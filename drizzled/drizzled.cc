@@ -233,12 +233,6 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
  {&Arg_comparator::compare_row,        &Arg_comparator::compare_e_row},
  {&Arg_comparator::compare_decimal,    &Arg_comparator::compare_e_decimal}};
 
-const char *log_output_names[] = { "NONE", "FILE", NULL};
-static const unsigned int log_output_names_len[]= { 4, 4, 0 };
-TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
-                             log_output_names,
-                             (unsigned int *) log_output_names_len};
-
 /* static variables */
 
 /* the default log output is log tables */
@@ -262,7 +256,6 @@ static I_List<Session> thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-ulong log_output_options;
 bool opt_log_queries_not_using_indexes= false;
 bool opt_error_log= 0;
 bool opt_skip_show_db= false;
@@ -301,7 +294,7 @@ char* opt_secure_file_priv= 0;
 */
 bool opt_noacl;
 
-ulong opt_binlog_rows_event_max_size;
+uint64_t opt_binlog_rows_event_max_size;
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
@@ -312,15 +305,15 @@ uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
 uint64_t session_startup_options;
-ulong back_log;
+uint32_t back_log;
 uint64_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
 ulong what_to_log;
 uint64_t slow_launch_time;
-ulong slave_open_temp_tables;
-ulong open_files_limit;
+uint64_t slave_open_temp_tables;
+uint64_t open_files_limit;
 uint64_t max_binlog_size;
 uint64_t max_relay_log_size;
 uint64_t slave_net_timeout;
@@ -333,19 +326,17 @@ uint64_t thread_pool_size= 0;
 uint64_t binlog_cache_size= 0;
 uint64_t max_binlog_cache_size= 0;
 uint32_t refresh_version;  /* Increments on each reload */
-ulong aborted_threads;
-ulong aborted_connects;
-ulong specialflag= 0;
-ulong binlog_cache_use= 0;
-ulong binlog_cache_disk_use= 0;
+uint64_t aborted_threads;
+uint64_t aborted_connects;
+uint64_t binlog_cache_use= 0;
+uint64_t binlog_cache_disk_use= 0;
 uint64_t max_connections;
 uint64_t max_connect_errors;
 ulong thread_id=1L;
 pid_t current_pid;
-ulong slow_launch_threads = 0;
+uint64_t slow_launch_threads= 0;
 uint64_t sync_binlog_period;
 uint64_t expire_logs_days= 0;
-const char *log_output_str= "FILE";
 
 const double log_10[] = {
   1e000, 1e001, 1e002, 1e003, 1e004, 1e005, 1e006, 1e007, 1e008, 1e009,
@@ -1832,7 +1823,7 @@ SHOW_VAR com_status_vars[]= {
   {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
   {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
   {"update_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE_MULTI]), SHOW_LONG_STATUS},
-  {NULL, NULL, SHOW_LONG}
+  {NULL, NULL, SHOW_LONGLONG}
 };
 
 static int init_common_variables(const char *conf_file_name, int argc,
@@ -2855,7 +2846,7 @@ struct my_option my_long_options[] =
       "The value has to be a multiple of 256."),
    (char**) &opt_binlog_rows_event_max_size,
    (char**) &opt_binlog_rows_event_max_size, 0,
-   GET_ULONG, REQUIRED_ARG,
+   GET_ULL, REQUIRED_ARG,
    /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX,
    /* sub_size */     0, /* block_size */ 256,
    /* app_type */ 0
@@ -3007,7 +2998,7 @@ struct my_option my_long_options[] =
 #ifdef HAVE_MMAP
   {"log-tc-size", OPT_LOG_TC_SIZE,
    N_("Size of transaction coordinator log."),
-   (char**) &opt_tc_log_size, (char**) &opt_tc_log_size, 0, GET_ULONG,
+   (char**) &opt_tc_log_size, (char**) &opt_tc_log_size, 0, GET_ULL,
    REQUIRED_ARG, TC_LOG_MIN_SIZE, TC_LOG_MIN_SIZE, ULONG_MAX, 0,
    TC_LOG_PAGE_SIZE, 0},
 #endif
@@ -3200,7 +3191,7 @@ struct my_option my_long_options[] =
    N_("The number of outstanding connection requests Drizzle can have. This "
       "comes into play when the main Drizzle thread gets very many connection "
       "requests in a very short time."),
-    (char**) &back_log, (char**) &back_log, 0, GET_ULONG,
+    (char**) &back_log, (char**) &back_log, 0, GET_UINT,
     REQUIRED_ARG, 50, 1, 65535, 0, 1, 0 },
   { "binlog_cache_size", OPT_BINLOG_CACHE_SIZE,
     N_("The size of the cache to hold the SQL statements for the binary log "
@@ -3600,7 +3591,7 @@ struct my_option my_long_options[] =
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,
-   (char**) &my_thread_stack_size, 0, GET_ULONG,
+   (char**) &my_thread_stack_size, 0, GET_ULL,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
    1024L*128L, ULONG_MAX, 0, 1024, 0},
   { "time_format", OPT_TIME_FORMAT,
@@ -3776,17 +3767,17 @@ show_table_definitions_cont= { &show_table_definitions };
 */
 
 SHOW_VAR status_vars[]= {
-  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONG},
-  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONG},
-  {"Binlog_cache_disk_use",    (char*) &binlog_cache_disk_use,  SHOW_LONG},
-  {"Binlog_cache_use",         (char*) &binlog_cache_use,       SHOW_LONG},
+  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
+  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
+  {"Binlog_cache_disk_use",    (char*) &binlog_cache_disk_use,  SHOW_LONGLONG},
+  {"Binlog_cache_use",         (char*) &binlog_cache_use,       SHOW_LONGLONG},
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
   {"Compression",              (char*) &show_net_compression_cont, SHOW_FUNC},
   {"Connections",              (char*) &thread_id,              SHOW_LONG_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
-  {"Created_tmp_files",	       (char*) &my_tmp_file_created,	SHOW_LONG},
+  {"Created_tmp_files",	       (char*) &my_tmp_file_created,	SHOW_INT},
   {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
   {"Flush_commands",           (char*) &refresh_version,        SHOW_LONG_NOFLUSH},
   {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
@@ -3812,7 +3803,7 @@ SHOW_VAR status_vars[]= {
   {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(STATUS_VAR, last_query_cost), SHOW_DOUBLE_STATUS},
-  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_LONG},
+  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
   {"Open_files",               (char*) &my_file_opened,         SHOW_LONG_NOFLUSH},
   {"Open_streams",             (char*) &my_stream_opened,       SHOW_LONG_NOFLUSH},
   {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
@@ -3826,30 +3817,30 @@ SHOW_VAR status_vars[]= {
   {"Select_range",             (char*) offsetof(STATUS_VAR, select_range_count), SHOW_LONG_STATUS},
   {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
   {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
-  {"Slave_open_temp_tables",   (char*) &slave_open_temp_tables, SHOW_LONG},
+  {"Slave_open_temp_tables",   (char*) &slave_open_temp_tables, SHOW_LONGLONG},
   {"Slave_retried_transactions",(char*) &show_slave_retried_trans_cont, SHOW_FUNC},
   {"Slave_heartbeat_period",   (char*) &show_heartbeat_period_cont, SHOW_FUNC},
   {"Slave_received_heartbeats",(char*) &show_slave_received_heartbeats_cont, SHOW_FUNC},
   {"Slave_running",            (char*) &show_slave_running_cont,     SHOW_FUNC},
-  {"Slow_launch_threads",      (char*) &slow_launch_threads,    SHOW_LONG},
+  {"Slow_launch_threads",      (char*) &slow_launch_threads,    SHOW_LONGLONG},
   {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
   {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
   {"Sort_range",	       (char*) offsetof(STATUS_VAR, filesort_range_count), SHOW_LONG_STATUS},
   {"Sort_rows",		       (char*) offsetof(STATUS_VAR, filesort_rows), SHOW_LONG_STATUS},
   {"Sort_scan",		       (char*) offsetof(STATUS_VAR, filesort_scan_count), SHOW_LONG_STATUS},
-  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_LONG},
-  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_LONG},
+  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
+  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
 #ifdef HAVE_MMAP
-  {"Tc_log_max_pages_used",    (char*) &tc_log_max_pages_used,  SHOW_LONG},
-  {"Tc_log_page_size",         (char*) &tc_log_page_size,       SHOW_LONG},
-  {"Tc_log_page_waits",        (char*) &tc_log_page_waits,      SHOW_LONG},
+  {"Tc_log_max_pages_used",    (char*) &tc_log_max_pages_used,  SHOW_LONGLONG},
+  {"Tc_log_page_size",         (char*) &tc_log_page_size,       SHOW_LONGLONG},
+  {"Tc_log_page_waits",        (char*) &tc_log_page_waits,      SHOW_LONGLONG},
 #endif
   {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
   {"Threads_created",	       (char*) &thread_created,		SHOW_LONG_NOFLUSH},
   {"Threads_running",          (char*) &thread_running,         SHOW_INT},
   {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
   {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
-  {NULL, NULL, SHOW_LONG}
+  {NULL, NULL, SHOW_LONGLONG}
 };
 
 static void print_version(void)
@@ -3917,7 +3908,6 @@ static void drizzle_init_variables(void)
   /* Things reset to zero */
   opt_skip_slave_start= opt_reckless_slave = 0;
   drizzle_home[0]= pidfile_name[0]= log_error_file[0]= 0;
-  log_output_options= find_bit_type(log_output_str, &log_output_typelib);
   opt_bin_log= 0;
   opt_skip_show_db=0;
   opt_logname= opt_binlog_index_name= 0;
@@ -3936,7 +3926,6 @@ static void drizzle_init_variables(void)
   abort_loop= select_thread_in_use= signal_thread_in_use= 0;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
-  specialflag= 0;
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;

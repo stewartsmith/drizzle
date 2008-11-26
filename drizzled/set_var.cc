@@ -463,14 +463,14 @@ sys_lc_time_names(&vars, "lc_time_names", sys_var::SESSION_VARIABLE_IN_BINLOG);
   slave).
 */
 static sys_var_insert_id sys_insert_id(&vars, "insert_id");
-static sys_var_readonly		sys_error_count(&vars, "error_count",
-						OPT_SESSION,
-						SHOW_LONG,
-						get_error_count);
-static sys_var_readonly		sys_warning_count(&vars, "warning_count",
-						  OPT_SESSION,
-						  SHOW_LONG,
-						  get_warning_count);
+static sys_var_readonly sys_error_count(&vars, "error_count",
+                                        OPT_SESSION,
+                                        SHOW_LONG,
+                                        get_error_count);
+static sys_var_readonly sys_warning_count(&vars, "warning_count",
+                                          OPT_SESSION,
+                                          SHOW_LONG,
+                                          get_warning_count);
 
 static sys_var_session_uint32_t sys_default_week_format(&vars, "default_week_format",
                                                         &SV::default_week_format);
@@ -501,7 +501,7 @@ static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symli
 
 #define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(SHOW_VAR))
 static SHOW_VAR fixed_vars[]= {
-  {"back_log",                (char*) &back_log,                    SHOW_LONG},
+  {"back_log",                (char*) &back_log,                    SHOW_INT},
   {"init_file",               (char*) &opt_init_file,               SHOW_CHAR_PTR},
   {"language",                language,                             SHOW_CHAR},
 #ifdef HAVE_MLOCKALL
@@ -510,12 +510,12 @@ static SHOW_VAR fixed_vars[]= {
   {"log_bin",                 (char*) &opt_bin_log,                 SHOW_BOOL},
   {"log_error",               (char*) log_error_file,               SHOW_CHAR},
   {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
-  {"open_files_limit",	      (char*) &open_files_limit,	    SHOW_LONG},
+  {"open_files_limit",	      (char*) &open_files_limit,	          SHOW_LONGLONG},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
   {"port",                    (char*) &drizzled_port,               SHOW_INT},
   {"protocol_version",        (char*) &protocol_version,            SHOW_INT},
-  {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_LONG},
+  {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_INT},
 };
 
 
@@ -1257,19 +1257,12 @@ Item *sys_var::item(Session *session, enum_var_type var_type, LEX_STRING *base)
     var_type= OPT_GLOBAL;
   }
   switch (show_type()) {
+  case SHOW_LONG:
   case SHOW_INT:
   {
     uint32_t value;
     pthread_mutex_lock(&LOCK_global_system_variables);
     value= *(uint*) value_ptr(session, var_type, base);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-    return new Item_uint((uint64_t) value);
-  }
-  case SHOW_LONG:
-  {
-    uint32_t value;
-    pthread_mutex_lock(&LOCK_global_system_variables);
-    value= *(uint32_t*) value_ptr(session, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_uint((uint64_t) value);
   }
@@ -2215,16 +2208,16 @@ static int check_pseudo_thread_id(Session *, set_var *var)
 static unsigned char *get_warning_count(Session *session)
 {
   session->sys_var_tmp.long_value=
-    (session->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE] +
-     session->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR] +
-     session->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_WARN]);
+    (session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE] +
+     session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR] +
+     session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN]);
   return (unsigned char*) &session->sys_var_tmp.long_value;
 }
 
 static unsigned char *get_error_count(Session *session)
 {
   session->sys_var_tmp.long_value= 
-    session->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
+    session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
   return (unsigned char*) &session->sys_var_tmp.long_value;
 }
 
