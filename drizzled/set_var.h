@@ -147,16 +147,16 @@ public:
 
 
 /*
-  A global-only ulong variable that requires its access to be
+  A global-only uint64_t variable that requires its access to be
   protected with a mutex.
 */
 
 class sys_var_long_ptr_global: public sys_var_global
 {
-  ulong *value;
+  uint64_t *value;
 public:
   sys_var_long_ptr_global(sys_var_chain *chain, const char *name_arg,
-                          ulong *value_ptr_arg,
+                          uint64_t *value_ptr_arg,
                           pthread_mutex_t *guard_arg,
                           sys_after_update_func after_update_arg= NULL)
     :sys_var_global(name_arg, after_update_arg, guard_arg),
@@ -174,13 +174,13 @@ public:
 
 
 /*
-  A global ulong variable that is protected by LOCK_global_system_variables
+  A global uint64_t variable that is protected by LOCK_global_system_variables
 */
 
 class sys_var_long_ptr :public sys_var_long_ptr_global
 {
 public:
-  sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, ulong *value_ptr,
+  sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr,
                    sys_after_update_func after_update_arg= NULL);
 };
 

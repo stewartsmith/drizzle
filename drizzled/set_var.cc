@@ -151,7 +151,7 @@ sys_auto_increment_offset(&vars, "auto_increment_offset",
 
 static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
 static sys_var_long_ptr	sys_binlog_cache_size(&vars, "binlog_cache_size",
-					      &binlog_cache_size);
+                                              &binlog_cache_size);
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
                                                           &SV::bulk_insert_buff_size);
 static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
@@ -171,7 +171,7 @@ sys_collation_server(&vars, "collation_server", &SV::collation_server,
                      &default_charset_info,
                      sys_var::SESSION_VARIABLE_IN_BINLOG);
 static sys_var_long_ptr	sys_connect_timeout(&vars, "connect_timeout",
-					    &connect_timeout);
+                                            &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
 static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    &delay_key_write_options,
@@ -179,7 +179,7 @@ static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    fix_delay_key_write);
 
 static sys_var_long_ptr	sys_expire_logs_days(&vars, "expire_logs_days",
-					     &expire_logs_days);
+                                             &expire_logs_days);
 static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
 sys_var_str             sys_init_connect(&vars, "init_connect", 0,
                                          sys_update_init_connect,
@@ -351,7 +351,7 @@ static sys_var_long_ptr	sys_table_lock_wait_timeout(&vars, "table_lock_wait_time
 static sys_var_long_ptr	sys_thread_cache_size(&vars, "thread_cache_size",
 					      &thread_cache_size);
 sys_var_long_ptr	sys_thread_pool_size(&vars, "thread_pool_size",
-					      &thread_pool_size);
+                                       &thread_pool_size);
 static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
                                              &SV::tx_isolation,
                                              &tx_isolation_typelib,
@@ -820,7 +820,7 @@ static bool get_unsigned(Session *, set_var *var)
 
 
 sys_var_long_ptr::
-sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, ulong *value_ptr_arg,
+sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr_arg,
                  sys_after_update_func after_update_arg)
   :sys_var_long_ptr_global(chain, name_arg, value_ptr_arg,
                            &LOCK_global_system_variables, after_update_arg)
@@ -837,7 +837,7 @@ bool sys_var_long_ptr_global::update(Session *session, set_var *var)
   uint64_t tmp= var->save_result.uint64_t_value;
   pthread_mutex_lock(guard);
   if (option_limits)
-    *value= (ulong) fix_unsigned(session, tmp, option_limits);
+    *value= (uint64_t) fix_unsigned(session, tmp, option_limits);
   else
   {
     if (tmp > UINT32_MAX)
@@ -846,7 +846,7 @@ bool sys_var_long_ptr_global::update(Session *session, set_var *var)
       throw_bounds_warning(session, true, true, name,
                            (int64_t) var->save_result.uint64_t_value);
     }
-    *value= (ulong) tmp;
+    *value= (uint64_t) tmp;
   }
 
   pthread_mutex_unlock(guard);
@@ -858,7 +858,7 @@ void sys_var_long_ptr_global::set_default(Session *, enum_var_type)
 {
   bool not_used;
   pthread_mutex_lock(guard);
-  *value= (ulong) getopt_ull_limit_value((ulong) option_limits->def_value,
+  *value= (uint64_t) getopt_ull_limit_value((uint64_t) option_limits->def_value,
                                          option_limits, &not_used);
   pthread_mutex_unlock(guard);
 }
@@ -1199,7 +1199,7 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
 					    &not_used));
     if (error_len)
     {
-      strmake(buff, error, cmin(sizeof(buff) - 1, (ulong)error_len));
+      strmake(buff, error, cmin(sizeof(buff) - 1, (uint64_t)error_len));
       goto err;
     }
   }
@@ -1757,7 +1757,7 @@ end:
 */
 bool sys_var_key_cache_long::update(Session *session, set_var *var)
 {
-  ulong tmp= (ulong) var->value->val_int();
+  uint64_t tmp= (uint64_t) var->value->val_int();
   LEX_STRING *base_name= &var->base;
   bool error= 0;
 
@@ -1782,8 +1782,8 @@ bool sys_var_key_cache_long::update(Session *session, set_var *var)
   if (key_cache->in_init)
     goto end;
 
-  *((ulong*) (((char*) key_cache) + offset))=
-    (ulong) fix_unsigned(session, tmp, option_limits);
+  *((uint64_t*) (((char*) key_cache) + offset))=
+    (uint64_t) fix_unsigned(session, tmp, option_limits);
 
   /*
     Don't create a new key cache if it didn't exist

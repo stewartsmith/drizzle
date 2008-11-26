@@ -310,7 +310,8 @@ uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
 uint64_t session_startup_options;
-ulong back_log, connect_timeout;
+ulong back_log;
+uint64_t connect_timeout;
 uint32_t server_id;
 ulong table_cache_size, table_def_size;
 ulong what_to_log;
@@ -324,9 +325,9 @@ bool slave_allow_batching;
 ulong slave_exec_mode_options;
 const char *slave_exec_mode_str= "STRICT";
 ulong thread_cache_size= 0;
-ulong thread_pool_size= 0;
-ulong binlog_cache_size= 0;
-ulong max_binlog_cache_size= 0;
+uint64_t thread_pool_size= 0;
+uint64_t binlog_cache_size= 0;
+uint64_t max_binlog_cache_size= 0;
 uint32_t refresh_version;  /* Increments on each reload */
 ulong aborted_threads;
 ulong aborted_connects;
@@ -339,7 +340,7 @@ ulong thread_id=1L;
 pid_t current_pid;
 ulong slow_launch_threads = 0;
 ulong sync_binlog_period;
-ulong expire_logs_days = 0;
+uint64_t expire_logs_days= 0;
 ulong rpl_recovery_rank=0;
 const char *log_output_str= "FILE";
 
@@ -1284,15 +1285,15 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
   fprintf(stderr, "connection_count=%u\n", connection_count);
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
-                    "sort_buffer_size)*max_threads = %lu K\n"
+                    "sort_buffer_size)*max_threads = %"PRIu64" K\n"
                     "bytes of memory\n"
                     "Hope that's ok; if not, decrease some variables in the "
                     "equation.\n\n"),
-                    ((uint32_t) dflt_key_cache->key_cache_mem_size +
+          (uint64_t)(((uint32_t) dflt_key_cache->key_cache_mem_size +
                      (global_system_variables.read_buff_size +
                       global_system_variables.sortbuff_size) *
                      thread_scheduler.max_threads +
-                     max_connections * sizeof(Session)) / 1024);
+                     max_connections * sizeof(Session)) / 1024));
 
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
@@ -3202,7 +3203,7 @@ struct my_option my_long_options[] =
     N_("The size of the cache to hold the SQL statements for the binary log "
        "during a transaction. If you often use big, multi-statement "
        "transactions you can increase this to get more performance."),
-    (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULONG,
+    (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULL,
     REQUIRED_ARG, 32*1024L, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
   { "bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
     N_("Size of tree cache used in bulk insert optimisation. Note that this is "
@@ -3214,7 +3215,7 @@ struct my_option my_long_options[] =
     N_("The number of seconds the drizzled server is waiting for a connect "
        "packet before responding with 'Bad handshake'."),
     (char**) &connect_timeout, (char**) &connect_timeout,
-    0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
+    0, GET_ULL, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "date_format", OPT_DATE_FORMAT,
     N_("The DATE format (For future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
@@ -3240,7 +3241,7 @@ struct my_option my_long_options[] =
     N_("If non-zero, binary logs will be purged after expire_logs_days "
        "days; possible purges happen at startup and at binary log rotation."),
     (char**) &expire_logs_days,
-    (char**) &expire_logs_days, 0, GET_ULONG,
+    (char**) &expire_logs_days, 0, GET_ULL,
     REQUIRED_ARG, 0, 0, 99, 0, 1, 0},
   { "group_concat_max_len", OPT_GROUP_CONCAT_MAX_LEN,
     N_("The maximum length of the result of function  group_concat."),
@@ -3303,7 +3304,7 @@ struct my_option my_long_options[] =
    N_("Can be used to restrict the total size used to cache a "
       "multi-transaction query."),
    (char**) &max_binlog_cache_size, (char**) &max_binlog_cache_size, 0,
-   GET_ULONG, REQUIRED_ARG, ULONG_MAX, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
+   GET_ULL, REQUIRED_ARG, ULONG_MAX, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
   {"max_binlog_size", OPT_MAX_BINLOG_SIZE,
    N_("Binary log will be rotated automatically when the size exceeds this "
       "value. Will also apply to relay logs if max_relay_log_size is 0. "
@@ -3591,7 +3592,7 @@ struct my_option my_long_options[] =
   {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
     N_("How many threads we should create to handle query requests in case of "
        "'thread_handling=pool-of-threads'"),
-    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_UINT,
+    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULL,
     REQUIRED_ARG, 8, 1, 16384, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
