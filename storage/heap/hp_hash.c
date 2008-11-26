@@ -16,9 +16,11 @@
 /* The hash functions used for saveing keys */
 
 #include "heapdef.h"
+
 #include <mystrings/m_ctype.h>
 #include <drizzled/util/test.h>
 
+#include <string.h>
 
 /*
   Find out how many rows there is in the given range

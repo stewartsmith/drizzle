@@ -15,6 +15,8 @@
 
 #include "heapdef.h"
 
+#include <string.h>
+
 	/* Read first record with the current key */
 
 

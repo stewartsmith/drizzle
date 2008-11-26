@@ -15,6 +15,8 @@
 
 #include "heapdef.h"
 
+#include <string.h>
+
 /* Read first record with the current key */
 
 int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)

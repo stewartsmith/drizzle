@@ -16,11 +16,8 @@
 /* open a heap-database */
 
 #include "heapdef.h"
-#ifdef VMS
-#include "hp_static.c"			/* Stupid vms-linker */
-#endif
 
-#include <mysys/my_sys.h>
+#include <string.h>
 
 /*
   Open heap table based on HP_SHARE structure
