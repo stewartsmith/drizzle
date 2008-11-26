@@ -8050,9 +8050,9 @@ static int my_strnncollsp_any_uca(const CHARSET_INFO * const cs,
 }   
 
 extern "C"
-static void my_hash_sort_any_uca(const CHARSET_INFO * const cs,
-                                 const unsigned char *s, size_t slen,
-                                 uint32_t *n1, uint32_t *n2)
+void my_hash_sort_any_uca(const CHARSET_INFO * const cs,
+                          const unsigned char *s, size_t slen,
+                          uint32_t *n1, uint32_t *n2)
 {
   my_hash_sort_uca(cs, &my_any_uca_scanner_handler, s, slen, n1, n2); 
 }
