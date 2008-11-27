@@ -20,6 +20,7 @@
 #include <mystrings/m_ctype.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 bool my_init_done= 0;
 uint	mysys_usage_id= 0;              /* Incremented for each my_init() */

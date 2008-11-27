@@ -20,10 +20,13 @@
 #ifndef _libdrizzle_drizzle_data_h
 #define _libdrizzle_drizzle_data_h
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <libdrizzle/drizzle_rows.h>
 #include <libdrizzle/drizzle_field.h>
+
+#include <stdint.h>
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
 
 typedef struct st_drizzle_data {
   DRIZZLE_ROWS *data;

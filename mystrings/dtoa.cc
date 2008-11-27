@@ -35,7 +35,8 @@
 
  ***************************************************************/
 
-#include <m_string.h>  /* for memcpy and NOT_FIXED_DEC */
+#include <mystrings/m_string.h>  /* for memcpy and NOT_FIXED_DEC */
+#include <stdlib.h>
 
 /**
    Appears to suffice to not call malloc() in most cases.
