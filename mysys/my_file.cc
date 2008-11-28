@@ -16,6 +16,8 @@
 #include "mysys_priv.h"
 #include "my_static.h"
 #include <mystrings/m_string.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
   set how many open files we want to be able to handle

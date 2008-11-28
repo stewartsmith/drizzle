@@ -25,9 +25,12 @@
 #define DRIZZLED_DRIZZLE_COMMON_H
 
 #include <unistd.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <drizzled/korr.h>
+
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
 
 /*
    This is included in the server and in the client.

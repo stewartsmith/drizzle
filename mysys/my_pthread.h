@@ -19,8 +19,11 @@
 #define _my_pthread_h
 
 #include <stdint.h>
-#include <stdbool.h>
 #include <unistd.h>
+
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
 
 #ifndef ETIME
 #define ETIME ETIMEDOUT				/* For FreeBSD */

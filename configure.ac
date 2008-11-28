@@ -376,7 +376,7 @@ dnl Needed for ltmain
 AC_PROG_RANLIB
 
 dnl Not critical since the generated file is distributed
-AC_PROG_YACC
+AC_CHECK_PROGS(YACC, ['bison -y'])
 if test -z "$YACC" && test -d ".bzr"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
