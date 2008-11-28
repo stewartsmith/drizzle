@@ -166,7 +166,7 @@ a	int	NO		NULL
 b	int	YES		NULL	
 drop table t1;
 alter database information_schema;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
 drop database information_schema;
 ERROR 42000: Access denied for user ''@'' to database 'information_schema'
 drop table information_schema.tables;
@@ -373,9 +373,9 @@ STATISTICS	information_schema.STATISTICS	1
 TABLES	information_schema.TABLES	1
 TABLE_CONSTRAINTS	information_schema.TABLE_CONSTRAINTS	1
 alter database;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
 alter database test;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
 create table t1 (
 f1 varchar(50),
 f2 varchar(50) not null,
