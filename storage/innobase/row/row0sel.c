@@ -2721,6 +2721,7 @@ row_sel_store_mysql_rec(
 		prebuilt->blob_heap = NULL;
 	}
 
+	memset(mysql_rec, 0xff, prebuilt->null_bitmap_len);
 	for (i = start_field_no; i < end_field_no /* prebuilt->n_template */; i++) {
 
 		templ = prebuilt->mysql_template + i;
@@ -2808,8 +2809,9 @@ row_sel_store_mysql_rec(
 			and DISTINCT could treat NULL values inequal. */
 			int	pad_char;
 
-			mysql_rec[templ->mysql_null_byte_offset]
-				|= (byte) templ->mysql_null_bit_mask;
+			/* We already set all NULL bits by default above,
+			so don't need to do it here. */
+
 			switch (templ->type) {
 			case DATA_VARCHAR:
 			case DATA_BINARY:
