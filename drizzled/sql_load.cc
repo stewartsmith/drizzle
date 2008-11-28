@@ -86,10 +86,6 @@ static int read_sep_field(Session *session, COPY_INFO &info, TableList *table_li
 			  String &enclosed, uint32_t skip_lines,
 			  bool ignore_check_option_errors);
 
-static bool write_execute_load_query_log_event(Session *session,
-					       bool duplicates, bool ignore,
-					       bool transactional_table,
-                                               Session::killed_state killed_status);
 
 /*
   Execute LOAD DATA query
@@ -125,14 +121,15 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
   String *field_term=ex->field_term,*escaped=ex->escaped;
   String *enclosed=ex->enclosed;
   bool is_fifo=0;
-  LOAD_FILE_INFO lf_info;
-  char *db = table_list->db;			// This is never null
+  char *db= table_list->db;			// This is never null
+  assert(db);
   /*
     If path for file is not defined, we will use the current database.
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
   char *tdb= session->db ? session->db : db;		// Result is never null
+  assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
   Session::killed_state killed_status= Session::NOT_KILLED;
@@ -319,15 +316,6 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
     return(true);				// Can't allocate buffers
   }
 
-  if (drizzle_bin_log.is_open())
-  {
-    lf_info.session = session;
-    lf_info.wrote_create_file = 0;
-    lf_info.last_pos_in_file = HA_POS_ERROR;
-    lf_info.log_delayed= transactional_table;
-    read_info.set_io_cache_arg((void*) &lf_info);
-  }
-
   session->count_cuted_fields= CHECK_FIELD_WARN;		/* calc cuted fields */
   session->cuted_fields=0L;
   /* Skip lines if there is a line terminator */
@@ -389,48 +377,6 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
       while (!read_info.next_line())
 	;
 
-    if (drizzle_bin_log.is_open())
-    {
-      {
-	/*
-	  Make sure last block (the one which caused the error) gets
-	  logged.  This is needed because otherwise after write of (to
-	  the binlog, not to read_info (which is a cache))
-	  Delete_file_log_event the bad block will remain in read_info
-	  (because pre_read is not called at the end of the last
-	  block; remember pre_read is called whenever a new block is
-	  read from disk).  At the end of mysql_load(), the destructor
-	  of read_info will call end_io_cache() which will flush
-	  read_info, so we will finally have this in the binlog:
-
-	  Append_block # The last successfull block
-	  Delete_file
-	  Append_block # The failing block
-	  which is nonsense.
-	  Or could also be (for a small file)
-	  Create_file  # The failing block
-	  which is nonsense (Delete_file is not written in this case, because:
-	  Create_file has not been written, so Delete_file is not written, then
-	  when read_info is destroyed end_io_cache() is called which writes
-	  Create_file.
-	*/
-	read_info.end_io_cache();
-	/* If the file was not empty, wrote_create_file is true */
-	if (lf_info.wrote_create_file)
-	{
-	  if (session->transaction.stmt.modified_non_trans_table)
-	    write_execute_load_query_log_event(session, handle_duplicates,
-					       ignore, transactional_table,
-                                               killed_status);
-	  else
-	  {
-	    Delete_file_log_event d(session, db, transactional_table);
-            d.flags|= LOG_EVENT_UPDATE_TABLE_MAP_VERSION_F;
-	    drizzle_bin_log.write(&d);
-	  }
-	}
-      }
-    }
     error= -1;				// Error on read
     goto err;
   }
@@ -452,24 +398,6 @@ err:
   table->auto_increment_field_not_null= false;
   session->abort_on_warning= 0;
   return(error);
-}
-
-
-/* Not a very useful function; just to avoid duplication of code */
-static bool write_execute_load_query_log_event(Session *session,
-					       bool duplicates, bool ignore,
-					       bool transactional_table,
-                                               Session::killed_state killed_err_arg)
-{
-  Execute_load_query_log_event
-    e(session, session->query, session->query_length,
-      (char*)session->lex->fname_start - (char*)session->query,
-      (char*)session->lex->fname_end - (char*)session->query,
-      (duplicates == DUP_REPLACE) ? LOAD_DUP_REPLACE :
-      (ignore ? LOAD_DUP_IGNORE : LOAD_DUP_ERROR),
-      transactional_table, false, killed_err_arg);
-  e.flags|= LOG_EVENT_UPDATE_TABLE_MAP_VERSION_F;
-  return drizzle_bin_log.write(&e);
 }
 
 
