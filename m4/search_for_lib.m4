@@ -36,9 +36,10 @@ AC_DEFUN([SEARCH_FOR_LIB],
     AS_VAR_SET([cflags_var],[""])
     AS_IF([test AS_VAR_GET([ac_header]) = "$3" -a AS_VAR_GET([ac_lib]) = yes],
       [AS_VAR_SET([have_lib],[yes])
-       AS_VAR_SET([path_var],[AS_VAR_GET([with_lib])])],
+       AS_VAR_SET([path_var],[$PATH])
+      ],
       [AS_VAR_SET([have_lib],[no])
-       AS_VAR_SET([with_lib],["AS_VAR_GET([with_lib]) AS_VAR_GET([path_var]) /opt/csw"])
+       AS_VAR_SET([with_lib],["AS_VAR_GET([path_var]) /opt/csw"])
       ])
   ])
   AS_IF([test "AS_VAR_GET([with_lib])" != yes],[
@@ -51,7 +52,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
       if cd $libloc; then libloc=`pwd`; cd $owd; fi
       AS_VAR_SET([cflags_var],[-I$libloc])
       AS_VAR_SET([libs_var],["-L$libloc -l$1"])
-      AS_VAR_SET([path_var],["$libloc"])
+      AS_VAR_SET([path_var],["$libloc:$PATH"])
       AS_VAR_SET([have_lib],[yes])
       AC_MSG_RESULT([yes])
       break
@@ -60,7 +61,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
       if cd $libloc; then libloc=`pwd`; cd $owd; fi
       AS_VAR_SET([cflags_var],[-I$libloc/include])
       AS_VAR_SET([libs_var],["-L$libloc/lib -l$1"])
-      AS_VAR_SET([path_var],["$libloc/bin"])
+      AS_VAR_SET([path_var],["$libloc/bin:$PATH"])
       AS_VAR_SET([have_lib],[yes])
       AC_MSG_RESULT([yes])
       break
