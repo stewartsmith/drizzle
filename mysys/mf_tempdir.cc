@@ -40,7 +40,7 @@ bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
     end= strrchr(pathlist, DELIM);
     if (end == NULL)
       end= pathlist+strlen(pathlist);
-    strmake(buff, pathlist, (uint) (end-pathlist));
+    strncpy(buff, pathlist, FN_REFLEN-1);
     length= cleanup_dirname(buff, buff);
     if (!(copy= my_strndup(buff, length, MYF(MY_WME))) ||
         insert_dynamic(&tmpdir->full_list, (unsigned char*) &copy))

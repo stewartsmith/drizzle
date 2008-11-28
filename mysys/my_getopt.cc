@@ -577,7 +577,7 @@ static char *check_struct_option(char *cur_arg, char *key_name)
   {
     uint32_t len= (uint) (ptr - cur_arg);
     set_if_smaller(len, FN_REFLEN-1);
-    strmake(key_name, cur_arg, len);
+    strncpy(key_name, cur_arg, len);
     return ++ptr;
   }
   key_name[0]= 0;

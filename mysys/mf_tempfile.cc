@@ -63,7 +63,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
     dir=getenv("TMPDIR");
   if ((res=tempnam((char*) dir,(char *) prefix)))
   {
-    strmake(to,res,FN_REFLEN-1);
+    strncpy(to,res,FN_REFLEN-1);
     (*free)(res);
     file=my_create(to, 0, mode | O_EXCL, MyFlags);
   }
@@ -119,7 +119,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
     }
     if ((res=tempnam((char*) dir, (char*) prefix)))
     {
-      strmake(to,res,FN_REFLEN-1);
+      strncpy(to,res,FN_REFLEN-1);
       (*free)(res);
       file=my_create(to,0,
 		     (int) (O_RDWR | O_TRUNC | O_EXCL),

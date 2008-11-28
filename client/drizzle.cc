@@ -1463,7 +1463,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 {
   switch(optid) {
   case OPT_CHARSETS_DIR:
-    strmake(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
+    strncpy(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
     charsets_dir = drizzle_charsets_dir;
     break;
   case  OPT_DEFAULT_CHARSET:
@@ -1479,7 +1479,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       /* Check that delimiter does not contain a backslash */
       if (!strstr(argument, "\\"))
       {
-        strmake(delimiter, argument, sizeof(delimiter) - 1);
+        strncpy(delimiter, argument, sizeof(delimiter) - 1);
       }
       else
       {
@@ -1517,7 +1517,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       if (argument && strlen(argument))
       {
         default_pager_set= 1;
-        strmake(pager, argument, sizeof(pager) - 1);
+        strncpy(pager, argument, sizeof(pager) - 1);
         my_stpcpy(default_pager, pager);
       }
       else if (default_pager_set)
@@ -2822,7 +2822,7 @@ static void init_tee(const char *file_name)
     return;
   }
   OUTFILE = new_outfile;
-  strmake(outfile, file_name, FN_REFLEN-1);
+  strncpy(outfile, file_name, FN_REFLEN-1);
   tee_fprintf(stdout, "Logging to file '%s'\n", file_name);
   opt_outfile= 1;
   return;
@@ -3502,7 +3502,7 @@ static int com_source(string *buffer __attribute__((unused)), const char *line)
                     INFO_ERROR, 0,0);
   while (my_isspace(charset_info,*param))
     param++;
-  end=strmake(source_name,param,sizeof(source_name)-1);
+  end= strmake(source_name,param,sizeof(source_name)-1);
   while (end > source_name && (my_isspace(charset_info,end[-1]) ||
                                my_iscntrl(charset_info,end[-1])))
     end--;
@@ -3548,7 +3548,7 @@ com_delimiter(string *buffer __attribute__((unused)), const char *line)
 {
   char buff[256], *tmp;
 
-  strmake(buff, line, sizeof(buff) - 1);
+  strncpy(buff, line, sizeof(buff) - 1);
   tmp= get_arg(buff, 0);
 
   if (!tmp || !*tmp)
@@ -3566,7 +3566,7 @@ com_delimiter(string *buffer __attribute__((unused)), const char *line)
       return 0;
     }
   }
-  strmake(delimiter, tmp, sizeof(delimiter) - 1);
+  strncpy(delimiter, tmp, sizeof(delimiter) - 1);
   delimiter_length= (int)strlen(delimiter);
   delimiter_str= delimiter;
   return 0;
@@ -3580,7 +3580,7 @@ com_use(string *buffer __attribute__((unused)), const char *line)
   int select_db;
 
   memset(buff, 0, sizeof(buff));
-  strmake(buff, line, sizeof(buff) - 1);
+  strncpy(buff, line, sizeof(buff) - 1);
   tmp= get_arg(buff, 0);
   if (!tmp || !*tmp)
   {
