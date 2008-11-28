@@ -15,7 +15,7 @@
 
 noinst_LTLIBRARIES = 	libtimefunc.la
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CFLAGS}
 
 libtimefunc_la_SOURCES = \
 		add_time.cc \
