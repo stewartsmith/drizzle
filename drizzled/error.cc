@@ -113,7 +113,7 @@ N_("Unexpected EOF found when reading file '%-.192s' (errno: %d)"),
 /* ER_CON_COUNT_ERROR 08004  */
 N_("Too many connections"),
 /* ER_OUT_OF_RESOURCES   */
-N_("Out of memory; check if mysqld or some other process uses all available memory; if not, you may have to use 'ulimit' to allow mysqld to use more memory or you can add more swap space"),
+N_("Out of memory; check if drizzled or some other process uses all available memory; if not, you may have to use 'ulimit' to allow drizzled to use more memory or you can add more swap space"),
 /* ER_BAD_HOST_ERROR 08S01  */
 N_("Can't get hostname for your address"),
 /* ER_HANDSHAKE_ERROR 08S01  */
@@ -255,7 +255,7 @@ N_("Column '%-.192s' specified twice"),
 /* ER_INVALID_GROUP_FUNC_USE   */
 N_("Invalid use of group function"),
 /* ER_UNSUPPORTED_EXTENSION 42000  */
-N_("Table '%-.192s' uses an extension that doesn't exist in this MySQL version"),
+N_("Table '%-.192s' uses an extension that doesn't exist in this Drizzle version"),
 /* ER_TABLE_MUST_HAVE_COLUMNS 42000  */
 N_("A table must have at least 1 column"),
 /* ER_RECORD_FILE_FULL   */
@@ -263,13 +263,13 @@ N_("The table '%-.192s' is full"),
 /* ER_UNKNOWN_CHARACTER_SET 42000  */
 N_("Unknown character set: '%-.64s'"),
 /* ER_TOO_MANY_TABLES   */
-N_("Too many tables; MySQL can only use %d tables in a join"),
+N_("Too many tables; Drizzle can only use %d tables in a join"),
 /* ER_TOO_MANY_FIELDS   */
 N_("Too many columns"),
 /* ER_TOO_BIG_ROWSIZE 42000  */
 N_("Row size too large. The maximum row size for the used table type, not counting BLOBs, is %ld. You have to change some columns to TEXT or BLOBs"),
 /* ER_STACK_OVERRUN   */
-N_("Thread stack overrun:  Used: %ld of a %ld stack.  Use 'mysqld -O thread_stack=#' to specify a bigger stack if needed"),
+N_("Thread stack overrun:  Used: %ld of a %ld stack.  Use 'drizzled -O thread_stack=#' to specify a bigger stack if needed"),
 /* ER_WRONG_OUTER_JOIN 42000  */
 N_("Cross dependency found in OUTER JOIN; examine your ON conditions"),
 /* ER_NULL_COLUMN_IN_INDEX 42000  */
@@ -289,13 +289,13 @@ N_("Can't find symbol '%-.128s' in library"),
 /* ER_FUNCTION_NOT_DEFINED   */
 N_("Function '%-.192s' is not defined"),
 /* ER_HOST_IS_BLOCKED   */
-N_("Host '%-.64s' is blocked because of many connection errors; unblock with 'mysqladmin flush-hosts'"),
+N_("Host '%-.64s' is blocked because of many connection errors; unblock with 'drizzleadmin flush-hosts'"),
 /* ER_HOST_NOT_PRIVILEGED   */
-N_("Host '%-.64s' is not allowed to connect to this MySQL server"),
+N_("Host '%-.64s' is not allowed to connect to this Drizzle server"),
 /* ER_PASSWORD_ANONYMOUS_USER 42000  */
-N_("You are using MySQL as an anonymous user and anonymous users are not allowed to change passwords"),
+N_("You are using Drizzle as an anonymous user and anonymous users are not allowed to change passwords"),
 /* ER_PASSWORD_NOT_ALLOWED 42000  */
-N_("You must have privileges to update tables in the mysql database to be able to change passwords for others"),
+N_("You must have privileges to update tables in the drizzle database to be able to change passwords for others"),
 /* ER_PASSWORD_NO_MATCH 42000  */
 N_("Can't find any matching row in the user table"),
 /* ER_UPDATE_INFO   */
@@ -327,9 +327,9 @@ N_("Table '%-.192s.%-.192s' doesn't exist"),
 /* ER_NONEXISTING_TABLE_GRANT 42000  */
 N_("There is no such grant defined for user '%-.48s' on host '%-.64s' on table '%-.192s'"),
 /* ER_NOT_ALLOWED_COMMAND 42000  */
-N_("The used command is not allowed with this MySQL version"),
+N_("The used command is not allowed with this Drizzle version"),
 /* ER_SYNTAX_ERROR 42000  */
-N_("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use"),
+N_("You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use"),
 /* ER_DELAYED_CANT_CHANGE_LOCK   */
 N_("Delayed insert thread couldn't get requested lock for table %-.192s"),
 /* ER_TOO_MANY_DELAYED_THREADS   */
@@ -379,7 +379,7 @@ N_("Result consisted of more than one row"),
 /* ER_REQUIRES_PRIMARY_KEY 42000  */
 N_("This table type requires a primary key"),
 /* ER_NO_RAID_COMPILED   */
-N_("This version of MySQL is not compiled with RAID support"),
+N_("This version of Drizzle is not compiled with RAID support"),
 /* ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE   */
 N_("You are using safe update mode and you tried to update a table without a WHERE that uses a KEY column"),
 /* ER_KEY_DOES_NOT_EXITS 42000 S1009 */
@@ -425,7 +425,7 @@ N_("Table '%-.192s' is marked as crashed and last (automatic?) repair failed"),
 /* ER_WARNING_NOT_COMPLETE_ROLLBACK   */
 N_("Some non-transactional changed tables couldn't be rolled back"),
 /* ER_TRANS_CACHE_FULL   */
-N_("Multi-statement transaction required more than 'max_binlog_cache_size' bytes of storage; increase this mysqld variable and try again"),
+N_("Multi-statement transaction required more than 'max_binlog_cache_size' bytes of storage; increase this drizzled variable and try again"),
 /* ER_SLAVE_MUST_STOP   */
 N_("This operation cannot be performed with a running slave; run STOP SLAVE first"),
 /* ER_SLAVE_NOT_RUNNING   */
@@ -433,7 +433,7 @@ N_("This operation requires a running slave; configure slave and do START SLAVE"
 /* ER_BAD_SLAVE   */
 N_("The server is not configured as slave; fix with CHANGE MASTER TO"),
 /* ER_MASTER_INFO   */
-N_("Could not initialize master info structure; more error messages can be found in the MySQL error log"),
+N_("Could not initialize master info structure; more error messages can be found in the Drizzle error log"),
 /* ER_SLAVE_THREAD   */
 N_("Could not create slave thread; check system resources"),
 /* ER_TOO_MANY_USER_CONNECTIONS 42000  */
@@ -501,7 +501,7 @@ N_("Variable '%-.64s' can only be set, not read"),
 /* ER_CANT_USE_OPTION_HERE 42000  */
 N_("Incorrect usage/placement of '%s'"),
 /* ER_NOT_SUPPORTED_YET 42000  */
-N_("This version of MySQL doesn't yet support '%s'"),
+N_("This version of Drizzle doesn't yet support '%s'"),
 /* ER_MASTER_FATAL_ERROR_READING_BINLOG   */
 N_("Got fatal error %d: '%-.128s' from master when reading data from binary log"),
 /* ER_SLAVE_IGNORED_TABLE   */
@@ -533,7 +533,7 @@ N_("Select %u was reduced during optimization"),
 /* ER_TABLENAME_NOT_ALLOWED_HERE 42000  */
 N_("Table '%-.192s' from one of the SELECTs cannot be used in %-.32s"),
 /* ER_NOT_SUPPORTED_AUTH_MODE 08004  */
-N_("Client does not support authentication protocol requested by server; consider upgrading MySQL client"),
+N_("Client does not support authentication protocol requested by server; consider upgrading Drizzle client"),
 /* ER_SPATIAL_CANT_HAVE_NULL 42000  */
 N_("All parts of a SPATIAL index must be NOT NULL"),
 /* ER_COLLATION_CHARSET_MISMATCH 42000  */
@@ -579,7 +579,7 @@ N_("Variable '%-.64s' is not a variable component (can't be used as XXXX.variabl
 /* ER_UNKNOWN_COLLATION   */
 N_("Unknown collation: '%-.64s'"),
 /* ER_SLAVE_IGNORED_SSL_PARAMS   */
-N_("SSL parameters in CHANGE MASTER are ignored because this MySQL slave was compiled without SSL support; they can be used later if MySQL slave with SSL is started"),
+N_("SSL parameters in CHANGE MASTER are ignored because this Drizzle slave was compiled without SSL support; they can be used later if Drizzle slave with SSL is started"),
 /* ER_SERVER_IS_IN_SECURE_AUTH_MODE   */
 N_("Server is running in --secure-auth mode, but '%s'@'%s' has a password in the old format; please change the password to the new format"),
 /* ER_WARN_FIELD_RESOLVED   */
@@ -587,7 +587,7 @@ N_("Field or reference '%-.192s%s%-.192s%s%-.192s' of SELECT #%d was resolved in
 /* ER_BAD_SLAVE_UNTIL_COND   */
 N_("Incorrect parameter or combination of parameters for START SLAVE UNTIL"),
 /* ER_MISSING_SKIP_SLAVE   */
-N_("It is recommended to use --skip-slave-start when doing step-by-step replication with START SLAVE UNTIL; otherwise, you will get problems if you get an unexpected slave's mysqld restart"),
+N_("It is recommended to use --skip-slave-start when doing step-by-step replication with START SLAVE UNTIL; otherwise, you will get problems if you get an unexpected slave's drizzled restart"),
 /* ER_UNTIL_COND_IGNORED   */
 N_("SQL thread is not to be started so UNTIL options are ignored"),
 /* ER_WRONG_NAME_FOR_INDEX 42000  */
@@ -601,7 +601,7 @@ N_("Column '%-.192s' cannot be part of FULLTEXT index"),
 /* ER_UNKNOWN_KEY_CACHE   */
 N_("Unknown key cache '%-.100s'"),
 /* ER_WARN_HOSTNAME_WONT_WORK   */
-N_("MySQL is started in --skip-name-resolve mode; you must restart it without this switch for this grant to work"),
+N_("Drizzle is started in --skip-name-resolve mode; you must restart it without this switch for this grant to work"),
 /* ER_UNKNOWN_STORAGE_ENGINE 42000  */
 N_("Unknown table engine '%s'"),
 /* ER_WARN_DEPRECATED_SYNTAX   */
@@ -609,9 +609,9 @@ N_("'%s' is deprecated; use '%s' instead"),
 /* ER_NON_UPDATABLE_TABLE   */
 N_("The target table %-.100s of the %s is not updatable"),
 /* ER_FEATURE_DISABLED   */
-N_("The '%s' feature is disabled; you need MySQL built with '%s' to have it working"),
+N_("The '%s' feature is disabled; you need Drizzle built with '%s' to have it working"),
 /* ER_OPTION_PREVENTS_STATEMENT   */
-N_("The MySQL server is running with the %s option so it cannot execute this statement"),
+N_("The Drizzle server is running with the %s option so it cannot execute this statement"),
 /* ER_DUPLICATED_VALUE_IN_TYPE   */
 N_("Column '%-.100s' has duplicated value '%-.64s' in %s"),
 /* ER_TRUNCATED_WRONG_VALUE 22007  */
@@ -795,7 +795,7 @@ N_("Failed initializing relay log position: %s"),
 /* ER_NO_BINARY_LOGGING   */
 N_("You are not using binary logging"),
 /* ER_RESERVED_SYNTAX   */
-N_("The '%-.64s' syntax is reserved for purposes internal to the MySQL server"),
+N_("The '%-.64s' syntax is reserved for purposes internal to the Drizzle server"),
 /* ER_WSAS_FAILED   */
 N_("WSAStartup Failed"),
 /* ER_DIFF_GROUPS_PROC   */
@@ -903,7 +903,7 @@ N_("Can't create federated table. Foreign data src error:  %-.64s"),
 /* ER_TRG_IN_WRONG_SCHEMA   */
 N_("Trigger in wrong schema"),
 /* ER_STACK_OVERRUN_NEED_MORE */
-N_("Thread stack overrun:  %ld bytes used of a %ld byte stack, and %ld bytes needed.  Use 'mysqld -O thread_stack=#' to specify a bigger stack."),
+N_("Thread stack overrun:  %ld bytes used of a %ld byte stack, and %ld bytes needed.  Use 'drizzled -O thread_stack=#' to specify a bigger stack."),
 /* ER_TOO_LONG_BODY 42000 S1009 */
 N_("Routine body for '%-.100s' is too long"),
 /* ER_WARN_CANT_DROP_DEFAULT_KEYCACHE */
@@ -945,7 +945,7 @@ N_("'%-.192s' has an old format, you should re-create the '%s' object(s)"),
 /* ER_SP_RECURSION_LIMIT */
 N_("Recursive limit %d (as set by the max_sp_recursion_depth variable) was exceeded for routine %.192s"),
 /* ER_SP_PROC_TABLE_CORRUPT */
-N_("Failed to load routine %-.192s. The table mysql.proc is missing, corrupt, or contains bad data (internal code %d)"),
+N_("Failed to load routine %-.192s. The table drizzle.proc is missing, corrupt, or contains bad data (internal code %d)"),
 /* ER_SP_WRONG_NAME 42000 */
 N_("Incorrect routine name '%-.192s'"),
 /* ER_TABLE_NEEDS_UPGRADE */
@@ -1025,7 +1025,7 @@ N_("Multiple definition of same constant in list partitioning"),
 /* ER_PARTITION_ENTRY_ERROR */
 N_("Partitioning can not be used stand-alone in query"),
 /* ER_MIX_HANDLER_ERROR */
-N_("The mix of handlers in the partitions is not allowed in this version of MySQL"),
+N_("The mix of handlers in the partitions is not allowed in this version of Drizzle"),
 /* ER_PARTITION_NOT_DEFINED_ERROR */
 N_("For the partitioned engine it is necessary to define all %-.64s"),
 /* ER_TOO_MANY_PARTITIONS_ERROR */
@@ -1121,15 +1121,15 @@ N_("ENDS is either invalid or before STARTS"),
 /* ER_EVENT_EXEC_TIME_IN_THE_PAST */
 N_("Event execution time is in the past. Event has been disabled"),
 /* ER_EVENT_OPEN_TABLE_FAILED */
-N_("Failed to open mysql.event"),
+N_("Failed to open drizzle.event"),
 /* ER_EVENT_NEITHER_M_EXPR_NOR_M_AT */
 N_("No datetime expression provided"),
 /* ER_COL_COUNT_DOESNT_MATCH_CORRUPTED */
-N_("Column count of mysql.%s is wrong. Expected %d, found %d. The table is probably corrupted"),
+N_("Column count of drizzle.%s is wrong. Expected %d, found %d. The table is probably corrupted"),
 /* ER_CANNOT_LOAD_FROM_TABLE */
-N_("Cannot load from mysql.%s. The table is probably corrupted"),
+N_("Cannot load from drizzle.%s. The table is probably corrupted"),
 /* ER_EVENT_CANNOT_DELETE */
-N_("Failed to delete the event from mysql.event"),
+N_("Failed to delete the event from drizzle.event"),
 /* ER_EVENT_COMPILE_ERROR */
 N_("Error during compilation of event's body"),
 /* ER_EVENT_SAME_NAME */
@@ -1139,7 +1139,7 @@ N_("Data for column '%s' too long"),
 /* ER_DROP_INDEX_FK */
 N_("Cannot drop index '%-.192s': needed in a foreign key constraint"),
 /* ER_WARN_DEPRECATED_SYNTAX_WITH_VER   */
-N_("The syntax '%s' is deprecated and will be removed in MySQL %s. Please use %s instead"),
+N_("The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %s instead"),
 /* ER_CANT_WRITE_LOCK_LOG_TABLE */
 N_("You can't write-lock a log table. Only read access is possible"),
 /* ER_CANT_LOCK_LOG_TABLE */
@@ -1147,7 +1147,7 @@ N_("You can't use locks with log tables."),
 /* ER_FOREIGN_DUPLICATE_KEY 23000 S1009 */
 N_("Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %d would lead to a duplicate entry"),
 /* ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE */
-N_("Column count of mysql.%s is wrong. Expected %d, found %d. Created with MySQL %d, now running %d. Please use mysql_upgrade to fix this error."),
+N_("Column count of drizzle.%s is wrong. Expected %d, found %d. Created with Drizzle %d, now running %d. Please use drizzle_upgrade to fix this error."),
 /* ER_TEMP_TABLE_PREVENTS_SWITCH_OUT_OF_RBR */
 N_("Cannot switch out of the row-based binary log format when the session has open temporary tables"),
 /* ER_STORED_FUNCTION_PREVENTS_SWITCH_BINLOG_FORMAT */
@@ -1361,7 +1361,7 @@ N_("Open and lock tables failed in %-.64s"),
 /* ER_BACKUP_THREAD_INIT */
 N_("Backup driver's table locking thread can not be initialized."),
 /* ER_BACKUP_PROGRESS_TABLES */
-N_("Can't open the online backup progress tables. Check 'mysql.online_backup' and 'mysql.online_backup_progress'."),
+N_("Can't open the online backup progress tables. Check 'drizzle.online_backup' and 'drizzle.online_backup_progress'."),
 /* ER_TABLESPACE_EXIST */
 N_("Tablespace '%-.192s' already exists"),
 /* ER_NO_SUCH_TABLESPACE */
