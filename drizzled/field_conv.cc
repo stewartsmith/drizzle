@@ -755,10 +755,8 @@ int field_conv(Field *to,Field *from)
         (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_DATE && to->type() != DRIZZLE_TYPE_DATETIME)) && 
         (from->real_type() != DRIZZLE_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
     {						// Identical fields
-#ifdef HAVE_purify
       /* This may happen if one does 'UPDATE ... SET x=x' */
       if (to->ptr != from->ptr)
-#endif
         memcpy(to->ptr,from->ptr,to->pack_length());
       return 0;
     }
