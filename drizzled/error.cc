@@ -105,7 +105,7 @@ N_("Old key file for table '%-.192s'; repair it!"),
 /* ER_OPEN_AS_READONLY   */
 N_("Table '%-.192s' is read only"),
 /* ER_OUTOFMEMORY HY001 S1001 */
-N_("Out of memory; restart server and try again (needed %d bytes)"),
+N_("Out of memory; restart server and try again (needed %lu bytes)"),
 /* ER_OUT_OF_SORTMEMORY HY001 S1001 */
 N_("Out of sort memory; increase server sort buffer size"),
 /* ER_UNEXPECTED_EOF   */

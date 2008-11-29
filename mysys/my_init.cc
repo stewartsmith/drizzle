@@ -24,7 +24,6 @@
 
 bool my_init_done= 0;
 uint	mysys_usage_id= 0;              /* Incremented for each my_init() */
-uint32_t   my_thread_stack_size= 65536;
 
 static uint32_t atoi_octal(const char *str)
 {

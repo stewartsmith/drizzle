@@ -26,7 +26,7 @@
 
 class Session;
 
-void init_sql_alloc(MEM_ROOT *root, uint32_t block_size, uint32_t pre_alloc_size);
+void init_sql_alloc(MEM_ROOT *root, size_t block_size, size_t pre_alloc_size);
 void *sql_alloc(size_t);
 void *sql_calloc(size_t);
 char *sql_strdup(const char *str);
