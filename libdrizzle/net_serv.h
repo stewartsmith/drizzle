@@ -26,7 +26,9 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <stdbool.h>
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
 
 #define net_new_transaction(net) ((net)->pkt_nr=0)
 

@@ -25,7 +25,9 @@ extern "C" {
 #endif
 
 
-#include <stdbool.h>
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
 
 enum drizzle_option
 {

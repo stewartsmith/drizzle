@@ -15,7 +15,7 @@
 
 noinst_LTLIBRARIES = 	libstrfunc.la
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CFLAGS}
 
 libstrfunc_la_SOURCES = alloc_buffer.cc \
 		 binary.cc \

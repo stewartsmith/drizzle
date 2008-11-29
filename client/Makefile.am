@@ -40,8 +40,8 @@ drizzle_SOURCES =		drizzle.cc readline.cc completion_hash.cc
 drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS)  \
 				$(NCURSES_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
-drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${W_EXCEPTIONS}
-drizzle_CPPFLAGS = 		${AM_CPPFLAGS} ${READLINE_CPPFLAGS}
+drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${READLINE_CFLAGS} \
+				${W_EXCEPTIONS} 
 drizzleadmin_SOURCES =		drizzleadmin.cc
 
 drizzlecheck_SOURCES =		drizzlecheck.cc
@@ -53,7 +53,7 @@ drizzleslap_SOURCES=            drizzleslap.cc
 
 drizzletest_SOURCES=		drizzletest.cc 
 drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
-drizzletest_CXXFLAGS = 		${AM_CXXFLAGS} $(PCRE_CFLAGS)
+drizzletest_CXXFLAGS = 		${AM_CXXFLAGS} ${PCRE_CFLAGS}
 
 DEFS =	-DDEFAULT_DRIZZLE_HOME="\"$(prefix)\"" \
 	-DDATADIR="\"$(localstatedir)\"" \

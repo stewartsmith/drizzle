@@ -13,7 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <m_string.h>
+#include <mystrings/m_string.h>
+#include <stdlib.h>
 
 static void *my_str_malloc_default(size_t size)
 {
