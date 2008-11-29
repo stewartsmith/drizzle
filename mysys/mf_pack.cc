@@ -252,15 +252,15 @@ void symdirget(char *dir)
     {
       if ((length= my_read(file, buff, sizeof(buff), MYF(0))) > 0)
       {
-	for (pos= buff + length ;
-	     pos > buff && (iscntrl(pos[-1]) || isspace(pos[-1])) ;
-	     pos --);
+        for (pos= buff + length ;
+             pos > buff && (iscntrl(pos[-1]) || isspace(pos[-1])) ;
+             pos --);
 
-	/* Ensure that the symlink ends with the directory symbol */
-	if (pos == buff || pos[-1] != FN_LIBCHAR)
-	  *pos++=FN_LIBCHAR;
+        /* Ensure that the symlink ends with the directory symbol */
+        if (pos == buff || pos[-1] != FN_LIBCHAR)
+          *pos++=FN_LIBCHAR;
 
-	strmake(dir,buff, (size_t) (pos-buff));
+        strncpy(dir,buff, FN_REFLEN-1);
       }
       my_close(file, MYF(0));
     }
@@ -403,7 +403,7 @@ size_t unpack_filename(char * to, const char *from)
 size_t system_filename(char * to, const char *from)
 {
 #ifndef FN_C_BEFORE_DIR
-  return (size_t) (strmake(to,from,FN_REFLEN-1)-to);
+  return strlen(strncpy(to,from,FN_REFLEN-1));
 #else	/* VMS */
 
 	/* change 'dev:lib/xxx' to 'dev:[lib]xxx' */

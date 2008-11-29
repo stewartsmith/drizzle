@@ -600,7 +600,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
   }
 
   path[path_len-1]= FN_LIBCHAR;
-  strmake(path+path_len, MY_DB_OPT_FILE, sizeof(path)-path_len-1);
+  strncpy(path+path_len, MY_DB_OPT_FILE, sizeof(path)-path_len-1);
   if (write_db_opt(session, path, db, create_info))
   {
     /*
@@ -1175,7 +1175,7 @@ static void backup_current_db_name(Session *session,
   }
   else
   {
-    strmake(saved_db_name->str, session->db, saved_db_name->length - 1);
+    strncpy(saved_db_name->str, session->db, saved_db_name->length - 1);
     saved_db_name->length= session->db_length;
   }
 }

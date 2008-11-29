@@ -42,9 +42,9 @@ char * fn_format(char * to, const char *name, const char *dir,
   else if ((flag & MY_RELATIVE_PATH) && !test_if_hard_path(dev))
   {
     /* Put 'dir' before the given path */
-    strmake(buff,dev,sizeof(buff)-1);
+    strncpy(buff,dev,sizeof(buff)-1);
     pos=convert_dirname(dev,dir,NULL);
-    strmake(pos,buff,sizeof(buff)-1- (int) (pos-dev));
+    strncpy(pos,buff,sizeof(buff)-1- (int) (pos-dev));
   }
 
   if (flag & MY_PACK_FILENAME)
@@ -78,8 +78,9 @@ char * fn_format(char * to, const char *name, const char *dir,
     size_t tmp_length;
     if (flag & MY_SAFE_PATH)
       return NULL;
-    tmp_length= strlength(startpos);
-    (void) strmake(to,startpos,cmin(tmp_length,FN_REFLEN-1));
+    tmp_length= cmin(strlength(startpos), FN_REFLEN-1);
+    strncpy(to,startpos,tmp_length);
+    to[tmp_length]= '\0';
   }
   else
   {
@@ -88,7 +89,7 @@ char * fn_format(char * to, const char *name, const char *dir,
       memcpy(buff, name, length); /* Save name for last copy */
       name=buff;
     }
-    pos=strmake(my_stpcpy(to,dev),name,length);
+    pos= strncpy(my_stpcpy(to,dev),name,length) + length;
     (void) my_stpcpy(pos,ext);			/* Don't convert extension */
   }
   /*
