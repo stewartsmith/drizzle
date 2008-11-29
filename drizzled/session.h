@@ -191,7 +191,7 @@ struct system_variables
   uint32_t sql_mode;
   uint32_t default_week_format;
   uint64_t max_seeks_for_key;
-  uint64_t range_alloc_block_size;
+  uint32_t range_alloc_block_size;
   uint32_t query_alloc_block_size;
   uint32_t query_prealloc_size;
   uint32_t trans_alloc_block_size;

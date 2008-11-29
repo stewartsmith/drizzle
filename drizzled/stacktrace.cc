@@ -118,7 +118,7 @@ static void backtrace_current_thread(void)
 #endif
 
 
-void  print_stacktrace(unsigned char* stack_bottom, ulong thread_stack)
+void  print_stacktrace(unsigned char* stack_bottom, size_t thread_stack)
 {
 #if HAVE_BACKTRACE
   backtrace_current_thread();

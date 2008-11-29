@@ -175,7 +175,6 @@ extern void (*error_handler_hook)(uint32_t my_err, const char *str,myf MyFlags);
 extern void (*fatal_error_handler_hook)(uint32_t my_err, const char *str,
                                         myf MyFlags);
 extern uint32_t my_file_limit;
-extern uint32_t my_thread_stack_size;
 
 /* charsets */
 extern const CHARSET_INFO *default_charset_info;
