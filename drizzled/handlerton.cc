@@ -322,10 +322,9 @@ const char *ha_resolve_storage_engine_name(const handlerton *db_type)
   return db_type == NULL ? "UNKNOWN" : hton2plugin[db_type->slot]->name.str;
 }
 
-bool ha_check_storage_engine_flag(const handlerton *db_type, uint32_t flag)
+bool ha_check_storage_engine_flag(const handlerton *db_type, const hton_flag_bits flag)
 {
-  /* TODO: Remove to_ulong() */
-  return db_type == NULL ? false : test(db_type->flags.to_ulong() & flag);
+  return db_type == NULL ? false : db_type->flags.test(static_cast<size_t>(flag));
 }
 
 bool ha_storage_engine_is_enabled(const handlerton *db_type)
