@@ -6,9 +6,9 @@ select hex(weight_string('aa' as char(3)));
 hex(weight_string('aa' as char(3)))
 004100410020
 select hex(weight_string('a' as char(-1)));
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '-1)))' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '-1)))' at line 1
 select hex(weight_string('a' as char(0)));
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '0)))' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '0)))' at line 1
 select hex(weight_string('a' as char(1)));
 hex(weight_string('a' as char(1)))
 0041
@@ -25,11 +25,11 @@ select hex(weight_string(cast('aa' as binary(3))));
 hex(weight_string(cast('aa' as binary(3))))
 616100
 select hex(weight_string('ab' level 1-1 ASC));
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'ASC))' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'ASC))' at line 1
 select hex(weight_string('ab' level 1-1 DESC));
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'DESC))' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'DESC))' at line 1
 select hex(weight_string('ab' level 1-1 REVERSE));
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'REVERSE))' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'REVERSE))' at line 1
 select hex(weight_string('ab' level 1 ASC));
 hex(weight_string('ab' level 1 ASC))
 00410042

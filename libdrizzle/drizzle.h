@@ -22,7 +22,9 @@
 
 
 #include <stdint.h>
-#include <stdbool.h>
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
 #include <drizzled/common.h>
 #include <libdrizzle/drizzle_field.h>
 #include <libdrizzle/drizzle_options.h>
