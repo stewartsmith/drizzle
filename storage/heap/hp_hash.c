@@ -777,7 +777,7 @@ uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
     key+= seg->length;
   }
   memcpy(key, &recpos, sizeof(unsigned char*));
-  return (uint) (key - start_key);
+  return (uint32_t) (key - start_key);
 }
 
 
