@@ -21,6 +21,7 @@
 #define DRIZZLED_HANDLERTON_H
 
 #include <stdint.h>
+#include <bitset>
 
 #include <drizzled/definitions.h>
 #include <drizzled/sql_plugin.h>
@@ -129,7 +130,7 @@ struct handlerton
    int (*fill_files_table)(handlerton *hton, Session *session,
                            TableList *tables,
                            class Item *cond);
-   uint32_t flags;                                /* global handler flags */
+  std::bitset<9> flags; /* global handler flags */ /* TODO: Remove hardcoded "9" */
    int (*release_temporary_latches)(handlerton *hton, Session *session);
 
    int (*discover)(handlerton *hton, Session* session, const char *db, 

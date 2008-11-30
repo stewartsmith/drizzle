@@ -36,6 +36,33 @@
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
 
+#include <bitset>
+
+/* Possible flags of a handlerton (there can be 32 of them) */
+enum hton_flag_bits {
+  HTON_BIT_CLOSE_CURSORS_AT_COMMIT,
+  HTON_BIT_ALTER_NOT_SUPPORTED,       // Engine does not support alter
+  HTON_BIT_CAN_RECREATE,              // Delete all is used for truncate
+  HTON_BIT_HIDDEN,                    // Engine does not appear in lists
+  HTON_BIT_FLUSH_AFTER_RENAME,
+  HTON_BIT_NOT_USER_SELECTABLE,
+  HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
+  HTON_BIT_SUPPORT_LOG_TABLES,        // Engine supports log tables
+  HTON_BIT_NO_PARTITION,              // You can not partition these tables
+  HTON_BIT_SIZE
+};
+
+static const std::bitset<HTON_BIT_SIZE> HTON_NO_FLAGS(0);
+static const std::bitset<HTON_BIT_SIZE> HTON_CLOSE_CURSORS_AT_COMMIT(1 <<  HTON_BIT_CLOSE_CURSORS_AT_COMMIT);
+static const std::bitset<HTON_BIT_SIZE> HTON_ALTER_NOT_SUPPORTED(1 << HTON_BIT_ALTER_NOT_SUPPORTED);
+static const std::bitset<HTON_BIT_SIZE> HTON_CAN_RECREATE(1 << HTON_BIT_CAN_RECREATE);
+static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
+static const std::bitset<HTON_BIT_SIZE> HTON_FLUSH_AFTER_RENAME(1 << HTON_BIT_FLUSH_AFTER_RENAME);
+static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
+static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
+static const std::bitset<HTON_BIT_SIZE> HTON_SUPPORT_LOG_TABLES(1 << HTON_BIT_SUPPORT_LOG_TABLES);
+static const std::bitset<HTON_BIT_SIZE> HTON_NO_PARTITION(1 << HTON_BIT_NO_PARTITION);
+
 #define HA_MAX_ALTER_FLAGS 40
 typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 

@@ -818,17 +818,6 @@ enum enum_binlog_command {
 
 enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
 
-/* Possible flags of a handlerton (there can be 32 of them) */
-#define HTON_NO_FLAGS                 0
-#define HTON_CLOSE_CURSORS_AT_COMMIT (1 << 0)
-#define HTON_ALTER_NOT_SUPPORTED     (1 << 1) //Engine does not support alter
-#define HTON_CAN_RECREATE            (1 << 2) //Delete all is used fro truncate
-#define HTON_HIDDEN                  (1 << 3) //Engine does not appear in lists
-#define HTON_FLUSH_AFTER_RENAME      (1 << 4)
-#define HTON_NOT_USER_SELECTABLE     (1 << 5)
-#define HTON_TEMPORARY_NOT_SUPPORTED (1 << 6) //Having temporary tables not supported
-#define HTON_SUPPORT_LOG_TABLES      (1 << 7) //Engine supports log tables
-#define HTON_NO_PARTITION            (1 << 8) //You can not partition these tables
 /*
   The below two are not used (and not handled) in this milestone of this WL
   entry because there seems to be no use for them at this stage of
