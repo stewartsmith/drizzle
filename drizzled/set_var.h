@@ -228,6 +228,25 @@ public:
   { return (unsigned char*) value; }
 };
 
+class sys_var_size_t_ptr :public sys_var
+{
+  size_t *value;
+public:
+  sys_var_size_t_ptr(sys_var_chain *chain, const char *name_arg, size_t *value_ptr_arg)
+    :sys_var(name_arg),value(value_ptr_arg)
+  { chain_sys_var(chain); }
+  sys_var_size_t_ptr(sys_var_chain *chain, const char *name_arg, size_t *value_ptr_arg,
+                     sys_after_update_func func)
+    :sys_var(name_arg,func), value(value_ptr_arg)
+  { chain_sys_var(chain); }
+  bool update(Session *session, set_var *var);
+  void set_default(Session *session, enum_var_type type);
+  SHOW_TYPE show_type() { return SHOW_SIZE; }
+  unsigned char *value_ptr(Session *session __attribute__((unused)),
+                   enum_var_type type __attribute__((unused)),
+                   LEX_STRING *base __attribute__((unused)))
+  { return (unsigned char*) value; }
+};
 
 class sys_var_bool_ptr :public sys_var
 {
@@ -504,6 +523,47 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
+  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
+  bool check(Session *session, set_var *var);
+  bool check_default(enum_var_type type)
+  {
+    return type == OPT_GLOBAL && !option_limits;
+  }
+  bool check_type(enum_var_type type)
+  {
+    return (only_global && type != OPT_GLOBAL);
+  }
+};
+
+class sys_var_session_size_t :public sys_var_session
+{
+  sys_check_func check_func;
+public:
+  size_t SV::*offset;
+  bool only_global;
+  sys_var_session_size_t(sys_var_chain *chain, const char *name_arg,
+                         size_t SV::*offset_arg,
+                         sys_after_update_func au_func= NULL,
+                         sys_check_func c_func= NULL,
+                         Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
+    :sys_var_session(name_arg, au_func, binlog_status_arg),
+     check_func(c_func),
+     offset(offset_arg)
+  { chain_sys_var(chain); }
+  sys_var_session_size_t(sys_var_chain *chain, 
+                         const char *name_arg, 
+                         size_t SV::*offset_arg, 
+                         sys_after_update_func func, 
+                         bool only_global_arg,
+                         sys_check_func cfunc= NULL)
+    :sys_var_session(name_arg, func),
+     check_func(cfunc),
+     offset(offset_arg),
+     only_global(only_global_arg)
+  { chain_sys_var(chain); }
+  bool update(Session *session, set_var *var);
+  void set_default(Session *session, enum_var_type type);
+  SHOW_TYPE show_type() { return SHOW_SIZE; }
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
   bool check(Session *session, set_var *var);
   bool check_default(enum_var_type type)
@@ -1024,6 +1084,7 @@ public:
     const CHARSET_INFO *charset;
     uint32_t uint32_t_value;
     uint64_t uint64_t_value;
+    size_t size_t_value;
     plugin_ref plugin;
     DATE_TIME_FORMAT *date_time_format;
     Time_zone *time_zone;

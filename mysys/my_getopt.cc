@@ -24,6 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <iostream>
+
+using namespace std;
 
 typedef void (*init_func_p)(const struct my_option *option, char **variable,
                             int64_t value);
@@ -37,6 +40,7 @@ static int findopt(char *optpat, uint32_t length,
 static int64_t getopt_ll(char *arg, const struct my_option *optp, int *err);
 static uint64_t getopt_ull(char *arg, const struct my_option *optp,
 			    int *err);
+static size_t getopt_size(char *arg, const struct my_option *optp, int *err);
 static double getopt_double(char *arg, const struct my_option *optp, int *err);
 static void init_variables(const struct my_option *options,
                            init_func_p init_one_value);
@@ -626,6 +630,9 @@ static int setval(const struct my_option *opts, char **value, char *argument,
     case GET_ULL:
       *((uint64_t*) result_pos)= getopt_ull(argument, opts, &err);
       break;
+    case GET_SIZE:
+      *((size_t*) result_pos)= getopt_size(argument, opts, &err);
+      break;
     case GET_DOUBLE:
       *((double*) result_pos)= getopt_double(argument, opts, &err);
       break;
@@ -861,8 +868,15 @@ static uint64_t getopt_ull(char *arg, const struct my_option *optp, int *err)
 }
 
 
+static size_t getopt_size(char *arg, const struct my_option *optp, int *err)
+{
+  return (size_t)getopt_ull(arg, optp, err);
+}
+
+
+
 uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
-                                 bool *fix)
+				bool *fix)
 {
   bool adjusted= false;
   uint64_t old= num;
@@ -887,6 +901,13 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
     if (num > (uint64_t) UINT32_MAX)
     {
       num= ((uint64_t) UINT32_MAX);
+      adjusted= true;
+    }
+    break;
+  case GET_SIZE:
+    if (num > (uint64_t) SIZE_MAX)
+    {
+      num= ((uint64_t) SIZE_MAX);
       adjusted= true;
     }
     break;
@@ -981,6 +1002,8 @@ static void init_one_value(const struct my_option *option, char** variable,
   case GET_LL:
     *((int64_t*) variable)= (int64_t) value;
     break;
+  case GET_SIZE:
+    *((size_t*) variable)= (size_t) value;
   case GET_ULL:
   case GET_SET:
     *((uint64_t*) variable)=  (uint64_t) value;
@@ -1230,6 +1253,9 @@ void my_print_variables(const struct my_option *options)
 	break;
       case GET_ULONG:
 	printf("%u\n", *((uint32_t*) value));
+	break;
+      case GET_SIZE:
+	cout << value;
 	break;
       case GET_LL:
 	printf("%s\n", llstr(*((int64_t*) value), buff));

@@ -844,7 +844,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
     handlerton *table_type= table->s->db_type();
     TABLE_SHARE *share= table->s;
 
-    if (!ha_check_storage_engine_flag(table_type, HTON_CAN_RECREATE))
+    if (!ha_check_storage_engine_flag(table_type, HTON_BIT_CAN_RECREATE))
       goto trunc_by_del;
 
     table->file->info(HA_STATUS_AUTO | HA_STATUS_NO_LOCK);

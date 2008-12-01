@@ -251,7 +251,7 @@ static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_
                                                            &SV::min_examined_row_limit);
 static sys_var_session_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
 static sys_var_session_uint32_t       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
-static sys_var_session_uint64_t	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
+static sys_var_session_size_t	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
 
 static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
                                                             &SV::myisam_stats_method,
@@ -300,7 +300,7 @@ static sys_var_session_uint32_t	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_s
 static sys_var_session_uint32_t	sys_div_precincrement(&vars, "div_precision_increment",
                                                       &SV::div_precincrement);
 
-static sys_var_session_uint32_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
+static sys_var_session_size_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
                                                            &SV::range_alloc_block_size);
 static sys_var_session_uint32_t	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
                                                            &SV::query_alloc_block_size,
@@ -327,7 +327,7 @@ static sys_var_bool_ptr         sys_slave_allow_batching(&vars, "slave_allow_bat
                                                          &slave_allow_batching);
 static sys_var_long_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
                                              &slow_launch_time);
-static sys_var_session_uint64_t	sys_sort_buffer(&vars, "sort_buffer_size",
+static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
                                                 &SV::sortbuff_size);
 /*
   sql_mode should *not* have binlog_mode=SESSION_VARIABLE_IN_BINLOG:
@@ -806,6 +806,17 @@ static uint64_t fix_unsigned(Session *session, uint64_t num,
   return out;
 }
 
+
+static size_t fix_size_t(Session *session, size_t num,
+                           const struct my_option *option_limits)
+{
+  bool fixed= false;
+  size_t out= (size_t)getopt_ull_limit_value(num, option_limits, &fixed);
+
+  throw_bounds_warning(session, fixed, true, option_limits->name, (int64_t) num);
+  return out;
+}
+
 static bool get_unsigned(Session *, set_var *var)
 {
   if (var->value->unsigned_flag)
@@ -814,6 +825,18 @@ static bool get_unsigned(Session *, set_var *var)
   {
     int64_t v= var->value->val_int();
     var->save_result.uint64_t_value= (uint64_t) ((v < 0) ? 0 : v);
+  }
+  return 0;
+}
+
+static bool get_size_t(Session *, set_var *var)
+{
+  if (var->value->unsigned_flag)
+    var->save_result.uint64_t_value= (size_t) var->value->val_int();
+  else
+  {
+    ssize_t v= var->value->val_int();
+    var->save_result.uint64_t_value= (size_t) ((v < 0) ? 0 : v);
   }
   return 0;
 }
@@ -908,6 +931,28 @@ void sys_var_uint64_t_ptr::set_default(Session *, enum_var_type)
   pthread_mutex_unlock(&LOCK_global_system_variables);
 }
 
+
+bool sys_var_size_t_ptr::update(Session *session, set_var *var)
+{
+  size_t tmp= var->save_result.size_t_value;
+  pthread_mutex_lock(&LOCK_global_system_variables);
+  if (option_limits)
+    *value= fix_size_t(session, tmp, option_limits);
+  else
+    *value= tmp;
+  pthread_mutex_unlock(&LOCK_global_system_variables);
+  return 0;
+}
+
+
+void sys_var_size_t_ptr::set_default(Session *, enum_var_type)
+{
+  bool not_used;
+  pthread_mutex_lock(&LOCK_global_system_variables);
+  *value= (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
+                                         option_limits, &not_used);
+  pthread_mutex_unlock(&LOCK_global_system_variables);
+}
 
 bool sys_var_bool_ptr::update(Session *, set_var *var)
 {
@@ -1099,6 +1144,59 @@ void sys_var_session_uint64_t::set_default(Session *session, enum_var_type type)
 unsigned char *sys_var_session_uint64_t::value_ptr(Session *session,
                                                    enum_var_type type,
                                                    LEX_STRING *)
+{
+  if (type == OPT_GLOBAL)
+    return (unsigned char*) &(global_system_variables.*offset);
+  return (unsigned char*) &(session->variables.*offset);
+}
+
+bool sys_var_session_size_t::check(Session *session, set_var *var)
+{
+  return (get_size_t(session, var) ||
+	  (check_func && (*check_func)(session, var)));
+}
+
+bool sys_var_session_size_t::update(Session *session,  set_var *var)
+{
+  size_t tmp= var->save_result.size_t_value;
+
+  if (tmp > max_system_variables.*offset)
+    tmp= max_system_variables.*offset;
+
+  if (option_limits)
+    tmp= fix_size_t(session, tmp, option_limits);
+  if (var->type == OPT_GLOBAL)
+  {
+    /* Lock is needed to make things safe on 32 bit systems */
+    pthread_mutex_lock(&LOCK_global_system_variables);
+    global_system_variables.*offset= tmp;
+    pthread_mutex_unlock(&LOCK_global_system_variables);
+  }
+  else
+    session->variables.*offset= tmp;
+  return 0;
+}
+
+
+void sys_var_session_size_t::set_default(Session *session, enum_var_type type)
+{
+  if (type == OPT_GLOBAL)
+  {
+    bool not_used;
+    pthread_mutex_lock(&LOCK_global_system_variables);
+    global_system_variables.*offset=
+      getopt_ull_limit_value((size_t) option_limits->def_value,
+                             option_limits, &not_used);
+    pthread_mutex_unlock(&LOCK_global_system_variables);
+  }
+  else
+    session->variables.*offset= global_system_variables.*offset;
+}
+
+
+unsigned char *sys_var_session_size_t::value_ptr(Session *session,
+                                                 enum_var_type type,
+                                                 LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);

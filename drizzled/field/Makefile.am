@@ -26,7 +26,6 @@ libfield_la_SOURCES = 	blob.cc \
 			longstr.cc \
 			null.cc \
 			num.cc \
-			fstring.cc \
 			real.cc \
 			str.cc \
 			timestamp.cc \
@@ -47,7 +46,6 @@ nobase_dist_fieldinclude_HEADERS = \
 		longstr.h \
 		null.h \
 		num.h \
-		fstring.h \
 		real.h \
 		str.h \
 		timestamp.h \

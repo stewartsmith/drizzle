@@ -492,8 +492,12 @@ AC_CXX_CMATH
 DRIZZLE_PROG_AR
 
 # libdrizzle versioning when linked with GNU ld.
-if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|grep -q GNU; then
-  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+if test "x$EGREP" != "x"
+then
+  if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|${EGREP} -q GNU
+  then
+    LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+  fi
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 

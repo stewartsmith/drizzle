@@ -469,15 +469,15 @@ void mysql_lock_remove(Session *session, DRIZZLE_LOCK *locked,Table *table,
         removed_locks= table->lock_count;
 
         /* Move down all table pointers above 'i'. */
-	memcpy((locked->table+i), (locked->table+i+1),
-               (old_tables - i) * sizeof(Table*));
+        memmove((locked->table+i), (locked->table+i+1),
+                (old_tables - i) * sizeof(Table*));
 
         lock_data_end= table->lock_data_start + table->lock_count;
         /* Move down all lock data pointers above 'table->lock_data_end-1' */
-        memcpy((locked->locks + table->lock_data_start),
-               (locked->locks + lock_data_end),
-               (locked->lock_count - lock_data_end) *
-               sizeof(THR_LOCK_DATA*));
+        memmove((locked->locks + table->lock_data_start),
+                (locked->locks + lock_data_end),
+                (locked->lock_count - lock_data_end) *
+                sizeof(THR_LOCK_DATA*));
 
         /*
           Fix moved table elements.
