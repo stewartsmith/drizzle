@@ -112,10 +112,6 @@ fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
 
-if test "x$GREP" = "x"
-then
-  AC_MSG_ERROR([A working grep is completely required. Get one.])
-fi
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 
 dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
@@ -496,8 +492,12 @@ AC_CXX_CMATH
 DRIZZLE_PROG_AR
 
 # libdrizzle versioning when linked with GNU ld.
-if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|${GREP} -q GNU; then
-  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+if test "x$EGREP" != "x"
+then
+  if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|${EGREP} -q GNU
+  then
+    LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+  fi
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
@@ -710,32 +710,32 @@ AC_PATH_PROG(PS, ps, ps)
 AC_MSG_CHECKING("how to check if pid exists")
 PS=$ac_cv_path_PS
 # Linux style
-if $PS p $$ 2> /dev/null | ${GREP} `echo $0 | sed s/\-//` > /dev/null
+if $PS p $$ 2> /dev/null | grep `echo $0 | sed s/\-//` > /dev/null
 then
-  FIND_PROC="$PS p \$\$PID | ${GREP} -v grep | ${GREP} \$\$MYSQLD > /dev/null"
+  FIND_PROC="$PS p \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
 # Solaris
-elif $PS -fp $$ 2> /dev/null | ${GREP} $0 > /dev/null
+elif $PS -fp $$ 2> /dev/null | grep $0 > /dev/null
 then
-  FIND_PROC="$PS -p \$\$PID | ${GREP} -v grep | ${GREP} \$\$MYSQLD > /dev/null"
+  FIND_PROC="$PS -p \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
 # BSD style
-elif $PS -uaxww 2> /dev/null | ${GREP} $0 > /dev/null
+elif $PS -uaxww 2> /dev/null | grep $0 > /dev/null
 then
-  FIND_PROC="$PS -uaxww | ${GREP} -v grep | ${GREP} \$\$MYSQLD | ${GREP} \" \$\$PID \" > /dev/null"
+  FIND_PROC="$PS -uaxww | grep -v grep | grep \$\$MYSQLD | grep \" \$\$PID \" > /dev/null"
 # SysV style
-elif $PS -ef 2> /dev/null | ${GREP} $0 > /dev/null
+elif $PS -ef 2> /dev/null | grep $0 > /dev/null
 then
-  FIND_PROC="$PS -ef | ${GREP} -v grep | ${GREP} \$\$MYSQLD | ${GREP} \" \$\$PID \" > /dev/null"
+  FIND_PROC="$PS -ef | grep -v grep | grep \$\$MYSQLD | grep \" \$\$PID \" > /dev/null"
 # Do anybody use this?
-elif $PS $$ 2> /dev/null | ${GREP} $0 > /dev/null
+elif $PS $$ 2> /dev/null | grep $0 > /dev/null
 then
-  FIND_PROC="$PS \$\$PID | ${GREP} -v grep | ${GREP} \$\$MYSQLD > /dev/null"
+  FIND_PROC="$PS \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
 else
   case $SYSTEM_TYPE in
     *freebsd*|*dragonfly*|*cygwin*)
-      FIND_PROC="$PS p \$\$PID | ${GREP} -v grep | ${GREP} \$\$MYSQLD > /dev/null"
+      FIND_PROC="$PS p \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
       ;;
     *darwin*)
-      FIND_PROC="$PS -uaxww | ${GREP} -v grep | ${GREP} \$\$MYSQLD | ${GREP} \" \$\$PID \" > /dev/null"
+      FIND_PROC="$PS -uaxww | grep -v grep | grep \$\$MYSQLD | grep \" \$\$PID \" > /dev/null"
       ;;
     *)
       AC_MSG_ERROR([Could not find the right ps switches. Which OS is this ?. See the Installation chapter in the Reference Manual.])
