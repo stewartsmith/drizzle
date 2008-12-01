@@ -805,7 +805,7 @@ uint32_t _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint32_t nod_flag,
 	}
 	else if (tot_length < 255 && *start == 255)
 	{
-	  memcpy(key+1,key+3,length);
+          memmove(key+1,key+3,length);
 	  *key=tot_length;
 	  key+=1+length;
 	}
@@ -861,7 +861,7 @@ uint32_t _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint32_t nod_flag,
     page+=length;
   }
   length=keyseg->length+nod_flag;
-  memcpy(key,page,length);
+  memmove(key,page,length);
   *page_pos= page+length;
   return ((uint) (key-start_key)+keyseg->length);
 } /* _mi_get_pack_key */
@@ -1004,7 +1004,7 @@ unsigned char *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *pag
   nod_flag=mi_test_if_nod(page);
   if (! (keyinfo->flag & (HA_VAR_LENGTH_KEY | HA_BINARY_PACK_KEY)))
   {
-    memcpy(key,keypos,keyinfo->keylength+nod_flag);
+    memmove(key,keypos,keyinfo->keylength+nod_flag);
     return(keypos+keyinfo->keylength+nod_flag);
   }
   else
@@ -1039,7 +1039,7 @@ static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *p
   if (! (keyinfo->flag & (HA_VAR_LENGTH_KEY | HA_BINARY_PACK_KEY)))
   {
     *return_key_length=keyinfo->keylength;
-    memcpy(key, keypos - *return_key_length-nod_flag, *return_key_length);
+    memmove(key, keypos - *return_key_length-nod_flag, *return_key_length);
     return(0);
   }
   else
@@ -1077,7 +1077,7 @@ unsigned char *_mi_get_last_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char
     lastpos=endpos-keyinfo->keylength-nod_flag;
     *return_key_length=keyinfo->keylength;
     if (lastpos > page)
-      memcpy(lastkey,lastpos,keyinfo->keylength+nod_flag);
+      memmove(lastkey,lastpos,keyinfo->keylength+nod_flag);
   }
   else
   {
@@ -1781,7 +1781,7 @@ void _mi_store_var_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
   }
   assert(key_pos >= start);
   length= s_temp->totlength - (key_pos - start);
-  memcpy(key_pos, s_temp->key, length);
+  memmove(key_pos, s_temp->key, length);
 
   if (!s_temp->next_key_pos)                    /* No following key */
     return;

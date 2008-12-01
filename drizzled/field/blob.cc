@@ -202,7 +202,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
     if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
     {
       Field_blob::store_length(length);
-      memcpy(ptr+packlength, &from, sizeof(char*));
+      memmove(ptr+packlength, &from, sizeof(char*));
       return 0;
     }
     if (tmpstr.copy(from, length, cs))
@@ -222,7 +222,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
                                             from, length);
     Field_blob::store_length(copy_length);
     tmp= value.ptr();
-    memcpy(ptr + packlength, &tmp, sizeof(char*));
+    memmove(ptr + packlength, &tmp, sizeof(char*));
     return 0;
   }
   /*
@@ -240,7 +240,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
 
   Field_blob::store_length(copy_length);
   tmp= value.ptr();
-  memcpy(ptr+packlength, &tmp, sizeof(char*));
+  memmove(ptr+packlength, &tmp, sizeof(char*));
 
   if (check_string_copy_error(this, well_formed_error_pos,
                               cannot_convert_error_pos, from + length, cs))

@@ -165,8 +165,8 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   case HA_EXTRA_KEYREAD:			/* Read only keys to record */
   case HA_EXTRA_REMEMBER_POS:
     info->opt_flag |= REMEMBER_OLD_POS;
-    memcpy(info->lastkey+share->base.max_key_length*2,
-           info->lastkey,info->lastkey_length);
+    memmove(info->lastkey+share->base.max_key_length*2,
+            info->lastkey,info->lastkey_length);
     info->save_update=	info->update;
     info->save_lastinx= info->lastinx;
     info->save_lastpos= info->lastpos;
@@ -182,9 +182,9 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   case HA_EXTRA_RESTORE_POS:
     if (info->opt_flag & REMEMBER_OLD_POS)
     {
-      memcpy(info->lastkey,
-             info->lastkey+share->base.max_key_length*2,
-             info->save_lastkey_length);
+      memmove(info->lastkey,
+              info->lastkey+share->base.max_key_length*2,
+              info->save_lastkey_length);
       info->update=	info->save_update | HA_STATE_WRITTEN;
       info->lastinx=	info->save_lastinx;
       info->lastpos=	info->save_lastpos;

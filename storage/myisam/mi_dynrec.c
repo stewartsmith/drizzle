@@ -689,7 +689,7 @@ int _mi_write_part_record(MI_INFO *info,
 	/* Make a long block for one write */
   record_end= *record+length-head_length;
   del_length=(res_length ? MI_DYN_DELETE_BLOCK_HEADER : 0);
-  memcpy(*record - head_length, temp, head_length);
+  memmove(*record - head_length, temp, head_length);
   memcpy(temp,record_end,(size_t) (extra_length+del_length));
   memset(record_end, 0, extra_length);
 
