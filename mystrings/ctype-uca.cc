@@ -7360,7 +7360,6 @@ static int my_uca_charcmp(const CHARSET_INFO * const cs, my_wc_t wc1, my_wc_t wc
 **	 1 if matched with wildcard
 */
 
-static
 int my_wildcmp_uca(const CHARSET_INFO * const cs,
 		   const char *str,const char *str_end,
 		   const char *wildstr,const char *wildend,
@@ -7865,7 +7864,7 @@ static int my_coll_rule_parse(MY_COLL_RULE *rule, size_t mitems,
   default weights.
 */
 
-static bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
+static bool create_tailoring(CHARSET_INFO *cs, cs_alloc_func alloc)
 {
   MY_COLL_RULE rule[MY_MAX_COLL_RULE];
   char errstr[128];
@@ -8023,33 +8022,31 @@ static bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
   Should work for any character set.
 */
 
-extern "C"
-bool my_coll_init_uca(CHARSET_INFO *cs, void *(*alloc)(size_t))
+bool my_coll_init_uca(CHARSET_INFO *cs, cs_alloc_func alloc)
 {
   cs->pad_char= ' ';
   return create_tailoring(cs, alloc);
 }
 
-static int my_strnncoll_any_uca(const CHARSET_INFO * const cs,
-                                const unsigned char *s, size_t slen,
-                                const unsigned char *t, size_t tlen,
-                                bool t_is_prefix)
+int my_strnncoll_any_uca(const CHARSET_INFO * const cs,
+                         const unsigned char *s, size_t slen,
+                         const unsigned char *t, size_t tlen,
+                         bool t_is_prefix)
 {
   return my_strnncoll_uca(cs, &my_any_uca_scanner_handler,
                           s, slen, t, tlen, t_is_prefix);
 }
 
-static int my_strnncollsp_any_uca(const CHARSET_INFO * const cs,
-                                  const unsigned char *s, size_t slen,
-                                  const unsigned char *t, size_t tlen,
-                                  bool diff_if_only_endspace_difference)
+int my_strnncollsp_any_uca(const CHARSET_INFO * const cs,
+                           const unsigned char *s, size_t slen,
+                           const unsigned char *t, size_t tlen,
+                           bool diff_if_only_endspace_difference)
 {
   return my_strnncollsp_uca(cs, &my_any_uca_scanner_handler,
                             s, slen, t, tlen,
                             diff_if_only_endspace_difference);
 }   
 
-extern "C"
 void my_hash_sort_any_uca(const CHARSET_INFO * const cs,
                           const unsigned char *s, size_t slen,
                           uint32_t *n1, uint32_t *n2)
@@ -8057,9 +8054,10 @@ void my_hash_sort_any_uca(const CHARSET_INFO * const cs,
   my_hash_sort_uca(cs, &my_any_uca_scanner_handler, s, slen, n1, n2); 
 }
 
-static size_t my_strnxfrm_any_uca(const CHARSET_INFO * const cs, 
-                                  unsigned char *dst, size_t dstlen, uint32_t nweights,
-                                  const unsigned char *src, size_t srclen, uint32_t flags)
+size_t my_strnxfrm_any_uca(const CHARSET_INFO * const cs, 
+                           unsigned char *dst, size_t dstlen, uint32_t nweights,
+                           const unsigned char *src, size_t srclen,
+                           uint32_t flags)
 {
   return my_strnxfrm_uca(cs, &my_any_uca_scanner_handler,
                          dst, dstlen, nweights, src, srclen, flags);

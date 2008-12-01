@@ -78,7 +78,7 @@ int64_t my_strtoll10(const char *nptr, char **endptr, int *error)
   unsigned long i, j, k;
   uint64_t li;
   int negative;
-  unsigned long cutoff, cutoff2, cutoff3;
+  uint64_t cutoff, cutoff2, cutoff3;
 
   s= nptr;
   /* If fixed length string */
