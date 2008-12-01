@@ -3948,6 +3948,7 @@ bool sql_ex_info::write_data(IO_CACHE* file)
   }
   else
     assert(0);
+  return true;
 }
 
 

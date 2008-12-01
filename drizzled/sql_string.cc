@@ -537,8 +537,8 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
     {
       if (to_length)
 	memcpy(Ptr+offset,to,to_length);
-      memcpy(Ptr+offset+to_length, Ptr+offset+arg_length,
-             str_length-offset-arg_length);
+      memmove(Ptr+offset+to_length, Ptr+offset+arg_length,
+              str_length-offset-arg_length);
     }
     else
     {

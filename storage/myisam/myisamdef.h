@@ -741,7 +741,7 @@ pthread_handler_t thr_find_all_keys(void *arg);
 int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, File file);
 
 int sort_write_record(MI_SORT_PARAM *sort_param);
-int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, uint32_t);
+int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, size_t);
 
 extern void mi_set_index_cond_func(MI_INFO *info, index_cond_func_t func,
                                    void *func_arg);

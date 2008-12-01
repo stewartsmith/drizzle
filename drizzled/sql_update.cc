@@ -24,7 +24,6 @@
 #include <drizzled/probes.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/timestamp.h>
-#include <drizzled/field/fstring.h>
 
 /*
   check that all fields are real fields
@@ -1227,12 +1226,8 @@ multi_update::initialize_tables(JOIN *join)
     Table *tbl= table;
     do
     {
-      Field_string *field= new Field_string(tbl->file->ref_length, 0,
-                                            tbl->alias, &my_charset_bin);
-#ifdef OLD
       Field_varstring *field= new Field_varstring(tbl->file->ref_length, 0,
                                                   tbl->alias, tbl->s, &my_charset_bin);
-#endif
       if (!field)
         return(1);
       field->init(tbl);
@@ -1411,8 +1406,10 @@ bool multi_update::send_data(List<Item> &)
       do
       {
         tbl->file->position(tbl->record[0]);
-        memcpy(tmp_table->field[field_num]->ptr,
-               tbl->file->ref, tbl->file->ref_length);
+        Field_varstring *ref_field=
+          reinterpret_cast<Field_varstring *>(tmp_table->field[field_num]);
+        ref_field->store((char *)tbl->file->ref, tbl->file->ref_length,
+                         &my_charset_bin);
         field_num++;
       } while ((tbl= tbl_it++));
 
@@ -1570,9 +1567,12 @@ int multi_update::do_updates()
       uint32_t field_num= 0;
       do
       {
+        Field_varstring *ref_field=
+          reinterpret_cast<Field_varstring *>(tmp_table->field[field_num]);
         if((local_error=
               tbl->file->rnd_pos(tbl->record[0],
-                                (unsigned char *) tmp_table->field[field_num]->ptr)))
+                                (unsigned char *) ref_field->ptr
+                                 + ref_field->length_bytes)))
           goto err;
         field_num++;
       } while((tbl= check_opt_it++));

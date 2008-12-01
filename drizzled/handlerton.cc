@@ -114,7 +114,7 @@ redo:
   if ((plugin= my_plugin_lock_by_name(session, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
     handlerton *hton= plugin_data(plugin, handlerton *);
-    if (!(hton->flags & HTON_NOT_USER_SELECTABLE))
+    if (!(hton->flags.test(HTON_BIT_NOT_USER_SELECTABLE)))
       return plugin;
       
     /*
@@ -322,9 +322,9 @@ const char *ha_resolve_storage_engine_name(const handlerton *db_type)
   return db_type == NULL ? "UNKNOWN" : hton2plugin[db_type->slot]->name.str;
 }
 
-bool ha_check_storage_engine_flag(const handlerton *db_type, uint32_t flag)
+bool ha_check_storage_engine_flag(const handlerton *db_type, const hton_flag_bits flag)
 {
-  return db_type == NULL ? false : test(db_type->flags & flag);
+  return db_type == NULL ? false : db_type->flags.test(static_cast<size_t>(flag));
 }
 
 bool ha_storage_engine_is_enabled(const handlerton *db_type)

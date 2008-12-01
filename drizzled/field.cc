@@ -45,7 +45,6 @@
 #include <drizzled/field/timetype.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/datetime.h>
-#include <drizzled/field/fstring.h>
 #include <drizzled/field/varstring.h>
 
 

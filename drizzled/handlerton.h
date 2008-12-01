@@ -21,6 +21,7 @@
 #define DRIZZLED_HANDLERTON_H
 
 #include <stdint.h>
+#include <bitset>
 
 #include <drizzled/definitions.h>
 #include <drizzled/sql_plugin.h>
@@ -36,6 +37,31 @@ typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_l
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
+
+/* Possible flags of a handlerton (there can be 32 of them) */
+enum hton_flag_bits {
+  HTON_BIT_CLOSE_CURSORS_AT_COMMIT,
+  HTON_BIT_ALTER_NOT_SUPPORTED,       // Engine does not support alter
+  HTON_BIT_CAN_RECREATE,              // Delete all is used for truncate
+  HTON_BIT_HIDDEN,                    // Engine does not appear in lists
+  HTON_BIT_FLUSH_AFTER_RENAME,
+  HTON_BIT_NOT_USER_SELECTABLE,
+  HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
+  HTON_BIT_SUPPORT_LOG_TABLES,        // Engine supports log tables
+  HTON_BIT_NO_PARTITION,              // You can not partition these tables
+  HTON_BIT_SIZE
+};
+
+static const std::bitset<HTON_BIT_SIZE> HTON_NO_FLAGS(0);
+static const std::bitset<HTON_BIT_SIZE> HTON_CLOSE_CURSORS_AT_COMMIT(1 <<  HTON_BIT_CLOSE_CURSORS_AT_COMMIT);
+static const std::bitset<HTON_BIT_SIZE> HTON_ALTER_NOT_SUPPORTED(1 << HTON_BIT_ALTER_NOT_SUPPORTED);
+static const std::bitset<HTON_BIT_SIZE> HTON_CAN_RECREATE(1 << HTON_BIT_CAN_RECREATE);
+static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
+static const std::bitset<HTON_BIT_SIZE> HTON_FLUSH_AFTER_RENAME(1 << HTON_BIT_FLUSH_AFTER_RENAME);
+static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
+static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
+static const std::bitset<HTON_BIT_SIZE> HTON_SUPPORT_LOG_TABLES(1 << HTON_BIT_SUPPORT_LOG_TABLES);
+static const std::bitset<HTON_BIT_SIZE> HTON_NO_PARTITION(1 << HTON_BIT_NO_PARTITION);
 
 /*
   handlerton is a singleton structure - one instance per storage engine -
@@ -129,7 +155,7 @@ struct handlerton
    int (*fill_files_table)(handlerton *hton, Session *session,
                            TableList *tables,
                            class Item *cond);
-   uint32_t flags;                                /* global handler flags */
+   std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
    int (*release_temporary_latches)(handlerton *hton, Session *session);
 
    int (*discover)(handlerton *hton, Session* session, const char *db, 
@@ -156,7 +182,7 @@ handlerton *ha_checktype(Session *session, enum legacy_db_type database_type,
 
 enum legacy_db_type ha_legacy_type(const handlerton *db_type);
 const char *ha_resolve_storage_engine_name(const handlerton *db_type);
-bool ha_check_storage_engine_flag(const handlerton *db_type, uint32_t flag);
+bool ha_check_storage_engine_flag(const handlerton *db_type, const hton_flag_bits flag);
 bool ha_storage_engine_is_enabled(const handlerton *db_type);
 LEX_STRING *ha_storage_engine_name(const handlerton *hton);
 

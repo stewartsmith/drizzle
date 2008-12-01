@@ -681,7 +681,7 @@ int ha_tina::find_current_row(unsigned char *buf)
         if (src)
         {
           tgt= (unsigned char*) alloc_root(&blobroot, length);
-          memcpy(tgt, src, length);
+          memmove(tgt, src, length);
           memcpy(blob->ptr + packlength, &tgt, sizeof(char*));
         }
       }

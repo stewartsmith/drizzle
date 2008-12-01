@@ -163,7 +163,7 @@ static size_t fill_buffer(LINE_BUFFER *buffer)
   /* Shift stuff down. */
   if (buffer->start_of_line != buffer->buffer)
   {
-    memcpy(buffer->buffer, buffer->start_of_line, (uint) bufbytes);
+    memmove(buffer->buffer, buffer->start_of_line, (uint) bufbytes);
     buffer->end=buffer->buffer+bufbytes;
   }
 
