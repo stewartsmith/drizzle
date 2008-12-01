@@ -19,6 +19,8 @@ AC_DEFUN([DRIZZLE_CHECK_READLINE_DECLARES_HIST_ENTRY], [
 ])
 
 AC_DEFUN([DRIZZLE_CHECK_NEW_RL_INTERFACE], [
+    save_CFLAGS="${CFLAGS}"
+    CFLAGS="${save_CFLAGS} ${READLINE_CFLAGS}"
     AC_CACHE_CHECK([defined rl_compentry_func_t and rl_completion_func_t], mysql_cv_new_rl_interface,
 	AC_TRY_COMPILE(
 	    [
@@ -37,5 +39,6 @@ AC_DEFUN([DRIZZLE_CHECK_NEW_RL_INTERFACE], [
 	    [mysql_cv_new_rl_interface=no]
         )
     )
+  CFLAGS="${save_CFLAGS}"
 ])
 

@@ -67,7 +67,7 @@
 
 extern const CHARSET_INFO *character_set_filesystem;
 extern I_List<NAMED_LIST> key_caches;
-
+extern size_t my_thread_stack_size;
 
 static DYNAMIC_ARRAY fixed_show_vars;
 static HASH system_variable_hash;
@@ -300,7 +300,7 @@ static sys_var_session_uint32_t	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_s
 static sys_var_session_uint32_t	sys_div_precincrement(&vars, "div_precision_increment",
                                                       &SV::div_precincrement);
 
-static sys_var_session_uint64_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
+static sys_var_session_uint32_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
                                                            &SV::range_alloc_block_size);
 static sys_var_session_uint32_t	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
                                                            &SV::query_alloc_block_size,
