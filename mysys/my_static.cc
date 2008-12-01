@@ -73,11 +73,9 @@ int volatile my_have_got_alarm=0;	/* declare variable to reset */
 uint32_t my_time_to_wait_for_lock=2;	/* In seconds */
 
 	/* from errors.c */
-void (*my_abort_hook)(int) = (void(*)(int)) exit;
-void (*error_handler_hook)(uint32_t error,const char *str,myf MyFlags)=
-    my_message_no_curses;
-void (*fatal_error_handler_hook)(uint32_t error,const char *str,myf MyFlags)=
-  my_message_no_curses;
+void_ptr_int_func my_abort_hook= (void_ptr_int_func)exit;
+error_handler_func error_handler_hook= my_message_no_curses;
+error_handler_func fatal_error_handler_hook= my_message_no_curses;
 
 	/* How to disable options */
 bool my_disable_async_io=0;

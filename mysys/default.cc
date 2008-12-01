@@ -51,8 +51,8 @@ const char *default_directories[MAX_DEFAULT_DIRS + 1];
 
 static const char *f_extensions[]= { ".cnf", 0 };
 
-static int handle_default_option(void *in_ctx, const char *group_name,
-                                 const char *option);
+int handle_default_option(void *in_ctx, const char *group_name,
+                          const char *option);
 
 /*
    This structure defines the context that we pass to callback
@@ -153,7 +153,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
     load_defaults() as otherwise we can't know the type of 'func_ctx'
   */
 
-  if (my_defaults_group_suffix && func == handle_default_option)
+  if (my_defaults_group_suffix && (func == handle_default_option))
   {
     /* Handle --defaults-group-suffix= */
     uint32_t i;
@@ -235,7 +235,6 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
 err:
   fprintf(stderr,"Fatal error in defaults handling. Program aborted\n");
   exit(1);
-  return 0;					/* Keep compiler happy */
 }
 
 
@@ -262,8 +261,8 @@ err:
     1 - error occured
 */
 
-static int handle_default_option(void *in_ctx, const char *group_name,
-                                 const char *option)
+int handle_default_option(void *in_ctx, const char *group_name,
+                          const char *option)
 {
   char *tmp;
   struct handle_option_ctx *ctx= (struct handle_option_ctx *) in_ctx;
@@ -468,7 +467,6 @@ int load_defaults(const char *conf_file, const char **groups,
  err:
   fprintf(stderr,"Fatal error in defaults handling. Program aborted\n");
   exit(1);
-  return 0;					/* Keep compiler happy */
 }
 
 

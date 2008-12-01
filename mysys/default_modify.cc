@@ -65,9 +65,10 @@ int modify_defaults_file(const char *file_location, const char *option,
   struct stat file_stat;
   char linebuff[BUFF_SIZE], *src_ptr, *dst_ptr, *file_buffer;
   size_t opt_len= 0, optval_len= 0, sect_len;
-  uint32_t nr_newlines= 0, buffer_size;
+  uint32_t nr_newlines= 0;
+  size_t buffer_size;
   bool in_section= false, opt_applied= 0;
-  uint32_t reserve_extended;
+  size_t reserve_extended;
   uint32_t new_opt_len;
   int reserve_occupied= 0;
 
@@ -92,15 +93,14 @@ int modify_defaults_file(const char *file_location, const char *option,
                      NEWLINE_LEN +              /* Space for newline */
                      RESERVE);                  /* Some additional space */
 
-  buffer_size= (file_stat.st_size +
-                1);                             /* The ending zero */
+  buffer_size= (size_t)cmax(file_stat.st_size + 1, SIZE_MAX);
 
   /*
     Reserve space to read the contents of the file and some more
     for the option we want to add.
   */
-  if (!(file_buffer= (char*) my_malloc(buffer_size + reserve_extended,
-                                       MYF(MY_WME))))
+  if (!(file_buffer= (char*) malloc(cmax(buffer_size + reserve_extended,
+                                         SIZE_MAX))))
     goto malloc_err;
 
   sect_len= strlen(section_name);

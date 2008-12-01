@@ -171,9 +171,9 @@ extern int errno;			/* declare errno */
 extern char errbuff[NRERRBUFFS][ERRMSGSIZE];
 extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
-extern void (*error_handler_hook)(uint32_t my_err, const char *str,myf MyFlags);
-extern void (*fatal_error_handler_hook)(uint32_t my_err, const char *str,
-                                        myf MyFlags);
+typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
+extern error_handler_func error_handler_hook;
+extern error_handler_func fatal_error_handler_hook;
 extern uint32_t my_file_limit;
 
 /* charsets */
@@ -187,11 +187,14 @@ extern uint32_t    my_file_total_opened;
 extern uint	mysys_usage_id;
 extern bool	my_init_done;
 
+typedef void (*void_ptr_func)(void);
+typedef void (*void_ptr_int_func)(int);
+
 					/* Point to current my_message() */
-extern void (*my_sigtstp_cleanup)(void),
+extern void_ptr_func my_sigtstp_cleanup,
 					/* Executed before jump to shell */
-	    (*my_sigtstp_restart)(void),
-	    (*my_abort_hook)(int);
+	    my_sigtstp_restart;
+extern void_ptr_int_func my_abort_hook;
 					/* Executed when comming from shell */
 extern int my_umask,		/* Default creation mask  */
 	   my_umask_dir,
@@ -332,6 +335,9 @@ typedef uint32_t ha_checksum;
 /* Define the type of function to be passed to process_default_option_files */
 typedef int (*Process_option_func)(void *ctx, const char *group_name,
                                    const char *option);
+
+int handle_default_option(void *in_ctx, const char *group_name,
+                          const char *option);
 
 #include <mysys/my_alloc.h>
 
@@ -573,6 +579,8 @@ int my_munmap(void *, size_t);
 #endif
 
 /* character sets */
+void *cs_alloc(size_t size);
+
 extern uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
 extern uint32_t get_collation_number(const char *name);
 extern const char *get_charset_name(uint32_t cs_number);

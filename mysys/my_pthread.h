@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include <unistd.h>
+#include <signal.h>
 
 #if !defined(__cplusplus)
 # include <stdbool.h>

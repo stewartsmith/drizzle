@@ -60,10 +60,11 @@ uint64_t my_getsystime()
 
 */
 
-time_t my_time(myf flags __attribute__((unused)))
+time_t my_time(myf flags)
 {
   time_t t;
 #ifdef HAVE_GETHRTIME
+  (void)flags;
   (void) my_micro_time_and_time(&t);
   return t;
 #else
@@ -195,9 +196,10 @@ uint64_t my_micro_time_and_time(time_t *time_arg)
     current time
 */
 
-time_t my_time_possible_from_micro(uint64_t microtime __attribute__((unused)))
+time_t my_time_possible_from_micro(uint64_t microtime)
 {
 #if defined(HAVE_GETHRTIME)
+  (void) microtime;
   return my_time(0);                            /* Cached time */
 #else
   return (time_t) (microtime / 1000000);

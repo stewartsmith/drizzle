@@ -19,7 +19,7 @@
 	/* convert filename to unix style filename */
 	/* If MSDOS converts '\' to '/' */
 
-void to_unix_path(char * to __attribute__((unused)))
+void to_unix_path(char * to)
 {
 #if FN_LIBCHAR != '/'
   {
@@ -27,5 +27,7 @@ void to_unix_path(char * to __attribute__((unused)))
     while ((to=strchr(to+1,FN_LIBCHAR)) != 0)
       *to='/';
   }
+#else
+  (void)to;
 #endif
 }

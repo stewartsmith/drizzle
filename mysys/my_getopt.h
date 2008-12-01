@@ -72,6 +72,7 @@ extern char *disabled_my_option;
 extern bool my_getopt_print_errors;
 extern bool my_getopt_skip_unknown;
 extern my_error_reporter my_getopt_error_reporter;
+void default_reporter(enum loglevel level, const char *format, ...);
 
 extern int handle_options (int *argc, char ***argv, 
 			   const struct my_option *longopts, my_get_one_option);

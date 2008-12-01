@@ -53,8 +53,8 @@
 */
 
 File create_temp_file(char *to, const char *dir, const char *prefix,
-		      int mode __attribute__((unused)),
-		      myf MyFlags __attribute__((unused)))
+		      int,
+		      myf MyFlags)
 {
   File file= -1;
 
@@ -104,6 +104,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
   }
 #elif defined(HAVE_TEMPNAM)
   {
+    (void)MyFlags;
     char *res,**old_env,*temp_env[1];
     if (dir && !dir[0])
     {				/* Change empty string to current dir */

@@ -67,10 +67,7 @@ static void *alarm_handler(void *arg);
 #define reschedule_alarms() pthread_kill(alarm_thread,THR_SERVER_ALARM)
 #endif
 
-static RETSIGTYPE thread_alarm(int sig __attribute__((unused)));
-
-static int compare_uint32_t(void *not_used __attribute__((unused)),
-			 unsigned char *a_ptr,unsigned char* b_ptr)
+int compare_uint32_t(void *, unsigned char *a_ptr,unsigned char* b_ptr)
 {
   uint32_t a=*((uint32_t*) a_ptr),b= *((uint32_t*) b_ptr);
   return (a < b) ? -1  : (a == b) ? 0 : 1;
@@ -323,7 +320,7 @@ RETSIGTYPE process_alarm(int sig __attribute__((unused)))
 }
 
 
-static RETSIGTYPE process_alarm_part2(int sig __attribute__((unused)))
+static RETSIGTYPE process_alarm_part2(int)
 {
   ALARM *alarm_data;
 
@@ -503,7 +500,7 @@ void thr_alarm_info(ALARM_INFO *info)
 */
 
 
-static RETSIGTYPE thread_alarm(int sig)
+RETSIGTYPE thread_alarm(int sig)
 {
 #ifdef MAIN
   printf("thread_alarm\n"); fflush(stdout);

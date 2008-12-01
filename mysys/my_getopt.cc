@@ -31,7 +31,7 @@ using namespace std;
 typedef void (*init_func_p)(const struct my_option *option, char **variable,
                             int64_t value);
 
-static void default_reporter(enum loglevel level, const char *format, ...);
+void default_reporter(enum loglevel level, const char *format, ...);
 my_error_reporter my_getopt_error_reporter= &default_reporter;
 
 static int findopt(char *optpat, uint32_t length,
@@ -80,8 +80,8 @@ bool my_getopt_print_errors= 1;
 
 bool my_getopt_skip_unknown= 0;
 
-static void default_reporter(enum loglevel level,
-                             const char *format, ...)
+void default_reporter(enum loglevel level,
+                      const char *format, ...)
 {
   va_list args;
   va_start(args, format);
@@ -1051,7 +1051,7 @@ static void init_one_value(const struct my_option *option, char** variable,
 */
 
 static void fini_one_value(const struct my_option *option, char **variable,
-			   int64_t value __attribute__ ((unused)))
+			   int64_t)
 {
   switch ((option->var_type & GET_TYPE_MASK)) {
   case GET_STR_ALLOC:
