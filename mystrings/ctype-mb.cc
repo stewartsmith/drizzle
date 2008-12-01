@@ -362,7 +362,7 @@ uint32_t my_instr_mb(const CHARSET_INFO * const cs,
 
 /* BINARY collations handlers for MB charsets */
 
-int my_strnncoll_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
+int my_strnncoll_mb_bin(const CHARSET_INFO * const,
                         const unsigned char *s, size_t slen,
                         const unsigned char *t, size_t tlen,
                         bool t_is_prefix)
@@ -398,7 +398,7 @@ int my_strnncoll_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
     0 if strings are equal
 */
 
-int my_strnncollsp_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
+int my_strnncollsp_mb_bin(const CHARSET_INFO * const,
                           const unsigned char *a, size_t a_length,
                           const unsigned char *b, size_t b_length,
                           bool diff_if_only_endspace_difference)
@@ -552,15 +552,16 @@ pad:
 }
 
 
-int my_strcasecmp_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
+int my_strcasecmp_mb_bin(const CHARSET_INFO * const,
                          const char *s, const char *t)
 {
   return strcmp(s,t);
 }
 
 
-void my_hash_sort_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
-                         const unsigned char *key, size_t len, uint32_t *nr1, uint32_t *nr2)
+void my_hash_sort_mb_bin(const CHARSET_INFO * const,
+                         const unsigned char *key, size_t len,
+                         uint32_t *nr1, uint32_t *nr2)
 {
   const unsigned char *pos = key;
   
