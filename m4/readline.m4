@@ -33,12 +33,14 @@ AC_DEFUN([DRIZZLE_CHECK_NEW_RL_INTERFACE], [
 	    ],
 	    [
 		mysql_cv_new_rl_interface=yes
-                AC_DEFINE_UNQUOTED([USE_NEW_READLINE_INTERFACE], [1],
-                                   [used new readline interface (are rl_completion_func_t and rl_compentry_func_t defined)])
 	    ],
 	    [mysql_cv_new_rl_interface=no]
         )
     )
+    if test "$mysql_cv_new_rl_interface" = "yes"; then
+		AC_DEFINE_UNQUOTED([USE_NEW_READLINE_INTERFACE], [1],
+		[used new readline interface (are rl_completion_func_t and rl_compentry_func_t defined)])
+    fi
   CFLAGS="${save_CFLAGS}"
 ])
 
