@@ -604,17 +604,16 @@ static void free_table_ent(char *key)
 }
 
 
-static unsigned char* get_table_key(const char *entry, size_t *length,
-                            bool not_used __attribute__((unused)))
+static unsigned char* get_table_key(const char *entry, size_t *length, bool)
 {
   *length= strlen(entry);
   return (unsigned char*) entry;
 }
 
 
+extern "C"
 static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-               char *argument)
+get_one_option(int optid, const struct my_option *, char *argument)
 {
   switch (optid) {
   case 'p':
@@ -963,7 +962,7 @@ static int drizzle_query_with_error_report(DRIZZLE *drizzle_con, DRIZZLE_RES **r
 
   @returns  whether there was an error or not
 */
-static int switch_character_set_results(DRIZZLE *drizzle, const char *cs_name)
+static int switch_character_set_results(const char *cs_name)
 {
   char query_buffer[QUERY_LENGTH];
   size_t query_length;
@@ -975,7 +974,7 @@ static int switch_character_set_results(DRIZZLE *drizzle, const char *cs_name)
   query_length= snprintf(query_buffer,
                          sizeof (query_buffer),
                          "SET SESSION character_set_results = '%s'",
-                         (const char *) cs_name);
+                         cs_name);
 
   return drizzle_real_query(drizzle, query_buffer, query_length);
 }
@@ -1415,7 +1414,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
   if ((write_data= !(*ignore_flag & IGNORE_DATA)))
   {
     complete_insert= opt_complete_insert;
-    insert_pat= "";
+    insert_pat.clear();
   }
 
   insert_option= ((delayed && opt_ignore) ? " DELAYED IGNORE " :
@@ -1447,9 +1446,9 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
       snprintf(buff, sizeof(buff), "show create table %s", result_table);
 
-      if (switch_character_set_results(drizzle, "binary") ||
+      if (switch_character_set_results("binary") ||
           drizzle_query_with_error_report(drizzle, &result, buff) ||
-          switch_character_set_results(drizzle, default_charset))
+          switch_character_set_results(default_charset))
         return(0);
 
       if (path)
@@ -1506,9 +1505,9 @@ static uint get_table_structure(char *table, char *db, char *table_type,
         */
         snprintf(query_buff, sizeof(query_buff),
                  "SHOW FIELDS FROM %s", result_table);
-        if (switch_character_set_results(drizzle, "binary") ||
+        if (switch_character_set_results("binary") ||
             drizzle_query_with_error_report(drizzle, &result, query_buff) ||
-            switch_character_set_results(drizzle, default_charset))
+            switch_character_set_results(default_charset))
         {
           /*
             View references invalid or privileged table/col/fun (err 1356),
@@ -2204,7 +2203,10 @@ static void dump_table(char *table, char *db)
         if (extended_insert && !opt_xml)
         {
           if (i == 0)
-            extended_row= "(";
+          {
+            extended_row.clear();
+            extended_row.append("(");
+          }
           else
             extended_row.append(",");
 
@@ -2589,8 +2591,7 @@ static int dump_all_tables_in_db(char *database)
     print_xml_tag(md_result_file, "", "\n", "database", "name=", database, NULL);
   if (lock_tables)
   {
-    string query;
-    query= "LOCK TABLES ";
+    string query("LOCK TABLES ");
     for (numrows= 0 ; (table= getTableName(1)) ; )
     {
       char *end= my_stpcpy(afterdot, table);
@@ -2689,7 +2690,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
 static int dump_selected_tables(char *db, char **table_names, int tables)
 {
   char table_buff[NAME_LEN*2+3];
-  string lock_tables_query;
+  string lock_tables_query("LOCK TABLES ");
   MEM_ROOT root;
   char **dump_tables, **pos, **end;
 
@@ -2701,7 +2702,6 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   if (!(dump_tables= pos= (char**) alloc_root(&root, tables * sizeof(char *))))
      die(EX_EOM, "alloc_root failure.");
 
-  lock_tables_query= "LOCK TABLES ";
   for (; tables > 0 ; tables-- , table_names++)
   {
     /* the table name passed on commandline may be wrong case */
@@ -3055,7 +3055,7 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
         *err_len= var_len;
       }
       else
-        found|= ((int64_t) 1 << (find - 1));
+        found|= (uint32_t)((int64_t) 1 << (find - 1));
       if (pos == end)
         break;
       start= pos + 1;

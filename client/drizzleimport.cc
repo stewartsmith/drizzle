@@ -181,9 +181,9 @@ file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
   my_print_variables(my_long_options);
 }
 
+extern "C"
 static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-         char *argument)
+get_one_option(int optid, const struct my_option *, char *argument)
 {
   switch(optid) {
   case 'p':
@@ -474,7 +474,8 @@ static char *field_escape(char *to,const char *from,uint length)
 
 int exitcode= 0;
 
-static void * worker_thread(void *arg)
+extern "C"
+void * worker_thread(void *arg)
 {
   int error;
   char *raw_table_name= (char *)arg;
