@@ -1199,7 +1199,9 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
 					    &not_used));
     if (error_len)
     {
-      strmake(buff, error, cmin(sizeof(buff) - 1, (uint64_t)error_len));
+      size_t len = cmin(sizeof(buff) - 1, error_len);
+      strncpy(buff, error, len);
+      buff[len]= '\0';
       goto err;
     }
   }

@@ -332,7 +332,7 @@ static void cleanup_load_tmpdir()
      we cannot meet Start_log event in the middle of events from one 
      LOAD DATA.
   */
-  p= strmake(prefbuf, STRING_WITH_LEN("SQL_LOAD-"));
+  p= strncpy(prefbuf, STRING_WITH_LEN("SQL_LOAD-")+1) + 9;
   p= int10_to_str(::server_id, p, 10);
   *(p++)= '-';
   *p= 0;
@@ -3930,23 +3930,25 @@ Execute_load_query_log_event::do_apply_event(Relay_log_info const *rli)
   p= buf;
   memcpy(p, query, fn_pos_start);
   p+= fn_pos_start;
-  fname= (p= strmake(p, STRING_WITH_LEN(" INFILE \'")));
+  fname= (p= strncpy(p, STRING_WITH_LEN(" INFILE \'")+1) + 9);
   p= slave_load_file_stem(p, file_id, server_id, ".data");
   fname_end= p= strchr(p, '\0');                      // Safer than p=p+5
   *(p++)='\'';
   switch (dup_handling) {
   case LOAD_DUP_IGNORE:
-    p= strmake(p, STRING_WITH_LEN(" IGNORE"));
+    p= strncpy(p, STRING_WITH_LEN(" IGNORE")+1) + 7;
     break;
   case LOAD_DUP_REPLACE:
-    p= strmake(p, STRING_WITH_LEN(" REPLACE"));
+    p= strncpy(p, STRING_WITH_LEN(" REPLACE")+1) + 8;
     break;
   default:
     /* Ordinary load data */
     break;
   }
-  p= strmake(p, STRING_WITH_LEN(" INTO"));
-  p= strmake(p, query+fn_pos_end, q_len-fn_pos_end);
+  size_t end_len = q_len-fn_pos_end;
+  p= strncpy(p, STRING_WITH_LEN(" INTO")+1) + 5;
+  p= strncpy(p, query+fn_pos_end, end_len);
+  p+= end_len;
 
   error= Query_log_event::do_apply_event(rli, buf, p-buf);
 

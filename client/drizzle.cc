@@ -3308,7 +3308,8 @@ com_tee(string *buffer __attribute__((unused)), const char *line )
   /* eliminate the spaces before the parameters */
   while (my_isspace(charset_info,*param))
     param++;
-  end= strmake(file_name, param, sizeof(file_name) - 1);
+  strncpy(file_name, param, sizeof(file_name) - 1);
+  end= file_name + strlen(file_name);
   /* remove end space from command line */
   while (end > file_name && (my_isspace(charset_info,end[-1]) ||
                              my_iscntrl(charset_info,end[-1])))
@@ -3369,7 +3370,8 @@ com_pager(string *buffer __attribute__((unused)),
   }
   else
   {
-    end= strmake(pager_name, param, sizeof(pager_name)-1);
+    end= strncpy(pager_name, param, sizeof(pager_name)-1);
+    end+= strlen(pager_name);
     while (end > pager_name && (my_isspace(charset_info,end[-1]) ||
                                 my_iscntrl(charset_info,end[-1])))
       end--;
@@ -3443,7 +3445,7 @@ com_connect(string *buffer, const char *line)
       Two null bytes are needed in the end of buff to allow
       get_arg to find end of string the second time it's called.
     */
-    tmp= strmake(buff, line, sizeof(buff)-2);
+    tmp= strncpy(buff, line, sizeof(buff)-2);
 #ifdef EXTRA_DEBUG
     tmp[1]= 0;
 #endif
@@ -3502,7 +3504,8 @@ static int com_source(string *buffer __attribute__((unused)), const char *line)
                     INFO_ERROR, 0,0);
   while (my_isspace(charset_info,*param))
     param++;
-  end= strmake(source_name,param,sizeof(source_name)-1);
+  end= strncpy(source_name,param,sizeof(source_name)-1);
+  end+= strlen(source_name);
   while (end > source_name && (my_isspace(charset_info,end[-1]) ||
                                my_iscntrl(charset_info,end[-1])))
     end--;
