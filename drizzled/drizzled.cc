@@ -3403,7 +3403,7 @@ struct my_option my_long_options[] =
       "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
    (char**) &global_system_variables.myisam_sort_buff_size,
    (char**) &max_system_variables.myisam_sort_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, INT32_MAX, 0, 1, 0},
+   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, SIZE_MAX, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
    N_("Specifies how MyISAM index statistics collection code should threat "
       "NULLs. Possible values of name are 'nulls_unequal' "
@@ -3496,7 +3496,7 @@ struct my_option my_long_options[] =
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
    (char**) &max_system_variables.range_alloc_block_size, 0, GET_ULONG,
-   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, ULONG_MAX,
+   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, SIZE_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
     N_("Each thread that does a sequential scan allocates a buffer of this "
@@ -3559,8 +3559,8 @@ struct my_option my_long_options[] =
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
-   (char**) &max_system_variables.sortbuff_size, 0, GET_ULL, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, UINT64_MAX,
+   (char**) &max_system_variables.sortbuff_size, 0, GET_ULONG, REQUIRED_ARG,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"sync-binlog", OPT_SYNC_BINLOG,
    N_("Synchronously flush binary log to disk after every #th event. "
