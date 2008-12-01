@@ -150,7 +150,7 @@ sinclude(m4/character_sets.m4)
 sinclude(m4/gettext.m4)
 
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.17)
+AM_GNU_GETTEXT_VERSION([0.17])
 
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
