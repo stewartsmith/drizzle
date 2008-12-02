@@ -32,6 +32,7 @@ libstrfunc_la_SOURCES = alloc_buffer.cc \
 		 hex.cc \
 		 insert.cc \
 		 left.cc \
+		 load_file.cc \
 		 make_set.cc \
 		 pad.cc \
 		 quote.cc \
@@ -66,6 +67,7 @@ nobase_dist_functionsinclude_HEADERS = \
 		hex.h \
 		insert.h \
 		left.h \
+		load_file.h \
 		make_set.h \
 		pad.h \
 		quote.h \

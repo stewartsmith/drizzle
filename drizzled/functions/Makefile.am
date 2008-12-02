@@ -27,12 +27,14 @@ libfunctions_la_SOURCES = abs.cc \
 		  bit.cc \
 		  bit_count.cc \
 		  char_length.cc \
+		  check_reserved_words.cc \
 		  ceiling.cc \
 		  connection_id.cc \
 		  coercibility.cc \
 		  cos.cc \
 		  decimal_typecast.cc \
 		  divide.cc \
+		  eval_const_cond.cc \
 		  exp.cc \
 		  get_user_var.cc \
 		  get_variable.cc \
@@ -79,7 +81,8 @@ libfunctions_la_SOURCES = abs.cc \
 		  update_hash.cc \
 		  units.cc \
 		  unsigned.cc \
-		  user_var_as_out_param.cc
+		  user_var_as_out_param.cc \
+		  user_var_entry.cc
 
 functionsincludedir = ${includedir}/drizzled/functions
 nobase_dist_functionsinclude_HEADERS = \
