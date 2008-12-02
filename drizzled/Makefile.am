@@ -99,6 +99,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin.h \
 		plugin_authentication.h \
 		plugin_configvar.h \
+		plugin_replicator.h \
 		plugin_errmsg.h \
 		plugin_logging.h \
 		plugin_qcache.h \
@@ -118,6 +119,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		replication/rli.h \
 		replication/tblmap.h \
 		replication/utility.h \
+		replicator.h \
 		scheduler.h \
 		scheduling.h \
 		session.h \
@@ -233,6 +235,7 @@ drizzled_SOURCES = \
 		replication/rli.cc \
 		replication/tblmap.cc \
 		replication/utility.cc \
+		replicator.cc \
 		scheduler.cc \
                 scheduling.cc \
 		session.cc \
