@@ -39,7 +39,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
        AS_VAR_SET([path_var],[$PATH])
       ],
       [AS_VAR_SET([have_lib],[no])
-       AS_VAR_SET([with_lib],["AS_VAR_GET([path_var]) /opt/csw"])
+       AS_VAR_SET([with_lib],["AS_VAR_GET([path_var]) /usr/local /opt/csw"])
       ])
   ])
   AS_IF([test "AS_VAR_GET([with_lib])" != yes],[
