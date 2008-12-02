@@ -285,7 +285,7 @@ AM_YFLAGS = -p DRIZZLE -d --verbose
 libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} -Wno-unused-macros
 
 
-if HAVE_DTRACE
+if BUILD_DTRACE
 drizzled_SOURCES += probes.d
 endif
 
@@ -301,7 +301,7 @@ DEFS =-DDRIZZLE_SERVER \
       -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
-if GCC_PCH
+if BUILD_GCC_PCH
 PCHHEADERS = \
 		definitions.h.gch \
 		handlerton.h.gch  \
@@ -347,7 +347,7 @@ probes.h: probes.d
 	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
 	rm probes.h.bak
 
-if GCC_PCH
+if BUILD_GCC_PCH
 %.h.gch: %.h
 	$(CXXCOMPILE) -include config.h -Wno-unused-macros -c $<
 endif

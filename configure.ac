@@ -174,7 +174,7 @@ AC_SUBST(SHARED_LIB_VERSION)
 AC_SUBST(AVAILABLE_LANGUAGES)
 
 dnl Ok. This is sort of lame, but we need to be nice to plugins Makefile.am's.
-AM_CONDITIONAL(BUILDING_DRIZZLE,[test "x" = "x"])
+AM_CONDITIONAL(BUILD_DRIZZLE,[test "x" = "x"])
 
 
 # General Constants
@@ -608,7 +608,6 @@ SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
 	)
 	]
 )
-AM_CONDITIONAL([HAVE_TINFO],[test "$ac_cv_have_tinfo" = "yes"])
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
@@ -651,7 +650,6 @@ then
   SEARCH_FOR_LIB(pcre, pcre_compile, pcre.h, 
                  AC_MSG_ERROR([libpcre is required for Drizzle]))
 fi
-AM_CONDITIONAL([HAVE_PCRE],[test "$ac_cv_have_pcre" = "yes"])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
@@ -1508,8 +1506,8 @@ AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 dnl GCC Precompiled Header Support
 dnl re-enable later
-dnl AM_CONDITIONAL([GCC_PCH],[test "$GCC" = "yes"])
-AM_CONDITIONAL([GCC_PCH],[test "no" = "yes"])
+dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
+AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl

@@ -26,7 +26,7 @@ AM_CPPFLAGS=		-I$(top_srcdir) -I$(top_builddir) \
 			-I$(top_srcdir)/storage/innobase/include \
 			-I$(top_srcdir)/sql
 
-if BUILDING_DRIZZLE
+if BUILD_DRIZZLE
 EXTRA_DEFS="-DBUILD_DRIZZLE"
 DYNAMIC_PLUGIN="-DDRIZZLE_DYNAMIC_PLUGIN"
 HANDLER_DIR=drizzle
