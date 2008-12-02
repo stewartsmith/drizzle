@@ -73,7 +73,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
   ])
   AS_IF([test AS_VAR_GET([have_lib]) = no],[
     AC_MSG_WARN([$3 or lib$1.a not found. Try installing $1 developement packages])
-    [$4]
+    $4
   ])
   AC_SUBST(libs_var)
   AC_SUBST(cflags_var)
