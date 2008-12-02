@@ -608,6 +608,7 @@ SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
 	)
 	]
 )
+AM_CONDITIONAL([HAVE_TINFO],[test "$ac_cv_have_tinfo" = "yes"])
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
