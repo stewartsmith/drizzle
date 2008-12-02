@@ -1126,10 +1126,13 @@ fi]
 
 # Check definition of pthread_getspecific
 AC_CACHE_CHECK([args to pthread_getspecific], [mysql_cv_getspecific_args],
-  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !defined(_REENTRANT)
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#if !defined(_REENTRANT)
 #define _REENTRANT
 #endif
+#ifndef _POSIX_PTHREAD_SEMANTICS 
 #define _POSIX_PTHREAD_SEMANTICS 
+#endif
 #include <pthread.h> ]], [[ void *pthread_getspecific(pthread_key_t key);
 pthread_getspecific((pthread_key_t) NULL); ]])],
     [mysql_cv_getspecific_args=POSIX],
@@ -1142,8 +1145,13 @@ pthread_getspecific((pthread_key_t) NULL); ]])],
 
   # Check definition of pthread_mutex_init
   AC_CACHE_CHECK([args to pthread_mutex_init], [mysql_cv_mutex_init_args],
-    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#ifndef _REENTRANT
+#define _REENTRANT
+#endif
+#ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS 
+#endif
 #include <pthread.h> ]], [[ 
   pthread_mutexattr_t attr;
   pthread_mutex_t mp;
@@ -1160,8 +1168,13 @@ pthread_getspecific((pthread_key_t) NULL); ]])],
 #---START: Used in for client configure
 # Check definition of readdir_r
 AC_CACHE_CHECK([args to readdir_r], [mysql_cv_readdir_r],
-  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#ifndef _REENTRANT
+#define _REENTRANT
+#endif
+#ifndef _POSIX_PTHREAD_SEMANTICS 
 #define _POSIX_PTHREAD_SEMANTICS 
+#endif
 #include <pthread.h>
 #include <dirent.h>]], [[ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
 readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ]])],
@@ -1175,8 +1188,12 @@ fi
 # Check definition of posix sigwait()
 AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#ifndef _REENTRANT
 #define _REENTRANT
+#endif
+#ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS 
+#endif
 #include <pthread.h>
 #include <signal.h>
       ]], [[
@@ -1199,8 +1216,12 @@ unset mysql_cv_sigwait
 # Check definition of posix sigwait()
 AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#ifndef _REENTRANT
 #define _REENTRANT
+#endif
+#ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS 
+#endif
 #include <pthread.h>
 #include <signal.h>
       ]], [[
@@ -1220,8 +1241,12 @@ fi
 # Check if pthread_attr_setscope() exists
 AC_CACHE_CHECK([for pthread_attr_setscope], [mysql_cv_pthread_attr_setscope],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#ifndef _REENTRANT
 #define _REENTRANT
+#endif
+#ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS 
+#endif
 #include <pthread.h>
       ]], [[
 pthread_attr_t thr_attr;

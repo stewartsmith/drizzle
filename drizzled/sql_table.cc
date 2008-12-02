@@ -128,9 +128,9 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 
   if (from[0] == '#' && !strncmp(from, MYSQL50_TABLE_NAME_PREFIX,
                                  MYSQL50_TABLE_NAME_PREFIX_LENGTH))
-    return((uint) (strmake(to, from+MYSQL50_TABLE_NAME_PREFIX_LENGTH,
-                                to_length-1) -
-                        (from + MYSQL50_TABLE_NAME_PREFIX_LENGTH)));
+    return((uint) (strncpy(to, from+MYSQL50_TABLE_NAME_PREFIX_LENGTH,
+                           to_length-1) -
+                           (from + MYSQL50_TABLE_NAME_PREFIX_LENGTH)));
   length= strconvert(system_charset_info, from,
                      &my_charset_filename, to, to_length, &errors);
   if (check_if_legal_tablename(to) &&
@@ -950,8 +950,10 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
                                                     MY_CS_BINSORT,MYF(0))))
     {
       char tmp[64];
-      strmake(strmake(tmp, save_cs->csname, sizeof(tmp)-4),
-              STRING_WITH_LEN("_bin"));
+      char *tmp_pos= tmp;
+      strncpy(tmp_pos, save_cs->csname, sizeof(tmp)-4);
+      tmp_pos+= strlen(tmp);
+      strncpy(tmp_pos, STRING_WITH_LEN("_bin"));
       my_error(ER_UNKNOWN_COLLATION, MYF(0), tmp);
       return(true);
     }
@@ -2039,7 +2041,9 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
   if (!check_if_keyname_exists(field_name,start,end) &&
       !is_primary_key_name(field_name))
     return (char*) field_name;			// Use fieldname
-  buff_end=strmake(buff,field_name, sizeof(buff)-4);
+
+  buff_end= strncpy(buff, field_name, sizeof(buff)-4);
+  buff_end+= strlen(buff);
 
   /*
     Only 3 chars + '\0' left, so need to limit to 2 digit

@@ -34,6 +34,7 @@ using namespace std;
 #include CMATH_H
 #include <drizzled/util/math.h>
 #include <drizzled/session.h>
+#include <drizzled/error.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
@@ -526,3 +527,108 @@ double Item_func::fix_result(double value)
   null_value=1;
   return 0.0;
 }
+
+
+void Item_func::fix_num_length_and_dec()
+{
+  uint32_t fl_length= 0;
+  decimals=0;
+  for (uint32_t i=0 ; i < arg_count ; i++)
+  {
+    set_if_bigger(decimals,args[i]->decimals);
+    set_if_bigger(fl_length, args[i]->max_length);
+  }
+  max_length=float_length(decimals);
+  if (fl_length > max_length)
+  {
+    decimals= NOT_FIXED_DEC;
+    max_length= float_length(NOT_FIXED_DEC);
+  }
+}
+
+/**
+  Set max_length/decimals of function if function is fixed point and
+  result length/precision depends on argument ones.
+*/
+
+void Item_func::count_decimal_length()
+{
+  int max_int_part= 0;
+  decimals= 0;
+  unsigned_flag= 1;
+  for (uint32_t i=0 ; i < arg_count ; i++)
+  {
+    set_if_bigger(decimals, args[i]->decimals);
+    set_if_bigger(max_int_part, args[i]->decimal_int_part());
+    set_if_smaller(unsigned_flag, args[i]->unsigned_flag);
+  }
+  int precision= cmin(max_int_part + decimals, DECIMAL_MAX_PRECISION);
+  max_length= my_decimal_precision_to_length(precision, decimals,
+                                             unsigned_flag);
+}
+
+
+/**
+  Set max_length of if it is maximum length of its arguments.
+*/
+
+void Item_func::count_only_length()
+{
+  max_length= 0;
+  unsigned_flag= 0;
+  for (uint32_t i=0 ; i < arg_count ; i++)
+  {
+    set_if_bigger(max_length, args[i]->max_length);
+    set_if_bigger(unsigned_flag, args[i]->unsigned_flag);
+  }
+}
+
+
+/**
+  Set max_length/decimals of function if function is floating point and
+  result length/precision depends on argument ones.
+*/
+
+void Item_func::count_real_length()
+{
+  uint32_t length= 0;
+  decimals= 0;
+  max_length= 0;
+  for (uint32_t i=0 ; i < arg_count ; i++)
+  {
+    if (decimals != NOT_FIXED_DEC)
+    {
+      set_if_bigger(decimals, args[i]->decimals);
+      set_if_bigger(length, (args[i]->max_length - args[i]->decimals));
+    }
+    set_if_bigger(max_length, args[i]->max_length);
+  }
+  if (decimals != NOT_FIXED_DEC)
+  {
+    max_length= length;
+    length+= decimals;
+    if (length < max_length)  // If previous operation gave overflow
+      max_length= UINT32_MAX;
+    else
+      max_length= length;
+  }
+}
+
+
+
+void Item_func::signal_divide_by_null()
+{
+  Session *session= current_session;
+  push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
+  null_value= 1;
+}
+
+
+Item *Item_func::get_tmp_table_item(Session *session)
+{
+  if (!with_sum_func && !const_item() && functype() != SUSERVAR_FUNC)
+    return new Item_field(result_field);
+  return copy_or_same(session);
+}
+
+

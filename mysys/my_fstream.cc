@@ -112,9 +112,8 @@ size_t my_fwrite(FILE *stream, const unsigned char *Buffer, size_t Count, myf My
 
 /* Seek to position in file */
 
-my_off_t my_fseek(FILE *stream, my_off_t pos, int whence,
-		  myf MyFlags __attribute__((unused)))
+my_off_t my_fseek(FILE *stream, my_off_t pos, int whence, myf)
 {
-  return(fseek(stream, (off_t) pos, whence) ?
+  return(fseeko(stream, (off_t) pos, whence) ?
 	      MY_FILEPOS_ERROR : (my_off_t) ftell(stream));
 } /* my_seek */

@@ -693,7 +693,7 @@ int32_t init_strvar_from_file(char *var, int32_t max_size, IO_CACHE *f,
   }
   else if (default_val)
   {
-    strmake(var,  default_val, max_size-1);
+    strncpy(var,  default_val, max_size-1);
     return(0);
   }
   return(1);

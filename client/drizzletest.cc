@@ -387,7 +387,7 @@ void log_msg(const char *fmt, ...)
 VAR* var_from_env(const char *, const char *);
 VAR* var_init(VAR* v, const char *name, int name_len, const char *val,
               int val_len);
-void var_free(void* v);
+extern "C" void var_free(void* v);
 VAR* var_get(const char *var_name, const char** var_name_end,
              bool raw, bool ignore_not_existing);
 void eval_expr(VAR* v, const char *p, const char** p_end);
@@ -1205,7 +1205,6 @@ static void show_diff(string* ds,
                "2>&1",
                NULL) > 1) /* Most "diff" tools return >1 if error */
   {
-    ds_tmp= "";
 
     /* Fallback to context diff with "diff -c" */
     if (run_tool("diff",
@@ -1220,7 +1219,7 @@ static void show_diff(string* ds,
         Fallback to dump both files to result file and inform
         about installing "diff"
       */
-      ds_tmp= "";
+      ds_tmp.clear();
 
       ds_tmp.append(
                     "\n"
@@ -1537,8 +1536,8 @@ static void strip_parentheses(struct st_command *command)
 }
 
 
-static unsigned char *get_var_key(const unsigned char* var, size_t *len,
-                          bool __attribute__((unused)) t)
+extern "C"
+unsigned char *get_var_key(const unsigned char* var, size_t *len, bool)
 {
   register char* key;
   key = ((VAR*)var)->name;
@@ -1635,7 +1634,8 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
                                  length)))
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
-      strmake(buff, save_var_name, length);
+      strncpy(buff, save_var_name, length);
+      buff[length]= '\0';
       v= var_from_env(buff, "");
     }
     var_name--;  /* Point at last character */
@@ -1888,7 +1888,8 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
   char * unstripped_query= strdup(ds_query.c_str());
   if (strip_surrounding(unstripped_query, '"', '"'))
     die("Mismatched \"'s around query '%s'", ds_query.c_str());
-  ds_query= unstripped_query;
+  ds_query.clear();
+  ds_query.append(unstripped_query);
 
   /* Run the query */
   if (drizzle_real_query(drizzle, ds_query.c_str(), ds_query.length()))
@@ -2596,7 +2597,7 @@ static void do_write_file_command(struct st_command *command, bool append)
 
   /* If no delimiter was provided, use EOF */
   if (ds_delimiter.length() == 0)
-    ds_delimiter= "EOF";
+    ds_delimiter.append("EOF");
 
   if (!append && access(ds_filename.c_str(), F_OK) == 0)
   {
@@ -2832,13 +2833,13 @@ static void do_change_user(struct st_command *command)
                      ',');
 
   if (!ds_user.length())
-    ds_user= drizzle->user;
+    ds_user.append(drizzle->user);
 
   if (!ds_passwd.length())
-    ds_passwd= drizzle->passwd;
+    ds_passwd.append(drizzle->passwd);
 
   if (!ds_db.length())
-    ds_db= drizzle->db;
+    ds_db.append(drizzle->db);
 
   if (drizzle_change_user(drizzle, ds_user.c_str(),
                           ds_passwd.c_str(), ds_db.c_str()))
@@ -2890,7 +2891,7 @@ static void do_perl(struct st_command *command)
 
   /* If no delimiter was provided, use EOF */
   if (ds_delimiter.length() == 0)
-    ds_delimiter= "EOF";
+    ds_delimiter.append("EOF");
 
   read_until_delimiter(&ds_script, &ds_delimiter);
 
@@ -2964,7 +2965,7 @@ static int do_echo(struct st_command *command)
 
 
 static void
-do_wait_for_slave_to_stop(struct st_command *c __attribute__((unused)))
+do_wait_for_slave_to_stop(struct st_command *)
 {
   static int SLAVE_POLL_INTERVAL= 300000;
   DRIZZLE *drizzle= &cur_con->drizzle;
@@ -3208,7 +3209,7 @@ static void do_get_file_name(struct st_command *command,
   if (*p)
     *p++= 0;
   command->last_argument= p;
-  strmake(dest, name, dest_max_len - 1);
+  strncpy(dest, name, dest_max_len - 1);
 }
 
 
@@ -3743,7 +3744,8 @@ static void do_connect(struct st_command *command)
     {
       char buff[FN_REFLEN];
       fn_format(buff, ds_sock.c_str(), TMPDIR, "", 0);
-      ds_sock= buff;
+      ds_sock.clear();
+      ds_sock.append(buff);
     }
   }
 
@@ -3792,11 +3794,11 @@ static void do_connect(struct st_command *command)
 
   /* Use default db name */
   if (ds_database.length() == 0)
-    ds_database= opt_db;
+    ds_database.append(opt_db);
 
   /* Special database to allow one to connect without a database name */
   if (ds_database.length() && !strcmp(ds_database.c_str(),"*NO-ONE*"))
-    ds_database= "";
+    ds_database.clear();
 
   if (connect_n_handle_errors(command, &con_slot->drizzle,
                               ds_host.c_str(),ds_user.c_str(),
@@ -3944,7 +3946,7 @@ static void do_delimiter(struct st_command* command)
   if (!(*p))
     die("Can't set empty delimiter");
 
-  strmake(delimiter, p, sizeof(delimiter) - 1);
+  strncpy(delimiter, p, sizeof(delimiter) - 1);
   delimiter_length= strlen(delimiter);
 
   command->last_argument= p + delimiter_length;
@@ -4556,9 +4558,8 @@ static void read_embedded_server_arguments(const char *name)
 }
 
 
-static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-               char *argument)
+extern "C" bool
+get_one_option(int optid, const struct my_option *, char *argument)
 {
   switch(optid) {
   case 'r':
@@ -5390,8 +5391,7 @@ static void get_command_type(struct st_command* command)
 
 */
 
-static void mark_progress(struct st_command* command __attribute__((unused)),
-                          int line)
+static void mark_progress(struct st_command*, int line)
 {
   char buf[32], *end;
   uint64_t timer= timer_now();
@@ -5628,7 +5628,7 @@ int main(int argc, char **argv)
 
         if (save_file[0])
         {
-          strmake(command->require_file, save_file, sizeof(save_file) - 1);
+          strncpy(command->require_file, save_file, sizeof(save_file) - 1);
           save_file[0]= 0;
         }
         run_query(cur_con, command, flags);

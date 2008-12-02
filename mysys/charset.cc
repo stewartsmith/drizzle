@@ -128,7 +128,7 @@ char *get_charsets_dir(char *buf)
   char *res;
 
   if (charsets_dir != NULL)
-    strmake(buf, charsets_dir, FN_REFLEN-1);
+    strncpy(buf, charsets_dir, FN_REFLEN-1);
   else
   {
     if (test_if_hard_path(sharedir) ||
@@ -151,7 +151,7 @@ void add_compiled_collation(CHARSET_INFO * cs)
   cs->state|= MY_CS_AVAILABLE;
 }
 
-static void *cs_alloc(size_t size)
+void *cs_alloc(size_t size)
 {
   return my_once_alloc(size, MYF(MY_WME));
 }

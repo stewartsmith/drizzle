@@ -118,7 +118,7 @@ int my_realpath(char *to, const char *filename,
     char *ptr;
     if ((ptr=realpath(filename,buff)))
     {
-      strmake(to,ptr,FN_REFLEN-1);
+      strncpy(to,ptr,FN_REFLEN-1);
     }
     else
     {

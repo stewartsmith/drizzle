@@ -218,9 +218,8 @@ static void usage(void)
   my_print_variables(my_long_options);
 } /* usage */
 
-static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-         char *argument)
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   switch(optid) {
   case 'a':

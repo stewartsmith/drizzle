@@ -109,8 +109,7 @@ static struct my_option my_long_options[] =
 static const char *load_default_groups[]= { "drizzleadmin","client",0 };
 
 bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-               char *argument)
+get_one_option(int optid, const struct my_option *, char *argument)
 {
   int error = 0;
 
@@ -135,7 +134,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case 'V':
     print_version();
     exit(0);
-    break;
   case 'w':
     if (argument)
     {
@@ -223,10 +221,10 @@ int main(int argc,char *argv[])
   free(user);
   free_defaults(save_argv);
   my_end(my_end_arg);
-  exit(error ? 1 : 0);
+  return error ? 1 : 0;
 }
 
-RETSIGTYPE endprog(int signal_number __attribute__((unused)))
+RETSIGTYPE endprog(int)
 {
   interrupted=1;
 }

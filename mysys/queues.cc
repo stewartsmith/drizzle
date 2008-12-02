@@ -92,7 +92,7 @@ int init_queue(QUEUE *queue, uint32_t max_elements, uint32_t offset_to_key,
 */
 
 int init_queue_ex(QUEUE *queue, uint32_t max_elements, uint32_t offset_to_key,
-	       bool max_at_top, int (*compare) (void *, unsigned char *, unsigned char *),
+	       bool max_at_top, queue_compare compare,
 	       void *first_cmp_arg, uint32_t auto_extent)
 {
   int ret;
@@ -128,7 +128,7 @@ int init_queue_ex(QUEUE *queue, uint32_t max_elements, uint32_t offset_to_key,
 */
 
 int reinit_queue(QUEUE *queue, uint32_t max_elements, uint32_t offset_to_key,
-		 bool max_at_top, int (*compare) (void *, unsigned char *, unsigned char *),
+		 bool max_at_top, queue_compare compare,
 		 void *first_cmp_arg)
 {
   queue->elements=0;

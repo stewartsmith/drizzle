@@ -276,8 +276,10 @@ void net_send_error_packet(Session *session, uint32_t sql_errno, const char *err
   buff[2]= '#';
   pos= (unsigned char*) my_stpcpy((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
 
-  length= (uint) (strmake((char*) pos, err, DRIZZLE_ERRMSG_SIZE-1) -
-                  (char*) buff);
+  char *tmp= strncpy((char*)pos, err, DRIZZLE_ERRMSG_SIZE-1);
+  tmp+= strlen((char*)pos);
+  tmp[0]= '\0';
+  length= (uint32_t)(tmp-(char*)buff);
   err= (char*) buff;
 
   net_write_command(net,(unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);

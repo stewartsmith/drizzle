@@ -1,37 +1,29 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
-
-/**
-  @file
-
-  @brief
-  This file defines all string functions
-
-  @warning
-    Some string functions don't always put and end-null on a String.
-    (This shouldn't be needed)
-*/
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/data_home.h>
+#include CSTDINT_H
+#include <drizzled/functions/str/strfunc.h>
+#include <drizzled/functions/str/load_file.h>
 #include <drizzled/error.h>
-#include <drizzled/item/strfunc.h>
+#include <drizzled/data_home.h>
 #include <drizzled/session.h>
-
-String my_empty_string("",default_charset_info);
 
 String *Item_load_file::val_str(String *str)
 {
@@ -86,4 +78,5 @@ err:
   null_value = 1;
   return(0);
 }
+
 

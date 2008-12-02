@@ -36,6 +36,7 @@
 #include <drizzled/functions/str/hex.h>
 #include <drizzled/functions/str/insert.h>
 #include <drizzled/functions/str/left.h>
+#include <drizzled/functions/str/load_file.h>
 #include <drizzled/functions/str/make_set.h>
 #include <drizzled/functions/str/pad.h>
 #include <drizzled/functions/str/repeat.h>
@@ -49,22 +50,5 @@
 #include <drizzled/functions/str/user.h>
 #include <drizzled/functions/str/uuid.h>
 #include <drizzled/functions/str/weight_string.h>
-
-class Item_load_file :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_load_file(Item *a) :Item_str_func(a) {}
-  String *val_str(String *);
-  const char *func_name() const { return "load_file"; }
-  void fix_length_and_dec()
-  {
-    collation.set(&my_charset_bin, DERIVATION_COERCIBLE);
-    maybe_null=1;
-    max_length=MAX_BLOB_WIDTH;
-  }
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-};
 
 #endif /* DRIZZLED_ITEM_STRFUNC_H */

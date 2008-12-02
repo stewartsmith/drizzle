@@ -43,24 +43,29 @@
 static uint32_t set_max_open_files(uint32_t max_file_limit)
 {
   struct rlimit rlimit;
-  uint32_t old_cur;
+  rlim_t old_cur;
 
   if (!getrlimit(RLIMIT_NOFILE,&rlimit))
   {
-    old_cur= (uint) rlimit.rlim_cur;
+    old_cur= rlimit.rlim_cur;
     if (rlimit.rlim_cur == RLIM_INFINITY)
       rlimit.rlim_cur = max_file_limit;
     if (rlimit.rlim_cur >= max_file_limit)
-      return(rlimit.rlim_cur);		/* purecov: inspected */
+    {
+      if (rlimit.rlim_cur > UINT32_MAX)
+        return UINT32_MAX;
+      else
+        return((uint32_t)rlimit.rlim_cur);
+    }
     rlimit.rlim_cur= rlimit.rlim_max= max_file_limit;
     if (setrlimit(RLIMIT_NOFILE, &rlimit))
-      max_file_limit= old_cur;			/* Use original value */
+      max_file_limit= (old_cur < UINT32_MAX) ? (uint32_t)old_cur : UINT32_MAX;
     else
     {
       rlimit.rlim_cur= 0;			/* Safety if next call fails */
       (void) getrlimit(RLIMIT_NOFILE,&rlimit);
       if (rlimit.rlim_cur)			/* If call didn't fail */
-	max_file_limit= (uint) rlimit.rlim_cur;
+	max_file_limit= (uint32_t) rlimit.rlim_cur;
     }
   }
   return(max_file_limit);
@@ -94,8 +99,7 @@ uint32_t my_set_max_open_files(uint32_t files)
   if (files <= MY_NFILE)
     return(files);
 
-  if (!(tmp= (struct st_my_file_info*) my_malloc(sizeof(*tmp) * files,
-						 MYF(MY_WME))))
+  if (!(tmp= (st_my_file_info*) malloc(sizeof(st_my_file_info) * files)))
     return(MY_NFILE);
 
   /* Copy any initialized files */

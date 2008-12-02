@@ -103,7 +103,7 @@ err:
 
 #else   /* FreeBSD elif linux */
 /* just fail */
-bool my_gethwaddr(unsigned char *to __attribute__((unused)))
+bool my_gethwaddr(unsigned char *)
 {
   return 1;
 }

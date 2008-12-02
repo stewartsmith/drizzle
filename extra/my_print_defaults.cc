@@ -90,9 +90,9 @@ static void usage(bool version)
   printf("\nExample usage:\n%s --defaults-file=example.cnf client mysql\n", my_progname);
 }
 
-static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-	       char *argument __attribute__((unused)))
+extern "C"
+bool
+get_one_option(int optid, const struct my_option *, char *)
 {
   switch (optid) {
     case 'c':
@@ -178,5 +178,5 @@ int main(int argc, char **argv)
   free((char*) load_default_groups);
   free_defaults(arguments);
 
-  exit(error);
+  return error;
 }

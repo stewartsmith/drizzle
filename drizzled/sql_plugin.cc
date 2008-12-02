@@ -1545,7 +1545,9 @@ static int check_func_set(Session *session __attribute__((unused)),
                      &error, &error_len, &not_used);
     if (error_len)
     {
-      strmake(buff, error, cmin(sizeof(buff), (unsigned long)error_len));
+      length= cmin(sizeof(buff), (unsigned long)error_len);
+      strncpy(buff, error, length);
+      buff[length]= '\0';
       strvalue= buff;
       goto err;
     }

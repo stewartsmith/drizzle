@@ -4412,7 +4412,7 @@ find_field_in_tables(Session *session, Item_ident *item,
       We can't do this in Item_field as this would change the
       'name' of the item which may be used in the select list
     */
-    strmake(name_buff, db, sizeof(name_buff)-1);
+    strncpy(name_buff, db, sizeof(name_buff)-1);
     my_casedn_str(files_charset_info, name_buff);
     db= name_buff;
   }
@@ -5732,7 +5732,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       We can't do this in Item_field as this would change the
       'name' of the item which may be used in the select list
     */
-    strmake(name_buff, db_name, sizeof(name_buff)-1);
+    strncpy(name_buff, db_name, sizeof(name_buff)-1);
     my_casedn_str(files_charset_info, name_buff);
     db_name= name_buff;
   }

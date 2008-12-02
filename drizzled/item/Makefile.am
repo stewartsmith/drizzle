@@ -19,9 +19,7 @@ libitem_la_SOURCES= \
 		cache_row.cc \
 		cmpfunc.cc \
 		create.cc \
-		func.cc \
 		row.cc \
-		strfunc.cc \
 		subselect.cc \
 		sum.cc \
 		type_holder.cc
