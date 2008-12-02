@@ -99,12 +99,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin.h \
 		plugin_authentication.h \
 		plugin_configvar.h \
+		plugin_replicator.h \
 		plugin_errmsg.h \
 		plugin_logging.h \
 		plugin_qcache.h \
 		plugin_parser.h \
 	 	plugin_scheduling.h \
-		plugin_replicator \
 		probes.h \
 		protocol.h \
 		qcache.h \
