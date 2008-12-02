@@ -94,10 +94,9 @@ static const char cur_dir_name[]= {FN_CURLIB, 0};
   RETURN
     0 if ok, !=0 if error
 */
-int my_sync_dir(const char *dir_name __attribute__((unused)),
-                myf my_flags __attribute__((unused)))
-{
 #ifdef NEED_EXPLICIT_SYNC_DIR
+int my_sync_dir(const char *dir_name, myf my_flags)
+{
   File dir_fd;
   int res= 0;
   const char *correct_dir_name;
@@ -117,10 +116,13 @@ int my_sync_dir(const char *dir_name __attribute__((unused)),
   else
     res= 1;
   return(res);
-#else
-  return 0;
-#endif
 }
+#else
+int my_sync_dir(const char *, myf)
+{
+  return 0;
+}
+#endif
 
 
 /*
@@ -134,16 +136,18 @@ int my_sync_dir(const char *dir_name __attribute__((unused)),
   RETURN
     0 if ok, !=0 if error
 */
-int my_sync_dir_by_file(const char *file_name __attribute__((unused)),
-                        myf my_flags __attribute__((unused)))
-{
 #ifdef NEED_EXPLICIT_SYNC_DIR
+int my_sync_dir_by_file(const char *file_name, myf my_flags)
+{
   char dir_name[FN_REFLEN];
   size_t dir_name_length;
   dirname_part(dir_name, file_name, &dir_name_length);
   return my_sync_dir(dir_name, my_flags);
-#else
-  return 0;
-#endif
 }
+#else
+int my_sync_dir_by_file(const char *, myf)
+{
+  return 0;
+}
+#endif
 

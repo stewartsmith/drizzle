@@ -1250,7 +1250,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-RETSIGTYPE window_resize(int sig __attribute__((unused)))
+RETSIGTYPE window_resize(int)
 {
   struct winsize window_size;
 
@@ -1458,12 +1458,11 @@ static void usage(int version)
 
 
 extern "C" bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-               char *argument)
+get_one_option(int optid, const struct my_option *, char *argument)
 {
   switch(optid) {
   case OPT_CHARSETS_DIR:
-    strmake(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
+    strncpy(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
     charsets_dir = drizzle_charsets_dir;
     break;
   case  OPT_DEFAULT_CHARSET:
@@ -1479,7 +1478,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       /* Check that delimiter does not contain a backslash */
       if (!strstr(argument, "\\"))
       {
-        strmake(delimiter, argument, sizeof(delimiter) - 1);
+        strncpy(delimiter, argument, sizeof(delimiter) - 1);
       }
       else
       {
@@ -1517,7 +1516,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       if (argument && strlen(argument))
       {
         default_pager_set= 1;
-        strmake(pager, argument, sizeof(pager) - 1);
+        strncpy(pager, argument, sizeof(pager) - 1);
         my_stpcpy(default_pager, pager);
       }
       else if (default_pager_set)
@@ -1585,7 +1584,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     status.batch= 1;
     status.add_to_history= 0;
     set_if_bigger(opt_silent,1);                         // more silent
-    break;
     break;
   case 'V':
     usage(1);
@@ -2082,8 +2080,7 @@ extern "C" char *new_command_generator(const char *text, int);
   on command names if this is the first word in the line, or on filenames
   if not.
 */
-static char *no_completion(const char * a __attribute__((unused)),
-                           int b __attribute__((unused)))
+static char *no_completion(const char *, int)
 {
   /* No filename completion */
   return 0;
@@ -2178,9 +2175,7 @@ static void initialize_readline (char *name)
   entire line in case we want to do some simple parsing.  Return the
   array of matches, or NULL if there aren't any.
 */
-char **mysql_completion (const char *text,
-                        int start __attribute__((unused)),
-                        int end __attribute__((unused)))
+char **mysql_completion (const char *text, int, int)
 {
   if (!status.batch && !quick)
     return rl_completion_matches(text, new_command_generator);
@@ -2493,9 +2488,7 @@ static void print_help_item(DRIZZLE_ROW *cur, int num_name, int num_cat, char *l
 }
 
 
-static int com_server_help(string *buffer,
-                           const char *line __attribute__((unused)),
-                           const char *help_arg)
+static int com_server_help(string *buffer, const char *, const char *help_arg)
 {
   DRIZZLE_ROW cur;
   const char *server_cmd= buffer->c_str();
@@ -2588,8 +2581,7 @@ err:
 }
 
 static int
-com_help(string *buffer __attribute__((unused)),
-         const char *line __attribute__((unused)))
+com_help(string *buffer, const char *line)
 {
   register int i, j;
   const char *help_arg= strchr(line,' ');
@@ -2620,8 +2612,7 @@ com_help(string *buffer __attribute__((unused)),
 
 
 static int
-com_clear(string *buffer,
-          const char *line __attribute__((unused)))
+com_clear(string *buffer, const char *)
 {
   if (status.add_to_history)
     fix_history(buffer);
@@ -2637,8 +2628,7 @@ com_clear(string *buffer,
   1  if fatal error
 */
 static int
-com_go(string *buffer,
-       const char *line __attribute__((unused)))
+com_go(string *buffer, const char *)
 {
   char          buff[200]; /* about 110 chars used so far */
   char          time_buff[52+3+1]; /* time max + space&parens + NUL */
@@ -2822,7 +2812,7 @@ static void init_tee(const char *file_name)
     return;
   }
   OUTFILE = new_outfile;
-  strmake(outfile, file_name, FN_REFLEN-1);
+  strncpy(outfile, file_name, FN_REFLEN-1);
   tee_fprintf(stdout, "Logging to file '%s'\n", file_name);
   opt_outfile= 1;
   return;
@@ -3280,7 +3270,7 @@ print_tab_data(DRIZZLE_RES *result)
 }
 
 static int
-com_tee(string *buffer __attribute__((unused)), const char *line )
+com_tee(string *, const char *line )
 {
   char file_name[FN_REFLEN], *end;
   const char *param;
@@ -3308,7 +3298,8 @@ com_tee(string *buffer __attribute__((unused)), const char *line )
   /* eliminate the spaces before the parameters */
   while (my_isspace(charset_info,*param))
     param++;
-  end= strmake(file_name, param, sizeof(file_name) - 1);
+  strncpy(file_name, param, sizeof(file_name) - 1);
+  end= file_name + strlen(file_name);
   /* remove end space from command line */
   while (end > file_name && (my_isspace(charset_info,end[-1]) ||
                              my_iscntrl(charset_info,end[-1])))
@@ -3325,8 +3316,7 @@ com_tee(string *buffer __attribute__((unused)), const char *line )
 
 
 static int
-com_notee(string *buffer __attribute__((unused)),
-          const char *line __attribute__((unused)))
+com_notee(string *, const char *)
 {
   if (opt_outfile)
     end_tee();
@@ -3339,8 +3329,7 @@ com_notee(string *buffer __attribute__((unused)),
 */
 
 static int
-com_pager(string *buffer __attribute__((unused)),
-          const char *line __attribute__((unused)))
+com_pager(string *, const char *line)
 {
   char pager_name[FN_REFLEN], *end;
   const char *param;
@@ -3369,7 +3358,8 @@ com_pager(string *buffer __attribute__((unused)),
   }
   else
   {
-    end= strmake(pager_name, param, sizeof(pager_name)-1);
+    end= strncpy(pager_name, param, sizeof(pager_name)-1);
+    end+= strlen(pager_name);
     while (end > pager_name && (my_isspace(charset_info,end[-1]) ||
                                 my_iscntrl(charset_info,end[-1])))
       end--;
@@ -3384,8 +3374,7 @@ com_pager(string *buffer __attribute__((unused)),
 
 
 static int
-com_nopager(string *buffer __attribute__((unused)),
-            const char *line __attribute__((unused)))
+com_nopager(string *, const char *)
 {
   my_stpcpy(pager, "stdout");
   opt_nopager=1;
@@ -3397,8 +3386,7 @@ com_nopager(string *buffer __attribute__((unused)),
 /* If arg is given, exit without errors. This happens on command 'quit' */
 
 static int
-com_quit(string *buffer __attribute__((unused)),
-         const char *line __attribute__((unused)))
+com_quit(string *, const char *)
 {
   /* let the screen auto close on a normal shutdown */
   status.exit_status=0;
@@ -3406,8 +3394,7 @@ com_quit(string *buffer __attribute__((unused)),
 }
 
 static int
-com_rehash(string *buffer __attribute__((unused)),
-           const char *line __attribute__((unused)))
+com_rehash(string *, const char *)
 {
   build_completion_hash(1, 0);
   return 0;
@@ -3416,7 +3403,7 @@ com_rehash(string *buffer __attribute__((unused)),
 
 
 static int
-com_print(string *buffer,const char *line __attribute__((unused)))
+com_print(string *buffer,const char *)
 {
   tee_puts("--------------", stdout);
   (void) tee_fputs(buffer->c_str(), stdout);
@@ -3443,7 +3430,7 @@ com_connect(string *buffer, const char *line)
       Two null bytes are needed in the end of buff to allow
       get_arg to find end of string the second time it's called.
     */
-    tmp= strmake(buff, line, sizeof(buff)-2);
+    tmp= strncpy(buff, line, sizeof(buff)-2);
 #ifdef EXTRA_DEBUG
     tmp[1]= 0;
 #endif
@@ -3485,7 +3472,7 @@ com_connect(string *buffer, const char *line)
 }
 
 
-static int com_source(string *buffer __attribute__((unused)), const char *line)
+static int com_source(string *, const char *line)
 {
   char source_name[FN_REFLEN], *end;
   const char *param;
@@ -3502,7 +3489,8 @@ static int com_source(string *buffer __attribute__((unused)), const char *line)
                     INFO_ERROR, 0,0);
   while (my_isspace(charset_info,*param))
     param++;
-  end=strmake(source_name,param,sizeof(source_name)-1);
+  end= strncpy(source_name,param,sizeof(source_name)-1);
+  end+= strlen(source_name);
   while (end > source_name && (my_isspace(charset_info,end[-1]) ||
                                my_iscntrl(charset_info,end[-1])))
     end--;
@@ -3544,11 +3532,11 @@ static int com_source(string *buffer __attribute__((unused)), const char *line)
 
 /* ARGSUSED */
 static int
-com_delimiter(string *buffer __attribute__((unused)), const char *line)
+com_delimiter(string *, const char *line)
 {
   char buff[256], *tmp;
 
-  strmake(buff, line, sizeof(buff) - 1);
+  strncpy(buff, line, sizeof(buff) - 1);
   tmp= get_arg(buff, 0);
 
   if (!tmp || !*tmp)
@@ -3566,7 +3554,7 @@ com_delimiter(string *buffer __attribute__((unused)), const char *line)
       return 0;
     }
   }
-  strmake(delimiter, tmp, sizeof(delimiter) - 1);
+  strncpy(delimiter, tmp, sizeof(delimiter) - 1);
   delimiter_length= (int)strlen(delimiter);
   delimiter_str= delimiter;
   return 0;
@@ -3574,13 +3562,13 @@ com_delimiter(string *buffer __attribute__((unused)), const char *line)
 
 /* ARGSUSED */
 static int
-com_use(string *buffer __attribute__((unused)), const char *line)
+com_use(string *, const char *line)
 {
   char *tmp, buff[FN_REFLEN + 1];
   int select_db;
 
   memset(buff, 0, sizeof(buff));
-  strmake(buff, line, sizeof(buff) - 1);
+  strncpy(buff, line, sizeof(buff) - 1);
   tmp= get_arg(buff, 0);
   if (!tmp || !*tmp)
   {
@@ -3646,8 +3634,7 @@ com_use(string *buffer __attribute__((unused)), const char *line)
 }
 
 static int
-com_warnings(string *buffer __attribute__((unused)),
-             const char *line __attribute__((unused)))
+com_warnings(string *, const char *)
 {
   show_warnings = 1;
   put_info("Show warnings enabled.",INFO_INFO, 0, 0);
@@ -3655,8 +3642,7 @@ com_warnings(string *buffer __attribute__((unused)),
 }
 
 static int
-com_nowarnings(string *buffer __attribute__((unused)),
-               const char *line __attribute__((unused)))
+com_nowarnings(string *, const char *)
 {
   show_warnings = 0;
   put_info("Show warnings disabled.",INFO_INFO, 0, 0);
@@ -3778,8 +3764,7 @@ sql_connect(char *host,char *database,char *user,char *password,
 
 
 static int
-com_status(string *buffer __attribute__((unused)),
-           const char *line __attribute__((unused)))
+com_status(string *, const char *)
 {
   char buff[40];
   uint64_t id;
@@ -4192,21 +4177,18 @@ static const char * construct_prompt()
         break;
       case PROMPT_CHAR:
         {
-          char c= PROMPT_CHAR;
-          processed_prompt->append(&c, 1);
+          processed_prompt->append(PROMPT_CHAR, 1);
         }
         break;
       case 'n':
         {
-          char c= '\n';
-          processed_prompt->append(&c, 1);
+          processed_prompt->append('\n', 1);
         }
         break;
       case ' ':
       case '_':
         {
-          char c= ' ';
-          processed_prompt->append(&c, 1);
+          processed_prompt->append(' ', 1);
         }
         break;
       case 'R':
@@ -4304,8 +4286,7 @@ static void init_username()
   }
 }
 
-static int com_prompt(string *buffer __attribute__((unused)),
-                      const char *line)
+static int com_prompt(string *, const char *line)
 {
   const char *ptr=strchr(line, ' ');
   prompt_counter = 0;

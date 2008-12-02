@@ -695,7 +695,7 @@ int do_flush (azio_stream *s, int flush)
   else
     s->dirty= AZ_STATE_SAVED; /* Mark it clean, we should be good now */
 
-  afterwrite_pos= (size_t)my_tell(s->file, MYF(0));
+  afterwrite_pos= (size_t)my_tell(s->file);
   if(write_header(s))
     return Z_ERRNO;
 

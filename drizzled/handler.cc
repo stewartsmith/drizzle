@@ -1364,7 +1364,7 @@ handle_error(uint32_t sql_errno  __attribute__((unused)),
              Session *session __attribute__((unused)))
 {
   /* Grab the error message */
-  strmake(buff, message, sizeof(buff)-1);
+  strncpy(buff, message, sizeof(buff)-1);
   return true;
 }
 

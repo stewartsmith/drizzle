@@ -42,8 +42,7 @@
                        actual error.
 */
 
-my_off_t my_seek(File fd, my_off_t pos, int whence,
-		 myf MyFlags __attribute__((unused)))
+my_off_t my_seek(File fd, my_off_t pos, int whence, myf)
 {
   register off_t newpos= -1;
   assert(pos != MY_FILEPOS_ERROR);		/* safety check */
@@ -74,7 +73,7 @@ my_off_t my_seek(File fd, my_off_t pos, int whence,
 	/* Tell current position of file */
 	/* ARGSUSED */
 
-my_off_t my_tell(File fd, myf MyFlags __attribute__((unused)))
+my_off_t my_tell(File fd)
 {
   off_t pos;
   assert(fd >= 0);

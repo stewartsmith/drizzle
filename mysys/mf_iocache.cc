@@ -167,7 +167,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
 
   if (file >= 0)
   {
-    pos= my_tell(file, MYF(0));
+    pos= my_tell(file);
     if ((pos == (my_off_t) -1) && (my_errno == ESPIPE))
     {
       /*
@@ -1670,7 +1670,8 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
       else
       {
 	info->end_of_file+=(info->write_pos-info->append_read_pos);
-	assert(info->end_of_file == my_tell(info->file,MYF(0)));
+	my_off_t tell_ret= my_tell(info->file);
+	assert(info->end_of_file == tell_ret);
       }
 
       info->append_read_pos=info->write_pos=info->write_buffer;

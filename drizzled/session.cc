@@ -383,7 +383,7 @@ Diagnostics_area::set_ok_status(Session *session, ha_rows affected_rows_arg,
   m_affected_rows= affected_rows_arg;
   m_last_insert_id= last_insert_id_arg;
   if (message_arg)
-    strmake(m_message, message_arg, sizeof(m_message) - 1);
+    strncpy(m_message, message_arg, sizeof(m_message) - 1);
   else
     m_message[0]= '\0';
   m_status= DA_OK;
@@ -441,7 +441,7 @@ Diagnostics_area::set_error_status(Session *session __attribute__((unused)),
     return;
 
   m_sql_errno= sql_errno_arg;
-  strmake(m_message, message_arg, sizeof(m_message) - 1);
+  strncpy(m_message, message_arg, sizeof(m_message) - 1);
 
   m_status= DA_ERROR;
 }
@@ -1523,7 +1523,7 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
   bool string_results= false, non_string_results= false;
   unit= u;
   if ((uint) strlen(exchange->file_name) + NAME_LEN >= FN_REFLEN)
-    strmake(path,exchange->file_name,FN_REFLEN-1);
+    strncpy(path,exchange->file_name,FN_REFLEN-1);
 
   if ((file= create_file(session, path, exchange, &cache)) < 0)
     return 1;

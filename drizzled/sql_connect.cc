@@ -276,7 +276,8 @@ static int check_connection(Session *session)
       tail: that's why first part of the scramble is placed here, and second
       part at the end of packet.
     */
-    end= strmake(end, session->scramble, SCRAMBLE_LENGTH_323) + 1;
+    end= strncpy(end, session->scramble, SCRAMBLE_LENGTH_323);
+    end+= SCRAMBLE_LENGTH_323 + 1;
    
     int2store(end, server_capabilites);
     /* write server characteristics: up to 16 bytes allowed */
@@ -285,8 +286,9 @@ static int check_connection(Session *session)
     memset(end+5, 0, 13);
     end+= 18;
     /* write scramble tail */
-    end= strmake(end, session->scramble + SCRAMBLE_LENGTH_323, 
-                 SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323) + 1;
+    size_t scramble_len= SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323;
+    end= strncpy(end, session->scramble + SCRAMBLE_LENGTH_323, scramble_len);
+    end+= scramble_len + 1;
 
     /* At this point we write connection message and read reply */
     if (net_write_command(net, (unsigned char) protocol_version, (unsigned char*) "", 0,

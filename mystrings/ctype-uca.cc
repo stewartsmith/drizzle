@@ -7599,7 +7599,7 @@ static void my_coll_lexem_print_error(MY_COLL_LEXEM *lexem,
 {
   char tail[30];
   size_t len= lexem->end - lexem->prev;
-  strmake (tail, lexem->prev, (size_t) cmin(len, sizeof(tail)-1));
+  strncpy(tail, lexem->prev, (size_t) cmin(len, sizeof(tail)-1));
   errstr[errsize-1]= '\0';
   snprintf(errstr,errsize-1,"%s at '%s'", txt, tail);
 }

@@ -44,7 +44,7 @@ extern CHARSET_INFO my_charset_utf8mb4_sinhala_uca_ci;
 #endif /* HAVE_CHARSET_utf8mb4 */
 
 
-bool init_compiled_charsets(myf flags __attribute__((unused)))
+bool init_compiled_charsets(myf)
 {
   CHARSET_INFO *cs;
 

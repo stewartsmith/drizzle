@@ -1846,7 +1846,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   {
     struct tm tm_tmp;
     localtime_r(&server_start_time,&tm_tmp);
-    strmake(system_time_zone, tzname[tm_tmp.tm_isdst != 0 ? 1 : 0],
+    strncpy(system_time_zone, tzname[tm_tmp.tm_isdst != 0 ? 1 : 0],
             sizeof(system_time_zone)-1);
 
  }
@@ -1869,13 +1869,13 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
-    strmake(glob_hostname, STRING_WITH_LEN("localhost"));
+    strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
     sql_print_warning(_("gethostname failed, using '%s' as hostname"),
                       glob_hostname);
-    strmake(pidfile_name, STRING_WITH_LEN("mysql"));
+    strncpy(pidfile_name, STRING_WITH_LEN("mysql"));
   }
   else
-  strmake(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
+    strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
   my_stpcpy(fn_ext(pidfile_name),".pid");		// Add proper extension
 
   /*
@@ -3973,9 +3973,9 @@ static void drizzle_init_variables(void)
   multi_keycache_init();
 
   /* Set directory paths */
-  strmake(language, LANGUAGE, sizeof(language)-1);
-  strmake(drizzle_real_data_home, get_relative_path(DATADIR),
-	  sizeof(drizzle_real_data_home)-1);
+  strncpy(language, LANGUAGE, sizeof(language)-1);
+  strncpy(drizzle_real_data_home, get_relative_path(DATADIR),
+          sizeof(drizzle_real_data_home)-1);
   drizzle_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
   drizzle_data_home_buff[1]=0;
   drizzle_data_home_len= 2;
@@ -4023,7 +4023,7 @@ static void drizzle_init_variables(void)
   const char *tmpenv;
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
     tmpenv = DEFAULT_DRIZZLE_HOME;
-  (void) strmake(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
+  (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
 }
 
 
@@ -4040,14 +4040,14 @@ drizzled_get_one_option(int optid,
     global_system_variables.tx_isolation= ISO_SERIALIZABLE;
     break;
   case 'b':
-    strmake(drizzle_home,argument,sizeof(drizzle_home)-1);
+    strncpy(drizzle_home,argument,sizeof(drizzle_home)-1);
     break;
   case 'C':
     if (default_collation_name == compiled_default_collation_name)
       default_collation_name= 0;
     break;
   case 'h':
-    strmake(drizzle_real_data_home,argument, sizeof(drizzle_real_data_home)-1);
+    strncpy(drizzle_real_data_home,argument, sizeof(drizzle_real_data_home)-1);
     /* Correct pointer set by my_getopt (for embedded library) */
     drizzle_data_home= drizzle_real_data_home;
     drizzle_data_home_len= strlen(drizzle_data_home);
@@ -4061,7 +4061,7 @@ drizzled_get_one_option(int optid,
                         argument, drizzled_user);
     break;
   case 'L':
-    strmake(language, argument, sizeof(language)-1);
+    strncpy(language, argument, sizeof(language)-1);
     break;
   case OPT_SLAVE_SKIP_ERRORS:
     init_slave_skip_errors(argument);
@@ -4124,7 +4124,7 @@ drizzled_get_one_option(int optid,
     }
     break;
   case (int) OPT_PID_FILE:
-    strmake(pidfile_name, argument, sizeof(pidfile_name)-1);
+    strncpy(pidfile_name, argument, sizeof(pidfile_name)-1);
     break;
   case OPT_CONSOLE:
     if (opt_console)
@@ -4154,7 +4154,7 @@ drizzled_get_one_option(int optid,
     }
     break;
   case OPT_CHARSETS_DIR:
-    strmake(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir)-1);
+    strncpy(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir)-1);
     charsets_dir = drizzle_charsets_dir;
     break;
   case OPT_TX_ISOLATION:

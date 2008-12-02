@@ -209,7 +209,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
     create_info->extra_size+= 2 + create_info->comment.length;
   }
   else{
-    strmake((char*) forminfo+47, create_info->comment.str ?
+    strncpy((char*) forminfo+47, create_info->comment.str ?
             create_info->comment.str : "", create_info->comment.length);
     forminfo[46]=(unsigned char) create_info->comment.length;
 #ifdef EXTRA_DEBUG
@@ -734,7 +734,9 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
       pos[0]=(unsigned char) row;
       pos[1]=0;
       pos[2]=(unsigned char) (length+1);
-      pos=(unsigned char*) strmake((char*) pos+3,cfield->field_name,length)+1;
+      strncpy((char*)pos+3,cfield->field_name, length);
+      pos[length + 3]= '\0';
+      pos+= length + 3 + 1;
     }
     cfield->row=(uint8_t) row;
     cfield->col=(uint8_t) (length+1);

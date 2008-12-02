@@ -15,7 +15,7 @@
 
 #called from the top level Makefile
 
-LDADD = libserialize.la ${PROTOBUF_LIBS} -luuid
+LDADD = libserialize.la ${PROTOBUF_LIBS} ${UUID_LIBS}
 
 AM_CPPFLAGS = ${PROTOBUF_CFLAGS}
 libserialize_la_CXXFLAGS =

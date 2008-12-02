@@ -17,6 +17,9 @@
 
 #ifndef _thr_alarm_h
 #define _thr_alarm_h
+
+#include <signal.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -77,6 +80,9 @@ typedef struct st_alarm {
 
 extern uint32_t thr_client_alarm;
 extern pthread_t alarm_thread;
+
+int compare_uint32_t(void *unused, unsigned char *a_ptr,unsigned char* b_ptr);
+RETSIGTYPE thread_alarm(int sig);
 
 #define thr_alarm_init(A) (*(A))=0
 #define thr_alarm_in_use(A) (*(A)!= 0)

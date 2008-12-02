@@ -44,9 +44,8 @@ static struct my_option my_long_options[] =
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-	       char *argument __attribute__((unused)))
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *)
 {
   switch(optid) {
   case 'V':
