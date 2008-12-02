@@ -868,7 +868,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
   if ((file= my_open(log_file_name, open_flags,
                      MYF(MY_WME | ME_WAITTANG))) < 0 ||
       init_io_cache(&log_file, file, IO_SIZE, io_cache_type,
-                    my_tell(file, MYF(MY_WME)), 0,
+                    my_tell(file), 0,
                     MYF(MY_WME | MY_NABP |
                         ((log_type == LOG_BIN) ? MY_WAIT_IF_FULL : 0))))
     goto err;

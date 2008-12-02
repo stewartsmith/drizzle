@@ -370,7 +370,7 @@ extern int my_symlink(const char *content, const char *linkname, myf MyFlags);
 extern size_t my_read(File Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
 extern int my_rename(const char *from,const char *to,myf MyFlags);
 extern my_off_t my_seek(File fd,my_off_t pos,int whence,myf MyFlags);
-extern my_off_t my_tell(File fd,myf MyFlags);
+extern my_off_t my_tell(File fd);
 extern size_t my_write(File Filedes,const unsigned char *Buffer,size_t Count,
 		     myf MyFlags);
 extern size_t my_fwrite(FILE *stream,const unsigned char *Buffer,size_t Count,
