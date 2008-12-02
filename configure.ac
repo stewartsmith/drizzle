@@ -602,7 +602,12 @@ SEARCH_FOR_LIB(z, crc32, zlib.h,
 #--------------------------------------------------------------------
 
 
-SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, AC_MSG_ERROR(Couldn't find ncurses)) 
+SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
+	SEARCH_FOR_LIB(tinfo, tgetent, ncurses/ncurses.h,
+		AC_MSG_ERROR([Couldn't find ncurses])
+	)
+	]
+)
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
@@ -1538,7 +1543,7 @@ echo "   * Installation prefix:       $prefix"
 echo "   * System type:               $SYSTEM_TYPE"
 echo "   * Host CPU:                  $host_cpu"
 echo "   * C Compiler:                $CC_VERSION"
-echo "   * C++ Compiler:              $CXX"
+echo "   * C++ Compiler:              $CXX_VERSION"
 echo "   * Build auth_pam:            $ac_cv_header_security_pam_appl_h"
 echo "   * Assertions enabled:        $ac_cv_assert"
 echo "   * Debug enabled:             $with_debug"

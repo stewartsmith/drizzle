@@ -39,7 +39,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
        AS_VAR_SET([path_var],[$PATH])
       ],
       [AS_VAR_SET([have_lib],[no])
-       AS_VAR_SET([with_lib],["AS_VAR_GET([path_var]) /opt/csw"])
+       AS_VAR_SET([with_lib],["AS_VAR_GET([path_var]) /usr/local /opt/csw"])
       ])
   ])
   AS_IF([test "AS_VAR_GET([with_lib])" != yes],[
@@ -73,7 +73,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
   ])
   AS_IF([test AS_VAR_GET([have_lib]) = no],[
     AC_MSG_WARN([$3 or lib$1.a not found. Try installing $1 developement packages])
-    [$4]
+    $4
   ])
   AC_SUBST(libs_var)
   AC_SUBST(cflags_var)
