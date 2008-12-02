@@ -58,17 +58,13 @@ public:
   { return alloc_root(mem_root, size); }
   static void *operator new(size_t size, MEM_ROOT *mem_root) throw ()
   { return alloc_root(mem_root, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *, size_t)
   {  }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              MEM_ROOT *mem_root __attribute__((unused)))
+  static void operator delete(void *, MEM_ROOT *)
   { /* never called */ }
-  static void operator delete[](void *ptr __attribute__((unused)),
-                                MEM_ROOT *mem_root __attribute__((unused)))
+  static void operator delete[](void *, MEM_ROOT *)
   { /* never called */ }
-  static void operator delete[](void *ptr __attribute__((unused)),
-                                size_t size __attribute__((unused)))
+  static void operator delete[](void *, size_t)
   {  }
 #ifdef HAVE_purify
   bool dummy;

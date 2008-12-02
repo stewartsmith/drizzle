@@ -78,7 +78,6 @@ AC_DEFUN([SEARCH_FOR_LIB],
   AC_SUBST(libs_var)
   AC_SUBST(cflags_var)
   AC_SUBST(path_var)
-  AM_CONDITIONAL(AS_TR_CPP(HAVE_$1),[test AS_VAR_GET([have_lib]) = yes])
   AS_VAR_POPDEF([with_lib])
   AS_VAR_POPDEF([ac_header])
   AS_VAR_POPDEF([libs_var])

@@ -22,7 +22,7 @@ noinst_HEADERS = convert.h \
 noinst_LTLIBRARIES = libutil.la
 libutil_la_SOURCES = math.cc
 
-if GCC_PCH
+if BUILD_GCC_PCH
 BUILT_SOURCES = convert.h.gch \
                 test.h.gch
 
