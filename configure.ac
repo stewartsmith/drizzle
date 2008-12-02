@@ -602,7 +602,12 @@ SEARCH_FOR_LIB(z, crc32, zlib.h,
 #--------------------------------------------------------------------
 
 
-SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, AC_MSG_ERROR(Couldn't find ncurses)) 
+SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
+	SEARCH_FOR_LIB(tinfo, tgetent, ncurses/ncurses.h,
+		AC_MSG_ERROR([Couldn't find ncurses])
+	)
+	]
+)
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
