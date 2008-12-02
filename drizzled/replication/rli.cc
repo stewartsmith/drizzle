@@ -528,8 +528,9 @@ int32_t Relay_log_info::wait_for_pos(Session* session, String* log_name,
   */
   uint32_t log_name_extension;
   char log_name_tmp[FN_REFLEN]; //make a char[] from String
-
-  strmake(log_name_tmp, log_name->ptr(), cmin(log_name->length(), (uint32_t)FN_REFLEN-1));
+  size_t len= cmin(log_name->length(), (uint32_t)FN_REFLEN-1);
+  strncpy(log_name_tmp, log_name->ptr(), len);
+  log_name_tmp[len]= '\0';
 
   char *p= fn_ext(log_name_tmp);
   char *p_end;

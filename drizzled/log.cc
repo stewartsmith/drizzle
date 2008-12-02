@@ -68,9 +68,9 @@ sql_print_message_func sql_print_message_handlers[3] =
 };
 
 
-char *make_default_log_name(char *buff,const char* log_ext)
+char *make_default_log_name(char *buff,const char *log_ext)
 {
-  strmake(buff, pidfile_name, FN_REFLEN-5);
+  strncpy(buff, pidfile_name, FN_REFLEN-5);
   return fn_format(buff, buff, drizzle_data_home, log_ext,
                    MYF(MY_UNPACK_FILENAME|MY_REPLACE_EXT));
 }
@@ -1015,7 +1015,7 @@ const char *DRIZZLE_LOG::generate_name(const char *log_name,
 {
   if (!log_name || !log_name[0])
   {
-    strmake(buff, pidfile_name, FN_REFLEN - strlen(suffix) - 1);
+    strncpy(buff, pidfile_name, FN_REFLEN - strlen(suffix) - 1);
     return (const char *)
       fn_format(buff, buff, "", suffix, MYF(MY_REPLACE_EXT|MY_REPLACE_DIR));
   }
@@ -1023,8 +1023,9 @@ const char *DRIZZLE_LOG::generate_name(const char *log_name,
   if (strip_ext)
   {
     char *p= fn_ext(log_name);
-    uint32_t length= (uint) (p - log_name);
-    strmake(buff, log_name, cmin(length, (uint)FN_REFLEN));
+    uint32_t length= cmin((uint32_t)(p - log_name), FN_REFLEN);
+    strncpy(buff, log_name, length);
+    buff[length]= '\0';
     return (const char*)buff;
   }
   return log_name;
@@ -1286,7 +1287,7 @@ int DRIZZLE_BIN_LOG::get_current_log(LOG_INFO* linfo)
 
 int DRIZZLE_BIN_LOG::raw_get_current_log(LOG_INFO* linfo)
 {
-  strmake(linfo->log_file_name, log_file_name, sizeof(linfo->log_file_name)-1);
+  strncpy(linfo->log_file_name, log_file_name, sizeof(linfo->log_file_name)-1);
   linfo->pos = my_b_tell(&log_file);
   return 0;
 }
@@ -1975,7 +1976,7 @@ void DRIZZLE_BIN_LOG::make_log_name(char* buf, const char* log_ident)
   if (dir_len >= FN_REFLEN)
     dir_len=FN_REFLEN-1;
   my_stpncpy(buf, log_file_name, dir_len);
-  strmake(buf+dir_len, log_ident, FN_REFLEN - dir_len -1);
+  strncpy(buf+dir_len, log_ident, FN_REFLEN - dir_len -1);
 }
 
 
@@ -3051,7 +3052,8 @@ bool flush_error_log()
   if (opt_error_log)
   {
     char err_renamed[FN_REFLEN], *end;
-    end= strmake(err_renamed,log_error_file,FN_REFLEN-4);
+    end= strncpy(err_renamed,log_error_file,FN_REFLEN-4);
+    end+= strlen(err_renamed);
     my_stpcpy(end, "-old");
     pthread_mutex_lock(&LOCK_error_log);
     char err_temp[FN_REFLEN+4];
@@ -3694,7 +3696,7 @@ int TC_LOG_BINLOG::open(const char *opt_name)
 
     do
     {
-      strmake(log_name, log_info.log_file_name, sizeof(log_name)-1);
+      strncpy(log_name, log_info.log_file_name, sizeof(log_name)-1);
     } while (!(error= find_next_log(&log_info, 1)));
 
     if (error !=  LOG_INFO_EOF)

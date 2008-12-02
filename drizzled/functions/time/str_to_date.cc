@@ -395,7 +395,9 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 err:
   {
     char buff[128];
-    strmake(buff, val_begin, cmin(length, (uint)sizeof(buff)-1));
+    size_t len= cmin(length, sizeof(buff)-1);
+    strncpy(buff, val_begin, len);
+    buff[len]= '\0';
     push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                         date_time_type, buff, "str_to_date");

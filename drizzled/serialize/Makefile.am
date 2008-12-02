@@ -15,7 +15,7 @@
 
 #called from the top level Makefile
 
-LDADD = libserialize.la ${PROTOBUF_LIBS}
+LDADD = libserialize.la ${PROTOBUF_LIBS} -luuid
 
 AM_CPPFLAGS = ${PROTOBUF_CFLAGS}
 libserialize_la_CXXFLAGS =
@@ -29,6 +29,8 @@ TESTS = check_length.sh
 bin_PROGRAMS = \
 	       table_reader \
 	       table_writer \
+	       replication_event_reader \
+	       replication_event_writer \
                master_list_reader \
                master_list_writer \
                binlog_reader \
@@ -41,11 +43,13 @@ noinst_LTLIBRARIES = libserialize.la
 
 libserialize_la_SOURCES = \
 			  table.pb.cc \
+			  replication_event.pb.cc \
 			  master_list.pb.cc \
 			  binary_log.pb.cc \
 			  schema.pb.cc
 
 noinst_HEADERS = table.pb.h \
+		 replication_event.pb.h \
 		 master_list.pb.h \
 		 schema.pb.h \
 		 binary_log.pb.h \
@@ -75,13 +79,20 @@ master_list_writer_CXXFLAGS =
 master_list_reader_SOURCES =  master_list_reader.cc
 master_list_reader_CXXFLAGS =
 
+replication_event_writer_SOURCES =  replication_event_writer.cc
+replication_event_writer_CXXFLAGS =
+
+replication_event_reader_SOURCES =  replication_event_reader.cc
+replication_event_reader_CXXFLAGS =
+
 length_SOURCES = length.cc
 length_CXXFLAGS = -fexceptions
 
-EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto
+EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto replication_event.proto
 BUILT_SOURCES = schema.pb.h \
 		table.pb.h \
 		binary_log.pb.h \
+		replication_event.pb.h \
 		master_list.pb.h
 
 CLEANFILES =  binary_log.pb.h \
@@ -90,5 +101,7 @@ CLEANFILES =  binary_log.pb.h \
               schema.pb.cc \
               table.pb.h \
               table.pb.cc \
+	      replication_event.pb.h \
+              replication_event.pb.cc \
               master_list.pb.h \
               master_list.pb.cc

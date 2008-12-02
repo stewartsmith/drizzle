@@ -872,14 +872,14 @@ int start_slave(Session* session , Master_info* mi,  bool net_report)
              We don't check session->lex->mi.log_file_name for NULL here
              since it is checked in sql_yacc.yy
           */
-          strmake(mi->rli.until_log_name, session->lex->mi.log_file_name,
+          strncpy(mi->rli.until_log_name, session->lex->mi.log_file_name,
                   sizeof(mi->rli.until_log_name)-1);
         }
         else if (session->lex->mi.relay_log_pos)
         {
           mi->rli.until_condition= Relay_log_info::UNTIL_RELAY_POS;
           mi->rli.until_log_pos= session->lex->mi.relay_log_pos;
-          strmake(mi->rli.until_log_name, session->lex->mi.relay_log_name,
+          strncpy(mi->rli.until_log_name, session->lex->mi.relay_log_name,
                   sizeof(mi->rli.until_log_name)-1);
         }
         else

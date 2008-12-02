@@ -715,7 +715,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
                                     &err_ptr, &error_len);
       if (error_len)
       {
-        strmake(buff, err_ptr, min((uint32_t)sizeof(buff), error_len));
+        strncpy(buff, err_ptr, min((uint32_t)sizeof(buff), error_len));
         fprintf(stderr, "Invalid mode to --compatible: %s\n", buff);
         exit(1);
       }
@@ -2975,7 +2975,7 @@ static int get_bin_log_name(DRIZZLE *drizzle_con,
     Only one row is returned, and the first column is the name of the
     active log.
   */
-  strmake(buff_log_name, row[0], buff_len - 1);
+  strncpy(buff_log_name, row[0], buff_len - 1);
 
   drizzle_free_result(res);
   return 0;
@@ -3047,7 +3047,7 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
 
       for (; pos != end && *pos != ','; pos++) ;
       var_len= (uint32_t) (pos - start);
-      strmake(buff, start, min((uint32_t)sizeof(buff), var_len));
+      strncpy(buff, start, min((uint32_t)sizeof(buff), var_len));
       find= find_type(buff, lib, var_len);
       if (!find)
       {
@@ -3148,7 +3148,7 @@ char check_if_ignore_table(const char *table_name, char *table_type)
     return(result);                         /* assume table is ok */
   }
   if (!(row[1]))
-    strmake(table_type, "VIEW", NAME_LEN-1);
+    strncpy(table_type, "VIEW", NAME_LEN-1);
   else
   {
     /*
@@ -3157,7 +3157,7 @@ char check_if_ignore_table(const char *table_name, char *table_type)
       these types, but we do want to use delayed inserts in the dump if
       the table type is _NOT_ one of these types
     */
-    strmake(table_type, row[1], NAME_LEN-1);
+    strncpy(table_type, row[1], NAME_LEN-1);
     if (opt_delayed)
     {
       if (strcmp(table_type,"MyISAM") &&

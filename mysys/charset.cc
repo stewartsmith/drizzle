@@ -128,7 +128,7 @@ char *get_charsets_dir(char *buf)
   char *res;
 
   if (charsets_dir != NULL)
-    strmake(buf, charsets_dir, FN_REFLEN-1);
+    strncpy(buf, charsets_dir, FN_REFLEN-1);
   else
   {
     if (test_if_hard_path(sharedir) ||

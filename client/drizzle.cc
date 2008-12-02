@@ -1462,7 +1462,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
 {
   switch(optid) {
   case OPT_CHARSETS_DIR:
-    strmake(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
+    strncpy(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
     charsets_dir = drizzle_charsets_dir;
     break;
   case  OPT_DEFAULT_CHARSET:
@@ -1478,7 +1478,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
       /* Check that delimiter does not contain a backslash */
       if (!strstr(argument, "\\"))
       {
-        strmake(delimiter, argument, sizeof(delimiter) - 1);
+        strncpy(delimiter, argument, sizeof(delimiter) - 1);
       }
       else
       {
@@ -1516,7 +1516,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
       if (argument && strlen(argument))
       {
         default_pager_set= 1;
-        strmake(pager, argument, sizeof(pager) - 1);
+        strncpy(pager, argument, sizeof(pager) - 1);
         my_stpcpy(default_pager, pager);
       }
       else if (default_pager_set)
@@ -2812,7 +2812,7 @@ static void init_tee(const char *file_name)
     return;
   }
   OUTFILE = new_outfile;
-  strmake(outfile, file_name, FN_REFLEN-1);
+  strncpy(outfile, file_name, FN_REFLEN-1);
   tee_fprintf(stdout, "Logging to file '%s'\n", file_name);
   opt_outfile= 1;
   return;
@@ -3298,7 +3298,8 @@ com_tee(string *, const char *line )
   /* eliminate the spaces before the parameters */
   while (my_isspace(charset_info,*param))
     param++;
-  end= strmake(file_name, param, sizeof(file_name) - 1);
+  strncpy(file_name, param, sizeof(file_name) - 1);
+  end= file_name + strlen(file_name);
   /* remove end space from command line */
   while (end > file_name && (my_isspace(charset_info,end[-1]) ||
                              my_iscntrl(charset_info,end[-1])))
@@ -3357,7 +3358,8 @@ com_pager(string *, const char *line)
   }
   else
   {
-    end= strmake(pager_name, param, sizeof(pager_name)-1);
+    end= strncpy(pager_name, param, sizeof(pager_name)-1);
+    end+= strlen(pager_name);
     while (end > pager_name && (my_isspace(charset_info,end[-1]) ||
                                 my_iscntrl(charset_info,end[-1])))
       end--;
@@ -3428,7 +3430,7 @@ com_connect(string *buffer, const char *line)
       Two null bytes are needed in the end of buff to allow
       get_arg to find end of string the second time it's called.
     */
-    tmp= strmake(buff, line, sizeof(buff)-2);
+    tmp= strncpy(buff, line, sizeof(buff)-2);
 #ifdef EXTRA_DEBUG
     tmp[1]= 0;
 #endif
@@ -3487,7 +3489,8 @@ static int com_source(string *, const char *line)
                     INFO_ERROR, 0,0);
   while (my_isspace(charset_info,*param))
     param++;
-  end=strmake(source_name,param,sizeof(source_name)-1);
+  end= strncpy(source_name,param,sizeof(source_name)-1);
+  end+= strlen(source_name);
   while (end > source_name && (my_isspace(charset_info,end[-1]) ||
                                my_iscntrl(charset_info,end[-1])))
     end--;
@@ -3533,7 +3536,7 @@ com_delimiter(string *, const char *line)
 {
   char buff[256], *tmp;
 
-  strmake(buff, line, sizeof(buff) - 1);
+  strncpy(buff, line, sizeof(buff) - 1);
   tmp= get_arg(buff, 0);
 
   if (!tmp || !*tmp)
@@ -3551,7 +3554,7 @@ com_delimiter(string *, const char *line)
       return 0;
     }
   }
-  strmake(delimiter, tmp, sizeof(delimiter) - 1);
+  strncpy(delimiter, tmp, sizeof(delimiter) - 1);
   delimiter_length= (int)strlen(delimiter);
   delimiter_str= delimiter;
   return 0;
@@ -3565,7 +3568,7 @@ com_use(string *, const char *line)
   int select_db;
 
   memset(buff, 0, sizeof(buff));
-  strmake(buff, line, sizeof(buff) - 1);
+  strncpy(buff, line, sizeof(buff) - 1);
   tmp= get_arg(buff, 0);
   if (!tmp || !*tmp)
   {

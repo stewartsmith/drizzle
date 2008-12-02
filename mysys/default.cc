@@ -721,7 +721,8 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
       end[0]=0;
 
-      strmake(curr_gr, ptr, cmin((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
+      strncpy(curr_gr, ptr, cmin((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
+      curr_gr[cmin((size_t)(end-ptr)+1, sizeof(curr_gr)-1)] = '\0';
 
       /* signal that a new group is found */
       opt_handler(handler_ctx, curr_gr, NULL);
@@ -743,7 +744,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
     if (!value)
     {
-      strmake(my_stpcpy(option,"--"),ptr, (size_t) (end-ptr));
+      strncpy(my_stpcpy(option,"--"),ptr,strlen(ptr)+1);
       if (opt_handler(handler_ctx, curr_gr, option))
         goto err;
     }
