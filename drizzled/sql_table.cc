@@ -4542,8 +4542,8 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   if (create_info->row_type == ROW_TYPE_NOT_USED)
     create_info->row_type= table->s->row_type;
 
-  if (ha_check_storage_engine_flag(old_db_type, HTON_ALTER_NOT_SUPPORTED) ||
-      ha_check_storage_engine_flag(new_db_type, HTON_ALTER_NOT_SUPPORTED))
+  if (ha_check_storage_engine_flag(old_db_type, HTON_BIT_ALTER_NOT_SUPPORTED) ||
+      ha_check_storage_engine_flag(new_db_type, HTON_BIT_ALTER_NOT_SUPPORTED))
   {
     my_error(ER_ILLEGAL_HA, MYF(0), table_name);
     goto err;
@@ -5002,7 +5002,7 @@ end_online:
                 (create_info->options & HA_LEX_CREATE_TMP_TABLE)));
   write_bin_log(session, true, session->query, session->query_length);
 
-  if (ha_check_storage_engine_flag(old_db_type, HTON_FLUSH_AFTER_RENAME))
+  if (ha_check_storage_engine_flag(old_db_type, HTON_BIT_FLUSH_AFTER_RENAME))
   {
     /*
       For the alter table to be properly flushed to the logs, we
@@ -5489,7 +5489,7 @@ static bool check_engine(Session *session, const char *table_name,
                        table_name);
   }
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE &&
-      ha_check_storage_engine_flag(*new_engine, HTON_TEMPORARY_NOT_SUPPORTED))
+      ha_check_storage_engine_flag(*new_engine, HTON_BIT_TEMPORARY_NOT_SUPPORTED))
   {
     if (create_info->used_fields & HA_CREATE_USED_ENGINE)
     {

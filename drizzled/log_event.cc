@@ -332,7 +332,7 @@ static void cleanup_load_tmpdir()
      we cannot meet Start_log event in the middle of events from one 
      LOAD DATA.
   */
-  p= strncpy(prefbuf, STRING_WITH_LEN("SQL_LOAD-")+1) + 9;
+  p= strncpy(prefbuf, STRING_WITH_LEN("SQL_LOAD-")) + 9;
   p= int10_to_str(::server_id, p, 10);
   *(p++)= '-';
   *p= 0;
@@ -1895,7 +1895,7 @@ int Start_log_event_v3::do_apply_event(Relay_log_info const *rli)
 */
 
 Format_description_log_event::
-Format_description_log_event(uint8_t binlog_ver, const char* server_ver)
+Format_description_log_event(uint8_t binlog_ver, const char*)
   :Start_log_event_v3(), event_type_permutation(0)
 {
   binlog_version= binlog_ver;
@@ -1935,46 +1935,8 @@ Format_description_log_event(uint8_t binlog_ver, const char* server_ver)
     }
     break;
 
-  case 1: /* 3.23 */
-  case 3: /* 4.0.x x>=2 */
-    /*
-      We build an artificial (i.e. not sent by the master) event, which
-      describes what those old master versions send.
-    */
-    if (binlog_ver==1)
-      my_stpcpy(server_version, server_ver ? server_ver : "3.23");
-    else
-      my_stpcpy(server_version, server_ver ? server_ver : "4.0");
-    common_header_len= binlog_ver==1 ? OLD_HEADER_LEN :
-      LOG_EVENT_MINIMAL_HEADER_LEN;
-    /*
-      The first new event in binlog version 4 is Format_desc. So any event type
-      after that does not exist in older versions. We use the events known by
-      version 3, even if version 1 had only a subset of them (this is not a
-      problem: it uses a few bytes for nothing but unifies code; it does not
-      make the slave detect less corruptions).
-    */
-    number_of_event_types= FORMAT_DESCRIPTION_EVENT - 1;
-    post_header_len=(uint8_t*) my_malloc(number_of_event_types*sizeof(uint8_t),
-                                       MYF(0));
-    if (post_header_len)
-    {
-      post_header_len[START_EVENT_V3-1]= START_V3_HEADER_LEN;
-      post_header_len[QUERY_EVENT-1]= QUERY_HEADER_MINIMAL_LEN;
-      post_header_len[STOP_EVENT-1]= 0;
-      post_header_len[ROTATE_EVENT-1]= (binlog_ver==1) ? 0 : ROTATE_HEADER_LEN;
-      post_header_len[LOAD_EVENT-1]= LOAD_HEADER_LEN;
-      post_header_len[SLAVE_EVENT-1]= 0;
-      post_header_len[CREATE_FILE_EVENT-1]= CREATE_FILE_HEADER_LEN;
-      post_header_len[APPEND_BLOCK_EVENT-1]= APPEND_BLOCK_HEADER_LEN;
-      post_header_len[EXEC_LOAD_EVENT-1]= EXEC_LOAD_HEADER_LEN;
-      post_header_len[DELETE_FILE_EVENT-1]= DELETE_FILE_HEADER_LEN;
-      post_header_len[NEW_LOAD_EVENT-1]= post_header_len[LOAD_EVENT-1];
-    }
-    break;
   default: /* Includes binlog version 2 i.e. 4.0.x x<=1 */
-    post_header_len= 0; /* will make is_valid() fail */
-    break;
+    assert(0);
   }
   calc_server_version_split();
 }
@@ -3930,23 +3892,23 @@ Execute_load_query_log_event::do_apply_event(Relay_log_info const *rli)
   p= buf;
   memcpy(p, query, fn_pos_start);
   p+= fn_pos_start;
-  fname= (p= strncpy(p, STRING_WITH_LEN(" INFILE \'")+1) + 9);
+  fname= (p= strncpy(p, STRING_WITH_LEN(" INFILE \'")) + 9);
   p= slave_load_file_stem(p, file_id, server_id, ".data");
   fname_end= p= strchr(p, '\0');                      // Safer than p=p+5
   *(p++)='\'';
   switch (dup_handling) {
   case LOAD_DUP_IGNORE:
-    p= strncpy(p, STRING_WITH_LEN(" IGNORE")+1) + 7;
+    p= strncpy(p, STRING_WITH_LEN(" IGNORE")) + 7;
     break;
   case LOAD_DUP_REPLACE:
-    p= strncpy(p, STRING_WITH_LEN(" REPLACE")+1) + 8;
+    p= strncpy(p, STRING_WITH_LEN(" REPLACE")) + 8;
     break;
   default:
     /* Ordinary load data */
     break;
   }
   size_t end_len = q_len-fn_pos_end;
-  p= strncpy(p, STRING_WITH_LEN(" INTO")+1) + 5;
+  p= strncpy(p, STRING_WITH_LEN(" INTO")) + 5;
   p= strncpy(p, query+fn_pos_end, end_len);
   p+= end_len;
 
@@ -3988,6 +3950,7 @@ bool sql_ex_info::write_data(IO_CACHE* file)
   }
   else
     assert(0);
+  return true;
 }
 
 

@@ -42,6 +42,7 @@ using namespace std;
   @{
 */
 
+extern size_t my_thread_stack_size;
 extern const CHARSET_INFO *character_set_filesystem;
 const char *any_db="*any*";	// Special symbol for check_access
 

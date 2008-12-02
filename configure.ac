@@ -376,7 +376,7 @@ dnl Needed for ltmain
 AC_PROG_RANLIB
 
 dnl Not critical since the generated file is distributed
-AC_PROG_YACC
+AC_CHECK_PROGS(YACC, ['bison -y'])
 if test -z "$YACC" && test -d ".bzr"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
@@ -492,8 +492,12 @@ AC_CXX_CMATH
 DRIZZLE_PROG_AR
 
 # libdrizzle versioning when linked with GNU ld.
-if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|grep -q GNU; then
-  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+if test "x$EGREP" != "x"
+then
+  if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|${EGREP} -q GNU
+  then
+    LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+  fi
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
@@ -501,58 +505,16 @@ AC_SUBST(LD_VERSION_SCRIPT)
 # Check for Google Proto Buffers
 #--------------------------------------------------------------------
 
-AC_MSG_CHECKING(for Google Protocol Buffers)
-AC_ARG_WITH(protobuf,
-  [AS_HELP_STRING([--with-protobuf@<:@=DIR@:>@],
-       [search for protobuf in DIR/include and DIR/lib])],
-  [ with_protobuf=$withval ],
-  [ with_protobuf=yes ])
+AC_LANG_PUSH([C++])
+SEARCH_FOR_LIB(protobuf, printf, google/protobuf/message.h,
+               AC_MSG_ERROR([protobuf is required for Drizzle]))
 
-save_CPPFLAGS="$CPPFLAGS"
-save_LIBS="$LIBS"
-
-if test "$with_protobuf" = "yes"
-then
-  CPPFLAGS=""
-  LIBS="-lprotobuf"
-  PROTO_PATH="$PATH"
-else
-  CPPFLAGS="-I$withval/include"
-  LIBS="-L$withval/lib -lprotobuf"
-  PROTO_PATH="${withval}/bin:$PATH"
-fi 
-
-AC_PATH_PROG([PROTOC],[protoc],[no],[$PROTO_PATH])
+AC_PATH_PROG([PROTOC],[protoc],[no],[$PROTOBUF_PATH])
 if test "x$PROTOC" = "xno"
 then
   AC_MSG_ERROR([Couldn't find protoc. Try installing Google Protocol Buffer.])
 fi
 
-AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([google/protobuf/message.h])
-if test "x$ac_cv_header_google_protobuf_message_h" != "xyes"
-then
-  AC_MSG_ERROR([Couldn't find message.h. Try installing Google Protocol Buffer development packages])
-fi
-AC_MSG_RESULT("$wthval")
-
-AC_CACHE_CHECK([for Message in libprotobuf], ac_cv_libprotobuf_works, [
-  AC_TRY_LINK([
-#include <google/protobuf/descriptor.pb.h>
-  ],[
-    google::protobuf::FileDescriptorProto testFdp;
-  ], ac_cv_libprotobuf_works=yes, [
-        AC_MSG_ERROR([could not find Google's libprotobuf])
-  ])
-
-])
-
-PROTOBUF_LIBS="${LIBS}"
-PROTOBUF_CPPFLAGS="${CPPFLAGS}"
-AC_SUBST(PROTOBUF_LIBS)
-AC_SUBST(PROTOBUF_CPPFLAGS)
-CPPFLAGS="$save_CPPFLAGS"
-LIBS="$save_LIBS"
 AC_LANG_POP()
 
 #--------------------------------------------------------------------
@@ -578,7 +540,7 @@ SEARCH_FOR_LIB(event, event_loop, event.h,
 AC_CACHE_CHECK([for bufferevent in libevent], ac_cv_libevent_works, [
   save_CPPFLAGS="$CPPFLAGS"
   save_LIBS="$LIBS"
-  CPPFLAGS="$EVENT_CPPFLAGS"
+  CPPFLAGS="$EVENT_CFLAGS"
   LIBS="$EVENT_LIBS"
   AC_TRY_LINK([
 #include <sys/types.h>
@@ -652,7 +614,7 @@ SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
                [$NCURSES_LIBS]) 
 
 save_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $READLINE_CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $READLINE_CFLAGS"
 AC_CHECK_HEADERS(readline/history.h)
 AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
 #ifdef HAVE_READLINE_HISTORY_H

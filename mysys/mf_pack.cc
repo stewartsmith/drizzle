@@ -317,10 +317,10 @@ size_t unpack_dirname(char * to, const char *from)
 	if (tilde_expansion[h_length-1] == FN_LIBCHAR)
 	  h_length--;
 	if (buff+h_length < suffix)
-	  memcpy(buff+h_length, suffix, length);
+          memmove(buff+h_length, suffix, length);
 	else
 	  bmove_upp((unsigned char*) buff+h_length+length, (unsigned char*) suffix+length, length);
-	memcpy(buff, tilde_expansion, h_length);
+        memmove(buff, tilde_expansion, h_length);
       }
     }
   }

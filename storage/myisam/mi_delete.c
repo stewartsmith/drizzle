@@ -369,7 +369,7 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned cha
   if (length > 0)
     bmove_upp((unsigned char*) endpos+length,(unsigned char*) endpos,(uint) (endpos-keypos));
   else
-    memcpy(keypos,keypos-length, (int) (endpos-keypos)+length);
+    memmove(keypos,keypos-length, (int) (endpos-keypos)+length);
   (*keyinfo->store_key)(keyinfo,keypos,&s_temp);
   /* Save pointer to next leaf */
   if (!(*keyinfo->get_key)(keyinfo,share->base.key_reflength,&keypos,ret_key))
@@ -437,7 +437,7 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     buff_length=mi_getint(buff);
 
     /* find keys to make a big key-page */
-    memcpy(next_keypos - key_reflength, buff + 2, key_reflength);
+    memmove(next_keypos - key_reflength, buff + 2, key_reflength);
     if (!_mi_get_last_key(info,keyinfo,anc_buff,anc_key,next_keypos,&length)
 	|| !_mi_get_last_key(info,keyinfo,leaf_buff,leaf_key,
 			     leaf_buff+leaf_length,&length))
@@ -499,13 +499,13 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 	bmove_upp((unsigned char*) endpos+t_length,(unsigned char*) endpos,
 		  (uint) (endpos-keypos));
       else
-	memcpy(keypos,keypos-t_length,(uint) (endpos-keypos)+t_length);
+	memmove(keypos,keypos-t_length,(uint) (endpos-keypos)+t_length);
       (*keyinfo->store_key)(keyinfo,keypos,&s_temp);
       mi_putint(anc_buff,(anc_length+=t_length),key_reflength);
 
 	/* Store key first in new page */
       if (nod_flag)
-	memcpy(buff + 2, half_pos - nod_flag, nod_flag);
+	memmove(buff + 2, half_pos - nod_flag, nod_flag);
       if (!(*keyinfo->get_key)(keyinfo,nod_flag,&half_pos,leaf_key))
 	goto err;
       t_length=(int) (*keyinfo->pack_key)(keyinfo, nod_flag, (unsigned char*) 0,
@@ -513,7 +513,7 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 					  leaf_key, &s_temp);
       /* t_length will always be > 0 for a new page !*/
       length=(uint) ((buff+mi_getint(buff))-half_pos);
-      memcpy(buff + p_length + t_length, half_pos, length);
+      memmove(buff + p_length + t_length, half_pos, length);
       (*keyinfo->store_key)(keyinfo,buff+p_length,&s_temp);
       mi_putint(buff,length+t_length+p_length,nod_flag);
 
@@ -536,7 +536,7 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   endpos=buff+buff_length;
 
   /* find keys to make a big key-page */
-  memcpy(next_keypos - key_reflength, leaf_buff+2, key_reflength);
+  memmove(next_keypos - key_reflength, leaf_buff+2, key_reflength);
   next_keypos=keypos;
   if (!(*keyinfo->get_key)(keyinfo,key_reflength,&next_keypos,
 			   anc_key))
@@ -552,10 +552,10 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 				prev_key, prev_key,
 				anc_key, &s_temp);
   if (t_length >= 0)
-    memcpy(endpos+t_length,leaf_buff+p_length, leaf_length-p_length);
+    memmove(endpos+t_length,leaf_buff+p_length, leaf_length-p_length);
   else						/* We gained space */
-    memcpy(endpos, leaf_buff+((int) p_length-t_length),
-           leaf_length - p_length + t_length);
+    memmove(endpos, leaf_buff+((int) p_length-t_length),
+            leaf_length - p_length + t_length);
 
   (*keyinfo->store_key)(keyinfo,endpos,&s_temp);
   buff_length=buff_length+leaf_length-p_length+t_length;
@@ -598,19 +598,19 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
       bmove_upp((unsigned char*) temp_pos+t_length,(unsigned char*) temp_pos,
 		(uint) (temp_pos-keypos));
     else
-      memcpy(keypos,keypos-t_length,(uint) (temp_pos-keypos)+t_length);
+      memmove(keypos,keypos-t_length,(uint) (temp_pos-keypos)+t_length);
     (*keyinfo->store_key)(keyinfo,keypos,&s_temp);
     mi_putint(anc_buff,(anc_length+=t_length),key_reflength);
 
     /* Store first key on new page */
     if (nod_flag)
-      memcpy(leaf_buff+2, half_pos - nod_flag, nod_flag);
+      memmove(leaf_buff+2, half_pos - nod_flag, nod_flag);
     if (!(length=(*keyinfo->get_key)(keyinfo,nod_flag,&half_pos,leaf_key)))
       goto err;
     t_length=(*keyinfo->pack_key)(keyinfo,nod_flag, (unsigned char*) 0,
 				  (unsigned char*) 0, (unsigned char*) 0, leaf_key, &s_temp);
     length=(uint) ((buff+buff_length)-half_pos);
-    memcpy(leaf_buff + p_length + t_length, half_pos, length);
+    memmove(leaf_buff + p_length + t_length, half_pos, length);
     (*keyinfo->store_key)(keyinfo,leaf_buff+p_length,&s_temp);
     mi_putint(leaf_buff,length+t_length+p_length,nod_flag);
     if (_mi_write_keypage(info,keyinfo,leaf_page,DFLT_INIT_HITS,leaf_buff))
@@ -752,6 +752,6 @@ static uint32_t remove_key(MI_KEYDEF *keyinfo, uint32_t nod_flag,
   }
 end:
   assert(page_end-start >= s_length);
-  memcpy(start, start + s_length, page_end-start-s_length);
+  memmove(start, start + s_length, page_end-start-s_length);
   return s_length;
 } /* remove_key */

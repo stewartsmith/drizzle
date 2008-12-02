@@ -13,9 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <m_string.h>
+#include <mystrings/m_string.h>
+#include <stdlib.h>
 
-static void *my_str_malloc_default(size_t size)
+void *my_str_malloc_default(size_t size)
 {
   void *ret= malloc(size);
   if (!ret)
@@ -23,10 +24,10 @@ static void *my_str_malloc_default(size_t size)
   return ret;
 }
 
-static void my_str_free_default(void *ptr)
+void my_str_free_default(void *ptr)
 {
   free(ptr);
 }
 
-void *(*my_str_malloc)(size_t)= &my_str_malloc_default;
-void (*my_str_free)(void *)= &my_str_free_default;
+str_malloc_func my_str_malloc= &my_str_malloc_default;
+str_free_func my_str_free= &my_str_free_default;

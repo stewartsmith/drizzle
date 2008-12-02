@@ -277,6 +277,8 @@ bool opt_log_slave_updates= 0;
 static struct pollfd fds[UINT8_MAX];
 static uint8_t pollfd_count= 0;
 
+size_t my_thread_stack_size= 65536;
+
 /*
   Legacy global handlerton. These will be removed (please do not add more).
 */
@@ -2375,10 +2377,10 @@ int main(int argc, char **argv)
     {
       if (global_system_variables.log_warnings)
       {
-        /* %zu is not yet in C++ */
-        uint64_t size_tmp= (uint64_t)stack_size;
-        sql_print_warning(_("Asked for %u thread stack, but got %"PRIu64),
-                          my_thread_stack_size, size_tmp);
+        sql_print_warning(_("Asked for %"PRIu64" thread stack, "
+                            "but got %"PRIu64),
+                          (uint64_t)my_thread_stack_size,
+                          (uint64_t)stack_size);
       }
       my_thread_stack_size= stack_size;
     }
@@ -2466,7 +2468,6 @@ int main(int argc, char **argv)
 
 
   handle_connections_sockets();
-
   /* (void) pthread_attr_destroy(&connection_attrib); */
 
 
@@ -3402,7 +3403,7 @@ struct my_option my_long_options[] =
       "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
    (char**) &global_system_variables.myisam_sort_buff_size,
    (char**) &max_system_variables.myisam_sort_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, INT32_MAX, 0, 1, 0},
+   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, SIZE_MAX, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
    N_("Specifies how MyISAM index statistics collection code should threat "
       "NULLs. Possible values of name are 'nulls_unequal' "
@@ -3495,7 +3496,7 @@ struct my_option my_long_options[] =
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
    (char**) &max_system_variables.range_alloc_block_size, 0, GET_ULONG,
-   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, ULONG_MAX,
+   REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, SIZE_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
     N_("Each thread that does a sequential scan allocates a buffer of this "
@@ -3558,8 +3559,8 @@ struct my_option my_long_options[] =
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
-   (char**) &max_system_variables.sortbuff_size, 0, GET_ULL, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, UINT64_MAX,
+   (char**) &max_system_variables.sortbuff_size, 0, GET_ULONG, REQUIRED_ARG,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"sync-binlog", OPT_SYNC_BINLOG,
    N_("Synchronously flush binary log to disk after every #th event. "
@@ -3591,9 +3592,9 @@ struct my_option my_long_options[] =
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,
-   (char**) &my_thread_stack_size, 0, GET_ULL,
+   (char**) &my_thread_stack_size, 0, GET_ULONG,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
-   1024L*128L, ULONG_MAX, 0, 1024, 0},
+   UINT32_C(1024*128), SIZE_MAX, 0, 1024, 0},
   { "time_format", OPT_TIME_FORMAT,
     N_("The TIME format (for future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],

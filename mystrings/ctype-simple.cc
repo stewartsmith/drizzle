@@ -17,6 +17,7 @@
 #include "m_ctype.h"
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "stdarg.h"
 
@@ -214,12 +215,11 @@ size_t my_casedn_str_8bit(const CHARSET_INFO * const  cs,char *str)
 
 
 size_t my_caseup_8bit(const CHARSET_INFO * const  cs, char *src, size_t srclen,
-                      char *dst __attribute__((unused)),
-                      size_t dstlen __attribute__((unused)))
+                      char *dst, size_t dstlen)
 {
+  assert(src == dst && srclen == dstlen);
   char *end= src + srclen;
   register unsigned char *map= cs->to_upper;
-  assert(src == dst && srclen == dstlen);
   for ( ; src != end ; src++)
     *src= (char) map[(unsigned char) *src];
   return srclen;
@@ -227,12 +227,11 @@ size_t my_caseup_8bit(const CHARSET_INFO * const  cs, char *src, size_t srclen,
 
 
 size_t my_casedn_8bit(const CHARSET_INFO * const  cs, char *src, size_t srclen,
-                      char *dst __attribute__((unused)),
-                      size_t dstlen __attribute__((unused)))
+                      char *dst, size_t dstlen)
 {
+  assert(src == dst && srclen == dstlen);
   char *end= src + srclen;
   register unsigned char *map=cs->to_lower;
-  assert(src == dst && srclen == dstlen);
   for ( ; src != end ; src++)
     *src= (char) map[(unsigned char) *src];
   return srclen;
@@ -249,7 +248,7 @@ int my_strcasecmp_8bit(const CHARSET_INFO * const  cs,const char *s, const char 
 
 int my_mb_wc_8bit(const CHARSET_INFO * const cs,my_wc_t *wc,
 		  const unsigned char *str,
-		  const unsigned char *end __attribute__((unused)))
+		  const unsigned char *end)
 {
   if (str >= end)
     return MY_CS_TOOSMALL;
@@ -286,8 +285,8 @@ int my_wc_mb_8bit(const CHARSET_INFO * const cs,my_wc_t wc,
    end buffer must be checked.
 */
 
-size_t my_snprintf_8bit(const CHARSET_INFO * const cs  __attribute__((unused)),
-                        char* to, size_t n  __attribute__((unused)),
+size_t my_snprintf_8bit(const CHARSET_INFO * const,
+                        char* to, size_t n,
 		     const char* fmt, ...)
 {
   va_list args;
@@ -820,7 +819,7 @@ noconv:
 */
 
 
-double my_strntod_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
+double my_strntod_8bit(const CHARSET_INFO * const,
 		       char *str, size_t length,
 		       char **end, int *err)
 {
@@ -837,7 +836,7 @@ double my_strntod_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
   Assume len >= 1
 */
 
-size_t my_long10_to_str_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
+size_t my_long10_to_str_8bit(const CHARSET_INFO * const,
                              char *dst, size_t len, int radix, long int val)
 {
   char buffer[66];
@@ -878,9 +877,9 @@ size_t my_long10_to_str_8bit(const CHARSET_INFO * const cs __attribute__((unused
 }
 
 
-size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
-                                 char *dst, size_t len, int radix,
-                                 int64_t val)
+size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const,
+                                char *dst, size_t len, int radix,
+                                int64_t val)
 {
   char buffer[65];
   register char *p, *e;
@@ -1122,37 +1121,35 @@ size_t my_scan_8bit(const CHARSET_INFO * const cs, const char *str, const char *
 }
 
 
-void my_fill_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
-		   char *s, size_t l, int fill)
+void my_fill_8bit(const CHARSET_INFO * const,
+		  char *s, size_t l, int fill)
 {
   memset(s, fill, l);
 }
 
 
-size_t my_numchars_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
-		      const char *b, const char *e)
+size_t my_numchars_8bit(const CHARSET_INFO * const,
+		        const char *b, const char *e)
 {
   return (size_t) (e - b);
 }
 
 
-size_t my_numcells_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
+size_t my_numcells_8bit(const CHARSET_INFO * const,
                         const char *b, const char *e)
 {
   return (size_t) (e - b);
 }
 
 
-size_t my_charpos_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
-                       const char *b  __attribute__((unused)),
-                       const char *e  __attribute__((unused)),
-                       size_t pos)
+size_t my_charpos_8bit(const CHARSET_INFO * const,
+                       const char *, const char *, size_t pos)
 {
   return pos;
 }
 
 
-size_t my_well_formed_len_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
+size_t my_well_formed_len_8bit(const CHARSET_INFO * const,
                                const char *start, const char *end,
                                size_t nchars, int *error)
 {
@@ -1162,7 +1159,7 @@ size_t my_well_formed_len_8bit(const CHARSET_INFO * const cs __attribute__((unus
 }
 
 
-size_t my_lengthsp_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
+size_t my_lengthsp_8bit(const CHARSET_INFO * const,
                         const char *ptr, size_t length)
 {
   const char *end;
@@ -1252,7 +1249,7 @@ static int pcmp(const void * f, const void * s)
   return res;
 }
 
-static bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
+static bool create_fromuni(CHARSET_INFO *cs, cs_alloc_func alloc)
 {
   uni_idx	idx[PLANE_NUM];
   int		i,n;
@@ -1331,8 +1328,7 @@ static bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
   return false;
 }
 
-extern "C"
-bool my_cset_init_8bit(CHARSET_INFO *cs, void *(*alloc)(size_t))
+bool my_cset_init_8bit(CHARSET_INFO *cs, cs_alloc_func alloc)
 {
   cs->caseup_multiply= 1;
   cs->casedn_multiply= 1;
@@ -1359,17 +1355,15 @@ static void set_max_sort_char(CHARSET_INFO *cs)
   }
 }
 
-extern "C"
-bool my_coll_init_simple(CHARSET_INFO *cs,
-                         void *(*alloc)(size_t) __attribute__((unused)))
+bool my_coll_init_simple(CHARSET_INFO *cs, cs_alloc_func)
 {
   set_max_sort_char(cs);
   return false;
 }
 
 
-int64_t my_strtoll10_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
-                           const char *nptr, char **endptr, int *error)
+int64_t my_strtoll10_8bit(const CHARSET_INFO * const,
+                          const char *nptr, char **endptr, int *error)
 {
   return my_strtoll10(nptr, endptr, error);
 }
@@ -1477,7 +1471,7 @@ static uint64_t d10[DIGITS_IN_ULONGLONG]=
 */
 
 uint64_t
-my_strntoull10rnd_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
+my_strntoull10rnd_8bit(const CHARSET_INFO * const,
                        const char *str, size_t length, int unsigned_flag,
                        char **endptr, int *error)
 {
@@ -1755,17 +1749,15 @@ ret_too_big:
 
 
 
-bool my_propagate_simple(const CHARSET_INFO * const cs __attribute__((unused)),
-                            const unsigned char *str __attribute__((unused)),
-                            size_t length __attribute__((unused)))
+bool my_propagate_simple(const CHARSET_INFO * const, const unsigned char *,
+                         size_t)
 {
   return 1;
 }
 
 
-bool my_propagate_complex(const CHARSET_INFO * const cs __attribute__((unused)),
-                             const unsigned char *str __attribute__((unused)),
-                             size_t length __attribute__((unused)))
+bool my_propagate_complex(const CHARSET_INFO * const, const unsigned char *,
+                          size_t)
 {
   return 0;
 }

@@ -160,7 +160,7 @@ struct system_variables
   uint64_t max_tmp_tables;
   uint64_t min_examined_row_limit;
   uint32_t myisam_repair_threads;
-  uint64_t myisam_sort_buff_size;
+  size_t myisam_sort_buff_size;
   uint32_t myisam_stats_method;
   uint32_t net_buffer_length;
   uint32_t net_interactive_timeout;
@@ -183,7 +183,7 @@ struct system_variables
   uint32_t read_buff_size;
   uint32_t read_rnd_buff_size;
   uint32_t div_precincrement;
-  uint64_t sortbuff_size;
+  size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
   uint32_t completion_type;
@@ -191,7 +191,7 @@ struct system_variables
   uint32_t sql_mode;
   uint32_t default_week_format;
   uint64_t max_seeks_for_key;
-  uint64_t range_alloc_block_size;
+  size_t range_alloc_block_size;
   uint32_t query_alloc_block_size;
   uint32_t query_prealloc_size;
   uint32_t trans_alloc_block_size;

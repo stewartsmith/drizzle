@@ -15,7 +15,7 @@
 
 noinst_LTLIBRARIES = 	libfunctions.la
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CFLAGS}
 
 libfunctions_la_SOURCES = abs.cc \
 		  acos.cc \

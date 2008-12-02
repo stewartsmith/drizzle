@@ -118,7 +118,7 @@ static void backtrace_current_thread(void)
 #endif
 
 
-void  print_stacktrace(unsigned char* stack_bottom, ulong thread_stack)
+void  print_stacktrace(unsigned char* stack_bottom, size_t thread_stack)
 {
 #if HAVE_BACKTRACE
   backtrace_current_thread();
@@ -156,8 +156,8 @@ void  print_stacktrace(unsigned char* stack_bottom, ulong thread_stack)
       fp < (unsigned char**) stack_bottom - thread_stack)
   {
     fprintf(stderr, "Bogus stack limit or frame pointer,\
- fp=%p, stack_bottom=%p, thread_stack=%ld, aborting backtrace.\n",
-	    (void *)fp, (void *)stack_bottom, thread_stack);
+ fp=%p, stack_bottom=%p, thread_stack=%"PRIu64", aborting backtrace.\n",
+	    (void *)fp, (void *)stack_bottom, (uint64_t)thread_stack);
     return;
   }
 

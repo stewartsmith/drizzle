@@ -25,7 +25,9 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <stdbool.h>
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
 #include <libdrizzle/drizzle_field.h>
 #include <libdrizzle/drizzle_data.h>
 #include <libdrizzle/drizzle_rows.h>

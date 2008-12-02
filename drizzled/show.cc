@@ -36,6 +36,10 @@
 #include <drizzled/field/fdecimal.h>
 
 #include <string>
+#include <iostream>
+#include <sstream>
+
+using namespace std;
 
 inline const char *
 str_or_nil(const char *str)
@@ -1543,7 +1547,6 @@ static bool show_status_array(Session *session, const char *wild,
       {
         char *value=var->value;
         const char *pos, *end;                  // We assign a lot of const's
-
         pthread_mutex_lock(&LOCK_global_system_variables);
 
         if (show_type == SHOW_SYS)
@@ -1578,6 +1581,16 @@ static bool show_status_array(Session *session, const char *wild,
           /* fall through */
         case SHOW_LONGLONG:
           end= int64_t10_to_str(*(int64_t*) value, buff, 10);
+          break;
+        case SHOW_SIZE:
+          {
+            stringstream ss (stringstream::in);
+            ss << *(size_t*) value;
+
+            string str= ss.str(); 
+            strncpy(buff, str.c_str(), str.length());
+            end= buff+ str.length();
+          }
           break;
         case SHOW_HA_ROWS:
           end= int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);

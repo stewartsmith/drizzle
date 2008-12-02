@@ -57,6 +57,8 @@ static void my_aiowait(my_aio_result *result);
 #include <mysys/iocache.h>
 #include <errno.h>
 #include <drizzled/util/test.h>
+#include <stdlib.h>
+
 #define lock_append_buffer(info) \
  pthread_mutex_lock(&(info)->append_buffer_lock)
 #define unlock_append_buffer(info) \
@@ -1371,8 +1373,8 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
       my_errno=errno;
       if (info->request_pos != info->buffer)
       {
-	memcpy(info->buffer, info->request_pos,
-               (size_t) (info->read_end - info->read_pos));
+        memmove(info->buffer, info->request_pos,
+                (size_t) (info->read_end - info->read_pos));
 	info->request_pos=info->buffer;
 	info->read_pos-=info->read_length;
 	info->read_end-=info->read_length;
