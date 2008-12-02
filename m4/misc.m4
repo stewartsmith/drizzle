@@ -471,7 +471,7 @@ AC_DEFUN([DRIZZLE_CHECK_C_VERSION],[
     CC_VERSION=`$CC --version | sed 1q`
   elif test "$SUNCC" = "yes"
   then
-    CC_VERSION=`$CC -V`
+    CC_VERSION=`$CC -V 2>&1 | sed 1q`
   else
     CC_VERSION=""
   fi
@@ -488,7 +488,7 @@ AC_DEFUN([DRIZZLE_CHECK_CXX_VERSION], [
     CXX_VERSION=`$CXX --version | sed 1q`
   elif test "$SUNCC" = "yes"
   then
-    CXX_VERSION=`$CXX -V`
+    CXX_VERSION=`$CXX -V 2>&1 | sed 1q`
   else
     CXX_VERSION=""
   fi
