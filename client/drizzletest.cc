@@ -1635,7 +1635,8 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
                                  length)))
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
-      strmake(buff, save_var_name, length);
+      strncpy(buff, save_var_name, length);
+      buff[length]= '\0';
       v= var_from_env(buff, "");
     }
     var_name--;  /* Point at last character */
@@ -3208,7 +3209,7 @@ static void do_get_file_name(struct st_command *command,
   if (*p)
     *p++= 0;
   command->last_argument= p;
-  strmake(dest, name, dest_max_len - 1);
+  strncpy(dest, name, dest_max_len - 1);
 }
 
 
@@ -3944,7 +3945,7 @@ static void do_delimiter(struct st_command* command)
   if (!(*p))
     die("Can't set empty delimiter");
 
-  strmake(delimiter, p, sizeof(delimiter) - 1);
+  strncpy(delimiter, p, sizeof(delimiter) - 1);
   delimiter_length= strlen(delimiter);
 
   command->last_argument= p + delimiter_length;
@@ -5628,7 +5629,7 @@ int main(int argc, char **argv)
 
         if (save_file[0])
         {
-          strmake(command->require_file, save_file, sizeof(save_file) - 1);
+          strncpy(command->require_file, save_file, sizeof(save_file) - 1);
           save_file[0]= 0;
         }
         run_query(cur_con, command, flags);

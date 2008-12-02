@@ -149,7 +149,10 @@ char *convert_dirname(char *to, const char *from, const char *from_end)
   }
 #else
   /* This is ok even if to == from, becasue we need to cut the string */
-  to= strmake(to, from, (size_t) (from_end-from));
+  size_t len= cmin(strlen(from),(size_t)(from_end-from));
+  to= strncpy(to, from, len);
+  to+= len;
+  to[0]= '\0';
 #endif
 
   /* Add FN_LIBCHAR to the end of directory path */
