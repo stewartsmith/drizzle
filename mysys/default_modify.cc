@@ -93,7 +93,7 @@ int modify_defaults_file(const char *file_location, const char *option,
                      NEWLINE_LEN +              /* Space for newline */
                      RESERVE);                  /* Some additional space */
 
-  buffer_size= (size_t)cmax(file_stat.st_size + 1, SIZE_MAX);
+  buffer_size= (size_t)cmax((uint64_t)file_stat.st_size + 1, (uint64_t)SIZE_MAX);
 
   /*
     Reserve space to read the contents of the file and some more
