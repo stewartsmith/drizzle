@@ -73,6 +73,8 @@ extern "C" {
 
 #include "ha_innodb.h"
 #include "i_s.h"
+#include "handler0vars.h"
+#include "mysql_addons.h"
 
 #ifndef DRIZZLE_SERVER
 /* This is needed because of Bug #3596.  Let us hope that pthread_mutex_t
@@ -91,22 +93,29 @@ static pthread_cond_t commit_cond;
 static pthread_mutex_t commit_cond_m;
 static bool innodb_inited = 0;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define INSIDE_HA_INNOBASE_CC
 
-static int64_t index_cond_func_innodb(void *arg);
+extern "C"
+int64_t index_cond_func_innodb(void *arg);
 
-#ifdef __cplusplus
-}
-#endif
+/* In the Windows plugin, the return value of current_session is
+undefined.  Map it to NULL. */
+#if defined MYSQL_DYNAMIC_PLUGIN && defined __WIN__
+# undef current_session
+# define current_session NULL
+# define EQ_CURRENT_SESSION(session) TRUE
+#else /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
+# define EQ_CURRENT_SESSION(session) ((session) == current_session)
+#endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 /* These must be weak global variables in the dynamic plugin. */
 struct handlerton* innodb_hton_ptr;
-
-
+#ifdef __WIN__
+struct st_mysql_plugin*	builtin_innobase_plugin_ptr;
+#else
 int builtin_innobase_plugin;
+#endif /* __WIN__ */
 /********************************************************************
 Copy InnoDB system variables from the static InnoDB to the dynamic
 plugin. */
@@ -127,8 +136,8 @@ static const long AUTOINC_NO_LOCKING = 2;
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
 	innobase_log_buffer_size,
 	innobase_additional_mem_pool_size, innobase_file_io_threads,
-	innobase_lock_wait_timeout, innobase_force_recovery,
-	innobase_open_files, innobase_autoinc_lock_mode;
+	innobase_force_recovery, innobase_open_files,
+	innobase_autoinc_lock_mode;
 
 static int64_t innobase_buffer_pool_size, innobase_log_file_size;
 
@@ -162,7 +171,7 @@ static my_bool	innobase_use_checksums			= TRUE;
 static my_bool	innobase_locks_unsafe_for_binlog	= FALSE;
 static my_bool	innobase_rollback_on_timeout		= FALSE;
 static my_bool	innobase_create_status_file		= FALSE;
-static my_bool innobase_stats_on_metadata		= TRUE;
+static my_bool	innobase_stats_on_metadata		= TRUE;
 static my_bool	innobase_adaptive_hash_index		= TRUE;
 
 static char*	internal_innobase_data_file_path	= NULL;
@@ -209,7 +218,7 @@ innobase_file_format_name_lookup(
 	const char*	format_name);		/* in: pointer to file format
 						name */
 /****************************************************************
-Validate the file format check config parameters, as a side affect it
+Validate the file format check config parameters, as a side effect it
 sets the srv_check_file_format_at_startup variable. */
 static
 bool
@@ -219,7 +228,7 @@ innobase_file_format_check_on_off(
 						"on" or "off" */
 	const char*	format_check);		/* in: parameter value */
 /****************************************************************
-Validate the file format check config parameters, as a side affect it
+Validate the file format check config parameters, as a side effect it
 sets the srv_check_file_format_at_startup variable. */
 static
 bool
@@ -228,71 +237,6 @@ innobase_file_format_check_validate(
 						/* out: true if valid
 						config value */
 	const char*	format_check);		/* in: parameter value */
-/*****************************************************************
-Check if it is a valid file format. This function is registered as
-a callback with MySQL. */
-static
-int
-innodb_file_format_name_validate(
-/*=============================*/
-						/* out: 0 for valid file
-						format */
-	Session*			session,	/* in: thread handle */
-	struct st_mysql_sys_var*	var,	/* in: pointer to system
-						variable */
-	void*				save,	/* out: immediate result
-						for update function */
-	struct st_mysql_value*		value);	/* in: incoming string */
-/********************************************************************
-Update the system variable innodb_file_format using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-bool
-innodb_file_format_name_update(
-/*===========================*/
-						/* out: should never
-						fail since it is
-						already validated */
-	Session*			session,	/* in: thread handle */
-	struct st_mysql_sys_var*	var,	/* in: pointer to
-						system variable */
-	void*				var_ptr,/* out: where the
-						formal string goes */
-	void*				save);	/* in: immediate result
-						from check function */
-/*****************************************************************
-Check if it is a valid file format. This function is registered as
-a callback with MySQL. */
-static
-int
-innodb_file_format_check_validate(
-/*==============================*/
-						/* out: 0 for valid file
-						format */
-	Session*			session,/* in: thread handle */
-	struct st_mysql_sys_var*	var,	/* in: pointer to system
-						variable */
-	void*				save,	/* out: immediate result
-						for update function */
-	struct st_mysql_value*		value);	/* in: incoming string */
-/********************************************************************
-Update the system variable innodb_file_format_check using the "saved"
-value. This function is registered as a callback with MySQL. */
-static
-bool
-innodb_file_format_check_update(
-/*============================*/
-						/* out: should never
-						fail since it is
-						already validated */
-	Session*			session,/* in: thread handle */
-	struct st_mysql_sys_var*	var,	/* in: pointer to
-						system variable */
-	void*				var_ptr,/* out: where the
-						formal string goes */
-	void*				save);	/* in: immediate result
-						from check function */
-
 
 static const char innobase_hton_name[]= "InnoDB";
 
@@ -306,10 +250,13 @@ static DRIZZLE_SessionVAR_BOOL(table_locks, PLUGIN_VAR_OPCMDARG,
   /* check_func */ NULL, /* update_func */ NULL,
   /* default */ TRUE);
 
-static DRIZZLE_SessionVAR_BOOL(strict_mode,
-  PLUGIN_VAR_NOCMDARG,
+static DRIZZLE_SessionVAR_BOOL(strict_mode, PLUGIN_VAR_OPCMDARG,
   "Use strict mode when evaluating create options.",
   NULL, NULL, FALSE);
+
+static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
+  "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
+  NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
 
 static handler *innobase_create_handler(handlerton *hton,
@@ -470,8 +417,10 @@ static SHOW_VAR innodb_status_variables[]= {
   (char*) &export_vars.innodb_buffer_pool_pages_flushed,  SHOW_LONG},
   {"buffer_pool_pages_free",
   (char*) &export_vars.innodb_buffer_pool_pages_free,	  SHOW_LONG},
+#ifdef UNIV_DEBUG
   {"buffer_pool_pages_latched",
   (char*) &export_vars.innodb_buffer_pool_pages_latched,  SHOW_LONG},
+#endif /* UNIV_DEBUG */
   {"buffer_pool_pages_misc",
   (char*) &export_vars.innodb_buffer_pool_pages_misc,	  SHOW_LONG},
   {"buffer_pool_pages_total",
@@ -576,7 +525,7 @@ thd_is_replication_slave_thread(
 /**********************************************************************
 Save some CPU by testing the value of srv_thread_concurrency in inline
 functions. */
-inline
+static inline
 void
 innodb_srv_conc_enter_innodb(
 /*=========================*/
@@ -593,7 +542,7 @@ innodb_srv_conc_enter_innodb(
 /**********************************************************************
 Save some CPU by testing the value of srv_thread_concurrency in inline
 functions. */
-inline
+static inline
 void
 innodb_srv_conc_exit_innodb(
 /*========================*/
@@ -612,7 +561,7 @@ Releases possible search latch and InnoDB thread FIFO ticket. These should
 be released at each SQL statement end, and also when mysqld passes the
 control to the client. It does no harm to release these also in the middle
 of an SQL statement. */
-inline
+static inline
 void
 innobase_release_stat_resources(
 /*============================*/
@@ -649,9 +598,48 @@ thd_has_edited_nontrans_tables(
 	return((ibool) session_non_transactional_update((Session*) session));
 }
 
+/**********************************************************************
+Returns true if the thread is executing a SELECT statement. */
+extern "C" UNIV_INTERN
+ibool
+thd_is_select(
+/*==========*/
+				/* out: true if thd is executing SELECT */
+	const void*	session)	/* in: thread handle (Session*) */
+{
+	return(session_sql_command((const Session*) session) == SQLCOM_SELECT);
+}
+
+/**********************************************************************
+Returns true if the thread is executing in innodb_strict_mode. */
+extern "C" UNIV_INTERN
+ibool
+thd_is_strict(
+/*==========*/
+				/* out: true if thd is in strict mode */
+	void*	session)	/* in: thread handle (Session*) */
+{
+	return(SessionVAR((Session*) session, strict_mode));
+}
+
+/**********************************************************************
+Returns the lock wait timeout for the current connection. */
+extern "C" UNIV_INTERN
+ulong
+thd_lock_wait_timeout(
+/*==================*/
+				/* out: the lock wait timeout, in seconds */
+	void*	session)	/* in: thread handle (Session*), or NULL to query
+				the global innodb_lock_wait_timeout */
+{
+	/* According to <drizzle/plugin.h>, passing session == NULL
+	returns the global value of the session variable. */
+	return(SessionVAR((Session*) session, lock_wait_timeout));
+}
+
 /************************************************************************
 Obtain the InnoDB transaction of a MySQL thread. */
-inline
+static inline
 trx_t*&
 session_to_trx(
 /*=======*/
@@ -695,7 +683,7 @@ Increments innobase_active_counter and every INNOBASE_WAKE_INTERVALth
 time calls srv_active_wake_master_thread. This function should be used
 when a single database operation may introduce a small need for
 server utility activity, like checkpointing. */
-inline
+static inline
 void
 innobase_active_small(void)
 /*=======================*/
@@ -902,41 +890,35 @@ innobase_get_cset_width(
 }
 
 /**********************************************************************
-Converts an identifier to a table name.
-
-NOTE that the exact prototype of this function has to be in
-/innobase/dict/dict0dict.c! */
+Converts an identifier to a table name. */
 extern "C" UNIV_INTERN
 void
 innobase_convert_from_table_id(
 /*===========================*/
-	char*		to,	/* out: converted identifier */
-	const char*	from,	/* in: identifier to convert */
-	ulint		len)	/* in: length of 'to', in bytes */
+	struct charset_info_st*	cs,	/* in: the 'from' character set */
+	char*			to,	/* out: converted identifier */
+	const char*		from,	/* in: identifier to convert */
+	ulint			len)	/* in: length of 'to', in bytes */
 {
 	uint	errors;
 
-	strconvert(session_charset(current_session), from,
-		   &my_charset_filename, to, (uint) len, &errors);
+	strconvert(cs, from, &my_charset_filename, to, (uint) len, &errors);
 }
 
 /**********************************************************************
-Converts an identifier to UTF-8.
-
-NOTE that the exact prototype of this function has to be in
-/innobase/dict/dict0dict.c! */
+Converts an identifier to UTF-8. */
 extern "C" UNIV_INTERN
 void
 innobase_convert_from_id(
 /*=====================*/
-	char*		to,	/* out: converted identifier */
-	const char*	from,	/* in: identifier to convert */
-	ulint		len)	/* in: length of 'to', in bytes */
+	struct charset_info_st*	cs,	/* in: the 'from' character set */
+	char*			to,	/* out: converted identifier */
+	const char*		from,	/* in: identifier to convert */
+	ulint			len)	/* in: length of 'to', in bytes */
 {
 	uint	errors;
 
-	strconvert(session_charset(current_session), from,
-		   system_charset_info, to, (uint) len, &errors);
+	strconvert(cs, from, system_charset_info, to, (uint) len, &errors);
 }
 
 /**********************************************************************
@@ -953,10 +935,7 @@ innobase_strcasecmp(
 }
 
 /**********************************************************************
-Makes all characters in a NUL-terminated UTF-8 string lower case.
-
-NOTE that the exact prototype of this function has to be in
-/innobase/dict/dict0dict.c! */
+Makes all characters in a NUL-terminated UTF-8 string lower case. */
 extern "C" UNIV_INTERN
 void
 innobase_casedn_str(
@@ -967,10 +946,7 @@ innobase_casedn_str(
 }
 
 /**************************************************************************
-Determines the connection character set.
-
-NOTE that the exact prototype of this function has to be in
-/innobase/dict/dict0dict.c! */
+Determines the connection character set. */
 extern "C" UNIV_INTERN
 struct charset_info_st*
 innobase_get_charset(
@@ -981,6 +957,99 @@ innobase_get_charset(
 	return(session_charset((Session*) mysql_session));
 }
 
+#if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
+/***********************************************************************
+Map an OS error to an errno value. The OS error number is stored in
+_doserrno and the mapped value is stored in errno) */
+extern "C"
+void __cdecl
+_dosmaperr(
+	unsigned long);	/* in: OS error value */
+
+/*************************************************************************
+Creates a temporary file. */
+extern "C" UNIV_INTERN
+int
+innobase_mysql_tmpfile(void)
+/*========================*/
+			/* out: temporary file descriptor, or < 0 on error */
+{
+	int	fd;				/* handle of opened file */
+	HANDLE	osfh;				/* OS handle of opened file */
+	char*	tmpdir;				/* point to the directory
+						where to create file */
+	TCHAR	path_buf[MAX_PATH - 14];	/* buffer for tmp file path.
+						The length cannot be longer
+						than MAX_PATH - 14, or
+						GetTempFileName will fail. */
+	char	filename[MAX_PATH];		/* name of the tmpfile */
+	DWORD	fileaccess = GENERIC_READ	/* OS file access */
+			     | GENERIC_WRITE
+			     | DELETE;
+	DWORD	fileshare = FILE_SHARE_READ	/* OS file sharing mode */
+			    | FILE_SHARE_WRITE
+			    | FILE_SHARE_DELETE;
+	DWORD	filecreate = CREATE_ALWAYS;	/* OS method of open/create */
+	DWORD	fileattrib =			/* OS file attribute flags */
+			     FILE_ATTRIBUTE_NORMAL
+			     | FILE_FLAG_DELETE_ON_CLOSE
+			     | FILE_ATTRIBUTE_TEMPORARY
+			     | FILE_FLAG_SEQUENTIAL_SCAN;
+
+	DBUG_ENTER("innobase_mysql_tmpfile");
+
+	tmpdir = my_tmpdir(&mysql_tmpdir_list);
+
+	/* The tmpdir parameter can not be NULL for GetTempFileName. */
+	if (!tmpdir) {
+		uint	ret;
+
+		/* Use GetTempPath to determine path for temporary files. */
+		ret = GetTempPath(sizeof(path_buf), path_buf);
+		if (ret > sizeof(path_buf) || (ret == 0)) {
+
+			_dosmaperr(GetLastError());	/* map error */
+			DBUG_RETURN(-1);
+		}
+
+		tmpdir = path_buf;
+	}
+
+	/* Use GetTempFileName to generate a unique filename. */
+	if (!GetTempFileName(tmpdir, "ib", 0, filename)) {
+
+		_dosmaperr(GetLastError());	/* map error */
+		DBUG_RETURN(-1);
+	}
+
+	DBUG_PRINT("info", ("filename: %s", filename));
+
+	/* Open/Create the file. */
+	osfh = CreateFile(filename, fileaccess, fileshare, NULL,
+			  filecreate, fileattrib, NULL);
+	if (osfh == INVALID_HANDLE_VALUE) {
+
+		/* open/create file failed! */
+		_dosmaperr(GetLastError());	/* map error */
+		DBUG_RETURN(-1);
+	}
+
+	do {
+		/* Associates a CRT file descriptor with the OS file handle. */
+		fd = _open_osfhandle((intptr_t) osfh, 0);
+	} while (fd == -1 && errno == EINTR);
+
+	if (fd == -1) {
+		/* Open failed, close the file handle. */
+
+		_dosmaperr(GetLastError());	/* map error */
+		CloseHandle(osfh);		/* no need to check if
+						CloseHandle fails */
+	}
+
+	DBUG_RETURN(fd);
+}
+#else
 /*************************************************************************
 Creates a temporary file. */
 extern "C" UNIV_INTERN
@@ -1011,6 +1080,7 @@ innobase_mysql_tmpfile(void)
 	}
 	return(fd2);
 }
+#endif /* defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN) */
 
 /*************************************************************************
 Wrapper around MySQL's copy_and_convert function, see it for
@@ -1072,6 +1142,83 @@ innobase_raw_format(
 }
 
 /*************************************************************************
+Compute the next autoinc value.
+
+For MySQL replication the autoincrement values can be partitioned among
+the nodes. The offset is the start or origin of the autoincrement value
+for a particular node. For n nodes the increment will be n and the offset
+will be in the interval [1, n]. The formula tries to allocate the next
+value for a particular node.
+
+Note: This function is also called with increment set to the number of
+values we want to reserve for multi-value inserts e.g.,
+
+	INSERT INTO T VALUES(), (), ();
+
+innobase_next_autoinc() will be called with increment set to
+n * 3 where autoinc_lock_mode != TRADITIONAL because we want
+to reserve 3 values for the multi-value INSERT above. */
+static
+uint64_t
+innobase_next_autoinc(
+/*==================*/
+					/* out: the next value */
+	uint64_t	current,	/* in: Current value */
+	uint64_t	increment,	/* in: increment current by */
+	uint64_t	offset,		/* in: AUTOINC offset */
+	uint64_t	max_value)	/* in: max value for type */
+{
+	uint64_t	next_value;
+
+	/* Should never be 0. */
+	ut_a(increment > 0);
+
+	if (max_value <= current) {
+		next_value = max_value;
+	} else if (offset <= 1) {
+		/* Offset 0 and 1 are the same, because there must be at
+		least one node in the system. */
+		if (max_value - current <= increment) {
+			next_value = max_value;
+		} else {
+			next_value = current + increment;
+		}
+	} else if (max_value > current) {
+		if (current > offset) {
+			next_value = ((current - offset) / increment) + 1;
+		} else {
+			next_value = ((offset - current) / increment) + 1;
+		}
+
+		ut_a(increment > 0);
+		ut_a(next_value > 0);
+
+		/* Check for multiplication overflow. */
+		if (increment > (max_value / next_value)) {
+
+			next_value = max_value;
+		} else {
+			next_value *= increment;
+
+			ut_a(max_value >= next_value);
+
+			/* Check for overflow. */
+			if (max_value - next_value <= offset) {
+				next_value = max_value;
+			} else {
+				next_value += offset;
+			}
+		}
+	} else {
+		next_value = max_value;
+	}
+
+	ut_a(next_value <= max_value);
+
+	return(next_value);
+}
+
+/*************************************************************************
 Gets the InnoDB transaction handle for a MySQL handler object, creates
 an InnoDB transaction struct if the corresponding MySQL thread struct still
 lacks one. */
@@ -1084,7 +1231,7 @@ check_trx_exists(
 {
 	trx_t*&	trx = session_to_trx(session);
 
-	ut_ad(session == current_session);
+	ut_ad(EQ_CURRENT_SESSION(session));
 
 	if (trx == NULL) {
 		assert(session != NULL);
@@ -1153,7 +1300,7 @@ ha_innobase::~ha_innobase()
 Updates the user_session field in a handle and also allocates a new InnoDB
 transaction handle if needed, and updates the transaction fields in the
 prebuilt struct. */
-inline
+UNIV_INTERN inline
 void
 ha_innobase::update_session(
 /*====================*/
@@ -1181,7 +1328,7 @@ ha_innobase::update_session()
 /*=====================*/
 {
 	Session*	session = ha_session();
-	ut_ad(session == current_session);
+	ut_ad(EQ_CURRENT_SESSION(session));
 	update_session(session);
 }
 
@@ -1190,7 +1337,7 @@ Registers that InnoDB takes part in an SQL statement, so that MySQL knows to
 roll back the statement if the statement results in an error. This MUST be
 called for every SQL statement that may be rolled back by MySQL. Calling this
 several times to register the same statement is allowed, too. */
-inline
+static inline
 void
 innobase_register_stmt(
 /*===================*/
@@ -1209,7 +1356,7 @@ MUST be called for every transaction for which the user may call commit or
 rollback. Calling this several times to register the same transaction is
 allowed, too.
 This function also registers the current SQL statement. */
-inline
+static inline
 void
 innobase_register_trx_and_stmt(
 /*===========================*/
@@ -1869,13 +2016,13 @@ innobase_init(
 	/* Process innobase_file_format_check variable */
 	ut_a(innobase_file_format_check != NULL);
 
-	/* As a side affect it will set srv_check_file_format_at_startup
+	/* As a side effect it will set srv_check_file_format_at_startup
 	on valid input. First we check for "on"/"off". */
 	if (!innobase_file_format_check_on_off(innobase_file_format_check)) {
 
 		/* Did the user specify a format name that we support ?
-		As a side affect it will update the variable
-		srv_check_file_format_at_startup*/
+		As a side effect it will update the variable
+		srv_check_file_format_at_startup */
 		if (!innobase_file_format_check_validate(
 			innobase_file_format_check)) {
 
@@ -1913,7 +2060,6 @@ innobase_init(
 
 	srv_n_file_io_threads = (ulint) innobase_file_io_threads;
 
-	srv_lock_wait_timeout = (ulint) innobase_lock_wait_timeout;
 	srv_force_recovery = (ulint) innobase_force_recovery;
 
 	srv_use_doublewrite_buf = (ibool) innobase_use_doublewrite;
@@ -1930,8 +2076,6 @@ innobase_init(
 
 	srv_max_n_open_files = (ulint) innobase_open_files;
 	srv_innodb_status = (ibool) innobase_create_status_file;
-
-	srv_stats_on_metadata = (ibool) innobase_stats_on_metadata;
 
 	btr_search_disabled = (ibool) !innobase_adaptive_hash_index;
 
@@ -2501,7 +2645,7 @@ ha_innobase::table_flags() const
 {
        /* Need to use tx_isolation here since table flags is (also)
           called before prebuilt is inited. */
-        ulong const tx_isolation = session_tx_isolation(current_session);
+        ulong const tx_isolation = session_tx_isolation(ha_session());
         if (tx_isolation <= ISO_READ_COMMITTED)
                 return int_table_flags;
         return int_table_flags | HA_BINLOG_STMT_CAPABLE;
@@ -2640,6 +2784,44 @@ normalize_table_name(
 #endif
 }
 
+/************************************************************************
+Set the autoinc column max value. This should only be called once from
+ha_innobase::open(). Therefore there's no need for a covering lock. */
+UNIV_INTERN
+ulint
+ha_innobase::innobase_initialize_autoinc()
+/*======================================*/
+{
+	dict_index_t*	index;
+	uint64_t	auto_inc;
+	const char*	col_name;
+	ulint		error = DB_SUCCESS;
+	dict_table_t*	innodb_table = prebuilt->table;
+
+	col_name = table->found_next_number_field->field_name;
+	index = innobase_get_index(table->s->next_number_index);
+
+	/* Execute SELECT MAX(col_name) FROM TABLE; */
+	error = row_search_max_autoinc(index, col_name, &auto_inc);
+
+	if (error == DB_SUCCESS) {
+
+		/* At the this stage we dont' know the increment
+		or the offset, so use default inrement of 1. */
+		++auto_inc;
+
+		dict_table_autoinc_initialize(innodb_table, auto_inc);
+
+	} else {
+		ut_print_timestamp(stderr);
+		fprintf(stderr, "  InnoDB: Error: (%lu) Couldn't read "
+			"the MAX(%s) autoinc value from the "
+			"index (%s).\n", error, col_name, index->name);
+	}
+
+	return(error);
+}
+
 /*********************************************************************
 Creates and opens a handle to a table which already exists in an InnoDB
 database. */
@@ -2662,6 +2844,14 @@ ha_innobase::open(
 	UT_NOT_USED(test_if_locked);
 
 	session = ha_session();
+
+	/* Under some cases Drizzle seems to call this function while
+	holding btr_search_latch. This breaks the latching order as
+	we acquire dict_sys->mutex below and leads to a deadlock. */
+	if (session != NULL) {
+		innobase_release_temporary_latches(ht, session);
+	}
+
 	normalize_table_name(norm_name, name);
 
 	user_session = NULL;
@@ -2825,11 +3015,32 @@ retry:
 		/* We update the highest file format in the system table
 		space, if this table has higher file format setting. */
 
-		trx_sys_file_format_max_update(
-			prebuilt->table->flags, &innobase_file_format_check);
+		trx_sys_file_format_max_upgrade(
+			(const char**) &innobase_file_format_check,
+			dict_table_get_format(prebuilt->table));
 	}
 
 	info(HA_STATUS_NO_LOCK | HA_STATUS_VARIABLE | HA_STATUS_CONST);
+
+	/* Only if the table has an AUTOINC column. */
+	if (prebuilt->table != NULL && table->found_next_number_field != NULL) {
+		ulint	error;
+
+		dict_table_autoinc_lock(prebuilt->table);
+
+		/* Since a table can already be "open" in InnoDB's internal
+		data dictionary, we only init the autoinc counter once, the
+		first time the table is loaded. We can safely reuse the
+		autoinc value from a previous Drizzle open. */
+		if (dict_table_autoinc_read(prebuilt->table) == 0) {
+
+			error = innobase_initialize_autoinc();
+			/* Should always succeed! */
+			ut_a(error == DB_SUCCESS);
+		}
+
+		dict_table_autoinc_unlock(prebuilt->table);
+	}
 
 	return(0);
 }
@@ -2851,7 +3062,7 @@ ha_innobase::close(void)
 {
 	Session*	session;
 
-	session = current_session;  // avoid calling current_session twice, it may be slow
+	session = ha_session();
 	if (session != NULL) {
 		innobase_release_temporary_latches(ht, session);
 	}
@@ -2873,7 +3084,7 @@ ha_innobase::close(void)
 
 /******************************************************************
 Gets field offset for a field in a table. */
-inline
+static inline
 uint
 get_field_offset(
 /*=============*/
@@ -2917,7 +3128,7 @@ field_in_record_is_null(
 /******************************************************************
 Sets a field in a record to SQL NULL. Uses the record format
 information in table to track the null bit in record. */
-inline
+static inline
 void
 set_field_in_record_to_null(
 /*========================*/
@@ -3085,7 +3296,7 @@ get_innobase_type_from_mysql_type(
 /***********************************************************************
 Writes an unsigned integer value < 64k to 2 bytes, in the little-endian
 storage format. */
-inline
+static inline
 void
 innobase_write_to_2_little_endian(
 /*==============================*/
@@ -3101,7 +3312,7 @@ innobase_write_to_2_little_endian(
 /***********************************************************************
 Reads an unsigned integer value < 64k from 2 bytes, in the little-endian
 storage format. */
-inline
+static inline
 uint
 innobase_read_from_2_little_endian(
 /*===============================*/
@@ -3620,14 +3831,67 @@ skip_field:
 }
 
 /************************************************************************
+Get the upper limit of the MySQL integral type. */
+UNIV_INTERN
+uint64_t
+ha_innobase::innobase_get_int_col_max_value(
+/*========================================*/
+	const Field*	field)
+{
+	uint64_t	max_value = 0;
+
+	switch(field->key_type()) {
+	/* TINY */
+        case HA_KEYTYPE_BINARY:
+		max_value = 0xFFULL;
+		break;
+	case HA_KEYTYPE_INT8:
+		max_value = 0x7FULL;
+		break;
+	/* SHORT */
+	case HA_KEYTYPE_USHORT_INT:
+		max_value = 0xFFFFULL;
+		break;
+	case HA_KEYTYPE_SHORT_INT:
+		max_value = 0x7FFFULL;
+		break;
+	/* MEDIUM */
+    	case HA_KEYTYPE_UINT24:
+		max_value = 0xFFFFFFULL;
+		break;
+	case HA_KEYTYPE_INT24:
+		max_value = 0x7FFFFFULL;
+		break;
+	/* LONG */
+	case HA_KEYTYPE_ULONG_INT:
+		max_value = 0xFFFFFFFFULL;
+		break;
+	case HA_KEYTYPE_LONG_INT:
+		max_value = 0x7FFFFFFFULL;
+		break;
+	/* BIG */
+    	case HA_KEYTYPE_ULONGLONG:
+		max_value = 0xFFFFFFFFFFFFFFFFULL;
+		break;
+	case HA_KEYTYPE_LONGLONG:
+		max_value = 0x7FFFFFFFFFFFFFFFULL;
+		break;
+	default:
+		ut_error;
+	}
+
+	return(max_value);
+}
+
+/************************************************************************
 This special handling is really to overcome the limitations of MySQL's
 binlogging. We need to eliminate the non-determinism that will arise in
 INSERT ... SELECT type of statements, since MySQL binlog only stores the
 min value of the autoinc interval. Once that is fixed we can get rid of
 the special lock handling.*/
 UNIV_INTERN
-ulong
-ha_innobase::innobase_autoinc_lock(void)
+ulint
+ha_innobase::innobase_lock_autoinc(void)
 /*====================================*/
 					/* out: DB_SUCCESS if all OK else
 					error code */
@@ -3645,7 +3909,8 @@ ha_innobase::innobase_autoinc_lock(void)
 		old style only if another transaction has already acquired
 		the AUTOINC lock on behalf of a LOAD FILE or INSERT ... SELECT
 		etc. type of statement. */
-		if (session_sql_command(user_session) == SQLCOM_INSERT) {
+		if (session_sql_command(user_session) == SQLCOM_INSERT
+		    || session_sql_command(user_session) == SQLCOM_REPLACE) {
 			dict_table_t*	table = prebuilt->table;
 
 			/* Acquire the AUTOINC mutex. */
@@ -3681,8 +3946,7 @@ ha_innobase::innobase_autoinc_lock(void)
 
 /************************************************************************
 Reset the autoinc value in the table.*/
-
-ulong
+ulint
 ha_innobase::innobase_reset_autoinc(
 /*================================*/
 					/* out: DB_SUCCESS if all went well
@@ -3691,7 +3955,7 @@ ha_innobase::innobase_reset_autoinc(
 {
 	ulint		error;
 
-	error = innobase_autoinc_lock();
+	error = innobase_lock_autoinc();
 
 	if (error == DB_SUCCESS) {
 
@@ -3707,7 +3971,7 @@ ha_innobase::innobase_reset_autoinc(
 Store the autoinc value in the table. The autoinc value is only set if
 it's greater than the existing autoinc value in the table.*/
 
-ulong
+ulint
 ha_innobase::innobase_set_max_autoinc(
 /*==================================*/
 					/* out: DB_SUCCES if all went well
@@ -3716,11 +3980,11 @@ ha_innobase::innobase_set_max_autoinc(
 {
 	ulint		error;
 
-	error = innobase_autoinc_lock();
+	error = innobase_lock_autoinc();
 
 	if (error == DB_SUCCESS) {
 
-		dict_table_autoinc_update(prebuilt->table, auto_inc);
+		dict_table_autoinc_update_if_greater(prebuilt->table, auto_inc);
 
 		dict_table_autoinc_unlock(prebuilt->table);
 	}
@@ -3838,8 +4102,20 @@ no_commit:
 	/* This is the case where the table has an auto-increment column */
 	if (table->next_number_field && record == table->record[0]) {
 
+		/* Reset the error code before calling
+		innobase_get_auto_increment(). */
+		prebuilt->autoinc_error = DB_SUCCESS;
+
 		if ((error = update_auto_increment())) {
 
+			/* We don't want to mask autoinc overflow errors. */
+			if (prebuilt->autoinc_error != DB_SUCCESS) {
+				error = prebuilt->autoinc_error;
+
+				goto report_error;
+			}
+
+			/* MySQL errors are passed straight back. */
 			goto func_exit;
 		}
 
@@ -3864,6 +4140,7 @@ no_commit:
 	if (auto_inc_used) {
 		ulint		err;
 		uint64_t	auto_inc;
+		uint64_t	col_max_value;
 
 		/* Note the number of rows processed for this statement, used
 		by get_auto_increment() to determine the number of AUTO-INC
@@ -3872,6 +4149,11 @@ no_commit:
 		if (trx->n_autoinc_rows > 0) {
 			--trx->n_autoinc_rows;
 		}
+
+		/* We need the upper limit of the col type to check for
+		whether we update the table autoinc counter or not. */
+		col_max_value = innobase_get_int_col_max_value(
+			table->next_number_field);
 
 		/* Get the value that MySQL attempted to store in the table.*/
 		auto_inc = table->next_number_field->val_int();
@@ -3910,22 +4192,19 @@ no_commit:
 			update the table upper limit. Note: last_value
 			will be 0 if get_auto_increment() was not called.*/
 
-			if (auto_inc > prebuilt->last_value) {
+			if (auto_inc <= col_max_value
+			    && auto_inc > prebuilt->autoinc_last_value) {
 set_max_autoinc:
-				ut_a(prebuilt->table->autoinc_increment > 0);
+				ut_a(prebuilt->autoinc_increment > 0);
 
-				uint64_t	have;
 				uint64_t	need;
+				uint64_t	offset;
 
-				/* Check for overflow conditions. */
-				need = prebuilt->table->autoinc_increment;
-				have = ~0x0ULL - auto_inc;
+				offset = prebuilt->autoinc_offset;
+				need = prebuilt->autoinc_increment;
 
-				if (have < need) {
-					need = have;
-				}
-
-				auto_inc += need;
+				auto_inc = innobase_next_autoinc(
+					auto_inc, need, offset, col_max_value);
 
 				err = innobase_set_max_autoinc(auto_inc);
 
@@ -3939,8 +4218,9 @@ set_max_autoinc:
 
 	innodb_srv_conc_exit_innodb(prebuilt->trx);
 
-        error = convert_error_code_to_mysql(error, prebuilt->table->flags,
-                                            user_session);
+report_error:
+	error = convert_error_code_to_mysql(error, prebuilt->table->flags,
+					    user_session);
 
 func_exit:
 	innobase_active_small();
@@ -4163,12 +4443,26 @@ ha_innobase::update_row(
 	    && (trx->duplicates & (TRX_DUP_IGNORE | TRX_DUP_REPLACE))
 		== TRX_DUP_IGNORE)  {
 
-		int64_t	auto_inc;
+		uint64_t	auto_inc;
+		uint64_t	col_max_value;
 
 		auto_inc = table->next_number_field->val_int();
 
-		if (auto_inc != 0) {
-			auto_inc += prebuilt->table->autoinc_increment;
+		/* We need the upper limit of the col type to check for
+		whether we update the table autoinc counter or not. */
+		col_max_value = innobase_get_int_col_max_value(
+			table->next_number_field);
+
+		if (auto_inc <= col_max_value && auto_inc != 0) {
+
+			uint64_t	need;
+			uint64_t	offset;
+
+			offset = prebuilt->autoinc_offset;
+			need = prebuilt->autoinc_increment;
+
+			auto_inc = innobase_next_autoinc(
+				auto_inc, need, offset, col_max_value);
 
 			error = innobase_set_max_autoinc(auto_inc);
 		}
@@ -4214,30 +4508,6 @@ ha_innobase::delete_row(
 
 	ha_statistic_increment(&SSV::ha_delete_count);
 
-	/* Only if the table has an AUTOINC column */
-	if (table->found_next_number_field && record == table->record[0]) {
-		uint64_t	dummy = 0;
-
-		/* First check whether the AUTOINC sub-system has been
-		initialized using the AUTOINC mutex. If not then we
-		do it the "proper" way, by acquiring the heavier locks. */
-		dict_table_autoinc_lock(prebuilt->table);
-
-		if (!prebuilt->table->autoinc_inited) {
-			dict_table_autoinc_unlock(prebuilt->table);
-
-			error = innobase_get_auto_increment(&dummy);
-
-			if (error == DB_SUCCESS) {
-				dict_table_autoinc_unlock(prebuilt->table);
-			} else {
-				goto error_exit;
-			}
-		} else  {
-			dict_table_autoinc_unlock(prebuilt->table);
-		}
-	}
-
 	if (!prebuilt->upd_node) {
 		row_get_prebuilt_update_vector(prebuilt);
 	}
@@ -4252,10 +4522,8 @@ ha_innobase::delete_row(
 
 	innodb_srv_conc_exit_innodb(trx);
 
-error_exit:
-	error = convert_error_code_to_mysql(error,
-					    prebuilt->table->flags,
-                                            user_session);
+	error = convert_error_code_to_mysql(
+		error, prebuilt->table->flags, user_session);
 
 	/* Tell the InnoDB server that there might be work for
 	utility threads: */
@@ -4390,7 +4658,7 @@ ha_innobase::index_end(void)
 /*************************************************************************
 Converts a search mode flag understood by MySQL to a flag understood
 by InnoDB. */
-inline
+static inline
 ulint
 convert_search_mode_to_innobase(
 /*============================*/
@@ -5518,7 +5786,29 @@ ha_innobase::create(
 
 	assert(session != NULL);
 
-	if (form->s->stored_fields > 1000) {
+#ifdef __WIN__
+	/* Names passed in from server are in two formats:
+	1. <database_name>/<table_name>: for normal table creation
+	2. full path: for temp table creation, or sym link
+
+	When srv_file_per_table is on, check for full path pattern, i.e.
+	X:\dir\...,		X is a driver letter, or
+	\\dir1\dir2\...,	UNC path
+	returns error if it is in full path format, but not creating a temp.
+	table. Currently InnoDB does not support symbolic link on Windows. */
+
+	if (srv_file_per_table
+	    && (!create_info->options & HA_LEX_CREATE_TMP_TABLE)) {
+
+		if ((name[1] == ':')
+		    || (name[0] == '\\' && name[1] == '\\')) {
+			sql_print_error("Cannot create table %s\n", name);
+			DBUG_RETURN(HA_ERR_GENERIC);
+		}
+	}
+#endif
+
+	if (form->s->fields > 1000) {
 		/* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
 		but we play safe here */
 
@@ -5803,10 +6093,14 @@ ha_innobase::create(
 
 	assert(innobase_table != 0);
 
-	/* We update the highest file format in the system table
-	space, if this table has a higher file format setting. */
+	if (innobase_table) {
+		/* We update the highest file format in the system table
+		space, if this table has higher file format setting. */
 
-	trx_sys_file_format_max_update(flags, &innobase_file_format_check);
+		trx_sys_file_format_max_upgrade(
+			(const char**) &innobase_file_format_check,
+			dict_table_get_format(innobase_table));
+	}
 
 	/* Note: We can't call update_session() as prebuilt will not be
 	setup at this stage and so we use session. */
@@ -5900,7 +6194,8 @@ ha_innobase::delete_all_rows(void)
 	if (session_sql_command(user_session) != SQLCOM_TRUNCATE) {
 	fallback:
 		/* We only handle TRUNCATE TABLE t as a special case.
-		DELETE FROM t will have to use ha_innobase::delete_row(). */
+		DELETE FROM t will have to use ha_innobase::delete_row(),
+		because DELETE is transactional while TRUNCATE is not. */
 		return(my_errno=HA_ERR_WRONG_COMMAND);
 	}
 
@@ -6015,7 +6310,6 @@ innobase_drop_database(
 			the database name is 'test' */
 {
 	ulint	len		= 0;
-	trx_t*	parent_trx;
 	trx_t*	trx;
 	char*	ptr;
 	int	error;
@@ -6027,12 +6321,16 @@ innobase_drop_database(
 
 	assert(hton == innodb_hton_ptr);
 
-	parent_trx = check_trx_exists(session);
+	/* In the Windows plugin, session = current_session is always NULL */
+	if (session) {
+		trx_t*	parent_trx = check_trx_exists(session);
 
-	/* In case MySQL calls this in the middle of a SELECT query, release
-	possible adaptive hash latch to avoid deadlocks of threads */
+		/* In case Drizzle calls this in the middle of a SELECT
+		query, release possible adaptive hash latch to avoid
+		deadlocks of threads */
 
-	trx_search_latch_release_if_reserved(parent_trx);
+		trx_search_latch_release_if_reserved(parent_trx);
+	}
 
 	ptr = strchr(path, '\0') - 2;
 
@@ -6052,10 +6350,15 @@ innobase_drop_database(
 #endif
 	trx = trx_allocate_for_mysql();
 	trx->mysql_thd = session;
-	trx->mysql_query_str = session_query(session);
+	if (session) {
+		trx->mysql_query_str = session_query(session);
 
-	if (session_test_options(session, OPTION_NO_FOREIGN_KEY_CHECKS)) {
-		trx->check_foreigns = FALSE;
+		if (session_test_options(session, OPTION_NO_FOREIGN_KEY_CHECKS)) {
+			trx->check_foreigns = FALSE;
+		}
+	} else {
+		/* In the Windows plugin, session = current_session is always NULL */
+		trx->mysql_query_str = NULL;
 	}
 
 	error = row_drop_database_for_mysql(namebuf, trx);
@@ -6447,7 +6750,7 @@ ha_innobase::info(
 	ib_table = prebuilt->table;
 
 	if (flag & HA_STATUS_TIME) {
-		if (srv_stats_on_metadata) {
+		if (innobase_stats_on_metadata) {
 			/* In sql_show we call with this flag: update
 			then statistics so that they are up-to-date */
 
@@ -6500,6 +6803,14 @@ ha_innobase::info(
 		if (session_sql_command(user_session) == SQLCOM_TRUNCATE) {
 
 			n_rows = 0;
+
+			/* We need to reset the prebuilt value too, otherwise
+			checks for values greater than the last value written
+			to the table will fail and the autoinc counter will
+			not be updated. This will force write_row() into
+			attempting an update of the table's AUTOINC counter. */
+
+			prebuilt->autoinc_last_value = 0;
 		}
 
 		stats.records = (ha_rows)n_rows;
@@ -6510,9 +6821,51 @@ ha_innobase::info(
 		stats.index_file_length = ((uint64_t)
 				ib_table->stat_sum_of_other_index_sizes)
 					* UNIV_PAGE_SIZE;
-		stats.delete_length =
-			fsp_get_available_space_in_free_extents(
-				ib_table->space) * 1024;
+
+		/* Since fsp_get_available_space_in_free_extents() is
+		acquiring latches inside InnoDB, we do not call it if we
+		are asked by MySQL to avoid locking. Another reason to
+		avoid the call is that it uses quite a lot of CPU.
+		See Bug#38185.
+		We do not update delete_length if no locking is requested
+		so the "old" value can remain. delete_length is initialized
+		to 0 in the ha_statistics' constructor. */
+		if (!(flag & HA_STATUS_NO_LOCK)) {
+
+			/* lock the data dictionary to avoid races with
+			ibd_file_missing and tablespace_discarded */
+			row_mysql_lock_data_dictionary(prebuilt->trx);
+
+			/* ib_table->space must be an existent tablespace */
+			if (!ib_table->ibd_file_missing
+			    && !ib_table->tablespace_discarded) {
+
+				stats.delete_length =
+					fsp_get_available_space_in_free_extents(
+						ib_table->space) * 1024;
+			} else {
+
+				Session*	session;
+
+				session = ha_session();
+
+				push_warning_printf(
+					session,
+					DRIZZLE_ERROR::WARN_LEVEL_WARN,
+					ER_CANT_GET_STAT,
+					"InnoDB: Trying to get the free "
+					"space for table %s but its "
+					"tablespace has been discarded or "
+					"the .ibd file is missing. Setting "
+					"the free space to zero.",
+					ib_table->name);
+
+				stats.delete_length = 0;
+			}
+
+			row_mysql_unlock_data_dictionary(prebuilt->trx);
+		}
+
 		stats.check_time = 0;
 
 		if (stats.records == 0) {
@@ -6602,30 +6955,8 @@ ha_innobase::info(
 		}
 	}
 
-	if (flag & HA_STATUS_AUTO && table->found_next_number_field) {
-		uint64_t	auto_inc;
-		int		ret;
-
-		/* The following function call can the first time fail in
-		a lock wait timeout error because it reserves the auto-inc
-		lock on the table. If it fails, then someone is already initing
-		the auto-inc counter, and the second call is guaranteed to
-		succeed. */
-
-		ret = innobase_read_and_init_auto_inc(&auto_inc);
-
-		if (ret != 0) {
-			ret = innobase_read_and_init_auto_inc(&auto_inc);
-
-			if (ret != 0) {
-				sql_print_error("Cannot get table %s auto-inc"
-						"counter value in ::info\n",
-						ib_table->name);
-				auto_inc = 0;
-			}
-		}
-
-		stats.auto_increment_value = auto_inc;
+	if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
+		stats.auto_increment_value = innobase_peek_autoinc();
 	}
 
 	prebuilt->trx->op_info = (char*)"";
@@ -7096,17 +7427,20 @@ UNIV_INTERN
 int
 ha_innobase::reset()
 {
-  if (prebuilt->blob_heap) {
-    row_mysql_prebuilt_free_blob_heap(prebuilt);
-  }
-  reset_template(prebuilt);
-  pushed_idx_cond_keyno= MAX_KEY;
-  pushed_idx_cond= NULL;
-  ds_mrr.dsmrr_close();
-  prebuilt->idx_cond_func= NULL;
-  return 0;
-}
+	if (prebuilt->blob_heap) {
+		row_mysql_prebuilt_free_blob_heap(prebuilt);
+	}
 
+	reset_template(prebuilt);
+
+	/* TODO: This should really be reset in reset_template() but for now
+	it's safer to do it explicitly here. */
+
+	/* This is a statement level counter. */
+	prebuilt->autoinc_last_value = 0;
+
+	return(0);
+}
 
 /**********************************************************************
 MySQL calls this function at the start of each SQL statement inside LOCK
@@ -7195,7 +7529,7 @@ ha_innobase::start_stmt(
 
 /**********************************************************************
 Maps a MySQL trx isolation level code to the InnoDB isolation level code */
-inline
+static inline
 ulint
 innobase_map_isolation_level(
 /*=========================*/
@@ -7223,9 +7557,9 @@ UNIV_INTERN
 int
 ha_innobase::external_lock(
 /*=======================*/
-				/* out: 0 */
-	Session*	session,		/* in: handle to the user thread */
-	int	lock_type)	/* in: lock type */
+					/* out: 0 */
+	Session*	session,	/* in: handle to the user thread */
+	int	lock_type)		/* in: lock type */
 {
 	trx_t*		trx;
 
@@ -7780,7 +8114,7 @@ ha_innobase::store_lock(
 		}
 	}
 
-	assert(session == current_session);
+	assert(EQ_CURRENT_SESSION(session));
 	const bool in_lock_tables = session_in_lock_tables(session);
 	const uint32_t sql_command = session_sql_command(session);
 
@@ -7929,171 +8263,61 @@ ha_innobase::store_lock(
 	return(to);
 }
 
-/***********************************************************************
-This function initializes the auto-inc counter if it has not been
-initialized yet. This function does not change the value of the auto-inc
-counter if it already has been initialized. In parameter ret returns
-the value of the auto-inc counter. */
-UNIV_INTERN
-int
-ha_innobase::innobase_read_and_init_auto_inc(
-/*=========================================*/
-						/* out: 0 or generic MySQL
-						error code */
-        uint64_t*	value)			/* out: the autoinc value */
-{
-	uint64_t	auto_inc;
-	ibool		stmt_start;
-	int		mysql_error = 0;
-	dict_table_t*	innodb_table = prebuilt->table;
-	ibool		trx_was_not_started	= FALSE;
-
-	ut_a(prebuilt);
-	ut_a(prebuilt->table);
-
-	/* Remember if we are in the beginning of an SQL statement.
-	This function must not change that flag. */
-	stmt_start = prebuilt->sql_stat_start;
-
-	/* Prepare prebuilt->trx in the table handle */
-	update_session(ha_session());
-
-	if (prebuilt->trx->conc_state == TRX_NOT_STARTED) {
-		trx_was_not_started = TRUE;
-	}
-
-	/* In case MySQL calls this in the middle of a SELECT query, release
-	possible adaptive hash latch to avoid deadlocks of threads */
-
-	trx_search_latch_release_if_reserved(prebuilt->trx);
-
-	dict_table_autoinc_lock(prebuilt->table);
-
-	auto_inc = dict_table_autoinc_read(prebuilt->table);
-
-	/* Was the AUTOINC counter reset during normal processing, if
-	so then we simply start count from 1. No need to go to the index.*/
-	if (auto_inc == 0 && innodb_table->autoinc_inited) {
-		++auto_inc;
-		dict_table_autoinc_initialize(innodb_table, auto_inc);
-	}
-
-	if (auto_inc == 0) {
-		dict_index_t* index;
-		ulint error;
-		const char* autoinc_col_name;
-
-		ut_a(!innodb_table->autoinc_inited);
-
-		index = innobase_get_index(table->s->next_number_index);
-
-		autoinc_col_name = table->found_next_number_field->field_name;
-
-		error = row_search_max_autoinc(
-			index, autoinc_col_name, &auto_inc);
-
-		if (error == DB_SUCCESS) {
-			if (auto_inc < ~0x0ULL) {
-				++auto_inc;
-			}
-			dict_table_autoinc_initialize(innodb_table, auto_inc);
-		} else {
-			ut_print_timestamp(stderr);
-			fprintf(stderr, "  InnoDB: Error: (%lu) Couldn't read "
-				"the max AUTOINC value from the index (%s).\n",
-				error, index->name);
-
-			mysql_error = 1;
-		}
-	}
-
-	*value = auto_inc;
-
-	dict_table_autoinc_unlock(prebuilt->table);
-
-	/* Since MySQL does not seem to call autocommit after SHOW TABLE
-	STATUS (even if we would register the trx here), we commit our
-	transaction here if it was started here. This is to eliminate a
-	dangling transaction. If the user had AUTOCOMMIT=0, then SHOW
-	TABLE STATUS does leave a dangling transaction if the user does not
-	himself call COMMIT. */
-
-	if (trx_was_not_started) {
-
-		innobase_commit_low(prebuilt->trx);
-	}
-
-	prebuilt->sql_stat_start = stmt_start;
-
-	return(mysql_error);
-}
-
 /*******************************************************************************
-Read the next autoinc value, initialize the table if it's not initialized.
-On return if there is no error then the tables AUTOINC lock is locked.*/
+Read the next autoinc value. Acquire the relevant locks before reading
+the AUTOINC value. If SUCCESS then the table AUTOINC mutex will be locked
+on return and all relevant locks acquired. */
 UNIV_INTERN
-ulong
-ha_innobase::innobase_get_auto_increment(
-/*=====================================*/
+ulint
+ha_innobase::innobase_get_autoinc(
+/*==============================*/
+					/* out: DB_SUCCESS or error code */
 	uint64_t*	value)		/* out: autoinc value */
 {
-	ulong		error;
+ 	*value = 0;
+ 
+	prebuilt->autoinc_error = innobase_lock_autoinc();
 
-	*value = 0;
+	if (prebuilt->autoinc_error == DB_SUCCESS) {
 
-	/* Note: If the table is not initialized when we attempt the
-	read below. We initialize the table's auto-inc counter  and
-	always do a reread of the AUTOINC value. */
-	do {
-		error = innobase_autoinc_lock();
+		/* Determine the first value of the interval */
+		*value = dict_table_autoinc_read(prebuilt->table);
 
-		if (error == DB_SUCCESS) {
-			uint64_t	autoinc;
+		/* It should have been initialized during open. */
+		ut_a(*value != 0);
+	}
 
-			/* Determine the first value of the interval */
-			autoinc = dict_table_autoinc_read(prebuilt->table);
-
-			/* We need to initialize the AUTO-INC value, for
-			that we release all locks.*/
-			if (autoinc == 0) {
-				trx_t*		trx;
-
-				trx = prebuilt->trx;
-				dict_table_autoinc_unlock(prebuilt->table);
-
-				/* If we had reserved the AUTO-INC
-				lock in this SQL statement we release
-				it before retrying.*/
-				row_unlock_table_autoinc_for_mysql(trx);
-
-				/* Just to make sure */
-				ut_a(!trx->auto_inc_lock);
-
-				int	mysql_error;
-
-				mysql_error = innobase_read_and_init_auto_inc(
-					&autoinc);
-
-				if (mysql_error) {
-					error = DB_ERROR;
-				}
-			} else {
-				*value = autoinc;
-			}
-		/* A deadlock error during normal processing is OK
-		and can be ignored. */
-		} else if (error != DB_DEADLOCK) {
-
-			sql_print_error("InnoDB: Error: %lu in "
-					"::innobase_get_auto_increment()",
-					error);
-		}
-
-	} while (*value == 0 && error == DB_SUCCESS);
-
-	return(error);
+	return(prebuilt->autoinc_error);
 }
 
+/***********************************************************************
+This function reads the global auto-inc counter. It doesn't use the 
+AUTOINC lock even if the lock mode is set to TRADITIONAL. */
+UNIV_INTERN
+uint64_t
+ha_innobase::innobase_peek_autoinc(void)
+/*====================================*/
+					/* out: the autoinc value */
+{
+	uint64_t	auto_inc;
+	dict_table_t*	innodb_table;
+
+	ut_a(prebuilt != NULL);
+	ut_a(prebuilt->table != NULL);
+
+	innodb_table = prebuilt->table;
+
+	dict_table_autoinc_lock(innodb_table);
+
+	auto_inc = dict_table_autoinc_read(innodb_table);
+
+	ut_a(auto_inc > 0);
+
+	dict_table_autoinc_unlock(innodb_table);
+ 
+	return(auto_inc);
+}
+  
 /*******************************************************************************
 This function initializes the auto-inc counter if it has not been
 initialized yet. This function does not change the value of the auto-inc
@@ -8105,7 +8329,7 @@ UNIV_INTERN
 void
 ha_innobase::get_auto_increment(
 /*============================*/
-        uint64_t	,              /* in: */
+        uint64_t	offset,              /* in: */
         uint64_t	increment,           /* in: table autoinc increment */
         uint64_t	nb_desired_values,   /* in: number of values reqd */
         uint64_t	*first_value,        /* out: the autoinc value */
@@ -8118,7 +8342,7 @@ ha_innobase::get_auto_increment(
 	/* Prepare prebuilt->trx in the table handle */
 	update_session(ha_session());
 
-	error = innobase_get_auto_increment(&autoinc);
+	error = innobase_get_autoinc(&autoinc);
 
 	if (error != DB_SUCCESS) {
 		*first_value = (~(uint64_t) 0);
@@ -8154,7 +8378,7 @@ ha_innobase::get_auto_increment(
 
 		set_if_bigger(*first_value, autoinc);
 	/* Not in the middle of a mult-row INSERT. */
-	} else if (prebuilt->last_value == 0) {
+	} else if (prebuilt->autoinc_last_value == 0) {
 		set_if_bigger(*first_value, autoinc);
 	}
 
@@ -8163,35 +8387,40 @@ ha_innobase::get_auto_increment(
 	/* With old style AUTOINC locking we only update the table's
 	AUTOINC counter after attempting to insert the row. */
 	if (innobase_autoinc_lock_mode != AUTOINC_OLD_STYLE_LOCKING) {
-		uint64_t	have;
 		uint64_t	need;
+		uint64_t	next_value;
+		uint64_t	col_max_value;
 
-		/* Check for overflow conditions. */
+		/* We need the upper limit of the col type to check for
+		whether we update the table autoinc counter or not. */
+		col_max_value = innobase_get_int_col_max_value(
+			table->next_number_field);
+
 		need = *nb_reserved_values * increment;
-		have = ~0x0ULL - *first_value;
-
-		if (have < need) {
-			need = have;
-		}
 
 		/* Compute the last value in the interval */
-		prebuilt->last_value = *first_value + need;
+		next_value = innobase_next_autoinc(
+			*first_value, need, offset, col_max_value);
 
-		ut_a(prebuilt->last_value >= *first_value);
+		prebuilt->autoinc_last_value = next_value;
+
+		ut_a(prebuilt->autoinc_last_value >= *first_value);
 
 		/* Update the table autoinc variable */
-		dict_table_autoinc_update(
-			prebuilt->table, prebuilt->last_value);
+		dict_table_autoinc_update_if_greater(
+			prebuilt->table, prebuilt->autoinc_last_value);
 	} else {
 		/* This will force write_row() into attempting an update
 		of the table's AUTOINC counter. */
-		prebuilt->last_value = 0;
+		prebuilt->autoinc_last_value = 0;
 	}
 
 	/* The increment to be used to increase the AUTOINC value, we use
 	this in write_row() and update_row() to increase the autoinc counter
-	for columns that are filled by the user.*/
-	prebuilt->table->autoinc_increment = increment;
+	for columns that are filled by the user. We need the offset and
+	the increment. */
+	prebuilt->autoinc_offset = offset;
+	prebuilt->autoinc_increment = increment;
 
 	dict_table_autoinc_unlock(prebuilt->table);
 }
@@ -8215,6 +8444,11 @@ ha_innobase::reset_auto_increment(
 						    user_session);
 
 		return(error);
+	}
+
+	/* The next value can never be 0. */
+	if (value == 0) {
+		value = 1;
 	}
 
 	innobase_reset_autoinc(value);
@@ -8724,7 +8958,7 @@ innobase_file_format_name_lookup(
 
 /****************************************************************
 Validate the file format check value, is it one of "on" or "off",
-as a side affect it sets the srv_check_file_format_at_startup variable. */
+as a side effect it sets the srv_check_file_format_at_startup variable. */
 static
 bool
 innobase_file_format_check_on_off(
@@ -8752,7 +8986,7 @@ innobase_file_format_check_on_off(
 }
 
 /****************************************************************
-Validate the file format check config parameters, as a side affect it
+Validate the file format check config parameters, as a side effect it
 sets the srv_check_file_format_at_startup variable. */
 static
 bool
@@ -8763,7 +8997,7 @@ innobase_file_format_check_validate(
 {
 	uint		format_id;
 	bool		ret = true;
-		
+
 	format_id = innobase_file_format_name_lookup(format_check);
 
 	if (format_id < DICT_TF_FORMAT_MAX + 1) {
@@ -8820,32 +9054,25 @@ innodb_file_format_name_validate(
 Update the system variable innodb_file_format using the "saved"
 value. This function is registered as a callback with MySQL. */
 static
-bool
+void
 innodb_file_format_name_update(
 /*===========================*/
-							/* out: should never
-							fail since it is
-							already validated */
 	Session*			,		/* in: thread handle */
 	struct st_mysql_sys_var*	,		/* in: pointer to
 							system variable */
 	void*				var_ptr,	/* out: where the
 							formal string goes */
-	void*				save)		/* in: immediate result
+	const void*			save)		/* in: immediate result
 							from check function */
 {
 	ut_a(var_ptr != NULL);
 	ut_a(save != NULL);
-	ut_a((*(uint*) save) <= DICT_TF_FORMAT_MAX);
+	ut_a((*(const uint*) save) <= DICT_TF_FORMAT_MAX);
 
-	srv_file_format = *(uint*) save;
+	srv_file_format = *(const uint*) save;
 
-	/* Given the type of var_ptr we have little choice but to cast
-	away the constness from the returned name. */
-	(*(char**) var_ptr) = 
-		(char*) trx_sys_file_format_id_to_name(srv_file_format);
-
-	return(true);
+	*(const char**) var_ptr
+		= trx_sys_file_format_id_to_name(srv_file_format);
 }
 
 /*****************************************************************
@@ -8880,7 +9107,7 @@ innodb_file_format_check_validate(
 
 		if (innobase_file_format_check_on_off(file_format_input)) {
 			sql_print_warning(
-				"InnoDB: invalid innodb_file_format_check"
+				"InnoDB: invalid innodb_file_format_check "
 				"value; on/off can only be set at startup or "
 				"in the configuration file");
 		} else if (innobase_file_format_check_validate(
@@ -8914,18 +9141,15 @@ innodb_file_format_check_validate(
 Update the system variable innodb_file_format_check using the "saved"
 value. This function is registered as a callback with MySQL. */
 static
-bool
+void
 innodb_file_format_check_update(
 /*============================*/
-							/* out: should never
-							fail since it is
-							already validated */
 	Session*			,		/* in: thread handle */
 	struct st_mysql_sys_var*	,		/* in: pointer to
 							system variable */
 	void*				var_ptr,	/* out: where the
 							formal string goes */
-	void*				save)		/* in: immediate result
+	const void*			save)		/* in: immediate result
 							from check function */
 {
 	uint	format_id;
@@ -8933,17 +9157,15 @@ innodb_file_format_check_update(
 	ut_a(save != NULL);
 	ut_a(var_ptr != NULL);
 
-	format_id = *(uint*) save;
+	format_id = *(const uint*) save;
 
 	/* Update the max format id in the system tablespace. */
-	if (trx_sys_file_format_max_set(format_id, (char**) var_ptr)) {
+	if (trx_sys_file_format_max_set(format_id, (const char**) var_ptr)) {
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
 			" [Info] InnoDB: the file format in the system "
 			"tablespace is now set to %s.\n", *(char**) var_ptr);
 	}
-
-	return(true);
 }
 
 static int show_innodb_vars(Session *, SHOW_VAR *var, char *)
@@ -8997,14 +9219,14 @@ static DRIZZLE_SYSVAR_BOOL(file_per_table, srv_file_per_table,
 static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
   PLUGIN_VAR_RQCMDARG,
   "File format to use for new tables in .ibd files.",
-  (mysql_var_check_func) &innodb_file_format_name_validate,
-  (mysql_var_update_func) &innodb_file_format_name_update, "Antelope");
+  innodb_file_format_name_validate,
+  innodb_file_format_name_update, "Antelope");
 
 static DRIZZLE_SYSVAR_STR(file_format_check, innobase_file_format_check,
   PLUGIN_VAR_OPCMDARG,
   "The highest file format in the tablespace.",
-  (mysql_var_check_func) &innodb_file_format_check_validate,
-  (mysql_var_update_func) &innodb_file_format_check_update,
+  innodb_file_format_check_validate,
+  innodb_file_format_check_update,
   "on");
 
 static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit,
@@ -9058,9 +9280,14 @@ static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
   NULL, NULL, FALSE);
 
 static DRIZZLE_SYSVAR_BOOL(stats_on_metadata, innobase_stats_on_metadata,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_NOSYSVAR,
+  PLUGIN_VAR_OPCMDARG,
   "Enable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)",
   NULL, NULL, TRUE);
+
+static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
+  PLUGIN_VAR_RQCMDARG,
+  "The number of index pages to sample when calculating statistics (default 8)",
+  NULL, NULL, 8, 1, ~0ULL, 0);
 
 static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, innobase_adaptive_hash_index,
   PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
@@ -9108,11 +9335,6 @@ static DRIZZLE_SYSVAR_LONG(force_recovery, innobase_force_recovery,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Helps to save your data in case the disk image of the database becomes corrupt.",
   NULL, NULL, 0, 0, 6, 0);
-
-static DRIZZLE_SYSVAR_LONG(lock_wait_timeout, innobase_lock_wait_timeout,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back.",
-  NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
 static DRIZZLE_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -9209,6 +9431,7 @@ static struct st_mysql_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(open_files),
   DRIZZLE_SYSVAR(rollback_on_timeout),
   DRIZZLE_SYSVAR(stats_on_metadata),
+  DRIZZLE_SYSVAR(stats_sample_pages),
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(replication_delay),
   DRIZZLE_SYSVAR(status_file),
@@ -9281,6 +9504,21 @@ innodb_plugin_init(void)
 # if !DRIZZLE_STORAGE_ENGINE_PLUGIN
 #  error "DRIZZLE_STORAGE_ENGINE_PLUGIN must be nonzero."
 # endif
+
+	/* Copy the system variables. */
+
+	struct st_mysql_plugin*		builtin;
+	struct st_mysql_sys_var**	sta; /* static parameters */
+	struct st_mysql_sys_var**	dyn; /* dynamic parameters */
+
+#ifdef __WIN__
+	if (!builtin_innobase_plugin_ptr) {
+
+		return(true);
+	}
+
+	builtin = builtin_innobase_plugin_ptr;
+#else
 	switch (builtin_innobase_plugin) {
 	case 0:
 		return(true);
@@ -9290,55 +9528,80 @@ innodb_plugin_init(void)
 		return(false);
 	}
 
-	/* Copy the system variables. */
-	struct st_mysql_plugin* builtin
-		= (struct st_mysql_plugin*) &builtin_innobase_plugin;
-	struct st_mysql_sys_var** v = builtin->system_vars;
-	struct st_mysql_sys_var** w = innobase_system_variables;
+	builtin = (struct st_mysql_plugin*) &builtin_innobase_plugin;
+#endif
 
-	for (; *v; v++, w++) {
-		if (!*w) {
-			fprintf(stderr, "InnoDB: unknown parameter %s,0x%x\n",
-				(*v)->name, (*v)->flags);
-			return(false);
-		} else if (!innobase_match_parameter((*v)->name, (*w)->name)) {
-			/* Skip the destination parameter, since it doesn't
-			exist in the source. */
-			v--;
-			continue;
-		/* Ignore changes that affect the READONLY flag. */
-		} else if (((*v)->flags ^ (*w)->flags) & ~PLUGIN_VAR_READONLY) {
-			fprintf(stderr,
-				"InnoDB: parameter mismatch:"
-				" %s,%s,0x%x,0x%x\n",
-				(*v)->name, (*w)->name,
-				(*v)->flags, (*w)->flags);
-			return(false);
-		} else if ((*v)->flags & PLUGIN_VAR_SessionLOCAL) {
-			/* Do not copy session variables. */
-			continue;
+	for (sta = builtin->system_vars; *sta != NULL; sta++) {
+
+		for (dyn = innobase_system_variables; *dyn != NULL; dyn++) {
+
+			/* do not copy session variables */
+			if (((*sta)->flags | (*dyn)->flags)
+			    & PLUGIN_VAR_SessionLOCAL) {
+				continue;
+			}
+
+			if (innobase_match_parameter((*sta)->name,
+						     (*dyn)->name)) {
+
+				/* found the corresponding parameter */
+
+				/* check if the flags are the same,
+				ignoring differences in the READONLY or
+				NOSYSVAR flags;
+				e.g. we are not copying string variable to
+				an integer one, but we do not care if it is
+				readonly in the static and not in the
+				dynamic */
+				if (((*sta)->flags ^ (*dyn)->flags)
+				    & ~(PLUGIN_VAR_READONLY
+					| PLUGIN_VAR_NOSYSVAR)) {
+
+					fprintf(stderr,
+						"InnoDB: %s in static InnoDB "
+						"(flags=0x%x) differs from "
+						"%s in dynamic InnoDB "
+						"(flags=0x%x)\n",
+						(*sta)->name, (*sta)->flags,
+						(*dyn)->name, (*dyn)->flags);
+
+					/* we could break; here leaving this
+					parameter uncopied */
+					return(false);
+				}
+
+				/* assign the value of the static parameter
+				to the dynamic one, according to their type */
+
+#define COPY_VAR(label, type)					\
+	case label:						\
+		*(type*)(*dyn)->value = *(type*)(*sta)->value;	\
+		break;
+
+				switch ((*sta)->flags
+					& ~(PLUGIN_VAR_MASK
+					    | PLUGIN_VAR_UNSIGNED)) {
+
+				COPY_VAR(PLUGIN_VAR_BOOL, char);
+				COPY_VAR(PLUGIN_VAR_INT, int);
+				COPY_VAR(PLUGIN_VAR_LONG, long);
+				COPY_VAR(PLUGIN_VAR_LONGLONG, long long);
+				COPY_VAR(PLUGIN_VAR_STR, char*);
+
+				default:
+					fprintf(stderr,
+						"InnoDB: unknown flags "
+						"0x%x for %s\n",
+						(*sta)->flags, (*sta)->name);
+				}
+
+				/* Make the static InnoDB variable point to
+				the dynamic one */
+				(*sta)->value = (*dyn)->value;
+
+				break;
+			}
 		}
-
-		switch ((*v)->flags
-			& ~(PLUGIN_VAR_MASK | PLUGIN_VAR_UNSIGNED)) {
-# define COPY_VAR(label, type)						\
-		case label:						\
-			*(type*)(*w)->value = *(type*)(*v)->value;	\
-			break;
-
-			COPY_VAR(PLUGIN_VAR_BOOL, char);
-			COPY_VAR(PLUGIN_VAR_INT, int);
-			COPY_VAR(PLUGIN_VAR_LONG, long);
-			COPY_VAR(PLUGIN_VAR_LONGLONG, long long);
-			COPY_VAR(PLUGIN_VAR_STR, char*);
-
-		default:
-			fprintf(stderr, "InnoDB: unknown flags 0x%x for %s\n",
-				(*v)->flags, (*v)->name);
-		}
-
-		/* Make the static InnoDB variable point to the dynamic one */
-		(*v)->value = (*w)->value;
 	}
 
 	return(true);
@@ -9422,8 +9685,7 @@ extern "C" {
 #endif
 
 /* Index condition check function to be called from within Innobase */
-
-static int64_t index_cond_func_innodb(void *arg)
+int64_t index_cond_func_innodb(void *arg)
 {
   ha_innobase *h= (ha_innobase*)arg;
   if (h->end_range) //was: h->in_range_read

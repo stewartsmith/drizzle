@@ -75,16 +75,19 @@ class ha_innobase: public handler
 
 	uint store_key_val_for_row(uint keynr, char* buff, uint buff_len,
                                    const unsigned char* record);
-	void update_session();
 	void update_session(Session* session);
+	void update_session();
 	int change_active_index(uint32_t keynr);
 	int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
-	int innobase_read_and_init_auto_inc(uint64_t* ret);
-	ulong innobase_autoinc_lock();
-	ulong innobase_set_max_autoinc(uint64_t auto_inc);
-	ulong innobase_reset_autoinc(uint64_t auto_inc);
-	ulong innobase_get_auto_increment(uint64_t* value);
+	ulint innobase_lock_autoinc();
+	uint64_t innobase_peek_autoinc();
+	ulint innobase_set_max_autoinc(uint64_t auto_inc);
+	ulint innobase_reset_autoinc(uint64_t auto_inc);
+	ulint innobase_get_autoinc(uint64_t* value);
+	ulint innobase_update_autoinc(uint64_t	auto_inc);
+	ulint innobase_initialize_autoinc();
 	dict_index_t* innobase_get_index(uint keynr);
+ 	uint64_t innobase_get_int_col_max_value(const Field* field);
 
 	/* Init values for the class: */
  public:
