@@ -323,7 +323,6 @@ uint64_t slave_trans_retries;
 bool slave_allow_batching;
 ulong slave_exec_mode_options;
 const char *slave_exec_mode_str= "STRICT";
-uint64_t thread_cache_size= 0;
 uint64_t thread_pool_size= 0;
 uint64_t binlog_cache_size= 0;
 uint64_t max_binlog_cache_size= 0;
@@ -3580,10 +3579,6 @@ struct my_option my_long_options[] =
       "error. Used only if the connection has active cursors."),
    (char**) &table_lock_wait_timeout, (char**) &table_lock_wait_timeout,
    0, GET_ULL, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
-  {"thread_cache_size", OPT_THREAD_CACHE_SIZE,
-   N_("How many threads we should keep in a cache for reuse."),
-   (char**) &thread_cache_size, (char**) &thread_cache_size, 0, GET_ULONG,
-   REQUIRED_ARG, 0, 0, 16384, 0, 1, 0},
   {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
     N_("How many threads we should create to handle query requests in case of "
        "'thread_handling=pool-of-threads'"),
