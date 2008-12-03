@@ -904,7 +904,7 @@ build_table_string(void)
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
   ptr->length= table_string.length()+1;
   ptr->type= CREATE_TABLE_TYPE;
-  my_stpcpy(ptr->string, table_string.c_str());
+  strcpy(ptr->string, table_string.c_str());
   return(ptr);
 }
 
@@ -974,7 +974,7 @@ build_update_string(void)
     ptr->type= UPDATE_TYPE_REQUIRES_PREFIX ;
   else
     ptr->type= UPDATE_TYPE;
-  my_stpcpy(ptr->string, update_string.c_str());
+  strcpy(ptr->string, update_string.c_str());
   return(ptr);
 }
 
@@ -1111,7 +1111,7 @@ build_insert_string(void)
   }
   ptr->length= insert_string.length()+1;
   ptr->type= INSERT_TYPE;
-  my_stpcpy(ptr->string, insert_string.c_str());
+  strcpy(ptr->string, insert_string.c_str());
   return(ptr);
 }
 
@@ -1197,7 +1197,7 @@ build_select_string(bool key)
     ptr->type= SELECT_TYPE_REQUIRES_PREFIX;
   else
     ptr->type= SELECT_TYPE;
-  my_stpcpy(ptr->string, query_string.c_str());
+  strcpy(ptr->string, query_string.c_str());
   return(ptr);
 }
 

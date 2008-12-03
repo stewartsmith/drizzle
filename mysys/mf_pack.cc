@@ -219,7 +219,7 @@ size_t cleanup_dirname(register char *to, const char *from)
       }
     }
   }
-  (void) my_stpcpy(to,buff);
+  (void) strcpy(to,buff);
   return((size_t) (pos-buff));
 } /* cleanup_dirname */
 
@@ -245,7 +245,7 @@ void symdirget(char *dir)
     File file;
     size_t length;
     char temp= *(--pos);            /* May be "/" or "\" */
-    my_stpcpy(pos,".sym");
+    strcpy(pos,".sym");
     file= my_open(dir, O_RDONLY, MYF(0));
     *pos++=temp; *pos=0;	  /* Restore old filename */
     if (file >= 0)
@@ -387,7 +387,7 @@ size_t unpack_filename(char * to, const char *from)
   n_length=unpack_dirname(buff,buff);
   if (n_length+strlen(from+length) < FN_REFLEN)
   {
-    (void) my_stpcpy(buff+n_length,from+length);
+    (void) strcpy(buff+n_length,from+length);
     length= system_filename(to,buff);		/* Fix to usably filename */
   }
   else
@@ -419,7 +419,7 @@ size_t system_filename(char * to, const char *from)
   char buff[FN_REFLEN];
 
   libchar_found=0;
-  (void) my_stpcpy(buff,from);			 /* If to == from */
+  (void) strcpy(buff,from);			 /* If to == from */
   from_pos= buff;
   if ((pos=strrchr(from_pos,FN_DEVCHAR)))	/* Skip device part */
   {
@@ -474,10 +474,10 @@ char *intern_filename(char *to, const char *from)
   char buff[FN_REFLEN];
   if (from == to)
   {						/* Dirname may destroy from */
-    my_stpcpy(buff,from);
+    strcpy(buff,from);
     from=buff;
   }
   length= dirname_part(to, from, &to_length);	/* Copy dirname & fix chars */
-  (void) my_stpcpy(to + to_length,from+length);
+  (void) strcpy(to + to_length,from+length);
   return (to);
 } /* intern_filename */

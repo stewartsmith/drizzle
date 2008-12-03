@@ -1278,7 +1278,7 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
   {
     if (!(res= var->value->val_str(&str)))
     {
-      my_stpcpy(buff, "NULL");
+      strcpy(buff, "NULL");
       goto err;
     }
 

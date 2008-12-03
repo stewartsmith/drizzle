@@ -276,7 +276,7 @@ int handle_default_option(void *in_ctx, const char *group_name,
       return 1;
     if (insert_dynamic(ctx->args, (unsigned char*) &tmp))
       return 1;
-    my_stpcpy(tmp, option);
+    strcpy(tmp, option);
   }
 
   return 0;
@@ -602,7 +602,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   }
   else
   {
-    my_stpcpy(name,config_file);
+    strcpy(name,config_file);
   }
   fn_format(name,name,"","",4);
   {

@@ -305,7 +305,7 @@ static char *slave_load_file_stem(char *buf, uint32_t file_id,
   buf= int10_to_str(event_server_id, buf, 10);
   *buf++ = '-';
   res= int10_to_str(file_id, buf, 10);
-  my_stpcpy(res, ext);                             // Add extension last
+  strcpy(res, ext);                             // Add extension last
   return res;                                   // Pointer to extension
 }
 
@@ -3357,7 +3357,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   fname_len= (uint) (my_stpcpy(ext, ".data") - fname);
   if (write_base(&file))
   {
-    my_stpcpy(ext, ".info"); // to have it right in the error message
+    strcpy(ext, ".info"); // to have it right in the error message
     rli->report(ERROR_LEVEL, my_errno,
                 _("Error in Create_file event: could not write to file '%s'"),
                 fname_buf);
@@ -3588,7 +3588,7 @@ int Delete_file_log_event::do_apply_event(const Relay_log_info *)
   char fname[FN_REFLEN+10];
   char *ext= slave_load_file_stem(fname, file_id, server_id, ".data");
   (void) my_delete(fname, MYF(MY_WME));
-  my_stpcpy(ext, ".info");
+  strcpy(ext, ".info");
   (void) my_delete(fname, MYF(MY_WME));
   return 0;
 }
@@ -5055,8 +5055,8 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   table_list->next_global= table_list->next_local= 0;
   table_list->table_id= m_table_id;
   table_list->updating= 1;
-  my_stpcpy(table_list->db, m_dbnam);
-  my_stpcpy(table_list->table_name, m_tblnam);
+  strcpy(table_list->db, m_dbnam);
+  strcpy(table_list->table_name, m_tblnam);
 
   int error= 0;
 

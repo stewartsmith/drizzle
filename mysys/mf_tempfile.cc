@@ -73,10 +73,9 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
     uint32_t pfx_len;
     File org_file;
 
-    pfx_len= (uint) (my_stpcpy(my_stpncpy(prefix_buff,
-				    prefix ? prefix : "tmp.",
-				    sizeof(prefix_buff)-7),"XXXXXX") -
-		     prefix_buff);
+    pfx_len= (uint32_t)(strcpy(my_stpncpy(prefix_buff,prefix ? prefix : "tmp.",
+                                          sizeof(prefix_buff)-7),"XXXXXX")+6
+                               -prefix_buff);
     if (!dir && ! (dir =getenv("TMPDIR")))
       dir= P_tmpdir;
     if (strlen(dir)+ pfx_len > FN_REFLEN-2)
@@ -84,7 +83,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
       errno=my_errno= ENAMETOOLONG;
       return(file);
     }
-    my_stpcpy(convert_dirname(to,dir,NULL),prefix_buff);
+    strcpy(convert_dirname(to,dir,NULL),prefix_buff);
     org_file=mkstemp(to);
     /* TODO: This was old behavior, but really don't we want to 
      * unlink files immediately under all circumstances?

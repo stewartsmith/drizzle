@@ -191,7 +191,7 @@ static bool init_available_charsets(myf myflags)
         }
       }
       
-      my_stpcpy(get_charsets_dir(fname), MY_CHARSET_INDEX);
+      strcpy(get_charsets_dir(fname), MY_CHARSET_INDEX);
       charset_initialized=1;
     }
     pthread_mutex_unlock(&THR_LOCK_charset);
@@ -288,7 +288,7 @@ const CHARSET_INFO *get_charset(uint32_t cs_number, myf flags)
   if (!cs && (flags & MY_WME))
   {
     char index_file[FN_REFLEN + sizeof(MY_CHARSET_INDEX)], cs_string[23];
-    my_stpcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
+    strcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
     cs_string[0]='#';
     int10_to_str(cs_number, cs_string+1, 10);
     my_error(EE_UNKNOWN_CHARSET, MYF(ME_BELL), cs_string, index_file);
@@ -308,7 +308,7 @@ const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
   if (!cs && (flags & MY_WME))
   {
     char index_file[FN_REFLEN + sizeof(MY_CHARSET_INDEX)];
-    my_stpcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
+    strcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
     my_error(EE_UNKNOWN_COLLATION, MYF(ME_BELL), cs_name, index_file);
   }
 
@@ -331,7 +331,7 @@ const CHARSET_INFO *get_charset_by_csname(const char *cs_name,
   if (!cs && (flags & MY_WME))
   {
     char index_file[FN_REFLEN + sizeof(MY_CHARSET_INDEX)];
-    my_stpcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
+    strcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
     my_error(EE_UNKNOWN_CHARSET, MYF(ME_BELL), cs_name, index_file);
   }
 
