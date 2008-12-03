@@ -242,14 +242,6 @@ dict_table_rename_in_cache(
 					to preserve the original table name
 					in constraints which reference it */
 /**************************************************************************
-Removes an index from the dictionary cache. */
-UNIV_INTERN
-void
-dict_index_remove_from_cache(
-/*=========================*/
-	dict_table_t*	table,	/* in/out: table */
-	dict_index_t*	index);	/* in, own: index */
-/**************************************************************************
 Change the id of a table object in the dictionary cache. This is used in
 DISCARD TABLESPACE. */
 UNIV_INTERN
@@ -655,7 +647,7 @@ dict_table_flags_to_zip_size(
 			/* out: compressed page size,
 			or 0 if not compressed */
 	ulint	flags)	/* in: flags */
-	__attribute__((const));
+	__attribute__((__const__));
 /************************************************************************
 Check whether the table uses the compressed compact page format. */
 UNIV_INLINE
@@ -1079,14 +1071,6 @@ dict_scan_to(
 	const char*	ptr,	/* in: scan from */
 	const char*	string);/* in: look for this */
 /*************************************************************************
-Removes an index from the cache */
-UNIV_INTERN
-void
-dict_index_remove_from_cache(
-/*=========================*/
-	dict_table_t*	table,	/* in/out: table */
-	dict_index_t*	index);	/* in, own: index */
-/**************************************************************************
 Get index by name */
 UNIV_INTERN
 dict_index_t*

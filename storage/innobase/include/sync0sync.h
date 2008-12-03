@@ -17,9 +17,6 @@ Created 9/5/1995 Heikki Tuuri
 #include "os0sync.h"
 #include "sync0arr.h"
 
-#ifndef UNIV_HOTBACKUP
-extern my_bool	timed_mutexes;
-#endif /* UNIV_HOTBACKUP */
 
 /**********************************************************************
 Initializes the synchronization data structures. */

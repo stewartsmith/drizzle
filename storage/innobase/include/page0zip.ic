@@ -128,7 +128,7 @@ page_zip_set_size(
 
 		ut_ad(ut_is_2pow(size));
 
-		for (ssize = 1; size > (ulint) (512 << ssize); ssize++);
+		for (ssize = 1; size > (ulint) (512 << ssize); ssize++) {};
 
 		page_zip->ssize = ssize;
 	} else {
@@ -161,7 +161,7 @@ page_zip_rec_needs_ext(
 
 	if (UNIV_UNLIKELY(!comp)) {
 		ut_ad(!zip_size);
-		return(rec_size >= page_get_free_space_of_empty(FALSE) / 2);
+		return(rec_size >= page_get_free_space_of_empty((ulint)FALSE) / 2);
 	}
 
 	/* If zip_size != 0, the record should fit on the compressed page.

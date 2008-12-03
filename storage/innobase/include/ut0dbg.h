@@ -71,7 +71,7 @@ ut_dbg_stop_thread(
 /* Abort the execution. */
 #  define UT_DBG_PANIC abort()
 /* Stop threads (null operation) */
-#  define UT_DBG_STOP while (0)
+#  define UT_DBG_STOP while (0) {}
 # else /* UT_DBG_USE_ABORT */
 /* Abort the execution. */
 #  define UT_DBG_PANIC					\

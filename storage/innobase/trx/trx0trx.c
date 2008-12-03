@@ -1755,7 +1755,7 @@ trx_weight_cmp(
 
 /********************************************************************
 Prepares a transaction. */
-UNIV_INTERN
+UNIV_INLINE
 void
 trx_prepare_off_kernel(
 /*===================*/

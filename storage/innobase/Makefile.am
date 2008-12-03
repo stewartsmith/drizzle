@@ -20,13 +20,23 @@ MYSQLSHAREdir=		$(pkgdatadir)
 MYSQLBASEdir=		$(prefix)
 MYSQLLIBdir=		$(pkglibdir)
 pkgplugindir=		$(pkglibdir)/plugin
-INCLUDES=		-I$(top_srcdir)/include -I$(top_builddir)/include \
+AM_CPPFLAGS=		-I$(top_srcdir) -I$(top_builddir) \
+			-I$(top_srcdir)/include -I$(top_builddir)/include \
 			-I$(top_srcdir)/regex \
 			-I$(top_srcdir)/storage/innobase/include \
-			-I$(top_srcdir)/sql \
-			-I$(srcdir)
+			-I$(top_srcdir)/sql
 
-DEFS=			@DEFS@
+if BUILD_DRIZZLE
+EXTRA_DEFS="-DBUILD_DRIZZLE"
+DYNAMIC_PLUGIN="-DDRIZZLE_DYNAMIC_PLUGIN"
+HANDLER_DIR=drizzle
+else
+DYNAMIC_PLUGIN="-DMYSQL_DYNAMIC_PLUGIN"
+HANDLER_DIR=handler
+endif
+
+
+DEFS=			@DEFS@ ${EXTRA_DEFS}
 
 
 noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
@@ -129,13 +139,13 @@ noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
 			include/ut0ut.ic include/ut0vec.h		\
 			include/ut0vec.ic include/ut0list.h		\
 			include/ut0list.ic include/ut0wqueue.h		\
-			include/ha_prototypes.h handler/ha_innodb.h	\
+			include/ha_prototypes.h				\
+			$(HANDLER_DIR)/ha_innodb.h			\
 			include/handler0alter.h				\
-			handler/i_s.h
+			$(HANDLER_DIR)/i_s.h
 
-EXTRA_LIBRARIES=	libinnobase.a
-noinst_LIBRARIES=	@plugin_innobase_static_target@
-libinnobase_a_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
+noinst_LTLIBRARIES=	libinnobase.la libpars.la
+libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			btr/btr0sea.c buf/buf0buddy.c			\
 			buf/buf0buf.c buf/buf0flu.c			\
 			buf/buf0lru.c buf/buf0rea.c data/data0data.c	\
@@ -154,7 +164,6 @@ libinnobase_a_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			mtr/mtr0mtr.c os/os0file.c os/os0proc.c		\
 			os/os0sync.c os/os0thread.c page/page0cur.c	\
 			page/page0page.c page/page0zip.c		\
-			pars/lexyy.c pars/pars0grm.c			\
 			pars/pars0opt.c pars/pars0pars.c		\
 			pars/pars0sym.c que/que0que.c read/read0read.c	\
 			rem/rem0cmp.c rem/rem0rec.c row/row0ext.c	\
@@ -172,20 +181,30 @@ libinnobase_a_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			usr/usr0sess.c ut/ut0byte.c ut/ut0dbg.c		\
 			ut/ut0list.c ut/ut0mem.c ut/ut0rnd.c		\
 			ut/ut0ut.c ut/ut0vec.c ut/ut0wqueue.c		\
-			handler/ha_innodb.cc handler/handler0alter.cc	\
-			handler/i_s.cc					\
-			handler/mysql_addons.cc
+			$(HANDLER_DIR)/ha_innodb.cc			\
+			$(HANDLER_DIR)/handler0alter.cc			\
+			$(HANDLER_DIR)/i_s.cc				\
+			$(HANDLER_DIR)/mysql_addons.cc
 
-libinnobase_a_CXXFLAGS=	$(AM_CFLAGS)
-libinnobase_a_CFLAGS=	$(AM_CFLAGS)
+# lexyy.c has lots of redundant decls, but it's generated anyway 
+libpars_la_CFLAGS=	${AM_CFLAGS} \
+			${NO_REDUNDANT_DECLS} \
+			${NO_UNUSED_MACROS}
+libpars_la_SOURCES= 	pars/lexyy.c pars/pars0grm.c
+
+libinnobase_la_CFLAGS=	$(AM_CFLAGS) \
+			${NO_UNUSED_MACROS}
+libinnobase_la_LIBADD= libpars.la
+
 
 EXTRA_LTLIBRARIES=	ha_innodb.la
 pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
 
 ha_innodb_la_LDFLAGS=	-module -rpath $(pkgplugindir)
-ha_innodb_la_CXXFLAGS=	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
-ha_innodb_la_CFLAGS=	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
-ha_innodb_la_SOURCES=	$(libinnobase_a_SOURCES)
+ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${DYNAMIC_PLUGIN}
+ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${DYNAMIC_PLUGIN}
+ha_innodb_la_LIBADD=	@plugin_innobase_shared_target@ \
+			libinnobase.la
 
 EXTRA_DIST=		CMakeLists.txt plug.in \
 			pars/make_bison.sh pars/make_flex.sh \

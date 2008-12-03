@@ -141,8 +141,6 @@ typedef unsigned int flex_uint32_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
-static int yyleng;
-
 static FILE *yyin, *yyout;
 
 #define EOB_ACT_CONTINUE_SCAN 0
@@ -683,7 +681,6 @@ static int yy_flex_debug = 0;
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-static char *yytext;
 #line 1 "pars0lex.l"
 /******************************************************
 SQL parser lexical analyzer: input file for the GNU Flex lexer generator

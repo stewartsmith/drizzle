@@ -78,7 +78,7 @@ ut_fold_ulint_pair(
 			/* out: folded value */
 	ulint	n1,	/* in: ulint */
 	ulint	n2)	/* in: ulint */
-	__attribute__((const));
+	__attribute__((__const__));
 /*****************************************************************
 Folds a dulint. */
 UNIV_INLINE
@@ -87,7 +87,7 @@ ut_fold_dulint(
 /*===========*/
 			/* out: folded value */
 	dulint	d)	/* in: dulint */
-	__attribute__((const));
+	__attribute__((__const__));
 /*****************************************************************
 Folds a character string ending in the null character. */
 UNIV_INLINE
@@ -116,7 +116,7 @@ ut_find_prime(
 /*==========*/
 			/* out: prime */
 	ulint	n)	/* in: positive number > 100 */
-	__attribute__((const));
+	__attribute__((__const__));
 
 
 #ifndef UNIV_NONINL

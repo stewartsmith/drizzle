@@ -11,8 +11,6 @@ table cache" for later retrieval.
 Created July 17, 2007 Vasil Dimov
 *******************************************************/
 
-#include <mysql/plugin.h>
-
 #include "mysql_addons.h"
 
 #include "univ.i"

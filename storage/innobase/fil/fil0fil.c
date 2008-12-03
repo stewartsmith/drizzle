@@ -2880,8 +2880,8 @@ fil_reset_too_high_lsns(
 	fprintf(stderr,
 		"  InnoDB: Flush lsn in the tablespace file %lu"
 		" to be imported\n"
-		"InnoDB: is %llu, which exceeds current"
-		" system lsn %llu.\n"
+		"InnoDB: is %"PRIu64", which exceeds current"
+		" system lsn %"PRIu64".\n"
 		"InnoDB: We reset the lsn's in the file ",
 		(ulong) space_id,
 		flush_lsn, current_lsn);

@@ -55,8 +55,6 @@ extern ibool		buf_debug_prints;/* If this is set TRUE, the program
 					prints info whenever read or flush
 					occurs */
 #endif /* UNIV_DEBUG */
-extern ulint srv_buf_pool_write_requests; /* variable to count write request
-					  issued */
 
 /* States of a control block (@see buf_page_struct).
 The enumeration values must be 0..7. */
@@ -931,7 +929,7 @@ buf_page_address_fold(
 			/* out: the folded value */
 	ulint	space,	/* in: space id */
 	ulint	offset)	/* in: offset of the page within space */
-	__attribute__((const));
+	__attribute__((__const__));
 /**********************************************************************
 Returns the control block of a file page, NULL if not found. */
 UNIV_INLINE

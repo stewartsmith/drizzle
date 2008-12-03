@@ -19,7 +19,21 @@ Created 5/11/1994 Heikki Tuuri
 #include "trx0trx.h"
 #include "ha_prototypes.h"
 #ifndef UNIV_HOTBACKUP
-# include "mysql_com.h" /* NAME_LEN */
+# if defined(BUILD_DRIZZLE)
+#  include <drizzled/common.h>
+#  if TIME_WITH_SYS_TIME
+#   include <sys/time.h>
+#   include <time.h>
+#  else
+#   if HAVE_SYS_TIME_H
+#    include <sys/time.h>
+#   else
+#    include <time.h>
+#   endif
+#  endif
+# else
+#  include "mysql_com.h" /* NAME_LEN */
+# endif /* DRIZZLE */
 #endif /* UNIV_HOTBACKUP */
 
 UNIV_INTERN ibool	ut_always_false	= FALSE;
@@ -478,7 +492,8 @@ ut_print_namel(
 				       trx ? trx->mysql_thd : NULL,
 				       table_id);
 
-	fwrite(buf, 1, bufend - buf, f);
+	ssize_t ret= fwrite(buf, 1, bufend - buf, f);
+	assert(ret==bufend-buf);  
 #endif
 }
 
@@ -500,7 +515,8 @@ ut_copy_file(
 			? (size_t) len
 			: sizeof buf;
 		size_t	size = fread(buf, 1, maxs, src);
-		fwrite(buf, 1, size, dest);
+		size_t ret= fwrite(buf, 1, size, dest);
+		assert(ret==size);
 		len -= (long) size;
 		if (size < maxs) {
 			break;

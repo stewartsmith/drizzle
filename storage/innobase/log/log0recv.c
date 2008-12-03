@@ -1849,7 +1849,7 @@ recv_report_corrupt_log(
 	fprintf(stderr,
 		"InnoDB: ############### CORRUPT LOG RECORD FOUND\n"
 		"InnoDB: Log record type %lu, space id %lu, page number %lu\n"
-		"InnoDB: Log parsing proceeded successfully up to %llu\n"
+		"InnoDB: Log parsing proceeded successfully up to %"PRIu64"\n"
 		"InnoDB: Previous log record type %lu, is multi %lu\n"
 		"InnoDB: Recv offset %lu, prev %lu\n",
 		(ulong) type, (ulong) space, (ulong) page_no,
@@ -2290,7 +2290,7 @@ recv_scan_log_recs(
 				    log_block)) {
 				fprintf(stderr,
 					"InnoDB: Log block no %lu at"
-					" lsn %llu has\n"
+					" lsn %"PRIu64" has\n"
 					"InnoDB: ok header, but checksum field"
 					" contains %lu, should be %lu\n",
 					(ulong) no,
@@ -2370,7 +2370,7 @@ recv_scan_log_recs(
 
 				fprintf(stderr,
 					"InnoDB: Log scan progressed"
-					" past the checkpoint lsn %llu\n",
+					" past the checkpoint lsn %"PRIu64"\n",
 					recv_sys->scanned_lsn);
 				recv_init_crash_recovery();
 			}
@@ -2417,7 +2417,7 @@ recv_scan_log_recs(
 
 			fprintf(stderr,
 				"InnoDB: Doing recovery: scanned up to"
-				" log sequence number %llu\n",
+				" log sequence number %"PRIu64"\n",
 				*group_scanned_lsn);
 		}
 	}
@@ -2489,7 +2489,7 @@ recv_group_scan_log_recs(
 	if (log_debug_writes) {
 		fprintf(stderr,
 			"InnoDB: Scanned group %lu up to"
-			" log sequence number %llu\n",
+			" log sequence number %"PRIu64"\n",
 			(ulong) group->id,
 			*group_scanned_lsn);
 	}
@@ -2762,10 +2762,10 @@ recv_recovery_from_checkpoint_start(
 					" ib_logfiles to start up"
 					" the database?\n"
 					"InnoDB: Log sequence number in"
-					" ib_logfiles is %llu, log\n"
+					" ib_logfiles is %"PRIu64", log\n"
 					"InnoDB: sequence numbers stamped"
 					" to ibdata file headers are between\n"
-					"InnoDB: %llu and %llu.\n"
+					"InnoDB: %"PRIu64" and %"PRIu64".\n"
 					"InnoDB: #########################"
 					"#################################\n",
 					checkpoint_lsn,
@@ -2795,7 +2795,7 @@ recv_recovery_from_checkpoint_start(
 		fprintf(stderr,
 			"  InnoDB: ERROR: We were only able to scan the log"
 			" up to\n"
-			"InnoDB: %llu, but a checkpoint was at %llu.\n"
+			"InnoDB: %"PRIu64", but a checkpoint was at %"PRIu64".\n"
 			"InnoDB: It is possible that"
 			" the database is now corrupt!\n",
 			group_scanned_lsn,
@@ -2806,8 +2806,8 @@ recv_recovery_from_checkpoint_start(
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
 			"  InnoDB: ERROR: We were only able to scan the log"
-			" up to %llu\n"
-			"InnoDB: but a database page a had an lsn %llu."
+			" up to %"PRIu64"\n"
+			"InnoDB: but a database page a had an lsn %"PRIu64"."
 			" It is possible that the\n"
 			"InnoDB: database is now corrupt!\n",
 			group_scanned_lsn,
@@ -3272,7 +3272,7 @@ ask_again:
 		if (log_debug_writes) {
 			fprintf(stderr,
 				"InnoDB: Archive read starting at"
-				" lsn %llu, len %lu from file %s\n",
+				" lsn %"PRIu64", len %lu from file %s\n",
 				start_lsn,
 				(ulong) len, name);
 		}

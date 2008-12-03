@@ -814,7 +814,11 @@ row_search_index_entry(
 
 #ifndef UNIV_HOTBACKUP
 
-#include <my_sys.h>
+#if defined(BUILD_DRIZZLE)
+# include <mysys/my_sys.h>
+#else
+# include <my_sys.h>
+#endif
 
 /***********************************************************************
 Formats the raw data in "data" (in InnoDB on-disk format) that is of

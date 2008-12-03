@@ -182,7 +182,11 @@ os_thread_create(
 #endif
 	if (srv_set_thread_priorities) {
 
-		my_pthread_setprio(pthread, srv_query_thread_priority);
+                  struct sched_param tmp_sched_param;
+
+                  memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+                  tmp_sched_param.sched_priority= srv_query_thread_priority;
+                  (void)pthread_setschedparam(pthread, SCHED_OTHER, &tmp_sched_param);
 	}
 
 	if (thread_id) {

@@ -9,7 +9,10 @@ Created 12/29/1997 Heikki Tuuri
 
 #include "que0que.h"
 #include "rem0cmp.h"
-#include "pars0grm.h"
+#ifndef PARS0GRM_H
+# define PARS0GRM_H
+# include "pars0grm.h"
+#endif
 
 /*********************************************************************
 Evaluates a function node. */

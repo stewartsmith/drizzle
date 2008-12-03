@@ -6,16 +6,18 @@ InnoDB INFORMATION SCHEMA tables interface to MySQL.
 Created July 18, 2007 Vasil Dimov
 *******************************************************/
 
-#include <mysql_priv.h>
-#include <mysqld_error.h>
+#include <drizzled/common_includes.h>
+#include <drizzled/error.h>
+#include <mystrings/m_ctype.h>
+#include <mysys/my_sys.h>
+#include <mysys/hash.h>
+#include <mysys/mysys_err.h>
+#include <drizzled/plugin.h>
+#include <drizzled/field.h>
+#include <drizzled/table.h>
 
-#include <m_ctype.h>
-#include <hash.h>
-#include <myisampack.h>
-#include <mysys_err.h>
-#include <my_sys.h>
 #include "i_s.h"
-#include <mysql/plugin.h>
+
 
 extern "C" {
 #include "trx0i_s.h"
@@ -30,32 +32,28 @@ static const char plugin_author[] = "Innobase Oy";
 
 #define OK(expr)		\
 	if ((expr) != 0) {	\
-		DBUG_RETURN(1);	\
+		return(1);	\
 	}
 
 #define RETURN_IF_INNODB_NOT_STARTED(plugin_name)			\
 do {									\
 	if (!srv_was_started) {						\
-		push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,	\
+		push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,	\
 				    ER_CANT_FIND_SYSTEM_REC,		\
 				    "InnoDB: SELECTing from "		\
 				    "INFORMATION_SCHEMA.%s but "	\
 				    "the InnoDB storage engine "	\
 				    "is not installed", plugin_name);	\
-		DBUG_RETURN(0);						\
+		return(0);						\
 	}								\
 } while (0)
 
-#if !defined __STRICT_ANSI__ && defined __GNUC__ && (__GNUC__) > 2 && !defined __INTEL_COMPILER
-#define STRUCT_FLD(name, value)	name: value
-#else
 #define STRUCT_FLD(name, value)	value
-#endif
 
 static const ST_FIELD_INFO END_OF_ST_FIELD_INFO =
 	{STRUCT_FLD(field_name,		NULL),
 	 STRUCT_FLD(field_length,	0),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_NULL),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_NULL),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -66,33 +64,32 @@ Use the following types mapping:
 
 C type	ST_FIELD_INFO::field_type
 ---------------------------------
-long			MYSQL_TYPE_LONGLONG
+long			DRIZZLE_TYPE_LONGLONG
 (field_length=MY_INT64_NUM_DECIMAL_DIGITS)
 
-long unsigned		MYSQL_TYPE_LONGLONG
+long unsigned		DRIZZLE_TYPE_LONGLONG
 (field_length=MY_INT64_NUM_DECIMAL_DIGITS, field_flags=MY_I_S_UNSIGNED)
 
-char*			MYSQL_TYPE_STRING
+char*			DRIZZLE_TYPE_STRING
 (field_length=n)
 
-float			MYSQL_TYPE_FLOAT
+float			DRIZZLE_TYPE_FLOAT
 (field_length=0 is ignored)
 
-void*			MYSQL_TYPE_LONGLONG
+void*			DRIZZLE_TYPE_LONGLONG
 (field_length=MY_INT64_NUM_DECIMAL_DIGITS, field_flags=MY_I_S_UNSIGNED)
 
-boolean (if else)	MYSQL_TYPE_LONG
+boolean (if else)	DRIZZLE_TYPE_LONG
 (field_length=1)
 
-time_t			MYSQL_TYPE_DATETIME
+time_t			DRIZZLE_TYPE_DATETIME
 (field_length=0 ignored)
 ---------------------------------
 */
 
-/* XXX these are defined in mysql_priv.h inside #ifdef MYSQL_SERVER */
-bool schema_table_store_record(THD *thd, TABLE *table);
-void localtime_to_TIME(MYSQL_TIME *to, struct tm *from);
-bool check_global_access(THD *thd, ulong want_access);
+/* XXX these are defined in mysql_priv.h inside #ifdef DRIZZLE_SERVER */
+bool schema_table_store_record(Session *session, Table *table);
+void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 
 /***********************************************************************
 Common function to fill any of the dynamic tables:
@@ -104,8 +101,8 @@ int
 trx_i_s_common_fill_table(
 /*======================*/
 				/* out: 0 on success */
-	THD*		thd,	/* in: thread */
-	TABLE_LIST*	tables,	/* in/out: tables to fill */
+	Session*		session,	/* in: thread */
+	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond);	/* in: condition (not used) */
 
 /***********************************************************************
@@ -118,7 +115,7 @@ i_s_common_deinit(
 	void*	p);	/* in/out: table schema object */
 
 /***********************************************************************
-Auxiliary function to store time_t value in MYSQL_TYPE_DATETIME
+Auxiliary function to store time_t value in DRIZZLE_TYPE_DATETIME
 field. */
 static
 int
@@ -128,25 +125,25 @@ field_store_time_t(
 	Field*	field,	/* in/out: target field for storage */
 	time_t	time)	/* in: value to store */
 {
-	MYSQL_TIME	my_time;
+	DRIZZLE_TIME	my_time;
 	struct tm	tm_time;
 
 #if 0
 	/* use this if you are sure that `variables' and `time_zone'
 	are always initialized */
-	thd->variables.time_zone->gmt_sec_to_TIME(
+	session->variables.time_zone->gmt_sec_to_TIME(
 		&my_time, (my_time_t) time);
 #else
 	localtime_r(&time, &tm_time);
 	localtime_to_TIME(&my_time, &tm_time);
-	my_time.time_type = MYSQL_TIMESTAMP_DATETIME;
+	my_time.time_type = DRIZZLE_TIMESTAMP_DATETIME;
 #endif
 
-	return(field->store_time(&my_time, MYSQL_TIMESTAMP_DATETIME));
+	return(field->store_time(&my_time, DRIZZLE_TIMESTAMP_DATETIME));
 }
 
 /***********************************************************************
-Auxiliary function to store char* value in MYSQL_TYPE_STRING field. */
+Auxiliary function to store char* value in DRIZZLE_TYPE_STRING field. */
 static
 int
 field_store_string(
@@ -173,7 +170,7 @@ field_store_string(
 }
 
 /***********************************************************************
-Auxiliary function to store ulint value in MYSQL_TYPE_LONGLONG field.
+Auxiliary function to store ulint value in DRIZZLE_TYPE_LONGLONG field.
 If the value is ULINT_UNDEFINED then the field it set to NULL. */
 static
 int
@@ -204,7 +201,7 @@ static ST_FIELD_INFO	innodb_trx_fields_info[] =
 #define IDX_TRX_ID		0
 	{STRUCT_FLD(field_name,		"trx_id"),
 	 STRUCT_FLD(field_length,	TRX_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -213,7 +210,7 @@ static ST_FIELD_INFO	innodb_trx_fields_info[] =
 #define IDX_TRX_STATE		1
 	{STRUCT_FLD(field_name,		"trx_state"),
 	 STRUCT_FLD(field_length,	TRX_QUE_STATE_STR_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -222,7 +219,7 @@ static ST_FIELD_INFO	innodb_trx_fields_info[] =
 #define IDX_TRX_STARTED		2
 	{STRUCT_FLD(field_name,		"trx_started"),
 	 STRUCT_FLD(field_length,	0),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_DATETIME),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_DATETIME),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -231,7 +228,7 @@ static ST_FIELD_INFO	innodb_trx_fields_info[] =
 #define IDX_TRX_REQUESTED_LOCK_ID	3
 	{STRUCT_FLD(field_name,		"trx_requested_lock_id"),
 	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
 	 STRUCT_FLD(old_name,		""),
@@ -240,7 +237,7 @@ static ST_FIELD_INFO	innodb_trx_fields_info[] =
 #define IDX_TRX_WAIT_STARTED	4
 	{STRUCT_FLD(field_name,		"trx_wait_started"),
 	 STRUCT_FLD(field_length,	0),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_DATETIME),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_DATETIME),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
 	 STRUCT_FLD(old_name,		""),
@@ -249,16 +246,16 @@ static ST_FIELD_INFO	innodb_trx_fields_info[] =
 #define IDX_TRX_WEIGHT		5
 	{STRUCT_FLD(field_name,		"trx_weight"),
 	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONGLONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED),
 	 STRUCT_FLD(old_name,		""),
 	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
 
-#define IDX_TRX_MYSQL_THREAD_ID	6
+#define IDX_TRX_DRIZZLE_THREAD_ID	6
 	{STRUCT_FLD(field_name,		"trx_mysql_thread_id"),
 	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONGLONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED),
 	 STRUCT_FLD(old_name,		""),
@@ -267,7 +264,7 @@ static ST_FIELD_INFO	innodb_trx_fields_info[] =
 #define IDX_TRX_QUERY		7
 	{STRUCT_FLD(field_name,		"trx_query"),
 	 STRUCT_FLD(field_length,	TRX_I_S_TRX_QUERY_MAX_LEN),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
 	 STRUCT_FLD(old_name,		""),
@@ -285,16 +282,14 @@ fill_innodb_trx_from_cache(
 /*=======================*/
 					/* out: 0 on success */
 	trx_i_s_cache_t*	cache,	/* in: cache to read from */
-	THD*			thd,	/* in: used to call
+	Session*			session,	/* in: used to call
 					schema_table_store_record() */
-	TABLE*			table)	/* in/out: fill this table */
+	Table*			table)	/* in/out: fill this table */
 {
 	Field**	fields;
 	ulint	rows_num;
 	char	lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
 	ulint	i;
-
-	DBUG_ENTER("fill_innodb_trx_from_cache");
 
 	fields = table->field;
 
@@ -344,21 +339,21 @@ fill_innodb_trx_from_cache(
 		}
 
 		/* trx_weight */
-		OK(fields[IDX_TRX_WEIGHT]->store((longlong) row->trx_weight,
+		OK(fields[IDX_TRX_WEIGHT]->store((int64_t) row->trx_weight,
 						 true));
 
 		/* trx_mysql_thread_id */
-		OK(fields[IDX_TRX_MYSQL_THREAD_ID]->store(
+		OK(fields[IDX_TRX_DRIZZLE_THREAD_ID]->store(
 			   row->trx_mysql_thread_id));
 
 		/* trx_query */
 		OK(field_store_string(fields[IDX_TRX_QUERY],
 				      row->trx_query));
 
-		OK(schema_table_store_record(thd, table));
+		OK(schema_table_store_record(session, table));
 	}
 
-	DBUG_RETURN(0);
+	return(0);
 }
 
 /***********************************************************************
@@ -372,34 +367,27 @@ innodb_trx_init(
 {
 	ST_SCHEMA_TABLE*	schema;
 
-	DBUG_ENTER("innodb_trx_init");
-
 	schema = (ST_SCHEMA_TABLE*) p;
 
 	schema->fields_info = innodb_trx_fields_info;
 	schema->fill_table = trx_i_s_common_fill_table;
 
-	DBUG_RETURN(0);
+	return(0);
 }
-
-static struct st_mysql_information_schema	i_s_info =
-{
-	MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION
-};
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_trx =
 {
-	/* the plugin type (a MYSQL_XXX_PLUGIN value) */
+	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
 	/* int */
-	STRUCT_FLD(type, MYSQL_INFORMATION_SCHEMA_PLUGIN),
-
-	/* pointer to type-specific plugin descriptor */
-	/* void* */
-	STRUCT_FLD(info, &i_s_info),
+	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
 
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_TRX"),
+
+	/* plugin version */
+	/* const char* */
+	STRUCT_FLD(version, "1.0.2"),
 
 	/* plugin author (for SHOW PLUGINS) */
 	/* const char* */
@@ -421,10 +409,6 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_trx =
 	/* int (*)(void*); */
 	STRUCT_FLD(deinit, i_s_common_deinit),
 
-	/* plugin version (for SHOW PLUGINS) */
-	/* unsigned int */
-	STRUCT_FLD(version, INNODB_VERSION_SHORT),
-
 	/* struct st_mysql_show_var* */
 	STRUCT_FLD(status_vars, NULL),
 
@@ -442,7 +426,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 #define IDX_LOCK_ID		0
 	{STRUCT_FLD(field_name,		"lock_id"),
 	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -451,7 +435,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 #define IDX_LOCK_TRX_ID		1
 	{STRUCT_FLD(field_name,		"lock_trx_id"),
 	 STRUCT_FLD(field_length,	TRX_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -461,7 +445,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 	{STRUCT_FLD(field_name,		"lock_mode"),
 	 /* S[,GAP] X[,GAP] IS[,GAP] IX[,GAP] AUTO_INC UNKNOWN */
 	 STRUCT_FLD(field_length,	32),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -470,7 +454,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 #define IDX_LOCK_TYPE		3
 	{STRUCT_FLD(field_name,		"lock_type"),
 	 STRUCT_FLD(field_length,	32 /* RECORD|TABLE|UNKNOWN */),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -479,7 +463,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 #define IDX_LOCK_TABLE		4
 	{STRUCT_FLD(field_name,		"lock_table"),
 	 STRUCT_FLD(field_length,	1024),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -488,7 +472,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 #define IDX_LOCK_INDEX		5
 	{STRUCT_FLD(field_name,		"lock_index"),
 	 STRUCT_FLD(field_length,	1024),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
 	 STRUCT_FLD(old_name,		""),
@@ -497,7 +481,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 #define IDX_LOCK_SPACE		6
 	{STRUCT_FLD(field_name,		"lock_space"),
 	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONGLONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL),
 	 STRUCT_FLD(old_name,		""),
@@ -506,7 +490,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 #define IDX_LOCK_PAGE		7
 	{STRUCT_FLD(field_name,		"lock_page"),
 	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONGLONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL),
 	 STRUCT_FLD(old_name,		""),
@@ -515,7 +499,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 #define IDX_LOCK_REC		8
 	{STRUCT_FLD(field_name,		"lock_rec"),
 	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONGLONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL),
 	 STRUCT_FLD(old_name,		""),
@@ -524,7 +508,7 @@ static ST_FIELD_INFO	innodb_locks_fields_info[] =
 #define IDX_LOCK_DATA		9
 	{STRUCT_FLD(field_name,		"lock_data"),
 	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_DATA_MAX_LEN),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
 	 STRUCT_FLD(old_name,		""),
@@ -542,15 +526,13 @@ fill_innodb_locks_from_cache(
 /*=========================*/
 					/* out: 0 on success */
 	trx_i_s_cache_t*	cache,	/* in: cache to read from */
-	THD*			thd,	/* in: MySQL client connection */
-	TABLE*			table)	/* in/out: fill this table */
+	Session*			session,	/* in: MySQL client connection */
+	Table*			table)	/* in/out: fill this table */
 {
 	Field**	fields;
 	ulint	rows_num;
 	char	lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
 	ulint	i;
-
-	DBUG_ENTER("fill_innodb_locks_from_cache");
 
 	fields = table->field;
 
@@ -600,7 +582,7 @@ fill_innodb_locks_from_cache(
 		bufend = innobase_convert_name(buf, sizeof(buf),
 					       row->lock_table,
 					       strlen(row->lock_table),
-					       thd, TRUE);
+					       session, TRUE);
 		OK(fields[IDX_LOCK_TABLE]->store(buf, bufend - buf,
 						 system_charset_info));
 
@@ -610,7 +592,7 @@ fill_innodb_locks_from_cache(
 			bufend = innobase_convert_name(buf, sizeof(buf),
 						       row->lock_index,
 						       strlen(row->lock_index),
-						       thd, FALSE);
+						       session, FALSE);
 			OK(fields[IDX_LOCK_INDEX]->store(buf, bufend - buf,
 							 system_charset_info));
 			fields[IDX_LOCK_INDEX]->set_notnull();
@@ -635,10 +617,10 @@ fill_innodb_locks_from_cache(
 		OK(field_store_string(fields[IDX_LOCK_DATA],
 				      row->lock_data));
 
-		OK(schema_table_store_record(thd, table));
+		OK(schema_table_store_record(session, table));
 	}
 
-	DBUG_RETURN(0);
+	return(0);
 }
 
 /***********************************************************************
@@ -652,29 +634,27 @@ innodb_locks_init(
 {
 	ST_SCHEMA_TABLE*	schema;
 
-	DBUG_ENTER("innodb_locks_init");
-
 	schema = (ST_SCHEMA_TABLE*) p;
 
 	schema->fields_info = innodb_locks_fields_info;
 	schema->fill_table = trx_i_s_common_fill_table;
 
-	DBUG_RETURN(0);
+	return(0);
 }
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_locks =
 {
-	/* the plugin type (a MYSQL_XXX_PLUGIN value) */
+	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
 	/* int */
-	STRUCT_FLD(type, MYSQL_INFORMATION_SCHEMA_PLUGIN),
-
-	/* pointer to type-specific plugin descriptor */
-	/* void* */
-	STRUCT_FLD(info, &i_s_info),
+	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
 
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_LOCKS"),
+
+	/* plugin version */
+	/* const char* */
+	STRUCT_FLD(version, "1.0.2"),
 
 	/* plugin author (for SHOW PLUGINS) */
 	/* const char* */
@@ -696,10 +676,6 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_locks =
 	/* int (*)(void*); */
 	STRUCT_FLD(deinit, i_s_common_deinit),
 
-	/* plugin version (for SHOW PLUGINS) */
-	/* unsigned int */
-	STRUCT_FLD(version, INNODB_VERSION_SHORT),
-
 	/* struct st_mysql_show_var* */
 	STRUCT_FLD(status_vars, NULL),
 
@@ -717,7 +693,7 @@ static ST_FIELD_INFO	innodb_lock_waits_fields_info[] =
 #define IDX_REQUESTING_TRX_ID	0
 	{STRUCT_FLD(field_name,		"requesting_trx_id"),
 	 STRUCT_FLD(field_length,	TRX_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -726,7 +702,7 @@ static ST_FIELD_INFO	innodb_lock_waits_fields_info[] =
 #define IDX_REQUESTED_LOCK_ID	1
 	{STRUCT_FLD(field_name,		"requested_lock_id"),
 	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -735,7 +711,7 @@ static ST_FIELD_INFO	innodb_lock_waits_fields_info[] =
 #define IDX_BLOCKING_TRX_ID	2
 	{STRUCT_FLD(field_name,		"blocking_trx_id"),
 	 STRUCT_FLD(field_length,	TRX_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -744,7 +720,7 @@ static ST_FIELD_INFO	innodb_lock_waits_fields_info[] =
 #define IDX_BLOCKING_LOCK_ID	3
 	{STRUCT_FLD(field_name,		"blocking_lock_id"),
 	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_STRING),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		""),
@@ -762,17 +738,15 @@ fill_innodb_lock_waits_from_cache(
 /*==============================*/
 					/* out: 0 on success */
 	trx_i_s_cache_t*	cache,	/* in: cache to read from */
-	THD*			thd,	/* in: used to call
+	Session*			session,	/* in: used to call
 					schema_table_store_record() */
-	TABLE*			table)	/* in/out: fill this table */
+	Table*			table)	/* in/out: fill this table */
 {
 	Field**	fields;
 	ulint	rows_num;
 	char	requested_lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
 	char	blocking_lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
 	ulint	i;
-
-	DBUG_ENTER("fill_innodb_lock_waits_from_cache");
 
 	fields = table->field;
 
@@ -818,10 +792,10 @@ fill_innodb_lock_waits_from_cache(
 				   blocking_lock_id,
 				   sizeof(blocking_lock_id))));
 
-		OK(schema_table_store_record(thd, table));
+		OK(schema_table_store_record(session, table));
 	}
 
-	DBUG_RETURN(0);
+	return(0);
 }
 
 /***********************************************************************
@@ -835,29 +809,27 @@ innodb_lock_waits_init(
 {
 	ST_SCHEMA_TABLE*	schema;
 
-	DBUG_ENTER("innodb_lock_waits_init");
-
 	schema = (ST_SCHEMA_TABLE*) p;
 
 	schema->fields_info = innodb_lock_waits_fields_info;
 	schema->fill_table = trx_i_s_common_fill_table;
 
-	DBUG_RETURN(0);
+	return(0);
 }
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_lock_waits =
 {
-	/* the plugin type (a MYSQL_XXX_PLUGIN value) */
+	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
 	/* int */
-	STRUCT_FLD(type, MYSQL_INFORMATION_SCHEMA_PLUGIN),
-
-	/* pointer to type-specific plugin descriptor */
-	/* void* */
-	STRUCT_FLD(info, &i_s_info),
+	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
 
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_LOCK_WAITS"),
+
+	/* plugin version */
+	/* const char* */
+	STRUCT_FLD(version, "1.0.2"),
 
 	/* plugin author (for SHOW PLUGINS) */
 	/* const char* */
@@ -878,10 +850,6 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_lock_waits =
 	/* the function to invoke when plugin is unloaded */
 	/* int (*)(void*); */
 	STRUCT_FLD(deinit, i_s_common_deinit),
-
-	/* plugin version (for SHOW PLUGINS) */
-	/* unsigned int */
-	STRUCT_FLD(version, INNODB_VERSION_SHORT),
 
 	/* struct st_mysql_show_var* */
 	STRUCT_FLD(status_vars, NULL),
@@ -904,21 +872,13 @@ int
 trx_i_s_common_fill_table(
 /*======================*/
 				/* out: 0 on success */
-	THD*		thd,	/* in: thread */
-	TABLE_LIST*	tables,	/* in/out: tables to fill */
-	COND*		cond)	/* in: condition (not used) */
+	Session*		session,	/* in: thread */
+	TableList*	tables,	/* in/out: tables to fill */
+	COND*		)	/* in: condition (not used) */
 {
 	const char*		table_name;
 	int			ret;
 	trx_i_s_cache_t*	cache;
-
-	DBUG_ENTER("trx_i_s_common_fill_table");
-
-	/* deny access to non-superusers */
-	if (check_global_access(thd, PROCESS_ACL)) {
-
-		DBUG_RETURN(0);
-	}
 
 	/* minimize the number of places where global variables are
 	referenced */
@@ -950,7 +910,7 @@ trx_i_s_common_fill_table(
 	if (innobase_strcasecmp(table_name, "innodb_trx") == 0) {
 
 		if (fill_innodb_trx_from_cache(
-			cache, thd, tables->table) != 0) {
+			cache, session, tables->table) != 0) {
 
 			ret = 1;
 		}
@@ -958,7 +918,7 @@ trx_i_s_common_fill_table(
 	} else if (innobase_strcasecmp(table_name, "innodb_locks") == 0) {
 
 		if (fill_innodb_locks_from_cache(
-			cache, thd, tables->table) != 0) {
+			cache, session, tables->table) != 0) {
 
 			ret = 1;
 		}
@@ -966,7 +926,7 @@ trx_i_s_common_fill_table(
 	} else if (innobase_strcasecmp(table_name, "innodb_lock_waits") == 0) {
 
 		if (fill_innodb_lock_waits_from_cache(
-			cache, thd, tables->table) != 0) {
+			cache, session, tables->table) != 0) {
 
 			ret = 1;
 		}
@@ -987,13 +947,13 @@ trx_i_s_common_fill_table(
 	trx_i_s_cache_end_read(cache);
 
 #if 0
-	DBUG_RETURN(ret);
+	return(ret);
 #else
 	/* if this function returns something else than 0 then a
 	deadlock occurs between the mysqld server and mysql client,
 	see http://bugs.mysql.com/29900 ; when that bug is resolved
-	we can enable the DBUG_RETURN(ret) above */
-	DBUG_RETURN(0);
+	we can enable the return(ret) above */
+	return(0);
 #endif
 }
 
@@ -1002,7 +962,7 @@ static ST_FIELD_INFO	i_s_cmp_fields_info[] =
 {
 	{STRUCT_FLD(field_name,		"page_size"),
 	 STRUCT_FLD(field_length,	5),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Compressed Page Size"),
@@ -1010,7 +970,7 @@ static ST_FIELD_INFO	i_s_cmp_fields_info[] =
 
 	{STRUCT_FLD(field_name,		"compress_ops"),
 	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Total Number of Compressions"),
@@ -1018,7 +978,7 @@ static ST_FIELD_INFO	i_s_cmp_fields_info[] =
 
 	{STRUCT_FLD(field_name,		"compress_ops_ok"),
 	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Total Number of"
@@ -1027,7 +987,7 @@ static ST_FIELD_INFO	i_s_cmp_fields_info[] =
 
 	{STRUCT_FLD(field_name,		"compress_time"),
 	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Total Duration of Compressions,"
@@ -1036,7 +996,7 @@ static ST_FIELD_INFO	i_s_cmp_fields_info[] =
 
 	{STRUCT_FLD(field_name,		"uncompress_ops"),
 	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Total Number of Decompressions"),
@@ -1044,7 +1004,7 @@ static ST_FIELD_INFO	i_s_cmp_fields_info[] =
 
 	{STRUCT_FLD(field_name,		"uncompress_time"),
 	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Total Duration of Decompressions,"
@@ -1063,21 +1023,14 @@ int
 i_s_cmp_fill_low(
 /*=============*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
-	TABLE_LIST*	tables,	/* in/out: tables to fill */
-	COND*		cond,	/* in: condition (ignored) */
+	Session*		session,	/* in: thread */
+	TableList*	tables,	/* in/out: tables to fill */
+	COND*		,	/* in: condition (ignored) */
 	ibool		reset)	/* in: TRUE=reset cumulated counts */
 {
-	TABLE*	table	= (TABLE *) tables->table;
+	Table*	table	= (Table *) tables->table;
 	int	status	= 0;
 
-	DBUG_ENTER("i_s_cmp_fill_low");
-
-	/* deny access to non-superusers */
-	if (check_global_access(thd, PROCESS_ACL)) {
-
-		DBUG_RETURN(0);
-	}
 
 	RETURN_IF_INNODB_NOT_STARTED(tables->schema_table_name);
 
@@ -1104,13 +1057,13 @@ i_s_cmp_fill_low(
 			memset(zip_stat, 0, sizeof *zip_stat);
 		}
 
-		if (schema_table_store_record(thd, table)) {
+		if (schema_table_store_record(session, table)) {
 			status = 1;
 			break;
 		}
 	}
 
-	DBUG_RETURN(status);
+	return(status);
 }
 
 /***********************************************************************
@@ -1120,11 +1073,11 @@ int
 i_s_cmp_fill(
 /*=========*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
-	TABLE_LIST*	tables,	/* in/out: tables to fill */
+	Session*		session,	/* in: thread */
+	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
 {
-	return(i_s_cmp_fill_low(thd, tables, cond, FALSE));
+	return(i_s_cmp_fill_low(session, tables, cond, FALSE));
 }
 
 /***********************************************************************
@@ -1134,11 +1087,11 @@ int
 i_s_cmp_reset_fill(
 /*===============*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
-	TABLE_LIST*	tables,	/* in/out: tables to fill */
+	Session*		session,	/* in: thread */
+	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
 {
-	return(i_s_cmp_fill_low(thd, tables, cond, TRUE));
+	return(i_s_cmp_fill_low(session, tables, cond, TRUE));
 }
 
 /***********************************************************************
@@ -1150,13 +1103,12 @@ i_s_cmp_init(
 			/* out: 0 on success */
 	void*	p)	/* in/out: table schema object */
 {
-	DBUG_ENTER("i_s_cmp_init");
 	ST_SCHEMA_TABLE* schema = (ST_SCHEMA_TABLE*) p;
 
 	schema->fields_info = i_s_cmp_fields_info;
 	schema->fill_table = i_s_cmp_fill;
 
-	DBUG_RETURN(0);
+	return(0);
 }
 
 /***********************************************************************
@@ -1168,28 +1120,27 @@ i_s_cmp_reset_init(
 			/* out: 0 on success */
 	void*	p)	/* in/out: table schema object */
 {
-	DBUG_ENTER("i_s_cmp_reset_init");
 	ST_SCHEMA_TABLE* schema = (ST_SCHEMA_TABLE*) p;
 
 	schema->fields_info = i_s_cmp_fields_info;
 	schema->fill_table = i_s_cmp_reset_fill;
 
-	DBUG_RETURN(0);
+	return(0);
 }
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp =
 {
-	/* the plugin type (a MYSQL_XXX_PLUGIN value) */
+	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
 	/* int */
-	STRUCT_FLD(type, MYSQL_INFORMATION_SCHEMA_PLUGIN),
-
-	/* pointer to type-specific plugin descriptor */
-	/* void* */
-	STRUCT_FLD(info, &i_s_info),
+	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
 
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_CMP"),
+
+	/* plugin version */
+	/* const char* */
+	STRUCT_FLD(version, "1.0.2"),
 
 	/* plugin author (for SHOW PLUGINS) */
 	/* const char* */
@@ -1211,10 +1162,6 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp =
 	/* int (*)(void*); */
 	STRUCT_FLD(deinit, i_s_common_deinit),
 
-	/* plugin version (for SHOW PLUGINS) */
-	/* unsigned int */
-	STRUCT_FLD(version, INNODB_VERSION_SHORT),
-
 	/* struct st_mysql_show_var* */
 	STRUCT_FLD(status_vars, NULL),
 
@@ -1228,17 +1175,17 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp =
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp_reset =
 {
-	/* the plugin type (a MYSQL_XXX_PLUGIN value) */
+	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
 	/* int */
-	STRUCT_FLD(type, MYSQL_INFORMATION_SCHEMA_PLUGIN),
-
-	/* pointer to type-specific plugin descriptor */
-	/* void* */
-	STRUCT_FLD(info, &i_s_info),
+	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
 
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_CMP_RESET"),
+
+	/* plugin version */
+	/* const char* */
+	STRUCT_FLD(version, "1.0.2"),
 
 	/* plugin author (for SHOW PLUGINS) */
 	/* const char* */
@@ -1261,10 +1208,6 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp_reset =
 	/* int (*)(void*); */
 	STRUCT_FLD(deinit, i_s_common_deinit),
 
-	/* plugin version (for SHOW PLUGINS) */
-	/* unsigned int */
-	STRUCT_FLD(version, INNODB_VERSION_SHORT),
-
 	/* struct st_mysql_show_var* */
 	STRUCT_FLD(status_vars, NULL),
 
@@ -1281,7 +1224,7 @@ static ST_FIELD_INFO	i_s_cmpmem_fields_info[] =
 {
 	{STRUCT_FLD(field_name,		"page_size"),
 	 STRUCT_FLD(field_length,	5),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Buddy Block Size"),
@@ -1289,7 +1232,7 @@ static ST_FIELD_INFO	i_s_cmpmem_fields_info[] =
 
 	{STRUCT_FLD(field_name,		"pages_used"),
 	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Currently in Use"),
@@ -1297,7 +1240,7 @@ static ST_FIELD_INFO	i_s_cmpmem_fields_info[] =
 
 	{STRUCT_FLD(field_name,		"pages_free"),
 	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Currently Available"),
@@ -1305,7 +1248,7 @@ static ST_FIELD_INFO	i_s_cmpmem_fields_info[] =
 
 	{STRUCT_FLD(field_name,		"relocation_ops"),
 	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONGLONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Total Number of Relocations"),
@@ -1313,7 +1256,7 @@ static ST_FIELD_INFO	i_s_cmpmem_fields_info[] =
 
 	{STRUCT_FLD(field_name,		"relocation_time"),
 	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		MYSQL_TYPE_LONG),
+	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
 	 STRUCT_FLD(value,		0),
 	 STRUCT_FLD(field_flags,	0),
 	 STRUCT_FLD(old_name,		"Total Duration of Relocations,"
@@ -1331,21 +1274,13 @@ int
 i_s_cmpmem_fill_low(
 /*================*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
-	TABLE_LIST*	tables,	/* in/out: tables to fill */
-	COND*		cond,	/* in: condition (ignored) */
+	Session*		session,	/* in: thread */
+	TableList*	tables,	/* in/out: tables to fill */
+	COND*		,	/* in: condition (ignored) */
 	ibool		reset)	/* in: TRUE=reset cumulated counts */
 {
-	TABLE*	table	= (TABLE *) tables->table;
+	Table*	table	= (Table *) tables->table;
 	int	status	= 0;
-
-	DBUG_ENTER("i_s_cmpmem_fill_low");
-
-	/* deny access to non-superusers */
-	if (check_global_access(thd, PROCESS_ACL)) {
-
-		DBUG_RETURN(0);
-	}
 
 	RETURN_IF_INNODB_NOT_STARTED(tables->schema_table_name);
 
@@ -1359,7 +1294,7 @@ i_s_cmpmem_fill_low(
 		table->field[2]->store(UNIV_LIKELY(x < BUF_BUDDY_SIZES)
 				       ? UT_LIST_GET_LEN(buf_pool->zip_free[x])
 				       : 0);
-		table->field[3]->store((longlong) buddy_stat->relocated, true);
+		table->field[3]->store((int64_t) buddy_stat->relocated, true);
 		table->field[4]->store(
 			(ulong) (buddy_stat->relocated_usec / 1000000));
 
@@ -1369,14 +1304,14 @@ i_s_cmpmem_fill_low(
 			buddy_stat->relocated_usec = 0;
 		}
 
-		if (schema_table_store_record(thd, table)) {
+		if (schema_table_store_record(session, table)) {
 			status = 1;
 			break;
 		}
 	}
 
 	buf_pool_mutex_exit();
-	DBUG_RETURN(status);
+	return(status);
 }
 
 /***********************************************************************
@@ -1386,11 +1321,11 @@ int
 i_s_cmpmem_fill(
 /*============*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
-	TABLE_LIST*	tables,	/* in/out: tables to fill */
+	Session*		session,	/* in: thread */
+	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
 {
-	return(i_s_cmpmem_fill_low(thd, tables, cond, FALSE));
+	return(i_s_cmpmem_fill_low(session, tables, cond, FALSE));
 }
 
 /***********************************************************************
@@ -1400,11 +1335,11 @@ int
 i_s_cmpmem_reset_fill(
 /*==================*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
-	TABLE_LIST*	tables,	/* in/out: tables to fill */
+	Session*		session,	/* in: thread */
+	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
 {
-	return(i_s_cmpmem_fill_low(thd, tables, cond, TRUE));
+	return(i_s_cmpmem_fill_low(session, tables, cond, TRUE));
 }
 
 /***********************************************************************
@@ -1416,13 +1351,12 @@ i_s_cmpmem_init(
 			/* out: 0 on success */
 	void*	p)	/* in/out: table schema object */
 {
-	DBUG_ENTER("i_s_cmpmem_init");
 	ST_SCHEMA_TABLE* schema = (ST_SCHEMA_TABLE*) p;
 
 	schema->fields_info = i_s_cmpmem_fields_info;
 	schema->fill_table = i_s_cmpmem_fill;
 
-	DBUG_RETURN(0);
+	return(0);
 }
 
 /***********************************************************************
@@ -1434,28 +1368,27 @@ i_s_cmpmem_reset_init(
 			/* out: 0 on success */
 	void*	p)	/* in/out: table schema object */
 {
-	DBUG_ENTER("i_s_cmpmem_reset_init");
 	ST_SCHEMA_TABLE* schema = (ST_SCHEMA_TABLE*) p;
 
 	schema->fields_info = i_s_cmpmem_fields_info;
 	schema->fill_table = i_s_cmpmem_reset_fill;
 
-	DBUG_RETURN(0);
+	return(0);
 }
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem =
 {
-	/* the plugin type (a MYSQL_XXX_PLUGIN value) */
+	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
 	/* int */
-	STRUCT_FLD(type, MYSQL_INFORMATION_SCHEMA_PLUGIN),
-
-	/* pointer to type-specific plugin descriptor */
-	/* void* */
-	STRUCT_FLD(info, &i_s_info),
+	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
 
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_CMPMEM"),
+
+	/* plugin version */
+	/* const char* */
+	STRUCT_FLD(version, "1.0.2"),
 
 	/* plugin author (for SHOW PLUGINS) */
 	/* const char* */
@@ -1477,10 +1410,6 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem =
 	/* int (*)(void*); */
 	STRUCT_FLD(deinit, i_s_common_deinit),
 
-	/* plugin version (for SHOW PLUGINS) */
-	/* unsigned int */
-	STRUCT_FLD(version, INNODB_VERSION_SHORT),
-
 	/* struct st_mysql_show_var* */
 	STRUCT_FLD(status_vars, NULL),
 
@@ -1494,17 +1423,17 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem =
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem_reset =
 {
-	/* the plugin type (a MYSQL_XXX_PLUGIN value) */
+	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
 	/* int */
-	STRUCT_FLD(type, MYSQL_INFORMATION_SCHEMA_PLUGIN),
-
-	/* pointer to type-specific plugin descriptor */
-	/* void* */
-	STRUCT_FLD(info, &i_s_info),
+	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
 
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_CMPMEM_RESET"),
+
+	/* plugin version */
+	/* const char* */
+	STRUCT_FLD(version, "1.0.2"),
 
 	/* plugin author (for SHOW PLUGINS) */
 	/* const char* */
@@ -1527,10 +1456,6 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem_reset =
 	/* int (*)(void*); */
 	STRUCT_FLD(deinit, i_s_common_deinit),
 
-	/* plugin version (for SHOW PLUGINS) */
-	/* unsigned int */
-	STRUCT_FLD(version, INNODB_VERSION_SHORT),
-
 	/* struct st_mysql_show_var* */
 	STRUCT_FLD(status_vars, NULL),
 
@@ -1549,11 +1474,9 @@ int
 i_s_common_deinit(
 /*==============*/
 			/* out: 0 on success */
-	void*	p)	/* in/out: table schema object */
+	void*	)	/* in/out: table schema object */
 {
-	DBUG_ENTER("i_s_common_deinit");
-
 	/* Do nothing */
 
-	DBUG_RETURN(0);
+	return(0);
 }

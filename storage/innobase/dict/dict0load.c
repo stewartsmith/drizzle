@@ -9,7 +9,11 @@ Created 4/24/1996 Heikki Tuuri
 
 #include "dict0load.h"
 #ifndef UNIV_HOTBACKUP
-#include "mysql_version.h"
+#if defined(BUILD_DRIZZLE)
+# include <drizzled/global.h>
+#else
+# include "mysql_version.h"
+#endif /* DRIZZLE */
 #endif /* !UNIV_HOTBACKUP */
 
 #ifdef UNIV_NONINL

@@ -1675,7 +1675,7 @@ innobase_start_or_create_for_mysql(void)
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
 			" InnoDB Plugin %s started; "
-			"log sequence number %llu\n",
+			"log sequence number %"PRIu64"\n",
 			INNODB_VERSION_STR, srv_start_lsn);
 	}
 
@@ -1941,7 +1941,7 @@ innobase_shutdown_for_mysql(void)
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
 			"  InnoDB: Shutdown completed;"
-			" log sequence number %llu\n",
+			" log sequence number %"PRIu64"\n",
 			srv_shutdown_lsn);
 	}
 

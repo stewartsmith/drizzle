@@ -15,7 +15,10 @@ Created 12/15/1997 Heikki Tuuri
 #include "mem0mem.h"
 #include "data0type.h"
 #include "data0data.h"
-#include "pars0grm.h"
+#ifndef PARS0GRM_H
+# define PARS0GRM_H
+# include "pars0grm.h"
+#endif
 #include "pars0pars.h"
 #include "que0que.h"
 #include "eval0eval.h"

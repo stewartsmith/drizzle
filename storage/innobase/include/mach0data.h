@@ -65,7 +65,7 @@ mach_encode_2(
 /*==========*/
 			/* out: 16-bit integer in canonical format */
 	ulint	n)	/* in: integer in machine-dependent format */
-	__attribute__((const));
+	__attribute__((__const__));
 /************************************************************
 The following function is used to convert a 16-bit data item
 from the canonical format, for fast bytewise equality test
@@ -76,7 +76,7 @@ mach_decode_2(
 /*==========*/
 			/* out: integer in machine-dependent format */
 	uint16	n)	/* in: 16-bit integer in canonical format */
-	__attribute__((const));
+	__attribute__((__const__));
 /***********************************************************
 The following function is used to store data in 3 consecutive
 bytes. We store the most significant byte to the lowest address. */
@@ -132,7 +132,7 @@ mach_get_compressed_size(
 /*=====================*/
 			/* out: compressed size in bytes */
 	ulint	n)	/* in: ulint integer to be stored */
-	__attribute__((const));
+	__attribute__((__const__));
 /*************************************************************
 Reads a ulint in a compressed form. */
 UNIV_INLINE
@@ -261,7 +261,7 @@ mach_dulint_get_much_compressed_size(
 /*=================================*/
 			/* out: compressed size in bytes */
 	dulint	 n)	 /* in: dulint integer to be stored */
-	__attribute__((const));
+	__attribute__((__const__));
 /*************************************************************
 Reads a dulint in a compressed form. */
 UNIV_INLINE

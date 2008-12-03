@@ -49,7 +49,7 @@ page_zip_rec_needs_ext(
 	ulint	rec_size,	/* in: length of the record in bytes */
 	ulint	comp,		/* in: nonzero=compact format */
 	ulint	zip_size)	/* in: compressed page size in bytes, or 0 */
-	__attribute__((const));
+	__attribute__((__const__));
 
 /**************************************************************************
 Determine the guaranteed free space on an empty page. */
@@ -164,19 +164,6 @@ page_zip_available(
 	__attribute__((nonnull, pure));
 
 /**************************************************************************
-Write data to the uncompressed header portion of a page.  The data must
-already have been written to the uncompressed page. */
-UNIV_INLINE
-void
-page_zip_write_header(
-/*==================*/
-	page_zip_des_t*	page_zip,/* in/out: compressed page */
-	const byte*	str,	/* in: address on the uncompressed page */
-	ulint		length,	/* in: length of the data */
-	mtr_t*		mtr)	/* in: mini-transaction, or NULL */
-	__attribute__((nonnull(1,2)));
-
-/**************************************************************************
 Write an entire record on the compressed page.  The data must already
 have been written to the uncompressed page. */
 UNIV_INTERN
@@ -259,30 +246,6 @@ page_zip_write_trx_id_and_roll_ptr(
 	__attribute__((nonnull));
 
 /**************************************************************************
-Write the "deleted" flag of a record on a compressed page.  The flag must
-already have been written on the uncompressed page. */
-UNIV_INTERN
-void
-page_zip_rec_set_deleted(
-/*=====================*/
-	page_zip_des_t*	page_zip,/* in/out: compressed page */
-	const byte*	rec,	/* in: record on the uncompressed page */
-	ulint		flag)	/* in: the deleted flag (nonzero=TRUE) */
-	__attribute__((nonnull));
-
-/**************************************************************************
-Write the "owned" flag of a record on a compressed page.  The n_owned field
-must already have been written on the uncompressed page. */
-UNIV_INTERN
-void
-page_zip_rec_set_owned(
-/*===================*/
-	page_zip_des_t*	page_zip,/* in/out: compressed page */
-	const byte*	rec,	/* in: record on the uncompressed page */
-	ulint		flag)	/* in: the owned flag (nonzero=TRUE) */
-	__attribute__((nonnull));
-
-/**************************************************************************
 Insert a record to the dense page directory. */
 UNIV_INTERN
 void
@@ -293,31 +256,6 @@ page_zip_dir_insert(
 	const byte*	free_rec,/* in: record from which rec was
 				allocated, or NULL */
 	byte*		rec);	/* in: record to insert */
-
-/**************************************************************************
-Shift the dense page directory and the array of BLOB pointers
-when a record is deleted. */
-UNIV_INTERN
-void
-page_zip_dir_delete(
-/*================*/
-	page_zip_des_t*	page_zip,/* in/out: compressed page */
-	byte*		rec,	/* in: deleted record */
-	dict_index_t*	index,	/* in: index of rec */
-	const ulint*	offsets,/* in: rec_get_offsets(rec) */
-	const byte*	free)	/* in: previous start of the free list */
-	__attribute__((nonnull(1,2,3,4)));
-
-/**************************************************************************
-Add a slot to the dense page directory. */
-UNIV_INTERN
-void
-page_zip_dir_add_slot(
-/*==================*/
-	page_zip_des_t*	page_zip,	/* in/out: compressed page */
-	ulint		is_clustered)	/* in: nonzero for clustered index,
-					zero for others */
-	__attribute__((nonnull));
 
 /***************************************************************
 Parses a log record of writing to the header of a page. */

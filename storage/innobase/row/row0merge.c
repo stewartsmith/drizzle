@@ -644,7 +644,7 @@ row_merge_read(
 	if (UNIV_UNLIKELY(!success)) {
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
-			"  InnoDB: failed to read merge block at %llu\n", ofs);
+			"  InnoDB: failed to read merge block at %"PRIu64"\n", ofs);
 	}
 
 	return(UNIV_LIKELY(success));

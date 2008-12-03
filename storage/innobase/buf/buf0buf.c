@@ -351,9 +351,9 @@ buf_page_is_corrupted(
 
 			fprintf(stderr,
 				"  InnoDB: Error: page %lu log sequence number"
-				" %llu\n"
+				" %"PRIu64"\n"
 				"InnoDB: is in the future! Current system "
-				"log sequence number %llu.\n"
+				"log sequence number %"PRIu64".\n"
 				"InnoDB: Your database may be corrupt or "
 				"you may have copied the InnoDB\n"
 				"InnoDB: tablespace but not the InnoDB "

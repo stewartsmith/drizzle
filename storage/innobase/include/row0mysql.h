@@ -550,6 +550,8 @@ struct mysql_row_templ_struct {
 #define ROW_PREBUILT_ALLOCATED	78540783
 #define ROW_PREBUILT_FREED	26423527
 
+typedef int64_t (*index_cond_func_t)(void *param);
+
 /* A struct for (sometimes lazily) prebuilt structures in an Innobase table
 handle used within MySQL; these are used to save CPU time. */
 
@@ -708,9 +710,15 @@ struct row_prebuilt_struct {
 					to this heap */
 	mem_heap_t*	old_vers_heap;	/* memory heap where a previous
 					version is built in consistent read */
-	ulonglong	last_value;	/* last value of AUTO-INC interval */
+	ib_uint64_t	last_value;	/* last value of AUTO-INC interval */
 	UT_LIST_NODE_T(row_prebuilt_t)	prebuilts;
 					/* list node of table->prebuilts */
+	index_cond_func_t idx_cond_func;/* Index Condition Pushdown function,
+                                        or NULL if there is none set */
+	void*           idx_cond_func_arg;/* ICP function  argument */
+        ulint           n_index_fields; /* Number of fields at the start of
+                                        mysql_template. Valid only when using
+                                        ICP. */
 	ulint		magic_n2;	/* this should be the same as
 					magic_n */
 };

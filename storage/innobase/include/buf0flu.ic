@@ -8,6 +8,7 @@ Created 11/5/1995 Heikki Tuuri
 
 #include "buf0buf.h"
 #include "mtr0mtr.h"
+#include "srv0srv.h"
 
 /************************************************************************
 Inserts a modified block into the flush list in the right sorted position.

@@ -1091,7 +1091,7 @@ while (0)
    we won't break user code: when these are the locations we know.  */
 
 #ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
+# ifdef YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
               (Loc).first_line, (Loc).first_column,	\
@@ -1344,23 +1344,6 @@ yydestruct (yymsg, yytype, yyvaluep)
     }
 }
 
-
-/* Prevent warnings from -Wmissing-prototypes.  */
-
-#ifdef YYPARSE_PARAM
-# if defined (__STDC__) || defined (__cplusplus)
-UNIV_INTERN int yyparse (void *YYPARSE_PARAM);
-# else
-UNIV_INTERN int yyparse ();
-# endif
-#else /* ! YYPARSE_PARAM */
-#if defined (__STDC__) || defined (__cplusplus)
-UNIV_INTERN int yyparse (void);
-#else
-UNIV_INTERN int yyparse ();
-#endif
-#endif /* ! YYPARSE_PARAM */
-
 
 
 /* The look-ahead symbol.  */

@@ -4,7 +4,11 @@
 #ifndef UNIV_HOTBACKUP
 
 #include "univ.i" /* ulint, uint */
-#include "m_ctype.h" /* CHARSET_INFO */
+#if defined(BUILD_DRIZZLE)
+# include <mystrings/m_ctype.h>
+#else
+# include "m_ctype.h" /* CHARSET_INFO */
+#endif /* DRIZZLE */
 
 /* Prototypes for global functions in ha_innodb.cc that are called by
 InnoDB's C-code. */
@@ -18,10 +22,10 @@ innobase_convert_string(
 /*====================*/
 	void*		to,
 	ulint		to_length,
-	CHARSET_INFO*	to_cs,
+	const CHARSET_INFO*	to_cs,
 	const void*	from,
 	ulint		from_length,
-	CHARSET_INFO*	from_cs,
+	const CHARSET_INFO*	from_cs,
 	uint*		errors);
 
 /***********************************************************************
