@@ -1060,14 +1060,6 @@ dict_tables_have_same_db(
 				dbname '/' tablename */
 	const char*	name2);	/* in: table name in the form
 				dbname '/' tablename */
-/*************************************************************************
-Removes an index from the cache */
-UNIV_INTERN
-void
-dict_index_remove_from_cache(
-/*=========================*/
-	dict_table_t*	table,	/* in/out: table */
-	dict_index_t*	index);	/* in, own: index */
 /**************************************************************************
 Get index by name */
 UNIV_INTERN

@@ -95,6 +95,9 @@ static bool innodb_inited = 0;
 
 #define INSIDE_HA_INNOBASE_CC
 
+extern "C"
+int64_t index_cond_func_innodb(void *arg);
+
 /* In the Windows plugin, the return value of current_session is
 undefined.  Map it to NULL. */
 #if defined MYSQL_DYNAMIC_PLUGIN && defined __WIN__
@@ -234,13 +237,6 @@ innobase_file_format_check_validate(
 						/* out: true if valid
 						config value */
 	const char*	format_check);		/* in: parameter value */
-/********************************************************************
-Return alter table flags supported in an InnoDB database. */
-static
-uint
-innobase_alter_table_flags(
-/*=======================*/
-	uint	flags);
 
 static const char innobase_hton_name[]= "InnoDB";
 
@@ -6357,7 +6353,7 @@ innobase_drop_database(
 	if (session) {
 		trx->mysql_query_str = session_query(session);
 
-		if (thd_test_options(session, OPTION_NO_FOREIGN_KEY_CHECKS)) {
+		if (session_test_options(session, OPTION_NO_FOREIGN_KEY_CHECKS)) {
 			trx->check_foreigns = FALSE;
 		}
 	} else {
@@ -7561,35 +7557,13 @@ UNIV_INTERN
 int
 ha_innobase::external_lock(
 /*=======================*/
-				/* out: 0 */
-	Session*	session,		/* in: handle to the user thread */
-	int	lock_type)	/* in: lock type */
+					/* out: 0 */
+	Session*	session,	/* in: handle to the user thread */
+	int	lock_type)		/* in: lock type */
 {
 	trx_t*		trx;
 
 	update_session(session);
-
-	/* Statement based binlogging does not work in isolation level
-	READ UNCOMMITTED and READ COMMITTED since the necessary
-	locks cannot be taken. In this case, we print an
-	informative error message and return with an error. */
-	if (lock_type == F_WRLCK && ib_bin_log_is_engaged(session))
-	{
-		ulong const binlog_format= session_binlog_format(session);
-		ulong const tx_isolation = session_tx_isolation(ha_session());
-		if (tx_isolation <= ISO_READ_COMMITTED
-		    && binlog_format == BINLOG_FORMAT_STMT)
-		{
-			char buf[256];
-			my_snprintf(buf, sizeof(buf),
-				    "Transaction level '%s' in"
-				    " InnoDB is not safe for binlog mode '%s'",
-				    tx_isolation_names[tx_isolation],
-				    binlog_format_names[binlog_format]);
-			my_error(ER_BINLOG_LOGGING_IMPOSSIBLE, MYF(0), buf);
-		}
-	}
-
 
 	trx = prebuilt->trx;
 
@@ -8355,7 +8329,7 @@ UNIV_INTERN
 void
 ha_innobase::get_auto_increment(
 /*============================*/
-        uint64_t	,              /* in: */
+        uint64_t	offset,              /* in: */
         uint64_t	increment,           /* in: table autoinc increment */
         uint64_t	nb_desired_values,   /* in: number of values reqd */
         uint64_t	*first_value,        /* out: the autoinc value */
@@ -9711,8 +9685,7 @@ extern "C" {
 #endif
 
 /* Index condition check function to be called from within Innobase */
-
-static int64_t index_cond_func_innodb(void *arg)
+int64_t index_cond_func_innodb(void *arg)
 {
   ha_innobase *h= (ha_innobase*)arg;
   if (h->end_range) //was: h->in_range_read

@@ -57,7 +57,7 @@ row_vers_impl_x_locked_off_kernel(
 	dtuple_t*	entry	= NULL; /* assignment to eliminate compiler
 					warning */
 	trx_t*		trx;
-	ulint		vers_del;
+	ulint		vers_del= 0;
 	ulint		rec_del;
 	ulint		err;
 	mtr_t		mtr;
