@@ -73,12 +73,15 @@ class ha_innobase: public handler
 	void update_thd();
 	int change_active_index(uint keynr);
 	int general_fetch(uchar* buf, uint direction, uint match_mode);
-	int innobase_read_and_init_auto_inc(ulonglong* ret);
-	ulong innobase_autoinc_lock();
-	ulong innobase_set_max_autoinc(ulonglong auto_inc);
-	ulong innobase_reset_autoinc(ulonglong auto_inc);
-	ulong innobase_get_auto_increment(ulonglong* value);
+	ulint innobase_lock_autoinc();
+	ulonglong innobase_peek_autoinc();
+	ulint innobase_set_max_autoinc(ulonglong auto_inc);
+	ulint innobase_reset_autoinc(ulonglong auto_inc);
+	ulint innobase_get_autoinc(ulonglong* value);
+	ulint innobase_update_autoinc(ulonglong	auto_inc);
+	ulint innobase_initialize_autoinc();
 	dict_index_t* innobase_get_index(uint keynr);
+ 	ulonglong innobase_get_int_col_max_value(const Field* field);
 
 	/* Init values for the class: */
  public:
@@ -214,12 +217,12 @@ char **thd_query(MYSQL_THD thd);
 /** Get the file name of the MySQL binlog.
  * @return the name of the binlog file
  */
-const char* drizzle_bin_log_file_name(void);
+const char* mysql_bin_log_file_name(void);
 
 /** Get the current position of the MySQL binlog.
  * @return byte offset from the beginning of the binlog
  */
-ulonglong drizzle_bin_log_file_pos(void);
+ulonglong mysql_bin_log_file_pos(void);
 
 /**
   Check if a user thread is a replication slave thread
