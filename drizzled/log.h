@@ -50,13 +50,11 @@ class TC_LOG_DUMMY: public TC_LOG // use it to disable the logging
 {
 public:
   TC_LOG_DUMMY() {}
-  int open(const char *opt_name __attribute__((unused)))
+  int open(const char *)
   { return 0; }
   void close(void)                          { }
-  int log_xid(Session *session __attribute__((unused)),
-              my_xid xid __attribute__((unused)))         { return 1; }
-  void unlog(ulong cookie __attribute__((unused)),
-             my_xid xid __attribute__((unused)))  { }
+  int log_xid(Session *, my_xid)         { return 1; }
+  void unlog(ulong, my_xid)  { }
 };
 
 #ifdef HAVE_MMAP

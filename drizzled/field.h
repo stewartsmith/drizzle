@@ -64,8 +64,7 @@ class Field
   void operator=(Field &);
 public:
   static void *operator new(size_t size) {return sql_alloc(size); }
-  static void operator delete(void *ptr_arg __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *, size_t)
   { TRASH(ptr_arg, size); }
 
   unsigned char		*ptr;			// Position to field in record
@@ -331,10 +330,10 @@ public:
       null_ptr=ADD_TO_PTR(null_ptr,ptr_diff,unsigned char*);
   }
   virtual void get_image(unsigned char *buff, uint32_t length,
-                         const CHARSET_INFO * const cs __attribute__((unused)))
+                         const CHARSET_INFO * const)
     { memcpy(buff,ptr,length); }
   virtual void set_image(const unsigned char *buff,uint32_t length,
-                         const CHARSET_INFO * const cs __attribute__((unused)))
+                         const CHARSET_INFO * const)
     { memcpy(ptr,buff,length); }
 
 
@@ -364,8 +363,7 @@ public:
       Number of copied bytes (excluding padded zero bytes -- see above).
   */
 
-  virtual uint32_t get_key_image(unsigned char *buff, uint32_t length,
-                             imagetype type __attribute__((unused)))
+  virtual uint32_t get_key_image(unsigned char *buff, uint32_t length, imagetype)
   {
     get_image(buff, length, &my_charset_bin);
     return length;
@@ -457,11 +455,11 @@ public:
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
-  virtual void set_charset(const CHARSET_INFO * const charset_arg __attribute__((unused)))
+  virtual void set_charset(const CHARSET_INFO * const)
   { }
   virtual enum Derivation derivation(void) const
   { return DERIVATION_IMPLICIT; }
-  virtual void set_derivation(enum Derivation derivation_arg __attribute__((unused)))
+  virtual void set_derivation(enum Derivation)
   { }
   bool set_warning(DRIZZLE_ERROR::enum_warning_level, unsigned int code,
                    int cuted_increment);
@@ -541,7 +539,7 @@ private:
 
    @returns 0 no bytes written.
 */
-  virtual int do_save_field_metadata(unsigned char *metadata_ptr __attribute__((unused)))
+  virtual int do_save_field_metadata(unsigned char *)
   { return 0; }
 };
 

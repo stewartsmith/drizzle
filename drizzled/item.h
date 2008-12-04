@@ -763,7 +763,7 @@ public:
   }
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
-  Field *tmp_table_field(Table *t_arg __attribute__((unused))) { return result_field; }
+  Field *tmp_table_field(Table *) { return result_field; }
   bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
@@ -774,7 +774,7 @@ public:
   bool find_item_in_field_list_processor(unsigned char *arg);
   bool register_field_in_read_map(unsigned char *arg);
   bool register_field_in_bitmap(unsigned char *arg);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
   void cleanup();
   bool result_as_int64_t();
@@ -821,14 +821,13 @@ public:
   Item *clone_item() { return new Item_null(name); }
   bool is_null() { return 1; }
 
-  virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((unused)))
+  virtual inline void print(String *str, enum_query_type)
   {
     str->append(STRING_WITH_LEN("NULL"));
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -842,7 +841,7 @@ public:
   {
     save_in_field(result_field, no_conversions);
   }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };  
 
@@ -1019,7 +1018,7 @@ public:
   uint32_t decimal_precision() const
   { return (uint)(max_length - test(value < 0)); }
   bool eq(const Item *, bool binary_cmp) const;
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1038,7 +1037,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg ();
   uint32_t decimal_precision() const { return max_length; }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1063,7 +1062,7 @@ public:
   int64_t val_int();
   double val_real();
   String *val_str(String*);
-  my_decimal *val_decimal(my_decimal *val __attribute__((unused)))
+  my_decimal *val_decimal(my_decimal *)
   { return &decimal_value; }
   int save_in_field(Field *field, bool no_conversions);
   bool basic_const_item() const { return 1; }
@@ -1081,7 +1080,7 @@ public:
   uint32_t decimal_precision() const { return decimal_value.precision(); }
   bool eq(const Item *, bool binary_cmp) const;
   void set_decimal_value(my_decimal *value_par);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1131,14 +1130,13 @@ public:
     :Item_float(NULL, val_arg, decimal_par, length), func_name(str)
   {}
 
-  virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((unused)))
+  virtual inline void print(String *str, enum_query_type)
   {
     str->append(func_name);
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1260,7 +1258,7 @@ public:
   {
     m_cs_specified= cs_specified;
   }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 
 private:
@@ -1279,12 +1277,11 @@ public:
   {}
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 
-  virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((unused)))
+  virtual inline void print(String *str, enum_query_type)
   {
     str->append(func_name);
   }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 
@@ -1365,7 +1362,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1387,7 +1384,7 @@ public:
   {}
   ~Item_result_field() {}			/* Required with gcc 2.95 */
   Field *get_tmp_table_field() { return result_field; }
-  Field *tmp_table_field(Table *t_arg __attribute__((unused)))
+  Field *tmp_table_field(Table *)
   { return result_field; }
   table_map used_tables() const { return 1; }
   virtual void fix_length_and_dec()=0;
@@ -1398,7 +1395,7 @@ public:
     save_in_field(result_field, no_conversions);
   }
   void cleanup();
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1595,7 +1592,7 @@ public:
                      alias_name_used_arg),
     outer_ref(0), in_sum_func(0), found_in_select_list(1)
   {}
-  void save_in_result_field(bool no_conversions __attribute__((unused)))
+  void save_in_result_field(bool)
   {
     outer_ref->save_org_in_field(result_field);
   }
@@ -1709,8 +1706,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   void make_field(Send_field *field) { item->make_field(field); }
   void copy();
-  int save_in_field(Field *field,
-                    bool no_conversions __attribute__((unused)))
+  int save_in_field(Field *field, bool)
   {
     return save_str_value_in_field(field, &str_value);
   }
@@ -1782,7 +1778,7 @@ public:
     return arg->walk(processor, walk_subquery, args) ||
 	    (this->*processor)(args);
   }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 
@@ -1816,7 +1812,7 @@ public:
 
   void set_used_tables(table_map map) { used_table_map= map; }
 
-  virtual bool allocate(uint32_t i __attribute__((unused)))
+  virtual bool allocate(uint32_t)
   { return 0; }
   virtual bool setup(Item *item)
   {
@@ -1837,8 +1833,7 @@ public:
   virtual void keep_array() {}
   virtual void print(String *str, enum_query_type query_type);
   bool eq_def(Field *field);
-  bool eq(const Item *item,
-          bool binary_cmp __attribute__((unused))) const
+  bool eq(const Item *item, bool) const
   {
     return this == item;
   }
