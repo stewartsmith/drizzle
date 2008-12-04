@@ -31,7 +31,7 @@ noinst_PROGRAMS	=	archive_test archive_reader archive_performance concurrency_te
 
 EXTRA_LTLIBRARIES =	ha_archive.la
 pkglib_LTLIBRARIES =	@plugin_archive_shared_target@
-ha_archive_la_LDFLAGS =	-module -rpath $(pkgplugindir) $(LDADD)
+ha_archive_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir) $(LDADD)
 ha_archive_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 ha_archive_la_CFLAGS =	$(AM_CFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN 
 ha_archive_la_SOURCES =	ha_archive.cc azio.cc

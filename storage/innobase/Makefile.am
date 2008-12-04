@@ -200,7 +200,7 @@ libinnobase_la_LIBADD= libpars.la
 EXTRA_LTLIBRARIES=	ha_innodb.la
 pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
 
-ha_innodb_la_LDFLAGS=	-module -rpath $(pkgplugindir)
+ha_innodb_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)
 ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${DYNAMIC_PLUGIN}
 ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${DYNAMIC_PLUGIN}
 ha_innodb_la_LIBADD=	@plugin_innobase_shared_target@ \
