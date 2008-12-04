@@ -3048,48 +3048,14 @@ void sql_perror(const char *message)
 
 bool flush_error_log()
 {
-  bool result=0;
+  bool result = 0;
   if (opt_error_log)
   {
-    char err_renamed[FN_REFLEN], *end;
-    end= strncpy(err_renamed,log_error_file,FN_REFLEN-4);
-    end+= strlen(err_renamed);
-    my_stpcpy(end, "-old");
     pthread_mutex_lock(&LOCK_error_log);
-    char err_temp[FN_REFLEN+4];
-    /*
-     On Windows is necessary a temporary file for to rename
-     the current error file.
-    */
-    strxmov(err_temp, err_renamed,"-tmp",NULL);
-    (void) my_delete(err_temp, MYF(0)); 
-    if (freopen(err_temp,"a+",stdout))
-    {
-      int fd;
-      size_t bytes;
-      unsigned char buf[IO_SIZE];
-
-      if(freopen(err_temp,"a+",stderr)==NULL)
-        return 1;
-      (void) my_delete(err_renamed, MYF(0));
-      my_rename(log_error_file,err_renamed,MYF(0));
-      if (freopen(log_error_file,"a+",stdout)==NULL)
-        return 1;
-      else
-        if(freopen(log_error_file,"a+",stderr)==NULL)
-          return 1;
-
-      if ((fd = my_open(err_temp, O_RDONLY, MYF(0))) >= 0)
-      {
-        while ((bytes= my_read(fd, buf, IO_SIZE, MYF(0))) &&
-               bytes != MY_FILE_ERROR)
-          my_fwrite(stderr, buf, bytes, MYF(0));
-        my_close(fd, MYF(0));
-      }
-      (void) my_delete(err_temp, MYF(0)); 
-    }
-    else
-     result= 1;
+    if (freopen(log_error_file,"a+",stdout)==NULL)
+      result = 1;
+    if (freopen(log_error_file,"a+",stderr)==NULL)
+      result = 1;
     pthread_mutex_unlock(&LOCK_error_log);
   }
    return result;
