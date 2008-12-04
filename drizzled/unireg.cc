@@ -230,7 +230,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
   }
 
   key_buff_length= uint4korr(fileinfo+47);
-  keybuff=(unsigned char*) my_malloc(key_buff_length, MYF(0));
+  keybuff=(unsigned char*) malloc(key_buff_length);
   key_info_length= pack_keys(keybuff, keys, key_info, data_offset);
   get_form_pos(file,fileinfo,&formnames);
   if (!(filepos=make_new_entry(file,fileinfo,&formnames,"")))
@@ -697,7 +697,7 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
   while ((field=it++))
     length+=(uint) strlen(field->field_name)+1+TE_INFO_LENGTH+cols/2;
 
-  if (!(info=(unsigned char*) my_malloc(length,MYF(MY_WME))))
+  if (!(info=(unsigned char*) malloc(length)))
     return(0);
 
   start_screen=0;
@@ -1235,10 +1235,11 @@ static bool make_empty_rec(Session *session, File file,
   memset(&share, 0, sizeof(share));
   table.s= &share;
 
-  if (!(buff=(unsigned char*) my_malloc((size_t) reclength,MYF(MY_WME | MY_ZEROFILL))))
+  if (!(buff=(unsigned char*) malloc((size_t) reclength)))
   {
     return(1);
   }
+  memset(buff, 0, (size_t) reclength);
 
   table.in_use= session;
   table.s->db_low_byte_first= handler->low_byte_first();

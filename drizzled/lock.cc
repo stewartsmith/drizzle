@@ -69,7 +69,7 @@
   in case external_lock() fails.
 
   @todo
-  Change to use my_malloc() ONLY when using LOCK TABLES command or when
+  Change to use malloc() ONLY when using LOCK TABLES command or when
   we are forced to use mysql_lock_merge.
 */
 #include <drizzled/server_includes.h>
@@ -577,9 +577,9 @@ DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
   Table **table, **end_table;
 
   if (!(sql_lock= (DRIZZLE_LOCK*)
-	my_malloc(sizeof(*sql_lock)+
-		  sizeof(THR_LOCK_DATA*)*(a->lock_count+b->lock_count)+
-		  sizeof(Table*)*(a->table_count+b->table_count),MYF(MY_WME))))
+	malloc(sizeof(*sql_lock)+
+               sizeof(THR_LOCK_DATA*)*(a->lock_count+b->lock_count)+
+               sizeof(Table*)*(a->table_count+b->table_count))))
     return(0);				// Fatal error
   sql_lock->lock_count=a->lock_count+b->lock_count;
   sql_lock->table_count=a->table_count+b->table_count;
@@ -777,10 +777,9 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
     from the first part immediately before calling thr_multi_lock().
   */
   if (!(sql_lock= (DRIZZLE_LOCK*)
-	my_malloc(sizeof(*sql_lock) +
-		  sizeof(THR_LOCK_DATA*) * tables * 2 +
-                  sizeof(table_ptr) * lock_count,
-		  MYF(0))))
+	malloc(sizeof(*sql_lock) +
+               sizeof(THR_LOCK_DATA*) * tables * 2 +
+               sizeof(table_ptr) * lock_count)))
     return(0);
   locks= locks_buf= sql_lock->locks= (THR_LOCK_DATA**) (sql_lock + 1);
   to= table_buf= sql_lock->table= (Table**) (locks + tables * 2);

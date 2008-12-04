@@ -83,9 +83,9 @@ int ha_init_errors(void)
 
   /* Allocate a pointer array for the error message strings. */
   /* Zerofill it to avoid uninitialized gaps. */
-  if (! (errmsgs= (const char**) my_malloc(HA_ERR_ERRORS * sizeof(char*),
-                                           MYF(MY_WME | MY_ZEROFILL))))
+  if (! (errmsgs= (const char**) malloc(HA_ERR_ERRORS * sizeof(char*))))
     return 1;
+  memset(errmsg, 0, HA_ERR_ERRORS * sizeof(char *));
 
   /* Set the dedicated error messages. */
   SETMSG(HA_ERR_KEY_NOT_FOUND,          ER(ER_KEY_NOT_FOUND));
@@ -1035,7 +1035,7 @@ int ha_recover(HASH *commit_list)
   for (info.len= MAX_XID_LIST_SIZE ;
        info.list==0 && info.len > MIN_XID_LIST_SIZE; info.len/=2)
   {
-    info.list=(XID *)my_malloc(info.len*sizeof(XID), MYF(0));
+    info.list=(XID *)malloc(info.len*sizeof(XID));
   }
   if (!info.list)
   {
