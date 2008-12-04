@@ -5472,8 +5472,7 @@ create_index(
 	index = dict_mem_index_create(table_name, key->name, 0,
 				      ind_type, n_fields);
 
-	field_lengths = (ulint*) my_malloc(sizeof(ulint) * n_fields,
-		MYF(MY_FAE));
+	field_lengths = (ulint*) malloc(sizeof(ulint) * n_fields);
 
 	for (i = 0; i < n_fields; i++) {
 		key_part = key->key_part + i;
@@ -6340,7 +6339,7 @@ innobase_drop_database(
 	}
 
 	ptr++;
-	namebuf = (char*) my_malloc((uint) len + 2, MYF(0));
+	namebuf = (char*) malloc((uint) len + 2);
 
 	memcpy(namebuf, ptr, len);
 	namebuf[len] = '/';
@@ -6402,8 +6401,8 @@ innobase_rename_table(
 	}
 
 	// Magic number 64 arbitrary
-	norm_to = (char*) my_malloc(strlen(to) + 64, MYF(0));
-	norm_from = (char*) my_malloc(strlen(from) + 64, MYF(0));
+	norm_to = (char*) malloc(strlen(to) + 64);
+	norm_from = (char*) malloc(strlen(from) + 64);
 
 	normalize_table_name(norm_to, to);
 	normalize_table_name(norm_from, from);
@@ -6507,10 +6506,9 @@ ha_innobase::records_in_range(
 {
 	KEY*		key;
 	dict_index_t*	index;
-	unsigned char*		key_val_buff2	= (unsigned char*) my_malloc(
+	unsigned char*		key_val_buff2	= (unsigned char*) malloc(
 						  table->s->stored_rec_length
-					+ table->s->max_key_length + 100,
-								MYF(MY_FAE));
+					+ table->s->max_key_length + 100);
 	ulint		buff2_len = table->s->stored_rec_length
 					+ table->s->max_key_length + 100;
 	dtuple_t*	range_start;
@@ -7086,7 +7084,7 @@ ha_innobase::update_table_comment(
 	/* allocate buffer for the full string, and
 	read the contents of the temporary file */
 
-	str = (char*) my_malloc(length + flen + 3, MYF(0));
+	str = (char*) malloc(length + flen + 3, MYF(0));
 
 	if (str) {
 		char* pos	= str + length;
@@ -7154,7 +7152,7 @@ ha_innobase::get_foreign_key_create_info(void)
 	/* allocate buffer for the string, and
 	read the contents of the temporary file */
 
-	str = (char*) my_malloc(flen + 1, MYF(0));
+	str = (char*) malloc(flen + 1);
 
 	if (str) {
 		rewind(srv_dict_tmpfile);
@@ -7841,7 +7839,7 @@ innodb_show_status(
 	/* allocate buffer for the string, and
 	read the contents of the temporary file */
 
-	if (!(str = (char*) my_malloc(usable_len + 1, MYF(0)))) {
+	if (!(str = (char*) malloc(usable_len + 1))) {
 	  mutex_exit(&srv_monitor_file_mutex);
 	  return(TRUE);
 	}
@@ -8021,8 +8019,8 @@ static INNOBASE_SHARE* get_share(const char* table_name)
 				(unsigned char*) table_name,
 				length))) {
 
-		share = (INNOBASE_SHARE *) my_malloc(sizeof(*share)+length+1,
-			MYF(MY_FAE | MY_ZEROFILL));
+		share = (INNOBASE_SHARE *) malloc(sizeof(*share)+length+1);
+                memset(share, 0, sizeof(*share)+length+1);
 
 		share->table_name_length=length;
 		share->table_name=(char*) (share+1);
