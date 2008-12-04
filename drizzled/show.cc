@@ -2854,18 +2854,18 @@ static int get_schema_tables_record(Session *session, TableList *tables,
     ptr=option_buff;
     if (share->min_rows)
     {
-      ptr=my_stpcpy(ptr," min_rows=");
-      ptr=int64_t10_to_str(share->min_rows,ptr,10);
+      ptr= strcpy(ptr," min_rows=")+10;
+      ptr= int64_t10_to_str(share->min_rows,ptr,10);
     }
     if (share->max_rows)
     {
-      ptr=my_stpcpy(ptr," max_rows=");
-      ptr=int64_t10_to_str(share->max_rows,ptr,10);
+      ptr= strcpy(ptr," max_rows=")+10;
+      ptr= int64_t10_to_str(share->max_rows,ptr,10);
     }
     if (share->avg_row_length)
     {
-      ptr=my_stpcpy(ptr," avg_row_length=");
-      ptr=int64_t10_to_str(share->avg_row_length,ptr,10);
+      ptr= strcpy(ptr," avg_row_length=")+16;
+      ptr= int64_t10_to_str(share->avg_row_length,ptr,10);
     }
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
       ptr=my_stpcpy(ptr," pack_keys=1");
@@ -2878,14 +2878,14 @@ static int get_schema_tables_record(Session *session, TableList *tables,
       ptr= strxmov(ptr, " page_checksum=",
                    ha_choice_values[(uint) share->page_checksum], NULL);
     if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
-      ptr=my_stpcpy(ptr," delay_key_write=1");
+      ptr= strcpy(ptr," delay_key_write=1")+18;
     if (share->row_type != ROW_TYPE_DEFAULT)
       ptr=strxmov(ptr, " row_format=", 
                   ha_row_type[(uint) share->row_type],
                   NULL);
     if (share->block_size)
     {
-      ptr= my_stpcpy(ptr, " block_size=");
+      ptr= strcpy(ptr, " block_size=")+12;
       ptr= int64_t10_to_str(share->block_size, ptr, 10);
     }
     

@@ -257,7 +257,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
 
   fn_format(tablename, filename, "", "", 1 | 2); /* removes path & ext. */
   if (!opt_local_file)
-    my_stpcpy(hard_path,filename);
+    strcpy(hard_path,filename);
   else
     my_load_path(hard_path, filename, NULL); /* filename includes the path */
 
@@ -291,13 +291,15 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
     opt_local_file ? "LOCAL" : "", hard_path);
   end= strchr(sql_statement, '\0');
   if (opt_replace)
-    end= my_stpcpy(end, " REPLACE");
+    end= strcpy(end, " REPLACE")+8;
   if (ignore)
-    end= my_stpcpy(end, " IGNORE");
-  end= my_stpcpy(my_stpcpy(end, " INTO TABLE "), tablename);
+    end= strcpy(end, " IGNORE")+7;
+
+  end= strcpy(end, " INTO TABLE ")+12;
+  end= strcpy(end, tablename)+strlen(tablename);
 
   if (fields_terminated || enclosed || opt_enclosed || escaped)
-      end= my_stpcpy(end, " FIELDS");
+      end= strcpy(end, " FIELDS")+7;
   end= add_load_option(end, fields_terminated, " TERMINATED BY");
   end= add_load_option(end, enclosed, " ENCLOSED BY");
   end= add_load_option(end, opt_enclosed,
@@ -305,10 +307,17 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
   end= add_load_option(end, escaped, " ESCAPED BY");
   end= add_load_option(end, lines_terminated, " LINES TERMINATED BY");
   if (opt_ignore_lines >= 0)
-    end= my_stpcpy(int64_t10_to_str(opt_ignore_lines,
-          my_stpcpy(end, " IGNORE "),10), " LINES");
+  {
+    end= strcpy(end, " IGNORE ")+8;
+    end+= sprintf(end, "%ld", opt_ignore_lines);
+    end= strcpy(end, " LINES")+6;
+  }
   if (opt_columns)
-    end= my_stpcpy(my_stpcpy(my_stpcpy(end, " ("), opt_columns), ")");
+  {
+    end= strcpy(end, " (")+2;
+    end= strcpy(end, opt_columns)+strlen(opt_columns);
+    end= strcpy(end, ")")+1;
+  }
   *end= '\0';
 
   if (drizzle_query(drizzle, sql_statement))

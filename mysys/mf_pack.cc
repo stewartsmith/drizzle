@@ -143,7 +143,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 #endif
 
   parent[0]=FN_LIBCHAR;
-  length=(size_t) (my_stpcpy(parent+1,FN_PARENTDIR)-parent);
+  length= (size_t)((strcpy(parent+1,FN_PARENTDIR)+strlen(FN_PARENTDIR))-parent);
   for (pos=start ; (*pos= *from_ptr++) != 0 ; pos++)
   {
 #ifdef BACKSLASH_MBTAIL
@@ -173,7 +173,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 	      pos+=length+1;			/* Don't unpack ~/.. */
 	      continue;
 	    }
-	    pos=my_stpcpy(buff,home_dir)-1;	/* Unpacks ~/.. */
+	    pos= strcpy(buff,home_dir)+strlen(home_dir)-1;	/* Unpacks ~/.. */
 	    if (*pos == FN_LIBCHAR)
 	      pos--;				/* home ended with '/' */
 	  }
@@ -184,7 +184,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 	      pos+=length+1;			/* Don't unpack ./.. */
 	      continue;
 	    }
-	    pos=my_stpcpy(buff,curr_dir)-1;	/* Unpacks ./.. */
+	    pos= strcpy(buff,curr_dir)+strlen(curr_dir)-1;	/* Unpacks ./.. */
 	    if (*pos == FN_LIBCHAR)
 	      pos--;				/* home ended with '/' */
 	  }
@@ -193,7 +193,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 	    pos--;
 	  if (pos[1] == FN_HOMELIB || memcmp(pos,parent,length) == 0)
 	  {					/* Don't remove ~user/ */
-	    pos=my_stpcpy(end_parentdir+1,parent);
+	    pos= strcpy(end_parentdir+1,parent)+strlen(parent);
 	    *pos=FN_LIBCHAR;
 	    continue;
 	  }
@@ -440,7 +440,7 @@ size_t system_filename(char * to, const char *from)
       from_pos+=strlen(FN_ROOTDIR);		/* Actually +1 but... */
       if (! strchr(from_pos,FN_LIBCHAR))
       {						/* No dir, use [000000] */
-	to_pos=my_stpcpy(to_pos,FN_C_ROOT_DIR);
+	to_pos= strcpy(to_pos,FN_C_ROOT_DIR)+strlen(FN_C_ROOT_DIR);
 	libchar_found++;
       }
     }
@@ -450,17 +450,21 @@ size_t system_filename(char * to, const char *from)
     while ((pos=strchr(from_pos,FN_LIBCHAR)))
     {
       if (libchar_found++)
-	*(to_pos++)=FN_C_DIR_SEP;		/* Add '.' between dirs */
+        *(to_pos++)=FN_C_DIR_SEP;		/* Add '.' between dirs */
       if (strstr(from_pos,FN_PARENTDIR) == from_pos &&
-	  from_pos+strlen(FN_PARENTDIR) == pos)
-	to_pos=my_stpcpy(to_pos,FN_C_PARENT_DIR);	/* Found '../' */
+          from_pos+strlen(FN_PARENTDIR) == pos) {
+        to_pos= strcpy(to_pos,FN_C_PARENT_DIR);	/* Found '../' */
+        to_pos+= strlen(FN_C_PARENT_DIR);
+      }
       else
-	to_pos=my_stpncpy(to_pos,from_pos,(size_t) (pos-from_pos));
+        to_pos=my_stpncpy(to_pos,from_pos,(size_t) (pos-from_pos));
       from_pos=pos+1;
     }
     *(to_pos++)=FN_C_AFTER_DIR;
   }
-  length= (size_t) (my_stpcpy(to_pos,from_pos)-to);
+  
+  strcpy(to_pos, from_pos);
+  length= strlen(to);
   return(length);
 #endif
 } /* system_filename */
