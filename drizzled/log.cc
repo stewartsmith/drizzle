@@ -2219,7 +2219,8 @@ int Session::binlog_setup_trx_data()
   if (trx_data)
     return(0);                             // Already set up
 
-  trx_data= (binlog_trx_data*) my_malloc(sizeof(binlog_trx_data), MYF(MY_ZEROFILL));
+  trx_data= (binlog_trx_data*) malloc(sizeof(binlog_trx_data));
+  memset(trx_data, 0, sizeof(binlog_trx_data));
   if (!trx_data ||
       open_cached_file(&trx_data->trans_log, drizzle_tmpdir,
                        LOG_PREFIX, binlog_cache_size, MYF(MY_WME)))
@@ -3241,8 +3242,9 @@ int TC_LOG_MMAP::open(const char *opt_name)
 
   npages=(uint)file_length/tc_log_page_size;
   assert(npages >= 3);             // to guarantee non-empty pool
-  if (!(pages=(PAGE *)my_malloc(npages*sizeof(PAGE), MYF(MY_WME|MY_ZEROFILL))))
+  if (!(pages=(PAGE *)malloc(npages*sizeof(PAGE))))
     goto err;
+  memset(pages, 0, npages*sizeof(PAGE));
   inited=3;
   for (pg=pages, i=0; i < npages; i++, pg++)
   {

@@ -200,8 +200,9 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
     if (usable_index == MAX_KEY)
     {
-      table->sort.io_cache= (IO_CACHE *) my_malloc(sizeof(IO_CACHE),
-                                                   MYF(MY_FAE | MY_ZEROFILL));
+      table->sort.io_cache= (IO_CACHE *) malloc(sizeof(IO_CACHE));
+      memset(table->sort.io_cache, 0, sizeof_IO_CACHE);
+                                         
     
       if (!(sortorder= make_unireg_sortorder((order_st*) order->first,
                                              &length, NULL)) ||
