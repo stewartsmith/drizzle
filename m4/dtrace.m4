@@ -14,7 +14,7 @@ then
   AC_SUBST(DTRACEFLAGS)
   AC_SUBST(HAVE_DTRACE)
 fi
-AM_CONDITIONAL([HAVE_DTRACE], [ test "$ENABLE_DTRACE" = "yes" ])
+AM_CONDITIONAL([BUILD_DTRACE], [ test "$ENABLE_DTRACE" = "yes" ])
 dnl ---------------------------------------------------------------------------
 dnl End Macro: DTRACE_TEST
 dnl ---------------------------------------------------------------------------

@@ -20,6 +20,7 @@ Created November 07, 2007 Vasil Dimov
 #endif /* MYSQL_SERVER */
 
 #if defined(BUILD_DRIZZLE)
+# include <drizzled/global.h>
 # include <drizzled/common_includes.h>
 #else
 # include <mysql_priv.h>

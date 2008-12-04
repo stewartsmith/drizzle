@@ -73,36 +73,7 @@ ifdef([AC_PROG_CC_C99],[
   C99_SUPPORT_HACK=""
 ],[C99_SUPPORT_HACK="-std=gnu99"])
 
-ifdef([AC_USE_SYSTEM_EXTENSIONS],[
-  AC_USE_SYSTEM_EXTENSIONS
-],[
-
-  AH_VERBATIM([__EXTENSIONS__],
-[/* Enable extensions on Solaris.  */
-#ifndef __EXTENSIONS__
-# undef __EXTENSIONS__
-#endif
-#ifndef _POSIX_PTHREAD_SEMANTICS
-# undef _POSIX_PTHREAD_SEMANTICS
-#endif
-#ifndef _TANDEM_SOURCE
-# undef _TANDEM_SOURCE
-#endif])
-
-  AC_CACHE_CHECK([whether it is safe to define __EXTENSIONS__],
-    [ac_cv_safe_to_define___extensions__],
-    [AC_COMPILE_IFELSE(
-       [AC_LANG_PROGRAM([
-#         define __EXTENSIONS__ 1
-          AC_INCLUDES_DEFAULT])],
-       [ac_cv_safe_to_define___extensions__=yes],
-       [ac_cv_safe_to_define___extensions__=no])])
-  test $ac_cv_safe_to_define___extensions__ = yes &&
-    AC_DEFINE([__EXTENSIONS__])
-  AC_DEFINE([_POSIX_PTHREAD_SEMANTICS])
-  AC_DEFINE([_TANDEM_SOURCE])
-])
-
+AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CXX
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
@@ -174,7 +145,7 @@ AC_SUBST(SHARED_LIB_VERSION)
 AC_SUBST(AVAILABLE_LANGUAGES)
 
 dnl Ok. This is sort of lame, but we need to be nice to plugins Makefile.am's.
-AM_CONDITIONAL(BUILDING_DRIZZLE,[test "x" = "x"])
+AM_CONDITIONAL(BUILD_DRIZZLE,[test "x" = "x"])
 
 
 # General Constants
@@ -650,7 +621,6 @@ then
   SEARCH_FOR_LIB(pcre, pcre_compile, pcre.h, 
                  AC_MSG_ERROR([libpcre is required for Drizzle]))
 fi
-AM_CONDITIONAL([HAVE_PCRE],[test "$ac_cv_have_pcre" = "yes"])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
@@ -1507,8 +1477,8 @@ AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 dnl GCC Precompiled Header Support
 dnl re-enable later
-dnl AM_CONDITIONAL([GCC_PCH],[test "$GCC" = "yes"])
-AM_CONDITIONAL([GCC_PCH],[test "no" = "yes"])
+dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
+AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
@@ -1543,7 +1513,7 @@ echo "   * Installation prefix:       $prefix"
 echo "   * System type:               $SYSTEM_TYPE"
 echo "   * Host CPU:                  $host_cpu"
 echo "   * C Compiler:                $CC_VERSION"
-echo "   * C++ Compiler:              $CXX"
+echo "   * C++ Compiler:              $CXX_VERSION"
 echo "   * Build auth_pam:            $ac_cv_header_security_pam_appl_h"
 echo "   * Assertions enabled:        $ac_cv_assert"
 echo "   * Debug enabled:             $with_debug"
