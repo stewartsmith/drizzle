@@ -85,7 +85,7 @@ int ha_init_errors(void)
   /* Zerofill it to avoid uninitialized gaps. */
   if (! (errmsgs= (const char**) malloc(HA_ERR_ERRORS * sizeof(char*))))
     return 1;
-  memset(errmsg, 0, HA_ERR_ERRORS * sizeof(char *));
+  memset(errmsgs, 0, HA_ERR_ERRORS * sizeof(char *));
 
   /* Set the dedicated error messages. */
   SETMSG(HA_ERR_KEY_NOT_FOUND,          ER(ER_KEY_NOT_FOUND));

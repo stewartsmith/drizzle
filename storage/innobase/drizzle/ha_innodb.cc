@@ -7084,7 +7084,7 @@ ha_innobase::update_table_comment(
 	/* allocate buffer for the full string, and
 	read the contents of the temporary file */
 
-	str = (char*) malloc(length + flen + 3, MYF(0));
+	str = (char*) malloc(length + flen + 3);
 
 	if (str) {
 		char* pos	= str + length;

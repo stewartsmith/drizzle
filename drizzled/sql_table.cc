@@ -5195,7 +5195,7 @@ copy_data_between_tables(Table *from,Table *to,
     else
     {
       from->sort.io_cache=(IO_CACHE*) malloc(sizeof(IO_CACHE));
-      memset(from-sort.io_cache, 0, sizeof(IO_CACHE));
+      memset(from->sort.io_cache, 0, sizeof(IO_CACHE));
 
       memset(&tables, 0, sizeof(tables));
       tables.table= from;

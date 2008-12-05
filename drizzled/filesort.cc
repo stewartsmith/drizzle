@@ -365,8 +365,7 @@ static char **make_char_array(char **old_pos, register uint32_t fields,
   char *char_pos;
 
   if (old_pos ||
-      (old_pos= (char**) malloc((uint32_t) fields*(length+sizeof(char*)),
-				   my_flag)))
+      (old_pos= (char**) malloc((uint32_t) fields*(length+sizeof(char*)))))
   {
     pos=old_pos; char_pos=((char*) (pos+fields)) -length;
     while (fields--) *(pos++) = (char_pos+= length);

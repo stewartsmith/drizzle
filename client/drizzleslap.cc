@@ -437,8 +437,11 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
   conclusions conclusion;
   uint64_t client_limit;
 
-  head_sptr= (stats *)my_malloc(sizeof(stats) * iterations,
-                                MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  head_sptr= (stats *)malloc(sizeof(stats) * iterations);
+  if (head_sptr == NULL)
+    fprintf(stderr, "Memory Allocation error in gather statistics\n");
+  memset(head_sptr, 0, sizeof(stats) * iterations);
+
 
   memset(&conclusion, 0, sizeof(conclusions));
 
@@ -898,10 +901,16 @@ build_table_string(void)
     }
 
   table_string.append(")");
-  ptr= (statement *)my_malloc(sizeof(statement),
-                              MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->string = (char *)my_malloc(table_string.length()+1,
-                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  ptr= (statement *)malloc(sizeof(statement));
+  if (ptr == NULL)
+    fprintf(stderr, "Memory Allocation error in create table\n");
+  memset(ptr, 0, sizeof(statement));
+
+  ptr->string = (char *)malloc(table_string.length()+1);
+  if (ptr->string == NULL)
+    fprintf(stderr, "Memory Allocation error in create table\n");
+  memset(ptr->string, 0, table_string.length()+1);
+
   ptr->length= table_string.length()+1;
   ptr->type= CREATE_TABLE_TYPE;
   my_stpcpy(ptr->string, table_string.c_str());
@@ -964,11 +973,18 @@ build_update_string(void)
     update_string.append(" WHERE id = ");
 
 
-  ptr= (statement *)my_malloc(sizeof(statement),
-                              MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  ptr= (statement *)malloc(sizeof(statement));
+  if (ptr == NULL)
+    fprintf(stderr, "Memory Allocation error in creating update\n");
+  memset(ptr, 0, sizeof(statement));
 
+  
   ptr->string= (char *)my_malloc(update_string.length() + 1,
                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  if (ptr->string == NULL)
+    fprintf(stderr, "Memory Allocation error in creating update\n");
+  memset(ptr->string, 0, update_string.length() + 1);
+
   ptr->length= update_string.length()+1;
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
     ptr->type= UPDATE_TYPE_REQUIRES_PREFIX ;
@@ -1061,8 +1077,7 @@ build_insert_string(void)
 
     if (num_blob_cols_size > HUGE_STRING_LENGTH)
     {
-      blob_ptr= (char *)my_malloc(sizeof(char)*num_blob_cols_size,
-                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+      blob_ptr= (char *)malloc(sizeof(char)*num_blob_cols_size);
       if (!blob_ptr)
       {
         fprintf(stderr, "Memory Allocation error in creating select\n");
@@ -1099,12 +1114,12 @@ build_insert_string(void)
 
   insert_string.append(")", 1);
 
-  if (!(ptr= (statement *)my_malloc(sizeof(statement), MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
+  if (!(ptr= (statement *)malloc(sizeof(statement))))
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  if (!(ptr->string= (char *)my_malloc(insert_string.length() + 1, MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
+  if (!(ptr->string= (char *)malloc(insert_string.length() + 1)))
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
