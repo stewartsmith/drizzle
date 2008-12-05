@@ -191,8 +191,7 @@ public:
 
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint) size); }
-  static void operator delete(void *ptr_arg __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *, size_t)
   { TRASH(ptr_arg, size); }
 
   sys_var_pluginvar(const char *name_arg,
@@ -208,10 +207,9 @@ public:
   TYPELIB* plugin_var_typelib(void);
   unsigned char* value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
   bool check(Session *session, set_var *var);
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
     { return is_readonly(); }
-  void set_default(Session *session,
-                   enum_var_type type __attribute__((unused)));
+  void set_default(Session *session, enum_var_type);
   bool update(Session *session, set_var *var);
 };
 
@@ -881,8 +879,7 @@ extern "C" unsigned char *get_plugin_hash_key(const unsigned char *, size_t *, b
 extern "C" unsigned char *get_bookmark_hash_key(const unsigned char *, size_t *, bool);
 
 
-unsigned char *get_plugin_hash_key(const unsigned char *buff, size_t *length,
-                           bool not_used __attribute__((unused)))
+unsigned char *get_plugin_hash_key(const unsigned char *buff, size_t *length, bool)
 {
   struct st_plugin_int *plugin= (st_plugin_int *)buff;
   *length= (uint)plugin->name.length;
@@ -890,8 +887,7 @@ unsigned char *get_plugin_hash_key(const unsigned char *buff, size_t *length,
 }
 
 
-unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length,
-                             bool not_used __attribute__((unused)))
+unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, bool)
 {
   struct st_bookmark *var= (st_bookmark *)buff;
   *length= var->name_len + 1;
@@ -1361,8 +1357,7 @@ typedef bool *(*mysql_sys_var_ptr_p)(Session* a_session, int offset);
   default variable data check and update functions
 ****************************************************************************/
 
-static int check_func_bool(Session *session __attribute__((unused)),
-                           struct st_mysql_sys_var *var,
+static int check_func_bool(Session *, struct st_mysql_sys_var *var,
                            void *save, st_mysql_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
@@ -1460,8 +1455,7 @@ static int check_func_int64_t(Session *session, struct st_mysql_sys_var *var,
                               var->name, (int64_t) tmp);
 }
 
-static int check_func_str(Session *session,
-                          struct st_mysql_sys_var *var __attribute__((unused)),
+static int check_func_str(Session *session, struct st_mysql_sys_var *,
                           void *save, st_mysql_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
@@ -1476,8 +1470,7 @@ static int check_func_str(Session *session,
 }
 
 
-static int check_func_enum(Session *session __attribute__((unused)),
-                           struct st_mysql_sys_var *var,
+static int check_func_enum(Session *, struct st_mysql_sys_var *var,
                            void *save, st_mysql_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
@@ -1523,8 +1516,7 @@ err:
 }
 
 
-static int check_func_set(Session *session __attribute__((unused)),
-                          struct st_mysql_sys_var *var,
+static int check_func_set(Session *, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE], *error= 0;
@@ -1576,39 +1568,35 @@ err:
 }
 
 
-static void update_func_bool(Session *session __attribute__((unused)),
-                             struct st_mysql_sys_var *var __attribute__((unused)),
+static void update_func_bool(Session *, struct st_mysql_sys_var *,
                              void *tgt, const void *save)
 {
   *(bool *) tgt= *(int *) save ? 1 : 0;
 }
 
 
-static void update_func_int(Session *session __attribute__((unused)),
-                            struct st_mysql_sys_var *var __attribute__((unused)),
+static void update_func_int(Session *, struct st_mysql_sys_var *,
                              void *tgt, const void *save)
 {
   *(int *)tgt= *(int *) save;
 }
 
 
-static void update_func_long(Session *session __attribute__((unused)),
-                             struct st_mysql_sys_var *var __attribute__((unused)),
+static void update_func_long(Session *, struct st_mysql_sys_var *,
                              void *tgt, const void *save)
 {
   *(long *)tgt= *(long *) save;
 }
 
 
-static void update_func_int64_t(Session *session __attribute__((unused)),
-                                 struct st_mysql_sys_var *var __attribute__((unused)),
+static void update_func_int64_t(Session *, struct st_mysql_sys_var *,
                                  void *tgt, const void *save)
 {
   *(int64_t *)tgt= *(uint64_t *) save;
 }
 
 
-static void update_func_str(Session *session __attribute__((unused)), struct st_mysql_sys_var *var,
+static void update_func_str(Session *, struct st_mysql_sys_var *var,
                              void *tgt, const void *save)
 {
   char *old= *(char **) tgt;
@@ -1951,8 +1939,7 @@ void plugin_sessionvar_init(Session *session)
 /*
   Unlocks all system variables which hold a reference
 */
-static void unlock_variables(Session *session __attribute__((unused)),
-                             struct system_variables *vars)
+static void unlock_variables(Session *, struct system_variables *vars)
 {
   intern_plugin_unlock(NULL, vars->table_plugin);
   vars->table_plugin= NULL;
@@ -2128,8 +2115,7 @@ TYPELIB* sys_var_pluginvar::plugin_var_typelib(void)
 }
 
 
-unsigned char* sys_var_pluginvar::value_ptr(Session *session, enum_var_type type,
-                                    LEX_STRING *base __attribute__((unused)))
+unsigned char* sys_var_pluginvar::value_ptr(Session *session, enum_var_type type, LEX_STRING *)
 {
   unsigned char* result;
 
@@ -2384,9 +2370,7 @@ static void plugin_opt_set_limits(struct my_option *options,
 extern "C" bool get_one_plugin_option(int optid, const struct my_option *,
                                          char *);
 
-bool get_one_plugin_option(int optid __attribute__((unused)),
-                              const struct my_option *opt __attribute__((unused)),
-                              char *argument __attribute__((unused)))
+bool get_one_plugin_option(int, const struct my_option *, char *)
 {
   return 0;
 }

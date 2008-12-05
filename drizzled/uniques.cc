@@ -40,8 +40,7 @@ using namespace CMATH_NAMESPACE;
 #endif
 
 
-int unique_write_to_file(unsigned char* key,
-                         element_count count __attribute__((unused)),
+int unique_write_to_file(unsigned char* key, element_count,
                          Unique *unique)
 {
   /*
@@ -54,8 +53,7 @@ int unique_write_to_file(unsigned char* key,
 }
 
 int unique_write_to_ptrs(unsigned char* key,
-                         element_count count __attribute__((unused)),
-                         Unique *unique)
+                         element_count, Unique *unique)
 {
   memcpy(unique->record_pointers, key, unique->size);
   unique->record_pointers+=unique->size;
@@ -132,8 +130,7 @@ inline double log2_n_fact(double x)
       total_buf_elems* log2(n_buffers) / TIME_FOR_COMPARE_ROWID;
 */
 
-static double get_merge_buffers_cost(uint32_t *buff_elems __attribute__((unused)),
-                                     uint32_t elem_size,
+static double get_merge_buffers_cost(uint32_t *, uint32_t elem_size,
                                      uint32_t *first, uint32_t *last)
 {
   uint32_t total_buf_elems= 0;
