@@ -4658,9 +4658,10 @@ int initialize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table;
 
-  if (!(schema_table= (ST_SCHEMA_TABLE *)my_malloc(sizeof(ST_SCHEMA_TABLE),
-                                MYF(MY_WME | MY_ZEROFILL))))
+  if (!(schema_table= (ST_SCHEMA_TABLE *)malloc(sizeof(ST_SCHEMA_TABLE))))
       return(1);
+  memset(schema_table, 0, sizeof(ST_SCHEMA_TABLE));
+
   /* Historical Requirement */
   plugin->data= schema_table; // shortcut for the future
   if (plugin->plugin->init)

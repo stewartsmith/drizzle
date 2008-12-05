@@ -1117,8 +1117,7 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
   save_write_set= head->write_set;
 
   /* Allocate a bitmap for used columns (Q: why not on MEM_ROOT?) */
-  if (!(bitmap= (my_bitmap_map*) my_malloc(head->s->column_bitmap_size,
-                                           MYF(MY_WME))))
+  if (!(bitmap= (my_bitmap_map*) malloc(head->s->column_bitmap_size)))
   {
     column_bitmap.bitmap= 0;
     *create_error= 1;

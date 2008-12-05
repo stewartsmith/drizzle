@@ -2949,9 +2949,9 @@ static KEY_CACHE *create_key_cache(const char *name, uint32_t length)
 {
   KEY_CACHE *key_cache;
   
-  if ((key_cache= (KEY_CACHE*) my_malloc(sizeof(KEY_CACHE),
-					     MYF(MY_ZEROFILL | MY_WME))))
+  if ((key_cache= (KEY_CACHE*) malloc(sizeof(KEY_CACHE))))
   {
+    memset(key_cache, 0, sizeof(KEY_CACHE));
     if (!new NAMED_LIST(&key_caches, name, length, (unsigned char*) key_cache))
     {
       free((char*) key_cache);

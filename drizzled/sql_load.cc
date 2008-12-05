@@ -772,7 +772,7 @@ READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * co
   set_if_bigger(length,line_start.length());
   stack=stack_pos=(int*) sql_alloc(sizeof(int)*length);
 
-  if (!(buffer=(unsigned char*) my_malloc(buff_length+1,MYF(0))))
+  if (!(buffer=(unsigned char*) malloc(buff_length+1)))
     error=1; /* purecov: inspected */
   else
   {

@@ -400,11 +400,11 @@ static int process_selected_tables(char *db, char **table_names, int tables)
       tot_length+= fixed_name_length(*(table_names + i)) + 2;
 
     if (!(table_names_comma_sep = (char *)
-    my_malloc((sizeof(char) * tot_length) + 4, MYF(MY_WME))))
+          malloc((sizeof(char) * tot_length) + 4)))
       return 1;
 
     for (end = table_names_comma_sep + 1; tables > 0;
-   tables--, table_names++)
+         tables--, table_names++)
     {
       end= fix_table_name(end, *table_names);
       *end++= ',';
@@ -488,7 +488,7 @@ static int process_all_tables_in_db(char *database)
       tot_length+= fixed_name_length(row[0]) + 2;
     drizzle_data_seek(res, 0);
 
-    if (!(tables=(char *) my_malloc(sizeof(char)*tot_length+4, MYF(MY_WME))))
+    if (!(tables=(char *) malloc(sizeof(char)*tot_length+4)))
     {
       drizzle_free_result(res);
       return 1;
@@ -624,7 +624,7 @@ static int handle_request_for_tables(const char *tables, uint length)
     return fix_table_storage_name(tables);
   }
 
-  if (!(query =(char *) my_malloc((sizeof(char)*(length+110)), MYF(MY_WME))))
+  if (!(query =(char *) malloc((sizeof(char)*(length+110)))))
     return 1;
   if (opt_all_in_1)
   {

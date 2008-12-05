@@ -1699,21 +1699,6 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 }
 
 
-extern "C" void *my_str_malloc_drizzled(size_t size);
-extern "C" void my_str_free_drizzled(void *ptr);
-
-void *my_str_malloc_drizzled(size_t size)
-{
-  return my_malloc(size, MYF(MY_FAE));
-}
-
-
-void my_str_free_drizzled(void *ptr)
-{
-  free((unsigned char*)ptr);
-}
-
-
 static const char *load_default_groups[]= {
 "mysqld","server", DRIZZLE_BASE_VERSION, 0, 0};
 
@@ -2426,11 +2411,6 @@ int main(int argc, char **argv)
 
   network_init();
 
-  /*
-   Initialize my_str_malloc() and my_str_free()
-  */
-  my_str_malloc= &my_str_malloc_drizzled;
-  my_str_free= &my_str_free_drizzled;
 
   /*
     init signals & alarm

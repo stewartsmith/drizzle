@@ -36,7 +36,7 @@ user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
     uint32_t size=ALIGN_SIZE(sizeof(user_var_entry))+name.length+1+extra_size;
     if (!hash_inited(hash))
       return 0;
-    if (!(entry = (user_var_entry*) my_malloc(size,MYF(MY_WME | ME_FATALERROR))))
+    if (!(entry = (user_var_entry*) malloc(size)))
       return 0;
     entry->name.str=(char*) entry+ ALIGN_SIZE(sizeof(user_var_entry))+
       extra_size;

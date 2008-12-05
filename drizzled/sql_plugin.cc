@@ -413,7 +413,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 
   /* Duplicate and convert dll name */
   plugin_dl.dl.length= dl->length * files_charset_info->mbmaxlen + 1;
-  if (! (plugin_dl.dl.str= (char*) my_malloc(plugin_dl.dl.length, MYF(0))))
+  if (! (plugin_dl.dl.str= (char*) malloc(plugin_dl.dl.length)))
   {
     free_plugin_mem(&plugin_dl);
     if (report & REPORT_TO_USER)

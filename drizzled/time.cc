@@ -628,7 +628,7 @@ DATE_TIME_FORMAT *date_time_format_copy(Session *session, DATE_TIME_FORMAT *form
   if (session)
     new_format= (DATE_TIME_FORMAT *) session->alloc(length);
   else
-    new_format=  (DATE_TIME_FORMAT *) my_malloc(length, MYF(MY_WME));
+    new_format=  (DATE_TIME_FORMAT *) malloc(length);
   if (new_format)
   {
     /* Put format string after current pos */

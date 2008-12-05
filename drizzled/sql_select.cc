@@ -13341,8 +13341,8 @@ create_sort_index(Session *session, JOIN *join, order_st *order,
         make_unireg_sortorder(order, &length, join->sortorder)))
     goto err;				/* purecov: inspected */
 
-  table->sort.io_cache=(IO_CACHE*) my_malloc(sizeof(IO_CACHE),
-                                             MYF(MY_WME | MY_ZEROFILL));
+  table->sort.io_cache=(IO_CACHE*) malloc(sizeof(IO_CACHE));
+  memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
   table->status=0;				// May be wrong if quick_select
 
   // If table has a range, move it to select
@@ -13830,7 +13830,7 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
   cache->blobs=blobs;
   *blob_ptr=0;					/* End sequentel */
   size=cmax(session->variables.join_buff_size, (uint32_t)cache->length);
-  if (!(cache->buff=(unsigned char*) my_malloc(size,MYF(0))))
+  if (!(cache->buff=(unsigned char*) malloc(size)))
     return(1);				/* Don't use cache */ /* purecov: inspected */
   cache->end=cache->buff+size;
   reset_cache_write(cache);

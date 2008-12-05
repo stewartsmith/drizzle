@@ -26,7 +26,7 @@ TESTS = check_length.sh
 %.pb.h %.pb.cc : %.proto
 	$(PROTOC) --cpp_out=${top_builddir}/drizzled/serialize $<
 
-bin_PROGRAMS = \
+noinst_PROGRAMS = \
 	       table_reader \
 	       table_writer \
 	       replication_event_reader \

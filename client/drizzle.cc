@@ -1133,9 +1133,7 @@ int main(int argc,char *argv[])
       histfile= strdup(getenv("DRIZZLE_HISTFILE"));
     else if (getenv("HOME"))
     {
-      histfile=(char*) my_malloc((uint) strlen(getenv("HOME"))
-                                 + (uint) strlen("/.drizzle_history")+2,
-                                 MYF(MY_WME));
+      histfile=(char*) malloc(strlen(getenv("HOME")) + strlen("/.drizzle_history") + 2);
       if (histfile)
         sprintf(histfile,"%s/.drizzle_history",getenv("HOME"));
       char link_name[FN_REFLEN];
@@ -1152,8 +1150,7 @@ int main(int argc,char *argv[])
       if (verbose)
         tee_fprintf(stdout, _("Reading history-file %s\n"),histfile);
       read_history(histfile);
-      if (!(histfile_tmp= (char*) my_malloc((uint) strlen(histfile) + 5,
-                                            MYF(MY_WME))))
+      if (!(histfile_tmp= (char*) malloc((uint) strlen(histfile) + 5)))
       {
         fprintf(stderr, _("Couldn't allocate memory for temp histfile!\n"));
         exit(1);
@@ -2930,8 +2927,7 @@ print_table_data(DRIZZLE_RES *result)
   
   separator.reserve(256);
 
-  num_flag=(bool*) my_malloc(sizeof(bool)*drizzle_num_fields(result),
-                             MYF(MY_WME));
+  num_flag=(bool*) malloc(sizeof(bool)*drizzle_num_fields(result));
   if (column_types_flag)
   {
     print_field_types(result);
