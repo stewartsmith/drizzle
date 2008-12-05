@@ -66,7 +66,7 @@ libmysys_la_SOURCES = my_init.cc mf_getdate.cc \
 			mf_format.cc mf_same.cc mf_dirname.cc mf_fn_ext.cc \
 			my_symlink.cc my_symlink2.cc \
 			mf_pack.cc mf_unixpath.cc mf_arr_appstr.cc \
-			mf_wcomp.cc my_gethwaddr.cc \
+			mf_wcomp.cc \
 			mf_qsort.cc mf_qsort2.cc mf_sort.cc \
 			ptr_cmp.cc mf_radix.cc queues.cc \
 			tree.cc list.cc array.cc typelib.cc \

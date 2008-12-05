@@ -295,9 +295,6 @@ RETSIGTYPE process_alarm(int sig __attribute__((unused)))
   if (thd_lib_detected == THD_LIB_LT &&
       !pthread_equal(pthread_self(),alarm_thread))
   {
-#if defined(MAIN) && !defined(__bsdi__)
-    printf("thread_alarm in process_alarm\n"); fflush(stdout);
-#endif
 #ifndef HAVE_BSD_SIGNALS
     my_sigset(thr_client_alarm, process_alarm);	/* int. thread system calls */
 #endif
@@ -324,9 +321,6 @@ static RETSIGTYPE process_alarm_part2(int)
 {
   ALARM *alarm_data;
 
-#if defined(MAIN)
-  printf("process_alarm\n"); fflush(stdout);
-#endif
   if (alarm_queue.elements)
   {
     if (alarm_aborted)
@@ -339,9 +333,6 @@ static RETSIGTYPE process_alarm_part2(int)
 	if (pthread_equal(alarm_data->thread,alarm_thread) ||
 	    pthread_kill(alarm_data->thread, thr_client_alarm))
 	{
-#ifdef MAIN
-	  printf("Warning: pthread_kill couldn't find thread!!!\n");
-#endif
 	  queue_remove(&alarm_queue,i);		/* No thread. Remove alarm */
 	}
 	else
@@ -362,9 +353,6 @@ static RETSIGTYPE process_alarm_part2(int)
 	if (pthread_equal(alarm_data->thread,alarm_thread) ||
 	    pthread_kill(alarm_data->thread, thr_client_alarm))
 	{
-#ifdef MAIN
-	  printf("Warning: pthread_kill couldn't find thread!!!\n");
-#endif
 	  queue_remove(&alarm_queue,0);		/* No thread. Remove alarm */
 	  if (!alarm_queue.elements)
 	    break;
@@ -502,9 +490,6 @@ void thr_alarm_info(ALARM_INFO *info)
 
 RETSIGTYPE thread_alarm(int sig)
 {
-#ifdef MAIN
-  printf("thread_alarm\n"); fflush(stdout);
-#endif
 #ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,thread_alarm);		/* int. thread system calls */
 #endif
@@ -523,9 +508,6 @@ static void *alarm_handler(void *arg __attribute__((unused)))
 {
   int error;
   struct timespec abstime;
-#ifdef MAIN
-  puts("Starting alarm thread");
-#endif
   my_thread_init();
   alarm_thread_running= 1;
   pthread_mutex_lock(&LOCK_alarm);
@@ -546,10 +528,7 @@ static void *alarm_handler(void *arg __attribute__((unused)))
 	if ((error=pthread_cond_timedwait(&COND_alarm,&LOCK_alarm,&abstime)) &&
 	    error != ETIME && error != ETIMEDOUT)
 	{
-#ifdef MAIN
-	  printf("Got error: %d from ptread_cond_timedwait (errno: %d)\n",
-		 error,errno);
-#endif
+          assert(1);
 	}
       }
     }
@@ -558,13 +537,9 @@ static void *alarm_handler(void *arg __attribute__((unused)))
     else
     {
       next_alarm_expire_time= ~ (time_t) 0;
-      if ((error=pthread_cond_wait(&COND_alarm,&LOCK_alarm)))
-      {
-#ifdef MAIN
-        printf("Got error: %d from ptread_cond_wait (errno: %d)\n",
-               error,errno);
-#endif
-      }
+      error= pthread_cond_wait(&COND_alarm,&LOCK_alarm);
+
+      assert(error == 0);
     }
     process_alarm(0);
   }
@@ -578,283 +553,3 @@ static void *alarm_handler(void *arg __attribute__((unused)))
 #endif /* USE_ALARM_THREAD */
 
 #endif /* THREAD */
-
-
-/****************************************************************************
-  Handling of test case (when compiled with -DMAIN)
-***************************************************************************/
-
-#ifdef MAIN
-#if !defined(DONT_USE_THR_ALARM)
-
-static pthread_cond_t COND_thread_count;
-static pthread_mutex_t LOCK_thread_count;
-static uint32_t thread_count;
-
-#ifdef HPUX10
-typedef int * fd_set_ptr;
-#else
-typedef fd_set * fd_set_ptr;
-#endif /* HPUX10 */
-
-static void *test_thread(void *arg)
-{
-  int i,param=*((int*) arg),wait_time,retry;
-  time_t start_time;
-  thr_alarm_t got_alarm;
-  fd_set fd;
-  FD_ZERO(&fd);
-  my_thread_init();
-  printf("Thread %d (%s) started\n",param,my_thread_name()); fflush(stdout);
-  for (i=1 ; i <= 10 ; i++)
-  {
-    wait_time=param ? 11-i : i;
-    start_time= my_time(0);
-    if (thr_alarm(&got_alarm,wait_time,0))
-    {
-      printf("Thread: %s  Alarms aborted\n",my_thread_name());
-      break;
-    }
-    if (wait_time == 3)
-    {
-      printf("Thread: %s  Simulation of no alarm needed\n",my_thread_name());
-      fflush(stdout);
-    }
-    else
-    {
-      for (retry=0 ; !thr_got_alarm(&got_alarm) && retry < 10 ; retry++)
-      {
-	printf("Thread: %s  Waiting %d sec\n",my_thread_name(),wait_time);
-	select(0,(fd_set_ptr) &fd,0,0,0);
-      }
-      if (!thr_got_alarm(&got_alarm))
-      {
-	printf("Thread: %s  didn't get an alarm. Aborting!\n",
-	       my_thread_name());
-	break;
-      }
-      if (wait_time == 7)
-      {						/* Simulate alarm-miss */
-	fd_set readFDs;
-	uint32_t max_connection=fileno(stdin);
-	FD_ZERO(&readFDs);
-	FD_SET(max_connection,&readFDs);
-	retry=0;
-	for (;;)
-	{
-	  printf("Thread: %s  Simulating alarm miss\n",my_thread_name());
-	  fflush(stdout);
-	  if (select(max_connection+1, (fd_set_ptr) &readFDs,0,0,0) < 0)
-	  {
-	    if (errno == EINTR)
-	      break;				/* Got new interrupt */
-	    printf("Got errno: %d from select.  Retrying..\n",errno);
-	    if (retry++ >= 3)
-	    {
-	      printf("Warning:  Interrupt of select() doesn't set errno!\n");
-	      break;
-	    }
-	  }
-	  else					/* This shouldn't happen */
-	  {
-	    if (!FD_ISSET(max_connection,&readFDs))
-	    {
-	      printf("Select interrupted, but errno not set\n");
-	      fflush(stdout);
-	      if (retry++ >= 3)
-		break;
-	      continue;
-	    }
-	    getchar();			/* Somebody was playing */
-	  }
-	}
-      }
-    }
-    printf("Thread: %s  Slept for %d (%d) sec\n",my_thread_name(),
-	   (int) (my_time(0)-start_time), wait_time); fflush(stdout);
-    thr_end_alarm(&got_alarm);
-    fflush(stdout);
-  }
-  pthread_mutex_lock(&LOCK_thread_count);
-  thread_count--;
-  pthread_cond_signal(&COND_thread_count); /* Tell main we are ready */
-  pthread_mutex_unlock(&LOCK_thread_count);
-  free((unsigned char*) arg);
-  return 0;
-}
-
-#ifdef USE_ONE_SIGNAL_HAND
-static RETSIGTYPE print_signal_warning(int sig)
-{
-  printf("Warning: Got signal %d from thread %s\n",sig,my_thread_name());
-  fflush(stdout);
-#ifndef HAVE_BSD_SIGNALS
-  my_sigset(sig,print_signal_warning);		/* int. thread system calls */
-#endif
-  if (sig == SIGALRM)
-    alarm(2);					/* reschedule alarm */
-}
-#endif /* USE_ONE_SIGNAL_HAND */
-
-
-static void *signal_hand(void *arg __attribute__((unused)))
-{
-  sigset_t set;
-  int sig,error,err_count=0;;
-
-  my_thread_init();
-  pthread_detach_this_thread();
-  init_thr_alarm(10);				/* Setup alarm handler */
-  pthread_mutex_lock(&LOCK_thread_count);	/* Required by bsdi */
-  pthread_cond_signal(&COND_thread_count); /* Tell main we are ready */
-  pthread_mutex_unlock(&LOCK_thread_count);
-
-  sigemptyset(&set);				/* Catch all signals */
-  sigaddset(&set,SIGINT);
-  sigaddset(&set,SIGQUIT);
-  sigaddset(&set,SIGTERM);
-  sigaddset(&set,SIGHUP);
-#ifdef SIGTSTP
-  sigaddset(&set,SIGTSTP);
-#endif
-#ifdef USE_ONE_SIGNAL_HAND
-  sigaddset(&set,THR_SERVER_ALARM);		/* For alarms */
-  puts("Starting signal and alarm handling thread");
-#else
-  puts("Starting signal handling thread");
-#endif
-  printf("server alarm: %d  thread alarm: %d\n",
-         THR_SERVER_ALARM, thr_client_alarm);
-  for(;;)
-  {
-    while ((error=my_sigwait(&set,&sig)) == EINTR)
-      printf("sigwait restarted\n");
-    if (error)
-    {
-      fprintf(stderr,"Got error %d from sigwait\n",error);
-      if (err_count++ > 5)
-	exit(1);				/* Too many errors in test */
-      continue;
-    }
-#ifdef USE_ONE_SIGNAL_HAND
-    if (sig != THR_SERVER_ALARM)
-#endif
-      printf("Main thread: Got signal %d\n",sig);
-    switch (sig) {
-    case SIGINT:
-    case SIGQUIT:
-    case SIGTERM:
-    case SIGHUP:
-      printf("Aborting nicely\n");
-      end_thr_alarm(0);
-      break;
-#ifdef SIGTSTP
-    case SIGTSTP:
-      printf("Aborting\n");
-      exit(1);
-      return 0;					/* Keep some compilers happy */
-#endif
-#ifdef USE_ONE_SIGNAL_HAND
-     case THR_SERVER_ALARM:
-       process_alarm(sig);
-      break;
-#endif
-    }
-  }
-}
-
-
-int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
-{
-  pthread_t tid;
-  pthread_attr_t thr_attr;
-  int i,*param,error;
-  sigset_t set;
-  ALARM_INFO alarm_info;
-  MY_INIT(argv[0]);
-
-  pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
-  pthread_cond_init(&COND_thread_count,NULL);
-
-  /* Start a alarm handling thread */
-  sigemptyset(&set);
-  sigaddset(&set,SIGINT);
-  sigaddset(&set,SIGQUIT);
-  sigaddset(&set,SIGTERM);
-  sigaddset(&set,SIGHUP);
-  signal(SIGTERM,SIG_DFL);			/* If it's blocked by parent */
-#ifdef SIGTSTP
-  sigaddset(&set,SIGTSTP);
-#endif
-  sigaddset(&set,THR_SERVER_ALARM);
-  sigdelset(&set, thr_client_alarm);
-  (void) pthread_sigmask(SIG_SETMASK,&set,NULL);
-#ifdef NOT_USED
-  sigemptyset(&set);
-  sigaddset(&set, thr_client_alarm);
-  pthread_sigmask(SIG_UNBLOCK, &set, (sigset_t*) 0);
-#endif
-
-  pthread_attr_init(&thr_attr);
-  pthread_attr_setscope(&thr_attr,PTHREAD_SCOPE_PROCESS);
-  pthread_attr_setdetachstate(&thr_attr,PTHREAD_CREATE_DETACHED);
-  pthread_attr_setstacksize(&thr_attr,65536L);
-
-  /* Start signal thread and wait for it to start */
-  pthread_mutex_lock(&LOCK_thread_count);
-  pthread_create(&tid,&thr_attr,signal_hand,NULL);
-  pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-  pthread_mutex_unlock(&LOCK_thread_count);
-
-  thr_setconcurrency(3);
-  pthread_attr_setscope(&thr_attr,PTHREAD_SCOPE_PROCESS);
-  printf("Main thread: %s\n",my_thread_name());
-  for (i=0 ; i < 2 ; i++)
-  {
-    param=(int*) malloc(sizeof(int));
-    *param= i;
-    pthread_mutex_lock(&LOCK_thread_count);
-    if ((error=pthread_create(&tid,&thr_attr,test_thread,(void*) param)))
-    {
-      printf("Can't create thread %d, error: %d\n",i,error);
-      exit(1);
-    }
-    thread_count++;
-    pthread_mutex_unlock(&LOCK_thread_count);
-  }
-
-  pthread_attr_destroy(&thr_attr);
-  pthread_mutex_lock(&LOCK_thread_count);
-  thr_alarm_info(&alarm_info);
-  printf("Main_thread:  Alarms: %u  max_alarms: %u  next_alarm_time: %lu\n",
-	 alarm_info.active_alarms, alarm_info.max_used_alarms,
-	 alarm_info.next_alarm_time);
-  while (thread_count)
-  {
-    pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-    if (thread_count == 1)
-    {
-      printf("Calling end_thr_alarm. This should cancel the last thread\n");
-      end_thr_alarm(0);
-    }
-  }
-  pthread_mutex_unlock(&LOCK_thread_count);
-  thr_alarm_info(&alarm_info);
-  end_thr_alarm(1);
-  printf("Main_thread:  Alarms: %u  max_alarms: %u  next_alarm_time: %lu\n",
-	 alarm_info.active_alarms, alarm_info.max_used_alarms,
-	 alarm_info.next_alarm_time);
-  printf("Test succeeded\n");
-  return 0;
-}
-
-#else /* DONT_USE_THR_ALARM */
-
-int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
-{
-  printf("thr_alarm disabled with DONT_USE_THR_ALARM\n");
-  exit(1);
-}
-
-#endif /* DONT_USE_THR_ALARM */
-#endif /* MAIN */

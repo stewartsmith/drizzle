@@ -53,9 +53,7 @@ void safe_mutex_global_init(void)
 
 
 int safe_mutex_init(safe_mutex_t *mp,
-		    const pthread_mutexattr_t *attr __attribute__((unused)),
-		    const char *file,
-		    uint32_t line)
+		    const pthread_mutexattr_t *, const char *file, uint32_t line)
 {
   memset(mp, 0, sizeof(*mp));
   pthread_mutex_init(&mp->global,MY_MUTEX_INIT_ERRCHK);
@@ -354,7 +352,7 @@ int safe_mutex_destroy(safe_mutex_t *mp, const char *file, uint32_t line)
    This is ok, as this thread may not yet have been exited.
 */
 
-void safe_mutex_end(int *file __attribute__((unused)))
+void safe_mutex_end(int *)
 {
   if (!safe_mutex_count)			/* safetly */
     pthread_mutex_destroy(&THR_LOCK_mutex);
