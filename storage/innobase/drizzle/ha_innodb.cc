@@ -192,8 +192,7 @@ static HASH	innobase_open_tables;
 bool nw_panic = FALSE;
 #endif
 
-static unsigned char* innobase_get_key(INNOBASE_SHARE *share, size_t *length,
-	my_bool not_used __attribute__((unused)));
+static unsigned char* innobase_get_key(INNOBASE_SHARE *share, size_t *length, my_bool);
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 static int innobase_close_connection(handlerton *hton, Session* session);
@@ -658,7 +657,7 @@ int
 innobase_release_temporary_latches(
 /*===============================*/
 				/* out: 0 */
-        handlerton*	hton __attribute__((unused)),	/* in: handlerton */
+        handlerton *hton,	/* in: handlerton */
 	Session*		session)	/* in: MySQL thread */
 {
 	trx_t*	trx;
@@ -855,9 +854,9 @@ extern "C" UNIV_INTERN
 void
 innobase_mysql_print_thd(
 /*=====================*/
-	FILE*	f,		/* in: output stream */
-	void*	input_session __attribute__((unused)),	/* in: pointer to a MySQL Session object */
-	uint	max_query_len __attribute__((unused)))	/* in: max query length to print, or 0 to
+	FILE *	f,		/* in: output stream */
+	void *,	/* in: pointer to a MySQL Session object */
+	uint)	/* in: max query length to print, or 0 to
 				   use the default max length */
 {
 	fputs("Unknown thread accessing table", f);
@@ -8001,8 +8000,7 @@ bool innobase_show_status(handlerton *hton, Session* session,
  locking.
 ****************************************************************************/
 
-static unsigned char* innobase_get_key(INNOBASE_SHARE* share, size_t *length,
-	my_bool not_used __attribute__((unused)))
+static unsigned char* innobase_get_key(INNOBASE_SHARE* share, size_t *length, my_bool)
 {
 	*length=share->table_name_length;
 

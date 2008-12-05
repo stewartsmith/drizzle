@@ -85,7 +85,7 @@ public:
   {
   }
   const char *table_type() const { return "ARCHIVE"; }
-  const char *index_type(uint32_t inx __attribute__((unused)))
+  const char *index_type(uint32_t)
   { return "NONE"; }
   const char **bas_ext() const;
   uint64_t table_flags() const
@@ -96,16 +96,12 @@ public:
             HA_HAS_RECORDS |
             HA_FILE_BASED);
   }
-  uint32_t index_flags(uint32_t idx __attribute__((unused)),
-                       uint32_t part __attribute__((unused)),
-                       bool all_parts __attribute__((unused))) const
+  uint32_t index_flags(uint32_t, uint32_t, bool) const
   {
     return HA_ONLY_WHOLE_INDEX;
   }
-  virtual void get_auto_increment(uint64_t offset, uint64_t increment,
-                                  uint64_t nb_desired_values,
-                                  uint64_t *first_value,
-                                  uint64_t *nb_reserved_values);
+  void get_auto_increment(uint64_t, uint64_t, uint64_t,
+                          uint64_t *first_value, uint64_t *nb_reserved_values);
   uint32_t max_supported_keys()          const { return 1; }
   uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
   uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
