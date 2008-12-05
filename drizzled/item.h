@@ -105,9 +105,6 @@ public:
 
   enum traverse_order { POSTFIX, PREFIX };
 
-  /* Reuse size, only used by SP local variable assignment, otherwize 0 */
-  uint32_t rsize;
-
   /*
     str_values's main purpose is to be used to cache the value in
     save_in_field
@@ -543,20 +540,6 @@ public:
   virtual Item *equal_fields_propagator(unsigned char * arg);
   virtual bool set_no_const_sub(unsigned char *arg);
   virtual Item *replace_equal_field(unsigned char * arg);
-
-
-  /*
-    For SP local variable returns pointer to Item representing its
-    current value and pointer to current Item otherwise.
-  */
-  virtual Item *this_item(void);
-  virtual const Item *this_item(void) const;
-
-  /*
-    For SP local variable returns address of pointer to Item representing its
-    current value and pointer passed via parameter otherwise.
-  */
-  virtual Item **this_item_addr(Session *session, Item **addr_arg);
 
   // Row emulation
   virtual uint32_t cols();
