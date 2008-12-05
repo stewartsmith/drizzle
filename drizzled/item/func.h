@@ -30,69 +30,19 @@ extern "C"				/* Bug in BSDI include file */
 }
 #endif
 
-#include <drizzled/functions/func.h>
-#include <drizzled/functions/abs.h>
-#include <drizzled/functions/acos.h>
-#include <drizzled/functions/additive_op.h>
+/* If you fix the parser to no longer create functions these can be moved to create.cc */
 #include <drizzled/functions/ascii.h>
-#include <drizzled/functions/asin.h>
-#include <drizzled/functions/atan.h>
-#include <drizzled/functions/benchmark.h>
-#include <drizzled/functions/bit.h>
-#include <drizzled/functions/bit_count.h>
-#include <drizzled/functions/bit_length.h>
-#include <drizzled/functions/ceiling.h>
-#include <drizzled/functions/char_length.h>
-#include <drizzled/functions/coercibility.h>
-#include <drizzled/functions/connection_id.h>
-#include <drizzled/functions/cos.h>
-#include <drizzled/functions/dec.h>
-#include <drizzled/functions/decimal_typecast.h>
 #include <drizzled/functions/divide.h>
-#include <drizzled/functions/exp.h>
-#include <drizzled/functions/field.h>
-#include <drizzled/functions/find_in_set.h>
-#include <drizzled/functions/floor.h>
-#include <drizzled/functions/found_rows.h>
-#include <drizzled/functions/get_system_var.h>
 #include <drizzled/functions/get_user_var.h>
-#include <drizzled/functions/get_variable.h>
 #include <drizzled/functions/int.h>
 #include <drizzled/functions/int_divide.h>
-#include <drizzled/functions/int_val.h>
-#include <drizzled/functions/integer.h>
-#include <drizzled/functions/last_insert.h>
-#include <drizzled/functions/length.h>
-#include <drizzled/functions/ln.h>
-#include <drizzled/functions/locate.h>
-#include <drizzled/functions/log.h>
-#include <drizzled/functions/master_pos_wait.h>
-#include <drizzled/functions/min_max.h>
 #include <drizzled/functions/minus.h>
 #include <drizzled/functions/mod.h>
 #include <drizzled/functions/multiply.h>
 #include <drizzled/functions/neg.h>
-#include <drizzled/functions/num1.h>
-#include <drizzled/functions/num_op.h>
-#include <drizzled/functions/numhybrid.h>
-#include <drizzled/functions/ord.h>
 #include <drizzled/functions/plus.h>
-#include <drizzled/functions/pow.h>
-#include <drizzled/functions/rand.h>
-#include <drizzled/functions/real.h>
 #include <drizzled/functions/rollup_const.h>
 #include <drizzled/functions/round.h>
-#include <drizzled/functions/row_count.h>
-#include <drizzled/functions/set_user_var.h>
-#include <drizzled/functions/sign.h>
-#include <drizzled/functions/signed.h>
-#include <drizzled/functions/sin.h>
-#include <drizzled/functions/sqrt.h>
-#include <drizzled/functions/str/quote.h>
-#include <drizzled/functions/tan.h>
-#include <drizzled/functions/units.h>
-#include <drizzled/functions/unsigned.h>
-#include <drizzled/functions/update_hash.h>
 #include <drizzled/functions/user_var_as_out_param.h>
 
 /* For type casts */
