@@ -98,19 +98,16 @@ public:
   bool check_enum(Session *session, set_var *var, const TYPELIB *enum_names);
   bool check_set(Session *session, set_var *var, TYPELIB *enum_names);
   virtual bool update(Session *session, set_var *var)=0;
-  virtual void set_default(Session *session_arg __attribute__((unused)),
-                           enum_var_type type __attribute__((unused)))
+  virtual void set_default(Session *, enum_var_type)
   {}
   virtual SHOW_TYPE show_type() { return SHOW_UNDEF; }
-  virtual unsigned char *value_ptr(Session *session __attribute__((unused)),
-                           enum_var_type type __attribute__((unused)),
-                           LEX_STRING *base __attribute__((unused)))
+  virtual unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   { return 0; }
   virtual bool check_type(enum_var_type type)
   { return type != OPT_GLOBAL; }		/* Error if not GLOBAL */
   virtual bool check_update_type(Item_result type)
   { return type != INT_RESULT; }		/* Assume INT */
-  virtual bool check_default(enum_var_type type __attribute__((unused)))
+  virtual bool check_default(enum_var_type)
   { return option_limits == 0; }
   Item *item(Session *session, enum_var_type type, LEX_STRING *base);
   virtual bool is_struct() { return 0; }
@@ -166,9 +163,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONG; }
-  unsigned char *value_ptr(Session *session __attribute__((unused)),
-                   enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   { return (unsigned char*) value; }
 };
 
@@ -201,9 +196,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONG; }
-  unsigned char *value_ptr(Session *session __attribute__((unused)),
-                   enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   { return (unsigned char*) value; }
 };
 
@@ -222,9 +215,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  unsigned char *value_ptr(Session *session __attribute__((unused)),
-                   enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   { return (unsigned char*) value; }
 };
 
@@ -242,9 +233,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_SIZE; }
-  unsigned char *value_ptr(Session *session __attribute__((unused)),
-                   enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   { return (unsigned char*) value; }
 };
 
@@ -262,11 +251,9 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  unsigned char *value_ptr(Session *session __attribute__((unused)),
-                   enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   { return (unsigned char*) value; }
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   { return 0; }
 };
 
@@ -307,15 +294,13 @@ public:
     (*set_default_func)(session, type);
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *session __attribute__((unused)),
-                   enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   { return (unsigned char*) value; }
   bool check_update_type(Item_result type)
   {
     return type != STRING_RESULT;		/* Only accept strings */
   }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 0; }
 };
 
@@ -332,28 +317,24 @@ public:
   {
     value= new_value;
   }
-  bool check(Session *session __attribute__((unused)),
-             set_var *var __attribute__((unused)))
+  bool check(Session *, set_var *)
   {
     return 1;
   }
-  bool update(Session *session __attribute__((unused)),
-              set_var *var __attribute__((unused)))
+  bool update(Session *, set_var *)
   {
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *session __attribute__((unused)),
-                   enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   {
     return (unsigned char*) value;
   }
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   {
     return 1;
   }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 1; }
   bool is_readonly() const { return 1; }
 };
@@ -366,28 +347,24 @@ public:
   sys_var_const_str_ptr(sys_var_chain *chain, const char *name_arg, char **value_arg)
     :sys_var(name_arg),value(value_arg)
   { chain_sys_var(chain); }
-  bool check(Session *session __attribute__((unused)),
-             set_var *var __attribute__((unused)))
+  bool check(Session *, set_var *)
   {
     return 1;
   }
-  bool update(Session *session __attribute__((unused)),
-              set_var *var __attribute__((unused)))
+  bool update(Session *, set_var *)
   {
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *session __attribute__((unused)),
-                   enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   {
     return (unsigned char*) *value;
   }
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   {
     return 1;
   }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 1; }
   bool is_readonly(void) const { return 1; }
 };
@@ -409,7 +386,7 @@ public:
   bool update(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   { return 0; }
 };
 
@@ -423,14 +400,12 @@ public:
       TYPELIB *typelib, sys_after_update_func func)
     :sys_var(name_arg,func), offset(offset_arg), enum_names(typelib)
   { chain_sys_var(chain); }
-  bool check(Session *session __attribute__((unused)),
-             set_var *var __attribute__((unused)))
+  bool check(Session *, set_var *)
   { return 1; }
-  bool update(Session *session __attribute__((unused)),
-              set_var *var __attribute__((unused)))
+  bool update(Session *, set_var *)
   { return 1; }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   { return 1; }
   bool is_readonly() const { return 1; }
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
@@ -445,7 +420,7 @@ public:
               Binlog_status_enum binlog_status= NOT_IN_BINLOG)
     :sys_var(name_arg, func, binlog_status)
   {}
-  bool check_type(enum_var_type type __attribute__((unused)))
+  bool check_type(enum_var_type)
   { return 0; }
   bool check_default(enum_var_type type)
   {
@@ -596,7 +571,7 @@ public:
   {
     return check_enum(session, var, &bool_typelib);
   }
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   { return 0; }
 };
 
@@ -626,7 +601,7 @@ public:
   void set_default(Session *session, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   { return 0; }
 };
 
@@ -686,7 +661,7 @@ public:
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   { return 0; }
   bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
@@ -705,7 +680,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
   bool check_type(enum_var_type type)    { return type == OPT_GLOBAL; }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 0; }
   SHOW_TYPE show_type(void) { return SHOW_LONG; }
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
@@ -754,7 +729,7 @@ public:
   {
     return ((type != STRING_RESULT) && (type != INT_RESULT));
   }
-  bool check_default(enum_var_type type __attribute__((unused))) { return 0; }
+  bool check_default(enum_var_type) { return 0; }
   virtual void set_default(Session *session, enum_var_type type)= 0;
 };
 
@@ -778,7 +753,7 @@ public:
   {
     return ((type != STRING_RESULT) && (type != INT_RESULT));
   }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 0; }
   bool update(Session *session, set_var *var);
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
@@ -816,7 +791,7 @@ public:
     :sys_var(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 1; }
   bool is_struct() { return 1; }
 };
@@ -861,7 +836,7 @@ public:
   {
     return type != STRING_RESULT;		/* Only accept strings */
   }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 0; }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
@@ -896,16 +871,14 @@ public:
     :sys_var(name_arg), var_type(type), 
        show_type_value(show_type_arg), value_ptr_func(value_ptr_func_arg)
   { chain_sys_var(chain); }
-  bool update(Session *session __attribute__((unused)),
-              set_var *var __attribute__((unused)))
+  bool update(Session *, set_var *)
   { return 1; }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 1; }
   bool check_type(enum_var_type type) { return type != var_type; }
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   { return 1; }
-  unsigned char *value_ptr(Session *session, enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *session, enum_var_type, LEX_STRING *)
   {
     return (*value_ptr_func)(session);
   }
@@ -922,18 +895,15 @@ public:
   sys_var_have_option(sys_var_chain *chain, const char *variable_name):
     sys_var(variable_name)
   { chain_sys_var(chain); }
-  unsigned char *value_ptr(Session *session __attribute__((unused)),
-                   enum_var_type type __attribute__((unused)),
-                   LEX_STRING *base __attribute__((unused)))
+  unsigned char *value_ptr(Session *, enum_var_type, LEX_STRING *)
   {
     return (unsigned char*) show_comp_option_name[get_option()];
   }
-  bool update(Session *session __attribute__((unused)),
-              set_var *var __attribute__((unused))) { return 1; }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool update(Session *, set_var *) { return 1; }
+  bool check_default(enum_var_type)
   { return 1; }
   bool check_type(enum_var_type type) { return type != OPT_GLOBAL; }
-  bool check_update_type(Item_result type __attribute__((unused)))
+  bool check_update_type(Item_result)
   { return 1; }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool is_readonly() const { return 1; }
@@ -989,7 +959,7 @@ public:
   {
     return type != STRING_RESULT;		/* Only accept strings */
   }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 0; }
   bool update(Session *session, set_var *var);
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
@@ -1005,8 +975,7 @@ public:
                        uint64_t SV::*offset_arg):
     sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
-  bool check(Session *session __attribute__((unused)),
-             set_var *var __attribute__((unused))) {return 0;}
+  bool check(Session *, set_var *) {return 0;}
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_DOUBLE; }
@@ -1047,7 +1016,7 @@ public:
   {
     return ((type != STRING_RESULT) && (type != INT_RESULT));
   }
-  bool check_default(enum_var_type type __attribute__((unused)))
+  bool check_default(enum_var_type)
   { return 0; }
   bool update(Session *session, set_var *var);
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
