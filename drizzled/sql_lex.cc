@@ -315,7 +315,6 @@ void lex_start(Session *session)
   lex->lock_option= TL_READ;
   lex->leaf_tables_insert= 0;
   lex->parsing_options.reset();
-  lex->empty_field_list_on_rset= 0;
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
