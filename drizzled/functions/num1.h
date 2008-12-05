@@ -32,7 +32,7 @@ public:
 
   void fix_num_length_and_dec();
   void find_num_type();
-  String *str_op(String *str __attribute__((unused)))
+  String *str_op(String *)
   { assert(0); return 0; }
 };
 

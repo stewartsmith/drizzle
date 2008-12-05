@@ -36,7 +36,7 @@ class Item_num_op :public Item_func_numhybrid
   }
 
   void find_num_type();
-  String *str_op(String *str __attribute__((unused)))
+  String *str_op(String *)
   { assert(0); return 0; }
 };
 

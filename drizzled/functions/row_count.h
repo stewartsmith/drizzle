@@ -30,7 +30,7 @@ public:
   int64_t val_int();
   const char *func_name() const { return "row_count"; }
   void fix_length_and_dec() { decimals= 0; maybe_null=0; }
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 

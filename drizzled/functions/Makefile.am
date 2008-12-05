@@ -53,7 +53,6 @@ libfunctions_la_SOURCES = abs.cc \
 		  length.cc \
 		  ln.cc \
 		  locate.cc \
-		  lock.cc \
 		  log.cc \
 		  master_pos_wait.cc \
 		  min_max.cc \
@@ -120,7 +119,6 @@ nobase_dist_functionsinclude_HEADERS = \
 		length.h \
 		ln.h \
 		locate.h \
-		lock.h \
 		log.h \
 		master_pos_wait.h \
 		min_max.h \

@@ -65,7 +65,6 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/length.h>
 #include <drizzled/functions/ln.h>
 #include <drizzled/functions/locate.h>
-#include <drizzled/functions/lock.h>
 #include <drizzled/functions/log.h>
 #include <drizzled/functions/master_pos_wait.h>
 #include <drizzled/functions/min_max.h>

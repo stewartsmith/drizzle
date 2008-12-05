@@ -32,7 +32,7 @@ public:
   double real_op();
   my_decimal *decimal_op(my_decimal *);
   void result_precision();
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 
 };
