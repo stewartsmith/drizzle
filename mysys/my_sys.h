@@ -514,7 +514,6 @@ extern int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
 #define reset_dynamic(array) ((array)->elements= 0)
 #define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
 
-#define my_malloc_lock(A,B) my_malloc((A),(B))
 #define alloc_root_inited(A) ((A)->min_malloc != 0)
 #define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
 #define clear_alloc_root(A) do { (A)->free= (A)->used= (A)->pre_alloc= 0; (A)->min_malloc=0;} while(0)

@@ -497,9 +497,8 @@ static int init_rr_cache(Session *session, READ_RECORD *info)
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
   if (info->cache_records <= 2 ||
-      !(info->cache=(unsigned char*) my_malloc_lock(rec_cache_size+info->cache_records*
-					   info->struct_length+1,
-					   MYF(0))))
+      !(info->cache=(unsigned char*) malloc(rec_cache_size+info->cache_records*
+					    info->struct_length+1)))
     return(1);
 #ifdef HAVE_purify
   // Avoid warnings in qsort

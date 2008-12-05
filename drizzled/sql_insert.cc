@@ -36,7 +36,7 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/field/timestamp.h>
 
-/* Define to force use of my_malloc() if the allocated memory block is big */
+/* Define to force use of malloc() if the allocated memory block is big */
 
 #ifndef HAVE_ALLOCA
 #define my_safe_alloca(size, min_length) my_alloca(size)

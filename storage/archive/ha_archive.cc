@@ -133,8 +133,7 @@ static handler *archive_create_handler(handlerton *hton,
 /*
   Used for hash table that tracks open tables.
 */
-static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length,
-                             bool not_used __attribute__((unused)))
+static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length, bool)
 {
   *length=share->table_name_length;
   return (unsigned char*) share->table_name;
@@ -192,7 +191,7 @@ error:
     false       OK
 */
 
-int archive_db_done(void *p __attribute__((unused)))
+int archive_db_done(void *)
 {
   hash_free(&archive_open_tables);
   pthread_mutex_destroy(&archive_mutex);
@@ -212,8 +211,7 @@ ha_archive::ha_archive(handlerton *hton, TABLE_SHARE *table_arg)
   archive_reader_open= false;
 }
 
-int archive_discover(handlerton *hton __attribute__((unused)),
-                     Session* session __attribute__((unused)),
+int archive_discover(handlerton *, Session *,
                      const char *db,
                      const char *name,
                      unsigned char **frmblob,
@@ -458,9 +456,7 @@ const char **ha_archive::bas_ext() const
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::open(const char *name,
-                     int mode __attribute__((unused)),
-                     uint32_t open_options)
+int ha_archive::open(const char *name, int, uint32_t open_options)
 {
   int rc= 0;
   share= get_share(name, &rc);
@@ -686,7 +682,7 @@ int ha_archive::real_write_row(unsigned char *buf, azio_stream *writer)
   the bytes required for the length in the header.
 */
 
-uint32_t ha_archive::max_row_length(const unsigned char *buf __attribute__((unused)))
+uint32_t ha_archive::max_row_length(const unsigned char *)
 {
   uint32_t length= (uint32_t)(table->getRecordLength() + table->sizeFields()*2);
   length+= ARCHIVE_ROW_HEADER_SIZE;
@@ -837,18 +833,15 @@ error:
 }
 
 
-void ha_archive::get_auto_increment(uint64_t offset __attribute__((unused)),
-                                    uint64_t increment __attribute__((unused)),
-                                    uint64_t nb_desired_values __attribute__((unused)),
-                                    uint64_t *first_value __attribute__((unused)),
-                                    uint64_t *nb_reserved_values __attribute__((unused)))
+void ha_archive::get_auto_increment(uint64_t, uint64_t, uint64_t,
+                                    uint64_t *first_value, uint64_t *nb_reserved_values)
 {
   *nb_reserved_values= UINT64_MAX;
   *first_value= share->archive_write.auto_increment + 1;
 }
 
 /* Initialized at each key walk (called multiple times unlike rnd_init()) */
-int ha_archive::index_init(uint32_t keynr, bool sorted __attribute__((unused)))
+int ha_archive::index_init(uint32_t keynr, bool)
 {
   active_index= keynr;
   return(0);
@@ -869,8 +862,7 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
 
 
 int ha_archive::index_read_idx(unsigned char *buf, uint32_t index, const unsigned char *key,
-                               uint32_t key_len,
-                               enum ha_rkey_function find_flag __attribute__((unused)))
+                               uint32_t key_len, enum ha_rkey_function)
 {
   int rc;
   bool found= 0;
@@ -1046,7 +1038,7 @@ int ha_archive::rnd_next(unsigned char *buf)
   needed.
 */
 
-void ha_archive::position(const unsigned char *record __attribute__((unused)))
+void ha_archive::position(const unsigned char *)
 {
   my_store_ptr(ref, ref_length, current_position);
   return;
@@ -1090,8 +1082,7 @@ int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
   The table can become fragmented if data was inserted, read, and then
   inserted again. What we do is open up the file and recompress it completely. 
 */
-int ha_archive::optimize(Session* session __attribute__((unused)),
-                         HA_CHECK_OPT* check_opt __attribute__((unused)))
+int ha_archive::optimize(Session *, HA_CHECK_OPT *)
 {
   int rc= 0;
   azio_stream writer;
@@ -1360,8 +1351,7 @@ bool ha_archive::is_crashed() const
   Simple scan of the tables to make sure everything is ok.
 */
 
-int ha_archive::check(Session* session,
-                      HA_CHECK_OPT* check_opt __attribute__((unused)))
+int ha_archive::check(Session* session, HA_CHECK_OPT *)
 {
   int rc= 0;
   const char *old_proc_info;

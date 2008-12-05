@@ -123,15 +123,15 @@ void session_scheduler::operator=(const session_scheduler&)
 
 bool session_scheduler::init(Session *parent_session)
 {
-  io_event=
-    (struct event*)my_malloc(sizeof(*io_event),MYF(MY_ZEROFILL|MY_WME));
+  io_event= (struct event*)malloc(sizeof(*io_event));
     
   if (!io_event)
   {
     sql_print_error(_("Memory allocation error in session_scheduler::init\n"));
     return true;
   }
-  
+  memset(io_event, 0, sizeof(*io_event));
+ 
   event_set(io_event, net_get_sd(&(parent_session->net)), EV_READ, 
             libevent_io_callback, (void*)parent_session);
     

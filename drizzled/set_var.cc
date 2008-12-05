@@ -348,8 +348,6 @@ static sys_var_long_ptr	sys_table_cache_size(&vars, "table_open_cache",
 					     &table_cache_size);
 static sys_var_long_ptr	sys_table_lock_wait_timeout(&vars, "table_lock_wait_timeout",
                                                     &table_lock_wait_timeout);
-static sys_var_long_ptr	sys_thread_cache_size(&vars, "thread_cache_size",
-					      &thread_cache_size);
 sys_var_long_ptr	sys_thread_pool_size(&vars, "thread_pool_size",
                                        &thread_pool_size);
 static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
@@ -2951,9 +2949,9 @@ static KEY_CACHE *create_key_cache(const char *name, uint32_t length)
 {
   KEY_CACHE *key_cache;
   
-  if ((key_cache= (KEY_CACHE*) my_malloc(sizeof(KEY_CACHE),
-					     MYF(MY_ZEROFILL | MY_WME))))
+  if ((key_cache= (KEY_CACHE*) malloc(sizeof(KEY_CACHE))))
   {
+    memset(key_cache, 0, sizeof(KEY_CACHE));
     if (!new NAMED_LIST(&key_caches, name, length, (unsigned char*) key_cache))
     {
       free((char*) key_cache);

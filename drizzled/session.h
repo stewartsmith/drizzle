@@ -2108,7 +2108,7 @@ class Unique :public Sql_alloc
 {
   DYNAMIC_ARRAY file_ptrs;
   ulong max_elements;
-  uint64_t max_in_memory_size;
+  size_t max_in_memory_size;
   IO_CACHE file;
   TREE tree;
   unsigned char *record_pointers;
@@ -2118,7 +2118,7 @@ class Unique :public Sql_alloc
 public:
   ulong elements;
   Unique(qsort_cmp2 comp_func, void *comp_func_fixed_arg,
-	 uint32_t size_arg, uint64_t max_in_memory_size_arg);
+	 uint32_t size_arg, size_t max_in_memory_size_arg);
   ~Unique();
   ulong elements_in_tree() { return tree.elements_in_tree; }
   inline bool unique_add(void *ptr)
@@ -2130,11 +2130,11 @@ public:
 
   bool get(Table *table);
   static double get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size, 
-                             uint64_t max_in_memory_size);
+                             size_t max_in_memory_size);
   inline static int get_cost_calc_buff_size(ulong nkeys, uint32_t key_size, 
-                                            uint64_t max_in_memory_size)
+                                            size_t max_in_memory_size)
   {
-    register uint64_t max_elems_in_tree=
+    register size_t max_elems_in_tree=
       (1 + max_in_memory_size / ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
     return (int) (sizeof(uint)*(1 + nkeys/max_elems_in_tree));
   }

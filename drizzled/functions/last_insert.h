@@ -36,7 +36,7 @@ public:
       max_length= args[0]->max_length;
   }
   bool fix_fields(Session *session, Item **ref);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
     

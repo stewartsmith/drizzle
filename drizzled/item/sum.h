@@ -370,7 +370,7 @@ public:
   */
   void no_rows_in_result() { clear(); }
 
-  virtual bool setup(Session *session __attribute__((unused))) {return 0;}
+  virtual bool setup(Session *) {return 0;}
   virtual void make_unique(void) {}
   Item *get_tmp_table_item(Session *session);
   virtual Field *create_tmp_field(bool group, Table *table,
@@ -683,7 +683,7 @@ public:
   String *val_str(String *str);
   void reset_field();
   void update_field();
-  Item *result_item(Field *field __attribute__((unused)))
+  Item *result_item(Field *)
   { return new Item_avg_field(hybrid_type, this); }
   void no_rows_in_result() {}
   const char *func_name() const { return "avg("; }
@@ -774,7 +774,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   void reset_field();
   void update_field();
-  Item *result_item(Field *field __attribute__((unused)))
+  Item *result_item(Field *)
   { return new Item_variance_field(this); }
   void no_rows_in_result() {}
   const char *func_name() const
@@ -816,7 +816,7 @@ class Item_sum_std :public Item_sum_variance
     {}
   enum Sumfunctype sum_func () const { return STD_FUNC; }
   double val_real();
-  Item *result_item(Field *field __attribute__((unused)))
+  Item *result_item(Field *)
     { return new Item_std_field(this); }
   const char *func_name() const { return "std("; }
   Item *copy_or_same(Session* session);
@@ -994,9 +994,8 @@ class Item_func_group_concat : public Item_sum
                                                 const void* key2);
   friend int group_concat_key_cmp_with_order(void* arg, const void* key1,
 					     const void* key2);
-  friend int dump_leaf_key(unsigned char* key,
-                           element_count count __attribute__((unused)),
-			   Item_func_group_concat *group_concat_item);
+  friend int dump_leaf_key(unsigned char* key, element_count,
+                           Item_func_group_concat *group_concat_item);
 
 public:
   Item_func_group_concat(Name_resolution_context *context_arg,

@@ -64,7 +64,7 @@ void mysql_client_binlog_statement(Session* session)
   }
 
   const char *error= 0;
-  char *buf= (char *) my_malloc(decoded_len, MYF(MY_WME));
+  char *buf= (char *) malloc(decoded_len);
   Log_event *ev = 0;
 
   /*

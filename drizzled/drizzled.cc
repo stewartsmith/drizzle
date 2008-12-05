@@ -323,7 +323,6 @@ uint64_t slave_trans_retries;
 bool slave_allow_batching;
 ulong slave_exec_mode_options;
 const char *slave_exec_mode_str= "STRICT";
-uint64_t thread_cache_size= 0;
 uint64_t thread_pool_size= 0;
 uint64_t binlog_cache_size= 0;
 uint64_t max_binlog_cache_size= 0;
@@ -1700,21 +1699,6 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 }
 
 
-extern "C" void *my_str_malloc_drizzled(size_t size);
-extern "C" void my_str_free_drizzled(void *ptr);
-
-void *my_str_malloc_drizzled(size_t size)
-{
-  return my_malloc(size, MYF(MY_FAE));
-}
-
-
-void my_str_free_drizzled(void *ptr)
-{
-  free((unsigned char*)ptr);
-}
-
-
 static const char *load_default_groups[]= {
 "mysqld","server", DRIZZLE_BASE_VERSION, 0, 0};
 
@@ -2427,11 +2411,6 @@ int main(int argc, char **argv)
 
   network_init();
 
-  /*
-   Initialize my_str_malloc() and my_str_free()
-  */
-  my_str_malloc= &my_str_malloc_drizzled;
-  my_str_free= &my_str_free_drizzled;
 
   /*
     init signals & alarm
@@ -3580,10 +3559,6 @@ struct my_option my_long_options[] =
       "error. Used only if the connection has active cursors."),
    (char**) &table_lock_wait_timeout, (char**) &table_lock_wait_timeout,
    0, GET_ULL, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
-  {"thread_cache_size", OPT_THREAD_CACHE_SIZE,
-   N_("How many threads we should keep in a cache for reuse."),
-   (char**) &thread_cache_size, (char**) &thread_cache_size, 0, GET_ULONG,
-   REQUIRED_ARG, 0, 0, 16384, 0, 1, 0},
   {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
     N_("How many threads we should create to handle query requests in case of "
        "'thread_handling=pool-of-threads'"),

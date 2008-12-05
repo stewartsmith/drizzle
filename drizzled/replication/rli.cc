@@ -413,7 +413,7 @@ int32_t init_relay_log_pos(Relay_log_info* rli,const char* log,
         rli->relay_log.description_event_for_exec= (Format_description_log_event*) ev;
         /*
           As ev was returned by read_log_event, it has passed is_valid(), so
-          my_malloc() in ctor worked, no need to check again.
+          malloc() in ctor worked, no need to check again.
         */
         /*
           Ok, we found a Format_description event. But it is not sure that this

@@ -59,10 +59,6 @@ static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 #define is_schema_db(X) \
   !my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.str, (X))
 
-/* sql_calc.cc */
-bool eval_const_cond(COND *cond);
-
-
 /* sql_test.cc */
 void print_where(COND *cond,const char *info, enum_query_type query_type);
 void print_cached_tables(void);
@@ -165,7 +161,6 @@ extern uint64_t open_files_limit;
 extern uint64_t max_binlog_size;
 extern uint64_t max_relay_log_size;
 extern uint64_t opt_binlog_rows_event_max_size;
-extern uint64_t thread_cache_size;
 extern uint64_t thread_pool_size;
 extern uint32_t back_log;
 extern pid_t current_pid;

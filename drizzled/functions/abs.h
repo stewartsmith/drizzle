@@ -32,7 +32,7 @@ public:
   my_decimal *decimal_op(my_decimal *);
   const char *func_name() const { return "abs"; }
   void fix_length_and_dec();
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 
 };

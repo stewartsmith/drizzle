@@ -877,7 +877,7 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
   }
 
   // some events use the extra byte to null-terminate strings
-  if (!(buf = (char*) my_malloc(data_len+1, MYF(MY_WME))))
+  if (!(buf = (char*) malloc(data_len+1)))
   {
     error = "Out of memory";
     goto err;
@@ -1027,9 +1027,9 @@ Log_event* Log_event::read_log_event(const char* buf, uint32_t event_len,
 
   /*
     is_valid() are small event-specific sanity tests which are
-    important; for example there are some my_malloc() in constructors
+    important; for example there are some malloc() in constructors
     (e.g. Query_log_event::Query_log_event(char*...)); when these
-    my_malloc() fail we can't return an error out of the constructor
+    malloc() fail we can't return an error out of the constructor
     (because constructor is "void") ; so instead we leave the pointer we
     wanted to allocate (e.g. 'query') to 0 and we test it in is_valid().
     Same for Format_description_log_event, member 'post_header_len'.
@@ -1068,7 +1068,7 @@ void Query_log_event::pack_info(Protocol *protocol)
 {
   // TODO: show the catalog ??
   char *buf, *pos;
-  if (!(buf= (char*) my_malloc(9 + db_len + q_len, MYF(MY_WME))))
+  if (!(buf= (char*) malloc(9 + db_len + q_len)))
     return;
   pos= buf;
   if (!(flags & LOG_EVENT_SUPPRESS_USE_F)
@@ -1429,10 +1429,9 @@ Query_log_event::Query_log_event(const char* buf, uint32_t event_len,
     }
   }
   
-  if (!(start= data_buf = (Log_event::Byte*) my_malloc(catalog_len + 1 +
+  if (!(start= data_buf = (Log_event::Byte*) malloc(catalog_len + 1 +
                                              time_zone_len + 1 +
-                                             data_len + 1,
-                                             MYF(MY_WME))))
+                                             data_len + 1)))
       return;
   if (catalog_len)                                  // If catalog is given
   {
@@ -1904,9 +1903,9 @@ Format_description_log_event(uint8_t binlog_ver, const char*)
     memcpy(server_version, ::server_version, ST_SERVER_VER_LEN);
     common_header_len= LOG_EVENT_HEADER_LEN;
     number_of_event_types= LOG_EVENT_TYPES;
-    /* we'll catch my_malloc() error in is_valid() */
-    post_header_len=(uint8_t*) my_malloc(number_of_event_types*sizeof(uint8_t),
-                                       MYF(MY_ZEROFILL));
+    /* we'll catch malloc() error in is_valid() */
+    post_header_len=(uint8_t*) malloc(number_of_event_types*sizeof(uint8_t));
+    memset(post_header_len, 0, number_of_event_types*sizeof(uint8_t));
     /*
       This long list of assignments is not beautiful, but I see no way to
       make it nicer, as the right members are #defines, not array members, so
@@ -2335,7 +2334,7 @@ void Load_log_event::pack_info(Protocol *protocol)
 {
   char *buf, *end;
 
-  if (!(buf= (char*) my_malloc(get_query_buffer_length(), MYF(MY_WME))))
+  if (!(buf= (char*) malloc(get_query_buffer_length())))
     return;
   print_query(true, buf, &end, 0, 0);
   protocol->store(buf, end-buf, &my_charset_bin);
@@ -3089,8 +3088,7 @@ Slave_log_event::Slave_log_event(Session* session_arg,
   pthread_mutex_lock(&mi->data_lock);
   pthread_mutex_lock(&rli->data_lock);
   // on OOM, just do not initialize the structure and print the error
-  if ((mem_pool = (char*)my_malloc(get_data_size() + 1,
-				   MYF(MY_WME))))
+  if ((mem_pool = (char*)malloc(get_data_size() + 1)))
   {
     master_host.assign(mi->getHostname());
     master_log.assign(rli->group_master_log_name);
@@ -3847,7 +3845,7 @@ Execute_load_query_log_event::write_post_header_for_derived(IO_CACHE* file)
 void Execute_load_query_log_event::pack_info(Protocol *protocol)
 {
   char *buf, *pos;
-  if (!(buf= (char*) my_malloc(9 + db_len + q_len + 10 + 21, MYF(MY_WME))))
+  if (!(buf= (char*) malloc(9 + db_len + q_len + 10 + 21)))
     return;
   pos= buf;
   if (db && db_len)
@@ -3877,8 +3875,8 @@ Execute_load_query_log_event::do_apply_event(Relay_log_info const *rli)
   char *fname_end;
   int error;
 
-  buf= (char*) my_malloc(q_len + 1 - (fn_pos_end - fn_pos_start) +
-                         (FN_REFLEN + 10) + 10 + 8 + 5, MYF(MY_WME));
+  buf= (char*) malloc(q_len + 1 - (fn_pos_end - fn_pos_start) +
+                      (FN_REFLEN + 10) + 10 + 8 + 5);
 
   /* Replace filename and LOCAL keyword in query before executing it */
   if (buf == NULL)
@@ -4129,7 +4127,7 @@ Rows_log_event::Rows_log_event(const char *buf, uint32_t event_len,
 
   size_t const data_size= event_len - (ptr_rows_data - (const unsigned char *) buf);
 
-  m_rows_buf= (unsigned char*) my_malloc(data_size, MYF(MY_WME));
+  m_rows_buf= (unsigned char*) malloc(data_size);
   if (likely((bool)m_rows_buf))
   {
     m_curr_row= m_rows_buf;
@@ -4145,7 +4143,7 @@ Rows_log_event::Rows_log_event(const char *buf, uint32_t event_len,
 
 Rows_log_event::~Rows_log_event()
 {
-  if (m_cols.bitmap == m_bitbuf) // no my_malloc happened
+  if (m_cols.bitmap == m_bitbuf) // no malloc happened
     m_cols.bitmap= 0; // so no free in bitmap_free
   bitmap_free(&m_cols); // To pair with bitmap_init().
   free((unsigned char*)m_rows_buf);
@@ -4877,7 +4875,7 @@ Table_map_log_event::Table_map_log_event(Session *session, Table *tbl,
   m_data_size+= 1 + m_colcnt;	// COLCNT and column types
 
   /* If malloc fails, caught in is_valid() */
-  if ((m_memory= (unsigned char*) my_malloc(m_colcnt, MYF(MY_WME))))
+  if ((m_memory= (unsigned char*) malloc(m_colcnt)))
   {
     m_coltype= reinterpret_cast<unsigned char*>(m_memory);
     for (unsigned int i= 0 ; i < m_table->s->fields ; ++i)
@@ -5942,7 +5940,7 @@ Delete_rows_log_event::do_before_row_operations(const Slave_reporting_capability
   if (m_table->s->keys > 0)
   {
     // Allocate buffer for key searches
-    m_key= (unsigned char*)my_malloc(m_table->key_info->key_length, MYF(MY_WME));
+    m_key= (unsigned char*)malloc(m_table->key_info->key_length);
     if (!m_key)
       return HA_ERR_OUT_OF_MEM;
   }
@@ -6013,7 +6011,7 @@ void Update_rows_log_event::init(MY_BITMAP const *cols)
 
 Update_rows_log_event::~Update_rows_log_event()
 {
-  if (m_cols_ai.bitmap == m_bitbuf_ai) // no my_malloc happened
+  if (m_cols_ai.bitmap == m_bitbuf_ai) // no malloc happened
     m_cols_ai.bitmap= 0; // so no free in bitmap_free
   bitmap_free(&m_cols_ai); // To pair with bitmap_init().
 }
@@ -6037,7 +6035,7 @@ Update_rows_log_event::do_before_row_operations(const Slave_reporting_capability
   if (m_table->s->keys > 0)
   {
     // Allocate buffer for key searches
-    m_key= (unsigned char*)my_malloc(m_table->key_info->key_length, MYF(MY_WME));
+    m_key= (unsigned char*)malloc(m_table->key_info->key_length);
     if (!m_key)
       return HA_ERR_OUT_OF_MEM;
   }

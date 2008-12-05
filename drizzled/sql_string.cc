@@ -42,7 +42,7 @@ bool String::real_alloc(uint32_t arg_length)
   if (Alloced_length < arg_length)
   {
     free();
-    if (!(Ptr=(char*) my_malloc(arg_length,MYF(MY_WME))))
+    if (!(Ptr=(char*) malloc(arg_length)))
       return true;
     Alloced_length=arg_length;
     alloced=1;
@@ -73,7 +73,7 @@ bool String::realloc(uint32_t alloc_length)
       else
 	return true;				// Signal error
     }
-    else if ((new_ptr= (char*) my_malloc(len,MYF(MY_WME))))
+    else if ((new_ptr= (char*) malloc(len)))
     {
       if (str_length)				// Avoid bugs in memcpy on AIX
 	memcpy(new_ptr,Ptr,str_length);

@@ -2450,7 +2450,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     }
 
     /* make a new table */
-    if (!(table=(Table*) my_malloc(sizeof(*table),MYF(MY_WME))))
+    if (!(table=(Table*) malloc(sizeof(*table))))
     {
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
@@ -3244,7 +3244,7 @@ retry:
     {
       char *query, *end;
       uint32_t query_buf_size= 20 + share->db.length + share->table_name.length +1;
-      if ((query= (char*) my_malloc(query_buf_size,MYF(MY_WME))))
+      if ((query= (char*) malloc(query_buf_size)))
       {
         /* this DELETE FROM is needed even with row-based binlogging */
         end = strxmov(strcpy(query, "DELETE FROM `")+13,
@@ -3255,14 +3255,10 @@ retry:
       }
       else
       {
-        /*
-          As replication is maybe going to be corrupted, we need to warn the
-          DBA on top of warning the client (which will automatically be done
-          because of MYF(MY_WME) in my_malloc() above).
-        */
         sql_print_error(_("When opening HEAP table, could not allocate memory "
                           "to write 'DELETE FROM `%s`.`%s`' to the binary log"),
                         table_list->db, table_list->table_name);
+        my_error(ER_OUTOFMEMORY, MYF(0), query_buf_size);
         closefrm(entry, 0);
         goto err;
       }
@@ -3794,10 +3790,9 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   key_length= create_table_def_key(session, cache_key, &table_list, 1);
   path_length= strlen(path);
 
-  if (!(tmp_table= (Table*) my_malloc(sizeof(*tmp_table) + sizeof(*share) +
-                                      path_length + 1 + key_length,
-                                      MYF(MY_WME))))
-    return(0);				/* purecov: inspected */
+  if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +
+                                   path_length + 1 + key_length)))
+    return(0);
 
   share= (TABLE_SHARE*) (tmp_table+1);
   tmp_path= (char*) (share+1);

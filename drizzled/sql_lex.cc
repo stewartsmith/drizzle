@@ -315,7 +315,6 @@ void lex_start(Session *session)
   lex->lock_option= TL_READ;
   lex->leaf_tables_insert= 0;
   lex->parsing_options.reset();
-  lex->empty_field_list_on_rset= 0;
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
@@ -1549,7 +1548,6 @@ void st_select_lex::init_query()
   parent_lex->push_context(&context);
   cond_count= between_count= with_wild= 0;
   max_equal_elems= 0;
-  conds_processed_with_permanent_arena= 0;
   ref_pointer_array= 0;
   select_n_where_fields= 0;
   select_n_having_items= 0;
@@ -1799,19 +1797,14 @@ void st_select_lex::mark_as_dependent(st_select_lex *last)
   }
 }
 
-bool st_select_lex_node::set_braces(bool value __attribute__((unused)))
+bool st_select_lex_node::set_braces(bool)
 { return 1; }
 bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
 uint32_t st_select_lex_node::get_in_sum_expr()           { return 0; }
 TableList* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
-TableList *st_select_lex_node::add_table_to_list (Session *session __attribute__((unused)),
-                                                   Table_ident *table __attribute__((unused)),
-						  LEX_STRING *alias __attribute__((unused)),
-						  uint32_t table_join_options __attribute__((unused)),
-						  thr_lock_type flags __attribute__((unused)),
-						  List<Index_hint> *hints __attribute__((unused)),
-                                                  LEX_STRING *option __attribute__((unused)))
+TableList *st_select_lex_node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t, 
+                                                  thr_lock_type, List<Index_hint> *, LEX_STRING *)
 {
   return 0;
 }
@@ -1853,8 +1846,7 @@ bool st_select_lex::add_order_to_list(Session *session, Item *item, bool asc)
 }
 
 
-bool st_select_lex::add_item_to_list(Session *session __attribute__((unused)),
-                                     Item *item)
+bool st_select_lex::add_item_to_list(Session *, Item *item)
 {
   return(item_list.push_back(item));
 }
@@ -1984,8 +1976,7 @@ void st_select_lex::print_order(String *str,
 }
  
 
-void st_select_lex::print_limit(Session *session __attribute__((unused)),
-                                String *str,
+void st_select_lex::print_limit(Session *, String *str,
                                 enum_query_type query_type)
 {
   SELECT_LEX_UNIT *unit= master_unit();
@@ -2036,7 +2027,7 @@ void st_select_lex::print_limit(Session *session __attribute__((unused)),
   to implement the clean up.
 */
 
-void LEX::cleanup_lex_after_parse_error(Session *session __attribute__((unused)))
+void LEX::cleanup_lex_after_parse_error(Session *)
 {
 }
 
@@ -2380,33 +2371,6 @@ void LEX::cleanup_after_one_table_open()
     /* remove underlying units (units of VIEW) subtree */
     select_lex.cut_subtree();
   }
-}
-
-
-/*
-  Save current state of Query_tables_list for this LEX, and prepare it
-  for processing of new statemnt.
-
-  SYNOPSIS
-    reset_n_backup_query_tables_list()
-      backup  Pointer to Query_tables_list instance to be used for backup
-*/
-
-void LEX::reset_n_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
-{
-}
-
-
-/*
-  Restore state of Query_tables_list for this LEX from backup.
-
-  SYNOPSIS
-    restore_backup_query_tables_list()
-      backup  Pointer to Query_tables_list instance used for backup
-*/
-
-void LEX::restore_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
-{
 }
 
 

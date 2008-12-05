@@ -337,8 +337,9 @@ int mysql_update(Session *session, TableList *table_list,
       SORT_FIELD  *sortorder;
       ha_rows examined_rows;
 
-      table->sort.io_cache = (IO_CACHE *) my_malloc(sizeof(IO_CACHE),
-						    MYF(MY_FAE | MY_ZEROFILL));
+      table->sort.io_cache = (IO_CACHE *) malloc(sizeof(IO_CACHE));
+      memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
+
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
           (table->sort.found_records= filesort(session, table, sortorder, length,
                                                select, limit, 1,

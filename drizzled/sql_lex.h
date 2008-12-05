@@ -309,11 +309,9 @@ public:
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint32_t) size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *, size_t)
   { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              MEM_ROOT *mem_root __attribute__((unused)))
+  static void operator delete(void *, MEM_ROOT *)
   {}
   st_select_lex_node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~st_select_lex_node() {}
@@ -342,7 +340,7 @@ public:
                                         thr_lock_type flags= TL_UNLOCK,
                                         List<Index_hint> *hints= 0,
                                         LEX_STRING *option= 0);
-  virtual void set_lock_for_tables(thr_lock_type lock_type __attribute__((unused)))
+  virtual void set_lock_for_tables(thr_lock_type)
   {}
 
   friend class st_select_lex_unit;
@@ -513,11 +511,6 @@ public:
   uint32_t select_n_where_fields;
   enum_parsing_place parsing_place; /* where we are parsing expression */
   bool with_sum_func;   /* sum function indicator */
-  /* 
-    PS or SP cond natural joins was alredy processed with permanent
-    arena and all additional items which we need alredy stored in it
-  */
-  bool conds_processed_with_permanent_arena;
 
   uint32_t table_join_options;
   uint32_t in_sum_expr;
@@ -1400,12 +1393,6 @@ public:
   Alter_info alter_info;
 
   /*
-    field_list was created for view and should be removed before PS/SP
-    rexecuton
-  */
-  bool empty_field_list_on_rset;
-
-  /*
     Pointers to part of LOAD DATA statement that should be rewritten
     during replication ("LOCAL 'filename' REPLACE INTO" part).
   */
@@ -1462,9 +1449,6 @@ public:
   */
   static void cleanup_lex_after_parse_error(Session *session);
 
-  void reset_n_backup_query_tables_list(Query_tables_list *backup);
-  void restore_backup_query_tables_list(Query_tables_list *backup);
-
   bool table_or_sp_used();
 
   /**
@@ -1500,11 +1484,9 @@ struct st_lex_local: public LEX
   {
     return (void*) alloc_root(mem_root, (uint32_t) size);
   }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *, size_t)
   { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              MEM_ROOT *mem_root __attribute__((unused)))
+  static void operator delete(void *, MEM_ROOT *)
   { /* Never called */ }
 };
 

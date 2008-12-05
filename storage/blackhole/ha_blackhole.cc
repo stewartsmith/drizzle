@@ -62,8 +62,7 @@ uint32_t ha_blackhole::index_flags(uint32_t inx, uint32_t, bool) const
           HA_READ_ORDER | HA_KEYREAD_ONLY);
 }
 
-int ha_blackhole::open(const char *name, int mode __attribute__((unused)),
-                       uint32_t test_if_locked __attribute__((unused)))
+int ha_blackhole::open(const char *name, int, uint32_t)
 {
   if (!(share= get_share(name)))
     return(HA_ERR_OUT_OF_MEM);
@@ -78,44 +77,41 @@ int ha_blackhole::close(void)
   return(0);
 }
 
-int ha_blackhole::create(const char *name __attribute__((unused)),
-                         Table *table_arg __attribute__((unused)),
-                         HA_CREATE_INFO *create_info __attribute__((unused)))
+int ha_blackhole::create(const char *, Table *, HA_CREATE_INFO *)
 {
   return(0);
 }
 
-const char *ha_blackhole::index_type(uint32_t key_number __attribute__((unused)))
+const char *ha_blackhole::index_type(uint32_t)
 {
   return("BTREE");
 }
 
-int ha_blackhole::write_row(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::write_row(unsigned char *)
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }
 
-int ha_blackhole::rnd_init(bool scan __attribute__((unused)))
+int ha_blackhole::rnd_init(bool)
 {
   return(0);
 }
 
 
-int ha_blackhole::rnd_next(unsigned char *buf __attribute__((unused)))
+int ha_blackhole::rnd_next(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::rnd_pos(unsigned char * buf __attribute__((unused)),
-                          unsigned char *pos __attribute__((unused)))
+int ha_blackhole::rnd_pos(unsigned char *, unsigned char *)
 {
   assert(0);
   return(0);
 }
 
 
-void ha_blackhole::position(const unsigned char *record __attribute__((unused)))
+void ha_blackhole::position(const unsigned char *)
 {
   assert(0);
   return;
@@ -130,8 +126,7 @@ int ha_blackhole::info(uint32_t flag)
   return(0);
 }
 
-int ha_blackhole::external_lock(Session *session __attribute__((unused)),
-                                int lock_type __attribute__((unused)))
+int ha_blackhole::external_lock(Session *, int)
 {
   return(0);
 }
@@ -173,52 +168,45 @@ THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
 }
 
 
-int ha_blackhole::index_read_map(unsigned char * buf __attribute__((unused)),
-                                 const unsigned char * key __attribute__((unused)),
-                                 key_part_map keypart_map  __attribute__((unused)),
-                                 enum ha_rkey_function find_flag __attribute__((unused)))
+int ha_blackhole::index_read_map(unsigned char *, const unsigned char *,
+                                 key_part_map, enum ha_rkey_function)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_read_idx_map(unsigned char * buf __attribute__((unused)),
-                                     uint32_t idx __attribute__((unused)),
-                                     const unsigned char * key __attribute__((unused)),
-                                     key_part_map keypart_map __attribute__((unused)),
-                                     enum ha_rkey_function find_flag __attribute__((unused)))
+int ha_blackhole::index_read_idx_map(unsigned char *, uint32_t, const unsigned char *, 
+                                     key_part_map, enum ha_rkey_function)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_read_last_map(unsigned char * buf __attribute__((unused)),
-                                      const unsigned char * key __attribute__((unused)),
-                                      key_part_map keypart_map __attribute__((unused)))
+int ha_blackhole::index_read_last_map(unsigned char *, const unsigned char *, key_part_map)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_next(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::index_next(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_prev(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::index_prev(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_first(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::index_first(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_last(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::index_last(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
@@ -273,8 +261,7 @@ static void blackhole_free_key(st_blackhole_share *share)
   free((unsigned char*) share);
 }
 
-static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *length,
-                                bool not_used __attribute__((unused)))
+static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *length, bool)
 {
   *length= share->table_name_length;
   return (unsigned char*) share->table_name;
@@ -296,7 +283,7 @@ static int blackhole_init(void *p)
   return 0;
 }
 
-static int blackhole_fini(void *p __attribute__((unused)))
+static int blackhole_fini(void *)
 {
   hash_free(&blackhole_open_tables);
   pthread_mutex_destroy(&blackhole_mutex);

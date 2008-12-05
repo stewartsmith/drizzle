@@ -616,7 +616,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   {
     /* Read extra data segment */
     unsigned char *next_chunk, *buff_end;
-    if (!(next_chunk= buff= (unsigned char*) my_malloc(n_length, MYF(MY_WME))))
+    if (!(next_chunk= buff= (unsigned char*) malloc(n_length)))
       goto err;
     if (pread(file, buff, n_length, record_offset + share->reclength) == 0)
     {
@@ -1900,8 +1900,7 @@ ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names)
   {
     length=uint2korr(head+4);
     my_seek(file,64L,MY_SEEK_SET,MYF(0));
-    if (!(buf= (unsigned char*) my_malloc((size_t) length+a_length+names*4,
-				  MYF(MY_WME))) ||
+    if (!(buf= (unsigned char*) malloc(length+a_length+names*4)) ||
 	my_read(file, buf+a_length, (size_t) (length+names*4),
 		MYF(MY_NABP)))
     {						/* purecov: inspected */
@@ -1941,7 +1940,7 @@ int read_string(File file, unsigned char**to, size_t length)
 
   if (*to)
     free(*to);
-  if (!(*to= (unsigned char*) my_malloc(length+1,MYF(MY_WME))) ||
+  if (!(*to= (unsigned char*) malloc(length+1)) ||
       my_read(file, *to, length,MYF(MY_NABP)))
   {
     if (*to)
