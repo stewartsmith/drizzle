@@ -29,7 +29,6 @@
 #include <drizzled/my_decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
-#include <drizzled/lex_string.h>
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
