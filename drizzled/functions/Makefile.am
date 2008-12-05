@@ -34,7 +34,6 @@ libfunctions_la_SOURCES = abs.cc \
 		  cos.cc \
 		  decimal_typecast.cc \
 		  divide.cc \
-		  eval_const_cond.cc \
 		  exp.cc \
 		  get_user_var.cc \
 		  get_variable.cc \

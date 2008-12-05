@@ -234,6 +234,12 @@ static bool test_if_ref(Item_field *left_item,Item *right_item);
 static bool replace_where_subcondition(JOIN *join, Item *old_cond, 
                                        Item *new_cond, bool fix_fields);
 
+static bool eval_const_cond(COND *cond)
+{
+    return ((Item_func*) cond)->val_int() ? true : false;
+}
+
+
 /*
   This is used to mark equalities that were made from i-th IN-equality.
   We limit semi-join InsideOut optimization to handling max 64 inequalities,

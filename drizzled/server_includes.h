@@ -59,10 +59,6 @@ static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 #define is_schema_db(X) \
   !my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.str, (X))
 
-/* sql_calc.cc */
-bool eval_const_cond(COND *cond);
-
-
 /* sql_test.cc */
 void print_where(COND *cond,const char *info, enum_query_type query_type);
 void print_cached_tables(void);
