@@ -167,7 +167,7 @@ static TINA_SHARE *get_share(const char *table_name,
     share->update_file_opened= false;
     share->tina_write_opened= false;
     share->data_file_version= 0;
-    my_stpcpy(share->table_name, table_name);
+    strcpy(share->table_name, table_name);
     fn_format(share->data_file_name, table_name, "", CSV_EXT,
               MY_REPLACE_EXT|MY_UNPACK_FILENAME);
     fn_format(meta_file_name, table_name, "", CSM_EXT,

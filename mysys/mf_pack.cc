@@ -48,8 +48,8 @@ void pack_dirname(char * to, const char *from)
     buff_length= strlen(buff);
     d_length= (size_t) (start-to);
     if ((start == to ||
-	 (buff_length == d_length && !memcmp(buff,start,d_length))) &&
-	*start != FN_LIBCHAR && *start)
+        (buff_length == d_length && !memcmp(buff,start,d_length))) &&
+        *start != FN_LIBCHAR && *start)
     {						/* Put current dir before */
       bchange((unsigned char*) to, d_length, (unsigned char*) buff, buff_length, strlen(to)+1);
     }
@@ -62,37 +62,37 @@ void pack_dirname(char * to, const char *from)
     {
       length= strlen(home_dir);
       if (home_dir[length-1] == FN_LIBCHAR)
-	length--;				/* Don't test last '/' */
+        length--;				/* Don't test last '/' */
     }
     if (length > 1 && length < d_length)
     {						/* test if /xx/yy -> ~/yy */
       if (memcmp(to,home_dir,length) == 0 && to[length] == FN_LIBCHAR)
       {
-	to[0]=FN_HOMELIB;			/* Filename begins with ~ */
-	(void) strmov_overlapp(to+1,to+length);
+        to[0]=FN_HOMELIB;			/* Filename begins with ~ */
+        (void) strcpy(to+1,to+length);
       }
     }
     if (! getcwd_error)
     {						/* Test if cwd is ~/... */
       if (length > 1 && length < buff_length)
       {
-	if (memcmp(buff,home_dir,length) == 0 && buff[length] == FN_LIBCHAR)
-	{
-	  buff[0]=FN_HOMELIB;
-	  (void) strmov_overlapp(buff+1,buff+length);
-	}
+        if (memcmp(buff,home_dir,length) == 0 && buff[length] == FN_LIBCHAR)
+        {
+          buff[0]=FN_HOMELIB;
+          (void) strcpy(buff+1,buff+length);
+        }
       }
       if (is_prefix(to,buff))
       {
-	length= strlen(buff);
-	if (to[length])
-	  (void) strmov_overlapp(to,to+length);	/* Remove everything before */
-	else
-	{
-	  to[0]= FN_CURLIB;			/* Put ./ instead of cwd */
-	  to[1]= FN_LIBCHAR;
-	  to[2]= '\0';
-	}
+        length= strlen(buff);
+        if (to[length])
+          (void) strcpy(to,to+length);	/* Remove everything before */
+        else
+        {
+          to[0]= FN_CURLIB;			/* Put ./ instead of cwd */
+          to[1]= FN_LIBCHAR;
+          to[2]= '\0';
+        }
       }
     }
   }

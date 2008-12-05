@@ -589,7 +589,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     }
   }
   keynames=(char*) key_part;
-  strpos+= (my_stpcpy(keynames, (char *) strpos) - keynames)+1;
+  strpos+= (strcpy(keynames, (char*)strpos)+strlen((char*)strpos)-keynames)+1;
 
   //reading index comments
   for (keyinfo= share->key_info, i=0; i < keys; i++, keyinfo++)

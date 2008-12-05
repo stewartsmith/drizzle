@@ -1596,10 +1596,10 @@ static bool show_status_array(Session *session, const char *wild,
           end= int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
           break;
         case SHOW_BOOL:
-          end= my_stpcpy(buff, *(bool*) value ? "ON" : "OFF");
+          end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
           break;
         case SHOW_MY_BOOL:
-          end= my_stpcpy(buff, *(bool*) value ? "ON" : "OFF");
+          end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
           break;
         case SHOW_INT:
           end= int10_to_str((long) *(uint32_t*) value, buff, 10);
@@ -2868,12 +2868,12 @@ static int get_schema_tables_record(Session *session, TableList *tables,
       ptr= int64_t10_to_str(share->avg_row_length,ptr,10);
     }
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
-      ptr=my_stpcpy(ptr," pack_keys=1");
+      ptr= strcpy(ptr," pack_keys=1")+12;
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
-      ptr=my_stpcpy(ptr," pack_keys=0");
+      ptr= strcpy(ptr," pack_keys=0")+12;
     /* We use CHECKSUM, instead of TABLE_CHECKSUM, for backward compability */
     if (share->db_create_options & HA_OPTION_CHECKSUM)
-      ptr=my_stpcpy(ptr," checksum=1");
+      ptr= strcpy(ptr," checksum=1")+11;
     if (share->page_checksum != HA_CHOICE_UNDEF)
       ptr= strxmov(ptr, " page_checksum=",
                    ha_choice_values[(uint) share->page_checksum], NULL);

@@ -794,7 +794,8 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
   *pos++=(unsigned char) NAMES_SEP_CHAR;
   for (key=keyinfo ; key != end ; key++)
   {
-    unsigned char *tmp=(unsigned char*) my_stpcpy((char*) pos,key->name);
+    unsigned char *tmp=(unsigned char*) strcpy((char*) pos,key->name);
+    tmp+= strlen(key->name);
     *tmp++= (unsigned char) NAMES_SEP_CHAR;
     *tmp=0;
     pos=tmp;
@@ -1099,7 +1100,8 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   it.rewind();
   while ((field=it++))
   {
-    char *pos= my_stpcpy((char*) buff,field->field_name);
+    char *pos= strcpy((char*) buff,field->field_name);
+    pos+= strlen(field->field_name);
     *pos++=NAMES_SEP_CHAR;
     if (i == create_fields.elements-1)
       *pos++=0;

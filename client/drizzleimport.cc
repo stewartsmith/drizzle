@@ -295,8 +295,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
   if (ignore)
     end= strcpy(end, " IGNORE")+7;
 
-  end= strcpy(end, " INTO TABLE ")+12;
-  end= strcpy(end, tablename)+strlen(tablename);
+  end+= sprintf(end, " INTO TABLE %s", tablename);
 
   if (fields_terminated || enclosed || opt_enclosed || escaped)
       end= strcpy(end, " FIELDS")+7;
@@ -309,7 +308,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
   if (opt_ignore_lines >= 0)
   {
     end= strcpy(end, " IGNORE ")+8;
-    end+= sprintf(end, "%ld", opt_ignore_lines);
+    end= int64_t2str(opt_ignore_lines, end, 10);
     end= strcpy(end, " LINES")+6;
   }
   if (opt_columns)
