@@ -49,9 +49,6 @@ noinst_HEADERS =	mysys_priv.h \
 if BUILD_FAST_MUTEX
 thr_mutex_source=thr_mutex.cc
 endif
-if BUILD_THR_RWLOCK
-thr_rwlock_source=thr_rwlock.cc
-endif
 
 libmysys_la_SOURCES = my_init.cc mf_getdate.cc \
 			mf_path.cc mf_loadpath.cc my_file.cc \
@@ -82,7 +79,7 @@ libmysys_la_SOURCES = my_init.cc mf_getdate.cc \
 			sha1.cc \
 			my_access.cc base64.cc \
 			thr_alarm.cc thr_lock.cc my_thr_init.cc \
-                        ${thr_mutex_source} ${thr_rwlock_source}
+                        ${thr_mutex_source}
 
 DEFS =			-DDEFAULT_BASEDIR=\"$(prefix)\" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
