@@ -3639,10 +3639,10 @@ int fill_variables(Session *session, TableList *tables, COND *)
       schema_table_idx == SCH_GLOBAL_VARIABLES)
     option_type= OPT_GLOBAL;
 
-  rw_rdlock(&LOCK_system_variables_hash);
+  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   res= show_status_array(session, wild, enumerate_sys_vars(session, sorted_vars),
                          option_type, NULL, "", tables->table, upper_case_names);
-  rw_unlock(&LOCK_system_variables_hash);
+  pthread_rwlock_unlock(&LOCK_system_variables_hash);
   return(res);
 }
 

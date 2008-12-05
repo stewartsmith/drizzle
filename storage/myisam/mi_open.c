@@ -237,8 +237,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 			 &share->state.key_root,keys*sizeof(my_off_t),
 			 &share->state.key_del,
 			 (share->state.header.max_block_size_index*sizeof(my_off_t)),
-			 &share->key_root_lock,sizeof(rw_lock_t)*keys,
-			 &share->mmap_lock,sizeof(rw_lock_t),
+			 &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
+			 &share->mmap_lock,sizeof(pthread_rwlock_t),
 			 NULL))
       goto err;
     errpos=4;
@@ -384,8 +384,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     thr_lock_init(&share->lock);
     pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST);
     for (i=0; i<keys; i++)
-      my_rwlock_init(&share->key_root_lock[i], NULL);
-    my_rwlock_init(&share->mmap_lock, NULL);
+      pthread_rwlock_init(&share->key_root_lock[i], NULL);
+    pthread_rwlock_init(&share->mmap_lock, NULL);
     if (!thr_lock_inited)
     {
       /* Probably a single threaded program; Don't use concurrent inserts */

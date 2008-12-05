@@ -71,15 +71,6 @@ extern int my_pthread_create_detached;
 int my_sigwait(const sigset_t *set,int *sig);
 #endif
 
-#ifdef HAVE_NONPOSIX_PTHREAD_MUTEX_INIT
-#define pthread_mutex_init(a,b) my_pthread_mutex_init((a),(b))
-extern int my_pthread_mutex_init(pthread_mutex_t *mp,
-				 const pthread_mutexattr_t *attr);
-#define pthread_cond_init(a,b) my_pthread_cond_init((a),(b))
-extern int my_pthread_cond_init(pthread_cond_t *mp,
-				const pthread_condattr_t *attr);
-#endif /* HAVE_NONPOSIX_PTHREAD_MUTEX_INIT */
-
 #if defined(HAVE_SIGTHREADMASK) && !defined(HAVE_PTHREAD_SIGMASK)
 #define pthread_sigmask(A,B,C) sigthreadmask((A),(B),(C))
 #endif
@@ -303,57 +294,6 @@ int my_pthread_fastmutex_lock(my_pthread_fastmutex_t *mp);
 #undef HAVE_RWLOCK_INIT
 #undef HAVE_RWLOCK_T
 #endif
-
-#if defined(USE_MUTEX_INSTEAD_OF_RW_LOCKS)
-/* use these defs for simple mutex locking */
-#define rw_lock_t pthread_mutex_t
-#define my_rwlock_init(A,B) pthread_mutex_init((A),(B))
-#define rw_rdlock(A) pthread_mutex_lock((A))
-#define rw_wrlock(A) pthread_mutex_lock((A))
-#define rw_tryrdlock(A) pthread_mutex_trylock((A))
-#define rw_trywrlock(A) pthread_mutex_trylock((A))
-#define rw_unlock(A) pthread_mutex_unlock((A))
-#define rwlock_destroy(A) pthread_mutex_destroy((A))
-#elif defined(HAVE_PTHREAD_RWLOCK_RDLOCK)
-#define rw_lock_t pthread_rwlock_t
-#define my_rwlock_init(A,B) pthread_rwlock_init((A),(B))
-#define rw_rdlock(A) pthread_rwlock_rdlock(A)
-#define rw_wrlock(A) pthread_rwlock_wrlock(A)
-#define rw_tryrdlock(A) pthread_rwlock_tryrdlock((A))
-#define rw_trywrlock(A) pthread_rwlock_trywrlock((A))
-#define rw_unlock(A) pthread_rwlock_unlock(A)
-#define rwlock_destroy(A) pthread_rwlock_destroy(A)
-#elif defined(HAVE_RWLOCK_INIT)
-#ifdef HAVE_RWLOCK_T				/* For example Solaris 2.6-> */
-#define rw_lock_t rwlock_t
-#endif
-#define my_rwlock_init(A,B) rwlock_init((A),USYNC_THREAD,0)
-#else
-/* Use our own version of read/write locks */
-typedef struct _my_rw_lock_t {
-	pthread_mutex_t lock;		/* lock for structure		*/
-	pthread_cond_t	readers;	/* waiting readers		*/
-	pthread_cond_t	writers;	/* waiting writers		*/
-	int		state;		/* -1:writer,0:free,>0:readers	*/
-	int		waiters;	/* number of waiting writers	*/
-} my_rw_lock_t;
-
-#define rw_lock_t my_rw_lock_t
-#define rw_rdlock(A) my_rw_rdlock((A))
-#define rw_wrlock(A) my_rw_wrlock((A))
-#define rw_tryrdlock(A) my_rw_tryrdlock((A))
-#define rw_trywrlock(A) my_rw_trywrlock((A))
-#define rw_unlock(A) my_rw_unlock((A))
-#define rwlock_destroy(A) my_rwlock_destroy((A))
-
-extern int my_rwlock_init(my_rw_lock_t *, void *);
-extern int my_rwlock_destroy(my_rw_lock_t *);
-extern int my_rw_rdlock(my_rw_lock_t *);
-extern int my_rw_wrlock(my_rw_lock_t *);
-extern int my_rw_unlock(my_rw_lock_t *);
-extern int my_rw_tryrdlock(my_rw_lock_t *);
-extern int my_rw_trywrlock(my_rw_lock_t *);
-#endif /* USE_MUTEX_INSTEAD_OF_RW_LOCKS */
 
 #ifndef HAVE_THR_SETCONCURRENCY
 #define thr_setconcurrency(A) pthread_dummy(0)

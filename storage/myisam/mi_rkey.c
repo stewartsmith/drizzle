@@ -67,7 +67,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
     goto err;
 
   if (share->concurrent_insert)
-    rw_rdlock(&share->key_root_lock[inx]);
+    pthread_rwlock_rdlock(&share->key_root_lock[inx]);
 
   nextflag=myisam_read_vec[search_flag];
   use_key_length=pack_key_length;
@@ -134,7 +134,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
       {
         info->lastpos= HA_OFFSET_ERROR;
         if (share->concurrent_insert)
-          rw_unlock(&share->key_root_lock[inx]);
+          pthread_rwlock_unlock(&share->key_root_lock[inx]);
         return((my_errno= HA_ERR_KEY_NOT_FOUND));
       }
       /*
@@ -150,7 +150,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
     }
   }
   if (share->concurrent_insert)
-    rw_unlock(&share->key_root_lock[inx]);
+    pthread_rwlock_unlock(&share->key_root_lock[inx]);
 
   /* Calculate length of the found key;  Used by mi_rnext_same */
   if ((keyinfo->flag & HA_VAR_LENGTH_KEY) && last_used_keyseg &&

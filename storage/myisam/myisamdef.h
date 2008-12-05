@@ -219,11 +219,11 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
     concurrent_insert;
   THR_LOCK lock;
   pthread_mutex_t intern_lock;		/* Locking for use with _locking */
-  rw_lock_t *key_root_lock;
+  pthread_rwlock_t *key_root_lock;
   my_off_t mmaped_length;
   uint32_t     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */
-  rw_lock_t mmap_lock;
+  pthread_rwlock_t mmap_lock;
 } MYISAM_SHARE;
 
 
