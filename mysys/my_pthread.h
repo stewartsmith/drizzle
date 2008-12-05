@@ -53,30 +53,8 @@ extern "C" {
 #define pthread_handler_t void *
 typedef void *(* pthread_handler)(void *);
 
-/* Test first for RTS or FSU threads */
-
-#if defined(PTHREAD_SCOPE_GLOBAL) && !defined(PTHREAD_SCOPE_SYSTEM)
-#define HAVE_rts_threads
-extern int my_pthread_create_detached;
-#define pthread_sigmask(A,B,C) sigprocmask((A),(B),(C))
-#define PTHREAD_CREATE_DETACHED &my_pthread_create_detached
-#define PTHREAD_SCOPE_SYSTEM  PTHREAD_SCOPE_GLOBAL
-#define PTHREAD_SCOPE_PROCESS PTHREAD_SCOPE_LOCAL
-#define USE_ALARM_THREAD
-#endif /* defined(PTHREAD_SCOPE_GLOBAL) && !defined(PTHREAD_SCOPE_SYSTEM) */
-
-#ifndef HAVE_NONPOSIX_SIGWAIT
-#define my_sigwait(A,B) sigwait((A),(B))
-#else
-int my_sigwait(const sigset_t *set,int *sig);
-#endif
-
 #if defined(HAVE_SIGTHREADMASK) && !defined(HAVE_PTHREAD_SIGMASK)
 #define pthread_sigmask(A,B,C) sigthreadmask((A),(B),(C))
-#endif
-
-#if !defined(HAVE_SIGWAIT) && !defined(HAVE_rts_threads) && !defined(sigwait) && !defined(alpha_linux_port) && !defined(HAVE_NONPOSIX_SIGWAIT)
-int sigwait(sigset_t *setp, int *sigp);		/* Use our implemention */
 #endif
 
 
@@ -121,63 +99,7 @@ extern int my_pthread_cond_timedwait(pthread_cond_t *cond,
 #define pthread_cond_timedwait(A,B,C) my_pthread_cond_timedwait((A),(B),(C))
 #endif
 
-/* FSU THREADS */
-#if !defined(HAVE_PTHREAD_KEY_DELETE) && !defined(pthread_key_delete)
-#define pthread_key_delete(A) pthread_dummy(0)
-#endif
-
-#ifdef HAVE_CTHREADS_WRAPPER			/* For MacOSX */
-#define pthread_cond_destroy(A) pthread_dummy(0)
-#define pthread_mutex_destroy(A) pthread_dummy(0)
-#define pthread_attr_delete(A) pthread_dummy(0)
-#define pthread_condattr_delete(A) pthread_dummy(0)
-#define pthread_attr_setstacksize(A,B) pthread_dummy(0)
-#define pthread_equal(A,B) ((A) == (B))
-#define pthread_cond_timedwait(a,b,c) pthread_cond_wait((a),(b))
-#define pthread_attr_init(A) pthread_attr_create(A)
-#define pthread_attr_destroy(A) pthread_attr_delete(A)
-#define pthread_attr_setdetachstate(A,B) pthread_dummy(0)
-#define pthread_create(A,B,C,D) pthread_create((A),*(B),(C),(D))
-#define pthread_sigmask(A,B,C) sigprocmask((A),(B),(C))
-#define pthread_kill(A,B) pthread_dummy((A) ? 0 : ESRCH)
-#undef	pthread_detach_this_thread
-#define pthread_detach_this_thread() { pthread_t tmp=pthread_self() ; pthread_detach(&tmp); }
-#endif
-
-#ifdef HAVE_DARWIN5_THREADS
-#define pthread_sigmask(A,B,C) sigprocmask((A),(B),(C))
-#define pthread_kill(A,B) pthread_dummy((A) ? 0 : ESRCH)
-#define pthread_condattr_init(A) pthread_dummy(0)
-#define pthread_condattr_destroy(A) pthread_dummy(0)
-#undef	pthread_detach_this_thread
-#define pthread_detach_this_thread() { pthread_t tmp=pthread_self() ; pthread_detach(tmp); }
-#endif
-
-#if (defined(HAVE_PTHREAD_ATTR_CREATE) && !defined(HAVE_SIGWAIT))
-/* This is set on AIX_3_2 and Siemens unix (and DEC OSF/1 3.2 too) */
-#define pthread_key_create(A,B) \
-		pthread_keycreate(A,(B) ?\
-				  (pthread_destructor_t) (B) :\
-				  (pthread_destructor_t) pthread_dummy)
-#define pthread_attr_init(A) pthread_attr_create(A)
-#define pthread_attr_destroy(A) pthread_attr_delete(A)
-#define pthread_attr_setdetachstate(A,B) pthread_dummy(0)
-#define pthread_create(A,B,C,D) pthread_create((A),*(B),(C),(D))
-#ifndef pthread_sigmask
-#define pthread_sigmask(A,B,C) sigprocmask((A),(B),(C))
-#endif
-#define pthread_kill(A,B) pthread_dummy((A) ? 0 : ESRCH)
-#undef	pthread_detach_this_thread
-#define pthread_detach_this_thread() { pthread_t tmp=pthread_self() ; pthread_detach(&tmp); }
-#else
 #define HAVE_PTHREAD_KILL
-#endif
-
-#if defined(HAVE_POSIX1003_4a_MUTEX) && !defined(DONT_REMAP_PTHREAD_FUNCTIONS)
-#undef pthread_mutex_trylock
-#define pthread_mutex_trylock(a) my_pthread_mutex_trylock((a))
-int my_pthread_mutex_trylock(pthread_mutex_t *mutex);
-#endif
 
 #if !defined(HAVE_PTHREAD_YIELD_ONE_ARG) && !defined(HAVE_PTHREAD_YIELD_ZERO_ARG)
 /* no pthread_yield() available */
@@ -255,45 +177,7 @@ void safe_mutex_end(void);
 #define safe_mutex_assert_owner(mp)
 #define safe_mutex_assert_not_owner(mp)
 
-#if defined(MY_PTHREAD_FASTMUTEX)
-typedef struct st_my_pthread_fastmutex_t
-{
-  pthread_mutex_t mutex;
-  uint32_t spins;
-} my_pthread_fastmutex_t;
-void fastmutex_global_init(void);
-
-int my_pthread_fastmutex_init(my_pthread_fastmutex_t *mp, 
-                              const pthread_mutexattr_t *attr);
-int my_pthread_fastmutex_lock(my_pthread_fastmutex_t *mp);
-
-#undef pthread_mutex_init
-#undef pthread_mutex_lock
-#undef pthread_mutex_unlock
-#undef pthread_mutex_destroy
-#undef pthread_mutex_wait
-#undef pthread_mutex_timedwait
-#undef pthread_mutex_t
-#undef pthread_cond_wait
-#undef pthread_cond_timedwait
-#undef pthread_mutex_trylock
-#define pthread_mutex_init(A,B) my_pthread_fastmutex_init((A),(B))
-#define pthread_mutex_lock(A) my_pthread_fastmutex_lock(A)
-#define pthread_mutex_unlock(A) pthread_mutex_unlock(&(A)->mutex)
-#define pthread_mutex_destroy(A) pthread_mutex_destroy(&(A)->mutex)
-#define pthread_cond_wait(A,B) pthread_cond_wait((A),&(B)->mutex)
-#define pthread_cond_timedwait(A,B,C) pthread_cond_timedwait((A),&(B)->mutex,(C))
-#define pthread_mutex_trylock(A) pthread_mutex_trylock(&(A)->mutex)
-#define pthread_mutex_t my_pthread_fastmutex_t
-#endif /* defined(MY_PTHREAD_FASTMUTEX) */
-
 	/* READ-WRITE thread locking */
-
-#ifdef HAVE_BROKEN_RWLOCK			/* For OpenUnix */
-#undef HAVE_PTHREAD_RWLOCK_RDLOCK
-#undef HAVE_RWLOCK_INIT
-#undef HAVE_RWLOCK_T
-#endif
 
 #ifndef HAVE_THR_SETCONCURRENCY
 #define thr_setconcurrency(A) pthread_dummy(0)

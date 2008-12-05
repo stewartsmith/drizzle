@@ -1567,7 +1567,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
       error=0;
     }
     else
-      while ((error=my_sigwait(&set,&sig)) == EINTR) ;
+      while ((error= sigwait(&set,&sig)) == EINTR) ;
     if (cleanup_done)
     {
       my_thread_end();
