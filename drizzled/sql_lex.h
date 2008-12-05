@@ -1455,9 +1455,6 @@ public:
   */
   static void cleanup_lex_after_parse_error(Session *session);
 
-  void reset_n_backup_query_tables_list(Query_tables_list *backup);
-  void restore_backup_query_tables_list(Query_tables_list *backup);
-
   bool table_or_sp_used();
 
   /**

@@ -381,7 +381,7 @@ struct st_mysql_plugin
   int (*deinit)(void *);/* the function to invoke when plugin is unloaded */
   struct st_mysql_show_var *status_vars;
   struct st_mysql_sys_var **system_vars;
-  void * __reserved1;   /* reserved for dependency checking             */
+  void *reserved1;   /* reserved for dependency checking             */
 };
 
 struct handlerton;

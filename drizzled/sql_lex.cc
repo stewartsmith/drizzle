@@ -2376,33 +2376,6 @@ void LEX::cleanup_after_one_table_open()
 
 
 /*
-  Save current state of Query_tables_list for this LEX, and prepare it
-  for processing of new statemnt.
-
-  SYNOPSIS
-    reset_n_backup_query_tables_list()
-      backup  Pointer to Query_tables_list instance to be used for backup
-*/
-
-void LEX::reset_n_backup_query_tables_list(Query_tables_list *)
-{
-}
-
-
-/*
-  Restore state of Query_tables_list for this LEX from backup.
-
-  SYNOPSIS
-    restore_backup_query_tables_list()
-      backup  Pointer to Query_tables_list instance used for backup
-*/
-
-void LEX::restore_backup_query_tables_list(Query_tables_list *)
-{
-}
-
-
-/*
   Checks for usage of routines and/or tables in a parsed statement
 
   SYNOPSIS

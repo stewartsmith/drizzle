@@ -1909,11 +1909,9 @@ public:
   /* Table read plans are allocated on MEM_ROOT and are never deleted */
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint) size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *, size_t)
     { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              MEM_ROOT *mem_root __attribute__((unused)))
+  static void operator delete(void *, MEM_ROOT *)
     { /* Never called */ }
   virtual ~TABLE_READ_PLAN() {}               /* Remove gcc warning */
 
@@ -1944,9 +1942,7 @@ public:
   {}
   virtual ~TRP_RANGE() {}                     /* Remove gcc warning */
 
-  QUICK_SELECT_I *make_quick(PARAM *param,
-                             bool retrieve_full_rows __attribute__((unused)),
-                             MEM_ROOT *parent_alloc)
+  QUICK_SELECT_I *make_quick(PARAM *param, bool, MEM_ROOT *parent_alloc)
   {
     QUICK_RANGE_SELECT *quick;
     if ((quick= get_quick_select(param, key_idx, key, mrr_flags, mrr_buf_size,
@@ -3623,9 +3619,7 @@ static TRP_RANGE *get_key_scans_params(PARAM *param, SEL_TREE *tree,
 }
 
 
-QUICK_SELECT_I *TRP_INDEX_MERGE::make_quick(PARAM *param,
-                                            bool retrieve_full_rows __attribute__((unused)),
-                                            MEM_ROOT *parent_alloc __attribute__((unused)))
+QUICK_SELECT_I *TRP_INDEX_MERGE::make_quick(PARAM *param, bool, MEM_ROOT *)
 {
   QUICK_INDEX_MERGE_SELECT *quick_imerge;
   QUICK_RANGE_SELECT *quick;
@@ -3700,9 +3694,7 @@ QUICK_SELECT_I *TRP_ROR_INTERSECT::make_quick(PARAM *param,
 }
 
 
-QUICK_SELECT_I *TRP_ROR_UNION::make_quick(PARAM *param,
-                                          bool retrieve_full_rows __attribute__((unused)),
-                                          MEM_ROOT *parent_alloc __attribute__((unused)))
+QUICK_SELECT_I *TRP_ROR_UNION::make_quick(PARAM *param, bool, MEM_ROOT *)
 {
   QUICK_ROR_UNION_SELECT *quick_roru;
   TABLE_READ_PLAN **scan;
@@ -4286,8 +4278,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
 static SEL_TREE *
 get_mm_parts(RANGE_OPT_PARAM *param, COND *cond_func, Field *field,
 	     Item_func::Functype type,
-	     Item *value,
-             Item_result cmp_type __attribute__((unused)))
+	     Item *value, Item_result)
 {
   if (field->table != param->table)
     return(0);
@@ -5952,9 +5943,7 @@ typedef struct st_sel_arg_range_seq
     Value of init_param
 */
 
-range_seq_t sel_arg_range_seq_init(void *init_param,
-                                   uint32_t n_ranges __attribute__((unused)),
-                                   uint32_t flags __attribute__((unused)))
+range_seq_t sel_arg_range_seq_init(void *init_param, uint32_t, uint32_t)
 {
   SEL_ARG_RANGE_SEQ *seq= (SEL_ARG_RANGE_SEQ*)init_param;
   seq->at_start= true;
@@ -7070,9 +7059,7 @@ int QUICK_RANGE_SELECT::reset()
     Opaque value to be passed to quick_range_seq_next
 */
 
-range_seq_t quick_range_seq_init(void *init_param,
-                                 uint32_t n_ranges __attribute__((unused)),
-                                 uint32_t flags __attribute__((unused)))
+range_seq_t quick_range_seq_init(void *init_param, uint32_t, uint32_t)
 {
   QUICK_RANGE_SELECT *quick= (QUICK_RANGE_SELECT*)init_param;
   quick->qr_traversal_ctx.first=  (QUICK_RANGE**)quick->ranges.buffer;
@@ -7180,8 +7167,7 @@ uint16_t &mrr_persistent_flag_storage(range_seq_t seq, uint32_t idx)
     Reference to range-associated data
 */
 
-char* &mrr_get_ptr_by_idx(range_seq_t seq __attribute__((unused)),
-                          uint32_t idx __attribute__((unused)))
+char* &mrr_get_ptr_by_idx(range_seq_t, uint32_t)
 {
   static char *dummy;
   return dummy;
@@ -7361,9 +7347,7 @@ bool QUICK_RANGE_SELECT::row_in_ranges()
   for now, this seems to work right at least.
  */
 
-QUICK_SELECT_DESC::QUICK_SELECT_DESC(QUICK_RANGE_SELECT *q,
-                                     uint32_t used_key_parts_arg __attribute__((unused)),
-                                     bool *create_err __attribute__((unused)))
+QUICK_SELECT_DESC::QUICK_SELECT_DESC(QUICK_RANGE_SELECT *q, uint32_t, bool *)
  :QUICK_RANGE_SELECT(*q), rev_it(rev_ranges)
 {
   QUICK_RANGE *r;
@@ -8421,13 +8405,11 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
 */
 
 static bool
-get_constant_key_infix(KEY *index_info __attribute__((unused)),
-                       SEL_ARG *index_range_tree,
+get_constant_key_infix(KEY *, SEL_ARG *index_range_tree,
                        KEY_PART_INFO *first_non_group_part,
                        KEY_PART_INFO *min_max_arg_part,
                        KEY_PART_INFO *last_part,
-                       Session *session __attribute__((unused)),
-                       unsigned char *key_infix, uint32_t *key_infix_len,
+                       Session *, unsigned char *key_infix, uint32_t *key_infix_len,
                        KEY_PART_INFO **first_non_infix_part)
 {
   SEL_ARG       *cur_range;
@@ -8620,8 +8602,7 @@ SEL_ARG * get_index_range_tree(uint32_t index, SEL_TREE* range_tree, PARAM *para
 
 void cost_group_min_max(Table* table, KEY *index_info, uint32_t used_key_parts,
                         uint32_t group_key_parts, SEL_TREE *range_tree,
-                        SEL_ARG *index_tree __attribute__((unused)),
-                        ha_rows quick_prefix_records,
+                        SEL_ARG *, ha_rows quick_prefix_records,
                         bool have_min, bool have_max,
                         double *read_cost, ha_rows *records)
 {
@@ -8716,9 +8697,7 @@ void cost_group_min_max(Table* table, KEY *index_info, uint32_t used_key_parts,
 */
 
 QUICK_SELECT_I *
-TRP_GROUP_MIN_MAX::make_quick(PARAM *param,
-                              bool retrieve_full_rows __attribute__((unused)),
-                              MEM_ROOT *parent_alloc)
+TRP_GROUP_MIN_MAX::make_quick(PARAM *param, bool, MEM_ROOT *parent_alloc)
 {
   QUICK_GROUP_MIN_MAX_SELECT *quick;
 
@@ -9767,8 +9746,7 @@ void QUICK_GROUP_MIN_MAX_SELECT::add_keys_and_lengths(String *key_names,
   used_lengths->append(buf, length);
 }
 
-static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map,
-                           const char *msg __attribute__((unused)))
+static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map, const char *)
 {
   SEL_ARG **key,**end;
   int idx;
@@ -9796,8 +9774,7 @@ static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map,
 
 
 static void print_ror_scans_arr(Table *table,
-                                const char *msg __attribute__((unused)),
-                                struct st_ror_scan_info **start,
+                                const char *, struct st_ror_scan_info **start,
                                 struct st_ror_scan_info **end)
 {
   char buff[1024];
