@@ -19,6 +19,9 @@ libitem_la_SOURCES= \
 		cache_row.cc \
 		cmpfunc.cc \
 		create.cc \
+		field.cc \
+		ident.cc \
+		num.cc \
 		row.cc \
 		subselect.cc \
 		sum.cc \
@@ -26,10 +29,14 @@ libitem_la_SOURCES= \
 
 itemincludedir = ${includedir}/drizzled/item
 nobase_dist_iteminclude_HEADERS = \
+		basic_constant.h \
 		cache_row.h \
 		cmpfunc.h \
 		create.h \
+		field.h \
 		func.h \
+		ident.h \
+		num.h \
 		row.h \
 		strfunc.h \
 		subselect.h \
