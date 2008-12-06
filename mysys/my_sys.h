@@ -335,10 +335,6 @@ int handle_default_option(void *in_ctx, const char *group_name,
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
-extern void *my_once_alloc(size_t Size,myf MyFlags);
-extern void my_once_free(void);
-extern char *my_once_strdup(const char *src,myf myflags);
-extern void *my_once_memdup(const void *src, size_t len, myf myflags);
 extern File my_open(const char *FileName,int Flags,myf MyFlags);
 extern File my_register_filename(File fd, const char *FileName,
 				 enum file_type type_of_file,

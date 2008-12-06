@@ -110,7 +110,6 @@ void my_end(int infoflag)
   }
   free_charsets();
   my_error_unregister_all();
-  my_once_free();
 
   if ((infoflag & MY_GIVE_INFO) || print_info)
   {

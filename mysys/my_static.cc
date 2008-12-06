@@ -51,10 +51,6 @@ uint32_t my_default_record_cache_size=RECORD_CACHE_SIZE;
 				/* :::::::::::::::::::::::::: */
 const char *soundex_map=	  "01230120022455012623010202";
 
-	/* from my_malloc */
-USED_MEM* my_once_root_block=0;			/* pointer to first block */
-uint	  my_once_extra=ONCE_ALLOC_INIT;	/* Memory to alloc / block */
-
 	/* from safe_malloc */
 uint32_t sf_malloc_prehunc=0,		/* If you have problem with core- */
      sf_malloc_endhunc=0,		/* dump when malloc-message.... */

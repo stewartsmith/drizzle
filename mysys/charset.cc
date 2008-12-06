@@ -58,10 +58,10 @@ static bool init_state_maps(CHARSET_INFO *cs)
   unsigned char *state_map;
   unsigned char *ident_map;
 
-  if (!(cs->state_map= (unsigned char*) my_once_alloc(256, MYF(MY_WME))))
+  if (!(cs->state_map= (unsigned char*) malloc(256)))
     return 1;
     
-  if (!(cs->ident_map= (unsigned char*) my_once_alloc(256, MYF(MY_WME))))
+  if (!(cs->ident_map= (unsigned char*) malloc(256)))
     return 1;
 
   state_map= cs->state_map;
@@ -153,7 +153,7 @@ void add_compiled_collation(CHARSET_INFO * cs)
 
 void *cs_alloc(size_t size)
 {
-  return my_once_alloc(size, MYF(MY_WME));
+  return malloc(size);
 }
 
 
