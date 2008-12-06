@@ -27,7 +27,7 @@ int64_t Item_func_unix_timestamp::val_int()
 {
   DRIZZLE_TIME ltime;
   bool not_used;
-  
+
   assert(fixed == 1);
   if (arg_count == 0)
     return (int64_t) current_session->query_start();
@@ -38,7 +38,7 @@ int64_t Item_func_unix_timestamp::val_int()
       return ((Field_timestamp*) field)->get_timestamp(&null_value);
   }
 
-  if (get_arg0_date(&ltime, 0)) 
+  if (get_arg0_date(&ltime, 0))
   {
     /*
       We have to set null_value again because get_arg0_date will also set it

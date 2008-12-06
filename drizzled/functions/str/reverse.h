@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_REVERSE_H
 #define DRIZZLED_FUNCTIONS_STR_REVERSE_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_func_reverse :public Item_str_func
 {

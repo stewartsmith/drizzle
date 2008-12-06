@@ -896,7 +896,7 @@ unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
   base->extra_alloc_procent = *ptr++;
 
   /* advance past raid_type (1) raid_chunks (2) and raid_chunksize (4) */
-  ptr+= 7; 
+  ptr+= 7;
 
   ptr+=6;
   return ptr;
@@ -959,7 +959,7 @@ int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
   pos= keyseg->null_bit ? keyseg->null_pos : keyseg->bit_pos;
   mi_int4store(ptr, pos);
   ptr+=4;
-  
+
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 

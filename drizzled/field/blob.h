@@ -80,7 +80,7 @@ public:
 
 
   /**
-     Return the packed length without the pointer size added. 
+     Return the packed length without the pointer size added.
 
      This is used to determine the size of the actual data in the row
      buffer.
@@ -111,9 +111,9 @@ public:
   }
 
   /**
-     Return the packed length plus the length of the data. 
+     Return the packed length plus the length of the data.
 
-     This is used to determine the size of the data plus the 
+     This is used to determine the size of the data plus the
      packed length portion in the row data.
 
      @returns The length in the row plus the size of the data.

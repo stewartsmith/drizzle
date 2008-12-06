@@ -22,10 +22,10 @@
 
   @details
 @verbatim
-The idea of presented algorithm see in 
+The idea of presented algorithm see in
 "The Art of Computer Programming" by Donald E. Knuth
 Volume 3 "Sorting and searching"
-(chapter 6.3 "Digital searching" - name and number of chapter 
+(chapter 6.3 "Digital searching" - name and number of chapter
    is back translation from Russian edition :))
 
 as illustration of data structures, imagine next table:
@@ -73,7 +73,7 @@ So, we can read full search-structure as 32-bit word
 @endverbatim
 
 @todo
-    use instead to_upper_lex, special array 
+    use instead to_upper_lex, special array
     (substitute chars) without skip codes..
 @todo
     try use reverse order of comparing..
@@ -126,7 +126,7 @@ hash_lex_struct *get_hash_struct_by_len(hash_lex_struct **root_by_len,
   return (*root_by_len)+(len-1);
 }
 
-void insert_into_hash(hash_lex_struct *root, const char *name, 
+void insert_into_hash(hash_lex_struct *root, const char *name,
 		      int len_from_begin, int index, int function)
 {
   hash_lex_struct *end, *cur, *tails;
@@ -198,7 +198,7 @@ void insert_symbols()
   size_t i= 0;
   SYMBOL *cur;
   for (cur= symbols; i<array_elements(symbols); cur++, i++){
-    hash_lex_struct *root= 
+    hash_lex_struct *root=
       get_hash_struct_by_len(&root_by_len,cur->length,&max_len);
     insert_into_hash(root,cur->name,0,i,0);
   }
@@ -210,7 +210,7 @@ void insert_sql_functions()
   SYMBOL *cur;
   for (cur= sql_functions; i < (int) array_elements(sql_functions); cur++, i++)
   {
-    hash_lex_struct *root= 
+    hash_lex_struct *root=
       get_hash_struct_by_len(&root_by_len,cur->length,&max_len);
     insert_into_hash(root,cur->name,0,-i-1,1);
   }

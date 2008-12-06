@@ -63,7 +63,7 @@ bool select_union::send_data(List<Item> &values)
   {
     /* create_myisam_from_heap will generate error if needed */
     if (table->file->is_fatal_error(error, HA_CHECK_DUP) &&
-        create_myisam_from_heap(session, table, tmp_table_param.start_recinfo, 
+        create_myisam_from_heap(session, table, tmp_table_param.start_recinfo,
                                 &tmp_table_param.recinfo, error, 1))
       return 1;
   }
@@ -160,14 +160,14 @@ void select_union::cleanup()
 */
 
 void
-st_select_lex_unit::init_prepare_fake_select_lex(Session *session_arg) 
+st_select_lex_unit::init_prepare_fake_select_lex(Session *session_arg)
 {
   session_arg->lex->current_select= fake_select_lex;
   fake_select_lex->table_list.link_in_list((unsigned char *)&result_table_list,
 					   (unsigned char **)
 					   &result_table_list.next_local);
-  fake_select_lex->context.table_list= 
-    fake_select_lex->context.first_name_resolution_table= 
+  fake_select_lex->context.table_list=
+    fake_select_lex->context.first_name_resolution_table=
     fake_select_lex->get_table_list();
 
   for (order_st *order= (order_st *) global_parameters->order_list.first;
@@ -224,7 +224,7 @@ bool st_select_lex_unit::prepare(Session *session_arg, select_result *sel_result
   }
   prepared= 1;
   saved_error= false;
-  
+
   session_arg->lex->current_select= sl= first_sl;
   found_rows_for_union= first_sl->options & OPTION_FOUND_ROWS;
   is_union_select= is_union() || fake_select_lex;
@@ -247,7 +247,7 @@ bool st_select_lex_unit::prepare(Session *session_arg, select_result *sel_result
   {
     bool can_skip_order_by;
     sl->options|=  SELECT_NO_UNLOCK;
-    JOIN *join= new JOIN(session_arg, sl->item_list, 
+    JOIN *join= new JOIN(session_arg, sl->item_list,
 			 sl->options | session_arg->options | additional_options,
 			 tmp_result);
     /*
@@ -320,7 +320,7 @@ bool st_select_lex_unit::prepare(Session *session_arg, select_result *sel_result
 	goto err;
       }
       List_iterator_fast<Item> it(sl->item_list);
-      List_iterator_fast<Item> tp(types);	
+      List_iterator_fast<Item> tp(types);
       Item *type, *item_tmp;
       while ((type= tp++, item_tmp= it++))
       {
@@ -349,7 +349,7 @@ bool st_select_lex_unit::prepare(Session *session_arg, select_result *sel_result
         goto err;
       }
     }
-    
+
     create_options= (first_sl->options | session_arg->options |
                      TMP_TABLE_ALL_COLUMNS);
 
@@ -398,7 +398,7 @@ bool st_select_lex_unit::exec()
   if (executed && !uncacheable && !describe)
     return(false);
   executed= 1;
-  
+
   if (uncacheable || !item || !item->assigned() || describe)
   {
     if (item)
@@ -443,7 +443,7 @@ bool st_select_lex_unit::exec()
           we don't calculate found_rows() per union part.
           Otherwise, SQL_CALC_FOUND_ROWS should be done on all sub parts.
         */
-        sl->join->select_options= 
+        sl->join->select_options=
           (select_limit_cnt == HA_POS_ERROR || sl->braces) ?
           sl->options & ~OPTION_FOUND_ROWS : sl->options | found_rows_for_union;
 
@@ -490,7 +490,7 @@ bool st_select_lex_unit::exec()
         table->file->print_error(error, MYF(0));
         return(1);
       }
-      if (found_rows_for_union && !sl->braces && 
+      if (found_rows_for_union && !sl->braces &&
           select_limit_cnt != HA_POS_ERROR)
       {
 	/*
@@ -556,7 +556,7 @@ bool st_select_lex_unit::exec()
              - 1st time is a real evaluation to get the subquery value
              - 2nd time is to produce EXPLAIN output rows.
             1st execution sets certain members (e.g. select_result) to perform
-            subquery execution rather than EXPLAIN line production. In order 
+            subquery execution rather than EXPLAIN line production. In order
             to reset them back, we re-do all of the actions (yes it is ugly):
           */
 	  join->init(session, item_list, fake_select_lex->options, result);

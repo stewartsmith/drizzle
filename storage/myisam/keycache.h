@@ -56,7 +56,7 @@ typedef struct st_keycache_wqueue
 /*
   The key cache structure
   It also contains read-only statistics parameters.
-*/   
+*/
 
 typedef struct st_key_cache
 {

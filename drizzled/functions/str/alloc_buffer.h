@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_ALLOC_BUFFER_H
 #define DRIZZLED_FUNCTIONS_STR_ALLOC_BUFFER_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 
 String* alloc_buffer(String *res,
                      String *str,

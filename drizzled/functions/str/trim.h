@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_TRIM_H
 #define DRIZZLED_FUNCTIONS_STR_TRIM_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_func_trim :public Item_str_func
 {

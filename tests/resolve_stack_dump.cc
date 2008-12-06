@@ -41,7 +41,7 @@ typedef struct sym_entry
 
 static char* dump_fname = 0, *sym_fname = 0;
 static DYNAMIC_ARRAY sym_table; /* how do you like this , static DYNAMIC ? */
-static FILE* fp_dump, *fp_sym = 0, *fp_out; 
+static FILE* fp_dump, *fp_sym = 0, *fp_out;
 
 static struct my_option my_long_options[] =
 {
@@ -173,7 +173,7 @@ static unsigned char hex_val(char c)
     return c - '0';
   l = my_tolower(&my_charset_utf8_general_ci,c);
   if (l < 'a' || l > 'f')
-    return HEX_INVALID; 
+    return HEX_INVALID;
   return (unsigned char)10 + ((unsigned char)c - (unsigned char)'a');
 }
 
@@ -186,7 +186,7 @@ static unsigned long read_addr(char** buf)
   while((c = hex_val(*p++)) != HEX_INVALID)
       addr = (addr << 4) + c;
 
-  *buf = p; 
+  *buf = p;
   return addr;
 }
 

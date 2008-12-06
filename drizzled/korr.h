@@ -49,7 +49,7 @@
 #else
 /*
    ATTENTION !
-   
+
     Please, note, uint3korr reads 4 bytes (not 3) !
     It means, that you have to provide enough allocated space !
 */

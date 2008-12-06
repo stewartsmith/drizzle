@@ -315,12 +315,12 @@ Increase max_allowed_packet on master";
 
   @return        heartbeat period an uint64_t of nanoseconds
                  or zero if heartbeat was not demanded by slave
-*/ 
+*/
 static uint64_t get_heartbeat_period(Session * session)
 {
   bool null_value;
   LEX_STRING name=  { C_STRING_WITH_LEN("master_heartbeat_period")};
-  user_var_entry *entry= 
+  user_var_entry *entry=
     (user_var_entry*) hash_search(&session->user_vars, (unsigned char*) name.str,
                                   name.length);
   return entry? entry->val_int(&null_value) : 0;
@@ -334,7 +334,7 @@ static uint64_t get_heartbeat_period(Session * session)
   @param event_coordinates  binlog file name and position of the last
                             real event master sent from binlog
 
-  @note 
+  @note
     Among three essential pieces of heartbeat data Log_event::when
     is computed locally.
     The  error to send is serious and should force terminating
@@ -394,7 +394,7 @@ void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos,
   bool binlog_can_be_corrupted= false;
 
   memset(&log, 0, sizeof(log));
-  /* 
+  /*
      heartbeat_period from @master_heartbeat_period user variable
   */
   uint64_t heartbeat_period= get_heartbeat_period(session);
@@ -503,7 +503,7 @@ impossible position";
   packet->set("\0", 1, &my_charset_bin);
   /*
     Adding MAX_LOG_EVENT_HEADER_LEN, since a binlog event can become
-    this larger than the corresponding packet (query) sent 
+    this larger than the corresponding packet (query) sent
     from client to master.
   */
   session->variables.max_allowed_packet+= MAX_LOG_EVENT_HEADER;
@@ -685,7 +685,7 @@ impossible position";
 	    goto end;
 	  }
 
-          do 
+          do
           {
             if (coord)
             {
@@ -710,9 +710,9 @@ impossible position";
             }
           } while (ret != 0 && coord != NULL && !session->killed);
           pthread_mutex_unlock(log_lock);
-        }    
+        }
         break;
-            
+
         default:
 	  pthread_mutex_unlock(log_lock);
 	  fatal_error = 1;
@@ -1393,14 +1393,14 @@ bool show_binlogs(Session* session)
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);
-  
+
   pthread_mutex_lock(drizzle_bin_log.get_log_lock());
   drizzle_bin_log.lock_index();
   index_file= drizzle_bin_log.get_index_file();
-  
+
   drizzle_bin_log.raw_get_current_log(&cur); // dont take mutex
   pthread_mutex_unlock(drizzle_bin_log.get_log_lock()); // lockdep, OK
-  
+
   cur_dir_len= dirname_length(cur.log_file_name);
 
   reinit_io_cache(index_file, READ_CACHE, (my_off_t) 0, 0, 0);
@@ -1447,7 +1447,7 @@ err:
    before a chunk of data is being read into the cache's buffer
    The fuction instantianates and writes into the binlog
    replication events along LOAD DATA processing.
-   
+
    @param file  pointer to io-cache
    @return 0
 */
@@ -1464,7 +1464,7 @@ int log_loaded_block(IO_CACHE* file)
   if (lf_info->last_pos_in_file != HA_POS_ERROR &&
       lf_info->last_pos_in_file >= my_b_get_pos_in_file(file))
     return(0);
-  
+
   for (block_len= my_b_get_bytes_in_buffer(file); block_len > 0;
        buffer += cmin(block_len, max_event_size),
        block_len -= cmin(block_len, max_event_size))

@@ -49,7 +49,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   uint32_t usable_index= MAX_KEY;
   SELECT_LEX   *select_lex= &session->lex->select_lex;
   Session::killed_state killed_status= Session::NOT_KILLED;
-  
+
 
   if (open_and_lock_tables(session, table_list))
     return(true);
@@ -194,7 +194,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     uint32_t         length= 0;
     SORT_FIELD  *sortorder;
     ha_rows examined_rows;
-    
+
     if ((!select || table->quick_keys.is_clear_all()) && limit != HA_POS_ERROR)
       usable_index= get_index_for_order(table, (order_st*)(order->first), limit);
 
@@ -202,8 +202,8 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     {
       table->sort.io_cache= (IO_CACHE *) malloc(sizeof(IO_CACHE));
       memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
-                                         
-    
+
+
       if (!(sortorder= make_unireg_sortorder((order_st*) order->first,
                                              &length, NULL)) ||
 	  (table->sort.found_records = filesort(session, table, sortorder, length,
@@ -313,7 +313,7 @@ cleanup:
 
   if (!transactional_table && deleted > 0)
     session->transaction.stmt.modified_non_trans_table= true;
-  
+
   /* See similar binlogging code in sql_update.cc, for comments */
   if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
   {
@@ -372,13 +372,13 @@ err:
 int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
 {
   SELECT_LEX *select_lex= &session->lex->select_lex;
-  
+
   List<Item> all_fields;
 
   session->lex->allow_sum_func= 0;
   if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
                                     &session->lex->select_lex.top_join_list,
-                                    table_list, 
+                                    table_list,
                                     &select_lex->leaf_tables, false) ||
       setup_conds(session, table_list, select_lex->leaf_tables, conds))
     return(true);
@@ -400,7 +400,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
 
 
 /***************************************************************************
-  Delete multiple tables from join 
+  Delete multiple tables from join
 ***************************************************************************/
 
 #define MEM_STRIP_BUF_SIZE current_session->variables.sortbuff_size
@@ -428,7 +428,7 @@ int mysql_multi_delete_prepare(Session *session)
   LEX *lex= session->lex;
   TableList *aux_tables= (TableList *)lex->auxiliary_table_list.first;
   TableList *target_tbl;
-  
+
 
   /*
     setup_tables() need for VIEWs. JOIN::prepare() will not do it second
@@ -493,7 +493,7 @@ multi_delete::multi_delete(TableList *dt, uint32_t num_of_tables_arg)
 int
 multi_delete::prepare(List<Item> &, SELECT_LEX_UNIT *u)
 {
-  
+
   unit= u;
   do_delete= 1;
   session->set_proc_info("deleting from main table");
@@ -506,7 +506,7 @@ multi_delete::initialize_tables(JOIN *join)
 {
   TableList *walk;
   Unique **tempfiles_ptr;
-  
+
 
   if ((session->options & OPTION_SAFE_UPDATES) && error_if_full_join(join))
     return(1);
@@ -638,7 +638,7 @@ bool multi_delete::send_data(List<Item> &)
 
 void multi_delete::send_error(uint32_t errcode,const char *err)
 {
-  
+
 
   /* First send error what ever it is ... */
   my_message(errcode, err, MYF(0));
@@ -649,7 +649,7 @@ void multi_delete::send_error(uint32_t errcode,const char *err)
 
 void multi_delete::abort()
 {
-  
+
 
   /* the error was handled or nothing deleted and no side effects return */
   if (error_handled ||
@@ -675,10 +675,10 @@ void multi_delete::abort()
     assert(error_handled);
     return;
   }
-  
+
   if (session->transaction.stmt.modified_non_trans_table)
   {
-    /* 
+    /*
        there is only side effects; to binlog with the error
     */
     if (drizzle_bin_log.is_open())
@@ -705,7 +705,7 @@ int multi_delete::do_deletes()
 {
   int local_error= 0, counter= 0, tmp_error;
   bool will_batch;
-  
+
   assert(do_delete);
 
   do_delete= 0;                                 // Mark called
@@ -714,10 +714,10 @@ int multi_delete::do_deletes()
 
   table_being_deleted= (delete_while_scanning ? delete_tables->next_local :
                         delete_tables);
- 
+
   for (; table_being_deleted;
        table_being_deleted= table_being_deleted->next_local, counter++)
-  { 
+  {
     ha_rows last_deleted= deleted;
     Table *table = table_being_deleted->table;
     if (tempfiles[counter]->get(table))
@@ -836,7 +836,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
   Table *table;
   bool error;
   uint32_t path_length;
-  
+
 
   memset(&create_info, 0, sizeof(create_info));
   /* If it is a temporary table, close and regenerate it */
@@ -849,7 +849,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
       goto trunc_by_del;
 
     table->file->info(HA_STATUS_AUTO | HA_STATUS_NO_LOCK);
-    
+
     close_temporary_table(session, table, 0, 0);    // Don't free share
     ha_create_table(session, share->normalized_path.str,
                     share->db.str, share->table_name.str, &create_info, 1);

@@ -87,7 +87,7 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
       return(my_errno= HA_ERR_END_OF_FILE);
     }
   }
-  
+
   if (info->s->concurrent_insert)
     pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
 

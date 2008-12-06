@@ -315,7 +315,7 @@ Item::Item():
   null_value= false;
   with_sum_func= false;
   unsigned_flag= false;
-  decimals= 0; 
+  decimals= 0;
   max_length= 0;
   with_subselect= 0;
   cmp_context= (Item_result)-1;
@@ -331,7 +331,7 @@ Item::Item():
   */
   if (session->lex->current_select)
   {
-    enum_parsing_place place= 
+    enum_parsing_place place=
       session->lex->current_select->parsing_place;
     if (place == SELECT_LIST ||
 	place == IN_HAVING)
@@ -505,7 +505,7 @@ Item_ident::Item_ident(Name_resolution_context *context_arg,
 Item_ident::Item_ident(Session *session, Item_ident *item)
   :Item(session, item),
    orig_db_name(item->orig_db_name),
-   orig_table_name(item->orig_table_name), 
+   orig_table_name(item->orig_table_name),
    orig_field_name(item->orig_field_name),
    context(item->context),
    db_name(item->db_name),
@@ -528,7 +528,7 @@ void Item_ident::cleanup()
                        orig_field_name ? orig_field_name : "(null)"));
 #endif
   Item::cleanup();
-  db_name= orig_db_name; 
+  db_name= orig_db_name;
   table_name= orig_table_name;
   field_name= orig_field_name;
   depended_from= 0;
@@ -621,7 +621,7 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
   if (field->table == table || !table)
     bitmap_set_bit(field->table->read_set, field->field_index);
   if (field->vcol_info && field->vcol_info->expr_item)
-    return field->vcol_info->expr_item->walk(&Item::register_field_in_read_map, 
+    return field->vcol_info->expr_item->walk(&Item::register_field_in_read_map,
                                              1, arg);
   return 0;
 }
@@ -1173,7 +1173,7 @@ int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
 
 
 /*
- need a special class to adjust printing : references to aggregate functions 
+ need a special class to adjust printing : references to aggregate functions
  must not be printed as refs because the aggregate functions that are added to
  the front of select list are not printed as well.
 */
@@ -1252,7 +1252,7 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
                                            ref_pointer_array + el, 0, name)))
       return;                                   // fatal_error is set
     if (type() == SUM_FUNC_ITEM)
-      item_ref->depended_from= ((Item_sum *) this)->depended_from(); 
+      item_ref->depended_from= ((Item_sum *) this)->depended_from();
     fields.push_front(real_itm);
     session->change_item_tree(ref, item_ref);
   }
@@ -1267,7 +1267,7 @@ void Item_ident_for_show::make_field(Send_field *tmp_field)
   tmp_field->charsetnr= field->charset()->number;
   tmp_field->length=field->field_length;
   tmp_field->type=field->type();
-  tmp_field->flags= field->table->maybe_null ? 
+  tmp_field->flags= field->table->maybe_null ?
     (field->flags & ~NOT_NULL_FLAG) : field->flags;
   tmp_field->decimals= field->decimals();
 }
@@ -2043,7 +2043,7 @@ Item *Item_null::safe_charset_converter(const CHARSET_INFO * const tocs)
 
 /*********************** Item_param related ******************************/
 
-/** 
+/**
   Default function of Item_param::set_param_func, so in case
   of malformed packet the server won't SIGSEGV.
 */
@@ -2066,7 +2066,7 @@ Item_param::Item_param(uint32_t pos_in_query_arg) :
   limit_clause_param(false)
 {
   name= (char*) "?";
-  /* 
+  /*
     Since we can't say whenever this item can be NULL or cannot be NULL
     before mysql_stmt_execute(), so we assuming that it can be NULL until
     value is set.
@@ -2081,9 +2081,9 @@ void Item_param::set_null()
 {
   /* These are cleared after each execution by reset() method */
   null_value= 1;
-  /* 
+  /*
     Because of NULL and string values we need to set max_length for each new
-    placeholder value: user can submit NULL for any placeholder type, and 
+    placeholder value: user can submit NULL for any placeholder type, and
     string length can be different in each execution.
   */
   max_length= 0;
@@ -2157,7 +2157,7 @@ void Item_param::set_decimal(char *str, ulong length)
 void Item_param::set_time(DRIZZLE_TIME *tm,
                           enum enum_drizzle_timestamp_type time_type,
                           uint32_t max_length_arg)
-{ 
+{
   value.time= *tm;
   value.time.time_type= time_type;
 
@@ -2260,7 +2260,7 @@ bool Item_param::set_from_user_var(Session *session, const user_var_entry *entry
       const CHARSET_INFO * const tocs= session->variables.collation_connection;
       uint32_t dummy_offset;
 
-      value.cs_info.character_set_of_placeholder= 
+      value.cs_info.character_set_of_placeholder=
         value.cs_info.character_set_client= fromcs;
       /*
         Setup source and destination character sets so that they
@@ -2427,11 +2427,11 @@ double Item_param::val_real()
     assert(0);
   }
   return 0.0;
-} 
+}
 
 
-int64_t Item_param::val_int() 
-{ 
+int64_t Item_param::val_int()
+{
   switch (state) {
   case REAL_VALUE:
     return (int64_t) rint(value.real);
@@ -2453,7 +2453,7 @@ int64_t Item_param::val_int()
   case TIME_VALUE:
     return (int64_t) TIME_to_uint64_t(&value.time);
   case NULL_VALUE:
-    return 0; 
+    return 0;
   default:
     assert(0);
   }
@@ -2483,7 +2483,7 @@ my_decimal *Item_param::val_decimal(my_decimal *dec)
     return dec;
   }
   case NULL_VALUE:
-    return 0; 
+    return 0;
   default:
     assert(0);
   }
@@ -2491,8 +2491,8 @@ my_decimal *Item_param::val_decimal(my_decimal *dec)
 }
 
 
-String *Item_param::val_str(String* str) 
-{ 
+String *Item_param::val_str(String* str)
+{
   switch (state) {
   case STRING_VALUE:
   case LONG_DATA_VALUE:
@@ -2517,7 +2517,7 @@ String *Item_param::val_str(String* str)
     return str;
   }
   case NULL_VALUE:
-    return NULL; 
+    return NULL;
   default:
     assert(0);
   }
@@ -2525,14 +2525,14 @@ String *Item_param::val_str(String* str)
 }
 
 /**
-  Return Param item values in string format, for generating the dynamic 
+  Return Param item values in string format, for generating the dynamic
   query used in update/binary logs.
 
   @todo
     - Change interface and implementation to fill log data in place
     and avoid one more memcpy/alloc between str and log string.
     - In case of error we need to notify replication
-    that binary log contains wrong statement 
+    that binary log contains wrong statement
 */
 
 const String *Item_param::query_val_str(String* str) const
@@ -2555,10 +2555,10 @@ const String *Item_param::query_val_str(String* str) const
       str->length(0);
       /*
         TODO: in case of error we need to notify replication
-        that binary log contains wrong statement 
+        that binary log contains wrong statement
       */
       if (str->reserve(MAX_DATE_STRING_REP_LENGTH+3))
-        break; 
+        break;
 
       /* Create date string inplace */
       buf= str->c_ptr_quick();
@@ -2804,7 +2804,7 @@ String* Item_ref_null_helper::val_str(String* s)
 
 
 bool Item_ref_null_helper::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
-{  
+{
   return (owner->was_null|= null_value= (*ref)->get_date(ltime, fuzzydate));
 }
 
@@ -2963,7 +2963,7 @@ static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
     {
       cur_field= (Item_ident*) *cur_group->item;
       cur_match_degree= 0;
-      
+
       assert(cur_field->field_name != 0);
 
       if (!my_strcasecmp(system_charset_info,
@@ -3078,7 +3078,7 @@ resolve_ref_in_select_and_group(Session *session, Item_ident *ref, SELECT_LEX *s
   if (select->having_fix_field && !ref->with_sum_func && group_list)
   {
     group_by_ref= find_field_in_group_list(ref, group_list);
-    
+
     /* Check if the fields found in SELECT and GROUP BY are the same field. */
     if (group_by_ref && (select_ref != not_found_item) &&
         !((*group_by_ref)->eq(*select_ref, 0)))
@@ -3340,7 +3340,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     /*
       Here, a subset of actions performed by Item_ref::set_properties
       is not enough. So we pass ptr to NULL into Item_[direct]_ref
-      constructor, so no initialization is performed, and call 
+      constructor, so no initialization is performed, and call
       fix_fields() below.
     */
     save= *ref;
@@ -3467,7 +3467,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
                                           context->last_name_resolution_table,
                                           reference,
                                           session->lex->use_only_table_context ?
-                                            REPORT_ALL_ERRORS : 
+                                            REPORT_ALL_ERRORS :
                                             IGNORE_EXCEPT_NON_UNIQUE,
                                           !any_privileges,
                                           true)) ==
@@ -3502,7 +3502,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
             if (new_field == NULL)
             {
               /* The column to which we link isn't valid. */
-              my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name, 
+              my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name,
                        current_session->where);
               return(1);
             }
@@ -3522,8 +3522,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
               return 1;
             session->change_item_tree(reference, rf);
             /*
-              Because Item_ref never substitutes itself with other items 
-              in Item_ref::fix_fields(), we can safely use the original 
+              Because Item_ref never substitutes itself with other items
+              in Item_ref::fix_fields(), we can safely use the original
               pointer to it even after fix_fields()
              */
             return rf->fix_fields(session, reference) ||  rf->check_cols(1);
@@ -3568,7 +3568,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
 
     set_field(from_field);
     if (session->lex->in_sum_func &&
-        session->lex->in_sum_func->nest_level == 
+        session->lex->in_sum_func->nest_level ==
         session->lex->current_select->nest_level)
       set_if_bigger(session->lex->in_sum_func->max_arg_level,
                     session->lex->current_select->nest_level);
@@ -3642,8 +3642,8 @@ bool Item_field::result_as_int64_t()
   of the current level (in the cond_equal->current_level list).
   If it fails, it continues searching in upper levels accessed
   through a pointer cond_equal->upper_levels.
-  The search terminates as soon as a multiple equality containing 
-  the field is found. 
+  The search terminates as soon as a multiple equality containing
+  the field is found.
 
   @param cond_equal   reference to list of multiple equalities where
                       the field (this object) is to be looked for
@@ -3664,7 +3664,7 @@ Item_equal *Item_field::find_item_equal(COND_EQUAL *cond_equal)
       if (item->contains(field))
         return item;
     }
-    /* 
+    /*
       The field is not found in any of the multiple equalities
       of the current level. Look for it in upper levels
     */
@@ -3748,7 +3748,7 @@ Item *Item_field::equal_fields_propagator(unsigned char *arg)
     the same as (Item_hex_string->val_str() in BINARY column)->val_int().
     We cannot simply disable the replacement in a particular context (
     e.g. <bin_col> = <int_col> AND <bin_col> = <hex_string>) since
-    Items don't know the context they are in and there are functions like 
+    Items don't know the context they are in and there are functions like
     IF (<hex_string>, 'yes', 'no').
     The same problem occurs when comparing a DATE/TIME field with a
     DATE/TIME represented as an int and as a string.
@@ -3782,8 +3782,8 @@ bool Item_field::set_no_const_sub(unsigned char *)
   The function returns a pointer to an item that is taken from
   the very beginning of the item_equal list which the Item_field
   object refers to (belongs to) unless item_equal contains  a constant
-  item. In this case the function returns this constant item, 
-  (if the substitution does not require conversion).   
+  item. In this case the function returns this constant item,
+  (if the substitution does not require conversion).
   If the Item_field object does not refer any Item_equal object
   'this' is returned .
 
@@ -3836,7 +3836,7 @@ void Item::init_make_field(Send_field *tmp_field,
   tmp_field->table_name=	empty_name;
   tmp_field->col_name=		name;
   tmp_field->charsetnr=         collation.collation->number;
-  tmp_field->flags=             (maybe_null ? 0 : NOT_NULL_FLAG) | 
+  tmp_field->flags=             (maybe_null ? 0 : NOT_NULL_FLAG) |
                                 (my_binary_compare(collation.collation) ?
                                  BINARY_FLAG : 0);
   tmp_field->type=              field_type_arg;
@@ -3930,7 +3930,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
 
 /*
   Compare two items using a given collation
-  
+
   SYNOPSIS
     eq_by_collation()
     item               item to compare with
@@ -3945,7 +3945,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
     restored.
 
   RETURN
-    1    compared items has been detected as equal   
+    1    compared items has been detected as equal
     0    otherwise
 */
 
@@ -3969,7 +3969,7 @@ bool Item::eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * con
   if (save_item_cs)
     item->collation.collation= save_item_cs;
   return res;
-}  
+}
 
 
 /**
@@ -3977,7 +3977,7 @@ bool Item::eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * con
 
   If max_length > CONVERT_IF_BIGGER_TO_BLOB create a blob @n
   If max_length > 0 create a varchar @n
-  If max_length == 0 create a CHAR(0) 
+  If max_length == 0 create a CHAR(0)
 
   @param table		Table for which the field is created
 */
@@ -4306,7 +4306,7 @@ static uint32_t nr_of_decimals(const char *str, const char *end)
     if (str == end)
       return 0;
     if (*str == 'e' || *str == 'E')
-      return NOT_FIXED_DEC;    
+      return NOT_FIXED_DEC;
     if (*str++ == '.')
       break;
   }
@@ -4517,7 +4517,7 @@ Item *Item_hex_string::safe_charset_converter(const CHARSET_INFO * const tocs)
   In string context this is a binary string.
   In number context this is a int64_t value.
 */
-  
+
 Item_bin_string::Item_bin_string(const char *str, uint32_t str_length)
 {
   const char *end= str + str_length - 1;
@@ -4537,10 +4537,10 @@ Item_bin_string::Item_bin_string(const char *str, uint32_t str_length)
     {
       power= 1;
       *ptr--= bits;
-      bits= 0;     
+      bits= 0;
     }
     if (*end == '1')
-      bits|= power; 
+      bits|= power;
     power<<= 1;
   }
   *ptr= (char) bits;
@@ -4960,7 +4960,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
           max_arg_level for the function if it's needed.
         */
         if (session->lex->in_sum_func &&
-            session->lex->in_sum_func->nest_level >= 
+            session->lex->in_sum_func->nest_level >=
             last_checked_context->select_lex->nest_level)
           set_if_bigger(session->lex->in_sum_func->max_arg_level,
                         last_checked_context->select_lex->nest_level);
@@ -4983,7 +4983,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
         max_arg_level for the function if it's needed.
       */
       if (session->lex->in_sum_func &&
-          session->lex->in_sum_func->nest_level >= 
+          session->lex->in_sum_func->nest_level >=
           last_checked_context->select_lex->nest_level)
         set_if_bigger(session->lex->in_sum_func->max_arg_level,
                       last_checked_context->select_lex->nest_level);
@@ -5460,7 +5460,7 @@ int Item_default_value::save_in_field(Field *field_arg, bool no_conversions)
 /**
   This method like the walk method traverses the item tree, but at the
   same time it can replace some nodes in the tree.
-*/ 
+*/
 
 Item *Item_default_value::transform(Item_transformer transformer, unsigned char *args)
 {
@@ -5862,7 +5862,7 @@ void Item_cache_str::store(Item *item)
     /*
       We copy string value to avoid changing value if 'item' is table field
       in queries like following (where t1.c is varchar):
-      select a, 
+      select a,
              (select a,b,c from t1 where t1.a=t2.a) = ROW(a,2,'a'),
              (select c from t1 where a=t2.a)
         from t2;
@@ -5962,11 +5962,11 @@ static Field *create_tmp_field_from_item(Session *,
                                 item->name, item->decimals, true);
     break;
   case INT_RESULT:
-    /* 
+    /*
       Select an integer type with the minimal fit precision.
       MY_INT32_NUM_DECIMAL_DIGITS is sign inclusive, don't consider the sign.
-      Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into 
-      Field_long : make them Field_int64_t.  
+      Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into
+      Field_long : make them Field_int64_t.
     */
     if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
       new_field=new Field_int64_t(item->max_length, maybe_null,
@@ -5977,22 +5977,22 @@ static Field *create_tmp_field_from_item(Session *,
     break;
   case STRING_RESULT:
     assert(item->collation.collation);
-  
+
     enum enum_field_types type;
     /*
-      DATE/TIME fields have STRING_RESULT result type. 
+      DATE/TIME fields have STRING_RESULT result type.
       To preserve type they needed to be handled separately.
     */
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
         type == DRIZZLE_TYPE_TIME || type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
       new_field= item->tmp_table_field_from_field_type(table, 1);
-    /* 
-      Make sure that the blob fits into a Field_varstring which has 
-      2-byte lenght. 
+    /*
+      Make sure that the blob fits into a Field_varstring which has
+      2-byte lenght.
     */
     else if (item->max_length/item->collation.collation->mbmaxlen > 255 &&
-             convert_blob_length <= Field_varstring::MAX_SIZE && 
+             convert_blob_length <= Field_varstring::MAX_SIZE &&
              convert_blob_length)
       new_field= new Field_varstring(convert_blob_length, maybe_null,
                                      item->name, table->s,
@@ -6048,7 +6048,7 @@ static Field *create_tmp_field_from_item(Session *,
   }
   if (new_field)
     new_field->init(table);
-    
+
   if (copy_func && item->is_result_field())
     *((*copy_func)++) = item;			// Save for copy_funcs
   if (modify_item)
@@ -6103,7 +6103,7 @@ Field *create_tmp_field(Session *session, Table *table,Item *item,
       *from_field= field->field;
       if (result && modify_item)
         field->result_field= result;
-    } 
+    }
     else
       result= create_tmp_field_from_field(session, (*from_field= field->field),
                                           orig_item ? orig_item->name :
@@ -6142,7 +6142,7 @@ Field *create_tmp_field(Session *session, Table *table,Item *item,
     return create_tmp_field_from_item(session, item, table,
                                       (make_copy_field ? 0 : copy_func),
                                        modify_item, convert_blob_length);
-  case Item::TYPE_HOLDER:  
+  case Item::TYPE_HOLDER:
     result= ((Item_type_holder *)item)->make_field_by_type(table);
     result->set_derivation(item->collation.derivation);
     return result;

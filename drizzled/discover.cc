@@ -48,22 +48,22 @@ int readfrm(const char *name, unsigned char **frmdata, size_t *len)
   File	 file;
   size_t read_len;
   unsigned char *read_data;
-  struct stat state;  
-  
+  struct stat state;
+
   *frmdata= NULL;      // In case of errors
   *len= 0;
   error= 1;
   if ((file=my_open(fn_format(index_file,name,"",reg_ext,
                               MY_UNPACK_FILENAME|MY_APPEND_EXT),
 		    O_RDONLY,
-		    MYF(0))) < 0)  
-    goto err_end; 
-  
+		    MYF(0))) < 0)
+    goto err_end;
+
   // Get length of file
   error= 2;
   if (fstat(file, &state))
     goto err;
-  read_len= state.st_size;  
+  read_len= state.st_size;
 
   // Read whole frm file
   error= 3;
@@ -75,18 +75,18 @@ int readfrm(const char *name, unsigned char **frmdata, size_t *len)
   *frmdata= (unsigned char*) read_data;
   *len= read_len;
   error= 0;
-  
+
  err:
   if (file > 0)
     my_close(file,MYF(MY_WME));
-  
+
  err_end:		      /* Here when no file */
   return(error);
 } /* readfrm */
 
 
 /*
-  Write the content of a frm data pointer 
+  Write the content of a frm data pointer
   to a frm file.
 
   @param name           path to table-file "db/name"

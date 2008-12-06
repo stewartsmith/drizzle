@@ -366,7 +366,7 @@ bool do_command(Session *session)
   my_net_set_read_timeout(net, session->variables.net_wait_timeout);
 
   /*
-    XXX: this code is here only to clear possible errors of init_connect. 
+    XXX: this code is here only to clear possible errors of init_connect.
     Consider moving to init_connect() instead.
   */
   session->clear_error();				// Clear error message
@@ -457,11 +457,11 @@ static bool deny_updates_if_read_only_option(Session *session,
   if (lex->sql_command == SQLCOM_UPDATE_MULTI)
     return(false);
 
-  const bool create_temp_tables= 
+  const bool create_temp_tables=
     (lex->sql_command == SQLCOM_CREATE_TABLE) &&
     (lex->create_info.options & HA_LEX_CREATE_TMP_TABLE);
 
-  const bool drop_temp_tables= 
+  const bool drop_temp_tables=
     (lex->sql_command == SQLCOM_DROP_TABLE) &&
     lex->drop_temporary;
 
@@ -971,7 +971,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   default:
     break;
   }
-  
+
   SELECT_LEX *select_lex= lex->current_select;
   assert(select_lex);
   if (make_schema_select(session, select_lex, schema_table_idx))
@@ -1080,7 +1080,7 @@ mysql_execute_command(Session *session)
 
   /*
     In many cases first table of main SELECT_LEX have special meaning =>
-    check that it is first table in global list and relink it first in 
+    check that it is first table in global list and relink it first in
     queries_tables list if it is necessary (we need such relinking only
     for queries with subqueries in select list, in this case tables of
     subqueries will go to global list first)
@@ -1152,7 +1152,7 @@ mysql_execute_command(Session *session)
   status_var_increment(session->status_var.com_stat[lex->sql_command]);
 
   assert(session->transaction.stmt.modified_non_trans_table == false);
-  
+
   switch (lex->sql_command) {
   case SQLCOM_SHOW_STATUS:
   {
@@ -1754,7 +1754,7 @@ end_with_restore_list:
       /* Skip first table, which is the table we are inserting in */
       TableList *second_table= first_table->next_local;
       select_lex->table_list.first= (unsigned char*) second_table;
-      select_lex->context.table_list= 
+      select_lex->context.table_list=
         select_lex->context.first_name_resolution_table= second_table;
       res= mysql_insert_select_prepare(session);
       if (!res && (sel_result= new select_insert(first_table,
@@ -1892,7 +1892,7 @@ end_with_restore_list:
     else
     {
       /*
-	If this is a slave thread, we may sometimes execute some 
+	If this is a slave thread, we may sometimes execute some
 	DROP / * 40005 TEMPORARY * / TABLE
 	that come from parts of binlogs (likely if we use RESET SLAVE or CHANGE
 	MASTER TO), while the temporary table has already been dropped.
@@ -2043,7 +2043,7 @@ end_with_restore_list:
     }
     else
     {
-      /* 
+      /*
         Need to end the current transaction, so the storage engine (InnoDB)
         can free its locks if LOCK TABLES locked some tables before finding
         that it can't lock a table in its list
@@ -2147,8 +2147,8 @@ end_with_restore_list:
       */
       write_bin_log(session, false, session->query, session->query_length);
       my_ok(session);
-    } 
-    
+    }
+
     break;
   }
   case SQLCOM_KILL:
@@ -2235,7 +2235,7 @@ end_with_restore_list:
         res= true; // cannot happen
       else
       {
-        if (((session->options & OPTION_KEEP_LOG) || 
+        if (((session->options & OPTION_KEEP_LOG) ||
              session->transaction.all.modified_non_trans_table) &&
             !session->slave_thread)
           push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -2473,7 +2473,7 @@ void mysql_reset_session_for_next_command(Session *session)
 
   session->query_start_used= 0;
   session->is_fatal_error= 0;
-  session->server_status&= ~ (SERVER_MORE_RESULTS_EXISTS | 
+  session->server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |
                           SERVER_QUERY_NO_INDEX_USED |
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
   /*
@@ -2566,10 +2566,10 @@ mysql_new_select(LEX *lex, bool move_down)
       return(1);
     }
     select_lex->include_neighbour(lex->current_select);
-    SELECT_LEX_UNIT *unit= select_lex->master_unit();                              
+    SELECT_LEX_UNIT *unit= select_lex->master_unit();
     if (!unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
       return(1);
-    select_lex->context.outer_context= 
+    select_lex->context.outer_context=
                 unit->first_select()->context.outer_context;
   }
 
@@ -2794,14 +2794,14 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 
   if (default_value)
   {
-    /* 
+    /*
       Default value should be literal => basic constants =>
       no need fix_fields()
-      
-      We allow only one function as part of default value - 
+
+      We allow only one function as part of default value -
       NOW() as default for TIMESTAMP type.
     */
-    if (default_value->type() == Item::FUNC_ITEM && 
+    if (default_value->type() == Item::FUNC_ITEM &&
         !(((Item_func*)default_value)->functype() == Item_func::NOW_FUNC &&
          type == DRIZZLE_TYPE_TIMESTAMP))
     {
@@ -2923,7 +2923,7 @@ TableList *st_select_lex::add_table_to_list(Session *session,
   if (!table)
     return(0);				// End of memory
   alias_str= alias ? alias->str : table->table.str;
-  if (!test(table_options & TL_OPTION_ALIAS) && 
+  if (!test(table_options & TL_OPTION_ALIAS) &&
       check_table_name(table->table.str, table->table.length))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.str);
@@ -2979,7 +2979,7 @@ TableList *st_select_lex::add_table_to_list(Session *session,
   {
     ST_SCHEMA_TABLE *schema_table= find_schema_table(session, ptr->table_name);
     if (!schema_table ||
-        (schema_table->hidden && 
+        (schema_table->hidden &&
          ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
           /*
             this check is used for show columns|keys from I_S hidden table
@@ -3285,13 +3285,13 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
     This object is created for any union construct containing a union
     operation and also for any single select union construct of the form
     @verbatim
-    (SELECT ... order_st BY order_list [LIMIT n]) order_st BY ... 
+    (SELECT ... order_st BY order_list [LIMIT n]) order_st BY ...
     @endvarbatim
     or of the form
     @varbatim
     (SELECT ... order_st BY LIMIT n) order_st BY ...
     @endvarbatim
-  
+
   @param session_arg		   thread handle
 
   @note
@@ -3311,7 +3311,7 @@ bool st_select_lex_unit::add_fake_select_lex(Session *session_arg)
 
   if (!(fake_select_lex= new (session_arg->mem_root) SELECT_LEX()))
       return(1);
-  fake_select_lex->include_standalone(this, 
+  fake_select_lex->include_standalone(this,
                                       (SELECT_LEX_NODE**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;
   fake_select_lex->parent_lex= session_arg->lex; /* Used in init_query. */
@@ -3326,12 +3326,12 @@ bool st_select_lex_unit::add_fake_select_lex(Session *session_arg)
 
   if (!is_union())
   {
-    /* 
-      This works only for 
+    /*
+      This works only for
       (SELECT ... order_st BY list [LIMIT n]) order_st BY order_list [LIMIT m],
       (SELECT ... LIMIT n) order_st BY order_list [LIMIT m]
       just before the parser starts processing order_list
-    */ 
+    */
     global_parameters= fake_select_lex;
     fake_select_lex->no_table_names_allowed= 1;
     session_arg->lex->current_select= fake_select_lex;
@@ -3458,7 +3458,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
   @param options What should be reset/reloaded (tables, privileges, slave...)
   @param tables Tables to flush (if any)
   @param write_to_binlog True if we can write to the binlog.
-               
+
   @note Depending on 'options', it may be very bad to write the
     query to the binlog (e.g. FLUSH SLAVE); this is a
     pointer where reload_cache() will put 0 if
@@ -3509,7 +3509,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
     Note that if REFRESH_READ_LOCK bit is set then REFRESH_TABLES is set too
     (see sql_yacc.yy)
   */
-  if (options & (REFRESH_TABLES | REFRESH_READ_LOCK)) 
+  if (options & (REFRESH_TABLES | REFRESH_READ_LOCK))
   {
     if ((options & REFRESH_READ_LOCK) && session)
     {
@@ -4054,7 +4054,7 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
     my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str->str);
     return true;
   }
-  
+
   if (str->length == res)
     return false;
 
@@ -4086,7 +4086,7 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
 
   RETURN VALUES
     0	ok
-    1	error  
+    1	error
 */
 
 bool test_if_data_home_dir(const char *dir)

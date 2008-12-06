@@ -59,7 +59,7 @@ err:
 }
 
 int errmsg_finalizer(st_plugin_int *plugin)
-{ 
+{
   errmsg_t *p = (errmsg_t *) plugin->data;
 
   if (plugin->plugin->deinit)

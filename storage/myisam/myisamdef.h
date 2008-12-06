@@ -159,7 +159,7 @@ typedef struct st_mi_isam_pack {
   unsigned char version;
 } MI_PACK;
 
-#define MAX_NONMAPPED_INSERTS 1000      
+#define MAX_NONMAPPED_INSERTS 1000
 
 typedef struct st_mi_isam_share {	/* Shared between opens */
   MI_STATE_INFO state;

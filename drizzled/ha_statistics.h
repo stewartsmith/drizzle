@@ -34,7 +34,7 @@ public:
   uint64_t delete_length;		/* Free bytes */
   uint64_t auto_increment_value;
   /*
-    The number of records in the table. 
+    The number of records in the table.
       0    - means the table has exactly 0 rows
     other  - if (table_flags() & HA_STATS_RECORDS_IS_EXACT)
                the value is the exact number of records in the table

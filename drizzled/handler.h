@@ -121,31 +121,31 @@ inline key_part_map make_prev_keypart_map(T a)
   =================
   [Warning: this description is work in progress and may be incomplete]
   The table record is stored in a fixed-size buffer:
-   
+
     record: null_bytes, column1_data, column2_data, ...
-  
-  The offsets of the parts of the buffer are also fixed: every column has 
+
+  The offsets of the parts of the buffer are also fixed: every column has
   an offset to its column{i}_data, and if it is nullable it also has its own
-  bit in null_bytes. 
+  bit in null_bytes.
 
   The record buffer only includes data about columns that are marked in the
   relevant column set (table->read_set and/or table->write_set, depending on
-  the situation). 
+  the situation).
   <not-sure>It could be that it is required that null bits of non-present
   columns are set to 1</not-sure>
 
   VARIOUS EXCEPTIONS AND SPECIAL CASES
 
-  f the table has no nullable columns, then null_bytes is still 
-  present, its length is one byte <not-sure> which must be set to 0xFF 
+  f the table has no nullable columns, then null_bytes is still
+  present, its length is one byte <not-sure> which must be set to 0xFF
   at all times. </not-sure>
-  
+
   If the table has columns of type BIT, then certain bits from those columns
   may be stored in null_bytes as well. Grep around for Field_bit for
   details.
 
-  For blob columns (see Field_blob), the record buffer stores length of the 
-  data, following by memory pointer to the blob data. The pointer is owned 
+  For blob columns (see Field_blob), the record buffer stores length of the
+  data, following by memory pointer to the blob data. The pointer is owned
   by the storage engine and is valid until the next operation.
 
   If a blob column has NULL value, then its length and blob data pointer
@@ -186,7 +186,7 @@ public:
   KEY_PART_INFO *range_key_part;
   int key_compare_result_on_equal;
   bool eq_range;
-  /* 
+  /*
     true <=> the engine guarantees that returned records are within the range
     being scanned.
   */
@@ -317,9 +317,9 @@ public:
   { return rows2double(ranges+rows); }
 
   virtual double index_only_read_time(uint32_t keynr, double records);
-  
+
   virtual ha_rows multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                                              void *seq_init_param, 
+                                              void *seq_init_param,
                                               uint32_t n_ranges, uint32_t *bufsz,
                                               uint32_t *flags, COST_VECT *cost);
   virtual int multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
@@ -680,7 +680,7 @@ public:
       anything
 
     This method offers the storage engine, the possibility to store a reference
-    to a table name which is going to be used with query cache. 
+    to a table name which is going to be used with query cache.
     The method is called each time a statement is written to the cache and can
     be used to verify if a specific statement is cachable. It also offers
     the possibility to register a generic (but static) call back function which
@@ -737,14 +737,14 @@ public:
    @note
    The pushed conditions form a stack (from which one can remove the
    last pushed condition using cond_pop).
-   The table handler filters out rows using (pushed_cond1 AND pushed_cond2 
+   The table handler filters out rows using (pushed_cond1 AND pushed_cond2
    AND ... AND pushed_condN)
    or less restrictive condition, depending on handler's capabilities.
 
    handler->ha_reset() call empties the condition stack.
    Calls to rnd_init/rnd_end, index_init/index_end etc do not affect the
    condition stack.
- */ 
+ */
  virtual const COND *cond_push(const COND *cond) { return cond; }
 
  /**
@@ -892,7 +892,7 @@ public:
     This procedure defines if the storage engine supports virtual columns.
     Default false means "not supported".
   */
-  virtual bool check_if_supported_virtual_columns(void) 
+  virtual bool check_if_supported_virtual_columns(void)
   { return false; }
 
 protected:
@@ -1003,7 +1003,7 @@ private:
   virtual void start_bulk_insert(ha_rows)
   {}
   virtual int end_bulk_insert(void) { return 0; }
-  virtual int index_read(unsigned char *, const unsigned char *, 
+  virtual int index_read(unsigned char *, const unsigned char *,
                          uint32_t, enum ha_rkey_function)
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_read_last(unsigned char *, const unsigned char *, uint32_t)
@@ -1068,8 +1068,8 @@ private:
   A Disk-Sweep MRR interface implementation
 
   This implementation makes range (and, in the future, 'ref') scans to read
-  table rows in disk sweeps. 
-  
+  table rows in disk sweeps.
+
   Currently it is used by MyISAM and InnoDB. Potentially it can be used with
   any table handler that has non-clustered indexes and on-disk rows.
 */
@@ -1106,11 +1106,11 @@ private:
 public:
   void init(handler *h_arg, Table *table_arg)
   {
-    h= h_arg; 
+    h= h_arg;
     table= table_arg;
   }
-  int dsmrr_init(handler *h, KEY *key, RANGE_SEQ_IF *seq_funcs, 
-                 void *seq_init_param, uint32_t n_ranges, uint32_t mode, 
+  int dsmrr_init(handler *h, KEY *key, RANGE_SEQ_IF *seq_funcs,
+                 void *seq_init_param, uint32_t n_ranges, uint32_t mode,
                  HANDLER_BUFFER *buf);
   void dsmrr_close();
   int dsmrr_fill_buffer(handler *h);
@@ -1119,14 +1119,14 @@ public:
   int dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys, uint32_t *bufsz,
                  uint32_t *flags, COST_VECT *cost);
 
-  ha_rows dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq, 
+  ha_rows dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                             void *seq_init_param, uint32_t n_ranges, uint32_t *bufsz,
                             uint32_t *flags, COST_VECT *cost);
 private:
   bool key_uses_partial_cols(uint32_t keyno);
-  bool choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags, uint32_t *bufsz, 
+  bool choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags, uint32_t *bufsz,
                        COST_VECT *cost);
-  bool get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t flags, 
+  bool get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t flags,
                                uint32_t *buffer_size, COST_VECT *cost);
 };
 

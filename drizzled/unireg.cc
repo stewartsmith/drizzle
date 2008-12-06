@@ -190,7 +190,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
   tmp_len= system_charset_info->cset->charpos(system_charset_info,
                                               create_info->comment.str,
                                               create_info->comment.str +
-                                              create_info->comment.length, 
+                                              create_info->comment.length,
                                               TABLE_COMMENT_MAXLEN);
 
   if (tmp_len < create_info->comment.length)
@@ -335,7 +335,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
     goto err3;
 
   {
-    /* 
+    /*
       Restore all UCS2 intervals.
       HEX representation of them is not needed anymore.
     */
@@ -686,7 +686,7 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
   unsigned char *info,*pos,*start_screen;
   uint32_t fields=create_fields.elements;
   List_iterator<Create_field> it(create_fields);
-  
+
 
   start_row=4; end_row=22; cols=80; fields_on_screen=end_row+1-start_row;
 
@@ -761,7 +761,7 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
   unsigned char *pos, *keyname_pos;
   KEY *key,*end;
   KEY_PART_INFO *key_part,*key_part_end;
-  
+
 
   pos=keybuff+6;
   key_parts=0;
@@ -903,8 +903,8 @@ static bool pack_header(unsigned char *forminfo,
 					   MTYP_NOEMPTY_BIT);
       no_empty++;
     }
-    /* 
-      We mark first TIMESTAMP field with NOW() in DEFAULT or ON UPDATE 
+    /*
+      We mark first TIMESTAMP field with NOW() in DEFAULT or ON UPDATE
       as auto-update field.
     */
     if (field->sql_type == DRIZZLE_TYPE_TIMESTAMP &&
@@ -923,24 +923,24 @@ static bool pack_header(unsigned char *forminfo,
 
       if (field->charset->mbminlen > 1)
       {
-        /* 
+        /*
           Escape UCS2 intervals using HEX notation to avoid
           problems with delimiters between enum elements.
-          As the original representation is still needed in 
+          As the original representation is still needed in
           the function make_empty_rec to create a record of
           filled with default values it is saved in save_interval
           The HEX representation is created from this copy.
         */
         field->save_interval= field->interval;
         field->interval= (TYPELIB*) sql_alloc(sizeof(TYPELIB));
-        *field->interval= *field->save_interval; 
-        field->interval->type_names= 
-          (const char **) sql_alloc(sizeof(char*) * 
+        *field->interval= *field->save_interval;
+        field->interval->type_names=
+          (const char **) sql_alloc(sizeof(char*) *
 				    (field->interval->count+1));
         field->interval->type_names[field->interval->count]= 0;
         field->interval->type_lengths=
           (uint32_t *) sql_alloc(sizeof(uint) * field->interval->count);
- 
+
         for (uint32_t pos= 0; pos < field->interval->count; pos++)
         {
           char *dst;
@@ -978,7 +978,7 @@ static bool pack_header(unsigned char *forminfo,
   /* Hack to avoid bugs with small static rows in MySQL */
   reclength=cmax((ulong)file->min_record_length(table_options),reclength);
   if (info_length+(ulong) create_fields.elements*FCOMP+288+
-      n_length+int_length+com_length+vcol_info_length > 65535L || 
+      n_length+int_length+com_length+vcol_info_length > 65535L ||
       int_count > 255)
   {
     my_message(ER_TOO_MANY_FIELDS, ER(ER_TOO_MANY_FIELDS), MYF(0));
@@ -1047,7 +1047,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   uint32_t int_count, comment_length=0, vcol_info_length=0;
   unsigned char buff[MAX_FIELD_WIDTH];
   Create_field *field;
-  
+
 
 	/* Write field info */
 
@@ -1068,14 +1068,14 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
     int2store(buff+8,field->pack_flag);
     int2store(buff+10,field->unireg_check);
     buff[12]= (unsigned char) field->interval_id;
-    buff[13]= (unsigned char) field->sql_type; 
-    if (field->charset) 
+    buff[13]= (unsigned char) field->sql_type;
+    if (field->charset)
       buff[14]= (unsigned char) field->charset->number;
     else
       buff[14]= 0;				// Numerical
     if (field->vcol_info)
     {
-      /* 
+      /*
         Use the interval_id place in the .frm file to store the length of
         virtual field's data.
       */
@@ -1198,8 +1198,8 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
         buff[2]= (unsigned char) field->is_stored;
         if (my_write(file, buff, 3, MYF_RW))
           return(1);
-        if (my_write(file, 
-                     (unsigned char*) field->vcol_info->expr_str.str, 
+        if (my_write(file,
+                     (unsigned char*) field->vcol_info->expr_str.str,
                      field->vcol_info->expr_str.length,
                      MYF_RW))
           return(1);
@@ -1228,7 +1228,7 @@ static bool make_empty_rec(Session *session, File file,
   TABLE_SHARE share;
   Create_field *field;
   enum_check_fields old_count_cuted_fields= session->count_cuted_fields;
-  
+
 
   /* We need a table to generate columns for default values */
   memset(&table, 0, sizeof(table));
@@ -1270,7 +1270,7 @@ static bool make_empty_rec(Session *session, File file,
                                 field->charset,
                                 field->unireg_check,
                                 field->save_interval ? field->save_interval :
-                                field->interval, 
+                                field->interval,
                                 field->field_name);
     if (!regfield)
     {

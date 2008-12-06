@@ -323,7 +323,7 @@ enum enum_server_command
 #define packet_error (~(uint32_t) 0)
 
 
-/* Shutdown/kill enums and constants */ 
+/* Shutdown/kill enums and constants */
 
 /* Bits for THD::killable. */
 #define DRIZZLE_SHUTDOWN_KILLABLE_CONNECT    (unsigned char)(1 << 0)
@@ -397,8 +397,8 @@ typedef struct st_udf_init
   bool const_item;          /* 1 if function always returns the same value */
   void *extension;
 } UDF_INIT;
-/* 
-  TODO: add a notion for determinism of the UDF. 
+/*
+  TODO: add a notion for determinism of the UDF.
   See Item_udf_func::update_used_tables ()
 */
 

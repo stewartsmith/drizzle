@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTIONS_GET_USER_VAR_H
 
 class user_var_entry;
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 class Item_func_get_user_var :public Item_func
 {

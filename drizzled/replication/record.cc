@@ -283,7 +283,7 @@ unpack_row(Relay_log_info const *rli,
     else
       *master_reclength = table->s->reclength;
   }
-  
+
   return(error);
 }
 
@@ -306,7 +306,7 @@ unpack_row(Relay_log_info const *rli,
   @todo When flag is added to allow engine to handle default values
   itself, the record should not be emptied and default values not set.
 
-  @param table[in,out] Table whose record[0] buffer is prepared. 
+  @param table[in,out] Table whose record[0] buffer is prepared.
   @param cols[in]      Vector of bits denoting columns that will be set
                        elsewhere
   @param check[in]     Indicates if errors should be checked when setting default

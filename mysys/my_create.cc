@@ -61,6 +61,6 @@ File my_create(const char *FileName, int CreateFlags, int access_flags,
     my_delete(FileName, MyFlags);
     my_errno= tmp;
   }
-  
+
   return(rc);
 } /* my_create */

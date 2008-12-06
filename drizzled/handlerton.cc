@@ -92,10 +92,10 @@ handlerton *ha_default_handlerton(Session *session)
 
 /**
   Return the storage engine handlerton for the supplied name
-  
+
   @param session         current thread
   @param name        name of storage engine
-  
+
   @return
     pointer to storage engine plugin handle
 */
@@ -116,7 +116,7 @@ redo:
     handlerton *hton= plugin_data(plugin, handlerton *);
     if (!(hton->flags.test(HTON_BIT_NOT_USER_SELECTABLE)))
       return plugin;
-      
+
     /*
       unlocking plugin immediately after locking is relatively low cost.
     */

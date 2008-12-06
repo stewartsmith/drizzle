@@ -85,7 +85,7 @@ public:
   virtual bool store_int64_t(int64_t from, bool unsigned_flag)=0;
   virtual bool store_decimal(const my_decimal * dec_value)=0;
   virtual bool store(const char *from, size_t length, const CHARSET_INFO * const cs)=0;
-  virtual bool store(const char *from, size_t length, 
+  virtual bool store(const char *from, size_t length,
                      const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs)=0;
   virtual bool store(float from, uint32_t decimals, String *buffer)=0;
   virtual bool store(double from, uint32_t decimals, String *buffer)=0;

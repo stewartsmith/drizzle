@@ -1,7 +1,7 @@
 /*
  -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-  Sections of this where taken/modified from mod_auth_path for Apache 
+  Sections of this where taken/modified from mod_auth_path for Apache
 */
 
 #define DRIZZLE_SERVER 1
@@ -41,14 +41,14 @@ static int auth_pam_talker(int num_msg,
     return PAM_CONV_ERR;
 
   /* copy values */
-  for(x= 0; x < num_msg; x++) 
+  for(x= 0; x < num_msg; x++)
   {
     /* initialize to safe values */
     response[x].resp_retcode= 0;
     response[x].resp= 0;
 
     /* select response based on requested output style */
-    switch(msg[x]->msg_style) 
+    switch(msg[x]->msg_style)
     {
     case PAM_PROMPT_ECHO_ON:
       /* on memory allocation failure, auth fails */
@@ -96,7 +96,7 @@ static bool authenticate(Session *session, const char *password)
 static int initialize(void *p)
 {
   authentication_st *auth= (authentication_st *)p;
-  
+
   auth->authenticate= authenticate;
 
   return 0;

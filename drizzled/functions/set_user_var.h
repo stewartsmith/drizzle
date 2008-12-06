@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_SET_USER_VAR_H
 #define DRIZZLED_FUNCTIONS_SET_USER_VAR_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 /* Handling of user definable variables */
 

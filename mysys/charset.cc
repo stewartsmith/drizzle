@@ -22,10 +22,10 @@
 
 /*
   The code below implements this functionality:
-  
+
     - Initializing charset related structures
     - Loading dynamic charsets
-    - Searching for a proper CHARSET_INFO 
+    - Searching for a proper CHARSET_INFO
       using charset name, collation name or collation ID
     - Setting server default character set
 */
@@ -44,10 +44,10 @@ get_collation_number_internal(const char *name)
        cs < all_charsets+array_elements(all_charsets)-1 ;
        cs++)
   {
-    if ( cs[0] && cs[0]->name && 
+    if ( cs[0] && cs[0]->name &&
          !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->name, name))
       return cs[0]->number;
-  }  
+  }
   return 0;
 }
 
@@ -60,13 +60,13 @@ static bool init_state_maps(CHARSET_INFO *cs)
 
   if (!(cs->state_map= (unsigned char*) my_once_alloc(256, MYF(MY_WME))))
     return 1;
-    
+
   if (!(cs->ident_map= (unsigned char*) my_once_alloc(256, MYF(MY_WME))))
     return 1;
 
   state_map= cs->state_map;
   ident_map= cs->ident_map;
-  
+
   /* Fill state_map with states to get a faster parser */
   for (i=0; i < 256 ; i++)
   {
@@ -177,7 +177,7 @@ static bool init_available_charsets(myf myflags)
     {
       memset(&all_charsets, 0, sizeof(all_charsets));
       init_compiled_charsets(myflags);
-      
+
       /* Copy compiled charsets */
       for (cs=all_charsets;
            cs < all_charsets+array_elements(all_charsets)-1 ;
@@ -190,7 +190,7 @@ static bool init_available_charsets(myf myflags)
               *cs= NULL;
         }
       }
-      
+
       my_stpcpy(get_charsets_dir(fname), MY_CHARSET_INDEX);
       charset_initialized=1;
     }
@@ -217,7 +217,7 @@ uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
 {
   CHARSET_INFO **cs;
   init_available_charsets(MYF(0));
-  
+
   for (cs= all_charsets;
        cs < all_charsets+array_elements(all_charsets)-1 ;
        cs++)
@@ -225,7 +225,7 @@ uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
     if ( cs[0] && cs[0]->csname && (cs[0]->state & cs_flags) &&
          !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->csname, charset_name))
       return cs[0]->number;
-  }  
+  }
   return 0;
 }
 
@@ -238,7 +238,7 @@ const char *get_charset_name(uint32_t charset_number)
   cs=all_charsets[charset_number];
   if (cs && (cs->number == charset_number) && cs->name )
     return (char*) cs->name;
-  
+
   return (char*) "?";   /* this mimics find_type() */
 }
 
@@ -279,10 +279,10 @@ const CHARSET_INFO *get_charset(uint32_t cs_number, myf flags)
     return default_charset_info;
 
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
-  
+
   if (!cs_number || cs_number >= array_elements(all_charsets)-1)
     return NULL;
-  
+
   cs= get_internal_charset(cs_number);
 
   if (!cs && (flags & MY_WME))

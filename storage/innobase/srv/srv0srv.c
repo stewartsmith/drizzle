@@ -90,7 +90,7 @@ dictionary tables are in the system tablespace 0 */
 UNIV_INTERN my_bool	srv_file_per_table;
 /* The file format to use on new *.ibd files. */
 UNIV_INTERN ulint	srv_file_format = 0;
-/* Whether to check file format during startup a value of 
+/* Whether to check file format during startup a value of
 DICT_TF_FORMAT_MAX + 1 means no checking ie. FALSE.  The default is to
 set it to the highest format we support. */
 UNIV_INTERN ulint	srv_check_file_format_at_startup = DICT_TF_FORMAT_MAX;
@@ -2132,7 +2132,7 @@ loop:
 	/* In case mutex_exit is not a memory barrier, it is
 	theoretically possible some threads are left waiting though
 	the semaphore is already released. Wake up those threads: */
-	
+
 	sync_arr_wake_threads_if_sema_free();
 
 	if (sync_array_print_long_waits()) {

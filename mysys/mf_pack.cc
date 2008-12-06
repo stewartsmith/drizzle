@@ -117,7 +117,7 @@ void pack_dirname(char * to, const char *from)
   Unpacks current dir if if "./.." used
 
   RETURN
-    #  length of new name   
+    #  length of new name
 */
 
 size_t cleanup_dirname(register char *to, const char *from)
@@ -226,7 +226,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 
 /*
   On system where you don't have symbolic links, the following
-  code will allow you to create a file: 
+  code will allow you to create a file:
   directory-name.sym that should contain the real path
   to the directory.  This will be used if the directory name
   doesn't exists

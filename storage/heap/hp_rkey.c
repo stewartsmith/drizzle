@@ -17,7 +17,7 @@
 
 #include <string.h>
 
-int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char *key, 
+int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char *key,
               key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
   unsigned char *pos;
@@ -36,7 +36,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
     heap_rb_param custom_arg;
 
     custom_arg.keyseg= info->s->keydef[inx].seg;
-    custom_arg.key_length= info->lastkey_len= 
+    custom_arg.key_length= info->lastkey_len=
       hp_rb_pack_key(keyinfo, (unsigned char*) info->lastkey,
 		     (unsigned char*) key, keypart_map);
     custom_arg.search_flag= SEARCH_FIND | SEARCH_SAME;

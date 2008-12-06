@@ -702,7 +702,7 @@ struct row_prebuilt_struct {
 					version is built in consistent read */
 	/*----------------------*/
 	ib_uint64_t	autoinc_last_value;/* last value of AUTO-INC interval */
-	ib_uint64_t	autoinc_increment;/* The increment step of the auto 
+	ib_uint64_t	autoinc_increment;/* The increment step of the auto
 					increment column. Value must be
 					greater than or equal to 1. Required to
 					calculate the next value */

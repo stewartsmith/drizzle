@@ -197,11 +197,11 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	if (val_len < 2 || ! usa_time)
 	  goto err;
 	if (!my_strnncoll(&my_charset_utf8_general_ci,
-			  (const unsigned char *) val, 2, 
+			  (const unsigned char *) val, 2,
 			  (const unsigned char *) "PM", 2))
 	  daypart= 12;
 	else if (my_strnncoll(&my_charset_utf8_general_ci,
-			      (const unsigned char *) val, 2, 
+			      (const unsigned char *) val, 2,
 			      (const unsigned char *) "AM", 2))
 	  goto err;
 	val+= 2;
@@ -373,7 +373,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
     get_date_from_daynr(days,&l_time->year,&l_time->month,&l_time->day);
   }
 
-  if (l_time->month > 12 || l_time->day > 31 || l_time->hour > 23 || 
+  if (l_time->month > 12 || l_time->day > 31 || l_time->hour > 23 ||
       l_time->minute > 59 || l_time->second > 59)
     goto err;
 
@@ -438,7 +438,7 @@ get_date_time_result_type(const char *format, uint32_t length)
   const char *time_part_frms= "HISThiklrs";
   const char *date_part_frms= "MVUXYWabcjmvuxyw";
   bool date_part_used= 0, time_part_used= 0, frac_second_used= 0;
-  
+
   const char *val= format;
   const char *end= format + length;
 
@@ -496,18 +496,18 @@ void Item_func_str_to_date::fix_length_and_dec()
       switch (cached_format_type) {
       case DATE_ONLY:
         cached_timestamp_type= DRIZZLE_TIMESTAMP_DATE;
-        cached_field_type= DRIZZLE_TYPE_DATE; 
+        cached_field_type= DRIZZLE_TYPE_DATE;
         max_length= MAX_DATE_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
         break;
       case TIME_ONLY:
       case TIME_MICROSECOND:
         cached_timestamp_type= DRIZZLE_TIMESTAMP_TIME;
-        cached_field_type= DRIZZLE_TYPE_TIME; 
+        cached_field_type= DRIZZLE_TYPE_TIME;
         max_length= MAX_TIME_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
         break;
       default:
         cached_timestamp_type= DRIZZLE_TIMESTAMP_DATETIME;
-        cached_field_type= DRIZZLE_TYPE_DATETIME; 
+        cached_field_type= DRIZZLE_TYPE_DATETIME;
         break;
       }
     }
@@ -539,7 +539,7 @@ bool Item_func_str_to_date::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date)
   if (cached_timestamp_type == DRIZZLE_TIMESTAMP_TIME && ltime->day)
   {
     /*
-      Day part for time type can be nonzero value and so 
+      Day part for time type can be nonzero value and so
       we should add hours from day part to hour part to
       keep valid time value.
     */

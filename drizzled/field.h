@@ -69,7 +69,7 @@ public:
   unsigned char		*ptr;			// Position to field in record
   unsigned char		*null_ptr;		// Byte where null_bit is
   /*
-    Note that you can use table->in_use as replacement for current_session member 
+    Note that you can use table->in_use as replacement for current_session member
     only inside of val_*() and store() members (e.g. you can't use it in cons)
   */
   Table *table;		// Pointer for table
@@ -462,13 +462,13 @@ public:
   { }
   bool set_warning(DRIZZLE_ERROR::enum_warning_level, unsigned int code,
                    int cuted_increment);
-  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint32_t code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint32_t code,
                             const char *str, uint32_t str_len,
                             enum enum_drizzle_timestamp_type ts_type, int cuted_increment);
-  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint32_t code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint32_t code,
                             int64_t nr, enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment);
-  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, const uint32_t code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, const uint32_t code,
                             double nr, enum enum_drizzle_timestamp_type ts_type);
   inline bool check_overflow(int op_result)
   {
@@ -557,7 +557,7 @@ public:
   enum	enum_field_types sql_type;
   /*
     At various stages in execution this can be length of field in bytes or
-    max number of characters. 
+    max number of characters.
   */
   uint32_t length;
   /*
@@ -580,7 +580,7 @@ public:
   /* Virtual column expression statement */
   virtual_column_info *vcol_info;
   /*
-    Indication that the field is phycically stored in tables 
+    Indication that the field is phycically stored in tables
     rather than just generated on SQL queries.
     As of now, FALSE can only be set for generated-only virtual columns.
   */
@@ -652,7 +652,7 @@ public:
 
   Copy_field() {}
   ~Copy_field() {}
-  void set(Field *to,Field *from,bool save);	// Field to field 
+  void set(Field *to,Field *from,bool save);	// Field to field
   void set(unsigned char *to,Field *from);		// Field to string
   void (*do_copy)(Copy_field *);
   void (*do_copy2)(Copy_field *);		// Used to handle null values

@@ -211,7 +211,7 @@ int Field_varstring::key_cmp(const unsigned char *key_ptr, uint32_t max_key_leng
   local_char_length= my_charpos(field_charset, ptr + length_bytes,
                           ptr + length_bytes + length, local_char_length);
   set_if_smaller(length, local_char_length);
-  return field_charset->coll->strnncollsp(field_charset, 
+  return field_charset->coll->strnncollsp(field_charset,
                                           ptr + length_bytes,
                                           length,
                                           key_ptr+
@@ -252,7 +252,7 @@ void Field_varstring::sort_string(unsigned char *to,uint32_t length)
       mi_int2store(to+length-2, tot_length);
     length-= length_bytes;
   }
- 
+
   tot_length= my_strnxfrm(field_charset,
 			  to, length, ptr + length_bytes,
 			  tot_length);
@@ -414,7 +414,7 @@ Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char 
 
    @note
    The string length is always packed little-endian.
-  
+
    @param   to         Destination of the data
    @param   from       Source of the data
    @param   param_data Length bytes from the master's field data
@@ -427,7 +427,7 @@ Field_varstring::unpack(unsigned char *to, const unsigned char *from,
                         bool low_byte_first __attribute__((unused)))
 {
   uint32_t length;
-  uint32_t l_bytes= (param_data && (param_data < field_length)) ? 
+  uint32_t l_bytes= (param_data && (param_data < field_length)) ?
                 (param_data <= 255) ? 1 : 2 : length_bytes;
   if (l_bytes == 1)
   {

@@ -1115,7 +1115,7 @@ int main(int argc,char *argv[])
 
   glob_buffer= new string();
   glob_buffer->reserve(512);
-  
+
   char * output_buff= (char *)malloc(512);
   memset(output_buff, '\0', 512);
 
@@ -2505,7 +2505,7 @@ static int com_server_help(string *buffer, const char *, const char *help_arg)
     cmd_buf.append("help '");
     cmd_buf.append(help_arg, end_arg-help_arg);
     cmd_buf.append("'");
-  
+
     server_cmd= cmd_buf.c_str();
   }
 
@@ -2924,7 +2924,7 @@ print_table_data(DRIZZLE_RES *result)
   DRIZZLE_FIELD   *field;
   bool          *num_flag;
   string separator;
-  
+
   separator.reserve(256);
 
   num_flag=(bool*) malloc(sizeof(bool)*drizzle_num_fields(result));
@@ -2968,7 +2968,7 @@ print_table_data(DRIZZLE_RES *result)
       tee_fprintf(PAGER, " %-*s |",(int) min(display_length,
                                              MAX_COLUMN_LENGTH),
                   field->name);
-      num_flag[off]= ((field->type <= DRIZZLE_TYPE_LONGLONG) || 
+      num_flag[off]= ((field->type <= DRIZZLE_TYPE_LONGLONG) ||
                       (field->type == DRIZZLE_TYPE_NEWDECIMAL));
     }
     (void) tee_fputs("\n", PAGER);
@@ -3160,7 +3160,7 @@ static void print_warnings()
   DRIZZLE_RES    *result;
   DRIZZLE_ROW    cur;
   uint64_t num_rows;
- 
+
   /* Save current error before calling "show warnings" */
   uint error= drizzle_errno(&drizzle);
 

@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_USER_VAR_AS_OUT_PARAM_H
 #define DRIZZLED_FUNCTIONS_USER_VAR_AS_OUT_PARAM_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 /*
   This item represents user variable used as out parameter (e.g in LOAD DATA),

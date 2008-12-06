@@ -4,16 +4,16 @@
 #include "replication_event.pb.h"
 using namespace std;
 
-/* 
+/*
   Example reader application for master.info data.
 */
 
-void printRecord(const drizzle::EventList *list) 
+void printRecord(const drizzle::EventList *list)
 {
   using namespace drizzle;
   uint32_t x;
 
-  for (x= 0; x < list->event_size(); x++) 
+  for (x= 0; x < list->event_size(); x++)
   {
     const drizzle::Event event= list->event(x);
 
@@ -124,11 +124,11 @@ void printRecord(const drizzle::EventList *list)
   }
 }
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  if (argc != 2) 
+  if (argc != 2)
   {
     cerr << "Usage:  " << argv[0] << " replication event log " << endl;
     return -1;
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
   {
     // Read the existing master.info file
     fstream input(argv[1], ios::in | ios::binary);
-    if (!list.ParseFromIstream(&input)) 
+    if (!list.ParseFromIstream(&input))
     {
       cerr << "Failed to parse master.info." << endl;
       return -1;

@@ -15,7 +15,7 @@
 
 /*
   Functions to handle space-packed-records and blobs
- 
+
   A row may be stored in one or more linked blocks.
   The block size is between MI_MIN_BLOCK_LENGTH and MI_MAX_BLOCK_LENGTH.
   Each block is aligned on MI_DYN_ALIGN_SIZE.
@@ -134,7 +134,7 @@ void mi_remap_file(MI_INFO *info, my_off_t size)
     Buffer              Input buffer
     Count               Count of bytes for read
     offset              Start position
-    MyFlags             
+    MyFlags
 
   RETURN
     0  ok
@@ -187,7 +187,7 @@ size_t mi_nommap_pread(MI_INFO *info, unsigned char *Buffer,
     Buffer              Output buffer
     Count               Count of bytes for write
     offset              Start position
-    MyFlags             
+    MyFlags
 
   RETURN
     0  ok
@@ -209,7 +209,7 @@ size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,
 
   if (info->s->mmaped_length >= offset + Count)
   {
-    memcpy(info->s->file_map + offset, Buffer, Count); 
+    memcpy(info->s->file_map + offset, Buffer, Count);
     if (info->s->concurrent_insert)
       pthread_rwlock_unlock(&info->s->mmap_lock);
     return 0;

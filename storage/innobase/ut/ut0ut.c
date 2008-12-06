@@ -519,7 +519,7 @@ ut_print_namel(
 				       table_id);
 
 	ssize_t ret= fwrite(buf, 1, bufend - buf, f);
-	assert(ret==bufend-buf);  
+	assert(ret==bufend-buf);
 #endif
 }
 

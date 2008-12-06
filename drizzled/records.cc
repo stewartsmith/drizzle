@@ -117,7 +117,7 @@ void init_read_record_idx(READ_RECORD *info, Session *, Table *table,
     rr_from_tempfile:
     -----------------
       Same as rr_from_pointers except that references are fetched from
-      temporary file instead of from 
+      temporary file instead of from
     rr_from_cache:
     --------------
       This is a special variant of rr_from_tempfile that can be used for
@@ -151,11 +151,11 @@ void init_read_record(READ_RECORD *info,Session *session, Table *table,
   info->table=table;
   info->file= table->file;
   info->forms= &info->table;		/* Only one table */
-  
+
   if (table->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE &&
       !table->sort.addon_field)
     table->file->extra(HA_EXTRA_MMAP);
-  
+
   if (table->sort.addon_field)
   {
     info->rec_buf= table->sort.addon_buf;
@@ -218,7 +218,7 @@ void init_read_record(READ_RECORD *info,Session *session, Table *table,
   {
     table->file->ha_rnd_init(0);
     info->cache_pos=table->sort.record_pointers;
-    info->cache_end=info->cache_pos+ 
+    info->cache_end=info->cache_pos+
                     table->sort.found_records*info->ref_length;
     info->read_record= (table->sort.addon_field ?
                         rr_unpack_from_buffer : rr_from_pointers);
@@ -236,13 +236,13 @@ void init_read_record(READ_RECORD *info,Session *session, Table *table,
 	  !(table->file->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
       table->file->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
   }
-  /* 
+  /*
     Do condition pushdown for UPDATE/DELETE.
-    TODO: Remove this from here as it causes two condition pushdown calls 
+    TODO: Remove this from here as it causes two condition pushdown calls
     when we're running a SELECT and the condition cannot be pushed down.
   */
-  if (session->variables.engine_condition_pushdown && 
-      select && select->cond && 
+  if (session->variables.engine_condition_pushdown &&
+      select && select->cond &&
       (select->cond->used_tables() & table->map) &&
       !table->file->pushed_cond)
     table->file->cond_push(select->cond);
@@ -405,7 +405,7 @@ static int rr_from_tempfile(READ_RECORD *info)
   Read a result set record from a temporary file after sorting.
 
   The function first reads the next sorted record from the temporary file.
-  into a buffer. If a success it calls a callback function that unpacks 
+  into a buffer. If a success it calls a callback function that unpacks
   the fields values use in the result set from this buffer into their
   positions in the regular record buffer.
 
@@ -456,7 +456,7 @@ static int rr_from_pointers(READ_RECORD *info)
   Read a result set record from a buffer after sorting.
 
   The function first reads the next sorted record from the sort buffer.
-  If a success it calls a callback function that unpacks 
+  If a success it calls a callback function that unpacks
   the fields values use in the result set from this buffer into their
   positions in the regular record buffer.
 

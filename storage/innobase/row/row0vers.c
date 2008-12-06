@@ -180,7 +180,7 @@ row_vers_impl_x_locked_off_kernel(
 			hold any implicit lock. */
 			if (0 != ut_dulint_cmp(trx_id, prev_trx_id)
 			    && vers_del) {
-	
+
 				mutex_enter(&kernel_mutex);
 				break;
 			}

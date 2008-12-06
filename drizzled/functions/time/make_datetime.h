@@ -22,7 +22,7 @@
 
 #include <drizzled/item/timefunc.h>
 
-bool make_datetime(date_time_format_types format, 
+bool make_datetime(date_time_format_types format,
                    DRIZZLE_TIME *ltime,
                    String *str);
 

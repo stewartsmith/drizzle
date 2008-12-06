@@ -284,7 +284,7 @@ TABLE_SHARE *get_table_share(Session *session, TableList *table_list, char *key,
   return(share);
 
 found:
-  /* 
+  /*
      We found an existing table definition. Return it if we didn't get
      an error when reading the table definition from file.
   */
@@ -346,12 +346,12 @@ static TABLE_SHARE
 
     If share is NULL, and there is no error, we're inside
     pre-locking, which silences 'ER_NO_SUCH_TABLE' errors
-    with the intention to silently drop non-existing tables 
+    with the intention to silently drop non-existing tables
     from the pre-locking list. In this case we still need to try
     auto-discover before returning a NULL share.
 
     If share is NULL and the error is ER_NO_SUCH_TABLE, this is
-    the same as above, only that the error was not silenced by 
+    the same as above, only that the error was not silenced by
     pre-locking. Once again, we need to try to auto-discover
     the share.
 
@@ -387,7 +387,7 @@ static TABLE_SHARE
 }
 
 
-/* 
+/*
    Mark that we are not using table share anymore.
 
    SYNOPSIS
@@ -469,7 +469,7 @@ TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name)
   table_list.table_name= (char*) table_name;
   key_length= create_table_def_key((Session*) 0, key, &table_list, 0);
   return (TABLE_SHARE*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
-}  
+}
 
 
 /*
@@ -882,7 +882,7 @@ bool close_cached_connection_tables(Session *session, bool if_wait_for_refresh,
     tmp.table_name= share->table_name.str;
     tmp.next_local= tables;
 
-    tables= (TableList *) memdup_root(session->mem_root, (char*)&tmp, 
+    tables= (TableList *) memdup_root(session->mem_root, (char*)&tmp,
                                        sizeof(TableList));
   }
 
@@ -1159,7 +1159,7 @@ static inline uint32_t  tmpkeyval(Session *session __attribute__((unused)),
 
 /*
   Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
-  creates one DROP TEMPORARY Table binlog event for each pseudo-thread 
+  creates one DROP TEMPORARY Table binlog event for each pseudo-thread
 */
 
 void close_temporary_tables(Session *session)
@@ -1735,7 +1735,7 @@ void drop_open_table(Session *session, Table *table, const char *db_name,
      wait_for_condition()
      session	Thread handler
      mutex	mutex that is currently hold that is associated with condition
-	        Will be unlocked on return     
+	        Will be unlocked on return
      cond	Condition to wait for
 */
 
@@ -1760,7 +1760,7 @@ void wait_for_condition(Session *session, pthread_mutex_t *mutex, pthread_cond_t
     condition variables that are guranteed to not disapper (freed) even if this
     mutex is unlocked
   */
-    
+
   pthread_mutex_unlock(mutex);
   pthread_mutex_lock(&session->mysys_var->mutex);
   session->mysys_var->current_mutex= 0;
@@ -2316,7 +2316,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
       need to back off and re-start opening tables.
       If we do not back off now, we may dead lock in case of lock
       order mismatch with some other thread:
-      c1: name lock t1; -- sort of exclusive lock 
+      c1: name lock t1; -- sort of exclusive lock
       c2: open t2;      -- sort of shared lock
       c1: name lock t2; -- blocks
       c2: open t1; -- blocks
@@ -3123,7 +3123,7 @@ static int open_unireg_entry(Session *session, Table *entry, TableList *table_li
   safe_mutex_assert_owner(&LOCK_open);
 retry:
   if (!(share= get_table_share_with_create(session, table_list, cache_key,
-                                           cache_key_length, 
+                                           cache_key_length,
                                            table_list->i_s_requested_object,
                                            &error)))
     return(1);
@@ -3147,7 +3147,7 @@ retry:
         Here we should wait until all threads has released the table.
         For now we do one retry. This may cause a deadlock if there
         is other threads waiting for other tables used by this thread.
-        
+
         Proper fix would be to if the second retry failed:
         - Mark that table def changed
         - Return from open table
@@ -3213,7 +3213,7 @@ retry:
        session->clear_error();			// Clear error message
      pthread_mutex_lock(&LOCK_open);
      unlock_table_name(session, table_list);
- 
+
      if (error)
        goto err;
      break;
@@ -3505,7 +3505,7 @@ Table *open_n_lock_single_table(Session *session, TableList *table_l,
   RETURN VALUES
     table		Opened table
     0			Error
-  
+
     If ok, the following are also set:
       table_list->lock_type 	lock_type
       table_list->table		table
@@ -3576,7 +3576,7 @@ int open_and_lock_tables_derived(Session *session, TableList *tables, bool deriv
   uint32_t counter;
   bool need_reopen;
 
-  for ( ; ; ) 
+  for ( ; ; )
   {
     if (open_tables(session, &tables, &counter, 0))
       return(-1);
@@ -3611,7 +3611,7 @@ int open_and_lock_tables_derived(Session *session, TableList *tables, bool deriv
     false - ok
     true  - error
 
-  NOTE 
+  NOTE
     This is to be used on prepare stage when you don't read any
     data from the tables.
 */
@@ -3868,7 +3868,7 @@ bool rm_temporary_table(handlerton *base, char *path)
 
 /* Special Field pointers as return values of find_field_in_XXX functions. */
 Field *not_found_field= (Field*) 0x1;
-Field *view_ref_found= (Field*) 0x2; 
+Field *view_ref_found= (Field*) 0x2;
 
 #define WRONG_GRANT (Field*) -1
 
@@ -3882,7 +3882,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       We always want to register the used keys, as the column bitmap may have
       been set for all fields (for example for view).
     */
-      
+
     table->covering_keys.intersect(field->part_of_key);
     table->merge_keys.merge(field->part_of_key);
 
@@ -3956,7 +3956,7 @@ find_field_in_natural_join(Session *session, TableList *table_ref, const char *n
   assert(table_ref->is_natural_join && table_ref->join_columns);
   assert(*actual_table == NULL);
 
-  for (nj_col= NULL, curr_nj_col= field_it++; curr_nj_col; 
+  for (nj_col= NULL, curr_nj_col= field_it++; curr_nj_col;
        curr_nj_col= field_it++)
   {
     if (!my_strcasecmp(system_charset_info, curr_nj_col->name(), name))
@@ -3979,7 +3979,7 @@ find_field_in_natural_join(Session *session, TableList *table_ref, const char *n
   }
 
   *actual_table= nj_col->table_ref;
-  
+
   return(found_field);
 }
 
@@ -4045,12 +4045,12 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         Item *vcol_item= (*field_ptr)->vcol_info->expr_item;
         assert(vcol_item);
         vcol_item->walk(&Item::register_field_in_read_map, 1, (unsigned char *) 0);
-        /* 
-          Set the virtual field for write here if 
+        /*
+          Set the virtual field for write here if
           1) this procedure is called for a read-only operation (SELECT), and
           2) the virtual column is not phycically stored in the table
         */
-        if ((session->mark_used_columns != MARK_COLUMNS_WRITE) && 
+        if ((session->mark_used_columns != MARK_COLUMNS_WRITE) &&
             (not (*field_ptr)->is_stored))
           bitmap_set_bit((*field_ptr)->table->write_set, (*field_ptr)->field_index);
       }
@@ -4536,13 +4536,13 @@ find_field_in_tables(Session *session, Item_ident *item,
 				return not_found_item, report other errors,
 				return 0
       IGNORE_ERRORS		Do not report errors, return 0 if error
-    resolution                  Set to the resolution type if the item is found 
-                                (it says whether the item is resolved 
+    resolution                  Set to the resolution type if the item is found
+                                (it says whether the item is resolved
                                  against an alias name,
                                  or as a field name without alias,
                                  or as a field hidden by alias,
                                  or ignoring alias)
-                                
+
   RETURN VALUES
     0			Item is not found or item is not unique,
 			error message is reported
@@ -4576,7 +4576,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
 
   *resolution= NOT_RESOLVED;
 
-  is_ref_by_name= (find->type() == Item::FIELD_ITEM  || 
+  is_ref_by_name= (find->type() == Item::FIELD_ITEM  ||
                    find->type() == Item::REF_ITEM);
   if (is_ref_by_name)
   {
@@ -4593,10 +4593,10 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
 
       /*
 	In case of group_concat() with ORDER BY condition in the QUERY
-	item_field can be field of temporary table without item name 
+	item_field can be field of temporary table without item name
 	(if this field created from expression argument of group_concat()),
 	=> we have to check presence of name before compare
-      */ 
+      */
       if (!item_field->name)
         continue;
 
@@ -4621,7 +4621,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
         if (item_field->field_name && item_field->table_name &&
 	    !my_strcasecmp(system_charset_info, item_field->field_name,
                            field_name) &&
-            !my_strcasecmp(table_alias_charset, item_field->table_name, 
+            !my_strcasecmp(table_alias_charset, item_field->table_name,
                            table_name) &&
             (!db_name || (item_field->db_name &&
                           !strcmp(item_field->db_name, db_name))))
@@ -4696,7 +4696,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
       }
     }
     else if (!table_name)
-    { 
+    {
       if (is_ref_by_name && find->name && item->name &&
 	  !my_strcasecmp(system_charset_info,item->name,find->name))
       {
@@ -4872,7 +4872,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
     if (!(nj_col_1= it_1.get_or_create_column_ref(leaf_1)))
       goto err;
     field_name_1= nj_col_1->name();
-    is_using_column_1= using_fields && 
+    is_using_column_1= using_fields &&
       test_if_string_in_list(field_name_1, using_fields);
 
     /*
@@ -4899,7 +4899,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
         (then cur_nj_col_2->is_common == true).
         Note that it is too early to check the columns outside of the
         USING list for ambiguity because they are not actually "referenced"
-        here. These columns must be checked only on unqualified reference 
+        here. These columns must be checked only on unqualified reference
         by name (e.g. in SELECT list).
       */
       if (!my_strcasecmp(system_charset_info, field_name_1, cur_field_name_2))
@@ -5561,7 +5561,7 @@ bool setup_tables(Session *session, Name_resolution_context *context,
 {
   uint32_t tablenr= 0;
 
-  assert ((select_insert && !tables->next_name_resolution_table) || !tables || 
+  assert ((select_insert && !tables->next_name_resolution_table) || !tables ||
                (context->table_list && context->first_name_resolution_table));
   /*
     this is used for INSERT ... SELECT.
@@ -5628,7 +5628,7 @@ bool setup_tables(Session *session, Name_resolution_context *context,
     false ok;  In this case *map will include the chosen index
     true  error
 */
-bool setup_tables_and_check_access(Session *session, 
+bool setup_tables_and_check_access(Session *session,
                                    Name_resolution_context *context,
                                    List<TableList> *from_clause,
                                    TableList *tables,
@@ -5751,7 +5751,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
 
     assert(tables->is_leaf_for_name_resolution());
 
-    if ((table_name && my_strcasecmp(table_alias_charset, table_name, tables->alias)) || 
+    if ((table_name && my_strcasecmp(table_alias_charset, table_name, tables->alias)) ||
         (db_name && strcmp(tables->db,db_name)))
       continue;
 
@@ -6014,8 +6014,8 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
     table= rfield->table;
     if (rfield == table->next_number_field)
       table->auto_increment_field_not_null= true;
-    if (rfield->vcol_info && 
-        value->type() != Item::DEFAULT_VALUE_ITEM && 
+    if (rfield->vcol_info &&
+        value->type() != Item::DEFAULT_VALUE_ITEM &&
         value->type() != Item::NULL_ITEM &&
         table->s->table_category != TABLE_CATEGORY_TEMPORARY)
     {
@@ -6042,7 +6042,7 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
     while ((table= t++))
     {
       /*
-        Do simple optimization to prevent unnecessary re-generating 
+        Do simple optimization to prevent unnecessary re-generating
         values for virtual fields
       */
       if (table != prev_table)
@@ -6096,7 +6096,7 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
   Field *field;
   List<Table> tbl_list;
   bool abort_on_warning_saved= session->abort_on_warning;
-  
+
   tbl_list.empty();
   /*
     Reset the table->auto_increment_field_not_null as it is valid for
@@ -6117,8 +6117,8 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
     table= field->table;
     if (field == table->next_number_field)
       table->auto_increment_field_not_null= true;
-    if (field->vcol_info && 
-        value->type() != Item::DEFAULT_VALUE_ITEM && 
+    if (field->vcol_info &&
+        value->type() != Item::DEFAULT_VALUE_ITEM &&
         value->type() != Item::NULL_ITEM &&
         table->s->table_category != TABLE_CATEGORY_TEMPORARY)
     {
@@ -6142,7 +6142,7 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
     while ((table= t++))
     {
       /*
-        Do simple optimization to prevent unnecessary re-generating 
+        Do simple optimization to prevent unnecessary re-generating
         values for virtual fields
       */
       if (table != prev_table)
@@ -6229,7 +6229,7 @@ bool drizzle_rm_tmp_tables(void)
           So we hide error messages which happnes during deleting of these
           files(MYF(0)).
         */
-        my_delete(filePath, MYF(0)); 
+        my_delete(filePath, MYF(0));
       }
     }
     my_dirend(dirp);

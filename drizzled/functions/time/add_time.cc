@@ -51,11 +51,11 @@ void Item_func_add_time::fix_length_and_dec()
 
 /**
   ADDTIME(t,a) and SUBTIME(t,a) are time functions that calculate a
-  time/datetime value 
+  time/datetime value
 
   t: time_or_datetime_expression
   a: time_expression
-  
+
   Result: Time value or datetime value
 */
 
@@ -71,15 +71,15 @@ String *Item_func_add_time::val_str(String *str)
   null_value=0;
   if (is_date)                        // TIMESTAMP function
   {
-    if (get_arg0_date(&l_time1, TIME_FUZZY_DATE) || 
+    if (get_arg0_date(&l_time1, TIME_FUZZY_DATE) ||
         args[1]->get_time(&l_time2) ||
-        l_time1.time_type == DRIZZLE_TIMESTAMP_TIME || 
+        l_time1.time_type == DRIZZLE_TIMESTAMP_TIME ||
         l_time2.time_type != DRIZZLE_TIMESTAMP_TIME)
       goto null_date;
   }
   else                                // ADDTIME function
   {
-    if (args[0]->get_time(&l_time1) || 
+    if (args[0]->get_time(&l_time1) ||
         args[1]->get_time(&l_time2) ||
         l_time2.time_type == DRIZZLE_TIMESTAMP_DATETIME)
       goto null_date;
@@ -87,9 +87,9 @@ String *Item_func_add_time::val_str(String *str)
   }
   if (l_time1.neg != l_time2.neg)
     l_sign= -l_sign;
-  
+
   memset(&l_time3, 0, sizeof(l_time3));
-  
+
   l_time3.neg= calc_time_diff(&l_time1, &l_time2, -l_sign,
 			      &seconds, &microseconds);
 
@@ -117,7 +117,7 @@ String *Item_func_add_time::val_str(String *str)
       return str;
     goto null_date;
   }
-  
+
   l_time3.hour+= days*24;
   if (!make_datetime_with_warn(l_time1.second_part || l_time2.second_part ?
                                TIME_MICROSECOND : TIME_ONLY,

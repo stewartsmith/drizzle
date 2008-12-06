@@ -35,7 +35,7 @@
 /* all of these ripped from InnoDB code from MySQL 4.0.22 */
 #define UT_HASH_RANDOM_MASK     1463735687
 #define UT_HASH_RANDOM_MASK2    1653893711
-#define FIL_PAGE_LSN          16 
+#define FIL_PAGE_LSN          16
 #define FIL_PAGE_FILE_FLUSH_LSN 26
 #define FIL_PAGE_OFFSET     4
 #define FIL_PAGE_DATA       38

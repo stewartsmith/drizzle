@@ -748,7 +748,7 @@ static int decimal_shift(decimal_t *dec, int shift)
   beg= ROUND_UP(beg + 1) - 1;
   end= ROUND_UP(end) - 1;
   assert(new_point >= 0);
-  
+
   /* We don't want negative new_point below */
   if (new_point != 0)
     new_point= ROUND_UP(new_point) - 1;
@@ -962,9 +962,9 @@ int decimal2double(decimal_t *from, double *to)
 
   rc = decimal2string(from, strbuf, &len, 0, 0, 0);
   end= strbuf + len;
-  
+
   *to= my_strtod(strbuf, &end, &error);
-             
+
   return (rc != E_DEC_OK) ? rc : (error ? E_DEC_OVERFLOW : E_DEC_OK);
 }
 

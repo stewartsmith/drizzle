@@ -39,7 +39,7 @@
 # else
 #  include <time.h>
 # endif
-#endif  
+#endif
 
 
 #ifndef ETIME

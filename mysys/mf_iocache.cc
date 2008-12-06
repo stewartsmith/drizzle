@@ -450,7 +450,7 @@ int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
   /* pos_in_file always point on where info->buffer was read */
   pos_in_file=info->pos_in_file+ (size_t) (info->read_end - info->buffer);
 
-  /* 
+  /*
     Whenever a function which operates on IO_CACHE flushes/writes
     some part of the IO_CACHE to disk it will set the property
     "seek_not_done" to indicate this to other functions operating
@@ -458,7 +458,7 @@ int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
   */
   if (info->seek_not_done)
   {
-    if ((my_seek(info->file,pos_in_file,MY_SEEK_SET,MYF(0)) 
+    if ((my_seek(info->file,pos_in_file,MY_SEEK_SET,MYF(0))
         != MY_FILEPOS_ERROR))
     {
       /* No error, reset seek_not_done flag. */
@@ -1053,7 +1053,7 @@ static void copy_to_read_buffer(IO_CACHE *write_cache,
 
 /*
   Do sequential read from the SEQ_READ_APPEND cache.
-  
+
   We do this in three stages:
    - first read from info->buffer
    - then if there are still data to read, try the file descriptor
@@ -1309,7 +1309,7 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
       info->error=(int) (read_length+left_length);
       return 1;
     }
-    
+
     if (my_seek(info->file,next_pos_in_file,MY_SEEK_SET,MYF(0))
         == MY_FILEPOS_ERROR)
     {
@@ -1405,7 +1405,7 @@ int _my_b_get(IO_CACHE *info)
   return (int) (unsigned char) buff;
 }
 
-/* 
+/*
    Write a byte buffer to IO_CACHE and flush to disk
    if IO_CACHE is full.
 
@@ -1532,7 +1532,7 @@ int my_b_safe_write(IO_CACHE *info, const unsigned char *Buffer, size_t Count)
 {
   /*
     Sasha: We are not writing this with the ? operator to avoid hitting
-    a possible compiler bug. At least gcc 2.95 cannot deal with 
+    a possible compiler bug. At least gcc 2.95 cannot deal with
     several layers of ternary operators that evaluated comma(,) operator
     expressions inside - I do have a test case if somebody wants it
   */

@@ -23,7 +23,7 @@
 
 /**
   Returns the second in time_exp in the range of 0 - 59.
-*/                             
+*/
 int64_t Item_func_second::val_int()
 {
   assert(fixed == 1);

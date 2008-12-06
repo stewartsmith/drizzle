@@ -663,7 +663,7 @@ get_one_option(int optid,
       exit(1);
     }
     switch (method-1) {
-    case 0: 
+    case 0:
       method_conv= MI_STATS_METHOD_NULLS_EQUAL;
       break;
     case 1:
@@ -1191,7 +1191,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
       if (!(share->state.changed & STATE_NOT_SORTED_PAGES))
 	pos=my_stpcpy(pos,"sorted index pages,");
       pos[-1]=0;				/* Remove extra ',' */
-    }      
+    }
     printf("Status:              %s\n",buff);
     if (share->base.auto_key)
     {
@@ -1465,7 +1465,7 @@ static int mi_sort_records(MI_CHECK *param,
   fn_format(param->temp_filename,name,"", MI_NAME_DEXT,2+4+32);
   new_file=my_create(fn_format(param->temp_filename,
                                param->temp_filename,"",
-                               DATA_TMP_EXT,2+4),	 
+                               DATA_TMP_EXT,2+4),
                      0,param->tmpfile_createflag,
                      MYF(0));
   if (new_file < 0)

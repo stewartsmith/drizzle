@@ -27,9 +27,9 @@
   from the total number of hours, minutes, and seconds.
   Result: Time value
 */
-  
+
 String *Item_func_maketime::val_str(String *str)
-{ 
+{
   assert(fixed == 1);
   DRIZZLE_TIME ltime;
   bool overflow= 0;

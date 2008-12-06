@@ -41,16 +41,16 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
 {
   FILE *fd;
   char type[5];
-  /* 
-    if we are not creating, then we need to use my_access to make sure  
-    the file exists since Windows doesn't handle files like "com1.sym" 
-    very  well 
+  /*
+    if we are not creating, then we need to use my_access to make sure
+    the file exists since Windows doesn't handle files like "com1.sym"
+    very  well
   */
   {
     make_ftype(type,flags);
     fd = fopen(filename, type);
   }
-  
+
   if (fd != 0)
   {
     /*
@@ -115,7 +115,7 @@ int my_fclose(FILE *fd, myf MyFlags)
 
 
 
-/*   
+/*
   Make a fopen() typestring from a open() type bitmap
 
   SYNOPSIS
@@ -124,42 +124,42 @@ int my_fclose(FILE *fd, myf MyFlags)
     flag	Flag used by open()
 
   IMPLEMENTATION
-    This routine attempts to find the best possible match 
-    between  a numeric option and a string option that could be 
-    fed to fopen.  There is not a 1 to 1 mapping between the two.  
-  
+    This routine attempts to find the best possible match
+    between  a numeric option and a string option that could be
+    fed to fopen.  There is not a 1 to 1 mapping between the two.
+
   NOTE
     On Unix, O_RDONLY is usually 0
 
   MAPPING
-    r  == O_RDONLY   
-    w  == O_WRONLY|O_TRUNC|O_CREAT  
-    a  == O_WRONLY|O_APPEND|O_CREAT  
-    r+ == O_RDWR  
-    w+ == O_RDWR|O_TRUNC|O_CREAT  
+    r  == O_RDONLY
+    w  == O_WRONLY|O_TRUNC|O_CREAT
+    a  == O_WRONLY|O_APPEND|O_CREAT
+    r+ == O_RDWR
+    w+ == O_RDWR|O_TRUNC|O_CREAT
     a+ == O_RDWR|O_APPEND|O_CREAT
 */
 
 static void make_ftype(register char * to, register int flag)
 {
-  /* check some possible invalid combinations */  
+  /* check some possible invalid combinations */
   assert((flag & (O_TRUNC | O_APPEND)) != (O_TRUNC | O_APPEND));
   assert((flag & (O_WRONLY | O_RDWR)) != (O_WRONLY | O_RDWR));
 
-  if ((flag & (O_RDONLY|O_WRONLY)) == O_WRONLY)    
-    *to++= (flag & O_APPEND) ? 'a' : 'w';  
-  else if (flag & O_RDWR)          
+  if ((flag & (O_RDONLY|O_WRONLY)) == O_WRONLY)
+    *to++= (flag & O_APPEND) ? 'a' : 'w';
+  else if (flag & O_RDWR)
   {
-    /* Add '+' after theese */    
-    if (flag & (O_TRUNC | O_CREAT))      
-      *to++= 'w';    
-    else if (flag & O_APPEND)      
-      *to++= 'a';    
-    else      
+    /* Add '+' after theese */
+    if (flag & (O_TRUNC | O_CREAT))
+      *to++= 'w';
+    else if (flag & O_APPEND)
+      *to++= 'a';
+    else
       *to++= 'r';
-    *to++= '+';  
-  }  
-  else    
+    *to++= '+';
+  }
+  else
     *to++= 'r';
 
   *to='\0';

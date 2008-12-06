@@ -105,12 +105,12 @@ static int compare_bin(unsigned char *a, uint32_t a_length, unsigned char *b, ui
     next_flag	How keys should be compared
 		If bit SEARCH_FIND is not set the keys includes the row
 		position and this should also be compared
-    diff_pos    OUT Number of first keypart where values differ, counting 
+    diff_pos    OUT Number of first keypart where values differ, counting
                 from one.
     diff_pos[1] OUT  (b + diff_pos[1]) points to first value in tuple b
                       that is different from corresponding value in tuple a.
-  
-  EXAMPLES 
+
+  EXAMPLES
    Example1: if the function is called for tuples
      ('aaa','bbb') and ('eee','fff'), then
      diff_pos[0] = 1 (as 'aaa' != 'eee')

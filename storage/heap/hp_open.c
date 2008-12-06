@@ -21,7 +21,7 @@
 
 /*
   Open heap table based on HP_SHARE structure
-  
+
   NOTE
     This doesn't register the table in the open table list.
 */
@@ -36,7 +36,7 @@ HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
   {
     return(0);
   }
-  share->open_count++; 
+  share->open_count++;
   thr_lock_data_init(&share->lock,&info->lock,NULL);
   info->s= share;
   info->lastkey= (unsigned char*) (info + 1);

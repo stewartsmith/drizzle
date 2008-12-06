@@ -33,7 +33,7 @@ void Item_func_round::fix_length_and_dec()
   int      decimals_to_set;
   int64_t val1;
   bool     val1_unsigned;
-  
+
   unsigned_flag= args[0]->unsigned_flag;
   if (!args[1]->const_item())
   {
@@ -63,7 +63,7 @@ void Item_func_round::fix_length_and_dec()
     hybrid_type= REAL_RESULT;
     return;
   }
-  
+
   switch (args[0]->result_type()) {
   case REAL_RESULT:
   case STRING_RESULT:
@@ -169,12 +169,12 @@ int64_t Item_func_round::int_op()
 
   abs_dec= -dec;
   int64_t tmp;
-  
+
   if(abs_dec >= array_elements(log_10_int))
     return 0;
-  
+
   tmp= log_10_int[abs_dec];
-  
+
   if (truncate)
     value= (unsigned_flag) ?
       ((uint64_t) value / tmp) * tmp : (value / tmp) * tmp;
@@ -194,10 +194,10 @@ my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
     dec= cmin(dec, (int64_t) decimals);
   else if (dec < INT_MIN)
     dec= INT_MIN;
-    
+
   if (!(null_value= (args[0]->null_value || args[1]->null_value ||
                      my_decimal_round(E_DEC_FATAL_ERROR, value, (int) dec,
-                                      truncate, decimal_value) > 1))) 
+                                      truncate, decimal_value) > 1)))
   {
     decimal_value->frac= decimals;
     return decimal_value;

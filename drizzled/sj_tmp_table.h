@@ -61,10 +61,10 @@ public:
   MI_COLUMNDEF *recinfo;
 
   /* Pointer to next table (next->start_idx > this->end_idx) */
-  SJ_TMP_TABLE *next; 
+  SJ_TMP_TABLE *next;
 };
 
-Table *create_duplicate_weedout_tmp_table(Session *session, 
+Table *create_duplicate_weedout_tmp_table(Session *session,
 					  uint32_t uniq_tuple_length_arg,
 					  SJ_TMP_TABLE *sjtbl);
 

@@ -48,11 +48,11 @@
            hash_stage2=sha1(hash_stage1)
            reply=xor(hash_stage1, sha1(public_seed,hash_stage2)
 
-           // this three steps are done in scramble() 
+           // this three steps are done in scramble()
 
            send(reply)
 
-     
+
   SERVER:  recv(reply)
            hash_stage1=xor(reply, sha1(public_seed,hash_stage2))
            candidate_hash2=sha1(hash_stage1)
@@ -107,7 +107,7 @@ double my_rnd(struct rand_struct *rand_st)
 
 
 /*
-    Generate binary hash from raw text string 
+    Generate binary hash from raw text string
     Used for Pre-4.1 password handling
   SYNOPSIS
     hash_password()
@@ -182,7 +182,7 @@ char *octet2hex(char *to, const char *str, uint32_t len)
 {
   static const char _dig_vec_upper[]= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-  const char *str_end= str + len; 
+  const char *str_end= str + len;
   for (; str != str_end; ++str)
   {
     *to++= _dig_vec_upper[((unsigned char) *str) >> 4];

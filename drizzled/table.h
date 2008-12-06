@@ -116,7 +116,7 @@ typedef struct st_table_share
   uint32_t   version, mysql_version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
-  uint32_t   stored_rec_length;         /* Stored record length 
+  uint32_t   stored_rec_length;         /* Stored record length
                                            (no generated-only virtual fields) */
 
   plugin_ref db_plugin;			/* storage engine plugin */
@@ -136,7 +136,7 @@ typedef struct st_table_share
   uint32_t key_block_size;			/* create key_block_size, if used */
   uint32_t null_bytes, last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
-  uint32_t stored_fields;                   /* Number of stored fields 
+  uint32_t stored_fields;                   /* Number of stored fields
                                            (i.e. without generated-only ones) */
   uint32_t rec_buff_length;                 /* Size of table->record[] buffer */
   uint32_t keys, key_parts;
@@ -251,7 +251,7 @@ typedef struct st_table_field_w_type
 
 bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF *start_recinfo,
-                             MI_COLUMNDEF **recinfo, 
+                             MI_COLUMNDEF **recinfo,
                              int error, bool ignore_last_dupp_key_error);
 
 class Table {
@@ -275,16 +275,16 @@ public:
   inline bool isNullFieldFirst() { return s->null_field_first; }
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; }		/* Portable row format */
   inline bool isCrashed() { return s->crashed; }
-  inline bool isNameLock() { return s->name_lock; } 
+  inline bool isNameLock() { return s->name_lock; }
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
   inline bool isWaitingOnCondition() { return s->waiting_on_cond; }                 /* Protection against free */
 
   /* For TMP tables, should be pulled out as a class */
   void updateCreateInfo(HA_CREATE_INFO *create_info);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
-  bool create_myisam_tmp_table(KEY *keyinfo, 
+  bool create_myisam_tmp_table(KEY *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
-                               MI_COLUMNDEF **recinfo, 
+                               MI_COLUMNDEF **recinfo,
                                uint64_t options);
   void free_tmp_table(Session *session);
   bool open_tmp_table();
@@ -310,8 +310,8 @@ public:
   unsigned char *write_row_record;		/* Used as optimisation in
 					   Session::write_row */
   unsigned char *insert_values;                  /* used by INSERT ... UPDATE */
-  /* 
-    Map of keys that can be used to retrieve all data from this table 
+  /*
+    Map of keys that can be used to retrieve all data from this table
     needed by the query without reading the row.
   */
   key_map covering_keys;
@@ -320,9 +320,9 @@ public:
     A set of keys that can be used in the query that references this
     table.
 
-    All indexes disabled on the table's TABLE_SHARE (see Table::s) will be 
+    All indexes disabled on the table's TABLE_SHARE (see Table::s) will be
     subtracted from this set upon instantiation. Thus for any Table t it holds
-    that t.keys_in_use_for_query is a subset of t.s.keys_in_use. Generally we 
+    that t.keys_in_use_for_query is a subset of t.s.keys_in_use. Generally we
     must not introduce any new keys here (see setup_tables).
 
     The set is implemented as a bitmap.
@@ -366,7 +366,7 @@ public:
   */
   query_id_t	query_id;
 
-  /* 
+  /*
     For each key that has quick_keys.is_set(key) == true: estimate of #records
     and max #key parts that range access would use.
   */
@@ -378,12 +378,12 @@ public:
   uint		quick_key_parts[MAX_KEY];
   uint		quick_n_ranges[MAX_KEY];
 
-  /* 
+  /*
     Estimate of number of records that satisfy SARGable part of the table
     condition, or table->file->records if no SARGable condition could be
     constructed.
     This value is used by join optimizer as an estimate of number of records
-    that will pass the table condition (condition that depends on fields of 
+    that will pass the table condition (condition that depends on fields of
     this table and constants)
   */
   ha_rows       quick_condition_rows;
@@ -422,7 +422,7 @@ public:
   bool maybe_null;
 
   /*
-    If true, the current table row is considered to have all columns set to 
+    If true, the current table row is considered to have all columns set to
     NULL, including columns declared as "not null" (see maybe_null).
   */
   bool null_row;
@@ -537,8 +537,8 @@ typedef struct st_foreign_key_info
 
 typedef struct st_field_info
 {
-  /** 
-      This is used as column name. 
+  /**
+      This is used as column name.
   */
   const char* field_name;
   /**
@@ -586,7 +586,7 @@ struct ST_SCHEMA_TABLE
   int (*old_format) (Session *session, struct ST_SCHEMA_TABLE *schema_table);
   int (*process_table) (Session *session, TableList *tables, Table *table,
                         bool res, LEX_STRING *db_name, LEX_STRING *table_name);
-  int idx_field1, idx_field2; 
+  int idx_field1, idx_field2;
   bool hidden;
   uint32_t i_s_requested_object;  /* the object we need to open(Table | VIEW) */
 };

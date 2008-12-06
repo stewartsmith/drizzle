@@ -36,7 +36,7 @@
 /* Sun Studio does not inject this into main namespace yet */
 #if defined(__cplusplus)
   using std::FILE;
-#endif 
+#endif
 
 #define MY_INIT(name);		{ my_progname= name; my_init(); }
 
@@ -321,7 +321,7 @@ typedef int (*qsort2_cmp)(const void *, const void *, const void *);
 #define my_b_tell(info) ((info)->pos_in_file + \
 			 (size_t) (*(info)->current_pos - (info)->request_pos))
 
-#define my_b_get_buffer_start(info) (info)->request_pos 
+#define my_b_get_buffer_start(info) (info)->request_pos
 #define my_b_get_bytes_in_buffer(info) (char*) (info)->read_end -   \
   (char*) my_b_get_buffer_start(info)
 #define my_b_get_pos_in_file(info) (info)->pos_in_file
@@ -493,7 +493,7 @@ File create_temp_file(char *to, const char *dir, const char *pfx,
 #define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
 #define my_init_dynamic_array2_ci(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
 extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
-                                   void *init_buffer, uint32_t init_alloc, 
+                                   void *init_buffer, uint32_t init_alloc,
                                    uint32_t alloc_increment);
 /* init_dynamic_array() function is deprecated */
 extern bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,

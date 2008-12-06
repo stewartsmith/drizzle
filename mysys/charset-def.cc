@@ -79,6 +79,6 @@ bool init_compiled_charsets(myf)
   /* Copy compiled charsets */
   for (cs=compiled_charsets; cs->name; cs++)
     add_compiled_collation(cs);
-  
+
   return false;
 }

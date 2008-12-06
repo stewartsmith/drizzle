@@ -107,7 +107,7 @@ enum sub_select_type
   EXCEPT_TYPE, GLOBAL_OPTIONS_TYPE, DERIVED_TABLE_TYPE, OLAP_TYPE
 };
 
-enum olap_type 
+enum olap_type
 {
   UNSPECIFIED_OLAP_TYPE, CUBE_TYPE, ROLLUP_TYPE
 };
@@ -117,7 +117,7 @@ enum tablespace_op_type
   NO_TABLESPACE_OP, DISCARD_TABLESPACE, IMPORT_TABLESPACE
 };
 
-/* 
+/*
   String names used to print a statement with index hints.
   Keep in sync with index_hint_type.
 */
@@ -143,10 +143,10 @@ public:
   enum index_hint_type type;
   /* Where the hit applies to. A bitmask of INDEX_HINT_MASK_<place> values */
   index_clause_map clause;
-  /* 
-    The index name. Empty (str=NULL) name represents an empty list 
-    USE INDEX () clause 
-  */ 
+  /*
+    The index name. Empty (str=NULL) name represents an empty list
+    USE INDEX () clause
+  */
   LEX_STRING key_name;
 
   Index_hint (enum index_hint_type type_arg, index_clause_map clause_arg,
@@ -158,11 +158,11 @@ public:
   }
 
   void print(Session *session, String *str);
-}; 
+};
 
-/* 
-  The state of the lex parsing for selects 
-   
+/*
+  The state of the lex parsing for selects
+
    master and slaves are pointers to select_lex.
    master is pointer to upper level node.
    slave is pointer to lower level node
@@ -274,8 +274,8 @@ public:
 
 */
 
-/* 
-    Base class for st_select_lex (SELECT_LEX) & 
+/*
+    Base class for st_select_lex (SELECT_LEX) &
     st_select_lex_unit (SELECT_LEX_UNIT)
 */
 class LEX;
@@ -350,8 +350,8 @@ private:
 };
 typedef class st_select_lex_node SELECT_LEX_NODE;
 
-/* 
-   SELECT_LEX_UNIT - unit of selects (UNION, INTERSECT, ...) group 
+/*
+   SELECT_LEX_UNIT - unit of selects (UNION, INTERSECT, ...) group
    SELECT_LEXs
 */
 class Session;
@@ -378,7 +378,7 @@ public:
   List<Item> item_list;
   /*
     list of types of items inside union (used for union & derived tables)
-    
+
     Item_type_holders from which this list consist may have pointers to Field,
     pointers is valid only after preparing SELECTS of this unit and before
     any SELECT of this unit execution
@@ -440,7 +440,7 @@ public:
                      select_result_interceptor *old_result);
   void set_limit(st_select_lex *values);
   void set_session(Session *session_arg) { session= session_arg; }
-  inline bool is_union (); 
+  inline bool is_union ();
 
   friend void lex_start(Session *session);
   friend int subselect_union_engine::exec();
@@ -470,8 +470,8 @@ public:
   List<Item>          item_list;  /* list of fields & expressions */
   List<String>        interval_list;
   bool	              is_item_list_lookup;
-  /* 
-    Despite their names, the following are used in unions. This should 
+  /*
+    Despite their names, the following are used in unions. This should
     be rewritten. -Brian
   */
   List<Item_real_func> *ftfunc_list;
@@ -503,7 +503,7 @@ public:
   uint32_t select_n_having_items;
   uint32_t cond_count;    /* number of arguments of and/or/xor in where/having/on */
   uint32_t between_count; /* number of between predicates in where/having/on      */
-  uint32_t max_equal_elems; /* maximal number of elements in multiple equalities  */   
+  uint32_t max_equal_elems; /* maximal number of elements in multiple equalities  */
   /*
     Number of fields used in select list or where clause of current select
     and all inner subselects.
@@ -516,7 +516,7 @@ public:
   uint32_t in_sum_expr;
   uint32_t select_number; /* number of select (used for EXPLAIN) */
   int nest_level;     /* nesting level of select */
-  Item_sum *inner_sum_func_list; /* list of sum func in nested selects */ 
+  Item_sum *inner_sum_func_list; /* list of sum func in nested selects */
   uint32_t with_wild; /* item list contain '*' */
   bool  braces;   	/* SELECT ... UNION (SELECT ... ) <- this braces */
   /* true when having fix field called in processing of this SELECT */
@@ -545,7 +545,7 @@ public:
   int cur_pos_in_select_list;
 
   List<udf_func>     udf_list;                  /* udf function calls stack */
-  /* 
+  /*
     This is a copy of the original JOIN USING list that comes from
     the parser. The parser :
       1. Sets the natural_join of the second TableList in the join
@@ -572,13 +572,13 @@ public:
   void init_query();
   void init_select();
   st_select_lex_unit* master_unit();
-  st_select_lex_unit* first_inner_unit() 
-  { 
-    return (st_select_lex_unit*) slave; 
+  st_select_lex_unit* first_inner_unit()
+  {
+    return (st_select_lex_unit*) slave;
   }
   st_select_lex* outer_select();
   st_select_lex* next_select() { return (st_select_lex*) next; }
-  st_select_lex* next_select_in_list() 
+  st_select_lex* next_select_in_list()
   {
     return (st_select_lex*) link_next;
   }
@@ -657,16 +657,16 @@ public:
 
   void set_index_hint_type(enum index_hint_type type, index_clause_map clause);
 
-  /* 
+  /*
    Add a index hint to the tagged list of hints. The type and clause of the
-   hint will be the current ones (set by set_index_hint()) 
+   hint will be the current ones (set by set_index_hint())
   */
   bool add_index_hint (Session *session, char *str, uint32_t length);
 
   /* make a list to hold index hints */
   void alloc_index_hints (Session *session);
   /* read and clear the index hints */
-  List<Index_hint>* pop_index_hints(void) 
+  List<Index_hint>* pop_index_hints(void)
   {
     List<Index_hint> *hints= index_hints;
     index_hints= NULL;
@@ -675,7 +675,7 @@ public:
 
   void clear_index_hints(void) { index_hints= NULL; }
 
-private:  
+private:
   /* current index hint kind. used in filling up index_hints */
   enum index_hint_type current_index_hint_type;
   index_clause_map current_index_hint_clause;
@@ -685,8 +685,8 @@ private:
 typedef class st_select_lex SELECT_LEX;
 
 inline bool st_select_lex_unit::is_union ()
-{ 
-  return first_select()->next_select() && 
+{
+  return first_select()->next_select() &&
     first_select()->next_select()->linkage == UNION_TYPE;
 }
 
@@ -1260,7 +1260,7 @@ public:
 
 class LEX : public Query_tables_list
 {
-public: 
+public:
   SELECT_LEX_UNIT unit;                         /* most upper unit */
   SELECT_LEX select_lex;                        /* first SELECT_LEX */
   /* current SELECT_LEX in parsing */
@@ -1343,10 +1343,10 @@ public:
   */
   bool expr_allows_subselect;
   /*
-    A special command "PARSE_VCOL_EXPR" is defined for the parser 
+    A special command "PARSE_VCOL_EXPR" is defined for the parser
     to translate an expression statement of a virtual column \
     (stored in the *.frm file as a string) into an Item object.
-    The following flag is used to prevent other applications to use 
+    The following flag is used to prevent other applications to use
     this command.
   */
   bool parse_vcol_expr;
@@ -1398,15 +1398,15 @@ public:
   */
   const char *fname_start;
   const char *fname_end;
-  
+
   /**
-    During name resolution search only in the table list given by 
+    During name resolution search only in the table list given by
     Name_resolution_context::first_name_resolution_table and
     Name_resolution_context::last_name_resolution_table
-    (see Item_field::fix_fields()). 
+    (see Item_field::fix_fields()).
   */
   bool use_only_table_context;
-  
+
   bool escape_used;
   bool is_lex_started; /* If lex_start() did run. For debugging. */
 
@@ -1454,17 +1454,17 @@ public:
   /**
     @brief check if the statement is a single-level join
     @return result of the check
-      @retval true  The statement doesn't contain subqueries, unions and 
+      @retval true  The statement doesn't contain subqueries, unions and
                     stored procedure calls.
       @retval false There are subqueries, UNIONs or stored procedure calls.
   */
-  bool is_single_level_stmt() 
-  { 
-    /* 
+  bool is_single_level_stmt()
+  {
+    /*
       This check exploits the fact that the last added to all_select_list is
-      on its top. So select_lex (as the first added) will be at the tail 
+      on its top. So select_lex (as the first added) will be at the tail
       of the list.
-    */ 
+    */
     if (&select_lex == all_selects_list)
     {
       assert(!all_selects_list->next_select_in_list());

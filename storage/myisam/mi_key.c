@@ -464,14 +464,14 @@ int _mi_read_key_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
     mi_check_index_cond()
       info    MyISAM handler
       keynr   Index we're running a scan on
-      record  Record buffer to use (it is assumed that index check function 
+      record  Record buffer to use (it is assumed that index check function
               will look for column values there)
 
   RETURN
-    -1  Error 
+    -1  Error
     0   Index condition is not satisfied, continue scanning
     1   Index condition is satisfied
-    2   Index condition is not satisfied, end the scan. 
+    2   Index condition is not satisfied, end the scan.
 */
 
 int mi_check_index_cond(register MI_INFO *info, uint32_t keynr, unsigned char *record)

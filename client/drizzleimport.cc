@@ -467,7 +467,7 @@ static char *field_escape(char *to,const char *from,uint length)
   }
   /* Add missing backslashes if user has specified odd number of backs.*/
   if (end_backslashes)
-    *to++= '\\';         
+    *to++= '\\';
   return to;
 }
 

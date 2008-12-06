@@ -34,7 +34,7 @@
 # else
 #  include <time.h>
 # endif
-#endif 
+#endif
 
 uint64_t my_getsystime()
 {

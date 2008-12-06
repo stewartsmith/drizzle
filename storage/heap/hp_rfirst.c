@@ -23,7 +23,7 @@ int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
 {
   HP_SHARE *share = info->s;
   HP_KEYDEF *keyinfo = share->keydef + inx;
-  
+
   info->lastinx= inx;
   if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
   {
@@ -32,7 +32,7 @@ int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
     if ((pos = tree_search_edge(&keyinfo->rb_tree, info->parents,
                                 &info->last_pos, offsetof(TREE_ELEMENT, left))))
     {
-      memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos), 
+      memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos),
 	     sizeof(unsigned char*));
       info->current_ptr = pos;
       hp_extract_record(share, record, pos);

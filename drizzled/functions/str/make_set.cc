@@ -45,7 +45,7 @@ void Item_func_make_set::fix_length_and_dec()
 
   if (agg_arg_charsets(collation, args, arg_count, MY_COLL_ALLOW_CONV, 1))
     return;
-  
+
   for (uint32_t i=0 ; i < arg_count ; i++)
     max_length+=args[i]->max_length;
 

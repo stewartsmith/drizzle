@@ -27,8 +27,8 @@
   @file
 */
 
-/** 
-   Some of defines are need in parser even though replication is not 
+/**
+   Some of defines are need in parser even though replication is not
    compiled in (embedded).
 */
 
@@ -54,11 +54,11 @@ class Master_info;
     I/O Thread - One of these threads is started for each master server.
                  They maintain a connection to their master server, read log
                  events from the master as they arrive, and queues them into
-                 a single, shared relay log file.  A Master_info 
+                 a single, shared relay log file.  A Master_info
                  represents each of these threads.
 
     SQL Thread - One of these threads is started and reads from the relay log
-                 file, executing each event.  A Relay_log_info 
+                 file, executing each event.  A Relay_log_info
                  represents this thread.
 
   Buffering in the relay log file makes it unnecessary to reread events from
@@ -93,7 +93,7 @@ class Master_info;
 
   In Relay_log_info: run_lock, data_lock
   see Master_info
-  
+
   Order of acquisition: if you want to have LOCK_active_mi and a run_lock, you
   must acquire LOCK_active_mi first.
 
@@ -213,7 +213,7 @@ extern char *report_host, *report_password;
 extern bool master_ssl;
 extern char *master_ssl_ca, *master_ssl_capath, *master_ssl_cert;
 extern char *master_ssl_cipher, *master_ssl_key;
-       
+
 extern I_List<Session> threads;
 
 

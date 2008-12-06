@@ -42,7 +42,7 @@ static uint32_t const days_at_timestart=719528;	/* daynr at 1970.01.01 */
 unsigned char days_in_month[]= {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 
 /*
-  Offset of system time zone from UTC in seconds used to speed up 
+  Offset of system time zone from UTC in seconds used to speed up
   work of my_system_gmt_sec() function.
 */
 static long my_time_zone=0;
@@ -588,7 +588,7 @@ fractional:
   }
   else
     date[4]=0;
-    
+
   /* Check for exponent part: E<gigit> | E<sign><digit> */
   /* (may occur as result of %g formatting of time value) */
   if ((end - str) > 1 &&
@@ -621,7 +621,7 @@ fractional:
       date[2] > UINT_MAX || date[3] > UINT_MAX ||
       date[4] > UINT_MAX)
     return 1;
-  
+
   l_time->year=         0;                      /* For protocol::store_time */
   l_time->month=        0;
   l_time->day=          date[0];
@@ -634,7 +634,7 @@ fractional:
   /* Check if the value is valid and fits into DRIZZLE_TIME range */
   if (check_time_range(l_time, warning))
     return 1;
-  
+
   /* Check if there is garbage at end of the DRIZZLE_TIME specification */
   if (str != end)
   {
@@ -669,7 +669,7 @@ fractional:
     1        time value is invalid
 */
 
-int check_time_range(DRIZZLE_TIME *my_time, int *warning) 
+int check_time_range(DRIZZLE_TIME *my_time, int *warning)
 {
   int64_t hour;
 
@@ -782,9 +782,9 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
       in_dst_time_gap - set to true if time falls into spring time-gap
 
   NOTES
-    The idea is to cache the time zone offset from UTC (including daylight 
-    saving time) for the next call to make things faster. But currently we 
-    just calculate this offset during startup (by calling init_time() 
+    The idea is to cache the time zone offset from UTC (including daylight
+    saving time) for the next call to make things faster. But currently we
+    just calculate this offset during startup (by calling init_time()
     function) and use it all the time.
     Time value provided should be legal time value (e.g. '2003-01-01 25:00:00'
     is not allowed).

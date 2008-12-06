@@ -22,7 +22,7 @@
 
 bool get_interval_value(Item *args,
                         interval_type int_type,
-                        String *str_value, 
+                        String *str_value,
                         INTERVAL *interval);
 
 #endif /* DRIZZLED_FUNCTIONS_TIME_GET_INTERVAL_VALUE_H */

@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
       new_auto_increment_value= reader_handle.auto_increment + 1;
     }
 
-    if (!(ret= azopen(&writer_handle, argv[0], O_CREAT|O_RDWR, 
+    if (!(ret= azopen(&writer_handle, argv[0], O_CREAT|O_RDWR,
                       AZ_METHOD_BLOCK)))
     {
       printf("Could not open file for update: %s\n", argv[0]);
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
       char *comment =
         (char *) malloc(sizeof(char) * reader_handle.comment_length);
       azread_comment(&reader_handle, comment);
-      printf("\tComment length %u\n\t\t%.*s\n", reader_handle.comment_length, 
+      printf("\tComment length %u\n\t\t%.*s\n", reader_handle.comment_length,
              reader_handle.comment_length, comment);
       free(comment);
     }

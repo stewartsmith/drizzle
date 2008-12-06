@@ -3593,7 +3593,7 @@ lock_table_remove_low(
 
 		/* The locks must be freed in the reverse order from
 		the one in which they were acquired. This is to avoid
-		traversing the AUTOINC lock vector unnecessarily. 
+		traversing the AUTOINC lock vector unnecessarily.
 
 		We only store locks that were granted in the
 		trx->autoinc_locks vector (see lock_table_create()

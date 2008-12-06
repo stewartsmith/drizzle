@@ -28,7 +28,7 @@
   SYNOPSIS
     mi_preload()
       info          open table
-      map           map of indexes to preload into key cache 
+      map           map of indexes to preload into key cache
       ignore_leaves only non-leaves pages are to be preloaded
 
   RETURN VALUE

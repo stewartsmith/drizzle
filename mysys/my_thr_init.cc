@@ -34,7 +34,7 @@
 # else
 #  include <time.h>
 # endif
-#endif  
+#endif
 
 uint32_t thd_lib_detected= 0;
 
@@ -45,8 +45,8 @@ pthread_key_t THR_KEY_mysys;
 #endif /* USE_TLS */
 pthread_mutex_t THR_LOCK_open;
 pthread_mutex_t THR_LOCK_lock;
-pthread_mutex_t THR_LOCK_charset; 
-pthread_mutex_t THR_LOCK_threads; 
+pthread_mutex_t THR_LOCK_charset;
+pthread_mutex_t THR_LOCK_threads;
 pthread_mutex_t THR_LOCK_time;
 pthread_cond_t  THR_COND_threads;
 uint32_t            THR_thread_count= 0;
@@ -214,14 +214,14 @@ bool my_thread_init(void)
 #ifdef EXTRA_DEBUG_THREADS
   fprintf(stderr,"my_thread_init(): thread_id: 0x%lx\n",
           (uint32_t) pthread_self());
-#endif  
+#endif
 
   if (pthread_getspecific(THR_KEY_mysys))
   {
 #ifdef EXTRA_DEBUG_THREADS
     fprintf(stderr,"my_thread_init() called more than once in thread 0x%lx\n",
             (long) pthread_self());
-#endif    
+#endif
     goto end;
   }
   if (!(tmp= (struct st_my_thread_var *) calloc(1, sizeof(*tmp))))
@@ -265,7 +265,7 @@ void my_thread_end(void)
 #ifdef EXTRA_DEBUG_THREADS
   fprintf(stderr,"my_thread_end(): tmp: 0x%lx  pthread_self: 0x%lx  thread_id: %ld\n",
 	  (long) tmp, (long) pthread_self(), tmp ? (long) tmp->id : 0L);
-#endif  
+#endif
   if (tmp && tmp->init)
   {
 #if !defined(__bsdi__) && !defined(__OpenBSD__)
@@ -283,7 +283,7 @@ void my_thread_end(void)
       Decrement counter for number of running threads. We are using this
       in my_thread_global_end() to wait until all threads have called
       my_thread_end and thus freed all memory they have allocated in
-      my_thread_init() 
+      my_thread_init()
     */
     pthread_mutex_lock(&THR_LOCK_threads);
     assert(THR_thread_count != 0);
@@ -325,7 +325,7 @@ static uint32_t get_thread_lib(void)
 {
 #ifdef _CS_GNU_LIBPTHREAD_VERSION
   char buff[64];
-    
+
   confstr(_CS_GNU_LIBPTHREAD_VERSION, buff, sizeof(buff));
 
   if (!strncasecmp(buff, "NPTL", 4))

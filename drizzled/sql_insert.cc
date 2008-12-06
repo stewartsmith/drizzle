@@ -258,7 +258,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   Name_resolution_context_state ctx_state;
   thr_lock_type lock_type;
   Item *unused_conds= 0;
-  
+
 
   /*
     Upgrade lock type if the requested lock is incompatible with
@@ -334,7 +334,7 @@ bool mysql_insert(Session *session,TableList *table_list,
       goto abort;
   }
   its.rewind ();
- 
+
   /* Restore the current context. */
   ctx_state.restore_state(context, table_list);
 
@@ -488,7 +488,7 @@ bool mysql_insert(Session *session,TableList *table_list,
 	A query which per-row-loop can not be interrupted with
 	KILLED, like INSERT, and that does not invoke stored
 	routines can be binlogged with neglecting the KILLED error.
-        
+
 	If there was no error (error == zero) until after the end of
 	inserting loop the KILLED flag that appeared later can be
 	disregarded since previously possible invocation of stored
@@ -508,7 +508,7 @@ bool mysql_insert(Session *session,TableList *table_list,
       if (session->transaction.stmt.modified_non_trans_table)
 	session->transaction.all.modified_non_trans_table= true;
     }
-    assert(transactional_table || !changed || 
+    assert(transactional_table || !changed ||
                 session->transaction.stmt.modified_non_trans_table);
 
   }
@@ -594,7 +594,7 @@ static bool mysql_prepare_insert_check_table(Session *session, TableList *table_
                                              List<Item> &fields __attribute__((unused)),
                                              bool select_insert)
 {
-  
+
 
   /*
      first table in list is the one we'll INSERT into, requires INSERT_ACL.
@@ -622,12 +622,12 @@ static bool mysql_prepare_insert_check_table(Session *session, TableList *table_
     session			Thread handler
     table_list	        Global/local table list
     table		Table to insert into (can be NULL if table should
-			be taken from table_list->table)    
+			be taken from table_list->table)
     where		Where clause (for insert ... select)
     select_insert	true if INSERT ... SELECT statement
-    check_fields        true if need to check that all INSERT fields are 
+    check_fields        true if need to check that all INSERT fields are
                         given values.
-    abort_on_warning    whether to report if some INSERT field is not 
+    abort_on_warning    whether to report if some INSERT field is not
                         assigned as an error (true) or as a warning (false).
 
   TODO (in far future)
@@ -639,7 +639,7 @@ static bool mysql_prepare_insert_check_table(Session *session, TableList *table_
   WARNING
     You MUST set table->insert_values to 0 after calling this function
     before releasing the table object.
-  
+
   RETURN VALUE
     false OK
     true  error
@@ -659,7 +659,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
   bool insert_into_view= (0 != 0);
   bool res= 0;
   table_map map= 0;
-  
+
   /* INSERT should have a SELECT or VALUES clause */
   assert (!select_insert || !values);
 
@@ -718,8 +718,8 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
     {
       bool saved_abort_on_warning= session->abort_on_warning;
       session->abort_on_warning= abort_on_warning;
-      res= check_that_all_fields_are_given_values(session, 
-                                                  table ? table : 
+      res= check_that_all_fields_are_given_values(session,
+                                                  table ? table :
                                                   context->table_list->table,
                                                   context->table_list);
       session->abort_on_warning= saved_abort_on_warning;
@@ -803,7 +803,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
   MY_BITMAP *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->file->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
-  
+
 
   info->records++;
   save_read_set=  table->read_set;
@@ -953,7 +953,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 	  an INSERT or DELETE(s) + INSERT; FOREIGN KEY checks in
 	  InnoDB do not function in the defined way if we allow MySQL
 	  to convert the latter operation internally to an UPDATE.
-          We also should not perform this conversion if we have 
+          We also should not perform this conversion if we have
           timestamp field with ON UPDATE which is different from DEFAULT.
           Another case when conversion should not be performed is when
           we have ON DELETE trigger on table so user may notice that
@@ -1028,7 +1028,7 @@ err:
   if (session->lex->current_select)
     session->lex->current_select->no_error= 0;        // Give error
   table->file->print_error(error,MYF(0));
-  
+
 before_err:
   table->file->restore_auto_increment(prev_insert_id);
   if (key)
@@ -1093,12 +1093,12 @@ bool mysql_insert_select_prepare(Session *session)
 {
   LEX *lex= session->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
-  
+
   /*
     SELECT_LEX do not belong to INSERT statement, so we can't add WHERE
     clause if table is VIEW
   */
-  
+
   if (mysql_prepare_insert(session, lex->query_tables,
                            lex->query_tables->table, lex->field_list, 0,
                            lex->update_list, lex->value_list,
@@ -1143,7 +1143,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   int res;
   table_map map= 0;
   SELECT_LEX *lex_current_select_save= lex->current_select;
-  
+
 
   unit= u;
 
@@ -1161,7 +1161,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   {
     bool saved_abort_on_warning= session->abort_on_warning;
     session->abort_on_warning= !info.ignore;
-    res= check_that_all_fields_are_given_values(session, table_list->table, 
+    res= check_that_all_fields_are_given_values(session, table_list->table,
                                                 table_list);
     session->abort_on_warning= saved_abort_on_warning;
   }
@@ -1181,7 +1181,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     res= res || check_update_fields(session, context->table_list,
                                     *info.update_fields, &map);
     /*
-      When we are not using GROUP BY and there are no ungrouped aggregate functions 
+      When we are not using GROUP BY and there are no ungrouped aggregate functions
       we can refer to other tables in the ON DUPLICATE KEY part.
       We use next_name_resolution_table descructively, so check it first (views?)
     */
@@ -1192,8 +1192,8 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
         We must make a single context out of the two separate name resolution contexts :
         the INSERT table and the tables in the SELECT part of INSERT ... SELECT.
         To do that we must concatenate the two lists
-      */  
-      table_list->next_name_resolution_table= 
+      */
+      table_list->next_name_resolution_table=
         ctx_state.get_first_name_resolution_table();
 
     res= res || setup_fields(session, 0, *info.update_values,
@@ -1242,8 +1242,8 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   else if (!(lex->current_select->options & OPTION_BUFFER_RESULT))
   {
     /*
-      We must not yet prepare the result table if it is the same as one of the 
-      source tables (INSERT SELECT). The preparation may disable 
+      We must not yet prepare the result table if it is the same as one of the
+      source tables (INSERT SELECT). The preparation may disable
       indexes on the result table, which may be used during the select, if it
       is the same table (Bug #6034). Do the preparation after the select phase
       in select_insert::prepare2().
@@ -1287,14 +1287,14 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     If the result table is the same as one of the source tables (INSERT SELECT),
     the result table is not finally prepared at the join prepair phase.
     Do the final preparation now.
-		       
+
   RETURN
     0   OK
 */
 
 int select_insert::prepare2(void)
 {
-  
+
   if (session->lex->current_select->options & OPTION_BUFFER_RESULT)
     table->file->ha_start_bulk_insert((ha_rows) 0);
   return(0);
@@ -1309,7 +1309,7 @@ void select_insert::cleanup()
 
 select_insert::~select_insert()
 {
-  
+
   if (table)
   {
     table->next_number_field=0;
@@ -1324,7 +1324,7 @@ select_insert::~select_insert()
 
 bool select_insert::send_data(List<Item> &values)
 {
-  
+
   bool error=0;
 
   if (unit->offset_limit_cnt)
@@ -1340,7 +1340,7 @@ bool select_insert::send_data(List<Item> &values)
     return(1);
 
   error= write_record(session, table, &info);
-    
+
   if (!error)
   {
     if (info.handle_duplicates == DUP_UPDATE)
@@ -1348,7 +1348,7 @@ bool select_insert::send_data(List<Item> &values)
       /*
         Restore fields of the record since it is possible that they were
         changed by ON DUPLICATE KEY UPDATE clause.
-    
+
         If triggers exist then whey can modify some fields which were not
         originally touched by INSERT ... SELECT, so we have to restore
         their original values for the next row.
@@ -1362,7 +1362,7 @@ bool select_insert::send_data(List<Item> &values)
         value we just saw, we may need to send it to client in the end.
       */
       if (session->first_successful_insert_id_in_cur_stmt == 0) // optimization
-        autoinc_value_of_last_inserted_row= 
+        autoinc_value_of_last_inserted_row=
           table->next_number_field->val_int();
       /*
         Clear auto-increment field for the next record, if triggers are used
@@ -1385,7 +1385,7 @@ void select_insert::store_values(List<Item> &values)
 
 void select_insert::send_error(uint32_t errcode,const char *err)
 {
-  
+
 
   my_message(errcode, err, MYF(0));
 
@@ -1400,7 +1400,7 @@ bool select_insert::send_eof()
   uint64_t id;
   bool changed;
   Session::killed_state killed_status= session->killed;
-  
+
   error= table->file->ha_end_bulk_insert();
   table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
   table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
@@ -1414,7 +1414,7 @@ bool select_insert::send_eof()
     if (session->transaction.stmt.modified_non_trans_table)
       session->transaction.all.modified_non_trans_table= true;
   }
-  assert(trans_table || !changed || 
+  assert(trans_table || !changed ||
               session->transaction.stmt.modified_non_trans_table);
 
   /*
@@ -1460,7 +1460,7 @@ bool select_insert::send_eof()
 
 void select_insert::abort() {
 
-  
+
   /*
     If the creation of the table failed (due to a syntax error, for
     example), no table will have been opened and therefore 'table'
@@ -1591,7 +1591,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   tmp_table.s->db_create_options=0;
   tmp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
-  tmp_table.s->db_low_byte_first= 
+  tmp_table.s->db_low_byte_first=
         test(create_info->db_type == myisam_hton ||
              create_info->db_type == heap_hton);
   tmp_table.null_row= false;
@@ -1712,7 +1712,7 @@ int
 select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 {
   DRIZZLE_LOCK *extra_lock= NULL;
-  
+
 
   Tableop_hooks *hook_ptr= NULL;
   /*
@@ -1747,7 +1747,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     {
       Table const *const table = *tables;
       if (drizzle_bin_log.is_open()
-          && !table->s->tmp_table 
+          && !table->s->tmp_table
           && !ptr->get_create_info()->table_existed)
       {
         ptr->binlog_show_create_table(tables, count);
@@ -1769,7 +1769,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     row-based replication for the statement.  If we are creating a
     temporary table, we need to start a statement transaction.
   */
-  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0 
+  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0
       && drizzle_bin_log.is_open())
   {
     session->binlog_start_trans_and_stmt();
@@ -1874,7 +1874,7 @@ void select_create::store_values(List<Item> &values)
 
 void select_create::send_error(uint32_t errcode,const char *err)
 {
-  
+
 
   /*
     This will execute any rollbacks that are necessary before writing
@@ -1928,7 +1928,7 @@ bool select_create::send_eof()
 
 void select_create::abort()
 {
-  
+
 
   /*
     In select_insert::abort() we roll back the statement, including

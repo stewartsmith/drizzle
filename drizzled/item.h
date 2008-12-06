@@ -77,7 +77,7 @@ class Item: public Sql_alloc
 
 public:
 
-  enum Type {FIELD_ITEM= 0, 
+  enum Type {FIELD_ITEM= 0,
     FUNC_ITEM,
     SUM_FUNC_ITEM,
     STRING_ITEM,
@@ -617,10 +617,10 @@ public:
 class Item_ident :public Item
 {
 protected:
-  /* 
+  /*
     We have to store initial values of db_name, table_name and field_name
-    to be able to restore them during cleanup() because they can be 
-    updated during fix_fields() to values from Field object and life-time 
+    to be able to restore them during cleanup() because they can be
+    updated during fix_fields() to values from Field object and life-time
     of those is shorter than life-time of Item_field.
   */
   const char *orig_db_name;
@@ -633,8 +633,8 @@ public:
   const char *table_name;
   const char *field_name;
   bool alias_name_used; /* true if item was resolved against alias */
-  /* 
-    Cached value of index for this field in table->field array, used by prep. 
+  /*
+    Cached value of index for this field in table->field array, used by prep.
     stmts for speeding up their re-execution. Holds NO_CACHED_FIELD_INDEX
     if index value is not known.
   */
@@ -826,7 +826,7 @@ public:
   }
   bool check_vcol_func_processor(unsigned char *)
   { return true; }
-};  
+};
 
 /* Item represents one placeholder ('?') of prepared statement */
 
@@ -1190,9 +1190,9 @@ public:
   enum_field_types field_type() const { return DRIZZLE_TYPE_VARCHAR; }
   bool basic_const_item() const { return 1; }
   bool eq(const Item *item, bool binary_cmp) const;
-  Item *clone_item() 
+  Item *clone_item()
   {
-    return new Item_string(name, str_value.ptr(), 
+    return new Item_string(name, str_value.ptr(),
     			   str_value.length(), collation.collation);
   }
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
@@ -1330,8 +1330,8 @@ public:
   Item_hex_string(const char *str,uint32_t str_length);
   enum Type type() const { return VARBIN_ITEM; }
   double val_real()
-  { 
-    assert(fixed == 1); 
+  {
+    assert(fixed == 1);
     return (double) (uint64_t) Item_hex_string::val_int();
   }
   int64_t val_int();
@@ -1400,14 +1400,14 @@ public:
     This constructor is used in two scenarios:
     A) *item = NULL
       No initialization is performed, fix_fields() call will be necessary.
-      
-    B) *item points to an Item this Item_ref will refer to. This is 
+
+    B) *item points to an Item this Item_ref will refer to. This is
       used for GROUP BY. fix_fields() will not be called in this case,
       so we call set_properties to make this item "fixed". set_properties
       performs a subset of action Item_ref::fix_fields does, and this subset
       is enough for Item_ref's used in GROUP BY.
-    
-    TODO we probably fix a superset of problems like in BUG#6658. Check this 
+
+    TODO we probably fix a superset of problems like in BUG#6658. Check this
          with Bar, and if we have a more broader set of problems like this.
   */
   Item_ref(Name_resolution_context *context_arg, Item **item,
@@ -1419,7 +1419,7 @@ public:
     :Item_ident(session, item), result_field(item->result_field), ref(item->ref) {}
   enum Type type() const		{ return REF_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const
-  { 
+  {
     Item *it= ((Item *) item)->real_item();
     return ref && (*ref)->eq(it, binary_cmp);
   }
@@ -1446,14 +1446,14 @@ public:
   Field *get_tmp_table_field()
   { return result_field ? result_field : (*ref)->get_tmp_table_field(); }
   Item *get_tmp_table_item(Session *session);
-  table_map used_tables() const		
+  table_map used_tables() const
   {
-    return depended_from ? OUTER_REF_TABLE_BIT : (*ref)->used_tables(); 
+    return depended_from ? OUTER_REF_TABLE_BIT : (*ref)->used_tables();
   }
-  void update_used_tables() 
-  { 
-    if (!depended_from) 
-      (*ref)->update_used_tables(); 
+  void update_used_tables()
+  {
+    if (!depended_from)
+      (*ref)->update_used_tables();
   }
   table_map not_null_tables() const { return (*ref)->not_null_tables(); }
   void set_result_field(Field *field)	{ result_field= field; }
@@ -1493,7 +1493,7 @@ public:
   }
   bool check_cols(uint32_t c)
   {
-    return ref && result_type() == ROW_RESULT ? (*ref)->check_cols(c) 
+    return ref && result_type() == ROW_RESULT ? (*ref)->check_cols(c)
                                               : Item::check_cols(c);
   }
   bool null_inside()
@@ -1501,7 +1501,7 @@ public:
     return ref && result_type() == ROW_RESULT ? (*ref)->null_inside() : 0;
   }
   void bring_value()
-  { 
+  {
     if (ref && result_type() == ROW_RESULT)
       (*ref)->bring_value();
   }
@@ -1631,9 +1631,9 @@ public:
   The following class is used to optimize comparing of date and bigint columns
   We need to save the original item ('ref') to be able to call
   ref->save_in_field(). This is used to create index search keys.
-  
+
   An instance of Item_int_with_ref may have signed or unsigned integer value.
-  
+
 */
 
 class Item_int_with_ref :public Item_int
@@ -1750,7 +1750,7 @@ public:
   {
     return Item_field::save_in_field(field_arg, no_conversions);
   }
-  /* 
+  /*
    We use RAND_TABLE_BIT to prevent Item_insert_value from
    being treated as a constant and precalculated before execution
   */
@@ -1772,18 +1772,18 @@ protected:
   Item *example;
   table_map used_table_map;
   /*
-    Field that this object will get value from. This is set/used by 
-    index-based subquery engines to detect and remove the equality injected 
+    Field that this object will get value from. This is set/used by
+    index-based subquery engines to detect and remove the equality injected
     by IN->EXISTS transformation.
     For all other uses of Item_cache, cached_field doesn't matter.
-  */  
+  */
   Field *cached_field;
   enum enum_field_types cached_field_type;
 public:
-  Item_cache(): 
-    example(0), used_table_map(0), cached_field(0), cached_field_type(DRIZZLE_TYPE_VARCHAR) 
+  Item_cache():
+    example(0), used_table_map(0), cached_field(0), cached_field_type(DRIZZLE_TYPE_VARCHAR)
   {
-    fixed= 1; 
+    fixed= 1;
     null_value= 1;
   }
   Item_cache(enum_field_types field_type_arg):

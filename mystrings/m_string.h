@@ -141,7 +141,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   MAX_DECPT_FOR_F_FORMAT zeros for cases when |x|<1 and the 'f' format is used).
 */
 #define MY_GCVT_MAX_FIELD_WIDTH (DBL_DIG + 4 + cmax(5, MAX_DECPT_FOR_F_FORMAT))
-  
+
 
 extern char *llstr(int64_t value,char *buff);
 extern char *ullstr(int64_t value,char *buff);

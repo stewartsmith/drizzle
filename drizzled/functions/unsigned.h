@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTIONS_UNSIGNED_H
 
 #include <drizzled/functions/signed.h>
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 class Item_func_unsigned :public Item_func_signed
 {

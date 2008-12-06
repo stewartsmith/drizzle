@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_CONCAT_H
 #define DRIZZLED_FUNCTIONS_STR_CONCAT_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_func_concat :public Item_str_func
 {

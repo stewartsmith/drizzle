@@ -37,7 +37,7 @@ String *Item_func_substr::val_str(String *str)
     return 0; /* purecov: inspected */
 
   /* Negative or zero length, will return empty string. */
-  if ((arg_count == 3) && (length <= 0) && 
+  if ((arg_count == 3) && (length <= 0) &&
       (length == 0 || !args[2]->unsigned_flag))
     return &my_empty_string;
 
@@ -93,7 +93,7 @@ void Item_func_substr::fix_length_and_dec()
 
 
 void Item_func_substr_index::fix_length_and_dec()
-{ 
+{
   max_length= args[0]->max_length;
 
   if (agg_arg_charsets(collation, args, 2, MY_COLL_CMP_CONV, 1))
@@ -194,8 +194,8 @@ String *Item_func_substr_index::val_str(String *str)
       */
       for (offset=res->length(); offset ;)
       {
-        /* 
-          this call will result in finding the position pointing to one 
+        /*
+          this call will result in finding the position pointing to one
           address space less than where the found substring is located
           in res
         */

@@ -50,7 +50,7 @@ err:
 }
 
 int parser_finalizer(st_plugin_int *plugin)
-{ 
+{
   parser_t *p= (parser_t *) plugin->data;
 
   if (plugin->plugin->deinit)
@@ -109,7 +109,7 @@ bool parser_do1 (Session *session, void *parm1, void *parm2)
 {
   parser_do1_parms_t parms;
   bool foreach_rv;
-  
+
   /* marshall the parameters so they will fit into the foreach */
   parms.parm1= parm1;
   parms.parm2= parm2;

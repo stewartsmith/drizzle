@@ -3268,10 +3268,10 @@ row_sel_push_cache_row_for_mysql(
             if (templ->mysql_null_bit_mask) {
               offs= templ->mysql_null_byte_offset;
               if (*(remainder_buf + offs) & templ->mysql_null_bit_mask)
-                 *(prebuilt->fetch_cache[prebuilt->n_fetch_cached] + offs) |= 
+                 *(prebuilt->fetch_cache[prebuilt->n_fetch_cached] + offs) |=
                 /*  (*(remainder_buf + offs) &*/( templ->mysql_null_bit_mask);
               else
-                *(prebuilt->fetch_cache[prebuilt->n_fetch_cached] + offs) &= 
+                *(prebuilt->fetch_cache[prebuilt->n_fetch_cached] + offs) &=
                   ~templ->mysql_null_bit_mask;
 
             }

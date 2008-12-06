@@ -18,7 +18,7 @@
   @file
 
   Optimising of MIN(), MAX() and COUNT(*) queries without 'group by' clause
-  by replacing the aggregate expression with a constant.  
+  by replacing the aggregate expression with a constant.
 
   Given a table with a compound key on columns (a,b,c), the following
   types of queries are optimised (assuming the table handler supports
@@ -41,7 +41,7 @@
   involved tables and return the answer without any join. Thus, the
   following query will be replaced with a row of two constants:
   @verbatim
-  SELECT MAX(b), MIN(d) FROM t1,t2 
+  SELECT MAX(b), MIN(d) FROM t1,t2
     WHERE a=const AND b<const AND d>const
   @endverbatim
   (assuming a index for column d of table t2 is defined)
@@ -160,7 +160,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
       statistics (cheap), compute the total number of rows. If there are
       no outer table dependencies, this count may be used as the real count.
       Schema tables are filled after this function is invoked, so we can't
-      get row count 
+      get row count
     */
     if (!(tl->table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) ||
         tl->schema_table)
@@ -237,11 +237,11 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
           Item_field *item_field= (Item_field*) (expr->real_item());
           Table *table= item_field->field->table;
 
-          /* 
+          /*
             Look for a partial key that can be used for optimization.
             If we succeed, ref.key_length will contain the length of
-            this key, while prefix_len will contain the length of 
-            the beginning of this key without field used in MIN(). 
+            this key, while prefix_len will contain the length of
+            the beginning of this key without field used in MIN().
             Type of range for the key part for this field will be
             returned in range_fl.
           */
@@ -256,12 +256,12 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
 
           if (!ref.key_length)
             error= table->file->index_first(table->record[0]);
-          else 
+          else
           {
             /*
               Use index to replace MIN/MAX functions with their values
               according to the following rules:
-           
+
               1) Insert the minimum non-null values where the WHERE clause still
                  matches, or
               2) a NULL value if there are only NULL values for key_part_k.
@@ -273,7 +273,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
               nullable column, test if there is an exact match for the key.
             */
             if (!(range_fl & NEAR_MIN))
-              /* 
+              /*
                  Closed interval: Either The MIN argument is non-nullable, or
                  we have a >= predicate for the MIN argument.
               */
@@ -290,10 +290,10 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
                 We need to scan the next bigger record first.
               */
               error= table->file->index_read_map(table->record[0],
-                                                 ref.key_buff, 
+                                                 ref.key_buff,
                                                  make_prev_keypart_map(ref.key_parts),
                                                  HA_READ_AFTER_KEY);
-              /* 
+              /*
                  If the found record is outside the group formed by the search
                  prefix, or there is no such record at all, check if all
                  records in that group have NULL in the MIN argument
@@ -323,7 +323,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
             }
           }
           /* Verify that the read tuple indeed matches the search key */
-	  if (!error && reckey_in_range(0, &ref, item_field->field, 
+	  if (!error && reckey_in_range(0, &ref, item_field->field,
 			                conds, range_fl, prefix_len))
 	    error= HA_ERR_KEY_NOT_FOUND;
           if (table->key_read)
@@ -385,10 +385,10 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
           Item_field *item_field= (Item_field*) (expr->real_item());
           Table *table= item_field->field->table;
 
-          /* 
+          /*
             Look for a partial key that can be used for optimization.
             If we succeed, ref.key_length will contain the length of
-            this key, while prefix_len will contain the length of 
+            this key, while prefix_len will contain the length of
             the beginning of this key without field used in MAX().
             Type of range for the key part for this field will be
             returned in range_fl.
@@ -593,7 +593,7 @@ bool simple_pred(Item_func *func_item, Item **args, bool *inv_order)
     1        We can use index to get MIN/MAX value
 */
 
-static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo, 
+static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
                           KEY_PART_INFO *field_part, COND *cond,
                           key_part_map *key_part_used, uint32_t *range_fl,
                           uint32_t *prefix_len)
@@ -627,8 +627,8 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
     return 0;                                 // Not operator, can't optimize
 
   bool eq_type= 0;                            // =, <=> or IS NULL
-  bool noeq_type= 0;                          // < or >  
-  bool less_fl= 0;                            // < or <= 
+  bool noeq_type= 0;                          // < or >
+  bool less_fl= 0;                            // < or <=
   bool is_null= 0;
   bool between= 0;
 
@@ -642,7 +642,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
   case Item_func::LT_FUNC:
     noeq_type= 1;   /* fall through */
   case Item_func::LE_FUNC:
-    less_fl= 1;      
+    less_fl= 1;
     break;
   case Item_func::GT_FUNC:
     noeq_type= 1;   /* fall through */
@@ -657,7 +657,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
   default:
     return 0;                                        // Can't optimize function
   }
-  
+
   Item *args[3];
   bool inv;
 
@@ -691,26 +691,26 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
     if (ref->key_length < length)
     {
     /* Ultimately ref->key_length will contain the length of the search key */
-      ref->key_length= length;      
+      ref->key_length= length;
       ref->key_parts= (part - keyinfo->key_part) + 1;
     }
-    if (!*prefix_len && part+1 == field_part)       
+    if (!*prefix_len && part+1 == field_part)
       *prefix_len= length;
     if (is_field_part && eq_type)
       *prefix_len= ref->key_length;
-  
+
     *key_part_used|= (key_part_map) 1 << (part - keyinfo->key_part);
   }
 
   if (org_key_part_used != *key_part_used ||
-      (is_field_part && 
+      (is_field_part &&
        (between || eq_type || max_fl == less_fl) && !cond->val_int()))
   {
     /*
       It's the first predicate for this part or a predicate of the
       following form  that moves upper/lower bounds for max/min values:
       - field BETWEEN const AND const
-      - field = const 
+      - field = const
       - field {<|<=} const, when searching for MAX
       - field {>|>=} const, when searching for MIN
     */
@@ -724,7 +724,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
     {
       store_val_in_field(part->field, args[between && max_fl ? 2 : 1],
                          CHECK_FIELD_IGNORE);
-      if (part->null_bit) 
+      if (part->null_bit)
         *key_ptr++= (unsigned char) test(part->field->is_null());
       part->field->get_key_image(key_ptr, part->length, Field::itRAW);
     }
@@ -750,7 +750,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
   }
   else if (is_field_part)
     *range_fl&= ~(max_fl ? NO_MIN_RANGE : NO_MAX_RANGE);
-  return 1;  
+  return 1;
 }
 
 
@@ -764,7 +764,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
      -# for each previous component f_i there is one and only one conjunct
         of the form: f_i= const_i or const_i= f_i or f_i is null
      -# references to field occur only in conjucts of the form:
-        field {<|<=|>=|>|=} const or const {<|<=|>=|>|=} field or 
+        field {<|<=|>=|>|=} const or const {<|<=|>=|>|=} field or
         field BETWEEN const1 AND const2
      -# all references to the columns from the same table as column field
         occur only in conjucts mentioned above.
@@ -796,7 +796,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
     In this case ref, range_fl and prefix_len are updated
 */
 
-      
+
 static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
                                 Field* field, COND *cond,
                                 uint32_t *range_fl, uint32_t *prefix_len)
@@ -851,8 +851,8 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
             /*
               The query is on this form:
 
-              SELECT MIN(key_part_k) 
-              FROM t1 
+              SELECT MIN(key_part_k)
+              FROM t1
               WHERE key_part_1 = const and ... and key_part_k-1 = const
 
               If key_part_k is nullable, we want to find the first matching row
