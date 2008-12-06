@@ -928,8 +928,17 @@ public:
   
   thr_lock_type update_lock_default;
 
+  /*
+    Both of the following container points in session will be converted to an API.
+  */
+
   /* container for handler's private per-connection data */
   Ha_data ha_data[MAX_HA];
+
+  /* container for replication data */
+  void *replication_data;
+  inline void setReplicationData (void *data) { replication_data= data; }
+  inline void *getReplicationData () { return replication_data; }
 
   /* Place to store various things */
   void *session_marker;

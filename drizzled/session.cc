@@ -520,6 +520,7 @@ Session::Session()
   warn_id= 0;
   db_charset= global_system_variables.collation_database;
   memset(ha_data, 0, sizeof(ha_data));
+  replication_data= 0;
   mysys_var=0;
   binlog_evt_union.do_union= false;
   dbug_sentry=Session_SENTRY_MAGIC;

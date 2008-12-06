@@ -25,6 +25,7 @@
 
 typedef struct replicator_st
 {
+  bool enabled;
   /* todo, define this api */
   /* this is the API that a replicator plugin must implement.
      it should implement each of these function pointers.
@@ -32,8 +33,12 @@ typedef struct replicator_st
      if a function pointer is NULL, that's ok.
   */
 
-  bool (*replicator_func1)(Session *session, void *parm1, void *parm2);
-  bool (*replicator_func2)(Session *session, void *parm3, void *parm4);
+  void *(*session_init)(Session *session);
+  bool (*row_insert)(Session *session, Table *table);
+  bool (*row_update)(Session *session, Table *table, 
+                     const unsigned char *before, 
+                     const unsigned char *after);
+  bool (*row_delete)(Session *session, Table *table);
 } replicator_t;
 
 #endif /* DRIZZLED_PLUGIN_REPLICATOR_H */

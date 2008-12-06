@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/replicator.h>
 #include <drizzled/gettext.h>
+#include <drizzled/session.h>
 
 int replicator_initializer(st_plugin_int *plugin)
 {
@@ -69,57 +70,44 @@ int replicator_finalizer(st_plugin_int *plugin)
   return 0;
 }
 
-/* The plugin_foreach() iterator requires that we
-   convert all the parameters of a plugin api entry point
-   into just one single void ptr, plus the session.
-   So we will take all the additional paramters of replicator_do1,
-   and marshall them into a struct of this type, and
-   then just pass in a pointer to it.
-*/
-typedef struct replicator_do1_parms_st
-{
-  void *parm1;
-  void *parm2;
-} replicator_do1_parms_t;
-
 /* This gets called by plugin_foreach once for each loaded replicator plugin */
-static bool replicator_do1_iterate (Session *session, plugin_ref plugin, void *p)
+static bool replicator_session_iterate (Session *session, plugin_ref plugin, void *)
 {
-  replicator_t *l= plugin_data(plugin, replicator_t *);
-  replicator_do1_parms_t *parms= (replicator_do1_parms_t *) p;
+  replicator_t *repl= plugin_data(plugin, replicator_t *);
+  void *session_data;
 
   /* call this loaded replicator plugin's replicator_func1 function pointer */
-  if (l && l->replicator_func1)
+  if (repl && repl->session_init)
     {
-      if (l->replicator_func1(session, parms->parm1, parms->parm2))
+      session_data= repl->session_init(session);
+      if (session_data)
         {
           /* TRANSLATORS: The leading word "replicator" is the name
              of the plugin api, and so should not be translated. */
-          sql_print_error(_("replicator plugin '%s' replicator_func1() failed"),
+          sql_print_error(_("replicator plugin '%s' replicator_session_init() failed"),
                           (char *)plugin_name(plugin));
           return true;
         }
     }
+
+  session->setReplicationData(session_data);
+
   return false;
 }
 
-/* This is the replicator_do1 entry point.
-   This gets called by the rest of the Drizzle server code */
-bool replicator_do1 (Session *session, void *parm1, void *parm2)
+/*
+  This call is called once at the begining of each transaction.
+*/
+bool replicator_session_init(Session *session)
 {
-  replicator_do1_parms_t parms;
   bool foreach_rv;
-  
-  /* marshall the parameters so they will fit into the foreach */
-  parms.parm1= parm1;
-  parms.parm2= parm2;
 
-  /* call replicator_do1_iterate
-     once for each loaded replicator plugin */
-  foreach_rv= plugin_foreach(session,
-			     replicator_do1_iterate,
-			     DRIZZLE_REPLICATOR_PLUGIN,
-			     (void *) &parms);
+  /* 
+    call replicator_session_iterate
+    once for each loaded replicator plugin 
+  */
+  foreach_rv= plugin_foreach(session, replicator_session_iterate,
+                             DRIZZLE_REPLICATOR_PLUGIN, NULL);
   return foreach_rv;
 }
 
@@ -130,50 +118,120 @@ bool replicator_do1 (Session *session, void *parm1, void *parm2)
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
 */
-typedef struct replicator_do2_parms_st
+enum repl_row_exec_t{
+  repl_insert,
+  repl_update,
+  repl_delete
+};
+
+typedef struct replicator_row_parms_st
 {
-  void *parm3;
-  void *parm4;
-} replicator_do2_parms_t;
+  repl_row_exec_t type;
+  Table *table;
+  const unsigned char *before;
+  const unsigned char *after;
+} replicator_row_parms_st;
+
 
 /* This gets called by plugin_foreach once for each loaded replicator plugin */
-static bool replicator_do2_iterate (Session *session, plugin_ref plugin, void *p)
+static bool replicator_do_row_iterate (Session *session, plugin_ref plugin, void *p)
 {
-  replicator_t *l= plugin_data(plugin, replicator_t *);
-  replicator_do2_parms_t *parms= (replicator_do2_parms_t *) p;
+  replicator_t *repl= plugin_data(plugin, replicator_t *);
+  replicator_row_parms_st *params= (replicator_row_parms_st *) p;
 
-  /* call this loaded replicator plugin's replicator_func1 function pointer */
-  if (l && l->replicator_func2)
+  switch (params->type) {
+  case repl_insert:
+    if (repl && repl->row_insert)
     {
-      if (l->replicator_func2(session, parms->parm3, parms->parm4))
-        {
-          /* TRANSLATORS: The leading word "replicator" is the name
-             of the plugin api, and so should not be translated. */
-          sql_print_error(_("replicator plugin '%s' replicator_func2() failed"),
-                          (char *)plugin_name(plugin));
+      if (repl->row_insert(session, params->table))
+      {
+        /* TRANSLATORS: The leading word "replicator" is the name
+          of the plugin api, and so should not be translated. */
+        sql_print_error(_("replicator plugin '%s' row_insert() failed"),
+                        (char *)plugin_name(plugin));
 
-          return true;
-        }
+        return true;
+      }
     }
+    break;
+  case repl_update:
+    if (repl && repl->row_update)
+    {
+      if (repl->row_update(session, params->table, params->before, params->after))
+      {
+        /* TRANSLATORS: The leading word "replicator" is the name
+          of the plugin api, and so should not be translated. */
+        sql_print_error(_("replicator plugin '%s' row_update() failed"),
+                        (char *)plugin_name(plugin));
+
+        return true;
+      }
+    }
+    break;
+  case repl_delete:
+    if (repl && repl->row_delete)
+    {
+      if (repl->row_delete(session, params->table))
+      {
+        /* TRANSLATORS: The leading word "replicator" is the name
+          of the plugin api, and so should not be translated. */
+        sql_print_error(_("replicator plugin '%s' row_delete() failed"),
+                        (char *)plugin_name(plugin));
+
+        return true;
+      }
+    }
+    break;
+  }
   return false;
 }
 
 /* This is the replicator_do2 entry point.
    This gets called by the rest of the Drizzle server code */
-bool replicator_do2 (Session *session, void *parm3, void *parm4)
+static bool replicator_do_row (Session *session,  replicator_row_parms_st *params)
 {
-  replicator_do2_parms_t parms;
   bool foreach_rv;
 
-  /* marshall the parameters so they will fit into the foreach */
-  parms.parm3= parm3;
-  parms.parm4= parm4;
-
-  /* call replicator_do2_iterate
-     once for each loaded replicator plugin */
-  foreach_rv= plugin_foreach(session,
-			     replicator_do2_iterate,
-			     DRIZZLE_REPLICATOR_PLUGIN,
-			     (void *) &parms);
+  foreach_rv= plugin_foreach(session, replicator_do_row_iterate,
+                             DRIZZLE_REPLICATOR_PLUGIN, (void *) &params);
   return foreach_rv;
 }
+
+bool replicator_write_row(Session *session, Table *table)
+{
+  replicator_row_parms_st param;
+
+  param.type= repl_insert;
+  param.table= table;
+  param.after= NULL;
+  param.before= NULL;
+
+  return replicator_do_row(session, &param);
+}
+
+bool replicator_update_row(Session *session, Table *table, 
+                           const unsigned char *before, 
+                           const unsigned char *after)
+{
+  replicator_row_parms_st param;
+
+  param.type= repl_update;
+  param.table= table;
+  param.after= after;
+  param.before= before;
+
+  return replicator_do_row(session, &param);
+}
+
+bool replicator_delete_row(Session *session, Table *table)
+{
+  replicator_row_parms_st param;
+
+  param.type= repl_delete;
+  param.table= table;
+  param.after= NULL;
+  param.before= NULL;
+
+  return replicator_do_row(session, &param);
+}
+
