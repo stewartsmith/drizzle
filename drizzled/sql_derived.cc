@@ -118,7 +118,7 @@ bool mysql_derived_prepare(Session *session, LEX *,
     create_options= (first_select->options | session->options |
                      TMP_TABLE_ALL_COLUMNS);
     /*
-      Temp table is created so that it hounours if UNION without ALL is to be 
+      Temp table is created so that it hounours if UNION without ALL is to be
       processed
 
       As 'distinct' parameter we always pass false (0), because underlying

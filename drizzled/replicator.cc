@@ -50,7 +50,7 @@ int replicator_initializer(st_plugin_int *plugin)
 }
 
 int replicator_finalizer(st_plugin_int *plugin)
-{ 
+{
   replicator_t *p= (replicator_t *) plugin->data;
 
   if (plugin->plugin->deinit)
@@ -109,7 +109,7 @@ bool replicator_do1 (Session *session, void *parm1, void *parm2)
 {
   replicator_do1_parms_t parms;
   bool foreach_rv;
-  
+
   /* marshall the parameters so they will fit into the foreach */
   parms.parm1= parm1;
   parms.parm2= parm2;

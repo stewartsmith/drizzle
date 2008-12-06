@@ -47,7 +47,7 @@ int Field_int64_t::store(const char *from,uint32_t len, const CHARSET_INFO * con
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;
   }
-  else if (table->in_use->count_cuted_fields && 
+  else if (table->in_use->count_cuted_fields &&
            check_int(cs, from, len, end, error))
     error= 1;
   else

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** 
- * @TODO There is plugin.h and also sql_plugin.h.  Ostensibly,  
+/**
+ * @TODO There is plugin.h and also sql_plugin.h.  Ostensibly,
  * it seems that the two files exist so that plugin.h can provide an
  * external API for plugin developers and sql_plugin.h will provide
  * and internal server API for dealing with those plugins.

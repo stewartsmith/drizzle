@@ -76,7 +76,7 @@ my_off_t my_b_append_tell(IO_CACHE* info)
     Prevent optimizer from putting res in a register when debugging
     we need this to be able to see the value of res when the assert fails
   */
-  volatile my_off_t res; 
+  volatile my_off_t res;
 
   /*
     We need to lock the append buffer mutex to keep flush_io_cache()
@@ -298,7 +298,7 @@ size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
     /* Copy everything until '%' or end of string */
     const char *start=fmt;
     size_t length;
-    
+
     for (; (*fmt != '\0') && (*fmt != '%'); fmt++) ;
 
     length= (size_t) (fmt - start);
@@ -309,9 +309,9 @@ size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
     if (*fmt == '\0')				/* End of format */
       return out_length;
 
-    /* 
+    /*
       By this point, *fmt must be a percent;  Keep track of this location and
-      skip over the percent character. 
+      skip over the percent character.
     */
     assert(*fmt == '%');
     backtrack= fmt;
@@ -326,7 +326,7 @@ size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
 process_flags:
     switch (*fmt)
     {
-      case '-': 
+      case '-':
         minimum_width_sign= -1; fmt++; goto process_flags;
       case '0':
         is_zero_padded= true; fmt++; goto process_flags;
@@ -397,7 +397,7 @@ process_flags:
         length2= (uint) (int10_to_str((long) (uint) iarg,buff,10)- buff);
 
       /* minimum width padding */
-      if (minimum_width > length2) 
+      if (minimum_width > length2)
       {
         const size_t buflen = minimum_width - length2;
         buffz.clear();

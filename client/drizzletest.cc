@@ -6388,7 +6388,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     return 1;
   }
 
-  char *substring_to_replace= in_string + ovector[0]; 
+  char *substring_to_replace= in_string + ovector[0];
   int substring_length= ovector[1] - ovector[0];
   *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
   char * new_buf = (char *)malloc(*buf_len_p+1);

@@ -32,11 +32,11 @@ typedef struct st_sort_field SORT_FIELD;
    for field values appended to sorted values in records to be sorted
    in the sort buffer.
    Only fixed layout is supported now.
-   Null bit maps for the appended values is placed before the values 
+   Null bit maps for the appended values is placed before the values
    themselves. Offsets are from the last sorted field, that is from the
    record referefence, which is still last component of sorted records.
    It is preserved for backward compatiblility.
-   The structure is used tp store values of the additional fields 
+   The structure is used tp store values of the additional fields
    in the sort buffer. It is used also when these values are read
    from a temporary file/buffer. As the reading procedures are beyond the
    scope of the 'filesort' code the values have to be retrieved via

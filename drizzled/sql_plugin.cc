@@ -1768,7 +1768,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
              global_variables_dynamic_size, 0,
              new_size - global_variables_dynamic_size);
       memset(max_system_variables.dynamic_variables_ptr +
-             global_variables_dynamic_size, 0, 
+             global_variables_dynamic_size, 0,
              new_size - global_variables_dynamic_size);
       global_variables_dynamic_size= new_size;
     }
@@ -1918,10 +1918,10 @@ static unsigned long *mysql_sys_var_ptr_enum(Session* a_session, int offset)
 void plugin_sessionvar_init(Session *session)
 {
   plugin_ref old_table_plugin= session->variables.table_plugin;
-  
+
   session->variables.table_plugin= NULL;
   cleanup_variables(session, &session->variables);
-  
+
   session->variables= global_system_variables;
   session->variables.table_plugin= NULL;
 
@@ -2557,7 +2557,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       if (opt->flags & PLUGIN_VAR_NOCMDOPT)
         continue;
 
-      optname= (char*) memdup_root(mem_root, v->key + 1, 
+      optname= (char*) memdup_root(mem_root, v->key + 1,
                                    (optnamelen= v->name_len) + 1);
     }
 

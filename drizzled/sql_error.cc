@@ -29,8 +29,8 @@ This file contains the implementation of error and warnings related
     (If we would reset after each command, we could not retrieve the number
      of warnings)
 
-  - When client requests the information using SHOW command, then 
-    server processes from this list and returns back in the form of 
+  - When client requests the information using SHOW command, then
+    server processes from this list and returns back in the form of
     resultset.
 
     Supported syntaxes:
@@ -68,7 +68,7 @@ void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
     Don't reset warnings if this has already been called for this query.
     This may happen if one gets a warning during the parsing stage,
     in which case push_warnings() has already called this function.
-*/  
+*/
 
 void drizzle_reset_errors(Session *session, bool force)
 {
@@ -86,7 +86,7 @@ void drizzle_reset_errors(Session *session, bool force)
 }
 
 
-/* 
+/*
   Push the warning/error to error list if there is still room in the list
 
   SYNOPSIS
@@ -95,12 +95,12 @@ void drizzle_reset_errors(Session *session, bool force)
     level		Severity of warning (note, warning, error ...)
     code		Error number
     msg			Clear error message
-    
+
   RETURN
     pointer on DRIZZLE_ERROR object
 */
 
-DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level, 
+DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
                           uint32_t code, const char *msg)
 {
   DRIZZLE_ERROR *err= 0;
@@ -160,7 +160,7 @@ void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level lev
 {
   va_list args;
   char    warning[ERRMSGSIZE+20];
-  
+
   va_start(args,format);
   vsnprintf(warning, sizeof(warning), format, args);
   va_end(args);
@@ -194,7 +194,7 @@ const LEX_STRING warning_level_names[]=
 };
 
 bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
-{  
+{
   List<Item> field_list;
 
   field_list.push_back(new Item_empty_string("Level", 7));

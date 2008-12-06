@@ -36,7 +36,7 @@ int heap_delete(HP_INFO *info, const unsigned char *record)
   pos=info->current_ptr;
 
   p_lastinx = share->keydef + info->lastinx;
-  for (keydef = share->keydef, end = keydef + share->keys; keydef < end; 
+  for (keydef = share->keydef, end = keydef + share->keys; keydef < end;
        keydef++)
   {
     if ((*keydef->delete_key)(info, keydef, record, pos, keydef == p_lastinx))
@@ -66,7 +66,7 @@ int hp_rb_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
   uint32_t old_allocated;
   int res;
 
-  if (flag) 
+  if (flag)
     info->last_pos= NULL; /* For heap_rnext/heap_rprev */
 
   custom_arg.keyseg= keyinfo->seg;

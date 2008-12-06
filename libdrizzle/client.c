@@ -29,10 +29,10 @@
   - Support for reading local file with LOAD DATA LOCAL
   - SHARED memory handling
   - Prepared statements
- 
+
   - Things that only works for the server
   - Alarm handling on connect
- 
+
   In all other cases, the code should be idential for the client and
   server.
 */
@@ -584,7 +584,7 @@ unsigned int drizzle_num_fields(const DRIZZLE_RES *res)
 
   EXAMPLE
     4.1.0-alfa ->  40100
- 
+
   NOTES
     We will ensure that a newer server always has a bigger number.
 

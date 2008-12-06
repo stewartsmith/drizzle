@@ -51,7 +51,7 @@ TYPELIB myisam_stats_method_typelib= {
 *****************************************************************************/
 
 static handler *myisam_create_handler(handlerton *hton,
-                                      TABLE_SHARE *table, 
+                                      TABLE_SHARE *table,
                                       MEM_ROOT *mem_root)
 {
   return new (mem_root) ha_myisam(hton, table);
@@ -552,7 +552,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
       /* purecov: end */
     }
   }
-  
+
   if (test_if_locked & (HA_OPEN_IGNORE_IF_LOCKED | HA_OPEN_TMP_TABLE))
     mi_extra(file, HA_EXTRA_NO_WAIT_LOCK, 0);
 
@@ -563,7 +563,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     int_table_flags|=HA_REC_NOT_IN_SEQ;
   if (file->s->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
     int_table_flags|=HA_HAS_CHECKSUM;
-  
+
   keys_with_parts.clear_all();
   for (i= 0; i < table->s->keys; i++)
   {
@@ -856,7 +856,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
-  if (!session->locked_tables && 
+  if (!session->locked_tables &&
       mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
     mi_check_print_error(&param,ER(ER_CANT_LOCK),my_errno);
@@ -995,7 +995,7 @@ int ha_myisam::assign_to_keycache(Session* session, HA_CHECK_OPT *check_opt)
     map= table->keys_in_use_for_query.to_uint64_t();
 
   if ((error= mi_assign_to_key_cache(file, map, new_key_cache)))
-  { 
+  {
     char buf[STRING_BUFFER_USUAL_SIZE];
     snprintf(buf, sizeof(buf),
 		"Failed to flush to index file (errno: %d)", error);
@@ -1168,7 +1168,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
 
 int ha_myisam::indexes_are_disabled(void)
 {
-  
+
   return mi_indexes_are_disabled(file);
 }
 
@@ -1323,12 +1323,12 @@ bool index_cond_func_myisam(void *arg)
 
 
 int ha_myisam::index_init(uint32_t idx, bool sorted __attribute__((unused)))
-{ 
+{
   active_index=idx;
   //in_range_read= false;
   if (pushed_idx_cond_keyno == idx)
     mi_set_index_cond_func(file, index_cond_func_myisam, this);
-  return 0; 
+  return 0;
 }
 
 
@@ -1339,7 +1339,7 @@ int ha_myisam::index_end()
   mi_set_index_cond_func(file, NULL, 0);
   in_range_check_pushed_down= false;
   ds_mrr.dsmrr_close();
-  return 0; 
+  return 0;
 }
 
 
@@ -1744,7 +1744,7 @@ void ha_myisam::get_auto_increment(uint64_t offset __attribute__((unused)),
       HA_READ_KEY_EXACT		Include the key in the range
       HA_READ_AFTER_KEY		Don't include key in range
 
-    max_key.flag can have one of the following values:  
+    max_key.flag can have one of the following values:
       HA_READ_BEFORE_KEY	Don't include key in range
       HA_READ_AFTER_KEY		Include all 'end_key' values in the range
 
@@ -1813,10 +1813,10 @@ static int myisam_init(void *p)
  ***************************************************************************/
 
 int ha_myisam::multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                                     uint32_t n_ranges, uint32_t mode, 
+                                     uint32_t n_ranges, uint32_t mode,
                                      HANDLER_BUFFER *buf)
 {
-  return ds_mrr.dsmrr_init(this, &table->key_info[active_index], 
+  return ds_mrr.dsmrr_init(this, &table->key_info[active_index],
                            seq, seq_init_param, n_ranges, mode, buf);
 }
 
@@ -1826,7 +1826,7 @@ int ha_myisam::multi_range_read_next(char **range_info)
 }
 
 ha_rows ha_myisam::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                                               void *seq_init_param, 
+                                               void *seq_init_param,
                                                uint32_t n_ranges, uint32_t *bufsz,
                                                uint32_t *flags, COST_VECT *cost)
 {

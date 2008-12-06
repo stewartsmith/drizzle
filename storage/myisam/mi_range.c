@@ -42,7 +42,7 @@ static uint32_t _mi_keynr(MI_INFO *info,MI_KEYDEF *,unsigned char *, unsigned ch
     HA_POS_ERROR  error (or we can't estimate number of rows)
     number	  Estimated number of rows
 */
-  
+
 ha_rows mi_records_in_range(MI_INFO *info, int inx,
                             key_range *min_key, key_range *max_key)
 {

@@ -35,7 +35,7 @@ public:
     Constructors take max_length of the field as a parameter - not the
     precision as the number of decimal digits allowed.
     So for example we need to count length from precision handling
-    CREATE TABLE ( DECIMAL(x,y)) 
+    CREATE TABLE ( DECIMAL(x,y))
   */
   Field_new_decimal(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
                     unsigned char null_bit_arg,
@@ -64,7 +64,7 @@ public:
   bool zero_pack() const { return 0; }
   void sql_type(String &str) const;
   uint32_t max_display_length() { return field_length; }
-  uint32_t size_of() const { return sizeof(*this); } 
+  uint32_t size_of() const { return sizeof(*this); }
   uint32_t pack_length() const { return (uint32_t) bin_size; }
   uint32_t pack_length_from_metadata(uint32_t field_metadata);
   uint32_t row_pack_length() { return pack_length(); }

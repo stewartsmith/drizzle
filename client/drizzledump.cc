@@ -83,7 +83,7 @@ static bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
                 opt_complete_insert= 0, opt_drop_database= 0,
                 opt_replace_into= 0,
                 opt_routines=0,
-                opt_slave_apply= 0, 
+                opt_slave_apply= 0,
                 opt_include_master_host_port= 0,
                 opt_events= 0,
                 opt_alltspcs=0, opt_notspcs= 0;
@@ -296,8 +296,8 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"include-master-host-port", OPT_DRIZZLEDUMP_INCLUDE_MASTER_HOST_PORT,
    "Adds 'MASTER_HOST=<host>, MASTER_PORT=<port>' to 'CHANGE MASTER TO..' in dump produced with --dump-slave.",
-   (char**) &opt_include_master_host_port, 
-   (char**) &opt_include_master_host_port, 
+   (char**) &opt_include_master_host_port,
+   (char**) &opt_include_master_host_port,
    0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
   {"insert-ignore", OPT_INSERT_IGNORE, "Insert rows with INSERT IGNORE.",
@@ -522,7 +522,7 @@ static void write_header(FILE *sql_file, char *db_name)
   {
     fputs("<?xml version=\"1.0\"?>\n", sql_file);
     /*
-      Schema reference.  Allows use of xsi:nil for NULL values and 
+      Schema reference.  Allows use of xsi:nil for NULL values and
       xsi:type to define an element's data type.
     */
     fputs("<drizzledump ", sql_file);
@@ -865,7 +865,7 @@ static void DB_error(DRIZZLE *drizzle_arg, const char *when)
     error_num   - process return value
     fmt_reason  - a format string for use by vsnprintf.
     ...         - variable arguments for above fmt_reason string
-  
+
   DESCRIPTION
     This call prints out the formatted error message to stderr and then
     terminates the process.
@@ -894,15 +894,15 @@ static void die(int error_num, const char* fmt_reason, ...)
     error_num   - process return value
     fmt_reason  - a format string for use by vsnprintf.
     ...         - variable arguments for above fmt_reason string
-  
+
   DESCRIPTION
     This call prints out the formatted error message to stderr and then
     terminates the process, unless the --force command line option is used.
-    
+
     This call should be used for non-fatal errors (such as database
     errors) that the code may still be able to continue to the next unit
     of work.
-    
+
 */
 static void maybe_die(int error_num, const char* fmt_reason, ...)
 {
@@ -1211,7 +1211,7 @@ static void print_quoted_xml(FILE *xml_file, const char *str, uint32_t len)
   Print xml tag. Optionally add attribute(s).
 
   SYNOPSIS
-    print_xml_tag(xml_file, sbeg, send, tag_name, first_attribute_name, 
+    print_xml_tag(xml_file, sbeg, send, tag_name, first_attribute_name,
                     ..., attribute_name_n, attribute_value_n, NULL)
     xml_file              - output file
     sbeg                  - line beginning
@@ -1226,7 +1226,7 @@ static void print_quoted_xml(FILE *xml_file, const char *str, uint32_t len)
     Print XML tag with any number of attribute="value" pairs to the xml_file.
 
     Format is:
-      sbeg<tag_name first_attribute_name="first_attribute_value" ... 
+      sbeg<tag_name first_attribute_name="first_attribute_value" ...
       attribute_name_n="attribute_value_n">send
   NOTE
     Additional arguments must be present in attribute/value pairs.
@@ -1236,8 +1236,8 @@ static void print_quoted_xml(FILE *xml_file, const char *str, uint32_t len)
 */
 
 static void print_xml_tag(FILE * xml_file, const char* sbeg,
-                          const char* line_end, 
-                          const char* tag_name, 
+                          const char* line_end,
+                          const char* tag_name,
                           const char* first_attribute_name, ...)
 {
   va_list arg_list;
@@ -1245,7 +1245,7 @@ static void print_xml_tag(FILE * xml_file, const char* sbeg,
 
   fputs(sbeg, xml_file);
   fputc('<', xml_file);
-  fputs(tag_name, xml_file);  
+  fputs(tag_name, xml_file);
 
   va_start(arg_list, first_attribute_name);
   attribute_name= first_attribute_name;
@@ -1255,9 +1255,9 @@ static void print_xml_tag(FILE * xml_file, const char* sbeg,
     assert(attribute_value != NULL);
 
     fputc(' ', xml_file);
-    fputs(attribute_name, xml_file);    
+    fputs(attribute_name, xml_file);
     fputc('\"', xml_file);
-    
+
     print_quoted_xml(xml_file, attribute_value, strlen(attribute_value));
     fputc('\"', xml_file);
 
@@ -1560,7 +1560,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
             fprintf(sql_file, ",\n  %s %s",
                     quote_name(row[0], name_buff, 0), row[1]);
           }
-          fprintf(sql_file, "\n) */;\n"); 
+          fprintf(sql_file, "\n) */;\n");
           check_io(sql_file);
         }
 
@@ -1658,7 +1658,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       if (!opt_xml)
         fprintf(sql_file, "CREATE TABLE %s (\n", result_table);
       else
-        print_xml_tag(sql_file, "\t", "\n", "table_structure", "name=", table, 
+        print_xml_tag(sql_file, "\t", "\n", "table_structure", "name=", table,
                 NULL);
       check_io(sql_file);
     }
@@ -1879,7 +1879,7 @@ static void add_load_option(string &str, const char *option,
   }
 
   str.append(option);
-  
+
   if (strncmp(option_value, "0x", sizeof("0x")-1) == 0)
   {
     /* It's a hex constant, don't escape */
@@ -1902,7 +1902,7 @@ static void add_load_option(string &str, const char *option,
 
 static void field_escape(string &in, const char *from)
 {
-  uint end_backslashes= 0; 
+  uint end_backslashes= 0;
 
   in.append("'");
 
@@ -2029,7 +2029,7 @@ static void dump_table(char *table, char *db)
       Convert the path to native os format
       and resolve to the full filepath.
     */
-    convert_dirname(tmp_path,path,NULL);    
+    convert_dirname(tmp_path,path,NULL);
     my_load_path(tmp_path, tmp_path, NULL);
     fn_format(filename, table, tmp_path, ".txt", MYF(MY_UNPACK_FILENAME));
 
@@ -2047,7 +2047,7 @@ static void dump_table(char *table, char *db)
 
     if (fields_terminated || enclosed || opt_enclosed || escaped)
       query_string.append( " FIELDS");
-    
+
     add_load_option(query_string, " TERMINATED BY ", fields_terminated);
     add_load_option(query_string, " ENCLOSED BY ", enclosed);
     add_load_option(query_string, " OPTIONALLY ENCLOSED BY ", opt_enclosed);
@@ -2083,7 +2083,7 @@ static void dump_table(char *table, char *db)
               result_table);
       check_io(md_result_file);
     }
-    
+
     query_string.append( "SELECT * FROM ");
     query_string.append( result_table);
 
@@ -2094,7 +2094,7 @@ static void dump_table(char *table, char *db)
         fprintf(md_result_file, "-- WHERE:  %s\n", where);
         check_io(md_result_file);
       }
-      
+
       query_string.append( " WHERE ");
       query_string.append( where);
     }
@@ -2283,7 +2283,7 @@ static void dump_table(char *table, char *db)
                 }
                 else
                 {
-                  print_xml_tag(md_result_file, "\t\t", "", "field", "name=", 
+                  print_xml_tag(md_result_file, "\t\t", "", "field", "name=",
                                 field->name, NULL);
                   print_quoted_xml(md_result_file, row[i], length);
                 }

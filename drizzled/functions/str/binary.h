@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_BINARY_H
 #define DRIZZLED_FUNCTIONS_STR_BINARY_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_func_binary :public Item_str_func
 {
@@ -39,7 +39,7 @@ public:
   {
     collation.set(&my_charset_bin);
     max_length=args[0]->max_length;
-  } 
+  }
   virtual void print(String *str, enum_query_type query_type);
   const char *func_name() const { return "cast_as_binary"; }
 };

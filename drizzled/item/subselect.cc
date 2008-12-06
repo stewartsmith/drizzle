@@ -208,7 +208,7 @@ bool Item_subselect::fix_fields(Session *session_param, Item **ref)
   }
   else
     goto err;
-  
+
   if ((uncacheable= engine->uncacheable()))
   {
     const_item_cache= 0;
@@ -477,7 +477,7 @@ Item_singlerow_subselect::select_transformer(JOIN *join)
     return(RES_OK);
 
   SELECT_LEX *select_lex= join->select_lex;
- 
+
   if (!select_lex->master_unit()->is_union() &&
       !select_lex->table_list.elements &&
       select_lex->item_list.elements == 1 &&
@@ -526,8 +526,8 @@ enum Item_result Item_singlerow_subselect::result_type() const
   return engine->type();
 }
 
-/* 
- Don't rely on the result type to calculate field type. 
+/*
+ Don't rely on the result type to calculate field type.
  Ask the engine instead.
 */
 enum_field_types Item_singlerow_subselect::field_type() const
@@ -875,9 +875,9 @@ bool Item_in_subselect::val_bool()
   if (exec())
   {
     reset();
-    /* 
+    /*
       Must mark the IN predicate as NULL so as to make sure an enclosing NOT
-      predicate will return false. See the comments in 
+      predicate will return false. See the comments in
       subselect_uniquesubquery_engine::copy_ref_key for further details.
     */
     null_value= 1;
@@ -910,7 +910,7 @@ my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
 }
 
 
-/* 
+/*
   Rewrite a single-column IN/ALL/ANY subselect
 
   SYNOPSIS
@@ -920,15 +920,15 @@ my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
 
   DESCRIPTION
     Rewrite a single-column subquery using rule-based approach. The subquery
-    
+
        oe $cmp$ (SELECT ie FROM ... WHERE subq_where ... HAVING subq_having)
-    
+
     First, try to convert the subquery to scalar-result subquery in one of
     the forms:
-    
+
        - oe $cmp$ (SELECT MAX(...) )  // handled by Item_singlerow_subselect
        - oe $cmp$ <max>(SELECT ...)   // handled by Item_maxmin_subselect
-   
+
     If that fails, the subquery will be handled with class Item_in_optimizer.
     There are two possibilites:
     - If the subquery execution method is materialization, then the subquery is
@@ -1023,9 +1023,9 @@ Item_in_subselect::single_value_transformer(JOIN *join,
       */
       if (item->fix_fields(session, 0))
 	return(RES_ERROR);
-      session->lex->allow_sum_func= save_allow_sum_func; 
+      session->lex->allow_sum_func= save_allow_sum_func;
       /* we added aggregate function => we have to change statistic */
-      count_field_types(select_lex, &join->tmp_table_param, join->all_fields, 
+      count_field_types(select_lex, &join->tmp_table_param, join->all_fields,
                         0);
 
       subs= new Item_singlerow_subselect(select_lex);
@@ -1098,9 +1098,9 @@ Item_in_subselect::single_value_transformer(JOIN *join,
 
   - If the subquery has aggregates, GROUP BY, or HAVING, convert to
 
-    SELECT ie FROM ...  HAVING subq_having AND 
+    SELECT ie FROM ...  HAVING subq_having AND
                                trigcond(oe $cmp$ ref_or_null_helper<ie>)
-                                   
+
     the addition is wrapped into trigger only when we want to distinguish
     between NULL and false results.
 
@@ -1108,7 +1108,7 @@ Item_in_subselect::single_value_transformer(JOIN *join,
     following:
 
     = If we don't need to distinguish between NULL and false subquery:
-        
+
       SELECT 1 FROM ... WHERE (oe $cmp$ ie) AND subq_where
 
     = If we need to distinguish between those:
@@ -1145,13 +1145,13 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
                                                       this->full_name()));
     if (!abort_on_null && left_expr->maybe_null)
     {
-      /* 
+      /*
         We can encounter "NULL IN (SELECT ...)". Wrap the added condition
         within a trig_cond.
       */
       item= new Item_func_trig_cond(item, get_cond_guard(0));
     }
-    
+
     /*
       AND and comparison functions can't be changed during fix_fields()
       we can assign select_lex->having here, and pass 0 as last
@@ -1183,7 +1183,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
                                                    (int64_t) 1,
                                                    MY_INT64_NUM_DECIMAL_DIGITS));
       select_lex->ref_pointer_array[0]= select_lex->item_list.head();
-       
+
       item= func->create(expr, item);
       if (!abort_on_null && orig_item->maybe_null)
       {
@@ -1214,7 +1214,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
 	item= new Item_cond_or(item,
 			       new Item_func_isnull(orig_item));
       }
-      /* 
+      /*
         If we may encounter NULL IN (SELECT ...) and care whether subquery
         result is NULL or false, wrap condition in a trig_cond.
       */
@@ -1224,7 +1224,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
           return(RES_ERROR);
       }
       /*
-        TODO: figure out why the following is done here in 
+        TODO: figure out why the following is done here in
         single_value_transformer but there is no corresponding action in
         row_value_transformer?
       */
@@ -1269,7 +1269,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
         new_having->name= (char*)in_having_cond;
 	select_lex->having= join->having= new_having;
 	select_lex->having_fix_field= 1;
-        
+
         /*
           we do not check join->having->fixed, because comparison function
           (from func->create) can't be fixed after creation
@@ -1442,8 +1442,8 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
           return(RES_ERROR);
       }
       having_item= and_items(having_item, col_item);
-      
-      Item *item_nnull_test= 
+
+      Item *item_nnull_test=
          new Item_is_not_null_test(this,
                                    new Item_ref(&select_lex->context,
                                                 select_lex->
@@ -1452,7 +1452,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
                                                 (char *)"<list ref>"));
       if (!abort_on_null && left_expr->element_index(i)->maybe_null)
       {
-        if (!(item_nnull_test= 
+        if (!(item_nnull_test=
               new Item_func_trig_cond(item_nnull_test, get_cond_guard(i))))
           return(RES_ERROR);
       }
@@ -1511,12 +1511,12 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
         Item *having_col_item=
           new Item_is_not_null_test(this,
                                     new
-                                    Item_ref(&select_lex->context, 
+                                    Item_ref(&select_lex->context,
                                              select_lex->ref_pointer_array + i,
                                              (char *)"<no matter>",
                                              (char *)"<list ref>"));
-        
-        
+
+
         item_isnull= new
           Item_func_isnull(new
                            Item_direct_ref(&select_lex->context,
@@ -1526,7 +1526,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
                                            (char *)"<list ref>")
                           );
         item= new Item_cond_or(item, item_isnull);
-        /* 
+        /*
           TODO: why we create the above for cases where the right part
                 cant be NULL?
         */
@@ -1534,7 +1534,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
         {
           if (!(item= new Item_func_trig_cond(item, get_cond_guard(i))))
             return(RES_ERROR);
-          if (!(having_col_item= 
+          if (!(having_col_item=
                   new Item_func_trig_cond(having_col_item, get_cond_guard(i))))
             return(RES_ERROR);
         }
@@ -2052,15 +2052,15 @@ int subselect_uniquesubquery_engine::prepare()
 */
 
 bool subselect_single_select_engine::no_rows()
-{ 
+{
   return !item->assigned();
 }
 
 
-/* 
- makes storage for the output values for the subquery and calcuates 
+/*
+ makes storage for the output values for the subquery and calcuates
  their data and column types and their nullability.
-*/ 
+*/
 void subselect_engine::set_row(List<Item> &item_list, Item_cache **row)
 {
   Item *sel_item;
@@ -2141,8 +2141,8 @@ int subselect_single_select_engine::exec()
       session->lex->current_select= save_select;
       return(join->error ? join->error : 1);
     }
-    if (!select_lex->uncacheable && session->lex->describe && 
-        !(join->select_options & SELECT_DESCRIBE) && 
+    if (!select_lex->uncacheable && session->lex->describe &&
+        !(join->select_options & SELECT_DESCRIBE) &&
         join->need_tmp && item->const_item())
     {
       /*
@@ -2211,7 +2211,7 @@ int subselect_single_select_engine::exec()
         }
       }
     }
-    
+
     join->exec();
 
     /* Enable the optimizations back */
@@ -2220,7 +2220,7 @@ int subselect_single_select_engine::exec()
       JOIN_TAB *tab= *ptab;
       tab->read_record.record= 0;
       tab->read_record.ref_length= 0;
-      tab->read_first_record= tab->save_read_first_record; 
+      tab->read_first_record= tab->save_read_first_record;
       tab->read_record.read_record= tab->save_read_record;
     }
     executed= 1;
@@ -2244,14 +2244,14 @@ int subselect_union_engine::exec()
 
 /*
   Search for at least one row satisfying select condition
- 
+
   SYNOPSIS
     subselect_uniquesubquery_engine::scan_table()
 
   DESCRIPTION
     Scan the table using sequential access until we find at least one row
     satisfying select condition.
-    
+
     The caller must set this->empty_result_set=false before calling this
     function. This function will set it to true if it finds a matching row.
 
@@ -2267,7 +2267,7 @@ int subselect_uniquesubquery_engine::scan_table()
 
   if (table->file->inited)
     table->file->ha_index_end();
- 
+
   table->file->ha_rnd_init(1);
   table->file->extra_opt(HA_EXTRA_CACHE,
                          current_session->variables.read_buff_size);
@@ -2371,18 +2371,18 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
     }
 
     /*
-      Check if the error is equal to STORE_KEY_FATAL. This is not expressed 
-      using the store_key::store_key_result enum because ref.key_err is a 
-      boolean and we want to detect both true and STORE_KEY_FATAL from the 
-      space of the union of the values of [true, false] and 
-      store_key::store_key_result.  
+      Check if the error is equal to STORE_KEY_FATAL. This is not expressed
+      using the store_key::store_key_result enum because ref.key_err is a
+      boolean and we want to detect both true and STORE_KEY_FATAL from the
+      space of the union of the values of [true, false] and
+      store_key::store_key_result.
       TODO: fix the variable an return types.
     */
     if (store_res == store_key::STORE_KEY_FATAL)
     {
       /*
        Error converting the left IN operand to the column type of the right
-       IN operand. 
+       IN operand.
       */
       tab->table->status= STATUS_NOT_FOUND;
       break;
@@ -2403,20 +2403,20 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
     If some part of the lookup key is NULL, then we're evaluating
       NULL IN (SELECT ... )
     This is a special case, we don't need to search for NULL in the table,
-    instead, the result value is 
+    instead, the result value is
       - NULL  if select produces empty row set
       - false otherwise.
 
     In some cases (IN subselect is a top level item, i.e. abort_on_null==true)
     the caller doesn't distinguish between NULL and false result and we just
-    return false. 
-    Otherwise we make a full table scan to see if there is at least one 
+    return false.
+    Otherwise we make a full table scan to see if there is at least one
     matching row.
-    
+
     The result of this function (info about whether a row was found) is
     stored in this->empty_result_set.
   NOTE
-    
+
   RETURN
     false - ok
     true  - an error occured while scanning
@@ -2428,14 +2428,14 @@ int subselect_uniquesubquery_engine::exec()
   Table *table= tab->table;
   empty_result_set= true;
   table->status= 0;
- 
+
   /* TODO: change to use of 'full_scan' here? */
   if (copy_ref_key())
     return(1);
   if (table->status)
   {
-    /* 
-      We know that there will be no rows even if we scan. 
+    /*
+      We know that there will be no rows even if we scan.
       Can be set in copy_ref_key.
     */
     ((Item_in_subselect *) item)->value= 0;
@@ -2444,7 +2444,7 @@ int subselect_uniquesubquery_engine::exec()
 
   if (null_keypart)
     return(scan_table());
- 
+
   if (!table->file->inited)
     table->file->ha_index_init(tab->ref.key, 0);
   error= table->file->index_read_map(table->record[0],
@@ -2476,27 +2476,27 @@ int subselect_uniquesubquery_engine::exec()
 
   SYNOPSIS
     subselect_indexsubquery_engine:exec()
-      full_scan 
+      full_scan
 
   DESCRIPTION
     The engine is used to resolve subqueries in form
 
-      oe IN (SELECT key FROM tbl WHERE subq_where) 
+      oe IN (SELECT key FROM tbl WHERE subq_where)
 
-    The value of the predicate is calculated as follows: 
+    The value of the predicate is calculated as follows:
     1. If oe IS NULL, this is a special case, do a full table scan on
-       table tbl and search for row that satisfies subq_where. If such 
+       table tbl and search for row that satisfies subq_where. If such
        row is found, return NULL, otherwise return false.
     2. Make an index lookup via key=oe, search for a row that satisfies
        subq_where. If found, return true.
-    3. If check_null==true, make another lookup via key=NULL, search for a 
+    3. If check_null==true, make another lookup via key=NULL, search for a
        row that satisfies subq_where. If found, return NULL, otherwise
        return false.
 
   TODO
     The step #1 can be optimized further when the index has several key
     parts. Consider a subquery:
-    
+
       (oe1, oe2) IN (SELECT keypart1, keypart2 FROM tbl WHERE subq_where)
 
     and suppose we need to evaluate it for {oe1, oe2}=={const1, NULL}.
@@ -2506,10 +2506,10 @@ int subselect_uniquesubquery_engine::exec()
       SELECT keypart1, keypart2 FROM tbl WHERE subq_where            (1)
 
     and checking if it has produced any matching rows, evaluate
-    
+
       SELECT keypart2 FROM tbl WHERE subq_where AND keypart1=const1  (2)
 
-    If this query produces a row, the result is NULL (as we're evaluating 
+    If this query produces a row, the result is NULL (as we're evaluating
     "(const1, NULL) IN { (const1, X), ... }", which has a value of UNKNOWN,
     i.e. NULL).  If the query produces no rows, the result is false.
 
@@ -2547,8 +2547,8 @@ int subselect_indexsubquery_engine::exec()
 
   if (table->status)
   {
-    /* 
-      We know that there will be no rows even if we scan. 
+    /*
+      We know that there will be no rows even if we scan.
       Can be set in copy_ref_key.
     */
     ((Item_in_subselect *) item)->value= 0;
@@ -2985,7 +2985,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     - this JOIN_TAB has no corresponding JOIN (and doesn't need one), and
     - here we initialize only those members that are used by
       subselect_uniquesubquery_engine, so these objects are incomplete.
-  */ 
+  */
   if (!(tab= (JOIN_TAB*) session->alloc(sizeof(JOIN_TAB))))
     return(true);
   tab->table= tmp_table;
@@ -3003,7 +3003,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   KEY_PART_INFO *cur_key_part= tmp_key->key_part;
   store_key **ref_key= tab->ref.key_copy;
   unsigned char *cur_ref_buff= tab->ref.key_buff;
-  
+
   for (uint32_t i= 0; i < tmp_key_parts; i++, cur_key_part++, ref_key++)
   {
     tab->ref.items[i]= item_in->left_expr->element_index(i);

@@ -254,7 +254,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
 oom_error:
   /* Fatal OOM error */
   memset(ptr, 0, Field_blob::pack_length());
-  return -1; 
+  return -1;
 }
 
 
@@ -336,7 +336,7 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
 int Field_blob::cmp(const unsigned char *a,uint32_t a_length, const unsigned char *b,
 		    uint32_t b_length)
 {
-  return field_charset->coll->strnncollsp(field_charset, 
+  return field_charset->coll->strnncollsp(field_charset,
                                           a, a_length, b, b_length,
                                           0);
 }
@@ -576,7 +576,7 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
 /**
    Unpack a blob field from row data.
 
-   This method is used to unpack a blob field from a master whose size of 
+   This method is used to unpack a blob field from a master whose size of
    the field is less than that of the slave. Note: This method is included
    to satisfy inheritance rules, but is not needed for blob fields. It
    simply is used as a pass-through to the original unpack() method for

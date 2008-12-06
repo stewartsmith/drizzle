@@ -114,7 +114,7 @@ function (const char *nptr,char **endptr,int base)
   {
     ++s;
   }
-    
+
 
   if (base == 16 && s[0] == '0' && my_toupper (&my_charset_utf8_general_ci, s[1]) == 'X')
     s += 2;

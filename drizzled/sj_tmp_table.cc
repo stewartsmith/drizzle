@@ -76,7 +76,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   uint32_t blob_count, null_pack_length, null_count;
   unsigned char *null_flags;
   unsigned char *pos;
-  
+
   /*
     STEP 1: Get temporary table name
   */

@@ -145,7 +145,7 @@ static inline void write_to_binlog(Session *session, char *query, uint32_t q_len
   qinfo.db= db;
   qinfo.db_len= db_len;
   drizzle_bin_log.write(&qinfo);
-}  
+}
 
 
 /*
@@ -160,7 +160,7 @@ void free_dbopt(void *dbopt)
 }
 
 
-/* 
+/*
   Initialize database option hash and locked database hash.
 
   SYNOPSIS
@@ -181,11 +181,11 @@ bool my_database_names_init(void)
   if (!dboptions_init)
   {
     dboptions_init= 1;
-    error= hash_init(&dboptions, lower_case_table_names ? 
+    error= hash_init(&dboptions, lower_case_table_names ?
                      &my_charset_bin : system_charset_info,
                      32, 0, 0, (hash_get_key) dboptions_get_key,
                      free_dbopt,0) ||
-           hash_init(&lock_db_cache, lower_case_table_names ? 
+           hash_init(&lock_db_cache, lower_case_table_names ?
                      &my_charset_bin : system_charset_info,
                      32, 0, 0, (hash_get_key) lock_db_get_key,
                      lock_db_free_element,0);
@@ -196,7 +196,7 @@ bool my_database_names_init(void)
 
 
 
-/* 
+/*
   Free database option hash and locked databases hash.
 */
 
@@ -220,7 +220,7 @@ void my_dbopt_cleanup(void)
 {
   pthread_rwlock_wrlock(&LOCK_dboptions);
   hash_free(&dboptions);
-  hash_init(&dboptions, lower_case_table_names ? 
+  hash_init(&dboptions, lower_case_table_names ?
             &my_charset_bin : system_charset_info,
             32, 0, 0, (hash_get_key) dboptions_get_key,
             free_dbopt,0);
@@ -230,11 +230,11 @@ void my_dbopt_cleanup(void)
 
 /*
   Find database options in the hash.
-  
+
   DESCRIPTION
     Search a database options in the hash, usings its path.
     Fills "create" on success.
-  
+
   RETURN VALUES
     0 on success.
     1 on error.
@@ -245,9 +245,9 @@ static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
   my_dbopt_t *opt;
   uint32_t length;
   bool error= true;
-  
+
   length= (uint) strlen(dbname);
-  
+
   pthread_rwlock_rdlock(&LOCK_dboptions);
   if ((opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
   {
@@ -261,11 +261,11 @@ static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
 
 /*
   Writes database options into the hash.
-  
+
   DESCRIPTION
     Inserts database options into the hash, or updates
     options if they are already in the hash.
-  
+
   RETURN VALUES
     0 on success.
     1 on error.
@@ -278,10 +278,10 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
   bool error= false;
 
   length= (uint) strlen(dbname);
-  
+
   pthread_rwlock_wrlock(&LOCK_dboptions);
   if (!(opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
-  { 
+  {
     /* Options are not in the hash, insert them */
     char *tmp_name;
     if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
@@ -291,11 +291,11 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
       error= true;
       goto end;
     }
-    
+
     opt->name= tmp_name;
     strcpy(opt->name, dbname);
     opt->name_length= length;
-    
+
     if ((error= my_hash_insert(&dboptions, (unsigned char*) opt)))
     {
       free(opt);
@@ -307,7 +307,7 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
   opt->charset= create->default_table_charset;
 
 end:
-  pthread_rwlock_unlock(&LOCK_dboptions);  
+  pthread_rwlock_unlock(&LOCK_dboptions);
   return(error);
 }
 
@@ -356,7 +356,7 @@ static bool write_db_opt(Session *session, const char *path, const char *name, H
   db.set_collation(create->default_table_charset->name);
 
   fstream output(path, ios::out | ios::trunc | ios::binary);
-  if (!db.SerializeToOstream(&output)) 
+  if (!db.SerializeToOstream(&output))
     error= false;
 
   return error;
@@ -619,7 +619,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       happened.  (This is a very unlikely senario)
     */
   }
-  
+
   if (!silent)
   {
     char *query;
@@ -639,7 +639,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
 
     if (drizzle_bin_log.is_open())
     {
-      Query_log_event qinfo(session, query, query_length, 0, 
+      Query_log_event qinfo(session, query, query_length, 0,
 			    /* suppress_use */ true);
 
       /*
@@ -648,10 +648,10 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
         default. If we do not change the "current database" to the
         database being created, the CREATE statement will not be
         replicated when using --binlog-do-db to select databases to be
-        replicated. 
+        replicated.
 
 	An example (--binlog-do-db=sisyfos):
-       
+
           CREATE DATABASE bob;        # Not replicated
           USE bob;                    # 'bob' is the current database
           CREATE DATABASE sisyfos;    # Not replicated since 'bob' is
@@ -701,7 +701,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
 
   pthread_mutex_lock(&LOCK_drizzle_create_db);
 
-  /* 
+  /*
      Recreate db options file: /dbpath/.db.opt
      We pass MY_DB_OPT_FILE as "extension" to avoid
      "table name to file name" encoding.
@@ -823,7 +823,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
     remove_db_from_cache(db);
     pthread_mutex_unlock(&LOCK_open);
 
-    
+
     error= -1;
     if ((deleted= mysql_rm_known_files(session, dirp, db, path, 0,
                                        &dropped_tables)) >= 0)
@@ -850,7 +850,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
     }
     if (drizzle_bin_log.is_open())
     {
-      Query_log_event qinfo(session, query, query_length, 0, 
+      Query_log_event qinfo(session, query, query_length, 0,
 			    /* suppress_use */ true);
       /*
         Write should use the database being created as the "current
@@ -978,9 +978,9 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
       /* Drop the table nicely */
       *extension= 0;			// Remove extension
       TableList *table_list=(TableList*)
-                              session->calloc(sizeof(*table_list) + 
+                              session->calloc(sizeof(*table_list) +
                                           db_len + 1 +
-                                          MYSQL50_TABLE_NAME_PREFIX_LENGTH + 
+                                          MYSQL50_TABLE_NAME_PREFIX_LENGTH +
                                           strlen(file->name) + 1);
 
       if (!table_list)
@@ -1010,11 +1010,11 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
       (tot_list && mysql_rm_table_part2(session, tot_list, 1, 0, 1)))
     goto err;
 
-  my_dirend(dirp);  
-  
+  my_dirend(dirp);
+
   if (dropped_tables)
     *dropped_tables= tot_list;
-  
+
   /*
     If the directory is a symbolic link, remove the link first, then
     remove the directory the symbolic link pointed at

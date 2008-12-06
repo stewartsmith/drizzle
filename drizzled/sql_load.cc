@@ -366,7 +366,7 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
   free_blobs(table);				/* if pack_blob was used */
   table->copy_blobs=0;
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
-  /* 
+  /*
      simulated killing in the middle of per-row loop
      must be effective for binlogging
   */
@@ -418,7 +418,7 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
   bool err;
 
   id= 0;
- 
+
   while (!read_info.read_fixed_length())
   {
     if (session->killed)
@@ -450,7 +450,7 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
     */
     while ((sql_field= (Item_field*) it++))
     {
-      Field *field= sql_field->field;                  
+      Field *field= sql_field->field;
       if (field == table->next_number_field)
         table->auto_increment_field_not_null= true;
       /*
@@ -463,8 +463,8 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
       if (pos == read_info.row_end)
       {
         session->cuted_fields++;			/* Not enough fields */
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
-                            ER_WARN_TOO_FEW_RECORDS, 
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                            ER_WARN_TOO_FEW_RECORDS,
                             ER(ER_WARN_TOO_FEW_RECORDS), session->row_count);
         if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
             ((Field_timestamp*) field)->set_time();
@@ -486,9 +486,9 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
     if (pos != read_info.row_end)
     {
       session->cuted_fields++;			/* To long row */
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
-                          ER_WARN_TOO_MANY_RECORDS, 
-                          ER(ER_WARN_TOO_MANY_RECORDS), session->row_count); 
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_WARN_TOO_MANY_RECORDS,
+                          ER(ER_WARN_TOO_MANY_RECORDS), session->row_count);
     }
 
     if (session->killed ||
@@ -500,7 +500,7 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
     table->auto_increment_field_not_null= false;
     if (err)
       return(1);
-   
+
     /*
       We don't need to reset auto-increment field since we are restoring
       its default value at the beginning of each loop iteration.
@@ -510,9 +510,9 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
     if (read_info.line_cuted)
     {
       session->cuted_fields++;			/* To long row */
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
-                          ER_WARN_TOO_MANY_RECORDS, 
-                          ER(ER_WARN_TOO_MANY_RECORDS), session->row_count); 
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_WARN_TOO_MANY_RECORDS,
+                          ER(ER_WARN_TOO_MANY_RECORDS), session->row_count);
     }
     session->row_count++;
   }
@@ -691,9 +691,9 @@ read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
     if (read_info.line_cuted)
     {
       session->cuted_fields++;			/* To long row */
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
-                          ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS), 
-                          session->row_count);   
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS),
+                          session->row_count);
       if (session->killed)
         return(1);
     }

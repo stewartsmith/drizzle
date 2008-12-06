@@ -33,7 +33,7 @@
 # else
 #  include <time.h>
 # endif
-#endif  
+#endif
 
 
 enum options_client

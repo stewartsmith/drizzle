@@ -168,7 +168,7 @@ extern bool locked_in_memory;
 extern bool opt_using_transactions;
 extern bool using_update_log, server_id_supplied;
 extern bool opt_update_log, opt_bin_log, opt_error_log;
-extern bool opt_log; 
+extern bool opt_log;
 extern bool opt_slow_log;
 extern ulong log_output_options;
 extern bool opt_log_queries_not_using_indexes;
@@ -289,7 +289,7 @@ bool lock_table_names(Session *session, TableList *table_list);
 void unlock_table_names(Session *session, TableList *table_list,
 			TableList *last_table);
 bool lock_table_names_exclusively(Session *session, TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(Session *session, 
+bool is_table_name_exclusively_locked_by_this_thread(Session *session,
                                                      TableList *table_list);
 bool is_table_name_exclusively_locked_by_this_thread(Session *session, unsigned char *key,
                                                      int key_length);
@@ -375,7 +375,7 @@ void change_byte(unsigned char *,uint,char,char);
 void init_read_record(READ_RECORD *info, Session *session, Table *reg_form,
 		      SQL_SELECT *select,
 		      int use_record_cache, bool print_errors);
-void init_read_record_idx(READ_RECORD *info, Session *session, Table *table, 
+void init_read_record_idx(READ_RECORD *info, Session *session, Table *table,
                           bool print_error, uint32_t idx);
 void end_read_record(READ_RECORD *info);
 ha_rows filesort(Session *session, Table *form,struct st_sort_field *sortorder,

@@ -18,13 +18,13 @@
 #include "transparent_file.h"
 
 Transparent_file::Transparent_file() : lower_bound(0), buff_size(IO_SIZE)
-{ 
-  buff= (unsigned char *) my_malloc(buff_size*sizeof(unsigned char),  MYF(MY_WME)); 
+{
+  buff= (unsigned char *) my_malloc(buff_size*sizeof(unsigned char),  MYF(MY_WME));
 }
 
 Transparent_file::~Transparent_file()
-{ 
-  free((unsigned char*)buff); 
+{
+  free((unsigned char*)buff);
 }
 
 void Transparent_file::init_buff(File filedes_arg)
@@ -38,18 +38,18 @@ void Transparent_file::init_buff(File filedes_arg)
 }
 
 unsigned char *Transparent_file::ptr()
-{ 
-  return buff; 
+{
+  return buff;
 }
 
 off_t Transparent_file::start()
-{ 
-  return lower_bound; 
+{
+  return lower_bound;
 }
 
 off_t Transparent_file::end()
-{ 
-  return upper_bound; 
+{
+  return upper_bound;
 }
 
 off_t Transparent_file::read_next()

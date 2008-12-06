@@ -302,7 +302,7 @@ void Field_new_decimal::sql_type(String &str) const
    Save the field metadata for new decimal fields.
 
    Saves the precision in the first byte and decimals() in the second
-   byte of the field metadata array at index of *metadata_ptr and 
+   byte of the field metadata array at index of *metadata_ptr and
    *(metadata_ptr + 1).
 
    @param   metadata_ptr   First byte of field metadata
@@ -318,7 +318,7 @@ int Field_new_decimal::do_save_field_metadata(unsigned char *metadata_ptr)
 
 
 /**
-   Returns the number of bytes field uses in row-based replication 
+   Returns the number of bytes field uses in row-based replication
    row packed size.
 
    This method is used in row-based replication to determine the number
@@ -332,8 +332,8 @@ int Field_new_decimal::do_save_field_metadata(unsigned char *metadata_ptr)
 uint32_t Field_new_decimal::pack_length_from_metadata(uint32_t field_metadata)
 {
   uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
-  uint32_t const source_decimal= field_metadata & 0x00ff; 
-  uint32_t const source_size= my_decimal_get_binary_size(source_precision, 
+  uint32_t const source_decimal= field_metadata & 0x00ff;
+  uint32_t const source_size= my_decimal_get_binary_size(source_precision,
                                                      source_decimal);
   return (source_size);
 }
@@ -343,9 +343,9 @@ uint32_t Field_new_decimal::pack_length_from_metadata(uint32_t field_metadata)
    Check to see if field size is compatible with destination.
 
    This method is used in row-based replication to verify that the slave's
-   field size is less than or equal to the master's field size. The 
+   field size is less than or equal to the master's field size. The
    encoded field metadata (from the master or source) is decoded and compared
-   to the size of this field (the slave or destination). 
+   to the size of this field (the slave or destination).
 
    @param   field_metadata   Encoded size in field metadata
 
@@ -356,8 +356,8 @@ int Field_new_decimal::compatible_field_size(uint32_t field_metadata)
 {
   int compatible= 0;
   uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
-  uint32_t const source_decimal= field_metadata & 0x00ff; 
-  uint32_t const source_size= my_decimal_get_binary_size(source_precision, 
+  uint32_t const source_decimal= field_metadata & 0x00ff;
+  uint32_t const source_size= my_decimal_get_binary_size(source_precision,
                                                      source_decimal);
   uint32_t const destination_size= row_pack_length();
   compatible= (source_size <= destination_size);
@@ -371,7 +371,7 @@ int Field_new_decimal::compatible_field_size(uint32_t field_metadata)
 uint32_t Field_new_decimal::is_equal(Create_field *new_field)
 {
   return ((new_field->sql_type == real_type()) &&
-          ((new_field->flags & UNSIGNED_FLAG) == 
+          ((new_field->flags & UNSIGNED_FLAG) ==
            (uint) (flags & UNSIGNED_FLAG)) &&
           ((new_field->flags & AUTO_INCREMENT_FLAG) ==
            (uint) (flags & AUTO_INCREMENT_FLAG)) &&
@@ -385,7 +385,7 @@ uint32_t Field_new_decimal::is_equal(Create_field *new_field)
 
    This method is used to unpack a decimal or numeric field from a master
    whose size of the field is less than that of the slave.
-  
+
    @param   to         Destination of the data
    @param   from       Source of the data
    @param   param_data Precision (upper) and decimal (lower) values

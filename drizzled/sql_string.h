@@ -68,34 +68,34 @@ class String
   const CHARSET_INFO *str_charset;
 public:
   String()
-  { 
-    Ptr=0; str_length=Alloced_length=0; alloced=0; 
-    str_charset= &my_charset_bin; 
+  {
+    Ptr=0; str_length=Alloced_length=0; alloced=0;
+    str_charset= &my_charset_bin;
   }
   String(uint32_t length_arg)
-  { 
-    alloced=0; Alloced_length=0; (void) real_alloc(length_arg); 
+  {
+    alloced=0; Alloced_length=0; (void) real_alloc(length_arg);
     str_charset= &my_charset_bin;
   }
   String(const char *str, const CHARSET_INFO * const cs)
-  { 
+  {
     Ptr=(char*) str; str_length=(uint) strlen(str); Alloced_length=0; alloced=0;
     str_charset=cs;
   }
   String(const char *str,uint32_t len, const CHARSET_INFO * const cs)
-  { 
+  {
     Ptr=(char*) str; str_length=len; Alloced_length=0; alloced=0;
     str_charset=cs;
   }
   String(char *str,uint32_t len, const CHARSET_INFO * const cs)
-  { 
+  {
     Ptr=(char*) str; Alloced_length=str_length=len; alloced=0;
     str_charset=cs;
   }
   String(const String &str)
-  { 
+  {
     Ptr=str.Ptr ; str_length=str.str_length ;
-    Alloced_length=str.Alloced_length; alloced=0; 
+    Alloced_length=str.Alloced_length; alloced=0;
     str_charset=str.str_charset;
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
@@ -186,8 +186,8 @@ public:
     statement to be run on the remote server, and have a comma after each.
     When the list is complete, I "chop" off the trailing comma
 
-    ex. 
-      String stringobj; 
+    ex.
+      String stringobj;
       stringobj.append("VALUES ('foo', 'fi', 'fo',");
       stringobj.chop();
       stringobj.append(")");
@@ -197,11 +197,11 @@ public:
     VALUES ('foo', 'fi', 'fo',
     VALUES ('foo', 'fi', 'fo'
     VALUES ('foo', 'fi', 'fo')
-      
+
   */
   inline void chop()
   {
-    Ptr[str_length--]= '\0'; 
+    Ptr[str_length--]= '\0';
   }
 
   inline void free()
@@ -246,7 +246,7 @@ public:
     if (&s != this)
     {
       /*
-        It is forbidden to do assignments like 
+        It is forbidden to do assignments like
         some_string = substring_of_that_string
        */
       assert(!s.uses_buffer_owned_by(this));
@@ -273,7 +273,7 @@ public:
   bool append(const char *s,uint32_t arg_length);
   bool append(const char *s,uint32_t arg_length, const CHARSET_INFO * const cs);
   bool append(IO_CACHE* file, uint32_t arg_length);
-  bool append_with_prefill(const char *s, uint32_t arg_length, 
+  bool append_with_prefill(const char *s, uint32_t arg_length,
 			   uint32_t full_length, char fill_char);
   int strstr(const String &search,uint32_t offset=0); // Returns offset to substring or -1
   int strrstr(const String &search,uint32_t offset=0); // Returns offset to substring or -1
@@ -387,7 +387,7 @@ public:
   }
 };
 
-static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str, 
+static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                                            char *end)
 {
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;

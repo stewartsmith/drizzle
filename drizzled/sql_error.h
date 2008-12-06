@@ -31,7 +31,7 @@ public:
   uint32_t code;
   enum_warning_level level;
   char *msg;
-  
+
   DRIZZLE_ERROR(Session *session, uint32_t code_arg, enum_warning_level level_arg,
 	      const char *msg_arg)
     :code(code_arg), level(level_arg)

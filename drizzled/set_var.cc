@@ -484,7 +484,7 @@ static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 
 static sys_var_const_str_ptr    sys_repl_report_host(&vars, "report_host", &report_host);
 
-sys_var_session_bool  sys_keep_files_on_create(&vars, "keep_files_on_create", 
+sys_var_session_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
                                            &SV::keep_files_on_create);
 /* Read only variables */
 
@@ -603,7 +603,7 @@ static void sys_default_init_slave(Session *, enum_var_type)
 static void fix_low_priority_updates(Session *session, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
-    thr_upgraded_concurrent_insert_lock= 
+    thr_upgraded_concurrent_insert_lock=
       (global_system_variables.low_priority_updates ?
        TL_WRITE_LOW_PRIORITY : TL_WRITE);
   else
@@ -985,7 +985,7 @@ unsigned char *sys_var_enum_const::value_ptr(Session *, enum_var_type,
 }
 
 /*
-  32 bit types for session variables 
+  32 bit types for session variables
 */
 bool sys_var_session_uint32_t::check(Session *session, set_var *var)
 {
@@ -996,14 +996,14 @@ bool sys_var_session_uint32_t::check(Session *session, set_var *var)
 bool sys_var_session_uint32_t::update(Session *session, set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
-  
+
   /* Don't use bigger value than given with --maximum-variable-name=.. */
   if ((uint32_t) tmp > max_system_variables.*offset)
   {
     throw_bounds_warning(session, true, true, name, (int64_t) tmp);
     tmp= max_system_variables.*offset;
   }
-  
+
   if (option_limits)
     tmp= (uint32_t) fix_unsigned(session, tmp, option_limits);
   else if (tmp > UINT32_MAX)
@@ -1011,7 +1011,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
     tmp= UINT32_MAX;
     throw_bounds_warning(session, true, true, name, (int64_t) var->save_result.uint64_t_value);
   }
-  
+
   if (var->type == OPT_GLOBAL)
      global_system_variables.*offset= (uint32_t) tmp;
    else
@@ -1059,7 +1059,7 @@ bool sys_var_session_ha_rows::update(Session *session, set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    pthread_mutex_lock(&LOCK_global_system_variables);    
+    pthread_mutex_lock(&LOCK_global_system_variables);
     global_system_variables.*offset= (ha_rows) tmp;
     pthread_mutex_unlock(&LOCK_global_system_variables);
   }
@@ -1546,7 +1546,7 @@ bool sys_var_session_date_time_format::check(Session *session, set_var *var)
     my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, res->c_ptr());
     return 1;
   }
-  
+
   /*
     We must copy result to thread space to not get a memory leak if
     update is aborted
@@ -1766,7 +1766,7 @@ bool sys_var_key_buffer_size::update(Session *session, set_var *var)
 
   pthread_mutex_lock(&LOCK_global_system_variables);
   key_cache= get_key_cache(base_name);
-                            
+
   if (!key_cache)
   {
     /* Key cache didn't exists */
@@ -1803,7 +1803,7 @@ bool sys_var_key_buffer_size::update(Session *session, set_var *var)
 	Move tables using this key cache to the default key cache
 	and clear the old key cache.
       */
-      NAMED_LIST *list; 
+      NAMED_LIST *list;
       key_cache= (KEY_CACHE *) find_named(&key_caches, base_name->str,
 					      base_name->length, &list);
       key_cache->in_init= 1;
@@ -1832,7 +1832,7 @@ bool sys_var_key_buffer_size::update(Session *session, set_var *var)
     error= (bool)(ha_resize_key_cache(key_cache));
 
   pthread_mutex_lock(&LOCK_global_system_variables);
-  key_cache->in_init= 0;  
+  key_cache->in_init= 0;
 
 end:
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -2139,7 +2139,7 @@ bool sys_var_session_lc_time_names::check(Session *, set_var *var)
   }
   else // STRING_RESULT
   {
-    char buff[6]; 
+    char buff[6];
     String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
     if (!(res=var->value->val_str(&str)))
     {
@@ -2312,7 +2312,7 @@ static unsigned char *get_warning_count(Session *session)
 
 static unsigned char *get_error_count(Session *session)
 {
-  session->sys_var_tmp.long_value= 
+  session->sys_var_tmp.long_value=
     session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
   return (unsigned char*) &session->sys_var_tmp.long_value;
 }
@@ -2359,7 +2359,7 @@ static unsigned char *get_tmpdir(Session *)
     ptr		pointer to option structure
 */
 
-static struct my_option *find_option(struct my_option *opt, const char *name) 
+static struct my_option *find_option(struct my_option *opt, const char *name)
 {
   uint32_t length=strlen(name);
   for (; opt->name; opt++)
@@ -2392,12 +2392,12 @@ static unsigned char *get_sys_var_length(const sys_var *var, size_t *length,
 
 /*
   Add variables to the dynamic hash of system variables
-  
+
   SYNOPSIS
     mysql_add_sys_var_chain()
     first       Pointer to first system variable to add
     long_opt    (optional)command line arguments may be tied for limit checks.
-  
+
   RETURN VALUES
     0           SUCCESS
     otherwise   FAILURE
@@ -2407,9 +2407,9 @@ static unsigned char *get_sys_var_length(const sys_var *var, size_t *length,
 int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
 {
   sys_var *var;
-  
+
   /* A write lock should be held on LOCK_system_variables_hash */
-  
+
   for (var= first; var; var= var->next)
   {
     var->name_length= strlen(var->name);
@@ -2426,47 +2426,47 @@ error:
     hash_delete(&system_variable_hash, (unsigned char*) first);
   return 1;
 }
- 
- 
+
+
 /*
   Remove variables to the dynamic hash of system variables
-   
+
   SYNOPSIS
     mysql_del_sys_var_chain()
     first       Pointer to first system variable to remove
-   
+
   RETURN VALUES
     0           SUCCESS
     otherwise   FAILURE
 */
- 
+
 int mysql_del_sys_var_chain(sys_var *first)
 {
   int result= 0;
- 
+
   /* A write lock should be held on LOCK_system_variables_hash */
-   
+
   for (sys_var *var= first; var; var= var->next)
     result|= hash_delete(&system_variable_hash, (unsigned char*) var);
 
   return result;
 }
- 
- 
+
+
 static int show_cmp(SHOW_VAR *a, SHOW_VAR *b)
 {
   return strcmp(a->name, b->name);
 }
- 
- 
+
+
 /*
   Constructs an array of system variables for display to the user.
-  
+
   SYNOPSIS
     enumerate_sys_vars()
     session         current thread
     sorted      If TRUE, the system variables should be sorted
-  
+
   RETURN VALUES
     pointer     Array of SHOW_VAR elements for display
     NULL        FAILURE
@@ -2497,7 +2497,7 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool sorted)
     if (sorted)
       my_qsort(result, count + fixed_count, sizeof(SHOW_VAR),
                (qsort_cmp) show_cmp);
-    
+
     /* make last element empty */
     memset(show, 0, sizeof(SHOW_VAR));
   }
@@ -2507,10 +2507,10 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool sorted)
 
 /*
   Initialize the system variables
-  
+
   SYNOPSIS
     set_var_init()
-  
+
   RETURN VALUES
     0           SUCCESS
     otherwise   FAILURE
@@ -2519,7 +2519,7 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool sorted)
 int set_var_init()
 {
   uint32_t count= 0;
-  
+
   for (sys_var *var=vars.first; var; var= var->next, count++) {};
 
   if (my_init_dynamic_array(&fixed_show_vars, sizeof(SHOW_VAR),
@@ -2554,12 +2554,12 @@ void set_var_free()
 
 /*
   Add elements to the dynamic list of read-only system variables.
-  
+
   SYNOPSIS
     mysql_append_static_vars()
     show_vars	Pointer to start of array
     count       Number of elements
-  
+
   RETURN VALUES
     0           SUCCESS
     otherwise   FAILURE
@@ -2946,7 +2946,7 @@ void delete_elements(I_List<NAMED_LIST> *list,
 static KEY_CACHE *create_key_cache(const char *name, uint32_t length)
 {
   KEY_CACHE *key_cache;
-  
+
   if ((key_cache= (KEY_CACHE*) malloc(sizeof(KEY_CACHE))))
   {
     memset(key_cache, 0, sizeof(KEY_CACHE));

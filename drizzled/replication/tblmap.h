@@ -79,7 +79,7 @@ private:
     This is a POD (Plain Old Data).  Keep it that way (we apply offsetof() to
     it, which only works for PODs)
   */
-  struct entry { 
+  struct entry {
     ulong table_id;
     union {
       Table *table;

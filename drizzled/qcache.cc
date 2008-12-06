@@ -50,7 +50,7 @@ err:
 }
 
 int qcache_finalizer(st_plugin_int *plugin)
-{ 
+{
   qcache_t *p= (qcache_t *) plugin->data;
 
   if (plugin->plugin->deinit)

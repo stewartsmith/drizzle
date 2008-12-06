@@ -33,7 +33,7 @@ int64_t Item_func_to_days::val_int()
 
 /*
   Get information about this Item tree monotonicity
-  
+
   SYNOPSIS
     Item_func_to_days::get_monotonicity_info()
 

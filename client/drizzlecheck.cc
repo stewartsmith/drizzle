@@ -392,7 +392,7 @@ static int process_selected_tables(char *db, char **table_names, int tables)
       We need table list in form `a`, `b`, `c`
       that's why we need 2 more chars added to to each table name
       space is for more readable output in logs and in case of error
-    */   
+    */
     char *table_names_comma_sep, *end;
     int i, tot_length = 0;
 
@@ -424,7 +424,7 @@ static uint fixed_name_length(const char *name)
 {
   const char *p;
   uint extra_length= 2;  /* count the first/last backticks */
- 
+
   for (p= name; *p; p++)
   {
     if (*p == '`')

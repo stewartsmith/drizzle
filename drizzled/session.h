@@ -131,18 +131,18 @@ struct system_variables
 {
   /*
     How dynamically allocated system variables are handled:
-    
+
     The global_system_variables and max_system_variables are "authoritative"
     They both should have the same 'version' and 'size'.
     When attempting to access a dynamic variable, if the session version
     is out of date, then the session version is updated and realloced if
     neccessary and bytes copied from global to make up for missing data.
-  */ 
+  */
   ulong dynamic_variables_version;
   char* dynamic_variables_ptr;
   uint32_t dynamic_variables_head;  /* largest valid variable offset */
   uint32_t dynamic_variables_size;  /* how many bytes are in use */
-  
+
   uint64_t myisam_max_extra_sort_file_size;
   uint64_t myisam_max_sort_file_size;
   uint64_t max_heap_table_size;
@@ -176,7 +176,7 @@ struct system_variables
       1 - force MRR when the storage engine is capable of doing it
       2 - disable MRR.
   */
-  uint32_t optimizer_use_mrr; 
+  uint32_t optimizer_use_mrr;
   /* A bitmap for switching optimizations on/off */
   uint32_t optimizer_switch;
   uint64_t preload_buff_size;
@@ -207,9 +207,9 @@ struct system_variables
 
   bool low_priority_updates;
   bool new_mode;
-  /* 
+  /*
     compatibility option:
-      - index usage hints (USE INDEX without a FOR clause) behave as in 5.0 
+      - index usage hints (USE INDEX without a FOR clause) behave as in 5.0
   */
   bool old_mode;
   bool engine_condition_pushdown;
@@ -434,7 +434,7 @@ public:
       it. We will see the query_length field as either 0, or the right value
       for it.
     Assuming that the write and read of an n-bit memory field in an n-bit
-    computer is atomic, we can avoid races in the above way. 
+    computer is atomic, we can avoid races in the above way.
     This printing is needed at least in SHOW PROCESSLIST and SHOW INNODB
     STATUS.
   */
@@ -507,7 +507,7 @@ public:
     priv_user - The user privilege we are using. May be "" for anonymous user.
     ip - client IP
   */
-  char *user; 
+  char *user;
   char *ip;
 
   void init();
@@ -909,7 +909,7 @@ public:
   /*
     One thread can hold up to one named user-level lock. This variable
     points to a lock object if the lock is present. See item_func.cc and
-    chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK. 
+    chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
   uint32_t dbug_sentry; // watch out for memory corruption
   struct st_my_thread_var *mysys_var;
@@ -925,7 +925,7 @@ public:
   time_t     start_time, user_time;
   uint64_t  connect_utime, thr_create_utime; // track down slow pthread_create
   uint64_t  start_utime, utime_after_lock;
-  
+
   thr_lock_type update_lock_default;
 
   /* container for handler's private per-connection data */
@@ -1241,7 +1241,7 @@ public:
     Reset to false when we leave the sub-statement mode.
   */
   bool       is_fatal_sub_stmt_error;
-  bool	     query_start_used; 
+  bool	     query_start_used;
   /* for IS NULL => = last_insert_id() fix in remove_eq_conds() */
   bool       substitute_null_with_insert_id;
   bool	     in_lock_tables;
@@ -1253,7 +1253,7 @@ public:
   */
   bool       is_slave_error;
   bool       cleanup_done;
-  
+
   /**  is set if some thread specific value(s) used in a statement. */
   bool       thread_specific_used;
   bool	     charset_is_system_charset, charset_is_collation_connection;
@@ -1280,10 +1280,10 @@ public:
     ulong     ulong_value;
     uint64_t uint64_t_value;
   } sys_var_tmp;
-  
+
   struct {
-    /* 
-      If true, drizzle_bin_log::write(Log_event) call will not write events to 
+    /*
+      If true, drizzle_bin_log::write(Log_event) call will not write events to
       binlog, and maintain 2 below variables instead (use
       drizzle_bin_log.start_union_events to turn this on)
     */
@@ -1294,13 +1294,13 @@ public:
     */
     bool unioned_events;
     /*
-      If true, at least one drizzle_bin_log::write(Log_event e), where 
-      e.cache_stmt == true call has been made after last 
+      If true, at least one drizzle_bin_log::write(Log_event e), where
+      e.cache_stmt == true call has been made after last
       drizzle_bin_log.start_union_events() call.
     */
     bool unioned_events_trans;
-    
-    /* 
+
+    /*
       'queries' (actually SP statements) that run under inside this binlog
       union have session->query_id >= first_query_id.
     */
@@ -1327,7 +1327,7 @@ public:
     killing mysqld) where it's vital to not allocate excessive and not used
     memory. Note, that we still don't return error from init_for_queries():
     if preallocation fails, we should notice that at the first call to
-    alloc_root. 
+    alloc_root.
   */
   void init_for_queries();
   void change_user(void);
@@ -1341,12 +1341,12 @@ public:
       The query can be logged row-based or statement-based
     */
     ROW_QUERY_TYPE,
-    
+
     /*
       The query has to be logged statement-based
     */
     STMT_QUERY_TYPE,
-    
+
     /*
       The query represents a change to a table in the "mysql"
       database and is currently mapped to ROW_QUERY_TYPE.
@@ -1354,7 +1354,7 @@ public:
     DRIZZLE_QUERY_TYPE,
     QUERY_TYPE_COUNT
   };
-  
+
   int binlog_query(enum_binlog_query_type qtype,
                    char const *query, ulong query_len,
                    bool is_trans, bool suppress_use,
@@ -1653,7 +1653,7 @@ my_eof(Session *session)
 class sql_exchange :public Sql_alloc
 {
 public:
-  enum enum_filetype filetype; /* load XML, Added by Arnold & Erik */ 
+  enum enum_filetype filetype; /* load XML, Added by Arnold & Erik */
   char *file_name;
   String *field_term,*enclosed,*line_term,*line_start,*escaped;
   bool opt_enclosed;
@@ -1887,8 +1887,8 @@ public:
 
 #include <storage/myisam/myisam.h>
 
-/* 
-  Param to create temporary tables when doing SELECT:s 
+/*
+  Param to create temporary tables when doing SELECT:s
   NOTE
     This structure is copied using memcpy as a part of JOIN.
 */
@@ -1916,8 +1916,8 @@ public:
   uint	quick_group;
   bool  using_indirect_summary_function;
   /* If >0 convert all blob fields to varchar(convert_blob_length) */
-  uint32_t  convert_blob_length; 
-  const CHARSET_INFO *table_charset; 
+  uint32_t  convert_blob_length;
+  const CHARSET_INFO *table_charset;
   bool schema_table;
   /*
     True if GROUP BY and its aggregate functions are already computed
@@ -2051,7 +2051,7 @@ public:
     else
       db= db_arg;
   }
-  inline Table_ident(LEX_STRING table_arg) 
+  inline Table_ident(LEX_STRING table_arg)
     :table(table_arg), sel((SELECT_LEX_UNIT *)0)
   {
     db.str=0;
@@ -2097,7 +2097,7 @@ class user_var_entry
 };
 
 /*
-   Unique -- class for unique (removing of duplicates). 
+   Unique -- class for unique (removing of duplicates).
    Puts all values to the TREE. If the tree becomes too big,
    it's dumped to the file. User can request sorted values, or
    just iterate through them. In the last case tree merging is performed in
@@ -2129,9 +2129,9 @@ public:
   }
 
   bool get(Table *table);
-  static double get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size, 
+  static double get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size,
                              size_t max_in_memory_size);
-  inline static int get_cost_calc_buff_size(ulong nkeys, uint32_t key_size, 
+  inline static int get_cost_calc_buff_size(ulong nkeys, uint32_t key_size,
                                             size_t max_in_memory_size)
   {
     register size_t max_elems_in_tree=
@@ -2192,7 +2192,7 @@ class multi_update :public select_result_interceptor
   uint32_t table_count;
   /*
    List of tables referenced in the CHECK OPTION condition of
-   the updated view excluding the updated table. 
+   the updated view excluding the updated table.
   */
   List <Table> unupdated_check_opt_tables;
   Copy_field *copy_field;
@@ -2201,7 +2201,7 @@ class multi_update :public select_result_interceptor
   /* True if the update operation has made a change in a transactional table */
   bool transactional_tables;
   bool ignore;
-  /* 
+  /*
      error handling (rollback and binlogging) can happen in send_eof()
      so that afterward send_error() needs to find out that.
   */

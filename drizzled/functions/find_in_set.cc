@@ -71,7 +71,7 @@ int64_t Item_func_find_in_set::val_int()
     while (1)
     {
       int symbol_len;
-      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) str_end, 
+      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) str_end,
                                        (unsigned char*) real_end)) > 0)
       {
         const char *substr_end= str_end + symbol_len;

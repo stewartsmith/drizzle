@@ -21,18 +21,18 @@
 
   This files implements routines which parse XML based
   character set and collation description files.
-  
+
   Unicode collations are encoded according to
-  
+
     Unicode Technical Standard #35
     Locale Data Markup Language (LDML)
     http://www.unicode.org/reports/tr35/
-  
+
   and converted into ICU string according to
-  
+
     Collation Customization
     http://oss.software.ibm.com/icu/userguide/Collate_Customization.html
-  
+
 */
 
 struct my_cs_file_section_st
@@ -96,24 +96,24 @@ my_string_repertoire(const CHARSET_INFO * const cs, const char *str, ulong lengt
   Detect whether a character set is ASCII compatible.
 
   Returns true for:
-  
+
   - all 8bit character sets whose Unicode mapping of 0x7B is '{'
     (ignores swe7 which maps 0x7B to "LATIN LETTER A WITH DIAERESIS")
-  
+
   - all multi-byte character sets having mbminlen == 1
     (ignores ucs2 whose mbminlen is 2)
-  
+
   TODO:
-  
+
   When merging to 5.2, this function should be changed
-  to check a new flag MY_CS_NONASCII, 
-  
+  to check a new flag MY_CS_NONASCII,
+
      return (cs->flag & MY_CS_NONASCII) ? 0 : 1;
-  
+
   This flag was previously added into 5.2 under terms
   of WL#3759 "Optimize identifier conversion in client-server protocol"
   especially to mark character sets not compatible with ASCII.
-  
+
   We won't backport this flag to 5.0 or 5.1.
   This function is Ok for 5.0 and 5.1, because we're not going
   to introduce new tricky character sets between 5.0 and 5.2.
@@ -121,7 +121,7 @@ my_string_repertoire(const CHARSET_INFO * const cs, const char *str, ulong lengt
 bool
 my_charset_is_ascii_based(const CHARSET_INFO * const cs)
 {
-  return 
+  return
     (cs->mbmaxlen == 1 && cs->tab_to_uni && cs->tab_to_uni['{'] == '{') ||
     (cs->mbminlen == 1 && cs->mbmaxlen > 1);
 }

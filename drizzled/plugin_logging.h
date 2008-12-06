@@ -2,7 +2,7 @@
  -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 
- *  Definitions required for Query Logging plugin 
+ *  Definitions required for Query Logging plugin
 
  *  Copyright (C) 2008 Mark Atwood
  *

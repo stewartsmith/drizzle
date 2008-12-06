@@ -245,7 +245,7 @@ const char **my_error_unregister(int first, int last)
 
   if (is_globerrs)
     return NULL;
-  
+
   return errmsgs;
 }
 

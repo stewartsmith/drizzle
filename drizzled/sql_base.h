@@ -48,9 +48,9 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field
 		       virtual_column_info *vcol_info);
 Create_field * new_create_field(Session *session, char *field_name, enum_field_types type,
 				char *length, char *decimals,
-				uint32_t type_modifier, 
+				uint32_t type_modifier,
 				Item *default_value, Item *on_update_value,
-				LEX_STRING *comment, char *change, 
+				LEX_STRING *comment, char *change,
 				List<String> *interval_list, CHARSET_INFO *cs,
 				virtual_column_info *vcol_info);
 void store_position_for_column(const char *name);
@@ -85,13 +85,13 @@ extern Item **not_found_item;
   This enumeration type is used only by the function find_item_in_list
   to return the info on how an item has been resolved against a list
   of possibly aliased items.
-  The item can be resolved: 
+  The item can be resolved:
    - against an alias name of the list's element (RESOLVED_AGAINST_ALIAS)
    - against non-aliased field name of the list  (RESOLVED_WITH_NO_ALIAS)
    - against an aliased field name of the list   (RESOLVED_BEHIND_ALIAS)
    - ignoring the alias name in cases when SQL requires to ignore aliases
      (e.g. when the resolved field reference contains a table name or
-     when the resolved item is an expression)   (RESOLVED_IGNORING_ALIAS)    
+     when the resolved item is an expression)   (RESOLVED_IGNORING_ALIAS)
 */
 enum enum_resolution_type {
   NOT_RESOLVED=0,
@@ -111,11 +111,11 @@ bool insert_fields(Session *session, Name_resolution_context *context,
 bool setup_tables(Session *session, Name_resolution_context *context,
                   List<TableList> *from_clause, TableList *tables,
                   TableList **leaves, bool select_insert);
-bool setup_tables_and_check_access(Session *session, 
+bool setup_tables_and_check_access(Session *session,
                                    Name_resolution_context *context,
-                                   List<TableList> *from_clause, 
-                                   TableList *tables, 
-                                   TableList **leaves, 
+                                   List<TableList> *from_clause,
+                                   TableList *tables,
+                                   TableList **leaves,
                                    bool select_insert);
 int setup_wild(Session *session, TableList *tables, List<Item> &fields,
 	       List<Item> *sum_func_list, uint32_t wild_num);

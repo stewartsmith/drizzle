@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_UUID_H
 #define DRIZZLED_FUNCTIONS_STR_UUID_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 
 #define UUID_LENGTH (8+1+4+1+4+1+4+1+12)
 class Item_func_uuid: public Item_str_func

@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_MIN_MAX_H
 #define DRIZZLED_FUNCTIONS_MIN_MAX_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 class Item_func_min_max :public Item_func
 {

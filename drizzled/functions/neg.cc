@@ -73,7 +73,7 @@ void Item_func_neg::fix_length_and_dec()
     int64_t val= args[0]->val_int();
     if ((uint64_t) val >= (uint64_t) INT64_MIN &&
         ((uint64_t) val != (uint64_t) INT64_MIN ||
-          args[0]->type() != INT_ITEM))        
+          args[0]->type() != INT_ITEM))
     {
       /*
         Ensure that result is converted to DECIMAL, as int64_t can't hold

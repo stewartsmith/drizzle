@@ -112,7 +112,7 @@ public:
   */
   table_map     sj_inner_tables;
   /* Number of IN-compared expressions */
-  uint32_t          sj_in_exprs; 
+  uint32_t          sj_in_exprs;
   /*
     The structure of ON expression presented in the member above
     can be changed during certain optimizations. This member
@@ -260,7 +260,7 @@ public:
   void reinit_before_use(Session *session);
   Item_subselect *containing_subselect();
 
-  /* 
+  /*
     Compiles the tagged hints list and fills up st_table::keys_in_use_for_query,
     st_table::keys_in_use_for_group_by, st_table::keys_in_use_for_order_by,
     st_table::force_index and st_table::covering_keys.

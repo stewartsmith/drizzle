@@ -35,7 +35,7 @@ static void write_eof_packet(Session *session, NET *net,
 bool Protocol::net_store_data(const unsigned char *from, size_t length)
 {
   size_t packet_length= packet->length();
-  /* 
+  /*
      The +9 comes from that strings of length longer than 16M require
      9 bytes to be stored (see net_store_length).
   */
@@ -53,7 +53,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length)
 
 /*
   net_store_data() - extended version with character set conversion.
-  
+
   It is optimized for short strings whose length after
   conversion is garanteed to be less than 251, which accupies
   exactly one byte to store length. It allows not to use
@@ -79,7 +79,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
       For example, when converting from utf8 (mbmaxlen=3) to latin1,
       conv_length=300 means that the result length can vary between 100 to 300.
       length=100 needs one byte, length=300 needs to bytes.
-      
+
       Thus conversion directly to "packet" is not worthy.
       Let's use "convert" as a temporary buffer.
     */
@@ -210,7 +210,7 @@ net_send_ok(Session *session,
   @param session		Thread handler
   @param no_flush	Set to 1 if there will be more data to the client,
                     like in send_fields().
-*/    
+*/
 
 static void
 net_send_eof(Session *session, uint32_t server_status, uint32_t total_warn_count)
@@ -781,7 +781,7 @@ bool Protocol_text::store(Field *field)
 
 /**
   @todo
-    Second_part format ("%06") needs to change when 
+    Second_part format ("%06") needs to change when
     we support 0-6 decimals for time.
 */
 
@@ -812,8 +812,8 @@ bool Protocol_text::store_date(DRIZZLE_TIME *tm)
 
 
 /**
-  @todo 
-    Second_part format ("%06") needs to change when 
+  @todo
+    Second_part format ("%06") needs to change when
     we support 0-6 decimals for time.
 */
 

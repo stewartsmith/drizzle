@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_DECIMAL_TYPECAST_H
 #define DRIZZLED_FUNCTIONS_DECIMAL_TYPECAST_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 class Item_decimal_typecast :public Item_func
 {
@@ -30,7 +30,7 @@ public:
   {
     decimals= dec;
     max_length= my_decimal_precision_to_length(len, dec, unsigned_flag);
-  } 
+  }
   String *val_str(String *str);
   double val_real();
   int64_t val_int();

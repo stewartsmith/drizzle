@@ -74,7 +74,7 @@ public:
   bool changed;
 
   /* TRUE <=> The underlying SELECT is correlated w.r.t some ancestor select */
-  bool is_correlated; 
+  bool is_correlated;
 
   enum trans_res {RES_OK, RES_REDUCE, RES_ERROR};
   enum subs_type {UNKNOWN_SUBS, SINGLEROW_SUBS,
@@ -236,7 +236,7 @@ public:
   Item_exists_subselect(): Item_subselect() {}
 
   subs_type substype() { return EXISTS_SUBS; }
-  void reset() 
+  void reset()
   {
     value= 0;
   }
@@ -261,7 +261,7 @@ public:
   "left_expr IN (SELECT ...)".
 
   @detail
-  This class has: 
+  This class has:
    - A "subquery execution engine" (as a subclass of Item_subselect) that allows
      it to evaluate subqueries. (and this class participates in execution by
      having was_null variable where part of execution result is stored.
@@ -295,11 +295,11 @@ protected:
 public:
   /* Used to trigger on/off conditions that were pushed down to subselect */
   bool *pushed_cond_guards;
-  
+
   /* Priority of this predicate in the convert-to-semi-join-nest process. */
   int sj_convert_priority;
 
-  /* 
+  /*
     Location of the subquery predicate. It is either
      - pointer to join nest if the subquery predicate is in the ON expression
      - (TableList*)1 if the predicate is in the WHERE.
@@ -319,8 +319,8 @@ public:
   {
     return pushed_cond_guards ? pushed_cond_guards + i : NULL;
   }
-  void set_cond_guard_var(int i, bool v) 
-  { 
+  void set_cond_guard_var(int i, bool v)
+  {
     if ( pushed_cond_guards)
       pushed_cond_guards[i]= v;
   }
@@ -336,7 +336,7 @@ public:
   {}
   void cleanup();
   subs_type substype() { return IN_SUBS; }
-  void reset() 
+  void reset()
   {
     value= 0;
     null_value= 0;
@@ -438,7 +438,7 @@ public:
       stored somewhere by the exec() method itself.
 
       A required side effect: If at least one pushed-down predicate is
-      disabled, subselect_engine->no_rows() must return correct result after 
+      disabled, subselect_engine->no_rows() must return correct result after
       the exec() call.
 
     RETURN
@@ -533,14 +533,14 @@ struct st_join_table;
   lookup in a unique index.
 
   This engine is used to resolve subqueries in forms
-  
-    outer_expr IN (SELECT tbl.unique_key FROM tbl WHERE subq_where) 
-    
+
+    outer_expr IN (SELECT tbl.unique_key FROM tbl WHERE subq_where)
+
   or, tuple-based:
-  
+
     (oe1, .. oeN) IN (SELECT uniq_key_part1, ... uniq_key_partK
-                      FROM tbl WHERE subqwhere) 
-  
+                      FROM tbl WHERE subqwhere)
+
   i.e. the subquery is a single table SELECT without GROUP BY, aggregate
   functions, etc.
 */
@@ -550,7 +550,7 @@ class subselect_uniquesubquery_engine: public subselect_engine
 protected:
   st_join_table *tab;
   Item *cond; /* The WHERE condition of subselect */
-  /* 
+  /*
     TRUE<=> last execution produced empty set. Valid only when left
     expression is NULL.
   */
@@ -587,20 +587,20 @@ class subselect_indexsubquery_engine: public subselect_uniquesubquery_engine
 {
   /* FALSE for 'ref', TRUE for 'ref-or-null'. */
   bool check_null;
-  /* 
+  /*
     The "having" clause. This clause (further reffered to as "artificial
-    having") was inserted by subquery transformation code. It contains 
-    Item(s) that have a side-effect: they record whether the subquery has 
+    having") was inserted by subquery transformation code. It contains
+    Item(s) that have a side-effect: they record whether the subquery has
     produced a row with NULL certain components. We need to use it for cases
     like
       (oe1, oe2) IN (SELECT t.key, t.no_key FROM t1)
     where we do index lookup on t.key=oe1 but need also to check if there
     was a row such that t.no_key IS NULL.
-    
+
     NOTE: This is currently here and not in the uniquesubquery_engine. Ideally
     it should have been in uniquesubquery_engine in order to allow execution of
     subqueries like
-    
+
       (oe1, oe2) IN (SELECT primary_key, non_key_maybe_null_field FROM tbl)
 
     We could use uniquesubquery_engine for the first component and let
@@ -613,7 +613,7 @@ class subselect_indexsubquery_engine: public subselect_uniquesubquery_engine
     The above example subquery is handled as a full-blown SELECT with eq_ref
     access to one table.
 
-    Due to this limitation, the "artificial having" currently needs to be 
+    Due to this limitation, the "artificial having" currently needs to be
     checked by only in indexsubquery_engine.
   */
   Item *having;

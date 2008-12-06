@@ -145,7 +145,7 @@ bool Master_info::setConnectionRetry(uint32_t retry)
 void Master_info::reset()
 {
   log_name.clear();
-  log_pos= 0; 
+  log_pos= 0;
 }
 
 
@@ -211,8 +211,8 @@ int Master_info::init_master_info(const char* master_info_fname,
     record->set_log_position(log_pos);
 
     fstream output(info_filename.c_str(), ios::out | ios::trunc | ios::binary);
-    if (!list.SerializeToOstream(&output)) 
-    { 
+    if (!list.SerializeToOstream(&output))
+    {
       assert(0);
       return -1;
     }
@@ -221,7 +221,7 @@ int Master_info::init_master_info(const char* master_info_fname,
   {
     /* Read Master info file here (from info_filename) */
     fstream input(info_filename.c_str(), ios::in | ios::binary);
-    if (!list.ParseFromIstream(&input)) 
+    if (!list.ParseFromIstream(&input))
     {
       assert(0);
       return -1;
@@ -296,8 +296,8 @@ int Master_info::flush()
   record->set_log_position(log_pos);
 
   fstream output(info_filename.c_str(), ios::out | ios::trunc | ios::binary);
-  if (!list.SerializeToOstream(&output)) 
-  { 
+  if (!list.SerializeToOstream(&output))
+  {
     assert(0);
     return 1;
   }

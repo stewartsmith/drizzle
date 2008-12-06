@@ -149,7 +149,7 @@ check_user(Session *session, const char *passwd,
     }
   }
   my_ok(session);
-  session->password= test(passwd_len);          // remember for error messages 
+  session->password= test(passwd_len);          // remember for error messages
   /* Ready to handle queries */
   return(0);
 }
@@ -198,7 +198,7 @@ void session_init_client_charset(Session *session, uint32_t cs_number)
   else
   {
     session->variables.character_set_results=
-      session->variables.collation_connection= 
+      session->variables.collation_connection=
       session->variables.character_set_client;
   }
 }
@@ -249,7 +249,7 @@ static int check_connection(Session *session)
       return 1; /* The error is set by my_strdup(). */
   }
   net_keepalive(net, true);
-  
+
   uint32_t server_capabilites;
   {
     /* buff[] needs to big enough to hold the server_version variable */
@@ -278,7 +278,7 @@ static int check_connection(Session *session)
     */
     end= strncpy(end, session->scramble, SCRAMBLE_LENGTH_323);
     end+= SCRAMBLE_LENGTH_323 + 1;
-   
+
     int2store(end, server_capabilites);
     /* write server characteristics: up to 16 bytes allowed */
     end[2]=(char) default_charset_info->number;
@@ -445,7 +445,7 @@ bool login_connection(Session *session)
   /* Use "connect_timeout" value during connection phase */
   my_net_set_read_timeout(net, connect_timeout);
   my_net_set_write_timeout(net, connect_timeout);
-  
+
   lex_start(session);
 
   error= check_connection(session);
@@ -602,7 +602,7 @@ pthread_handler_t handle_one_connection(void *arg)
 	break;
     }
     end_connection(session);
-   
+
 end_thread:
     close_connection(session, 0, 1);
     if (thread_scheduler.end_thread(session,1))

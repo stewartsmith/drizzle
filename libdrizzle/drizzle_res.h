@@ -48,7 +48,7 @@ extern "C" {
   uint32_t  field_count, current_field;
   bool  eof;      /* Used by drizzle_fetch_row */
   /* drizzle_stmt_close() had to cancel this result */
-  bool       unbuffered_fetch_cancelled; 
+  bool       unbuffered_fetch_cancelled;
   void *extension;
 } DRIZZLE_RES;
 

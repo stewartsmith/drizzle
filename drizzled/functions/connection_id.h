@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTIONS_CONNECTION_ID_H
 
 #include <drizzled/functions/int.h>
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 class Item_func_connection_id :public Item_int_func
 {

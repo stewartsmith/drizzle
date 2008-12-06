@@ -371,13 +371,13 @@ typedef struct st_sort_key_blocks		/* Used when sorting */
 } SORT_KEY_BLOCKS;
 
 
-/* 
-  MyISAM supports several statistics collection methods. Currently statistics 
-  collection method is not stored in MyISAM file and has to be specified for 
+/*
+  MyISAM supports several statistics collection methods. Currently statistics
+  collection method is not stored in MyISAM file and has to be specified for
   each table analyze/repair operation in  MI_CHECK::stats_method.
 */
 
-typedef enum 
+typedef enum
 {
   /* Treat NULLs as inequal when collecting statistics (default for 4.1/5.0) */
   MI_STATS_METHOD_NULLS_NOT_EQUAL,
@@ -411,14 +411,14 @@ typedef struct st_mi_check_param
   int tmpfile_createflag;
   myf myf_rw;
   IO_CACHE read_cache;
-  
-  /* 
+
+  /*
     The next two are used to collect statistics, see update_key_parts for
     description.
   */
   uint64_t unique_count[MI_MAX_KEY_SEG+1];
   uint64_t notnull_count[MI_MAX_KEY_SEG+1];
-  
+
   ha_checksum key_crc[HA_MAX_POSSIBLE_KEY];
   ulong rec_per_key_part[MI_MAX_KEY_SEG*HA_MAX_POSSIBLE_KEY];
   void *session;
@@ -466,7 +466,7 @@ void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
 			       bool repair);
 int update_state_info(MI_CHECK *param, MI_INFO *info,uint32_t update);
 void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
-                      uint64_t *unique, uint64_t *notnull, 
+                      uint64_t *unique, uint64_t *notnull,
                       uint64_t records);
 int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
 	     my_off_t length, const char *type);
@@ -481,7 +481,7 @@ bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
 int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows);
 void mi_flush_bulk_insert(MI_INFO *info, uint32_t inx);
 void mi_end_bulk_insert(MI_INFO *info);
-int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map, 
+int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map,
 			   KEY_CACHE *key_cache);
 void mi_change_key_cache(KEY_CACHE *old_key_cache,
 			 KEY_CACHE *new_key_cache);

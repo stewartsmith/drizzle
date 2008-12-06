@@ -434,7 +434,7 @@ pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_global_read_lock,
                 LOCK_error_log,
                 LOCK_global_system_variables,
-                LOCK_slave_list, 
+                LOCK_slave_list,
                 LOCK_active_mi,
                 LOCK_connection_count;
 
@@ -1091,7 +1091,7 @@ static void network_init(void)
       int flags =1;
 
 #ifdef IPV6_V6ONLY
-      if (next->ai_family == AF_INET6) 
+      if (next->ai_family == AF_INET6)
       {
         error= setsockopt(ip_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &flags, sizeof(flags));
         if (error != 0)
@@ -1100,7 +1100,7 @@ static void network_init(void)
           assert(error == 0);
         }
       }
-#endif   
+#endif
       error= setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
       if (error != 0)
       {

@@ -32,7 +32,7 @@
 #define SHUTDOWN_DEF_TIMEOUT 3600		/* Wait for shutdown */
 
 char *host= NULL, *user= NULL, *opt_password= NULL;
-static bool interrupted= false, opt_verbose= false,tty_password= false; 
+static bool interrupted= false, opt_verbose= false,tty_password= false;
 static uint32_t tcp_port= 0, option_wait= 0, option_silent= 0;
 static uint32_t my_end_arg;
 static uint32_t opt_connect_timeout, opt_shutdown_timeout;
@@ -41,7 +41,7 @@ static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 using namespace std;
 
 /*
-  Forward declarations 
+  Forward declarations
 */
 static void usage(void);
 static void print_version(void);
@@ -125,8 +125,8 @@ get_one_option(int optid, const struct my_option *, char *argument)
         start[1]=0; /* Cut length of argument */
       tty_password= 0;
     }
-    else 
-      tty_password= 1; 
+    else
+      tty_password= 1;
     break;
   case 's':
     option_silent++;

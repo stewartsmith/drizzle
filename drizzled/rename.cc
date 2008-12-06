@@ -90,7 +90,7 @@ bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
   */
   pthread_mutex_unlock(&LOCK_open);
 
-  /* Lets hope this doesn't fail as the result will be messy */ 
+  /* Lets hope this doesn't fail as the result will be messy */
   if (!silent && !error)
   {
     write_bin_log(session, true, session->query, session->query_length);

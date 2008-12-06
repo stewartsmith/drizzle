@@ -52,10 +52,10 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
   new_select->group_list.first=(unsigned char *)0;
   new_select->group_list.next=(unsigned char **)&new_select->group_list.first;
   List<Item> privlist;
-  
+
   List_iterator<Item> list_it(select_lex->item_list);
   List_iterator<Item> new_it(new_fields);
-    
+
   while ((item=list_it++))
   {
     bool not_found= true;
@@ -65,7 +65,7 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
       new_it.rewind();
       while ((new_item=new_it++))
       {
-	if (new_item->type()==Item::FIELD_ITEM && 
+	if (new_item->type()==Item::FIELD_ITEM &&
 	    !strcmp(((Item_field*)new_item)->table_name,iif->table_name) &&
 	    !strcmp(((Item_field*)new_item)->field_name,iif->field_name))
 	{
@@ -99,8 +99,8 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
   Returns 0 if OK, 1 if error, -1 if error already printed to client
 ****************************************************************************/
 
-static int  olap_combos(List<Item> old_fields, List<Item> new_fields, Item *item, LEX *lex, 
-			      SELECT_LEX *select_lex, int position, int selection, int num_fields, 
+static int  olap_combos(List<Item> old_fields, List<Item> new_fields, Item *item, LEX *lex,
+			      SELECT_LEX *select_lex, int position, int selection, int num_fields,
 			      int num_new_fields)
 {
   int sl_return = 0;
@@ -126,7 +126,7 @@ static int  olap_combos(List<Item> old_fields, List<Item> new_fields, Item *item
 
 /****************************************************************************
   Top level function for converting OLAP clauses to multiple selects
-  This is also a place where clauses treatment depends on OLAP type 
+  This is also a place where clauses treatment depends on OLAP type
   Returns 0 if OK, 1 if error, -1 if error already printed to client
 ****************************************************************************/
 

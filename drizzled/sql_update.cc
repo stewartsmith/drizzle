@@ -81,7 +81,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   uint32_t keynr;
   MY_BITMAP unique_map; /* Fields in offended unique. */
   my_bitmap_map unique_map_buf[bitmap_buffer_size(MAX_FIELDS)];
-  
+
   /*
     Only duplicate key errors print the key value.
     If storage engine does always read all columns, we have the value alraedy.
@@ -175,7 +175,7 @@ int mysql_update(Session *session, TableList *table_list,
   uint64_t     id;
   List<Item> all_fields;
   Session::killed_state killed_status= Session::NOT_KILLED;
-  
+
   for ( ; ; )
   {
     if (open_tables(session, &table_list, &table_count, 0))
@@ -292,7 +292,7 @@ int mysql_update(Session *session, TableList *table_list,
   table->mark_columns_needed_for_update();
 
   /* Check if we are modifying a key that we are used to search with */
-  
+
   if (select && select->quick)
   {
     used_index= select->quick->index;
@@ -420,7 +420,7 @@ int mysql_update(Session *session, TableList *table_list,
       limit= tmp_limit;
       table->file->try_semi_consistent_read(0);
       end_read_record(&info);
-     
+
       /* Change select to use tempfile */
       if (select)
       {
@@ -447,7 +447,7 @@ int mysql_update(Session *session, TableList *table_list,
 
   if (ignore)
     table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
-  
+
   if (select && select->quick && select->quick->reset())
     goto err;
   table->file->try_semi_consistent_read(1);
@@ -506,7 +506,7 @@ int mysql_update(Session *session, TableList *table_list,
 
             1) is covered by exec_bulk_update calls.
             2) and 3) is handled by the bulk_update_row method.
-            
+
             bulk_update_row can execute the updates including the one
             defined in the bulk_update_row or not including the row
             in the call. This is up to the handler implementation and can
@@ -738,7 +738,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
 
   session->lex->allow_sum_func= 0;
 
-  if (setup_tables_and_check_access(session, &select_lex->context, 
+  if (setup_tables_and_check_access(session, &select_lex->context,
                                     &select_lex->top_join_list,
                                     table_list,
                                     &select_lex->leaf_tables,
@@ -765,7 +765,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
 
 
 /***************************************************************************
-  Update multiple tables from join 
+  Update multiple tables from join
 ***************************************************************************/
 
 /*
@@ -778,7 +778,7 @@ static table_map get_table_map(List<Item> *items)
   Item_field *item;
   table_map map= 0;
 
-  while ((item= (Item_field *) item_it++)) 
+  while ((item= (Item_field *) item_it++))
     map|= item->used_tables();
   return map;
 }
@@ -813,7 +813,7 @@ int mysql_multi_update_prepare(Session *session)
   const bool using_lock_tables= session->locked_tables != 0;
   bool original_multiupdate= (session->lex->sql_command == SQLCOM_UPDATE_MULTI);
   bool need_reopen= false;
-  
+
 
   /* following need for prepared statements, to run next time multi-update */
   session->lex->sql_command= SQLCOM_UPDATE_MULTI;
@@ -933,7 +933,7 @@ reopen_tables:
     further check in multi_update::prepare whether to use record cache.
   */
   lex->select_lex.exclude_from_table_unique_test= false;
- 
+
   if (session->fill_derived_tables() &&
       mysql_handle_derived(lex, &mysql_derived_filling))
     return(true);
@@ -957,7 +957,7 @@ bool mysql_multi_update(Session *session,
 {
   multi_update *result;
   bool res;
-  
+
   if (!(result= new multi_update(table_list,
 				 session->lex->select_lex.leaf_tables,
 				 fields, values,
@@ -1016,7 +1016,7 @@ int multi_update::prepare(List<Item> &,
   List_iterator_fast<Item> value_it(*values);
   uint32_t i, max_fields;
   uint32_t leaf_table_count= 0;
-  
+
   session->count_cuted_fields= CHECK_FIELD_WARN;
   session->cuted_fields=0L;
   session->set_proc_info("updating main table");
@@ -1182,7 +1182,7 @@ bool
 multi_update::initialize_tables(JOIN *join)
 {
   TableList *table_ref;
-  
+
   if ((session->options & OPTION_SAFE_UPDATES) && error_if_full_join(join))
     return(1);
   main_table=join->join_tab->table;
@@ -1464,7 +1464,7 @@ void multi_update::abort()
     if (do_update && table_count > 1)
     {
       /* Add warning here */
-      /* 
+      /*
          todo/fixme: do_update() is never called with the arg 1.
          should it change the signature to become argless?
       */
@@ -1501,7 +1501,7 @@ int multi_update::do_updates()
   ha_rows org_updated;
   Table *table, *tmp_table;
   List_iterator_fast<Table> check_opt_it(unupdated_check_opt_tables);
-  
+
   do_update= 0;					// Don't retry this function
   if (!found)
     return(0);
@@ -1531,7 +1531,7 @@ int multi_update::do_updates()
       Setup copy functions to copy fields from temporary table
     */
     List_iterator_fast<Item> field_it(*fields_for_table[offset]);
-    Field **field= tmp_table->field + 
+    Field **field= tmp_table->field +
                    1 + unupdated_check_opt_tables.elements; // Skip row pointers
     Copy_field *copy_field_ptr= copy_field, *copy_field_end;
     for ( ; *field ; field++)
@@ -1656,10 +1656,10 @@ bool multi_update::send_eof()
   char buff[STRING_BUFFER_USUAL_SIZE];
   uint64_t id;
   Session::killed_state killed_status= Session::NOT_KILLED;
-  
+
   session->set_proc_info("updating reference tables");
 
-  /* 
+  /*
      Does updates for the last n - 1 tables, returns 0 if ok;
      error takes into account killed status gained in do_updates()
   */
@@ -1675,12 +1675,12 @@ bool multi_update::send_eof()
     Write the SQL statement to the binlog if we updated
     rows and we succeeded or if we updated some non
     transactional tables.
-    
+
     The query has to binlog because there's a modified non-transactional table
     either from the query's list or via a stored routine: bug#13270,23333
   */
 
-  assert(trans_safe || !updated || 
+  assert(trans_safe || !updated ||
               session->transaction.stmt.modified_non_trans_table);
   if (local_error == 0 || session->transaction.stmt.modified_non_trans_table)
   {

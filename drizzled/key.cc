@@ -291,7 +291,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
   const unsigned char *key_end= key + key_length;;
 
   for (key_part=table->key_info[idx].key_part;
-       key < key_end ; 
+       key < key_end ;
        key_part++, key+= store_length)
   {
     uint32_t length;
@@ -299,7 +299,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
 
     if (key_part->null_bit)
     {
-      if (*key != test(table->record[0][key_part->null_offset] & 
+      if (*key != test(table->record[0][key_part->null_offset] &
 		       key_part->null_bit))
 	return 1;
       if (*key)
@@ -341,7 +341,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
 /*
   unpack key-fields from record to some buffer.
 
-  This is used mainly to get a good error message.  We temporary 
+  This is used mainly to get a good error message.  We temporary
   change the column bitmap so that all columns are readable.
 
   @param
@@ -395,7 +395,7 @@ void key_unpack(String *to,Table *table,uint32_t idx)
                                  char_length)) < key_part->length)
           tmp.length(charpos);
       }
-      
+
       if (key_part->length < field->pack_length())
 	tmp.length(cmin(tmp.length(),(uint32_t)key_part->length));
       to->append(tmp);

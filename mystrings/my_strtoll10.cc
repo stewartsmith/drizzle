@@ -29,14 +29,14 @@ static uint64_t lfactor[9]=
 
 /*
   Convert a string to an to uint64_t integer value
-  
+
   SYNOPSYS
     my_strtoll10()
       nptr     in       pointer to the string to be converted
       endptr   in/out   pointer to the end of the string/
                         pointer to the stop character
       error    out      returned error code
- 
+
   DESCRIPTION
     This function takes the decimal representation of integer number
     from string nptr and converts it to an signed or unsigned
@@ -48,7 +48,7 @@ static uint64_t lfactor[9]=
     The function stops reading the string nptr at the first character
     that is not a decimal digit. If endptr is not NULL then the function
     will not read characters after *endptr.
- 
+
   RETURN VALUES
     Value of string as a signed/unsigned int64_t integer
 

@@ -237,7 +237,7 @@ bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen)
   }
   vio->addrLen= (int)addrLen;
 
-  if ((error= getnameinfo((struct sockaddr *)(&vio->remote), 
+  if ((error= getnameinfo((struct sockaddr *)(&vio->remote),
                           addrLen,
                           buf, buflen,
                           port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV)))

@@ -85,7 +85,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
     }
     strcpy(convert_dirname(to,dir,NULL),prefix_buff);
     org_file=mkstemp(to);
-    /* TODO: This was old behavior, but really don't we want to 
+    /* TODO: This was old behavior, but really don't we want to
      * unlink files immediately under all circumstances?
      * if (mode & O_TEMPORARY)
       (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));

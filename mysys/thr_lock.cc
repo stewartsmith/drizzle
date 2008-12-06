@@ -85,7 +85,7 @@ multiple read locks.
 # else
 #  include <time.h>
 # endif
-#endif  
+#endif
 
 #include <drizzled/util/test.h>
 
@@ -502,7 +502,7 @@ static inline void free_all_read_locks(THR_LOCK *lock,
       if (using_concurrent_insert)
       {
 	/*
-	  We can't free this lock; 
+	  We can't free this lock;
 	  Link lock away from read chain back into read_wait chain
 	*/
 	if (((*data->prev)=data->next))
@@ -515,7 +515,7 @@ static inline void free_all_read_locks(THR_LOCK *lock,
 	continue;
       }
       lock->read_no_write_count++;
-    }      
+    }
     data->cond=0;				/* Mark thread free */
     pthread_cond_signal(cond);
   } while ((data=data->next));
@@ -539,7 +539,7 @@ void thr_unlock(THR_LOCK_DATA *data)
   else if (lock_type == TL_WRITE_DELAYED && data->cond)
   {
     /*
-      This only happens in extreme circumstances when a 
+      This only happens in extreme circumstances when a
       write delayed lock that is waiting for a lock
     */
     lock->write_wait.last=data->prev;		/* Put it on wait queue */

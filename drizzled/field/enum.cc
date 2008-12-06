@@ -95,7 +95,7 @@ int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * co
 
   /* Convert character set if necessary */
   if (String::needs_conversion(length, cs, field_charset, &not_used))
-  { 
+  {
     uint32_t dummy_errors;
     tmpstr.copy(from, length, cs, field_charset, &dummy_errors);
     from= tmpstr.ptr();
@@ -206,7 +206,7 @@ int64_t Field_enum::val_int(void)
 /**
    Save the field metadata for enum fields.
 
-   Saves the real type in the first byte and the pack length in the 
+   Saves the real type in the first byte and the pack length in the
    second byte of the field metadata array at index of *metadata_ptr and
    *(metadata_ptr + 1).
 

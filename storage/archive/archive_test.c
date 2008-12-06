@@ -29,7 +29,7 @@
 # else
 #  include <time.h>
 # endif
-#endif  
+#endif
 
 #define COMMENT_STRING "Your bases"
 #define FRM_STRING "My bases"
@@ -122,13 +122,13 @@ int small_test(az_method method)
     return 0;
   }
 
-  azwrite_comment(&writer_handle, (char *)COMMENT_STRING, 
+  azwrite_comment(&writer_handle, (char *)COMMENT_STRING,
                   (unsigned int)strlen(COMMENT_STRING));
   azread_comment(&writer_handle, comment_str);
   assert(!memcmp(COMMENT_STRING, comment_str,
                 strlen(COMMENT_STRING)));
 
-  azwrite_frm(&writer_handle, (char *)FRM_STRING, 
+  azwrite_frm(&writer_handle, (char *)FRM_STRING,
                   (unsigned int)strlen(FRM_STRING));
   azread_frm(&writer_handle, comment_str);
   assert(!memcmp(FRM_STRING, comment_str,
@@ -280,7 +280,7 @@ int small_test(az_method method)
   return 0;
 }
 
-int size_test(uint64_t length, uint64_t rows_to_test_for, 
+int size_test(uint64_t length, uint64_t rows_to_test_for,
               az_method method)
 {
   azio_stream writer_handle, reader_handle;
@@ -291,7 +291,7 @@ int size_test(uint64_t length, uint64_t rows_to_test_for,
   int error;
   int x;
 
-  if (!(ret= azopen(&writer_handle, TEST_FILENAME, 
+  if (!(ret= azopen(&writer_handle, TEST_FILENAME,
                     O_CREAT|O_RDWR|O_TRUNC,
                     method)))
   {
@@ -299,7 +299,7 @@ int size_test(uint64_t length, uint64_t rows_to_test_for,
     exit(1);
   }
 
-  for (count= 0, write_length= 0; write_length < length ; 
+  for (count= 0, write_length= 0; write_length < length ;
        write_length+= ret)
   {
     count++;
@@ -357,7 +357,7 @@ int size_test(uint64_t length, uint64_t rows_to_test_for,
 long int timedif(struct timeval a, struct timeval b)
 {
     register int us, s;
- 
+
     us = a.tv_usec - b.tv_usec;
     us /= 1000;
     s = a.tv_sec - b.tv_sec;
