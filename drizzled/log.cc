@@ -27,6 +27,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/replication/replication.h>
 #include <libdrizzle/libdrizzle.h>
+#include <drizzled/replicator.h>
 #include <mysys/hash.h>
 #include <drizzled/replication/rli.h>
 
@@ -387,7 +388,7 @@ binlog_end_trans(Session *session, binlog_trx_data *trx_data,
   return(error);
 }
 
-static int binlog_prepare(handlerton *, Session *, bool)
+static int binlog_prepare(handlerton *, Session *session, bool)
 {
   /*
     do nothing.
@@ -395,6 +396,9 @@ static int binlog_prepare(handlerton *, Session *, bool)
     switch to 1pc.
     real work will be done in DRIZZLE_BIN_LOG::log_xid()
   */
+
+  (void)replicator_prepare(session);
+
   return 0;
 }
 
@@ -487,6 +491,8 @@ static int binlog_commit(handlerton *, Session *session, bool all)
   {
     Query_log_event qev(session, STRING_WITH_LEN("COMMIT"), true, false);
     qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
+    /* TODO: Fix return type */
+    (void)replicator_end_transaction(session, all, true);
     int error= binlog_end_trans(session, trx_data, &qev, all);
     return(error);
   }
@@ -545,6 +551,10 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
      */
     error= binlog_end_trans(session, trx_data, 0, all);
   }
+
+  /* TODO: Fix return type */
+  (void)replicator_end_transaction(session, all, false);
+
   return(error);
 }
 
@@ -574,6 +584,7 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
 
 static int binlog_savepoint_set(handlerton *, Session *session, void *sv)
 {
+  (void)replicator_savepoint_set(session, sv);
   binlog_trans_log_savepos(session, (my_off_t*) sv);
   /* Write it to the binary log */
 
@@ -585,6 +596,7 @@ static int binlog_savepoint_set(handlerton *, Session *session, void *sv)
 
 static int binlog_savepoint_rollback(handlerton *, Session *session, void *sv)
 {
+  bool error;
   /*
     Write ROLLBACK TO SAVEPOINT to the binlog cache if we have updated some
     non-transactional table. Otherwise, truncate the binlog cache starting
@@ -595,10 +607,14 @@ static int binlog_savepoint_rollback(handlerton *, Session *session, void *sv)
   {
     int error=
       session->binlog_query(Session::STMT_QUERY_TYPE,
-                        session->query, session->query_length, true, false);
+                            session->query, session->query_length, true, false);
     return(error);
   }
   binlog_trans_log_truncate(session, *(my_off_t*)sv);
+
+
+  error= replicator_rollback_to_savepoint(session, sv);
+
   return(0);
 }
 
@@ -2137,60 +2153,6 @@ int Session::binlog_setup_trx_data()
   return(0);
 }
 
-/*
-  Function to start a statement and optionally a transaction for the
-  binary log.
-
-  SYNOPSIS
-    binlog_start_trans_and_stmt()
-
-  DESCRIPTION
-
-    This function does three things:
-    - Start a transaction if not in autocommit mode or if a BEGIN
-      statement has been seen.
-
-    - Start a statement transaction to allow us to truncate the binary
-      log.
-
-    - Save the currrent binlog position so that we can roll back the
-      statement by truncating the transaction log.
-
-      We only update the saved position if the old one was undefined,
-      the reason is that there are some cases (e.g., for CREATE-SELECT)
-      where the position is saved twice (e.g., both in
-      select_create::prepare() and Session::binlog_write_table_map()) , but
-      we should use the first. This means that calls to this function
-      can be used to start the statement before the first table map
-      event, to include some extra events.
- */
-
-void
-Session::binlog_start_trans_and_stmt()
-{
-  binlog_trx_data *trx_data= (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
-
-  if (trx_data == NULL ||
-      trx_data->before_stmt_pos == MY_OFF_T_UNDEF)
-  {
-    this->binlog_set_stmt_begin();
-    if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
-      trans_register_ha(this, true, binlog_hton);
-    trans_register_ha(this, false, binlog_hton);
-    /*
-      Mark statement transaction as read/write. We never start
-      a binary log transaction and keep it read-only,
-      therefore it's best to mark the transaction read/write just
-      at the same time we start it.
-      Not necessary to mark the normal transaction read/write
-      since the statement-level flag will be propagated automatically
-      inside ha_commit_trans.
-    */
-    ha_data[binlog_hton->slot].ha_info[0].set_trx_read_write();
-  }
-  return;
-}
-
 void Session::binlog_set_stmt_begin() {
   binlog_trx_data *trx_data=
     (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
@@ -2207,34 +2169,6 @@ void Session::binlog_set_stmt_begin() {
   trx_data->before_stmt_pos= pos;
 }
 
-
-/*
-  Write a table map to the binary log.
- */
-
-int Session::binlog_write_table_map(Table *table, bool is_trans)
-{
-  int error;
-
-  /* Pre-conditions */
-  assert(table->s->table_map_id != UINT32_MAX);
-
-  Table_map_log_event::flag_set const
-    flags= Table_map_log_event::TM_NO_FLAGS;
-
-  Table_map_log_event
-    the_event(this, table, table->s->table_map_id, is_trans, flags);
-
-  if (is_trans && binlog_table_maps == 0)
-    binlog_start_trans_and_stmt();
-
-  if ((error= drizzle_bin_log.write(&the_event)))
-    return(error);
-
-  binlog_table_maps++;
-  table->s->table_map_version= drizzle_bin_log.table_map_version();
-  return(0);
-}
 
 Rows_log_event*
 Session::binlog_get_pending_rows_event() const
@@ -2422,8 +2356,6 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
       my_off_t trans_log_pos= my_b_tell(trans_log);
       if (event_info->get_cache_stmt() || trans_log_pos != 0)
       {
-        if (trans_log_pos == 0)
-          session->binlog_start_trans_and_stmt();
         file= trans_log;
       }
       /*
@@ -3618,6 +3550,8 @@ int TC_LOG_BINLOG::log_xid(Session *session, my_xid xid)
   Xid_log_event xle(session, xid);
   binlog_trx_data *trx_data=
     (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
+  /* TODO: Fix return type */
+  (void)replicator_end_transaction(session, true, true);
   /*
     We always commit the entire transaction when writing an XID. Also
     note that the return value is inverted.

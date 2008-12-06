@@ -1760,7 +1760,6 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0
       && drizzle_bin_log.is_open())
   {
-    session->binlog_start_trans_and_stmt();
   }
 
   if (!(table= create_table_from_items(session, create_info, create_table,

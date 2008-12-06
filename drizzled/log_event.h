@@ -2920,13 +2920,6 @@ public:
 		       bool is_transactional);
   Write_rows_log_event(const char *buf, uint32_t event_len,
                        const Format_description_log_event *description_event);
-  static bool binlog_row_logging_function(Session *session, Table *table,
-                                          bool is_transactional,
-                                          const unsigned char *,
-                                          const unsigned char *after_record)
-  {
-    return session->binlog_write_row(table, is_transactional, after_record);
-  }
 
 private:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
@@ -2967,15 +2960,6 @@ public:
 
   Update_rows_log_event(const char *buf, uint32_t event_len,
 			const Format_description_log_event *description_event);
-
-  static bool binlog_row_logging_function(Session *session, Table *table,
-                                          bool is_transactional,
-                                          const unsigned char *before_record,
-                                          const unsigned char *after_record)
-  {
-    return session->binlog_update_row(table, is_transactional,
-                                  before_record, after_record);
-  }
 
   virtual bool is_valid() const
   {
@@ -3023,14 +3007,6 @@ public:
 			bool is_transactional);
   Delete_rows_log_event(const char *buf, uint32_t event_len,
 			const Format_description_log_event *description_event);
-  static bool binlog_row_logging_function(Session *session, Table *table,
-                                          bool is_transactional,
-                                          const unsigned char *before_record,
-                                          const unsigned char *)
-  {
-    return session->binlog_delete_row(table, is_transactional, before_record);
-  }
-
 protected:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
 

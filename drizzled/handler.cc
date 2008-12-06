@@ -35,6 +35,7 @@
 #include CMATH_H
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/replicator.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
@@ -4286,109 +4287,48 @@ bool ha_show_status(Session *session, handlerton *db_type, enum ha_stat_type sta
   - table is not mysql.event
 */
 
-static bool check_table_binlog_row_based(Session *session, Table *table)
+static bool  binlog_log_row(Table* table,
+                            const unsigned char *before_record,
+                            const unsigned char *after_record)
 {
-  if (table->s->cached_row_logging_check == -1)
-  {
-    int const check(table->s->tmp_table == NO_TMP_TABLE);
-    table->s->cached_row_logging_check= check;
-  }
-
-  assert(table->s->cached_row_logging_check == 0 ||
-              table->s->cached_row_logging_check == 1);
-
-  return (table->s->cached_row_logging_check &&
-          (session->options & OPTION_BIN_LOG) &&
-          drizzle_bin_log.is_open());
-}
-
-
-/**
-   Write table maps for all (manually or automatically) locked tables
-   to the binary log.
-
-   This function will generate and write table maps for all tables
-   that are locked by the thread 'session'.  Either manually locked
-   (stored in Session::locked_tables) and automatically locked (stored
-   in Session::lock) are considered.
-
-   @param session     Pointer to Session structure
-
-   @retval 0   All OK
-   @retval 1   Failed to write all table maps
-
-   @sa
-       Session::lock
-       Session::locked_tables
-*/
-
-static int write_locked_table_maps(Session *session)
-{
-  if (session->get_binlog_table_maps() == 0)
-  {
-    DRIZZLE_LOCK *locks[3];
-    locks[0]= session->extra_lock;
-    locks[1]= session->lock;
-    locks[2]= session->locked_tables;
-    for (uint32_t i= 0 ; i < sizeof(locks)/sizeof(*locks) ; ++i )
-    {
-      DRIZZLE_LOCK const *const lock= locks[i];
-      if (lock == NULL)
-        continue;
-
-      Table **const end_ptr= lock->table + lock->table_count;
-      for (Table **table_ptr= lock->table ;
-           table_ptr != end_ptr ;
-           ++table_ptr)
-      {
-        Table *const table= *table_ptr;
-        if (table->current_lock == F_WRLCK &&
-            check_table_binlog_row_based(session, table))
-        {
-          int const has_trans= table->file->has_transactions();
-          int const error= session->binlog_write_table_map(table, has_trans);
-          /*
-            If an error occurs, it is the responsibility of the caller to
-            roll back the transaction.
-          */
-          if (unlikely(error))
-            return(1);
-        }
-      }
-    }
-  }
-  return(0);
-}
-
-
-typedef bool Log_func(Session*, Table*, bool, const unsigned char*, const unsigned char*);
-
-static int binlog_log_row(Table* table,
-                          const unsigned char *before_record,
-                          const unsigned char *after_record,
-                          Log_func *log_func)
-{
-  if (table->no_replicate)
-    return 0;
-
   bool error= 0;
   Session *const session= table->in_use;
 
-  if (check_table_binlog_row_based(session, table))
+  if (table->no_replicate)
+    return 0;
+
+  if (session->getReplicationData() == NULL)
   {
-    /*
-      If there are no table maps written to the binary log, this is
-      the first row handled in this statement. In that case, we need
-      to write table maps for all locked tables to the binary log.
-    */
-    if (likely(!(error= write_locked_table_maps(session))))
-    {
-      bool const has_trans= table->file->has_transactions();
-      error= (*log_func)(session, table, has_trans, before_record, after_record);
-    }
+    error= replicator_session_init(session);
   }
 
-  return error ? HA_ERR_RBR_LOGGING_FAILED : 0;
+  switch (session->lex->sql_command)
+  {
+  case SQLCOM_REPLACE:
+  case SQLCOM_INSERT:
+  case SQLCOM_REPLACE_SELECT:
+  case SQLCOM_INSERT_SELECT:
+    error= replicator_write_row(session, table);
+    break;
+
+  case SQLCOM_UPDATE:
+  case SQLCOM_UPDATE_MULTI:
+    error= replicator_update_row(session, table, before_record, after_record);
+    break;
+
+  case SQLCOM_DELETE:
+  case SQLCOM_DELETE_MULTI:
+    error= replicator_delete_row(session, table);
+    break;
+
+    /* 
+      For everything else we ignore the event (since it just involves a temp table)
+    */
+  default:
+    break;
+  }
+
+  return error;
 }
 
 int handler::ha_external_lock(Session *session, int lock_type)
@@ -4437,15 +4377,16 @@ int handler::ha_reset()
 int handler::ha_write_row(unsigned char *buf)
 {
   int error;
-  Log_func *log_func= Write_rows_log_event::binlog_row_logging_function;
   DRIZZLE_INSERT_ROW_START();
 
   mark_trx_read_write();
 
   if (unlikely(error= write_row(buf)))
     return(error);
-  if (unlikely(error= binlog_log_row(table, 0, buf, log_func)))
-    return(error); /* purecov: inspected */
+
+  if (unlikely(binlog_log_row(table, 0, buf)))
+    return HA_ERR_RBR_LOGGING_FAILED; /* purecov: inspected */
+
   DRIZZLE_INSERT_ROW_END();
   return(0);
 }
@@ -4454,7 +4395,6 @@ int handler::ha_write_row(unsigned char *buf)
 int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_data)
 {
   int error;
-  Log_func *log_func= Update_rows_log_event::binlog_row_logging_function;
 
   /*
     Some storage engines require that the new record is in record[0]
@@ -4466,22 +4406,25 @@ int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_dat
 
   if (unlikely(error= update_row(old_data, new_data)))
     return error;
-  if (unlikely(error= binlog_log_row(table, old_data, new_data, log_func)))
-    return error;
+
+  if (unlikely(binlog_log_row(table, old_data, new_data)))
+    return HA_ERR_RBR_LOGGING_FAILED;
+
   return 0;
 }
 
 int handler::ha_delete_row(const unsigned char *buf)
 {
   int error;
-  Log_func *log_func= Delete_rows_log_event::binlog_row_logging_function;
 
   mark_trx_read_write();
 
   if (unlikely(error= delete_row(buf)))
     return error;
-  if (unlikely(error= binlog_log_row(table, buf, 0, log_func)))
-    return error;
+
+  if (unlikely(binlog_log_row(table, buf, 0)))
+    return HA_ERR_RBR_LOGGING_FAILED;
+
   return 0;
 }
 

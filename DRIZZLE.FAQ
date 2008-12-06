@@ -20,7 +20,7 @@ for the project is web infrastructure backend and cloud components.
 No, though several of the authors do work for Sun/MySQL. The development
 model is one based around open collaboration.  
 
-Drizzle's license is the GPL v2.
+Drizzle's license is the GPL v2 and all contributions come in as BSD.
 
 * So what are the differences between is and MySQL?
 

@@ -928,8 +928,17 @@ public:
 
   thr_lock_type update_lock_default;
 
+  /*
+    Both of the following container points in session will be converted to an API.
+  */
+
   /* container for handler's private per-connection data */
   Ha_data ha_data[MAX_HA];
+
+  /* container for replication data */
+  void *replication_data;
+  inline void setReplicationData (void *data) { replication_data= data; }
+  inline void *getReplicationData () { return replication_data; }
 
   /* Place to store various things */
   void *session_marker;
@@ -938,15 +947,8 @@ public:
   /*
     Public interface to write RBR events to the binlog
   */
-  void binlog_start_trans_and_stmt();
   void binlog_set_stmt_begin();
   int binlog_write_table_map(Table *table, bool is_transactional);
-  int binlog_write_row(Table* table, bool is_transactional,
-                       const unsigned char *new_data);
-  int binlog_delete_row(Table* table, bool is_transactional,
-                        const unsigned char *old_data);
-  int binlog_update_row(Table* table, bool is_transactional,
-                        const unsigned char *old_data, const unsigned char *new_data);
 
   void set_server_id(uint32_t sid) { server_id = sid; }
 
