@@ -4286,11 +4286,9 @@ bool ha_show_status(Session *session, handlerton *db_type, enum ha_stat_type sta
   - table is not mysql.event
 */
 
-typedef bool Log_func(Session*, Table*, bool, const unsigned char*, const unsigned char*);
-
-static int binlog_log_row(Table* table,
-                          const unsigned char *before_record,
-                          const unsigned char *after_record)
+static bool  binlog_log_row(Table* table,
+                            const unsigned char *before_record,
+                            const unsigned char *after_record)
 {
   bool error= 0;
   Session *const session= table->in_use;
@@ -4322,11 +4320,14 @@ static int binlog_log_row(Table* table,
     error= replicator_delete_row(session, table);
     break;
 
+    /* 
+      For everything else we ignore the event (since it just involves a temp table)
+    */
   default:
     break;
   }
 
-  return error ? HA_ERR_RBR_LOGGING_FAILED : 0;
+  return error;
 }
 
 int handler::ha_external_lock(Session *session, int lock_type)
@@ -4381,8 +4382,10 @@ int handler::ha_write_row(unsigned char *buf)
 
   if (unlikely(error= write_row(buf)))
     return(error);
-  if (unlikely(error= binlog_log_row(table, 0, buf)))
-    return(error); /* purecov: inspected */
+
+  if (unlikely(binlog_log_row(table, 0, buf)))
+    return HA_ERR_RBR_LOGGING_FAILED; /* purecov: inspected */
+
   DRIZZLE_INSERT_ROW_END();
   return(0);
 }
@@ -4402,8 +4405,10 @@ int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_dat
 
   if (unlikely(error= update_row(old_data, new_data)))
     return error;
-  if (unlikely(error= binlog_log_row(table, old_data, new_data)))
-    return error;
+
+  if (unlikely(binlog_log_row(table, old_data, new_data)))
+    return HA_ERR_RBR_LOGGING_FAILED;
+
   return 0;
 }
 
@@ -4415,8 +4420,10 @@ int handler::ha_delete_row(const unsigned char *buf)
 
   if (unlikely(error= delete_row(buf)))
     return error;
-  if (unlikely(error= binlog_log_row(table, buf, 0)))
-    return error;
+
+  if (unlikely(binlog_log_row(table, buf, 0)))
+    return HA_ERR_RBR_LOGGING_FAILED;
+
   return 0;
 }
 

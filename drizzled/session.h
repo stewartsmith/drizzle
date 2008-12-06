@@ -950,12 +950,6 @@ public:
   void binlog_start_trans_and_stmt();
   void binlog_set_stmt_begin();
   int binlog_write_table_map(Table *table, bool is_transactional);
-  int binlog_write_row(Table* table, bool is_transactional,
-                       const unsigned char *new_data);
-  int binlog_delete_row(Table* table, bool is_transactional,
-                        const unsigned char *old_data);
-  int binlog_update_row(Table* table, bool is_transactional,
-                        const unsigned char *old_data, const unsigned char *new_data);
 
   void set_server_id(uint32_t sid) { server_id = sid; }
 
