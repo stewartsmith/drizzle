@@ -1328,7 +1328,7 @@ static const char *check_lowercase_names(handler *file, const char *path,
 
   /* Ensure that table handler get path in lower case */
   if (tmp_path != path)
-    my_stpcpy(tmp_path, path);
+    strcpy(tmp_path, path);
 
   /*
     we only should turn into lowercase database/table part
@@ -4152,7 +4152,8 @@ int handler::compare_key2(key_range *range)
   return cmp;
 }
 
-int handler::index_read_idx_map(unsigned char * buf, uint32_t index, const unsigned char * key,
+int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
+                                const unsigned char * key,
                                 key_part_map keypart_map,
                                 enum ha_rkey_function find_flag)
 {

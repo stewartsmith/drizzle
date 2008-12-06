@@ -229,7 +229,7 @@ static st_blackhole_share *get_share(const char *table_name)
       goto error;
 
     share->table_name_length= length;
-    my_stpcpy(share->table_name, table_name);
+    strcpy(share->table_name, table_name);
 
     if (my_hash_insert(&blackhole_open_tables, (unsigned char*) share))
     {

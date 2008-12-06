@@ -120,7 +120,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return(NULL);
   }
-  my_stpcpy(tmpname,path);
+  strcpy(tmpname,path);
 
   /* STEP 4: Create Table description */
   memset(table, 0, sizeof(*table));

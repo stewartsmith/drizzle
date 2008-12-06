@@ -33,6 +33,7 @@
 #include <drizzled/sql_load.h>
 
 #include <algorithm>
+#include <string>
 
 #include <mysys/base64.h>
 #include <mysys/my_bitmap.h>
@@ -44,6 +45,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/slave.h>
 
+using namespace std;
 
 static const char *HA_ERR(int i)
 {
@@ -305,7 +307,7 @@ static char *slave_load_file_stem(char *buf, uint32_t file_id,
   buf= int10_to_str(event_server_id, buf, 10);
   *buf++ = '-';
   res= int10_to_str(file_id, buf, 10);
-  my_stpcpy(res, ext);                             // Add extension last
+  strcpy(res, ext);                             // Add extension last
   return res;                                   // Pointer to extension
 }
 
@@ -393,7 +395,7 @@ char *str_to_hex(char *to, const char *from, uint32_t len)
     to= octet2hex(to, from, len);
   }
   else
-    to= my_stpcpy(to, "\"\"");
+    to= strcpy(to, "\"\"")+2;
   return to;                               // pointer to end 0 of 'to'
 }
 
@@ -1074,9 +1076,9 @@ void Query_log_event::pack_info(Protocol *protocol)
   if (!(flags & LOG_EVENT_SUPPRESS_USE_F)
       && db && db_len)
   {
-    pos= my_stpcpy(buf, "use `");
+    pos= strcpy(buf, "use `")+5;
     memcpy(pos, db, db_len);
-    pos= my_stpcpy(pos+db_len, "`; ");
+    pos= strcpy(pos+db_len, "`; ")+3;
   }
   if (query && q_len)
   {
@@ -1762,9 +1764,9 @@ Start_log_event_v3::Start_log_event_v3()
 void Start_log_event_v3::pack_info(Protocol *protocol)
 {
   char buf[12 + ST_SERVER_VER_LEN + 14 + 22], *pos;
-  pos= my_stpcpy(buf, "Server ver: ");
-  pos= my_stpcpy(pos, server_version);
-  pos= my_stpcpy(pos, ", Binlog ver: ");
+  pos= strcpy(buf, "Server ver: ")+12;
+  pos= strcpy(pos, server_version)+strlen(server_version);
+  pos= strcpy(pos, ", Binlog ver: ")+14;
   pos= int10_to_str(binlog_version, pos, 10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
@@ -2251,67 +2253,67 @@ void Load_log_event::print_query(bool need_db, char *buf,
 
   if (need_db && db && db_len)
   {
-    pos= my_stpcpy(pos, "use `");
+    pos= strcpy(pos, "use `")+5;
     memcpy(pos, db, db_len);
-    pos= my_stpcpy(pos+db_len, "`; ");
+    pos= strcpy(pos+db_len, "`; ")+3;
   }
 
-  pos= my_stpcpy(pos, "LOAD DATA ");
+  pos= strcpy(pos, "LOAD DATA ")+10;
 
   if (fn_start)
     *fn_start= pos;
 
   if (check_fname_outside_temp_buf())
-    pos= my_stpcpy(pos, "LOCAL ");
-  pos= my_stpcpy(pos, "INFILE '");
+    pos= strcpy(pos, "LOCAL ")+6;
+  pos= strcpy(pos, "INFILE '")+8;
   memcpy(pos, fname, fname_len);
-  pos= my_stpcpy(pos+fname_len, "' ");
+  pos= strcpy(pos+fname_len, "' ")+2;
 
   if (sql_ex.opt_flags & REPLACE_FLAG)
-    pos= my_stpcpy(pos, " REPLACE ");
+    pos= strcpy(pos, " REPLACE ")+9;
   else if (sql_ex.opt_flags & IGNORE_FLAG)
-    pos= my_stpcpy(pos, " IGNORE ");
+    pos= strcpy(pos, " IGNORE ")+8;
 
-  pos= my_stpcpy(pos ,"INTO");
+  pos= strcpy(pos ,"INTO")+4;
 
   if (fn_end)
     *fn_end= pos;
 
-  pos= my_stpcpy(pos ," Table `");
+  pos= strcpy(pos ," Table `")+8;
   memcpy(pos, table_name, table_name_len);
   pos+= table_name_len;
 
   /* We have to create all optinal fields as the default is not empty */
-  pos= my_stpcpy(pos, "` FIELDS TERMINATED BY ");
+  pos= strcpy(pos, "` FIELDS TERMINATED BY ")+23;
   pos= pretty_print_str(pos, sql_ex.field_term, sql_ex.field_term_len);
   if (sql_ex.opt_flags & OPT_ENCLOSED_FLAG)
-    pos= my_stpcpy(pos, " OPTIONALLY ");
-  pos= my_stpcpy(pos, " ENCLOSED BY ");
+    pos= strcpy(pos, " OPTIONALLY ")+12;
+  pos= strcpy(pos, " ENCLOSED BY ")+13;
   pos= pretty_print_str(pos, sql_ex.enclosed, sql_ex.enclosed_len);
 
-  pos= my_stpcpy(pos, " ESCAPED BY ");
+  pos= strcpy(pos, " ESCAPED BY ")+12;
   pos= pretty_print_str(pos, sql_ex.escaped, sql_ex.escaped_len);
 
-  pos= my_stpcpy(pos, " LINES TERMINATED BY ");
+  pos= strcpy(pos, " LINES TERMINATED BY ")+21;
   pos= pretty_print_str(pos, sql_ex.line_term, sql_ex.line_term_len);
   if (sql_ex.line_start_len)
   {
-    pos= my_stpcpy(pos, " STARTING BY ");
+    pos= strcpy(pos, " STARTING BY ")+13;
     pos= pretty_print_str(pos, sql_ex.line_start, sql_ex.line_start_len);
   }
 
   if ((long) skip_lines > 0)
   {
-    pos= my_stpcpy(pos, " IGNORE ");
+    pos= strcpy(pos, " IGNORE ")+8;
     pos= int64_t10_to_str((int64_t) skip_lines, pos, 10);
-    pos= my_stpcpy(pos," LINES ");
+    pos= strcpy(pos," LINES ")+7;
   }
 
   if (num_fields)
   {
     uint32_t i;
     const char *field= fields;
-    pos= my_stpcpy(pos, " (");
+    pos= strcpy(pos, " (")+2;
     for (i = 0; i < num_fields; i++)
     {
       if (i)
@@ -3005,9 +3007,9 @@ Rotate_log_event::do_shall_skip(Relay_log_info *rli)
 void Xid_log_event::pack_info(Protocol *protocol)
 {
   char buf[128], *pos;
-  pos= my_stpcpy(buf, "COMMIT /* xid=");
+  pos= strcpy(buf, "COMMIT /* xid=")+14;
   pos= int64_t10_to_str(xid, pos, 10);
-  pos= my_stpcpy(pos, " */");
+  pos= strcpy(pos, " */")+3;
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
 
@@ -3060,13 +3062,13 @@ Xid_log_event::do_shall_skip(Relay_log_info *rli)
 void Slave_log_event::pack_info(Protocol *protocol)
 {
   char buf[256+HOSTNAME_LENGTH], *pos;
-  pos= my_stpcpy(buf, "host=");
+  pos= strcpy(buf, "host=")+5;
   pos= my_stpncpy(pos, master_host.c_str(), HOSTNAME_LENGTH);
-  pos= my_stpcpy(pos, ",port=");
+  pos= strcpy(pos, ",port=")+6;
   pos= int10_to_str((long) master_port, pos, 10);
-  pos= my_stpcpy(pos, ",log=");
-  pos= my_stpcpy(pos, master_log.c_str());
-  pos= my_stpcpy(pos, ",pos=");
+  pos= strcpy(pos, ",log=")+5;
+  pos= strcpy(pos, master_log.c_str())+master_log.length();
+  pos= strcpy(pos, ",pos=")+5;
   pos= int64_t10_to_str(master_pos, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
 }
@@ -3309,13 +3311,13 @@ Create_file_log_event::Create_file_log_event(const char* buf, uint32_t len,
 void Create_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[NAME_LEN*2 + 30 + 21*2], *pos;
-  pos= my_stpcpy(buf, "db=");
+  pos= strcpy(buf, "db=")+3;
   memcpy(pos, db, db_len);
-  pos= my_stpcpy(pos + db_len, ";table=");
+  pos= strcpy(pos + db_len, ";table=")+7;
   memcpy(pos, table_name, table_name_len);
-  pos= my_stpcpy(pos + table_name_len, ";file_id=");
+  pos= strcpy(pos + table_name_len, ";file_id=")+9;
   pos= int10_to_str((long) file_id, pos, 10);
-  pos= my_stpcpy(pos, ";block_len=");
+  pos= strcpy(pos, ";block_len=")+11;
   pos= int10_to_str((long) block_len, pos, 10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
@@ -3334,7 +3336,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   int error = 1;
 
   memset(&file, 0, sizeof(file));
-  fname_buf= my_stpcpy(proc_info, "Making temp file ");
+  fname_buf= strcpy(proc_info, "Making temp file ")+17;
   ext= slave_load_file_stem(fname_buf, file_id, server_id, ".info");
   session->set_proc_info(proc_info);
   my_delete(fname_buf, MYF(0)); // old copy may exist already
@@ -3352,10 +3354,10 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
 
   // a trick to avoid allocating another buffer
   fname= fname_buf;
-  fname_len= (uint) (my_stpcpy(ext, ".data") - fname);
+  fname_len= (uint) ((strcpy(ext, ".data") + 5) - fname);
   if (write_base(&file))
   {
-    my_stpcpy(ext, ".info"); // to have it right in the error message
+    strcpy(ext, ".info"); // to have it right in the error message
     rli->report(ERROR_LEVEL, my_errno,
                 _("Error in Create_file event: could not write to file '%s'"),
                 fname_buf);
@@ -3481,7 +3483,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
   int fd;
   int error = 1;
 
-  fname= my_stpcpy(proc_info, "Making temp file ");
+  fname= strcpy(proc_info, "Making temp file ")+17;
   slave_load_file_stem(fname, file_id, server_id, ".data");
   session->set_proc_info(proc_info);
   if (get_create_or_append())
@@ -3586,7 +3588,7 @@ int Delete_file_log_event::do_apply_event(const Relay_log_info *)
   char fname[FN_REFLEN+10];
   char *ext= slave_load_file_stem(fname, file_id, server_id, ".data");
   (void) my_delete(fname, MYF(MY_WME));
-  my_stpcpy(ext, ".info");
+  strcpy(ext, ".info");
   (void) my_delete(fname, MYF(MY_WME));
   return 0;
 }
@@ -3850,16 +3852,16 @@ void Execute_load_query_log_event::pack_info(Protocol *protocol)
   pos= buf;
   if (db && db_len)
   {
-    pos= my_stpcpy(buf, "use `");
+    pos= strcpy(buf, "use `")+5;
     memcpy(pos, db, db_len);
-    pos= my_stpcpy(pos+db_len, "`; ");
+    pos= strcpy(pos+db_len, "`; ")+3;
   }
   if (query && q_len)
   {
     memcpy(pos, query, q_len);
     pos+= q_len;
   }
-  pos= my_stpcpy(pos, " ;file_id=");
+  pos= strcpy(pos, " ;file_id=")+10;
   pos= int10_to_str((long) file_id, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
   free(buf);
@@ -5053,8 +5055,8 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   table_list->next_global= table_list->next_local= 0;
   table_list->table_id= m_table_id;
   table_list->updating= 1;
-  my_stpcpy(table_list->db, m_dbnam);
-  my_stpcpy(table_list->table_name, m_tblnam);
+  strcpy(table_list->db, m_dbnam);
+  strcpy(table_list->table_name, m_tblnam);
 
   int error= 0;
 
@@ -5403,7 +5405,7 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
   Table *table= m_table;  // pointer to event's table
   int error;
   int keynum;
-  auto_afree_ptr<char> key(NULL);
+  basic_string<unsigned char> key;
 
   /* fill table->record[0] with default values */
 
@@ -5483,19 +5485,11 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
         return(my_errno);
       }
 
-      if (key.get() == NULL)
-      {
-        key.assign(static_cast<char*>(my_alloca(table->s->max_unique_length)));
-        if (key.get() == NULL)
-        {
-          return(ENOMEM);
-        }
-      }
+      key.reserve(table->s->max_unique_length);
 
-      key_copy((unsigned char*)key.get(), table->record[0], table->key_info + keynum,
-               0);
+      key_copy(key, table->record[0], table->key_info + keynum, 0);
       error= table->file->index_read_idx_map(table->record[1], keynum,
-                                             (const unsigned char*)key.get(),
+                                             key.data(),
                                              HA_WHOLE_KEY,
                                              HA_READ_KEY_EXACT);
       if (error)

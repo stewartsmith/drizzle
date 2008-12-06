@@ -442,7 +442,8 @@ public:
      row if available. If the key value is null, begin at the first key of the
      index.
   */
-  virtual int index_read_idx_map(unsigned char * buf, uint32_t index, const unsigned char * key,
+  virtual int index_read_idx_map(unsigned char * buf, uint32_t index,
+                                 const unsigned char * key,
                                  key_part_map keypart_map,
                                  enum ha_rkey_function find_flag);
   virtual int index_next(unsigned char *)

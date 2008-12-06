@@ -1,73 +1,73 @@
-/* Copyright (C) 2000-2006 MySQL AB & Sasha
+        /* Copyright (C) 2000-2006 MySQL AB & Sasha
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
+           This program is free software; you can redistribute it and/or modify
+           it under the terms of the GNU General Public License as published by
+           the Free Software Foundation; version 2 of the License.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+           This program is distributed in the hope that it will be useful,
+           but WITHOUT ANY WARRANTY; without even the implied warranty of
+           MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+           GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+           You should have received a copy of the GNU General Public License
+           along with this program; if not, write to the Free Software
+           Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+        #include <drizzled/server_includes.h>
 
-#include <drizzled/replication/mi.h>
-#include <drizzled/replication/replication.h>
-#include <drizzled/log_event.h>
-#include <libdrizzle/libdrizzle.h>
-#include <mysys/hash.h>
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
-#include <drizzled/data_home.h>
+        #include <drizzled/replication/mi.h>
+        #include <drizzled/replication/replication.h>
+        #include <drizzled/log_event.h>
+        #include <libdrizzle/libdrizzle.h>
+        #include <mysys/hash.h>
+        #include <drizzled/error.h>
+        #include <drizzled/gettext.h>
+        #include <drizzled/data_home.h>
 
-int max_binlog_dump_events = 0; // unlimited
+        int max_binlog_dump_events = 0; // unlimited
 
-/*
-    fake_rotate_event() builds a fake (=which does not exist physically in any
-    binlog) Rotate event, which contains the name of the binlog we are going to
-    send to the slave (because the slave may not know it if it just asked for
-    MASTER_LOG_FILE='', MASTER_LOG_POS=4).
-    < 4.0.14, fake_rotate_event() was called only if the requested pos was 4.
-    After this version we always call it, so that a 3.23.58 slave can rely on
-    it to detect if the master is 4.0 (and stop) (the _fake_ Rotate event has
-    zeros in the good positions which, by chance, make it possible for the 3.23
-    slave to detect that this event is unexpected) (this is luck which happens
-    because the master and slave disagree on the size of the header of
-    Log_event).
+        /*
+            fake_rotate_event() builds a fake (=which does not exist physically in any
+            binlog) Rotate event, which contains the name of the binlog we are going to
+            send to the slave (because the slave may not know it if it just asked for
+            MASTER_LOG_FILE='', MASTER_LOG_POS=4).
+            < 4.0.14, fake_rotate_event() was called only if the requested pos was 4.
+            After this version we always call it, so that a 3.23.58 slave can rely on
+            it to detect if the master is 4.0 (and stop) (the _fake_ Rotate event has
+            zeros in the good positions which, by chance, make it possible for the 3.23
+            slave to detect that this event is unexpected) (this is luck which happens
+            because the master and slave disagree on the size of the header of
+            Log_event).
 
-    Relying on the event length of the Rotate event instead of these
-    well-placed zeros was not possible as Rotate events have a variable-length
-    part.
-*/
-static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
-                             uint64_t position, const char** errmsg)
-{
-  char header[LOG_EVENT_HEADER_LEN], buf[ROTATE_HEADER_LEN+100];
-  /*
-    'when' (the timestamp) is set to 0 so that slave could distinguish between
-    real and fake Rotate events (if necessary)
-  */
-  memset(header, 0, 4);
-  header[EVENT_TYPE_OFFSET] = ROTATE_EVENT;
+            Relying on the event length of the Rotate event instead of these
+            well-placed zeros was not possible as Rotate events have a variable-length
+            part.
+        */
+        static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
+                                     uint64_t position, const char** errmsg)
+        {
+          char header[LOG_EVENT_HEADER_LEN], buf[ROTATE_HEADER_LEN+100];
+          /*
+            'when' (the timestamp) is set to 0 so that slave could distinguish between
+            real and fake Rotate events (if necessary)
+          */
+          memset(header, 0, 4);
+          header[EVENT_TYPE_OFFSET] = ROTATE_EVENT;
 
-  char* p = log_file_name+dirname_length(log_file_name);
-  uint32_t ident_len = (uint32_t) strlen(p);
-  uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN + ROTATE_HEADER_LEN;
-  int4store(header + SERVER_ID_OFFSET, server_id);
-  int4store(header + EVENT_LEN_OFFSET, event_len);
-  int2store(header + FLAGS_OFFSET, 0);
+          char* p = log_file_name+dirname_length(log_file_name);
+          uint32_t ident_len = (uint32_t) strlen(p);
+          uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN + ROTATE_HEADER_LEN;
+          int4store(header + SERVER_ID_OFFSET, server_id);
+          int4store(header + EVENT_LEN_OFFSET, event_len);
+          int2store(header + FLAGS_OFFSET, 0);
 
-  // TODO: check what problems this may cause and fix them
-  int4store(header + LOG_POS_OFFSET, 0);
+          // TODO: check what problems this may cause and fix them
+          int4store(header + LOG_POS_OFFSET, 0);
 
-  packet->append(header, sizeof(header));
-  int8store(buf+R_POS_OFFSET,position);
-  packet->append(buf, ROTATE_HEADER_LEN);
-  packet->append(p,ident_len);
+          packet->append(header, sizeof(header));
+          int8store(buf+R_POS_OFFSET,position);
+          packet->append(buf, ROTATE_HEADER_LEN);
+          packet->append(p,ident_len);
   if (my_net_write(net, (unsigned char*) packet->ptr(), packet->length()))
   {
     *errmsg = "failed on my_net_write()";
@@ -1579,7 +1579,7 @@ static int show_slave_skip_errors(Session *session __attribute__((unused)),
     if (var->value != buff)
       buff--;				// Remove last ','
     if (i < MAX_SLAVE_ERROR)
-      buff= my_stpcpy(buff, "...");  // Couldn't show all errors
+      buff= strcpy(buff, "...")+3;  // Couldn't show all errors
     *buff=0;
   }
   return 0;

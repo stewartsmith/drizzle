@@ -110,8 +110,10 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/field/num.h>
 
+#include <string>
 #include CMATH_H
 
+using namespace std;
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif
@@ -9448,6 +9450,9 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
   QUICK_RANGE *cur_range;
   bool found_null= false;
   int result= HA_ERR_KEY_NOT_FOUND;
+  basic_string<unsigned char> max_key;
+  
+  max_key.reserve(real_prefix_len + min_max_arg_len);
 
   assert(min_max_ranges.elements > 0);
 
@@ -9521,12 +9526,12 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
     if ( !(cur_range->flag & NO_MAX_RANGE) )
     {
       /* Compose the MAX key for the range. */
-      unsigned char *max_key= (unsigned char*) my_alloca(real_prefix_len + min_max_arg_len);
-      memcpy(max_key, group_prefix, real_prefix_len);
-      memcpy(max_key + real_prefix_len, cur_range->max_key,
-             cur_range->max_length);
+      max_key.clear();
+      max_key.append(group_prefix, real_prefix_len);
+      max_key.append(cur_range->max_key, cur_range->max_length);
       /* Compare the found key with max_key. */
-      int cmp_res= key_cmp(index_info->key_part, max_key,
+      int cmp_res= key_cmp(index_info->key_part,
+                           max_key.data(),
                            real_prefix_len + min_max_arg_len);
       if ((!((cur_range->flag & NEAR_MAX) && (cmp_res == -1)) || (cmp_res <= 0)))
       {
@@ -9579,6 +9584,8 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
   key_part_map keypart_map;
   QUICK_RANGE *cur_range;
   int result;
+  basic_string<unsigned char> min_key;
+  min_key.reserve(real_prefix_len + min_max_arg_len);
 
   assert(min_max_ranges.elements > 0);
 
@@ -9638,12 +9645,13 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
     if ( !(cur_range->flag & NO_MIN_RANGE) )
     {
       /* Compose the MIN key for the range. */
-      unsigned char *min_key= (unsigned char*) my_alloca(real_prefix_len + min_max_arg_len);
-      memcpy(min_key, group_prefix, real_prefix_len);
-      memcpy(min_key + real_prefix_len, cur_range->min_key,
-             cur_range->min_length);
+      min_key.clear();
+      min_key.append(group_prefix, real_prefix_len);
+      min_key.append(cur_range->min_key, cur_range->min_length);
+
       /* Compare the found key with min_key. */
-      int cmp_res= key_cmp(index_info->key_part, min_key,
+      int cmp_res= key_cmp(index_info->key_part,
+                           min_key.data(),
                            real_prefix_len + min_max_arg_len);
       if ((!((cur_range->flag & NEAR_MIN) && (cmp_res == 1)) ||
             (cmp_res >= 0)))

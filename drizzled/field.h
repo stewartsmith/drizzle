@@ -29,6 +29,7 @@
 #include <drizzled/my_decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
+#include <string>
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
@@ -331,6 +332,10 @@ public:
   virtual void get_image(unsigned char *buff, uint32_t length,
                          const CHARSET_INFO * const)
     { memcpy(buff,ptr,length); }
+  virtual void get_image(std::basic_string<unsigned char> &buff,
+                         uint32_t length,
+                         const CHARSET_INFO * const)
+    { buff.append(ptr,length); }
   virtual void set_image(const unsigned char *buff,uint32_t length,
                          const CHARSET_INFO * const)
     { memcpy(ptr,buff,length); }
@@ -363,6 +368,12 @@ public:
   */
 
   virtual uint32_t get_key_image(unsigned char *buff, uint32_t length, imagetype)
+  {
+    get_image(buff, length, &my_charset_bin);
+    return length;
+  }
+  virtual uint32_t get_key_image(std::basic_string<unsigned char> &buff,
+                                 uint32_t length, imagetype)
   {
     get_image(buff, length, &my_charset_bin);
     return length;

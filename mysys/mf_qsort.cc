@@ -110,7 +110,7 @@ RETQSORTTYPE my_qsort(void *base_ptr, size_t count, size_t size,
   /* The first element in the stack will be accessed for the last POP */
   stack[0].low=stack[0].high=0;
 #endif
-  pivot = (char *) my_alloca((int) size);
+  pivot = (char *) malloc(size);
   ptr_cmp= size == sizeof(char*) && !((low - (char*) 0)& (sizeof(char*)-1));
 
   /* The following loop sorts elements between high and low */
@@ -209,6 +209,6 @@ RETQSORTTYPE my_qsort(void *base_ptr, size_t count, size_t size,
       high = high_ptr;
     }
   } while (stack_ptr > stack);
-  my_afree(pivot);
+  free(pivot);
   SORT_RETURN;
 }

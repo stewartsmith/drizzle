@@ -24,6 +24,10 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+#include <string>
+
+using namespace std;
+
 /****************************************************************************
   VARCHAR type
   Data in field->ptr is stored as:
@@ -513,6 +517,33 @@ uint32_t Field_varstring::max_packed_col_length(uint32_t max_length)
 {
   return (max_length > 255 ? 2 : 1)+max_length;
 }
+
+uint32_t Field_varstring::get_key_image(basic_string<unsigned char> &buff,
+                                        uint32_t length, imagetype)
+{
+  /* Key is always stored with 2 bytes */
+  const uint32_t key_len= 2;
+  uint32_t f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t local_char_length= length / field_charset->mbmaxlen;
+  unsigned char *pos= ptr+length_bytes;
+  local_char_length= my_charpos(field_charset, pos, pos + f_length,
+                                local_char_length);
+  set_if_smaller(f_length, local_char_length);
+  unsigned char len_buff[key_len];
+  int2store(len_buff,f_length);
+  buff.append(len_buff);
+  buff.append(pos, f_length);
+  if (f_length < length)
+  {
+    /*
+      Must clear this as we do a memcmp in opt_range.cc to detect
+      identical keys
+    */
+    buff.append(length-f_length, 0);
+  }
+  return key_len+f_length;
+}
+
 
 uint32_t Field_varstring::get_key_image(unsigned char *buff,
                                     uint32_t length,

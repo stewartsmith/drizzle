@@ -63,7 +63,6 @@ void *my_str_malloc_default(size_t size);
 void my_str_free_default(void *ptr);
 
 char *my_stpncpy(register char *dst, register const char *src, size_t n);
-char *my_stpcpy(register char *dst, register const char *src);
 
 #define strmov_overlapp(A,B) my_stpcpy(A,B)
 #define strmake_overlapp(A,B,C) strmake(A,B,C)

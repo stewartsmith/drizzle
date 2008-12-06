@@ -276,7 +276,7 @@ int handle_default_option(void *in_ctx, const char *group_name,
       return 1;
     if (insert_dynamic(ctx->args, (unsigned char*) &tmp))
       return 1;
-    my_stpcpy(tmp, option);
+    strcpy(tmp, option);
   }
 
   return 0;
@@ -602,7 +602,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   }
   else
   {
-    my_stpcpy(name,config_file);
+    strcpy(name,config_file);
   }
   fn_format(name,name,"","",4);
   {
@@ -744,7 +744,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
     if (!value)
     {
-      strncpy(my_stpcpy(option,"--"),ptr,strlen(ptr)+1);
+      strncpy(strcpy(option,"--")+2,ptr,strlen(ptr)+1);
       if (opt_handler(handler_ctx, curr_gr, option))
         goto err;
     }
@@ -767,10 +767,10 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
           (value + 1 < value_end ) && /* String is longer than 1 */
           *value == value_end[-1] ) /* First char is equal to last char */
       {
-	value++;
-	value_end--;
+        value++;
+        value_end--;
       }
-      ptr=my_stpncpy(my_stpcpy(option,"--"),ptr,(size_t) (end-ptr));
+      ptr= my_stpncpy(strcpy(option,"--")+2,ptr,(size_t) (end-ptr));
       *ptr++= '=';
 
       for ( ; value != value_end; value++)

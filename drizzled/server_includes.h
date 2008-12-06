@@ -68,18 +68,6 @@ void print_keyuse_array(DYNAMIC_ARRAY *keyuse_array);
 void dump_TableList_graph(SELECT_LEX *select_lex, TableList* tl);
 void mysql_print_status();
 
-/* key.cc */
-int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *field,
-                 uint32_t *key_length, uint32_t *keypart);
-void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info, uint32_t key_length);
-void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
-                 uint16_t key_length);
-void key_zero_nulls(unsigned char *tuple, KEY *key_info);
-bool key_cmp_if_same(Table *form,const unsigned char *key,uint32_t index,uint32_t key_length);
-void key_unpack(String *to,Table *form,uint32_t index);
-bool is_key_used(Table *table, uint32_t idx, const MY_BITMAP *fields);
-int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length);
-extern "C" int key_rec_cmp(void *key_info, unsigned char *a, unsigned char *b);
 
 bool init_errmessage(void);
 File open_binlog(IO_CACHE *log, const char *log_file_name,

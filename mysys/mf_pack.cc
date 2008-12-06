@@ -48,8 +48,8 @@ void pack_dirname(char * to, const char *from)
     buff_length= strlen(buff);
     d_length= (size_t) (start-to);
     if ((start == to ||
-	 (buff_length == d_length && !memcmp(buff,start,d_length))) &&
-	*start != FN_LIBCHAR && *start)
+        (buff_length == d_length && !memcmp(buff,start,d_length))) &&
+        *start != FN_LIBCHAR && *start)
     {						/* Put current dir before */
       bchange((unsigned char*) to, d_length, (unsigned char*) buff, buff_length, strlen(to)+1);
     }
@@ -62,37 +62,37 @@ void pack_dirname(char * to, const char *from)
     {
       length= strlen(home_dir);
       if (home_dir[length-1] == FN_LIBCHAR)
-	length--;				/* Don't test last '/' */
+        length--;				/* Don't test last '/' */
     }
     if (length > 1 && length < d_length)
     {						/* test if /xx/yy -> ~/yy */
       if (memcmp(to,home_dir,length) == 0 && to[length] == FN_LIBCHAR)
       {
-	to[0]=FN_HOMELIB;			/* Filename begins with ~ */
-	(void) strmov_overlapp(to+1,to+length);
+        to[0]=FN_HOMELIB;			/* Filename begins with ~ */
+        (void) strcpy(to+1,to+length);
       }
     }
     if (! getcwd_error)
     {						/* Test if cwd is ~/... */
       if (length > 1 && length < buff_length)
       {
-	if (memcmp(buff,home_dir,length) == 0 && buff[length] == FN_LIBCHAR)
-	{
-	  buff[0]=FN_HOMELIB;
-	  (void) strmov_overlapp(buff+1,buff+length);
-	}
+        if (memcmp(buff,home_dir,length) == 0 && buff[length] == FN_LIBCHAR)
+        {
+          buff[0]=FN_HOMELIB;
+          (void) strcpy(buff+1,buff+length);
+        }
       }
       if (is_prefix(to,buff))
       {
-	length= strlen(buff);
-	if (to[length])
-	  (void) strmov_overlapp(to,to+length);	/* Remove everything before */
-	else
-	{
-	  to[0]= FN_CURLIB;			/* Put ./ instead of cwd */
-	  to[1]= FN_LIBCHAR;
-	  to[2]= '\0';
-	}
+        length= strlen(buff);
+        if (to[length])
+          (void) strcpy(to,to+length);	/* Remove everything before */
+        else
+        {
+          to[0]= FN_CURLIB;			/* Put ./ instead of cwd */
+          to[1]= FN_LIBCHAR;
+          to[2]= '\0';
+        }
       }
     }
   }
@@ -143,7 +143,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 #endif
 
   parent[0]=FN_LIBCHAR;
-  length=(size_t) (my_stpcpy(parent+1,FN_PARENTDIR)-parent);
+  length= (size_t)((strcpy(parent+1,FN_PARENTDIR)+strlen(FN_PARENTDIR))-parent);
   for (pos=start ; (*pos= *from_ptr++) != 0 ; pos++)
   {
 #ifdef BACKSLASH_MBTAIL
@@ -173,7 +173,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 	      pos+=length+1;			/* Don't unpack ~/.. */
 	      continue;
 	    }
-	    pos=my_stpcpy(buff,home_dir)-1;	/* Unpacks ~/.. */
+	    pos= strcpy(buff,home_dir)+strlen(home_dir)-1;	/* Unpacks ~/.. */
 	    if (*pos == FN_LIBCHAR)
 	      pos--;				/* home ended with '/' */
 	  }
@@ -184,7 +184,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 	      pos+=length+1;			/* Don't unpack ./.. */
 	      continue;
 	    }
-	    pos=my_stpcpy(buff,curr_dir)-1;	/* Unpacks ./.. */
+	    pos= strcpy(buff,curr_dir)+strlen(curr_dir)-1;	/* Unpacks ./.. */
 	    if (*pos == FN_LIBCHAR)
 	      pos--;				/* home ended with '/' */
 	  }
@@ -193,7 +193,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 	    pos--;
 	  if (pos[1] == FN_HOMELIB || memcmp(pos,parent,length) == 0)
 	  {					/* Don't remove ~user/ */
-	    pos=my_stpcpy(end_parentdir+1,parent);
+	    pos= strcpy(end_parentdir+1,parent)+strlen(parent);
 	    *pos=FN_LIBCHAR;
 	    continue;
 	  }
@@ -219,7 +219,7 @@ size_t cleanup_dirname(register char *to, const char *from)
       }
     }
   }
-  (void) my_stpcpy(to,buff);
+  (void) strcpy(to,buff);
   return((size_t) (pos-buff));
 } /* cleanup_dirname */
 
@@ -245,7 +245,7 @@ void symdirget(char *dir)
     File file;
     size_t length;
     char temp= *(--pos);            /* May be "/" or "\" */
-    my_stpcpy(pos,".sym");
+    strcpy(pos,".sym");
     file= my_open(dir, O_RDONLY, MYF(0));
     *pos++=temp; *pos=0;	  /* Restore old filename */
     if (file >= 0)
@@ -387,7 +387,7 @@ size_t unpack_filename(char * to, const char *from)
   n_length=unpack_dirname(buff,buff);
   if (n_length+strlen(from+length) < FN_REFLEN)
   {
-    (void) my_stpcpy(buff+n_length,from+length);
+    (void) strcpy(buff+n_length,from+length);
     length= system_filename(to,buff);		/* Fix to usably filename */
   }
   else
@@ -419,7 +419,7 @@ size_t system_filename(char * to, const char *from)
   char buff[FN_REFLEN];
 
   libchar_found=0;
-  (void) my_stpcpy(buff,from);			 /* If to == from */
+  (void) strcpy(buff,from);			 /* If to == from */
   from_pos= buff;
   if ((pos=strrchr(from_pos,FN_DEVCHAR)))	/* Skip device part */
   {
@@ -440,7 +440,7 @@ size_t system_filename(char * to, const char *from)
       from_pos+=strlen(FN_ROOTDIR);		/* Actually +1 but... */
       if (! strchr(from_pos,FN_LIBCHAR))
       {						/* No dir, use [000000] */
-	to_pos=my_stpcpy(to_pos,FN_C_ROOT_DIR);
+	to_pos= strcpy(to_pos,FN_C_ROOT_DIR)+strlen(FN_C_ROOT_DIR);
 	libchar_found++;
       }
     }
@@ -450,17 +450,21 @@ size_t system_filename(char * to, const char *from)
     while ((pos=strchr(from_pos,FN_LIBCHAR)))
     {
       if (libchar_found++)
-	*(to_pos++)=FN_C_DIR_SEP;		/* Add '.' between dirs */
+        *(to_pos++)=FN_C_DIR_SEP;		/* Add '.' between dirs */
       if (strstr(from_pos,FN_PARENTDIR) == from_pos &&
-	  from_pos+strlen(FN_PARENTDIR) == pos)
-	to_pos=my_stpcpy(to_pos,FN_C_PARENT_DIR);	/* Found '../' */
+          from_pos+strlen(FN_PARENTDIR) == pos) {
+        to_pos= strcpy(to_pos,FN_C_PARENT_DIR);	/* Found '../' */
+        to_pos+= strlen(FN_C_PARENT_DIR);
+      }
       else
-	to_pos=my_stpncpy(to_pos,from_pos,(size_t) (pos-from_pos));
+        to_pos=my_stpncpy(to_pos,from_pos,(size_t) (pos-from_pos));
       from_pos=pos+1;
     }
     *(to_pos++)=FN_C_AFTER_DIR;
   }
-  length= (size_t) (my_stpcpy(to_pos,from_pos)-to);
+  
+  strcpy(to_pos, from_pos);
+  length= strlen(to);
   return(length);
 #endif
 } /* system_filename */
@@ -474,10 +478,10 @@ char *intern_filename(char *to, const char *from)
   char buff[FN_REFLEN];
   if (from == to)
   {						/* Dirname may destroy from */
-    my_stpcpy(buff,from);
+    strcpy(buff,from);
     from=buff;
   }
   length= dirname_part(to, from, &to_length);	/* Copy dirname & fix chars */
-  (void) my_stpcpy(to + to_length,from+length);
+  (void) strcpy(to + to_length,from+length);
   return (to);
 } /* intern_filename */

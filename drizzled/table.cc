@@ -147,7 +147,7 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
 
     share->path.str= path_buff;
     share->path.length= path_length;
-    my_stpcpy(share->path.str, path);
+    strcpy(share->path.str, path);
     share->normalized_path.str=    share->path.str;
     share->normalized_path.length= path_length;
 
@@ -370,7 +370,7 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
 
     /* Unencoded 5.0 table name found */
     unpacked_path[length]= '\0'; // Remove .frm extension
-    my_stpcpy(share->normalized_path.str, unpacked_path);
+    strcpy(share->normalized_path.str, unpacked_path);
     share->normalized_path.length= length;
   }
 
@@ -589,7 +589,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     }
   }
   keynames=(char*) key_part;
-  strpos+= (my_stpcpy(keynames, (char *) strpos) - keynames)+1;
+  strpos+= (strcpy(keynames, (char*)strpos)+strlen((char*)strpos)-keynames)+1;
 
   //reading index comments
   for (keyinfo= share->key_info, i=0; i < keys; i++, keyinfo++)
@@ -3804,7 +3804,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
     return(NULL);				/* purecov: inspected */
   }
   param->items_to_copy= copy_func;
-  my_stpcpy(tmpname,path);
+  strcpy(tmpname,path);
   /* make table according to fields */
 
   memset(table, 0, sizeof(*table));

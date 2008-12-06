@@ -853,7 +853,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   param.session= session;
   param.tmpdir= &drizzle_tmpdir_list;
   param.out_flag= 0;
-  my_stpcpy(fixed_name,file->filename);
+  strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
   if (!session->locked_tables &&

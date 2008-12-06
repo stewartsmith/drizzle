@@ -150,17 +150,6 @@ extern char *my_strndup(const char *from, size_t length,
 				   myf MyFlags);
 #define TRASH(A,B) /* nothing */
 
-#ifdef HAVE_ALLOCA
-#if defined(__GNUC__) && !defined(HAVE_ALLOCA_H) && ! defined(alloca)
-#define alloca __builtin_alloca
-#endif /* GNUC */
-#define my_alloca(SZ) malloc((size_t) (SZ))
-#define my_afree(PTR) free((PTR))
-#else
-#define my_alloca(SZ) malloc((SZ))
-#define my_afree(PTR) free((PTR))
-#endif /* HAVE_ALLOCA */
-
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE
 #include <errno.h>			/* errno is a define */
@@ -269,7 +258,7 @@ extern struct st_my_file_info *my_file_info;
 typedef struct st_dynamic_array
 {
   unsigned char *buffer;
-  uint32_t elements,max_element;
+  size_t elements,max_element;
   uint32_t alloc_increment;
   uint32_t size_of_element;
 } DYNAMIC_ARRAY;

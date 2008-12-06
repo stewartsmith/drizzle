@@ -32,6 +32,7 @@
 #include <drizzled/session.h>
 
 #include <string>
+#include <vector>
 
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -718,16 +719,19 @@ static void plugin_del(struct st_plugin_int *plugin)
 
 static void reap_plugins(void)
 {
-  uint32_t count, idx;
-  struct st_plugin_int *plugin, **reap, **list;
+  size_t count;
+  uint32_t idx;
+  struct st_plugin_int *plugin;
+  vector<st_plugin_int *> reap;
+  vector<st_plugin_int *>::reverse_iterator riter;
 
   if (!reap_needed)
     return;
 
+  
   reap_needed= false;
   count= plugin_array.elements;
-  reap= (struct st_plugin_int **)my_alloca(sizeof(plugin)*(count+1));
-  *(reap++)= NULL;
+  reap.reserve(count);
 
   for (idx= 0; idx < count; idx++)
   {
@@ -736,18 +740,16 @@ static void reap_plugins(void)
     {
       /* change the status flag to prevent reaping by another thread */
       plugin->state= PLUGIN_IS_DYING;
-      *(reap++)= plugin;
+      reap.push_back(plugin);
     }
   }
 
-  list= reap;
-  while ((plugin= *(--list)))
+  for (riter= reap.rbegin(); plugin= *riter, riter != reap.rend(); riter++)
     plugin_deinitialize(plugin, true);
 
-  while ((plugin= *(--reap)))
+  for (riter= reap.rbegin(); plugin= *riter, riter != reap.rend(); riter++)
     plugin_del(plugin);
 
-  my_afree(reap);
 }
 
 static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
@@ -904,10 +906,12 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 */
 int plugin_init(int *argc, char **argv, int flags)
 {
-  uint32_t i;
+  uint32_t idx;
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
-  struct st_plugin_int tmp, *plugin_ptr, **reap;
+  struct st_plugin_int tmp, *plugin_ptr;
+  vector<st_plugin_int *> reap;
+  vector<st_plugin_int *>::reverse_iterator riter;
   MEM_ROOT tmp_root;
 
   if (initialized)
@@ -927,9 +931,9 @@ int plugin_init(int *argc, char **argv, int flags)
                             sizeof(struct st_plugin_int *),16,16))
     goto err;
 
-  for (i= 0; i < DRIZZLE_MAX_PLUGIN_TYPE_NUM; i++)
+  for (idx= 0; idx < DRIZZLE_MAX_PLUGIN_TYPE_NUM; idx++)
   {
-    if (hash_init(&plugin_hash[i], system_charset_info, 16, 0, 0,
+    if (hash_init(&plugin_hash[idx], system_charset_info, 16, 0, 0,
                   get_plugin_hash_key, NULL, HASH_UNIQUE))
       goto err;
   }
@@ -988,19 +992,17 @@ int plugin_init(int *argc, char **argv, int flags)
   /*
     Now we initialize all remaining plugins
   */
+  reap.reserve(plugin_array.elements);
 
-  reap= (st_plugin_int **) my_alloca((plugin_array.elements+1) * sizeof(void*));
-  *(reap++)= NULL;
-
-  for (i= 0; i < plugin_array.elements; i++)
+  for (idx= 0; idx < plugin_array.elements; idx++)
   {
-    plugin_ptr= *dynamic_element(&plugin_array, i, struct st_plugin_int **);
+    plugin_ptr= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
     if (plugin_ptr->state == PLUGIN_IS_UNINITIALIZED)
     {
       if (plugin_initialize(plugin_ptr))
       {
         plugin_ptr->state= PLUGIN_IS_DYING;
-        *(reap++)= plugin_ptr;
+        reap[idx]= plugin_ptr;
       }
     }
   }
@@ -1008,13 +1010,13 @@ int plugin_init(int *argc, char **argv, int flags)
   /*
     Check if any plugins have to be reaped
   */
-  while ((plugin_ptr= *(--reap)))
+  for(riter= reap.rbegin();
+      plugin_ptr= *riter, riter != reap.rend();
+      riter++)
   {
     plugin_deinitialize(plugin_ptr, true);
     plugin_del(plugin_ptr);
   }
-
-  my_afree(reap);
 
 end:
   free_root(&tmp_root, MYF(0));
@@ -1135,9 +1137,11 @@ error:
 
 void plugin_shutdown(void)
 {
-  uint32_t i, count= plugin_array.elements, free_slots= 0;
-  struct st_plugin_int **plugins, *plugin;
-  struct st_plugin_dl **dl;
+  uint32_t idx, free_slots= 0; 
+  size_t count= plugin_array.elements;
+  struct st_plugin_int *plugin;
+  vector<st_plugin_int *> plugins;
+  vector<st_plugin_dl *> dl;
 
   if (initialized)
   {
@@ -1153,9 +1157,9 @@ void plugin_shutdown(void)
     while (reap_needed && (count= plugin_array.elements))
     {
       reap_plugins();
-      for (i= free_slots= 0; i < count; i++)
+      for (idx= free_slots= 0; idx < count; idx++)
       {
-        plugin= *dynamic_element(&plugin_array, i, struct st_plugin_int **);
+        plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
         switch (plugin->state) {
         case PLUGIN_IS_READY:
           plugin->state= PLUGIN_IS_DELETED;
@@ -1178,48 +1182,49 @@ void plugin_shutdown(void)
     }
 
     if (count > free_slots)
-      sql_print_warning(_("Forcing shutdown of %d plugins"),
-                        count - free_slots);
+      sql_print_warning(_("Forcing shutdown of %"PRIu64" plugins"),
+                        (uint64_t)count - free_slots);
 
-    plugins= (struct st_plugin_int **) my_alloca(sizeof(void*) * (count+1));
+    plugins.reserve(count);
 
     /*
       If we have any plugins which did not die cleanly, we force shutdown
     */
-    for (i= 0; i < count; i++)
+    for (idx= 0; idx < count; idx++)
     {
-      plugins[i]= *dynamic_element(&plugin_array, i, struct st_plugin_int **);
+      plugins.push_back(*dynamic_element(&plugin_array, idx,
+                                         struct st_plugin_int **));
       /* change the state to ensure no reaping races */
-      if (plugins[i]->state == PLUGIN_IS_DELETED)
-        plugins[i]->state= PLUGIN_IS_DYING;
+      if (plugins[idx]->state == PLUGIN_IS_DELETED)
+        plugins[idx]->state= PLUGIN_IS_DYING;
     }
 
     /*
       We loop through all plugins and call deinit() if they have one.
     */
-    for (i= 0; i < count; i++)
-      if (!(plugins[i]->state & (PLUGIN_IS_UNINITIALIZED | PLUGIN_IS_FREED)))
+    for (idx= 0; idx < count; idx++)
+      if (!(plugins[idx]->state & (PLUGIN_IS_UNINITIALIZED | PLUGIN_IS_FREED)))
       {
         sql_print_information(_("Plugin '%s' will be forced to shutdown"),
-                              plugins[i]->name.str);
+                              plugins[idx]->name.str);
         /*
           We are forcing deinit on plugins so we don't want to do a ref_count
           check until we have processed all the plugins.
         */
-        plugin_deinitialize(plugins[i], false);
+        plugin_deinitialize(plugins[idx], false);
       }
 
     /*
       We defer checking ref_counts until after all plugins are deinitialized
       as some may have worker threads holding on to plugin references.
     */
-    for (i= 0; i < count; i++)
+    for (idx= 0; idx < count; idx++)
     {
-      if (plugins[i]->ref_count)
+      if (plugins[idx]->ref_count)
         sql_print_error(_("Plugin '%s' has ref_count=%d after shutdown."),
-                        plugins[i]->name.str, plugins[i]->ref_count);
-      if (plugins[i]->state & PLUGIN_IS_UNINITIALIZED)
-        plugin_del(plugins[i]);
+                        plugins[idx]->name.str, plugins[idx]->ref_count);
+      if (plugins[idx]->state & PLUGIN_IS_UNINITIALIZED)
+        plugin_del(plugins[idx]);
     }
 
     /*
@@ -1231,22 +1236,21 @@ void plugin_shutdown(void)
 
     initialized= 0;
 
-    my_afree(plugins);
   }
 
   /* Dispose of the memory */
 
-  for (i= 0; i < DRIZZLE_MAX_PLUGIN_TYPE_NUM; i++)
-    hash_free(&plugin_hash[i]);
+  for (idx= 0; idx < DRIZZLE_MAX_PLUGIN_TYPE_NUM; idx++)
+    hash_free(&plugin_hash[idx]);
   delete_dynamic(&plugin_array);
 
   count= plugin_dl_array.elements;
-  dl= (struct st_plugin_dl **)my_alloca(sizeof(void*) * count);
-  for (i= 0; i < count; i++)
-    dl[i]= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);
-  for (i= 0; i < plugin_dl_array.elements; i++)
-    free_plugin_mem(dl[i]);
-  my_afree(dl);
+  dl.reserve(count);
+  for (idx= 0; idx < count; idx++)
+    dl.push_back(*dynamic_element(&plugin_dl_array, idx,
+                 struct st_plugin_dl **));
+  for (idx= 0; idx < count; idx++)
+    free_plugin_mem(dl[idx]);
   delete_dynamic(&plugin_dl_array);
 
   hash_free(&bookmark_hash);
@@ -1261,8 +1265,10 @@ void plugin_shutdown(void)
 bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
                        int type, uint32_t state_mask, void *arg)
 {
-  uint32_t idx, total;
-  struct st_plugin_int *plugin, **plugins;
+  uint32_t idx;
+  size_t total;
+  struct st_plugin_int *plugin;
+  vector<st_plugin_int *> plugins;
   int version=plugin_array_version;
 
   if (!initialized)
@@ -1272,17 +1278,14 @@ bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
 
   total= type == DRIZZLE_ANY_PLUGIN ? plugin_array.elements
                                   : plugin_hash[type].records;
-  /*
-    Do the alloca out here in case we do have a working alloca:
-        leaving the nested stack frame invalidates alloca allocation.
-  */
-  plugins=(struct st_plugin_int **)my_alloca(total*sizeof(plugin));
+  plugins.reserve(total);
+
   if (type == DRIZZLE_ANY_PLUGIN)
   {
     for (idx= 0; idx < total; idx++)
     {
       plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-      plugins[idx]= !(plugin->state & state_mask) ? plugin : NULL;
+      plugins.push_back(!(plugin->state & state_mask) ? plugin : NULL);
     }
   }
   else
@@ -1291,7 +1294,7 @@ bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
     for (idx= 0; idx < total; idx++)
     {
       plugin= (struct st_plugin_int *) hash_element(hash, idx);
-      plugins[idx]= !(plugin->state & state_mask) ? plugin : NULL;
+      plugins.push_back(!(plugin->state & state_mask) ? plugin : NULL);
     }
   }
   for (idx= 0; idx < total; idx++)
@@ -1308,11 +1311,9 @@ bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
         goto err;
   }
 
-  my_afree(plugins);
-  return(false);
+  return false;
 err:
-  my_afree(plugins);
-  return(true);
+  return true;
 }
 
 
@@ -1667,7 +1668,7 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
   if (plugin)
     pluginlen= strlen(plugin) + 1;
   length= namelen + pluginlen + 2;
-  varname= (char*) my_alloca(length);
+  varname= (char*) malloc(length);
 
   if (plugin)
   {
@@ -1684,7 +1685,7 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
   result= (st_bookmark*) hash_search(&bookmark_hash,
                                      (const unsigned char*) varname, length - 1);
 
-  my_afree(varname);
+  free(varname);
   return result;
 }
 
@@ -1727,7 +1728,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     return NULL;
   };
 
-  varname= ((char*) my_alloca(length));
+  varname= ((char*) malloc(length));
   strxmov(varname + 1, plugin, "_", name, NULL);
   for (p= varname + 1; *p; p++)
     if (*p == '-')
@@ -1788,7 +1789,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
       assert(0);
     }
   }
-  my_afree(varname);
+  free(varname);
   return result;
 }
 

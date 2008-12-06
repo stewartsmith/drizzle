@@ -688,7 +688,7 @@ static int find_uniq_filename(char *name)
 
   if (!(dir_info = my_dir(buff,MYF(MY_DONT_SORT))))
   {						// This shouldn't happen
-    my_stpcpy(end,".1");				// use name+1
+    strcpy(end,".1");				// use name+1
     return(0);
   }
   file_info= dir_info->dir_entry;
@@ -756,7 +756,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
   }
 
   if (new_name)
-    my_stpcpy(log_file_name, new_name);
+    strcpy(log_file_name, new_name);
   else if (generate_new_name(log_file_name, name))
     goto err;
 

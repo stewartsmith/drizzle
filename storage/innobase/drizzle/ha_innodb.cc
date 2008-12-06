@@ -198,10 +198,10 @@ static void free_share(INNOBASE_SHARE *share);
 static int innobase_close_connection(handlerton *hton, Session* session);
 static int innobase_commit(handlerton *hton, Session* session, bool all);
 static int innobase_rollback(handlerton *hton, Session* session, bool all);
-static int innobase_rollback_to_savepoint(handlerton *hton, Session* session,
+static int innobase_rollback_to_savepoint(handlerton *hton, Session* session, 
            void *savepoint);
 static int innobase_savepoint(handlerton *hton, Session* session, void *savepoint);
-static int innobase_release_savepoint(handlerton *hton, Session* session,
+static int innobase_release_savepoint(handlerton *hton, Session* session, 
            void *savepoint);
 static handler *innobase_create_handler(handlerton *hton,
                                         TABLE_SHARE *table,
@@ -223,7 +223,7 @@ static
 bool
 innobase_file_format_check_on_off(
 /*==============================*/
-						/* out: true if one of
+						/* out: true if one of 
 						"on" or "off" */
 	const char*	format_check);		/* in: parameter value */
 /****************************************************************
@@ -259,7 +259,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 
 
 static handler *innobase_create_handler(handlerton *hton,
-                                        TABLE_SHARE *table,
+                                        TABLE_SHARE *table, 
                                         MEM_ROOT *mem_root)
 {
   return new (mem_root) ha_innobase(hton, table);
@@ -371,7 +371,7 @@ int
 innobase_start_trx_and_assign_read_view(
 /*====================================*/
 			/* out: 0 */
-	handlerton* hton, /* in: Innodb handlerton */
+	handlerton* hton, /* in: Innodb handlerton */ 
 	Session*	session);	/* in: MySQL thread handle of the user for whom
 			the transaction should be committed */
 /********************************************************************
@@ -395,7 +395,7 @@ innodb_show_status(
 	Session*	session,	/* in: the MySQL query thread of the caller */
 	stat_print_fn *stat_print);
 static
-bool innobase_show_status(handlerton *hton, Session* session,
+bool innobase_show_status(handlerton *hton, Session* session, 
                           stat_print_fn* stat_print,
                           enum ha_stat_type stat_type);
 
@@ -508,7 +508,7 @@ should be allowed to enter InnoDB - the replication thread is treated
 differently than other threads. Also used in
 srv_conc_force_exit_innodb().
 
-DRIZZLE: Note, we didn't change this name to avoid more ifdef forking
+DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
          in non-handler code.
 */
 extern "C" UNIV_INTERN
@@ -583,7 +583,7 @@ non-transactional tables. Used by the deadlock detector when deciding
 which transaction to rollback in case of a deadlock - we try to avoid
 rolling back transactions that have edited non-transactional tables.
 
-DRIZZLE: Note, we didn't change this name to avoid more ifdef forking
+DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
          in non-handler code.
 */
 extern "C" UNIV_INTERN
@@ -818,7 +818,7 @@ current thread, we know that Drizzle cannot modify sesion->query, and it is
 not necessary to call this. Call innobase_mysql_end_print_arbitrary_thd()
 after you release the kernel_mutex.
 
-DRIZZLE: Note, we didn't change this name to avoid more ifdef forking
+DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
          in non-handler code.
  */
 extern "C" UNIV_INTERN
@@ -834,9 +834,9 @@ innobase_mysql_prepare_print_arbitrary_thd(void)
 Releases the mutex reserved by innobase_mysql_prepare_print_arbitrary_thd().
 In the InnoDB latching order, the mutex sits right above the
 kernel_mutex.  In debug builds, we assert that the kernel_mutex is
-released before this function is invoked.
+released before this function is invoked. 
 
-DRIZZLE: Note, we didn't change this name to avoid more ifdef forking
+DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
          in non-handler code.
 */
 extern "C" UNIV_INTERN
@@ -1278,10 +1278,10 @@ ha_innobase::ha_innobase(handlerton *hton, TABLE_SHARE *table_arg)
 		  HA_PRIMARY_KEY_IN_READ_INDEX |
 		  HA_BINLOG_ROW_CAPABLE |
 		  HA_PARTIAL_COLUMN_READ |
-		  HA_TABLE_SCAN_ON_INDEX |
+		  HA_TABLE_SCAN_ON_INDEX | 
                   HA_MRR_CANT_SORT),
-  primary_key(0), /* needs initialization because index_flags() may be called
-                     before this is set to the real value. It's ok to have any
+  primary_key(0), /* needs initialization because index_flags() may be called 
+                     before this is set to the real value. It's ok to have any 
                      value here because it doesn't matter if we return the
                      HA_DO_INDEX_COND_PUSHDOWN bit from those "early" calls */
   start_of_scan(0),
@@ -2009,7 +2009,7 @@ innobase_init(
 	innobase_file_format_name is used in the MySQL set variable
 	interface and so can't be const. */
 
-	innobase_file_format_name =
+	innobase_file_format_name = 
 		(char*) trx_sys_file_format_id_to_name(format_id);
 
 	/* Process innobase_file_format_check variable */
@@ -2196,7 +2196,7 @@ int
 innobase_start_trx_and_assign_read_view(
 /*====================================*/
 			/* out: 0 */
-        handlerton *hton, /* in: Innodb handlerton */
+        handlerton *hton, /* in: Innodb handlerton */ 
 	Session*	session)	/* in: MySQL thread handle of the user for whom
 			the transaction should be committed */
 {
@@ -2240,7 +2240,7 @@ int
 innobase_commit(
 /*============*/
 			/* out: 0 */
-        handlerton *hton, /* in: Innodb handlerton */
+        handlerton *hton, /* in: Innodb handlerton */ 
 	Session*	session,	/* in: MySQL thread handle of the user for whom
 			the transaction should be committed */
 	bool	all)	/* in:	TRUE - commit transaction
@@ -2366,7 +2366,7 @@ int
 innobase_rollback(
 /*==============*/
 			/* out: 0 or error number */
-        handlerton *hton, /* in: Innodb handlerton */
+        handlerton *hton, /* in: Innodb handlerton */ 
 	Session*	session,	/* in: handle to the MySQL thread of the user
 			whose transaction should be rolled back */
 	bool	all)	/* in:	TRUE - commit transaction
@@ -2442,7 +2442,7 @@ innobase_rollback_to_savepoint(
 /*===========================*/
 				/* out: 0 if success, HA_ERR_NO_SAVEPOINT if
 				no savepoint with the given name */
-        handlerton *hton,       /* in: Innodb handlerton */
+        handlerton *hton,       /* in: Innodb handlerton */ 
 	Session*	session,		/* in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
 	void*	savepoint)	/* in: savepoint data */
@@ -2887,7 +2887,7 @@ ha_innobase::open(
 retry:
 	/* Get pointer to a table object in InnoDB dictionary cache */
 	ib_table = dict_table_get(norm_name, TRUE);
-
+	
 	if (NULL == ib_table) {
 		if (is_part && retries < 10) {
 			++retries;
@@ -3673,11 +3673,11 @@ build_template(
             file->active_index != MAX_KEY)
           do_idx_cond_push= need_second_pass= TRUE;
 
-        /*
-          Ok, now build an array of mysql_row_templ_struct structures.
+        /* 
+          Ok, now build an array of mysql_row_templ_struct structures. 
           If index condition pushdown is used, the array is split into two
           parts: first go index fields, then go table fields.
-
+	  
           Note that in InnoDB, innodb_idx is the column number. MySQL calls columns
 	  'fields' associated with index sql_idx.
         */
@@ -3692,7 +3692,7 @@ build_template(
 			and which we can skip. */
 			register const ibool	index_contains_field =
 				dict_index_contains_col_or_prefix(index, innodb_idx);
-                        register const ibool    index_covers_field =
+                        register const ibool    index_covers_field = 
                                 field->part_of_key.is_set(file->active_index);
 
 
@@ -4671,7 +4671,7 @@ convert_search_mode_to_innobase(
 		return(PAGE_CUR_GE);
 	case HA_READ_KEY_OR_PREV:
 		return(PAGE_CUR_LE);
-	case HA_READ_AFTER_KEY:
+	case HA_READ_AFTER_KEY:	
 		return(PAGE_CUR_G);
 	case HA_READ_BEFORE_KEY:
 		return(PAGE_CUR_L);
@@ -5626,7 +5626,7 @@ create_options_are_valid(
 			ret = FALSE;
 		}
 	}
-
+	
 	/* If KEY_BLOCK_SIZE was specified, check for its
 	dependencies. */
 	if (kbs_specified && !srv_file_per_table) {
@@ -7250,8 +7250,8 @@ ha_innobase::get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_ke
           }
 	  f_key_info.delete_method = session_make_lex_string(
 		  session, f_key_info.delete_method, tmp_buff, length, 1);
-
-
+ 
+ 
           if (foreign->type & DICT_FOREIGN_ON_UPDATE_CASCADE)
           {
             length=7;
@@ -7978,7 +7978,7 @@ innodb_mutex_show_status(
 }
 
 static
-bool innobase_show_status(handlerton *hton, Session* session,
+bool innobase_show_status(handlerton *hton, Session* session, 
                           stat_print_fn* stat_print,
                           enum ha_stat_type stat_type)
 {
@@ -8022,7 +8022,7 @@ static INNOBASE_SHARE* get_share(const char* table_name)
 
 		share->table_name_length=length;
 		share->table_name=(char*) (share+1);
-		my_stpcpy(share->table_name,table_name);
+		strcpy(share->table_name,table_name);
 
 		if (my_hash_insert(&innobase_open_tables,
 				(unsigned char*) share)) {
@@ -8118,7 +8118,7 @@ ha_innobase::store_lock(
 
 		/* MySQL calls this function in DROP Table though this table
 		handle may belong to another session that is running a query.
-		Let us in that case skip any changes to the prebuilt struct. */
+		Let us in that case skip any changes to the prebuilt struct. */ 
 
 	} else if ((lock_type == TL_READ && in_lock_tables)
 		   || (lock_type == TL_READ_HIGH_PRIORITY && in_lock_tables)
@@ -8271,7 +8271,7 @@ ha_innobase::innobase_get_autoinc(
 	uint64_t*	value)		/* out: autoinc value */
 {
  	*value = 0;
-
+ 
 	prebuilt->autoinc_error = innobase_lock_autoinc();
 
 	if (prebuilt->autoinc_error == DB_SUCCESS) {
@@ -8287,7 +8287,7 @@ ha_innobase::innobase_get_autoinc(
 }
 
 /***********************************************************************
-This function reads the global auto-inc counter. It doesn't use the
+This function reads the global auto-inc counter. It doesn't use the 
 AUTOINC lock even if the lock mode is set to TRADITIONAL. */
 UNIV_INTERN
 uint64_t
@@ -8310,10 +8310,10 @@ ha_innobase::innobase_peek_autoinc(void)
 	ut_a(auto_inc > 0);
 
 	dict_table_autoinc_unlock(innodb_table);
-
+ 
 	return(auto_inc);
 }
-
+  
 /*******************************************************************************
 This function initializes the auto-inc counter if it has not been
 initialized yet. This function does not change the value of the auto-inc

@@ -293,7 +293,7 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
     }
 
     opt->name= tmp_name;
-    my_stpcpy(opt->name, dbname);
+    strcpy(opt->name, dbname);
     opt->name_length= length;
 
     if ((error= my_hash_insert(&dboptions, (unsigned char*) opt)))
@@ -800,7 +800,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
   pthread_mutex_lock(&LOCK_drizzle_create_db);
 
   length= build_table_filename(path, sizeof(path), db, "", "", 0);
-  my_stpcpy(path+length, MY_DB_OPT_FILE);		// Append db option file name
+  strcpy(path+length, MY_DB_OPT_FILE);		// Append db option file name
   del_dbopt(path);				// Remove dboption hash entry
   path[length]= '\0';				// Remove file name
 
@@ -877,7 +877,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 
     if (!(query= (char*) session->alloc(MAX_DROP_TABLE_Q_LEN)))
       goto exit; /* not much else we can do */
-    query_pos= query_data_start= my_stpcpy(query,"drop table ");
+    query_pos= query_data_start= strcpy(query,"drop table ")+11;
     query_end= query + MAX_DROP_TABLE_Q_LEN;
     db_len= strlen(db);
 
@@ -895,7 +895,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
       }
 
       *query_pos++ = '`';
-      query_pos= my_stpcpy(query_pos,tbl->table_name);
+      query_pos= strcpy(query_pos,tbl->table_name) + (tbl_name_len-3);
       *query_pos++ = '`';
       *query_pos++ = ',';
     }
@@ -973,18 +973,20 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
     if (db && !my_strcasecmp(files_charset_info,
                              extension, reg_ext))
     {
+      uint32_t db_len= strlen(db);
+
       /* Drop the table nicely */
       *extension= 0;			// Remove extension
       TableList *table_list=(TableList*)
                               session->calloc(sizeof(*table_list) +
-                                          strlen(db) + 1 +
+                                          db_len + 1 +
                                           MYSQL50_TABLE_NAME_PREFIX_LENGTH +
                                           strlen(file->name) + 1);
 
       if (!table_list)
         goto err;
       table_list->db= (char*) (table_list+1);
-      table_list->table_name= my_stpcpy(table_list->db, db) + 1;
+      table_list->table_name= strcpy(table_list->db, db) + db_len + 1;
       filename_to_tablename(file->name, table_list->table_name,
                             MYSQL50_TABLE_NAME_PREFIX_LENGTH +
                             strlen(file->name) + 1);

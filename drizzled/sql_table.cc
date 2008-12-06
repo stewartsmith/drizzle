@@ -520,7 +520,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         delete_table_proto_file(path);
 
         /* Delete the table definition file */
-        my_stpcpy(end,reg_ext);
+        strcpy(end,reg_ext);
         if (!(new_error=my_delete(path,MYF(MY_WME))))
         {
           some_tables_deleted=1;
@@ -2114,13 +2114,13 @@ mysql_rename_table(handlerton *base, const char *old_db,
   if (lower_case_table_names == 2 && file &&
       !(file->ha_table_flags() & HA_FILE_BASED))
   {
-    my_stpcpy(tmp_name, old_name);
+    strcpy(tmp_name, old_name);
     my_casedn_str(files_charset_info, tmp_name);
     build_table_filename(lc_from, sizeof(lc_from), old_db, tmp_name, "",
                          flags & FN_FROM_IS_TMP);
     from_base= lc_from;
 
-    my_stpcpy(tmp_name, new_name);
+    strcpy(tmp_name, new_name);
     my_casedn_str(files_charset_info, tmp_name);
     build_table_filename(lc_to, sizeof(lc_to), new_db, tmp_name, "",
                          flags & FN_TO_IS_TMP);
@@ -3713,7 +3713,7 @@ int create_temporary_table(Session *session,
     if (create_info->index_file_name)
     {
       /* Fix index_file_name to have 'tmp_name' as basename */
-      my_stpcpy(index_file, tmp_name);
+      strcpy(index_file, tmp_name);
       create_info->index_file_name=fn_same(index_file,
                                            create_info->index_file_name,
                                            1);
@@ -3721,7 +3721,7 @@ int create_temporary_table(Session *session,
     if (create_info->data_file_name)
     {
       /* Fix data_file_name to have 'tmp_name' as basename */
-      my_stpcpy(data_file, tmp_name);
+      strcpy(data_file, tmp_name);
       create_info->data_file_name=fn_same(data_file,
                                           create_info->data_file_name,
                                           1);
@@ -4464,14 +4464,14 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   /* Check that we are not trying to rename to an existing table */
   if (new_name)
   {
-    my_stpcpy(new_name_buff,new_name);
-    my_stpcpy(new_alias= new_alias_buff, new_name);
+    strcpy(new_name_buff,new_name);
+    strcpy(new_alias= new_alias_buff, new_name);
     if (lower_case_table_names)
     {
       if (lower_case_table_names != 2)
       {
-	my_casedn_str(files_charset_info, new_name_buff);
-	new_alias= new_name;			// Create lower case table name
+        my_casedn_str(files_charset_info, new_name_buff);
+        new_alias= new_name;			// Create lower case table name
       }
       my_casedn_str(files_charset_info, new_name);
     }
