@@ -89,8 +89,9 @@ char * fn_format(char * to, const char *name, const char *dir,
       memmove(buff, name, length); /* Save name for last copy */
       name=buff;
     }
-    pos= strncpy(my_stpcpy(to,dev),name,length) + length;
-    (void) my_stpcpy(pos,ext);			/* Don't convert extension */
+    char *tmp= strcpy(to, dev) + strlen(dev);
+    pos= strncpy(tmp,name,length) + length;
+    (void) strcpy(pos,ext);			/* Don't convert extension */
   }
   /*
     If MY_RETURN_REAL_PATH and MY_RESOLVE_SYMLINK is given, only do
@@ -101,7 +102,7 @@ char * fn_format(char * to, const char *name, const char *dir,
 				   MY_RESOLVE_LINK: 0));
   else if (flag & MY_RESOLVE_SYMLINKS)
   {
-    my_stpcpy(buff,to);
+    strcpy(buff,to);
     (void) my_readlink(to, buff, MYF(0));
   }
   return(to);

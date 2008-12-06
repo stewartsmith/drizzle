@@ -3653,7 +3653,7 @@ bool append_file_to_dir(Session *session, const char **filename_ptr,
     return 1;
   }
   /* Fix is using unix filename format on dos */
-  my_stpcpy(buff,*filename_ptr);
+  strcpy(buff,*filename_ptr);
   end=convert_dirname(buff, *filename_ptr, NULL);
   if (!(ptr= (char*) session->alloc((size_t) (end-buff) + strlen(table_name)+1)))
     return 1;					// End of memory

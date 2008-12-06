@@ -1061,7 +1061,7 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
                                            ref_pointer_array + el, 0, name)))
       return;                                   // fatal_error is set
     if (type() == SUM_FUNC_ITEM)
-      item_ref->depended_from= ((Item_sum *) this)->depended_from(); 
+      item_ref->depended_from= ((Item_sum *) this)->depended_from();
     fields.push_front(real_itm);
     session->change_item_tree(ref, item_ref);
   }

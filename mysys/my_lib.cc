@@ -132,7 +132,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
         goto error;
       
       memset(finfo.mystat, 0, sizeof(struct stat));
-      my_stpcpy(tmp_file,dp->d_name);
+      strcpy(tmp_file,dp->d_name);
       stat(tmp_path, finfo.mystat);
       if (!(finfo.mystat->st_mode & S_IREAD))
         continue;
@@ -188,7 +188,7 @@ char * directory_file_name (char * dst, const char *src)
 
   if (src[0] == 0)
     src= (char*) ".";				/* Use empty as current */
-  end=my_stpcpy(dst, src);
+  end= strcpy(dst, src)+strlen(src);
   if (end[-1] != FN_LIBCHAR)
   {
     end[0]=FN_LIBCHAR;				/* Add last '/' */

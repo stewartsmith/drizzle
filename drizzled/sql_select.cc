@@ -16393,7 +16393,7 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
       {
         if (alias && alias[0])
         {
-          my_stpcpy(t_alias_buff, alias);
+          strcpy(t_alias_buff, alias);
           my_casedn_str(files_charset_info, t_alias_buff);
           t_alias= t_alias_buff;
         }

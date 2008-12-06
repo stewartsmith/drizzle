@@ -1156,8 +1156,8 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
   else
     puts("Fixed length");
   printf("Character set:       %s (%d)\n",
-	 get_charset_name(share->state.header.language),
-	 share->state.header.language);
+  get_charset_name(share->state.header.language),
+  share->state.header.language);
 
   if (param->testflag & T_VERBOSE)
   {
@@ -1175,21 +1175,21 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     }
     pos=buff;
     if (share->state.changed & STATE_CRASHED)
-      my_stpcpy(buff,"crashed");
+      strcpy(buff,"crashed");
     else
     {
       if (share->state.open_count)
-	pos=my_stpcpy(pos,"open,");
+        pos= strcpy(pos,"open,")+5;
       if (share->state.changed & STATE_CHANGED)
-	pos=my_stpcpy(pos,"changed,");
+        pos= strcpy(pos,"changed,")+8;
       else
-	pos=my_stpcpy(pos,"checked,");
+        pos= strcpy(pos,"checked,")+8;
       if (!(share->state.changed & STATE_NOT_ANALYZED))
-	pos=my_stpcpy(pos,"analyzed,");
+        pos= strcpy(pos,"analyzed,")+9;
       if (!(share->state.changed & STATE_NOT_OPTIMIZED_KEYS))
-	pos=my_stpcpy(pos,"optimized keys,");
+        pos= strcpy(pos,"optimized keys,")+15;
       if (!(share->state.changed & STATE_NOT_SORTED_PAGES))
-	pos=my_stpcpy(pos,"sorted index pages,");
+        pos= strcpy(pos,"sorted index pages,")+19;
       pos[-1]=0;				/* Remove extra ',' */
     }      
     printf("Status:              %s\n",buff);
@@ -1207,7 +1207,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 
   }
   printf("Data records:        %13s  Deleted blocks:     %13s\n",
-	 llstr(info->state->records,llbuff),llstr(info->state->del,llbuff2));
+  llstr(info->state->records,llbuff),llstr(info->state->del,llbuff2));
   if (param->testflag & T_SILENT)
     return;				/* This is enough */
 
@@ -1217,23 +1217,23 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     printf("Init-relocation:     %13s\n",llstr(share->base.reloc,llbuff));
 #endif
     printf("Datafile parts:      %13s  Deleted data:       %13s\n",
-	   llstr(share->state.split,llbuff),
-	   llstr(info->state->empty,llbuff2));
+    llstr(share->state.split,llbuff),
+    llstr(info->state->empty,llbuff2));
     printf("Datafile pointer (bytes):%9d  Keyfile pointer (bytes):%9d\n",
-	   share->rec_reflength,share->base.key_reflength);
+    share->rec_reflength,share->base.key_reflength);
     printf("Datafile length:     %13s  Keyfile length:     %13s\n",
-	   llstr(info->state->data_file_length,llbuff),
-	   llstr(info->state->key_file_length,llbuff2));
+    llstr(info->state->data_file_length,llbuff),
+    llstr(info->state->key_file_length,llbuff2));
 
     if (info->s->base.reloc == 1L && info->s->base.records == 1L)
       puts("This is a one-record table");
     else
     {
       if (share->base.max_data_file_length != HA_OFFSET_ERROR ||
-	  share->base.max_key_file_length != HA_OFFSET_ERROR)
-	printf("Max datafile length: %13s  Max keyfile length: %13s\n",
-	       llstr(share->base.max_data_file_length-1,llbuff),
-	       llstr(share->base.max_key_file_length-1,llbuff2));
+          share->base.max_key_file_length != HA_OFFSET_ERROR)
+        printf("Max datafile length: %13s  Max keyfile length: %13s\n",
+	             llstr(share->base.max_data_file_length-1,llbuff),
+	             llstr(share->base.max_key_file_length-1,llbuff2));
     }
   }
 
@@ -1242,7 +1242,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
   {
     int64_t2str(share->state.key_map,buff,2);
     printf("Using only keys '%s' of %d possibly keys\n",
-	   buff, share->base.keys);
+    buff, share->base.keys);
   }
   puts("\ntable description:");
   printf("Key Start Len Index   Type");
@@ -1261,50 +1261,52 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     pos=buff;
     if (keyseg->flag & HA_REVERSE_SORT)
       *pos++ = '-';
-    pos=my_stpcpy(pos,type_names[keyseg->type]);
+    pos= strcpy(pos,type_names[keyseg->type]);
+    pos+= strlen(type_names[keyseg->type]);
     *pos++ = ' ';
     *pos=0;
     if (keyinfo->flag & HA_PACK_KEY)
-      pos=my_stpcpy(pos,prefix_packed_txt);
+      pos= strcpy(pos,prefix_packed_txt) + strlen(prefix_packed_txt);
     if (keyinfo->flag & HA_BINARY_PACK_KEY)
-      pos=my_stpcpy(pos,bin_packed_txt);
+      pos= strcpy(pos,bin_packed_txt) + strlen(bin_packed_txt);
     if (keyseg->flag & HA_SPACE_PACK)
-      pos=my_stpcpy(pos,diff_txt);
+      pos= strcpy(pos,diff_txt) + strlen(diff_txt);
     if (keyseg->flag & HA_BLOB_PART)
-      pos=my_stpcpy(pos,blob_txt);
+      pos= strcpy(pos,blob_txt) + strlen(blob_txt);
     if (keyseg->flag & HA_NULL_PART)
-      pos=my_stpcpy(pos,null_txt);
+      pos= strcpy(pos,null_txt) + strlen(null_txt);
     *pos=0;
 
     printf("%-4d%-6ld%-3d %-8s%-21s",
-	   key+1,(long) keyseg->start+1,keyseg->length,text,buff);
+           key+1,(long) keyseg->start+1,keyseg->length,text,buff);
     if (share->state.key_root[key] != HA_OFFSET_ERROR)
       llstr(share->state.key_root[key],buff);
     else
       buff[0]=0;
     if (param->testflag & T_VERBOSE)
       printf("%11lu %12s %10d",
-	     share->state.rec_per_key_part[keyseg_nr++],
-	     buff,keyinfo->block_length);
+    share->state.rec_per_key_part[keyseg_nr++],
+    buff,keyinfo->block_length);
     putchar('\n');
     while ((++keyseg)->type != HA_KEYTYPE_END)
     {
       pos=buff;
       if (keyseg->flag & HA_REVERSE_SORT)
-	*pos++ = '-';
-      pos=my_stpcpy(pos,type_names[keyseg->type]);
+        *pos++ = '-';
+      pos= strcpy(pos,type_names[keyseg->type]);
+      pos+= strlen(type_names[keyseg->type]);
       *pos++= ' ';
       if (keyseg->flag & HA_SPACE_PACK)
-	pos=my_stpcpy(pos,diff_txt);
+        pos= strcpy(pos,diff_txt) + strlen(diff_txt);
       if (keyseg->flag & HA_BLOB_PART)
-	pos=my_stpcpy(pos,blob_txt);
+        pos= strcpy(pos,blob_txt) + strlen(blob_txt);
       if (keyseg->flag & HA_NULL_PART)
-	pos=my_stpcpy(pos,null_txt);
+        pos= strcpy(pos,null_txt) + strlen(null_txt);
       *pos=0;
       printf("    %-6ld%-3d         %-21s",
 	     (long) keyseg->start+1,keyseg->length,buff);
       if (param->testflag & T_VERBOSE)
-	printf("%11lu", share->state.rec_per_key_part[keyseg_nr++]);
+        printf("%11lu", share->state.rec_per_key_part[keyseg_nr++]);
       putchar('\n');
     }
     keyseg++;
@@ -1314,26 +1316,26 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     MI_UNIQUEDEF *uniqueinfo;
     puts("\nUnique  Key  Start  Len  Nullpos  Nullbit  Type");
     for (key=0,uniqueinfo= &share->uniqueinfo[0] ;
-	 key < share->state.header.uniques; key++, uniqueinfo++)
+         key < share->state.header.uniques; key++, uniqueinfo++)
     {
       bool new_row=0;
       char null_bit[8],null_pos[8];
       printf("%-8d%-5d",key+1,uniqueinfo->key+1);
       for (keyseg=uniqueinfo->seg ; keyseg->type != HA_KEYTYPE_END ; keyseg++)
       {
-	if (new_row)
-	  fputs("             ",stdout);
-	null_bit[0]=null_pos[0]=0;
-	if (keyseg->null_bit)
-	{
-	  sprintf(null_bit,"%d",keyseg->null_bit);
-	  sprintf(null_pos,"%ld",(long) keyseg->null_pos+1);
-	}
-	printf("%-7ld%-5d%-9s%-10s%-30s\n",
-	       (long) keyseg->start+1,keyseg->length,
-	       null_pos,null_bit,
-	       type_names[keyseg->type]);
-	new_row=1;
+        if (new_row)
+          fputs("             ",stdout);
+        null_bit[0]=null_pos[0]=0;
+        if (keyseg->null_bit)
+        {
+          sprintf(null_bit,"%d",keyseg->null_bit);
+          sprintf(null_pos,"%ld",(long) keyseg->null_pos+1);
+        }
+        printf("%-7ld%-5d%-9s%-10s%-30s\n",
+               (long) keyseg->start+1,keyseg->length,
+               null_pos,null_bit,
+               type_names[keyseg->type]);
+        new_row=1;
       }
     }
   }
@@ -1348,30 +1350,31 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     for (field=0 ; field < share->base.fields ; field++)
     {
       if (share->options & HA_OPTION_COMPRESS_RECORD)
-	type=share->rec[field].base_type;
+        type=share->rec[field].base_type;
       else
-	type=(enum en_fieldtype) share->rec[field].type;
-      end=my_stpcpy(buff,field_pack[type]);
+        type=(enum en_fieldtype) share->rec[field].type;
+      end= strcpy(buff, field_pack[type]);
+      end+= strlen(field_pack[type]);
       if (share->options & HA_OPTION_COMPRESS_RECORD)
       {
-	if (share->rec[field].pack_type & PACK_TYPE_SELECTED)
-	  end=my_stpcpy(end,", not_always");
-	if (share->rec[field].pack_type & PACK_TYPE_SPACE_FIELDS)
-	  end=my_stpcpy(end,", no empty");
-	if (share->rec[field].pack_type & PACK_TYPE_ZERO_FILL)
-	{
-	  sprintf(end,", zerofill(%d)",share->rec[field].space_length_bits);
-	  end= strchr(end, '\0');
-	}
+        if (share->rec[field].pack_type & PACK_TYPE_SELECTED)
+          end= strcpy(end,", not_always")+12;
+        if (share->rec[field].pack_type & PACK_TYPE_SPACE_FIELDS)
+          end= strcpy(end,", no empty")+10;
+        if (share->rec[field].pack_type & PACK_TYPE_ZERO_FILL)
+        {
+          sprintf(end,", zerofill(%d)",share->rec[field].space_length_bits);
+          end= strchr(end, '\0');
+        }
       }
       if (buff[0] == ',')
-	my_stpcpy(buff,buff+2);
+        strcpy(buff,buff+2);
       int10_to_str((long) share->rec[field].length,length,10);
       null_bit[0]=null_pos[0]=0;
       if (share->rec[field].null_bit)
       {
-	sprintf(null_bit,"%d",share->rec[field].null_bit);
-	sprintf(null_pos,"%d",share->rec[field].null_pos+1);
+        sprintf(null_bit,"%d",share->rec[field].null_bit);
+        sprintf(null_pos,"%d",share->rec[field].null_pos+1);
       }
       printf("%-6d%-6d%-7s%-8s%-8s%-35s",field+1,start,length,
 	     null_pos, null_bit, buff);

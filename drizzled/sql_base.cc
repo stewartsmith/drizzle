@@ -133,8 +133,13 @@ uint32_t cached_open_tables(void)
 uint32_t create_table_def_key(Session *session, char *key, TableList *table_list,
                           bool tmp_table)
 {
-  uint32_t key_length= (uint) (my_stpcpy(my_stpcpy(key, table_list->db)+1,
-                                  table_list->table_name)-key)+1;
+  uint32_t key_length;
+  char *key_pos= key;
+  key_pos= strcpy(key_pos, table_list->db) + strlen(table_list->db);
+  key_pos= strcpy(key_pos+1, table_list->table_name) + 
+                  strlen(table_list->table_name);
+  key_length= (uint32_t)(key_pos-key)+1;
+
   if (tmp_table)
   {
     int4store(key + key_length, session->server_id);
@@ -591,10 +596,10 @@ OPEN_TableList *list_open_tables(Session *session __attribute__((unused)),
       open_list=0;				// Out of memory
       break;
     }
-    my_stpcpy((*start_list)->table=
-	   my_stpcpy(((*start_list)->db= (char*) ((*start_list)+1)),
-		  share->db.str)+1,
-	   share->table_name.str);
+    strcpy((*start_list)->table=
+           strcpy(((*start_list)->db= (char*) ((*start_list)+1)),
+           share->db.str)+share->db.length+1,
+           share->table_name.str);
     (*start_list)->in_use= entry->in_use ? 1 : 0;
     (*start_list)->locked= entry->locked_by_name ? 1 : 0;
     start_list= &(*start_list)->next;
@@ -1969,9 +1974,13 @@ bool lock_table_name_if_not_cached(Session *session, const char *db,
                                    const char *table_name, Table **table)
 {
   char key[MAX_DBKEY_LENGTH];
+  char *key_pos= key;
   uint32_t key_length;
 
-  key_length= (uint)(my_stpcpy(my_stpcpy(key, db) + 1, table_name) - key) + 1;
+  key_pos= strcpy(key_pos, db) + strlen(db);
+  key_pos= strcpy(key_pos+1, table_name) + strlen(table_name);
+  key_length= (uint32_t) (key_pos-key)+1;
+
   pthread_mutex_lock(&LOCK_open);
 
   if (hash_search(&open_cache, (unsigned char *)key, key_length))
@@ -2509,8 +2518,13 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
 
 Table *find_locked_table(Session *session, const char *db,const char *table_name)
 {
-  char	key[MAX_DBKEY_LENGTH];
-  uint32_t key_length=(uint) (my_stpcpy(my_stpcpy(key,db)+1,table_name)-key)+1;
+  char key[MAX_DBKEY_LENGTH];
+  char *key_pos= key;
+  uint32_t key_length;
+
+  key_pos= strcpy(key_pos, db) + strlen(db);
+  key_pos= strcpy(key_pos+1, table_name) + strlen(table_name);
+  key_length= (uint32_t)(key_pos-key)+1;
 
   for (Table *table=session->open_tables; table ; table=table->next)
   {
@@ -3233,7 +3247,7 @@ retry:
       if ((query= (char*) malloc(query_buf_size)))
       {
         /* this DELETE FROM is needed even with row-based binlogging */
-        end = strxmov(my_stpcpy(query, "DELETE FROM `"),
+        end = strxmov(strcpy(query, "DELETE FROM `")+13,
                       share->db.str,"`.`",share->table_name.str,"`", NULL);
         session->binlog_query(Session::STMT_QUERY_TYPE,
                           query, (ulong)(end-query), false, false);
@@ -3767,21 +3781,22 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   Table *tmp_table;
   TABLE_SHARE *share;
   char cache_key[MAX_DBKEY_LENGTH], *saved_cache_key, *tmp_path;
-  uint32_t key_length;
+  uint32_t key_length, path_length;
   TableList table_list;
 
   table_list.db=         (char*) db;
   table_list.table_name= (char*) table_name;
   /* Create the cache_key for temporary tables */
   key_length= create_table_def_key(session, cache_key, &table_list, 1);
+  path_length= strlen(path);
 
   if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +
-                                   strlen(path)+1 + key_length)))
+                                   path_length + 1 + key_length)))
     return(0);
 
   share= (TABLE_SHARE*) (tmp_table+1);
   tmp_path= (char*) (share+1);
-  saved_cache_key= my_stpcpy(tmp_path, path)+1;
+  saved_cache_key= strcpy(tmp_path, path)+path_length+1;
   memcpy(saved_cache_key, cache_key, key_length);
 
   init_tmp_table_share(session, share, saved_cache_key, key_length,
@@ -3841,7 +3856,7 @@ bool rm_temporary_table(handlerton *base, char *path)
 
   delete_table_proto_file(path);
 
-  my_stpcpy(ext= strchr(path, '\0'), reg_ext);
+  strcpy(ext= strchr(path, '\0'), reg_ext);
   if (my_delete(path,MYF(0)))
     error=1; /* purecov: inspected */
   *ext= 0;				// remove extension
@@ -6311,12 +6326,16 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
                              uint32_t flags)
 {
   char key[MAX_DBKEY_LENGTH];
+  char *key_pos= key;
   uint32_t key_length;
   Table *table;
   TABLE_SHARE *share;
   bool result= 0, signalled= 0;
 
-  key_length=(uint) (my_stpcpy(my_stpcpy(key,db)+1,table_name)-key)+1;
+  key_pos= strcpy(key_pos, db) + strlen(db);
+  key_pos= strcpy(key_pos+1, table_name) + strlen(table_name);
+  key_length= (uint32_t) (key_pos-key)+1;
+
   for (;;)
   {
     HASH_SEARCH_STATE state;

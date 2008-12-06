@@ -65,7 +65,7 @@ char * my_path(char * to, const char *progname,
     to= strchr(to, '\0');
     if (to != start && to[-1] != FN_LIBCHAR)
       *to++ = FN_LIBCHAR;
-    my_stpcpy(to,own_pathname_part);
+    strcpy(to,own_pathname_part);
   }
   return(start);
 } /* my_path */

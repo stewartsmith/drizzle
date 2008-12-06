@@ -1857,7 +1857,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   else
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
-  my_stpcpy(fn_ext(pidfile_name),".pid");		// Add proper extension
+  strcpy(fn_ext(pidfile_name),".pid");		// Add proper extension
 
   /*
     Add server status variables to the dynamic list of
@@ -3926,7 +3926,7 @@ static void drizzle_init_variables(void)
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
-  my_stpcpy(server_version, VERSION);
+  strcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   threads.empty();
@@ -4321,7 +4321,7 @@ static void set_server_version(void)
   char *end= strxmov(server_version, VERSION,
                      DRIZZLE_SERVER_SUFFIX_STR, NULL);
   if (opt_bin_log)
-    my_stpcpy(end, "-log");                        // This may slow down system
+    strcpy(end, "-log");                        // This may slow down system
 }
 
 
