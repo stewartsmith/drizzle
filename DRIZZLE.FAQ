@@ -18,7 +18,8 @@ for the project is web infrastructure backend and cloud components.
 * Is this a product of Sun/MySQL?
 
 No, though several of the authors do work for Sun/MySQL. The development model is
-one based around open collaboration.  Drizzle's license is the GPL v2.
+one based around open collaboration.  Drizzle's license is the GPL v2 and
+all contributions come in as BSD.
 
 * So what are the differences between is and MySQL?
 
@@ -107,7 +108,7 @@ performance, and over all maintenance then we are features.
 
 Please look here:
 
-https://blueprints.launchpad.net/drizzle/+spec/style-cleanup
+http://drizzle.org/wiki/Coding_Standards
 
 If you have a question on this, please email the mailing list so that we can
 clarify the document. And when you get the answer? Please update the code

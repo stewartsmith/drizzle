@@ -283,3 +283,30 @@ bool replicator_end_transaction(Session *session, bool autocommit, bool commit)
 
   return foreach_rv;
 }
+
+/*
+  For a ROLLBACK TO SAVEPOINT we make this call.
+*/
+bool replicator_rollback_to_savepoint(Session *, void *)
+{
+  return false;
+}
+
+/*
+  If somene makes a call to create a savepoint.
+*/
+bool replicator_savepoint_set(Session *, void *)
+{
+  return false;
+}
+
+/*
+  If you can do real 2PC this is your hook poing to know that the event is coming.
+
+  Always true for the moment.
+
+*/
+bool replicator_prepare(Session *)
+{
+  return false;
+}
