@@ -99,7 +99,7 @@ int mi_write(MI_INFO *info, unsigned char *record)
                                   is_tree_inited(&info->bulk_insert[i])));
       if (local_lock_tree)
       {
-	rw_wrlock(&share->key_root_lock[i]);
+	pthread_rwlock_wrlock(&share->key_root_lock[i]);
 	share->keyinfo[i].version++;
       }
       {
@@ -107,7 +107,7 @@ int mi_write(MI_INFO *info, unsigned char *record)
 			_mi_make_key(info,i,buff,record,filepos)))
         {
           if (local_lock_tree)
-            rw_unlock(&share->key_root_lock[i]);
+            pthread_rwlock_unlock(&share->key_root_lock[i]);
           goto err;
         }
       }
@@ -116,7 +116,7 @@ int mi_write(MI_INFO *info, unsigned char *record)
       info->update&= ~HA_STATE_RNEXT_SAME;
 
       if (local_lock_tree)
-        rw_unlock(&share->key_root_lock[i]);
+        pthread_rwlock_unlock(&share->key_root_lock[i]);
     }
   }
   if (share->calc_checksum)
@@ -174,18 +174,18 @@ err:
                                   !(info->bulk_insert &&
                                     is_tree_inited(&info->bulk_insert[i])));
 	if (local_lock_tree)
-	  rw_wrlock(&share->key_root_lock[i]);
+	  pthread_rwlock_wrlock(&share->key_root_lock[i]);
 	{
 	  uint32_t key_length=_mi_make_key(info,i,buff,record,filepos);
 	  if (_mi_ck_delete(info,i,buff,key_length))
 	  {
 	    if (local_lock_tree)
-	      rw_unlock(&share->key_root_lock[i]);
+	      pthread_rwlock_unlock(&share->key_root_lock[i]);
 	    break;
 	  }
 	}
 	if (local_lock_tree)
-	  rw_unlock(&share->key_root_lock[i]);
+	  pthread_rwlock_unlock(&share->key_root_lock[i]);
       }
     }
   }
@@ -768,7 +768,7 @@ static int keys_free(unsigned char *key, TREE_FREE mode, bulk_insert_param *para
   case free_init:
     if (param->info->s->concurrent_insert)
     {
-      rw_wrlock(&param->info->s->key_root_lock[param->keynr]);
+      pthread_rwlock_wrlock(&param->info->s->key_root_lock[param->keynr]);
       param->info->s->keyinfo[param->keynr].version++;
     }
     return 0;
@@ -780,7 +780,7 @@ static int keys_free(unsigned char *key, TREE_FREE mode, bulk_insert_param *para
 			      keylen - param->info->s->rec_reflength);
   case free_end:
     if (param->info->s->concurrent_insert)
-      rw_unlock(&param->info->s->key_root_lock[param->keynr]);
+      pthread_rwlock_unlock(&param->info->s->key_root_lock[param->keynr]);
     return 0;
   }
   return -1;

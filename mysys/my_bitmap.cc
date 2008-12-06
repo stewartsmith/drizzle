@@ -83,21 +83,20 @@ void create_last_word_mask(MY_BITMAP *map)
 }
 
 
-static inline void bitmap_lock(MY_BITMAP *map __attribute__((unused)))
+static inline void bitmap_lock(MY_BITMAP *map)
 {
   if (map->mutex)
     pthread_mutex_lock(map->mutex);
 }
 
-static inline void bitmap_unlock(MY_BITMAP *map __attribute__((unused)))
+static inline void bitmap_unlock(MY_BITMAP *map)
 {
   if (map->mutex)
     pthread_mutex_unlock(map->mutex);
 }
 
 
-bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint32_t n_bits,
-		    bool thread_safe __attribute__((unused)))
+bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint32_t n_bits, bool thread_safe)
 {
   if (!buf)
   {
@@ -791,8 +790,7 @@ error2:
   return true;
 }
 
-bool test_operators(MY_BITMAP *map __attribute__((unused)),
-                    uint32_t bitsize __attribute__((unused)))
+bool test_operators(MY_BITMAP *, uint32_t)
 {
   return false;
 }

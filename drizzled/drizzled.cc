@@ -438,8 +438,9 @@ pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_active_mi,
                 LOCK_connection_count;
 
-rw_lock_t	LOCK_sys_init_connect, LOCK_sys_init_slave;
-rw_lock_t	LOCK_system_variables_hash;
+pthread_rwlock_t	LOCK_sys_init_connect;
+pthread_rwlock_t	LOCK_sys_init_slave;
+pthread_rwlock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
 pthread_t signal_thread;
 pthread_attr_t connection_attrib;
@@ -782,8 +783,6 @@ void clean_up(bool print_message)
   if (cleanup_done++)
     return; /* purecov: inspected */
 
-  logger.cleanup_base();
-
   drizzle_bin_log.cleanup();
 
   if (use_slave_mask)
@@ -834,8 +833,6 @@ void clean_up(bool print_message)
   // TODO!!!! EPIC FAIL!!!! This sefaults if uncommented.
 /*  if (freeme != NULL)
     free(freeme);  */
-  /* Tell main we are ready */
-  logger.cleanup_end();
   (void) pthread_mutex_lock(&LOCK_thread_count);
   ready_to_exit=1;
   /* do the broadcast inside the lock to ensure that my_end() is not called */
@@ -879,10 +876,10 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_error_log);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
   (void) pthread_mutex_destroy(&LOCK_active_mi);
-  (void) rwlock_destroy(&LOCK_sys_init_connect);
-  (void) rwlock_destroy(&LOCK_sys_init_slave);
+  (void) pthread_rwlock_destroy(&LOCK_sys_init_connect);
+  (void) pthread_rwlock_destroy(&LOCK_sys_init_slave);
   (void) pthread_mutex_destroy(&LOCK_global_system_variables);
-  (void) rwlock_destroy(&LOCK_system_variables_hash);
+  (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
   (void) pthread_mutex_destroy(&LOCK_global_read_lock);
   (void) pthread_cond_destroy(&COND_thread_count);
   (void) pthread_cond_destroy(&COND_refresh);
@@ -1570,7 +1567,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
       error=0;
     }
     else
-      while ((error=my_sigwait(&set,&sig)) == EINTR) ;
+      while ((error= sigwait(&set,&sig)) == EINTR) ;
     if (cleanup_done)
     {
       my_thread_end();
@@ -2045,11 +2042,11 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
-  (void) my_rwlock_init(&LOCK_system_variables_hash, NULL);
+  (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_connection_count, MY_MUTEX_INIT_FAST);
-  (void) my_rwlock_init(&LOCK_sys_init_connect, NULL);
-  (void) my_rwlock_init(&LOCK_sys_init_slave, NULL);
+  (void) pthread_rwlock_init(&LOCK_sys_init_connect, NULL);
+  (void) pthread_rwlock_init(&LOCK_sys_init_slave, NULL);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
   (void) pthread_cond_init(&COND_global_read_lock,NULL);
@@ -2328,12 +2325,6 @@ int main(int argc, char **argv)
 #else
   thr_kill_signal= SIGINT;
 #endif
-
-  /*
-    Perform basic logger initialization logger. Should be called after
-    MY_INIT, as it initializes mutexes. Log tables are inited later.
-  */
-  logger.init_base();
 
 #ifdef _CUSTOMSTARTUPCONFIG_
   if (_cust_check_startup())
