@@ -107,7 +107,7 @@ void lock_db_delete(const char *name, uint32_t length)
 /* Database options hash */
 static HASH dboptions;
 static bool dboptions_init= 0;
-static rw_lock_t LOCK_dboptions;
+static pthread_rwlock_t LOCK_dboptions;
 
 /* Structure for database options */
 typedef struct my_dbopt_st
@@ -177,7 +177,7 @@ void free_dbopt(void *dbopt)
 bool my_database_names_init(void)
 {
   bool error= false;
-  (void) my_rwlock_init(&LOCK_dboptions, NULL);
+  (void) pthread_rwlock_init(&LOCK_dboptions, NULL);
   if (!dboptions_init)
   {
     dboptions_init= 1;
@@ -206,7 +206,7 @@ void my_database_names_free(void)
   {
     dboptions_init= 0;
     hash_free(&dboptions);
-    (void) rwlock_destroy(&LOCK_dboptions);
+    (void) pthread_rwlock_destroy(&LOCK_dboptions);
     hash_free(&lock_db_cache);
   }
 }
@@ -218,13 +218,13 @@ void my_database_names_free(void)
 
 void my_dbopt_cleanup(void)
 {
-  rw_wrlock(&LOCK_dboptions);
+  pthread_rwlock_wrlock(&LOCK_dboptions);
   hash_free(&dboptions);
   hash_init(&dboptions, lower_case_table_names ? 
             &my_charset_bin : system_charset_info,
             32, 0, 0, (hash_get_key) dboptions_get_key,
             free_dbopt,0);
-  rw_unlock(&LOCK_dboptions);
+  pthread_rwlock_unlock(&LOCK_dboptions);
 }
 
 
@@ -248,13 +248,13 @@ static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
   
   length= (uint) strlen(dbname);
   
-  rw_rdlock(&LOCK_dboptions);
+  pthread_rwlock_rdlock(&LOCK_dboptions);
   if ((opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
   {
     create->default_table_charset= opt->charset;
     error= true;
   }
-  rw_unlock(&LOCK_dboptions);
+  pthread_rwlock_unlock(&LOCK_dboptions);
   return error;
 }
 
@@ -279,7 +279,7 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
 
   length= (uint) strlen(dbname);
   
-  rw_wrlock(&LOCK_dboptions);
+  pthread_rwlock_wrlock(&LOCK_dboptions);
   if (!(opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
   { 
     /* Options are not in the hash, insert them */
@@ -307,7 +307,7 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
   opt->charset= create->default_table_charset;
 
 end:
-  rw_unlock(&LOCK_dboptions);  
+  pthread_rwlock_unlock(&LOCK_dboptions);  
   return(error);
 }
 
@@ -319,11 +319,11 @@ end:
 void del_dbopt(const char *path)
 {
   my_dbopt_t *opt;
-  rw_wrlock(&LOCK_dboptions);
+  pthread_rwlock_wrlock(&LOCK_dboptions);
   if ((opt= (my_dbopt_t *)hash_search(&dboptions, (const unsigned char*) path,
                                       strlen(path))))
     hash_delete(&dboptions, (unsigned char*) opt);
-  rw_unlock(&LOCK_dboptions);
+  pthread_rwlock_unlock(&LOCK_dboptions);
 }
 
 

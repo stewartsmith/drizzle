@@ -372,45 +372,6 @@ public:
   virtual ~Log_event_handler() {}
 };
 
-
-/* Class which manages slow, general and error log event handlers */
-class LOGGER
-{
-  rw_lock_t LOCK_logger;
-  /* flag to check whether logger mutex is initialized */
-  uint32_t inited;
-
-  /* NULL-terminated arrays of log handlers */
-  Log_event_handler *error_log_handler_list[MAX_LOG_HANDLERS_NUM + 1];
-
-public:
-
-  LOGGER() : inited(0)
-  {}
-  void lock_shared() { rw_rdlock(&LOCK_logger); }
-  void lock_exclusive() { rw_wrlock(&LOCK_logger); }
-  void unlock() { rw_unlock(&LOCK_logger); }
-  bool log_command(Session *session, enum enum_server_command command);
-
-  /*
-    We want to initialize all log mutexes as soon as possible,
-    but we cannot do it in constructor, as safe_mutex relies on
-    initialization, performed by MY_INIT(). This why this is done in
-    this function.
-  */
-  void init_base();
-  bool flush_logs(Session *session);
-  /* Perform basic logger cleanup. this will leave e.g. error log open. */
-  void cleanup_base();
-  /* Free memory. Nothing could be logged after this function is called */
-  void cleanup_end();
-  bool error_log_print(enum loglevel level, const char *format,
-                      va_list args);
-  /* we use this function to setup all enabled log event handlers */
-  int set_handlers(uint32_t error_log_printer);
-  void init_error_log(uint32_t error_log_printer);
-};
-
 extern TYPELIB binlog_format_typelib;
 
 void sql_print_error(const char *format, ...) __attribute__((format(printf, 1, 2)));
@@ -420,9 +381,6 @@ void sql_print_information(const char *format, ...)
 typedef void (*sql_print_message_func)(const char *format, ...)
   __attribute__((format(printf, 1, 2)));
 extern sql_print_message_func sql_print_message_handlers[];
-
-int error_log_print(enum loglevel level, const char *format,
-                    va_list args);
 
 void sql_perror(const char *message);
 

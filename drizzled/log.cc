@@ -44,8 +44,6 @@
 /* max size of the log message */
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
 
-LOGGER logger;
-
 DRIZZLE_BIN_LOG drizzle_bin_log;
 uint64_t sync_binlog_counter= 0; /* We should rationalize the largest possible counters for binlog sync */
 
@@ -201,102 +199,6 @@ public:
 };
 
 handlerton *binlog_hton;
-
-
-/*
-  Log error with all enabled log event handlers
-
-  SYNOPSIS
-    error_log_print()
-
-    level             The level of the error significance: NOTE,
-                      WARNING or ERROR.
-    format            format string for the error message
-    args              list of arguments for the format string
-
-  RETURN
-    FALSE - OK
-    TRUE - error occured
-*/
-
-bool LOGGER::error_log_print(enum loglevel level, const char *format,
-                             va_list args)
-{
-  bool error= false;
-  Log_event_handler **current_handler;
-
-  /* currently we don't need locking here as there is no error_log table */
-  for (current_handler= error_log_handler_list ; *current_handler ;)
-    error= (*current_handler++)->log_error(level, format, args) || error;
-
-  return error;
-}
-
-
-void LOGGER::cleanup_base()
-{
-  assert(inited == 1);
-  rwlock_destroy(&LOCK_logger);
-}
-
-
-void LOGGER::cleanup_end()
-{
-  assert(inited == 1);
-}
-
-
-/**
-  Perform basic log initialization: create file-based log handler and
-  init error log.
-*/
-void LOGGER::init_base()
-{
-  assert(inited == 0);
-  inited= 1;
-
-  /* by default we use traditional error log */
-  init_error_log(LOG_FILE);
-
-  my_rwlock_init(&LOCK_logger, NULL);
-}
-
-
-bool LOGGER::flush_logs(Session *)
-{
-  int rc= 0;
-
-  /*
-    Now we lock logger, as nobody should be able to use logging routines while
-    log tables are closed
-  */
-  logger.lock_exclusive();
-
-  /* end of log flush */
-  logger.unlock();
-  return rc;
-}
-
-void LOGGER::init_error_log(uint32_t error_log_printer)
-{
-  if (error_log_printer & LOG_NONE)
-  {
-    error_log_handler_list[0]= 0;
-    return;
-  }
-
-}
-
-int LOGGER::set_handlers(uint32_t error_log_printer)
-{
-  /* error log table is not supported yet */
-  lock_exclusive();
-
-  init_error_log(error_log_printer);
-  unlock();
-
-  return 0;
-}
 
 
  /*
@@ -2564,13 +2466,6 @@ err:
 
   pthread_mutex_unlock(&LOCK_log);
   return(error);
-}
-
-
-int error_log_print(enum loglevel level, const char *format,
-                    va_list args)
-{
-  return logger.error_log_print(level, format, args);
 }
 
 void DRIZZLE_BIN_LOG::rotate_and_purge(uint32_t flags)

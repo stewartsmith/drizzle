@@ -206,7 +206,6 @@ extern char *opt_logname, *opt_slow_logname;
 extern const char *log_output_str;
 
 extern DRIZZLE_BIN_LOG drizzle_bin_log;
-extern LOGGER logger;
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
 extern pthread_key_t THR_MALLOC;
@@ -218,8 +217,9 @@ extern pthread_mutex_t LOCK_drizzle_create_db,LOCK_open, LOCK_lock_db,
        LOCK_global_system_variables, LOCK_user_conn,
        LOCK_bytes_sent, LOCK_bytes_received, LOCK_connection_count;
 extern pthread_mutex_t LOCK_server_started;
-extern rw_lock_t LOCK_sys_init_connect, LOCK_sys_init_slave;
-extern rw_lock_t LOCK_system_variables_hash;
+extern pthread_rwlock_t LOCK_sys_init_connect;
+extern pthread_rwlock_t LOCK_sys_init_slave;
+extern pthread_rwlock_t LOCK_system_variables_hash;
 extern pthread_cond_t COND_refresh, COND_thread_count, COND_manager;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;

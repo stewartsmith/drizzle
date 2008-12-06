@@ -49,12 +49,12 @@ int mi_rsame(MI_INFO *info, unsigned char *record, int inx)
     info->lastkey_length=_mi_make_key(info,(uint) inx,info->lastkey,record,
 				      info->lastpos);
     if (info->s->concurrent_insert)
-      rw_rdlock(&info->s->key_root_lock[inx]);
+      pthread_rwlock_rdlock(&info->s->key_root_lock[inx]);
     _mi_search(info,info->s->keyinfo+inx,info->lastkey, USE_WHOLE_KEY,
                SEARCH_SAME,
                info->s->state.key_root[inx]);
     if (info->s->concurrent_insert)
-      rw_unlock(&info->s->key_root_lock[inx]);
+      pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
   }
 
   if (!(*info->read_record)(info,info->lastpos,record))

@@ -234,7 +234,7 @@ bool is_update_query(enum enum_sql_command command)
 }
 
 void execute_init_command(Session *session, sys_var_str *init_command_var,
-			  rw_lock_t *var_mutex)
+			  pthread_rwlock_t *var_mutex)
 {
   Vio* save_vio;
   ulong save_client_capabilities;
@@ -245,7 +245,7 @@ void execute_init_command(Session *session, sys_var_str *init_command_var,
     during execution of init_command_var query
     values of init_command_var can't be changed
   */
-  rw_rdlock(var_mutex);
+  pthread_rwlock_rdlock(var_mutex);
   save_client_capabilities= session->client_capabilities;
   session->client_capabilities|= CLIENT_MULTI_STATEMENTS;
   /*
@@ -257,7 +257,7 @@ void execute_init_command(Session *session, sys_var_str *init_command_var,
   dispatch_command(COM_QUERY, session,
                    init_command_var->value,
                    init_command_var->value_length);
-  rw_unlock(var_mutex);
+  pthread_rwlock_unlock(var_mutex);
   session->client_capabilities= save_client_capabilities;
   session->net.vio= save_vio;
 }
@@ -3499,9 +3499,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
     pthread_mutex_lock(&LOCK_active_mi);
     rotate_relay_log(active_mi);
     pthread_mutex_unlock(&LOCK_active_mi);
-
-    /* flush slow and general logs */
-    logger.flush_logs(session);
 
     if (ha_flush_logs(NULL))
       result=1;
