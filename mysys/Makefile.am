@@ -33,7 +33,6 @@ noinst_HEADERS =	mysys_priv.h \
 			my_bitmap.h \
 			my_dir.h \
 			my_static.h \
-			my_nosys.h \
 			mysys_err.h \
 			my_tree.h \
 			queues.h \
@@ -69,7 +68,7 @@ libmysys_la_SOURCES = my_init.cc mf_getdate.cc \
 			tree.cc list.cc array.cc typelib.cc \
 			my_copy.cc my_lib.cc hash.cc \
 			my_delete.cc my_rename.cc my_redel.cc \
-			my_quick.cc my_static.cc \
+			my_static.cc \
 			my_time.cc \
 			my_sync.cc my_getopt.cc my_mkdir.cc \
 			default_modify.cc default.cc \

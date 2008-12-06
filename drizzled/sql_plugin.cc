@@ -530,7 +530,7 @@ static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc)
       memory manager and/or valgrind to track locked references and
       double unlocks to aid resolving reference counting.problems.
     */
-    if (!(plugin= (plugin_ref) my_malloc_ci(sizeof(pi), MYF(MY_WME))))
+    if (!(plugin= (plugin_ref) malloc(sizeof(pi))))
       return(NULL);
 
     *plugin= pi;

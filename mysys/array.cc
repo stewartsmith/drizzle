@@ -36,7 +36,7 @@
     Static buffers must begin immediately after the array structure.
 
   RETURN VALUE
-    true	my_malloc_ci() failed
+    true	malloc() failed
     false	Ok
 */
 
@@ -62,8 +62,7 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
   array->size_of_element=element_size;
   if ((array->buffer= (unsigned char*) init_buffer))
     return(false);
-  if (!(array->buffer=(unsigned char*) my_malloc_ci(element_size*init_alloc,
-                                            MYF(MY_WME))))
+  if (!(array->buffer=(unsigned char*) malloc(element_size*init_alloc)))
   {
     array->max_element=0;
     return(true);
