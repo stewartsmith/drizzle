@@ -730,7 +730,7 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
   char llbuff[22];
   uint32_t diff_pos[2];
 
-  if (!(temp_buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
+  if (!(temp_buff=(unsigned char*) malloc(keyinfo->block_length)))
   {
     mi_check_print_error(param,"Not enough memory for keyblock");
     return(-1);
@@ -828,10 +828,10 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
                 llstr(page,llbuff), used_length, (keypos - buff));
     goto err;
   }
-  my_afree((unsigned char*) temp_buff);
+  free(temp_buff);
   return(0);
  err:
-  my_afree((unsigned char*) temp_buff);
+  free(temp_buff);
   return(1);
 } /* chk_index */
 
@@ -1896,7 +1896,7 @@ static int sort_one_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
   new_page_pos=param->new_file_pos;
   param->new_file_pos+=keyinfo->block_length;
 
-  if (!(buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
+  if (!(buff=(unsigned char*) malloc(keyinfo->block_length)))
   {
     mi_check_print_error(param,"Not enough memory for key block");
     return(-1);
@@ -1939,10 +1939,10 @@ static int sort_one_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
     mi_check_print_error(param,"Can't write indexblock, error: %d",my_errno);
     goto err;
   }
-  my_afree((unsigned char*) buff);
+  free(buff);
   return(0);
 err:
-  my_afree((unsigned char*) buff);
+  free(buff);
   return(1);
 } /* sort_one_index */
 
@@ -3695,30 +3695,30 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
   share= *(*org_info)->s;
   unpack= (share.options & HA_OPTION_COMPRESS_RECORD) &&
     (param->testflag & T_UNPACK);
-  if (!(keyinfo=(MI_KEYDEF*) my_alloca(sizeof(MI_KEYDEF)*share.base.keys)))
+  if (!(keyinfo=(MI_KEYDEF*) malloc(sizeof(MI_KEYDEF)*share.base.keys)))
     return(0);
   memcpy(keyinfo,share.keyinfo,sizeof(MI_KEYDEF)*share.base.keys);
 
   key_parts= share.base.all_key_parts;
-  if (!(keysegs=(HA_KEYSEG*) my_alloca(sizeof(HA_KEYSEG)*
-				       (key_parts+share.base.keys))))
+  if (!(keysegs=(HA_KEYSEG*) malloc(sizeof(HA_KEYSEG)*
+				    (key_parts+share.base.keys))))
   {
-    my_afree((unsigned char*) keyinfo);
+    free(keyinfo);
     return(1);
   }
   if (!(recdef=(MI_COLUMNDEF*)
-	my_alloca(sizeof(MI_COLUMNDEF)*(share.base.fields+1))))
+	malloc(sizeof(MI_COLUMNDEF)*(share.base.fields+1))))
   {
-    my_afree((unsigned char*) keyinfo);
-    my_afree((unsigned char*) keysegs);
+    free(keyinfo);
+    free(keysegs);
     return(1);
   }
   if (!(uniquedef=(MI_UNIQUEDEF*)
-	my_alloca(sizeof(MI_UNIQUEDEF)*(share.state.header.uniques+1))))
+	malloc(sizeof(MI_UNIQUEDEF)*(share.state.header.uniques+1))))
   {
-    my_afree((unsigned char*) recdef);
-    my_afree((unsigned char*) keyinfo);
-    my_afree((unsigned char*) keysegs);
+    free(recdef);
+    free(keyinfo);
+    free(keysegs);
     return(1);
   }
 
@@ -3833,10 +3833,10 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
     goto end;
   error=0;
 end:
-  my_afree((unsigned char*) uniquedef);
-  my_afree((unsigned char*) keyinfo);
-  my_afree((unsigned char*) recdef);
-  my_afree((unsigned char*) keysegs);
+  free(uniquedef);
+  free(keyinfo);
+  free(recdef);
+  free(keysegs);
   return(error);
 }
 

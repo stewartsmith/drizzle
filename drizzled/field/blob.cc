@@ -24,6 +24,9 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+#include <string>
+
+using namespace std;
 
 uint32_t
 blob_pack_length_to_max_length(uint32_t arg)
@@ -374,8 +377,8 @@ int Field_blob::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_pt
 /* The following is used only when comparing a key */
 
 uint32_t Field_blob::get_key_image(unsigned char *buff,
-                               uint32_t length,
-                               imagetype type_arg __attribute__((unused)))
+                                   uint32_t length,
+                                   imagetype)
 {
   uint32_t blob_length= get_length(ptr);
   unsigned char *blob;
@@ -397,6 +400,37 @@ uint32_t Field_blob::get_key_image(unsigned char *buff,
   }
   int2store(buff,length);
   memcpy(buff+HA_KEY_BLOB_LENGTH, blob, length);
+  return HA_KEY_BLOB_LENGTH+length;
+}
+
+
+uint32_t Field_blob::get_key_image(basic_string<unsigned char> &buff,
+                                   uint32_t length,
+                                   imagetype)
+{
+  uint32_t blob_length= get_length(ptr);
+  unsigned char *blob;
+
+  get_ptr(&blob);
+  uint32_t local_char_length= length / field_charset->mbmaxlen;
+  local_char_length= my_charpos(field_charset, blob, blob + blob_length,
+                                local_char_length);
+  set_if_smaller(blob_length, local_char_length);
+
+  unsigned char len_buff[HA_KEY_BLOB_LENGTH];
+  int2store(len_buff,length);
+  buff.append(len_buff);
+  buff.append(blob, blob_length);
+
+  if (length > blob_length)
+  {
+    /*
+      Must clear this as we do a memcmp in opt_range.cc to detect
+      identical keys
+    */
+
+    buff.append(length-blob_length, '0');
+  }
   return HA_KEY_BLOB_LENGTH+length;
 }
 

@@ -2717,7 +2717,7 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
     uint32_t opens=0;
     for (table= session->open_tables; table ; table=table->next)
       opens++;
-    tables= (Table**) my_alloca(sizeof(Table*)*opens);
+    tables= (Table**) malloc(sizeof(Table*)*opens);
   }
   else
     tables= &session->open_tables;
@@ -2776,7 +2776,7 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
   }
   if (get_locks && tables)
   {
-    my_afree((unsigned char*) tables);
+    free((unsigned char*) tables);
   }
   broadcast_refresh();
   return(error);

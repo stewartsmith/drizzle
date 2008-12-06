@@ -139,7 +139,7 @@ static int _mi_ck_real_delete(register MI_INFO *info, MI_KEYDEF *keyinfo,
     mi_print_error(info->s, HA_ERR_CRASHED);
     return(my_errno=HA_ERR_CRASHED);
   }
-  if (!(root_buff= (unsigned char*) my_alloca((uint) keyinfo->block_length+
+  if (!(root_buff= (unsigned char*) malloc(keyinfo->block_length+
 				      MI_MAX_KEY_BUFF*2)))
   {
     return(my_errno=ENOMEM);
@@ -173,7 +173,7 @@ static int _mi_ck_real_delete(register MI_INFO *info, MI_KEYDEF *keyinfo,
     }
   }
 err:
-  my_afree((unsigned char*) root_buff);
+  free(root_buff);
   return(error);
 } /* _mi_ck_real_delete */
 
@@ -210,7 +210,7 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   if (nod_flag)
   {
     leaf_page=_mi_kpos(nod_flag,keypos);
-    if (!(leaf_buff= (unsigned char*) my_alloca((uint) keyinfo->block_length+
+    if (!(leaf_buff= (unsigned char*) malloc(keyinfo->block_length+
 					MI_MAX_KEY_BUFF*2)))
     {
       my_errno=ENOMEM;
@@ -279,11 +279,11 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   }
   if (save_flag && ret_value != 1)
     ret_value|=_mi_write_keypage(info,keyinfo,page,DFLT_INIT_HITS,anc_buff);
-  my_afree((unsigned char*) leaf_buff);
+  free(leaf_buff);
   return(ret_value);
 
 err:
-  my_afree((unsigned char*) leaf_buff);
+  free(leaf_buff);
   return (-1);
 } /* d_search */
 
@@ -311,7 +311,7 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned cha
   if ((nod_flag=mi_test_if_nod(leaf_buff)))
   {
     next_page= _mi_kpos(nod_flag,endpos);
-    if (!(next_buff= (unsigned char*) my_alloca((uint) keyinfo->block_length+
+    if (!(next_buff= (unsigned char*) malloc(keyinfo->block_length+
 					MI_MAX_KEY_BUFF*2)))
       return(-1);
     if (!_mi_fetch_keypage(info,keyinfo,next_page,DFLT_INIT_HITS,next_buff,0))
@@ -343,7 +343,7 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned cha
       if (_mi_write_keypage(info,keyinfo,leaf_page,DFLT_INIT_HITS,leaf_buff))
 	goto err;
     }
-    my_afree((unsigned char*) next_buff);
+    free(next_buff);
     return(ret_value);
   }
 

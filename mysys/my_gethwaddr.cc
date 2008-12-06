@@ -51,7 +51,7 @@ bool my_gethwaddr(unsigned char *to)
 
   if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
     goto err;
-  if (!(buf = alloca(len)))
+  if (!(buf = malloc(len)))
     goto err;
   if (sysctl(mib, 6, buf, &len, NULL, 0) < 0)
     goto err;
@@ -70,6 +70,8 @@ bool my_gethwaddr(unsigned char *to)
   }
 
 err:
+  if (buf != NULL)
+    free(buf);
   return res;
 }
 

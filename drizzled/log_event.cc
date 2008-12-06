@@ -33,6 +33,7 @@
 #include <drizzled/sql_load.h>
 
 #include <algorithm>
+#include <string>
 
 #include <mysys/base64.h>
 #include <mysys/my_bitmap.h>
@@ -44,6 +45,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/slave.h>
 
+using namespace std;
 
 static const char *HA_ERR(int i)
 {
@@ -5403,7 +5405,7 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
   Table *table= m_table;  // pointer to event's table
   int error;
   int keynum;
-  auto_afree_ptr<char> key(NULL);
+  basic_string<unsigned char> key;
 
   /* fill table->record[0] with default values */
 
@@ -5483,19 +5485,11 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
         return(my_errno);
       }
 
-      if (key.get() == NULL)
-      {
-        key.assign(static_cast<char*>(my_alloca(table->s->max_unique_length)));
-        if (key.get() == NULL)
-        {
-          return(ENOMEM);
-        }
-      }
+      key.reserve(table->s->max_unique_length);
 
-      key_copy((unsigned char*)key.get(), table->record[0], table->key_info + keynum,
-               0);
+      key_copy(key, table->record[0], table->key_info + keynum, 0);
       error= table->file->index_read_idx_map(table->record[1], keynum,
-                                             (const unsigned char*)key.get(),
+                                             key.data(),
                                              HA_WHOLE_KEY,
                                              HA_READ_KEY_EXACT);
       if (error)

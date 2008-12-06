@@ -1451,7 +1451,7 @@ static int mi_sort_records(MI_CHECK *param,
     goto err;
   info->opt_flag|=WRITE_CACHE_USED;
 
-  if (!(temp_buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
+  if (!(temp_buff=(unsigned char*) malloc(keyinfo->block_length)))
   {
     mi_check_print_error(param,"Not enough memory for key block");
     goto err;
@@ -1546,7 +1546,7 @@ err:
   }
   if (temp_buff)
   {
-    my_afree((unsigned char*) temp_buff);
+    free((unsigned char*) temp_buff);
   }
   void * rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.record);
   if (rec_buff_ptr != NULL)
@@ -1582,7 +1582,7 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
 
   if (nod_flag)
   {
-    if (!(temp_buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
+    if (!(temp_buff=(unsigned char*) malloc(keyinfo->block_length)))
     {
       mi_check_print_error(param,"Not Enough memory");
       return(-1);
@@ -1642,11 +1642,11 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
     goto err;
   }
   if (temp_buff)
-    my_afree((unsigned char*) temp_buff);
+    free((unsigned char*) temp_buff);
   return(0);
 err:
   if (temp_buff)
-    my_afree((unsigned char*) temp_buff);
+    free((unsigned char*) temp_buff);
   return(1);
 } /* sort_record_index */
 

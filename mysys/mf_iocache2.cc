@@ -22,6 +22,9 @@
 #include <stdarg.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/iocache.h>
+#include <string>
+
+using namespace std;
 
 /*
   Copy contents of an IO_CACHE to a file.
@@ -280,6 +283,7 @@ size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
   int32_t minimum_width_sign;
   uint32_t precision; /* as yet unimplemented for anything but %b */
   bool is_zero_padded;
+  basic_string<unsigned char> buffz;
 
   /*
     Store the location of the beginning of a format directive, for the
@@ -396,10 +400,10 @@ process_flags:
       if (minimum_width > length2) 
       {
         const size_t buflen = minimum_width - length2;
-        unsigned char *buffz= (unsigned char *)my_alloca(buflen);
-        memset(buffz, is_zero_padded ? '0' : ' ', buflen);
-        my_b_write(info, buffz, buflen);
-        my_afree(buffz);
+        buffz.clear();
+        buffz.reserve(buflen);
+        buffz.append(buflen, is_zero_padded ? '0' : ' ');
+        my_b_write(info, buffz.data(), buflen);
       }
 
       out_length+= length2;

@@ -22,6 +22,7 @@
 #define DRIZZLE_SERVER_FIELD_VARSTRING
 
 #include <drizzled/field/longstr.h>
+#include <string>
 
 class Field_varstring :public Field_longstr {
 public:
@@ -67,6 +68,8 @@ public:
   }
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t get_key_image(unsigned char *buff,uint32_t length, imagetype type);
+  uint32_t get_key_image(std::basic_string <unsigned char> &buff,
+                         uint32_t length, imagetype type);
   void set_key_image(const unsigned char *buff,uint32_t length);
   void sql_type(String &str) const;
   virtual unsigned char *pack(unsigned char *to, const unsigned char *from,

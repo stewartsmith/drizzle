@@ -244,35 +244,4 @@ struct RPL_TableList
   table_def m_tabledef;
 };
 
-
-/* Anonymous namespace for template functions/classes */
-namespace {
-
-  /*
-    Smart pointer that will automatically call my_afree (a macro) when
-    the pointer goes out of scope.  This is used so that I do not have
-    to remember to call my_afree() before each return.  There is no
-    overhead associated with this, since all functions are inline.
-
-    I (Matz) would prefer to use the free function as a template
-    parameter, but that is not possible when the "function" is a
-    macro.
-  */
-  template <class Obj>
-  class auto_afree_ptr
-  {
-    Obj* m_ptr;
-  public:
-    auto_afree_ptr(Obj* ptr) : m_ptr(ptr) { }
-    ~auto_afree_ptr() { if (m_ptr) my_afree(m_ptr); }
-    void assign(Obj* ptr) {
-      /* Only to be called if it hasn't been given a value before. */
-      assert(m_ptr == NULL);
-      m_ptr= ptr;
-    }
-    Obj* get() { return m_ptr; }
-  };
-
-}
-
 #endif /* RPL_UTILITY_H */

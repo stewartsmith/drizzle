@@ -36,17 +36,6 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/field/timestamp.h>
 
-/* Define to force use of malloc() if the allocated memory block is big */
-
-#ifndef HAVE_ALLOCA
-#define my_safe_alloca(size, min_length) my_alloca(size)
-#define my_safe_afree(ptr, size, min_length) my_afree(ptr)
-#else
-#define my_safe_alloca(size, min_length) ((size <= min_length) ? my_alloca(size) : malloc(size))
-#define my_safe_afree(ptr, size, min_length) if (size > min_length) free(ptr)
-#endif
-
-
 
 /*
   Check if insert fields are correct.
@@ -873,8 +862,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 
 	if (!key)
 	{
-	  if (!(key=(char*) my_safe_alloca(table->s->max_unique_length,
-					   MAX_KEY_LENGTH)))
+	  if (!(key=(char*) malloc(table->s->max_unique_length)))
 	  {
 	    error=ENOMEM;
 	    goto err;
@@ -1017,7 +1005,7 @@ after_n_copied_inc:
 
 gok_or_after_err:
   if (key)
-    my_safe_afree(key,table->s->max_unique_length,MAX_KEY_LENGTH);
+    free(key);
   if (!table->file->has_transactions())
     session->transaction.stmt.modified_non_trans_table= true;
   return(0);
@@ -1032,7 +1020,7 @@ err:
 before_err:
   table->file->restore_auto_increment(prev_insert_id);
   if (key)
-    my_safe_afree(key, table->s->max_unique_length, MAX_KEY_LENGTH);
+    free(key);
   table->column_bitmaps_set(save_read_set, save_write_set);
   return(1);
 }
