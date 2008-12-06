@@ -462,7 +462,7 @@ size_t system_filename(char * to, const char *from)
     }
     *(to_pos++)=FN_C_AFTER_DIR;
   }
-  
+
   strcpy(to_pos, from_pos);
   length= strlen(to);
   return(length);
