@@ -728,7 +728,7 @@ static void reap_plugins(void)
   if (!reap_needed)
     return;
 
-  
+
   reap_needed= false;
   count= plugin_array.elements;
   reap.reserve(count);
@@ -1137,7 +1137,7 @@ error:
 
 void plugin_shutdown(void)
 {
-  uint32_t idx, free_slots= 0; 
+  uint32_t idx, free_slots= 0;
   size_t count= plugin_array.elements;
   struct st_plugin_int *plugin;
   vector<st_plugin_int *> plugins;

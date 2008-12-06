@@ -9451,7 +9451,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
   bool found_null= false;
   int result= HA_ERR_KEY_NOT_FOUND;
   basic_string<unsigned char> max_key;
-  
+
   max_key.reserve(real_prefix_len + min_max_arg_len);
 
   assert(min_max_ranges.elements > 0);

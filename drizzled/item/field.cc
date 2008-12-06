@@ -107,7 +107,7 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
   if (field->table == table || !table)
     bitmap_set_bit(field->table->read_set, field->field_index);
   if (field->vcol_info && field->vcol_info->expr_item)
-    return field->vcol_info->expr_item->walk(&Item::register_field_in_read_map, 
+    return field->vcol_info->expr_item->walk(&Item::register_field_in_read_map,
                                              1, arg);
   return 0;
 }
@@ -660,7 +660,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     /*
       Here, a subset of actions performed by Item_ref::set_properties
       is not enough. So we pass ptr to NULL into Item_[direct]_ref
-      constructor, so no initialization is performed, and call 
+      constructor, so no initialization is performed, and call
       fix_fields() below.
     */
     save= *ref;
@@ -787,7 +787,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
                                           context->last_name_resolution_table,
                                           reference,
                                           session->lex->use_only_table_context ?
-                                            REPORT_ALL_ERRORS : 
+                                            REPORT_ALL_ERRORS :
                                             IGNORE_EXCEPT_NON_UNIQUE,
                                           !any_privileges,
                                           true)) ==
@@ -822,7 +822,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
             if (new_field == NULL)
             {
               /* The column to which we link isn't valid. */
-              my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name, 
+              my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name,
                        current_session->where);
               return(1);
             }
@@ -842,8 +842,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
               return 1;
             session->change_item_tree(reference, rf);
             /*
-              Because Item_ref never substitutes itself with other items 
-              in Item_ref::fix_fields(), we can safely use the original 
+              Because Item_ref never substitutes itself with other items
+              in Item_ref::fix_fields(), we can safely use the original
               pointer to it even after fix_fields()
              */
             return rf->fix_fields(session, reference) ||  rf->check_cols(1);
@@ -888,7 +888,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
 
     set_field(from_field);
     if (session->lex->in_sum_func &&
-        session->lex->in_sum_func->nest_level == 
+        session->lex->in_sum_func->nest_level ==
         session->lex->current_select->nest_level)
       set_if_bigger(session->lex->in_sum_func->max_arg_level,
                     session->lex->current_select->nest_level);
@@ -962,8 +962,8 @@ bool Item_field::result_as_int64_t()
   of the current level (in the cond_equal->current_level list).
   If it fails, it continues searching in upper levels accessed
   through a pointer cond_equal->upper_levels.
-  The search terminates as soon as a multiple equality containing 
-  the field is found. 
+  The search terminates as soon as a multiple equality containing
+  the field is found.
 
   @param cond_equal   reference to list of multiple equalities where
                       the field (this object) is to be looked for
@@ -984,7 +984,7 @@ Item_equal *Item_field::find_item_equal(COND_EQUAL *cond_equal)
       if (item->contains(field))
         return item;
     }
-    /* 
+    /*
       The field is not found in any of the multiple equalities
       of the current level. Look for it in upper levels
     */
@@ -1068,7 +1068,7 @@ Item *Item_field::equal_fields_propagator(unsigned char *arg)
     the same as (Item_hex_string->val_str() in BINARY column)->val_int().
     We cannot simply disable the replacement in a particular context (
     e.g. <bin_col> = <int_col> AND <bin_col> = <hex_string>) since
-    Items don't know the context they are in and there are functions like 
+    Items don't know the context they are in and there are functions like
     IF (<hex_string>, 'yes', 'no').
     The same problem occurs when comparing a DATE/TIME field with a
     DATE/TIME represented as an int and as a string.
@@ -1102,8 +1102,8 @@ bool Item_field::set_no_const_sub(unsigned char *)
   The function returns a pointer to an item that is taken from
   the very beginning of the item_equal list which the Item_field
   object refers to (belongs to) unless item_equal contains  a constant
-  item. In this case the function returns this constant item, 
-  (if the substitution does not require conversion).   
+  item. In this case the function returns this constant item,
+  (if the substitution does not require conversion).
   If the Item_field object does not refer any Item_equal object
   'this' is returned .
 

@@ -136,7 +136,7 @@ uint32_t create_table_def_key(Session *session, char *key, TableList *table_list
   uint32_t key_length;
   char *key_pos= key;
   key_pos= strcpy(key_pos, table_list->db) + strlen(table_list->db);
-  key_pos= strcpy(key_pos+1, table_list->table_name) + 
+  key_pos= strcpy(key_pos+1, table_list->table_name) +
                   strlen(table_list->table_name);
   key_length= (uint32_t)(key_pos-key)+1;
 
