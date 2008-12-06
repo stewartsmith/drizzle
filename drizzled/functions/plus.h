@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_PLUS_H
 #define DRIZZLED_FUNCTIONS_PLUS_H
 
-#include <drizzled/functions/func.h> 
-#include <drizzled/functions/additive_op.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/additive_op.h>
 
 class Item_func_plus :public Item_func_additive_op
 {

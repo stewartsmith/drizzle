@@ -76,7 +76,7 @@ extern "C" bool tina_check_status(void* param);
 pthread_mutex_t tina_mutex;
 static HASH tina_open_tables;
 static handler *tina_create_handler(handlerton *hton,
-                                    TABLE_SHARE *table, 
+                                    TABLE_SHARE *table,
                                     MEM_ROOT *mem_root);
 
 
@@ -112,7 +112,7 @@ static int tina_init_func(void *p)
                    (hash_get_key) tina_get_key,0,0);
   tina_hton->state= SHOW_OPTION_YES;
   tina_hton->create= tina_create_handler;
-  tina_hton->flags= (HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES | 
+  tina_hton->flags= (HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES |
                      HTON_NO_PARTITION);
   return 0;
 }
@@ -165,7 +165,7 @@ static TINA_SHARE *get_share(const char *table_name, Table *)
     share->update_file_opened= false;
     share->tina_write_opened= false;
     share->data_file_version= 0;
-    my_stpcpy(share->table_name, table_name);
+    strcpy(share->table_name, table_name);
     fn_format(share->data_file_name, table_name, "", CSV_EXT,
               MY_REPLACE_EXT|MY_UNPACK_FILENAME);
     fn_format(meta_file_name, table_name, "", CSM_EXT,
@@ -417,7 +417,7 @@ off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 
 
 static handler *tina_create_handler(handlerton *hton,
-                                    TABLE_SHARE *table, 
+                                    TABLE_SHARE *table,
                                     MEM_ROOT *mem_root)
 {
   return new (mem_root) ha_tina(hton, table);
@@ -458,7 +458,7 @@ int ha_tina::encode_quote(unsigned char *)
     const char *ptr;
     const char *end_ptr;
     const bool was_null= (*field)->is_null();
-    
+
     /*
       assistance for backwards compatibility in production builds.
       note: this will not work for ENUM columns.
@@ -470,7 +470,7 @@ int ha_tina::encode_quote(unsigned char *)
     }
 
     (*field)->val_str(&attribute,&attribute);
-    
+
     if (was_null)
       (*field)->set_null();
 
@@ -481,7 +481,7 @@ int ha_tina::encode_quote(unsigned char *)
 
       buffer.append('"');
 
-      while (ptr < end_ptr) 
+      while (ptr < end_ptr)
       {
         if (*ptr == '"')
         {
@@ -766,7 +766,7 @@ void ha_tina::get_status()
     For log tables concurrent insert works different. The reason is that
     log tables are always opened and locked. And as they do not unlock
     tables, the file length after writes should be updated in a different
-    way. 
+    way.
 */
 
 void ha_tina::update_status()
@@ -904,8 +904,8 @@ int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
   size= encode_quote(new_data);
 
   /*
-    During update we mark each updating record as deleted 
-    (see the chain_append()) then write new one to the temporary data file. 
+    During update we mark each updating record as deleted
+    (see the chain_append()) then write new one to the temporary data file.
     At the end of the sequence in the rnd_end() we append all non-marked
     records from the data file to the temporary data file then rename it.
     The temp_file_length is used to calculate new data file length.
@@ -956,13 +956,13 @@ int ha_tina::delete_row(const unsigned char *)
 
 /**
   @brief Initialize the data file.
-  
+
   @details Compare the local version of the data file with the shared one.
   If they differ, there are some changes behind and we have to reopen
   the data file to make the changes visible.
-  Call @c file_buff->init_buff() at the end to read the beginning of the 
+  Call @c file_buff->init_buff() at the end to read the beginning of the
   data file into buffer.
-  
+
   @retval  0  OK.
   @retval  1  There was an error.
 */
@@ -1100,7 +1100,7 @@ int ha_tina::rnd_pos(unsigned char * buf, unsigned char *pos)
 int ha_tina::info(uint32_t)
 {
   /* This is a lie, but you don't want the optimizer to see zero or 1 */
-  if (!records_is_known && stats.records < 2) 
+  if (!records_is_known && stats.records < 2)
     stats.records= 2;
   return(0);
 }
@@ -1167,7 +1167,7 @@ int ha_tina::rnd_end()
       /* if there is something to write, write it */
       if (write_length)
       {
-        if (my_write(update_temp_file, 
+        if (my_write(update_temp_file,
                      (unsigned char*) (file_buff->ptr() +
                                (write_begin - file_buff->start())),
                      write_length, MYF_RW))
@@ -1221,11 +1221,11 @@ int ha_tina::rnd_end()
     if (((data_file= my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1))
       return(-1);
     /*
-      As we reopened the data file, increase share->data_file_version 
-      in order to force other threads waiting on a table lock and  
+      As we reopened the data file, increase share->data_file_version
+      in order to force other threads waiting on a table lock and
       have already opened the table to reopen the data file.
       That makes the latest changes become visible to them.
-      Update local_data_file_version as no need to reopen it in the 
+      Update local_data_file_version as no need to reopen it in the
       current thread.
     */
     share->data_file_version++;
@@ -1236,8 +1236,8 @@ int ha_tina::rnd_end()
       Here we record this fact to the meta-file.
     */
     (void)write_meta_file(share->meta_file, share->rows_recorded, false);
-    /* 
-      Update local_saved_data_file_length with the real length of the 
+    /*
+      Update local_saved_data_file_length with the real length of the
       data file.
     */
     local_saved_data_file_length= temp_file_length;
@@ -1424,7 +1424,7 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
   return to;
 }
 
-/* 
+/*
   Create a table. You do not want to leave the table open after a call to
   this (the database will call ::open() if it needs to).
 */
@@ -1445,7 +1445,7 @@ int ha_tina::create(const char *name, Table *table_arg, HA_CREATE_INFO *)
       return(HA_ERR_UNSUPPORTED);
     }
   }
-  
+
 
   if ((create_file= my_create(fn_format(name_buff, name, "", CSM_EXT,
                                         MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
@@ -1499,7 +1499,7 @@ int ha_tina::check(Session* session, HA_CHECK_OPT *)
     count--;
     current_position= next_position;
   }
-  
+
   free_root(&blobroot, MYF(0));
 
   free((char*)buf);

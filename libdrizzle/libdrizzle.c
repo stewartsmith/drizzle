@@ -133,7 +133,7 @@ int cli_read_change_user_result(DRIZZLE *drizzle)
   uint32_t pkt_length;
 
   pkt_length= cli_safe_read(drizzle);
-  
+
   if (pkt_length == packet_error)
     return 1;
 

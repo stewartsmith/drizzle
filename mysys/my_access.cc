@@ -20,7 +20,7 @@
   List of file names that causes problem on windows
 
   NOTE that one can also not have file names of type CON.TXT
-  
+
   NOTE: it is important to keep "CLOCK$" on the first place,
   we skip it in check_if_legal_tablename.
 */
@@ -37,7 +37,7 @@ static const char *reserved_names[]=
 /*
   Looks up a null-terminated string in a list,
   case insensitively.
- 
+
   SYNOPSIS
     str_list_find()
     list        list of items
@@ -89,7 +89,7 @@ static char reserved_map[256]=
 
 /*
   Check if a table name may cause problems
- 
+
   SYNOPSIS
     check_if_legal_tablename
     name 	Table name (without any extensions)

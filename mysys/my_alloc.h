@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* 
+/*
    Data structures for mysys/my_alloc.c (root memory allocator)
 */
 
@@ -47,8 +47,8 @@ typedef struct st_mem_root
   size_t min_malloc;
   size_t block_size;               /* initial block size */
   unsigned int block_num;          /* allocated blocks counter */
-  /* 
-     first free block in queue test counter (if it exceed 
+  /*
+     first free block in queue test counter (if it exceed
      MAX_BLOCK_USAGE_BEFORE_DROP block will be dropped in 'used' list)
   */
   unsigned int first_block_usage;

@@ -273,7 +273,7 @@ bool bitmap_is_prefix(const MY_BITMAP *map, uint32_t prefix_size)
       goto ret;
   res= 1;
 ret:
-  return res; 
+  return res;
 }
 
 
@@ -444,7 +444,7 @@ void bitmap_invert(MY_BITMAP *map)
 
 
 uint32_t bitmap_bits_set(const MY_BITMAP *map)
-{  
+{
   unsigned char *m= (unsigned char*)map->bitmap;
   unsigned char *end= m + no_bytes_in_map(map);
   uint32_t res= 0;
@@ -517,7 +517,7 @@ uint32_t bitmap_get_first(const MY_BITMAP *map)
     {
       byte_ptr= (unsigned char*)data_ptr;
       for (j=0; ; j++, byte_ptr++)
-      { 
+      {
         if (*byte_ptr != 0xFF)
         {
           for (k=0; ; k++)
@@ -693,11 +693,11 @@ uint32_t bitmap_lock_bits_set(const MY_BITMAP *map)
 }
 
 
-/* 
+/*
   SYNOPSIS
     bitmap_get_first()
       map
-  RETURN 
+  RETURN
     Number of first unset bit in the bitmap or MY_BIT_NONE if all bits are set.
 */
 uint32_t bitmap_lock_get_first(const MY_BITMAP *map)

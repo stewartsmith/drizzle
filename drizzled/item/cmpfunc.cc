@@ -96,7 +96,7 @@ static void agg_result_type(Item_result *type, Item **items, uint32_t nitems)
   DESCRIPTION
     The function checks that two expressions have compatible row signatures
     i.e. that the number of columns they return are the same and that if they
-    are both row expressions then each component from the first expression has 
+    are both row expressions then each component from the first expression has
     a row signature compatible with the signature of the corresponding component
     of the second expression.
 
@@ -157,7 +157,7 @@ static int agg_cmp_type(Item_result *type, Item **items, uint32_t nitems)
       of the first row expression has a compatible row signature with
       the signature of the corresponding component of the second row
       expression.
-    */ 
+    */
     if (type[0] == ROW_RESULT && cmp_row_type(items[0], items[i]))
       return 1;     // error found: invalid usage of rows
   }
@@ -220,7 +220,7 @@ static uint32_t collect_cmp_types(Item **items, uint32_t nitems)
   found_types= 0;
   for (i= 1; i < nitems ; i++)
   {
-    if ((left_result == ROW_RESULT || 
+    if ((left_result == ROW_RESULT ||
          items[i]->result_type() == ROW_RESULT) &&
         cmp_row_type(items[0], items[i]))
       return 0;
@@ -435,7 +435,7 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
     uint64_t orig_field_val= 0; /* original field value if valid */
 
     /* For comparison purposes allow invalid dates like 2000-01-32 */
-    session->variables.sql_mode= (orig_sql_mode & ~MODE_NO_ZERO_DATE) | 
+    session->variables.sql_mode= (orig_sql_mode & ~MODE_NO_ZERO_DATE) |
                              MODE_INVALID_DATES;
     session->count_cuted_fields= CHECK_FIELD_IGNORE;
 
@@ -479,25 +479,25 @@ void Item_bool_func2::fix_length_and_dec()
   if (!args[0] || !args[1])
     return;
 
-  /* 
+  /*
     We allow to convert to Unicode character sets in some cases.
     The conditions when conversion is possible are:
     - arguments A and B have different charsets
     - A wins according to coercibility rules
     - character set of A is superset for character set of B
-   
+
     If all of the above is true, then it's possible to convert
     B into the character set of A, and then compare according
     to the collation of A.
   */
 
-  
+
   DTCollation coll;
   if (args[0]->result_type() == STRING_RESULT &&
       args[1]->result_type() == STRING_RESULT &&
       agg_arg_charsets(coll, args, 2, MY_COLL_CMP_CONV, 1))
     return;
-    
+
   args[0]->cmp_context= args[1]->cmp_context=
     item_cmp_type(args[0]->result_type(), args[1]->result_type());
   // Make a special case of compare with fields to get nicer DATE comparisons
@@ -580,7 +580,7 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
       We must set cmp_charset here as we may be called from for an automatic
       generated item, like in natural join
     */
-    if (cmp_collation.set((*a)->collation, (*b)->collation) || 
+    if (cmp_collation.set((*a)->collation, (*b)->collation) ||
 	cmp_collation.derivation == DERIVATION_NONE)
     {
       my_coll_agg_error((*a)->collation, (*b)->collation, owner->func_name());
@@ -1552,7 +1552,7 @@ int64_t Item_in_optimizer::val_int()
   bool tmp;
   assert(fixed == 1);
   cache->store(args[0]);
-  
+
   if (cache->null_value)
   {
     if (((Item_in_subselect*)args[1])->is_top_level_item())
@@ -1580,7 +1580,7 @@ int64_t Item_in_optimizer::val_int()
           We disable the predicates we've pushed down into subselect, run the
           subselect and see if it has produced any rows.
         */
-        Item_in_subselect *item_subs=(Item_in_subselect*)args[1]; 
+        Item_in_subselect *item_subs=(Item_in_subselect*)args[1];
         if (cache->cols() == 1)
         {
           item_subs->set_cond_guard_var(0, false);
@@ -1601,10 +1601,10 @@ int64_t Item_in_optimizer::val_int()
             if (cache->element_index(i)->null_value)
               item_subs->set_cond_guard_var(i, false);
           }
-          
+
           (void) args[1]->val_bool_result();
           result_for_null_param= null_value= !item_subs->engine->no_rows();
-          
+
           /* Turn all predicates back on */
           for (i= 0; i < ncols; i++)
             item_subs->set_cond_guard_var(i, true);
@@ -1806,7 +1806,7 @@ bool Item_func_opt_neg::eq(const Item *item, bool binary_cmp) const
 void Item_func_interval::fix_length_and_dec()
 {
   uint32_t rows= row->cols();
-  
+
   use_decimal_comparison= ((row->element_index(0)->result_type() ==
                             DECIMAL_RESULT) ||
                            (row->element_index(0)->result_type() ==
@@ -1947,7 +1947,7 @@ int64_t Item_func_interval::val_int()
       if (my_decimal_cmp(e_dec, dec) > 0)
         return i - 1;
     }
-    else 
+    else
     {
       double val= el->val_real();
       /* Skip NULL ranges. */
@@ -2212,7 +2212,7 @@ Item_func_ifnull::fix_length_and_dec()
   decimals= cmax(args[0]->decimals, args[1]->decimals);
   unsigned_flag= args[0]->unsigned_flag && args[1]->unsigned_flag;
 
-  if (hybrid_type == DECIMAL_RESULT || hybrid_type == INT_RESULT) 
+  if (hybrid_type == DECIMAL_RESULT || hybrid_type == INT_RESULT)
   {
     int len0= args[0]->max_length - args[0]->decimals
       - (args[0]->unsigned_flag ? 0 : 1);
@@ -2250,7 +2250,7 @@ uint32_t Item_func_ifnull::decimal_precision() const
 }
 
 
-enum_field_types Item_func_ifnull::field_type() const 
+enum_field_types Item_func_ifnull::field_type() const
 {
   return cached_field_type;
 }
@@ -2570,7 +2570,7 @@ Item_func_nullif::val_decimal(my_decimal * decimal_value)
 bool
 Item_func_nullif::is_null()
 {
-  return (null_value= (!cmp.compare() ? 1 : args[0]->null_value)); 
+  return (null_value= (!cmp.compare() ? 1 : args[0]->null_value));
 }
 
 
@@ -2738,9 +2738,9 @@ void Item_func_case::agg_num_lengths(Item *arg)
 {
   uint32_t len= my_decimal_length_to_precision(arg->max_length, arg->decimals,
                                            arg->unsigned_flag) - arg->decimals;
-  set_if_bigger(max_length, len); 
+  set_if_bigger(max_length, len);
   set_if_bigger(decimals, arg->decimals);
-  unsigned_flag= unsigned_flag && arg->unsigned_flag; 
+  unsigned_flag= unsigned_flag && arg->unsigned_flag;
 }
 
 
@@ -2751,23 +2751,23 @@ void Item_func_case::fix_length_and_dec()
   uint32_t found_types= 0;
   if (!(agg= (Item**) sql_alloc(sizeof(Item*)*(ncases+1))))
     return;
-  
+
   /*
     Aggregate all THEN and ELSE expression types
     and collations when string result
   */
-  
+
   for (nagg= 0 ; nagg < ncases/2 ; nagg++)
     agg[nagg]= args[nagg*2+1];
-  
+
   if (else_expr_num != -1)
     agg[nagg++]= args[else_expr_num];
-  
+
   agg_result_type(&cached_result_type, agg, nagg);
   if ((cached_result_type == STRING_RESULT) &&
       agg_arg_charsets(collation, agg, nagg, MY_COLL_ALLOW_CONV, 1))
     return;
-  
+
   cached_field_type= agg_field_type(agg, nagg);
   /*
     Aggregate first expression and all THEN expression types
@@ -2803,7 +2803,7 @@ void Item_func_case::fix_length_and_dec()
 
   if (else_expr_num == -1 || args[else_expr_num]->maybe_null)
     maybe_null=1;
-  
+
   max_length=0;
   decimals=0;
   unsigned_flag= true;
@@ -2818,7 +2818,7 @@ void Item_func_case::fix_length_and_dec()
   {
     for (uint32_t i= 0; i < ncases; i+= 2)
       agg_num_lengths(args[i + 1]);
-    if (else_expr_num != -1) 
+    if (else_expr_num != -1)
       agg_num_lengths(args[else_expr_num]);
     max_length= my_decimal_precision_to_length(max_length + decimals, decimals,
                                                unsigned_flag);
@@ -2832,7 +2832,7 @@ uint32_t Item_func_case::decimal_precision() const
   for (uint32_t i=0 ; i < ncases ; i+=2)
     set_if_bigger(max_int_part, args[i+1]->decimal_int_part());
 
-  if (else_expr_num != -1) 
+  if (else_expr_num != -1)
     set_if_bigger(max_int_part, args[else_expr_num]->decimal_int_part());
   return cmin(max_int_part + decimals, DECIMAL_MAX_PRECISION);
 }
@@ -3023,7 +3023,7 @@ static inline int cmp_ulongs (uint64_t a_val, uint64_t b_val)
 
 
 /*
-  Compare two integers in IN value list format (packed_int64_t) 
+  Compare two integers in IN value list format (packed_int64_t)
 
   SYNOPSIS
     cmp_int64_t()
@@ -3049,18 +3049,18 @@ int cmp_int64_t(void *, in_int64_t::packed_int64_t *a,
                 in_int64_t::packed_int64_t *b)
 {
   if (a->unsigned_flag != b->unsigned_flag)
-  { 
-    /* 
-      One of the args is unsigned and is too big to fit into the 
+  {
+    /*
+      One of the args is unsigned and is too big to fit into the
       positive signed range. Report no match.
-    */  
+    */
     if ((a->unsigned_flag && ((uint64_t) a->val) > (uint64_t) INT64_MAX) ||
         (b->unsigned_flag && ((uint64_t) b->val) > (uint64_t) INT64_MAX))
       return a->unsigned_flag ? 1 : -1;
     /*
-      Although the signedness differs both args can fit into the signed 
+      Although the signedness differs both args can fit into the signed
       positive range. Make them signed and compare as usual.
-    */  
+    */
     return cmp_longs (a->val, b->val);
   }
   if (a->unsigned_flag)
@@ -3197,7 +3197,7 @@ in_int64_t::in_int64_t(uint32_t elements)
 void in_int64_t::set(uint32_t pos,Item *item)
 {
   struct packed_int64_t *buff= &((packed_int64_t*) base)[pos];
-  
+
   buff->val= item->val_int();
   buff->unsigned_flag= item->unsigned_flag;
 }
@@ -3262,7 +3262,7 @@ void in_decimal::set(uint32_t pos, Item *item)
   dec->len= DECIMAL_BUFF_LENGTH;
   dec->fix_buffer_pointer();
   my_decimal *res= item->val_decimal(dec);
-  /* if item->val_decimal() is evaluated to NULL then res == 0 */ 
+  /* if item->val_decimal() is evaluated to NULL then res == 0 */
   if (!item->null_value && res != dec)
     my_decimal2decimal(res, dec);
 }
@@ -3570,7 +3570,7 @@ void Item_func_in::fix_length_and_dec()
   left_result_type= args[0]->result_type();
   if (!(found_types= collect_cmp_types(args, arg_count)))
     return;
-  
+
   for (arg= args + 1, arg_end= args + arg_count; arg != arg_end ; arg++)
   {
     if (!arg[0]->const_item())
@@ -3590,7 +3590,7 @@ void Item_func_in::fix_length_and_dec()
 
   if (type_cnt == 1)
   {
-    if (cmp_type == STRING_RESULT && 
+    if (cmp_type == STRING_RESULT &&
         agg_arg_charsets(cmp_collation, args, arg_count, MY_COLL_CMP_CONV, 1))
       return;
     arg_types_compatible= true;
@@ -3692,10 +3692,10 @@ void Item_func_in::fix_length_and_dec()
       /*
         IN must compare INT columns and constants as int values (the same
         way as equality does).
-        So we must check here if the column on the left and all the constant 
-        values on the right can be compared as integers and adjust the 
+        So we must check here if the column on the left and all the constant
+        values on the right can be compared as integers and adjust the
         comparison type accordingly.
-      */  
+      */
       if (args[0]->real_item()->type() == FIELD_ITEM &&
           session->lex->sql_command != SQLCOM_SHOW_CREATE &&
           cmp_type != INT_RESULT)
@@ -3715,7 +3715,7 @@ void Item_func_in::fix_length_and_dec()
       }
       switch (cmp_type) {
       case STRING_RESULT:
-        array=new in_string(arg_count-1,(qsort2_cmp) srtcmp_in, 
+        array=new in_string(arg_count-1,(qsort2_cmp) srtcmp_in,
                             cmp_collation.collation);
         break;
       case INT_RESULT:
@@ -3975,7 +3975,7 @@ Item_cond::fix_fields(Session *session, Item **)
       not_null_tables_cache|= tmp_table_map;
       and_tables_cache&= tmp_table_map;
       const_item_cache= false;
-    }  
+    }
     with_sum_func=	    with_sum_func || item->with_sum_func;
     with_subselect|=        item->with_subselect;
     if (item->maybe_null)
@@ -4016,7 +4016,7 @@ void Item_cond::fix_after_pullout(st_select_lex *new_parent, Item **)
       not_null_tables_cache|= tmp_table_map;
       and_tables_cache&= tmp_table_map;
       const_item_cache= false;
-    }  
+    }
   }
 }
 
@@ -4034,20 +4034,20 @@ bool Item_cond::walk(Item_processor processor, bool walk_subquery, unsigned char
 
 /**
   Transform an Item_cond object with a transformer callback function.
-  
+
     The function recursively applies the transform method to each
      member item of the condition list.
     If the call of the method for a member item returns a new item
     the old item is substituted for a new one.
     After this the transformer is applied to the root node
-    of the Item_cond object. 
-     
+    of the Item_cond object.
+
   @param transformer   the transformer callback function to be applied to
                        the nodes of the tree of the object
   @param arg           parameter to be passed to the transformer
 
   @return
-    Item returned as the result of transformation of the root node 
+    Item returned as the result of transformation of the root node
 */
 
 Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
@@ -4076,7 +4076,7 @@ Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
 /**
   Compile Item_cond object with a processor and a transformer
   callback functions.
-  
+
     First the function applies the analyzer to the root node of
     the Item_func object. Then if the analyzer succeeeds (returns true)
     the function recursively applies the compile method to member
@@ -4084,8 +4084,8 @@ Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
     If the call of the method for a member item returns a new item
     the old item is substituted for a new one.
     After this the transformer is applied to the root node
-    of the Item_cond object. 
-     
+    of the Item_cond object.
+
   @param analyzer      the analyzer callback function to be applied to the
                        nodes of the tree of the object
   @param[in,out] arg_p parameter to be passed to the analyzer
@@ -4094,7 +4094,7 @@ Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
   @param arg_t         parameter to be passed to the transformer
 
   @return
-    Item returned as the result of transformation of the root node 
+    Item returned as the result of transformation of the root node
 */
 
 Item *Item_cond::compile(Item_analyzer analyzer, unsigned char **arg_p,
@@ -4102,15 +4102,15 @@ Item *Item_cond::compile(Item_analyzer analyzer, unsigned char **arg_p,
 {
   if (!(this->*analyzer)(arg_p))
     return 0;
-  
+
   List_iterator<Item> li(list);
   Item *item;
   while ((item= li++))
   {
-    /* 
+    /*
       The same parameter value of arg_p must be passed
       to analyze any argument of the condition formula.
-    */   
+    */
     unsigned char *arg_v= *arg_p;
     Item *new_item= item->compile(analyzer, &arg_v, transformer, arg_t);
     if (new_item && new_item != item)
@@ -4453,7 +4453,7 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
     my_error(ER_WRONG_ARGUMENTS,MYF(0),"ESCAPE");
     return true;
   }
-  
+
   if (escape_item->const_item())
   {
     /* If we are on execution stage */
@@ -4506,12 +4506,12 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       We could also do boyer-more for non-const items, but as we would have to
       recompute the tables for each row it's not worth it.
     */
-    if (args[1]->const_item() && !use_strnxfrm(collation.collation)) 
+    if (args[1]->const_item() && !use_strnxfrm(collation.collation))
     {
       String* res2 = args[1]->val_str(&tmp_value2);
       if (!res2)
         return false;				// Null argument
-      
+
       const size_t len   = res2->length();
       const char*  first = res2->ptr();
       const char*  last  = first + len - 1;
@@ -4519,7 +4519,7 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
         len must be > 2 ('%pattern%')
         heuristic: only do TurboBM for pattern_len > 2
       */
-      
+
       if (len > MIN_TURBOBM_PATTERN_LEN + 2 &&
           *first == wild_many &&
           *last  == wild_many)
@@ -4792,7 +4792,7 @@ int64_t Item_cond_xor::val_int()
   assert(fixed == 1);
   List_iterator<Item> li(list);
   Item *item;
-  int result=0;	
+  int result=0;
   null_value=0;
   while ((item=li++))
   {
@@ -5017,7 +5017,7 @@ uint32_t Item_equal::members()
   @retval
     1       if nultiple equality contains a reference to field
   @retval
-    0       otherwise    
+    0       otherwise
 */
 
 bool Item_equal::contains(Field *field)
@@ -5035,12 +5035,12 @@ bool Item_equal::contains(Field *field)
 
 /**
   Join members of another Item_equal object.
-  
+
     The function actually merges two multiple equalities.
     After this operation the Item_equal object additionally contains
     the field items of another item of the type Item_equal.
     If the optional constant items are not equal the cond_false flag is
-    set to 1.  
+    set to 1.
   @param item    multiple equality whose members are to be joined
 */
 
@@ -5050,15 +5050,15 @@ void Item_equal::merge(Item_equal *item)
   Item *c= item->const_item;
   if (c)
   {
-    /* 
-      The flag cond_false will be set to 1 after this, if 
-      the multiple equality already contains a constant and its 
+    /*
+      The flag cond_false will be set to 1 after this, if
+      the multiple equality already contains a constant and its
       value is  not equal to the value of c.
     */
     add(c);
   }
   cond_false|= item->cond_false;
-} 
+}
 
 
 /**

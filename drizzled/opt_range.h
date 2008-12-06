@@ -178,10 +178,10 @@ public:
     reset() should be called when it is certain that row retrieval will be
     necessary. This call may do heavyweight initialization like buffering first
     N records etc. If reset() call fails get_next() must not be called.
-    Note that reset() may be called several times if 
+    Note that reset() may be called several times if
      * the quick select is executed in a subselect
      * a JOIN buffer is used
-    
+
     RETURN
       0      OK
       other  Error code
@@ -301,19 +301,19 @@ protected:
   /* Range pointers to be used when not using MRR interface */
   QUICK_RANGE **cur_range;  /* current element in ranges  */
   QUICK_RANGE *last_range;
-  
+
   /* Members needed to use the MRR interface */
   QUICK_RANGE_SEQ_CTX qr_traversal_ctx;
 public:
   uint32_t mrr_flags; /* Flags to be used with MRR interface */
 protected:
-  uint32_t mrr_buf_size; /* copy from session->variables.read_rnd_buff_size */  
+  uint32_t mrr_buf_size; /* copy from session->variables.read_rnd_buff_size */
   HANDLER_BUFFER *mrr_buf_desc; /* the handler buffer */
 
   /* Info about index we're scanning */
   KEY_PART *key_parts;
   KEY_PART_INFO *key_part_info;
-  
+
   bool dont_free; /* Used by QUICK_SELECT_DESC */
 
   int cmp_next(QUICK_RANGE *range);
@@ -344,7 +344,7 @@ private:
   QUICK_RANGE_SELECT(const QUICK_RANGE_SELECT& org) : QUICK_SELECT_I()
   {
     memmove(this, &org, sizeof(*this));
-    /* 
+    /*
       Use default MRR implementation for reverse scans. No table engine
       currently can do an MRR scan with output in reverse index order.
     */
@@ -357,8 +357,8 @@ private:
   QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
                                                struct st_table_ref *ref,
                                                ha_rows records);
-  friend bool get_quick_keys(PARAM *param, QUICK_RANGE_SELECT *quick, 
-                             KEY_PART *key, SEL_ARG *key_tree, 
+  friend bool get_quick_keys(PARAM *param, QUICK_RANGE_SELECT *quick,
+                             KEY_PART *key, SEL_ARG *key_tree,
                              unsigned char *min_key, uint32_t min_key_flag,
                              unsigned char *max_key, uint32_t max_key_flag);
   friend QUICK_RANGE_SELECT *get_quick_select(PARAM*,uint32_t idx,
@@ -527,7 +527,7 @@ public:
   Session *session;       /* current thread */
   bool need_to_fetch_row; /* if true, do retrieve full table records. */
   /* in top-level quick select, true if merged scans where initialized */
-  bool scans_inited; 
+  bool scans_inited;
 };
 
 
@@ -574,7 +574,7 @@ public:
   uint32_t rowid_length;    /* table rowid length */
 private:
   static int queue_cmp(void *arg, unsigned char *val1, unsigned char *val2);
-  bool scans_inited; 
+  bool scans_inited;
 };
 
 
@@ -679,7 +679,7 @@ public:
 class QUICK_SELECT_DESC: public QUICK_RANGE_SELECT
 {
 public:
-  QUICK_SELECT_DESC(QUICK_RANGE_SELECT *q, uint32_t used_key_parts, 
+  QUICK_SELECT_DESC(QUICK_RANGE_SELECT *q, uint32_t used_key_parts,
                     bool *create_err);
   int get_next();
   bool reverse_sorted() { return 1; }

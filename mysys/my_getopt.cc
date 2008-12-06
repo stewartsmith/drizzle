@@ -65,7 +65,7 @@ enum enum_special_opt
 
 char *disabled_my_option= (char*) "0";
 
-/* 
+/*
    This is a flag that can be set in client programs. 0 means that
    my_getopt will not print error messages, but the client should do
    it by itself
@@ -73,7 +73,7 @@ char *disabled_my_option= (char*) "0";
 
 bool my_getopt_print_errors= 1;
 
-/* 
+/*
    This is a flag that can be set in client programs. 1 means that
    my_getopt will skip over options it does not know how to handle.
 */
@@ -95,7 +95,7 @@ void default_reporter(enum loglevel level,
   fflush(stderr);
 }
 
-/* 
+/*
   function: handle_options
 
   Sort options; put options first, until special end of options (--), or
@@ -112,7 +112,7 @@ void my_getopt_register_get_addr(getopt_get_addr_func func_addr)
   getopt_get_addr= func_addr;
 }
 
-int handle_options(int *argc, char ***argv, 
+int handle_options(int *argc, char ***argv,
 		   const struct my_option *longopts,
                    my_get_one_option get_one_option)
 {
@@ -304,7 +304,7 @@ int handle_options(int *argc, char ***argv,
 	    if (must_be_var)
 	    {
 	      if (my_getopt_print_errors)
-                my_getopt_error_reporter(option_is_loose ? 
+                my_getopt_error_reporter(option_is_loose ?
                                            WARNING_LEVEL : ERROR_LEVEL,
                                          "%s: unknown variable '%s'",
                                          my_progname, cur_arg);
@@ -314,9 +314,9 @@ int handle_options(int *argc, char ***argv,
 	    else
 	    {
 	      if (my_getopt_print_errors)
-                my_getopt_error_reporter(option_is_loose ? 
+                my_getopt_error_reporter(option_is_loose ?
                                            WARNING_LEVEL : ERROR_LEVEL,
-                                         "%s: unknown option '--%s'", 
+                                         "%s: unknown option '--%s'",
                                          my_progname, cur_arg);
 	      if (!option_is_loose)
 		return EXIT_UNKNOWN_OPTION;
@@ -343,7 +343,7 @@ int handle_options(int *argc, char ***argv,
 	    if (my_getopt_print_errors)
               my_getopt_error_reporter(ERROR_LEVEL,
                                        "%s: ambiguous option '--%s' (%s, %s)",
-                                       my_progname, opt_str, prev_found, 
+                                       my_progname, opt_str, prev_found,
                                        optp->name);
 	    return EXIT_AMBIGUOUS_OPTION;
 	  }
@@ -364,14 +364,14 @@ int handle_options(int *argc, char ***argv,
 	if (must_be_var && (optp->var_type & GET_TYPE_MASK) == GET_NO_ARG)
 	{
 	  if (my_getopt_print_errors)
-            my_getopt_error_reporter(ERROR_LEVEL, 
+            my_getopt_error_reporter(ERROR_LEVEL,
                                      "%s: option '%s' cannot take an argument",
                                      my_progname, optp->name);
 	  return EXIT_NO_ARGUMENT_ALLOWED;
 	}
 	value= optp->var_type & GET_ASK_ADDR ?
 	  (*getopt_get_addr)(key_name, (uint) strlen(key_name), optp) : optp->value;
-  
+
 	if (optp->arg_type == NO_ARG)
 	{
 	  if (optend && (optp->var_type & GET_TYPE_MASK) != GET_BOOL)
@@ -516,7 +516,7 @@ invalid value '%s'",
           {
             if (my_getopt_print_errors)
               my_getopt_error_reporter(ERROR_LEVEL,
-                                       "%s: unknown option '-%c'", 
+                                       "%s: unknown option '-%c'",
                                        my_progname, *optend);
             return EXIT_UNKNOWN_OPTION;
           }
@@ -570,7 +570,7 @@ static char *check_struct_option(char *cur_arg, char *key_name)
   ptr= strrchr(cur_arg + 1, '.'); /* Skip the first character */
   end= strrchr(cur_arg, '=');
 
-  /* 
+  /*
      If the first dot is after an equal sign, then it is part
      of a variable value and the option is not a struct option.
      Also, if the last character in the string before the ending
@@ -664,7 +664,7 @@ static int setval(const struct my_option *opts, char **value, char *argument,
 }
 
 
-/* 
+/*
   Find option
 
   SYNOPSIS
@@ -719,7 +719,7 @@ static int findopt(char *optpat, uint32_t length,
 }
 
 
-/* 
+/*
   function: compare_strings
 
   Works like strncmp, other than 1.) considers '-' and '_' the same.
@@ -749,7 +749,7 @@ static int64_t eval_num_suffix(char *argument, int *error, char *option_name)
 {
   char *endchar;
   int64_t num;
-  
+
   *error= 0;
   errno= 0;
   num= strtoll(argument, &endchar, 10);
@@ -777,7 +777,7 @@ static int64_t eval_num_suffix(char *argument, int *error, char *option_name)
   return num;
 }
 
-/* 
+/*
   function: getopt_ll
 
   Evaluates and returns the value that user gave as an argument
@@ -1071,7 +1071,7 @@ void my_cleanup_options(const struct my_option *options)
 }
 
 
-/* 
+/*
   initialize all variables to their default values
 
   SYNOPSIS

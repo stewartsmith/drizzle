@@ -61,7 +61,7 @@ public:
     Enumeration type to indicate for a system variable whether it will be written to the binlog or not.
   */
   enum Binlog_status_enum
-  {  
+  {
     /* The variable value is not in the binlog. */
     NOT_IN_BINLOG,
     /* The value of the @@session variable is in the binlog. */
@@ -415,7 +415,7 @@ public:
 class sys_var_session :public sys_var
 {
 public:
-  sys_var_session(const char *name_arg, 
+  sys_var_session(const char *name_arg,
               sys_after_update_func func= NULL,
               Binlog_status_enum binlog_status= NOT_IN_BINLOG)
     :sys_var(name_arg, func, binlog_status)
@@ -453,11 +453,11 @@ class sys_var_session_ha_rows :public sys_var_session
 {
 public:
   ha_rows SV::*offset;
-  sys_var_session_ha_rows(sys_var_chain *chain, const char *name_arg, 
+  sys_var_session_ha_rows(sys_var_chain *chain, const char *name_arg,
                       ha_rows SV::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
-  sys_var_session_ha_rows(sys_var_chain *chain, const char *name_arg, 
+  sys_var_session_ha_rows(sys_var_chain *chain, const char *name_arg,
                       ha_rows SV::*offset_arg,
 		      sys_after_update_func func)
     :sys_var_session(name_arg,func), offset(offset_arg)
@@ -484,10 +484,10 @@ public:
     check_func(c_func),
     offset(offset_arg)
   { chain_sys_var(chain); }
-  sys_var_session_uint64_t(sys_var_chain *chain, 
-                           const char *name_arg, 
-                           uint64_t SV::*offset_arg, 
-                           sys_after_update_func func, 
+  sys_var_session_uint64_t(sys_var_chain *chain,
+                           const char *name_arg,
+                           uint64_t SV::*offset_arg,
+                           sys_after_update_func func,
                            bool only_global_arg,
                            sys_check_func cfunc= NULL)
     :sys_var_session(name_arg, func),
@@ -525,10 +525,10 @@ public:
      check_func(c_func),
      offset(offset_arg)
   { chain_sys_var(chain); }
-  sys_var_session_size_t(sys_var_chain *chain, 
-                         const char *name_arg, 
-                         size_t SV::*offset_arg, 
-                         sys_after_update_func func, 
+  sys_var_session_size_t(sys_var_chain *chain,
+                         const char *name_arg,
+                         size_t SV::*offset_arg,
+                         sys_after_update_func func,
                          bool only_global_arg,
                          sys_check_func cfunc= NULL)
     :sys_var_session(name_arg, func),
@@ -610,7 +610,7 @@ public:
 class sys_var_session_optimizer_switch :public sys_var_session_enum
 {
 public:
-  sys_var_session_optimizer_switch(sys_var_chain *chain, const char *name_arg, 
+  sys_var_session_optimizer_switch(sys_var_chain *chain, const char *name_arg,
                                    uint32_t SV::*offset_arg)
     :sys_var_session_enum(chain, name_arg, offset_arg, &optimizer_switch_typelib)
   {}
@@ -630,7 +630,7 @@ class sys_var_session_storage_engine :public sys_var_session
 protected:
   plugin_ref SV::*offset;
 public:
-  sys_var_session_storage_engine(sys_var_chain *chain, const char *name_arg, 
+  sys_var_session_storage_engine(sys_var_chain *chain, const char *name_arg,
                              plugin_ref SV::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
@@ -786,7 +786,7 @@ class sys_var_key_cache_param :public sys_var
 protected:
   size_t offset;
 public:
-  sys_var_key_cache_param(sys_var_chain *chain, const char *name_arg, 
+  sys_var_key_cache_param(sys_var_chain *chain, const char *name_arg,
                           size_t offset_arg)
     :sys_var(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
@@ -850,7 +850,7 @@ class sys_var_log_state :public sys_var_bool_ptr
 {
   uint32_t log_type;
 public:
-  sys_var_log_state(sys_var_chain *chain, const char *name_arg, bool *value_arg, 
+  sys_var_log_state(sys_var_chain *chain, const char *name_arg, bool *value_arg,
                     uint32_t log_type_arg)
     :sys_var_bool_ptr(chain, name_arg, value_arg), log_type(log_type_arg) {}
   bool update(Session *session, set_var *var);
@@ -868,7 +868,7 @@ public:
   sys_var_readonly(sys_var_chain *chain, const char *name_arg, enum_var_type type,
 		   SHOW_TYPE show_type_arg,
 		   sys_value_ptr_func value_ptr_func_arg)
-    :sys_var(name_arg), var_type(type), 
+    :sys_var(name_arg), var_type(type),
        show_type_value(show_type_arg), value_ptr_func(value_ptr_func_arg)
   { chain_sys_var(chain); }
   bool update(Session *, set_var *)
@@ -932,9 +932,9 @@ class sys_var_have_plugin: public sys_var_have_option
 
 public:
   sys_var_have_plugin(sys_var_chain *chain, const char *variable_name,
-                      const char *plugin_name_str_arg, uint32_t plugin_name_len_arg, 
+                      const char *plugin_name_str_arg, uint32_t plugin_name_len_arg,
                       int plugin_type_arg):
-    sys_var_have_option(chain, variable_name), 
+    sys_var_have_option(chain, variable_name),
     plugin_name_str(plugin_name_str_arg), plugin_name_len(plugin_name_len_arg),
     plugin_type(plugin_type_arg)
   { }
@@ -993,7 +993,7 @@ public:
 class sys_var_opt_readonly :public sys_var_bool_ptr
 {
 public:
-  sys_var_opt_readonly(sys_var_chain *chain, const char *name_arg, 
+  sys_var_opt_readonly(sys_var_chain *chain, const char *name_arg,
                        bool *value_arg) :
     sys_var_bool_ptr(chain, name_arg, value_arg) {};
   ~sys_var_opt_readonly() {};
@@ -1072,7 +1072,7 @@ public:
     if (value_arg && value_arg->type() == Item::FIELD_ITEM)
     {
       Item_field *item= (Item_field*) value_arg;
-      if (!(value=new Item_string(item->field_name, 
+      if (!(value=new Item_string(item->field_name,
                   (uint) strlen(item->field_name),
 				  item->collation.collation)))
 	value=value_arg;			/* Give error message later */

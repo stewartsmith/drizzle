@@ -6388,7 +6388,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     return 1;
   }
 
-  char *substring_to_replace= in_string + ovector[0]; 
+  char *substring_to_replace= in_string + ovector[0];
   int substring_length= ovector[1] - ovector[0];
   *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
   char * new_buf = (char *)malloc(*buf_len_p+1);
@@ -6739,7 +6739,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     for (i=0 ; i < count ; i++)
     {
       to_array[i]=to_pos;
-      to_pos=my_stpcpy(to_pos,to[i])+1;
+      to_pos=strcpy(to_pos,to[i])+strlen(to[i])+1;
     }
     rep_str[0].found=1;
     rep_str[0].replace_string=0;
@@ -7025,7 +7025,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   pa->flag[pa->typelib.count]=0;      /* Reset flag */
   pa->typelib.type_names[pa->typelib.count++]= (char*) pa->str+pa->length;
   pa->typelib.type_names[pa->typelib.count]= NULL;  /* Put end-mark */
-  my_stpcpy((char*) pa->str+pa->length,name);
+  strcpy((char*) pa->str+pa->length,name);
   pa->length+=length;
   return(0);
 } /* insert_pointer_name */

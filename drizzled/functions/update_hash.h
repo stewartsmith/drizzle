@@ -20,16 +20,16 @@
 #ifndef DRIZZLED_FUNCTIONS_UPDATE_HASH_H
 #define DRIZZLED_FUNCTIONS_UPDATE_HASH_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 bool
 update_hash(
-  user_var_entry *entry, 
-  bool set_null, 
-  void *ptr, 
+  user_var_entry *entry,
+  bool set_null,
+  void *ptr,
   uint32_t length,
-  Item_result type, 
-  const CHARSET_INFO * const cs, 
+  Item_result type,
+  const CHARSET_INFO * const cs,
   Derivation dv,
   bool unsigned_arg
   );

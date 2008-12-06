@@ -1069,8 +1069,8 @@ end:
   @param session        Thread handle.
   @param table_list Names of tables to lock.
 
-  @note 
-    This function needs to be protected by LOCK_open. If we're 
+  @note
+    This function needs to be protected by LOCK_open. If we're
     under LOCK TABLES, this function does not work as advertised. Namely,
     it does not exclude other threads from using this table and does not
     put an exclusive name lock on this table into the table cache.

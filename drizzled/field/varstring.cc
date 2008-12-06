@@ -24,6 +24,10 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+#include <string>
+
+using namespace std;
+
 /****************************************************************************
   VARCHAR type
   Data in field->ptr is stored as:
@@ -211,7 +215,7 @@ int Field_varstring::key_cmp(const unsigned char *key_ptr, uint32_t max_key_leng
   local_char_length= my_charpos(field_charset, ptr + length_bytes,
                           ptr + length_bytes + length, local_char_length);
   set_if_smaller(length, local_char_length);
-  return field_charset->coll->strnncollsp(field_charset, 
+  return field_charset->coll->strnncollsp(field_charset,
                                           ptr + length_bytes,
                                           length,
                                           key_ptr+
@@ -252,7 +256,7 @@ void Field_varstring::sort_string(unsigned char *to,uint32_t length)
       mi_int2store(to+length-2, tot_length);
     length-= length_bytes;
   }
- 
+
   tot_length= my_strnxfrm(field_charset,
 			  to, length, ptr + length_bytes,
 			  tot_length);
@@ -414,7 +418,7 @@ Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char 
 
    @note
    The string length is always packed little-endian.
-  
+
    @param   to         Destination of the data
    @param   from       Source of the data
    @param   param_data Length bytes from the master's field data
@@ -427,7 +431,7 @@ Field_varstring::unpack(unsigned char *to, const unsigned char *from,
                         bool low_byte_first __attribute__((unused)))
 {
   uint32_t length;
-  uint32_t l_bytes= (param_data && (param_data < field_length)) ? 
+  uint32_t l_bytes= (param_data && (param_data < field_length)) ?
                 (param_data <= 255) ? 1 : 2 : length_bytes;
   if (l_bytes == 1)
   {
@@ -513,6 +517,33 @@ uint32_t Field_varstring::max_packed_col_length(uint32_t max_length)
 {
   return (max_length > 255 ? 2 : 1)+max_length;
 }
+
+uint32_t Field_varstring::get_key_image(basic_string<unsigned char> &buff,
+                                        uint32_t length, imagetype)
+{
+  /* Key is always stored with 2 bytes */
+  const uint32_t key_len= 2;
+  uint32_t f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t local_char_length= length / field_charset->mbmaxlen;
+  unsigned char *pos= ptr+length_bytes;
+  local_char_length= my_charpos(field_charset, pos, pos + f_length,
+                                local_char_length);
+  set_if_smaller(f_length, local_char_length);
+  unsigned char len_buff[key_len];
+  int2store(len_buff,f_length);
+  buff.append(len_buff);
+  buff.append(pos, f_length);
+  if (f_length < length)
+  {
+    /*
+      Must clear this as we do a memcmp in opt_range.cc to detect
+      identical keys
+    */
+    buff.append(length-f_length, 0);
+  }
+  return key_len+f_length;
+}
+
 
 uint32_t Field_varstring::get_key_image(unsigned char *buff,
                                     uint32_t length,

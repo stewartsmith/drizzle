@@ -42,7 +42,7 @@
 #endif
 
 /*
-  We are assuming that directory we are reading is either has less than 
+  We are assuming that directory we are reading is either has less than
   100 files and so can be read in one initial chunk or has more than 1000
   files and so big increment are suitable.
 */
@@ -60,9 +60,9 @@ void my_dirend(MY_DIR *buffer)
 {
   if (buffer)
   {
-    delete_dynamic((DYNAMIC_ARRAY*)((char*)buffer + 
+    delete_dynamic((DYNAMIC_ARRAY*)((char*)buffer +
                                     ALIGN_SIZE(sizeof(MY_DIR))));
-    free_root((MEM_ROOT*)((char*)buffer + ALIGN_SIZE(sizeof(MY_DIR)) + 
+    free_root((MEM_ROOT*)((char*)buffer + ALIGN_SIZE(sizeof(MY_DIR)) +
                           ALIGN_SIZE(sizeof(DYNAMIC_ARRAY))), MYF(0));
     free((unsigned char*) buffer);
   }
@@ -95,16 +95,16 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
 #endif
 
   dirp = opendir(directory_file_name(tmp_path,(char *) path));
-  if (dirp == NULL || 
-      ! (buffer= (char *) my_malloc(ALIGN_SIZE(sizeof(MY_DIR)) + 
+  if (dirp == NULL ||
+      ! (buffer= (char *) my_malloc(ALIGN_SIZE(sizeof(MY_DIR)) +
                                     ALIGN_SIZE(sizeof(DYNAMIC_ARRAY)) +
                                     sizeof(MEM_ROOT), MyFlags)))
     goto error;
 
-  dir_entries_storage= (DYNAMIC_ARRAY*)(buffer + ALIGN_SIZE(sizeof(MY_DIR))); 
+  dir_entries_storage= (DYNAMIC_ARRAY*)(buffer + ALIGN_SIZE(sizeof(MY_DIR)));
   names_storage= (MEM_ROOT*)(buffer + ALIGN_SIZE(sizeof(MY_DIR)) +
                              ALIGN_SIZE(sizeof(DYNAMIC_ARRAY)));
-  
+
   if (my_init_dynamic_array(dir_entries_storage, sizeof(FILEINFO),
                             ENTRIES_START_SIZE, ENTRIES_INCREMENT))
   {
@@ -112,27 +112,27 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
     goto error;
   }
   init_alloc_root(names_storage, NAMES_START_SIZE, NAMES_START_SIZE);
-  
+
   /* MY_DIR structure is allocated and completly initialized at this point */
   result= (MY_DIR*)buffer;
 
   tmp_file= strchr(tmp_path, '\0');
 
   dp= (struct dirent*) dirent_tmp;
-  
+
   while (!(READDIR(dirp,(struct dirent*) dirent_tmp,dp)))
   {
     if (!(finfo.name= strdup_root(names_storage, dp->d_name)))
       goto error;
-    
+
     if (MyFlags & MY_WANT_STAT)
     {
-      if (!(finfo.mystat= (struct stat*)alloc_root(names_storage, 
+      if (!(finfo.mystat= (struct stat*)alloc_root(names_storage,
                                                sizeof(struct stat))))
         goto error;
-      
+
       memset(finfo.mystat, 0, sizeof(struct stat));
-      my_stpcpy(tmp_file,dp->d_name);
+      strcpy(tmp_file,dp->d_name);
       stat(tmp_path, finfo.mystat);
       if (!(finfo.mystat->st_mode & S_IREAD))
         continue;
@@ -150,7 +150,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
 #endif
   result->dir_entry= (FILEINFO *)dir_entries_storage->buffer;
   result->number_off_files= dir_entries_storage->elements;
-  
+
   if (!(MyFlags & MY_DONT_SORT))
     my_qsort((void *) result->dir_entry, result->number_off_files,
           sizeof(FILEINFO), (qsort_cmp) comp_names);
@@ -188,7 +188,7 @@ char * directory_file_name (char * dst, const char *src)
 
   if (src[0] == 0)
     src= (char*) ".";				/* Use empty as current */
-  end=my_stpcpy(dst, src);
+  end= strcpy(dst, src)+strlen(src);
   if (end[-1] != FN_LIBCHAR)
   {
     end[0]=FN_LIBCHAR;				/* Add last '/' */

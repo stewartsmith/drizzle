@@ -51,7 +51,7 @@ int replicator_initializer(st_plugin_int *plugin)
 }
 
 int replicator_finalizer(st_plugin_int *plugin)
-{ 
+{
   replicator_t *p= (replicator_t *) plugin->data;
 
   if (plugin->plugin->deinit)

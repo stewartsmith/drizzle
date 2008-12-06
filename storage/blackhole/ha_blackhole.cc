@@ -175,7 +175,7 @@ int ha_blackhole::index_read_map(unsigned char *, const unsigned char *,
 }
 
 
-int ha_blackhole::index_read_idx_map(unsigned char *, uint32_t, const unsigned char *, 
+int ha_blackhole::index_read_idx_map(unsigned char *, uint32_t, const unsigned char *,
                                      key_part_map, enum ha_rkey_function)
 {
   return(HA_ERR_END_OF_FILE);
@@ -219,7 +219,7 @@ static st_blackhole_share *get_share(const char *table_name)
 
   length= (uint) strlen(table_name);
   pthread_mutex_lock(&blackhole_mutex);
-    
+
   if (!(share= (st_blackhole_share*) hash_search(&blackhole_open_tables,
                                                  (unsigned char*) table_name, length)))
   {
@@ -229,19 +229,19 @@ static st_blackhole_share *get_share(const char *table_name)
       goto error;
 
     share->table_name_length= length;
-    my_stpcpy(share->table_name, table_name);
-    
+    strcpy(share->table_name, table_name);
+
     if (my_hash_insert(&blackhole_open_tables, (unsigned char*) share))
     {
       free((unsigned char*) share);
       share= NULL;
       goto error;
     }
-    
+
     thr_lock_init(&share->lock);
   }
   share->use_count++;
-  
+
 error:
   pthread_mutex_unlock(&blackhole_mutex);
   return share;
@@ -274,7 +274,7 @@ static int blackhole_init(void *p)
   blackhole_hton->state= SHOW_OPTION_YES;
   blackhole_hton->create= blackhole_create_handler;
   blackhole_hton->flags= HTON_CAN_RECREATE;
-  
+
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
   (void) hash_init(&blackhole_open_tables, system_charset_info,32,0,0,
                    (hash_get_key) blackhole_get_key,

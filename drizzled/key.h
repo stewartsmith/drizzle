@@ -67,4 +67,33 @@ public:
     { return new (mem_root) Key(*this, mem_root); }
 };
 
+
+int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *field,
+                 uint32_t *key_length, uint32_t *keypart);
+/**
+  Copy part of a record that forms a key or key prefix to a buffer.
+
+    The function takes a complete table record (as e.g. retrieved by
+    handler::index_read()), and a description of an index on the same table,
+    and extracts the first key_length bytes of the record which are part of a
+    key into to_key. If length == 0 then copy all bytes from the record that
+    form a key.
+
+  @param to_key      buffer that will be used as a key
+  @param from_record full record to be copied from
+  @param key_info    descriptor of the index
+  @param key_length  specifies length of all keyparts that will be copied
+*/
+
+void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info, uint32_t key_length);
+void key_copy(std::basic_string<unsigned char> &to_key,
+              unsigned char *from_record, KEY *key_info, uint32_t key_length);
+void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
+                 uint16_t key_length);
+void key_zero_nulls(unsigned char *tuple, KEY *key_info);
+bool key_cmp_if_same(Table *form,const unsigned char *key,uint32_t index,uint32_t key_length);
+void key_unpack(String *to,Table *form,uint32_t index);
+bool is_key_used(Table *table, uint32_t idx, const MY_BITMAP *fields);
+int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length);
+extern "C" int key_rec_cmp(void *key_info, unsigned char *a, unsigned char *b);
 #endif /* DRIZZLED_KEY_H */

@@ -134,7 +134,7 @@ public:
     a different log under our feet
   */
   uint32_t cur_log_old_open_count;
-  
+
   /*
     Let's call a group (of events) :
       - a transaction
@@ -163,7 +163,7 @@ public:
   bool is_fake; /* Mark that this is a fake relay log info structure */
 #endif
 
-  /* 
+  /*
      Original log name and position of the group we're currently executing
      (whose coordinates are group_relay_log_name/pos in the relay log)
      in the master's binlog. These concern the *group*, because in the master's
@@ -212,28 +212,28 @@ public:
   volatile bool abort_slave;
   volatile uint32_t slave_running;
 
-  /* 
+  /*
      Condition and its parameters from START SLAVE UNTIL clause.
-     
-     UNTIL condition is tested with is_until_satisfied() method that is 
+
+     UNTIL condition is tested with is_until_satisfied() method that is
      called by exec_relay_log_event(). is_until_satisfied() caches the result
      of the comparison of log names because log names don't change very often;
      this cache is invalidated by parts of code which change log names with
      notify_*_log_name_updated() methods. (They need to be called only if SQL
      thread is running).
    */
-  
+
   enum {UNTIL_NONE= 0, UNTIL_MASTER_POS, UNTIL_RELAY_POS} until_condition;
   char until_log_name[FN_REFLEN];
   uint64_t until_log_pos;
   /* extension extracted from log_name and converted to int32_t */
-  uint32_t until_log_name_extension;   
-  /* 
+  uint32_t until_log_name_extension;
+  /*
      Cached result of comparison of until_log_name and current log name
-     -2 means unitialised, -1,0,1 are comarison results 
+     -2 means unitialised, -1,0,1 are comarison results
   */
-  enum 
-  { 
+  enum
+  {
     UNTIL_LOG_NAMES_CMP_UNKNOWN= -2, UNTIL_LOG_NAMES_CMP_LESS= -1,
     UNTIL_LOG_NAMES_CMP_EQUAL= 0, UNTIL_LOG_NAMES_CMP_GREATER= 1
   } until_log_names_cmp_result;
@@ -262,7 +262,7 @@ public:
   ~Relay_log_info();
 
   /*
-    Invalidate cached until_log_name and group_relay_log_name comparison 
+    Invalidate cached until_log_name and group_relay_log_name comparison
     result. Should be called after any update of group_realy_log_name if
     there chances that sql_thread is running.
   */
@@ -273,14 +273,14 @@ public:
   }
 
   /*
-    The same as previous but for group_master_log_name. 
+    The same as previous but for group_master_log_name.
   */
   inline void notify_group_master_log_name_update()
   {
     if (until_condition==UNTIL_MASTER_POS)
       until_log_names_cmp_result= UNTIL_LOG_NAMES_CMP_UNKNOWN;
   }
-  
+
   inline void inc_event_relay_log_pos()
   {
     event_relay_log_pos= future_event_relay_log_pos;
@@ -289,7 +289,7 @@ public:
   void inc_group_relay_log_pos(uint64_t log_pos,
 			       bool skip_lock=0);
 
-  int32_t wait_for_pos(Session* session, String* log_name, int64_t log_pos, 
+  int32_t wait_for_pos(Session* session, String* log_name, int64_t log_pos,
 		   int64_t timeout);
   void close_temporary_tables();
 

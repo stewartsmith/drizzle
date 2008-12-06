@@ -18,10 +18,10 @@
  */
 
 #ifndef ERROR_INJECT_SUPPORT
-/**  
- * @file 
+/**
+ * @file
  *
- * Simple compile-time error injection module to enable easy 
+ * Simple compile-time error injection module to enable easy
  * error printing in case of a crash
  */
 #ifndef DRIZZLE_SERVER_ERROR_INJECTION_H

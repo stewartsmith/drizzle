@@ -79,7 +79,7 @@ int Field_datetime::store(double nr)
   int error= 0;
   if (nr < 0.0 || nr > 99991231235959.0)
   {
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE,
                          nr, DRIZZLE_TIMESTAMP_DATETIME);
     nr= 0.0;

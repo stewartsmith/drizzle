@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_BIT_LENGTH_H
 #define DRIZZLED_FUNCTIONS_BIT_LENGTH_H
 
-#include <drizzled/functions/func.h> 
-#include <drizzled/functions/length.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/length.h>
 
 class Item_func_bit_length :public Item_func_length
 {

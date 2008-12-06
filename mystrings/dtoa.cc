@@ -90,7 +90,7 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
   char *res, *src, *end, *dst= to;
   char buf[DTOA_BUFF_SIZE];
   assert(precision >= 0 && precision < NOT_FIXED_DEC && to != NULL);
-  
+
   res= dtoa(x, 5, precision, &decpt, &sign, &end, buf, sizeof(buf));
 
   if (decpt == DTOA_OVERFLOW)
@@ -130,11 +130,11 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
   {
     if (len <= decpt)
       *dst++= '.';
-    
+
     for (i= precision - cmax(0, (len - decpt)); i > 0; i--)
       *dst++= '0';
   }
-  
+
   *dst= '\0';
   if (error != NULL)
     *error= false;
@@ -197,12 +197,12 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
      my_gcvt(55, ..., 1, ...);
 
    We do our best to minimize such cases by:
-   
+
    - passing to dtoa() the field width as the number of significant digits
-   
+
    - removing the sign of the number early (and decreasing the width before
      passing it to dtoa())
-   
+
    - choosing the proper format to preserve the most number of significant
      digits.
 */
@@ -215,7 +215,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   char buf[DTOA_BUFF_SIZE];
   bool have_space, force_e_format;
   assert(width > 0 && to != NULL);
-  
+
   /* We want to remove '-' from equations early */
   if (x < 0.)
     width--;
@@ -244,7 +244,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
      to count it here.
    */
   exp_len= 1 + (decpt >= 101 || decpt <= -99) + (decpt >= 11 || decpt <= -9);
-  
+
   /*
      Do we have enough space for all digits in the 'f' format?
      Let 'len' be the number of significant digits returned by dtoa,
@@ -297,7 +297,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
        ((decpt <= width && (decpt >= -1 || (decpt == -2 &&
                                             (len > 1 || !force_e_format)))) &&
          !force_e_format)) &&
-      
+
        /*
          Use the 'e' format in some cases even if we have enough space for the
          'f' one. See comment for MAX_DECPT_FOR_F_FORMAT.
@@ -319,7 +319,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
           *error= true;
         width= decpt;
       }
-      
+
       /*
         We want to truncate (len - width) least significant digits after the
         decimal point. For this we are calling dtoa with mode=5, passing the
@@ -337,7 +337,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
       *dst++= '0';
       goto end;
     }
-    
+
     /*
       At this point we are sure we have enough space to put all digits
       returned by dtoa
@@ -386,7 +386,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
         *error= true;
       width= 0;
     }
-      
+
     /* Do we have to truncate any digits? */
     if (width < len)
     {
@@ -451,7 +451,7 @@ end:
                   rejected character.
    @param error   Upon return is set to EOVERFLOW in case of underflow or
                   overflow.
-   
+
    @return        The resulting double value. In case of underflow, 0.0 is
                   returned. In case overflow, signed DBL_MAX is returned.
 */
@@ -770,7 +770,7 @@ static Bigint *s2b(const char *s, int nd0, int nd, ULong y9, Stack_alloc *alloc)
   b= Balloc(k, alloc);
   b->p.x[0]= y9;
   b->wds= 1;
-  
+
   i= 9;
   if (9 < nd0)
   {
@@ -1267,7 +1267,7 @@ static const double tinytens[]=
   9007199254740992.*9007199254740992.e-256 /* = 2^106 * 1e-53 */
 };
 /*
-  The factor of 2^53 in tinytens[4] helps us avoid setting the underflow 
+  The factor of 2^53 in tinytens[4] helps us avoid setting the underflow
   flag unnecessarily.  It leads to a song and dance at the end of strtod.
 */
 #define Scale_Bit 0x10
@@ -1275,16 +1275,16 @@ static const double tinytens[]=
 
 /*
   strtod for IEEE--arithmetic machines.
- 
+
   This strtod returns a nearest machine number to the input decimal
   string (or sets errno to EOVERFLOW). Ties are broken by the IEEE round-even
   rule.
- 
+
   Inspired loosely by William D. Clinger's paper "How to Read Floating
   Point Numbers Accurately" [Proc. ACM SIGPLAN '90, pp. 92-101].
- 
+
   Modifications:
- 
+
    1. We only require IEEE (not IEEE double-extended).
    2. We get by with floating-point arithmetic in a case that
      Clinger missed -- when we're computing d * 10^n
@@ -1347,7 +1347,7 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
  break2:
   if (s >= end)
     goto ret0;
-  
+
   if (*s == '0')
   {
     nz0= 1;
@@ -2013,7 +2013,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
   double d2, ds, eps;
   char *s, *s0;
   Stack_alloc alloc;
-  
+
   alloc.begin= alloc.free= buf;
   alloc.end= buf + buf_size;
   memset(alloc.freelist, 0, sizeof(alloc.freelist));
@@ -2039,7 +2039,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
       *rve= res + 1;
     return res;
   }
-  
+
 
   b= d2b(dval(d), &be, &bbits, &alloc);
   if ((i= (int)(word0(d) >> Exp_shift1 & (Exp_mask>>Exp_shift1))))
@@ -2053,12 +2053,12 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
       log10(x)      =  log(x) / log(10)
                    ~=~ log(1.5)/log(10) + (x-1.5)/(1.5*log(10))
       log10(d)= (i-Bias)*log(2)/log(10) + log10(d2)
-     
+
       This suggests computing an approximation k to log10(d) by
-     
+
       k= (i - Bias)*0.301029995663981
            + ( (d2-1.5)*0.289529654602168 + 0.176091259055681 );
-     
+
       We want k to be too large rather than too small.
       The error in the first-order Taylor series approximation
       is in our favor, so we just round up the constant enough
@@ -2371,7 +2371,7 @@ bump_up:
   /*
     Arrange for convenient computation of quotients:
     shift left if necessary so divisor has 4 leading 0 bits.
-    
+
     Perhaps we should just compute leading 28 bits of S once
     a nd for all and pass them and a shift to quorem, so it
     can do shifts and ors to compute the numerator for q.

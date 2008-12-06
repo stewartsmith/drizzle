@@ -76,7 +76,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   uint32_t blob_count, null_pack_length, null_count;
   unsigned char *null_flags;
   unsigned char *pos;
-  
+
   /*
     STEP 1: Get temporary table name
   */
@@ -120,7 +120,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return(NULL);
   }
-  my_stpcpy(tmpname,path);
+  strcpy(tmpname,path);
 
   /* STEP 4: Create Table description */
   memset(table, 0, sizeof(*table));

@@ -78,7 +78,7 @@ int Field_real::truncate(double *nr, double max_value)
 {
   int error= 1;
   double res= *nr;
-  
+
   if (isnan(res))
   {
     res= 0;
@@ -104,7 +104,7 @@ int Field_real::truncate(double *nr, double max_value)
       res= floor(res) + tmp;
     }
   }
-  
+
   if (res < -max_value)
   {
    res= -max_value;

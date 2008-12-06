@@ -132,8 +132,8 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
 
   while (memavl >= MIN_SORT_MEMORY)
   {
-    if ((records < UINT32_MAX) && 
-       ((my_off_t) (records + 1) * 
+    if ((records < UINT32_MAX) &&
+       ((my_off_t) (records + 1) *
         (sort_length + sizeof(char*)) <= (my_off_t) memavl))
       keys= (uint)records+1;
     else
@@ -314,7 +314,7 @@ pthread_handler_t thr_find_all_keys(void *arg)
   if (my_thread_init())
     goto err;
 
-  { 
+  {
     if (sort_param->sort_info->got_error)
       goto err;
 

@@ -65,7 +65,7 @@ int Field_time::store(const char *from,
     }
     if (warning & DRIZZLE_TIME_WARN_OUT_OF_RANGE)
     {
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
                            from, len, DRIZZLE_TIMESTAMP_TIME, !error);
       error= 1;
@@ -74,7 +74,7 @@ int Field_time::store(const char *from,
       ltime.day=0;
     tmp=(ltime.day*24L+ltime.hour)*10000L+(ltime.minute*100+ltime.second);
   }
-  
+
   if (ltime.neg)
     tmp= -tmp;
   int3store(ptr,tmp);
@@ -107,7 +107,7 @@ int Field_time::store(double nr)
   else if (nr < (double)-TIME_MAX_VALUE)
   {
     tmp= -TIME_MAX_VALUE;
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE, nr, DRIZZLE_TIMESTAMP_TIME);
     error= 1;
   }
@@ -119,7 +119,7 @@ int Field_time::store(double nr)
     if (tmp % 100 > 59 || tmp/100 % 100 > 59)
     {
       tmp=0;
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE, nr,
                            DRIZZLE_TIMESTAMP_TIME);
       error= 1;
@@ -137,7 +137,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
   if (nr < (int64_t) -TIME_MAX_VALUE && !unsigned_val)
   {
     tmp= -TIME_MAX_VALUE;
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE, nr,
                          DRIZZLE_TIMESTAMP_TIME, 1);
     error= 1;
@@ -145,7 +145,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
   else if (nr > (int64_t) TIME_MAX_VALUE || (nr < 0 && unsigned_val))
   {
     tmp= TIME_MAX_VALUE;
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE, nr,
                          DRIZZLE_TIMESTAMP_TIME, 1);
     error= 1;
@@ -156,7 +156,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
     if (tmp % 100 > 59 || tmp/100 % 100 > 59)
     {
       tmp=0;
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE, nr,
                            DRIZZLE_TIMESTAMP_TIME, 1);
       error= 1;
@@ -212,7 +212,7 @@ String *Field_time::val_str(String *val_buffer,
   get_date() here to be able to do things like
   DATE_FORMAT(time, "%l.%i %p")
 */
- 
+
 bool Field_time::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long tmp;

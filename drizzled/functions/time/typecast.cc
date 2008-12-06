@@ -149,14 +149,14 @@ String *Item_char_typecast::val_str(String *str)
 void Item_char_typecast::fix_length_and_dec()
 {
   uint32_t char_length;
-  /* 
+  /*
      We always force character set conversion if cast_cs
      is a multi-byte character set. It garantees that the
      result of CAST is a well-formed string.
      For single-byte character sets we allow just to copy
      from the argument. A single-byte character sets string
-     is always well-formed. 
-     
+     is always well-formed.
+
      There is a special trick to convert form a number to ucs2.
      As numbers have my_charset_bin as their character set,
      it wouldn't do conversion to ucs2 without an additional action.
@@ -171,7 +171,7 @@ void Item_char_typecast::fix_length_and_dec()
      - If the argument is not a number, then from_cs is set to
        the argument's charset.
   */
-  from_cs= (args[0]->result_type() == INT_RESULT || 
+  from_cs= (args[0]->result_type() == INT_RESULT ||
             args[0]->result_type() == DECIMAL_RESULT ||
             args[0]->result_type() == REAL_RESULT) ?
            (cast_cs->mbminlen == 1 ? cast_cs : &my_charset_utf8_general_ci) :
@@ -179,7 +179,7 @@ void Item_char_typecast::fix_length_and_dec()
   charset_conversion= (cast_cs->mbmaxlen > 1) ||
                       (!my_charset_same(from_cs, cast_cs) && from_cs != &my_charset_bin && cast_cs != &my_charset_bin);
   collation.set(cast_cs, DERIVATION_IMPLICIT);
-  char_length= (cast_length >= 0) ? cast_length : 
+  char_length= (cast_length >= 0) ? cast_length :
 	       args[0]->max_length/from_cs->mbmaxlen;
   max_length= char_length * cast_cs->mbmaxlen;
 }
@@ -191,7 +191,7 @@ String *Item_datetime_typecast::val_str(String *str)
   DRIZZLE_TIME ltime;
 
   if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
-      !make_datetime(ltime.second_part ? DATE_TIME_MICROSECOND : DATE_TIME, 
+      !make_datetime(ltime.second_part ? DATE_TIME_MICROSECOND : DATE_TIME,
 		     &ltime, str))
     return str;
 

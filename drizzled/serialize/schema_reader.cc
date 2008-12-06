@@ -4,11 +4,11 @@
 #include "schema.pb.h"
 using namespace std;
 
-/* 
+/*
   Written from Google proto example
 */
 
-void printSchema(const drizzle::Schema *schema) 
+void printSchema(const drizzle::Schema *schema)
 {
   cout << "CREATE SCHEMA `" << schema->name() << "` ";
   if (schema->has_collation())
@@ -18,7 +18,7 @@ void printSchema(const drizzle::Schema *schema)
   cout << ";" << endl;
 }
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
   {
     // Read the existing address book.
     fstream input(argv[1], ios::in | ios::binary);
-    if (!schema.ParseFromIstream(&input)) 
+    if (!schema.ParseFromIstream(&input))
     {
       cerr << "Failed to parse schema." << endl;
       return -1;

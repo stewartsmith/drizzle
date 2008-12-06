@@ -42,7 +42,7 @@ int64_t Item_func_mod::int_op()
   }
 
   if (args[0]->unsigned_flag)
-    result= args[1]->unsigned_flag ? 
+    result= args[1]->unsigned_flag ?
       ((uint64_t) value) % ((uint64_t) val2) : ((uint64_t) value) % val2;
   else
     result= args[1]->unsigned_flag ?

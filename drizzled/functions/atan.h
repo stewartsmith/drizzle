@@ -24,7 +24,7 @@
 #include <drizzled/functions/dec.h>
 
 class Item_func_atan :public Item_dec_func
-{ 
+{
 public:
   Item_func_atan(Item *a) :Item_dec_func(a) {}
   Item_func_atan(Item *a,Item *b) :Item_dec_func(a,b) {}

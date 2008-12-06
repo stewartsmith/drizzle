@@ -20,7 +20,7 @@
 /**
  * @file
  *
- * Mostly constants and some macros/functions used by the server  
+ * Mostly constants and some macros/functions used by the server
  */
 
 #ifndef DRIZZLE_SERVER_DEFINITIONS_H
@@ -172,13 +172,13 @@
 */
 #define MIN_TURBOBM_PATTERN_LEN 3
 
-/* 
+/*
    Defines for binary logging.
    Do not decrease the value of BIN_LOG_HEADER_SIZE.
    Do not even increase it before checking code.
 */
 
-#define BIN_LOG_HEADER_SIZE    4 
+#define BIN_LOG_HEADER_SIZE    4
 
 #define DEFAULT_KEY_CACHE_NAME "default"
 
@@ -199,9 +199,9 @@
 #define TABLE_OPEN_CACHE_MIN    64
 #define TABLE_OPEN_CACHE_DEFAULT 64
 
-/* 
+/*
  Value of 9236 discovered through binary search 2006-09-26 on Ubuntu Dapper
- Drake, libc6 2.3.6-0ubuntu2, Linux kernel 2.6.15-27-686, on x86.  (Added 
+ Drake, libc6 2.3.6-0ubuntu2, Linux kernel 2.6.15-27-686, on x86.  (Added
  100 bytes as reasonable buffer against growth and other environments'
  requirements.)
 
@@ -213,7 +213,7 @@
 #define STACK_MIN_SIZE_FOR_OPEN 1024*80
 #define STACK_BUFF_ALLOC        352     ///< For stack overrun checks
 
-/** 
+/**
  * @TODO Move into a drizzled.h since it's only used in drizzled.cc
  *
  * @TODO Rename to DRIZZLED_NET_RETRY_COUNT
@@ -253,16 +253,16 @@
 #define TIME_FOR_COMPARE   5	// 5 compares == one read
 
 /**
-  Number of comparisons of table rowids equivalent to reading one row from a 
+  Number of comparisons of table rowids equivalent to reading one row from a
   table.
 */
 #define TIME_FOR_COMPARE_ROWID  (TIME_FOR_COMPARE*2)
 
 /*
   For sequential disk seeks the cost formula is:
-    DISK_SEEK_BASE_COST + DISK_SEEK_PROP_COST * #blocks_to_skip  
-  
-  The cost of average seek 
+    DISK_SEEK_BASE_COST + DISK_SEEK_PROP_COST * #blocks_to_skip
+
+  The cost of average seek
     DISK_SEEK_BASE_COST + DISK_SEEK_PROP_COST*BLOCKS_IN_AVG_SEEK =1.0.
 */
 #define DISK_SEEK_BASE_COST ((double)0.9)
@@ -605,8 +605,8 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 /*
   If HA_PRIMARY_KEY_REQUIRED_FOR_POSITION is set, it means that to position()
   uses a primary key. Without primary key, we can't call position().
-*/ 
-#define HA_PRIMARY_KEY_REQUIRED_FOR_POSITION (1 << 16) 
+*/
+#define HA_PRIMARY_KEY_REQUIRED_FOR_POSITION (1 << 16)
 #define HA_NOT_DELETE_WITH_CACHE (1 << 18)
 /*
   The following is we need to a primary key to delete (and update) a row.
@@ -650,7 +650,7 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
   Index scan will not return records in rowid order. Not guaranteed to be
   set for unordered (e.g. HASH) indexes.
 */
-#define HA_KEY_SCAN_NOT_ROR     128 
+#define HA_KEY_SCAN_NOT_ROR     128
 #define HA_DO_INDEX_COND_PUSHDOWN  256 /* Supports Index Condition Pushdown */
 
 
@@ -825,13 +825,13 @@ enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
 #define HA_MRR_SINGLE_POINT 1
 #define HA_MRR_FIXED_KEY  2
 
-/* 
+/*
   Indicates that RANGE_SEQ_IF::next(&range) doesn't need to fill in the
   'range' parameter.
 */
 #define HA_MRR_NO_ASSOCIATION 4
 
-/* 
+/*
   The MRR user will provide ranges in key order, and MRR implementation
   must return rows in key order.
 */
@@ -840,7 +840,7 @@ enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
 /* MRR implementation doesn't have to retrieve full records */
 #define HA_MRR_INDEX_ONLY 16
 
-/* 
+/*
   The passed memory buffer is of maximum possible size, the caller can't
   assume larger buffer.
 */
@@ -904,7 +904,7 @@ enum enum_sql_command {
   SQLCOM_COMMIT, SQLCOM_SAVEPOINT, SQLCOM_RELEASE_SAVEPOINT,
   SQLCOM_SLAVE_START, SQLCOM_SLAVE_STOP,
   SQLCOM_BEGIN, SQLCOM_CHANGE_MASTER,
-  SQLCOM_RENAME_TABLE,  
+  SQLCOM_RENAME_TABLE,
   SQLCOM_RESET, SQLCOM_PURGE, SQLCOM_PURGE_BEFORE, SQLCOM_SHOW_BINLOGS,
   SQLCOM_SHOW_OPEN_TABLES,
   SQLCOM_DELETE_MULTI, SQLCOM_UPDATE_MULTI,
@@ -996,7 +996,7 @@ enum enum_schema_tables
 
   [signed] int64_t F(field1, field2, ...) {
     put values of field_i into table record buffer;
-    return item->val_int(); 
+    return item->val_int();
   }
 
   NOTE
@@ -1007,7 +1007,7 @@ enum enum_schema_tables
   (BUG#16002, BUG#15447, BUG#13436) are fixed.
 */
 
-typedef enum monotonicity_info 
+typedef enum monotonicity_info
 {
    NON_MONOTONIC,              /* none of the below holds */
    MONOTONIC_INCREASING,       /* F() is unary and (x < y) => (F(x) <= F(y)) */

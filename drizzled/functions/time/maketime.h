@@ -23,7 +23,7 @@
 #include <drizzled/functions/time/str_timefunc.h>
 
 class Item_func_maketime :public Item_str_timefunc
-{ 
+{
 public:
   Item_func_maketime(Item *a, Item *b, Item *c)
     :Item_str_timefunc(a, b, c)

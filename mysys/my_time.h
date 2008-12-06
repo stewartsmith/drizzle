@@ -129,7 +129,7 @@ static inline bool validate_timestamp_range(const DRIZZLE_TIME *t)
   return true;
 }
 
-my_time_t 
+my_time_t
 my_system_gmt_sec(const DRIZZLE_TIME *t, long *my_timezone,
                   bool *in_dst_time_gap);
 
@@ -150,18 +150,18 @@ int my_date_to_str(const DRIZZLE_TIME *l_time, char *to);
 int my_datetime_to_str(const DRIZZLE_TIME *l_time, char *to);
 int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to);
 
-/* 
+/*
   Available interval types used in any statement.
 
   'interval_type' must be sorted so that simple intervals comes first,
   ie year, quarter, month, week, day, hour, etc. The order based on
   interval size is also important and the intervals should be kept in a
   large to smaller order. (get_interval_value() depends on this)
- 
-  Note: If you change the order of elements in this enum you should fix 
-  order of elements in 'interval_type_to_name' and 'interval_names' 
-  arrays 
-  
+
+  Note: If you change the order of elements in this enum you should fix
+  order of elements in 'interval_type_to_name' and 'interval_names'
+  arrays
+
   See also interval_type_to_name, get_interval_value, interval_names
 */
 

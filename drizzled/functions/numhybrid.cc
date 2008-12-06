@@ -175,7 +175,7 @@ my_decimal *Item_func_numhybrid::val_decimal(my_decimal *decimal_value)
     str2my_decimal(E_DEC_FATAL_ERROR, (char*) res->ptr(),
                    res->length(), res->charset(), decimal_value);
     break;
-  }  
+  }
   case ROW_RESULT:
   default:
     assert(0);

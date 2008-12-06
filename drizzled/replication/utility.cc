@@ -33,7 +33,7 @@ uint32_t table_def::calc_field_size(uint32_t col, unsigned char *master_data) co
 
   switch (type(col)) {
   case DRIZZLE_TYPE_NEWDECIMAL:
-    length= my_decimal_get_binary_size(m_field_metadata[col] >> 8, 
+    length= my_decimal_get_binary_size(m_field_metadata[col] >> 8,
                                        m_field_metadata[col] & 0xff);
     break;
   case DRIZZLE_TYPE_DOUBLE:
@@ -124,7 +124,7 @@ table_def::compatible_with(Relay_log_info const *rli_arg, Table *table)
     /*
       Check the slave's field size against that of the master.
     */
-    if (!error && 
+    if (!error &&
         !table->field[col]->compatible_field_size(field_metadata(col)))
     {
       error= 1;
@@ -135,7 +135,7 @@ table_def::compatible_with(Relay_log_info const *rli_arg, Table *table)
                "column size."), col,
                table->field[col]->pack_length_from_metadata(
                                     m_field_metadata[col]),
-               tsh->db.str, tsh->table_name.str, 
+               tsh->db.str, tsh->table_name.str,
                table->field[col]->row_pack_length());
       rli->report(ERROR_LEVEL, ER_BINLOG_ROW_WRONG_TABLE_DEF,
                   ER(ER_BINLOG_ROW_WRONG_TABLE_DEF), buf);

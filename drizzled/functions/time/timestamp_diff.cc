@@ -29,7 +29,7 @@ int64_t Item_func_timestamp_diff::val_int()
   long months= 0;
   int neg= 1;
 
-  null_value= 0;  
+  null_value= 0;
   if (args[0]->get_date(&ltime1, TIME_NO_ZERO_DATE) ||
       args[1]->get_date(&ltime2, TIME_NO_ZERO_DATE))
     goto null_date;
@@ -100,15 +100,15 @@ int64_t Item_func_timestamp_diff::val_int()
     return months/3*neg;
   case INTERVAL_MONTH:
     return months*neg;
-  case INTERVAL_WEEK:          
+  case INTERVAL_WEEK:
     return seconds/86400L/7L*neg;
-  case INTERVAL_DAY:		
+  case INTERVAL_DAY:
     return seconds/86400L*neg;
-  case INTERVAL_HOUR:		
+  case INTERVAL_HOUR:
     return seconds/3600L*neg;
-  case INTERVAL_MINUTE:		
+  case INTERVAL_MINUTE:
     return seconds/60L*neg;
-  case INTERVAL_SECOND:		
+  case INTERVAL_SECOND:
     return seconds*neg;
   case INTERVAL_MICROSECOND:
     /*
@@ -141,21 +141,21 @@ void Item_func_timestamp_diff::print(String *str, enum_query_type query_type)
   case INTERVAL_MONTH:
     str->append(STRING_WITH_LEN("MONTH"));
     break;
-  case INTERVAL_WEEK:          
+  case INTERVAL_WEEK:
     str->append(STRING_WITH_LEN("WEEK"));
     break;
-  case INTERVAL_DAY:		
+  case INTERVAL_DAY:
     str->append(STRING_WITH_LEN("DAY"));
     break;
   case INTERVAL_HOUR:
     str->append(STRING_WITH_LEN("HOUR"));
     break;
-  case INTERVAL_MINUTE:		
+  case INTERVAL_MINUTE:
     str->append(STRING_WITH_LEN("MINUTE"));
     break;
   case INTERVAL_SECOND:
     str->append(STRING_WITH_LEN("SECOND"));
-    break;		
+    break;
   case INTERVAL_MICROSECOND:
     str->append(STRING_WITH_LEN("SECOND_FRAC"));
     break;

@@ -43,7 +43,7 @@ pthread_handler_t run_task(void *p)
   int fd;
   char *buffer;
   size_t offset;
-  azio_stream *s= (azio_stream *)p;  
+  azio_stream *s= (azio_stream *)p;
 
   my_thread_init();
 
@@ -78,7 +78,7 @@ pthread_handler_t run_task(void *p)
 static void azio_kill(azio_stream *s)
 {
   pthread_mutex_lock(&s->container.thresh_mutex);
-  s->container.ready= AZ_THREAD_DEAD; 
+  s->container.ready= AZ_THREAD_DEAD;
   pthread_mutex_unlock(&s->container.thresh_mutex);
 
   pthread_cond_signal(&s->container.threshhold);
@@ -120,7 +120,7 @@ static int azio_start(azio_stream *s)
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-  s->container.ready= AZ_THREAD_FINISHED; 
+  s->container.ready= AZ_THREAD_FINISHED;
 
   /* If we don't create a thread, signal the caller */
   if (pthread_create(&s->container.mainthread, &attr, run_task,
@@ -135,7 +135,7 @@ static int azio_start(azio_stream *s)
 static int azio_read(azio_stream *s)
 {
   pthread_mutex_lock(&s->container.thresh_mutex);
-  s->container.ready= AZ_THREAD_ACTIVE; 
+  s->container.ready= AZ_THREAD_ACTIVE;
   pthread_mutex_unlock(&s->container.thresh_mutex);
   pthread_cond_broadcast(&s->container.threshhold);
 
@@ -181,16 +181,16 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method)
   s->method= method;
 
   /*
-    We do our own version of append by nature. 
+    We do our own version of append by nature.
     We must always have write access to take card of the header.
   */
   assert(Flags | O_APPEND);
   assert(Flags | O_WRONLY);
 
-  if (Flags & O_RDWR) 
+  if (Flags & O_RDWR)
     s->mode = 'w';
 
-  if (s->mode == 'w') 
+  if (s->mode == 'w')
   {
     err = deflateInit2(&(s->stream), level,
                        Z_DEFLATED, -MAX_WBITS, 8, strategy);
@@ -227,13 +227,13 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method)
   s->container.fd= s->file;
 #endif
 
-  if (s->file < 0 ) 
+  if (s->file < 0 )
   {
     destroy(s);
     return Z_NULL;
   }
 
-  if (Flags & O_CREAT || Flags & O_TRUNC) 
+  if (Flags & O_CREAT || Flags & O_TRUNC)
   {
     s->rows= 0;
     s->forced_flushes= 0;
@@ -251,7 +251,7 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method)
       return Z_NULL;
     s->pos= (size_t)my_seek(s->file, 0, MY_SEEK_END, MYF(0));
   }
-  else if (s->mode == 'w') 
+  else if (s->mode == 'w')
   {
     unsigned char buffer[AZHEADER_SIZE + AZMETA_BUFFER_SIZE];
     const ssize_t read_size= AZHEADER_SIZE + AZMETA_BUFFER_SIZE;
@@ -310,7 +310,7 @@ int write_header(azio_stream *s)
   int8store(ptr + AZ_AUTOINCREMENT_POS, (uint64_t)s->auto_increment); /* Start of Data Block Index Block */
   int4store(ptr+ AZ_LONGEST_POS , s->longest_row); /* Longest row */
   int4store(ptr+ AZ_SHORTEST_POS, s->shortest_row); /* Shorest row */
-  int4store(ptr+ AZ_FRM_POS, 
+  int4store(ptr+ AZ_FRM_POS,
             AZHEADER_SIZE + AZMETA_BUFFER_SIZE); /* FRM position */
   *(ptr + AZ_DIRTY_POS)= (unsigned char)s->dirty; /* Start of Data Block Index Block */
 
@@ -330,10 +330,10 @@ int write_header(azio_stream *s)
 int get_byte(azio_stream *s)
 {
   if (s->z_eof) return EOF;
-  if (s->stream.avail_in == 0) 
+  if (s->stream.avail_in == 0)
   {
     errno = 0;
-    if (s->stream.avail_in == 0) 
+    if (s->stream.avail_in == 0)
     {
       s->z_eof = 1;
       return EOF;
@@ -429,20 +429,20 @@ int destroy (azio_stream *s)
 {
   int err = Z_OK;
 
-  if (s->stream.state != NULL) 
+  if (s->stream.state != NULL)
   {
-    if (s->mode == 'w') 
+    if (s->mode == 'w')
     {
       err = deflateEnd(&(s->stream));
       my_sync(s->file, MYF(0));
     }
-    else if (s->mode == 'r') 
+    else if (s->mode == 'r')
       err = inflateEnd(&(s->stream));
   }
 
   do_aio_cleanup(s);
 
-  if (s->file > 0 && my_close(s->file, MYF(0))) 
+  if (s->file > 0 && my_close(s->file, MYF(0)))
       err = Z_ERRNO;
 
   s->file= -1;
@@ -463,19 +463,19 @@ unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *
   *error= 0;
 
   if (s->mode != 'r')
-  { 
+  {
     *error= Z_STREAM_ERROR;
     return 0;
   }
 
   if (s->z_err == Z_DATA_ERROR || s->z_err == Z_ERRNO)
-  { 
+  {
     *error= s->z_err;
     return 0;
   }
 
   if (s->z_err == Z_STREAM_END)  /* EOF */
-  { 
+  {
     return 0;
   }
 
@@ -492,7 +492,7 @@ unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *
     start++;
     if (s->last) {
       s->z_err = Z_STREAM_END;
-      { 
+      {
         return 1;
       }
     }
@@ -504,7 +504,7 @@ unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *
 
       errno = 0;
       get_block(s);
-      if (s->stream.avail_in == 0) 
+      if (s->stream.avail_in == 0)
       {
         s->z_eof = 1;
       }
@@ -530,7 +530,7 @@ unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *
          * Check for such files:
        */
         check_header(s);
-        if (s->z_err == Z_OK) 
+        if (s->z_err == Z_OK)
         {
           inflateReset(&(s->stream));
           s->crc = crc32(0L, Z_NULL, 0);
@@ -553,7 +553,7 @@ unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *
 }
 
 /* ===========================================================================
-  Experimental Interface. We abstract out a concecpt of rows 
+  Experimental Interface. We abstract out a concecpt of rows
 */
 size_t azwrite_row(azio_stream *s, void *buf, unsigned int len)
 {
@@ -587,7 +587,7 @@ size_t azread_row(azio_stream *s, int *error)
   size_t read;
 
   read= azread_internal(s, buffer, sizeof(unsigned int), error);
-  
+
   /* On error the return value will be zero as well */
   if (read == 0)
     return read;
@@ -616,13 +616,13 @@ static unsigned int azwrite(azio_stream *s, void *buf, unsigned int len)
   s->stream.next_in = (Bytef*)buf;
   s->stream.avail_in = len;
 
-  while (s->stream.avail_in != 0) 
+  while (s->stream.avail_in != 0)
   {
-    if (s->stream.avail_out == 0) 
+    if (s->stream.avail_out == 0)
     {
 
       s->stream.next_out = s->outbuf;
-      if (pwrite(s->file, (unsigned char *)s->outbuf, AZ_BUFSIZE_WRITE, s->pos) != AZ_BUFSIZE_WRITE) 
+      if (pwrite(s->file, (unsigned char *)s->outbuf, AZ_BUFSIZE_WRITE, s->pos) != AZ_BUFSIZE_WRITE)
       {
         s->z_err = Z_ERRNO;
         break;
@@ -657,13 +657,13 @@ int do_flush (azio_stream *s, int flush)
 
   s->stream.avail_in = 0; /* should be zero already anyway */
 
-  for (;;) 
+  for (;;)
   {
     len = AZ_BUFSIZE_WRITE - s->stream.avail_out;
 
-    if (len != 0) 
+    if (len != 0)
     {
-      if ((uInt)pwrite(s->file, (unsigned char *)s->outbuf, len, s->pos) != len) 
+      if ((uInt)pwrite(s->file, (unsigned char *)s->outbuf, len, s->pos) != len)
       {
         s->z_err = Z_ERRNO;
         assert(0);
@@ -725,7 +725,7 @@ int ZEXPORT azflush (azio_stream *s,int flush)
 {
   int err;
 
-  if (s->mode == 'r') 
+  if (s->mode == 'r')
   {
     unsigned char buffer[AZHEADER_SIZE + AZMETA_BUFFER_SIZE];
     const ssize_t read_size= AZHEADER_SIZE + AZMETA_BUFFER_SIZE;
@@ -814,14 +814,14 @@ size_t azseek (azio_stream *s, size_t offset, int whence)
     return SIZE_MAX;
   }
 
-  if (s->mode == 'w') 
+  if (s->mode == 'w')
   {
-    if (whence == SEEK_SET) 
+    if (whence == SEEK_SET)
       offset -= s->in;
 
     /* At this point, offset is the number of zero bytes to write. */
     /* There was a zmemzero here if inbuf was null -Brian */
-    while (offset > 0)  
+    while (offset > 0)
     {
       uInt size = AZ_BUFSIZE_READ;
       if (offset < AZ_BUFSIZE_READ) size = (uInt)offset;
@@ -886,7 +886,7 @@ void putLong (azio_stream *s, uLong x)
   int n;
   unsigned char buffer[1];
 
-  for (n = 0; n < 4; n++) 
+  for (n = 0; n < 4; n++)
   {
     buffer[0]= (int)(x & 0xff);
     assert(pwrite(s->file, buffer, 1, s->pos)==1);
@@ -921,10 +921,10 @@ int azclose (azio_stream *s)
   int returnable;
 
   if (s == NULL) return Z_STREAM_ERROR;
-  
+
   if (s->file < 1) return Z_OK;
 
-  if (s->mode == 'w') 
+  if (s->mode == 'w')
   {
     if (do_flush(s, Z_FINISH) != Z_OK)
       return destroy(s);
@@ -955,15 +955,15 @@ int azclose (azio_stream *s)
 }
 
 /*
-  Though this was added to support MySQL's FRM file, anything can be 
+  Though this was added to support MySQL's FRM file, anything can be
   stored in this location.
 */
 int azwrite_frm(azio_stream *s, char *blob, unsigned int length)
 {
-  if (s->mode == 'r') 
+  if (s->mode == 'r')
     return 1;
 
-  if (s->rows > 0) 
+  if (s->rows > 0)
     return 1;
 
   s->frm_start_pos= (uint) s->start;
@@ -995,10 +995,10 @@ int azread_frm(azio_stream *s, char *blob)
 */
 int azwrite_comment(azio_stream *s, char *blob, unsigned int length)
 {
-  if (s->mode == 'r') 
+  if (s->mode == 'r')
     return 1;
 
-  if (s->rows > 0) 
+  if (s->rows > 0)
     return 1;
 
   s->comment_start_pos= (uint) s->start;
@@ -1037,14 +1037,14 @@ static void do_aio_cleanup(azio_stream *s)
 }
 #endif
 
-/* 
+/*
   Normally all IO goes through azio_read(), but in case of error or non-support
   we make use of pread().
 */
 static void get_block(azio_stream *s)
 {
 #ifdef AZIO_AIO
-  if (s->method == AZ_METHOD_AIO && s->mode == 'r' 
+  if (s->method == AZ_METHOD_AIO && s->mode == 'r'
       && s->pos < s->check_point
       && s->aio_inited)
   {

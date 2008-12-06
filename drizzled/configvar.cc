@@ -50,7 +50,7 @@ err:
 }
 
 int configvar_finalizer(st_plugin_int *plugin)
-{ 
+{
   configvar_t *p= (configvar_t *) plugin->data;
 
   if (plugin->plugin->deinit)
@@ -109,7 +109,7 @@ bool configvar_do1 (Session *session, void *parm1, void *parm2)
 {
   configvar_do1_parms_t parms;
   bool foreach_rv;
-  
+
   /* marshall the parameters so they will fit into the foreach */
   parms.parm1= parm1;
   parms.parm2= parm2;

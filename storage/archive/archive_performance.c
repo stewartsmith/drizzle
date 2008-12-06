@@ -30,7 +30,7 @@
 # else
 #  include <time.h>
 # endif
-#endif  
+#endif
 
 
 #define TEST_FILENAME "performance_test.az"
@@ -128,8 +128,8 @@ int generate_data(uint64_t rows_to_test)
       azflush(&writer_handle,  Z_SYNC_FLUSH);
     }
   }
-  /* 
-    We put the flush in just to be honest with write speed, normally azclose 
+  /*
+    We put the flush in just to be honest with write speed, normally azclose
     would be fine.
   */
   azflush(&writer_handle,  Z_SYNC_FLUSH);
@@ -176,7 +176,7 @@ int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for)
 long int timedif(struct timeval a, struct timeval b)
 {
     register int us, s;
- 
+
     us = a.tv_usec - b.tv_usec;
     us /= 1000;
     s = a.tv_sec - b.tv_sec;

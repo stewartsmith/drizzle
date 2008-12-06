@@ -37,7 +37,7 @@ static struct my_option my_long_options[] =
   {"help", 'I', "Synonym for -?.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
    0, 0, 0, 0, 0},
   {"verbose", 'v',
-   "Be more verbose. Give a warning, if kill can't handle signal 0.", 
+   "Be more verbose. Give a warning, if kill can't handle signal 0.",
    (char**) &verbose, (char**) &verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Print version information and exit.", 0, 0, 0,
    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -57,7 +57,7 @@ bool get_one_option(int optid, const struct my_option *, char *)
   }
   return 0;
 }
- 
+
 
 int main(int argc, char *argv[])
 {

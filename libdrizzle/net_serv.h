@@ -66,7 +66,7 @@ typedef struct st_net {
   */
   unsigned char *unused;
   unsigned int last_errno;
-  unsigned char error; 
+  unsigned char error;
   /** Client library error message buffer. Actually belongs to struct MYSQL. */
   char last_error[LIBDRIZZLE_ERRMSG_SIZE];
   /** Client library sqlstate buffer. Set along with the error message. */

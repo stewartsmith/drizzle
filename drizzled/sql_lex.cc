@@ -62,15 +62,15 @@ static unsigned char to_upper_lex[]=
   208,209,210,211,212,213,214,247,216,217,218,219,220,221,222,255
 };
 
-/* 
-  Names of the index hints (for error messages). Keep in sync with 
-  index_hint_type 
+/*
+  Names of the index hints (for error messages). Keep in sync with
+  index_hint_type
 */
 
 const char * index_hint_type_name[] =
 {
-  "IGNORE INDEX", 
-  "USE INDEX", 
+  "IGNORE INDEX",
+  "USE INDEX",
   "FORCE INDEX"
 };
 
@@ -354,7 +354,7 @@ void lex_end(LEX *lex)
   }
 
   /* release used plugins */
-  plugin_unlock_list(0, (plugin_ref*)lex->plugins.buffer, 
+  plugin_unlock_list(0, (plugin_ref*)lex->plugins.buffer,
                      lex->plugins.elements);
   reset_dynamic(&lex->plugins);
 
@@ -421,10 +421,10 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t lengt
   return tmp;
 }
 
-/* 
- todo: 
-   There are no dangerous charsets in mysql for function 
-   get_quoted_token yet. But it should be fixed in the 
+/*
+ todo:
+   There are no dangerous charsets in mysql for function
+   get_quoted_token yet. But it should be fixed in the
    future to operate multichar strings (like ucs2)
 */
 
@@ -1344,7 +1344,7 @@ int lex_one_token(void *arg, void *yysession)
     case MY_LEX_END:
       lip->next_state=MY_LEX_END;
       return(0);			// We found end of input last time
-      
+
       /* Actually real shouldn't start with . but allow them anyhow */
     case MY_LEX_REAL_OR_POINT:
       if (my_isdigit(cs,lip->yyPeek()))
@@ -1653,7 +1653,7 @@ void st_select_lex_node::fast_exclude()
   // Remove slave structure
   for (; slave; slave= slave->next)
     slave->fast_exclude();
-  
+
 }
 
 /*
@@ -1667,8 +1667,8 @@ void st_select_lex_node::exclude()
   //exclude from other structures
   if ((*prev= next))
     next->prev= prev;
-  /* 
-     We do not need following statements, because prev pointer of first 
+  /*
+     We do not need following statements, because prev pointer of first
      list element point to master->slave
      if (master->slave == this)
        master->slave= next;
@@ -1683,7 +1683,7 @@ void st_select_lex_node::exclude()
     st_select_lex_unit::exclude_level()
 
   NOTE: units which belong to current will be brought up on level of
-  currernt unit 
+  currernt unit
 */
 void st_select_lex_unit::exclude_level()
 {
@@ -1754,11 +1754,11 @@ void st_select_lex_unit::exclude_tree()
 
 
 /*
-  st_select_lex_node::mark_as_dependent mark all st_select_lex struct from 
+  st_select_lex_node::mark_as_dependent mark all st_select_lex struct from
   this to 'last' as dependent
 
   SYNOPSIS
-    last - pointer to last st_select_lex struct, before wich all 
+    last - pointer to last st_select_lex struct, before wich all
            st_select_lex have to be marked as dependent
 
   NOTE
@@ -1803,7 +1803,7 @@ bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
 uint32_t st_select_lex_node::get_in_sum_expr()           { return 0; }
 TableList* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
-TableList *st_select_lex_node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t, 
+TableList *st_select_lex_node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
                                                   thr_lock_type, List<Index_hint> *, LEX_STRING *)
 {
   return 0;
@@ -1873,7 +1873,7 @@ st_select_lex* st_select_lex::outer_select()
 bool st_select_lex::set_braces(bool value)
 {
   braces= value;
-  return 0; 
+  return 0;
 }
 
 
@@ -1974,7 +1974,7 @@ void st_select_lex::print_order(String *str,
       str->append(',');
   }
 }
- 
+
 
 void st_select_lex::print_limit(Session *, String *str,
                                 enum_query_type query_type)
@@ -2100,7 +2100,7 @@ LEX::LEX()
 
   my_init_dynamic_array2(&plugins, sizeof(plugin_ref),
                          plugins_static_buffer,
-                         INITIAL_LEX_PLUGIN_LIST_SIZE, 
+                         INITIAL_LEX_PLUGIN_LIST_SIZE,
                          INITIAL_LEX_PLUGIN_LIST_SIZE);
   reset_query_tables_list(true);
 }
@@ -2160,7 +2160,7 @@ bool LEX::need_correct_ident()
   and will initialize the destination with the default
   database of the stored routine, rather than the default
   database of the connection it is parsed in.
-  E.g. if one has no current database selected, or current database 
+  E.g. if one has no current database selected, or current database
   set to 'bar' and then issues:
 
   CREATE PROCEDURE foo.p1() BEGIN SELECT * FROM t1 END//
@@ -2194,7 +2194,7 @@ void st_select_lex_unit::set_limit(st_select_lex *sl)
 
   val= sl->select_limit ? sl->select_limit->val_uint() : HA_POS_ERROR;
   select_limit_val= (ha_rows)val;
-  /* 
+  /*
     Check for overflow : ha_rows can be smaller then uint64_t if
     BIG_TABLES is off.
     */
@@ -2245,7 +2245,7 @@ TableList *LEX::unlink_first_table(bool *link_to_local)
     */
     if ((*link_to_local= test(select_lex.table_list.first)))
     {
-      select_lex.context.table_list= 
+      select_lex.context.table_list=
         select_lex.context.first_name_resolution_table= first->next_local;
       select_lex.table_list.first= (unsigned char*) (first->next_local);
       select_lex.table_list.elements--;	//safety
@@ -2445,14 +2445,14 @@ static void fix_prepare_info_in_table_list(Session *session, TableList *tbl)
 
   DESCRIPTION
     Used in filling up the tagged hints list.
-    This list is filled by first setting the kind of the hint as a 
+    This list is filled by first setting the kind of the hint as a
     context variable and then adding hints of the current kind.
     Then the context variable index_hint_type can be reset to the
     next hint type.
 */
 void st_select_lex::set_index_hint_type(enum index_hint_type type_arg,
                                         index_clause_map clause)
-{ 
+{
   current_index_hint_type= type_arg;
   current_index_hint_clause= clause;
 }
@@ -2467,14 +2467,14 @@ void st_select_lex::set_index_hint_type(enum index_hint_type type_arg,
 */
 
 void st_select_lex::alloc_index_hints (Session *session)
-{ 
-  index_hints= new (session->mem_root) List<Index_hint>(); 
+{
+  index_hints= new (session->mem_root) List<Index_hint>();
 }
 
 
 
 /*
-  adds an element to the array storing index usage hints 
+  adds an element to the array storing index usage hints
   (ADD/FORCE/IGNORE INDEX).
 
   SYNOPSIS
@@ -2488,7 +2488,7 @@ void st_select_lex::alloc_index_hints (Session *session)
 */
 bool st_select_lex::add_index_hint (Session *session, char *str, uint32_t length)
 {
-  return index_hints->push_front (new (session->mem_root) 
+  return index_hints->push_front (new (session->mem_root)
                                  Index_hint(current_index_hint_type,
                                             current_index_hint_clause,
                                             str, length));

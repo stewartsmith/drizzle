@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_EXP_H
 #define DRIZZLED_FUNCTIONS_EXP_H
 
-#include <drizzled/functions/func.h> 
-#include <drizzled/functions/dec.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/dec.h>
 
 class Item_func_exp :public Item_dec_func
 {

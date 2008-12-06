@@ -22,7 +22,7 @@
 
 #include <mysys/my_sys.h>
 
-/* 
+/*
   Array of pointers to Elem that uses memory from MEM_ROOT
 
   MEM_ROOT has no realloc() so this is supposed to be used for cases when

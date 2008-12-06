@@ -22,7 +22,7 @@
 #include <drizzled/functions/time/dayofyear.h>
 
 int64_t Item_func_dayofyear::val_int()
-{   
+{
   assert(fixed == 1);
   DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime,TIME_NO_ZERO_DATE))

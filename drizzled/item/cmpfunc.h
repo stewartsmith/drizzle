@@ -37,7 +37,7 @@ class Item_row;
 
 typedef int (Arg_comparator::*arg_cmp_func)();
 
-typedef int (*Item_field_cmpfunc)(Item_field *f1, Item_field *f2, void *arg); 
+typedef int (*Item_field_cmpfunc)(Item_field *f1, Item_field *f2, void *arg);
 
 class Arg_comparator: public Sql_alloc
 {
@@ -232,7 +232,7 @@ class Item_in_optimizer: public Item_bool_func
 protected:
   Item_cache *cache;
   bool save_cache;
-  /* 
+  /*
     Stores the value of "NULL IN (SELECT ...)" for uncorrelated subqueries:
       UNKNOWN - "NULL in (SELECT ...)" has not yet been evaluated
       FALSE   - result is FALSE
@@ -389,10 +389,10 @@ class Item_maxmin_subselect;
 /*
   trigcond<param>(arg) ::= param? arg : TRUE
 
-  The class Item_func_trig_cond is used for guarded predicates 
+  The class Item_func_trig_cond is used for guarded predicates
   which are employed only for internal purposes.
   A guarded predicate is an object consisting of an a regular or
-  a guarded predicate P and a pointer to a boolean guard variable g. 
+  a guarded predicate P and a pointer to a boolean guard variable g.
   A guarded predicate P/g is evaluated to true if the value of the
   guard g is false, otherwise it is evaluated to the same value that
   the predicate P: val(P/g)= g ? val(P):true.
@@ -404,12 +404,12 @@ class Item_maxmin_subselect;
   the objects consisting of three elements: a predicate P, a pointer
   to a variable g and a firing value s with following evaluation
   rule: val(P/g,s)= g==s? val(P) : true. It will allow us to build only
-  one item for the objects of the form P/g1/g2... 
+  one item for the objects of the form P/g1/g2...
 
   Objects of this class are built only for query execution after
   the execution plan has been already selected. That's why this
-  class needs only val_int out of generic methods. 
- 
+  class needs only val_int out of generic methods.
+
   Current uses of Item_func_trig_cond objects:
    - To wrap selection conditions when executing outer joins
    - To wrap condition that is pushed down into subquery
@@ -553,7 +553,7 @@ public:
   int64_t val_int();
   enum Functype functype() const { return NE_FUNC; }
   cond_result eq_cmp_result() const { return COND_FALSE; }
-  optimize_type select_optimize() const { return OPTIMIZE_KEY; } 
+  optimize_type select_optimize() const { return OPTIMIZE_KEY; }
   const char *func_name() const { return "<>"; }
   Item *negated_item();
 };
@@ -757,7 +757,7 @@ public:
   uint32_t count;
   uint32_t used_count;
   in_vector() {}
-  in_vector(uint32_t elements,uint32_t element_length,qsort2_cmp cmp_func, 
+  in_vector(uint32_t elements,uint32_t element_length,qsort2_cmp cmp_func,
   	    const CHARSET_INFO * const cmp_coll)
     :base((char*) sql_calloc(elements*element_length)),
      size(element_length), compare(cmp_func), collation(cmp_coll),
@@ -770,8 +770,8 @@ public:
     my_qsort2(base,used_count,size,compare, (void *) collation);
   }
   int find(Item *item);
-  
-  /* 
+
+  /*
     Create an instance of Item_{type} (e.g. Item_decimal) constant object
     which type allows it to hold an element of this vector without any
     conversions.
@@ -780,7 +780,7 @@ public:
     for every array element you get (i.e. this implements "FlyWeight" pattern)
   */
   virtual Item* create_item() { return NULL; }
-  
+
   /*
     Store the value at position #pos into provided item object
     SYNOPSIS
@@ -790,7 +790,7 @@ public:
               type that create_item() returns.
   */
   virtual void value_to_item(uint32_t, Item *) { }
-  
+
   /* Compare values number pos1 and pos2 for equality */
   bool compare_elems(uint32_t pos1, uint32_t pos2)
   {
@@ -809,11 +809,11 @@ public:
   void set(uint32_t pos,Item *item);
   unsigned char *get_value(Item *item);
   Item* create_item()
-  { 
+  {
     return new Item_string(collation);
   }
   void value_to_item(uint32_t pos, Item *item)
-  {    
+  {
     String *str=((String*) base)+pos;
     Item_string *to= (Item_string*)item;
     to->str_value= *str;
@@ -826,10 +826,10 @@ class in_int64_t :public in_vector
 protected:
   /*
     Here we declare a temporary variable (tmp) of the same type as the
-    elements of this vector. tmp is used in finding if a given value is in 
-    the list. 
+    elements of this vector. tmp is used in finding if a given value is in
+    the list.
   */
-  struct packed_int64_t 
+  struct packed_int64_t
   {
     int64_t val;
     int64_t unsigned_flag;  // Use int64_t, not bool, to preserve alignment
@@ -838,11 +838,11 @@ public:
   in_int64_t(uint32_t elements);
   void set(uint32_t pos,Item *item);
   unsigned char *get_value(Item *item);
-  
+
   Item* create_item()
-  { 
-    /* 
-      We're created a signed INT, this may not be correct in 
+  {
+    /*
+      We're created a signed INT, this may not be correct in
       general case (see BUG#19342).
     */
     return new Item_int((int64_t)0);
@@ -891,7 +891,7 @@ public:
   void set(uint32_t pos,Item *item);
   unsigned char *get_value(Item *item);
   Item *create_item()
-  { 
+  {
     return new Item_float(0.0, 0);
   }
   void value_to_item(uint32_t pos, Item *item)
@@ -910,7 +910,7 @@ public:
   void set(uint32_t pos, Item *item);
   unsigned char *get_value(Item *item);
   Item *create_item()
-  { 
+  {
     return new Item_decimal(0, false);
   }
   void value_to_item(uint32_t pos, Item *item)
@@ -946,7 +946,7 @@ public:
   }
 };
 
-class cmp_item_string :public cmp_item 
+class cmp_item_string :public cmp_item
 {
 protected:
   String *value_res;
@@ -985,7 +985,7 @@ public:
   {
     cmp_item_string *l_cmp= (cmp_item_string *) ci;
     return sortcmp(value_res, l_cmp->value_res, cmp_charset);
-  } 
+  }
   cmp_item *make_same();
   void set_charset(const CHARSET_INFO * const cs)
   {
@@ -1073,7 +1073,7 @@ public:
 };
 
 
-/* 
+/*
    cmp_item for optimized IN with row (right part string, which never
    be changed)
 */
@@ -1111,7 +1111,7 @@ public:
   The class Item_func_case is the CASE ... WHEN ... THEN ... END function
   implementation.
 
-  When there is no expression between CASE and the first WHEN 
+  When there is no expression between CASE and the first WHEN
   (the CASE expression) then this function simple checks all WHEN expressions
   one after another. When some WHEN expression evaluated to TRUE then the
   value of the corresponding THEN expression is returned.
@@ -1191,13 +1191,13 @@ public:
 class Item_func_in :public Item_func_opt_neg
 {
 public:
-  /* 
+  /*
     an array of values when the right hand arguments of IN
-    are all SQL constant and there are no nulls 
+    are all SQL constant and there are no nulls
   */
   in_vector *array;
   bool have_null;
-  /* 
+  /*
     true when all arguments of the IN clause are of compatible types
     and can be used safely as comparisons for key conditions
   */
@@ -1315,7 +1315,7 @@ public:
 
 class Item_in_subselect;
 
-/* 
+/*
   This is like IS NOT NULL but it also remembers if it ever has
   encountered a NULL.
 */
@@ -1378,14 +1378,14 @@ class Item_func_like :public Item_bool_func2
   enum { alphabet_size = 256 };
 
   Item *escape_item;
-  
+
   bool escape_used_in_parsing;
 
 public:
   int escape;
 
   Item_func_like(Item *a,Item *b, Item *escape_arg, bool escape_used)
-    :Item_bool_func2(a,b), canDoTurboBM(false), pattern(0), pattern_len(0), 
+    :Item_bool_func2(a,b), canDoTurboBM(false), pattern(0), pattern_len(0),
      bmGs(0), bmBc(0), escape_item(escape_arg),
      escape_used_in_parsing(escape_used) {}
   int64_t val_int();
@@ -1465,10 +1465,10 @@ public:
   A conjunction of the predicates f2=f1 and f3=f1 and f3=f2 will be
   substituted for the item representing the same multiple equality
   f1=f2=f3.
-  An item Item_equal(f1,f2) can appear instead of a conjunction of 
+  An item Item_equal(f1,f2) can appear instead of a conjunction of
   f2=f1 and f1=f2, or instead of just the predicate f1=f2.
 
-  An item of the class Item_equal inherits equalities from outer 
+  An item of the class Item_equal inherits equalities from outer
   conjunctive levels.
 
   Suppose we have a where condition of the following form:
@@ -1479,7 +1479,7 @@ public:
     f1=f3 will be substituted for Item_equal(f1,f2,f3,f4,f5);
 
   An object of the class Item_equal can contain an optional constant
-  item c. Then it represents a multiple equality of the form 
+  item c. Then it represents a multiple equality of the form
   c=f1=...=fk.
 
   Objects of the class Item_equal are used for the following:
@@ -1494,13 +1494,13 @@ public:
   It also can give us additional index scans and can allow us to
   improve selectivity estimates.
 
-  3. An object Item_equal(t1.f1,...,tk.fk) is used to optimize the 
-  selected execution plan for the query: if table ti is accessed 
+  3. An object Item_equal(t1.f1,...,tk.fk) is used to optimize the
+  selected execution plan for the query: if table ti is accessed
   before the table tj then in any predicate P in the where condition
   the occurrence of tj.fj is substituted for ti.fi. This can allow
   an evaluation of the predicate at an earlier step.
 
-  When feature 1 is supported they say that join transitive closure 
+  When feature 1 is supported they say that join transitive closure
   is employed.
   When feature 2 is supported they say that search argument transitive
   closure is employed.
@@ -1509,7 +1509,7 @@ public:
   We do not just add predicates, we rather dynamically replace some
   predicates that can not be used to access tables in the investigated
   plan for those, obtained by substitution of some fields for equal fields,
-  that can be used.     
+  that can be used.
 
   Prepared Statements/Stored Procedures note: instances of class
   Item_equal are created only at the time a PS/SP is executed and
@@ -1545,7 +1545,7 @@ public:
   void merge(Item_equal *item);
   void update_const();
   enum Functype functype() const { return MULT_EQUAL_FUNC; }
-  int64_t val_int(); 
+  int64_t val_int();
   const char *func_name() const { return "multiple equal"; }
   optimize_type select_optimize() const { return OPTIMIZE_EQUAL; }
   void sort(Item_field_cmpfunc cmp, void *arg);
@@ -1556,20 +1556,20 @@ public:
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
   Item *transform(Item_transformer transformer, unsigned char *arg);
   virtual void print(String *str, enum_query_type query_type);
-  const CHARSET_INFO *compare_collation() 
+  const CHARSET_INFO *compare_collation()
   { return fields.head()->collation.collation; }
-}; 
+};
 
 class COND_EQUAL: public Sql_alloc
 {
 public:
   uint32_t max_members;               /* max number of members the current level
-                                     list and all lower level lists */ 
+                                     list and all lower level lists */
   COND_EQUAL *upper_levels;       /* multiple equalities of upper and levels */
-  List<Item_equal> current_level; /* list of multiple equalities of 
+  List<Item_equal> current_level; /* list of multiple equalities of
                                      the current and level           */
   COND_EQUAL()
-  { 
+  {
     upper_levels= 0;
   }
 };
@@ -1578,16 +1578,16 @@ public:
 class Item_equal_iterator : public List_iterator_fast<Item_field>
 {
 public:
-  inline Item_equal_iterator(Item_equal &item_equal) 
+  inline Item_equal_iterator(Item_equal &item_equal)
     :List_iterator_fast<Item_field> (item_equal.fields)
   {}
   inline Item_field* operator++(int)
-  { 
+  {
     Item_field *item= (*(List_iterator_fast<Item_field> *) this)++;
     return  item;
   }
-  inline void rewind(void) 
-  { 
+  inline void rewind(void)
+  {
     List_iterator_fast<Item_field>::rewind();
   }
 };
@@ -1595,9 +1595,9 @@ public:
 class Item_cond_and :public Item_cond
 {
 public:
-  COND_EQUAL cond_equal;  /* contains list of Item_equal objects for 
+  COND_EQUAL cond_equal;  /* contains list of Item_equal objects for
                              the current and level and reference
-                             to multiple equalities of upper and levels */  
+                             to multiple equalities of upper and levels */
   Item_cond_and() :Item_cond() {}
   Item_cond_and(Item *i1,Item *i2) :Item_cond(i1,i2) {}
   Item_cond_and(Session *session, Item_cond_and *item) :Item_cond(session, item) {}

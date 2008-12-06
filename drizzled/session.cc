@@ -222,19 +222,19 @@ bool Foreign_key::validate(List<Create_field> &table_fields)
     {
       if (delete_opt == FK_OPTION_SET_NULL)
       {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0), 
+        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
                  "ON DELETE SET NULL");
         return true;
       }
       if (update_opt == FK_OPTION_SET_NULL)
       {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0), 
+        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
                  "ON UPDATE SET NULL");
         return true;
       }
       if (update_opt == FK_OPTION_CASCADE)
       {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0), 
+        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
                  "ON UPDATE CASCADE");
         return true;
       }
@@ -337,7 +337,7 @@ void session_inc_row_count(Session *session)
 }
 
 /**
-  Clear this diagnostics area. 
+  Clear this diagnostics area.
 
   Normally called at the end of a statement.
 */
@@ -690,7 +690,7 @@ void Session::init(void)
 
 void Session::init_for_queries()
 {
-  set_time(); 
+  set_time();
   ha_enable_transaction(this,true);
 
   reset_root_defaults(mem_root, variables.query_alloc_block_size,
@@ -732,7 +732,7 @@ void Session::cleanup(void)
   free((char*) variables.time_format);
   free((char*) variables.date_format);
   free((char*) variables.datetime_format);
-  
+
   if (global_read_lock)
     unlock_global_read_lock(this);
 
@@ -776,7 +776,7 @@ Session::~Session()
     delete rli_fake;
     rli_fake= NULL;
   }
-  
+
   free_root(&main_mem_root, MYF(0));
   return;
 }
@@ -815,7 +815,7 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
     to_var       add to this array
     from_var     from this array
     dec_var      minus this array
-  
+
   NOTE
     This function assumes that all variables are long/ulong.
 */
@@ -836,7 +836,7 @@ void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
 void Session::awake(Session::killed_state state_to_set)
 {
   Session_CHECK_SENTRY(this);
-  safe_mutex_assert_owner(&LOCK_delete); 
+  safe_mutex_assert_owner(&LOCK_delete);
 
   killed= state_to_set;
   if (state_to_set != Session::KILL_QUERY)
@@ -932,7 +932,7 @@ bool Session::store_globals()
 void Session::cleanup_after_query()
 {
   /*
-    Reset rand_used so that detection of calls to rand() will save random 
+    Reset rand_used so that detection of calls to rand() will save random
     seeds if needed by the slave.
   */
   {
@@ -942,7 +942,7 @@ void Session::cleanup_after_query()
   if (first_successful_insert_id_in_cur_stmt > 0)
   {
     /* set what LAST_INSERT_ID() will return */
-    first_successful_insert_id_in_prev_stmt= 
+    first_successful_insert_id_in_prev_stmt=
       first_successful_insert_id_in_cur_stmt;
     first_successful_insert_id_in_cur_stmt= 0;
     substitute_null_with_insert_id= true;
@@ -1024,7 +1024,7 @@ bool Session::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
     Session::convert_string
 
   DESCRIPTION
-    Convert string using convert_buffer - buffer for character set 
+    Convert string using convert_buffer - buffer for character set
     conversion shared between all protocols.
 
   RETURN
@@ -1059,10 +1059,10 @@ void Session::update_charset()
   charset_is_system_charset= !String::needs_conversion(0,charset(),
                                                        system_charset_info,
                                                        &not_used);
-  charset_is_collation_connection= 
+  charset_is_collation_connection=
     !String::needs_conversion(0,charset(),variables.collation_connection,
                               &not_used);
-  charset_is_character_set_filesystem= 
+  charset_is_character_set_filesystem=
     !String::needs_conversion(0, charset(),
                               variables.character_set_filesystem, &not_used);
 }
@@ -1127,7 +1127,7 @@ void Session::add_changed_table(const char *key, long key_length)
 
 CHANGED_TableList* Session::changed_table_dup(const char *key, long key_length)
 {
-  CHANGED_TableList* new_table = 
+  CHANGED_TableList* new_table =
     (CHANGED_TableList*) trans_alloc(ALIGN_SIZE(sizeof(CHANGED_TableList))+
 				      key_length + 1);
   if (!new_table)
@@ -1304,7 +1304,7 @@ void select_send::abort()
 }
 
 
-/** 
+/**
   Cleanup an instance of this class for re-use
   at next execution of a prepared statement/
   stored procedure statement.
@@ -1361,10 +1361,10 @@ bool select_send::send_data(List<Item> &items)
 
 bool select_send::send_eof()
 {
-  /* 
+  /*
     We may be passing the control from mysqld to the client: release the
     InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
-    by session 
+    by session
   */
   ha_release_temporary_latches(session);
 
@@ -1510,7 +1510,7 @@ static File create_file(Session *session, char *path, sql_exchange *exchange,
   if (init_io_cache(cache, file, 0L, WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     my_close(file, MYF(0));
-    my_delete(path, MYF(0));  // Delete file on error, it was just created 
+    my_delete(path, MYF(0));  // Delete file on error, it was just created
     return -1;
   }
   return file;
@@ -1676,26 +1676,26 @@ bool select_export::send_data(List<Item> &items)
             for the clients with character sets big5, cp932, gbk and sjis,
             which can have the escape character (0x5C "\" by default)
             as the second byte of a multi-byte sequence.
-            
+
             If
             - pos[0] is a valid multi-byte head (e.g 0xEE) and
             - pos[1] is 0x00, which will be escaped as "\0",
-            
+
             then we'll get "0xEE + 0x5C + 0x30" in the output file.
-            
+
             If this file is later loaded using this sequence of commands:
-            
+
             mysql> create table t1 (a varchar(128)) character set big5;
             mysql> LOAD DATA INFILE 'dump.txt' INTO Table t1;
-            
+
             then 0x5C will be misinterpreted as the second byte
             of a multi-byte character "0xEE + 0x5C", instead of
             escape character for 0x00.
-            
+
             To avoid this confusion, we'll escape the multi-byte
             head character too, so the sequence "0xEE + 0x00" will be
             dumped as "0x5C + 0xEE + 0x5C + 0x30".
-            
+
             Note, in the condition below we only check if
             mbcharlen is equal to 2, because there are no
             character sets with mbmaxlen longer than 2
@@ -1801,7 +1801,7 @@ bool select_dump::send_data(List<Item> &items)
     unit->offset_limit_cnt--;
     return(0);
   }
-  if (row_count++ > 1) 
+  if (row_count++ > 1)
   {
     my_message(ER_TOO_MANY_ROWS, ER(ER_TOO_MANY_ROWS), MYF(0));
     goto err;
@@ -1985,13 +1985,13 @@ bool select_exists_subselect::send_data(List<Item> &items __attribute__((unused)
 int select_dumpvar::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
 {
   unit= u;
-  
+
   if (var_list.elements != list.elements)
   {
     my_message(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT,
                ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT), MYF(0));
     return 1;
-  }               
+  }
   return 0;
 }
 
@@ -2076,7 +2076,7 @@ bool select_dumpvar::send_data(List<Item> &items)
     unit->offset_limit_cnt--;
     return(0);
   }
-  if (row_count++) 
+  if (row_count++)
   {
     my_message(ER_TOO_MANY_ROWS, ER(ER_TOO_MANY_ROWS), MYF(0));
     return(1);
@@ -2398,7 +2398,7 @@ void xid_cache_delete(XID_STATE *xid_state)
 
   PRE CONDITION:
     - Events of type 'RowEventT' have the type code 'type_code'.
-    
+
   POST CONDITION:
     If a non-NULL pointer is returned, the pending event for thread 'session' will
     be an event of type 'RowEventT' (which have the type code 'type_code')
@@ -2413,7 +2413,7 @@ void xid_cache_delete(XID_STATE *xid_state)
     If error, NULL.
  */
 
-template <class RowsEventT> Rows_log_event* 
+template <class RowsEventT> Rows_log_event*
 Session::binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
                                        size_t needed,
                                        bool is_transactional,
@@ -2456,9 +2456,9 @@ Session::binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
     TODO: Fix the code so that the last test can be removed.
   */
   if (!pending ||
-      pending->server_id != serv_id || 
+      pending->server_id != serv_id ||
       pending->get_table_id() != table->s->table_map_id ||
-      pending->get_type_code() != type_code || 
+      pending->get_type_code() != type_code ||
       pending->get_data_size() + needed > opt_binlog_rows_event_max_size ||
       !bitmap_cmp(pending->get_cols(), table->write_set))
     {
@@ -2497,7 +2497,7 @@ template Rows_log_event*
 Session::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Delete_rows_log_event *);
 
-template Rows_log_event* 
+template Rows_log_event*
 Session::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Update_rows_log_event *);
 #endif

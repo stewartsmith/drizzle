@@ -13,19 +13,20 @@ ACL code. Etc.
 
 A micro-kernel that we then extend to add what we need (all additions come
 through interfaces that can be compiled/loaded in as needed).  The target
-for the project is web infrastructure backend and cloud components. 
+for the project is web infrastructure backend and cloud components.
 
 * Is this a product of Sun/MySQL?
 
-No, though several of the authors do work for Sun/MySQL. The development model is
-one based around open collaboration.  Drizzle's license is the GPL v2 and
-all contributions come in as BSD.
+No, though several of the authors do work for Sun/MySQL. The development
+model is one based around open collaboration.  
+
+Drizzle's license is the GPL v2 and all contributions come in as BSD.
 
 * So what are the differences between is and MySQL?
 
-No modes, views, triggers, prepared statements, stored procedures, query cache, 
-data conversion inserts, ACL. Fewer data types.  Less engines, less code. 
-Assume the primary engine is transactional.
+No modes, views, triggers, prepared statements, stored procedures, query
+cache, data conversion inserts, ACL. Fewer data types.  Less engines, less
+code.  Assume the primary engine is transactional.
 
 * Why now?
 
@@ -34,8 +35,8 @@ Why not now :)
 * "This is awesome, but I need you to add back..."
 
 Forget it. Nothing is going back in at this time. As for the future? Maybe,
-but at the moment this is not the target. If you want more features, go
-use MySQL.
+but at the moment this is not the target. If you want more features, go use
+MySQL.
 
 * What platforms?
 
@@ -61,7 +62,7 @@ still need to be done:
 
 * "This is not a SQL compliant relational..."
 
-Very true, and we do not aim to be that. 
+Very true, and we do not aim to be that.
 
 * What is left to be cut out?
 
@@ -69,9 +70,9 @@ Please ask on the mailing list or on IRC.
 
 * Can I get involved?
 
-Most certainly. There is plenty to do from refactoring code, design of interfaces, 
-documentation and blueprints, etc... The best way to get involved it to join the 
-mailing list at:
+Most certainly. There is plenty to do from refactoring code, design of
+interfaces, documentation and blueprints, etc... The best way to get
+involved it to join the mailing list at:
 
 https://launchpad.net/~drizzle-discuss/
 
@@ -80,10 +81,10 @@ the mailing list and keep an open mind. Do not expect anyone will work on
 your idea though, you may influence someone to do that, but more then likely
 you will need to rollup your sleeves and write some code. For very simple
 bits you are welcome to ask others on #drizzle on Freenode, but please be
-aware that you may be asked to email the mailing list. 
+aware that you may be asked to email the mailing list.
 
 Showing up with a big block of code is probably the worst way of getting
-your work accepted. This is unlikely to work. 
+your work accepted. This is unlikely to work.
 
 Right now we use a simple captain system for commits. Anyone can send in a
 proprosal for merge via launchpad but your changes may be flowed first
@@ -92,9 +93,9 @@ requirements to review your code. This system is based entirely on trust,
 and individuals who have shown that they can provide three good patches gain
 credibility. Starting small is fine, patches that are just comments or are
 even two or three line cleanups are welcome and encouraged. I would really
-recommend that anyone who wants to work on something first start with something 
-of this size. Patches like these are valuable and teach you how to work with
-the system.
+recommend that anyone who wants to work on something first start with
+something of this size. Patches like these are valuable and teach you how to
+work with the system.
 
 The general rule is no new code in the core of the server, and any changes
 to interfaces need to be code line neutral. AKA if you want to add an
@@ -126,7 +127,7 @@ pull from it.
 Deliver a microkernel that we can use to build a database that meets the
 needs of a web/cloud infrastructure. To this end we are exploring http
 interfaces, sharding enhancements, etc... do not expect an Oracle, MySQL,
-Postgres, or DB2. 
+Postgres, or DB2.
 
 There is no GA date at the moment.
 
@@ -140,15 +141,15 @@ which assume very large amounts of RAM will be made available to the DB.
 No. We are still making incompatible changes, and I certainly do not believe
 the code is production quality. Right now we are defaulting many configure
 operations to generate debugging code for us so our binaries are not
-optimal.  Therefore, do not go out and benchmark this and expect it to be one way or
-the other. We are currently only doing benchmarks where it makes sense for
-us to determine where bottlenecks are.
+optimal.  Therefore, do not go out and benchmark this and expect it to be
+one way or the other. We are currently only doing benchmarks where it makes
+sense for us to determine where bottlenecks are.
 
 * Why drizzle?
 
-I am from Seattle. Drizzle is our normal form of "rain" but it is not "rain",
-it is drizzle. This was a bit of a rainy day project that finally found a
-spot in my schedule :)
+I am from Seattle. Drizzle is our normal form of "rain" but it is not
+"rain", it is drizzle. This was a bit of a rainy day project that finally
+found a spot in my schedule :)
 
   -Brian
     Seattle, USA

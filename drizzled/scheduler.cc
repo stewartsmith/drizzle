@@ -63,7 +63,7 @@ static int session_add_pipe[2]; /* pipe to signal add a connection to libevent*/
 static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent */
 
 /*
-  LOCK_event_loop protects the non-thread safe libevent calls (event_add and 
+  LOCK_event_loop protects the non-thread safe libevent calls (event_add and
   event_del) and sessions_need_processing and sessions_waiting_for_io.
 */
 static pthread_mutex_t LOCK_event_loop;
@@ -104,7 +104,7 @@ static bool init_pipe(int pipe_fds[])
 
 session_scheduler::session_scheduler()
   : logged_in(false), io_event(NULL), thread_attached(false)
-{  
+{
 }
 
 
@@ -124,19 +124,19 @@ void session_scheduler::operator=(const session_scheduler&)
 bool session_scheduler::init(Session *parent_session)
 {
   io_event= (struct event*)malloc(sizeof(*io_event));
-    
+
   if (!io_event)
   {
     sql_print_error(_("Memory allocation error in session_scheduler::init\n"));
     return true;
   }
   memset(io_event, 0, sizeof(*io_event));
- 
-  event_set(io_event, net_get_sd(&(parent_session->net)), EV_READ, 
+
+  event_set(io_event, net_get_sd(&(parent_session->net)), EV_READ,
             libevent_io_callback, (void*)parent_session);
-    
+
   list.data= parent_session;
-  
+
   return false;
 }
 
@@ -194,14 +194,14 @@ static bool libevent_init(void)
   uint32_t i;
 
   event_init();
-  
+
   created_threads= 0;
   killed_threads= 0;
   kill_pool_threads= false;
-  
+
   pthread_mutex_init(&LOCK_event_loop, NULL);
   pthread_mutex_init(&LOCK_session_add, NULL);
-  
+
   /* set up the pipe used to add new sessions to the event pool */
   if (init_pipe(session_add_pipe))
   {
@@ -220,13 +220,13 @@ static bool libevent_init(void)
             libevent_add_session_callback, NULL);
   event_set(&session_kill_event, session_kill_pipe[0], EV_READ|EV_PERSIST,
             libevent_kill_session_callback, NULL);
- 
+
  if (event_add(&session_add_event, NULL) || event_add(&session_kill_event, NULL))
  {
    sql_print_error(_("session_add_event event_add error in libevent_init\n"));
    libevent_end();
    return(1);
-   
+
  }
   /* Set up the thread pool */
   created_threads= killed_threads= 0;
@@ -251,24 +251,24 @@ static bool libevent_init(void)
   while (created_threads != thread_pool_size)
     pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   pthread_mutex_unlock(&LOCK_thread_count);
-  
+
   return(false);
 }
 
 
 /*
   This is called when data is ready on the socket.
-  
+
   NOTES
     This is only called by the thread that owns LOCK_event_loop.
-  
-    We add the session that got the data to sessions_need_processing, and 
+
+    We add the session that got the data to sessions_need_processing, and
     cause the libevent event_loop() to terminate. Then this same thread will
     return from event_loop and pick the session value back up for processing.
 */
 
 void libevent_io_callback(int, short, void *ctx)
-{    
+{
   safe_mutex_assert_owner(&LOCK_event_loop);
   Session *session= (Session*)ctx;
   sessions_waiting_for_io= list_delete(sessions_waiting_for_io, &session->scheduler.list);
@@ -277,13 +277,13 @@ void libevent_io_callback(int, short, void *ctx)
 
 /*
   This is called when we have a thread we want to be killed.
-  
+
   NOTES
     This is only called by the thread that owns LOCK_event_loop.
 */
 
 void libevent_kill_session_callback(int Fd, short, void*)
-{    
+{
   safe_mutex_assert_owner(&LOCK_event_loop);
 
   /* clear the pending events */
@@ -315,13 +315,13 @@ void libevent_kill_session_callback(int Fd, short, void*)
   This is used to add connections to the pool. This callback is invoked from
   the libevent event_loop() call whenever the session_add_pipe[1] pipe has a byte
   written to it.
-  
+
   NOTES
     This is only called by the thread that owns LOCK_event_loop.
 */
 
 void libevent_add_session_callback(int Fd, short, void *)
-{ 
+{
   safe_mutex_assert_owner(&LOCK_event_loop);
 
   /* clear the pending events */
@@ -337,7 +337,7 @@ void libevent_add_session_callback(int Fd, short, void *)
     sessions_need_adding= list_delete(sessions_need_adding, sessions_need_adding);
 
     pthread_mutex_unlock(&LOCK_session_add);
-    
+
     if (!session->scheduler.logged_in || libevent_should_close_connection(session))
     {
       /*
@@ -354,7 +354,7 @@ void libevent_add_session_callback(int Fd, short, void *)
       {
         sql_print_error(_("event_add error in libevent_add_session_callback\n"));
         libevent_connection_close(session);
-      } 
+      }
       else
       {
         sessions_waiting_for_io= list_add(sessions_waiting_for_io,
@@ -385,7 +385,7 @@ static void libevent_add_connection(Session *session)
   }
   threads.append(session);
   libevent_session_add(session);
-  
+
   pthread_mutex_unlock(&LOCK_thread_count);
   return;
 }
@@ -393,11 +393,11 @@ static void libevent_add_connection(Session *session)
 
 /**
   @brief Signal a waiting connection it's time to die.
- 
+
   @details This function will signal libevent the Session should be killed.
     Either the global LOCK_session_count or the Session's LOCK_delete must be locked
     upon entry.
- 
+
   @param[in]  session The connection to kill
 */
 
@@ -407,7 +407,7 @@ static void libevent_post_kill_notification(Session *)
     Note, we just wake up libevent with an event that a Session should be killed,
     It will search its list of sessions for session->killed ==  KILL_CONNECTION to
     find the Sessions it should kill.
-    
+
     So we don't actually tell it which one and we don't actually use the
     Session being passed to us, but that's just a design detail that could change
     later.
@@ -472,12 +472,12 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
   if (created_threads == thread_pool_size)
     (void) pthread_cond_signal(&COND_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
-  
+
   for (;;)
   {
     Session *session= NULL;
     (void) pthread_mutex_lock(&LOCK_event_loop);
-    
+
     /* get session(s) to process */
     while (!sessions_need_processing)
     {
@@ -489,19 +489,19 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
       }
       event_loop(EVLOOP_ONCE);
     }
-    
+
     /* pop the first session off the list */
     session= (Session*)sessions_need_processing->data;
     sessions_need_processing= list_delete(sessions_need_processing,
                                       sessions_need_processing);
-    
+
     (void) pthread_mutex_unlock(&LOCK_event_loop);
-    
+
     /* now we process the connection (session) */
-    
+
     /* set up the session<->thread links. */
     session->thread_stack= (char*) &session;
-    
+
     if (session->scheduler.thread_attach())
     {
       libevent_connection_close(session);
@@ -537,7 +537,7 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
       }
     } while (libevent_needs_immediate_processing(session));
   }
-  
+
 thread_exit:
   (void) pthread_mutex_lock(&LOCK_thread_count);
   killed_threads++;
@@ -550,7 +550,7 @@ thread_exit:
 
 
 /*
-  Returns true if the connection needs immediate processing and false if 
+  Returns true if the connection needs immediate processing and false if
   instead it's queued for libevent processing or closed,
 */
 
@@ -569,7 +569,7 @@ static bool libevent_needs_immediate_processing(Session *session)
   */
   if (net_more_data(&(session->net)))
     return true;
-  
+
   session->scheduler.thread_detach();
   libevent_session_add(session);
   return false;
@@ -578,7 +578,7 @@ static bool libevent_needs_immediate_processing(Session *session)
 
 /*
   Adds a Session to queued for libevent processing.
-  
+
   This call does not actually register the event with libevent.
   Instead, it places the Session onto a queue and signals libevent by writing
   a byte into session_add_pipe, which will cause our libevent_add_session_callback to
@@ -604,7 +604,7 @@ static void libevent_session_add(Session* session)
 static void libevent_end()
 {
   (void) pthread_mutex_lock(&LOCK_thread_count);
-  
+
   kill_pool_threads= true;
   while (killed_threads != created_threads)
   {
@@ -615,7 +615,7 @@ static void libevent_end()
     pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
-  
+
   event_del(&session_add_event);
   close(session_add_pipe[0]);
   close(session_add_pipe[1]);

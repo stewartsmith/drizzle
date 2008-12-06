@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_STR_CONV_H
 #define DRIZZLED_FUNCTIONS_STR_STR_CONV_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_str_conv :public Item_str_func
 {

@@ -60,7 +60,7 @@ int64_t Item_func_get_user_var::val_int()
 }
 
 /**
-  Get variable by name and, if necessary, put the record of variable 
+  Get variable by name and, if necessary, put the record of variable
   use into the binary log.
 
   When a user variable is invoked from an update query (INSERT, UPDATE etc),
@@ -90,7 +90,7 @@ int get_var_with_binlog(Session *session, enum_sql_command sql_command,
   /*
     Any reference to user-defined variable which is done from stored
     function or trigger affects their execution and the execution of the
-    calling statement. We must log all such variables even if they are 
+    calling statement. We must log all such variables even if they are
     not involved in table-updating statements.
   */
   if (!(opt_bin_log && is_update_query(sql_command)))
@@ -112,7 +112,7 @@ int get_var_with_binlog(Session *session, enum_sql_command sql_command,
       in dispatch_command()). Instead of building a one-element list to pass to
       sql_set_variables(), we could instead manually call check() and update();
       this would save memory and time; but calling sql_set_variables() makes
-      one unique place to maintain (sql_set_variables()). 
+      one unique place to maintain (sql_set_variables()).
 
       Manipulation with lex is necessary since free_underlaid_joins
       is going to release memory belonging to the main query.
@@ -137,7 +137,7 @@ int get_var_with_binlog(Session *session, enum_sql_command sql_command,
   else if (var_entry->used_query_id == session->query_id ||
            drizzle_bin_log.is_query_in_union(session, var_entry->used_query_id))
   {
-    /* 
+    /*
        If this variable was already stored in user_var_events by this query
        (because it's used in more than one place in the query), don't store
        it.
@@ -155,7 +155,7 @@ int get_var_with_binlog(Session *session, enum_sql_command sql_command,
     We have to write to binlog value @a= 1.
 
     We allocate the user_var_event on user_var_events_alloc pool, not on
-    the this-statement-execution pool because in SPs user_var_event objects 
+    the this-statement-execution pool because in SPs user_var_event objects
     may need to be valid after current [SP] statement execution pool is
     destroyed.
   */

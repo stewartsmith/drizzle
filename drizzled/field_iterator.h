@@ -46,7 +46,7 @@ public:
 };
 
 
-/* 
+/*
   Iterator over the fields of a base table, view with temporary
   table, or subquery.
 */

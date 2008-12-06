@@ -82,9 +82,9 @@ int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
   find=0;
   for (pos=0 ; (j=typelib->type_names[pos]) ; pos++)
   {
-    for (i=x ; 
+    for (i=x ;
     	*i && (!(full_name & 8) || *i != field_separator) &&
-        my_toupper(&my_charset_utf8_general_ci,*i) == 
+        my_toupper(&my_charset_utf8_general_ci,*i) ==
     		my_toupper(&my_charset_utf8_general_ci,*j) ; i++, j++) ;
     if (! *j)
     {
@@ -93,7 +93,7 @@ int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
       if (! *i || ((full_name & 8) && *i == field_separator))
 	return(pos+1);
     }
-    if ((!*i && (!(full_name & 8) || *i != field_separator)) && 
+    if ((!*i && (!(full_name & 8) || *i != field_separator)) &&
         (!*j || !(full_name & 1)))
     {
       find++;
@@ -112,7 +112,7 @@ int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
     return(-1);
   }
   if (!(full_name & 2))
-    (void) my_stpcpy(x,typelib->type_names[findpos]);
+    (void) strcpy(x,typelib->type_names[findpos]);
   return(findpos+1);
 } /* find_type */
 
@@ -126,7 +126,7 @@ void make_type(register char * to, register uint32_t nr,
   if (!nr)
     to[0]=0;
   else
-    (void) my_stpcpy(to,get_type(typelib,nr-1));
+    (void) strcpy(to,get_type(typelib,nr-1));
   return;
 } /* make_type */
 
@@ -150,7 +150,7 @@ const char *get_type(TYPELIB *typelib, uint32_t nr)
     find_typeset()
     x		string to decompose
     lib		TYPELIB (struct of pointer to values + count)
-    err		index (not char position) of string element which was not 
+    err		index (not char position) of string element which was not
                 found or 0 if there was no error
 
   RETURN

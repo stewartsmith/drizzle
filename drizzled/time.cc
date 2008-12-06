@@ -36,9 +36,9 @@
 
   'interval_type_to_name' is ordered and sorted on interval size and
   interval complexity.
-  Order of elements in 'interval_type_to_name' should correspond to 
+  Order of elements in 'interval_type_to_name' should correspond to
   the order of elements in 'interval_type' enum
-  
+
   See also interval_type, interval_names
 */
 
@@ -63,7 +63,7 @@ LEX_STRING interval_type_to_name[INTERVAL_LAST] = {
   { C_STRING_WITH_LEN("HOUR_MICROSECOND")},
   { C_STRING_WITH_LEN("MINUTE_MICROSECOND")},
   { C_STRING_WITH_LEN("SECOND_MICROSECOND")}
-}; 
+};
 
 	/* Calc weekday from daynr */
 	/* Returns 0 for monday, 1 for tuesday .... */
@@ -95,7 +95,7 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week)
 			   		to ISO 8601:1988
 			  If set	The week that contains the first
 					'first-day-of-week' is week 1.
-	
+
 	ISO 8601:1988 means that if the week containing January 1 has
 	four or more days in the new year, then it is week 1;
 	Otherwise it is the last week of the previous year, and the
@@ -216,7 +216,7 @@ uint32_t convert_month_to_period(uint32_t month)
 
 
 /*
-  Convert a timestamp string to a DRIZZLE_TIME value and produce a warning 
+  Convert a timestamp string to a DRIZZLE_TIME value and produce a warning
   if string was truncated during conversion.
 
   NOTE
@@ -230,7 +230,7 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
   int was_cut;
   Session *session= current_session;
   enum enum_drizzle_timestamp_type ts_type;
-  
+
   ts_type= str_to_datetime(str, length, l_time,
                            (flags | (session->variables.sql_mode &
                                      (MODE_INVALID_DATES |
@@ -244,21 +244,21 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
 
 
 /*
-  Convert a datetime from broken-down DRIZZLE_TIME representation to corresponding 
+  Convert a datetime from broken-down DRIZZLE_TIME representation to corresponding
   TIMESTAMP value.
 
   SYNOPSIS
     TIME_to_timestamp()
       session             - current thread
-      t               - datetime in broken-down representation, 
+      t               - datetime in broken-down representation,
       in_dst_time_gap - pointer to bool which is set to true if t represents
-                        value which doesn't exists (falls into the spring 
+                        value which doesn't exists (falls into the spring
                         time-gap) or to false otherwise.
-   
+
   RETURN
      Number seconds in UTC since start of Unix Epoch corresponding to t.
      0 - t contains datetime value which is out of TIMESTAMP range.
-     
+
 */
 my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t,
                             bool *in_dst_time_gap)
@@ -355,7 +355,7 @@ void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds)
     1	error
 */
 
-bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type, 
+bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
 			    const char *format, uint32_t format_length,
 			    DATE_TIME_FORMAT *date_time_format)
 {
@@ -490,7 +490,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
     /* Remove separator before %f from sep map */
     separator_map= ((separator_map & ((1 << pos)-1)) |
 		    ((separator_map & ~((1 << pos)-1)) >> 1));
-    if (part_map & 64)			      
+    if (part_map & 64)
     {
       separators--;				// There is always a separator
       need_p= 1;				// force use of separators
@@ -505,7 +505,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
   {
     if (need_p && parts[7] != parts[6]+2)
       separators--;
-  }     
+  }
   /*
     Calculate if %p is in first or last part of the datetime field
 
@@ -532,7 +532,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
     */
     if (format_length == 6 && !need_p &&
 	!my_strnncoll(&my_charset_bin,
-		      (const unsigned char *) format, 6, 
+		      (const unsigned char *) format, 6,
 		      (const unsigned char *) format_str, 6))
       return 0;
     if (separator_map == (1 | 2))
@@ -554,7 +554,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
       Between DATE and TIME we also allow space as separator
     */
     if ((format_length == 12 && !need_p &&
-	 !my_strnncoll(&my_charset_bin, 
+	 !my_strnncoll(&my_charset_bin,
 		       (const unsigned char *) format, 12,
 		       (const unsigned char*) known_date_time_formats[INTERNAL_FORMAT].datetime_format,
 		       12)) ||
@@ -680,14 +680,14 @@ const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
 
 /****************************************************************************
   Functions to create default time/date/datetime strings
- 
+
   NOTE:
     For the moment the DATE_TIME_FORMAT argument is ignored becasue
     MySQL doesn't support comparing of date/time/datetime strings that
     are not in arbutary order as dates are compared as strings in some
     context)
     This functions don't check that given DRIZZLE_TIME structure members are
-    in valid range. If they are not, return value won't reflect any 
+    in valid range. If they are not, return value won't reflect any
     valid date either. Additionally, make_time doesn't take into
     account time->day member: it's assumed that days have been converted
     to hours already.
@@ -735,7 +735,7 @@ void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_
   str[str_length]= 0;               // Ensure we have end 0 for snprintf
 
   switch (time_type) {
-    case DRIZZLE_TIMESTAMP_DATE: 
+    case DRIZZLE_TIMESTAMP_DATE:
       type_str= "date";
       break;
     case DRIZZLE_TIMESTAMP_TIME:

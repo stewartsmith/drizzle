@@ -36,7 +36,7 @@
 /* Sun Studio does not inject this into main namespace yet */
 #if defined(__cplusplus)
   using std::FILE;
-#endif 
+#endif
 
 #define MY_INIT(name);		{ my_progname= name; my_init(); }
 
@@ -150,17 +150,6 @@ extern char *my_strndup(const char *from, size_t length,
 				   myf MyFlags);
 #define TRASH(A,B) /* nothing */
 
-#ifdef HAVE_ALLOCA
-#if defined(__GNUC__) && !defined(HAVE_ALLOCA_H) && ! defined(alloca)
-#define alloca __builtin_alloca
-#endif /* GNUC */
-#define my_alloca(SZ) malloc((size_t) (SZ))
-#define my_afree(PTR) free((PTR))
-#else
-#define my_alloca(SZ) malloc((SZ))
-#define my_afree(PTR) free((PTR))
-#endif /* HAVE_ALLOCA */
-
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE
 #include <errno.h>			/* errno is a define */
@@ -269,7 +258,7 @@ extern struct st_my_file_info *my_file_info;
 typedef struct st_dynamic_array
 {
   unsigned char *buffer;
-  uint32_t elements,max_element;
+  size_t elements,max_element;
   uint32_t alloc_increment;
   uint32_t size_of_element;
 } DYNAMIC_ARRAY;
@@ -321,7 +310,7 @@ typedef int (*qsort2_cmp)(const void *, const void *, const void *);
 #define my_b_tell(info) ((info)->pos_in_file + \
 			 (size_t) (*(info)->current_pos - (info)->request_pos))
 
-#define my_b_get_buffer_start(info) (info)->request_pos 
+#define my_b_get_buffer_start(info) (info)->request_pos
 #define my_b_get_bytes_in_buffer(info) (char*) (info)->read_end -   \
   (char*) my_b_get_buffer_start(info)
 #define my_b_get_pos_in_file(info) (info)->pos_in_file
@@ -493,7 +482,7 @@ File create_temp_file(char *to, const char *dir, const char *pfx,
 #define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
 #define my_init_dynamic_array2_ci(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
 extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
-                                   void *init_buffer, uint32_t init_alloc, 
+                                   void *init_buffer, uint32_t init_alloc,
                                    uint32_t alloc_increment);
 /* init_dynamic_array() function is deprecated */
 extern bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,

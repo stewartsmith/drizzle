@@ -61,19 +61,19 @@ struct st_level_info
 {
   /* Number of unused slots in *last_blocks HP_PTRS block (0 for 0th level) */
   uint32_t free_ptrs_in_block;
-  
+
   /*
     Maximum number of records that can be 'contained' inside of each element
-    of last_blocks array. For level 0 - 1, for level 1 - HP_PTRS_IN_NOD, for 
+    of last_blocks array. For level 0 - 1, for level 1 - HP_PTRS_IN_NOD, for
     level 2 - HP_PTRS_IN_NOD^2 and so forth.
   */
   uint32_t records_under_level;
 
   /*
-    Ptr to last allocated HP_PTRS (or records buffer for level 0) on this 
+    Ptr to last allocated HP_PTRS (or records buffer for level 0) on this
     level.
   */
-  HP_PTRS *last_blocks;			
+  HP_PTRS *last_blocks;
 };
 
 
@@ -83,19 +83,19 @@ struct st_level_info
   is recbuffer bytes.
   The internal representation is as follows:
   HP_BLOCK is a hierarchical structure of 'blocks'.
-  A block at level 0 is an array records_in_block records. 
-  A block at higher level is an HP_PTRS structure with pointers to blocks at 
+  A block at level 0 is an array records_in_block records.
+  A block at higher level is an HP_PTRS structure with pointers to blocks at
   lower levels.
   At the highest level there is one top block. It is stored in HP_BLOCK::root.
 
-  See hp_find_block for a description of how record pointer is obtained from 
+  See hp_find_block for a description of how record pointer is obtained from
   its index.
-  See hp_get_new_block 
+  See hp_get_new_block
 */
 
 typedef struct st_heap_block
 {
-  HP_PTRS *root;                        /* Top-level block */ 
+  HP_PTRS *root;                        /* Top-level block */
   struct st_level_info level_info[HP_MAX_LEVELS+1];
   uint32_t levels;                          /* number of used levels */
   uint32_t records_in_block;		/* Records in one heap-block */
@@ -117,7 +117,7 @@ typedef struct st_hp_keydef		/* Key definition with open */
     Number of buckets used in hash table. Used only to provide
     #records estimates for heap key scans.
   */
-  ha_rows hash_buckets; 
+  ha_rows hash_buckets;
   TREE rb_tree;
   int (*write_key)(struct st_heap_info *info, struct st_hp_keydef *keyinfo,
 		   const unsigned char *record, unsigned char *recpos);
@@ -135,7 +135,7 @@ typedef struct st_heap_columndef              /* column information */
   uint16_t null_pos;                    /* position for null marker */
   uint8_t  length_bytes;  /* length of the size, 1 o 2 bytes */
 } HP_COLUMNDEF;
- 
+
 typedef struct st_heap_dataspace   /* control data for data space */
 {
   HP_BLOCK block;
@@ -170,7 +170,7 @@ typedef struct st_heap_share
   uint32_t currently_disabled_keys;    /* saved value from "keys" when disabled */
   uint32_t open_count;
 
-  
+
   char * name;			/* Name of "memory-file" */
   THR_LOCK lock;
   pthread_mutex_t intern_lock;		/* Locking for use with _locking */
@@ -209,7 +209,7 @@ typedef struct st_heap_create_info
   uint32_t auto_key;                        /* keynr [1 - maxkey] for auto key */
   uint32_t auto_key_type;
   uint32_t max_chunk_size;
-  uint32_t is_dynamic;  
+  uint32_t is_dynamic;
   uint64_t max_table_size;
   uint64_t auto_increment;
   bool with_auto_increment;

@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_WEIGHT_STRING_H
 #define DRIZZLED_FUNCTIONS_STR_WEIGHT_STRING_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_func_weight_string :public Item_str_func
 {

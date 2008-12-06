@@ -46,7 +46,7 @@ table_mapping::~table_mapping()
 Table* table_mapping::get_table(ulong table_id)
 {
   entry *e= find_entry(table_id);
-  if (e) 
+  if (e)
   {
     return(e->table);
   }
@@ -86,7 +86,7 @@ int table_mapping::set_table(ulong table_id, Table* table)
   if (e == 0)
   {
     if (m_free == 0 && expand())
-      return(ERR_MEMORY_ALLOCATION); // Memory allocation failed      
+      return(ERR_MEMORY_ALLOCATION); // Memory allocation failed
     e= m_free;
     m_free= m_free->next;
   }

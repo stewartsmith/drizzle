@@ -39,5 +39,5 @@ public:
   bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
-    
+
 #endif /* DRIZZLED_FUNCTIONS_LAST_INSERT_H */

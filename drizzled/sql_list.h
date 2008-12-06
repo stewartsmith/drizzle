@@ -248,7 +248,7 @@ public:
       check_list()
         name  Name to print to trace file
 
-    RETURN 
+    RETURN
       1  The list is Ok.
       0  List invariants are not met.
   */
@@ -304,11 +304,11 @@ protected:
     ls.elements= elm;
   }
 public:
-  base_list_iterator() 
+  base_list_iterator()
     :list(0), el(0), prev(0), current(0)
   {}
 
-  base_list_iterator(base_list &list_par) 
+  base_list_iterator(base_list &list_par)
   { init(list_par); }
 
   inline void init(base_list &list_par)
@@ -498,7 +498,7 @@ public:
   const char* key;
   const char* val;
   i_string_pair():key(0),val(0) { }
-  i_string_pair(const char* key_arg, const char* val_arg) : 
+  i_string_pair(const char* key_arg, const char* val_arg) :
     key(key_arg),val(val_arg) {}
 };
 
@@ -569,7 +569,7 @@ class I_List :private base_ilist
 public:
   I_List() :base_ilist()	{}
   inline void empty()		{ base_ilist::empty(); }
-  inline bool is_empty()        { return base_ilist::is_empty(); } 
+  inline bool is_empty()        { return base_ilist::is_empty(); }
   inline void append(T* a)	{ base_ilist::append(a); }
   inline void push_back(T* a)	{ base_ilist::push_back(a); }
   inline T* get()		{ return (T*) base_ilist::get(); }

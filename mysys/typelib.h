@@ -28,7 +28,7 @@ typedef struct st_typelib {	/* Different types saved here */
 
 #ifdef __cplusplus
   extern "C" {
-#endif 
+#endif
 
 extern uint64_t find_typeset(char *x, TYPELIB *typelib,int *error_position);
 extern int find_type_or_exit(char *x, TYPELIB *typelib,

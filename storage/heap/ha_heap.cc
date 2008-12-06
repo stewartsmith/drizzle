@@ -50,7 +50,7 @@ int heap_init(void *p)
 }
 
 static handler *heap_create_handler(handlerton *hton,
-                                    TABLE_SHARE *table, 
+                                    TABLE_SHARE *table,
                                     MEM_ROOT *mem_root)
 {
   return new (mem_root) ha_heap(hton, table);
@@ -62,7 +62,7 @@ static handler *heap_create_handler(handlerton *hton,
 *****************************************************************************/
 
 ha_heap::ha_heap(handlerton *hton, TABLE_SHARE *table_arg)
-  :handler(hton, table_arg), file(0), records_changed(0), key_stat_version(0), 
+  :handler(hton, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
 
@@ -77,14 +77,14 @@ const char **ha_heap::bas_ext() const
 }
 
 /*
-  Hash index statistics is updated (copied from HP_KEYDEF::hash_buckets to 
-  rec_per_key) after 1/HEAP_STATS_UPDATE_THRESHOLD fraction of table records 
-  have been inserted/updated/deleted. delete_all_rows() and table flush cause 
+  Hash index statistics is updated (copied from HP_KEYDEF::hash_buckets to
+  rec_per_key) after 1/HEAP_STATS_UPDATE_THRESHOLD fraction of table records
+  have been inserted/updated/deleted. delete_all_rows() and table flush cause
   immediate update.
 
   NOTE
    hash index statistics must be updated when number of table records changes
-   from 0 to non-zero value and vice versa. Otherwise records_in_range may 
+   from 0 to non-zero value and vice versa. Otherwise records_in_range may
    erroneously return 0 and 'range' may miss records.
 */
 #define HEAP_STATS_UPDATE_THRESHOLD 10
@@ -140,9 +140,9 @@ int ha_heap::close(void)
   Create a copy of this table
 
   DESCRIPTION
-    Do same as default implementation but use file->s->name instead of 
+    Do same as default implementation but use file->s->name instead of
     table->s->path. This is needed by Windows where the clone() call sees
-    '/'-delimited path in table->s->path, while ha_peap::open() was called 
+    '/'-delimited path in table->s->path, while ha_peap::open() was called
     with '\'-delimited path.
 */
 
@@ -256,7 +256,7 @@ int ha_heap::update_row(const unsigned char * old_data, unsigned char * new_data
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
   res= heap_update(file,old_data,new_data);
-  if (!res && ++records_changed*HEAP_STATS_UPDATE_THRESHOLD > 
+  if (!res && ++records_changed*HEAP_STATS_UPDATE_THRESHOLD >
               file->s->records)
   {
     /*
@@ -273,7 +273,7 @@ int ha_heap::delete_row(const unsigned char * buf)
   int res;
   ha_statistic_increment(&SSV::ha_delete_count);
   res= heap_delete(file,buf);
-  if (!res && table->s->tmp_table == NO_TMP_TABLE && 
+  if (!res && table->s->tmp_table == NO_TMP_TABLE &&
       ++records_changed*HEAP_STATS_UPDATE_THRESHOLD > file->s->records)
   {
     /*
@@ -756,15 +756,15 @@ int ha_heap::create(const char *name, Table *table_arg,
       }
     }
   }
-  
+
   if (key_part_size < share->null_bytes + ((share->last_null_bit_pos+7) >> 3))
   {
     /* Make sure to include null fields regardless of the presense of keys */
     key_part_size = share->null_bytes + ((share->last_null_bit_pos+7) >> 3);
   }
 
-  
-  
+
+
   if (table_arg->found_next_number_field)
   {
     keydef[share->next_number_index].flag|= HA_AUTO_KEY;
@@ -788,7 +788,7 @@ int ha_heap::create(const char *name, Table *table_arg,
          share->reclength, mem_per_row_keys,
          (uint32_t) share->max_rows, (uint32_t) share->min_rows,
          &hp_create_info, &internal_share);
-  
+
   free((unsigned char*) keydef);
   free((void *) columndef);
   assert(file == 0);

@@ -602,7 +602,7 @@ static int binlog_savepoint_rollback(handlerton *, Session *session, void *sv)
     non-transactional table. Otherwise, truncate the binlog cache starting
     from the SAVEPOINT command.
   */
-  if (unlikely(session->transaction.all.modified_non_trans_table || 
+  if (unlikely(session->transaction.all.modified_non_trans_table ||
                (session->options & OPTION_KEEP_LOG)))
   {
     int error=
@@ -645,7 +645,7 @@ File open_binlog(IO_CACHE *log, const char *log_file_name, const char **errmsg)
 {
   File file;
 
-  if ((file = my_open(log_file_name, O_RDONLY, 
+  if ((file = my_open(log_file_name, O_RDONLY,
                       MYF(MY_WME))) < 0)
   {
     sql_print_error(_("Failed to open log (file '%s', errno %d)"),
@@ -704,7 +704,7 @@ static int find_uniq_filename(char *name)
 
   if (!(dir_info = my_dir(buff,MYF(MY_DONT_SORT))))
   {						// This shouldn't happen
-    my_stpcpy(end,".1");				// use name+1
+    strcpy(end,".1");				// use name+1
     return(0);
   }
   file_info= dir_info->dir_entry;
@@ -772,7 +772,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
   }
 
   if (new_name)
-    my_stpcpy(log_file_name, new_name);
+    strcpy(log_file_name, new_name);
   else if (generate_new_name(log_file_name, name))
     goto err;
 
@@ -1438,7 +1438,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(Session* session)
   {
     if ((error= my_delete_allow_opened(linfo.log_file_name, MYF(0))) != 0)
     {
-      if (my_errno == ENOENT) 
+      if (my_errno == ENOENT)
       {
         push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
@@ -1469,7 +1469,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(Session* session)
   close(LOG_CLOSE_INDEX);
   if ((error= my_delete_allow_opened(index_file_name, MYF(0))))	// Reset (open will update)
   {
-    if (my_errno == ENOENT) 
+    if (my_errno == ENOENT)
     {
       push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
@@ -1566,7 +1566,7 @@ int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
     context switches
   */
   pthread_cond_broadcast(&rli->log_space_cond);
-  
+
   /*
     Read the next log file name from the index file and pass it back to
     the caller
@@ -1652,10 +1652,10 @@ int DRIZZLE_BIN_LOG::update_log_index(LOG_INFO* log_info, bool need_update_threa
                                 stat() or my_delete()
 */
 
-int DRIZZLE_BIN_LOG::purge_logs(const char *to_log, 
+int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
                           bool included,
-                          bool need_mutex, 
-                          bool need_update_threads, 
+                          bool need_mutex,
+                          bool need_update_threads,
                           uint64_t *decrease_log_space)
 {
   int error;
@@ -1680,12 +1680,12 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
     struct stat s;
     if (stat(log_info.log_file_name, &s))
     {
-      if (errno == ENOENT) 
+      if (errno == ENOENT)
       {
         /*
           It's not fatal if we can't stat a log file that does not exist;
           If we could not stat, we won't delete.
-        */     
+        */
         push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
@@ -1718,7 +1718,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
       }
       else
       {
-        if (my_errno == ENOENT) 
+        if (my_errno == ENOENT)
         {
           push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
@@ -1749,7 +1749,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
     if (find_next_log(&log_info, 0) || exit_loop)
       break;
   }
-  
+
   /*
     If we get killed -9 here, the sysadmin would have to edit
     the log index file after restart - otherwise, this should be safe
@@ -1805,11 +1805,11 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
   {
     if (stat(log_info.log_file_name, &stat_area))
     {
-      if (errno == ENOENT) 
+      if (errno == ENOENT)
       {
         /*
           It's not fatal if we can't stat a log file that does not exist.
-        */     
+        */
         push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
@@ -1839,7 +1839,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
         break;
       if (my_delete(log_info.log_file_name, MYF(0)))
       {
-        if (my_errno == ENOENT) 
+        if (my_errno == ENOENT)
         {
           /* It's not fatal even if we can't delete a log file */
           push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -1890,7 +1890,7 @@ err:
 
 void DRIZZLE_BIN_LOG::make_log_name(char* buf, const char* log_ident)
 {
-  uint32_t dir_len = dirname_length(log_file_name); 
+  uint32_t dir_len = dirname_length(log_file_name);
   if (dir_len >= FN_REFLEN)
     dir_len=FN_REFLEN-1;
   my_stpncpy(buf, log_file_name, dir_len);
@@ -2119,7 +2119,7 @@ void DRIZZLE_BIN_LOG::stop_union_events(Session *session)
 
 bool DRIZZLE_BIN_LOG::is_query_in_union(Session *session, query_id_t query_id_param)
 {
-  return (session->binlog_evt_union.do_union && 
+  return (session->binlog_evt_union.do_union &&
           query_id_param >= session->binlog_evt_union.first_query_id);
 }
 
@@ -2697,7 +2697,7 @@ void DRIZZLE_BIN_LOG::wait_for_update_relay_log(Session* session)
 {
   const char *old_msg;
   old_msg= session->enter_cond(&update_cond, &LOCK_log,
-                           "Slave has read all relay log; " 
+                           "Slave has read all relay log; "
                            "waiting for the slave I/O "
                            "thread to update it" );
   pthread_cond_wait(&update_cond, &LOCK_log);
@@ -2709,7 +2709,7 @@ void DRIZZLE_BIN_LOG::wait_for_update_relay_log(Session* session)
 /**
   Wait until we get a signal that the binary log has been updated.
   Applies to master only.
-     
+
   NOTES
   @param[in] session        a Session struct
   @param[in] timeout    a pointer to a timespec;
@@ -2842,7 +2842,7 @@ static bool test_if_number(register const char *str,
   register int flag;
   const char *start;
 
-  flag= 0; 
+  flag= 0;
   start= str;
   while (*str++ == ' ') ;
   if (*--str == '-' || *str == '+')
@@ -2895,7 +2895,7 @@ void DRIZZLE_BIN_LOG::signal_update()
   return;
 }
 
-void sql_print_error(const char *format, ...) 
+void sql_print_error(const char *format, ...)
 {
   va_list args;
 
@@ -2907,7 +2907,7 @@ void sql_print_error(const char *format, ...)
 }
 
 
-void sql_print_warning(const char *format, ...) 
+void sql_print_warning(const char *format, ...)
 {
   va_list args;
 
@@ -2919,7 +2919,7 @@ void sql_print_warning(const char *format, ...)
 }
 
 
-void sql_print_information(const char *format, ...) 
+void sql_print_information(const char *format, ...)
 {
   va_list args;
 
@@ -3063,7 +3063,7 @@ int TC_LOG_MMAP::open(const char *opt_name)
   memcpy(data, tc_log_magic, sizeof(tc_log_magic));
   data[sizeof(tc_log_magic)]= (unsigned char)total_ha_2pc;
   // must cast data to (char *) for solaris. Arg1 is (void *) on linux
-  //   so the cast should be fine. 
+  //   so the cast should be fine.
   msync((char *)data, tc_log_page_size, MS_SYNC);
   my_sync(fd, MYF(0));
   inited=5;
@@ -3271,7 +3271,7 @@ int TC_LOG_MMAP::sync()
     note - no locks are held at this point
   */
   // must cast data to (char *) for solaris. Arg1 is (void *) on linux
-  //   so the cast should be fine. 
+  //   so the cast should be fine.
   err= msync((char *)syncing->start, 1, MS_SYNC);
   if(err==0)
     err= my_sync(fd, MYF(0));

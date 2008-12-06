@@ -230,7 +230,7 @@ bool get_interval_value(Item *args,interval_type int_type,
     interval->second_part= array[1];
     break;
   case INTERVAL_LAST: /* purecov: begin deadcode */
-    assert(0); 
+    assert(0);
     break;            /* purecov: end */
   }
   return 0;

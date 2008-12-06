@@ -35,7 +35,7 @@
 extern "C" {
 #else
 #define EXTERNC
-#endif /* __cplusplus */ 
+#endif /* __cplusplus */
 
 #include <pthread.h>
 #ifndef _REENTRANT

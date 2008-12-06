@@ -68,7 +68,7 @@ public:
      result type is DECIMAL.
 
      @param A pointer where the DECIMAL value will be allocated.
-     @return 
+     @return
        - 0 If the result is NULL
        - The same pointer it was given, with the area initialized to the
          result of the operation.

@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_DEC_H
 #define DRIZZLED_FUNCTIONS_DEC_H
 
-#include <drizzled/functions/func.h> 
-#include <drizzled/functions/real.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/real.h>
 
 // A class to handle logarithmic and trigonometric functions
 

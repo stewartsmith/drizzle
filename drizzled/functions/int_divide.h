@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_INT_DIVIDE_H
 #define DRIZZLED_FUNCTIONS_INT_DIVIDE_H
 
-#include <drizzled/functions/func.h> 
-#include <drizzled/functions/int.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int.h>
 
 class Item_func_int_div :public Item_int_func
 {
