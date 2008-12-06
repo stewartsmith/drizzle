@@ -605,195 +605,20 @@ public:
 
 };
 
+#include <drizzled/item/basic_constant.h>
+#include <drizzled/item/ident.h>
+#include <drizzled/item/field.h>
+#include <drizzled/item/num.h>
 
-class Item_basic_constant :public Item
-{
-public:
-  /* to prevent drop fixed flag (no need parent cleanup call) */
-  void cleanup()
-  {
-    /*
-      Restore the original field name as it might not have been allocated
-      in the statement memory. If the name is auto generated, it must be
-      done again between subsequent executions of a prepared statement.
-    */
-    if (orig_name)
-      name= orig_name;
-  }
-};
+void mark_as_dependent(Session *session, 
+		       st_select_lex *last, 
+                       st_select_lex *current,
+                       Item_ident *resolved_item,
+                       Item_ident *mark_item);
 
-
-class Item_num: public Item_basic_constant
-{
-public:
-  Item_num() {}                               /* Remove gcc warning */
-  virtual Item_num *neg()= 0;
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-};
-
-class Item_ident :public Item
-{
-protected:
-  /* 
-    We have to store initial values of db_name, table_name and field_name
-    to be able to restore them during cleanup() because they can be 
-    updated during fix_fields() to values from Field object and life-time 
-    of those is shorter than life-time of Item_field.
-  */
-  const char *orig_db_name;
-  const char *orig_table_name;
-  const char *orig_field_name;
-
-public:
-  Name_resolution_context *context;
-  const char *db_name;
-  const char *table_name;
-  const char *field_name;
-  bool alias_name_used; /* true if item was resolved against alias */
-  /* 
-    Cached value of index for this field in table->field array, used by prep. 
-    stmts for speeding up their re-execution. Holds NO_CACHED_FIELD_INDEX
-    if index value is not known.
-  */
-  uint32_t cached_field_index;
-  /*
-    Cached pointer to table which contains this field, used for the same reason
-    by prep. stmt. too in case then we have not-fully qualified field.
-    0 - means no cached value.
-  */
-  TableList *cached_table;
-  st_select_lex *depended_from;
-  Item_ident(Name_resolution_context *context_arg,
-             const char *db_name_arg, const char *table_name_arg,
-             const char *field_name_arg);
-  Item_ident(Session *session, Item_ident *item);
-  const char *full_name() const;
-  void cleanup();
-  bool remove_dependence_processor(unsigned char * arg);
-  virtual void print(String *str, enum_query_type query_type);
-  virtual bool change_context_processor(unsigned char *cntx)
-    { context= (Name_resolution_context *)cntx; return false; }
-  friend bool insert_fields(Session *session, Name_resolution_context *context,
-                            const char *db_name,
-                            const char *table_name, List_iterator<Item> *it,
-                            bool any_privileges);
-};
-
-
-class Item_ident_for_show :public Item
-{
-public:
-  Field *field;
-  const char *db_name;
-  const char *table_name;
-
-  Item_ident_for_show(Field *par_field, const char *db_arg,
-                      const char *table_name_arg)
-    :field(par_field), db_name(db_arg), table_name(table_name_arg)
-  {}
-
-  enum Type type() const { return FIELD_ITEM; }
-  double val_real();
-  int64_t val_int();
-  String *val_str(String *str);
-  my_decimal *val_decimal(my_decimal *dec);
-  void make_field(Send_field *tmp_field);
-};
-
-
-class Item_field :public Item_ident
-{
-protected:
-  void set_field(Field *field);
-public:
-  Field *field,*result_field;
-  Item_equal *item_equal;
-  bool no_const_subst;
-  /*
-    if any_privileges set to true then here real effective privileges will
-    be stored
-  */
-  uint32_t have_privileges;
-  /* field need any privileges (for VIEW creation) */
-  bool any_privileges;
-  Item_field(Name_resolution_context *context_arg,
-             const char *db_arg,const char *table_name_arg,
-	     const char *field_name_arg);
-  /*
-    Constructor needed to process subselect with temporary tables (see Item)
-  */
-  Item_field(Session *session, Item_field *item);
-  /*
-    Constructor used inside setup_wild(), ensures that field, table,
-    and database names will live as long as Item_field (this is important
-    in prepared statements).
-  */
-  Item_field(Session *session, Name_resolution_context *context_arg, Field *field);
-  /*
-    If this constructor is used, fix_fields() won't work, because
-    db_name, table_name and column_name are unknown. It's necessary to call
-    reset_field() before fix_fields() for all fields created this way.
-  */
-  Item_field(Field *field);
-  enum Type type() const { return FIELD_ITEM; }
-  bool eq(const Item *item, bool binary_cmp) const;
-  double val_real();
-  int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
-  String *val_str(String*);
-  double val_result();
-  int64_t val_int_result();
-  String *str_result(String* tmp);
-  my_decimal *val_decimal_result(my_decimal *);
-  bool val_bool_result();
-  bool send(Protocol *protocol, String *str_arg);
-  void reset_field(Field *f);
-  bool fix_fields(Session *, Item **);
-  void fix_after_pullout(st_select_lex *new_parent, Item **ref);
-  void make_field(Send_field *tmp_field);
-  int save_in_field(Field *field,bool no_conversions);
-  void save_org_in_field(Field *field);
-  table_map used_tables() const;
-  enum Item_result result_type () const;
-  Item_result cast_to_int_type() const;
-  enum_field_types field_type() const;
-  enum_monotonicity_info get_monotonicity_info() const
-  {
-    return MONOTONIC_STRICT_INCREASING;
-  }
-  int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
-  Field *get_tmp_table_field() { return result_field; }
-  Field *tmp_table_field(Table *t_arg __attribute__((unused))) { return result_field; }
-  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  bool get_time(DRIZZLE_TIME *ltime);
-  bool is_null();
-  void update_null_value();
-  Item *get_tmp_table_item(Session *session);
-  bool collect_item_field_processor(unsigned char * arg);
-  bool find_item_in_field_list_processor(unsigned char *arg);
-  bool register_field_in_read_map(unsigned char *arg);
-  bool register_field_in_bitmap(unsigned char *arg);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
-  { return false; }
-  void cleanup();
-  bool result_as_int64_t();
-  Item_equal *find_item_equal(COND_EQUAL *cond_equal);
-  bool subst_argument_checker(unsigned char **arg);
-  Item *equal_fields_propagator(unsigned char *arg);
-  bool set_no_const_sub(unsigned char *arg);
-  Item *replace_equal_field(unsigned char *arg);
-  uint32_t max_disp_length();
-  Item_field *filed_for_view_update() { return this; }
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  int fix_outer_field(Session *session, Field **field, Item **reference);
-  virtual Item *update_value_transformer(unsigned char *select_arg);
-  virtual void print(String *str, enum_query_type query_type);
-
-  friend class Item_default_value;
-  friend class Item_insert_value;
-  friend class st_select_lex_unit;
-};
+Item** resolve_ref_in_select_and_group(Session *session, 
+			               Item_ident *ref, 
+				       st_select_lex *select);
 
 class Item_null :public Item_basic_constant
 {
@@ -821,14 +646,13 @@ public:
   Item *clone_item() { return new Item_null(name); }
   bool is_null() { return 1; }
 
-  virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((unused)))
+  virtual inline void print(String *str, enum_query_type)
   {
     str->append(STRING_WITH_LEN("NULL"));
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -842,7 +666,7 @@ public:
   {
     save_in_field(result_field, no_conversions);
   }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };  
 
@@ -1019,7 +843,7 @@ public:
   uint32_t decimal_precision() const
   { return (uint)(max_length - test(value < 0)); }
   bool eq(const Item *, bool binary_cmp) const;
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1038,7 +862,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg ();
   uint32_t decimal_precision() const { return max_length; }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1063,7 +887,7 @@ public:
   int64_t val_int();
   double val_real();
   String *val_str(String*);
-  my_decimal *val_decimal(my_decimal *val __attribute__((unused)))
+  my_decimal *val_decimal(my_decimal *)
   { return &decimal_value; }
   int save_in_field(Field *field, bool no_conversions);
   bool basic_const_item() const { return 1; }
@@ -1081,7 +905,7 @@ public:
   uint32_t decimal_precision() const { return decimal_value.precision(); }
   bool eq(const Item *, bool binary_cmp) const;
   void set_decimal_value(my_decimal *value_par);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1131,14 +955,13 @@ public:
     :Item_float(NULL, val_arg, decimal_par, length), func_name(str)
   {}
 
-  virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((unused)))
+  virtual inline void print(String *str, enum_query_type)
   {
     str->append(func_name);
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1260,7 +1083,7 @@ public:
   {
     m_cs_specified= cs_specified;
   }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 
 private:
@@ -1279,12 +1102,11 @@ public:
   {}
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 
-  virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((unused)))
+  virtual inline void print(String *str, enum_query_type)
   {
     str->append(func_name);
   }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 
@@ -1365,7 +1187,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1387,7 +1209,7 @@ public:
   {}
   ~Item_result_field() {}			/* Required with gcc 2.95 */
   Field *get_tmp_table_field() { return result_field; }
-  Field *tmp_table_field(Table *t_arg __attribute__((unused)))
+  Field *tmp_table_field(Table *)
   { return result_field; }
   table_map used_tables() const { return 1; }
   virtual void fix_length_and_dec()=0;
@@ -1398,7 +1220,7 @@ public:
     save_in_field(result_field, no_conversions);
   }
   void cleanup();
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
@@ -1595,7 +1417,7 @@ public:
                      alias_name_used_arg),
     outer_ref(0), in_sum_func(0), found_in_select_list(1)
   {}
-  void save_in_result_field(bool no_conversions __attribute__((unused)))
+  void save_in_result_field(bool)
   {
     outer_ref->save_org_in_field(result_field);
   }
@@ -1709,8 +1531,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   void make_field(Send_field *field) { item->make_field(field); }
   void copy();
-  int save_in_field(Field *field,
-                    bool no_conversions __attribute__((unused)))
+  int save_in_field(Field *field, bool)
   {
     return save_str_value_in_field(field, &str_value);
   }
@@ -1782,7 +1603,7 @@ public:
     return arg->walk(processor, walk_subquery, args) ||
 	    (this->*processor)(args);
   }
-  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 
@@ -1816,7 +1637,7 @@ public:
 
   void set_used_tables(table_map map) { used_table_map= map; }
 
-  virtual bool allocate(uint32_t i __attribute__((unused)))
+  virtual bool allocate(uint32_t)
   { return 0; }
   virtual bool setup(Item *item)
   {
@@ -1837,8 +1658,7 @@ public:
   virtual void keep_array() {}
   virtual void print(String *str, enum_query_type query_type);
   bool eq_def(Field *field);
-  bool eq(const Item *item,
-          bool binary_cmp __attribute__((unused))) const
+  bool eq(const Item *item, bool) const
   {
     return this == item;
   }

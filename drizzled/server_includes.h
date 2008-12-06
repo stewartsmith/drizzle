@@ -165,7 +165,6 @@ extern uint64_t open_files_limit;
 extern uint64_t max_binlog_size;
 extern uint64_t max_relay_log_size;
 extern uint64_t opt_binlog_rows_event_max_size;
-extern uint64_t thread_cache_size;
 extern uint64_t thread_pool_size;
 extern uint32_t back_log;
 extern pid_t current_pid;
