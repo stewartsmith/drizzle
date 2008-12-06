@@ -1462,7 +1462,7 @@ innobase_start_or_create_for_mysql(void)
 	} else {
 
 		/* Check if we support the max format that is stamped
-		on the system tablespace.
+		on the system tablespace. 
 		Note:  We are NOT allowed to make any modifications to
 		the TRX_SYS_PAGE_NO page before recovery  because this
 		page also contains the max_trx_id etc. important system

@@ -1100,7 +1100,7 @@ next_rec:
 
 	block->is_hashed = FALSE;
 	block->index = NULL;
-
+	
 cleanup:
 #ifdef UNIV_DEBUG
 	if (UNIV_UNLIKELY(block->n_pointers)) {

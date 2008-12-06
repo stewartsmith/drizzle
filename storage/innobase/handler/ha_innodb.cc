@@ -197,10 +197,10 @@ static void free_share(INNOBASE_SHARE *share);
 static int innobase_close_connection(handlerton *hton, THD* thd);
 static int innobase_commit(handlerton *hton, THD* thd, bool all);
 static int innobase_rollback(handlerton *hton, THD* thd, bool all);
-static int innobase_rollback_to_savepoint(handlerton *hton, THD* thd,
+static int innobase_rollback_to_savepoint(handlerton *hton, THD* thd, 
            void *savepoint);
 static int innobase_savepoint(handlerton *hton, THD* thd, void *savepoint);
-static int innobase_release_savepoint(handlerton *hton, THD* thd,
+static int innobase_release_savepoint(handlerton *hton, THD* thd, 
            void *savepoint);
 static handler *innobase_create_handler(handlerton *hton,
                                         TABLE_SHARE *table,
@@ -222,7 +222,7 @@ static
 bool
 innobase_file_format_check_on_off(
 /*==============================*/
-						/* out: true if one of
+						/* out: true if one of 
 						"on" or "off" */
 	const char*	format_check);		/* in: parameter value */
 /****************************************************************
@@ -265,7 +265,7 @@ static MYSQL_THDVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 
 
 static handler *innobase_create_handler(handlerton *hton,
-                                        TABLE_SHARE *table,
+                                        TABLE_SHARE *table, 
                                         MEM_ROOT *mem_root)
 {
   return new (mem_root) ha_innobase(hton, table);
@@ -377,7 +377,7 @@ int
 innobase_start_trx_and_assign_read_view(
 /*====================================*/
 			/* out: 0 */
-	handlerton* hton, /* in: Innodb handlerton */
+	handlerton* hton, /* in: Innodb handlerton */ 
 	THD*	thd);	/* in: MySQL thread handle of the user for whom
 			the transaction should be committed */
 /********************************************************************
@@ -401,7 +401,7 @@ innodb_show_status(
 	THD*	thd,	/* in: the MySQL query thread of the caller */
 	stat_print_fn *stat_print);
 static
-bool innobase_show_status(handlerton *hton, THD* thd,
+bool innobase_show_status(handlerton *hton, THD* thd, 
                           stat_print_fn* stat_print,
                           enum ha_stat_type stat_type);
 
@@ -2017,7 +2017,7 @@ innobase_init(
 	innobase_file_format_name is used in the MySQL set variable
 	interface and so can't be const. */
 
-	innobase_file_format_name =
+	innobase_file_format_name = 
 		(char*) trx_sys_file_format_id_to_name(format_id);
 
 	/* Process innobase_file_format_check variable */
@@ -2240,7 +2240,7 @@ int
 innobase_start_trx_and_assign_read_view(
 /*====================================*/
 			/* out: 0 */
-        handlerton *hton, /* in: Innodb handlerton */
+        handlerton *hton, /* in: Innodb handlerton */ 
 	THD*	thd)	/* in: MySQL thread handle of the user for whom
 			the transaction should be committed */
 {
@@ -2285,7 +2285,7 @@ int
 innobase_commit(
 /*============*/
 			/* out: 0 */
-        handlerton *hton, /* in: Innodb handlerton */
+        handlerton *hton, /* in: Innodb handlerton */ 
 	THD* 	thd,	/* in: MySQL thread handle of the user for whom
 			the transaction should be committed */
 	bool	all)	/* in:	TRUE - commit transaction
@@ -2413,7 +2413,7 @@ int
 innobase_rollback(
 /*==============*/
 			/* out: 0 or error number */
-        handlerton *hton, /* in: Innodb handlerton */
+        handlerton *hton, /* in: Innodb handlerton */ 
 	THD*	thd,	/* in: handle to the MySQL thread of the user
 			whose transaction should be rolled back */
 	bool	all)	/* in:	TRUE - commit transaction
@@ -2494,7 +2494,7 @@ innobase_rollback_to_savepoint(
 /*===========================*/
 				/* out: 0 if success, HA_ERR_NO_SAVEPOINT if
 				no savepoint with the given name */
-        handlerton *hton,       /* in: Innodb handlerton */
+        handlerton *hton,       /* in: Innodb handlerton */ 
 	THD*	thd,		/* in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
 	void*	savepoint)	/* in: savepoint data */
@@ -2939,7 +2939,7 @@ ha_innobase::open(
 retry:
 	/* Get pointer to a table object in InnoDB dictionary cache */
 	ib_table = dict_table_get(norm_name, TRUE);
-
+	
 	if (NULL == ib_table) {
 		if (is_part && retries < 10) {
 			++retries;
@@ -4749,7 +4749,7 @@ convert_search_mode_to_innobase(
 		return(PAGE_CUR_GE);
 	case HA_READ_KEY_OR_PREV:
 		return(PAGE_CUR_LE);
-	case HA_READ_AFTER_KEY:
+	case HA_READ_AFTER_KEY:	
 		return(PAGE_CUR_G);
 	case HA_READ_BEFORE_KEY:
 		return(PAGE_CUR_L);
@@ -5732,7 +5732,7 @@ create_options_are_valid(
 			ret = FALSE;
 		}
 	}
-
+	
 	/* If KEY_BLOCK_SIZE was specified, check for its
 	dependencies. */
 	if (kbs_specified && !srv_file_per_table) {
@@ -8133,7 +8133,7 @@ innodb_mutex_show_status(
 }
 
 static
-bool innobase_show_status(handlerton *hton, THD* thd,
+bool innobase_show_status(handlerton *hton, THD* thd, 
                           stat_print_fn* stat_print,
                           enum ha_stat_type stat_type)
 {
@@ -8274,7 +8274,7 @@ ha_innobase::store_lock(
 
 		/* MySQL calls this function in DROP TABLE though this table
 		handle may belong to another thd that is running a query. Let
-		us in that case skip any changes to the prebuilt struct. */
+		us in that case skip any changes to the prebuilt struct. */ 
 
 	} else if ((lock_type == TL_READ && in_lock_tables)
 		   || (lock_type == TL_READ_HIGH_PRIORITY && in_lock_tables)
@@ -8427,7 +8427,7 @@ ha_innobase::innobase_get_autoinc(
 	ulonglong*	value)		/* out: autoinc value */
 {
  	*value = 0;
-
+ 
 	prebuilt->autoinc_error = innobase_lock_autoinc();
 
 	if (prebuilt->autoinc_error == DB_SUCCESS) {
@@ -8443,7 +8443,7 @@ ha_innobase::innobase_get_autoinc(
 }
 
 /***********************************************************************
-This function reads the global auto-inc counter. It doesn't use the
+This function reads the global auto-inc counter. It doesn't use the 
 AUTOINC lock even if the lock mode is set to TRADITIONAL. */
 UNIV_INTERN
 ulonglong
@@ -8466,10 +8466,10 @@ ha_innobase::innobase_peek_autoinc(void)
 	ut_a(auto_inc > 0);
 
 	dict_table_autoinc_unlock(innodb_table);
-
+ 
 	return(auto_inc);
 }
-
+  
 /*******************************************************************************
 This function initializes the auto-inc counter if it has not been
 initialized yet. This function does not change the value of the auto-inc

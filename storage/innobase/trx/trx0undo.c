@@ -1513,9 +1513,9 @@ trx_undo_create(
 /*============*/
 				/* out: DB_SUCCESS if successful in creating
 				the new undo lob object, possible error
-				codes are:
+				codes are: 
 				DB_TOO_MANY_CONCURRENT_TRXS
-				DB_OUT_OF_FILE_SPACE
+				DB_OUT_OF_FILE_SPACE 
 				DB_OUT_OF_MEMORY*/
 	trx_t*		trx,	/* in: transaction */
 	trx_rseg_t*	rseg,	/* in: rollback segment memory copy */

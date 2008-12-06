@@ -1219,7 +1219,7 @@ int yydebug;
 # define YYMAXDEPTH 10000
 #endif
 
-
+
 
 #if YYERROR_VERBOSE
 
@@ -1274,7 +1274,7 @@ yystpcpy (yydest, yysrc)
 
 #endif /* !YYERROR_VERBOSE */
 
-
+
 
 #if YYDEBUG
 /*--------------------------------.
@@ -1343,7 +1343,7 @@ yydestruct (yymsg, yytype, yyvaluep)
         break;
     }
 }
-
+
 
 
 /* The look-ahead symbol.  */
@@ -1379,7 +1379,7 @@ yyparse ()
 #endif
 #endif
 {
-
+  
   register int yystate;
   register int yyn;
   int yyresult;
@@ -2350,7 +2350,7 @@ yyreduce:
 
 /* Line 1010 of yacc.c.  */
 #line 2345 "pars0grm.c"
-
+
   yyvsp -= yylen;
   yyssp -= yylen;
 
