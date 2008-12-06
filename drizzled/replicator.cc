@@ -235,3 +235,51 @@ bool replicator_delete_row(Session *session, Table *table)
   return replicator_do_row(session, &param);
 }
 
+/* 
+  Here be Dragons!
+
+  Ok, not so much dragons, but this is where we handle either commits or rollbacks of 
+  statements. 
+*/
+typedef struct replicator_row_end_st
+{
+  bool autocommit;
+  bool commit;
+} replicator_row_end_st;
+
+/* We call this to end a statement (on each registered plugin) */
+static bool replicator_do_row_end_iterate (Session *session, plugin_ref plugin, void *p)
+{
+  replicator_t *repl= plugin_data(plugin, replicator_t *);
+  replicator_row_end_st *params= (replicator_row_end_st *)p;
+
+  /* call this loaded replicator plugin's replicator_func1 function pointer */
+  if (repl && repl->end_transaction)
+  {
+    if (repl->end_transaction(session, params->autocommit, params->commit))
+    {
+      /* TRANSLATORS: The leading word "replicator" is the name
+        of the plugin api, and so should not be translated. */
+      sql_print_error(_("replicator plugin '%s' end_transaction() failed"),
+                      (char *)plugin_name(plugin));
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool replicator_end_transaction(Session *session, bool autocommit, bool commit)
+{
+  bool foreach_rv;
+  replicator_row_end_st params;
+  
+  params.autocommit= autocommit;
+  params.commit= commit;
+
+  /* We need to free any data we did an init of for the session */
+  foreach_rv= plugin_foreach(session, replicator_do_row_end_iterate,
+                             DRIZZLE_REPLICATOR_PLUGIN, (void *) &params);
+
+  return foreach_rv;
+}

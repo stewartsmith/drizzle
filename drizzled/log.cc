@@ -27,6 +27,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/replication/replication.h>
 #include <libdrizzle/libdrizzle.h>
+#include <drizzled/replicator.h>
 #include <mysys/hash.h>
 #include <drizzled/replication/rli.h>
 
@@ -487,6 +488,8 @@ static int binlog_commit(handlerton *, Session *session, bool all)
   {
     Query_log_event qev(session, STRING_WITH_LEN("COMMIT"), true, false);
     qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
+    /* TODO: Fix return type */
+    (void)replicator_end_transaction(session, all, true);
     int error= binlog_end_trans(session, trx_data, &qev, all);
     return(error);
   }
@@ -545,6 +548,10 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
      */
     error= binlog_end_trans(session, trx_data, 0, all);
   }
+
+  /* TODO: Fix return type */
+  (void)replicator_end_transaction(session, all, false);
+
   return(error);
 }
 
@@ -3618,6 +3625,8 @@ int TC_LOG_BINLOG::log_xid(Session *session, my_xid xid)
   Xid_log_event xle(session, xid);
   binlog_trx_data *trx_data=
     (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
+  /* TODO: Fix return type */
+  (void)replicator_end_transaction(session, true, true);
   /*
     We always commit the entire transaction when writing an XID. Also
     note that the return value is inverted.

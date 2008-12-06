@@ -39,6 +39,7 @@ typedef struct replicator_st
                      const unsigned char *before, 
                      const unsigned char *after);
   bool (*row_delete)(Session *session, Table *table);
+  bool (*end_transaction)(Session *session, bool autocommit, bool commit);
 } replicator_t;
 
 #endif /* DRIZZLED_PLUGIN_REPLICATOR_H */

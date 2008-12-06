@@ -34,5 +34,6 @@ bool replicator_update_row(Session *session, Table *table,
                            const unsigned char *before, 
                            const unsigned char *after);
 bool replicator_delete_row(Session *session, Table *table);
+bool replicator_end_transaction(Session *session, bool autocommit, bool commit);
 
 #endif /* DRIZZLED_REPLICATOR_H */
