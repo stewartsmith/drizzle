@@ -109,7 +109,7 @@ performance, and over all maintenance then we are features.
 
 Please look here:
 
-https://blueprints.launchpad.net/drizzle/+spec/style-cleanup
+http://drizzle.org/wiki/Coding_Standards
 
 If you have a question on this, please email the mailing list so that we can
 clarify the document. And when you get the answer? Please update the code
