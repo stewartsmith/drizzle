@@ -2352,7 +2352,7 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state)
   pthread_mutex_lock(&LOCK_xid_cache);
   if (hash_search(&xid_cache, xid->key(), xid->key_length()))
     res=0;
-  else if (!(xs=(XID_STATE *)my_malloc(sizeof(*xs), MYF(MY_WME))))
+  else if (!(xs=(XID_STATE *)malloc(sizeof(*xs))))
     res=1;
   else
   {
@@ -2602,7 +2602,7 @@ namespace {
       }
       else
       {
-        m_memory= (unsigned char *) my_malloc(total_length, MYF(MY_WME));
+        m_memory= (unsigned char *) malloc(total_length);
         m_release_memory_on_destruction= true;
       }
     }

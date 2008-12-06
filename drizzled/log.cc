@@ -44,8 +44,6 @@
 /* max size of the log message */
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
 
-LOGGER logger;
-
 DRIZZLE_BIN_LOG drizzle_bin_log;
 uint64_t sync_binlog_counter= 0; /* We should rationalize the largest possible counters for binlog sync */
 
@@ -201,102 +199,6 @@ public:
 };
 
 handlerton *binlog_hton;
-
-
-/*
-  Log error with all enabled log event handlers
-
-  SYNOPSIS
-    error_log_print()
-
-    level             The level of the error significance: NOTE,
-                      WARNING or ERROR.
-    format            format string for the error message
-    args              list of arguments for the format string
-
-  RETURN
-    FALSE - OK
-    TRUE - error occured
-*/
-
-bool LOGGER::error_log_print(enum loglevel level, const char *format,
-                             va_list args)
-{
-  bool error= false;
-  Log_event_handler **current_handler;
-
-  /* currently we don't need locking here as there is no error_log table */
-  for (current_handler= error_log_handler_list ; *current_handler ;)
-    error= (*current_handler++)->log_error(level, format, args) || error;
-
-  return error;
-}
-
-
-void LOGGER::cleanup_base()
-{
-  assert(inited == 1);
-  rwlock_destroy(&LOCK_logger);
-}
-
-
-void LOGGER::cleanup_end()
-{
-  assert(inited == 1);
-}
-
-
-/**
-  Perform basic log initialization: create file-based log handler and
-  init error log.
-*/
-void LOGGER::init_base()
-{
-  assert(inited == 0);
-  inited= 1;
-
-  /* by default we use traditional error log */
-  init_error_log(LOG_FILE);
-
-  my_rwlock_init(&LOCK_logger, NULL);
-}
-
-
-bool LOGGER::flush_logs(Session *)
-{
-  int rc= 0;
-
-  /*
-    Now we lock logger, as nobody should be able to use logging routines while
-    log tables are closed
-  */
-  logger.lock_exclusive();
-
-  /* end of log flush */
-  logger.unlock();
-  return rc;
-}
-
-void LOGGER::init_error_log(uint32_t error_log_printer)
-{
-  if (error_log_printer & LOG_NONE)
-  {
-    error_log_handler_list[0]= 0;
-    return;
-  }
-
-}
-
-int LOGGER::set_handlers(uint32_t error_log_printer)
-{
-  /* error log table is not supported yet */
-  lock_exclusive();
-
-  init_error_log(error_log_printer);
-  unlock();
-
-  return 0;
-}
 
 
  /*
@@ -2219,7 +2121,8 @@ int Session::binlog_setup_trx_data()
   if (trx_data)
     return(0);                             // Already set up
 
-  trx_data= (binlog_trx_data*) my_malloc(sizeof(binlog_trx_data), MYF(MY_ZEROFILL));
+  trx_data= (binlog_trx_data*) malloc(sizeof(binlog_trx_data));
+  memset(trx_data, 0, sizeof(binlog_trx_data));
   if (!trx_data ||
       open_cached_file(&trx_data->trans_log, drizzle_tmpdir,
                        LOG_PREFIX, binlog_cache_size, MYF(MY_WME)))
@@ -2563,13 +2466,6 @@ err:
 
   pthread_mutex_unlock(&LOCK_log);
   return(error);
-}
-
-
-int error_log_print(enum loglevel level, const char *format,
-                    va_list args)
-{
-  return logger.error_log_print(level, format, args);
 }
 
 void DRIZZLE_BIN_LOG::rotate_and_purge(uint32_t flags)
@@ -3048,48 +2944,14 @@ void sql_perror(const char *message)
 
 bool flush_error_log()
 {
-  bool result=0;
+  bool result = 0;
   if (opt_error_log)
   {
-    char err_renamed[FN_REFLEN], *end;
-    end= strncpy(err_renamed,log_error_file,FN_REFLEN-4);
-    end+= strlen(err_renamed);
-    my_stpcpy(end, "-old");
     pthread_mutex_lock(&LOCK_error_log);
-    char err_temp[FN_REFLEN+4];
-    /*
-     On Windows is necessary a temporary file for to rename
-     the current error file.
-    */
-    strxmov(err_temp, err_renamed,"-tmp",NULL);
-    (void) my_delete(err_temp, MYF(0)); 
-    if (freopen(err_temp,"a+",stdout))
-    {
-      int fd;
-      size_t bytes;
-      unsigned char buf[IO_SIZE];
-
-      if(freopen(err_temp,"a+",stderr)==NULL)
-        return 1;
-      (void) my_delete(err_renamed, MYF(0));
-      my_rename(log_error_file,err_renamed,MYF(0));
-      if (freopen(log_error_file,"a+",stdout)==NULL)
-        return 1;
-      else
-        if(freopen(log_error_file,"a+",stderr)==NULL)
-          return 1;
-
-      if ((fd = my_open(err_temp, O_RDONLY, MYF(0))) >= 0)
-      {
-        while ((bytes= my_read(fd, buf, IO_SIZE, MYF(0))) &&
-               bytes != MY_FILE_ERROR)
-          my_fwrite(stderr, buf, bytes, MYF(0));
-        my_close(fd, MYF(0));
-      }
-      (void) my_delete(err_temp, MYF(0)); 
-    }
-    else
-     result= 1;
+    if (freopen(log_error_file,"a+",stdout)==NULL)
+      result = 1;
+    if (freopen(log_error_file,"a+",stderr)==NULL)
+      result = 1;
     pthread_mutex_unlock(&LOCK_error_log);
   }
    return result;
@@ -3241,8 +3103,9 @@ int TC_LOG_MMAP::open(const char *opt_name)
 
   npages=(uint)file_length/tc_log_page_size;
   assert(npages >= 3);             // to guarantee non-empty pool
-  if (!(pages=(PAGE *)my_malloc(npages*sizeof(PAGE), MYF(MY_WME|MY_ZEROFILL))))
+  if (!(pages=(PAGE *)malloc(npages*sizeof(PAGE))))
     goto err;
+  memset(pages, 0, npages*sizeof(PAGE));
   inited=3;
   for (pg=pages, i=0; i < npages; i++, pg++)
   {

@@ -548,7 +548,7 @@ bool sys_var_str::check(Session *session, set_var *var)
   'var' parameter is NULL pointer.
 */
 
-bool update_sys_var_str(sys_var_str *var_str, rw_lock_t *var_mutex,
+bool update_sys_var_str(sys_var_str *var_str, pthread_rwlock_t *var_mutex,
 			set_var *var)
 {
   char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
@@ -561,11 +561,11 @@ bool update_sys_var_str(sys_var_str *var_str, rw_lock_t *var_mutex,
     Replace the old value in such a way that the any thread using
     the value will work.
   */
-  rw_wrlock(var_mutex);
+  pthread_rwlock_wrlock(var_mutex);
   old_value= var_str->value;
   var_str->value= res;
   var_str->value_length= new_length;
-  rw_unlock(var_mutex);
+  pthread_rwlock_unlock(var_mutex);
   free(old_value);
   return 0;
 }
@@ -1938,7 +1938,6 @@ bool update_sys_var_str_path(Session *, sys_var_str *var_str,
   }
 
   pthread_mutex_lock(&LOCK_global_system_variables);
-  logger.lock_exclusive();
 
   old_value= var_str->value;
   var_str->value= res;
@@ -1952,7 +1951,6 @@ bool update_sys_var_str_path(Session *, sys_var_str *var_str,
     }
   }
 
-  logger.unlock();
   pthread_mutex_unlock(&LOCK_global_system_variables);
 
 err:
@@ -2949,9 +2947,9 @@ static KEY_CACHE *create_key_cache(const char *name, uint32_t length)
 {
   KEY_CACHE *key_cache;
   
-  if ((key_cache= (KEY_CACHE*) my_malloc(sizeof(KEY_CACHE),
-					     MYF(MY_ZEROFILL | MY_WME))))
+  if ((key_cache= (KEY_CACHE*) malloc(sizeof(KEY_CACHE))))
   {
+    memset(key_cache, 0, sizeof(KEY_CACHE));
     if (!new NAMED_LIST(&key_caches, name, length, (unsigned char*) key_cache))
     {
       free((char*) key_cache);

@@ -38,13 +38,13 @@ int errmsg_initializer(st_plugin_int *plugin)
     if (plugin->plugin->init((void *)p))
     {
       /* we're doing the errmsg plugin api,
-	 so we can't trust the errmsg api to emit our error messages
-	 so we will emit error messages to stderr */
+        so we can't trust the errmsg api to emit our error messages
+        so we will emit error messages to stderr */
       /* TRANSLATORS: The leading word "errmsg" is the name
-         of the plugin api, and so should not be translated. */
+        of the plugin api, and so should not be translated. */
       fprintf(stderr,
-	      _("errmsg plugin '%s' init() failed."),
-	      plugin->name.str);
+              _("errmsg plugin '%s' init() failed."),
+              plugin->name.str);
       goto err;
     }
   }
@@ -145,10 +145,8 @@ bool errmsg_vprintf (Session *session, int priority, const char *format, va_list
 
   /* call errmsg_iterate
      once for each loaded errmsg plugin */
-  foreach_rv= plugin_foreach(session,
-			     errmsg_iterate,
-			     DRIZZLE_ERRMSG_PLUGIN,
-			     (void *) &parms);
+  foreach_rv= plugin_foreach(session, errmsg_iterate,
+                             DRIZZLE_ERRMSG_PLUGIN, (void *) &parms);
   return foreach_rv;
 }
 

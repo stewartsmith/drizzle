@@ -62,8 +62,7 @@ public:
   { return (field_metadata & 0x00ff); }
   uint32_t row_pack_length() { return pack_length(); }
   virtual bool zero_pack() const { return 0; }
-  bool optimize_range(uint32_t idx __attribute__((unused)),
-                      uint32_t part __attribute__((unused)))
+  bool optimize_range(uint32_t, uint32_t)
   { return 0; }
   bool eq_def(Field *field);
   bool has_charset(void) const { return true; }

@@ -88,16 +88,9 @@ bool mysqld_show_create_db(Session *session, char *dbname, HA_CREATE_INFO *creat
 int mysqld_show_status(Session *session);
 int mysqld_show_variables(Session *session,const char *wild);
 bool mysqld_show_storage_engines(Session *session);
-bool mysqld_show_authors(Session *session);
-bool mysqld_show_contributors(Session *session);
-bool mysqld_show_privileges(Session *session);
 bool mysqld_show_column_types(Session *session);
 void mysqld_list_processes(Session *session,const char *user, bool verbose);
-bool mysqld_help (Session *session, const char *text);
 void calc_sum_of_all_status(STATUS_VAR *to);
-
-void append_definer(Session *session, String *buffer, const LEX_STRING *definer_user,
-                    const LEX_STRING *definer_host);
 
 int add_status_vars(SHOW_VAR *list);
 void remove_status_vars(SHOW_VAR *list);

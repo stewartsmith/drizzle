@@ -34,7 +34,6 @@ libfunctions_la_SOURCES = abs.cc \
 		  cos.cc \
 		  decimal_typecast.cc \
 		  divide.cc \
-		  eval_const_cond.cc \
 		  exp.cc \
 		  get_user_var.cc \
 		  get_variable.cc \
@@ -53,7 +52,6 @@ libfunctions_la_SOURCES = abs.cc \
 		  length.cc \
 		  ln.cc \
 		  locate.cc \
-		  lock.cc \
 		  log.cc \
 		  master_pos_wait.cc \
 		  min_max.cc \
@@ -120,7 +118,6 @@ nobase_dist_functionsinclude_HEADERS = \
 		length.h \
 		ln.h \
 		locate.h \
-		lock.h \
 		log.h \
 		master_pos_wait.h \
 		min_max.h \

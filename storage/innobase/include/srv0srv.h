@@ -132,7 +132,7 @@ extern ulint	srv_fast_shutdown;	 /* If this is 1, do not do a
 					 transactions). */
 extern ibool	srv_innodb_status;
 
-extern uint64_t	srv_stats_sample_pages;
+extern ib_uint64_t	srv_stats_sample_pages;
 
 extern ibool	srv_use_doublewrite_buf;
 extern ibool	srv_use_checksums;

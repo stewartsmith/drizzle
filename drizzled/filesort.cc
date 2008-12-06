@@ -32,7 +32,7 @@
 /* functions defined in this file */
 
 static char **make_char_array(char **old_pos, register uint32_t fields,
-                              uint32_t length, myf my_flag);
+                              uint32_t length);
 static unsigned char *read_buffpek_from_file(IO_CACHE *buffer_file, uint32_t count,
                                      unsigned char *buf);
 static ha_rows find_all_keys(SORTPARAM *param,SQL_SELECT *select,
@@ -153,8 +153,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   if (param.addon_field)
   {
     param.res_length= param.addon_length;
-    if (!(table_sort.addon_buf= (unsigned char *) my_malloc(param.addon_length,
-                                                    MYF(MY_WME))))
+    if (!(table_sort.addon_buf= (unsigned char *) malloc(param.addon_length)))
       goto err;
   }
   else
@@ -198,7 +197,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   }
 
   if (multi_byte_charset &&
-      !(param.tmp_buffer= (char*) my_malloc(param.sort_length,MYF(MY_WME))))
+      !(param.tmp_buffer= (char*) malloc(param.sort_length)))
     goto err;
 
   memavl= session->variables.sortbuff_size;
@@ -210,7 +209,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     param.keys=(uint32_t) cmin(records+1, keys);
     if ((table_sort.sort_keys=
 	 (unsigned char **) make_char_array((char **) table_sort.sort_keys,
-                                    param.keys, param.rec_length, MYF(0))))
+                                            param.keys, param.rec_length)))
       break;
     old_memavl=memavl;
     if ((memavl=memavl/4*3) < min_sort_memory && old_memavl > min_sort_memory)
@@ -360,14 +359,13 @@ void filesort_free_buffers(Table *table, bool full)
 /** Make a array of string pointers. */
 
 static char **make_char_array(char **old_pos, register uint32_t fields,
-                              uint32_t length, myf my_flag)
+                              uint32_t length)
 {
   register char **pos;
   char *char_pos;
 
   if (old_pos ||
-      (old_pos= (char**) my_malloc((uint32_t) fields*(length+sizeof(char*)),
-				   my_flag)))
+      (old_pos= (char**) malloc((uint32_t) fields*(length+sizeof(char*)))))
   {
     pos=old_pos; char_pos=((char*) (pos+fields)) -length;
     while (fields--) *(pos++) = (char_pos+= length);
@@ -387,7 +385,7 @@ static unsigned char *read_buffpek_from_file(IO_CACHE *buffpek_pointers, uint32_
   if (count > UINT_MAX/sizeof(BUFFPEK))
     return 0; /* sizeof(BUFFPEK)*count will overflow */
   if (!tmp)
-    tmp= (unsigned char *)my_malloc(length, MYF(MY_WME));
+    tmp= (unsigned char *)malloc(length);
   if (tmp)
   {
     if (reinit_io_cache(buffpek_pointers,READ_CACHE,0L,0,0) ||
@@ -966,7 +964,7 @@ static bool save_index(SORTPARAM *param, unsigned char **sort_keys, uint32_t cou
   if ((ha_rows) count > param->max_rows)
     count=(uint32_t) param->max_rows;
   if (!(to= table_sort->record_pointers= 
-        (unsigned char*) my_malloc(res_length*count, MYF(MY_WME))))
+        (unsigned char*) malloc(res_length*count)))
     return(1);                 /* purecov: inspected */
   for (unsigned char **end= sort_keys+count ; sort_keys != end ; sort_keys++)
   {
@@ -1498,8 +1496,8 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
   length+= (null_fields+7)/8;
 
   if (length+sortlength > session->variables.max_length_for_sort_data ||
-      !(addonf= (SORT_ADDON_FIELD *) my_malloc(sizeof(SORT_ADDON_FIELD)*
-                                               (fields+1), MYF(MY_WME))))
+      !(addonf= (SORT_ADDON_FIELD *) malloc(sizeof(SORT_ADDON_FIELD)*
+                                            (fields+1))))
     return 0;
 
   *plength= length;

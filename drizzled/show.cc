@@ -2524,8 +2524,6 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
   uint32_t table_open_method;
   bool old_value= session->no_warnings_for_error;
 
-  lex->reset_n_backup_query_tables_list(&query_tables_list_backup);
-
   /*
     We should not introduce deadlocks even if we already have some
     tables open and locked, since we won't lock tables which we will
@@ -2722,7 +2720,6 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
   error= 0;
 err:
   session->restore_backup_open_tables_state(&open_tables_state_backup);
-  lex->restore_backup_query_tables_list(&query_tables_list_backup);
   lex->derived_tables= derived_tables;
   lex->all_selects_list= old_all_select_lex;
   lex->sql_command= save_sql_command;
@@ -3642,10 +3639,10 @@ int fill_variables(Session *session, TableList *tables, COND *)
       schema_table_idx == SCH_GLOBAL_VARIABLES)
     option_type= OPT_GLOBAL;
 
-  rw_rdlock(&LOCK_system_variables_hash);
+  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   res= show_status_array(session, wild, enumerate_sys_vars(session, sorted_vars),
                          option_type, NULL, "", tables->table, upper_case_names);
-  rw_unlock(&LOCK_system_variables_hash);
+  pthread_rwlock_unlock(&LOCK_system_variables_hash);
   return(res);
 }
 
@@ -4658,9 +4655,10 @@ int initialize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table;
 
-  if (!(schema_table= (ST_SCHEMA_TABLE *)my_malloc(sizeof(ST_SCHEMA_TABLE),
-                                MYF(MY_WME | MY_ZEROFILL))))
+  if (!(schema_table= (ST_SCHEMA_TABLE *)malloc(sizeof(ST_SCHEMA_TABLE))))
       return(1);
+  memset(schema_table, 0, sizeof(ST_SCHEMA_TABLE));
+
   /* Historical Requirement */
   plugin->data= schema_table; // shortcut for the future
   if (plugin->plugin->init)

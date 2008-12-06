@@ -784,11 +784,10 @@ public:
 
   static void *operator new(size_t size)
   {
-    return (void*) my_malloc((uint)size, MYF(MY_WME|MY_FAE));
+    return (void*) malloc(size);
   }
 
-  static void operator delete(void *ptr,
-                              size_t)
+  static void operator delete(void *ptr, size_t)
   {
     free((unsigned char*) ptr);
   }

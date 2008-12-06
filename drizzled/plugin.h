@@ -381,7 +381,7 @@ struct st_mysql_plugin
   int (*deinit)(void *);/* the function to invoke when plugin is unloaded */
   struct st_mysql_show_var *status_vars;
   struct st_mysql_sys_var **system_vars;
-  void * __reserved1;   /* reserved for dependency checking             */
+  void *reserved1;   /* reserved for dependency checking             */
 };
 
 struct handlerton;
@@ -479,7 +479,7 @@ unsigned long session_get_thread_id(const Session *session);
   Allocate memory in the connection's local memory pool
 
   @details
-  When properly used in place of @c my_malloc(), this can significantly
+  When properly used in place of @c malloc(), this can significantly
   improve concurrency. Don't use this or related functions to allocate
   large chunks of memory. Use for temporary storage only. The memory
   will be freed automatically at the end of the statement; no explicit

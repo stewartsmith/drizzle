@@ -119,193 +119,6 @@ thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
   return rhs == lhs;
 }
 
-#ifdef EXTRA_DEBUG
-
-#define MAX_THREADS 100
-#define MAX_LOCKS   100
-#define MAX_FOUND_ERRORS	10		/* Report 10 first errors */
-static uint32_t found_errors=0;
-
-static int check_lock(struct st_lock_list *list, const char* lock_type,
-		      const char *where, bool same_owner, bool no_cond)
-{
-  THR_LOCK_DATA *data,**prev;
-  uint32_t count=0;
-  THR_LOCK_OWNER *first_owner;
-
-  prev= &list->data;
-  if (list->data)
-  {
-    enum thr_lock_type last_lock_type=list->data->type;
-
-    if (same_owner && list->data)
-      first_owner= list->data->owner;
-    for (data=list->data; data && count++ < MAX_LOCKS ; data=data->next)
-    {
-      if (data->type != last_lock_type)
-	last_lock_type=TL_IGNORE;
-      if (data->prev != prev)
-      {
-	fprintf(stderr,
-		"Warning: prev link %d didn't point at previous lock at %s: %s\n",
-		count, lock_type, where);
-	return 1;
-      }
-      if (same_owner &&
-          !thr_lock_owner_equal(data->owner, first_owner) &&
-	  last_lock_type != TL_WRITE_ALLOW_WRITE)
-      {
-	fprintf(stderr,
-		"Warning: Found locks from different threads in %s: %s\n",
-		lock_type,where);
-	return 1;
-      }
-      if (no_cond && data->cond)
-      {
-	fprintf(stderr,
-		"Warning: Found active lock with not reset cond %s: %s\n",
-		lock_type,where);
-	return 1;
-      }
-      prev= &data->next;
-    }
-    if (data)
-    {
-      fprintf(stderr,"Warning: found too many locks at %s: %s\n",
-	      lock_type,where);
-      return 1;
-    }
-  }
-  if (prev != list->last)
-  {
-    fprintf(stderr,"Warning: last didn't point at last lock at %s: %s\n",
-	    lock_type, where);
-    return 1;
-  }
-  return 0;
-}
-
-
-static void check_locks(THR_LOCK *lock, const char *where,
-			bool allow_no_locks)
-{
-  uint32_t old_found_errors=found_errors;
-
-  if (found_errors < MAX_FOUND_ERRORS)
-  {
-    if (check_lock(&lock->write,"write",where,1,1) |
-	check_lock(&lock->write_wait,"write_wait",where,0,0) |
-	check_lock(&lock->read,"read",where,0,1) |
-	check_lock(&lock->read_wait,"read_wait",where,0,0))
-      found_errors++;
-
-    if (found_errors < MAX_FOUND_ERRORS)
-    {
-      uint32_t count=0;
-      THR_LOCK_DATA *data;
-      for (data=lock->read.data ; data ; data=data->next)
-      {
-	if ((int) data->type == (int) TL_READ_NO_INSERT)
-	  count++;
-        /* Protect against infinite loop. */
-        assert(count <= lock->read_no_write_count);
-      }
-      if (count != lock->read_no_write_count)
-      {
-	found_errors++;
-	fprintf(stderr,
-		"Warning at '%s': Locks read_no_write_count was %u when it should have been %u\n", where, lock->read_no_write_count,count);
-      }      
-
-      if (!lock->write.data)
-      {
-	if (!allow_no_locks && !lock->read.data &&
-	    (lock->write_wait.data || lock->read_wait.data))
-	{
-	  found_errors++;
-	  fprintf(stderr,
-		  "Warning at '%s': No locks in use but locks are in wait queue\n",
-		  where);
-	}
-	if (!lock->write_wait.data)
-	{
-	  if (!allow_no_locks && lock->read_wait.data)
-	  {
-	    found_errors++;
-	    fprintf(stderr,
-		    "Warning at '%s': No write locks and waiting read locks\n",
-		    where);
-	  }
-	}
-	else
-	{
-	  if (!allow_no_locks &&
-	      (((lock->write_wait.data->type == TL_WRITE_CONCURRENT_INSERT ||
-		 lock->write_wait.data->type == TL_WRITE_ALLOW_WRITE) &&
-		!lock->read_no_write_count) ||
-	       lock->write_wait.data->type == TL_WRITE_ALLOW_READ ||
-	       (lock->write_wait.data->type == TL_WRITE_DELAYED &&
-		!lock->read.data)))
-	  {
-	    found_errors++;
-	    fprintf(stderr,
-		    "Warning at '%s': Write lock %d waiting while no exclusive read locks\n",where,(int) lock->write_wait.data->type);
-	  }
-	}	      
-      }
-      else
-      {						/* Have write lock */
-	if (lock->write_wait.data)
-	{
-	  if (!allow_no_locks && 
-	      lock->write.data->type == TL_WRITE_ALLOW_WRITE &&
-	      lock->write_wait.data->type == TL_WRITE_ALLOW_WRITE)
-	  {
-	    found_errors++;
-	    fprintf(stderr,
-		    "Warning at '%s': Found WRITE_ALLOW_WRITE lock waiting for WRITE_ALLOW_WRITE lock\n",
-		    where);
-	  }
-	}
-	if (lock->read.data)
-	{
-          if (!thr_lock_owner_equal(lock->write.data->owner,
-                                    lock->read.data->owner) &&
-	      ((lock->write.data->type > TL_WRITE_DELAYED &&
-		lock->write.data->type != TL_WRITE_ONLY) ||
-	       ((lock->write.data->type == TL_WRITE_CONCURRENT_INSERT ||
-		 lock->write.data->type == TL_WRITE_ALLOW_WRITE) &&
-		lock->read_no_write_count)))
-	  {
-	    found_errors++;
-	    fprintf(stderr,
-		    "Warning at '%s': Found lock of type %d that is write and read locked\n",
-		    where, lock->write.data->type);
-	  }
-	}
-	if (lock->read_wait.data)
-	{
-	  if (!allow_no_locks && lock->write.data->type <= TL_WRITE_DELAYED &&
-	      lock->read_wait.data->type <= TL_READ_HIGH_PRIORITY)
-	  {
-	    found_errors++;
-	    fprintf(stderr,
-		    "Warning at '%s': Found read lock of type %d waiting for write lock of type %d\n",
-		    where,
-		    (int) lock->read_wait.data->type,
-		    (int) lock->write.data->type);
-	  }
-	}
-      }
-    }
-  }
-  return;
-}
-
-#else /* EXTRA_DEBUG */
-#define check_locks(A,B,C)
-#endif
-
 
 	/* Initialize a lock */
 
@@ -448,12 +261,7 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
       else
 	wait->last=data->prev;
       data->type= TL_UNLOCK;                    /* No lock */
-      check_locks(data->lock, "killed or timed out wait_for_lock", 1);
       wake_up_waiters(data->lock);
-    }
-    else
-    {
-      check_locks(data->lock, "aborted wait_for_lock", 0);
     }
   }
   else
@@ -461,7 +269,6 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
     result= THR_LOCK_SUCCESS;
     if (data->lock->get_status)
       (*data->lock->get_status)(data->status_param, 0);
-    check_locks(data->lock,"got wait_for_lock",0);
   }
   pthread_mutex_unlock(&data->lock->mutex);
 
@@ -488,8 +295,6 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
   data->type=lock_type;
   data->owner= owner;                           /* Must be reset ! */
   pthread_mutex_lock(&lock->mutex);
-  check_locks(lock,(uint) lock_type <= (uint) TL_READ_NO_INSERT ?
-	      "enter read_lock" : "enter write_lock",0);
   if ((int) lock_type <= (int) TL_READ_NO_INSERT)
   {
     /* Request for READ lock */
@@ -515,7 +320,6 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	lock->read.last= &data->next;
 	if (lock_type == TL_READ_NO_INSERT)
 	  lock->read_no_write_count++;
-	check_locks(lock,"read lock with old write lock",0);
 	if (lock->get_status)
 	  (*lock->get_status)(data->status_param, 0);
 	statistic_increment(locks_immediate,&THR_LOCK_lock);
@@ -541,7 +345,6 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	(*lock->get_status)(data->status_param, 0);
       if (lock_type == TL_READ_NO_INSERT)
 	lock->read_no_write_count++;
-      check_locks(lock,"read lock with no write locks",0);
       statistic_increment(locks_immediate,&THR_LOCK_lock);
       goto end;
     }
@@ -619,7 +422,6 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	(*lock->write.last)=data;	/* Add to running fifo */
 	data->prev=lock->write.last;
 	lock->write.last= &data->next;
-	check_locks(lock,"second write lock",0);
 	if (data->lock->get_status)
 	  (*data->lock->get_status)(data->status_param, 0);
 	statistic_increment(locks_immediate,&THR_LOCK_lock);
@@ -652,7 +454,6 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	  lock->write.last= &data->next;
 	  if (data->lock->get_status)
 	    (*data->lock->get_status)(data->status_param, concurrent_insert);
-	  check_locks(lock,"only write lock",0);
 	  statistic_increment(locks_immediate,&THR_LOCK_lock);
 	  goto end;
 	}
@@ -684,8 +485,6 @@ static inline void free_all_read_locks(THR_LOCK *lock,
 				       bool using_concurrent_insert)
 {
   THR_LOCK_DATA *data=lock->read_wait.data;
-
-  check_locks(lock,"before freeing read locks",1);
 
   /* move all locks from read_wait list to read list */
   (*lock->read.last)=data;
@@ -723,7 +522,6 @@ static inline void free_all_read_locks(THR_LOCK *lock,
   *lock->read_wait.last=0;
   if (!lock->read_wait.data)
     lock->write_lock_count=0;
-  check_locks(lock,"after giving read locks",0);
 }
 
 	/* Unlock lock and free next thread on same lock */
@@ -733,7 +531,6 @@ void thr_unlock(THR_LOCK_DATA *data)
   THR_LOCK *lock=data->lock;
   enum thr_lock_type lock_type=data->type;
   pthread_mutex_lock(&lock->mutex);
-  check_locks(lock,"start of release lock",0);
 
   if (((*data->prev)=data->next))		/* remove from lock-list */
     data->next->prev= data->prev;
@@ -762,7 +559,6 @@ void thr_unlock(THR_LOCK_DATA *data)
   if (lock_type == TL_READ_NO_INSERT)
     lock->read_no_write_count--;
   data->type=TL_UNLOCK;				/* Mark unlocked */
-  check_locks(lock,"after releasing lock",1);
   wake_up_waiters(lock);
   pthread_mutex_unlock(&lock->mutex);
   return;
@@ -878,7 +674,6 @@ static void wake_up_waiters(THR_LOCK *lock)
       free_all_read_locks(lock,0);
   }
 end:
-  check_locks(lock, "after waking up waiters", 0);
   return;
 }
 
@@ -928,10 +723,6 @@ thr_multi_lock(THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
       thr_multi_unlock(data,(uint) (pos-data));
       return(result);
     }
-#ifdef MAIN
-    printf("Thread: %s  Got lock: 0x%lx  type: %d\n",my_thread_name(),
-	   (long) pos[0]->lock, pos[0]->type); fflush(stdout);
-#endif
   }
   /*
     Ensure that all get_locks() have the same status
@@ -991,11 +782,6 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
 
   for (pos=data,end=data+count; pos < end ; pos++)
   {
-#ifdef MAIN
-    printf("Thread: %s  Rel lock: 0x%lx  type: %d\n",
-	   my_thread_name(), (long) pos[0]->lock, pos[0]->type);
-    fflush(stdout);
-#endif
     if ((*pos)->type != TL_UNLOCK)
       thr_unlock(*pos);
   }
@@ -1121,7 +907,6 @@ void thr_downgrade_write_lock(THR_LOCK_DATA *in_data,
 
   pthread_mutex_lock(&lock->mutex);
   in_data->type= new_lock_type;
-  check_locks(lock,"after downgrading lock",0);
 
   pthread_mutex_unlock(&lock->mutex);
   return;
@@ -1139,7 +924,6 @@ bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
     pthread_mutex_unlock(&lock->mutex);
     return(data->type == TL_UNLOCK);	/* Test if Aborted */
   }
-  check_locks(lock,"before upgrading lock",0);
   /* TODO:  Upgrade to TL_WRITE_CONCURRENT_INSERT in some cases */
   data->type=TL_WRITE;				/* Upgrade lock */
 
@@ -1165,12 +949,8 @@ bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
       lock->write_wait.last= &data->next;
     data->prev= &lock->write_wait.data;
     lock->write_wait.data=data;
-    check_locks(lock,"upgrading lock",0);
   }
-  else
-  {
-    check_locks(lock,"waiting for lock",0);
-  }
+
   return(wait_for_lock(&lock->write_wait,data,1));
 }
 
@@ -1208,241 +988,3 @@ bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
   pthread_mutex_unlock(&lock->mutex);
   return(thr_upgrade_write_delay_lock(data));
 }
-
-
-#include <my_sys.h>
-
-/*****************************************************************************
-** Test of thread locks
-****************************************************************************/
-
-#ifdef MAIN
-
-struct st_test {
-  uint32_t lock_nr;
-  enum thr_lock_type lock_type;
-};
-
-THR_LOCK locks[5];			/* 4 locks */
-
-struct st_test test_0[] = {{0,TL_READ}};	/* One lock */
-struct st_test test_1[] = {{0,TL_READ},{0,TL_WRITE}}; /* Read and write lock of lock 0 */
-struct st_test test_2[] = {{1,TL_WRITE},{0,TL_READ},{2,TL_READ}};
-struct st_test test_3[] = {{2,TL_WRITE},{1,TL_READ},{0,TL_READ}}; /* Deadlock with test_2 ? */
-struct st_test test_4[] = {{0,TL_WRITE},{0,TL_READ},{0,TL_WRITE},{0,TL_READ}};
-struct st_test test_5[] = {{0,TL_READ},{1,TL_READ},{2,TL_READ},{3,TL_READ}}; /* Many reads */
-struct st_test test_6[] = {{0,TL_WRITE},{1,TL_WRITE},{2,TL_WRITE},{3,TL_WRITE}}; /* Many writes */
-struct st_test test_7[] = {{3,TL_READ}};
-struct st_test test_8[] = {{1,TL_READ_NO_INSERT},{2,TL_READ_NO_INSERT},{3,TL_READ_NO_INSERT}};	/* Should be quick */
-struct st_test test_9[] = {{4,TL_READ_HIGH_PRIORITY}};
-struct st_test test_10[] ={{4,TL_WRITE}};
-struct st_test test_11[] = {{0,TL_WRITE_LOW_PRIORITY},{1,TL_WRITE_LOW_PRIORITY},{2,TL_WRITE_LOW_PRIORITY},{3,TL_WRITE_LOW_PRIORITY}}; /* Many writes */
-struct st_test test_12[] = {{0,TL_WRITE_ALLOW_READ},{1,TL_WRITE_ALLOW_READ},{2,TL_WRITE_ALLOW_READ},{3,TL_WRITE_ALLOW_READ}}; /* Many writes */
-struct st_test test_13[] = {{0,TL_WRITE_CONCURRENT_INSERT},{1,TL_WRITE_CONCURRENT_INSERT},{2,TL_WRITE_CONCURRENT_INSERT},{3,TL_WRITE_CONCURRENT_INSERT}};
-struct st_test test_14[] = {{0,TL_WRITE_CONCURRENT_INSERT},{1,TL_READ}};
-struct st_test test_15[] = {{0,TL_WRITE_ALLOW_WRITE},{1,TL_READ}};
-struct st_test test_16[] = {{0,TL_WRITE_ALLOW_WRITE},{1,TL_WRITE_ALLOW_WRITE}};
-
-struct st_test *tests[] = {test_0,test_1,test_2,test_3,test_4,test_5,test_6,
-			   test_7,test_8,test_9,test_10,test_11,test_12,
-			   test_13,test_14,test_15,test_16};
-int lock_counts[]= {sizeof(test_0)/sizeof(struct st_test),
-		    sizeof(test_1)/sizeof(struct st_test),
-		    sizeof(test_2)/sizeof(struct st_test),
-		    sizeof(test_3)/sizeof(struct st_test),
-		    sizeof(test_4)/sizeof(struct st_test),
-		    sizeof(test_5)/sizeof(struct st_test),
-		    sizeof(test_6)/sizeof(struct st_test),
-		    sizeof(test_7)/sizeof(struct st_test),
-		    sizeof(test_8)/sizeof(struct st_test),
-		    sizeof(test_9)/sizeof(struct st_test),
-		    sizeof(test_10)/sizeof(struct st_test),
-		    sizeof(test_11)/sizeof(struct st_test),
-		    sizeof(test_12)/sizeof(struct st_test),
-		    sizeof(test_13)/sizeof(struct st_test),
-		    sizeof(test_14)/sizeof(struct st_test),
-		    sizeof(test_15)/sizeof(struct st_test),
-		    sizeof(test_16)/sizeof(struct st_test)
-};
-
-
-static pthread_cond_t COND_thread_count;
-static pthread_mutex_t LOCK_thread_count;
-static uint32_t thread_count;
-static uint32_t sum=0;
-
-#define MAX_LOCK_COUNT 8
-
-/* The following functions is for WRITE_CONCURRENT_INSERT */
-
-static void test_get_status(void* param __attribute__((unused)),
-                            int concurrent_insert __attribute__((unused)))
-{
-}
-
-static void test_update_status(void* param __attribute__((unused)))
-{
-}
-
-static void test_copy_status(void* to __attribute__((unused)) ,
-			     void *from __attribute__((unused)))
-{
-}
-
-static bool test_check_status(void* param __attribute__((unused)))
-{
-  return 0;
-}
-
-
-static void *test_thread(void *arg)
-{
-  int i,j,param=*((int*) arg);
-  THR_LOCK_DATA data[MAX_LOCK_COUNT];
-  THR_LOCK_OWNER owner;
-  THR_LOCK_INFO lock_info;
-  THR_LOCK_DATA *multi_locks[MAX_LOCK_COUNT];
-  my_thread_init();
-
-  printf("Thread %s (%d) started\n",my_thread_name(),param); fflush(stdout);
-
-
-  thr_lock_info_init(&lock_info);
-  thr_lock_owner_init(&owner, &lock_info);
-  for (i=0; i < lock_counts[param] ; i++)
-    thr_lock_data_init(locks+tests[param][i].lock_nr,data+i,NULL);
-  for (j=1 ; j < 10 ; j++)		/* try locking 10 times */
-  {
-    for (i=0; i < lock_counts[param] ; i++)
-    {					/* Init multi locks */
-      multi_locks[i]= &data[i];
-      data[i].type= tests[param][i].lock_type;
-    }
-    thr_multi_lock(multi_locks, lock_counts[param], &owner);
-    pthread_mutex_lock(&LOCK_thread_count);
-    {
-      int tmp=rand() & 7;			/* Do something from 0-2 sec */
-      if (tmp == 0)
-	sleep(1);
-      else if (tmp == 1)
-	sleep(2);
-      else
-      {
-	uint32_t k;
-	for (k=0 ; k < (uint32_t) (tmp-2)*100000L ; k++)
-	  sum+=k;
-      }
-    }
-    pthread_mutex_unlock(&LOCK_thread_count);
-    thr_multi_unlock(multi_locks,lock_counts[param]);
-  }
-
-  printf("Thread %s (%d) ended\n",my_thread_name(),param); fflush(stdout);
-  thr_print_locks();
-  pthread_mutex_lock(&LOCK_thread_count);
-  thread_count--;
-  pthread_cond_signal(&COND_thread_count); /* Tell main we are ready */
-  pthread_mutex_unlock(&LOCK_thread_count);
-  free((unsigned char*) arg);
-  return 0;
-}
-
-
-int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
-{
-  pthread_t tid;
-  pthread_attr_t thr_attr;
-  int i,*param,error;
-  MY_INIT(argv[0]);
-
-  printf("Main thread: %s\n",my_thread_name());
-
-  if ((error=pthread_cond_init(&COND_thread_count,NULL)))
-  {
-    fprintf(stderr,"Got error: %d from pthread_cond_init (errno: %d)",
-	    error,errno);
-    exit(1);
-  }
-  if ((error=pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST)))
-  {
-    fprintf(stderr,"Got error: %d from pthread_cond_init (errno: %d)",
-	    error,errno);
-    exit(1);
-  }
-
-  for (i=0 ; i < (int) array_elements(locks) ; i++)
-  {
-    thr_lock_init(locks+i);
-    locks[i].check_status= test_check_status;
-    locks[i].update_status=test_update_status;
-    locks[i].copy_status=  test_copy_status;
-    locks[i].get_status=   test_get_status;
-  }
-  if ((error=pthread_attr_init(&thr_attr)))
-  {
-    fprintf(stderr,"Got error: %d from pthread_attr_init (errno: %d)",
-	    error,errno);
-    exit(1);
-  }
-  if ((error=pthread_attr_setdetachstate(&thr_attr,PTHREAD_CREATE_DETACHED)))
-  {
-    fprintf(stderr,
-	    "Got error: %d from pthread_attr_setdetachstate (errno: %d)",
-	    error,errno);
-    exit(1);
-  }
-#ifndef pthread_attr_setstacksize		/* void return value */
-  if ((error=pthread_attr_setstacksize(&thr_attr,65536L)))
-  {
-    fprintf(stderr,"Got error: %d from pthread_attr_setstacksize (errno: %d)",
-	    error,errno);
-    exit(1);
-  }
-#endif
-#ifdef HAVE_THR_SETCONCURRENCY
-  thr_setconcurrency(2);
-#endif
-  for (i=0 ; i < (int) array_elements(lock_counts) ; i++)
-  {
-    param=(int*) malloc(sizeof(int));
-    *param=i;
-
-    if ((error=pthread_mutex_lock(&LOCK_thread_count)))
-    {
-      fprintf(stderr,"Got error: %d from pthread_mutex_lock (errno: %d)",
-	      error,errno);
-      exit(1);
-    }
-    if ((error=pthread_create(&tid,&thr_attr,test_thread,(void*) param)))
-    {
-      fprintf(stderr,"Got error: %d from pthread_create (errno: %d)\n",
-	      error,errno);
-      pthread_mutex_unlock(&LOCK_thread_count);
-      exit(1);
-    }
-    thread_count++;
-    pthread_mutex_unlock(&LOCK_thread_count);
-  }
-
-  pthread_attr_destroy(&thr_attr);
-  if ((error=pthread_mutex_lock(&LOCK_thread_count)))
-    fprintf(stderr,"Got error: %d from pthread_mutex_lock\n",error);
-  while (thread_count)
-  {
-    if ((error=pthread_cond_wait(&COND_thread_count,&LOCK_thread_count)))
-      fprintf(stderr,"Got error: %d from pthread_cond_wait\n",error);
-  }
-  if ((error=pthread_mutex_unlock(&LOCK_thread_count)))
-    fprintf(stderr,"Got error: %d from pthread_mutex_unlock\n",error);
-  for (i=0 ; i < (int) array_elements(locks) ; i++)
-    thr_lock_delete(locks+i);
-#ifdef EXTRA_DEBUG
-  if (found_errors)
-    printf("Got %d warnings\n",found_errors);
-  else
-#endif
-    printf("Test succeeded\n");
-  return 0;
-}
-
-#endif /* MAIN */

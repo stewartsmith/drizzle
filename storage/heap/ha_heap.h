@@ -57,8 +57,7 @@ public:
   uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
   double scan_time()
   { return (double) (stats.records+stats.deleted) / 20.0+10; }
-  double read_time(uint32_t index __attribute__((unused)),
-                   uint32_t ranges __attribute__((unused)),
+  double read_time(uint32_t, uint32_t,
                    ha_rows rows)
   { return (double) rows /  20.0+1; }
 

@@ -257,11 +257,7 @@ static bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
 void Item_func_date_format::fix_length_and_dec()
 {
   Session* session= current_session;
-  /*
-    Must use this_item() in case it's a local SP variable
-    (for ->max_length and ->str_value)
-  */
-  Item *arg1= args[1]->this_item();
+  Item *arg1= args[1];
 
   decimals=0;
   const CHARSET_INFO * const cs= session->variables.collation_connection;

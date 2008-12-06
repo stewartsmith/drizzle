@@ -519,10 +519,9 @@ int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
                       const char *wildstr,const char *wildend,
                       int escape, int w_one, int w_many);
 
-int my_strcasecmp_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
-                         const char *s, const char *t);
+int my_strcasecmp_mb_bin(const CHARSET_INFO * const, const char *s, const char *t);
 
-void my_hash_sort_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
+void my_hash_sort_mb_bin(const CHARSET_INFO *,
                          const unsigned char *key, size_t len, uint32_t *nr1, uint32_t *nr2);
 
 size_t my_strnxfrm_mb(const CHARSET_INFO * const,

@@ -100,7 +100,7 @@ public:
       delete file_buff;
   }
   const char *table_type(void) const { return "CSV"; }
-  const char *index_type(uint32_t inx __attribute__((unused)))
+  const char *index_type(uint32_t)
   { return "NONE"; }
   const char **bas_ext() const;
   uint64_t table_flags() const
@@ -108,9 +108,7 @@ public:
     return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT |
             HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE);
   }
-  uint32_t index_flags(uint32_t idx __attribute__((unused)),
-                       uint32_t part __attribute__((unused)),
-                       bool all_parts __attribute__((unused))) const
+  uint32_t index_flags(uint32_t, uint32_t, bool) const
   {
     /*
       We will never have indexes so this will never be called(AKA we return

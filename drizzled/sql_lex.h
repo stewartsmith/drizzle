@@ -511,11 +511,6 @@ public:
   uint32_t select_n_where_fields;
   enum_parsing_place parsing_place; /* where we are parsing expression */
   bool with_sum_func;   /* sum function indicator */
-  /* 
-    PS or SP cond natural joins was alredy processed with permanent
-    arena and all additional items which we need alredy stored in it
-  */
-  bool conds_processed_with_permanent_arena;
 
   uint32_t table_join_options;
   uint32_t in_sum_expr;
@@ -1398,12 +1393,6 @@ public:
   Alter_info alter_info;
 
   /*
-    field_list was created for view and should be removed before PS/SP
-    rexecuton
-  */
-  bool empty_field_list_on_rset;
-
-  /*
     Pointers to part of LOAD DATA statement that should be rewritten
     during replication ("LOCAL 'filename' REPLACE INTO" part).
   */
@@ -1459,9 +1448,6 @@ public:
     Restore the LEX and Session in case of a parse error.
   */
   static void cleanup_lex_after_parse_error(Session *session);
-
-  void reset_n_backup_query_tables_list(Query_tables_list *backup);
-  void restore_backup_query_tables_list(Query_tables_list *backup);
 
   bool table_or_sp_used();
 

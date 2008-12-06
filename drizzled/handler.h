@@ -313,8 +313,7 @@ public:
   /* Estimates calculation */
   virtual double scan_time(void)
   { return uint64_t2double(stats.data_file_length) / IO_SIZE + 2; }
-  virtual double read_time(uint32_t index __attribute__((unused)),
-                           uint32_t ranges, ha_rows rows)
+  virtual double read_time(uint32_t, uint32_t ranges, ha_rows rows)
   { return rows2double(ranges+rows); }
 
   virtual double index_only_read_time(uint32_t keynr, double records);
@@ -367,7 +366,7 @@ public:
   */
   virtual enum row_type get_row_type() const { return ROW_TYPE_NOT_USED; }
 
-  virtual const char *index_type(uint32_t key_number __attribute__((unused)))
+  virtual const char *index_type(uint32_t)
   { assert(0); return "";}
 
 
@@ -403,7 +402,7 @@ public:
     @retval  0           Success
     @retval  >0          Error code
   */
-  virtual int exec_bulk_update(uint32_t *dup_key_found __attribute__((unused)))
+  virtual int exec_bulk_update(uint32_t *)
   {
     assert(false);
     return HA_ERR_WRONG_COMMAND;
@@ -446,17 +445,15 @@ public:
   virtual int index_read_idx_map(unsigned char * buf, uint32_t index, const unsigned char * key,
                                  key_part_map keypart_map,
                                  enum ha_rkey_function find_flag);
-  virtual int index_next(unsigned char * buf __attribute__((unused)))
+  virtual int index_next(unsigned char *)
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_prev(unsigned char * buf __attribute__((unused)))
+  virtual int index_prev(unsigned char *)
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_first(unsigned char * buf __attribute__((unused)))
+  virtual int index_first(unsigned char *)
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_last(unsigned char * buf __attribute__((unused)))
+  virtual int index_last(unsigned char *)
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_next_same(unsigned char *buf __attribute__((unused)),
-                              const unsigned char *key __attribute__((unused)),
-                              uint32_t keylen __attribute__((unused)));
+  virtual int index_next_same(unsigned char *, const unsigned char *, uint32_t);
   /**
      @brief
      The following functions works like index_read, but it find the last
@@ -474,9 +471,8 @@ public:
   virtual int read_range_next();
   int compare_key(key_range *range);
   int compare_key2(key_range *range);
-  virtual int rnd_next(unsigned char *buf __attribute__((unused)))=0;
-  virtual int rnd_pos(unsigned char * buf __attribute__((unused)),
-                      unsigned char *pos __attribute__((unused)))=0;
+  virtual int rnd_next(unsigned char *)=0;
+  virtual int rnd_pos(unsigned char *, unsigned char *)=0;
   /**
     One has to use this method when to find
     random position by record as the plain
@@ -489,24 +485,19 @@ public:
     The following function is only needed for tables that may be temporary
     tables during joins.
   */
-  virtual int restart_rnd_next(unsigned char *buf __attribute__((unused)),
-                               unsigned char *pos __attribute__((unused)))
+  virtual int restart_rnd_next(unsigned char *, unsigned char *)
     { return HA_ERR_WRONG_COMMAND; }
-  virtual int rnd_same(unsigned char *buf __attribute__((unused)),
-                       uint32_t inx __attribute__((unused)))
+  virtual int rnd_same(unsigned char *, uint32_t)
     { return HA_ERR_WRONG_COMMAND; }
-  virtual ha_rows records_in_range(uint32_t inx __attribute__((unused)),
-                                   key_range *min_key __attribute__((unused)),
-                                   key_range *max_key __attribute__((unused)))
+  virtual ha_rows records_in_range(uint32_t, key_range *, key_range *)
     { return (ha_rows) 10; }
   virtual void position(const unsigned char *record)=0;
   virtual int info(uint)=0; // see my_base.h for full description
-  virtual uint32_t calculate_key_hash_value(Field **field_array __attribute__((unused)))
+  virtual uint32_t calculate_key_hash_value(Field **)
   { assert(0); return 0; }
-  virtual int extra(enum ha_extra_function operation __attribute__((unused)))
+  virtual int extra(enum ha_extra_function)
   { return 0; }
-  virtual int extra_opt(enum ha_extra_function operation,
-                        uint32_t cache_size __attribute__((unused)))
+  virtual int extra_opt(enum ha_extra_function operation, uint32_t)
   { return extra(operation); }
 
   /**
@@ -530,8 +521,7 @@ public:
   */
   virtual void try_semi_consistent_read(bool) {}
   virtual void unlock_row(void) {}
-  virtual int start_stmt(Session *session __attribute__((unused)),
-                         thr_lock_type lock_type __attribute__((unused)))
+  virtual int start_stmt(Session *, thr_lock_type)
   {return 0;}
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
@@ -557,17 +547,16 @@ public:
       insert_id_for_cur_row;
   }
 
-  virtual void update_create_info(HA_CREATE_INFO *create_info __attribute__((unused))) {}
+  virtual void update_create_info(HA_CREATE_INFO *) {}
   int check_old_types(void);
-  virtual int assign_to_keycache(Session* session __attribute__((unused)),
-                                 HA_CHECK_OPT* check_opt __attribute__((unused)))
+  virtual int assign_to_keycache(Session*, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
   /* end of the list of admin commands */
 
   virtual int indexes_are_disabled(void) {return 0;}
   virtual char *update_table_comment(const char * comment)
   { return (char*) comment;}
-  virtual void append_create_info(String *packet __attribute__((unused)))
+  virtual void append_create_info(String *)
   {}
   /**
       If index == MAX_KEY then a check for table is made and if index <
@@ -579,20 +568,19 @@ public:
     @retval   true            Foreign key defined on table or index
     @retval   false           No foreign key defined
   */
-  virtual bool is_fk_defined_on_table_or_index(uint32_t index __attribute__((unused)))
+  virtual bool is_fk_defined_on_table_or_index(uint32_t)
   { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return(NULL);}  /* gets foreign key create string from InnoDB */
   /** used in ALTER Table; 1 if changing storage engine is allowed */
   virtual bool can_switch_engines(void) { return 1; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */
-  virtual int get_foreign_key_list(Session *session __attribute__((unused)),
-                                   List<FOREIGN_KEY_INFO> *f_key_list __attribute__((unused)))
+  virtual int get_foreign_key_list(Session *, List<FOREIGN_KEY_INFO> *)
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
   virtual void init_table_handle_for_HANDLER()
   { return; }       /* prepare InnoDB for HANDLER */
-  virtual void free_foreign_key_create_info(char* str __attribute__((unused))) {}
+  virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
   virtual const char *table_type() const =0;
   /**
@@ -608,9 +596,8 @@ public:
   */
   virtual const char **bas_ext() const =0;
 
-  virtual int get_default_no_partitions(HA_CREATE_INFO *info __attribute__((unused))) { return 1;}
-  virtual bool get_no_parts(const char *name __attribute__((unused)),
-                            uint32_t *no_parts)
+  virtual int get_default_no_partitions(HA_CREATE_INFO *) { return 1;}
+  virtual bool get_no_parts(const char *, uint32_t *no_parts)
   {
     *no_parts= 0;
     return 0;
@@ -618,15 +605,11 @@ public:
 
   virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
 
-  virtual int add_index(Table *table_arg __attribute__((unused)),
-                        KEY *key_info __attribute__((unused)),
-                        uint32_t num_of_keys __attribute__((unused)))
+  virtual int add_index(Table *, KEY *, uint32_t)
   { return (HA_ERR_WRONG_COMMAND); }
-  virtual int prepare_drop_index(Table *table_arg __attribute__((unused)),
-                                 uint32_t *key_num __attribute__((unused)),
-                                 uint32_t num_of_keys __attribute__((unused)))
+  virtual int prepare_drop_index(Table *, uint32_t *, uint32_t)
   { return (HA_ERR_WRONG_COMMAND); }
-  virtual int final_drop_index(Table *table_arg __attribute__((unused)))
+  virtual int final_drop_index(Table *)
   { return (HA_ERR_WRONG_COMMAND); }
 
   uint32_t max_record_length() const
@@ -646,7 +629,7 @@ public:
   virtual uint32_t max_supported_key_parts(void) const { return MAX_REF_PARTS; }
   virtual uint32_t max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
-  virtual uint32_t min_record_length(uint32_t options __attribute__((unused))) const
+  virtual uint32_t min_record_length(uint32_t) const
   { return 1; }
 
   virtual bool low_byte_first(void) const { return 1; }
@@ -716,11 +699,9 @@ public:
   */
 
   virtual bool
-    register_query_cache_table(Session *session __attribute__((unused)),
-                               char *table_key __attribute__((unused)),
-                               uint32_t key_length __attribute__((unused)),
+    register_query_cache_table(Session *, char *, uint32_t,
                                qc_engine_callback *engine_callback,
-                               uint64_t *engine_data __attribute__((unused)))
+                               uint64_t *)
   {
     *engine_callback= 0;
     return true;
@@ -773,17 +754,14 @@ public:
  */
  virtual void cond_pop(void) { return; }
 
- virtual Item
-   *idx_cond_push(uint32_t keyno __attribute__((unused)),
-                  Item* idx_cond __attribute__((unused)))
+ virtual Item *idx_cond_push(uint32_t, Item *idx_cond)
  { return idx_cond; }
 
  /*
     Part of old fast alter table, to be depricated
   */
  virtual bool
-   check_if_incompatible_data(HA_CREATE_INFO *create_info __attribute__((unused)),
-                              uint32_t table_changes __attribute__((unused)))
+   check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
  { return COMPATIBLE_DATA_NO; }
 
  /* On-line ALTER Table interface */
@@ -811,11 +789,8 @@ public:
       just changing the frm file) without any change in the handler
       implementation.
  */
- virtual int
-   check_if_supported_alter(Table *altered_table __attribute__((unused)),
-                            HA_CREATE_INFO *create_info,
-                            HA_ALTER_FLAGS *alter_flags __attribute__((unused)),
-                            uint32_t table_changes)
+ virtual int check_if_supported_alter(Table *, HA_CREATE_INFO *create_info,
+                                      HA_ALTER_FLAGS * alter_flags, uint32_t table_changes)
  {
    if (this->check_if_incompatible_data(create_info, table_changes)
        == COMPATIBLE_DATA_NO)
@@ -838,11 +813,8 @@ public:
    @retval   0      OK
    @retval   error  error code passed from storage engine
  */
- virtual int alter_table_phase1(Session *session __attribute__((unused)),
-                                Table *altered_table __attribute__((unused)),
-                                HA_CREATE_INFO *create_info __attribute__((unused)),
-                                HA_ALTER_INFO *alter_info __attribute__((unused)),
-                                HA_ALTER_FLAGS *alter_flags  __attribute__((unused)))
+ virtual int alter_table_phase1(Session *, Table *, HA_CREATE_INFO *, HA_ALTER_INFO *,
+                                HA_ALTER_FLAGS *)
  {
    return HA_ERR_UNSUPPORTED;
  }
@@ -864,11 +836,8 @@ public:
       this call is to be wrapped with a DDL lock. This is currently NOT
       supported.
  */
- virtual int alter_table_phase2(Session *session  __attribute__((unused)),
-                                Table *altered_table  __attribute__((unused)),
-                                HA_CREATE_INFO *create_info __attribute__((unused)),
-                                HA_ALTER_INFO *alter_info __attribute__((unused)),
-                                HA_ALTER_FLAGS *alter_flags __attribute__((unused)))
+ virtual int alter_table_phase2(Session *, Table *, HA_CREATE_INFO *, HA_ALTER_INFO *,
+                                HA_ALTER_FLAGS *)
  {
    return HA_ERR_UNSUPPORTED;
  }
@@ -879,8 +848,7 @@ public:
     @param    session               The thread handle
     @param    table             The altered table, re-opened
  */
- virtual int alter_table_phase3(Session *session __attribute__((unused)),
-                                Table *table __attribute__((unused)))
+ virtual int alter_table_phase3(Session *, Table *)
  {
    return HA_ERR_UNSUPPORTED;
  }
@@ -916,9 +884,7 @@ public:
                                       lock conflict with NOWAIT option
     @retval HA_ERR_LOCK_DEADLOCK      Deadlock detected
   */
-  virtual int lock_table(Session *session         __attribute__((unused)),
-                         int lock_type    __attribute__((unused)),
-                         int lock_timeout __attribute__((unused)))
+  virtual int lock_table(Session *, int, int)
   {
     return HA_ERR_WRONG_COMMAND;
   }
@@ -960,8 +926,7 @@ private:
   */
 
   virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
-  virtual int index_init(uint32_t idx,
-                         bool sorted __attribute__((unused)))
+  virtual int index_init(uint32_t idx, bool)
   { active_index= idx; return 0; }
   virtual int index_end() { active_index= MAX_KEY; return 0; }
   /**
@@ -973,18 +938,17 @@ private:
   */
   virtual int rnd_init(bool scan)= 0;
   virtual int rnd_end() { return 0; }
-  virtual int write_row(unsigned char *buf __attribute__((unused)))
+  virtual int write_row(unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int update_row(const unsigned char *old_data __attribute__((unused)),
-                         unsigned char *new_data __attribute__((unused)))
+  virtual int update_row(const unsigned char *, unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int delete_row(const unsigned char *buf __attribute__((unused)))
+  virtual int delete_row(const unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
@@ -1018,17 +982,15 @@ private:
     @return  non-0 in case of failure, 0 in case of success.
     When lock_type is F_UNLCK, the return value is ignored.
   */
-  virtual int external_lock(Session *session __attribute__((unused)),
-                            int lock_type __attribute__((unused)))
+  virtual int external_lock(Session *, int)
   {
     return 0;
   }
   virtual void release_auto_increment(void) { return; };
   /** admin commands - called from mysql_admin_table */
-  virtual int check_for_upgrade(HA_CHECK_OPT *check_opt __attribute__((unused)))
+  virtual int check_for_upgrade(HA_CHECK_OPT *)
   { return 0; }
-  virtual int check(Session* session __attribute__((unused)),
-                    HA_CHECK_OPT* check_opt __attribute__((unused)))
+  virtual int check(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
   /**
@@ -1036,20 +998,15 @@ private:
      to specify CHECK option to use to call check()
      upon the table.
   */
-  virtual int repair(Session* session __attribute__((unused)),
-                     HA_CHECK_OPT* check_opt __attribute__((unused)))
+  virtual int repair(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
-  virtual void start_bulk_insert(ha_rows rows __attribute__((unused)))
+  virtual void start_bulk_insert(ha_rows)
   {}
   virtual int end_bulk_insert(void) { return 0; }
-  virtual int index_read(unsigned char * buf __attribute__((unused)),
-                         const unsigned char * key __attribute__((unused)),
-                         uint32_t key_len __attribute__((unused)),
-                         enum ha_rkey_function find_flag __attribute__((unused)))
+  virtual int index_read(unsigned char *, const unsigned char *, 
+                         uint32_t, enum ha_rkey_function)
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_read_last(unsigned char * buf __attribute__((unused)),
-                              const unsigned char * key __attribute__((unused)),
-                              uint32_t key_len __attribute__((unused)))
+  virtual int index_read_last(unsigned char *, const unsigned char *, uint32_t)
    { return (my_errno= HA_ERR_WRONG_COMMAND); }
   /**
     This method is similar to update_row, however the handler doesn't need
@@ -1064,9 +1021,7 @@ private:
     @retval  0   Bulk delete used by handler
     @retval  1   Bulk delete not used, normal operation used
   */
-  virtual int bulk_update_row(const unsigned char *old_data __attribute__((unused)),
-                              unsigned char *new_data __attribute__((unused)),
-                              uint32_t *dup_key_found __attribute__((unused)))
+  virtual int bulk_update_row(const unsigned char *, unsigned char *, uint32_t *)
   {
     assert(false);
     return HA_ERR_WRONG_COMMAND;
@@ -1085,32 +1040,25 @@ private:
     is emulated by doing a 'DELETE FROM t'. HA_ERR_WRONG_COMMAND is
     returned by storage engines that don't support this operation.
   */
-  virtual int reset_auto_increment(uint64_t value __attribute__((unused)))
+  virtual int reset_auto_increment(uint64_t)
   { return HA_ERR_WRONG_COMMAND; }
-  virtual int optimize(Session* session __attribute__((unused)),
-                       HA_CHECK_OPT* check_opt __attribute__((unused)))
+  virtual int optimize(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
-  virtual int analyze(Session* session __attribute__((unused)),
-                      HA_CHECK_OPT* check_opt __attribute__((unused)))
+  virtual int analyze(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
-  virtual bool check_and_repair(Session *session __attribute__((unused)))
+  virtual bool check_and_repair(Session *)
   { return true; }
-  virtual int disable_indexes(uint32_t mode __attribute__((unused)))
+  virtual int disable_indexes(uint32_t)
   { return HA_ERR_WRONG_COMMAND; }
-  virtual int enable_indexes(uint32_t mode __attribute__((unused)))
+  virtual int enable_indexes(uint32_t)
   { return HA_ERR_WRONG_COMMAND; }
-  virtual int discard_or_import_tablespace(bool discard __attribute__((unused)))
+  virtual int discard_or_import_tablespace(bool)
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
-  virtual int create(const char *name __attribute__((unused)),
-                     Table *form __attribute__((unused)),
-                     HA_CREATE_INFO *info __attribute__((unused)))=0;
+  virtual int create(const char *, Table *, HA_CREATE_INFO *)=0;
 
-  virtual int create_handler_files(const char *name __attribute__((unused)),
-                                   const char *old_name __attribute__((unused)),
-                                   int action_flag __attribute__((unused)),
-                                   HA_CREATE_INFO *info __attribute__((unused)))
+  virtual int create_handler_files(const char *, const char *, int, HA_CREATE_INFO *)
   { return false; }
 };
 
@@ -1403,7 +1351,7 @@ bool table_is_used(Table *table, bool wait_for_name_lock);
 Table *drop_locked_tables(Session *session,const char *db, const char *table_name);
 void abort_locked_tables(Session *session,const char *db, const char *table_name);
 void execute_init_command(Session *session, sys_var_str *init_command_var,
-                          rw_lock_t *var_mutex);
+                          pthread_rwlock_t *var_mutex);
 extern Field *not_found_field;
 extern Field *view_ref_found;
 

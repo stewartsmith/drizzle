@@ -83,7 +83,6 @@
 #define EXTRA_RECORDS	10			/* Extra records in sort */
 #define SCROLL_EXTRA	5			/* Extra scroll-rows. */
 #define FIELD_NAME_USED ((uint) 32768)		/* Bit set if fieldname used */
-#define FORM_NAME_USED	((uint) 16384)		/* Bit set if formname used */
 #define FIELD_NR_MASK	16383			/* To get fieldnumber */
 #define FERR		-1			/* Error from my_functions */
 #define CREATE_MODE	0			/* Default mode on new files */
@@ -119,26 +118,6 @@
   Views are not processed.
 */
 #define OPEN_TABLE_ONLY        OPEN_FRM_FILE_ONLY*2
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine
-  The flag means that we need to process views only to get necessary data.
-  Tables are not processed.
-*/
-#define OPEN_VIEW_ONLY         OPEN_TABLE_ONLY*2
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine.
-  The flag means that we need to open a view using
-  open_normal_and_derived_tables() function.
-*/
-#define OPEN_VIEW_FULL         OPEN_VIEW_ONLY*2
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine.
-  The flag means that I_S table uses optimization algorithm.
-*/
-#define OPTIMIZE_I_S_TABLE     OPEN_VIEW_FULL*2
 
 #define SC_INFO_LENGTH 4		/* Form format constant */
 #define TE_INFO_LENGTH 3

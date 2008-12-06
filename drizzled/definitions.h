@@ -107,7 +107,6 @@
 #define EXTRA_RECORDS	10			/* Extra records in sort */
 #define SCROLL_EXTRA	5			/* Extra scroll-rows. */
 #define FIELD_NAME_USED ((uint) 32768)		/* Bit set if fieldname used */
-#define FORM_NAME_USED	((uint) 16384)		/* Bit set if formname used */
 #define FIELD_NR_MASK	16383			/* To get fieldnumber */
 #define FERR		-1			/* Error from my_functions */
 #define CREATE_MODE	0			/* Default mode on new files */

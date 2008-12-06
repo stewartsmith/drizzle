@@ -377,7 +377,7 @@ int ha_heap::rnd_pos(unsigned char * buf, unsigned char *pos)
   return error;
 }
 
-void ha_heap::position(const unsigned char *record __attribute__((unused)))
+void ha_heap::position(const unsigned char *)
 {
   *(HEAP_PTR*) ref= heap_position(file);	// Ref is aligned
 }
@@ -442,8 +442,7 @@ int ha_heap::delete_all_rows()
   return 0;
 }
 
-int ha_heap::external_lock(Session *session __attribute__((unused)),
-                           int lock_type __attribute__((unused)))
+int ha_heap::external_lock(Session *, int)
 {
   return 0;					// No external locking
 }
@@ -556,7 +555,7 @@ int ha_heap::indexes_are_disabled(void)
   return heap_indexes_are_disabled(file);
 }
 
-THR_LOCK_DATA **ha_heap::store_lock(Session *session __attribute__((unused)),
+THR_LOCK_DATA **ha_heap::store_lock(Session *,
                                     THR_LOCK_DATA **to,
                                     enum thr_lock_type lock_type)
 {
@@ -577,7 +576,7 @@ int ha_heap::delete_table(const char *name)
 }
 
 
-void ha_heap::drop_table(const char *name __attribute__((unused)))
+void ha_heap::drop_table(const char *)
 {
   file->s->delete_on_close= 1;
   close();
@@ -811,9 +810,7 @@ void ha_heap::update_create_info(HA_CREATE_INFO *create_info)
   }
 }
 
-void ha_heap::get_auto_increment(uint64_t offset __attribute__((unused)),
-                                 uint64_t increment __attribute__((unused)),
-                                 uint64_t nb_desired_values __attribute__((unused)),
+void ha_heap::get_auto_increment(uint64_t, uint64_t, uint64_t,
                                  uint64_t *first_value,
                                  uint64_t *nb_reserved_values)
 {

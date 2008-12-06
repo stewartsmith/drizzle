@@ -841,9 +841,9 @@ uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned ch
 }
 
 
-uint32_t hp_rb_key_length(HP_KEYDEF *keydef, 
-		      const unsigned char *key __attribute__((unused)))
+uint32_t hp_rb_key_length(HP_KEYDEF *keydef, const unsigned char *not_used)
 {
+  (void)not_used;
   return keydef->length;
 }
 
