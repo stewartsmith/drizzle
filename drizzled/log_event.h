@@ -22,7 +22,7 @@
   @{
 
   @file
-  
+
   @brief Binary log event definitions.  This includes generic code
   common to all types of log events, as well as specific code for each
   type of log event.
@@ -215,7 +215,7 @@ struct sql_ex_info
 #define EXECUTE_LOAD_QUERY_HEADER_LEN  (QUERY_HEADER_LEN + EXECUTE_LOAD_QUERY_EXTRA_HEADER_LEN)
 #define INCIDENT_HEADER_LEN    2
 #define HEARTBEAT_HEADER_LEN   0
-/* 
+/*
   Max number of possible extra bytes in a replication event compared to a
   packet (i.e. a query) sent from client to master;
   First, an auxiliary log_event status vars estimation:
@@ -233,8 +233,8 @@ struct sql_ex_info
   MAX_SIZE_LOG_EVENT_STATUS + /* status */ \
   NAME_LEN + 1)
 
-/* 
-   Event header offsets; 
+/*
+   Event header offsets;
    these point to places inside the fixed header.
 */
 
@@ -478,11 +478,11 @@ enum Log_event_type
   INCIDENT_EVENT= 26,
 
   /*
-    Heartbeat event to be send by master at its idle time 
-    to ensure master's online status to slave 
+    Heartbeat event to be send by master at its idle time
+    to ensure master's online status to slave
   */
   HEARTBEAT_LOG_EVENT= 27,
-  
+
   /*
     Add new events here - right above this comment!
     Existing events (except ENUM_END_EVENT) should never change their numbers
@@ -530,7 +530,7 @@ struct event_coordinates
   @class Log_event
 
   This is the abstract base class for binary log events.
-  
+
   @section Log_event_binary_format Binary Format
 
   Any @c Log_event saved on disk consists of the following three
@@ -687,7 +687,7 @@ public:
 
 
   /*
-    The following type definition is to be used whenever data is placed 
+    The following type definition is to be used whenever data is placed
     and manipulated in a common buffer. Use this typedef for buffers
     that contain data containing binary and character data.
   */
@@ -1000,7 +1000,7 @@ protected:
 
 /**
   @class Query_log_event
-   
+
   A @c Query_log_event is created for each query that modifies the
   database, unless the query is logged row-based.
 
@@ -1591,7 +1591,7 @@ private:
     <td>4 byte unsigned integer</td>
     <td>The number n of fields on line (15) above.</td>
   </tr>
-  </table>    
+  </table>
 
   The Body contains the following components.
 
@@ -1957,7 +1957,7 @@ protected:
   Logs xid of the transaction-to-be-committed in the 2pc protocol.
   Has no meaning in replication, slaves ignore it.
 
-  @section Xid_log_event_binary_format Binary Format  
+  @section Xid_log_event_binary_format Binary Format
 */
 class Xid_log_event: public Log_event
 {
@@ -2620,7 +2620,7 @@ public:
 
   enum enum_flag
   {
-    /* 
+    /*
        Nothing here right now, but the flags support is there in
        preparation for changes that are coming.  Need to add a
        constant to make it compile under HP-UX: aCC does not like
@@ -2632,7 +2632,7 @@ public:
   typedef uint16_t flag_set;
 
   /* Special constants representing sets of flags */
-  enum 
+  enum
   {
     TM_NO_FLAGS = 0U
   };
@@ -2641,9 +2641,9 @@ public:
   void clear_flags(flag_set flag) { m_flags &= ~flag; }
   flag_set get_flags(flag_set flag) const { return m_flags & flag; }
 
-  Table_map_log_event(Session *session, Table *tbl, ulong tid, 
+  Table_map_log_event(Session *session, Table *tbl, ulong tid,
 		      bool is_transactional, uint16_t flags);
-  Table_map_log_event(const char *buf, uint32_t event_len, 
+  Table_map_log_event(const char *buf, uint32_t event_len,
                       const Format_description_log_event *description_event);
 
   ~Table_map_log_event();
@@ -2651,7 +2651,7 @@ public:
   virtual Log_event_type get_type_code() { return TABLE_MAP_EVENT; }
   virtual bool is_valid() const { return m_memory != NULL; /* we check malloc */ }
 
-  virtual int get_data_size() { return m_data_size; } 
+  virtual int get_data_size() { return m_data_size; }
   virtual int save_field_metadata();
   virtual bool write_data_header(IO_CACHE *file);
   virtual bool write_data_body(IO_CACHE *file);
@@ -2681,7 +2681,7 @@ private:
   /*
     The size of field metadata buffer set by calling save_field_metadata()
   */
-  ulong          m_field_metadata_size;   
+  ulong          m_field_metadata_size;
   unsigned char         *m_null_bits;
   unsigned char         *m_meta_memory;
 };
@@ -2736,7 +2736,7 @@ public:
     /* Value of the OPTION_RELAXED_UNIQUE_CHECKS flag in session->options */
     RELAXED_UNIQUE_CHECKS_F = (1U << 2),
 
-    /** 
+    /**
       Indicates that rows in this event are complete, that is contain
       values for all columns of the table.
      */
@@ -2746,7 +2746,7 @@ public:
   typedef uint16_t flag_set;
 
   /* Special constants representing sets of flags */
-  enum 
+  enum
   {
       RLE_NO_FLAGS = 0U
   };
@@ -2761,7 +2761,7 @@ public:
 
   int add_row_data(unsigned char *data, size_t length)
   {
-    return do_add_row_data(data,length); 
+    return do_add_row_data(data,length);
   }
 
   /* Member functions to implement superclass interface */
@@ -2788,13 +2788,13 @@ public:
   uint32_t     m_row_count;         /* The number of rows added to the event */
 
 protected:
-  /* 
+  /*
      The constructors are protected since you're supposed to inherit
      this class, not create instances of this class.
   */
-  Rows_log_event(Session*, Table*, ulong table_id, 
+  Rows_log_event(Session*, Table*, ulong table_id,
 		 MY_BITMAP const *cols, bool is_transactional);
-  Rows_log_event(const char *row_data, uint32_t event_len, 
+  Rows_log_event(const char *row_data, uint32_t event_len,
 		 Log_event_type event_type,
 		 const Format_description_log_event *description_event);
 
@@ -2860,23 +2860,23 @@ private:
       The member function will return 0 if all went OK, or a non-zero
       error code otherwise.
   */
-  virtual 
+  virtual
   int do_before_row_operations(const Slave_reporting_capability *const log) = 0;
 
   /*
     Primitive to clean up after a sequence of row executions.
 
     DESCRIPTION
-    
+
       After doing a sequence of do_prepare_row() and do_exec_row(),
       this member function should be called to clean up and release
       any allocated buffers.
-      
+
       The error argument, if non-zero, indicates an error which happened during
-      row processing before this function was called. In this case, even if 
+      row processing before this function was called. In this case, even if
       function is successful, it should return the error code given in the argument.
   */
-  virtual 
+  virtual
   int do_after_row_operations(const Slave_reporting_capability *const log,
                               int error) = 0;
 
@@ -2885,13 +2885,13 @@ private:
 
     DESCRIPTION
       The member function will do the actual execution needed to handle a row.
-      The row is located at m_curr_row. When the function returns, 
+      The row is located at m_curr_row. When the function returns,
       m_curr_row_end should point at the next row (one byte after the end
-      of the current row).    
+      of the current row).
 
     RETURN VALUE
       0 if execution succeeded, 1 if execution failed.
-      
+
   */
   virtual int do_exec_row(const Relay_log_info *const rli) = 0;
 
@@ -2910,23 +2910,16 @@ private:
 class Write_rows_log_event : public Rows_log_event
 {
 public:
-  enum 
+  enum
   {
     /* Support interface to Session::binlog_prepare_pending_rows_event */
     TYPE_CODE = WRITE_ROWS_EVENT
   };
 
-  Write_rows_log_event(Session*, Table*, ulong table_id, 
+  Write_rows_log_event(Session*, Table*, ulong table_id,
 		       bool is_transactional);
-  Write_rows_log_event(const char *buf, uint32_t event_len, 
+  Write_rows_log_event(const char *buf, uint32_t event_len,
                        const Format_description_log_event *description_event);
-  static bool binlog_row_logging_function(Session *session, Table *table,
-                                          bool is_transactional,
-                                          const unsigned char *,
-                                          const unsigned char *after_record)
-  {
-    return session->binlog_write_row(table, is_transactional, after_record);
-  }
 
 private:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
@@ -2952,7 +2945,7 @@ private:
 class Update_rows_log_event : public Rows_log_event
 {
 public:
-  enum 
+  enum
   {
     /* Support interface to Session::binlog_prepare_pending_rows_event */
     TYPE_CODE = UPDATE_ROWS_EVENT
@@ -2965,17 +2958,8 @@ public:
 
   virtual ~Update_rows_log_event();
 
-  Update_rows_log_event(const char *buf, uint32_t event_len, 
+  Update_rows_log_event(const char *buf, uint32_t event_len,
 			const Format_description_log_event *description_event);
-
-  static bool binlog_row_logging_function(Session *session, Table *table,
-                                          bool is_transactional,
-                                          const unsigned char *before_record,
-                                          const unsigned char *after_record)
-  {
-    return session->binlog_update_row(table, is_transactional,
-                                  before_record, after_record);
-  }
 
   virtual bool is_valid() const
   {
@@ -2999,7 +2983,7 @@ protected:
   RESPONSIBILITIES
 
     - Act as a container for rows that has been deleted on the master
-      and should be deleted on the slave. 
+      and should be deleted on the slave.
 
   COLLABORATION
 
@@ -3013,24 +2997,16 @@ protected:
 class Delete_rows_log_event : public Rows_log_event
 {
 public:
-  enum 
+  enum
   {
     /* Support interface to Session::binlog_prepare_pending_rows_event */
     TYPE_CODE = DELETE_ROWS_EVENT
   };
 
-  Delete_rows_log_event(Session*, Table*, ulong, 
+  Delete_rows_log_event(Session*, Table*, ulong,
 			bool is_transactional);
-  Delete_rows_log_event(const char *buf, uint32_t event_len, 
+  Delete_rows_log_event(const char *buf, uint32_t event_len,
 			const Format_description_log_event *description_event);
-  static bool binlog_row_logging_function(Session *session, Table *table,
-                                          bool is_transactional,
-                                          const unsigned char *before_record,
-                                          const unsigned char *)
-  {
-    return session->binlog_delete_row(table, is_transactional, before_record);
-  }
-  
 protected:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
 
@@ -3125,7 +3101,7 @@ int append_query_string(const CHARSET_INFO * const csinfo,
 static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,
                                                        FILE *file)
 {
-  return         
+  return
     my_b_copy_to_file(cache, file) ||
     reinit_io_cache(cache, WRITE_CACHE, 0, false, true);
 }
@@ -3139,7 +3115,7 @@ static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,
   slave without being logged. Slave itself does not store it in relay log
   but rather uses a data for immediate checks and throws away the event.
 
-  Two members of the class log_ident and Log_event::log_pos comprise 
+  Two members of the class log_ident and Log_event::log_pos comprise
   @see the event_coordinates instance. The coordinates that a heartbeat
   instance carries correspond to the last event master has sent from
   its binlog.
@@ -3158,7 +3134,7 @@ public:
     }
   const char * get_log_ident() { return log_ident; }
   uint32_t get_ident_len() { return ident_len; }
-  
+
 private:
   const char* log_ident;
   uint32_t ident_len;

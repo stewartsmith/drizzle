@@ -23,7 +23,7 @@
 
 /**
  * This is all to work around what I _think_ is a bug in Sun Studio headers
- * But for now, it just gets things compiling while I get the Sun Studio 
+ * But for now, it just gets things compiling while I get the Sun Studio
  * guys to look at it.
  */
 
@@ -33,7 +33,7 @@
 # endif
 # include CMATH_H
 
-# if defined(__cplusplus) 
+# if defined(__cplusplus)
 
 #  if defined(NEED_ISNAN)
 int isnan (double a);

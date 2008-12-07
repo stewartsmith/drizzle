@@ -101,7 +101,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
       while ((info->lastpos >= info->state->data_file_length &&
               (search_flag != HA_READ_KEY_EXACT ||
               last_used_keyseg != keyinfo->seg + keyinfo->keysegs)) ||
-             (info->index_cond_func && 
+             (info->index_cond_func &&
               !(res= mi_check_index_cond(info, inx, buf))))
       {
         uint32_t not_used[2];

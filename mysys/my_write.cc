@@ -29,7 +29,7 @@ size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFl
   /* The behavior of write(fd, buf, 0) is not portable */
   if (unlikely(!Count))
     return(0);
-  
+
   for (;;)
   {
     if ((writenbytes= write(Filedes, Buffer, Count)) == Count)

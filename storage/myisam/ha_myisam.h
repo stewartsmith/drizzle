@@ -141,12 +141,12 @@ public:
                             uint32_t n_ranges, uint32_t mode, HANDLER_BUFFER *buf);
   int multi_range_read_next(char **range_info);
   ha_rows multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                                      void *seq_init_param, 
+                                      void *seq_init_param,
                                       uint32_t n_ranges, uint32_t *bufsz,
                                       uint32_t *flags, COST_VECT *cost);
   int multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
                             uint32_t *bufsz, uint32_t *flags, COST_VECT *cost);
-  
+
   /* Index condition pushdown implementation */
   Item *idx_cond_push(uint32_t keyno, Item* idx_cond);
   bool check_if_supported_virtual_columns(void) { return true; }

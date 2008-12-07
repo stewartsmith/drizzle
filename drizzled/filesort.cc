@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2006 MySQL AB  
+/* Copyright (C) 2000-2006 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ static int merge_index(SORTPARAM *param,unsigned char *sort_buffer,
 		       BUFFPEK *buffpek,
 		       uint32_t maxbuffer,IO_CACHE *tempfile,
 		       IO_CACHE *outfile);
-static bool save_index(SORTPARAM *param,unsigned char **sort_keys, uint32_t count, 
+static bool save_index(SORTPARAM *param,unsigned char **sort_keys, uint32_t count,
                        filesort_info_st *table_sort);
 static uint32_t suffix_length(uint32_t string_length);
 static uint32_t sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
@@ -101,7 +101,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   BUFFPEK *buffpek;
   ha_rows records= HA_POS_ERROR;
   unsigned char **sort_keys= 0;
-  IO_CACHE tempfile, buffpek_pointers, *selected_records_file, *outfile; 
+  IO_CACHE tempfile, buffpek_pointers, *selected_records_file, *outfile;
   SORTPARAM param;
   bool multi_byte_charset;
 
@@ -117,14 +117,14 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   */
   ha_release_temporary_latches(session);
 
-  /* 
-    Don't use table->sort in filesort as it is also used by 
-    QUICK_INDEX_MERGE_SELECT. Work with a copy and put it back at the end 
+  /*
+    Don't use table->sort in filesort as it is also used by
+    QUICK_INDEX_MERGE_SELECT. Work with a copy and put it back at the end
     when index_merge select has finished with it.
   */
   memcpy(&table_sort, &table->sort, sizeof(filesort_info_st));
   table->sort.io_cache= NULL;
-  
+
   outfile= table_sort.io_cache;
   my_b_clear(&tempfile);
   my_b_clear(&buffpek_pointers);
@@ -137,11 +137,11 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   param.addon_length= 0;
   if (!(table->file->ha_table_flags() & HA_FAST_KEY_READ) && !sort_positions)
   {
-    /* 
-      Get the descriptors of all fields whose values are appended 
+    /*
+      Get the descriptors of all fields whose values are appended
       to sorted fields and get its total length in param.spack_length.
     */
-    param.addon_field= get_addon_fields(session, table->field, 
+    param.addon_field= get_addon_fields(session, table->field,
                                         param.sort_length,
                                         &param.addon_length);
   }
@@ -159,8 +159,8 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   else
   {
     param.res_length= param.ref_length;
-    /* 
-      The reference to the record is considered 
+    /*
+      The reference to the record is considered
       as an additional sorted field
     */
     param.sort_length+= param.ref_length;
@@ -188,8 +188,8 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   {
     records= table->file->estimate_rows_upper_bound();
     /*
-      If number of records is not known, use as much of sort buffer 
-      as possible. 
+      If number of records is not known, use as much of sort buffer
+      as possible.
     */
     if (records == HA_POS_ERROR)
       records--;  // we use 'records+1' below.
@@ -579,7 +579,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
 
   if (session->is_error())
     return(HA_POS_ERROR);
-  
+
   /* Signal we should use orignal column read and write maps */
   sort_form->column_bitmaps_set(save_read_set, save_write_set);
 
@@ -814,7 +814,7 @@ static void make_sortkey(register SORTPARAM *param,
           if (maybe_null)
           {
             if (item->null_value)
-            { 
+            {
               memset(to, 0, sort_field->length+1);
               to++;
               break;
@@ -843,7 +843,7 @@ static void make_sortkey(register SORTPARAM *param,
 	  break;
 	}
       case ROW_RESULT:
-      default: 
+      default:
 	// This case should never be choosen
 	assert(0);
 	break;
@@ -866,7 +866,7 @@ static void make_sortkey(register SORTPARAM *param,
 
   if (param->addon_field)
   {
-    /* 
+    /*
       Save field values appended to sorted fields.
       First null bit indicators are appended then field values follow.
       In this implementation we use fixed layout for field values -
@@ -952,7 +952,7 @@ static void register_used_fields(SORTPARAM *param)
 }
 
 
-static bool save_index(SORTPARAM *param, unsigned char **sort_keys, uint32_t count, 
+static bool save_index(SORTPARAM *param, unsigned char **sort_keys, uint32_t count,
                        filesort_info_st *table_sort)
 {
   uint32_t offset,res_length;
@@ -963,7 +963,7 @@ static bool save_index(SORTPARAM *param, unsigned char **sort_keys, uint32_t cou
   offset= param->rec_length-res_length;
   if ((ha_rows) count > param->max_rows)
     count=(uint32_t) param->max_rows;
-  if (!(to= table_sort->record_pointers= 
+  if (!(to= table_sort->record_pointers=
         (unsigned char*) malloc(res_length*count)))
     return(1);                 /* purecov: inspected */
   for (unsigned char **end= sort_keys+count ; sort_keys != end ; sort_keys++)
@@ -1142,7 +1142,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
 
   /* The following will fire if there is not enough space in sort_buffer */
   assert(maxcount!=0);
-  
+
   if (param->unique_buff)
   {
     cmp= param->compare;
@@ -1170,7 +1170,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
 
   if (param->unique_buff)
   {
-    /* 
+    /*
        Called by Unique::get()
        Copy the first argument to param->unique_buff for unique removal.
        Store it also in 'to_file'.
@@ -1289,10 +1289,10 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
       for (end= strpos+buffpek->mem_count*rec_length ;
            strpos != end ;
            strpos+= rec_length)
-      {     
+      {
         if (my_b_write(to_file, (unsigned char *) strpos, res_length))
         {
-          error=1; goto err;                        
+          error=1; goto err;
         }
       }
     }
@@ -1390,7 +1390,7 @@ sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
 	sortorder->length=sortorder->item->max_length;
         set_if_smaller(sortorder->length, session->variables.max_sort_length);
 	if (use_strnxfrm((cs=sortorder->item->collation.collation)))
-	{ 
+	{
           sortorder->length= cs->coll->strnxfrmlen(cs, sortorder->length);
 	  sortorder->need_strxnfrm= 1;
 	  *multi_byte_charset= 1;
@@ -1407,7 +1407,7 @@ sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
 	break;
       case DECIMAL_RESULT:
         sortorder->length=
-          my_decimal_get_binary_size(sortorder->item->max_length - 
+          my_decimal_get_binary_size(sortorder->item->max_length -
                                      (sortorder->item->decimals ? 1 : 0),
                                      sortorder->item->decimals);
         break;
@@ -1415,7 +1415,7 @@ sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
 	sortorder->length=sizeof(double);
 	break;
       case ROW_RESULT:
-      default: 
+      default:
 	// This case should never be choosen
 	assert(0);
 	break;
@@ -1437,7 +1437,7 @@ sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
 
   The function first finds out what fields are used in the result set.
   Then it calculates the length of the buffer to store the values of
-  these fields together with the value of sort values. 
+  these fields together with the value of sort values.
   If the calculated length is not greater than max_length_for_sort_data
   the function allocates memory for an array of descriptors containing
   layouts for the values of the non-sorted fields in the buffer and
@@ -1475,7 +1475,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
     Note for future refinement:
     This this a too strong condition.
     Actually we need only the fields referred in the
-    result set. And for some of them it makes sense to use 
+    result set. And for some of them it makes sense to use
     the values directly from sorted fields.
   */
   *plength= 0;
@@ -1490,7 +1490,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
     if (field->maybe_null())
       null_fields++;
     fields++;
-  } 
+  }
   if (!fields)
     return 0;
   length+= (null_fields+7)/8;
@@ -1525,7 +1525,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
     addonf++;
   }
   addonf->field= 0;     // Put end marker
-  
+
   return (addonf-fields);
 }
 
@@ -1545,7 +1545,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
     void.
 */
 
-static void 
+static void
 unpack_addon_fields(struct st_sort_addon_field *addon_field, unsigned char *buff)
 {
   Field *field;

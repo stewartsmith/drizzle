@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_USER_H
 #define DRIZZLED_FUNCTIONS_STR_USER_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 #include <drizzled/functions/str/sysconst.h>
 
 class Item_func_user :public Item_func_sysconst

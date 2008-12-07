@@ -33,7 +33,7 @@ int heap_rlast(HP_INFO *info, unsigned char *record, int inx)
     if ((pos = tree_search_edge(&keyinfo->rb_tree, info->parents,
                                 &info->last_pos, offsetof(TREE_ELEMENT, right))))
     {
-      memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos), 
+      memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos),
 	     sizeof(unsigned char*));
       info->current_ptr = pos;
       hp_extract_record(share, record, pos);

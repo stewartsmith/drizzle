@@ -1,15 +1,15 @@
 /* Copyright (C) 2002 MySQL AB & tommy@valley.ne.jp.
-   
+
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
    License as published by the Free Software Foundation; version 2
    of the License.
-   
+
    This library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-   
+
    You should have received a copy of the GNU Library General Public
    License along with this library; if not, write to the Free
    Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
@@ -69,7 +69,7 @@ static unsigned char bin_char_array[] =
 bool my_coll_init_8bit_bin(CHARSET_INFO *cs,
                            cs_alloc_func)
 {
-  cs->max_sort_char=255; 
+  cs->max_sort_char=255;
   return false;
 }
 
@@ -159,7 +159,7 @@ int my_strnncoll_8bit_bin(const CHARSET_INFO * const,
 */
 
 int my_strnncollsp_8bit_bin(const CHARSET_INFO * const,
-                            const unsigned char *a, size_t a_length, 
+                            const unsigned char *a, size_t a_length,
                             const unsigned char *b, size_t b_length,
                             bool diff_if_only_endspace_difference)
 {
@@ -239,7 +239,7 @@ int my_mb_wc_bin(const CHARSET_INFO * const,
 {
   if (str >= end)
     return MY_CS_TOOSMALL;
-  
+
   *wc=str[0];
   return 1;
 }
@@ -265,7 +265,7 @@ void my_hash_sort_8bit_bin(const CHARSET_INFO * const,
                            uint32_t *nr1, uint32_t *nr2)
 {
   const unsigned char *pos = key;
-  
+
   /*
      Remove trailing spaces. We have to do this to be able to compare
     'A ' and 'A' as identical
@@ -274,7 +274,7 @@ void my_hash_sort_8bit_bin(const CHARSET_INFO * const,
 
   for (; pos < (unsigned char*) key ; pos++)
   {
-    nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) * 
+    nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) *
 	     ((uint)*pos)) + (nr1[0] << 8);
     nr2[0]+=3;
   }
@@ -287,12 +287,12 @@ void my_hash_sort_bin(const CHARSET_INFO * const,
                       uint32_t *nr1, uint32_t *nr2)
 {
   const unsigned char *pos = key;
-  
+
   key+= len;
-  
+
   for (; pos < (unsigned char*) key ; pos++)
   {
-    nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) * 
+    nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) *
 	     ((uint)*pos)) + (nr1[0] << 8);
     nr2[0]+=3;
   }
@@ -314,7 +314,7 @@ int my_wildcmp_bin(const CHARSET_INFO * const cs,
                    int escape, int w_one, int w_many)
 {
   int result= -1;			/* Not found, using wildcards */
-  
+
   while (wildstr != wildend)
   {
     while (*wildstr != w_many && *wildstr != w_one)
@@ -360,7 +360,7 @@ int my_wildcmp_bin(const CHARSET_INFO * const cs,
 	return(0);			/* match if w_many is last */
       if (str == str_end)
 	return(-1);
-      
+
       if ((cmp= *wildstr) == escape && wildstr+1 != wildend)
 	cmp= *++wildstr;
 

@@ -303,8 +303,8 @@ static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   my_off_t next_page, dupp_key_pos;
 
   search_key_length= (comp_flag & SEARCH_FIND) ? key_length : USE_WHOLE_KEY;
-  if (!(temp_buff= (unsigned char*) my_alloca((uint) keyinfo->block_length+
-				      MI_MAX_KEY_BUFF*2)))
+  if (!(temp_buff= (unsigned char*) malloc(keyinfo->block_length+
+				           MI_MAX_KEY_BUFF*2)))
     return(-1);
   if (!_mi_fetch_keypage(info,keyinfo,page,DFLT_INIT_HITS,temp_buff,0))
     goto err;
@@ -324,7 +324,7 @@ static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
     {
       info->dupp_key_pos= dupp_key_pos;
-      my_afree((unsigned char*) temp_buff);
+      free(temp_buff);
       my_errno=HA_ERR_FOUND_DUPP_KEY;
       return(-1);
     }
@@ -343,10 +343,10 @@ static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     if (_mi_write_keypage(info,keyinfo,page,DFLT_INIT_HITS,temp_buff))
       goto err;
   }
-  my_afree((unsigned char*) temp_buff);
+  free(temp_buff);
   return(error);
 err:
-  my_afree((unsigned char*) temp_buff);
+  free(temp_buff);
   return (-1);
 } /* w_search */
 

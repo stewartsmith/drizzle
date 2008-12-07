@@ -62,7 +62,7 @@ class ha_archive: public handler
 {
   THR_LOCK_DATA lock;        /* MySQL lock */
   ARCHIVE_SHARE *share;      /* Shared lock info */
-  
+
   azio_stream archive;            /* Archive file we are working with */
   my_off_t current_position;  /* The position of the row we just read */
   unsigned char byte_buffer[IO_SIZE]; /* Initial buffer for our string */
@@ -137,8 +137,8 @@ public:
   int repair(Session* session, HA_CHECK_OPT* check_opt);
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
-  enum row_type get_row_type() const 
-  { 
+  enum row_type get_row_type() const
+  {
     return ROW_TYPE_COMPRESSED;
   }
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,

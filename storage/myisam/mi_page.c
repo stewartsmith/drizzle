@@ -20,7 +20,7 @@
 	/* Fetch a key-page in memory */
 
 unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
-			 my_off_t page, int level, 
+			 my_off_t page, int level,
                          unsigned char *buff, int return_buffer)
 {
   unsigned char *tmp;

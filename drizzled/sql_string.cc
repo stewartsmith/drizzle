@@ -181,7 +181,7 @@ bool String::needs_conversion(uint32_t arg_length,
 {
   *offset= 0;
   if (!to_cs ||
-      (to_cs == &my_charset_bin) || 
+      (to_cs == &my_charset_bin) ||
       (to_cs == from_cs) ||
       my_charset_same(from_cs, to_cs) ||
       ((from_cs == &my_charset_bin) &&
@@ -206,8 +206,8 @@ bool String::needs_conversion(uint32_t arg_length,
   NOTES
     For real multi-byte, ascii incompatible charactser sets,
     like UCS-2, add leading zeros if we have an incomplete character.
-    Thus, 
-      SELECT _ucs2 0xAA 
+    Thus,
+      SELECT _ucs2 0xAA
     will automatically be converted into
       SELECT _ucs2 0x00AA
 
@@ -226,7 +226,7 @@ bool String::copy_aligned(const char *str,uint32_t arg_length, uint32_t offset,
   uint32_t aligned_length= arg_length + offset;
   if (alloc(aligned_length))
     return true;
-  
+
   /*
     Note, this is only safe for big-endian UCS-2.
     If we add little-endian UCS-2 sometimes, this code
@@ -246,8 +246,8 @@ bool String::set_or_copy_aligned(const char *str,uint32_t arg_length,
                                  const CHARSET_INFO * const cs)
 {
   /* How many bytes are in incomplete character */
-  uint32_t offset= (arg_length % cs->mbminlen); 
-  
+  uint32_t offset= (arg_length % cs->mbminlen);
+
   if (!offset) /* All characters are complete, just copy */
   {
     set(str, arg_length, cs);
@@ -285,7 +285,7 @@ bool String::copy(const char *str, uint32_t arg_length,
 
 /*
   Set a string to the value of a latin1-string, keeping the original charset
-  
+
   SYNOPSIS
     copy_or_set()
     str			String of a simple charset (latin1)
@@ -396,19 +396,19 @@ bool String::append(const char *s)
 bool String::append(const char *s,uint32_t arg_length, const CHARSET_INFO * const cs)
 {
   uint32_t dummy_offset;
-  
+
   if (needs_conversion(arg_length, cs, str_charset, &dummy_offset))
   {
     uint32_t add_length= arg_length / cs->mbminlen * str_charset->mbmaxlen;
     uint32_t dummy_errors;
-    if (realloc(str_length + add_length)) 
+    if (realloc(str_length + add_length))
       return true;
     str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
 				  s, arg_length, cs, &dummy_errors);
   }
   else
   {
-    if (realloc(str_length + arg_length)) 
+    if (realloc(str_length + arg_length))
       return true;
     memcpy(Ptr + str_length, s, arg_length);
     str_length+= arg_length;
@@ -679,7 +679,7 @@ String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
 
 /*
   copy a string from one character set to another
-  
+
   SYNOPSIS
     copy_and_convert()
     to			Store result here
@@ -698,7 +698,7 @@ String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
 
 static uint32_t
 copy_and_convert_extended(char *to, uint32_t to_length,
-                          const CHARSET_INFO * const to_cs, 
+                          const CHARSET_INFO * const to_cs,
                           const char *from, uint32_t from_length,
                           const CHARSET_INFO * const from_cs,
                           uint32_t *errors)
@@ -757,7 +757,7 @@ outp:
   Optimized for quick copying of ASCII characters in the range 0x00..0x7F.
 */
 uint32_t
-copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs, 
+copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
                  const char *from, uint32_t from_length,
 				 const CHARSET_INFO * const from_cs, uint32_t *errors)
 {
@@ -820,9 +820,9 @@ copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
   are read from "src". Any sequences of bytes representing
   a not-well-formed substring (according to cs) are hex-encoded,
   and all well-formed substrings (according to cs) are copied as is.
-  Not more than "dstlen" bytes are written to "dst". The number 
+  Not more than "dstlen" bytes are written to "dst". The number
   of bytes written to "dst" is returned.
-  
+
    @param      cs       character set pointer of the destination string
    @param[out] dst      destination string
    @param      dstlen   size of dst
@@ -878,7 +878,7 @@ my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
   copy a string,
   with optional character set conversion,
   with optional left padding (for binary -> UCS2 conversion)
-  
+
   SYNOPSIS
     well_formed_copy_nchars()
     to			     Store result here
@@ -913,7 +913,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
 {
   uint32_t res;
 
-  if ((to_cs == &my_charset_bin) || 
+  if ((to_cs == &my_charset_bin) ||
       (from_cs == &my_charset_bin) ||
       (to_cs == from_cs) ||
       my_charset_same(from_cs, to_cs))

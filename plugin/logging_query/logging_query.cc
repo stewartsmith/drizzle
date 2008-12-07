@@ -60,7 +60,7 @@ const LEX_STRING command_name[]={
 };
 
 
-/* stolen from mysys/my_getsystime 
+/* stolen from mysys/my_getsystime
    until the Session has a good utime "now" we can use
    will have to use this instead */
 
@@ -150,14 +150,14 @@ static int logging_query_plugin_init(void *p)
   if (logging_query_filename == NULL)
   {
     /* no destination filename was specified via system variables
-       return now, dont set the callback pointers 
+       return now, dont set the callback pointers
     */
     return 0;
   }
 
   fd= open(logging_query_filename, O_WRONLY | O_APPEND | O_CREAT,
            S_IRUSR|S_IWUSR);
-  if (fd < 0) 
+  if (fd < 0)
   {
     sql_print_error(_("fail open() fn=%s er=%s\n"),
 		    logging_query_filename,
@@ -183,7 +183,7 @@ static int logging_query_plugin_deinit(void *p)
 {
   logging_st *l= (logging_st *) p;
 
-  if (fd >= 0) 
+  if (fd >= 0)
   {
     close(fd);
     fd= -1;

@@ -41,7 +41,7 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
       return(my_errno);                          /* Out of memory or table space */
     }
   }
- 
+
   if (--(share->records) < share->blength >> 1) share->blength>>= 1;
   share->changed=1;
 

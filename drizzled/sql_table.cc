@@ -345,7 +345,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
     drop_temporary	Only drop temporary tables
     drop_view		Allow to delete VIEW .frm
     dont_log_query	Don't write query to log files. This will also not
-			generate warnings if the handler files doesn't exists  
+			generate warnings if the handler files doesn't exists
 
   TODO:
     When logging to the binary log, we should log
@@ -500,7 +500,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       *(end= path + path_length - reg_ext_length)= '\0';
       error= ha_delete_table(session, path, db, table->table_name,
                              !dont_log_query);
-      if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && 
+      if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) &&
 	  if_exists)
       {
 	error= 0;
@@ -520,7 +520,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         delete_table_proto_file(path);
 
         /* Delete the table definition file */
-        my_stpcpy(end,reg_ext);
+        strcpy(end,reg_ext);
         if (!(new_error=my_delete(path,MYF(MY_WME))))
         {
           some_tables_deleted=1;
@@ -658,7 +658,7 @@ bool quick_rm_table(handlerton *base __attribute__((unused)),const char *db,
 static int sort_keys(KEY *a, KEY *b)
 {
   ulong a_flags= a->flags, b_flags= b->flags;
-  
+
   if (a_flags & HA_NOSAME)
   {
     if (!(b_flags & HA_NOSAME))
@@ -714,8 +714,8 @@ bool check_duplicates_in_interval(const char *set_or_name,
   TYPELIB tmp= *typelib;
   const char **cur_value= typelib->type_names;
   unsigned int *cur_length= typelib->type_lengths;
-  *dup_val_count= 0;  
-  
+  *dup_val_count= 0;
+
   for ( ; tmp.count > 1; cur_value++, cur_length++)
   {
     tmp.type_names++;
@@ -785,7 +785,7 @@ void calculate_interval_lengths(const CHARSET_INFO * const cs, TYPELIB *interval
    1	Error
 */
 
-int prepare_create_field(Create_field *sql_field, 
+int prepare_create_field(Create_field *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
                          int64_t table_flags __attribute__((unused)))
@@ -962,7 +962,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
       Convert the default value from client character
       set into the column character set if necessary.
     */
-    if (sql_field->def && 
+    if (sql_field->def &&
         save_cs != sql_field->def->collation.collation &&
         (sql_field->sql_type == DRIZZLE_TYPE_ENUM))
     {
@@ -1010,7 +1010,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
         String conv, *tmp;
         char comma_buf[4];
         int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
-                                          (unsigned char*) comma_buf + 
+                                          (unsigned char*) comma_buf +
                                           sizeof(comma_buf));
         assert(comma_length > 0);
         for (uint32_t i= 0; (tmp= int_it++); i++)
@@ -1051,7 +1051,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
             }
 
             /* else, the defaults yield the correct length for NULLs. */
-          } 
+          }
           else /* not NULL */
           {
             def->length(cs->cset->lengthsp(cs, def->ptr(), def->length()));
@@ -1111,7 +1111,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 	  sql_field->decimals=		dup_field->decimals;
 	  sql_field->create_length_to_internal_length();
 	  sql_field->unireg_check=	dup_field->unireg_check;
-          /* 
+          /*
             We're making one field from two, the result field will have
             dup_field->flags as flags. If we've incremented null_fields
             because of sql_field->flags, decrement it back.
@@ -1144,7 +1144,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
   {
     assert(sql_field->charset != 0);
 
-    if (prepare_create_field(sql_field, &blob_columns, 
+    if (prepare_create_field(sql_field, &blob_columns,
 			     &timestamps, &timestamps_with_niladic,
 			     file->ha_table_flags()))
       return(true);
@@ -1155,7 +1155,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
       auto_increment++;
     /*
           For now skip fields that are not physically stored in the database
-          (virtual fields) and update their offset later 
+          (virtual fields) and update their offset later
           (see the next loop).
         */
     if (sql_field->is_stored)
@@ -1681,7 +1681,7 @@ static bool prepare_blob_field(Session *session __attribute__((unused)),
              MAX_FIELD_VARCHARLENGTH / sql_field->charset->mbmaxlen);
     return(1);
   }
-    
+
   if ((sql_field->flags & BLOB_FLAG) && sql_field->length)
   {
     if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
@@ -1709,7 +1709,7 @@ static bool prepare_blob_field(Session *session __attribute__((unused)),
     keys		List of keys to create
     internal_tmp_table  Set to 1 if this is an internal temporary table
 			(From ALTER Table)
-    select_field_count  
+    select_field_count
 
   DESCRIPTION
     If one creates a temporary table, this is automatically opened
@@ -1779,7 +1779,7 @@ bool mysql_create_table_no_lock(Session *session,
     path_length= build_tmptable_filename(session, path, sizeof(path));
     create_info->table_options|=HA_CREATE_DELAY_KEY_WRITE;
   }
-  else  
+  else
   {
  #ifdef FN_DEVCHAR
     /* check if the table name contains FN_DEVCHAR when defined */
@@ -2114,13 +2114,13 @@ mysql_rename_table(handlerton *base, const char *old_db,
   if (lower_case_table_names == 2 && file &&
       !(file->ha_table_flags() & HA_FILE_BASED))
   {
-    my_stpcpy(tmp_name, old_name);
+    strcpy(tmp_name, old_name);
     my_casedn_str(files_charset_info, tmp_name);
     build_table_filename(lc_from, sizeof(lc_from), old_db, tmp_name, "",
                          flags & FN_FROM_IS_TMP);
     from_base= lc_from;
 
-    my_stpcpy(tmp_name, new_name);
+    strcpy(tmp_name, new_name);
     my_casedn_str(files_charset_info, tmp_name);
     build_table_filename(lc_to, sizeof(lc_to), new_db, tmp_name, "",
                          flags & FN_TO_IS_TMP);
@@ -2303,7 +2303,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     Check if this is a table type that stores index and data separately,
     like ISAM or MyISAM. We assume fixed order of engine file name
     extentions array. First element of engine file name extentions array
-    is meta/index file extention. Second element - data file extention. 
+    is meta/index file extention. Second element - data file extention.
   */
   ext= table->file->bas_ext();
   if (!ext[0] || !ext[1])
@@ -2387,7 +2387,7 @@ end:
 /*
   RETURN VALUES
     false Message sent to net (admin operation went ok)
-    true  Message should be sent by caller 
+    true  Message should be sent by caller
           (admin operation or network communication failed)
 */
 static bool mysql_admin_table(Session* session, TableList* tables,
@@ -2566,7 +2566,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
         /*
           mysql_recreate_table() can push OK or ERROR.
           Clear 'OK' status. If there is an error, keep it:
-          we will store the error message in a result set row 
+          we will store the error message in a result set row
           and then clear.
         */
         if (session->main_da.is_ok())
@@ -2679,7 +2679,7 @@ send_result_message:
       /*
         mysql_recreate_table() can push OK or ERROR.
         Clear 'OK' status. If there is an error, keep it:
-        we will store the error message in a result set row 
+        we will store the error message in a result set row
         and then clear.
       */
       if (session->main_da.is_ok())
@@ -2887,7 +2887,7 @@ int reassign_keycache_tables(Session *session __attribute__((unused)),
   @brief          Create frm file based on I_S table
 
   @param[in]      session                      thread handler
-  @param[in]      schema_table             I_S table           
+  @param[in]      schema_table             I_S table
   @param[in]      dst_path                 path where frm should be created
   @param[in]      create_info              Create info
 
@@ -2969,7 +2969,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
   strxmov(src_path, src_table->table->s->path.str, reg_ext, NULL);
 
-  /* 
+  /*
     Check that destination tables does not exist. Note that its name
     was already checked when it was added to the table list.
   */
@@ -3205,7 +3205,7 @@ mysql_discard_or_import_tablespace(Session *session,
 err:
   ha_autocommit_or_rollback(session, error);
   session->tablespace_op=false;
-  
+
   if (error == 0)
   {
     my_ok(session);
@@ -3213,7 +3213,7 @@ err:
   }
 
   table->file->print_error(error, MYF(0));
-    
+
   return(-1);
 }
 
@@ -3431,7 +3431,7 @@ compare_tables(Session *session,
       /*
         Check if the altered column is a stored virtual field.
         TODO: Mark such a column with an alter flag only if
-        the expression functions are not equal. 
+        the expression functions are not equal.
       */
       if (field->is_stored && field->vcol_info)
         *alter_flags|= HA_ALTER_STORED_VCOL;
@@ -3713,7 +3713,7 @@ int create_temporary_table(Session *session,
     if (create_info->index_file_name)
     {
       /* Fix index_file_name to have 'tmp_name' as basename */
-      my_stpcpy(index_file, tmp_name);
+      strcpy(index_file, tmp_name);
       create_info->index_file_name=fn_same(index_file,
                                            create_info->index_file_name,
                                            1);
@@ -3721,7 +3721,7 @@ int create_temporary_table(Session *session,
     if (create_info->data_file_name)
     {
       /* Fix data_file_name to have 'tmp_name' as basename */
-      my_stpcpy(data_file, tmp_name);
+      strcpy(data_file, tmp_name);
       create_info->data_file_name=fn_same(data_file,
                                           create_info->data_file_name,
                                           1);
@@ -3852,7 +3852,7 @@ int mysql_fast_or_online_alter_table(Session *session,
 
     /*
        Tell the storage engine to perform the online alter table
-       TODO: 
+       TODO:
        if check_if_supported_alter() returned HA_ALTER_SUPPORTED_WAIT_LOCK
        we need to wrap the next call with a DDL lock.
      */
@@ -4464,14 +4464,14 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   /* Check that we are not trying to rename to an existing table */
   if (new_name)
   {
-    my_stpcpy(new_name_buff,new_name);
-    my_stpcpy(new_alias= new_alias_buff, new_name);
+    strcpy(new_name_buff,new_name);
+    strcpy(new_alias= new_alias_buff, new_name);
     if (lower_case_table_names)
     {
       if (lower_case_table_names != 2)
       {
-	my_casedn_str(files_charset_info, new_name_buff);
-	new_alias= new_name;			// Create lower case table name
+        my_casedn_str(files_charset_info, new_name_buff);
+        new_alias= new_name;			// Create lower case table name
       }
       my_casedn_str(files_charset_info, new_name);
     }
@@ -4821,8 +4821,8 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
 
 
   /* Create a temporary table with the new format */
-  if ((error= create_temporary_table(session, table, new_db, tmp_name, 
-                                     create_info, alter_info, 
+  if ((error= create_temporary_table(session, table, new_db, tmp_name,
+                                     create_info, alter_info,
                                      !strcmp(db, new_db))))
   {
     goto err;
@@ -5138,13 +5138,13 @@ copy_data_between_tables(Table *from,Table *to,
   /*
     Turn off recovery logging since rollback of an alter table is to
     delete the new table so there is no need to log the changes to it.
-    
+
     This needs to be done before external_lock
   */
   error= ha_enable_transaction(session, false);
   if (error)
     return(-1);
-  
+
   if (!(copy= new Copy_field[to->s->fields]))
     return(-1);				/* purecov: inspected */
 
@@ -5185,7 +5185,7 @@ copy_data_between_tables(Table *from,Table *to,
     if (to->s->primary_key != MAX_KEY && to->file->primary_key_is_clustered())
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
-      snprintf(warn_buff, sizeof(warn_buff), 
+      snprintf(warn_buff, sizeof(warn_buff),
                _("order_st BY ignored because there is a user-defined clustered "
                  "index in the table '%-.192s'"),
                from->s->table_name.str);
@@ -5244,7 +5244,7 @@ copy_data_between_tables(Table *from,Table *to,
       else
         to->next_number_field->reset();
     }
-    
+
     for (Copy_field *copy_ptr=copy ; copy_ptr != copy_end ; copy_ptr++)
     {
       copy_ptr->do_copy(copy_ptr);

@@ -39,7 +39,7 @@ int Field_long::store(const char *from,uint32_t len, const CHARSET_INFO * const 
   long store_tmp;
   int error;
   int64_t rnd;
-  
+
   error= get_int(cs, from, len, &rnd, UINT32_MAX, INT32_MIN, INT32_MAX);
   store_tmp= (long) rnd;
 #ifdef WORDS_BIGENDIAN
@@ -95,7 +95,7 @@ int Field_long::store(int64_t nr, bool unsigned_val)
 
   if (nr < 0 && unsigned_val)
     nr= ((int64_t) INT32_MAX) + 1;           // Generate overflow
-  if (nr < (int64_t) INT32_MIN) 
+  if (nr < (int64_t) INT32_MIN)
   {
     res=(int32_t) INT32_MIN;
     error= 1;

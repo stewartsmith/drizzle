@@ -30,8 +30,8 @@
       alloc_increment	Increment for adding new elements
 
   DESCRIPTION
-    init_dynamic_array() initiates array and allocate space for 
-    init_alloc eilements. 
+    init_dynamic_array() initiates array and allocate space for
+    init_alloc eilements.
     Array is usable even if space allocation failed.
     Static buffers must begin immediately after the array structure.
 
@@ -41,7 +41,7 @@
 */
 
 bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
-                            void *init_buffer, uint32_t init_alloc, 
+                            void *init_buffer, uint32_t init_alloc,
                             uint32_t alloc_increment)
 {
   if (!alloc_increment)
@@ -69,14 +69,14 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
     return(true);
   }
   return(false);
-} 
+}
 
 bool init_dynamic_array(DYNAMIC_ARRAY *array, uint32_t element_size,
-                           uint32_t init_alloc, 
+                           uint32_t init_alloc,
                            uint32_t alloc_increment)
 {
   /* placeholder to preserve ABI */
-  return my_init_dynamic_array_ci(array, element_size, init_alloc, 
+  return my_init_dynamic_array_ci(array, element_size, init_alloc,
                                   alloc_increment);
 }
 /*
@@ -111,7 +111,7 @@ bool insert_dynamic(DYNAMIC_ARRAY *array, unsigned char* element)
 
 
 /*
-  Alloc space for next element(s) 
+  Alloc space for next element(s)
 
   SYNOPSIS
     alloc_dynamic()
@@ -143,7 +143,7 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
                                         array->size_of_element,
                                         MYF(MY_WME))))
         return 0;
-      memcpy(new_ptr, array->buffer, 
+      memcpy(new_ptr, array->buffer,
              array->elements * array->size_of_element);
     }
     else
@@ -165,8 +165,8 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
   SYNOPSIS
     pop_dynamic()
       array
-  
-  RETURN VALUE    
+
+  RETURN VALUE
     pointer	Ok
     0		Array is empty
 */
@@ -188,9 +188,9 @@ unsigned char *pop_dynamic(DYNAMIC_ARRAY *array)
       idx	Index where element is to be inserted
 
   DESCRIPTION
-    set_dynamic() replaces element in array. 
-    If idx > max_element insert new element. Allocate memory if needed. 
- 
+    set_dynamic() replaces element in array.
+    If idx > max_element insert new element. Allocate memory if needed.
+
   RETURN VALUE
     true	Idx was out of range and allocation of new memory failed
     false	Ok
@@ -246,7 +246,7 @@ bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
                                          array->size_of_element,
                                          MYF(MY_WME))))
          return 0;
-       memcpy(new_ptr, array->buffer, 
+       memcpy(new_ptr, array->buffer,
               array->elements * array->size_of_element);
      }
      else
@@ -268,9 +268,9 @@ bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
 
   SYNOPSIS
     get_dynamic()
-      array	
+      array
       unsigned char*	Element to be returned. If idx > elements contain zeroes.
-      idx	Index of element wanted. 
+      idx	Index of element wanted.
 */
 
 void get_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
@@ -345,7 +345,7 @@ void freeze_size(DYNAMIC_ARRAY *array)
   */
   if (array->buffer == (unsigned char *)(array + 1))
     return;
-    
+
   if (array->buffer && array->max_element != elements)
   {
     array->buffer=(unsigned char*) my_realloc(array->buffer,
@@ -362,7 +362,7 @@ void freeze_size(DYNAMIC_ARRAY *array)
   SYNOPSIS
     get_index_dynamic()
      array	Array
-     element Whose element index 
+     element Whose element index
 
 */
 

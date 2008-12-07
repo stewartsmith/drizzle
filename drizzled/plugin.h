@@ -146,7 +146,7 @@ struct st_mysql_value;
   RETURN
     0   user provided value is OK and the update func may be called.
     any other value indicates error.
-  
+
   This function should parse the user provided value and store in the
   provided temporary storage any data as required by the update func.
   There is sufficient space in the temporary storage to store a double.
@@ -168,7 +168,7 @@ typedef int (*mysql_var_check_func)(Session *session,
       save              pointer to temporary storage
    RETURN
      NONE
-   
+
    This function should use the validated value stored in the temporary store
    and persist it in the provided pointer to the dynamic variable.
    For example, strings may require memory to be allocated.
@@ -203,7 +203,7 @@ typedef void (*mysql_var_update_func)(Session *session,
   for thread variables, the value offset is the first
   element after the header, the default value is the second.
 */
-   
+
 
 #define DECLARE_DRIZZLE_SYSVAR_BASIC(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \

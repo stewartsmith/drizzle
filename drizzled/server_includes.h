@@ -68,18 +68,6 @@ void print_keyuse_array(DYNAMIC_ARRAY *keyuse_array);
 void dump_TableList_graph(SELECT_LEX *select_lex, TableList* tl);
 void mysql_print_status();
 
-/* key.cc */
-int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *field,
-                 uint32_t *key_length, uint32_t *keypart);
-void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info, uint32_t key_length);
-void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
-                 uint16_t key_length);
-void key_zero_nulls(unsigned char *tuple, KEY *key_info);
-bool key_cmp_if_same(Table *form,const unsigned char *key,uint32_t index,uint32_t key_length);
-void key_unpack(String *to,Table *form,uint32_t index);
-bool is_key_used(Table *table, uint32_t idx, const MY_BITMAP *fields);
-int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length);
-extern "C" int key_rec_cmp(void *key_info, unsigned char *a, unsigned char *b);
 
 bool init_errmessage(void);
 File open_binlog(IO_CACHE *log, const char *log_file_name,
@@ -180,7 +168,7 @@ extern bool locked_in_memory;
 extern bool opt_using_transactions;
 extern bool using_update_log, server_id_supplied;
 extern bool opt_update_log, opt_bin_log, opt_error_log;
-extern bool opt_log; 
+extern bool opt_log;
 extern bool opt_slow_log;
 extern ulong log_output_options;
 extern bool opt_log_queries_not_using_indexes;
@@ -301,7 +289,7 @@ bool lock_table_names(Session *session, TableList *table_list);
 void unlock_table_names(Session *session, TableList *table_list,
 			TableList *last_table);
 bool lock_table_names_exclusively(Session *session, TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(Session *session, 
+bool is_table_name_exclusively_locked_by_this_thread(Session *session,
                                                      TableList *table_list);
 bool is_table_name_exclusively_locked_by_this_thread(Session *session, unsigned char *key,
                                                      int key_length);
@@ -387,7 +375,7 @@ void change_byte(unsigned char *,uint,char,char);
 void init_read_record(READ_RECORD *info, Session *session, Table *reg_form,
 		      SQL_SELECT *select,
 		      int use_record_cache, bool print_errors);
-void init_read_record_idx(READ_RECORD *info, Session *session, Table *table, 
+void init_read_record_idx(READ_RECORD *info, Session *session, Table *table,
                           bool print_error, uint32_t idx);
 void end_read_record(READ_RECORD *info);
 ha_rows filesort(Session *session, Table *form,struct st_sort_field *sortorder,

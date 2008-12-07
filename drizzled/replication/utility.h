@@ -59,7 +59,7 @@ public:
     @param metadata_size Size of the field_metadata array
     @param null_bitmap The bitmap of fields that can be null
    */
-  table_def(field_type *types, uint32_t size, unsigned char *field_metadata, 
+  table_def(field_type *types, uint32_t size, unsigned char *field_metadata,
       int metadata_size, unsigned char *null_bitmap)
     : m_size(size), m_type(0), m_field_metadata_size(metadata_size),
       m_field_metadata(0), m_null_bits(0), m_memory(NULL)
@@ -81,11 +81,11 @@ public:
       Extract the data from the table map into the field metadata array
       iff there is field metadata. The variable metadata_size will be
       0 if we are replicating from an older version server since no field
-      metadata was written to the table map. This can also happen if 
+      metadata was written to the table map. This can also happen if
       there were no fields in the master that needed extra metadata.
     */
     if (m_size && metadata_size)
-    { 
+    {
       int index= 0;
       for (unsigned int i= 0; i < m_size; i++)
       {
@@ -169,11 +169,11 @@ public:
     table map for a given field. If there is no metadata for that field
     or there is no extra metadata at all, the function returns 0.
 
-    The function returns the value for the field metadata for column at 
-    position indicated by index. As mentioned, if the field was a type 
-    that stores field metadata, that value is returned else zero (0) is 
-    returned. This method is used in the unpack() methods of the 
-    corresponding fields to properly extract the data from the binary log 
+    The function returns the value for the field metadata for column at
+    position indicated by index. As mentioned, if the field was a type
+    that stores field metadata, that value is returned else zero (0) is
+    returned. This method is used in the unpack() methods of the
+    corresponding fields to properly extract the data from the binary log
     in the event that the master's field is smaller than the slave.
   */
   uint16_t field_metadata(uint32_t index) const
@@ -192,15 +192,15 @@ public:
   bool maybe_null(uint32_t index) const
   {
     assert(index < m_size);
-    return ((m_null_bits[(index / 8)] & 
+    return ((m_null_bits[(index / 8)] &
             (1 << (index % 8))) == (1 << (index %8)));
   }
 
   /*
     This function returns the field size in raw bytes based on the type
-    and the encoded field data from the master's raw data. This method can 
-    be used for situations where the slave needs to skip a column (e.g., 
-    WL#3915) or needs to advance the pointer for the fields in the raw 
+    and the encoded field data from the master's raw data. This method can
+    be used for situations where the slave needs to skip a column (e.g.,
+    WL#3915) or needs to advance the pointer for the fields in the raw
     data from the master to a specific column.
   */
   uint32_t calc_field_size(uint32_t col, unsigned char *master_data) const;
@@ -243,36 +243,5 @@ struct RPL_TableList
   bool m_tabledef_valid;
   table_def m_tabledef;
 };
-
-
-/* Anonymous namespace for template functions/classes */
-namespace {
-
-  /*
-    Smart pointer that will automatically call my_afree (a macro) when
-    the pointer goes out of scope.  This is used so that I do not have
-    to remember to call my_afree() before each return.  There is no
-    overhead associated with this, since all functions are inline.
-
-    I (Matz) would prefer to use the free function as a template
-    parameter, but that is not possible when the "function" is a
-    macro.
-  */
-  template <class Obj>
-  class auto_afree_ptr
-  {
-    Obj* m_ptr;
-  public:
-    auto_afree_ptr(Obj* ptr) : m_ptr(ptr) { }
-    ~auto_afree_ptr() { if (m_ptr) my_afree(m_ptr); }
-    void assign(Obj* ptr) {
-      /* Only to be called if it hasn't been given a value before. */
-      assert(m_ptr == NULL);
-      m_ptr= ptr;
-    }
-    Obj* get() { return m_ptr; }
-  };
-
-}
 
 #endif /* RPL_UTILITY_H */

@@ -45,7 +45,7 @@ size_t my_read(File Filedes, unsigned char *Buffer, size_t Count, myf MyFlags)
     {
       my_errno= errno ? errno : -1;
       if ((readbytes == 0 || (int) readbytes == -1) && errno == EINTR)
-      {  
+      {
         continue;                              /* Interrupted */
       }
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))

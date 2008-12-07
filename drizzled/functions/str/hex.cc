@@ -35,7 +35,7 @@ String *Item_func_hex::val_str(String *str)
         args[0]->result_type() == DECIMAL_RESULT)
     {
       double val= args[0]->val_real();
-      if ((val <= (double) INT64_MIN) || 
+      if ((val <= (double) INT64_MIN) ||
           (val >= (double) (uint64_t) UINT64_MAX))
         dec=  ~(int64_t) 0;
       else

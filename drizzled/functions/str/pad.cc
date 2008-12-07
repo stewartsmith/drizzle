@@ -72,7 +72,7 @@ String *Item_func_rpad::val_str(String *str)
   String *res= args[0]->val_str(str);
   String *rpad= args[2]->val_str(&rpad_str);
 
-  if (!res || args[1]->null_value || !rpad || 
+  if (!res || args[1]->null_value || !rpad ||
       ((count < 0) && !args[1]->unsigned_flag))
     goto err;
   null_value=0;
@@ -131,7 +131,7 @@ void Item_func_lpad::fix_length_and_dec()
   // Handle character set for args[0] and args[2].
   if (agg_arg_charsets(collation, &args[0], 2, MY_COLL_ALLOW_CONV, 2))
     return;
-  
+
   if (args[1]->const_item())
   {
     uint64_t length= 0;
@@ -173,9 +173,9 @@ String *Item_func_lpad::val_str(String *str)
   String *res= args[0]->val_str(&tmp_value);
   String *pad= args[2]->val_str(&lpad_str);
 
-  if (!res || args[1]->null_value || !pad ||  
+  if (!res || args[1]->null_value || !pad ||
       ((count < 0) && !args[1]->unsigned_flag))
-    goto err;  
+    goto err;
   null_value=0;
   /* Assumes that the maximum length of a String is < INT32_MAX. */
   /* Set here so that rest of code sees out-of-bound value as such. */
@@ -189,10 +189,10 @@ String *Item_func_lpad::val_str(String *str)
     res->length(res->charpos((int) count));
     return res;
   }
-  
+
   pad_char_length= pad->numchars();
   byte_count= count * collation.collation->mbmaxlen;
-  
+
   if ((uint64_t) byte_count > current_session->variables.max_allowed_packet)
   {
     push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -205,7 +205,7 @@ String *Item_func_lpad::val_str(String *str)
   if (args[2]->null_value || !pad_char_length ||
       str->alloc((uint32_t) byte_count))
     goto err;
-  
+
   str->length(0);
   str->set_charset(collation.collation);
   count-= res_char_length;

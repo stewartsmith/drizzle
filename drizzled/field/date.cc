@@ -131,7 +131,7 @@ int Field_date::store(int64_t nr,
   if (error)
     set_datetime_warning(error == 3 ? DRIZZLE_ERROR::WARN_LEVEL_NOTE :
                          DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         error == 2 ? 
+                         error == 2 ?
                          ER_WARN_DATA_OUT_OF_RANGE : ER_WARN_DATA_TRUNCATED,
                          nr,DRIZZLE_TIMESTAMP_DATE, 1);
 

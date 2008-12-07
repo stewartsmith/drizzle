@@ -166,7 +166,7 @@ void scheduler(az_method use_aio)
     timer_alarm= true;
     pthread_mutex_unlock(&timer_alarm_mutex);
 
-    if (pthread_create(&mainthread, &attr, timer_thread, 
+    if (pthread_create(&mainthread, &attr, timer_thread,
                        (void *)&opt_timer_length) != 0)
     {
       fprintf(stderr,"%s: Could not create timer thread\n", my_progname);
@@ -211,8 +211,8 @@ void *timer_thread(void *p)
   time_t *timer_length= (time_t *)p;
   struct timespec abstime;
 
-  /* 
-    We lock around the initial call in case were we in a loop. This 
+  /*
+    We lock around the initial call in case were we in a loop. This
     also keeps the value properly syncronized across call threads.
   */
   pthread_mutex_lock(&sleeper_mutex);
@@ -254,7 +254,7 @@ void *run_concurrent_task(void *p)
   while (master_wakeup)
   {
     pthread_cond_wait(&sleep_threshhold, &sleeper_mutex);
-  } 
+  }
   pthread_mutex_unlock(&sleeper_mutex);
 
   /* Do Stuff */
@@ -312,7 +312,7 @@ unsigned int write_row(azio_stream *s)
   /* Avoid zero length strings */
   length++;
 
-  get_random_string(buffer, length); 
+  get_random_string(buffer, length);
   pthread_mutex_lock(&row_lock);
   azwrite_row(s, buffer, length);
   pthread_mutex_unlock(&row_lock);

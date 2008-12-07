@@ -129,7 +129,7 @@ static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
                  "reconnect done to recover from failed read")
   }
 };
- 
+
 
 typedef enum { SLAVE_Session_IO, SLAVE_Session_SQL} SLAVE_Session_TYPE;
 
@@ -988,8 +988,8 @@ static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
     char llbuf[22];
     const char query_format[]= "SET @master_heartbeat_period= %s";
     char query[sizeof(query_format) - 2 + sizeof(llbuf)];
-    /* 
-       the period is an uint64_t of nano-secs. 
+    /*
+       the period is an uint64_t of nano-secs.
     */
     llstr((uint64_t) (mi->heartbeat_period*1000000000UL), llbuf);
     sprintf(query, query_format, llbuf);
@@ -1011,7 +1011,7 @@ static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
     }
     drizzle_free_result(drizzle_store_result(drizzle));
   }
-  
+
 err:
   if (err_msg.length() != 0)
   {
@@ -1134,7 +1134,7 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
     else if (!check_io_slave_killed(mi->io_session, mi, NULL))
     {
       char buf[256];
-      snprintf(buf, sizeof(buf), "%s (Errno: %d)", drizzle_error(drizzle), 
+      snprintf(buf, sizeof(buf), "%s (Errno: %d)", drizzle_error(drizzle),
                drizzle_errno(drizzle));
       mi->report(ERROR_LEVEL, ER_SLAVE_MASTER_COM_FAILURE,
                  ER(ER_SLAVE_MASTER_COM_FAILURE), "COM_REGISTER_SLAVE", buf);
@@ -1398,7 +1398,7 @@ static int32_t request_dump(DRIZZLE *drizzle, Master_info* mi,
   int32_t len;
   int32_t binlog_flags = 0; // for now
   const char* logname = mi->getLogName();
-  
+
   *suppress_warnings= false;
 
   // TODO if big log files: Change next to int8store()
@@ -1834,9 +1834,9 @@ static int32_t exec_relay_log_event(Session* session, Relay_log_info* rli)
   @param[in]     DRIZZLE               DRIZZLE connection.
   @param[in]     mi                  Master connection information.
   @param[in,out] retry_count         Number of attempts to reconnect.
-  @param[in]     suppress_warnings   TRUE when a normal net read timeout 
+  @param[in]     suppress_warnings   TRUE when a normal net read timeout
                                      has caused to reconnecting.
-  @param[in]     messages            Messages to print/log, see 
+  @param[in]     messages            Messages to print/log, see
                                      reconnect_messages[] array.
 
   @retval        0                   OK.
@@ -1973,7 +1973,7 @@ connected:
   session->set_proc_info("Checking master version");
   if (get_master_version_and_clock(drizzle, mi))
     goto err;
-  
+
   if (mi->rli.relay_log.description_event_for_queue->binlog_version > 1)
   {
     /*
@@ -2159,7 +2159,7 @@ err:
     Note: the order of the two following calls (first broadcast, then unlock)
     is important. Otherwise a killer_thread can execute between the calls and
     delete the mi structure leading to a crash! (see BUG#25306 for details)
-   */ 
+   */
   pthread_cond_broadcast(&mi->stop_cond);       // tell the world we are done
   pthread_mutex_unlock(&mi->run_lock);
   my_thread_end();
@@ -2189,7 +2189,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   session = new Session;
   session->thread_stack = (char*)&session; // remember where our stack is
   rli->sql_session= session;
-  
+
   /* Inform waiting threads that slave has started */
   rli->slave_run_id++;
   rli->slave_running = 1;
@@ -2431,10 +2431,10 @@ pthread_handler_t handle_slave_sql(void *arg)
   Note: the order of the broadcast and unlock calls below (first broadcast, then unlock)
   is important. Otherwise a killer_thread can execute between the calls and
   delete the mi structure leading to a crash! (see BUG#25306 for details)
- */ 
+ */
   pthread_cond_broadcast(&rli->stop_cond);
   pthread_mutex_unlock(&rli->run_lock);  // tell the world we are done
-  
+
   my_thread_end();
   pthread_exit(0);
   return(0);                               // Can't return anything here
@@ -2910,9 +2910,9 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
       goto err;
     }
     mi->received_heartbeats++;
-    /* 
+    /*
        compare local and event's versions of log_file, log_pos.
-       
+
        Heartbeat is sent only after an event corresponding to the corrdinates
        the heartbeat carries.
        Slave can not have a difference in coordinates except in the only
@@ -2938,7 +2938,7 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
     goto skip_relay_logging;
   }
   break;
-    
+
   default:
     inc_pos= event_len;
     break;
@@ -3004,7 +3004,7 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
   pthread_mutex_unlock(log_lock);
 
 skip_relay_logging:
-  
+
 err:
   pthread_mutex_unlock(&mi->data_lock);
   if (error)
@@ -3272,7 +3272,7 @@ static Log_event* next_event(Relay_log_info* rli)
         hot_log=0;                              // Using old binary log
       }
     }
-    /* 
+    /*
       As there is no guarantee that the relay is open (for example, an I/O
       error during a write by the slave I/O thread may have closed it), we
       have to test it.

@@ -112,7 +112,7 @@ public:
   {
     len= DECIMAL_BUFF_LENGTH;
     buf= buffer;
-#if !defined (HAVE_purify) 
+#if !defined (HAVE_purify)
     /* Set buffer to 'random' value to find wrong buffer usage */
     for (uint32_t i= 0; i < DECIMAL_BUFF_LENGTH; i++)
       buffer[i]= i;

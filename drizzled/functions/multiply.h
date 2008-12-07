@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_MULTIPLY_H
 #define DRIZZLED_FUNCTIONS_MULTIPLY_H
 
-#include <drizzled/functions/func.h> 
-#include <drizzled/functions/num_op.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/num_op.h>
 
 class Item_func_mul :public Item_num_op
 {

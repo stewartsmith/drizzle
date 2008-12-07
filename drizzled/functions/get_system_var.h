@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_GET_SYSTEM_VAR_H
 #define DRIZZLED_FUNCTIONS_GET_SYSTEM_VAR_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 /* A system variable */
 

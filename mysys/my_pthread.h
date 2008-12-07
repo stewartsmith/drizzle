@@ -35,7 +35,7 @@
 extern "C" {
 #else
 #define EXTERNC
-#endif /* __cplusplus */ 
+#endif /* __cplusplus */
 
 #include <pthread.h>
 #ifndef _REENTRANT
@@ -86,17 +86,6 @@ typedef void *(* pthread_handler)(void *);
 #else
 extern void my_pthread_attr_setprio(pthread_attr_t *attr, int priority);
 #endif
-#endif
-
-#if !defined(HAVE_PTHREAD_ATTR_SETSCOPE)
-#define pthread_attr_setscope(A,B)
-#endif
-
-#if defined(HAVE_BROKEN_PTHREAD_COND_TIMEDWAIT)
-extern int my_pthread_cond_timedwait(pthread_cond_t *cond,
-				     pthread_mutex_t *mutex,
-				     struct timespec *abstime);
-#define pthread_cond_timedwait(A,B,C) my_pthread_cond_timedwait((A),(B),(C))
 #endif
 
 #define HAVE_PTHREAD_KILL

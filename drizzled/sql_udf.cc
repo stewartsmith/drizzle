@@ -108,7 +108,7 @@ int initialize_udf(st_plugin_int *plugin)
 }
 
 int finalize_udf(st_plugin_int *plugin)
-{ 
+{
   udf_func *udff = (udf_func *)plugin->data;
 
   /* TODO: Issue warning on failure */

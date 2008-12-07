@@ -1,0 +1,4 @@
+DRIZZLE_STORAGE_ENGINE(replicator,  replicator, [Replication Engine],
+        [Replication Engine for Drizzle])
+DRIZZLE_PLUGIN_STATIC(replicator,   [libreplicator.la])
+DRIZZLE_PLUGIN_MANDATORY(replicator)  dnl Default

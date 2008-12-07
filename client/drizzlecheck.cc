@@ -392,7 +392,7 @@ static int process_selected_tables(char *db, char **table_names, int tables)
       We need table list in form `a`, `b`, `c`
       that's why we need 2 more chars added to to each table name
       space is for more readable output in logs and in case of error
-    */   
+    */
     char *table_names_comma_sep, *end;
     int i, tot_length = 0;
 
@@ -424,7 +424,7 @@ static uint fixed_name_length(const char *name)
 {
   const char *p;
   uint extra_length= 2;  /* count the first/last backticks */
- 
+
   for (p= name; *p; p++)
   {
     if (*p == '`')
@@ -601,18 +601,18 @@ static int handle_request_for_tables(const char *tables, uint length)
   switch (what_to_do) {
   case DO_CHECK:
     op = "CHECK";
-    if (opt_quick)              end = my_stpcpy(end, " QUICK");
-    if (opt_fast)               end = my_stpcpy(end, " FAST");
-    if (opt_medium_check)       end = my_stpcpy(end, " MEDIUM"); /* Default */
-    if (opt_extended)           end = my_stpcpy(end, " EXTENDED");
-    if (opt_check_only_changed) end = my_stpcpy(end, " CHANGED");
-    if (opt_upgrade)            end = my_stpcpy(end, " FOR UPGRADE");
+    if (opt_quick)              end = strcpy(end, " QUICK")+6;
+    if (opt_fast)               end = strcpy(end, " FAST")+5;
+    if (opt_medium_check)       end = strcpy(end, " MEDIUM")+7; /* Default */
+    if (opt_extended)           end = strcpy(end, " EXTENDED")+9;
+    if (opt_check_only_changed) end = strcpy(end, " CHANGED")+8;
+    if (opt_upgrade)            end = strcpy(end, " FOR UPGRADE")+12;
     break;
   case DO_REPAIR:
     op= (opt_write_binlog) ? "REPAIR" : "REPAIR NO_WRITE_TO_BINLOG";
-    if (opt_quick)              end = my_stpcpy(end, " QUICK");
-    if (opt_extended)           end = my_stpcpy(end, " EXTENDED");
-    if (opt_frm)                end = my_stpcpy(end, " USE_FRM");
+    if (opt_quick)              end = strcpy(end, " QUICK")+6;
+    if (opt_extended)           end = strcpy(end, " EXTENDED")+9;
+    if (opt_frm)                end = strcpy(end, " USE_FRM")+8;
     break;
   case DO_ANALYZE:
     op= (opt_write_binlog) ? "ANALYZE" : "ANALYZE NO_WRITE_TO_BINLOG";
@@ -634,8 +634,9 @@ static int handle_request_for_tables(const char *tables, uint length)
   else
   {
     char *ptr;
-
-    ptr= my_stpcpy(my_stpcpy(query, op), " TABLE ");
+    ptr= query;
+    ptr= strcpy(query, op)+strlen(op);
+    ptr= strcpy(ptr, " TABLE ")+7;
     ptr= fix_table_name(ptr, tables);
     ptr= strxmov(ptr, " ", options, NULL);
     query_length= (uint) (ptr - query);
@@ -692,7 +693,7 @@ static void print_result()
     }
     else
       printf("%-9s: %s", row[2], row[3]);
-    my_stpcpy(prev, row[0]);
+    strcpy(prev, row[0]);
     putchar('\n');
   }
   /* add the last table to be repaired to the list */

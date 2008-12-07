@@ -39,13 +39,13 @@ struct order_st;
  GENERAL NOTES
 
   A set function cannot be used in certain positions where expressions are
-  accepted. There are some quite explicable restrictions for the usage of 
+  accepted. There are some quite explicable restrictions for the usage of
   set functions.
 
   In the query:
     SELECT AVG(b) FROM t1 WHERE SUM(b) > 20 GROUP by a
   the usage of the set function AVG(b) is legal, while the usage of SUM(b)
-  is illegal. A WHERE condition must contain expressions that can be 
+  is illegal. A WHERE condition must contain expressions that can be
   evaluated for each row of the table. Yet the expression SUM(b) can be
   evaluated only for each group of rows with the same value of column a.
   In the query:
@@ -70,19 +70,19 @@ struct order_st;
   The problem of finding the query where to aggregate a particular
   set function is not so simple as it seems to be.
 
-  In the query: 
+  In the query:
     SELECT t1.a FROM t1 GROUP BY t1.a
      HAVING t1.a > ALL(SELECT t2.c FROM t2 GROUP BY t2.c
                          HAVING SUM(t1.a) < t2.c)
   the set function can be evaluated for both outer and inner selects.
   If we evaluate SUM(t1.a) for the outer query then we get the value of t1.a
-  multiplied by the cardinality of a group in table t1. In this case 
+  multiplied by the cardinality of a group in table t1. In this case
   in each correlated subquery SUM(t1.a) is used as a constant. But we also
   can evaluate SUM(t1.a) for the inner query. In this case t1.a will be a
   constant for each correlated subquery and summation is performed
   for each group of table t2.
   (Here it makes sense to remind that the query
-    SELECT c FROM t GROUP BY a HAVING SUM(1) < a 
+    SELECT c FROM t GROUP BY a HAVING SUM(1) < a
   is quite legal in our SQL).
 
   So depending on what query we assign the set function to we
@@ -124,7 +124,7 @@ struct order_st;
 
   3. SELECT t1.a FROM t1 GROUP BY t1.a
        HAVING t1.a > ALL(SELECT t2.b FROM t2
-                           WHERE t2.b > ALL (SELECT t3.c FROM t3 
+                           WHERE t2.b > ALL (SELECT t3.c FROM t3
                                                WHERE SUM(t1.a+t2.b) < t3.c))
   In this query evaluation of SUM(t1.a+t2.b) is not legal neither in the second
   nor in the third subqueries. So this query is invalid.
@@ -153,7 +153,7 @@ struct order_st;
     SELECT t2.c FROM t2 GROUP BY t2.c HAVING AVG(t2.c+s)
   than returns some result set.
 
-  By the same reason the following query with a subquery 
+  By the same reason the following query with a subquery
     SELECT t1.a FROM t1 GROUP BY t1.a
       HAVING t1.a IN (SELECT t2.c FROM t2 GROUP BY t2.c
                         HAVING AVG(SUM(t1.b)) > 20)
@@ -219,12 +219,12 @@ struct order_st;
   Exploiting the fact that the members mentioned above are used in one
   recursive function we could have allocated them on the thread stack.
   Yet we don't do it now.
-  
+
   We assume that the nesting level of subquries does not exceed 127.
   TODO: to catch queries where the limit is exceeded to make the
-  code clean here.  
-    
-*/ 
+  code clean here.
+
+*/
 
 class Item_sum :public Item_result_field
 {
@@ -239,8 +239,8 @@ public:
   Item **ref_by; /* pointer to a ref to the object used to register it */
   Item_sum *next; /* next in the circular chain of registered objects  */
   uint32_t arg_count;
-  Item_sum *in_sum_func;  /* embedding set function if any */ 
-  st_select_lex * aggr_sel; /* select where the function is aggregated       */ 
+  Item_sum *in_sum_func;  /* embedding set function if any */
+  st_select_lex * aggr_sel; /* select where the function is aggregated       */
   int8_t nest_level;        /* number of the nesting level of the set function */
   int8_t aggr_level;        /* nesting level of the aggregating subquery       */
   int8_t max_arg_level;     /* max level of unbound column references          */
@@ -254,18 +254,18 @@ public:
   */
   List<Item_field> outer_fields;
 
-protected:  
+protected:
   table_map used_tables_cache;
   bool forced_const;
 
-public:  
+public:
 
   void mark_as_sum_func();
   Item_sum() :arg_count(0), quick_group(1), forced_const(false)
   {
     mark_as_sum_func();
   }
-  Item_sum(Item *a) :args(tmp_args), arg_count(1), quick_group(1), 
+  Item_sum(Item *a) :args(tmp_args), arg_count(1), quick_group(1),
     forced_const(false)
   {
     args[0]=a;
@@ -344,16 +344,16 @@ public:
     { return new Item_field(field); }
   table_map used_tables() const { return used_tables_cache; }
   void update_used_tables ();
-  void cleanup() 
-  { 
+  void cleanup()
+  {
     Item::cleanup();
-    forced_const= false; 
+    forced_const= false;
   }
   bool is_null() { return null_value; }
-  void make_const () 
-  { 
-    used_tables_cache= 0; 
-    forced_const= true; 
+  void make_const ()
+  {
+    used_tables_cache= 0;
+    forced_const= true;
   }
   virtual bool const_item() const { return forced_const; }
   void make_field(Send_field *field);
@@ -379,7 +379,7 @@ public:
   bool init_sum_func_check(Session *session);
   bool check_sum_func(Session *session, Item **ref);
   bool register_sum_func(Session *session, Item **ref);
-  st_select_lex *depended_from() 
+  st_select_lex *depended_from()
     { return (nest_level == aggr_level ? 0 : aggr_sel); }
 };
 
@@ -388,20 +388,20 @@ class Item_sum_num :public Item_sum
 {
 protected:
   /*
-   val_xxx() functions may be called several times during the execution of a 
+   val_xxx() functions may be called several times during the execution of a
    query. Derived classes that require extensive calculation in val_xxx()
-   maintain cache of aggregate value. This variable governs the validity of 
+   maintain cache of aggregate value. This variable governs the validity of
    that cache.
   */
   bool is_evaluated;
 public:
   Item_sum_num() :Item_sum(),is_evaluated(false) {}
-  Item_sum_num(Item *item_par) 
+  Item_sum_num(Item *item_par)
     :Item_sum(item_par), is_evaluated(false) {}
   Item_sum_num(Item *a, Item* b) :Item_sum(a,b),is_evaluated(false) {}
-  Item_sum_num(List<Item> &list) 
+  Item_sum_num(List<Item> &list)
     :Item_sum(list), is_evaluated(false) {}
-  Item_sum_num(Session *session, Item_sum_num *item) 
+  Item_sum_num(Session *session, Item_sum_num *item)
     :Item_sum(session, item),is_evaluated(item->is_evaluated) {}
   bool fix_fields(Session *, Item **);
   int64_t val_int();
@@ -552,8 +552,8 @@ class Item_sum_count :public Item_sum_int
   void clear();
   void no_rows_in_result() { count=0; }
   bool add();
-  void make_const(int64_t count_arg) 
-  { 
+  void make_const(int64_t count_arg)
+  {
     count=count_arg;
     Item_sum::make_const();
   }
@@ -587,7 +587,7 @@ class Item_sum_count_distinct :public Item_sum_int
   */
   int64_t count;
   /*
-    Following is 0 normal object and pointer to original one for copy 
+    Following is 0 normal object and pointer to original one for copy
     (to correctly free resources)
   */
   Item_sum_count_distinct *original;
@@ -610,7 +610,7 @@ public:
     :Item_sum_int(session, item), table(item->table),
      field_lengths(item->field_lengths),
      tmp_table_param(item->tmp_table_param),
-     force_copy_fields(0), tree(item->tree), count(item->count), 
+     force_copy_fields(0), tree(item->tree), count(item->count),
      original(item), tree_key_length(item->tree_key_length),
      always_null(item->always_null)
   {}
@@ -732,15 +732,15 @@ public:
 
   =  sum (ai - avg(a))^2 / count(a) )
   =  sum (ai^2 - 2*ai*avg(a) + avg(a)^2) / count(a)
-  =  (sum(ai^2) - sum(2*ai*avg(a)) + sum(avg(a)^2))/count(a) = 
-  =  (sum(ai^2) - 2*avg(a)*sum(a) + count(a)*avg(a)^2)/count(a) = 
-  =  (sum(ai^2) - 2*sum(a)*sum(a)/count(a) + count(a)*sum(a)^2/count(a)^2 )/count(a) = 
-  =  (sum(ai^2) - 2*sum(a)^2/count(a) + sum(a)^2/count(a) )/count(a) = 
+  =  (sum(ai^2) - sum(2*ai*avg(a)) + sum(avg(a)^2))/count(a) =
+  =  (sum(ai^2) - 2*avg(a)*sum(a) + count(a)*avg(a)^2)/count(a) =
+  =  (sum(ai^2) - 2*sum(a)*sum(a)/count(a) + count(a)*sum(a)^2/count(a)^2 )/count(a) =
+  =  (sum(ai^2) - 2*sum(a)^2/count(a) + sum(a)^2/count(a) )/count(a) =
   =  (sum(ai^2) - sum(a)^2/count(a))/count(a)
 
 But, this falls prey to catastrophic cancellation.  Instead, use the recurrence formulas
 
-  M_{1} = x_{1}, ~ M_{k} = M_{k-1} + (x_{k} - M_{k-1}) / k newline 
+  M_{1} = x_{1}, ~ M_{k} = M_{k-1} + (x_{k} - M_{k-1}) / k newline
   S_{1} = 0, ~ S_{k} = S_{k-1} + (x_{k} - M_{k-1}) times (x_{k} - M_{k}) newline
   for 2 <= k <= n newline
   ital variance = S_{n} / (n-1)
@@ -965,7 +965,7 @@ class Item_func_group_concat : public Item_sum
 
   /**
      If DISTINCT is used with this GROUP_CONCAT, this member is used to filter
-     out duplicates. 
+     out duplicates.
      @see Item_func_group_concat::setup
      @see Item_func_group_concat::add
      @see Item_func_group_concat::clear

@@ -29,7 +29,7 @@ public:
   int64_t val_int();
   const char *func_name() const { return "quarter"; }
   void fix_length_and_dec()
-  { 
+  {
      decimals=0;
      max_length=1*MY_CHARSET_BIN_MB_MAXLEN;
      maybe_null=1;

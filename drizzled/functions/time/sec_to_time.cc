@@ -40,7 +40,7 @@
     1                if the value was truncated during conversion
     0                otherwise
 */
- 
+
 static bool sec_to_time(int64_t seconds, bool unsigned_flag, DRIZZLE_TIME *ltime)
 {
   uint32_t sec;
@@ -56,7 +56,7 @@ static bool sec_to_time(int64_t seconds, bool unsigned_flag, DRIZZLE_TIME *ltime
   }
   else if (seconds > 3020399)
     goto overflow;
- 
+
   sec= (uint) ((uint64_t) seconds % 3600);
   ltime->hour= (uint) (seconds/3600);
   ltime->minute= sec/60;

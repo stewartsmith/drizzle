@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTIONS_TIME_MAKE_TIME_WITH_WARN_H
 
 bool make_time_with_warn(const DATE_TIME_FORMAT *format,
-                         DRIZZLE_TIME *l_time, 
+                         DRIZZLE_TIME *l_time,
 			 String *str);
 
 #endif /* DRIZZLED_FUNCTIONS_TIME_MAKE_TIME_WITH_WARN_H */

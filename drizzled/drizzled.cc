@@ -434,7 +434,7 @@ pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_global_read_lock,
                 LOCK_error_log,
                 LOCK_global_system_variables,
-                LOCK_slave_list, 
+                LOCK_slave_list,
                 LOCK_active_mi,
                 LOCK_connection_count;
 
@@ -1091,7 +1091,7 @@ static void network_init(void)
       int flags =1;
 
 #ifdef IPV6_V6ONLY
-      if (next->ai_family == AF_INET6) 
+      if (next->ai_family == AF_INET6)
       {
         error= setsockopt(ip_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &flags, sizeof(flags));
         if (error != 0)
@@ -1100,7 +1100,7 @@ static void network_init(void)
           assert(error == 0);
         }
       }
-#endif   
+#endif
       error= setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
       if (error != 0)
       {
@@ -1857,7 +1857,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   else
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
-  my_stpcpy(fn_ext(pidfile_name),".pid");		// Add proper extension
+  strcpy(fn_ext(pidfile_name),".pid");		// Add proper extension
 
   /*
     Add server status variables to the dynamic list of
@@ -3926,7 +3926,7 @@ static void drizzle_init_variables(void)
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
-  my_stpcpy(server_version, VERSION);
+  strcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   threads.empty();
@@ -4321,7 +4321,7 @@ static void set_server_version(void)
   char *end= strxmov(server_version, VERSION,
                      DRIZZLE_SERVER_SUFFIX_STR, NULL);
   if (opt_bin_log)
-    my_stpcpy(end, "-log");                        // This may slow down system
+    strcpy(end, "-log");                        // This may slow down system
 }
 
 

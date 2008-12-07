@@ -25,7 +25,7 @@
   SYNOPSIS
     mi_assign_to_key_cache()
       info          open table
-      key_map       map of indexes to assign to the key cache 
+      key_map       map of indexes to assign to the key cache
       key_cache_ptr pointer to the key cache handle
       assign_lock   Mutex to lock during assignment
 

@@ -1,73 +1,73 @@
-/* Copyright (C) 2000-2006 MySQL AB & Sasha
+        /* Copyright (C) 2000-2006 MySQL AB & Sasha
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
+           This program is free software; you can redistribute it and/or modify
+           it under the terms of the GNU General Public License as published by
+           the Free Software Foundation; version 2 of the License.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+           This program is distributed in the hope that it will be useful,
+           but WITHOUT ANY WARRANTY; without even the implied warranty of
+           MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+           GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+           You should have received a copy of the GNU General Public License
+           along with this program; if not, write to the Free Software
+           Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+        #include <drizzled/server_includes.h>
 
-#include <drizzled/replication/mi.h>
-#include <drizzled/replication/replication.h>
-#include <drizzled/log_event.h>
-#include <libdrizzle/libdrizzle.h>
-#include <mysys/hash.h>
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
-#include <drizzled/data_home.h>
+        #include <drizzled/replication/mi.h>
+        #include <drizzled/replication/replication.h>
+        #include <drizzled/log_event.h>
+        #include <libdrizzle/libdrizzle.h>
+        #include <mysys/hash.h>
+        #include <drizzled/error.h>
+        #include <drizzled/gettext.h>
+        #include <drizzled/data_home.h>
 
-int max_binlog_dump_events = 0; // unlimited
+        int max_binlog_dump_events = 0; // unlimited
 
-/*
-    fake_rotate_event() builds a fake (=which does not exist physically in any
-    binlog) Rotate event, which contains the name of the binlog we are going to
-    send to the slave (because the slave may not know it if it just asked for
-    MASTER_LOG_FILE='', MASTER_LOG_POS=4).
-    < 4.0.14, fake_rotate_event() was called only if the requested pos was 4.
-    After this version we always call it, so that a 3.23.58 slave can rely on
-    it to detect if the master is 4.0 (and stop) (the _fake_ Rotate event has
-    zeros in the good positions which, by chance, make it possible for the 3.23
-    slave to detect that this event is unexpected) (this is luck which happens
-    because the master and slave disagree on the size of the header of
-    Log_event).
+        /*
+            fake_rotate_event() builds a fake (=which does not exist physically in any
+            binlog) Rotate event, which contains the name of the binlog we are going to
+            send to the slave (because the slave may not know it if it just asked for
+            MASTER_LOG_FILE='', MASTER_LOG_POS=4).
+            < 4.0.14, fake_rotate_event() was called only if the requested pos was 4.
+            After this version we always call it, so that a 3.23.58 slave can rely on
+            it to detect if the master is 4.0 (and stop) (the _fake_ Rotate event has
+            zeros in the good positions which, by chance, make it possible for the 3.23
+            slave to detect that this event is unexpected) (this is luck which happens
+            because the master and slave disagree on the size of the header of
+            Log_event).
 
-    Relying on the event length of the Rotate event instead of these
-    well-placed zeros was not possible as Rotate events have a variable-length
-    part.
-*/
-static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
-                             uint64_t position, const char** errmsg)
-{
-  char header[LOG_EVENT_HEADER_LEN], buf[ROTATE_HEADER_LEN+100];
-  /*
-    'when' (the timestamp) is set to 0 so that slave could distinguish between
-    real and fake Rotate events (if necessary)
-  */
-  memset(header, 0, 4);
-  header[EVENT_TYPE_OFFSET] = ROTATE_EVENT;
+            Relying on the event length of the Rotate event instead of these
+            well-placed zeros was not possible as Rotate events have a variable-length
+            part.
+        */
+        static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
+                                     uint64_t position, const char** errmsg)
+        {
+          char header[LOG_EVENT_HEADER_LEN], buf[ROTATE_HEADER_LEN+100];
+          /*
+            'when' (the timestamp) is set to 0 so that slave could distinguish between
+            real and fake Rotate events (if necessary)
+          */
+          memset(header, 0, 4);
+          header[EVENT_TYPE_OFFSET] = ROTATE_EVENT;
 
-  char* p = log_file_name+dirname_length(log_file_name);
-  uint32_t ident_len = (uint32_t) strlen(p);
-  uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN + ROTATE_HEADER_LEN;
-  int4store(header + SERVER_ID_OFFSET, server_id);
-  int4store(header + EVENT_LEN_OFFSET, event_len);
-  int2store(header + FLAGS_OFFSET, 0);
+          char* p = log_file_name+dirname_length(log_file_name);
+          uint32_t ident_len = (uint32_t) strlen(p);
+          uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN + ROTATE_HEADER_LEN;
+          int4store(header + SERVER_ID_OFFSET, server_id);
+          int4store(header + EVENT_LEN_OFFSET, event_len);
+          int2store(header + FLAGS_OFFSET, 0);
 
-  // TODO: check what problems this may cause and fix them
-  int4store(header + LOG_POS_OFFSET, 0);
+          // TODO: check what problems this may cause and fix them
+          int4store(header + LOG_POS_OFFSET, 0);
 
-  packet->append(header, sizeof(header));
-  int8store(buf+R_POS_OFFSET,position);
-  packet->append(buf, ROTATE_HEADER_LEN);
-  packet->append(p,ident_len);
+          packet->append(header, sizeof(header));
+          int8store(buf+R_POS_OFFSET,position);
+          packet->append(buf, ROTATE_HEADER_LEN);
+          packet->append(p,ident_len);
   if (my_net_write(net, (unsigned char*) packet->ptr(), packet->length()))
   {
     *errmsg = "failed on my_net_write()";
@@ -315,12 +315,12 @@ Increase max_allowed_packet on master";
 
   @return        heartbeat period an uint64_t of nanoseconds
                  or zero if heartbeat was not demanded by slave
-*/ 
+*/
 static uint64_t get_heartbeat_period(Session * session)
 {
   bool null_value;
   LEX_STRING name=  { C_STRING_WITH_LEN("master_heartbeat_period")};
-  user_var_entry *entry= 
+  user_var_entry *entry=
     (user_var_entry*) hash_search(&session->user_vars, (unsigned char*) name.str,
                                   name.length);
   return entry? entry->val_int(&null_value) : 0;
@@ -334,7 +334,7 @@ static uint64_t get_heartbeat_period(Session * session)
   @param event_coordinates  binlog file name and position of the last
                             real event master sent from binlog
 
-  @note 
+  @note
     Among three essential pieces of heartbeat data Log_event::when
     is computed locally.
     The  error to send is serious and should force terminating
@@ -394,7 +394,7 @@ void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos,
   bool binlog_can_be_corrupted= false;
 
   memset(&log, 0, sizeof(log));
-  /* 
+  /*
      heartbeat_period from @master_heartbeat_period user variable
   */
   uint64_t heartbeat_period= get_heartbeat_period(session);
@@ -503,7 +503,7 @@ impossible position";
   packet->set("\0", 1, &my_charset_bin);
   /*
     Adding MAX_LOG_EVENT_HEADER_LEN, since a binlog event can become
-    this larger than the corresponding packet (query) sent 
+    this larger than the corresponding packet (query) sent
     from client to master.
   */
   session->variables.max_allowed_packet+= MAX_LOG_EVENT_HEADER;
@@ -685,7 +685,7 @@ impossible position";
 	    goto end;
 	  }
 
-          do 
+          do
           {
             if (coord)
             {
@@ -710,9 +710,9 @@ impossible position";
             }
           } while (ret != 0 && coord != NULL && !session->killed);
           pthread_mutex_unlock(log_lock);
-        }    
+        }
         break;
-            
+
         default:
 	  pthread_mutex_unlock(log_lock);
 	  fatal_error = 1;
@@ -1393,14 +1393,14 @@ bool show_binlogs(Session* session)
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);
-  
+
   pthread_mutex_lock(drizzle_bin_log.get_log_lock());
   drizzle_bin_log.lock_index();
   index_file= drizzle_bin_log.get_index_file();
-  
+
   drizzle_bin_log.raw_get_current_log(&cur); // dont take mutex
   pthread_mutex_unlock(drizzle_bin_log.get_log_lock()); // lockdep, OK
-  
+
   cur_dir_len= dirname_length(cur.log_file_name);
 
   reinit_io_cache(index_file, READ_CACHE, (my_off_t) 0, 0, 0);
@@ -1447,7 +1447,7 @@ err:
    before a chunk of data is being read into the cache's buffer
    The fuction instantianates and writes into the binlog
    replication events along LOAD DATA processing.
-   
+
    @param file  pointer to io-cache
    @return 0
 */
@@ -1464,7 +1464,7 @@ int log_loaded_block(IO_CACHE* file)
   if (lf_info->last_pos_in_file != HA_POS_ERROR &&
       lf_info->last_pos_in_file >= my_b_get_pos_in_file(file))
     return(0);
-  
+
   for (block_len= my_b_get_bytes_in_buffer(file); block_len > 0;
        buffer += cmin(block_len, max_event_size),
        block_len -= cmin(block_len, max_event_size))
@@ -1579,7 +1579,7 @@ static int show_slave_skip_errors(Session *session __attribute__((unused)),
     if (var->value != buff)
       buff--;				// Remove last ','
     if (i < MAX_SLAVE_ERROR)
-      buff= my_stpcpy(buff, "...");  // Couldn't show all errors
+      buff= strcpy(buff, "...")+3;  // Couldn't show all errors
     *buff=0;
   }
   return 0;

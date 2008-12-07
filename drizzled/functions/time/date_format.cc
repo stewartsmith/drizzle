@@ -41,7 +41,7 @@ static bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
 
   if (l_time->neg)
     str->append('-');
-  
+
   end= (ptr= format->format.str) + format->format.length;
   for (; ptr != end ; ptr++)
   {
@@ -153,7 +153,7 @@ static bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
 	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= int10_to_str(calc_daynr(l_time->year,l_time->month,
-					l_time->day) - 
+					l_time->day) -
 		     calc_daynr(l_time->year,1,1) + 1, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 3, '0');
 	break;
@@ -171,7 +171,7 @@ static bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
 	str->append(hours_i < 12 ? "AM" : "PM",2);
 	break;
       case 'r':
-	length= sprintf(intbuff, 
+	length= sprintf(intbuff,
 		    ((l_time->hour % 24) < 12) ?
                     "%02d:%02d:%02d AM" : "%02d:%02d:%02d PM",
 		    (l_time->hour+11)%12+1,
@@ -185,9 +185,9 @@ static bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'T':
-	length= sprintf(intbuff, 
-		    "%02d:%02d:%02d", 
-		    l_time->hour, 
+	length= sprintf(intbuff,
+		    "%02d:%02d:%02d",
+		    l_time->hour,
 		    l_time->minute,
 		    l_time->second);
 	str->append(intbuff, length);
@@ -418,7 +418,7 @@ String *Item_func_date_format::val_str(String *str)
 
   DATE_TIME_FORMAT date_time_format;
   date_time_format.format.str=    (char*) format->ptr();
-  date_time_format.format.length= format->length(); 
+  date_time_format.format.length= format->length();
 
   /* Create the result string */
   str->set_charset(collation.collation);

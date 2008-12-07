@@ -27,9 +27,9 @@
  *
  * Previously, the mysql_priv.h file contained a number of conditional
  * #ifdef DRIZZLE_SERVER blocks which made it very difficult to determine
- * which headers and definitions were actually necessary for plugins to 
+ * which headers and definitions were actually necessary for plugins to
  * include.  The file, and NOT mysql_priv.h, should now be the main included
- * header for storage engine plugins, as it contains all definitions and 
+ * header for storage engine plugins, as it contains all definitions and
  * declarations needed by the plugin and nothing more.
  */
 #ifndef DRIZZLE_SERVER_COMMON_INCLUDES_H
@@ -60,7 +60,7 @@
  * @TODO Move the following into a drizzled.h header?
  *
  * I feel that global variables and functions referencing them directly
- * and that are used only in the server should be separated out into 
+ * and that are used only in the server should be separated out into
  * a drizzled.h header file -- JRP
  */
 

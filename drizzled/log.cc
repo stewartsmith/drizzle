@@ -27,6 +27,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/replication/replication.h>
 #include <libdrizzle/libdrizzle.h>
+#include <drizzled/replicator.h>
 #include <mysys/hash.h>
 #include <drizzled/replication/rli.h>
 
@@ -387,7 +388,7 @@ binlog_end_trans(Session *session, binlog_trx_data *trx_data,
   return(error);
 }
 
-static int binlog_prepare(handlerton *, Session *, bool)
+static int binlog_prepare(handlerton *, Session *session, bool)
 {
   /*
     do nothing.
@@ -395,6 +396,9 @@ static int binlog_prepare(handlerton *, Session *, bool)
     switch to 1pc.
     real work will be done in DRIZZLE_BIN_LOG::log_xid()
   */
+
+  (void)replicator_prepare(session);
+
   return 0;
 }
 
@@ -487,6 +491,8 @@ static int binlog_commit(handlerton *, Session *session, bool all)
   {
     Query_log_event qev(session, STRING_WITH_LEN("COMMIT"), true, false);
     qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
+    /* TODO: Fix return type */
+    (void)replicator_end_transaction(session, all, true);
     int error= binlog_end_trans(session, trx_data, &qev, all);
     return(error);
   }
@@ -545,6 +551,10 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
      */
     error= binlog_end_trans(session, trx_data, 0, all);
   }
+
+  /* TODO: Fix return type */
+  (void)replicator_end_transaction(session, all, false);
+
   return(error);
 }
 
@@ -574,6 +584,7 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
 
 static int binlog_savepoint_set(handlerton *, Session *session, void *sv)
 {
+  (void)replicator_savepoint_set(session, sv);
   binlog_trans_log_savepos(session, (my_off_t*) sv);
   /* Write it to the binary log */
 
@@ -585,20 +596,25 @@ static int binlog_savepoint_set(handlerton *, Session *session, void *sv)
 
 static int binlog_savepoint_rollback(handlerton *, Session *session, void *sv)
 {
+  bool error;
   /*
     Write ROLLBACK TO SAVEPOINT to the binlog cache if we have updated some
     non-transactional table. Otherwise, truncate the binlog cache starting
     from the SAVEPOINT command.
   */
-  if (unlikely(session->transaction.all.modified_non_trans_table || 
+  if (unlikely(session->transaction.all.modified_non_trans_table ||
                (session->options & OPTION_KEEP_LOG)))
   {
     int error=
       session->binlog_query(Session::STMT_QUERY_TYPE,
-                        session->query, session->query_length, true, false);
+                            session->query, session->query_length, true, false);
     return(error);
   }
   binlog_trans_log_truncate(session, *(my_off_t*)sv);
+
+
+  error= replicator_rollback_to_savepoint(session, sv);
+
   return(0);
 }
 
@@ -629,7 +645,7 @@ File open_binlog(IO_CACHE *log, const char *log_file_name, const char **errmsg)
 {
   File file;
 
-  if ((file = my_open(log_file_name, O_RDONLY, 
+  if ((file = my_open(log_file_name, O_RDONLY,
                       MYF(MY_WME))) < 0)
   {
     sql_print_error(_("Failed to open log (file '%s', errno %d)"),
@@ -688,7 +704,7 @@ static int find_uniq_filename(char *name)
 
   if (!(dir_info = my_dir(buff,MYF(MY_DONT_SORT))))
   {						// This shouldn't happen
-    my_stpcpy(end,".1");				// use name+1
+    strcpy(end,".1");				// use name+1
     return(0);
   }
   file_info= dir_info->dir_entry;
@@ -756,7 +772,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
   }
 
   if (new_name)
-    my_stpcpy(log_file_name, new_name);
+    strcpy(log_file_name, new_name);
   else if (generate_new_name(log_file_name, name))
     goto err;
 
@@ -1422,7 +1438,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(Session* session)
   {
     if ((error= my_delete_allow_opened(linfo.log_file_name, MYF(0))) != 0)
     {
-      if (my_errno == ENOENT) 
+      if (my_errno == ENOENT)
       {
         push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
@@ -1453,7 +1469,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(Session* session)
   close(LOG_CLOSE_INDEX);
   if ((error= my_delete_allow_opened(index_file_name, MYF(0))))	// Reset (open will update)
   {
-    if (my_errno == ENOENT) 
+    if (my_errno == ENOENT)
     {
       push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
@@ -1550,7 +1566,7 @@ int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
     context switches
   */
   pthread_cond_broadcast(&rli->log_space_cond);
-  
+
   /*
     Read the next log file name from the index file and pass it back to
     the caller
@@ -1636,10 +1652,10 @@ int DRIZZLE_BIN_LOG::update_log_index(LOG_INFO* log_info, bool need_update_threa
                                 stat() or my_delete()
 */
 
-int DRIZZLE_BIN_LOG::purge_logs(const char *to_log, 
+int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
                           bool included,
-                          bool need_mutex, 
-                          bool need_update_threads, 
+                          bool need_mutex,
+                          bool need_update_threads,
                           uint64_t *decrease_log_space)
 {
   int error;
@@ -1664,12 +1680,12 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
     struct stat s;
     if (stat(log_info.log_file_name, &s))
     {
-      if (errno == ENOENT) 
+      if (errno == ENOENT)
       {
         /*
           It's not fatal if we can't stat a log file that does not exist;
           If we could not stat, we won't delete.
-        */     
+        */
         push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
@@ -1702,7 +1718,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
       }
       else
       {
-        if (my_errno == ENOENT) 
+        if (my_errno == ENOENT)
         {
           push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
@@ -1733,7 +1749,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
     if (find_next_log(&log_info, 0) || exit_loop)
       break;
   }
-  
+
   /*
     If we get killed -9 here, the sysadmin would have to edit
     the log index file after restart - otherwise, this should be safe
@@ -1789,11 +1805,11 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
   {
     if (stat(log_info.log_file_name, &stat_area))
     {
-      if (errno == ENOENT) 
+      if (errno == ENOENT)
       {
         /*
           It's not fatal if we can't stat a log file that does not exist.
-        */     
+        */
         push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
@@ -1823,7 +1839,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
         break;
       if (my_delete(log_info.log_file_name, MYF(0)))
       {
-        if (my_errno == ENOENT) 
+        if (my_errno == ENOENT)
         {
           /* It's not fatal even if we can't delete a log file */
           push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -1874,7 +1890,7 @@ err:
 
 void DRIZZLE_BIN_LOG::make_log_name(char* buf, const char* log_ident)
 {
-  uint32_t dir_len = dirname_length(log_file_name); 
+  uint32_t dir_len = dirname_length(log_file_name);
   if (dir_len >= FN_REFLEN)
     dir_len=FN_REFLEN-1;
   my_stpncpy(buf, log_file_name, dir_len);
@@ -2103,7 +2119,7 @@ void DRIZZLE_BIN_LOG::stop_union_events(Session *session)
 
 bool DRIZZLE_BIN_LOG::is_query_in_union(Session *session, query_id_t query_id_param)
 {
-  return (session->binlog_evt_union.do_union && 
+  return (session->binlog_evt_union.do_union &&
           query_id_param >= session->binlog_evt_union.first_query_id);
 }
 
@@ -2137,60 +2153,6 @@ int Session::binlog_setup_trx_data()
   return(0);
 }
 
-/*
-  Function to start a statement and optionally a transaction for the
-  binary log.
-
-  SYNOPSIS
-    binlog_start_trans_and_stmt()
-
-  DESCRIPTION
-
-    This function does three things:
-    - Start a transaction if not in autocommit mode or if a BEGIN
-      statement has been seen.
-
-    - Start a statement transaction to allow us to truncate the binary
-      log.
-
-    - Save the currrent binlog position so that we can roll back the
-      statement by truncating the transaction log.
-
-      We only update the saved position if the old one was undefined,
-      the reason is that there are some cases (e.g., for CREATE-SELECT)
-      where the position is saved twice (e.g., both in
-      select_create::prepare() and Session::binlog_write_table_map()) , but
-      we should use the first. This means that calls to this function
-      can be used to start the statement before the first table map
-      event, to include some extra events.
- */
-
-void
-Session::binlog_start_trans_and_stmt()
-{
-  binlog_trx_data *trx_data= (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
-
-  if (trx_data == NULL ||
-      trx_data->before_stmt_pos == MY_OFF_T_UNDEF)
-  {
-    this->binlog_set_stmt_begin();
-    if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
-      trans_register_ha(this, true, binlog_hton);
-    trans_register_ha(this, false, binlog_hton);
-    /*
-      Mark statement transaction as read/write. We never start
-      a binary log transaction and keep it read-only,
-      therefore it's best to mark the transaction read/write just
-      at the same time we start it.
-      Not necessary to mark the normal transaction read/write
-      since the statement-level flag will be propagated automatically
-      inside ha_commit_trans.
-    */
-    ha_data[binlog_hton->slot].ha_info[0].set_trx_read_write();
-  }
-  return;
-}
-
 void Session::binlog_set_stmt_begin() {
   binlog_trx_data *trx_data=
     (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
@@ -2207,34 +2169,6 @@ void Session::binlog_set_stmt_begin() {
   trx_data->before_stmt_pos= pos;
 }
 
-
-/*
-  Write a table map to the binary log.
- */
-
-int Session::binlog_write_table_map(Table *table, bool is_trans)
-{
-  int error;
-
-  /* Pre-conditions */
-  assert(table->s->table_map_id != UINT32_MAX);
-
-  Table_map_log_event::flag_set const
-    flags= Table_map_log_event::TM_NO_FLAGS;
-
-  Table_map_log_event
-    the_event(this, table, table->s->table_map_id, is_trans, flags);
-
-  if (is_trans && binlog_table_maps == 0)
-    binlog_start_trans_and_stmt();
-
-  if ((error= drizzle_bin_log.write(&the_event)))
-    return(error);
-
-  binlog_table_maps++;
-  table->s->table_map_version= drizzle_bin_log.table_map_version();
-  return(0);
-}
 
 Rows_log_event*
 Session::binlog_get_pending_rows_event() const
@@ -2422,8 +2356,6 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
       my_off_t trans_log_pos= my_b_tell(trans_log);
       if (event_info->get_cache_stmt() || trans_log_pos != 0)
       {
-        if (trans_log_pos == 0)
-          session->binlog_start_trans_and_stmt();
         file= trans_log;
       }
       /*
@@ -2765,7 +2697,7 @@ void DRIZZLE_BIN_LOG::wait_for_update_relay_log(Session* session)
 {
   const char *old_msg;
   old_msg= session->enter_cond(&update_cond, &LOCK_log,
-                           "Slave has read all relay log; " 
+                           "Slave has read all relay log; "
                            "waiting for the slave I/O "
                            "thread to update it" );
   pthread_cond_wait(&update_cond, &LOCK_log);
@@ -2777,7 +2709,7 @@ void DRIZZLE_BIN_LOG::wait_for_update_relay_log(Session* session)
 /**
   Wait until we get a signal that the binary log has been updated.
   Applies to master only.
-     
+
   NOTES
   @param[in] session        a Session struct
   @param[in] timeout    a pointer to a timespec;
@@ -2910,7 +2842,7 @@ static bool test_if_number(register const char *str,
   register int flag;
   const char *start;
 
-  flag= 0; 
+  flag= 0;
   start= str;
   while (*str++ == ' ') ;
   if (*--str == '-' || *str == '+')
@@ -2963,7 +2895,7 @@ void DRIZZLE_BIN_LOG::signal_update()
   return;
 }
 
-void sql_print_error(const char *format, ...) 
+void sql_print_error(const char *format, ...)
 {
   va_list args;
 
@@ -2975,7 +2907,7 @@ void sql_print_error(const char *format, ...)
 }
 
 
-void sql_print_warning(const char *format, ...) 
+void sql_print_warning(const char *format, ...)
 {
   va_list args;
 
@@ -2987,7 +2919,7 @@ void sql_print_warning(const char *format, ...)
 }
 
 
-void sql_print_information(const char *format, ...) 
+void sql_print_information(const char *format, ...)
 {
   va_list args;
 
@@ -3131,7 +3063,7 @@ int TC_LOG_MMAP::open(const char *opt_name)
   memcpy(data, tc_log_magic, sizeof(tc_log_magic));
   data[sizeof(tc_log_magic)]= (unsigned char)total_ha_2pc;
   // must cast data to (char *) for solaris. Arg1 is (void *) on linux
-  //   so the cast should be fine. 
+  //   so the cast should be fine.
   msync((char *)data, tc_log_page_size, MS_SYNC);
   my_sync(fd, MYF(0));
   inited=5;
@@ -3339,7 +3271,7 @@ int TC_LOG_MMAP::sync()
     note - no locks are held at this point
   */
   // must cast data to (char *) for solaris. Arg1 is (void *) on linux
-  //   so the cast should be fine. 
+  //   so the cast should be fine.
   err= msync((char *)syncing->start, 1, MS_SYNC);
   if(err==0)
     err= my_sync(fd, MYF(0));
@@ -3618,6 +3550,8 @@ int TC_LOG_BINLOG::log_xid(Session *session, my_xid xid)
   Xid_log_event xle(session, xid);
   binlog_trx_data *trx_data=
     (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
+  /* TODO: Fix return type */
+  (void)replicator_end_transaction(session, true, true);
   /*
     We always commit the entire transaction when writing an XID. Also
     note that the return value is inverted.

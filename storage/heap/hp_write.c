@@ -83,18 +83,18 @@ err:
     if ((*keydef->delete_key)(info, keydef, record, pos, 0))
       break;
     keydef--;
-  } 
+  }
 
   hp_free_chunks(&share->recordspace, pos);
 
   return(my_errno);
 } /* heap_write */
 
-/* 
-  Write a key to rb_tree-index 
+/*
+  Write a key to rb_tree-index
 */
 
-int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char *record, 
+int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char *record,
 		    unsigned char *recpos)
 {
   heap_rb_param custom_arg;
@@ -129,22 +129,22 @@ int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char *reco
     info     Heap table info
     keyinfo  Key info
     record   Table record to added
-    recpos   Memory buffer where the table record will be stored if added 
+    recpos   Memory buffer where the table record will be stored if added
              successfully
   NOTE
-    Hash index uses HP_BLOCK structure as a 'growable array' of HASH_INFO 
+    Hash index uses HP_BLOCK structure as a 'growable array' of HASH_INFO
     structs. Array size == number of entries in hash index.
     hp_mask(hp_rec_hashnr()) maps hash entries values to hash array positions.
     If there are several hash entries with the same hash array position P,
-    they are connected in a linked list via HASH_INFO::next_key. The first 
-    list element is located at position P, next elements are located at 
+    they are connected in a linked list via HASH_INFO::next_key. The first
+    list element is located at position P, next elements are located at
     positions for which there is no record that should be located at that
     position. The order of elements in the list is arbitrary.
 
   RETURN
     0  - OK
     -1 - Out of memory
-    HA_ERR_FOUND_DUPP_KEY - Duplicate record on unique key. The record was 
+    HA_ERR_FOUND_DUPP_KEY - Duplicate record on unique key. The record was
     still added and the caller must call hp_delete_key for it.
 */
 
@@ -162,21 +162,21 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
     return(-1);				/* No more memory */
   halfbuff= (long) share->blength >> 1;
   pos= hp_find_hash(&keyinfo->block,(first_index=share->records-halfbuff));
-  
+
   /*
     We're about to add one more hash array position, with hash_mask=#records.
-    The number of hash positions will change and some entries might need to 
-    be relocated to the newly added position. Those entries are currently 
-    members of the list that starts at #first_index position (this is 
+    The number of hash positions will change and some entries might need to
+    be relocated to the newly added position. Those entries are currently
+    members of the list that starts at #first_index position (this is
     guaranteed by properties of hp_mask(hp_rec_hashnr(X)) mapping function)
     At #first_index position currently there may be either:
     a) An entry with hashnr != first_index. We don't need to move it.
     or
     b) A list of items with hash_mask=first_index. The list contains entries
        of 2 types:
-       1) entries that should be relocated to the list that starts at new 
+       1) entries that should be relocated to the list that starts at new
           position we're adding ('uppper' list)
-       2) entries that should be left in the list starting at #first_index 
+       2) entries that should be left in the list starting at #first_index
           position ('lower' list)
   */
   if (pos != empty)				/* If some records */
@@ -186,8 +186,8 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
       hashnr = hp_rec_hashnr(keyinfo, pos->ptr_to_rec);
       if (flag == 0)
       {
-        /* 
-          First loop, bail out if we're dealing with case a) from above 
+        /*
+          First loop, bail out if we're dealing with case a) from above
           comment
         */
 	if (hp_mask(hashnr, share->blength, share->records) != first_index)
@@ -205,7 +205,7 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
         ptr_to_rec2 - same for upper list.
       */
       if (!(hashnr & halfbuff))
-      {						
+      {
         /* Key should be put into 'lower' list */
 	if (!(flag & LOWFIND))
 	{
@@ -221,7 +221,7 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
 	  else
 	  {
             /*
-              We can only get here at first iteration: key is at 'lower' 
+              We can only get here at first iteration: key is at 'lower'
               position pos and should be left here.
             */
 	    flag=LOWFIND | LOWUSED;
@@ -269,7 +269,7 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
       }
     }
     while ((pos=pos->next_key));
-    
+
     if ((flag & (LOWFIND | HIGHFIND)) == (LOWFIND | HIGHFIND))
     {
       /*

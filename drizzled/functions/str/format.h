@@ -20,10 +20,10 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_FORMAT_H
 #define DRIZZLED_FUNCTIONS_STR_FORMAT_H
 
-#include <drizzled/functions/str/strfunc.h> 
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_func_format :public Item_str_func
-{ 
+{
   String tmp_str;
 public:
   Item_func_format(Item *org, Item *dec);
@@ -32,5 +32,5 @@ public:
   const char *func_name() const { return "format"; }
   virtual void print(String *str, enum_query_type query_type);
 };
-  
+
 #endif /* DRIZZLED_FUNCTIONS_STR_FORMAT_H */

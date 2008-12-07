@@ -65,7 +65,7 @@ extern my_decimal decimal_zero;
   @retval
     FALSE  otherwise
 */
- 
+
 bool Item_sum::init_sum_func_check(Session *session)
 {
   if (!session->lex->allow_sum_func)
@@ -117,8 +117,8 @@ bool Item_sum::init_sum_func_check(Session *session)
          HAVING t1.a IN (SELECT t2.c FROM t2 WHERE AVG(t1.b) > 20) AND
                 t1.a > (SELECT MIN(t2.d) FROM t2);
     @endcode
-    allow_sum_func will contain: 
-    - for SUM(t1.b) - 1 at the first position 
+    allow_sum_func will contain:
+    - for SUM(t1.b) - 1 at the first position
     - for AVG(t1.b) - 1 at the first position, 0 at the second position
     - for MIN(t2.d) - 1 at the first position, 1 at the second position.
 
@@ -136,25 +136,25 @@ bool Item_sum::init_sum_func_check(Session *session)
   @retval
     FALSE  otherwise
 */
- 
+
 bool Item_sum::check_sum_func(Session *session, Item **ref)
 {
   bool invalid= false;
   nesting_map allow_sum_func= session->lex->allow_sum_func;
-  /*  
+  /*
     The value of max_arg_level is updated if an argument of the set function
     contains a column reference resolved  against a subquery whose level is
     greater than the current value of max_arg_level.
     max_arg_level cannot be greater than nest level.
-    nest level is always >= 0  
-  */ 
+    nest level is always >= 0
+  */
   if (nest_level == max_arg_level)
   {
     /*
-      The function must be aggregated in the current subquery, 
-      If it is there under a construct where it is not allowed 
-      we report an error. 
-    */ 
+      The function must be aggregated in the current subquery,
+      If it is there under a construct where it is not allowed
+      we report an error.
+    */
     invalid= !(allow_sum_func & (1 << max_arg_level));
   }
   else if (max_arg_level >= 0 || !(allow_sum_func & (1 << nest_level)))
@@ -178,16 +178,16 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
   /*
     By this moment we either found a subquery where the set function is
     to be aggregated  and assigned a value that is  >= 0 to aggr_level,
-    or set the value of 'invalid' to TRUE to report later an error. 
+    or set the value of 'invalid' to TRUE to report later an error.
   */
-  /* 
+  /*
     Additionally we have to check whether possible nested set functions
     are acceptable here: they are not, if the level of aggregation of
     some of them is less than aggr_level.
   */
-  if (!invalid) 
+  if (!invalid)
     invalid= aggr_level <= max_sum_func_level;
-  if (invalid)  
+  if (invalid)
   {
     my_message(ER_INVALID_GROUP_FUNC_USE, ER(ER_INVALID_GROUP_FUNC_USE),
                MYF(0));
@@ -199,8 +199,8 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
     /*
       If the set function is nested adjust the value of
       max_sum_func_level for the nesting set function.
-      We take into account only enclosed set functions that are to be 
-      aggregated on the same level or above of the nest level of 
+      We take into account only enclosed set functions that are to be
+      aggregated on the same level or above of the nest level of
       the enclosing set function.
       But we must always pass up the max_sum_func_level because it is
       the maximum nested level of all directly and indirectly enclosed
@@ -288,7 +288,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
     aggregated. If it finds such a subquery then aggr_level is set to
     the nest level of this subquery and the item for the set function
     is added to the list of set functions used in nested subqueries
-    inner_sum_func_list defined for each subquery. When the item is placed 
+    inner_sum_func_list defined for each subquery. When the item is placed
     there the field 'ref_by' is set to ref.
 
   @note
@@ -304,7 +304,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
     FALSE  if the executes without failures (currently always)
   @retval
     TRUE   otherwise
-*/  
+*/
 
 bool Item_sum::register_sum_func(Session *session, Item **ref)
 {
@@ -323,11 +323,11 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
   }
   if (sl && (allow_sum_func & (1 << sl->nest_level)))
   {
-    /* 
+    /*
       We reached the subquery of level max_arg_level and checked
-      that the function can be aggregated here. 
+      that the function can be aggregated here.
       The set function will be aggregated in this subquery.
-    */   
+    */
     aggr_level= sl->nest_level;
     aggr_sel= sl;
 
@@ -346,14 +346,14 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
     aggr_sel->inner_sum_func_list= this;
     aggr_sel->with_sum_func= 1;
 
-    /* 
+    /*
       Mark Item_subselect(s) as containing aggregate function all the way up
       to aggregate function's calculation context.
       Note that we must not mark the Item of calculation context itself
       because with_sum_func on the calculation context st_select_lex is
       already set above.
 
-      with_sum_func being set for an Item means that this Item refers 
+      with_sum_func being set for an Item means that this Item refers
       (somewhere in it, e.g. one of its arguments if it's a function) directly
       or through intermediate items to an aggregate function that is calculated
       in a context "outside" of the Item (e.g. in the current or outer select).
@@ -361,7 +361,7 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
       with_sum_func being set for an st_select_lex means that this st_select_lex
       has aggregate functions directly referenced (i.e. not through a sub-select).
     */
-    for (sl= session->lex->current_select; 
+    for (sl= session->lex->current_select;
          sl && sl != aggr_sel && sl->master_unit()->item;
          sl= sl->master_unit()->outer_select() )
       sl->master_unit()->item->with_sum_func= 1;
@@ -371,7 +371,7 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
 }
 
 
-Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements), 
+Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
   forced_const(false)
 {
   if ((args=(Item**) sql_alloc(sizeof(Item*)*arg_count)))
@@ -399,7 +399,7 @@ Item_sum::Item_sum(Session *session, Item_sum *item):
   aggr_sel(item->aggr_sel),
   nest_level(item->nest_level), aggr_level(item->aggr_level),
   quick_group(item->quick_group), used_tables_cache(item->used_tables_cache),
-  forced_const(item->forced_const) 
+  forced_const(item->forced_const)
 {
   if (arg_count <= 2)
     args=tmp_args;
@@ -707,7 +707,7 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   if (args[0]->type() == Item::FIELD_ITEM)
   {
     field= ((Item_field*) args[0])->field;
-    
+
     if ((field= create_tmp_field_from_field(current_session, field, name, table,
 					    NULL, convert_blob_length)))
       field->flags&= ~NOT_NULL_FLAG;
@@ -746,7 +746,7 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   @todo
   check if the following assignments are really needed
 */
-Item_sum_sum::Item_sum_sum(Session *session, Item_sum_sum *item) 
+Item_sum_sum::Item_sum_sum(Session *session, Item_sum_sum *item)
   :Item_sum_num(session, item), hybrid_type(item->hybrid_type),
    curr_dec_buff(item->curr_dec_buff)
 {
@@ -1379,7 +1379,7 @@ static void variance_fp_recurrence_next(double *m, double *s, uint64_t *count, d
 {
   *count += 1;
 
-  if (*count == 1) 
+  if (*count == 1)
   {
     *m= nr;
     *s= 0;
@@ -1423,7 +1423,7 @@ void Item_sum_variance::fix_length_and_dec()
 
   /*
     According to the SQL2003 standard (Part 2, Foundations; sec 10.9,
-    aggregate function; paragraph 7h of Syntax Rules), "the declared 
+    aggregate function; paragraph 7h of Syntax Rules), "the declared
     type of the result is an implementation-defined aproximate numeric
     type.
   */
@@ -1488,17 +1488,17 @@ Field *Item_sum_variance::create_tmp_field(bool group, Table *table,
 
 void Item_sum_variance::clear()
 {
-  count= 0; 
+  count= 0;
 }
 
 bool Item_sum_variance::add()
 {
-  /* 
+  /*
     Why use a temporary variable?  We don't know if it is null until we
     evaluate it, which has the side-effect of setting null_value .
   */
   double nr= args[0]->val_real();
-  
+
   if (!args[0]->null_value)
     variance_fp_recurrence_next(&recurrence_m, &recurrence_s, &count, nr);
   return 0;
@@ -1763,7 +1763,7 @@ bool Item_sum_min::add()
   {
     int64_t nr=args[0]->val_int();
     if (!args[0]->null_value && (null_value ||
-				 (unsigned_flag && 
+				 (unsigned_flag &&
 				  (uint64_t) nr < (uint64_t) sum_int) ||
 				 (!unsigned_flag && nr < sum_int)))
     {
@@ -1827,7 +1827,7 @@ bool Item_sum_max::add()
   {
     int64_t nr=args[0]->val_int();
     if (!args[0]->null_value && (null_value ||
-				 (unsigned_flag && 
+				 (unsigned_flag &&
 				  (uint64_t) nr > (uint64_t) sum_int) ||
 				 (!unsigned_flag && nr > sum_int)))
     {
@@ -2694,7 +2694,7 @@ bool Item_sum_count_distinct::setup(Session *session)
 }
 
 
-Item *Item_sum_count_distinct::copy_or_same(Session* session) 
+Item *Item_sum_count_distinct::copy_or_same(Session* session)
 {
   return new (session->mem_root) Item_sum_count_distinct(session, this);
 }
@@ -2789,22 +2789,22 @@ int64_t Item_sum_count_distinct::val_int()
 *****************************************************************************/
 
 
-/** 
+/**
   Compares the values for fields in expr list of GROUP_CONCAT.
   @note
-       
+
      GROUP_CONCAT([DISTINCT] expr [,expr ...]
               [order_st BY {unsigned_integer | col_name | expr}
                   [ASC | DESC] [,col_name ...]]
               [SEPARATOR str_val])
- 
+
   @return
-  @retval -1 : key1 < key2 
+  @retval -1 : key1 < key2
   @retval  0 : key1 = key2
-  @retval  1 : key1 > key2 
+  @retval  1 : key1 > key2
 */
 
-int group_concat_key_cmp_with_distinct(void* arg, const void* key1, 
+int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
                                        const void* key2)
 {
   Item_func_group_concat *item_func= (Item_func_group_concat*)arg;
@@ -2813,9 +2813,9 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
   for (uint32_t i= 0; i < item_func->arg_count_field; i++)
   {
     Item *item= item_func->args[i];
-    /* 
+    /*
       If field_item is a const item then either get_tp_table_field returns 0
-      or it is an item over a const table. 
+      or it is an item over a const table.
     */
     if (item->const_item())
       continue;
@@ -2838,7 +2838,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
   function of sort for syntax: GROUP_CONCAT(expr,... order_st BY col,... )
 */
 
-int group_concat_key_cmp_with_order(void* arg, const void* key1, 
+int group_concat_key_cmp_with_order(void* arg, const void* key1,
                                     const void* key2)
 {
   Item_func_group_concat* grp_item= (Item_func_group_concat*) arg;
@@ -2856,9 +2856,9 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
       the temporary table, not the original field
     */
     Field *field= item->get_tmp_table_field();
-    /* 
+    /*
       If item is a const item then either get_tp_table_field returns 0
-      or it is an item over a const table. 
+      or it is an item over a const table.
     */
     if (field && !item->const_item())
     {
@@ -3130,7 +3130,7 @@ bool Item_func_group_concat::add()
   null_value= false;
   bool row_eligible= true;
 
-  if (distinct) 
+  if (distinct)
   {
     /* Filter out duplicate rows. */
     uint32_t count= unique_filter->elements_in_tree();
@@ -3204,7 +3204,7 @@ Item_func_group_concat::fix_fields(Session *session, Item **ref)
         !(new_separator= new(session->mem_root)
                            String(buf, buflen, collation.collation)))
       return true;
-    
+
     conv_length= copy_and_convert(buf, buflen, collation.collation,
                                   separator->ptr(), separator->length(),
                                   separator->charset(), &errors);
@@ -3277,7 +3277,7 @@ bool Item_func_group_concat::setup(Session *session)
       DISTINCT. This leads to truncation if the BLOB's size exceeds
       Field_varstring::MAX_SIZE.
     */
-    set_if_smaller(tmp_table_param->convert_blob_length, 
+    set_if_smaller(tmp_table_param->convert_blob_length,
                    Field_varstring::MAX_SIZE);
   }
 
@@ -3313,7 +3313,7 @@ bool Item_func_group_concat::setup(Session *session)
     */
     init_tree(tree, (uint) cmin(session->variables.max_heap_table_size,
                                session->variables.sortbuff_size/16), 0,
-              tree_key_length, 
+              tree_key_length,
               group_concat_key_cmp_with_order , 0, NULL, (void*) this);
   }
 
@@ -3322,7 +3322,7 @@ bool Item_func_group_concat::setup(Session *session)
                               (void*)this,
                               tree_key_length,
                               session->variables.max_heap_table_size);
-  
+
   return(false);
 }
 
@@ -3397,5 +3397,5 @@ void Item_func_group_concat::print(String *str, enum_query_type query_type)
 Item_func_group_concat::~Item_func_group_concat()
 {
   if (!original && unique_filter)
-    delete unique_filter;    
+    delete unique_filter;
 }

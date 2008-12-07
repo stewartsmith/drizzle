@@ -884,7 +884,7 @@ static bool test_if_real(const char *str,int length, const CHARSET_INFO * const 
     return 1;
   if (*str == 'E' || *str == 'e')
   {
-    if (length < 3 || (str[1] != '+' && str[1] != '-') || 
+    if (length < 3 || (str[1] != '+' && str[1] != '-') ||
         !my_isdigit(cs,str[2]))
       return 0;
     length-=3;
@@ -1515,7 +1515,7 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
     assert(vcol_info && vcol_info->expr_item);
     is_stored= vcol_info->get_field_stored();
     /*
-      Perform per item-type checks to determine if the expression is 
+      Perform per item-type checks to determine if the expression is
       allowed for a virtual column.
       Note that validation of the specific function is done later in
       procedures open_table_from_share and fix_fields_vcol_func
@@ -1542,7 +1542,7 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
          my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
          return true;
          break;
-    default: 
+    default:
       // Continue with the field creation
       break;
     }
@@ -1653,7 +1653,7 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
     if (fld_default_value)
     {
       /* Grammar allows only NOW() value for ON UPDATE clause */
-      if (fld_default_value->type() == Item::FUNC_ITEM && 
+      if (fld_default_value->type() == Item::FUNC_ITEM &&
           ((Item_func*)fld_default_value)->functype() == Item_func::NOW_FUNC)
       {
         unireg_check= (fld_on_update_value ? Field::TIMESTAMP_DNUN_FIELD:
@@ -1948,7 +1948,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
   if (!(flags & (NO_DEFAULT_VALUE_FLAG | BLOB_FLAG)) &&
       old_field->ptr && orig_field &&
       (sql_type != DRIZZLE_TYPE_TIMESTAMP ||                /* set def only if */
-       old_field->table->timestamp_field != old_field ||  /* timestamp field */ 
+       old_field->table->timestamp_field != old_field ||  /* timestamp field */
        unireg_check == Field::TIMESTAMP_UN_FIELD))        /* has default val */
   {
     char buff[MAX_FIELD_WIDTH];
@@ -1996,7 +1996,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
     0 otherwise
 */
 
-bool 
+bool
 Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
                    int cuted_increment)
 {
@@ -2032,10 +2032,10 @@ Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
     thread.
 */
 
-void 
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
-                            unsigned int code, 
-                            const char *str, uint32_t str_length, 
+void
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
+                            unsigned int code,
+                            const char *str, uint32_t str_length,
                             enum enum_drizzle_timestamp_type ts_type, int cuted_increment)
 {
   Session *session= table ? table->in_use : current_session;
@@ -2062,8 +2062,8 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
     thread.
 */
 
-void 
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code, 
+void
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
                             int64_t nr, enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment)
 {
@@ -2073,7 +2073,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t co
   {
     char str_nr[22];
     char *str_end= int64_t10_to_str(nr, str_nr, -10);
-    make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr), 
+    make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr),
                                  ts_type, field_name);
   }
 }
@@ -2093,8 +2093,8 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t co
     thread.
 */
 
-void 
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, const uint32_t code, 
+void
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, const uint32_t code,
                             double nr, enum enum_drizzle_timestamp_type ts_type)
 {
   Session *session= table ? table->in_use : current_session;

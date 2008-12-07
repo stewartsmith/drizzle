@@ -29,7 +29,7 @@ String *Item_func_left::val_str(String *str)
   /* must be int64_t to avoid truncation */
   int64_t length= args[1]->val_int();
   uint32_t char_pos;
-  
+
   if ((null_value=(args[0]->null_value || args[1]->null_value)))
     return 0;
 

@@ -22,7 +22,8 @@ pkgplugindir =		$(pkglibdir)/plugin
 AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
 EXTRA_LTLIBRARIES =	libcompressudf.la
 pkgplugin_LTLIBRARIES =	@plugin_compress_shared_target@
-libcompressudf_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir) -lz
+libcompressudf_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir)\
+				${Z_LIBS}
 libcompressudf_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 libcompressudf_la_SOURCES =	compressudf.cc
 

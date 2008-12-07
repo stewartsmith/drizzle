@@ -134,7 +134,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     /* Don't call realpath() if the name can't be a link */
     if (!strcmp(name_buff, org_name) ||
         my_readlink(index_name, org_name, MYF(0)) == -1)
-      (void) my_stpcpy(index_name, org_name);
+      (void) strcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
     (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,
                      MY_APPEND_EXT|MY_UNPACK_FILENAME|MY_RESOLVE_SYMLINKS);
@@ -249,10 +249,10 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
            sizeof(my_off_t)*keys);
     memcpy(share->state.key_del, key_del,
            sizeof(my_off_t) * share->state.header.max_block_size_index);
-    my_stpcpy(share->unique_file_name, name_buff);
+    strcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
-    my_stpcpy(share->index_file_name,  index_name);
-    my_stpcpy(share->data_file_name,   data_name);
+    strcpy(share->index_file_name,  index_name);
+    strcpy(share->data_file_name,   data_name);
 
     share->blocksize=cmin(IO_SIZE,myisam_block_size);
     {
@@ -447,7 +447,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   if (!have_rtree)
     info.rtree_recursion_state= NULL;
 
-  my_stpcpy(info.filename,name);
+  strcpy(info.filename,name);
   memcpy(info.blobs,share->blobs,sizeof(MI_BLOB)*share->base.blobs);
   info.lastkey2=info.lastkey+share->base.max_key_length;
 
@@ -896,7 +896,7 @@ unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
   base->extra_alloc_procent = *ptr++;
 
   /* advance past raid_type (1) raid_chunks (2) and raid_chunksize (4) */
-  ptr+= 7; 
+  ptr+= 7;
 
   ptr+=6;
   return ptr;
@@ -959,7 +959,7 @@ int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
   pos= keyseg->null_bit ? keyseg->null_pos : keyseg->bit_pos;
   mi_int4store(ptr, pos);
   ptr+=4;
-  
+
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 

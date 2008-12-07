@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_ROLLUP_CONST_H
 #define DRIZZLED_FUNCTIONS_ROLLUP_CONST_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
 
 /*
   Objects of this class are used for ROLLUP queries to wrap up

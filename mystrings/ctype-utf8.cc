@@ -1521,9 +1521,9 @@ MY_UNICASE_INFO *my_unicase_default[256]={
 
 /*
   Turkish lower/upper mapping:
-  1. LOWER(0x0049 LATIN CAPITAL LETTER I) -> 
+  1. LOWER(0x0049 LATIN CAPITAL LETTER I) ->
            0x0131 LATIN SMALL   LETTER DOTLESS I
-  2. UPPER(0x0069 LATIN SMALL   LETTER I) -> 
+  2. UPPER(0x0069 LATIN SMALL   LETTER I) ->
            0x0130 LATIN CAPITAL LETTER I WITH DOT ABOVE
 */
 
@@ -1702,7 +1702,7 @@ MY_UNICASE_INFO *my_unicase_turkish[256]=
 /**
   Compare string against string with wildcard
   This function is used for utf8mb3, utf8mb4, ucs2, utf16, utf32
-  
+
   @param cs Character set.
   @str      String.
   @str_end  End of string.
@@ -1711,7 +1711,7 @@ MY_UNICASE_INFO *my_unicase_turkish[256]=
   @escape   Escape characters, typically \\.
   @w_one    "One character", typically _.
   @w_many   "Many characters", typically %.
-  
+
   @return Comparison result.
     @retval  0 if matched.
     @retval -1 if not matched with wildcard.
@@ -1729,7 +1729,7 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
   int scan, plane;
   my_charset_conv_mb_wc mb_wc;
   mb_wc= cs->cset->mb_wc;
-  
+
   while (wildstr != wildend)
   {
     while (1)
@@ -1754,12 +1754,12 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
         wildstr+= scan;
         escaped= 1;
       }
-      
+
       if ((scan= mb_wc(cs, &s_wc, (const unsigned char*)str,
                        (const unsigned char*)str_end)) <= 0)
         return 1;
       str+= scan;
-      
+
       if (!escaped && w_wc == (my_wc_t)w_one)
       {
         result= 1;				/* Found an anchor char */
@@ -1785,24 +1785,24 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
       if (wildstr == wildend)
 	return (str != str_end);		/* Match if both are at end */
     }
-    
-    
+
+
     if (w_wc == (my_wc_t)w_many)
     {						/* Found w_many */
-    
+
       /* Remove any '%' and '_' from the wild search string */
       for (; wildstr != wildend ;)
       {
         if ((scan= mb_wc(cs, &w_wc, (const unsigned char*)wildstr,
                          (const unsigned char*)wildend)) <= 0)
           return 1;
-        
+
 	if (w_wc == (my_wc_t)w_many)
 	{
 	  wildstr+= scan;
 	  continue;
-	} 
-	
+	}
+
 	if (w_wc == (my_wc_t)w_one)
 	{
 	  wildstr+= scan;
@@ -1814,18 +1814,18 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
 	}
 	break;					/* Not a wild character */
       }
-      
+
       if (wildstr == wildend)
 	return 0;				/* Ok if w_many is last */
-      
+
       if (str == str_end)
 	return -1;
-      
+
       if ((scan= mb_wc(cs, &w_wc, (const unsigned char*)wildstr,
                        (const unsigned char*)wildend)) <=0)
         return 1;
       wildstr+= scan;
-      
+
       if (w_wc ==  (my_wc_t)escape)
       {
         if (wildstr < wildend)
@@ -1836,7 +1836,7 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
           wildstr+= scan;
         }
       }
-      
+
       while (1)
       {
         /* Skip until the first character from wildstr is found */
@@ -1852,21 +1852,21 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
             plane=(w_wc>>8) & 0xFF;
             w_wc = weights[plane] ? weights[plane][w_wc & 0xFF].sort : w_wc;
           }
-          
+
           if (s_wc == w_wc)
             break;
           str+= scan;
         }
         if (str == str_end)
           return -1;
-        
+
         str+= scan;
         result= my_wildcmp_unicode(cs, str, str_end, wildstr, wildend,
                                    escape, w_one, w_many,
                                    weights);
         if (result <= 0)
           return result;
-      } 
+      }
     }
   }
   return (str != str_end ? 1 : 0);
@@ -2048,7 +2048,7 @@ my_mb_wc_utf8mb4_no_range(const CHARSET_INFO * const,
     *pwc = ((my_wc_t) (c & 0x1f) << 6) | (my_wc_t) (s[1] ^ 0x80);
     return 2;
   }
-  
+
   if (c < 0xf0)
   {
     if (!((s[1] ^ 0x80) < 0x40 &&
@@ -2362,7 +2362,7 @@ my_strnncoll_utf8mb4(const CHARSET_INFO * const cs,
 
     my_tosort_utf8mb4(uni_plane, &s_wc);
     my_tosort_utf8mb4(uni_plane, &t_wc);
-    
+
     if ( s_wc != t_wc )
     {
       return s_wc > t_wc ? 1 : -1;
@@ -2498,10 +2498,10 @@ int my_strcasecmp_utf8mb4(const CHARSET_INFO * const cs,
   while (s[0] && t[0])
   {
     my_wc_t s_wc,t_wc;
-    
+
     if ((unsigned char) s[0] < 128)
     {
-      /* 
+      /*
         s[0] is between 0 and 127.
         It represents a single byte character.
         Convert it into weight according to collation.
@@ -2512,21 +2512,21 @@ int my_strcasecmp_utf8mb4(const CHARSET_INFO * const cs,
     else
     {
       int res= my_mb_wc_utf8mb4_no_range(cs, &s_wc, (const unsigned char*) s);
-      
-      /* 
+
+      /*
          In the case of wrong multibyte sequence we will
          call strcmp() for byte-to-byte comparison.
       */
       if (res <= 0)
         return strcmp(s, t);
       s+= res;
-      
+
       my_tolower_utf8mb4(uni_plane, &s_wc);
     }
-    
-    
+
+
     /* Do the same for the second string */
-    
+
     if ((unsigned char) t[0] < 128)
     {
       /* Convert single byte character into weight */
@@ -2539,10 +2539,10 @@ int my_strcasecmp_utf8mb4(const CHARSET_INFO * const cs,
       if (res <= 0)
         return strcmp(s, t);
       t+= res;
-      
+
       my_tolower_utf8mb4(uni_plane, &t_wc);
     }
-    
+
     /* Now we have two weights, let's compare them */
     if ( s_wc != t_wc )
       return  ((int) s_wc) - ((int) t_wc);
@@ -2558,7 +2558,7 @@ my_wildcmp_utf8mb4(const CHARSET_INFO * const cs,
                    int escape, int w_one, int w_many)
 {
   return my_wildcmp_unicode(cs, str, strend, wildstr, wildend,
-                            escape, w_one, w_many, cs->caseinfo); 
+                            escape, w_one, w_many, cs->caseinfo);
 }
 
 
@@ -2592,12 +2592,12 @@ my_strnxfrm_utf8mb4(const CHARSET_INFO * const cs,
 
     if (uni_plane)
       my_tosort_utf8mb4(uni_plane, &wc);
-    
+
     *dst++= (unsigned char)(wc >> 8);
     *dst++= (unsigned char)(wc & 0xFF);
-    
+
   }
-  
+
   if (dst < de && nweights && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
     /* Fill the tail with keys for space character */
@@ -2606,7 +2606,7 @@ my_strnxfrm_utf8mb4(const CHARSET_INFO * const cs,
       *dst++= 0x00;
       *dst++= 0x20;
     }
-    
+
     if (dst < de)  /* Clear the last byte, if "dstlen" was an odd number */
       *dst++= 0x00;
   }
@@ -2990,7 +2990,7 @@ my_mb_wc_utf8mb3_no_range(const CHARSET_INFO * const,
     *pwc = ((my_wc_t) (c & 0x1f) << 6) | (my_wc_t) (s[1] ^ 0x80);
     return 2;
   }
-  
+
   if (c < 0xf0)
   {
     if (!((s[1] ^ 0x80) < 0x40 &&
@@ -3398,10 +3398,10 @@ my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs,
   while (s[0] && t[0])
   {
     my_wc_t s_wc,t_wc;
-    
+
     if ((unsigned char) s[0] < 128)
     {
-      /* 
+      /*
         s[0] is between 0 and 127.
         It represents a single byte character.
         Convert it into weight according to collation.
@@ -3412,7 +3412,7 @@ my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs,
     else
     {
       int plane, res;
-      
+
       /*
         Scan a multibyte character.
 
@@ -3427,25 +3427,25 @@ my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs,
         then my_utf8_uni will always return a negative number, so the
         loop with finish.
       */
-      
+
       res= my_mb_wc_utf8mb3(cs, &s_wc, (const unsigned char*)s, (const unsigned char*) s + 3);
-      
-      /* 
+
+      /*
          In the case of wrong multibyte sequence we will
          call strcmp() for byte-to-byte comparison.
       */
       if (res <= 0)
         return strcmp(s, t);
       s+= res;
-      
+
       /* Convert Unicode code into weight according to collation */
       plane=(s_wc>>8) & 0xFF;
       s_wc = uni_plane[plane] ? uni_plane[plane][s_wc & 0xFF].tolower : s_wc;
     }
-    
-    
+
+
     /* Do the same for the second string */
-    
+
     if ((unsigned char) t[0] < 128)
     {
       /* Convert single byte character into weight */
@@ -3460,12 +3460,12 @@ my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs,
       if (res <= 0)
         return strcmp(s, t);
       t+= res;
-      
+
       /* Convert code into weight */
       plane=(t_wc>>8) & 0xFF;
       t_wc = uni_plane[plane] ? uni_plane[plane][t_wc & 0xFF].tolower : t_wc;
     }
-    
+
     /* Now we have two weights, let's compare them */
     if ( s_wc != t_wc )
       return  ((int) s_wc) - ((int) t_wc);
@@ -3482,7 +3482,7 @@ my_wildcmp_utf8mb3(const CHARSET_INFO * const cs,
 {
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
   return my_wildcmp_unicode(cs,str,str_end,wildstr,wildend,
-                            escape,w_one,w_many,uni_plane); 
+                            escape,w_one,w_many,uni_plane);
 }
 
 
@@ -3518,9 +3518,9 @@ my_strnxfrm_utf8mb3(const CHARSET_INFO * const cs,
 
     *dst++= (unsigned char)(wc >> 8);
     *dst++= (unsigned char)(wc & 0xFF);
-    
+
   }
-  
+
   if (dst < de && nweights && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
     /* Fill the tail with keys for space character */
@@ -3529,7 +3529,7 @@ my_strnxfrm_utf8mb3(const CHARSET_INFO * const cs,
       *dst++= 0x00;
       *dst++= 0x20;
     }
-    
+
     if (dst < de)  /* Clear the last byte, if "dstlen" was an odd number */
       *dst++= 0x00;
   }
@@ -3559,7 +3559,7 @@ my_strnxfrm_utf8mb3_bin(const CHARSET_INFO * const cs,
     *dst++= (unsigned char)(wc >> 8);
     *dst++= (unsigned char)(wc & 0xFF);
   }
-  
+
   if (dst < de && nweights && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
     /* Fill the tail with keys for space character */
@@ -3568,7 +3568,7 @@ my_strnxfrm_utf8mb3_bin(const CHARSET_INFO * const cs,
       *dst++= 0x00;
       *dst++= 0x20;
     }
-    
+
     if (dst < de)  /* Clear the last byte, if "dstlen" was an odd number */
       *dst++= 0x00;
   }
@@ -3755,7 +3755,7 @@ CHARSET_INFO my_charset_utf8mb3_bin=
  */
 
 int
-my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs, 
+my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs,
                         const unsigned char *s, size_t slen,
                         const unsigned char *t, size_t tlen,
                         bool t_is_prefix)
@@ -3773,14 +3773,14 @@ my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs,
     int plane;
     s_res= my_mb_wc_utf8mb3(cs, &s_wc, s, se);
     t_res= my_mb_wc_utf8mb3(cs, &t_wc, t, te);
-    
+
     if ( s_res <= 0 || t_res <= 0 )
 
     {
       /* Incorrect string, compare by char value */
-      return ((int)s[0]-(int)t[0]); 
+      return ((int)s[0]-(int)t[0]);
     }
-    
+
     if ( save_diff == 0 )
     {
       save_diff = ((int)s_wc) - ((int)t_wc);
@@ -3793,7 +3793,7 @@ my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs,
     {
       return  ((int) s_wc) - ((int) t_wc);
     }
-    
+
     s+=s_res;
     t+=t_res;
   }
@@ -3802,7 +3802,7 @@ my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs,
 }
 
 int
-my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs, 
+my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs,
                           const unsigned char *s, size_t slen,
                           const unsigned char *t, size_t tlen,
                           bool diff_if_only_endspace_difference)
@@ -3817,19 +3817,19 @@ my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs,
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
   diff_if_only_endspace_difference= false;
 #endif
-    
+
   while ( s < se && t < te )
   {
     int plane;
     s_res= my_mb_wc_utf8mb3(cs, &s_wc, s, se);
     t_res= my_mb_wc_utf8mb3(cs, &t_wc, t, te);
-    
+
     if ( s_res <= 0 || t_res <= 0 )
     {
       /* Incorrect string, compare by char value */
-      return ((int)s[0]-(int)t[0]); 
+      return ((int)s[0]-(int)t[0]);
     }
-    
+
     if ( save_diff == 0 )
     {
       save_diff = ((int)s_wc) - ((int)t_wc);
@@ -3842,15 +3842,15 @@ my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs,
     {
       return  ((int) s_wc) - ((int) t_wc);
     }
-    
+
     s+=s_res;
     t+=t_res;
   }
-  
+
   slen= se-s;
   tlen= te-t;
   res= 0;
-  
+
   if (slen != tlen)
   {
     int swap= 1;
@@ -5061,21 +5061,21 @@ my_mb_wc_filename(const CHARSET_INFO * const,
   if (s >= e)
     return MY_CS_TOOSMALL;
 
-  if (*s < 128 && filename_safe_char[*s])  
+  if (*s < 128 && filename_safe_char[*s])
   {
     *pwc= *s;
     return 1;
   }
-  
+
   if (*s != MY_FILENAME_ESCAPE)
     return MY_CS_ILSEQ;
-  
+
   if (s + 3 > e)
     return MY_CS_TOOSMALL3;
-  
+
   byte1= s[1];
   byte2= s[2];
-  
+
   if (byte1 >= 0x30 && byte1 <= 0x7F &&
       byte2 >= 0x30 && byte2 <= 0x7F)
   {
@@ -5091,7 +5091,7 @@ my_mb_wc_filename(const CHARSET_INFO * const,
       return 3;
     }
   }
-  
+
   if (s + 4 > e)
     return MY_CS_TOOSMALL4;
 
@@ -5106,7 +5106,7 @@ my_mb_wc_filename(const CHARSET_INFO * const,
       return 5;
     }
   }
-  
+
   return MY_CS_ILSEQ;
 }
 
@@ -5122,7 +5122,7 @@ my_wc_mb_filename(const CHARSET_INFO * const,
     *s= (unsigned char) wc;
     return 1;
   }
-  
+
   if (s + 3 > e)
     return MY_CS_TOOSMALL3;
 

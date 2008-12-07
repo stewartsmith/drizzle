@@ -124,10 +124,10 @@ void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
       /* Allocate new prealloc block and add it to the end of free list */
       if ((mem= (USED_MEM *) my_malloc(size, MYF(0))))
       {
-        mem->size= size; 
+        mem->size= size;
         mem->left= pre_alloc_size;
         mem->next= *prev;
-        *prev= mem_root->pre_alloc= mem; 
+        *prev= mem_root->pre_alloc= mem;
       }
       else
       {

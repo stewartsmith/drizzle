@@ -173,7 +173,7 @@ void my_handler_error_register(void)
     handler_error_messages[] list (check mysys/ma_handler_errors.h and
     include/my_base.h).
 
-    TODO: Remove fix the handler_error_messages so that this hack isn't 
+    TODO: Remove fix the handler_error_messages so that this hack isn't
           necessary.
   */
 #ifdef __GNUC__

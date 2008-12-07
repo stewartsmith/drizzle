@@ -77,7 +77,7 @@ int64_t Item_func_signed::val_int()
       args[0]->result_as_int64_t())
   {
     value= args[0]->val_int();
-    null_value= args[0]->null_value; 
+    null_value= args[0]->null_value;
     return value;
   }
 

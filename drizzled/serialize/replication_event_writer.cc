@@ -9,7 +9,7 @@ using namespace std;
 static uint64_t query_id= 0;
 char transaction_id[37];
 
-/* 
+/*
   Example script for reader a Drizzle master replication list.
 */
 
@@ -109,7 +109,7 @@ void write_update(drizzle::Event *record, const char *trx)
   value->add_value("6");
 }
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
   write_update(list.add_event(), transaction_id);
 
   fstream output(argv[1], ios::out | ios::trunc | ios::binary);
-  if (!list.SerializeToOstream(&output)) 
+  if (!list.SerializeToOstream(&output))
   {
     cerr << "Failed to write replication event log." << endl;
     return -1;

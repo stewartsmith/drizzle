@@ -71,7 +71,7 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
 
   DESCRIPTION
     Checks file name part starting with the rightmost '.' character,
-    and returns it if it is equal to '.frm'. 
+    and returns it if it is equal to '.frm'.
 
   TODO
     It is a good idea to get rid of this function modifying the code
@@ -147,7 +147,7 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
 
     share->path.str= path_buff;
     share->path.length= path_length;
-    my_stpcpy(share->path.str, path);
+    strcpy(share->path.str, path);
     share->normalized_path.str=    share->path.str;
     share->normalized_path.length= path_length;
 
@@ -186,7 +186,7 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
     session         thread handle
     share	Share to fill
     key		Table_cache_key, as generated from create_table_def_key.
-		must start with db name.    
+		must start with db name.
     key_length	Length of key
     table_name	Table name
     path	Path to file (possible in lower case) without .frm
@@ -271,7 +271,7 @@ void free_table_share(TABLE_SHARE *share)
     pthread_cond_destroy(&share->cond);
   }
   hash_free(&share->name_hash);
-  
+
   plugin_unlock(NULL, share->db_plugin);
   share->db_plugin= NULL;
 
@@ -283,7 +283,7 @@ void free_table_share(TABLE_SHARE *share)
 
 /*
   Read table definition from a binary / text based .frm file
-  
+
   SYNOPSIS
   open_table_def()
   session		Thread handler
@@ -327,11 +327,11 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
   {
     /*
       We don't try to open 5.0 unencoded name, if
-      - non-encoded name contains '@' signs, 
+      - non-encoded name contains '@' signs,
         because '@' can be misinterpreted.
         It is not clear if '@' is escape character in 5.1,
         or a normal character in 5.0.
-        
+
       - non-encoded db or table name contain "#mysql50#" prefix.
         This kind of tables must have been opened only by the
         open() above.
@@ -370,7 +370,7 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
 
     /* Unencoded 5.0 table name found */
     unpacked_path[length]= '\0'; // Remove .frm extension
-    my_stpcpy(share->normalized_path.str, unpacked_path);
+    strcpy(share->normalized_path.str, unpacked_path);
     share->normalized_path.length= length;
   }
 
@@ -475,9 +475,9 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     if the storage engine is dynamic, no point in resolving it by its
     dynamically allocated legacy_db_type. We will resolve it later by name.
   */
-  if (legacy_db_type > DB_TYPE_UNKNOWN && 
+  if (legacy_db_type > DB_TYPE_UNKNOWN &&
       legacy_db_type < DB_TYPE_FIRST_DYNAMIC)
-    share->db_plugin= ha_lock_engine(NULL, 
+    share->db_plugin= ha_lock_engine(NULL,
                                      ha_checktype(session, legacy_db_type, 0, 0));
   share->db_create_options= db_create_options= uint2korr(head+30);
   share->db_options_in_use= share->db_create_options;
@@ -589,7 +589,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     }
   }
   keynames=(char*) key_part;
-  strpos+= (my_stpcpy(keynames, (char *) strpos) - keynames)+1;
+  strpos+= (strcpy(keynames, (char*)strpos)+strlen((char*)strpos)-keynames)+1;
 
   //reading index comments
   for (keyinfo= share->key_info, i=0; i < keys; i++, keyinfo++)
@@ -600,8 +600,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       keyinfo->comment.str= strmake_root(&share->mem_root, (char*) strpos+2,
                                          keyinfo->comment.length);
       strpos+= 2 + keyinfo->comment.length;
-    } 
-    assert(test(keyinfo->flags & HA_USES_COMMENT) == 
+    }
+    assert(test(keyinfo->flags & HA_USES_COMMENT) ==
                (keyinfo->comment.length > 0));
   }
 
@@ -611,7 +611,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   record_offset= (ulong) (uint2korr(head+6)+
                           ((uint2korr(head+14) == 0xffff ?
                             uint4korr(head+47) : uint2korr(head+14))));
- 
+
   if ((n_length= uint4korr(head+55)))
   {
     /* Read extra data segment */
@@ -784,10 +784,10 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   memcpy(names, strpos+(share->fields*field_pack_length),
 	 (uint) (n_length+int_length));
   comment_pos= names+(n_length+int_length);
-  memcpy(comment_pos, disk_buff+read_length-com_length-vcol_screen_length, 
+  memcpy(comment_pos, disk_buff+read_length-com_length-vcol_screen_length,
          com_length);
   vcol_screen_pos= names+(n_length+int_length+com_length);
-  memcpy(vcol_screen_pos, disk_buff+read_length-vcol_screen_length, 
+  memcpy(vcol_screen_pos, disk_buff+read_length-vcol_screen_length,
          vcol_screen_length);
 
   fix_type_pointers(&interval_array, &share->fieldnames, 1, &names);
@@ -885,7 +885,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       if (field_type == DRIZZLE_TYPE_VIRTUAL)
       {
         assert(interval_nr); // Expect non-null expression
-        /* 
+        /*
           The interval_id byte in the .frm file stores the length of the
           expression statement for a virtual column.
         */
@@ -945,9 +945,9 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       {
         /*
           Try to choose the best 4.1 type:
-          - for 4.0 "CHAR(N) BINARY" or "VARCHAR(N) BINARY" 
+          - for 4.0 "CHAR(N) BINARY" or "VARCHAR(N) BINARY"
             try to find a binary collation for character set.
-          - for other types (e.g. BLOB) just use my_charset_bin. 
+          - for other types (e.g. BLOB) just use my_charset_bin.
         */
         if (!f_is_blob(pack_flag))
         {
@@ -1178,7 +1178,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   {
     /* Old file format with default as not null */
     uint32_t null_length= (share->null_fields+7)/8;
-    memset(share->default_values + (null_flags - (unsigned char*) record), 
+    memset(share->default_values + (null_flags - (unsigned char*) record),
           null_length, 255);
   }
 
@@ -1274,7 +1274,7 @@ static void clear_field_flag(Table *table)
 }
 
 /*
-  The function uses the feature in fix_fields where the flag 
+  The function uses the feature in fix_fields where the flag
   GET_FIXED_FIELDS_FLAG is set for all fields in the item tree.
   This field must always be reset before returning from the function
   since it is used for other purposes as well.
@@ -1363,8 +1363,8 @@ bool fix_fields_vcol_func(Session *session,
     goto end;
   }
   session->where= save_where;
-  /* 
-    Walk through the Item tree checking if all items are valid 
+  /*
+    Walk through the Item tree checking if all items are valid
    to be part of the virtual column
  */
   error= func_expr->walk(&Item::check_vcol_func_processor, 0, NULL);
@@ -1382,7 +1382,7 @@ bool fix_fields_vcol_func(Session *session,
   }
   /* Ensure that this virtual column is not based on another virtual field. */
   ptr= table->field;
-  while ((field= *(ptr++))) 
+  while ((field= *(ptr++)))
   {
     if ((field->flags & GET_FIXED_FIELDS_FLAG) &&
         (field->vcol_info))
@@ -1432,16 +1432,16 @@ bool unpack_vcol_info_from_frm(Session *session,
 {
   assert(vcol_expr);
 
-  /* 
+  /*
     Step 1: Construct a statement for the parser.
     The parsed string needs to take the following format:
     "PARSE_VCOL_EXPR (<expr_string_from_frm>)"
   */
   char *vcol_expr_str;
   int str_len= 0;
-  
+
   if (!(vcol_expr_str= (char*) alloc_root(&table->mem_root,
-                                          vcol_expr->length + 
+                                          vcol_expr->length +
                                             parse_vcol_keyword.length + 3)))
   {
     return(true);
@@ -1452,8 +1452,8 @@ bool unpack_vcol_info_from_frm(Session *session,
   str_len= parse_vcol_keyword.length;
   memcpy(vcol_expr_str + str_len, "(", 1);
   str_len++;
-  memcpy(vcol_expr_str + str_len, 
-         (char*) vcol_expr->str, 
+  memcpy(vcol_expr_str + str_len,
+         (char*) vcol_expr->str,
          vcol_expr->length);
   str_len+= vcol_expr->length;
   memcpy(vcol_expr_str + str_len, ")", 1);
@@ -1462,14 +1462,14 @@ bool unpack_vcol_info_from_frm(Session *session,
   str_len++;
   Lex_input_stream lip(session, vcol_expr_str, str_len);
 
-  /* 
+  /*
     Step 2: Setup session for parsing.
     1) make Item objects be created in the memory allocated for the Table
        object (not TABLE_SHARE)
-    2) ensure that created Item's are not put on to session->free_list 
-       (which is associated with the parsed statement and hence cleared after 
+    2) ensure that created Item's are not put on to session->free_list
+       (which is associated with the parsed statement and hence cleared after
        the parsing)
-    3) setup a flag in the LEX structure to allow "PARSE_VCOL_EXPR" 
+    3) setup a flag in the LEX structure to allow "PARSE_VCOL_EXPR"
        to be parsed as a SQL command.
   */
   MEM_ROOT **root_ptr, *old_root;
@@ -1480,7 +1480,7 @@ bool unpack_vcol_info_from_frm(Session *session,
   session->free_list= NULL;
   session->lex->parse_vcol_expr= true;
 
-  /* 
+  /*
     Step 3: Use the parser to build an Item object from.
   */
   if (parse_sql(session, &lip))
@@ -1674,7 +1674,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
       goto err;
     outparam->key_info= key_info;
     key_part= (reinterpret_cast<KEY_PART_INFO*> (key_info+share->keys));
-    
+
     memcpy(key_info, share->key_info, sizeof(*key_info)*share->keys);
     memcpy(key_part, share->key_info[0].key_part, (sizeof(*key_part) *
                                                    share->key_parts));
@@ -1718,7 +1718,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
     goto err;
 
   outparam->vfield= vfield_ptr;
-  
+
   for (field_ptr= outparam->field; *field_ptr; field_ptr++)
   {
     if ((*field_ptr)->vcol_info)
@@ -1738,11 +1738,11 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
   }
   *vfield_ptr= NULL;                              // End marker
   /* Check virtual columns against table's storage engine. */
-  if ((share->vfields && outparam->file) && 
+  if ((share->vfields && outparam->file) &&
         (not outparam->file->check_if_supported_virtual_columns()))
   {
     my_error(ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN,
-             MYF(0), 
+             MYF(0),
              "Specified storage engine");
     error_reported= true;
     goto err;
@@ -1809,7 +1809,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
     }
   }
 
-#if defined(HAVE_purify) 
+#if defined(HAVE_purify)
   memset(bitmaps, 0, bitmap_size*3);
 #endif
 
@@ -2046,7 +2046,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
   {
     handler *file= 0;
     const char *datext= "";
-    
+
     if (share->db_type() != NULL)
     {
       if ((file= get_new_handler(share, current_session->mem_root,
@@ -2073,7 +2073,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
       csname= tmp;
     }
     my_printf_error(ER_UNKNOWN_COLLATION,
-                    _("Unknown collation '%s' in table '%-.64s' definition"), 
+                    _("Unknown collation '%s' in table '%-.64s' definition"),
                     MYF(0), csname, share->table_name.str);
     break;
   }
@@ -2081,7 +2081,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     strxmov(buff, share->normalized_path.str, reg_ext, NULL);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
-                    "of MySQL and cannot be read"), 
+                    "of MySQL and cannot be read"),
                     MYF(0), buff);
     break;
   case 8:
@@ -2164,7 +2164,7 @@ TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
  Search after a field with given start & length
  If an exact field isn't found, return longest field with starts
  at right position.
- 
+
  NOTES
    This is needed because in some .frm fields 'fieldnr' was saved wrong
 
@@ -2219,7 +2219,7 @@ ulong next_io_size(register ulong pos)
 /*
   Store an SQL quoted string.
 
-  SYNOPSIS  
+  SYNOPSIS
     append_unescaped()
     res		result String
     pos		string to be quoted
@@ -2316,7 +2316,7 @@ File create_frm(Session *session, const char *name, const char *db,
     int2store(fileinfo+6,IO_SIZE);		/* Next block starts here */
     for (i= 0; i < keys; i++)
     {
-      assert(test(key_info[i].flags & HA_USES_COMMENT) == 
+      assert(test(key_info[i].flags & HA_USES_COMMENT) ==
                  (key_info[i].comment.length > 0));
       if (key_info[i].flags & HA_USES_COMMENT)
         key_comment_total_bytes += 2 + key_info[i].comment.length;
@@ -2360,7 +2360,7 @@ File create_frm(Session *session, const char *name, const char *db,
     fileinfo[41]= 0;
     fileinfo[42]= 0;
     int4store(fileinfo+43,create_info->block_size);
- 
+
     fileinfo[44]= 0;
     fileinfo[45]= 0;
     fileinfo[46]= 0;
@@ -2587,14 +2587,14 @@ bool check_column_name(const char *name)
 {
   uint32_t name_length= 0;  // name length in symbols
   bool last_char_is_space= true;
-  
+
   while (*name)
   {
 #if defined(USE_MB) && defined(USE_MB_IDENT)
     last_char_is_space= my_isspace(system_charset_info, *name);
     if (use_mb(system_charset_info))
     {
-      int len=my_ismbchar(system_charset_info, name, 
+      int len=my_ismbchar(system_charset_info, name,
                           name+system_charset_info->mbmaxlen);
       if (len)
       {
@@ -3053,7 +3053,7 @@ void Table::clear_column_bitmaps()
 
 /*
   Tell handler we are going to call position() and rnd_pos() later.
-  
+
   NOTES:
   This is needed for handlers that uses the primary key to find the
   row. In this case we have to extend the read bitmap with the primary
@@ -3134,7 +3134,7 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index,
     if (key_part->field->vcol_info &&
         key_part->field->vcol_info->expr_item)
       key_part->field->vcol_info->
-               expr_item->walk(&Item::register_field_in_bitmap, 
+               expr_item->walk(&Item::register_field_in_bitmap,
                                1, (unsigned char *) bitmap);
   }
 }
@@ -3282,7 +3282,7 @@ void Table::mark_columns_needed_for_insert()
   mark_virtual_columns();
 }
 
-/* 
+/*
   @brief Update the write and read table bitmap to allow
          using procedure save_in_field for all virtual columns
          in the table.
@@ -3304,7 +3304,7 @@ void Table::mark_virtual_columns(void)
   {
     tmp_vfield= *vfield_ptr;
     assert(tmp_vfield->vcol_info && tmp_vfield->vcol_info->expr_item);
-    tmp_vfield->vcol_info->expr_item->walk(&Item::register_field_in_read_map, 
+    tmp_vfield->vcol_info->expr_item->walk(&Item::register_field_in_read_map,
                                            1, (unsigned char *) 0);
     bitmap_set_bit(read_set, tmp_vfield->field_index);
     bitmap_set_bit(write_set, tmp_vfield->field_index);
@@ -3350,7 +3350,7 @@ void TableList::reinit_before_use(Session *session)
 
   SYNOPSIS
     TableList::containing_subselect()
- 
+
   RETURN
     Subselect item for the subquery that contains the FROM list
     this table is taken from if there is any
@@ -3359,7 +3359,7 @@ void TableList::reinit_before_use(Session *session)
 */
 
 Item_subselect *TableList::containing_subselect()
-{    
+{
   return (select_lex ? select_lex->master_unit()->item : 0);
 }
 
@@ -3371,24 +3371,24 @@ Item_subselect *TableList::containing_subselect()
       table         the Table to operate on.
 
   DESCRIPTION
-    The parser collects the index hints for each table in a "tagged list" 
+    The parser collects the index hints for each table in a "tagged list"
     (TableList::index_hints). Using the information in this tagged list
-    this function sets the members Table::keys_in_use_for_query, 
+    this function sets the members Table::keys_in_use_for_query,
     Table::keys_in_use_for_group_by, Table::keys_in_use_for_order_by,
     Table::force_index and Table::covering_keys.
 
     Current implementation of the runtime does not allow mixing FORCE INDEX
-    and USE INDEX, so this is checked here. Then the FORCE INDEX list 
+    and USE INDEX, so this is checked here. Then the FORCE INDEX list
     (if non-empty) is appended to the USE INDEX list and a flag is set.
 
-    Multiple hints of the same kind are processed so that each clause 
+    Multiple hints of the same kind are processed so that each clause
     is applied to what is computed in the previous clause.
     For example:
         USE INDEX (i1) USE INDEX (i2)
     is equivalent to
         USE INDEX (i1,i2)
     and means "consider only i1 and i2".
-        
+
     Similarly
         USE INDEX () USE INDEX (i1)
     is equivalent to
@@ -3397,7 +3397,7 @@ Item_subselect *TableList::containing_subselect()
 
     It is OK to have the same index several times, e.g. "USE INDEX (i1,i1)" is
     not an error.
-        
+
     Different kind of hints (USE/FORCE/IGNORE) are processed in the following
     order:
       1. All indexes in USE (or FORCE) INDEX are added to the mask.
@@ -3406,8 +3406,8 @@ Item_subselect *TableList::containing_subselect()
     e.g. "USE INDEX i1, IGNORE INDEX i1, USE INDEX i1" will not use i1 at all
     as if we had "USE INDEX i1, USE INDEX i1, IGNORE INDEX i1".
 
-    As an optimization if there is a covering index, and we have 
-    IGNORE INDEX FOR GROUP/order_st, and this index is used for the JOIN part, 
+    As an optimization if there is a covering index, and we have
+    IGNORE INDEX FOR GROUP/order_st, and this index is used for the JOIN part,
     then we have to ignore the IGNORE INDEX FROM GROUP/order_st.
 
   RETURN VALUE
@@ -3417,7 +3417,7 @@ Item_subselect *TableList::containing_subselect()
 bool TableList::process_index_hints(Table *tbl)
 {
   /* initialize the result variables */
-  tbl->keys_in_use_for_query= tbl->keys_in_use_for_group_by= 
+  tbl->keys_in_use_for_query= tbl->keys_in_use_for_group_by=
     tbl->keys_in_use_for_order_by= tbl->s->keys_in_use;
 
   /* index hint list processing */
@@ -3428,7 +3428,7 @@ bool TableList::process_index_hints(Table *tbl)
     key_map index_group[INDEX_HINT_FORCE + 1];
     Index_hint *hint;
     int type;
-    bool have_empty_use_join= false, have_empty_use_order= false, 
+    bool have_empty_use_join= false, have_empty_use_order= false,
          have_empty_use_group= false;
     List_iterator <Index_hint> iter(*index_hints);
 
@@ -3466,9 +3466,9 @@ bool TableList::process_index_hints(Table *tbl)
         continue;
       }
 
-      /* 
-        Check if an index with the given name exists and get his offset in 
-        the keys bitmask for the table 
+      /*
+        Check if an index with the given name exists and get his offset in
+        the keys bitmask for the table
       */
       if (tbl->s->keynames.type_names == 0 ||
           (pos= find_type(&tbl->s->keynames, hint->key_name.str,
@@ -3585,9 +3585,9 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 {
   Field *new_field;
 
-  /* 
-    Make sure that the blob fits into a Field_varstring which has 
-    2-byte lenght. 
+  /*
+    Make sure that the blob fits into a Field_varstring which has
+    2-byte lenght.
   */
   if (convert_blob_length && convert_blob_length <= Field_varstring::MAX_SIZE &&
       (org_field->flags & BLOB_FLAG))
@@ -3769,7 +3769,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
   */
   if (param->precomputed_group_by)
     copy_func_count+= param->sum_func_count;
-  
+
   init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
   if (!multi_alloc_root(&own_root,
@@ -3804,7 +3804,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
     return(NULL);				/* purecov: inspected */
   }
   param->items_to_copy= copy_func;
-  my_stpcpy(tmpname,path);
+  strcpy(tmpname,path);
   /* make table according to fields */
 
   memset(table, 0, sizeof(*table));
@@ -4051,7 +4051,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
     share->default_values= table->record[1]+alloc_length;
   }
   copy_func[0]=0;				// End marker
-  param->func_count= copy_func - param->items_to_copy; 
+  param->func_count= copy_func - param->items_to_copy;
 
   table->setup_tmp_table_column_bitmaps(bitmaps);
 
@@ -4111,7 +4111,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
     */
     if (default_field[i] && default_field[i]->ptr)
     {
-      /* 
+      /*
          default_field[i] is set only in the cases  when 'field' can
          inherit the default value that is defined for the field referred
          by the Item_field object from which 'field' has been created.
@@ -4130,7 +4130,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
         memcpy(field->ptr, orig_field->ptr, field->pack_length());
       }
       orig_field->move_field_offset(-diff);     // Back to record[0]
-    } 
+    }
 
     if (from_field[i])
     {						/* Not a table Item */
@@ -4287,7 +4287,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
                                                 (unsigned char*) 0,
                                                 (uint) 0,
                                                 Field::NONE,
-                                                NULL, 
+                                                NULL,
                                                 table->s,
                                                 &my_charset_bin);
       if (!key_part_info->field)
@@ -4318,7 +4318,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
 
       if ((*reg_field)->real_maybe_null())
         key_part_info->store_length+= HA_KEY_NULL_LENGTH;
-      if ((*reg_field)->type() == DRIZZLE_TYPE_BLOB || 
+      if ((*reg_field)->type() == DRIZZLE_TYPE_BLOB ||
           (*reg_field)->real_type() == DRIZZLE_TYPE_VARCHAR)
         key_part_info->store_length+= HA_KEY_BLOB_LENGTH;
 
@@ -4507,7 +4507,7 @@ bool Table::open_tmp_table()
       start_recinfo   MyISAM's column descriptions
       recinfo INOUT   End of MyISAM's column descriptions
       options         Option bits
-   
+
   DESCRIPTION
     Create a MyISAM temporary table according to passed description. The is
     assumed to have one unique index or constraint.
@@ -4518,7 +4518,7 @@ bool Table::open_tmp_table()
          when there are many nullable columns)
       2. Table columns
       3. One free MI_COLUMNDEF element (*recinfo points here)
-   
+
     This function may use the free element to create hash column for unique
     constraint.
 
@@ -4527,9 +4527,9 @@ bool Table::open_tmp_table()
      true  - Error
 */
 
-bool Table::create_myisam_tmp_table(KEY *keyinfo, 
+bool Table::create_myisam_tmp_table(KEY *keyinfo,
                                     MI_COLUMNDEF *start_recinfo,
-                                    MI_COLUMNDEF **recinfo, 
+                                    MI_COLUMNDEF **recinfo,
 				    uint64_t options)
 {
   int error;
@@ -4674,7 +4674,7 @@ void Table::free_tmp_table(Session *session)
 
 bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF *start_recinfo,
-                             MI_COLUMNDEF **recinfo, 
+                             MI_COLUMNDEF **recinfo,
 			     int error, bool ignore_last_dupp_key_error)
 {
   Table new_table;
@@ -4682,7 +4682,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   const char *save_proc_info;
   int write_err;
 
-  if (table->s->db_type() != heap_hton || 
+  if (table->s->db_type() != heap_hton ||
       error != HA_ERR_RECORD_FILE_FULL)
   {
     table->file->print_error(error,MYF(0));
@@ -4700,7 +4700,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   session->set_proc_info("converting HEAP to MyISAM");
 
   if (new_table.create_myisam_tmp_table(table->key_info, start_recinfo,
-					recinfo, session->lex->select_lex.options | 
+					recinfo, session->lex->select_lex.options |
 					session->options))
     goto err2;
   if (new_table.open_tmp_table())
@@ -4747,7 +4747,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   new_table.s= table->s;                       // Keep old share
   *table= new_table;
   *table->s= share;
-  
+
   table->file->change_table_ptr(table, table->s);
   table->use_all_columns();
   if (save_proc_info)
@@ -4886,7 +4886,7 @@ int Table::report_error(int error)
                            fields do not need updating.
                            This value is false when during INSERT and UPDATE
                            and true in all other cases.
- 
+
   RETURN
     0  - Success
     >0 - Error occurred during the generation/calculation of a virtual field value

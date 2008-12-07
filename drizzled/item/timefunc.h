@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_ITEM_TIMEFUNC_H
 #define DRIZZLED_ITEM_TIMEFUNC_H
 
-enum date_time_format_types 
-{ 
+enum date_time_format_types
+{
   TIME_ONLY= 0, TIME_MICROSECOND, DATE_ONLY, DATE_TIME, DATE_TIME_MICROSECOND
 };
 
