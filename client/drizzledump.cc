@@ -620,7 +620,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     {
       char *start=argument;
       free(opt_password);
-      opt_password=my_strdup(argument,MYF(MY_FAE));
+      opt_password=strdup(argument);
       while (*argument) *argument++= 'x';               /* Destroy argument */
       if (*start)
         start[1]=0;                             /* Cut length of argument */
@@ -694,7 +694,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
       fprintf(stderr, "Illegal use of option --ignore-table=<database>.<table>\n");
       exit(1);
     }
-    if (my_hash_insert(&ignore_table, (unsigned char*)my_strdup(argument, MYF(0))))
+    if (my_hash_insert(&ignore_table, (unsigned char*)strdup(argument)))
       exit(EX_EOM);
     break;
   }
@@ -760,17 +760,17 @@ static int get_options(int *argc, char ***argv)
     return(EX_EOM);
   /* Don't copy internal log tables */
   if (my_hash_insert(&ignore_table,
-                     (unsigned char*) my_strdup("mysql.apply_status", MYF(MY_WME))) ||
+                     (unsigned char*) strdup("mysql.apply_status")) ||
       my_hash_insert(&ignore_table,
-                     (unsigned char*) my_strdup("mysql.schema", MYF(MY_WME))) ||
+                     (unsigned char*) strdup("mysql.schema")) ||
       my_hash_insert(&ignore_table,
-                     (unsigned char*) my_strdup("mysql.general_log", MYF(MY_WME))) ||
+                     (unsigned char*) strdup("mysql.general_log")) ||
       my_hash_insert(&ignore_table,
-                     (unsigned char*) my_strdup("mysql.slow_log", MYF(MY_WME))) ||
+                     (unsigned char*) strdup("mysql.slow_log")) ||
       my_hash_insert(&ignore_table,
-                     (unsigned char*) my_strdup("mysql.online_backup", MYF(MY_WME))) ||
+                     (unsigned char*) strdup("mysql.online_backup")) ||
       my_hash_insert(&ignore_table,
-                     (unsigned char*) my_strdup("mysql.online_backup_progress", MYF(MY_WME))))
+                     (unsigned char*) strdup("mysql.online_backup_progress")))
     return(EX_EOM);
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
@@ -1063,7 +1063,7 @@ static void unescape(FILE *file,char *pos,uint length)
 {
   char *tmp;
 
-  if (!(tmp=(char*) my_malloc(length*2+1, MYF(MY_WME))))
+  if (!(tmp=(char*) malloc(length*2+1)))
     die(EX_DRIZZLEERR, "Couldn't allocate memory");
 
   drizzle_escape_string(tmp, pos, length);
@@ -1488,7 +1488,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
         /* save "show create" statement for later */
         if ((row= drizzle_fetch_row(result)) && (scv_buff=row[1]))
-          scv_buff= my_strdup(scv_buff, MYF(0));
+          scv_buff= strdup(scv_buff);
 
         drizzle_free_result(result);
 
@@ -3243,7 +3243,7 @@ static char *primary_key_fields(const char *table_name)
   {
     char *end;
     /* result (terminating \0 is already in result_length) */
-    result= (char *)my_malloc(result_length + 10, MYF(MY_WME));
+    result= (char *)malloc(result_length + 10);
     if (!result)
     {
       fprintf(stderr, "Error: Not enough memory to store ORDER BY clause\n");

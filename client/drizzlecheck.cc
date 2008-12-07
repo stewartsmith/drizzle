@@ -257,7 +257,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     {
       char *start = argument;
       free(opt_password);
-      opt_password = my_strdup(argument, MYF(MY_FAE));
+      opt_password = strdup(argument);
       while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
   start[1] = 0;                             /* Cut length of argument */

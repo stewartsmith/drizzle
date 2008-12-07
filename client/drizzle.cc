@@ -1027,10 +1027,10 @@ int main(int argc,char *argv[])
 
   MY_INIT(argv[0]);
   delimiter_str= delimiter;
-  default_prompt= my_strdup(getenv("DRIZZLE_PS1") ?
-                            getenv("DRIZZLE_PS1") :
-                            "drizzle>> ", MYF(0));
-  current_prompt= my_strdup(default_prompt, MYF(0));
+  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
+                         getenv("DRIZZLE_PS1") :
+                         "drizzle> ");
+  current_prompt= strdup(default_prompt);
   processed_prompt= new string();
   processed_prompt->reserve(32);
 
