@@ -4221,9 +4221,9 @@ TYPELIB *ha_known_exts(void)
     plugin_foreach(NULL, exts_handlerton,
                    DRIZZLE_STORAGE_ENGINE_PLUGIN, &found_exts);
 
-    ext= (const char **) my_once_alloc(sizeof(char *)*
-                                       (found_exts.elements+1),
-                                       MYF(MY_WME | MY_FAE));
+    ext= (const char **) malloc(sizeof(char *)*
+                                (found_exts.elements+1));
+                              
 
     assert(ext != 0);
     known_extensions.count= found_exts.elements;

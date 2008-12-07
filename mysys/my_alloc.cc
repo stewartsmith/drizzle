@@ -52,19 +52,6 @@ void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
   mem_root->block_num= 4;			/* We shift this with >>2 */
   mem_root->first_block_usage= 0;
 
-#if !(defined(HAVE_purify) && defined(EXTRA_DEBUG))
-  if (pre_alloc_size)
-  {
-    if ((mem_root->free= mem_root->pre_alloc=
-	 (USED_MEM*) my_malloc(pre_alloc_size+ ALIGN_SIZE(sizeof(USED_MEM)),
-			       MYF(0))))
-    {
-      mem_root->free->size= pre_alloc_size+ALIGN_SIZE(sizeof(USED_MEM));
-      mem_root->free->left= pre_alloc_size;
-      mem_root->free->next= 0;
-    }
-  }
-#endif
   return;
 }
 
@@ -122,7 +109,7 @@ void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
           prev= &mem->next;
       }
       /* Allocate new prealloc block and add it to the end of free list */
-      if ((mem= (USED_MEM *) my_malloc(size, MYF(0))))
+      if ((mem= (USED_MEM *) malloc(size)))
       {
         mem->size= size;
         mem->left= pre_alloc_size;
@@ -143,23 +130,6 @@ void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
 
 void *alloc_root(MEM_ROOT *mem_root, size_t length)
 {
-#if defined(HAVE_purify) && defined(EXTRA_DEBUG)
-  register USED_MEM *next;
-
-  assert(alloc_root_inited(mem_root));
-
-  length+=ALIGN_SIZE(sizeof(USED_MEM));
-  if (!(next = (USED_MEM*) my_malloc(length,MYF(MY_WME | ME_FATALERROR))))
-  {
-    if (mem_root->error_handler)
-      (*mem_root->error_handler)();
-    return((unsigned char*) 0);			/* purecov: inspected */
-  }
-  next->next= mem_root->used;
-  next->size= length;
-  mem_root->used= next;
-  return((unsigned char*) (((char*) next)+ALIGN_SIZE(sizeof(USED_MEM))));
-#else
   size_t get_size, block_size;
   unsigned char* point;
   register USED_MEM *next= 0;
@@ -188,7 +158,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
     get_size= length+ALIGN_SIZE(sizeof(USED_MEM));
     get_size= cmax(get_size, block_size);
 
-    if (!(next = (USED_MEM*) my_malloc(get_size,MYF(MY_WME | ME_FATALERROR))))
+    if (!(next = (USED_MEM*) malloc(get_size)))
     {
       if (mem_root->error_handler)
 	(*mem_root->error_handler)();
@@ -211,7 +181,6 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
     mem_root->first_block_usage= 0;
   }
   return((void*) point);
-#endif
 }
 
 
