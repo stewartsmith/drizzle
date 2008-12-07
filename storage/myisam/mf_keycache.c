@@ -2349,7 +2349,7 @@ no_key_cache:
 
   if (locked_and_incremented)
     keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  if (pread(file, (unsigned char*) buff, length, filepos))
+  if (!pread(file, (unsigned char*) buff, length, filepos))
     error= 1;
   if (locked_and_incremented)
     keycache_pthread_mutex_lock(&keycache->cache_lock);
