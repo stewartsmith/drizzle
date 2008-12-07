@@ -224,9 +224,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
       if (type == SEQ_READ_APPEND)
 	buffer_block *= 2;
       if ((info->buffer=
-	   (unsigned char*) my_malloc(buffer_block,
-			     MYF((cache_myflags & ~ MY_WME) |
-				 (cachesize == min_cache ? MY_WME : 0)))) != 0)
+	   (unsigned char*) malloc(buffer_block)) != 0)
       {
 	info->write_buffer=info->buffer;
 	if (type == SEQ_READ_APPEND)
@@ -1789,7 +1787,7 @@ int main(int argc, char** argv)
   char* block, *block_end;
   MY_INIT(argv[0]);
   max_block = cache_size*3;
-  if (!(block=(char*)my_malloc(max_block,MYF(MY_WME))))
+  if (!(block=(char*)malloc(max_block)))
     die("Not enough memory to allocate test block");
   block_end = block + max_block;
   for (p = block,i=0; p < block_end;i++)

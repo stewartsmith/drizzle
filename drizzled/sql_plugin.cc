@@ -1753,12 +1753,21 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 
     if (new_size > global_variables_dynamic_size)
     {
-      global_system_variables.dynamic_variables_ptr= (char*)
-        my_realloc(global_system_variables.dynamic_variables_ptr, new_size,
-                   MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
-      max_system_variables.dynamic_variables_ptr= (char*)
-        my_realloc(max_system_variables.dynamic_variables_ptr, new_size,
-                   MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+      if (!global_system_variables.dynamic_variables_ptr)
+        global_system_variables.dynamic_variables_ptr= 
+          (char *)malloc(new_size);
+      else
+        global_system_variables.dynamic_variables_ptr=
+          (char *)realloc(global_system_variables.dynamic_variables_ptr,
+                          new_size); 
+      if (!max_system_variables.dynamic_variables_ptr)
+        max_system_variables.dynamic_variables_ptr= 
+          (char *)malloc(new_size);
+      else
+        max_system_variables.dynamic_variables_ptr=
+          (char *)realloc(max_system_variables.dynamic_variables_ptr,
+                          new_size); 
+           
       /*
         Clear the new variable value space. This is required for string
         variables. If their value is non-NULL, it must point to a valid
@@ -1818,10 +1827,11 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
 
     pthread_rwlock_rdlock(&LOCK_system_variables_hash);
 
-    session->variables.dynamic_variables_ptr= (char*)
-      my_realloc(session->variables.dynamic_variables_ptr,
-                 global_variables_dynamic_size,
-                 MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+    session->variables.dynamic_variables_ptr=
+      (session->variables.dynamic_variables_ptr)
+        ? (char *)realloc(session->variables.dynamic_variables_ptr,
+                          global_variables_dynamic_size)
+        : (char *)malloc(global_variables_dynamic_size);
 
     if (global_lock)
       pthread_mutex_lock(&LOCK_global_system_variables);

@@ -132,9 +132,8 @@ int modify_defaults_file(const char *file_location, const char *option,
       if (reserve_occupied >= (int) reserve_extended)
       {
         reserve_extended= (uint) reserve_occupied + RESERVE;
-        if (!(file_buffer= (char*) my_realloc(file_buffer, buffer_size +
-                                              reserve_extended,
-                                              MYF(MY_WME|MY_FREE_ON_ERROR))))
+        if (!(file_buffer= (char*) realloc(file_buffer, buffer_size +
+                                           reserve_extended)))
           goto malloc_err;
       }
       opt_applied= 1;

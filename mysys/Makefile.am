@@ -55,7 +55,7 @@ libmysys_la_SOURCES = my_init.cc mf_getdate.cc \
 			my_write.cc \
 			mf_iocache.cc mf_iocache2.cc mf_cache.cc mf_tempfile.cc \
 			mf_tempdir.cc \
-			my_malloc.cc my_realloc.cc mulalloc.cc \
+			mulalloc.cc \
 			my_alloc.cc \
 			my_fopen.cc my_fstream.cc my_getsystime.cc \
 			my_error.cc errors.cc my_filename.cc my_messnc.cc \

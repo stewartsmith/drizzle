@@ -77,14 +77,15 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint32_t length,
       /* Allocate variable */
       if (entry->length != length)
       {
-	char *pos= (char*) entry+ ALIGN_SIZE(sizeof(user_var_entry));
-	if (entry->value == pos)
-	  entry->value=0;
-        entry->value= (char*) my_realloc(entry->value, length,
-                                         MYF(MY_ALLOW_ZERO_PTR | MY_WME |
-                                             ME_FATALERROR));
+        char *pos= (char*) entry+ ALIGN_SIZE(sizeof(user_var_entry));
+        if (entry->value == pos)
+          entry->value=0;
         if (!entry->value)
-	  return 1;
+          entry->value= (char *)malloc(length);
+        else
+          entry->value= (char *)realloc(entry->value, length);
+        if (!entry->value)
+          return 1;
       }
     }
     if (type == STRING_RESULT)

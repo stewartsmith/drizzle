@@ -63,10 +63,7 @@
 #define MY_REDEL_MAKE_BACKUP 256
 #define MY_SEEK_NOT_DONE 32	/* my_lock may have to do a seek */
 #define MY_DONT_WAIT	64	/* my_lock() don't wait if can't lock */
-#define MY_ZEROFILL	32	/* my_malloc(), fill array with zero */
-#define MY_ALLOW_ZERO_PTR 64	/* my_realloc() ; zero ptr -> malloc */
-#define MY_FREE_ON_ERROR 128	/* my_realloc() ; Free old ptr on error */
-#define MY_HOLD_ON_ERROR 256	/* my_realloc() ; Return old ptr on error */
+#define MY_ZEROFILL	32	/* my_multi_malloc(), fill array with zero */
 #define MY_DONT_OVERWRITE_FILE 1024	/* my_copy: Don't overwrite file */
 #define MY_THREADSAFE 2048      /* my_seek(): lock fd mutex */
 
@@ -140,13 +137,6 @@ extern "C" {
 typedef int  (*qsort_cmp)(const void *,const void *);
 typedef int  (*qsort_cmp2)(void*, const void *,const void *);
 
-extern void *my_malloc(size_t Size,myf MyFlags);
-extern void *my_realloc(void *oldpoint, size_t Size, myf MyFlags);
-extern void my_no_flags_free(void *ptr);
-extern void *my_memdup(const void *from,size_t length,myf MyFlags);
-extern char *my_strdup(const char *from,myf MyFlags);
-extern char *my_strndup(const char *from, size_t length,
-				   myf MyFlags);
 #define TRASH(A,B) /* nothing */
 
 #ifndef errno				/* did we already get it? */
@@ -367,13 +357,6 @@ extern void *_myrealloc(void *pPtr,size_t uSize,const char *sFile,
 extern void * my_multi_malloc (myf MyFlags, ...);
 extern void _myfree(void *pPtr, const char *sFile, uint32_t uLine, myf MyFlag);
 extern int _sanity(const char *sFile, uint32_t uLine);
-extern void *_my_memdup(const void *from, size_t length,
-                        const char *sFile, uint32_t uLine,myf MyFlag);
-extern char * _my_strdup(const char *from, const char *sFile, uint32_t uLine,
-                         myf MyFlag);
-extern char *_my_strndup(const char *from, size_t length,
-                         const char *sFile, uint32_t uLine,
-                         myf MyFlag);
 
 #define my_access access
 extern int check_if_legal_filename(const char *path);

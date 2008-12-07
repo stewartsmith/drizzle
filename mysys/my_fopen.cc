@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 static void make_ftype(char * to,int flag);
 
@@ -65,7 +66,7 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
     }
     pthread_mutex_lock(&THR_LOCK_open);
     if ((my_file_info[fileno(fd)].name = (char*)
-	 my_strdup(filename,MyFlags)))
+	 strdup(filename)))
     {
       my_stream_opened++;
       my_file_total_opened++;

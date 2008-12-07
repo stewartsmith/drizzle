@@ -108,7 +108,7 @@ bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint32_t n_bits, bool threa
       extra= sizeof(pthread_mutex_t);
     }
     map->mutex= 0;
-    if (!(buf= (my_bitmap_map*) my_malloc(size_in_bytes+extra, MYF(MY_WME))))
+    if (!(buf= (my_bitmap_map*) malloc(size_in_bytes+extra)))
       return(1);
     if (thread_safe)
     {

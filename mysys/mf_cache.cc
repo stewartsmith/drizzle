@@ -33,8 +33,8 @@
 bool open_cached_file(IO_CACHE *cache, const char* dir, const char *prefix,
                          size_t cache_size, myf cache_myflags)
 {
-  cache->dir=	 dir ? my_strdup(dir,MYF(cache_myflags & MY_WME)) : (char*) 0;
-  cache->prefix= (prefix ? my_strdup(prefix,MYF(cache_myflags & MY_WME)) :
+  cache->dir=	 dir ? strdup(dir) : (char*) 0;
+  cache->prefix= (prefix ? strdup(prefix) :
 		 (char*) 0);
   cache->file_name=0;
   cache->buffer=0;				/* Mark that not open */

@@ -228,7 +228,7 @@ public:
     if (arg_length < Alloced_length)
     {
       char *new_ptr;
-      if (!(new_ptr=(char*) my_realloc(Ptr,arg_length,MYF(0))))
+      if (!(new_ptr=(char*) ::realloc(Ptr,arg_length)))
       {
 	Alloced_length = 0;
 	real_alloc(arg_length);

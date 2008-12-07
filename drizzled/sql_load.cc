@@ -990,8 +990,7 @@ int READ_INFO::read_field()
     /*
     ** We come here if buffer is too small. Enlarge it and continue
     */
-    if (!(new_buffer=(unsigned char*) my_realloc((char*) buffer,buff_length+1+IO_SIZE,
-					MYF(MY_WME))))
+    if (!(new_buffer=(unsigned char*) realloc(buffer, buff_length+1+IO_SIZE)))
       return (error=1);
     to=new_buffer + (to-buffer);
     buffer=new_buffer;

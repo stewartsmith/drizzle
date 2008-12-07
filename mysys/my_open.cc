@@ -18,6 +18,7 @@
 #include <my_dir.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*
   Open a file
@@ -124,7 +125,7 @@ File my_register_filename(File fd, const char *FileName, enum file_type
     else
     {
       pthread_mutex_lock(&THR_LOCK_open);
-      if ((my_file_info[fd].name = (char*) my_strdup(FileName,MyFlags)))
+      if ((my_file_info[fd].name = (char*) strdup(FileName)))
       {
         my_file_opened++;
         my_file_total_opened++;

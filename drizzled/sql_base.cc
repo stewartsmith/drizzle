@@ -2491,8 +2491,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   if (strcmp(table->alias, alias))
   {
     uint32_t length=(uint) strlen(alias)+1;
-    table->alias= (char*) my_realloc((char*) table->alias, length,
-                                     MYF(MY_WME));
+    table->alias= (char*) realloc((char*) table->alias, length);
     memcpy((void*) table->alias, alias, length);
   }
   /* These variables are also set in reopen_table() */

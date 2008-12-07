@@ -137,19 +137,21 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
         In this senerio, the buffer is statically preallocated,
         so we have to create an all-new malloc since we overflowed
       */
-      if (!(new_ptr= (char *) my_malloc((array->max_element+
-                                         array->alloc_increment) *
-                                        array->size_of_element,
-                                        MYF(MY_WME))))
+      if (!(new_ptr= (char *) malloc((array->max_element+
+                                     array->alloc_increment) *
+                                     array->size_of_element)))
         return 0;
       memcpy(new_ptr, array->buffer,
              array->elements * array->size_of_element);
     }
-    else
-    if (!(new_ptr=(char*) my_realloc(array->buffer,(array->max_element+
-                                     array->alloc_increment)*
-                                     array->size_of_element,
-                                     MYF(MY_WME | MY_ALLOW_ZERO_PTR))))
+    else if (!(new_ptr=
+             (array->buffer) ? (char*) realloc(array->buffer,
+                                               (array->max_element+
+                                                array->alloc_increment)*
+                                                array->size_of_element)
+                             : (char*) malloc((array->max_element+
+                                              array->alloc_increment)*
+                                              array->size_of_element)))
       return 0;
     array->buffer= (unsigned char*) new_ptr;
     array->max_element+=array->alloc_increment;
@@ -241,9 +243,8 @@ bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
          In this senerio, the buffer is statically preallocated,
          so we have to create an all-new malloc since we overflowed
        */
-       if (!(new_ptr= (unsigned char *) my_malloc(size *
-                                         array->size_of_element,
-                                         MYF(MY_WME))))
+       if (!(new_ptr= (unsigned char *) malloc(size *
+                                               array->size_of_element)))
          return 0;
        memcpy(new_ptr, array->buffer,
               array->elements * array->size_of_element);
@@ -251,9 +252,11 @@ bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
      else
 
 
-    if (!(new_ptr= (unsigned char*) my_realloc(array->buffer,size*
-                                       array->size_of_element,
-                                       MYF(MY_WME | MY_ALLOW_ZERO_PTR))))
+    if (!(new_ptr=
+           (array->buffer)
+             ? (unsigned char*) realloc(array->buffer,
+                                        size* array->size_of_element)
+             : (unsigned char*) malloc(size* array->size_of_element)))
       return true;
     array->buffer= new_ptr;
     array->max_element= size;
@@ -347,9 +350,8 @@ void freeze_size(DYNAMIC_ARRAY *array)
 
   if (array->buffer && array->max_element != elements)
   {
-    array->buffer=(unsigned char*) my_realloc(array->buffer,
-                                     elements*array->size_of_element,
-                                     MYF(MY_WME));
+    array->buffer=(unsigned char*) realloc(array->buffer,
+                                     elements*array->size_of_element);
     array->max_element=elements;
   }
 }
