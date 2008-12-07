@@ -84,9 +84,9 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     ci->reloc_rows=ci->max_rows;		/* Check if wrong parameter */
 
   if (!(rec_per_key_part=
-	(ulong*) my_malloc((keys + uniques)*MI_MAX_KEY_SEG*sizeof(long),
-			   MYF(MY_WME | MY_ZEROFILL))))
+	(ulong*) malloc((keys + uniques)*MI_MAX_KEY_SEG*sizeof(long))))
     return(my_errno);
+  memset(rec_per_key_part, 0, (keys + uniques)*MI_MAX_KEY_SEG*sizeof(long));
 
 	/* Start by checking fields and field-types used */
 

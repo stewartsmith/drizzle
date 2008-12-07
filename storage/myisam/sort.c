@@ -152,7 +152,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
       }
       while ((maxbuffer= (records/(keys-1)+1)) != skr);
 
-    if ((sort_keys=(unsigned char **)my_malloc(keys*(sort_length+sizeof(char*)), MYF(0))))
+    if ((sort_keys=(unsigned char **)malloc(keys*(sort_length+sizeof(char*)))))
     {
       if (my_init_dynamic_array(&buffpek, sizeof(BUFFPEK), maxbuffer,
 			     maxbuffer/2))
@@ -366,7 +366,7 @@ pthread_handler_t thr_find_all_keys(void *arg)
         while ((maxbuffer= (idx/(keys-1)+1)) != skr);
       }
       if ((sort_keys= (unsigned char**)
-           my_malloc(keys*(sort_length+sizeof(char*)), MYF(0))))
+           malloc(keys*(sort_length+sizeof(char*)))))
       {
         if (my_init_dynamic_array(&sort_param->buffpek, sizeof(BUFFPEK),
                                   maxbuffer, maxbuffer/2))
@@ -550,7 +550,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
         length=param->sort_buffer_length;
         while (length >= MIN_SORT_MEMORY)
         {
-          if ((mergebuf= my_malloc(length, MYF(0))))
+          if ((mergebuf= malloc(length)))
               break;
           length=length*3/4;
         }

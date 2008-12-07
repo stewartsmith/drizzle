@@ -237,7 +237,7 @@ int archive_discover(handlerton *, Session *,
   if (frm_stream.frm_length == 0)
     goto err;
 
-  frm_ptr= (char *)my_malloc(sizeof(char) * frm_stream.frm_length, MYF(0));
+  frm_ptr= (char *)malloc(sizeof(char) * frm_stream.frm_length);
   azread_frm(&frm_stream, frm_ptr);
   azclose(&frm_stream);
 
@@ -614,7 +614,8 @@ int ha_archive::create(const char *name, Table *table_arg,
     {
       if (fstat(frm_file, &file_stat))
       {
-        frm_ptr= (unsigned char *)my_malloc(sizeof(unsigned char) * file_stat.st_size, MYF(0));
+        frm_ptr= (unsigned char *)malloc(sizeof(unsigned char) *
+                                         file_stat.st_size);
         if (frm_ptr)
         {
           my_read(frm_file, frm_ptr, file_stat.st_size, MYF(0));
@@ -777,7 +778,7 @@ int ha_archive::write_row(unsigned char *buf)
         First we create a buffer that we can use for reading rows, and can pass
         to get_row().
       */
-      if (!(read_buf= (unsigned char*) my_malloc(table->s->reclength, MYF(MY_WME))))
+      if (!(read_buf= (unsigned char*) malloc(table->s->reclength)))
       {
         rc= HA_ERR_OUT_OF_MEM;
         goto error;
@@ -957,9 +958,10 @@ bool ha_archive::fix_rec_buff(unsigned int length)
   if (length > record_buffer->length)
   {
     unsigned char *newptr;
-    if (!(newptr=(unsigned char*) my_realloc((unsigned char*) record_buffer->buffer,
-                                    length,
-				    MYF(MY_ALLOW_ZERO_PTR))))
+    if (!(newptr= 
+        (record_buffer->buffer)
+          ? (unsigned char*) realloc(record_buffer->buffer, length)
+          : (unsigned char*) malloc(length)))
       return(1);
     record_buffer->buffer= newptr;
     record_buffer->length= length;
@@ -1407,16 +1409,13 @@ bool ha_archive::check_and_repair(Session *session)
 archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
 {
   archive_record_buffer *r;
-  if (!(r=
-        (archive_record_buffer*) my_malloc(sizeof(archive_record_buffer),
-                                           MYF(MY_WME))))
+  if (!(r= (archive_record_buffer*) malloc(sizeof(archive_record_buffer))))
   {
     return(NULL); /* purecov: inspected */
   }
   r->length= (int)length;
 
-  if (!(r->buffer= (unsigned char*) my_malloc(r->length,
-                                    MYF(MY_WME))))
+  if (!(r->buffer= (unsigned char*) malloc(r->length)))
   {
     free((char*) r);
     return(NULL); /* purecov: inspected */

@@ -210,8 +210,7 @@ static bool safe_hash_set(SAFE_HASH *hash, const unsigned char *key, uint32_t le
   }
   else
   {
-    if (!(entry= (SAFE_HASH_ENTRY *) my_malloc(sizeof(*entry) + length,
-					       MYF(MY_WME))))
+    if (!(entry= (SAFE_HASH_ENTRY *) malloc(sizeof(*entry) + length)))
     {
       error= 1;
       goto end;

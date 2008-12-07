@@ -546,15 +546,12 @@ int ha_tina::chain_append()
       chain_size += DEFAULT_CHAIN_LENGTH;
       if (chain_alloced)
       {
-        /* Must cast since my_malloc unlike malloc doesn't have a void ptr */
-        if ((chain= (tina_set *) my_realloc((unsigned char*)chain,
-                                            chain_size, MYF(MY_WME))) == NULL)
+        if ((chain= (tina_set *) realloc(chain, chain_size)) == NULL)
           return -1;
       }
       else
       {
-        tina_set *ptr= (tina_set *) my_malloc(chain_size * sizeof(tina_set),
-                                              MYF(MY_WME));
+        tina_set *ptr= (tina_set *) malloc(chain_size * sizeof(tina_set));
         memcpy(ptr, chain, DEFAULT_CHAIN_LENGTH * sizeof(tina_set));
         chain= ptr;
         chain_alloced++;
@@ -1287,7 +1284,7 @@ int ha_tina::repair(Session* session, HA_CHECK_OPT *)
 
   /* Don't assert in field::val() functions */
   table->use_all_columns();
-  if (!(buf= (unsigned char*) my_malloc(table->s->reclength, MYF(MY_WME))))
+  if (!(buf= (unsigned char*) malloc(table->s->reclength)))
     return(HA_ERR_OUT_OF_MEM);
 
   /* position buffer to the start of the file */
@@ -1474,7 +1471,7 @@ int ha_tina::check(Session* session, HA_CHECK_OPT *)
 
   old_proc_info= get_session_proc_info(session);
   set_session_proc_info(session, "Checking table");
-  if (!(buf= (unsigned char*) my_malloc(table->s->reclength, MYF(MY_WME))))
+  if (!(buf= (unsigned char*) malloc(table->s->reclength)))
     return(HA_ERR_OUT_OF_MEM);
 
   /* position buffer to the start of the file */

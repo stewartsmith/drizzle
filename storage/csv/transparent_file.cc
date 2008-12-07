@@ -19,7 +19,7 @@
 
 Transparent_file::Transparent_file() : lower_bound(0), buff_size(IO_SIZE)
 {
-  buff= (unsigned char *) my_malloc(buff_size*sizeof(unsigned char),  MYF(MY_WME));
+  buff= (unsigned char *) malloc(buff_size*sizeof(unsigned char));
 }
 
 Transparent_file::~Transparent_file()

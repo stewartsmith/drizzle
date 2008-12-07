@@ -1980,7 +1980,7 @@ int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
   ulong buff_length;
 
   buff_length=(ulong) cmin(param->write_buffer_length,length);
-  if (!(buff=my_malloc(buff_length,MYF(0))))
+  if (!(buff=malloc(buff_length)))
   {
     buff=tmp_buff; buff_length=IO_SIZE;
   }
@@ -2566,13 +2566,14 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
   if (share->options & HA_OPTION_COMPRESS_RECORD)
     set_if_bigger(max_pack_reclength, share->max_pack_length);
   if (!(sort_param=(MI_SORT_PARAM *)
-        my_malloc((uint) share->base.keys *
-		  (sizeof(MI_SORT_PARAM) + max_pack_reclength),
-		  MYF(MY_ZEROFILL))))
+        malloc(share->base.keys *
+               (sizeof(MI_SORT_PARAM) + max_pack_reclength))))
   {
     mi_check_print_error(param,"Not enough memory for key!");
     goto err;
   }
+  memset(sort_param, 0, share->base.keys *
+                        (sizeof(MI_SORT_PARAM) + max_pack_reclength));
   total_key_length=0;
   rec_per_key_part= param->rec_per_key_part;
   info->state->records=info->state->del=share->state.split=0;
@@ -3326,10 +3327,9 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
 	  MI_DYN_DELETE_BLOCK_HEADER;
 	if (sort_info->buff_length < reclength)
 	{
-	  if (!(sort_info->buff=my_realloc(sort_info->buff, (uint) reclength,
-					   MYF(MY_FREE_ON_ERROR |
-					       MY_ALLOW_ZERO_PTR))))
-	    return(1);
+	  if (!(sort_info->buff=
+              (sort_info->buff) ? realloc(sort_info->buff, reclength)
+                                : malloc(reclength)))
 	  sort_info->buff_length=reclength;
 	}
 	from= sort_info->buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER);
@@ -3643,9 +3643,8 @@ static SORT_KEY_BLOCKS *alloc_key_blocks(MI_CHECK *param, uint32_t blocks,
   register uint32_t i;
   SORT_KEY_BLOCKS *block;
 
-  if (!(block=(SORT_KEY_BLOCKS*) my_malloc((sizeof(SORT_KEY_BLOCKS)+
-					    buffer_length+IO_SIZE)*blocks,
-					   MYF(0))))
+  if (!(block=(SORT_KEY_BLOCKS*) malloc((sizeof(SORT_KEY_BLOCKS)+
+                                        buffer_length+IO_SIZE)*blocks)))
   {
     mi_check_print_error(param,"Not enough memory for sort-key-blocks");
     return(0);

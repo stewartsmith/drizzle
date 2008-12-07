@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     if (reader_handle.frm_length)
     {
       char *ptr;
-      ptr= (char *)my_malloc(sizeof(char) * reader_handle.frm_length, MYF(0));
+      ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
       azread_frm(&reader_handle, ptr);
       azwrite_frm(&writer_handle, ptr, reader_handle.frm_length);
       free(ptr);
@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
     if (reader_handle.comment_length)
     {
       char *ptr;
-      ptr= (char *)my_malloc(sizeof(char) * reader_handle.comment_length, MYF(0));
+      ptr= (char *)malloc(sizeof(char) * reader_handle.comment_length);
       azread_comment(&reader_handle, ptr);
       azwrite_comment(&writer_handle, ptr, reader_handle.comment_length);
       free(ptr);
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
     File frm_file;
     char *ptr;
     frm_file= my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
-    ptr= (char *)my_malloc(sizeof(char) * reader_handle.frm_length, MYF(0));
+    ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
     azread_frm(&reader_handle, ptr);
     my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));
     my_close(frm_file, MYF(0));
