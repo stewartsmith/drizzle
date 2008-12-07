@@ -456,44 +456,6 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
     if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table || was_insert_delayed)
     {
-      if (drizzle_bin_log.is_open())
-      {
-	if (error <= 0)
-        {
-	  /*
-	    [Guilhem wrote] Temporary errors may have filled
-	    session->net.last_error/errno.  For example if there has
-	    been a disk full error when writing the row, and it was
-	    MyISAM, then session->net.last_error/errno will be set to
-	    "disk full"... and the my_pwrite() will wait until free
-	    space appears, and so when it finishes then the
-	    write_row() was entirely successful
-	  */
-	  /* todo: consider removing */
-	  session->clear_error();
-	}
-	/* bug#22725:
-
-	A query which per-row-loop can not be interrupted with
-	KILLED, like INSERT, and that does not invoke stored
-	routines can be binlogged with neglecting the KILLED error.
-
-	If there was no error (error == zero) until after the end of
-	inserting loop the KILLED flag that appeared later can be
-	disregarded since previously possible invocation of stored
-	routines did not result in any error due to the KILLED.  In
-	such case the flag is ignored for constructing binlog event.
-	*/
-	assert(session->killed != Session::KILL_BAD_DATA || error > 0);
-	if (session->binlog_query(Session::ROW_QUERY_TYPE,
-			      session->query, session->query_length,
-			      transactional_table, false,
-			      (error>0) ? session->killed : Session::NOT_KILLED) &&
-	    transactional_table)
-        {
-	  error=1;
-	}
-      }
       if (session->transaction.stmt.modified_non_trans_table)
 	session->transaction.all.modified_non_trans_table= true;
     }
@@ -1387,7 +1349,6 @@ bool select_insert::send_eof()
   bool const trans_table= table->file->has_transactions();
   uint64_t id;
   bool changed;
-  Session::killed_state killed_status= session->killed;
 
   error= table->file->ha_end_bulk_insert();
   table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
@@ -1405,20 +1366,6 @@ bool select_insert::send_eof()
   assert(trans_table || !changed ||
               session->transaction.stmt.modified_non_trans_table);
 
-  /*
-    Write to binlog before commiting transaction.  No statement will
-    be written by the binlog_query() below in RBR mode.  All the
-    events are in the transaction cache and will be written when
-    ha_autocommit_or_rollback() is issued below.
-  */
-  if (drizzle_bin_log.is_open())
-  {
-    if (!error)
-      session->clear_error();
-    session->binlog_query(Session::ROW_QUERY_TYPE,
-                      session->query, session->query_length,
-                      trans_table, false, killed_status);
-  }
   table->file->ha_release_auto_increment();
 
   if (error)
@@ -1477,12 +1424,6 @@ void select_insert::abort() {
     */
     changed= (info.copied || info.deleted || info.updated);
     transactional_table= table->file->has_transactions();
-    if (session->transaction.stmt.modified_non_trans_table)
-    {
-        if (drizzle_bin_log.is_open())
-          session->binlog_query(Session::ROW_QUERY_TYPE, session->query, session->query_length,
-                            transactional_table, false);
-    }
     assert(transactional_table || !changed ||
 		session->transaction.stmt.modified_non_trans_table);
     table->file->ha_release_auto_increment();
@@ -1846,11 +1787,6 @@ select_create::binlog_show_create_table(Table **tables, uint32_t count)
 
   result= store_create_info(session, &tmp_table_list, &query, create_info);
   assert(result == 0); /* store_create_info() always return 0 */
-
-  session->binlog_query(Session::STMT_QUERY_TYPE,
-                    query.ptr(), query.length(),
-                    /* is_trans */ true,
-                    /* suppress_use */ false);
 }
 
 void select_create::store_values(List<Item> &values)
