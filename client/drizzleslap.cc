@@ -966,14 +966,14 @@ build_update_string(void)
   ptr= (statement *)malloc(sizeof(statement));
   memset(ptr, 0, sizeof(statement));
 
-  ptr->string= (char *)malloc(update_string.length() + 1);
-  memset(ptr, 0, update_string.length()+1);
   ptr->length= update_string.length()+1;
+  ptr->string= (char *)malloc(ptr->length);
+  memset(ptr->string, 0, ptr->length);
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
     ptr->type= UPDATE_TYPE_REQUIRES_PREFIX ;
   else
     ptr->type= UPDATE_TYPE;
-  strcpy(ptr->string, update_string.c_str());
+  strncpy(ptr->string, update_string.c_str(), ptr->length);
   return(ptr);
 }
 
@@ -1104,13 +1104,13 @@ build_insert_string(void)
     exit(1);
   }
   memset(ptr, 0, sizeof(statement));
-  if (!(ptr->string= (char *)malloc(insert_string.length() + 1)))
+  ptr->length= insert_string.length()+1;
+  if (!(ptr->string= (char *)malloc(ptr->length)))
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  memset(ptr->string, 0, insert_string.length() + 1);
-  ptr->length= insert_string.length()+1;
+  memset(ptr->string, 0, ptr->length);
   ptr->type= INSERT_TYPE;
   strcpy(ptr->string, insert_string.c_str());
   return(ptr);
@@ -1190,9 +1190,9 @@ build_select_string(bool key)
 
   ptr= (statement *)malloc(sizeof(statement));
   memset(ptr, 0, sizeof(statement));
-  ptr->string= (char *)malloc(query_string.length() + 1);
-  memset(ptr->string, 0, query_string.length()+1);
   ptr->length= query_string.length()+1;
+  ptr->string= (char *)malloc(ptr->length);
+  memset(ptr->string, 0, ptr->length);
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     ptr->type= SELECT_TYPE_REQUIRES_PREFIX;
@@ -1494,8 +1494,8 @@ get_options(int *argc,char ***argv)
       query_statements_count=
         parse_option("default", &query_options, ',');
 
-      query_statements= (statement **)malloc(sizeof(statement *));
-      memset(query_statements, 0, sizeof(statement *)); 
+      query_statements= (statement **)malloc(sizeof(statement *) * query_statements_count);
+      memset(query_statements, 0, sizeof(statement *) * query_statements_count); 
     }
 
     if (user_supplied_query && !stat(user_supplied_query, &sbuf))
@@ -2225,8 +2225,8 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   {
     memset(tmp, 0, sizeof(statement));
     count++;
-    tmp->string= strndup(ptr, (retstr - ptr));
     tmp->length= (size_t)(retstr - ptr);
+    tmp->string= strndup(ptr, tmp->length);
     ptr+= retstr - ptr + 1;
     if (isspace(*ptr))
       ptr++;
@@ -2234,8 +2234,8 @@ parse_delimiter(const char *script, statement **stmt, char delm)
 
   if (ptr != script+length)
   {
-    tmp->string= strndup(ptr, (uint)((script + length) - ptr));
     tmp->length= (size_t)((script + length) - ptr);
+    tmp->string= strndup(ptr, tmp->length);
     count++;
   }
 
