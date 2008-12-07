@@ -35,8 +35,8 @@ typedef struct replicator_st
 
   void *(*session_init)(Session *session);
   bool (*row_insert)(Session *session, Table *table);
-  bool (*row_update)(Session *session, Table *table, 
-                     const unsigned char *before, 
+  bool (*row_update)(Session *session, Table *table,
+                     const unsigned char *before,
                      const unsigned char *after);
   bool (*row_delete)(Session *session, Table *table);
   bool (*end_transaction)(Session *session, bool autocommit, bool commit);

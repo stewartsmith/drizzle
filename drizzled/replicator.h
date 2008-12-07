@@ -30,8 +30,8 @@ int replicator_finalizer (st_plugin_int *plugin);
    to do whatever this plugin does. */
 bool replicator_session_init (Session *session);
 bool replicator_write_row(Session *session, Table *table);
-bool replicator_update_row(Session *session, Table *table, 
-                           const unsigned char *before, 
+bool replicator_update_row(Session *session, Table *table,
+                           const unsigned char *before,
                            const unsigned char *after);
 bool replicator_delete_row(Session *session, Table *table);
 

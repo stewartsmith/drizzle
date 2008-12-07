@@ -4321,7 +4321,7 @@ static bool  binlog_log_row(Table* table,
     error= replicator_delete_row(session, table);
     break;
 
-    /* 
+    /*
       For everything else we ignore the event (since it just involves a temp table)
     */
   default:
