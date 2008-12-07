@@ -74,7 +74,7 @@ int replicator_finalizer(st_plugin_int *plugin)
 static bool replicator_session_iterate (Session *session, plugin_ref plugin, void *)
 {
   replicator_t *repl= plugin_data(plugin, replicator_t *);
-  void *session_data;
+  void *session_data= NULL;
 
   /* call this loaded replicator plugin's replicator_func1 function pointer */
   if (repl && repl->session_init)
