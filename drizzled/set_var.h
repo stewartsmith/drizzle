@@ -1137,7 +1137,7 @@ public:
 	     uint32_t name_length_arg, unsigned char* data_arg)
     :name_length(name_length_arg), data(data_arg)
   {
-    name= my_strndup(name_arg, name_length, MYF(MY_WME));
+    name= strndup(name_arg, name_length);
     links->push_back(this);
   }
   inline bool cmp(const char *name_cmp, uint32_t length)

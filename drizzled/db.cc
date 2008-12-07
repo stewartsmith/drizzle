@@ -1320,8 +1320,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     TODO: fix check_db_name().
   */
 
-  new_db_file_name.str= my_strndup(new_db_name->str, new_db_name->length,
-                                   MYF(MY_WME));
+  new_db_file_name.str= strndup(new_db_name->str, new_db_name->length);
   new_db_file_name.length= new_db_name->length;
 
   if (new_db_file_name.str == NULL)
