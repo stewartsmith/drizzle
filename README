@@ -1,0 +1,30 @@
+The most current information is on the wiki, but are some essential links
+and notes for getting started.
+
+http://drizzle.org/wiki/
+https://launchpad.net/drizzle
+
+Compiling:
+# bzr branch lp:drizzle ; cd drizzle;
+./config/autorun.sh &&
+./configure --prefix=${HOME}/builds/drizzle && 
+make &&
+make test ||
+echo "FAIL $?"
+
+More information on compiling can be found at:
+http://drizzle.org/wiki/Compiling
+
+Running Drizzle:
+# be sure you configured with a prefix before running make install
+make install
+cd ${HOME}/builds/drizzle
+./sbin/drizzled --no-defaults --port=XXXX \
+     --basedir=$PWD --datadir=$PWD/var \
+     >> $PWD/var/drizzle.err 2>&1 &
+
+See also:
+http://drizzle.org/wiki/Starting_drizzled
+http://drizzle.org/wiki/Contributing_Code
+
+Cheers!
