@@ -1573,7 +1573,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
 
   init_sql_alloc(&outparam->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
-  if (!(outparam->alias= my_strdup(alias, MYF(MY_WME))))
+  if (!(outparam->alias= strdup(alias)))
     goto err;
   outparam->quick_keys.init();
   outparam->covering_keys.init();

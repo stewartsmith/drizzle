@@ -1604,7 +1604,7 @@ static void update_func_str(Session *, struct st_mysql_sys_var *var,
   *(char **)tgt= *(char **) save;
   if (var->flags & PLUGIN_VAR_MEMALLOC)
   {
-    *(char **)tgt= my_strdup(*(char **) save, MYF(0));
+    *(char **)tgt= strdup(*(char **) save);
     free(old);
   }
 }
@@ -1860,7 +1860,7 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
                              *(int*)(pi->plugin_var + 1));
          if ((*pp= *(char**) (global_system_variables.dynamic_variables_ptr +
                              *(int*)(pi->plugin_var + 1))))
-           *pp= my_strdup(*pp, MYF(MY_WME|MY_FAE));
+           *pp= strdup(*pp);
       }
     }
 

@@ -3708,7 +3708,7 @@ int Execute_load_log_event::do_apply_event(Relay_log_info const *rli)
       don't want to overwrite it with the filename.
       What we want instead is add the filename to the current error message.
     */
-    char *tmp= my_strdup(rli->last_error().message, MYF(MY_WME));
+    char *tmp= strdup(rli->last_error().message);
     if (tmp)
     {
       rli->report(ERROR_LEVEL, rli->last_error().number,

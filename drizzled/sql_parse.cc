@@ -626,7 +626,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     save_db= session->db;
     save_user_connect= session->user_connect;
 
-    if (!(session->security_ctx->user= my_strdup(user, MYF(0))))
+    if (!(session->security_ctx->user= strdup(user)))
     {
       session->security_ctx->user= save_security_ctx.user;
       my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));

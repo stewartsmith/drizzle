@@ -765,7 +765,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
 
   init(log_type_arg, io_cache_type_arg);
 
-  if (!(name= my_strdup(log_name, MYF(MY_WME))))
+  if (!(name= strdup(log_name)))
   {
     name= (char *)log_name; // for the error message
     goto err;
