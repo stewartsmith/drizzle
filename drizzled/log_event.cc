@@ -1975,9 +1975,10 @@ Format_description_log_event(const char* buf,
   number_of_event_types=
     event_len-(LOG_EVENT_MINIMAL_HEADER_LEN+ST_COMMON_HEADER_LEN_OFFSET+1);
   /* If alloc fails, we'll detect it in is_valid() */
-  post_header_len= (uint8_t*) my_memdup((unsigned char*)buf+ST_COMMON_HEADER_LEN_OFFSET+1,
-                                      number_of_event_types*
-                                      sizeof(*post_header_len), MYF(0));
+  post_header_len= (uint8_t*) malloc(number_of_event_types*
+                                     sizeof(*post_header_len));
+  memcpy(post_header_len, buf+ST_COMMON_HEADER_LEN_OFFSET+1,
+         number_of_event_types* sizeof(*post_header_len));
   calc_server_version_split();
 
   /*
@@ -2881,7 +2882,7 @@ Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
                           (uint) strlen(new_log_ident_arg)), flags(flags_arg)
 {
   if (flags & DUP_NAME)
-    new_log_ident= my_strndup(new_log_ident_arg, ident_len, MYF(MY_WME));
+    new_log_ident= strndup(new_log_ident_arg, ident_len);
   return;
 }
 
@@ -2902,7 +2903,7 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint32_t event_len,
                      (header_size+post_header_len));
   ident_offset = post_header_len;
   set_if_smaller(ident_len,FN_REFLEN-1);
-  new_log_ident= my_strndup(buf + ident_offset, (uint) ident_len, MYF(MY_WME));
+  new_log_ident= strndup(buf + ident_offset, ident_len);
   return;
 }
 
@@ -3262,7 +3263,8 @@ Create_file_log_event::Create_file_log_event(const char* buf, uint32_t len,
   uint32_t header_len= description_event->common_header_len;
   uint8_t load_header_len= description_event->post_header_len[LOAD_EVENT-1];
   uint8_t create_file_header_len= description_event->post_header_len[CREATE_FILE_EVENT-1];
-  if (!(event_buf= (char*) my_memdup(buf, len, MYF(MY_WME))) ||
+  if (!(event_buf= (const char*)malloc(len)) ||
+      memcpy((char *)event_buf, buf, len) ||
       copy_log_event(event_buf,len,
                      ((buf[EVENT_TYPE_OFFSET] == LOAD_EVENT) ?
                       load_header_len + header_len :
@@ -4197,12 +4199,13 @@ int Rows_log_event::do_add_row_data(unsigned char *row_data, size_t length)
   if (static_cast<size_t>(m_rows_end - m_rows_cur) <= length)
   {
     size_t const block_size= 1024;
-    my_ptrdiff_t const cur_size= m_rows_cur - m_rows_buf;
-    my_ptrdiff_t const new_alloc=
+    const size_t cur_size= m_rows_cur - m_rows_buf;
+    const size_t new_alloc=
         block_size * ((cur_size + length + block_size - 1) / block_size);
 
-    unsigned char* const new_buf= (unsigned char*)my_realloc((unsigned char*)m_rows_buf, (uint) new_alloc,
-                                           MYF(MY_ALLOW_ZERO_PTR|MY_WME));
+    unsigned char* const new_buf= 
+      (m_rows_buf) ? (unsigned char*)realloc(m_rows_buf, new_alloc)
+                   : (unsigned char*)malloc(new_alloc);
     if (unlikely(!new_buf))
       return(HA_ERR_OUT_OF_MEM);
 
