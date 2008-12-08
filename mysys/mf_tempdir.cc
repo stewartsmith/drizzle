@@ -42,11 +42,8 @@ bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
       end= pathlist+strlen(pathlist);
     strncpy(buff, pathlist, FN_REFLEN-1);
     length= cleanup_dirname(buff, buff);
-    copy= (char *)malloc(length);
-    if (copy == NULL)
-      return true;
-    strncpy(copy, buff, length);
-    if (insert_dynamic(&tmpdir->full_list, (unsigned char*) &copy))
+    if (!(copy= strndup(buff, length)) ||
+        insert_dynamic(&tmpdir->full_list, (unsigned char*) &copy))
       return(true);
     pathlist=end+1;
   } while (*end != '\0');

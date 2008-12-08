@@ -2181,11 +2181,11 @@ parse_option(const char *origin, option_string **stmt, char delm)
 
       /* Move past the : and the first string */
       tmp->option_length= strlen(buffer_ptr);
-      tmp->option= strdup(buffer_ptr);
+      tmp->option= strndup(buffer_ptr, tmp->option_length);
     }
 
+    tmp->string= strndup(buffer, strlen(buffer));
     tmp->length= strlen(buffer);
-    tmp->string= strdup(buffer);
 
     if (isspace(*begin_ptr))
       begin_ptr++;
@@ -2226,7 +2226,7 @@ parse_delimiter(const char *script, statement **stmt, char delm)
     memset(tmp, 0, sizeof(statement));
     count++;
     tmp->length= (size_t)(retstr - ptr);
-    tmp->string= strdup(ptr);
+    tmp->string= strndup(ptr, tmp->length);
     ptr+= retstr - ptr + 1;
     if (isspace(*ptr))
       ptr++;
@@ -2235,7 +2235,7 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   if (ptr != script+length)
   {
     tmp->length= (size_t)((script + length) - ptr);
-    tmp->string= strdup(ptr);
+    tmp->string= strndup(ptr, tmp->length);
     count++;
   }
 

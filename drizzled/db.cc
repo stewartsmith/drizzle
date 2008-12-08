@@ -1320,12 +1320,13 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     TODO: fix check_db_name().
   */
 
-  new_db_file_name.str= (char *)malloc(new_db_name->length+1);
-  if (new_db_file_name.str == NULL)
-    return true;
-  strncpy(new_db_file_name.str, new_db_name->str, new_db_name->length);
-  new_db_file_name.str[new_db_name->length]= 0;
   new_db_file_name.length= new_db_name->length;
+  new_db_file_name.str= (char *)malloc(new_db_name->length + 1);
+  memcpy(new_db_file_name.str, new_db_name->str, new_db_name->length);
+  new_db_file_name.str[new_db_name->length]= 0;
+
+  if (new_db_file_name.str == NULL)
+    return(true);                             /* the error is set */
 
   /*
     NOTE: if check_db_name() fails, we should throw an error in any case,

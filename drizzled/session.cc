@@ -2237,7 +2237,14 @@ bool Session::set_db(const char *new_db, size_t new_db_len)
     if (db)
       free(db);
     if (new_db)
-      db= strdup(new_db);
+    {
+      db= (char *)malloc(new_db_len + 1);
+      if (db != NULL)
+      {
+        memcpy(db, new_db, new_db_len);
+        db[new_db_len]= 0;
+      }
+    }
     else
       db= NULL;
   }

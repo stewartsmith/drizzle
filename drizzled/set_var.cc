@@ -549,16 +549,17 @@ bool sys_var_str::check(Session *session, set_var *var)
 */
 
 bool update_sys_var_str(sys_var_str *var_str, pthread_rwlock_t *var_mutex,
-			set_var *var)
+                        set_var *var)
 {
   char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
   uint32_t new_length= (var ? var->value->str_value.length() : 0);
   if (!old_value)
     old_value= (char*) "";
-  res= (char *)malloc(new_length);
+  res= (char *)malloc(new_length + 1);
   if (res == NULL)
     return 1;
-  strncpy(res, old_value, new_length);
+  memcpy(res, old_value, new_length);
+  res[new_length]= 0; 
 
   /*
     Replace the old value in such a way that the any thread using
@@ -1934,13 +1935,14 @@ bool update_sys_var_str_path(Session *, sys_var_str *var_str,
     old_value= make_default_log_name(buff, log_ext);
     str_length= strlen(old_value);
   }
-  res= (char *)malloc(str_length);
+  res= (char *)malloc(str_length + 1);
   if (res == NULL)
   {
     result= 1;
     goto err;
   }
-  strncpy(res, old_value, str_length);
+  memcpy(res, old_value, str_length);
+  res[str_length]= 0;
 
   pthread_mutex_lock(&LOCK_global_system_variables);
 
@@ -2510,6 +2512,21 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool sorted)
 }
 
 
+NAMED_LIST::NAMED_LIST(I_List<NAMED_LIST> *links, const char *name_arg,
+                       uint32_t name_length_arg, unsigned char* data_arg)
+    :data(data_arg)
+{
+  name.assign(name_arg, name_length_arg);
+  links->push_back(this);
+}
+
+
+bool NAMED_LIST::cmp(const char *name_cmp, uint32_t length)
+{
+  return length == name.length() && !name.compare(name_cmp);
+}
+
+
 /*
   Initialize the system variables
 
@@ -2939,7 +2956,7 @@ void delete_elements(I_List<NAMED_LIST> *list,
   NAMED_LIST *element;
   while ((element= list->get()))
   {
-    (*free_element)(element->name, element->data);
+    (*free_element)(element->name.c_str(), element->data);
     delete element;
   }
   return;
@@ -3007,7 +3024,7 @@ bool process_key_caches(process_key_cache_t func)
   while ((element= it++))
   {
     KEY_CACHE *key_cache= (KEY_CACHE *) element->data;
-    func(element->name, key_cache);
+    func(element->name.c_str(), key_cache);
   }
   return 0;
 }
