@@ -21,6 +21,7 @@ if BUILD_GETTEXT
 endif
 
 SUBDIRS = ${po} . \
+          gnu \
 	  mystrings \
 	  mysys \
 	  extra \
@@ -32,7 +33,7 @@ SUBDIRS = ${po} . \
 	  tests \
 	  support-files
 
-EXTRA_DIST = config/config.rpath
+EXTRA_DIST = config/config.rpath m4/gnulib-cache.m4
 DISTCLEANFILES = ac_available_languages_fragment
 
 # Create empty datadir 
