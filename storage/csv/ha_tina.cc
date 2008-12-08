@@ -234,7 +234,7 @@ static int read_meta_file(File meta_file, ha_rows *rows)
   unsigned char meta_buffer[META_BUFFER_SIZE];
   unsigned char *ptr= meta_buffer;
 
-  my_seek(meta_file, 0, MY_SEEK_SET, MYF(0));
+  lseek(meta_file, 0, SEEK_SET);
   if (my_read(meta_file, (unsigned char*)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(HA_ERR_CRASHED_ON_USAGE);
@@ -301,7 +301,7 @@ static int write_meta_file(File meta_file, ha_rows rows, bool dirty)
   ptr+= 3*sizeof(uint64_t);
   *ptr= (unsigned char)dirty;
 
-  my_seek(meta_file, 0, MY_SEEK_SET, MYF(0));
+  lseek(meta_file, 0, SEEK_SET);
   if (my_write(meta_file, (unsigned char *)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(-1);

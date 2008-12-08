@@ -209,10 +209,9 @@ int modify_defaults_file(const char *file_location, const char *option,
   if (opt_applied)
   {
     /* Don't write the file if there are no changes to be made */
-    if (ftruncate(fileno(cnf_file), (my_off_t) (dst_ptr - file_buffer)) ||
-        my_fseek(cnf_file, 0, MY_SEEK_SET, MYF(0)) ||
-        my_fwrite(cnf_file, (unsigned char*) file_buffer, (size_t) (dst_ptr - file_buffer),
-                  MYF(MY_NABP)))
+    if (ftruncate(fileno(cnf_file), (size_t) (dst_ptr - file_buffer)) ||
+        fseeko(cnf_file, 0, SEEK_SET) ||
+        fwrite(file_buffer, 1, (size_t) (dst_ptr - file_buffer), cnf_file))
       goto err;
   }
   if (my_fclose(cnf_file, MYF(MY_WME)))

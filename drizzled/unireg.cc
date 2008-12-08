@@ -248,9 +248,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
   if (pwrite(file, fileinfo, 64, 0L) == 0 ||
       pwrite(file, keybuff, key_info_length, (ulong) uint2korr(fileinfo+6)) == 0)
     goto err;
-  my_seek(file,
-	       (ulong) uint2korr(fileinfo+6)+ (ulong) key_buff_length,
-	       MY_SEEK_SET,MYF(0));
+  lseek(file, (off_t)(uint2korr(fileinfo+6) + key_buff_length), SEEK_SET);
   if (make_empty_rec(session,file,ha_legacy_type(create_info->db_type),
                      create_info->table_options,
 		     create_fields,reclength, data_offset, db_file))
@@ -317,7 +315,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
       }
     }
   }
-  my_seek(file,filepos,MY_SEEK_SET,MYF(0));
+  lseek(file,filepos,SEEK_SET);
   if (my_write(file, forminfo, 288, MYF_RW) ||
       my_write(file, screen_buff, info_length, MYF_RW) ||
       pack_fields(file, create_fields, data_offset))

@@ -61,7 +61,6 @@
 #define MY_RESOLVE_LINK 128	/* my_realpath(); Only resolve links */
 #define MY_HOLD_ORIGINAL_MODES 128  /* my_copy() holds to file modes */
 #define MY_REDEL_MAKE_BACKUP 256
-#define MY_SEEK_NOT_DONE 32	/* my_lock may have to do a seek */
 #define MY_DONT_WAIT	64	/* my_lock() don't wait if can't lock */
 #define MY_ZEROFILL	32	/* my_multi_malloc(), fill array with zero */
 #define MY_DONT_OVERWRITE_FILE 1024	/* my_copy: Don't overwrite file */
@@ -99,11 +98,6 @@
 #define MY_RELATIVE_PATH	128	/* name is relative to 'dir' */
 #define MY_APPEND_EXT           256     /* add 'ext' as additional extension*/
 
-
-	/* My seek flags */
-#define MY_SEEK_SET	0
-#define MY_SEEK_CUR	1
-#define MY_SEEK_END	2
 
 	/* Some constants */
 #define MY_WAIT_FOR_USER_TO_FIX_PANIC	60	/* in seconds */
@@ -343,19 +337,9 @@ extern int my_rename_with_symlink(const char *from,const char *to,myf MyFlags);
 extern int my_symlink(const char *content, const char *linkname, myf MyFlags);
 extern size_t my_read(File Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
 extern int my_rename(const char *from,const char *to,myf MyFlags);
-extern my_off_t my_seek(File fd,my_off_t pos,int whence,myf MyFlags);
-extern my_off_t my_tell(File fd);
 extern size_t my_write(File Filedes,const unsigned char *Buffer,size_t Count,
 		     myf MyFlags);
-extern size_t my_fwrite(FILE *stream,const unsigned char *Buffer,size_t Count,
-		      myf MyFlags);
-extern my_off_t my_fseek(FILE *stream,my_off_t pos,int whence,myf MyFlags);
-extern void *_mymalloc(size_t uSize,const char *sFile,
-                       uint32_t uLine, myf MyFlag);
-extern void *_myrealloc(void *pPtr,size_t uSize,const char *sFile,
-		       uint32_t uLine, myf MyFlag);
 extern void * my_multi_malloc (myf MyFlags, ...);
-extern void _myfree(void *pPtr, const char *sFile, uint32_t uLine, myf MyFlag);
 extern int _sanity(const char *sFile, uint32_t uLine);
 
 #define my_access access

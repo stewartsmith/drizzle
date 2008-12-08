@@ -149,7 +149,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     end_pos=disk_cache+info_length;
     errpos=2;
 
-    my_seek(kfile,0L,MY_SEEK_SET,MYF(0));
+    lseek(kfile,0,SEEK_SET);
     errpos=3;
     if (my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
     {
@@ -544,7 +544,7 @@ err:
 } /* mi_open */
 
 
-unsigned char *mi_alloc_rec_buff(MI_INFO *info, ulong length, unsigned char **buf)
+unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **buf)
 {
   uint32_t extra;
   uint32_t old_length= 0;

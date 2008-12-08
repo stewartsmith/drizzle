@@ -1379,7 +1379,7 @@ static int string_cmp(string* ds, const char *fname)
   /* Write ds to temporary file and set file pos to beginning*/
   if (my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
                MYF(MY_FNABP | MY_WME)) ||
-      my_seek(fd, 0, SEEK_SET, MYF(0)) == MY_FILEPOS_ERROR)
+      lseek(fd, 0, SEEK_SET) == MY_FILEPOS_ERROR)
   {
     my_close(fd, MYF(0));
     /* Remove the temporary file */
@@ -4688,7 +4688,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   if ((fd= my_open(buff, flags,
                    MYF(MY_WME | MY_FFNF))) < 0)
     die("Could not open '%s' for writing: errno = %d", buff, errno);
-  if (append && my_seek(fd, 0, SEEK_END, MYF(0)) == MY_FILEPOS_ERROR)
+  if (append && lseek(fd, 0, SEEK_END) == MY_FILEPOS_ERROR)
     die("Could not find end of file '%s': errno = %d", buff, errno);
   if (my_write(fd, (unsigned char*)str, size, MYF(MY_WME|MY_FNABP)))
     die("write failed");

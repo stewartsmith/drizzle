@@ -51,13 +51,13 @@ endif
 
 libmysys_la_SOURCES = my_init.cc mf_getdate.cc \
 			mf_path.cc mf_loadpath.cc my_file.cc \
-			my_open.cc my_create.cc my_dup.cc my_seek.cc my_read.cc \
+			my_open.cc my_create.cc my_dup.cc my_read.cc \
 			my_write.cc \
 			mf_iocache.cc mf_iocache2.cc mf_cache.cc mf_tempfile.cc \
 			mf_tempdir.cc \
 			mulalloc.cc \
 			my_alloc.cc \
-			my_fopen.cc my_fstream.cc my_getsystime.cc \
+			my_fopen.cc my_getsystime.cc \
 			my_error.cc errors.cc my_filename.cc my_messnc.cc \
 			mf_format.cc mf_same.cc mf_dirname.cc mf_fn_ext.cc \
 			my_symlink.cc my_symlink2.cc \
