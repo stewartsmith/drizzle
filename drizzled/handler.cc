@@ -4287,20 +4287,17 @@ bool ha_show_status(Session *session, handlerton *db_type, enum ha_stat_type sta
   - table is not mysql.event
 */
 
-static bool  binlog_log_row(Table* table,
-                            const unsigned char *before_record,
-                            const unsigned char *after_record)
+static bool binlog_log_row(Table* table,
+                           const unsigned char *before_record,
+                           const unsigned char *after_record)
 {
-  bool error= 0;
+  bool error= false;
   Session *const session= table->in_use;
 
   if (table->no_replicate)
-    return 0;
+    return false;
 
-  if (session->getReplicationData() == NULL)
-  {
-    error= replicator_session_init(session);
-  }
+  error= replicator_session_init(session);
 
   switch (session->lex->sql_command)
   {

@@ -33,13 +33,14 @@ typedef struct replicator_st
      if a function pointer is NULL, that's ok.
   */
 
-  void *(*session_init)(Session *session);
+  bool (*session_init)(Session *session);
   bool (*row_insert)(Session *session, Table *table);
   bool (*row_update)(Session *session, Table *table, 
                      const unsigned char *before, 
                      const unsigned char *after);
   bool (*row_delete)(Session *session, Table *table);
   bool (*end_transaction)(Session *session, bool autocommit, bool commit);
+  bool (*statement)(Session *session, const char *query, size_t query_length);
 } replicator_t;
 
 #endif /* DRIZZLED_PLUGIN_REPLICATOR_H */

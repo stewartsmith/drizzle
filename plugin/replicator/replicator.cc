@@ -18,6 +18,78 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/item/strfunc.h>
+#include <drizzled/plugin_replicator.h>
+
+static char anchor[100];
+
+static bool statement(Session *, const char *query, size_t query_length)
+{
+  fprintf(stderr, "STATEMENT: %.*s\n", (uint32_t)query_length, query);
+
+  return false;
+}
+
+static bool session_init(Session *session)
+{
+  fprintf(stderr, "Starting Session\n");
+  session->setReplicationData(anchor);
+
+  return false;
+}
+
+static bool row_insert(Session *session, Table *)
+{
+  fprintf(stderr, "INSERT: %.*s\n", (uint32_t)session->query_length, session->query);
+
+  return false;
+}
+
+static bool row_update(Session *session, Table *, 
+                          const unsigned char *, 
+                          const unsigned char *)
+{
+  fprintf(stderr, "UPDATE: %.*s\n", (uint32_t)session->query_length, session->query);
+
+  return false;
+}
+
+static bool row_delete(Session *session, Table *)
+{
+  fprintf(stderr, "DELETE: %.*s\n", (uint32_t)session->query_length, session->query);
+
+  return false;
+}
+
+static bool end_transaction(Session *session, bool autocommit, bool commit)
+{
+  if (commit)
+  {
+    if (autocommit)
+      fprintf(stderr, "COMMIT\n");
+    else
+      fprintf(stderr, "AUTOCOMMIT\n");
+  }
+  else
+    fprintf(stderr, "ROLLBACK\n");
+
+  session->setReplicationData(NULL);
+
+  return false;
+}
+
+static int init(void *p)
+{
+  replicator_t *repl = (replicator_t *)p;
+
+  repl->statement= statement;
+  repl->session_init= session_init;
+  repl->row_insert= row_insert;
+  repl->row_delete= row_delete;
+  repl->row_update= row_update;
+  repl->end_transaction= end_transaction;
+
+  return 0;
+}
 
 mysql_declare_plugin(replicator)
 {
@@ -27,7 +99,7 @@ mysql_declare_plugin(replicator)
   "Brian Aker",
   "Basic replication module",
   PLUGIN_LICENSE_GPL,
-  NULL, /* Plugin Init */
+  init, /* Plugin Init */
   NULL, /* Plugin Deinit */
   NULL,   /* status variables */
   NULL,   /* system variables */
