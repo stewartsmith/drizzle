@@ -2073,7 +2073,7 @@ public:
   enum {
     DUP_NAME= 2 // if constructor should dup the string argument
   };
-  const char* new_log_ident;
+  char* new_log_ident;
   uint64_t pos;
   uint32_t ident_len;
   uint32_t flags;

@@ -2877,19 +2877,23 @@ void Rotate_log_event::pack_info(Protocol *protocol)
 Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
                                    uint32_t ident_len_arg, uint64_t pos_arg,
                                    uint32_t flags_arg)
-  :Log_event(), new_log_ident(new_log_ident_arg),
-   pos(pos_arg),ident_len(ident_len_arg ? ident_len_arg :
-                          (uint) strlen(new_log_ident_arg)), flags(flags_arg)
+  :Log_event(), pos(pos_arg),
+   ident_len(ident_len_arg
+               ? ident_len_arg
+               : strlen(new_log_ident_arg)),
+   flags(flags_arg)
 {
-  if (flags & DUP_NAME)
-    new_log_ident= strndup(new_log_ident_arg, ident_len);
+  new_log_ident= (char *)malloc(ident_len + 1);
+  assert(new_log_ident != NULL);
+  memcpy(new_log_ident, new_log_ident_arg, ident_len);
+  new_log_ident[ident_len]= 0;
   return;
 }
 
 
 Rotate_log_event::Rotate_log_event(const char* buf, uint32_t event_len,
                                    const Format_description_log_event* description_event)
-  :Log_event(buf, description_event) ,new_log_ident(0), flags(DUP_NAME)
+  :Log_event(buf, description_event) , new_log_ident(0), flags(DUP_NAME)
 {
   // The caller will ensure that event_len is what we have at EVENT_LEN_OFFSET
   uint8_t header_size= description_event->common_header_len;
@@ -2903,7 +2907,10 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint32_t event_len,
                      (header_size+post_header_len));
   ident_offset = post_header_len;
   set_if_smaller(ident_len,FN_REFLEN-1);
-  new_log_ident= strndup(buf + ident_offset, ident_len);
+  new_log_ident= (char *)malloc(ident_len + 1);
+  assert(new_log_ident != NULL);
+  memcpy((char *)new_log_ident, buf + ident_offset, ident_len);
+  new_log_ident[ident_len]= 0;
   return;
 }
 
