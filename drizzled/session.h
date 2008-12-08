@@ -942,27 +942,8 @@ public:
 
   /* Place to store various things */
   void *session_marker;
-  int binlog_setup_trx_data();
-
-  /*
-    Public interface to write RBR events to the binlog
-  */
-  void binlog_set_stmt_begin();
-  int binlog_write_table_map(Table *table, bool is_transactional);
 
   void set_server_id(uint32_t sid) { server_id = sid; }
-
-  /*
-    Member functions to handle pending event for row-level logging.
-  */
-  template <class RowsEventT> Rows_log_event*
-    binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
-                                      size_t needed,
-                                      bool is_transactional,
-				      RowsEventT* hint);
-  Rows_log_event* binlog_get_pending_rows_event() const;
-  void            binlog_set_pending_rows_event(Rows_log_event* ev);
-  int binlog_flush_pending_rows_event(bool stmt_end);
 
 private:
   uint32_t binlog_table_maps; // Number of table maps currently in the binlog
