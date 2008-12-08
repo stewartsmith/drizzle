@@ -456,15 +456,18 @@ static int binlog_commit(handlerton *, Session *session, bool all)
 
     Otherwise, we accumulate the statement
   */
+
   uint64_t const in_transaction=
     session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
+
+
   if ((in_transaction && (all || (!trx_data->at_least_one_stmt && session->transaction.stmt.modified_non_trans_table))) || (!in_transaction && !all))
   {
     Query_log_event qev(session, STRING_WITH_LEN("COMMIT"), true, false);
     qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
     /* TODO: Fix return type */
-    (void)replicator_end_transaction(session, all, true);
     int error= binlog_end_trans(session, trx_data, &qev, all);
+    (void)replicator_end_transaction(session, all, true);
     return(error);
   }
   return(0);
@@ -491,8 +494,13 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
   binlog_trx_data *const trx_data=
     (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
 
-  if (trx_data->empty()) {
+  /* TODO: Fix return type */
+  (void)replicator_end_transaction(session, all, false);
+
+  if (trx_data->empty()) 
+  {
     trx_data->reset();
+
     return(0);
   }
 
@@ -522,9 +530,6 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
      */
     error= binlog_end_trans(session, trx_data, 0, all);
   }
-
-  /* TODO: Fix return type */
-  (void)replicator_end_transaction(session, all, false);
 
   return(error);
 }
