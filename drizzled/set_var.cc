@@ -555,8 +555,11 @@ bool update_sys_var_str(sys_var_str *var_str, pthread_rwlock_t *var_mutex,
   uint32_t new_length= (var ? var->value->str_value.length() : 0);
   if (!old_value)
     old_value= (char*) "";
-  if (!(res= strndup(old_value, new_length)))
+  res= (char *)malloc(new_length);
+  if (res == NULL)
     return 1;
+  strncpy(res, old_value, new_length);
+
   /*
     Replace the old value in such a way that the any thread using
     the value will work.
@@ -1931,11 +1934,13 @@ bool update_sys_var_str_path(Session *, sys_var_str *var_str,
     old_value= make_default_log_name(buff, log_ext);
     str_length= strlen(old_value);
   }
-  if (!(res= strndup(old_value, str_length)))
+  res= (char *)malloc(str_length);
+  if (res == NULL)
   {
     result= 1;
     goto err;
   }
+  strncpy(res, old_value, str_length);
 
   pthread_mutex_lock(&LOCK_global_system_variables);
 

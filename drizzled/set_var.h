@@ -1137,7 +1137,8 @@ public:
 	     uint32_t name_length_arg, unsigned char* data_arg)
     :name_length(name_length_arg), data(data_arg)
   {
-    name= strndup(name_arg, name_length);
+    name= (const char *)malloc(name_length);
+    strncpy((char *)name, name_arg, name_length);
     links->push_back(this);
   }
   inline bool cmp(const char *name_cmp, uint32_t length)

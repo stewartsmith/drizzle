@@ -2879,10 +2879,10 @@ Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
                                    uint32_t flags_arg)
   :Log_event(), new_log_ident(new_log_ident_arg),
    pos(pos_arg),ident_len(ident_len_arg ? ident_len_arg :
-                          (uint) strlen(new_log_ident_arg)), flags(flags_arg)
+                          strlen(new_log_ident_arg)), flags(flags_arg)
 {
   if (flags & DUP_NAME)
-    new_log_ident= strndup(new_log_ident_arg, ident_len);
+    new_log_ident= strdup(new_log_ident_arg);
   return;
 }
 
@@ -2899,11 +2899,11 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint32_t event_len,
     return;
   buf += header_size;
   pos = post_header_len ? uint8korr(buf + R_POS_OFFSET) : 4;
-  ident_len = (uint)(event_len -
-                     (header_size+post_header_len));
+  ident_len = event_len - header_size + post_header_len;
   ident_offset = post_header_len;
   set_if_smaller(ident_len,FN_REFLEN-1);
-  new_log_ident= strndup(buf + ident_offset, ident_len);
+  new_log_ident= (const char *)malloc(ident_len);
+  strncpy((char *)new_log_ident, buf + ident_offset, ident_len);
   return;
 }
 

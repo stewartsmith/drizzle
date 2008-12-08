@@ -2237,7 +2237,7 @@ bool Session::set_db(const char *new_db, size_t new_db_len)
     if (db)
       free(db);
     if (new_db)
-      db= strndup(new_db, new_db_len);
+      db= strdup(new_db);
     else
       db= NULL;
   }
