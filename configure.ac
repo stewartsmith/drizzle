@@ -67,14 +67,13 @@ fi
 
 dnl Checks for programs.
 AC_PROG_CC
-gl_EARLY
-gl_INIT
 ifdef([AC_PROG_CC_C99],[
   dnl TODO: Need to fix this to use c99 instead of gnu99
   AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
   C99_SUPPORT_HACK=""
 ],[C99_SUPPORT_HACK="-std=gnu99"])
 
+AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CXX
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
@@ -1456,7 +1455,7 @@ AC_SUBST(W_EXCEPTIONS)
 AC_SUBST(NO_UNUSED_MACROS)
 AC_SUBST(NO_REDUNDANT_DECLS)
 
-AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir) -I$(top_builddir)/gnu'])
+AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CXXFLAGS])
@@ -1483,7 +1482,6 @@ AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
- gnu/Makefile dnl
  po/Makefile.in dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
