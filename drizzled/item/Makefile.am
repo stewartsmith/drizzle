@@ -21,7 +21,9 @@ libitem_la_SOURCES= \
 		create.cc \
 		field.cc \
 		ident.cc \
+		null.cc \
 		num.cc \
+		param.cc \
 		row.cc \
 		subselect.cc \
 		sum.cc \
@@ -36,7 +38,9 @@ nobase_dist_iteminclude_HEADERS = \
 		field.h \
 		func.h \
 		ident.h \
+		null.h \
 		num.h \
+		param.h \
 		row.h \
 		strfunc.h \
 		subselect.h \
