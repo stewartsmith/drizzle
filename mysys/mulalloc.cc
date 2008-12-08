@@ -16,6 +16,7 @@
 #include "mysys_priv.h"
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 /*
   Malloc many pointers at the same time
