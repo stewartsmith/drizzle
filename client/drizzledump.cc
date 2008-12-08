@@ -758,20 +758,6 @@ static int get_options(int *argc, char ***argv)
                 (hash_get_key) get_table_key,
                 (hash_free_key) free_table_ent, 0))
     return(EX_EOM);
-  /* Don't copy internal log tables */
-  if (my_hash_insert(&ignore_table,
-                     (unsigned char*) strdup("mysql.apply_status")) ||
-      my_hash_insert(&ignore_table,
-                     (unsigned char*) strdup("mysql.schema")) ||
-      my_hash_insert(&ignore_table,
-                     (unsigned char*) strdup("mysql.general_log")) ||
-      my_hash_insert(&ignore_table,
-                     (unsigned char*) strdup("mysql.slow_log")) ||
-      my_hash_insert(&ignore_table,
-                     (unsigned char*) strdup("mysql.online_backup")) ||
-      my_hash_insert(&ignore_table,
-                     (unsigned char*) strdup("mysql.online_backup_progress")))
-    return(EX_EOM);
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
     return(ho_error);

@@ -2226,7 +2226,9 @@ parse_delimiter(const char *script, statement **stmt, char delm)
     memset(tmp, 0, sizeof(statement));
     count++;
     tmp->length= (size_t)(retstr - ptr);
-    tmp->string= strdup(ptr);
+    tmp->string= (char *)malloc(tmp->length + 1);
+    memcpy(tmp->string, ptr, tmp->length);
+    tmp->string[tmp->length]= 0;
     ptr+= retstr - ptr + 1;
     if (isspace(*ptr))
       ptr++;
@@ -2235,7 +2237,9 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   if (ptr != script+length)
   {
     tmp->length= (size_t)((script + length) - ptr);
-    tmp->string= strdup(ptr);
+    tmp->string= (char *)malloc(tmp->length + 1);
+    memcpy(tmp->string, ptr, tmp->length);
+    tmp->string[tmp->length]= 0;
     count++;
   }
 
