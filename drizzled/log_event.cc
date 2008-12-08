@@ -2862,7 +2862,7 @@ void Rotate_log_event::pack_info(Protocol *protocol)
   char buf1[256], buf[22];
   String tmp(buf1, sizeof(buf1), &my_charset_utf8_general_ci);
   tmp.length(0);
-  tmp.append(new_log_ident, ident_len);
+  tmp.append(new_log_ident.c_str(), ident_len);
   tmp.append(STRING_WITH_LEN(";pos="));
   tmp.append(llstr(pos,buf));
   protocol->store(tmp.ptr(), tmp.length(), &my_charset_bin);
@@ -2883,17 +2883,14 @@ Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
                : strlen(new_log_ident_arg)),
    flags(flags_arg)
 {
-  new_log_ident= (char *)malloc(ident_len + 1);
-  assert(new_log_ident != NULL);
-  memcpy(new_log_ident, new_log_ident_arg, ident_len);
-  new_log_ident[ident_len]= 0;
+  new_log_ident.assign(new_log_ident_arg, ident_len);
   return;
 }
 
 
 Rotate_log_event::Rotate_log_event(const char* buf, uint32_t event_len,
                                    const Format_description_log_event* description_event)
-  :Log_event(buf, description_event) , new_log_ident(0), flags(DUP_NAME)
+  :Log_event(buf, description_event), flags(DUP_NAME)
 {
   // The caller will ensure that event_len is what we have at EVENT_LEN_OFFSET
   uint8_t header_size= description_event->common_header_len;
@@ -2907,10 +2904,7 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint32_t event_len,
                      (header_size+post_header_len));
   ident_offset = post_header_len;
   set_if_smaller(ident_len,FN_REFLEN-1);
-  new_log_ident= (char *)malloc(ident_len + 1);
-  assert(new_log_ident != NULL);
-  memcpy((char *)new_log_ident, buf + ident_offset, ident_len);
-  new_log_ident[ident_len]= 0;
+  new_log_ident.assign(buf + ident_offset, ident_len);
   return;
 }
 
@@ -2925,7 +2919,8 @@ bool Rotate_log_event::write(IO_CACHE* file)
   int8store(buf + R_POS_OFFSET, pos);
   return (write_header(file, ROTATE_HEADER_LEN + ident_len) ||
           my_b_safe_write(file, (unsigned char*)buf, ROTATE_HEADER_LEN) ||
-          my_b_safe_write(file, (unsigned char*)new_log_ident, (uint) ident_len));
+          my_b_safe_write(file, (const unsigned char*)new_log_ident.c_str(),
+                          (uint) ident_len));
 }
 
 
@@ -2965,7 +2960,7 @@ int Rotate_log_event::do_update_pos(Relay_log_info *rli)
   if ((server_id != ::server_id || rli->replicate_same_server_id) &&
       !rli->is_in_group())
   {
-    rli->group_master_log_name.assign(new_log_ident, ident_len+1);
+    rli->group_master_log_name.assign(new_log_ident);
     rli->notify_group_master_log_name_update();
     rli->group_master_log_pos= pos;
     rli->group_relay_log_name.assign(rli->event_relay_log_name);

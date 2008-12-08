@@ -2574,7 +2574,7 @@ static int32_t process_io_rotate(Master_info *mi, Rotate_log_event *rev)
     return(1);
 
   /* Safe copy as 'rev' has been "sanitized" in Rotate_log_event's ctor */
-  mi->setLogName(rev->new_log_ident);
+  mi->setLogName(rev->new_log_ident.c_str());
   mi->setLogPosition(rev->pos);
   /*
     If we do not do this, we will be getting the first
