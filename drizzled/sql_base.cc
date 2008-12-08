@@ -42,6 +42,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/replicator.h>
 
 
 /**
@@ -3245,11 +3246,15 @@ retry:
       uint32_t query_buf_size= 20 + share->db.length + share->table_name.length +1;
       if ((query= (char*) malloc(query_buf_size)))
       {
-        /* this DELETE FROM is needed even with row-based binlogging */
+        /* 
+          "this DELETE FROM is needed even with row-based binlogging"
+
+          We inherited this from MySQL. TODO: fix it to issue a propper truncate
+          of the table (though that may not be completely right sematics).
+        */
         end = strxmov(strcpy(query, "DELETE FROM `")+13,
                       share->db.str,"`.`",share->table_name.str,"`", NULL);
-        session->binlog_query(Session::STMT_QUERY_TYPE,
-                          query, (ulong)(end-query), false, false);
+        (void)replicator_statement(session, query, (size_t)(end - query));
         free(query);
       }
       else

@@ -232,35 +232,6 @@ binlog_trans_log_savepos(Session *session, my_off_t *pos)
 
 
 /*
-  Truncate the binary log transaction cache.
-
-  SYNPOSIS
-    binlog_trans_log_truncate()
-
-    session      The thread to take the binlog data from
-    pos      Position to truncate to
-
-  DESCRIPTION
-
-    Truncate the binary log to the given position. Will not change
-    anything else.
-
- */
-static void
-binlog_trans_log_truncate(Session *session, my_off_t pos)
-{
-  assert(session_get_ha_data(session, binlog_hton) != NULL);
-  /* Only true if binlog_trans_log_savepos() wasn't called before */
-  assert(pos != ~(my_off_t) 0);
-
-  binlog_trx_data *const trx_data=
-    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
-  trx_data->truncate(pos);
-  return;
-}
-
-
-/*
   this function is mostly a placeholder.
   conceptually, binlog initialization (now mostly done in DRIZZLE_BIN_LOG::open)
   should be moved here.
@@ -485,15 +456,18 @@ static int binlog_commit(handlerton *, Session *session, bool all)
 
     Otherwise, we accumulate the statement
   */
+
   uint64_t const in_transaction=
     session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
+
+
   if ((in_transaction && (all || (!trx_data->at_least_one_stmt && session->transaction.stmt.modified_non_trans_table))) || (!in_transaction && !all))
   {
     Query_log_event qev(session, STRING_WITH_LEN("COMMIT"), true, false);
     qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
     /* TODO: Fix return type */
-    (void)replicator_end_transaction(session, all, true);
     int error= binlog_end_trans(session, trx_data, &qev, all);
+    (void)replicator_end_transaction(session, all, true);
     return(error);
   }
   return(0);
@@ -520,8 +494,13 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
   binlog_trx_data *const trx_data=
     (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
 
-  if (trx_data->empty()) {
+  /* TODO: Fix return type */
+  (void)replicator_end_transaction(session, all, false);
+
+  if (trx_data->empty()) 
+  {
     trx_data->reset();
+
     return(0);
   }
 
@@ -552,9 +531,6 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
     error= binlog_end_trans(session, trx_data, 0, all);
   }
 
-  /* TODO: Fix return type */
-  (void)replicator_end_transaction(session, all, false);
-
   return(error);
 }
 
@@ -584,38 +560,22 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
 
 static int binlog_savepoint_set(handlerton *, Session *session, void *sv)
 {
-  (void)replicator_savepoint_set(session, sv);
+  bool error;
   binlog_trans_log_savepos(session, (my_off_t*) sv);
   /* Write it to the binary log */
 
-  int const error=
-    session->binlog_query(Session::STMT_QUERY_TYPE,
-                      session->query, session->query_length, true, false);
+  error= replicator_statement(session, session->query, session->query_length);
+
   return(error);
 }
 
-static int binlog_savepoint_rollback(handlerton *, Session *session, void *sv)
+static int binlog_savepoint_rollback(handlerton *, Session *session, void *)
 {
   bool error;
-  /*
-    Write ROLLBACK TO SAVEPOINT to the binlog cache if we have updated some
-    non-transactional table. Otherwise, truncate the binlog cache starting
-    from the SAVEPOINT command.
-  */
-  if (unlikely(session->transaction.all.modified_non_trans_table ||
-               (session->options & OPTION_KEEP_LOG)))
-  {
-    int error=
-      session->binlog_query(Session::STMT_QUERY_TYPE,
-                            session->query, session->query_length, true, false);
-    return(error);
-  }
-  binlog_trans_log_truncate(session, *(my_off_t*)sv);
 
+  error= replicator_statement(session, session->query, session->query_length);
 
-  error= replicator_rollback_to_savepoint(session, sv);
-
-  return(0);
+  return error;
 }
 
 

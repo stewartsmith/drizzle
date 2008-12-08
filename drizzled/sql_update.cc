@@ -664,18 +664,6 @@ int mysql_update(Session *session, TableList *table_list,
   */
   if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
   {
-    if (drizzle_bin_log.is_open())
-    {
-      if (error < 0)
-        session->clear_error();
-      if (session->binlog_query(Session::ROW_QUERY_TYPE,
-                            session->query, session->query_length,
-                            transactional_table, false, killed_status) &&
-          transactional_table)
-      {
-        error=1;				// Rollback update
-      }
-    }
     if (session->transaction.stmt.modified_non_trans_table)
       session->transaction.all.modified_non_trans_table= true;
   }
@@ -1473,21 +1461,6 @@ void multi_update::abort()
   }
   if (session->transaction.stmt.modified_non_trans_table)
   {
-    /*
-      The query has to binlog because there's a modified non-transactional table
-      either from the query's list or via a stored routine: bug#13270,23333
-    */
-    if (drizzle_bin_log.is_open())
-    {
-      /*
-        Session::killed status might not have been set ON at time of an error
-        got caught and if happens later the killed error is written
-        into repl event.
-      */
-      session->binlog_query(Session::ROW_QUERY_TYPE,
-                        session->query, session->query_length,
-                        transactional_tables, false);
-    }
     session->transaction.all.modified_non_trans_table= true;
   }
   assert(trans_safe || !updated || session->transaction.stmt.modified_non_trans_table);
@@ -1684,18 +1657,6 @@ bool multi_update::send_eof()
               session->transaction.stmt.modified_non_trans_table);
   if (local_error == 0 || session->transaction.stmt.modified_non_trans_table)
   {
-    if (drizzle_bin_log.is_open())
-    {
-      if (local_error == 0)
-        session->clear_error();
-      if (session->binlog_query(Session::ROW_QUERY_TYPE,
-                            session->query, session->query_length,
-                            transactional_tables, false, killed_status) &&
-          trans_safe)
-      {
-        local_error= 1;				// Rollback update
-      }
-    }
     if (session->transaction.stmt.modified_non_trans_table)
       session->transaction.all.modified_non_trans_table= true;
   }

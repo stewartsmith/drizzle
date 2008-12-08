@@ -1357,11 +1357,6 @@ public:
     QUERY_TYPE_COUNT
   };
 
-  int binlog_query(enum_binlog_query_type qtype,
-                   char const *query, ulong query_len,
-                   bool is_trans, bool suppress_use,
-                   Session::killed_state killed_err_arg= Session::KILLED_NO_VALUE);
-
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
     enter_cond(); this mutex is then released by exit_cond().

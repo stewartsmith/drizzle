@@ -37,8 +37,7 @@ bool replicator_delete_row(Session *session, Table *table);
 
 /* The below control transactions */
 bool replicator_end_transaction(Session *session, bool autocommit, bool commit);
-bool replicator_rollback_to_savepoint(Session *session, void *save_point);
-bool replicator_savepoint_set(Session *session, void *save_point);
 bool replicator_prepare(Session *session);
+bool replicator_statement(Session *session, const char *query, size_t query_length);
 
 #endif /* DRIZZLED_REPLICATOR_H */

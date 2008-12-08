@@ -317,25 +317,6 @@ cleanup:
   /* See similar binlogging code in sql_update.cc, for comments */
   if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
   {
-    if (drizzle_bin_log.is_open())
-    {
-      if (error < 0)
-        session->clear_error();
-      /*
-        [binlog]: If 'handler::delete_all_rows()' was called and the
-        storage engine does not inject the rows itself, we replicate
-        statement-based; otherwise, 'ha_delete_row()' was used to
-        delete specific rows which we might log row-based.
-      */
-      int log_result= session->binlog_query(Session::ROW_QUERY_TYPE,
-                                        session->query, session->query_length,
-                                        transactional_table, false, killed_status);
-
-      if (log_result && transactional_table)
-      {
-	error=1;
-      }
-    }
     if (session->transaction.stmt.modified_non_trans_table)
       session->transaction.all.modified_non_trans_table= true;
   }
@@ -678,15 +659,6 @@ void multi_delete::abort()
 
   if (session->transaction.stmt.modified_non_trans_table)
   {
-    /*
-       there is only side effects; to binlog with the error
-    */
-    if (drizzle_bin_log.is_open())
-    {
-      session->binlog_query(Session::ROW_QUERY_TYPE,
-                        session->query, session->query_length,
-                        transactional_tables, false);
-    }
     session->transaction.all.modified_non_trans_table= true;
   }
   return;
@@ -786,18 +758,6 @@ bool multi_delete::send_eof()
 
   if ((local_error == 0) || session->transaction.stmt.modified_non_trans_table)
   {
-    if (drizzle_bin_log.is_open())
-    {
-      if (local_error == 0)
-        session->clear_error();
-      if (session->binlog_query(Session::ROW_QUERY_TYPE,
-                            session->query, session->query_length,
-                            transactional_tables, false, killed_status) &&
-          !normal_tables)
-      {
-	local_error=1;  // Log write failed: roll back the SQL statement
-      }
-    }
     if (session->transaction.stmt.modified_non_trans_table)
       session->transaction.all.modified_non_trans_table= true;
   }

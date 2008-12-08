@@ -59,7 +59,7 @@ bool mysql_preload_keys(Session* session, TableList* table_list);
 int reassign_keycache_tables(Session* session, KEY_CACHE *src_cache,
                              KEY_CACHE *dst_cache);
 void write_bin_log(Session *session, bool clear_error,
-                   char const *query, ulong query_length);
+                   char const *query, size_t query_length);
 
 bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);

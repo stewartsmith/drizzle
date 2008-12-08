@@ -27,6 +27,7 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
+#include <drizzled/replicator.h>
 
 extern HASH lock_db_cache;
 
@@ -261,16 +262,10 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
     file
 */
 
-void write_bin_log(Session *session, bool clear_error,
-                   char const *query, ulong query_length)
+void write_bin_log(Session *session, bool,
+                   char const *query, size_t query_length)
 {
-  if (drizzle_bin_log.is_open())
-  {
-    if (clear_error)
-      session->clear_error();
-    session->binlog_query(Session::STMT_QUERY_TYPE,
-                      query, query_length, false, false);
-  }
+  (void)replicator_statement(session, query, query_length);
 }
 
 
