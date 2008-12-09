@@ -4323,20 +4323,6 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
         return(error);
       }
 
-      /*
-        So we need to reopen the tables.
-
-        We need to flush the pending RBR event, since it keeps a
-        pointer to an open table.
-
-        ALTERNATIVE SOLUTION (not implemented): Extract a pointer to
-        the pending RBR event and reset the table pointer after the
-        tables has been reopened.
-
-        NOTE: For this new scheme there should be no pending event:
-        need to add code to assert that is the case.
-       */
-      session->binlog_flush_pending_rows_event(false);
       TableList *tables= rli->tables_to_lock;
       close_tables_for_reopen(session, &tables);
 
@@ -4644,23 +4630,6 @@ Rows_log_event::do_update_pos(Relay_log_info *rli)
 
   if (get_flags(STMT_END_F))
   {
-    /*
-      This is the end of a statement or transaction, so close (and
-      unlock) the tables we opened when processing the
-      Table_map_log_event starting the statement.
-
-      OBSERVER.  This will clear *all* mappings, not only those that
-      are open for the table. There is not good handle for on-close
-      actions for tables.
-
-      NOTE. Even if we have no table ('table' == 0) we still need to be
-      here, so that we increase the group relay log position. If we didn't, we
-      could have a group relay log position which lags behind "forever"
-      (assume the last master's transaction is ignored by the slave because of
-      replicate-ignore rules).
-    */
-    session->binlog_flush_pending_rows_event(true);
-
     /*
       If this event is not in a transaction, the call below will, if some
       transactional storage engines are involved, commit the statement into
