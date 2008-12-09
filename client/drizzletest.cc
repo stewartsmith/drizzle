@@ -2045,7 +2045,8 @@ static int open_file(const char *name)
     cur_file--;
     die("Could not open '%s' for reading", buff);
   }
-  cur_file->file_name= strdup(buff);
+  if (!(cur_file->file_name= strdup(buff)))
+    die("Out of memory");
   cur_file->lineno=1;
   return(0);
 }
@@ -4577,7 +4578,8 @@ get_one_option(int optid, const struct my_option *, char *argument)
     if (!(cur_file->file=
           my_fopen(buff, O_RDONLY, MYF(0))))
       die("Could not open '%s' for reading: errno = %d", buff, errno);
-    cur_file->file_name= strdup(buff);
+    if (!(cur_file->file_name= strdup(buff)))
+      die("Out of memory");
     cur_file->lineno= 1;
     break;
   }
@@ -4597,8 +4599,11 @@ get_one_option(int optid, const struct my_option *, char *argument)
   case 'p':
     if (argument)
     {
-      free(opt_pass);
-      opt_pass= strdup(argument);
+      if (opt_pass)
+        free(opt_pass);
+      opt_pass = strdup(argument);
+      if (opt_pass == NULL)
+        die("Out of memory");
       while (*argument) *argument++= 'x';    /* Destroy argument */
       tty_password= 0;
     }
@@ -5481,6 +5486,8 @@ int main(int argc, char **argv)
   {
     cur_file->file= stdin;
     cur_file->file_name= strdup("<stdin>");
+    if (cur_file->file_name == NULL)
+      die("Out of memory");
     cur_file->lineno= 1;
   }
   cur_con= connections;
@@ -5939,6 +5946,8 @@ void do_get_replace_column(struct st_command *command)
     to= get_string(&buff, &from, command);
     free(replace_column[column_number-1]);
     replace_column[column_number-1]= strdup(to);
+    if (replace_column[column_number-1] == NULL)
+      die("Out of memory");
     set_if_bigger(max_replace_column, column_number);
   }
   free(start);

@@ -619,8 +619,15 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     if (argument)
     {
       char *start=argument;
-      free(opt_password);
+      if (opt_password)
+        free(opt_password);
       opt_password=strdup(argument);
+      if (opt_password == NULL)
+      {
+        fprintf(stderr, "Memory allocation error while copying password. "
+                        "Aborting.\n");
+        exit(ENOMEM);
+      }
       while (*argument) *argument++= 'x';               /* Destroy argument */
       if (*start)
         start[1]=0;                             /* Cut length of argument */
@@ -694,7 +701,8 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
       fprintf(stderr, "Illegal use of option --ignore-table=<database>.<table>\n");
       exit(1);
     }
-    if (my_hash_insert(&ignore_table, (unsigned char*)strdup(argument)))
+    char * tmpptr= strdup(argument);
+    if (!(tmpptr) || my_hash_insert(&ignore_table, (unsigned char*)tmpptr))
       exit(EX_EOM);
     break;
   }
@@ -1473,6 +1481,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
         verbose_msg("-- It's a view, create dummy table for view\n");
 
         /* save "show create" statement for later */
+        /* It's ok for scv_buff to be NULL here */
         if ((row= drizzle_fetch_row(result)) && (scv_buff=row[1]))
           scv_buff= strdup(scv_buff);
 

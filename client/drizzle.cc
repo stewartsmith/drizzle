@@ -1030,7 +1030,20 @@ int main(int argc,char *argv[])
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
+  
+  if (default_prompt == NULL)
+  {
+    fprintf(stderr, _("Memory allocation error while constructing initial "
+                      "prompt. Aborting.\n"));
+    exit(ENOMEM);
+  }
   current_prompt= strdup(default_prompt);
+  if (current_prompt == NULL)
+  {
+    fprintf(stderr, _("Memory allocation error while constructing initial "
+                      "prompt. Aborting.\n"));
+    exit(ENOMEM);
+  }
   processed_prompt= new string();
   processed_prompt->reserve(32);
 
@@ -4296,14 +4309,19 @@ static void init_username()
 static int com_prompt(string *, const char *line)
 {
   const char *ptr=strchr(line, ' ');
-  prompt_counter = 0;
-  free(current_prompt);
-  current_prompt= strdup(ptr ? ptr+1 : default_prompt);
-  if (!ptr)
+  if (ptr == NULL)
     tee_fprintf(stdout, "Returning to default PROMPT of %s\n",
                 default_prompt);
+  prompt_counter = 0;
+  char * tmpptr= strdup(ptr ? ptr+1 : default_prompt);
+  if (tmpptr == NULL)
+    tee_fprintf(stdout, "Memory allocation error. Not changing prompt\n");
   else
+  {
+    free(current_prompt);
+    current_prompt= tmpptr;
     tee_fprintf(stdout, "PROMPT set to '%s'\n", current_prompt);
+  }
   return 0;
 }
 

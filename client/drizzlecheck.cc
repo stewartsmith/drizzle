@@ -256,8 +256,15 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     if (argument)
     {
       char *start = argument;
-      free(opt_password);
+      if (opt_password)
+        free(opt_password);
       opt_password = strdup(argument);
+      if (opt_password == NULL)
+      {
+        fprintf(stderr, "Memory allocation error while copying password. "
+                        "Aborting.\n");
+        exit(ENOMEM);
+      }
       while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
   start[1] = 0;                             /* Cut length of argument */

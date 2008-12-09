@@ -740,8 +740,15 @@ get_one_option(int optid, const struct my_option *, char *argument)
     if (argument)
     {
       char *start= argument;
-      free(opt_password);
-      opt_password= strdup(argument);
+      if (opt_password)
+        free(opt_password);
+      opt_password = strdup(argument);
+      if (opt_password == NULL)
+      {
+        fprintf(stderr, "Memory allocation error while copying password. "
+                        "Aborting.\n");
+        exit(ENOMEM);
+      }
       while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
         start[1]= 0;        /* Cut length of argument */
@@ -1710,6 +1717,11 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
     memset(primary_keys, 0, (sizeof(char *) * primary_keys_number_of));
     /* Yes, we strdup a const string to simplify the interface */
     primary_keys[0]= strdup("796c4422-1d94-102a-9d6d-00e0812d");
+    if (primary_keys[0] == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in option processing\n");
+      exit(1);
+    }
   }
   else
   {
@@ -1740,7 +1752,14 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
       row= drizzle_fetch_row(result);
       for (counter= 0; counter < primary_keys_number_of;
            counter++, row= drizzle_fetch_row(result))
+      {
         primary_keys[counter]= strdup(row[0]);
+        if (primary_keys[counter] == NULL)
+        {
+          fprintf(stderr, "Memory Allocation error in option processing\n");
+          exit(1);
+        }
+      }
     }
 
     drizzle_free_result(result);
@@ -2278,6 +2297,11 @@ parse_option(const char *origin, option_string **stmt, char delm)
 
     tmp->length= strlen(buffer);
     tmp->string= strdup(buffer);
+    if (tmp->string == NULL)
+    {
+      fprintf(stderr,"Error allocating memory while parsing options\n");
+      exit(1);
+    }
 
     if (isspace(*begin_ptr))
       begin_ptr++;
