@@ -113,10 +113,11 @@ static bool init_line_buffer_from_string(LINE_BUFFER *buffer,char * str)
 {
   uint old_length=(uint)(buffer->end - buffer->buffer);
   uint length= (uint) strlen(str);
-  if (!(buffer->buffer= buffer->start_of_line= buffer->end_of_line=
-    (buffer->buffer) ? (char*) realloc(buffer->buffer, old_length+length+2)
-                     : (char*) malloc(old_length+length+2)))
+  char * tmpptr= (char*)realloc(buffer->buffer, old_length+length+2);
+  if (tmpptr == NULL)
     return 1;
+  
+  buffer->buffer= buffer->start_of_line= buffer->end_of_line= tmpptr;
   buffer->end= buffer->buffer + old_length;
   if (old_length)
     buffer->end[-1]=' ';

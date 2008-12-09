@@ -2324,6 +2324,11 @@ parse_delimiter(const char *script, statement **stmt, char delm)
     count++;
     tmp->length= (size_t)(retstr - ptr);
     tmp->string= (char *)malloc(tmp->length + 1);
+    if (tmp->string == NULL)
+    {
+      fprintf(stderr,"Error allocating memory while parsing delimiter\n");
+      exit(1);
+    }
     memcpy(tmp->string, ptr, tmp->length);
     tmp->string[tmp->length]= 0;
     ptr+= retstr - ptr + 1;
@@ -2335,6 +2340,11 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   {
     tmp->length= (size_t)((script + length) - ptr);
     tmp->string= (char *)malloc(tmp->length + 1);
+    if (tmp->string == NULL)
+    {
+      fprintf(stderr,"Error allocating memory while parsing delimiter\n");
+      exit(1);
+    }
     memcpy(tmp->string, ptr, tmp->length);
     tmp->string[tmp->length]= 0;
     count++;
