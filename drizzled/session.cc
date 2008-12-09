@@ -2226,6 +2226,33 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
   return;
 }
 
+
+bool Session::set_db(const char *new_db, size_t new_db_len)
+{
+  /* Do not reallocate memory if current chunk is big enough. */
+  if (db && new_db && db_length >= new_db_len)
+    memcpy(db, new_db, new_db_len+1);
+  else
+  {
+    if (db)
+      free(db);
+    if (new_db)
+    {
+      db= (char *)malloc(new_db_len + 1);
+      if (db != NULL)
+      {
+        memcpy(db, new_db, new_db_len);
+        db[new_db_len]= 0;
+      }
+    }
+    else
+      db= NULL;
+  }
+  db_length= db ? new_db_len : 0;
+  return new_db && !db;
+}
+
+
 /**
   Check the killed state of a user thread
   @param session  user thread

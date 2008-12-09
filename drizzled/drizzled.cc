@@ -1697,7 +1697,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 
 
 static const char *load_default_groups[]= {
-"mysqld","server", DRIZZLE_BASE_VERSION, 0, 0};
+"drizzled","server", DRIZZLE_BASE_VERSION, 0, 0};
 
 
 /**
@@ -2010,13 +2010,17 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if ((sys_init_connect.value= opt_init_connect))
     sys_init_connect.value_length= strlen(opt_init_connect);
   else
-    sys_init_connect.value=my_strdup("",MYF(0));
+    sys_init_connect.value=strdup("");
+  if (sys_init_connect.value == NULL)
+    return 1;
 
   sys_init_slave.value_length= 0;
   if ((sys_init_slave.value= opt_init_slave))
     sys_init_slave.value_length= strlen(opt_init_slave);
   else
-    sys_init_slave.value=my_strdup("",MYF(0));
+    sys_init_slave.value=strdup("");
+  if (sys_init_slave.value == NULL)
+    return 1;
 
   if (use_temp_pool && bitmap_init(&temp_pool,0,1024,1))
     return 1;
@@ -2151,7 +2155,12 @@ static int init_server_components()
     if (ln == buf)
     {
       free(opt_bin_logname);
-      opt_bin_logname=my_strdup(buf, MYF(0));
+      opt_bin_logname=strdup(buf);
+      if (opt_bin_logname == NULL)
+      {
+        sql_print_error(_("Out of memory in init_server_components."));
+        return(1);
+      }
     }
     if (drizzle_bin_log.open_index_file(opt_binlog_index_name, ln))
     {
@@ -3830,7 +3839,7 @@ static void usage(void)
   if (!default_collation_name)
     default_collation_name= (char*) default_charset_info->name;
   print_version();
-  puts(_("Copyright (C) 2000 MySQL AB, by Monty and others\n"
+  puts(_("Copyright (C) 2008 Sun Microsystems\n"
          "This software comes with ABSOLUTELY NO WARRANTY. "
          "This is free software,\n"
          "and you are welcome to modify and redistribute it under the GPL "
@@ -4390,7 +4399,7 @@ static void fix_paths(void)
     exit(1);
   if (!slave_load_tmpdir)
   {
-    if (!(slave_load_tmpdir = (char*) my_strdup(drizzle_tmpdir, MYF(MY_FAE))))
+    if (!(slave_load_tmpdir = (char*) strdup(drizzle_tmpdir)))
       exit(1);
   }
   /*
@@ -4401,7 +4410,9 @@ static void fix_paths(void)
   {
     convert_dirname(buff, opt_secure_file_priv, NULL);
     free(opt_secure_file_priv);
-    opt_secure_file_priv= my_strdup(buff, MYF(MY_FAE));
+    opt_secure_file_priv= strdup(buff);
+    if (opt_secure_file_priv == NULL)
+      exit(1);
   }
 }
 

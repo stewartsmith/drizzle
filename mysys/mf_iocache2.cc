@@ -61,8 +61,8 @@ my_b_copy_to_file(IO_CACHE *cache, FILE *file)
   bytes_in_cache= my_b_bytes_in_cache(cache);
   do
   {
-    if (my_fwrite(file, cache->read_pos, bytes_in_cache,
-                  MYF(MY_WME | MY_NABP)) == (size_t) -1)
+    if (fwrite(cache->read_pos, 1, bytes_in_cache, file)
+               != bytes_in_cache)
       return(1);
     cache->read_pos= cache->read_end;
   } while ((bytes_in_cache= my_b_fill(cache)));
@@ -173,7 +173,7 @@ size_t my_b_fill(IO_CACHE *info)
 
   if (info->seek_not_done)
   {					/* File touched, do seek */
-    if (my_seek(info->file,pos_in_file,MY_SEEK_SET,MYF(0)) ==
+    if (lseek(info->file,pos_in_file,SEEK_SET) ==
 	MY_FILEPOS_ERROR)
     {
       info->error= 0;
@@ -255,7 +255,7 @@ my_off_t my_b_filelength(IO_CACHE *info)
     return my_b_tell(info);
 
   info->seek_not_done= 1;
-  return my_seek(info->file, 0L, MY_SEEK_END, MYF(0));
+  return lseek(info->file, 0L, SEEK_END);
 }
 
 

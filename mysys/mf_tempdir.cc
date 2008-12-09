@@ -42,8 +42,12 @@ bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
       end= pathlist+strlen(pathlist);
     strncpy(buff, pathlist, FN_REFLEN-1);
     length= cleanup_dirname(buff, buff);
-    if (!(copy= my_strndup(buff, length, MYF(MY_WME))) ||
-        insert_dynamic(&tmpdir->full_list, (unsigned char*) &copy))
+    copy= (char *)malloc(length + 1);
+    if (copy == NULL)
+      return true;
+    memcpy(copy, buff, length);
+    copy[length]= 0;
+    if (insert_dynamic(&tmpdir->full_list, (unsigned char*) &copy))
       return(true);
     pathlist=end+1;
   } while (*end != '\0');

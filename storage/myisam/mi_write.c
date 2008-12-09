@@ -820,8 +820,8 @@ int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
     cache_size/=total_keylength*16;
 
   info->bulk_insert=(TREE *)
-    my_malloc((sizeof(TREE)*share->base.keys+
-               sizeof(bulk_insert_param)*num_keys),MYF(0));
+    malloc((sizeof(TREE)*share->base.keys+
+           sizeof(bulk_insert_param)*num_keys));
 
   if (!info->bulk_insert)
     return(HA_ERR_OUT_OF_MEM);

@@ -26,7 +26,7 @@ noinst_HEADERS =	my_uctype.h \
 
 
 libmystrings_la_SOURCES = 	strxmov.cc bmove_upp.cc \
-				strfill.cc is_prefix.cc \
+				is_prefix.cc \
 				longlong2str.cc \
 				my_strtoll10.cc \
 				bchange.cc int2str.cc str2int.cc \
@@ -35,6 +35,6 @@ libmystrings_la_SOURCES = 	strxmov.cc bmove_upp.cc \
                                 ctype.cc ctype-simple.cc ctype-mb.cc \
                                 ctype-utf8.cc \
                                 ctype-uca.cc ctype-bin.cc \
-                                decimal.cc ctype-extra.cc str_alloc.cc \
+                                decimal.cc ctype-extra.cc \
                                 dtoa.cc 
 

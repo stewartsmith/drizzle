@@ -18,6 +18,7 @@
 */
 
 #include "heapdef.h"
+#include <string.h>
 
 int heap_rename(const char *old_name, const char *new_name)
 {
@@ -27,7 +28,7 @@ int heap_rename(const char *old_name, const char *new_name)
   pthread_mutex_lock(&THR_LOCK_heap);
   if ((info = hp_find_named_heap(old_name)))
   {
-    if (!(name_buff=(char*) my_strdup(new_name,MYF(MY_WME))))
+    if (!(name_buff=(char*) strdup(new_name)))
     {
       pthread_mutex_unlock(&THR_LOCK_heap);
       return(my_errno);

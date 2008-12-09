@@ -69,7 +69,7 @@ void list_free(LIST *root, uint32_t free_data)
 
 LIST *list_cons(void *data, LIST *list)
 {
-  LIST * const new_charset=(LIST*) my_malloc(sizeof(LIST),MYF(MY_FAE));
+  LIST * const new_charset=(LIST*) malloc(sizeof(LIST));
   if (!new_charset)
     return NULL;
   new_charset->data=data;

@@ -110,7 +110,7 @@ bool replicator_session_init(Session *session)
 
   /* 
     call replicator_session_iterate
-    once for each loaded replicator plugin 
+    once for each loaded replicator plugin
   */
   foreach_rv= plugin_foreach(session, replicator_session_iterate,
                              DRIZZLE_REPLICATOR_PLUGIN, NULL);
@@ -216,8 +216,8 @@ bool replicator_write_row(Session *session, Table *table)
   return replicator_do_row(session, &param);
 }
 
-bool replicator_update_row(Session *session, Table *table, 
-                           const unsigned char *before, 
+bool replicator_update_row(Session *session, Table *table,
+                           const unsigned char *before,
                            const unsigned char *after)
 {
   replicator_row_parms_st param;
@@ -242,11 +242,11 @@ bool replicator_delete_row(Session *session, Table *table)
   return replicator_do_row(session, &param);
 }
 
-/* 
+/*
   Here be Dragons!
 
-  Ok, not so much dragons, but this is where we handle either commits or rollbacks of 
-  statements. 
+  Ok, not so much dragons, but this is where we handle either commits or rollbacks of
+  statements.
 */
 typedef struct replicator_row_end_st
 {
@@ -280,7 +280,7 @@ bool replicator_end_transaction(Session *session, bool autocommit, bool commit)
 {
   bool foreach_rv;
   replicator_row_end_st params;
-  
+
   params.autocommit= autocommit;
   params.commit= commit;
 

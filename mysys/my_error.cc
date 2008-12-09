@@ -163,8 +163,7 @@ int my_error_register(const char **errmsgs, int first, int last)
   struct my_err_head **search_meh_pp;
 
   /* Allocate a new header structure. */
-  if (! (meh_p= (struct my_err_head*) my_malloc(sizeof(struct my_err_head),
-                                                MYF(MY_WME))))
+  if (! (meh_p= (struct my_err_head*) malloc(sizeof(struct my_err_head))))
     return 1;
   meh_p->meh_errmsgs= errmsgs;
   meh_p->meh_first= first;

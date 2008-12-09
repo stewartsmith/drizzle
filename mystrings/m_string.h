@@ -49,18 +49,6 @@
 extern "C" {
 #endif
 
-/*
-  my_str_malloc() and my_str_free() are assigned to implementations in
-  strings/alloc.c, but can be overridden in the calling program.
- */
-typedef void *(*str_malloc_func)(size_t);
-typedef void (*str_free_func)(void *);
-
-extern str_malloc_func my_str_malloc;
-extern str_free_func my_str_free;
-
-void *my_str_malloc_default(size_t size);
-void my_str_free_default(void *ptr);
 
 char *my_stpncpy(register char *dst, register const char *src, size_t n);
 

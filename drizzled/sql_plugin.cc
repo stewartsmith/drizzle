@@ -530,7 +530,7 @@ static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc)
       memory manager and/or valgrind to track locked references and
       double unlocks to aid resolving reference counting.problems.
     */
-    if (!(plugin= (plugin_ref) my_malloc_ci(sizeof(pi), MYF(MY_WME))))
+    if (!(plugin= (plugin_ref) malloc(sizeof(pi))))
       return(NULL);
 
     *plugin= pi;
@@ -1604,8 +1604,15 @@ static void update_func_str(Session *, struct st_mysql_sys_var *var,
   *(char **)tgt= *(char **) save;
   if (var->flags & PLUGIN_VAR_MEMALLOC)
   {
-    *(char **)tgt= my_strdup(*(char **) save, MYF(0));
+    *(char **)tgt= strdup(*(char **) save);
     free(old);
+    /*
+     * There isn't a _really_ good thing to do here until this whole set_var
+     * mess gets redesigned
+     */
+    if (tgt == NULL)
+      sql_print_error(_("Out of memor."));
+
   }
 }
 
@@ -1753,12 +1760,19 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 
     if (new_size > global_variables_dynamic_size)
     {
-      global_system_variables.dynamic_variables_ptr= (char*)
-        my_realloc(global_system_variables.dynamic_variables_ptr, new_size,
-                   MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
-      max_system_variables.dynamic_variables_ptr= (char*)
-        my_realloc(max_system_variables.dynamic_variables_ptr, new_size,
-                   MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+      char* tmpptr= NULL;
+      if (!(tmpptr=
+              (char *)realloc(global_system_variables.dynamic_variables_ptr,
+                              new_size)))
+        return NULL;
+      global_system_variables.dynamic_variables_ptr= tmpptr;
+      tmpptr= NULL;
+      if (!(tmpptr=
+              (char *)realloc(max_system_variables.dynamic_variables_ptr,
+                              new_size)))
+        return NULL;
+      max_system_variables.dynamic_variables_ptr= tmpptr;
+           
       /*
         Clear the new variable value space. This is required for string
         variables. If their value is non-NULL, it must point to a valid
@@ -1818,10 +1832,11 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
 
     pthread_rwlock_rdlock(&LOCK_system_variables_hash);
 
-    session->variables.dynamic_variables_ptr= (char*)
-      my_realloc(session->variables.dynamic_variables_ptr,
-                 global_variables_dynamic_size,
-                 MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+    char *tmpptr= NULL;
+    if (!(tmpptr= (char *)realloc(session->variables.dynamic_variables_ptr,
+                                  global_variables_dynamic_size)))
+      return NULL;
+    session->variables.dynamic_variables_ptr= tmpptr;
 
     if (global_lock)
       pthread_mutex_lock(&LOCK_global_system_variables);
@@ -1860,7 +1875,9 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
                              *(int*)(pi->plugin_var + 1));
          if ((*pp= *(char**) (global_system_variables.dynamic_variables_ptr +
                              *(int*)(pi->plugin_var + 1))))
-           *pp= my_strdup(*pp, MYF(MY_WME|MY_FAE));
+           *pp= strdup(*pp);
+         if (*pp == NULL)
+           return NULL;
       }
     }
 

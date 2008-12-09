@@ -474,7 +474,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
 
   init(log_type_arg, io_cache_type_arg);
 
-  if (!(name= my_strdup(log_name, MYF(MY_WME))))
+  if (!(name= strdup(log_name)))
   {
     name= (char *)log_name; // for the error message
     goto err;
@@ -495,7 +495,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
   if ((file= my_open(log_file_name, open_flags,
                      MYF(MY_WME | ME_WAITTANG))) < 0 ||
       init_io_cache(&log_file, file, IO_SIZE, io_cache_type,
-                    my_tell(file), 0,
+                    lseek(file, 0, SEEK_CUR), 0,
                     MYF(MY_WME | MY_NABP |
                         ((log_type == LOG_BIN) ? MY_WAIT_IF_FULL : 0))))
     goto err;
@@ -737,7 +737,7 @@ bool DRIZZLE_BIN_LOG::open_index_file(const char *index_file_name_arg,
        my_sync(index_file_nr, MYF(MY_WME)) ||
        init_io_cache(&index_file, index_file_nr,
                      IO_SIZE, WRITE_CACHE,
-                     my_seek(index_file_nr,0L,MY_SEEK_END,MYF(0)),
+                     lseek(index_file_nr,0,SEEK_END),
 			0, MYF(MY_WME | MY_WAIT_IF_FULL)))
   {
     /*
@@ -945,13 +945,13 @@ static bool copy_up_file_and_fill(IO_CACHE *index_file, my_off_t offset)
 
   for (;; offset+= bytes_read)
   {
-    (void) my_seek(file, offset, MY_SEEK_SET, MYF(0));
+    (void) lseek(file, offset, SEEK_SET);
     if ((bytes_read= (int) my_read(file, io_buf, sizeof(io_buf), MYF(MY_WME)))
 	< 0)
       goto err;
     if (!bytes_read)
       break;					// end of file
-    (void) my_seek(file, offset-init_offset, MY_SEEK_SET, MYF(0));
+    (void) lseek(file, offset-init_offset, SEEK_SET);
     if (my_write(file, io_buf, bytes_read, MYF(MY_WME | MY_NABP)))
       goto err;
   }
@@ -2550,8 +2550,8 @@ int TC_LOG_MMAP::open(const char *opt_name)
                       "--tc-heuristic-recover is used"));
       goto err;
     }
-    file_length= my_seek(fd, 0L, MY_SEEK_END, MYF(MY_WME+MY_FAE));
-    if (file_length == MY_FILEPOS_ERROR || file_length % tc_log_page_size)
+    file_length= lseek(fd, 0, SEEK_END);
+    if (file_length == OFF_T_MAX || file_length % tc_log_page_size)
       goto err;
   }
 

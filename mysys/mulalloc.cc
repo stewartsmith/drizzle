@@ -15,6 +15,8 @@
 
 #include "mysys_priv.h"
 #include <stdarg.h>
+#include <string.h>
+#include <stdlib.h>
 
 /*
   Malloc many pointers at the same time
@@ -46,8 +48,10 @@ void* my_multi_malloc(myf myFlags, ...)
   }
   va_end(args);
 
-  if (!(start=(char *) my_malloc(tot_length,myFlags)))
+  if (!(start=(char *) malloc(tot_length)))
     return(0); /* purecov: inspected */
+  if (myFlags & MY_ZEROFILL)
+    memset(start, 0, tot_length);
 
   va_start(args,myFlags);
   res=start;

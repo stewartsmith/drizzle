@@ -24,7 +24,7 @@ void my_string_ptr_sort(unsigned char *base, uint32_t items, size_t size)
   unsigned char **ptr= NULL;
 
   if (size <= 20 && items >= 1000 && items < 100000 &&
-      (ptr= (unsigned char**) my_malloc(items*sizeof(char*),MYF(0))))
+      (ptr= (unsigned char**) malloc(items*sizeof(char*))))
   {
     radixsort_for_str_ptr((unsigned char**) base,items,size,ptr);
     free((unsigned char*) ptr);

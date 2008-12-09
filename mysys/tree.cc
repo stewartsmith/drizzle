@@ -218,7 +218,7 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint32_t key_size,
 
     key_size+=tree->size_of_element;
     if (tree->with_delete)
-      element=(TREE_ELEMENT *) my_malloc(alloc_size, MYF(MY_WME));
+      element=(TREE_ELEMENT *) malloc(alloc_size);
     else
       element=(TREE_ELEMENT *) alloc_root(&tree->mem_root,alloc_size);
     if (!element)

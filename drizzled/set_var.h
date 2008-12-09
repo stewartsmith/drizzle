@@ -23,6 +23,8 @@
 #include <drizzled/functions/func.h>
 #include <drizzled/functions/set_user_var.h>
 
+#include <string>
+
 /* Classes to support the SET command */
 
 
@@ -1128,29 +1130,17 @@ extern "C"
 
 class NAMED_LIST :public ilink
 {
-  const char *name;
-  uint32_t name_length;
+  std::string name;
 public:
   unsigned char* data;
 
   NAMED_LIST(I_List<NAMED_LIST> *links, const char *name_arg,
-	     uint32_t name_length_arg, unsigned char* data_arg)
-    :name_length(name_length_arg), data(data_arg)
-  {
-    name= my_strndup(name_arg, name_length, MYF(MY_WME));
-    links->push_back(this);
-  }
-  inline bool cmp(const char *name_cmp, uint32_t length)
-  {
-    return length == name_length && !memcmp(name, name_cmp, length);
-  }
-  ~NAMED_LIST()
-  {
-    free((unsigned char*) name);
-  }
+	           uint32_t name_length_arg, unsigned char* data_arg);
+  bool cmp(const char *name_cmp, uint32_t length);
   friend bool process_key_caches(process_key_cache_t func);
   friend void delete_elements(I_List<NAMED_LIST> *list,
-			      void (*free_element)(const char*, unsigned char*));
+                              void (*free_element)(const char*,
+                                                   unsigned char*));
 };
 
 /* updated in sql_acl.cc */

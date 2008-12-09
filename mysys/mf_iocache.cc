@@ -153,7 +153,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
 		  bool use_async_io, myf cache_myflags)
 {
   size_t min_cache;
-  my_off_t pos;
+  off_t pos;
   my_off_t end_of_file= ~(my_off_t) 0;
 
   info->file= file;
@@ -167,8 +167,8 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
 
   if (file >= 0)
   {
-    pos= my_tell(file);
-    if ((pos == (my_off_t) -1) && (my_errno == ESPIPE))
+    pos= lseek(file, 0, SEEK_CUR);
+    if ((pos == MY_FILEPOS_ERROR) && (my_errno == ESPIPE))
     {
       /*
          This kind of object doesn't support seek() or tell(). Don't set a
@@ -183,7 +183,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
       assert(seek_offset == 0);
     }
     else
-      info->seek_not_done= test(seek_offset != pos);
+      info->seek_not_done= test(seek_offset != (my_off_t)pos);
   }
 
   info->disk_writes= 0;
@@ -197,7 +197,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
     if (!(cache_myflags & MY_DONT_CHECK_FILESIZE))
     {
       /* Calculate end of file to avoid allocating oversized buffers */
-      end_of_file=my_seek(file,0L,MY_SEEK_END,MYF(0));
+      end_of_file=lseek(file,0L,SEEK_END);
       /* Need to reset seek_not_done now that we just did a seek. */
       info->seek_not_done= end_of_file == seek_offset ? 0 : 1;
       if (end_of_file < seek_offset)
@@ -224,9 +224,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
       if (type == SEQ_READ_APPEND)
 	buffer_block *= 2;
       if ((info->buffer=
-	   (unsigned char*) my_malloc(buffer_block,
-			     MYF((cache_myflags & ~ MY_WME) |
-				 (cachesize == min_cache ? MY_WME : 0)))) != 0)
+	   (unsigned char*) malloc(buffer_block)) != 0)
       {
 	info->write_buffer=info->buffer;
 	if (type == SEQ_READ_APPEND)
@@ -458,8 +456,7 @@ int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
   */
   if (info->seek_not_done)
   {
-    if ((my_seek(info->file,pos_in_file,MY_SEEK_SET,MYF(0))
-        != MY_FILEPOS_ERROR))
+    if ((lseek(info->file,pos_in_file,SEEK_SET) != MY_FILEPOS_ERROR))
     {
       /* No error, reset seek_not_done flag. */
       info->seek_not_done= 0;
@@ -947,8 +944,7 @@ int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
         */
         if (cache->seek_not_done)
         {
-          if (my_seek(cache->file, pos_in_file, MY_SEEK_SET, MYF(0))
-              == MY_FILEPOS_ERROR)
+          if (lseek(cache->file, pos_in_file, SEEK_SET) == MY_FILEPOS_ERROR)
           {
             cache->error= -1;
             unlock_io_cache(cache);
@@ -1089,7 +1085,7 @@ int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
     With read-append cache we must always do a seek before we read,
     because the write could have moved the file pointer astray
   */
-  if (my_seek(info->file,pos_in_file,MY_SEEK_SET,MYF(0)) == MY_FILEPOS_ERROR)
+  if (lseek(info->file,pos_in_file,SEEK_SET) == MY_FILEPOS_ERROR)
   {
    info->error= -1;
    unlock_append_buffer(info);
@@ -1310,8 +1306,7 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
       return 1;
     }
 
-    if (my_seek(info->file,next_pos_in_file,MY_SEEK_SET,MYF(0))
-        == MY_FILEPOS_ERROR)
+    if (lseek(info->file,next_pos_in_file,SEEK_SET) == MY_FILEPOS_ERROR)
     {
       info->error= -1;
       return (1);
@@ -1367,7 +1362,7 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
   {
     info->aio_result.result.aio_errno=AIO_INPROGRESS;	/* Marker for test */
     if (aioread(info->file,read_buffer, max_length,
-		(my_off_t) next_pos_in_file,MY_SEEK_SET,
+		(my_off_t) next_pos_in_file,SEEK_SET,
 		&info->aio_result.result))
     {						/* Skip async io */
       my_errno=errno;
@@ -1444,7 +1439,7 @@ int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Cou
         "seek_not_done" to indicate this to other functions operating
         on the IO_CACHE.
       */
-      if (my_seek(info->file,info->pos_in_file,MY_SEEK_SET,MYF(0)))
+      if (lseek(info->file,info->pos_in_file,SEEK_SET))
       {
         info->error= -1;
         return (1);
@@ -1644,8 +1639,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
       */
       if (!append_cache && info->seek_not_done)
       {					/* File touched, do seek */
-	if (my_seek(info->file,pos_in_file,MY_SEEK_SET,MYF(0)) ==
-	    MY_FILEPOS_ERROR)
+	if (lseek(info->file,pos_in_file,SEEK_SET) == MY_FILEPOS_ERROR)
 	{
 	  UNLOCK_APPEND_BUFFER;
 	  return((info->error= -1));
@@ -1670,7 +1664,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
       else
       {
 	info->end_of_file+=(info->write_pos-info->append_read_pos);
-	my_off_t tell_ret= my_tell(info->file);
+	my_off_t tell_ret= lseek(info->file, 0, SEEK_CUR);
 	assert(info->end_of_file == tell_ret);
       }
 
@@ -1789,7 +1783,7 @@ int main(int argc, char** argv)
   char* block, *block_end;
   MY_INIT(argv[0]);
   max_block = cache_size*3;
-  if (!(block=(char*)my_malloc(max_block,MYF(MY_WME))))
+  if (!(block=(char*)malloc(max_block)))
     die("Not enough memory to allocate test block");
   block_end = block + max_block;
   for (p = block,i=0; p < block_end;i++)

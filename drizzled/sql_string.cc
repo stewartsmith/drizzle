@@ -65,7 +65,7 @@ bool String::realloc(uint32_t alloc_length)
     char *new_ptr;
     if (alloced)
     {
-      if ((new_ptr= (char*) my_realloc(Ptr,len,MYF(MY_WME))))
+      if ((new_ptr= (char*) ::realloc(Ptr,len)))
       {
 	Ptr=new_ptr;
 	Alloced_length=len;

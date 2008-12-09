@@ -223,10 +223,10 @@ static st_blackhole_share *get_share(const char *table_name)
   if (!(share= (st_blackhole_share*) hash_search(&blackhole_open_tables,
                                                  (unsigned char*) table_name, length)))
   {
-    if (!(share= (st_blackhole_share*) my_malloc(sizeof(st_blackhole_share) +
-                                                 length,
-                                                 MYF(MY_WME | MY_ZEROFILL))))
+    if (!(share= (st_blackhole_share*) malloc(sizeof(st_blackhole_share) +
+                                              length)))
       goto error;
+    memset(share, 0, sizeof(st_blackhole_share) + length);
 
     share->table_name_length= length;
     strcpy(share->table_name, table_name);

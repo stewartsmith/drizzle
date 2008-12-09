@@ -1932,8 +1932,7 @@ innobase_init(
 	/* Since InnoDB edits the argument in the next call, we make another
 	copy of it: */
 
-	internal_innobase_data_file_path = my_strdup(innobase_data_file_path,
-						   MYF(MY_FAE));
+	internal_innobase_data_file_path = strdup(innobase_data_file_path);
 
 	ret = (bool) srv_parse_data_file_paths_and_sizes(
 				internal_innobase_data_file_path,

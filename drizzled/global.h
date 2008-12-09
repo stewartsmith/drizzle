@@ -226,8 +226,15 @@ typedef unsigned long ulong;      /* Short for unsigned long */
 
 typedef uint64_t my_off_t;
 
-#define MY_FILEPOS_ERROR  (UINT64_MAX)
+#if defined(SIZEOF_OFF_T)
+# if (SIZEOF_OFF_T == 8)
+#  define OFF_T_MAX (INT64_MAX)
+# else
+#  define OFF_T_MAX (INT32_MAX)
+# endif
+#endif
 
+#define MY_FILEPOS_ERROR  -1
 
 /* Defines for time function */
 #define SCALE_SEC  100

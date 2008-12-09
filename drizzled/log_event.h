@@ -2073,25 +2073,20 @@ public:
   enum {
     DUP_NAME= 2 // if constructor should dup the string argument
   };
-  const char* new_log_ident;
+  std::string new_log_ident;
   uint64_t pos;
   uint32_t ident_len;
   uint32_t flags;
   Rotate_log_event(const char* new_log_ident_arg,
-		   uint32_t ident_len_arg,
-		   uint64_t pos_arg, uint32_t flags);
+		               uint32_t ident_len_arg,
+		               uint64_t pos_arg, uint32_t flags);
   void pack_info(Protocol* protocol);
 
   Rotate_log_event(const char* buf, uint32_t event_len,
                    const Format_description_log_event* description_event);
-  ~Rotate_log_event()
-  {
-    if (flags & DUP_NAME)
-      free((unsigned char*) new_log_ident);
-  }
   Log_event_type get_type_code() { return ROTATE_EVENT;}
   int get_data_size() { return  ident_len + ROTATE_HEADER_LEN;}
-  bool is_valid() const { return new_log_ident != 0; }
+  bool is_valid() const { return new_log_ident.size() != 0; }
   bool write(IO_CACHE* file);
 
 private:

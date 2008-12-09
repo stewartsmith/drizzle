@@ -1379,7 +1379,7 @@ static int string_cmp(string* ds, const char *fname)
   /* Write ds to temporary file and set file pos to beginning*/
   if (my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
                MYF(MY_FNABP | MY_WME)) ||
-      my_seek(fd, 0, SEEK_SET, MYF(0)) == MY_FILEPOS_ERROR)
+      lseek(fd, 0, SEEK_SET) == MY_FILEPOS_ERROR)
   {
     my_close(fd, MYF(0));
     /* Remove the temporary file */
@@ -1556,14 +1556,14 @@ VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
   if (!val_len && val)
     val_len = strlen(val) ;
   val_alloc_len = val_len + 16; /* room to grow */
-  if (!(tmp_var=v) && !(tmp_var = (VAR*)my_malloc(sizeof(*tmp_var)
-                                                  + name_len+1, MYF(MY_WME))))
+  if (!(tmp_var=v) && !(tmp_var = (VAR*)malloc(sizeof(*tmp_var)
+                                               + name_len+1)))
     die("Out of memory");
 
   tmp_var->name = (name) ? (char*) tmp_var + sizeof(*tmp_var) : 0;
   tmp_var->alloced = (v == 0);
 
-  if (!(tmp_var->str_val = (char *)my_malloc(val_alloc_len+1, MYF(MY_WME))))
+  if (!(tmp_var->str_val = (char *)malloc(val_alloc_len+1)))
     die("Out of memory");
 
   memcpy(tmp_var->name, name, name_len);
@@ -1710,7 +1710,7 @@ static void var_set(const char *var_name, const char *var_name_end,
     snprintf(buf, sizeof(buf), "%.*s=%.*s",
              v->name_len, v->name,
              v->str_val_len, v->str_val);
-    if (!(v->env_s= my_strdup(buf, MYF(MY_WME))))
+    if (!(v->env_s= strdup(buf)))
       die("Out of memory");
     putenv(v->env_s);
     free(old_env_s);
@@ -1957,8 +1957,8 @@ static void var_copy(VAR *dest, VAR *src)
   /* Alloc/realloc data for str_val in dest */
   if (dest->alloced_len < src->alloced_len &&
       !(dest->str_val= dest->str_val
-        ? (char *)my_realloc(dest->str_val, src->alloced_len, MYF(MY_WME))
-        : (char *)my_malloc(src->alloced_len, MYF(MY_WME))))
+        ? (char *)realloc(dest->str_val, src->alloced_len)
+        : (char *)malloc(src->alloced_len)))
     die("Out of memory");
   else
     dest->alloced_len= src->alloced_len;
@@ -2012,9 +2012,8 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
       v->alloced_len = (new_val_len < MIN_VAR_ALLOC - 1) ?
         MIN_VAR_ALLOC : new_val_len + 1;
       if (!(v->str_val =
-            v->str_val ? (char *)my_realloc(v->str_val, v->alloced_len+1,
-                                            MYF(MY_WME)) :
-            (char *)my_malloc(v->alloced_len+1, MYF(MY_WME))))
+            v->str_val ? (char *)realloc(v->str_val, v->alloced_len+1)
+                       : (char *)malloc(v->alloced_len+1)))
         die("Out of memory");
     }
     v->str_val_len = new_val_len;
@@ -2046,7 +2045,8 @@ static int open_file(const char *name)
     cur_file--;
     die("Could not open '%s' for reading", buff);
   }
-  cur_file->file_name= my_strdup(buff, MYF(MY_FAE));
+  if (!(cur_file->file_name= strdup(buff)))
+    die("Out of memory");
   cur_file->lineno=1;
   return(0);
 }
@@ -3524,7 +3524,7 @@ static void do_close_connection(struct st_command *command)
     When the connection is closed set name to "-closed_connection-"
     to make it possible to reuse the connection name.
   */
-  if (!(con->name = my_strdup("-closed_connection-", MYF(MY_WME))))
+  if (!(con->name = strdup("-closed_connection-")))
     die("Out of memory");
 
   return;
@@ -4367,9 +4367,9 @@ static int read_command(struct st_command** command_ptr)
     return(0);
   }
   if (!(*command_ptr= command=
-        (struct st_command*) my_malloc(sizeof(*command),
-                                       MYF(MY_WME|MY_ZEROFILL))))
+        (struct st_command*) malloc(sizeof(*command))))
     die(NULL);
+  memset(command, 0, sizeof(*command));
   q_lines.push_back(command);
   command->type= Q_UNKNOWN;
 
@@ -4396,7 +4396,7 @@ static int read_command(struct st_command** command_ptr)
   while (*p && my_isspace(charset_info, *p))
     p++;
 
-  if (!(command->query_buf= command->query= my_strdup(p, MYF(MY_WME))))
+  if (!(command->query_buf= command->query= strdup(p)))
     die("Out of memory");
 
   /* Calculate first word length(the command), terminated by space or ( */
@@ -4542,7 +4542,7 @@ static void read_embedded_server_arguments(const char *name)
   {
     *(strchr(str, '\0')-1)=0;        /* Remove end newline */
     if (!(embedded_server_args[embedded_server_arg_count]=
-          (char*) my_strdup(str,MYF(MY_WME))))
+          (char*) strdup(str)))
     {
       my_fclose(file,MYF(0));
       die("Out of memory");
@@ -4578,7 +4578,8 @@ get_one_option(int optid, const struct my_option *, char *argument)
     if (!(cur_file->file=
           my_fopen(buff, O_RDONLY, MYF(0))))
       die("Could not open '%s' for reading: errno = %d", buff, errno);
-    cur_file->file_name= my_strdup(buff, MYF(MY_FAE));
+    if (!(cur_file->file_name= strdup(buff)))
+      die("Out of memory");
     cur_file->lineno= 1;
     break;
   }
@@ -4598,8 +4599,11 @@ get_one_option(int optid, const struct my_option *, char *argument)
   case 'p':
     if (argument)
     {
-      free(opt_pass);
-      opt_pass= my_strdup(argument, MYF(MY_FAE));
+      if (opt_pass)
+        free(opt_pass);
+      opt_pass = strdup(argument);
+      if (opt_pass == NULL)
+        die("Out of memory");
       while (*argument) *argument++= 'x';    /* Destroy argument */
       tty_password= 0;
     }
@@ -4617,7 +4621,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
     }
     if (embedded_server_arg_count == MAX_EMBEDDED_SERVER_ARGS-1 ||
         !(embedded_server_args[embedded_server_arg_count++]=
-          my_strdup(argument, MYF(MY_FAE))))
+          strdup(argument)))
     {
       die("Can't use server argument");
     }
@@ -4689,7 +4693,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   if ((fd= my_open(buff, flags,
                    MYF(MY_WME | MY_FFNF))) < 0)
     die("Could not open '%s' for writing: errno = %d", buff, errno);
-  if (append && my_seek(fd, 0, SEEK_END, MYF(0)) == MY_FILEPOS_ERROR)
+  if (append && lseek(fd, 0, SEEK_END) == MY_FILEPOS_ERROR)
     die("Could not find end of file '%s': errno = %d", buff, errno);
   if (my_write(fd, (unsigned char*)str, size, MYF(MY_WME|MY_FNABP)))
     die("write failed");
@@ -5481,7 +5485,9 @@ int main(int argc, char **argv)
   if (cur_file == file_stack && cur_file->file == 0)
   {
     cur_file->file= stdin;
-    cur_file->file_name= my_strdup("<stdin>", MYF(MY_WME));
+    cur_file->file_name= strdup("<stdin>");
+    if (cur_file->file_name == NULL)
+      die("Out of memory");
     cur_file->lineno= 1;
   }
   cur_con= connections;
@@ -5491,7 +5497,7 @@ int main(int argc, char **argv)
     drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   drizzle_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
 
-  if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
+  if (!(cur_con->name = strdup("default")))
     die("Out of memory");
 
   safe_connect(&cur_con->drizzle, cur_con->name, opt_host, opt_user, opt_pass,
@@ -5926,7 +5932,7 @@ void do_get_replace_column(struct st_command *command)
     die("Missing argument in %s", command->query);
 
   /* Allocate a buffer for results */
-  start= buff= (char *)my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
+  start= buff= (char *)malloc(strlen(from)+1);
   while (*from)
   {
     char *to;
@@ -5939,7 +5945,9 @@ void do_get_replace_column(struct st_command *command)
       die("Wrong number of arguments to replace_column in '%s'", command->query);
     to= get_string(&buff, &from, command);
     free(replace_column[column_number-1]);
-    replace_column[column_number-1]= my_strdup(to, MYF(MY_WME | MY_FAE));
+    replace_column[column_number-1]= strdup(to);
+    if (replace_column[column_number-1] == NULL)
+      die("Out of memory");
     set_if_bigger(max_replace_column, column_number);
   }
   free(start);
@@ -6009,7 +6017,7 @@ void do_get_replace(struct st_command *command)
   memset(&from_array, 0, sizeof(from_array));
   if (!*from)
     die("Missing argument in %s", command->query);
-  start= buff= (char *)my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
+  start= buff= (char *)malloc(strlen(from)+1);
   while (*from)
   {
     char *to= buff;
@@ -6188,9 +6196,9 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   char last_c = 0;
   struct st_regex reg;
 
-  /* my_malloc() will die on fail with MY_FAE */
-  res=(struct st_replace_regex*)my_malloc(
-                                          sizeof(*res)+expr_len ,MYF(MY_FAE+MY_WME));
+  res=(st_replace_regex*)malloc(sizeof(*res)+expr_len);
+  if (!res)
+    return NULL;
   my_init_dynamic_array(&res->regex_arr,sizeof(struct st_regex),128,128);
 
   buf= (char*)res + sizeof(*res);
@@ -6247,8 +6255,8 @@ static struct st_replace_regex* init_replace_regex(char* expr)
       die("Out of memory");
   }
   res->odd_buf_len= res->even_buf_len= 8192;
-  res->even_buf= (char*)my_malloc(res->even_buf_len,MYF(MY_WME+MY_FAE));
-  res->odd_buf= (char*)my_malloc(res->odd_buf_len,MYF(MY_WME+MY_FAE));
+  res->even_buf= (char*)malloc(res->even_buf_len);
+  res->odd_buf= (char*)malloc(res->odd_buf_len);
   res->buf= res->even_buf;
 
   return res;
@@ -6525,8 +6533,8 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   if (init_sets(&sets,states))
     return(0);
   found_sets=0;
-  if (!(found_set= (FOUND_SET*) my_malloc(sizeof(FOUND_SET)*max_length*count,
-                                          MYF(MY_WME))))
+  if (!(found_set= (FOUND_SET*) malloc(sizeof(FOUND_SET)*max_length*count)))
+                                
   {
     free_sets(&sets);
     return(0);
@@ -6536,7 +6544,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   used_sets=-1;
   word_states=make_new_set(&sets);    /* Start of new word */
   start_states=make_new_set(&sets);    /* This is first state */
-  if (!(follow=(FOLLOWS*) my_malloc((states+2)*sizeof(FOLLOWS),MYF(MY_WME))))
+  if (!(follow=(FOLLOWS*) malloc((states+2)*sizeof(FOLLOWS))))
   {
     free_sets(&sets);
     free(found_set);
@@ -6728,11 +6736,13 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
 
   /* Alloc replace structure for the replace-state-machine */
 
-  if ((replace=(REPLACE*) my_malloc(sizeof(REPLACE)*(sets.count)+
-                                    sizeof(REPLACE_STRING)*(found_sets+1)+
-                                    sizeof(char *)*count+result_len,
-                                    MYF(MY_WME | MY_ZEROFILL))))
+  if ((replace=(REPLACE*) malloc(sizeof(REPLACE)*(sets.count)+
+                                 sizeof(REPLACE_STRING)*(found_sets+1)+
+                                 sizeof(char *)*count+result_len)))
   {
+    memset(replace, 0, sizeof(REPLACE)*(sets.count)+
+                       sizeof(REPLACE_STRING)*(found_sets+1)+
+                       sizeof(char *)*count+result_len);
     rep_str=(REPLACE_STRING*) (replace+sets.count);
     to_array= (char **) (rep_str+found_sets+1);
     to_pos=(char *) (to_array+count);
@@ -6772,11 +6782,10 @@ int init_sets(REP_SETS *sets,uint states)
 {
   memset(sets, 0, sizeof(*sets));
   sets->size_of_bits=((states+7)/8);
-  if (!(sets->set_buffer=(REP_SET*) my_malloc(sizeof(REP_SET)*SET_MALLOC_HUNC,
-                                              MYF(MY_WME))))
+  if (!(sets->set_buffer=(REP_SET*) malloc(sizeof(REP_SET)*SET_MALLOC_HUNC)))
     return 1;
-  if (!(sets->bit_buffer=(uint*) my_malloc(sizeof(uint)*sets->size_of_bits*
-                                           SET_MALLOC_HUNC,MYF(MY_WME))))
+  if (!(sets->bit_buffer=(uint*) malloc(sizeof(uint)*sets->size_of_bits*
+                                        SET_MALLOC_HUNC)))
   {
     free(sets->set);
     return 1;
@@ -6810,15 +6819,13 @@ REP_SET *make_new_set(REP_SETS *sets)
     return set;
   }
   count=sets->count+sets->invisible+SET_MALLOC_HUNC;
-  if (!(set=(REP_SET*) my_realloc((unsigned char*) sets->set_buffer,
-                                  sizeof(REP_SET)*count,
-                                  MYF(MY_WME))))
+  if (!(set=(REP_SET*) realloc((unsigned char*) sets->set_buffer,
+                                  sizeof(REP_SET)*count)))
     return 0;
   sets->set_buffer=set;
   sets->set=set+sets->invisible;
-  if (!(bit_buffer=(uint*) my_realloc((unsigned char*) sets->bit_buffer,
-                                      (sizeof(uint)*sets->size_of_bits)*count,
-                                      MYF(MY_WME))))
+  if (!(bit_buffer=(uint*) realloc((unsigned char*) sets->bit_buffer,
+                                   (sizeof(uint)*sets->size_of_bits)*count)))
     return 0;
   sets->bit_buffer=bit_buffer;
   for (i=0 ; i < count ; i++)
@@ -6970,12 +6977,11 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   if (! pa->typelib.count)
   {
     if (!(pa->typelib.type_names=(const char **)
-          my_malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
+          malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
                      (sizeof(char *)+sizeof(*pa->flag))*
-                     (sizeof(char *)+sizeof(*pa->flag))),MYF(MY_WME))))
+                     (sizeof(char *)+sizeof(*pa->flag))))))
       return(-1);
-    if (!(pa->str= (unsigned char*) my_malloc((uint) (PS_MALLOC-MALLOC_OVERHEAD),
-                                      MYF(MY_WME))))
+    if (!(pa->str= (unsigned char*) malloc(PS_MALLOC-MALLOC_OVERHEAD)))
     {
       free((char*) pa->typelib.type_names);
       return (-1);
@@ -6990,9 +6996,8 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   length=(uint) strlen(name)+1;
   if (pa->length+length >= pa->max_length)
   {
-    if (!(new_pos= (unsigned char*) my_realloc((unsigned char*) pa->str,
-                                       (uint) (pa->max_length+PS_MALLOC),
-                                       MYF(MY_WME))))
+    if (!(new_pos= (unsigned char*)realloc((unsigned char*)pa->str,
+                                           (size_t)(pa->max_length+PS_MALLOC))))
       return(1);
     if (new_pos != pa->str)
     {
@@ -7006,14 +7011,14 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   }
   if (pa->typelib.count >= pa->max_count-1)
   {
-    int len;
+    size_t len;
     pa->array_allocs++;
     len=(PC_MALLOC*pa->array_allocs - MALLOC_OVERHEAD);
-    if (!(new_array=(const char **) my_realloc((unsigned char*) pa->typelib.type_names,
-                                               (uint) len/
-                                               (sizeof(unsigned char*)+sizeof(*pa->flag))*
-                                               (sizeof(unsigned char*)+sizeof(*pa->flag)),
-                                               MYF(MY_WME))))
+    if (!(new_array=
+         (const char **)realloc((unsigned char*) pa->typelib.type_names,
+                                 len/
+                                  (sizeof(unsigned char*)+sizeof(*pa->flag))*
+                                  (sizeof(unsigned char*)+sizeof(*pa->flag)))))
       return(1);
     pa->typelib.type_names=new_array;
     old_count=pa->max_count;

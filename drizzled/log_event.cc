@@ -1974,10 +1974,12 @@ Format_description_log_event(const char* buf,
     return; /* sanity check */
   number_of_event_types=
     event_len-(LOG_EVENT_MINIMAL_HEADER_LEN+ST_COMMON_HEADER_LEN_OFFSET+1);
+  post_header_len= (uint8_t*) malloc(number_of_event_types*
+                                     sizeof(*post_header_len));
   /* If alloc fails, we'll detect it in is_valid() */
-  post_header_len= (uint8_t*) my_memdup((unsigned char*)buf+ST_COMMON_HEADER_LEN_OFFSET+1,
-                                      number_of_event_types*
-                                      sizeof(*post_header_len), MYF(0));
+  if (post_header_len != NULL)
+    memcpy(post_header_len, buf+ST_COMMON_HEADER_LEN_OFFSET+1,
+           number_of_event_types* sizeof(*post_header_len));
   calc_server_version_split();
 
   /*
@@ -2861,7 +2863,7 @@ void Rotate_log_event::pack_info(Protocol *protocol)
   char buf1[256], buf[22];
   String tmp(buf1, sizeof(buf1), &my_charset_utf8_general_ci);
   tmp.length(0);
-  tmp.append(new_log_ident, ident_len);
+  tmp.append(new_log_ident.c_str(), ident_len);
   tmp.append(STRING_WITH_LEN(";pos="));
   tmp.append(llstr(pos,buf));
   protocol->store(tmp.ptr(), tmp.length(), &my_charset_bin);
@@ -2876,19 +2878,20 @@ void Rotate_log_event::pack_info(Protocol *protocol)
 Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
                                    uint32_t ident_len_arg, uint64_t pos_arg,
                                    uint32_t flags_arg)
-  :Log_event(), new_log_ident(new_log_ident_arg),
-   pos(pos_arg),ident_len(ident_len_arg ? ident_len_arg :
-                          (uint) strlen(new_log_ident_arg)), flags(flags_arg)
+  :Log_event(), pos(pos_arg),
+   ident_len(ident_len_arg
+               ? ident_len_arg
+               : strlen(new_log_ident_arg)),
+   flags(flags_arg)
 {
-  if (flags & DUP_NAME)
-    new_log_ident= my_strndup(new_log_ident_arg, ident_len, MYF(MY_WME));
+  new_log_ident.assign(new_log_ident_arg, ident_len);
   return;
 }
 
 
 Rotate_log_event::Rotate_log_event(const char* buf, uint32_t event_len,
                                    const Format_description_log_event* description_event)
-  :Log_event(buf, description_event) ,new_log_ident(0), flags(DUP_NAME)
+  :Log_event(buf, description_event), flags(DUP_NAME)
 {
   // The caller will ensure that event_len is what we have at EVENT_LEN_OFFSET
   uint8_t header_size= description_event->common_header_len;
@@ -2902,7 +2905,7 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint32_t event_len,
                      (header_size+post_header_len));
   ident_offset = post_header_len;
   set_if_smaller(ident_len,FN_REFLEN-1);
-  new_log_ident= my_strndup(buf + ident_offset, (uint) ident_len, MYF(MY_WME));
+  new_log_ident.assign(buf + ident_offset, ident_len);
   return;
 }
 
@@ -2917,7 +2920,8 @@ bool Rotate_log_event::write(IO_CACHE* file)
   int8store(buf + R_POS_OFFSET, pos);
   return (write_header(file, ROTATE_HEADER_LEN + ident_len) ||
           my_b_safe_write(file, (unsigned char*)buf, ROTATE_HEADER_LEN) ||
-          my_b_safe_write(file, (unsigned char*)new_log_ident, (uint) ident_len));
+          my_b_safe_write(file, (const unsigned char*)new_log_ident.c_str(),
+                          (uint) ident_len));
 }
 
 
@@ -2957,7 +2961,7 @@ int Rotate_log_event::do_update_pos(Relay_log_info *rli)
   if ((server_id != ::server_id || rli->replicate_same_server_id) &&
       !rli->is_in_group())
   {
-    rli->group_master_log_name.assign(new_log_ident, ident_len+1);
+    rli->group_master_log_name.assign(new_log_ident);
     rli->notify_group_master_log_name_update();
     rli->group_master_log_pos= pos;
     rli->group_relay_log_name.assign(rli->event_relay_log_name);
@@ -3262,7 +3266,8 @@ Create_file_log_event::Create_file_log_event(const char* buf, uint32_t len,
   uint32_t header_len= description_event->common_header_len;
   uint8_t load_header_len= description_event->post_header_len[LOAD_EVENT-1];
   uint8_t create_file_header_len= description_event->post_header_len[CREATE_FILE_EVENT-1];
-  if (!(event_buf= (char*) my_memdup(buf, len, MYF(MY_WME))) ||
+  if (!(event_buf= (const char*)malloc(len)) ||
+      memcpy((char *)event_buf, buf, len) ||
       copy_log_event(event_buf,len,
                      ((buf[EVENT_TYPE_OFFSET] == LOAD_EVENT) ?
                       load_header_len + header_len :
@@ -3708,7 +3713,7 @@ int Execute_load_log_event::do_apply_event(Relay_log_info const *rli)
       don't want to overwrite it with the filename.
       What we want instead is add the filename to the current error message.
     */
-    char *tmp= my_strdup(rli->last_error().message, MYF(MY_WME));
+    char *tmp= strdup(rli->last_error().message);
     if (tmp)
     {
       rli->report(ERROR_LEVEL, rli->last_error().number,
@@ -4197,12 +4202,11 @@ int Rows_log_event::do_add_row_data(unsigned char *row_data, size_t length)
   if (static_cast<size_t>(m_rows_end - m_rows_cur) <= length)
   {
     size_t const block_size= 1024;
-    my_ptrdiff_t const cur_size= m_rows_cur - m_rows_buf;
-    my_ptrdiff_t const new_alloc=
+    const size_t cur_size= m_rows_cur - m_rows_buf;
+    const size_t new_alloc=
         block_size * ((cur_size + length + block_size - 1) / block_size);
 
-    unsigned char* const new_buf= (unsigned char*)my_realloc((unsigned char*)m_rows_buf, (uint) new_alloc,
-                                           MYF(MY_ALLOW_ZERO_PTR|MY_WME));
+    unsigned char* new_buf= (unsigned char*)realloc(m_rows_buf, new_alloc);
     if (unlikely(!new_buf))
       return(HA_ERR_OUT_OF_MEM);
 

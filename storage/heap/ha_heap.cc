@@ -627,7 +627,7 @@ int ha_heap::create(const char *name, Table *table_arg,
   TABLE_SHARE *share= table_arg->s;
   bool found_real_auto_increment= 0;
 
-  if (!(columndef= (HP_COLUMNDEF*) my_malloc(column_count * sizeof(HP_COLUMNDEF), MYF(MY_WME))))
+  if (!(columndef= (HP_COLUMNDEF*) malloc(column_count * sizeof(HP_COLUMNDEF))))
     return my_errno;
 
   for (column_idx= 0; column_idx < column_count; column_idx++)
@@ -662,9 +662,8 @@ int ha_heap::create(const char *name, Table *table_arg,
   for (key= parts= 0; key < keys; key++)
     parts+= table_arg->key_info[key].key_parts;
 
-  if (!(keydef= (HP_KEYDEF*) my_malloc(keys * sizeof(HP_KEYDEF) +
-				       parts * sizeof(HA_KEYSEG),
-				       MYF(MY_WME))))
+  if (!(keydef= (HP_KEYDEF*) malloc(keys * sizeof(HP_KEYDEF) +
+				    parts * sizeof(HA_KEYSEG))))
   {
     free((void *) columndef);
     return my_errno;
