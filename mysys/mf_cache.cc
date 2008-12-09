@@ -25,7 +25,7 @@
 	/*
 	** Open tempfile cached by IO_CACHE
 	** Should be used when no seeks are done (only reinit_io_buff)
-	** Return 0 if cache is inited ok
+	** Return false if cache is inited ok
 	** The actual file is created when the IO_CACHE buffer gets filled
 	** If dir is not given, use TMPDIR.
 	*/
@@ -36,16 +36,18 @@ bool open_cached_file(IO_CACHE *cache, const char* dir, const char *prefix,
   cache->dir=	 dir ? strdup(dir) : (char*) 0;
   cache->prefix= (prefix ? strdup(prefix) :
 		 (char*) 0);
+  if ((cache->dir == NULL) || (cache->prefix == NULL))
+    return true;
   cache->file_name=0;
   cache->buffer=0;				/* Mark that not open */
   if (!init_io_cache(cache,-1,cache_size,WRITE_CACHE,0L,0,
 		     MYF(cache_myflags | MY_NABP)))
   {
-    return(0);
+    return false;
   }
   free(cache->dir);
   free(cache->prefix);
-  return(1);
+  return true;
 }
 
 	/* Create the temporary file */

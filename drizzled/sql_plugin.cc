@@ -1606,6 +1606,13 @@ static void update_func_str(Session *, struct st_mysql_sys_var *var,
   {
     *(char **)tgt= strdup(*(char **) save);
     free(old);
+    /*
+     * There isn't a _really_ good thing to do here until this whole set_var
+     * mess gets redesigned
+     */
+    if (tgt == NULL)
+      sql_print_error(_("Out of memor."));
+
   }
 }
 
@@ -1869,6 +1876,8 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
          if ((*pp= *(char**) (global_system_variables.dynamic_variables_ptr +
                              *(int*)(pi->plugin_var + 1))))
            *pp= strdup(*pp);
+         if (*pp == NULL)
+           return NULL;
       }
     }
 

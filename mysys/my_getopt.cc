@@ -1031,7 +1031,9 @@ static void init_one_value(const struct my_option *option, char** variable,
     if ((char*) (intptr_t) value)
     {
       free((*(char**) variable));
-      *((char**) variable)= strdup((char*) (intptr_t) value);
+      char *tmpptr= strdup((char *) (intptr_t) value);
+      if (tmpptr != NULL)
+        *((char**) variable)= tmpptr;
     }
     break;
   default: /* dummy default to avoid compiler warnings */
