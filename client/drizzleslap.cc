@@ -438,6 +438,11 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
   uint64_t client_limit;
 
   head_sptr= (stats *)malloc(sizeof(stats) * iterations);
+  if (head_sptr == NULL)
+  {
+    fprintf(stderr,"Error allocating memory in concurrency_loop\n");
+    exit(1);
+  }
   memset(head_sptr, 0, sizeof(stats) * iterations);
 
   memset(&conclusion, 0, sizeof(conclusions));
@@ -898,8 +903,18 @@ build_table_string(void)
 
   table_string.append(")");
   ptr= (statement *)malloc(sizeof(statement));
+  if (ptr == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating table\n");
+    exit(1);
+  }
   memset(ptr, 0, sizeof(statement));
   ptr->string = (char *)malloc(table_string.length()+1);
+  if (ptr->string == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating table\n");
+    exit(1);
+  }
   memset(ptr->string, 0, table_string.length()+1);
   ptr->length= table_string.length()+1;
   ptr->type= CREATE_TABLE_TYPE;
@@ -964,10 +979,20 @@ build_update_string(void)
 
 
   ptr= (statement *)malloc(sizeof(statement));
+  if (ptr == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating update\n");
+    exit(1);
+  }
   memset(ptr, 0, sizeof(statement));
 
   ptr->length= update_string.length()+1;
   ptr->string= (char *)malloc(ptr->length);
+  if (ptr->string == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating update\n");
+    exit(1);
+  }
   memset(ptr->string, 0, ptr->length);
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
     ptr->type= UPDATE_TYPE_REQUIRES_PREFIX ;
@@ -1189,9 +1214,19 @@ build_select_string(bool key)
     query_string.append(" WHERE id = ");
 
   ptr= (statement *)malloc(sizeof(statement));
+  if (ptr == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating select\n");
+    exit(1);
+  }
   memset(ptr, 0, sizeof(statement));
   ptr->length= query_string.length()+1;
   ptr->string= (char *)malloc(ptr->length);
+  if (ptr->string == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating select\n");
+    exit(1);
+  }
   memset(ptr->string, 0, ptr->length);
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
@@ -1355,6 +1390,11 @@ get_options(int *argc,char ***argv)
       parse_option(opt_auto_generate_sql_type, &query_options, ',');
 
     query_statements= (statement **)malloc(sizeof(statement *) * query_statements_count);
+    if (query_statements == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in Building Query Statements\n");
+      exit(1);
+    }
     memset(query_statements, 0, sizeof(statement *) * query_statements_count);
 
     sql_type= query_options;
@@ -1476,6 +1516,11 @@ get_options(int *argc,char ***argv)
         exit(1);
       }
       tmp_string= (char *)malloc(sbuf.st_size + 1);
+      if (tmp_string == NULL)
+      {
+        fprintf(stderr, "Memory Allocation error in option processing\n");
+        exit(1);
+      }
       memset(tmp_string, 0, sbuf.st_size + 1);
       my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
       tmp_string[sbuf.st_size]= '\0';
@@ -1495,6 +1540,11 @@ get_options(int *argc,char ***argv)
         parse_option("default", &query_options, ',');
 
       query_statements= (statement **)malloc(sizeof(statement *) * query_statements_count);
+      if (query_statements == NULL)
+      {
+        fprintf(stderr, "Memory Allocation error in option processing\n");
+        exit(1);
+      }
       memset(query_statements, 0, sizeof(statement *) * query_statements_count); 
     }
 
@@ -1513,6 +1563,11 @@ get_options(int *argc,char ***argv)
         exit(1);
       }
       tmp_string= (char *)malloc(sbuf.st_size + 1);
+      if (tmp_string == NULL)
+      {
+        fprintf(stderr, "Memory Allocation error in option processing\n");
+        exit(1);
+      }
       memset(tmp_string, 0, sbuf.st_size + 1);
       my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
       tmp_string[sbuf.st_size]= '\0';
@@ -1545,6 +1600,11 @@ get_options(int *argc,char ***argv)
       exit(1);
     }
     tmp_string= (char *)malloc(sbuf.st_size + 1);
+    if (tmp_string == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in option processing\n");
+      exit(1);
+    }
     memset(tmp_string, 0, sbuf.st_size + 1);
     my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
     tmp_string[sbuf.st_size]= '\0';
@@ -1577,6 +1637,11 @@ get_options(int *argc,char ***argv)
       exit(1);
     }
     tmp_string= (char *)malloc(sbuf.st_size + 1);
+    if (tmp_string == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in option processing\n");
+      exit(1);
+    }
     memset(tmp_string, 0, sbuf.st_size+1);
     my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
     tmp_string[sbuf.st_size]= '\0';
@@ -1636,6 +1701,11 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
     primary_keys_number_of= 1;
     primary_keys= (char **)malloc((sizeof(char *) *
                                   primary_keys_number_of));
+    if (primary_keys == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in option processing\n");
+      exit(1);
+    }
     
     memset(primary_keys, 0, (sizeof(char *) * primary_keys_number_of));
     /* Yes, we strdup a const string to simplify the interface */
@@ -1661,6 +1731,11 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
       */
       primary_keys= (char **)malloc(sizeof(char *) *
                                     primary_keys_number_of);
+      if (primary_keys == NULL)
+      {
+        fprintf(stderr, "Memory Allocation error in option processing\n");
+        exit(1);
+      }
       memset(primary_keys, 0, sizeof(char *) * primary_keys_number_of);
       row= drizzle_fetch_row(result);
       for (counter= 0; counter < primary_keys_number_of;
@@ -1893,6 +1968,11 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
       for (x= 0; x < concur; x++)
       {
         con= (thread_context *)malloc(sizeof(thread_context));
+        if (con == NULL)
+        {
+          fprintf(stderr, "Memory Allocation error in scheduler\n");
+          exit(1);
+        }
         con->stmt= stmts[y];
         con->limit= limit;
 
