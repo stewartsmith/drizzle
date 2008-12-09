@@ -16,11 +16,14 @@
 noinst_LTLIBRARIES= 	libitem.la
 
 libitem_la_SOURCES= \
+		bin_string.cc \
 		cache_row.cc \
 		cmpfunc.cc \
 		create.cc \
 		decimal.cc \
+		empty_string.cc \
 		field.cc \
+		hex_string.cc \
 		ifloat.cc \
 		istring.cc \
 		ident.cc \
@@ -28,6 +31,7 @@ libitem_la_SOURCES= \
 		null.cc \
 		num.cc \
 		param.cc \
+		ref.cc \
 		row.cc \
 		subselect.cc \
 		sum.cc \
@@ -37,11 +41,15 @@ libitem_la_SOURCES= \
 itemincludedir = ${includedir}/drizzled/item
 nobase_dist_iteminclude_HEADERS = \
 		basic_constant.h \
+		bin_string.h \
+		blob.h \
 		cache_row.h \
 		cmpfunc.h \
 		create.h \
 		decimal.h \
+		empty_string.h \
 		field.h \
+		hex_string.h \
 		ifloat.h \
 		istring.h \
 		func.h \
@@ -50,7 +58,9 @@ nobase_dist_iteminclude_HEADERS = \
 		null.h \
 		num.h \
 		param.h \
+		ref.h \
 		return_date_time.h \
+		return_int.h \
 		row.h \
 		strfunc.h \
 		subselect.h \
