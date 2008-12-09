@@ -1955,11 +1955,13 @@ static void var_copy(VAR *dest, VAR *src)
   dest->int_dirty= src->int_dirty;
 
   /* Alloc/realloc data for str_val in dest */
-  if (dest->alloced_len < src->alloced_len &&
-      !(dest->str_val= dest->str_val
-        ? (char *)realloc(dest->str_val, src->alloced_len)
-        : (char *)malloc(src->alloced_len)))
-    die("Out of memory");
+  if (dest->alloced_len < src->alloced_len)
+  {
+    char *tmpptr= realloc(dest->str_val, src->alloced_len);
+    if (tmpptr == NULL)
+      die("Out of memory");
+    dest->str_val= tmpptr;
+  }
   else
     dest->alloced_len= src->alloced_len;
 
@@ -2011,10 +2013,10 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
       static int MIN_VAR_ALLOC= 32;
       v->alloced_len = (new_val_len < MIN_VAR_ALLOC - 1) ?
         MIN_VAR_ALLOC : new_val_len + 1;
-      if (!(v->str_val =
-            v->str_val ? (char *)realloc(v->str_val, v->alloced_len+1)
-                       : (char *)malloc(v->alloced_len+1)))
+      char *tmpptr= (char *)realloc(v->str_val, v->alloced_len+1);
+      if (tmpptr == NULL)
         die("Out of memory");
+      v->str_val= tmpptr;
     }
     v->str_val_len = new_val_len;
     memcpy(v->str_val, p, new_val_len);
