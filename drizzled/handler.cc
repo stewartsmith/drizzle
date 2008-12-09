@@ -2506,7 +2506,6 @@ handler::mark_trx_read_write()
   */
   if (ha_info->is_started())
   {
-    assert(has_transactions());
     /*
       table_share can be NULL in ha_delete_table(). See implementation
       of standalone function ha_delete_table() in sql_base.cc.
@@ -4294,7 +4293,7 @@ static bool binlog_log_row(Table* table,
   bool error= false;
   Session *const session= table->in_use;
 
-  if (table->no_replicate)
+  if (table->no_replicate == false)
     return false;
 
   error= replicator_session_init(session);
@@ -4305,6 +4304,7 @@ static bool binlog_log_row(Table* table,
   case SQLCOM_INSERT:
   case SQLCOM_REPLACE_SELECT:
   case SQLCOM_INSERT_SELECT:
+  case SQLCOM_CREATE_TABLE:
     error= replicator_write_row(session, table);
     break;
 

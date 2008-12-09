@@ -1094,7 +1094,6 @@ void close_thread_tables(Session *session)
       handled either before writing a query log event (inside
       binlog_query()) or when preparing a pending event.
      */
-    session->binlog_flush_pending_rows_event(true);
     mysql_unlock_tables(session, session->lock);
     session->lock=0;
   }

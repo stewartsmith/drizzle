@@ -107,98 +107,6 @@ private:
   void operator=(Mutex_sentry const&);
 };
 
-/*
-  Helper class to store binary log transaction data.
-*/
-class binlog_trx_data {
-public:
-  binlog_trx_data()
-    : at_least_one_stmt(0), m_pending(0), before_stmt_pos(MY_OFF_T_UNDEF)
-  {
-    trans_log.end_of_file= max_binlog_cache_size;
-  }
-
-  ~binlog_trx_data()
-  {
-    assert(pending() == NULL);
-    close_cached_file(&trans_log);
-  }
-
-  my_off_t position() const {
-    return my_b_tell(&trans_log);
-  }
-
-  bool empty() const
-  {
-    return pending() == NULL && my_b_tell(&trans_log) == 0;
-  }
-
-  /*
-    Truncate the transaction cache to a certain position. This
-    includes deleting the pending event.
-   */
-  void truncate(my_off_t pos)
-  {
-    delete pending();
-    set_pending(0);
-    reinit_io_cache(&trans_log, WRITE_CACHE, pos, 0, 0);
-    if (pos < before_stmt_pos)
-      before_stmt_pos= MY_OFF_T_UNDEF;
-
-    /*
-      The only valid positions that can be truncated to are at the
-      beginning of a statement. We are relying on this fact to be able
-      to set the at_least_one_stmt flag correctly. In other word, if
-      we are truncating to the beginning of the transaction cache,
-      there will be no statements in the cache, otherwhise, we will
-      have at least one statement in the transaction cache.
-     */
-    at_least_one_stmt= (pos > 0);
-  }
-
-  /*
-    Reset the entire contents of the transaction cache, emptying it
-    completely.
-   */
-  void reset() {
-    if (!empty())
-      truncate(0);
-    before_stmt_pos= MY_OFF_T_UNDEF;
-    trans_log.end_of_file= max_binlog_cache_size;
-  }
-
-  Rows_log_event *pending() const
-  {
-    return m_pending;
-  }
-
-  void set_pending(Rows_log_event *const pending)
-  {
-    m_pending= pending;
-  }
-
-  IO_CACHE trans_log;                         // The transaction cache
-
-  /**
-    Boolean that is true if there is at least one statement in the
-    transaction cache.
-  */
-  bool at_least_one_stmt;
-
-private:
-  /*
-    Pending binrows event. This event is the event where the rows are
-    currently written.
-   */
-  Rows_log_event *m_pending;
-
-public:
-  /*
-    Binlog position before the start of the current statement.
-  */
-  my_off_t before_stmt_pos;
-};
-
 handlerton *binlog_hton;
 
 
@@ -218,15 +126,10 @@ handlerton *binlog_hton;
  */
 
 static void
-binlog_trans_log_savepos(Session *session, my_off_t *pos)
+binlog_trans_log_savepos(Session *, my_off_t *pos)
 {
   assert(pos != NULL);
-  if (session_get_ha_data(session, binlog_hton) == NULL)
-    session->binlog_setup_trx_data();
-  binlog_trx_data *const trx_data=
-    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
-  assert(drizzle_bin_log.is_open());
-  *pos= trx_data->position();
+
   return;
 }
 
@@ -253,110 +156,10 @@ int binlog_init(void *p)
   return 0;
 }
 
-static int binlog_close_connection(handlerton *, Session *session)
+static int binlog_close_connection(handlerton *, Session *)
 {
-  binlog_trx_data *const trx_data=
-    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
-  assert(trx_data->empty());
-  session_set_ha_data(session, binlog_hton, NULL);
-  trx_data->~binlog_trx_data();
-  free((unsigned char*)trx_data);
+
   return 0;
-}
-
-/*
-  End a transaction.
-
-  SYNOPSIS
-    binlog_end_trans()
-
-    session      The thread whose transaction should be ended
-    trx_data Pointer to the transaction data to use
-    end_ev   The end event to use, or NULL
-    all      True if the entire transaction should be ended, false if
-             only the statement transaction should be ended.
-
-  DESCRIPTION
-
-    End the currently open transaction. The transaction can be either
-    a real transaction (if 'all' is true) or a statement transaction
-    (if 'all' is false).
-
-    If 'end_ev' is NULL, the transaction is a rollback of only
-    transactional tables, so the transaction cache will be truncated
-    to either just before the last opened statement transaction (if
-    'all' is false), or reset completely (if 'all' is true).
- */
-static int
-binlog_end_trans(Session *session, binlog_trx_data *trx_data,
-                 Log_event *end_ev, bool all)
-{
-  int error=0;
-  IO_CACHE *trans_log= &trx_data->trans_log;
-
-  /*
-    NULL denotes ROLLBACK with nothing to replicate: i.e., rollback of
-    only transactional tables.  If the transaction contain changes to
-    any non-transactiona tables, we need write the transaction and log
-    a ROLLBACK last.
-  */
-  if (end_ev != NULL)
-  {
-    /*
-      Doing a commit or a rollback including non-transactional tables,
-      i.e., ending a transaction where we might write the transaction
-      cache to the binary log.
-
-      We can always end the statement when ending a transaction since
-      transactions are not allowed inside stored functions.  If they
-      were, we would have to ensure that we're not ending a statement
-      inside a stored function.
-     */
-    session->binlog_flush_pending_rows_event(true);
-
-    error= drizzle_bin_log.write(session, &trx_data->trans_log, end_ev);
-    trx_data->reset();
-
-    /*
-      We need to step the table map version after writing the
-      transaction cache to disk.
-    */
-    drizzle_bin_log.update_table_map_version();
-    statistic_increment(binlog_cache_use, &LOCK_status);
-    if (trans_log->disk_writes != 0)
-    {
-      statistic_increment(binlog_cache_disk_use, &LOCK_status);
-      trans_log->disk_writes= 0;
-    }
-  }
-  else
-  {
-    /*
-      If rolling back an entire transaction or a single statement not
-      inside a transaction, we reset the transaction cache.
-
-      If rolling back a statement in a transaction, we truncate the
-      transaction cache to remove the statement.
-     */
-    if (all || !(session->options & (OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT)))
-    {
-      trx_data->reset();
-
-      assert(!session->binlog_get_pending_rows_event());
-      session->clear_binlog_table_maps();
-    }
-    else                                        // ...statement
-      trx_data->truncate(trx_data->before_stmt_pos);
-
-    /*
-      We need to step the table map version on a rollback to ensure
-      that a new table map event is generated instead of the one that
-      was written to the thrown-away transaction cache.
-    */
-    drizzle_bin_log.update_table_map_version();
-  }
-
-  return(error);
 }
 
 static int binlog_prepare(handlerton *, Session *session, bool)
@@ -388,16 +191,6 @@ static int binlog_prepare(handlerton *, Session *session, bool)
 */
 static int binlog_commit(handlerton *, Session *session, bool all)
 {
-  binlog_trx_data *const trx_data=
-    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
-
-  if (trx_data->empty())
-  {
-    // we're here because trans_log was flushed in DRIZZLE_BIN_LOG::log_xid()
-    trx_data->reset();
-    return(0);
-  }
-
   /*
     Decision table for committing a transaction. The top part, the
     *conditions* represent different cases that can occur, and hte
@@ -457,19 +250,11 @@ static int binlog_commit(handlerton *, Session *session, bool all)
     Otherwise, we accumulate the statement
   */
 
-  uint64_t const in_transaction=
-    session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
-
-
-  if ((in_transaction && (all || (!trx_data->at_least_one_stmt && session->transaction.stmt.modified_non_trans_table))) || (!in_transaction && !all))
+  if (all || (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) 
   {
-    Query_log_event qev(session, STRING_WITH_LEN("COMMIT"), true, false);
-    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
-    /* TODO: Fix return type */
-    int error= binlog_end_trans(session, trx_data, &qev, all);
-    (void)replicator_end_transaction(session, all, true);
-    return(error);
+    return replicator_end_transaction(session, all, true);
   }
+
   return(0);
 }
 
@@ -491,45 +276,9 @@ static int binlog_commit(handlerton *, Session *session, bool all)
 static int binlog_rollback(handlerton *, Session *session, bool all)
 {
   int error=0;
-  binlog_trx_data *const trx_data=
-    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
 
   /* TODO: Fix return type */
   (void)replicator_end_transaction(session, all, false);
-
-  if (trx_data->empty()) 
-  {
-    trx_data->reset();
-
-    return(0);
-  }
-
-  if ((all && session->transaction.all.modified_non_trans_table) ||
-      (!all && session->transaction.stmt.modified_non_trans_table) ||
-      (session->options & OPTION_KEEP_LOG))
-  {
-    /*
-      We write the transaction cache with a rollback last if we have
-      modified any non-transactional table. We do this even if we are
-      committing a single statement that has modified a
-      non-transactional table since it can have modified a
-      transactional table in that statement as well, which needs to be
-      rolled back on the slave.
-    */
-    Query_log_event qev(session, STRING_WITH_LEN("ROLLBACK"), true, false);
-    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
-    error= binlog_end_trans(session, trx_data, &qev, all);
-  }
-  else if ((all && !session->transaction.all.modified_non_trans_table) ||
-           (!all && !session->transaction.stmt.modified_non_trans_table))
-  {
-    /*
-      If we have modified only transactional tables, we can truncate
-      the transaction cache without writing anything to the binary
-      log.
-     */
-    error= binlog_end_trans(session, trx_data, 0, all);
-  }
 
   return(error);
 }
@@ -2083,163 +1832,17 @@ bool DRIZZLE_BIN_LOG::is_query_in_union(Session *session, query_id_t query_id_pa
           query_id_param >= session->binlog_evt_union.first_query_id);
 }
 
-
-/*
-  These functions are placed in this file since they need access to
-  binlog_hton, which has internal linkage.
-*/
-
-int Session::binlog_setup_trx_data()
-{
-  binlog_trx_data *trx_data=
-    (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
-
-  if (trx_data)
-    return(0);                             // Already set up
-
-  trx_data= (binlog_trx_data*) malloc(sizeof(binlog_trx_data));
-  memset(trx_data, 0, sizeof(binlog_trx_data));
-  if (!trx_data ||
-      open_cached_file(&trx_data->trans_log, drizzle_tmpdir,
-                       LOG_PREFIX, binlog_cache_size, MYF(MY_WME)))
-  {
-    free((unsigned char*)trx_data);
-    return(1);                      // Didn't manage to set it up
-  }
-  session_set_ha_data(this, binlog_hton, trx_data);
-
-  trx_data= new (session_get_ha_data(this, binlog_hton)) binlog_trx_data;
-
-  return(0);
-}
-
-void Session::binlog_set_stmt_begin() {
-  binlog_trx_data *trx_data=
-    (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
-
-  /*
-    The call to binlog_trans_log_savepos() might create the trx_data
-    structure, if it didn't exist before, so we save the position
-    into an auto variable and then write it into the transaction
-    data for the binary log (i.e., trx_data).
-  */
-  my_off_t pos= 0;
-  binlog_trans_log_savepos(this, &pos);
-  trx_data= (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
-  trx_data->before_stmt_pos= pos;
-}
-
-
-Rows_log_event*
-Session::binlog_get_pending_rows_event() const
-{
-  binlog_trx_data *const trx_data=
-    (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
-  /*
-    This is less than ideal, but here's the story: If there is no
-    trx_data, prepare_pending_rows_event() has never been called
-    (since the trx_data is set up there). In that case, we just return
-    NULL.
-   */
-  return trx_data ? trx_data->pending() : NULL;
-}
-
-void
-Session::binlog_set_pending_rows_event(Rows_log_event* ev)
-{
-  if (session_get_ha_data(this, binlog_hton) == NULL)
-    binlog_setup_trx_data();
-
-  binlog_trx_data *const trx_data=
-    (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
-
-  assert(trx_data);
-  trx_data->set_pending(ev);
-}
-
-
 /*
   Moves the last bunch of rows from the pending Rows event to the binlog
   (either cached binlog if transaction, or disk binlog). Sets a new pending
   event.
 */
 int
-DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(Session *session,
-                                                Rows_log_event* event)
+DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(Session *, Rows_log_event*)
 {
   assert(drizzle_bin_log.is_open());
 
-  int error= 0;
-
-  binlog_trx_data *const trx_data=
-    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
-
-  assert(trx_data);
-
-  if (Rows_log_event* pending= trx_data->pending())
-  {
-    IO_CACHE *file= &log_file;
-
-    /*
-      Decide if we should write to the log file directly or to the
-      transaction log.
-    */
-    if (pending->get_cache_stmt() || my_b_tell(&trx_data->trans_log))
-      file= &trx_data->trans_log;
-
-    /*
-      If we are writing to the log file directly, we could avoid
-      locking the log. This does not work since we need to step the
-      m_table_map_version below, and that change has to be protected
-      by the LOCK_log mutex.
-    */
-    pthread_mutex_lock(&LOCK_log);
-
-    /*
-      Write pending event to log file or transaction cache
-    */
-    if (pending->write(file))
-    {
-      pthread_mutex_unlock(&LOCK_log);
-      return(1);
-    }
-
-    /*
-      We step the table map version if we are writing an event
-      representing the end of a statement.  We do this regardless of
-      wheather we write to the transaction cache or to directly to the
-      file.
-
-      In an ideal world, we could avoid stepping the table map version
-      if we were writing to a transaction cache, since we could then
-      reuse the table map that was written earlier in the transaction
-      cache.  This does not work since STMT_END_F implies closing all
-      table mappings on the slave side.
-
-      TODO: Find a solution so that table maps does not have to be
-      written several times within a transaction.
-     */
-    if (pending->get_flags(Rows_log_event::STMT_END_F))
-      ++m_table_map_version;
-
-    delete pending;
-
-    if (file == &log_file)
-    {
-      error= flush_and_sync();
-      if (!error)
-      {
-        signal_update();
-        rotate_and_purge(RP_LOCK_LOG_IS_ALREADY_LOCKED);
-      }
-    }
-
-    pthread_mutex_unlock(&LOCK_log);
-  }
-
-  session->binlog_set_pending_rows_event(event);
-
-  return(error);
+  return false;
 }
 
 /**
@@ -2272,8 +1875,6 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
     we are inside a stored function, we do not end the statement since
     this will close all tables on the slave.
   */
-  bool const end_stmt= false;
-  session->binlog_flush_pending_rows_event(end_stmt);
 
   pthread_mutex_lock(&LOCK_log);
 
@@ -2294,36 +1895,6 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
     {
       pthread_mutex_unlock(&LOCK_log);
       return(0);
-    }
-
-    /*
-      Should we write to the binlog cache or to the binlog on disk?
-      Write to the binlog cache if:
-      - it is already not empty (meaning we're in a transaction; note that the
-     present event could be about a non-transactional table, but still we need
-     to write to the binlog cache in that case to handle updates to mixed
-     trans/non-trans table types the best possible in binlogging)
-      - or if the event asks for it (cache_stmt == TRUE).
-    */
-    if (opt_using_transactions && session)
-    {
-      if (session->binlog_setup_trx_data())
-        goto err;
-
-      binlog_trx_data *const trx_data=
-        (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
-      IO_CACHE *trans_log= &trx_data->trans_log;
-      my_off_t trans_log_pos= my_b_tell(trans_log);
-      if (event_info->get_cache_stmt() || trans_log_pos != 0)
-      {
-        file= trans_log;
-      }
-      /*
-        TODO as Mats suggested, for all the cases above where we write to
-        trans_log, it sounds unnecessary to lock LOCK_log. We should rather
-        test first if we want to write to trans_log, and if not, lock
-        LOCK_log.
-      */
     }
 
     /*
@@ -3508,15 +3079,15 @@ void TC_LOG_BINLOG::close()
 int TC_LOG_BINLOG::log_xid(Session *session, my_xid xid)
 {
   Xid_log_event xle(session, xid);
-  binlog_trx_data *trx_data=
-    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
   /* TODO: Fix return type */
-  (void)replicator_end_transaction(session, true, true);
   /*
     We always commit the entire transaction when writing an XID. Also
     note that the return value is inverted.
+
+    TODO: fix backasswards logic on this method
    */
-  return(!binlog_end_trans(session, trx_data, &xle, true));
+
+  return replicator_end_transaction(session, true, true) ? false : true;
 }
 
 void TC_LOG_BINLOG::unlog(ulong, my_xid)
