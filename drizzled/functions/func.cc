@@ -30,7 +30,7 @@ using namespace std;
 #include <drizzled/field/int64_t.h>
 #include <drizzled/field/long.h>
 #include <drizzled/field/double.h>
-#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/decimal.h>
 #include CMATH_H
 #include <drizzled/util/math.h>
 #include <drizzled/session.h>

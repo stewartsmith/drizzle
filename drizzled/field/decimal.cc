@@ -20,7 +20,7 @@
 
 
 #include <drizzled/server_includes.h>
-#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/decimal.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>

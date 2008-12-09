@@ -33,7 +33,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
 #include <drizzled/field/timestamp.h>
-#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/decimal.h>
 
 #include <string>
 #include <iostream>
