@@ -386,9 +386,6 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
   if (session->transaction.stmt.modified_non_trans_table)
     session->transaction.all.modified_non_trans_table= true;
 
-  if (drizzle_bin_log.is_open())
-    session->binlog_flush_pending_rows_event(true);
-
   /* ok to client sent only after binlog write and engine commit */
   my_ok(session, info.copied + info.deleted, 0L, name);
 err:

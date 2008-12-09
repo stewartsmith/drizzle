@@ -101,11 +101,9 @@ bool replicator_session_init(Session *session)
 {
   bool foreach_rv;
 
-  /*
   if (session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
     trans_register_ha(session, true, binlog_hton);
   trans_register_ha(session, false, binlog_hton);
-  */
 
   if (session->getReplicationData())
     return false;
