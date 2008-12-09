@@ -35,6 +35,6 @@ libmystrings_la_SOURCES = 	strxmov.cc bmove_upp.cc \
                                 ctype.cc ctype-simple.cc ctype-mb.cc \
                                 ctype-utf8.cc \
                                 ctype-uca.cc ctype-bin.cc \
-                                decimal.cc ctype-extra.cc str_alloc.cc \
+                                decimal.cc ctype-extra.cc \
                                 dtoa.cc 
 
