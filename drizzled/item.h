@@ -591,18 +591,23 @@ public:
 #include <drizzled/item/basic_constant.h>
 #include <drizzled/item/bin_string.h>
 #include <drizzled/item/blob.h>
+#include <drizzled/item/copy_string.h>
 #include <drizzled/item/ident.h>
 #include <drizzled/item/decimal.h>
+#include <drizzled/item/direct_ref.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/hex_string.h>
 #include <drizzled/item/ifloat.h>
 #include <drizzled/item/istring.h>
 #include <drizzled/item/int.h>
+#include <drizzled/item/int_with_ref.h>
 #include <drizzled/item/null.h>
 #include <drizzled/item/num.h>
+#include <drizzled/item/outer_ref.h>
 #include <drizzled/item/param.h>
 #include <drizzled/item/ref.h>
+#include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/uint.h>
@@ -618,221 +623,6 @@ Item** resolve_ref_in_select_and_group(Session *session,
 				       st_select_lex *select);
 
 
-/*
-  The same as Item_ref, but get value from val_* family of method to get
-  value of item on which it referred instead of result* family.
-*/
-class Item_direct_ref :public Item_ref
-{
-public:
-  Item_direct_ref(Name_resolution_context *context_arg, Item **item,
-                  const char *table_name_arg,
-                  const char *field_name_arg,
-                  bool alias_name_used_arg= false)
-    :Item_ref(context_arg, item, table_name_arg,
-              field_name_arg, alias_name_used_arg)
-  {}
-  /* Constructor need to process subselect with temporary tables (see Item) */
-  Item_direct_ref(Session *session, Item_direct_ref *item) : Item_ref(session, item) {}
-
-  double val_real();
-  int64_t val_int();
-  String *val_str(String* tmp);
-  my_decimal *val_decimal(my_decimal *);
-  bool val_bool();
-  bool is_null();
-  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
-  virtual Ref_Type ref_type() { return DIRECT_REF; }
-};
-
-/*
-  Class for outer fields.
-  An object of this class is created when the select where the outer field was
-  resolved is a grouping one. After it has been fixed the ref field will point
-  to either an Item_ref or an Item_direct_ref object which will be used to
-  access the field.
-  See also comments for the fix_inner_refs() and the
-  Item_field::fix_outer_field() functions.
-*/
-
-class Item_outer_ref :public Item_direct_ref
-{
-public:
-  Item *outer_ref;
-  /* The aggregate function under which this outer ref is used, if any. */
-  Item_sum *in_sum_func;
-  /*
-    true <=> that the outer_ref is already present in the select list
-    of the outer select.
-  */
-  bool found_in_select_list;
-  Item_outer_ref(Name_resolution_context *context_arg,
-                 Item_field *outer_field_arg)
-    :Item_direct_ref(context_arg, 0, outer_field_arg->table_name,
-                     outer_field_arg->field_name),
-    outer_ref(outer_field_arg), in_sum_func(0),
-    found_in_select_list(0)
-  {
-    ref= &outer_ref;
-    set_properties();
-    fixed= 0;
-  }
-  Item_outer_ref(Name_resolution_context *context_arg, Item **item,
-                 const char *table_name_arg, const char *field_name_arg,
-                 bool alias_name_used_arg)
-    :Item_direct_ref(context_arg, item, table_name_arg, field_name_arg,
-                     alias_name_used_arg),
-    outer_ref(0), in_sum_func(0), found_in_select_list(1)
-  {}
-  void save_in_result_field(bool)
-  {
-    outer_ref->save_org_in_field(result_field);
-  }
-  bool fix_fields(Session *, Item **);
-  void fix_after_pullout(st_select_lex *new_parent, Item **ref);
-  table_map used_tables() const
-  {
-    return (*ref)->const_item() ? 0 : OUTER_REF_TABLE_BIT;
-  }
-  virtual Ref_Type ref_type() { return OUTER_REF; }
-};
-
-
-
-/*
-  An object of this class:
-   - Converts val_XXX() calls to ref->val_XXX_result() calls, like Item_ref.
-   - Sets owner->was_null=true if it has returned a NULL value from any
-     val_XXX() function. This allows to inject an Item_ref_null_helper
-     object into subquery and then check if the subquery has produced a row
-     with NULL value.
-*/
-
-class Item_ref_null_helper: public Item_ref
-{
-protected:
-  Item_in_subselect* owner;
-public:
-  Item_ref_null_helper(Name_resolution_context *context_arg,
-                       Item_in_subselect* master, Item **item,
-		       const char *table_name_arg, const char *field_name_arg)
-    :Item_ref(context_arg, item, table_name_arg, field_name_arg),
-     owner(master) {}
-  double val_real();
-  int64_t val_int();
-  String* val_str(String* s);
-  my_decimal *val_decimal(my_decimal *);
-  bool val_bool();
-  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate);
-  virtual void print(String *str, enum_query_type query_type);
-  /*
-    we add RAND_TABLE_BIT to prevent moving this item from HAVING to WHERE
-  */
-  table_map used_tables() const
-  {
-    return (depended_from ?
-            OUTER_REF_TABLE_BIT :
-            (*ref)->used_tables() | RAND_TABLE_BIT);
-  }
-};
-
-/*
-  The following class is used to optimize comparing of date and bigint columns
-  We need to save the original item ('ref') to be able to call
-  ref->save_in_field(). This is used to create index search keys.
-
-  An instance of Item_int_with_ref may have signed or unsigned integer value.
-
-*/
-
-class Item_int_with_ref :public Item_int
-{
-  Item *ref;
-public:
-  Item_int_with_ref(int64_t i, Item *ref_arg, bool unsigned_arg) :
-    Item_int(i), ref(ref_arg)
-  {
-    unsigned_flag= unsigned_arg;
-  }
-  int save_in_field(Field *field, bool no_conversions)
-  {
-    return ref->save_in_field(field, no_conversions);
-  }
-  Item *clone_item();
-  virtual Item *real_item() { return ref; }
-};
-
-
-class Item_copy_string :public Item
-{
-  enum enum_field_types cached_field_type;
-public:
-  Item *item;
-  Item_copy_string(Item *i) :item(i)
-  {
-    null_value= maybe_null= item->maybe_null;
-    decimals=item->decimals;
-    max_length=item->max_length;
-    name=item->name;
-    cached_field_type= item->field_type();
-  }
-  enum Type type() const { return COPY_STR_ITEM; }
-  enum Item_result result_type () const { return STRING_RESULT; }
-  enum_field_types field_type() const { return cached_field_type; }
-  double val_real()
-  {
-    int err_not_used;
-    char *end_not_used;
-    return (null_value ? 0.0 :
-            my_strntod(str_value.charset(), (char*) str_value.ptr(),
-                       str_value.length(), &end_not_used, &err_not_used));
-  }
-  int64_t val_int()
-  {
-    int err;
-    return null_value ? 0 : my_strntoll(str_value.charset(),str_value.ptr(),
-                                        str_value.length(),10, (char**) 0,
-                                        &err);
-  }
-  String *val_str(String*);
-  my_decimal *val_decimal(my_decimal *);
-  void make_field(Send_field *field) { item->make_field(field); }
-  void copy();
-  int save_in_field(Field *field, bool)
-  {
-    return save_str_value_in_field(field, &str_value);
-  }
-  table_map used_tables() const { return (table_map) 1L; }
-  bool const_item() const { return 0; }
-  bool is_null() { return null_value; }
-};
-class Item_default_value : public Item_field
-{
-public:
-  Item *arg;
-  Item_default_value(Name_resolution_context *context_arg)
-    :Item_field(context_arg, (const char *)NULL, (const char *)NULL,
-               (const char *)NULL),
-     arg(NULL) {}
-  Item_default_value(Name_resolution_context *context_arg, Item *a)
-    :Item_field(context_arg, (const char *)NULL, (const char *)NULL,
-                (const char *)NULL),
-     arg(a) {}
-  enum Type type() const { return DEFAULT_VALUE_ITEM; }
-  bool eq(const Item *item, bool binary_cmp) const;
-  bool fix_fields(Session *, Item **);
-  virtual void print(String *str, enum_query_type query_type);
-  int save_in_field(Field *field_arg, bool no_conversions);
-  table_map used_tables() const { return (table_map)0L; }
-
-  bool walk(Item_processor processor, bool walk_subquery, unsigned char *args)
-  {
-    return arg->walk(processor, walk_subquery, args) ||
-      (this->*processor)(args);
-  }
-
-  Item *transform(Item_transformer transformer, unsigned char *args);
-};
 
 /*
   Item_insert_value -- an implementation of VALUES() function.

@@ -19,19 +19,24 @@ libitem_la_SOURCES= \
 		bin_string.cc \
 		cache_row.cc \
 		cmpfunc.cc \
+		copy_string.cc \
 		create.cc \
 		decimal.cc \
+		direct_ref.cc \
 		empty_string.cc \
 		field.cc \
 		hex_string.cc \
 		ifloat.cc \
+		int_with_ref.cc \
 		istring.cc \
 		ident.cc \
 		int.cc \
 		null.cc \
 		num.cc \
+		outer_ref.cc \
 		param.cc \
 		ref.cc \
+		ref_null_helper.cc \
 		row.cc \
 		subselect.cc \
 		sum.cc \
@@ -45,20 +50,25 @@ nobase_dist_iteminclude_HEADERS = \
 		blob.h \
 		cache_row.h \
 		cmpfunc.h \
+		copy_string.h \
 		create.h \
 		decimal.h \
+		direct_ref.h \
 		empty_string.h \
 		field.h \
 		hex_string.h \
 		ifloat.h \
+		int_with_ref.h \
 		istring.h \
 		func.h \
 		ident.h \
 		int.h \
 		null.h \
 		num.h \
+		outer_ref.h \
 		param.h \
 		ref.h \
+		ref_null_helper.h \
 		return_date_time.h \
 		return_int.h \
 		row.h \

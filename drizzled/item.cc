@@ -965,38 +965,6 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
   }
 }
 
-/****************************************************************************
-  Item_copy_string
-****************************************************************************/
-
-void Item_copy_string::copy()
-{
-  String *res=item->val_str(&str_value);
-  if (res && res != &str_value)
-    str_value.copy(*res);
-  null_value=item->null_value;
-}
-
-/* ARGSUSED */
-String *Item_copy_string::val_str(String *)
-{
-  // Item_copy_string is used without fix_fields call
-  if (null_value)
-    return (String*) 0;
-  return &str_value;
-}
-
-
-my_decimal *Item_copy_string::val_decimal(my_decimal *decimal_value)
-{
-  // Item_copy_string is used without fix_fields call
-  if (null_value)
-    return 0;
-  string2my_decimal(E_DEC_FATAL_ERROR, &str_value, decimal_value);
-  return (decimal_value);
-}
-
-
 /*
   Functions to convert item to field (for send_fields)
 */
@@ -1009,56 +977,6 @@ bool Item::fix_fields(Session *, Item **)
   assert(fixed == 0 || basic_const_item());
   fixed= 1;
   return false;
-}
-
-double Item_ref_null_helper::val_real()
-{
-  assert(fixed == 1);
-  double tmp= (*ref)->val_result();
-  owner->was_null|= null_value= (*ref)->null_value;
-  return tmp;
-}
-
-
-int64_t Item_ref_null_helper::val_int()
-{
-  assert(fixed == 1);
-  int64_t tmp= (*ref)->val_int_result();
-  owner->was_null|= null_value= (*ref)->null_value;
-  return tmp;
-}
-
-
-my_decimal *Item_ref_null_helper::val_decimal(my_decimal *decimal_value)
-{
-  assert(fixed == 1);
-  my_decimal *val= (*ref)->val_decimal_result(decimal_value);
-  owner->was_null|= null_value= (*ref)->null_value;
-  return val;
-}
-
-
-bool Item_ref_null_helper::val_bool()
-{
-  assert(fixed == 1);
-  bool val= (*ref)->val_bool_result();
-  owner->was_null|= null_value= (*ref)->null_value;
-  return val;
-}
-
-
-String* Item_ref_null_helper::val_str(String* s)
-{
-  assert(fixed == 1);
-  String* tmp= (*ref)->str_result(s);
-  owner->was_null|= null_value= (*ref)->null_value;
-  return tmp;
-}
-
-
-bool Item_ref_null_helper::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
-{
-  return (owner->was_null|= null_value= (*ref)->get_date(ltime, fuzzydate));
 }
 
 
@@ -1674,19 +1592,6 @@ int Item::save_in_field(Field *field, bool no_conversions)
 }
 
 
-Item *Item_int_with_ref::clone_item()
-{
-  assert(ref->const_item());
-  /*
-    We need to evaluate the constant to make sure it works with
-    parameter markers.
-  */
-  return (ref->unsigned_flag ?
-          new Item_uint(ref->name, ref->val_int(), ref->max_length) :
-          new Item_int(ref->name, ref->val_int(), ref->max_length));
-}
-
-
 /**
   This is only called from items that is not of type item_field.
 */
@@ -1758,105 +1663,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   if (null_value)
     result= protocol->store_null();
   return result;
-}
-
-
-void Item_ref_null_helper::print(String *str, enum_query_type query_type)
-{
-  str->append(STRING_WITH_LEN("<ref_null_helper>("));
-  if (ref)
-    (*ref)->print(str, query_type);
-  else
-    str->append('?');
-  str->append(')');
-}
-
-
-double Item_direct_ref::val_real()
-{
-  double tmp=(*ref)->val_real();
-  null_value=(*ref)->null_value;
-  return tmp;
-}
-
-
-int64_t Item_direct_ref::val_int()
-{
-  int64_t tmp=(*ref)->val_int();
-  null_value=(*ref)->null_value;
-  return tmp;
-}
-
-
-String *Item_direct_ref::val_str(String* tmp)
-{
-  tmp=(*ref)->val_str(tmp);
-  null_value=(*ref)->null_value;
-  return tmp;
-}
-
-
-my_decimal *Item_direct_ref::val_decimal(my_decimal *decimal_value)
-{
-  my_decimal *tmp= (*ref)->val_decimal(decimal_value);
-  null_value=(*ref)->null_value;
-  return tmp;
-}
-
-
-bool Item_direct_ref::val_bool()
-{
-  bool tmp= (*ref)->val_bool();
-  null_value=(*ref)->null_value;
-  return tmp;
-}
-
-
-bool Item_direct_ref::is_null()
-{
-  return (*ref)->is_null();
-}
-
-
-bool Item_direct_ref::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
-{
-  return (null_value=(*ref)->get_date(ltime,fuzzydate));
-}
-
-/*
-  Prepare referenced outer field then call usual Item_direct_ref::fix_fields
-
-  SYNOPSIS
-    Item_outer_ref::fix_fields()
-    session         thread handler
-    reference   reference on reference where this item stored
-
-  RETURN
-    false   OK
-    true    Error
-*/
-
-bool Item_outer_ref::fix_fields(Session *session, Item **reference)
-{
-  bool err;
-  /* outer_ref->check_cols() will be made in Item_direct_ref::fix_fields */
-  if ((*ref) && !(*ref)->fixed && ((*ref)->fix_fields(session, reference)))
-    return true;
-  err= Item_direct_ref::fix_fields(session, reference);
-  if (!outer_ref)
-    outer_ref= *ref;
-  if ((*ref)->type() == Item::FIELD_ITEM)
-    table_name= ((Item_field*)outer_ref)->table_name;
-  return err;
-}
-
-void Item_outer_ref::fix_after_pullout(st_select_lex *new_parent, Item **ref)
-{
-  if (depended_from == new_parent)
-  {
-    *ref= outer_ref;
-    outer_ref->fix_after_pullout(new_parent, ref);
-  }
 }
 
 
