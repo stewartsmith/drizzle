@@ -552,6 +552,8 @@ int ha_tina::chain_append()
       else
       {
         tina_set *ptr= (tina_set *) malloc(chain_size * sizeof(tina_set));
+        if (ptr == NULL)
+          return -1;
         memcpy(ptr, chain, DEFAULT_CHAIN_LENGTH * sizeof(tina_set));
         chain= ptr;
         chain_alloced++;

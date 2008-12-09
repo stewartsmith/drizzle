@@ -144,14 +144,10 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
       memcpy(new_ptr, array->buffer,
              array->elements * array->size_of_element);
     }
-    else if (!(new_ptr=
-             (array->buffer) ? (char*) realloc(array->buffer,
-                                               (array->max_element+
-                                                array->alloc_increment)*
-                                                array->size_of_element)
-                             : (char*) malloc((array->max_element+
-                                              array->alloc_increment)*
-                                              array->size_of_element)))
+    else if (!(new_ptr= (char*) realloc(array->buffer,
+                                        (array->max_element+
+                                         array->alloc_increment)*
+                                        array->size_of_element)))
       return 0;
     array->buffer= (unsigned char*) new_ptr;
     array->max_element+=array->alloc_increment;
@@ -252,11 +248,8 @@ bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
      else
 
 
-    if (!(new_ptr=
-           (array->buffer)
-             ? (unsigned char*) realloc(array->buffer,
-                                        size* array->size_of_element)
-             : (unsigned char*) malloc(size* array->size_of_element)))
+    if (!(new_ptr=(unsigned char*) realloc(array->buffer,
+                                        size* array->size_of_element)))
       return true;
     array->buffer= new_ptr;
     array->max_element= size;

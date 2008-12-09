@@ -238,6 +238,11 @@ int archive_discover(handlerton *, Session *,
     goto err;
 
   frm_ptr= (char *)malloc(sizeof(char) * frm_stream.frm_length);
+  if (frm_ptr == NULL)
+  {
+    goto err;
+  }
+
   azread_frm(&frm_stream, frm_ptr);
   azclose(&frm_stream);
 

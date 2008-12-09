@@ -3326,10 +3326,9 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
 	  MI_DYN_DELETE_BLOCK_HEADER;
 	if (sort_info->buff_length < reclength)
 	{
-	  if (!(sort_info->buff=
-              (sort_info->buff) ? realloc(sort_info->buff, reclength)
-                                : malloc(reclength)))
-	  sort_info->buff_length=reclength;
+          void *tmpptr= NULL;
+	  if (!(tmpptr= realloc(sort_info->buff, reclength)))
+	    sort_info->buff_length=reclength;
 	}
 	from= sort_info->buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER);
       }

@@ -161,6 +161,11 @@ int main(int argc, char *argv[])
     {
       char *ptr;
       ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
+      if (ptr == NULL)
+      {
+        printf("Could not allocate enough memory\n");
+        goto end;
+      }
       azread_frm(&reader_handle, ptr);
       azwrite_frm(&writer_handle, ptr, reader_handle.frm_length);
       free(ptr);
@@ -206,6 +211,11 @@ int main(int argc, char *argv[])
     char *ptr;
     frm_file= my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
     ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
+    if (ptr == NULL)
+    {
+      printf("Could not allocate enough memory\n");
+      goto end;
+    }
     azread_frm(&reader_handle, ptr);
     my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));
     my_close(frm_file, MYF(0));
