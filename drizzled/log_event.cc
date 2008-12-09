@@ -1974,11 +1974,12 @@ Format_description_log_event(const char* buf,
     return; /* sanity check */
   number_of_event_types=
     event_len-(LOG_EVENT_MINIMAL_HEADER_LEN+ST_COMMON_HEADER_LEN_OFFSET+1);
-  /* If alloc fails, we'll detect it in is_valid() */
   post_header_len= (uint8_t*) malloc(number_of_event_types*
                                      sizeof(*post_header_len));
-  memcpy(post_header_len, buf+ST_COMMON_HEADER_LEN_OFFSET+1,
-         number_of_event_types* sizeof(*post_header_len));
+  /* If alloc fails, we'll detect it in is_valid() */
+  if (post_header_len != NULL)
+    memcpy(post_header_len, buf+ST_COMMON_HEADER_LEN_OFFSET+1,
+           number_of_event_types* sizeof(*post_header_len));
   calc_server_version_split();
 
   /*
@@ -4205,9 +4206,7 @@ int Rows_log_event::do_add_row_data(unsigned char *row_data, size_t length)
     const size_t new_alloc=
         block_size * ((cur_size + length + block_size - 1) / block_size);
 
-    unsigned char* const new_buf= 
-      (m_rows_buf) ? (unsigned char*)realloc(m_rows_buf, new_alloc)
-                   : (unsigned char*)malloc(new_alloc);
+    unsigned char* new_buf= (unsigned char*)realloc(m_rows_buf, new_alloc);
     if (unlikely(!new_buf))
       return(HA_ERR_OUT_OF_MEM);
 

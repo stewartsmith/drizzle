@@ -2427,16 +2427,16 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
   if (!lex->yacc_yyvs)
     old_info= *yystacksize;
   *yystacksize= set_zone((*yystacksize)*2,MY_YACC_INIT,MY_YACC_MAX);
-  if (!(lex->yacc_yyvs= (lex->yacc_yyvs) 
-        ? (unsigned char*)realloc(lex->yacc_yyvs,
-                                  *yystacksize* sizeof(**yyvs))
-        : (unsigned char*)malloc(*yystacksize*sizeof(**yyvs))))
+  unsigned char *tmpptr= NULL;
+  if (!(tmpptr= (unsigned char *)realloc(lex->yacc_yyvs,
+                                         *yystacksize* sizeof(**yyvs))))
       return 1;
-  if (!(lex->yacc_yyss= (lex->yacc_yyss) 
-        ? (unsigned char*)realloc(lex->yacc_yyss,
-                                  *yystacksize* sizeof(**yyss))
-        : (unsigned char*)malloc(*yystacksize*sizeof(**yyss))))
+  lex->yacc_yyvs= tmpptr;
+  tmpptr= NULL;
+  if (!(tmpptr= (unsigned char*)realloc(lex->yacc_yyss,
+                                        *yystacksize* sizeof(**yyss))))
       return 1;
+  lex->yacc_yyss= tmpptr;
   if (old_info)
   {						// Copy old info from stack
     memcpy(lex->yacc_yyss, *yyss, old_info*sizeof(**yyss));

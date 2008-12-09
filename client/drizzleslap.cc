@@ -2272,7 +2272,7 @@ parse_option(const char *origin, option_string **stmt, char delm)
         fprintf(stderr,"Error allocating memory while parsing options\n");
         exit(1);
       }
-      memcpy(tmp->option, butter_ptr, tmp->option_length);
+      memcpy(tmp->option, buffer_ptr, tmp->option_length);
       tmp->option[tmp->option_length]= 0; 
     }
 

@@ -80,12 +80,10 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint32_t length,
         char *pos= (char*) entry+ ALIGN_SIZE(sizeof(user_var_entry));
         if (entry->value == pos)
           entry->value=0;
-        if (!entry->value)
-          entry->value= (char *)malloc(length);
-        else
-          entry->value= (char *)realloc(entry->value, length);
-        if (!entry->value)
+        void *tmpptr= realloc(entry->value, length);
+        if (tmpptr == NULL)
           return 1;
+        entry->value= (char *)tmpptr;
       }
     }
     if (type == STRING_RESULT)

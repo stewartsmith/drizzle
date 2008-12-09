@@ -1753,20 +1753,18 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 
     if (new_size > global_variables_dynamic_size)
     {
-      if (!global_system_variables.dynamic_variables_ptr)
-        global_system_variables.dynamic_variables_ptr= 
-          (char *)malloc(new_size);
-      else
-        global_system_variables.dynamic_variables_ptr=
-          (char *)realloc(global_system_variables.dynamic_variables_ptr,
-                          new_size); 
-      if (!max_system_variables.dynamic_variables_ptr)
-        max_system_variables.dynamic_variables_ptr= 
-          (char *)malloc(new_size);
-      else
-        max_system_variables.dynamic_variables_ptr=
-          (char *)realloc(max_system_variables.dynamic_variables_ptr,
-                          new_size); 
+      char* tmpptr= NULL;
+      if (!(tmpptr=
+              (char *)realloc(global_system_variables.dynamic_variables_ptr,
+                              new_size)))
+        return NULL;
+      global_system_variables.dynamic_variables_ptr= tmpptr;
+      tmpptr= NULL;
+      if (!(tmpptr=
+              (char *)realloc(max_system_variables.dynamic_variables_ptr,
+                              new_size)))
+        return NULL;
+      max_system_variables.dynamic_variables_ptr= tmpptr;
            
       /*
         Clear the new variable value space. This is required for string
@@ -1827,11 +1825,11 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
 
     pthread_rwlock_rdlock(&LOCK_system_variables_hash);
 
-    session->variables.dynamic_variables_ptr=
-      (session->variables.dynamic_variables_ptr)
-        ? (char *)realloc(session->variables.dynamic_variables_ptr,
-                          global_variables_dynamic_size)
-        : (char *)malloc(global_variables_dynamic_size);
+    char *tmpptr= NULL;
+    if (!(tmpptr= (char *)realloc(session->variables.dynamic_variables_ptr,
+                                  global_variables_dynamic_size)))
+      return NULL;
+    session->variables.dynamic_variables_ptr= tmpptr;
 
     if (global_lock)
       pthread_mutex_lock(&LOCK_global_system_variables);
