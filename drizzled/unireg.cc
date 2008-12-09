@@ -248,9 +248,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
   if (pwrite(file, fileinfo, 64, 0L) == 0 ||
       pwrite(file, keybuff, key_info_length, (ulong) uint2korr(fileinfo+6)) == 0)
     goto err;
-  my_seek(file,
-	       (ulong) uint2korr(fileinfo+6)+ (ulong) key_buff_length,
-	       MY_SEEK_SET,MYF(0));
+  lseek(file, (off_t)(uint2korr(fileinfo+6) + key_buff_length), SEEK_SET);
   if (make_empty_rec(session,file,ha_legacy_type(create_info->db_type),
                      create_info->table_options,
 		     create_fields,reclength, data_offset, db_file))
@@ -317,7 +315,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
       }
     }
   }
-  my_seek(file,filepos,MY_SEEK_SET,MYF(0));
+  lseek(file,filepos,SEEK_SET);
   if (my_write(file, forminfo, 288, MYF_RW) ||
       my_write(file, screen_buff, info_length, MYF_RW) ||
       pack_fields(file, create_fields, data_offset))
@@ -682,16 +680,16 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
 {
   register uint32_t i;
   uint32_t row,start_row,end_row,fields_on_screen;
-  uint32_t length,cols;
+  uint32_t length,cols, cols_half_len;
   unsigned char *info,*pos,*start_screen;
   uint32_t fields=create_fields.elements;
   List_iterator<Create_field> it(create_fields);
 
-
   start_row=4; end_row=22; cols=80; fields_on_screen=end_row+1-start_row;
+  cols_half_len= (uint32_t)(cols >> 1);
 
   *screens=(fields-1)/fields_on_screen+1;
-  length= (*screens) * (SC_INFO_LENGTH+ (cols>> 1)+4);
+  length= (*screens) * (SC_INFO_LENGTH+cols_half_len+4);
 
   Create_field *field;
   while ((field=it++))
@@ -711,21 +709,22 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
     {
       if (i)
       {
-	length=(uint) (pos-start_screen);
-	int2store(start_screen,length);
-	start_screen[2]=(unsigned char) (fields_on_screen+1);
-	start_screen[3]=(unsigned char) (fields_on_screen);
+        length=(uint) (pos-start_screen);
+        int2store(start_screen,length);
+        start_screen[2]=(unsigned char) (fields_on_screen+1);
+        start_screen[3]=(unsigned char) (fields_on_screen);
       }
-      row=start_row;
+      row= start_row;
       start_screen=pos;
       pos+=4;
       pos[0]= (unsigned char) start_row-2;	/* Header string */
       pos[1]= (unsigned char) (cols >> 2);
       pos[2]= (unsigned char) (cols >> 1) +1;
-      strfill((char *) pos+3,(uint) (cols >> 1),' ');
-      pos+=(cols >> 1)+4;
+      memset((char*)pos+3,' ',cols_half_len);
+      pos[cols_half_len+3]= '\0';
+      pos+= cols_half_len+4;
     }
-    length=(uint) strlen(cfield->field_name);
+    length= (uint32_t) strlen(cfield->field_name);
     if (length > cols-3)
       length=cols-3;
 

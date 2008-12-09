@@ -61,12 +61,8 @@
 #define MY_RESOLVE_LINK 128	/* my_realpath(); Only resolve links */
 #define MY_HOLD_ORIGINAL_MODES 128  /* my_copy() holds to file modes */
 #define MY_REDEL_MAKE_BACKUP 256
-#define MY_SEEK_NOT_DONE 32	/* my_lock may have to do a seek */
 #define MY_DONT_WAIT	64	/* my_lock() don't wait if can't lock */
-#define MY_ZEROFILL	32	/* my_malloc(), fill array with zero */
-#define MY_ALLOW_ZERO_PTR 64	/* my_realloc() ; zero ptr -> malloc */
-#define MY_FREE_ON_ERROR 128	/* my_realloc() ; Free old ptr on error */
-#define MY_HOLD_ON_ERROR 256	/* my_realloc() ; Return old ptr on error */
+#define MY_ZEROFILL	32	/* my_multi_malloc(), fill array with zero */
 #define MY_DONT_OVERWRITE_FILE 1024	/* my_copy: Don't overwrite file */
 #define MY_THREADSAFE 2048      /* my_seek(): lock fd mutex */
 
@@ -103,11 +99,6 @@
 #define MY_APPEND_EXT           256     /* add 'ext' as additional extension*/
 
 
-	/* My seek flags */
-#define MY_SEEK_SET	0
-#define MY_SEEK_CUR	1
-#define MY_SEEK_END	2
-
 	/* Some constants */
 #define MY_WAIT_FOR_USER_TO_FIX_PANIC	60	/* in seconds */
 #define MY_WAIT_GIVE_USER_A_MESSAGE	10	/* Every 10 times of prev */
@@ -140,14 +131,6 @@ extern "C" {
 typedef int  (*qsort_cmp)(const void *,const void *);
 typedef int  (*qsort_cmp2)(void*, const void *,const void *);
 
-extern void *my_malloc(size_t Size,myf MyFlags);
-#define my_malloc_ci(SZ,FLAG) my_malloc( SZ, FLAG )
-extern void *my_realloc(void *oldpoint, size_t Size, myf MyFlags);
-extern void my_no_flags_free(void *ptr);
-extern void *my_memdup(const void *from,size_t length,myf MyFlags);
-extern char *my_strdup(const char *from,myf MyFlags);
-extern char *my_strndup(const char *from, size_t length,
-				   myf MyFlags);
 #define TRASH(A,B) /* nothing */
 
 #ifndef errno				/* did we already get it? */
@@ -335,10 +318,6 @@ int handle_default_option(void *in_ctx, const char *group_name,
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
-extern void *my_once_alloc(size_t Size,myf MyFlags);
-extern void my_once_free(void);
-extern char *my_once_strdup(const char *src,myf myflags);
-extern void *my_once_memdup(const void *src, size_t len, myf myflags);
 extern File my_open(const char *FileName,int Flags,myf MyFlags);
 extern File my_register_filename(File fd, const char *FileName,
 				 enum file_type type_of_file,
@@ -358,27 +337,10 @@ extern int my_rename_with_symlink(const char *from,const char *to,myf MyFlags);
 extern int my_symlink(const char *content, const char *linkname, myf MyFlags);
 extern size_t my_read(File Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
 extern int my_rename(const char *from,const char *to,myf MyFlags);
-extern my_off_t my_seek(File fd,my_off_t pos,int whence,myf MyFlags);
-extern my_off_t my_tell(File fd);
 extern size_t my_write(File Filedes,const unsigned char *Buffer,size_t Count,
 		     myf MyFlags);
-extern size_t my_fwrite(FILE *stream,const unsigned char *Buffer,size_t Count,
-		      myf MyFlags);
-extern my_off_t my_fseek(FILE *stream,my_off_t pos,int whence,myf MyFlags);
-extern void *_mymalloc(size_t uSize,const char *sFile,
-                       uint32_t uLine, myf MyFlag);
-extern void *_myrealloc(void *pPtr,size_t uSize,const char *sFile,
-		       uint32_t uLine, myf MyFlag);
 extern void * my_multi_malloc (myf MyFlags, ...);
-extern void _myfree(void *pPtr, const char *sFile, uint32_t uLine, myf MyFlag);
 extern int _sanity(const char *sFile, uint32_t uLine);
-extern void *_my_memdup(const void *from, size_t length,
-                        const char *sFile, uint32_t uLine,myf MyFlag);
-extern char * _my_strdup(const char *from, const char *sFile, uint32_t uLine,
-                         myf MyFlag);
-extern char *_my_strndup(const char *from, size_t length,
-                         const char *sFile, uint32_t uLine,
-                         myf MyFlag);
 
 #define my_access access
 extern int check_if_legal_filename(const char *path);

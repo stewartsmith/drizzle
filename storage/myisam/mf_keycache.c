@@ -326,8 +326,7 @@ int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
 	  Allocate memory for blocks, hash_links and hash entries;
 	  For each block 2 hash links are allocated
         */
-        if ((keycache->block_root= (BLOCK_LINK*) my_malloc(length,
-                                                           MYF(0))))
+        if ((keycache->block_root= (BLOCK_LINK*) malloc(length)))
           break;
         free(keycache->block_mem);
         keycache->block_mem= 0;
@@ -2349,7 +2348,7 @@ no_key_cache:
 
   if (locked_and_incremented)
     keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  if (pread(file, (unsigned char*) buff, length, filepos))
+  if (!pread(file, (unsigned char*) buff, length, filepos))
     error= 1;
   if (locked_and_incremented)
     keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -3210,8 +3209,7 @@ static int flush_key_blocks_int(KEY_CACHE *keycache,
         changed blocks appear while we need to wait for something.
       */
       if ((count > FLUSH_CACHE) &&
-          !(cache= (BLOCK_LINK**) my_malloc(sizeof(BLOCK_LINK*)*count,
-                                            MYF(0))))
+          !(cache= (BLOCK_LINK**) malloc(sizeof(BLOCK_LINK*)*count)))
         cache= cache_buff;
       /*
         After a restart there could be more changed blocks than now.

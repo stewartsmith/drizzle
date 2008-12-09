@@ -198,7 +198,7 @@ bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
   reschedule= (uint32_t) next_alarm_expire_time > (uint32_t) now + sec;
   if (!alarm_data)
   {
-    if (!(alarm_data=(ALARM*) my_malloc(sizeof(ALARM),MYF(MY_WME))))
+    if (!(alarm_data=(ALARM*) malloc(sizeof(ALARM))))
     {
       *alrm= 0;					/* No alarm */
       pthread_mutex_unlock(&LOCK_alarm);

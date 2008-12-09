@@ -1792,7 +1792,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
             block_info.filepos + block_info.data_len &&
             flush_io_cache(&info->rec_cache))
           goto err;
-	/* my_seek(info->dfile,filepos,MY_SEEK_SET,MYF(0)); */
+	/* lseek(info->dfile,filepos,SEEK_SET); */
 	if (my_read(info->dfile,(unsigned char*) to,block_info.data_len,MYF(MY_NABP)))
 	{
 	  if (my_errno == -1)
@@ -1845,7 +1845,7 @@ uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
       pointer set to the end of the header after this function.
       my_pread() may leave the file pointer untouched.
     */
-    my_seek(file,filepos,MY_SEEK_SET,MYF(0));
+    lseek(file,filepos,SEEK_SET);
     if (my_read(file, header, sizeof(info->header),MYF(0)) !=
 	sizeof(info->header))
       goto err;

@@ -55,7 +55,7 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
     return NULL;
   }
 
-  if (!(name= my_strdup(hostname_buff, MYF(0))))
+  if (!(name= strdup(hostname_buff)))
   {
     return NULL;
   }
@@ -245,8 +245,8 @@ static int check_connection(Session *session)
       my_error(ER_BAD_HOST_ERROR, MYF(0), session->main_security_ctx.ip);
       return 1;
     }
-    if (!(session->main_security_ctx.ip= my_strdup(ip,MYF(MY_WME))))
-      return 1; /* The error is set by my_strdup(). */
+    if (!(session->main_security_ctx.ip= strdup(ip)))
+      return 1; /* The error is set by strdup(). */
   }
   net_keepalive(net, true);
 
@@ -389,8 +389,8 @@ static int check_connection(Session *session)
   if (session->main_security_ctx.user)
     if (session->main_security_ctx.user)
       free(session->main_security_ctx.user);
-  if (!(session->main_security_ctx.user= my_strdup(user, MYF(MY_WME))))
-    return 1; /* The error is set by my_strdup(). */
+  if (!(session->main_security_ctx.user= strdup(user)))
+    return 1; /* The error is set by strdup(). */
   return check_user(session, passwd, passwd_len, db, true);
 }
 

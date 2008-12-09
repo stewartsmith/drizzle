@@ -626,7 +626,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     save_db= session->db;
     save_user_connect= session->user_connect;
 
-    if (!(session->security_ctx->user= my_strdup(user, MYF(0))))
+    if (!(session->security_ctx->user= strdup(user)))
     {
       session->security_ctx->user= save_security_ctx.user;
       my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
@@ -2427,15 +2427,16 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
   if (!lex->yacc_yyvs)
     old_info= *yystacksize;
   *yystacksize= set_zone((*yystacksize)*2,MY_YACC_INIT,MY_YACC_MAX);
-  if (!(lex->yacc_yyvs= (unsigned char*)
-	my_realloc(lex->yacc_yyvs,
-		   *yystacksize*sizeof(**yyvs),
-		   MYF(MY_ALLOW_ZERO_PTR | MY_FREE_ON_ERROR))) ||
-      !(lex->yacc_yyss= (unsigned char*)
-	my_realloc(lex->yacc_yyss,
-		   *yystacksize*sizeof(**yyss),
-		   MYF(MY_ALLOW_ZERO_PTR | MY_FREE_ON_ERROR))))
-    return 1;
+  unsigned char *tmpptr= NULL;
+  if (!(tmpptr= (unsigned char *)realloc(lex->yacc_yyvs,
+                                         *yystacksize* sizeof(**yyvs))))
+      return 1;
+  lex->yacc_yyvs= tmpptr;
+  tmpptr= NULL;
+  if (!(tmpptr= (unsigned char*)realloc(lex->yacc_yyss,
+                                        *yystacksize* sizeof(**yyss))))
+      return 1;
+  lex->yacc_yyss= tmpptr;
   if (old_info)
   {						// Copy old info from stack
     memcpy(lex->yacc_yyss, *yyss, old_info*sizeof(**yyss));

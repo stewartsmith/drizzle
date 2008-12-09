@@ -53,8 +53,8 @@ int init_queue(QUEUE *queue, uint32_t max_elements, uint32_t offset_to_key,
 	       bool max_at_top, queue_compare compare,
 	       void *first_cmp_arg)
 {
-  if ((queue->root= (unsigned char **) my_malloc((max_elements+1)*sizeof(void*),
-					 MYF(MY_WME))) == 0)
+  if ((queue->root=
+      (unsigned char **) malloc((max_elements+1)*sizeof(void*))) == 0)
     return(1);
   queue->elements=0;
   queue->compare=compare;
@@ -163,9 +163,9 @@ int resize_queue(QUEUE *queue, uint32_t max_elements)
   unsigned char **new_root;
   if (queue->max_elements == max_elements)
     return(0);
-  if ((new_root= (unsigned char **) my_realloc((void *)queue->root,
-				      (max_elements+1)*sizeof(void*),
-				      MYF(MY_WME))) == 0)
+  if ((new_root=
+         (unsigned char **) realloc(queue->root,
+                                    (max_elements+1)*sizeof(void*))) == 0)
     return(1);
   set_if_smaller(queue->elements, max_elements);
   queue->max_elements= max_elements;

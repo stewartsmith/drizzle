@@ -2523,6 +2523,8 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--loose-innodb_data_file_path=ibdata1:10M:autoextend",
 		$prefix);
 
+    mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
+
     mtr_add_arg($args, "%s--local-infile", $prefix);
 
     if ( $idx > 0 or !$use_innodb)

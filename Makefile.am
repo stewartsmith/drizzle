@@ -70,7 +70,8 @@ distclean-local:
     test-fast \
     test-fast-cursor \
     test-fast-view \
-    test-full-qa
+    test-full-qa \
+    indent
 
 # Target 'test' will run the regression test suite using the built server.
 #
@@ -100,3 +101,10 @@ test-drizzle:
 
 doxygen:
 	doxygen Doxyfile
+
+indent:
+	for f in `find ${top_srcdir} -type f | grep -v innobase |\
+                  ${EGREP} '\.(cc|c|h)$$' ` ; do \
+            uncrustify -f $$f -c ${top_srcdir}/config/uncrustify.cfg \
+               -o indentoutput.tmp && mv indentoutput.tmp "$$f" ;\
+        done

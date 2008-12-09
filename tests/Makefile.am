@@ -34,7 +34,7 @@ LDADD=			$(top_builddir)/mysys/libmysys.la \
                         $(top_builddir)/mystrings/libmystrings.la \
 			$(LIBINTL)
 
-
+check: test-drizzle
 
 dist-hook:
 	mkdir -p \

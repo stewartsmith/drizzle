@@ -601,7 +601,7 @@ extern int _mi_read_cache(IO_CACHE *info,unsigned char *buff,my_off_t pos,
 			  uint32_t length,int re_read_if_possibly);
 extern uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record);
 
-unsigned char *mi_alloc_rec_buff(MI_INFO *info, ulong length, unsigned char **buf);
+unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **buf);
 #define mi_get_rec_buff_ptr(info,buf)                              \
         ((((info)->s->options & HA_OPTION_PACK_RECORD) && (buf)) ? \
         (buf) - MI_REC_BUFF_OFFSET : (buf))

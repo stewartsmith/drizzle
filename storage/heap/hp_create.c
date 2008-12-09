@@ -251,12 +251,15 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
           keyinfo->get_key_length= hp_rb_key_length;
       }
     }
-    if (!(share= (HP_SHARE*) my_malloc((uint) sizeof(HP_SHARE)+
-				       keys*sizeof(HP_KEYDEF)+
-                                       columns*sizeof(HP_COLUMNDEF)+
-				       key_segs*sizeof(HA_KEYSEG),
-				       MYF(MY_ZEROFILL))))
+    if (!(share= (HP_SHARE*) malloc(sizeof(HP_SHARE)+
+				    keys*sizeof(HP_KEYDEF)+
+                                    columns*sizeof(HP_COLUMNDEF)+
+				    key_segs*sizeof(HA_KEYSEG))))
       goto err;
+    memset(share, 0, sizeof(HP_SHARE)+
+                     keys*sizeof(HP_KEYDEF)+
+                     columns*sizeof(HP_COLUMNDEF)+
+                     key_segs*sizeof(HA_KEYSEG));
 
     /*
        Max_records is used for estimating block sizes and for enforcement.
@@ -339,7 +342,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     }
 
     /* Must be allocated separately for rename to work */
-    if (!(share->name= my_strdup(name,MYF(0))))
+    if (!(share->name= strdup(name)))
     {
       free((unsigned char*) share);
       goto err;

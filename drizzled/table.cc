@@ -465,7 +465,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   error= 3;
   if (!(pos=get_form_pos(file,head,(TYPELIB*) 0)))
     goto err;                                   /* purecov: inspected */
-  my_seek(file,pos,MY_SEEK_SET,MYF(0));
+  lseek(file,pos,SEEK_SET);
   if (my_read(file,forminfo,288,MYF(MY_NABP)))
     goto err;
 
@@ -517,7 +517,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 
   /* Read keyinformation */
   key_info_length= (uint) uint2korr(head+28);
-  my_seek(file,(ulong) uint2korr(head+6),MY_SEEK_SET,MYF(0));
+  lseek(file,(ulong) uint2korr(head+6),SEEK_SET);
   if (read_string(file,(unsigned char**) &disk_buff,key_info_length))
     goto err;                                   /* purecov: inspected */
   if (disk_buff[0] & 0x80)
@@ -737,7 +737,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   if (pread(file, record, (size_t) share->reclength, record_offset) == 0)
     goto err;                                   /* purecov: inspected */
 
-  my_seek(file,pos+288,MY_SEEK_SET,MYF(0));
+  lseek(file,pos+288,SEEK_SET);
 
   share->fields= uint2korr(forminfo+258);
   pos= uint2korr(forminfo+260);			/* Length of all screens */
@@ -1573,7 +1573,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
 
   init_sql_alloc(&outparam->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
-  if (!(outparam->alias= my_strdup(alias, MYF(MY_WME))))
+  if (!(outparam->alias= strdup(alias)))
     goto err;
   outparam->quick_keys.init();
   outparam->covering_keys.init();
@@ -1899,7 +1899,7 @@ ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names)
   if (names)
   {
     length=uint2korr(head+4);
-    my_seek(file,64L,MY_SEEK_SET,MYF(0));
+    lseek(file,64,SEEK_SET);
     if (!(buf= (unsigned char*) malloc(length+a_length+names*4)) ||
 	my_read(file, buf+a_length, (size_t) (length+names*4),
 		MYF(MY_NABP)))
@@ -1959,7 +1959,7 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 		     const char *newname)
 {
   uint32_t i,bufflength,maxlength,n_length,length,names;
-  ulong endpos,newpos;
+  off_t endpos,newpos;
   unsigned char buff[IO_SIZE];
   unsigned char *pos;
 
@@ -1973,22 +1973,21 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
   {						/* Expand file */
     newpos+=IO_SIZE;
     int4store(fileinfo+10,newpos);
-    endpos=(ulong) my_seek(file,0L,MY_SEEK_END,MYF(0));/* Copy from file-end */
+    endpos= lseek(file,0,SEEK_END);/* Copy from file-end */
     bufflength= (uint) (endpos & (IO_SIZE-1));	/* IO_SIZE is a power of 2 */
 
     while (endpos > maxlength)
     {
-      my_seek(file,(ulong) (endpos-bufflength),MY_SEEK_SET,MYF(0));
+      lseek(file,(off_t) (endpos-bufflength),SEEK_SET);
       if (my_read(file, buff, bufflength, MYF(MY_NABP+MY_WME)))
 	return(0L);
-      my_seek(file,(ulong) (endpos-bufflength+IO_SIZE),MY_SEEK_SET,
-		   MYF(0));
+      lseek(file,(off_t) (endpos-bufflength+IO_SIZE),SEEK_SET);
       if ((my_write(file, buff,bufflength,MYF(MY_NABP+MY_WME))))
 	return(0);
       endpos-=bufflength; bufflength=IO_SIZE;
     }
     memset(buff, 0, IO_SIZE);			/* Null new block */
-    my_seek(file,(ulong) maxlength,MY_SEEK_SET,MYF(0));
+    lseek(file,(ulong) maxlength,SEEK_SET);
     if (my_write(file,buff,bufflength,MYF(MY_NABP+MY_WME)))
 	return(0L);
     maxlength+=IO_SIZE;				/* Fix old ref */
@@ -2008,7 +2007,7 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
   }
   else
     strxmov((char*) buff,newname,"/",NULL); /* purecov: inspected */
-  my_seek(file,63L+(ulong) n_length,MY_SEEK_SET,MYF(0));
+  lseek(file, 63 + n_length,SEEK_SET);
   if (my_write(file, buff, (size_t) length+1,MYF(MY_NABP+MY_WME)) ||
       (names && my_write(file,(unsigned char*) (*formnames->type_names+n_length-1),
 			 names*4, MYF(MY_NABP+MY_WME))) ||

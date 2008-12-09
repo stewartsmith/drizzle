@@ -642,7 +642,7 @@ static int setval(const struct my_option *opts, char **value, char *argument,
     case GET_STR_ALLOC:
       if ((*((char**) result_pos)))
 	free((*(char**) result_pos));
-      if (!(*((char**) result_pos)= my_strdup(argument, MYF(MY_WME))))
+      if (!(*((char**) result_pos)= strdup(argument)))
 	return EXIT_OUT_OF_MEMORY;
       break;
     case GET_ENUM:
@@ -1031,7 +1031,9 @@ static void init_one_value(const struct my_option *option, char** variable,
     if ((char*) (intptr_t) value)
     {
       free((*(char**) variable));
-      *((char**) variable)= my_strdup((char*) (intptr_t) value, MYF(MY_WME));
+      char *tmpptr= strdup((char *) (intptr_t) value);
+      if (tmpptr != NULL)
+        *((char**) variable)= tmpptr;
     }
     break;
   default: /* dummy default to avoid compiler warnings */

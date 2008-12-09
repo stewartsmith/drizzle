@@ -19,13 +19,20 @@ libitem_la_SOURCES= \
 		cache_row.cc \
 		cmpfunc.cc \
 		create.cc \
+		decimal.cc \
 		field.cc \
+		ifloat.cc \
+		istring.cc \
 		ident.cc \
+		int.cc \
+		null.cc \
 		num.cc \
+		param.cc \
 		row.cc \
 		subselect.cc \
 		sum.cc \
-		type_holder.cc
+		type_holder.cc \
+		uint.cc
 
 itemincludedir = ${includedir}/drizzled/item
 nobase_dist_iteminclude_HEADERS = \
@@ -33,16 +40,24 @@ nobase_dist_iteminclude_HEADERS = \
 		cache_row.h \
 		cmpfunc.h \
 		create.h \
+		decimal.h \
 		field.h \
+		ifloat.h \
+		istring.h \
 		func.h \
 		ident.h \
+		int.h \
+		null.h \
 		num.h \
+		param.h \
+		return_date_time.h \
 		row.h \
 		strfunc.h \
 		subselect.h \
 		sum.h \
 		timefunc.h \
-		type_holder.h
+		type_holder.h \
+		uint.h
 
 
 DEFS= -DDRIZZLE_SERVER @DEFS@
