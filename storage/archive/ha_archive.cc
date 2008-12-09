@@ -958,10 +958,7 @@ bool ha_archive::fix_rec_buff(unsigned int length)
   if (length > record_buffer->length)
   {
     unsigned char *newptr;
-    if (!(newptr= 
-        (record_buffer->buffer)
-          ? (unsigned char*) realloc(record_buffer->buffer, length)
-          : (unsigned char*) malloc(length)))
+    if (!(newptr= realloc(record_buffer->buffer, length)))
       return(1);
     record_buffer->buffer= newptr;
     record_buffer->length= length;

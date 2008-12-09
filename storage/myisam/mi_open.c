@@ -571,10 +571,10 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
 	    MI_REC_BUFF_OFFSET : 0);
     if (extra && newptr)
       newptr-= MI_REC_BUFF_OFFSET;
-    if (!(newptr=
-          (newptr) ? (unsigned char *) realloc(newptr, length+extra+8)
-                   : (unsigned char *) malloc(length+extra+8)))
+    void *tmpnewptr= NULL;
+    if (!(tmpnewptr= realloc(newptr, length+extra+8))) 
       return newptr;
+    newptr= tmpnewptr;
     *((uint32_t *) newptr)= (uint32_t) length;
     *buf= newptr+(extra ?  MI_REC_BUFF_OFFSET : 0);
   }

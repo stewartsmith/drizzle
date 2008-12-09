@@ -713,7 +713,7 @@ static void print_version(void)
 static void usage(void)
 {
   print_version();
-  puts("Copyright (C) 2005 DRIZZLE AB");
+  puts("Copyright (C) 2008 Sun Microsystems");
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
        \nand you are welcome to modify and redistribute it under the GPL \
        license\n");
@@ -2148,6 +2148,11 @@ parse_option(const char *origin, option_string **stmt, char delm)
   end_ptr= (char *)origin + length;
 
   tmp= *sptr= (option_string *)malloc(sizeof(option_string));
+  if (tmp == NULL)
+  {
+    fprintf(stderr,"Error allocating memory while parsing options\n");
+    exit(1);
+  }
   memset(tmp, 0, sizeof(option_string));
 
   for (begin_ptr= (char *)origin;
@@ -2181,7 +2186,14 @@ parse_option(const char *origin, option_string **stmt, char delm)
 
       /* Move past the : and the first string */
       tmp->option_length= strlen(buffer_ptr);
-      tmp->option= strdup(buffer_ptr);
+      tmp->option= (char *)malloc(tmp->option_length + 1);
+      if (tmp->option == NULL)
+      {
+        fprintf(stderr,"Error allocating memory while parsing options\n");
+        exit(1);
+      }
+      memcpy(tmp->option, butter_ptr, tmp->option_length);
+      tmp->option[tmp->option_length]= 0; 
     }
 
     tmp->length= strlen(buffer);
@@ -2195,6 +2207,11 @@ parse_option(const char *origin, option_string **stmt, char delm)
     if (begin_ptr != end_ptr)
     {
       tmp->next= (option_string *)malloc(sizeof(option_string));
+      if (tmp->next == NULL)
+      {
+        fprintf(stderr,"Error allocating memory while parsing options\n");
+        exit(1);
+      }
       memset(tmp->next, 0, sizeof(option_string));
     }
     
