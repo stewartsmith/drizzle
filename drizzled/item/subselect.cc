@@ -29,6 +29,7 @@
 #include <drizzled/item/subselect.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/cached_item.h>
+#include <drizzled/check_stack_overrun.h>
 
 inline Item * and_items(Item* cond, Item *item)
 {

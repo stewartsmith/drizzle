@@ -64,6 +64,7 @@
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/lock.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
 extern I_List<NAMED_LIST> key_caches;
@@ -71,6 +72,7 @@ extern size_t my_thread_stack_size;
 
 static DYNAMIC_ARRAY fixed_show_vars;
 static HASH system_variable_hash;
+extern char *opt_drizzle_tmpdir;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
 TYPELIB bool_typelib=

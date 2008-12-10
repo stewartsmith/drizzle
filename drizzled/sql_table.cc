@@ -28,6 +28,8 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
 #include <drizzled/replicator.h>
+#include <drizzled/lock.h>
+#include <drizzled/unireg.h>
 
 extern HASH lock_db_cache;
 

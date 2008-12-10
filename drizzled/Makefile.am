@@ -54,6 +54,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		authentication.h \
 		base.h \
 		cached_item.h \
+		check_stack_overrun.h \
 		client_settings.h \
 		current_session.h \
 		common.h \
@@ -88,6 +89,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex.h \
 		lex_string.h \
 		lex_symbol.h \
+		lock.h \
 		log_event.h \
 		logging.h \
 		log.h \
@@ -191,6 +193,7 @@ noinst_HEADERS = \
 drizzled_SOURCES = \
 		authentication.cc \
 		cached_item.cc \
+		check_stack_overrun.cc \
 		comp_creator.cc \
 		configvar.cc \
 		current_session.cc \
@@ -208,7 +211,6 @@ drizzled_SOURCES = \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
-		init.cc \
 		item.cc \
 		key.cc \
                 key_map.cc \

@@ -22,6 +22,9 @@
 
 #include <drizzled/functions/func.h>
 
+Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
+                     LEX_STRING component);
+
 /* A system variable */
 
 class Item_func_get_system_var :public Item_func

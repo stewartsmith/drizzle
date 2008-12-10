@@ -51,6 +51,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/item/create.h>
 #include <drizzled/lex_string.h>
+#include <drizzled/functions/get_system_var.h>
 
 class Table_ident;
 class Item;

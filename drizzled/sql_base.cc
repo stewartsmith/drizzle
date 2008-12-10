@@ -43,6 +43,8 @@
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/replicator.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/lock.h>
 
 
 /**

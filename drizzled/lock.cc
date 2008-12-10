@@ -78,6 +78,7 @@
 #include <mysys/thr_lock.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/lock.h>
 
 /**
   @defgroup Locking Locking

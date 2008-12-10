@@ -35,6 +35,7 @@ using namespace std;
 #include <drizzled/util/math.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
+#include <drizzled/check_stack_overrun.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
