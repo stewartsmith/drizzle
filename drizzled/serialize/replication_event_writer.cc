@@ -1,5 +1,9 @@
 #include <iostream>
 #include <fstream>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <string>
 #include <uuid/uuid.h>
 
@@ -109,28 +113,65 @@ void write_update(drizzle::Event *record, const char *trx)
   value->add_value("6");
 }
 
+void write_to_disk(int file, drizzle::EventList *list)
+{
+  std::string buffer;
+  uint64_t length;
+  size_t written;
+
+  list->SerializePartialToString(&buffer);
+
+  length= buffer.length();
+
+  cout << "Writing record of " << length << "." << endl;
+
+  if ((written= write(file, &length, sizeof(uint64_t))) != sizeof(uint64_t))
+  {
+    cerr << "Only wrote " << written << " out of " << length << "." << endl;
+    exit(1);
+  }
+
+  if ((written= write(file, buffer.c_str(), length)) != length)
+  {
+    cerr << "Only wrote " << written << " out of " << length << "." << endl;
+    exit(1);
+  }
+}
+
+
 int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
+  int file;
 
-  if (argc != 2) {
+  if (argc != 2) 
+  {
     cerr << "Usage:  " << argv[0] << " REPLICATION_EVENT_LOG " << endl;
     return -1;
   }
 
+  if ((file= open(argv[1], O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU)) == -1)
+  {
+    cerr << "Can not open file: " << argv[0] << endl;
+   exit(0);
+  }
+
   drizzle::EventList list;
 
+  /* Write first set of records */
   write_ddl(list.add_event(), "CREATE TABLE A (a int) ENGINE=innodb");
   write_insert(list.add_event(), transaction_id);
+
+  write_to_disk(file, &list);
+
+  /* Write Second set of records */
+  write_ddl(list.add_event(), "CREATE TABLE A (a int) ENGINE=innodb");
   write_delete(list.add_event(), transaction_id);
   write_update(list.add_event(), transaction_id);
 
-  fstream output(argv[1], ios::out | ios::trunc | ios::binary);
-  if (!list.SerializeToOstream(&output))
-  {
-    cerr << "Failed to write replication event log." << endl;
-    return -1;
-  }
+  write_to_disk(file, &list);
+
+  close(file);
 
   return 0;
 }
