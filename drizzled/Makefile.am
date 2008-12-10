@@ -184,7 +184,6 @@ drizzled_DEPENDENCIES = @mysql_plugin_libs@ libyacc.la libhandler.la
 drizzled_LDFLAGS =
 
 noinst_HEADERS = \
-		common_includes.h \
 		gettext.h \
 		global.h \
 		server_includes.h

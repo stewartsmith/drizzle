@@ -30,11 +30,24 @@
 #ifndef DRIZZLED_SERVER_INCLUDES_H
 #define DRIZZLED_SERVER_INCLUDES_H
 
-/**
- * Contains all headers, definitions, and declarations common to
- * the server and the plugin infrastructure, and not the client
- */
-#include <drizzled/common_includes.h>
+/* Cross-platform portability code and standard includes */
+#include <drizzled/global.h>
+/* Contains system-wide constants and #defines */
+#include <drizzled/definitions.h>
+/* System-wide common data structures */
+#include <drizzled/structs.h>
+/* Defines for the storage engine handler -- i.e. HA_XXX defines */
+/* Needed by field.h */
+#include <drizzled/base.h>
+
+/* Lots of system-wide struct definitions like IO_CACHE,
+   prototypes for all my_* functions */
+#include <mysys/my_sys.h>
+/* Custom C string functions */
+#include <mystrings/m_string.h>
+
+/* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
+#include <drizzled/sql_plugin.h>
 /* Range optimization API/library */
 #include <drizzled/opt_range.h>
 /* Simple error injection (crash) module */
@@ -49,6 +62,8 @@
 #include <bitset>
 
 
+extern const CHARSET_INFO *system_charset_info, *files_charset_info ;
+extern const CHARSET_INFO *national_charset_info, *table_alias_charset;
 
 typedef class st_select_lex SELECT_LEX;
 typedef struct st_mysql_lock DRIZZLE_LOCK;

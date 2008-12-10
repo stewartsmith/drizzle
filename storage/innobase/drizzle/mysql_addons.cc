@@ -19,12 +19,7 @@ Created November 07, 2007 Vasil Dimov
 #define MYSQL_SERVER
 #endif /* MYSQL_SERVER */
 
-#if defined(BUILD_DRIZZLE)
-# include <drizzled/global.h>
-# include <drizzled/common_includes.h>
-#else
-# include <mysql_priv.h>
-#endif
+#include <drizzled/server_includes.h>
 
 #include "mysql_addons.h"
 #include "univ.i"

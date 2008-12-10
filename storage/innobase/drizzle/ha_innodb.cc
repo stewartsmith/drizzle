@@ -21,7 +21,7 @@
     in Windows?
 */
 
-#include <drizzled/common_includes.h>
+#include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
