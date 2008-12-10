@@ -33,7 +33,6 @@ class Item_field;
 class Name_resolution_context;
 class st_select_lex;
 class Item_equal;
-class COND_EQUAL;
 class user_var_entry;
 class Item_sum;
 class Item_in_subselect;

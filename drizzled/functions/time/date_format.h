@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_DATE_FORMAT_H
 #define DRIZZLED_FUNCTIONS_TIME_DATE_FORMAT_H
 
-#include <drizzled/item/strfunc.h>
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_func_date_format :public Item_str_func
 {

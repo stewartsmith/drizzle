@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
 #define DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
 
-#include <drizzled/item/strfunc.h>
+#include <drizzled/functions/str/strfunc.h>
 
 enum date_time_format
 {

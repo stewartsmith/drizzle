@@ -17,7 +17,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
-#include <drizzled/item/strfunc.h>
 #include <drizzled/plugin_replicator.h>
 
 static char anchor[100];

@@ -16,7 +16,7 @@
 #include <drizzled/common_includes.h>
 #include <drizzled/sql_udf.h>
 #include <drizzled/item/func.h>
-#include <drizzled/item/strfunc.h>
+#include <drizzled/functions/str/strfunc.h>
 
 #include <openssl/md5.h>
 

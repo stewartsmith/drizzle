@@ -84,7 +84,6 @@ nobase_dist_iteminclude_HEADERS = \
 		return_date_time.h \
 		return_int.h \
 		row.h \
-		strfunc.h \
 		subselect.h \
 		sum.h \
 		timefunc.h \
