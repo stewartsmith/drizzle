@@ -26,6 +26,7 @@
 #include <drizzled/error.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/cached_item.h>
+#include <drizzled/item/cache_int.h>
 #include <drizzled/functions/bit.h>
 
 #include CMATH_H

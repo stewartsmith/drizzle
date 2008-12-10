@@ -17,7 +17,12 @@ noinst_LTLIBRARIES= 	libitem.la
 
 libitem_la_SOURCES= \
 		bin_string.cc \
+		cache.cc \
+		cache_decimal.cc \
+		cache_int.cc \
+		cache_real.cc \
 		cache_row.cc \
+		cache_str.cc \
 		cmpfunc.cc \
 		copy_string.cc \
 		create.cc \
@@ -27,6 +32,7 @@ libitem_la_SOURCES= \
 		field.cc \
 		hex_string.cc \
 		ifloat.cc \
+		insert_value.cc \
 		int_with_ref.cc \
 		istring.cc \
 		ident.cc \
@@ -48,7 +54,12 @@ nobase_dist_iteminclude_HEADERS = \
 		basic_constant.h \
 		bin_string.h \
 		blob.h \
+		cache.h \
+		cache_decimal.h \
+		cache_int.h \
+		cache_real.h \
 		cache_row.h \
+		cache_str.h \
 		cmpfunc.h \
 		copy_string.h \
 		create.h \
@@ -58,6 +69,7 @@ nobase_dist_iteminclude_HEADERS = \
 		field.h \
 		hex_string.h \
 		ifloat.h \
+		insert_value.h \
 		int_with_ref.h \
 		istring.h \
 		func.h \
