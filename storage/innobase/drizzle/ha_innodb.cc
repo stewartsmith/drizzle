@@ -34,6 +34,7 @@
 #include <drizzled/field.h>
 #include <drizzled/log.h>
 #include <drizzled/session.h>
+#include <drizzled/current_session.h>
 #include <drizzled/table.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/varstring.h>

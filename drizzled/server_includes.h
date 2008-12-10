@@ -48,6 +48,8 @@
 #include <string>
 #include <bitset>
 
+
+
 typedef class st_select_lex SELECT_LEX;
 typedef struct st_mysql_lock DRIZZLE_LOCK;
 typedef struct st_ha_create_information HA_CREATE_INFO;
@@ -196,7 +198,6 @@ extern const char *log_output_str;
 extern DRIZZLE_BIN_LOG drizzle_bin_log;
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
-extern pthread_key_t THR_MALLOC;
 extern pthread_mutex_t LOCK_drizzle_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
        LOCK_error_log, LOCK_uuid_generator,

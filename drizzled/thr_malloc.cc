@@ -17,7 +17,9 @@
 /* Mallocs for used in threads */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/current_session.h>
 #include <drizzled/error.h>
+
 
 extern "C" {
   void sql_alloc_error_handler(void)
@@ -35,7 +37,7 @@ void init_sql_alloc(MEM_ROOT *mem_root, size_t block_size, size_t pre_alloc)
 
 void *sql_alloc(size_t Size)
 {
-  MEM_ROOT *root= *(MEM_ROOT **)pthread_getspecific(THR_MALLOC);
+  MEM_ROOT *root= current_mem_root();
   return alloc_root(root,Size);
 }
 

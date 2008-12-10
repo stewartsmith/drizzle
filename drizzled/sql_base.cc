@@ -6253,7 +6253,6 @@ bool drizzle_rm_tmp_tables(void)
     my_dirend(dirp);
   }
   delete session;
-  pthread_setspecific(THR_Session,  0);
   return(0);
 }
 

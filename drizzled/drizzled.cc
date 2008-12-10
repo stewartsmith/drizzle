@@ -427,7 +427,7 @@ SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
 
-pthread_key_t THR_MALLOC;
+pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
 pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_status,
@@ -2069,7 +2069,7 @@ static int init_thread_environment()
   }
 
   if (pthread_key_create(&THR_Session,NULL) ||
-      pthread_key_create(&THR_MALLOC,NULL))
+      pthread_key_create(&THR_Mem_root,NULL))
   {
     sql_print_error(_("Can't create thread-keys"));
     return 1;

@@ -56,6 +56,7 @@
 #include <drizzled/sql_plugin.h>
 
 
+
 /**
  * @TODO Move the following into a drizzled.h header?
  *
@@ -63,17 +64,7 @@
  * and that are used only in the server should be separated out into
  * a drizzled.h header file -- JRP
  */
-
-
 extern const CHARSET_INFO *system_charset_info, *files_charset_info ;
 extern const CHARSET_INFO *national_charset_info, *table_alias_charset;
-
-extern pthread_key_t THR_Session;
-inline Session *_current_session(void)
-{
-  return (Session *)pthread_getspecific(THR_Session);
-}
-#define current_session _current_session()
-
 
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */

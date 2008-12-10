@@ -55,6 +55,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		base.h \
 		cached_item.h \
 		client_settings.h \
+		current_session.h \
 		common.h \
 		comp_creator.h \
 		configvar.h \
@@ -193,6 +194,7 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		comp_creator.cc \
 		configvar.cc \
+		current_session.cc \
 		db.cc \
 		discover.cc \
 		drizzled.cc \

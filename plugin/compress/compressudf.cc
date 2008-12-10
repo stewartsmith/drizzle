@@ -19,6 +19,7 @@
 #include <drizzled/item/strfunc.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_error.h>
+#include <drizzled/current_session.h>
 #include <zlib.h>
 
 class Item_func_compress: public Item_str_func
