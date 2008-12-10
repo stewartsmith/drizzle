@@ -33,6 +33,8 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
+/* API for connecting, logging in to a drizzled server */
+#include <drizzled/connect.h>
 #include <bitset>
 
 using namespace std;

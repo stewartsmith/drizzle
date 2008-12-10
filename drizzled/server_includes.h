@@ -52,8 +52,6 @@
 #include <drizzled/opt_range.h>
 /* Simple error injection (crash) module */
 #include <drizzled/error_injection.h>
-/* API for connecting, logging in to a drizzled server */
-#include <drizzled/connect.h>
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 #include <drizzled/log.h>

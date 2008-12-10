@@ -24,6 +24,8 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduler.h>
 #include <drizzled/session.h>
+/* API for connecting, logging in to a drizzled server */
+#include <drizzled/connect.h>
 
 /*
   'Dummy' functions to be used when we don't need any handling for a scheduler
