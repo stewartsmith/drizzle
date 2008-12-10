@@ -23,7 +23,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = util field item serialize functions functions/str functions/time .
+SUBDIRS = util field item functions functions/str functions/time .
 
 sbin_PROGRAMS =drizzled
 
