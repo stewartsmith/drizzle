@@ -1957,7 +1957,7 @@ static void var_copy(VAR *dest, VAR *src)
   /* Alloc/realloc data for str_val in dest */
   if (dest->alloced_len < src->alloced_len)
   {
-    char *tmpptr= realloc(dest->str_val, src->alloced_len);
+    char *tmpptr= (char *)realloc(dest->str_val, src->alloced_len);
     if (tmpptr == NULL)
       die("Out of memory");
     dest->str_val= tmpptr;

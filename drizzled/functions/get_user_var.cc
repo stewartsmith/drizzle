@@ -80,8 +80,8 @@ int64_t Item_func_get_user_var::val_int()
 
 */
 
-int get_var_with_binlog(Session *session, enum_sql_command sql_command,
-                        LEX_STRING &name, user_var_entry **out_entry)
+static int get_var_with_binlog(Session *session, enum_sql_command sql_command,
+                               LEX_STRING &name, user_var_entry **out_entry)
 {
   BINLOG_USER_VAR_EVENT *user_var_event;
   user_var_entry *var_entry;

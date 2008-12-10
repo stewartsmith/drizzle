@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+bool init_errmessage(void);
 const char * error_message(unsigned int err_index);
 
 enum drizzled_error_code {

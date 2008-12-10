@@ -397,7 +397,7 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
   /* No handling of text based files yet */
   if (table_type == 1)
   {
-    root_ptr= (MEM_ROOT **)pthread_getspecific(THR_MALLOC);
+    root_ptr= current_mem_root_ptr();
     old_root= *root_ptr;
     *root_ptr= &share->mem_root;
     error= open_binary_frm(session, share, head, file);
@@ -1474,7 +1474,7 @@ bool unpack_vcol_info_from_frm(Session *session,
   */
   MEM_ROOT **root_ptr, *old_root;
   Item *backup_free_list= session->free_list;
-  root_ptr= (MEM_ROOT **)pthread_getspecific(THR_MALLOC);
+  root_ptr= current_mem_root_ptr();
   old_root= *root_ptr;
   *root_ptr= &table->mem_root;
   session->free_list= NULL;

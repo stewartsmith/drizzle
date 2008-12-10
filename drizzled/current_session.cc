@@ -19,35 +19,26 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/current_session.h>
-#include CSTDINT_H
-#include <drizzled/functions/time/make_datetime_with_warn.h>
 
-/*
-  Wrapper over make_datetime() with validation of the input DRIZZLE_TIME value
+#include <pthread.h>
 
-  NOTE
-    see make_datetime() for more information
+extern pthread_key_t THR_Session;
+extern pthread_key_t THR_Mem_root;
 
-  RETURN
-    1    if there was an error during converion
-    0    otherwise
-*/
-
-bool make_datetime_with_warn(date_time_format_types format, DRIZZLE_TIME *ltime,
-                                    String *str)
+Session *_current_session(void)
 {
-  int warning= 0;
+  return static_cast<Session *>(pthread_getspecific(THR_Session));
+}
 
-  if (make_datetime(format, ltime, str))
-    return 1;
-  if (check_time_range(ltime, &warning))
-    return 1;
-  if (!warning)
-    return 0;
 
-  make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                               str->ptr(), str->length(),
-                               DRIZZLE_TIMESTAMP_TIME, NULL);
-  return make_datetime(format, ltime, str);
+MEM_ROOT *current_mem_root(void)
+{
+  return *(static_cast<MEM_ROOT **>(pthread_getspecific(THR_Mem_root)));
+}
+
+
+MEM_ROOT **current_mem_root_ptr(void)
+{
+  return static_cast<MEM_ROOT **>(pthread_getspecific(THR_Mem_root));
 }
 

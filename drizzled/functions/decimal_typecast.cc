@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/decimal_typecast.h>
 #include <drizzled/error.h>
+#include <drizzled/current_session.h>
 
 
 String *Item_decimal_typecast::val_str(String *str)

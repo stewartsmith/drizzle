@@ -30,9 +30,12 @@
 #include <drizzled/show.h>
 #include <drizzled/rename.h>
 #include <drizzled/functions/time/unix_timestamp.h>
+#include <drizzled/functions/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
+#include <drizzled/connect.h>
+#include <drizzled/lock.h>
 #include <bitset>
 
 using namespace std;
@@ -2384,36 +2387,6 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
   return res;
 }
 
-/****************************************************************************
-	Check stack size; Send error if there isn't enough stack to continue
-****************************************************************************/
-#if STACK_DIRECTION < 0
-#define used_stack(A,B) (long) (A - B)
-#else
-#define used_stack(A,B) (long) (B - A)
-#endif
-
-/**
-  @note
-  Note: The 'buf' parameter is necessary, even if it is unused here.
-  - fix_fields functions has a "dummy" buffer large enough for the
-    corresponding exec. (Thus we only have to check in fix_fields.)
-  - Passing to check_stack_overrun() prevents the compiler from removing it.
-*/
-bool check_stack_overrun(Session *session, long margin, unsigned char *)
-{
-  long stack_used;
-  assert(session == current_session);
-  if ((stack_used=used_stack(session->thread_stack,(char*) &stack_used)) >=
-      (long) (my_thread_stack_size - margin))
-  {
-    sprintf(errbuff[0],ER(ER_STACK_OVERRUN_NEED_MORE),
-            stack_used,my_thread_stack_size,margin);
-    my_message(ER_STACK_OVERRUN_NEED_MORE,errbuff[0],MYF(ME_FATALERROR));
-    return 1;
-  }
-  return 0;
-}
 
 #define MY_YACC_INIT 1000			// Start with big alloc
 #define MY_YACC_MAX  32000			// Because of 'short'

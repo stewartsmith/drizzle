@@ -27,6 +27,7 @@
 #include <drizzled/error.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
+#include <drizzled/unireg.h>
 
 /* For proto */
 #include <string>

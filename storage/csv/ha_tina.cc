@@ -40,7 +40,7 @@ TODO:
 
  -Brian
 */
-#include <drizzled/common_includes.h>
+#include <drizzled/server_includes.h>
 #include <drizzled/field.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/timestamp.h>

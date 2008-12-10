@@ -34,6 +34,7 @@
 #include <drizzled/db.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/decimal.h>
+#include <drizzled/lock.h>
 
 #include <string>
 #include <iostream>

@@ -43,6 +43,8 @@
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/replicator.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/lock.h>
 
 
 /**
@@ -6253,7 +6255,6 @@ bool drizzle_rm_tmp_tables(void)
     my_dirend(dirp);
   }
   delete session;
-  pthread_setspecific(THR_Session,  0);
   return(0);
 }
 

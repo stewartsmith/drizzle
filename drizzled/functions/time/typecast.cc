@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/current_session.h>
 #include CSTDINT_H
 #include <drizzled/error.h>
 #include <drizzled/functions/time/typecast.h>

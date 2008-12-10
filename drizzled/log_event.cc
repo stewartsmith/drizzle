@@ -44,6 +44,7 @@
 #include <drizzled/query_id.h>
 #include <drizzled/tztime.h>
 #include <drizzled/slave.h>
+#include <drizzled/lock.h>
 
 using namespace std;
 

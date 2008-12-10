@@ -30,23 +30,38 @@
 #ifndef DRIZZLED_SERVER_INCLUDES_H
 #define DRIZZLED_SERVER_INCLUDES_H
 
-/**
- * Contains all headers, definitions, and declarations common to
- * the server and the plugin infrastructure, and not the client
- */
-#include <drizzled/common_includes.h>
+/* Cross-platform portability code and standard includes */
+#include <drizzled/global.h>
+/* Contains system-wide constants and #defines */
+#include <drizzled/definitions.h>
+/* System-wide common data structures */
+#include <drizzled/structs.h>
+/* Defines for the storage engine handler -- i.e. HA_XXX defines */
+/* Needed by field.h */
+#include <drizzled/base.h>
+
+/* Lots of system-wide struct definitions like IO_CACHE,
+   prototypes for all my_* functions */
+#include <mysys/my_sys.h>
+/* Custom C string functions */
+#include <mystrings/m_string.h>
+
+/* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
+#include <drizzled/sql_plugin.h>
 /* Range optimization API/library */
 #include <drizzled/opt_range.h>
 /* Simple error injection (crash) module */
 #include <drizzled/error_injection.h>
-/* API for connecting, logging in to a drizzled server */
-#include <drizzled/connect.h>
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 #include <drizzled/log.h>
 
 #include <string>
 #include <bitset>
+
+
+extern const CHARSET_INFO *system_charset_info, *files_charset_info ;
+extern const CHARSET_INFO *national_charset_info, *table_alias_charset;
 
 typedef class st_select_lex SELECT_LEX;
 typedef struct st_mysql_lock DRIZZLE_LOCK;
@@ -56,22 +71,6 @@ typedef struct st_ha_create_information HA_CREATE_INFO;
 static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 
 
-#define is_schema_db(X) \
-  !my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.str, (X))
-
-/* sql_test.cc */
-void print_where(COND *cond,const char *info, enum_query_type query_type);
-void print_cached_tables(void);
-void print_plan(JOIN* join,uint32_t idx, double record_count, double read_time,
-                double current_read_time, const char *info);
-void print_keyuse_array(DYNAMIC_ARRAY *keyuse_array);
-void dump_TableList_graph(SELECT_LEX *select_lex, TableList* tl);
-void mysql_print_status();
-
-
-bool init_errmessage(void);
-File open_binlog(IO_CACHE *log, const char *log_file_name,
-                 const char **errmsg);
 
 /* mysqld.cc */
 void refresh_status(Session *session);
@@ -105,9 +104,6 @@ bool is_keyword(const char *name, uint32_t len);
 /*
   External variables
 */
-
-extern time_t server_start_time, flush_status_time;
-extern char *opt_drizzle_tmpdir;
 
 #define drizzle_tmpdir (my_tmpdir(&drizzle_tmpdir_list))
 extern MY_TMPDIR drizzle_tmpdir_list;
@@ -196,7 +192,6 @@ extern const char *log_output_str;
 extern DRIZZLE_BIN_LOG drizzle_bin_log;
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
-extern pthread_key_t THR_MALLOC;
 extern pthread_mutex_t LOCK_drizzle_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
        LOCK_error_log, LOCK_uuid_generator,
@@ -244,74 +239,6 @@ extern SHOW_COMP_OPTION have_compress;
 
 extern pthread_t signal_thread;
 
-DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **table, uint32_t count,
-                              uint32_t flags, bool *need_reopen);
-/* mysql_lock_tables() and open_table() flags bits */
-#define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK      0x0001
-#define DRIZZLE_LOCK_IGNORE_FLUSH                 0x0002
-#define DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        0x0004
-#define DRIZZLE_OPEN_TEMPORARY_ONLY               0x0008
-#define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_ONLY      0x0010
-#define DRIZZLE_LOCK_PERF_SCHEMA                  0x0020
-
-void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock);
-void mysql_unlock_read_tables(Session *session, DRIZZLE_LOCK *sql_lock);
-void mysql_unlock_some_tables(Session *session, Table **table,uint32_t count);
-void mysql_lock_remove(Session *session, DRIZZLE_LOCK *locked,Table *table,
-                       bool always_unlock);
-void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock);
-void mysql_lock_downgrade_write(Session *session, Table *table,
-                                thr_lock_type new_lock_type);
-bool mysql_lock_abort_for_thread(Session *session, Table *table);
-DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b);
-TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
-                                      TableList *haystack);
-bool lock_global_read_lock(Session *session);
-void unlock_global_read_lock(Session *session);
-bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
-                              bool is_not_commit);
-void start_waiting_global_read_lock(Session *session);
-bool make_global_read_lock_block_commit(Session *session);
-bool set_protect_against_global_read_lock(void);
-void unset_protect_against_global_read_lock(void);
-void broadcast_refresh(void);
-int try_transactional_lock(Session *session, TableList *table_list);
-int check_transactional_lock(Session *session, TableList *table_list);
-int set_handler_table_locks(Session *session, TableList *table_list,
-                            bool transactional);
-
-/* Lock based on name */
-int lock_and_wait_for_table_name(Session *session, TableList *table_list);
-int lock_table_name(Session *session, TableList *table_list, bool check_in_use);
-void unlock_table_name(Session *session, TableList *table_list);
-bool wait_for_locked_table_names(Session *session, TableList *table_list);
-bool lock_table_names(Session *session, TableList *table_list);
-void unlock_table_names(Session *session, TableList *table_list,
-			TableList *last_table);
-bool lock_table_names_exclusively(Session *session, TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(Session *session,
-                                                     TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(Session *session, unsigned char *key,
-                                                     int key_length);
-
-
-/* old unireg functions */
-
-void unireg_init(ulong options);
-void unireg_end(void) __attribute__((noreturn));
-bool mysql_create_frm(Session *session, const char *file_name,
-                      const char *db, const char *table,
-                      HA_CREATE_INFO *create_info,
-                      List<Create_field> &create_field,
-                      uint32_t key_count,KEY *key_info,handler *db_type);
-int rea_create_table(Session *session, const char *path,
-                     const char *db, const char *table_name,
-                     HA_CREATE_INFO *create_info,
-                     List<Create_field> &create_field,
-                     uint32_t key_count,KEY *key_info,
-                     handler *file);
-int format_number(uint32_t inputflag,uint32_t max_length,char * pos,uint32_t length,
-		  char * *errpos);
 
 /* table.cc */
 TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
@@ -424,14 +351,6 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 #define FN_IS_TMP       (FN_FROM_IS_TMP | FN_TO_IS_TMP)
 #define NO_FRM_RENAME   (1 << 2)
 
-/* item_func.cc */
-Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
-		     LEX_STRING component);
-int get_var_with_binlog(Session *session, enum_sql_command sql_command,
-                        LEX_STRING &name, user_var_entry **out_entry);
-/* log.cc */
-bool flush_error_log(void);
-
 
 inline ulong sql_rnd()
 {
@@ -456,12 +375,5 @@ inline int hexchar_to_int(char c)
   return -1;
 }
 
-/*
-  Some functions that are different in the embedded library and the normal
-  server
-*/
-
-extern "C" void unireg_abort(int exit_code) __attribute__((noreturn));
-bool check_stack_overrun(Session *session, long margin, unsigned char *dummy);
 
 #endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */
