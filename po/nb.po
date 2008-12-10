@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-10-25 21:22+0000\n"
-"Last-Translator: matslindh <Unknown>\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-11-27 01:23+0000\n"
+"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
 "Language-Team: Norwegian Bokmal <nb@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:36+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:22+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -378,13 +378,10 @@ msgstr ""
 "angitt, vil du bli spurt om det i terminalvinduet."
 
 #: client/drizzle.cc:1370
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
-"Portnummeret som skal brukes for tilkoblingen eller 0 for å bruke en "
-"standardverdi fra my.cnf, $MYSQL_TCP_PORT, "
 
 #: client/drizzle.cc:1371
 msgid "built-in default"
@@ -517,14 +514,12 @@ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s Ver %s Distrib %s, for %s (%s) bruker %s %s\n"
 
 #: client/drizzle.cc:1462
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
 
 #: client/drizzle.cc:1467
 #, c-format
@@ -698,14 +693,10 @@ msgstr[0] "Spørring OK, %ld rad påvirket"
 msgstr[1] "Spørring OK, %ld rader påvirket"
 
 #: client/drizzleadmin.cc:82 drizzled/drizzled.cc:3053
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
-"Portnummeret som skal brukes for tilkoblingen eller 0 for å bruke "
-"standardverdien fra, i prioritert rekkefølge, my.cnf, $DRIZZLE_TCP_PORT "
-"eller den innebygde standardverdien ("
 
 #: client/drizzleadmin.cc:87
 msgid "Silently exit if one can't connect to server."
@@ -1978,9 +1969,8 @@ msgid "Default transaction isolation level."
 msgstr ""
 
 #: drizzled/drizzled.cc:3183
-#, fuzzy
 msgid "Run drizzled daemon as user."
-msgstr "Gå ut av drizzle. Det samme som avslutt."
+msgstr ""
 
 #: drizzled/drizzled.cc:3191
 msgid ""
@@ -5918,9 +5908,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/log_event.cc:138
-#, fuzzy, c-format
+#, c-format
 msgid " %s, Error_code: %d;"
-msgstr "Slave: %s Feilkode: %d"
+msgstr ""
 
 #: drizzled/log_event.cc:142
 #, c-format
@@ -5958,9 +5948,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/log_event.cc:1648
-#, fuzzy
 msgid "no error"
-msgstr "Ukjent feil %d"
+msgstr ""
 
 #: drizzled/log_event.cc:1668
 #, c-format
@@ -6002,19 +5991,19 @@ msgid "Out of memory while recording slave event"
 msgstr ""
 
 #: drizzled/log_event.cc:3356 drizzled/log_event.cc:3382
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Create_file event: could not open file '%s'"
-msgstr "feil ved skriving av Create_file-hendelse til relay-loggen"
+msgstr ""
 
 #: drizzled/log_event.cc:3368
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Create_file event: could not write to file '%s'"
-msgstr "feil ved skriving av Create_file-hendelse til relay-loggen"
+msgstr ""
 
 #: drizzled/log_event.cc:3389
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Create_file event: write to '%s' failed"
-msgstr "feil ved skriving av Create_file-hendelse til relay-loggen"
+msgstr ""
 
 #: drizzled/log_event.cc:3503
 #, c-format
@@ -6032,19 +6021,19 @@ msgid "Error in %s event: write to '%s' failed"
 msgstr ""
 
 #: drizzled/log_event.cc:3681
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Exec_load event: could not open file '%s'"
-msgstr "feil ved skriving av Exec_load-hendelse til relay-loggen"
+msgstr ""
 
 #: drizzled/log_event.cc:3691
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Exec_load event: file '%s' appears corrupted"
-msgstr "feil ved skriving av Exec_load-hendelse til relay-loggen"
+msgstr ""
 
 #: drizzled/log_event.cc:3721
-#, fuzzy, c-format
+#, c-format
 msgid "%s. Failed executing load from '%s'"
-msgstr "Slave I/O: feilet ved forespørsel om nedlasting av '%s'"
+msgstr ""
 
 #: drizzled/log_event.cc:3894
 msgid "Not enough memory"
@@ -6508,13 +6497,11 @@ msgid "Error initializing relay log position: %s"
 msgstr "Klarte ikke å intialisere posisjonen i relay-loggen: %s"
 
 #: drizzled/slave.cc:1784
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Slave SQL thread retried transaction %<PRIu64> time(s) in vain, giving up. "
 "Consider raising the value of the slave_transaction_retries variable."
 msgstr ""
-"En slave-I/O-tråd prøvde transaksjonen %lu gang(er) uten å lykkes og gir nå "
-"opp. Vurdér om du bør øke verdien av slave_transaction_retries-variabelen."
 
 #: drizzled/slave.cc:1807
 msgid ""
@@ -6580,15 +6567,12 @@ msgid "Slave I/O thread killed while reading event"
 msgstr "Slave-I/O-tråden ble drept mens den leste en hendelse"
 
 #: drizzled/slave.cc:2060
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Log entry on master is longer than max_allowed_packet (%u) on slave. If the "
 "entry is correct, restart the server with a higher value of "
 "max_allowed_packet"
 msgstr ""
-"Logginnslaget på masteren er lenger enn 'max_allowed_packet' (%ld) på "
-"slaven. Hvis innslaget er riktig, start serveren på nytt med en høyere verdi "
-"for 'max_allowed_packet'."
 
 #: drizzled/slave.cc:2074
 msgid "Stopping slave I/O thread due to out-of-memory error from master"
@@ -7062,9 +7046,8 @@ msgid "Got an error from unknown thread, %s:%d"
 msgstr ""
 
 #: storage/myisam/ha_myisam.cc:462
-#, fuzzy
 msgid "Unknown thread accessing table"
-msgstr "Ukjent tegnsett er brukt i tabellen"
+msgstr ""
 
 #: storage/myisam/my_handler_errors.c:34
 msgid "Didn't find key on read or update"
@@ -7323,22 +7306,22 @@ msgid "Tablespace not empty"
 msgstr "Tabellplassen er ikke tom"
 
 #~ msgid ""
-#~ "Copyright (C) 2000-2008 MySQL AB\n"
-#~ "                                      This software comes with ABSOLUTELY "
-#~ "NO WARRANTY. This is free software,\n"
-#~ " and you are welcome to modify and redistribute it under the GPL license\n"
-#~ msgstr ""
-#~ "Copyright (C) 2000-2008 MySQL AB\n"
-#~ "                                      This software comes with ABSOLUTELY "
-#~ "NO WARRANTY. This is free software,\n"
-#~ " and you are welcome to modify and redistribute it under the GPL license\n"
-
-#~ msgid ""
 #~ "Switch to another charset. Might be needed for processing binlog with "
 #~ "multi-byte charsets."
 #~ msgstr ""
 #~ "Bytt til et annet tegnsett. Kan være nødvendig for å behandle binlog med "
 #~ "tegnsett med flere bytes pr. tegn."
+
+#~ msgid ""
+#~ "Copyright (C) 2000-2008 MySQL AB\n"
+#~ "                                      This software comes with ABSOLUTELY "
+#~ "NO WARRANTY. This is free software,\n"
+#~ " and you are welcome to modify and redistribute it under the GPL license\n"
+#~ msgstr ""
+#~ "Copyright (C) 2000-2008 MySQL AB\n"
+#~ "                                      This software comes with ABSOLUTELY "
+#~ "NO WARRANTY. This is free software,\n"
+#~ " and you are welcome to modify and redistribute it under the GPL license\n"
 
 #~ msgid "Usage: \\C char_setname | charset charset_name"
 #~ msgstr "Bruk: \\C navn_på_tegnsett | charset navn_på_tegnsett"
@@ -7348,12 +7331,6 @@ msgstr "Tabellplassen er ikke tom"
 
 #~ msgid "Charset is not found"
 #~ msgstr "Tegnsettet ble ikke funnet"
-
-#~ msgid "Unknown option to protocol: %s\n"
-#~ msgstr "Ukjent innstilling til protokollen: %s\n"
-
-#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
-#~ msgstr "Sammenligningen (COLLATION) %s er ikke gyldig for tegnsettet %s"
 
 #~ msgid "Failed to create a new master info file (file '%s', errno %d)"
 #~ msgstr ""
@@ -7378,9 +7355,6 @@ msgstr "Tabellplassen er ikke tom"
 #~ msgid "Error reading master configuration"
 #~ msgstr "Klarte ikke å lese masterkonfigurasjonen"
 
-#~ msgid "Invalid error code"
-#~ msgstr "Ugyldig feilkode"
-
 #~ msgid ""
 #~ "Found incompatible DECIMAL field '%s' in %s; Please do \"ALTER TABLE '%s' "
 #~ "FORCE\" to fix it!"
@@ -7401,3 +7375,12 @@ msgstr "Tabellplassen er ikke tom"
 #~ msgstr ""
 #~ "Fant feil nøkkeldefinisjon i %s; kjør \"ALTER TABLE '%s' FORCE\" for å "
 #~ "rette på problemet!"
+
+#~ msgid "Invalid error code"
+#~ msgstr "Ugyldig feilkode"
+
+#~ msgid "Unknown option to protocol: %s\n"
+#~ msgstr "Ukjent innstilling til protokollen: %s\n"
+
+#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
+#~ msgstr "Sammenligningen (COLLATION) %s er ikke gyldig for tegnsettet %s"

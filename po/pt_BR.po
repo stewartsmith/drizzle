@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-11-08 16:58+0000\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-11-28 04:19+0000\n"
 "Last-Translator: Augusto Bott <Unknown>\n"
 "Language-Team: Brazilian Portuguese <pt_BR@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:37+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:23+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -74,7 +74,7 @@ msgstr "Exibe o comando atual."
 
 #: client/drizzle.cc:272
 msgid "Change your drizzle prompt."
-msgstr "Mudar seu prompt drizzle."
+msgstr ""
 
 #: client/drizzle.cc:273
 msgid "Quit drizzle."
@@ -102,8 +102,8 @@ msgstr ""
 #: client/drizzle.cc:281
 msgid "Use another database. Takes database name as argument."
 msgstr ""
-"Seleciona outro banco de dados para uso. Espera um nome de um banco de dados "
-"como argumento."
+"Seleciona outro banco de dados para uso. Precisa um nome de um banco de "
+"dados como argumento."
 
 #: client/drizzle.cc:283 client/drizzle.cc:1441
 msgid "Show warnings after every statement."
@@ -365,13 +365,10 @@ msgstr ""
 "fornecida como parâmetro, ela será perguntada no terminal."
 
 #: client/drizzle.cc:1370
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
-"Número da porta para conectar ou 0 para o padrão, nessa ordem de "
-"preferência: my.cnf, $DRIZZLE_TCP_PORT, "
 
 #: client/drizzle.cc:1371
 msgid "built-in default"
@@ -498,14 +495,12 @@ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s Ver %s Distrib %s, para %s(%s) usando %s %s\n"
 
 #: client/drizzle.cc:1462
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
-"Este software é distribuído SEM NENHUMA GARANTIA. Este é um software livre,\n"
-"e você é bem-vindo para modifica-lo e redistribuí-lo sob a licença GPL\n"
 
 #: client/drizzle.cc:1467
 #, c-format
@@ -679,13 +674,10 @@ msgstr[0] "Query OK, %ld linha afetada"
 msgstr[1] "Query OK, %ld linhas afetadas"
 
 #: client/drizzleadmin.cc:82 drizzled/drizzled.cc:3053
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
-"Use o número da porta para conexão or 0 para padrão, ordem de preferência "
-"em, my.cnf, $DRIZZLE_TCP_PORT, built-in padrão ("
 
 #: client/drizzleadmin.cc:87
 msgid "Silently exit if one can't connect to server."
@@ -1011,6 +1003,8 @@ msgid ""
 "Attempt to read a row while there is no result set associated with the "
 "statement"
 msgstr ""
+"Tentativa de ler uma tupla enquanto não há result set associado com a "
+"sentença"
 
 #: libdrizzle/errmsg.c:84
 msgid "This feature is not implemented yet"
@@ -1065,6 +1059,7 @@ msgstr ""
 #, c-format
 msgid "Statement closed indirectly because of a preceeding %s() call"
 msgstr ""
+"Declaração fechada indiretamente por causa de uma chamada precedente %s()"
 
 #: libdrizzle/errmsg.c:97 drizzled/error.cc:348
 msgid "Couldn't uncompress communication packet"
@@ -1201,11 +1196,13 @@ msgid ""
 "Character set '%s' is not a compiled character set and is not specified in "
 "the %s file"
 msgstr ""
+"Conjunto de caracteres '%s' não é um conjunto de caracteres compilado e não "
+"foi especificado no arquivo %s"
 
 #: mysys/errors.cc:46
 #, c-format
 msgid "Out of resources when opening file '%s' (Errcode: %d)"
-msgstr ""
+msgstr "Fiquei sem recursos enquanto abria o arquivo '%s' (Código do erro: %d)"
 
 #: mysys/errors.cc:47
 #, c-format
@@ -1294,6 +1291,10 @@ msgid ""
 "and boolean options {false|true}  Value (after reading options)\n"
 "--------------------------------- -----------------------------\n"
 msgstr ""
+"\n"
+"Variaveis (--nome-da-variavel=valor)\n"
+"e opções boleanas {false|true} Valor (depois da leitura de opções)\n"
+"--------------------------------- -----------------------------\n"
 
 #: mysys/my_getopt.cc:1226 mysys/my_getopt.cc:1242
 msgid "(No default value)"
@@ -1357,9 +1358,9 @@ msgid "Got error %d from pthread_cond_timedwait"
 msgstr "Recebi o erro %d de pthread_cond_timedwait"
 
 #: drizzled/drizzled.cc:731
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
-msgstr "Recebi o sinal %d da thread %ld"
+msgstr ""
 
 #: drizzled/drizzled.cc:784
 msgid "Aborting\n"
@@ -1367,7 +1368,7 @@ msgstr "Abortando\n"
 
 #: drizzled/drizzled.cc:959
 msgid "One can only use the --user switch if running as root\n"
-msgstr ""
+msgstr "O usuário só pode usar a opção --user se estiver rodando como root\n"
 
 #: drizzled/drizzled.cc:967
 msgid ""
@@ -1387,7 +1388,7 @@ msgstr ""
 #: drizzled/drizzled.cc:1165
 #, c-format
 msgid "Retrying bind on TCP/IP port %u"
-msgstr ""
+msgstr "Tentando novamente o bind na porta TCP/IP %u"
 
 #: drizzled/drizzled.cc:1171
 msgid "Can't start server: Bind on TCP/IP port"
@@ -1397,6 +1398,7 @@ msgstr "Impossível iniciar o servidor: Bind na porta TCP/IP"
 #, c-format
 msgid "Do you already have another drizzled server running on port: %d ?"
 msgstr ""
+"Você já possui uma outra instância do servidor drizzled rodando na porta: %d?"
 
 #: drizzled/drizzled.cc:1178
 msgid "Can't start server: listen() on TCP/IP port"
@@ -1448,6 +1450,9 @@ msgid ""
 "Trying to get some variables.\n"
 "Some pointers may be invalid and cause the dump to abort...\n"
 msgstr ""
+"Tentando pegar algumas variáveis.\n"
+"Alguns ponteiros podem estar inválidos e podem fazer com que o dump seja "
+"abortado...\n"
 
 #: drizzled/drizzled.cc:1356
 #, c-format
@@ -1511,13 +1516,13 @@ msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
 
 #: drizzled/drizzled.cc:1602
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal %d to shutdown drizzled"
-msgstr "Recebi o sinal %d da thread %ld"
+msgstr ""
 
 #: drizzled/drizzled.cc:1619 drizzled/sql_base.cc:6476
 msgid "Can't create thread to kill server"
-msgstr ""
+msgstr "Impossível criar thread para matar o servidor"
 
 #: drizzled/drizzled.cc:1642
 #, c-format
@@ -1552,7 +1557,7 @@ msgstr ""
 #: drizzled/drizzled.cc:2024
 #, c-format
 msgid "Unknown locale: '%s'"
-msgstr ""
+msgstr "Locale desconhecido: '%s'"
 
 #: drizzled/drizzled.cc:2094
 msgid "Can't create thread-keys"
@@ -1575,6 +1580,8 @@ msgid ""
 "using --replicate-same-server-id in conjunction with --log-slave-updates is "
 "impossible, it would lead to infinite loops in this server."
 msgstr ""
+"usar --replicate-same-server-id em conjunto com --log-slave-updates é "
+"impossível. Isso levaria o sevidor a loops infinitos."
 
 #: drizzled/drizzled.cc:2169
 #, c-format
@@ -1583,10 +1590,15 @@ msgid ""
 "replication may break when this Drizzle server acts as a master and has his "
 "hostname changed!! Please use '--log-bin=%s' to avoid this problem."
 msgstr ""
+"Nenhum argumento foi fornecido para --log-bin, e --log-bin-index não foi "
+"usado; então a replicação pode parar quando este servidor Drizzle agir como "
+"mestre e tiver seu hostname alterado!! Por favor use '--log-bin=%s' para "
+"evitar este problema."
 
 #: drizzled/drizzled.cc:2181
+#, fuzzy
 msgid "Out of memory in init_server_components."
-msgstr ""
+msgstr "Sem memória na engine"
 
 #: drizzled/drizzled.cc:2202
 msgid "Failed to initialize plugins."
@@ -1635,6 +1647,9 @@ msgid ""
 "value: we force server id to 1; updates will be logged to the binary log, "
 "but connections from slaves will not be accepted."
 msgstr ""
+"Você ativou o log binário, mas você não definiu server-id para um valor "
+"diferente de zero: forçamos server-id para 1; atualizações serão logadas no "
+"log binario, mas conexões de escravos não serão aceitadas."
 
 #: drizzled/drizzled.cc:2474
 msgid "Before Lock_thread_count"
@@ -1687,7 +1702,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2860
 msgid "Set the filesystem character set."
-msgstr ""
+msgstr "Define o conjunto de caracteres do sistema de arquivos"
 
 #: drizzled/drizzled.cc:2865
 msgid "Set the default character set."
@@ -1699,7 +1714,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2876
 msgid "Set the default collation."
-msgstr ""
+msgstr "Definir o collation padrão."
 
 #: drizzled/drizzled.cc:2880
 msgid "Default completion type."
@@ -1986,9 +2001,8 @@ msgid "Default transaction isolation level."
 msgstr ""
 
 #: drizzled/drizzled.cc:3183
-#, fuzzy
 msgid "Run drizzled daemon as user."
-msgstr "Sai do drizzle. O mesmo que quit (sair)."
+msgstr ""
 
 #: drizzled/drizzled.cc:3191
 msgid ""
@@ -5963,9 +5977,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/log_event.cc:1648
-#, fuzzy
 msgid "no error"
-msgstr "Erro desconhecido %d"
+msgstr ""
 
 #: drizzled/log_event.cc:1668
 #, c-format
@@ -6052,9 +6065,8 @@ msgid "%s. Failed executing load from '%s'"
 msgstr ""
 
 #: drizzled/log_event.cc:3894
-#, fuzzy
 msgid "Not enough memory"
-msgstr "Memória insuficiente"
+msgstr ""
 
 #: drizzled/log_event.cc:4314
 #, c-format
@@ -6067,9 +6079,9 @@ msgid "Error in %s event: when locking tables"
 msgstr ""
 
 #: drizzled/log_event.cc:4345
-#, fuzzy, c-format
+#, c-format
 msgid "Error '%s' on reopening tables"
-msgstr "Recebi o erro '%d' enquanto lia a tabela '%s'"
+msgstr ""
 
 #: drizzled/log_event.cc:4681
 #, c-format
@@ -6077,9 +6089,9 @@ msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/log_event.cc:5077
-#, fuzzy, c-format
+#, c-format
 msgid "Error '%s' on opening table `%s`.`%s`"
-msgstr "Recebi o erro '%d' enquanto lia a tabela '%s'"
+msgstr ""
 
 #. TRANSLATORS: The leading word "logging" is the name
 #. of the plugin api, and so should not be translated.
@@ -6899,6 +6911,9 @@ msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 "position %d to have character set '%s' but the type has no character set."
 msgstr ""
+"Definição incorreta da tabela %s.%s: é esperado que o tipo de coluna '%s' na "
+"posição %d tenha um conjunto de caracteres '%s' porém o tipo não tem um "
+"conjunto de caracteres."
 
 #: drizzled/table.cc:2738
 #, c-format
@@ -6916,6 +6931,8 @@ msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
 "have type %s  but the column is not found."
 msgstr ""
+"Definição incorreta da tabela %s.%s: é esperado que a coluna '%s' na posição "
+"%d  tenha um tipo %s porém a coluna não foi encontrada."
 
 #: drizzled/table.cc:4869
 #, c-format
@@ -6928,9 +6945,8 @@ msgid "Fatal error: Illegal or unknown default time zone '%s'"
 msgstr "Erro fatal: fuso horário padrão '%s' é ilegal ou desconhecido."
 
 #: plugin/errmsg_stderr/errmsg_stderr.cc:76
-#, fuzzy
 msgid "Error Messages to stderr"
-msgstr "Erro conectando ao mestre"
+msgstr ""
 
 #: plugin/logging_query/logging_query.cc:162
 #, c-format
@@ -6966,19 +6982,18 @@ msgid "Log queries to a file"
 msgstr ""
 
 #: storage/myisam/ha_myisam.cc:453
-#, fuzzy, c-format
+#, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
-msgstr "Recebi o sinal %d da thread %ld"
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:457
-#, fuzzy, c-format
+#, c-format
 msgid "Got an error from unknown thread, %s:%d"
-msgstr "Recebi o sinal %d da thread %ld"
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:462
-#, fuzzy
 msgid "Unknown thread accessing table"
-msgstr "Conjunto de caracteres desconhecido utilizado na tabela"
+msgstr ""
 
 #: storage/myisam/my_handler_errors.c:34
 msgid "Didn't find key on read or update"
@@ -6990,13 +7005,15 @@ msgstr "Chave duplicada ao escrever ou atualizar"
 
 #: storage/myisam/my_handler_errors.c:38
 msgid "Internal (unspecified) error in handler"
-msgstr ""
+msgstr "Erro interno (não especificado) no handler"
 
 #: storage/myisam/my_handler_errors.c:40
 msgid ""
 "Someone has changed the row since it was read (while the table was locked to "
 "prevent it)"
 msgstr ""
+"Alguém modificou a linha desde que ela foi lida (enquanto a tabela estava em "
+"lock para prevenir isso)"
 
 #: storage/myisam/my_handler_errors.c:43
 msgid "Wrong index given to function"
@@ -7004,7 +7021,7 @@ msgstr "Indíce incorreto fornecido para a função"
 
 #: storage/myisam/my_handler_errors.c:45
 msgid "Undefined handler error 125"
-msgstr ""
+msgstr "Erro de handler indefinido 125"
 
 #: storage/myisam/my_handler_errors.c:47
 msgid "Index file is crashed"
@@ -7016,7 +7033,7 @@ msgstr "Arquivo de registro está corrompido"
 
 #: storage/myisam/my_handler_errors.c:51
 msgid "Out of memory in engine"
-msgstr ""
+msgstr "Sem memória na engine"
 
 #: storage/myisam/my_handler_errors.c:53
 msgid "Undefined handler error 129"
@@ -7032,7 +7049,7 @@ msgstr "Comando não suportado pelo banco de dados"
 
 #: storage/myisam/my_handler_errors.c:59
 msgid "Old database file"
-msgstr ""
+msgstr "Arquivo de banco de dados antigo"
 
 #: storage/myisam/my_handler_errors.c:61
 msgid "No record read before update"
@@ -7081,7 +7098,7 @@ msgstr ""
 
 #: storage/myisam/my_handler_errors.c:83
 msgid "Table is crashed and last repair failed"
-msgstr ""
+msgstr "Tabela está corrompida e o último reparo falhou"
 
 #: storage/myisam/my_handler_errors.c:85
 msgid "Table was marked as crashed and should be repaired"
@@ -7089,15 +7106,17 @@ msgstr "Tabela foi marcada como corrompida e deve ser reparada"
 
 #: storage/myisam/my_handler_errors.c:87
 msgid "Lock timed out; Retry transaction"
-msgstr ""
+msgstr "Trava expirada; Tentar transação novamente"
 
 #: storage/myisam/my_handler_errors.c:89
 msgid "Lock table is full;  Restart program with a larger locktable"
 msgstr ""
+"Tabela de travas está cheia; Reinicie o programa com uma tabela de travas "
+"maior"
 
 #: storage/myisam/my_handler_errors.c:91
 msgid "Updates are not allowed under a read only transactions"
-msgstr ""
+msgstr "Atualizações não são permitidas sob uma transação somente leitura"
 
 #: storage/myisam/my_handler_errors.c:93
 msgid "Lock deadlock; Retry transaction"
@@ -7105,15 +7124,15 @@ msgstr ""
 
 #: storage/myisam/my_handler_errors.c:95
 msgid "Foreign key constraint is incorrectly formed"
-msgstr ""
+msgstr "Chave estrangeira está incorretamente formada"
 
 #: storage/myisam/my_handler_errors.c:97
 msgid "Cannot add a child row"
-msgstr ""
+msgstr "Impossível adicionar uma linha filha"
 
 #: storage/myisam/my_handler_errors.c:99
 msgid "Cannot delete a parent row"
-msgstr ""
+msgstr "Impossível apagar uma linha pai"
 
 #: storage/myisam/my_handler_errors.c:101
 msgid "No savepoint with that name"
@@ -7153,7 +7172,7 @@ msgstr ""
 
 #: storage/myisam/my_handler_errors.c:119
 msgid "Index needed in foreign key constraint"
-msgstr ""
+msgstr "É ncessário um índice na constraint de chave estrangeira"
 
 #: storage/myisam/my_handler_errors.c:121
 msgid "Upholding foreign key constraints would lead to a duplicate key error"
@@ -7161,7 +7180,7 @@ msgstr ""
 
 #: storage/myisam/my_handler_errors.c:123
 msgid "Table needs to be upgraded before it can be used"
-msgstr ""
+msgstr "Tabela precisa ser atualizada antes de poder ser usada"
 
 #: storage/myisam/my_handler_errors.c:125
 msgid "Table is read only"
@@ -7169,11 +7188,11 @@ msgstr "A tabela é somente leitura"
 
 #: storage/myisam/my_handler_errors.c:127
 msgid "Failed to get next auto increment value"
-msgstr ""
+msgstr "Falhei em pegar o próximo valaor para o auto incremento"
 
 #: storage/myisam/my_handler_errors.c:129
 msgid "Failed to set row auto increment value"
-msgstr ""
+msgstr "Falhei em definir o valor para o auto incremento"
 
 #: storage/myisam/my_handler_errors.c:131
 msgid "Unknown (generic) error from engine"
@@ -7185,7 +7204,7 @@ msgstr "O registro é  mesmo"
 
 #: storage/myisam/my_handler_errors.c:135
 msgid "It is not possible to log this statement"
-msgstr ""
+msgstr "Não é possível logar esse comando"
 
 #: storage/myisam/my_handler_errors.c:137
 msgid "Tablespace exists"
@@ -7205,19 +7224,19 @@ msgstr ""
 
 #: storage/myisam/my_handler_errors.c:145
 msgid "Got a fatal error during initialzaction of handler"
-msgstr ""
+msgstr "Ocorreu um erro fatal durante inicialização do handler"
 
 #: storage/myisam/my_handler_errors.c:147
 msgid "File to short; Expected more data in file"
-msgstr ""
+msgstr "Arquivo muito pequeno; Mais dados eram experados no arquivo"
 
 #: storage/myisam/my_handler_errors.c:149
 msgid "Read page with wrong checksum"
-msgstr ""
+msgstr "Ler página com checksum incorreto"
 
 #: storage/myisam/my_handler_errors.c:151
 msgid "Lock or active transaction"
-msgstr ""
+msgstr "Trava ou transação ativa"
 
 #: storage/myisam/my_handler_errors.c:153
 msgid "No such table space"
@@ -7228,6 +7247,13 @@ msgid "Tablespace not empty"
 msgstr "Tablespace não está vazio"
 
 #~ msgid ""
+#~ "Switch to another charset. Might be needed for processing binlog with "
+#~ "multi-byte charsets."
+#~ msgstr ""
+#~ "Troca para outro charset. Pode ser necessário para processar binlog com "
+#~ "charsets de múltiplos bytes."
+
+#~ msgid ""
 #~ "Copyright (C) 2000-2008 MySQL AB\n"
 #~ "                                      This software comes with ABSOLUTELY "
 #~ "NO WARRANTY. This is free software,\n"
@@ -7235,16 +7261,6 @@ msgstr "Tablespace não está vazio"
 #~ msgstr ""
 #~ "Este software não possui ABSOLUTAMENTE NENHUMA GARANTIA. Este software é "
 #~ "livre.\n"
-
-#~ msgid "You need to use --log-bin to make --binlog-format work."
-#~ msgstr "Você precisa usar --log-bin para fazer --binlog-format funcionar."
-
-#~ msgid ""
-#~ "Switch to another charset. Might be needed for processing binlog with "
-#~ "multi-byte charsets."
-#~ msgstr ""
-#~ "Troca para outro charset. Pode ser necessário para processar binlog com "
-#~ "charsets de múltiplos bytes."
 
 #~ msgid "Usage: \\C char_setname | charset charset_name"
 #~ msgstr "Uso: \\C char_setname | charset charset_name"
@@ -7255,11 +7271,8 @@ msgstr "Tablespace não está vazio"
 #~ msgid "Charset is not found"
 #~ msgstr "Charset não encontrado"
 
-#~ msgid "Unknown option to protocol: %s\n"
-#~ msgstr "Opção desconhecida para o protocolo: %s\n"
-
-#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
-#~ msgstr "COLLATION %s não é válido pra o CHARACTER SET %s"
+#~ msgid "Invalid error code"
+#~ msgstr "Código de erro inválido"
 
 #~ msgid ""
 #~ "Although a path was specified for the --log option, log tables are used. "
@@ -7278,5 +7291,11 @@ msgstr "Tablespace não está vazio"
 #~ "tabelas de log serão utilizadas. Para ativar o log em arquivos use a "
 #~ "opção --log-output=arquivo"
 
-#~ msgid "Invalid error code"
-#~ msgstr "Código de erro inválido"
+#~ msgid "You need to use --log-bin to make --binlog-format work."
+#~ msgstr "Você precisa usar --log-bin para fazer --binlog-format funcionar."
+
+#~ msgid "Unknown option to protocol: %s\n"
+#~ msgstr "Opção desconhecida para o protocolo: %s\n"
+
+#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
+#~ msgstr "COLLATION %s não é válido pra o CHARACTER SET %s"

@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-09-11 13:31+0000\n"
-"Last-Translator: Tiago Silva <Unknown>\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-11-27 01:54+0000\n"
+"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:37+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:23+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -458,16 +458,12 @@ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s Ver %s Distrib %s, para %s (%s) usando %s %s\n"
 
 #: client/drizzle.cc:1462
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
-"Copyright (C) 2000-2008 MySQL AB\n"
-"                                      This software comes with ABSOLUTELY NO "
-"WARRANTY. This is free software,\n"
-" and you are welcome to modify and redistribute it under the GPL license\n"
 
 #: client/drizzle.cc:1467
 #, c-format
@@ -1883,9 +1879,8 @@ msgid "Default transaction isolation level."
 msgstr ""
 
 #: drizzled/drizzled.cc:3183
-#, fuzzy
 msgid "Run drizzled daemon as user."
-msgstr "Sair do drizzle."
+msgstr ""
 
 #: drizzled/drizzled.cc:3191
 msgid ""
@@ -2282,7 +2277,6 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3862
-#, fuzzy
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -2290,10 +2284,6 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
-"Copyright (C) 2000-2008 MySQL AB\n"
-"                                      This software comes with ABSOLUTELY NO "
-"WARRANTY. This is free software,\n"
-" and you are welcome to modify and redistribute it under the GPL license\n"
 
 #: drizzled/drizzled.cc:3869
 #, c-format

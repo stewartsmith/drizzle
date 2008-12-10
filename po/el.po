@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-11-22 12:38+0000\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-12-04 19:32+0000\n"
 "Last-Translator: fokis...ftw <fotis.koutoulakis@gmail.com>\n"
 "Language-Team: Greek <el@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:37+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:23+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -49,11 +49,11 @@ msgstr ""
 
 #: client/drizzle.cc:266
 msgid "Display this help."
-msgstr ""
+msgstr "Εμφάνησε αυτή την βοήθεια."
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
-msgstr ""
+msgstr "Προβολή βοήθειας."
 
 #: client/drizzle.cc:268
 msgid "Don't write into outfile."
@@ -65,7 +65,7 @@ msgstr ""
 
 #: client/drizzle.cc:271
 msgid "Print current command."
-msgstr ""
+msgstr "Τύπωσε αυτήν την εντολή."
 
 #: client/drizzle.cc:272
 msgid "Change your drizzle prompt."
@@ -73,7 +73,7 @@ msgstr ""
 
 #: client/drizzle.cc:273
 msgid "Quit drizzle."
-msgstr ""
+msgstr "Έξοδος από το drizzle."
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
@@ -85,7 +85,7 @@ msgstr ""
 
 #: client/drizzle.cc:277
 msgid "Get status information from the server."
-msgstr ""
+msgstr "Μεταφόρτωση πληροφοριών κατάστασης από τον διακομιστή."
 
 #: client/drizzle.cc:279
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
@@ -140,11 +140,11 @@ msgstr ""
 
 #: client/drizzle.cc:1203
 msgid "Aborted"
-msgstr ""
+msgstr "Ακυρώθηκε"
 
 #: client/drizzle.cc:1203
 msgid "Bye"
-msgstr ""
+msgstr "Γεια"
 
 #: client/drizzle.cc:1252
 msgid "Query aborted by Ctrl+C\n"

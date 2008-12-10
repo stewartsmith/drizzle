@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-10-01 16:57+0000\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-11-26 23:57+0000\n"
 "Last-Translator: tesserhex <jxl@gmx.com>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:37+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:23+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -367,13 +367,10 @@ msgstr ""
 "asked from the tty."
 
 #: client/drizzle.cc:1370
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, my.cnf, $DRIZZLE_TCP_PORT, "
 
 #: client/drizzle.cc:1371
 msgid "built-in default"
@@ -497,14 +494,12 @@ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 
 #: client/drizzle.cc:1462
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
 
 #: client/drizzle.cc:1467
 #, c-format
@@ -674,13 +669,10 @@ msgstr[0] "Query OK, %ld row affected"
 msgstr[1] "Query OK, %ld rows affected"
 
 #: client/drizzleadmin.cc:82 drizzled/drizzled.cc:3053
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, my.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 
 #: client/drizzleadmin.cc:87
 msgid "Silently exit if one can't connect to server."
@@ -1351,9 +1343,9 @@ msgid "Got error %d from pthread_cond_timedwait"
 msgstr "Got error %d from pthread_cond_timedwait"
 
 #: drizzled/drizzled.cc:731
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
-msgstr "Got signal %d from thread %ld"
+msgstr ""
 
 #: drizzled/drizzled.cc:784
 msgid "Aborting\n"
@@ -1364,13 +1356,10 @@ msgid "One can only use the --user switch if running as root\n"
 msgstr "One can only use the --user switch if running as root\n"
 
 #: drizzled/drizzled.cc:967
-#, fuzzy
 msgid ""
 "Fatal error: Please read \"Security\" section of the manual to find out how "
 "to run drizzled as root!\n"
 msgstr ""
-"Fatal error: Please read \"Security\" section of the manual to find out how "
-"to run mysqld as root!\n"
 
 #: drizzled/drizzled.cc:991
 #, c-format
@@ -1427,7 +1416,7 @@ msgstr ""
 "\n"
 
 #: drizzled/drizzled.cc:1298
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "It is possible that drizzled could use up to \n"
 "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
@@ -1436,22 +1425,14 @@ msgid ""
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 msgstr ""
-"It is possible that mysqld could use up to \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %lu K\n"
-"bytes of memory\n"
-"Hope that's ok; if not, decrease some variables in the equation.\n"
-"\n"
 
 #: drizzled/drizzled.cc:1316
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Attempting backtrace. You can use the following information to find out\n"
 "where drizzled died. If you see no messages after this, something went\n"
 "terribly wrong...\n"
 msgstr ""
-"Attempting backtrace. You can use the following information to find out\n"
-"where mysqld died. If you see no messages after this, something went\n"
-"terribly wrong...\n"
 
 #: drizzled/drizzled.cc:1344
 #, c-format
@@ -1536,9 +1517,9 @@ msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr "Can't create interrupt-thread (error %d, errno: %d)"
 
 #: drizzled/drizzled.cc:1602
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal %d to shutdown drizzled"
-msgstr "Got signal %d to shutdown mysqld"
+msgstr ""
 
 #: drizzled/drizzled.cc:1619 drizzled/sql_base.cc:6476
 msgid "Can't create thread to kill server"
@@ -1560,12 +1541,11 @@ msgid "gethostname failed, using '%s' as hostname"
 msgstr "gethostname failed, using '%s' as hostname"
 
 #: drizzled/drizzled.cc:1938
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Changed limits: max_open_files: %u  max_connections: %<PRIu64>  table_cache: "
 "%<PRIu64>"
 msgstr ""
-"Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld"
 
 #: drizzled/drizzled.cc:1943
 #, c-format
@@ -1656,9 +1636,9 @@ msgid "Failed to lock memory. Errno: %d\n"
 msgstr "Failed to lock memory. Error: %d\n"
 
 #: drizzled/drizzled.cc:2384
-#, fuzzy, c-format
+#, c-format
 msgid "Asked for %<PRIu64> thread stack, but got %<PRIu64>"
-msgstr "Asked for %u thread stack, but got %llu"
+msgstr ""
 
 #: drizzled/drizzled.cc:2422
 msgid ""
@@ -6009,9 +5989,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/log_event.cc:1648
-#, fuzzy
 msgid "no error"
-msgstr "Unknown error %d"
+msgstr ""
 
 #: drizzled/log_event.cc:1668
 #, c-format
@@ -6098,9 +6077,8 @@ msgid "%s. Failed executing load from '%s'"
 msgstr ""
 
 #: drizzled/log_event.cc:3894
-#, fuzzy
 msgid "Not enough memory"
-msgstr "Out of memory"
+msgstr ""
 
 #: drizzled/log_event.cc:4314
 #, c-format
@@ -6964,9 +6942,8 @@ msgid "Fatal error: Illegal or unknown default time zone '%s'"
 msgstr ""
 
 #: plugin/errmsg_stderr/errmsg_stderr.cc:76
-#, fuzzy
 msgid "Error Messages to stderr"
-msgstr "Error connecting to master:"
+msgstr ""
 
 #: plugin/logging_query/logging_query.cc:162
 #, c-format
@@ -7002,19 +6979,18 @@ msgid "Log queries to a file"
 msgstr ""
 
 #: storage/myisam/ha_myisam.cc:453
-#, fuzzy, c-format
+#, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
-msgstr "Got signal %d from thread %ld"
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:457
-#, fuzzy, c-format
+#, c-format
 msgid "Got an error from unknown thread, %s:%d"
-msgstr "Got signal %d from thread %ld"
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:462
-#, fuzzy
 msgid "Unknown thread accessing table"
-msgstr "Unknown character set used in table"
+msgstr ""
 
 #: storage/myisam/my_handler_errors.c:34
 msgid "Didn't find key on read or update"
@@ -7265,6 +7241,13 @@ msgid "Tablespace not empty"
 msgstr "Tablespace not empty"
 
 #~ msgid ""
+#~ "Switch to another charset. Might be needed for processing binlog with "
+#~ "multi-byte charsets."
+#~ msgstr ""
+#~ "Switch to another charset. Might be needed for processing binlog with "
+#~ "multi-byte charsets."
+
+#~ msgid ""
 #~ "Copyright (C) 2000-2008 MySQL AB\n"
 #~ "                                      This software comes with ABSOLUTELY "
 #~ "NO WARRANTY. This is free software,\n"
@@ -7274,6 +7257,31 @@ msgstr "Tablespace not empty"
 #~ "                                      This software comes with ABSOLUTELY "
 #~ "NO WARRANTY. This is free software,\n"
 #~ " and you are welcome to modify and redistribute it under the GPL license\n"
+
+#~ msgid "Usage: \\C char_setname | charset charset_name"
+#~ msgstr "Usage: \\C char_setname | charset charset_name"
+
+#~ msgid "Charset changed"
+#~ msgstr "Charset changed"
+
+#~ msgid "Charset is not found"
+#~ msgstr "Charset is not found"
+
+#~ msgid ""
+#~ "Although a path was specified for the --log option, log tables are used. "
+#~ "To enable logging to files use the --log-output option."
+#~ msgstr ""
+#~ "Although a path was specified for the --log option, log tables are used. "
+#~ "To enable logging to files use the --log-output option."
+
+#~ msgid ""
+#~ "Although a path was specified for the --log-slow-queries option, log "
+#~ "tables are used. To enable logging to files use the --log-output=file "
+#~ "option."
+#~ msgstr ""
+#~ "Although a path was specified for the --log-slow-queries option, log "
+#~ "tables are used. To enable logging to files use the --log-output=file "
+#~ "option."
 
 #~ msgid "You need to use --log-bin to make --binlog-format work."
 #~ msgstr "You need to use --log-bin to make --binlog-format work."
@@ -7297,44 +7305,6 @@ msgstr "Tablespace not empty"
 #~ "contrast to replicate-ignore-db."
 
 #~ msgid ""
-#~ "Switch to another charset. Might be needed for processing binlog with "
-#~ "multi-byte charsets."
-#~ msgstr ""
-#~ "Switch to another charset. Might be needed for processing binlog with "
-#~ "multi-byte charsets."
-
-#~ msgid "Usage: \\C char_setname | charset charset_name"
-#~ msgstr "Usage: \\C char_setname | charset charset_name"
-
-#~ msgid "Charset changed"
-#~ msgstr "Charset changed"
-
-#~ msgid "Charset is not found"
-#~ msgstr "Charset is not found"
-
-#~ msgid "Unknown option to protocol: %s\n"
-#~ msgstr "Unknown option to protocol: %s\n"
-
-#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
-#~ msgstr "COLLATION %s is not valid for CHARACTER SET %s"
-
-#~ msgid ""
-#~ "Although a path was specified for the --log option, log tables are used. "
-#~ "To enable logging to files use the --log-output option."
-#~ msgstr ""
-#~ "Although a path was specified for the --log option, log tables are used. "
-#~ "To enable logging to files use the --log-output option."
-
-#~ msgid ""
-#~ "Although a path was specified for the --log-slow-queries option, log "
-#~ "tables are used. To enable logging to files use the --log-output=file "
-#~ "option."
-#~ msgstr ""
-#~ "Although a path was specified for the --log-slow-queries option, log "
-#~ "tables are used. To enable logging to files use the --log-output=file "
-#~ "option."
-
-#~ msgid ""
 #~ "Log all queries that have taken more than long_query_time seconds to "
 #~ "execute to file. The argument will be treated as a decimal value with "
 #~ "microsecond precission."
@@ -7342,3 +7312,9 @@ msgstr "Tablespace not empty"
 #~ "Log all queries that have taken more than long_query_time seconds to "
 #~ "execute to file. The argument will be treated as a decimal value with "
 #~ "microsecond precision."
+
+#~ msgid "Unknown option to protocol: %s\n"
+#~ msgstr "Unknown option to protocol: %s\n"
+
+#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
+#~ msgstr "COLLATION %s is not valid for CHARACTER SET %s"

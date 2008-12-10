@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-10-01 16:22+0000\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-11-27 03:01+0000\n"
 "Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
 "Language-Team: Chinese (Hong Kong) <zh_HK@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:37+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:23+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -1865,9 +1865,8 @@ msgid "Default transaction isolation level."
 msgstr ""
 
 #: drizzled/drizzled.cc:3183
-#, fuzzy
 msgid "Run drizzled daemon as user."
-msgstr "離開drizzle.等如quit."
+msgstr ""
 
 #: drizzled/drizzled.cc:3191
 msgid ""
@@ -5839,9 +5838,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/log_event.cc:1648
-#, fuzzy
 msgid "no error"
-msgstr "不明的錯誤 %d"
+msgstr ""
 
 #: drizzled/log_event.cc:1668
 #, c-format

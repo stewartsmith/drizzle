@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-10-29 23:53+0000\n"
-"Last-Translator: José Lecaros Cisterna <lecaros@ubuntu-cl.org>\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-12-08 16:33+0000\n"
+"Last-Translator: ZUR47 <om.paucar@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:36+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:23+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -240,7 +240,7 @@ msgstr "Base de datos a utilizar."
 
 #: client/drizzle.cc:1311
 msgid "(not used)"
-msgstr ""
+msgstr "(sin usar)"
 
 #: client/drizzle.cc:1313
 msgid "Delimiter to be used."
@@ -383,13 +383,10 @@ msgstr ""
 "la terminal (tty)."
 
 #: client/drizzle.cc:1370
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
-"Puerto para la conexión o 0 por defecto, en orden de preferencia, my.cnf, "
-"$DRIZZLE_TCP_POST, "
 
 #: client/drizzle.cc:1371
 msgid "built-in default"
@@ -516,15 +513,12 @@ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s Ver %s Distrib %s, para %s (%s) usando %s %s\n"
 
 #: client/drizzle.cc:1462
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
-"Este software viene con ABSOLUTAMENTE NINGUNA GARANTIA. Esto es software "
-"libre y usted es bienvenido a modificarlo y redistribuirlo debajo de la "
-"licencia GPL.\n"
 
 #: client/drizzle.cc:1467
 #, c-format
@@ -698,13 +692,13 @@ msgstr[0] "Consulta OK, %ld fila afectada"
 msgstr[1] "Consulta OK, %ld filas afectadas"
 
 #: client/drizzleadmin.cc:82 drizzled/drizzled.cc:3053
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
-"Puerto para la conexión o 0 por defecto, en orden de preferencia, my.cnf, "
-"$DRIZZLE_TCP_PORT, puesto por defecto ("
+"Numero del puerto a usar para la conexion o 0 para predeterminado a, en "
+"orden de preferencia, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in "
+"predeterminado ("
 
 #: client/drizzleadmin.cc:87
 msgid "Silently exit if one can't connect to server."
@@ -1354,33 +1348,33 @@ msgstr "La funcion init del plugin '%s' a retornado un error."
 #: drizzled/configvar.cc:40
 #, c-format
 msgid "configvar plugin '%s' init() failed"
-msgstr ""
+msgstr "Falló configvar plugin '%s' init()"
 
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/configvar.cc:62
 #, c-format
 msgid "configvar plugin '%s' deinit() failed"
-msgstr ""
+msgstr "Falló configvar plugin '%s' deinit()"
 
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/configvar.cc:98
 #, c-format
 msgid "configvar plugin '%s' configvar_func1() failed"
-msgstr ""
+msgstr "Falló configvar plugin '%s' configvar_func1()"
 
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/configvar.cc:152
 #, c-format
 msgid "configvar plugin '%s' configvar_func2() failed"
-msgstr ""
+msgstr "Falló configvar plugin '%s' configvar_func2()"
 
 #: drizzled/db.cc:404 drizzled/db.cc:412
 #, c-format
 msgid "Error while loading database options: '%s':"
-msgstr ""
+msgstr "Error al cargar las opciones de la base de datos: '%s'"
 
 #: drizzled/drizzled.cc:550
 #, c-format
@@ -1388,9 +1382,9 @@ msgid "Got error %d from pthread_cond_timedwait"
 msgstr "Obtuvo error %d de pthread_cond_timedwait"
 
 #: drizzled/drizzled.cc:731
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
-msgstr "Obtuvo señal % del hilo de ejecucion %ld"
+msgstr "Capturada la señal %d del hilo de ejecución %<PRIu64>"
 
 #: drizzled/drizzled.cc:784
 msgid "Aborting\n"
@@ -1401,13 +1395,12 @@ msgid "One can only use the --user switch if running as root\n"
 msgstr "solo se puede user el switch --user si esta ejecutando como root\n"
 
 #: drizzled/drizzled.cc:967
-#, fuzzy
 msgid ""
 "Fatal error: Please read \"Security\" section of the manual to find out how "
 "to run drizzled as root!\n"
 msgstr ""
-"Error fatal: Por favor lea la seccion de \"Seguridad\" del manual para "
-"investigar como ejecutar mysqld como root!\n"
+"Error fatal: Por favor, ¡lea la sección \"Seguridad\" en el manual para "
+"entender cómo ejecutar drizzled como usuario root!\n"
 
 #: drizzled/drizzled.cc:991
 #, c-format
@@ -1463,7 +1456,7 @@ msgstr ""
 "\n"
 
 #: drizzled/drizzled.cc:1298
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "It is possible that drizzled could use up to \n"
 "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
@@ -1472,24 +1465,20 @@ msgid ""
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 msgstr ""
-"Es posible que mysqld podrá utilizar hasta\n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size) * max_threads = %lu "
-"K\n"
+"Es posible que drizzled pueda llegar a usar hasta \n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
+"<PRIu64> K\n"
 "bytes de memoria\n"
-"Espero que esta bien; si no, disminuir algunas variables en la ecuación.\n"
+"Espero que esto esté bien; si no, reduzca algunas variables en la ecuación.\n"
 "\n"
 
 #: drizzled/drizzled.cc:1316
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Attempting backtrace. You can use the following information to find out\n"
 "where drizzled died. If you see no messages after this, something went\n"
 "terribly wrong...\n"
 msgstr ""
-"Intentando backtrace. Puede utilizar la siguiente información para "
-"averiguar\n"
-"donde murió mysqld. Si no aparece un mensaje después de esto, algo pasó\n"
-"terriblemente mal...\n"
 
 #: drizzled/drizzled.cc:1344
 #, c-format
@@ -1584,9 +1573,9 @@ msgstr ""
 "No se pudo crear hilo de ejecucion de interrupcion (error %d, errno: %d)"
 
 #: drizzled/drizzled.cc:1602
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal %d to shutdown drizzled"
-msgstr "Obtuvo señal %d para cerrar mysqld"
+msgstr "Capturada señal %d para detener drizzled"
 
 #: drizzled/drizzled.cc:1619 drizzled/sql_base.cc:6476
 msgid "Can't create thread to kill server"
@@ -1608,13 +1597,13 @@ msgid "gethostname failed, using '%s' as hostname"
 msgstr "gethostname fallo, usando '%s' como hostname"
 
 #: drizzled/drizzled.cc:1938
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Changed limits: max_open_files: %u  max_connections: %<PRIu64>  table_cache: "
 "%<PRIu64>"
 msgstr ""
-"Cambiaron los limites: max_open_files: %u max_connections: %ld table_cache %"
-"ld"
+"Modificados los límites: max_open_files: %u max_connections: %<PRIu64> "
+"table_cache: %<PRIu64>"
 
 #: drizzled/drizzled.cc:1943
 #, c-format
@@ -1634,11 +1623,11 @@ msgstr "No se puede crear las llave de hilos de ejecucion"
 
 #: drizzled/drizzled.cc:2134
 msgid "Unable to reopen stdout"
-msgstr ""
+msgstr "No es posible volver a abrir stdout"
 
 #: drizzled/drizzled.cc:2137
 msgid "Unable to reopen stderr"
-msgstr ""
+msgstr "No es posible volver a abrir stderr"
 
 #: drizzled/drizzled.cc:2143
 msgid "Out of memory"
@@ -1708,7 +1697,7 @@ msgstr "Fallo al tratar de bloquear memoria. Errno: %d\n"
 #: drizzled/drizzled.cc:2384
 #, fuzzy, c-format
 msgid "Asked for %<PRIu64> thread stack, but got %<PRIu64>"
-msgstr "Se pidio la pila de hilos de ejecucion %u , pero se obtuvo %llu"
+msgstr "Se pidió la pila de llamadas del hilo %u, pero se obtuvo %<PRIu64>"
 
 #: drizzled/drizzled.cc:2422
 msgid ""
@@ -1784,9 +1773,8 @@ msgid "Set the default character set."
 msgstr "Ajustar el character set por defecto."
 
 #: drizzled/drizzled.cc:2872
-#, fuzzy
 msgid "Chroot drizzled daemon during startup."
-msgstr "CHroot mysqld demonio durante inicio."
+msgstr ""
 
 #: drizzled/drizzled.cc:2876
 msgid "Set the default collation."
@@ -1829,10 +1817,11 @@ msgstr "Imprime stack trace simbolico en fallo."
 #: drizzled/drizzled.cc:2920
 msgid "Push supported query conditions to the storage engine."
 msgstr ""
+"Pasar las condiciones de consulta soportadas al motor de almacenamiento."
 
 #: drizzled/drizzled.cc:2926
 msgid "Used for debugging;  Use at your own risk!"
-msgstr ""
+msgstr "Usado para depurar: ¡Úselo bajo su propio riesgo!"
 
 #: drizzled/drizzled.cc:2929
 msgid "Flush tables to disk between SQL commands."
@@ -1878,6 +1867,10 @@ msgid ""
 "the binary log files.(Strongly recommended to avoid replication problems if "
 "server's hostname changes)"
 msgstr ""
+"Coonsultas de inicio de sesion actualizadas en formato binario.El argumento "
+"opcional es la localizacion de los archivos binarios de inicio de sesion."
+"(Altamente recomendado a evitar problemas de replicacion si el nombre de "
+"host del servidor cambia)"
 
 #: drizzled/drizzled.cc:2975
 msgid "File that holds the names for last binary log files."
@@ -1930,9 +1923,8 @@ msgstr ""
 "rendirse."
 
 #: drizzled/drizzled.cc:3030
-#, fuzzy
 msgid "Lock drizzled in memory."
-msgstr "Bloquea mysqld en memoria."
+msgstr ""
 
 #: drizzled/drizzled.cc:3034
 msgid ""
@@ -2092,9 +2084,8 @@ msgid "Default transaction isolation level."
 msgstr ""
 
 #: drizzled/drizzled.cc:3183
-#, fuzzy
 msgid "Run drizzled daemon as user."
-msgstr "Correr el demonio mysqld como usuario"
+msgstr ""
 
 #: drizzled/drizzled.cc:3191
 msgid ""
@@ -6070,9 +6061,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/log_event.cc:1648
-#, fuzzy
 msgid "no error"
-msgstr "Error desconocido %d"
+msgstr ""
 
 #: drizzled/log_event.cc:1668
 #, c-format
@@ -6159,9 +6149,8 @@ msgid "%s. Failed executing load from '%s'"
 msgstr ""
 
 #: drizzled/log_event.cc:3894
-#, fuzzy
 msgid "Not enough memory"
-msgstr "Memoria agotada"
+msgstr ""
 
 #: drizzled/log_event.cc:4314
 #, c-format
@@ -7039,9 +7028,8 @@ msgid "Fatal error: Illegal or unknown default time zone '%s'"
 msgstr "Error fatal: Zona horaria por defecto '%s' ilegal o desconocida"
 
 #: plugin/errmsg_stderr/errmsg_stderr.cc:76
-#, fuzzy
 msgid "Error Messages to stderr"
-msgstr "Error al conectarse al maestro:"
+msgstr ""
 
 #: plugin/logging_query/logging_query.cc:162
 #, c-format
@@ -7073,24 +7061,22 @@ msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 
 #: plugin/logging_query/logging_query.cc:282
-#, fuzzy
 msgid "Log queries to a file"
-msgstr "Loguear conexiones y consultas a archivo."
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:453
-#, fuzzy, c-format
+#, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
-msgstr "Obtuvo señal % del hilo de ejecucion %ld"
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:457
-#, fuzzy, c-format
+#, c-format
 msgid "Got an error from unknown thread, %s:%d"
-msgstr "Obtuvo señal % del hilo de ejecucion %ld"
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:462
-#, fuzzy
 msgid "Unknown thread accessing table"
-msgstr "Conjunto de caracteres desconocido usado en tabla"
+msgstr ""
 
 #: storage/myisam/my_handler_errors.c:34
 msgid "Didn't find key on read or update"
@@ -7345,6 +7331,13 @@ msgid "Tablespace not empty"
 msgstr "Espacio de tabla no vacio"
 
 #~ msgid ""
+#~ "Switch to another charset. Might be needed for processing binlog with "
+#~ "multi-byte charsets."
+#~ msgstr ""
+#~ "Cambiar a otro charset. Puede necesitarse para procesar el log binario "
+#~ "con caracteres multi-byte."
+
+#~ msgid ""
 #~ "Copyright (C) 2000-2008 MySQL AB\n"
 #~ "                                      This software comes with ABSOLUTELY "
 #~ "NO WARRANTY. This is free software,\n"
@@ -7354,6 +7347,34 @@ msgstr "Espacio de tabla no vacio"
 #~ "                                      Este software no garantiza "
 #~ "ABSOLUTAMENTE NINGUNA GARANTÍA. Esto es softwre libre, y eres bienvenido "
 #~ "para modificar y redistribuirlo bajo licencia GPL\n"
+
+#~ msgid "Usage: \\C char_setname | charset charset_name"
+#~ msgstr "Uso: \\C char_setname | charset charset_name"
+
+#~ msgid "Charset changed"
+#~ msgstr "Charset cambiado"
+
+#~ msgid "Charset is not found"
+#~ msgstr "Charset no encontrado"
+
+#~ msgid "Invalid error code"
+#~ msgstr "Código de error inválido"
+
+#~ msgid ""
+#~ "Although a path was specified for the --log option, log tables are used. "
+#~ "To enable logging to files use the --log-output option."
+#~ msgstr ""
+#~ "Aunque la ruta fue especificada para la opcion --log, tablas de log son "
+#~ "usadas. Para habilitar logueo a archivos use la opcion --log-output."
+
+#~ msgid ""
+#~ "Although a path was specified for the --log-slow-queries option, log "
+#~ "tables are used. To enable logging to files use the --log-output=file "
+#~ "option."
+#~ msgstr ""
+#~ "Aunque el camino se ha especificado para la opción --log-slow-queries, "
+#~ "están activadas las tablas de registro. Para activar la utilización "
+#~ "archivos para registros, utiliza la opción -log-output=file."
 
 #~ msgid "You need to use --log-bin to make --binlog-format work."
 #~ msgstr ""
@@ -7375,6 +7396,27 @@ msgstr "Espacio de tabla no vacio"
 #~ "en que sólo a base de fila es correcta: aquellos que impliquen funciones "
 #~ "definidas por el usuario (es decir, UDFs) o el UUID (); para ellos, "
 #~ "registros basados en fila esta utilizado automáticamente. "
+
+#~ msgid ""
+#~ "Set the default character set (deprecated option, use --character-set-"
+#~ "server instead)."
+#~ msgstr ""
+#~ "Establece el conjunto de caracteres por defecto (opcion deprecada, use --"
+#~ "character-set-server en sustitucion)."
+
+#~ msgid ""
+#~ "Set the default collation (deprecated option, use --collation-server "
+#~ "instead)."
+#~ msgstr ""
+#~ "Establece la coalicion por defecto (opcion deprecada, use --collation-"
+#~ "server en sustitucion)."
+
+#~ msgid ""
+#~ "Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
+#~ "FILE or NONE."
+#~ msgstr ""
+#~ "Sintaxis: log-output[=valor[,valor...]], donde \"valor\" puede ser TABLE, "
+#~ "FILE o NONE."
 
 #~ msgid ""
 #~ "Tells the slave thread to restrict replication to the specified database. "
@@ -7450,70 +7492,14 @@ msgstr "Espacio de tabla no vacio"
 #~ "sin establecer."
 
 #~ msgid ""
-#~ "Switch to another charset. Might be needed for processing binlog with "
-#~ "multi-byte charsets."
-#~ msgstr ""
-#~ "Cambiar a otro charset. Puede necesitarse para procesar el log binario "
-#~ "con caracteres multi-byte."
-
-#~ msgid "Usage: \\C char_setname | charset charset_name"
-#~ msgstr "Uso: \\C char_setname | charset charset_name"
-
-#~ msgid "Charset changed"
-#~ msgstr "Charset cambiado"
-
-#~ msgid "Charset is not found"
-#~ msgstr "Charset no encontrado"
-
-#~ msgid "Unknown option to protocol: %s\n"
-#~ msgstr "Opción de protocolo desconocido: %s\n"
-
-#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
-#~ msgstr "COLLATION %s no es válido para CHARACTER SET %s"
-
-#~ msgid ""
-#~ "Although a path was specified for the --log option, log tables are used. "
-#~ "To enable logging to files use the --log-output option."
-#~ msgstr ""
-#~ "Aunque la ruta fue especificada para la opcion --log, tablas de log son "
-#~ "usadas. Para habilitar logueo a archivos use la opcion --log-output."
-
-#~ msgid ""
-#~ "Although a path was specified for the --log-slow-queries option, log "
-#~ "tables are used. To enable logging to files use the --log-output=file "
-#~ "option."
-#~ msgstr ""
-#~ "Aunque el camino se ha especificado para la opción --log-slow-queries, "
-#~ "están activadas las tablas de registro. Para activar la utilización "
-#~ "archivos para registros, utiliza la opción -log-output=file."
-
-#~ msgid ""
-#~ "Set the default character set (deprecated option, use --character-set-"
-#~ "server instead)."
-#~ msgstr ""
-#~ "Establece el conjunto de caracteres por defecto (opcion deprecada, use --"
-#~ "character-set-server en sustitucion)."
-
-#~ msgid ""
-#~ "Set the default collation (deprecated option, use --collation-server "
-#~ "instead)."
-#~ msgstr ""
-#~ "Establece la coalicion por defecto (opcion deprecada, use --collation-"
-#~ "server en sustitucion)."
-
-#~ msgid ""
-#~ "Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
-#~ "FILE or NONE."
-#~ msgstr ""
-#~ "Sintaxis: log-output[=valor[,valor...]], donde \"valor\" puede ser TABLE, "
-#~ "FILE o NONE."
-
-#~ msgid ""
 #~ "Change the value of a variable. Please note that this option is "
 #~ "deprecated;you can set variables directly with --variable-name=value."
 #~ msgstr ""
 #~ "Cambia el valor de una variable. Notese que esta opción esta desaprobada; "
 #~ "tu puedes establecer variables directamente con --variable-name=valor."
 
-#~ msgid "Invalid error code"
-#~ msgstr "Código de error inválido"
+#~ msgid "Unknown option to protocol: %s\n"
+#~ msgstr "Opción de protocolo desconocido: %s\n"
+
+#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
+#~ msgstr "COLLATION %s no es válido para CHARACTER SET %s"

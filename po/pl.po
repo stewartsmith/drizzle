@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-11-26 00:04+0000\n"
-"Last-Translator: Andrzej MoST (Marcin Ostajewski) <Unknown>\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-11-27 01:39+0000\n"
+"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
 "Language-Team: Polish <pl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:36+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:23+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -69,7 +69,7 @@ msgstr "Ustawienie PAGER [to_pager]. Drukuje wynik zapytania przez  PAGER"
 #: client/drizzle.cc:271
 msgid "Print current command."
 msgstr ""
-"Wyświetl bieżącą komendę\n"
+"Wyświetl bieżącą komendę\r\n"
 "Pokaż bieżącą komendę"
 
 #: client/drizzle.cc:272
@@ -475,15 +475,12 @@ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr ""
 
 #: client/drizzle.cc:1462
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
-"To oprogramowanie jest dostarczane ABSOLUTNIE BEZ GWARANCJI, to jest. To "
-"jest darmowe oprogramowanie,\n"
-"zachęcamy do modyfikacji i rozprowadzania zgodnie z licencją GPL.\n"
 
 #: client/drizzle.cc:1467
 #, c-format
@@ -1933,9 +1930,8 @@ msgid "Default transaction isolation level."
 msgstr ""
 
 #: drizzled/drizzled.cc:3183
-#, fuzzy
 msgid "Run drizzled daemon as user."
-msgstr "Wyjście z drizzle. To samo co \"quit\"."
+msgstr ""
 
 #: drizzled/drizzled.cc:3191
 msgid ""
@@ -5911,9 +5907,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/log_event.cc:1648
-#, fuzzy
 msgid "no error"
-msgstr "Otrzymano błąd: %s\n"
+msgstr ""
 
 #: drizzled/log_event.cc:1668
 #, c-format
@@ -6014,9 +6009,9 @@ msgid "Error in %s event: when locking tables"
 msgstr ""
 
 #: drizzled/log_event.cc:4345
-#, fuzzy, c-format
+#, c-format
 msgid "Error '%s' on reopening tables"
-msgstr "Wystąpił błąd %d podczas odczytu tabeli '%s'"
+msgstr ""
 
 #: drizzled/log_event.cc:4681
 #, c-format
@@ -6024,9 +6019,9 @@ msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/log_event.cc:5077
-#, fuzzy, c-format
+#, c-format
 msgid "Error '%s' on opening table `%s`.`%s`"
-msgstr "Wystąpił błąd %d podczas odczytu tabeli '%s'"
+msgstr ""
 
 #. TRANSLATORS: The leading word "logging" is the name
 #. of the plugin api, and so should not be translated.
@@ -7178,8 +7173,8 @@ msgstr ""
 #~ msgid "Charset is not found"
 #~ msgstr "Nie odnaleziono zestawu znaków"
 
-#~ msgid "Unknown option to protocol: %s\n"
-#~ msgstr "Nierozpoznana opcja dla protokołu: %s\n"
-
 #~ msgid "Invalid error code"
 #~ msgstr "Niepoprawny kod błędu"
+
+#~ msgid "Unknown option to protocol: %s\n"
+#~ msgstr "Nierozpoznana opcja dla protokołu: %s\n"

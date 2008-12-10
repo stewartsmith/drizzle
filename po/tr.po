@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-11-04 15:47+0000\n"
-"Last-Translator: Murat Bişkin <mbiskin@gmail.com>\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-12-09 16:52+0000\n"
+"Last-Translator: onur kopan <onurkopan@hotmail.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:37+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:23+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -28,7 +28,7 @@ msgstr "komutu temizle"
 
 #: client/drizzle.cc:259
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
+msgstr "servere yeniden bağlan.isteğe bağlı parametreler db ve host"
 
 #: client/drizzle.cc:261
 msgid ""
@@ -41,7 +41,7 @@ msgstr "Drizzle sunucusuna emir gönder, sonuclari dikey olarak göster."
 
 #: client/drizzle.cc:264
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "drizzle den çıkış.(quit)"
 
 #: client/drizzle.cc:265
 msgid "Send command to drizzle server."
@@ -57,7 +57,7 @@ msgstr ""
 
 #: client/drizzle.cc:268
 msgid "Don't write into outfile."
-msgstr "Outfile'a yazma."
+msgstr "outfile 'e  yazmayınız."
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -93,7 +93,8 @@ msgstr ""
 
 #: client/drizzle.cc:281
 msgid "Use another database. Takes database name as argument."
-msgstr "Başka veritabanı kullan. Argüman olarak veritabanı ismi alır."
+msgstr ""
+"Başka veritabanı kullanınız.parametre olarak veri tabanının adını kullanır."
 
 #: client/drizzle.cc:283 client/drizzle.cc:1441
 msgid "Show warnings after every statement."

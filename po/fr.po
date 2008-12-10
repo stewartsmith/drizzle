@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 12:07-0800\n"
-"PO-Revision-Date: 2008-10-08 17:59+0000\n"
-"Last-Translator: Jean-Yves Délèze <launchpad@oblique.ch>\n"
+"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"PO-Revision-Date: 2008-12-04 10:04+0000\n"
+"Last-Translator: MichelRoig <josselin99@yahoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2008-11-26 20:37+0000\n"
+"X-Launchpad-Export-Date: 2008-12-10 20:23+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -390,13 +390,12 @@ msgstr ""
 "passe n'est pas donné il est demandé par le terminal."
 
 #: client/drizzle.cc:1370
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
-"Numéro de port à utiliser pour la connexion ou 0 pour le défaut, dans "
-"l'ordre de préférences, my.cnf, $DRIZZLE_TCP_PORT "
+"Numéro de port à utiliser pour la connexion, ou bien 0 pour utiliser par "
+"défaut, et dans cet ordre, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 
 #: client/drizzle.cc:1371
 msgid "built-in default"
@@ -528,15 +527,15 @@ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s Ver %s Distrib %s, pour %s (%s) en utilisant %s %s\n"
 
 #: client/drizzle.cc:1462
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
-"Ce logiciel est livré avec ABSOLUMENT AUCUNE GARANTIE. C'est un logiciel "
-"libre,\n"
-"et vous êtes libres de le modifier et de le redistribuer sous licence GPL\n"
+"Copyright (C) 2008 Sun Microsystems\n"
+"Ce logiciel est livré SANS ABSOLUMENT AUCUNE GARANTIE. C'est un logiciel\n"
+"libre, et vous pouvez le modifier et le redistribuer sous licence PGL\n"
 
 #: client/drizzle.cc:1467
 #, c-format
@@ -713,14 +712,13 @@ msgstr[0] "Requête OK, %ld ligne affectée"
 msgstr[1] "Requête OK, %ld lignes affectées"
 
 #: client/drizzleadmin.cc:82 drizzled/drizzled.cc:3053
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
-"Numéro de port à utiliser pour la connexion, ou bien 0 pour utiliser les "
-"valeurs fournies dans le fichier my.cnf, la variable $MYSQL_TCP_PORT, la "
-"valeur compilée par défaut (dans cet ordre de préséance)."
+"Numéro de port à utiliser pour la connexion, ou bien 0 pour utiliser par "
+"défaut, et dans cet ordre, drizzle.cnf, $DRIZZLE_TCP_PORT,  natif de "
+"compilation ("
 
 #: client/drizzleadmin.cc:87
 msgid "Silently exit if one can't connect to server."
@@ -731,9 +729,9 @@ msgid "Write more information."
 msgstr "Affiche plus d'information."
 
 #: client/drizzleadmin.cc:127
-#, fuzzy, c-format
+#, c-format
 msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr "Erreur d'allocation de mémoire dans thd_scheduler::init\n"
+msgstr ""
 
 #: client/drizzleadmin.cc:264
 #, c-format
@@ -1378,30 +1376,30 @@ msgstr "La fonction d'initialisation du greffon '%s' a retourné une erreur."
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/configvar.cc:40
-#, fuzzy, c-format
+#, c-format
 msgid "configvar plugin '%s' init() failed"
-msgstr "L'analyse des options du plugin '%s' a échoué"
+msgstr "L'init() configvar du plugin '%s' a échoué"
 
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/configvar.cc:62
-#, fuzzy, c-format
+#, c-format
 msgid "configvar plugin '%s' deinit() failed"
-msgstr "L'analyse des options du plugin '%s' a échoué"
+msgstr "Le deinit() configvar du plugin '%s' a échoué"
 
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/configvar.cc:98
 #, c-format
 msgid "configvar plugin '%s' configvar_func1() failed"
-msgstr ""
+msgstr "Le configvar_func1() configvar du plugin '%s' a échoué"
 
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/configvar.cc:152
 #, c-format
 msgid "configvar plugin '%s' configvar_func2() failed"
-msgstr ""
+msgstr "La fonction configvar_func2() du plugin '%s'  configvar a échoué"
 
 #: drizzled/db.cc:404 drizzled/db.cc:412
 #, c-format
@@ -1414,9 +1412,9 @@ msgid "Got error %d from pthread_cond_timedwait"
 msgstr "Reçu l'erreur %d de pthread_cond_timedwait"
 
 #: drizzled/drizzled.cc:731
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
-msgstr "Reçu le signal %d du thread %ld"
+msgstr "Reçu un signal %d du thread %<PRIu64>"
 
 #: drizzled/drizzled.cc:784
 msgid "Aborting\n"
@@ -1427,13 +1425,12 @@ msgid "One can only use the --user switch if running as root\n"
 msgstr "On ne peut utiliser l'option --user que si on est root\n"
 
 #: drizzled/drizzled.cc:967
-#, fuzzy
 msgid ""
 "Fatal error: Please read \"Security\" section of the manual to find out how "
 "to run drizzled as root!\n"
 msgstr ""
-"Erreur fatale : relisez la section '\"Sécurité\" du manuel pour savoir "
-"comment exécuter mysqld en tant que root\n"
+"Erreur fatale : relisez la section \"Sécurité\" du manuel pour savoir "
+"comment exécuter drizzled en tant que root!\n"
 
 #: drizzled/drizzled.cc:991
 #, c-format
@@ -1491,7 +1488,7 @@ msgstr ""
 "\n"
 
 #: drizzled/drizzled.cc:1298
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "It is possible that drizzled could use up to \n"
 "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
@@ -1500,26 +1497,19 @@ msgid ""
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 msgstr ""
-"Il est possible que mysqld utilise jusqu'à \n"
-"key_buffer_size + ((read_buffer_size + sort_buffer_size)*max_threads = %lu "
-"K\n"
-"octets de mémoire\n"
-"Avec un peu de chance, cela sera correct; autrement, réduisez les valeurs "
-"utilisées dans les variables de l'équation.\n"
-"\n"
 
 #: drizzled/drizzled.cc:1316
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Attempting backtrace. You can use the following information to find out\n"
 "where drizzled died. If you see no messages after this, something went\n"
 "terribly wrong...\n"
 msgstr ""
-"Essai de backtrace. Vous pouvez utiliser les informations suivantes pour "
-"remonter\n"
-"à l'origine de la mort de mysqld. Si vous ne voyez aucun message après celui-"
-"ci\n"
-"un gros problème est survenu...\n"
+"Tentative de backtrace. Vous pouvez utiliser les informations suivantes pour "
+"comprendre\n"
+"où drizzled s'est arrêté. Si vous ne voyez aucun message après celui-ci, un "
+"gros\n"
+"problème est survenu...\n"
 
 #: drizzled/drizzled.cc:1344
 #, c-format
@@ -1616,9 +1606,9 @@ msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr "Impossible de créer un thread d'interruption (erreur %d, errno : %d)"
 
 #: drizzled/drizzled.cc:1602
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal %d to shutdown drizzled"
-msgstr "Reçu le signal %d pour arrêter le serveur mysqld"
+msgstr "Reçu le signal %d pour éteindre drizzled"
 
 #: drizzled/drizzled.cc:1619 drizzled/sql_base.cc:6476
 msgid "Can't create thread to kill server"
@@ -1640,13 +1630,13 @@ msgid "gethostname failed, using '%s' as hostname"
 msgstr "gethostname a échoué, on utilise '%s' comme nom d'hôte"
 
 #: drizzled/drizzled.cc:1938
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Changed limits: max_open_files: %u  max_connections: %<PRIu64>  table_cache: "
 "%<PRIu64>"
 msgstr ""
-"Changement de limites : max_open_files : %u max_connections : %ld "
-"table_cache : %ld"
+"Changement de limites : max_open_files : %u max_connections : %<PRIu64> "
+"table_cache: %<PRIu64>"
 
 #: drizzled/drizzled.cc:1943
 #, c-format
@@ -1665,14 +1655,12 @@ msgid "Can't create thread-keys"
 msgstr "Impossible de créer un thread de clés"
 
 #: drizzled/drizzled.cc:2134
-#, fuzzy
 msgid "Unable to reopen stdout"
-msgstr "Impossible d'effacer %s"
+msgstr "Impossible d'accéder à stdout"
 
 #: drizzled/drizzled.cc:2137
-#, fuzzy
 msgid "Unable to reopen stderr"
-msgstr "Impossible d'effacer %s"
+msgstr "Impossible d'accéder à stderr"
 
 #: drizzled/drizzled.cc:2143
 msgid "Out of memory"
@@ -1740,7 +1728,7 @@ msgstr "Impossible de verrouiller la mémoire. Errno : %d\n"
 #: drizzled/drizzled.cc:2384
 #, fuzzy, c-format
 msgid "Asked for %<PRIu64> thread stack, but got %<PRIu64>"
-msgstr "Demandé la pile du thread %u, mais obtenu %llu"
+msgstr "La demande de %u threads dans la pile a obtenu %<PRIu64>"
 
 #: drizzled/drizzled.cc:2422
 msgid ""
@@ -1821,9 +1809,8 @@ msgid "Set the default character set."
 msgstr "Définit le jeu de caractères par défaut."
 
 #: drizzled/drizzled.cc:2872
-#, fuzzy
 msgid "Chroot drizzled daemon during startup."
-msgstr "Chroot mysqld au démarrage."
+msgstr "Le démon drizzled a été chrooté durant le démarrage."
 
 #: drizzled/drizzled.cc:2876
 msgid "Set the default collation."
@@ -1980,9 +1967,8 @@ msgstr ""
 "d'abandonner."
 
 #: drizzled/drizzled.cc:3030
-#, fuzzy
 msgid "Lock drizzled in memory."
-msgstr "Verrouille mysqld en mémoire."
+msgstr "Verrouillage de drizzled en mémoire."
 
 #: drizzled/drizzled.cc:3034
 msgid ""
@@ -2179,20 +2165,15 @@ msgid "Default transaction isolation level."
 msgstr "Niveau d'isolation des transactions par défaut."
 
 #: drizzled/drizzled.cc:3183
-#, fuzzy
 msgid "Run drizzled daemon as user."
-msgstr "Exécuter le démon mysqld comme un utilisateur."
+msgstr "Exécution du démon drizzled comme utilisateur."
 
 #: drizzled/drizzled.cc:3191
-#, fuzzy
 msgid ""
 "The number of outstanding connection requests Drizzle can have. This comes "
 "into play when the main Drizzle thread gets very many connection requests in "
 "a very short time."
 msgstr ""
-"Le nombre de connexions sortantes que MySQL accepte. Cela intervient lorsque "
-"le thread principal de MySQL reçoit trop de tentatives de connexions en peu "
-"de temps."
 
 #: drizzled/drizzled.cc:3197
 msgid ""
@@ -2214,13 +2195,10 @@ msgstr ""
 "que cette limite est assurée par thread!"
 
 #: drizzled/drizzled.cc:3209
-#, fuzzy
 msgid ""
 "The number of seconds the drizzled server is waiting for a connect packet "
 "before responding with 'Bad handshake'."
 msgstr ""
-"Le nombre de secondes que le serveur mysqld attend un paquet avant de "
-"répondre 'Bad handshake'."
 
 #: drizzled/drizzled.cc:3214
 msgid "The DATE format (For future)."
@@ -2478,30 +2456,20 @@ msgid "Use compatible behavior."
 msgstr "Utilise un comportement compatible."
 
 #: drizzled/drizzled.cc:3442
-#, fuzzy
 msgid ""
 "If this is not 0, then drizzled will use this value to reserve file "
 "descriptors to use with setrlimit(). If this value is 0 then drizzled will "
 "reserve max_connections*5 or max_connections + table_cache*2 (whichever is "
 "larger) number of files."
 msgstr ""
-"Si cette option ne vaut pas 0, mysqld va utiliser cette valeur pour réserver "
-"des pointeurs de fichiers à utiliser avec setrlimit(). Si cette valeur vaut "
-"0, alors mysqld va en réserver max_connections * 5 ou max_connections + "
-"table_cache*2 (le plus grand des deux)."
 
 #: drizzled/drizzled.cc:3449
-#, fuzzy
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
 "promising partial plans from the optimizer search space. Meaning: false - do "
 "not apply any heuristic, thus perform exhaustive search; true - prune plans "
 "based on number of retrieved rows."
 msgstr ""
-"Contrôle l'heuristique appliquée durant l'optimisation de la requête pour "
-"écarter les plans partiels les moins prometteurs. Les valeurs possibles "
-"sont : 0, n'applique aucune heuristique; 1 - supprime les plans en fonction "
-"du nombre de lignes lues."
 
 #: drizzled/drizzled.cc:3457
 msgid ""
@@ -2527,15 +2495,11 @@ msgid "Directory for plugins."
 msgstr "Répertoire des greffons."
 
 #: drizzled/drizzled.cc:3473
-#, fuzzy
 msgid ""
 "Optional colon (or semicolon) separated list of plugins to load,where each "
 "plugin is identified by the name of the shared library. [for example: --"
 "plugin_load=libmd5udf.so:libauth_pam.so]"
 msgstr ""
-"Liste de plugins optionnels à charger (chacun séparé par des virgules), où "
-"chaque plugin est identifié par le nom de sa bibliothèque partagée. [par "
-"exemple, --plugin_load=libm5udf.so]"
 
 #: drizzled/drizzled.cc:3479
 msgid "The size of the buffer that is allocated when preloading indexes"
@@ -4782,10 +4746,9 @@ msgid "Division by 0"
 msgstr "Division par 0"
 
 #: drizzled/error.cc:766
-#, fuzzy, c-format
+#, c-format
 msgid "Incorrect %-.32s value: '%-.128s' for column '%.192s' at row %u"
 msgstr ""
-"%-.32s incorrecte valeur: '%-.128s' pour la colonne '%.192s' à la ligne %ld"
 
 #: drizzled/error.cc:768
 #, c-format
@@ -6578,26 +6541,23 @@ msgid "The value specified for virtual column '%s' in table '%s' ignored."
 msgstr ""
 
 #: drizzled/error.cc:1394
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not yet supported for virtual columns."
-msgstr "AGGREGATE n'est pas supporté avec les fonctions stockées"
+msgstr ""
 
 #: drizzled/error.cc:1396
-#, fuzzy
 msgid "Constant expression in virtual column function is not allowed."
 msgstr ""
-"Les expressions constantes ou aléatoires ne sont pas autorisées dans les "
-"fonctions de partitionnement et de sous-partitionnement"
 
 #: drizzled/errmsg.cc:46
-#, fuzzy, c-format
+#, c-format
 msgid "errmsg plugin '%s' init() failed."
-msgstr "L'analyse des options du plugin '%s' a échoué"
+msgstr ""
 
 #: drizzled/errmsg.cc:75
-#, fuzzy, c-format
+#, c-format
 msgid "errmsg plugin '%s' deinit() failed."
-msgstr "L'analyse des options du plugin '%s' a échoué"
+msgstr ""
 
 #: drizzled/errmsg.cc:116
 #, c-format
@@ -6776,9 +6736,9 @@ msgstr ""
 "avec l'option --tc-heuristic-recover={commit|rollback}"
 
 #: drizzled/log_event.cc:138
-#, fuzzy, c-format
+#, c-format
 msgid " %s, Error_code: %d;"
-msgstr "Esclave: %s Code d'erreur: %d"
+msgstr ""
 
 #: drizzled/log_event.cc:142
 #, c-format
@@ -6817,9 +6777,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/log_event.cc:1648
-#, fuzzy
 msgid "no error"
-msgstr "Erreur inconnue"
+msgstr ""
 
 #: drizzled/log_event.cc:1668
 #, c-format
@@ -6863,22 +6822,19 @@ msgid "Out of memory while recording slave event"
 msgstr "Plus mémoire durant l'enregistrement de l'événement de l'esclave"
 
 #: drizzled/log_event.cc:3356 drizzled/log_event.cc:3382
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Create_file event: could not open file '%s'"
 msgstr ""
-"Erreur lors de l'écriture de l'événement Create_file dans le log de relais"
 
 #: drizzled/log_event.cc:3368
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Create_file event: could not write to file '%s'"
 msgstr ""
-"Erreur lors de l'écriture de l'événement Create_file dans le log de relais"
 
 #: drizzled/log_event.cc:3389
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Create_file event: write to '%s' failed"
 msgstr ""
-"Erreur lors de l'écriture de l'événement Create_file dans le log de relais"
 
 #: drizzled/log_event.cc:3503
 #, c-format
@@ -6896,28 +6852,23 @@ msgid "Error in %s event: write to '%s' failed"
 msgstr ""
 
 #: drizzled/log_event.cc:3681
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Exec_load event: could not open file '%s'"
 msgstr ""
-"Erreur lors de l'écriture de l'événement Exec_load dans le log de relais"
 
 #: drizzled/log_event.cc:3691
-#, fuzzy, c-format
+#, c-format
 msgid "Error in Exec_load event: file '%s' appears corrupted"
 msgstr ""
-"Erreur lors de l'écriture de l'événement Exec_load dans le log de relais"
 
 #: drizzled/log_event.cc:3721
-#, fuzzy, c-format
+#, c-format
 msgid "%s. Failed executing load from '%s'"
 msgstr ""
-"Thread d'entrée / sortie esclave : la requête de demande de téléchargement "
-"de '%s' a échoué"
 
 #: drizzled/log_event.cc:3894
-#, fuzzy
 msgid "Not enough memory"
-msgstr "ZLIB: Mémoire insuffisante"
+msgstr ""
 
 #: drizzled/log_event.cc:4314
 #, c-format
@@ -6930,9 +6881,9 @@ msgid "Error in %s event: when locking tables"
 msgstr ""
 
 #: drizzled/log_event.cc:4345
-#, fuzzy, c-format
+#, c-format
 msgid "Error '%s' on reopening tables"
-msgstr "Erreur %d à la lecture de la table '%s'"
+msgstr ""
 
 #: drizzled/log_event.cc:4681
 #, c-format
@@ -6940,9 +6891,9 @@ msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/log_event.cc:5077
-#, fuzzy, c-format
+#, c-format
 msgid "Error '%s' on opening table `%s`.`%s`"
-msgstr "Erreur %d à la lecture de la table '%s'"
+msgstr ""
 
 #. TRANSLATORS: The leading word "logging" is the name
 #. of the plugin api, and so should not be translated.
@@ -6968,16 +6919,16 @@ msgstr ""
 #. TRANSLATORS: The leading word "parser" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/parser.cc:40
-#, fuzzy, c-format
+#, c-format
 msgid "parser plugin '%s' init() failed"
-msgstr "L'analyse des options du plugin '%s' a échoué"
+msgstr ""
 
 #. TRANSLATORS: The leading word "parser" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/parser.cc:62
-#, fuzzy, c-format
+#, c-format
 msgid "parser plugin '%s' deinit() failed"
-msgstr "L'analyse des options du plugin '%s' a échoué"
+msgstr ""
 
 #. TRANSLATORS: The leading word "parser" is the name
 #. of the plugin api, and so should not be translated.
@@ -7105,24 +7056,20 @@ msgstr ""
 "égale à la taille de la même colonne, sur l'esclave."
 
 #: drizzled/scheduler.cc:132
-#, fuzzy
 msgid "Memory allocation error in session_scheduler::init\n"
-msgstr "Erreur d'allocation de mémoire dans thd_scheduler::init\n"
+msgstr ""
 
 #: drizzled/scheduler.cc:210
-#, fuzzy
 msgid "init_pipe(session_add_pipe) error in libevent_init\n"
-msgstr "erreur init_pipe(thd_add_pipe) dans libevent_init\n"
+msgstr ""
 
 #: drizzled/scheduler.cc:216
-#, fuzzy
 msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
-msgstr "erreur init_pipe(thd_kill_pipe) dans libevent_init\n"
+msgstr ""
 
 #: drizzled/scheduler.cc:228
-#, fuzzy
 msgid "session_add_event event_add error in libevent_init\n"
-msgstr "erreur thd_add_event event_add dans libevent_init\n"
+msgstr ""
 
 #: drizzled/scheduler.cc:244
 #, c-format
@@ -7130,9 +7077,8 @@ msgid "Can't create completion port thread (error %d)"
 msgstr "Impossible de créer le thread de port de complétion (erreur %d)"
 
 #: drizzled/scheduler.cc:357
-#, fuzzy
 msgid "event_add error in libevent_add_session_callback\n"
-msgstr "erreur event_add dans libevent_add_thd_callback\n"
+msgstr ""
 
 #: drizzled/scheduler.cc:383
 msgid "Scheduler init error in libevent_add_new_connection\n"
@@ -7145,9 +7091,9 @@ msgstr "libevent_thread_proc: my_thread_init() a échoué\n"
 #. TRANSLATORS: The leading word "scheduling" is the name
 #. of the plugin api, and so should not be translated.
 #: drizzled/scheduling.cc:40
-#, fuzzy, c-format
+#, c-format
 msgid "scheduling plugin '%s' init() failed"
-msgstr "L'analyse des options du plugin '%s' a échoué"
+msgstr ""
 
 #. TRANSLATORS: The leading word "scheduling" is the name
 #. of the plugin api, and so should not be translated.
@@ -7400,14 +7346,11 @@ msgid "Error initializing relay log position: %s"
 msgstr "Erreur d'initialisation de la position de log de relais : %s"
 
 #: drizzled/slave.cc:1784
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Slave SQL thread retried transaction %<PRIu64> time(s) in vain, giving up. "
 "Consider raising the value of the slave_transaction_retries variable."
 msgstr ""
-"Le thread SQL esclave a retenté %lu fois la transaction en vain et a "
-"abandonné. Envisagez d'augmenter la valeur de la variable "
-"slave_transaction_retries."
 
 #: drizzled/slave.cc:1807
 msgid ""
@@ -7478,15 +7421,12 @@ msgstr ""
 "Le thread d'entrée/sortie a été terminé durant la lecture d'un événement"
 
 #: drizzled/slave.cc:2060
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Log entry on master is longer than max_allowed_packet (%u) on slave. If the "
 "entry is correct, restart the server with a higher value of "
 "max_allowed_packet"
 msgstr ""
-"La taille de l'entrée sur le maître est plus longue que max_allowed_packet (%"
-"ld) sur l'esclave. Si cette entrée est correcte, relancez le serveur avec "
-"une valeur supérieure pour max_allowed_packet"
 
 #: drizzled/slave.cc:2074
 msgid "Stopping slave I/O thread due to out-of-memory error from master"
@@ -7937,9 +7877,8 @@ msgid "Fatal error: Illegal or unknown default time zone '%s'"
 msgstr "Erreur fatale: fuseau horaire '%s' illégal ou inconnu"
 
 #: plugin/errmsg_stderr/errmsg_stderr.cc:76
-#, fuzzy
 msgid "Error Messages to stderr"
-msgstr "Erreur de connexion au maître :"
+msgstr ""
 
 #: plugin/logging_query/logging_query.cc:162
 #, c-format
@@ -7947,9 +7886,8 @@ msgid "fail open() fn=%s er=%s\n"
 msgstr ""
 
 #: plugin/logging_query/logging_query.cc:202
-#, fuzzy
 msgid "File to log to"
-msgstr "Impossible d'effacer %s"
+msgstr ""
 
 #: plugin/logging_query/logging_query.cc:211
 msgid "Enable logging"
@@ -7972,24 +7910,22 @@ msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 
 #: plugin/logging_query/logging_query.cc:282
-#, fuzzy
 msgid "Log queries to a file"
-msgstr "Enregistre les connexions et les requêtes dans un fichier."
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:453
-#, fuzzy, c-format
+#, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
-msgstr "Réception d'une erreur de fnctl()"
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:457
-#, fuzzy, c-format
+#, c-format
 msgid "Got an error from unknown thread, %s:%d"
-msgstr "Réception d'une erreur de fnctl()"
+msgstr ""
 
 #: storage/myisam/ha_myisam.cc:462
-#, fuzzy
 msgid "Unknown thread accessing table"
-msgstr "Jeu de caractère inconnu utilisé dans la table"
+msgstr ""
 
 #: storage/myisam/my_handler_errors.c:34
 msgid "Didn't find key on read or update"
@@ -8254,6 +8190,13 @@ msgstr "L'espace de tables n'est pas vide"
 #~ "Le nombre de threads à conserver en cache pour réutilisation ultérieure."
 
 #~ msgid ""
+#~ "Switch to another charset. Might be needed for processing binlog with "
+#~ "multi-byte charsets."
+#~ msgstr ""
+#~ "Change l'encodage des caractères. Peut-être requis pour lire les logs "
+#~ "binaires avec des caractères multi-byte."
+
+#~ msgid ""
 #~ "Copyright (C) 2000-2008 MySQL AB\n"
 #~ "                                      This software comes with ABSOLUTELY "
 #~ "NO WARRANTY. This is free software,\n"
@@ -8263,6 +8206,60 @@ msgstr "L'espace de tables n'est pas vide"
 #~ "                                      Ce logiciel est distribué sans "
 #~ "AUCUNE GARANTIE. C'est un logiciel libre, et vous êtes libres de le "
 #~ "modifier et de le redistribuer sous licence GPL.\n"
+
+#~ msgid "Usage: \\C char_setname | charset charset_name"
+#~ msgstr "Utilisation: \\C char_setname | charset charset_name"
+
+#~ msgid "Charset changed"
+#~ msgstr "Jeu de caractères changé"
+
+#~ msgid "Charset is not found"
+#~ msgstr "Jeu de caractères non trouvé"
+
+#~ msgid "Failed to create a new master info file (file '%s', errno %d)"
+#~ msgstr ""
+#~ "Impossible de créer un nouveau fichier d'informations maître (fichier '%"
+#~ "s', numéro d'erreur %d)"
+
+#~ msgid "Failed to create a cache on master info file (file '%s')"
+#~ msgstr ""
+#~ "Impossible de créer un cache pour le fichier d'informations du maître "
+#~ "(fichier '%s')"
+
+#~ msgid "Failed to open the existing master info file (file '%s', errno %d)"
+#~ msgstr ""
+#~ "Impossible d'ouvrir le fichier d'information maître (fichier '%s', numéro "
+#~ "d'erreur %d)"
+
+#~ msgid ""
+#~ "SSL information in the master info file ('%s') are ignored because this "
+#~ "MySQL slave was compiled without SSL support."
+#~ msgstr ""
+#~ "Les informations SSL dans le fichier d'information du maître ('%s') sont "
+#~ "ignorées, car cet esclave MySQL a été compilé sans le support SSL."
+
+#~ msgid "Error reading master configuration"
+#~ msgstr "Erreur durant la lecture de la configuration du maître"
+
+#~ msgid "Invalid error code"
+#~ msgstr "Code d'erreur invalide"
+
+#~ msgid ""
+#~ "Although a path was specified for the --log option, log tables are used. "
+#~ "To enable logging to files use the --log-output option."
+#~ msgstr ""
+#~ "Même si un chemin a été spécifié pour l'option --log, les tables de logs "
+#~ "sont utilisées. Pour activer le log sous forme de fichiers, il faut "
+#~ "utiliser l'option --log-output."
+
+#~ msgid ""
+#~ "Although a path was specified for the --log-slow-queries option, log "
+#~ "tables are used. To enable logging to files use the --log-output=file "
+#~ "option."
+#~ msgstr ""
+#~ "Même si un chemin a été spécifié pour l'option --log-slow-queries, les "
+#~ "tables de logs sont utilisées. Pour activer le log sous forme de "
+#~ "fichiers, il faut utiliser l'option --log-output=file."
 
 #~ msgid "You need to use --log-bin to make --binlog-format work."
 #~ msgstr "Vous devez utilisez -log-bin pour que --binlog-format fonctionne."
@@ -8298,6 +8295,106 @@ msgstr "L'espace de tables n'est pas vide"
 #~ msgstr ""
 #~ "Indique au maître que les modifications qui interviennent dans les bases "
 #~ "de données spécifiées ne doivent pas être consignées dans le log binaire."
+
+#~ msgid ""
+#~ "Set the default character set (deprecated option, use --character-set-"
+#~ "server instead)."
+#~ msgstr ""
+#~ "Définit les jeu de caractères (option obsolète, utilisez --character-set-"
+#~ "server à la place)."
+
+#~ msgid ""
+#~ "Set the default collation (deprecated option, use --collation-server "
+#~ "instead)."
+#~ msgstr ""
+#~ "Spécifie la collation par défaut (option obsolète, utilisez plutôt --"
+#~ "collation-server)."
+
+#~ msgid ""
+#~ "Don't flush key buffers between writes for any MyISAM table (Deprecated "
+#~ "option, use --delay-key-write=all instead)."
+#~ msgstr ""
+#~ "N'écrit pas les buffers de clés entre deux écritures pour les tables "
+#~ "MyISAM (option obsolète, utilisez de préférence --delay-key-write=all)."
+
+#~ msgid "Enable general query log"
+#~ msgstr "Active le log des requêtes"
+
+#~ msgid ""
+#~ "If equal to 0 (the default), then when --log-bin is used, creation of a "
+#~ "stored function (or trigger) is allowed only to users having the SUPER "
+#~ "privilege and only if this stored function (trigger) may not break binary "
+#~ "logging. Note that if ALL connections to this server ALWAYS use row-based "
+#~ "binary logging, the security issues do not exist and the binary logging "
+#~ "cannot break, so you can safely set this to 1."
+#~ msgstr ""
+#~ "Si cette option vaut 0 (ce qui est la valeur par défaut), alors lorsque --"
+#~ "log-bin est utilisé, la création d'une fonction stockée (ou d'un "
+#~ "déclencheur) est autorisé uniquement aux utilisateurs ayant des droits de "
+#~ "niveau SUPER, et uniquement si la procédure stockée ne risque pas de "
+#~ "corrompre le log binaire. Notez que si TOUTES les connexions de ce "
+#~ "serveur utilisent TOUJOURS le log binaire de ligne, les problèmes de "
+#~ "sécurité sont inexistants, et le log binaire ne peut pas être corrompu : "
+#~ "vous pouvez alors utiliser la valeur 1 sans souci."
+
+#~ msgid ""
+#~ "Log some extra information to update log. Please note that this option is "
+#~ "deprecated; see --log-queries-not-using-indexes option."
+#~ msgstr ""
+#~ "Enregistre des informations supplémentaires dans le journal de log. Notez "
+#~ "que cette option est obsolète; Voyez l'option --log-queries-not-using-"
+#~ "indexes."
+
+#~ msgid ""
+#~ "Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
+#~ "FILE or NONE."
+#~ msgstr ""
+#~ "Syntaxe: log-output[=valeur[,valeur...]], où \"valeur\" peut être TABLE, "
+#~ "FILE ou NONE."
+
+#~ msgid ""
+#~ "Log queries that are executed without benefit of any index to the slow "
+#~ "log if it is open."
+#~ msgstr ""
+#~ "Enregistre les requêtes qui n'utilisent aucun index dans le log de "
+#~ "requêtes lentes, s'il est ouvert."
+
+#~ msgid "Don't log extra information to update and slow-query logs."
+#~ msgstr ""
+#~ "N'enregistre pas d'informations complémentaires dans les logs de "
+#~ "modifications et de requêtes lentes."
+
+#~ msgid ""
+#~ "Log slow OPTIMIZE, ANALYZE, ALTER and other administrative statements to "
+#~ "the slow log if it is open."
+#~ msgstr ""
+#~ "Enregistre les commandes OPTIMIZE, ANALYZE, ALTER et autres commandes "
+#~ "d'administration dans le log de requêtes lentes s'il est activé."
+
+#~ msgid ""
+#~ "Log slow statements executed by slave thread to the slow log if it is "
+#~ "open."
+#~ msgstr ""
+#~ "Enregistre les requêtes lentes de l'esclave dans le log de requêtes "
+#~ "lentes, s'il est ouvert."
+
+#~ msgid ""
+#~ "Log slow queries to a table or log file. Defaults logging to table mysql."
+#~ "slow_log or hostname-slow.log if --log-output=file is used. Must be "
+#~ "enabled to activate other slow log options."
+#~ msgstr ""
+#~ "Enregistre les requêtes lentes dans un fichier de log ou dans une table. "
+#~ "Par défaut, l'enregistrement se fait dans la table mysql.slow_log, si --"
+#~ "log-output=file est utilisé. Cette option doit être activée pour activer "
+#~ "les autres options de requêtes lentes."
+
+#~ msgid ""
+#~ "Enable old-style user limits (before 5.0.3 user resources were counted "
+#~ "per each user+host vs. per account)"
+#~ msgstr ""
+#~ "Active les limitations d'utilisateur à l'ancienne (avant la version "
+#~ "5.0.3, les ressources utilisateurs étaient comptées par utilisateur et "
+#~ "hôte, et non pas par compte)."
 
 #~ msgid ""
 #~ "Tells the slave thread to restrict replication to the specified database. "
@@ -8402,171 +8499,6 @@ msgstr "L'espace de tables n'est pas vide"
 #~ "ou si vous avez un tunnel spécial jusqu'au maître. En cas de doute, "
 #~ "laissez cette option inactive."
 
-#~ msgid "Bad syntax in replicate-rewrite-db - missing '->'!\n"
-#~ msgstr ""
-#~ "Mauvaise syntaxe pour la directive replicate-rewrite-db : il manque '-"
-#~ ">'!\n"
-
-#~ msgid "Bad syntax in replicate-rewrite-db - empty FROM db!\n"
-#~ msgstr ""
-#~ "Mauvaise syntaxe pour la directive replicate-rewrite-db : la base de "
-#~ "données d'origine est vide!\n"
-
-#~ msgid "Bad syntax in replicate-rewrite-db - empty TO db!\n"
-#~ msgstr ""
-#~ "Mauvaise syntaxe pour replicate-rewrite-db : la base de destination est "
-#~ "vide!\n"
-
-#~ msgid "Could not add do table rule '%s'!\n"
-#~ msgstr "Impossible d'ajouter la règle de table à considérer '%s'!\n"
-
-#~ msgid "Could not add ignore table rule '%s'!\n"
-#~ msgstr "Impossible d'ajouter la règle de table à ignorer '%s'!\n"
-
-#~ msgid "Too many storage engines!"
-#~ msgstr "Trop de moteurs de stockage de table!"
-
-#~ msgid "Storage engine '%s' has conflicting typecode. Assigning value %d."
-#~ msgstr ""
-#~ "Le moteur de stockage '%s'  a un code en conflit. La valeur %d lui a été "
-#~ "assignée."
-
-#~ msgid ""
-#~ "Switch to another charset. Might be needed for processing binlog with "
-#~ "multi-byte charsets."
-#~ msgstr ""
-#~ "Change l'encodage des caractères. Peut-être requis pour lire les logs "
-#~ "binaires avec des caractères multi-byte."
-
-#~ msgid "Usage: \\C char_setname | charset charset_name"
-#~ msgstr "Utilisation: \\C char_setname | charset charset_name"
-
-#~ msgid "Charset changed"
-#~ msgstr "Jeu de caractères changé"
-
-#~ msgid "Charset is not found"
-#~ msgstr "Jeu de caractères non trouvé"
-
-#~ msgid "Unknown option to protocol: %s\n"
-#~ msgstr "Option inconnue du protocole : %s\n"
-
-#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
-#~ msgstr ""
-#~ "La COLLATION %s n'est pas compatible avec le jeu de caractères %s "
-#~ "(CHARACTER SET)"
-
-#~ msgid ""
-#~ "Although a path was specified for the --log option, log tables are used. "
-#~ "To enable logging to files use the --log-output option."
-#~ msgstr ""
-#~ "Même si un chemin a été spécifié pour l'option --log, les tables de logs "
-#~ "sont utilisées. Pour activer le log sous forme de fichiers, il faut "
-#~ "utiliser l'option --log-output."
-
-#~ msgid ""
-#~ "Although a path was specified for the --log-slow-queries option, log "
-#~ "tables are used. To enable logging to files use the --log-output=file "
-#~ "option."
-#~ msgstr ""
-#~ "Même si un chemin a été spécifié pour l'option --log-slow-queries, les "
-#~ "tables de logs sont utilisées. Pour activer le log sous forme de "
-#~ "fichiers, il faut utiliser l'option --log-output=file."
-
-#~ msgid ""
-#~ "Set the default character set (deprecated option, use --character-set-"
-#~ "server instead)."
-#~ msgstr ""
-#~ "Définit les jeu de caractères (option obsolète, utilisez --character-set-"
-#~ "server à la place)."
-
-#~ msgid ""
-#~ "Set the default collation (deprecated option, use --collation-server "
-#~ "instead)."
-#~ msgstr ""
-#~ "Spécifie la collation par défaut (option obsolète, utilisez plutôt --"
-#~ "collation-server)."
-
-#~ msgid ""
-#~ "Don't flush key buffers between writes for any MyISAM table (Deprecated "
-#~ "option, use --delay-key-write=all instead)."
-#~ msgstr ""
-#~ "N'écrit pas les buffers de clés entre deux écritures pour les tables "
-#~ "MyISAM (option obsolète, utilisez de préférence --delay-key-write=all)."
-
-#~ msgid "Enable general query log"
-#~ msgstr "Active le log des requêtes"
-
-#~ msgid ""
-#~ "If equal to 0 (the default), then when --log-bin is used, creation of a "
-#~ "stored function (or trigger) is allowed only to users having the SUPER "
-#~ "privilege and only if this stored function (trigger) may not break binary "
-#~ "logging. Note that if ALL connections to this server ALWAYS use row-based "
-#~ "binary logging, the security issues do not exist and the binary logging "
-#~ "cannot break, so you can safely set this to 1."
-#~ msgstr ""
-#~ "Si cette option vaut 0 (ce qui est la valeur par défaut), alors lorsque --"
-#~ "log-bin est utilisé, la création d'une fonction stockée (ou d'un "
-#~ "déclencheur) est autorisé uniquement aux utilisateurs ayant des droits de "
-#~ "niveau SUPER, et uniquement si la procédure stockée ne risque pas de "
-#~ "corrompre le log binaire. Notez que si TOUTES les connexions de ce "
-#~ "serveur utilisent TOUJOURS le log binaire de ligne, les problèmes de "
-#~ "sécurité sont inexistants, et le log binaire ne peut pas être corrompu : "
-#~ "vous pouvez alors utiliser la valeur 1 sans souci."
-
-#~ msgid ""
-#~ "Log some extra information to update log. Please note that this option is "
-#~ "deprecated; see --log-queries-not-using-indexes option."
-#~ msgstr ""
-#~ "Enregistre des informations supplémentaires dans le journal de log. Notez "
-#~ "que cette option est obsolète; Voyez l'option --log-queries-not-using-"
-#~ "indexes."
-
-#~ msgid ""
-#~ "Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
-#~ "FILE or NONE."
-#~ msgstr ""
-#~ "Syntaxe: log-output[=valeur[,valeur...]], où \"valeur\" peut être TABLE, "
-#~ "FILE ou NONE."
-
-#~ msgid ""
-#~ "Log queries that are executed without benefit of any index to the slow "
-#~ "log if it is open."
-#~ msgstr ""
-#~ "Enregistre les requêtes qui n'utilisent aucun index dans le log de "
-#~ "requêtes lentes, s'il est ouvert."
-
-#~ msgid ""
-#~ "Log slow OPTIMIZE, ANALYZE, ALTER and other administrative statements to "
-#~ "the slow log if it is open."
-#~ msgstr ""
-#~ "Enregistre les commandes OPTIMIZE, ANALYZE, ALTER et autres commandes "
-#~ "d'administration dans le log de requêtes lentes s'il est activé."
-
-#~ msgid ""
-#~ "Log slow statements executed by slave thread to the slow log if it is "
-#~ "open."
-#~ msgstr ""
-#~ "Enregistre les requêtes lentes de l'esclave dans le log de requêtes "
-#~ "lentes, s'il est ouvert."
-
-#~ msgid ""
-#~ "Log slow queries to a table or log file. Defaults logging to table mysql."
-#~ "slow_log or hostname-slow.log if --log-output=file is used. Must be "
-#~ "enabled to activate other slow log options."
-#~ msgstr ""
-#~ "Enregistre les requêtes lentes dans un fichier de log ou dans une table. "
-#~ "Par défaut, l'enregistrement se fait dans la table mysql.slow_log, si --"
-#~ "log-output=file est utilisé. Cette option doit être activée pour activer "
-#~ "les autres options de requêtes lentes."
-
-#~ msgid ""
-#~ "Enable old-style user limits (before 5.0.3 user resources were counted "
-#~ "per each user+host vs. per account)"
-#~ msgstr ""
-#~ "Active les limitations d'utilisateur à l'ancienne (avant la version "
-#~ "5.0.3, les ressources utilisateurs étaient comptées par utilisateur et "
-#~ "hôte, et non pas par compte)."
-
 #~ msgid ""
 #~ "Change the value of a variable. Please note that this option is "
 #~ "deprecated;you can set variables directly with --variable-name=value."
@@ -8604,12 +8536,6 @@ msgstr "L'espace de tables n'est pas vide"
 #~ "secondes à s'exécuter. L'argument sera traité comme une valeur décimale, "
 #~ "avec une précision de micro-secondes."
 
-#~ msgid "(Deprecated option)"
-#~ msgstr "(Option obsolète)"
-
-#~ msgid "Deprecated; use --table_open_cache instead."
-#~ msgstr "Obsolète; utilisez l'option --table_open_cache à la place."
-
 #~ msgid ""
 #~ "options --log-slow-admin-statements, --log-queries-not-using-indexes and "
 #~ "--log-slow-slave-statements have no effect if --log-slow-queries is not "
@@ -8619,30 +8545,53 @@ msgstr "L'espace de tables n'est pas vide"
 #~ "et --log-slow-slave-statements n'ont aucun effet si --log-slow-queries "
 #~ "n'est pas actif"
 
-#~ msgid "Failed to create a new master info file (file '%s', errno %d)"
-#~ msgstr ""
-#~ "Impossible de créer un nouveau fichier d'informations maître (fichier '%"
-#~ "s', numéro d'erreur %d)"
+#~ msgid "Unknown option to protocol: %s\n"
+#~ msgstr "Option inconnue du protocole : %s\n"
 
-#~ msgid "Failed to create a cache on master info file (file '%s')"
+#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
 #~ msgstr ""
-#~ "Impossible de créer un cache pour le fichier d'informations du maître "
-#~ "(fichier '%s')"
+#~ "La COLLATION %s n'est pas compatible avec le jeu de caractères %s "
+#~ "(CHARACTER SET)"
 
-#~ msgid "Failed to open the existing master info file (file '%s', errno %d)"
+#~ msgid "(Deprecated option)"
+#~ msgstr "(Option obsolète)"
+
+#~ msgid "Sync .frm to disk on create. Enabled by default."
 #~ msgstr ""
-#~ "Impossible d'ouvrir le fichier d'information maître (fichier '%s', numéro "
-#~ "d'erreur %d)"
+#~ "Synchronise le fichier .frm sur le disque lors de la création. Activé par "
+#~ "défaut."
 
-#~ msgid ""
-#~ "SSL information in the master info file ('%s') are ignored because this "
-#~ "MySQL slave was compiled without SSL support."
+#~ msgid "Deprecated; use --table_open_cache instead."
+#~ msgstr "Obsolète; utilisez l'option --table_open_cache à la place."
+
+#~ msgid "Bad syntax in replicate-rewrite-db - missing '->'!\n"
 #~ msgstr ""
-#~ "Les informations SSL dans le fichier d'information du maître ('%s') sont "
-#~ "ignorées, car cet esclave MySQL a été compilé sans le support SSL."
+#~ "Mauvaise syntaxe pour la directive replicate-rewrite-db : il manque '-"
+#~ ">'!\n"
 
-#~ msgid "Error reading master configuration"
-#~ msgstr "Erreur durant la lecture de la configuration du maître"
+#~ msgid "Bad syntax in replicate-rewrite-db - empty FROM db!\n"
+#~ msgstr ""
+#~ "Mauvaise syntaxe pour la directive replicate-rewrite-db : la base de "
+#~ "données d'origine est vide!\n"
+
+#~ msgid "Bad syntax in replicate-rewrite-db - empty TO db!\n"
+#~ msgstr ""
+#~ "Mauvaise syntaxe pour replicate-rewrite-db : la base de destination est "
+#~ "vide!\n"
+
+#~ msgid "Could not add do table rule '%s'!\n"
+#~ msgstr "Impossible d'ajouter la règle de table à considérer '%s'!\n"
+
+#~ msgid "Could not add ignore table rule '%s'!\n"
+#~ msgstr "Impossible d'ajouter la règle de table à ignorer '%s'!\n"
+
+#~ msgid "Too many storage engines!"
+#~ msgstr "Trop de moteurs de stockage de table!"
+
+#~ msgid "Storage engine '%s' has conflicting typecode. Assigning value %d."
+#~ msgstr ""
+#~ "Le moteur de stockage '%s'  a un code en conflit. La valeur %d lui a été "
+#~ "assignée."
 
 #~ msgid "Failed to create a new relay log info file ( file '%s', errno %d)"
 #~ msgstr ""
@@ -8662,16 +8611,3 @@ msgstr "L'espace de tables n'est pas vide"
 
 #~ msgid "Failed to open the relay log '%s' (relay_log_pos %s)"
 #~ msgstr "Impossible d'ouvrir le log de relais '%s' (relay_log_pos %s)"
-
-#~ msgid "Invalid error code"
-#~ msgstr "Code d'erreur invalide"
-
-#~ msgid "Don't log extra information to update and slow-query logs."
-#~ msgstr ""
-#~ "N'enregistre pas d'informations complémentaires dans les logs de "
-#~ "modifications et de requêtes lentes."
-
-#~ msgid "Sync .frm to disk on create. Enabled by default."
-#~ msgstr ""
-#~ "Synchronise le fichier .frm sur le disque lors de la création. Activé par "
-#~ "défaut."
