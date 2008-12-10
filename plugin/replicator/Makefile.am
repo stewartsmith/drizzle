@@ -29,7 +29,6 @@ noinst_HEADERS=
 
 noinst_LTLIBRARIES=	libreplicator.la
 libreplicator_la_SOURCES=	replicator.cc
-
-EXTRA_LTLIBRARIES=
+libreplicator_la_LDFLAGS = $(top_builddir)/drizzled/serialize/libserialize.la
 
 EXTRA_DIST=
