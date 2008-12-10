@@ -17,34 +17,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
-#define DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <drizzled/item/copy_string.h>
 
-#include <drizzled/functions/str/strfunc.h>
-
-enum date_time_format
+void Item_copy_string::copy()
 {
-  USA_FORMAT, JIS_FORMAT, ISO_FORMAT, EUR_FORMAT, INTERNAL_FORMAT
-};
+  String *res=item->val_str(&str_value);
+  if (res && res != &str_value)
+    str_value.copy(*res);
+  null_value=item->null_value;
+}
 
-class Item_func_get_format :public Item_str_func
+/* ARGSUSED */
+String *Item_copy_string::val_str(String *)
 {
-public:
-  const enum enum_drizzle_timestamp_type type; // keep it public
-  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
-    :Item_str_func(a), type(type_arg)
-  {}
-  String *val_str(String *str);
-  const char *func_name() const { return "get_format"; }
-  void fix_length_and_dec()
-  {
-    maybe_null= 1;
-    decimals=0;
-    max_length=17*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  virtual void print(String *str, enum_query_type query_type);
-};
+  // Item_copy_string is used without fix_fields call
+  if (null_value)
+    return (String*) 0;
+  return &str_value;
+}
 
 
+my_decimal *Item_copy_string::val_decimal(my_decimal *decimal_value)
+{
+  // Item_copy_string is used without fix_fields call
+  if (null_value)
+    return 0;
+  string2my_decimal(E_DEC_FATAL_ERROR, &str_value, decimal_value);
+  return (decimal_value);
+}
 
-#endif /* DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H */

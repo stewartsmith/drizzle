@@ -17,34 +17,37 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
-#define DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <drizzled/item/cache_real.h>
+#include CMATH_H
 
-#include <drizzled/functions/str/strfunc.h>
-
-enum date_time_format
+void Item_cache_real::store(Item *item)
 {
-  USA_FORMAT, JIS_FORMAT, ISO_FORMAT, EUR_FORMAT, INTERNAL_FORMAT
-};
+  value= item->val_result();
+  null_value= item->null_value;
+}
 
-class Item_func_get_format :public Item_str_func
+
+int64_t Item_cache_real::val_int()
 {
-public:
-  const enum enum_drizzle_timestamp_type type; // keep it public
-  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
-    :Item_str_func(a), type(type_arg)
-  {}
-  String *val_str(String *str);
-  const char *func_name() const { return "get_format"; }
-  void fix_length_and_dec()
-  {
-    maybe_null= 1;
-    decimals=0;
-    max_length=17*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  virtual void print(String *str, enum_query_type query_type);
-};
+  assert(fixed == 1);
+  return (int64_t) rint(value);
+}
 
 
+String* Item_cache_real::val_str(String *str)
+{
+  assert(fixed == 1);
+  str->set_real(value, decimals, default_charset());
+  return str;
+}
 
-#endif /* DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H */
+
+my_decimal *Item_cache_real::val_decimal(my_decimal *decimal_val)
+{
+  assert(fixed == 1);
+  double2my_decimal(E_DEC_FATAL_ERROR, value, decimal_val);
+  return decimal_val;
+}
+

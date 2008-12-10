@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_udf.h>
 #include <drizzled/item/func.h>
-#include <drizzled/item/strfunc.h>
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_func_hello_world : public Item_str_func
 {

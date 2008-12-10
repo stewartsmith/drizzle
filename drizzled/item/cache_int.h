@@ -17,34 +17,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
-#define DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
+#ifndef DRIZZLED_ITEM_CACHE_INT_H
+#define DRIZZLED_ITEM_CACHE_INT_H
 
-#include <drizzled/functions/str/strfunc.h>
-
-enum date_time_format
+class Item_cache_int: public Item_cache
 {
-  USA_FORMAT, JIS_FORMAT, ISO_FORMAT, EUR_FORMAT, INTERNAL_FORMAT
-};
-
-class Item_func_get_format :public Item_str_func
-{
+protected:
+  int64_t value;
 public:
-  const enum enum_drizzle_timestamp_type type; // keep it public
-  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
-    :Item_str_func(a), type(type_arg)
-  {}
-  String *val_str(String *str);
-  const char *func_name() const { return "get_format"; }
-  void fix_length_and_dec()
-  {
-    maybe_null= 1;
-    decimals=0;
-    max_length=17*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  virtual void print(String *str, enum_query_type query_type);
+  Item_cache_int(): Item_cache(), value(0) {}
+  Item_cache_int(enum_field_types field_type_arg):
+    Item_cache(field_type_arg), value(0) {}
+
+  void store(Item *item);
+  void store(Item *item, int64_t val_arg);
+  double val_real() { assert(fixed == 1); return (double) value; }
+  int64_t val_int() { assert(fixed == 1); return value; }
+  String* val_str(String *str);
+  my_decimal *val_decimal(my_decimal *);
+  enum Item_result result_type() const { return INT_RESULT; }
+  bool result_as_int64_t() { return true; }
 };
 
-
-
-#endif /* DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H */
+#endif /* DRIZZLED_ITEM_CACHE_INT_H */

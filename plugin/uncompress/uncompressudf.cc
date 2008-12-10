@@ -17,7 +17,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
-#include <drizzled/item/strfunc.h>
+#include <drizzled/functions/str/strfunc.h>
 
 #include <zlib.h>
 

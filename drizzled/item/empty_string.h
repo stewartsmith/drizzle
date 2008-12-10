@@ -17,34 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
-#define DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
+#ifndef DRIZZLED_ITEM_EMPTRY_STRING_H
+#define DRIZZLED_ITEM_EMPTRY_STRING_H
 
-#include <drizzled/functions/str/strfunc.h>
+/**
+  Item_empty_string -- is a utility class to put an item into List<Item>
+  which is then used in protocol.send_fields() when sending SHOW output to
+  the client.
+*/
 
-enum date_time_format
-{
-  USA_FORMAT, JIS_FORMAT, ISO_FORMAT, EUR_FORMAT, INTERNAL_FORMAT
-};
-
-class Item_func_get_format :public Item_str_func
+class Item_empty_string :public Item_string
 {
 public:
-  const enum enum_drizzle_timestamp_type type; // keep it public
-  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
-    :Item_str_func(a), type(type_arg)
-  {}
-  String *val_str(String *str);
-  const char *func_name() const { return "get_format"; }
-  void fix_length_and_dec()
-  {
-    maybe_null= 1;
-    decimals=0;
-    max_length=17*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  virtual void print(String *str, enum_query_type query_type);
+  Item_empty_string(const char *header,uint32_t length, const CHARSET_INFO * cs= NULL) :
+    Item_string("",0, cs ? cs : &my_charset_utf8_general_ci)
+    { name=(char*) header; max_length= cs ? length * cs->mbmaxlen : length; }
+  void make_field(Send_field *field);
 };
-
-
-
-#endif /* DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H */
+  
+#endif /* DRIZZLED_ITEM_EMPTRY_STRING_H */

@@ -17,34 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
-#define DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <drizzled/item/int_with_ref.h>
 
-#include <drizzled/functions/str/strfunc.h>
-
-enum date_time_format
+Item *Item_int_with_ref::clone_item()
 {
-  USA_FORMAT, JIS_FORMAT, ISO_FORMAT, EUR_FORMAT, INTERNAL_FORMAT
-};
+  assert(ref->const_item());
+  /*
+    We need to evaluate the constant to make sure it works with
+    parameter markers.
+  */
+  return (ref->unsigned_flag ?
+          new Item_uint(ref->name, ref->val_int(), ref->max_length) :
+          new Item_int(ref->name, ref->val_int(), ref->max_length));
+}
 
-class Item_func_get_format :public Item_str_func
-{
-public:
-  const enum enum_drizzle_timestamp_type type; // keep it public
-  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
-    :Item_str_func(a), type(type_arg)
-  {}
-  String *val_str(String *str);
-  const char *func_name() const { return "get_format"; }
-  void fix_length_and_dec()
-  {
-    maybe_null= 1;
-    decimals=0;
-    max_length=17*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  virtual void print(String *str, enum_query_type query_type);
-};
-
-
-
-#endif /* DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H */

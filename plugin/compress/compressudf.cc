@@ -16,7 +16,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_udf.h>
 #include <drizzled/item/func.h>
-#include <drizzled/item/strfunc.h>
+#include <drizzled/functions/str/strfunc.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/current_session.h>

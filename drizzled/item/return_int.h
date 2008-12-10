@@ -17,34 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
-#define DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
+#ifndef DRIZZLED_ITEM_RETURN_INT_H
+#define DRIZZLED_ITEM_RETURN_INT_H
 
-#include <drizzled/functions/str/strfunc.h>
-
-enum date_time_format
+class Item_return_int :public Item_int
 {
-  USA_FORMAT, JIS_FORMAT, ISO_FORMAT, EUR_FORMAT, INTERNAL_FORMAT
-};
-
-class Item_func_get_format :public Item_str_func
-{
+  enum_field_types int_field_type;
 public:
-  const enum enum_drizzle_timestamp_type type; // keep it public
-  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
-    :Item_str_func(a), type(type_arg)
-  {}
-  String *val_str(String *str);
-  const char *func_name() const { return "get_format"; }
-  void fix_length_and_dec()
+  Item_return_int(const char *name_arg, uint32_t length,
+                  enum_field_types field_type_arg, int64_t value= 0)
+    :Item_int(name_arg, value, length), int_field_type(field_type_arg)
   {
-    maybe_null= 1;
-    decimals=0;
-    max_length=17*MY_CHARSET_BIN_MB_MAXLEN;
+    unsigned_flag=1;
   }
-  virtual void print(String *str, enum_query_type query_type);
+  enum_field_types field_type() const { return int_field_type; }
 };
 
 
-
-#endif /* DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H */
+#endif /* DRIZZLED_ITEM_RETURN_INT_H */
