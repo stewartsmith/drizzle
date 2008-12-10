@@ -92,7 +92,7 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
   if (!memcmp(from, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
   {
     /* Temporary table name. */
-    res= (my_stpncpy(to, from, to_length) - to);
+    res= strlen(strncpy(to, from, to_length));
   }
   else
   {
@@ -174,39 +174,47 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
     build_tmptable_filename() for them.
 
   RETURN
-    path length
+    path length on success, 0 on failure
 */
 
 uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
                           const char *table_name, const char *ext, uint32_t flags)
 {
+  std::string table_path;
   char dbbuff[FN_REFLEN];
   char tbbuff[FN_REFLEN];
+  int rootdir_len= strlen(FN_ROOTDIR);
 
   if (flags & FN_IS_TMP) // FN_FROM_IS_TMP | FN_TO_IS_TMP
-    my_stpncpy(tbbuff, table_name, sizeof(tbbuff));
+    strncpy(tbbuff, table_name, sizeof(tbbuff));
   else
     tablename_to_filename(table_name, tbbuff, sizeof(tbbuff));
 
   tablename_to_filename(db, dbbuff, sizeof(dbbuff));
+  table_path= drizzle_data_home;
+  int without_rootdir= table_path.length()-rootdir_len;
 
-  char *end = buff + bufflen;
   /* Don't add FN_ROOTDIR if dirzzle_data_home already includes it */
-  char *pos = my_stpncpy(buff, drizzle_data_home, bufflen);
-  int rootdir_len= strlen(FN_ROOTDIR);
-  if (pos - rootdir_len >= buff &&
-      memcmp(pos - rootdir_len, FN_ROOTDIR, rootdir_len) != 0)
-    pos= my_stpncpy(pos, FN_ROOTDIR, end - pos);
-  pos= my_stpncpy(pos, dbbuff, end-pos);
-  pos= my_stpncpy(pos, FN_ROOTDIR, end-pos);
-#ifdef USE_SYMDIR
-  unpack_dirname(buff, buff);
-  pos= strend(buff);
-#endif
-  pos= my_stpncpy(pos, tbbuff, end - pos);
-  pos= my_stpncpy(pos, ext, end - pos);
+  if (without_rootdir >= 0)
+  {
+    char *tmp= (char*)table_path.c_str()+without_rootdir;
+    if (memcmp(tmp, FN_ROOTDIR, rootdir_len) != 0)
+      table_path.append(FN_ROOTDIR);
+  }
 
-  return(pos - buff);
+  table_path.append(dbbuff);
+  table_path.append(FN_ROOTDIR);
+#ifdef USE_SYMDIR
+  table_path.clear();
+#endif
+  table_path.append(tbbuff);
+  table_path.append(ext);
+
+  if (bufflen < table_path.length())
+    return 0;
+
+  strcpy(buff, table_path.c_str());
+  return table_path.length();
 }
 
 
@@ -215,7 +223,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 
   SYNOPSIS
    build_tmptable_filename()
-     session                        The thread handle.
+     session                    The thread handle.
      buff                       Where to write result in my_charset_filename.
      bufflen                    buff size
 
@@ -225,25 +233,31 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
     a file name in drizzle_tmpdir.
 
   RETURN
-    path length
+    path length on success, 0 on failure
 */
 
 uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 {
+  uint32_t length;
+  std::ostringstream path_str, post_tmpdir_str;
+  std::string tmp;
 
-  char *p= my_stpncpy(buff, drizzle_tmpdir, bufflen);
-  snprintf(p, bufflen - (p - buff), "/%s%lx_%"PRIx64"_%x%s",
-           TMP_FILE_PREFIX, (unsigned long)current_pid,
-           session->thread_id, session->tmp_table++, reg_ext);
+  path_str << drizzle_tmpdir;
+  post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
+  post_tmpdir_str << session->thread_id << session->tmp_table++ << reg_ext;
+  tmp= post_tmpdir_str.str();
 
   if (lower_case_table_names)
-  {
-    /* Convert all except tmpdir to lower case */
-    my_casedn_str(files_charset_info, p);
-  }
+    std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
 
-  uint32_t length= unpack_filename(buff, buff);
-  return(length);
+  path_str << tmp;
+
+  if (bufflen < path_str.str().length())
+    length= 0;
+  else
+    length= unpack_filename(buff, path_str.str().c_str());
+
+  return length;
 }
 
 /*
@@ -4393,6 +4407,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
                        uint32_t order_num, order_st *order, bool ignore)
 {
   Table *table, *new_table=0, *name_lock= 0;;
+  std::string new_name_str;
   int error= 0;
   char tmp_name[80],old_name[32],new_name_buff[FN_REFLEN];
   char new_alias_buff[FN_REFLEN], *table_name, *db, *new_alias, *alias;
@@ -4428,16 +4443,10 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     /* Conditionally writes to binlog. */
     return(mysql_discard_or_import_tablespace(session,table_list,
                                               alter_info->tablespace_op));
-  char* pos= new_name_buff;
-  char* pos_end= pos+strlen(new_name_buff)-1;
-  pos= my_stpncpy(new_name_buff, drizzle_data_home, pos_end-pos);
-  pos= my_stpncpy(new_name_buff, "/", pos_end-pos);
-  pos= my_stpncpy(new_name_buff, db, pos_end-pos);
-  pos= my_stpncpy(new_name_buff, "/", pos_end-pos);
-  pos= my_stpncpy(new_name_buff, table_name, pos_end-pos);
-  pos= my_stpncpy(new_name_buff, reg_ext, pos_end-pos);
+  std::ostringstream oss;
+  oss << drizzle_data_home << "/" << db << "/" << table_name << reg_ext;
 
-  (void) unpack_filename(new_name_buff, new_name_buff);
+  (void) unpack_filename(new_name_buff, oss.str().c_str());
   /*
     If this is just a rename of a view, short cut to the
     following scenario: 1) lock LOCK_open 2) do a RENAME

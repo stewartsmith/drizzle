@@ -46,6 +46,7 @@
 #include <drizzled/log.h>
 
 #include <string>
+#include <sstream>
 #include <bitset>
 
 typedef class st_select_lex SELECT_LEX;
