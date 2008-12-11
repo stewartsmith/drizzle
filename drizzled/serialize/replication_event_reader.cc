@@ -1,3 +1,6 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -127,6 +130,7 @@ void printRecord(const drizzle::EventList *list)
 int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
+  int file;
 
   if (argc != 2)
   {
@@ -136,17 +140,41 @@ int main(int argc, char* argv[])
 
   drizzle::EventList list;
 
+  if ((file= open(argv[1], O_RDONLY)) == -1)
   {
-    // Read the existing master.info file
-    fstream input(argv[1], ios::in | ios::binary);
-    if (!list.ParseFromIstream(&input))
-    {
-      cerr << "Failed to parse master.info." << endl;
-      return -1;
-    }
+    cerr << "Can not open file: " << argv[0] << endl;
   }
 
-  printRecord(&list);
+  while (1)
+  {
+    uint64_t length;
+    char *buffer= NULL;
+    char *temp_buffer;
+
+    /* Read the size */
+    if (read(file, &length, sizeof(uint64_t)) != sizeof(uint64_t))
+      break;
+
+    temp_buffer= (char *)realloc(buffer, length);
+    if (temp_buffer == NULL)
+    {
+      cerr << "Memory allocation failure trying to " << length << "."  << endl;
+      exit(1);
+    }
+    buffer= temp_buffer;
+
+    /* Read the record */
+    if (read(file, buffer, length) != length)
+    {
+      cerr << "Could not read entire record." << endl;
+      exit(1);
+    }
+    list.ParseFromArray(buffer, length);
+
+    /* Print the record */
+    printRecord(&list);
+  }
+
 
   return 0;
 }
