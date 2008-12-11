@@ -21,7 +21,6 @@
 #define DRIZZLED_FUNCTIONS_TIME_TYPECAST_H
 
 #include <drizzled/functions/str/strfunc.h>
-#include <drizzled/item/timefunc.h>
 
 class Item_typecast :public Item_str_func
 {

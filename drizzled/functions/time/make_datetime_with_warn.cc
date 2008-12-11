@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/time/make_datetime_with_warn.h>
+#include <drizzled/functions/time/make_datetime.h>
 
 /*
   Wrapper over make_datetime() with validation of the input DRIZZLE_TIME value

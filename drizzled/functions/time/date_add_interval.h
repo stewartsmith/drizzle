@@ -21,7 +21,6 @@
 #define DRIZZLED_FUNCTIONS_TIME_DATE_ADD_INTERVAL_H
 
 #include <drizzled/functions/time/date.h>
-#include <drizzled/item/timefunc.h>
 
 class Item_date_add_interval :public Item_date_func
 {

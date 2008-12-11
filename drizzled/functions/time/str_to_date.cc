@@ -22,6 +22,7 @@
 #include <drizzled/sql_locale.h>
 #include <drizzled/error.h>
 #include <drizzled/functions/time/str_to_date.h>
+#include <drizzled/functions/time/make_datetime.h>
 
 /*
   Date formats corresponding to compound %r and %T conversion specifiers

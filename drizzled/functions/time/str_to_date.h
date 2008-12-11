@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_STR_TO_DATE_H
 #define DRIZZLED_FUNCTIONS_TIME_STR_TO_DATE_H
 
-#include <drizzled/item/timefunc.h>
+#include <drizzled/functions/str/strfunc.h>
 
 class Item_func_str_to_date :public Item_str_func
 {
