@@ -262,7 +262,9 @@ static int check_connection(Session *session)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= my_stpncpy(buff, server_version, SERVER_VERSION_LENGTH) + 1;
+    end= strncpy(buff, server_version, SERVER_VERSION_LENGTH);
+    end+= SERVER_VERSION_LENGTH+1;
+
     int4store((unsigned char*) end, session->thread_id);
     end+= 4;
     /*

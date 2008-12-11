@@ -3083,7 +3083,7 @@ static int do_save_master_pos(void)
     die("drizzle_store_result() retuned NULL for '%s'", query);
   if (!(row = drizzle_fetch_row(res)))
     die("empty result in show master status");
-  my_stpncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
+  strncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
   master_pos.pos = strtoul(row[1], (char**) 0, 10);
   drizzle_free_result(res);
   return(0);
@@ -4613,7 +4613,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
       tty_password= 1;
     break;
   case 't':
-    my_stpncpy(TMPDIR, argument, sizeof(TMPDIR));
+    strncpy(TMPDIR, argument, sizeof(TMPDIR));
     break;
   case 'A':
     if (!embedded_server_arg_count)

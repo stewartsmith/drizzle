@@ -57,6 +57,7 @@
 #include <drizzled/log.h>
 
 #include <string>
+#include <sstream>
 #include <bitset>
 
 

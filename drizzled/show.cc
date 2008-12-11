@@ -676,7 +676,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   List<Item> field_list;
   char tmp[MAX_FIELD_WIDTH], *for_str, def_value_buf[MAX_FIELD_WIDTH];
   const char *alias;
-  std::string buff;
+  string buff;
   String type(tmp, sizeof(tmp), system_charset_info);
   String def_value(def_value_buf, sizeof(def_value_buf), system_charset_info);
   Field **ptr,*field;
@@ -1516,14 +1516,16 @@ static bool show_status_array(Session *session, const char *wild,
   null_lex_str.str= 0;				// For sys_var->value_ptr()
   null_lex_str.length= 0;
 
-  prefix_end=my_stpncpy(name_buffer, prefix, sizeof(name_buffer)-1);
+  prefix_end= strncpy(name_buffer, prefix, sizeof(name_buffer)-1);
+  prefix_end+= strlen(prefix);
+
   if (*prefix)
     *prefix_end++= '_';
   len=name_buffer + sizeof(name_buffer) - prefix_end;
 
   for (; variables->name; variables++)
   {
-    my_stpncpy(prefix_end, variables->name, len);
+    strncpy(prefix_end, variables->name, len);
     name_buffer[sizeof(name_buffer)-1]=0;       /* Safety */
     if (ucase_names)
       make_upper(name_buffer);

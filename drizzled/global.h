@@ -41,6 +41,7 @@
 # include <cstddef>
 # include <cassert>
 # include <cerrno>
+# include <sstream>
 #else
 # include <stdint.h>
 # include <inttypes.h>
