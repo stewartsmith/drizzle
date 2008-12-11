@@ -28,6 +28,7 @@
 #include <drizzled/cached_item.h>
 #include <drizzled/item/cache_int.h>
 #include <drizzled/functions/bit.h>
+#include <drizzled/check_stack_overrun.h>
 
 #include CMATH_H
 
@@ -2715,7 +2716,8 @@ bool Item_func_case::fix_fields(Session *session, Item **ref)
     buff should match stack usage from
     Item_func_case::val_int() -> Item_func_case::find_item()
   */
-  unsigned char buff[MAX_FIELD_WIDTH*2+sizeof(String)*2+sizeof(String*)*2+sizeof(double)*2+sizeof(int64_t)*2];
+  unsigned char buff[MAX_FIELD_WIDTH*2+sizeof(String)*2+sizeof(String*)*2
+                     +sizeof(double)*2+sizeof(int64_t)*2];
   bool res= Item_func::fix_fields(session, ref);
   /*
     Call check_stack_overrun after fix_fields to be sure that stack variable

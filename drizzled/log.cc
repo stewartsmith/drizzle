@@ -502,16 +502,14 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
 
   if (log_type == LOG_NORMAL)
   {
-    char *end;
-    int len=snprintf(buff, sizeof(buff), "%s, Version: %s (%s). "
-		     "started with:\nTCP Port: %d, Named Pipe: %s\n",
-                     my_progname, server_version, COMPILATION_COMMENT,
-                     drizzled_port, ""
-                     );
-    end= my_stpncpy(buff + len, "Time                 Id Command    Argument\n",
-                 sizeof(buff) - len);
-    if (my_b_write(&log_file, (unsigned char*) buff, (uint) (end-buff)) ||
-	flush_io_cache(&log_file))
+    int len= snprintf(buff, sizeof(buff), "%s, Version: %s (%s). "
+                      "started with:\nTCP Port: %d, Named Pipe: %s\n",
+                      my_progname, server_version, COMPILATION_COMMENT,
+                      drizzled_port, "");
+    len+= sprintf(buff+len, "Time                 Id Command    Argument\n");
+
+    if (my_b_write(&log_file, (unsigned char*) buff, len) ||
+        flush_io_cache(&log_file))
       goto err;
   }
 
@@ -1602,7 +1600,7 @@ void DRIZZLE_BIN_LOG::make_log_name(char* buf, const char* log_ident)
   uint32_t dir_len = dirname_length(log_file_name);
   if (dir_len >= FN_REFLEN)
     dir_len=FN_REFLEN-1;
-  my_stpncpy(buf, log_file_name, dir_len);
+  strncpy(buf, log_file_name, dir_len);
   strncpy(buf+dir_len, log_ident, FN_REFLEN - dir_len -1);
 }
 

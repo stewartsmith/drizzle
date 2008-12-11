@@ -109,6 +109,7 @@
 #include <drizzled/cost_vect.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/field/num.h>
+#include <drizzled/check_stack_overrun.h>
 
 #include <string>
 #include CMATH_H

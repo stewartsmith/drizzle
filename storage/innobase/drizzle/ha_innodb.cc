@@ -21,7 +21,7 @@
     in Windows?
 */
 
-#include <drizzled/common_includes.h>
+#include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
@@ -34,6 +34,7 @@
 #include <drizzled/field.h>
 #include <drizzled/log.h>
 #include <drizzled/session.h>
+#include <drizzled/current_session.h>
 #include <drizzled/table.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/varstring.h>

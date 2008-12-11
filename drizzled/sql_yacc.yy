@@ -54,11 +54,31 @@
 #include <drizzled/functions/str/trim.h>
 #include <drizzled/functions/str/user.h>
 #include <drizzled/functions/str/weight_string.h>
+
+#include <drizzled/functions/time/add_time.h>
+#include <drizzled/functions/time/curdate.h>
+#include <drizzled/functions/time/curtime.h>
+#include <drizzled/functions/time/date_add_interval.h>
+#include <drizzled/functions/time/dayofmonth.h>
+#include <drizzled/functions/time/extract.h>
+#include <drizzled/functions/time/get_format.h>
+#include <drizzled/functions/time/hour.h>
+#include <drizzled/functions/time/microsecond.h>
+#include <drizzled/functions/time/minute.h>
+#include <drizzled/functions/time/month.h>
+#include <drizzled/functions/time/now.h>
+#include <drizzled/functions/time/quarter.h>
+#include <drizzled/functions/time/second.h>
+#include <drizzled/functions/time/sysdate_local.h>
+#include <drizzled/functions/time/timestamp_diff.h>
+#include <drizzled/functions/time/typecast.h>
+#include <drizzled/functions/time/week.h>
+#include <drizzled/functions/time/year.h>
+
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/timefunc.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
 #include <drizzled/item/func.h>
@@ -66,6 +86,7 @@
 #include <drizzled/item/create.h>
 #include <drizzled/item/insert_value.h>
 #include <drizzled/lex_string.h>
+#include <drizzled/functions/get_system_var.h>
 
 class Table_ident;
 class Item;

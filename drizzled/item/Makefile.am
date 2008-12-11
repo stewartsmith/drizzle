@@ -86,7 +86,6 @@ nobase_dist_iteminclude_HEADERS = \
 		row.h \
 		subselect.h \
 		sum.h \
-		timefunc.h \
 		type_holder.h \
 		uint.h
 

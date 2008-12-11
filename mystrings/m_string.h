@@ -49,9 +49,6 @@
 extern "C" {
 #endif
 
-
-char *my_stpncpy(register char *dst, register const char *src, size_t n);
-
 #define strmov_overlapp(A,B) my_stpcpy(A,B)
 #define strmake_overlapp(A,B,C) strmake(A,B,C)
 

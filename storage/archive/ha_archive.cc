@@ -14,7 +14,7 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include <drizzled/common_includes.h>
+#include <drizzled/server_includes.h>
 #include <drizzled/field.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/timestamp.h>

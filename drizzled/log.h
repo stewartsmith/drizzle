@@ -360,6 +360,11 @@ public:
   inline uint32_t get_open_count() { return open_count; }
 };
 
+
+File open_binlog(IO_CACHE *log, const char *log_file_name,
+                 const char **errmsg);
+bool flush_error_log(void);
+
 class Log_event_handler
 {
 public:

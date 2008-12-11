@@ -20,6 +20,7 @@
 #include <drizzled/error.h>
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
+#include <drizzled/lock.h>
 
 static TableList *rename_tables(Session *session, TableList *table_list,
                                 bool skip_error);

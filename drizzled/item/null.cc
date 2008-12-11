@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/protocol.h>
 #include <drizzled/item/null.h>
+#include <drizzled/lex_string.h>
 
 bool Item_null::eq(const Item *item, bool) const
 { return item->type() == type(); }
@@ -52,6 +53,13 @@ my_decimal *Item_null::val_decimal(my_decimal *)
 {
   return 0;
 }
+
+
+void Item_null::print(String *str, enum_query_type)
+{
+  str->append(STRING_WITH_LEN("NULL"));
+}
+
 
 Item *Item_null::safe_charset_converter(const CHARSET_INFO * const tocs)
 {

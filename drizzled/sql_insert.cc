@@ -35,6 +35,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_load.h>
 #include <drizzled/field/timestamp.h>
+#include <drizzled/lock.h>
 
 
 /*

@@ -22,9 +22,10 @@
 #include <string>
 #include <mystrings/m_ctype.h>
 
-template class std::vector<std::string>;
-
 using namespace std;
+
+template class vector<string>;
+
 /* Exit codes */
 
 #define EX_USAGE 1

@@ -40,6 +40,8 @@
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/blob.h>
+#include <drizzled/check_stack_overrun.h>
+#include <drizzled/lock.h>
 
 #include CMATH_H
 
@@ -2678,13 +2680,11 @@ mysql_select(Session *session, Item ***rref_pointer_array,
     }
   }
 
-  /* dump_TableList_graph(select_lex, select_lex->leaf_tables); */
   if (join->flatten_subqueries())
   {
     err= 1;
     goto err;
   }
-  /* dump_TableList_struct(select_lex, select_lex->leaf_tables); */
 
   if ((err= join->optimize()))
   {
@@ -3091,7 +3091,6 @@ bool JOIN::flatten_subqueries()
       (*in_subq)->is_correlated * MAX_TABLES + child_join->outer_tables;
   }
 
-  //dump_TableList_struct(select_lex, select_lex->leaf_tables);
   /*
     2. Pick which subqueries to convert:
       sort the subquery array

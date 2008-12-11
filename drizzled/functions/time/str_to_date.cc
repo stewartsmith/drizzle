@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/current_session.h>
 #include CSTDINT_H
 #include <drizzled/sql_locale.h>
 #include <drizzled/error.h>

@@ -36,6 +36,7 @@
 #include <drizzled/query_id.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/lock.h>
 
 extern scheduler_functions thread_scheduler;
 /*
@@ -46,6 +47,8 @@ char internal_table_name[2]= "*";
 char empty_c_string[1]= {0};    /* used for not defined db */
 
 const char * const Session::DEFAULT_WHERE= "field list";
+extern pthread_key_t THR_Session;
+extern pthread_key_t THR_Mem_root;
 
 
 /*****************************************************************************
@@ -63,6 +66,7 @@ template class List_iterator<Alter_drop>;
 template class List<Alter_column>;
 template class List_iterator<Alter_column>;
 #endif
+
 
 /****************************************************************************
 ** User variables
@@ -778,6 +782,7 @@ Session::~Session()
   }
 
   free_root(&main_mem_root, MYF(0));
+  pthread_setspecific(THR_Session,  0);
   return;
 }
 
@@ -894,7 +899,7 @@ bool Session::store_globals()
   assert(thread_stack);
 
   if (pthread_setspecific(THR_Session,  this) ||
-      pthread_setspecific(THR_MALLOC, &mem_root))
+      pthread_setspecific(THR_Mem_root, &mem_root))
     return 1;
   mysys_var=my_thread_var;
   /*

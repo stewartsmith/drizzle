@@ -23,6 +23,7 @@
 class Item_null :public Item_basic_constant
 {
 public:
+
   Item_null(char *name_par=0)
   {
     maybe_null= null_value= true;
@@ -44,12 +45,9 @@ public:
   enum_field_types field_type() const   { return DRIZZLE_TYPE_NULL; }
   bool basic_const_item() const { return 1; }
   Item *clone_item() { return new Item_null(name); }
-  bool is_null() { return 1; }
+  bool is_null() { return true; }
 
-  virtual inline void print(String *str, enum_query_type)
-  {
-    str->append(STRING_WITH_LEN("NULL"));
-  }
+  virtual void print(String *str, enum_query_type);
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   bool check_vcol_func_processor(unsigned char *)
