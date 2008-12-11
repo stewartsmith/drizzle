@@ -3065,7 +3065,7 @@ Xid_log_event::do_shall_skip(Relay_log_info *rli)
 
 void Slave_log_event::pack_info(Protocol *protocol)
 {
-  std::ostringstream stream;
+  ostringstream stream;
   stream << "host=" << master_host << ",port=" << master_port;
   stream << ",log=" << master_log << ",pos=" << master_pos;
 

@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <sstream>
 
+using namespace std;
+
 static char *find_file_in_path(char *to,const char *name);
 
 	/* Finds where program can find it's files.
@@ -81,7 +83,7 @@ static char *find_file_in_path(char *to, const char *name)
 {
   char *path,*pos, dir[2];
   const char *ext="";
-  std::ostringstream sstream;
+  ostringstream sstream;
 
   if (!(path=getenv("PATH")))
     return NULL;

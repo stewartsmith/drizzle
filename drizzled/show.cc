@@ -675,7 +675,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   List<Item> field_list;
   char tmp[MAX_FIELD_WIDTH], *for_str, def_value_buf[MAX_FIELD_WIDTH];
   const char *alias;
-  std::string buff;
+  string buff;
   String type(tmp, sizeof(tmp), system_charset_info);
   String def_value(def_value_buf, sizeof(def_value_buf), system_charset_info);
   Field **ptr,*field;

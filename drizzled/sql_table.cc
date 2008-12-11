@@ -29,6 +29,8 @@
 #include <drizzled/db.h>
 #include <drizzled/replicator.h>
 
+using namespace std;
+
 extern HASH lock_db_cache;
 
 int creating_table= 0;        // How many mysql_create_table are running
@@ -180,7 +182,7 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
                           const char *table_name, const char *ext, uint32_t flags)
 {
-  std::string table_path;
+  string table_path;
   char dbbuff[FN_REFLEN];
   char tbbuff[FN_REFLEN];
   int rootdir_len= strlen(FN_ROOTDIR);
@@ -239,8 +241,8 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 {
   uint32_t length;
-  std::ostringstream path_str, post_tmpdir_str;
-  std::string tmp;
+  ostringstream path_str, post_tmpdir_str;
+  string tmp;
 
   path_str << drizzle_tmpdir;
   post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
@@ -248,7 +250,7 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
   tmp= post_tmpdir_str.str();
 
   if (lower_case_table_names)
-    std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
+    transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
 
   path_str << tmp;
 
@@ -4407,7 +4409,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
                        uint32_t order_num, order_st *order, bool ignore)
 {
   Table *table, *new_table=0, *name_lock= 0;;
-  std::string new_name_str;
+  string new_name_str;
   int error= 0;
   char tmp_name[80],old_name[32],new_name_buff[FN_REFLEN];
   char new_alias_buff[FN_REFLEN], *table_name, *db, *new_alias, *alias;
@@ -4443,7 +4445,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     /* Conditionally writes to binlog. */
     return(mysql_discard_or_import_tablespace(session,table_list,
                                               alter_info->tablespace_op));
-  std::ostringstream oss;
+  ostringstream oss;
   oss << drizzle_data_home << "/" << db << "/" << table_name << reg_ext;
 
   (void) unpack_filename(new_name_buff, oss.str().c_str());

@@ -24,7 +24,7 @@
 #include <paths.h>
 #endif
 
-
+using namespace std;
 
 /*
   @brief
@@ -71,7 +71,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
 #elif defined(HAVE_MKSTEMP)
   {
     File org_file;
-    std::string prefix_str;
+    string prefix_str;
 
     prefix_str= prefix ? prefix : "tmp.";
     prefix_str.append("XXXXXX");
