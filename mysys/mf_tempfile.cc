@@ -19,11 +19,12 @@
 #include "mysys_err.h"
 #include <stdio.h>
 #include <errno.h>
+#include <string>
 #ifdef HAVE_PATHS_H
 #include <paths.h>
 #endif
 
-
+using namespace std;
 
 /*
   @brief
@@ -69,21 +70,20 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
   }
 #elif defined(HAVE_MKSTEMP)
   {
-    char prefix_buff[30];
-    uint32_t pfx_len;
     File org_file;
+    string prefix_str;
 
-    pfx_len= (uint32_t)(strcpy(my_stpncpy(prefix_buff,prefix ? prefix : "tmp.",
-                                          sizeof(prefix_buff)-7),"XXXXXX")+6
-                               -prefix_buff);
+    prefix_str= prefix ? prefix : "tmp.";
+    prefix_str.append("XXXXXX");
+
     if (!dir && ! (dir =getenv("TMPDIR")))
       dir= P_tmpdir;
-    if (strlen(dir)+ pfx_len > FN_REFLEN-2)
+    if (strlen(dir)+prefix_str.length() > FN_REFLEN-2)
     {
       errno=my_errno= ENAMETOOLONG;
       return(file);
     }
-    strcpy(convert_dirname(to,dir,NULL),prefix_buff);
+    strcpy(convert_dirname(to,dir,NULL),prefix_str.c_str());
     org_file=mkstemp(to);
     /* TODO: This was old behavior, but really don't we want to
      * unlink files immediately under all circumstances?

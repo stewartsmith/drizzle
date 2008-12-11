@@ -29,7 +29,7 @@
 #include <drizzled/sql_base.h>
 
 #include <drizzled/item/sum.h>
-#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/decimal.h>
 #include <drizzled/field/double.h>
 #include <drizzled/field/int64_t.h>
 #include <drizzled/field/date.h>

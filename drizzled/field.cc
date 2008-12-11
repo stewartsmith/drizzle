@@ -36,7 +36,7 @@
 #include <drizzled/field/enum.h>
 #include <drizzled/field/null.h>
 #include <drizzled/field/date.h>
-#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/decimal.h>
 #include <drizzled/field/real.h>
 #include <drizzled/field/double.h>
 #include <drizzled/field/long.h>

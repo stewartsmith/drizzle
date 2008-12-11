@@ -138,7 +138,9 @@ size_t cleanup_dirname(register char *to, const char *from)
   if ((pos=strrchr(from_ptr,FN_DEVCHAR)) != 0)
   {						/* Skip device part */
     length=(size_t) (pos-from_ptr)+1;
-    start=my_stpncpy(buff,from_ptr,length); from_ptr+=length;
+    start= strncpy(buff,from_ptr,length);
+    start+= strlen(from_ptr);
+    from_ptr+=length;
   }
 #endif
 
@@ -424,7 +426,8 @@ size_t system_filename(char * to, const char *from)
   if ((pos=strrchr(from_pos,FN_DEVCHAR)))	/* Skip device part */
   {
     pos++;
-    to_pos=my_stpncpy(to,from_pos,(size_t) (pos-from_pos));
+    to_pos= strncpy(to,from_pos,(size_t) (pos-from_pos));
+    to_pos+= strlen(to);
     from_pos=pos;
   }
   else
@@ -457,7 +460,10 @@ size_t system_filename(char * to, const char *from)
         to_pos+= strlen(FN_C_PARENT_DIR);
       }
       else
-        to_pos=my_stpncpy(to_pos,from_pos,(size_t) (pos-from_pos));
+      {
+        to_pos= strncpy(to_pos,from_pos,(size_t) (pos-from_pos));
+        to_pos+= strlen(to_pos);
+      }
       from_pos=pos+1;
     }
     *(to_pos++)=FN_C_AFTER_DIR;

@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/show.h>
 #include <drizzled/table.h>
+#include <drizzled/current_session.h>
 #include <drizzled/item/ident.h>
 
 const uint32_t NO_CACHED_FIELD_INDEX= UINT32_MAX;

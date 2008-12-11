@@ -26,6 +26,7 @@ SUBDIRS = ${po} . \
 	  extra \
 	  libdrizzle \
 	  client \
+	  drizzled/serialize \
 	  storage \
 	  plugin \
 	  drizzled \

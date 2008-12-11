@@ -32,6 +32,7 @@ using namespace std;
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/lock.h>
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 

@@ -20,7 +20,14 @@
 
 /*  Extra functions used by unireg library */
 
-#ifndef _unireg_h
+#ifndef DRIZZLED_UNIREG_H
+#define DRIZZLED_UNIREG_H
+
+#include <drizzled/structs.h>				/* All structs we need */
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 #ifndef NO_ALARM_LOOP
 #define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
@@ -149,8 +156,26 @@
 #define COLUMN_FORMAT_MASK 7
 #define COLUMN_FORMAT_SHIFT 3
 
-/* Include prototypes for unireg */
+void unireg_init();
+void unireg_end(void) __attribute__((noreturn));
+void unireg_abort(int exit_code) __attribute__((noreturn));
 
-#include "structs.h"				/* All structs we need */
+bool mysql_create_frm(Session *session, const char *file_name,
+                      const char *db, const char *table,
+                      HA_CREATE_INFO *create_info,
+                      List<Create_field> &create_field,
+                      uint32_t key_count,KEY *key_info,handler *db_type);
+int rea_create_table(Session *session, const char *path,
+                     const char *db, const char *table_name,
+                     HA_CREATE_INFO *create_info,
+                     List<Create_field> &create_field,
+                     uint32_t key_count,KEY *key_info,
+                     handler *file);
+
+
+#if defined(__cplusplus)
+}
+#endif
+
 
 #endif

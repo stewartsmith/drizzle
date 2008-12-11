@@ -23,7 +23,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = util field item serialize functions functions/str functions/time .
+SUBDIRS = util field item functions functions/str functions/time .
 
 sbin_PROGRAMS =drizzled
 
@@ -54,7 +54,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		authentication.h \
 		base.h \
 		cached_item.h \
+		check_stack_overrun.h \
 		client_settings.h \
+		current_session.h \
 		common.h \
 		comp_creator.h \
 		configvar.h \
@@ -87,6 +89,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex.h \
 		lex_string.h \
 		lex_symbol.h \
+		lock.h \
 		log_event.h \
 		logging.h \
 		log.h \
@@ -183,7 +186,6 @@ drizzled_DEPENDENCIES = @mysql_plugin_libs@ libyacc.la libhandler.la
 drizzled_LDFLAGS =
 
 noinst_HEADERS = \
-		common_includes.h \
 		gettext.h \
 		global.h \
 		server_includes.h
@@ -191,8 +193,10 @@ noinst_HEADERS = \
 drizzled_SOURCES = \
 		authentication.cc \
 		cached_item.cc \
+		check_stack_overrun.cc \
 		comp_creator.cc \
 		configvar.cc \
+		current_session.cc \
 		db.cc \
 		discover.cc \
 		drizzled.cc \
@@ -207,7 +211,6 @@ drizzled_SOURCES = \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
-		init.cc \
 		item.cc \
 		key.cc \
                 key_map.cc \

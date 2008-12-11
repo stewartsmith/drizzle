@@ -755,12 +755,12 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       for (value++ ; my_isspace(&my_charset_utf8_general_ci,*value); value++) ;
       value_end= strchr(value, '\0');
       /*
-	We don't have to test for value_end >= value as we know there is
-	an '=' before
+       We don't have to test for value_end >= value as we know there is
+       an '=' before
       */
       for ( ; my_isspace(&my_charset_utf8_general_ci,value_end[-1]) ; value_end--) ;
       if (value_end < value)			/* Empty string */
-	value_end=value;
+        value_end=value;
 
       /* remove quotes around argument */
       if ((*value == '\"' || *value == '\'') && /* First char is quote */
@@ -770,7 +770,8 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
         value++;
         value_end--;
       }
-      ptr= my_stpncpy(strcpy(option,"--")+2,ptr,(size_t) (end-ptr));
+      ptr= strncpy(strcpy(option,"--")+2,ptr,(size_t) (end-ptr));
+      ptr+= strlen(ptr);
       *ptr++= '=';
 
       for ( ; value != value_end; value++)

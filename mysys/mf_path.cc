@@ -17,6 +17,9 @@
 #include <mystrings/m_string.h>
 #include "my_static.h"
 #include <stdlib.h>
+#include <sstream>
+
+using namespace std;
 
 static char *find_file_in_path(char *to,const char *name);
 
@@ -78,8 +81,9 @@ char * my_path(char * to, const char *progname,
 
 static char *find_file_in_path(char *to, const char *name)
 {
-  char *path,*pos,dir[2];
+  char *path,*pos, dir[2];
   const char *ext="";
+  ostringstream sstream;
 
   if (!(path=getenv("PATH")))
     return NULL;
@@ -93,11 +97,12 @@ static char *find_file_in_path(char *to, const char *name)
   {
     if (path != pos)
     {
-      strxmov(my_stpncpy(to,path,(uint) (pos-path)),dir,name,ext,NULL);
+      sstream << path << dir << name << ext << NULL;
+      strncpy(to, sstream.str().c_str(), sstream.str().length());
       if (!access(to,F_OK))
       {
-	to[(uint) (pos-path)+1]=0;	/* Return path only */
-	return to;
+        to[(uint) (pos-path)+1]=0;	/* Return path only */
+        return to;
       }
     }
   }

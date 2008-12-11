@@ -40,6 +40,20 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/lex_symbol.h>
 #include <drizzled/functions/locate.h>
+#include <drizzled/functions/str/char.h>
+#include <drizzled/functions/str/collation.h>
+#include <drizzled/functions/str/database.h>
+#include <drizzled/functions/str/insert.h>
+#include <drizzled/functions/str/left.h>
+#include <drizzled/functions/str/repeat.h>
+#include <drizzled/functions/str/replace.h>
+#include <drizzled/functions/str/reverse.h>
+#include <drizzled/functions/str/right.h>
+#include <drizzled/functions/str/set_collation.h>
+#include <drizzled/functions/str/substr.h>
+#include <drizzled/functions/str/trim.h>
+#include <drizzled/functions/str/user.h>
+#include <drizzled/functions/str/weight_string.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
@@ -50,7 +64,9 @@
 #include <drizzled/item/func.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/item/create.h>
+#include <drizzled/item/insert_value.h>
 #include <drizzled/lex_string.h>
+#include <drizzled/functions/get_system_var.h>
 
 class Table_ident;
 class Item;

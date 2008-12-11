@@ -19,7 +19,7 @@ libfield_la_SOURCES = 	blob.cc \
 			date.cc \
 			datetime.cc \
 			enum.cc \
-			fdecimal.cc \
+			decimal.cc \
 			double.cc \
 			int64_t.cc \
 			long.cc \
@@ -39,7 +39,7 @@ nobase_dist_fieldinclude_HEADERS = \
 		date.h \
 		datetime.h \
 		enum.h \
-		fdecimal.h \
+		decimal.h \
 		double.h \
 		int64_t.h \
 		long.h \

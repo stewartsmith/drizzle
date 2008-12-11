@@ -44,6 +44,7 @@
 #include <drizzled/db.h>
 #include <drizzled/item/create.h>
 #include <drizzled/errmsg.h>
+#include <drizzled/unireg.h>
 
 
 #if TIME_WITH_SYS_TIME
@@ -427,7 +428,7 @@ SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
 
-pthread_key_t THR_MALLOC;
+pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
 pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_status,
@@ -734,6 +735,25 @@ extern "C" RETSIGTYPE print_signal_warning(int sig)
   if (sig == SIGALRM)
     alarm(2);					/* reschedule alarm */
 }
+
+
+void unireg_init()
+{
+  abort_loop=0;
+
+  my_disable_async_io=1;		/* aioread is only in shared library */
+  wild_many='%'; wild_one='_'; wild_prefix='\\'; /* Change to sql syntax */
+
+  current_pid=(ulong) getpid();		/* Save for later ref */
+  init_time();				/* Init time-functions (read zone) */
+  my_abort_hook=unireg_abort;		/* Abort with close of databases */
+
+  strcpy(reg_ext,".frm");
+  reg_ext_length= 4;
+
+  return;
+}
+
 
 /**
   cleanup all memory and end program nicely.
@@ -1926,7 +1946,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     }
     open_files_limit= files;
   }
-  unireg_init(0); /* Set up extern variabels */
+  unireg_init(); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
   lex_init();
@@ -2069,7 +2089,7 @@ static int init_thread_environment()
   }
 
   if (pthread_key_create(&THR_Session,NULL) ||
-      pthread_key_create(&THR_MALLOC,NULL))
+      pthread_key_create(&THR_Mem_root,NULL))
   {
     sql_print_error(_("Can't create thread-keys"));
     return 1;

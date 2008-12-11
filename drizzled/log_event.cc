@@ -44,6 +44,7 @@
 #include <drizzled/query_id.h>
 #include <drizzled/tztime.h>
 #include <drizzled/slave.h>
+#include <drizzled/lock.h>
 
 using namespace std;
 
@@ -3065,16 +3066,12 @@ Xid_log_event::do_shall_skip(Relay_log_info *rli)
 
 void Slave_log_event::pack_info(Protocol *protocol)
 {
-  char buf[256+HOSTNAME_LENGTH], *pos;
-  pos= strcpy(buf, "host=")+5;
-  pos= my_stpncpy(pos, master_host.c_str(), HOSTNAME_LENGTH);
-  pos= strcpy(pos, ",port=")+6;
-  pos= int10_to_str((long) master_port, pos, 10);
-  pos= strcpy(pos, ",log=")+5;
-  pos= strcpy(pos, master_log.c_str())+master_log.length();
-  pos= strcpy(pos, ",pos=")+5;
-  pos= int64_t10_to_str(master_pos, pos, 10);
-  protocol->store(buf, pos-buf, &my_charset_bin);
+  ostringstream stream;
+  stream << "host=" << master_host << ",port=" << master_port;
+  stream << ",log=" << master_log << ",pos=" << master_pos;
+
+  protocol->store(stream.str().c_str(), stream.str().length(),
+                  &my_charset_bin);
 }
 
 

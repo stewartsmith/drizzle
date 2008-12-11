@@ -13,12 +13,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/common_includes.h>
+#include <drizzled/server_includes.h>
 #include <drizzled/sql_udf.h>
 #include <drizzled/item/func.h>
-#include <drizzled/item/strfunc.h>
+#include <drizzled/functions/str/strfunc.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_error.h>
+#include <drizzled/current_session.h>
 #include <zlib.h>
 
 class Item_func_compress: public Item_str_func

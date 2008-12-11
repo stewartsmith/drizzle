@@ -29,6 +29,7 @@
 
 #include <drizzled/common.h>
 #include <mysys/iocache.h>
+#include <string.h>
 
 class String;
 

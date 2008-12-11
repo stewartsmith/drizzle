@@ -27,6 +27,7 @@
 #include <drizzled/error.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
+#include <drizzled/unireg.h>
 
 /* For proto */
 #include <string>
@@ -806,7 +807,8 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
     if (key->flags & HA_USES_COMMENT)
     {
       int2store(pos, key->comment.length);
-      unsigned char *tmp= (unsigned char*)my_stpncpy((char*) pos+2,key->comment.str,key->comment.length);
+      unsigned char *tmp= (unsigned char*)strncpy((char*) pos+2,key->comment.str,key->comment.length);
+      tmp+= key->comment.length;
       pos= tmp;
     }
   }

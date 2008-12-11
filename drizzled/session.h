@@ -33,6 +33,7 @@
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_tree.h>
 #include <drizzled/handler.h>
+#include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
 #include <bitset>
 
@@ -1579,6 +1580,7 @@ private:
   */
   MEM_ROOT main_mem_root;
 };
+
 
 
 /** A short cut for session->main_da.set_ok_status(). */

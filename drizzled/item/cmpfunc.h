@@ -27,6 +27,7 @@
 #include <drizzled/item/sum.h>
 #include <drizzled/functions/int.h>
 #include <drizzled/functions/numhybrid.h>
+#include <drizzled/session.h>
 
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
