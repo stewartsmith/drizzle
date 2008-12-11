@@ -23,11 +23,9 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = util field item functions functions/str functions/time .
+sbin_PROGRAMS= drizzled
 
-sbin_PROGRAMS =drizzled
-
-EXTRA_PROGRAMS =gen_lex_hash
+EXTRA_PROGRAMS= gen_lex_hash
 
 bin_PROGRAMS =
 
@@ -71,8 +69,159 @@ nobase_dist_drizzledinclude_HEADERS = \
 		error_injection.h \
 		field.h \
 		field_iterator.h \
+		field/blob.h \
+		field/date.h \
+		field/datetime.h \
+		field/enum.h \
+		field/decimal.h \
+		field/double.h \
+		field/int64_t.h \
+		field/long.h \
+		field/longstr.h \
+		field/null.h \
+		field/num.h \
+		field/real.h \
+		field/str.h \
+		field/timestamp.h \
+		field/timetype.h \
+		field/varstring.h \
 		filesort_info.h \
 		foreign_key.h \
+		functions/abs.h \
+		functions/acos.h \
+		functions/ascii.h \
+		functions/asin.h \
+		functions/atan.h \
+		functions/additive_op.h \
+		functions/benchmark.h \
+		functions/bit.h \
+		functions/bit_count.h \
+		functions/bit_length.h \
+		functions/ceiling.h \
+		functions/char_length.h \
+		functions/coercibility.h \
+		functions/connection_id.h \
+		functions/cos.h \
+		functions/dec.h \
+		functions/decimal_typecast.h \
+		functions/divide.h \
+		functions/exp.h \
+		functions/field.h \
+		functions/find_in_set.h \
+		functions/floor.h \
+		functions/found_rows.h \
+		functions/func.h \
+		functions/get_system_var.h \
+		functions/get_user_var.h \
+		functions/int.h \
+		functions/integer.h \
+		functions/int_divide.h \
+		functions/int_val.h \
+		functions/last_insert.h \
+		functions/length.h \
+		functions/ln.h \
+		functions/locate.h \
+		functions/log.h \
+		functions/master_pos_wait.h \
+		functions/min_max.h \
+		functions/minus.h \
+		functions/mod.h \
+		functions/multiply.h \
+		functions/neg.h \
+		functions/num1.h \
+		functions/numhybrid.h \
+		functions/num_op.h \
+		functions/ord.h \
+		functions/plus.h \
+		functions/pow.h \
+		functions/real.h \
+		functions/rollup_const.h \
+		functions/round.h \
+		functions/row_count.h \
+		functions/set_user_var.h \
+		functions/sign.h \
+		functions/signed.h \
+		functions/sin.h \
+		functions/sqrt.h \
+		functions/tan.h \
+		functions/unsigned.h \
+		functions/user_var_as_out_param.h \
+		functions/str/alloc_buffer.h \
+		functions/str/binary.h \
+		functions/str/char.h \
+		functions/str/charset.h \
+		functions/str/collation.h \
+		functions/str/concat.h \
+		functions/str/conv.h \
+		functions/str/conv_charset.h \
+		functions/str/database.h \
+		functions/str/elt.h \
+		functions/str/export_set.h \
+		functions/str/format.h \
+		functions/str/hex.h \
+		functions/str/insert.h \
+		functions/str/left.h \
+		functions/str/load_file.h \
+		functions/str/make_set.h \
+		functions/str/pad.h \
+		functions/str/quote.h \
+		functions/str/repeat.h \
+		functions/str/replace.h \
+		functions/str/reverse.h \
+		functions/str/right.h \
+		functions/str/set_collation.h \
+		functions/str/str_conv.h \
+		functions/str/strfunc.h \
+		functions/str/substr.h \
+		functions/str/sysconst.h \
+		functions/str/trim.h \
+		functions/str/user.h \
+		functions/str/uuid.h \
+		functions/str/weight_string.h
+		functions/time/add_time.h \
+		functions/time/curdate.h \
+		functions/time/curtime.h \
+		functions/time/date.h \
+		functions/time/date_add_interval.h \
+		functions/time/date_format.h \
+		functions/time/dayname.h \
+		functions/time/dayofmonth.h \
+		functions/time/dayofyear.h \
+		functions/time/extract.h \
+		functions/time/from_days.h \
+		functions/time/from_unixtime.h \
+		functions/time/get_format.h \
+		functions/time/get_interval_value.h \
+		functions/time/hour.h \
+		functions/time/last_day.h \
+		functions/time/makedate.h \
+		functions/time/make_datetime_with_warn.h \
+		functions/time/make_datetime.h \
+		functions/time/maketime.h \
+		functions/time/make_time_with_warn.h \
+		functions/time/microsecond.h \
+		functions/time/minute.h \
+		functions/time/month.h \
+		functions/time/now.h \
+		functions/time/quarter.h \
+		functions/time/period_add.h \
+		functions/time/period_diff.h \
+		functions/time/sec_to_time.h \
+		functions/time/second.h \
+		functions/time/str_to_date.h \
+		functions/time/sysdate_local.h \
+		functions/time/str_timefunc.h \
+		functions/time/timediff.h \
+		functions/time/timestamp_diff.h \
+		functions/time/time_to_sec.h \
+		functions/time/to_days.h \
+		functions/time/typecast.h \
+		functions/time/unix_timestamp.h \
+		functions/time/week.h \
+		functions/time/week_mode.h \
+		functions/time/weekday.h \
+		functions/time/year.h  \
+		functions/time/yearweek.h \
 		ha_trx_info.h \
 		ha_statistics.h \
 		handler.h \
@@ -82,6 +231,44 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 	       	item.h \
+		item/basic_constant.h \
+		item/bin_string.h \
+		item/blob.h \
+		item/cache.h \
+		item/cache_decimal.h \
+		item/cache_int.h \
+		item/cache_real.h \
+		item/cache_row.h \
+		item/cache_str.h \
+		item/cmpfunc.h \
+		item/copy_string.h \
+		item/create.h \
+		item/decimal.h \
+		item/direct_ref.h \
+		item/empty_string.h \
+		item/field.h \
+		item/float.h \
+		item/hex_string.h \
+		item/insert_value.h \
+		item/int_with_ref.h \
+		item/func.h \
+		item/ident.h \
+		item/int.h \
+		item/null.h \
+		item/num.h \
+		item/outer_ref.h \
+		item/param.h \
+		item/ref.h \
+		item/ref_null_helper.h \
+		item/return_date_time.h \
+		item/return_int.h \
+		item/row.h \
+		item/string.h \
+		item/subselect.h \
+		item/sum.h \
+		item/timefunc.h \
+		item/type_holder.h \
+		item/uint.h \
 		key.h \
                 key_map.h \
 		key_part_spec.h \
@@ -159,36 +346,40 @@ nobase_dist_drizzledinclude_HEADERS = \
 		virtual_column_info.h \
 		xid.h
 
-noinst_LTLIBRARIES = libhandler.la libyacc.la
+noinst_LTLIBRARIES = \
+		libhandler.la \
+		libyacc.la \
+		libitem.la \
+		libutil.la \
+		libfield.la \
+		libfunctions.la
 
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
 	$(Z_LIBS) $(LIBINTL) 
 
-drizzled_LDADD = libhandler.la libyacc.la \
+drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
-		 $(top_builddir)/drizzled/item/libitem.la \
-		 $(top_builddir)/drizzled/field/libfield.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
-		 $(top_builddir)/drizzled/functions/libfunctions.la \
-		 $(top_builddir)/drizzled/functions/str/libstrfunc.la \
-		 $(top_builddir)/drizzled/functions/time/libtimefunc.la \
-		 $(top_builddir)/drizzled/util/libutil.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
 		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
 		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS)
-drizzled_DEPENDENCIES = @mysql_plugin_libs@ libyacc.la libhandler.la
+drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
 drizzled_LDFLAGS =
+
 
 noinst_HEADERS = \
 		gettext.h \
 		global.h \
-		server_includes.h
+		server_includes.h \
+		util/convert.h \
+		util/math.h \
+		util/test.h
 
 drizzled_SOURCES = \
 		authentication.cc \
@@ -283,14 +474,6 @@ drizzled_SOURCES = \
 		virtual_column_info.cc \
 		xid.cc
 
-libhandler_la_SOURCES = handler.cc handlerton.cc
-libyacc_la_SOURCES = sql_yacc.yy
-AM_YFLAGS = -p DRIZZLE -d --verbose
-# Code output from YACC contains GOBS of unused macros, and I can't
-# figure out how to turn it off.
-libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} -Wno-unused-macros
-
-
 if BUILD_DTRACE
 drizzled_SOURCES += probes.d
 endif
@@ -298,6 +481,222 @@ endif
 gen_lex_hash_SOURCES= gen_lex_hash.cc
 
 gen_lex_hash_LDFLAGS= 
+
+
+libhandler_la_SOURCES = handler.cc handlerton.cc
+
+# Code output from YACC contains GOBS of unused macros, and I can't
+# figure out how to turn it off.
+libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_UNUSED_MACROS}
+libyacc_la_SOURCES = sql_yacc.yy
+AM_YFLAGS = -p DRIZZLE -d --verbose
+
+# This may seem silly, but it's required to get the object files prefixed
+# with libitem_ so that item/field.cc and field.cc don't conflict.
+libitem_la_CXXFLAGS = ${AM_CXXFLAGS}
+libitem_la_SOURCES= \
+		item/bin_string.cc \
+		item/cache.cc \
+		item/cache_decimal.cc \
+		item/cache_int.cc \
+		item/cache_real.cc \
+		item/cache_row.cc \
+		item/cache_str.cc \
+		item/cmpfunc.cc \
+		item/copy_string.cc \
+		item/create.cc \
+		item/decimal.cc \
+		item/direct_ref.cc \
+		item/empty_string.cc \
+		item/field.cc \
+		item/float.cc \
+		item/hex_string.cc \
+		item/insert_value.cc \
+		item/int_with_ref.cc \
+		item/ident.cc \
+		item/int.cc \
+		item/null.cc \
+		item/num.cc \
+		item/outer_ref.cc \
+		item/param.cc \
+		item/ref.cc \
+		item/ref_null_helper.cc \
+		item/row.cc \
+		item/string.cc \
+		item/subselect.cc \
+		item/sum.cc \
+		item/type_holder.cc \
+		item/uint.cc
+
+
+libutil_la_CXXFLAGS = ${AM_CXXFLAGS}
+libutil_la_SOURCES = \
+		util/math.cc
+
+
+libfield_la_CXXFLAGS = ${AM_CXXFLAGS}
+libfield_la_SOURCES = 	
+		field/blob.cc \
+		field/date.cc \
+		field/datetime.cc \
+		field/enum.cc \
+		field/decimal.cc \
+		field/double.cc \
+		field/int64_t.cc \
+		field/long.cc \
+		field/longstr.cc \
+		field/null.cc \
+		field/num.cc \
+		field/real.cc \
+		field/str.cc \
+		field/timestamp.cc \
+		field/timetype.cc \
+		field/varstring.cc
+
+
+libfunctions_la_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CFLAGS}
+libfunctions_la_SOURCES = \
+		functions/abs.cc \
+		functions/acos.cc \
+		functions/ascii.cc \
+		functions/asin.cc \
+		functions/atan.cc \
+		functions/additive_op.cc \
+		functions/benchmark.cc \
+		functions/bit.cc \
+		functions/bit_count.cc \
+		functions/char_length.cc \
+		functions/check_reserved_words.cc \
+		functions/ceiling.cc \
+		functions/connection_id.cc \
+		functions/coercibility.cc \
+		functions/cos.cc \
+		functions/decimal_typecast.cc \
+		functions/divide.cc \
+		functions/exp.cc \
+		functions/get_user_var.cc \
+		functions/get_variable.cc \
+		functions/field.cc \
+		functions/find_in_set.cc \
+		functions/floor.cc \
+		functions/found_rows.cc \
+		functions/func.cc \
+		functions/get_system_var.cc \
+		functions/get_variable.cc \
+		functions/int.cc \
+		functions/integer.cc \
+		functions/int_divide.cc \
+		functions/int_val.cc \
+		functions/last_insert.cc \
+		functions/length.cc \
+		functions/ln.cc \
+		functions/locate.cc \
+		functions/log.cc \
+		functions/master_pos_wait.cc \
+		functions/min_max.cc \
+		functions/minus.cc \
+		functions/mod.cc \
+		functions/multiply.cc \
+		functions/neg.cc \
+		functions/num1.cc \
+		functions/numhybrid.cc \
+		functions/num_op.cc \
+		functions/ord.cc \
+		functions/plus.cc \
+		functions/pow.cc \
+		functions/rand.cc \
+		functions/real.cc \
+		functions/round.cc \
+		functions/row_count.cc \
+		functions/set_user_var.cc \
+		functions/shift.cc \
+		functions/sign.cc \
+		functions/signed.cc \
+		functions/sin.cc \
+		functions/sqrt.cc \
+		functions/tan.cc \
+		functions/update_hash.cc \
+		functions/units.cc \
+		functions/unsigned.cc \
+		functions/user_var_as_out_param.cc \
+		functions/user_var_entry.cc \
+		functions/str/alloc_buffer.cc \
+		functions/str/binary.cc \
+		functions/str/char.cc \
+		functions/str/charset.cc \
+		functions/str/collation.cc \
+		functions/str/concat.cc \
+		functions/str/conv.cc \
+		functions/str/conv_charset.cc \
+		functions/str/database.cc \
+		functions/str/elt.cc \
+		functions/str/export_set.cc \
+		functions/str/format.cc \
+		functions/str/hex.cc \
+		functions/str/insert.cc \
+		functions/str/left.cc \
+		functions/str/load_file.cc \
+		functions/str/make_set.cc \
+		functions/str/pad.cc \
+		functions/str/quote.cc \
+		functions/str/repeat.cc \
+		functions/str/replace.cc \
+		functions/str/reverse.cc \
+		functions/str/right.cc \
+		functions/str/set_collation.cc \
+		functions/str/str_conv.cc \
+		functions/str/strfunc.cc \
+		functions/str/substr.cc \
+		functions/str/sysconst.cc \
+		functions/str/trim.cc \
+		functions/str/user.cc \
+		functions/str/uuid.cc \
+		functions/str/weight_string.cc \
+		functions/time/add_time.cc \
+		functions/time/curdate.cc \
+		functions/time/curtime.cc \
+		functions/time/date.cc \
+		functions/time/date_add_interval.cc \
+		functions/time/date_format.cc \
+		functions/time/dayname.cc \
+		functions/time/dayofmonth.cc \
+		functions/time/extract.cc \
+		functions/time/dayofyear.cc \
+		functions/time/from_days.cc \
+		functions/time/from_unixtime.cc \
+		functions/time/get_format.cc \
+		functions/time/get_interval_value.cc \
+		functions/time/hour.cc \
+		functions/time/last_day.cc \
+		functions/time/makedate.cc \
+		functions/time/make_datetime_with_warn.cc \
+		functions/time/make_datetime.cc \
+		functions/time/maketime.cc \
+		functions/time/make_time_with_warn.cc \
+		functions/time/microsecond.cc \
+		functions/time/minute.cc \
+		functions/time/month.cc \
+		functions/time/now.cc \
+		functions/time/quarter.cc \
+		functions/time/period_add.cc \
+		functions/time/period_diff.cc \
+		functions/time/sec_to_time.cc \
+		functions/time/second.cc \
+		functions/time/str_to_date.cc \
+		functions/time/sysdate_local.cc \
+		functions/time/timediff.cc \
+		functions/time/timestamp_diff.cc \
+		functions/time/time_to_sec.cc \
+		functions/time/to_days.cc \
+		functions/time/typecast.cc \
+		functions/time/unix_timestamp.cc \
+		functions/time/week.cc \
+		functions/time/week_mode.cc \
+		functions/time/weekday.cc \
+		functions/time/year.cc \
+		functions/time/yearweek.cc
+
+
 
 DEFS =-DDRIZZLE_SERVER \
       -DDEFAULT_DRIZZLE_HOME="\"$(MYSQLBASEdir)\"" \
@@ -313,7 +712,9 @@ PCHHEADERS = \
 		handlerton.h.gch  \
 		sql_base.h.gch \
 		sql_parse.h.gch \
-		sql_plugin.h.gch
+		sql_plugin.h.gch \
+		util/convert.h.gch \
+		util/test.h.gch
 else
 PCHHEADERS = 
 endif
@@ -355,7 +756,7 @@ probes.h: probes.d
 
 if BUILD_GCC_PCH
 %.h.gch: %.h
-	$(CXXCOMPILE) -include config.h -Wno-unused-macros -c $<
+	$(CXXCOMPILE) -include config.h ${NO_UNUSED_MACROS} -c $<
 endif
 
 SUFFIXES = .d
