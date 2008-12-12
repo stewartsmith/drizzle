@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-10 14:01-0800\n"
+"POT-Creation-Date: 2008-12-11 22:45-0600\n"
 "PO-Revision-Date: 2008-11-26 23:54+0000\n"
 "Last-Translator: Morgan Tocker <tocker@gmail.com>\n"
 "Language-Team: English (Australia) <en_AU@li.org>\n"
@@ -1204,7 +1204,7 @@ msgstr ""
 msgid "(Disabled)\n"
 msgstr ""
 
-#: drizzled/authentication.cc:66 drizzled/show.cc:4677
+#: drizzled/authentication.cc:66 drizzled/show.cc:4679
 #: drizzled/sql_plugin.cc:829
 #, c-format
 msgid "Plugin '%s' init function returned error."
@@ -5704,7 +5704,7 @@ msgstr ""
 msgid "Failed to create a cache on log (file '%s')"
 msgstr ""
 
-#: drizzled/log.cc:522 drizzled/log.cc:887
+#: drizzled/log.cc:520 drizzled/log.cc:885
 #, c-format
 msgid ""
 "Could not use %s for logging (error %d). Turning logging off for the whole "
@@ -5712,82 +5712,82 @@ msgid ""
 "shutdown the Drizzle server and restart it."
 msgstr ""
 
-#: drizzled/log.cc:1155 drizzled/log.cc:1186 drizzled/log.cc:1435
-#: drizzled/log.cc:1557
+#: drizzled/log.cc:1153 drizzled/log.cc:1184 drizzled/log.cc:1433
+#: drizzled/log.cc:1555
 #, c-format
 msgid "Failed to delete file '%s'"
 msgstr ""
 
-#: drizzled/log.cc:1164 drizzled/log.cc:1443 drizzled/log.cc:1565
+#: drizzled/log.cc:1162 drizzled/log.cc:1441 drizzled/log.cc:1563
 #, c-format
 msgid ""
 "a problem with deleting %s; consider examining correspondence of your binlog "
 "index file to the actual binlog files"
 msgstr ""
 
-#: drizzled/log.cc:1291
+#: drizzled/log.cc:1289
 #, c-format
 msgid "next log error: %d  offset: %s  log: %s included: %d"
 msgstr ""
 
-#: drizzled/log.cc:1401 drizzled/log.cc:1525
+#: drizzled/log.cc:1399 drizzled/log.cc:1523
 #, c-format
 msgid "Failed to execute stat() on file '%s'"
 msgstr ""
 
-#: drizzled/log.cc:1412 drizzled/log.cc:1536
+#: drizzled/log.cc:1410 drizzled/log.cc:1534
 #, c-format
 msgid ""
 "a problem with getting info on being purged %s; consider examining "
 "correspondence of your binlog index file to the actual binlog files"
 msgstr ""
 
-#: drizzled/log.cc:2546 drizzled/log.cc:3044
+#: drizzled/log.cc:2544 drizzled/log.cc:3042
 #, c-format
 msgid "Recovering after a crash using %s"
 msgstr ""
 
-#: drizzled/log.cc:2549
+#: drizzled/log.cc:2547
 msgid ""
 "Cannot perform automatic crash recovery when --tc-heuristic-recover is used"
 msgstr ""
 
-#: drizzled/log.cc:2891
+#: drizzled/log.cc:2889
 msgid "Bad magic header in tc log"
 msgstr ""
 
-#: drizzled/log.cc:2901
+#: drizzled/log.cc:2899
 #, c-format
 msgid ""
 "Recovery failed! You must enable exactly %d storage engines that support two-"
 "phase commit protocol"
 msgstr ""
 
-#: drizzled/log.cc:2929
+#: drizzled/log.cc:2927
 msgid ""
 "Crash recovery failed. Either correct the problem (if it's, for example, out "
 "of memory error) and restart, or delete tc log and start drizzled with --tc-"
 "heuristic-recover={commit|rollback}"
 msgstr ""
 
-#: drizzled/log.cc:2959
+#: drizzled/log.cc:2957
 msgid "Heuristic crash recovery mode"
 msgstr ""
 
-#: drizzled/log.cc:2961
+#: drizzled/log.cc:2959
 msgid "Heuristic crash recovery failed"
 msgstr ""
 
-#: drizzled/log.cc:2962
+#: drizzled/log.cc:2960
 msgid "Please restart mysqld without --tc-heuristic-recover"
 msgstr ""
 
-#: drizzled/log.cc:3006 drizzled/log.cc:3030
+#: drizzled/log.cc:3004 drizzled/log.cc:3028
 #, c-format
 msgid "find_log_pos() failed (error: %d)"
 msgstr ""
 
-#: drizzled/log.cc:3144
+#: drizzled/log.cc:3142
 msgid ""
 "Crash recovery failed. Either correct the problem (if it's, for example, out "
 "of memory error) and restart, or delete (or rename) binary log and start "
@@ -5843,8 +5843,8 @@ msgstr ""
 msgid "Error '%s' on query. Default database: '%s'. Query: '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:1670 drizzled/log_event.cc:4317
-#: drizzled/log_event.cc:4348 drizzled/log_event.cc:5080
+#: drizzled/log_event.cc:1670 drizzled/log_event.cc:4313
+#: drizzled/log_event.cc:4344 drizzled/log_event.cc:5076
 msgid "unexpected success or fatal error"
 msgstr ""
 
@@ -5873,80 +5873,80 @@ msgstr ""
 msgid "Running LOAD DATA INFILE on table '%-.64s'. Default database: '%-.64s'"
 msgstr ""
 
-#: drizzled/log_event.cc:3106
+#: drizzled/log_event.cc:3102
 msgid "Out of memory while recording slave event"
 msgstr ""
 
-#: drizzled/log_event.cc:3356 drizzled/log_event.cc:3382
+#: drizzled/log_event.cc:3352 drizzled/log_event.cc:3378
 #, c-format
 msgid "Error in Create_file event: could not open file '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:3368
+#: drizzled/log_event.cc:3364
 #, c-format
 msgid "Error in Create_file event: could not write to file '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:3389
+#: drizzled/log_event.cc:3385
 #, c-format
 msgid "Error in Create_file event: write to '%s' failed"
 msgstr ""
 
-#: drizzled/log_event.cc:3503
+#: drizzled/log_event.cc:3499
 #, c-format
 msgid "Error in %s event: could not create file '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:3512
+#: drizzled/log_event.cc:3508
 #, c-format
 msgid "Error in %s event: could not open file '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:3519
+#: drizzled/log_event.cc:3515
 #, c-format
 msgid "Error in %s event: write to '%s' failed"
 msgstr ""
 
-#: drizzled/log_event.cc:3681
+#: drizzled/log_event.cc:3677
 #, c-format
 msgid "Error in Exec_load event: could not open file '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:3691
+#: drizzled/log_event.cc:3687
 #, c-format
 msgid "Error in Exec_load event: file '%s' appears corrupted"
 msgstr ""
 
-#: drizzled/log_event.cc:3721
+#: drizzled/log_event.cc:3717
 #, c-format
 msgid "%s. Failed executing load from '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:3894
+#: drizzled/log_event.cc:3890
 msgid "Not enough memory"
 msgstr ""
 
-#: drizzled/log_event.cc:4314
+#: drizzled/log_event.cc:4310
 #, c-format
 msgid "Error '%s' in %s event: when locking tables"
 msgstr ""
 
-#: drizzled/log_event.cc:4324
+#: drizzled/log_event.cc:4320
 #, c-format
 msgid "Error in %s event: when locking tables"
 msgstr ""
 
-#: drizzled/log_event.cc:4345
+#: drizzled/log_event.cc:4341
 #, c-format
 msgid "Error '%s' on reopening tables"
 msgstr ""
 
-#: drizzled/log_event.cc:4681
+#: drizzled/log_event.cc:4677
 #, c-format
 msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
 msgstr ""
 
-#: drizzled/log_event.cc:5077
+#: drizzled/log_event.cc:5073
 #, c-format
 msgid "Error '%s' on opening table `%s`.`%s`"
 msgstr ""
@@ -6696,22 +6696,22 @@ msgstr ""
 msgid "Plugin '%s' disabled by command line option"
 msgstr ""
 
-#: drizzled/sql_table.cc:108
+#: drizzled/sql_table.cc:110
 #, c-format
 msgid "Invalid (old?) table or database name '%s'"
 msgstr ""
 
-#: drizzled/sql_table.cc:2746
+#: drizzled/sql_table.cc:2762
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr ""
 
-#: drizzled/sql_table.cc:5019
+#: drizzled/sql_table.cc:5030
 #, c-format
 msgid "Could not open table %s.%s after rename\n"
 msgstr ""
 
-#: drizzled/sql_table.cc:5186
+#: drizzled/sql_table.cc:5197
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
