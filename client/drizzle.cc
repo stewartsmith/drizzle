@@ -1441,7 +1441,7 @@ static struct my_option my_long_options[] =
   {"show-warnings", OPT_SHOW_WARNINGS, N_("Show warnings after every statement."),
    (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"show-progress", OPT_SHOW_PROGRESS, N_("Show progress during an import."),
+  {"show-progress-size", OPT_SHOW_PROGRESS_SIZE, N_("Number of lines before each import progress report."),
    (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_ULONG, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
