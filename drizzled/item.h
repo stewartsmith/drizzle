@@ -599,9 +599,6 @@ public:
 #include <drizzled/item/field.h>
 #include <drizzled/item/hex_string.h>
 #include <drizzled/item/ifloat.h>
-#include <drizzled/item/istring.h>
-#include <drizzled/item/int.h>
-#include <drizzled/item/int_with_ref.h>
 
 void mark_as_dependent(Session *session,
 		       st_select_lex *last,
