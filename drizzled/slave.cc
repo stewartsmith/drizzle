@@ -41,6 +41,7 @@
 #include <drizzled/session.h>
 #include <drizzled/log_event.h>
 #include <drizzled/item/return_int.h>
+#include <drizzled/item/empty_string.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

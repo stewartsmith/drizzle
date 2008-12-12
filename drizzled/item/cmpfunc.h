@@ -26,6 +26,7 @@
 #include <drizzled/item/row.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/item/int.h>
+#include <drizzled/item/ifloat.h>
 #include <drizzled/functions/int.h>
 #include <drizzled/functions/numhybrid.h>
 #include <drizzled/session.h>

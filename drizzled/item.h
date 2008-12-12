@@ -595,10 +595,10 @@ public:
 #include <drizzled/item/ident.h>
 #include <drizzled/item/decimal.h>
 #include <drizzled/item/direct_ref.h>
+/*
 #include <drizzled/item/empty_string.h>
+*/
 #include <drizzled/item/field.h>
-#include <drizzled/item/hex_string.h>
-#include <drizzled/item/ifloat.h>
 
 void mark_as_dependent(Session *session,
 		       st_select_lex *last,
