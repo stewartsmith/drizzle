@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/get_user_var.h>
 #include <drizzled/functions/get_variable.h>
+#include <drizzled/item/null.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
 
