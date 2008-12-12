@@ -1699,7 +1699,7 @@ static int read_and_execute(bool interactive)
       line_number++;
       if (show_progress)
       {
-        if ((line_number & 1000) == 0)
+        if ((line_number % 1000) == 0)
           fprintf(stderr, _("Processing line: %"PRIu32"\n"), line_number);
       }
       if (!glob_buffer->empty())
