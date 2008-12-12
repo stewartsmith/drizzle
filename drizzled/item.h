@@ -605,10 +605,9 @@ public:
 #include <drizzled/item/null.h>
 #include <drizzled/item/num.h>
 #include <drizzled/item/outer_ref.h>
+/*
 #include <drizzled/item/param.h>
-#include <drizzled/item/ref.h>
-#include <drizzled/item/ref_null_helper.h>
-#include <drizzled/item/return_date_time.h>
+*/
 
 void mark_as_dependent(Session *session,
 		       st_select_lex *last,

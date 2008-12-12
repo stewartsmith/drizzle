@@ -30,6 +30,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/return_int.h>
+#include <drizzled/item/return_date_time.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
