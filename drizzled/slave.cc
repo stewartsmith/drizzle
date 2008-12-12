@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <drizzled/session.h>
 #include <drizzled/log_event.h>
+#include <drizzled/item/return_int.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

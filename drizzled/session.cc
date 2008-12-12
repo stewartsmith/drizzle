@@ -37,6 +37,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
+#include <drizzled/item/return_int.h>
 
 extern scheduler_functions thread_scheduler;
 /*
