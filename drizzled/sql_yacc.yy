@@ -79,6 +79,7 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/uint.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
 #include <drizzled/item/func.h>

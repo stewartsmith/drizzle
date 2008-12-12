@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/session.h>
+#include <drizzled/item/uint.h>
 #include <drizzled/item/param.h>
 #include CMATH_H
 

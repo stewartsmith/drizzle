@@ -37,6 +37,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/uint.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/blob.h>

@@ -65,6 +65,7 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
+#include <drizzled/item/uint.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
 extern I_List<NAMED_LIST> key_caches;
