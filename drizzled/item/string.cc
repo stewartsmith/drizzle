@@ -21,7 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/session.h>
 #include <drizzled/error.h>
-#include <drizzled/item/istring.h>
+#include <drizzled/item/string.h>
 
 Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
