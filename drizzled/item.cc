@@ -28,7 +28,7 @@
 #include <drizzled/item/cache_row.h>
 #include <drizzled/item/type_holder.h>
 #include <drizzled/item/sum.h>
-#include <drizzled/functions/str/conv_charset.h>
+#include <drizzled/function/str/conv_charset.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 

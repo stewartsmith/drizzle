@@ -28,7 +28,7 @@
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/table_list.h>
-#include <drizzled/functions/real.h>
+#include <drizzled/function/real.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/alter_column.h>
 #include <drizzled/key.h>

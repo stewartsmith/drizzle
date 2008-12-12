@@ -29,8 +29,8 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/rename.h>
-#include <drizzled/functions/time/unix_timestamp.h>
-#include <drizzled/functions/get_system_var.h>
+#include <drizzled/function/time/unix_timestamp.h>
+#include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
