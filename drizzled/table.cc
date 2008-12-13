@@ -2080,7 +2080,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     strxmov(buff, share->normalized_path.str, reg_ext, NULL);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
-                    "of MySQL and cannot be read"),
+                    "of Drizzle and cannot be read"),
                     MYF(0), buff);
     break;
   case 8:
