@@ -28,6 +28,7 @@
 #include <drizzled/error.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/ref_null_helper.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/check_stack_overrun.h>
 

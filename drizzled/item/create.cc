@@ -41,8 +41,31 @@
 #include <drizzled/function/str/trim.h>
 #include <drizzled/function/str/uuid.h>
 
+#include <drizzled/function/time/add_time.h>
+#include <drizzled/function/time/date_format.h>
+#include <drizzled/function/time/dayname.h>
+#include <drizzled/function/time/dayofmonth.h>
+#include <drizzled/function/time/dayofyear.h>
+#include <drizzled/function/time/from_unixtime.h>
+#include <drizzled/function/time/from_days.h>
+#include <drizzled/function/time/last_day.h>
+#include <drizzled/function/time/makedate.h>
+#include <drizzled/function/time/maketime.h>
+#include <drizzled/function/time/month.h>
+#include <drizzled/function/time/period_add.h>
+#include <drizzled/function/time/period_diff.h>
+#include <drizzled/function/time/sec_to_time.h>
+#include <drizzled/function/time/str_to_date.h>
+#include <drizzled/function/time/time_to_sec.h>
+#include <drizzled/function/time/timediff.h>
+#include <drizzled/function/time/to_days.h>
+#include <drizzled/function/time/typecast.h>
+#include <drizzled/function/time/unix_timestamp.h>
+#include <drizzled/function/time/yearweek.h>
+#include <drizzled/function/time/week.h>
+#include <drizzled/function/time/weekday.h>
+
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/timefunc.h>
 #include <drizzled/sql_udf.h>
 #include <drizzled/session.h>
 

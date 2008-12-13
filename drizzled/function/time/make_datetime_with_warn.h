@@ -20,11 +20,8 @@
 #ifndef DRIZZLED_FUNCTION_TIME_MAKE_DATETIME_WITH_WARN_H
 #define DRIZZLED_FUNCTION_TIME_MAKE_DATETIME_WITH_WARN_H
 
-#include <drizzled/item/timefunc.h>
-
 bool make_datetime_with_warn(date_time_format_types format,
                              DRIZZLE_TIME *ltime,
                              String *str);
-
 
 #endif /* DRIZZLED_FUNCTION_TIME_MAKE_DATETIME_WITH_WARN_H */

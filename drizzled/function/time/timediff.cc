@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/time/timediff.h>
-#include <drizzled/item/timefunc.h>
+#include <drizzled/function/time/make_datetime_with_warn.h>
 
 /**
   TIMEDIFF(t,s) is a time function that calculates the

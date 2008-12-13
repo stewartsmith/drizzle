@@ -30,6 +30,8 @@
 #include <drizzled/replicator.h>
 #include <drizzled/lock.h>
 #include <drizzled/unireg.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/empty_string.h>
 
 using namespace std;
 

@@ -21,7 +21,6 @@
 #include CSTDINT_H
 #include <drizzled/function/time/from_unixtime.h>
 #include <drizzled/function/time/make_datetime.h>
-#include <drizzled/item/timefunc.h>
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
 

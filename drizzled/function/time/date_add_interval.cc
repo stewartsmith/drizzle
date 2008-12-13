@@ -19,9 +19,9 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
-#include <drizzled/item/timefunc.h>
 #include <drizzled/function/time/date_add_interval.h>
 #include <drizzled/function/time/get_interval_value.h>
+#include <drizzled/function/time/make_datetime.h>
 
 /*
    'interval_names' reflects the order of the enumeration interval_type.

@@ -30,6 +30,7 @@
 #include <drizzled/handler.h>
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
+#include <drizzled/item/null.h>
 
 #include <string>
 #include <vector>

@@ -39,10 +39,10 @@
 #include <drizzled/show.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/timefunc.h>
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/item/create.h>
+#include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
 

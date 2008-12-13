@@ -54,11 +54,33 @@
 #include <drizzled/function/str/trim.h>
 #include <drizzled/function/str/user.h>
 #include <drizzled/function/str/weight_string.h>
+
+#include <drizzled/function/time/add_time.h>
+#include <drizzled/function/time/curdate.h>
+#include <drizzled/function/time/curtime.h>
+#include <drizzled/function/time/date_add_interval.h>
+#include <drizzled/function/time/dayofmonth.h>
+#include <drizzled/function/time/extract.h>
+#include <drizzled/function/time/get_format.h>
+#include <drizzled/function/time/hour.h>
+#include <drizzled/function/time/microsecond.h>
+#include <drizzled/function/time/minute.h>
+#include <drizzled/function/time/month.h>
+#include <drizzled/function/time/now.h>
+#include <drizzled/function/time/quarter.h>
+#include <drizzled/function/time/second.h>
+#include <drizzled/function/time/sysdate_local.h>
+#include <drizzled/function/time/timestamp_diff.h>
+#include <drizzled/function/time/typecast.h>
+#include <drizzled/function/time/week.h>
+#include <drizzled/function/time/year.h>
+
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/timefunc.h>
+#include <drizzled/item/uint.h>
+#include <drizzled/item/null.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
 #include <drizzled/item/func.h>

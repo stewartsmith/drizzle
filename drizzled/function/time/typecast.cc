@@ -21,6 +21,7 @@
 #include <drizzled/current_session.h>
 #include CSTDINT_H
 #include <drizzled/error.h>
+#include <drizzled/function/time/make_datetime.h>
 #include <drizzled/function/time/typecast.h>
 
 bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const

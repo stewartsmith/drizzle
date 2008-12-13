@@ -32,6 +32,7 @@
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/null.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
 #include <drizzled/connect.h>

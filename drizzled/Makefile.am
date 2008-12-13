@@ -266,7 +266,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/string.h \
 		item/subselect.h \
 		item/sum.h \
-		item/timefunc.h \
 		item/type_holder.h \
 		item/uint.h \
 		key.h \
@@ -536,7 +535,7 @@ libutil_la_SOURCES = \
 
 
 libfield_la_CXXFLAGS = ${AM_CXXFLAGS}
-libfield_la_SOURCES = 	
+libfield_la_SOURCES = \
 		field/blob.cc \
 		field/date.cc \
 		field/datetime.cc \
