@@ -2875,14 +2875,12 @@ static int get_schema_tables_record(Session *session, TableList *tables,
     if (share->db_create_options & HA_OPTION_CHECKSUM)
       ptr= strcpy(ptr," checksum=1")+11;
     if (share->page_checksum != HA_CHOICE_UNDEF)
-      ptr= strxmov(ptr, " page_checksum=",
-                   ha_choice_values[(uint) share->page_checksum], NULL);
+      ptr+= sprintf(ptr, " page_checksum=%s",
+                    ha_choice_values[(uint) share->page_checksum]);
     if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
       ptr= strcpy(ptr," delay_key_write=1")+18;
     if (share->row_type != ROW_TYPE_DEFAULT)
-      ptr=strxmov(ptr, " row_format=",
-                  ha_row_type[(uint) share->row_type],
-                  NULL);
+      ptr+= sprintf(ptr, " row_format=%s", ha_row_type[(uint)share->row_type]);
     if (share->block_size)
     {
       ptr= strcpy(ptr, " block_size=")+12;
@@ -2891,13 +2889,12 @@ static int get_schema_tables_record(Session *session, TableList *tables,
 
     if (share->transactional != HA_CHOICE_UNDEF)
     {
-      ptr= strxmov(ptr, " TRANSACTIONAL=",
-                   (share->transactional == HA_CHOICE_YES ? "1" : "0"),
-                   NULL);
+      ptr+= sprintf(ptr, " TRANSACTIONAL=%s",
+                    (share->transactional == HA_CHOICE_YES ? "1" : "0"));
     }
     if (share->transactional != HA_CHOICE_UNDEF)
-      ptr= strxmov(ptr, " transactional=",
-                   ha_choice_values[(uint) share->transactional], NULL);
+      ptr+= sprintf(ptr, " transactional=%s",
+                    ha_choice_values[(uint) share->transactional]);
     table->field[19]->store(option_buff+1,
                             (ptr == option_buff ? 0 :
                              (uint) (ptr-option_buff)-1), cs);
