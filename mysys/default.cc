@@ -598,7 +598,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     end=convert_dirname(name, dir, NULL);
     if (dir[0] == FN_HOMELIB)		/* Add . to filenames in home */
       *end++='.';
-    strxmov(end,config_file,ext,NULL);
+    sprintf(end,"%s%s",config_file,ext);
   }
   else
   {
@@ -881,7 +881,7 @@ void my_print_default_files(const char *conf_file)
 	end= convert_dirname(name, pos, NULL);
 	if (name[0] == FN_HOMELIB)	/* Add . to filenames in home */
 	  *end++='.';
-	strxmov(end, conf_file, *ext, " ", NULL);
+  sprintf(end,"%s%s ",conf_file, *ext);
 	fputs(name,stdout);
       }
     }

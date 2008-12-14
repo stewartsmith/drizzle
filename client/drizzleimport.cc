@@ -444,11 +444,11 @@ static char *add_load_option(char *ptr, const char *object,
   {
     /* Don't escape hex constants */
     if (object[0] == '0' && (object[1] == 'x' || object[1] == 'X'))
-      ptr= strxmov(ptr," ",statement," ",object,NULL);
+      ptr+= sprintf(ptr, " %s %s", statement, object);
     else
     {
       /* char constant; escape */
-      ptr= strxmov(ptr," ",statement," '",NULL);
+      ptr+= sprintf(ptr, " %s '", statement); 
       ptr= field_escape(ptr,object,(uint) strlen(object));
       *ptr++= '\'';
     }
