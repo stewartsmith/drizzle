@@ -83,8 +83,8 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     my_message(ER_NOT_KEYFILE,msgbuf,MYF(MY_WME));
     return;
   }
-  length=(uint) (strxmov(name, param->db_name,".",param->table_name,NULL) -
-		 name);
+  length= sprintf(name,"%s.%s",param->db_name,param->table_name);
+
   /*
     TODO: switch from protocol to push_warning here. The main reason we didn't
     it yet is parallel repair. Due to following trace:
