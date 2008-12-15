@@ -27,6 +27,7 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/field.h>
+#include <drizzled/item/outer_ref.h>
 
 
 /**

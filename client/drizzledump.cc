@@ -3251,7 +3251,7 @@ static char *primary_key_fields(const char *table_name)
     while ((row= drizzle_fetch_row(res)) && atoi(row[3]) > 1)
     {
       quoted_field= quote_name(row[4], buff, 0);
-      end= strxmov(end, ",", quoted_field, NULL);
+      end+= sprintf(end,",%s",quoted_field);
     }
   }
 

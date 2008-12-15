@@ -2376,26 +2376,6 @@ void LEX::cleanup_after_one_table_open()
 
 
 /*
-  Checks for usage of routines and/or tables in a parsed statement
-
-  SYNOPSIS
-    st_lex:table_or_sp_used()
-
-  RETURN
-    false  No routines and tables used
-    true   Either or both routines and tables are used.
-*/
-
-bool LEX::table_or_sp_used()
-{
-  if (query_tables)
-    return(true);
-
-  return(false);
-}
-
-
-/*
   Do end-of-prepare fixup for list of tables and their merge-VIEWed tables
 
   SYNOPSIS

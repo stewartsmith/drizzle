@@ -28,7 +28,7 @@
 #include <drizzled/cached_item.h>
 #include <drizzled/item/cache_int.h>
 #include <drizzled/item/int_with_ref.h>
-#include <drizzled/functions/bit.h>
+#include <drizzled/function/bit.h>
 #include <drizzled/check_stack_overrun.h>
 
 #include CMATH_H

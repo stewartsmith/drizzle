@@ -25,7 +25,7 @@
 #include <drizzled/util/test.h>
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
-#include <drizzled/functions/time/get_format.h>
+#include <drizzled/function/time/get_format.h>
 
 /* Some functions to calculate dates */
 

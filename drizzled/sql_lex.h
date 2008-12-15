@@ -30,11 +30,12 @@
 #include <drizzled/item/param.h>
 #include <drizzled/item/outer_ref.h>
 #include <drizzled/table_list.h>
-#include <drizzled/functions/real.h>
+#include <drizzled/function/real.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/alter_column.h>
 #include <drizzled/key.h>
 #include <drizzled/foreign_key.h>
+#include <drizzled/item/param.h>
 
 class select_result_interceptor;
 class virtual_column_info;
@@ -45,6 +46,7 @@ class virtual_column_info;
 class Table_ident;
 class sql_exchange;
 class LEX_COLUMN;
+class Item_outer_ref;
 
 #ifdef DRIZZLE_SERVER
 /*
@@ -1450,8 +1452,6 @@ public:
     Restore the LEX and Session in case of a parse error.
   */
   static void cleanup_lex_after_parse_error(Session *session);
-
-  bool table_or_sp_used();
 
   /**
     @brief check if the statement is a single-level join

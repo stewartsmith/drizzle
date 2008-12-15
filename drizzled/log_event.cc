@@ -31,7 +31,6 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/item/int.h>
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 

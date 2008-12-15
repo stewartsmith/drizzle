@@ -29,8 +29,8 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/rename.h>
-#include <drizzled/functions/time/unix_timestamp.h>
-#include <drizzled/functions/get_system_var.h>
+#include <drizzled/function/time/unix_timestamp.h>
+#include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/null.h>
 #include <drizzled/session.h>
@@ -2159,13 +2159,6 @@ end_with_restore_list:
   {
     Item *it= (Item *)lex->value_list.head();
 
-    if (lex->table_or_sp_used())
-    {
-      my_error(ER_NOT_SUPPORTED_YET, MYF(0), "Usage of subqueries or stored "
-               "function calls as part of this statement");
-      break;
-    }
-
     if ((!it->fixed && it->fix_fields(lex->session, &it)) || it->check_cols(1))
     {
       my_message(ER_SET_CONSTANTS_ONLY, ER(ER_SET_CONSTANTS_ONLY),
@@ -2575,7 +2568,8 @@ void create_select_for_variable(const char *var_name)
   LEX *lex;
   LEX_STRING tmp, null_lex_string;
   Item *var;
-  char buff[MAX_SYS_VAR_LENGTH*2+4+8], *end;
+  char buff[MAX_SYS_VAR_LENGTH*2+4+8];
+  char *end= buff;
 
   session= current_session;
   lex= session->lex;
@@ -2590,7 +2584,7 @@ void create_select_for_variable(const char *var_name)
   */
   if ((var= get_system_var(session, OPT_SESSION, tmp, null_lex_string)))
   {
-    end= strxmov(buff, "@@session.", var_name, NULL);
+    end+= sprintf(buff, "@@session.%s", var_name);
     var->set_name(buff, end-buff, system_charset_info);
     add_item_to_list(session, var);
   }
@@ -3633,7 +3627,7 @@ bool append_file_to_dir(Session *session, const char **filename_ptr,
   if (!(ptr= (char*) session->alloc((size_t) (end-buff) + strlen(table_name)+1)))
     return 1;					// End of memory
   *filename_ptr=ptr;
-  strxmov(ptr,buff,table_name,NULL);
+  sprintf(ptr,"%s%s",buff,table_name);
   return 0;
 }
 

@@ -628,9 +628,8 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
 
     if (!session->query)				// Only in replication
     {
-      query= 	     tmp_query;
-      query_length= (uint) (strxmov(tmp_query,"create database `",
-                                    db, "`", NULL) - tmp_query);
+      query= tmp_query;
+      query_length= sprintf(tmp_query, "create database `%s`", db);
     }
     else
     {
@@ -841,12 +840,11 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
     {
       /* The client used the old obsolete mysql_drop_db() call */
       query= path;
-      query_length= (uint) (strxmov(path, "drop database `", db, "`",
-                                     NULL) - path);
+      query_length= sprintf(path, "drop database `%s`", db);
     }
     else
     {
-      query =session->query;
+      query= session->query;
       query_length= session->query_length;
     }
     if (drizzle_bin_log.is_open())
@@ -1000,7 +998,7 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
     }
     else
     {
-      strxmov(filePath, org_path, "/", file->name, NULL);
+      sprintf(filePath, "%s/%s", org_path, file->name);
       if (my_delete_with_symlink(filePath,MYF(MY_WME)))
       {
 	goto err;

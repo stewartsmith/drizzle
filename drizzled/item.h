@@ -590,7 +590,6 @@ public:
 #include <drizzled/item/basic_constant.h>
 #include <drizzled/item/bin_string.h>
 #include <drizzled/item/blob.h>
-#include <drizzled/item/cache.h>
 #include <drizzled/item/copy_string.h>
 #include <drizzled/item/ident.h>
 #include <drizzled/item/field.h>

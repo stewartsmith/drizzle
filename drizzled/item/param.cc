@@ -22,7 +22,7 @@
 #include <drizzled/session.h>
 #include <drizzled/item/uint.h>
 #include <drizzled/item/null.h>
-#include <drizzled/item/ifloat.h>
+#include <drizzled/item/float.h>
 #include <drizzled/item/param.h>
 #include CMATH_H
 

@@ -497,7 +497,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                                         FN_IS_TMP : 0);
     }
     if (drop_temporary ||
-        ((table_type == NULL && (access(path, F_OK) && ha_create_table_from_engine(session, db, alias))))
+        ((table_type == NULL && (access(path, F_OK))))
         )
     {
       // Table was not found on disk and table can't be created from engine
@@ -2325,7 +2325,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     goto end;					// No data file
 
   // Name of data file
-  strxmov(from, table->s->normalized_path.str, ext[1], NULL);
+  sprintf(from,"%s%s", table->s->normalized_path.str, ext[1]);
   if (stat(from, &stat_info))
     goto end;				// Can't use USE_FRM flag
 
@@ -2450,7 +2450,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     char* db = table->db;
     bool fatal_error=0;
 
-    strxmov(table_name, db, ".", table->table_name, NULL);
+    sprintf(table_name,"%s.%s",db,table->table_name);
     session->open_options|= extra_open_options;
     table->lock_type= lock_type;
     /* open only one table from local list of command */
@@ -2982,7 +2982,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   if (open_tables(session, &src_table, &not_used, 0))
     return(true);
 
-  strxmov(src_path, src_table->table->s->path.str, reg_ext, NULL);
+  sprintf(src_path,"%s%s",src_table->table->s->path.str, reg_ext);
 
   /*
     Check that destination tables does not exist. Note that its name
@@ -5388,7 +5388,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     char table_name[NAME_LEN*2+2];
     Table *t;
 
-    strxmov(table_name, table->db ,".", table->table_name, NULL);
+    sprintf(table_name,"%s.%s",table->db,table->table_name);
 
     t= table->table= open_n_lock_single_table(session, table, TL_READ);
     session->clear_error();			// these errors shouldn't get client

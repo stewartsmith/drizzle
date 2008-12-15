@@ -67,7 +67,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/uint.h>
 #include <drizzled/item/null.h>
-#include <drizzled/item/ifloat.h>
+#include <drizzled/item/float.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
 extern I_List<NAMED_LIST> key_caches;
