@@ -158,8 +158,8 @@ static bool ignore_errors=0,quick=0,
   default_charset_used= 0, opt_secure_auth= 0,
   default_pager_set= 0, opt_sigint_ignore= 0,
   auto_vertical_output= 0,
-  show_warnings= 0, executing_query= 0, interrupted_query= 0,
-  show_progress= 0;
+  show_warnings= 0, executing_query= 0, interrupted_query= 0;
+static uint32_t  show_progress_size= 0;
 static bool debug_info_flag, debug_check_flag;
 static bool column_types_flag;
 static bool preserve_comments= 0;
@@ -1441,8 +1441,8 @@ static struct my_option my_long_options[] =
   {"show-warnings", OPT_SHOW_WARNINGS, N_("Show warnings after every statement."),
    (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"show-progress", OPT_SHOW_PROGRESS, N_("Show progress during an import."),
-   (char**) &show_progress, (char**) &show_progress, 0, GET_BOOL, NO_ARG,
+  {"show-progress-size", OPT_SHOW_PROGRESS_SIZE, N_("Number of lines before each import progress report."),
+   (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_ULONG, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
@@ -1697,9 +1697,9 @@ static int read_and_execute(bool interactive)
           (unsigned char) line[2] == 0xBF)
         line+= 3;
       line_number++;
-      if (show_progress)
+      if (show_progress_size > 0)
       {
-        if ((line_number % 1000) == 0)
+        if ((line_number % show_progress_size) == 0)
           fprintf(stderr, _("Processing line: %"PRIu32"\n"), line_number);
       }
       if (!glob_buffer->empty())

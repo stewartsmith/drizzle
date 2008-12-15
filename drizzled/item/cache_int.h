@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_CACHE_INT_H
 #define DRIZZLED_ITEM_CACHE_INT_H
 
+#include <drizzled/item/cache.h>
+
 class Item_cache_int: public Item_cache
 {
 protected:

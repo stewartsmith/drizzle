@@ -3211,8 +3211,9 @@ retry:
           We inherited this from MySQL. TODO: fix it to issue a propper truncate
           of the table (though that may not be completely right sematics).
         */
-        end = strxmov(strcpy(query, "DELETE FROM `")+13,
-                      share->db.str,"`.`",share->table_name.str,"`", NULL);
+        end= query;
+        end+= sprintf(query, "DELETE FROM `%s`.`%s`", share->db.str,
+                      share->table_name.str);
         (void)replicator_statement(session, query, (size_t)(end - query));
         free(query);
       }

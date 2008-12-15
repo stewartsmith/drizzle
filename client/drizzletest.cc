@@ -2034,7 +2034,7 @@ static int open_file(const char *name)
 
   if (!test_if_hard_path(name))
   {
-    strxmov(buff, opt_basedir, name, NULL);
+    sprintf(buff,"%s%s",opt_basedir,name);
     name=buff;
   }
   fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -4526,7 +4526,7 @@ static void read_embedded_server_arguments(const char *name)
 
   if (!test_if_hard_path(name))
   {
-    strxmov(buff, opt_basedir, name, NULL);
+    sprintf(buff,"%s%s",opt_basedir,name);
     name=buff;
   }
   fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -4572,7 +4572,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
     char buff[FN_REFLEN];
     if (!test_if_hard_path(argument))
     {
-      strxmov(buff, opt_basedir, argument, NULL);
+      sprintf(buff,"%s%s",opt_basedir,argument);
       argument= buff;
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4590,7 +4590,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
     static char buff[FN_REFLEN];
     if (!test_if_hard_path(argument))
     {
-      strxmov(buff, opt_basedir, argument, NULL);
+      sprintf(buff,"%s%s",opt_basedir,argument);
       argument= buff;
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4685,7 +4685,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   int flags= O_WRONLY | O_CREAT;
   if (!test_if_hard_path(fname))
   {
-    strxmov(buff, opt_basedir, fname, NULL);
+    sprintf(buff,"%s%s",opt_basedir,fname);
     fname= buff;
   }
   fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);

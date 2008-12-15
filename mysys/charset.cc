@@ -132,11 +132,10 @@ char *get_charsets_dir(char *buf)
   else
   {
     if (test_if_hard_path(sharedir) ||
-	is_prefix(sharedir, DEFAULT_CHARSET_HOME))
-      strxmov(buf, sharedir, "/", CHARSET_DIR, NULL);
+        is_prefix(sharedir, DEFAULT_CHARSET_HOME))
+      sprintf(buf,"%s/%s",sharedir,CHARSET_DIR);
     else
-      strxmov(buf, DEFAULT_CHARSET_HOME, "/", sharedir, "/", CHARSET_DIR,
-	      NULL);
+      sprintf(buf,"%s/%s/%s",DEFAULT_CHARSET_HOME,sharedir,CHARSET_DIR);
   }
   res= convert_dirname(buf,buf,NULL);
   return(res);

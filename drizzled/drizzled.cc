@@ -39,10 +39,10 @@
 #include <drizzled/show.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/timefunc.h>
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/item/create.h>
+#include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
 
@@ -4346,10 +4346,11 @@ static void get_options(int *argc,char **argv)
 
 static void set_server_version(void)
 {
-  char *end= strxmov(server_version, VERSION,
-                     DRIZZLE_SERVER_SUFFIX_STR, NULL);
+  char *end= server_version;
+  end+= sprintf(server_version, "%s%s", VERSION, 
+                DRIZZLE_SERVER_SUFFIX_STR);
   if (opt_bin_log)
-    strcpy(end, "-log");                        // This may slow down system
+    strcpy(end, "-log"); // This may slow down system
 }
 
 

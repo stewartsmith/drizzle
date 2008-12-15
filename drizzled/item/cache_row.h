@@ -21,6 +21,7 @@
 #define DRIZZLED_ITEM_CACHE_ROW_H
 
 #include <stdint.h>
+#include <drizzled/item/cache.h>
 
 class Item_cache;
 class Item;

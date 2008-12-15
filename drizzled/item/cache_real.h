@@ -20,6 +20,7 @@
 #ifndef DRIZZLED_ITEM_CACHE_REAL_H
 #define DRIZZLED_ITEM_CACHE_REAL_H
 
+#include <drizzled/item/cache.h>
 class Item_cache_real: public Item_cache
 {
   double value;

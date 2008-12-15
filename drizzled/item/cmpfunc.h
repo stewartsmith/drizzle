@@ -25,8 +25,10 @@
 #include <drizzled/comp_creator.h>
 #include <drizzled/item/row.h>
 #include <drizzled/item/sum.h>
-#include <drizzled/functions/int.h>
-#include <drizzled/functions/numhybrid.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/float.h>
+#include <drizzled/function/int.h>
+#include <drizzled/function/numhybrid.h>
 #include <drizzled/session.h>
 
 
