@@ -24,6 +24,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/unireg.h>
+#include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 
 int max_binlog_dump_events = 0; // unlimited

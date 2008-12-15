@@ -37,6 +37,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/replicator.h>
 #include <drizzled/lock.h>
+#include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 
 #if defined(CMATH_NAMESPACE)
@@ -2880,7 +2881,7 @@ int ha_create_table(Session *session, const char *path,
   closefrm(&table, 0);
   if (error)
   {
-    strxmov(name_buff, db, ".", table_name, NULL);
+    sprintf(name_buff,"%s.%s",db,table_name);
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
   }
 err:

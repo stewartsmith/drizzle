@@ -645,7 +645,7 @@ int rea_create_table(Session *session, const char *path,
                      uint32_t keys, KEY *key_info, handler *file)
 {
   char frm_name[FN_REFLEN];
-  strxmov(frm_name, path, reg_ext, NULL);
+  sprintf(frm_name,"%s%s",path,reg_ext);
   if (mysql_create_frm(session, frm_name, db, table_name, create_info,
                        create_fields, keys, key_info, file))
 

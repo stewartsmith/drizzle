@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_RETURN_INT_H
 #define DRIZZLED_ITEM_RETURN_INT_H
 
+#include <drizzled/item/int.h>
+
 class Item_return_int :public Item_int
 {
   enum_field_types int_field_type;

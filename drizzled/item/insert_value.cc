@@ -23,6 +23,7 @@
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/table.h>
 #include <drizzled/item/insert_value.h>
+#include <drizzled/item/ref.h>
 #include <drizzled/field/null.h>
 
 

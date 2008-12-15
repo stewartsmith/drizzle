@@ -29,9 +29,10 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/rename.h>
-#include <drizzled/functions/time/unix_timestamp.h>
-#include <drizzled/functions/get_system_var.h>
+#include <drizzled/function/time/unix_timestamp.h>
+#include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/null.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
 #include <drizzled/connect.h>
@@ -2567,7 +2568,8 @@ void create_select_for_variable(const char *var_name)
   LEX *lex;
   LEX_STRING tmp, null_lex_string;
   Item *var;
-  char buff[MAX_SYS_VAR_LENGTH*2+4+8], *end;
+  char buff[MAX_SYS_VAR_LENGTH*2+4+8];
+  char *end= buff;
 
   session= current_session;
   lex= session->lex;
@@ -2582,7 +2584,7 @@ void create_select_for_variable(const char *var_name)
   */
   if ((var= get_system_var(session, OPT_SESSION, tmp, null_lex_string)))
   {
-    end= strxmov(buff, "@@session.", var_name, NULL);
+    end+= sprintf(buff, "@@session.%s", var_name);
     var->set_name(buff, end-buff, system_charset_info);
     add_item_to_list(session, var);
   }
@@ -3625,7 +3627,7 @@ bool append_file_to_dir(Session *session, const char **filename_ptr,
   if (!(ptr= (char*) session->alloc((size_t) (end-buff) + strlen(table_name)+1)))
     return 1;					// End of memory
   *filename_ptr=ptr;
-  strxmov(ptr,buff,table_name,NULL);
+  sprintf(ptr,"%s%s",buff,table_name);
   return 0;
 }
 

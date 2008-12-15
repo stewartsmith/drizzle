@@ -45,6 +45,7 @@ This file contains the implementation of error and warnings related
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/item/empty_string.h>
+#include <drizzled/item/return_int.h>
 
 /*
   Store a new message in an error object

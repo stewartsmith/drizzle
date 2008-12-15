@@ -594,15 +594,6 @@ public:
 #include <drizzled/item/ident.h>
 #include <drizzled/item/decimal.h>
 #include <drizzled/item/field.h>
-#include <drizzled/item/ifloat.h>
-#include <drizzled/item/istring.h>
-#include <drizzled/item/int.h>
-#include <drizzled/item/int_with_ref.h>
-#include <drizzled/item/null.h>
-#include <drizzled/item/num.h>
-#include <drizzled/item/ref.h>
-#include <drizzled/item/return_int.h>
-#include <drizzled/item/uint.h>
 
 void mark_as_dependent(Session *session,
 		       st_select_lex *last,

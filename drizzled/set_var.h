@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_ITEM_SET_H
 #define DRIZZLED_ITEM_SET_H
 
-#include <drizzled/functions/func.h>
-#include <drizzled/functions/set_user_var.h>
+#include <drizzled/function/func.h>
+#include <drizzled/function/set_user_var.h>
 
 #include <string>
 
