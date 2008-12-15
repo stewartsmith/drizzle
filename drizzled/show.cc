@@ -4660,8 +4660,8 @@ int initialize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table;
 
-  if (!(schema_table= (ST_SCHEMA_TABLE *)malloc(sizeof(ST_SCHEMA_TABLE))))
-      return(1);
+  if ((schema_table= new ST_SCHEMA_TABLE) == NULL)
+    return(1);
   memset(schema_table, 0, sizeof(ST_SCHEMA_TABLE));
 
   /* Historical Requirement */
@@ -4687,10 +4687,11 @@ int initialize_schema_table(st_plugin_int *plugin)
     schema_table->table_name= plugin->name.str;
   }
 
-  return(0);
+  return 0;
 err:
-  free(schema_table);
-  return(1);
+  delete schema_table;
+
+  return 1;
 }
 
 int finalize_schema_table(st_plugin_int *plugin)
@@ -4698,7 +4699,7 @@ int finalize_schema_table(st_plugin_int *plugin)
   ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;
 
   if (schema_table && plugin->plugin->deinit)
-    free(schema_table);
+    delete schema_table;
 
   return(0);
 }

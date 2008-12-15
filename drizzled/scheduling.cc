@@ -25,7 +25,7 @@ int scheduling_initializer(st_plugin_int *plugin)
 {
   scheduling_t *p;
 
-  p= (scheduling_t *) malloc(sizeof(scheduling_t));
+  p= new scheduling_t;
   if (p == NULL) return 1;
   memset(p, 0, sizeof(scheduling_t));
 
