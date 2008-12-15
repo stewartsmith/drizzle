@@ -13,22 +13,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# Process this file with automake to create Makefile.in
 
-MYSQLDATAdir=		$(localstatedir)
-MYSQLSHAREdir=		$(pkgdatadir)
-MYSQLBASEdir=		$(prefix)
-MYSQLLIBdir=		$(pkglibdir)
-pkgplugindir=		$(pkglibdir)/plugin
-AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
-
-DEFS=			@DEFS@ ${EXTRA_DEFS}
-
-
-noinst_HEADERS=
-
-noinst_LTLIBRARIES=	libreplicator.la
+noinst_LTLIBRARIES= libreplicator.la
 libreplicator_la_SOURCES=	replicator.cc
-libreplicator_la_LDFLAGS = $(top_builddir)/drizzled/serialize/libserialize.la
+libreplicator_la_LDFLAGS= $(top_builddir)/drizzled/serialize/libserialize.la
+libreplicator_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOBUF_CFLAGS}
 
-EXTRA_DIST=
