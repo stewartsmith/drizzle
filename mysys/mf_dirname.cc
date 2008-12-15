@@ -150,7 +150,7 @@ char *convert_dirname(char *to, const char *from, const char *from_end)
 #else
   /* This is ok even if to == from, becasue we need to cut the string */
   size_t len= cmin(strlen(from),(size_t)(from_end-from));
-  to= strncpy(to, from, len);
+  assert(memmove(to, from, len));
   to+= len;
   to[0]= '\0';
 #endif
