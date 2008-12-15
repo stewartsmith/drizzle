@@ -1449,8 +1449,6 @@ public:
   */
   static void cleanup_lex_after_parse_error(Session *session);
 
-  bool table_or_sp_used();
-
   /**
     @brief check if the statement is a single-level join
     @return result of the check

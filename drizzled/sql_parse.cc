@@ -2158,13 +2158,6 @@ end_with_restore_list:
   {
     Item *it= (Item *)lex->value_list.head();
 
-    if (lex->table_or_sp_used())
-    {
-      my_error(ER_NOT_SUPPORTED_YET, MYF(0), "Usage of subqueries or stored "
-               "function calls as part of this statement");
-      break;
-    }
-
     if ((!it->fixed && it->fix_fields(lex->session, &it)) || it->check_cols(1))
     {
       my_message(ER_SET_CONSTANTS_ONLY, ER(ER_SET_CONSTANTS_ONLY),
