@@ -1443,6 +1443,7 @@ if test "$SUNCC" = "yes"
 then
   CC_WARNINGS="-v -xc99=all -errtags=yes"
   CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -xmemalign=8s"
   NO_EXCEPTIONS="-features=no%except"
   W_EXCEPTIONS="-features=except"
 fi
