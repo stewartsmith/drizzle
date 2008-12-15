@@ -37,6 +37,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/replicator.h>
 #include <drizzled/lock.h>
+#include <drizzled/item/empty_string.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

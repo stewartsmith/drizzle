@@ -33,6 +33,7 @@
 #include <drizzled/alter_column.h>
 #include <drizzled/key.h>
 #include <drizzled/foreign_key.h>
+#include <drizzled/item/param.h>
 
 class select_result_interceptor;
 class virtual_column_info;
@@ -43,6 +44,7 @@ class virtual_column_info;
 class Table_ident;
 class sql_exchange;
 class LEX_COLUMN;
+class Item_outer_ref;
 
 #ifdef DRIZZLE_SERVER
 /*

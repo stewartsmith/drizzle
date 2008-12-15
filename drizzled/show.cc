@@ -35,6 +35,8 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/lock.h>
+#include <drizzled/item/return_date_time.h>
+#include <drizzled/item/empty_string.h>
 
 #include <string>
 #include <iostream>
