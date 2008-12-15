@@ -534,6 +534,7 @@ libutil_la_SOURCES = \
 
 
 libfield_la_CXXFLAGS = ${AM_CXXFLAGS}
+libfield_la_LIBADD= libutil.la
 libfield_la_SOURCES = \
 		field/blob.cc \
 		field/date.cc \
@@ -554,6 +555,7 @@ libfield_la_SOURCES = \
 
 
 libfunction_la_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CFLAGS}
+libfunction_la_LIBADD= libutil.la
 libfunction_la_SOURCES = \
 		function/abs.cc \
 		function/acos.cc \
