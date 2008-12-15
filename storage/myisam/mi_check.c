@@ -2139,7 +2139,6 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
      (ha_rows) (sort_info.filelength/length+1));
   sort_param.key_cmp=sort_key_cmp;
   sort_param.lock_in_memory=lock_memory;
-  sort_param.tmpdir=param->tmpdir;
   sort_param.sort_info=&sort_info;
   sort_param.fix_datafile= (bool) (! rep_quick);
   sort_param.master =1;
@@ -2608,7 +2607,6 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
     }
     sort_param[i].key_cmp=sort_key_cmp;
     sort_param[i].lock_in_memory=lock_memory;
-    sort_param[i].tmpdir=param->tmpdir;
     sort_param[i].sort_info=&sort_info;
     sort_param[i].master=0;
     sort_param[i].fix_datafile=0;

@@ -44,7 +44,6 @@ static const CHARSET_INFO *set_collation;
 static long opt_myisam_block_size;
 static long opt_key_cache_block_size;
 static const char *my_progname_short;
-static MY_TMPDIR myisamchk_tmpdir;
 
 static const char *type_names[]=
 { "impossible","char","binary", "short", "long", "float",
@@ -136,7 +135,6 @@ int main(int argc, char **argv)
   pthread_mutex_destroy(&THR_LOCK_myisam);
 
   free_defaults(default_argv);
-  free_tmpdir(&myisamchk_tmpdir);
   my_end(check_param.testflag & T_INFO ? MY_CHECK_ERROR | MY_GIVE_INFO : MY_CHECK_ERROR);
   exit(error);
 #ifndef _lint
@@ -737,10 +735,6 @@ static void get_options(register int *argc,register char ***argv)
     exit(1);
   }
 
-  if (init_tmpdir(&myisamchk_tmpdir, opt_tmpdir))
-    exit(1);
-
-  check_param.tmpdir=&myisamchk_tmpdir;
   check_param.key_cache_block_size= opt_key_cache_block_size;
 
   if (set_collation_name)
