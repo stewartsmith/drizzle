@@ -1163,10 +1163,6 @@ int ha_delete_table(Session *session, const char *path,
 /* statistics and info */
 bool ha_show_status(Session *session, handlerton *db_type, enum ha_stat_type stat);
 
-/* discovery */
-int ha_create_table_from_engine(Session* session, const char *db, const char *name);
-int ha_discover(Session* session, const char* dbname, const char* name,
-                unsigned char** frmblob, size_t* frmlen);
 int ha_find_files(Session *session,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
 int ha_table_exists_in_engine(Session* session, const char* db, const char* name);

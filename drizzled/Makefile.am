@@ -199,7 +199,6 @@ drizzled_SOURCES = \
 		configvar.cc \
 		current_session.cc \
 		db.cc \
-		discover.cc \
 		drizzled.cc \
 		dtcollation.cc \
 		errmsg.cc \

@@ -270,7 +270,6 @@ typedef struct system_status_var
   ulong ha_update_count;
   ulong ha_write_count;
   ulong ha_prepare_count;
-  ulong ha_discover_count;
   ulong ha_savepoint_count;
   ulong ha_savepoint_rollback_count;
 

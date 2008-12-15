@@ -495,7 +495,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                                         FN_IS_TMP : 0);
     }
     if (drop_temporary ||
-        ((table_type == NULL && (access(path, F_OK) && ha_create_table_from_engine(session, db, alias))))
+        ((table_type == NULL && (access(path, F_OK))))
         )
     {
       // Table was not found on disk and table can't be created from engine

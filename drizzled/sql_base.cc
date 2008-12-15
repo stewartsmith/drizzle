@@ -346,7 +346,6 @@ static TABLE_SHARE
                              uint32_t db_flags, int *error)
 {
   TABLE_SHARE *share;
-  int tmp;
 
   share= get_table_share(session, table_list, key, key_length, db_flags, error);
   /*
@@ -372,26 +371,7 @@ static TABLE_SHARE
 
     return(share);
 
-  /* Table didn't exist. Check if some engine can provide it */
-  if ((tmp= ha_create_table_from_engine(session, table_list->db,
-                                        table_list->table_name)) < 0)
-    return(0);
-
-  if (tmp)
-  {
-    /* Give right error message */
-    session->clear_error();
-    my_printf_error(ER_UNKNOWN_ERROR,
-                    "Failed to open '%-.64s', error while "
-                    "unpacking from engine",
-                    MYF(0), table_list->table_name);
-    return(0);
-  }
-  /* Table existed in engine. Let's open it */
-  drizzle_reset_errors(session, 1);                   // Clear warnings
-  session->clear_error();                           // Clear error message
-  return(get_table_share(session, table_list, key, key_length,
-                              db_flags, error));
+  return 0;
 }
 
 
@@ -2025,10 +2005,9 @@ bool lock_table_name_if_not_cached(Session *session, const char *db,
     @retval  false  No error. 'exists' out parameter set accordingly.
 */
 
-bool check_if_table_exists(Session *session, TableList *table, bool *exists)
+bool check_if_table_exists(TableList *table, bool *exists)
 {
   char path[FN_REFLEN];
-  int rc;
 
   safe_mutex_assert_owner(&LOCK_open);
 
@@ -2043,27 +2022,8 @@ bool check_if_table_exists(Session *session, TableList *table, bool *exists)
   if (!access(path, F_OK))
     return(false);
 
-  /* .FRM file doesn't exist. Check if some engine can provide it. */
-
-  rc= ha_create_table_from_engine(session, table->db, table->table_name);
-
-  if (rc < 0)
-  {
-    /* Table does not exists in engines as well. */
-    *exists= false;
-    return(false);
-  }
-  else if (!rc)
-  {
-    /* Table exists in some engine and .FRM for it was created. */
-    return(false);
-  }
-  else /* (rc > 0) */
-  {
-    my_printf_error(ER_UNKNOWN_ERROR, "Failed to open '%-.64s', error while "
-                    "unpacking from engine", MYF(0), table->table_name);
-    return(true);
-  }
+  *exists= false;
+  return(false);
 }
 
 
@@ -2421,7 +2381,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     {
       bool exists;
 
-      if (check_if_table_exists(session, table_list, &exists))
+      if (check_if_table_exists(table_list, &exists))
       {
         pthread_mutex_unlock(&LOCK_open);
         return(NULL);
@@ -3170,9 +3130,7 @@ retry:
         - Start waiting that the share is released
         - Retry by opening all tables again
       */
-      if (ha_create_table_from_engine(session, table_list->db,
-                                      table_list->table_name))
-        goto err;
+
       /*
         TO BE FIXED
         To avoid deadlock, only wait for release if no one else is
