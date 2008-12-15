@@ -2889,69 +2889,6 @@ err:
   return(error != 0);
 }
 
-/**
-  Try to discover table from engine.
-
-  @note
-    If found, write the frm file to disk.
-
-  @retval
-  -1    Table did not exists
-  @retval
-   0    Table created ok
-  @retval
-   > 0  Error, table existed but could not be created
-*/
-int ha_create_table_from_engine(Session* session, const char *db, const char *name)
-{
-  int error;
-  unsigned char *frmblob;
-  size_t frmlen;
-  char path[FN_REFLEN];
-  HA_CREATE_INFO create_info;
-  Table table;
-  TABLE_SHARE share;
-
-  memset(&create_info, 0, sizeof(create_info));
-  if ((error= ha_discover(session, db, name, &frmblob, &frmlen)))
-  {
-    /* Table could not be discovered and thus not created */
-    return(error);
-  }
-
-  /*
-    Table exists in handler and could be discovered
-    frmblob and frmlen are set, write the frm to disk
-  */
-
-  build_table_filename(path, FN_REFLEN-1, db, name, "", 0);
-  // Save the frm file
-  error= writefrm(path, frmblob, frmlen);
-  free(frmblob);
-  if (error)
-    return(2);
-
-  init_tmp_table_share(session, &share, db, 0, name, path);
-  if (open_table_def(session, &share, 0))
-  {
-    return(3);
-  }
-  if (open_table_from_share(session, &share, "" ,0, 0, 0, &table, OTM_OPEN))
-  {
-    free_table_share(&share);
-    return(3);
-  }
-
-  table.updateCreateInfo(&create_info);
-  create_info.table_options|= HA_OPTION_CREATE_FROM_ENGINE;
-
-  check_lowercase_names(table.file, path, path);
-  error=table.file->ha_create(path, &table, &create_info);
-  closefrm(&table, 1);
-
-  return(error != 0);
-}
-
 void st_ha_check_opt::init()
 {
   flags= sql_flags= 0;
@@ -3047,58 +2984,6 @@ int ha_change_key_cache(KEY_CACHE *old_key_cache,
   mi_change_key_cache(old_key_cache, new_key_cache);
   return 0;
 }
-
-
-/**
-  Try to discover one table from handler(s).
-
-  @retval
-    -1   Table did not exists
-  @retval
-    0   OK. In this case *frmblob and *frmlen are set
-  @retval
-    >0   error.  frmblob and frmlen may not be set
-*/
-struct st_discover_args
-{
-  const char *db;
-  const char *name;
-  unsigned char **frmblob;
-  size_t *frmlen;
-};
-
-static bool discover_handlerton(Session *session, plugin_ref plugin,
-                                void *arg)
-{
-  st_discover_args *vargs= (st_discover_args *)arg;
-  handlerton *hton= plugin_data(plugin, handlerton *);
-  if (hton->state == SHOW_OPTION_YES && hton->discover &&
-      (!(hton->discover(hton, session, vargs->db, vargs->name,
-                        vargs->frmblob,
-                        vargs->frmlen))))
-    return true;
-
-  return false;
-}
-
-int ha_discover(Session *session, const char *db, const char *name,
-		unsigned char **frmblob, size_t *frmlen)
-{
-  int error= -1; // Table does not exist in any handler
-  st_discover_args args= {db, name, frmblob, frmlen};
-
-  if (is_prefix(name, TMP_FILE_PREFIX)) /* skip temporary tables */
-    return(error);
-
-  if (plugin_foreach(session, discover_handlerton,
-                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &args))
-    error= 0;
-
-  if (!error)
-    status_var_increment(session->status_var.ha_discover_count);
-  return(error);
-}
-
 
 /**
   Call this function in order to give the handler the possiblity
