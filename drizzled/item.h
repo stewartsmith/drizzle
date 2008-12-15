@@ -593,7 +593,6 @@ public:
 #include <drizzled/item/cache.h>
 #include <drizzled/item/copy_string.h>
 #include <drizzled/item/ident.h>
-#include <drizzled/item/decimal.h>
 #include <drizzled/item/field.h>
 
 void mark_as_dependent(Session *session,
