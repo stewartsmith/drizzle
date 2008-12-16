@@ -1557,6 +1557,11 @@ public:
   */
   void pop_internal_handler();
 
+  /**
+    Close the current connection.
+  */
+  void close_connection(uint32_t errcode, bool lock);
+
 private:
   const char *proc_info;
 

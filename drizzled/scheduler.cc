@@ -430,7 +430,7 @@ static void libevent_connection_close(Session *session)
   if (net_get_sd(&(session->net)) >= 0)                  // not already closed
   {
     end_connection(session);
-    close_connection(session, 0, 1);
+    session->close_connection(0, 1);
   }
   session->scheduler.thread_detach();
   unlink_session(session);   /* locks LOCK_thread_count and deletes session */

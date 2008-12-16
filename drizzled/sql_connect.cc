@@ -414,7 +414,7 @@ bool setup_connection_thread_globals(Session *session)
 {
   if (session->store_globals())
   {
-    close_connection(session, ER_OUT_OF_RESOURCES, 1);
+    session->close_connection(ER_OUT_OF_RESOURCES, true);
     statistic_increment(aborted_connects,&LOCK_status);
     thread_scheduler.end_thread(session, 0);
     return 1;                                   // Error
@@ -568,7 +568,7 @@ pthread_handler_t handle_one_connection(void *arg)
 
   if (thread_scheduler.init_new_connection_thread())
   {
-    close_connection(session, ER_OUT_OF_RESOURCES, 1);
+    session->close_connection(ER_OUT_OF_RESOURCES, true);
     statistic_increment(aborted_connects,&LOCK_status);
     thread_scheduler.end_thread(session,0);
     return 0;
@@ -606,8 +606,8 @@ pthread_handler_t handle_one_connection(void *arg)
     end_connection(session);
 
 end_thread:
-    close_connection(session, 0, 1);
-    if (thread_scheduler.end_thread(session,1))
+    session->close_connection(NULL, true);
+    if (thread_scheduler.end_thread(session, 1))
       return 0;                                 // Probably no-threads
 
     /*
