@@ -24,11 +24,9 @@ select count(*),b from t1;
 ERROR 42S22: Unknown column 'b' in 'field list'
 drop table t1;
 create table t1 (a int(256));
-ERROR 42000: Display width out of range for column 'a' (max = 255)
-set sql_mode='traditional';
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '(256))' at line 1
 create table t1 (a varchar(66000));
-ERROR 42000: Column length too big for column 'a' (max = 65535); use BLOB or TEXT instead
-set sql_mode=default;
+ERROR 42000: Column length too big for column 'a' (max = 16383); use BLOB or TEXT instead
 CREATE TABLE t1 (a INT);
 SELECT a FROM t1 WHERE a IN(1, (SELECT IF(1=0,1,2/0)));
 a
@@ -40,6 +38,9 @@ INSERT INTO t1 VALUES(2),(3);
 SELECT a FROM t1 WHERE a IN(1, (SELECT IF(1=0,1,2/0)));
 a
 1
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
 DROP TABLE t1;
 CREATE TABLE t1( a INT );
 SELECT b FROM t1;
