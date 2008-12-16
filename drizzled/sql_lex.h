@@ -1286,10 +1286,6 @@ public:
   Session *session;
   virtual_column_info *vcol_info;
 
-  /* maintain a list of used plugins for this LEX */
-  DYNAMIC_ARRAY plugins;
-  plugin_ref plugins_static_buffer[INITIAL_LEX_PLUGIN_LIST_SIZE];
-
   const CHARSET_INFO *charset;
   bool text_string_is_7bit;
   /* store original leaf_tables for INSERT SELECT and PS/SP */
@@ -1419,8 +1415,6 @@ public:
   virtual ~LEX()
   {
     destroy_query_tables_list();
-    plugin_unlock_list(NULL, (plugin_ref *)plugins.buffer, plugins.elements);
-    delete_dynamic(&plugins);
   }
 
   TableList *unlink_first_table(bool *link_to_local);

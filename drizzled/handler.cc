@@ -3038,6 +3038,20 @@ int ha_table_exists_in_engine(Session* session, const char* db, const char* name
   st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE};
   plugin_foreach(session, table_exists_in_engine_handlerton,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &args);
+
+  if(args.err==HA_ERR_NO_SUCH_TABLE)
+  {
+    /* Default way of knowing if a table exists. (checking .frm exists) */
+
+    char path[FN_REFLEN];
+    build_table_filename(path, sizeof(path),
+                         db, name, ".frm", 0);
+    if (!access(path, F_OK))
+      args.err= HA_ERR_TABLE_EXIST;
+    else
+      args.err= HA_ERR_NO_SUCH_TABLE;
+  }
+
   return(args.err);
 }
 

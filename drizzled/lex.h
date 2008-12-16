@@ -251,6 +251,7 @@ static SYMBOL symbols[] = {
   { "LIKE",		SYM(LIKE)},
   { "LIMIT",		SYM(LIMIT)},
   { "LINEAR",		SYM(LINEAR_SYM)},
+  { "LINES",            SYM(LINES)},
   { "LIST",             SYM(LIST_SYM)},
   { "LOAD",		SYM(LOAD)},
   { "LOCAL",		SYM(LOCAL_SYM)},
