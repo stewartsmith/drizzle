@@ -25,7 +25,7 @@ int qcache_initializer(st_plugin_int *plugin)
 {
   qcache_t *p;
 
-  p= (qcache_t *) malloc(sizeof(qcache_t));
+  p= new qcache_t;
   if (p == NULL) return 1;
   memset(p, 0, sizeof(qcache_t));
 
@@ -45,7 +45,7 @@ int qcache_initializer(st_plugin_int *plugin)
   return 0;
 
 err:
-  free(p);
+  delete p;
   return 1;
 }
 
@@ -64,7 +64,7 @@ int qcache_finalizer(st_plugin_int *plugin)
     }
   }
 
-  if (p) free(p);
+  if (p) delete p;
 
   return 0;
 }

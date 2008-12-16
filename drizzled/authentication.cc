@@ -54,8 +54,10 @@ int authentication_initializer(st_plugin_int *plugin)
 {
   authentication_st *authen;
 
-  if ((authen= (authentication_st *)malloc(sizeof(authentication_st))) == 0)
-      return(1);
+  authen= new authentication_st;
+
+  if (authen == NULL)
+    return 1;
 
   memset(authen, 0, sizeof(authentication_st));
 
@@ -74,7 +76,7 @@ int authentication_initializer(st_plugin_int *plugin)
 
   return(0);
 err:
-  free(authen);
+  delete authen;
   return(1);
 }
 
@@ -86,7 +88,7 @@ int authentication_finalizer(st_plugin_int *plugin)
   if (authen && plugin->plugin->deinit)
     plugin->plugin->deinit(authen);
 
-  free(authen);
+  delete authen;
 
   return(0);
 }
