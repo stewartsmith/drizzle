@@ -1328,7 +1328,7 @@ static int32_t init_slave_thread(Session* session, SLAVE_Session_TYPE session_ty
   int32_t simulate_error= 0;
   session->system_thread = (session_type == SLAVE_Session_SQL) ?
     SYSTEM_THREAD_SLAVE_SQL : SYSTEM_THREAD_SLAVE_IO;
-  session->security_ctx->skip_grants();
+  session->security_ctx.skip_grants();
   my_net_init(&session->net, 0);
 /*
   Adding MAX_LOG_EVENT_HEADER_LEN to the max_allowed_packet on all

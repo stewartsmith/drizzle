@@ -54,8 +54,8 @@ bool Item_func_user::init(const char *user, const char *host)
 bool Item_func_user::fix_fields(Session *session, Item **ref)
 {
   return (Item_func_sysconst::fix_fields(session, ref) ||
-          init(session->main_security_ctx.user,
-               session->main_security_ctx.ip));
+          init(session->security_ctx.user.c_str(),
+               session->security_ctx.ip.c_str()));
 }
 
 
@@ -64,9 +64,8 @@ bool Item_func_current_user::fix_fields(Session *session, Item **ref)
   if (Item_func_sysconst::fix_fields(session, ref))
     return true;
 
-  Security_context *ctx=
-                         session->security_ctx;
-  return init(ctx->user, ctx->ip);
+  Security_context *ctx= &session->security_ctx;
+  return init(ctx->user.c_str(), ctx->ip.c_str());
 }
 
 
