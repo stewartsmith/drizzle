@@ -30,7 +30,7 @@
 #include <drizzled/item/param.h>
 #include <drizzled/item/outer_ref.h>
 #include <drizzled/table_list.h>
-#include <drizzled/function/real.h>
+#include <drizzled/function/math/real.h>
 #include <drizzled/alter_drop.h>
 #include <drizzled/alter_column.h>
 #include <drizzled/key.h>
