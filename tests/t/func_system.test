@@ -27,7 +27,7 @@ create table t1 (c1 char(5));
 insert into t1 values('row 1');
 insert into t1 values('row 2');
 insert into t1 values('row 3');
-select concat(user(), '--', c1) from t1;
+select concat(SUBSTRING(user(), 0, 4), '--', c1) from t1;
 select concat(database(), '--', c1) from t1;
 drop table t1;
 
