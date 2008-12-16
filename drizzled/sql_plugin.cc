@@ -521,7 +521,7 @@ SHOW_COMP_OPTION sys_var_have_plugin::get_option()
 }
 
 
-static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc)
+static plugin_ref intern_plugin_lock(LEX *, plugin_ref rc)
 {
   st_plugin_int *pi= plugin_ref_to_int(rc);
 
@@ -539,8 +539,6 @@ static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc)
     *plugin= pi;
     pi->ref_count++;
 
-    if (lex)
-      insert_dynamic(&lex->plugins, (unsigned char*)&plugin);
     return(plugin);
   }
   return(NULL);
@@ -755,9 +753,8 @@ static void reap_plugins(void)
 
 }
 
-static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
+static void intern_plugin_unlock(LEX *, plugin_ref plugin)
 {
-  int i;
   st_plugin_int *pi;
 
   if (!plugin)
@@ -766,22 +763,6 @@ static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
   pi= plugin_ref_to_int(plugin);
 
   free((void *) plugin);
-
-  if (lex)
-  {
-    /*
-      Remove one instance of this plugin from the use list.
-      We are searching backwards so that plugins locked last
-      could be unlocked faster - optimizing for LIFO semantics.
-    */
-    for (i= lex->plugins.elements - 1; i >= 0; i--)
-      if (plugin == *dynamic_element(&lex->plugins, i, plugin_ref*))
-      {
-        delete_dynamic_element(&lex->plugins, i);
-        break;
-      }
-    assert(i >= 0);
-  }
 
   assert(pi->ref_count);
   pi->ref_count--;
@@ -2014,22 +1995,8 @@ static void cleanup_variables(Session *session, struct system_variables *vars)
 
 void plugin_sessionvar_cleanup(Session *session)
 {
-  uint32_t idx;
-  plugin_ref *list;
-
   unlock_variables(session, &session->variables);
   cleanup_variables(session, &session->variables);
-
-  if ((idx= session->lex->plugins.elements))
-  {
-    list= ((plugin_ref*) session->lex->plugins.buffer) + idx - 1;
-    while ((unsigned char*) list >= session->lex->plugins.buffer)
-      intern_plugin_unlock(NULL, *list--);
-  }
-
-  reset_dynamic(&session->lex->plugins);
-
-  return;
 }
 
 
