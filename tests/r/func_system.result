@@ -1,0 +1,65 @@
+select database();
+database()
+test
+select database() = "test";
+database() = "test"
+1
+select database() = _utf8"test";
+database() = _utf8"test"
+1
+select user() like "%@%";
+user() like "%@%"
+1
+select user() like _utf8"%@%";
+user() like _utf8"%@%"
+1
+select version()>="3.23.29";
+version()>="3.23.29"
+1
+select version()>=_utf8"3.23.29";
+version()>=_utf8"3.23.29"
+1
+explain extended select database(), user();
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
+Warnings:
+Note	1003	select database() AS `database()`,user() AS `user()`
+create table t1 (version char(60)) select database(), user(), version() as 'version';
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `database()` varchar(34),
+  `user()` varchar(77),
+  `version` varchar(60)
+) ENGINE=InnoDB
+drop table t1;
+select TRUE,FALSE,NULL;
+TRUE	FALSE	NULL
+1	0	NULL
+create table t1 (c1 char(5));
+insert into t1 values('row 1');
+insert into t1 values('row 2');
+insert into t1 values('row 3');
+select concat(SUBSTRING(user(), 0, 4), '--', c1) from t1;
+concat(SUBSTRING(user(), 0, 4), '--', c1)
+--row 1
+--row 2
+--row 3
+select concat(database(), '--', c1) from t1;
+concat(database(), '--', c1)
+test--row 1
+test--row 2
+test--row 3
+drop table t1;
+create table t1 (a char(10));
+select * from t1 where a=version();
+a
+select * from t1 where a=database();
+a
+select * from t1 where a=user();
+a
+insert into t1 values ('a');
+select left(concat(a,version()),1) from t1;
+left(concat(a,version()),1)
+a
+drop table t1;

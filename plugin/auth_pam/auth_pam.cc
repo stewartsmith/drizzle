@@ -77,7 +77,7 @@ static bool authenticate(Session *session, const char *password)
   struct pam_conv conv_info= { &auth_pam_talker, (void*)&userinfo };
   pam_handle_t *pamh= NULL;
 
-  userinfo.name= session->main_security_ctx.user;
+  userinfo.name= session->security_ctx.user.c_str();
   userinfo.password= password;
 
   retval= pam_start("check_user", userinfo.name, &conv_info, &pamh);

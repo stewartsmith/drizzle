@@ -499,8 +499,6 @@ Session::Session()
   init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= 0;
   catalog= (char*)"std"; // the only catalog we have for now
-  main_security_ctx.init();
-  security_ctx= &main_security_ctx;
   some_tables_deleted=no_errors=password= 0;
   query_start_used= 0;
   count_cuted_fields= CHECK_FIELD_IGNORE;
@@ -768,7 +766,6 @@ Session::~Session()
   ha_close_connection(this);
   plugin_sessionvar_cleanup(this);
 
-  main_security_ctx.destroy();
   if (db)
   {
     free(db);
@@ -1535,8 +1532,6 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
   if ((uint) strlen(exchange->file_name) + NAME_LEN >= FN_REFLEN)
     strncpy(path,exchange->file_name,FN_REFLEN-1);
 
-  if ((file= create_file(session, path, exchange, &cache)) < 0)
-    return 1;
   /* Check if there is any blobs in data */
   {
     List_iterator_fast<Item> li(list);
@@ -1578,12 +1573,12 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
       (exchange->opt_enclosed && non_string_results &&
        field_term_length && strchr(NUMERIC_CHARS, field_term_char)))
   {
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                 ER_AMBIGUOUS_FIELD_TERM, ER(ER_AMBIGUOUS_FIELD_TERM));
-    is_ambiguous_field_term= true;
+    my_error(ER_AMBIGUOUS_FIELD_TERM, MYF(0));
+    return 1;
   }
-  else
-    is_ambiguous_field_term= false;
+
+  if ((file= create_file(session, path, exchange, &cache)) < 0)
+    return 1;
 
   return 0;
 }
@@ -2176,29 +2171,6 @@ void Session::set_status_var_init()
   memset(&status_var, 0, sizeof(status_var));
 }
 
-
-void Security_context::init()
-{
-  user= ip= 0;
-}
-
-
-void Security_context::destroy()
-{
-  // If not pointer to constant
-  if (user)
-  {
-    free(user);
-    user= NULL;
-  }
-  if (ip)
-  {
-    free(ip);
-    ip= NULL;
-  }
-}
-
-
 void Security_context::skip_grants()
 {
   /* privileges for the user are unknown everything is allowed */
@@ -2570,19 +2542,18 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
   @note
     For the connection that is doing shutdown, this is called twice
 */
-void close_connection(Session *session, uint32_t errcode, bool lock)
+void Session::close_connection(uint32_t errcode, bool lock)
 {
   st_vio *vio;
   if (lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
-  session->killed= Session::KILL_CONNECTION;
-  if ((vio= session->net.vio) != 0)
+  killed= Session::KILL_CONNECTION;
+  if ((vio= net.vio) != 0)
   {
     if (errcode)
-      net_send_error(session, errcode, ER(errcode)); /* purecov: inspected */
-    net_close(&(session->net));		/* vio is freed in delete session */
+      net_send_error(this, errcode, ER(errcode)); /* purecov: inspected */
+    net_close(&net);		/* vio is freed in delete session */
   }
   if (lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
-  return;;
 }
