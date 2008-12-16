@@ -116,6 +116,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/set_user_var.h \
 		function/sign.h \
 		function/signed.h \
+		function/units.h \
 		function/unsigned.h \
 		function/update_hash.h \
 		function/user_var_as_out_param.h \

@@ -116,6 +116,7 @@ our $path_my_basedir;
 our $opt_vardir;                 # A path but set directly on cmd line
 our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
+our $opt_testdir;
 
 
 our $default_vardir;
@@ -543,6 +544,7 @@ sub command_line_setup () {
 	     # Directories
              'tmpdir=s'                 => \$opt_tmpdir,
              'vardir=s'                 => \$opt_vardir,
+	     'testdir=s'		=> \$opt_testdir,
              'benchdir=s'               => \$glob_mysql_bench_dir,
              'mem'                      => \$opt_mem,
 
@@ -599,7 +601,14 @@ sub command_line_setup () {
   }
 
   # Find the absolute path to the test directory
-  $glob_mysql_test_dir=  cwd();
+  if ( ! $opt_testdir )
+  {
+    $glob_mysql_test_dir=  cwd();
+  } 
+  else
+  {
+    $glob_mysql_test_dir= $opt_testdir;
+  }
   $default_vardir= "$glob_mysql_test_dir/var";
 
   # In most cases, the base directory we find everything relative to,

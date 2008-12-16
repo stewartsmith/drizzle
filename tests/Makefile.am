@@ -29,6 +29,11 @@ LDADD=			$(top_builddir)/mysys/libmysys.la \
                         $(top_builddir)/mystrings/libmystrings.la \
 			$(LIBINTL)
 
+TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
+		${top_srcdir}/tests/test-run.pl \
+		--vardir=${top_builddir}/tests/var \
+		--testdir=${top_srcdir}/tests
+
 EXTRA_DIST = \
 	$(EXTRA_SCRIPTS) \
 	t/*.test \
@@ -101,15 +106,15 @@ test-run:
 
 test-nr:
 	cd tests ; \
-	  ./test-run $(force) --mysqld=--binlog-format=row
+	  $(TEST_RUN) $(force) --mysqld=--binlog-format=row
 
 test-ns:
 	cd tests ; \
-	  ./test-run $(force) $(mem) --mysqld=--binlog-format=mixed
+	  $(TEST_RUN) $(force) $(mem) --mysqld=--binlog-format=mixed
 
 test-binlog-statement:
 	cd tests ; \
-	  ./test-run $(force) --mysqld=--binlog-format=statement
+	  $(TEST_RUN) $(force) --mysqld=--binlog-format=statement
 
 test: test-drizzle
 
@@ -117,6 +122,4 @@ test: test-drizzle
 # maintenance and verification
 
 test-drizzle:
-	  $(PERL) -I$(top_srcdir)/tests/lib \
-		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
-		--suite=main,vcol
+	  $(TEST_RUN) --fast --reorder --force --suite=main,vcol
