@@ -91,7 +91,7 @@ replication_event_reader_CXXFLAGS =
 length_SOURCES = length.cc
 length_CXXFLAGS = -fexceptions
 
-EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto replication_event.proto
+EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto replication_event.proto check_length.sh
 BUILT_SOURCES = schema.pb.h \
 		table.pb.h \
 		binary_log.pb.h \
