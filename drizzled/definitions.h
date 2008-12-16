@@ -447,6 +447,17 @@ enum open_table_mode
   OTM_ALTER= 2
 };
 
+
+/**
+ * used by several functions in functions/time directory
+ *
+**/
+enum date_time_format_types
+{
+  TIME_ONLY= 0, TIME_MICROSECOND, DATE_ONLY, DATE_TIME, DATE_TIME_MICROSECOND
+};
+
+
 enum enum_parsing_place
 {
   NO_MATTER

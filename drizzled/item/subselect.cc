@@ -26,10 +26,14 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
+#include <drizzled/item/cache.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/ref_null_helper.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/check_stack_overrun.h>
+#include <drizzled/item/ref_null_helper.h>
+#include <drizzled/item/direct_ref.h>
 
 inline Item * and_items(Item* cond, Item *item)
 {

@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
+#include <drizzled/item/uint.h>
 #include <drizzled/item/outer_ref.h>
 
 /*

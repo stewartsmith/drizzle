@@ -36,12 +36,16 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/probes.h>
 #include <drizzled/show.h>
+#include <drizzled/item/cache.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/uint.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
+#include <drizzled/item/outer_ref.h>
+
 
 #include CMATH_H
 

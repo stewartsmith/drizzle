@@ -31,19 +31,19 @@ extern "C"				/* Bug in BSDI include file */
 #endif
 
 /* If you fix the parser to no longer create functions these can be moved to create.cc */
-#include <drizzled/functions/ascii.h>
-#include <drizzled/functions/divide.h>
-#include <drizzled/functions/get_user_var.h>
-#include <drizzled/functions/int.h>
-#include <drizzled/functions/int_divide.h>
-#include <drizzled/functions/minus.h>
-#include <drizzled/functions/mod.h>
-#include <drizzled/functions/multiply.h>
-#include <drizzled/functions/neg.h>
-#include <drizzled/functions/plus.h>
-#include <drizzled/functions/rollup_const.h>
-#include <drizzled/functions/round.h>
-#include <drizzled/functions/user_var_as_out_param.h>
+#include <drizzled/function/ascii.h>
+#include <drizzled/function/divide.h>
+#include <drizzled/function/get_user_var.h>
+#include <drizzled/function/int.h>
+#include <drizzled/function/int_divide.h>
+#include <drizzled/function/minus.h>
+#include <drizzled/function/mod.h>
+#include <drizzled/function/multiply.h>
+#include <drizzled/function/neg.h>
+#include <drizzled/function/plus.h>
+#include <drizzled/function/rollup_const.h>
+#include <drizzled/function/round.h>
+#include <drizzled/function/user_var_as_out_param.h>
 
 /* For type casts */
 

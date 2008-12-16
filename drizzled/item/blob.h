@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_ITEM_BLOB_H
 #define DRIZZLED_ITEM_BLOB_H
 
-#include <drizzled/item/istring.h>
+#include <drizzled/item/string.h>
 
 class Item_blob :public Item_string
 {

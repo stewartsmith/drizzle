@@ -17,8 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <drizzled/item/direct_ref.h>
+
 #ifndef DRIZZLED_ITEM_OUTER_REF_H
 #define DRIZZLED_ITEM_OUTER_REF_H
+
+#include <drizzled/item/ref.h>
+#include <drizzled/item/direct_ref.h>
 
 /*
   Class for outer fields.

@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
+#include <drizzled/item/ref.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/subselect.h>
 
