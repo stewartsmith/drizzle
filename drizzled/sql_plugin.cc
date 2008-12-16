@@ -894,8 +894,6 @@ int plugin_init(int *argc, char **argv, int flags)
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
   struct st_plugin_int tmp, *plugin_ptr;
-  vector<st_plugin_int *> reap;
-  vector<st_plugin_int *>::reverse_iterator riter;
   MEM_ROOT tmp_root;
 
   if (initialized)
@@ -976,8 +974,6 @@ int plugin_init(int *argc, char **argv, int flags)
   /*
     Now we initialize all remaining plugins
   */
-  reap.reserve(plugin_array.elements);
-
   for (idx= 0; idx < plugin_array.elements; idx++)
   {
     plugin_ptr= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
@@ -986,21 +982,12 @@ int plugin_init(int *argc, char **argv, int flags)
       if (plugin_initialize(plugin_ptr))
       {
         plugin_ptr->state= PLUGIN_IS_DYING;
-        reap[idx]= plugin_ptr;
+        plugin_deinitialize(plugin_ptr, true);
+        plugin_del(plugin_ptr);
       }
     }
   }
 
-  /*
-    Check if any plugins have to be reaped
-  */
-  for(riter= reap.rbegin();
-      plugin_ptr= *riter, riter != reap.rend();
-      riter++)
-  {
-    plugin_deinitialize(plugin_ptr, true);
-    plugin_del(plugin_ptr);
-  }
 
 end:
   free_root(&tmp_root, MYF(0));
