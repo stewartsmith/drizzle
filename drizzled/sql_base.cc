@@ -2412,7 +2412,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     }
 
     /* make a new table */
-    if (!(table=(Table*) malloc(sizeof(*table))))
+    if ((table= new Table) == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
@@ -2422,7 +2422,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     /* Combine the follow two */
     if (error > 0)
     {
-      free((unsigned char*)table);
+      delete table;
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
     }
@@ -3756,7 +3756,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 
   if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +
                                    path_length + 1 + key_length)))
-    return(0);
+    return NULL;
 
   share= (TABLE_SHARE*) (tmp_table+1);
   tmp_path= (char*) (share+1);

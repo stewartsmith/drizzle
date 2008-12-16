@@ -23,6 +23,7 @@
 
 #include <utility>
 #include <algorithm>
+#include <stdlib.h>
 #include <drizzled/sql_alloc.h>
 
 /** Struct to handle simple linked lists. */
