@@ -25,7 +25,7 @@ int configvar_initializer(st_plugin_int *plugin)
 {
   configvar_t *p;
 
-  p= (configvar_t *) malloc(sizeof(configvar_t));
+  p= new configvar_t;
   if (p == NULL) return 1;
   memset(p, 0, sizeof(configvar_t));
 
@@ -45,7 +45,7 @@ int configvar_initializer(st_plugin_int *plugin)
   return 0;
 
 err:
-  free(p);
+  delete p;
   return 1;
 }
 
@@ -64,7 +64,7 @@ int configvar_finalizer(st_plugin_int *plugin)
     }
   }
 
-  if (p) free(p);
+  if (p) delete p;
 
   return 0;
 }
