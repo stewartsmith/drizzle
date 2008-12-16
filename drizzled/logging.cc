@@ -25,7 +25,7 @@ int logging_initializer(st_plugin_int *plugin)
 {
   logging_t *p;
 
-  p= (logging_t *) malloc(sizeof(logging_t));
+  p= new logging_t;
   if (p == NULL) return 1;
   memset(p, 0, sizeof(logging_t));
 
@@ -45,7 +45,7 @@ int logging_initializer(st_plugin_int *plugin)
   return 0;
 
 err:
-  free(p);
+  delete p;
   return 1;
 }
 
@@ -64,7 +64,7 @@ int logging_finalizer(st_plugin_int *plugin)
     }
   }
 
-  if (p) free(p);
+  if (p) delete p;
 
   return 0;
 }

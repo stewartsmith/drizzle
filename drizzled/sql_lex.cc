@@ -341,7 +341,6 @@ void lex_start(Session *session)
   lex->in_sum_func= NULL;
 
   lex->is_lex_started= true;
-  return;
 }
 
 void lex_end(LEX *lex)
@@ -354,15 +353,8 @@ void lex_end(LEX *lex)
     lex->yacc_yyvs= 0;
   }
 
-  /* release used plugins */
-  plugin_unlock_list(0, (plugin_ref*)lex->plugins.buffer,
-                     lex->plugins.elements);
-  reset_dynamic(&lex->plugins);
-
   delete lex->result;
   lex->result= 0;
-
-  return;
 }
 
 
@@ -379,6 +371,7 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
 
     return symbol->tok;
   }
+
   return 0;
 }
 
@@ -2099,10 +2092,6 @@ LEX::LEX()
    sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
 {
 
-  my_init_dynamic_array2(&plugins, sizeof(plugin_ref),
-                         plugins_static_buffer,
-                         INITIAL_LEX_PLUGIN_LIST_SIZE,
-                         INITIAL_LEX_PLUGIN_LIST_SIZE);
   reset_query_tables_list(true);
 }
 
