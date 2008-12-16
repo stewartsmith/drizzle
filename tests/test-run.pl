@@ -804,7 +804,9 @@ sub command_line_setup () {
   # Chop off any "c:", DBUG likes a unix path ex: c:/src/... => /src/...
   $path_vardir_trace=~ s/^\w://;
 
+  print "opt_vardir== $opt_vardir\n";
   $opt_vardir= collapse_path(rel2abs($opt_vardir));
+  print "opt_vardir== $opt_vardir\n";
 
   # --------------------------------------------------------------------------
   # Set tmpdir
@@ -1432,7 +1434,8 @@ sub environment_setup () {
   
   $ENV{'LC_COLLATE'}=         "C";
   $ENV{'USE_RUNNING_SERVER'}= $opt_extern;
-  $ENV{'DRIZZLE_TEST_DIR'}=     $glob_mysql_test_dir;
+print "DRIZZLE_TEST_DIR== $glob_mysql_test_dir \n";
+  $ENV{'DRIZZLE_TEST_DIR'}=     collapse_path(rel2abs($glob_mysql_test_dir));
   $ENV{'MYSQLTEST_VARDIR'}=   $opt_vardir;
   $ENV{'DRIZZLE_TMP_DIR'}=      $opt_tmpdir;
   $ENV{'MASTER_MYSOCK'}=      $master->[0]->{'path_sock'};

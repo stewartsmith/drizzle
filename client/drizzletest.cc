@@ -1285,13 +1285,14 @@ static int compare_files2(File fd, const char* filename2)
   uint len, len2;
   char buff[512], buff2[512];
   const char *fname= filename2;
-  string tmpfile(opt_testdir);
+  string tmpfile;
 
   if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
     my_close(fd, MYF(0));
     if (opt_testdir != NULL)
     {
+      tmpfile= opt_testdir;
       if (tmpfile[tmpfile.length()] != '/')
         tmpfile.append("/");
       tmpfile.append(filename2);
