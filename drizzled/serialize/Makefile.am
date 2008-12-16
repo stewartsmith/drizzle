@@ -24,7 +24,8 @@ TESTS_ENVIRONMENT = sh
 TESTS = check_length.sh
 
 %.pb.h %.pb.cc : %.proto
-	$(PROTOC) --cpp_out=${top_builddir}/drizzled/serialize $<
+	$(PROTOC) -I${top_srcdir}/drizzled/serialize \
+		--cpp_out=${top_builddir}/drizzled/serialize $<
 
 noinst_PROGRAMS = \
 	       table_reader \

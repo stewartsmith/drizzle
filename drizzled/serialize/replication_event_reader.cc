@@ -5,7 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "replication_event.pb.h"
+#include <drizzled/serialize/replication_event.pb.h>
 using namespace std;
 
 /*
