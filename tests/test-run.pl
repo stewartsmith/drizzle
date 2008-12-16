@@ -1791,7 +1791,8 @@ sub setup_vardir() {
   }
 
   # Make a link std_data_ln in var/ that points to std_data
-  symlink("$glob_mysql_test_dir/std_data", "$opt_vardir/std_data_ln");
+  symlink(collapse_path(rel2abs("$glob_mysql_test_dir/std_data")),
+          "$opt_vardir/std_data_ln");
 
   # Remove old log files
   foreach my $name (glob("r/*.progress r/*.log r/*.warnings"))
@@ -2490,6 +2491,7 @@ sub mysqld_arguments ($$$$) {
 
   mtr_add_arg($args, "%s--no-defaults", $prefix);
 
+  $path_my_basedir= collapse_path(rel2abs($path_my_basedir));
   mtr_add_arg($args, "%s--basedir=%s", $prefix, $path_my_basedir);
 
   if ($opt_engine)
