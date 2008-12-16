@@ -105,7 +105,7 @@ check_user(Session *session, const char *passwd,
 
   if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->main_security_ctx.ip);
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
     return(1);
   }
 
@@ -114,8 +114,8 @@ check_user(Session *session, const char *passwd,
   if (is_authenticated != true)
   {
     my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
-             session->main_security_ctx.user,
-             session->main_security_ctx.ip,
+             session->security_ctx.user.c_str(),
+             session->security_ctx.ip.c_str(),
              passwd_len ? ER(ER_YES) : ER(ER_NO));
 
     return 1;
@@ -123,7 +123,7 @@ check_user(Session *session, const char *passwd,
 
 
   USER_RESOURCES ur;
-  session->security_ctx->skip_grants();
+  session->security_ctx.skip_grants();
   memset(&ur, 0, sizeof(USER_RESOURCES));
 
   if (check_count)
@@ -242,11 +242,11 @@ static int check_connection(Session *session)
 
     if (net_peer_addr(net, ip, &session->peer_port, NI_MAXHOST))
     {
-      my_error(ER_BAD_HOST_ERROR, MYF(0), session->main_security_ctx.ip);
+      my_error(ER_BAD_HOST_ERROR, MYF(0), session->security_ctx.ip.c_str());
       return 1;
     }
-    if (!(session->main_security_ctx.ip= strdup(ip)))
-      return 1; /* The error is set by strdup(). */
+
+    session->security_ctx.ip.assign(ip);
   }
   net_keepalive(net, true);
 
@@ -299,7 +299,7 @@ static int check_connection(Session *session)
 	pkt_len < MIN_HANDSHAKE_SIZE)
     {
       my_error(ER_HANDSHAKE_ERROR, MYF(0),
-               session->main_security_ctx.ip);
+               session->security_ctx.ip.c_str());
       return 1;
     }
   }
@@ -324,7 +324,7 @@ static int check_connection(Session *session)
   if (end >= (char*) net->read_pos+ pkt_len +2)
   {
 
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->main_security_ctx.ip);
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
     return 1;
   }
 
@@ -361,7 +361,7 @@ static int check_connection(Session *session)
 
   if (passwd + passwd_len + db_len > (char *)net->read_pos + pkt_len)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->main_security_ctx.ip);
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
     return 1;
   }
 
@@ -388,11 +388,8 @@ static int check_connection(Session *session)
     user_len-= 2;
   }
 
-  if (session->main_security_ctx.user)
-    if (session->main_security_ctx.user)
-      free(session->main_security_ctx.user);
-  if (!(session->main_security_ctx.user= strdup(user)))
-    return 1; /* The error is set by strdup(). */
+  session->security_ctx.user.assign(user);
+
   return check_user(session, passwd, passwd_len, db, true);
 }
 
@@ -486,12 +483,12 @@ void end_connection(Session *session)
   {
     if (!session->killed && session->variables.log_warnings > 1)
     {
-      Security_context *sctx= session->security_ctx;
+      Security_context *sctx= &session->security_ctx;
 
       sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
                         session->thread_id,(session->db ? session->db : "unconnected"),
-                        sctx->user ? sctx->user : "unauthenticated",
-                        sctx->ip,
+                        sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated",
+                        sctx->ip.c_str(),
                         (session->main_da.is_error() ? session->main_da.message() :
                          ER(ER_UNKNOWN_ERROR)));
     }
@@ -505,7 +502,7 @@ void end_connection(Session *session)
 
 void prepare_new_connection_state(Session* session)
 {
-  Security_context *sctx= session->security_ctx;
+  Security_context *sctx= &session->security_ctx;
 
   if (session->variables.max_join_size == HA_POS_ERROR)
     session->options |= OPTION_BIG_SELECTS;
@@ -532,8 +529,8 @@ void prepare_new_connection_state(Session* session)
       session->killed= Session::KILL_CONNECTION;
       sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
                         session->thread_id,(session->db ? session->db : "unconnected"),
-                        sctx->user ? sctx->user : "unauthenticated",
-                        sctx->ip, "init_connect command failed");
+                        sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated",
+                        sctx->ip.c_str(), "init_connect command failed");
       sql_print_warning("%s", session->main_da.message());
     }
     session->set_proc_info(0);

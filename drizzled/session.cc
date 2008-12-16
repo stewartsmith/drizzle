@@ -499,8 +499,6 @@ Session::Session()
   init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= 0;
   catalog= (char*)"std"; // the only catalog we have for now
-  main_security_ctx.init();
-  security_ctx= &main_security_ctx;
   some_tables_deleted=no_errors=password= 0;
   query_start_used= 0;
   count_cuted_fields= CHECK_FIELD_IGNORE;
@@ -768,7 +766,6 @@ Session::~Session()
   ha_close_connection(this);
   plugin_sessionvar_cleanup(this);
 
-  main_security_ctx.destroy();
   if (db)
   {
     free(db);
@@ -2175,29 +2172,6 @@ void Session::set_status_var_init()
 {
   memset(&status_var, 0, sizeof(status_var));
 }
-
-
-void Security_context::init()
-{
-  user= ip= 0;
-}
-
-
-void Security_context::destroy()
-{
-  // If not pointer to constant
-  if (user)
-  {
-    free(user);
-    user= NULL;
-  }
-  if (ip)
-  {
-    free(ip);
-    ip= NULL;
-  }
-}
-
 
 void Security_context::skip_grants()
 {

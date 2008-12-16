@@ -628,8 +628,8 @@ static void close_connections(void)
       if (global_system_variables.log_warnings)
         sql_print_warning(ER(ER_FORCING_CLOSE),my_progname,
                           tmp->thread_id,
-                          (tmp->main_security_ctx.user ?
-                           tmp->main_security_ctx.user : ""));
+                          (tmp->security_ctx.user.c_str() ?
+                           tmp->security_ctx.user.c_str() : ""));
       tmp->close_connection(0,0);
     }
     (void) pthread_mutex_unlock(&LOCK_thread_count);
