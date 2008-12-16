@@ -65,7 +65,8 @@ use File::Path;
 use File::Basename;
 use File::Copy;
 use File::Temp qw /tempdir/;
-use File::Spec::Functions qw /splitdir rel2abs/;
+use File::Spec::Functions qw /splitdir catpath catdir
+                              updir curdir splitpath rel2abs/;
 use Cwd;
 use Getopt::Long;
 use IO::Socket;
@@ -299,6 +300,7 @@ sub mysqld_start ($$$);
 sub mysqld_arguments ($$$$);
 sub stop_all_servers ();
 sub run_drizzletest ($);
+sub collapse_path ($);
 sub usage ($);
 
 
@@ -628,7 +630,6 @@ sub command_line_setup () {
     $glob_basedir= dirname($glob_basedir);
   }
 
-  $opt_vardir= rel2abs($opt_vardir);
   if ( -d $opt_testdir and -d $opt_vardir
          and -f "$opt_vardir/../../drizzled/drizzled")
   {
@@ -803,13 +804,7 @@ sub command_line_setup () {
   # Chop off any "c:", DBUG likes a unix path ex: c:/src/... => /src/...
   $path_vardir_trace=~ s/^\w://;
 
-  # We make the path absolute, as the server will do a chdir() before usage
-  unless ( $opt_vardir =~ m,^/,)
-  {
-    # Make absolute path, relative test dir
-    
-    $opt_vardir= cwd() . "/$opt_vardir";
-  }
+  $opt_vardir= collapse_path(rel2abs($opt_vardir));
 
   # --------------------------------------------------------------------------
   # Set tmpdir
@@ -3522,6 +3517,33 @@ sub mysqld_wait_started($){
   return 0;
 }
 
+sub collapse_path ($) {
+
+    my $c_path= shift;
+    my $updir  = updir($c_path);
+    my $curdir = curdir($c_path);
+
+    my($vol, $dirs, $file) = splitpath($c_path);
+    my @dirs = splitdir($dirs);
+
+    my @collapsed;
+    foreach my $dir (@dirs) {
+        if( $dir eq $updir              and   # if we have an updir
+            @collapsed                  and   # and something to collapse
+            length $collapsed[-1]       and   # and its not the rootdir
+            $collapsed[-1] ne $updir    and   # nor another updir
+            $collapsed[-1] ne $curdir         # nor the curdir
+          )
+        {                                     # then
+            pop @collapsed;                   # collapse
+        }
+        else {                                # else
+            push @collapsed, $dir;            # just hang onto it
+        }
+    }
+
+    return catpath($vol, catdir(@collapsed), $file);
+}
 
 ##############################################################################
 #
