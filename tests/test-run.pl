@@ -104,6 +104,8 @@ our $glob_scriptname=             undef;
 our $glob_timers=                 undef;
 our @glob_test_mode;
 
+our $glob_builddir;
+
 our $glob_basedir;
 
 our $path_client_bindir;
@@ -588,12 +590,12 @@ sub command_line_setup () {
 
   # We require that we are in the "mysql-test" directory
   # to run drizzle-test-run
-  if (! -f $glob_scriptname)
-  {
-    mtr_error("Can't find the location for the drizzle-test-run script\n" .
-              "Go to to the mysql-test directory and execute the script " .
-              "as follows:\n./$glob_scriptname");
-  }
+  #if (! -f $glob_scriptname)
+  #{
+  #  mtr_error("Can't find the location for the drizzle-test-run script\n" .
+  #            "Go to to the mysql-test directory and execute the script " .
+  #            "as follows:\n./$glob_scriptname");
+  #}
 
   if ( -d "../drizzled" )
   {
@@ -610,6 +612,8 @@ sub command_line_setup () {
     $glob_mysql_test_dir= $opt_testdir;
   }
   $default_vardir= "$glob_mysql_test_dir/var";
+  print "default_vardir= $default_vardir\n";
+  print "opt_vardir= $opt_vardir\n";
 
   # In most cases, the base directory we find everything relative to,
   # is the parent directory of the "mysql-test" directory. For source
@@ -624,6 +628,13 @@ sub command_line_setup () {
   if ( ! $source_dist and ! -d "$glob_basedir/bin" )
   {
     $glob_basedir= dirname($glob_basedir);
+  }
+
+  if ( -d $opt_testdir and -d $opt_vardir
+         and -f "$opt_vardir/../../drizzled/drizzled")
+  {
+    # probably in a VPATH build
+    $glob_builddir= "$opt_vardir/../..";
   }
 
   # Expect mysql-bench to be located adjacent to the source tree, by default
@@ -643,7 +654,8 @@ sub command_line_setup () {
   #
 
   # Look for the client binaries directory
-  $path_client_bindir= mtr_path_exists("$glob_basedir/client",
+  $path_client_bindir= mtr_path_exists("$glob_builddir/client",
+                                       "$glob_basedir/client",
 				       "$glob_basedir/bin");
 
   if (!$opt_extern)
@@ -652,7 +664,8 @@ sub command_line_setup () {
 				       "$path_client_bindir/drizzled",
 				       "$glob_basedir/libexec/drizzled",
 				       "$glob_basedir/bin/drizzled",
-				       "$glob_basedir/sbin/drizzled");
+				       "$glob_basedir/sbin/drizzled",
+                                       "$glob_builddir/drizzled/drizzled");
 
     # Use the mysqld found above to find out what features are available
     collect_mysqld_features();
@@ -763,8 +776,9 @@ sub command_line_setup () {
   # --------------------------------------------------------------------------
   # Set the "var/" directory, as it is the base for everything else
   # --------------------------------------------------------------------------
-  if ( ! $opt_vardir )
+  if ( ! -d $opt_vardir )
   {
+    print "Overriding opt_vardir\n";
     $opt_vardir= $default_vardir;
   }
   elsif ( $mysql_version_id < 50000 and
@@ -790,7 +804,8 @@ sub command_line_setup () {
   unless ( $opt_vardir =~ m,^/,)
   {
     # Make absolute path, relative test dir
-    $opt_vardir= "$glob_mysql_test_dir/$opt_vardir";
+    
+    $opt_vardir= cwd() . "/$opt_vardir";
   }
 
   # --------------------------------------------------------------------------
@@ -1241,7 +1256,8 @@ sub executable_setup () {
   $exe_my_print_defaults=
     mtr_exe_exists(
         "$path_client_bindir/my_print_defaults",
-        "$glob_basedir/extra/my_print_defaults");
+        "$glob_basedir/extra/my_print_defaults",
+        "$glob_builddir/extra/my_print_defaults");
 
 # Look for perror
   $exe_perror= "perror";
@@ -1727,6 +1743,8 @@ sub remove_stale_vardir () {
 sub setup_vardir() {
   mtr_report("Creating Directories");
 
+  print "default_vardir= $default_vardir\n";
+  print "opt_vardir= $opt_vardir\n";
   if ( $opt_vardir eq $default_vardir )
   {
     #
@@ -1751,6 +1769,7 @@ sub setup_vardir() {
     }
   }
 
+  print "opt_vardir== $opt_vardir";
   if ( ! -d $opt_vardir )
   {
     mtr_verbose("Creating $opt_vardir");

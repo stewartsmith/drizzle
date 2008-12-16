@@ -36,6 +36,7 @@ TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
 
 EXTRA_DIST = \
 	$(EXTRA_SCRIPTS) \
+	suite \
 	t/*.test \
 	t/*.opt \
 	extra/rpl_tests/*.test \
@@ -65,6 +66,7 @@ dtr:
 	$(RM) -f mtr dtr
 	$(LN_S) test-run.pl mtr
 	$(LN_S) test-run.pl dtr
+	-mkdir -fp ${top_builddir}/tests/var
 
 # test-run - a shortcut for executing test-run.pl
 test-run:
