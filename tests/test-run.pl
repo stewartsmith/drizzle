@@ -65,7 +65,7 @@ use File::Path;
 use File::Basename;
 use File::Copy;
 use File::Temp qw /tempdir/;
-use File::Spec::Functions qw /splitdir/;
+use File::Spec::Functions qw /splitdir rel2abs/;
 use Cwd;
 use Getopt::Long;
 use IO::Socket;
@@ -628,6 +628,7 @@ sub command_line_setup () {
     $glob_basedir= dirname($glob_basedir);
   }
 
+  $opt_vardir= rel2abs($opt_vardir);
   if ( -d $opt_testdir and -d $opt_vardir
          and -f "$opt_vardir/../../drizzled/drizzled")
   {
