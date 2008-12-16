@@ -102,11 +102,11 @@ static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
 {
   {
     N_("Waiting to reconnect after a failed registration on master"),
-    N_("Slave I/O thread killed while waitnig to reconnect after a "
+    N_("Slave I/O thread killed while waiting to reconnect after a "
                  "failed registration on master"),
     N_("Reconnecting after a failed registration on master"),
     N_("failed registering on master, reconnecting to try again, "
-                 "log '%s' at postion %s"),
+                 "log '%s' at position %s"),
     "COM_REGISTER_SLAVE",
     N_("Slave I/O thread killed during or after reconnect")
   },
@@ -115,7 +115,7 @@ static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
     N_("Slave I/O thread killed while retrying master dump"),
     N_("Reconnecting after a failed binlog dump request"),
     N_("failed dump request, reconnecting to try again, "
-                 "log '%s' at postion %s"),
+                 "log '%s' at position %s"),
     "COM_BINLOG_DUMP",
     N_("Slave I/O thread killed during or after reconnect")
   },
@@ -125,7 +125,7 @@ static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
                  "after a failed read"),
     N_("Reconnecting after a failed master event read"),
     N_("Slave I/O thread: Failed reading log event, "
-                 "reconnecting to retry, log '%s' at postion %s"),
+                 "reconnecting to retry, log '%s' at position %s"),
     "",
     N_("Slave I/O thread killed during or after a "
                  "reconnect done to recover from failed read")
@@ -895,7 +895,7 @@ static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
           "DRIZZLE server ids; these ids must be different "
           "for replication to work (or "
           "the --replicate-same-server-id option must be used "
-          "on slave but this does"
+          "on slave but this does "
           "not always make sense; please check the manual before using it).");
       err_code= ER_SLAVE_FATAL_ERROR;
       sprintf(err_buff, ER(err_code), errmsg);
@@ -2083,7 +2083,7 @@ requesting master dump")) ||
       } // if (event_len == packet_error)
 
       retry_count=0;                    // ok event, reset retry counter
-      session->set_proc_info(_("Queueing master event to the relay log"));
+      session->set_proc_info(_("Queuing master event to the relay log"));
       if (queue_event(mi,(const char*)drizzle->net.read_pos + 1, event_len))
       {
         goto err;

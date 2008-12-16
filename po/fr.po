@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-12-15 22:04-0600\n"
+"POT-Creation-Date: 2008-12-16 01:33-0600\n"
 "PO-Revision-Date: 2008-12-04 10:04+0000\n"
 "Last-Translator: MichelRoig <josselin99@yahoo.fr>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -1105,8 +1105,8 @@ msgstr ""
 "la base, erreur système : %d"
 
 #: libdrizzle/errmsg.c:95
-#, c-format
-msgid "Statement closed indirectly because of a preceeding %s() call"
+#, fuzzy, c-format
+msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
 "La commande a été terminée indirectement à cause d'un appel à la fonction %s"
 "()"
@@ -1523,10 +1523,10 @@ msgstr ""
 "procédure...\n"
 
 #: drizzled/drizzled.cc:1356
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "\n"
-"This crash occured while the server was calling initgroups(). This is\n"
+"This crash occurred while the server was calling initgroups(). This is\n"
 "often due to the use of a drizzled that is statically linked against glibc\n"
 "and configured to use LDAP in /etc/nsswitch.conf. You will need to either\n"
 "upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
@@ -2074,7 +2074,8 @@ msgid "Don't use new, possible wrong routines."
 msgstr "N'utilise pas de fonctions nouvelles et potentiellement erronnées."
 
 #: drizzled/drizzled.cc:3112
-msgid "If set, slave is not autostarted."
+#, fuzzy
+msgid "If set, slave is not started automatically."
 msgstr "Si activé, l'esclave ne s'active pas automatiquement."
 
 #: drizzled/drizzled.cc:3116
@@ -2183,8 +2184,9 @@ msgstr ""
 "taille."
 
 #: drizzled/drizzled.cc:3201
+#, fuzzy
 msgid ""
-"Size of tree cache used in bulk insert optimisation. Note that this is a "
+"Size of tree cache used in bulk insert optimization. Note that this is a "
 "limit per thread!"
 msgstr ""
 "La taille du fichier de cache utilisé lors des insertions de masse. Notez "
@@ -2637,8 +2639,9 @@ msgid "The TIME format (for future)."
 msgstr "Le format TIME (pour utilisation ultérieure)"
 
 #: drizzled/drizzled.cc:3597
+#, fuzzy
 msgid ""
-"If an internal in-memory temporary table exceeds this size, MySQL will "
+"If an internal in-memory temporary table exceeds this size, Drizzle will "
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
 "Si une table temporaire en mémoire excède cette taille, MySQL va "
@@ -5609,16 +5612,18 @@ msgstr ""
 "KEY"
 
 #: drizzled/error.cc:1054
+#, fuzzy
 msgid ""
-"REORGANISE PARTITION can only be used to reorganise partitions not to change "
+"REORGANIZE PARTITION can only be used to reorganize partitions not to change "
 "their numbers"
 msgstr ""
 "REORGANISE PARTITION ne peut être utilisé que pour réorganiser les "
 "partitions, pas pour changer leur nombres"
 
 #: drizzled/error.cc:1056
+#, fuzzy
 msgid ""
-"REORGANISE PARTITION without parameters can only be used on auto-partitioned "
+"REORGANIZE PARTITION without parameters can only be used on auto-partitioned "
 "tables using HASH PARTITIONs"
 msgstr ""
 "REORGANISE PARTITION sans paramètre ne peut être utilisé que sur des tables "
@@ -5644,7 +5649,8 @@ msgid "At least one partition must be coalesced"
 msgstr "Au moins une partition doit être fusionnée"
 
 #: drizzled/error.cc:1066
-msgid "More partitions to reorganise than there are partitions"
+#, fuzzy
+msgid "More partitions to reorganize than there are partitions"
 msgstr "Plus de partition à réorganiser qu'il n'y a de partitions"
 
 #: drizzled/error.cc:1068
@@ -5657,7 +5663,8 @@ msgid "It is not allowed to shut off binlog on this command"
 msgstr "Il n'est pas autorisé d'éteindre le log binaire sur cette commande"
 
 #: drizzled/error.cc:1072
-msgid "When reorganising a set of partitions they must be in consecutive order"
+#, fuzzy
+msgid "When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 "Lors de la réorganisation d'un jeu de partitions, elles doivent être dans le "
 "même ordre, et consécutives"
@@ -6055,8 +6062,8 @@ msgstr ""
 "après sa création."
 
 #: drizzled/error.cc:1214
-#, c-format
-msgid "The incident %s occured on the master. Message: %-.64s"
+#, fuzzy, c-format
+msgid "The incident %s occurred on the master. Message: %-.64s"
 msgstr "L'incident %s est survenu sur le maître. Message d'erreur : %-.64s"
 
 #: drizzled/error.cc:1216
@@ -6995,11 +7002,11 @@ msgid "Slave %s: %s%s Error_code: %d"
 msgstr "Esclave %s: %s%s Code d'erreur: %d"
 
 #: drizzled/replication/rli.cc:149
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Neither --relay-log nor --relay-log-index were used; so replication may "
-"break when this MySQL server acts as a slave and has his hostname changed!! "
-"Please use '--relay-log=%s' to avoid this problem."
+"break when this Drizzle server acts as a slave and has his hostname "
+"changed!! Please use '--relay-log=%s' to avoid this problem."
 msgstr ""
 "Ni  --relay-log ni --relay-log-index ne sont utilisés : la réplication peut "
 "se bloquer lorsque le serveur MySQL  joue le rôle d'esclave et que son nom "
@@ -7122,8 +7129,9 @@ msgstr ""
 "En attente de reconnexion suite à un échec d'enregistrement sur le maître"
 
 #: drizzled/slave.cc:105
+#, fuzzy
 msgid ""
-"Slave I/O thread killed while waitnig to reconnect after a failed "
+"Slave I/O thread killed while waiting to reconnect after a failed "
 "registration on master"
 msgstr ""
 "Le thread d'entrée/sortie esclave a été tué durant la phase de reconnexion, "
@@ -7134,10 +7142,10 @@ msgid "Reconnecting after a failed registration on master"
 msgstr "Reconnexion suite à un échec d'enregistrement sur le maître"
 
 #: drizzled/slave.cc:108
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"failed registering on master, reconnecting to try again, log '%s' at postion "
-"%s"
+"failed registering on master, reconnecting to try again, log '%s' at "
+"position %s"
 msgstr ""
 "Enregistrement sur le maître échoué, nouvelle tentative de connexion, log '%"
 "s' at position %s"
@@ -7163,8 +7171,8 @@ msgid "Reconnecting after a failed binlog dump request"
 msgstr "Reconnexion après une tentative échouée d'accéder au log binaire"
 
 #: drizzled/slave.cc:117
-#, c-format
-msgid "failed dump request, reconnecting to try again, log '%s' at postion %s"
+#, fuzzy, c-format
+msgid "failed dump request, reconnecting to try again, log '%s' at position %s"
 msgstr ""
 "Tentative de lecture du log binaire maître échoué, nouvelle tentative de "
 "connexion, log '%s', à la position %s"
@@ -7184,10 +7192,10 @@ msgid "Reconnecting after a failed master event read"
 msgstr "Reconnexion après une tentative échouée de lecture sur le maître"
 
 #: drizzled/slave.cc:127
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Slave I/O thread: Failed reading log event, reconnecting to retry, log '%s' "
-"at postion %s"
+"at position %s"
 msgstr ""
 "Thread esclave d'entrée/sortie : erreur durant la lecture du log "
 "d'événements, tentative de reconnexion, log '%s' à la position %s"
@@ -7249,10 +7257,11 @@ msgstr ""
 "Seconds_Behind_Master of SHOW SLAVE STATUS est corrompue. Erreur: %s (%d)"
 
 #: drizzled/slave.cc:894
+#, fuzzy
 msgid ""
 "The slave I/O thread stops because master and slave have equal DRIZZLE "
 "server ids; these ids must be different for replication to work (or the --"
-"replicate-same-server-id option must be used on slave but this doesnot "
+"replicate-same-server-id option must be used on slave but this does not "
 "always make sense; please check the manual before using it)."
 msgstr ""
 "Le thread esclave d'entrée/sortie s'est arrêté car le maître et l'esclave "
@@ -7431,7 +7440,8 @@ msgstr ""
 "le maître"
 
 #: drizzled/slave.cc:2086
-msgid "Queueing master event to the relay log"
+#, fuzzy
+msgid "Queuing master event to the relay log"
 msgstr "Ajout de l'événement maître au log de relais"
 
 #: drizzled/slave.cc:2113
@@ -7710,7 +7720,7 @@ msgstr "Le plugin '%s' a un ref_count=%d après extinction."
 
 #: drizzled/sql_plugin.cc:1568
 #, fuzzy
-msgid "Out of memor."
+msgid "Out of memory."
 msgstr "Mémoire insuffisante"
 
 #: drizzled/sql_plugin.cc:2417 drizzled/sql_plugin.cc:2480
@@ -7807,9 +7817,9 @@ msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr "Collation '%s' inconnue dans la définition de la table '%-.64s'"
 
 #: drizzled/table.cc:2082
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"Table '%-.64s' was created with a different version of MySQL and cannot be "
+"Table '%-.64s' was created with a different version of Drizzle and cannot be "
 "read"
 msgstr ""
 "La table '%-.64s' a été créée avec une version différente de MySQL and ne "
@@ -8153,12 +8163,14 @@ msgid "The table is of a new format not supported by this version"
 msgstr "La table est dans format non supporté par cette version"
 
 #: storage/myisam/my_handler_errors.c:143
-msgid "The event could not be processed no other hanlder error happened"
+#, fuzzy
+msgid "The event could not be processed no other handler error happened"
 msgstr ""
 "Cet événement ne peut pas être traité, mais aucune erreur n'est survenue."
 
 #: storage/myisam/my_handler_errors.c:145
-msgid "Got a fatal error during initialzaction of handler"
+#, fuzzy
+msgid "Got a fatal error during initialzation of handler"
 msgstr "Réception d'une erreur fatal à l'initialisation du gestionnaire"
 
 #: storage/myisam/my_handler_errors.c:147
@@ -8180,6 +8192,10 @@ msgstr "Cet espace de tables n'existe pas"
 #: storage/myisam/my_handler_errors.c:155
 msgid "Tablespace not empty"
 msgstr "L'espace de tables n'est pas vide"
+
+#, fuzzy
+#~ msgid "Out of memor."
+#~ msgstr "Mémoire insuffisante"
 
 #~ msgid ""
 #~ "Path for temporary files. Several paths may be specified, separated by a "
