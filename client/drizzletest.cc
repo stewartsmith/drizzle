@@ -1284,11 +1284,25 @@ static int compare_files2(File fd, const char* filename2)
   File fd2;
   uint len, len2;
   char buff[512], buff2[512];
+  const char *fname= filename2;
+  string tmpfile(opt_testdir);
 
-  if ((fd2= my_open(filename2, O_RDONLY, MYF(0))) < 0)
+  if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
     my_close(fd, MYF(0));
-    die("Failed to open second file: '%s'", filename2);
+    if (opt_testdir != NULL)
+    {
+      if (tmpfile[tmpfile.length()] != '/')
+        tmpfile.append("/");
+      tmpfile.append(filename2);
+      fname= tmpfile.c_str();
+    }
+    if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
+    {
+      my_close(fd, MYF(0));
+    
+      die("Failed to open second file: '%s'", fname);
+    }
   }
   while((len= my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
