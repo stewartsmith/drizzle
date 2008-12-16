@@ -628,9 +628,9 @@ static void close_connections(void)
       if (global_system_variables.log_warnings)
         sql_print_warning(ER(ER_FORCING_CLOSE),my_progname,
                           tmp->thread_id,
-                          (tmp->main_security_ctx.user ?
-                           tmp->main_security_ctx.user : ""));
-      close_connection(tmp,0,0);
+                          (tmp->security_ctx.user.c_str() ?
+                           tmp->security_ctx.user.c_str() : ""));
+      tmp->close_connection(0,0);
     }
     (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
@@ -641,8 +641,6 @@ static void close_connections(void)
     (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
-
-  return;;
 }
 
 
@@ -2519,7 +2517,7 @@ static void create_new_thread(Session *session)
   {
     pthread_mutex_unlock(&LOCK_connection_count);
 
-    close_connection(session, ER_CON_COUNT_ERROR, 1);
+    session->close_connection(ER_CON_COUNT_ERROR, 1);
     delete session;
     return;;
   }
@@ -2545,8 +2543,6 @@ static void create_new_thread(Session *session)
   thread_count++;
 
   thread_scheduler.add_connection(session);
-
-  return;;
 }
 
 
@@ -2621,17 +2617,17 @@ void handle_connections_sockets()
       new_sock= accept(sock, (struct sockaddr *)(&cAddr),
                        &length);
       if (new_sock != -1 || (errno != EINTR && errno != EAGAIN))
-	break;
+        break;
     }
 
 
     if (new_sock == -1)
     {
       if ((error_count++ & 255) == 0)		// This can happen often
-	sql_perror("Error in accept");
+        sql_perror("Error in accept");
       MAYBE_BROKEN_SYSCALL;
       if (errno == ENFILE || errno == EMFILE)
-	sleep(1);				// Give other threads some time
+        sleep(1);				// Give other threads some time
       continue;
     }
 
