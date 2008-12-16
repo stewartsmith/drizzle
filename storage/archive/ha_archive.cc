@@ -106,10 +106,6 @@ static unsigned int global_version;
 static handler *archive_create_handler(handlerton *hton,
                                        TABLE_SHARE *table,
                                        MEM_ROOT *mem_root);
-int archive_discover(handlerton *hton, Session* session, const char *db,
-                     const char *name,
-                     unsigned char **frmblob,
-                     size_t *frmlen);
 
 static bool archive_use_aio= false;
 
@@ -160,7 +156,6 @@ int archive_db_init(void *p)
   archive_hton->state= SHOW_OPTION_YES;
   archive_hton->create= archive_create_handler;
   archive_hton->flags= HTON_NO_FLAGS;
-  archive_hton->discover= archive_discover;
 
   /* When the engine starts up set the first version */
   global_version= 1;
@@ -209,50 +204,6 @@ ha_archive::ha_archive(handlerton *hton, TABLE_SHARE *table_arg)
   /* The size of the offset value we will use for position() */
   ref_length= sizeof(my_off_t);
   archive_reader_open= false;
-}
-
-int archive_discover(handlerton *, Session *,
-                     const char *db,
-                     const char *name,
-                     unsigned char **frmblob,
-                     size_t *frmlen)
-{
-  azio_stream frm_stream;
-  char az_file[FN_REFLEN];
-  char *frm_ptr;
-  struct stat file_stat;
-
-  fn_format(az_file, name, db, ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-
-  if (stat(az_file, &file_stat))
-    goto err;
-
-  if (!(azopen(&frm_stream, az_file, O_RDONLY, AZ_METHOD_BLOCK)))
-  {
-    if (errno == EROFS || errno == EACCES)
-      return(my_errno= errno);
-    return(HA_ERR_CRASHED_ON_USAGE);
-  }
-
-  if (frm_stream.frm_length == 0)
-    goto err;
-
-  frm_ptr= (char *)malloc(sizeof(char) * frm_stream.frm_length);
-  if (frm_ptr == NULL)
-  {
-    goto err;
-  }
-
-  azread_frm(&frm_stream, frm_ptr);
-  azclose(&frm_stream);
-
-  *frmlen= frm_stream.frm_length;
-  *frmblob= (unsigned char*) frm_ptr;
-
-  return(0);
-err:
-  my_errno= 0;
-  return(1);
 }
 
 /*

@@ -36,12 +36,16 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/probes.h>
 #include <drizzled/show.h>
+#include <drizzled/item/cache.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/uint.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
+#include <drizzled/item/outer_ref.h>
+
 
 #include CMATH_H
 
@@ -13346,7 +13350,7 @@ create_sort_index(Session *session, JOIN *join, order_st *order,
         make_unireg_sortorder(order, &length, join->sortorder)))
     goto err;				/* purecov: inspected */
 
-  table->sort.io_cache=(IO_CACHE*) malloc(sizeof(IO_CACHE));
+  table->sort.io_cache= new IO_CACHE;
   memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
   table->status=0;				// May be wrong if quick_select
 
@@ -13833,13 +13837,13 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
 
   cache->length=length+blobs*sizeof(char*);
   cache->blobs=blobs;
-  *blob_ptr=0;					/* End sequentel */
-  size=cmax(session->variables.join_buff_size, (uint32_t)cache->length);
+  *blob_ptr= NULL;					/* End sequentel */
+  size= cmax(session->variables.join_buff_size, (uint32_t)cache->length);
   if (!(cache->buff=(unsigned char*) malloc(size)))
-    return(1);				/* Don't use cache */ /* purecov: inspected */
+    return 1;				/* Don't use cache */ /* purecov: inspected */
   cache->end=cache->buff+size;
   reset_cache_write(cache);
-  return(0);
+  return 0;
 }
 
 

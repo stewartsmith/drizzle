@@ -1980,20 +1980,20 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
     {
       lseek(file,(off_t) (endpos-bufflength),SEEK_SET);
       if (my_read(file, buff, bufflength, MYF(MY_NABP+MY_WME)))
-	return(0L);
+        return(0L);
       lseek(file,(off_t) (endpos-bufflength+IO_SIZE),SEEK_SET);
       if ((my_write(file, buff,bufflength,MYF(MY_NABP+MY_WME))))
-	return(0);
+        return(0);
       endpos-=bufflength; bufflength=IO_SIZE;
     }
     memset(buff, 0, IO_SIZE);			/* Null new block */
     lseek(file,(ulong) maxlength,SEEK_SET);
     if (my_write(file,buff,bufflength,MYF(MY_NABP+MY_WME)))
-	return(0L);
+      return(0L);
     maxlength+=IO_SIZE;				/* Fix old ref */
     int2store(fileinfo+6,maxlength);
-    for (i=names, pos= (unsigned char*) *formnames->type_names+n_length-1; i-- ;
-	 pos+=4)
+    for (i=names, pos= (unsigned char*) *formnames->type_names+n_length-1; i--;
+         pos+=4)
     {
       endpos=uint4korr(pos)+IO_SIZE;
       int4store(pos,endpos);
@@ -2003,10 +2003,10 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
   if (n_length == 1 )
   {						/* First name */
     length++;
-    strxmov((char*) buff,"/",newname,"/",NULL);
+    sprintf((char*)buff,"/%s/",newname);
   }
   else
-    strxmov((char*) buff,newname,"/",NULL); /* purecov: inspected */
+    sprintf((char*)buff,"%s/",newname); /* purecov: inspected */
   lseek(file, 63 + n_length,SEEK_SET);
   if (my_write(file, buff, (size_t) length+1,MYF(MY_NABP+MY_WME)) ||
       (names && my_write(file,(unsigned char*) (*formnames->type_names+n_length-1),
@@ -2036,7 +2036,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
       my_error(ER_NO_SUCH_TABLE, MYF(0), share->db.str, share->table_name.str);
     else
     {
-      strxmov(buff, share->normalized_path.str, reg_ext, NULL);
+      sprintf(buff,"%s%s",share->normalized_path.str,reg_ext);
       my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
                errortype, buff, db_errno);
     }
@@ -2057,7 +2057,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     }
     err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
       ER_FILE_USED : ER_CANT_OPEN_FILE;
-    strxmov(buff, share->normalized_path.str, datext, NULL);
+    sprintf(buff,"%s%s", share->normalized_path.str,datext);
     my_error(err_no,errortype, buff, db_errno);
     delete file;
     break;
@@ -2077,7 +2077,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     break;
   }
   case 6:
-    strxmov(buff, share->normalized_path.str, reg_ext, NULL);
+    sprintf(buff,"%s%s",share->normalized_path.str,reg_ext);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
                     "of Drizzle and cannot be read"),
@@ -2087,7 +2087,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     break;
   default:				/* Better wrong error than none */
   case 4:
-    strxmov(buff, share->normalized_path.str, reg_ext, NULL);
+    sprintf(buff,"%s%s",share->normalized_path.str,reg_ext);
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
@@ -2432,13 +2432,15 @@ void Table::updateCreateInfo(HA_CREATE_INFO *create_info)
   return;
 }
 
-int
-rename_file_ext(const char * from,const char * to,const char * ext)
+int rename_file_ext(const char * from,const char * to,const char * ext)
 {
-  char from_b[FN_REFLEN],to_b[FN_REFLEN];
-  strxmov(from_b,from,ext,NULL);
-  strxmov(to_b,to,ext,NULL);
-  return (my_rename(from_b,to_b,MYF(MY_WME)));
+  string from_s, to_s;
+
+  from_s.append(from);
+  from_s.append(ext);
+  to_s.append(to);
+  to_s.append(ext);
+  return (my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
 }
 
 

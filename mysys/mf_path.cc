@@ -81,7 +81,7 @@ char * my_path(char * to, const char *progname,
 
 static char *find_file_in_path(char *to, const char *name)
 {
-  char *path,*pos, dir[2];
+  char *path, *pos, dir[2];
   const char *ext="";
   ostringstream sstream;
 
@@ -97,7 +97,7 @@ static char *find_file_in_path(char *to, const char *name)
   {
     if (path != pos)
     {
-      sstream << path << dir << name << ext << NULL;
+      sstream << path << dir << name << ext  << '\0';
       strncpy(to, sstream.str().c_str(), sstream.str().length());
       if (!access(to,F_OK))
       {

@@ -25,7 +25,7 @@ noinst_HEADERS =	my_uctype.h \
 			t_ctype.h
 
 
-libmystrings_la_SOURCES = 	strxmov.cc bmove_upp.cc \
+libmystrings_la_SOURCES = 	bmove_upp.cc \
 				is_prefix.cc \
 				longlong2str.cc \
 				my_strtoll10.cc \

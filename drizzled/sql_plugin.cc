@@ -30,6 +30,7 @@
 #include <drizzled/handler.h>
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
+#include <drizzled/item/null.h>
 
 #include <string>
 #include <vector>
@@ -301,6 +302,7 @@ static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
 {
   uint32_t i;
   struct st_plugin_dl *tmp;
+
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
     tmp= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);
@@ -317,6 +319,7 @@ static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
 {
   uint32_t i;
   struct st_plugin_dl *tmp;
+
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
     tmp= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);
@@ -1679,7 +1682,7 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
 
   if (plugin)
   {
-    strxmov(varname + 1, plugin, "_", name, NULL);
+    sprintf(varname+1,"%s_%s",plugin,name);
     for (p= varname + 1; *p; p++)
       if (*p == '-')
         *p= '_';
@@ -1736,7 +1739,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
   };
 
   varname= ((char*) malloc(length));
-  strxmov(varname + 1, plugin, "_", name, NULL);
+  sprintf(varname+1, "%s_%s", plugin, name);
   for (p= varname + 1; *p; p++)
     if (*p == '-')
       *p= '_';
@@ -2409,7 +2412,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
   /* support --skip-plugin-foo syntax */
   memcpy(name, plugin_name, namelen + 1);
   my_casedn_str(&my_charset_utf8_general_ci, name);
-  strxmov(name + namelen + 1, "plugin-", name, NULL);
+  sprintf(name+namelen+1, "plugin-%s", name);
   /* Now we have namelen + 1 + 7 + namelen + 1 == namelen * 2 + 9. */
 
   for (p= name + namelen*2 + 8; p > name; p--)
@@ -2418,8 +2421,9 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
 
   if (can_disable)
   {
-    strxmov(name + namelen*2 + 10, "Enable ", plugin_name, " plugin. "
-            "Disable with --skip-", name," (will save memory).", NULL);
+    sprintf(name+namelen*2+10,
+            "Enable %s plugin. Disable with --skip-%s (will save memory).",
+            plugin_name, name);
     /*
       Now we have namelen * 2 + 10 (one char unused) + 7 + namelen + 9 +
       20 + namelen + 20 + 1 == namelen * 4 + 67.
@@ -2556,7 +2560,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
     {
       optnamelen= strlen(opt->name);
       optname= (char*) alloc_root(mem_root, namelen + optnamelen + 2);
-      strxmov(optname, name, "-", opt->name, NULL);
+      sprintf(optname, "%s-%s", name, opt->name);
       optnamelen= namelen + optnamelen + 1;
     }
     else
@@ -2599,7 +2603,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
     options[1]= options[0];
     options[1].name= p= (char*) alloc_root(mem_root, optnamelen + 8);
     options[1].comment= 0; // hidden
-    strxmov(p, "plugin-", optname, NULL);
+    sprintf(p,"plugin-%s",optname);
 
     options+= 2;
   }
@@ -2719,7 +2723,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
       {
         len= tmp->name.length + strlen(o->name) + 2;
         varname= (char*) alloc_root(mem_root, len);
-        strxmov(varname, tmp->name.str, "-", o->name, NULL);
+        sprintf(varname,"%s-%s",tmp->name.str,o->name);
         my_casedn_str(&my_charset_utf8_general_ci, varname);
 
         for (p= varname; *p; p++)

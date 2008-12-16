@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_UINT_H
 #define DRIZZLED_ITEM_UINT_H
 
+#include <drizzled/item/int.h>
+
 class Item_uint :public Item_int
 {
 public:

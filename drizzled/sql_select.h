@@ -24,6 +24,7 @@
 #include <drizzled/cached_item.h>
 #include <drizzled/session.h>
 #include <drizzled/field/varstring.h>
+#include <drizzled/item/null.h>
 
 class select_result;
 
