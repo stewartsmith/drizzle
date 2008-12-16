@@ -13,10 +13,11 @@ select database();
 create database d2;
 --error 1007
 create database D1;
+drop database d2;
 disconnect sample;
 
 connection master;
-drop database if exists d1;
+drop database d1;
 disconnect master;
 connection default;
 
