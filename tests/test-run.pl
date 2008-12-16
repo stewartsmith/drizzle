@@ -590,15 +590,6 @@ sub command_line_setup () {
     $opt_mtr_build_thread= $ENV{'MTR_BUILD_THREAD'};
   }
 
-  # We require that we are in the "mysql-test" directory
-  # to run drizzle-test-run
-  #if (! -f $glob_scriptname)
-  #{
-  #  mtr_error("Can't find the location for the drizzle-test-run script\n" .
-  #            "Go to to the mysql-test directory and execute the script " .
-  #            "as follows:\n./$glob_scriptname");
-  #}
-
   if ( -d "../drizzled" )
   {
     $source_dist=  1;
@@ -780,9 +771,8 @@ sub command_line_setup () {
   # --------------------------------------------------------------------------
   # Set the "var/" directory, as it is the base for everything else
   # --------------------------------------------------------------------------
-  if ( ! -d $opt_vardir )
+  if ( ! $opt_vardir )
   {
-    print "Overriding opt_vardir\n";
     $opt_vardir= $default_vardir;
   }
   elsif ( $mysql_version_id < 50000 and
@@ -804,7 +794,7 @@ sub command_line_setup () {
   # Chop off any "c:", DBUG likes a unix path ex: c:/src/... => /src/...
   $path_vardir_trace=~ s/^\w://;
 
-  $opt_vardir= collapse_path(rel2abs($opt_vardir));
+  $opt_vardir= collapse_path($opt_vardir);
 
   # --------------------------------------------------------------------------
   # Set tmpdir
@@ -1432,7 +1422,7 @@ sub environment_setup () {
   
   $ENV{'LC_COLLATE'}=         "C";
   $ENV{'USE_RUNNING_SERVER'}= $opt_extern;
-  $ENV{'DRIZZLE_TEST_DIR'}=     collapse_path(rel2abs($glob_mysql_test_dir));
+  $ENV{'DRIZZLE_TEST_DIR'}=     collapse_path($glob_mysql_test_dir);
   $ENV{'MYSQLTEST_VARDIR'}=   $opt_vardir;
   $ENV{'DRIZZLE_TMP_DIR'}=      $opt_tmpdir;
   $ENV{'MASTER_MYSOCK'}=      $master->[0]->{'path_sock'};
@@ -1791,7 +1781,7 @@ sub setup_vardir() {
   }
 
   # Make a link std_data_ln in var/ that points to std_data
-  symlink(collapse_path(rel2abs("$glob_mysql_test_dir/std_data")),
+  symlink(collapse_path("$glob_mysql_test_dir/std_data"),
           "$opt_vardir/std_data_ln");
 
   # Remove old log files
@@ -2491,7 +2481,7 @@ sub mysqld_arguments ($$$$) {
 
   mtr_add_arg($args, "%s--no-defaults", $prefix);
 
-  $path_my_basedir= collapse_path(rel2abs($path_my_basedir));
+  $path_my_basedir= collapse_path($path_my_basedir);
   mtr_add_arg($args, "%s--basedir=%s", $prefix, $path_my_basedir);
 
   if ($opt_engine)
@@ -3521,7 +3511,7 @@ sub mysqld_wait_started($){
 
 sub collapse_path ($) {
 
-    my $c_path= shift;
+    my $c_path= rel2abs(shift);
     my $updir  = updir($c_path);
     my $curdir = curdir($c_path);
 
