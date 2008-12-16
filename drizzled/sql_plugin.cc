@@ -723,34 +723,17 @@ static void reap_plugins(void)
   size_t count;
   uint32_t idx;
   struct st_plugin_int *plugin;
-  vector<st_plugin_int *> reap;
-  vector<st_plugin_int *>::reverse_iterator riter;
-
-  if (!reap_needed)
-    return;
-
 
   reap_needed= false;
   count= plugin_array.elements;
-  reap.reserve(count);
 
   for (idx= 0; idx < count; idx++)
   {
     plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-    if (plugin->state == PLUGIN_IS_DELETED && !plugin->ref_count)
-    {
-      /* change the status flag to prevent reaping by another thread */
-      plugin->state= PLUGIN_IS_DYING;
-      reap.push_back(plugin);
-    }
-  }
-
-  for (riter= reap.rbegin(); plugin= *riter, riter != reap.rend(); riter++)
+    plugin->state= PLUGIN_IS_DYING;
     plugin_deinitialize(plugin, true);
-
-  for (riter= reap.rbegin(); plugin= *riter, riter != reap.rend(); riter++)
     plugin_del(plugin);
-
+  }
 }
 
 static void intern_plugin_unlock(LEX *, plugin_ref plugin)
