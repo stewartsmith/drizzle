@@ -104,7 +104,7 @@
 #include <drizzled/global.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_sys.h>
-#include <keycache.h>
+#include "keycache.h"
 #include <mystrings/m_string.h>
 #include <mysys/my_bit.h>
 #include <errno.h>
