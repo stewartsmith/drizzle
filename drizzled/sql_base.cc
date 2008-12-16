@@ -1983,50 +1983,6 @@ bool lock_table_name_if_not_cached(Session *session, const char *db,
   return(false);
 }
 
-
-/**
-    Check that table exists in table definition cache, on disk
-    or in some storage engine.
-
-    @param       session     Thread context
-    @param       table   Table list element
-    @param[out]  exists  Out parameter which is set to true if table
-                         exists and to false otherwise.
-
-    @note This function assumes that caller owns LOCK_open mutex.
-          It also assumes that the fact that there are no name-locks
-          on the table was checked beforehand.
-
-    @note If there is no .FRM file for the table but it exists in one
-          of engines (e.g. it was created on another node of NDB cluster)
-          this function will fetch and create proper .FRM file for it.
-
-    @retval  true   Some error occured
-    @retval  false  No error. 'exists' out parameter set accordingly.
-*/
-
-bool check_if_table_exists(TableList *table, bool *exists)
-{
-  char path[FN_REFLEN];
-
-  safe_mutex_assert_owner(&LOCK_open);
-
-  *exists= true;
-
-  if (get_cached_table_share(table->db, table->table_name))
-    return(false);
-
-  build_table_filename(path, sizeof(path) - 1, table->db, table->table_name,
-                       reg_ext, 0);
-
-  if (!access(path, F_OK))
-    return(false);
-
-  *exists= false;
-  return(false);
-}
-
-
 /*
   Open a table.
 
@@ -2379,15 +2335,14 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
 
     if (table_list->create)
     {
-      bool exists;
-
-      if (check_if_table_exists(table_list, &exists))
+      if(ha_table_exists_in_engine(session, table_list->db,
+                                   table_list->table_name)
+         == HA_ERR_TABLE_EXIST)
       {
         pthread_mutex_unlock(&LOCK_open);
         return(NULL);
       }
-
-      if (!exists)
+      else
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
