@@ -610,12 +610,12 @@ bool Unique::get(Table *table)
   bool error=1;
 
       /* Open cached file if it isn't open */
-  outfile=table->sort.io_cache=(IO_CACHE*) malloc(sizeof(IO_CACHE));
+  outfile=table->sort.io_cache= new IO_CACHE;
   memset(outfile, 0, sizeof(IO_CACHE));
 
   if (!outfile || (! my_b_inited(outfile) && open_cached_file(outfile,drizzle_tmpdir,TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME))))
     return 1;
-  reinit_io_cache(outfile,WRITE_CACHE,0L,0,0);
+  reinit_io_cache(outfile, WRITE_CACHE, 0L, 0, 0);
 
   memset(&sort_param, 0, sizeof(sort_param));
   sort_param.max_rows= elements;

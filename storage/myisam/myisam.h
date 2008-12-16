@@ -407,7 +407,6 @@ typedef struct st_mi_check_param
   bool using_global_keycache, opt_lock_memory, opt_follow_links;
   bool retry_repair, force_sort;
   char temp_filename[FN_REFLEN],*isam_file_name;
-  MY_TMPDIR *tmpdir;
   int tmpfile_createflag;
   myf myf_rw;
   IO_CACHE read_cache;

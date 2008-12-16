@@ -112,7 +112,7 @@ session_scheduler::session_scheduler()
 
 session_scheduler::~session_scheduler()
 {
-  free(io_event);
+  delete io_event;
 }
 
 
@@ -125,9 +125,9 @@ void session_scheduler::operator=(const session_scheduler&)
 
 bool session_scheduler::init(Session *parent_session)
 {
-  io_event= (struct event*)malloc(sizeof(*io_event));
+  io_event= new struct event;
 
-  if (!io_event)
+  if (io_event == NULL)
   {
     sql_print_error(_("Memory allocation error in session_scheduler::init\n"));
     return true;

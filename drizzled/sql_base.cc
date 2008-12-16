@@ -2367,7 +2367,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     }
 
     /* make a new table */
-    if (!(table=(Table*) malloc(sizeof(*table))))
+    if ((table= new Table) == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
@@ -2377,7 +2377,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     /* Combine the follow two */
     if (error > 0)
     {
-      free((unsigned char*)table);
+      delete table;
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
     }
@@ -3711,7 +3711,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 
   if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +
                                    path_length + 1 + key_length)))
-    return(0);
+    return NULL;
 
   share= (TABLE_SHARE*) (tmp_table+1);
   tmp_path= (char*) (share+1);
@@ -6105,27 +6105,25 @@ err:
 
 bool drizzle_rm_tmp_tables(void)
 {
-  uint32_t i, idx;
-  char	filePath[FN_REFLEN], *tmpdir, filePathCopy[FN_REFLEN];
+  uint32_t  idx;
+  char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   MY_DIR *dirp;
   FILEINFO *file;
   TABLE_SHARE share;
   Session *session;
 
+  assert(drizzle_tmpdir);
+
   if (!(session= new Session))
-    return(1);
+    return true;
   session->thread_stack= (char*) &session;
   session->store_globals();
 
-  for (i=0; i<=drizzle_tmpdir_list.max; i++)
+  /* Remove all temp tables in the tmpdir */
+  /* See if the directory exists */
+  if ((dirp = my_dir(drizzle_tmpdir ,MYF(MY_WME | MY_DONT_SORT))))
   {
-    tmpdir=drizzle_tmpdir_list.list[i];
-    /* See if the directory exists */
-    if (!(dirp = my_dir(tmpdir,MYF(MY_WME | MY_DONT_SORT))))
-      continue;
-
     /* Remove all SQLxxx tables from directory */
-
     for (idx=0 ; idx < (uint) dirp->number_off_files ; idx++)
     {
       file=dirp->dir_entry+idx;
@@ -6140,8 +6138,8 @@ bool drizzle_rm_tmp_tables(void)
         char *ext= fn_ext(file->name);
         uint32_t ext_len= strlen(ext);
         uint32_t filePath_len= snprintf(filePath, sizeof(filePath),
-                                    "%s%c%s", tmpdir, FN_LIBCHAR,
-                                    file->name);
+                                        "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
+                                        file->name);
         if (!memcmp(reg_ext, ext, ext_len))
         {
           handler *handler_file= 0;
@@ -6168,8 +6166,10 @@ bool drizzle_rm_tmp_tables(void)
     }
     my_dirend(dirp);
   }
+
   delete session;
-  return(0);
+
+  return false;
 }
 
 

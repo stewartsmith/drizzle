@@ -55,7 +55,7 @@ bool my_net_init(NET *net, Vio* vio)
   net->vio = vio;
   my_net_local_init(net);            /* Set some limits */
   if (!(net->buff=(unsigned char*) malloc((size_t) net->max_packet+
-                                  NET_HEADER_SIZE + COMP_HEADER_SIZE)))
+                                          NET_HEADER_SIZE + COMP_HEADER_SIZE)))
     return(1);
   net->buff_end=net->buff+net->max_packet;
   net->error=0; net->return_status=0;
@@ -103,7 +103,7 @@ void net_end(NET *net)
 {
   if (net->buff != NULL)
     free(net->buff);
-  net->buff=0;
+  net->buff= NULL;
   return;
 }
 
@@ -454,10 +454,10 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
   in the server, yield to another process and come back later.
 */
 int
-net_real_write(NET *net,const unsigned char *packet, size_t len)
+net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
   size_t length;
-  const unsigned char *pos,*end;
+  const unsigned char *pos, *end;
   uint32_t retry_count= 0;
 
   /* Backup of the original SO_RCVTIMEO timeout */
@@ -548,7 +548,8 @@ net_real_write(NET *net,const unsigned char *packet, size_t len)
   /* Loop until we have read everything */
   while (pos != end)
   {
-    if ((long) (length= vio_write(net->vio,pos,(size_t) (end-pos))) <= 0)
+    assert(pos);
+    if ((long) (length= vio_write(net->vio, pos, (size_t) (end-pos))) <= 0)
     {
       const bool interrupted= vio_should_retry(net->vio);
       /*

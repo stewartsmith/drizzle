@@ -2346,8 +2346,7 @@ static unsigned char *get_error_count(Session *session)
 */
 static unsigned char *get_tmpdir(Session *)
 {
-  if (opt_drizzle_tmpdir)
-    return (unsigned char *)opt_drizzle_tmpdir;
+  assert(drizzle_tmpdir);
   return (unsigned char*)drizzle_tmpdir;
 }
 

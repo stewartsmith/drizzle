@@ -33,7 +33,7 @@ int log_file= -1;
 static bool write_to_disk(int file, drizzle::EventList *list)
 {
   std::string buffer;
-  uint64_t length;
+  size_t length;
   size_t written;
 
   list->SerializePartialToString(&buffer);
