@@ -103,7 +103,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/get_system_var.h \
 		function/get_user_var.h \
 		function/get_variable.h \
-		function/int.h \
 		function/last_insert.h \
 		function/length.h \
 		function/locate.h \
