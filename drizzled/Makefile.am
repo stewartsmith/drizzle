@@ -113,6 +113,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/func.h \
 		function/get_system_var.h \
 		function/get_user_var.h \
+		function/get_variable.h \
 		function/int.h \
 		function/integer.h \
 		function/int_divide.h \
@@ -134,6 +135,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/ord.h \
 		function/plus.h \
 		function/pow.h \
+		function/rand.h \
 		function/real.h \
 		function/rollup_const.h \
 		function/round.h \
@@ -144,7 +146,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/sin.h \
 		function/sqrt.h \
 		function/tan.h \
+		function/units.h \
 		function/unsigned.h \
+		function/update_hash.h \
 		function/user_var_as_out_param.h \
 		function/str/alloc_buffer.h \
 		function/str/binary.h \
@@ -177,7 +181,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/trim.h \
 		function/str/user.h \
 		function/str/uuid.h \
-		function/str/weight_string.h
+		function/str/weight_string.h \
 		function/time/add_time.h \
 		function/time/curdate.h \
 		function/time/curtime.h \
@@ -225,6 +229,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		ha_trx_info.h \
 		ha_statistics.h \
 		handler.h \
+		handlerton.h \
 		handler_structs.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
@@ -282,6 +287,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		my_decimal.h\
 		name_resolution_context.h \
 		name_resolution_context_state.h \
+		natural_join_column.h \
+		nested_join.h \
 		opt_range.h \
 		order.h \
 		parser.h \
@@ -342,6 +349,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		tmp_table.h \
 		tzfile.h \
 		tztime.h \
+		unireg.h \
 		virtual_column_info.h \
 		xid.h
 

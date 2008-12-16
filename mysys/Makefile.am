@@ -21,6 +21,7 @@ noinst_LTLIBRARIES =	libmysys.la
 
 mysysincludedir= ${includedir}/mysys
 dist_mysysinclude_HEADERS= \
+		definitions.h \
 		iocache.h \
 		my_alloc.h \
 		my_getopt.h \

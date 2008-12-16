@@ -24,7 +24,7 @@ TESTS_ENVIRONMENT = sh
 TESTS = check_length.sh
 
 %.pb.h %.pb.cc : %.proto
-	$(PROTOC) -I${top_srcdir}/drizzled/serialize \
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
 		--cpp_out=${top_builddir}/drizzled/serialize $<
 
 noinst_PROGRAMS = \
@@ -43,21 +43,23 @@ check_PROGRAMS = length
 noinst_LTLIBRARIES = libserialize.la
 
 libserialize_la_SOURCES = \
-			  table.pb.cc \
-			  replication_event.pb.cc \
-			  master_list.pb.cc \
-			  binary_log.pb.cc \
-			  schema.pb.cc
+		binary_log.pb.cc \
+		master_list.pb.cc \
+		replication_event.pb.cc \
+		schema.pb.cc \
+		table.pb.cc
 
-noinst_HEADERS = table.pb.h \
-		 replication_event.pb.h \
-		 master_list.pb.h \
-		 schema.pb.h \
-		 binary_log.pb.h \
-		 binlog_encoding.h \
-		 serialize.h
+noinst_HEADERS= \
+		binary_log.h \
+		binary_log.pb.h \
+		binlog_encoding.h \
+		ioutil.h \
+		master_list.pb.h \
+		replication_event.pb.h \
+		schema.pb.h \
+		serialize.h \
+		table.pb.h
 
-DEFS= @DEFS@
 
 binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
 binlog_reader_CXXFLAGS = 

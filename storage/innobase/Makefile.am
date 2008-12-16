@@ -142,6 +142,7 @@ noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
 			include/ha_prototypes.h				\
 			$(HANDLER_DIR)/ha_innodb.h			\
 			include/handler0alter.h				\
+			$(HANDLER_DIR)/handler0vars.h			\
 			$(HANDLER_DIR)/i_s.h
 
 noinst_LTLIBRARIES=	libinnobase.la libpars.la
@@ -200,6 +201,7 @@ libinnobase_la_LIBADD= libpars.la
 EXTRA_LTLIBRARIES=	ha_innodb.la
 pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
 
+ha_innodb_la_SOURCES=
 ha_innodb_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)
 ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${DYNAMIC_PLUGIN}
 ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${DYNAMIC_PLUGIN}

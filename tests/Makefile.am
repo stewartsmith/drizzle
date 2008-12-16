@@ -22,7 +22,6 @@ SUBDIRS =
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	valgrind.supp $(PRESCRIPTS)
-EXTRA_DIST = 		$(EXTRA_SCRIPTS) suite
 GENSCRIPTS =		install_test_db dtr test-run
 PRESCRIPTS =		test-run.pl stress-test.pl
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
@@ -34,45 +33,31 @@ LDADD=			$(top_builddir)/mysys/libmysys.la \
                         $(top_builddir)/mystrings/libmystrings.la \
 			$(LIBINTL)
 
-check: test-drizzle
+EXTRA_DIST = \
+	$(EXTRA_SCRIPTS) \
+	t/*.test \
+	t/*.opt \
+	extra/rpl_tests/*.test \
+	extra/binlog_tests/*.test \
+	include/*.inc \
+	include/*.sql \
+	include/*.test \
+	r/*.result \
+	r/*.require \
+	std_data/Moscow_leap \
+	std_data/Index.xml \
+	std_data/*.dat \
+	std_data/*.000001 \
+	std_data/des_key_file \
+	std_data/*.pem \
+	std_data/*.frm \
+	std_data/*.MY* \
+	std_data/*.cnf \
+	std_data/parts/part_* \
+	lib/*.pl \
+	lib/My/*.pm
 
-dist-hook:
-	mkdir -p \
-		$(distdir)/t \
-                $(distdir)/extra/binlog_tests \
-                $(distdir)/extra/rpl_tests \
-		$(distdir)/r \
-		$(distdir)/include \
-		$(distdir)/std_data \
-		$(distdir)/std_data/parts \
-		$(distdir)/lib \
-		$(distdir)/lib/My
-	-$(INSTALL_DATA) $(srcdir)/t/*.def $(distdir)/t
-	$(INSTALL_DATA) $(srcdir)/t/*.test $(distdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.imtest $(distdir)/t
-	$(INSTALL_DATA) $(srcdir)/t/*.sql $(distdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.disabled $(distdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.opt $(srcdir)/t/*.slave-mi $(distdir)/t
-	-$(INSTALL_SCRIPT) $(srcdir)/t/*.sh $(distdir)/t
-	$(INSTALL_DATA) $(srcdir)/extra/binlog_tests/*.test $(distdir)/extra/binlog_tests
-	$(INSTALL_DATA) $(srcdir)/extra/rpl_tests/*.test $(distdir)/extra/rpl_tests
-	-$(INSTALL_DATA) $(srcdir)/extra/binlog_tests/*.opt $(distdir)/extra/binlog_tests
-	-$(INSTALL_DATA) $(srcdir)/extra/rpl_tests/*.opt $(distdir)/extra/rpl_tests
-	$(INSTALL_DATA) $(srcdir)/include/*.inc $(distdir)/include
-	$(INSTALL_DATA) $(srcdir)/include/*.sql $(distdir)/include
-	$(INSTALL_DATA) $(srcdir)/include/*.test $(distdir)/include
-	$(INSTALL_DATA) $(srcdir)/r/*.result $(srcdir)/r/*.require $(distdir)/r
-	$(INSTALL_DATA) $(srcdir)/std_data/Moscow_leap $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/Index.xml $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.dat $(srcdir)/std_data/*.000001 $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/des_key_file $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.pem $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.frm $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.MY* $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.cnf $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/parts/part_* $(distdir)/std_data/parts
-	$(INSTALL_DATA) $(srcdir)/lib/*.pl $(distdir)/lib
-	$(INSTALL_DATA) $(srcdir)/lib/My/*.pm $(distdir)/lib/My
+check: test-drizzle
 
 # dtr - a shortcut for executing test-run.pl
 dtr:
