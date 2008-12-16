@@ -1509,7 +1509,7 @@ static bool show_status_array(Session *session, const char *wild,
                               const char *prefix, Table *table,
                               bool ucase_names)
 {
-  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, long);
+  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
   char * const buff= (char *) &buff_data;
   char *prefix_end;
   /* the variable name should not be longer than 64 characters */
