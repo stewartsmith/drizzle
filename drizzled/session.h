@@ -35,6 +35,7 @@
 #include <drizzled/handler.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
+#include <string>
 #include <bitset>
 
 class Relay_log_info;
@@ -497,9 +498,10 @@ void xid_cache_delete(XID_STATE *xid_state);
   @brief A set of Session members describing the current authenticated user.
 */
 
+using namespace std;
 class Security_context {
 public:
-  Security_context() {}                       /* Remove gcc warning */
+  Security_context() {}
   /*
     host - host of the client
     user - user of the client, set to NULL until the user has been read from
@@ -507,15 +509,13 @@ public:
     priv_user - The user privilege we are using. May be "" for anonymous user.
     ip - client IP
   */
-  char *user;
-  char *ip;
+  string user;
+  string ip;
 
-  void init();
-  void destroy();
   void skip_grants();
-  inline char *priv_host_name()
+  inline const char *priv_host_name()
   {
-    return (ip ? ip : (char *)"%");
+    return (ip.c_str() ? ip.c_str() : (char *)"%");
   }
 };
 
@@ -880,8 +880,7 @@ public:
     @see handle_slave_sql
   */
 
-  Security_context main_security_ctx;
-  Security_context *security_ctx;
+  Security_context security_ctx;
 
   /*
     Points to info-string that we show in SHOW PROCESSLIST
@@ -1313,7 +1312,6 @@ public:
     alloc_root.
   */
   void init_for_queries();
-  void change_user(void);
   void cleanup(void);
   void cleanup_after_query();
   bool store_globals();
@@ -1556,6 +1554,11 @@ public:
     Remove the error handler last pushed.
   */
   void pop_internal_handler();
+
+  /**
+    Close the current connection.
+  */
+  void close_connection(uint32_t errcode, bool lock);
 
 private:
   const char *proc_info;
@@ -2232,8 +2235,6 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
-
-void close_connection(Session *session, uint32_t errcode, bool lock);
 
 /* Some inline functions for more speed */
 

@@ -4924,14 +4924,14 @@ insert_lock_option:
           {
             $$= TL_WRITE_CONCURRENT_INSERT;
           }
-        | LOW_PRIORITY  { $$= TL_WRITE_LOW_PRIORITY; }
-        | DELAYED_SYM   { $$= TL_WRITE_LOW_PRIORITY; }
+        | LOW_PRIORITY  { $$= TL_WRITE_DEFAULT; }
+        | DELAYED_SYM   { $$= TL_WRITE_DEFAULT; }
         | HIGH_PRIORITY { $$= TL_WRITE; }
         ;
 
 replace_lock_option:
           opt_low_priority { $$= $1; }
-        | DELAYED_SYM { $$= TL_WRITE_LOW_PRIORITY; }
+        | DELAYED_SYM { $$= TL_WRITE_DEFAULT; }
         ;
 
 insert2:
@@ -5115,7 +5115,7 @@ insert_update_elem:
 
 opt_low_priority:
           /* empty */ { $$= TL_WRITE_DEFAULT; }
-        | LOW_PRIORITY { $$= TL_WRITE_LOW_PRIORITY; }
+        | LOW_PRIORITY { $$= TL_WRITE_DEFAULT; }
         ;
 
 /* Delete rows from a table */
@@ -5195,7 +5195,7 @@ opt_delete_options:
 
 opt_delete_option:
           QUICK        { Select->options|= OPTION_QUICK; }
-        | LOW_PRIORITY { Lex->lock_option= TL_WRITE_LOW_PRIORITY; }
+        | LOW_PRIORITY { Lex->lock_option= TL_WRITE_DEFAULT; }
         | IGNORE_SYM   { Lex->ignore= 1; }
         ;
 
@@ -5594,7 +5594,7 @@ load_data_lock:
           {
               $$= TL_WRITE_CONCURRENT_INSERT;
           }
-        | LOW_PRIORITY { $$= TL_WRITE_LOW_PRIORITY; }
+        | LOW_PRIORITY { $$= TL_WRITE_DEFAULT; }
         ;
 
 opt_duplicate:
@@ -6618,7 +6618,7 @@ table_lock_info:
         }
         | LOW_PRIORITY WRITE_SYM
         {
-          $$.lock_type=          TL_WRITE_LOW_PRIORITY;
+          $$.lock_type=          TL_WRITE_DEFAULT;
           $$.lock_timeout=       -1;
           $$.lock_transactional= false;
         }

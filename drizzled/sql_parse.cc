@@ -516,8 +516,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                       (unsigned char)(*passwd++) : strlen(passwd));
     uint32_t dummy_errors, save_db_length, db_length;
     int res;
-    Security_context save_security_ctx= *session->security_ctx;
     USER_CONN *save_user_connect;
+    string old_username;
 
     db+= passwd_len + 1;
     /*
@@ -556,12 +556,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     save_db= session->db;
     save_user_connect= session->user_connect;
 
-    if (!(session->security_ctx->user= strdup(user)))
-    {
-      session->security_ctx->user= save_security_ctx.user;
-      my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-      break;
-    }
+    old_username= session->security_ctx.user;
+    session->security_ctx.user.assign(user);
 
     /* Clear variables that are allocated */
     session->user_connect= 0;
@@ -569,9 +565,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     if (res)
     {
-      if (session->security_ctx->user)
-        free(session->security_ctx->user);
-      *session->security_ctx= save_security_ctx;
+      session->security_ctx.user= old_username;
       session->user_connect= save_user_connect;
       session->db= save_db;
       session->db_length= save_db_length;
@@ -580,8 +574,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     {
       if (save_db)
         free(save_db);
-      if (save_security_ctx.user)
-        free(save_security_ctx.user);
 
       if (cs_number)
       {
@@ -2364,7 +2356,6 @@ void mysql_reset_session_for_next_command(Session *session)
     session->options&= ~OPTION_KEEP_LOG;
     session->transaction.all.modified_non_trans_table= false;
   }
-  assert(session->security_ctx== &session->main_security_ctx);
   session->thread_specific_used= false;
 
   if (opt_bin_log)

@@ -499,8 +499,6 @@ Session::Session()
   init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= 0;
   catalog= (char*)"std"; // the only catalog we have for now
-  main_security_ctx.init();
-  security_ctx= &main_security_ctx;
   some_tables_deleted=no_errors=password= 0;
   query_start_used= 0;
   count_cuted_fields= CHECK_FIELD_IGNORE;
@@ -678,9 +676,7 @@ void Session::init(void)
 
   transaction.all.modified_non_trans_table= transaction.stmt.modified_non_trans_table= false;
   open_options=ha_open_options;
-  update_lock_default= (variables.low_priority_updates ?
-			TL_WRITE_LOW_PRIORITY :
-			TL_WRITE);
+  update_lock_default= TL_WRITE;
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
   warn_list.empty();
   memset(warn_count, 0, sizeof(warn_count));
@@ -768,7 +764,6 @@ Session::~Session()
   ha_close_connection(this);
   plugin_sessionvar_cleanup(this);
 
-  main_security_ctx.destroy();
   if (db)
   {
     free(db);
@@ -2174,29 +2169,6 @@ void Session::set_status_var_init()
   memset(&status_var, 0, sizeof(status_var));
 }
 
-
-void Security_context::init()
-{
-  user= ip= 0;
-}
-
-
-void Security_context::destroy()
-{
-  // If not pointer to constant
-  if (user)
-  {
-    free(user);
-    user= NULL;
-  }
-  if (ip)
-  {
-    free(ip);
-    ip= NULL;
-  }
-}
-
-
 void Security_context::skip_grants()
 {
   /* privileges for the user are unknown everything is allowed */
@@ -2568,19 +2540,18 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
   @note
     For the connection that is doing shutdown, this is called twice
 */
-void close_connection(Session *session, uint32_t errcode, bool lock)
+void Session::close_connection(uint32_t errcode, bool lock)
 {
   st_vio *vio;
   if (lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
-  session->killed= Session::KILL_CONNECTION;
-  if ((vio= session->net.vio) != 0)
+  killed= Session::KILL_CONNECTION;
+  if ((vio= net.vio) != 0)
   {
     if (errcode)
-      net_send_error(session, errcode, ER(errcode)); /* purecov: inspected */
-    net_close(&(session->net));		/* vio is freed in delete session */
+      net_send_error(this, errcode, ER(errcode)); /* purecov: inspected */
+    net_close(&net);		/* vio is freed in delete session */
   }
   if (lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
-  return;;
 }
