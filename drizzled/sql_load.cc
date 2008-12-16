@@ -280,7 +280,10 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
 
       struct stat stat_info;
       if (stat(name,&stat_info))
+      {
+        my_error(ER_FILE_NOT_FOUND, MYF(0), name, errno);
 	return(true);
+      }
 
       // if we are not in slave thread, the file must be:
       if (!session->slave_thread &&
@@ -296,7 +299,10 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
 	is_fifo = 1;
     }
     if ((file=my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
+    {
+      my_error(ER_CANT_OPEN_FILE, MYF(0), my_errno);
       return(true);
+    }
   }
 
   COPY_INFO info;

@@ -1532,8 +1532,6 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
   if ((uint) strlen(exchange->file_name) + NAME_LEN >= FN_REFLEN)
     strncpy(path,exchange->file_name,FN_REFLEN-1);
 
-  if ((file= create_file(session, path, exchange, &cache)) < 0)
-    return 1;
   /* Check if there is any blobs in data */
   {
     List_iterator_fast<Item> li(list);
@@ -1575,12 +1573,12 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
       (exchange->opt_enclosed && non_string_results &&
        field_term_length && strchr(NUMERIC_CHARS, field_term_char)))
   {
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                 ER_AMBIGUOUS_FIELD_TERM, ER(ER_AMBIGUOUS_FIELD_TERM));
-    is_ambiguous_field_term= true;
+    my_error(ER_AMBIGUOUS_FIELD_TERM, MYF(0));
+    return 1;
   }
-  else
-    is_ambiguous_field_term= false;
+
+  if ((file= create_file(session, path, exchange, &cache)) < 0)
+    return 1;
 
   return 0;
 }
