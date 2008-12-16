@@ -231,9 +231,6 @@ struct st_my_file_info
 {
   char *		name;
   enum file_type	type;
-#if !defined(HAVE_PREAD)
-  pthread_mutex_t	mutex;
-#endif
 };
 
 extern struct st_my_file_info *my_file_info;
@@ -245,14 +242,6 @@ typedef struct st_dynamic_array
   uint32_t alloc_increment;
   uint32_t size_of_element;
 } DYNAMIC_ARRAY;
-
-typedef struct st_my_tmpdir
-{
-  DYNAMIC_ARRAY full_list;
-  char **list;
-  uint32_t cur, max;
-  pthread_mutex_t mutex;
-} MY_TMPDIR;
 
 
 typedef int (*qsort2_cmp)(const void *, const void *, const void *);
@@ -376,10 +365,6 @@ void my_print_open_files(void);
 #else
 #define my_print_open_files()
 #endif
-
-extern bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist);
-extern char *my_tmpdir(MY_TMPDIR *tmpdir);
-extern void free_tmpdir(MY_TMPDIR *tmpdir);
 
 extern void my_remember_signal(int signal_number,RETSIGTYPE (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);

@@ -633,7 +633,7 @@ static int  write_keys(MI_SORT_PARAM *info, register unsigned char **sort_keys,
   my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp,
             info);
   if (!my_b_inited(tempfile) &&
-      open_cached_file(tempfile, my_tmpdir(info->tmpdir), "ST",
+      open_cached_file(tempfile, P_tmpdir, "ST",
                        DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1); /* purecov: inspected */
 
@@ -675,7 +675,7 @@ static int  write_keys_varlen(MI_SORT_PARAM *info,
   my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp,
             info);
   if (!my_b_inited(tempfile) &&
-      open_cached_file(tempfile, my_tmpdir(info->tmpdir), "ST",
+      open_cached_file(tempfile, P_tmpdir, "ST",
                        DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1); /* purecov: inspected */
 
@@ -696,7 +696,7 @@ static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
   uint32_t key_length=info->real_key_length;
 
   if (!my_b_inited(tempfile) &&
-      open_cached_file(tempfile, my_tmpdir(info->tmpdir), "ST",
+      open_cached_file(tempfile, P_tmpdir, "ST",
                        DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
@@ -736,7 +736,7 @@ static int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
   if (*maxbuffer < MERGEBUFF2)
     return(0);                             /* purecov: inspected */
   if (flush_io_cache(t_file) ||
-      open_cached_file(&t_file2,my_tmpdir(info->tmpdir),"ST",
+      open_cached_file(&t_file2, P_tmpdir, "ST",
                        DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);                             /* purecov: inspected */
 

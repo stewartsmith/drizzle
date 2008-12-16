@@ -392,7 +392,8 @@ const char *opt_date_time_formats[3];
 uint32_t drizzle_data_home_len;
 char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
-char *opt_drizzle_tmpdir;
+char *drizzle_tmpdir= NULL;
+char *opt_drizzle_tmpdir= NULL;
 const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
@@ -414,7 +415,6 @@ struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
 
-MY_TMPDIR drizzle_tmpdir_list;
 MY_BITMAP temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
@@ -832,7 +832,7 @@ void clean_up(bool print_message)
     free_defaults(defaults_argv);
   free(sys_init_connect.value);
   free(sys_init_slave.value);
-  free_tmpdir(&drizzle_tmpdir_list);
+  free(drizzle_tmpdir);
   free(slave_load_tmpdir);
   if (opt_bin_logname)
     free(opt_bin_logname);
@@ -3170,9 +3170,7 @@ struct my_option my_long_options[] =
    (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
     0, 0, 0, 0, 0},
   {"tmpdir", 't',
-   N_("Path for temporary files. Several paths may be specified, separated "
-      "by a colon (:)"
-      ", in this case they are used in a round-robin fashion."),
+   N_("Path for temporary files."),
    (char**) &opt_drizzle_tmpdir,
    (char**) &opt_drizzle_tmpdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"transaction-isolation", OPT_TX_ISOLATION,
@@ -3924,8 +3922,7 @@ static void drizzle_init_variables(void)
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;
-  opt_drizzle_tmpdir= my_bind_addr_str= NULL;
-  memset(&drizzle_tmpdir_list, 0, sizeof(drizzle_tmpdir_list));
+  my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();
 
@@ -4415,8 +4412,27 @@ static void fix_paths(void)
   convert_dirname(drizzle_charsets_dir, drizzle_charsets_dir, NULL);
   charsets_dir=drizzle_charsets_dir;
 
-  if (init_tmpdir(&drizzle_tmpdir_list, opt_drizzle_tmpdir))
-    exit(1);
+  {
+    char *tmp_string;
+    struct stat buf;
+
+    tmp_string= getenv("TMPDIR");
+
+    if (opt_drizzle_tmpdir)
+      drizzle_tmpdir= strdup(opt_drizzle_tmpdir);
+    else if (tmp_string == NULL)
+      drizzle_tmpdir= strdup(P_tmpdir);
+    else
+      drizzle_tmpdir= strdup(tmp_string);
+
+    assert(drizzle_tmpdir);
+
+    if (stat(drizzle_tmpdir, &buf) || (S_ISDIR(buf.st_mode) == false))
+    {
+      exit(1);
+    }
+  }
+
   if (!slave_load_tmpdir)
   {
     if (!(slave_load_tmpdir = (char*) strdup(drizzle_tmpdir)))

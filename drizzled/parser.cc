@@ -25,8 +25,10 @@ int parser_initializer(st_plugin_int *plugin)
 {
   parser_t *p;
 
-  p= (parser_t *) malloc(sizeof(parser_t));
-  if (p == NULL) return 1;
+  p= new parser_t;
+
+  if (p == NULL) 
+    return 1;
   memset(p, 0, sizeof(parser_t));
 
   plugin->data= (void *)p;
@@ -45,7 +47,8 @@ int parser_initializer(st_plugin_int *plugin)
   return 0;
 
 err:
-  free(p);
+  delete p;
+
   return 1;
 }
 
@@ -64,7 +67,8 @@ int parser_finalizer(st_plugin_int *plugin)
     }
   }
 
-  if (p) free(p);
+  if (p) 
+    delete p;
 
   return 0;
 }

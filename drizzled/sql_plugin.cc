@@ -302,6 +302,7 @@ static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
 {
   uint32_t i;
   struct st_plugin_dl *tmp;
+
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
     tmp= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);
@@ -318,6 +319,7 @@ static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
 {
   uint32_t i;
   struct st_plugin_dl *tmp;
+
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
     tmp= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);

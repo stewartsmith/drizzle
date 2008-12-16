@@ -106,8 +106,7 @@ bool is_keyword(const char *name, uint32_t len);
   External variables
 */
 
-#define drizzle_tmpdir (my_tmpdir(&drizzle_tmpdir_list))
-extern MY_TMPDIR drizzle_tmpdir_list;
+extern char *drizzle_tmpdir;
 extern const LEX_STRING command_name[];
 extern const char *first_keyword, *my_localhost, *delayed_user, *binary_keyword;
 extern const char *myisam_recover_options_str;
