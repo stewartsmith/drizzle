@@ -346,7 +346,6 @@ static TABLE_SHARE
                              uint32_t db_flags, int *error)
 {
   TABLE_SHARE *share;
-  int tmp;
 
   share= get_table_share(session, table_list, key, key_length, db_flags, error);
   /*
@@ -372,26 +371,7 @@ static TABLE_SHARE
 
     return(share);
 
-  /* Table didn't exist. Check if some engine can provide it */
-  if ((tmp= ha_create_table_from_engine(session, table_list->db,
-                                        table_list->table_name)) < 0)
-    return(0);
-
-  if (tmp)
-  {
-    /* Give right error message */
-    session->clear_error();
-    my_printf_error(ER_UNKNOWN_ERROR,
-                    "Failed to open '%-.64s', error while "
-                    "unpacking from engine",
-                    MYF(0), table_list->table_name);
-    return(0);
-  }
-  /* Table existed in engine. Let's open it */
-  drizzle_reset_errors(session, 1);                   // Clear warnings
-  session->clear_error();                           // Clear error message
-  return(get_table_share(session, table_list, key, key_length,
-                              db_flags, error));
+  return 0;
 }
 
 
@@ -2025,10 +2005,9 @@ bool lock_table_name_if_not_cached(Session *session, const char *db,
     @retval  false  No error. 'exists' out parameter set accordingly.
 */
 
-bool check_if_table_exists(Session *session, TableList *table, bool *exists)
+bool check_if_table_exists(TableList *table, bool *exists)
 {
   char path[FN_REFLEN];
-  int rc;
 
   safe_mutex_assert_owner(&LOCK_open);
 
@@ -2043,27 +2022,8 @@ bool check_if_table_exists(Session *session, TableList *table, bool *exists)
   if (!access(path, F_OK))
     return(false);
 
-  /* .FRM file doesn't exist. Check if some engine can provide it. */
-
-  rc= ha_create_table_from_engine(session, table->db, table->table_name);
-
-  if (rc < 0)
-  {
-    /* Table does not exists in engines as well. */
-    *exists= false;
-    return(false);
-  }
-  else if (!rc)
-  {
-    /* Table exists in some engine and .FRM for it was created. */
-    return(false);
-  }
-  else /* (rc > 0) */
-  {
-    my_printf_error(ER_UNKNOWN_ERROR, "Failed to open '%-.64s', error while "
-                    "unpacking from engine", MYF(0), table->table_name);
-    return(true);
-  }
+  *exists= false;
+  return(false);
 }
 
 
@@ -2421,7 +2381,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     {
       bool exists;
 
-      if (check_if_table_exists(session, table_list, &exists))
+      if (check_if_table_exists(table_list, &exists))
       {
         pthread_mutex_unlock(&LOCK_open);
         return(NULL);
@@ -2452,7 +2412,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     }
 
     /* make a new table */
-    if (!(table=(Table*) malloc(sizeof(*table))))
+    if ((table= new Table) == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
@@ -2462,7 +2422,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     /* Combine the follow two */
     if (error > 0)
     {
-      free((unsigned char*)table);
+      delete table;
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
     }
@@ -3170,9 +3130,7 @@ retry:
         - Start waiting that the share is released
         - Retry by opening all tables again
       */
-      if (ha_create_table_from_engine(session, table_list->db,
-                                      table_list->table_name))
-        goto err;
+
       /*
         TO BE FIXED
         To avoid deadlock, only wait for release if no one else is
@@ -3253,8 +3211,9 @@ retry:
           We inherited this from MySQL. TODO: fix it to issue a propper truncate
           of the table (though that may not be completely right sematics).
         */
-        end = strxmov(strcpy(query, "DELETE FROM `")+13,
-                      share->db.str,"`.`",share->table_name.str,"`", NULL);
+        end= query;
+        end+= sprintf(query, "DELETE FROM `%s`.`%s`", share->db.str,
+                      share->table_name.str);
         (void)replicator_statement(session, query, (size_t)(end - query));
         free(query);
       }
@@ -3797,7 +3756,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 
   if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +
                                    path_length + 1 + key_length)))
-    return(0);
+    return NULL;
 
   share= (TABLE_SHARE*) (tmp_table+1);
   tmp_path= (char*) (share+1);
@@ -6191,27 +6150,25 @@ err:
 
 bool drizzle_rm_tmp_tables(void)
 {
-  uint32_t i, idx;
-  char	filePath[FN_REFLEN], *tmpdir, filePathCopy[FN_REFLEN];
+  uint32_t  idx;
+  char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   MY_DIR *dirp;
   FILEINFO *file;
   TABLE_SHARE share;
   Session *session;
 
+  assert(drizzle_tmpdir);
+
   if (!(session= new Session))
-    return(1);
+    return true;
   session->thread_stack= (char*) &session;
   session->store_globals();
 
-  for (i=0; i<=drizzle_tmpdir_list.max; i++)
+  /* Remove all temp tables in the tmpdir */
+  /* See if the directory exists */
+  if ((dirp = my_dir(drizzle_tmpdir ,MYF(MY_WME | MY_DONT_SORT))))
   {
-    tmpdir=drizzle_tmpdir_list.list[i];
-    /* See if the directory exists */
-    if (!(dirp = my_dir(tmpdir,MYF(MY_WME | MY_DONT_SORT))))
-      continue;
-
     /* Remove all SQLxxx tables from directory */
-
     for (idx=0 ; idx < (uint) dirp->number_off_files ; idx++)
     {
       file=dirp->dir_entry+idx;
@@ -6226,8 +6183,8 @@ bool drizzle_rm_tmp_tables(void)
         char *ext= fn_ext(file->name);
         uint32_t ext_len= strlen(ext);
         uint32_t filePath_len= snprintf(filePath, sizeof(filePath),
-                                    "%s%c%s", tmpdir, FN_LIBCHAR,
-                                    file->name);
+                                        "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
+                                        file->name);
         if (!memcmp(reg_ext, ext, ext_len))
         {
           handler *handler_file= 0;
@@ -6254,8 +6211,10 @@ bool drizzle_rm_tmp_tables(void)
     }
     my_dirend(dirp);
   }
+
   delete session;
-  return(0);
+
+  return false;
 }
 
 

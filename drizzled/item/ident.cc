@@ -92,7 +92,7 @@ const char *Item_ident::full_name() const
   {
     tmp=(char*) sql_alloc((uint) strlen(db_name)+(uint) strlen(table_name)+
                           (uint) strlen(field_name)+3);
-    strxmov(tmp,db_name,".",table_name,".",field_name,NULL);
+    sprintf(tmp,"%s.%s.%s",db_name,table_name,field_name);
   }
   else
   {
@@ -100,7 +100,7 @@ const char *Item_ident::full_name() const
     {
       tmp= (char*) sql_alloc((uint) strlen(table_name) +
                              (uint) strlen(field_name) + 2);
-      strxmov(tmp, table_name, ".", field_name, NULL);
+      sprintf(tmp, "%s.%s", table_name, field_name);
     }
     else
       tmp= (char*) field_name;

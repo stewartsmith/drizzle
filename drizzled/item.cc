@@ -28,7 +28,7 @@
 #include <drizzled/item/cache_row.h>
 #include <drizzled/item/type_holder.h>
 #include <drizzled/item/sum.h>
-#include <drizzled/functions/str/conv_charset.h>
+#include <drizzled/function/str/conv_charset.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 
@@ -73,7 +73,7 @@ void item_init(void)
 
 bool Item::is_expensive_processor(unsigned char *)
 {
-  return 0;
+  return false;
 }
 
 void Item::fix_after_pullout(st_select_lex *, Item **)
@@ -82,7 +82,7 @@ void Item::fix_after_pullout(st_select_lex *, Item **)
 
 Field *Item::tmp_table_field(Table *)
 {
-  return 0;
+  return NULL;
 }
 
 
@@ -115,7 +115,7 @@ bool Item::val_bool()
     my_decimal *val= val_decimal(&decimal_value);
     if (val)
       return !my_decimal_is_zero(val);
-    return 0;
+    return false;
   }
   case REAL_RESULT:
   case STRING_RESULT:
@@ -123,7 +123,7 @@ bool Item::val_bool()
   case ROW_RESULT:
   default:
     assert(0);
-    return 0;                                   // Wrong (but safe)
+    return false;                                   // Wrong (but safe)
   }
 }
 
@@ -132,7 +132,8 @@ String *Item::val_string_from_real(String *str)
 {
   double nr= val_real();
   if (null_value)
-    return 0;					/* purecov: inspected */
+    return NULL;					/* purecov: inspected */
+
   str->set_real(nr,decimals, &my_charset_bin);
   return str;
 }
@@ -142,7 +143,8 @@ String *Item::val_string_from_int(String *str)
 {
   int64_t nr= val_int();
   if (null_value)
-    return 0;
+    return NULL;
+
   str->set_int(nr, unsigned_flag, &my_charset_bin);
   return str;
 }
@@ -152,7 +154,8 @@ String *Item::val_string_from_decimal(String *str)
 {
   my_decimal dec_buf, *dec= val_decimal(&dec_buf);
   if (null_value)
-    return 0;
+    return NULL;
+
   my_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
   my_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, 0, str);
   return str;
@@ -163,7 +166,8 @@ my_decimal *Item::val_decimal_from_real(my_decimal *decimal_value)
 {
   double nr= val_real();
   if (null_value)
-    return 0;
+    return NULL;
+
   double2my_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
   return (decimal_value);
 }
@@ -173,7 +177,8 @@ my_decimal *Item::val_decimal_from_int(my_decimal *decimal_value)
 {
   int64_t nr= val_int();
   if (null_value)
-    return 0;
+    return NULL;
+
   int2my_decimal(E_DEC_FATAL_ERROR, nr, unsigned_flag, decimal_value);
   return decimal_value;
 }
@@ -184,7 +189,7 @@ my_decimal *Item::val_decimal_from_string(my_decimal *decimal_value)
   String *res;
   char *end_ptr;
   if (!(res= val_str(&str_value)))
-    return 0;                                   // NULL or EOM
+    return NULL;                                   // NULL or EOM
 
   end_ptr= (char*) res->ptr()+ res->length();
   if (str2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
@@ -208,7 +213,7 @@ my_decimal *Item::val_decimal_from_date(my_decimal *decimal_value)
   {
     my_decimal_set_zero(decimal_value);
     null_value= 1;                               // set NULL, stop processing
-    return 0;
+    return NULL;
   }
   return date2my_decimal(&ltime, decimal_value);
 }
@@ -221,7 +226,7 @@ my_decimal *Item::val_decimal_from_time(my_decimal *decimal_value)
   if (get_time(&ltime))
   {
     my_decimal_set_zero(decimal_value);
-    return 0;
+    return NULL;
   }
   return date2my_decimal(&ltime, decimal_value);
 }
@@ -487,7 +492,7 @@ bool Item::check_cols(uint32_t c)
     my_error(ER_OPERAND_COLUMNS, MYF(0), c);
     return 1;
   }
-  return 0;
+  return false;
 }
 
 
@@ -592,11 +597,11 @@ bool Item::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
       goto err;
     }
   }
-  return 0;
+  return false;
 
 err:
   memset(ltime, 0, sizeof(*ltime));
-  return 1;
+  return true;
 }
 
 /**
@@ -647,13 +652,13 @@ void Item::set_result_field(Field *)
 
 bool Item::is_result_field(void)
 {
-  return 0;
+  return false;
 }
 
 
 bool Item::is_bool_func(void)
 {
-  return 0;
+  return false;
 }
 
 
@@ -712,7 +717,7 @@ Item* Item::compile(Item_analyzer analyzer, unsigned char **arg_p,
 {
   if ((this->*analyzer) (arg_p))
     return ((this->*transformer) (arg_t));
-  return 0;
+  return NULL;
 }
 
 
@@ -724,49 +729,49 @@ void Item::traverse_cond(Cond_traverser traverser, void *arg, traverse_order)
 
 bool Item::remove_dependence_processor(unsigned char *)
 {
-  return 0;
+  return false;
 }
 
 
 bool Item::remove_fixed(unsigned char *)
 {
   fixed= 0;
-  return 0;
+  return false;
 }
 
 
 bool Item::collect_item_field_processor(unsigned char *)
 {
-  return 0;
+  return false;
 }
 
 
 bool Item::find_item_in_field_list_processor(unsigned char *)
 {
-  return 0;
+  return false;
 }
 
 
 bool Item::change_context_processor(unsigned char *)
 {
-  return 0;
+  return false;
 }
 
 bool Item::reset_query_id_processor(unsigned char *)
 {
-  return 0;
+  return false;
 }
 
 
 bool Item::register_field_in_read_map(unsigned char *)
 {
-  return 0;
+  return false;
 }
 
 
 bool Item::register_field_in_bitmap(unsigned char *)
 {
-  return 0;
+  return false;
 }
 
 
@@ -816,13 +821,13 @@ Item* Item::element_index(uint32_t)
 
 Item** Item::addr(uint32_t)
 {
-  return 0;
+  return NULL;
 }
 
 
 bool Item::null_inside()
 {
-  return 0;
+  return false;
 }
 
 
@@ -1367,7 +1372,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
     {
       my_error(ER_INVALID_CHARACTER_STRING, MYF(0),
                cs->csname,  hexbuf);
-      return 0;
+      return NULL;
     }
     {
       level= DRIZZLE_ERROR::WARN_LEVEL_ERROR;
@@ -1768,7 +1773,7 @@ Item *Item_default_value::transform(Item_transformer transformer, unsigned char 
 {
   Item *new_item= arg->transform(transformer, args);
   if (!new_item)
-    return 0;
+    return NULL;
 
   /*
     Session::change_item_tree() should be called only if the tree was
@@ -2164,7 +2169,7 @@ Field *create_tmp_field(Session *session, Table *table,Item *item,
     result->set_derivation(item->collation.derivation);
     return result;
   default:					// Dosen't have to be stored
-    return 0;
+    return NULL;
   }
 }
 

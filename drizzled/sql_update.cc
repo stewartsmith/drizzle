@@ -337,7 +337,7 @@ int mysql_update(Session *session, TableList *table_list,
       SORT_FIELD  *sortorder;
       ha_rows examined_rows;
 
-      table->sort.io_cache = (IO_CACHE *) malloc(sizeof(IO_CACHE));
+      table->sort.io_cache = new IO_CACHE;
       memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||

@@ -158,10 +158,6 @@ struct handlerton
    std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
    int (*release_temporary_latches)(handlerton *hton, Session *session);
 
-   int (*discover)(handlerton *hton, Session* session, const char *db,
-                   const char *name,
-                   unsigned char **frmblob,
-                   size_t *frmlen);
    int (*table_exists_in_engine)(handlerton *hton, Session* session, const char *db,
                                  const char *name);
    uint32_t license; /* Flag for Engine License */

@@ -83,8 +83,8 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     my_message(ER_NOT_KEYFILE,msgbuf,MYF(MY_WME));
     return;
   }
-  length=(uint) (strxmov(name, param->db_name,".",param->table_name,NULL) -
-		 name);
+  length= sprintf(name,"%s.%s",param->db_name,param->table_name);
+
   /*
     TODO: switch from protocol to push_warning here. The main reason we didn't
     it yet is parallel repair. Due to following trace:
@@ -851,7 +851,6 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   param.tmpfile_createflag = O_RDWR | O_TRUNC;
   param.using_global_keycache = 1;
   param.session= session;
-  param.tmpdir= &drizzle_tmpdir_list;
   param.out_flag= 0;
   strcpy(fixed_name,file->filename);
 
@@ -1123,7 +1122,6 @@ int ha_myisam::enable_indexes(uint32_t mode)
     param.myf_rw&= ~MY_WAIT_IF_FULL;
     param.sort_buffer_length=  session->variables.myisam_sort_buff_size;
     param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
-    param.tmpdir=&drizzle_tmpdir_list;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
       sql_print_warning("Warning: Enabling keys got errno %d on %s.%s, retrying",

@@ -29,12 +29,17 @@
 #include <drizzled/tztime.h>
 #include <drizzled/data_home.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/return_int.h>
+#include <drizzled/item/empty_string.h>
+#include <drizzled/item/return_date_time.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/decimal.h>
 #include <drizzled/lock.h>
+#include <drizzled/item/return_date_time.h>
+#include <drizzled/item/empty_string.h>
 
 #include <string>
 #include <iostream>
@@ -2875,14 +2880,12 @@ static int get_schema_tables_record(Session *session, TableList *tables,
     if (share->db_create_options & HA_OPTION_CHECKSUM)
       ptr= strcpy(ptr," checksum=1")+11;
     if (share->page_checksum != HA_CHOICE_UNDEF)
-      ptr= strxmov(ptr, " page_checksum=",
-                   ha_choice_values[(uint) share->page_checksum], NULL);
+      ptr+= sprintf(ptr, " page_checksum=%s",
+                    ha_choice_values[(uint) share->page_checksum]);
     if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
       ptr= strcpy(ptr," delay_key_write=1")+18;
     if (share->row_type != ROW_TYPE_DEFAULT)
-      ptr=strxmov(ptr, " row_format=",
-                  ha_row_type[(uint) share->row_type],
-                  NULL);
+      ptr+= sprintf(ptr, " row_format=%s", ha_row_type[(uint)share->row_type]);
     if (share->block_size)
     {
       ptr= strcpy(ptr, " block_size=")+12;
@@ -2891,13 +2894,12 @@ static int get_schema_tables_record(Session *session, TableList *tables,
 
     if (share->transactional != HA_CHOICE_UNDEF)
     {
-      ptr= strxmov(ptr, " TRANSACTIONAL=",
-                   (share->transactional == HA_CHOICE_YES ? "1" : "0"),
-                   NULL);
+      ptr+= sprintf(ptr, " TRANSACTIONAL=%s",
+                    (share->transactional == HA_CHOICE_YES ? "1" : "0"));
     }
     if (share->transactional != HA_CHOICE_UNDEF)
-      ptr= strxmov(ptr, " transactional=",
-                   ha_choice_values[(uint) share->transactional], NULL);
+      ptr+= sprintf(ptr, " transactional=%s",
+                    ha_choice_values[(uint) share->transactional]);
     table->field[19]->store(option_buff+1,
                             (ptr == option_buff ? 0 :
                              (uint) (ptr-option_buff)-1), cs);
@@ -4658,8 +4660,8 @@ int initialize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table;
 
-  if (!(schema_table= (ST_SCHEMA_TABLE *)malloc(sizeof(ST_SCHEMA_TABLE))))
-      return(1);
+  if ((schema_table= new ST_SCHEMA_TABLE) == NULL)
+    return(1);
   memset(schema_table, 0, sizeof(ST_SCHEMA_TABLE));
 
   /* Historical Requirement */
@@ -4685,10 +4687,11 @@ int initialize_schema_table(st_plugin_int *plugin)
     schema_table->table_name= plugin->name.str;
   }
 
-  return(0);
+  return 0;
 err:
-  free(schema_table);
-  return(1);
+  delete schema_table;
+
+  return 1;
 }
 
 int finalize_schema_table(st_plugin_int *plugin)
@@ -4696,7 +4699,7 @@ int finalize_schema_table(st_plugin_int *plugin)
   ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;
 
   if (schema_table && plugin->plugin->deinit)
-    free(schema_table);
+    delete schema_table;
 
   return(0);
 }

@@ -646,7 +646,7 @@ static int handle_request_for_tables(const char *tables, uint length)
     ptr= strcpy(query, op)+strlen(op);
     ptr= strcpy(ptr, " TABLE ")+7;
     ptr= fix_table_name(ptr, tables);
-    ptr= strxmov(ptr, " ", options, NULL);
+    ptr+= sprintf(ptr," %s",options);
     query_length= (uint) (ptr - query);
   }
   if (drizzle_real_query(sock, query, query_length))

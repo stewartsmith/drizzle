@@ -37,6 +37,10 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
+#include <drizzled/item/cache.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/return_int.h>
+#include <drizzled/item/empty_string.h>
 
 extern scheduler_functions thread_scheduler;
 /*
@@ -528,7 +532,7 @@ Session::Session()
   mysys_var=0;
   binlog_evt_union.do_union= false;
   dbug_sentry=Session_SENTRY_MAGIC;
-  net.vio=0;
+  net.vio= 0;
   client_capabilities= 0;                       // minimalistic client
   system_thread= NON_SYSTEM_THREAD;
   cleanup_done= abort_on_warning= no_warnings_for_error= 0;
@@ -541,7 +545,7 @@ Session::Session()
   proc_info="login";
   where= Session::DEFAULT_WHERE;
   server_id = ::server_id;
-  slave_net = 0;
+  slave_net= NULL;
   command=COM_CONNECT;
   *scramble= '\0';
 
