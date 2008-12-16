@@ -158,7 +158,6 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
           char *new_table_alias, bool skip_error)
 {
   int rc= 1;
-  char name[FN_REFLEN];
   const char *new_alias, *old_alias;
   /* TODO: What should this really be set to - it doesn't
      get set anywhere before it's used? */
@@ -174,15 +173,13 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
     old_alias= ren_table->table_name;
     new_alias= new_table_name;
   }
-  build_table_filename(name, sizeof(name),
-                       new_db, new_alias, reg_ext, 0);
-  if (!access(name,F_OK))
+
+  if (ha_table_exists_in_engine(session, new_db, new_alias)
+      !=HA_ERR_NO_SUCH_TABLE)
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
     return(1);			// This can't be skipped
   }
-  build_table_filename(name, sizeof(name),
-                       ren_table->db, old_alias, reg_ext, 0);
 
   rc= mysql_rename_table(ha_resolve_by_legacy_type(session, table_type),
                                ren_table->db, old_alias,
