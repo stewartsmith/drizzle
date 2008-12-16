@@ -64,14 +64,14 @@ check: test-drizzle
 # dtr - a shortcut for executing test-run.pl
 dtr:
 	$(RM) -f mtr dtr
-	$(LN_S) test-run.pl mtr
-	$(LN_S) test-run.pl dtr
+	$(LN_S) ${top_srcdir}/tests/test-run.pl mtr
+	$(LN_S) ${top_srcdir}/tests/test-run.pl dtr
 	$(MKDIR_P) ${top_builddir}/tests/var
 
 # test-run - a shortcut for executing test-run.pl
 test-run:
 	$(RM) -f test-run
-	$(LN_S) test-run.pl test-run
+	$(LN_S) ${top_srcdir}/tests/test-run.pl test-run
 
 
 .PHONY: test \

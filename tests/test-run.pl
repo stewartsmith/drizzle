@@ -3102,6 +3102,11 @@ sub run_check_testcase ($$) {
     mtr_add_arg($args, "--record");
   }
 
+  if ( $opt_testdir )
+  {
+    mtr_add_arg($args, "--testdir=%s", $opt_testdir);
+  }
+
   my $res = mtr_run_test($exe_drizzletest,$args,
 	        "include/check-testcase.test", "", "", "");
 
@@ -3207,6 +3212,12 @@ sub run_drizzletest ($) {
     mtr_add_arg($args, "--debug=d:t:A,%s/log/drizzletest.trace",
 		$path_vardir_trace);
   }
+
+  if ( $opt_testdir )
+  {
+    mtr_add_arg($args, "--testdir=%s", $opt_testdir);
+  }
+
 
   # ----------------------------------------------------------------------
   # export DRIZZLE_TEST variable containing <path>/drizzletest <args>
