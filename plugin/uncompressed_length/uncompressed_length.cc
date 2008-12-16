@@ -15,7 +15,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_udf.h>
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_uncompressed_length : public Item_int_func
 {

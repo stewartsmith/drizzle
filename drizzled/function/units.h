@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTION_UNITS_H
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/real.h>
+#include <drizzled/function/math/real.h>
 
 class Item_func_units :public Item_real_func
 {

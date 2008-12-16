@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTION_MASTER_POS_WAIT_H
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 #include <drizzled/slave.h>
 
 class Item_master_pos_wait :public Item_int_func

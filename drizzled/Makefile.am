@@ -87,65 +87,66 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/varstring.h \
 		filesort_info.h \
 		foreign_key.h \
-		function/abs.h \
-		function/acos.h \
 		function/ascii.h \
-		function/asin.h \
-		function/atan.h \
 		function/additive_op.h \
 		function/benchmark.h \
 		function/bit.h \
 		function/bit_count.h \
 		function/bit_length.h \
-		function/ceiling.h \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
-		function/cos.h \
-		function/dec.h \
-		function/decimal_typecast.h \
-		function/divide.h \
-		function/exp.h \
 		function/field.h \
 		function/find_in_set.h \
-		function/floor.h \
 		function/found_rows.h \
 		function/func.h \
 		function/get_system_var.h \
 		function/get_user_var.h \
-		function/int.h \
-		function/integer.h \
-		function/int_divide.h \
-		function/int_val.h \
 		function/last_insert.h \
 		function/length.h \
-		function/ln.h \
 		function/locate.h \
-		function/log.h \
 		function/master_pos_wait.h \
 		function/min_max.h \
-		function/minus.h \
-		function/mod.h \
-		function/multiply.h \
-		function/neg.h \
 		function/num1.h \
 		function/numhybrid.h \
 		function/num_op.h \
-		function/ord.h \
-		function/plus.h \
-		function/pow.h \
-		function/real.h \
 		function/rollup_const.h \
-		function/round.h \
 		function/row_count.h \
 		function/set_user_var.h \
 		function/sign.h \
 		function/signed.h \
-		function/sin.h \
-		function/sqrt.h \
-		function/tan.h \
 		function/unsigned.h \
 		function/user_var_as_out_param.h \
+		function/math/abs.h \
+		function/math/acos.h \
+		function/math/asin.h \
+		function/math/atan.h \
+		function/math/ceiling.h \
+		function/math/cos.h \
+		function/math/dec.h \
+		function/math/decimal_typecast.h \
+		function/math/divide.h \
+		function/math/exp.h \
+		function/math/floor.h \
+		function/math/int_divide.h \
+		function/math/integer.h \
+		function/math/int.h \
+		function/math/int_val.h \
+		function/math/ln.h \
+		function/math/log.h \
+		function/math/minus.h \
+		function/math/mod.h \
+		function/math/multiply.h \
+		function/math/neg.h \
+		function/math/ord.h \
+		function/math/plus.h \
+		function/math/pow.h \
+		function/math/rand.h \
+		function/math/real.h \
+		function/math/round.h \
+		function/math/sin.h \
+		function/math/sqrt.h \
+		function/math/tan.h \
 		function/str/alloc_buffer.h \
 		function/str/binary.h \
 		function/str/char.h \
@@ -557,70 +558,70 @@ libfield_la_SOURCES = \
 libfunction_la_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CFLAGS}
 libfunction_la_LIBADD= libutil.la
 libfunction_la_SOURCES = \
-		function/abs.cc \
-		function/acos.cc \
 		function/ascii.cc \
-		function/asin.cc \
-		function/atan.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
 		function/bit.cc \
 		function/bit_count.cc \
 		function/char_length.cc \
 		function/check_reserved_words.cc \
-		function/ceiling.cc \
 		function/connection_id.cc \
 		function/coercibility.cc \
-		function/cos.cc \
-		function/decimal_typecast.cc \
-		function/divide.cc \
-		function/exp.cc \
 		function/get_user_var.cc \
 		function/get_variable.cc \
 		function/field.cc \
 		function/find_in_set.cc \
-		function/floor.cc \
 		function/found_rows.cc \
 		function/func.cc \
 		function/get_system_var.cc \
 		function/get_variable.cc \
-		function/int.cc \
-		function/integer.cc \
-		function/int_divide.cc \
-		function/int_val.cc \
 		function/last_insert.cc \
 		function/length.cc \
-		function/ln.cc \
 		function/locate.cc \
-		function/log.cc \
 		function/master_pos_wait.cc \
 		function/min_max.cc \
-		function/minus.cc \
-		function/mod.cc \
-		function/multiply.cc \
-		function/neg.cc \
 		function/num1.cc \
 		function/numhybrid.cc \
 		function/num_op.cc \
-		function/ord.cc \
-		function/plus.cc \
-		function/pow.cc \
-		function/rand.cc \
-		function/real.cc \
-		function/round.cc \
 		function/row_count.cc \
 		function/set_user_var.cc \
 		function/shift.cc \
 		function/sign.cc \
 		function/signed.cc \
-		function/sin.cc \
-		function/sqrt.cc \
-		function/tan.cc \
 		function/update_hash.cc \
 		function/units.cc \
 		function/unsigned.cc \
 		function/user_var_as_out_param.cc \
 		function/user_var_entry.cc \
+		function/math/abs.cc \
+		function/math/acos.cc \
+		function/math/asin.cc \
+		function/math/atan.cc \
+		function/math/ceiling.cc \
+		function/math/cos.cc \
+		function/math/decimal_typecast.cc \
+		function/math/divide.cc \
+		function/math/exp.cc \
+		function/math/floor.cc \
+		function/math/int_divide.cc \
+		function/math/integer.cc \
+		function/math/int.cc \
+		function/math/int_val.cc \
+		function/math/ln.cc \
+		function/math/log.cc \
+		function/math/minus.cc \
+		function/math/mod.cc \
+		function/math/multiply.cc \
+		function/math/neg.cc \
+		function/math/ord.cc \
+		function/math/plus.cc \
+		function/math/pow.cc \
+		function/math/rand.cc \
+		function/math/real.cc \
+		function/math/round.cc \
+		function/math/sin.cc \
+		function/math/sqrt.cc \
+		function/math/tan.cc \
 		function/str/alloc_buffer.cc \
 		function/str/binary.cc \
 		function/str/char.cc \

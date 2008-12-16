@@ -28,7 +28,7 @@
 #include <drizzled/item/int.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/decimal.h>
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 #include <drizzled/function/numhybrid.h>
 #include <drizzled/session.h>
 
