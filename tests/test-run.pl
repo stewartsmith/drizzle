@@ -612,8 +612,6 @@ sub command_line_setup () {
     $glob_mysql_test_dir= $opt_testdir;
   }
   $default_vardir= "$glob_mysql_test_dir/var";
-  print "default_vardir= $default_vardir\n";
-  print "opt_vardir= $opt_vardir\n";
 
   # In most cases, the base directory we find everything relative to,
   # is the parent directory of the "mysql-test" directory. For source
@@ -635,6 +633,10 @@ sub command_line_setup () {
   {
     # probably in a VPATH build
     $glob_builddir= "$opt_vardir/../..";
+  }
+  else
+  {
+    $glob_builddir="..";
   }
 
   # Expect mysql-bench to be located adjacent to the source tree, by default
@@ -1743,8 +1745,6 @@ sub remove_stale_vardir () {
 sub setup_vardir() {
   mtr_report("Creating Directories");
 
-  print "default_vardir= $default_vardir\n";
-  print "opt_vardir= $opt_vardir\n";
   if ( $opt_vardir eq $default_vardir )
   {
     #
@@ -1769,7 +1769,6 @@ sub setup_vardir() {
     }
   }
 
-  print "opt_vardir== $opt_vardir";
   if ( ! -d $opt_vardir )
   {
     mtr_verbose("Creating $opt_vardir");
