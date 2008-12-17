@@ -34,7 +34,6 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **table, uint32_t count,
 #define DRIZZLE_LOCK_IGNORE_FLUSH                 0x0002
 #define DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        0x0004
 #define DRIZZLE_OPEN_TEMPORARY_ONLY               0x0008
-#define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_ONLY      0x0010
 #define DRIZZLE_LOCK_PERF_SCHEMA                  0x0020
 
 void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock);
