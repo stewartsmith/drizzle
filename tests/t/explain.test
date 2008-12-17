@@ -4,7 +4,7 @@
 --disable_warnings
 drop table if exists t1;
 --enable_warnings
-create table t1 (id int not null, str char(10), unique(str));
+create table t1 (id int not null, str char(10), unique(str)) ENGINE=MYISAM;
 explain select * from t1;
 insert into t1 values (1, null),(2, null),(3, "foo"),(4, "bar");
 select * from t1 where str is null;
@@ -23,7 +23,7 @@ drop table t1;
 
 explain select 1;
 
-create table t1 (a int not null);
+create table t1 (a int not null) ENGINE=myisam;
 explain select count(*) from t1;
 insert into t1 values(1);
 explain select count(*) from t1;
@@ -34,13 +34,11 @@ drop table t1;
 #
 # Bug #3403 Wrong encoding in EXPLAIN SELECT output
 #
-set names koi8r;
-create table таб (кол0 int, кол1 int, key инд0 (кол0), key инд01 (кол0,кол1));
-insert into таб (кол0) values (1);
-insert into таб (кол0) values (2);
-explain select кол0 from таб where кол0=1;
-drop table таб;
-set names latin1;
+create table Б≤┐ (Б≤╒ int, Б≤ё int, key Б≤╒ (Б≤╒), key Б≤ё (Б≤╒,Б≤ё)) ENGINE=MYISAM;
+insert into Б≤┐ (Б≤╒) values (1);
+insert into Б≤┐ (Б≤╒) values (2);
+explain select Б≤╒ from Б≤┐ where Б≤╒=1;
+drop table Б≤┐;
 
 # End of 4.1 tests
 
