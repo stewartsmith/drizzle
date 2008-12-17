@@ -1580,7 +1580,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
     /* If the port number is > 65535 it is not a valid port
        This also helps with potential data loss casting unsigned long to a
        uint32_t. */
-    if (temp_drizzle_port > 65535)
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
     {
       put_info(_("Value supplied for port is not valid."), INFO_ERROR, 0, 0);
       return false;
