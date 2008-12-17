@@ -23,6 +23,7 @@ GENSCRIPTS =		install_test_db dtr test-run
 PRESCRIPTS =		test-run.pl stress-test.pl
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS) mtr
+DISTCLEANFILES = 	var
 noinst_PROGRAMS = 	resolve_stack_dump
 resolve_stack_dump_SOURCES = resolve_stack_dump.cc
 
