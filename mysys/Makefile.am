@@ -100,12 +100,10 @@ libmysys_la_SOURCES= \
 		my_init.cc \
 		my_lib.cc \
 		my_messnc.cc \
-		my_mkdir.cc \
 		my_open.cc \
 		my_read.cc \
 		my_redel.cc \
 		my_rename.cc \
-		my_sleep.cc \
 		my_static.cc \
 		my_symlink.cc \
 		my_symlink2.cc \

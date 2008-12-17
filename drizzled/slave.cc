@@ -1362,16 +1362,19 @@ static int32_t init_slave_thread(Session* session, SLAVE_Session_TYPE session_ty
   return(0);
 }
 
-
+/* Returns non zero on error */
 static int32_t safe_sleep(Session* session, int32_t sec, CHECK_KILLED_FUNC thread_killed,
-                      void* thread_killed_arg)
+                          void* thread_killed_arg)
 {
   int32_t nap_time;
   thr_alarm_t alarmed;
 
   thr_alarm_init(&alarmed);
-  time_t start_time= my_time(0);
-  time_t end_time= start_time+sec;
+  time_t start_time, end_time;
+
+  if ((start_time= time(0)) == (time_t)-1)
+    return -1;
+  end_time= start_time+sec;
 
   while ((nap_time= (int32_t) (end_time - start_time)) > 0)
   {
@@ -1387,7 +1390,8 @@ static int32_t safe_sleep(Session* session, int32_t sec, CHECK_KILLED_FUNC threa
 
     if ((*thread_killed)(session,thread_killed_arg))
       return(1);
-    start_time= my_time(0);
+    if ((start_time= time(0)) == (time_t)-1)
+      return -1;
   }
   return(0);
 }
@@ -1604,7 +1608,9 @@ int32_t apply_event_and_update_pos(Log_event* ev, Session* session, Relay_log_in
   session->set_time();                            // time the query
   session->lex->current_select= 0;
   if (!ev->when)
-    ev->when= my_time(0);
+    if((ev->when= time(0)) == (time_t)-1)
+      return 2;
+
   ev->session = session; // because up to this point, ev->session == 0
 
   if (skip)

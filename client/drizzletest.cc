@@ -2493,8 +2493,8 @@ static void do_file_exist(struct st_command *command)
 
 static void do_mkdir(struct st_command *command)
 {
-  int error;
   string ds_dirname;
+  int error;
   const struct command_arg mkdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to create"}
   };
@@ -2504,7 +2504,7 @@ static void do_mkdir(struct st_command *command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= my_mkdir(ds_dirname.c_str(), 0777, MYF(0)) != 0;
+  error= mkdir(ds_dirname.c_str(), (0777 & my_umask_dir)) != 0;
   handle_command_error(command, error);
   return;
 }
@@ -3015,7 +3015,7 @@ do_wait_for_slave_to_stop(struct st_command *)
     drizzle_free_result(res);
     if (done)
       break;
-    my_sleep(SLAVE_POLL_INTERVAL);
+    usleep(SLAVE_POLL_INTERVAL);
   }
   return;
 }
@@ -3218,7 +3218,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
     sleep_val= opt_sleep;
 
   if (sleep_val)
-    my_sleep((uint32_t) (sleep_val * 1000000L));
+    usleep((uint32_t) (sleep_val * 1000000L));
   command->last_argument= sleep_end;
   return 0;
 }
@@ -3609,7 +3609,7 @@ static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
       verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts,
                   opt_max_connect_retries, drizzle_errno(drizzle),
                   drizzle_error(drizzle));
-      my_sleep(connection_retry_sleep);
+      usleep(connection_retry_sleep);
     }
     else
     {
