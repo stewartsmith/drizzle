@@ -954,7 +954,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         union_option
         start_transaction_opts opt_chain opt_release
         union_opt select_derived_init option_type2
-        opt_transactional_lock_timeout
         /* opt_lock_timeout_value */
 
 %type <m_fk_option>
@@ -974,7 +973,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <lock_type>
         replace_lock_option opt_low_priority insert_lock_option load_data_lock
-        transactional_lock_mode
 
 %type <table_lock_info>
         table_lock_info
@@ -6628,24 +6626,6 @@ table_lock_info:
           $$.lock_timeout=       -1;
           $$.lock_transactional= false;
         }
-        | IN_SYM transactional_lock_mode MODE_SYM opt_transactional_lock_timeout
-        {
-          $$.lock_type=          $2;
-          $$.lock_timeout=       $4;
-          $$.lock_transactional= true;
-        }
-        ;
-
-/* Use thr_lock_type here for easier fallback to non-trans locking. */
-transactional_lock_mode:
-        SHARE_SYM       { $$= TL_READ_NO_INSERT; }
-        | EXCLUSIVE_SYM { $$= TL_WRITE_DEFAULT; }
-        ;
-
-opt_transactional_lock_timeout:
-        /* empty */     { $$= -1; }
-        | NOWAIT_SYM    { $$= 0; }
-        /* | WAIT_SYM opt_lock_timeout_value { $$= $2; } */
         ;
 
 /*
