@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <unistd.h>
 #include <drizzled/serialize/replication_event.pb.h>
 using namespace std;
 
