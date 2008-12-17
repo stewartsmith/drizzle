@@ -1072,6 +1072,7 @@ sub command_line_setup () {
 
 sub set_mtr_build_thread_ports($) {
   my $mtr_build_thread= shift;
+  $mtr_build_thread= ($mtr_build_thread % 200) - 100;
 
   if ( lc($mtr_build_thread) eq 'auto' ) {
     print "Requesting build thread... ";
@@ -1435,7 +1436,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'port'};
 
-  $ENV{MTR_BUILD_THREAD}=      $opt_mtr_build_thread;
+  $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
 
   $ENV{'EXE_MYSQL'}=          $exe_drizzle;
 

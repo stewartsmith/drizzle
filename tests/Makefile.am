@@ -33,7 +33,8 @@ LDADD=			$(top_builddir)/mysys/libmysys.la \
 TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
 		${top_srcdir}/tests/test-run.pl \
 		--vardir=${top_builddir}/tests/var \
-		--testdir=${top_srcdir}/tests
+		--testdir=${top_srcdir}/tests \
+		--mtr-build-thread=$$$$
 
 EXTRA_DIST = \
 	$(EXTRA_SCRIPTS) \
