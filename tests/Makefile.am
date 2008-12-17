@@ -15,6 +15,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 # MA 02111-1307, USA
 
+srcdir=			${top_srcdir}/tests
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	valgrind.supp $(PRESCRIPTS)
@@ -37,27 +38,27 @@ TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
 EXTRA_DIST = \
 	$(EXTRA_SCRIPTS) \
 	suite \
-	t/*.test \
-	t/*.opt \
-	extra/rpl_tests/*.test \
-	extra/binlog_tests/*.test \
-	include/*.inc \
-	include/*.sql \
-	include/*.test \
-	r/*.result \
-	r/*.require \
-	std_data/Moscow_leap \
-	std_data/Index.xml \
-	std_data/*.dat \
-	std_data/*.000001 \
-	std_data/des_key_file \
-	std_data/*.pem \
-	std_data/*.frm \
-	std_data/*.MY* \
-	std_data/*.cnf \
-	std_data/parts/part_* \
-	lib/*.pl \
-	lib/My/*.pm
+	${srcdir}/t/*.test \
+	${srcdir}/t/*.opt \
+	${srcdir}/extra/rpl_tests/*.test \
+	${srcdir}/extra/binlog_tests/*.test \
+	${srcdir}/include/*.inc \
+	${srcdir}/include/*.sql \
+	${srcdir}/include/*.test \
+	${srcdir}/r/*.result \
+	${srcdir}/r/*.require \
+	${srcdir}/std_data/Moscow_leap \
+	${srcdir}/std_data/Index.xml \
+	${srcdir}/std_data/*.dat \
+	${srcdir}/std_data/*.000001 \
+	${srcdir}/std_data/des_key_file \
+	${srcdir}/std_data/*.pem \
+	${srcdir}/std_data/*.frm \
+	${srcdir}/std_data/*.MY* \
+	${srcdir}/std_data/*.cnf \
+	${srcdir}/std_data/parts/part_* \
+	${srcdir}/lib/*.pl \
+	${srcdir}/lib/My/*.pm
 
 check: test-drizzle
 
