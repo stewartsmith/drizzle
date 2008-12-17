@@ -954,7 +954,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         union_option
         start_transaction_opts opt_chain opt_release
         union_opt select_derived_init option_type2
-        opt_transactional_lock_timeout
         /* opt_lock_timeout_value */
 
 %type <m_fk_option>
@@ -974,7 +973,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <lock_type>
         replace_lock_option opt_low_priority insert_lock_option load_data_lock
-        transactional_lock_mode
 
 %type <table_lock_info>
         table_lock_info
@@ -4924,14 +4922,14 @@ insert_lock_option:
           {
             $$= TL_WRITE_CONCURRENT_INSERT;
           }
-        | LOW_PRIORITY  { $$= TL_WRITE_LOW_PRIORITY; }
-        | DELAYED_SYM   { $$= TL_WRITE_LOW_PRIORITY; }
+        | LOW_PRIORITY  { $$= TL_WRITE_DEFAULT; }
+        | DELAYED_SYM   { $$= TL_WRITE_DEFAULT; }
         | HIGH_PRIORITY { $$= TL_WRITE; }
         ;
 
 replace_lock_option:
           opt_low_priority { $$= $1; }
-        | DELAYED_SYM { $$= TL_WRITE_LOW_PRIORITY; }
+        | DELAYED_SYM { $$= TL_WRITE_DEFAULT; }
         ;
 
 insert2:
@@ -5115,7 +5113,7 @@ insert_update_elem:
 
 opt_low_priority:
           /* empty */ { $$= TL_WRITE_DEFAULT; }
-        | LOW_PRIORITY { $$= TL_WRITE_LOW_PRIORITY; }
+        | LOW_PRIORITY { $$= TL_WRITE_DEFAULT; }
         ;
 
 /* Delete rows from a table */
@@ -5195,7 +5193,7 @@ opt_delete_options:
 
 opt_delete_option:
           QUICK        { Select->options|= OPTION_QUICK; }
-        | LOW_PRIORITY { Lex->lock_option= TL_WRITE_LOW_PRIORITY; }
+        | LOW_PRIORITY { Lex->lock_option= TL_WRITE_DEFAULT; }
         | IGNORE_SYM   { Lex->ignore= 1; }
         ;
 
@@ -5594,7 +5592,7 @@ load_data_lock:
           {
               $$= TL_WRITE_CONCURRENT_INSERT;
           }
-        | LOW_PRIORITY { $$= TL_WRITE_LOW_PRIORITY; }
+        | LOW_PRIORITY { $$= TL_WRITE_DEFAULT; }
         ;
 
 opt_duplicate:
@@ -6618,7 +6616,7 @@ table_lock_info:
         }
         | LOW_PRIORITY WRITE_SYM
         {
-          $$.lock_type=          TL_WRITE_LOW_PRIORITY;
+          $$.lock_type=          TL_WRITE_DEFAULT;
           $$.lock_timeout=       -1;
           $$.lock_transactional= false;
         }
@@ -6628,24 +6626,6 @@ table_lock_info:
           $$.lock_timeout=       -1;
           $$.lock_transactional= false;
         }
-        | IN_SYM transactional_lock_mode MODE_SYM opt_transactional_lock_timeout
-        {
-          $$.lock_type=          $2;
-          $$.lock_timeout=       $4;
-          $$.lock_transactional= true;
-        }
-        ;
-
-/* Use thr_lock_type here for easier fallback to non-trans locking. */
-transactional_lock_mode:
-        SHARE_SYM       { $$= TL_READ_NO_INSERT; }
-        | EXCLUSIVE_SYM { $$= TL_WRITE_DEFAULT; }
-        ;
-
-opt_transactional_lock_timeout:
-        /* empty */     { $$= -1; }
-        | NOWAIT_SYM    { $$= 0; }
-        /* | WAIT_SYM opt_lock_timeout_value { $$= $2; } */
         ;
 
 /*
