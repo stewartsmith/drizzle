@@ -1158,17 +1158,17 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
     Session *tmp;
     while ((tmp=it++))
     {
-      Security_context *tmp_sctx= tmp->security_ctx;
+      Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if ((tmp->vio_ok() || tmp->system_thread) && (!user || (tmp_sctx->user && !strcmp(tmp_sctx->user, user))))
+      if ((tmp->vio_ok() || tmp->system_thread) && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
         thread_info *session_info= new thread_info;
 
         session_info->thread_id=tmp->thread_id;
-        session_info->user= session->strdup(tmp_sctx->user ? tmp_sctx->user :
+        session_info->user= session->strdup(tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() :
                                     (tmp->system_thread ?
                                      "system user" : "unauthenticated user"));
-        session_info->host= session->strdup(tmp_sctx->ip);
+        session_info->host= session->strdup(tmp_sctx->ip.c_str());
         if ((session_info->db=tmp->db))             // Safe test
           session_info->db=session->strdup(session_info->db);
         session_info->command=(int) tmp->command;
@@ -1252,7 +1252,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
 
     while ((tmp= it++))
     {
-      Security_context *tmp_sctx= tmp->security_ctx;
+      Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
       const char *val;
 
@@ -1263,11 +1263,11 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       /* ID */
       table->field[0]->store((int64_t) tmp->thread_id, true);
       /* USER */
-      val= tmp_sctx->user ? tmp_sctx->user :
+      val= tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() :
             (tmp->system_thread ? "system user" : "unauthenticated user");
       table->field[1]->store(val, strlen(val), cs);
       /* HOST */
-      table->field[2]->store(tmp_sctx->ip, strlen(tmp_sctx->ip), cs);
+      table->field[2]->store(tmp_sctx->ip.c_str(), strlen(tmp_sctx->ip.c_str()), cs);
       /* DB */
       if (tmp->db)
       {
@@ -1512,7 +1512,7 @@ static bool show_status_array(Session *session, const char *wild,
                               const char *prefix, Table *table,
                               bool ucase_names)
 {
-  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, long);
+  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
   char * const buff= (char *) &buff_data;
   char *prefix_end;
   /* the variable name should not be longer than 64 characters */

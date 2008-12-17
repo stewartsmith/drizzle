@@ -286,7 +286,6 @@ size_t my_thread_stack_size= 65536;
 handlerton *heap_hton;
 handlerton *myisam_hton;
 
-bool opt_readonly;
 bool use_temp_pool;
 bool relay_log_purge;
 char* opt_secure_file_priv= 0;
@@ -628,9 +627,9 @@ static void close_connections(void)
       if (global_system_variables.log_warnings)
         sql_print_warning(ER(ER_FORCING_CLOSE),my_progname,
                           tmp->thread_id,
-                          (tmp->main_security_ctx.user ?
-                           tmp->main_security_ctx.user : ""));
-      close_connection(tmp,0,0);
+                          (tmp->security_ctx.user.c_str() ?
+                           tmp->security_ctx.user.c_str() : ""));
+      tmp->close_connection(0,0);
     }
     (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
@@ -641,8 +640,6 @@ static void close_connections(void)
     (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
-
-  return;;
 }
 
 
@@ -2528,7 +2525,7 @@ static void create_new_thread(Session *session)
   {
     pthread_mutex_unlock(&LOCK_connection_count);
 
-    close_connection(session, ER_CON_COUNT_ERROR, 1);
+    session->close_connection(ER_CON_COUNT_ERROR, 1);
     delete session;
     return;;
   }
@@ -2554,8 +2551,6 @@ static void create_new_thread(Session *session)
   thread_count++;
 
   thread_scheduler.add_connection(session);
-
-  return;;
 }
 
 
@@ -2630,17 +2625,17 @@ void handle_connections_sockets()
       new_sock= accept(sock, (struct sockaddr *)(&cAddr),
                        &length);
       if (new_sock != -1 || (errno != EINTR && errno != EAGAIN))
-	break;
+        break;
     }
 
 
     if (new_sock == -1)
     {
       if ((error_count++ & 255) == 0)		// This can happen often
-	sql_perror("Error in accept");
+        sql_perror("Error in accept");
       MAYBE_BROKEN_SYSCALL;
       if (errno == ENFILE || errno == EMFILE)
-	sleep(1);				// Give other threads some time
+        sleep(1);				// Give other threads some time
       continue;
     }
 
@@ -2703,7 +2698,7 @@ enum options_drizzled
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_SKIP_PRIOR,
   OPT_STANDALONE,
-  OPT_CONSOLE,                 OPT_LOW_PRIORITY_UPDATES,
+  OPT_CONSOLE,
   OPT_SHORT_LOG_FORMAT,
   OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          OPT_INIT_FILE,
@@ -2764,7 +2759,7 @@ enum options_drizzled
   OPT_RECORD_RND_BUFFER, OPT_DIV_PRECINCREMENT, OPT_RELAY_LOG_SPACE_LIMIT,
   OPT_RELAY_LOG_PURGE,
   OPT_SLAVE_NET_TIMEOUT, OPT_SLAVE_COMPRESSED_PROTOCOL, OPT_SLOW_LAUNCH_TIME,
-  OPT_SLAVE_TRANS_RETRIES, OPT_READONLY, OPT_DEBUGGING,
+  OPT_SLAVE_TRANS_RETRIES, OPT_DEBUGGING,
   OPT_SORT_BUFFER, OPT_TABLE_OPEN_CACHE, OPT_TABLE_DEF_CACHE,
   OPT_THREAD_CONCURRENCY, OPT_THREAD_CACHE_SIZE,
   OPT_TMP_TABLE_SIZE, OPT_THREAD_STACK,
@@ -3016,11 +3011,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG, 1, 0, 0,
    0, 0, 0},
-  {"low-priority-updates", OPT_LOW_PRIORITY_UPDATES,
-   N_("INSERT/DELETE/UPDATE has lower priority than selects."),
-   (char**) &global_system_variables.low_priority_updates,
-   (char**) &max_system_variables.low_priority_updates,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"master-info-file", OPT_MASTER_INFO_FILE,
    N_("The location and name of the file that remembers the master and "
       "where the I/O replication thread is in the master's binlogs."),
@@ -3512,12 +3502,6 @@ struct my_option my_long_options[] =
     (char**) &max_system_variables.read_buff_size,0, GET_UINT, REQUIRED_ARG,
     128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
     0},
-  {"read_only", OPT_READONLY,
-   N_("Make all non-temporary tables read-only, with the exception for "
-      "replication (slave) threads and users with the SUPER privilege"),
-   (char**) &opt_readonly,
-   (char**) &opt_readonly,
-   0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"read_rnd_buffer_size", OPT_RECORD_RND_BUFFER,
    N_("When reading rows in sorted order after a sort, the rows are read "
       "through this buffer to avoid a disk seeks. If not set, then it's set "
@@ -4129,10 +4113,6 @@ drizzled_get_one_option(int optid,
   case OPT_CONSOLE:
     if (opt_console)
       opt_error_log= 0;			// Force logs to stdout
-    break;
-  case OPT_LOW_PRIORITY_UPDATES:
-    thr_upgraded_concurrent_insert_lock= TL_WRITE_LOW_PRIORITY;
-    global_system_variables.low_priority_updates=1;
     break;
   case OPT_SERVER_ID:
     server_id_supplied = 1;

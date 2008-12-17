@@ -702,17 +702,6 @@ int ha_commit_trans(Session *session, bool all)
       return(1);
     }
 
-    if (   is_real_trans
-        && opt_readonly
-        && ! session->slave_thread
-       )
-    {
-      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
-      ha_rollback_trans(session, all);
-      error= 1;
-      goto end;
-    }
-
     must_2pc= ha_check_and_coalesce_trx_read_only(session, ha_info, all);
 
     if (!trans->no_2pc && must_2pc)
@@ -3038,6 +3027,20 @@ int ha_table_exists_in_engine(Session* session, const char* db, const char* name
   st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE};
   plugin_foreach(session, table_exists_in_engine_handlerton,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &args);
+
+  if(args.err==HA_ERR_NO_SUCH_TABLE)
+  {
+    /* Default way of knowing if a table exists. (checking .frm exists) */
+
+    char path[FN_REFLEN];
+    build_table_filename(path, sizeof(path),
+                         db, name, ".frm", 0);
+    if (!access(path, F_OK))
+      args.err= HA_ERR_TABLE_EXIST;
+    else
+      args.err= HA_ERR_NO_SUCH_TABLE;
+  }
+
   return(args.err);
 }
 

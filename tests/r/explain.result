@@ -1,5 +1,5 @@
 drop table if exists t1;
-create table t1 (id int not null, str char(10), unique(str));
+create table t1 (id int not null, str char(10), unique(str)) ENGINE=MYISAM;
 explain select * from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	0	const row not found
@@ -13,16 +13,16 @@ id	str
 3	foo
 explain select * from t1 where str is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	str	str	11	const	1	Using index condition
+1	SIMPLE	t1	ref	str	str	43	const	1	Using where
 explain select * from t1 where str="foo";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	const	str	str	11	const	1	
+1	SIMPLE	t1	const	str	str	43	const	1	
 explain select * from t1 ignore key (str) where str="foo";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	4	Using where
 explain select * from t1 use key (str,str) where str="foo";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	const	str	str	11	const	1	
+1	SIMPLE	t1	const	str	str	43	const	1	
 explain select * from t1 use key (str,str,foo) where str="foo";
 ERROR 42000: Key 'foo' doesn't exist in table 't1'
 explain select * from t1 ignore key (str,str,foo) where str="foo";
@@ -31,7 +31,7 @@ drop table t1;
 explain select 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
-create table t1 (a int not null);
+create table t1 (a int not null) ENGINE=myisam;
 explain select count(*) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
@@ -44,15 +44,13 @@ explain select count(*) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
 drop table t1;
-set names koi8r;
-create table таб (кол0 int, кол1 int, key инд0 (кол0), key инд01 (кол0,кол1));
-insert into таб (кол0) values (1);
-insert into таб (кол0) values (2);
-explain select кол0 from таб where кол0=1;
+create table Б≤┐ (Б≤╒ int, Б≤ё int, key Б≤╒ (Б≤╒), key Б≤ё (Б≤╒,Б≤ё)) ENGINE=MYISAM;
+insert into Б≤┐ (Б≤╒) values (1);
+insert into Б≤┐ (Б≤╒) values (2);
+explain select Б≤╒ from Б≤┐ where Б≤╒=1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	таб	ref	инд0,инд01	инд0	5	const	1	Using index
-drop table таб;
-set names latin1;
+1	SIMPLE	Б≤┐	ref	Б≤╒,Б≤ё	Б≤╒	5	const	1	Using index
+drop table Б≤┐;
 select 3 into @v1;
 explain select 3 into @v1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
@@ -80,16 +78,16 @@ DROP TABLE t1;
 End of 5.0 tests.
 explain select 1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					id	8	3	1	N	32929	0	63
-def					select_type	253	19	6	N	1	31	8
-def					table	253	64	0	Y	0	31	8
-def					type	253	10	0	Y	0	31	8
-def					possible_keys	253	4096	0	Y	0	31	8
-def					key	253	64	0	Y	0	31	8
-def					key_len	253	320	0	Y	0	31	8
-def					ref	253	1024	0	Y	0	31	8
-def					rows	8	10	0	Y	32928	0	63
-def					Extra	253	255	14	N	1	31	8
+def					id	5	3	1	N	32897	0	63
+def					select_type	9	76	6	N	1	31	45
+def					table	9	256	0	Y	0	31	45
+def					type	9	40	0	Y	0	31	45
+def					possible_keys	9	16384	0	Y	0	31	45
+def					key	9	256	0	Y	0	31	45
+def					key_len	9	1280	0	Y	0	31	45
+def					ref	9	4096	0	Y	0	31	45
+def					rows	5	10	0	Y	32896	0	63
+def					Extra	9	1020	14	N	1	31	45
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 End of 5.2 tests.
