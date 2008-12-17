@@ -676,9 +676,7 @@ void Session::init(void)
 
   transaction.all.modified_non_trans_table= transaction.stmt.modified_non_trans_table= false;
   open_options=ha_open_options;
-  update_lock_default= (variables.low_priority_updates ?
-			TL_WRITE_LOW_PRIORITY :
-			TL_WRITE);
+  update_lock_default= TL_WRITE;
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
   warn_list.empty();
   memset(warn_count, 0, sizeof(warn_count));

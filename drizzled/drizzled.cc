@@ -2690,7 +2690,7 @@ enum options_drizzled
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_SKIP_PRIOR,
   OPT_STANDALONE,
-  OPT_CONSOLE,                 OPT_LOW_PRIORITY_UPDATES,
+  OPT_CONSOLE,
   OPT_SHORT_LOG_FORMAT,
   OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          OPT_INIT_FILE,
@@ -3003,11 +3003,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG, 1, 0, 0,
    0, 0, 0},
-  {"low-priority-updates", OPT_LOW_PRIORITY_UPDATES,
-   N_("INSERT/DELETE/UPDATE has lower priority than selects."),
-   (char**) &global_system_variables.low_priority_updates,
-   (char**) &max_system_variables.low_priority_updates,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"master-info-file", OPT_MASTER_INFO_FILE,
    N_("The location and name of the file that remembers the master and "
       "where the I/O replication thread is in the master's binlogs."),
@@ -4116,10 +4111,6 @@ drizzled_get_one_option(int optid,
   case OPT_CONSOLE:
     if (opt_console)
       opt_error_log= 0;			// Force logs to stdout
-    break;
-  case OPT_LOW_PRIORITY_UPDATES:
-    thr_upgraded_concurrent_insert_lock= TL_WRITE_LOW_PRIORITY;
-    global_system_variables.low_priority_updates=1;
     break;
   case OPT_SERVER_ID:
     server_id_supplied = 1;
