@@ -1272,7 +1272,12 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
 
   segfaulted = 1;
 
-  curr_time= my_time(0);
+  if((curr_time= time(0)) == (time_t)-1)
+  {
+    fprintf(stderr, "Fetal: time() call failed\n");
+    exit(1);
+  }
+
   localtime_r(&curr_time, &tm);
 
   fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got "
@@ -1830,14 +1835,18 @@ SHOW_VAR com_status_vars[]= {
 };
 
 static int init_common_variables(const char *conf_file_name, int argc,
-				 char **argv, const char **groups)
+                                 char **argv, const char **groups)
 {
+  time_t current;
   umask(((~my_umask) & 0666));
   my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
   tzset();			// Set tzname
 
+  if ((current= time(0)) == (time_t)-1)
+    return 1;
+
   max_system_variables.pseudo_thread_id= UINT32_MAX;
-  server_start_time= flush_status_time= my_time(0);
+  server_start_time= flush_status_time= current;
 
   if (init_thread_environment())
     return 1;
