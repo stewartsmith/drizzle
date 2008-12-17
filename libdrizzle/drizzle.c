@@ -295,7 +295,7 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
   if (!net->vio)
   {
     drizzle_set_extended_error(drizzle, CR_CONN_HOST_ERROR, sqlstate_get_unknown(),
-                               ER(CR_CONN_HOST_ERROR), host, errno);
+                               ER(CR_CONN_HOST_ERROR), host, port, errno);
     goto error;
   }
 

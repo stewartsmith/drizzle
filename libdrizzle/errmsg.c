@@ -27,7 +27,7 @@ const char *client_errors[]=
   N_("Unknown Drizzle error"),
   N_("Can't create UNIX socket (%d)"),
   N_("Can't connect to local Drizzle server through socket '%-.100s' (%d)"),
-  N_("Can't connect to Drizzle server on '%-.100s' (%d)"),
+  N_("Can't connect to Drizzle server on '%-.100s:%lu' (%d)"),
   N_("Can't create TCP/IP socket (%d)"),
   N_("Unknown Drizzle server host '%-.100s' (%d)"),
   N_("Drizzle server has gone away"),
