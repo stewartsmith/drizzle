@@ -702,17 +702,6 @@ int ha_commit_trans(Session *session, bool all)
       return(1);
     }
 
-    if (   is_real_trans
-        && opt_readonly
-        && ! session->slave_thread
-       )
-    {
-      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
-      ha_rollback_trans(session, all);
-      error= 1;
-      goto end;
-    }
-
     must_2pc= ha_check_and_coalesce_trx_read_only(session, ha_info, all);
 
     if (!trans->no_2pc && must_2pc)

@@ -108,7 +108,6 @@ static void print_lock_error(int error, const char *);
     count                       The number of tables to lock.
     flags                       Options:
       DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK      Ignore a global read lock
-      DRIZZLE_LOCK_IGNORE_GLOBAL_READ_ONLY      Ignore SET GLOBAL READ_ONLY
       DRIZZLE_LOCK_IGNORE_FLUSH                 Ignore a flush tables.
       DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        Instead of reopening altered
                                               or dropped tables by itself,
@@ -200,20 +199,6 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
         reset_lock_data_and_free(&sql_lock);
 	goto retry;
       }
-    }
-
-    if (!(flags & DRIZZLE_LOCK_IGNORE_GLOBAL_READ_ONLY) &&
-        write_lock_used &&
-        opt_readonly &&
-        !session->slave_thread)
-    {
-      /*
-	Someone has issued SET GLOBAL READ_ONLY=1 and we want a write lock.
-        We do not wait for READ_ONLY=0, and fail.
-      */
-      reset_lock_data_and_free(&sql_lock);
-      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
-      break;
     }
 
     session->set_proc_info("System lock");

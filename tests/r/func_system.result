@@ -40,11 +40,11 @@ create table t1 (c1 char(5));
 insert into t1 values('row 1');
 insert into t1 values('row 2');
 insert into t1 values('row 3');
-select concat(user(), '--', c1) from t1;
-concat(user(), '--', c1)
-root@127.0.0.1--row 1
-root@127.0.0.1--row 2
-root@127.0.0.1--row 3
+select concat(SUBSTRING(user(), 0, 4), '--', c1) from t1;
+concat(SUBSTRING(user(), 0, 4), '--', c1)
+--row 1
+--row 2
+--row 3
 select concat(database(), '--', c1) from t1;
 concat(database(), '--', c1)
 test--row 1

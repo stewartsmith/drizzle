@@ -108,7 +108,6 @@ static bool set_option_bit(Session *session, set_var *var);
 static bool set_option_autocommit(Session *session, set_var *var);
 static int  check_log_update(Session *session, set_var *var);
 static int  check_pseudo_thread_id(Session *session, set_var *var);
-static void fix_low_priority_updates(Session *session, enum_var_type type);
 static int check_tx_isolation(Session *session, set_var *var);
 static void fix_tx_isolation(Session *session, enum_var_type type);
 static int check_completion_type(Session *session, set_var *var);
@@ -208,14 +207,6 @@ static sys_var_key_cache_long  sys_key_cache_age_threshold(&vars, "key_cache_age
                                                                     param_age_threshold));
 static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
                                          &opt_local_infile);
-static sys_var_session_bool	sys_low_priority_updates(&vars, "low_priority_updates",
-                                                     &SV::low_priority_updates,
-                                                     fix_low_priority_updates);
-#ifndef TO_BE_DELETED	/* Alias for the low_priority_updates */
-static sys_var_session_bool	sys_sql_low_priority_updates(&vars, "sql_low_priority_updates",
-                                                         &SV::low_priority_updates,
-                                                         fix_low_priority_updates);
-#endif
 static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
                                                        &SV::max_allowed_packet);
 static sys_var_long_ptr	sys_max_binlog_cache_size(&vars, "max_binlog_cache_size",
@@ -299,7 +290,6 @@ static sys_var_session_uint64_t sys_preload_buff_size(&vars, "preload_buffer_siz
                                                       &SV::preload_buff_size);
 static sys_var_session_uint32_t sys_read_buff_size(&vars, "read_buffer_size",
                                                    &SV::read_buff_size);
-static sys_var_opt_readonly	sys_readonly(&vars, "read_only", &opt_readonly);
 static sys_var_session_uint32_t	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_size",
                                                        &SV::read_rnd_buff_size);
 static sys_var_session_uint32_t	sys_div_precincrement(&vars, "div_precision_increment",
@@ -601,23 +591,6 @@ static bool sys_update_init_slave(Session *, set_var *var)
 static void sys_default_init_slave(Session *, enum_var_type)
 {
   update_sys_var_str(&sys_init_slave, &LOCK_sys_init_slave, 0);
-}
-
-
-/**
-  If one sets the LOW_PRIORIY UPDATES flag, we also must change the
-  used lock type.
-*/
-
-static void fix_low_priority_updates(Session *session, enum_var_type type)
-{
-  if (type == OPT_GLOBAL)
-    thr_upgraded_concurrent_insert_lock=
-      (global_system_variables.low_priority_updates ?
-       TL_WRITE_LOW_PRIORITY : TL_WRITE);
-  else
-    session->update_lock_default= (session->variables.low_priority_updates ?
-			       TL_WRITE_LOW_PRIORITY : TL_WRITE);
 }
 
 
@@ -3031,68 +3004,6 @@ bool process_key_caches(process_key_cache_t func)
     func(element->name.c_str(), key_cache);
   }
   return 0;
-}
-
-
-bool sys_var_opt_readonly::update(Session *session, set_var *var)
-{
-  bool result;
-
-  /* Prevent self dead-lock */
-  if (session->locked_tables || session->active_transaction())
-  {
-    my_error(ER_LOCK_OR_ACTIVE_TRANSACTION, MYF(0));
-    return(true);
-  }
-
-  if (session->global_read_lock)
-  {
-    /*
-      This connection already holds the global read lock.
-      This can be the case with:
-      - FLUSH TABLES WITH READ LOCK
-      - SET GLOBAL READ_ONLY = 1
-    */
-    result= sys_var_bool_ptr::update(session, var);
-    return(result);
-  }
-
-  /*
-    Perform a 'FLUSH TABLES WITH READ LOCK'.
-    This is a 3 step process:
-    - [1] lock_global_read_lock()
-    - [2] close_cached_tables()
-    - [3] make_global_read_lock_block_commit()
-    [1] prevents new connections from obtaining tables locked for write.
-    [2] waits until all existing connections close their tables.
-    [3] prevents transactions from being committed.
-  */
-
-  if (lock_global_read_lock(session))
-    return(true);
-
-  /*
-    This call will be blocked by any connection holding a READ or WRITE lock.
-    Ideally, we want to wait only for pending WRITE locks, but since:
-    con 1> LOCK TABLE T FOR READ;
-    con 2> LOCK TABLE T FOR WRITE; (blocked by con 1)
-    con 3> SET GLOBAL READ ONLY=1; (blocked by con 2)
-    can cause to wait on a read lock, it's required for the client application
-    to unlock everything, and acceptable for the server to wait on all locks.
-  */
-  if ((result= close_cached_tables(session, NULL, false, true, true)) == true)
-    goto end_with_read_lock;
-
-  if ((result= make_global_read_lock_block_commit(session)) == true)
-    goto end_with_read_lock;
-
-  /* Change the opt_readonly system variable, safe because the lock is held */
-  result= sys_var_bool_ptr::update(session, var);
-
-end_with_read_lock:
-  /* Release the lock */
-  unlock_global_read_lock(session);
-  return(result);
 }
 
 /****************************************************************************
