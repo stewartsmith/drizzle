@@ -286,7 +286,6 @@ size_t my_thread_stack_size= 65536;
 handlerton *heap_hton;
 handlerton *myisam_hton;
 
-bool opt_readonly;
 bool use_temp_pool;
 bool relay_log_purge;
 char* opt_secure_file_priv= 0;
@@ -2751,7 +2750,7 @@ enum options_drizzled
   OPT_RECORD_RND_BUFFER, OPT_DIV_PRECINCREMENT, OPT_RELAY_LOG_SPACE_LIMIT,
   OPT_RELAY_LOG_PURGE,
   OPT_SLAVE_NET_TIMEOUT, OPT_SLAVE_COMPRESSED_PROTOCOL, OPT_SLOW_LAUNCH_TIME,
-  OPT_SLAVE_TRANS_RETRIES, OPT_READONLY, OPT_DEBUGGING,
+  OPT_SLAVE_TRANS_RETRIES, OPT_DEBUGGING,
   OPT_SORT_BUFFER, OPT_TABLE_OPEN_CACHE, OPT_TABLE_DEF_CACHE,
   OPT_THREAD_CONCURRENCY, OPT_THREAD_CACHE_SIZE,
   OPT_TMP_TABLE_SIZE, OPT_THREAD_STACK,
@@ -3494,12 +3493,6 @@ struct my_option my_long_options[] =
     (char**) &max_system_variables.read_buff_size,0, GET_UINT, REQUIRED_ARG,
     128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
     0},
-  {"read_only", OPT_READONLY,
-   N_("Make all non-temporary tables read-only, with the exception for "
-      "replication (slave) threads and users with the SUPER privilege"),
-   (char**) &opt_readonly,
-   (char**) &opt_readonly,
-   0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"read_rnd_buffer_size", OPT_RECORD_RND_BUFFER,
    N_("When reading rows in sorted order after a sort, the rows are read "
       "through this buffer to avoid a disk seeks. If not set, then it's set "
