@@ -33,21 +33,13 @@ a
 SELECT * FROM t1 where (1 AND a) IS NULL;
 a
 NULL
-set sql_mode='high_not_precedence';
-select * from t1 where not a between 2 and 3;
-a
-set sql_mode=default;
-select * from t1 where not a between 2 and 3;
-a
-0
-1
 select a, a is false, a is true, a is unknown from t1;
-a	a is false	a is true	a is unknown
+a	a is false	a is true	a is unknown 
 0	1	0	0
 1	0	1	0
 NULL	0	0	1
 select a, a is not false, a is not true, a is not unknown from t1;
-a	a is not false	a is not true	a is not unknown
+a	a is not false	a is not true	a is not unknown 
 0	0	1	1
 1	1	0	1
 NULL	1	1	0
