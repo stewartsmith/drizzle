@@ -1011,12 +1011,11 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
         table_list= table_list->top_table();
         view= test(0);
       }
-      {
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_NO_DEFAULT_FOR_FIELD,
-                            ER(ER_NO_DEFAULT_FOR_FIELD),
-                            (*field)->field_name);
-      }
+      /*
+       * Per the SQL standard, inserting NULL into a NOT NULL
+       * field requires an error to be thrown.
+       */
+      my_error(ER_BAD_NULL_ERROR, MYF(0), (*field)->field_name);
       err= 1;
     }
   }

@@ -316,7 +316,15 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
     return(true);				// Can't allocate buffers
   }
 
-  session->count_cuted_fields= CHECK_FIELD_WARN;		/* calc cuted fields */
+  /*
+   * Per the SQL standard, inserting NULL into a NOT NULL
+   * field requires an error to be thrown.
+   *
+   * @NOTE
+   *
+   * NULL check and handling occurs in field_conv.cc
+   */
+  session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
   session->cuted_fields=0L;
   /* Skip lines if there is a line terminator */
   if (ex->line_term->length())
