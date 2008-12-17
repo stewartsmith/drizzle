@@ -38,7 +38,6 @@
 #include CMATH_H
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
 #include <sys/ioctl.h>
@@ -148,42 +147,44 @@ enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
 typedef enum enum_info_type INFO_TYPE;
 
 static DRIZZLE drizzle;      /* The connection */
-static bool ignore_errors=0,quick=0,
-  connected=0,opt_raw_data=0,unbuffered=0,output_tables=0,
-  opt_rehash=1,skip_updates=0,safe_updates=0,one_database=0,
-  opt_compress=0, using_opt_local_infile=0,
-  vertical=0, line_numbers=1, column_names=1,
-  opt_nopager=1, opt_outfile=0, named_cmds= 0,
-  tty_password= 0, opt_nobeep=0, opt_reconnect=1,
-  default_charset_used= 0, opt_secure_auth= 0,
-  default_pager_set= 0, opt_sigint_ignore= 0,
-  auto_vertical_output= 0,
-  show_warnings= 0, executing_query= 0, interrupted_query= 0;
+static bool ignore_errors= false, quick= false,
+  connected= false, opt_raw_data= false, unbuffered= false,
+  output_tables= false, opt_rehash= true, skip_updates= false,
+  safe_updates= false, one_database= false,
+  opt_compress= false, using_opt_local_infile= false,
+  vertical= false, line_numbers= true, column_names= true,
+  opt_nopager= true, opt_outfile= false, named_cmds= false,
+  tty_password= false, opt_nobeep= false, opt_reconnect= true,
+  default_charset_used= false, opt_secure_auth= false,
+  default_pager_set= false, opt_sigint_ignore= false,
+  auto_vertical_output= false,
+  show_warnings= false, executing_query= false, interrupted_query= false;
 static uint32_t  show_progress_size= 0;
 static bool debug_info_flag, debug_check_flag;
 static bool column_types_flag;
-static bool preserve_comments= 0;
-static uint32_t opt_max_allowed_packet, opt_net_buffer_length;
-static int verbose=0,opt_silent=0,opt_drizzle_port=0, opt_local_infile=0;
+static bool preserve_comments= false;
+static uint32_t opt_max_allowed_packet, opt_net_buffer_length,
+  opt_drizzle_port= 0;
+static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
 static uint my_end_arg;
-static char * opt_drizzle_unix_port=0;
-static int connect_flag=CLIENT_INTERACTIVE;
-static char *current_host,*current_db,*current_user=0,*opt_password=0,
-  *delimiter_str= 0,* current_prompt= 0;
+static char * opt_drizzle_unix_port= NULL;
+static int connect_flag= CLIENT_INTERACTIVE;
+static char *current_host, *current_db, *current_user= NULL,
+  *opt_password= NULL, *delimiter_str= NULL, *current_prompt= NULL;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
 static string *processed_prompt= NULL;
 static char *default_prompt= NULL;
-static char *full_username=0,*part_username=0;
+static char *full_username= NULL,*part_username= NULL;
 static STATUS status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
 static uint32_t opt_connect_timeout= 0;
 static char drizzle_charsets_dir[FN_REFLEN+1];
 // TODO: Need to i18n these
-static const char *day_names[]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-static const char *month_names[]={"Jan","Feb","Mar","Apr","May","Jun","Jul",
+static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
                                   "Aug","Sep","Oct","Nov","Dec"};
 static char default_pager[FN_REFLEN];
 static char pager[FN_REFLEN], outfile[FN_REFLEN];
@@ -1364,13 +1365,12 @@ static struct my_option my_long_options[] =
   {"no-pager", OPT_NOPAGER,
    N_("Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"password", 'p',
+  {"password", 'P',
    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, ")
+  {"port", 'p', N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, ")
    N_("built-in default") " (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   (char**) &opt_drizzle_port,
-   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,  0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"prompt", OPT_PROMPT, N_("Set the drizzle prompt to this value."),
    (char**) &current_prompt, (char**) &current_prompt, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -1474,6 +1474,9 @@ static void usage(int version)
 extern "C" bool
 get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch(optid) {
   case OPT_CHARSETS_DIR:
     strncpy(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
@@ -1498,14 +1501,14 @@ get_one_option(int optid, const struct my_option *, char *argument)
       {
         put_info(_("DELIMITER cannot contain a backslash character"),
                  INFO_ERROR,0,0);
-        return 0;
+        return false;
       }
     }
     delimiter_length= (uint)strlen(delimiter);
     delimiter_str= delimiter;
     break;
   case OPT_LOCAL_INFILE:
-    using_opt_local_infile=1;
+    using_opt_local_infile= 1;
     break;
   case OPT_TEE:
     if (argument == disabled_my_option)
@@ -1567,20 +1570,52 @@ get_one_option(int optid, const struct my_option *, char *argument)
       one_database= skip_updates= 1;
     break;
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      put_info(_("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead."), INFO_ERROR, 0, 0);
+      return false;
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      put_info(_("Value supplied for port is not valid."), INFO_ERROR, 0, 0);
+      return false;
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
+    /* Don't require password */
     if (argument == disabled_my_option)
-      argument= (char*) "";      // Don't require password
+    {
+      argument= (char*) "";
+    }
     if (argument)
     {
       char *start= argument;
       free(opt_password);
       opt_password= strdup(argument);
-      while (*argument) *argument++= 'x';        // Destroy argument
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-        start[1]=0 ;
+      {
+        start[1]= 0;
+      }
       tty_password= 0;
     }
     else
+    {
       tty_password= 1;
+    }
     break;
   case 's':
     if (argument == disabled_my_option)

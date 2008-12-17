@@ -14,10 +14,10 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys_priv.h"
-#include <my_dir.h>
+#include "my_dir.h"
 #include "mysys_err.h"
+
 #include <errno.h>
-#include <my_sys.h>
 	/*
 	** Create a new file
 	** Arguments:
@@ -29,7 +29,7 @@
 
 
 File my_create(const char *FileName, int CreateFlags, int access_flags,
-	       myf MyFlags)
+               myf MyFlags)
 {
   int fd, rc;
 

@@ -1,7 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "table.pb.h"
+#include <drizzled/serialize/table.pb.h>
+
 using namespace std;
 
 /*

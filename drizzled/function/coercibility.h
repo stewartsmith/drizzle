@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTION_COERCIBILITY_H
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_coercibility :public Item_int_func
 {

@@ -22,7 +22,11 @@
 
 #include <drizzled/handler.h>
 #include <mysys/thr_lock.h>
-#include <heap.h>
+
+typedef struct st_heap_info HP_INFO;
+typedef struct st_heap_share HEAP_SHARE;
+typedef unsigned char *HEAP_PTR;
+
 
 class ha_heap: public handler
 {
@@ -105,10 +109,7 @@ public:
 
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
-  int cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
-  {
-    return memcmp(ref1, ref2, sizeof(HEAP_PTR));
-  }
+  int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
   bool check_if_incompatible_data(HA_CREATE_INFO *info, uint32_t table_changes);
 private:
   void update_key_stats();

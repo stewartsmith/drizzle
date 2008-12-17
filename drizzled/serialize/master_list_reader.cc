@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "master_list.pb.h"
+#include <drizzled/serialize/master_list.pb.h>
 using namespace std;
 
 /*

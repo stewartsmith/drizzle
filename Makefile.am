@@ -14,6 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 ACLOCAL_AMFLAGS = -I m4
+CONFIGURE_DEPENDENCIES= ${drizzle_plugin_files}
 
 # Process this file with automake to create Makefile.in
 if BUILD_GETTEXT
@@ -35,6 +36,7 @@ SUBDIRS = ${po} . \
 
 EXTRA_DIST = config/config.rpath
 DISTCLEANFILES = ac_available_languages_fragment
+MAINTAINERCLEANFILES = autom4te.cache
 
 # Create empty datadir 
 install-data-local:
@@ -47,8 +49,6 @@ install-data-local:
 		fi \
 	fi
 
-distclean-local:
-	@RM@ -r -f autom4te.cache
 
 .PHONY: test \
     test-force \
