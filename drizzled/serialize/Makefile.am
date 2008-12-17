@@ -20,7 +20,7 @@ LDADD = libserialize.la ${PROTOBUF_LIBS} ${UUID_LIBS}
 AM_CPPFLAGS = ${PROTOBUF_CFLAGS} ${GLOBAL_CPPFLAGS}
 libserialize_la_CXXFLAGS =
 
-TESTS_ENVIRONMENT = sh
+TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
 TESTS = check_length.sh
 
 %.pb.h %.pb.cc : %.proto
