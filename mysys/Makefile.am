@@ -69,10 +69,9 @@ libmysys_la_SOURCES = my_init.cc mf_getdate.cc \
 			my_delete.cc my_rename.cc my_redel.cc \
 			my_static.cc \
 			my_time.cc \
-			my_sync.cc my_getopt.cc my_mkdir.cc \
+			my_sync.cc my_getopt.cc \
 			default_modify.cc default.cc \
                         checksum.cc \
-			my_sleep.cc \
 			charset.cc charset-def.cc my_bitmap.cc my_bit.cc \
 			sha1.cc \
 			my_access.cc base64.cc \

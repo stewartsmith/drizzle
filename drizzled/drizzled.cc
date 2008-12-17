@@ -881,7 +881,7 @@ static void wait_for_signal_thread_to_end()
   {
     if (pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL) != ESRCH)
       break;
-    my_sleep(100);				// Give it time to die
+    usleep(100);				// Give it time to die
   }
 }
 

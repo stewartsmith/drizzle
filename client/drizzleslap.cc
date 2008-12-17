@@ -2605,7 +2605,7 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
     return;
 
   if (opt_delayed_start)
-    my_sleep(random()%opt_delayed_start);
+    usleep(random()%opt_delayed_start);
 
   drizzle_create(drizzle);
 
@@ -2626,7 +2626,7 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
       connect_error= 0;
       break;
     }
-    my_sleep(connection_retry_sleep);
+    usleep(connection_retry_sleep);
   }
   if (connect_error)
   {

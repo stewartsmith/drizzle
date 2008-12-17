@@ -29,7 +29,7 @@
 
 
 File my_create(const char *FileName, int CreateFlags, int access_flags,
-	       myf MyFlags)
+               myf MyFlags)
 {
   int fd, rc;
 
