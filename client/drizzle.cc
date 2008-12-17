@@ -163,8 +163,9 @@ static uint32_t  show_progress_size= 0;
 static bool debug_info_flag, debug_check_flag;
 static bool column_types_flag;
 static bool preserve_comments= false;
-static uint32_t opt_max_allowed_packet, opt_net_buffer_length;
-static int verbose= 0, opt_drizzle_port= 0, opt_silent= 0, opt_local_infile= 0;
+static uint32_t opt_max_allowed_packet, opt_net_buffer_length,
+  opt_drizzle_port= 0;
+static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
 static uint my_end_arg;
 static char * opt_drizzle_unix_port= NULL;
 static int connect_flag= CLIENT_INTERACTIVE;
@@ -1473,7 +1474,8 @@ static void usage(int version)
 extern "C" bool
 get_one_option(int optid, const struct my_option *, char *argument)
 {
-  char *endchar = NULL;
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
 
   switch(optid) {
   case OPT_CHARSETS_DIR:
@@ -1506,7 +1508,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
     delimiter_str= delimiter;
     break;
   case OPT_LOCAL_INFILE:
-    using_opt_local_infile=1;
+    using_opt_local_infile= 1;
     break;
   case OPT_TEE:
     if (argument == disabled_my_option)
@@ -1568,12 +1570,24 @@ get_one_option(int optid, const struct my_option *, char *argument)
       one_database= skip_updates= 1;
     break;
   case 'p':
-    opt_drizzle_port= strtol(argument, &endchar, 10);
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
     /* if there is an alpha character this is not a valid port */
     if (strlen(endchar) != 0)
     {
       put_info(_("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead."), INFO_ERROR, 0, 0);
       return false;
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if (temp_drizzle_port > 65535)
+    {
+      put_info(_("Value supplied for port is not valid."), INFO_ERROR, 0, 0);
+      return false;
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
     }
     break;
   case 'P':
