@@ -1326,11 +1326,15 @@ AC_ARG_ENABLE([go-crazy],
     [ac_warn_go_crazy="$enableval"],
     [ac_warn_go_crazy="no"])
 
+AC_ARG_ENABLE([datarace],
+    [AS_HELP_STRING([--enable-datarace],
+       [Enables Sun Studio data race detection @<:@default=off@:>@])],
+    [ac_datarace="$enableval"],
+    [ac_datarace="no"])
 
 
 if test "$GCC" = "yes"
 then
-
 
   if test "$ac_warn_fail" = "yes"
   then
@@ -1446,11 +1450,6 @@ void testme() {  };],[
 fi
 if test "$SUNCC" = "yes"
 then
-  AC_ARG_ENABLE([datarace],
-    [AS_HELP_STRING([--enable-datarace],
-       [Enables Sun Studio data race detection @<:@default=off@:>@])],
-    [ac_datarace="$enableval"],
-    [ac_datarace="no"])
   if test "$ac_datarace" = "yes"
   then
     CXXFLAGS="${CXXFLAGS} -xinstrument-datarace"
