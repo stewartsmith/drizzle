@@ -454,10 +454,16 @@ int mysql_update(Session *session, TableList *table_list,
   init_read_record(&info,session,table,select,0,1);
 
   updated= found= 0;
-  /* Generate an error when trying to set a NOT NULL field to NULL. */
-  session->count_cuted_fields= ignore ? CHECK_FIELD_WARN
-                                  : CHECK_FIELD_ERROR_FOR_NULL;
-  session->cuted_fields=0L;
+  /*
+   * Per the SQL standard, inserting NULL into a NOT NULL
+   * field requires an error to be thrown.
+   *
+   * @NOTE
+   *
+   * NULL check and handling occurs in field_conv.cc
+   */
+  session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
+  session->cuted_fields= 0L;
   session->set_proc_info("Updating");
 
   transactional_table= table->file->has_transactions();

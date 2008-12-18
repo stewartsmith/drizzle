@@ -208,7 +208,7 @@ drop table t1;
 create table t1 (v varchar(10), c char(10), t text, key(v(5)), key(c(5)), key(t(5)));
 show create table t1;
 drop table t1;
-create table t1 (v char(10) character set utf8);
+create table t1 (v char(10));
 show create table t1;
 drop table t1;
 
@@ -221,11 +221,13 @@ drop table t1;
 #
 # Test long varchars
 #
-
-create table t1 (v varchar(65530), key(v(10)));
-insert into t1 values(repeat('a',65530));
-select length(v) from t1 where v=repeat('a',65530);
-drop table t1;
+# @TODO The below fails because it assumes latin1
+# as the charset.  Possibly re-enable a similar test
+# for UTF8-only in future
+#create table t1 (v varchar(65530), key(v(10)));
+#insert into t1 values(repeat('a',65530));
+#select length(v) from t1 where v=repeat('a',65530);
+#drop table t1;
 
 #
 # Bug #9489: problem with hash indexes

@@ -197,7 +197,7 @@ N_("Can't create IP socket"),
 /* ER_NO_SUCH_INDEX 42S12 S1009 */
 N_("Table '%-.192s' has no index like the one used in CREATE INDEX; recreate the table"),
 /* ER_WRONG_FIELD_TERMINATORS 42000 S1009 */
-N_("Field separator argument is not what is expected; check the manual"),
+N_("Field separator argument '%-.32s' with length '%d' is not what is expected; check the manual"),
 /* ER_BLOBS_AND_NO_TERMINATED 42000 S1009 */
 N_("You can't use fixed rowlength with BLOBs; please use 'fields terminated by'"),
 /* ER_TEXTFILE_NOT_READABLE   */
