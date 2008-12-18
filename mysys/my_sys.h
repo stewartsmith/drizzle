@@ -473,7 +473,6 @@ extern void my_sleep(uint32_t m_seconds);
 extern uint32_t my_set_max_open_files(uint32_t files);
 void my_free_open_file_info(void);
 
-extern time_t my_time(myf flags);
 extern uint64_t my_getsystime(void);
 extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);

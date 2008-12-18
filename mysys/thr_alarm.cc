@@ -164,7 +164,8 @@ bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
   bool reschedule;
   struct st_my_thread_var *current_my_thread_var= my_thread_var;
 
-  if((now= time(0)) == (time_t)-1)
+  now= time(NULL);
+  if(now == (time_t)-1)
   {
     fprintf(stderr, "%s: Warning: time() call failed\n", my_progname);
     return 1;
@@ -350,7 +351,7 @@ static RETSIGTYPE process_alarm_part2(int)
     }
     else
     {
-      uint32_t now= time(0);
+      time_t now= time(NULL);
       uint32_t next= now+10-(now%10);
       while ((alarm_data=(ALARM*) queue_top(&alarm_queue))->expire_time <= now)
       {
@@ -478,7 +479,7 @@ void thr_alarm_info(ALARM_INFO *info)
   info->max_used_alarms= max_used_alarms;
   if ((info->active_alarms=  alarm_queue.elements))
   {
-    uint32_t now= (uint32_t)time(0);
+    time_t now= time(NULL);
     long time_diff;
     ALARM *alarm_data= (ALARM*) queue_top(&alarm_queue);
     time_diff= (long) (alarm_data->expire_time - now);
@@ -525,9 +526,10 @@ static void *alarm_handler(void *arg __attribute__((unused)))
   {
     if (alarm_queue.elements)
     {
-      uint32_t sleep_time, now;
+      uint32_t sleep_time;
 
-      if ((now= time(0)) == (time_t)-1)
+      time_t now= time(NULL);
+      if (now == (time_t)-1)
       {
         pthread_mutex_unlock(&LOCK_alarm);
         return NULL;
