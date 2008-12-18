@@ -13,7 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <m_string.h>
+#include <drizzled/global.h>
+#include <mystrings/m_string.h>
 #include <errno.h>
 
 #define MAX_NEGATIVE_NUMBER	((uint64_t) 0x8000000000000000LL)

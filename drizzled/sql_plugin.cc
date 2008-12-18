@@ -521,7 +521,7 @@ SHOW_COMP_OPTION sys_var_have_plugin::get_option()
 }
 
 
-static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc)
+static plugin_ref intern_plugin_lock(LEX *, plugin_ref rc)
 {
   st_plugin_int *pi= plugin_ref_to_int(rc);
 
@@ -539,8 +539,6 @@ static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc)
     *plugin= pi;
     pi->ref_count++;
 
-    if (lex)
-      insert_dynamic(&lex->plugins, (unsigned char*)&plugin);
     return(plugin);
   }
   return(NULL);
@@ -725,39 +723,21 @@ static void reap_plugins(void)
   size_t count;
   uint32_t idx;
   struct st_plugin_int *plugin;
-  vector<st_plugin_int *> reap;
-  vector<st_plugin_int *>::reverse_iterator riter;
-
-  if (!reap_needed)
-    return;
-
 
   reap_needed= false;
   count= plugin_array.elements;
-  reap.reserve(count);
 
   for (idx= 0; idx < count; idx++)
   {
     plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-    if (plugin->state == PLUGIN_IS_DELETED && !plugin->ref_count)
-    {
-      /* change the status flag to prevent reaping by another thread */
-      plugin->state= PLUGIN_IS_DYING;
-      reap.push_back(plugin);
-    }
-  }
-
-  for (riter= reap.rbegin(); plugin= *riter, riter != reap.rend(); riter++)
+    plugin->state= PLUGIN_IS_DYING;
     plugin_deinitialize(plugin, true);
-
-  for (riter= reap.rbegin(); plugin= *riter, riter != reap.rend(); riter++)
     plugin_del(plugin);
-
+  }
 }
 
-static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
+static void intern_plugin_unlock(LEX *, plugin_ref plugin)
 {
-  int i;
   st_plugin_int *pi;
 
   if (!plugin)
@@ -766,22 +746,6 @@ static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
   pi= plugin_ref_to_int(plugin);
 
   free((void *) plugin);
-
-  if (lex)
-  {
-    /*
-      Remove one instance of this plugin from the use list.
-      We are searching backwards so that plugins locked last
-      could be unlocked faster - optimizing for LIFO semantics.
-    */
-    for (i= lex->plugins.elements - 1; i >= 0; i--)
-      if (plugin == *dynamic_element(&lex->plugins, i, plugin_ref*))
-      {
-        delete_dynamic_element(&lex->plugins, i);
-        break;
-      }
-    assert(i >= 0);
-  }
 
   assert(pi->ref_count);
   pi->ref_count--;
@@ -913,8 +877,6 @@ int plugin_init(int *argc, char **argv, int flags)
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
   struct st_plugin_int tmp, *plugin_ptr;
-  vector<st_plugin_int *> reap;
-  vector<st_plugin_int *>::reverse_iterator riter;
   MEM_ROOT tmp_root;
 
   if (initialized)
@@ -995,8 +957,6 @@ int plugin_init(int *argc, char **argv, int flags)
   /*
     Now we initialize all remaining plugins
   */
-  reap.reserve(plugin_array.elements);
-
   for (idx= 0; idx < plugin_array.elements; idx++)
   {
     plugin_ptr= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
@@ -1005,21 +965,12 @@ int plugin_init(int *argc, char **argv, int flags)
       if (plugin_initialize(plugin_ptr))
       {
         plugin_ptr->state= PLUGIN_IS_DYING;
-        reap[idx]= plugin_ptr;
+        plugin_deinitialize(plugin_ptr, true);
+        plugin_del(plugin_ptr);
       }
     }
   }
 
-  /*
-    Check if any plugins have to be reaped
-  */
-  for(riter= reap.rbegin();
-      plugin_ptr= *riter, riter != reap.rend();
-      riter++)
-  {
-    plugin_deinitialize(plugin_ptr, true);
-    plugin_del(plugin_ptr);
-  }
 
 end:
   free_root(&tmp_root, MYF(0));
@@ -1614,7 +1565,7 @@ static void update_func_str(Session *, struct st_mysql_sys_var *var,
      * mess gets redesigned
      */
     if (tgt == NULL)
-      sql_print_error(_("Out of memor."));
+      sql_print_error(_("Out of memory."));
 
   }
 }
@@ -2014,22 +1965,8 @@ static void cleanup_variables(Session *session, struct system_variables *vars)
 
 void plugin_sessionvar_cleanup(Session *session)
 {
-  uint32_t idx;
-  plugin_ref *list;
-
   unlock_variables(session, &session->variables);
   cleanup_variables(session, &session->variables);
-
-  if ((idx= session->lex->plugins.elements))
-  {
-    list= ((plugin_ref*) session->lex->plugins.buffer) + idx - 1;
-    while ((unsigned char*) list >= session->lex->plugins.buffer)
-      intern_plugin_unlock(NULL, *list--);
-  }
-
-  reset_dynamic(&session->lex->plugins);
-
-  return;
 }
 
 

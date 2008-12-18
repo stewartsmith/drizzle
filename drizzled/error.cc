@@ -1051,9 +1051,9 @@ N_("Cannot remove all partitions, use DROP TABLE instead"),
 /* ER_COALESCE_ONLY_ON_HASH_PARTITION */
 N_("COALESCE PARTITION can only be used on HASH/KEY partitions"),
 /* ER_REORG_HASH_ONLY_ON_SAME_NO */
-N_("REORGANISE PARTITION can only be used to reorganise partitions not to change their numbers"),
+N_("REORGANIZE PARTITION can only be used to reorganize partitions not to change their numbers"),
 /* ER_REORG_NO_PARAM_ERROR */
-N_("REORGANISE PARTITION without parameters can only be used on auto-partitioned tables using HASH PARTITIONs"),
+N_("REORGANIZE PARTITION without parameters can only be used on auto-partitioned tables using HASH PARTITIONs"),
 /* ER_ONLY_ON_RANGE_LIST_PARTITION */
 N_("%-.64s PARTITION can only be used on RANGE/LIST partitions"),
 /* ER_ADD_PARTITION_SUBPART_ERROR */
@@ -1063,13 +1063,13 @@ N_("At least one partition must be added"),
 /* ER_COALESCE_PARTITION_NO_PARTITION */
 N_("At least one partition must be coalesced"),
 /* ER_REORG_PARTITION_NOT_EXIST */
-N_("More partitions to reorganise than there are partitions"),
+N_("More partitions to reorganize than there are partitions"),
 /* ER_SAME_NAME_PARTITION */
 N_("Duplicate partition name %-.192s"),
 /* ER_NO_BINLOG_ERROR */
 N_("It is not allowed to shut off binlog on this command"),
 /* ER_CONSECUTIVE_REORG_PARTITIONS */
-N_("When reorganising a set of partitions they must be in consecutive order"),
+N_("When reorganizing a set of partitions they must be in consecutive order"),
 /* ER_REORG_OUTSIDE_RANGE */
 N_("Reorganize of range partitions cannot change total ranges except for last partition where it can extend the range"),
 /* ER_PARTITION_FUNCTION_FAILURE */
@@ -1211,7 +1211,7 @@ N_("Event execution time is in the past and ON COMPLETION NOT PRESERVE is set. T
 /* ER_EVENT_CANNOT_ALTER_IN_THE_PAST */
 N_("Event execution time is in the past and ON COMPLETION NOT PRESERVE is set. The event was dropped immediately after creation."),
 /* ER_SLAVE_INCIDENT */
-N_("The incident %s occured on the master. Message: %-.64s"),
+N_("The incident %s occurred on the master. Message: %-.64s"),
 /* ER_NO_PARTITION_FOR_GIVEN_VALUE_SILENT */
 N_("Table has no partition for some existing values"),
 /* ER_BINLOG_UNSAFE_STATEMENT */

@@ -98,13 +98,15 @@
 */
 
 #include <drizzled/global.h>
-#include <alloca.h>
-#include <m_string.h>
-#include <m_ctype.h>
-#include <storage/myisam/myisampack.h>
-#include <mystrings/decimal.h>
 
+#include "m_string.h"
+#include "m_ctype.h"
+#include "decimal.h"
+
+#include <storage/myisam/myisampack.h>
 #include <drizzled/util/test.h>
+
+#include <alloca.h>
 /*
   Internally decimal numbers are stored base 10^9 (see DIG_BASE below)
   So one variable of type decimal_digit_t is limited:

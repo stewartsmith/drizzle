@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTION_LAST_INSERT_H
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_last_insert_id :public Item_int_func
 {

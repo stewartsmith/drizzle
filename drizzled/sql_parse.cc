@@ -145,20 +145,6 @@ inline bool all_tables_not_ok(Session *, TableList *)
   return false;
 }
 
-
-static bool some_non_temp_table_to_be_updated(Session *session, TableList *tables)
-{
-  for (TableList *table= tables; table; table= table->next_global)
-  {
-    assert(table->db && table->table_name);
-    if (table->updating &&
-        !find_temporary_table(session, table->db, table->table_name))
-      return 1;
-  }
-  return 0;
-}
-
-
 /**
   Mark all commands that somehow changes a table.
 
@@ -432,66 +418,6 @@ out:
 }
 
 /**
-  Determine if an attempt to update a non-temporary table while the
-  read-only option was enabled has been made.
-
-  This is a helper function to mysql_execute_command.
-
-  @note SQLCOM_MULTI_UPDATE is an exception and dealt with elsewhere.
-
-  @see mysql_execute_command
-
-  @returns Status code
-    @retval true The statement should be denied.
-    @retval false The statement isn't updating any relevant tables.
-*/
-
-static bool deny_updates_if_read_only_option(Session *session,
-                                                TableList *all_tables)
-{
-  if (!opt_readonly)
-    return(false);
-
-  LEX *lex= session->lex;
-
-  if (!(sql_command_flags[lex->sql_command].test(CF_BIT_CHANGES_DATA)))
-    return(false);
-
-  /* Multi update is an exception and is dealt with later. */
-  if (lex->sql_command == SQLCOM_UPDATE_MULTI)
-    return(false);
-
-  const bool create_temp_tables=
-    (lex->sql_command == SQLCOM_CREATE_TABLE) &&
-    (lex->create_info.options & HA_LEX_CREATE_TMP_TABLE);
-
-  const bool drop_temp_tables=
-    (lex->sql_command == SQLCOM_DROP_TABLE) &&
-    lex->drop_temporary;
-
-  const bool update_real_tables=
-    some_non_temp_table_to_be_updated(session, all_tables) &&
-    !(create_temp_tables || drop_temp_tables);
-
-
-  const bool create_or_drop_databases=
-    (lex->sql_command == SQLCOM_CREATE_DB) ||
-    (lex->sql_command == SQLCOM_DROP_DB);
-
-  if (update_real_tables || create_or_drop_databases)
-  {
-      /*
-        An attempt was made to modify one or more non-temporary tables.
-      */
-      return(true);
-  }
-
-
-  /* Assuming that only temporary tables are modified. */
-  return(false);
-}
-
-/**
   Perform one connection-level (COM_XXXX) command.
 
   @param command         type of command to perform
@@ -590,8 +516,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                       (unsigned char)(*passwd++) : strlen(passwd));
     uint32_t dummy_errors, save_db_length, db_length;
     int res;
-    Security_context save_security_ctx= *session->security_ctx;
     USER_CONN *save_user_connect;
+    string old_username;
 
     db+= passwd_len + 1;
     /*
@@ -630,12 +556,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     save_db= session->db;
     save_user_connect= session->user_connect;
 
-    if (!(session->security_ctx->user= strdup(user)))
-    {
-      session->security_ctx->user= save_security_ctx.user;
-      my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-      break;
-    }
+    old_username= session->security_ctx.user;
+    session->security_ctx.user.assign(user);
 
     /* Clear variables that are allocated */
     session->user_connect= 0;
@@ -643,9 +565,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     if (res)
     {
-      if (session->security_ctx->user)
-        free(session->security_ctx->user);
-      *session->security_ctx= save_security_ctx;
+      session->security_ctx.user= old_username;
       session->user_connect= save_user_connect;
       session->db= save_db;
       session->db_length= save_db_length;
@@ -654,8 +574,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     {
       if (save_db)
         free(save_db);
-      if (save_security_ctx.user)
-        free(save_security_ctx.user);
 
       if (cs_number)
       {
@@ -1141,18 +1059,7 @@ mysql_execute_command(Session *session)
       return(0);
     }
   }
-  else
-  {
-    /*
-      When option readonly is set deny operations which change non-temporary
-      tables. Except for the replication thread and the 'super' users.
-    */
-    if (deny_updates_if_read_only_option(session, all_tables))
-    {
-      my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
-      return(-1);
-    }
-  } /* endif unlikely slave */
+
   status_var_increment(session->status_var.com_stat[lex->sql_command]);
 
   assert(session->transaction.stmt.modified_non_trans_table == false);
@@ -1693,12 +1600,7 @@ end_with_restore_list:
     {
       if (res)
         break;
-      if (opt_readonly &&
-	  some_non_temp_table_to_be_updated(session, all_tables))
-      {
-	my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
-	break;
-      }
+
     }  /* unlikely */
 
     res= mysql_multi_update(session, all_tables,
@@ -2454,7 +2356,6 @@ void mysql_reset_session_for_next_command(Session *session)
     session->options&= ~OPTION_KEEP_LOG;
     session->transaction.all.modified_non_trans_table= false;
   }
-  assert(session->security_ctx== &session->main_security_ctx);
   session->thread_specific_used= false;
 
   if (opt_bin_log)

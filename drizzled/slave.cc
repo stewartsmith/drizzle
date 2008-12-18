@@ -102,11 +102,11 @@ static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
 {
   {
     N_("Waiting to reconnect after a failed registration on master"),
-    N_("Slave I/O thread killed while waitnig to reconnect after a "
+    N_("Slave I/O thread killed while waiting to reconnect after a "
                  "failed registration on master"),
     N_("Reconnecting after a failed registration on master"),
     N_("failed registering on master, reconnecting to try again, "
-                 "log '%s' at postion %s"),
+                 "log '%s' at position %s"),
     "COM_REGISTER_SLAVE",
     N_("Slave I/O thread killed during or after reconnect")
   },
@@ -115,7 +115,7 @@ static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
     N_("Slave I/O thread killed while retrying master dump"),
     N_("Reconnecting after a failed binlog dump request"),
     N_("failed dump request, reconnecting to try again, "
-                 "log '%s' at postion %s"),
+                 "log '%s' at position %s"),
     "COM_BINLOG_DUMP",
     N_("Slave I/O thread killed during or after reconnect")
   },
@@ -125,7 +125,7 @@ static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
                  "after a failed read"),
     N_("Reconnecting after a failed master event read"),
     N_("Slave I/O thread: Failed reading log event, "
-                 "reconnecting to retry, log '%s' at postion %s"),
+                 "reconnecting to retry, log '%s' at position %s"),
     "",
     N_("Slave I/O thread killed during or after a "
                  "reconnect done to recover from failed read")
@@ -895,7 +895,7 @@ static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
           "DRIZZLE server ids; these ids must be different "
           "for replication to work (or "
           "the --replicate-same-server-id option must be used "
-          "on slave but this does"
+          "on slave but this does "
           "not always make sense; please check the manual before using it).");
       err_code= ER_SLAVE_FATAL_ERROR;
       sprintf(err_buff, ER(err_code), errmsg);
@@ -1328,7 +1328,7 @@ static int32_t init_slave_thread(Session* session, SLAVE_Session_TYPE session_ty
   int32_t simulate_error= 0;
   session->system_thread = (session_type == SLAVE_Session_SQL) ?
     SYSTEM_THREAD_SLAVE_SQL : SYSTEM_THREAD_SLAVE_IO;
-  session->security_ctx->skip_grants();
+  session->security_ctx.skip_grants();
   my_net_init(&session->net, 0);
 /*
   Adding MAX_LOG_EVENT_HEADER_LEN to the max_allowed_packet on all
@@ -1362,16 +1362,19 @@ static int32_t init_slave_thread(Session* session, SLAVE_Session_TYPE session_ty
   return(0);
 }
 
-
+/* Returns non zero on error */
 static int32_t safe_sleep(Session* session, int32_t sec, CHECK_KILLED_FUNC thread_killed,
-                      void* thread_killed_arg)
+                          void* thread_killed_arg)
 {
   int32_t nap_time;
   thr_alarm_t alarmed;
 
   thr_alarm_init(&alarmed);
-  time_t start_time= my_time(0);
-  time_t end_time= start_time+sec;
+  time_t start_time, end_time;
+
+  if ((start_time= time(0)) == (time_t)-1)
+    return -1;
+  end_time= start_time+sec;
 
   while ((nap_time= (int32_t) (end_time - start_time)) > 0)
   {
@@ -1387,7 +1390,8 @@ static int32_t safe_sleep(Session* session, int32_t sec, CHECK_KILLED_FUNC threa
 
     if ((*thread_killed)(session,thread_killed_arg))
       return(1);
-    start_time= my_time(0);
+    if ((start_time= time(0)) == (time_t)-1)
+      return -1;
   }
   return(0);
 }
@@ -1604,7 +1608,9 @@ int32_t apply_event_and_update_pos(Log_event* ev, Session* session, Relay_log_in
   session->set_time();                            // time the query
   session->lex->current_select= 0;
   if (!ev->when)
-    ev->when= my_time(0);
+    if((ev->when= time(0)) == (time_t)-1)
+      return 2;
+
   ev->session = session; // because up to this point, ev->session == 0
 
   if (skip)
@@ -2083,7 +2089,7 @@ requesting master dump")) ||
       } // if (event_len == packet_error)
 
       retry_count=0;                    // ok event, reset retry counter
-      session->set_proc_info(_("Queueing master event to the relay log"));
+      session->set_proc_info(_("Queuing master event to the relay log"));
       if (queue_event(mi,(const char*)drizzle->net.read_pos + 1, event_len))
       {
         goto err;

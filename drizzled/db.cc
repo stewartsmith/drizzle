@@ -592,7 +592,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       my_error(EE_STAT, MYF(0), path, errno);
       goto exit;
     }
-    if (my_mkdir(path,0777,MYF(0)) < 0)
+    if (mkdir(path,0777) < 0)
     {
       my_error(ER_CANT_CREATE_DB, MYF(0), db, my_errno);
       error= -1;

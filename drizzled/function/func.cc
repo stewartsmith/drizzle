@@ -26,7 +26,7 @@ using namespace std;
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 #include <drizzled/field/int64_t.h>
 #include <drizzled/field/long.h>
 #include <drizzled/field/double.h>

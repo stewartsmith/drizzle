@@ -50,35 +50,6 @@ uint64_t my_getsystime()
 #endif
 }
 
-
-/*
-  Return current time
-
-  SYNOPSIS
-    my_time()
-    flags	If MY_WME is set, write error if time call fails
-
-*/
-
-time_t my_time(myf flags)
-{
-  time_t t;
-#ifdef HAVE_GETHRTIME
-  (void)flags;
-  (void) my_micro_time_and_time(&t);
-  return t;
-#else
-  /* The following loop is here beacuse time() may fail on some systems */
-  while ((t= time(0)) == (time_t) -1)
-  {
-    if (flags & MY_WME)
-      fprintf(stderr, "%s: Warning: time() call failed\n", my_progname);
-  }
-  return t;
-#endif
-}
-
-
 /*
   Return time in micro seconds
 

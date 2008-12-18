@@ -7,7 +7,7 @@
 #include <string>
 #include <uuid/uuid.h>
 
-#include "replication_event.pb.h"
+#include <drizzled/serialize/replication_event.pb.h>
 using namespace std;
 
 static uint64_t query_id= 0;

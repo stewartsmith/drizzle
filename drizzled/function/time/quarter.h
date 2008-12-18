@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_TIME_QUARTER_H
 #define DRIZZLED_FUNCTION_TIME_QUARTER_H
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_quarter :public Item_int_func
 {

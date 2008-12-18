@@ -1,0 +1,24 @@
+#
+# Specific tests for case sensitive file systems
+# i.e. lower_case_filesystem=OFF
+#
+
+connect (master,localhost,root,,);
+connection master;
+create database d1;
+
+connect (sample,localhost,sample,password,d1);
+connection sample;
+select database();
+create database d2;
+--error 1007
+create database D1;
+drop database d2;
+disconnect sample;
+
+connection master;
+drop database d1;
+disconnect master;
+connection default;
+
+# End of 4.1 tests

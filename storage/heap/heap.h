@@ -266,17 +266,7 @@ extern unsigned char *heap_position(HP_INFO *info);
    pointer to rows where a long instead of a (unsigned char*).
 */
 
-#if defined(WANT_OLD_HEAP_VERSION) || defined(OLD_HEAP_VERSION)
-extern int heap_rrnd_old(HP_INFO *info,unsigned char *buf,uint32_t pos);
-extern uint32_t heap_position_old(HP_INFO *info);
-#endif
-#ifdef OLD_HEAP_VERSION
-typedef uint32_t HEAP_PTR;
-#define heap_position(A) heap_position_old(A)
-#define heap_rrnd(A,B,C) heap_rrnd_old(A,B,C)
-#else
 typedef unsigned char *HEAP_PTR;
-#endif
 
 #ifdef	__cplusplus
 }

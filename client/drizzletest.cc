@@ -64,7 +64,8 @@ using namespace std;
 
 enum {
   OPT_PS_PROTOCOL, OPT_SP_PROTOCOL, OPT_CURSOR_PROTOCOL, OPT_VIEW_PROTOCOL,
-  OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES
+  OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES,
+  OPT_TESTDIR
 };
 
 static int record= 0, opt_sleep= -1;
@@ -72,6 +73,7 @@ static char *opt_db= 0, *opt_pass= 0;
 const char *opt_user= 0, *opt_host= 0, *unix_sock= 0, *opt_basedir= "./";
 const char *opt_logdir= "";
 const char *opt_include= 0, *opt_charsets_dir;
+const char *opt_testdir= 0;
 static int opt_port= 0;
 static int opt_max_connect_retries;
 static bool opt_compress= 0, silent= 0, verbose= 0;
@@ -1282,11 +1284,26 @@ static int compare_files2(File fd, const char* filename2)
   File fd2;
   uint len, len2;
   char buff[512], buff2[512];
+  const char *fname= filename2;
+  string tmpfile;
 
-  if ((fd2= my_open(filename2, O_RDONLY, MYF(0))) < 0)
+  if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
     my_close(fd, MYF(0));
-    die("Failed to open second file: '%s'", filename2);
+    if (opt_testdir != NULL)
+    {
+      tmpfile= opt_testdir;
+      if (tmpfile[tmpfile.length()] != '/')
+        tmpfile.append("/");
+      tmpfile.append(filename2);
+      fname= tmpfile.c_str();
+    }
+    if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
+    {
+      my_close(fd, MYF(0));
+    
+      die("Failed to open second file: '%s'", fname);
+    }
   }
   while((len= my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
@@ -2088,6 +2105,14 @@ static void do_source(struct st_command *command)
     ; /* Do nothing */
   else
   {
+    if (opt_testdir != NULL)
+    {
+      string testdir(opt_testdir);
+      if (testdir[testdir.length()] != '/')
+        testdir.append("/");
+      testdir.append(ds_filename);
+      ds_filename.swap(testdir);
+    }
     open_file(ds_filename.c_str());
   }
 
@@ -2468,8 +2493,8 @@ static void do_file_exist(struct st_command *command)
 
 static void do_mkdir(struct st_command *command)
 {
-  int error;
   string ds_dirname;
+  int error;
   const struct command_arg mkdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to create"}
   };
@@ -2479,7 +2504,7 @@ static void do_mkdir(struct st_command *command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= my_mkdir(ds_dirname.c_str(), 0777, MYF(0)) != 0;
+  error= mkdir(ds_dirname.c_str(), (0777 & my_umask_dir)) != 0;
   handle_command_error(command, error);
   return;
 }
@@ -2990,7 +3015,7 @@ do_wait_for_slave_to_stop(struct st_command *)
     drizzle_free_result(res);
     if (done)
       break;
-    my_sleep(SLAVE_POLL_INTERVAL);
+    usleep(SLAVE_POLL_INTERVAL);
   }
   return;
 }
@@ -3193,7 +3218,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
     sleep_val= opt_sleep;
 
   if (sleep_val)
-    my_sleep((uint32_t) (sleep_val * 1000000L));
+    usleep((uint32_t) (sleep_val * 1000000L));
   command->last_argument= sleep_end;
   return 0;
 }
@@ -3584,7 +3609,7 @@ static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
       verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts,
                   opt_max_connect_retries, drizzle_errno(drizzle),
                   drizzle_error(drizzle));
-      my_sleep(connection_retry_sleep);
+      usleep(connection_retry_sleep);
     }
     else
     {
@@ -4443,6 +4468,9 @@ static struct my_option my_long_options[] =
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"include", 'i', "Include SQL before each test case.", (char**) &opt_include,
    (char**) &opt_include, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"testdir", OPT_TESTDIR, "Path to use to search for test files",
+   (char**) &opt_testdir,
+   (char**) &opt_testdir, 0,GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"logdir", OPT_LOG_DIR, "Directory for log files", (char**) &opt_logdir,
    (char**) &opt_logdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"mark-progress", OPT_MARK_PROGRESS,

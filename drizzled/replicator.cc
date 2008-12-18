@@ -26,7 +26,7 @@ int replicator_initializer(st_plugin_int *plugin)
 {
   replicator_t *p;
 
-  p= (replicator_t *) malloc(sizeof(replicator_t));
+  p= new replicator_t;
   if (p == NULL) return 1;
   memset(p, 0, sizeof(replicator_t));
 
@@ -46,7 +46,7 @@ int replicator_initializer(st_plugin_int *plugin)
   return 0;
 
  err:
-  free(p);
+  delete p;
   return 1;
 }
 
@@ -65,7 +65,7 @@ int replicator_finalizer(st_plugin_int *plugin)
         }
     }
 
-  if (p) free(p);
+  if (p) delete p;
 
   return 0;
 }

@@ -13,12 +13,15 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/global.h>
-#include <my_time.h>
+#include "mysys_priv.h"
+
+#include "my_time.h"
+
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include <stdio.h>
 #include <drizzled/util/test.h>
+
+#include <stdio.h>
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
 
 uint64_t log_10_int[20]=

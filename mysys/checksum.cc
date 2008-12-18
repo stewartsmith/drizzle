@@ -16,7 +16,6 @@
 
 #include "mysys_priv.h"
 
-#include <my_sys.h>
 #include <zlib.h>
 
 /*

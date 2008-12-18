@@ -27,7 +27,7 @@ int errmsg_initializer(st_plugin_int *plugin)
 {
   errmsg_t *p;
 
-  p= (errmsg_t *) malloc(sizeof(errmsg_t));
+  p= new errmsg_t;
   if (p == NULL) return 1;
   memset(p, 0, sizeof(errmsg_t));
 
@@ -54,7 +54,7 @@ int errmsg_initializer(st_plugin_int *plugin)
   return 0;
 
 err:
-  free(p);
+  delete p;
   return 1;
 }
 
@@ -77,7 +77,7 @@ int errmsg_finalizer(st_plugin_int *plugin)
     }
   }
 
-  if (p) free(p);
+  if (p) delete p;
 
   return 0;
 }
