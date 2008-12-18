@@ -134,10 +134,10 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
   bool transactional_table;
   Session::killed_state killed_status= Session::NOT_KILLED;
 
-  if (escaped->length() > 1 || enclosed->length() > 1)
+  /* Escape and enclosed character may be a utf8 4-byte character */
+  if (escaped->length() > 4 || enclosed->length() > 4)
   {
-    my_message(ER_WRONG_FIELD_TERMINATORS,ER(ER_WRONG_FIELD_TERMINATORS),
-	       MYF(0));
+    my_error(ER_WRONG_FIELD_TERMINATORS,MYF(0),enclosed->c_ptr(), enclosed->length());
     return(true);
   }
   if (open_and_lock_tables(session, table_list))
