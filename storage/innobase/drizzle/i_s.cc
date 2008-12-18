@@ -133,7 +133,7 @@ field_store_time_t(
 	/* use this if you are sure that `variables' and `time_zone'
 	are always initialized */
 	session->variables.time_zone->gmt_sec_to_TIME(
-		&my_time, (my_time_t) time);
+		&my_time, (time_t) time);
 #else
 	localtime_r(&time, &tm_time);
 	localtime_to_TIME(&my_time, &tm_time);

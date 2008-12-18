@@ -1206,7 +1206,7 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
   pthread_mutex_unlock(&LOCK_thread_count);
 
   thread_info *session_info;
-  time_t now= time(0);
+  time_t now= time(NULL);
   while ((session_info=thread_infos.get()))
   {
     protocol->prepare_for_resend();
@@ -1236,9 +1236,9 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
   char *user;
-  time_t now;
+  time_t now= time(NULL);
 
-  if ((now= time(0)) == (time_t)-1)
+  if (now == (time_t)-1)
     return 1;
 
   user= NULL;
