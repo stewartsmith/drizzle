@@ -15,15 +15,15 @@
 
 /* Describe, check and repair of MyISAM tables */
 
-#include <drizzled/global.h>
+#include "myisamdef.h"
+#include "myisam.h"
 
 #include <mystrings/m_ctype.h>
-#include <stdio.h>
-#include <stdarg.h>
 #include <mysys/my_getopt.h>
 #include <mysys/my_bit.h>
-#include <myisam.h>
 #include <mystrings/m_string.h>
+#include <stdio.h>
+#include <stdarg.h>
 #ifdef HAVE_SYS_VADVICE_H
 #include <sys/vadvise.h>
 #endif
@@ -32,7 +32,6 @@
 #endif
 #include <drizzled/util/test.h>
 
-#include "myisamdef.h"
 
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 

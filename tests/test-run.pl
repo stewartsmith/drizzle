@@ -65,7 +65,8 @@ use File::Path;
 use File::Basename;
 use File::Copy;
 use File::Temp qw /tempdir/;
-use File::Spec::Functions qw /splitdir/;
+use File::Spec::Functions qw /splitdir catpath catdir
+                              updir curdir splitpath rel2abs/;
 use Cwd;
 use Getopt::Long;
 use IO::Socket;
@@ -104,6 +105,8 @@ our $glob_scriptname=             undef;
 our $glob_timers=                 undef;
 our @glob_test_mode;
 
+our $glob_builddir;
+
 our $glob_basedir;
 
 our $path_client_bindir;
@@ -116,6 +119,7 @@ our $path_my_basedir;
 our $opt_vardir;                 # A path but set directly on cmd line
 our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
+our $opt_testdir;
 
 
 our $default_vardir;
@@ -296,6 +300,7 @@ sub mysqld_start ($$$);
 sub mysqld_arguments ($$$$);
 sub stop_all_servers ();
 sub run_drizzletest ($);
+sub collapse_path ($);
 sub usage ($);
 
 
@@ -543,6 +548,7 @@ sub command_line_setup () {
 	     # Directories
              'tmpdir=s'                 => \$opt_tmpdir,
              'vardir=s'                 => \$opt_vardir,
+	     'testdir=s'		=> \$opt_testdir,
              'benchdir=s'               => \$glob_mysql_bench_dir,
              'mem'                      => \$opt_mem,
 
@@ -584,22 +590,20 @@ sub command_line_setup () {
     $opt_mtr_build_thread= $ENV{'MTR_BUILD_THREAD'};
   }
 
-  # We require that we are in the "mysql-test" directory
-  # to run drizzle-test-run
-  if (! -f $glob_scriptname)
-  {
-    mtr_error("Can't find the location for the drizzle-test-run script\n" .
-              "Go to to the mysql-test directory and execute the script " .
-              "as follows:\n./$glob_scriptname");
-  }
-
   if ( -d "../drizzled" )
   {
     $source_dist=  1;
   }
 
   # Find the absolute path to the test directory
-  $glob_mysql_test_dir=  cwd();
+  if ( ! $opt_testdir )
+  {
+    $glob_mysql_test_dir=  cwd();
+  } 
+  else
+  {
+    $glob_mysql_test_dir= $opt_testdir;
+  }
   $default_vardir= "$glob_mysql_test_dir/var";
 
   # In most cases, the base directory we find everything relative to,
@@ -615,6 +619,17 @@ sub command_line_setup () {
   if ( ! $source_dist and ! -d "$glob_basedir/bin" )
   {
     $glob_basedir= dirname($glob_basedir);
+  }
+
+  if ( -d $opt_testdir and -d $opt_vardir
+         and -f "$opt_vardir/../../drizzled/drizzled")
+  {
+    # probably in a VPATH build
+    $glob_builddir= "$opt_vardir/../..";
+  }
+  else
+  {
+    $glob_builddir="..";
   }
 
   # Expect mysql-bench to be located adjacent to the source tree, by default
@@ -634,7 +649,8 @@ sub command_line_setup () {
   #
 
   # Look for the client binaries directory
-  $path_client_bindir= mtr_path_exists("$glob_basedir/client",
+  $path_client_bindir= mtr_path_exists("$glob_builddir/client",
+                                       "$glob_basedir/client",
 				       "$glob_basedir/bin");
 
   if (!$opt_extern)
@@ -643,7 +659,8 @@ sub command_line_setup () {
 				       "$path_client_bindir/drizzled",
 				       "$glob_basedir/libexec/drizzled",
 				       "$glob_basedir/bin/drizzled",
-				       "$glob_basedir/sbin/drizzled");
+				       "$glob_basedir/sbin/drizzled",
+                                       "$glob_builddir/drizzled/drizzled");
 
     # Use the mysqld found above to find out what features are available
     collect_mysqld_features();
@@ -777,12 +794,7 @@ sub command_line_setup () {
   # Chop off any "c:", DBUG likes a unix path ex: c:/src/... => /src/...
   $path_vardir_trace=~ s/^\w://;
 
-  # We make the path absolute, as the server will do a chdir() before usage
-  unless ( $opt_vardir =~ m,^/,)
-  {
-    # Make absolute path, relative test dir
-    $opt_vardir= "$glob_mysql_test_dir/$opt_vardir";
-  }
+  $opt_vardir= collapse_path($opt_vardir);
 
   # --------------------------------------------------------------------------
   # Set tmpdir
@@ -1060,6 +1072,7 @@ sub command_line_setup () {
 
 sub set_mtr_build_thread_ports($) {
   my $mtr_build_thread= shift;
+  $mtr_build_thread= ($mtr_build_thread % 200) - 100;
 
   if ( lc($mtr_build_thread) eq 'auto' ) {
     print "Requesting build thread... ";
@@ -1232,7 +1245,8 @@ sub executable_setup () {
   $exe_my_print_defaults=
     mtr_exe_exists(
         "$path_client_bindir/my_print_defaults",
-        "$glob_basedir/extra/my_print_defaults");
+        "$glob_basedir/extra/my_print_defaults",
+        "$glob_builddir/extra/my_print_defaults");
 
 # Look for perror
   $exe_perror= "perror";
@@ -1409,7 +1423,7 @@ sub environment_setup () {
   
   $ENV{'LC_COLLATE'}=         "C";
   $ENV{'USE_RUNNING_SERVER'}= $opt_extern;
-  $ENV{'DRIZZLE_TEST_DIR'}=     $glob_mysql_test_dir;
+  $ENV{'DRIZZLE_TEST_DIR'}=     collapse_path($glob_mysql_test_dir);
   $ENV{'MYSQLTEST_VARDIR'}=   $opt_vardir;
   $ENV{'DRIZZLE_TMP_DIR'}=      $opt_tmpdir;
   $ENV{'MASTER_MYSOCK'}=      $master->[0]->{'path_sock'};
@@ -1422,7 +1436,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'port'};
 
-  $ENV{MTR_BUILD_THREAD}=      $opt_mtr_build_thread;
+  $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
 
   $ENV{'EXE_MYSQL'}=          $exe_drizzle;
 
@@ -1768,7 +1782,8 @@ sub setup_vardir() {
   }
 
   # Make a link std_data_ln in var/ that points to std_data
-  symlink("$glob_mysql_test_dir/std_data", "$opt_vardir/std_data_ln");
+  symlink(collapse_path("$glob_mysql_test_dir/std_data"),
+          "$opt_vardir/std_data_ln");
 
   # Remove old log files
   foreach my $name (glob("r/*.progress r/*.log r/*.warnings"))
@@ -2467,6 +2482,7 @@ sub mysqld_arguments ($$$$) {
 
   mtr_add_arg($args, "%s--no-defaults", $prefix);
 
+  $path_my_basedir= collapse_path($path_my_basedir);
   mtr_add_arg($args, "%s--basedir=%s", $prefix, $path_my_basedir);
 
   if ($opt_engine)
@@ -3075,6 +3091,11 @@ sub run_check_testcase ($$) {
     mtr_add_arg($args, "--record");
   }
 
+  if ( $opt_testdir )
+  {
+    mtr_add_arg($args, "--testdir=%s", $opt_testdir);
+  }
+
   my $res = mtr_run_test($exe_drizzletest,$args,
 	        "include/check-testcase.test", "", "", "");
 
@@ -3180,6 +3201,12 @@ sub run_drizzletest ($) {
     mtr_add_arg($args, "--debug=d:t:A,%s/log/drizzletest.trace",
 		$path_vardir_trace);
   }
+
+  if ( $opt_testdir )
+  {
+    mtr_add_arg($args, "--testdir=%s", $opt_testdir);
+  }
+
 
   # ----------------------------------------------------------------------
   # export DRIZZLE_TEST variable containing <path>/drizzletest <args>
@@ -3483,6 +3510,33 @@ sub mysqld_wait_started($){
   return 0;
 }
 
+sub collapse_path ($) {
+
+    my $c_path= rel2abs(shift);
+    my $updir  = updir($c_path);
+    my $curdir = curdir($c_path);
+
+    my($vol, $dirs, $file) = splitpath($c_path);
+    my @dirs = splitdir($dirs);
+
+    my @collapsed;
+    foreach my $dir (@dirs) {
+        if( $dir eq $updir              and   # if we have an updir
+            @collapsed                  and   # and something to collapse
+            length $collapsed[-1]       and   # and its not the rootdir
+            $collapsed[-1] ne $updir    and   # nor another updir
+            $collapsed[-1] ne $curdir         # nor the curdir
+          )
+        {                                     # then
+            pop @collapsed;                   # collapse
+        }
+        else {                                # else
+            push @collapsed, $dir;            # just hang onto it
+        }
+    }
+
+    return catpath($vol, catdir(@collapsed), $file);
+}
 
 ##############################################################################
 #

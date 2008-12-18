@@ -16,11 +16,11 @@ select CASE when 1=0 then "true" else "false" END;
 select CASE 1 when 1 then "one" WHEN 2 then "two" ELSE "more" END;
 explain extended select CASE 1 when 1 then "one" WHEN 2 then "two" ELSE "more" END;
 select CASE 2.0 when 1 then "one" WHEN 2.0 then "two" ELSE "more" END;
-select (CASE "two" when "one" then "1" WHEN "two" then "2" END) | 0;
+select (CASE "two" when "one" then "1" WHEN "two" then "2" END);
 select (CASE "two" when "one" then 1.00 WHEN "two" then 2.00 END) +0.0;
 select case 1/0 when "a" then "true" else "false" END;
 select case 1/0 when "a" then "true" END;
-select (case 1/0 when "a" then "true" END) | 0;
+select (case 1/0 when "a" then "true" END);
 select (case 1/0 when "a" then "true" END) + 0.0;
 select case when 1>0 then "TRUE" else "FALSE" END;
 select case when 1<0 then "TRUE" else "FALSE" END;
@@ -44,14 +44,12 @@ insert into t1 values (1,1,'orange'),(1,2,'large'),(2,1,'yellow'),(2,2,'medium')
 select max(case col when 1 then val else null end) as color from t1 group by row;
 drop table t1;
 
-SET NAMES latin1;
-
 #
 # CASE and argument types/collations aggregation into result 
 #
 CREATE TABLE t1 SELECT 
- CASE WHEN 1 THEN _latin1'a' COLLATE latin1_danish_ci ELSE _latin1'a' END AS c1,
- CASE WHEN 1 THEN _latin1'a' ELSE _latin1'a' COLLATE latin1_danish_ci END AS c2,
+ CASE WHEN 1 THEN 'a' COLLATE utf8_bin ELSE 'a' END AS c1,
+ CASE WHEN 1 THEN 'a' ELSE 'a' COLLATE utf8_bin END AS c2,
  CASE WHEN 1 THEN 'a' ELSE  1  END AS c3,
  CASE WHEN 1 THEN  1  ELSE 'a' END AS c4,
  CASE WHEN 1 THEN 'a' ELSE 1.0 END AS c5,
@@ -69,21 +67,21 @@ DROP TABLE t1;
 --error 1267
 SELECT CASE 
   WHEN 1 
-  THEN _latin1'a' COLLATE latin1_danish_ci 
-  ELSE _latin1'a' COLLATE latin1_swedish_ci
+  THEN 'a' COLLATE utf8_bin 
+  ELSE 'a' COLLATE utf8_swedish_ci
   END;
 
 --error 1270
-SELECT CASE _latin1'a' COLLATE latin1_general_ci
-  WHEN _latin1'a' COLLATE latin1_danish_ci  THEN 1
-  WHEN _latin1'a' COLLATE latin1_swedish_ci THEN 2
+SELECT CASE 'a' COLLATE utf8_bin
+  WHEN 'a' COLLATE utf8_danish_ci  THEN 1
+  WHEN 'a' COLLATE utf8_swedish_ci THEN 2
   END;
 
 SELECT 
-CASE _latin1'a' COLLATE latin1_general_ci  WHEN _latin1'A' THEN '1' ELSE 2 END,
-CASE _latin1'a' COLLATE latin1_bin         WHEN _latin1'A' THEN '1' ELSE 2 END,
-CASE _latin1'a' WHEN _latin1'A' COLLATE latin1_swedish_ci THEN '1' ELSE 2 END,
-CASE _latin1'a' WHEN _latin1'A' COLLATE latin1_bin        THEN '1' ELSE 2 END
+CASE 'a' COLLATE utf8_general_ci  WHEN 'A' THEN '1' ELSE 2 END,
+CASE 'a' COLLATE utf8_bin         WHEN 'A' THEN '1' ELSE 2 END,
+CASE 'a' WHEN 'A' COLLATE utf8_swedish_ci THEN '1' ELSE 2 END,
+CASE 'a' WHEN 'A' COLLATE utf8_bin        THEN '1' ELSE 2 END
 ;
 
 #
@@ -97,17 +95,15 @@ CASE _latin1'a' WHEN _latin1'A' COLLATE latin1_bin        THEN '1' ELSE 2 END
 # Check COALESCE argument types aggregation
 
 --error 1267
-CREATE TABLE t1 SELECT COALESCE(_latin1'a',_latin2'a');
---error 1267
-CREATE TABLE t1 SELECT COALESCE('a' COLLATE latin1_swedish_ci,'b' COLLATE latin1_bin);
+CREATE TABLE t1 SELECT COALESCE('a' COLLATE utf8_swedish_ci,'b' COLLATE utf8_bin);
 CREATE TABLE t1 SELECT 
  COALESCE(1), COALESCE(1.0),COALESCE('a'),
  COALESCE(1,1.0), COALESCE(1,'1'),COALESCE(1.1,'1'),
- COALESCE('a' COLLATE latin1_bin,'b');
+ COALESCE('a' COLLATE utf8_bin,'b');
 explain extended SELECT 
  COALESCE(1), COALESCE(1.0),COALESCE('a'),
  COALESCE(1,1.0), COALESCE(1,'1'),COALESCE(1.1,'1'),
- COALESCE('a' COLLATE latin1_bin,'b');
+ COALESCE('a' COLLATE utf8_bin,'b');
 SHOW CREATE TABLE t1;
 DROP TABLE t1;
 

@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/global.h>
-#include <definitions.h>
+#include <drizzled/definitions.h>
 #include <drizzled/query_id.h>
 #include <mysys/my_pthread.h>
 

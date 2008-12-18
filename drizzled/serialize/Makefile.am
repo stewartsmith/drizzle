@@ -17,14 +17,15 @@
 
 LDADD = libserialize.la ${PROTOBUF_LIBS} ${UUID_LIBS}
 
-AM_CPPFLAGS = ${PROTOBUF_CFLAGS}
+AM_CPPFLAGS = ${PROTOBUF_CFLAGS} ${GLOBAL_CPPFLAGS}
 libserialize_la_CXXFLAGS =
 
-TESTS_ENVIRONMENT = sh
+TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
 TESTS = check_length.sh
 
 %.pb.h %.pb.cc : %.proto
-	$(PROTOC) --cpp_out=${top_builddir}/drizzled/serialize $<
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
+		--cpp_out=${top_builddir}/drizzled/serialize $<
 
 noinst_PROGRAMS = \
 	       table_reader \
@@ -42,21 +43,23 @@ check_PROGRAMS = length
 noinst_LTLIBRARIES = libserialize.la
 
 libserialize_la_SOURCES = \
-			  table.pb.cc \
-			  replication_event.pb.cc \
-			  master_list.pb.cc \
-			  binary_log.pb.cc \
-			  schema.pb.cc
+		binary_log.pb.cc \
+		master_list.pb.cc \
+		replication_event.pb.cc \
+		schema.pb.cc \
+		table.pb.cc
 
-noinst_HEADERS = table.pb.h \
-		 replication_event.pb.h \
-		 master_list.pb.h \
-		 schema.pb.h \
-		 binary_log.pb.h \
-		 binlog_encoding.h \
-		 serialize.h
+noinst_HEADERS= \
+		binary_log.h \
+		binary_log.pb.h \
+		binlog_encoding.h \
+		ioutil.h \
+		master_list.pb.h \
+		replication_event.pb.h \
+		schema.pb.h \
+		serialize.h \
+		table.pb.h
 
-DEFS= @DEFS@
 
 binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
 binlog_reader_CXXFLAGS = 
@@ -88,7 +91,7 @@ replication_event_reader_CXXFLAGS =
 length_SOURCES = length.cc
 length_CXXFLAGS = -fexceptions
 
-EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto replication_event.proto
+EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto replication_event.proto check_length.sh
 BUILT_SOURCES = schema.pb.h \
 		table.pb.h \
 		binary_log.pb.h \

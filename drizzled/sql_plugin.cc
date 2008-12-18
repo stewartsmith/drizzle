@@ -1565,7 +1565,7 @@ static void update_func_str(Session *, struct st_mysql_sys_var *var,
      * mess gets redesigned
      */
     if (tgt == NULL)
-      sql_print_error(_("Out of memor."));
+      sql_print_error(_("Out of memory."));
 
   }
 }

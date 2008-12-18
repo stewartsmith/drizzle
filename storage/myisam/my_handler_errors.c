@@ -140,9 +140,9 @@ static const char *handler_error_messages[]=
   /* HA_ERR_NEW_FILE */
   N_("The table is of a new format not supported by this version"),
   /* HA_ERR_ROWS_EVENT_APPLY */
-  N_("The event could not be processed no other hanlder error happened"),
+  N_("The event could not be processed no other handler error happened"),
   /* HA_ERR_INITIALIZATION */
-  N_("Got a fatal error during initialzaction of handler"),
+  N_("Got a fatal error during initialzation of handler"),
   /* HA_ERR_FILE_TOO_SHORT */
   N_("File to short; Expected more data in file"),
   /* HA_ERR_WRONG_CRC */
