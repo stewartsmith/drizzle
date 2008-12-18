@@ -186,7 +186,8 @@ our $opt_client_ddd;
 our $opt_manual_gdb;
 our $opt_manual_ddd;
 our $opt_manual_debug;
-our $opt_mtr_build_thread=0;
+# Magic number -69.4 results in traditional test ports starting from 9306.
+our $opt_mtr_build_thread=-69.4;
 our $opt_debugger;
 our $opt_client_debugger;
 
@@ -426,9 +427,6 @@ sub command_line_setup () {
 
   my $opt_comment;
 
-  # Magic number -69.4 results in traditional test ports starting from 9306.
-  set_mtr_build_thread_ports(-69.4);
-
   # If so requested, we try to avail ourselves of a unique build thread number.
   if ( $ENV{'MTR_BUILD_THREAD'} ) {
     if ( lc($ENV{'MTR_BUILD_THREAD'}) eq 'auto' ) {
@@ -621,7 +619,7 @@ sub command_line_setup () {
     $glob_basedir= dirname($glob_basedir);
   }
 
-  if ( -d $opt_testdir and -d $opt_vardir
+  if ( $opt_testdir and -d $opt_testdir and $opt_vardir and -d $opt_vardir
          and -f "$opt_vardir/../../drizzled/drizzled")
   {
     # probably in a VPATH build
@@ -1072,7 +1070,6 @@ sub command_line_setup () {
 
 sub set_mtr_build_thread_ports($) {
   my $mtr_build_thread= shift;
-  $mtr_build_thread= ($mtr_build_thread % 200) - 100;
 
   if ( lc($mtr_build_thread) eq 'auto' ) {
     print "Requesting build thread... ";
@@ -1080,9 +1077,11 @@ sub set_mtr_build_thread_ports($) {
     print "got ".$mtr_build_thread."\n";
   }
 
+  $mtr_build_thread= (($mtr_build_thread * 10) % 2000) - 1000;
+
   # Up to two masters, up to three slaves
   # A magic value in command_line_setup depends on these equations.
-  $opt_master_myport=         $mtr_build_thread * 10 + 10000; # and 1
+  $opt_master_myport=         $mtr_build_thread + 9000; # and 1
   $opt_slave_myport=          $opt_master_myport + 2;  # and 3 4
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
