@@ -733,7 +733,7 @@ BUILT_MAINT_SRC = sql_yacc.cc \
 
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		lex_hash.h \
-		configvar.h \
+		configmake.h \
 		$(PCHHEADERS)
 
 EXTRA_DIST = \
@@ -768,8 +768,8 @@ probes.h: probes.d
 	rm probes.h.bak
 
 configmake.h: Makefile
-	rm -f $@-t $@
-	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
+	@rm -f $@-t $@
+	@{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
 	  echo '#define PREFIX "$(prefix)"'; \
 	  echo '#define EXEC_PREFIX "$(exec_prefix)"'; \
 	  echo '#define BINDIR "$(bindir)"'; \
