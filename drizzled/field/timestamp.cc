@@ -271,7 +271,7 @@ int64_t Field_timestamp::val_int(void)
   if (temp == 0L)				// No time
     return(0);					/* purecov: inspected */
 
-  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (my_time_t)temp);
+  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (time_t)temp);
 
   return time_tmp.year * INT64_C(10000000000) +
          time_tmp.month * INT64_C(100000000) +
@@ -305,7 +305,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
   }
   val_buffer->set_charset(&my_charset_bin);	// Safety
 
-  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(my_time_t)temp);
+  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(time_t)temp);
 
   temp= time_tmp.year % 100;
   if (temp < YY_PART_YEAR - 1)
@@ -369,7 +369,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
   }
   else
   {
-    session->variables.time_zone->gmt_sec_to_TIME(ltime, (my_time_t)temp);
+    session->variables.time_zone->gmt_sec_to_TIME(ltime, (time_t)temp);
   }
   return 0;
 }

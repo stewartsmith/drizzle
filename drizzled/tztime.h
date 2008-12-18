@@ -41,7 +41,7 @@ public:
     Converts time in my_time_t representation to local time in
     broken down DRIZZLE_TIME representation.
   */
-  virtual void   gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const = 0;
+  virtual void   gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const = 0;
   /**
     Because of constness of String returned by get_name() time zone name
     have to be already zeroended to be able to use String::ptr() instead
