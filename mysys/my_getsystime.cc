@@ -171,7 +171,7 @@ time_t my_time_possible_from_micro(uint64_t microtime)
 {
 #if defined(HAVE_GETHRTIME)
   (void) microtime;
-  return my_time(0);                            /* Cached time */
+  return time(0);                            /* Cached time */
 #else
   return (time_t) (microtime / 1000000);
 #endif  /* defined(HAVE_GETHRTIME) */
