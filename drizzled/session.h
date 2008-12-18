@@ -1377,7 +1377,7 @@ public:
     else
       start_utime= utime_after_lock= my_micro_time_and_time(&start_time);
   }
-  inline void	set_current_time()    { start_time= my_time(MY_WME); }
+  inline void	set_current_time()    { start_time= time(NULL); }
   inline void	set_time(time_t t)
   {
     start_time= user_time= t;
