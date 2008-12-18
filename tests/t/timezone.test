@@ -4,6 +4,7 @@
 
 -- require r/have_met_timezone.require
 disable_query_log;
+# Drizzle bug #309403 - returning wrong value for FROM_UNIXTIME
 select FROM_UNIXTIME(24*3600);
 enable_query_log;
 
