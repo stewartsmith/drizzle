@@ -24,7 +24,7 @@
 #include <mysys/hash.h>
 
 
-#include "slave.h"
+#include <drizzled/slave.h>
 
 typedef struct st_slave_info
 {

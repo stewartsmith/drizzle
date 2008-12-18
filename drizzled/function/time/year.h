@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_TIME_YEAR_H
 #define DRIZZLED_FUNCTION_TIME_YEAR_H
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_year :public Item_int_func
 {

@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_TIME_SECOND_H
 #define DRIZZLED_FUNCTION_TIME_SECOND_H
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_second :public Item_int_func
 {

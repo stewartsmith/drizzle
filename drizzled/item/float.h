@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_FLOAT_H
 #define DRIZZLED_ITEM_FLOAT_H
 
+#include <drizzled/item/num.h>
+
 class Item_float :public Item_num
 {
   char *presentation;

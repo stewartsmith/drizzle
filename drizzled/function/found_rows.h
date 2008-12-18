@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTION_FOUND_ROWS_H
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_found_rows :public Item_int_func
 {

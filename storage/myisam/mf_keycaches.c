@@ -24,7 +24,7 @@
 #include <drizzled/global.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_sys.h>
-#include <keycache.h>
+#include "keycache.h"
 #include <mysys/hash.h>
 #include <mystrings/m_string.h>
 

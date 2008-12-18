@@ -1278,7 +1278,7 @@ int ha_start_consistent_snapshot(Session *session)
   */
   if (warn)
     push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
-                 "This MySQL server does not support any "
+                 "This Drizzle server does not support any "
                  "consistent-read capable storage engine");
   return 0;
 }

@@ -64,7 +64,8 @@ using namespace std;
 
 enum {
   OPT_PS_PROTOCOL, OPT_SP_PROTOCOL, OPT_CURSOR_PROTOCOL, OPT_VIEW_PROTOCOL,
-  OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES
+  OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES,
+  OPT_TESTDIR
 };
 
 static int record= 0, opt_sleep= -1;
@@ -72,6 +73,7 @@ static char *opt_db= 0, *opt_pass= 0;
 const char *opt_user= 0, *opt_host= 0, *unix_sock= 0, *opt_basedir= "./";
 const char *opt_logdir= "";
 const char *opt_include= 0, *opt_charsets_dir;
+const char *opt_testdir= 0;
 static int opt_port= 0;
 static int opt_max_connect_retries;
 static bool opt_compress= 0, silent= 0, verbose= 0;
@@ -1282,11 +1284,26 @@ static int compare_files2(File fd, const char* filename2)
   File fd2;
   uint len, len2;
   char buff[512], buff2[512];
+  const char *fname= filename2;
+  string tmpfile;
 
-  if ((fd2= my_open(filename2, O_RDONLY, MYF(0))) < 0)
+  if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
     my_close(fd, MYF(0));
-    die("Failed to open second file: '%s'", filename2);
+    if (opt_testdir != NULL)
+    {
+      tmpfile= opt_testdir;
+      if (tmpfile[tmpfile.length()] != '/')
+        tmpfile.append("/");
+      tmpfile.append(filename2);
+      fname= tmpfile.c_str();
+    }
+    if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
+    {
+      my_close(fd, MYF(0));
+    
+      die("Failed to open second file: '%s'", fname);
+    }
   }
   while((len= my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
@@ -2088,6 +2105,14 @@ static void do_source(struct st_command *command)
     ; /* Do nothing */
   else
   {
+    if (opt_testdir != NULL)
+    {
+      string testdir(opt_testdir);
+      if (testdir[testdir.length()] != '/')
+        testdir.append("/");
+      testdir.append(ds_filename);
+      ds_filename.swap(testdir);
+    }
     open_file(ds_filename.c_str());
   }
 
@@ -4443,6 +4468,9 @@ static struct my_option my_long_options[] =
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"include", 'i', "Include SQL before each test case.", (char**) &opt_include,
    (char**) &opt_include, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"testdir", OPT_TESTDIR, "Path to use to search for test files",
+   (char**) &opt_testdir,
+   (char**) &opt_testdir, 0,GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"logdir", OPT_LOG_DIR, "Directory for log files", (char**) &opt_logdir,
    (char**) &opt_logdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"mark-progress", OPT_MARK_PROGRESS,

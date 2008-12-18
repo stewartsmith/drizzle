@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_TIME_TIMESTAMP_DIFF_H
 #define DRIZZLED_FUNCTION_TIME_TIMESTAMP_DIFF_H
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_timestamp_diff :public Item_int_func
 {
