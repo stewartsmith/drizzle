@@ -352,8 +352,8 @@ static RETSIGTYPE process_alarm_part2(int)
     else
     {
       time_t now= time(NULL);
-      uint32_t next= now+10-(now%10);
-      while ((alarm_data=(ALARM*) queue_top(&alarm_queue))->expire_time <= now)
+      time_t next= now+10-(now%10);
+      while ((alarm_data= (ALARM*) queue_top(&alarm_queue))->expire_time <= now)
       {
         alarm_data->alarmed=1;			/* Info to thread */
         if (pthread_equal(alarm_data->thread,alarm_thread) ||
@@ -372,7 +372,7 @@ static RETSIGTYPE process_alarm_part2(int)
 #ifndef USE_ALARM_THREAD
       if (alarm_queue.elements)
       {
-        alarm((uint) (alarm_data->expire_time-now));
+        alarm((uint32_t) (alarm_data->expire_time-now));
         next_alarm_expire_time= alarm_data->expire_time;
       }
 #endif

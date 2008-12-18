@@ -1452,7 +1452,8 @@ if test "$SUNCC" = "yes"
 then
   if test "$ac_datarace" = "yes"
   then
-    CXXFLAGS="${CXXFLAGS} -xinstrument-datarace"
+    CFLAGS="${CFLAGS} -xinstrument=datarace"
+    CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
   fi
   CC_WARNINGS="-v -xc99=all -errtags=yes"
   CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
