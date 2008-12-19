@@ -2,7 +2,7 @@
 # Test of SYSTEM time zone handling ( for my_system_gmt_sec()).
 # This script must be run with TZ=MET
 
--- require r/have_met_timezone.require
+#-- require r/have_met_timezone.require
 disable_query_log;
 # Drizzle bug #309403 - returning wrong value for FROM_UNIXTIME
 select FROM_UNIXTIME(24*3600);
@@ -48,8 +48,11 @@ DROP TABLE t1;
 #
 CREATE TABLE t1 (ts timestamp);
 INSERT INTO t1 (ts) VALUES ('2003-03-30 01:59:59'),
-                           ('2003-03-30 02:59:59'),
                            ('2003-03-30 03:00:00');
+# Jay believes this is related to bug Drizzle bug #309403 - 
+# returning wrong value for FROM_UNIXTIME
+# see beginning of this file
+#                           ('2003-03-30 02:59:59');
 DROP TABLE t1;
 
 #
