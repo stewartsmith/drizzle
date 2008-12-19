@@ -1,0 +1,3 @@
+create table t1 select 1 as i;;
+rename table t1 to t2;
+drop table t2;

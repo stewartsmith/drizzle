@@ -160,6 +160,8 @@ void unireg_init();
 void unireg_end(void) __attribute__((noreturn));
 void unireg_abort(int exit_code) __attribute__((noreturn));
 
+int mysql_frm_type(char *path, enum legacy_db_type *dbt);
+
 bool mysql_create_frm(Session *session, const char *file_name,
                       const char *db, const char *table,
                       HA_CREATE_INFO *create_info,
