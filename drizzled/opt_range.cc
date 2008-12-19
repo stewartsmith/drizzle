@@ -1017,11 +1017,11 @@ SQL_SELECT *make_select(Table *head, table_map const_tables,
   *error=0;
 
   if (!conds && !allow_null_cond)
-    return(0);
+    return 0;
   if (!(select= new SQL_SELECT))
   {
     *error= 1;			// out of memory
-    return(0);		/* purecov: inspected */
+    return 0;		/* purecov: inspected */
   }
   select->read_tables=read_tables;
   select->const_tables=const_tables;
@@ -1190,7 +1190,7 @@ QUICK_INDEX_MERGE_SELECT::QUICK_INDEX_MERGE_SELECT(Session *session_param,
 
 int QUICK_INDEX_MERGE_SELECT::init()
 {
-  return(0);
+  return 0;
 }
 
 int QUICK_INDEX_MERGE_SELECT::reset()
@@ -1295,7 +1295,7 @@ int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
   {
     if (init() || reset())
     {
-      return(1);
+      return 0;
     }
     head->column_bitmaps_set(&column_bitmap, &column_bitmap);
     goto end;
@@ -1305,7 +1305,7 @@ int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
   if (free_file)
   {
     /* already have own 'handler' object. */
-    return(0);
+    return 0;
   }
 
   session= head->in_use;
@@ -1357,13 +1357,13 @@ end:
   bitmap_copy(&column_bitmap, head->read_set);
   head->column_bitmaps_set(&column_bitmap, &column_bitmap);
 
-  return(0);
+  return 0;
 
 failure:
   head->column_bitmaps_set(save_read_set, save_write_set);
   delete file;
   file= save_file;
-  return(1);
+  return 0;
 }
 
 
@@ -1398,13 +1398,13 @@ int QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handler)
       selects.
     */
     if (quick->init_ror_merged_scan(true))
-      return(1);
+      return 0;
     quick->file->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
   }
   while ((quick= quick_it++))
   {
     if (quick->init_ror_merged_scan(false))
-      return(1);
+      return 0;
     quick->file->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
     /* All merged scans share the same record buffer in intersection. */
     quick->record= head->record[0];
@@ -1412,9 +1412,9 @@ int QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handler)
 
   if (need_to_fetch_row && head->file->ha_rnd_init(1))
   {
-    return(1);
+    return 0;
   }
-  return(0);
+  return 0;
 }
 
 
@@ -1430,13 +1430,13 @@ int QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handler)
 int QUICK_ROR_INTERSECT_SELECT::reset()
 {
   if (!scans_inited && init_ror_merged_scan(true))
-    return(1);
+    return 0;
   scans_inited= true;
   List_iterator_fast<QUICK_RANGE_SELECT> it(quick_selects);
   QUICK_RANGE_SELECT *quick;
   while ((quick= it++))
     quick->reset();
-  return(0);
+  return 0;
 }
 
 
@@ -1502,13 +1502,13 @@ int QUICK_ROR_UNION_SELECT::init()
                  (void*) this))
   {
     memset(&queue, 0, sizeof(QUEUE));
-    return(1);
+    return 0;
   }
 
   if (!(cur_rowid= (unsigned char*) alloc_root(&alloc, 2*head->file->ref_length)))
-    return(1);
+    return 0;
   prev_rowid= cur_rowid + head->file->ref_length;
-  return(0);
+  return 0;
 }
 
 
@@ -1552,7 +1552,7 @@ int QUICK_ROR_UNION_SELECT::reset()
     while ((quick= it++))
     {
       if (quick->init_ror_merged_scan(false))
-        return(1);
+        return 0;
     }
     scans_inited= true;
   }
@@ -1565,7 +1565,7 @@ int QUICK_ROR_UNION_SELECT::reset()
   while ((quick= it++))
   {
     if (quick->reset())
-      return(1);
+      return 0;
     if ((error= quick->get_next()))
     {
       if (error == HA_ERR_END_OF_FILE)
@@ -1578,10 +1578,10 @@ int QUICK_ROR_UNION_SELECT::reset()
 
   if (head->file->ha_rnd_init(1))
   {
-    return(1);
+    return 0;
   }
 
-  return(0);
+  return 0;
 }
 
 
@@ -1954,7 +1954,7 @@ public:
       quick->records= records;
       quick->read_time= read_cost;
     }
-    return(quick);
+    return quick;
   }
 };
 
@@ -2184,7 +2184,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
   needed_reg.clear_all();
   quick_keys.clear_all();
   if (keys_to_use.is_clear_all())
-    return(0);
+    return 0;
   records= head->file->stats.records;
   if (!records)
     records++;					/* purecov: inspected */
@@ -2195,7 +2195,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
   if (limit < records)
     read_time= (double) records + scan_time + 1; // Force to use index
   else if (read_time <= 2.0 && !force_quick_range)
-    return(0);				/* No need for quick select */
+    return 0;				/* No need for quick select */
 
   keys_to_use.intersect(head->keys_in_use_for_query);
   if (!keys_to_use.is_clear_all())
@@ -2207,7 +2207,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
     PARAM param;
 
     if (check_stack_overrun(session, 2*STACK_MIN_SIZE, NULL))
-      return(0);                           // Fatal error flag is set
+      return 0;                           // Fatal error flag is set
 
     /* set up parameter that is passed to all functions */
     param.session= session;
@@ -2234,7 +2234,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
     {
       session->no_errors=0;
       free_root(&alloc,MYF(0));			// Return memory & allocator
-      return(0);				// Can't use range
+      return 0;				// Can't use range
     }
     key_parts= param.key_parts;
     session->mem_root= &alloc;
@@ -2507,7 +2507,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   if (!(range_scans= (TRP_RANGE**)alloc_root(param->mem_root,
                                              sizeof(TRP_RANGE*)*
                                              n_child_scans)))
-    return(NULL);
+    return NULL;
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
     analyze possibility of ROR scans. Also calculate some values needed by
@@ -2552,7 +2552,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
       Bail out if it is obvious that both index_merge and ROR-union will be
       more expensive
     */
-    return(NULL);
+    return NULL;
   }
   if (all_scans_rors)
   {
@@ -2589,7 +2589,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   {
     if (!(param->imerge_cost_buff= (uint*)alloc_root(param->mem_root,
                                                      unique_calc_buff_size)))
-      return(NULL);
+      return NULL;
     param->imerge_cost_buff_size= unique_calc_buff_size;
   }
 
@@ -2761,7 +2761,7 @@ ROR_SCAN_INFO *make_ror_scan(const PARAM *param, int idx, SEL_ARG *sel_arg)
 
   if (!(ror_scan= (ROR_SCAN_INFO*)alloc_root(param->mem_root,
                                              sizeof(ROR_SCAN_INFO))))
-    return(NULL);
+    return NULL;
 
   ror_scan->idx= idx;
   ror_scan->keynr= keynr= param->real_keynr[idx];
@@ -2772,11 +2772,11 @@ ROR_SCAN_INFO *make_ror_scan(const PARAM *param, int idx, SEL_ARG *sel_arg)
 
   if (!(bitmap_buf= (my_bitmap_map*) alloc_root(param->mem_root,
                                                 param->fields_bitmap_size)))
-    return(NULL);
+    return NULL;
 
   if (bitmap_init(&ror_scan->covered_fields, bitmap_buf,
                   param->table->s->fields, false))
-    return(NULL);
+    return NULL;
   bitmap_clear_all(&ror_scan->covered_fields);
 
   KEY_PART_INFO *key_part= param->table->key_info[keynr].key_part;
@@ -3124,7 +3124,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   if (selectivity_mult == 1.0)
   {
     /* Don't add this scan if it doesn't improve selectivity. */
-    return(false);
+    return false;
   }
 
   info->out_rows *= selectivity_mult;
@@ -3161,7 +3161,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
                         is_interrupted, &sweep_cost);
     info->total_cost += sweep_cost.total_cost();
   }
-  return(true);
+  return true;
 }
 
 
@@ -3238,7 +3238,7 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const PARAM *param, SEL_TREE *tree,
   double min_cost= DBL_MAX;
 
   if ((tree->n_ror_scans < 2) || !param->table->file->stats.records)
-    return(NULL);
+    return NULL;
 
   /*
     Step1: Collect ROR-able SEL_ARGs and create ROR_SCAN_INFO for each of
@@ -3327,7 +3327,7 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const PARAM *param, SEL_TREE *tree,
 
   if (intersect_scans_best == intersect_scans)
   {
-    return(NULL);
+    return NULL;
   }
 
   print_ror_scans_arr(param->table,
@@ -3363,7 +3363,7 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const PARAM *param, SEL_TREE *tree,
     if (!(trp->first_scan=
            (ROR_SCAN_INFO**)alloc_root(param->mem_root,
                                        sizeof(ROR_SCAN_INFO*)*best_num)))
-      return(NULL);
+      return NULL;
     memcpy(trp->first_scan, intersect_scans, best_num*sizeof(ROR_SCAN_INFO*));
     trp->last_scan=  trp->first_scan + best_num;
     trp->is_covering= intersect_best->is_covering;
@@ -3441,7 +3441,7 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
   if (!covered_fields->bitmap ||
       bitmap_init(covered_fields, covered_fields->bitmap,
                   param->table->s->fields, false))
-    return(0);
+    return 0;
   bitmap_clear_all(covered_fields);
 
   double total_cost= 0.0f;
@@ -3479,14 +3479,14 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
     total_cost += (*ror_scan_mark)->index_read_cost;
     records += (*ror_scan_mark)->records;
     if (total_cost > read_time)
-      return(NULL);
+      return NULL;
     /* F=F-covered by first(I) */
     bitmap_union(covered_fields, &(*ror_scan_mark)->covered_fields);
     all_covered= bitmap_is_subset(&param->needed_fields, covered_fields);
   } while ((++ror_scan_mark < ror_scans_end) && !all_covered);
 
   if (!all_covered || (ror_scan_mark - tree->ror_scans) == 1)
-    return(NULL);
+    return NULL;
 
   /*
     Ok, [tree->ror_scans .. ror_scan) holds covering index_intersection with
@@ -3502,7 +3502,7 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
                 (TIME_FOR_COMPARE_ROWID * M_LN2);
 
   if (total_cost > read_time)
-    return(NULL);
+    return NULL;
 
   TRP_ROR_INTERSECT *trp;
   if (!(trp= new (param->mem_root) TRP_ROR_INTERSECT))
@@ -3511,7 +3511,7 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
   if (!(trp->first_scan= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
                                                      sizeof(ROR_SCAN_INFO*)*
                                                      best_num)))
-    return(NULL);
+    return NULL;
   memcpy(trp->first_scan, tree->ror_scans, best_num*sizeof(ROR_SCAN_INFO*));
   trp->last_scan=  trp->first_scan + best_num;
   trp->is_covering= true;
@@ -3674,7 +3674,7 @@ QUICK_SELECT_I *TRP_ROR_INTERSECT::make_quick(PARAM *param,
           quick_intrsect->push_quick_back(quick))
       {
         delete quick_intrsect;
-        return(NULL);
+        return NULL;
       }
     }
     if (cpk_scan)
@@ -3685,7 +3685,7 @@ QUICK_SELECT_I *TRP_ROR_INTERSECT::make_quick(PARAM *param,
                                     0, alloc)))
       {
         delete quick_intrsect;
-        return(NULL);
+        return NULL;
       }
       quick->file= NULL;
       quick_intrsect->cpk_quick= quick;
@@ -3712,7 +3712,7 @@ QUICK_SELECT_I *TRP_ROR_UNION::make_quick(PARAM *param, bool, MEM_ROOT *)
     {
       if (!(quick= (*scan)->make_quick(param, false, &quick_roru->alloc)) ||
           quick_roru->push_quick_back(quick))
-        return(NULL);
+        return NULL;
     }
     quick_roru->records= records;
     quick_roru->read_time= read_cost;
@@ -4130,7 +4130,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
 	SEL_TREE *new_tree=get_mm_tree(param,item);
 	if (param->session->is_fatal_error ||
             param->alloced_sel_args > SEL_ARG::MAX_SEL_ARGS)
-	  return(0);	// out of memory
+	  return 0;	// out of memory
 	tree=tree_and(param,tree,new_tree);
 	if (tree && tree->type == SEL_TREE::IMPOSSIBLE)
 	  break;
@@ -4146,7 +4146,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
 	{
 	  SEL_TREE *new_tree=get_mm_tree(param,item);
 	  if (!new_tree)
-	    return(0);	// out of memory
+	    return 0;	// out of memory
 	  tree=tree_or(param,tree,new_tree);
 	  if (!tree || tree->type == SEL_TREE::ALWAYS)
 	    break;
@@ -4180,7 +4180,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
     ref_tables= cond->used_tables();
     if ((ref_tables & param->current_table) ||
 	(ref_tables & ~(param->prev_tables | param->read_tables)))
-      return(0);
+      return 0;
     return(new SEL_TREE(SEL_TREE::MAYBE));
   }
 
@@ -4189,7 +4189,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
       cond_func->functype() == Item_func::IN_FUNC)
     inv= ((Item_func_opt_neg *) cond_func)->negated;
   else if (cond_func->select_optimize() == Item_func::OPTIMIZE_NONE)
-    return(0);
+    return 0;
 
   param->cond= cond;
 
@@ -4230,7 +4230,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
   {
     Item_func_in *func=(Item_func_in*) cond_func;
     if (func->key_item()->real_item()->type() != Item::FIELD_ITEM)
-      return(0);
+      return 0;
     field_item= (Item_field*) (func->key_item()->real_item());
     ftree= get_full_func_mm_tree(param, cond_func, field_item, NULL, inv);
     break;
@@ -4239,7 +4239,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
   {
     Item_equal *item_equal= (Item_equal *) cond;
     if (!(value= item_equal->get_const()))
-      return(0);
+      return 0;
     Item_equal_iterator it(*item_equal);
     ref_tables= value->used_tables();
     while ((field_item= it++))
@@ -4270,7 +4270,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
       value= cond_func->arguments()[0];
     }
     else
-      return(0);
+      return 0;
     ftree= get_full_func_mm_tree(param, cond_func, field_item, value, inv);
   }
 
@@ -4284,21 +4284,21 @@ get_mm_parts(RANGE_OPT_PARAM *param, COND *cond_func, Field *field,
 	     Item *value, Item_result)
 {
   if (field->table != param->table)
-    return(0);
+    return 0;
 
   KEY_PART *key_part = param->key_parts;
   KEY_PART *end = param->key_parts_end;
   SEL_TREE *tree=0;
   if (value &&
       value->used_tables() & ~(param->prev_tables | param->read_tables))
-    return(0);
+    return 0;
   for (; key_part != end ; key_part++)
   {
     if (field->eq(key_part->field))
     {
       SEL_ARG *sel_arg=0;
       if (!tree && !(tree=new SEL_TREE()))
-	return(0);				// OOM
+	return 0;				// OOM
       if (!value || !(value->used_tables() & ~param->read_tables))
       {
 	sel_arg=get_mm_leaf(param,cond_func,
@@ -4315,7 +4315,7 @@ get_mm_parts(RANGE_OPT_PARAM *param, COND *cond_func, Field *field,
       {
 	// This key may be used later
 	if (!(sel_arg= new SEL_ARG(SEL_ARG::MAYBE_KEY)))
-	  return(0);			// OOM
+	  return 0;			// OOM
       }
       sel_arg->part=(unsigned char) key_part->part;
       tree->keys[key_part->key]=sel_add(tree->keys[key_part->key],sel_arg);
@@ -4767,7 +4767,7 @@ bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2,
   common_keys.intersect(tree2->keys_map);
 
   if (common_keys.is_clear_all())
-    return(false);
+    return false;
 
   /* trees have a common key, check if they refer to same key part */
   SEL_ARG **key1,**key2;
@@ -4779,11 +4779,11 @@ bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2,
       key2= tree2->keys + key_no;
       if ((*key1)->part == (*key2)->part)
       {
-        return(true);
+        return true;
       }
     }
   }
-  return(false);
+  return false;
 }
 
 
@@ -4866,7 +4866,7 @@ static SEL_TREE *
 tree_or(RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2)
 {
   if (!tree1 || !tree2)
-    return(0);
+    return 0;
   if (tree1->type == SEL_TREE::IMPOSSIBLE || tree2->type == SEL_TREE::ALWAYS)
     return(tree2);
   if (tree2->type == SEL_TREE::IMPOSSIBLE || tree1->type == SEL_TREE::ALWAYS)
@@ -4944,7 +4944,7 @@ tree_or(RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2)
         result= tree1;
     }
   }
-  return(result);
+  return result;
 }
 
 
@@ -5555,7 +5555,7 @@ SEL_ARG::tree_delete(SEL_ARG *key)
   }
 
   if (root == &null_element)
-    return(0);				// Maybe root later
+    return 0;				// Maybe root later
   if (remove_color == BLACK)
     root=rb_delete_fixup(root,nod,fix_par);
 #ifdef EXTRA_DEBUG
@@ -6393,7 +6393,7 @@ get_quick_select(PARAM *param,uint32_t idx,SEL_ARG *key_tree, uint32_t mrr_flags
                     param->table->key_info[param->real_keynr[idx]].key_parts);
     }
   }
-  return(quick);
+  return quick;
 }
 
 
@@ -6755,13 +6755,13 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
     reset here.
   */
   if (cur_quick->init() || cur_quick->reset())
-    return(1);
+    return 0;
 
   unique= new Unique(refpos_order_cmp, (void *)file,
                      file->ref_length,
                      session->variables.sortbuff_size);
   if (!unique)
-    return(1);
+    return 0;
   for (;;)
   {
     while ((result= cur_quick->get_next()) == HA_ERR_END_OF_FILE)
@@ -6774,7 +6774,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
       if (cur_quick->file->inited != handler::NONE)
         cur_quick->file->ha_index_end();
       if (cur_quick->init() || cur_quick->reset())
-        return(1);
+        return 0;
     }
 
     if (result)
@@ -6782,13 +6782,13 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
       if (result != HA_ERR_END_OF_FILE)
       {
         cur_quick->range_end();
-        return(result);
+        return result;
       }
       break;
     }
 
     if (session->killed)
-      return(1);
+      return 0;
 
     /* skip row if it will be retrieved by clustered PK scan */
     if (pk_quick_select && pk_quick_select->row_in_ranges())
@@ -6797,7 +6797,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
     cur_quick->file->position(cur_quick->record);
     result= unique->unique_add((char*)cur_quick->file->ref);
     if (result)
-      return(1);
+      return 0;
 
   }
 
@@ -6809,7 +6809,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
   file->extra(HA_EXTRA_NO_KEYREAD);
   /* start table scan */
   init_read_record(&read_record, session, head, (SQL_SELECT*) 0, 1, 1);
-  return(result);
+  return result;
 }
 
 
@@ -6839,12 +6839,12 @@ int QUICK_INDEX_MERGE_SELECT::get_next()
       doing_pk_scan= true;
       if ((result= pk_quick_select->init()) ||
           (result= pk_quick_select->reset()))
-        return(result);
+        return result;
       return(pk_quick_select->get_next());
     }
   }
 
-  return(result);
+  return result;
 }
 
 
@@ -7211,7 +7211,7 @@ int QUICK_RANGE_SELECT::get_next()
     /* Restore bitmaps set on entry */
     head->column_bitmaps_set_no_signal(save_read_set, save_write_set);
   }
-  return(result);
+  return result;
 }
 
 
@@ -7258,7 +7258,7 @@ int QUICK_RANGE_SELECT::get_next_prefix(uint32_t prefix_length,
       result= file->index_read_map(record, cur_prefix, keypart_map,
                                    HA_READ_AFTER_KEY);
       if (result || (file->compare_key(file->end_range) <= 0))
-        return(result);
+        return result;
     }
 
     uint32_t count= ranges.elements - (cur_range - (QUICK_RANGE**) ranges.buffer);
@@ -7266,7 +7266,7 @@ int QUICK_RANGE_SELECT::get_next_prefix(uint32_t prefix_length,
     {
       /* Ranges have already been used up before. None is left for read. */
       last_range= 0;
-      return(HA_ERR_END_OF_FILE);
+      return HA_ERR_END_OF_FILE;
     }
     last_range= *(cur_range++);
 
@@ -7294,7 +7294,7 @@ int QUICK_RANGE_SELECT::get_next_prefix(uint32_t prefix_length,
       last_range= 0;			// Stop searching
 
     if (result != HA_ERR_END_OF_FILE)
-      return(result);
+      return result;
     last_range= 0;			// No matching rows; go to next range
   }
 }
@@ -7398,14 +7398,14 @@ int QUICK_SELECT_DESC::get_next()
       if (!result)
       {
 	if (cmp_prev(*rev_it.ref()) == 0)
-	  return(0);
+	  return 0;
       }
       else if (result != HA_ERR_END_OF_FILE)
-	return(result);
+	return result;
     }
 
     if (!(last_range= rev_it++))
-      return(HA_ERR_END_OF_FILE);		// All ranges used
+      return HA_ERR_END_OF_FILE;		// All ranges used
 
     if (last_range->flag & NO_MAX_RANGE)        // Read last record
     {
@@ -7413,7 +7413,7 @@ int QUICK_SELECT_DESC::get_next()
       if ((local_error=file->index_last(record)))
 	return(local_error);		// Empty table
       if (cmp_prev(last_range) == 0)
-	return(0);
+	return 0;
       last_range= 0;                            // No match; go to next range
       continue;
     }
@@ -7437,7 +7437,7 @@ int QUICK_SELECT_DESC::get_next()
     if (result)
     {
       if (result != HA_ERR_KEY_NOT_FOUND && result != HA_ERR_END_OF_FILE)
-	return(result);
+	return result;
       last_range= 0;                            // Not found, to next range
       continue;
     }
@@ -7445,7 +7445,7 @@ int QUICK_SELECT_DESC::get_next()
     {
       if (last_range->flag == (UNIQUE_RANGE | EQ_RANGE))
 	last_range= 0;				// Stop searching
-      return(0);				// Found key is in range
+      return 0;				// Found key is in range
     }
     last_range= 0;                              // To next range
   }
@@ -7873,21 +7873,21 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
 
   /* Perform few 'cheap' tests whether this access method is applicable. */
   if (!join)
-    return(NULL);        /* This is not a select statement. */
+    return NULL;        /* This is not a select statement. */
   if ((join->tables != 1) ||  /* The query must reference one table. */
       ((!join->group_list) && /* Neither GROUP BY nor a DISTINCT query. */
        (!join->select_distinct)) ||
       (join->select_lex->olap == ROLLUP_TYPE)) /* Check (B3) for ROLLUP */
-    return(NULL);
+    return NULL;
   if (table->s->keys == 0)        /* There are no indexes to use. */
-    return(NULL);
+    return NULL;
 
   /* Analyze the query in more detail. */
   List_iterator<Item> select_items_it(join->fields_list);
 
   /* Check (SA1,SA4) and store the only MIN/MAX argument - the C attribute.*/
   if (join->make_sum_func_list(join->all_fields, join->fields_list, 1))
-    return(NULL);
+    return NULL;
   if (join->sum_funcs[0])
   {
     Item_sum *min_max_item;
@@ -7899,7 +7899,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
       else if (min_max_item->sum_func() == Item_sum::MAX_FUNC)
         have_max= true;
       else
-        return(NULL);
+        return NULL;
 
       /* The argument of MIN/MAX. */
       Item *expr= min_max_item->args[0]->real_item();
@@ -7908,10 +7908,10 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
         if (! min_max_arg_item)
           min_max_arg_item= (Item_field*) expr;
         else if (! min_max_arg_item->eq(expr, 1))
-          return(NULL);
+          return NULL;
       }
       else
-        return(NULL);
+        return NULL;
     }
   }
 
@@ -7921,7 +7921,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
     while ((item= select_items_it++))
     {
       if (item->type() != Item::FIELD_ITEM)
-        return(NULL);
+        return NULL;
     }
   }
 
@@ -7929,7 +7929,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
   for (tmp_group= join->group_list; tmp_group; tmp_group= tmp_group->next)
   {
     if ((*tmp_group->item)->type() != Item::FIELD_ITEM)
-      return(NULL);
+      return NULL;
   }
 
   /*
@@ -8215,12 +8215,12 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
     cur_group_prefix_len= 0;
   }
   if (!index_info) /* No usable index found. */
-    return(NULL);
+    return NULL;
 
   /* Check (SA3) for the where clause. */
   if (join->conds && min_max_arg_item &&
       !check_group_min_max_predicates(join->conds, min_max_arg_item, Field::itRAW))
-    return(NULL);
+    return NULL;
 
   /* The query passes all tests, so construct a new TRP object. */
   read_plan= new (param->mem_root)
@@ -8234,13 +8234,13 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
   if (read_plan)
   {
     if (tree && read_plan->quick_prefix_records == 0)
-      return(NULL);
+      return NULL;
 
     read_plan->read_cost= best_read_cost;
     read_plan->records=   best_records;
   }
 
-  return(read_plan);
+  return read_plan;
 }
 
 
@@ -8282,9 +8282,9 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
     {
       if (!check_group_min_max_predicates(and_or_arg, min_max_arg_item,
                                          image_type))
-        return(false);
+        return false;
     }
-    return(true);
+    return true;
   }
 
   /*
@@ -8297,7 +8297,7 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
     so.
   */
   if (cond_type == Item::SUBSELECT_ITEM)
-    return(false);
+    return false;
 
   /* We presume that at this point there are no other Items than functions. */
   assert(cond_type == Item::FUNC_ITEM);
@@ -8328,7 +8328,7 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
             pred_type != Item_func::ISNOTNULL_FUNC &&
             pred_type != Item_func::EQ_FUNC        &&
             pred_type != Item_func::NE_FUNC)
-          return(false);
+          return false;
 
         /* Check that pred compares min_max_arg_item with a constant. */
         Item *args[3];
@@ -8336,7 +8336,7 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
         bool inv;
         /* Test if this is a comparison of a field and a constant. */
         if (!simple_pred(pred, args, &inv))
-          return(false);
+          return false;
 
         /* Check for compatible string comparisons - similar to get_mm_leaf. */
         if (args[0] && args[1] && !args[2] && // this is a binary function
@@ -8355,24 +8355,24 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
              */
              (args[1]->result_type() != STRING_RESULT &&
               min_max_arg_item->field->cmp_type() != args[1]->result_type())))
-          return(false);
+          return false;
       }
     }
     else if (cur_arg->type() == Item::FUNC_ITEM)
     {
       if (!check_group_min_max_predicates(cur_arg, min_max_arg_item,
                                          image_type))
-        return(false);
+        return false;
     }
     else if (cur_arg->const_item())
     {
-      return(true);
+      return true;
     }
     else
-      return(false);
+      return false;
   }
 
-  return(true);
+  return true;
 }
 
 
@@ -8539,7 +8539,7 @@ SEL_ARG * get_index_range_tree(uint32_t index, SEL_TREE* range_tree, PARAM *para
     idx++;
   }
   *param_idx= idx;
-  return(range_tree->keys[idx]);
+  return range_tree->keys[idx];
 }
 
 
@@ -8674,7 +8674,6 @@ void cost_group_min_max(Table* table, KEY *index_info, uint32_t used_key_parts,
 
   *read_cost= io_cost + cpu_cost;
   *records= num_groups;
-  return;
 }
 
 
@@ -8712,12 +8711,12 @@ TRP_GROUP_MIN_MAX::make_quick(PARAM *param, bool, MEM_ROOT *parent_alloc)
                                         read_cost, records, key_infix_len,
                                         key_infix, parent_alloc);
   if (!quick)
-    return(NULL);
+    return NULL;
 
   if (quick->init())
   {
     delete quick;
-    return(NULL);
+    return NULL;
   }
 
   if (range_tree)
@@ -8756,7 +8755,7 @@ TRP_GROUP_MIN_MAX::make_quick(PARAM *param, bool, MEM_ROOT *parent_alloc)
         {
           delete quick;
           quick= NULL;
-          return(NULL);
+          return NULL;
         }
         min_max_range= min_max_range->next;
       }
@@ -8768,7 +8767,7 @@ TRP_GROUP_MIN_MAX::make_quick(PARAM *param, bool, MEM_ROOT *parent_alloc)
   quick->update_key_stat();
   quick->adjust_prefix_ranges();
 
-  return(quick);
+  return quick;
 }
 
 
@@ -8945,7 +8944,6 @@ QUICK_GROUP_MIN_MAX_SELECT::~QUICK_GROUP_MIN_MAX_SELECT()
   delete min_functions_it;
   delete max_functions_it;
   delete quick_prefix_select;
-  return;
 }
 
 
@@ -9122,16 +9120,16 @@ int QUICK_GROUP_MIN_MAX_SELECT::reset(void)
 
   file->extra(HA_EXTRA_KEYREAD); /* We need only the key attributes */
   if ((result= file->ha_index_init(index,1)))
-    return(result);
+    return result;
   if (quick_prefix_select && quick_prefix_select->reset())
-    return(1);
+    return 0;
   result= file->index_last(record);
   if (result == HA_ERR_END_OF_FILE)
-    return(0);
+    return 0;
   /* Save the prefix of the last group. */
   key_copy(last_prefix, record, index_info, group_prefix_len);
 
-  return(0);
+  return 0;
 }
 
 
@@ -9208,8 +9206,8 @@ int QUICK_GROUP_MIN_MAX_SELECT::get_next()
       if (max_res == 0)
         update_max_result();
       /* If a MIN was found, a MAX must have been found as well. */
-      assert((have_max && !have_min) ||
-                  (have_max && have_min && (max_res == 0)));
+      assert(((have_max && !have_min) ||
+                  (have_max && have_min && (max_res == 0))));
     }
     /*
       If this is just a GROUP BY or DISTINCT without MIN or MAX and there
@@ -9238,7 +9236,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::get_next()
   else if (result == HA_ERR_KEY_NOT_FOUND)
     result= HA_ERR_END_OF_FILE;
 
-  return(result);
+  return result;
 }
 
 
@@ -9273,7 +9271,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min()
   if (min_max_ranges.elements > 0)
   {
     if ((result= next_min_in_range()))
-      return(result);
+      return result;
   }
   else
   {
@@ -9283,7 +9281,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min()
       if ((result= file->index_read_map(record, group_prefix,
                                         make_prev_keypart_map(real_key_parts),
                                         HA_READ_KEY_EXACT)))
-        return(result);
+        return result;
     }
 
     /*
@@ -9324,7 +9322,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min()
     If the MIN attribute is non-nullable, this->record already contains the
     MIN key in the group, so just return.
   */
-  return(result);
+  return result;
 }
 
 
@@ -9355,7 +9353,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_max()
     result= file->index_read_map(record, group_prefix,
                                  make_prev_keypart_map(real_key_parts),
                                  HA_READ_PREFIX_LAST);
-  return(result);
+  return result;
 }
 
 
@@ -9389,7 +9387,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
     unsigned char *cur_prefix= seen_first_key ? group_prefix : NULL;
     if ((result= quick_prefix_select->get_next_prefix(group_prefix_len,
                          make_prev_keypart_map(group_key_parts), cur_prefix)))
-      return(result);
+      return result;
     seen_first_key= true;
   }
   else
@@ -9398,7 +9396,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
     {
       result= file->index_first(record);
       if (result)
-        return(result);
+        return result;
       seen_first_key= true;
     }
     else
@@ -9408,7 +9406,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
                                    make_prev_keypart_map(group_key_parts),
                                    HA_READ_AFTER_KEY);
       if (result)
-        return(result);
+        return result;
     }
   }
 
@@ -9419,7 +9417,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
     memcpy(group_prefix + group_prefix_len,
            key_infix, key_infix_len);
 
-  return(0);
+  return 0;
 }
 
 
@@ -9777,8 +9775,6 @@ static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map, cons
   }
   if (!tmp.length())
     tmp.append(STRING_WITH_LEN("(empty)"));
-
-  return;
 }
 
 
@@ -9797,7 +9793,6 @@ static void print_ror_scans_arr(Table *table,
   }
   if (!tmp.length())
     tmp.append(STRING_WITH_LEN("(empty)"));
-  return;
 }
 
 /*****************************************************************************
