@@ -801,12 +801,12 @@ configmake.h: Makefile
 	mv $@-t $@
 
 
+SUFFIXES = .d .gch
+
 if BUILD_GCC_PCH
-%.h.gch: %.h
+.h.gch:
 	$(CXXCOMPILE) -include config.h ${NO_UNUSED_MACROS} -c $<
 endif
-
-SUFFIXES = .d
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
