@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/error.h>
+#include <drizzled/item/num.h>
 #include <drizzled/item/float.h>
 #include CMATH_H
 

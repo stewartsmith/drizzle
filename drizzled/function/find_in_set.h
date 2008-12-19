@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTION_FIND_IN_SET_H
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_find_in_set :public Item_int_func
 {

@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_SIGNED_H
 #define DRIZZLED_FUNCTION_SIGNED_H
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 #include <drizzled/function/func.h>
 
 class Item_func_signed :public Item_int_func

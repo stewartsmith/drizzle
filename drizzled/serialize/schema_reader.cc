@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "schema.pb.h"
+#include <drizzled/serialize/schema.pb.h>
 using namespace std;
 
 /*

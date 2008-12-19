@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_CONNECTION_ID_H
 #define DRIZZLED_FUNCTION_CONNECTION_ID_H
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 #include <drizzled/function/func.h>
 
 class Item_func_connection_id :public Item_int_func

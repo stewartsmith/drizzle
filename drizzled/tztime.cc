@@ -301,7 +301,7 @@ find_transition_type(my_time_t t, const TIME_ZONE_INFO *sp)
     DRIZZLE_TIME has two matching my_time_t ranges and some of them have none.
 */
 static void
-gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t sec_in_utc, const TIME_ZONE_INFO *sp)
+gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t sec_in_utc, const TIME_ZONE_INFO *sp)
 {
   const TRAN_TYPE_INFO *ttisp;
   const LS_INFO *lp;

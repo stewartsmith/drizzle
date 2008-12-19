@@ -30,7 +30,7 @@
 void Item_func_sysdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   Session *session= current_session;
-  session->variables.time_zone->gmt_sec_to_TIME(now_time, (my_time_t) my_time(0));
+  session->variables.time_zone->gmt_sec_to_TIME(now_time, time(NULL));
 }
 
 

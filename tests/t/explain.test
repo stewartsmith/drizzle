@@ -1,0 +1,86 @@
+#
+# Test of different EXPLAIN's
+
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+create table t1 (id int not null, str char(10), unique(str)) ENGINE=MYISAM;
+explain select * from t1;
+insert into t1 values (1, null),(2, null),(3, "foo"),(4, "bar");
+select * from t1 where str is null;
+select * from t1 where str="foo";
+explain select * from t1 where str is null;
+explain select * from t1 where str="foo";
+explain select * from t1 ignore key (str) where str="foo";
+explain select * from t1 use key (str,str) where str="foo";
+
+#The following should give errors
+--error 1176
+explain select * from t1 use key (str,str,foo) where str="foo";
+--error 1176
+explain select * from t1 ignore key (str,str,foo) where str="foo";
+drop table t1;
+
+explain select 1;
+
+create table t1 (a int not null) ENGINE=myisam;
+explain select count(*) from t1;
+insert into t1 values(1);
+explain select count(*) from t1;
+insert into t1 values(1);
+explain select count(*) from t1;
+drop table t1;
+
+#
+# Bug #3403 Wrong encoding in EXPLAIN SELECT output
+#
+create table ☃ (☢ int, ☣ int, key ☢ (☢), key ☣ (☢,☣)) ENGINE=MYISAM;
+insert into ☃ (☢) values (1);
+insert into ☃ (☢) values (2);
+explain select ☢ from ☃ where ☢=1;
+drop table ☃;
+
+# End of 4.1 tests
+
+
+#
+# Bug#15463: EXPLAIN SELECT..INTO hangs the client (QB, command line)
+#
+select 3 into @v1;
+explain select 3 into @v1;
+
+#
+# Bug #32241: memory corruption due to large index map in 'Range checked for 
+#             each record'
+#
+
+CREATE TABLE t1(c INT);
+INSERT INTO t1 VALUES (),();
+
+CREATE TABLE t2 (b INT,
+KEY(b),KEY(b),KEY(b),KEY(b),KEY(b),
+KEY(b),KEY(b),KEY(b),KEY(b),KEY(b),
+KEY(b),KEY(b),KEY(b),KEY(b),KEY(b),
+KEY(b),KEY(b),KEY(b),KEY(b),KEY(b),
+KEY(b),KEY(b),KEY(b),KEY(b),KEY(b),
+KEY(b),KEY(b),KEY(b),KEY(b),KEY(b),
+KEY(b),KEY(b),KEY(b),KEY(b),KEY(b),
+KEY(b),KEY(b),KEY(b),KEY(b),KEY(b));
+
+INSERT INTO t2 VALUES (),(),();
+
+# We only need to make sure that there is no buffer overrun and the index map
+# is displayed correctly
+--replace_column 1 X 2 X 3 X 4 X 5 X 6 X 7 X 8 X 9 X
+EXPLAIN SELECT 1 FROM
+  (SELECT 1 FROM t2,t1 WHERE b < c GROUP BY 1 LIMIT 1) AS d2;
+DROP TABLE t2;
+DROP TABLE t1;
+
+--echo End of 5.0 tests.
+
+--enable_metadata
+explain select 1;
+--disable_metadata
+
+--echo End of 5.2 tests.

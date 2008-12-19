@@ -148,7 +148,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
       */
       sql_print_warning(_("Neither --relay-log nor --relay-log-index were used;"
                         " so replication "
-                        "may break when this MySQL server acts as a "
+                        "may break when this Drizzle server acts as a "
                         "slave and has his hostname changed!! Please "
                         "use '--relay-log=%s' to avoid this problem."), ln);
       name_warning_sent= 1;

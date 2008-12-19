@@ -499,9 +499,9 @@ Log_event::Log_event()
   :temp_buf(0), exec_time(0), flags(0), cache_stmt(0),
    session(0)
 {
-  server_id=	::server_id;
+  server_id= ::server_id;
   /*
-    We can't call my_time() here as this would cause a call before
+    We can't call time() here as this would cause a call before
     my_init() is called
   */
   when=		0;
@@ -748,7 +748,7 @@ time_t Log_event::get_time()
     return session->start_time;
   if ((tmp_session= current_session))
     return tmp_session->start_time;
-  return my_time(0);
+  return time(0);
 }
 
 
@@ -4606,7 +4606,12 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
       problem.  When WL#2975 is implemented, just remove the member
       Relay_log_info::last_event_start_time and all its occurrences.
     */
-    const_cast<Relay_log_info*>(rli)->last_event_start_time= my_time(0);
+    time_t t= time(0);
+
+    /* don't trust time() all the time */
+    if (t == (time_t)-1)
+      return (-1);
+    const_cast<Relay_log_info*>(rli)->last_event_start_time= time(0);
   }
 
   return(0);

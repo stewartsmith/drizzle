@@ -878,7 +878,7 @@ static void wait_for_signal_thread_to_end()
   {
     if (pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL) != ESRCH)
       break;
-    my_sleep(100);				// Give it time to die
+    usleep(100);				// Give it time to die
   }
 }
 
@@ -1269,7 +1269,13 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
 
   segfaulted = 1;
 
-  curr_time= my_time(0);
+  curr_time= time(NULL);
+  if(curr_time == (time_t)-1)
+  {
+    fprintf(stderr, "Fetal: time() call failed\n");
+    exit(1);
+  }
+
   localtime_r(&curr_time, &tm);
 
   fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got "
@@ -1350,7 +1356,7 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
 
 #ifdef HAVE_INITGROUPS
   if (calling_initgroups)
-    fprintf(stderr, _("\nThis crash occured while the server was calling "
+    fprintf(stderr, _("\nThis crash occurred while the server was calling "
                       "initgroups(). This is\n"
                       "often due to the use of a drizzled that is statically "
                       "linked against glibc\n"
@@ -1827,14 +1833,19 @@ SHOW_VAR com_status_vars[]= {
 };
 
 static int init_common_variables(const char *conf_file_name, int argc,
-				 char **argv, const char **groups)
+                                 char **argv, const char **groups)
 {
+  time_t curr_time;
   umask(((~my_umask) & 0666));
   my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
   tzset();			// Set tzname
 
+  curr_time= time(NULL);
+  if (curr_time == (time_t)-1)
+    return 1;
+
   max_system_variables.pseudo_thread_id= UINT32_MAX;
-  server_start_time= flush_status_time= my_time(0);
+  server_start_time= flush_status_time= curr_time;
 
   if (init_thread_environment())
     return 1;
@@ -3099,7 +3110,7 @@ struct my_option my_long_options[] =
    N_("Don't use new, possible wrong routines."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-slave-start", OPT_SKIP_SLAVE_START,
-   N_("If set, slave is not autostarted."),
+   N_("If set, slave is not started automatically."),
    (char**) &opt_skip_slave_start,
    (char**) &opt_skip_slave_start, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-stack-trace", OPT_SKIP_STACK_TRACE,
@@ -3188,7 +3199,7 @@ struct my_option my_long_options[] =
     (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULL,
     REQUIRED_ARG, 32*1024L, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
   { "bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
-    N_("Size of tree cache used in bulk insert optimisation. Note that this is "
+    N_("Size of tree cache used in bulk insert optimization. Note that this is "
        "a limit per thread!"),
     (char**) &global_system_variables.bulk_insert_buff_size,
     (char**) &max_system_variables.bulk_insert_buff_size,
@@ -3578,7 +3589,7 @@ struct my_option my_long_options[] =
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
-   N_("If an internal in-memory temporary table exceeds this size, MySQL will"
+   N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
    (char**) &global_system_variables.tmp_table_size,
    (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,

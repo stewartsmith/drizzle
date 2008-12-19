@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/item/uint.h>
 #include <drizzled/item/num.h>
+#include <drizzled/item/decimal.h>
 
 /**
   @details
