@@ -36,6 +36,7 @@
 #include "client_priv.h"
 #include <string>
 #include CMATH_H
+#include <algorithm>
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
 #include "my_readline.h"
@@ -3110,7 +3111,7 @@ print_table_data(DRIZZLE_RES *result)
 */
 static int get_field_disp_length(DRIZZLE_FIELD *field)
 {
-  uint length= column_names ? field->name_length : 0;
+  uint32_t length= column_names ? field->name_length : 0;
 
   if (quick)
     length= max(length, field->length);

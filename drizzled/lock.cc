@@ -1436,13 +1436,10 @@ bool make_global_read_lock_block_commit(Session *session)
   pthread_mutex_lock(&LOCK_global_read_lock);
   /* increment this BEFORE waiting on cond (otherwise race cond) */
   global_read_lock_blocks_commit++;
-  /* For testing we set up some blocking, to see if we can be killed */
-  protect_against_global_read_lock++;
   old_message= session->enter_cond(&COND_global_read_lock, &LOCK_global_read_lock,
                                "Waiting for all running commits to finish");
   while (protect_against_global_read_lock && !session->killed)
     pthread_cond_wait(&COND_global_read_lock, &LOCK_global_read_lock);
-  protect_against_global_read_lock--;
   if ((error= test(session->killed)))
     global_read_lock_blocks_commit--; // undo what we did
   else

@@ -58,7 +58,7 @@ void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   Session *session= current_session;
   session->variables.time_zone->gmt_sec_to_TIME(now_time,
-                                             (my_time_t)session->query_start());
+                                                (time_t)session->query_start());
 }
 
 /**
@@ -68,7 +68,7 @@ void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   my_tz_UTC->gmt_sec_to_TIME(now_time,
-                             (my_time_t)(current_session->query_start()));
+                             (time_t)(current_session->query_start()));
   /*
     We are not flagging this query as using time zone, since it uses fixed
     UTC-SYSTEM time-zone.

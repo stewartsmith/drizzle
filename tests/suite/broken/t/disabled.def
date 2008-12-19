@@ -45,7 +45,6 @@ default: strict mode failure
 derived: unknown reasons
 dirty_close: rewrite to get rid of GET_LOCK
 errors: SQL MODE issues (rewrite)
-foreign_key: unknown
 almost_full: check bug
 analyze: check bug
 func_test: remove old style || 
