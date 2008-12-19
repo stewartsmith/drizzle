@@ -1,0 +1,13 @@
+# Concurrent RENAME TABLE
+
+connect (con1,localhost,root,,test);
+
+--send create table t1 select 1 as i;
+connection con1;
+--sleep 2
+rename table t1 to t2;
+connection default;
+#--reap
+drop table t2;
+
+disconnect con1;
