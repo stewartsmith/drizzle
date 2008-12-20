@@ -11,7 +11,8 @@ drop table if exists t1;
 # varbinary as string and number
 #
 
-select 0x41,0x41+0,0x41 | 0x7fffffffffffffff | 0,0xffffffffffffffff | 0 ;
+# Drizzle Bug 309895
+#select 0x41,0x41+0,0x41 | 0x7fffffffffffffff | 0,0xffffffffffffffff | 0 ;
 select 0x31+1,concat(0x31)+1,-0xf;
 select x'31',X'ffff'+0;
 
@@ -19,7 +20,7 @@ select x'31',X'ffff'+0;
 # Test of hex constants in WHERE:
 #
 
-create table t1 (ID int(8) zerofill not null auto_increment,UNIQ bigint(21) zerofill not null,primary key (ID),unique (UNIQ) );
+create table t1 (ID int not null auto_increment,UNIQ bigint not null,primary key (ID),unique (UNIQ) );
 insert into t1 set UNIQ=0x38afba1d73e6a18a;
 insert into t1 set UNIQ=123; 
 explain extended select * from t1 where UNIQ=0x38afba1d73e6a18a;
@@ -46,36 +47,30 @@ drop table t1;
 # Bug #19371 VARBINARY() have trailing zeros after upgrade from 4.1
 #
 
+# REMOVING THIS TEST FOR DRIZZLE SINCE FILE FORMATS ARE NOT COMPATIBLE
 # Test with a saved table from 4.1
-copy_file std_data/bug19371.frm $MYSQLTEST_VARDIR/master-data/test/t1.frm;
-chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.frm;
-copy_file std_data/bug19371.MYD $MYSQLTEST_VARDIR/master-data/test/t1.MYD;
-chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.MYD;
-copy_file std_data/bug19371.MYI $MYSQLTEST_VARDIR/master-data/test/t1.MYI;
-chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.MYI;
-
+#copy_file std_data/bug19371.frm $MYSQLTEST_VARDIR/master-data/test/t1.frm;
+#chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.frm;
+#copy_file std_data/bug19371.MYD $MYSQLTEST_VARDIR/master-data/test/t1.MYD;
+#chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.MYD;
+#copy_file std_data/bug19371.MYI $MYSQLTEST_VARDIR/master-data/test/t1.MYI;
+#chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.MYI;
 # Everything _looks_ fine
-show create table t1;
-
+#show create table t1;
 # But the length of the varbinary columns are too long
-select length(a), length(b) from t1;
-
+#select length(a), length(b) from t1;
 # Run CHECK TABLE, it should indicate table need a REPAIR TABLE
-CHECK TABLE t1 FOR UPGRADE;
-
+#CHECK TABLE t1 FOR UPGRADE;
 # Run REPAIR TABLE to alter the table and repair
 # the varbinary fields
-REPAIR TABLE t1;
-
+#REPAIR TABLE t1;
 # Now check it's back to normal
-show create table t1;
-select length(a), length(b) from t1;
-insert into t1 values("ccc", "ddd");
-select length(a), length(b) from t1;
-select hex(a), hex(b) from t1;
-select concat("'", a, "'"), concat("'", b, "'") from t1;
-
-drop table t1;
+#show create table t1;
+#select length(a), length(b) from t1;
+#insert into t1 values("ccc", "ddd");
+#select length(a), length(b) from t1;
+#select hex(a), hex(b) from t1;
+#select concat("'", a, "'"), concat("'", b, "'") from t1;
 
 # Check that the fix does not affect table created with current version
 create table t1(a varbinary(255));
