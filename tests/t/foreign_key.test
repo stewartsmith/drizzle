@@ -2,25 +2,27 @@
 # Test syntax of foreign keys
 #
 
---disable_warnings
-drop table if exists t1;
---enable_warnings
+CREATE TABLE product (category INT NOT NULL, id INT NOT NULL,
+    price DECIMAL,
+    PRIMARY KEY(category, id)) ENGINE=INNODB;
+CREATE TABLE customer (id INT NOT NULL,
+    PRIMARY KEY (id)) ENGINE=INNODB;
+CREATE TABLE product_order (no INT NOT NULL AUTO_INCREMENT,
+    product_category INT NOT NULL,
+    product_id INT NOT NULL,
+    customer_id INT NOT NULL,
+    PRIMARY KEY(no),
+    INDEX (product_category, product_id),
+    FOREIGN KEY (product_category, product_id)
+    REFERENCES product(category, id)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+    INDEX (customer_id),
+    FOREIGN KEY (customer_id)
+    REFERENCES customer(id)) ENGINE=INNODB;
 
-create table t1 (
-	a int not null references t2,
-	b int not null references t2 (c),
-	primary key (a,b),
-	foreign key (a) references t3 match full,
-	foreign key (a) references t3 match partial,
-	foreign key (a,b) references t3 (c,d) on delete no action
-	  on update no action,
-	foreign key (a,b) references t3 (c,d) on update cascade,
-	foreign key (a,b) references t3 (c,d) on delete set default,
-	foreign key (a,b) references t3 (c,d) on update set null);
+show create table product_order;
 
-create index a on t1 (a);
-create unique index b on t1 (a,b);
-drop table t1;
+drop table product_order, customer, product;
 
 # End of 4.1 tests
 
