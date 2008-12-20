@@ -15,7 +15,6 @@
 
 #include "mysys_priv.h"
 #include "mysys_err.h"
-#include <my_dir.h>
 #include <errno.h>
 	/* Open a file */
 

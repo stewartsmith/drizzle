@@ -18,8 +18,8 @@
 
 #include	"mysys_priv.h"
 #include	<mystrings/m_string.h>
-#include	<my_dir.h>	/* Structs used by my_dir,includes sys/types */
 #include	"mysys_err.h"
+#include	"my_dir.h"	/* Structs used by my_dir,includes sys/types */
 #if defined(HAVE_DIRENT_H)
 # include <dirent.h>
 #else

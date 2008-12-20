@@ -92,7 +92,7 @@ const char *client_errors[]=
      "information, system error: %d"),
   N_("Lost connection to Drizzle server while setting initial database, "
      "system error: %d"),
-  N_("Statement closed indirectly because of a preceeding %s() call"),
+  N_("Statement closed indirectly because of a preceding %s() call"),
 /* CR_NET_UNCOMPRESS_ERROR 08S01  */
   N_("Couldn't uncompress communication packet"),
 /* CR_NET_READ_ERROR 08S01  */

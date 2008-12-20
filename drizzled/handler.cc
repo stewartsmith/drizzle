@@ -39,6 +39,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
+#include <drizzled/unireg.h> // for mysql_frm_type
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
@@ -1278,7 +1279,7 @@ int ha_start_consistent_snapshot(Session *session)
   */
   if (warn)
     push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
-                 "This MySQL server does not support any "
+                 "This Drizzle server does not support any "
                  "consistent-read capable storage engine");
   return 0;
 }
@@ -3002,6 +3003,7 @@ struct st_table_exists_in_engine_args
   const char *db;
   const char *name;
   int err;
+  handlerton* hton;
 };
 
 static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugin,
@@ -3017,14 +3019,19 @@ static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugi
 
   vargs->err = err;
   if (vargs->err == HA_ERR_TABLE_EXIST)
+  {
+    vargs->hton= hton;
     return true;
+  }
 
   return false;
 }
 
-int ha_table_exists_in_engine(Session* session, const char* db, const char* name)
+int ha_table_exists_in_engine(Session* session,
+                              const char* db, const char* name,
+                              handlerton **hton)
 {
-  st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE};
+  st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE, NULL};
   plugin_foreach(session, table_exists_in_engine_handlerton,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &args);
 
@@ -3039,7 +3046,16 @@ int ha_table_exists_in_engine(Session* session, const char* db, const char* name
       args.err= HA_ERR_TABLE_EXIST;
     else
       args.err= HA_ERR_NO_SUCH_TABLE;
+
+    enum legacy_db_type table_type;
+    if(args.err==HA_ERR_TABLE_EXIST && mysql_frm_type(path, &table_type)==0)
+    {
+      args.hton= ha_resolve_by_legacy_type(session, table_type);
+    }
   }
+
+  if(hton)
+    *hton= args.hton;
 
   return(args.err);
 }

@@ -1939,7 +1939,7 @@ void DRIZZLE_BIN_LOG::rotate_and_purge(uint32_t flags)
     new_file_without_locking();
     if (expire_logs_days)
     {
-      time_t purge_time= my_time(0) - expire_logs_days*24*60*60;
+      time_t purge_time= time(0) - expire_logs_days*24*60*60;
       if (purge_time >= 0)
         purge_logs_before_date(purge_time);
     }

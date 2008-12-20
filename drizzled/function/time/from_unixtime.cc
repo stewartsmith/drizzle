@@ -76,7 +76,7 @@ bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime,
   if ((null_value= (args[0]->null_value || tmp > TIMESTAMP_MAX_VALUE)))
     return 1;
 
-  session->variables.time_zone->gmt_sec_to_TIME(ltime, (my_time_t)tmp);
+  session->variables.time_zone->gmt_sec_to_TIME(ltime, (time_t)tmp);
 
   return 0;
 }

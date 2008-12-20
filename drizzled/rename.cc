@@ -159,9 +159,6 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
 {
   int rc= 1;
   const char *new_alias, *old_alias;
-  /* TODO: What should this really be set to - it doesn't
-     get set anywhere before it's used? */
-  enum legacy_db_type table_type=DB_TYPE_UNKNOWN;
 
   if (lower_case_table_names == 2)
   {
@@ -174,6 +171,15 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
     new_alias= new_table_name;
   }
 
+  handlerton *hton= NULL;
+
+  if(ha_table_exists_in_engine(session, ren_table->db, old_alias, &hton)
+     != HA_ERR_TABLE_EXIST)
+  {
+    my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
+    return(1);
+  }
+
   if (ha_table_exists_in_engine(session, new_db, new_alias)
       !=HA_ERR_NO_SUCH_TABLE)
   {
@@ -181,9 +187,9 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
     return(1);			// This can't be skipped
   }
 
-  rc= mysql_rename_table(ha_resolve_by_legacy_type(session, table_type),
-                               ren_table->db, old_alias,
-                               new_db, new_alias, 0);
+  rc= mysql_rename_table(hton,
+                         ren_table->db, old_alias,
+                         new_db, new_alias, 0);
   if (rc && !skip_error)
     return(1);
 

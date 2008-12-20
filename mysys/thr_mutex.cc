@@ -22,9 +22,8 @@
 #endif
 #if defined(SAFE_MUTEX)
 #undef SAFE_MUTEX			/* Avoid safe_mutex redefinitions */
-#include "mysys_priv.h"
-#include "my_static.h"
-#include <m_string.h>
+#include <mysys/my_static.h>
+#include <mystrings/m_string.h>
 
 #ifndef DO_NOT_REMOVE_THREAD_WRAPPERS
 /* Remove wrappers */

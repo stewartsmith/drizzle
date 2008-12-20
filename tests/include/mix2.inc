@@ -66,7 +66,7 @@ drop table if exists t1,t2,t3,t4;
 drop database if exists mysqltest;
 --enable_warnings
 
-eval create table t1 (id int not null auto_increment, code tinyint not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
+eval create table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
 
 insert into t1 (code, name) values (1, 'Tim'), (1, 'Monty'), (2, 'David'), (2, 'Erik'), (3, 'Sasha'), (3, 'Jeremy'), (4, 'Matt');
 select id, code, name from t1 order by id;
@@ -85,9 +85,9 @@ drop table t1;
 #
 
 eval CREATE TABLE t1 (
-  id int(11) NOT NULL auto_increment,
-  parent_id int(11) DEFAULT '0' NOT NULL,
-  level tinyint(4) DEFAULT '0' NOT NULL,
+  id int NOT NULL auto_increment,
+  parent_id int DEFAULT '0' NOT NULL,
+  level int DEFAULT '0' NOT NULL,
   PRIMARY KEY (id),
   KEY parent_id (parent_id),
   KEY level (level)
@@ -121,8 +121,8 @@ drop table t1;
 #
 
 eval CREATE TABLE t1 (
-  gesuchnr int(11) DEFAULT '0' NOT NULL,
-  benutzer_id int(11) DEFAULT '0' NOT NULL,
+  gesuchnr int DEFAULT '0' NOT NULL,
+  benutzer_id int DEFAULT '0' NOT NULL,
   PRIMARY KEY (gesuchnr,benutzer_id)
 ) engine=$engine_type;
 
@@ -315,7 +315,7 @@ set autocommit=1;
 # Test when reading on part of unique key
 #
 eval CREATE TABLE t1 (
-  user_id int(10) DEFAULT '0' NOT NULL,
+  user_id int DEFAULT '0' NOT NULL,
   name varchar(100),
   phone varchar(100),
   ref_email varchar(100) DEFAULT '' NOT NULL,
@@ -380,7 +380,7 @@ drop table t1,t2;
 #
 
 eval CREATE TABLE t1 (
-  id int(11) NOT NULL auto_increment,
+  id int NOT NULL auto_increment,
   ggid varchar(32) binary DEFAULT '' NOT NULL,
   email varchar(64) DEFAULT '' NOT NULL,
   passwd varchar(32) binary DEFAULT '' NOT NULL,
@@ -416,13 +416,13 @@ eval CREATE TABLE t1 (
   user_name varchar(12),
   password text,
   subscribed char(1),
-  user_id int(11) DEFAULT '0' NOT NULL,
-  quota bigint(20),
+  user_id int DEFAULT '0' NOT NULL,
+  quota bigint,
   weight double,
   access_date date,
   access_time time,
   approved datetime,
-  dummy_primary_key int(11) NOT NULL auto_increment,
+  dummy_primary_key int NOT NULL auto_increment,
   PRIMARY KEY (dummy_primary_key)
 ) ENGINE=$engine_type;
 INSERT INTO t1 VALUES ('user_0','somepassword','N',0,0,0,'2000-09-07','23:06:59','2000-09-07 23:06:59',1);
@@ -438,9 +438,9 @@ drop table t1;
 #
 
 eval CREATE TABLE t1 (
-  id int(11) NOT NULL auto_increment,
-  parent_id int(11) DEFAULT '0' NOT NULL,
-  level tinyint(4) DEFAULT '0' NOT NULL,
+  id int NOT NULL auto_increment,
+  parent_id int DEFAULT '0' NOT NULL,
+  level int DEFAULT '0' NOT NULL,
   KEY (id),
   KEY parent_id (parent_id),
   KEY level (level)
@@ -534,8 +534,8 @@ drop table t1;
 #
 
 eval CREATE TABLE t1 (
-  a int3 NOT NULL,
-  b int1 NOT NULL,
+  a int NOT NULL,
+  b int NOT NULL,
   UNIQUE (a, b)
 ) ENGINE = $engine_type;
 
@@ -723,17 +723,17 @@ drop table t1;
 #
 
 eval CREATE TABLE t1 (
-  number bigint(20) NOT NULL default '0',
+  number bigint NOT NULL default '0',
   cname char(15) NOT NULL default '',
-  carrier_id smallint(6) NOT NULL default '0',
-  privacy tinyint(4) NOT NULL default '0',
+  carrier_id int NOT NULL default '0',
+  privacy int NOT NULL default '0',
   last_mod_date timestamp NOT NULL,
-  last_mod_id smallint(6) NOT NULL default '0',
+  last_mod_id int NOT NULL default '0',
   last_app_date timestamp NOT NULL,
-  last_app_id smallint(6) default '-1',
-  version smallint(6) NOT NULL default '0',
-  assigned_scps int(11) default '0',
-  status tinyint(4) default '0'
+  last_app_id int default '-1',
+  version int NOT NULL default '0',
+  assigned_scps int default '0',
+  status int default '0'
 ) ENGINE=$engine_type;
 INSERT INTO t1 VALUES (4077711111,'SeanWheeler',90,2,20020111112846,500,00000000000000,-1,2,3,1);
 INSERT INTO t1 VALUES (9197722223,'berry',90,3,20020111112809,500,20020102114532,501,4,10,0);
@@ -742,17 +742,17 @@ INSERT INTO t1 VALUES (302467,'Sue\'s Subshop',90,3,20020109113241,500,200201021
 INSERT INTO t1 VALUES (6014911113,'SudzCarwash',520,1,20020102115234,500,20020102115259,501,33,32768,0);
 INSERT INTO t1 VALUES (333,'tubs',99,2,20020109113440,501,20020109113440,500,3,10,0);
 eval CREATE TABLE t2 (
-  number bigint(20) NOT NULL default '0',
+  number bigint NOT NULL default '0',
   cname char(15) NOT NULL default '',
-  carrier_id smallint(6) NOT NULL default '0',
-  privacy tinyint(4) NOT NULL default '0',
+  carrier_id int NOT NULL default '0',
+  privacy int NOT NULL default '0',
   last_mod_date timestamp NOT NULL,
-  last_mod_id smallint(6) NOT NULL default '0',
+  last_mod_id int NOT NULL default '0',
   last_app_date timestamp NOT NULL,
-  last_app_id smallint(6) default '-1',
-  version smallint(6) NOT NULL default '0',
-  assigned_scps int(11) default '0',
-  status tinyint(4) default '0'
+  last_app_id int default '-1',
+  version int NOT NULL default '0',
+  assigned_scps int default '0',
+  status int default '0'
 ) ENGINE=$engine_type;
 INSERT INTO t2 VALUES (4077711111,'SeanWheeler',0,2,20020111112853,500,00000000000000,-1,2,3,1);
 INSERT INTO t2 VALUES (9197722223,'berry',90,3,20020111112818,500,20020102114532,501,4,10,0);
@@ -772,7 +772,7 @@ drop table t1,t2;
 # this works.
 #
 
-eval create table t1 (id int not null auto_increment, code tinyint not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
+eval create table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
 
 BEGIN;
 SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -797,8 +797,8 @@ DROP TABLE t1;
 #
 # Test of multi-table-update
 #
-eval create table t1 (n int(10), d int(10)) engine=$engine_type;
-eval create table t2 (n int(10), d int(10)) engine=$engine_type;
+eval create table t1 (n int, d int) engine=$engine_type;
+eval create table t2 (n int, d int) engine=$engine_type;
 insert into t1 values(1,1),(1,2);
 insert into t2 values(1,10),(2,20);
 UPDATE t1,t2 SET t1.d=t2.d,t2.d=30 WHERE t1.n=t2.n;
@@ -1047,11 +1047,11 @@ drop table t2,t1;
 # Test of multi updated and foreign keys
 #
 
-eval create table `t1` (`id` int( 11 ) not null  ,primary key ( `id` )) engine = $engine_type;
+eval create table `t1` (`id` int not null  ,primary key ( `id` )) engine = $engine_type;
 insert into `t1`values ( 1 ) ;
-eval create table `t2` (`id` int( 11 ) not null default '0',unique key `id` ( `id` ) ,constraint `t1_id_fk` foreign key ( `id` ) references `t1` (`id` )) engine = $engine_type;
+eval create table `t2` (`id` int not null default '0',unique key `id` ( `id` ) ,constraint `t1_id_fk` foreign key ( `id` ) references `t1` (`id` )) engine = $engine_type;
 insert into `t2`values ( 1 ) ;
-eval create table `t3` (`id` int( 11 ) not null default '0',key `id` ( `id` ) ,constraint `t2_id_fk` foreign key ( `id` ) references `t2` (`id` )) engine = $engine_type;
+eval create table `t3` (`id` int not null default '0',key `id` ( `id` ) ,constraint `t2_id_fk` foreign key ( `id` ) references `t2` (`id` )) engine = $engine_type;
 insert into `t3`values ( 1 ) ;
 --error 1451
 delete t3,t2,t1 from t1,t2,t3 where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
@@ -1084,11 +1084,12 @@ drop table t1;
 # Test timestamps
 #
 
-eval CREATE TABLE t1 (col1 int(1))ENGINE=$engine_type;
-eval CREATE TABLE t2 (col1 int(1),stamp TIMESTAMP,INDEX stamp_idx
+eval CREATE TABLE t1 (col1 int)ENGINE=$engine_type;
+eval CREATE TABLE t2 (col1 int,stamp TIMESTAMP,INDEX stamp_idx
 (stamp))ENGINE=$engine_type;
 insert into t1 values (1),(2),(3);
 # Note that timestamp 3 is wrong
+--error 1292
 insert into t2 values (1, 20020204130000),(2, 20020204130000),(4,20020204310000 ),(5,20020204230000);
 SELECT col1 FROM t1 UNION SELECT col1 FROM t2 WHERE stamp <
 '20020204120000' GROUP BY col1;
@@ -1099,9 +1100,9 @@ drop table t1,t2;
 #
 
 eval CREATE TABLE t1 (
-  `id` int(10) NOT NULL auto_increment,
-  `id_object` int(10) default '0',
-  `id_version` int(10) NOT NULL default '1',
+  `id` int NOT NULL auto_increment,
+  `id_object` int default '0',
+  `id_version` int NOT NULL default '1',
   `label` varchar(100) NOT NULL default '',
   `description` text,
   PRIMARY KEY  (`id`),
@@ -1112,8 +1113,8 @@ eval CREATE TABLE t1 (
 INSERT INTO t1 VALUES("6", "3382", "9", "Test", NULL), ("7", "102", "5", "Le Pekin (Test)", NULL),("584", "1794", "4", "Test de resto", NULL),("837", "1822", "6", "Test 3", NULL),("1119", "3524", "1", "Societe Test", NULL),("1122", "3525", "1", "Fournisseur Test", NULL);
 
 eval CREATE TABLE t2 (
-  `id` int(10) NOT NULL auto_increment,
-  `id_version` int(10) NOT NULL default '1',
+  `id` int NOT NULL auto_increment,
+  `id_version` int NOT NULL default '1',
   PRIMARY KEY  (`id`),
   KEY `id_version` (`id_version`)
 ) ENGINE=$engine_type;
@@ -1175,8 +1176,8 @@ if ($test_foreign_keys)
 # Test of automaticly created foreign keys
 #
 
-eval create table t1 (id int(11) not null, id2 int(11) not null, unique (id,id2)) engine=$engine_type;
-eval create table t2 (id int(11) not null, constraint t1_id_fk foreign key ( id ) references t1 (id)) engine = $engine_type;
+eval create table t1 (id int not null, id2 int not null, unique (id,id2)) engine=$engine_type;
+eval create table t2 (id int not null, constraint t1_id_fk foreign key ( id ) references t1 (id)) engine = $engine_type;
 show create table t1;
 show create table t2;
 create index id on t2 (id);
@@ -1189,30 +1190,30 @@ drop index id on t2;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int(11) not null, id2 int(11) not null, constraint t1_id_fk foreign key (id,id2) references t1 (id,id2)) engine = $engine_type;
+eval create table t2 (id int not null, id2 int not null, constraint t1_id_fk foreign key (id,id2) references t1 (id,id2)) engine = $engine_type;
 show create table t2;
 create unique index id on t2 (id,id2);
 show create table t2;
 drop table t2;
 
 # Check foreign key columns created in different order than key columns
-eval create table t2 (id int(11) not null, id2 int(11) not null, unique (id,id2),constraint t1_id_fk foreign key (id2,id) references t1 (id,id2)) engine = $engine_type;
+eval create table t2 (id int not null, id2 int not null, unique (id,id2),constraint t1_id_fk foreign key (id2,id) references t1 (id,id2)) engine = $engine_type;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int(11) not null, id2 int(11) not null, unique (id,id2), constraint t1_id_fk foreign key (id) references t1 (id)) engine = $engine_type;
+eval create table t2 (id int not null, id2 int not null, unique (id,id2), constraint t1_id_fk foreign key (id) references t1 (id)) engine = $engine_type;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int(11) not null, id2 int(11) not null, unique (id,id2),constraint t1_id_fk foreign key (id2,id) references t1 (id,id2)) engine = $engine_type;
+eval create table t2 (id int not null, id2 int not null, unique (id,id2),constraint t1_id_fk foreign key (id2,id) references t1 (id,id2)) engine = $engine_type;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int(11) not null auto_increment, id2 int(11) not null, constraint t1_id_fk foreign key (id) references t1 (id), primary key (id), index (id,id2)) engine = $engine_type;
+eval create table t2 (id int not null auto_increment, id2 int not null, constraint t1_id_fk foreign key (id) references t1 (id), primary key (id), index (id,id2)) engine = $engine_type;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int(11) not null auto_increment, id2 int(11) not null, constraint t1_id_fk foreign key (id) references t1 (id)) engine= $engine_type;
+eval create table t2 (id int not null auto_increment, id2 int not null, constraint t1_id_fk foreign key (id) references t1 (id)) engine= $engine_type;
 show create table t2;
 alter table t2 add index id_test (id), add index id_test2 (id,id2);
 show create table t2;
@@ -1224,7 +1225,7 @@ drop table t2;
 # regular server reports relative path with .frm (argh!)
 --replace_result \\ / $DRIZZLE_TEST_DIR . /var/master-data/ / t2.frm t2
 --error 1005
-eval create table t2 (id int(11) not null, id2 int(11) not null, constraint t1_id_fk foreign key (id2,id) references t1 (id)) engine = $engine_type;
+eval create table t2 (id int not null, id2 int not null, constraint t1_id_fk foreign key (id2,id) references t1 (id)) engine = $engine_type;
 
 # bug#3749
 
@@ -1299,7 +1300,7 @@ drop table t1;
 # Bug #4082: integer truncation
 #
 
-eval create table t1(a int(1) , b int(1)) engine=$engine_type;
+eval create table t1(a int, b int) engine=$engine_type;
 insert into t1 values ('1111', '3333');
 select distinct concat(a, b) from t1;
 drop table t1;
@@ -1324,9 +1325,9 @@ if ($test_foreign_keys)
 #
 
 --disable_warnings
-eval CREATE TABLE t1 (a_id tinyint(4) NOT NULL default '0', PRIMARY KEY  (a_id)) ENGINE=$engine_type DEFAULT CHARSET=latin1;
+eval CREATE TABLE t1 (a_id int NOT NULL default '0', PRIMARY KEY  (a_id)) ENGINE=$engine_type DEFAULT CHARSET=latin1;
 INSERT INTO t1 VALUES (1),(2),(3);
-eval CREATE TABLE t2 (b_id tinyint(4) NOT NULL default '0',b_a tinyint(4) NOT NULL default '0', PRIMARY KEY  (b_id), KEY  (b_a),
+eval CREATE TABLE t2 (b_id int NOT NULL default '0',b_a int NOT NULL default '0', PRIMARY KEY  (b_id), KEY  (b_a),
                 CONSTRAINT fk_b_a FOREIGN KEY (b_a) REFERENCES t1 (a_id) ON DELETE CASCADE ON UPDATE NO ACTION) ENGINE=$engine_type DEFAULT CHARSET=latin1;
 --enable_warnings
 INSERT INTO t2 VALUES (1,1),(2,1),(3,1),(4,2),(5,2);
@@ -1380,6 +1381,8 @@ drop table t1;
 #
 
 eval create table t1 (x bigint not null primary key) engine=$engine_type;
+# The below is out of range for a BIGINT (signed)
+--error 1264
 insert into t1(x) values (0xfffffffffffffff0),(0xfffffffffffffff1);
 select * from t1;
 select count(*) from t1 where x>0;
@@ -1467,21 +1470,23 @@ source include/varchar.inc;
 
 # Clean up filename -- embedded server reports whole path without .frm,
 # regular server reports relative path with .frm (argh!)
---replace_result \\ / $DRIZZLE_TEST_DIR . /var/master-data/ / t1.frm t1
-create table t1 (v varchar(65530), key(v));
-drop table t1;
-create table t1 (v varchar(65536));
-show create table t1;
-drop table t1;
-create table t1 (v varchar(65530) character set utf8);
-show create table t1;
-drop table t1;
-
-eval set storage_engine=$default;
-
+# @TODO The below fails because it assumes latin1
+# as the charset.  Possibly re-enable a similar test
+#--replace_result \\ / $DRIZZLE_TEST_DIR . /var/master-data/ / t1.frm t1
+#create table t1 (v varchar(65530), key(v));
+#drop table t1;
+#create table t1 (v varchar(65536));
+#show create table t1;
+#drop table t1;
+#create table t1 (v varchar(65530) character set utf8);
+#show create table t1;
+#drop table t1;
+#
+#eval set storage_engine=$default;
+#
 # InnoDB specific varchar tests
-eval create table t1 (v varchar(16384)) engine=$engine_type;
-drop table t1;
+#eval create table t1 (v varchar(16384)) engine=$engine_type;
+#drop table t1;
 
 #
 # BUG#11039 Wrong key length in min()
@@ -1497,7 +1502,7 @@ drop table t1;
 # Bug #11080 & #11005  Multi-row REPLACE fails on a duplicate key error
 #
 
-eval CREATE TABLE t1 ( `a` int(11) NOT NULL auto_increment, `b` int(11) default NULL,PRIMARY KEY  (`a`),UNIQUE KEY `b` (`b`)) ENGINE=$engine_type;
+eval CREATE TABLE t1 ( `a` int NOT NULL auto_increment, `b` int default NULL,PRIMARY KEY  (`a`),UNIQUE KEY `b` (`b`)) ENGINE=$engine_type;
 insert into t1 (b) values (1);
 replace into t1 (b) values (2), (1), (3);
 select * from t1;
@@ -1980,97 +1985,6 @@ ALTER TABLE t2 DROP FOREIGN KEY t2_ibfk_0;
 SHOW CREATE TABLE t2;
 DROP TABLE t2,t1;
 }
-
-#
-# Test case for bug #16229: MySQL/InnoDB uses full explicit table locks in trigger processing
-#
-
-connect (a,localhost,root,,);
-connect (b,localhost,root,,);
-connection a;
-eval create table t1(a int not null, b int, c int, d int, primary key(a)) engine=$engine_type;
-insert into t1(a) values (1),(2),(3);
-commit;
-connection b;
-set autocommit = 0;
-update t1 set b = 5 where a = 2;
-connection a;
-delimiter |;
-create trigger t1t before insert on t1 for each row begin set NEW.b = NEW.a * 10 + 5, NEW.c = NEW.a / 10; end |
-delimiter ;|
-set autocommit = 0;
-connection a;
-insert into t1(a) values (10),(20),(30),(40),(50),(60),(70),(80),(90),(100),
-(11),(21),(31),(41),(51),(61),(71),(81),(91),(101),
-(12),(22),(32),(42),(52),(62),(72),(82),(92),(102),
-(13),(23),(33),(43),(53),(63),(73),(83),(93),(103),
-(14),(24),(34),(44),(54),(64),(74),(84),(94),(104);
-connection b;
-commit;
-connection a;
-commit;
-drop trigger t1t;
-drop table t1;
-disconnect a;
-disconnect b;
-#
-# Another trigger test
-#
-connect (a,localhost,root,,);
-connect (b,localhost,root,,);
-connection a;
-eval create table t1(a int not null, b int, c int, d int, primary key(a)) engine=$engine_type;
-eval create table t2(a int not null, b int, c int, d int, primary key(a)) engine=$engine_type;
-eval create table t3(a int not null, b int, c int, d int, primary key(a)) engine=$engine_type;
-eval create table t4(a int not null, b int, c int, d int, primary key(a)) engine=$engine_type;
-eval create table t5(a int not null, b int, c int, d int, primary key(a)) engine=$engine_type;
-insert into t1(a) values (1),(2),(3);
-insert into t2(a) values (1),(2),(3);
-insert into t3(a) values (1),(2),(3);
-insert into t4(a) values (1),(2),(3);
-insert into t3(a) values (5),(7),(8);
-insert into t4(a) values (5),(7),(8);
-insert into t5(a) values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12);
-
-delimiter |;
-create trigger t1t before insert on t1 for each row begin
-    INSERT INTO t2 SET a = NEW.a;
-end |
-
-create trigger t2t before insert on t2 for each row begin
-    DELETE FROM t3 WHERE a = NEW.a;
-end |
-
-create trigger t3t before delete on t3 for each row begin
-    UPDATE t4 SET b = b + 1 WHERE a = OLD.a;
-end |
-
-create trigger t4t before update on t4 for each row begin
-    UPDATE t5 SET b = b + 1 where a = NEW.a;
-end |
-delimiter ;|
-commit;
-set autocommit = 0;
-update t1 set b = b + 5 where a = 1;
-update t2 set b = b + 5 where a = 1;
-update t3 set b = b + 5 where a = 1;
-update t4 set b = b + 5 where a = 1;
-insert into t5(a) values(20);
-connection b;
-set autocommit = 0;
-insert into t1(a) values(7);
-insert into t2(a) values(8);
-delete from t2 where a = 3;
-update t4 set b = b + 1 where a = 3;
-commit;
-drop trigger t1t;
-drop trigger t2t;
-drop trigger t3t;
-drop trigger t4t;
-drop table t1, t2, t3, t4, t5;
-connection default;
-disconnect a;
-disconnect b;
 
 if ($test_foreign_keys)
 {

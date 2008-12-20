@@ -71,7 +71,7 @@ typedef int thr_alarm_entry;
 typedef thr_alarm_entry* thr_alarm_t;
 
 typedef struct st_alarm {
-  uint32_t expire_time;
+  time_t expire_time;
   thr_alarm_entry alarmed;		/* set when alarm is due */
   pthread_t thread;
   my_thread_id thread_id;

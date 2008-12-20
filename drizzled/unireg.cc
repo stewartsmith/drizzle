@@ -88,6 +88,39 @@ handle_error(uint32_t sql_errno,
   return is_handled;
 }
 
+int mysql_frm_type(char *path, enum legacy_db_type *dbt)
+{
+  int file;
+  unsigned char header[10];
+  int error;
+
+  *dbt= DB_TYPE_UNKNOWN;
+
+  file= open(path, O_RDONLY);
+
+  if(file < 1)
+    return 1;
+
+  error= read(file, header, sizeof(header));
+  close(file);
+
+  if (error!=sizeof(header))
+    return 1;
+
+  /*
+    This is just a check for DB_TYPE. We'll return default unknown type
+    if the following test is true (arg #3). This should not have effect
+    on return value from this function (default FRMTYPE_TABLE)
+  */
+  if (header[0] != (unsigned char)254 || header[1] != 1 ||
+      (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
+       (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
+    return 0;
+
+  *dbt= (enum legacy_db_type) (uint) *(header + 3);
+  return 0;
+}
+
 /*
   Create a frm (table definition) file
 

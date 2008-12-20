@@ -28,7 +28,7 @@ AC_SUBST(SAVE_CXXLDFLAGS)
 AC_SUBST(CXXLDFLAGS)
 
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(-Wall -Wno-portability -Werror)
+AM_INIT_AUTOMAKE(nostdinc -Wall -Wno-portability -Werror)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
@@ -401,10 +401,14 @@ then
   dnl I'm cheating here and sticking C99 support in SYMBOLS_FLAGS
   SYMBOLS_FLAGS=""
   DEBUG_OPTIMIZE_CC=""
-  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -mt -xstrconst -D_FORTEC_"
+  if test "$target_cpu" = "sparc"
+  then
+    MEMALIGN_FLAGS="-xmemalign=8s"
+  fi
+  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -mt -xstrconst -D_FORTEC_ ${MEMALIGN_FLAGS}"
   DEBUG_OPTIMIZE_CXX=""
   #Put back in once isnan is figured out
-  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -mt -D_FORTEC_ -xlang=c99 -compat=5 -library=stlport4"
+  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -mt -D_FORTEC_ -xlang=c99 -compat=5 -library=stlport4 ${MEMALIGN_FLAGS}"
 fi
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
@@ -1322,10 +1326,15 @@ AC_ARG_ENABLE([go-crazy],
     [ac_warn_go_crazy="$enableval"],
     [ac_warn_go_crazy="no"])
 
+AC_ARG_ENABLE([datarace],
+    [AS_HELP_STRING([--enable-datarace],
+       [Enables Sun Studio data race detection @<:@default=off@:>@])],
+    [ac_datarace="$enableval"],
+    [ac_datarace="no"])
+
 
 if test "$GCC" = "yes"
 then
-
 
   if test "$ac_warn_fail" = "yes"
   then
@@ -1441,9 +1450,13 @@ void testme() {  };],[
 fi
 if test "$SUNCC" = "yes"
 then
+  if test "$ac_datarace" = "yes"
+  then
+    CFLAGS="${CFLAGS} -xinstrument=datarace"
+    CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
+  fi
   CC_WARNINGS="-v -xc99=all -errtags=yes"
   CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
-  AM_CXXFLAGS="${AM_CXXFLAGS} -xmemalign=8s"
   NO_EXCEPTIONS="-features=no%except"
   W_EXCEPTIONS="-features=except"
 fi

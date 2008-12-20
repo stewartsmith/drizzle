@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_TIME_PERIOD_ADD_H
 #define DRIZZLED_FUNCTION_TIME_PERIOD_ADD_H
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_period_add :public Item_int_func
 {
