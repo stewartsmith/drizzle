@@ -798,7 +798,11 @@ configmake.h: Makefile
 	  echo '#define PKGLIBDIR "$(pkglibdir)"'; \
 	  echo '#define PKGLIBEXECDIR "$(pkglibexecdir)"'; \
 	} | sed '/""/d' > $@-t
-	mv $@-t $@
+	if diff $@-t $@ >/dev/null 2>&1 ; then \
+	  rm @-t ; \
+	else \
+	  mv $@-t $@ ; \
+	fi
 
 
 SUFFIXES = .d .gch

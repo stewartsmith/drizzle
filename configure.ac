@@ -8,72 +8,35 @@ AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 
-# Save some variables and the command line options for mysqlbug
-SAVE_CC="$CC"
-SAVE_CXX="$CXX"
-SAVE_ASFLAGS="$ASFLAGS"
-SAVE_CFLAGS="$CFLAGS"
-SAVE_CXXFLAGS="$CXXFLAGS"
-SAVE_LDFLAGS="$LDFLAGS"
-SAVE_CXXLDFLAGS="$CXXLDFLAGS"
-CONF_COMMAND="$0 $ac_configure_args"
-AC_SUBST(CONF_COMMAND)
-AC_SUBST(SAVE_CC)
-AC_SUBST(SAVE_CXX)
-AC_SUBST(SAVE_ASFLAGS)
-AC_SUBST(SAVE_CFLAGS)
-AC_SUBST(SAVE_CXXFLAGS)
-AC_SUBST(SAVE_LDFLAGS)
-AC_SUBST(SAVE_CXXLDFLAGS)
-AC_SUBST(CXXLDFLAGS)
+# Setting CFLAGS here prevents AC_CANONICAL_TARGET from injecting them
+SAVE_CFLAGS=${CFLAGS}
+SAVE_CXXFLAGS=${CXXFLAGS}
+CFLAGS=
+CXXFLAGS=
 
 AC_CANONICAL_TARGET
+
+CFLAGS=${SAVE_CFLAGS}
+CXXFLAGS=${SAVE_CXXFLAGS}
+
 AM_INIT_AUTOMAKE(nostdinc -Wall -Werror)
-
-PROTOCOL_VERSION=10
-DOT_FRM_VERSION=6
-# See the libtool docs for information on how to do shared lib versions.
-SHARED_LIB_MAJOR_VERSION=1
-SHARED_LIB_VERSION=$SHARED_LIB_MAJOR_VERSION:0:0
-
-##############################################################################
-# The below section needs to be done before AC_PROG_CC
-##############################################################################
-
-if test "x${CFLAGS-}" = x ; then
-  cflags_is_set=no
-else
-  cflags_is_set=yes
-fi
-
-if test "x${CPPFLAGS-}" = x ; then
-  cppflags_is_set=no
-else
-  cppflags_is_set=yes
-fi
-
-if test "x${LDFLAGS-}" = x ; then
-  ldflags_is_set=no
-else
-  ldflags_is_set=yes
-fi
-
 if test "x${enable_dependency_tracking}" = "x"
 then
   enable_dependency_tracking=yes
 fi
 
-################ End of section to be done before AC_PROG_CC #################
+
+# See the libtool docs for information on how to do shared lib versions.
+SHARED_LIB_MAJOR_VERSION=1
+SHARED_LIB_VERSION=$SHARED_LIB_MAJOR_VERSION:0:0
+AC_SUBST(SHARED_LIB_MAJOR_VERSION)
+AC_SUBST(SHARED_LIB_VERSION)
+
 
 dnl Checks for programs.
 AC_PROG_CC
-ifdef([AC_PROG_CC_C99],[
-  dnl TODO: Need to fix this to use c99 instead of gnu99
-  AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
-  C99_SUPPORT_HACK=""
-],[C99_SUPPORT_HACK="-std=gnu99"])
 
-AC_USE_SYSTEM_EXTENSIONS
+ACX_USE_SYSTEM_EXTENSIONS
 AC_PROG_CXX
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
@@ -84,17 +47,19 @@ AC_PROG_CPP
 AM_PROG_CC_C_O
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
+ifdef([AC_PROG_CC_C99],[
+    AC_PROG_CC_C99([$1],[$2],[$3])
+],[
+if "x$GCC" = "xyes"
+then
+  C99_SUPPORT_HACK="-std=gnu99"
+fi
+if "x$SUNCC" = "xyes"
+then
+  C99_SUPPORT_HACK="-xc99"
+fi
+])
 
-dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
-dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
-if test "x${CFLAGS}" = "x-g -O2"
-then
-  CFLAGS=
-fi
-if test "x${CXXFLAGS}" = "x-g -O2"
-then
-  CXXFLAGS=
-fi
 
 
 # Set all version vars based on $VERSION. How do we do this more elegant ?
@@ -112,103 +77,25 @@ DRIZZLE_NUMERIC_VERSION=`echo $DRIZZLE_NO_DASH_VERSION | sed -e "s|[[a-z]][[a-z0
 DRIZZLE_BASE_VERSION=`echo $DRIZZLE_NUMERIC_VERSION | sed -e "s|\.[[^.]]*$||"`
 DRIZZLE_VERSION_ID=`echo $DRIZZLE_NUMERIC_VERSION | \
     awk -F. '{printf "%d%0.2d%0.2d", $1, $2, $3}'`
+AC_DEFINE_UNQUOTED(DRIZZLE_BASE_VERSION,["$DRIZZLE_BASE_VERSION"],
+                   [Major and minor version])
+AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
+		   [Version ID that can be easily used for numeric comparison])
 
 # The port should be constant for a LONG time
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
 sinclude(m4/dtrace.m4)
+
 sinclude(m4/character_sets.m4)
-sinclude(m4/gettext.m4)
-
-AM_GNU_GETTEXT([external])
-
-AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
-
-AC_SUBST(DRIZZLE_NO_DASH_VERSION)
-AC_DEFINE_UNQUOTED(DRIZZLE_BASE_VERSION,["$DRIZZLE_BASE_VERSION"],
-                  [Major and minor version])
-AC_SUBST(DRIZZLE_VERSION_ID)
-AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
-		   [Version ID that can be easily used for numeric comparison])
-AC_SUBST(DRIZZLE_PREVIOUS_BASE_VERSION)
-AC_SUBST(PROTOCOL_VERSION)
-AC_DEFINE_UNQUOTED([PROTOCOL_VERSION], [$PROTOCOL_VERSION],
-                   [mysql client protocol version])
-AC_SUBST(DOT_FRM_VERSION)
-AC_DEFINE_UNQUOTED([FRM_VER], [$DOT_FRM_VERSION],
-                   [Version of .frm files])
-AC_DEFINE_UNQUOTED([DRIZZLE_CONFIG_NAME],["drizzled"],[Name of server config section])
-
-AC_SUBST(SHARED_LIB_MAJOR_VERSION)
-AC_SUBST(SHARED_LIB_VERSION)
 AC_SUBST(AVAILABLE_LANGUAGES)
 
-dnl Ok. This is sort of lame, but we need to be nice to plugins Makefile.am's.
-AM_CONDITIONAL(BUILD_DRIZZLE,[test "x" = "x"])
+sinclude(m4/gettext.m4)
+AM_GNU_GETTEXT([external])
+AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
-
-# General Constants
-AC_DEFINE([IO_SIZE], [4096], [Io buffer size; Must be a power of 2 and 
-  a multiple of 512. May be
-  smaller what the disk page size. This influences the speed of the
-  isam btree library. eg to big to slow.])
-AC_DEFINE([SC_MAXWIDTH],[256], [Max width of screen (for error messages)])
-AC_DEFINE([FN_LEN],[256	], [Max file name len ])
-AC_DEFINE([FN_EXTLEN],[20], [Max length of extension (part of FN_LEN) ])
-AC_DEFINE([FN_REFLEN],[512], [Max length of full path-name ])
-AC_DEFINE([FN_EXTCHAR],['.'], [File extension character])
-AC_DEFINE([FN_HOMELIB],['~'], [~/ is used as abbrev for home dir ])
-AC_DEFINE([FN_CURLIB],['.'], [./ is used as abbrev for current dir ])
-AC_DEFINE([FN_PARENTDIR],[".."], [Parent directory; Must be a string ])
-
-AC_DEFINE([MASTER],[1],[Compile without unireg])
-
-AH_VERBATIM([QUOTE_ARG],[
-/* Quote argument (before cpp) */
-#ifndef QUOTE_ARG
-# define QUOTE_ARG(x) #x
-#endif
-/* Quote argument, (after cpp) */
-#ifndef STRINGIFY_ARG
-# define STRINGIFY_ARG(x) QUOTE_ARG(x)
-#endif
-])
-
-AH_VERBATIM([builtin_expect],[
-/*
- * The macros below are borrowed from include/linux/compiler.h in the
- * Linux kernel. Use them to indicate the likelyhood of the truthfulness
- * of a condition. This serves two purposes - newer versions of gcc will be
- * able to optimize for branch predication, which could yield siginficant
- * performance gains in frequently executed sections of the code, and the
- * other reason to use them is for documentation
- */
-#if !defined(__GNUC__)
-#define __builtin_expect(x, expected_value) (x)
-#endif
-
-#define likely(x)  __builtin_expect((x),1)
-#define unlikely(x)  __builtin_expect((x),0)
-])
-
-dnl  InnoDB depends on some Drizzle's internals which other plugins should not
-dnl  need.  This is because of InnoDB's foreign key support, "safe" binlog
-dnl  truncation, and other similar legacy features.
-
-dnl  We define accessors for these internals unconditionally, but do not
-dnl  expose them in mysql/plugin.h.  They are declared in ha_innodb.h for
-dnl  InnoDB's use.
-
-AC_DEFINE([INNODB_COMPATIBILITY_HOOKS],[1],[TODO: Remove the need for this])
-dnl TODO: Make a test for when this needs to be set.
-AC_DEFINE([_REENTRANT],[1],[Some thread libraries require this])
-
-AH_VERBATIM([posix_pthread],[
-/* We want posix threads */
-#ifndef _POSIX_PTHREAD_SEMANTICS
-#define _POSIX_PTHREAD_SEMANTICS
-#endif
-])
+# Set this for plugins to use
+ac_build_drizzle="yes"
 
 
 # Canonicalize the configuration name.

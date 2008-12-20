@@ -220,6 +220,7 @@ static TYPELIB tc_heuristic_recover_typelib=
 
 const char *first_keyword= "first", *binary_keyword= "BINARY";
 const char *my_localhost= "localhost";
+const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
 
 /*
@@ -302,7 +303,7 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
 uint32_t drizzled_port, test_flags, select_errors, dropping_tables, ha_open_options;
 uint32_t drizzled_port_timeout;
-uint32_t delay_key_write_options, protocol_version;
+uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
@@ -1720,7 +1721,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 
 
 static const char *load_default_groups[]= {
-"drizzled","server", DRIZZLE_BASE_VERSION, 0, 0};
+DRIZZLE_CONFIG_NAME,"server", DRIZZLE_BASE_VERSION, 0, 0};
 
 
 /**
@@ -3942,7 +3943,6 @@ static void drizzle_init_variables(void)
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
                         OPTION_QUOTE_SHOW_CREATE | OPTION_SQL_NOTES);
-  protocol_version= PROTOCOL_VERSION;
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
