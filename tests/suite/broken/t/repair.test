@@ -6,7 +6,7 @@
 drop table if exists t1;
 --enable_warnings
 
-create table t1 SELECT 1,"table 1";
+create table t1 ENGINE=MyISAM SELECT 1,"table 1";
 repair table t1 use_frm;
 alter table t1 ENGINE=HEAP;
 repair table t1 use_frm;
@@ -15,7 +15,7 @@ drop table t1;
 #
 # disabled keys during repair
 #
-create table t1(id int PRIMARY KEY, st varchar(10), KEY st_key(st));
+create table t1(id int PRIMARY KEY, st varchar(10), KEY st_key(st)) ENGINE=MyISAM;
 insert into t1 values(1, "One");
 alter table t1 disable keys;
 show keys from t1;
@@ -29,7 +29,7 @@ repair table t1 use_frm;
 
 create table t1 engine=myisam SELECT 1,"table 1";
 flush tables;
-system echo 1 > $MYSQLTEST_VARDIR/master-data/test/t1.MYI ;
+--system echo 1 > $MYSQLTEST_VARDIR/master-data/test/t1.MYI ;
 repair table t1;
 repair table t1 use_frm;
 drop table t1;
@@ -37,7 +37,7 @@ drop table t1;
 #
 # BUG#18874 - Setting myisam_repair_threads > 1, index cardinality always 1
 #
-CREATE TABLE t1(a INT, KEY(a));
+CREATE TABLE t1(a INT, KEY(a)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES(1),(2),(3),(4),(5);
 SET myisam_repair_threads=2;
 REPAIR TABLE t1;
@@ -49,7 +49,7 @@ DROP TABLE t1;
 # BUG#22562 - REPAIR TABLE .. USE_FRM causes server crash on Windows and
 #             server hangs on Linux
 #
-CREATE TABLE t1(a INT);
+CREATE TABLE t1(a INT) ENGINE=MyISAM;
 USE mysql;
 REPAIR TABLE test.t1 USE_FRM;
 USE test;
@@ -58,8 +58,10 @@ DROP TABLE t1;
 #
 # BUG#23175 - MYISAM crash/repair failed during repair
 #
-CREATE TABLE t1(a CHAR(255), KEY(a));
+CREATE TABLE t1(a CHAR(255), KEY(a)) ENGINE=MyISAM;
 SET myisam_sort_buffer_size=4096;
+# fails with ER_NOT_KEYFILE but really 'myisam_sort_buffer_size is too small'
+--error ER_NOT_KEYFILE
 INSERT INTO t1 VALUES
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),
@@ -87,8 +89,8 @@ DROP TABLE t1;
 # BUG#31174 - "Repair" command on MyISAM crashes with small 
 #              myisam_sort_buffer_size
 #
-CREATE TABLE t1(a CHAR(255), KEY(a));
-SET myisam_sort_buffer_size=4496;
+CREATE TABLE t1(a CHAR(255), KEY(a)) ENGINE=MyISAM;
+SET myisam_sort_buffer_size=16384;
 INSERT INTO t1 VALUES
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),

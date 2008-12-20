@@ -1371,6 +1371,14 @@ Item *sys_var::item(Session *session, enum_var_type var_type, LEX_STRING *base)
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_int((uint64_t) value);
   }
+  case SHOW_SIZE:
+  {
+    size_t value;
+    pthread_mutex_lock(&LOCK_global_system_variables);
+    value= *(size_t*) value_ptr(session, var_type, base);
+    pthread_mutex_unlock(&LOCK_global_system_variables);
+    return new Item_int((uint64_t) value);
+  }
   case SHOW_MY_BOOL:
   {
     int32_t value;
