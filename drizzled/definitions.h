@@ -39,15 +39,6 @@
 #define TEMP_PREFIX	"MY"
 #define LOG_PREFIX	"ML"
 #define PROGDIR		"bin/"
-#ifndef DATADIR
-#define DATADIR		"data/"
-#endif
-#ifndef SHAREDIR
-#define SHAREDIR	"share/"
-#endif
-#ifndef PLUGINDIR
-#define PLUGINDIR	"lib/plugin"
-#endif
 
 #define ER(X) error_message((X))
 

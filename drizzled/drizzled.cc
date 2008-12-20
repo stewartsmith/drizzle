@@ -45,6 +45,7 @@
 #include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
+#include <drizzled/configmake.h>
 
 
 #if TIME_WITH_SYS_TIME
@@ -497,7 +498,7 @@ static void get_options(int *argc,char **argv);
 extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
 static void set_server_version(void);
 static int init_thread_environment();
-static char *get_relative_path(const char *path);
+static const char *get_relative_path(const char *path);
 static void fix_paths(void);
 void handle_connections_sockets();
 pthread_handler_t kill_server_thread(void *arg);
@@ -3960,7 +3961,7 @@ static void drizzle_init_variables(void)
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
-  strncpy(drizzle_real_data_home, get_relative_path(DATADIR),
+  strncpy(drizzle_real_data_home, get_relative_path(LOCALSTATEDIR),
           sizeof(drizzle_real_data_home)-1);
   drizzle_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
   drizzle_data_home_buff[1]=0;
@@ -4008,7 +4009,7 @@ static void drizzle_init_variables(void)
 
   const char *tmpenv;
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
-    tmpenv = DEFAULT_DRIZZLE_HOME;
+    tmpenv = PREFIX;
   (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
 }
 
@@ -4342,17 +4343,18 @@ static void set_server_version(void)
 }
 
 
-static char *get_relative_path(const char *path)
+static const char *get_relative_path(const char *path)
 {
   if (test_if_hard_path(path) &&
-      is_prefix(path,DEFAULT_DRIZZLE_HOME) &&
-      strcmp(DEFAULT_DRIZZLE_HOME,FN_ROOTDIR))
+      is_prefix(path,PREFIX) &&
+      strcmp(PREFIX,FN_ROOTDIR))
   {
-    path+=(uint) strlen(DEFAULT_DRIZZLE_HOME);
+    if (strlen(PREFIX) < strlen(path))
+      path+=(size_t) strlen(PREFIX);
     while (*path == FN_LIBCHAR)
       path++;
   }
-  return (char*) path;
+  return path;
 }
 
 
@@ -4378,10 +4380,11 @@ static void fix_paths(void)
   (void) my_load_path(drizzle_real_data_home,drizzle_real_data_home,drizzle_home);
   (void) my_load_path(pidfile_name,pidfile_name,drizzle_real_data_home);
   (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr ? opt_plugin_dir_ptr :
-                                      get_relative_path(PLUGINDIR), drizzle_home);
+                                      get_relative_path(PKGPLUGINDIR),
+                                      drizzle_home);
   opt_plugin_dir_ptr= opt_plugin_dir;
 
-  char *sharedir=get_relative_path(SHAREDIR);
+  const char *sharedir=get_relative_path(PKGDATADIR);
   if (test_if_hard_path(sharedir))
     strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
   else

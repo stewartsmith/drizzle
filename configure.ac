@@ -1227,7 +1227,7 @@ then
   then
     W_FAIL="-Werror"
   fi
-  BASE_WARNINGS="-W -Wall -Wextra ${W_FAIL}"
+  BASE_WARNINGS="-Wall -Wextra ${W_FAIL}"
 
   if test "$ac_warn_longlong" = "yes"
   then
@@ -1374,6 +1374,8 @@ case $SYSTEM_TYPE in
     ;;
 esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
+
+AC_SUBST(pkgplugindir,"\$(pkglibdir)/plugin")
 
 dnl GCC Precompiled Header Support
 dnl re-enable later
