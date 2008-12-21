@@ -234,6 +234,8 @@ ANALYZE table t1, t2, t3;
 
 SELECT COUNT(*) FROM t3;
 
+# Ignore the 9th column (rows in EXPLAIN output - inaccurate in InnoDB)
+--regex_replace 9 X
 EXPLAIN SELECT SQL_CALC_FOUND_ROWS * FROM t1 LEFT JOIN t2 ON t1.a=t2.a
                                              LEFT JOIN t3 ON t2.b=t3.b;
 FLUSH STATUS ;
