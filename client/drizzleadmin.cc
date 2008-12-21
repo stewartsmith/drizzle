@@ -76,14 +76,13 @@ static struct my_option my_long_options[] =
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', N_("Connect to host."), (char**) &host, (char**) &host, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"password", 'p',
+  {"password", 'P',
    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', N_("Port number to use for connection or 0 for default to, in "
+  {"port", 'p', N_("Port number to use for connection or 0 for default to, in "
    "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
-   (char**) &tcp_port,
-   (char**) &tcp_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', N_("Silently exit if one can't connect to server."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
@@ -111,10 +110,33 @@ static const char *load_default_groups[]= { "drizzleadmin","client",0 };
 bool
 get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
   int error = 0;
 
   switch(optid) {
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(1);
+    }
+    /* If the port number is > 65535 it is not a valid port
+ *  *        This also helps with potential data loss casting unsigned long to a
+ *   *               uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(1);
+    }
+    else
+    {
+      tcp_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
       char *start=argument;
