@@ -452,7 +452,6 @@ void xid_cache_delete(XID_STATE *xid_state);
   @brief A set of Session members describing the current authenticated user.
 */
 
-using namespace std;
 class Security_context {
 public:
   Security_context() {}
@@ -463,8 +462,8 @@ public:
     priv_user - The user privilege we are using. May be "" for anonymous user.
     ip - client IP
   */
-  string user;
-  string ip;
+  std::string user;
+  std::string ip;
 
   void skip_grants();
   inline const char *priv_host_name()
