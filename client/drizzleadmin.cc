@@ -124,8 +124,8 @@ get_one_option(int optid, const struct my_option *, char *argument)
       exit(1);
     }
     /* If the port number is > 65535 it is not a valid port
- *  *        This also helps with potential data loss casting unsigned long to a
- *   *               uint32_t. */
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
     if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
     {
       fprintf(stderr, _("Value supplied for port is not valid.\n"));
@@ -150,9 +150,16 @@ get_one_option(int optid, const struct my_option *, char *argument)
                           "Aborting.\n"));
         exit(ENOMEM);
       }
-      while (*argument) *argument++= 'x';   /* Destroy argument */
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-        start[1]=0; /* Cut length of argument */
+      {
+        /* Cut length of argument */
+        start[1]= 0;
+      }
       tty_password= 0;
     }
     else
