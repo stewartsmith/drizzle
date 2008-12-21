@@ -102,7 +102,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/func.h \
 		function/get_system_var.h \
 		function/get_user_var.h \
-		function/get_variable.h \
 		function/last_insert.h \
 		function/length.h \
 		function/locate.h \
@@ -116,9 +115,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/set_user_var.h \
 		function/sign.h \
 		function/signed.h \
-		function/units.h \
 		function/unsigned.h \
-		function/update_hash.h \
 		function/user_var_as_out_param.h \
 		function/math/abs.h \
 		function/math/acos.h \
@@ -131,9 +128,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/math/divide.h \
 		function/math/exp.h \
 		function/math/floor.h \
+		function/math/int_divide.h \
 		function/math/integer.h \
 		function/math/int.h \
-		function/math/int_divide.h \
 		function/math/int_val.h \
 		function/math/ln.h \
 		function/math/log.h \
@@ -181,7 +178,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/trim.h \
 		function/str/user.h \
 		function/str/uuid.h \
-		function/str/weight_string.h \
+		function/str/weight_string.h
 		function/time/add_time.h \
 		function/time/curdate.h \
 		function/time/curtime.h \
@@ -229,7 +226,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		ha_trx_info.h \
 		ha_statistics.h \
 		handler.h \
-		handlerton.h \
 		handler_structs.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
@@ -287,8 +283,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		my_decimal.h\
 		name_resolution_context.h \
 		name_resolution_context_state.h \
-		natural_join_column.h \
-		nested_join.h \
 		opt_range.h \
 		order.h \
 		parser.h \
@@ -349,7 +343,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		tmp_table.h \
 		tzfile.h \
 		tztime.h \
-		unireg.h \
 		virtual_column_info.h \
 		xid.h
 
