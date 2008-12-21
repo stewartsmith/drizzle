@@ -296,9 +296,8 @@ public:
   bool table_check_intact(const uint32_t table_f_count, const TABLE_FIELD_W_TYPE *table_def);
 
   /* See if this can be blown away */
-  inline uint32_t getDBStat () { return db_stat; }
-  inline uint32_t setDBStat () { return db_stat; }
-  uint		db_stat;		/* mode of file as in handler.h */
+  inline HA_OPEN_FLAGS getDBStat () { return db_stat; }
+  HA_OPEN_FLAGS db_stat;
 
   handler	*file;
   Table *next, *prev;
@@ -510,7 +509,7 @@ public:
   }
 
   /* Is table open or should be treated as such by name-locking? */
-  inline bool is_name_opened() { return db_stat || open_placeholder; }
+  inline bool is_name_opened() { return db_stat.any() || open_placeholder; }
   /*
     Is this instance of the table should be reopen or represents a name-lock?
   */

@@ -68,6 +68,38 @@ typedef class st_select_lex SELECT_LEX;
 typedef struct st_mysql_lock DRIZZLE_LOCK;
 typedef struct st_ha_create_information HA_CREATE_INFO;
 
+/*
+  Parameters for open() (in register form->filestat)
+  HA_GET_INFO does an implicit HA_ABORT_IF_LOCKED
+*/
+enum ha_open_flag_bits {
+  HA_BIT_OPEN_KEYFILE,
+  HA_BIT_OPEN_RNDFILE,
+  HA_BIT_GET_INDEX,
+  HA_BIT_GET_INFO,         /* do a ha_info() after open */
+  HA_BIT_READ_ONLY,        /* File opened as readonly */
+  HA_BIT_TRY_READ_ONLY,    /* Try readonly if can't open with read and write */
+  HA_BIT_WAIT_IF_LOCKED,   /* Wait if locked on open */
+  HA_BIT_ABORT_IF_LOCKED,  /* skip if locked on open.*/
+  HA_BIT_BLOCK_LOCK,       /* unlock when reading some records */
+  HA_BIT_OPEN_TEMPORARY,
+  HA_BIT_OPEN_MAX
+};
+
+typedef std::bitset<HA_BIT_OPEN_MAX> HA_OPEN_FLAGS;
+
+static HA_OPEN_FLAGS HA_OPEN_KEYFILE(1 << HA_BIT_OPEN_KEYFILE);
+static HA_OPEN_FLAGS HA_OPEN_RNDFILE(1 << HA_BIT_OPEN_RNDFILE);
+static HA_OPEN_FLAGS HA_GET_INDEX(1 << HA_BIT_GET_INDEX);
+static HA_OPEN_FLAGS HA_GET_INFO(1 << HA_BIT_GET_INFO);
+static HA_OPEN_FLAGS HA_READ_ONLY(1 << HA_BIT_READ_ONLY);
+static HA_OPEN_FLAGS HA_TRY_READ_ONLY(1 << HA_BIT_TRY_READ_ONLY);
+static HA_OPEN_FLAGS HA_WAIT_IF_LOCKED(1 << HA_BIT_WAIT_IF_LOCKED);
+static HA_OPEN_FLAGS HA_ABORT_IF_LOCKED(1 << HA_BIT_ABORT_IF_LOCKED);
+static HA_OPEN_FLAGS HA_BLOCK_LOCK(1 << HA_BIT_BLOCK_LOCK);
+static HA_OPEN_FLAGS HA_OPEN_TEMPORARY(1 << HA_BIT_OPEN_TEMPORARY);
+
+
 /* information schema */
 static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 
@@ -250,7 +282,7 @@ void free_table_share(TABLE_SHARE *share);
 int open_table_def(Session *session, TABLE_SHARE *share, uint32_t db_flags);
 void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alias,
-                          uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
+                          HA_OPEN_FLAGS db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode);
 int readfrm(const char *name, unsigned char **data, size_t *length);
 int writefrm(const char* name, const unsigned char* data, size_t len);

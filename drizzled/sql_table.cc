@@ -2512,7 +2512,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       goto send_result;
     }
 
-    if ((table->table->db_stat & HA_READ_ONLY) && open_for_modify)
+    if ((table->table->db_stat.test(HA_BIT_READ_ONLY)) && open_for_modify)
     {
       /* purecov: begin inspected */
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];

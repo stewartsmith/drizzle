@@ -133,7 +133,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   table->field=reg_field;
   table->alias= "weedout-tmp";
   table->reginfo.lock_type=TL_WRITE;  /* Will be updated */
-  table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
+  table->db_stat= HA_OPEN_KEYFILE | HA_OPEN_RNDFILE;
   table->map=1;
   table->temp_pool_slot = temp_pool_slot;
   table->copy_blobs= 1;

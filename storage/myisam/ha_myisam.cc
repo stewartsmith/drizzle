@@ -639,7 +639,7 @@ int ha_myisam::check(Session* session, HA_CHECK_OPT* check_opt)
   param.testflag = check_opt->flags | T_CHECK | T_SILENT;
   param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
 
-  if (!(table->db_stat & HA_READ_ONLY))
+  if (!(table->db_stat.test(HA_BIT_READ_ONLY)))
     param.testflag|= T_STATISTICS;
   param.using_global_keycache = 1;
 
@@ -690,9 +690,9 @@ int ha_myisam::check(Session* session, HA_CHECK_OPT* check_opt)
       pthread_mutex_lock(&share->intern_lock);
       share->state.changed&= ~(STATE_CHANGED | STATE_CRASHED |
 			       STATE_CRASHED_ON_REPAIR);
-      if (!(table->db_stat & HA_READ_ONLY))
-	error=update_state_info(&param,file,UPDATE_TIME | UPDATE_OPEN_COUNT |
-				UPDATE_STAT);
+      if (!(table->db_stat.test(HA_BIT_READ_ONLY)))
+	    error= update_state_info(&param,file,UPDATE_TIME | UPDATE_OPEN_COUNT |
+				                 UPDATE_STAT);
       pthread_mutex_unlock(&share->intern_lock);
       info(HA_STATUS_NO_LOCK | HA_STATUS_TIME | HA_STATUS_VARIABLE |
 	   HA_STATUS_CONST);

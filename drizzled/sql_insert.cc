@@ -1511,7 +1511,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   bool not_used;
 
   if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
-      create_table->table->db_stat)
+      create_table->table->db_stat.any())
   {
     /* Table already exists and was open at open_and_lock_tables() stage. */
     if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)

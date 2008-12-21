@@ -484,7 +484,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
   char *key_buff;
   MEM_ROOT *mem_root= &table->mem_root;
 
-  assert(table->db_stat);
+  assert(table->db_stat.any());
 
   /*
     Make a local copy of the table share and free the current one.
@@ -787,7 +787,7 @@ bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
           are employed by CREATE TABLE as in this case table simply does not
           exist yet.
         */
-	if (table->needs_reopen_or_name_lock() && (table->db_stat ||
+    if (table->needs_reopen_or_name_lock() && (table->db_stat.any() ||
             (table->open_placeholder && wait_for_placeholders)))
 	{
 	  found=1;
@@ -1104,9 +1104,8 @@ bool close_thread_table(Session *session, Table **table_ptr)
   assert(!table->file || table->file->inited == handler::NONE);
 
   *table_ptr=table->next;
-
   if (table->needs_reopen_or_name_lock() ||
-      session->version != refresh_version || !table->db_stat)
+      session->version != refresh_version || table->db_stat.none())
   {
     hash_delete(&open_cache,(unsigned char*) table);
     found_old_table=1;
@@ -2656,9 +2655,9 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
   prev= &session->open_tables;
   for (table=session->open_tables; table ; table=next)
   {
-    uint32_t db_stat=table->db_stat;
+    HA_OPEN_FLAGS db_stat= table->db_stat;
     next=table->next;
-    if (!tables || (!db_stat && reopen_table(table)))
+    if (!tables || (db_stat.none() && reopen_table(table)))
     {
       my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
       hash_delete(&open_cache,(unsigned char*) table);
@@ -2669,7 +2668,7 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
       *prev= table;
       prev= &table->next;
       /* Do not handle locks of MERGE children. */
-      if (get_locks && !db_stat)
+      if (get_locks && db_stat.none())
 	*tables_ptr++= table;			// need new lock on this
       if (mark_share_as_old)
       {
@@ -2740,7 +2739,7 @@ static void close_old_data_files(Session *session, Table *table, bool morph_lock
     if (table->needs_reopen_or_name_lock())
     {
       found=1;
-      if (table->db_stat)
+      if (table->db_stat.any())
       {
 	if (morph_locks)
 	{
@@ -2757,7 +2756,7 @@ static void close_old_data_files(Session *session, Table *table, bool morph_lock
             mysql_lock_remove(session, session->locked_tables, ulcktbl, true);
             ulcktbl->lock_count= 0;
           }
-          if ((ulcktbl != table) && ulcktbl->db_stat)
+          if ((ulcktbl != table) && ulcktbl->db_stat.any())
           {
             /*
               Close the parent too. Note that parent can come later in
@@ -2917,9 +2916,9 @@ Table *drop_locked_tables(Session *session,const char *db, const char *table_nam
       {
         found= table;
         /* Close engine table, but keep object around as a name lock */
-        if (table->db_stat)
+        if (table->db_stat.any())
         {
-          table->db_stat= 0;
+          table->db_stat.reset();
           table->file->close();
         }
       }
@@ -3059,10 +3058,10 @@ retry:
     return(1);
 
   while ((error= open_table_from_share(session, share, alias,
-                                       (uint) (HA_OPEN_KEYFILE |
-                                               HA_OPEN_RNDFILE |
-                                               HA_GET_INDEX |
-                                               HA_TRY_READ_ONLY),
+                                       (HA_OPEN_KEYFILE |
+                                       HA_OPEN_RNDFILE |
+                                       HA_GET_INDEX |
+                                       HA_TRY_READ_ONLY),
                                        (EXTRA_RECORD),
                                        session->open_options, entry, OTM_OPEN)))
   {
@@ -3120,9 +3119,9 @@ retry:
      session->clear_error();				// Clear error message
      error= 0;
      if (open_table_from_share(session, share, alias,
-                               (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
-                                       HA_GET_INDEX |
-                                       HA_TRY_READ_ONLY),
+                               (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
+                               HA_GET_INDEX |
+                               HA_TRY_READ_ONLY),
                                EXTRA_RECORD,
                                ha_open_options | HA_OPEN_FOR_REPAIR,
                                entry, OTM_OPEN) || ! entry->file ||
@@ -3724,8 +3723,8 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   if (open_table_def(session, share, 0) ||
       open_table_from_share(session, share, table_name,
                             (open_mode == OTM_ALTER) ? 0 :
-                            (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
-                                    HA_GET_INDEX),
+                            (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
+                             HA_GET_INDEX),
                             (open_mode == OTM_ALTER) ?
                               (EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
                             : (EXTRA_RECORD),
@@ -6298,7 +6297,8 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
 	     session_table= session_table->next)
         {
           /* Do not handle locks of MERGE children. */
-	  if (session_table->db_stat)	// If table is open
+
+          if (session_table->db_stat.any())	// If table is open
 	    signalled|= mysql_lock_abort_for_thread(session, session_table);
         }
       }

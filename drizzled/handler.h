@@ -32,6 +32,7 @@
 #include <drizzled/handlerton.h>
 #include <drizzled/handler_structs.h>
 #include <drizzled/ha_statistics.h>
+#include <drizzled/server_includes.h>
 
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
@@ -252,7 +253,6 @@ public:
   }
 
   /* ha_ methods: pubilc wrappers for private virtual API */
-
   int ha_open(Table *table, const char *name, int mode, int test_if_locked);
   int ha_index_init(uint32_t idx, bool sorted);
   int ha_index_end();

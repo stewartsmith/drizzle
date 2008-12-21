@@ -1,3 +1,4 @@
+
 /* Copyright (C) 2000-2006 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
@@ -194,7 +195,7 @@ void init_read_record(READ_RECORD *info,Session *session, Table *table,
     if (!table->sort.addon_field &&
 	session->variables.read_rnd_buff_size &&
 	!(table->file->ha_table_flags() & HA_FAST_KEY_READ) &&
-	(table->db_stat & HA_READ_ONLY ||
+     (table->db_stat.test(HA_BIT_READ_ONLY) ||
 	 table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
 	(uint64_t) table->s->reclength* (table->file->stats.records+
                                           table->file->stats.deleted) >

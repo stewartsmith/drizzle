@@ -1552,7 +1552,7 @@ parse_err:
 */
 
 int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alias,
-                          uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
+                          HA_OPEN_FLAGS db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode)
 {
   int error;
@@ -1589,14 +1589,14 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
   }
   else
   {
-    assert(!db_stat);
+    assert(db_stat.none());
   }
 
   error= 4;
   outparam->reginfo.lock_type= TL_UNLOCK;
   outparam->current_lock= F_UNLCK;
   records=0;
-  if ((db_stat & HA_OPEN_KEYFILE) || (prgflag & DELAYED_OPEN))
+  if (db_stat.test(HA_BIT_OPEN_KEYFILE) || (prgflag & DELAYED_OPEN))
     records=1;
   if (prgflag & (READ_ALL+EXTRA_RECORD))
     records++;
@@ -1763,15 +1763,15 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
 
   /* The table struct is now initialized;  Open the table */
   error= 2;
-  if (db_stat && open_mode != OTM_ALTER)
+  if (db_stat.any() && open_mode != OTM_ALTER)
   {
     int ha_err;
     if ((ha_err= (outparam->file->
                   ha_open(outparam, share->normalized_path.str,
-                          (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
-                          (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE :
-                           (db_stat & HA_WAIT_IF_LOCKED) ?  HA_OPEN_WAIT_IF_LOCKED :
-                           (db_stat & (HA_ABORT_IF_LOCKED | HA_GET_INFO)) ?
+                          (db_stat.test(HA_BIT_READ_ONLY) ? O_RDONLY : O_RDWR),
+                          (db_stat.test(HA_BIT_OPEN_TEMPORARY) ? HA_OPEN_TMP_TABLE :
+                           (db_stat.test(HA_BIT_WAIT_IF_LOCKED)) ?  HA_OPEN_WAIT_IF_LOCKED :
+                           (db_stat.test(HA_BIT_ABORT_IF_LOCKED) | db_stat.test(HA_BIT_GET_INFO)) ?
                           HA_OPEN_ABORT_IF_LOCKED :
                            HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
     {
@@ -1823,7 +1823,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
     open_table_error(share, error, my_errno, 0);
   delete outparam->file;
   outparam->file= 0;				// For easier error checking
-  outparam->db_stat=0;
+  outparam->db_stat.reset();
   free_root(&outparam->mem_root, MYF(0));       // Safe to call on zeroed root
   free((char*) outparam->alias);
   return (error);
@@ -1843,7 +1843,7 @@ int closefrm(register Table *table, bool free_share)
 {
   int error=0;
 
-  if (table->db_stat)
+  if (table->db_stat.any())
     error=table->file->close();
   free((char*) table->alias);
   table->alias= 0;
@@ -2868,7 +2868,7 @@ void TableList::cleanup_items()
 
 bool TableList::placeholder()
 {
-  return derived || schema_table || (create && !table->getDBStat()) || !table;
+  return derived || schema_table || (create && table->getDBStat().none()) || !table;
 }
 
 
@@ -3820,7 +3820,8 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
   table->field=reg_field;
   table->alias= table_alias;
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
-  table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
+  table->db_stat= HA_OPEN_KEYFILE | HA_OPEN_RNDFILE;
+
   table->map=1;
   table->temp_pool_slot = temp_pool_slot;
   table->copy_blobs= 1;
@@ -4491,7 +4492,7 @@ bool Table::open_tmp_table()
                                   HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
     file->print_error(error,MYF(0)); /* purecov: inspected */
-    db_stat=0;
+    db_stat.reset();
     return(1);
   }
   (void) file->extra(HA_EXTRA_QUICK);		/* Faster */
@@ -4624,7 +4625,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 		       HA_CREATE_TMP_TABLE)))
   {
     file->print_error(error,MYF(0));	/* purecov: inspected */
-    db_stat=0;
+    db_stat.reset();
     goto err;
   }
   status_var_increment(in_use->status_var.created_tmp_disk_tables);
@@ -4645,7 +4646,7 @@ void Table::free_tmp_table(Session *session)
 
   if (file)
   {
-    if (db_stat)
+    if (db_stat.any())
       file->ha_drop_table(s->table_name.str);
     else
       file->ha_delete_table(s->table_name.str);

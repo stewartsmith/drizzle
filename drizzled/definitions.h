@@ -710,23 +710,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 */
 #define MAX_HA 15
 
-/*
-  Parameters for open() (in register form->filestat)
-  HA_GET_INFO does an implicit HA_ABORT_IF_LOCKED
-*/
-
-#define HA_OPEN_KEYFILE		1
-#define HA_OPEN_RNDFILE		2
-#define HA_GET_INDEX		4
-#define HA_GET_INFO		8	/* do a ha_info() after open */
-#define HA_READ_ONLY		16	/* File opened as readonly */
-/* Try readonly if can't open with read and write */
-#define HA_TRY_READ_ONLY	32
-#define HA_WAIT_IF_LOCKED	64	/* Wait if locked on open */
-#define HA_ABORT_IF_LOCKED	128	/* skip if locked on open.*/
-#define HA_BLOCK_LOCK		256	/* unlock when reading some records */
-#define HA_OPEN_TEMPORARY	512
-
 /* For transactional LOCK Table. handler::lock_table() */
 #define HA_LOCK_IN_SHARE_MODE      F_RDLCK
 #define HA_LOCK_IN_EXCLUSIVE_MODE  F_WRLCK

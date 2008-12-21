@@ -294,7 +294,7 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
   {
     assert((*tables)->reginfo.lock_type >= TL_READ);
     lock_type=F_WRLCK;				/* Lock exclusive */
-    if ((*tables)->db_stat & HA_READ_ONLY ||
+    if ((*tables)->db_stat.test(HA_BIT_READ_ONLY) ||
 	((*tables)->reginfo.lock_type >= TL_READ &&
 	 (*tables)->reginfo.lock_type <= TL_READ_NO_INSERT))
       lock_type=F_RDLCK;
@@ -783,7 +783,7 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
     if (lock_type >= TL_WRITE_ALLOW_WRITE)
     {
       *write_lock_used=table;
-      if (table->db_stat & HA_READ_ONLY)
+      if (table->db_stat.test(HA_BIT_READ_ONLY))
       {
 	my_error(ER_OPEN_AS_READONLY,MYF(0),table->alias);
         /* Clear the lock type of the lock data that are stored already. */
