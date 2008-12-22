@@ -39,13 +39,13 @@ typedef struct ttinfo
 /* Structure describing leap-second corrections. */
 typedef struct lsinfo
 {
-  my_time_t ls_trans; // Transition time
+  time_t ls_trans; // Transition time
   long      ls_corr;  // Correction to apply
 } LS_INFO;
 
 /*
-  Structure with information describing ranges of my_time_t shifted to local
-  time (my_time_t + offset). Used for local DRIZZLE_TIME -> my_time_t conversion.
+  Structure with information describing ranges of time_t shifted to local
+  time (time_t + offset). Used for local DRIZZLE_TIME -> time_t conversion.
   See comments for TIME_to_gmt_sec() for more info.
 */
 typedef struct revtinfo
@@ -65,9 +65,9 @@ typedef struct st_time_zone_info
   uint32_t timecnt;  // Number of transitions between time types
   uint32_t typecnt;  // Number of local time types
   uint32_t charcnt;  // Number of characters used for abbreviations
-  uint32_t revcnt;   // Number of transition descr. for TIME->my_time_t conversion
+  uint32_t revcnt;   // Number of transition descr. for TIME->time_t conversion
   /* The following are dynamical arrays are allocated in MEM_ROOT */
-  my_time_t *ats;       // Times of transitions between time types
+  time_t *ats;       // Times of transitions between time types
   unsigned char	*types; // Local time types for transitions
   TRAN_TYPE_INFO *ttis; // Local time types descriptions
   /* Storage for local time types abbreviations. They are stored as ASCIIZ */
@@ -78,11 +78,11 @@ typedef struct st_time_zone_info
   */
   LS_INFO *lsis;
   /*
-    Starting points and descriptions of shifted my_time_t (my_time_t + offset)
-    ranges on which shifted my_time_t -> my_time_t mapping is linear or undefined.
-    Used for tm -> my_time_t conversion.
+    Starting points and descriptions of shifted time_t (time_t + offset)
+    ranges on which shifted time_t -> time_t mapping is linear or undefined.
+    Used for tm -> time_t conversion.
   */
-  my_time_t *revts;
+  time_t *revts;
   REVT_INFO *revtis;
   /*
     Time type which is used for times smaller than first transition or if
@@ -116,24 +116,24 @@ static const uint32_t year_lengths[2]=
 
 
 /*
-  Converts time from my_time_t representation (seconds in UTC since Epoch)
+  Converts time from time_t representation (seconds in UTC since Epoch)
   to broken down representation using given local time zone offset.
 
   SYNOPSIS
     sec_to_TIME()
       tmp    - pointer to structure for broken down representation
-      t      - my_time_t value to be converted
+      t      - time_t value to be converted
       offset - local time zone offset
 
   DESCRIPTION
-    Convert my_time_t with offset to DRIZZLE_TIME struct. Differs from timesub
+    Convert time_t with offset to DRIZZLE_TIME struct. Differs from timesub
     (from elsie code) because doesn't contain any leap correction and
     TM_GMTOFF and is_dst setting and contains some MySQL specific
     initialization. Funny but with removing of these we almost have
     glibc's offtime function.
 */
 static void
-sec_to_TIME(DRIZZLE_TIME * tmp, my_time_t t, long offset)
+sec_to_TIME(DRIZZLE_TIME * tmp, time_t t, long offset)
 {
   long days;
   long rem;
@@ -146,7 +146,7 @@ sec_to_TIME(DRIZZLE_TIME * tmp, my_time_t t, long offset)
 
   /*
     We do this as separate step after dividing t, because this
-    allows us handle times near my_time_t bounds without overflows.
+    allows us handle times near time_t bounds without overflows.
   */
   rem+= offset;
   while (rem < 0)
@@ -196,17 +196,17 @@ sec_to_TIME(DRIZZLE_TIME * tmp, my_time_t t, long offset)
 
 
 /*
-  Find time range wich contains given my_time_t value
+  Find time range wich contains given time_t value
 
   SYNOPSIS
     find_time_range()
-      t                - my_time_t value for which we looking for range
+      t                - time_t value for which we looking for range
       range_boundaries - sorted array of range starts.
       higher_bound     - number of ranges
 
   DESCRIPTION
-    Performs binary search for range which contains given my_time_t value.
-    It has sense if number of ranges is greater than zero and my_time_t value
+    Performs binary search for range which contains given time_t value.
+    It has sense if number of ranges is greater than zero and time_t value
     is greater or equal than beginning of first range. It also assumes that
     t belongs to some range specified or end of last is MY_TIME_T_MAX.
 
@@ -217,7 +217,7 @@ sec_to_TIME(DRIZZLE_TIME * tmp, my_time_t t, long offset)
     Index of range to which t belongs
 */
 static uint
-find_time_range(my_time_t t, const my_time_t *range_boundaries,
+find_time_range(time_t t, const time_t *range_boundaries,
                 uint32_t higher_bound)
 {
   uint32_t i, lower_bound= 0;
@@ -246,20 +246,20 @@ find_time_range(my_time_t t, const my_time_t *range_boundaries,
 }
 
 /*
-  Find local time transition for given my_time_t.
+  Find local time transition for given time_t.
 
   SYNOPSIS
     find_transition_type()
-      t   - my_time_t value to be converted
+      t   - time_t value to be converted
       sp  - pointer to struct with time zone description
 
   RETURN VALUE
     Pointer to structure in time zone description describing
-    local time type for given my_time_t.
+    local time type for given time_t.
 */
 static
 const TRAN_TYPE_INFO *
-find_transition_type(my_time_t t, const TIME_ZONE_INFO *sp)
+find_transition_type(time_t t, const TIME_ZONE_INFO *sp)
 {
   if (unlikely(sp->timecnt == 0 || t < sp->ats[0]))
   {
@@ -280,13 +280,13 @@ find_transition_type(my_time_t t, const TIME_ZONE_INFO *sp)
 
 
 /*
-  Converts time in my_time_t representation (seconds in UTC since Epoch) to
+  Converts time in time_t representation (seconds in UTC since Epoch) to
   broken down DRIZZLE_TIME representation in local time zone.
 
   SYNOPSIS
     gmt_sec_to_TIME()
       tmp          - pointer to structure for broken down represenatation
-      sec_in_utc   - my_time_t value to be converted
+      sec_in_utc   - time_t value to be converted
       sp           - pointer to struct with time zone description
 
   TODO
@@ -296,9 +296,9 @@ find_transition_type(my_time_t t, const TIME_ZONE_INFO *sp)
     (60th and 61st second, look how we calculate them as "hit" in this
     function).
     Under realistic assumptions about frequency of transitions the same array
-    can be used fot DRIZZLE_TIME -> my_time_t conversion. For this we need to
+    can be used for DRIZZLE_TIME -> time_t conversion. For this we need to
     implement tweaked binary search which will take into account that some
-    DRIZZLE_TIME has two matching my_time_t ranges and some of them have none.
+    DRIZZLE_TIME has two matching time_t ranges and some of them have none.
 */
 static void
 gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t sec_in_utc, const TIME_ZONE_INFO *sp)
@@ -357,25 +357,25 @@ gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t sec_in_utc, const TIME_ZONE_INFO *sp)
 
 /*
   Converts local time in broken down representation to local
-  time zone analog of my_time_t represenation.
+  time zone analog of time_t represenation.
 
   SYNOPSIS
     sec_since_epoch()
       year, mon, mday, hour, min, sec - broken down representation.
 
   DESCRIPTION
-    Converts time in broken down representation to my_time_t representation
+    Converts time in broken down representation to time_t representation
     ignoring time zone. Note that we cannot convert back some valid _local_
-    times near ends of my_time_t range because of my_time_t  overflow. But we
+    times near ends of time_t range because of time_t overflow. But we
     ignore this fact now since MySQL will never pass such argument.
 
   RETURN VALUE
     Seconds since epoch time representation.
 */
-static my_time_t
+static time_t
 sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
 {
-  /* Guard against my_time_t overflow(on system with 32 bit my_time_t) */
+  /* Guard against time_t overflow (on system with 32 bit time_t) */
   assert(!(year == TIMESTAMP_MAX_YEAR && mon == 1 && mday > 17));
 #ifndef WE_WANT_TO_HANDLE_UNORMALIZED_DATES
   /*
@@ -403,7 +403,7 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
 }
 
 /*
-  Converts local time in broken down DRIZZLE_TIME representation to my_time_t
+  Converts local time in broken down DRIZZLE_TIME representation to time_t
   representation.
 
   SYNOPSIS
@@ -421,7 +421,7 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
       has two answers it will give the smaller one
     - If we are in spring time gap then it will return
       beginning of the gap
-    - It can give wrong results near the ends of my_time_t due to
+    - It can give wrong results near the ends of time_t due to
       overflows, but we are safe since in MySQL we will never
       call this function for such dates (its restriction for year
       between 1970 and 2038 gives us several days of reserve).
@@ -445,20 +445,20 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
 
     We use completely different approach. It is better since it is both
     faster than iterative implementations and fully determenistic. If you
-    look at my_time_t to DRIZZLE_TIME conversion then you'll find that it consist
+    look at time_t to DRIZZLE_TIME conversion then you'll find that it consist
     of two steps:
-    The first is calculating shifted my_time_t value and the second - TIME
-    calculation from shifted my_time_t value (well it is a bit simplified
-    picture). The part in which we are interested in is my_time_t -> shifted
-    my_time_t conversion. It is piecewise linear function which is defined
+    The first is calculating shifted time_t value and the second - TIME
+    calculation from shifted time_t value (well it is a bit simplified
+    picture). The part in which we are interested in is time_t -> shifted
+    time_t conversion. It is piecewise linear function which is defined
     by combination of transition times as break points and times offset
     as changing function parameter. The possible inverse function for this
     converison would be ambiguos but with MySQL's restrictions we can use
     some function which is the same as inverse function on unambigiuos
     ranges and coincides with one of branches of inverse function in
     other ranges. Thus we just need to build table which will determine
-    this shifted my_time_t -> my_time_t conversion similar to existing
-    (my_time_t -> shifted my_time_t table). We do this in
+    this shifted time_t -> time_t conversion similar to existing
+    (time_t -> shifted time_t table). We do this in
     prepare_tz_info function.
 
   TODO
@@ -474,11 +474,11 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
     Seconds in UTC since Epoch.
     0 in case of error.
 */
-static my_time_t
+static time_t
 TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
                 bool *in_dst_time_gap)
 {
-  my_time_t local_t;
+  time_t local_t;
   uint32_t saved_seconds;
   uint32_t i;
   int shift= 0;
@@ -494,8 +494,8 @@ TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
     saved_seconds= t->second;
 
   /*
-    NOTE: to convert full my_time_t range we do a shift of the
-    boundary dates here to avoid overflow of my_time_t.
+    NOTE: to convert full time_t range we do a shift of the
+    boundary dates here to avoid overflow of time_t.
     We use alike approach in my_system_gmt_sec().
 
     However in that function we also have to take into account
@@ -526,8 +526,8 @@ TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
   if (local_t < sp->revts[0] || local_t > sp->revts[sp->revcnt])
   {
     /*
-      This means that source time can't be represented as my_time_t due to
-      limited my_time_t range.
+      This means that source time can't be represented as time_t due to
+      limited time_t range.
     */
     return(0);
   }
@@ -542,10 +542,10 @@ TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
   */
   if (shift)
   {
-    if (local_t > (my_time_t) (TIMESTAMP_MAX_VALUE - shift * SECS_PER_DAY +
-                               sp->revtis[i].rt_offset - saved_seconds))
+    if (local_t > (time_t) (TIMESTAMP_MAX_VALUE - shift * SECS_PER_DAY +
+                            sp->revtis[i].rt_offset - saved_seconds))
     {
-      return(0);                           /* my_time_t overflow */
+      return(0);                           /* time_t overflow */
     }
     local_t+= shift * SECS_PER_DAY;
   }
@@ -555,7 +555,7 @@ TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
     /*
       Oops! We are in spring time gap.
       May be we should return error here?
-      Now we are returning my_time_t value corresponding to the
+      Now we are returning time_t value corresponding to the
       beginning of the gap.
     */
     *in_dst_time_gap= 1;
@@ -598,16 +598,16 @@ class Time_zone_system : public Time_zone
 {
 public:
   Time_zone_system() {}                       /* Remove gcc warning */
-  virtual my_time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
+  virtual time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                     bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const;
+  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const;
   virtual const String * get_name() const;
 };
 
 
 /*
   Converts local time in system time zone in DRIZZLE_TIME representation
-  to its my_time_t representation.
+  to its time_t representation.
 
   SYNOPSIS
     TIME_to_gmt_sec()
@@ -619,18 +619,18 @@ public:
 
   DESCRIPTION
     This method uses system function (localtime_r()) for conversion
-    local time in system time zone in DRIZZLE_TIME structure to its my_time_t
+    local time in system time zone in DRIZZLE_TIME structure to its time_t
     representation. Unlike the same function for Time_zone_db class
     it it won't handle unnormalized input properly. Still it will
-    return lowest possible my_time_t in case of ambiguity or if we
+    return lowest possible time_t in case of ambiguity or if we
     provide time corresponding to the time-gap.
 
     You should call init_time() function before using this function.
 
   RETURN VALUE
-    Corresponding my_time_t value or 0 in case of error
+    Corresponding time_t value or 0 in case of error
 */
-my_time_t
+time_t
 Time_zone_system::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) const
 {
   long not_used;
@@ -639,13 +639,13 @@ Time_zone_system::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) 
 
 
 /*
-  Converts time from UTC seconds since Epoch (my_time_t) representation
+  Converts time from UTC seconds since Epoch (time_t) representation
   to system local time zone broken-down representation.
 
   SYNOPSIS
     gmt_sec_to_TIME()
       tmp - pointer to DRIZZLE_TIME structure to fill-in
-      t   - my_time_t value to be converted
+      t   - time_t value to be converted
 
   NOTE
     We assume that value passed to this function will fit into time_t range
@@ -655,7 +655,7 @@ Time_zone_system::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) 
     the 1902 easily.
 */
 void
-Time_zone_system::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const
+Time_zone_system::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
   struct tm tmp_tm;
   time_t tmp_t= (time_t)t;
@@ -685,22 +685,22 @@ Time_zone_system::get_name() const
 /*
   Instance of this class represents UTC time zone. It uses system gmtime_r
   function for conversions and is always available. It is used only for
-  my_time_t -> DRIZZLE_TIME conversions in various UTC_...  functions, it is not
-  intended for DRIZZLE_TIME -> my_time_t conversions and shouldn't be exposed to user.
+  time_t -> DRIZZLE_TIME conversions in various UTC_...  functions, it is not
+  intended for DRIZZLE_TIME -> time_t conversions and shouldn't be exposed to user.
 */
 class Time_zone_utc : public Time_zone
 {
 public:
   Time_zone_utc() {}                          /* Remove gcc warning */
-  virtual my_time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
+  virtual time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                     bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const;
+  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const;
   virtual const String * get_name() const;
 };
 
 
 /*
-  Convert UTC time from DRIZZLE_TIME representation to its my_time_t representation.
+  Convert UTC time from DRIZZLE_TIME representation to its time_t representation.
 
   SYNOPSIS
     TIME_to_gmt_sec()
@@ -711,14 +711,14 @@ public:
                         spring time-gap) and is not touched otherwise.
 
   DESCRIPTION
-    Since Time_zone_utc is used only internally for my_time_t -> TIME
+    Since Time_zone_utc is used only internally for time_t -> TIME
     conversions, this function of Time_zone interface is not implemented for
     this class and should not be called.
 
   RETURN VALUE
     0
 */
-my_time_t
+time_t
 Time_zone_utc::TIME_to_gmt_sec(const DRIZZLE_TIME *t __attribute__((unused)),
                                bool *in_dst_time_gap __attribute__((unused))) const
 {
@@ -729,19 +729,19 @@ Time_zone_utc::TIME_to_gmt_sec(const DRIZZLE_TIME *t __attribute__((unused)),
 
 
 /*
-  Converts time from UTC seconds since Epoch (my_time_t) representation
+  Converts time from UTC seconds since Epoch (time_t) representation
   to broken-down representation (also in UTC).
 
   SYNOPSIS
     gmt_sec_to_TIME()
       tmp - pointer to DRIZZLE_TIME structure to fill-in
-      t   - my_time_t value to be converted
+      t   - time_t value to be converted
 
   NOTE
     See note for apropriate Time_zone_system method.
 */
 void
-Time_zone_utc::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const
+Time_zone_utc::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
   struct tm tmp_tm;
   time_t tmp_t= (time_t)t;
@@ -782,9 +782,9 @@ class Time_zone_db : public Time_zone
 {
 public:
   Time_zone_db(TIME_ZONE_INFO *tz_info_arg, const String * tz_name_arg);
-  virtual my_time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
+  virtual time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                     bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const;
+  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const;
   virtual const String * get_name() const;
 private:
   TIME_ZONE_INFO *tz_info;
@@ -814,7 +814,7 @@ Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
 
 /*
   Converts local time in time zone described from TIME
-  representation to its my_time_t representation.
+  representation to its time_t representation.
 
   SYNOPSIS
     TIME_to_gmt_sec()
@@ -829,9 +829,9 @@ Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
     parameter restrictions.
 
   RETURN VALUE
-    Corresponding my_time_t value or 0 in case of error
+    Corresponding time_t value or 0 in case of error
 */
-my_time_t
+time_t
 Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) const
 {
   return ::TIME_to_gmt_sec(t, tz_info, in_dst_time_gap);
@@ -839,16 +839,16 @@ Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) cons
 
 
 /*
-  Converts time from UTC seconds since Epoch (my_time_t) representation
+  Converts time from UTC seconds since Epoch (time_t) representation
   to local time zone described in broken-down representation.
 
   SYNOPSIS
     gmt_sec_to_TIME()
       tmp - pointer to DRIZZLE_TIME structure to fill-in
-      t   - my_time_t value to be converted
+      t   - time_t value to be converted
 */
 void
-Time_zone_db::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const
+Time_zone_db::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
   ::gmt_sec_to_TIME(tmp, t, tz_info);
 }
@@ -878,9 +878,9 @@ class Time_zone_offset : public Time_zone
 {
 public:
   Time_zone_offset(long tz_offset_arg);
-  virtual my_time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
+  virtual time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                     bool *in_dst_time_gap) const;
-  virtual void   gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const;
+  virtual void   gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const;
   virtual const String * get_name() const;
   /*
     This have to be public because we want to be able to access it from
@@ -915,7 +915,7 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
 
 /*
   Converts local time in time zone described as offset from UTC
-  from DRIZZLE_TIME representation to its my_time_t representation.
+  from DRIZZLE_TIME representation to its time_t representation.
 
   SYNOPSIS
     TIME_to_gmt_sec()
@@ -928,13 +928,13 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
                         It is not really used in this class.
 
   RETURN VALUE
-    Corresponding my_time_t value or 0 in case of error
+    Corresponding time_t value or 0 in case of error
 */
-my_time_t
+time_t
 Time_zone_offset::TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                   bool *in_dst_time_gap __attribute__((unused))) const
 {
-  my_time_t local_t;
+  time_t local_t;
   int shift= 0;
 
   /*
@@ -946,7 +946,7 @@ Time_zone_offset::TIME_to_gmt_sec(const DRIZZLE_TIME *t,
 
   /*
     Do a temporary shift of the boundary dates to avoid
-    overflow of my_time_t if the time value is near it's
+    overflow of time_t if the time value is near it's
     maximum range
   */
   if ((t->year == TIMESTAMP_MAX_YEAR) && (t->month == 1) && t->day > 4)
@@ -971,17 +971,17 @@ Time_zone_offset::TIME_to_gmt_sec(const DRIZZLE_TIME *t,
 
 
 /*
-  Converts time from UTC seconds since Epoch (my_time_t) representation
+  Converts time from UTC seconds since Epoch (time_t) representation
   to local time zone described as offset from UTC and in broken-down
   representation.
 
   SYNOPSIS
     gmt_sec_to_TIME()
       tmp - pointer to DRIZZLE_TIME structure to fill-in
-      t   - my_time_t value to be converted
+      t   - time_t value to be converted
 */
 void
-Time_zone_offset::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const
+Time_zone_offset::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
   sec_to_TIME(tmp, t, offset);
 }

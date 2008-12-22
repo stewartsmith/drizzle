@@ -152,7 +152,7 @@ int Field_timestamp::store(const char *from,
                            const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME l_time;
-  my_time_t tmp= 0;
+  time_t tmp= 0;
   int error;
   bool have_smth_to_conv;
   bool in_dst_time_gap;
@@ -212,7 +212,7 @@ int Field_timestamp::store(int64_t nr,
                            bool unsigned_val __attribute__((unused)))
 {
   DRIZZLE_TIME l_time;
-  my_time_t timestamp= 0;
+  time_t timestamp= 0;
   int error;
   bool in_dst_time_gap;
   Session *session= table ? table->in_use : current_session;
@@ -466,7 +466,7 @@ long Field_timestamp::get_timestamp(bool *null_value)
 }
 
 
-void Field_timestamp::store_timestamp(my_time_t timestamp)
+void Field_timestamp::store_timestamp(time_t timestamp)
 {
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
