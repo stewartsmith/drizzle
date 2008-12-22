@@ -168,7 +168,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/trim.h \
 		function/str/user.h \
 		function/str/uuid.h \
-		function/str/weight_string.h
+		function/str/weight_string.h \
 		function/time/add_time.h \
 		function/time/curdate.h \
 		function/time/curtime.h \
