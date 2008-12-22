@@ -167,7 +167,6 @@ extern bool opt_update_log, opt_bin_log, opt_error_log;
 extern bool opt_log;
 extern bool opt_slow_log;
 extern ulong log_output_options;
-extern bool opt_log_queries_not_using_indexes;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
 extern uint32_t volatile thread_count, thread_running, global_read_lock;
@@ -234,8 +233,6 @@ extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
 
 extern SHOW_COMP_OPTION have_symlink;
-extern SHOW_COMP_OPTION have_compress;
-
 
 extern pthread_t signal_thread;
 

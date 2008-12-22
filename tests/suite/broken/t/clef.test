@@ -1,0 +1,36 @@
+# Test Clef Unicode character for creation
+# of tables and databases. This is interesting as it's > 2**16
+
+# Test without backticks
+#CREATE DATABASE 𝄢;
+
+#DROP DATABASE 𝄢;
+
+# Now with backticks
+CREATE DATABASE `𝄢`;
+
+DROP DATABASE `𝄢`;
+
+# Now try table names
+USE test;
+
+# Test table creation without backticks
+# And various operations on the table
+CREATE TABLE 𝄢 (a INT NOT NULL);
+
+INSERT INTO 𝄢 VALUES(1);
+INSERT INTO 𝄢 VALUES(2);
+
+SELECT a FROM 𝄢;
+
+DELETE FROM 𝄢 WHERE a = 1;
+
+UPDATE 𝄢 SET a = 3 WHERE a = 2;
+
+TRUNCATE 𝄢;
+
+RENAME TABLE 𝄢 TO t1;
+CREATE DATABASE 𝄢;
+DROP DATABASE 𝄢;
+CREATE DATABASE `𝄢`;
+DROP DATABASE `𝄢`;
