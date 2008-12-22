@@ -96,7 +96,6 @@ show create table t2;
 drop table t2;
 
 create table t1 (
-  test_set set( 'val1', 'val2', 'val3' ) not null default '',
   name char(20) default 'O''Brien' comment 'O''Brien as default',
   c int not null comment 'int column',
   `c-b` int comment 'name with a minus',
@@ -140,10 +139,7 @@ drop table t1;
 # Do a create table that tries to cover all types and options
 #
 create table t1 (
-type_bool bool not null default 0,
-type_tiny int not null auto_increment primary key,
-type_short int(3),
-type_mediumint mediumint,
+type_int int,
 type_bigint bigint,
 type_decimal decimal(5,2),
 type_numeric numeric(5,2),
@@ -154,15 +150,11 @@ type_timestamp timestamp not null,
 type_date date not null default '0000-00-00',
 type_time time not null default '00:00:00',
 type_datetime datetime not null default '0000-00-00 00:00:00',
-type_year year,
 type_enum enum ('red', 'green', 'blue'),
 type_set enum ('red', 'green', 'blue'),
-type_tinyblob tinyblob,
 type_blob blob,
-type_medium_blob mediumblob,
-type_long_blob longblob,
-index(type_short)
-) AVG_ROW_LENGTH=10 CHECKSUM=1 COMMENT="test" ENGINE=MYISAM MIN_ROWS=10 MAX_ROWS=100 PACK_KEYS=1 DELAY_KEY_WRITE=1 ROW_FORMAT=fixed CHARSET=latin1;
+index(type_int)
+) AVG_ROW_LENGTH=10 CHECKSUM=1 COMMENT="test" ENGINE=MYISAM MIN_ROWS=10 MAX_ROWS=100 PACK_KEYS=1 DELAY_KEY_WRITE=1 ROW_FORMAT=fixed;
 
 # Not tested above: RAID_# UNION INSERT_METHOD DATA DIRECTORY INDEX DIRECTORY
 show create table t1;
@@ -216,18 +208,18 @@ DROP TABLE `a.1`;
 select @@max_heap_table_size;
 
 CREATE TABLE t1 (
- a int(11) default NULL,
+ a int default NULL,
  KEY a USING BTREE (a)
 ) ENGINE=HEAP;
 
 CREATE TABLE t2 (
- b int(11) default NULL,
+ b int default NULL,
  index(b)
 ) ENGINE=HEAP;
 
 CREATE TABLE t3 (
- a int(11) default NULL,
- b int(11) default NULL,
+ a int default NULL,
+ b int default NULL,
  KEY a USING BTREE (a),
  index(b)
 ) ENGINE=HEAP;
@@ -305,7 +297,7 @@ DROP TABLE t1;
 # Test for BUG#9439 "Reporting wrong datatype for sub_part on show index"
 CREATE TABLE t1(
   field1 text NOT NULL,
-  PRIMARY KEY(field1(1000))
+  PRIMARY KEY(field1(180))
 );
 --enable_metadata
 show index from t1;
@@ -321,20 +313,6 @@ create table t1 (
 );
 SHOW CREATE TABLE t1;
 DROP TABLE t1;
-
-# Test for BUG#93: 4.1 protocl crash on corupted frm and SHOW TABLE STATUS
-
-flush tables;
-
-# Create a junk frm file on disk
-system echo "this is a junk file for test" >> $MYSQLTEST_VARDIR/master-data/test/t1.frm ;
---replace_column 6 # 7 # 8 # 9 #
-SHOW TABLE STATUS like 't1';
---error 1033
-show create table t1;
-drop table if exists t1;
---error 1,0
---remove_file $MYSQLTEST_VARDIR/master-data/test/t1.frm
 
 #
 # BUG 12183 -  SHOW OPEN TABLES behavior doesn't match grammar
