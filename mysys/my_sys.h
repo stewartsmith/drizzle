@@ -40,6 +40,8 @@
 
 #define MY_INIT(name);		{ my_progname= name; my_init(); }
 
+/* Max width of screen (for error messages) */
+#define SC_MAXWIDTH 256
 #define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */
 #define NRERRBUFFS	(2)	/* Buffers for parameters */
 #define MY_FILE_ERROR	((size_t) -1)

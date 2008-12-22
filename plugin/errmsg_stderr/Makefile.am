@@ -1,5 +1,4 @@
 
-pkgplugindir = $(pkglibdir)/plugin
 
 EXTRA_LTLIBRARIES = liberrmsg_stderr.la
 pkgplugin_LTLIBRARIES =	@plugin_errmsg_stderr_shared_target@

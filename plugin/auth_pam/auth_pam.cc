@@ -4,7 +4,6 @@
   Sections of this where taken/modified from mod_auth_path for Apache
 */
 
-#define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin_authentication.h>

@@ -42,6 +42,7 @@
 #include "my_readline.h"
 #include <signal.h>
 #include <sys/ioctl.h>
+#include <drizzled/configmake.h>
 
 
 #if defined(HAVE_LOCALE_H)

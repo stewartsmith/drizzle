@@ -775,7 +775,7 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
 
 /*
   Convert time in DRIZZLE_TIME representation in system time zone to its
-  my_time_t form (number of seconds in UTC since begginning of Unix Epoch).
+  time_t form (number of seconds in UTC since begginning of Unix Epoch).
 
   SYNOPSIS
     my_system_gmt_sec()
@@ -795,7 +795,7 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
   RETURN VALUE
     Time in UTC seconds since Unix Epoch representation.
 */
-my_time_t
+time_t
 my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
                   bool *in_dst_time_gap)
 {
@@ -981,7 +981,7 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
   if ((tmp < TIMESTAMP_MIN_VALUE) || (tmp > TIMESTAMP_MAX_VALUE))
     tmp= 0;
 
-  return (my_time_t) tmp;
+  return (time_t) tmp;
 } /* my_system_gmt_sec */
 
 

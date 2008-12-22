@@ -39,15 +39,6 @@
 #define TEMP_PREFIX	"MY"
 #define LOG_PREFIX	"ML"
 #define PROGDIR		"bin/"
-#ifndef DATADIR
-#define DATADIR		"data/"
-#endif
-#ifndef SHAREDIR
-#define SHAREDIR	"share/"
-#endif
-#ifndef PLUGINDIR
-#define PLUGINDIR	"lib/plugin"
-#endif
 
 #define ER(X) error_message((X))
 
@@ -160,6 +151,7 @@
 #define TE_INFO_LENGTH 3
 #define MTYP_NOEMPTY_BIT 128
 
+#define FRM_VER 6
 #define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM 50205

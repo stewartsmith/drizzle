@@ -37,6 +37,7 @@
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_dir.h>
+#include <drizzled/configmake.h>
 
 #include <stdio.h>
 
@@ -140,7 +141,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
                                     (char **) &my_defaults_group_suffix);
 
   if (! my_defaults_group_suffix)
-    my_defaults_group_suffix= getenv(STRINGIFY_ARG(DEFAULT_GROUP_SUFFIX_ENV));
+    my_defaults_group_suffix= getenv("DRIZZLE_GROUP_SUFFIX");
 
   if (forced_extra_defaults)
     my_defaults_extra_file= (char *) forced_extra_defaults;
@@ -927,8 +928,8 @@ void print_defaults(const char *conf_file, const char **groups)
 
 #define ADD_COMMON_DIRECTORIES() \
   do { \
-    char *env; \
-    if ((env= getenv(STRINGIFY_ARG(DEFAULT_HOME_ENV)))) \
+    const char *env; \
+    if ((env= getenv("DRIZZLE_HOME"))) \
       ADD_DIRECTORY(env); \
     /* Placeholder for --defaults-extra-file=<path> */ \
     ADD_DIRECTORY(""); \
@@ -942,7 +943,7 @@ void print_defaults(const char *conf_file, const char **groups)
     1. /etc/
     2. /etc/drizzle/
     3. --sysconfdir=<path> (compile-time option)
-    4. getenv(DEFAULT_HOME_ENV)
+    4. getenv("DRIZZLE_HOME")
     5. --defaults-extra-file=<path> (run-time option)
     6. "~/"
 */
@@ -952,9 +953,7 @@ static void init_default_directories(void)
   memset(default_directories, 0, sizeof(default_directories));
   ADD_DIRECTORY("/etc/");
   ADD_DIRECTORY("/etc/drizzle/");
-#if defined(DEFAULT_SYSCONFDIR)
-    ADD_DIRECTORY(DEFAULT_SYSCONFDIR);
-#endif
+  ADD_DIRECTORY(SYSCONFDIR);
   ADD_COMMON_DIRECTORIES();
   ADD_DIRECTORY("~/");
 }
