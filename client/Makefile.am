@@ -55,6 +55,3 @@ drizzletest_SOURCES=		drizzletest.cc
 drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
 drizzletest_CXXFLAGS = 		${AM_CXXFLAGS} ${PCRE_CFLAGS}
 
-DEFS =	-DDEFAULT_DRIZZLE_HOME="\"$(prefix)\"" \
-	-DDATADIR="\"$(localstatedir)\"" \
-	-DLOCALEDIR=\"$(localedir)\" @DEFS@

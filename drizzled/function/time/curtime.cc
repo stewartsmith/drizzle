@@ -43,24 +43,24 @@ void Item_func_curtime::fix_length_and_dec()
 }
 
 /**
-    Converts current time in my_time_t to DRIZZLE_TIME represenatation for local
+    Converts current time in time_t to DRIZZLE_TIME represenatation for local
     time zone. Defines time zone (local) used for whole CURTIME function.
 */
 void Item_func_curtime_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   Session *session= current_session;
   session->variables.time_zone->gmt_sec_to_TIME(now_time,
-                                             (my_time_t)session->query_start());
+                                                (time_t)session->query_start());
 }
 
 /**
-    Converts current time in my_time_t to DRIZZLE_TIME represenatation for UTC
+    Converts current time in time_t to DRIZZLE_TIME represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_TIME function.
 */
 void Item_func_curtime_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   my_tz_UTC->gmt_sec_to_TIME(now_time,
-                             (my_time_t)(current_session->query_start()));
+                             (time_t)(current_session->query_start()));
   /*
     We are not flagging this query as using time zone, since it uses fixed
     UTC-SYSTEM time-zone.

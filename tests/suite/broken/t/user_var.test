@@ -150,11 +150,10 @@ set @first_var= NULL;
 create table t1 select @first_var;
 show create table t1;
 drop table t1;
-# NEEDS INVESTIGATION
-#set @first_var= cast(NULL as signed integer);
-#create table t1 select @first_var;
-#show create table t1;
-#drop table t1;
+set @first_var= cast(NULL as integer);
+create table t1 select @first_var;
+show create table t1;
+drop table t1;
 set @first_var= NULL;
 create table t1 select @first_var;
 show create table t1;

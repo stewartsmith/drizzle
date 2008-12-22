@@ -42,6 +42,7 @@
 #include "my_readline.h"
 #include <signal.h>
 #include <sys/ioctl.h>
+#include <drizzled/configmake.h>
 
 
 #if defined(HAVE_LOCALE_H)
@@ -3794,7 +3795,7 @@ sql_connect(char *host,char *database,char *user,char *password,
     char init_command[100];
     sprintf(init_command,
             "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
-            ",SQL_MAX_JOIN_SIZE=%"PRIu32,
+            ",MAX_JOIN_SIZE=%"PRIu32,
             select_limit, max_join_size);
     drizzle_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
   }

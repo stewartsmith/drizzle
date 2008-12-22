@@ -1,5 +1,4 @@
 
-pkgplugindir = $(pkglibdir)/plugin
 
 EXTRA_LTLIBRARIES = liblogging_query.la
 pkgplugin_LTLIBRARIES =	@plugin_logging_query_shared_target@
