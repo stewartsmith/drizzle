@@ -23,6 +23,9 @@ select x,xx from t1;
 x	xx
 1	2
 drop table t1;
+show create table t1;
+ERROR HY000: Incorrect information in file: './test/t1.frm'
+drop table t1;
 create table t1(a varbinary(255));
 insert into t1 values("aaa   ");
 select length(a) from t1;
