@@ -16,6 +16,7 @@
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
 #include "my_static.h"
+#include <drizzled/configmake.h>
 #include <stdlib.h>
 #include <sstream>
 
@@ -37,7 +38,8 @@ static char *find_file_in_path(char *to,const char *name);
 char * my_path(char * to, const char *progname,
                const char *own_pathname_part)
 {
-  char *start, *end, *prog;
+  char *start, *prog;
+  const char *end;
   size_t to_length;
 
   start=to;					/* Return this */
@@ -58,11 +60,7 @@ char * my_path(char * to, const char *progname,
     if ((end = getenv("MY_BASEDIR_VERSION")) == 0 &&
 	(end = getenv("MY_BASEDIR")) == 0)
     {
-#ifdef DEFAULT_BASEDIR
-      end= (char*) DEFAULT_BASEDIR;
-#else
-      end= (char*) "/my/";
-#endif
+      end= PREFIX;
     }
     intern_filename(to,end);
     to= strchr(to, '\0');

@@ -483,7 +483,6 @@ sys_var_session_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
                                            &SV::keep_files_on_create);
 /* Read only variables */
 
-static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /*
   Additional variables (not derived from sys_var class, not accessible as
@@ -1368,6 +1367,14 @@ Item *sys_var::item(Session *session, enum_var_type var_type, LEX_STRING *base)
     ha_rows value;
     pthread_mutex_lock(&LOCK_global_system_variables);
     value= *(ha_rows*) value_ptr(session, var_type, base);
+    pthread_mutex_unlock(&LOCK_global_system_variables);
+    return new Item_int((uint64_t) value);
+  }
+  case SHOW_SIZE:
+  {
+    size_t value;
+    pthread_mutex_lock(&LOCK_global_system_variables);
+    value= *(size_t*) value_ptr(session, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_int((uint64_t) value);
   }

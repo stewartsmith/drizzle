@@ -260,10 +260,10 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
      0 - t contains datetime value which is out of TIMESTAMP range.
 
 */
-my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t,
+time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t,
                             bool *in_dst_time_gap)
 {
-  my_time_t timestamp;
+  time_t timestamp;
 
   *in_dst_time_gap= 0;
 

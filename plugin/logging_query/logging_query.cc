@@ -17,8 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* need to define DRIZZLE_SERVER to get inside the Session */
-#define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_logging.h>
 #include <drizzled/gettext.h>

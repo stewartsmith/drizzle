@@ -38,7 +38,7 @@ public:
   void fix_length_and_dec();
   /*
     Abstract method that defines which time zone is used for conversion.
-    Converts time current time in my_time_t representation to broken-down
+    Converts time current time in time_t representation to broken-down
     DRIZZLE_TIME representation using UTC-SYSTEM or per-thread time zone.
   */
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;

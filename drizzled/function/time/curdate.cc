@@ -51,7 +51,7 @@ String *Item_func_curdate::val_str(String *str)
 }
 
 /**
-    Converts current time in my_time_t to DRIZZLE_TIME represenatation for local
+    Converts current time in time_t to DRIZZLE_TIME represenatation for local
     time zone. Defines time zone (local) used for whole CURDATE function.
 */
 void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
@@ -62,7 +62,7 @@ void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 }
 
 /**
-    Converts current time in my_time_t to DRIZZLE_TIME represenatation for UTC
+    Converts current time in time_t to DRIZZLE_TIME represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_DATE function.
 */
 void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)

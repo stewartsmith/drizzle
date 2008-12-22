@@ -230,13 +230,6 @@ public:
 
 };
 
-/* Some accessor functions which the InnoDB plugin needs, but which
-can not be added to mysql/plugin.h as part of the public interface;
-the definitions are bracketed with #ifdef INNODB_COMPATIBILITY_HOOKS */
-
-#ifndef INNODB_COMPATIBILITY_HOOKS
-#error InnoDB needs MySQL to be built with #define INNODB_COMPATIBILITY_HOOKS
-#endif
 
 extern "C" {
 struct charset_info_st *session_charset(Session *session);

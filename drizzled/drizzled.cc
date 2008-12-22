@@ -45,6 +45,7 @@
 #include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
+#include <drizzled/configmake.h>
 
 
 #if TIME_WITH_SYS_TIME
@@ -220,6 +221,7 @@ static TYPELIB tc_heuristic_recover_typelib=
 
 const char *first_keyword= "first", *binary_keyword= "BINARY";
 const char *my_localhost= "localhost";
+const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
 
 /*
@@ -257,7 +259,6 @@ static I_List<Session> thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_log_queries_not_using_indexes= false;
 bool opt_error_log= 0;
 bool opt_skip_show_db= false;
 bool opt_character_set_client_handshake= 1;
@@ -302,7 +303,7 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
 uint32_t drizzled_port, test_flags, select_errors, dropping_tables, ha_open_options;
 uint32_t drizzled_port_timeout;
-uint32_t delay_key_write_options, protocol_version;
+uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
@@ -423,7 +424,6 @@ const CHARSET_INFO *character_set_filesystem;
 MY_LOCALE *my_default_lc_time_names;
 
 SHOW_COMP_OPTION have_symlink;
-SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
 
@@ -496,7 +496,7 @@ static void get_options(int *argc,char **argv);
 extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
 static void set_server_version(void);
 static int init_thread_environment();
-static char *get_relative_path(const char *path);
+static const char *get_relative_path(const char *path);
 static void fix_paths(void);
 void handle_connections_sockets();
 pthread_handler_t kill_server_thread(void *arg);
@@ -1720,7 +1720,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 
 
 static const char *load_default_groups[]= {
-"drizzled","server", DRIZZLE_BASE_VERSION, 0, 0};
+DRIZZLE_CONFIG_NAME,"server", DRIZZLE_BASE_VERSION, 0, 0};
 
 
 /**
@@ -3942,7 +3942,6 @@ static void drizzle_init_variables(void)
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
                         OPTION_QUOTE_SHOW_CREATE | OPTION_SQL_NOTES);
-  protocol_version= PROTOCOL_VERSION;
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
@@ -3960,7 +3959,7 @@ static void drizzle_init_variables(void)
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
-  strncpy(drizzle_real_data_home, get_relative_path(DATADIR),
+  strncpy(drizzle_real_data_home, get_relative_path(LOCALSTATEDIR),
           sizeof(drizzle_real_data_home)-1);
   drizzle_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
   drizzle_data_home_buff[1]=0;
@@ -4000,15 +3999,10 @@ static void drizzle_init_variables(void)
 #else
   have_symlink=SHOW_OPTION_YES;
 #endif
-#ifdef HAVE_COMPRESS
-  have_compress= SHOW_OPTION_YES;
-#else
-  have_compress= SHOW_OPTION_NO;
-#endif
 
   const char *tmpenv;
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
-    tmpenv = DEFAULT_DRIZZLE_HOME;
+    tmpenv = PREFIX;
   (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
 }
 
@@ -4342,17 +4336,18 @@ static void set_server_version(void)
 }
 
 
-static char *get_relative_path(const char *path)
+static const char *get_relative_path(const char *path)
 {
   if (test_if_hard_path(path) &&
-      is_prefix(path,DEFAULT_DRIZZLE_HOME) &&
-      strcmp(DEFAULT_DRIZZLE_HOME,FN_ROOTDIR))
+      is_prefix(path,PREFIX) &&
+      strcmp(PREFIX,FN_ROOTDIR))
   {
-    path+=(uint) strlen(DEFAULT_DRIZZLE_HOME);
+    if (strlen(PREFIX) < strlen(path))
+      path+=(size_t) strlen(PREFIX);
     while (*path == FN_LIBCHAR)
       path++;
   }
-  return (char*) path;
+  return path;
 }
 
 
@@ -4378,10 +4373,11 @@ static void fix_paths(void)
   (void) my_load_path(drizzle_real_data_home,drizzle_real_data_home,drizzle_home);
   (void) my_load_path(pidfile_name,pidfile_name,drizzle_real_data_home);
   (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr ? opt_plugin_dir_ptr :
-                                      get_relative_path(PLUGINDIR), drizzle_home);
+                                      get_relative_path(PKGPLUGINDIR),
+                                      drizzle_home);
   opt_plugin_dir_ptr= opt_plugin_dir;
 
-  char *sharedir=get_relative_path(SHAREDIR);
+  const char *sharedir=get_relative_path(PKGDATADIR);
   if (test_if_hard_path(sharedir))
     strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
   else

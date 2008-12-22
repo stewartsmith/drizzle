@@ -260,11 +260,61 @@ typedef uint64_t my_off_t;
 #define cmax(a, b)       ((a) > (b) ? (a) : (b))
 #define cmin(a, b)       ((a) < (b) ? (a) : (b))
 
+#define DRIZZLE_SERVER
+
 /* Length of decimal number represented by INT32. */
 #define MY_INT32_NUM_DECIMAL_DIGITS 11
 
 /* Length of decimal number represented by INT64. */
 #define MY_INT64_NUM_DECIMAL_DIGITS 21
+
+#define PROTOCOL_VERSION 10
+/*
+  Io buffer size; Must be a power of 2 and
+  a multiple of 512. May be
+  smaller what the disk page size. This influences the speed of the
+  isam btree library. eg to big to slow.
+*/
+#define IO_SIZE 4096
+/* Max file name len */
+#define FN_LEN 256
+/* Max length of extension (part of FN_LEN) */
+#define FN_EXTLEN 20
+/* Max length of full path-name */
+#define FN_REFLEN 512
+/* File extension character */
+#define FN_EXTCHAR '.'
+/* ~ is used as abbrev for home dir */
+#define FN_HOMELIB '~'
+/* ./ is used as abbrev for current dir */
+#define FN_CURLIB '.'
+/* Parent directory; Must be a string */
+#define FN_PARENTDIR ".."
+
+/* Quote argument (before cpp) */
+#ifndef QUOTE_ARG
+# define QUOTE_ARG(x) #x
+#endif
+/* Quote argument, (after cpp) */
+#ifndef STRINGIFY_ARG
+# define STRINGIFY_ARG(x) QUOTE_ARG(x)
+#endif
+
+/*
+ * The macros below are borrowed from include/linux/compiler.h in the
+ * Linux kernel. Use them to indicate the likelyhood of the truthfulness
+ * of a condition. This serves two purposes - newer versions of gcc will be
+ * able to optimize for branch predication, which could yield siginficant
+ * performance gains in frequently executed sections of the code, and the
+ * other reason to use them is for documentation
+ */
+#if !defined(__GNUC__)
+#define __builtin_expect(x, expected_value) (x)
+#endif
+
+#define likely(x)  __builtin_expect((x),1)
+#define unlikely(x)  __builtin_expect((x),0)
+
 
 /*
   Only Linux is known to need an explicit sync of the directory to make sure a

@@ -38,5 +38,7 @@ DRIZZLE_PLUGIN_ACTIONS(innobase,  [
          openbsd*)
            CFLAGS="$CFLAGS -DUNIV_MUST_NOT_INLINE";;
   esac
+
+  AM_CONDITIONAL(BUILD_DRIZZLE,[test "x$ac_build_drizzle" = "xyes"])
   ])
 
