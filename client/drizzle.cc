@@ -1376,8 +1376,6 @@ static struct my_option my_long_options[] =
   {"prompt", OPT_PROMPT, N_("Set the drizzle prompt to this value."),
    (char**) &current_prompt, (char**) &current_prompt, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"protocol", OPT_DRIZZLE_PROTOCOL, N_("The protocol of connection (tcp,socket,pipe,memory)."),
-   0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
    N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."),
    (char**) &quick, (char**) &quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
