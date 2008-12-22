@@ -262,7 +262,7 @@ uint32_t convert_period_to_month(uint32_t period);
 uint32_t convert_month_to_period(uint32_t month);
 void get_date_from_daynr(long daynr,uint32_t *year, uint32_t *month,
 			 uint32_t *day);
-my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *not_exist);
+time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *not_exist);
 bool str_to_time_with_warn(const char *str,uint32_t length,DRIZZLE_TIME *l_time);
 enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, uint32_t length,
                                          DRIZZLE_TIME *l_time, uint32_t flags);

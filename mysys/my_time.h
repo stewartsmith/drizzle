@@ -36,21 +36,6 @@ extern "C" {
 extern uint64_t log_10_int[20];
 extern unsigned char days_in_month[];
 
-/*
-  Portable time_t replacement.
-  Should be signed and hold seconds for 1902 -- 2038-01-19 range
-  i.e at least a 32bit variable
-
-  Using the system built in time_t is not an option as
-  we rely on the above requirements in the time functions
-
-  For example QNX has an unsigned time_t type
-*/
-typedef long my_time_t;
-
-#define MY_TIME_T_MAX INT32_MAX
-#define MY_TIME_T_MIN INT32_MIN
-
 /* Time handling defaults */
 #define TIMESTAMP_MAX_YEAR 2038
 #define TIMESTAMP_MIN_YEAR (1900 + YY_PART_YEAR - 1)
@@ -129,7 +114,7 @@ static inline bool validate_timestamp_range(const DRIZZLE_TIME *t)
   return true;
 }
 
-my_time_t
+time_t
 my_system_gmt_sec(const DRIZZLE_TIME *t, long *my_timezone,
                   bool *in_dst_time_gap);
 
