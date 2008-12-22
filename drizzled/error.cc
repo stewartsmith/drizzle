@@ -239,7 +239,7 @@ N_("Incorrect database name '%-.100s'"),
 /* ER_WRONG_TABLE_NAME 42000  */
 N_("Incorrect table name '%-.100s'"),
 /* ER_TOO_BIG_SELECT 42000  */
-N_("The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and use SET SQL_BIG_SELECTS=1 or SET SQL_MAX_JOIN_SIZE=# if the SELECT is okay"),
+N_("The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and use SET SQL_BIG_SELECTS=1 or SET MAX_JOIN_SIZE=# if the SELECT is okay"),
 /* ER_UNKNOWN_ERROR   */
 N_("Unknown error"),
 /* ER_UNKNOWN_PROCEDURE 42000  */
