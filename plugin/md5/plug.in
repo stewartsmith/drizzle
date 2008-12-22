@@ -1,8 +1,9 @@
 DRIZZLE_PLUGIN(md5,[MD5 UDF],
         [UDF Plugin for MD5])
-DRIZZLE_PLUGIN_STATIC(md5,   [libmd5udf.a])
-DRIZZLE_PLUGIN_DYNAMIC(md5,   [libmd5udf.la])
+DRIZZLE_PLUGIN_STATIC(md5,   [libmd5udf.la])
 DRIZZLE_PLUGIN_ACTIONS(md5,  [
-  AC_CHECK_HEADERS(openssl/md5.h)
-  AM_CONDITIONAL(BUILD_MD5_UDF,[test "$ac_cv_header_openssl_md5_h" = "yes"])
+  SEARCH_FOR_LIB(crypto, MD5, openssl/md5.h,
+                 AC_MSG_WARN([MD5 not found in crypto lib: not building md5 plugin]))
+
+  AM_CONDITIONAL(BUILD_MD5_UDF,[test "$ac_cv_have_crypto" = "yes"])
 ])

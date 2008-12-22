@@ -13,16 +13,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} $(openssl_includes)
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} $(SSL_CFLAGS)
 
 if BUILD_MD5_UDF
-EXTRA_LTLIBRARIES =	libmd5udf.la
-pkgplugin_LTLIBRARIES =	@plugin_md5_shared_target@
-libmd5udf_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir) -L/opt/csw/lib -lssl
-libmd5udf_la_CXXFLAGS=	-DDRIZZLE_DYNAMIC_PLUGIN
-libmd5udf_la_SOURCES =	md5udf.cc
-
-EXTRA_LIBRARIES =	libmd5udf.a
-noinst_LIBRARIES =	@plugin_md5_static_target@
-libmd5udf_a_SOURCES=	$(libmd5udf_la_SOURCES)
+EXTRA_LTLIBRARIES=	libmd5udf.la
+pkgplugin_LTLIBRARIES=	$(plugin_md5_static_target)
+libmd5udf_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)
+libmd5udf_la_LIBADD=	$(CRYPTO_LIBS)
+libmd5udf_la_SOURCES=	md5udf.cc
 endif
