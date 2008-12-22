@@ -40,14 +40,14 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-`id` int(5) NOT NULL auto_increment,
-`kid` int(5) NOT NULL default '0',
+`id` int NOT NULL auto_increment,
+`kid` int NOT NULL default '0',
 PRIMARY KEY (`id`),
 KEY `kid` (`kid`)
 );
 
 CREATE TABLE t2 (
-  id int(5) NOT NULL auto_increment,
+  id int NOT NULL auto_increment,
   name varchar(50) NOT NULL default '',
   email varchar(50) NOT NULL default '',
   PRIMARY KEY  (id),
@@ -55,6 +55,7 @@ CREATE TABLE t2 (
 );
 
 disable_query_log;
+begin;
 let $1=200;
 let $2=0;
 while ($1) 
@@ -63,6 +64,7 @@ while ($1)
   eval INSERT INTO t2 VALUES ($2,'name$2','email$2');
   dec $1;
 }
+commit;
 enable_query_log;
 
 EXPLAIN SELECT SQL_CALC_FOUND_ROWS DISTINCT email FROM t2 LEFT JOIN t1  ON kid = t2.id WHERE t1.id IS NULL LIMIT 10;
@@ -87,8 +89,8 @@ drop table t1,t2;
 
 CREATE TABLE `t1` (
   `titre` char(80) NOT NULL default '',
-  `numeropost` mediumint(8) NOT NULL auto_increment,
-  `maxnumrep` int(10) NOT NULL default '0',
+  `numeropost` int NOT NULL auto_increment,
+  `maxnumrep` int NOT NULL default '0',
   PRIMARY KEY  (`numeropost`),
   KEY `maxnumrep` (`maxnumrep`)
 ) ENGINE=MyISAM ROW_FORMAT=FIXED;
