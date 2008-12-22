@@ -234,8 +234,6 @@ extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
 
 extern SHOW_COMP_OPTION have_symlink;
-extern SHOW_COMP_OPTION have_compress;
-
 
 extern pthread_t signal_thread;
 

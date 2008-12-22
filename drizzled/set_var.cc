@@ -483,7 +483,6 @@ sys_var_session_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
                                            &SV::keep_files_on_create);
 /* Read only variables */
 
-static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /*
   Additional variables (not derived from sys_var class, not accessible as

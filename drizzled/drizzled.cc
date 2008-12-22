@@ -423,7 +423,6 @@ const CHARSET_INFO *character_set_filesystem;
 MY_LOCALE *my_default_lc_time_names;
 
 SHOW_COMP_OPTION have_symlink;
-SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
 
@@ -3999,11 +3998,6 @@ static void drizzle_init_variables(void)
   have_symlink=SHOW_OPTION_NO;
 #else
   have_symlink=SHOW_OPTION_YES;
-#endif
-#ifdef HAVE_COMPRESS
-  have_compress= SHOW_OPTION_YES;
-#else
-  have_compress= SHOW_OPTION_NO;
 #endif
 
   const char *tmpenv;
