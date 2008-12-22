@@ -395,42 +395,12 @@ SHOW TABLES FROM no_such_database;
 --error ER_NO_SUCH_TABLE
 SHOW COLUMNS FROM no_such_table;
 
-
-#
-# Bug #28808: log_queries_not_using_indexes variable dynamic change is ignored
-#
-flush status;
-show variables like "log_queries_not_using_indexes";
-select 1 from information_schema.tables limit 1;
-show status like 'slow_queries';
-set global log_queries_not_using_indexes=OFF;
-show variables like "log_queries_not_using_indexes";
-select 1 from information_schema.tables limit 1;
-show status like 'slow_queries';
-set global log_queries_not_using_indexes=ON;
-show variables like "log_queries_not_using_indexes";
-select 1 from information_schema.tables limit 1;
-show status like 'slow_queries';
-
 #
 # Bug #30088: Can't disable myisam-recover by a value of ""
 #
 show variables like 'myisam_recover_options';
 
 --echo End of 5.0 tests
-
---disable_result_log
-SHOW AUTHORS;
---enable_result_log
-
-
-#
-# Ensure that show plugin code is tested
-#
-
---disable_result_log
-show plugins;
---enable_result_log
 
 #
 # Bug #19874: SHOW COLUMNS and SHOW KEYS handle identifiers containing
@@ -460,19 +430,16 @@ show engine foobar mutex;
 show engine mutex status;
 
 show engine csv status;
-show engine csv logs;
-show engine csv mutex;
+
 #
 # Bug#25081 SHOW FULL TABLES on table with latin chars in name fails
 #
-set names utf8;
 --disable_warnings
 drop table if exists `été`;
 --enable_warnings
 create table `été` (field1 int);
 show full tables;
 drop table `été`;
-set names latin1;
 
 #
 # Bug#26402 Server crashes with old-style named table

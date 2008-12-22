@@ -9,71 +9,71 @@ insert into t1 values (1,2,2),(2,2,3),(3,2,4),(4,2,4);
 -- after Bug#29394 is implemented.
 check table t1 fast;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	253	128	7	Y	0	31	8
-def					Op	253	10	5	Y	0	31	8
-def					Msg_type	253	10	6	Y	0	31	8
-def					Msg_text	253	255	27	Y	0	31	8
+def					Table	9	512	7	Y	0	31	45
+def					Op	9	40	5	Y	0	31	45
+def					Msg_type	9	40	6	Y	0	31	45
+def					Msg_text	9	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
-test.t1	check	status	Table is already up to date
+test.t1	check	status	OK
 check table t1 fast;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	253	128	7	Y	0	31	8
-def					Op	253	10	5	Y	0	31	8
-def					Msg_type	253	10	6	Y	0	31	8
-def					Msg_text	253	255	27	Y	0	31	8
+def					Table	9	512	7	Y	0	31	45
+def					Op	9	40	5	Y	0	31	45
+def					Msg_type	9	40	6	Y	0	31	45
+def					Msg_text	9	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
-test.t1	check	status	Table is already up to date
+test.t1	check	status	OK
 check table t1 changed;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	253	128	7	Y	0	31	8
-def					Op	253	10	5	Y	0	31	8
-def					Msg_type	253	10	6	Y	0	31	8
-def					Msg_text	253	255	2	Y	0	31	8
+def					Table	9	512	7	Y	0	31	45
+def					Op	9	40	5	Y	0	31	45
+def					Msg_type	9	40	6	Y	0	31	45
+def					Msg_text	9	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 insert into t1 values (5,5,5);
 check table t1 changed;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	253	128	7	Y	0	31	8
-def					Op	253	10	5	Y	0	31	8
-def					Msg_type	253	10	6	Y	0	31	8
-def					Msg_text	253	255	2	Y	0	31	8
+def					Table	9	512	7	Y	0	31	45
+def					Op	9	40	5	Y	0	31	45
+def					Msg_type	9	40	6	Y	0	31	45
+def					Msg_text	9	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 check table t1 medium;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	253	128	7	Y	0	31	8
-def					Op	253	10	5	Y	0	31	8
-def					Msg_type	253	10	6	Y	0	31	8
-def					Msg_text	253	255	2	Y	0	31	8
+def					Table	9	512	7	Y	0	31	45
+def					Op	9	40	5	Y	0	31	45
+def					Msg_type	9	40	6	Y	0	31	45
+def					Msg_text	9	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 check table t1 extended;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	253	128	7	Y	0	31	8
-def					Op	253	10	5	Y	0	31	8
-def					Msg_type	253	10	6	Y	0	31	8
-def					Msg_text	253	255	2	Y	0	31	8
+def					Table	9	512	7	Y	0	31	45
+def					Op	9	40	5	Y	0	31	45
+def					Msg_type	9	40	6	Y	0	31	45
+def					Msg_text	9	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			STATISTICS	TABLE_NAME	Table	253	64	2	N	1	0	8
-def			STATISTICS	NON_UNIQUE	Non_unique	8	1	1	N	32769	0	63
-def			STATISTICS	INDEX_NAME	Key_name	253	64	7	N	1	0	8
-def			STATISTICS	SEQ_IN_INDEX	Seq_in_index	8	2	1	N	32769	0	63
-def			STATISTICS	COLUMN_NAME	Column_name	253	64	1	N	1	0	8
-def			STATISTICS	COLLATION	Collation	253	1	1	Y	0	0	8
-def			STATISTICS	CARDINALITY	Cardinality	8	21	1	Y	32768	0	63
-def			STATISTICS	SUB_PART	Sub_part	8	3	0	Y	32768	0	63
-def			STATISTICS	PACKED	Packed	253	10	0	Y	0	0	8
-def			STATISTICS	NULLABLE	Null	253	3	0	N	1	0	8
-def			STATISTICS	INDEX_TYPE	Index_type	253	16	5	N	1	0	8
-def			STATISTICS	COMMENT	Comment	253	16	0	Y	0	0	8
-def			STATISTICS	INDEX_COMMENT	Index_Comment	253	1024	0	N	1	0	8
+def			STATISTICS	TABLE_NAME	Table	9	256	2	N	1	0	45
+def			STATISTICS	NON_UNIQUE	Non_unique	5	1	1	N	32769	0	63
+def			STATISTICS	INDEX_NAME	Key_name	9	256	7	N	1	0	45
+def			STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	2	1	N	32769	0	63
+def			STATISTICS	COLUMN_NAME	Column_name	9	256	1	N	1	0	45
+def			STATISTICS	COLLATION	Collation	9	4	1	Y	0	0	45
+def			STATISTICS	CARDINALITY	Cardinality	5	21	1	Y	32768	0	63
+def			STATISTICS	SUB_PART	Sub_part	5	3	0	Y	32768	0	63
+def			STATISTICS	PACKED	Packed	9	40	0	Y	0	0	45
+def			STATISTICS	NULLABLE	Null	9	12	0	N	1	0	45
+def			STATISTICS	INDEX_TYPE	Index_type	9	64	5	N	1	0	45
+def			STATISTICS	COMMENT	Comment	9	64	0	Y	0	0	45
+def			STATISTICS	INDEX_COMMENT	Index_Comment	9	4096	0	N	1	0	45
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	a	A	5	NULL	NULL		BTREE		
-t1	1	b	1	b	A	1	NULL	NULL		BTREE		
+t1	1	b	1	b	A	5	NULL	NULL		BTREE		
 t1	1	b	2	c	A	5	NULL	NULL		BTREE		
 insert into t1 values (5,5,5);
 ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
@@ -82,67 +82,67 @@ ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
 -- after Bug#29394 is implemented.
 optimize table t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	253	128	7	Y	0	31	8
-def					Op	253	10	8	Y	0	31	8
-def					Msg_type	253	10	6	Y	0	31	8
-def					Msg_text	253	255	2	Y	0	31	8
+def					Table	9	512	7	Y	0	31	45
+def					Op	9	40	8	Y	0	31	45
+def					Msg_type	9	40	6	Y	0	31	45
+def					Msg_text	9	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	optimize	status	OK
 optimize table t1;
 Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	Table is already up to date
+test.t1	optimize	status	OK
 drop table t1;
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
 show variables like "wait_timeout%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	253	64	12	N	1	0	8
-def			VARIABLES	VARIABLE_VALUE	Value	253	16300	5	Y	0	0	8
+def			VARIABLES	VARIABLE_NAME	Variable_name	9	256	12	N	1	0	45
+def			VARIABLES	VARIABLE_VALUE	Value	9	65200	5	Y	0	0	45
 Variable_name	Value
 wait_timeout	28800
 show variables like "WAIT_timeout%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	253	64	12	N	1	0	8
-def			VARIABLES	VARIABLE_VALUE	Value	253	16300	5	Y	0	0	8
+def			VARIABLES	VARIABLE_NAME	Variable_name	9	256	12	N	1	0	45
+def			VARIABLES	VARIABLE_VALUE	Value	9	65200	5	Y	0	0	45
 Variable_name	Value
 wait_timeout	28800
 show variables like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	253	64	0	N	1	0	8
-def			VARIABLES	VARIABLE_VALUE	Value	253	16300	0	Y	0	0	8
+def			VARIABLES	VARIABLE_NAME	Variable_name	9	256	0	N	1	0	45
+def			VARIABLES	VARIABLE_VALUE	Value	9	65200	0	Y	0	0	45
 Variable_name	Value
 show table status from test like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			TABLES	TABLE_NAME	Name	253	64	0	N	1	0	8
-def			TABLES	ENGINE	Engine	253	64	0	Y	0	0	8
-def			TABLES	VERSION	Version	8	21	0	Y	32800	0	63
-def			TABLES	ROW_FORMAT	Row_format	253	10	0	Y	0	0	8
-def			TABLES	TABLE_ROWS	Rows	8	21	0	Y	32800	0	63
-def			TABLES	AVG_ROW_LENGTH	Avg_row_length	8	21	0	Y	32800	0	63
-def			TABLES	DATA_LENGTH	Data_length	8	21	0	Y	32800	0	63
-def			TABLES	MAX_DATA_LENGTH	Max_data_length	8	21	0	Y	32800	0	63
-def			TABLES	INDEX_LENGTH	Index_length	8	21	0	Y	32800	0	63
-def			TABLES	DATA_FREE	Data_free	8	21	0	Y	32800	0	63
-def			TABLES	AUTO_INCREMENT	Auto_increment	8	21	0	Y	32800	0	63
-def			TABLES	CREATE_TIME	Create_time	12	19	0	Y	128	0	63
-def			TABLES	UPDATE_TIME	Update_time	12	19	0	Y	128	0	63
-def			TABLES	CHECK_TIME	Check_time	12	19	0	Y	128	0	63
-def			TABLES	TABLE_COLLATION	Collation	253	64	0	Y	0	0	8
-def			TABLES	CHECKSUM	Checksum	8	21	0	Y	32800	0	63
-def			TABLES	CREATE_OPTIONS	Create_options	253	255	0	Y	0	0	8
-def			TABLES	TABLE_COMMENT	Comment	253	2048	0	N	1	0	8
+def			TABLES	TABLE_NAME	Name	9	256	0	N	1	0	45
+def			TABLES	ENGINE	Engine	9	256	0	Y	0	0	45
+def			TABLES	VERSION	Version	5	21	0	Y	32768	0	63
+def			TABLES	ROW_FORMAT	Row_format	9	40	0	Y	0	0	45
+def			TABLES	TABLE_ROWS	Rows	5	21	0	Y	32768	0	63
+def			TABLES	AVG_ROW_LENGTH	Avg_row_length	5	21	0	Y	32768	0	63
+def			TABLES	DATA_LENGTH	Data_length	5	21	0	Y	32768	0	63
+def			TABLES	MAX_DATA_LENGTH	Max_data_length	5	21	0	Y	32768	0	63
+def			TABLES	INDEX_LENGTH	Index_length	5	21	0	Y	32768	0	63
+def			TABLES	DATA_FREE	Data_free	5	21	0	Y	32768	0	63
+def			TABLES	AUTO_INCREMENT	Auto_increment	5	21	0	Y	32768	0	63
+def			TABLES	CREATE_TIME	Create_time	7	19	0	Y	128	0	63
+def			TABLES	UPDATE_TIME	Update_time	7	19	0	Y	128	0	63
+def			TABLES	CHECK_TIME	Check_time	7	19	0	Y	128	0	63
+def			TABLES	TABLE_COLLATION	Collation	9	256	0	Y	0	0	45
+def			TABLES	CHECKSUM	Checksum	5	21	0	Y	32768	0	63
+def			TABLES	CREATE_OPTIONS	Create_options	9	1020	0	Y	0	0	45
+def			TABLES	TABLE_COMMENT	Comment	9	8192	0	N	1	0	45
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			SCHEMATA	SCHEMA_NAME	Database	253	64	18	N	1	0	8
+def			SCHEMATA	SCHEMA_NAME	Database	9	256	18	N	1	0	45
 Database
 information_schema
 mysql
 test
 show databases like "test%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			SCHEMATA	SCHEMA_NAME	Database (test%)	253	64	4	N	1	0	8
+def			SCHEMATA	SCHEMA_NAME	Database (test%)	9	256	4	N	1	0	45
 Database (test%)
 test
 create table t1 (f1 int not null, f2 int not null, f3 int not null, f4 int not null, primary key(f1,f2,f3,f4));
@@ -152,51 +152,50 @@ insert into t1 values (1,1,1,0),(1,1,2,0),(1,1,3,0),(1,2,1,0),(1,2,2,0),(1,2,3,0
 -- after Bug#29394 is implemented.
 analyze table t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	253	128	7	Y	0	31	8
-def					Op	253	10	7	Y	0	31	8
-def					Msg_type	253	10	6	Y	0	31	8
-def					Msg_text	253	255	2	Y	0	31	8
+def					Table	9	512	7	Y	0	31	45
+def					Op	9	40	7	Y	0	31	45
+def					Msg_type	9	40	6	Y	0	31	45
+def					Msg_text	9	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show index from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	f1	A	1	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	f2	A	3	NULL	NULL		BTREE		
-t1	0	PRIMARY	3	f3	A	9	NULL	NULL		BTREE		
+t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE		
+t1	0	PRIMARY	2	f2	A	6	NULL	NULL		BTREE		
+t1	0	PRIMARY	3	f3	A	18	NULL	NULL		BTREE		
 t1	0	PRIMARY	4	f4	A	18	NULL	NULL		BTREE		
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
 repair table t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	253	128	7	Y	0	31	8
-def					Op	253	10	6	Y	0	31	8
-def					Msg_type	253	10	6	Y	0	31	8
-def					Msg_text	253	255	2	Y	0	31	8
+def					Table	9	512	7	Y	0	31	45
+def					Op	9	40	6	Y	0	31	45
+def					Msg_type	9	40	4	Y	0	31	45
+def					Msg_text	9	1020	55	Y	0	31	45
 Table	Op	Msg_type	Msg_text
-test.t1	repair	status	OK
+test.t1	repair	note	The storage engine for the table doesn't support repair
 show index from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	f1	A	1	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	f2	A	3	NULL	NULL		BTREE		
-t1	0	PRIMARY	3	f3	A	9	NULL	NULL		BTREE		
+t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE		
+t1	0	PRIMARY	2	f2	A	6	NULL	NULL		BTREE		
+t1	0	PRIMARY	3	f3	A	18	NULL	NULL		BTREE		
 t1	0	PRIMARY	4	f4	A	18	NULL	NULL		BTREE		
 drop table t1;
 create temporary table t1 (a int not null);
 show create table t1;
 Table	Create Table
-t1	CREATE TEMPORARY TABLE "t1" (
-  "a" int(11) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TEMPORARY TABLE `t1` (
+  `a` int NOT NULL
+) ENGINE=InnoDB
 alter table t1 rename t2;
 show create table t2;
 Table	Create Table
-t2	CREATE TEMPORARY TABLE "t2" (
-  "a" int(11) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t2	CREATE TEMPORARY TABLE `t2` (
+  `a` int NOT NULL
+) ENGINE=InnoDB
 drop table t2;
 create table t1 (
-test_set set( 'val1', 'val2', 'val3' ) not null default '',
 name char(20) default 'O''Brien' comment 'O''Brien as default',
 c int not null comment 'int column',
 `c-b` int comment 'name with a minus',
@@ -204,83 +203,78 @@ c int not null comment 'int column',
   ) comment = 'it\'s a table' ;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "test_set" set('val1','val2','val3') NOT NULL,
-  "name" char(20) COMMENT 'O''Brien as default',
-  "c" int(11) NOT NULL COMMENT 'int column',
-  "c-b" int(11) COMMENT 'name with a minus',
-  "space 2" int(11) COMMENT 'name with a space'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='it''s a table'
+t1	CREATE TABLE `t1` (
+  `name` varchar(20) COMMENT 'O''Brien as default',
+  `c` int NOT NULL COMMENT 'int column',
+  `c-b` int COMMENT 'name with a minus',
+  `space 2` int COMMENT 'name with a space'
+) ENGINE=InnoDB COMMENT='it''s a table'
 set sql_quote_show_create=0;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE t1 (
-  test_set set('val1','val2','val3') NOT NULL,
-  "name" char(20) COMMENT 'O''Brien as default',
-  c int(11) NOT NULL COMMENT 'int column',
-  "c-b" int(11) COMMENT 'name with a minus',
-  "space 2" int(11) COMMENT 'name with a space'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='it''s a table'
+  `name` varchar(20) COMMENT 'O''Brien as default',
+  c int NOT NULL COMMENT 'int column',
+  `c-b` int COMMENT 'name with a minus',
+  `space 2` int COMMENT 'name with a space'
+) ENGINE=InnoDB COMMENT='it''s a table'
 set sql_quote_show_create=1;
 show full columns from t1;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-test_set	set('val1','val2','val3')	latin1_swedish_ci	NO		NULL			
-name	char(20)	latin1_swedish_ci	YES		NULL			O'Brien as default
-c	int(11)	NULL	NO		NULL			int column
-c-b	int(11)	NULL	YES		NULL			name with a minus
-space 2	int(11)	NULL	YES		NULL			name with a space
+name	varchar(20)	utf8_general_ci	YES		NULL			O'Brien as default
+c	int	NULL	NO		NULL			int column
+c-b	int	NULL	YES		NULL			name with a minus
+space 2	int	NULL	YES		NULL			name with a space
 drop table t1;
 create table t1 (a int not null, unique aa (a));
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" int(11) NOT NULL,
-  UNIQUE KEY "aa" ("a")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `a` int NOT NULL,
+  UNIQUE KEY `aa` (`a`)
+) ENGINE=InnoDB
 drop table t1;
 create table t1 (a int not null, primary key (a));
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" int(11) NOT NULL,
-  PRIMARY KEY ("a")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `a` int NOT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB
 drop table t1;
 flush tables;
 show open tables;
 Database	Table	In_use	Name_locked
-mysql	general_log	0	0
 create table t1(n int);
 insert into t1 values (1);
 show open tables;
 Database	Table	In_use	Name_locked
 test	t1	0	0
-mysql	general_log	0	0
 drop table t1;
 create table t1 (a int not null, b VARCHAR(10), INDEX (b) ) AVG_ROW_LENGTH=10 CHECKSUM=1 COMMENT="test" ENGINE=MYISAM MIN_ROWS=10 MAX_ROWS=100 PACK_KEYS=1 DELAY_KEY_WRITE=1 ROW_FORMAT=fixed;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" int(11) NOT NULL,
-  "b" varchar(10),
-  KEY "b" ("b")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 MIN_ROWS=10 MAX_ROWS=100 AVG_ROW_LENGTH=10 PACK_KEYS=1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=FIXED COMMENT='test'
+t1	CREATE TABLE `t1` (
+  `a` int NOT NULL,
+  `b` varchar(10),
+  KEY `b` (`b`)
+) ENGINE=MyISAM MIN_ROWS=10 MAX_ROWS=100 AVG_ROW_LENGTH=10 PACK_KEYS=1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=FIXED COMMENT='test'
 alter table t1 MAX_ROWS=200 ROW_FORMAT=dynamic PACK_KEYS=0;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" int(11) NOT NULL,
-  "b" varchar(10),
-  KEY "b" ("b")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 MIN_ROWS=10 MAX_ROWS=200 AVG_ROW_LENGTH=10 PACK_KEYS=0 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC COMMENT='test'
+t1	CREATE TABLE `t1` (
+  `a` int NOT NULL,
+  `b` varchar(10),
+  KEY `b` (`b`)
+) ENGINE=MyISAM MIN_ROWS=10 MAX_ROWS=200 AVG_ROW_LENGTH=10 PACK_KEYS=0 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC COMMENT='test'
 ALTER TABLE t1 AVG_ROW_LENGTH=0 CHECKSUM=0 COMMENT="" MIN_ROWS=0 MAX_ROWS=0 PACK_KEYS=DEFAULT DELAY_KEY_WRITE=0 ROW_FORMAT=default;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" int(11) NOT NULL,
-  "b" varchar(10),
-  KEY "b" ("b")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `a` int NOT NULL,
+  `b` varchar(10),
+  KEY `b` (`b`)
+) ENGINE=MyISAM
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
@@ -289,22 +283,19 @@ a	decimal(9,2)	YES		NULL
 b	decimal(9,0)	YES		NULL	
 e	double(9,2)	YES		NULL	
 f	double(5,0)	YES		NULL	
-h	float(3,2)	YES		NULL	
-i	float(3,0)	YES		NULL	
+h	double(3,2)	YES		NULL	
+i	double(3,0)	YES		NULL	
 show full columns from t1;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 a	decimal(9,2)	NULL	YES		NULL			
 b	decimal(9,0)	NULL	YES		NULL			
 e	double(9,2)	NULL	YES		NULL			
 f	double(5,0)	NULL	YES		NULL			
-h	float(3,2)	NULL	YES		NULL			
-i	float(3,0)	NULL	YES		NULL			
+h	double(3,2)	NULL	YES		NULL			
+i	double(3,0)	NULL	YES		NULL			
 drop table t1;
 create table t1 (
-type_bool bool not null default 0,
-type_tiny tinyint not null auto_increment primary key,
-type_short smallint(3),
-type_mediumint mediumint,
+type_int int,
 type_bigint bigint,
 type_decimal decimal(5,2),
 type_numeric numeric(5,2),
@@ -315,59 +306,47 @@ type_timestamp timestamp not null,
 type_date date not null default '0000-00-00',
 type_time time not null default '00:00:00',
 type_datetime datetime not null default '0000-00-00 00:00:00',
-type_year year,
 type_enum enum ('red', 'green', 'blue'),
 type_set enum ('red', 'green', 'blue'),
-type_tinyblob tinyblob,
 type_blob blob,
-type_medium_blob mediumblob,
-type_long_blob longblob,
-index(type_short)
-) AVG_ROW_LENGTH=10 CHECKSUM=1 COMMENT="test" ENGINE=MYISAM MIN_ROWS=10 MAX_ROWS=100 PACK_KEYS=1 DELAY_KEY_WRITE=1 ROW_FORMAT=fixed CHARSET=latin1;
+index(type_int)
+) AVG_ROW_LENGTH=10 CHECKSUM=1 COMMENT="test" ENGINE=MYISAM MIN_ROWS=10 MAX_ROWS=100 PACK_KEYS=1 DELAY_KEY_WRITE=1 ROW_FORMAT=fixed;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "type_bool" tinyint(1) NOT NULL,
-  "type_tiny" tinyint(4) NOT NULL AUTO_INCREMENT,
-  "type_short" smallint(3),
-  "type_mediumint" mediumint(9),
-  "type_bigint" bigint(20),
-  "type_decimal" decimal(5,2),
-  "type_numeric" decimal(5,2),
-  "empty_char" char(0),
-  "type_char" char(2),
-  "type_varchar" varchar(10),
-  "type_timestamp" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  "type_date" date NOT NULL,
-  "type_time" time NOT NULL,
-  "type_datetime" datetime NOT NULL,
-  "type_year" year(4),
-  "type_enum" enum('red','green','blue'),
-  "type_set" enum('red','green','blue'),
-  "type_tinyblob" tinyblob,
-  "type_blob" blob,
-  "type_medium_blob" mediumblob,
-  "type_long_blob" longblob,
-  PRIMARY KEY ("type_tiny"),
-  KEY "type_short" ("type_short")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 MIN_ROWS=10 MAX_ROWS=100 AVG_ROW_LENGTH=10 PACK_KEYS=1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=FIXED COMMENT='test'
+t1	CREATE TABLE `t1` (
+  `type_int` int,
+  `type_bigint` bigint,
+  `type_decimal` decimal(5,2),
+  `type_numeric` decimal(5,2),
+  `empty_char` varchar(0),
+  `type_char` varchar(2),
+  `type_varchar` varchar(10),
+  `type_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `type_date` date NOT NULL,
+  `type_time` time NOT NULL,
+  `type_datetime` datetime NOT NULL,
+  `type_enum` enum('red','green','blue'),
+  `type_set` enum('red','green','blue'),
+  `type_blob` blob,
+  KEY `type_int` (`type_int`)
+) ENGINE=MyISAM MIN_ROWS=10 MAX_ROWS=100 AVG_ROW_LENGTH=10 PACK_KEYS=1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=FIXED COMMENT='test'
 insert into t1 (type_timestamp) values ("2003-02-07 10:00:01");
 select * from t1;
-type_bool	type_tiny	type_short	type_mediumint	type_bigint	type_decimal	type_numeric	empty_char	type_char	type_varchar	type_timestamp	type_date	type_time	type_datetime	type_year	type_enum	type_set	type_tinyblob	type_blob	type_medium_blob	type_long_blob
-0	1	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	2003-02-07 10:00:01	0000-00-00	00:00:00	0000-00-00 00:00:00	NULL	NULL	NULL	NULL	NULL	NULL	NULL
+type_int	type_bigint	type_decimal	type_numeric	empty_char	type_char	type_varchar	type_timestamp	type_date	type_time	type_datetime	type_enum	type_set	type_blob
+NULL	NULL	NULL	NULL	NULL	NULL	NULL	2003-02-07 10:00:01	0000-00-00	00:00:00	0000-00-00 00:00:00	NULL	NULL	NULL
 drop table t1;
 create table t1 (a int not null);
 create table t2 select max(a) from t1;
 show columns from t2;
 Field	Type	Null	Key	Default	Extra
-max(a)	int(11)	YES		NULL	
+max(a)	int	YES		NULL	
 drop table t1,t2;
 create table t1 (c decimal, d double, f float, r real);
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
 c	decimal(10,0)	YES		NULL	
 d	double	YES		NULL	
-f	float	YES		NULL	
+f	double	YES		NULL	
 r	double	YES		NULL	
 drop table t1;
 create table t1 (c decimal(3,3), d double(3,3), f float(3,3));
@@ -375,50 +354,50 @@ show columns from t1;
 Field	Type	Null	Key	Default	Extra
 c	decimal(3,3)	YES		NULL	
 d	double(3,3)	YES		NULL	
-f	float(3,3)	YES		NULL	
+f	double(3,3)	YES		NULL	
 drop table t1;
 CREATE TABLE ```ab``cd``` (i INT);
 SHOW CREATE TABLE ```ab``cd```;
 Table	Create Table
-`ab`cd`	CREATE TABLE "`ab`cd`" (
-  "i" int(11)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+`ab`cd`	CREATE TABLE ```ab``cd``` (
+  `i` int
+) ENGINE=InnoDB
 DROP TABLE ```ab``cd```;
 CREATE TABLE ```ab````cd``` (i INT);
 SHOW CREATE TABLE ```ab````cd```;
 Table	Create Table
-`ab``cd`	CREATE TABLE "`ab``cd`" (
-  "i" int(11)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+`ab``cd`	CREATE TABLE ```ab````cd``` (
+  `i` int
+) ENGINE=InnoDB
 DROP TABLE ```ab````cd```;
 CREATE TABLE ```a` (i INT);
 SHOW CREATE TABLE ```a`;
 Table	Create Table
-`a	CREATE TABLE "`a" (
-  "i" int(11)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+`a	CREATE TABLE ```a` (
+  `i` int
+) ENGINE=InnoDB
 DROP TABLE ```a`;
 CREATE TABLE `a.1` (i INT);
 SHOW CREATE TABLE `a.1`;
 Table	Create Table
-a.1	CREATE TABLE "a.1" (
-  "i" int(11)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+a.1	CREATE TABLE `a.1` (
+  `i` int
+) ENGINE=InnoDB
 DROP TABLE `a.1`;
 select @@max_heap_table_size;
 @@max_heap_table_size
 1048576
 CREATE TABLE t1 (
-a int(11) default NULL,
+a int default NULL,
 KEY a USING BTREE (a)
 ) ENGINE=HEAP;
 CREATE TABLE t2 (
-b int(11) default NULL,
+b int default NULL,
 index(b)
 ) ENGINE=HEAP;
 CREATE TABLE t3 (
-a int(11) default NULL,
-b int(11) default NULL,
+a int default NULL,
+b int default NULL,
 KEY a USING BTREE (a),
 index(b)
 ) ENGINE=HEAP;
@@ -427,149 +406,149 @@ insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MEMORY	10	Fixed	2	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t2	MEMORY	10	Fixed	2	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t3	MEMORY	10	Fixed	2	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
+t1	MEMORY	0	Fixed	2	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t2	MEMORY	0	Fixed	2	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t3	MEMORY	0	Fixed	2	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
 insert into t1 values (3),(4);
 insert into t2 values (3),(4);
 insert into t3 values (3,3),(4,4);
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MEMORY	10	Fixed	4	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t2	MEMORY	10	Fixed	4	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t3	MEMORY	10	Fixed	4	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
+t1	MEMORY	0	Fixed	4	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t2	MEMORY	0	Fixed	4	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t3	MEMORY	0	Fixed	4	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MEMORY	10	Fixed	5	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t2	MEMORY	10	Fixed	5	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t3	MEMORY	10	Fixed	5	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
+t1	MEMORY	0	Fixed	5	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t2	MEMORY	0	Fixed	5	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t3	MEMORY	0	Fixed	5	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
 delete from t1 where a=3;
 delete from t2 where b=3;
 delete from t3 where a=3;
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MEMORY	10	Fixed	4	#	#	#	#	#	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t2	MEMORY	10	Fixed	4	#	#	#	#	#	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t3	MEMORY	10	Fixed	4	#	#	#	#	#	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
+t1	MEMORY	0	Fixed	4	#	#	#	#	#	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t2	MEMORY	0	Fixed	4	#	#	#	#	#	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t3	MEMORY	0	Fixed	4	#	#	#	#	#	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
 truncate table t1;
 truncate table t2;
 truncate table t3;
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MEMORY	10	Fixed	0	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t2	MEMORY	10	Fixed	0	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t3	MEMORY	10	Fixed	0	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
+t1	MEMORY	0	Fixed	0	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t2	MEMORY	0	Fixed	0	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t3	MEMORY	0	Fixed	0	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MEMORY	10	Fixed	1	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t2	MEMORY	10	Fixed	1	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t3	MEMORY	10	Fixed	1	#	#	#	#	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
+t1	MEMORY	0	Fixed	1	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t2	MEMORY	0	Fixed	1	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t3	MEMORY	0	Fixed	1	#	#	#	#	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
 delete from t1 where a=5;
 delete from t2 where b=5;
 delete from t3 where a=5;
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MEMORY	10	Fixed	0	#	#	#	#	#	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t2	MEMORY	10	Fixed	0	#	#	#	#	#	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t3	MEMORY	10	Fixed	0	#	#	#	#	#	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
+t1	MEMORY	0	Fixed	0	#	#	#	#	#	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t2	MEMORY	0	Fixed	0	#	#	#	#	#	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t3	MEMORY	0	Fixed	0	#	#	#	#	#	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
 drop table t1, t2, t3;
 CREATE TABLE t1 (i int, KEY (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "i" int(11),
-  KEY "i" ("i")
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `i` int,
+  KEY `i` (`i`)
+) ENGINE=MEMORY
 DROP TABLE t1;
 CREATE TABLE t1 (i int, KEY USING HASH (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "i" int(11),
-  KEY "i" ("i") USING HASH
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `i` int,
+  KEY `i` (`i`) USING HASH
+) ENGINE=MEMORY
 DROP TABLE t1;
 CREATE TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "i" int(11),
-  KEY "i" ("i") USING BTREE
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `i` int,
+  KEY `i` (`i`) USING BTREE
+) ENGINE=MEMORY
 DROP TABLE t1;
 CREATE TABLE t1 (i int, KEY (i)) ENGINE=MyISAM;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "i" int(11),
-  KEY "i" ("i")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `i` int,
+  KEY `i` (`i`)
+) ENGINE=MyISAM
 DROP TABLE t1;
 CREATE TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MyISAM;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "i" int(11),
-  KEY "i" ("i") USING BTREE
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `i` int,
+  KEY `i` (`i`) USING BTREE
+) ENGINE=MyISAM
 DROP TABLE t1;
 CREATE TABLE t1 (i int, KEY (i)) ENGINE=MyISAM;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "i" int(11),
-  KEY "i" ("i")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `i` int,
+  KEY `i` (`i`)
+) ENGINE=MyISAM
 ALTER TABLE t1 ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "i" int(11),
-  KEY "i" ("i")
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `i` int,
+  KEY `i` (`i`)
+) ENGINE=MEMORY
 DROP TABLE t1;
 CREATE TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MyISAM;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "i" int(11),
-  KEY "i" ("i") USING BTREE
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `i` int,
+  KEY `i` (`i`) USING BTREE
+) ENGINE=MyISAM
 ALTER TABLE t1 ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "i" int(11),
-  KEY "i" ("i") USING BTREE
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `i` int,
+  KEY `i` (`i`) USING BTREE
+) ENGINE=MEMORY
 DROP TABLE t1;
 CREATE TABLE t1(
 field1 text NOT NULL,
-PRIMARY KEY(field1(1000))
+PRIMARY KEY(field1(180))
 );
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			STATISTICS	TABLE_NAME	Table	253	64	2	N	1	0	8
-def			STATISTICS	NON_UNIQUE	Non_unique	8	1	1	N	32769	0	63
-def			STATISTICS	INDEX_NAME	Key_name	253	64	7	N	1	0	8
-def			STATISTICS	SEQ_IN_INDEX	Seq_in_index	8	2	1	N	32769	0	63
-def			STATISTICS	COLUMN_NAME	Column_name	253	64	6	N	1	0	8
-def			STATISTICS	COLLATION	Collation	253	1	1	Y	0	0	8
-def			STATISTICS	CARDINALITY	Cardinality	8	21	1	Y	32768	0	63
-def			STATISTICS	SUB_PART	Sub_part	8	3	4	Y	32768	0	63
-def			STATISTICS	PACKED	Packed	253	10	0	Y	0	0	8
-def			STATISTICS	NULLABLE	Null	253	3	0	N	1	0	8
-def			STATISTICS	INDEX_TYPE	Index_type	253	16	5	N	1	0	8
-def			STATISTICS	COMMENT	Comment	253	16	0	Y	0	0	8
-def			STATISTICS	INDEX_COMMENT	Index_Comment	253	1024	0	N	1	0	8
+def			STATISTICS	TABLE_NAME	Table	9	256	2	N	1	0	45
+def			STATISTICS	NON_UNIQUE	Non_unique	5	1	1	N	32769	0	63
+def			STATISTICS	INDEX_NAME	Key_name	9	256	7	N	1	0	45
+def			STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	2	1	N	32769	0	63
+def			STATISTICS	COLUMN_NAME	Column_name	9	256	6	N	1	0	45
+def			STATISTICS	COLLATION	Collation	9	4	1	Y	0	0	45
+def			STATISTICS	CARDINALITY	Cardinality	5	21	1	Y	32768	0	63
+def			STATISTICS	SUB_PART	Sub_part	5	3	3	Y	32768	0	63
+def			STATISTICS	PACKED	Packed	9	40	0	Y	0	0	45
+def			STATISTICS	NULLABLE	Null	9	12	0	N	1	0	45
+def			STATISTICS	INDEX_TYPE	Index_type	9	64	5	N	1	0	45
+def			STATISTICS	COMMENT	Comment	9	64	0	Y	0	0	45
+def			STATISTICS	INDEX_COMMENT	Index_Comment	9	4096	0	N	1	0	45
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	field1	A	0	1000	NULL		BTREE		
+t1	0	PRIMARY	1	field1	A	0	180	NULL		BTREE		
 drop table t1;
 create table t1 (
 c1 int NOT NULL,
@@ -579,12 +558,12 @@ INDEX USING BTREE(c2)
 );
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "c1" int(11) NOT NULL,
-  "c2" int(11) NOT NULL,
-  PRIMARY KEY ("c1") USING HASH,
-  KEY "c2" ("c2") USING BTREE
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `c1` int NOT NULL,
+  `c2` int NOT NULL,
+  PRIMARY KEY (`c1`) USING HASH,
+  KEY `c2` (`c2`) USING BTREE
+) ENGINE=InnoDB
 DROP TABLE t1;
 
 # Bug#12183: SHOW OPEN TABLES behavior doesn't match grammar.
@@ -631,42 +610,10 @@ SHOW TABLES FROM no_such_database;
 ERROR 42000: Unknown database 'no_such_database'
 SHOW COLUMNS FROM no_such_table;
 ERROR 42S02: Table 'test.no_such_table' doesn't exist
-flush status;
-show variables like "log_queries_not_using_indexes";
-Variable_name	Value
-log_queries_not_using_indexes	ON
-select 1 from information_schema.tables limit 1;
-1
-1
-show status like 'slow_queries';
-Variable_name	Value
-Slow_queries	1
-set global log_queries_not_using_indexes=OFF;
-show variables like "log_queries_not_using_indexes";
-Variable_name	Value
-log_queries_not_using_indexes	OFF
-select 1 from information_schema.tables limit 1;
-1
-1
-show status like 'slow_queries';
-Variable_name	Value
-Slow_queries	1
-set global log_queries_not_using_indexes=ON;
-show variables like "log_queries_not_using_indexes";
-Variable_name	Value
-log_queries_not_using_indexes	ON
-select 1 from information_schema.tables limit 1;
-1
-1
-show status like 'slow_queries';
-Variable_name	Value
-Slow_queries	2
 show variables like 'myisam_recover_options';
 Variable_name	Value
 myisam_recover_options	OFF
 End of 5.0 tests
-SHOW AUTHORS;
-show plugins;
 create database `mysqlttest\1`;
 create table `mysqlttest\1`.`a\b` (a int);
 show tables from `mysqlttest\1`;
@@ -674,10 +621,10 @@ Tables_in_mysqlttest\1
 a\b
 show fields from `mysqlttest\1`.`a\b`;
 Field	Type	Null	Key	Default	Extra
-a	int(11)	YES		NULL	
+a	int	YES		NULL	
 show columns from `a\b` from `mysqlttest\1`;
 Field	Type	Null	Key	Default	Extra
-a	int(11)	YES		NULL	
+a	int	YES		NULL	
 show keys from `mysqlttest\1`.`a\b`;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 drop table `mysqlttest\1`.`a\b`;
@@ -692,18 +639,12 @@ show engine mutex status;
 ERROR 42000: Unknown table engine 'mutex'
 show engine csv status;
 Type	Name	Status
-show engine csv logs;
-Type	Name	Status
-show engine csv mutex;
-Type	Name	Status
-set names utf8;
 drop table if exists `été`;
 create table `été` (field1 int);
 show full tables;
 Tables_in_test	Table_type
-été	BASE TABLE
+été	BASE Table
 drop table `été`;
-set names latin1;
 show columns from `#mysql50#????????`;
 Got one of the listed errors
 End of 5.1 tests

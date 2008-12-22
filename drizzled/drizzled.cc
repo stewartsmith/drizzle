@@ -257,7 +257,6 @@ static I_List<Session> thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_log_queries_not_using_indexes= false;
 bool opt_error_log= 0;
 bool opt_skip_show_db= false;
 bool opt_character_set_client_handshake= 1;
