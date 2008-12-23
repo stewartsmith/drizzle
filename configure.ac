@@ -85,12 +85,12 @@ AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
 # The port should be constant for a LONG time
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-sinclude(m4/dtrace.m4)
+m4_include(m4/dtrace.m4)
 
-sinclude(m4/character_sets.m4)
+m4_include(m4/character_sets.m4)
 AC_SUBST(AVAILABLE_LANGUAGES)
 
-sinclude(m4/gettext.m4)
+m4_include(m4/gettext.m4)
 AM_GNU_GETTEXT([external])
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
