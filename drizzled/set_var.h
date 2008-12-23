@@ -1086,25 +1086,6 @@ public:
   int update(Session *session);
 };
 
-/* For SET NAMES and SET CHARACTER SET */
-
-class set_var_collation_client: public set_var_base
-{
-  const CHARSET_INFO *character_set_client;
-  const CHARSET_INFO *character_set_results;
-  const CHARSET_INFO *collation_connection;
-public:
-  set_var_collation_client(const CHARSET_INFO * const client_coll_arg,
-  			   const CHARSET_INFO * const connection_coll_arg,
-  			   const CHARSET_INFO * const result_coll_arg)
-    :character_set_client(client_coll_arg),
-     character_set_results(result_coll_arg),
-     collation_connection(connection_coll_arg)
-  {}
-  int check(Session *session);
-  int update(Session *session);
-};
-
 
 extern "C"
 {

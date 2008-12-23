@@ -1949,33 +1949,6 @@ err:
   return result;
 }
 
-
-/*****************************************************************************
-  Functions to handle SET NAMES and SET CHARACTER SET
-*****************************************************************************/
-
-int set_var_collation_client::check(Session *)
-{
-  /* Currently, UCS-2 cannot be used as a client character set */
-  if (character_set_client->mbminlen > 1)
-  {
-    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), "character_set_client",
-             character_set_client->csname);
-    return 1;
-  }
-  return 0;
-}
-
-int set_var_collation_client::update(Session *session)
-{
-  session->variables.character_set_client= character_set_client;
-  session->variables.character_set_results= character_set_results;
-  session->variables.collation_connection= collation_connection;
-  session->update_charset();
-  session->protocol_text.init(session);
-  return 0;
-}
-
 /****************************************************************************/
 
 bool sys_var_timestamp::update(Session *session,  set_var *var)

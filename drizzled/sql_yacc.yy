@@ -412,10 +412,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %pure_parser                                    /* We have threads */
 /*
-  Currently there are 93 shift/reduce conflicts.
+  Currently there are 92 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 93
+%expect 92
 
 /*
    Comments for TOKENS.
@@ -6462,12 +6462,6 @@ option_value:
           {
             LEX *lex=Lex;
             lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
-          }
-        | NAMES_SYM COLLATE_SYM collation_name_or_default
-          {
-            LEX *lex= Lex;
-            $3= $3 ? $3 : global_system_variables.character_set_client;
-            lex->var_list.push_back(new set_var_collation_client($3,$3,$3));
           }
         ;
 
