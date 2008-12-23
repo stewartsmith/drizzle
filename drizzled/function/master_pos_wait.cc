@@ -22,6 +22,7 @@
 #include CSTDINT_H
 #include <drizzled/function/master_pos_wait.h>
 #include <drizzled/session.h>
+#include <drizzled/slave.h>
 
 /**
   Wait until we are at or past the given position in the master binlog
