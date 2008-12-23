@@ -262,8 +262,12 @@ static int check_connection(Session *session)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= strncpy(buff, server_version, SERVER_VERSION_LENGTH);
-    end+= SERVER_VERSION_LENGTH+1;
+    end= buff + strlen(server_version);
+    if ((end - buff) >= SERVER_VERSION_LENGTH)
+      end= buff + (SERVER_VERSION_LENGTH - 1);
+    memcpy(buff, server_version, end - buff);
+    *end= 0;
+    end++;
 
     int4store((unsigned char*) end, session->thread_id);
     end+= 4;
