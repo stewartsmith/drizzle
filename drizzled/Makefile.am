@@ -355,7 +355,7 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(Z_LIBS) $(LIBINTL) 
+	$(Z_LIBS) $(LIBINTL)
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
@@ -365,7 +365,8 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
-		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS)
+		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS) \
+		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
 drizzled_LDFLAGS =
