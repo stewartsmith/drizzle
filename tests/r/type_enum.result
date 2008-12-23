@@ -1626,56 +1626,36 @@ create table t1 (a enum (' ','a','b') not null);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` enum('','a','b') NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `a` enum(' ','a','b') NOT NULL
+) ENGINE=InnoDB
 drop table t1;
 create table t1 (a enum (' ','a','b ') not null default 'b ');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` enum('','a','b') NOT NULL DEFAULT 'b'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `a` enum(' ','a','b') NOT NULL
+) ENGINE=InnoDB
 drop table t1;
 create table t1 (a enum ('0','1'));
 insert into t1 set a='foobar';
-Warnings:
-Warning	1265	Data truncated for column 'a' at row 1
+ERROR 01000: Data truncated for column 'a' at row 1
 select * from t1;
 a
-
 update t1 set a = replace(a,'x','y');
-Warnings:
-Warning	1265	Data truncated for column 'a' at row 1
 select * from t1;
 a
-
 drop table t1;
-set names latin1;
 create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
-a	enum('‰','1','2')	NO		‰	
+a	enum('	NO		NULL	
+Warnings:
+Warning	1366	Incorrect string value: '\xE4','1'...' for column 'COLUMN_TYPE' at row 1
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` enum('‰','1','2') NOT NULL DEFAULT '‰'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-drop table t1;
-set names latin1;
-CREATE TABLE t1 (
-a INT  default 1,
-b ENUM('value','ˆ‰¸_value',' √’') character set latin1 NOT NULL
-);
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `a` int(11) DEFAULT '1',
-  `b` enum('value','ˆ‰¸_value',' √’') NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-show columns from t1;
-Field	Type	Null	Key	Default	Extra
-a	int(11)	YES		1	
-b	enum('value','ˆ‰¸_value',' √’')	NO		NULL	
+  `a` enum('‰','1','2') NOT NULL
+) ENGINE=InnoDB
 drop table t1;
 CREATE TABLE t1 (c enum('a', 'A') BINARY);
 INSERT INTO t1 VALUES ('a'),('A');
@@ -1684,173 +1664,109 @@ c
 a
 A
 DROP TABLE t1;
-CREATE TABLE t1 (c enum('ae','oe','ue','ss') collate latin1_german2_ci);
-INSERT INTO t1 VALUES ('‰'),('ˆ'),('¸'),('ﬂ');
-SELECT * FROM t1;
-c
-ae
-oe
-ue
-ss
-DROP TABLE t1;
-CREATE TABLE t1 (
-a ENUM('‰','ˆ','¸') character set utf8 default '¸'
-);
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `a` enum('‰','ˆ','¸') CHARACTER SET utf8 DEFAULT '¸'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-insert into t1 values ('‰'), ('ˆ'), ('¸');
-select a from t1 order by a;
-a
-‰
-ˆ
-¸
-drop table t1;
-set names utf8;
-CREATE TABLE t1 (
-a ENUM('√§','√∂','√º') character set latin1 default '√º'
-);
-insert into t1 values ('√§'),('√∂'),('√º');
-set names latin1;
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `a` enum('‰','ˆ','¸') DEFAULT '¸'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-select a from t1 order by a;
-a
-‰
-ˆ
-¸
-drop table t1;
-create table t1 (a enum ('Y','N') CHARACTER SET utf8 COLLATE utf8_bin);
+create table t1 (a enum ('Y','N') COLLATE utf8_bin);
 insert into t1 values ('Y');
-alter table t1 add b set ('Y','N') CHARACTER SET utf8 COLLATE utf8_bin;
-alter table t1 add c enum ('Y','N') CHARACTER SET utf8 COLLATE utf8_bin;
+alter table t1 add c enum ('Y','N') COLLATE utf8_bin;
 select * from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	test	t1	t1	a	a	254	1	1	Y	384	0	8
-def	test	t1	t1	b	b	254	3	0	Y	2176	0	8
-def	test	t1	t1	c	c	254	1	0	Y	384	0	8
-a	b	c
-Y	NULL	NULL
-drop table t1;
-create table t1 (a enum('x','y') default 'x');
-alter table t1 alter a set default 'z';
-ERROR 42000: Invalid default value for 'a'
-drop table t1;
-create table t1 (a set('x','y') default 'x');
-alter table t1 alter a set default 'z';
-ERROR 42000: Invalid default value for 'a'
+def	test	t1	t1	a	a	12	4	1	Y	384	0	45
+def	test	t1	t1	c	c	12	4	0	Y	384	0	45
+a	c
+Y	NULL
 drop table t1;
 create table t1 (f1 int);
 alter table t1 add f2 enum(0xFFFF);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f1` int(11) DEFAULT NULL,
-  `f2` enum('ˇˇ') DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `f1` int,
+  `f2` enum('ˇˇ')
+) ENGINE=InnoDB
 drop table t1;
 create table t1(russian enum('E','F','EˇF','FˇE') NOT NULL DEFAULT'E');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `russian` enum('E','F','EˇF','FˇE') NOT NULL DEFAULT 'E'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `russian` enum('E','F','EˇF','FˇE') NOT NULL
+) ENGINE=InnoDB
 drop table t1;
 create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `denormal` enum('E','F','E,F','F,E') NOT NULL DEFAULT 'E'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `denormal` enum('E','F','E,F','F,E') NOT NULL
+) ENGINE=InnoDB
 drop table t1;
 create table t1(russian_deviant enum('E','F','EˇF','F,E') NOT NULL DEFAULT'E');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `russian_deviant` enum('E','F','EˇF','F,E') NOT NULL DEFAULT 'E'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `russian_deviant` enum('E','F','EˇF','F,E') NOT NULL
+) ENGINE=InnoDB
 drop table t1;
 create table t1(exhausting_charset enum('ABCDEFGHIJKLMNOPQRSTUVWXYZ','	
  !"','#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~','xx\','yy\Ä','zzÅÇÉÑÖÜáàâäãåçéèêëíìîïñóòôöõúùûü†°¢£§•¶ß®©™´¨≠ÆØ∞±≤≥¥µ∂∑∏π∫ªºΩæø¿¡¬√ƒ≈∆«»… ÀÃÕŒœ–—“”‘’÷◊ÿŸ⁄€‹›ﬁﬂ‡·‚„‰ÂÊÁËÈÍÎÏÌÓÔÒÚÛÙıˆ˜¯˘˙˚¸˝˛ˇ'));
-ERROR 42000: Field separator argument is not what is expected; check the manual
+ERROR 42000: Field separator argument '%-.32s' with length '%d' is not what is expected; check the manual
 CREATE TABLE t1 (
 id INT AUTO_INCREMENT PRIMARY KEY,
 c1 ENUM('a', '', 'b')
 );
 INSERT INTO t1 (c1) VALUES (0), ('a'), (''), ('b');
-Warnings:
-Warning	1265	Data truncated for column 'c1' at row 1
+ERROR 01000: Data truncated for column 'c1' at row 1
+INSERT INTO t1 (c1) VALUES (0), ('a'), (''), ('b');
+ERROR 01000: Data truncated for column 'c1' at row 1
+INSERT INTO t1 (c1) VALUES ('a'), ('b');
 SELECT id, c1 + 0, c1 FROM t1;
 id	c1 + 0	c1
-1	0	
-2	1	a
-3	2	
-4	3	b
+1	1	a
+2	3	b
 ALTER TABLE t1 CHANGE c1 c1 ENUM('a', '') NOT NULL;
-Warnings:
-Warning	1265	Data truncated for column 'c1' at row 4
+ERROR 01000: Data truncated for column 'c1' at row 2
+ALTER TABLE t1 CHANGE c1 c1 ENUM('a', 'b') NOT NULL;
 SELECT id, c1 + 0, c1 FROM t1;
 id	c1 + 0	c1
-1	0	
-2	1	a
-3	2	
-4	0	
+1	1	a
+2	2	b
 DROP TABLE t1;
 End of 4.1 tests
-create table t1(f1 set('a','b'), index(f1));
+create table t1(f1 enum('a','b'), index(f1));
 insert into t1 values(''),(''),('a'),('b');
+ERROR 01000: Data truncated for column 'f1' at row 1
 select * from t1 where f1='';
 f1
-
-
 drop table t1;
 CREATE TABLE t1 (c1 ENUM('a', '', 'b'));
 INSERT INTO t1 (c1) VALUES ('b');
 INSERT INTO t1 (c1) VALUES ('');
+ERROR 01000: Data truncated for column 'c1' at row 1
 INSERT INTO t1 (c1) VALUES (0);
-Warnings:
-Warning	1265	Data truncated for column 'c1' at row 1
-INSERT INTO t1 (c1) VALUES ('');
+ERROR 01000: Data truncated for column 'c1' at row 1
+INSERT INTO t1 (c1) VALUES ('a');
 SELECT c1 + 0, COUNT(c1) FROM t1 GROUP BY c1;
 c1 + 0	COUNT(c1)
-0	1
-2	2
+1	1
 3	1
 CREATE TABLE t2 SELECT * FROM t1;
 SELECT c1 + 0 FROM t2;
 c1 + 0
 3
-2
-0
-2
+1
 DROP TABLE t1,t2;
 CREATE TABLE t1(a enum('a','b','c','d'));
 INSERT INTO t1 VALUES (4),(1),(0),(3);
-Warnings:
-Warning	1265	Data truncated for column 'a' at row 3
+ERROR 01000: Data truncated for column 'a' at row 3
 SELECT a FROM t1;
 a
-d
-a
-
-c
 EXPLAIN SELECT a FROM t1 WHERE a=0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	4	Using where
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	2	Using where
 SELECT a FROM t1 WHERE a=0;
 a
-
 ALTER TABLE t1 ADD PRIMARY KEY (a);
 EXPLAIN SELECT a FROM t1 WHERE a=0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	const	PRIMARY	PRIMARY	1	const	1	Using index
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE noticed after reading const tables
 SELECT a FROM t1 WHERE a=0;
 a
-
 DROP TABLE t1;
 End of 5.1 tests

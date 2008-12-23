@@ -1,5 +1,3 @@
---source include/have_community_features.inc
-
 #
 # Bug#24822: Patch: uptime_since_flush_status
 #
