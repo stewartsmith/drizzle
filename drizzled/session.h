@@ -1176,7 +1176,6 @@ public:
     Reset to false when we leave the sub-statement mode.
   */
   bool       is_fatal_sub_stmt_error;
-  bool	     query_start_used;
   /* for IS NULL => = last_insert_id() fix in remove_eq_conds() */
   bool       substitute_null_with_insert_id;
   bool	     in_lock_tables;
@@ -1319,7 +1318,7 @@ public:
     this->set_proc_info(old_msg);
     pthread_mutex_unlock(&mysys_var->mutex);
   }
-  inline time_t query_start() { query_start_used=1; return start_time; }
+  inline time_t query_start() { return start_time; }
   inline void set_time()
   {
     if (user_time)
@@ -1507,6 +1506,11 @@ public:
     Remove the error handler last pushed.
   */
   void pop_internal_handler();
+
+  /**
+    Reset object after executing commands.
+  */
+  void reset_for_next_command();
 
   /**
     Close the current connection.

@@ -500,7 +500,6 @@ Session::Session()
   thread_stack= 0;
   catalog= (char*)"std"; // the only catalog we have for now
   some_tables_deleted=no_errors=password= 0;
-  query_start_used= 0;
   count_cuted_fields= CHECK_FIELD_IGNORE;
   killed= NOT_KILLED;
   col_access=0;
@@ -2554,4 +2553,59 @@ void Session::close_connection(uint32_t errcode, bool lock)
   }
   if (lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
+}
+
+
+
+/**
+ Reset Session part responsible for command processing state.
+
+   This needs to be called before execution of every statement
+   (prepared or conventional).
+   It is not called by substatements of routines.
+
+  @todo
+   Make it a method of Session and align its name with the rest of
+   reset/end/start/init methods.
+  @todo
+   Call it after we use Session for queries, not before.
+*/
+
+void Session::reset_for_next_command()
+{
+  free_list= 0;
+  select_number= 1;
+  /*
+    Those two lines below are theoretically unneeded as
+    Session::cleanup_after_query() should take care of this already.
+  */
+  auto_inc_intervals_in_cur_stmt_for_binlog.empty();
+
+  is_fatal_error= 0;
+  server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |
+                          SERVER_QUERY_NO_INDEX_USED |
+                          SERVER_QUERY_NO_GOOD_INDEX_USED);
+  /*
+    If in autocommit mode and not in a transaction, reset
+    OPTION_STATUS_NO_TRANS_UPDATE | OPTION_KEEP_LOG to not get warnings
+    in ha_rollback_trans() about some tables couldn't be rolled back.
+  */
+  if (!(options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+  {
+    options&= ~OPTION_KEEP_LOG;
+    transaction.all.modified_non_trans_table= false;
+  }
+  thread_specific_used= false;
+
+  if (opt_bin_log)
+  {
+    reset_dynamic(&user_var_events);
+    user_var_events_alloc= mem_root;
+  }
+  clear_error();
+  main_da.reset_diagnostics_area();
+  total_warn_count=0;			// Warnings for this query
+  sent_row_count= examined_row_count= 0;
+
+  return;
 }
