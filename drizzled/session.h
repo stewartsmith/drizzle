@@ -897,22 +897,6 @@ public:
 
   void set_server_id(uint32_t sid) { server_id = sid; }
 
-private:
-  uint32_t binlog_table_maps; // Number of table maps currently in the binlog
-
-  /**
-     Flags with per-thread information regarding the status of the
-     binary log.
-   */
-  uint32_t binlog_flags;
-public:
-  uint32_t get_binlog_table_maps() const {
-    return binlog_table_maps;
-  }
-  void clear_binlog_table_maps() {
-    binlog_table_maps= 0;
-  }
-
 public:
 
   struct st_transactions {

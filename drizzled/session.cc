@@ -477,7 +477,6 @@ Session::Session()
    Open_tables_state(refresh_version), rli_fake(0),
    lock_id(&main_lock_id),
    user_time(0),
-   binlog_table_maps(0), binlog_flags(0UL),
    arg_of_last_insert_id_function(false),
    first_successful_insert_id_in_prev_stmt(0),
    first_successful_insert_id_in_cur_stmt(0),
