@@ -1627,61 +1627,6 @@ bool sys_var_collation::check(Session *, set_var *var)
 }
 
 
-bool sys_var_character_set::check(Session *, set_var *var)
-{
-  const CHARSET_INFO *tmp;
-
-  if (var->value->result_type() == STRING_RESULT)
-  {
-    char buff[STRING_BUFFER_USUAL_SIZE];
-    String str(buff,sizeof(buff), system_charset_info), *res;
-    if (!(res=var->value->val_str(&str)))
-    {
-      if (!nullable)
-      {
-        my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
-        return 1;
-      }
-      tmp= NULL;
-    }
-    else if (!(tmp= get_charset_by_csname(res->c_ptr(),MY_CS_PRIMARY,MYF(0))))
-    {
-      my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), res->c_ptr());
-      return 1;
-    }
-  }
-  else // INT_RESULT
-  {
-    if (!(tmp=get_charset((int) var->value->val_int(),MYF(0))))
-    {
-      char buf[20];
-      int10_to_str((int) var->value->val_int(), buf, -10);
-      my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), buf);
-      return 1;
-    }
-  }
-  var->save_result.charset= tmp;	// Save for update
-  return 0;
-}
-
-
-bool sys_var_character_set::update(Session *session, set_var *var)
-{
-  ci_ptr(session,var->type)[0]= var->save_result.charset;
-  session->update_charset();
-  return 0;
-}
-
-
-unsigned char *sys_var_character_set::value_ptr(Session *session,
-                                                enum_var_type type,
-                                                LEX_STRING *)
-{
-  const CHARSET_INFO * const cs= ci_ptr(session,type)[0];
-  return cs ? (unsigned char*) cs->csname : (unsigned char*) NULL;
-}
-
-
 bool sys_var_collation_sv::update(Session *session, set_var *var)
 {
   if (var->type == OPT_GLOBAL)

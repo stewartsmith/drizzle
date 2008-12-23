@@ -732,28 +732,6 @@ public:
   virtual void set_default(Session *session, enum_var_type type)= 0;
 };
 
-class sys_var_character_set :public sys_var_session
-{
-public:
-  bool nullable;
-  sys_var_character_set(const char *name_arg, bool is_nullable= 0,
-                        Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var_session(name_arg, NULL, binlog_status_arg), nullable(is_nullable)
-  { }
-  bool check(Session *session, set_var *var);
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool check_update_type(Item_result type)
-  {
-    return ((type != STRING_RESULT) && (type != INT_RESULT));
-  }
-  bool check_default(enum_var_type)
-  { return 0; }
-  bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  virtual void set_default(Session *session, enum_var_type type)= 0;
-  virtual const CHARSET_INFO **ci_ptr(Session *session, enum_var_type type)= 0;
-};
-
 class sys_var_collation_sv :public sys_var_collation
 {
   const CHARSET_INFO *SV::*offset;
