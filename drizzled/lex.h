@@ -318,7 +318,6 @@ static SYMBOL symbols[] = {
   { "ON",		SYM(ON)},
   { "ONE",              SYM(ONE_SYM)},
   { "ONLINE",		SYM(ONLINE_SYM)},
-  { "ONE_SHOT",		SYM(ONE_SHOT_SYM)},
   { "OPEN",		SYM(OPEN_SYM)},
   { "OPTIMIZE",		SYM(OPTIMIZE)},
   { "OPTIONS",		SYM(OPTIONS_SYM)},

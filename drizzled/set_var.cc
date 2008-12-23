@@ -2627,35 +2627,6 @@ err:
 }
 
 
-/**
-  Say if all variables set by a SET support the ONE_SHOT keyword
-  (currently, only character set and collation do; later timezones
-  will).
-
-  @param var_list	List of variables to update
-
-  @note
-    It has a "not_" because it makes faster tests (no need to "!")
-
-  @retval
-    0	all variables of the list support ONE_SHOT
-  @retval
-    1	at least one does not support ONE_SHOT
-*/
-
-bool not_all_support_one_shot(List<set_var_base> *var_list)
-{
-  List_iterator_fast<set_var_base> it(*var_list);
-  set_var_base *var;
-  while ((var= it++))
-  {
-    if (var->no_support_one_shot())
-      return 1;
-  }
-  return 0;
-}
-
-
 /*****************************************************************************
   Functions to handle SET mysql_internal_variable=const_expr
 *****************************************************************************/

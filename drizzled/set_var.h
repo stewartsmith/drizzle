@@ -80,10 +80,9 @@ public:
   const char *name;
 
   sys_after_update_func after_update;
-  bool no_support_one_shot;
   sys_var(const char *name_arg, sys_after_update_func func= NULL,
           Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :name(name_arg), after_update(func), no_support_one_shot(1),
+    :name(name_arg), after_update(func),
     binlog_status(binlog_status_arg),
     m_allow_empty_value(true)
   {}
@@ -722,9 +721,7 @@ public:
   sys_var_collation(const char *name_arg,
                     Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     :sys_var_session(name_arg, NULL, binlog_status_arg)
-  {
-    no_support_one_shot= 0;
-  }
+  { }
   bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
@@ -742,13 +739,7 @@ public:
   sys_var_character_set(const char *name_arg, bool is_nullable= 0,
                         Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     :sys_var_session(name_arg, NULL, binlog_status_arg), nullable(is_nullable)
-  {
-    /*
-      In fact only almost all variables derived from sys_var_character_set
-      support ONE_SHOT; character_set_results doesn't. But that's good enough.
-    */
-    no_support_one_shot= 0;
-  }
+  { }
   bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
@@ -952,7 +943,6 @@ public:
                         Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     :sys_var_session(name_arg, NULL, binlog_status_arg)
   {
-    no_support_one_shot= 0;
     chain_sys_var(chain);
   }
   bool check(Session *session, set_var *var);
@@ -1023,7 +1013,6 @@ public:
   virtual int check(Session *session)=0;	/* To check privileges etc. */
   virtual int update(Session *session)=0;	/* To set the value */
   /* light check for PS */
-  virtual bool no_support_one_shot() { return 1; }
 };
 
 
@@ -1069,7 +1058,6 @@ public:
   }
   int check(Session *session);
   int update(Session *session);
-  bool no_support_one_shot() { return var->no_support_one_shot; }
 };
 
 
