@@ -229,9 +229,6 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 AC_CHECK_PROGS(GROUPADD, groupadd addgroup)
 AC_CHECK_PROGS(USERADD, useradd adduser)
 
-dnl Needed for ltmain
-AC_PROG_RANLIB
-
 dnl Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y'])
 if test -z "$YACC" && test -d ".bzr"

@@ -5,5 +5,5 @@ DRIZZLE_PLUGIN_ACTIONS(md5,  [
   SEARCH_FOR_LIB(crypto, MD5, openssl/md5.h,
                  AC_MSG_WARN([MD5 not found in crypto lib: not building md5 plugin]))
 
-  AM_CONDITIONAL(BUILD_MD5_UDF,[test "$ac_cv_have_crypto" = "yes"])
 ])
+AM_CONDITIONAL(BUILD_MD5_UDF,[test "$ac_cv_have_crypto" = "yes"])
