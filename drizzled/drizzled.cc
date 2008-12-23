@@ -259,7 +259,6 @@ static I_List<Session> thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_log_queries_not_using_indexes= false;
 bool opt_error_log= 0;
 bool opt_skip_show_db= false;
 bool opt_character_set_client_handshake= 1;
@@ -425,7 +424,6 @@ const CHARSET_INFO *character_set_filesystem;
 MY_LOCALE *my_default_lc_time_names;
 
 SHOW_COMP_OPTION have_symlink;
-SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
 
@@ -4000,11 +3998,6 @@ static void drizzle_init_variables(void)
   have_symlink=SHOW_OPTION_NO;
 #else
   have_symlink=SHOW_OPTION_YES;
-#endif
-#ifdef HAVE_COMPRESS
-  have_compress= SHOW_OPTION_YES;
-#else
-  have_compress= SHOW_OPTION_NO;
 #endif
 
   const char *tmpenv;

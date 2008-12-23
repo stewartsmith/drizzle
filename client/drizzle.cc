@@ -1376,8 +1376,6 @@ static struct my_option my_long_options[] =
   {"prompt", OPT_PROMPT, N_("Set the drizzle prompt to this value."),
    (char**) &current_prompt, (char**) &current_prompt, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"protocol", OPT_DRIZZLE_PROTOCOL, N_("The protocol of connection (tcp,socket,pipe,memory)."),
-   0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
    N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."),
    (char**) &quick, (char**) &quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -3795,7 +3793,7 @@ sql_connect(char *host,char *database,char *user,char *password,
     char init_command[100];
     sprintf(init_command,
             "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
-            ",SQL_MAX_JOIN_SIZE=%"PRIu32,
+            ",MAX_JOIN_SIZE=%"PRIu32,
             select_limit, max_join_size);
     drizzle_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
   }
