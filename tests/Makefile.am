@@ -55,6 +55,7 @@ EXTRA_DIST = \
 	${srcdir}/std_data/*.000001 \
 	${srcdir}/std_data/des_key_file \
 	${srcdir}/std_data/*.pem \
+	${srcdir}/std_data/*.txt \
 	${srcdir}/std_data/*.frm \
 	${srcdir}/std_data/*.MY* \
 	${srcdir}/std_data/*.cnf \

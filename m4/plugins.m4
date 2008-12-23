@@ -804,7 +804,10 @@ dnl ---------------------------------------------------------------------------
 AC_DEFUN([_DRIZZLE_INCLUDE_LIST],[
  ifelse([$1], [], [], [
   m4_define([__mysql_include__],[$1])
-  sinclude($1)
+  dnl sinclude($1) causes an overly large amount of re-aclocaling... looks
+  dnl like an automake bug to me - a ${srcdir} where there really should be a 
+  dnl ${top_srcdir}
+  builtin([include],$1)
   m4_undefine([__mysql_include__])
   _DRIZZLE_INCLUDE_LIST(m4_shift($@))
   drizzle_plugin_files="\${top_srcdir}/$1 ${drizzle_plugin_files}"
