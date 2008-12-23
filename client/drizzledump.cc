@@ -71,7 +71,7 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
 static void field_escape(string &in, const char *from);
 static bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
                 quick= 1, extended_insert= 1,
-                lock_tables=1,ignore_errors=0,flush_logs=0,flush_privileges=0,
+                lock_tables=1,ignore_errors=0,flush_logs=0,
                 opt_drop=1,opt_keywords=0,opt_lock=1,opt_compress=0,
                 opt_delayed=0,create_options=1,opt_quoted=0,opt_databases=0,
                 opt_alldbs=0,opt_create_db=0,opt_lock_all_tables=0,
@@ -85,8 +85,7 @@ static bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
                 opt_routines=0,
                 opt_slave_apply= 0,
                 opt_include_master_host_port= 0,
-                opt_events= 0,
-                opt_alltspcs=0, opt_notspcs= 0;
+                opt_alltspcs=0;
 static bool debug_info_flag= 0, debug_check_flag= 0;
 static uint32_t opt_max_allowed_packet, opt_net_buffer_length;
 static DRIZZLE drizzle_connection,*drizzle=0;
@@ -125,8 +124,6 @@ static const char *drizzle_universal_client_charset=
 static char *default_charset;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 const char *default_dbug_option="d:t:o,/tmp/drizzledump.trace";
-/* have we seen any VIEWs during table scanning? */
-bool seen_views= 0;
 const char *compatible_mode_names[]=
 {
   "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
@@ -160,10 +157,6 @@ static struct my_option my_long_options[] =
   {"all-tablespaces", 'Y',
    "Dump all the tablespaces.",
    (char**) &opt_alltspcs, (char**) &opt_alltspcs, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
-  {"no-tablespaces", 'y',
-   "Do not dump any tablespace information.",
-   (char**) &opt_notspcs, (char**) &opt_notspcs, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"add-drop-database", OPT_DROP_DATABASE, "Add a 'DROP DATABASE' before each create.",
    (char**) &opt_drop_database, (char**) &opt_drop_database, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
@@ -241,9 +234,6 @@ static struct my_option my_long_options[] =
    "Option automatically turns --lock-tables off.",
    (char**) &opt_slave_data, (char**) &opt_slave_data, 0,
    GET_UINT, OPT_ARG, 0, 0, DRIZZLE_OPT_SLAVE_DATA_COMMENTED_SQL, 0, 0, 0},
-  {"events", 'E', "Dump events.",
-     (char**) &opt_events, (char**) &opt_events, 0, GET_BOOL,
-     NO_ARG, 0, 0, 0, 0, 0, 0},
   {"extended-insert", 'e',
    "Allows utilization of the new, much faster INSERT syntax.",
    (char**) &extended_insert, (char**) &extended_insert, 0, GET_BOOL, NO_ARG,
@@ -272,12 +262,6 @@ static struct my_option my_long_options[] =
    "the log flush to happen at the same exact moment you should use "
    "--lock-all-tables or --master-data with --flush-logs",
    (char**) &flush_logs, (char**) &flush_logs, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
-  {"flush-privileges", OPT_ESC, "Emit a FLUSH PRIVILEGES statement "
-   "after dumping the DRIZZLE database.  This option should be used any "
-   "time the dump contains the DRIZZLE database and any other database "
-   "that depends on the data in the DRIZZLE database for proper restore. ",
-   (char**) &flush_privileges, (char**) &flush_privileges, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"force", 'f', "Continue even if we get an sql-error.",
    (char**) &ignore_errors, (char**) &ignore_errors, 0, GET_BOOL, NO_ARG,
@@ -378,9 +362,6 @@ static struct my_option my_long_options[] =
   {"routines", 'R', "Dump stored routines (functions and procedures).",
      (char**) &opt_routines, (char**) &opt_routines, 0, GET_BOOL,
      NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"set-variable", 'O',
-   "Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   /*
     Note that the combination --single-transaction --master-data
     will give bullet-proof binlog position only if server >=4.1.3. That's the
@@ -1454,10 +1435,6 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       }
       if (!opt_xml && opt_comments)
       {
-      if (strcmp (table_type, "VIEW") == 0)         /* view */
-        fprintf(sql_file, "\n--\n-- Temporary table structure for view %s\n--\n\n",
-                result_table);
-      else
         fprintf(sql_file, "\n--\n-- Table structure for table %s\n--\n\n",
                 result_table);
         check_io(sql_file);
@@ -1465,8 +1442,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       if (opt_drop)
       {
       /*
-        Even if the "table" is a view, we do a DROP TABLE here.  The
-        view-specific code below fills in the DROP VIEW.
+        Even if the "table" is a view, we do a DROP TABLE here.
        */
         fprintf(sql_file, "DROP TABLE IF EXISTS %s;\n",
                 opt_quoted_table);
@@ -1474,99 +1450,6 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       }
 
       field= drizzle_fetch_field_direct(result, 0);
-      if (strcmp(field->name, "View") == 0)
-      {
-        char *scv_buff= NULL;
-
-        verbose_msg("-- It's a view, create dummy table for view\n");
-
-        /* save "show create" statement for later */
-        /* It's ok for scv_buff to be NULL here */
-        if ((row= drizzle_fetch_row(result)) && (scv_buff=row[1]))
-          scv_buff= strdup(scv_buff);
-
-        drizzle_free_result(result);
-
-        /*
-          Create a table with the same name as the view and with columns of
-          the same name in order to satisfy views that depend on this view.
-          The table will be removed when the actual view is created.
-
-          The properties of each column, aside from the data type, are not
-          preserved in this temporary table, because they are not necessary.
-
-          This will not be necessary once we can determine dependencies
-          between views and can simply dump them in the appropriate order.
-        */
-        snprintf(query_buff, sizeof(query_buff),
-                 "SHOW FIELDS FROM %s", result_table);
-        if (switch_character_set_results("binary") ||
-            drizzle_query_with_error_report(drizzle, &result, query_buff) ||
-            switch_character_set_results(default_charset))
-        {
-          /*
-            View references invalid or privileged table/col/fun (err 1356),
-            so we cannot create a stand-in table.  Be defensive and dump
-            a comment with the view's 'show create' statement. (Bug #17371)
-          */
-
-          if (drizzle_errno(drizzle) == ER_VIEW_INVALID)
-            fprintf(sql_file, "\n-- failed on view %s: %s\n\n", result_table, scv_buff ? scv_buff : "");
-
-          free(scv_buff);
-
-          return(0);
-        }
-        else
-          free(scv_buff);
-
-        if (drizzle_num_rows(result))
-        {
-          if (opt_drop)
-          {
-            /*
-              We have already dropped any table of the same name above, so
-              here we just drop the view.
-            */
-
-            fprintf(sql_file, "/*!50001 DROP VIEW IF EXISTS %s*/;\n",
-                    opt_quoted_table);
-            check_io(sql_file);
-          }
-
-          fprintf(sql_file,
-                  "/*!50001 CREATE TABLE %s (\n",
-                  result_table);
-
-          /*
-            Get first row, following loop will prepend comma - keeps from
-            having to know if the row being printed is last to determine if
-            there should be a _trailing_ comma.
-          */
-
-          row= drizzle_fetch_row(result);
-
-          fprintf(sql_file, "  %s %s", quote_name(row[0], name_buff, 0),
-                  row[1]);
-
-          while((row= drizzle_fetch_row(result)))
-          {
-            /* col name, col type */
-            fprintf(sql_file, ",\n  %s %s",
-                    quote_name(row[0], name_buff, 0), row[1]);
-          }
-          fprintf(sql_file, "\n) */;\n");
-          check_io(sql_file);
-        }
-
-        drizzle_free_result(result);
-
-        if (path)
-          my_fclose(sql_file, MYF(MY_WME));
-
-        seen_views= 1;
-        return(0);
-      }
 
       row= drizzle_fetch_row(result);
 
@@ -1964,12 +1847,6 @@ static void dump_table(char *table, char *db)
   */
   num_fields= get_table_structure(table, db, table_type, &ignore_flag);
 
-  /*
-    The "table" could be a view.  If so, we don't do anything here.
-  */
-  if (strcmp(table_type, "VIEW") == 0)
-    return;
-
   /* Check --no-data flag */
   if (opt_no_data)
   {
@@ -1993,18 +1870,6 @@ static void dump_table(char *table, char *db)
   {
     verbose_msg("-- Skipping dump data for table '%s', it has no fields\n",
                 table);
-    return;
-  }
-
-  /*
-     Check --skip-events flag: it is not enough to skip creation of events
-     discarding SHOW CREATE EVENT statements generation. The myslq.event
-     table data should be skipped too.
-  */
-  if (!opt_events && !my_strcasecmp(&my_charset_utf8_general_ci, db, "mysql") &&
-      !my_strcasecmp(&my_charset_utf8_general_ci, table, "event"))
-  {
-    verbose_msg("-- Skipping data table mysql.event, --skip-events was used\n");
     return;
   }
 
@@ -2574,8 +2439,6 @@ static int dump_all_tables_in_db(char *database)
   char table_buff[NAME_LEN*2+3];
   char hash_key[2*NAME_LEN+2];  /* "db.tablename" */
   char *afterdot;
-  int using_mysql_db= my_strcasecmp(&my_charset_utf8_general_ci, database, "mysql");
-
 
   afterdot= strcpy(hash_key, database) + strlen(database);
   *afterdot++= '.';
@@ -2625,11 +2488,7 @@ static int dump_all_tables_in_db(char *database)
   }
   if (lock_tables)
     drizzle_query_with_error_report(drizzle, 0, "UNLOCK TABLES");
-  if (flush_privileges && using_mysql_db == 0)
-  {
-    fprintf(md_result_file,"\n--\n-- Flush Grant Tables \n--\n");
-    fprintf(md_result_file,"\n/*! FLUSH PRIVILEGES */;\n");
-  }
+
   return(0);
 } /* dump_all_tables_in_db */
 
@@ -3142,34 +3001,23 @@ char check_if_ignore_table(const char *table_name, char *table_type)
     drizzle_free_result(res);
     return(result);                         /* assume table is ok */
   }
-  if (!(row[1]))
-    strncpy(table_type, "VIEW", NAME_LEN-1);
-  else
-  {
-    /*
-      If the table type matches any of these, we do support delayed inserts.
-      Note: we do not want to skip dumping this table if if is not one of
-      these types, but we do want to use delayed inserts in the dump if
-      the table type is _NOT_ one of these types
+
+  /*
+    If the table type matches any of these, we do support delayed inserts.
+    Note: we do not want to skip dumping this table if if is not one of
+    these types, but we do want to use delayed inserts in the dump if
+    the table type is _NOT_ one of these types
     */
+  {
     strncpy(table_type, row[1], NAME_LEN-1);
     if (opt_delayed)
     {
       if (strcmp(table_type,"MyISAM") &&
-          strcmp(table_type,"ISAM") &&
           strcmp(table_type,"ARCHIVE") &&
           strcmp(table_type,"HEAP") &&
           strcmp(table_type,"MEMORY"))
         result= IGNORE_INSERT_DELAYED;
     }
-
-    /*
-      If these two types, we do want to skip dumping the table
-    */
-    if (!opt_no_data &&
-        (!my_strcasecmp(&my_charset_utf8_general_ci, table_type, "MRG_MyISAM") ||
-         !strcmp(table_type,"MRG_ISAM")))
-      result= IGNORE_DATA;
   }
   drizzle_free_result(res);
   return(result);

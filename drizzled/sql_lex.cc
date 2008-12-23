@@ -107,10 +107,7 @@ void lex_free(void)
 void
 st_parsing_options::reset()
 {
-  allows_variable= true;
-  allows_select_into= true;
   allows_select_procedure= true;
-  allows_derived= true;
 }
 
 Lex_input_stream::Lex_input_stream(Session *session,

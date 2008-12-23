@@ -2,7 +2,7 @@
 # Test "mysqladmin ping"
 #
 
---exec $MYSQLADMIN --no-defaults -S $MASTER_MYSOCK -P $MASTER_MYPORT  -u root --password= ping 2>&1
+--exec $MYSQLADMIN --port=$MASTER_MYPORT  --user=root --password= ping 2>&1
 
 
 #
@@ -15,9 +15,9 @@
 database=db1
 EOF
 
---replace_regex /.*mysqladmin.*: unknown/mysqladmin: unknown/
+--replace_regex /.*drizzleadmin.*: unknown/drizzleadmin: unknown/
 --error 7
---exec $MYSQLADMIN --defaults-file=$MYSQLTEST_VARDIR/tmp/bug10608.cnf -S $MASTER_MYSOCK -P $MASTER_MYPORT  -u root --password= ping 2>&1
+--exec $MYSQLADMIN --defaults-file=$MYSQLTEST_VARDIR/tmp/bug10608.cnf --port=$MASTER_MYPORT  --user=root --password= ping 2>&1
 remove_file $MYSQLTEST_VARDIR/tmp/bug10608.cnf;
 
 # When mysqladmin finds "loose-database" in .cnf file it shall print
@@ -27,7 +27,7 @@ remove_file $MYSQLTEST_VARDIR/tmp/bug10608.cnf;
 loose-database=db2
 EOF
 
---replace_regex /Warning: .*mysqladmin.*: unknown/Warning: mysqladmin: unknown/
---exec $MYSQLADMIN --defaults-file=$MYSQLTEST_VARDIR/tmp/bug10608.cnf -S $MASTER_MYSOCK -P $MASTER_MYPORT  -u root --password= ping 2>&1
+--replace_regex /Warning: .*drizzleadmin.*: unknown/Warning: drizzleadmin: unknown/
+--exec $MYSQLADMIN --defaults-file=$MYSQLTEST_VARDIR/tmp/bug10608.cnf --port=$MASTER_MYPORT  --user=root --password= ping 2>&1
 
 remove_file $MYSQLTEST_VARDIR/tmp/bug10608.cnf;

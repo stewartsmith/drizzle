@@ -85,12 +85,12 @@ AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
 # The port should be constant for a LONG time
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-sinclude(m4/dtrace.m4)
+m4_include(m4/dtrace.m4)
 
-sinclude(m4/character_sets.m4)
+m4_include(m4/character_sets.m4)
 AC_SUBST(AVAILABLE_LANGUAGES)
 
-sinclude(m4/gettext.m4)
+m4_include(m4/gettext.m4)
 AM_GNU_GETTEXT([external])
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
@@ -228,9 +228,6 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 #       was not created at the end of the install routine.
 AC_CHECK_PROGS(GROUPADD, groupadd addgroup)
 AC_CHECK_PROGS(USERADD, useradd adduser)
-
-dnl Needed for ltmain
-AC_PROG_RANLIB
 
 dnl Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y'])
@@ -1151,6 +1148,7 @@ DRIZZLE_CONFIGURE_PLUGINS([none])
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
+AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
 
 
 AC_ARG_ENABLE([profiling],

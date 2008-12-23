@@ -2736,14 +2736,6 @@ send_result_message:
       table->next_global= save_next_global;
       goto send_result_message;
     }
-    case HA_ADMIN_WRONG_CHECKSUM:
-    {
-      protocol->store(STRING_WITH_LEN("note"), system_charset_info);
-      protocol->store(ER(ER_VIEW_CHECKSUM), strlen(ER(ER_VIEW_CHECKSUM)),
-                      system_charset_info);
-      break;
-    }
-
     case HA_ADMIN_NEEDS_UPGRADE:
     case HA_ADMIN_NEEDS_ALTER:
     {
