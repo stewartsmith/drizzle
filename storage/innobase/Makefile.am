@@ -13,13 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# Process this file with automake to create Makefile.in
 
-MYSQLDATAdir=		$(localstatedir)
-MYSQLSHAREdir=		$(pkgdatadir)
-MYSQLBASEdir=		$(prefix)
-MYSQLLIBdir=		$(pkglibdir)
-pkgplugindir=		$(pkglibdir)/plugin
 AM_CPPFLAGS=		-I$(top_srcdir) -I$(top_builddir) \
 			-I$(top_srcdir)/include -I$(top_builddir)/include \
 			-I$(top_srcdir)/regex \
@@ -212,5 +206,3 @@ EXTRA_DIST=		CMakeLists.txt plug.in \
 			pars/make_bison.sh pars/make_flex.sh \
 			pars/pars0grm.y pars/pars0lex.l
 
-# Don't update the files from bitkeeper
-%::SCCS/s.%

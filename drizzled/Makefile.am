@@ -13,15 +13,6 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-MYSQLDATAdir =$(localstatedir)
-
-MYSQLSHAREdir =$(pkgdatadir)
-
-MYSQLBASEdir=$(prefix)
-
-MYSQLLIBdir=            $(pkglibdir)
-
-pkgplugindir =$(pkglibdir)/plugin
 
 sbin_PROGRAMS= drizzled
 
@@ -57,7 +48,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		current_session.h \
 		common.h \
 		comp_creator.h \
-		configmake.h \
 		connect.h \
 		cost_vect.h \
 		data_home.h \
@@ -298,6 +288,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		probes.h \
 		protocol.h \
 		qcache.h \
+		query_arena.h \
 		query_id.h \
 		rename.h \
 		replication/binlog.h \
@@ -699,15 +690,6 @@ libfunction_la_SOURCES = \
 		function/time/yearweek.cc
 
 
-
-DEFS =-DDRIZZLE_SERVER \
-      -DDEFAULT_DRIZZLE_HOME="\"$(MYSQLBASEdir)\"" \
-      -DDATADIR="\"$(MYSQLDATAdir)\"" \
-      -DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
-      -DPLUGINDIR="\"$(pkgplugindir)\"" \
-      -DLOCALEDIR=\"$(localedir)\" \
-      @DEFS@
-
 if BUILD_GCC_PCH
 PCHHEADERS = \
 		definitions.h.gch \
@@ -726,7 +708,6 @@ BUILT_MAINT_SRC = sql_yacc.cc \
 
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		lex_hash.h \
-		configmake.h \
 		$(PCHHEADERS)
 
 EXTRA_DIST = \
@@ -760,46 +741,13 @@ probes.h: probes.d
 	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
 	rm probes.h.bak
 
-configmake.h: Makefile
-	@rm -f $@-t $@
-	@{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
-	  echo '#define PREFIX "$(prefix)"'; \
-	  echo '#define EXEC_PREFIX "$(exec_prefix)"'; \
-	  echo '#define BINDIR "$(bindir)"'; \
-	  echo '#define SBINDIR "$(sbindir)"'; \
-	  echo '#define LIBEXECDIR "$(libexecdir)"'; \
-	  echo '#define DATAROOTDIR "$(datarootdir)"'; \
-	  echo '#define DATADIR "$(datadir)"'; \
-	  echo '#define SYSCONFDIR "$(sysconfdir)"'; \
-	  echo '#define SHAREDSTATEDIR "$(sharedstatedir)"'; \
-	  echo '#define LOCALSTATEDIR "$(localstatedir)"'; \
-	  echo '#define INCLUDEDIR "$(includedir)"'; \
-	  echo '#define OLDINCLUDEDIR "$(oldincludedir)"'; \
-	  echo '#define DOCDIR "$(docdir)"'; \
-	  echo '#define INFODIR "$(infodir)"'; \
-	  echo '#define HTMLDIR "$(htmldir)"'; \
-	  echo '#define DVIDIR "$(dvidir)"'; \
-	  echo '#define PDFDIR "$(pdfdir)"'; \
-	  echo '#define PSDIR "$(psdir)"'; \
-	  echo '#define LIBDIR "$(libdir)"'; \
-	  echo '#define LISPDIR "$(lispdir)"'; \
-	  echo '#define LOCALEDIR "$(localedir)"'; \
-	  echo '#define MANDIR "$(mandir)"'; \
-	  echo '#define MANEXT "$(manext)"'; \
-	  echo '#define PKGDATADIR "$(pkgdatadir)"'; \
-	  echo '#define PKGINCLUDEDIR "$(pkgincludedir)"'; \
-	  echo '#define PKGLIBDIR "$(pkglibdir)"'; \
-	  echo '#define PKGLIBEXECDIR "$(pkglibexecdir)"'; \
-	} | sed '/""/d' > $@-t
-	mv $@-t $@
 
+SUFFIXES = .d .gch
 
 if BUILD_GCC_PCH
-%.h.gch: %.h
+.h.gch:
 	$(CXXCOMPILE) -include config.h ${NO_UNUSED_MACROS} -c $<
 endif
-
-SUFFIXES = .d
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)

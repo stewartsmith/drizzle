@@ -13,9 +13,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-MYSQLDATAdir =		$(localstatedir)
-MYSQLSHAREdir =		$(pkgdatadir)
-MYSQLBASEdir=		$(prefix)
 
 noinst_LTLIBRARIES =	libmysys.la
 
@@ -120,12 +117,4 @@ libmysys_la_SOURCES= \
 		typelib.cc \
 		${thr_mutex_source}
 
-DEFS=		-DDEFAULT_BASEDIR=\"$(prefix)\" \
-		-DDATADIR="\"$(MYSQLDATAdir)\"" \
-		-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
-		-DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
-		-DDEFAULT_HOME_ENV=DRIZZLE_HOME \
-		-DDEFAULT_GROUP_SUFFIX_ENV=DRIZZLE_GROUP_SUFFIX \
-		-DDEFAULT_SYSCONFDIR="\"$(sysconfdir)\"" \
-		@DEFS@
 

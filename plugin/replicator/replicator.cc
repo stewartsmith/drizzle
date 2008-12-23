@@ -13,7 +13,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#define DRIZZLE_SERVER 1 /* for session variable max_allowed_packet */
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>

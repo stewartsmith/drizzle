@@ -15,8 +15,6 @@
 
 
 
-#define DRIZZLE_SERVER 1
-
 #include <drizzled/server_includes.h>
 #include <mysys/my_bit.h>
 #include "myisampack.h"
