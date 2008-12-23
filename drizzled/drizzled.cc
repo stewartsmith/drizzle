@@ -513,6 +513,7 @@ static void clean_up_mutexes(void);
 static void wait_for_signal_thread_to_end(void);
 static void create_pid_file();
 static void drizzled_exit(int exit_code) __attribute__((noreturn));
+bool safe_read_error_impl(NET *net);
 
 /****************************************************************************
 ** Code to end drizzled
@@ -2439,6 +2440,7 @@ int main(int argc, char **argv)
 
   network_init();
 
+  safe_read_error_hook= safe_read_error_impl; 
 
   /*
     init signals & alarm
@@ -4581,6 +4583,13 @@ void refresh_status(Session *session)
   pthread_mutex_lock(&LOCK_thread_count);
   max_used_connections= thread_count;
   pthread_mutex_unlock(&LOCK_thread_count);
+}
+
+bool safe_read_error_impl(NET *net)
+{
+  if (net->vio)
+    return vio_was_interrupted(net->vio);
+  return false;
 }
 
 

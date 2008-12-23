@@ -171,6 +171,8 @@ int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row);
 const char * cli_read_statistics(DRIZZLE *drizzle);
 int cli_read_change_user_result(DRIZZLE *drizzle);
 
+typedef bool (*safe_read_error_hook_func)(NET *net);
+extern safe_read_error_hook_func safe_read_error_hook;
 
 #ifdef  __cplusplus
 }

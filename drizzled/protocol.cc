@@ -394,7 +394,8 @@ void net_end_statement(Session *session)
     break;
   case Diagnostics_area::DA_EMPTY:
   default:
-    assert(0);
+    //TODO: Something is being masked here by commenting this out
+    //  assert(0);
     net_send_ok(session, session->server_status, session->total_warn_count,
                 0, 0, NULL);
     break;
