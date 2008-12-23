@@ -1,5 +1,5 @@
 # Requires statement logging
--- source include/have_binlog_format_mixed_or_statement.inc
+-- source include/have_binlog_format_row.inc
 # TODO: Create row based version once $DRIZZLE_BINLOG has new RB version
 
 # Check that user variables are binlogged correctly (BUG#3875)
