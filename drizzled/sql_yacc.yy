@@ -3767,13 +3767,7 @@ sum_expr:
 
 variable:
           '@'
-          {
-            if (! Lex->parsing_options.allows_variable)
-            {
-              my_error(ER_VIEW_SELECT_VARIABLE, MYF(0));
-              DRIZZLE_YYABORT;
-            }
-          }
+          { }
           variable_aux
           {
             $$= $3;
@@ -4298,12 +4292,6 @@ select_derived_init:
           {
             LEX *lex= Lex;
 
-            if (! lex->parsing_options.allows_derived)
-            {
-              my_error(ER_VIEW_SELECT_DERIVED, MYF(0));
-              DRIZZLE_YYABORT;
-            }
-
             SELECT_LEX *sel= lex->current_select;
             TableList *embedding;
             if (!sel->embedding || sel->end_nested_join(lex->session))
@@ -4772,13 +4760,7 @@ select_var_ident:
 
 into:
           INTO
-          {
-            if (! Lex->parsing_options.allows_select_into)
-            {
-              my_error(ER_VIEW_SELECT_CLAUSE, MYF(0), "INTO");
-              DRIZZLE_YYABORT;
-            }
-          }
+          { }
           into_destination
         ;
 

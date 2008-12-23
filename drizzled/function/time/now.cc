@@ -23,10 +23,10 @@
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
 
-String *Item_func_now::val_str(String *str __attribute__((unused)))
+String *Item_func_now::val_str(String *)
 {
   assert(fixed == 1);
-  str_value.set(buff,buff_length, &my_charset_bin);
+  str_value.set(buff, buff_length, &my_charset_bin);
   return &str_value;
 }
 

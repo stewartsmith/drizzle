@@ -515,7 +515,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 #define HA_ADMIN_INVALID         -5
 #define HA_ADMIN_REJECT          -6
 #define HA_ADMIN_TRY_ALTER       -7
-#define HA_ADMIN_WRONG_CHECKSUM  -8
 #define HA_ADMIN_NOT_BASE_TABLE  -9
 #define HA_ADMIN_NEEDS_UPGRADE  -10
 #define HA_ADMIN_NEEDS_ALTER    -11

@@ -54,12 +54,10 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
   if (open_and_lock_tables(session, table_list))
     return(true);
-  /* TODO look at this error */
-  if (!(table= table_list->table))
-  {
-    my_error(ER_VIEW_DELETE_MERGE_VIEW, MYF(0), "", "");
-    return(true);
-  }
+
+  table= table_list->table;
+  assert(table);
+
   session->set_proc_info("init");
   table->map=1;
 
@@ -435,14 +433,8 @@ int mysql_multi_delete_prepare(Session *session)
        target_tbl;
        target_tbl= target_tbl->next_local)
   {
-    if (!(target_tbl->table= target_tbl->correspondent_table->table))
-    {
-      assert(target_tbl->correspondent_table->merge_underlying_list &&
-                  target_tbl->correspondent_table->merge_underlying_list->
-                  next_local);
-      my_error(ER_VIEW_DELETE_MERGE_VIEW, MYF(0), "", "");
-      return(true);
-    }
+    target_tbl->table= target_tbl->correspondent_table->table;
+    assert(target_tbl->table);
 
     /*
       Check that table from which we delete is not used somewhere

@@ -337,7 +337,7 @@ mysqld_show_create(Session *session, TableList *table_list)
   /* Only one table for now, but VIEW can involve several tables */
   if (open_normal_and_derived_tables(session, table_list, 0))
   {
-    if (session->is_error() && session->main_da.sql_errno() != ER_VIEW_INVALID)
+    if (session->is_error())
       return(true);
 
     /*
