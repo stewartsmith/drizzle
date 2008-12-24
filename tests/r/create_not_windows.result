@@ -3,14 +3,14 @@ create table `about:text` (
 _id int not null auto_increment,
 `about:text` varchar(255) not null default '',
 primary key (_id)
-);
+) ENGINE=MyISAM;
 show create table `about:text`;
 Table	Create Table
-about:text	CREATE TABLE "about:text" (
-  "_id" int(11) NOT NULL AUTO_INCREMENT,
-  "about:text" varchar(255) NOT NULL,
-  PRIMARY KEY ("_id")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+about:text	CREATE TABLE `about:text` (
+  `_id` int NOT NULL AUTO_INCREMENT,
+  `about:text` varchar(255) NOT NULL,
+  PRIMARY KEY (`_id`)
+) ENGINE=MyISAM
 drop table `about:text`;
 use test;
 drop table if exists t1;
