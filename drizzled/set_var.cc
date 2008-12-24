@@ -455,7 +455,6 @@ sys_lc_time_names(&vars, "lc_time_names", sys_var::SESSION_VARIABLE_IN_BINLOG);
   statement-based logging mode: t will be different on master and
   slave).
 */
-static sys_var_insert_id sys_insert_id(&vars, "insert_id");
 static sys_var_readonly sys_error_count(&vars, "error_count",
                                         OPT_SESSION,
                                         SHOW_LONG,
@@ -1935,22 +1934,6 @@ unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
   */
   session->sys_var_tmp.uint64_t_value=
     session->read_first_successful_insert_id_in_prev_stmt();
-  return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
-}
-
-
-bool sys_var_insert_id::update(Session *session, set_var *var)
-{
-  session->force_one_auto_inc_interval(var->save_result.uint64_t_value);
-  return 0;
-}
-
-
-unsigned char *sys_var_insert_id::value_ptr(Session *session, enum_var_type,
-                                            LEX_STRING *)
-{
-  session->sys_var_tmp.uint64_t_value=
-    session->auto_inc_intervals_forced.minimum();
   return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
 }
 

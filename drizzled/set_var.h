@@ -702,19 +702,6 @@ public:
 };
 
 
-class sys_var_insert_id :public sys_var
-{
-public:
-  sys_var_insert_id(sys_var_chain *chain, const char *name_arg)
-    :sys_var(name_arg)
-  { chain_sys_var(chain); }
-  bool update(Session *session, set_var *var);
-  bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
-  SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-};
-
-
 class sys_var_collation :public sys_var_session
 {
 public:
