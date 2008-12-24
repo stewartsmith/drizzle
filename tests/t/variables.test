@@ -279,21 +279,21 @@ show global variables like 'myisam_max_sort_file_size';
 select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
 set global myisam_max_sort_file_size=default;
 
-#
-# swap
-#
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @svc=@@global.myisam_max_sort_file_size, @svj=@@local.max_join_size;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @@global.myisam_max_sort_file_size=111,@@local.max_join_size=222;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @@global.myisam_max_sort_file_size=@@local.max_join_size,@@local.max_join_size=@@global.myisam_max_sort_file_size;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @@global.myisam_max_sort_file_size=@svc, @@local.max_join_size=@svj;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @a=1, @b=2;
-set @a=@b, @b=@a;
-select @a, @b;
+## Bug #311084
+## swap
+##
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @svc=@@global.myisam_max_sort_file_size, @svj=@@local.max_join_size;
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @@global.myisam_max_sort_file_size=111,@@local.max_join_size=222;
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @@global.myisam_max_sort_file_size=@@local.max_join_size,@@local.max_join_size=@@global.myisam_max_sort_file_size;
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @@global.myisam_max_sort_file_size=@svc, @@local.max_join_size=@svj;
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @a=1, @b=2;
+#set @a=@b, @b=@a;
+#select @a, @b;
 
 #
 # Bug#2586:Disallow global/session/local as structured var. instance names

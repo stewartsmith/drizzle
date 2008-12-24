@@ -450,32 +450,6 @@ select * from information_schema.global_variables where variable_name like 'myis
 VARIABLE_NAME	VARIABLE_VALUE
 MYISAM_MAX_SORT_FILE_SIZE	MAX_FILE_SIZE
 set global myisam_max_sort_file_size=default;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-9223372036853727232	100
-set @svc=@@global.myisam_max_sort_file_size, @svj=@@local.max_join_size;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-9223372036853727232	100
-set @@global.myisam_max_sort_file_size=111,@@local.max_join_size=222;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-0	222
-set @@global.myisam_max_sort_file_size=@@local.max_join_size,@@local.max_join_size=@@global.myisam_max_sort_file_size;
-Warnings:
-Warning	1292	Truncated incorrect max_join_size value: '0'
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-0	1
-set @@global.myisam_max_sort_file_size=@svc, @@local.max_join_size=@svj;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-9223372036853727232	100
-set @a=1, @b=2;
-set @a=@b, @b=@a;
-select @a, @b;
-@a	@b
-2	1
 set @@global.global.key_buffer_size= 1;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size= 1' at line 1
 set GLOBAL global.key_buffer_size= 1;
