@@ -38,6 +38,8 @@
 #include <drizzled/connect.h>
 #include <drizzled/lock.h>
 #include <bitset>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -3495,7 +3497,8 @@ bool check_simple_select()
     char command[80];
     Lex_input_stream *lip= session->m_lip;
     strncpy(command, lip->yylval->symbol.str,
-            cmin((ulong)lip->yylval->symbol.length, sizeof(command)-1));
+            cmin(lip->yylval->symbol.length, sizeof(command)-1));
+    command[cmin(lip->yylval->symbol.length, sizeof(command)-1)]=0;
     my_error(ER_CANT_USE_OPTION_HERE, MYF(0), command);
     return 1;
   }
