@@ -17,9 +17,7 @@
 #                           NOT NULL for each column
 #############################################################################
 -- echo # ===== csv_not_null.1 =====
--- disable_warnings
 DROP TABLE IF EXISTS t1, t2;
--- enable_warnings
 
 
 --echo # === Will fail -- no NOT NULL ===
@@ -40,26 +38,20 @@ DROP TABLE t1;
 #                           statements for CSV
 ##############################################################################
 -- echo # ===== csv_not_null.2 =====
--- disable_warnings
 DROP TABLE IF EXISTS t1;
---enable_warnings
 
 
 CREATE TABLE t1 (a int NOT NULL, b blob NOT NULL, c CHAR(20) NOT NULL, 
 d VARCHAR(20) NOT NULL, e enum('foo','bar') NOT NULL,f DATE NOT NULL) 
 ENGINE = CSV;
--- echo # === should result in default for each datatype ===
--- disable_warnings
+--error 1364
 INSERT INTO t1 VALUES();
--- enable_warnings
 SELECT * FROM t1;
 
--- disable_warnings
 # NOTE - Test disabled due to enum crash for this INSERT
 # See Bug#33717 - INSERT...(default) fails for enum. 
 # Crashes CSV tables, loads spaces for MyISAM
 #INSERT INTO t1 VALUES(default,default,default,default,default,default);
--- enable_warnings
 
 SELECT * FROM t1;
 INSERT INTO t1 VALUES(0,'abc','def','ghi','bar','1999-12-31');
@@ -79,19 +71,15 @@ DROP TABLE t1;
 #                           statements for CSV
 ##############################################################################
 -- echo # ===== csv_not_null.3 =====
--- disable_warnings
 DROP TABLE IF EXISTS t1;
---enable_warnings
 
 
 CREATE TABLE t1 (a int NOT NULL, b char(10) NOT NULL) ENGINE = CSV;
---disable_warnings
+--error 1364
 INSERT INTO t1 VALUES();
---enable_warnings
+insert into t1 values (0,"");
 SELECT * FROM t1;
---disable_warnings
 UPDATE t1 set b = 'new_value' where a = 0;
---enable_warnings
 SELECT * FROM t1;
 --error ER_BAD_NULL_ERROR
 UPDATE t1 set b = NULL where b = 'new_value';
