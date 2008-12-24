@@ -19,14 +19,11 @@ connect (con2,localhost,root,,test);
 show tables;
 
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
+--error 1049
 connect (fail_con,localhost,root,z,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
 connect (fail_con,localhost,root,z,);
-
-grant ALL on *.* to test@localhost identified by "gambling";
-grant ALL on *.* to test@127.0.0.1 identified by "gambling";
+--disconnect fail_con
 
 # Now check this user with different databases
 #connect (con1,localhost,test,gambling,"");
@@ -37,53 +34,34 @@ connect (con4,localhost,test,gambling,test);
 show tables;
 
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
+--error 1049
 connect (fail_con,localhost,test,,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
+--error 1049
 connect (fail_con,localhost,test,,"");
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
+--error 1049
 connect (fail_con,localhost,test,zorro,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
 connect (fail_con,localhost,test,zorro,);
+--disconnect fail_con
 
 
-# check if old password version also works
-update mysql.user set password=old_password("gambling2") where user=_binary"test";
-flush privileges;
-
-connect (con10,localhost,test,gambling2,);
-connect (con5,localhost,test,gambling2,mysql);
-connection con5;
-set password="";
---error 1372
-set password='gambling3';
-set password=old_password('gambling3');
-show tables;
-connect (con6,localhost,test,gambling3,test);
-show tables;
 
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
+--error 1049
 connect (fail_con,localhost,test,,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
 connect (fail_con,localhost,test,,);
+--disconnect fail_con
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
+--error 1049
 connect (fail_con,localhost,test,zorro,test2);
 --replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
---error 1045
 connect (fail_con,localhost,test,zorro,);
+--disconnect fail_con
 
 
-# remove user 'test' so that other tests which may use 'test'
-# do not depend on this test.
-
-delete from mysql.user where user=_binary"test";
-flush privileges;
 
 #
 # Bug#12517: Clear user variables and replication events before 
@@ -103,9 +81,6 @@ drop table t1;
 --disconnect con2
 --disconnect con3
 --disconnect con4
---disconnect con5
---disconnect con6
---disconnect con10
 
 --echo # ------------------------------------------------------------------
 --echo # -- End of 4.1 tests

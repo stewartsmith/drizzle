@@ -1,0 +1,134 @@
+#
+# test of already fixed bugs
+#
+--disable_warnings
+drop table if exists t1,t2,t3,t4,t5,t6;
+drop database if exists mysqltest;
+
+#
+# Bug 10838
+# Insert causes warnings for no default values and corrupts tables
+#
+CREATE TABLE t1 (a varbinary(30) NOT NULL DEFAULT ' ',
+                 b varbinary(1) NOT NULL DEFAULT ' ',
+		 c varbinary(4) NOT NULL DEFAULT '0000',
+		 d blob NULL,
+		 e blob NULL,
+		 f blob NULL,
+		 g blob NULL,
+		 h blob NULL,
+		 i blob NULL,
+		 j blob NULL,
+		 k blob NULL,
+		 l blob NULL,
+		 m blob NULL,
+		 n blob NULL,
+		 o blob NULL,
+		 p blob NULL,
+                 q varbinary(30) NOT NULL DEFAULT ' ',
+                 r varbinary(30) NOT NULL DEFAULT ' ',
+		 s blob NULL,
+                 t varbinary(4) NOT NULL DEFAULT ' ',
+                 u varbinary(1) NOT NULL DEFAULT ' ',
+                 v varbinary(30) NOT NULL DEFAULT ' ',
+                 w varbinary(30) NOT NULL DEFAULT ' ',
+		 x blob NULL,
+                 y varbinary(5) NOT NULL DEFAULT ' ',
+                 z varbinary(20) NOT NULL DEFAULT ' ',
+                 a1 varbinary(30) NOT NULL DEFAULT ' ',
+		 b1 blob NULL)
+ENGINE=InnoDB DEFAULT COLLATE utf8_bin;
+
+INSERT into t1 (b) values ('1');
+SHOW WARNINGS;
+SELECT * from t1;
+
+CREATE TABLE t2 (a varbinary(30) NOT NULL DEFAULT ' ',
+                 b varbinary(1) NOT NULL DEFAULT ' ',
+		 c varbinary(4) NOT NULL DEFAULT '0000',
+		 d blob NULL,
+		 e blob NULL,
+		 f blob NULL,
+		 g blob NULL,
+		 h blob NULL,
+		 i blob NULL,
+		 j blob NULL,
+		 k blob NULL,
+		 l blob NULL,
+		 m blob NULL,
+		 n blob NULL,
+		 o blob NULL,
+		 p blob NULL,
+                 q varbinary(30) NOT NULL DEFAULT ' ',
+                 r varbinary(30) NOT NULL DEFAULT ' ',
+		 s blob NULL,
+                 t varbinary(4) NOT NULL DEFAULT ' ',
+                 u varbinary(1) NOT NULL DEFAULT ' ',
+                 v varbinary(30) NOT NULL DEFAULT ' ',
+                 w varbinary(30) NOT NULL DEFAULT ' ',
+		 x blob NULL,
+                 y varbinary(5) NOT NULL DEFAULT ' ',
+                 z varbinary(20) NOT NULL DEFAULT ' ',
+                 a1 varbinary(30) NOT NULL DEFAULT ' ',
+		 b1 blob NULL)
+ENGINE=MyISAM DEFAULT COLLATE utf8_bin;
+
+SHOW CREATE TABLE t2;
+INSERT into t2 (b) values ('1');
+SHOW WARNINGS;
+SELECT * from t2;
+
+drop table t1;
+drop table t2;
+
+
+#
+# Bug#20691: DATETIME col (NOT NULL, NO DEFAULT) may insert garbage when specifying DEFAULT
+#
+# From the docs:
+#  If the column can take NULL as a value, the column is defined with an
+#  explicit DEFAULT NULL clause. This is the same as before 5.0.2.
+#
+#  If the column cannot take NULL as the value, MySQL defines the column with
+#  no explicit DEFAULT clause. For data entry, if an INSERT or REPLACE
+#  statement includes no value for the column, MySQL handles the column
+#  according to the SQL mode in effect at the time:
+#
+#    * If strict SQL mode is not enabled, MySQL sets the column to the
+#      implicit default value for the column data type.
+#
+#    * If strict mode is enabled, an error occurs for transactional tables and
+#      the statement is rolled back. For non-transactional tables, an error
+#      occurs, but if this happens for the second or subsequent row of a
+#      multiple-row statement, the preceding rows will have been inserted.
+#
+create table bug20691 (i int, d datetime NOT NULL, dn datetime not null default '0000-00-00 00:00:00');
+--error 1364
+insert into bug20691 values (7, DEFAULT, DEFAULT), (7, '1975-07-10 07:10:03', '1978-01-13 14:08:51'), (7, DEFAULT, DEFAULT);
+insert into bug20691 values (7, '1975-07-10 07:10:03', DEFAULT);
+select * from bug20691 order by i asc;
+drop table bug20691;
+
+create table bug20691 (
+  b enum('small', 'medium', 'large', 'enormous', 'ellisonego') not null,
+  c time not null,
+  d date not null,
+  e int not null,
+  g blob not null,
+  h datetime not null,
+  i decimal not null,
+  x int);
+insert into bug20691 values (3, 5, '0007-01-01', 11, 17, '0019-01-01 00:00:00', 23, 1);
+--error 1364
+insert into bug20691 (x) values (2);
+insert into bug20691 values (3, 5, '0007-01-01', 11, 17, '0019-01-01 00:00:00', 23, 3);
+--error 1364
+insert into bug20691 values (DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, 4);
+select * from bug20691 order by x asc;
+drop table bug20691;
+
+create table t1 (id int not null default 1);
+insert into t1 values(default);
+
+drop table t1;
+
