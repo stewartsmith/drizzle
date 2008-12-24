@@ -240,8 +240,6 @@ drop table t1, t2, t3;
 #
 create table t1 (a int);
 create table t2 (a int);
-# TODO: Perhaps this is valid? Perhaps it isn't
-#--error 1060
 select * from (select * from t1,t2) foo;
 drop table t1,t2;
 
