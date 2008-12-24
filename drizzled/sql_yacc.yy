@@ -5685,8 +5685,8 @@ text_literal:
           {
             LEX_STRING tmp;
             Session *session= YYSession;
-            const CHARSET_INFO * const cs_con= session->variables.collation_connection;
-            const CHARSET_INFO * const cs_cli= session->variables.character_set_client;
+            const CHARSET_INFO * const cs_con= session->variables.getCollation();
+            const CHARSET_INFO * const cs_cli= default_charset_info;
             uint32_t repertoire= session->lex->text_string_is_7bit &&
                              my_charset_is_ascii_based(cs_cli) ?
                              MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
@@ -5717,7 +5717,7 @@ text_literal:
                  If the string has been pure ASCII so far,
                  check the new part.
               */
-              const CHARSET_INFO * const cs= YYSession->variables.collation_connection;
+              const CHARSET_INFO * const cs= YYSession->variables.getCollation();
               item->collation.repertoire|= my_string_repertoire(cs,
                                                                 $2.str,
                                                                 $2.length);
@@ -5730,7 +5730,7 @@ text_string:
           {
             $$= new (YYSession->mem_root) String($1.str,
                                              $1.length,
-                                             YYSession->variables.collation_connection);
+                                             YYSession->variables.getCollation());
           }
         | HEX_NUM
           {
@@ -6071,7 +6071,7 @@ TEXT_STRING_literal:
             if (session->charset_is_collation_connection)
               $$= $1;
             else
-              session->convert_string(&$$, session->variables.collation_connection,
+              session->convert_string(&$$, session->variables.getCollation(),
                                   $1.str, $1.length, session->charset());
           }
         ;

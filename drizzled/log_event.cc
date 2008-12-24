@@ -1300,12 +1300,7 @@ Query_log_event::Query_log_event(Session* session_arg, const char* query_arg,
     we will probably want to reclaim the 29 bits. So we need the &.
   */
   flags2= (uint32_t) (session_arg->options & OPTIONS_WRITTEN_TO_BIN_LOG);
-  assert(session_arg->variables.character_set_client->number < 256*256);
-  assert(session_arg->variables.collation_connection->number < 256*256);
   assert(session_arg->variables.collation_server->number < 256*256);
-  assert(session_arg->variables.character_set_client->mbminlen == 1);
-  int2store(charset, session_arg->variables.character_set_client->number);
-  int2store(charset+2, session_arg->variables.collation_connection->number);
   int2store(charset+4, session_arg->variables.collation_server->number);
   time_zone_len= 0;
 }

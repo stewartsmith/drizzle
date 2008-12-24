@@ -163,10 +163,6 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     check_completion_type,
                                                     fix_completion_type);
 static sys_var_collation_sv
-sys_collation_connection(&vars, "collation_connection",
-                         &SV::collation_connection, &default_charset_info,
-                         sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_collation_sv
 sys_collation_database(&vars, "collation_database", &SV::collation_database,
                        &default_charset_info,
                        sys_var::SESSION_VARIABLE_IN_BINLOG);
