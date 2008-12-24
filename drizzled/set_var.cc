@@ -163,10 +163,6 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     check_completion_type,
                                                     fix_completion_type);
 static sys_var_collation_sv
-sys_collation_connection(&vars, "collation_connection",
-                         &SV::collation_connection, &default_charset_info,
-                         sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_collation_sv
 sys_collation_database(&vars, "collation_database", &SV::collation_database,
                        &default_charset_info,
                        sys_var::SESSION_VARIABLE_IN_BINLOG);
@@ -455,7 +451,6 @@ sys_lc_time_names(&vars, "lc_time_names", sys_var::SESSION_VARIABLE_IN_BINLOG);
   statement-based logging mode: t will be different on master and
   slave).
 */
-static sys_var_insert_id sys_insert_id(&vars, "insert_id");
 static sys_var_readonly sys_error_count(&vars, "error_count",
                                         OPT_SESSION,
                                         SHOW_LONG,
@@ -1935,22 +1930,6 @@ unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
   */
   session->sys_var_tmp.uint64_t_value=
     session->read_first_successful_insert_id_in_prev_stmt();
-  return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
-}
-
-
-bool sys_var_insert_id::update(Session *session, set_var *var)
-{
-  session->force_one_auto_inc_interval(var->save_result.uint64_t_value);
-  return 0;
-}
-
-
-unsigned char *sys_var_insert_id::value_ptr(Session *session, enum_var_type,
-                                            LEX_STRING *)
-{
-  session->sys_var_tmp.uint64_t_value=
-    session->auto_inc_intervals_forced.minimum();
   return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
 }
 

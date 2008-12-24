@@ -260,7 +260,7 @@ void Item_func_date_format::fix_length_and_dec()
   Item *arg1= args[1];
 
   decimals=0;
-  const CHARSET_INFO * const cs= session->variables.collation_connection;
+  const CHARSET_INFO * const cs= session->variables.getCollation();
   uint32_t repertoire= arg1->collation.repertoire;
   if (!session->variables.lc_time_names->is_ascii)
     repertoire|= MY_REPERTOIRE_EXTENDED;

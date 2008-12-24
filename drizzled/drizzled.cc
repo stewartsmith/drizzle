@@ -261,7 +261,6 @@ static I_List<Session> thread_cache;
 bool opt_bin_log;
 bool opt_error_log= 0;
 bool opt_skip_show_db= false;
-bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
@@ -2013,9 +2012,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
   global_system_variables.collation_database=	 default_charset_info;
-  global_system_variables.collation_connection=  default_charset_info;
-  global_system_variables.character_set_results= default_charset_info;
-  global_system_variables.character_set_client= default_charset_info;
 
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
@@ -2857,11 +2853,6 @@ struct my_option my_long_options[] =
    /* sub_size */     0, /* block_size */ 256,
    /* app_type */ 0
   },
-  {"character-set-client-handshake", OPT_CHARACTER_SET_CLIENT_HANDSHAKE,
-   N_("Don't ignore client side character set value sent during handshake."),
-   (char**) &opt_character_set_client_handshake,
-   (char**) &opt_character_set_client_handshake,
-    0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"character-set-filesystem", OPT_CHARACTER_SET_FILESYSTEM,
    N_("Set the filesystem character set."),
    (char**) &character_set_filesystem_name,

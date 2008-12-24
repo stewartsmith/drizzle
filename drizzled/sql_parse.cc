@@ -577,7 +577,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
       if (cs_number)
       {
-        session_init_client_charset(session, cs_number);
         session->update_charset();
       }
     }

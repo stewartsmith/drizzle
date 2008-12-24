@@ -326,10 +326,6 @@ set storage_engine=UNKNOWN_TABLE_TYPE;
 ERROR 42000: Unknown table engine 'UNKNOWN_TABLE_TYPE'
 set GLOBAL storage_engine=DEFAULT;
 ERROR 42000: Variable 'storage_engine' doesn't have a default value
-set collation_connection=UNKNOWN_COLLATION;
-ERROR HY000: Unknown collation: 'UNKNOWN_COLLATION'
-set collation_connection=NULL;
-ERROR 42000: Variable 'collation_connection' can't be set to the value of 'NULL'
 set global autocommit=1;
 ERROR HY000: Variable 'autocommit' is a SESSION variable and can't be used with SET GLOBAL
 select @@global.timestamp;
@@ -361,7 +357,6 @@ set global delay_key_write=1;
 select @@delay_key_write;
 @@delay_key_write
 ON
-set insert_id=1;
 set interactive_timeout=100;
 set join_buffer_size=100;
 Warnings:
@@ -417,28 +412,6 @@ Warnings:
 Warning	1292	Truncated incorrect tmp_table_size value: '100'
 set tx_isolation="READ-COMMITTED";
 set wait_timeout=100;
-select @@session.insert_id;
-@@session.insert_id
-1
-set @save_insert_id=@@session.insert_id;
-set session insert_id=20;
-select @@session.insert_id;
-@@session.insert_id
-20
-set session last_insert_id=100;
-select @@session.insert_id;
-@@session.insert_id
-20
-select @@session.last_insert_id;
-@@session.last_insert_id
-100
-select @@session.insert_id;
-@@session.insert_id
-20
-set @@session.insert_id=@save_insert_id;
-select @@session.insert_id;
-@@session.insert_id
-1
 create table t1 (a int not null auto_increment, primary key(a));
 create table t2 (a int not null auto_increment, primary key(a));
 insert into t1 values(null),(null),(null);
@@ -477,32 +450,6 @@ select * from information_schema.global_variables where variable_name like 'myis
 VARIABLE_NAME	VARIABLE_VALUE
 MYISAM_MAX_SORT_FILE_SIZE	MAX_FILE_SIZE
 set global myisam_max_sort_file_size=default;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-2146435072	100
-set @svc=@@global.myisam_max_sort_file_size, @svj=@@local.max_join_size;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-2146435072	100
-set @@global.myisam_max_sort_file_size=111,@@local.max_join_size=222;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-0	222
-set @@global.myisam_max_sort_file_size=@@local.max_join_size,@@local.max_join_size=@@global.myisam_max_sort_file_size;
-Warnings:
-Warning	1292	Truncated incorrect max_join_size value: '0'
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-0	1
-set @@global.myisam_max_sort_file_size=@svc, @@local.max_join_size=@svj;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-@@global.myisam_max_sort_file_size	@@local.max_join_size
-2146435072	100
-set @a=1, @b=2;
-set @a=@b, @b=@a;
-select @a, @b;
-@a	@b
-2	1
 set @@global.global.key_buffer_size= 1;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size= 1' at line 1
 set GLOBAL global.key_buffer_size= 1;
