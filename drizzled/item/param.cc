@@ -251,7 +251,7 @@ bool Item_param::set_from_user_var(Session *session, const user_var_entry *entry
     case STRING_RESULT:
     {
       const CHARSET_INFO * const fromcs= entry->collation.collation;
-      const CHARSET_INFO * const tocs= session->variables.collation_connection;
+      const CHARSET_INFO * const tocs= session->variables.getCollation();
       uint32_t dummy_offset;
 
       value.cs_info.character_set_of_placeholder=

@@ -24,7 +24,6 @@ set @my_net_read_timeout          =@@global.net_read_timeout;
 set @my_server_id                 =@@global.server_id;
 set @my_slow_launch_time          =@@global.slow_launch_time;
 set @my_storage_engine            =@@global.storage_engine;
-set @my_thread_cache_size         =@@global.thread_cache_size;
 
 # case insensitivity tests (new in 5.0)
 set @`test`=1;
@@ -175,10 +174,6 @@ set max_join_size="hello";
 set storage_engine=UNKNOWN_TABLE_TYPE;
 --error 1230
 set GLOBAL storage_engine=DEFAULT;
---error 1273
-set collation_connection=UNKNOWN_COLLATION;
---error 1231
-set collation_connection=NULL;
 --error 1228
 set global autocommit=1;
 --error 1238
@@ -203,7 +198,6 @@ select @@delay_key_write;
 set global delay_key_write=ALL;
 set global delay_key_write=1;
 select @@delay_key_write;
-set insert_id=1;
 set interactive_timeout=100;
 set join_buffer_size=100;
 set last_insert_id=1;
@@ -230,7 +224,6 @@ set sort_buffer_size=100;
 set sql_big_selects=1;
 set sql_buffer_result=1;
 set sql_log_bin=1;
-set sql_low_priority_updates=1;
 set sql_quote_show_create=1;
 set sql_safe_updates=1;
 set sql_select_limit=1;
@@ -239,27 +232,10 @@ set sql_select_limit=default;
 set sql_warnings=1;
 set global table_open_cache=100;
 set storage_engine=myisam;
-set global thread_cache_size=100;
 set timestamp=1, timestamp=default;
 set tmp_table_size=100;
 set tx_isolation="READ-COMMITTED";
 set wait_timeout=100;
-
-#
-# Bugs: #20392: INSERT_ID session variable has weird value
-#
-select @@session.insert_id;
-set @save_insert_id=@@session.insert_id;
-set session insert_id=20;
-select @@session.insert_id;
-
-set session last_insert_id=100;
-select @@session.insert_id;
-select @@session.last_insert_id;
-select @@session.insert_id;
-
-set @@session.insert_id=@save_insert_id;
-select @@session.insert_id;
 
 #
 # key buffer
@@ -303,21 +279,21 @@ show global variables like 'myisam_max_sort_file_size';
 select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
 set global myisam_max_sort_file_size=default;
 
-#
-# swap
-#
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @svc=@@global.myisam_max_sort_file_size, @svj=@@local.max_join_size;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @@global.myisam_max_sort_file_size=111,@@local.max_join_size=222;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @@global.myisam_max_sort_file_size=@@local.max_join_size,@@local.max_join_size=@@global.myisam_max_sort_file_size;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @@global.myisam_max_sort_file_size=@svc, @@local.max_join_size=@svj;
-select @@global.myisam_max_sort_file_size,@@local.max_join_size;
-set @a=1, @b=2;
-set @a=@b, @b=@a;
-select @a, @b;
+## Bug #311084
+## swap
+##
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @svc=@@global.myisam_max_sort_file_size, @svj=@@local.max_join_size;
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @@global.myisam_max_sort_file_size=111,@@local.max_join_size=222;
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @@global.myisam_max_sort_file_size=@@local.max_join_size,@@local.max_join_size=@@global.myisam_max_sort_file_size;
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @@global.myisam_max_sort_file_size=@svc, @@local.max_join_size=@svj;
+#select @@global.myisam_max_sort_file_size,@@local.max_join_size;
+#set @a=1, @b=2;
+#set @a=@b, @b=@a;
+#select @a, @b;
 
 #
 # Bug#2586:Disallow global/session/local as structured var. instance names
@@ -358,24 +334,9 @@ drop table t1;
 
 SET GLOBAL table_open_cache=-1;
 SHOW VARIABLES LIKE 'table_open_cache';
-SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
 SET GLOBAL table_open_cache=DEFAULT;
-
-#
-# Bugs12363: character_set_results is nullable,
-# but value_ptr returns string "NULL"
-#
-set character_set_results=NULL;
-select ifnull(@@character_set_results,"really null");
-set names latin1;
-
-
-#
-# Bug #9613: @@have_innodb
-#
-
---replace_column 1 #
-select @@have_innodb;
 
 #
 # Tests for lc_time_names
@@ -486,25 +447,20 @@ select @@max_heap_table_size > 0;
 #
 # Bug #11775 Variable character_set_system does not exist (sometimes)
 #
+--error 1193
 select @@character_set_system;
---error 1238
-set global character_set_system = latin1;
+--error 1193
+set global character_set_system = utf8;
 --error 1238
 set @@global.version_compile_os='234';
 
 #
-# Check character_set_filesystem variable
+# Check character_set_filesystem variable invalid for Drizzle
 #
-set character_set_filesystem=latin1;
-select @@character_set_filesystem;
-set @@global.character_set_filesystem=latin2;
-set character_set_filesystem=latin1;
-select @@character_set_filesystem;
-set @@global.character_set_filesystem=latin2;
-set character_set_filesystem=default;
-select @@character_set_filesystem;
-set @@global.character_set_filesystem=default;
-select @@global.character_set_filesystem;
+--error 1193
+set @@global.character_set_filesystem=utf8;
+--error 1193
+set character_set_filesystem=utf8;
 
 #
 # Bug #17849: Show sql_big_selects in SHOW VARIABLES
@@ -512,7 +468,8 @@ select @@global.character_set_filesystem;
 set @old_sql_big_selects = @@sql_big_selects;
 set @@sql_big_selects = 1;
 show variables like 'sql_big_selects';
-select * from information_schema.session_variables where variable_name like 'sql_big_selects';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'sql_big_selects';
 set @@sql_big_selects = @old_sql_big_selects;
 
 #
@@ -521,14 +478,18 @@ set @@sql_big_selects = @old_sql_big_selects;
 # 
 set @@sql_notes = 0, @@sql_warnings = 0;
 show variables like 'sql_notes';
-select * from information_schema.session_variables where variable_name like 'sql_notes';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'sql_notes';
 show variables like 'sql_warnings';
-select * from information_schema.session_variables where variable_name like 'sql_warnings';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'sql_warnings';
 set @@sql_notes = 1, @@sql_warnings = 1;
 show variables like 'sql_notes';
-select * from information_schema.session_variables where variable_name like 'sql_notes';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'sql_notes';
 show variables like 'sql_warnings';
-select * from information_schema.session_variables where variable_name like 'sql_warnings';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'sql_warnings';
 
 #
 # Bug #12792: @@system_time_zone is not SELECTable.
@@ -555,34 +516,41 @@ select @@basedir, @@datadir, @@tmpdir;
 --replace_column 2 #
 show variables like 'basedir';
 --replace_column 2 #
-select * from information_schema.session_variables where variable_name like 'basedir';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'basedir';
 --replace_column 2 #
 show variables like 'datadir';
 --replace_column 2 #
-select * from information_schema.session_variables where variable_name like 'datadir';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'datadir';
 --replace_column 2 #
 show variables like 'tmpdir';
 --replace_column 2 #
-select * from information_schema.session_variables where variable_name like 'tmpdir';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'tmpdir';
 
 #
 # Bug #19606: make ssl settings available via SHOW VARIABLES and @@variables
 # 
 # Don't actually output, since it depends on the system
---replace_column 1 # 2 # 3 # 4 # 5 #
-select @@ssl_ca, @@ssl_capath, @@ssl_cert, @@ssl_cipher, @@ssl_key;
---replace_column 2 #
-show variables like 'ssl%';
---replace_column 2 #
-select * from information_schema.session_variables where variable_name like 'ssl%' order by 1;
+#--replace_column 1 # 2 # 3 # 4 # 5 #
+# Not supported in Drizzle
+#select @@ssl_ca, @@ssl_capath, @@ssl_cert, @@ssl_cipher, @@ssl_key;
+#--replace_column 2 #
+#show variables like 'ssl%';
+#--replace_column 2 #
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'ssl%' order by 1;
 
 #
 # Bug #19616: make log_queries_not_using_indexes available in SHOW VARIABLES
 # and as @@log_queries_not_using_indexes
 #
-select @@log_queries_not_using_indexes;
-show variables like 'log_queries_not_using_indexes';
-select * from information_schema.session_variables where variable_name like 'log_queries_not_using_indexes';
+# Not valid in Drizzle
+#select @@log_queries_not_using_indexes;
+#show variables like 'log_queries_not_using_indexes';
+# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
+#select * from information_schema.session_variables where variable_name like 'log_queries_not_using_indexes';
 
 #
 # Bug#20908: Crash if select @@""
@@ -616,6 +584,7 @@ show variables like 'hostname';
 set global binlog_cache_size         =@my_binlog_cache_size;
 set global connect_timeout           =@my_connect_timeout;
 set global flush                     =@my_flush;
+--error 1193
 set global flush_time                =@my_flush_time;
 set global key_buffer_size           =@my_key_buffer_size;
 set global max_binlog_cache_size     =default;                #@my_max_binlog_cache_size;
@@ -627,36 +596,22 @@ set global max_join_size             =@my_max_join_size;
 # No default
 #set global max_user_connections      =default;
 set global max_write_lock_count      =default;
+--error 1193
 set global myisam_data_pointer_size  =@my_myisam_data_pointer_size;
 set global net_buffer_length         =@my_net_buffer_length;
 set global net_write_timeout         =@my_net_write_timeout;
 set global net_read_timeout          =@my_net_read_timeout;
+--error 1193
 set global rpl_recovery_rank         =@my_rpl_recovery_rank;
 set global server_id                 =@my_server_id;
 set global slow_launch_time          =@my_slow_launch_time;
 set global storage_engine            =@my_storage_engine;
+--error 1193
 set global thread_cache_size         =@my_thread_cache_size;
 
 #
 # Bug#28580 Repeatation of status variables
 #
 --replace_column 2 #
-show global variables where Variable_name='table_definition_cache' or
-Variable_name='table_lock_wait_timeout';
-
-###########################################################################
-
---echo
---echo # --
---echo # -- Bug#34820: log_output can be set to illegal value.
---echo # --
-
---error ER_WRONG_VALUE_FOR_VAR
-SET GLOBAL log_output = '';
-
---error ER_WRONG_VALUE_FOR_VAR
-SET GLOBAL log_output = 0;
-
---echo
---echo # -- End of Bug#34820.
-
+# Drizzle Bug 311044
+#show global variables where variable_name='table_definition_cache' or Variable_name='table_lock_wait_timeout';

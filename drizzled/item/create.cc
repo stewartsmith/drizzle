@@ -2749,7 +2749,7 @@ Create_func_space::create(Session *session, Item *arg1)
     The parsed item tree should not depend on
     <code>session->variables.collation_connection</code>.
   */
-  const CHARSET_INFO * const cs= session->variables.collation_connection;
+  const CHARSET_INFO * const cs= session->variables.getCollation();
   Item *sp;
 
   if (cs->mbminlen > 1)
@@ -3187,7 +3187,7 @@ find_native_function_builder(Session *session __attribute__((unused)),
 Item*
 create_func_char_cast(Session *session, Item *a, int len, const CHARSET_INFO * const cs)
 {
-  const CHARSET_INFO * const real_cs= (cs ? cs : session->variables.collation_connection);
+  const CHARSET_INFO * const real_cs= (cs ? cs : session->variables.getCollation());
   return new (session->mem_root) Item_char_typecast(a, len, real_cs);
 }
 

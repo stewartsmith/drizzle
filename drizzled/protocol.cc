@@ -492,7 +492,7 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
   Protocol_text prot(session);
   String *local_packet= prot.storage_packet();
-  const CHARSET_INFO * const session_charset= session->variables.character_set_results;
+  const CHARSET_INFO * const session_charset= default_charset_info;
 
   if (flags & SEND_NUM_ROWS)
   {				// Packet with number of elements
@@ -702,7 +702,7 @@ bool Protocol_text::store(const char *from, size_t length,
 bool Protocol_text::store(const char *from, size_t length,
                           const CHARSET_INFO * const fromcs)
 {
-  const CHARSET_INFO * const tocs= this->session->variables.character_set_results;
+  const CHARSET_INFO * const tocs= default_charset_info;
   return store_string_aux(from, length, fromcs, tocs);
 }
 
@@ -772,7 +772,7 @@ bool Protocol_text::store(Field *field)
     return store_null();
   char buff[MAX_FIELD_WIDTH];
   String str(buff,sizeof(buff), &my_charset_bin);
-  const CHARSET_INFO * const tocs= this->session->variables.character_set_results;
+  const CHARSET_INFO * const tocs= default_charset_info;
 
   field->val_str(&str);
 

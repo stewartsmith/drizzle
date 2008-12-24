@@ -163,7 +163,7 @@ void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
   assert(m_cpp_buf <= begin_ptr && begin_ptr <= m_cpp_buf + m_buf_length);
 
   uint32_t body_utf8_length=
-    (m_buf_length / session->variables.character_set_client->mbminlen) *
+    (m_buf_length / default_charset_info->mbminlen) *
     my_charset_utf8_bin.mbmaxlen;
 
   m_body_utf8= (char *) session->alloc(body_utf8_length + 1);
