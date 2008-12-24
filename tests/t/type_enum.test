@@ -204,9 +204,9 @@ DROP TABLE t1,t2;
 #
 
 CREATE TABLE t1(a enum('a','b','c','d'));
-# NEEDS INVESTIGATION
---error 1265 
+--error 1265  Data truncated for column 'a' at row 3
 INSERT INTO t1 VALUES (4),(1),(0),(3);
+INSERT INTO t1 VALUES (4),(1),(2),(3);
 
 SELECT a FROM t1;
 

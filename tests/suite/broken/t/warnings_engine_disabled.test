@@ -4,7 +4,7 @@
 #
 disable_query_log;
 --require r/true.require
-select support = 'Disabled' as `TRUE` from information_schema.engines where engine = 'ndbcluster';
+#select support = 'Disabled' as `TRUE` from information_schema.engines where engine = 'myisam';
 enable_query_log;
 
 
