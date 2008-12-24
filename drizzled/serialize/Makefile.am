@@ -23,10 +23,6 @@ libserialize_la_CXXFLAGS =
 TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
 TESTS = check_length.sh
 
-%.pb.h %.pb.cc : %.proto
-	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
-		--cpp_out=${top_builddir}/drizzled/serialize $<
-
 noinst_PROGRAMS = \
 	       table_reader \
 	       table_writer \
@@ -108,3 +104,11 @@ CLEANFILES =  binary_log.pb.h \
               replication_event.pb.cc \
               master_list.pb.h \
               master_list.pb.cc
+
+SUFFIXES = .proto .pb.cc .pb.h
+.proto.pb.cc:
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
+		--cpp_out=${top_builddir}/drizzled/serialize $<
+.proto.pb.h:
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
+		--cpp_out=${top_builddir}/drizzled/serialize $<

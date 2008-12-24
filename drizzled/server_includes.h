@@ -167,7 +167,6 @@ extern bool opt_update_log, opt_bin_log, opt_error_log;
 extern bool opt_log;
 extern bool opt_slow_log;
 extern ulong log_output_options;
-extern bool opt_log_queries_not_using_indexes;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
 extern uint32_t volatile thread_count, thread_running, global_read_lock;
@@ -234,8 +233,6 @@ extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
 
 extern SHOW_COMP_OPTION have_symlink;
-extern SHOW_COMP_OPTION have_compress;
-
 
 extern pthread_t signal_thread;
 
@@ -262,7 +259,7 @@ uint32_t convert_period_to_month(uint32_t period);
 uint32_t convert_month_to_period(uint32_t month);
 void get_date_from_daynr(long daynr,uint32_t *year, uint32_t *month,
 			 uint32_t *day);
-my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *not_exist);
+time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *not_exist);
 bool str_to_time_with_warn(const char *str,uint32_t length,DRIZZLE_TIME *l_time);
 enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, uint32_t length,
                                          DRIZZLE_TIME *l_time, uint32_t flags);

@@ -291,7 +291,6 @@ int str2my_decimal(uint32_t mask, char *str, my_decimal *d, char **end)
 int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
                    const CHARSET_INFO * charset, my_decimal *decimal_value);
 
-#if defined(DRIZZLE_SERVER)
 inline
 int string2my_decimal(uint32_t mask, const String *str, my_decimal *d)
 {
@@ -301,8 +300,6 @@ int string2my_decimal(uint32_t mask, const String *str, my_decimal *d)
 
 my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec);
 
-
-#endif /*defined(DRIZZLE_SERVER) */
 
 inline
 int double2my_decimal(uint32_t mask, double val, my_decimal *d)

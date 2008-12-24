@@ -2619,7 +2619,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
     as the present method does not call mysql_parse().
   */
   lex_start(session);
-  mysql_reset_session_for_next_command(session);
+  session->reset_for_next_command();
 
   if (!use_rli_only_for_errors)
   {
@@ -5044,7 +5044,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
       call mysql_init_query() which does a more complete set of inits.
     */
     lex_start(session);
-    mysql_reset_session_for_next_command(session);
+    session->reset_for_next_command();
 
     /*
       Open the table if it is not already open and add the table to

@@ -412,10 +412,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %pure_parser                                    /* We have threads */
 /*
-  Currently there are 93 shift/reduce conflicts.
+  Currently there are 92 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 93
+%expect 92
 
 /*
    Comments for TOKENS.
@@ -452,7 +452,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ASCII_SYM                     /* MYSQL-FUNC */
 %token  ASENSITIVE_SYM                /* FUTURE-USE */
 %token  AT_SYM                        /* SQL-2003-R */
-%token  AUTHORS_SYM
 %token  AUTOEXTEND_SIZE_SYM
 %token  AUTO_INC
 %token  AVG_ROW_LENGTH
@@ -3768,13 +3767,7 @@ sum_expr:
 
 variable:
           '@'
-          {
-            if (! Lex->parsing_options.allows_variable)
-            {
-              my_error(ER_VIEW_SELECT_VARIABLE, MYF(0));
-              DRIZZLE_YYABORT;
-            }
-          }
+          { }
           variable_aux
           {
             $$= $3;
@@ -4299,12 +4292,6 @@ select_derived_init:
           {
             LEX *lex= Lex;
 
-            if (! lex->parsing_options.allows_derived)
-            {
-              my_error(ER_VIEW_SELECT_DERIVED, MYF(0));
-              DRIZZLE_YYABORT;
-            }
-
             SELECT_LEX *sel= lex->current_select;
             TableList *embedding;
             if (!sel->embedding || sel->end_nested_join(lex->session))
@@ -4773,13 +4760,7 @@ select_var_ident:
 
 into:
           INTO
-          {
-            if (! Lex->parsing_options.allows_select_into)
-            {
-              my_error(ER_VIEW_SELECT_CLAUSE, MYF(0), "INTO");
-              DRIZZLE_YYABORT;
-            }
-          }
+          { }
           into_destination
         ;
 
@@ -6177,7 +6158,6 @@ keyword_sp:
         | ALGORITHM_SYM            {}
         | ANY_SYM                  {}
         | AT_SYM                   {}
-        | AUTHORS_SYM              {}
         | AUTO_INC                 {}
         | AUTOEXTEND_SIZE_SYM      {}
         | AVG_ROW_LENGTH           {}
@@ -6482,12 +6462,6 @@ option_value:
           {
             LEX *lex=Lex;
             lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
-          }
-        | NAMES_SYM COLLATE_SYM collation_name_or_default
-          {
-            LEX *lex= Lex;
-            $3= $3 ? $3 : global_system_variables.character_set_client;
-            lex->var_list.push_back(new set_var_collation_client($3,$3,$3));
           }
         ;
 
