@@ -2,7 +2,12 @@ drop table if exists t1, t2;
 Warnings:
 Note	1051	Unknown table 't1'
 Note	1051	Unknown table 't2'
-CREATE TABLE t1 ( a int );
+drop table if exists t1;
+Warnings:
+Note	1051	Unknown table 't1'
+CREATE TABLE t1 (
+a int DEFAULT 0 NOT NULL
+) ENGINE = InnoDB;
 INSERT INTO t1 VALUES (1),(2),(1);
 CREATE TABLE t2 ( PRIMARY KEY (a) ) ENGINE=INNODB SELECT a FROM t1;
 ERROR 23000: Duplicate entry '1' for key 'PRIMARY'
