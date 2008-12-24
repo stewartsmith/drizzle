@@ -38,8 +38,6 @@
 #include <drizzled/connect.h>
 #include <drizzled/lock.h>
 #include <bitset>
-#include <iostream>
-#include <fstream>
 
 using namespace std;
 
