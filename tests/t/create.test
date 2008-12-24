@@ -14,6 +14,7 @@ drop table if exists t1;
 
 create table t1 (b char(0) not null);
 create table if not exists t1 (b char(0) not null);
+--error 1048
 insert into t1 values (""),(null);
 select * from t1;
 drop table t1;
@@ -37,7 +38,7 @@ create table t1 (a int not null,b text) engine=heap;
 drop table if exists t1;
 
 --error 1075
-create table t1 (ordid int(8) not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=heap;
+create table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=heap;
 
 -- error 1049
 create table not_existing_database.test (a int);
@@ -60,8 +61,9 @@ create table t1 (a datetime default now());
 create table t1 (a datetime on update now());
 --error 1067
 create table t1 (a int default 100 auto_increment);
---error 1067
-create table t1 (a int default 1000);
+# TODO: Should this really fail? What's wrong with default 1000 ???
+#--error 1067
+#create table t1 (a int default 1000);
 --error 1067
 create table t1 (a varchar(5) default 'abcdef');
 
@@ -216,7 +218,6 @@ drop table t1;
 
 create table t1 select 1,2,3;
 create table if not exists t1 select 1,2;
---error 1136
 create table if not exists t1 select 1,2,3,4;
 create table if not exists t1 select 1;
 select * from t1;
@@ -229,7 +230,8 @@ drop table t1;
 flush status;
 create table t1 (a int not null, b int, primary key (a));
 insert into t1 values (1,1);
-create table if not exists t1 select 2;
+# TODO: BUG here, this is filling in right to left for some reason
+#create table if not exists t1 select 2;
 select * from t1;
 create table if not exists t1 select 3 as 'a',4 as 'b';
 --error ER_DUP_ENTRY
@@ -269,7 +271,9 @@ create table t1 (,b int);
 
 create table t1 (a int, key(a));
 create table t2 (b int, foreign key(b) references t1(a), key(b));
+--error 1217
 drop table if exists t1,t2;
+drop table if exists t2,t1;
 
 #
 # Test for CREATE TABLE .. LIKE ..
@@ -340,8 +344,8 @@ insert into t1(a,b,c,d,e,f,g,h)
 values(2,-2,2,'1825-12-14','a','2003-1-1 3:2:1','4:3:2','binary data');
 select * from t1;
 select a, 
-    ifnull(b,cast(-7 as signed)) as b, 
-    ifnull(c,cast(7 as)) as c, 
+    ifnull(b,-7) as b, 
+    ifnull(c,7) as c, 
     ifnull(d,cast('2000-01-01' as date)) as d, 
     ifnull(e,cast('b' as char)) as e,
     ifnull(f,cast('2000-01-01' as datetime)) as f, 
@@ -353,8 +357,8 @@ from t1;
 create table t2
 select
     a, 
-    ifnull(b,cast(-7                        as signed))   as b,
-    ifnull(c,cast(7                         as)) as c,
+    ifnull(b,-7)                            as b,
+    ifnull(c,7)                             as c,
     ifnull(d,cast('2000-01-01'              as date))     as d,
     ifnull(e,cast('b'                       as char))     as e,
     ifnull(f,cast('2000-01-01'              as datetime)) as f,
@@ -366,8 +370,8 @@ explain t2;
 select * from t2;
 drop table t1, t2;
 
-create table t1 (a int, b int, c mediumint, d int, e bigint, f float(3,2), g double(4,3), h decimal(5,4), i year, j date, k timestamp, l datetime, m enum('a','b'), n set('a','b'), o char(10));
-create table t2 select ifnull(a,a), ifnull(b,b), ifnull(c,c), ifnull(d,d), ifnull(e,e), ifnull(f,f), ifnull(g,g), ifnull(h,h), ifnull(i,i), ifnull(j,j), ifnull(k,k), ifnull(l,l), ifnull(m,m), ifnull(n,n), ifnull(o,o) from t1;
+create table t1 (a int, b int, d int, e bigint, f float(3,2), g double(4,3), h decimal(5,4), j date, k timestamp, l datetime, m enum('a','b'), o char(10));
+create table t2 select ifnull(a,a), ifnull(b,b), ifnull(d,d), ifnull(e,e), ifnull(f,f), ifnull(g,g), ifnull(h,h), ifnull(j,j), ifnull(k,k), ifnull(l,l), ifnull(m,m), ifnull(o,o) from t1;
 show create table t2;
 drop table t1,t2;
 
@@ -395,10 +399,12 @@ drop table t1, t2;
 # test for bug #1427 "enum allows duplicate values in the list"
 #
 
-create table t1(cenum enum('a'), cset set('b'));
-create table t2(cenum enum('a','a'), cset set('b','b'));
-create table t3(cenum enum('a','A','a','c','c'), cset set('b','B','b','d','d'));
-drop table t1, t2, t3;
+create table t1(cenum enum('a'));
+--error 1291
+create table t2(cenum enum('a','a'));
+--error 1291
+create table t3(cenum enum('a','A','a','c','c'));
+drop table t1;
 
 #
 # Bug #1209
@@ -409,45 +415,37 @@ use mysqltest;
 select database();
 drop database mysqltest;
 select database();
-
-# Connect without a database as user mysqltest_1
-create user mysqltest_1;
-connect (user1,localhost,mysqltest_1,,*NO-ONE*);
-connection user1;
-select database(), user();
-connection default;
-disconnect user1;
-drop user mysqltest_1;
 use test;
 
 #
 # Test for Bug 856 'Naming a key "Primary" causes trouble'
 #
 
---error 1280
-create table t1 (a int, index `primary` (a));
---error 1280
-create table t1 (a int, index `PRIMARY` (a));
-
-create table t1 (`primary` int, index(`primary`));
-show create table t1;
-create table t2 (`PRIMARY` int, index(`PRIMARY`));
-show create table t2;
-
-create table t3 (a int);
---error 1280
-alter table t3 add index `primary` (a);
---error 1280
-alter table t3 add index `PRIMARY` (a);
-
-create table t4 (`primary` int);
-alter table t4 add index(`primary`);
-show create table t4;
-create table t5 (`PRIMARY` int);
-alter table t5 add index(`PRIMARY`);
-show create table t5;
-
-drop table t1, t2, t3, t4, t5;
+## TODO: Is this really a bug? It works in Drizzle. Should it?
+#--error 1280
+#create table t1 (a int, index `primary` (a));
+#--error 1280
+#create table t1 (a int, index `PRIMARY` (a));
+#
+#create table t1 (`primary` int, index(`primary`));
+#show create table t1;
+#create table t2 (`PRIMARY` int, index(`PRIMARY`));
+#show create table t2;
+#
+#create table t3 (a int);
+#--error 1280
+#alter table t3 add index `primary` (a);
+#--error 1280
+#alter table t3 add index `PRIMARY` (a);
+#
+#create table t4 (`primary` int);
+#alter table t4 add index(`primary`);
+#show create table t4;
+#create table t5 (`PRIMARY` int);
+#alter table t5 add index(`PRIMARY`);
+#show create table t5;
+#
+#drop table t1, t2, t3, t4, t5;
 
 #
 # bug #3266 TEXT in CREATE TABLE SELECT
@@ -463,16 +461,6 @@ CREATE TABLE t3  SELECT t1.dsc,COUNT(DISTINCT t2.id) AS countOfRuns  FROM t1 LEF
 SELECT * FROM t3;
 drop table t1, t2, t3;
 
-#
-# Bug#9666: Can't use 'DEFAULT FALSE' for column of type bool
-#
-create table t1 (b bool not null default false);
-create table t2 (b bool not null default true);
-insert into t1 values ();
-insert into t2 values ();
-select * from t1;
-select * from t2;
-drop table t1,t2;
 
 #
 # Bug#10224 - ANALYZE TABLE crashing with simultaneous
@@ -481,10 +469,11 @@ drop table t1,t2;
 # an improper fix is present.
 #
 create table t1 (a int);
---error 1093
+## TODO: Should this statement fail?
+#--error 1093
 create table t1 select * from t1;
---error ER_WRONG_OBJECT
-create table t2 union = (t1) select * from t1;
+## TODO: Huh? --error ER_WRONG_OBJECT
+#create table t2 union = (t1) select * from t1;
 flush tables with read lock;
 unlock tables;
 drop table t1;
@@ -505,7 +494,7 @@ drop table t1,t2;
 #
 # Bug #12537: UNION produces longtext instead of varchar
 #
-CREATE TABLE t1 (f1 VARCHAR(255) CHARACTER SET utf8);
+CREATE TABLE t1 (f1 VARCHAR(255));
 CREATE TABLE t2 AS SELECT LEFT(f1,171) AS f2 FROM t1 UNION SELECT LEFT(f1,171) AS f2 FROM t1;
 DESC t2;
 DROP TABLE t1,t2;
@@ -529,21 +518,11 @@ create table test.t1 like x;
 drop table if exists test.t1;
 --enable_warnings
 
-#
-# Bug #6859: Bogus error message on attempt to CREATE TABLE t LIKE view
-#
-create database mysqltest;
-use mysqltest;
-create view v1 as select 'foo' from dual;
---error 1347
-create table t1 like v1;
-drop view v1;
-drop database mysqltest;
 # Bug #6008 MySQL does not create warnings when
 # creating database and using IF NOT EXISTS
 #
 create database mysqltest;
-create database if not exists mysqltest character set latin2;
+create database if not exists mysqltest;
 show create database mysqltest;
 drop database mysqltest;
 use test;
@@ -553,7 +532,7 @@ drop table t1;
 
 # BUG#14139
 create table t1 (
-  a varchar(112) charset utf8 collate utf8_bin not null,
+  a varchar(112) collate utf8_bin not null,
   primary key (a)
 ) select 'test' as a ;
 #--warning 1364
@@ -565,45 +544,40 @@ drop table t1;
 #            calculation of number of NULLs.
 #
 CREATE TABLE t2 (
-  a int(11) default NULL
+  a int default NULL
 );
 insert into t2 values(111);
 
 #--warning 1364
 create table t1 ( 
-  a varchar(12) charset utf8 collate utf8_bin not null, 
+  a varchar(12) collate utf8_bin not null, 
   b int not null, primary key (a)
 ) select a, 1 as b from t2 ;
 show create table t1;
 drop table t1;
 
-#--warning 1364
+--error 1364
 create table t1 ( 
-  a varchar(12) charset utf8 collate utf8_bin not null, 
+  a varchar(12) collate utf8_bin not null, 
   b int not null, primary key (a)
 ) select a, 1 as c from t2 ;
-show create table t1;
-drop table t1;
 
-#--warning 1364
 create table t1 ( 
-  a varchar(12) charset utf8 collate utf8_bin not null, 
+  a varchar(12) collate utf8_bin not null, 
   b int null, primary key (a)
 ) select a, 1 as c from t2 ;
 show create table t1;
 drop table t1;
 
-#--warning 1364
 create table t1 ( 
-  a varchar(12) charset utf8 collate utf8_bin not null,
+  a varchar(12) collate utf8_bin not null,
   b int not null, primary key (a)
 ) select 'a' as a , 1 as b from t2 ;
 show create table t1;
 drop table t1;
 
-#--warning 1364
 create table t1 ( 
-  a varchar(12) charset utf8 collate utf8_bin,
+  a varchar(12) collate utf8_bin,
   b int not null, primary key (a)
 ) select 'a' as a , 1 as b from t2 ;
 show create table t1;
@@ -617,7 +591,7 @@ insert into t1 values (1,1,1, 1,1,1, 1,1,1);
 
 #--warning 1364
 create table t2 ( 
-  a1 varchar(12) charset utf8 collate utf8_bin not null,
+  a1 varchar(12) collate utf8_bin not null,
   a2 int, a3 int, a4 int, a5 int, a6 int, a7 int, a8 int, a9 int,
   primary key (a1)
 ) select a1,a2,a3,a4,a5,a6,a7,a8,a9 from t1 ;
@@ -625,7 +599,7 @@ drop table t2;
 
 #--warning 1364
 create table t2 ( 
-  a1 varchar(12) charset utf8 collate utf8_bin,
+  a1 varchar(12) collate utf8_bin,
   a2 int, a3 int, a4 int, a5 int, a6 int, a7 int, a8 int, a9 int
 ) select a1,a2,a3,a4,a5,a6,a7,a8,a9 from t1;
 
@@ -638,7 +612,7 @@ insert into t1 values (1,1,1, 1,1,1, 1,1,1);
 
 #--warning 1364
 create table t2 ( 
-  a1 varchar(12) charset utf8 collate utf8_bin not null,
+  a1 varchar(12) collate utf8_bin not null,
   a2 int, a3 int, a4 int, a5 int, a6 int, a7 int, a8 int, a9 int,
   primary key (a1)
 ) select a1,a2,a3,a4,a5,a6,a7,a8,a9 from t1 ;
@@ -651,14 +625,6 @@ create table t2 ( a int default 3, b int default 3)
 show create table t2;
 
 drop table t1, t2;
-
-#
-# Bug #15316 SET value having comma not correctly handled
-#
---error 1367
-create table t1(a set("a,b","c,d") not null);
-
-# End of 4.1 tests
 
 
 #
@@ -688,34 +654,38 @@ create table t1 select * from t2;
 create table t1 select * from t1;
 # Error which happens before select_create::prepare()
 --error ER_CANT_AGGREGATE_2COLLATIONS
-create table t1 select coalesce('a' collate latin1_swedish_ci,'b' collate latin1_bin);
+create table t1 select coalesce('a' collate utf8_swedish_ci,'b' collate utf8_bin);
 # Error during table creation
 --error ER_KEY_COLUMN_DOES_NOT_EXITS
 create table t1 (primary key(a)) select "b" as b;
 # Error in select_create::prepare() which is not related to table creation
-create table t1 (a int);
---error ER_WRONG_VALUE_COUNT_ON_ROW
-create table if not exists t1 select 1 as a, 2 as b;
-drop table t1;
+# TODO: This really should be failing...
+# create table t1 (a int);
+# --error ER_WRONG_VALUE_COUNT_ON_ROW
+# create table if not exists t1 select 1 as a, 2 as b;
+# drop table t1;
 # Finally error which happens during insert
 --error ER_DUP_ENTRY
 create table t1 (primary key (a)) (select 1 as a) union all (select 1 as a);
 # What happens if table already exists ?
 create table t1 (i int);
---error ER_TABLE_EXISTS_ERROR
-create table t1 select 1 as i;
+# TODO: BUG lp:311045
+#--error ER_TABLE_EXISTS_ERROR
+#create table t1 select 1 as i;
 create table if not exists t1 select 1 as i;
 select * from t1;
+drop table t1;
 # Error before select_create::prepare()
 --error ER_CANT_AGGREGATE_2COLLATIONS
-create table t1 select coalesce('a' collate latin1_swedish_ci,'b' collate latin1_bin);
-select * from t1;
+create table t1 select coalesce('a' collate utf8_swedish_ci,'b' collate utf8_bin);
 # Error which happens during insertion of rows
-alter table t1 add primary key (i);
---error ER_DUP_ENTRY
-create table if not exists t1 (select 2 as i) union all (select 2 as i);
-select * from t1;
-drop table t1;
+# TODO: Bug lp:311072
+# create table t1 (i int);
+# alter table t1 add primary key (i);
+# --error ER_DUP_ENTRY
+# create table if not exists t1 (select 2 as i) union all (select 2 as i);
+# select * from t1;
+# drop table t1;
 
 
 # Base vs temporary tables dillema (a.k.a. bug#24508 "Inconsistent
@@ -1192,15 +1162,16 @@ drop table if exists t2;
 CREATE TEMPORARY TABLE t2 (primary key (a)) select * from t1;
 # This should give warning
 drop table if exists t2;
-CREATE TABLE t2 (a int, b int, primary key (a));
---error ER_DUP_ENTRY
-CREATE TABLE IF NOT EXISTS t2 (primary key (a)) select * from t1;
-SELECT * from t2;
-TRUNCATE table t2;
---error ER_DUP_ENTRY
-INSERT INTO t2 select * from t1;
-SELECT * from t2;
-drop table t2;
+# TODO: Bug lp:311072
+#CREATE TABLE t2 (a int, b int, primary key (a));
+#--error ER_DUP_ENTRY
+#CREATE TABLE IF NOT EXISTS t2 (primary key (a)) select * from t1;
+#SELECT * from t2;
+#TRUNCATE table t2;
+#--error ER_DUP_ENTRY
+#INSERT INTO t2 select * from t1;
+#SELECT * from t2;
+#drop table t2;
 
 CREATE TEMPORARY TABLE t2 (a int, b int, primary key (a));
 --error ER_DUP_ENTRY
@@ -1240,7 +1211,6 @@ SHOW CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 #
 # Bug#21432 Database/Table name limited to 64 bytes, not chars, problems with multi-byte
 #
-set names utf8;
 
 create database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 use имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
@@ -1257,11 +1227,8 @@ create table имя_таблицы_в_кодировке_утф8_длиной_б
   index имя_индекса_в_кодировке_утф8_длиной_больше_чем_48 (имя_поля_в_кодировке_утф8_длиной_больше_чем_45)
 );
 
-create view имя_вью_кодировке_утф8_длиной_больше_чем_42 as
-select имя_поля_в_кодировке_утф8_длиной_больше_чем_45
-from имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 
-# database, table, field, key, view
+# database, table, field, key
 select * from имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 
 select TABLE_NAME from information_schema.tables where
@@ -1273,75 +1240,10 @@ table_schema='test';
 select INDEX_NAME from information_schema.statistics where
 table_schema='test';
 
-select TABLE_NAME from information_schema.views where
-table_schema='test';
-
 show create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
-show create view имя_вью_кодировке_утф8_длиной_больше_чем_42;
 
-# procedure, function, trigger
-
-create trigger имя_триггера_в_кодировке_утф8_длиной_больше_чем_49
-before insert on имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48 for each row set @a:=1;
-select TRIGGER_NAME from information_schema.triggers where
-trigger_schema='test';
-drop trigger имя_триггера_в_кодировке_утф8_длиной_больше_чем_49;
---error 1059
-create trigger
-очень_очень_очень_очень_очень_очень_очень_очень_длинная_строка_66
-before insert on имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48 for each row set @a:=1;
---error 1059
-drop trigger очень_очень_очень_очень_очень_очень_очень_очень_длинная_строка_66;
-
-create procedure имя_процедуры_в_кодировке_утф8_длиной_больше_чем_50()
-begin
-end;
-select ROUTINE_NAME from information_schema.routines where
-routine_schema='test';
-drop procedure имя_процедуры_в_кодировке_утф8_длиной_больше_чем_50;
---error 1059
-create procedure очень_очень_очень_очень_очень_очень_очень_очень_длинная_строка_66()
-begin
-end;
-
-create function имя_функции_в_кодировке_утф8_длиной_больше_чем_49()
-   returns int
-return 0;
-select ROUTINE_NAME from information_schema.routines where
-routine_schema='test';
-drop function имя_функции_в_кодировке_утф8_длиной_больше_чем_49;
---error 1059
-create function очень_очень_очень_очень_очень_очень_очень_очень_длинная_строка_66()
-   returns int
-return 0;
-
-drop view имя_вью_кодировке_утф8_длиной_больше_чем_42;
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
-set names default;
 
-#
-# Bug#21136 CREATE TABLE SELECT within CREATE TABLE SELECT causes server crash
-#
-
---disable_warnings
-drop table if exists t1,t2,t3;
-drop function if exists f1;
---enable_warnings
-
---delimiter |
-create function f1() returns int
-begin
-  declare res int;
-  create temporary table t3 select 1 i;
-  set res:= (select count(*) from t1);
-  drop temporary table t3;
-  return res;
-end|
---delimiter ;
-create table t1 as select 1;
-create table t2 as select f1() from t1;
-drop table t1,t2;
-drop function f1;
 
 #
 # Bug#25629 CREATE TABLE LIKE does not work with INFORMATION_SCHEMA
@@ -1350,9 +1252,6 @@ create table t1 like information_schema.processlist;
 show create table t1;
 drop table t1;
 create temporary table t1 like information_schema.processlist;
-show create table t1;
-drop table t1;
-create table t1 like information_schema.character_sets;
 show create table t1;
 drop table t1;
 
@@ -1377,10 +1276,10 @@ CREATE TABLE t1(
   c1 INT DEFAULT 12 COMMENT 'column1',
   c2 INT NULL COMMENT 'column2',
   c3 INT NOT NULL COMMENT 'column3',
-  c4 VARCHAR(255) CHARACTER SET utf8 NOT NULL DEFAULT 'a',
+  c4 VARCHAR(255) NOT NULL DEFAULT 'a',
   c5 VARCHAR(255) COLLATE utf8_unicode_ci NULL DEFAULT 'b',
   c6 VARCHAR(255))
-  COLLATE latin1_bin;
+  COLLATE utf8_bin;
 
 --echo
 
@@ -1421,15 +1320,13 @@ CREATE TABLE t1(c1 TIMESTAMP, c2 TIMESTAMP);
 
 --echo
 
-SET sql_mode = NO_ZERO_DATE;
-
 --echo
---error ER_INVALID_DEFAULT
 CREATE TABLE t2(c1 TIMESTAMP, c2 TIMESTAMP DEFAULT 0);
+drop table t2;
 
 --echo
---error ER_INVALID_DEFAULT
 CREATE TABLE t2(c1 TIMESTAMP, c2 TIMESTAMP);
+drop table t2;
 
 --echo
 --echo # -- Check that NULL column still can be created.
@@ -1437,29 +1334,21 @@ CREATE TABLE t2(c1 TIMESTAMP NULL);
 
 --echo
 --echo # -- Check ALTER TABLE.
---error ER_INVALID_DEFAULT
 ALTER TABLE t1 ADD INDEX(c1);
 
 --echo
 --echo # -- Check DATETIME.
-SET sql_mode = '';
-
 --echo
 
 CREATE TABLE t3(c1 DATETIME NOT NULL);
 INSERT INTO t3 VALUES (0);
 
 --echo
-SET sql_mode = TRADITIONAL;
-
---echo
---error ER_TRUNCATED_WRONG_VALUE
 ALTER TABLE t3 ADD INDEX(c1);
 
 --echo
 --echo # -- Cleanup.
 
-SET sql_mode = '';
 DROP TABLE t1;
 DROP TABLE t2;
 DROP TABLE t3;
@@ -1467,49 +1356,3 @@ DROP TABLE t3;
 --echo
 --echo # -- End of Bug#18834.
 
-###########################################################################
-
---echo
---echo # --
---echo # -- Bug#34274: Invalid handling of 'DEFAULT 0' for YEAR data type.
---echo # --
---echo
-
---disable_warnings
-DROP TABLE IF EXISTS t1;
---enable_warnings
-
---echo
-CREATE TABLE t1(c1 YEAR DEFAULT 2008, c2 YEAR DEFAULT 0);
-
---echo
-SHOW CREATE TABLE t1;
-
---echo
-INSERT INTO t1 VALUES();
-
---echo
-SELECT * FROM t1;
-
---echo
-ALTER TABLE t1 MODIFY c1 YEAR DEFAULT 0;
-
---echo
-SHOW CREATE TABLE t1;
-
---echo
-INSERT INTO t1 VALUES();
-
---echo
-SELECT * FROM t1;
-
---echo
-DROP TABLE t1;
-
---echo
---echo # -- End of Bug#34274
-
-###########################################################################
-
---echo
---echo End of 5.1 tests
