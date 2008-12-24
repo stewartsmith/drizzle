@@ -52,6 +52,7 @@ while ($1)
  }
 enable_query_log;
 SELECT * FROM (SELECT * FROM t1) as b ORDER BY a  ASC LIMIT 0,20;
+--replace_column 9 X
 explain select count(*) from t1 as tt1, (select * from t1) as tt2;
 drop table t1;
 SELECT * FROM (SELECT (SELECT * FROM (SELECT 1 as a) as a )) as b;
