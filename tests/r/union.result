@@ -131,7 +131,7 @@ ERROR 21000: The used SELECT statements have a different number of columns
 select a from t1 union select * from t2;
 ERROR 21000: The used SELECT statements have a different number of columns
 select * from t1 union select SQL_BUFFER_RESULT * from t2;
-ERROR 42000: Incorrect usage/placement of 'SQL_BUFFER_RESULT'
+ERROR 42000: Incorrect usage/placement of 'SQL_BUFFER_RESULT'
 create table t3 select a,b from t1 union all select a,b from t2;
 insert into t3 select a,b from t1 union all select a,b from t2;
 replace into t3 select a,b as c from t1 union all select a,b from t2;
