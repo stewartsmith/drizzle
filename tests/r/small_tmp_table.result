@@ -2,9 +2,8 @@ DROP TABLE IF EXISTS t1;
 Warnings:
 Note	1051	Unknown table 't1'
 CREATE TABLE t1 (
-a varchar(32) character set utf8 collate utf8_bin NOT NULL,
-b varchar(32) character set utf8 collate utf8_bin NOT NULL )
-ENGINE=MyISAM DEFAULT CHARSET=utf8;
+a varchar(32) collate utf8_bin NOT NULL,
+b varchar(32) collate utf8_bin NOT NULL );
 INSERT INTO t1 VALUES
 ('AAAAAAAAAA','AAAAAAAAAA'), ('AAAAAAAAAB','AAAAAAAAAB '),
 ('AAAAAAAAAB','AAAAAAAAAB'), ('AAAAAAAAAC','AAAAAAAAAC'),
@@ -14,6 +13,17 @@ INSERT INTO t1 VALUES
 ('AAAAAAAAAJ','AAAAAAAAAJ'), ('AAAAAAAAAK','AAAAAAAAAK');
 set tmp_table_size=1024;
 SELECT MAX(a) FROM t1 GROUP BY a,b;
-ERROR 23000: Can't write; duplicate key in table 'tmp_table'
+MAX(a)
+AAAAAAAAAA
+AAAAAAAAAB
+AAAAAAAAAC
+AAAAAAAAAD
+AAAAAAAAAE
+AAAAAAAAAF
+AAAAAAAAAG
+AAAAAAAAAH
+AAAAAAAAAI
+AAAAAAAAAJ
+AAAAAAAAAK
 set tmp_table_size=default;
 DROP TABLE t1;

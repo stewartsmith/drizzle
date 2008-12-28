@@ -99,6 +99,7 @@ char* getlogin(void);
   Read a packet from server. Give error message if socket was down
   or packet is an error message
 *****************************************************************************/
+safe_read_error_hook_func safe_read_error_hook= NULL;
 
 uint32_t cli_safe_read(DRIZZLE *drizzle)
 {
@@ -110,10 +111,9 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
 
   if (len == packet_error || len == 0)
   {
-#ifdef DRIZZLE_SERVER
-    if (net->vio && vio_was_interrupted(net->vio))
-      return (packet_error);
-#endif /*DRIZZLE_SERVER*/
+    if (safe_read_error_hook != NULL)
+      if (safe_read_error_hook(net))
+        return (packet_error);
     drizzle_disconnect(drizzle);
     drizzle_set_error(drizzle, net->last_errno == CR_NET_PACKET_TOO_LARGE ?
                       CR_NET_PACKET_TOO_LARGE : CR_SERVER_LOST,

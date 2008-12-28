@@ -5,11 +5,11 @@
 # binlog if it was a transactional table, it resulted in an
 # inconsistency between binlog and the internal list of temp tables.
 
--- source include/have_innodb.inc
---disable_warnings
 drop table if exists t1, t2;
---enable_warnings
-CREATE TABLE t1 ( a int );
+drop table if exists t1;
+CREATE TABLE t1 (
+  a int DEFAULT 0 NOT NULL
+) ENGINE = InnoDB;
 INSERT INTO t1 VALUES (1),(2),(1);
 --error ER_DUP_ENTRY
 CREATE TABLE t2 ( PRIMARY KEY (a) ) ENGINE=INNODB SELECT a FROM t1;

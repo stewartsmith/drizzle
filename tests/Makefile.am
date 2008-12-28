@@ -40,8 +40,7 @@ TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
 EXTRA_DIST = \
 	$(EXTRA_SCRIPTS) \
 	suite \
-	${srcdir}/t/*.test \
-	${srcdir}/t/*.opt \
+	${srcdir}/t \
 	${srcdir}/extra/rpl_tests/*.test \
 	${srcdir}/extra/binlog_tests/*.test \
 	${srcdir}/include/*.inc \

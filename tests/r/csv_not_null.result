@@ -1,5 +1,8 @@
 # ===== csv_not_null.1 =====
 DROP TABLE IF EXISTS t1, t2;
+Warnings:
+Note	1051	Unknown table 't1'
+Note	1051	Unknown table 't2'
 # === Will fail -- no NOT NULL ===
 CREATE TABLE t1 (a int) ENGINE = CSV;
 ERROR 42000: The storage engine for the table doesn't support nullable columns
@@ -11,21 +14,20 @@ ERROR 42000: The storage engine for the table doesn't support nullable columns
 DROP TABLE t1;
 # ===== csv_not_null.2 =====
 DROP TABLE IF EXISTS t1;
+Warnings:
+Note	1051	Unknown table 't1'
 CREATE TABLE t1 (a int NOT NULL, b blob NOT NULL, c CHAR(20) NOT NULL, 
 d VARCHAR(20) NOT NULL, e enum('foo','bar') NOT NULL,f DATE NOT NULL) 
 ENGINE = CSV;
-# === should result in default for each datatype ===
 INSERT INTO t1 VALUES();
+ERROR HY000: Field 'a' doesn't have a default value
 SELECT * FROM t1;
 a	b	c	d	e	f
-0				foo	0000-00-00
 SELECT * FROM t1;
 a	b	c	d	e	f
-0				foo	0000-00-00
 INSERT INTO t1 VALUES(0,'abc','def','ghi','bar','1999-12-31');
 SELECT * FROM t1;
 a	b	c	d	e	f
-0				foo	0000-00-00
 0	abc	def	ghi	bar	1999-12-31
 # === insert failures ===
 INSERT INTO t1 VALUES(NULL,'ab','a','b','foo','2007-01-01');
@@ -36,8 +38,12 @@ ERROR HY000: Field 'a' doesn't have a default value
 DROP TABLE t1;
 # ===== csv_not_null.3 =====
 DROP TABLE IF EXISTS t1;
+Warnings:
+Note	1051	Unknown table 't1'
 CREATE TABLE t1 (a int NOT NULL, b char(10) NOT NULL) ENGINE = CSV;
 INSERT INTO t1 VALUES();
+ERROR HY000: Field 'a' doesn't have a default value
+insert into t1 values (0,"");
 SELECT * FROM t1;
 a	b
 0	
