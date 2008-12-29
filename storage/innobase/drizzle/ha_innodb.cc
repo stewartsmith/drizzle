@@ -2522,10 +2522,6 @@ innobase_savepoint(
 	  (unless we are in sub-statement), so SQL layer ensures that
 	  this method is never called in such situation.
 	*/
-#ifdef DRIZZLE_SERVER /* plugins cannot access session->in_sub_stmt */
-	assert(session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN) ||
-		session->in_sub_stmt);
-#endif /* DRIZZLE_SERVER */
 
 	trx = check_trx_exists(session);
 

@@ -696,7 +696,7 @@ Item *Item::get_tmp_table_item(Session *session)
 
 const CHARSET_INFO *Item::default_charset()
 {
-  return current_session->variables.collation_connection;
+  return current_session->variables.getCollation();
 }
 
 

@@ -13,12 +13,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir=           $(prefix)
-MYSQLLIBdir=            $(pkglibdir)
-pkgplugindir =		$(pkglibdir)/plugin
-
 AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
 EXTRA_LTLIBRARIES =	libuncompressed_lengthudf.la
 pkgplugin_LTLIBRARIES =	@plugin_uncompressed_length_shared_target@

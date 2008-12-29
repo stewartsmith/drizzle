@@ -577,7 +577,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
       if (cs_number)
       {
-        session_init_client_charset(session, cs_number);
         session->update_charset();
       }
     }
@@ -669,7 +668,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     table_list.select_lex= &(session->lex->select_lex);
 
     lex_start(session);
-    mysql_reset_session_for_next_command(session);
+    session->reset_for_next_command();
 
     session->lex->
       select_lex.table_list.link_in_list((unsigned char*) &table_list,
@@ -2317,61 +2316,6 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 }
 
 
-/**
- Reset Session part responsible for command processing state.
-
-   This needs to be called before execution of every statement
-   (prepared or conventional).
-   It is not called by substatements of routines.
-
-  @todo
-   Make it a method of Session and align its name with the rest of
-   reset/end/start/init methods.
-  @todo
-   Call it after we use Session for queries, not before.
-*/
-
-void mysql_reset_session_for_next_command(Session *session)
-{
-  session->free_list= 0;
-  session->select_number= 1;
-  /*
-    Those two lines below are theoretically unneeded as
-    Session::cleanup_after_query() should take care of this already.
-  */
-  session->auto_inc_intervals_in_cur_stmt_for_binlog.empty();
-
-  session->query_start_used= 0;
-  session->is_fatal_error= 0;
-  session->server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |
-                          SERVER_QUERY_NO_INDEX_USED |
-                          SERVER_QUERY_NO_GOOD_INDEX_USED);
-  /*
-    If in autocommit mode and not in a transaction, reset
-    OPTION_STATUS_NO_TRANS_UPDATE | OPTION_KEEP_LOG to not get warnings
-    in ha_rollback_trans() about some tables couldn't be rolled back.
-  */
-  if (!(session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
-  {
-    session->options&= ~OPTION_KEEP_LOG;
-    session->transaction.all.modified_non_trans_table= false;
-  }
-  session->thread_specific_used= false;
-
-  if (opt_bin_log)
-  {
-    reset_dynamic(&session->user_var_events);
-    session->user_var_events_alloc= session->mem_root;
-  }
-  session->clear_error();
-  session->main_da.reset_diagnostics_area();
-  session->total_warn_count=0;			// Warnings for this query
-  session->sent_row_count= session->examined_row_count= 0;
-
-  return;
-}
-
-
 void
 mysql_init_select(LEX *lex)
 {
@@ -2541,7 +2485,7 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
     FIXME: cleanup the dependencies in the code to simplify this.
   */
   lex_start(session);
-  mysql_reset_session_for_next_command(session);
+  session->reset_for_next_command();
 
   {
     LEX *lex= session->lex;
@@ -2606,7 +2550,7 @@ bool mysql_test_parse_for_slave(Session *session, char *inBuf, uint32_t length)
 
   Lex_input_stream lip(session, inBuf, length);
   lex_start(session);
-  mysql_reset_session_for_next_command(session);
+  session->reset_for_next_command();
 
   if (!parse_sql(session, &lip) &&
       all_tables_not_ok(session,(TableList*) lex->select_lex.table_list.first))
@@ -3549,7 +3493,8 @@ bool check_simple_select()
     char command[80];
     Lex_input_stream *lip= session->m_lip;
     strncpy(command, lip->yylval->symbol.str,
-            cmin((ulong)lip->yylval->symbol.length, sizeof(command)-1));
+            cmin(lip->yylval->symbol.length, sizeof(command)-1));
+    command[cmin(lip->yylval->symbol.length, sizeof(command)-1)]=0;
     my_error(ER_CANT_USE_OPTION_HERE, MYF(0), command);
     return 1;
   }

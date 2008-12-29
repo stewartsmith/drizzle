@@ -48,26 +48,26 @@ class sql_exchange;
 class LEX_COLUMN;
 class Item_outer_ref;
 
-#ifdef DRIZZLE_SERVER
 /*
   The following hack is needed because mysql_yacc.cc does not define
   YYSTYPE before including this file
 */
 
-#include <drizzled/set_var.h>
-#include <drizzled/item/func.h>
-#ifdef DRIZZLE_YACC
-#define LEX_YYSTYPE void *
-#else
-#if defined(DRIZZLE_LEX)
-#include <drizzled/lex_symbol.h>
-#include <drizzled/sql_yacc.h>
-#define LEX_YYSTYPE YYSTYPE *
-#else
-#define LEX_YYSTYPE void *
-#endif
-#endif
-#endif
+#ifdef DRIZZLE_SERVER
+# include <drizzled/set_var.h>
+# include <drizzled/item/func.h>
+# ifdef DRIZZLE_YACC
+#  define LEX_YYSTYPE void *
+# else
+#  if defined(DRIZZLE_LEX)
+#   include <drizzled/lex_symbol.h>
+#   include <drizzled/sql_yacc.h>
+#   define LEX_YYSTYPE YYSTYPE *
+#  else
+#   define LEX_YYSTYPE void *
+#  endif /* defined(DRIZZLE_LEX) */
+# endif /* DRIZZLE_YACC */
+#endif /* DRIZZLE_SERVER */
 
 // describe/explain types
 #define DESCRIBE_NORMAL		1
@@ -849,10 +849,7 @@ public:
 
 struct st_parsing_options
 {
-  bool allows_variable;
-  bool allows_select_into;
   bool allows_select_procedure;
-  bool allows_derived;
 
   st_parsing_options() { reset(); }
   void reset();

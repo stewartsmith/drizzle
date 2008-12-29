@@ -35,6 +35,7 @@
 #include <drizzled/handler.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
+#include <drizzled/query_arena.h>
 #include <string>
 #include <bitset>
 
@@ -223,13 +224,15 @@ struct system_variables
 
   /* Only charset part of these variables is sensible */
   const CHARSET_INFO  *character_set_filesystem;
-  const CHARSET_INFO  *character_set_client;
-  const CHARSET_INFO  *character_set_results;
 
   /* Both charset and collation parts of these variables are important */
   const CHARSET_INFO	*collation_server;
   const CHARSET_INFO	*collation_database;
-  const CHARSET_INFO  *collation_connection;
+
+  inline const CHARSET_INFO  *getCollation(void) 
+  {
+    return collation_database ? collation_database : collation_server;
+  }
 
   /* Locale Support */
   MY_LOCALE *lc_time_names;
@@ -331,53 +334,6 @@ typedef struct system_status_var
 void mark_transaction_to_rollback(Session *session, bool all);
 
 #ifdef DRIZZLE_SERVER
-
-class Query_arena
-{
-public:
-  /*
-    List of items created in the parser for this query. Every item puts
-    itself to the list on creation (see Item::Item() for details))
-  */
-  Item *free_list;
-  MEM_ROOT *mem_root;                   // Pointer to current memroot
-
-  Query_arena(MEM_ROOT *mem_root_arg) :
-    free_list(0), mem_root(mem_root_arg)
-  { }
-  /*
-    This constructor is used only when Query_arena is created as
-    backup storage for another instance of Query_arena.
-  */
-  Query_arena() { }
-
-  virtual ~Query_arena() {};
-
-  inline void* alloc(size_t size) { return alloc_root(mem_root,size); }
-  inline void* calloc(size_t size)
-  {
-    void *ptr;
-    if ((ptr=alloc_root(mem_root,size)))
-      memset(ptr, 0, size);
-    return ptr;
-  }
-  inline char *strdup(const char *str)
-  { return strdup_root(mem_root,str); }
-  inline char *strmake(const char *str, size_t size)
-  { return strmake_root(mem_root,str,size); }
-  inline void *memdup(const void *str, size_t size)
-  { return memdup_root(mem_root,str,size); }
-  inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
-  {
-    void *ptr;
-    if ((ptr= alloc_root(mem_root,size+gap)))
-      memcpy(ptr,str,size);
-    return ptr;
-  }
-
-  void free_items();
-};
-
 
 /**
   @class Statement
@@ -498,7 +454,6 @@ void xid_cache_delete(XID_STATE *xid_state);
   @brief A set of Session members describing the current authenticated user.
 */
 
-using namespace std;
 class Security_context {
 public:
   Security_context() {}
@@ -509,8 +464,8 @@ public:
     priv_user - The user privilege we are using. May be "" for anonymous user.
     ip - client IP
   */
-  string user;
-  string ip;
+  std::string user;
+  std::string ip;
 
   void skip_grants();
   inline const char *priv_host_name()
@@ -944,22 +899,6 @@ public:
 
   void set_server_id(uint32_t sid) { server_id = sid; }
 
-private:
-  uint32_t binlog_table_maps; // Number of table maps currently in the binlog
-
-  /**
-     Flags with per-thread information regarding the status of the
-     binary log.
-   */
-  uint32_t binlog_flags;
-public:
-  uint32_t get_binlog_table_maps() const {
-    return binlog_table_maps;
-  }
-  void clear_binlog_table_maps() {
-    binlog_table_maps= 0;
-  }
-
 public:
 
   struct st_transactions {
@@ -1223,7 +1162,6 @@ public:
     Reset to false when we leave the sub-statement mode.
   */
   bool       is_fatal_sub_stmt_error;
-  bool	     query_start_used;
   /* for IS NULL => = last_insert_id() fix in remove_eq_conds() */
   bool       substitute_null_with_insert_id;
   bool	     in_lock_tables;
@@ -1366,7 +1304,7 @@ public:
     this->set_proc_info(old_msg);
     pthread_mutex_unlock(&mysys_var->mutex);
   }
-  inline time_t query_start() { query_start_used=1; return start_time; }
+  inline time_t query_start() { return start_time; }
   inline void set_time()
   {
     if (user_time)
@@ -1456,7 +1394,7 @@ public:
     To raise this flag, use my_error().
   */
   inline bool is_error() const { return main_da.is_error(); }
-  inline const CHARSET_INFO *charset() { return variables.character_set_client; }
+  inline const CHARSET_INFO *charset() { return default_charset_info; }
   void update_charset();
 
   void change_item_tree(Item **place, Item *new_value)
@@ -1554,6 +1492,11 @@ public:
     Remove the error handler last pushed.
   */
   void pop_internal_handler();
+
+  /**
+    Reset object after executing commands.
+  */
+  void reset_for_next_command();
 
   /**
     Close the current connection.
@@ -1665,14 +1608,6 @@ public:
   { return 0; }
   virtual void send_error(uint32_t errcode,const char *err);
   virtual bool send_eof()=0;
-  /**
-    Check if this query returns a result set and therefore is allowed in
-    cursors and set an error message if it is not the case.
-
-    @retval false     success
-    @retval true      error, an error message is set
-  */
-  virtual bool check_simple_select() const;
   virtual void abort() {}
   /*
     Cleanup instance of this class for next execution of a prepared
@@ -1714,7 +1649,6 @@ public:
   bool send_fields(List<Item> &list, uint32_t flags);
   bool send_data(List<Item> &items);
   bool send_eof();
-  virtual bool check_simple_select() const { return false; }
   void abort();
   virtual void cleanup();
 };
@@ -2208,7 +2142,6 @@ public:
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
   bool send_eof();
-  virtual bool check_simple_select() const;
   void cleanup();
 };
 

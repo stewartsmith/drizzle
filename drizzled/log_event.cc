@@ -1300,12 +1300,7 @@ Query_log_event::Query_log_event(Session* session_arg, const char* query_arg,
     we will probably want to reclaim the 29 bits. So we need the &.
   */
   flags2= (uint32_t) (session_arg->options & OPTIONS_WRITTEN_TO_BIN_LOG);
-  assert(session_arg->variables.character_set_client->number < 256*256);
-  assert(session_arg->variables.collation_connection->number < 256*256);
   assert(session_arg->variables.collation_server->number < 256*256);
-  assert(session_arg->variables.character_set_client->mbminlen == 1);
-  int2store(charset, session_arg->variables.character_set_client->number);
-  int2store(charset+2, session_arg->variables.collation_connection->number);
   int2store(charset+4, session_arg->variables.collation_server->number);
   time_zone_len= 0;
 }
@@ -2619,7 +2614,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
     as the present method does not call mysql_parse().
   */
   lex_start(session);
-  mysql_reset_session_for_next_command(session);
+  session->reset_for_next_command();
 
   if (!use_rli_only_for_errors)
   {
@@ -5044,7 +5039,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
       call mysql_init_query() which does a more complete set of inits.
     */
     lex_start(session);
-    mysql_reset_session_for_next_command(session);
+    session->reset_for_next_command();
 
     /*
       Open the table if it is not already open and add the table to

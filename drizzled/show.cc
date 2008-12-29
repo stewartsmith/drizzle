@@ -337,7 +337,7 @@ mysqld_show_create(Session *session, TableList *table_list)
   /* Only one table for now, but VIEW can involve several tables */
   if (open_normal_and_derived_tables(session, table_list, 0))
   {
-    if (session->is_error() && session->main_da.sql_errno() != ER_VIEW_INVALID)
+    if (session->is_error())
       return(true);
 
     /*
@@ -2970,21 +2970,21 @@ static int get_schema_tables_record(Session *session, TableList *tables,
       if (file->stats.create_time)
       {
         session->variables.time_zone->gmt_sec_to_TIME(&time,
-                                                  (my_time_t) file->stats.create_time);
+                                                  (time_t) file->stats.create_time);
         table->field[14]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[14]->set_notnull();
       }
       if (file->stats.update_time)
       {
         session->variables.time_zone->gmt_sec_to_TIME(&time,
-                                                  (my_time_t) file->stats.update_time);
+                                                  (time_t) file->stats.update_time);
         table->field[15]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[15]->set_notnull();
       }
       if (file->stats.check_time)
       {
         session->variables.time_zone->gmt_sec_to_TIME(&time,
-                                                  (my_time_t) file->stats.check_time);
+                                                  (time_t) file->stats.check_time);
         table->field[16]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[16]->set_notnull();
       }

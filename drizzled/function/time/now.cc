@@ -23,10 +23,10 @@
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
 
-String *Item_func_now::val_str(String *str __attribute__((unused)))
+String *Item_func_now::val_str(String *)
 {
   assert(fixed == 1);
-  str_value.set(buff,buff_length, &my_charset_bin);
+  str_value.set(buff, buff_length, &my_charset_bin);
   return &str_value;
 }
 
@@ -44,7 +44,7 @@ void Item_func_now::fix_length_and_dec()
 }
 
 /**
-    Converts current time in my_time_t to DRIZZLE_TIME represenatation for local
+    Converts current time in time_t to DRIZZLE_TIME represenatation for local
     time zone. Defines time zone (local) used for whole NOW function.
 */
 void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
@@ -56,13 +56,13 @@ void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 
 
 /**
-    Converts current time in my_time_t to DRIZZLE_TIME represenatation for UTC
+    Converts current time in time_t to DRIZZLE_TIME represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_TIMESTAMP function.
 */
 void Item_func_now_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   my_tz_UTC->gmt_sec_to_TIME(now_time,
-                             (my_time_t)(current_session->query_start()));
+                             (time_t)(current_session->query_start()));
   /*
     We are not flagging this query as using time zone, since it uses fixed
     UTC-SYSTEM time-zone.

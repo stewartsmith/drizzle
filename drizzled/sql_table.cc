@@ -2630,16 +2630,6 @@ send_result_message:
       }
       break;
 
-    case HA_ADMIN_NOT_BASE_TABLE:
-      {
-        char buf[ERRMSGSIZE+20];
-        uint32_t length= snprintf(buf, ERRMSGSIZE,
-                              ER(ER_BAD_TABLE_ERROR), table_name);
-        protocol->store(STRING_WITH_LEN("note"), system_charset_info);
-        protocol->store(buf, length, system_charset_info);
-      }
-      break;
-
     case HA_ADMIN_OK:
       protocol->store(STRING_WITH_LEN("status"), system_charset_info);
       protocol->store(STRING_WITH_LEN("OK"), system_charset_info);
@@ -2736,14 +2726,6 @@ send_result_message:
       table->next_global= save_next_global;
       goto send_result_message;
     }
-    case HA_ADMIN_WRONG_CHECKSUM:
-    {
-      protocol->store(STRING_WITH_LEN("note"), system_charset_info);
-      protocol->store(ER(ER_VIEW_CHECKSUM), strlen(ER(ER_VIEW_CHECKSUM)),
-                      system_charset_info);
-      break;
-    }
-
     case HA_ADMIN_NEEDS_UPGRADE:
     case HA_ADMIN_NEEDS_ALTER:
     {

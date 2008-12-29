@@ -40,8 +40,7 @@ TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
 EXTRA_DIST = \
 	$(EXTRA_SCRIPTS) \
 	suite \
-	${srcdir}/t/*.test \
-	${srcdir}/t/*.opt \
+	${srcdir}/t \
 	${srcdir}/extra/rpl_tests/*.test \
 	${srcdir}/extra/binlog_tests/*.test \
 	${srcdir}/include/*.inc \
@@ -55,6 +54,7 @@ EXTRA_DIST = \
 	${srcdir}/std_data/*.000001 \
 	${srcdir}/std_data/des_key_file \
 	${srcdir}/std_data/*.pem \
+	${srcdir}/std_data/*.txt \
 	${srcdir}/std_data/*.frm \
 	${srcdir}/std_data/*.MY* \
 	${srcdir}/std_data/*.cnf \

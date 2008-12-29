@@ -412,10 +412,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %pure_parser                                    /* We have threads */
 /*
-  Currently there are 93 shift/reduce conflicts.
+  Currently there are 92 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 93
+%expect 92
 
 /*
    Comments for TOKENS.
@@ -452,7 +452,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ASCII_SYM                     /* MYSQL-FUNC */
 %token  ASENSITIVE_SYM                /* FUTURE-USE */
 %token  AT_SYM                        /* SQL-2003-R */
-%token  AUTHORS_SYM
 %token  AUTOEXTEND_SIZE_SYM
 %token  AUTO_INC
 %token  AVG_ROW_LENGTH
@@ -3768,13 +3767,7 @@ sum_expr:
 
 variable:
           '@'
-          {
-            if (! Lex->parsing_options.allows_variable)
-            {
-              my_error(ER_VIEW_SELECT_VARIABLE, MYF(0));
-              DRIZZLE_YYABORT;
-            }
-          }
+          { }
           variable_aux
           {
             $$= $3;
@@ -4299,12 +4292,6 @@ select_derived_init:
           {
             LEX *lex= Lex;
 
-            if (! lex->parsing_options.allows_derived)
-            {
-              my_error(ER_VIEW_SELECT_DERIVED, MYF(0));
-              DRIZZLE_YYABORT;
-            }
-
             SELECT_LEX *sel= lex->current_select;
             TableList *embedding;
             if (!sel->embedding || sel->end_nested_join(lex->session))
@@ -4773,13 +4760,7 @@ select_var_ident:
 
 into:
           INTO
-          {
-            if (! Lex->parsing_options.allows_select_into)
-            {
-              my_error(ER_VIEW_SELECT_CLAUSE, MYF(0), "INTO");
-              DRIZZLE_YYABORT;
-            }
-          }
+          { }
           into_destination
         ;
 
@@ -5704,8 +5685,8 @@ text_literal:
           {
             LEX_STRING tmp;
             Session *session= YYSession;
-            const CHARSET_INFO * const cs_con= session->variables.collation_connection;
-            const CHARSET_INFO * const cs_cli= session->variables.character_set_client;
+            const CHARSET_INFO * const cs_con= session->variables.getCollation();
+            const CHARSET_INFO * const cs_cli= default_charset_info;
             uint32_t repertoire= session->lex->text_string_is_7bit &&
                              my_charset_is_ascii_based(cs_cli) ?
                              MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
@@ -5736,7 +5717,7 @@ text_literal:
                  If the string has been pure ASCII so far,
                  check the new part.
               */
-              const CHARSET_INFO * const cs= YYSession->variables.collation_connection;
+              const CHARSET_INFO * const cs= YYSession->variables.getCollation();
               item->collation.repertoire|= my_string_repertoire(cs,
                                                                 $2.str,
                                                                 $2.length);
@@ -5749,7 +5730,7 @@ text_string:
           {
             $$= new (YYSession->mem_root) String($1.str,
                                              $1.length,
-                                             YYSession->variables.collation_connection);
+                                             YYSession->variables.getCollation());
           }
         | HEX_NUM
           {
@@ -6090,7 +6071,7 @@ TEXT_STRING_literal:
             if (session->charset_is_collation_connection)
               $$= $1;
             else
-              session->convert_string(&$$, session->variables.collation_connection,
+              session->convert_string(&$$, session->variables.getCollation(),
                                   $1.str, $1.length, session->charset());
           }
         ;
@@ -6177,7 +6158,6 @@ keyword_sp:
         | ALGORITHM_SYM            {}
         | ANY_SYM                  {}
         | AT_SYM                   {}
-        | AUTHORS_SYM              {}
         | AUTO_INC                 {}
         | AUTOEXTEND_SIZE_SYM      {}
         | AVG_ROW_LENGTH           {}
@@ -6482,12 +6462,6 @@ option_value:
           {
             LEX *lex=Lex;
             lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
-          }
-        | NAMES_SYM COLLATE_SYM collation_name_or_default
-          {
-            LEX *lex= Lex;
-            $3= $3 ? $3 : global_system_variables.character_set_client;
-            lex->var_list.push_back(new set_var_collation_client($3,$3,$3));
           }
         ;
 
