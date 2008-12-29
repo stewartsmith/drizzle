@@ -66,6 +66,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		dtcollation.h \
 		errmsg.h \
 		error.h \
+		errmsg_print.h \
 		error_injection.h \
 		field.h \
 		field_iterator.h \
@@ -401,6 +402,7 @@ drizzled_SOURCES = \
 		dtcollation.cc \
 		errmsg.cc \
 		error.cc \
+		errmsg_print.cc \
 		field.cc \
 		field_conv.cc \
 		field_iterator.cc \

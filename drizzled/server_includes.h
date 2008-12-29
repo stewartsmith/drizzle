@@ -56,6 +56,9 @@
 #include <drizzled/sql_table.h>
 #include <drizzled/log.h>
 
+/* Routines for printing error messages */
+#include <drizzled/errmsg_print.h>
+
 #include <string>
 #include <sstream>
 #include <bitset>
@@ -116,7 +119,7 @@ extern const char * const TRN_EXT;
 extern char language[FN_REFLEN];
 extern char glob_hostname[FN_REFLEN], drizzle_home[FN_REFLEN];
 extern char pidfile_name[FN_REFLEN], system_time_zone[30], *opt_init_file;
-extern char log_error_file[FN_REFLEN], *opt_tc_log_file;
+extern char *opt_tc_log_file;
 extern const double log_10[309];
 extern uint64_t log_10_int[20];
 extern uint64_t keybuff_size;
@@ -163,7 +166,7 @@ extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;
 extern bool opt_using_transactions;
 extern bool using_update_log, server_id_supplied;
-extern bool opt_update_log, opt_bin_log, opt_error_log;
+extern bool opt_update_log, opt_bin_log;
 extern bool opt_log;
 extern bool opt_slow_log;
 extern ulong log_output_options;
@@ -194,7 +197,7 @@ extern TableList general_log, slow_log;
 extern FILE *stderror_file;
 extern pthread_mutex_t LOCK_drizzle_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
-       LOCK_error_log, LOCK_uuid_generator,
+       LOCK_uuid_generator,
        LOCK_crypt, LOCK_timezone,
        LOCK_slave_list, LOCK_active_mi, LOCK_global_read_lock,
        LOCK_global_system_variables, LOCK_user_conn,

@@ -501,7 +501,6 @@ static SHOW_VAR fixed_vars[]= {
   {"locked_in_memory",	      (char*) &locked_in_memory,	    SHOW_MY_BOOL},
 #endif
   {"log_bin",                 (char*) &opt_bin_log,                 SHOW_BOOL},
-  {"log_error",               (char*) log_error_file,               SHOW_CHAR},
   {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
   {"open_files_limit",	      (char*) &open_files_limit,	          SHOW_LONGLONG},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
