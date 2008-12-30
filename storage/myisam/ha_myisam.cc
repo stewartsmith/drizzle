@@ -22,6 +22,7 @@
 #include "myisamdef.h"
 #include <drizzled/util/test.h>
 #include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include <drizzled/protocol.h>

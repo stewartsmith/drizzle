@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/configvar.h>
 #include <drizzled/gettext.h>
+#include <drizzled/errmsg_print.h>
 
 int configvar_initializer(st_plugin_int *plugin)
 {
