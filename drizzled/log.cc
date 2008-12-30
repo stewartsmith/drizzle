@@ -36,11 +36,10 @@
 
 #include <drizzled/plugin.h>
 #include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/log_event.h>
-
-#include <drizzled/errmsg.h>
 
 /* max size of the log message */
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
@@ -57,14 +56,6 @@ static int binlog_savepoint_rollback(handlerton *hton, Session *session, void *s
 static int binlog_commit(handlerton *hton, Session *session, bool all);
 static int binlog_rollback(handlerton *hton, Session *session, bool all);
 static int binlog_prepare(handlerton *hton, Session *session, bool all);
-
-
-sql_print_message_func sql_print_message_handlers[3] =
-{
-  sql_print_information,
-  sql_print_warning,
-  sql_print_error
-};
 
 
 char *make_default_log_name(char *buff,const char *log_ext)
@@ -2396,69 +2387,11 @@ static bool test_if_number(register const char *str,
   return(1);			/* Number ok */
 } /* test_if_number */
 
-
-void sql_perror(const char *message)
-{
-  sql_print_error("%s: %s",message, strerror(errno));
-}
-
-
-bool flush_error_log()
-{
-  bool result = 0;
-  if (opt_error_log)
-  {
-    pthread_mutex_lock(&LOCK_error_log);
-    if (freopen(log_error_file,"a+",stdout)==NULL)
-      result = 1;
-    if (freopen(log_error_file,"a+",stderr)==NULL)
-      result = 1;
-    pthread_mutex_unlock(&LOCK_error_log);
-  }
-   return result;
-}
-
 void DRIZZLE_BIN_LOG::signal_update()
 {
   pthread_cond_broadcast(&update_cond);
   return;
 }
-
-void sql_print_error(const char *format, ...)
-{
-  va_list args;
-
-  va_start(args, format);
-  errmsg_vprintf (current_session, ERROR_LEVEL, format, args);
-  va_end(args);
-
-  return;
-}
-
-
-void sql_print_warning(const char *format, ...)
-{
-  va_list args;
-
-  va_start(args, format);
-  errmsg_vprintf (current_session, WARNING_LEVEL, format, args);
-  va_end(args);
-
-  return;
-}
-
-
-void sql_print_information(const char *format, ...)
-{
-  va_list args;
-
-  va_start(args, format);
-  errmsg_vprintf (current_session, INFORMATION_LEVEL, format, args);
-  va_end(args);
-
-  return;
-}
-
 
 /********* transaction coordinator log for 2pc - mmap() based solution *******/
 

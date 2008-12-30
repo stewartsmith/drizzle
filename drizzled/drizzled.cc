@@ -34,6 +34,7 @@
 #include <drizzled/stacktrace.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
 #include <drizzled/tztime.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
@@ -241,11 +242,11 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 /* the default log output is log tables */
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
-static bool opt_debugging= 0, opt_console= 0;
+static bool opt_debugging= 0;
 static uint32_t wake_thread;
 static uint32_t killed_threads, thread_created;
 static uint32_t max_used_connections;
-static char *drizzled_user, *drizzled_chroot, *log_error_file_ptr;
+static char *drizzled_user, *drizzled_chroot;
 static char *opt_init_slave, *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
 static char *character_set_filesystem_name;
@@ -259,7 +260,7 @@ static I_List<Session> thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_error_log= 0;
+bool opt_log_queries_not_using_indexes= false;
 bool opt_skip_show_db= false;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
@@ -377,7 +378,7 @@ time_t server_start_time, flush_status_time;
 
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
-char log_error_file[FN_REFLEN], glob_hostname[FN_REFLEN];
+char glob_hostname[FN_REFLEN];
 char drizzle_real_data_home[FN_REFLEN],
      language[FN_REFLEN], reg_ext[FN_EXTLEN], drizzle_charsets_dir[FN_REFLEN],
      *opt_init_file, *opt_tc_log_file;
@@ -431,7 +432,6 @@ pthread_key_t THR_Session;
 pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_status,
                 LOCK_global_read_lock,
-                LOCK_error_log,
                 LOCK_global_system_variables,
                 LOCK_slave_list,
                 LOCK_active_mi,
@@ -889,7 +889,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
-  (void) pthread_mutex_destroy(&LOCK_error_log);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
   (void) pthread_mutex_destroy(&LOCK_active_mi);
   (void) pthread_rwlock_destroy(&LOCK_sys_init_connect);
@@ -2067,7 +2066,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
@@ -2116,31 +2114,6 @@ static int init_server_components()
   init_thr_lock();
 
   /* Setup logs */
-
-  /*
-    Enable old-fashioned error log, except when the user has requested
-    help information. Since the implementation of plugin server
-    variables the help output is now written much later.
-  */
-  if (opt_error_log && !opt_help)
-  {
-    if (!log_error_file_ptr[0])
-      fn_format(log_error_file, pidfile_name, drizzle_data_home, ".err",
-                MY_REPLACE_EXT); /* replace '.<domain>' by '.err', bug#4997 */
-    else
-      fn_format(log_error_file, log_error_file_ptr, drizzle_data_home, ".err",
-                MY_UNPACK_FILENAME | MY_SAFE_PATH);
-    if (!log_error_file[0])
-      opt_error_log= 1;				// Too long file name
-    else
-    {
-      if (freopen(log_error_file, "a+", stdout)==NULL)
-        sql_print_error(_("Unable to reopen stdout"));
-      else
-        if(freopen(log_error_file, "a+", stderr)==NULL)
-          sql_print_error(_("Unable to reopen stderr"));
-    }
-  }
 
   if (xid_cache_init())
   {
@@ -2697,7 +2670,6 @@ enum options_drizzled
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_SKIP_PRIOR,
   OPT_STANDALONE,
-  OPT_CONSOLE,
   OPT_SHORT_LOG_FORMAT,
   OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          OPT_INIT_FILE,
@@ -2763,7 +2735,6 @@ enum options_drizzled
   OPT_THREAD_CONCURRENCY, OPT_THREAD_CACHE_SIZE,
   OPT_TMP_TABLE_SIZE, OPT_THREAD_STACK,
   OPT_WAIT_TIMEOUT,
-  OPT_ERROR_LOG_FILE,
   OPT_DEFAULT_WEEK_FORMAT,
   OPT_RANGE_ALLOC_BLOCK_SIZE,
   OPT_QUERY_ALLOC_BLOCK_SIZE, OPT_QUERY_PREALLOC_SIZE,
@@ -2879,10 +2850,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.completion_type,
    (char**) &max_system_variables.completion_type, 0, GET_UINT,
    REQUIRED_ARG, 0, 0, 2, 0, 1, 0},
-  {"console", OPT_CONSOLE,
-   N_("Write error output on screen."),
-   (char**) &opt_console, (char**) &opt_console, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
   {"core-file", OPT_WANT_CORE,
    N_("Write core on errors."),
    0, 0, 0, GET_NO_ARG,
@@ -2973,10 +2940,6 @@ struct my_option my_long_options[] =
    N_("File that holds the names for last binary log files."),
    (char**) &opt_binlog_index_name, (char**) &opt_binlog_index_name, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-error", OPT_ERROR_LOG_FILE,
-   N_("Error log file."),
-   (char**) &log_error_file_ptr, (char**) &log_error_file_ptr, 0, GET_STR,
-   OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-isam", OPT_ISAM_LOG,
    N_("Log all MyISAM changes to file."),
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
@@ -3875,7 +3838,7 @@ static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
   opt_skip_slave_start= opt_reckless_slave = 0;
-  drizzle_home[0]= pidfile_name[0]= log_error_file[0]= 0;
+  drizzle_home[0]= pidfile_name[0]= 0;
   opt_bin_log= 0;
   opt_skip_show_db=0;
   opt_logname= opt_binlog_index_name= 0;
@@ -3917,7 +3880,6 @@ static void drizzle_init_variables(void)
     find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
-  log_error_file_ptr= log_error_file;
   language_ptr= language;
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
@@ -3973,7 +3935,6 @@ static void drizzle_init_variables(void)
   global_system_variables.myisam_stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   /* Variables that depends on compile options */
-  opt_error_log= 0;
 #ifdef HAVE_BROKEN_REALPATH
   have_symlink=SHOW_OPTION_NO;
 #else
@@ -4048,9 +4009,6 @@ drizzled_get_one_option(int optid,
   case (int) OPT_BIN_LOG:
     opt_bin_log= test(argument != disabled_my_option);
     break;
-  case (int) OPT_ERROR_LOG_FILE:
-    opt_error_log= 1;
-    break;
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
     break;
@@ -4085,10 +4043,6 @@ drizzled_get_one_option(int optid,
     break;
   case (int) OPT_PID_FILE:
     strncpy(pidfile_name, argument, sizeof(pidfile_name)-1);
-    break;
-  case OPT_CONSOLE:
-    if (opt_console)
-      opt_error_log= 0;			// Force logs to stdout
     break;
   case OPT_SERVER_ID:
     server_id_supplied = 1;

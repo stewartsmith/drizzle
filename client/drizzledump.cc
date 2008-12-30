@@ -101,8 +101,7 @@ static char  *opt_password= NULL, *current_user= NULL,
              *escaped= NULL,
              *where= NULL, *order_by= NULL,
              *opt_compatible_mode_str= NULL,
-             *err_ptr= NULL,
-             *log_error_file= NULL;
+             *err_ptr= NULL;
 static char **defaults_argv= NULL;
 static char compatible_mode_normal_str[255];
 /* Server supports character_set_results session variable? */
@@ -304,9 +303,6 @@ static struct my_option my_long_options[] =
    0, 0, 0, 0, 0, 0},
   {"lock-tables", 'l', "Lock all tables for read.", (char**) &lock_tables,
    (char**) &lock_tables, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
-  {"log-error", OPT_ERROR_LOG_FILE, "Append warnings and errors to given file.",
-   (char**) &log_error_file, (char**) &log_error_file, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"master-data", OPT_MASTER_DATA,
    "This causes the binary log position and filename to be appended to the "
    "output. If equal to 1, will print it as a CHANGE MASTER command; if equal"
@@ -3165,15 +3161,6 @@ int main(int argc, char **argv)
   {
     free_resources();
     exit(exit_code);
-  }
-
-  if (log_error_file)
-  {
-    if(!(stderror_file= freopen(log_error_file, "a+", stderr)))
-    {
-      free_resources();
-      exit(EX_DRIZZLEERR);
-    }
   }
 
   if (connect_to_db(current_host, current_user, opt_password))

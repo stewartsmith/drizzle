@@ -3316,8 +3316,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
 
     if (ha_flush_logs(NULL))
       result=1;
-    if (flush_error_log())
-      result=1;
   }
   /*
     Note that if REFRESH_READ_LOCK bit is set then REFRESH_TABLES is set too

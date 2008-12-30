@@ -17,22 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ERRMSG_H
-#define DRIZZLED_ERRMSG_H
+/* This file and these functions are a stopgap until all the
+   sql_print_foo() function calls are replaced with calls to
+   errmsg_printf()
+*/
 
-#include <drizzled/plugin_errmsg.h>
+#ifndef DRIZZLED_ERRMSG_PRINT_H
+#define DRIZZLED_ERRMSG_PRINT_H
 
-// need stdarg for va_list
-#include <stdarg.h>
+void sql_print_error (const char *format, ...);
+void sql_print_warning (const char *format, ...);
+void sql_print_information (const char *format, ...);
+void sql_perror (const char *message);
 
-int errmsg_initializer(st_plugin_int *plugin);
-int errmsg_finalizer(st_plugin_int *plugin);
+#endif /* DRIZZLED_ERRMSG_PRINT_H */
 
-bool errmsg_vprintf (Session *session, int priority, char const *format, va_list ap);
 
-// todo: add __attribute__((format(printf, 1, 2)))
-// todo: remove session from declaration, instead reference current_session inside definition
-//       so that places that have not defined Session can still print error messages
-bool errmsg_printf (Session *session, int priority, char const *format, ...);
-
-#endif /* DRIZZLED_ERRMSG_H */
