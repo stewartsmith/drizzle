@@ -84,6 +84,9 @@
 #include <ctype.h>
 #include <string>
 
+/* Added this for string translation. */
+#include <drizzled/gettext.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -128,7 +131,7 @@ const char *delimiter= "\n";
 const char *create_schema_string= "drizzleslap";
 
 static bool opt_preserve= true;
-static bool debug_info_flag= 0, debug_check_flag= 0;
+static bool debug_info_flag= false, debug_check_flag= false;
 static bool opt_only_print= false;
 static bool opt_burnin= false;
 static bool opt_ignore_sql_errors= false;
@@ -176,12 +179,12 @@ const char *concurrency_str= NULL;
 static char *create_string;
 uint *concurrency;
 
-const char *default_dbug_option="d:t:o,/tmp/drizzleslap.trace";
+const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
 const char *opt_csv_str;
 File csv_file;
 
 static int get_options(int *argc,char ***argv);
-static uint opt_drizzle_port= 0;
+static uint32_t opt_drizzle_port= 0;
 
 static const char *load_default_groups[]= { "drizzleslap","client",0 };
 
@@ -647,12 +650,11 @@ static struct my_option my_long_options[] =
    "out what it would have done instead.",
    (char**) &opt_only_print, (char**) &opt_only_print, 0, GET_BOOL,  NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"password", 'p',
+  {"password", 'P',
    "Password to use when connecting to server. If password is not given it's "
    "asked from the tty.", 0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection.", (char**) &opt_drizzle_port,
-   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
-   0},
+  {"port", 'p', "Port number to use for connection.",
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"post-query", OPT_SLAP_POST_QUERY,
    "Query to run or file containing query to execute after tests have completed.",
    (char**) &user_supplied_post_statements,
@@ -731,12 +733,35 @@ static void usage(void)
 static bool
 get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
 
   switch(optid) {
   case 'v':
     verbose++;
     break;
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(1);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(1);
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
       char *start= argument;
@@ -749,9 +774,16 @@ get_one_option(int optid, const struct my_option *, char *argument)
                         "Aborting.\n");
         exit(ENOMEM);
       }
-      while (*argument) *argument++= 'x';    /* Destroy argument */
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-        start[1]= 0;        /* Cut length of argument */
+      {
+        /* Cut length of argument */
+        start[1]= 0;
+      }
       tty_password= 0;
     }
     else

@@ -1,6 +1,11 @@
 # List of source files which contain translatable strings.
 client/drizzle.cc
 client/drizzleadmin.cc
+client/drizzlecheck.cc
+client/drizzledump.cc
+client/drizzleimport.cc
+client/drizzleslap.cc
+client/drizzletest.cc
 libdrizzle/client.c
 libdrizzle/drizzle.c
 libdrizzle/errmsg.c

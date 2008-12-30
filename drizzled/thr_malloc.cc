@@ -20,7 +20,6 @@
 #include <drizzled/current_session.h>
 #include <drizzled/error.h>
 
-
 extern "C" {
   void sql_alloc_error_handler(void)
   {

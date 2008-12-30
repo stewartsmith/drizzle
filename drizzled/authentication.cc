@@ -21,6 +21,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/authentication.h>
 #include <drizzled/gettext.h>
+#include <drizzled/errmsg_print.h>
 
 static bool are_plugins_loaded= false;
 
