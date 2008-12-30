@@ -3383,12 +3383,6 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.myisam_max_sort_file_size, 0,
    GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
    0, 1024*1024, 0},
-  {"myisam_repair_threads", OPT_MYISAM_REPAIR_THREADS,
-   N_("Number of threads to use when repairing MyISAM tables. The value of "
-      "1 disables parallel repair."),
-   (char**) &global_system_variables.myisam_repair_threads,
-   (char**) &max_system_variables.myisam_repair_threads, 0,
-   GET_ULONG, REQUIRED_ARG, 1, 1, ULONG_MAX, 0, 1, 0},
   {"myisam_sort_buffer_size", OPT_MYISAM_SORT_BUFFER_SIZE,
    N_("The buffer that is allocated when sorting the index when doing a "
       "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),

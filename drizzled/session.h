@@ -162,7 +162,6 @@ struct system_variables
   uint64_t max_sort_length;
   uint64_t max_tmp_tables;
   uint64_t min_examined_row_limit;
-  uint32_t myisam_repair_threads;
   size_t myisam_sort_buff_size;
   uint32_t myisam_stats_method;
   uint32_t net_buffer_length;

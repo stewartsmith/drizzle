@@ -31,6 +31,8 @@
 ulong myisam_recover_options= HA_RECOVER_NONE;
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
+static uint32_t repair_threads;
+
 /* bits in myisam_recover_options */
 const char *myisam_recover_names[] =
 { "DEFAULT", "BACKUP", "FORCE", "QUICK", NULL};
@@ -875,7 +877,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
       local_testflag|= T_STATISTICS;
       param.testflag|= T_STATISTICS;		// We get this for free
       statistics_done=1;
-      if (session->variables.myisam_repair_threads>1)
+      if (repair_threads > 1)
       {
         char buf[40];
         /* TODO: respect myisam_repair_threads variable */
@@ -1859,6 +1861,17 @@ Item *ha_myisam::idx_cond_push(uint32_t keyno_arg, Item* idx_cond_arg)
   return NULL;
 }
 
+static DRIZZLE_SYSVAR_UINT(repair_threads, repair_threads,
+  PLUGIN_VAR_RQCMDARG,
+  N_("Number of threads to use when repairing MyISAM tables. The value of "
+     "1 disables parallel repair."),
+  NULL, NULL, 1, 1, UINT32_MAX, 0);
+
+static struct st_mysql_sys_var* system_variables[]= {
+  DRIZZLE_SYSVAR(repair_threads),
+  NULL
+};
+
 
 mysql_declare_plugin(myisam)
 {
@@ -1871,7 +1884,7 @@ mysql_declare_plugin(myisam)
   myisam_init, /* Plugin Init */
   myisam_deinit, /* Plugin Deinit */
   NULL,                       /* status variables                */
-  NULL,                       /* system variables                */
+  system_variables,           /* system variables */
   NULL                        /* config options                  */
 }
 mysql_declare_plugin_end;

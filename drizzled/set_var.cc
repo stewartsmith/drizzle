@@ -242,7 +242,6 @@ static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
 static sys_var_session_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
-static sys_var_session_uint32_t       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
 static sys_var_session_size_t	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
 
 static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
