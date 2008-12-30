@@ -35,6 +35,8 @@
 #include <mysys/hash.h>
 #include <stdarg.h>
 
+#include <drizzled/gettext.h>
+
 #include <drizzled/error.h>
 
 using namespace std;
@@ -69,35 +71,39 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
                       char **err_pos, uint *err_len);
 
 static void field_escape(string &in, const char *from);
-static bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
-                quick= 1, extended_insert= 1,
-                lock_tables=1,ignore_errors=0,flush_logs=0,
-                opt_drop=1,opt_keywords=0,opt_lock=1,opt_compress=0,
-                opt_delayed=0,create_options=1,opt_quoted=0,opt_databases=0,
-                opt_alldbs=0,opt_create_db=0,opt_lock_all_tables=0,
-                opt_set_charset=0, opt_dump_date=1,
-                opt_autocommit=0,opt_disable_keys=1,opt_xml=0,
-                opt_delete_master_logs=0, tty_password=0,
-                opt_single_transaction=0, opt_comments= 0, opt_compact= 0,
-                opt_hex_blob=0, opt_order_by_primary=0, opt_ignore=0,
-                opt_complete_insert= 0, opt_drop_database= 0,
-                opt_replace_into= 0,
-                opt_routines=0,
-                opt_slave_apply= 0,
-                opt_include_master_host_port= 0,
-                opt_alltspcs=0;
-static bool debug_info_flag= 0, debug_check_flag= 0;
+static bool  verbose= false, opt_no_create_info= false, opt_no_data= false,
+                quick= true, extended_insert= true,
+                lock_tables= true, ignore_errors= false, flush_logs= false,
+                opt_drop= true, opt_keywords= false,
+                opt_lock= true, opt_compress= false,
+                opt_delayed= false, create_options= true, opt_quoted= false,
+                opt_databases= false, opt_alldbs= false, opt_create_db= false,
+                opt_lock_all_tables= false,
+                opt_set_charset= false, opt_dump_date= true,
+                opt_autocommit= false, opt_disable_keys= true, opt_xml= false,
+                opt_delete_master_logs= false, tty_password= false,
+                opt_single_transaction= false, opt_comments= false,
+                opt_compact= false, opt_hex_blob= false, 
+                opt_order_by_primary=false, opt_ignore= false,
+                opt_complete_insert= false, opt_drop_database= false,
+                opt_replace_into= false,
+                opt_routines= false,
+                opt_slave_apply= false,
+                opt_include_master_host_port= false,
+                opt_alltspcs= false;
+static bool debug_info_flag= false, debug_check_flag= false;
 static uint32_t opt_max_allowed_packet, opt_net_buffer_length;
-static DRIZZLE drizzle_connection,*drizzle=0;
+static DRIZZLE drizzle_connection, *drizzle= 0;
 static string insert_pat;
-static char  *opt_password=0,*current_user=0,
-             *current_host=0,*path=0,*fields_terminated=0,
-             *lines_terminated=0, *enclosed=0, *opt_enclosed=0, *escaped=0,
-             *where=0, *order_by=0,
-             *opt_compatible_mode_str= 0,
-             *err_ptr= 0,
+static char  *opt_password= NULL, *current_user= NULL,
+             *current_host= NULL, *path= NULL, *fields_terminated= NULL,
+             *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
+             *escaped= NULL,
+             *where= NULL, *order_by= NULL,
+             *opt_compatible_mode_str= NULL,
+             *err_ptr= NULL,
              *log_error_file= NULL;
-static char **defaults_argv= 0;
+static char **defaults_argv= NULL;
 static char compatible_mode_normal_str[255];
 /* Server supports character_set_results session variable? */
 static bool server_supports_switching_charsets= true;
@@ -106,13 +112,14 @@ static uint32_t opt_compatible_mode= 0;
 #define DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL 2
 #define DRIZZLE_OPT_SLAVE_DATA_EFFECTIVE_SQL 1
 #define DRIZZLE_OPT_SLAVE_DATA_COMMENTED_SQL 2
-static uint opt_drizzle_port= 0, opt_master_data;
+static uint32_t opt_drizzle_port= 0;
+static uint opt_master_data;
 static uint opt_slave_data;
 static uint my_end_arg;
-static int   first_error=0;
+static int first_error= 0;
 static string extended_row;
 FILE *md_result_file= 0;
-FILE *stderror_file=0;
+FILE *stderror_file= 0;
 
 /*
   Constant for detection of default value of default_charset.
@@ -342,12 +349,11 @@ static struct my_option my_long_options[] =
   {"order-by-primary", OPT_ORDER_BY_PRIMARY,
    "Sorts each table's rows by primary key, or first unique key, if such a key exists.  Useful when dumping a MyISAM table to be loaded into an InnoDB table, but will make the dump itself take considerably longer.",
    (char**) &opt_order_by_primary, (char**) &opt_order_by_primary, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"password", 'p',
+  {"password", 'P',
    "Password to use when connecting to server. If password is not given it's solicited on the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection.", (char**) &opt_drizzle_port,
-   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
-   0},
+  {"port", 'p', "Port number to use for connection.", 
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q', "Don't buffer query, dump directly to stdout.",
    (char**) &quick, (char**) &quick, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"quote-names",'Q', "Quote table and column names with backticks (`).",
@@ -595,27 +601,60 @@ static unsigned char* get_table_key(const char *entry, size_t *length, bool)
 extern "C"
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch (optid) {
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(EX_USAGE);
+    }
+    /* If the port number is > 65535 it is not a valid port
+ *        This also helps with potential data loss casting unsigned long to a
+ *               uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(EX_USAGE);
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
-      char *start=argument;
+      char *start= argument;
       if (opt_password)
         free(opt_password);
-      opt_password=strdup(argument);
+      opt_password= strdup(argument);
       if (opt_password == NULL)
       {
         fprintf(stderr, "Memory allocation error while copying password. "
                         "Aborting.\n");
         exit(ENOMEM);
       }
-      while (*argument) *argument++= 'x';               /* Destroy argument */
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-        start[1]=0;                             /* Cut length of argument */
+      {
+        /* Cut length of argument */
+        start[1]= 0;
+      }
       tty_password= 0;
     }
     else
-      tty_password=1;
+    {
+      tty_password= 1;
+    }
     break;
   case 'r':
     if (!(md_result_file= my_fopen(argument, O_WRONLY,

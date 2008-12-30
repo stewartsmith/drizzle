@@ -52,6 +52,9 @@
 
 #include "errname.h"
 
+/* Added this for string translation. */
+#include <drizzled/gettext.h>
+
 using namespace std;
 
 #define MAX_VAR_NAME_LENGTH    256
@@ -69,26 +72,27 @@ enum {
 };
 
 static int record= 0, opt_sleep= -1;
-static char *opt_db= 0, *opt_pass= 0;
-const char *opt_user= 0, *opt_host= 0, *unix_sock= 0, *opt_basedir= "./";
+static char *opt_db= NULL, *opt_pass= NULL;
+const char *opt_user= NULL, *opt_host= NULL, *unix_sock= NULL,
+           *opt_basedir= "./";
 const char *opt_logdir= "";
-const char *opt_include= 0, *opt_charsets_dir;
-const char *opt_testdir= 0;
-static int opt_port= 0;
+const char *opt_include= NULL, *opt_charsets_dir;
+const char *opt_testdir= NULL;
+static uint32_t opt_port= 0;
 static int opt_max_connect_retries;
-static bool opt_compress= 0, silent= 0, verbose= 0;
-static bool debug_info_flag= 0, debug_check_flag= 0;
-static bool tty_password= 0;
-static bool opt_mark_progress= 0;
-static bool parsing_disabled= 0;
+static bool opt_compress= false, silent= false, verbose= false;
+static bool debug_info_flag= false, debug_check_flag= false;
+static bool tty_password= false;
+static bool opt_mark_progress= false;
+static bool parsing_disabled= false;
 static bool display_result_vertically= false,
   display_metadata= false, display_result_sorted= false;
-static bool disable_query_log= 0, disable_result_log= 0;
-static bool disable_warnings= 0;
-static bool disable_info= 1;
-static bool abort_on_error= 1;
-static bool server_initialized= 0;
-static bool is_windows= 0;
+static bool disable_query_log= false, disable_result_log= false;
+static bool disable_warnings= false;
+static bool disable_info= true;
+static bool abort_on_error= true;
+static bool server_initialized= false;
+static bool is_windows= false;
 static char **default_argv;
 static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
@@ -166,7 +170,7 @@ typedef struct
 master_pos_st master_pos;
 
 /* if set, all results are concated and compared against this file */
-const char *result_file_name= 0;
+const char *result_file_name= NULL;
 
 typedef struct st_var
 {
@@ -4481,13 +4485,12 @@ static struct my_option my_long_options[] =
    "Max number of connection attempts when connecting to server",
    (char**) &opt_max_connect_retries, (char**) &opt_max_connect_retries, 0,
    GET_INT, REQUIRED_ARG, 500, 1, 10000, 0, 0, 0},
-  {"password", 'p', "Password to use when connecting to server.",
+  {"password", 'P', "Password to use when connecting to server.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
+  {"port", 'p', "Port number to use for connection or 0 for default to, in "
    "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   (char**) &opt_port,
-   (char**) &opt_port, 0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quiet", 's', "Suppress all normal output.", (char**) &silent,
    (char**) &silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"record", 'r', "Record output of test_file into result file.",
@@ -4591,6 +4594,9 @@ static void read_embedded_server_arguments(const char *name)
 extern "C" bool
 get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch(optid) {
   case 'r':
     record = 1;
@@ -4627,6 +4633,27 @@ get_one_option(int optid, const struct my_option *, char *argument)
     break;
   }
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(1);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(1);
+    }
+    else
+    {
+      opt_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
       if (opt_pass)
@@ -4634,7 +4661,11 @@ get_one_option(int optid, const struct my_option *, char *argument)
       opt_pass = strdup(argument);
       if (opt_pass == NULL)
         die("Out of memory");
-      while (*argument) *argument++= 'x';    /* Destroy argument */
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       tty_password= 0;
     }
     else
