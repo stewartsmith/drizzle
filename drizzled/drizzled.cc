@@ -461,7 +461,6 @@ static bool kill_in_progress, segfaulted;
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 static int cleanup_done;
-static uint32_t opt_myisam_block_size;
 static char *opt_binlog_index_name;
 static char *opt_tc_heuristic_recover;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
@@ -3365,12 +3364,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"myisam_block_size", OPT_MYISAM_BLOCK_SIZE,
-   N_("Block size to be used for MyISAM index pages."),
-   (char**) &opt_myisam_block_size,
-   (char**) &opt_myisam_block_size, 0, GET_ULONG, REQUIRED_ARG,
-   MI_KEY_BLOCK_LENGTH, MI_MIN_KEY_BLOCK_LENGTH, MI_MAX_KEY_BLOCK_LENGTH,
-   0, MI_MIN_KEY_BLOCK_LENGTH, 0},
   {"myisam_data_pointer_size", OPT_MYISAM_DATA_POINTER_SIZE,
    N_("Default pointer size to be used for MyISAM tables."),
    (char**) &myisam_data_pointer_size,
@@ -4284,9 +4277,6 @@ static void get_options(int *argc,char **argv)
   my_default_record_cache_size=global_system_variables.read_buff_size;
   myisam_max_temp_length=
     (my_off_t) global_system_variables.myisam_max_sort_file_size;
-
-  /* Set global variables based on startup options */
-  myisam_block_size=(uint) 1 << my_bit_log2(opt_myisam_block_size);
 
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||
