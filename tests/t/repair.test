@@ -41,10 +41,10 @@ drop table t1;
 #
 CREATE TABLE t1(a INT, KEY(a)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES(1),(2),(3),(4),(5);
-SET myisam_repair_threads=2;
+SET GLOBAL myisam_repair_threads=2;
 REPAIR TABLE t1;
 SHOW INDEX FROM t1;
-SET myisam_repair_threads=@@global.myisam_repair_threads;
+SET GLOBAL myisam_repair_threads=1;
 DROP TABLE t1;
 
 #
@@ -81,9 +81,9 @@ INSERT INTO t1 VALUES
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),
 ('0'),('0'),('0'),('0'),('0'),('0'),('0');
-SET myisam_repair_threads=2;
+SET GLOBAL myisam_repair_threads=2;
 REPAIR TABLE t1;
-SET myisam_repair_threads=@@global.myisam_repair_threads;
+SET GLOBAL myisam_repair_threads=1;
 SET myisam_sort_buffer_size=@@global.myisam_sort_buffer_size;
 DROP TABLE t1;
 
@@ -110,9 +110,9 @@ INSERT INTO t1 VALUES
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),
 ('0'),('0'),('0'),('0'),('0'),('0'),('0');
-SET myisam_repair_threads=2;
+SET GLOBAL myisam_repair_threads=2;
 REPAIR TABLE t1;
-SET myisam_repair_threads=@@global.myisam_repair_threads;
+SET GLOBAL myisam_repair_threads=1;
 SET myisam_sort_buffer_size=@@global.myisam_sort_buffer_size;
 DROP TABLE t1;
 
