@@ -261,7 +261,6 @@ static I_List<Session> thread_cache;
 bool opt_bin_log;
 bool opt_error_log= 0;
 bool opt_skip_show_db= false;
-bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
@@ -462,7 +461,6 @@ static bool kill_in_progress, segfaulted;
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 static int cleanup_done;
-static uint32_t opt_myisam_block_size;
 static char *opt_binlog_index_name;
 static char *opt_tc_heuristic_recover;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
@@ -513,6 +511,7 @@ static void clean_up_mutexes(void);
 static void wait_for_signal_thread_to_end(void);
 static void create_pid_file();
 static void drizzled_exit(int exit_code) __attribute__((noreturn));
+bool safe_read_error_impl(NET *net);
 
 /****************************************************************************
 ** Code to end drizzled
@@ -2013,9 +2012,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
   global_system_variables.collation_database=	 default_charset_info;
-  global_system_variables.collation_connection=  default_charset_info;
-  global_system_variables.character_set_results= default_charset_info;
-  global_system_variables.character_set_client= default_charset_info;
 
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
@@ -2439,6 +2435,7 @@ int main(int argc, char **argv)
 
   network_init();
 
+  safe_read_error_hook= safe_read_error_impl; 
 
   /*
     init signals & alarm
@@ -2857,11 +2854,6 @@ struct my_option my_long_options[] =
    /* sub_size */     0, /* block_size */ 256,
    /* app_type */ 0
   },
-  {"character-set-client-handshake", OPT_CHARACTER_SET_CLIENT_HANDSHAKE,
-   N_("Don't ignore client side character set value sent during handshake."),
-   (char**) &opt_character_set_client_handshake,
-   (char**) &opt_character_set_client_handshake,
-    0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"character-set-filesystem", OPT_CHARACTER_SET_FILESYSTEM,
    N_("Set the filesystem character set."),
    (char**) &character_set_filesystem_name,
@@ -3372,12 +3364,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"myisam_block_size", OPT_MYISAM_BLOCK_SIZE,
-   N_("Block size to be used for MyISAM index pages."),
-   (char**) &opt_myisam_block_size,
-   (char**) &opt_myisam_block_size, 0, GET_ULONG, REQUIRED_ARG,
-   MI_KEY_BLOCK_LENGTH, MI_MIN_KEY_BLOCK_LENGTH, MI_MAX_KEY_BLOCK_LENGTH,
-   0, MI_MIN_KEY_BLOCK_LENGTH, 0},
   {"myisam_data_pointer_size", OPT_MYISAM_DATA_POINTER_SIZE,
    N_("Default pointer size to be used for MyISAM tables."),
    (char**) &myisam_data_pointer_size,
@@ -3390,12 +3376,6 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.myisam_max_sort_file_size, 0,
    GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
    0, 1024*1024, 0},
-  {"myisam_repair_threads", OPT_MYISAM_REPAIR_THREADS,
-   N_("Number of threads to use when repairing MyISAM tables. The value of "
-      "1 disables parallel repair."),
-   (char**) &global_system_variables.myisam_repair_threads,
-   (char**) &max_system_variables.myisam_repair_threads, 0,
-   GET_ULONG, REQUIRED_ARG, 1, 1, ULONG_MAX, 0, 1, 0},
   {"myisam_sort_buffer_size", OPT_MYISAM_SORT_BUFFER_SIZE,
    N_("The buffer that is allocated when sorting the index when doing a "
       "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
@@ -4298,9 +4278,6 @@ static void get_options(int *argc,char **argv)
   myisam_max_temp_length=
     (my_off_t) global_system_variables.myisam_max_sort_file_size;
 
-  /* Set global variables based on startup options */
-  myisam_block_size=(uint) 1 << my_bit_log2(opt_myisam_block_size);
-
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||
       init_global_datetime_format(DRIZZLE_TIMESTAMP_TIME,
@@ -4581,6 +4558,13 @@ void refresh_status(Session *session)
   pthread_mutex_lock(&LOCK_thread_count);
   max_used_connections= thread_count;
   pthread_mutex_unlock(&LOCK_thread_count);
+}
+
+bool safe_read_error_impl(NET *net)
+{
+  if (net->vio)
+    return vio_was_interrupted(net->vio);
+  return false;
 }
 
 

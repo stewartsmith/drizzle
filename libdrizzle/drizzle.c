@@ -450,7 +450,14 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
   /* Add database if needed */
   if (db && (drizzle->server_capabilities & CLIENT_CONNECT_WITH_DB))
   {
-    end= strncpy(end, db, NAME_LEN) + NAME_LEN + 1;
+    size_t db_len= strlen(db);
+
+    if (db_len >= NAME_LEN)
+      db_len= NAME_LEN - 1;
+    end= memcpy(end, db, db_len);
+    end[db_len]= 0;
+    end+= (db_len + 1);
+
     drizzle->db= strdup(db);
     db= 0;
   }

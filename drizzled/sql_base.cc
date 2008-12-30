@@ -1256,12 +1256,9 @@ void close_temporary_tables(Session *session)
         close_temporary(table, 1, 1);
       }
       session->clear_error();
-      const CHARSET_INFO * const cs_save= session->variables.character_set_client;
-      session->variables.character_set_client= system_charset_info;
       Query_log_event qinfo(session, s_query.ptr(),
                             s_query.length() - 1 /* to remove trailing ',' */,
                             0, false);
-      session->variables.character_set_client= cs_save;
       /*
         Imagine the thread had created a temp table, then was doing a
         SELECT, and the SELECT was killed. Then it's not clever to

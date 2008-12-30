@@ -748,12 +748,9 @@ unique key(name,uid)
 ) engine=MyISAM;
 insert into t1 values (1,'one','one value',101),
 (2,'two','two value',102),(3,'three','three value',103);
-set insert_id=5;
 replace into t1 (value,name,uid) values ('other value','two',102);
 delete from t1 where uid=102;
-set insert_id=5;
 replace into t1 (value,name,uid) values ('other value','two',102);
-set insert_id=6;
 replace into t1 (value,name,uid) values ('other value','two',102);
 select * from t1;
 id	name	value	uid

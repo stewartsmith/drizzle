@@ -162,7 +162,6 @@ struct system_variables
   uint64_t max_sort_length;
   uint64_t max_tmp_tables;
   uint64_t min_examined_row_limit;
-  uint32_t myisam_repair_threads;
   size_t myisam_sort_buff_size;
   uint32_t myisam_stats_method;
   uint32_t net_buffer_length;
@@ -224,13 +223,15 @@ struct system_variables
 
   /* Only charset part of these variables is sensible */
   const CHARSET_INFO  *character_set_filesystem;
-  const CHARSET_INFO  *character_set_client;
-  const CHARSET_INFO  *character_set_results;
 
   /* Both charset and collation parts of these variables are important */
   const CHARSET_INFO	*collation_server;
   const CHARSET_INFO	*collation_database;
-  const CHARSET_INFO  *collation_connection;
+
+  inline const CHARSET_INFO  *getCollation(void) 
+  {
+    return collation_database ? collation_database : collation_server;
+  }
 
   /* Locale Support */
   MY_LOCALE *lc_time_names;
@@ -1392,7 +1393,7 @@ public:
     To raise this flag, use my_error().
   */
   inline bool is_error() const { return main_da.is_error(); }
-  inline const CHARSET_INFO *charset() { return variables.character_set_client; }
+  inline const CHARSET_INFO *charset() { return default_charset_info; }
   void update_charset();
 
   void change_item_tree(Item **place, Item *new_value)
