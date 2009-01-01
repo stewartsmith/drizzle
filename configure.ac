@@ -466,9 +466,10 @@ SEARCH_FOR_LIB(z, crc32, zlib.h,
 # Check for libncurses
 #--------------------------------------------------------------------
 
-
-SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
-	SEARCH_FOR_LIB(tinfo, tgetent, ncurses/ncurses.h,
+dnl We're only looking for ncurses in case we need it for readline
+dnl So we don't need to check for ncurses.h
+SEARCH_FOR_LIB(ncurses, tgetent, stdio.h, [
+	SEARCH_FOR_LIB(tinfo, tgetent, stdio.h,
 		AC_MSG_ERROR([Couldn't find ncurses])
 	)
 	]
