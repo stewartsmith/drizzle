@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_HEX_STRING_H
 #define DRIZZLED_ITEM_HEX_STRING_H
 
+#include <drizzled/item/basic_constant.h>
+
 class Item_hex_string: public Item_basic_constant
 {
 public:

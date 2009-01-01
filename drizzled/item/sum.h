@@ -26,6 +26,7 @@
 #include <mysys/my_tree.h>
 #include <drizzled/hybrid_type.h>
 #include <drizzled/item.h>
+#include <drizzled/item/field.h>
 
 
 class st_select_lex;

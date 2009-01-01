@@ -78,6 +78,7 @@
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/item/copy_string.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/uint.h>
 #include <drizzled/item/null.h>
