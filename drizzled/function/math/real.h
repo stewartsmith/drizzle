@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_FUNCTION_MATH_REAL_H
 #define DRIZZLED_FUNCTION_MATH_REAL_H
 
-#include <drizzled/item.h>
 #include <drizzled/function/func.h>
 
 class Item_real_func :public Item_func
