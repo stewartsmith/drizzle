@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/error.h>
+#include <drizzled/item/string.h>
 #include <drizzled/item/hex_string.h>
 
 inline uint32_t char_val(char X)

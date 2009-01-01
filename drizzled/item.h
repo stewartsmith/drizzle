@@ -587,7 +587,6 @@ public:
 
 };
 
-#include <drizzled/item/blob.h>
 #include <drizzled/item/ident.h>
 
 void mark_as_dependent(Session *session,
