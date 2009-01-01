@@ -35,6 +35,9 @@ AC_SUBST(SHARED_LIB_VERSION)
 
 dnl Checks for programs.
 AC_PROG_CC
+# We need an ANSI C compiler
+AM_PROG_CC_STDC
+
 
 ACX_USE_SYSTEM_EXTENSIONS
 AC_PROG_CXX
@@ -622,9 +625,6 @@ else
 fi
 AC_SUBST(CHECK_PID)
 AC_MSG_RESULT("$CHECK_PID")
-
-# We need an ANSI C compiler
-AM_PROG_CC_STDC
 
 # We need an assembler, too
 AM_PROG_AS
