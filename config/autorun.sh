@@ -7,7 +7,7 @@ die() { echo "$@"; exit 1; }
 # LIBTOOLIZE=${LIBTOOLIZE:-libtoolize}
 LIBTOOLIZE_FLAGS=" --automake --copy --force"
 # ACLOCAL=${ACLOCAL:-aclocal}
-# ACLOCAL_FLAGS="-I m4"
+ACLOCAL_FLAGS="-I m4"
 # AUTOHEADER=${AUTOHEADER:-autoheader}
 # AUTOMAKE=${AUTOMAKE:-automake}
 # --add-missing instructs automake to install missing auxiliary files
