@@ -587,7 +587,6 @@ public:
 
 };
 
-#include <drizzled/item/bin_string.h>
 #include <drizzled/item/blob.h>
 #include <drizzled/item/ident.h>
 
