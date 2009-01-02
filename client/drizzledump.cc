@@ -2064,6 +2064,10 @@ static void dump_table(char *table, char *db)
       uint i;
       uint32_t *lengths= drizzle_fetch_lengths(res);
       rownr++;
+      if ((rownr % 10000) == 0)
+      {
+        verbose_msg(_("-- %lu rows dumped\n"), rownr);
+      }
       if (!extended_insert && !opt_xml)
       {
         fputs(insert_pat.c_str(),md_result_file);
