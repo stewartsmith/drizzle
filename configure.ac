@@ -35,9 +35,9 @@ AC_SUBST(SHARED_LIB_VERSION)
 
 dnl Checks for programs.
 AC_PROG_CC
+AC_PROG_CXX
 
 ACX_USE_SYSTEM_EXTENSIONS
-AC_PROG_CXX
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
@@ -45,6 +45,9 @@ then
 fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
+# We need an ANSI C compiler
+AM_PROG_CC_STDC
+
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 ifdef([AC_PROG_CC_C99],[
@@ -60,6 +63,10 @@ then
 fi
 ])
 
+
+# We need an assembler, too
+AM_PROG_AS
+CCASFLAGS="$CCASFLAGS $ASFLAGS"
 
 
 # Set all version vars based on $VERSION. How do we do this more elegant ?
@@ -459,9 +466,10 @@ SEARCH_FOR_LIB(z, crc32, zlib.h,
 # Check for libncurses
 #--------------------------------------------------------------------
 
-
-SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
-	SEARCH_FOR_LIB(tinfo, tgetent, ncurses/ncurses.h,
+dnl We're only looking for ncurses in case we need it for readline
+dnl So we don't need to check for ncurses.h
+SEARCH_FOR_LIB(ncurses, tgetent, stdio.h, [
+	SEARCH_FOR_LIB(tinfo, tgetent, stdio.h,
 		AC_MSG_ERROR([Couldn't find ncurses])
 	)
 	]
@@ -623,12 +631,6 @@ fi
 AC_SUBST(CHECK_PID)
 AC_MSG_RESULT("$CHECK_PID")
 
-# We need an ANSI C compiler
-AM_PROG_CC_STDC
-
-# We need an assembler, too
-AM_PROG_AS
-CCASFLAGS="$CCASFLAGS $ASFLAGS"
 
 # Check if we need noexec stack for assembler
 AC_CHECK_NOEXECSTACK
