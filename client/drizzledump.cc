@@ -104,8 +104,6 @@ static char  *opt_password= NULL, *current_user= NULL,
              *err_ptr= NULL;
 static char **defaults_argv= NULL;
 static char compatible_mode_normal_str[255];
-/* Server supports character_set_results session variable? */
-static bool server_supports_switching_charsets= true;
 static uint32_t opt_compatible_mode= 0;
 #define DRIZZLE_OPT_MASTER_DATA_EFFECTIVE_SQL 1
 #define DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL 2
@@ -959,36 +957,6 @@ static int drizzle_query_with_error_report(DRIZZLE *drizzle_con, DRIZZLE_RES **r
   return 0;
 }
 
-
-/**
-  Switch charset for results to some specified charset.  If the server does not
-  support character_set_results variable, nothing can be done here.  As for
-  whether something should be done here, future new callers of this function
-  should be aware that the server lacking the facility of switching charsets is
-  treated as success.
-
-  @note  If the server lacks support, then nothing is changed and no error
-         condition is returned.
-
-  @returns  whether there was an error or not
-*/
-static int switch_character_set_results(const char *cs_name)
-{
-  char query_buffer[QUERY_LENGTH];
-  size_t query_length;
-
-  /* Server lacks facility.  This is not an error, by arbitrary decision . */
-  if (!server_supports_switching_charsets)
-    return false;
-
-  query_length= snprintf(query_buffer,
-                         sizeof (query_buffer),
-                         "SET SESSION character_set_results = '%s'",
-                         cs_name);
-
-  return drizzle_real_query(drizzle, query_buffer, query_length);
-}
-
 /*
   Open a new .sql file to dump the table or view into
 
@@ -1456,9 +1424,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
       snprintf(buff, sizeof(buff), "show create table %s", result_table);
 
-      if (switch_character_set_results("binary") ||
-          drizzle_query_with_error_report(drizzle, &result, buff) ||
-          switch_character_set_results(default_charset))
+      if (drizzle_query_with_error_report(drizzle, &result, buff))
         return(0);
 
       if (path)
