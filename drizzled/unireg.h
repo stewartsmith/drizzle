@@ -162,17 +162,12 @@ void unireg_abort(int exit_code) __attribute__((noreturn));
 
 int mysql_frm_type(char *path, enum legacy_db_type *dbt);
 
-bool mysql_create_frm(Session *session, const char *file_name,
-                      const char *db, const char *table,
-                      HA_CREATE_INFO *create_info,
-                      List<Create_field> &create_field,
-                      uint32_t key_count,KEY *key_info,handler *db_type);
 int rea_create_table(Session *session, const char *path,
                      const char *db, const char *table_name,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_field,
                      uint32_t key_count,KEY *key_info,
-                     handler *file);
+                     handler *file, bool is_like);
 
 
 #if defined(__cplusplus)
