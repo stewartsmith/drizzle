@@ -28,6 +28,7 @@
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 #include <drizzled/data_home.h>
+#include <drizzled/item/blob.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>

@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_FUNCTION_NUM1_H
 #define DRIZZLED_FUNCTION_NUM1_H
 
-#include <drizzled/item.h>
 #include <drizzled/function/numhybrid.h>
 
 /* function where type of result detected by first argument */
