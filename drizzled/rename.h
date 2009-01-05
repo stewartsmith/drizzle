@@ -21,11 +21,6 @@
 #ifndef DRIZZLED_RENAME_H
 #define DRIZZLED_RENAME_H
 
-
 bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent);
-bool do_rename(Session *session, TableList *ren_table, char *new_db,
-                      char *new_table_name, char *new_table_alias,
-                      bool skip_error);
-
 
 #endif /* DRIZZLED_RENAME_H */

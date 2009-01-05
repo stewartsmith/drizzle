@@ -1914,7 +1914,7 @@ bool mysql_create_table_no_lock(Session *session,
   path[path_length - reg_ext_length]= '\0'; // Remove .frm extension
   if (rea_create_table(session, path, db, table_name,
                        create_info, alter_info->create_list,
-                       key_count, key_info_buffer, file))
+                       key_count, key_info_buffer, file, false))
     goto unlock_and_end;
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
@@ -2909,21 +2909,23 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
   schema_table->table->use_all_columns();
   if (mysql_prepare_alter_table(session, schema_table->table,
                                 &local_create_info, &alter_info))
-    return(1);
+    return true;
+
   if (mysql_prepare_create_table(session, &local_create_info, &alter_info,
                                  tmp_table, &db_options,
                                  schema_table->table->file,
                                  &schema_table->table->s->key_info, &keys, 0))
-    return(1);
+    return true;
+
   local_create_info.max_rows= 0;
-  if (mysql_create_frm(session, dst_path, NULL, NULL,
+  if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
                        &local_create_info, alter_info.create_list,
                        keys, schema_table->table->s->key_info,
-                       schema_table->table->file))
-    return(1);
-  return(0);
-}
+                       schema_table->table->file, true))
+    return true;
 
+  return false;
+}
 
 /*
   Create a table identical to the specified table

@@ -134,7 +134,8 @@ typedef struct st_table_share
   uint32_t open_count;			/* Number of tables in open list */
   uint32_t blob_ptr_size;			/* 4 or 8 */
   uint32_t key_block_size;			/* create key_block_size, if used */
-  uint32_t null_bytes, last_null_bit_pos;
+  uint32_t null_bytes;
+  uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
   uint32_t stored_fields;                   /* Number of stored fields
                                            (i.e. without generated-only ones) */
