@@ -1,43 +1,6 @@
 drop table if exists t1;
 create table t1(a int);
 insert into t1 values(1);
-ERROR: DELIMITER must be followed by a 'delimiter' character or string
-
-Test default delimiter ;
-a
-1
-
-Test delimiter without arg
-
-Test delimiter :
-a
-1
-
-Test delimiter :
-a
-1
-
-Test delimiter :;
-a
-1
-
-Test delimiter //
-a
-1
-
-Test delimiter MySQL
-a
-1
-
-Test delimiter delimiter
-a
-1
-Tables_in_test
-t1
-t2
-t3
-Tables_in_test
-t1
 _
 Test delimiter : from command line
 a
