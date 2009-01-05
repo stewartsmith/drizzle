@@ -2406,8 +2406,8 @@ static int fill_schema_table_names(Session *session, Table *table,
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                  ST_SCHEMA_TABLE *schema_table,
-                                  enum enum_schema_tables)
+                                      ST_SCHEMA_TABLE *schema_table,
+                                      enum enum_schema_tables)
 {
   /*
     determine which method will be used for table opening
