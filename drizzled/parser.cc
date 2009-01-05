@@ -39,7 +39,7 @@ int parser_initializer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "parser" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("parser plugin '%s' init() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("parser plugin '%s' init() failed"),
 		      plugin->name.str);
       goto err;
     }
@@ -62,7 +62,7 @@ int parser_finalizer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "parser" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("parser plugin '%s' deinit() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("parser plugin '%s' deinit() failed"),
 		      plugin->name.str);
     }
   }
@@ -99,7 +99,7 @@ static bool parser_do1_iterate (Session *session, plugin_ref plugin, void *p)
     {
       /* TRANSLATORS: The leading word "parser" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("parser plugin '%s' parser_func1() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("parser plugin '%s' parser_func1() failed"),
 		      (char *)plugin_name(plugin));
       return true;
     }
@@ -153,7 +153,7 @@ static bool parser_do2_iterate (Session *session, plugin_ref plugin, void *p)
     {
       /* TRANSLATORS: The leading word "parser" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("parser plugin '%s' parser_func2() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("parser plugin '%s' parser_func2() failed"),
 		      (char *)plugin_name(plugin));
 
       return true;

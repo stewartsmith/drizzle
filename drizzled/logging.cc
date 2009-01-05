@@ -37,7 +37,7 @@ int logging_initializer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error("logging plugin '%s' init() failed",
+      errmsg_printf(ERRMSG_LVL_ERROR, "logging plugin '%s' init() failed",
                       plugin->name.str);
       goto err;
     }
@@ -59,7 +59,7 @@ int logging_finalizer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("logging plugin '%s' deinit() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("logging plugin '%s' deinit() failed"),
 		      plugin->name.str);
     }
   }
@@ -82,7 +82,7 @@ static bool logging_pre_iterate (Session *session, plugin_ref plugin,
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("logging plugin '%s' logging_pre() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("logging plugin '%s' logging_pre() failed"),
 		      (char *)plugin_name(plugin));
       return true;
     }
@@ -115,7 +115,7 @@ static bool logging_post_iterate (Session *session, plugin_ref plugin,
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("logging plugin '%s' logging_post() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("logging plugin '%s' logging_post() failed"),
 		      (char *)plugin_name(plugin));
       return true;
     }

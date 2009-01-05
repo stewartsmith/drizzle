@@ -237,7 +237,7 @@ innobase_check_index_keys(
 			const KEY&	key2 = key_info[i];
 
 			if (0 == strcmp(key.name, key2.name)) {
-				sql_print_error("InnoDB: key name `%s` appears"
+				errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: key name `%s` appears"
 						" twice in CREATE INDEX\n",
 						key.name);
 
@@ -278,7 +278,7 @@ innobase_check_index_keys(
 					}
 				}
 
-				sql_print_error("InnoDB: MySQL is trying to"
+				errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: MySQL is trying to"
 						" create a column prefix"
 						" index field on an"
 						" inappropriate data type."
@@ -298,7 +298,7 @@ innobase_check_index_keys(
 					continue;
 				}
 
-				sql_print_error("InnoDB: column `%s`"
+				errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: column `%s`"
 						" is not allowed to occur"
 						" twice in index `%s`.\n",
 						key_part1.field->field_name,
@@ -944,7 +944,7 @@ ha_innobase::prepare_drop_index(
 			prebuilt->table, key->name);
 
 		if (!index) {
-			sql_print_error("InnoDB could not find key n:o %u "
+			errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB could not find key n:o %u "
 					"with name %s for table %s",
 					key_num[n_key],
 					key ? key->name : "NULL",

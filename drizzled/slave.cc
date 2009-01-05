@@ -241,13 +241,13 @@ int32_t init_slave()
   */
   if (!active_mi)
   {
-    sql_print_error(_("Failed to allocate memory for the master info structure"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate memory for the master info structure"));
     goto err;
   }
 
   if (active_mi->init_master_info(master_info_file, relay_log_info_file, (SLAVE_IO | SLAVE_SQL)))
   {
-    sql_print_error(_("Failed to initialize the master info structure"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the master info structure"));
     goto err;
   }
 
@@ -262,7 +262,7 @@ int32_t init_slave()
                             relay_log_info_file,
                             SLAVE_IO | SLAVE_SQL))
     {
-      sql_print_error(_("Failed to create slave threads"));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to create slave threads"));
       goto err;
     }
   }
@@ -459,7 +459,7 @@ int32_t start_slave_thread(pthread_handler h_func, pthread_mutex_t *start_lock,
       pthread_cond_broadcast(start_cond);
     if (start_lock)
       pthread_mutex_unlock(start_lock);
-    sql_print_error(_("Server id not set, will not start slave"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Server id not set, will not start slave"));
     return(ER_BAD_SLAVE);
   }
 
@@ -745,7 +745,7 @@ static bool check_io_slave_killed(Session *session, Master_info *mi, const char 
   if (io_slave_killed(session, mi))
   {
     if (info && global_system_variables.log_warnings)
-      sql_print_information("%s",info);
+      errmsg_printf(ERRMSG_LVL_INFO, "%s",info);
     return true;
   }
   return false;
@@ -864,7 +864,7 @@ static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
   else if (!check_io_slave_killed(mi->io_session, mi, NULL))
   {
     mi->clock_diff_with_master= 0; /* The "most sensible" value */
-    sql_print_warning(_("\"SELECT UNIX_TIMESTAMP()\" failed on master, "
+    errmsg_printf(ERRMSG_LVL_WARN, _("\"SELECT UNIX_TIMESTAMP()\" failed on master, "
                         "do not trust column Seconds_Behind_Master of SHOW "
                         "SLAVE STATUS. Error: %s (%d)"),
                       drizzle_error(drizzle), drizzle_errno(drizzle));
@@ -1017,7 +1017,7 @@ static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
 err:
   if (err_msg.length() != 0)
   {
-    sql_print_error("%s",err_msg.ptr());
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s",err_msg.ptr());
     assert(err_code != 0);
     mi->report(ERROR_LEVEL, err_code, "%s",err_msg.ptr());
     return(1);
@@ -1088,7 +1088,7 @@ static void write_ignored_events_info_to_relay_log(Session *session,
                      " inaccurate"));
       rli->relay_log.harvest_bytes_written(&rli->log_space_total);
       if (mi->flush())
-        sql_print_error(_("Failed to flush master info file"));
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to flush master info file"));
       delete ev;
     }
     else
@@ -1426,7 +1426,7 @@ static int32_t request_dump(DRIZZLE *drizzle, Master_info* mi,
     if (drizzle_errno(drizzle) == ER_NET_READ_INTERRUPTED)
       *suppress_warnings= true;                 // Suppress reconnect warning
     else
-      sql_print_error(_("Error on COM_BINLOG_DUMP: %d  %s, will retry in %d secs"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Error on COM_BINLOG_DUMP: %d  %s, will retry in %d secs"),
                       drizzle_errno(drizzle), drizzle_error(drizzle),
                       mi->connect_retry);
     return(1);
@@ -1479,7 +1479,7 @@ static uint32_t read_event(DRIZZLE *drizzle,
       *suppress_warnings= true;
     }
     else
-      sql_print_error(_("Error reading packet from server: %s ( server_errno=%d)"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Error reading packet from server: %s ( server_errno=%d)"),
                       drizzle_error(drizzle), drizzle_errno(drizzle));
     return(packet_error);
   }
@@ -1487,7 +1487,7 @@ static uint32_t read_event(DRIZZLE *drizzle,
   /* Check if eof packet */
   if (len < 8 && drizzle->net.read_pos[0] == 254)
   {
-    sql_print_information(_("Slave: received end packet from server, apparent "
+    errmsg_printf(ERRMSG_LVL_INFO, _("Slave: received end packet from server, apparent "
                             "master shutdown: %s"),
                      drizzle_error(drizzle));
      return(packet_error);
@@ -1720,7 +1720,7 @@ static int32_t exec_relay_log_event(Session* session, Relay_log_info* rli)
                                 ev->log_pos - ev->data_written))
     {
       char buf[22];
-      sql_print_information(_("Slave SQL thread stopped because it reached its"
+      errmsg_printf(ERRMSG_LVL_INFO, _("Slave SQL thread stopped because it reached its"
                               " UNTIL position %s"),
                             llstr(rli->until_pos(), buf));
       /*
@@ -1774,12 +1774,12 @@ static int32_t exec_relay_log_event(Session* session, Relay_log_info* rli)
         if (rli->trans_retries < slave_trans_retries)
         {
           if (rli->mi->init_master_info(0, 0, SLAVE_SQL))
-            sql_print_error(_("Failed to initialize the master info structure"));
+            errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the master info structure"));
           else if (init_relay_log_pos(rli,
                                       rli->group_relay_log_name.c_str(),
                                       rli->group_relay_log_pos,
                                       1, &errmsg, 1))
-            sql_print_error(_("Error initializing relay log position: %s"),
+            errmsg_printf(ERRMSG_LVL_ERROR, _("Error initializing relay log position: %s"),
                             errmsg);
           else
           {
@@ -1795,7 +1795,7 @@ static int32_t exec_relay_log_event(Session* session, Relay_log_info* rli)
           }
         }
         else
-          sql_print_error(_("Slave SQL thread retried transaction %"PRIu64" time(s) "
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Slave SQL thread retried transaction %"PRIu64" time(s) "
                             "in vain, giving up. Consider raising the value of "
                             "the slave_transaction_retries variable."),
                           slave_trans_retries);
@@ -1892,13 +1892,13 @@ static int32_t try_to_reconnect(Session *session, DRIZZLE *drizzle, Master_info 
     }
     else
     {
-      sql_print_information("%s",buf);
+      errmsg_printf(ERRMSG_LVL_INFO, "%s",buf);
     }
   }
   if (safe_reconnect(session, drizzle, mi, 1) || io_slave_killed(session, mi))
   {
     if (global_system_variables.log_warnings)
-      sql_print_information("%s",_(messages[SLAVE_RECON_MSG_KILLED_AFTER]));
+      errmsg_printf(ERRMSG_LVL_INFO, "%s",_(messages[SLAVE_RECON_MSG_KILLED_AFTER]));
     return 1;
   }
   return 0;
@@ -1939,7 +1939,7 @@ pthread_handler_t handle_slave_io(void *arg)
   {
     pthread_cond_broadcast(&mi->start_cond);
     pthread_mutex_unlock(&mi->run_lock);
-    sql_print_error(_("Failed during slave I/O thread initialization"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed during slave I/O thread initialization"));
     goto err;
   }
   pthread_mutex_lock(&LOCK_thread_count);
@@ -1961,7 +1961,7 @@ pthread_handler_t handle_slave_io(void *arg)
   // we can get killed during safe_connect
   if (!safe_connect(session, drizzle, mi))
   {
-    sql_print_information(_("Slave I/O thread: connected to master '%s@%s:%d',"
+    errmsg_printf(ERRMSG_LVL_INFO, _("Slave I/O thread: connected to master '%s@%s:%d',"
                             "replication started in log '%s' at position %s"),
                           mi->getUsername(), mi->getHostname(), mi->getPort(),
 			  IO_RPL_LOG_NAME,
@@ -1975,7 +1975,7 @@ pthread_handler_t handle_slave_io(void *arg)
   }
   else
   {
-    sql_print_information(_("Slave I/O thread killed while connecting to master"));
+    errmsg_printf(ERRMSG_LVL_INFO, _("Slave I/O thread killed while connecting to master"));
     goto err;
   }
 
@@ -1999,7 +1999,7 @@ connected:
       if (!check_io_slave_killed(session, mi, "Slave I/O thread killed "
                                  "while registering slave on master"))
       {
-        sql_print_error(_("Slave I/O thread couldn't register on master"));
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Slave I/O thread couldn't register on master"));
         if (try_to_reconnect(session, drizzle, mi, &retry_count, suppress_warnings,
                              reconnect_messages[SLAVE_RECON_ACT_REG]))
           goto err;
@@ -2011,7 +2011,7 @@ connected:
     if (!retry_count_reg)
     {
       retry_count_reg++;
-      sql_print_information(_("Forcing to reconnect slave I/O thread"));
+      errmsg_printf(ERRMSG_LVL_INFO, _("Forcing to reconnect slave I/O thread"));
       if (try_to_reconnect(session, drizzle, mi, &retry_count, suppress_warnings,
                            reconnect_messages[SLAVE_RECON_ACT_REG]))
         goto err;
@@ -2024,7 +2024,7 @@ connected:
     session->set_proc_info("Requesting binlog dump");
     if (request_dump(drizzle, mi, &suppress_warnings))
     {
-      sql_print_error(_("Failed on request_dump()"));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed on request_dump()"));
       if (check_io_slave_killed(session, mi, _("Slave I/O thread killed while \
 requesting master dump")) ||
           try_to_reconnect(session, drizzle, mi, &retry_count, suppress_warnings,
@@ -2035,7 +2035,7 @@ requesting master dump")) ||
     if (!retry_count_dump)
     {
       retry_count_dump++;
-      sql_print_information(_("Forcing to reconnect slave I/O thread"));
+      errmsg_printf(ERRMSG_LVL_INFO, _("Forcing to reconnect slave I/O thread"));
       if (try_to_reconnect(session, drizzle, mi, &retry_count, suppress_warnings,
                            reconnect_messages[SLAVE_RECON_ACT_DUMP]))
         goto err;
@@ -2059,7 +2059,7 @@ requesting master dump")) ||
       if (!retry_count_event)
       {
         retry_count_event++;
-        sql_print_information(_("Forcing to reconnect slave I/O thread"));
+        errmsg_printf(ERRMSG_LVL_INFO, _("Forcing to reconnect slave I/O thread"));
         if (try_to_reconnect(session, drizzle, mi, &retry_count, suppress_warnings,
                              reconnect_messages[SLAVE_RECON_ACT_EVENT]))
           goto err;
@@ -2071,7 +2071,7 @@ requesting master dump")) ||
         uint32_t drizzle_error_number= drizzle_errno(drizzle);
         switch (drizzle_error_number) {
         case CR_NET_PACKET_TOO_LARGE:
-          sql_print_error(_("Log entry on master is longer than "
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Log entry on master is longer than "
                             "max_allowed_packet (%u) on "
                             "slave. If the entry is correct, restart the "
                             "server with a higher value of "
@@ -2079,12 +2079,12 @@ requesting master dump")) ||
                           session->variables.max_allowed_packet);
           goto err;
         case ER_MASTER_FATAL_ERROR_READING_BINLOG:
-          sql_print_error(ER(drizzle_error_number), drizzle_error_number,
+          errmsg_printf(ERRMSG_LVL_ERROR, ER(drizzle_error_number), drizzle_error_number,
                           drizzle_error(drizzle));
           goto err;
         case EE_OUTOFMEMORY:
         case ER_OUTOFMEMORY:
-          sql_print_error(
+          errmsg_printf(ERRMSG_LVL_ERROR, 
        _("Stopping slave I/O thread due to out-of-memory error from master"));
           goto err;
         }
@@ -2102,7 +2102,7 @@ requesting master dump")) ||
       }
       if (mi->flush())
       {
-        sql_print_error(_("Failed to flush master info file"));
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to flush master info file"));
         goto err;
       }
       /*
@@ -2122,7 +2122,7 @@ requesting master dump")) ||
           !rli->ignore_log_space_limit)
         if (wait_for_relay_log_space(rli))
         {
-          sql_print_error(_("Slave I/O thread aborted while waiting for "
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Slave I/O thread aborted while waiting for "
                             "relay log space"));
           goto err;
         }
@@ -2132,7 +2132,7 @@ requesting master dump")) ||
 // error = 0;
 err:
 // print the current replication position
-  sql_print_information(_("Slave I/O thread exiting, read up to log '%s', "
+  errmsg_printf(ERRMSG_LVL_INFO, _("Slave I/O thread exiting, read up to log '%s', "
                           "position %s"),
                         IO_RPL_LOG_NAME, llstr(mi->getLogPosition(), llbuff));
   pthread_mutex_lock(&LOCK_thread_count);
@@ -2217,7 +2217,7 @@ pthread_handler_t handle_slave_sql(void *arg)
     */
     pthread_cond_broadcast(&rli->start_cond);
     pthread_mutex_unlock(&rli->run_lock);
-    sql_print_error(_("Failed during slave thread initialization"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed during slave thread initialization"));
     goto err;
   }
   session->init_for_queries();
@@ -2261,7 +2261,7 @@ pthread_handler_t handle_slave_sql(void *arg)
                          1 /*need data lock*/, &errmsg,
                          1 /*look for a description_event*/))
   {
-    sql_print_error(_("Error initializing relay log position: %s"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error initializing relay log position: %s"),
                     errmsg);
     goto err;
   }
@@ -2283,7 +2283,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   assert(rli->sql_session == session);
 
   if (global_system_variables.log_warnings)
-    sql_print_information(_("Slave SQL thread initialized, "
+    errmsg_printf(ERRMSG_LVL_INFO, _("Slave SQL thread initialized, "
                             "starting replication in log '%s' at "
                             "position %s, relay log '%s' position: %s"),
                             RPL_LOG_NAME,
@@ -2297,7 +2297,7 @@ pthread_handler_t handle_slave_sql(void *arg)
     execute_init_command(session, &sys_init_slave, &LOCK_sys_init_slave);
     if (session->is_slave_error)
     {
-      sql_print_error(_("Slave SQL thread aborted. "
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Slave SQL thread aborted. "
                         "Can't execute init_slave query"));
       goto err;
     }
@@ -2312,7 +2312,7 @@ pthread_handler_t handle_slave_sql(void *arg)
       rli->is_until_satisfied(rli->group_master_log_pos))
   {
     char buf[22];
-    sql_print_information(_("Slave SQL thread stopped because it reached its"
+    errmsg_printf(ERRMSG_LVL_INFO, _("Slave SQL thread stopped because it reached its"
                             " UNTIL position %s"), llstr(rli->until_pos(), buf));
     pthread_mutex_unlock(&rli->data_lock);
     goto err;
@@ -2348,7 +2348,7 @@ pthread_handler_t handle_slave_sql(void *arg)
           }
           else if (last_errno != session->main_da.sql_errno())
           {
-            sql_print_error(_("Slave (additional info): %s Error_code: %d"),
+            errmsg_printf(ERRMSG_LVL_ERROR, _("Slave (additional info): %s Error_code: %d"),
                             errmsg, session->main_da.sql_errno());
           }
         }
@@ -2365,10 +2365,10 @@ pthread_handler_t handle_slave_sql(void *arg)
         {
           if (err->code == ER_CANT_OPEN_LIBRARY)
             udf_error = true;
-          sql_print_warning(_("Slave: %s Error_code: %d"),err->msg, err->code);
+          errmsg_printf(ERRMSG_LVL_WARN, _("Slave: %s Error_code: %d"),err->msg, err->code);
         }
         if (udf_error)
-          sql_print_error(_("Error loading user-defined library, slave SQL "
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Error loading user-defined library, slave SQL "
                             "thread aborted. Install the missing library, "
                             "and restart the slave SQL thread with "
                             "\"SLAVE START\". We stopped at log '%s' "
@@ -2376,7 +2376,7 @@ pthread_handler_t handle_slave_sql(void *arg)
                           RPL_LOG_NAME, llstr(rli->group_master_log_pos,
             llbuff));
         else
-          sql_print_error(_("Error running query, slave SQL thread aborted. "
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Error running query, slave SQL thread aborted. "
                             "Fix the problem, and restart "
                             "the slave SQL thread with \"SLAVE START\". "
                             "We stopped at log '%s' position %s"),
@@ -2388,7 +2388,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   }
 
   /* Thread stopped. Print the current replication position to the log */
-  sql_print_information(_("Slave SQL thread exiting, replication stopped in "
+  errmsg_printf(ERRMSG_LVL_INFO, _("Slave SQL thread exiting, replication stopped in "
                           "log '%s' at position %s"),
                         RPL_LOG_NAME,
                         llstr(rli->group_master_log_pos,llbuff));
@@ -2477,7 +2477,7 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
 
   if (unlikely(net_request_file(net,cev->fname)))
   {
-    sql_print_error(_("Slave I/O: failed requesting download of '%s'"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Slave I/O: failed requesting download of '%s'"),
                     cev->fname);
     goto err;
   }
@@ -2494,7 +2494,7 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
     {
       if (unlikely((num_bytes=my_net_read(net)) == packet_error))
       {
-        sql_print_error(_("Network read error downloading '%s' from master"),
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Network read error downloading '%s' from master"),
                         cev->fname);
         goto err;
       }
@@ -2666,7 +2666,7 @@ static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
                                             mi->rli.relay_log.description_event_for_queue);
   if (unlikely(!ev))
   {
-    sql_print_error(_("Read invalid event from master: '%s', "
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Read invalid event from master: '%s', "
                       "master could be corrupt but a more likely cause "
                       "of this is a bug"),
                     errmsg);
@@ -2752,7 +2752,7 @@ static int32_t queue_binlog_ver_3_event(Master_info *mi, const char *buf,
                                             mi->rli.relay_log.description_event_for_queue);
   if (unlikely(!ev))
   {
-    sql_print_error(_("Read invalid event from master: '%s', "
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Read invalid event from master: '%s', "
                       "master could be corrupt but a more likely cause of "
                       "this is a bug"),
                     errmsg);
@@ -3140,7 +3140,7 @@ static int32_t connect_to_master(Session* session, DRIZZLE *drizzle, Master_info
     if (reconnect)
     {
       if (!suppress_warnings && global_system_variables.log_warnings)
-        sql_print_information(_("Slave: connected to master '%s@%s:%d', "
+        errmsg_printf(ERRMSG_LVL_INFO, _("Slave: connected to master '%s@%s:%d', "
                                 "replication resumed in log '%s' at "
                                 "position %s"), mi->getUsername(),
                                 mi->getHostname(), mi->getPort(),
@@ -3501,7 +3501,7 @@ static Log_event* next_event(Relay_log_info* rli)
       {
 #ifdef EXTRA_DEBUG
         if (global_system_variables.log_warnings)
-          sql_print_information(_("next log '%s' is currently active"),
+          errmsg_printf(ERRMSG_LVL_INFO, _("next log '%s' is currently active"),
                                 rli->linfo.log_file_name);
 #endif
         rli->cur_log= cur_log= rli->relay_log.get_log_file();
@@ -3531,7 +3531,7 @@ static Log_event* next_event(Relay_log_info* rli)
       */
 #ifdef EXTRA_DEBUG
       if (global_system_variables.log_warnings)
-        sql_print_information(_("next log '%s' is not active"),
+        errmsg_printf(ERRMSG_LVL_INFO, _("next log '%s' is not active"),
                               rli->linfo.log_file_name);
 #endif
       // open_binlog() will check the magic header
@@ -3547,7 +3547,7 @@ static Log_event* next_event(Relay_log_info* rli)
       */
       if (hot_log)
         pthread_mutex_unlock(log_lock);
-      sql_print_error(_("Slave SQL thread: I/O error reading "
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Slave SQL thread: I/O error reading "
                         "event(errno: %d  cur_log->error: %d)"),
                       my_errno,cur_log->error);
       // set read position to the beginning of the event
@@ -3559,14 +3559,14 @@ static Log_event* next_event(Relay_log_info* rli)
   }
   if (!errmsg && global_system_variables.log_warnings)
   {
-    sql_print_information(_("Error reading relay log event: %s"),
+    errmsg_printf(ERRMSG_LVL_INFO, _("Error reading relay log event: %s"),
                           _("slave SQL thread was killed"));
     return(0);
   }
 
 err:
   if (errmsg)
-    sql_print_error(_("Error reading relay log event: %s"), errmsg);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error reading relay log event: %s"), errmsg);
   return(0);
 }
 

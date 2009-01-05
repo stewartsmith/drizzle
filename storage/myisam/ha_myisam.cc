@@ -75,7 +75,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
 
   if (!session->vio_ok())
   {
-    sql_print_error("%s",msgbuf);
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s",msgbuf);
     return;
   }
 
@@ -101,7 +101,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
   protocol->store(msg_type, system_charset_info);
   protocol->store(msgbuf, msg_length, system_charset_info);
   if (protocol->write())
-    sql_print_error("Failed on my_net_write, writing to stderr instead: %s\n",
+    errmsg_printf(ERRMSG_LVL_ERROR, "Failed on my_net_write, writing to stderr instead: %s\n",
 		    msgbuf);
   return;
 }
@@ -452,16 +452,16 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
   LIST *element;
   pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_session= (Session*) file->in_use.data))
-    sql_print_error(_("Got an error from thread_id=%"PRIu64", %s:%d"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
                     cur_session->thread_id,
                     sfile, sline);
   else
-    sql_print_error(_("Got an error from unknown thread, %s:%d"), sfile, sline);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from unknown thread, %s:%d"), sfile, sline);
   if (message)
-    sql_print_error("%s", message);
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s", message);
   for (element= file->s->in_use; element; element= list_rest(element))
   {
-    sql_print_error("%s", _("Unknown thread accessing table"));
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s", _("Unknown thread accessing table"));
   }
   pthread_mutex_unlock(&file->s->intern_lock);
 }
@@ -773,7 +773,7 @@ int ha_myisam::repair(Session* session, HA_CHECK_OPT *check_opt)
 		      (uint) (T_RETRY_WITHOUT_QUICK | T_QUICK)))
     {
       param.testflag&= ~T_RETRY_WITHOUT_QUICK;
-      sql_print_information("Retrying repair of: '%s' without quick",
+      errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' without quick",
                             table->s->path.str);
       continue;
     }
@@ -781,7 +781,7 @@ int ha_myisam::repair(Session* session, HA_CHECK_OPT *check_opt)
     if ((param.testflag & T_REP_BY_SORT))
     {
       param.testflag= (param.testflag & ~T_REP_BY_SORT) | T_REP;
-      sql_print_information("Retrying repair of: '%s' with keycache",
+      errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' with keycache",
                             table->s->path.str);
       continue;
     }
@@ -791,7 +791,7 @@ int ha_myisam::repair(Session* session, HA_CHECK_OPT *check_opt)
       !(check_opt->flags & T_VERY_SILENT))
   {
     char llbuff[22],llbuff2[22];
-    sql_print_information("Found %s of %s rows when repairing '%s'",
+    errmsg_printf(ERRMSG_LVL_INFO, "Found %s of %s rows when repairing '%s'",
                           llstr(file->state->records, llbuff),
                           llstr(start_records, llbuff2),
                           table->s->path.str);
@@ -813,7 +813,7 @@ int ha_myisam::optimize(Session* session, HA_CHECK_OPT *check_opt)
   param.sort_buffer_length=  check_opt->sort_buffer_size;
   if ((error= repair(session,param,1)) && param.retry_repair)
   {
-    sql_print_warning("Warning: Optimize table got errno %d on %s.%s, retrying",
+    errmsg_printf(ERRMSG_LVL_WARN, "Warning: Optimize table got errno %d on %s.%s, retrying",
                       my_errno, param.db_name, param.table_name);
     param.testflag&= ~T_REP_BY_SORT;
     error= repair(session,param,1);
@@ -842,7 +842,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   */
   if (file->dfile == -1)
   {
-    sql_print_information("Retrying repair of: '%s' failed. "
+    errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' failed. "
                           "Please try REPAIR EXTENDED or myisamchk",
                           table->s->path.str);
     return(HA_ADMIN_FAILED);
@@ -1126,7 +1126,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
     param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
-      sql_print_warning("Warning: Enabling keys got errno %d on %s.%s, retrying",
+      errmsg_printf(ERRMSG_LVL_WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
                         my_errno, param.db_name, param.table_name);
       /* Repairing by sort failed. Now try standard repair method. */
       param.testflag&= ~(T_REP_BY_SORT | T_QUICK);
@@ -1254,7 +1254,7 @@ bool ha_myisam::check_and_repair(Session *session)
   // Don't use quick if deleted rows
   if (!file->state->del && (myisam_recover_options & HA_RECOVER_QUICK))
     check_opt.flags|=T_QUICK;
-  sql_print_warning("Checking table:   '%s'",table->s->path.str);
+  errmsg_printf(ERRMSG_LVL_WARN, "Checking table:   '%s'",table->s->path.str);
 
   old_query= session->query;
   old_query_length= session->query_length;
@@ -1265,7 +1265,7 @@ bool ha_myisam::check_and_repair(Session *session)
 
   if ((marked_crashed= mi_is_crashed(file)) || check(session, &check_opt))
   {
-    sql_print_warning("Recovering table: '%s'",table->s->path.str);
+    errmsg_printf(ERRMSG_LVL_WARN, "Recovering table: '%s'",table->s->path.str);
     check_opt.flags=
       ((myisam_recover_options & HA_RECOVER_BACKUP ? T_BACKUP_DATA : 0) |
        (marked_crashed                             ? 0 : T_QUICK) |

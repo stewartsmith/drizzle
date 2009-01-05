@@ -38,7 +38,7 @@ int replicator_initializer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "replicator" is the name
         of the plugin api, and so should not be translated. */
-      sql_print_error(_("replicator plugin '%s' init() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' init() failed"),
                       plugin->name.str);
       goto err;
     }
@@ -60,7 +60,7 @@ int replicator_finalizer(st_plugin_int *plugin)
         {
           /* TRANSLATORS: The leading word "replicator" is the name
              of the plugin api, and so should not be translated. */
-          sql_print_error(_("replicator plugin '%s' deinit() failed"),
+          errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' deinit() failed"),
                           plugin->name.str);
         }
     }
@@ -84,7 +84,7 @@ static bool replicator_session_iterate(Session *session, plugin_ref plugin, void
     {
       /* TRANSLATORS: The leading word "replicator" is the name
         of the plugin api, and so should not be translated. */
-      sql_print_error(_("replicator plugin '%s' session_init() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' session_init() failed"),
                       (char *)plugin_name(plugin));
       return true;
     }
@@ -154,7 +154,7 @@ static bool replicator_do_row_iterate (Session *session, plugin_ref plugin, void
       {
         /* TRANSLATORS: The leading word "replicator" is the name
           of the plugin api, and so should not be translated. */
-        sql_print_error(_("replicator plugin '%s' row_insert() failed"),
+        errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' row_insert() failed"),
                         (char *)plugin_name(plugin));
 
         return true;
@@ -168,7 +168,7 @@ static bool replicator_do_row_iterate (Session *session, plugin_ref plugin, void
       {
         /* TRANSLATORS: The leading word "replicator" is the name
           of the plugin api, and so should not be translated. */
-        sql_print_error(_("replicator plugin '%s' row_update() failed"),
+        errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' row_update() failed"),
                         (char *)plugin_name(plugin));
 
         return true;
@@ -182,7 +182,7 @@ static bool replicator_do_row_iterate (Session *session, plugin_ref plugin, void
       {
         /* TRANSLATORS: The leading word "replicator" is the name
           of the plugin api, and so should not be translated. */
-        sql_print_error(_("replicator plugin '%s' row_delete() failed"),
+        errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' row_delete() failed"),
                         (char *)plugin_name(plugin));
 
         return true;
@@ -267,7 +267,7 @@ static bool replicator_end_transaction_iterate (Session *session, plugin_ref plu
     {
       /* TRANSLATORS: The leading word "replicator" is the name
         of the plugin api, and so should not be translated. */
-      sql_print_error(_("replicator plugin '%s' end_transaction() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' end_transaction() failed"),
                       (char *)plugin_name(plugin));
       return true;
     }
@@ -324,7 +324,7 @@ static bool replicator_statement_iterate(Session *session, plugin_ref plugin, vo
     {
       /* TRANSLATORS: The leading word "replicator" is the name
         of the plugin api, and so should not be translated. */
-      sql_print_error(_("replicator plugin '%s' statement() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' statement() failed"),
                       (char *)plugin_name(plugin));
       return true;
     }

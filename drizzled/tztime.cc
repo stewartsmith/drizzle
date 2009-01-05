@@ -1057,8 +1057,9 @@ my_tz_init(Session *session, const char *default_tzname)
     */
     if (!(global_system_variables.time_zone= my_tz_find(session, &tmp_tzname2)))
     {
-      sql_print_error(_("Fatal error: Illegal or unknown default time zone '%s'"),
-                      default_tzname);
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Fatal error: Illegal or unknown default time zone '%s'"),
+                    default_tzname);
       return true;
     }
   }

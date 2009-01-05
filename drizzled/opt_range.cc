@@ -5755,19 +5755,19 @@ int test_rb_tree(SEL_ARG *element,SEL_ARG *parent)
     return 0;					// Found end of tree
   if (element->parent != parent)
   {
-    sql_print_error("Wrong tree: Parent doesn't point at parent");
+    errmsg_printf(ERRMSG_LVL_ERROR, "Wrong tree: Parent doesn't point at parent");
     return -1;
   }
   if (element->color == SEL_ARG::RED &&
       (element->left->color == SEL_ARG::RED ||
        element->right->color == SEL_ARG::RED))
   {
-    sql_print_error("Wrong tree: Found two red in a row");
+    errmsg_printf(ERRMSG_LVL_ERROR, "Wrong tree: Found two red in a row");
     return -1;
   }
   if (element->left == element->right && element->left != &null_element)
   {						// Dummy test
-    sql_print_error("Wrong tree: Found right == left");
+    errmsg_printf(ERRMSG_LVL_ERROR, "Wrong tree: Found right == left");
     return -1;
   }
   count_l=test_rb_tree(element->left,element);
@@ -5776,7 +5776,7 @@ int test_rb_tree(SEL_ARG *element,SEL_ARG *parent)
   {
     if (count_l == count_r)
       return count_l+(element->color == SEL_ARG::BLACK);
-    sql_print_error("Wrong tree: Incorrect black-count: %d - %d",
+    errmsg_printf(ERRMSG_LVL_ERROR, "Wrong tree: Incorrect black-count: %d - %d",
 	    count_l,count_r);
   }
   return -1;					// Error, no more warnings
@@ -5863,7 +5863,7 @@ void SEL_ARG::test_use_count(SEL_ARG *root)
   uint32_t e_count=0;
   if (this == root && use_count != 1)
   {
-    sql_print_information("Use_count: Wrong count %lu for root",use_count);
+    errmsg_printf(ERRMSG_LVL_INFO, "Use_count: Wrong count %lu for root",use_count);
     return;
   }
   if (this->type != SEL_ARG::KEY_RANGE)
@@ -5876,7 +5876,7 @@ void SEL_ARG::test_use_count(SEL_ARG *root)
       ulong count=count_key_part_usage(root,pos->next_key_part);
       if (count > pos->next_key_part->use_count)
       {
-        sql_print_information("Use_count: Wrong count for key at 0x%lx, %lu "
+        errmsg_printf(ERRMSG_LVL_INFO, "Use_count: Wrong count for key at 0x%lx, %lu "
                               "should be %lu", (long unsigned int)pos,
                               pos->next_key_part->use_count, count);
 	return;
@@ -5885,7 +5885,7 @@ void SEL_ARG::test_use_count(SEL_ARG *root)
     }
   }
   if (e_count != elements)
-    sql_print_warning("Wrong use count: %u (should be %u) for tree at 0x%lx",
+    errmsg_printf(ERRMSG_LVL_WARN, "Wrong use count: %u (should be %u) for tree at 0x%lx",
                       e_count, elements, (long unsigned int) this);
 }
 
