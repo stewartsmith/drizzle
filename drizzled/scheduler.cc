@@ -129,7 +129,7 @@ bool session_scheduler::init(Session *parent_session)
 
   if (io_event == NULL)
   {
-    sql_print_error(_("Memory allocation error in session_scheduler::init\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Memory allocation error in session_scheduler::init\n"));
     return true;
   }
   memset(io_event, 0, sizeof(*io_event));
@@ -207,13 +207,13 @@ static bool libevent_init(void)
   /* set up the pipe used to add new sessions to the event pool */
   if (init_pipe(session_add_pipe))
   {
-    sql_print_error(_("init_pipe(session_add_pipe) error in libevent_init\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("init_pipe(session_add_pipe) error in libevent_init\n"));
     return(1);
   }
   /* set up the pipe used to kill sessions in the event queue */
   if (init_pipe(session_kill_pipe))
   {
-    sql_print_error(_("init_pipe(session_kill_pipe) error in libevent_init\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("init_pipe(session_kill_pipe) error in libevent_init\n"));
     close(session_add_pipe[0]);
     close(session_add_pipe[1]);
     return(1);
@@ -225,7 +225,7 @@ static bool libevent_init(void)
 
  if (event_add(&session_add_event, NULL) || event_add(&session_kill_event, NULL))
  {
-   sql_print_error(_("session_add_event event_add error in libevent_init\n"));
+   errmsg_printf(ERRMSG_LVL_ERROR, _("session_add_event event_add error in libevent_init\n"));
    libevent_end();
    return(1);
 
@@ -241,7 +241,7 @@ static bool libevent_init(void)
     if ((error= pthread_create(&thread, &connection_attrib,
                                libevent_thread_proc, 0)))
     {
-      sql_print_error(_("Can't create completion port thread (error %d)"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
                       error);
       pthread_mutex_unlock(&LOCK_thread_count);
       libevent_end();                      // Cleanup
@@ -354,7 +354,7 @@ void libevent_add_session_callback(int Fd, short, void *)
       /* Add to libevent */
       if (event_add(session->scheduler.io_event, NULL))
       {
-        sql_print_error(_("event_add error in libevent_add_session_callback\n"));
+        errmsg_printf(ERRMSG_LVL_ERROR, _("event_add error in libevent_add_session_callback\n"));
         libevent_connection_close(session);
       }
       else
@@ -380,7 +380,7 @@ static void libevent_add_connection(Session *session)
 {
   if (session->scheduler.init(session))
   {
-    sql_print_error(_("Scheduler init error in libevent_add_new_connection\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Scheduler init error in libevent_add_new_connection\n"));
     pthread_mutex_unlock(&LOCK_thread_count);
     libevent_connection_close(session);
     return;
@@ -461,7 +461,7 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
   if (init_new_connection_handler_thread())
   {
     my_thread_global_end();
-    sql_print_error(_("libevent_thread_proc: my_thread_init() failed\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("libevent_thread_proc: my_thread_init() failed\n"));
     exit(1);
   }
 

@@ -4681,8 +4681,9 @@ int initialize_schema_table(st_plugin_int *plugin)
 
     if (plugin->plugin->init(schema_table))
     {
-      sql_print_error(_("Plugin '%s' init function returned error."),
-                      plugin->name.str);
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error."),
+                    plugin->name.str);
       goto err;
     }
 

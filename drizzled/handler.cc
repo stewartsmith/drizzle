@@ -958,7 +958,7 @@ static bool xarecover_handlerton(Session *unused __attribute__((unused)),
   {
     while ((got= hton->recover(hton, info->list, info->len)) > 0 )
     {
-      sql_print_information(_("Found %d prepared transaction(s) in %s"),
+      errmsg_printf(ERRMSG_LVL_INFO, _("Found %d prepared transaction(s) in %s"),
                             got, ha_resolve_storage_engine_name(hton));
       for (int i=0; i < got; i ++)
       {
@@ -1010,7 +1010,7 @@ int ha_recover(HASH *commit_list)
     return(0);
 
   if (info.commit_list)
-    sql_print_information(_("Starting crash recovery..."));
+    errmsg_printf(ERRMSG_LVL_INFO, _("Starting crash recovery..."));
 
 
 #ifndef WILL_BE_DELETED_LATER
@@ -1033,7 +1033,7 @@ int ha_recover(HASH *commit_list)
   }
   if (!info.list)
   {
-    sql_print_error(ER(ER_OUTOFMEMORY), info.len*sizeof(XID));
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), info.len*sizeof(XID));
     return(1);
   }
 
@@ -1042,11 +1042,12 @@ int ha_recover(HASH *commit_list)
 
   free((unsigned char*)info.list);
   if (info.found_foreign_xids)
-    sql_print_warning(_("Found %d prepared XA transactions"),
-                      info.found_foreign_xids);
+    errmsg_printf(ERRMSG_LVL_WARN, _("Found %d prepared XA transactions"),
+                  info.found_foreign_xids);
   if (info.dry_run && info.found_my_xids)
   {
-    sql_print_error(_("Found %d prepared transactions! It means that drizzled "
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Found %d prepared transactions! It means that drizzled "
                     "was not shut down properly last time and critical "
                     "recovery information (last binlog or %s file) was "
                     "manually deleted after a crash. You have to start "
@@ -1056,7 +1057,7 @@ int ha_recover(HASH *commit_list)
     return(1);
   }
   if (info.commit_list)
-    sql_print_information(_("Crash recovery finished."));
+    errmsg_printf(ERRMSG_LVL_INFO, _("Crash recovery finished."));
   return(0);
 }
 

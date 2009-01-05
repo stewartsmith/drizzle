@@ -694,8 +694,8 @@ void fix_slave_exec_mode(enum_var_type)
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT) == 1 &&
       bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
   {
-    sql_print_error(_("Ambiguous slave modes combination."
-                    " STRICT will be used"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Ambiguous slave modes combination."
+                                      " STRICT will be used"));
     bit_do_clear(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT);
   }
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 0)

@@ -2479,7 +2479,7 @@ bool reopen_table(Table *table)
 
 #ifdef EXTRA_DEBUG
   if (table->db_stat)
-    sql_print_error(_("Table %s had a open data handler in reopen_table"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Table %s had a open data handler in reopen_table"),
 		    table->alias);
 #endif
   memset(&table_list, 0, sizeof(TableList));
@@ -3128,7 +3128,7 @@ retry:
        /* Give right error message */
        session->clear_error();
        my_error(ER_NOT_KEYFILE, MYF(0), share->table_name.str, my_errno);
-       sql_print_error(_("Couldn't repair table: %s.%s"), share->db.str,
+       errmsg_printf(ERRMSG_LVL_ERROR, _("Couldn't repair table: %s.%s"), share->db.str,
                        share->table_name.str);
        if (entry->file)
  	closefrm(entry, 0);
@@ -3171,7 +3171,7 @@ retry:
       }
       else
       {
-        sql_print_error(_("When opening HEAP table, could not allocate memory "
+        errmsg_printf(ERRMSG_LVL_ERROR, _("When opening HEAP table, could not allocate memory "
                           "to write 'DELETE FROM `%s`.`%s`' to the binary log"),
                         table_list->db, table_list->table_name);
         my_error(ER_OUTOFMEMORY, MYF(0), query_buf_size);
@@ -3780,7 +3780,7 @@ bool rm_temporary_table(handlerton *base, char *path)
   if (file && file->ha_delete_table(path))
   {
     error=1;
-    sql_print_warning(_("Could not remove temporary table: '%s', error: %d"),
+    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                       path, my_errno);
   }
   delete file;
@@ -6384,7 +6384,7 @@ void kill_drizzle(void)
     abort_loop=1;
     if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
 			   (void*) 0))
-      sql_print_error(_("Can't create thread to kill server"));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread to kill server"));
   }
 #endif
   return;;
