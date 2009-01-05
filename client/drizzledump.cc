@@ -34,6 +34,7 @@
 #include <mystrings/m_ctype.h>
 #include <mysys/hash.h>
 #include <stdarg.h>
+#include <algorithm>
 
 #include <drizzled/gettext.h>
 
