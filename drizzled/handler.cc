@@ -46,8 +46,6 @@ using namespace CMATH_NAMESPACE;
 #endif
 
 
-extern HASH open_cache;
-
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
 /* number of entries in handlertons[] */
