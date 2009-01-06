@@ -177,11 +177,9 @@ int main(int argc, char **argv)
     case ':':
       fprintf(stderr, "option -%c requires an argument\n", optopt);
       return 1;
-      break;
     case '?':
       fprintf(stderr, "unrecognized option: -%c\n", optopt);
       return 1;
-      break;
     }
   }
 

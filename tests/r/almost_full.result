@@ -1,0 +1,2 @@
+drop table if exists t1;
+CREATE TABLE t1 (a int auto_increment primary key not null, b longtext) ENGINE=MyISAM;
