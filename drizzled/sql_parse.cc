@@ -3848,16 +3848,13 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
                            uint32_t max_char_length,
                            const char *param_for_err_msg)
 {
-#ifdef HAVE_CHARSET_utf8mb3
   /*
     We don't support non-BMP characters in identifiers at the moment,
     so they should be prohibited until such support is done.
     This is why we use the 3-byte utf8 to check well-formedness here.
   */
-  const CHARSET_INFO * const cs= &my_charset_utf8mb3_general_ci;
-#else
-  const CHARSET_INFO * const cs= system_charset_info;
-#endif
+  const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
+
   int well_formed_error;
   uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
                                       max_char_length, &well_formed_error);
