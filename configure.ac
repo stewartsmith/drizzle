@@ -466,9 +466,22 @@ SEARCH_FOR_LIB(z, crc32, zlib.h,
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
+dnl First, search for readline. If that fails, search for ncurses then
+dnl search for readline again... on some platforms *cough* solaris *cough*
+dnl you need to link with ncurses directly to get readline to work
 
-SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
-               AC_MSG_ERROR([libreadline is required for Drizzle]))
+SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,[
+	SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
+	        SEARCH_FOR_LIB(tinfo, tgetent, ncurses/ncurses.h,
+			AC_MSG_ERROR([Couldn't find ncurses])
+        	)
+        	]
+	)
+	SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
+               AC_MSG_ERROR([libreadline is required for Drizzle]),
+               [$NCURSES_LIBS]) 
+ 	]
+)
 
 save_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $READLINE_CFLAGS"
