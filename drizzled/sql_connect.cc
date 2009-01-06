@@ -457,7 +457,7 @@ void end_connection(Session *session)
     {
       Security_context *sctx= &session->security_ctx;
 
-      sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
+      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION),
                         session->thread_id,(session->db ? session->db : "unconnected"),
                         sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated",
                         sctx->ip.c_str(),
@@ -499,11 +499,11 @@ void prepare_new_connection_state(Session* session)
     if (session->is_error())
     {
       session->killed= Session::KILL_CONNECTION;
-      sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
+      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION),
                         session->thread_id,(session->db ? session->db : "unconnected"),
                         sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated",
                         sctx->ip.c_str(), "init_connect command failed");
-      sql_print_warning("%s", session->main_da.message());
+      errmsg_printf(ERRMSG_LVL_WARN, "%s", session->main_da.message());
     }
     session->set_proc_info(0);
     session->set_time();

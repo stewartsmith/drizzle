@@ -902,7 +902,7 @@ err:
   if (!res)
   {
     assert(error != 0);
-    sql_print_error(_("Error in Log_event::read_log_event(): "
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error in Log_event::read_log_event(): "
                     "'%s', data_len: %d, event_type: %d"),
 		    error,data_len,head[EVENT_TYPE_OFFSET]);
     free(buf);
@@ -1485,7 +1485,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli)
   @code
      if ((uint32_t) affected_in_event != (uint32_t) affected_on_slave)
      {
-     sql_print_error("Slave: did not get the expected number of affected \
+     errmsg_printf(ERRMSG_LVL_ERROR, "Slave: did not get the expected number of affected \
      rows running query from master - expected %d, got %d (this numbers \
      should have matched modulo 4294967296).", 0, ...);
      session->query_error = 1;
@@ -1674,7 +1674,7 @@ compare_errors:
       like:
       if ((uint32_t) affected_in_event != (uint32_t) affected_on_slave)
       {
-      sql_print_error("Slave: did not get the expected number of affected \
+      errmsg_printf(ERRMSG_LVL_ERROR, "Slave: did not get the expected number of affected \
       rows running query from master - expected %d, got %d (this numbers \
       should have matched modulo 4294967296).", 0, ...);
       session->is_slave_error = 1;
@@ -2772,7 +2772,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       if (session->cuted_fields)
       {
         /* log_pos is the position of the LOAD event in the master log */
-        sql_print_warning(_("Slave: load data infile on table '%s' at "
+        errmsg_printf(ERRMSG_LVL_WARN, _("Slave: load data infile on table '%s' at "
                             "log position %s in log '%s' produced %ld "
                             "warning(s). Default database: '%s'"),
                           (char*) table_name,
@@ -3096,7 +3096,7 @@ Slave_log_event::Slave_log_event(Session* session_arg,
     master_pos = rli->group_master_log_pos;
   }
   else
-    sql_print_error(_("Out of memory while recording slave event"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory while recording slave event"));
   pthread_mutex_unlock(&rli->data_lock);
   pthread_mutex_unlock(&mi->data_lock);
   return;

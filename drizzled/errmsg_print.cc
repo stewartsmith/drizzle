@@ -60,5 +60,16 @@ void sql_print_information(const char *format, ...)
 void sql_perror(const char *message)
 {
   // is stderr threadsafe?
-  sql_print_error("%s: %s", message, strerror(errno));
+  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s", message, strerror(errno));
+}
+
+
+bool errmsg_printf (int priority, char const *format, ...)
+{
+  bool rv;
+  va_list args;
+  va_start(args, format);
+  rv= errmsg_vprintf(current_session, priority, format, args);
+  va_end(args);
+  return rv;
 }

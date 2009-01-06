@@ -157,9 +157,9 @@ static int logging_query_plugin_init(void *p)
            S_IRUSR|S_IWUSR);
   if (fd < 0)
   {
-    sql_print_error(_("fail open() fn=%s er=%s\n"),
-		    logging_query_filename,
-		    strerror(errno));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
+                  logging_query_filename,
+                  strerror(errno));
 
     /* todo
        we should return an error here, so the plugin doesnt load

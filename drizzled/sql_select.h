@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_SQL_SELECT_H
 #define DRIZZLED_SQL_SELECT_H
 
-#include <drizzled/item.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/session.h>
 #include <drizzled/field/varstring.h>

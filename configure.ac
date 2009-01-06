@@ -463,26 +463,12 @@ SEARCH_FOR_LIB(z, crc32, zlib.h,
                AC_MSG_ERROR([libz is required for Drizzle]))
 
 #--------------------------------------------------------------------
-# Check for libncurses
-#--------------------------------------------------------------------
-
-dnl We're only looking for ncurses in case we need it for readline
-dnl So we don't need to check for ncurses.h
-SEARCH_FOR_LIB(ncurses, tgetent, stdio.h, [
-	SEARCH_FOR_LIB(tinfo, tgetent, stdio.h,
-		AC_MSG_ERROR([Couldn't find ncurses])
-	)
-	]
-)
-
-#--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
 
 SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
-               AC_MSG_ERROR([libreadline is required for Drizzle]),
-               [$NCURSES_LIBS]) 
+               AC_MSG_ERROR([libreadline is required for Drizzle]))
 
 save_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $READLINE_CFLAGS"
