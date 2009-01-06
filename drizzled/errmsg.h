@@ -30,9 +30,4 @@ int errmsg_finalizer(st_plugin_int *plugin);
 
 bool errmsg_vprintf (Session *session, int priority, char const *format, va_list ap);
 
-// todo: add __attribute__((format(printf, 1, 2)))
-// todo: remove session from declaration, instead reference current_session inside definition
-//       so that places that have not defined Session can still print error messages
-bool errmsg_printf (Session *session, int priority, char const *format, ...);
-
 #endif /* DRIZZLED_ERRMSG_H */

@@ -37,7 +37,7 @@ int scheduling_initializer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "scheduling" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("scheduling plugin '%s' init() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' init() failed"),
 		      plugin->name.str);
       goto err;
     }
@@ -59,7 +59,7 @@ int scheduling_finalizer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "scheduling" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("scheduling plugin '%s' deinit() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' deinit() failed"),
 		      plugin->name.str);
     }
   }
@@ -95,7 +95,7 @@ static bool scheduling_do1_iterate (Session *session, plugin_ref plugin, void *p
     {
       /* TRANSLATORS: The leading word "scheduling" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("scheduling plugin '%s' scheduling_func1() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' scheduling_func1() failed"),
 		      (char *)plugin_name(plugin));
       return true;
     }
@@ -149,7 +149,7 @@ static bool scheduling_do2_iterate (Session *session, plugin_ref plugin, void *p
     {
       /* TRANSLATORS: The leading word "scheduling" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("scheduling plugin '%s' scheduling_func2() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' scheduling_func2() failed"),
 		      (char *)plugin_name(plugin));
 
       return true;

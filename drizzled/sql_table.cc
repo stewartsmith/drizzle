@@ -109,7 +109,7 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
       strcpy(to, MYSQL50_TABLE_NAME_PREFIX);
       strncat(to, from, to_length-MYSQL50_TABLE_NAME_PREFIX_LENGTH-1);
       res= strlen(to);
-      sql_print_error(_("Invalid (old?) table or database name '%s'"), from);
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid (old?) table or database name '%s'"), from);
     }
   }
 
@@ -2705,7 +2705,7 @@ send_result_message:
           const char *err_msg= session->main_da.message();
           if (!session->vio_ok())
           {
-            sql_print_error("%s",err_msg);
+            errmsg_printf(ERRMSG_LVL_ERROR, "%s", err_msg);
           }
           else
           {
@@ -5013,7 +5013,7 @@ end_online:
       free(t_table);
     }
     else
-      sql_print_warning(_("Could not open table %s.%s after rename\n"),
+      errmsg_printf(ERRMSG_LVL_WARN, _("Could not open table %s.%s after rename\n"),
                         new_db,table_name);
     ha_flush_logs(old_db_type);
   }
