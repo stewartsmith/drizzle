@@ -642,8 +642,8 @@ void free_io_cache(Table *table)
   if (table->sort.io_cache)
   {
     close_cached_file(table->sort.io_cache);
-    free((unsigned char*) table->sort.io_cache);
-    table->sort.io_cache=0;
+    delete table->sort.io_cache;
+    table->sort.io_cache= 0;
   }
   return;
 }
