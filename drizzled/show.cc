@@ -28,6 +28,7 @@
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 #include <drizzled/data_home.h>
+#include <drizzled/item/blob.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
@@ -2405,8 +2406,8 @@ static int fill_schema_table_names(Session *session, Table *table,
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                  ST_SCHEMA_TABLE *schema_table,
-                                  enum enum_schema_tables)
+                                      ST_SCHEMA_TABLE *schema_table,
+                                      enum enum_schema_tables)
 {
   /*
     determine which method will be used for table opening
@@ -4681,8 +4682,9 @@ int initialize_schema_table(st_plugin_int *plugin)
 
     if (plugin->plugin->init(schema_table))
     {
-      sql_print_error(_("Plugin '%s' init function returned error."),
-                      plugin->name.str);
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error."),
+                    plugin->name.str);
       goto err;
     }
 

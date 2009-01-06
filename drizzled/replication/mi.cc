@@ -251,7 +251,7 @@ int Master_info::init_master_info(const char* master_info_fname,
 
   inited= 1;
   if ((error= test(flush())))
-    sql_print_error(_("Failed to flush master info file"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to flush master info file"));
   pthread_mutex_unlock(&data_lock);
   return(error);
 

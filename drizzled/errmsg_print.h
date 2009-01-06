@@ -25,9 +25,19 @@
 #ifndef DRIZZLED_ERRMSG_PRINT_H
 #define DRIZZLED_ERRMSG_PRINT_H
 
-void sql_print_error (const char *format, ...);
-void sql_print_warning (const char *format, ...);
-void sql_print_information (const char *format, ...);
+//void sql_print_error (const char *format, ...);
+//void sql_print_warning (const char *format, ...);
+//void sql_print_information (const char *format, ...);
+//void sql_perror (const char *message);
+
+#define ERRMSG_LVL_DBUG 1
+#define ERRMSG_LVL_INFO 2
+#define ERRMSG_LVL_WARN 3
+#define ERRMSG_LVL_ERROR 4
+
+// todo: add __attribute__((format(printf, 1, 2)))
+bool errmsg_printf (int priority, char const *format, ...);
+
 void sql_perror (const char *message);
 
 #endif /* DRIZZLED_ERRMSG_PRINT_H */

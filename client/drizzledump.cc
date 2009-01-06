@@ -34,6 +34,7 @@
 #include <mystrings/m_ctype.h>
 #include <mysys/hash.h>
 #include <stdarg.h>
+#include <algorithm>
 
 #include <drizzled/gettext.h>
 
@@ -48,6 +49,7 @@ using namespace std;
 #define EX_EOM 4
 #define EX_EOF 5 /* ferror for output file was got */
 #define EX_ILLEGAL_TABLE 6
+#define EX_TABLE_STATUS 7
 
 /* index into 'show fields from table' */
 
@@ -104,8 +106,6 @@ static char  *opt_password= NULL, *current_user= NULL,
              *err_ptr= NULL;
 static char **defaults_argv= NULL;
 static char compatible_mode_normal_str[255];
-/* Server supports character_set_results session variable? */
-static bool server_supports_switching_charsets= true;
 static uint32_t opt_compatible_mode= 0;
 #define DRIZZLE_OPT_MASTER_DATA_EFFECTIVE_SQL 1
 #define DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL 2
@@ -959,36 +959,6 @@ static int drizzle_query_with_error_report(DRIZZLE *drizzle_con, DRIZZLE_RES **r
   return 0;
 }
 
-
-/**
-  Switch charset for results to some specified charset.  If the server does not
-  support character_set_results variable, nothing can be done here.  As for
-  whether something should be done here, future new callers of this function
-  should be aware that the server lacking the facility of switching charsets is
-  treated as success.
-
-  @note  If the server lacks support, then nothing is changed and no error
-         condition is returned.
-
-  @returns  whether there was an error or not
-*/
-static int switch_character_set_results(const char *cs_name)
-{
-  char query_buffer[QUERY_LENGTH];
-  size_t query_length;
-
-  /* Server lacks facility.  This is not an error, by arbitrary decision . */
-  if (!server_supports_switching_charsets)
-    return false;
-
-  query_length= snprintf(query_buffer,
-                         sizeof (query_buffer),
-                         "SET SESSION character_set_results = '%s'",
-                         cs_name);
-
-  return drizzle_real_query(drizzle, query_buffer, query_length);
-}
-
 /*
   Open a new .sql file to dump the table or view into
 
@@ -1391,16 +1361,16 @@ static void print_blob_as_hex(FILE *output_file, const char *str, uint32_t len)
     db          - db name
     table_type  - table type, e.g. "MyISAM" or "InnoDB", but also "VIEW"
     ignore_flag - what we must particularly ignore - see IGNORE_ defines above
+    num_fields  - number of fields in the table
 
   RETURN
-    number of fields in table, 0 if error
+    true if success, false if error
 */
 
-static uint get_table_structure(char *table, char *db, char *table_type,
-                                char *ignore_flag)
+static bool get_table_structure(char *table, char *db, char *table_type,
+                                char *ignore_flag, uint64_t *num_fields)
 {
   bool    init=0, delayed, write_data, complete_insert;
-  uint64_t num_fields;
   char       *result_table, *opt_quoted_table;
   const char *insert_option;
   char	     name_buff[NAME_LEN+3],table_buff[NAME_LEN*2+3];
@@ -1456,15 +1426,13 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
       snprintf(buff, sizeof(buff), "show create table %s", result_table);
 
-      if (switch_character_set_results("binary") ||
-          drizzle_query_with_error_report(drizzle, &result, buff) ||
-          switch_character_set_results(default_charset))
-        return(0);
+      if (drizzle_query_with_error_report(drizzle, &result, buff))
+        return false;
 
       if (path)
       {
         if (!(sql_file= open_sql_file_for_table(table)))
-          return(0);
+          return false;
 
         write_header(sql_file, db);
       }
@@ -1499,7 +1467,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
     {
       if (path)
         my_fclose(sql_file, MYF(MY_WME));
-      return(0);
+      return false;
     }
 
     /*
@@ -1541,7 +1509,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
         insert_pat.append(quote_name(row[SHOW_FIELDNAME], name_buff, 0));
       }
     }
-    num_fields= drizzle_num_rows(result);
+    *num_fields= drizzle_num_rows(result);
     drizzle_free_result(result);
   }
   else
@@ -1552,7 +1520,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
     snprintf(query_buff, sizeof(query_buff), "show fields from %s",
              result_table);
     if (drizzle_query_with_error_report(drizzle, &result, query_buff))
-      return(0);
+      return false;
 
     /* Make an sql-file, if path was given iow. option -T was given */
     if (!opt_no_create_info)
@@ -1560,7 +1528,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       if (path)
       {
         if (!(sql_file= open_sql_file_for_table(table)))
-          return(0);
+          return false;
         write_header(sql_file, db);
       }
       if (!opt_xml && opt_comments)
@@ -1639,7 +1607,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
         check_io(sql_file);
       }
     }
-    num_fields= drizzle_num_rows(result);
+    *num_fields= drizzle_num_rows(result);
     drizzle_free_result(result);
     if (!opt_no_create_info)
     {
@@ -1659,7 +1627,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
                 my_progname, result_table, drizzle_error(drizzle));
         if (path)
           my_fclose(sql_file, MYF(MY_WME));
-        return(0);
+        return false;
       }
 
       /* Find first which key is primary key */
@@ -1779,7 +1747,7 @@ continue_xml:
     write_footer(sql_file);
     my_fclose(sql_file, MYF(MY_WME));
   }
-  return((uint) num_fields);
+  return true;
 } /* get_table_structure */
 
 static void add_load_option(string &str, const char *option,
@@ -1869,8 +1837,8 @@ static void dump_table(char *table, char *db)
   char table_type[NAME_LEN];
   char *result_table, table_buff2[NAME_LEN*2+3], *opt_quoted_table;
   int error= 0;
-  uint32_t         rownr, row_break, total_length, init_length;
-  uint num_fields;
+  uint32_t rownr, row_break, total_length, init_length;
+  uint64_t num_fields= 0;
   DRIZZLE_RES     *res;
   DRIZZLE_FIELD   *field;
   DRIZZLE_ROW     row;
@@ -1880,7 +1848,11 @@ static void dump_table(char *table, char *db)
     Make sure you get the create table info before the following check for
     --no-data flag below. Otherwise, the create table info won't be printed.
   */
-  num_fields= get_table_structure(table, db, table_type, &ignore_flag);
+  if (!get_table_structure(table, db, table_type, &ignore_flag, &num_fields))
+  {
+    maybe_die(EX_TABLE_STATUS, "Error retrieving table structure for table: \"%s\"", table);
+    return;
+  }
 
   /* Check --no-data flag */
   if (opt_no_data)
@@ -3154,7 +3126,7 @@ int main(int argc, char **argv)
 {
   char bin_log_name[FN_REFLEN];
   int exit_code;
-  MY_INIT("mysqldump");
+  MY_INIT("drizzledump");
 
   compatible_mode_normal_str[0]= 0;
   default_charset= (char *)drizzle_universal_client_charset;

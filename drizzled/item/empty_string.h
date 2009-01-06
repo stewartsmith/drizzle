@@ -26,6 +26,8 @@
   the client.
 */
 
+#include <drizzled/item/string.h>
+
 class Item_empty_string :public Item_string
 {
 public:

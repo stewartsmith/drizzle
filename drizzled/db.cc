@@ -402,16 +402,16 @@ bool load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
   buffer= db.characterset();
   if (!(create->default_table_charset= get_charset_by_csname(buffer.c_str(), MY_CS_PRIMARY, MYF(0))))
   {
-    sql_print_error(_("Error while loading database options: '%s':"),path);
-    sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error while loading database options: '%s':"),path);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
     create->default_table_charset= default_charset_info;
   }
 
   buffer= db.collation();
   if (!(create->default_table_charset= get_charset_by_name(buffer.c_str(), MYF(0))))
   {
-    sql_print_error(_("Error while loading database options: '%s':"),path);
-    sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error while loading database options: '%s':"),path);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
     create->default_table_charset= default_charset_info;
   }
 

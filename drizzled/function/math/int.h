@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_FUNCTION_MATH_INT_H
 #define DRIZZLED_FUNCTION_MATH_INT_H
 
-#include <drizzled/item.h>
 #include <drizzled/function/func.h>
 #include <drizzled/sql_list.h>
 

@@ -25,6 +25,7 @@
 
 #include <drizzled/comp_creator.h>
 #include <drizzled/item/ref.h>
+#include <drizzled/item/field.h>
 
 class st_select_lex;
 class st_select_lex_unit;

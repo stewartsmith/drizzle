@@ -37,7 +37,7 @@ int qcache_initializer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "qcache" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("qcache plugin '%s' init() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' init() failed"),
 		      plugin->name.str);
       goto err;
     }
@@ -59,7 +59,7 @@ int qcache_finalizer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "qcache" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("qcache plugin '%s' deinit() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' deinit() failed"),
 		      plugin->name.str);
     }
   }
@@ -95,7 +95,7 @@ static bool qcache_do1_iterate (Session *session, plugin_ref plugin, void *p)
     {
       /* TRANSLATORS: The leading word "qcache" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("qcache plugin '%s' do1() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' do1() failed"),
 		      (char *)plugin_name(plugin));
       return true;
     }
@@ -149,7 +149,7 @@ static bool qcache_do2_iterate (Session *session, plugin_ref plugin, void *p)
     {
       /* TRANSLATORS: The leading word "qcache" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("qcache plugin '%s' qcache_func2() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' qcache_func2() failed"),
 		      (char *)plugin_name(plugin));
 
       return true;
