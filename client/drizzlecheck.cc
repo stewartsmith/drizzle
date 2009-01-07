@@ -22,6 +22,10 @@
 #include <string>
 #include <mystrings/m_ctype.h>
 
+/* Added this for string translation. */
+#include <drizzled/gettext.h>
+
+
 using namespace std;
 
 template class vector<string>;
@@ -31,21 +35,23 @@ template class vector<string>;
 #define EX_USAGE 1
 #define EX_MYSQLERR 2
 
-static DRIZZLE drizzle_connection, *sock = 0;
-static bool opt_alldbs = 0, opt_check_only_changed = 0, opt_extended = 0,
-               opt_compress = 0, opt_databases = 0, opt_fast = 0,
-               opt_medium_check = 0, opt_quick = 0, opt_all_in_1 = 0,
-               opt_silent = 0, opt_auto_repair = 0, ignore_errors = 0,
-               tty_password= 0, opt_frm= 0, debug_info_flag= 0, debug_check_flag= 0,
-               opt_fix_table_names= 0, opt_fix_db_names= 0, opt_upgrade= 0,
-               opt_write_binlog= 1;
-static uint verbose = 0, opt_mysql_port=0;
+static DRIZZLE drizzle_connection, *sock= 0;
+static bool opt_alldbs= false, opt_check_only_changed= false,
+            opt_extended= false, opt_compress= false, opt_databases= false,
+            opt_fast= false, opt_medium_check= false, opt_quick= false,
+            opt_all_in_1= false, opt_silent= false, opt_auto_repair= false,
+            ignore_errors= false, tty_password= false, opt_frm= false,
+            debug_info_flag= false, debug_check_flag= false,
+            opt_fix_table_names= false, opt_fix_db_names= false,
+            opt_upgrade= false, opt_write_binlog= true;
+static uint verbose= 0;
+static uint32_t opt_drizzle_port= 0;
 static int my_end_arg;
-static char * opt_mysql_unix_port = 0;
-static char *opt_password = 0, *current_user = 0,
-      *default_charset = (char *)DRIZZLE_DEFAULT_CHARSET_NAME,
-      *current_host = 0;
-static int first_error = 0;
+static char * opt_drizzle_unix_port= NULL;
+static char *opt_password= NULL, *current_user= NULL,
+      *default_charset= (char *)DRIZZLE_DEFAULT_CHARSET_NAME,
+      *current_host= NULL;
+static int first_error= 0;
 vector<string> tables4repair;
 static uint opt_protocol=0;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
@@ -124,15 +130,13 @@ static struct my_option my_long_options[] =
    1, 0, 0, 0, 0, 0},
   {"optimize", 'o', "Optimize table.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"password", 'p',
+  {"password", 'P',
    "Password to use when connecting to server. If password is not given it's solicited on the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
+  {"port", 'p', "Port number to use for connection or 0 for default to, in "
    "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   (char**) &opt_mysql_port,
-   (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
-   0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"protocol", OPT_DRIZZLE_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
@@ -145,7 +149,7 @@ static struct my_option my_long_options[] =
   {"silent", 's', "Print only error messages.", (char**) &opt_silent,
    (char**) &opt_silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
-   (char**) &opt_mysql_unix_port, (char**) &opt_mysql_unix_port, 0, GET_STR,
+   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tables", OPT_TABLES, "Overrides option --databases (-B).", 0, 0, 0,
    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -222,6 +226,9 @@ static void usage(void)
 extern "C"
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch(optid) {
   case 'a':
     what_to_do = DO_ANALYZE;
@@ -254,9 +261,30 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     default_charset= (char*) "utf8";
     break;
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(EX_USAGE);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(EX_USAGE);
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
-      char *start = argument;
+      char *start= argument;
       if (opt_password)
         free(opt_password);
       opt_password = strdup(argument);
@@ -266,9 +294,16 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
                         "Aborting.\n");
         exit(ENOMEM);
       }
-      while (*argument) *argument++= 'x';    /* Destroy argument */
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-  start[1] = 0;                             /* Cut length of argument */
+      {
+        /* Cut length of argument */
+        start[1] = 0;
+      }
       tty_password= 0;
     }
     else
@@ -724,7 +759,7 @@ static int dbConnect(char *host, char *user, char *passwd)
   if (opt_protocol)
     drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (!(sock = drizzle_connect(&drizzle_connection, host, user, passwd,
-         NULL, opt_mysql_port, opt_mysql_unix_port, 0)))
+         NULL, opt_drizzle_port, opt_drizzle_unix_port, 0)))
   {
     DBerror(&drizzle_connection, "when trying to connect");
     return 1;

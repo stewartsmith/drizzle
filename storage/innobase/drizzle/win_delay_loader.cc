@@ -478,7 +478,7 @@ wdl_get_procaddr_from_map(
 #endif
 			if (wdl_init == TRUE) {
 
-				sql_print_error(
+				errmsg_printf(ERRMSG_LVL_ERROR, 
 					"InnoDB: the procedure pointer of %s"
 					" is not found.",
 					import_proc);
@@ -540,7 +540,7 @@ wdl_get_varaddr_from_map(
 #endif
 			if (wdl_init == TRUE) {
 
-				sql_print_error(
+				errmsg_printf(ERRMSG_LVL_ERROR, 
 					"InnoDB: the variable address of %s"
 					" is not found.",
 					import_variable);
@@ -718,7 +718,7 @@ __delayLoadHelper2(
 	specified correctly. */
 	if ((idd.grAttrs & dlattrRva) == 0) {
 
-		sql_print_error("InnoDB: invalid parameter for delay loader.");
+		errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: invalid parameter for delay loader.");
 		return(0);
 	}
 
@@ -755,7 +755,7 @@ __delayLoadHelper2(
 
 		dli.dwLastError = ::GetLastError();
 
-		sql_print_error(
+		errmsg_printf(ERRMSG_LVL_ERROR, 
 			"InnoDB: failed to load mysqld.map with error %d.",
 			dli.dwLastError);
 

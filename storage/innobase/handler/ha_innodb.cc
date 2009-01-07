@@ -1464,7 +1464,7 @@ innobase_query_caching_of_table_permitted(
 	}
 
 	if (trx->has_search_latch) {
-		sql_print_error("The calling thread is holding the adaptive "
+		errmsg_printf(ERRMSG_LVL_ERROR, "The calling thread is holding the adaptive "
 				"search, latch though calling "
 				"innobase_query_caching_of_table_permitted.");
 
@@ -1814,7 +1814,7 @@ innobase_init(
 
 #ifdef MYSQL_DYNAMIC_PLUGIN
 	if (!innodb_plugin_init()) {
-		sql_print_error("InnoDB plugin init failed.");
+		errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB plugin init failed.");
 		DBUG_RETURN(-1);
 	}
 
@@ -1867,7 +1867,7 @@ innobase_init(
 			|| strcmp(test_tablename
 			+ sizeof srv_mysql50_table_name_prefix,
 			test_filename)) {
-		sql_print_error("tablename encoding has been changed");
+		errmsg_printf(ERRMSG_LVL_ERROR, "tablename encoding has been changed");
 		goto error;
 	}
 #endif /* UNIV_DEBUG */
@@ -1875,7 +1875,7 @@ innobase_init(
 	/* Check that values don't overflow on 32-bit systems. */
 	if (sizeof(ulint) == 4) {
 		if (innobase_buffer_pool_size > UINT_MAX32) {
-			sql_print_error(
+			errmsg_printf(ERRMSG_LVL_ERROR, 
 				"innobase_buffer_pool_size can't be over 4GB"
 				" on 32-bit systems");
 
@@ -1883,7 +1883,7 @@ innobase_init(
 		}
 
 		if (innobase_log_file_size > UINT_MAX32) {
-			sql_print_error(
+			errmsg_printf(ERRMSG_LVL_ERROR, 
 				"innobase_log_file_size can't be over 4GB"
 				" on 32-bit systems");
 
@@ -1952,7 +1952,7 @@ innobase_init(
 				&srv_auto_extend_last_data_file,
 				&srv_last_file_size_max);
 	if (ret == FALSE) {
-		sql_print_error(
+		errmsg_printf(ERRMSG_LVL_ERROR, 
 			"InnoDB: syntax error in innodb_data_file_path");
 		my_free(internal_innobase_data_file_path,
 						MYF(MY_ALLOW_ZERO_PTR));
@@ -1982,7 +1982,7 @@ innobase_init(
 						&srv_log_group_home_dirs);
 
 	if (ret == FALSE || innobase_mirrored_log_groups != 1) {
-	  sql_print_error("syntax error in innodb_log_group_home_dir, or a "
+	  errmsg_printf(ERRMSG_LVL_ERROR, "syntax error in innodb_log_group_home_dir, or a "
 			  "wrong number of mirrored log groups");
 
 		my_free(internal_innobase_data_file_path,
@@ -1998,7 +1998,7 @@ innobase_init(
 
 		if (format_id > DICT_TF_FORMAT_MAX) {
 
-			sql_print_error("InnoDB: wrong innodb_file_format.");
+			errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: wrong innodb_file_format.");
 
 			my_free(internal_innobase_data_file_path,
 				MYF(MY_ALLOW_ZERO_PTR));
@@ -2033,7 +2033,7 @@ innobase_init(
 		if (!innobase_file_format_check_validate(
 			innobase_file_format_check)) {
 
-			sql_print_error("InnoDB: invalid "
+			errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: invalid "
 					"innodb_file_format_check value: "
 					"should be either 'on' or 'off' or "
 					"any value up to %s or its "
@@ -2327,7 +2327,7 @@ innobase_commit(
 	if (trx->active_trans == 0
 		&& trx->conc_state != TRX_NOT_STARTED) {
 
-		sql_print_error("trx->active_trans == 0, but"
+		errmsg_printf(ERRMSG_LVL_ERROR, "trx->active_trans == 0, but"
 			" trx->conc_state != TRX_NOT_STARTED");
 	}
 	if (all
@@ -2624,14 +2624,14 @@ innobase_close_connection(
 	if (trx->active_trans == 0
 		&& trx->conc_state != TRX_NOT_STARTED) {
 
-		sql_print_error("trx->active_trans == 0, but"
+		errmsg_printf(ERRMSG_LVL_ERROR, "trx->active_trans == 0, but"
 			" trx->conc_state != TRX_NOT_STARTED");
 	}
 
 
 	if (trx->conc_state != TRX_NOT_STARTED &&
 		global_system_variables.log_warnings) {
-		sql_print_warning(
+		errmsg_printf(ERRMSG_LVL_WARN, 
 			"MySQL is closing a connection that has an active "
 			"InnoDB transaction.  %lu row modifications will "
 			"roll back.",
@@ -2948,12 +2948,12 @@ retry:
 		}
 
 		if (is_part) {
-			sql_print_error("Failed to open table %s after "
+			errmsg_printf(ERRMSG_LVL_ERROR, "Failed to open table %s after "
 					"%lu attemtps.\n", norm_name,
 					retries);
 		}
 
-		sql_print_error("Cannot find or open table %s from\n"
+		errmsg_printf(ERRMSG_LVL_ERROR, "Cannot find or open table %s from\n"
 				"the internal data dictionary of InnoDB "
 				"though the .frm file for the\n"
 				"table exists. Maybe you have deleted and "
@@ -2976,7 +2976,7 @@ retry:
 	}
 
 	if (ib_table->ibd_file_missing && !thd_tablespace_op(thd)) {
-		sql_print_error("MySQL is trying to open a table handle but "
+		errmsg_printf(ERRMSG_LVL_ERROR, "MySQL is trying to open a table handle but "
 				"the .ibd file for\ntable %s does not exist.\n"
 				"Have you deleted the .ibd file from the "
 				"database directory under\nthe MySQL datadir, "
@@ -3009,7 +3009,7 @@ retry:
 
 	if (!row_table_got_default_clust_index(ib_table)) {
 		if (primary_key >= MAX_KEY) {
-		  sql_print_error("Table %s has a primary key in InnoDB data "
+		  errmsg_printf(ERRMSG_LVL_ERROR, "Table %s has a primary key in InnoDB data "
 				  "dictionary, but not in MySQL!", name);
 		}
 
@@ -3024,7 +3024,7 @@ retry:
 		ref_length = table->key_info[primary_key].key_length;
 	} else {
 		if (primary_key != MAX_KEY) {
-		  sql_print_error("Table %s has no primary key in InnoDB data "
+		  errmsg_printf(ERRMSG_LVL_ERROR, "Table %s has no primary key in InnoDB data "
 				  "dictionary, but has one in MySQL! If you "
 				  "created the table with a MySQL version < "
 				  "3.23.54 and did not define a primary key, "
@@ -3048,7 +3048,7 @@ retry:
 		and it will never be updated anyway. */
 
 		if (key_used_on_scan != MAX_KEY) {
-			sql_print_warning(
+			errmsg_printf(ERRMSG_LVL_WARN, 
 				"Table %s key_used_on_scan is %lu even "
 				"though there is no primary key inside "
 				"InnoDB.", name, (ulong) key_used_on_scan);
@@ -3248,7 +3248,7 @@ innobase_mysql_cmp(
 			charset = get_charset(charset_number, MYF(MY_WME));
 
 			if (charset == NULL) {
-			  sql_print_error("InnoDB needs charset %lu for doing "
+			  errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB needs charset %lu for doing "
 					  "a comparison, but MySQL cannot "
 					  "find that charset.",
 					  (ulong) charset_number);
@@ -4082,7 +4082,7 @@ ha_innobase::write_row(
 	DBUG_ENTER("ha_innobase::write_row");
 
 	if (prebuilt->trx != trx) {
-	  sql_print_error("The transaction object for the table handle is at "
+	  errmsg_printf(ERRMSG_LVL_ERROR, "The transaction object for the table handle is at "
 			  "%p, but for the current thread it is at %p",
 			  (const void*) prebuilt->trx, (const void*) trx);
 
@@ -5002,7 +5002,7 @@ ha_innobase::innobase_get_index(
 	}
 
 	if (!index) {
-		sql_print_error(
+		errmsg_printf(ERRMSG_LVL_ERROR, 
 			"Innodb could not find key n:o %u with name %s "
 			"from dict cache for table %s",
 			keynr, key ? key->name : "NULL",
@@ -5033,7 +5033,7 @@ ha_innobase::change_active_index(
 	prebuilt->index = innobase_get_index(keynr);
 
 	if (UNIV_UNLIKELY(!prebuilt->index)) {
-		sql_print_warning("InnoDB: change_active_index(%u) failed",
+		errmsg_printf(ERRMSG_LVL_WARN, "InnoDB: change_active_index(%u) failed",
 				  keynr);
 		DBUG_RETURN(1);
 	}
@@ -5397,7 +5397,7 @@ ha_innobase::position(
 	table. */
 
 	if (len != ref_length) {
-	  sql_print_error("Stored ref len is %lu, but table ref len is %lu",
+	  errmsg_printf(ERRMSG_LVL_ERROR, "Stored ref len is %lu, but table ref len is %lu",
 			  (ulong) len, (ulong) ref_length);
 	}
 }
@@ -5620,7 +5620,7 @@ create_index(
 				|| col_type == DATA_FLOAT
 				|| col_type == DATA_DOUBLE
 				|| col_type == DATA_DECIMAL) {
-				sql_print_error(
+				errmsg_printf(ERRMSG_LVL_ERROR, 
 					"MySQL is trying to create a column "
 					"prefix index field, on an "
 					"inappropriate data type. Table "
@@ -5909,7 +5909,7 @@ ha_innobase::create(
 
 		if ((name[1] == ':')
 		    || (name[0] == '\\' && name[1] == '\\')) {
-			sql_print_error("Cannot create table %s\n", name);
+			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot create table %s\n", name);
 			DBUG_RETURN(HA_ERR_GENERIC);
 		}
 	}
@@ -7009,7 +7009,7 @@ ha_innobase::info(
 
 		for (i = 0; i < table->s->keys; i++) {
 			if (index == NULL) {
-				sql_print_error("Table %s contains fewer "
+				errmsg_printf(ERRMSG_LVL_ERROR, "Table %s contains fewer "
 						"indexes inside InnoDB than "
 						"are defined in the MySQL "
 						".frm file. Have you mixed up "
@@ -7024,7 +7024,7 @@ ha_innobase::info(
 			for (j = 0; j < table->key_info[i].key_parts; j++) {
 
 				if (j + 1 > index->n_uniq) {
-					sql_print_error(
+					errmsg_printf(ERRMSG_LVL_ERROR, 
 "Index %s of %s has %lu columns unique inside InnoDB, but MySQL is asking "
 "statistics for %lu columns. Have you mixed up .frm files from different "
 "installations? "
@@ -8873,7 +8873,7 @@ innobase_xa_prepare(
 
 	if (trx->active_trans == 0 && trx->conc_state != TRX_NOT_STARTED) {
 
-	  sql_print_error("trx->active_trans == 0, but trx->conc_state != "
+	  errmsg_printf(ERRMSG_LVL_ERROR, "trx->active_trans == 0, but trx->conc_state != "
 			  "TRX_NOT_STARTED");
 	}
 
@@ -9264,7 +9264,7 @@ innodb_file_format_check_validate(
 		message if they did so. */
 
 		if (innobase_file_format_check_on_off(file_format_input)) {
-			sql_print_warning(
+			errmsg_printf(ERRMSG_LVL_WARN, 
 				"InnoDB: invalid innodb_file_format_check "
 				"value; on/off can only be set at startup or "
 				"in the configuration file");
@@ -9283,7 +9283,7 @@ innodb_file_format_check_validate(
 			return(0);
 
 		} else {
-			sql_print_warning(
+			errmsg_printf(ERRMSG_LVL_WARN, 
 				"InnoDB: invalid innodb_file_format_check "
 				"value; can be any format up to %s "
 				"or its equivalent numeric id",

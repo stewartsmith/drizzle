@@ -26,6 +26,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
   AS_VAR_PUSHDEF([libs_var], AS_TR_CPP([$1_LIBS]))
   AS_VAR_PUSHDEF([cflags_var], AS_TR_CPP([$1_CFLAGS]))
   AS_VAR_PUSHDEF([path_var], AS_TR_CPP([$1_PATH]))
+  AS_VAR_PUSHDEF([header_var], AS_TR_CPP([HAVE_$3]))
   AS_LITERAL_IF([$1],
                 [AS_VAR_PUSHDEF([ac_lib], [ac_cv_lib_$1_$2])],
                 [AS_VAR_PUSHDEF([ac_lib], [ac_cv_lib_$1''_$2])])
@@ -42,7 +43,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
     [ AS_VAR_SET([with_lib], [yes]) ])
 
   AS_IF([test AS_VAR_GET([with_lib]) = yes],[
-    AC_CHECK_HEADERS([$3])
+    AC_CHECK_HEADER([$3])
 
     my_save_LIBS="$LIBS"
     LIBS="$5"
@@ -50,7 +51,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
     AS_VAR_SET([libs_var],[${LIBS}])
     LIBS="${my_save_LIBS}"
     AS_VAR_SET([cflags_var],[""])
-    AS_IF([test AS_VAR_GET([ac_header]) = "$3" -a AS_VAR_GET([ac_lib]) = yes],
+    AS_IF([test AS_VAR_GET([ac_header]) = yes -a AS_VAR_GET([ac_lib]) = yes],
       [AS_VAR_SET([have_lib],[yes])
        AS_VAR_SET([path_var],[$PATH])
       ],
@@ -70,6 +71,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
       AS_VAR_SET([libs_var],["-L$libloc -l$1"])
       AS_VAR_SET([path_var],["$libloc:$PATH"])
       AS_VAR_SET([have_lib],[yes])
+      AS_VAR_SET([ac_header],[yes])
       AC_MSG_RESULT([yes])
       break
     elif test -f $libloc/include/$3 -a -f $libloc/lib/lib$1.a; then
@@ -79,6 +81,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
       AS_VAR_SET([libs_var],["-L$libloc/lib -l$1"])
       AS_VAR_SET([path_var],["$libloc/bin:$PATH"])
       AS_VAR_SET([have_lib],[yes])
+      AS_VAR_SET([ac_header],[yes])
       AC_MSG_RESULT([yes])
       break
     else
@@ -91,6 +94,10 @@ AC_DEFUN([SEARCH_FOR_LIB],
     AC_MSG_WARN([$3 or lib$1.a not found. Try installing $1 developement packages])
     $4
   ])
+  AS_IF([test AS_VAR_GET([ac_header]) = "yes"],
+    AC_DEFINE(header_var,[1],
+              [Define to 1 if you have the <$3> header file.]))
+
   AC_SUBST(libs_var)
   AC_SUBST(cflags_var)
   AC_SUBST(path_var)
@@ -101,4 +108,5 @@ AC_DEFUN([SEARCH_FOR_LIB],
   AS_VAR_POPDEF([path_var])
   AS_VAR_POPDEF([have_lib])
   AS_VAR_POPDEF([ac_lib])
+  AS_VAR_POPDEF([header_var])
 ])    

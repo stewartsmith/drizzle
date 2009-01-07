@@ -56,6 +56,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		dtcollation.h \
 		errmsg.h \
 		error.h \
+		errmsg_print.h \
 		error_injection.h \
 		field.h \
 		field_iterator.h \
@@ -90,6 +91,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/find_in_set.h \
 		function/found_rows.h \
 		function/func.h \
+		function/get_variable.h \
 		function/get_system_var.h \
 		function/get_user_var.h \
 		function/last_insert.h \
@@ -105,7 +107,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/set_user_var.h \
 		function/sign.h \
 		function/signed.h \
+		function/units.h \
 		function/unsigned.h \
+		function/update_hash.h \
 		function/user_var_as_out_param.h \
 		function/math/abs.h \
 		function/math/acos.h \
@@ -168,7 +172,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/trim.h \
 		function/str/user.h \
 		function/str/uuid.h \
-		function/str/weight_string.h
+		function/str/weight_string.h \
 		function/time/add_time.h \
 		function/time/curdate.h \
 		function/time/curtime.h \
@@ -216,6 +220,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		ha_trx_info.h \
 		ha_statistics.h \
 		handler.h \
+		handlerton.h \
 		handler_structs.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
@@ -273,6 +278,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		my_decimal.h\
 		name_resolution_context.h \
 		name_resolution_context_state.h \
+		natural_join_column.h \
+		nested_join.h \
 		opt_range.h \
 		order.h \
 		parser.h \
@@ -334,6 +341,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		tmp_table.h \
 		tzfile.h \
 		tztime.h \
+		unireg.h \
 		virtual_column_info.h \
 		xid.h
 
@@ -348,7 +356,7 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(Z_LIBS) $(LIBINTL) 
+	$(Z_LIBS) $(LIBINTL)
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
@@ -358,7 +366,8 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
-		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS)
+		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS) \
+		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
 drizzled_LDFLAGS =
@@ -385,6 +394,7 @@ drizzled_SOURCES = \
 		dtcollation.cc \
 		errmsg.cc \
 		error.cc \
+		errmsg_print.cc \
 		field.cc \
 		field_conv.cc \
 		field_iterator.cc \
@@ -401,7 +411,7 @@ drizzled_SOURCES = \
 		log_event.cc \
 		logging.cc \
 		mf_iocache.cc \
-		my_decimal.cc\
+		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
 		opt_range.cc \

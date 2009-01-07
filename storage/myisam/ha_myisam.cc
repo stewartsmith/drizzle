@@ -22,6 +22,7 @@
 #include "myisamdef.h"
 #include <drizzled/util/test.h>
 #include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include <drizzled/protocol.h>
@@ -30,6 +31,9 @@
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
+
+static uint32_t repair_threads;
+static uint32_t block_size;
 
 /* bits in myisam_recover_options */
 const char *myisam_recover_names[] =
@@ -71,7 +75,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
 
   if (!session->vio_ok())
   {
-    sql_print_error("%s",msgbuf);
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s",msgbuf);
     return;
   }
 
@@ -97,7 +101,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
   protocol->store(msg_type, system_charset_info);
   protocol->store(msgbuf, msg_length, system_charset_info);
   if (protocol->write())
-    sql_print_error("Failed on my_net_write, writing to stderr instead: %s\n",
+    errmsg_printf(ERRMSG_LVL_ERROR, "Failed on my_net_write, writing to stderr instead: %s\n",
 		    msgbuf);
   return;
 }
@@ -448,16 +452,16 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
   LIST *element;
   pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_session= (Session*) file->in_use.data))
-    sql_print_error(_("Got an error from thread_id=%"PRIu64", %s:%d"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
                     cur_session->thread_id,
                     sfile, sline);
   else
-    sql_print_error(_("Got an error from unknown thread, %s:%d"), sfile, sline);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from unknown thread, %s:%d"), sfile, sline);
   if (message)
-    sql_print_error("%s", message);
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s", message);
   for (element= file->s->in_use; element; element= list_rest(element))
   {
-    sql_print_error("%s", _("Unknown thread accessing table"));
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s", _("Unknown thread accessing table"));
   }
   pthread_mutex_unlock(&file->s->intern_lock);
 }
@@ -769,7 +773,7 @@ int ha_myisam::repair(Session* session, HA_CHECK_OPT *check_opt)
 		      (uint) (T_RETRY_WITHOUT_QUICK | T_QUICK)))
     {
       param.testflag&= ~T_RETRY_WITHOUT_QUICK;
-      sql_print_information("Retrying repair of: '%s' without quick",
+      errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' without quick",
                             table->s->path.str);
       continue;
     }
@@ -777,7 +781,7 @@ int ha_myisam::repair(Session* session, HA_CHECK_OPT *check_opt)
     if ((param.testflag & T_REP_BY_SORT))
     {
       param.testflag= (param.testflag & ~T_REP_BY_SORT) | T_REP;
-      sql_print_information("Retrying repair of: '%s' with keycache",
+      errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' with keycache",
                             table->s->path.str);
       continue;
     }
@@ -787,7 +791,7 @@ int ha_myisam::repair(Session* session, HA_CHECK_OPT *check_opt)
       !(check_opt->flags & T_VERY_SILENT))
   {
     char llbuff[22],llbuff2[22];
-    sql_print_information("Found %s of %s rows when repairing '%s'",
+    errmsg_printf(ERRMSG_LVL_INFO, "Found %s of %s rows when repairing '%s'",
                           llstr(file->state->records, llbuff),
                           llstr(start_records, llbuff2),
                           table->s->path.str);
@@ -809,7 +813,7 @@ int ha_myisam::optimize(Session* session, HA_CHECK_OPT *check_opt)
   param.sort_buffer_length=  check_opt->sort_buffer_size;
   if ((error= repair(session,param,1)) && param.retry_repair)
   {
-    sql_print_warning("Warning: Optimize table got errno %d on %s.%s, retrying",
+    errmsg_printf(ERRMSG_LVL_WARN, "Warning: Optimize table got errno %d on %s.%s, retrying",
                       my_errno, param.db_name, param.table_name);
     param.testflag&= ~T_REP_BY_SORT;
     error= repair(session,param,1);
@@ -838,7 +842,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   */
   if (file->dfile == -1)
   {
-    sql_print_information("Retrying repair of: '%s' failed. "
+    errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' failed. "
                           "Please try REPAIR EXTENDED or myisamchk",
                           table->s->path.str);
     return(HA_ADMIN_FAILED);
@@ -875,7 +879,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
       local_testflag|= T_STATISTICS;
       param.testflag|= T_STATISTICS;		// We get this for free
       statistics_done=1;
-      if (session->variables.myisam_repair_threads>1)
+      if (repair_threads > 1)
       {
         char buf[40];
         /* TODO: respect myisam_repair_threads variable */
@@ -1122,7 +1126,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
     param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
-      sql_print_warning("Warning: Enabling keys got errno %d on %s.%s, retrying",
+      errmsg_printf(ERRMSG_LVL_WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
                         my_errno, param.db_name, param.table_name);
       /* Repairing by sort failed. Now try standard repair method. */
       param.testflag&= ~(T_REP_BY_SORT | T_QUICK);
@@ -1250,7 +1254,7 @@ bool ha_myisam::check_and_repair(Session *session)
   // Don't use quick if deleted rows
   if (!file->state->del && (myisam_recover_options & HA_RECOVER_QUICK))
     check_opt.flags|=T_QUICK;
-  sql_print_warning("Checking table:   '%s'",table->s->path.str);
+  errmsg_printf(ERRMSG_LVL_WARN, "Checking table:   '%s'",table->s->path.str);
 
   old_query= session->query;
   old_query_length= session->query_length;
@@ -1261,7 +1265,7 @@ bool ha_myisam::check_and_repair(Session *session)
 
   if ((marked_crashed= mi_is_crashed(file)) || check(session, &check_opt))
   {
-    sql_print_warning("Recovering table: '%s'",table->s->path.str);
+    errmsg_printf(ERRMSG_LVL_WARN, "Recovering table: '%s'",table->s->path.str);
     check_opt.flags=
       ((myisam_recover_options & HA_RECOVER_BACKUP ? T_BACKUP_DATA : 0) |
        (marked_crashed                             ? 0 : T_QUICK) |
@@ -1516,7 +1520,7 @@ int ha_myisam::info(uint32_t flag)
     stats.create_time= misam_info.create_time;
     ref_length= misam_info.reflength;
     share->db_options_in_use= misam_info.options;
-    stats.block_size= myisam_block_size;        /* record block size */
+    stats.block_size= block_size;        /* record block size */
 
     /* Update share */
     if (share->tmp_table == NO_TMP_TABLE)
@@ -1859,6 +1863,24 @@ Item *ha_myisam::idx_cond_push(uint32_t keyno_arg, Item* idx_cond_arg)
   return NULL;
 }
 
+static DRIZZLE_SYSVAR_UINT(block_size, block_size,
+                           PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+                           N_("Block size to be used for MyISAM index pages."),
+                           NULL, NULL, MI_KEY_BLOCK_LENGTH, MI_MIN_KEY_BLOCK_LENGTH, 
+                           MI_MAX_KEY_BLOCK_LENGTH, 0);
+
+static DRIZZLE_SYSVAR_UINT(repair_threads, repair_threads,
+                           PLUGIN_VAR_RQCMDARG,
+                           N_("Number of threads to use when repairing MyISAM tables. The value of "
+                              "1 disables parallel repair."),
+                           NULL, NULL, 1, 1, UINT32_MAX, 0);
+
+static struct st_mysql_sys_var* system_variables[]= {
+  DRIZZLE_SYSVAR(block_size),
+  DRIZZLE_SYSVAR(repair_threads),
+  NULL
+};
+
 
 mysql_declare_plugin(myisam)
 {
@@ -1871,7 +1893,7 @@ mysql_declare_plugin(myisam)
   myisam_init, /* Plugin Init */
   myisam_deinit, /* Plugin Deinit */
   NULL,                       /* status variables                */
-  NULL,                       /* system variables                */
+  system_variables,           /* system variables */
   NULL                        /* config options                  */
 }
 mysql_declare_plugin_end;

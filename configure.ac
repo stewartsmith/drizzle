@@ -35,9 +35,9 @@ AC_SUBST(SHARED_LIB_VERSION)
 
 dnl Checks for programs.
 AC_PROG_CC
+AC_PROG_CXX
 
 ACX_USE_SYSTEM_EXTENSIONS
-AC_PROG_CXX
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
@@ -45,6 +45,9 @@ then
 fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
+# We need an ANSI C compiler
+AM_PROG_CC_STDC
+
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 ifdef([AC_PROG_CC_C99],[
@@ -60,6 +63,10 @@ then
 fi
 ])
 
+
+# We need an assembler, too
+AM_PROG_AS
+CCASFLAGS="$CCASFLAGS $ASFLAGS"
 
 
 # Set all version vars based on $VERSION. How do we do this more elegant ?
@@ -85,12 +92,12 @@ AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
 # The port should be constant for a LONG time
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-sinclude(m4/dtrace.m4)
+m4_include(m4/dtrace.m4)
 
-sinclude(m4/character_sets.m4)
+m4_include(m4/character_sets.m4)
 AC_SUBST(AVAILABLE_LANGUAGES)
 
-sinclude(m4/gettext.m4)
+m4_include(m4/gettext.m4)
 AM_GNU_GETTEXT([external])
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
@@ -228,9 +235,6 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 #       was not created at the end of the install routine.
 AC_CHECK_PROGS(GROUPADD, groupadd addgroup)
 AC_CHECK_PROGS(USERADD, useradd adduser)
-
-dnl Needed for ltmain
-AC_PROG_RANLIB
 
 dnl Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y'])
@@ -459,25 +463,25 @@ SEARCH_FOR_LIB(z, crc32, zlib.h,
                AC_MSG_ERROR([libz is required for Drizzle]))
 
 #--------------------------------------------------------------------
-# Check for libncurses
-#--------------------------------------------------------------------
-
-
-SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
-	SEARCH_FOR_LIB(tinfo, tgetent, ncurses/ncurses.h,
-		AC_MSG_ERROR([Couldn't find ncurses])
-	)
-	]
-)
-
-#--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
+dnl First, search for readline. If that fails, search for ncurses then
+dnl search for readline again... on some platforms *cough* solaris *cough*
+dnl you need to link with ncurses directly to get readline to work
 
-SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
+SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,[
+	SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
+	        SEARCH_FOR_LIB(tinfo, tgetent, ncurses/ncurses.h,
+			AC_MSG_ERROR([Couldn't find ncurses])
+        	)
+        	]
+	)
+	SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
                AC_MSG_ERROR([libreadline is required for Drizzle]),
                [$NCURSES_LIBS]) 
+ 	]
+)
 
 save_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $READLINE_CFLAGS"
@@ -626,12 +630,6 @@ fi
 AC_SUBST(CHECK_PID)
 AC_MSG_RESULT("$CHECK_PID")
 
-# We need an ANSI C compiler
-AM_PROG_CC_STDC
-
-# We need an assembler, too
-AM_PROG_AS
-CCASFLAGS="$CCASFLAGS $ASFLAGS"
 
 # Check if we need noexec stack for assembler
 AC_CHECK_NOEXECSTACK
@@ -1151,6 +1149,7 @@ DRIZZLE_CONFIGURE_PLUGINS([none])
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
+AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
 
 
 AC_ARG_ENABLE([profiling],

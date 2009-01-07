@@ -2,7 +2,6 @@
 # Bugs: #13046:
 # LIKE pattern matching using prefix index doesn't return correct result
 #
-select @@collation_connection;
 create table t1 ROW_FORMAT=DYNAMIC select repeat('a',50) as c1 ;
 insert into t1 values('abcdef');
 insert into t1 values('_bcdef');

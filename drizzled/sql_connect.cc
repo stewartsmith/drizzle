@@ -122,9 +122,7 @@ check_user(Session *session, const char *passwd,
   }
 
 
-  USER_RESOURCES ur;
   session->security_ctx.skip_grants();
-  memset(&ur, 0, sizeof(USER_RESOURCES));
 
   if (check_count)
   {
@@ -172,37 +170,6 @@ extern "C" void free_user(struct user_conn *uc)
 {
   free((char*) uc);
 }
-
-void session_init_client_charset(Session *session, uint32_t cs_number)
-{
-  /*
-   Use server character set and collation if
-   - opt_character_set_client_handshake is not set
-   - client has not specified a character set
-   - client character set is the same as the servers
-   - client character set doesn't exists in server
-  */
-  if (!opt_character_set_client_handshake ||
-      !(session->variables.character_set_client= get_charset(cs_number, MYF(0))) ||
-      !my_strcasecmp(&my_charset_utf8_general_ci,
-                     global_system_variables.character_set_client->name,
-                     session->variables.character_set_client->name))
-  {
-    session->variables.character_set_client=
-      global_system_variables.character_set_client;
-    session->variables.collation_connection=
-      global_system_variables.collation_connection;
-    session->variables.character_set_results=
-      global_system_variables.character_set_results;
-  }
-  else
-  {
-    session->variables.character_set_results=
-      session->variables.collation_connection=
-      session->variables.character_set_client;
-  }
-}
-
 
 /*
   Initialize connection threads
@@ -262,8 +229,12 @@ static int check_connection(Session *session)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= strncpy(buff, server_version, SERVER_VERSION_LENGTH);
-    end+= SERVER_VERSION_LENGTH+1;
+    end= buff + strlen(server_version);
+    if ((end - buff) >= SERVER_VERSION_LENGTH)
+      end= buff + (SERVER_VERSION_LENGTH - 1);
+    memcpy(buff, server_version, end - buff);
+    *end= 0;
+    end++;
 
     int4store((unsigned char*) end, session->thread_id);
     end+= 4;
@@ -311,7 +282,6 @@ static int check_connection(Session *session)
 
   session->client_capabilities|= ((uint32_t) uint2korr(net->read_pos+2)) << 16;
   session->max_client_packet_length= uint4korr(net->read_pos+4);
-  session_init_client_charset(session, (uint) net->read_pos[8]);
   session->update_charset();
   end= (char*) net->read_pos+32;
 
@@ -485,7 +455,7 @@ void end_connection(Session *session)
     {
       Security_context *sctx= &session->security_ctx;
 
-      sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
+      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION),
                         session->thread_id,(session->db ? session->db : "unconnected"),
                         sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated",
                         sctx->ip.c_str(),
@@ -527,11 +497,11 @@ void prepare_new_connection_state(Session* session)
     if (session->is_error())
     {
       session->killed= Session::KILL_CONNECTION;
-      sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
+      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION),
                         session->thread_id,(session->db ? session->db : "unconnected"),
                         sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated",
                         sctx->ip.c_str(), "init_connect command failed");
-      sql_print_warning("%s", session->main_da.message());
+      errmsg_printf(ERRMSG_LVL_WARN, "%s", session->main_da.message());
     }
     session->set_proc_info(0);
     session->set_time();

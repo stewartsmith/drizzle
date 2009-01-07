@@ -23,7 +23,6 @@ GENSCRIPTS =		install_test_db dtr test-run
 PRESCRIPTS =		test-run.pl stress-test.pl
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS) mtr
-DISTCLEANFILES = 	var
 noinst_PROGRAMS = 	resolve_stack_dump
 resolve_stack_dump_SOURCES = resolve_stack_dump.cc
 
@@ -40,8 +39,7 @@ TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
 EXTRA_DIST = \
 	$(EXTRA_SCRIPTS) \
 	suite \
-	${srcdir}/t/*.test \
-	${srcdir}/t/*.opt \
+	${srcdir}/t \
 	${srcdir}/extra/rpl_tests/*.test \
 	${srcdir}/extra/binlog_tests/*.test \
 	${srcdir}/include/*.inc \
@@ -55,6 +53,7 @@ EXTRA_DIST = \
 	${srcdir}/std_data/*.000001 \
 	${srcdir}/std_data/des_key_file \
 	${srcdir}/std_data/*.pem \
+	${srcdir}/std_data/*.txt \
 	${srcdir}/std_data/*.frm \
 	${srcdir}/std_data/*.MY* \
 	${srcdir}/std_data/*.cnf \
@@ -128,3 +127,6 @@ test: test-drizzle
 
 test-drizzle:
 	  $(TEST_RUN) --fast --reorder --force --suite=main,vcol
+
+distclean-local:
+	rm -rf var

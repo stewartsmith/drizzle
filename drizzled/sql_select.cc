@@ -38,6 +38,7 @@
 #include <drizzled/show.h>
 #include <drizzled/item/cache.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/copy_string.h>
 #include <drizzled/item/uint.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_base.h>

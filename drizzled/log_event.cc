@@ -902,7 +902,7 @@ err:
   if (!res)
   {
     assert(error != 0);
-    sql_print_error(_("Error in Log_event::read_log_event(): "
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error in Log_event::read_log_event(): "
                     "'%s', data_len: %d, event_type: %d"),
 		    error,data_len,head[EVENT_TYPE_OFFSET]);
     free(buf);
@@ -1300,12 +1300,7 @@ Query_log_event::Query_log_event(Session* session_arg, const char* query_arg,
     we will probably want to reclaim the 29 bits. So we need the &.
   */
   flags2= (uint32_t) (session_arg->options & OPTIONS_WRITTEN_TO_BIN_LOG);
-  assert(session_arg->variables.character_set_client->number < 256*256);
-  assert(session_arg->variables.collation_connection->number < 256*256);
   assert(session_arg->variables.collation_server->number < 256*256);
-  assert(session_arg->variables.character_set_client->mbminlen == 1);
-  int2store(charset, session_arg->variables.character_set_client->number);
-  int2store(charset+2, session_arg->variables.collation_connection->number);
   int2store(charset+4, session_arg->variables.collation_server->number);
   time_zone_len= 0;
 }
@@ -1490,7 +1485,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli)
   @code
      if ((uint32_t) affected_in_event != (uint32_t) affected_on_slave)
      {
-     sql_print_error("Slave: did not get the expected number of affected \
+     errmsg_printf(ERRMSG_LVL_ERROR, "Slave: did not get the expected number of affected \
      rows running query from master - expected %d, got %d (this numbers \
      should have matched modulo 4294967296).", 0, ...);
      session->query_error = 1;
@@ -1679,7 +1674,7 @@ compare_errors:
       like:
       if ((uint32_t) affected_in_event != (uint32_t) affected_on_slave)
       {
-      sql_print_error("Slave: did not get the expected number of affected \
+      errmsg_printf(ERRMSG_LVL_ERROR, "Slave: did not get the expected number of affected \
       rows running query from master - expected %d, got %d (this numbers \
       should have matched modulo 4294967296).", 0, ...);
       session->is_slave_error = 1;
@@ -2619,7 +2614,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
     as the present method does not call mysql_parse().
   */
   lex_start(session);
-  mysql_reset_session_for_next_command(session);
+  session->reset_for_next_command();
 
   if (!use_rli_only_for_errors)
   {
@@ -2777,7 +2772,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       if (session->cuted_fields)
       {
         /* log_pos is the position of the LOAD event in the master log */
-        sql_print_warning(_("Slave: load data infile on table '%s' at "
+        errmsg_printf(ERRMSG_LVL_WARN, _("Slave: load data infile on table '%s' at "
                             "log position %s in log '%s' produced %ld "
                             "warning(s). Default database: '%s'"),
                           (char*) table_name,
@@ -3101,7 +3096,7 @@ Slave_log_event::Slave_log_event(Session* session_arg,
     master_pos = rli->group_master_log_pos;
   }
   else
-    sql_print_error(_("Out of memory while recording slave event"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory while recording slave event"));
   pthread_mutex_unlock(&rli->data_lock);
   pthread_mutex_unlock(&mi->data_lock);
   return;
@@ -5044,7 +5039,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
       call mysql_init_query() which does a more complete set of inits.
     */
     lex_start(session);
-    mysql_reset_session_for_next_command(session);
+    session->reset_for_next_command();
 
     /*
       Open the table if it is not already open and add the table to

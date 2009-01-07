@@ -31,6 +31,9 @@
 
 #include <pthread.h>
 
+/* Added this for string translation. */
+#include <drizzled/gettext.h>
+
 using namespace std;
 
 /* Global Thread counter */
@@ -44,18 +47,20 @@ static char *field_escape(char *to,const char *from,uint length);
 static char *add_load_option(char *ptr,const char *object,
            const char *statement);
 
-static bool  verbose=0,lock_tables=0,ignore_errors=0,opt_delete=0,
-  opt_replace=0,silent=0,ignore=0,opt_compress=0,
-  opt_low_priority= 0, tty_password= 0;
-static bool debug_info_flag= 0, debug_check_flag= 0;
-static uint opt_use_threads=0, opt_local_file=0, my_end_arg= 0;
-static char  *opt_password=0, *current_user=0,
-    *current_host=0, *current_db=0, *fields_terminated=0,
-    *lines_terminated=0, *enclosed=0, *opt_enclosed=0,
-    *escaped=0, *opt_columns=0,
+static bool verbose= false, lock_tables= false, ignore_errors= false,
+            opt_delete= false, opt_replace= false, silent= false,
+            ignore= false, opt_compress= false, opt_low_priority= false,
+            tty_password= false;
+static bool debug_info_flag= false, debug_check_flag= false;
+static uint opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
+static char  *opt_password= NULL, *current_user= NULL,
+    *current_host= NULL, *current_db= NULL, *fields_terminated= NULL,
+    *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
+    *escaped= NULL, *opt_columns= NULL,
     *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
-static uint     opt_drizzle_port= 0, opt_protocol= 0;
-static char * opt_drizzle_unix_port=0;
+static uint opt_protocol= 0;
+static uint32_t opt_drizzle_port= 0;
+static char * opt_drizzle_unix_port= 0;
 static int64_t opt_ignore_lines= -1;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
@@ -119,15 +124,13 @@ static struct my_option my_long_options[] =
   {"low-priority", OPT_LOW_PRIORITY,
    "Use LOW_PRIORITY when updating the table.", (char**) &opt_low_priority,
    (char**) &opt_low_priority, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"password", 'p',
+  {"password", 'P',
    "Password to use when connecting to server. If password is not given it's asked from the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
+  {"port", 'p', "Port number to use for connection or 0 for default to, in "
    "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   (char**) &opt_drizzle_port,
-   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
-   0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"protocol", OPT_DRIZZLE_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replace", 'r', "If duplicate unique key was found, replace old row.",
@@ -184,8 +187,32 @@ file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
 extern "C"
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch(optid) {
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(1);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(1);
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
       char *start=argument;
@@ -198,9 +225,16 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
                         "Aborting.\n");
         exit(ENOMEM);
       }
-      while (*argument) *argument++= 'x';    /* Destroy argument */
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-        start[1]=0;        /* Cut length of argument */
+      {
+        /* Cut length of argument */
+        start[1]= 0;
+      }
       tty_password= 0;
     }
     else

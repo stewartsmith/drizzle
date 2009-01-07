@@ -53,10 +53,10 @@ SELECT (SELECT * FROM (SELECT 'test' a,'test' b) a);
 
 SELECT 1 as a,(SELECT a+a) b,(SELECT b);
 
-create table t1 (a int);
-create table t2 (a int, b int);
-create table t3 (a int);
-create table t4 (a int not null, b int not null);
+create table t1 (a int) ENGINE=MyISAM;
+create table t2 (a int, b int) ENGINE=MyISAM;
+create table t3 (a int) ENGINE=MyISAM;
+create table t4 (a int not null, b int not null) ENGINE=MyISAM;
 insert into t1 values (2);
 insert into t2 values (1,7),(2,7);
 insert into t4 values (4,8),(3,8),(5,9);
@@ -111,7 +111,7 @@ insert into t2 values (2,10);
 select b,max(a) as ma from t4 group by b having ma < (select max(t2.a) from t2 where t2.b=t4.b);
 delete from t2 where a=2 and b=10;
 select b,max(a) as ma from t4 group by b having b >= (select max(t2.a) from t2 where t2.b=t4.b);
-create table t5 (a int);
+create table t5 (a int) ENGINE=MyISAM;
 select (select a from t1 where t1.a=t2.a union select a from t5 where t5.a=t2.a), a from t2;
 insert into t5 values (5);
 select (select a from t1 where t1.a=t2.a union select a from t5 where t5.a=t2.a), a from t2;
@@ -120,8 +120,8 @@ select (select a from t1 where t1.a=t2.a union select a from t5 where t5.a=t2.a)
 explain extended select (select a from t1 where t1.a=t2.a union select a from t5 where t5.a=t2.a), a from t2;
 -- error 1242
 select (select a from t1 where t1.a=t2.a union all select a from t5 where t5.a=t2.a), a from t2;
-create table t6 (patient_uq int, clinic_uq int, index i1 (clinic_uq));
-create table t7( uq int primary key, name char(25));
+create table t6 (patient_uq int, clinic_uq int, index i1 (clinic_uq)) ENGINE=MyISAM;
+create table t7( uq int primary key, name char(25)) ENGINE=MyISAM;
 insert into t7 values(1,"Oblastnaia bolnitsa"),(2,"Bolnitsa Krasnogo Kresta");
 insert into t6 values (1,1),(1,2),(2,2),(1,3);
 select * from t6 where exists (select * from t7 where uq = clinic_uq);
@@ -134,11 +134,11 @@ select * from t1 where a= (select a from t2,t4 where t2.b=t4.b);
 # different tipes & group functions
 drop table t1,t2,t3;
 
-CREATE TABLE t3 (a varchar(20),b char(1) NOT NULL default '0');
+CREATE TABLE t3 (a varchar(20),b char(1) NOT NULL default '0') ENGINE=MyISAM;
 INSERT INTO t3 VALUES ('W','a'),('A','c'),('J','b');
-CREATE TABLE t2 (a varchar(20),b int NOT NULL default '0');
+CREATE TABLE t2 (a varchar(20),b int NOT NULL default '0') ENGINE=MyISAM;
 INSERT INTO t2 VALUES ('W','1'),('A','3'),('J','2');
-CREATE TABLE t1 (a varchar(20),b date NOT NULL default '0000-00-00');
+CREATE TABLE t1 (a varchar(20),b date NOT NULL default '0000-00-00') ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('W','1732-02-22'),('A','1735-10-30'),('J','1743-04-13');
 SELECT * FROM t1 WHERE b = (SELECT MIN(b) FROM t1);
 SELECT * FROM t2 WHERE b = (SELECT MIN(b) FROM t2);
@@ -245,13 +245,13 @@ select numeropost as a FROM t1 GROUP BY (SELECT 1 FROM t1 HAVING a=1);
 select numeropost as a FROM t1 ORDER BY (SELECT 1 FROM t1 HAVING a=1);
 drop table t1;
 
-create table t1 (a int);
+create table t1 (a int) ENGINE=MyISAM;
 insert into t1 values (1),(2),(3);
 (select * from t1) union (select * from t1) order by (select a from t1 limit 1);
 drop table t1;
 
 #iftest
-CREATE TABLE t1 (field char(1) NOT NULL DEFAULT 'b');
+CREATE TABLE t1 (field char(1) NOT NULL DEFAULT 'b') ENGINE=MyISAM;
 INSERT INTO t1 VALUES ();
 -- error 1242
 SELECT field FROM t1 WHERE 1=(SELECT 1 UNION ALL SELECT 1 FROM (SELECT 1) a HAVING field='b');
@@ -278,14 +278,14 @@ EXPLAIN EXTENDED SELECT MAX(numreponse) FROM t1 WHERE numeropost='1';
 EXPLAIN EXTENDED SELECT numreponse FROM t1 WHERE numeropost='1' AND numreponse=(SELECT MAX(numreponse) FROM t1 WHERE numeropost='1');
 drop table t1;
 
-CREATE TABLE t1 (a int);
+CREATE TABLE t1 (a int) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1);
 SELECT 1 FROM (SELECT a FROM t1) b HAVING (SELECT b.a)=1;
 drop table t1;
 
 #update with subselects
-create table t1 (a int NOT NULL, b int, primary key (a));
-create table t2 (a int NOT NULL, b int, primary key (a));
+create table t1 (a int NOT NULL, b int, primary key (a)) ENGINE=MyISAM;
+create table t2 (a int NOT NULL, b int, primary key (a)) ENGINE=MyISAM;
 insert into t1 values (0, 10),(1, 11),(2, 12);
 insert into t2 values (1, 21),(2, 22),(3, 23);
 select * from t1;
@@ -298,8 +298,8 @@ select * from t1;
 drop table t1, t2;
 
 #delete with subselects
-create table t1 (a int NOT NULL, b int, primary key (a));
-create table t2 (a int NOT NULL, b int, primary key (a));
+create table t1 (a int NOT NULL, b int, primary key (a)) ENGINE=MyISAM;
+create table t2 (a int NOT NULL, b int, primary key (a)) ENGINE=MyISAM;
 insert into t1 values (0, 10),(1, 11),(2, 12);
 insert into t2 values (1, 21),(2, 12),(3, 23);
 select * from t1;
@@ -314,9 +314,9 @@ drop table t1, t2;
 
 #multi-delete with subselects
 
-create table t11 (a int NOT NULL, b int, primary key (a));
-create table t12 (a int NOT NULL, b int, primary key (a));
-create table t2 (a int NOT NULL, b int, primary key (a));
+create table t11 (a int NOT NULL, b int, primary key (a)) ENGINE=MyISAM;
+create table t12 (a int NOT NULL, b int, primary key (a)) ENGINE=MyISAM;
+create table t2 (a int NOT NULL, b int, primary key (a)) ENGINE=MyISAM;
 insert into t11 values (0, 10),(1, 11),(2, 12);
 insert into t12 values (33, 10),(22, 11),(2, 12);
 insert into t2 values (1, 21),(2, 12),(3, 23);
@@ -334,9 +334,9 @@ select * from t12;
 drop table t11, t12, t2;
 
 #insert with subselects
-CREATE TABLE t1 (x int);
-create table t2 (a int);
-create table t3 (b int);
+CREATE TABLE t1 (x int) ENGINE=MyISAM;
+create table t2 (a int) ENGINE=MyISAM;
+create table t3 (b int) ENGINE=MyISAM;
 insert into t2 values (1);
 insert into t3 values (1),(2);
 -- error 1093
@@ -366,9 +366,9 @@ select * from t1;
 drop table t1, t2, t3;
 
 #replace with subselects
-CREATE TABLE t1 (x int not null, y int, primary key (x));
-create table t2 (a int);
-create table t3 (a int);
+CREATE TABLE t1 (x int not null, y int, primary key (x)) ENGINE=MyISAM;
+create table t2 (a int) ENGINE=MyISAM;
+create table t3 (a int) ENGINE=MyISAM;
 insert into t2 values (1);
 insert into t3 values (1),(2);
 select * from t1;
@@ -417,7 +417,7 @@ UPDATE t2 SET id=(SELECT * FROM t1);
 drop table t2, t1;
 
 #NULL test
-create table t1 (a int);
+create table t1 (a int) ENGINE=MyISAM;
 insert into t1 values (1),(2),(3);
 select 1 IN (SELECT * from t1);
 select 10 IN (SELECT * from t1);
@@ -431,7 +431,7 @@ select 10 > ALL (SELECT * from t1);
 select 1 > ANY (SELECT * from t1);
 select 10 > ANY (SELECT * from t1);
 drop table t1;
-create table t1 (a varchar(20));
+create table t1 (a varchar(20)) ENGINE=MyISAM;
 insert into t1 values ('A'),('BC'),('DEF');
 select 'A' IN (SELECT * from t1);
 select 'XYZS' IN (SELECT * from t1);
@@ -445,7 +445,7 @@ select 'XYZS' > ALL (SELECT * from t1);
 select 'A' > ANY (SELECT * from t1);
 select 'XYZS' > ANY (SELECT * from t1);
 drop table t1;
-create table t1 (a float);
+create table t1 (a float) ENGINE=MyISAM;
 insert into t1 values (1.5),(2.5),(3.5);
 select 1.5 IN (SELECT * from t1);
 select 10.5 IN (SELECT * from t1);
@@ -467,28 +467,28 @@ drop table t1;
 # Null with keys
 #
 
-CREATE TABLE t1 (a int NOT NULL default '0', PRIMARY KEY  (a));
-CREATE TABLE t2 (a int default '0', INDEX (a));
+CREATE TABLE t1 (a int NOT NULL default '0', PRIMARY KEY  (a)) ENGINE=MyISAM;
+CREATE TABLE t2 (a int default '0', INDEX (a)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1),(2),(3),(4);
 INSERT INTO t2 VALUES (1),(2),(3);
 SELECT t1.a, t1.a in (select t2.a from t2) FROM t1;
 explain extended SELECT t1.a, t1.a in (select t2.a from t2) FROM t1;
-CREATE TABLE t3 (a int default '0');
+CREATE TABLE t3 (a int default '0') ENGINE=MyISAM;
 INSERT INTO t3 VALUES (1),(2),(3);
 SELECT t1.a, t1.a in (select t2.a from t2,t3 where t3.a=t2.a) FROM t1;
 explain extended SELECT t1.a, t1.a in (select t2.a from t2,t3 where t3.a=t2.a) FROM t1;
 drop table t1,t2,t3;
 
 #LIMIT is not supported now
-#create table t1 (a float);
+#create table t1 (a float) ENGINE=MyISAM;
 #-- error 1235
 #select 10.5 IN (SELECT * from t1 LIMIT 1);
 #-- error 1235
 #select 10.5 IN (SELECT * from t1 LIMIT 1 UNION SELECT 1.5);
 #drop table t1;
 #
-#create table t1 (a int, b int, c varchar(10));
-#create table t2 (a int);
+#create table t1 (a int, b int, c varchar(10)) ENGINE=MyISAM;
+#create table t2 (a int) ENGINE=MyISAM;
 #insert into t1 values (1,2,'a'),(2,3,'b'),(3,4,'c');
 #insert into t2 values (1),(2),(NULL);
 #select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,2,'a'),(select c from t1 where a=t2.a)  from t2;
@@ -496,7 +496,7 @@ drop table t1,t2,t3;
 #select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,4,'c'),(select c from t1 where a=t2.a) from t2;
 #drop table t1,t2;
 #
-#create table t1 (a int, b real, c varchar(10));
+#create table t1 (a int, b real, c varchar(10)) ENGINE=MyISAM;
 #insert into t1 values (1, 1, 'a'), (2,2,'b'), (NULL, 2, 'b');
 #select ROW(1, 1, 'a') IN (select a,b,c from t1);
 #select ROW(1, 2, 'a') IN (select a,b,c from t1);
@@ -512,7 +512,7 @@ drop table t1,t2,t3;
 #drop table t1;
 
 #test of uncacheable subqueries
-CREATE TABLE t1 (a int);
+CREATE TABLE t1 (a int) ENGINE=MyISAM;
 EXPLAIN EXTENDED SELECT (SELECT RAND() FROM t1) FROM t1;
 EXPLAIN EXTENDED SELECT (SELECT BENCHMARK(1,1) FROM t1) FROM t1;
 drop table t1;
@@ -560,21 +560,21 @@ select * from t1;
 drop table t1, t2, t3;
 
 SELECT * FROM (SELECT 1 as a,(SELECT a)) a;
-CREATE TABLE t1 SELECT * FROM (SELECT 1 as a,(SELECT 1)) a;
+CREATE TABLE t1 ENGINE=MyISAM SELECT * FROM (SELECT 1 as a,(SELECT 1)) a;
 SHOW CREATE TABLE t1;
 drop table t1;
-CREATE TABLE t1 SELECT * FROM (SELECT 1 as a,(SELECT a)) a;
+CREATE TABLE t1 ENGINE=MyISAM SELECT * FROM (SELECT 1 as a,(SELECT a)) a;
 SHOW CREATE TABLE t1;
 drop table t1;
-CREATE TABLE t1 SELECT * FROM (SELECT 1 as a,(SELECT a+0)) a;
+CREATE TABLE t1 ENGINE=MyISAM SELECT * FROM (SELECT 1 as a,(SELECT a+0)) a;
 SHOW CREATE TABLE t1;
 drop table t1;
-CREATE TABLE t1 SELECT (SELECT 1 as a UNION SELECT 1+1 limit 1,1) as a;
+CREATE TABLE t1 ENGINE=MyISAM SELECT (SELECT 1 as a UNION SELECT 1+1 limit 1,1) as a;
 select * from t1;
 SHOW CREATE TABLE t1;
 drop table t1;
 
-create table t1 (a int);
+create table t1 (a int) ENGINE=MyISAM;
 insert into t1 values (1), (2), (3);
 explain extended select a,(select (select rand() from t1 limit 1)  from t1 limit 1)
 from t1;
@@ -679,7 +679,7 @@ drop table t1,t2;
 #
 # correct NULL in <CONSTANT> IN (SELECT ...)
 #
-create table t1 (a int, unique index indexa (a)); 
+create table t1 (a int, unique index indexa (a)) ENGINE=MyISAM; 
 insert into t1 values (-1), (-4), (-2), (NULL); 
 select -10 IN (select a from t1 FORCE INDEX (indexa)); 
 drop table t1;
@@ -687,7 +687,7 @@ drop table t1;
 #
 # Test optimization for sub selects
 #
-create table t1 (id int not null auto_increment primary key, salary int, key(salary));
+create table t1 (id int not null auto_increment primary key, salary int, key(salary)) ENGINE=MyISAM;
 insert into t1 (salary) values (100),(1000),(10000),(10),(500),(5000),(50000);
 explain extended SELECT id FROM t1 where salary = (SELECT MAX(salary) FROM t1);
 drop table t1;
@@ -709,8 +709,8 @@ DROP TABLE t1;
 #
 # uninterruptable update
 #
-create table t1 (a int, b int);
-create table t2 (a int, b int);
+create table t1 (a int, b int) ENGINE=MyISAM;
+create table t2 (a int, b int) ENGINE=MyISAM;
 
 insert into t1 values (1,0), (2,0), (3,0);
 insert into t2 values (1,1), (2,1), (3,1), (2,2);
@@ -741,9 +741,9 @@ drop table if exists t1;
 #
 # IN subselect optimization test
 #
-create table t1 (a int not null, b int, primary key (a));
-create table t2 (a int not null, primary key (a));
-create table t3 (a int not null, b int, primary key (a));
+create table t1 (a int not null, b int, primary key (a)) ENGINE=MyISAM;
+create table t2 (a int not null, primary key (a)) ENGINE=MyISAM;
+create table t3 (a int not null, b int, primary key (a)) ENGINE=MyISAM;
 insert into t1 values (1,10), (2,20), (3,30),  (4,40);
 insert into t2 values (2), (3), (4), (5);
 insert into t3 values (10,3), (20,4), (30,5);
@@ -754,9 +754,9 @@ explain extended select * from t2 where t2.a in (select a from t1 where t1.b <> 
 select * from t2 where t2.a in (select t1.a from t1,t3 where t1.b=t3.a);
 explain extended select * from t2 where t2.a in (select t1.a from t1,t3 where t1.b=t3.a);
 drop table t1, t2, t3;
-create table t1 (a int, b int, index a (a,b));
-create table t2 (a int, index a (a));
-create table t3 (a int, b int, index a (a));
+create table t1 (a int, b int, index a (a,b)) ENGINE=MyISAM;
+create table t2 (a int, index a (a)) ENGINE=MyISAM;
+create table t3 (a int, b int, index a (a)) ENGINE=MyISAM;
 insert into t1 values (1,10), (2,20), (3,30), (4,40);
 disable_query_log;
 # making table large enough
@@ -788,9 +788,9 @@ drop table t1, t2, t3;
 #
 # alloc_group_fields() working
 #
-create table t1 (a int, b int);
-create table t2 (a int, b int);
-create table t3 (a int, b int);
+create table t1 (a int, b int) ENGINE=MyISAM;
+create table t2 (a int, b int) ENGINE=MyISAM;
+create table t3 (a int, b int) ENGINE=MyISAM;
 insert into t1 values (0,100),(1,2), (1,3), (2,2), (2,7), (2,-1), (3,10);
 insert into t2 values (0,0), (1,1), (2,1), (3,1), (4,1);
 insert into t3 values (3,3), (2,2), (1,1); 
@@ -800,8 +800,8 @@ drop table t1,t2,t3;
 #
 # aggregate functions in HAVING test
 #
-create table t1 (s1 int);
-create table t2 (s1 int);
+create table t1 (s1 int) ENGINE=MyISAM;
+create table t2 (s1 int) ENGINE=MyISAM;
 insert into t1 values (1);
 insert into t2 values (1);
 select * from t1 where exists (select s1 from t2 having max(t2.s1)=t1.s1);
@@ -811,8 +811,8 @@ drop table t1,t2;
 # update subquery with wrong field (to force name resolving
 # in UPDATE name space)
 #
-create table t1 (s1 int);
-create table t2 (s1 int);
+create table t1 (s1 int) ENGINE=MyISAM;
+create table t2 (s1 int) ENGINE=MyISAM;
 insert into t1 values (1);
 insert into t2 values (1);
 -- error 1054
@@ -823,7 +823,7 @@ DROP TABLE t1, t2;
 # collation test
 #
 #CREATE TABLE t1 (s1 CHAR(5) COLLATE latin1_german1_ci,
-#                 s2 CHAR(5) COLLATE latin1_swedish_ci);
+#                 s2 CHAR(5) COLLATE latin1_swedish_ci) ENGINE=MyISAM;
 #INSERT INTO t1 VALUES ('z','?');
 #-- error 1267
 #select * from t1 where s1 > (select max(s2) from t1);
@@ -834,8 +834,8 @@ DROP TABLE t1, t2;
 #
 # aggregate functions reinitialization
 #
-create table t1(toid int,rd int);
-create table t2(userid int,pmnew int,pmtotal int);
+create table t1(toid int,rd int) ENGINE=MyISAM;
+create table t2(userid int,pmnew int,pmtotal int) ENGINE=MyISAM;
 insert into t2 values(1,0,0),(2,0,0);
 insert into t1 values(1,0),(1,0),(1,0),(1,12),(1,15),(1,123),(1,12312),(1,12312),(1,123),(2,0),(2,0),(2,1),(2,2);
 select userid,pmtotal,pmnew, (select count(rd) from t1 where toid=t2.userid) calc_total, (select count(rd) from t1 where rd=0 and toid=t2.userid) calc_new from t2 where userid in (select distinct toid from t1);
@@ -844,7 +844,7 @@ drop table t1, t2;
 #
 # row union
 #
-create table t1 (s1 char(5));
+create table t1 (s1 char(5)) ENGINE=MyISAM;
 -- error 1241
 select (select 'a','b' from t1 union select 'a','b' from t1) from t1;
 insert into t1 values ('tttt');
@@ -856,8 +856,8 @@ drop table t1;
 #
 # IN optimisation test results
 #
-create table t1 (s1 char(5), index s1(s1));
-create table t2 (s1 char(5), index s1(s1));
+create table t1 (s1 char(5), index s1(s1)) ENGINE=MyISAM;
+create table t2 (s1 char(5), index s1(s1)) ENGINE=MyISAM;
 insert into t1 values ('a1'),('a2'),('a3');
 insert into t2 values ('a1'),('a2');
 select s1, s1 NOT IN (SELECT s1 FROM t2) from t1;
@@ -873,8 +873,8 @@ drop table t1,t2;
 #
 # correct ALL optimisation
 #
-create table t2 (a int, b int);
-create table t3 (a int);
+create table t2 (a int, b int) ENGINE=MyISAM;
+create table t3 (a int) ENGINE=MyISAM;
 insert into t3 values (6),(7),(3);
 select * from t3 where a >= all (select b from t2);
 explain extended select * from t3 where a >= all (select b from t2);
@@ -930,7 +930,7 @@ DROP TABLE t1,t2;
 #
 # optimized ALL/ANY with union
 #
-create table t1 (s1 char);
+create table t1 (s1 char) ENGINE=MyISAM;
 insert into t1 values ('e');
 select * from t1 where 'f' > any (select s1 from t1);
 select * from t1 where 'f' > any (select s1 from t1 union select s1 from t1);
@@ -950,8 +950,8 @@ drop table t1, t2;
 #
 # unresolved field error
 #
-create table t1 (s1 int); 
-create table t2 (s1 int);
+create table t1 (s1 int) ENGINE=MyISAM; 
+create table t2 (s1 int) ENGINE=MyISAM;
 -- error 1054
 select * from t1 where (select count(*) from t2 where t1.s2) = 1;
 -- error 1054
@@ -963,14 +963,14 @@ drop table t1, t2;
 #
 # fix_fields() in add_ref_to_table_cond()
 #
-CREATE TABLE t1(COLA FLOAT NOT NULL,COLB FLOAT NOT NULL,COLC VARCHAR(20) DEFAULT NULL,PRIMARY KEY (COLA, COLB));
-CREATE TABLE t2(COLA FLOAT NOT NULL,COLB FLOAT NOT NULL,COLC CHAR(1) NOT NULL,PRIMARY KEY (COLA));
+CREATE TABLE t1(COLA FLOAT NOT NULL,COLB FLOAT NOT NULL,COLC VARCHAR(20) DEFAULT NULL,PRIMARY KEY (COLA, COLB)) ENGINE=MyISAM;
+CREATE TABLE t2(COLA FLOAT NOT NULL,COLB FLOAT NOT NULL,COLC CHAR(1) NOT NULL,PRIMARY KEY (COLA)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,1,'1A3240'), (1,2,'4W2365');
 INSERT INTO t2 VALUES (100, 200, 'C');
 SELECT DISTINCT COLC FROM t1 WHERE COLA = (SELECT COLA FROM t2 WHERE COLB = 200 AND COLC ='C' LIMIT 1);
 DROP TABLE t1, t2;
 
-CREATE TABLE t1 (a int);
+CREATE TABLE t1 (a int) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1),(1),(1),(1),(1),(2),(3),(4),(5);
 SELECT DISTINCT (SELECT a) FROM t1 LIMIT 100;
 DROP TABLE t1;
@@ -989,14 +989,13 @@ CREATE TABLE `t1` (
   `bis` int NOT NULL default '0',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `idx_cns_gen_anno` (`anno_dep`,`id_cns`,`generale`,`particolare`),
-  UNIQUE KEY `idx_cns_par_anno` (`id_cns`,`anno_dep`,`tipo`,`particolare`,`bis`)
-);
+  UNIQUE KEY `idx_cns_par_anno` (`id_cns`,`anno_dep`,`tipo`,`particolare`,`bis`))
+ ENGINE=MyISAM;
 INSERT INTO `t1` VALUES (1,16,'UNO',1987,2048,9681,0),(2,50,'UNO',1987,1536,13987,0),(3,16,'UNO',1987,2432,14594,0),(4,16,'UNO',1987,1792,13422,0),(5,16,'UNO',1987,1025,10240,0),(6,16,'UNO',1987,1026,7089,0);
 CREATE TABLE `t2` (
   `id` int NOT NULL auto_increment,
   `max_anno_dep` int NOT NULL default '0',
-  PRIMARY KEY  (`id`)
-);
+  PRIMARY KEY  (`id`)) ENGINE=MyISAM;
 INSERT INTO `t2` VALUES (16,1987),(50,1990),(51,1990);
 
 SELECT cns.id, cns.max_anno_dep, cns.max_anno_dep = (SELECT s.anno_dep FROM t1 AS s WHERE s.id_cns = cns.id ORDER BY s.anno_dep DESC LIMIT 1) AS PIPPO FROM t2 AS cns;
@@ -1006,7 +1005,7 @@ DROP TABLE t1, t2;
 #
 # GLOBAL LIMIT
 #
-create table t1 (a int);
+create table t1 (a int) ENGINE=MyISAM;
 insert into t1 values (1), (2), (3);
 SET SQL_SELECT_LIMIT=1;
 select sum(a) from (select * from t1) as a;
@@ -1018,14 +1017,14 @@ drop table t1;
 # Bug #3118: subselect + order by
 #
 
-CREATE TABLE t1 (a int, b int, INDEX (a));
+CREATE TABLE t1 (a int, b int, INDEX (a)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1, 1), (1, 2), (1, 3);
 SELECT * FROM t1 WHERE a = (SELECT MAX(a) FROM t1 WHERE a = 1) ORDER BY b;
 DROP TABLE t1;
 
 # Item_cond fix field
 #
-create table t1(val varchar(10));
+create table t1(val varchar(10)) ENGINE=MyISAM;
 insert into t1 values ('aaa'), ('bbb'),('eee'),('mmm'),('ppp');
 select count(*) from t1 as w1 where w1.val in (select w2.val from t1 as w2 where w2.val like 'm%') and w1.val in (select w3.val from t1 as w3 where w3.val like 'e%');
 drop table t1;
@@ -1033,14 +1032,14 @@ drop table t1;
 #
 # ref_or_null replacing with ref
 #
-create table t1 (id int not null, text varchar(20) not null default '', primary key (id));
+create table t1 (id int not null, text varchar(20) not null default '', primary key (id)) ENGINE=MyISAM;
 insert into t1 (id, text) values (1, 'text1'), (2, 'text2'), (3, 'text3'), (4, 'text4'), (5, 'text5'), (6, 'text6'), (7, 'text7'), (8, 'text8'), (9, 'text9'), (10, 'text10'), (11, 'text11'), (12, 'text12');
 select * from t1 where id not in (select id from t1 where id < 8);
 select * from t1 as tt where not exists (select id from t1 where id < 8 and (id = tt.id or id is null) having id is not null);
 explain extended select * from t1 where id not in (select id from t1 where id < 8);
 explain extended select * from t1 as tt where not exists (select id from t1 where id < 8 and (id = tt.id or id is null) having id is not null);
 insert into t1 (id, text) values (1000, 'text1000'), (1001, 'text1001');
-create table t2 (id int not null, text varchar(20) not null default '', primary key (id));
+create table t2 (id int not null, text varchar(20) not null default '', primary key (id)) ENGINE=MyISAM;
 insert into t2 (id, text) values (1, 'text1'), (2, 'text2'), (3, 'text3'), (4, 'text4'), (5, 'text5'), (6, 'text6'), (7, 'text7'), (8, 'text8'), (9, 'text9'), (10, 'text10'), (11, 'text1'), (12, 'text2'), (13, 'text3'), (14, 'text4'), (15, 'text5'), (16, 'text6'), (17, 'text7'), (18, 'text8'), (19, 'text9'), (20, 'text10'),(21, 'text1'), (22, 'text2'), (23, 'text3'), (24, 'text4'), (25, 'text5'), (26, 'text6'), (27, 'text7'), (28, 'text8'), (29, 'text9'), (30, 'text10'), (31, 'text1'), (32, 'text2'), (33, 'text3'), (34, 'text4'), (35, 'text5'), (36, 'text6'), (37, 'text7'), (38, 'text8'), (39, 'text9'), (40, 'text10'), (41, 'text1'), (42, 'text2'), (43, 'text3'), (44, 'text4'), (45, 'text5'), (46, 'text6'), (47, 'text7'), (48, 'text8'), (49, 'text9'), (50, 'text10');
 select * from t1 a left join t2 b on (a.id=b.id or b.id is null) join t1 c on (if(isnull(b.id), 1000, b.id)=c.id);
 explain extended select * from t1 a left join t2 b on (a.id=b.id or b.id is null) join t1 c on (if(isnull(b.id), 1000, b.id)=c.id);
@@ -1049,7 +1048,7 @@ drop table t1,t2;
 #
 # Static tables & rund() in subqueries
 #
-create table t1 (a int);
+create table t1 (a int) ENGINE=MyISAM;
 insert into t1 values (1);
 explain select benchmark(1000, (select a from t1 where a=rand()));
 drop table t1;
@@ -1057,9 +1056,9 @@ drop table t1;
 #
 # bug 3188
 #
-create table t1(id int);
-create table t2(id int);
-create table t3(flag int);
+create table t1(id int) ENGINE=MyISAM;
+create table t2(id int) ENGINE=MyISAM;
+create table t3(flag int) ENGINE=MyISAM;
 -- error 1064
 select (select * from t3 where id not null) from t1, t2;
 drop table t1,t2,t3;
@@ -1067,8 +1066,8 @@ drop table t1,t2,t3;
 #
 # aggregate functions (Bug #3505)
 #
-CREATE TABLE t1 (id INT);
-CREATE TABLE t2 (id INT);
+CREATE TABLE t1 (id INT) ENGINE=MyISAM;
+CREATE TABLE t2 (id INT) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1), (2);
 INSERT INTO t2 VALUES (1);
 SELECT t1.id, ( SELECT COUNT(t.id) FROM t2 AS t WHERE t.id = t1.id ) AS c FROM t1 LEFT JOIN t2 USING (id);
@@ -1080,7 +1079,7 @@ DROP TABLE t1,t2;
 #
 # ALL/ANY test
 #
-CREATE TABLE t1 ( a int, b int );
+CREATE TABLE t1 ( a int, b int ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,1),(2,2),(3,3);
 SELECT a FROM t1 WHERE a > ANY ( SELECT a FROM t1 WHERE b = 2 );
 SELECT a FROM t1 WHERE a < ANY ( SELECT a FROM t1 WHERE b = 2 );
@@ -1215,7 +1214,7 @@ SELECT concat(EXISTS(SELECT a FROM t1 WHERE b = 2 and a.a > t1.a), '-') from t1 
 SELECT concat(EXISTS(SELECT a FROM t1 WHERE b = 2 and a.a < t1.a), '-') from t1 a;
 SELECT concat(EXISTS(SELECT a FROM t1 WHERE b = 2 and a.a = t1.a), '-') from t1 a;
 DROP TABLE t1;
-CREATE TABLE t1 ( a double, b double );
+CREATE TABLE t1 ( a double, b double ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,1),(2,2),(3,3);
 SELECT a FROM t1 WHERE a > ANY (SELECT a FROM t1 WHERE b = 2e0);
 SELECT a FROM t1 WHERE a < ANY (SELECT a FROM t1 WHERE b = 2e0);
@@ -1230,7 +1229,7 @@ SELECT a FROM t1 WHERE a >= ALL (SELECT a FROM t1 WHERE b = 2e0);
 SELECT a FROM t1 WHERE a <= ALL (SELECT a FROM t1 WHERE b = 2e0);
 SELECT a FROM t1 WHERE a <> ALL (SELECT a FROM t1 WHERE b = 2e0);
 DROP TABLE t1;
-CREATE TABLE t1 ( a char(1), b char(1));
+CREATE TABLE t1 ( a char(1), b char(1)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('1','1'),('2','2'),('3','3');
 SELECT a FROM t1 WHERE a > ANY (SELECT a FROM t1 WHERE b = '2');
 SELECT a FROM t1 WHERE a < ANY (SELECT a FROM t1 WHERE b = '2');
@@ -1250,7 +1249,7 @@ DROP TABLE t1;
 #
 # SELECT(EXISTS * ...)optimisation
 #
-create table t1 (a int, b int);
+create table t1 (a int, b int) ENGINE=MyISAM;
 insert into t1 values (1,2),(3,4);
 select * from t1 up where exists (select * from t1 where t1.a=up.a);
 explain extended select * from t1 up where exists (select * from t1 where t1.a=up.a);
@@ -1260,9 +1259,9 @@ drop table t1;
 # Bug #4102: subselect in HAVING
 #
 
-CREATE TABLE t1 (t1_a int);
+CREATE TABLE t1 (t1_a int) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1);
-CREATE TABLE t2 (t2_a int, t2_b int, PRIMARY KEY (t2_a, t2_b));
+CREATE TABLE t2 (t2_a int, t2_b int, PRIMARY KEY (t2_a, t2_b)) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (1, 1), (1, 2);
 SELECT * FROM t1, t2 table2 WHERE t1_a = 1 AND table2.t2_a = 1
   HAVING table2.t2_b = (SELECT MAX(t2_b) FROM t2 WHERE t2_a = table2.t2_a);
@@ -1272,9 +1271,9 @@ DROP TABLE t1, t2;
 # Test problem with NULL and derived tables (Bug #4097)
 #
 
-CREATE TABLE t1 (id int default NULL,name varchar(10) default NULL);
+CREATE TABLE t1 (id int default NULL,name varchar(10) default NULL) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,'Tim'),(2,'Rebecca'),(3,NULL);
-CREATE TABLE t2 (id int default NULL, pet varchar(10) default NULL);
+CREATE TABLE t2 (id int default NULL, pet varchar(10) default NULL) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (1,'Fido'),(2,'Spot'),(3,'Felix');
 SELECT a.*, b.* FROM (SELECT * FROM t1) AS a JOIN t2 as b on a.id=b.id;
 drop table t1,t2;
@@ -1292,7 +1291,7 @@ drop table t1,t2;
 #
 # BUG#5003 - like in subselect
 #
-CREATE TABLE t1(`IZAVORGANG_ID` VARCHAR(11) COLLATE utf8_bin,`KUERZEL` VARCHAR(10) COLLATE utf8_bin,`IZAANALYSEART_ID` VARCHAR(11) COLLATE utf8_bin,`IZAPMKZ_ID` VARCHAR(11) COLLATE utf8_bin);
+CREATE TABLE t1(`IZAVORGANG_ID` VARCHAR(11) COLLATE utf8_bin,`KUERZEL` VARCHAR(10) COLLATE utf8_bin,`IZAANALYSEART_ID` VARCHAR(11) COLLATE utf8_bin,`IZAPMKZ_ID` VARCHAR(11) COLLATE utf8_bin) ENGINE=MyISAM;
 CREATE INDEX AK01IZAVORGANG ON t1(izaAnalyseart_id,Kuerzel);
 INSERT INTO t1(`IZAVORGANG_ID`,`KUERZEL`,`IZAANALYSEART_ID`,`IZAPMKZ_ID`)VALUES('D0000000001','601','D0000000001','I0000000001');
 INSERT INTO t1(`IZAVORGANG_ID`,`KUERZEL`,`IZAANALYSEART_ID`,`IZAPMKZ_ID`)VALUES('D0000000002','602','D0000000001','I0000000001');
@@ -1304,8 +1303,8 @@ drop table t1;
 #
 # Optimized IN with compound index
 #
-CREATE TABLE `t1` ( `aid` int NOT NULL default '0', `bid` int NOT NULL default '0', PRIMARY KEY  (`aid`,`bid`));
-CREATE TABLE `t2` ( `aid` int NOT NULL default '0', `bid` int NOT NULL default '0', PRIMARY KEY  (`aid`,`bid`));
+CREATE TABLE `t1` ( `aid` int NOT NULL default '0', `bid` int NOT NULL default '0', PRIMARY KEY  (`aid`,`bid`)) ENGINE=MyISAM;
+CREATE TABLE `t2` ( `aid` int NOT NULL default '0', `bid` int NOT NULL default '0', PRIMARY KEY  (`aid`,`bid`)) ENGINE=MyISAM;
 insert into t1 values (1,1),(1,2),(2,1),(2,2);
 insert into t2 values (1,2),(2,2);
 select * from t1 where t1.aid not in (select aid from t2 where bid=t1.bid);
@@ -1320,7 +1319,7 @@ drop table t1,t2;
 #
 # resolving fields of grouped outer SELECT
 #
-CREATE TABLE t1 (howmanyvalues bigint, avalue int);
+CREATE TABLE t1 (howmanyvalues bigint, avalue int) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1, 1),(2, 1),(2, 2),(3, 1),(3, 2),(3, 3),(4, 1),(4, 2),(4, 3),(4, 4);
 SELECT howmanyvalues, count(*) from t1 group by howmanyvalues;
 SELECT a.howmanyvalues, (SELECT count(*) from t1 b where b.howmanyvalues = a.howmanyvalues) as mycount from t1 a group by a.howmanyvalues;
@@ -1330,7 +1329,7 @@ SELECT a.howmanyvalues, (SELECT count(*) from t1 b where b.howmanyvalues = a.how
 SELECT a.howmanyvalues, (SELECT count(*) from t1 b where b.howmanyvalues = a.avalue) as mycount from t1 a group by a.howmanyvalues;
 drop table t1;
 
-create table t1 (x int);
+create table t1 (x int) ENGINE=MyISAM;
 select  (select b.x from t1 as b where b.x=a.x) from t1 as a where a.x=2 group by a.x;
 drop table t1;
 
@@ -1338,9 +1337,9 @@ drop table t1;
 # Test of correct maybe_null flag returning by subquwery for temporary table
 # creation
 #
-CREATE TABLE `t1` ( `master` int NOT NULL default '0', `map` int NOT NULL default '0', `slave` int NOT NULL default '0', `access` int NOT NULL default '0', UNIQUE KEY `access_u` (`master`,`map`,`slave`));
+CREATE TABLE `t1` ( `master` int NOT NULL default '0', `map` int NOT NULL default '0', `slave` int NOT NULL default '0', `access` int NOT NULL default '0', UNIQUE KEY `access_u` (`master`,`map`,`slave`)) ENGINE=MyISAM;
 INSERT INTO `t1` VALUES (1,0,0,700),(1,1,1,400),(1,5,5,400),(1,12,12,400),(1,12,32,400),(4,12,32,400);
-CREATE TABLE `t2` ( `id` int NOT NULL default '0', `pid` int NOT NULL default '0', `map` int NOT NULL default '0', `level` int NOT NULL default '0', `title` varchar(255) default NULL, PRIMARY KEY  (`id`,`pid`,`map`), KEY `level` (`level`), KEY `id` (`id`,`map`)) ;
+CREATE TABLE `t2` ( `id` int NOT NULL default '0', `pid` int NOT NULL default '0', `map` int NOT NULL default '0', `level` int NOT NULL default '0', `title` varchar(255) default NULL, PRIMARY KEY  (`id`,`pid`,`map`), KEY `level` (`level`), KEY `id` (`id`,`map`)) ENGINE=MyISAM ;
 INSERT INTO `t2` VALUES (6,5,12,7,'a'),(12,0,0,7,'a'),(12,1,0,7,'a'),(12,5,5,7,'a'),(12,5,12,7,'a');
 -- error 1054
 SELECT b.sc FROM (SELECT (SELECT a.access FROM t1 a WHERE a.map = op.map AND a.slave = op.pid AND a.master = 1) ac FROM t2 op WHERE op.id = 12 AND op.map = 0) b;
@@ -1357,8 +1356,8 @@ set @got_val= (SELECT 1 FROM (SELECT 'A' as my_col) as T1 ) ;
 #
 # primary query with temporary table and subquery with groupping
 #
-create table t1 (a int, b int);
-create table t2 (a int, b int);
+create table t1 (a int, b int) ENGINE=MyISAM;
+create table t2 (a int, b int) ENGINE=MyISAM;
 insert into t1 values (1,1),(1,2),(1,3),(2,4),(2,5);
 insert into t2 values (1,3),(2,1);
 select distinct a,b, (select max(b) from t2 where t1.b=t2.a) from t1 order by t1.b;
@@ -1367,7 +1366,7 @@ drop table t1, t2;
 #
 # Equal operation under row and empty subquery
 #
-create table t1 (s1 int,s2 int);
+create table t1 (s1 int,s2 int) ENGINE=MyISAM;
 insert into t1 values (20,15);
 select * from t1 where  (('a',null) <=> (select 'a',s2 from t1 where s1 = 0));
 drop table t1;
@@ -1375,7 +1374,7 @@ drop table t1;
 #
 # ALL/ANY with NULL
 #
-create table t1 (s1 int);
+create table t1 (s1 int) ENGINE=MyISAM;
 insert into t1 values (1),(null);
 select * from t1 where s1 < all (select s1 from t1);
 select s1, s1 < all (select s1 from t1) from t1;
@@ -1415,8 +1414,8 @@ drop table t1;
 # Test for BUG#7885: Server crash when 'any' subselect compared to
 # non-existant field.
 #
-create table t1 (a1 int);
-create table t2 (b1 int);
+create table t1 (a1 int) ENGINE=MyISAM;
+create table t2 (b1 int) ENGINE=MyISAM;
 --error 1054
 select * from t1 where a2 > any(select b1 from t2);
 select * from t1 where a1 > any(select b1 from t2);
@@ -1426,7 +1425,7 @@ drop table t1,t2;
 #
 # Comparison subquery with * and row
 #
-create table t1 (a integer, b integer);
+create table t1 (a integer, b integer) ENGINE=MyISAM;
 select (select * from t1) = (select 1,2);
 select (select 1,2) = (select * from t1);
 # queries whih can be converted to IN
@@ -1437,7 +1436,7 @@ drop table t1;
 #
 # Comparison subquery and row with nested rows
 #
-create table t1 (a integer, b integer);
+create table t1 (a integer, b integer) ENGINE=MyISAM;
 -- error 1241
 select row(1,(2,2)) in (select * from t1 );
 -- error 1241
@@ -1470,8 +1469,9 @@ CREATE TABLE t1 (
   endDate datetime NOT NULL,
   createDate datetime NOT NULL,
   modifyDate timestamp NOT NULL,
-  attributes text NOT NULL
-);
+  attributes text NOT NULL)
+  engine=myisam;
+
 INSERT INTO t1 VALUES (1,41,'2004-02-09','2010-01-01','2004-02-09','2004-02-09',''),
 (1,86,'2004-08-16','2004-08-16','2004-08-16','2004-08-16',''),
 (1,87,'2004-08-16','2004-08-16','2004-08-16','2004-08-16',''),
@@ -1485,8 +1485,9 @@ INSERT INTO t1 VALUES (1,41,'2004-02-09','2010-01-01','2004-02-09','2004-02-09',
 CREATE TABLE t2 (
   userId int NOT NULL,
   courseId int NOT NULL,
-  date datetime NOT NULL
-);
+  date datetime NOT NULL)
+  engine=myisam;
+
 INSERT INTO t2 VALUES (5141,71,'2003-11-18'),
 (5141,72,'2003-11-25'),(5141,41,'2004-08-06'),
 (5141,52,'2004-08-06'),(5141,53,'2004-08-06'),
@@ -1502,8 +1503,9 @@ CREATE TABLE t3 (
   endDate datetime NOT NULL,
   createDate datetime NOT NULL,
   modifyDate timestamp NOT NULL,
-  ordering int
-);
+  ordering int)
+  engine=myisam;
+
 INSERT INTO t3 VALUES (12,9,'1000-01-01','3999-12-31','2004-01-29','2004-01-29',NULL);
 
 CREATE TABLE t4 (
@@ -1514,8 +1516,9 @@ CREATE TABLE t4 (
   ordering int,
   description text,
   createDate datetime NOT NULL,
-  modifyDate timestamp NOT NULL
-);
+  modifyDate timestamp NOT NULL)
+  engine=myisam;
+
 INSERT INTO t4 VALUES (9,5,'stationer','stationer',0,'Stationer','2004-01-29','2004-01-29'),
 (12,5,'group2','group2',0,'group2','2004-01-29','2004-01-29');
 
@@ -1523,8 +1526,8 @@ CREATE TABLE t5 (
   userId int NOT NULL,
   groupId int NOT NULL,
   createDate datetime NOT NULL,
-  modifyDate timestamp NOT NULL
-);
+  modifyDate timestamp NOT NULL) ENGINE=MyISAM;
+
 INSERT INTO t5 VALUES (5141,12,'2004-08-06','2004-08-06');
 
 select
@@ -1564,7 +1567,7 @@ drop table t1, t2, t3, t4, t5;
 #
 # Transformation in left expression of subquery (BUG#8888)
 #
-create table t1 (a int);
+create table t1 (a int) ENGINE=MyISAM;
 insert into t1 values (1), (2), (3);
 SELECT 1 FROM t1 WHERE (SELECT 1) in (SELECT 1);
 drop table t1;
@@ -1572,7 +1575,7 @@ drop table t1;
 #
 # single row subqueries and row operations (code covarage improvement)
 #
-create table t1 (a int, b int);
+create table t1 (a int, b int) ENGINE=MyISAM;
 insert into t1 values (1,2);
 -- error 1241
 select 1 = (select * from t1);
@@ -1612,7 +1615,7 @@ drop table t1;
 
 # BUG#11821 : Select from subselect using aggregate function on an enum
 # segfaults:
-create table t1 (fld enum('0','1'));
+create table t1 (fld enum('0','1')) ENGINE=MyISAM;
 insert into t1 values ('1');
 select * from (select max(fld) from t1) as foo;
 drop table t1;
@@ -1621,8 +1624,8 @@ drop table t1;
 # Bug #11867: queries with ROW(,elems>) IN (SELECT DISTINCT <cols> FROM ...)
 #
 
-CREATE TABLE t1 (one int, two int, flag char(1));
-CREATE TABLE t2 (one int, two int, flag char(1));
+CREATE TABLE t1 (one int, two int, flag char(1)) ENGINE=MyISAM;
+CREATE TABLE t2 (one int, two int, flag char(1)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES(1,2,'Y'),(2,3,'Y'),(3,4,'Y'),(5,6,'N'),(7,8,'N');
 INSERT INTO t2 VALUES(1,2,'Y'),(2,3,'Y'),(3,4,'Y'),(5,6,'N'),(7,8,'N');
 
@@ -1652,7 +1655,7 @@ DROP TABLE t1,t2;
 # Bug #12392: where cond with IN predicate for rows and NULL values in table 
 #
 
-CREATE TABLE t1 (a char(5), b char(5));
+CREATE TABLE t1 (a char(5), b char(5)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (NULL,'aaa'), ('aaa','aaa');
 
 SELECT * FROM t1 WHERE (a,b) IN (('aaa','aaa'), ('aaa','bbb'));
@@ -1663,9 +1666,9 @@ DROP TABLE t1;
 # Bug #11479: subquery over left join with an empty inner table 
 #
 
-CREATE TABLE t1 (a int);
-CREATE TABLE t2 (a int, b int);
-CREATE TABLE t3 (b int NOT NULL);
+CREATE TABLE t1 (a int) ENGINE=MyISAM;
+CREATE TABLE t2 (a int, b int) ENGINE=MyISAM;
+CREATE TABLE t3 (b int NOT NULL) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1), (2), (3), (4);
 INSERT INTO t2 VALUES (1,10), (3,30);
 
@@ -1681,8 +1684,8 @@ DROP TABLE t1,t2,t3;
 # Bug#18503: Queries with a quantified subquery returning empty set may
 # return a wrong result. 
 #
-CREATE TABLE t1 (f1 INT);
-CREATE TABLE t2 (f2 INT);
+CREATE TABLE t1 (f1 INT) ENGINE=MyISAM;
+CREATE TABLE t2 (f2 INT) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1);
 SELECT * FROM t1 WHERE f1 > ALL (SELECT f2 FROM t2);
 SELECT * FROM t1 WHERE f1 > ALL (SELECT f2 FROM t2 WHERE 1=0);
@@ -1692,7 +1695,7 @@ SELECT * FROM t1 WHERE f1 > ALL (SELECT f2 FROM t2 WHERE f2=0);
 DROP TABLE t1, t2;
 
 # BUG#20975 Wrong query results for subqueries within NOT
-create table t1 (s1 char);
+create table t1 (s1 char) ENGINE=MyISAM;
 insert into t1 values (1),(2);
 
 select * from t1 where (s1 < any (select s1 from t1));
@@ -1715,8 +1718,8 @@ create table t1 (
   retailerID varchar(8) NOT NULL,
   statusID   int NOT NULL,
   changed    datetime NOT NULL,
-  UNIQUE KEY retailerID (retailerID, statusID, changed)
-);
+  UNIQUE KEY retailerID (retailerID, statusID, changed))
+  ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES("0026", "1", "2005-12-06 12:18:56");
 INSERT INTO t1 VALUES("0026", "2", "2006-01-06 12:25:53");
@@ -1735,10 +1738,10 @@ drop table t1;
 # Bug #21180: Subselect with index for both WHERE and ORDER BY 
 #             produces empty result
 #
-create table t1(a int, primary key (a));
+create table t1(a int, primary key (a)) ENGINE=MyISAM;
 insert into t1 values (10);
 
-create table t2 (a int primary key, b varchar(32), c int, unique key b(c, b));
+create table t2 (a int primary key, b varchar(32), c int, unique key b(c, b)) ENGINE=MyISAM;
 insert into t2(a, c, b) values (1,10,'359'), (2,10,'35988'), (3,10,'35989');
 
 explain SELECT t1.a, r.a, r.b FROM t1 LEFT JOIN t2 r 
@@ -1766,13 +1769,14 @@ CREATE TABLE t1 (
   field1 int NOT NULL,                 
   field2 int NOT NULL,                 
   field3 int NOT NULL,                 
-  PRIMARY KEY  (field1,field2,field3)  
-);
+  PRIMARY KEY  (field1,field2,field3))
+  ENGINE=MyISAM;
+
 CREATE TABLE t2 (             
   fieldA int NOT NULL,            
   fieldB int NOT NULL,            
-  PRIMARY KEY  (fieldA,fieldB)     
-); 
+  PRIMARY KEY  (fieldA,fieldB))
+  ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES
   (1,1,1), (1,1,2), (1,2,1), (1,2,2), (1,2,3), (1,3,1);
@@ -1799,11 +1803,11 @@ DROP TABLE t1, t2;
 #             with possible NULL values by index access from the outer query
 #
 
-CREATE TABLE t1(a int, INDEX (a));
+CREATE TABLE t1(a int, INDEX (a)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1), (3), (5), (7);
 INSERT INTO t1 VALUES (NULL);
 
-CREATE TABLE t2(a int);
+CREATE TABLE t2(a int) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (1),(2),(3);
 
 EXPLAIN SELECT a, a IN (SELECT a FROM t1) FROM t2;
@@ -1814,15 +1818,15 @@ DROP TABLE t1,t2;
 #
 # Bug #11302: getObject() returns a String for a sub-query of type datetime
 #
-CREATE TABLE t1 (a DATETIME);
+CREATE TABLE t1 (a DATETIME) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('1998-09-23'), ('2003-03-25');
 
-CREATE TABLE t2 AS SELECT 
+CREATE TABLE t2 ENGINE=MyISAM AS SELECT 
   (SELECT a FROM t1 WHERE a < '2000-01-01') AS sub_a 
    FROM t1 WHERE a > '2000-01-01';
 SHOW CREATE TABLE t2;
 
-CREATE TABLE t3 AS (SELECT a FROM t1 WHERE a < '2000-01-01') UNION (SELECT a FROM t1 WHERE a > '2000-01-01'); 
+CREATE TABLE t3 ENGINE=MyISAM AS (SELECT a FROM t1 WHERE a < '2000-01-01') UNION (SELECT a FROM t1 WHERE a > '2000-01-01'); 
 SHOW CREATE TABLE t3;
 
 DROP TABLE t1,t2,t3;
@@ -1832,10 +1836,10 @@ DROP TABLE t1,t2,t3;
 #            that return more than one row
 #
 
-CREATE TABLE t1 (a int);
+CREATE TABLE t1 (a int) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (2), (4), (1), (3);
 
-CREATE TABLE t2 (b int, c int);
+CREATE TABLE t2 (b int, c int) ENGINE=MyISAM;
 INSERT INTO t2 VALUES
   (2,1), (1,3), (2,1), (4,4), (2,2), (1,4);
 
@@ -1890,7 +1894,7 @@ DROP TABLE t1,t2;
 #
 #decimal-related tests
 #
-create table t1 (df decimal(5,1));
+create table t1 (df decimal(5,1)) ENGINE=MyISAM;
 insert into t1 values(1.1);
 insert into t1 values(2.2);
 
@@ -1898,14 +1902,14 @@ select * from t1 where df <= all (select avg(df) from t1 group by df);
 select * from t1 where df >= all (select avg(df) from t1 group by df);
 drop table t1;
 
-create table t1 (df decimal(5,1));
+create table t1 (df decimal(5,1)) ENGINE=MyISAM;
 insert into t1 values(1.1);
 select 1.1 * exists(select * from t1);
 drop table t1;
 
 CREATE TABLE t1 (
   grp int default NULL,
-  a decimal(10,2) default NULL);
+  a decimal(10,2) default NULL) ENGINE=MyISAM;
 
 insert into t1 values (1, 1), (2, 2), (2, 3), (3, 4), (3, 5), (3, 6), (NULL, NULL);
 select * from t1;
@@ -1916,12 +1920,12 @@ drop table t1;
 # Test for bug #9338: lame substitution of c1 instead of c2 
 #
 
-CREATE table t1 ( c1 integer );
+CREATE table t1 ( c1 integer ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ( 1 );
 INSERT INTO t1 VALUES ( 2 );
 INSERT INTO t1 VALUES ( 3 );
 
-CREATE TABLE t2 ( c2 integer );
+CREATE TABLE t2 ( c2 integer ) ENGINE=MyISAM;
 INSERT INTO t2 VALUES ( 1 );
 INSERT INTO t2 VALUES ( 4 );
 INSERT INTO t2 VALUES ( 5 );
@@ -1936,19 +1940,19 @@ DROP TABLE t1,t2;
 #
 # Test for bug #9516: wrong evaluation of not_null_tables attribute in SQ 
 #
-CREATE TABLE t1 ( c1 integer );
+CREATE TABLE t1 ( c1 integer ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ( 1 );
 INSERT INTO t1 VALUES ( 2 );
 INSERT INTO t1 VALUES ( 3 );
 INSERT INTO t1 VALUES ( 6 ); 
  
-CREATE TABLE t2 ( c2 integer );
+CREATE TABLE t2 ( c2 integer ) ENGINE=MyISAM;
 INSERT INTO t2 VALUES ( 1 );
 INSERT INTO t2 VALUES ( 4 );
 INSERT INTO t2 VALUES ( 5 );
 INSERT INTO t2 VALUES ( 6 );
 
-CREATE TABLE t3 ( c3 integer );
+CREATE TABLE t3 ( c3 integer ) ENGINE=MyISAM;
 INSERT INTO t3 VALUES ( 7 );
 INSERT INTO t3 VALUES ( 8 );
 
@@ -1961,8 +1965,8 @@ DROP TABLE t1,t2,t3;
 # Correct building of equal fields list (do not include outer
 # fields) (BUG#6384)
 #
-CREATE TABLE t1 (EMPNUM   CHAR(3));
-CREATE TABLE t2 (EMPNUM   CHAR(3) );
+CREATE TABLE t1 (EMPNUM   CHAR(3)) ENGINE=MyISAM;
+CREATE TABLE t2 (EMPNUM   CHAR(3) ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('E1'),('E2');
 INSERT INTO t2 VALUES ('E1');
 DELETE FROM t1
@@ -1977,10 +1981,10 @@ DROP TABLE t1,t2;
 # Test for bug #11487: range access in a subquery
 #
 
-CREATE TABLE t1(select_id BIGINT, values_id BIGINT);
+CREATE TABLE t1(select_id BIGINT, values_id BIGINT) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1, 1);
 CREATE TABLE t2 (select_id BIGINT, values_id BIGINT, 
-                 PRIMARY KEY(select_id,values_id));
+                 PRIMARY KEY(select_id,values_id)) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (0, 1), (0, 2), (0, 3), (1, 5);
 
 SELECT values_id FROM t1 
@@ -1997,7 +2001,7 @@ DROP TABLE t1, t2;
 
 # BUG#11821 : Select from subselect using aggregate function on an enum
 # segfaults:
-create table t1 (fld enum('0','1'));
+create table t1 (fld enum('0','1')) ENGINE=MyISAM;
 insert into t1 values ('1');
 select * from (select max(fld) from t1) as foo;
 drop table t1;
@@ -2006,9 +2010,9 @@ drop table t1;
 # Test for bug #11762: subquery with an aggregate function in HAVING
 #
 
-CREATE TABLE t1 (a int, b int);
-CREATE TABLE t2 (c int, d int);
-CREATE TABLE t3 (e int);
+CREATE TABLE t1 (a int, b int) ENGINE=MyISAM;
+CREATE TABLE t2 (c int, d int) ENGINE=MyISAM;
+CREATE TABLE t3 (e int) ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES 
   (1,10), (2,10), (1,20), (2,20), (3,20), (2,30), (4,40);
@@ -2090,7 +2094,7 @@ DROP TABLE t1,t2,t3;
 # Test for bug #16603: GROUP BY in a row subquery with a quantifier 
 #                      when an index is defined on the grouping field
 
-CREATE TABLE t1 (a varchar(5), b varchar(10));
+CREATE TABLE t1 (a varchar(5), b varchar(10)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES
   ('AAA', 5), ('BBB', 4), ('BBB', 1), ('CCC', 2),
   ('CCC', 7), ('AAA', 2), ('AAA', 4), ('BBB', 3), ('AAA', 8);
@@ -2110,7 +2114,7 @@ DROP TABLE t1;
 #
 # Bug#17366: Unchecked Item_int results in server crash
 #
-create table t1( f1 int,f2 int);
+create table t1( f1 int,f2 int) ENGINE=MyISAM;
 insert into t1 values (1,1),(2,2);
 select tt.t from (select 'crash1' as t, f2 from t1) as tt left join t1 on tt.t = 'crash2' and tt.f2 = t1.f2 where tt.t = 'crash1';
 drop table t1;
@@ -2119,9 +2123,9 @@ drop table t1;
 # Bug #18306: server crash on delete using subquery.
 #
 
-create table t1 (c int, key(c));                              
+create table t1 (c int, key(c)) ENGINE=MyISAM;                              
 insert into t1 values (1142477582), (1142455969);
-create table t2 (a int, b int);
+create table t2 (a int, b int) ENGINE=MyISAM;
 insert into t2 values (2, 1), (1, 0);
 delete from t1 where c <= 1140006215 and (select b from t2 where a = 2) = 1;
 drop table t1, t2;
@@ -2129,7 +2133,7 @@ drop table t1, t2;
 #
 # Bug#19077: A nested materialized derived table is used before being populated.
 #
-create table t1 (i int, j bigint);
+create table t1 (i int, j bigint) ENGINE=MyISAM;
 insert into t1 values (1, 2), (2, 2), (3, 2);
 select * from (select min(i) from t1 where j=(select * from (select min(j) from t1) t2)) t3;
 drop table t1;
@@ -2137,11 +2141,11 @@ drop table t1;
 # 
 # Bug#19700: subselect returning BIGINT always returned it as SIGNED
 #
-CREATE TABLE t1 (i BIGINT);
+CREATE TABLE t1 (i BIGINT) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (10000000000000000); # > MAX SIGNED BIGINT 9323372036854775807
 INSERT INTO t1 VALUES (1);
 
-CREATE TABLE t2 (i BIGINT);
+CREATE TABLE t2 (i BIGINT) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (10000000000000000); # same as first table
 INSERT INTO t2 VALUES (1);
 
@@ -2164,8 +2168,9 @@ DROP TABLE t2;
 CREATE TABLE t1 (
   id bigint NOT NULL auto_increment,
   name varchar(255) NOT NULL,
-  PRIMARY KEY  (id)
-);
+  PRIMARY KEY  (id))
+  ENGINE=MyISAM;
+
 INSERT INTO t1 VALUES
   (1, 'Balazs'), (2, 'Joe'), (3, 'Frank');
 
@@ -2173,8 +2178,9 @@ CREATE TABLE t2 (
   id bigint NOT NULL auto_increment,
   mid bigint NOT NULL,
   date date NOT NULL,
-  PRIMARY KEY  (id)
-);
+  PRIMARY KEY  (id))
+  ENGINE=MyISAM;
+
 INSERT INTO t2 VALUES 
   (1, 1, '2006-03-30'), (2, 2, '2006-04-06'), (3, 3, '2006-04-13'),
   (4, 2, '2006-04-20'), (5, 1, '2006-05-01');
@@ -2205,8 +2211,9 @@ CREATE TABLE t1 (
   i1 int NOT NULL default '0',
   i2 int NOT NULL default '0',
   t datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY  (i1,i2,t)
-);
+  PRIMARY KEY  (i1,i2,t))
+  ENGINE=MyISAM;
+
 INSERT INTO t1 VALUES 
 (24,1,'2005-03-03 16:31:31'),(24,1,'2005-05-27 12:40:07'),
 (24,1,'2005-05-27 12:40:08'),(24,1,'2005-05-27 12:40:10'),
@@ -2219,8 +2226,9 @@ CREATE TABLE t2 (
   i1 int NOT NULL default '0',
   i2 int NOT NULL default '0',
   t datetime default NULL,
-  PRIMARY KEY  (i1)
-);
+  PRIMARY KEY  (i1))
+  ENGINE=MyISAM;
+
 INSERT INTO t2 VALUES (24,1,'2006-06-20 12:29:40');
 
 EXPLAIN
@@ -2239,7 +2247,7 @@ DROP TABLE t1, t2;
 # Bug#14654 : Cannot select from the same table twice within a UNION
 # statement 
 #
-CREATE TABLE t1 (i INT);
+CREATE TABLE t1 (i INT) ENGINE=MyISAM;
 
 (SELECT i FROM t1) UNION (SELECT i FROM t1);
 SELECT * FROM t1 WHERE NOT EXISTS 
@@ -2266,8 +2274,8 @@ DROP TABLE t1;
 #
 # Bug #21540: Subqueries with no from and aggregate functions return 
 #              wrong results
-CREATE TABLE t1 (a INT, b INT);
-CREATE TABLE t2 (a INT);
+CREATE TABLE t1 (a INT, b INT) ENGINE=MyISAM;
+CREATE TABLE t2 (a INT) ENGINE=MyISAM;
 INSERT INTO t2 values (1);
 INSERT INTO t1 VALUES (1,1),(1,2),(2,3),(3,4);
 SELECT (SELECT COUNT(DISTINCT t1.b) from t2) FROM t1 GROUP BY t1.a;
@@ -2290,9 +2298,9 @@ DROP TABLE t1,t2;
 #             slow with big sort_buffer_size 
 #
 
-CREATE TABLE t1 (a int, b int auto_increment, PRIMARY KEY (b));
+CREATE TABLE t1 (a int, b int auto_increment, PRIMARY KEY (b)) ENGINE=MyISAM;
 CREATE TABLE t2 (x int auto_increment, y int, z int,
-                 PRIMARY KEY (x), FOREIGN KEY (y) REFERENCES t1 (b));
+                 PRIMARY KEY (x), FOREIGN KEY (y) REFERENCES t1 (b)) ENGINE=MyISAM;
 disable_query_log;
 set autocommit=0;
 begin;
@@ -2330,8 +2338,8 @@ DROP TABLE t2,t1;
 #             correlated and uncorrelated selects
 #
 
-CREATE TABLE t1 (id char(4) PRIMARY KEY, c int);
-CREATE TABLE t2 (c int);
+CREATE TABLE t1 (id char(4) PRIMARY KEY, c int) ENGINE=MyISAM;
+CREATE TABLE t2 (c int) ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES ('aa', 1);
 INSERT INTO t2 VALUES (1);
@@ -2349,7 +2357,7 @@ SELECT * FROM t1
                 SELECT c from t2 WHERE c=t1.c);
 
 INSERT INTO t2 VALUES (2);
-CREATE TABLE t3 (c int);
+CREATE TABLE t3 (c int) ENGINE=MyISAM;
 INSERT INTO t3 VALUES (1);
 
 SELECT * FROM t1
@@ -2371,18 +2379,18 @@ DROP TABLE IF EXISTS t1xt2;
 
 CREATE TABLE t1 (
   id_1 int NOT NULL,
-  t varchar(4) DEFAULT NULL
-);
+  t varchar(4) DEFAULT NULL)
+  ENGINE=MyISAM;
 
 CREATE TABLE t2 (
   id_2 int NOT NULL,
-  t varchar(4) DEFAULT NULL
-);
+  t varchar(4) DEFAULT NULL)
+  ENGINE=MyISAM;
 
 CREATE TABLE t1xt2 (
   id_1 int NOT NULL,
-  id_2 int NOT NULL
-);
+  id_2 int NOT NULL)
+  ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES (1, 'a'), (2, 'b'), (3, 'c'), (4, 'd');
 
@@ -2462,7 +2470,7 @@ DROP TABLE t1xt2;
 # Bug #26728: derived table with concatanation of literals in select list
 #  
 
-CREATE TABLE t1 (a int);
+CREATE TABLE t1 (a int) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (3), (1), (2);           
 
 SELECT 'this is ' 'a test.' AS col1, a AS col2 FROM t1;
@@ -2474,8 +2482,8 @@ DROP table t1;
 # Bug #27257: COUNT(*) aggregated in outer query
 #  
 
-CREATE TABLE t1 (a int, b int);
-CREATE TABLE t2 (m int, n int);
+CREATE TABLE t1 (a int, b int) ENGINE=MyISAM;
+CREATE TABLE t2 (m int, n int) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (2,2), (2,2), (3,3), (3,3), (3,3), (4,4);
 INSERT INTO t2 VALUES (1,11), (2,22), (3,32), (4,44), (4,44);
 
@@ -2497,8 +2505,8 @@ DROP TABLE t1,t2;
 # Bug #27229: GROUP_CONCAT in subselect with COUNT() as an argument 
 #  
 
-CREATE TABLE t1 (a int, b int);
-CREATE TABLE t2 (m int, n int);
+CREATE TABLE t1 (a int, b int) ENGINE=MyISAM;
+CREATE TABLE t2 (m int, n int) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (2,2), (2,2), (3,3), (3,3), (3,3), (4,4);
 INSERT INTO t2 VALUES (1,11), (2,22), (3,32), (4,44), (4,44);
 
@@ -2515,7 +2523,7 @@ DROP table t1,t2;
 #
 # Bug#27321: Wrong subquery result in a grouping select
 #
-CREATE TABLE t1 (a int, b INT, d INT, c CHAR(10) NOT NULL, PRIMARY KEY (a, b));
+CREATE TABLE t1 (a int, b INT, d INT, c CHAR(10) NOT NULL, PRIMARY KEY (a, b)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,1,0,'a'), (1,2,0,'b'), (1,3,0,'c'), (1,4,0,'d'),
 (1,5,0,'e'), (2,1,0,'f'), (2,2,0,'g'), (2,3,0,'h'), (3,4,0,'i'), (3,3,0,'j'),
 (3,2,0,'k'), (3,1,0,'l'), (1,9,0,'m'), (1,0,10,'n'), (2,0,5,'o'), (3,0,7,'p');
@@ -2553,8 +2561,8 @@ DROP TABLE t1;
 # Bug #27363: nested aggregates in outer, subquery / sum(select
 # count(outer))
 #
-CREATE TABLE t1 (a INT); INSERT INTO t1 values (1),(1),(1),(1);
-CREATE TABLE t2 (x INT); INSERT INTO t1 values (1000),(1001),(1002);
+CREATE TABLE t1 (a INT) ENGINE=MyISAM; INSERT INTO t1 values (1),(1),(1),(1);
+CREATE TABLE t2 (x INT) ENGINE=MyISAM; INSERT INTO t1 values (1000),(1001),(1002);
 
 --error ER_INVALID_GROUP_FUNC_USE
 SELECT SUM( (SELECT COUNT(a) FROM t2) ) FROM t1;
@@ -2576,7 +2584,7 @@ DROP TABLE t1,t2;
 #
 # Bug #27807: Server crash when executing subquery with EXPLAIN
 #  
-CREATE TABLE t1 (a int, b int, KEY (a)); 
+CREATE TABLE t1 (a int, b int, KEY (a)) ENGINE=MyISAM; 
 INSERT INTO t1 VALUES (1,1),(2,1);
 EXPLAIN SELECT 1 FROM t1 WHERE a = (SELECT COUNT(*) FROM t1 GROUP BY b);
 DROP TABLE t1;
@@ -2585,10 +2593,10 @@ DROP TABLE t1;
 # Bug #28377: grouping query with a correlated subquery in WHERE condition
 #  
 
-CREATE TABLE t1 (id int NOT NULL, st CHAR(2), INDEX idx(id));
+CREATE TABLE t1 (id int NOT NULL, st CHAR(2), INDEX idx(id)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES
   (3,'FL'), (2,'GA'), (4,'FL'), (1,'GA'), (5,'NY'), (7,'FL'), (6,'NY');
-CREATE TABLE t2 (id int NOT NULL, INDEX idx(id));
+CREATE TABLE t2 (id int NOT NULL, INDEX idx(id)) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (7), (5), (1), (3);
 
 SELECT id, st FROM t1 
@@ -2610,7 +2618,7 @@ DROP TABLE t1,t2;
 #             over a grouping subselect
 # 
 
-CREATE TABLE t1 (a int);
+CREATE TABLE t1 (a int) ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES (1), (2);
 
@@ -2626,11 +2634,12 @@ DROP TABLE t1;
 CREATE TABLE t1 (
   a varchar(255) default NULL,
   b timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
-  INDEX idx(a,b)
-);
+  INDEX idx(a,b))
+  ENGINE=MyISAM;
+
 CREATE TABLE t2 (
-  a varchar(255) default NULL
-);
+  a varchar(255) default NULL)
+  ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES ('abcdefghijk','2007-05-07 06:00:24');
 INSERT INTO t1 SELECT * FROM t1;
@@ -2656,8 +2665,8 @@ DROP TABLE t1,t2;
 # Bug #27333: subquery grouped for aggregate of outer query / no aggregate
 # of subquery
 #
-CREATE TABLE t1 (a INTEGER, b INTEGER);
-CREATE TABLE t2 (x INTEGER);
+CREATE TABLE t1 (a INTEGER, b INTEGER) ENGINE=MyISAM;
+CREATE TABLE t2 (x INTEGER) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,11), (2,22), (2,22);
 INSERT INTO t2 VALUES (1), (2);
 
@@ -2673,7 +2682,7 @@ SELECT (SELECT SUM(t1.a)/AVG(t2.x) FROM t2) FROM t1;
 DROP TABLE t1,t2;
 
 # second test case from 27333
-CREATE TABLE t1 (a INT, b INT);
+CREATE TABLE t1 (a INT, b INT) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1, 2), (1,3), (1,4), (2,1), (2,2);
 
 # returns no rows, when it should
@@ -2683,8 +2692,8 @@ GROUP BY a1.a;
 DROP TABLE t1;
 
 #test cases from 29297
-CREATE TABLE t1 (a INT);
-CREATE TABLE t2 (a INT);
+CREATE TABLE t1 (a INT) ENGINE=MyISAM;
+CREATE TABLE t2 (a INT) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1),(2);
 INSERT INTO t2 VALUES (1),(2);
 SELECT (SELECT SUM(t1.a) FROM t2 WHERE a=0) FROM t1;
@@ -2697,8 +2706,8 @@ DROP TABLE t1,t2;
 # Bug #31884: Assertion + crash in subquery in the SELECT clause.
 #
 
-CREATE TABLE t1 (a1 INT, a2 INT);
-CREATE TABLE t2 (b1 INT, b2 INT);
+CREATE TABLE t1 (a1 INT, a2 INT) ENGINE=MyISAM;
+CREATE TABLE t2 (b1 INT, b2 INT) ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES (100, 200);
 INSERT INTO t1 VALUES (101, 201);
@@ -2712,7 +2721,7 @@ DROP TABLE t1, t2;
 # Bug #30788: Inconsistent retrieval of char/varchar
 #
 
-CREATE TABLE t1 (a CHAR(1), b VARCHAR(10));
+CREATE TABLE t1 (a CHAR(1), b VARCHAR(10)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('a', 'aa');
 INSERT INTO t1 VALUES ('a', 'aaa');
 SELECT a,b FROM t1 WHERE b IN (SELECT a FROM t1);
@@ -2721,7 +2730,7 @@ CREATE INDEX I2 ON t1 (b);
 EXPLAIN SELECT a,b FROM t1 WHERE b IN (SELECT a FROM t1);
 SELECT a,b FROM t1 WHERE b IN (SELECT a FROM t1);
 
-CREATE TABLE t2 (a VARCHAR(1), b VARCHAR(10));
+CREATE TABLE t2 (a VARCHAR(1), b VARCHAR(10)) ENGINE=MyISAM;
 INSERT INTO t2 SELECT * FROM t1;
 CREATE INDEX I1 ON t2 (a);
 CREATE INDEX I2 ON t2 (b);
@@ -2738,7 +2747,7 @@ DROP TABLE t1,t2;
 # occasions
 #
 
-CREATE TABLE t1(a INT, b INT);
+CREATE TABLE t1(a INT, b INT) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,1), (1,2), (2,3), (2,4);
 
 --error ER_BAD_FIELD_ERROR
@@ -2768,8 +2777,8 @@ DROP TABLE t1;
 # Bug #32036: EXISTS within a WHERE clause with a UNION crashes MySQL 5.122
 #
 
-CREATE TABLE t1 (a INT);
-CREATE TABLE t2 (a INT);
+CREATE TABLE t1 (a INT) ENGINE=MyISAM;
+CREATE TABLE t2 (a INT) ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES (1),(2);
 INSERT INTO t2 VALUES (1),(2);
@@ -2791,8 +2800,9 @@ DROP TABLE t1,t2;
 CREATE TABLE t4 (
   f7 varchar(32) collate utf8_bin NOT NULL default '',
   f10 varchar(32) collate utf8_bin default NULL,
-  PRIMARY KEY  (f7)
-);
+  PRIMARY KEY  (f7))
+  ENGINE=MyISAM;
+
 INSERT INTO t4 VALUES(1,1), (2,null);
 
 CREATE TABLE t2 (
@@ -2800,23 +2810,26 @@ CREATE TABLE t2 (
   f2 varchar(50) collate utf8_bin default NULL,
   f3 varchar(10) collate utf8_bin default NULL,
   PRIMARY KEY  (f4),
-  UNIQUE KEY uk1 (f2)
-);
+  UNIQUE KEY uk1 (f2))
+  ENGINE=MyISAM;
+
 INSERT INTO t2 VALUES(1,1,null), (2,2,null);
 
-CREATE TABLE t1 (
+CREATE TABLE t1  (
   f8 varchar(32) collate utf8_bin NOT NULL default '',
   f1 varchar(10) collate utf8_bin default NULL,
   f9 varchar(32) collate utf8_bin default NULL,
-  PRIMARY KEY  (f8)
-);
+  PRIMARY KEY  (f8))
+  ENGINE=MyISAM;
+
 INSERT INTO t1 VALUES (1,'P',1), (2,'P',1), (3,'R',2);
 
 CREATE TABLE t3 (
   f6 varchar(32) collate utf8_bin NOT NULL default '',
   f5 varchar(50) collate utf8_bin default NULL,
-  PRIMARY KEY (f6)
-);
+  PRIMARY KEY (f6))
+  ENGINE=MyISAM;
+
 INSERT INTO t3 VALUES (1,null), (2,null);
 
 SELECT
@@ -2846,8 +2859,8 @@ DROP TABLE t1, t2, t3, t4;
 #
 
 create table t_out (subcase char(3),
-                    a1 char(2), b1 char(2), c1 char(2));
-create table t_in  (a2 char(2), b2 char(2), c2 char(2));
+                    a1 char(2), b1 char(2), c1 char(2)) ENGINE=MyISAM;
+create table t_in  (a2 char(2), b2 char(2), c2 char(2)) ENGINE=MyISAM;
 
 insert into t_out values ('A.1','2a', NULL, '2a');
 #------------------------- A.2 - impossible
@@ -3021,7 +3034,7 @@ drop table t_in;
 #
 # Bug#20835 (literal string with =any values)
 #
-CREATE TABLE t1 (s1 char(1));
+CREATE TABLE t1 (s1 char(1)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('a');
 SELECT * FROM t1 WHERE _utf8'a' = ANY (SELECT s1 FROM t1);
 DROP TABLE t1;
@@ -3029,10 +3042,10 @@ DROP TABLE t1;
 #
 # Bug#33204: INTO is allowed in subselect, causing inconsistent results
 #
-CREATE TABLE t1( a INT );
+CREATE TABLE t1( a INT ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1),(2);
 
-CREATE TABLE t2( a INT, b INT );
+CREATE TABLE t2( a INT, b INT ) ENGINE=MyISAM;
 
 --error ER_PARSE_ERROR
 SELECT * 

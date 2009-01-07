@@ -622,15 +622,13 @@ int delete_table_proto_file(char *file_name)
   return my_delete(new_path.c_str(), MYF(0));
 }
 
-int create_table_proto_file(char *file_name,
-                            const char *table_name,
-                            HA_CREATE_INFO *create_info,
-                            List<Create_field> &create_fields,
-                            uint32_t keys,
-                            KEY *key_info)
+bool create_table_proto_file(const char *file_name,
+                             const char *table_name,
+                             HA_CREATE_INFO *create_info,
+                             List<Create_field> &create_fields,
+                             uint32_t keys,
+                             KEY *key_info)
 {
-  (void)key_info;
-
   drizzle::Table table_proto;
   string new_path(file_name);
   string file_ext = ".tabledefinition";
@@ -643,12 +641,12 @@ int create_table_proto_file(char *file_name,
   fstream output(new_path.c_str(), ios::out | ios::trunc | ios::binary);
   if (!table_proto.SerializeToOstream(&output))
   {
-    printf("Failed to write schema.\n");
     fprintf(stderr, "Failed to write schema.\n");
-    return -1;
+
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
 /*
@@ -665,6 +663,7 @@ int create_table_proto_file(char *file_name,
     keys		number of keys to create
     key_info		Keys to create
     file		Handler to use
+    is_like             is true for mysql_create_like_schema_frm
 
   RETURN
     0  ok
@@ -675,18 +674,40 @@ int rea_create_table(Session *session, const char *path,
                      const char *db, const char *table_name,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_fields,
-                     uint32_t keys, KEY *key_info, handler *file)
+                     uint32_t keys, KEY *key_info, handler *file,
+                     bool is_like)
 {
   char frm_name[FN_REFLEN];
-  sprintf(frm_name,"%s%s",path,reg_ext);
-  if (mysql_create_frm(session, frm_name, db, table_name, create_info,
-                       create_fields, keys, key_info, file))
 
-    return(1);
+  /* Proto will blow up unless we give a name */
+  assert(table_name);
 
-  if (create_table_proto_file(frm_name, table_name, create_info,
-                              create_fields, keys, key_info) != 0)
-    return 1;
+  /* For is_like we return once the file has been created */
+  if (is_like)
+  {
+    if (mysql_create_frm(session, path, db, table_name, create_info,
+                         create_fields, keys, key_info, file))
+      return 1;
+
+    if (create_table_proto_file(path, table_name, create_info,
+                                create_fields, keys, key_info))
+      return 1;
+
+    return 0;
+  }
+  /* Here we need to build the full frm from the path */
+  else
+  {
+    sprintf(frm_name,"%s%s", path, reg_ext);
+
+    if (mysql_create_frm(session, frm_name, db, table_name, create_info,
+                         create_fields, keys, key_info, file))
+      return 1;
+
+    if (create_table_proto_file(frm_name, table_name, create_info,
+                                create_fields, keys, key_info))
+      return 1;
+  }
 
   // Make sure mysql_create_frm din't remove extension
   assert(*fn_rext(frm_name));
@@ -694,15 +715,17 @@ int rea_create_table(Session *session, const char *path,
     create_info->options|= HA_CREATE_KEEP_FILES;
   if (file->ha_create_handler_files(path, NULL, CHF_CREATE_FLAG, create_info))
     goto err_handler;
-  if ( ha_create_table(session, path, db, table_name,
-                                                create_info,0))
+  if (ha_create_table(session, path, db, table_name,
+                      create_info,0))
     goto err_handler;
-  return(0);
+  return 0;
 
 err_handler:
   file->ha_create_handler_files(path, NULL, CHF_DELETE_FLAG, create_info);
   my_delete(frm_name, MYF(0));
-  return(1);
+  delete_table_proto_file(frm_name);
+
+  return 1;
 } /* rea_create_table */
 
 

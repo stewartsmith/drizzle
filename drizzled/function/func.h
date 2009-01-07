@@ -24,6 +24,7 @@
 
 #include <drizzled/item.h>
 #include <drizzled/sql_list.h>
+#include <drizzled/item/bin_string.h>
 
 
 class Item_func :public Item_result_field

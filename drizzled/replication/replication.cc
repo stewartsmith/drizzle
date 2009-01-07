@@ -144,7 +144,7 @@ static int send_file(Session *session)
     (void) my_close(fd, MYF(0));
   if (errmsg)
   {
-    sql_print_error("%s",errmsg);
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s",errmsg);
   }
   return(error);
 }

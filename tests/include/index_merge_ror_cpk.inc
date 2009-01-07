@@ -113,11 +113,11 @@ create table t1
   ETEXT varchar(80),
   ETEXT_TYPE char(1),
   INFO char(1),
-  SEVERITY tinyint(3),
+  SEVERITY int,
   TADIRFLAG char(1),
   PRIMARY KEY  (RUNID,SUBMITNR,ORDERNR,PROGRAMM,TESTID,UCCHECK),
   KEY `TVERM~KEY`  (PROGRAMM,TESTID,UCCHECK)
-) DEFAULT CHARSET=latin1;
+);
 
 update t1 set `ETEXT` = '', `ETEXT_TYPE`='', `INFO`='', `SEVERITY`='', `TADIRFLAG`=''
 WHERE

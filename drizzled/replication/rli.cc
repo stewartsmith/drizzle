@@ -146,7 +146,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
         instead require a name. But as we don't want to break many existing
         setups, we only give warning, not error.
       */
-      sql_print_warning(_("Neither --relay-log nor --relay-log-index were used;"
+      errmsg_printf(ERRMSG_LVL_WARN, _("Neither --relay-log nor --relay-log-index were used;"
                         " so replication "
                         "may break when this Drizzle server acts as a "
                         "slave and has his hostname changed!! Please "
@@ -163,7 +163,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
                             max_binlog_size), 1))
     {
       pthread_mutex_unlock(&rli->data_lock);
-      sql_print_error(_("Failed in open_log() called from "
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed in open_log() called from "
                         "init_relay_log_info()"));
       return(1);
     }
@@ -185,7 +185,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
   */
   reinit_io_cache(&rli->info_file, WRITE_CACHE,0L,0,1);
   if ((error= flush_relay_log_info(rli)))
-    sql_print_error(_("Failed to flush relay log info file"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to flush relay log info file"));
   if (count_relay_log_space(rli))
   {
     msg=_("Error counting relay log space");
@@ -196,7 +196,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
   return(error);
 
 err:
-  sql_print_error("%s",msg);
+  errmsg_printf(ERRMSG_LVL_ERROR, "%s",msg);
   end_io_cache(&rli->info_file);
   if (info_fd >= 0)
     my_close(info_fd, MYF(0));
@@ -212,7 +212,7 @@ static inline int32_t add_relay_log(Relay_log_info* rli,LOG_INFO* linfo)
   struct stat s;
   if (stat(linfo->log_file_name,&s))
   {
-    sql_print_error(_("log %s listed in the index, but failed to stat"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("log %s listed in the index, but failed to stat"),
                     linfo->log_file_name);
     return(1);
   }
@@ -227,7 +227,7 @@ static int32_t count_relay_log_space(Relay_log_info* rli)
   rli->log_space_total= 0;
   if (rli->relay_log.find_log_pos(&linfo, NULL, 1))
   {
-    sql_print_error(_("Could not find first log while counting relay "
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not find first log while counting relay "
                       "log space"));
     return(1);
   }
@@ -882,7 +882,7 @@ bool Relay_log_info::is_until_satisfied(my_off_t master_beg_pos)
       else
       {
         /* Probably error so we aborting */
-        sql_print_error(_("Slave SQL thread is stopped because UNTIL "
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Slave SQL thread is stopped because UNTIL "
                           "condition is bad."));
         return(true);
       }

@@ -38,7 +38,7 @@ void udf_init()
 
   if (hash_init(&udf_hash, system_charset_info, 32, 0, 0, get_hash_key, NULL, 0))
   {
-    sql_print_error(_("Can't allocate memory for udf structures"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Can't allocate memory for udf structures"));
     hash_free(&udf_hash);
     free_root(&mem, MYF(0));
     return;
@@ -92,8 +92,8 @@ int initialize_udf(st_plugin_int *plugin)
     int r;
     if ((r= plugin->plugin->init((void *)&f)))
     {
-      sql_print_error("Plugin '%s' init function returned error %d.",
-                      plugin->name.str, r);
+      errmsg_printf(ERRMSG_LVL_ERROR, "Plugin '%s' init function returned error %d.",
+		    plugin->name.str, r);
       return r;
     }
   }

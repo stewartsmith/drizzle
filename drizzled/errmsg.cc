@@ -121,7 +121,7 @@ static bool errmsg_iterate (Session *session, plugin_ref plugin, void *p)
   return false;
 }
 
-bool errmsg_vprintf (Session *session, int priority, const char *format, va_list ap)
+bool errmsg_vprintf (Session *session, int priority, char const *format, va_list ap)
 {
   bool foreach_rv;
   errmsg_parms_t parms;
@@ -150,12 +150,4 @@ bool errmsg_vprintf (Session *session, int priority, const char *format, va_list
   return foreach_rv;
 }
 
-bool errmsg_printf (Session *session, int priority, const char *format, ...)
-{
-  bool rv;
-  va_list args;
-  va_start(args, format);
-  rv= errmsg_vprintf(session, priority, format, args);
-  va_end(args);
-  return rv;
-}
+

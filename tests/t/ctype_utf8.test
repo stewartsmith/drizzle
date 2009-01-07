@@ -1,0 +1,1003 @@
+#
+# Tests with the utf8 character set
+#
+
+--disable_warnings
+drop table if exists t1,t2;
+--enable_warnings
+
+select left(0xD0B0D0B1D0B2,1);
+select right(0xD0B0D0B2D0B2,1);
+
+select locate('he','hello');
+select locate('he','hello',2);
+select locate('lo','hello',2);
+select locate('HE','hello');
+select locate('HE','hello',2);
+select locate('LO','hello',2);
+select locate('HE','hello' collate utf8_bin);
+select locate('HE','hello' collate utf8_bin,2);
+select locate('LO','hello' collate utf8_bin,2);
+
+select locate(0xD0B1, 0xD0B0D0B1D0B2);
+select locate(0xD091, 0xD0B0D0B1D0B2);
+select locate(0xD0B1, 0xD0B0D091D0B2);
+# TODO: Bug lp:314472
+#select locate(0xD091, 0xD0B0D0B1D0B2 collate utf8_bin);
+#select locate(0xD0B1, 0xD0B0D091D0B2 collate utf8_bin);
+
+select length(0xD0B1), bit_length(0xD0B1), char_length(0xD0B1);
+
+select 'a' like 'a';
+select 'A' like 'a';
+select 'A' like 'a' collate utf8_bin;
+select 0xD0B0D0B1D0B2 like concat(_utf8'%',0xD0B1,'%');
+
+# Bug #6040: can't retrieve records with umlaut
+# characters in case insensitive manner.
+# Case insensitive search LIKE comparison
+# was broken for multibyte characters:
+select 'Günter André' like 'GÜNTER%';
+
+#
+# Check the following:
+# "a"  == "a "
+# "a\0" < "a"
+# "a\0" < "a "
+
+SELECT 'a' = 'a ';
+SELECT 'a\0' < 'a';
+SELECT 'a\0' < 'a ';
+SELECT 'a\t' < 'a';
+SELECT 'a\t' < 'a ';
+
+#
+# The same for binary collation
+#
+SELECT 'a' = 'a ' collate utf8_bin;
+SELECT 'a\0' < 'a' collate utf8_bin;
+SELECT 'a\0' < 'a ' collate utf8_bin;
+SELECT 'a\t' < 'a' collate utf8_bin;
+SELECT 'a\t' < 'a ' collate utf8_bin;
+
+CREATE TABLE t1 (a char(10) not null);
+INSERT INTO t1 VALUES ('a'),('a\0'),('a\t'),('a ');
+SELECT hex(a),STRCMP(a,'a'), STRCMP(a,'a ') FROM t1;
+DROP TABLE t1;
+
+#
+# Fix this, it should return 1:
+#
+#select 0xD0B0D0B1D0B2 like concat(_utf8'%',0xD091,'%');
+#
+
+#
+# Bug 2367: INSERT() behaviour is different for different charsets.
+#
+select insert('txs',2,1,'hi'),insert('is ',4,0,'a'),insert('txxxxt',2,4,'es');
+select insert("aa",100,1,"b"),insert("aa",1,3,"b");
+
+#
+# LELF() didn't work well with utf8 in some cases too.
+#
+select char_length(left(@a:='න ',5)), length(@a), @a;
+
+
+#
+# CREATE ... SELECT
+#
+create table t1 select date_format("2004-01-19 10:10:10", "%Y-%m-%d");
+show create table t1;
+select * from t1;
+drop table t1;
+
+
+
+# TODO: Bug lp:314474
+#create table t1 (s1 tinytext);
+#insert into t1 select repeat('a',300);
+#insert into t1 select repeat('Ñ',300);
+#insert into t1 select repeat('aÑ',300);
+#insert into t1 select repeat('Ña',300);
+#insert into t1 select repeat('ÑÑ',300);
+#select hex(s1) from t1;
+#select length(s1),char_length(s1) from t1;
+#drop table t1;
+
+#create table t1 (s1 text);
+#insert into t1 select repeat('a',66000);
+#insert into t1 select repeat('Ñ',66000);
+#insert into t1 select repeat('aÑ',66000);
+#insert into t1 select repeat('Ña',66000);
+#insert into t1 select repeat('ÑÑ',66000);
+#select length(s1),char_length(s1) from t1;
+#drop table t1;
+
+#
+# Bug #2368 Multibyte charsets do not check that incoming data is well-formed
+#
+create table t1 (s1 char(10));
+--error 1366
+insert into t1 values (0x41FF);
+select hex(s1) from t1;
+drop table t1;
+
+create table t1 (s1 varchar(10));
+--error 1366
+insert into t1 values (0x41FF);
+select hex(s1) from t1;
+drop table t1;
+
+create table t1 (s1 text);
+--error 1366
+insert into t1 values (0x41FF);
+select hex(s1) from t1;
+drop table t1;
+
+#
+# Bug 2699
+# UTF8 breaks primary keys for cols > 333 characters
+#
+--error 1071
+create table t1 (a text, primary key(a(360)));
+
+
+#
+# Bug 2959
+# UTF8 charset breaks joins with mixed column/string constant
+#
+CREATE TABLE t1 ( a varchar(10) );
+INSERT INTO t1 VALUES ( 'test' );
+SELECT a.a, b.a FROM t1 a, t1 b WHERE a.a = b.a;
+SELECT a.a, b.a FROM t1 a, t1 b WHERE a.a = 'test' and b.a = 'test';
+SELECT a.a, b.a FROM t1 a, t1 b WHERE a.a = b.a and a.a = 'test';
+DROP TABLE t1;
+
+create table t1 (a char(255));
+insert into t1 values('b'),('b');
+select * from t1 where a = 'b';
+select * from t1 where a = 'b' and a = 'b';
+select * from t1 where a = 'b' and a != 'b';
+drop table t1;
+
+#
+# Bug #4555
+# ALTER TABLE crashes mysqld with enum column collated utf8_unicode_ci
+#
+CREATE TABLE t1 (a enum ('Y', 'N') DEFAULT 'N' COLLATE utf8_unicode_ci);
+ALTER TABLE t1 ADD COLUMN b CHAR(20);
+DROP TABLE t1;
+
+# Customer Support Center issue # 3299 
+# ENUM and SET multibyte fields computed their length wronly 
+# when converted into a char field
+# TODO: Bug lp:314502
+#create table t1 (a enum('aaaa', '킱'));
+#show create table t1;
+#insert into t1 values ('킱');
+#select * from t1;
+#create table t2 select ifnull(a,a) from t1;
+#show create table t2;
+#select * from t2;
+#drop table t1;
+#drop table t2;
+
+#
+# Bug 4521: unique key prefix interacts poorly with utf8
+# MYISAM: keys with prefix compression, case insensitive collation.
+#
+create table t1 (c varchar(30), unique(c(10)));
+insert into t1 values ('1'),('2'),('3'),('x'),('y'),('z');
+insert into t1 values ('aaaaaaaaaa');
+--error ER_DUP_ENTRY
+insert into t1 values ('aaaaaaaaaaa');
+--error ER_DUP_ENTRY
+insert into t1 values ('aaaaaaaaaaaa');
+insert into t1 values (repeat('b',20));
+select c c1 from t1 where c='1';
+select c c2 from t1 where c='2';
+select c c3 from t1 where c='3';
+select c cx from t1 where c='x';
+select c cy from t1 where c='y';
+select c cz from t1 where c='z';
+select c ca10 from t1 where c='aaaaaaaaaa';
+select c cb20 from t1 where c=repeat('b',20);
+drop table t1;
+
+#
+# Bug 4521: unique key prefix interacts poorly with utf8
+# InnoDB: keys with prefix compression, case insensitive collation.
+#
+--disable_warnings
+create table t1 (c varchar(30), unique(c(10))) engine=innodb;
+--enable_warnings
+insert into t1 values ('1'),('2'),('3'),('x'),('y'),('z');
+insert into t1 values ('aaaaaaaaaa');
+--error ER_DUP_ENTRY
+insert into t1 values ('aaaaaaaaaaa');
+--error ER_DUP_ENTRY
+insert into t1 values ('aaaaaaaaaaaa');
+insert into t1 values (repeat('b',20));
+select c c1 from t1 where c='1';
+select c c2 from t1 where c='2';
+select c c3 from t1 where c='3';
+select c cx from t1 where c='x';
+select c cy from t1 where c='y';
+select c cz from t1 where c='z';
+select c ca10 from t1 where c='aaaaaaaaaa';
+select c cb20 from t1 where c=repeat('b',20);
+drop table t1;
+#
+# Bug 4521: unique key prefix interacts poorly with utf8
+# MYISAM: fixed length keys, case insensitive collation
+#
+create table t1 (c char(3), unique (c(2))) engine=myisam;
+insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
+insert into t1 values ('a');
+insert into t1 values ('aa');
+--error ER_DUP_ENTRY
+insert into t1 values ('aaa');
+insert into t1 values ('b');
+insert into t1 values ('bb');
+--error ER_DUP_ENTRY
+insert into t1 values ('bbb');
+insert into t1 values ('킱');
+insert into t1 values ('킱킱');
+--error ER_DUP_ENTRY
+insert into t1 values ('킱킱킱');
+drop table t1;
+#
+# Bug 4521: unique key prefix interacts poorly with utf8
+# InnoDB: fixed length keys, case insensitive collation
+#
+create table t1 (c char(3), unique (c(2))) engine=innodb;
+insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
+insert into t1 values ('a');
+insert into t1 values ('aa');
+--error ER_DUP_ENTRY
+insert into t1 values ('aaa');
+insert into t1 values ('b');
+insert into t1 values ('bb');
+--error ER_DUP_ENTRY
+insert into t1 values ('bbb');
+insert into t1 values ('킱');
+insert into t1 values ('킱킱');
+--error ER_DUP_ENTRY
+insert into t1 values ('킱킱킱');
+drop table t1;
+#
+# Bug 4531: unique key prefix interacts poorly with utf8
+# Check HEAP+HASH, case insensitive collation
+#
+create table t1 (
+c char(10),
+unique key a using hash (c(2))
+) engine=heap;
+insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
+insert into t1 values ('a');
+insert into t1 values ('aa');
+--error ER_DUP_ENTRY
+insert into t1 values ('aaa');
+insert into t1 values ('b');
+insert into t1 values ('bb');
+--error ER_DUP_ENTRY
+insert into t1 values ('bbb');
+insert into t1 values ('킱');
+insert into t1 values ('킱킱');
+--error ER_DUP_ENTRY
+insert into t1 values ('킱킱킱');
+select c as c_all from t1 order by c;
+select c as c_a from t1 where c='a';
+select c as c_a from t1 where c='킱';
+drop table t1;
+
+#
+# Bug 4531: unique key prefix interacts poorly with utf8
+# Check HEAP+BTREE, case insensitive collation
+#
+create table t1 (
+c char(10),
+unique key a using btree (c(2))
+) engine=heap;
+show create table t1;
+insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
+insert into t1 values ('a');
+insert into t1 values ('aa');
+--error ER_DUP_ENTRY
+insert into t1 values ('aaa');
+insert into t1 values ('b');
+insert into t1 values ('bb');
+--error ER_DUP_ENTRY
+insert into t1 values ('bbb');
+insert into t1 values ('킱');
+insert into t1 values ('킱킱');
+--error ER_DUP_ENTRY
+insert into t1 values ('킱킱킱');
+select c as c_all from t1 order by c;
+select c as c_a from t1 where c='a';
+select c as c_a from t1 where c='킱';
+drop table t1;
+
+
+# Bug#4594: column index make = failed for gbk, but like works
+# Check MYISAM
+#
+create table t1 (
+  str varchar(255) not null,
+  key str  (str(2))
+) engine=myisam;
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+drop table t1;
+
+# Bug#4594: column index make = failed for gbk, but like works
+# Check InnoDB
+#
+--disable_warnings
+create table t1 (
+  str varchar(255) not null,
+  key str  (str(2))
+) engine=innodb;
+--enable_warnings
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+drop table t1;
+
+# the same for HEAP+BTREE
+#
+
+create table t1 (
+  str varchar(255) not null,
+  key str using btree (str(2))
+) engine=heap;
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+drop table t1;
+
+# the same for HEAP+HASH
+#
+
+create table t1 (
+  str varchar(255) not null,
+  key str using hash (str(2))
+) engine=heap;
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+drop table t1;
+
+# the same for BDB
+#
+
+--disable_warnings
+create table t1 (
+  str varchar(255) not null,
+  key str (str(2))
+) engine=innodb;
+--enable_warnings
+INSERT INTO t1 VALUES ('str');
+INSERT INTO t1 VALUES ('str2');
+select * from t1 where str='str';
+drop table t1;
+
+#
+# Bug #5397: Crash with varchar binary and LIKE
+#
+CREATE TABLE t1 (a varchar(32) BINARY);
+INSERT INTO t1 VALUES ('test');
+SELECT a FROM t1 WHERE a LIKE '%te';
+DROP TABLE t1;
+
+#
+# Bug #5723: length(<varchar utf8 field>) returns varying results
+#
+--disable_warnings
+CREATE TABLE t1 (
+  subject varchar(255) collate utf8_unicode_ci,
+  p varchar(15)
+) ENGINE=InnoDB;
+--enable_warnings
+INSERT INTO t1 values ('킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱','abcdefghijklmno');
+INSERT INTO t1 VALUES ('aaa','bbb');
+SELECT length(subject) FROM t1;
+SELECT length(subject) FROM t1 ORDER BY 1;
+DROP TABLE t1;
+
+#
+# Bug #5832 SELECT doesn't return records in some cases
+#
+CREATE TABLE t1 (
+    id       int NOT NULL auto_increment,
+    list_id  int NOT NULL,
+    term     TEXT NOT NULL,
+    PRIMARY KEY(id),
+    INDEX(list_id, term(4))
+) ENGINE=MYISAM;
+INSERT INTO t1 SET list_id = 1, term = "letterc";
+INSERT INTO t1 SET list_id = 1, term = "letterb";
+INSERT INTO t1 SET list_id = 1, term = "lettera";
+INSERT INTO t1 SET list_id = 1, term = "letterd";
+SELECT id FROM t1 WHERE (list_id = 1) AND (term = "letterc");
+SELECT id FROM t1 WHERE (list_id = 1) AND (term = "letterb");
+SELECT id FROM t1 WHERE (list_id = 1) AND (term = "lettera");
+SELECT id FROM t1 WHERE (list_id = 1) AND (term = "letterd");
+DROP TABLE t1;
+
+
+#
+# Bug #6043 erratic searching for diacriticals in indexed MyISAM UTF-8 table
+#
+CREATE TABLE t1 (
+    id int NOT NULL auto_increment,
+    list_id int NOT NULL,
+    term text NOT NULL,
+    PRIMARY KEY(id),
+    INDEX(list_id, term(19))
+) ENGINE=MyISAM;
+INSERT INTO t1 set list_id = 1, term = "testétest";
+INSERT INTO t1 set list_id = 1, term = "testetest";
+INSERT INTO t1 set list_id = 1, term = "testètest";
+SELECT id, term FROM t1 where (list_id = 1) AND (term = "testétest");
+SELECT id, term FROM t1 where (list_id = 1) AND (term = "testetest");
+SELECT id, term FROM t1 where (list_id = 1) AND (term = "testètest");
+DROP TABLE t1;
+
+#
+# Bug #6019 SELECT tries to use too short prefix index on utf8 data
+#
+--disable_warnings
+create table t1 (
+  a int primary key,
+  b varchar(6),
+  index b3(b(3))
+) engine=innodb;
+--enable_warnings
+insert into t1 values(1,'foo'),(2,'foobar');
+select * from t1 where b like 'foob%';
+--disable_warnings
+alter table t1 engine=innodb;
+--enable_warnings
+select * from t1 where b like 'foob%';
+drop table t1;
+
+#
+# Test for calculate_interval_lengths() function
+#
+create table t1 (
+  a enum('☃','☄','킱') not null default '킱'
+);
+create table t2 select concat(a,_utf8'') as a from t1;
+show create table t2;
+drop table t2;
+drop table t1;
+
+#
+# Bug #6787 LIKE not working properly with _ and utf8 data
+#
+select 'c' like '\_' as want0; 
+
+#
+# SUBSTR with negative offset didn't work with multi-byte strings
+#
+SELECT SUBSTR('☃☄킱',-2);
+
+
+-- source include/ctype_filesort.inc
+-- source include/ctype_like_escape.inc
+-- source include/ctype_german.inc
+-- source include/ctype_filesort.inc
+-- source include/ctype_like_escape.inc
+
+
+
+#
+# Bugs#5980: NULL requires a characterset in a union
+#
+create table t1 (a varchar(10));
+insert into t1 values ('test');
+select ifnull(a,'') from t1;
+drop table t1;
+select repeat(_utf8'+',3) as h union select NULL;
+select ifnull(NULL, _utf8'string');
+
+#
+# Bug#9509 Optimizer: wrong result after AND with comparisons
+#
+create table t1 (s1 char(5) collate utf8_lithuanian_ci);
+insert into t1 values ('I'),('K'),('Y');
+select * from t1 where s1 < 'K' and s1 = 'Y';
+select * from t1 where 'K' > s1 and s1 = 'Y';
+drop table t1;
+
+create table t1 (s1 char(5) collate utf8_czech_ci);
+insert into t1 values ('c'),('d'),('h'),('ch'),('CH'),('cH'),('Ch'),('i');
+select * from t1 where s1 > 'd' and s1 = 'CH';
+select * from t1 where 'd' < s1 and s1 = 'CH';
+select * from t1 where s1 = 'cH' and s1 <> 'ch';
+select * from t1 where 'cH' = s1 and s1 <> 'ch';
+drop table t1;
+
+#
+# Bug#10714: Inserting double value into utf8 column crashes server
+#
+create table t1 (a varchar(255));
+insert into t1 values (1.0);
+drop table t1;
+
+#
+# Bug#10253 compound index length and utf8 char set
+# produces invalid query results
+#
+create table t1 (
+ id int not null,
+ city varchar(20) not null,
+ key (city(7),id)
+);
+insert into t1 values (1,'Durban North');
+insert into t1 values (2,'Durban');
+select * from t1 where city = 'Durban';
+select * from t1 where city = 'Durban ';
+drop table t1;
+
+#
+#
+# Test for bug #11167: join for utf8 varchar value longer than 255 bytes 
+#
+
+CREATE TABLE t1 (
+  `id` int NOT NULL auto_increment,
+  `country` varchar(100) NOT NULL default '',
+  `shortcode` varchar(100) NOT NULL default '',
+  `operator` varchar(100) NOT NULL default '',
+  `momid` varchar(30) NOT NULL default '',
+  `keyword` varchar(160) NOT NULL default '',
+  `content` varchar(160) NOT NULL default '',
+  `second_token` varchar(160) default NULL,
+  `gateway_id` int NOT NULL default '0',
+  `created` datetime NOT NULL default '0000-00-00 00:00:00',
+  `msisdn` varchar(15) NOT NULL default '',
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `MSCCSPK_20030521130957121` (`momid`),
+  KEY `IX_mobile_originated_message_keyword` (`keyword`),
+  KEY `IX_mobile_originated_message_created` (`created`),
+  KEY `IX_mobile_originated_message_support` (`msisdn`,`momid`,`keyword`,`gateway_id`,`created`)
+) ENGINE=MyISAM;
+
+INSERT INTO t1 VALUES 
+(1,'blah','464','aaa','fkc1c9ilc20x0hgae7lx6j09','ERR','킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱킱','G', 3,'2005-06-01 17:30:43','1234567890'),
+(2,'blah','464','aaa','haxpl2ilc20x00bj4tt2m5ti','11','11 g','G',3,'2005-06-02 22:43:10','1234567890');
+
+--disable_warnings
+CREATE TABLE t2 (
+  `msisdn` varchar(15) NOT NULL default '',
+  `operator_id` int NOT NULL default '0',
+  `created` datetime NOT NULL default '0000-00-00 00:00:00',
+  UNIQUE KEY `PK_user` (`msisdn`)
+) ENGINE=InnoDB;
+--enable_warnings
+
+INSERT INTO t2 VALUES ('1234567890',2,'2005-05-24 13:53:25');
+
+SELECT content, t2.msisdn FROM t1, t2 WHERE t1.msisdn = '1234567890';
+
+DROP TABLE t1,t2;
+
+#
+# Bug#11591: CHAR column with utf8 does not work properly
+# (more chars than expected)
+#
+create table t1 (a char(20));
+insert into t1 values ('12'),('킱킲');
+alter table t1 modify a char(2);
+select char_length(a), length(a), a from t1 order by a;
+drop table t1;
+
+#
+# Bugs#12611
+# ESCAPE + LIKE do not work when the escape char is a multibyte one
+#
+select 'andre%' like 'andre킱%' escape '킱';
+
+#
+# Bugs#11754: SET NAMES utf8 followed by SELECT "A\\" LIKE "A\\" returns 0
+#
+select 'a\\' like 'a\\';
+select 'aa\\' like 'a%\\';
+
+create table t1 (a char(10), key(a));
+insert into t1 values ("a"),("abc"),("abcd"),("hello"),("test");
+select * from t1 where a like "abc%";
+select * from t1 where a like concat("abc","%");
+select * from t1 where a like "ABC%";
+select * from t1 where a like "test%";
+select * from t1 where a like "te_t";
+select * from t1 where a like "%a%";
+select * from t1 where a like "%abcd%";
+select * from t1 where a like "%abc\d%";
+drop table t1;
+
+
+#
+# Bug#9557 MyISAM utf8 table crash
+#
+CREATE TABLE t1 (
+  a varchar(255) NOT NULL default '',
+  KEY a (a)
+) ENGINE=MyISAM COLLATE utf8_general_ci;
+insert into t1 values (0xe880bd);
+insert into t1 values (0x5b);
+select hex(a) from t1;
+drop table t1;
+
+#
+# Bug#13751 find_in_set: Illegal mix of collations
+#
+create table t1 (a varchar(255));
+select * from t1 where find_in_set('-1', a);
+drop table t1;
+
+#
+# Bug#13233: select distinct char(column) fails with utf8
+#
+create table t1 (a int);
+insert into t1 values (48),(49),(50);
+select distinct char(a) from t1;
+drop table t1;
+
+#
+# Bug#15581: COALESCE function truncates mutli-byte TINYTEXT values
+#
+CREATE TABLE t1 (t TINYTEXT);
+INSERT INTO t1 VALUES(REPEAT('a', 100));
+CREATE TEMPORARY TABLE t2 SELECT COALESCE(t) AS bug FROM t1;
+SELECT LENGTH(bug) FROM t2;
+DROP TABLE t2;
+DROP TABLE t1;
+
+#
+# Bug#17313: N'xxx' and _utf8'xxx' are not equivalent
+#
+CREATE TABLE t1 (item varchar(255));
+INSERT INTO t1 VALUES ('\\');
+INSERT INTO t1 VALUES (_utf8'\\');
+INSERT INTO t1 VALUES ('Cote d\'Ivoire');
+INSERT INTO t1 VALUES (_utf8'Cote d\'Ivoire');
+SELECT item FROM t1 ORDER BY item;
+DROP TABLE t1;
+
+#
+# Bug#17705: Corruption of compressed index when index length changes between
+# 254 and 256
+#
+
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(a VARCHAR(255), KEY(a)) ENGINE=MyISAM;
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+INSERT INTO t1 VALUES('uu');
+check table t1;
+INSERT INTO t1 VALUES('uU');
+check table t1;
+INSERT INTO t1 VALUES('uu');
+check table t1;
+INSERT INTO t1 VALUES('uuABC');
+check table t1;
+INSERT INTO t1 VALUES('UuABC');
+check table t1;
+INSERT INTO t1 VALUES('uuABC');
+check table t1;
+alter table t1 add b int;
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',1);
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',2);
+delete from t1 where b=1;
+INSERT INTO t1 VALUES('UUABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',1);
+check table t1;
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',3);
+INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',4);
+delete from t1 where b=3;
+INSERT INTO t1 VALUES('uUABCDEFGHIGKLMNOPRSTUVWXYZÌbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',3);
+check table t1;
+drop table t1;
+
+#
+# Bug#20471 LIKE search fails with indexed utf8 char column
+#
+create table t1 (s1 char(5));
+insert into t1 values
+('a'),('b'),(null),('킁aaaa'),('Ã¼'),('Y');
+create index it1 on t1 (s1);
+select s1 as before_delete_general_ci from t1 where s1 like '킁aaa%';
+delete from t1 where s1 = 'Y';
+select s1 as after_delete_general_ci from t1 where s1 like '킁aaa%';
+drop table t1;
+
+create table t1 (s1 char(5) collate utf8_unicode_ci);
+insert into t1 values
+('a'),('b'),(null),('킁aaaa'),('Ã¼'),('Y');
+create index it1 on t1 (s1);
+select s1 as before_delete_unicode_ci from t1 where s1 like '킁aaa%';
+delete from t1 where s1 = 'Y';
+select s1 as after_delete_unicode_ci from t1 where s1 like '킁aaa%';
+drop table t1;
+
+create table t1 (s1 char(5) collate utf8_bin);
+insert into t1 values
+('a'),('b'),(null),('킁aaaa'),('Ã¼'),('Y');
+create index it1 on t1 (s1);
+select s1 as before_delete_bin from t1 where s1 like '킁aaa%';
+delete from t1 where s1 = 'Y';
+select s1 as after_delete_bin from t1 where s1 like '킁aaa%';
+drop table t1;
+
+
+
+
+#
+# Bug#14896: Comparison with a key in a partial index over mb chararacter field
+#
+
+CREATE TABLE t1 (id int PRIMARY KEY,
+                 a varchar(16) collate utf8_unicode_ci NOT NULL default '',
+                 b int,
+                 f varchar(128) default 'XXX',
+                 INDEX (a(4))
+) ENGINE=MyISAM COLLATE=utf8_unicode_ci;
+INSERT INTO t1(id, a, b) VALUES
+  (1, 'cccc', 50), (2, 'cccc', 70), (3, 'cccc', 30),
+  (4, 'cccc', 30), (5, 'cccc', 20), (6, 'bbbbbb', 40),
+  (7, 'dddd', 30), (8, 'aaaa', 10), (9, 'aaaa', 50),
+  (10, 'eeeee', 40), (11, 'bbbbbb', 60);
+
+SELECT id, a, b FROM t1;
+
+SELECT id, a, b FROM t1 WHERE a BETWEEN 'aaaa' AND 'bbbbbb';
+
+SELECT id, a FROM t1 WHERE a='bbbbbb';
+SELECT id, a FROM t1 WHERE a='bbbbbb' ORDER BY b;
+
+DROP TABLE t1;
+
+#
+# Bug#16674: LIKE predicate for a utf8 character set column
+#
+
+CREATE TABLE t1 (
+  a CHAR(13) DEFAULT '',
+  INDEX(a)
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
+INSERT INTO t1 VALUES 
+ ('KÃli KÃli 2-4'), ('KÃli KÃli 2-4'),
+ ('KÃli KÃli 2+4'), ('KÃli KÃli 2+4'),
+ ('KÃli KÃli 2-6'), ('KÃli KÃli 2-6');
+INSERT INTO t1 SELECT * FROM t1;
+
+SELECT a FROM t1 WHERE a LIKE 'KÃli KÃli 2+4';
+
+EXPLAIN SELECT a FROM t1 WHERE a LIKE 'KÃli KÃli 2+4';
+EXPLAIN SELECT a FROM t1 WHERE a = 'KÃli KÃli 2+4';
+
+DROP TABLE t1;
+
+CREATE TABLE t1 (
+  a char(255) DEFAULT '', 
+  KEY(a(10))
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
+INSERT INTO t1 VALUES ('KÃli KÃli 2-4');
+SELECT * FROM t1 WHERE a LIKE 'KÃli KÃli 2%';
+INSERT INTO t1 VALUES ('KÃli KÃli 2-4');
+SELECT * FROM t1 WHERE a LIKE 'KÃli KÃli 2%';
+DROP TABLE t1;
+
+CREATE TABLE t1 (
+  a char(255) DEFAULT ''
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
+INSERT INTO t1 VALUES ('KÃli KÃli 2-4');
+INSERT INTO t1 VALUES ('KÃli KÃli 2-4');
+SELECT * FROM t1 WHERE a LIKE 'KÃli KÃli 2%';
+ALTER TABLE t1 ADD KEY (a(10));
+SELECT * FROM t1 WHERE a LIKE 'KÃli KÃli 2%';
+DROP TABLE t1;
+
+#
+# Bug#18359: LIKE predicate for a 'utf8' text column with a partial index
+#            (see bug #16674 as well)
+#
+
+CREATE TABLE t1 (
+  id int NOT NULL default '0',
+  tid int NOT NULL default '0',
+  val text NOT NULL,
+  INDEX idx(tid, val(10))
+) ENGINE=MyISAM;
+
+INSERT INTO t1 VALUES
+  (40988,72,'VOLNÝ ADSL'),(41009,72,'VOLNÝ ADSL'),
+  (41032,72,'VOLNÝ ADSL'),(41038,72,'VOLNÝ ADSL'),
+  (41063,72,'VOLNÝ ADSL'),(41537,72,'VOLNÝ ADSL Office'),
+  (42141,72,'VOLNÝ ADSL'),(42565,72,'VOLNÝ ADSL Combi'),
+  (42749,72,'VOLNÝ ADSL'),(44205,72,'VOLNÝ ADSL');
+
+SELECT * FROM t1 WHERE tid=72 and val LIKE 'VOLNY ADSL'; 
+SELECT * FROM t1 WHERE tid=72 and val LIKE 'VOLNÝ ADSL'; 
+SELECT * FROM t1 WHERE tid=72 and val LIKE '%VOLNÝ ADSL'; 
+
+ALTER TABLE t1 DROP KEY idx;
+ALTER TABLE t1 ADD KEY idx (tid,val(11));
+
+SELECT * FROM t1 WHERE tid=72 and val LIKE 'VOLNÝ ADSL'; 
+
+DROP TABLE t1;
+
+#
+# Bug 20709: problem with utf8 fields in temporary tables
+#
+
+create table t1(a char(200) collate utf8_unicode_ci NOT NULL default '')
+  collate=utf8_unicode_ci;
+insert into t1 values (unhex('65')), (unhex('C3A9')), (unhex('65'));
+explain select distinct a from t1;
+select distinct a from t1;
+explain select a from t1 group by a;
+select a from t1 group by a;
+drop table t1;
+
+#
+# Bug #20204: "order by" changes the results returned
+#
+
+create table t1(a char(10));
+insert into t1 values ('123'), ('456');
+explain
+  select substr(Z.a,-1), Z.a from t1 as Y join t1 as Z on Y.a=Z.a order by 1;
+select substr(Z.a,-1), Z.a from t1 as Y join t1 as Z on Y.a=Z.a order by 1;
+drop table t1;
+
+# End of 4.1 tests
+
+#
+# Test for bug #11484: wrong results for a DISTINCT varchar column in uft8. 
+#
+
+CREATE TABLE t1(id varchar(20) NOT NULL);
+INSERT INTO t1 VALUES ('xxx'), ('aa'), ('yyy'), ('aa');
+
+SELECT id FROM t1;
+SELECT DISTINCT id FROM t1;
+SELECT DISTINCT id FROM t1 ORDER BY id;
+
+DROP TABLE t1;
+
+
+
+#
+# char() without USING returns "binary" by default, any argument is ok
+#
+select hex(char(195));
+select hex(char(196));
+select hex(char(2557));
+
+
+
+#
+# Bug#12891: UNION doesn't return DISTINCT result for multi-byte characters
+#
+create table t1 (a char(1));
+create table t2 (a char(1));
+insert into t1 values('a'),('a'),(0xE38182),(0xE38182);
+insert into t1 values('i'),('i'),(0xE38184),(0xE38184);
+select * from t1 union distinct select * from t2;
+drop table t1,t2;
+
+
+
+# Conversion tests for "text_literal TEXT_STRING_literal" syntax structure
+create table t1 (a varchar(10), b int);
+insert into t1 values ('a',1);
+select concat(a, if(b>10, 'x' 'x', 'y' 'y')) from t1;
+select concat(a, if(b>10, 'x' 'Ã¦', 'y' '킁')) from t1;
+drop table t1;
+
+
+#
+# Bug#19960: Inconsistent results when joining
+# InnoDB tables using partial UTF8 indexes
+#
+--disable_warnings
+CREATE TABLE t1 (
+  colA int NOT NULL,
+  colB varchar(255) NOT NULL,
+   PRIMARY KEY  (colA)
+) ENGINE=InnoDB;
+--enable_warnings
+INSERT INTO t1 (colA, colB) VALUES (1, 'foo'), (2, 'foo bar');
+--disable_warnings
+CREATE TABLE t2 (
+  colA int NOT NULL,
+  colB varchar(255) NOT NULL,
+   KEY bad  (colA,colB(3))
+) ENGINE=InnoDB;
+--enable_warnings
+INSERT INTO t2 (colA, colB) VALUES (1, 'foo'),(2, 'foo bar');
+SELECT * FROM t1 JOIN t2 ON t1.colA=t2.colA AND t1.colB=t2.colB
+WHERE t1.colA < 3;
+DROP TABLE t1, t2;
+
+#
+# Bug#29205: truncation of UTF8 values when the UNION statement
+# forces collation to the binary charset
+#
+
+SELECT '½1234567890' UNION SELECT _binary '1';
+SELECT '½1234567890' UNION SELECT 1;
+
+SELECT '1' UNION SELECT '킱1234567890';
+SELECT 1 UNION SELECT '킱1234567890';
+
+CREATE TABLE t1 (c VARCHAR(11));
+CREATE TABLE t2 (b CHAR(1), i INT);
+
+INSERT INTO t1 (c) VALUES ('킱1234567890');
+INSERT INTO t2 (b, i) VALUES ('1', 1);
+
+SELECT c FROM t1 UNION SELECT b FROM t2;
+SELECT c FROM t1 UNION SELECT i FROM t2;
+
+SELECT b FROM t2 UNION SELECT c FROM t1;
+SELECT i FROM t2 UNION SELECT c FROM t1;
+
+DROP TABLE t1, t2;
+
+
+#
+# Bug#26474: Add Sinhala script (Sri Lanka) collation to MySQL
+#
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+CREATE TABLE t1 (
+        predicted_order int NOT NULL,
+        utf8_encoding VARCHAR(10) NOT NULL
+);
+INSERT INTO t1 VALUES (19, x'E0B696'), (30, x'E0B69AE0B798'), (61, x'E0B6AF'), (93, x'E0B799'), (52, x'E0B6A6'), (73, x'E0B6BBE0B78AE2808D'), (3, x'E0B686'), (56, x'E0B6AA'), (55, x'E0B6A9'), (70, x'E0B6B9'), (94, x'E0B79A'), (80, x'E0B785'), (25, x'E0B69AE0B791'), (48, x'E0B6A2'), (13, x'E0B690'), (86, x'E0B793'), (91, x'E0B79F'), (81, x'E0B786'), (79, x'E0B784'), (14, x'E0B691'), (99, x'E0B78A'), (8, x'E0B68B'), (68, x'E0B6B7'), (22, x'E0B69A'), (16, x'E0B693'), (33, x'E0B69AE0B7B3'), (38, x'E0B69AE0B79D'), (21, x'E0B683'), (11, x'E0B68E'), (77, x'E0B782'), (40, x'E0B69AE0B78A'), (101, x'E0B78AE2808DE0B6BB'), (35, x'E0B69AE0B79A'), (1, x'E0B7B4'), (9, x'E0B68C'), (96, x'E0B79C'), (6, x'E0B689'), (95, x'E0B79B'), (88, x'E0B796'), (64, x'E0B6B3'), (26, x'E0B69AE0B792'), (82, x'E0B78F'), (28, x'E0B69AE0B794'), (39, x'E0B69AE0B79E'), (97, x'E0B79D'), (2, x'E0B685'), (75, x'E0B780'), (34, x'E0B69AE0B799'), (69, x'E0B6B8'), (83, x'E0B790'), (18, x'E0B695'), (90, x'E0B7B2'), (17, x'E0B694'), (72, x'E0B6BB'), (66, x'E0B6B5'), (59, x'E0B6AD'), (44, x'E0B69E'), (15, x'E0B692'), (23, x'E0B69AE0B78F'), (65, x'E0B6B4'), (42, x'E0B69C'), (63, x'E0B6B1'), (85, x'E0B792'), (47, x'E0B6A1'), (49, x'E0B6A3'), (92, x'E0B7B3'), (78, x'E0B783'), (36, x'E0B69AE0B79B'), (4, x'E0B687'), (24, x'E0B69AE0B790'), (87, x'E0B794'), (37, x'E0B69AE0B79C'), (32, x'E0B69AE0B79F'), (29, x'E0B69AE0B796'), (43, x'E0B69D'), (62, x'E0B6B0'), (100, x'E0B78AE2808DE0B6BA'), (60, x'E0B6AE'), (45, x'E0B69F'), (12, x'E0B68F'), (46, x'E0B6A0'), (50, x'E0B6A5'), (51, x'E0B6A4'), (5, x'E0B688'), (76, x'E0B781'), (89, x'E0B798'), (74, x'E0B6BD'), (10, x'E0B68D'), (57, x'E0B6AB'), (71, x'E0B6BA'), (58, x'E0B6AC'), (27, x'E0B69AE0B793'), (54, x'E0B6A8'), (84, x'E0B791'), (31, x'E0B69AE0B7B2'), (98, x'E0B79E'), (53, x'E0B6A7'), (41, x'E0B69B'), (67, x'E0B6B6'), (7, x'E0B68A'), (20, x'E0B682');
+SELECT predicted_order, hex(utf8_encoding) FROM t1 ORDER BY utf8_encoding COLLATE utf8_sinhala_ci;
+DROP TABLE t1;
+
+--echo End of 5.1 tests
+
+--source include/weight_string.inc
+--source include/weight_string_l1.inc
+
+--source include/weight_string.inc
+--source include/weight_string_l1.inc
+
+#
+# Check strnxfrm() with odd length
+#
+set max_sort_length=5;
+select @@max_sort_length;
+create table t1 (a varchar(128) collate utf8_general_ci);
+insert into t1 values ('a'),('b'),('c');
+select * from t1 order by a;
+alter table t1 modify a varchar(128) collate utf8_bin;
+select * from t1 order by a;
+drop table t1;
+set max_sort_length=default;
+
+#
+# Bug#26474: Add Sinhala script (Sri Lanka) collation to MySQL
+#
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+CREATE TABLE t1 (
+        predicted_order int NOT NULL,
+        utf8_encoding VARCHAR(10) NOT NULL
+);
+INSERT INTO t1 VALUES (19, x'E0B696'), (30, x'E0B69AE0B798'), (61, x'E0B6AF'), (93, x'E0B799'), (52, x'E0B6A6'), (73, x'E0B6BBE0B78AE2808D'), (3, x'E0B686'), (56, x'E0B6AA'), (55, x'E0B6A9'), (70, x'E0B6B9'), (94, x'E0B79A'), (80, x'E0B785'), (25, x'E0B69AE0B791'), (48, x'E0B6A2'), (13, x'E0B690'), (86, x'E0B793'), (91, x'E0B79F'), (81, x'E0B786'), (79, x'E0B784'), (14, x'E0B691'), (99, x'E0B78A'), (8, x'E0B68B'), (68, x'E0B6B7'), (22, x'E0B69A'), (16, x'E0B693'), (33, x'E0B69AE0B7B3'), (38, x'E0B69AE0B79D'), (21, x'E0B683'), (11, x'E0B68E'), (77, x'E0B782'), (40, x'E0B69AE0B78A'), (101, x'E0B78AE2808DE0B6BB'), (35, x'E0B69AE0B79A'), (1, x'E0B7B4'), (9, x'E0B68C'), (96, x'E0B79C'), (6, x'E0B689'), (95, x'E0B79B'), (88, x'E0B796'), (64, x'E0B6B3'), (26, x'E0B69AE0B792'), (82, x'E0B78F'), (28, x'E0B69AE0B794'), (39, x'E0B69AE0B79E'), (97, x'E0B79D'), (2, x'E0B685'), (75, x'E0B780'), (34, x'E0B69AE0B799'), (69, x'E0B6B8'), (83, x'E0B790'), (18, x'E0B695'), (90, x'E0B7B2'), (17, x'E0B694'), (72, x'E0B6BB'), (66, x'E0B6B5'), (59, x'E0B6AD'), (44, x'E0B69E'), (15, x'E0B692'), (23, x'E0B69AE0B78F'), (65, x'E0B6B4'), (42, x'E0B69C'), (63, x'E0B6B1'), (85, x'E0B792'), (47, x'E0B6A1'), (49, x'E0B6A3'), (92, x'E0B7B3'), (78, x'E0B783'), (36, x'E0B69AE0B79B'), (4, x'E0B687'), (24, x'E0B69AE0B790'), (87, x'E0B794'), (37, x'E0B69AE0B79C'), (32, x'E0B69AE0B79F'), (29, x'E0B69AE0B796'), (43, x'E0B69D'), (62, x'E0B6B0'), (100, x'E0B78AE2808DE0B6BA'), (60, x'E0B6AE'), (45, x'E0B69F'), (12, x'E0B68F'), (46, x'E0B6A0'), (50, x'E0B6A5'), (51, x'E0B6A4'), (5, x'E0B688'), (76, x'E0B781'), (89, x'E0B798'), (74, x'E0B6BD'), (10, x'E0B68D'), (57, x'E0B6AB'), (71, x'E0B6BA'), (58, x'E0B6AC'), (27, x'E0B69AE0B793'), (54, x'E0B6A8'), (84, x'E0B791'), (31, x'E0B69AE0B7B2'), (98, x'E0B79E'), (53, x'E0B6A7'), (41, x'E0B69B'), (67, x'E0B6B6'), (7, x'E0B68A'), (20, x'E0B682');
+SELECT predicted_order, hex(utf8_encoding) FROM t1 ORDER BY utf8_encoding COLLATE utf8_sinhala_ci;
+DROP TABLE t1;
+
+
+
