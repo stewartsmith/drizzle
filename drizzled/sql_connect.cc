@@ -122,9 +122,7 @@ check_user(Session *session, const char *passwd,
   }
 
 
-  USER_RESOURCES ur;
   session->security_ctx.skip_grants();
-  memset(&ur, 0, sizeof(USER_RESOURCES));
 
   if (check_count)
   {
