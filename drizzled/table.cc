@@ -764,7 +764,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 			   interval_count*sizeof(TYPELIB)+
 			   (share->fields+interval_parts+
 			    keys+3)*sizeof(char *)+
-			   (n_length+int_length+com_length+
+			   (n_length+int_length+
 			       vcol_screen_length)))))
     goto err;                                   /* purecov: inspected */
 
@@ -783,10 +783,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     share->intervals= 0;			// For better debugging
   memcpy(names, strpos+(share->fields*field_pack_length),
 	 (uint) (n_length+int_length));
-  comment_pos= names+(n_length+int_length);
-  memcpy(comment_pos, disk_buff+read_length-com_length-vcol_screen_length,
-         com_length);
-  vcol_screen_pos= names+(n_length+int_length+com_length);
+  comment_pos= (char *)(disk_buff+read_length-com_length-vcol_screen_length);
+  vcol_screen_pos= names+(n_length+int_length);
   memcpy(vcol_screen_pos, disk_buff+read_length-vcol_screen_length,
          vcol_screen_length);
 
@@ -899,7 +897,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       }
       else
       {
-	comment.str=    (char*) comment_pos;
+	comment.str=    strmake_root(&share->mem_root, comment_pos, comment_length);
 	comment.length= comment_length;
 	comment_pos+=   comment_length;
       }
