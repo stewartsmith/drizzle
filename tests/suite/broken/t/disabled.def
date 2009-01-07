@@ -46,5 +46,3 @@ errors: SQL MODE issues (rewrite)
 almost_full: check bug
 analyze: check bug
 func_test: remove old style || 
-init_connect: bug in not executing sql on connect from variable
-init_file: Unknown init bug
