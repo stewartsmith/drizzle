@@ -2856,13 +2856,6 @@ TableList *TableList::find_underlying_table(Table *table_to_find)
 
 void TableList::cleanup_items()
 {
-  if (!field_translation)
-    return;
-
-  for (Field_translator *transl= field_translation;
-       transl < field_translation_end;
-       transl++)
-    transl->item->walk(&Item::cleanup_processor, 0, 0);
 }
 
 

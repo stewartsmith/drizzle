@@ -4079,9 +4079,8 @@ find_field_in_table_ref(Session *session, TableList *table_list,
           something !
   */
   if (/* Exclude nested joins. */
-      (!table_list->nested_join ||
+      (!table_list->nested_join) &&
        /* Include merge views and information schema tables. */
-       table_list->field_translation) &&
       /*
         Test if the field qualifiers match the table reference we plan
         to search.
@@ -4094,10 +4093,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
 
   *actual_table= NULL;
 
-  if (table_list->field_translation)
-  {
-  }
-  else if (!table_list->nested_join)
+  if (!table_list->nested_join)
   {
     /* 'table_list' is a stored table. */
     assert(table_list->table);

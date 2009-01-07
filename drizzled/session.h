@@ -298,13 +298,6 @@ typedef struct system_status_var
   ulong filesort_range_count;
   ulong filesort_rows;
   ulong filesort_scan_count;
-  /* Prepared statements and binary protocol */
-  ulong com_stmt_prepare;
-  ulong com_stmt_execute;
-  ulong com_stmt_send_long_data;
-  ulong com_stmt_fetch;
-  ulong com_stmt_reset;
-  ulong com_stmt_close;
   /*
     Number of statements sent from the client
   */
