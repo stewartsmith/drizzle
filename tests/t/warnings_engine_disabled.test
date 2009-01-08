@@ -1,0 +1,27 @@
+#
+# Only run this test with a compiled in but disabled
+# engine
+#
+disable_query_log;
+# Drizzle currently doesn't have a way to query if an engine is disabled
+#--require r/true.require
+#select support = 'Disabled' as `TRUE` from information_schema.engines where engine = 'myisam';
+enable_query_log;
+
+
+#
+# Drizzle bug 309847 - change warning to error when selected engine is disabled
+#
+# Test for handler type, will select default storage engine and issue an error
+# since NDB is disabled
+#
+# remove this line after bug 309847 is fixed
+create table t1 (id int) engine=innodb;
+
+# uncomment after bug 309847 is fixed
+#create table t1 (id int) engine=NDB;
+#alter table t1 engine=NDB;
+
+drop table t1;
+
+
