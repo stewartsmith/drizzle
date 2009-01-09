@@ -366,15 +366,26 @@ then
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+AC_LIB_PREFIX
+echo "CFLAGS = $CFLAGS"
+echo "CPPFLAGS = $CPPFLAGS"
+
 #--------------------------------------------------------------------
 # Check for Google Proto Buffers
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
-SEARCH_FOR_LIB(protobuf, printf, google/protobuf/message.h,
-               AC_MSG_ERROR([protobuf is required for Drizzle]))
+AC_LIB_HAVE_LINKFLAGS(protobuf,,
+[#include <google/protobuf/descriptor.h>
+#if GOOGLE_PROTOBUF_VERSION < 2000002
+# error Your version of Protobuf is too old
+#endif
+],
+[google::protobuf::FileDescriptor* file;])
+AS_IF([test x$ac_cv_libprotobuf = xno],
+      AC_MSG_ERROR([protobuf is required for Drizzle]))
 
-AC_PATH_PROG([PROTOC],[protoc],[no],[$PROTOBUF_PATH])
+AC_PATH_PROG([PROTOC],[protoc],[no],[$LIBPROTOBUF_PREFIX/bin:$PATH])
 if test "x$PROTOC" = "xno"
 then
   AC_MSG_ERROR([Couldn't find protoc. Try installing Google Protocol Buffer.])
@@ -386,7 +397,9 @@ AC_LANG_POP()
 # Check for libuuid
 #--------------------------------------------------------------------
 
-dnl Do this by hand instead of with SEARCH_FOR_LIB, because uuid is weird.
+dnl Do this by hand. Need to check for uuid/uuid.h, but uuid may or may
+dnl not be a lib is weird.
+
 AC_CHECK_HEADERS(uuid/uuid.h)
 if test "x$ac_cv_header_uuid_uuid_h" = "xno"
 then
@@ -398,42 +411,31 @@ AC_CHECK_LIB(uuid, uuid_generate)
 # Check for libevent
 #--------------------------------------------------------------------
 
-SEARCH_FOR_LIB(event, event_loop, event.h, 
-               AC_MSG_ERROR([libevent is required for Drizzle]))
-
-
-AC_CACHE_CHECK([for bufferevent in libevent], ac_cv_libevent_works, [
-  save_CPPFLAGS="$CPPFLAGS"
-  save_LIBS="$LIBS"
-  CPPFLAGS="$EVENT_CFLAGS"
-  LIBS="$EVENT_LIBS"
-  AC_TRY_LINK([
+AC_LIB_HAVE_LINKFLAGS(event,,
+[
 #include <sys/types.h>
 #include <sys/time.h>
 #include <stdlib.h>
-#include <event.h>],[
-	struct bufferevent bev;
-	bufferevent_settimeout(&bev, 1, 1);
-  ], ac_cv_libevent_works=yes, [
-        AC_MSG_ERROR([you need to install a more recent version of libevent,
-	check http://www.monkey.org/~provos/libevent/])
-  ])
+#include <event.h>
+],[
+  struct bufferevent bev;
+  bufferevent_settimeout(&bev, 1, 1);
+  event_init();
+  event_loop(EVLOOP_ONCE);
+]) 
+AS_IF([test x$ac_cv_libevent = xno],
+      AC_MSG_ERROR([A recent libevent is required for Drizzle. Check http://www.monkey.org/~provos/libevent ]))
 
-  CPPFLAGS="$save_CPPFLAGS"
-  LIBS="$save_LIBS"
-])
 
 
 #--------------------------------------------------------------------
 # Check for libpthread
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(pthread.h)
-if test "x$ac_cv_header_pthread_h" != "xyes"
-then
-  AC_MSG_ERROR([Couldn't find pthread.h.])
-fi
-AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
+ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CC="$PTHREAD_CC"
 
 #--------------------------------------------------------------------
 # Check for tcmalloc/mtmalloc
@@ -455,12 +457,18 @@ then
   AC_CHECK_LIB(mtmalloc,malloc,[],[])
 fi
 
+
 #--------------------------------------------------------------------
 # Check for libz
 #--------------------------------------------------------------------
 
-SEARCH_FOR_LIB(z, crc32, zlib.h, 
-               AC_MSG_ERROR([libz is required for Drizzle]))
+AC_LIB_HAVE_LINKFLAGS(z,,
+[#include <zlib.h>],
+[
+  crc32(0, Z_NULL, 0);
+])
+AS_IF([test x$ac_cv_libz = xno],
+      AC_MSG_ERROR([libz is required for Drizzle]))
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
