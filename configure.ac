@@ -249,6 +249,7 @@ fi
 case "$host_os" in
   solaris*)
     CPPFLAGS="${CPPFLAGS} -I/opt/csw/include -I/opt/local/include"
+    LDFLAGS="${LDFLAGS} -L/opt/csw/lib -L/opt/csw/lib"
     ;;
 esac
 
