@@ -92,27 +92,26 @@ AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
 # The port should be constant for a LONG time
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-m4_include(m4/dtrace.m4)
-
-m4_include(m4/character_sets.m4)
-AC_SUBST(AVAILABLE_LANGUAGES)
-
-m4_include(m4/gettext.m4)
-AM_GNU_GETTEXT([external])
-AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
-
-# Set this for plugins to use
-ac_build_drizzle="yes"
-
 # We need to hack in some of the non-standard locations that solaris sticks
-# stuff in. This makes me very sad. This hack also has to happen _after_
-# the gettext checks, otherwise we break OpenSolaris.
+# stuff in. This makes me very sad.
 case "$host_os" in
   solaris*)
     CPPFLAGS="${CPPFLAGS} -I/opt/csw/include -I/opt/local/include"
     LDFLAGS="${LDFLAGS} -L/opt/csw/lib -L/opt/csw/lib"
     ;;
 esac
+
+m4_include(m4/dtrace.m4)
+
+m4_include(m4/character_sets.m4)
+AC_SUBST(AVAILABLE_LANGUAGES)
+
+m4_include(m4/gettext.m4)
+AM_GNU_GETTEXT(external, need-formatstring-macros)
+AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
+
+# Set this for plugins to use
+ac_build_drizzle="yes"
 
 
 # Canonicalize the configuration name.
