@@ -5,3 +5,4 @@ t1	NULL	NULL	NULL	NULL	#	#	#	#	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Incorrect
 show create table t1;
 ERROR HY000: Incorrect information in file: './test/t1.frm'
 drop table if exists t1;
+ERROR 42S02: Unknown table 't1'

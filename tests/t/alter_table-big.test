@@ -5,7 +5,7 @@
 --source include/big_test.inc
 # Also we are using SBR to check that statements are executed
 # in proper order.
---source include/have_binlog_format_mixed_or_statement.inc
+--source include/have_binlog_format_row.inc
 
 
 #
