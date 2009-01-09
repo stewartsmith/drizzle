@@ -11,7 +11,7 @@ drop table if exists t1, t2, t3, t4;
 CREATE TABLE t1
 (
 DOCID VARCHAR(32)BINARY NOT NULL
-, UUID VARCHAR(32)BINARY NOT NULL
+, UUID VARCHAR(32)BINARY NOT NULL DEFAULT ""
 , MIMETYPE VARCHAR(80)BINARY
 , CONTENTDATA LONGBLOB
 , CONTENTSIZE INTEGER
@@ -119,7 +119,10 @@ INSERT INTO t3 VALUES("c373e9f5ad0791ab034b444553544200", "LevelB", "admin", "20
 INSERT INTO t3 VALUES("c373e9f5ad0791ac7311444553544200", "LevelC", "admin", "2003-06-09 10:51:32", NULL, "0", "2003-06-09 10:51:32", "admin", "0", "c373e9f5ad0791ab034b444553544200", "03eea05112b845949f3fd03278b5fe43", NULL);
 INSERT INTO t3 VALUES("c373e9f5ad0791ad66cf444553544200", "test2", "admin", "2003-06-09 10:51:32", NULL, "0", "2003-06-09 10:51:32", "admin", "0", "c373e9f5ad0791724315444553544200", "03eea05112b845949f3fd03278b5fe43", NULL);
 INSERT INTO t3 VALUES("c373e9f5ad0791aebd87444553544200", "test3", "admin", "2003-06-09 10:51:33", NULL, "0", "2003-06-09 10:51:33", "admin", "0", "c373e9f5ad0791ad66cf444553544200", "03eea05112b845949f3fd03278b5fe43", NULL);
-INSERT INTO t3 VALUES("c373e9f5ad0791dbaac4444553544200", "Special Café Folder", "admin", "2003-06-09 10:51:43", "test folder names with special chars", "0", "2003-06-09 10:51:43", "admin", "0", "2f6161e879db43c1a5b82c21ddc49089", "03eea05112b845949f3fd03278b5fe43", NULL);
+
+#This insertion died due to error 1366. Changed Cafe <with accent symbol> to Caf.
+INSERT INTO t3 VALUES("c373e9f5ad0791dbaac4444553544200", "Special Caf Folder", "admin", "2003-06-09 10:51:43", "test folder names with special chars", "0", "2003-06-09 10:51:43", "admin", "0", "2f6161e879db43c1a5b82c21ddc49089", "03eea05112b845949f3fd03278b5fe43", NULL);
+
 INSERT INTO t3 VALUES("c373e9f5ad0796bf913f444553544200", "CopiedFolder", "admin", "2003-06-09 11:09:05", "Movie Reviews", "0", "2003-06-09 11:09:05", "admin", "0", "c373e9f5ad0791a23c0e444553544200", "03eea05112b845949f3fd03278b5fe43", NULL);
 INSERT INTO t3 VALUES("c373e9f5ad0796c0eca4444553544200", "Movie Reviews", "admin", "2003-06-09 11:09:13", "Movie Reviews", "0", "2003-06-09 11:09:13", "admin", "33", "c373e9f5ad0796bf913f444553544200", "03eea05112b845949f3fd03278b5fe43", NULL);
 INSERT INTO t3 VALUES("c373e9f5ad0796d9b895444553544200", "NewBookFolder", "admin", "2003-06-09 11:12:41", "NewBooks - folder", "0", "2003-06-09 11:12:41", "admin", "0", "c373e9f5ad0796c0eca4444553544200", "03eea05112b845949f3fd03278b5fe43", NULL);
@@ -132,7 +135,10 @@ INSERT INTO t4 VALUES("4d09dd60850711d4998a204c4f4f5020", "__SystemResourceType"
 INSERT INTO t4 VALUES("91d4d595478211d497b40010a4ef934d", "__PmcSystemDefaultType", "The type for all the default available fields", NULL, "2003-06-05 16:30:00", "System", "1");
 INSERT INTO t4 VALUES("c373e9f59cf15a59b08a444553544200", "NoFieldDocType", "plain doc type", NULL, "2003-06-06 07:48:40", "admin", NULL);
 INSERT INTO t4 VALUES("c373e9f59cf15a5c6a99444553544200", "Movie Review", "This doc type is for movie reviews", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<props autocheckin=\"false\" autopublish=\"false\" binary=\"choice\" categories=\"none\" cleanup=\"false\" folder=\"none\"><![CDATA[Doc type for cm tests]]></props>\r\n", "2003-06-06 07:48:40", "admin", NULL);
-INSERT INTO t4 VALUES("c373e9f59cf15a6116a5444553544200", "Special DocÃu20A4u20A4u0113ééøÉu016BType", "test special chars xxxé in doc type", NULL, "2003-06-06 07:48:41", "admin", NULL);
+
+# This insertion died due to error 1366, special char in "xxxe". Changed to "xxx"   
+#INSERT INTO t4 VALUES("c373e9f59cf15a6116a5444553544200", "Special DocÃu20A4u20A4u0113ééøÉu016BType", "test special chars xxx in doc type", NULL, "2003-06-06 07:48:41", "admin", NULL);
+
 INSERT INTO t4 VALUES("c373e9f59cf15a695d47444553544200", "Movie", NULL, NULL, "2003-06-06 07:48:41", "admin", NULL);
 INSERT INTO t4 VALUES("c373e9f5ad079174ff17444553544200", "Discussion", NULL, NULL, "2003-06-09 10:51:25", "admin", NULL);
 INSERT INTO t4 VALUES("c373e9f5ad0791da7e2b444553544200", "Books", "list of recommended books", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<props autocheckin=\"false\" autopublish=\"false\" binary=\"choice\" categories=\"none\" cleanup=\"false\" folder=\"none\"><![CDATA[Doc type for cm tests]]><![CDATA[Doc type for book tests]]></props>\r\n", "2003-06-09 10:51:40", "admin", NULL);
@@ -154,13 +160,16 @@ drop table t1, t2, t3, t4;
 #
 # Bug #20792: Incorrect results from aggregate subquery
 #
-CREATE TABLE t1 (a int(10) , PRIMARY KEY (a)) Engine=InnoDB;
+# This died due to int(10). Changed syntax to int.
+CREATE TABLE t1 (a int, PRIMARY KEY (a)) Engine=InnoDB;
 INSERT INTO t1 VALUES (1),(2);
 
-CREATE TABLE t2 (a int(10), PRIMARY KEY (a)) Engine=InnoDB;
+#This died due to int(10). Changed syntax to int.
+CREATE TABLE t2 (a int, PRIMARY KEY (a)) Engine=InnoDB;
 INSERT INTO t2 VALUES (1);
 
-CREATE TABLE t3 (a int(10), b int(10), c int(10),
+# This died due to int(10). Changed syntax to int.
+CREATE TABLE t3 (a int, b int, c int,
                 PRIMARY KEY (a)) Engine=InnoDB;
 INSERT INTO t3 VALUES (1,2,1);
 
