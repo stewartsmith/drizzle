@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
-AC_INIT(drizzle, [7.0.0], [http://bugs.launchpad.net/drizzle])
+AC_INIT([drizzle],[7.0.0],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
@@ -103,6 +103,16 @@ AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"
 
 # Set this for plugins to use
 ac_build_drizzle="yes"
+
+# We need to hack in some of the non-standard locations that solaris sticks
+# stuff in. This makes me very sad. This hack also has to happen _after_
+# the gettext checks, otherwise we break OpenSolaris.
+case "$host_os" in
+  solaris*)
+    CPPFLAGS="${CPPFLAGS} -I/opt/csw/include -I/opt/local/include"
+    LDFLAGS="${LDFLAGS} -L/opt/csw/lib -L/opt/csw/lib"
+    ;;
+esac
 
 
 # Canonicalize the configuration name.
@@ -220,11 +230,6 @@ fi
 # We use libtool
 AC_PROG_LIBTOOL
 
-# Ensure that we have --preserve-dup-deps defines, otherwise we get link
-# problems of 'mysql' with CXX=g++
-LIBTOOL="$LIBTOOL --preserve-dup-deps"
-AC_SUBST(LIBTOOL)dnl
-
 AC_SUBST(NM)dnl
 
 AC_PROG_INSTALL
@@ -243,15 +248,6 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
-
-# We need to hack in some of the non-standard locations that solaris sticks
-# stuff in. This makes me very sad.
-case "$host_os" in
-  solaris*)
-    CPPFLAGS="${CPPFLAGS} -I/opt/csw/include -I/opt/local/include"
-    LDFLAGS="${LDFLAGS} -L/opt/csw/lib -L/opt/csw/lib"
-    ;;
-esac
 
 # The following is required for portable results of floating point calculations
 # on PowerPC. The same must also be done for IA-64, but this options is missing
@@ -486,9 +482,21 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 # Check for libpcre
 #--------------------------------------------------------------------
 
-AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
-AS_IF([test "x$ac_cv_libpcre" = "xno"],
-      AC_MSG_ERROR([libpcre is required for Drizzle]))
+AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
+PKG_CHECK_MODULES(PCRE, [libpcre >= 3], [found_pcre="yes"],[found_pcre="no"])
+
+if test "$found_pcre" = "no"
+then
+  save_LIBS="${LIBS}"
+  AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
+  AS_IF([test "x$ac_cv_libpcre" = "xno"],
+        AC_MSG_ERROR([libpcre is required for Drizzle]))
+  PCRE_LIBS="${LTLIBPCRE}"
+  LIBS="${save_LIBS}"
+fi
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
+
 
 dnl Find paths to some shell programs
 AC_PATH_PROG(LN, ln, ln)
@@ -871,25 +879,11 @@ DRIZZLE_SIGNAL_CHECK
 DRIZZLE_CHECK_GETPW_FUNCS
 DRIZZLE_HAVE_TIOCGWINSZ
 DRIZZLE_HAVE_TIOCSTAT
-DRIZZLE_TYPE_SIGHANDLER
 
 #########################################################################
 
 dnl Checks for library functions.
 
-#
-# The following code disables intrinsic function support while we test for
-# library functions.  This is to avoid configure problems with Intel ecc
-# compiler
-
-ORG_CFLAGS="$CFLAGS"
-if test "$GCC" != "yes"; then
-  AC_SYS_COMPILER_FLAG(-nolib_inline,nolib_inline,CFLAGS,[],[])
-fi
-
-#AC_FUNC_MMAP
-AC_TYPE_SIGNAL
-DRIZZLE_TYPE_QSORT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 
@@ -1291,7 +1285,6 @@ void testme() {  };],[
 
   NO_EXCEPTIONS="-fno-exceptions"
   W_EXCEPTIONS="-fexceptions"
-  NO_UNUSED_MACROS="-Wno-unused-macros"
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
@@ -1315,7 +1308,6 @@ AM_CFLAGS="${CC_WARNINGS} ${AM_CFLAGS}"
 
 AC_SUBST(NO_EXCEPTIONS)
 AC_SUBST(W_EXCEPTIONS)
-AC_SUBST(NO_UNUSED_MACROS)
 AC_SUBST(NO_REDUNDANT_DECLS)
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
