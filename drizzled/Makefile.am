@@ -345,7 +345,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 
 noinst_LTLIBRARIES = \
 		libhandler.la \
-		libyacc.la \
 		libitem.la \
 		libutil.la \
 		libfield.la \
@@ -456,6 +455,7 @@ drizzled_SOURCES = \
 		sql_udf.cc \
 		sql_union.cc \
 		sql_update.cc \
+		sql_yacc.yy \
 		stacktrace.cc \
 		strfunc.cc \
 		table.cc \
@@ -481,10 +481,6 @@ gen_lex_hash_LDFLAGS=
 
 libhandler_la_SOURCES = handler.cc handlerton.cc
 
-# Code output from YACC contains GOBS of unused macros, and I can't
-# figure out how to turn it off.
-libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_UNUSED_MACROS}
-libyacc_la_SOURCES = sql_yacc.yy
 AM_YFLAGS = -p DRIZZLE -d --verbose
 
 # This may seem silly, but it's required to get the object files prefixed

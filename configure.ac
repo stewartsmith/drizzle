@@ -1284,7 +1284,6 @@ void testme() {  };],[
 
   NO_EXCEPTIONS="-fno-exceptions"
   W_EXCEPTIONS="-fexceptions"
-  NO_UNUSED_MACROS="-Wno-unused-macros"
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
@@ -1308,7 +1307,6 @@ AM_CFLAGS="${CC_WARNINGS} ${AM_CFLAGS}"
 
 AC_SUBST(NO_EXCEPTIONS)
 AC_SUBST(W_EXCEPTIONS)
-AC_SUBST(NO_UNUSED_MACROS)
 AC_SUBST(NO_REDUNDANT_DECLS)
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
