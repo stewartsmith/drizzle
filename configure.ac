@@ -412,9 +412,6 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
   uuid_generate(uout);
 ])
 
-AC_CHECK_LIB(uuid, uuid_generate)
-
-
 #--------------------------------------------------------------------
 # Check for libevent
 #--------------------------------------------------------------------
@@ -482,7 +479,12 @@ AS_IF([test x$ac_cv_libz = xno],
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
+save_LIBS="${LIBS}"
+LIBS=""
 VL_LIB_READLINE
+READLINE_LIBS="${LIBS}"
+LIBS="${save_LIBS}"
+AC_SUBST(READLINE_LIBS)
 
 DRIZZLE_CHECK_NEW_RL_INTERFACE
 
