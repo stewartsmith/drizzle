@@ -73,16 +73,6 @@
 #endif
 #endif
 
-/**
- Make the old readline interface look like the new one.
-*/
-#ifndef USE_NEW_READLINE_INTERFACE
-typedef CPPFunction rl_completion_func_t;
-typedef Function rl_compentry_func_t;
-#define rl_completion_matches(str, func) \
-  completion_matches((char *)str, (CPFunction *)func)
-#endif
-
 #ifdef HAVE_LIBREADLINE
 #  if defined(HAVE_READLINE_READLINE_H)
 #    include <readline/readline.h>
@@ -110,6 +100,15 @@ extern int read_history ();
     /* no history */
 #endif /* HAVE_READLINE_HISTORY */
 
+/**
+ Make the old readline interface look like the new one.
+*/
+#ifndef USE_NEW_READLINE_INTERFACE
+typedef CPPFunction rl_completion_func_t;
+typedef Function rl_compentry_func_t;
+#define rl_completion_matches(str, func) \
+  completion_matches((char *)str, (CPFunction *)func)
+#endif
 
 #if defined(HAVE_LOCALE_H)
 #include <locale.h>
