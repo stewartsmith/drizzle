@@ -618,7 +618,7 @@ void intern_close_table(Table *table)
 
 static void free_cache_entry(void *entry)
 {
-  Table *table= (Table *)entry;
+  Table *table= static_cast<Table *>(entry);
   intern_close_table(table);
   if (!table->in_use)
   {
