@@ -1,0 +1,3 @@
+DRIZZLE_PLUGIN(logging_syslog,[Syslog Logging Plugin],
+        [Logging Plugin that writes to syslog.])
+DRIZZLE_PLUGIN_DYNAMIC(logging_syslog, [liblogging_syslog.la])

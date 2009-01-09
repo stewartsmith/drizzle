@@ -325,8 +325,6 @@ typedef struct system_status_var
 
 void mark_transaction_to_rollback(Session *session, bool all);
 
-#ifdef DRIZZLE_SERVER
-
 /**
   @class Statement
   @brief State of a single command executed against this connection.
@@ -1247,25 +1245,6 @@ public:
   bool store_globals();
   void awake(Session::killed_state state_to_set);
 
-  enum enum_binlog_query_type {
-    /*
-      The query can be logged row-based or statement-based
-    */
-    ROW_QUERY_TYPE,
-
-    /*
-      The query has to be logged statement-based
-    */
-    STMT_QUERY_TYPE,
-
-    /*
-      The query represents a change to a table in the "mysql"
-      database and is currently mapped to ROW_QUERY_TYPE.
-    */
-    DRIZZLE_QUERY_TYPE,
-    QUERY_TYPE_COUNT
-  };
-
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
     enter_cond(); this mutex is then released by exit_cond().
@@ -2182,7 +2161,5 @@ inline bool add_group_to_list(Session *session, Item *item, bool asc)
 {
   return session->lex->current_select->add_group_to_list(session, item, asc);
 }
-
-#endif /* DRIZZLE_SERVER */
 
 #endif /* DRIZZLED_SQL_CLASS_H */
