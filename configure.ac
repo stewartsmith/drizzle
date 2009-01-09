@@ -104,6 +104,16 @@ AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"
 # Set this for plugins to use
 ac_build_drizzle="yes"
 
+# We need to hack in some of the non-standard locations that solaris sticks
+# stuff in. This makes me very sad. This hack also has to happen _after_
+# the gettext checks, otherwise we break OpenSolaris.
+case "$host_os" in
+  solaris*)
+    CPPFLAGS="${CPPFLAGS} -I/opt/csw/include -I/opt/local/include"
+    LDFLAGS="${LDFLAGS} -L/opt/csw/lib -L/opt/csw/lib"
+    ;;
+esac
+
 
 # Canonicalize the configuration name.
 
@@ -238,15 +248,6 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
-
-# We need to hack in some of the non-standard locations that solaris sticks
-# stuff in. This makes me very sad.
-case "$host_os" in
-  solaris*)
-    CPPFLAGS="${CPPFLAGS} -I/opt/csw/include -I/opt/local/include"
-    LDFLAGS="${LDFLAGS} -L/opt/csw/lib -L/opt/csw/lib"
-    ;;
-esac
 
 # The following is required for portable results of floating point calculations
 # on PowerPC. The same must also be done for IA-64, but this options is missing
