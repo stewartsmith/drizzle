@@ -495,7 +495,7 @@ then
   AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
   AS_IF([test "x$ac_cv_libpcre" = "xno"],
         AC_MSG_ERROR([libpcre is required for Drizzle]))
-  PCRE_LIBS="${LIBS}"
+  PCRE_LIBS="${LTLIBPCRE}"
   LIBS="${save_LIBS}"
 fi
 AC_SUBST(PCRE_LIBS)
