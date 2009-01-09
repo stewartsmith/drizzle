@@ -243,21 +243,14 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
-AC_PATH_PROG(uname_prog, uname, no)
 
-# We should go through this and put all the explictly system dependent
-# stuff in one place
-AC_MSG_CHECKING(operating system)
-AC_CACHE_VAL(mysql_cv_sys_os,
-[
-if test "$uname_prog" != "no"; then
-  mysql_cv_sys_os="`uname`"
-else
-  mysql_cv_sys_os="Not Solaris"
-fi
-])
-AC_MSG_RESULT($mysql_cv_sys_os)
-
+# We need to hack in some of the non-standard locations that solaris sticks
+# stuff in. This makes me very sad.
+case "$host_os" in
+  solaris*)
+    CPPFLAGS="${CPPFLAGS} -I/opt/csw/include -I/opt/local/include"
+    ;;
+esac
 
 # The following is required for portable results of floating point calculations
 # on PowerPC. The same must also be done for IA-64, but this options is missing
@@ -492,16 +485,9 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 # Check for libpcre
 #--------------------------------------------------------------------
 
-AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcre >= 3], [found_pcre="yes"],[found_pcre="no"])
-
-if test "$found_pcre" = "no"
-then
-  SEARCH_FOR_LIB(pcre, pcre_compile, pcre.h, 
-                 AC_MSG_ERROR([libpcre is required for Drizzle]))
-fi
-AC_SUBST(PCRE_LIBS)
-AC_SUBST(PCRE_CFLAGS)
+AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
+AS_IF([test "x$ac_cv_libpcre" = "xno"],
+      AC_MSG_ERROR([libpcre is required for Drizzle]))
 
 dnl Find paths to some shell programs
 AC_PATH_PROG(LN, ln, ln)

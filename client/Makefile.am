@@ -49,6 +49,5 @@ drizzleimport_SOURCES=		drizzleimport.cc
 drizzleslap_SOURCES=            drizzleslap.cc
 
 drizzletest_SOURCES=		drizzletest.cc 
-drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
-drizzletest_CXXFLAGS = 		${AM_CXXFLAGS} ${PCRE_CFLAGS}
+drizzletest_LDADD =		${LDADD} $(LTLIBPCRE)
 
