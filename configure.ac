@@ -367,8 +367,6 @@ fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
 AC_LIB_PREFIX
-echo "CFLAGS = $CFLAGS"
-echo "CPPFLAGS = $CPPFLAGS"
 
 #--------------------------------------------------------------------
 # Check for Google Proto Buffers
@@ -478,21 +476,12 @@ dnl First, search for readline. If that fails, search for ncurses then
 dnl search for readline again... on some platforms *cough* solaris *cough*
 dnl you need to link with ncurses directly to get readline to work
 
-SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,[
-	SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
-	        SEARCH_FOR_LIB(tinfo, tgetent, ncurses/ncurses.h,
-			AC_MSG_ERROR([Couldn't find ncurses])
-        	)
-        	]
-	)
-	SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
-               AC_MSG_ERROR([libreadline is required for Drizzle]),
-               [$NCURSES_LIBS]) 
- 	]
-)
+AC_LIB_HAVE_LINKFLAGS(readline,ncurses,
+[#include <readline/readline.h>],
+[rl_initialize();])
+AS_IF([test x$ac_cv_libreadline = xno],
+      AC_MSG_ERROR([libreadline is required for Drizzle]))
 
-save_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $READLINE_CFLAGS"
 AC_CHECK_HEADERS(readline/history.h)
 AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
 #ifdef HAVE_READLINE_HISTORY_H
@@ -508,8 +497,6 @@ AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
 ]])
 
 DRIZZLE_CHECK_NEW_RL_INTERFACE
-CPPFLAGS="$save_CPPFLAGS"
-
 
 #--------------------------------------------------------------------
 # Check for libpcre
