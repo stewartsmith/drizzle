@@ -486,9 +486,21 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 # Check for libpcre
 #--------------------------------------------------------------------
 
-AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
-AS_IF([test "x$ac_cv_libpcre" = "xno"],
-      AC_MSG_ERROR([libpcre is required for Drizzle]))
+AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
+PKG_CHECK_MODULES(PCRE, [libpcre >= 3], [found_pcre="yes"],[found_pcre="no"])
+
+if test "$found_pcre" = "no"
+then
+  save_LIBS="${LIBS}"
+  AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
+  AS_IF([test "x$ac_cv_libpcre" = "xno"],
+        AC_MSG_ERROR([libpcre is required for Drizzle]))
+  PCRE_LIBS="${LIBS}"
+  LIBS="${save_LIBS}"
+fi
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
+
 
 dnl Find paths to some shell programs
 AC_PATH_PROG(LN, ln, ln)
