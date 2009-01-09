@@ -225,30 +225,6 @@ case "x$am_cv_prog_cc_stdc" in
 esac
 ])
 
-# Orginal from bash-2.0 aclocal.m4, Changed to use termcap last by monty.
- 
-AC_DEFUN([DRIZZLE_CHECK_LIB_TERMCAP],
-[
-AC_CACHE_VAL(mysql_cv_termcap_lib,
-[AC_CHECK_LIB(ncurses, tgetent, mysql_cv_termcap_lib=libncurses,
-    [AC_CHECK_LIB(curses, tgetent, mysql_cv_termcap_lib=libcurses,
-	[AC_CHECK_LIB(termcap, tgetent, mysql_cv_termcap_lib=libtermcap,
-          [AC_CHECK_LIB(tinfo, tgetent, mysql_cv_termcap_lib=libtinfo,
-	    mysql_cv_termcap_lib=NOT_FOUND)])])])])
-AC_MSG_CHECKING(for termcap functions library)
-if test "$mysql_cv_termcap_lib" = "NOT_FOUND"; then
-AC_MSG_ERROR([No curses/termcap library found])
-elif test "$mysql_cv_termcap_lib" = "libtermcap"; then
-TERMCAP_LIB=-ltermcap
-elif test "$mysql_cv_termcap_lib" = "libncurses"; then
-TERMCAP_LIB=-lncurses
-elif test "$mysql_cv_termcap_lib" = "libtinfo"; then
-TERMCAP_LIB=-ltinfo
-else
-TERMCAP_LIB=-lcurses
-fi
-AC_MSG_RESULT($TERMCAP_LIB)
-])
 
 dnl Check type of signal routines (posix, 4.2bsd, 4.1bsd or v7)
 AC_DEFUN([DRIZZLE_SIGNAL_CHECK],

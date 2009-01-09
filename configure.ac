@@ -243,21 +243,15 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
-AC_PATH_PROG(uname_prog, uname, no)
 
-# We should go through this and put all the explictly system dependent
-# stuff in one place
-AC_MSG_CHECKING(operating system)
-AC_CACHE_VAL(mysql_cv_sys_os,
-[
-if test "$uname_prog" != "no"; then
-  mysql_cv_sys_os="`uname`"
-else
-  mysql_cv_sys_os="Not Solaris"
-fi
-])
-AC_MSG_RESULT($mysql_cv_sys_os)
-
+# We need to hack in some of the non-standard locations that solaris sticks
+# stuff in. This makes me very sad.
+case "$host_os" in
+  solaris*)
+    CPPFLAGS="${CPPFLAGS} -I/opt/csw/include -I/opt/local/include"
+    LDFLAGS="${LDFLAGS} -L/opt/csw/lib -L/opt/csw/lib"
+    ;;
+esac
 
 # The following is required for portable results of floating point calculations
 # on PowerPC. The same must also be done for IA-64, but this options is missing
@@ -366,15 +360,24 @@ then
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+AC_LIB_PREFIX
+
 #--------------------------------------------------------------------
 # Check for Google Proto Buffers
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
-SEARCH_FOR_LIB(protobuf, printf, google/protobuf/message.h,
-               AC_MSG_ERROR([protobuf is required for Drizzle]))
+AC_LIB_HAVE_LINKFLAGS(protobuf,,
+[#include <google/protobuf/descriptor.h>
+#if GOOGLE_PROTOBUF_VERSION < 2000002
+# error Your version of Protobuf is too old
+#endif
+],
+[google::protobuf::FileDescriptor* file;])
+AS_IF([test x$ac_cv_libprotobuf = xno],
+      AC_MSG_ERROR([protobuf is required for Drizzle]))
 
-AC_PATH_PROG([PROTOC],[protoc],[no],[$PROTOBUF_PATH])
+AC_PATH_PROG([PROTOC],[protoc],[no],[$LIBPROTOBUF_PREFIX/bin:$PATH])
 if test "x$PROTOC" = "xno"
 then
   AC_MSG_ERROR([Couldn't find protoc. Try installing Google Protocol Buffer.])
@@ -386,54 +389,52 @@ AC_LANG_POP()
 # Check for libuuid
 #--------------------------------------------------------------------
 
-dnl Do this by hand instead of with SEARCH_FOR_LIB, because uuid is weird.
+dnl Do this by hand. Need to check for uuid/uuid.h, but uuid may or may
+dnl not be a lib is weird.
+
 AC_CHECK_HEADERS(uuid/uuid.h)
 if test "x$ac_cv_header_uuid_uuid_h" = "xno"
 then
   AC_MSG_ERROR([Couldn't find uuid/uuid.h. Try installing libuuid development packages])
 fi
-AC_CHECK_LIB(uuid, uuid_generate)
+AC_LIB_HAVE_LINKFLAGS(uuid,,
+[
+#include <uuid/uuid.h>
+],
+[
+  uuid_t uout;
+  uuid_generate(uout);
+])
 
 #--------------------------------------------------------------------
 # Check for libevent
 #--------------------------------------------------------------------
 
-SEARCH_FOR_LIB(event, event_loop, event.h, 
-               AC_MSG_ERROR([libevent is required for Drizzle]))
-
-
-AC_CACHE_CHECK([for bufferevent in libevent], ac_cv_libevent_works, [
-  save_CPPFLAGS="$CPPFLAGS"
-  save_LIBS="$LIBS"
-  CPPFLAGS="$EVENT_CFLAGS"
-  LIBS="$EVENT_LIBS"
-  AC_TRY_LINK([
+AC_LIB_HAVE_LINKFLAGS(event,,
+[
 #include <sys/types.h>
 #include <sys/time.h>
 #include <stdlib.h>
-#include <event.h>],[
-	struct bufferevent bev;
-	bufferevent_settimeout(&bev, 1, 1);
-  ], ac_cv_libevent_works=yes, [
-        AC_MSG_ERROR([you need to install a more recent version of libevent,
-	check http://www.monkey.org/~provos/libevent/])
-  ])
+#include <event.h>
+],[
+  struct bufferevent bev;
+  bufferevent_settimeout(&bev, 1, 1);
+  event_init();
+  event_loop(EVLOOP_ONCE);
+]) 
+AS_IF([test x$ac_cv_libevent = xno],
+      AC_MSG_ERROR([A recent libevent is required for Drizzle. Check http://www.monkey.org/~provos/libevent ]))
 
-  CPPFLAGS="$save_CPPFLAGS"
-  LIBS="$save_LIBS"
-])
 
 
 #--------------------------------------------------------------------
 # Check for libpthread
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(pthread.h)
-if test "x$ac_cv_header_pthread_h" != "xyes"
-then
-  AC_MSG_ERROR([Couldn't find pthread.h.])
-fi
-AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
+ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CC="$PTHREAD_CC"
 
 #--------------------------------------------------------------------
 # Check for tcmalloc/mtmalloc
@@ -455,68 +456,39 @@ then
   AC_CHECK_LIB(mtmalloc,malloc,[],[])
 fi
 
+
 #--------------------------------------------------------------------
 # Check for libz
 #--------------------------------------------------------------------
 
-SEARCH_FOR_LIB(z, crc32, zlib.h, 
-               AC_MSG_ERROR([libz is required for Drizzle]))
+AC_LIB_HAVE_LINKFLAGS(z,,
+[#include <zlib.h>],
+[
+  crc32(0, Z_NULL, 0);
+])
+AS_IF([test x$ac_cv_libz = xno],
+      AC_MSG_ERROR([libz is required for Drizzle]))
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
-dnl First, search for readline. If that fails, search for ncurses then
-dnl search for readline again... on some platforms *cough* solaris *cough*
-dnl you need to link with ncurses directly to get readline to work
-
-SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,[
-	SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, [
-	        SEARCH_FOR_LIB(tinfo, tgetent, ncurses/ncurses.h,
-			AC_MSG_ERROR([Couldn't find ncurses])
-        	)
-        	]
-	)
-	SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
-               AC_MSG_ERROR([libreadline is required for Drizzle]),
-               [$NCURSES_LIBS]) 
- 	]
-)
-
-save_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $READLINE_CFLAGS"
-AC_CHECK_HEADERS(readline/history.h)
-AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
-#ifdef HAVE_READLINE_HISTORY_H
-#include <readline/history.h>
-#endif
-#include <readline/readline.h>
-]])
-AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
-#ifdef HAVE_READLINE_HISTORY_H
-#include <readline/history.h>
-#endif
-#include <readline/readline.h>
-]])
+save_LIBS="${LIBS}"
+LIBS=""
+VL_LIB_READLINE
+READLINE_LIBS="${LIBS}"
+LIBS="${save_LIBS}"
+AC_SUBST(READLINE_LIBS)
 
 DRIZZLE_CHECK_NEW_RL_INTERFACE
-CPPFLAGS="$save_CPPFLAGS"
-
 
 #--------------------------------------------------------------------
 # Check for libpcre
 #--------------------------------------------------------------------
 
-AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcre >= 3], [found_pcre="yes"],[found_pcre="no"])
-
-if test "$found_pcre" = "no"
-then
-  SEARCH_FOR_LIB(pcre, pcre_compile, pcre.h, 
-                 AC_MSG_ERROR([libpcre is required for Drizzle]))
-fi
-AC_SUBST(PCRE_LIBS)
-AC_SUBST(PCRE_CFLAGS)
+AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
+AS_IF([test "x$ac_cv_libpcre" = "xno"],
+      AC_MSG_ERROR([libpcre is required for Drizzle]))
 
 dnl Find paths to some shell programs
 AC_PATH_PROG(LN, ln, ln)
@@ -900,15 +872,7 @@ DRIZZLE_CHECK_GETPW_FUNCS
 DRIZZLE_HAVE_TIOCGWINSZ
 DRIZZLE_HAVE_TIOCSTAT
 DRIZZLE_TYPE_SIGHANDLER
-if test "$with_named_curses" = "no"
-then
-  DRIZZLE_CHECK_LIB_TERMCAP
-else
-  TERMCAP_LIBS="$with_named_curses"
-fi
-AC_SUBST(TERMCAP_LIBS)
 
-# End of readline/libedit stuff
 #########################################################################
 
 dnl Checks for library functions.

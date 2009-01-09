@@ -23,8 +23,6 @@ bin_PROGRAMS =
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${EVENT_CFLAGS} ${PROTOBUF_CFLAGS}
-
 DTRACE = @DTRACE@
 
 DTRACEFLAGS = @DTRACEFLAGS@
@@ -356,17 +354,14 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(Z_LIBS) $(LIBINTL)
+	$(LTLIBZ)
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
-		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
-		 -lprotobuf \
-		 $(LDADD) \
-		 $(CXXLDFLAGS) \
-		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS) \
+		 $(LDADD) $(LTLIBUUID) \
+		 $(LIBDL_LIBS) $(LTLIBEVENT) $(LTLIBPROTOBUF) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
