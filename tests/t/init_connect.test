@@ -44,3 +44,4 @@ disconnect con5;
 # Test 5.* features
 #
 
+set GLOBAL init_connect=DEFAULT;
