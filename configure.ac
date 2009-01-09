@@ -482,32 +482,7 @@ AS_IF([test x$ac_cv_libz = xno],
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
-dnl First, search for readline. If that fails, search for ncurses then
-dnl search for readline again... on some platforms *cough* solaris *cough*
-dnl you need to link with ncurses directly to get readline to work
-
-AC_LIB_HAVE_LINKFLAGS(readline,ncurses,
-[
-#include <stdlib.h>
-#include <readline/readline.h>
-],
-[rl_initialize();])
-AS_IF([test x$ac_cv_libreadline = xno],
-      AC_MSG_ERROR([libreadline is required for Drizzle]))
-
-AC_CHECK_HEADERS(readline/history.h)
-AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
-#ifdef HAVE_READLINE_HISTORY_H
-#include <readline/history.h>
-#endif
-#include <readline/readline.h>
-]])
-AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
-#ifdef HAVE_READLINE_HISTORY_H
-#include <readline/history.h>
-#endif
-#include <readline/readline.h>
-]])
+VL_LIB_READLINE
 
 DRIZZLE_CHECK_NEW_RL_INTERFACE
 
@@ -908,15 +883,7 @@ DRIZZLE_CHECK_GETPW_FUNCS
 DRIZZLE_HAVE_TIOCGWINSZ
 DRIZZLE_HAVE_TIOCSTAT
 DRIZZLE_TYPE_SIGHANDLER
-if test "$with_named_curses" = "no"
-then
-  DRIZZLE_CHECK_LIB_TERMCAP
-else
-  TERMCAP_LIBS="$with_named_curses"
-fi
-AC_SUBST(TERMCAP_LIBS)
 
-# End of readline/libedit stuff
 #########################################################################
 
 dnl Checks for library functions.
