@@ -125,4 +125,3 @@ WHERE
  `TESTID`='' AND `UCCHECK`='';
 
 drop table t1;
-
