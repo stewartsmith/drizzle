@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
-AC_INIT(drizzle, [7.0.0], [http://bugs.launchpad.net/drizzle])
+AC_INIT([drizzle],[7.0.0],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
@@ -219,11 +219,6 @@ fi
 
 # We use libtool
 AC_PROG_LIBTOOL
-
-# Ensure that we have --preserve-dup-deps defines, otherwise we get link
-# problems of 'mysql' with CXX=g++
-LIBTOOL="$LIBTOOL --preserve-dup-deps"
-AC_SUBST(LIBTOOL)dnl
 
 AC_SUBST(NM)dnl
 
@@ -883,25 +878,11 @@ DRIZZLE_SIGNAL_CHECK
 DRIZZLE_CHECK_GETPW_FUNCS
 DRIZZLE_HAVE_TIOCGWINSZ
 DRIZZLE_HAVE_TIOCSTAT
-DRIZZLE_TYPE_SIGHANDLER
 
 #########################################################################
 
 dnl Checks for library functions.
 
-#
-# The following code disables intrinsic function support while we test for
-# library functions.  This is to avoid configure problems with Intel ecc
-# compiler
-
-ORG_CFLAGS="$CFLAGS"
-if test "$GCC" != "yes"; then
-  AC_SYS_COMPILER_FLAG(-nolib_inline,nolib_inline,CFLAGS,[],[])
-fi
-
-#AC_FUNC_MMAP
-AC_TYPE_SIGNAL
-DRIZZLE_TYPE_QSORT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 

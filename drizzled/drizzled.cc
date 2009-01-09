@@ -181,7 +181,7 @@ inline void setup_fpu()
 extern "C" int gethostname(char *name, int namelen);
 #endif
 
-extern "C" RETSIGTYPE handle_segfault(int sig);
+extern "C" void handle_segfault(int sig);
 
 using namespace std;
 
@@ -721,7 +721,7 @@ pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
 #endif
 
 
-extern "C" RETSIGTYPE print_signal_warning(int sig)
+extern "C" void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
     errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64), sig,my_thread_id());
@@ -1185,7 +1185,7 @@ static void network_init(void)
 
 /** Called when a thread is aborted. */
 /* ARGSUSED */
-extern "C" RETSIGTYPE end_thread_signal(int sig __attribute__((unused)))
+extern "C" void end_thread_signal(int sig __attribute__((unused)))
 {
   Session *session=current_session;
   if (session)
@@ -1230,7 +1230,7 @@ void unlink_session(Session *session)
   @todo
     One should have to fix that thr_alarm know about this thread too.
 */
-extern "C" RETSIGTYPE abort_thread(int sig __attribute__((unused)))
+extern "C" void abort_thread(int sig __attribute__((unused)))
 {
   Session *session=current_session;
   if (session)
@@ -1248,7 +1248,7 @@ extern "C" char *my_demangle(const char *mangled_name, int *status)
 #endif
 
 
-extern "C" RETSIGTYPE handle_segfault(int sig)
+extern "C" void handle_segfault(int sig)
 {
   time_t curr_time;
   struct tm tm;
