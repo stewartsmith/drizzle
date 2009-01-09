@@ -403,7 +403,17 @@ if test "x$ac_cv_header_uuid_uuid_h" = "xno"
 then
   AC_MSG_ERROR([Couldn't find uuid/uuid.h. Try installing libuuid development packages])
 fi
+AC_LIB_HAVE_LINKFLAGS(uuid,,
+[
+#include <uuid/uuid.h>
+],
+[
+  uuid_t uout;
+  uuid_generate(uout);
+])
+
 AC_CHECK_LIB(uuid, uuid_generate)
+
 
 #--------------------------------------------------------------------
 # Check for libevent
@@ -477,7 +487,10 @@ dnl search for readline again... on some platforms *cough* solaris *cough*
 dnl you need to link with ncurses directly to get readline to work
 
 AC_LIB_HAVE_LINKFLAGS(readline,ncurses,
-[#include <readline/readline.h>],
+[
+#include <stdlib.h>
+#include <readline/readline.h>
+],
 [rl_initialize();])
 AS_IF([test x$ac_cv_libreadline = xno],
       AC_MSG_ERROR([libreadline is required for Drizzle]))
