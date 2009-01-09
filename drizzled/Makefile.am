@@ -353,7 +353,7 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(LTLIBZ)
+	$(LTLIBZ) $(LIBINTL)
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
