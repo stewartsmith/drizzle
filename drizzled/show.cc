@@ -4138,7 +4138,7 @@ int make_character_sets_old_format(Session *session, ST_SCHEMA_TABLE *schema_tab
     1   error
 */
 
-int mysql_schema_table(Session *session, LEX *lex, TableList *table_list)
+int mysql_schema_table(Session *session, LEX *, TableList *table_list)
 {
   Table *table;
   if (!(table= table_list->schema_table->create_table(session, table_list)))
@@ -4161,43 +4161,6 @@ int mysql_schema_table(Session *session, LEX *lex, TableList *table_list)
   table->next= session->derived_tables;
   session->derived_tables= table;
   table_list->select_lex->options |= OPTION_SCHEMA_TABLE;
-
-  if (table_list->schema_table_reformed) // show command
-  {
-    SELECT_LEX *sel= lex->current_select;
-    Item *item;
-    Field_translator *transl, *org_transl;
-
-    if (table_list->field_translation)
-    {
-      Field_translator *end= table_list->field_translation_end;
-      for (transl= table_list->field_translation; transl < end; transl++)
-      {
-        if (!transl->item->fixed &&
-            transl->item->fix_fields(session, &transl->item))
-          return(1);
-      }
-      return(0);
-    }
-    List_iterator_fast<Item> it(sel->item_list);
-    if (!(transl=
-          (Field_translator*)(session->alloc(sel->item_list.elements *
-                                    sizeof(Field_translator)))))
-    {
-      return(1);
-    }
-    for (org_transl= transl; (item= it++); transl++)
-    {
-      transl->item= item;
-      transl->name= item->name;
-      if (!item->fixed && item->fix_fields(session, &transl->item))
-      {
-        return(1);
-      }
-    }
-    table_list->field_translation= org_transl;
-    table_list->field_translation_end= transl;
-  }
 
   return(0);
 }

@@ -1,0 +1,52 @@
+create table t1 (a bigint);
+lock tables t1 write;
+insert into t1 values(0);
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	OK
+unlock tables;
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+drop table t1;
+create table t1 (a bigint);
+insert into t1 values(0);
+lock tables t1 write;
+delete from t1;
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	OK
+unlock tables;
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+drop table t1;
+create table t1 (a bigint);
+insert into t1 values(0);
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	OK
+check table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+drop table t1;
+create table t1 (a varchar(10), key key1(a)) collate utf8_general_ci engine myisam;
+insert into t1 values ('hello');
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	OK
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	Table is already up to date
+drop table t1;
+create temporary table t1(a int, index(a));
+insert into t1 values('1'),('2'),('3'),('4'),('5');
+analyze table t1;
+Table	Op	Msg_type	Msg_text
+test.t1	analyze	status	OK
+show index from t1;
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
+t1	1	a	1	a	A	5	NULL	NULL	YES	BTREE		
+drop table t1;
+End of 4.1 tests
+End of 5.0 tests

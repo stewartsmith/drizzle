@@ -310,41 +310,6 @@ innobase_rollback_by_xid(
 			/* out: 0 or error number */
 	handlerton* hton,
 	XID	*xid);	/* in: X/Open XA transaction identification */
-/***********************************************************************
-Create a consistent view for a cursor based on current transaction
-which is created if the corresponding MySQL thread still lacks one.
-This consistent view is then used inside of MySQL when accessing records
-using a cursor. */
-static
-void*
-innobase_create_cursor_view(
-/*========================*/
-				/* out: pointer to cursor view or NULL */
-	handlerton*	hton,	/* in: innobase hton */
-	Session*		session);	/* in: user thread handle */
-/***********************************************************************
-Set the given consistent cursor view to a transaction which is created
-if the corresponding MySQL thread still lacks one. If the given
-consistent cursor view is NULL global read view of a transaction is
-restored to a transaction read view. */
-static
-void
-innobase_set_cursor_view(
-/*=====================*/
-	handlerton* hton,
-	Session*	session,	/* in: user thread handle */
-	void*	curview);/* in: Consistent cursor view to be set */
-/***********************************************************************
-Close the given consistent cursor view of a transaction and restore
-global read view to a transaction read view. Transaction is created if the
-corresponding MySQL thread still lacks one. */
-static
-void
-innobase_close_cursor_view(
-/*=======================*/
-	handlerton* hton,
-	Session*	session,	/* in: user thread handle */
-	void*	curview);/* in: Consistent read view to be closed */
 /*********************************************************************
 Removes all tables in the named database inside InnoDB. */
 static
@@ -1845,9 +1810,6 @@ innobase_init(
         innobase_hton->recover=innobase_xa_recover;
         innobase_hton->commit_by_xid=innobase_commit_by_xid;
         innobase_hton->rollback_by_xid=innobase_rollback_by_xid;
-        innobase_hton->create_cursor_read_view=innobase_create_cursor_view;
-        innobase_hton->set_cursor_read_view=innobase_set_cursor_view;
-        innobase_hton->close_cursor_read_view=innobase_close_cursor_view;
         innobase_hton->create=innobase_create_handler;
         innobase_hton->drop_database=innobase_drop_database;
         innobase_hton->start_consistent_snapshot=innobase_start_trx_and_assign_read_view;
@@ -8819,60 +8781,6 @@ innobase_rollback_by_xid(
 	}
 }
 
-/***********************************************************************
-Create a consistent view for a cursor based on current transaction
-which is created if the corresponding MySQL thread still lacks one.
-This consistent view is then used inside of MySQL when accessing records
-using a cursor. */
-static
-void*
-innobase_create_cursor_view(
-/*========================*/
-                          /* out: pointer to cursor view or NULL */
-        handlerton *hton, /* in: innobase hton */
-	Session* session)	  /* in: user thread handle */
-{
-	assert(hton == innodb_hton_ptr);
-
-	return(read_cursor_view_create_for_mysql(check_trx_exists(session)));
-}
-
-/***********************************************************************
-Close the given consistent cursor view of a transaction and restore
-global read view to a transaction read view. Transaction is created if the
-corresponding MySQL thread still lacks one. */
-static
-void
-innobase_close_cursor_view(
-/*=======================*/
-        handlerton *hton,
-	Session*	session,	/* in: user thread handle */
-	void*	curview)/* in: Consistent read view to be closed */
-{
-	assert(hton == innodb_hton_ptr);
-
-	read_cursor_view_close_for_mysql(check_trx_exists(session),
-					 (cursor_view_t*) curview);
-}
-
-/***********************************************************************
-Set the given consistent cursor view to a transaction which is created
-if the corresponding MySQL thread still lacks one. If the given
-consistent cursor view is NULL global read view of a transaction is
-restored to a transaction read view. */
-static
-void
-innobase_set_cursor_view(
-/*=====================*/
-        handlerton *hton,
-	Session*	session,	/* in: user thread handle */
-	void*	curview)/* in: Consistent cursor view to be set */
-{
-	assert(hton == innodb_hton_ptr);
-
-	read_cursor_set_for_mysql(check_trx_exists(session),
-				  (cursor_view_t*) curview);
-}
 
 
 UNIV_INTERN
