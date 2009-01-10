@@ -1052,22 +1052,9 @@ bool store_db_create_info(Session *session, const char *dbname, String *buffer,
   buffer->append(STRING_WITH_LEN("CREATE DATABASE "));
 
   if (create_options & HA_LEX_CREATE_IF_NOT_EXISTS)
-    buffer->append(STRING_WITH_LEN("/*!32312 IF NOT EXISTS*/ "));
+    buffer->append(STRING_WITH_LEN("IF NOT EXISTS "));
 
   append_identifier(session, buffer, dbname, strlen(dbname));
-
-  if (create.default_table_charset)
-  {
-    buffer->append(STRING_WITH_LEN(" /*!40100"));
-    buffer->append(STRING_WITH_LEN(" DEFAULT CHARACTER SET "));
-    buffer->append(create.default_table_charset->csname);
-    if (!(create.default_table_charset->state & MY_CS_PRIMARY))
-    {
-      buffer->append(STRING_WITH_LEN(" COLLATE "));
-      buffer->append(create.default_table_charset->name);
-    }
-    buffer->append(STRING_WITH_LEN(" */"));
-  }
 
   return(false);
 }
