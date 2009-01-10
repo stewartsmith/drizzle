@@ -45,7 +45,7 @@ using namespace std;
 */
 static void usage(void);
 static void print_version(void);
-extern "C" RETSIGTYPE endprog(int signal_number);
+extern "C" void endprog(int signal_number);
 extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                char *argument);
 static int execute_commands(DRIZZLE *drizzle,int argc, char **argv);
@@ -261,7 +261,7 @@ int main(int argc,char *argv[])
   return error ? 1 : 0;
 }
 
-RETSIGTYPE endprog(int)
+void endprog(int)
 {
   interrupted=1;
 }

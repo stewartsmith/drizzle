@@ -68,7 +68,7 @@ dtr:
 	$(RM) -f mtr dtr
 	$(LN_S) ${top_srcdir}/tests/test-run.pl mtr
 	$(LN_S) ${top_srcdir}/tests/test-run.pl dtr
-	$(MKDIR_P) ${top_builddir}/tests/var
+	$(mkdir_p) ${top_builddir}/tests/var
 
 # test-run - a shortcut for executing test-run.pl
 test-run:

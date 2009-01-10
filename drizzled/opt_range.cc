@@ -1033,7 +1033,7 @@ SQL_SELECT *make_select(Table *head, table_map const_tables,
     select->file= *head->sort.io_cache;
     select->records=(ha_rows) (select->file.end_of_file/
 			       head->file->ref_length);
-    free(head->sort.io_cache);
+    delete head->sort.io_cache;
     head->sort.io_cache=0;
   }
   return(select);

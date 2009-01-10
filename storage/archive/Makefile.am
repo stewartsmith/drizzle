@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-LDADD = $(LIBINTL)
+LDADD = $(LIBINTL) $(LTLIBZ)
 
 noinst_HEADERS =	ha_archive.h azio.h
 noinst_PROGRAMS	=	archive_test archive_reader archive_performance concurrency_test
@@ -36,24 +36,21 @@ archive_performance_SOURCES =	archive_performance.c azio.cc
 archive_performance_CFLAGS =	$(AM_CFLAGS) 
 archive_performance_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LDADD) \
-			-lz
+			$(LDADD)
 archive_performance_LDFLAGS =
 
 archive_test_SOURCES =	archive_test.c azio.cc
 archive_test_CFLAGS =	$(AM_CFLAGS) 
 archive_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LDADD) \
-			-lz
+			$(LDADD)
 archive_test_LDFLAGS =
 
 archive_reader_SOURCES = archive_reader.c azio.cc
 archive_reader_CFLAGS =	$(AM_CFLAGS) 
 archive_reader_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LDADD) \
-			-lz
+			$(LDADD)
 archive_reader_LDFLAGS =
 
 concurrency_test_SOURCES = concurrency_test.c azio.cc
@@ -61,8 +58,7 @@ concurrency_test_CFLAGS =	$(AM_CFLAGS)
 concurrency_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
 			$(top_builddir)/libdrizzle/libdrizzle.la \
-			$(LDADD) \
-			-lz
+			$(LDADD)
 concurrency_test_LDFLAGS =
 
 valgrind-test: archive_test archive_performance

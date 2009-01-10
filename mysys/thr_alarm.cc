@@ -51,7 +51,7 @@ static int alarm_aborted=1;			/* No alarm thread */
 bool thr_alarm_inited= 0;
 volatile bool alarm_thread_running= 0;
 time_t next_alarm_expire_time= ~ (time_t) 0;
-static RETSIGTYPE process_alarm_part2(int sig);
+static void process_alarm_part2(int sig);
 
 static pthread_mutex_t LOCK_alarm;
 static pthread_cond_t COND_alarm;
@@ -294,7 +294,7 @@ void thr_end_alarm(thr_alarm_t *alarmed)
   every second.
 */
 
-RETSIGTYPE process_alarm(int sig __attribute__((unused)))
+void process_alarm(int sig __attribute__((unused)))
 {
   sigset_t old_mask;
 
@@ -323,7 +323,7 @@ RETSIGTYPE process_alarm(int sig __attribute__((unused)))
 }
 
 
-static RETSIGTYPE process_alarm_part2(int)
+static void process_alarm_part2(int)
 {
   ALARM *alarm_data;
 
@@ -494,7 +494,7 @@ void thr_alarm_info(ALARM_INFO *info)
 */
 
 
-RETSIGTYPE thread_alarm(int sig)
+void thread_alarm(int sig)
 {
 #ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,thread_alarm);		/* int. thread system calls */

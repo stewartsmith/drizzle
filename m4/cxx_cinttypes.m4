@@ -6,9 +6,8 @@
 
 AC_DEFUN([AC_CXX_CINTTYPES],
   [AC_REQUIRE([AC_CXX_CSTDINT])
-  AC_MSG_CHECKING(the location of cinttypes)
-  AC_LANG_SAVE
-   AC_LANG_CPLUSPLUS
+   AC_MSG_CHECKING(the location of cinttypes)
+   AC_LANG_PUSH(C++)
    ac_cv_cxx_cinttypes=""
    for location in tr1/cinttypes boost/cinttypes cinttypes; do
      if test -z "$ac_cv_cxx_cinttypes"; then
@@ -18,6 +17,7 @@ AC_DEFUN([AC_CXX_CINTTYPES],
                       [ac_cv_cxx_cinttypes="<$location>";])
      fi
    done
+   AC_LANG_POP()
    if test -n "$ac_cv_cxx_cinttypes"; then
       AC_MSG_RESULT([$ac_cv_cxx_cinttypes])
    else
