@@ -8064,7 +8064,7 @@ size_t my_strnxfrm_any_uca(const CHARSET_INFO * const cs,
 }
 
 
-#if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_utf8mb4)
+#if defined(HAVE_CHARSET_utf8mb4)
 /*
   We consider bytes with code more than 127 as a letter.
   This garantees that word boundaries work fine with regular
@@ -8108,7 +8108,7 @@ MY_COLLATION_HANDLER my_collation_any_uca_handler =
   my_propagate_complex
 };
 
-#endif /* HAVE_CHARSET_utf8mb3 || HAVE_CHARSET_utf8mb4 */
+#endif /* HAVE_CHARSET_utf8mb4 */
 
 
 #ifdef HAVE_CHARSET_utf8mb4

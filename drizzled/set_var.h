@@ -22,6 +22,7 @@
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/set_user_var.h>
+#include <drizzled/item/string.h>
 
 #include <string>
 
