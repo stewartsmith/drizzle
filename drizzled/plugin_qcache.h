@@ -4,7 +4,7 @@
 
  *  Definitions required for Query Cache plugin
 
- *  Copyright (C) 2008 Mark Atwood
+ *  Copyright (C) 2008 Mark Atwood, Toru Maesaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,17 +23,25 @@
 #ifndef DRIZZLED_PLUGIN_QCACHE_H
 #define DRIZZLED_PLUGIN_QCACHE_H
 
+/* 
+  This is the API that a qcache plugin must implement.
+  it should implement each of these function pointers.
+  if a function pointer is NULL (not loaded), that's ok.
+
+  Return:
+    false = success
+    true  = failure
+*/
 typedef struct qcache_st
 {
-  /* todo, define this api */
-  /* this is the API that a qcache plugin must implement.
-     it should implement each of these function pointers.
-     if a function returns bool true, that means it failed.
-     if a function pointer is NULL, that's ok.
-  */
+  /* Lookup the cache and transmit the data back to the client */
+  bool (*qcache_try_fetch_and_send)(Session *session, bool transactional);
 
-  bool (*qcache_func1)(Session *session, void *parm1, void *parm2);
-  bool (*qcache_func2)(Session *session, void *parm3, void *parm4);
+  bool (*qcache_set)(Session *session, bool transactional);
+  bool (*qcache_invalidate_table)(Session *session, bool transactional);
+  bool (*qcache_invalidate_db)(Session *session, const char *db_name,
+                               bool transactional);
+  bool (*qcache_flush)(Session *session);
 } qcache_t;
 
 #endif /* DRIZZLED_PLUGIN_QCACHE_H */
