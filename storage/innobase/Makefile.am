@@ -13,13 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# Process this file with automake to create Makefile.in
 
-MYSQLDATAdir=		$(localstatedir)
-MYSQLSHAREdir=		$(pkgdatadir)
-MYSQLBASEdir=		$(prefix)
-MYSQLLIBdir=		$(pkglibdir)
-pkgplugindir=		$(pkglibdir)/plugin
 AM_CPPFLAGS=		-I$(top_srcdir) -I$(top_builddir) \
 			-I$(top_srcdir)/include -I$(top_builddir)/include \
 			-I$(top_srcdir)/regex \
@@ -142,6 +136,7 @@ noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
 			include/ha_prototypes.h				\
 			$(HANDLER_DIR)/ha_innodb.h			\
 			include/handler0alter.h				\
+			$(HANDLER_DIR)/handler0vars.h			\
 			$(HANDLER_DIR)/i_s.h
 
 noinst_LTLIBRARIES=	libinnobase.la libpars.la
@@ -188,18 +183,16 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 
 # lexyy.c has lots of redundant decls, but it's generated anyway 
 libpars_la_CFLAGS=	${AM_CFLAGS} \
-			${NO_REDUNDANT_DECLS} \
-			${NO_UNUSED_MACROS}
+			${NO_REDUNDANT_DECLS}
 libpars_la_SOURCES= 	pars/lexyy.c pars/pars0grm.c
 
-libinnobase_la_CFLAGS=	$(AM_CFLAGS) \
-			${NO_UNUSED_MACROS}
 libinnobase_la_LIBADD= libpars.la
 
 
 EXTRA_LTLIBRARIES=	ha_innodb.la
 pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
 
+ha_innodb_la_SOURCES=
 ha_innodb_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)
 ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${DYNAMIC_PLUGIN}
 ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${DYNAMIC_PLUGIN}
@@ -210,5 +203,3 @@ EXTRA_DIST=		CMakeLists.txt plug.in \
 			pars/make_bison.sh pars/make_flex.sh \
 			pars/pars0grm.y pars/pars0lex.l
 
-# Don't update the files from bitkeeper
-%::SCCS/s.%

@@ -17,7 +17,7 @@
 #include "mysys_err.h"
 #include <mystrings/m_ctype.h>
 #include <mystrings/m_string.h>
-#include <my_dir.h>
+#include <drizzled/configmake.h>
 
 
 /*
@@ -124,18 +124,17 @@ static int charset_initialized=0;
 
 char *get_charsets_dir(char *buf)
 {
-  const char *sharedir= SHAREDIR;
   char *res;
 
   if (charsets_dir != NULL)
     strncpy(buf, charsets_dir, FN_REFLEN-1);
   else
   {
-    if (test_if_hard_path(sharedir) ||
-        is_prefix(sharedir, DEFAULT_CHARSET_HOME))
-      sprintf(buf,"%s/%s",sharedir,CHARSET_DIR);
+    if (test_if_hard_path(PKGDATADIR) ||
+        is_prefix(PKGDATADIR, PREFIX))
+      sprintf(buf,"%s/%s",PKGDATADIR,CHARSET_DIR);
     else
-      sprintf(buf,"%s/%s/%s",DEFAULT_CHARSET_HOME,sharedir,CHARSET_DIR);
+      sprintf(buf,"%s/%s/%s",PREFIX,PKGDATADIR,CHARSET_DIR);
   }
   res= convert_dirname(buf,buf,NULL);
   return(res);

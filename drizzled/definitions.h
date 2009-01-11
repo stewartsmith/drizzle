@@ -39,15 +39,6 @@
 #define TEMP_PREFIX	"MY"
 #define LOG_PREFIX	"ML"
 #define PROGDIR		"bin/"
-#ifndef DATADIR
-#define DATADIR		"data/"
-#endif
-#ifndef SHAREDIR
-#define SHAREDIR	"share/"
-#endif
-#ifndef PLUGINDIR
-#define PLUGINDIR	"lib/plugin"
-#endif
 
 #define ER(X) error_message((X))
 
@@ -160,6 +151,7 @@
 #define TE_INFO_LENGTH 3
 #define MTYP_NOEMPTY_BIT 128
 
+#define FRM_VER 6
 #define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM 50205
@@ -228,10 +220,8 @@
 #define TRANS_ALLOC_BLOCK_SIZE		4096
 #define TRANS_ALLOC_PREALLOC_SIZE	4096
 #define RANGE_ALLOC_BLOCK_SIZE		4096
-#define ACL_ALLOC_BLOCK_SIZE		1024
 #define UDF_ALLOC_BLOCK_SIZE		1024
 #define TABLE_ALLOC_BLOCK_SIZE		1024
-#define BDB_LOG_ALLOC_BLOCK_SIZE	1024
 #define WARN_ALLOC_BLOCK_SIZE		2048
 #define WARN_ALLOC_PREALLOC_SIZE	1024
 #define PROFILE_ALLOC_BLOCK_SIZE  2048
@@ -523,8 +513,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 #define HA_ADMIN_INVALID         -5
 #define HA_ADMIN_REJECT          -6
 #define HA_ADMIN_TRY_ALTER       -7
-#define HA_ADMIN_WRONG_CHECKSUM  -8
-#define HA_ADMIN_NOT_BASE_TABLE  -9
 #define HA_ADMIN_NEEDS_UPGRADE  -10
 #define HA_ADMIN_NEEDS_ALTER    -11
 #define HA_ADMIN_NEEDS_CHECK    -12
@@ -663,37 +651,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 */
 #define HA_KEY_SCAN_NOT_ROR     128
 #define HA_DO_INDEX_COND_PUSHDOWN  256 /* Supports Index Condition Pushdown */
-
-
-
-/*
-  HA_PARTITION_FUNCTION_SUPPORTED indicates that the function is
-  supported at all.
-  HA_FAST_CHANGE_PARTITION means that optimised variants of the changes
-  exists but they are not necessarily done online.
-
-  HA_ONLINE_DOUBLE_WRITE means that the handler supports writing to both
-  the new partition and to the old partitions when updating through the
-  old partitioning schema while performing a change of the partitioning.
-  This means that we can support updating of the table while performing
-  the copy phase of the change. For no lock at all also a double write
-  from new to old must exist and this is not required when this flag is
-  set.
-  This is actually removed even before it was introduced the first time.
-  The new idea is that handlers will handle the lock level already in
-  store_lock for ALTER Table partitions.
-
-  HA_PARTITION_ONE_PHASE is a flag that can be set by handlers that take
-  care of changing the partitions online and in one phase. Thus all phases
-  needed to handle the change are implemented inside the storage engine.
-  The storage engine must also support auto-discovery since the frm file
-  is changed as part of the change and this change must be controlled by
-  the storage engine. A typical engine to support this is NDB (through
-  WL #2498).
-*/
-#define HA_PARTITION_FUNCTION_SUPPORTED         (1L << 1)
-#define HA_FAST_CHANGE_PARTITION                (1L << 2)
-#define HA_PARTITION_ONE_PHASE                  (1L << 3)
 
 /* operations for disable/enable indexes */
 #define HA_KEY_SWITCH_NONUNIQ      0

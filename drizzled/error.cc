@@ -197,7 +197,7 @@ N_("Can't create IP socket"),
 /* ER_NO_SUCH_INDEX 42S12 S1009 */
 N_("Table '%-.192s' has no index like the one used in CREATE INDEX; recreate the table"),
 /* ER_WRONG_FIELD_TERMINATORS 42000 S1009 */
-N_("Field separator argument is not what is expected; check the manual"),
+N_("Field separator argument '%-.32s' with length '%d' is not what is expected; check the manual"),
 /* ER_BLOBS_AND_NO_TERMINATED 42000 S1009 */
 N_("You can't use fixed rowlength with BLOBs; please use 'fields terminated by'"),
 /* ER_TEXTFILE_NOT_READABLE   */
@@ -239,7 +239,7 @@ N_("Incorrect database name '%-.100s'"),
 /* ER_WRONG_TABLE_NAME 42000  */
 N_("Incorrect table name '%-.100s'"),
 /* ER_TOO_BIG_SELECT 42000  */
-N_("The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and use SET SQL_BIG_SELECTS=1 or SET SQL_MAX_JOIN_SIZE=# if the SELECT is okay"),
+N_("The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and use SET SQL_BIG_SELECTS=1 or SET MAX_JOIN_SIZE=# if the SELECT is okay"),
 /* ER_UNKNOWN_ERROR   */
 N_("Unknown error"),
 /* ER_UNKNOWN_PROCEDURE 42000  */

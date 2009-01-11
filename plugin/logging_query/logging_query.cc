@@ -17,8 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* need to define DRIZZLE_SERVER to get inside the Session */
-#define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_logging.h>
 #include <drizzled/gettext.h>
@@ -159,9 +157,9 @@ static int logging_query_plugin_init(void *p)
            S_IRUSR|S_IWUSR);
   if (fd < 0)
   {
-    sql_print_error(_("fail open() fn=%s er=%s\n"),
-		    logging_query_filename,
-		    strerror(errno));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
+                  logging_query_filename,
+                  strerror(errno));
 
     /* todo
        we should return an error here, so the plugin doesnt load

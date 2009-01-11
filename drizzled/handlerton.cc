@@ -235,7 +235,7 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
   {
     if (plugin->plugin->init(hton))
     {
-      sql_print_error(_("Plugin '%s' init function returned error."),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }
@@ -265,12 +265,13 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
 
         if (idx == (int) DB_TYPE_DEFAULT)
         {
-          sql_print_warning(_("Too many storage engines!"));
+          errmsg_printf(ERRMSG_LVL_WARN, _("Too many storage engines!"));
           return(1);
         }
         if (hton->db_type != DB_TYPE_UNKNOWN)
-          sql_print_warning(_("Storage engine '%s' has conflicting typecode. "
-                            "Assigning value %d."), plugin->plugin->name, idx);
+          errmsg_printf(ERRMSG_LVL_WARN,
+                        _("Storage engine '%s' has conflicting typecode. Assigning value %d."),
+                        plugin->plugin->name, idx);
         hton->db_type= (enum legacy_db_type) idx;
       }
       installed_htons[hton->db_type]= hton;

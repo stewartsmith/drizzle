@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/configvar.h>
 #include <drizzled/gettext.h>
+#include <drizzled/errmsg_print.h>
 
 int configvar_initializer(st_plugin_int *plugin)
 {
@@ -37,7 +38,7 @@ int configvar_initializer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "configvar" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("configvar plugin '%s' init() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("configvar plugin '%s' init() failed"),
 		      plugin->name.str);
       goto err;
     }
@@ -59,7 +60,7 @@ int configvar_finalizer(st_plugin_int *plugin)
     {
       /* TRANSLATORS: The leading word "configvar" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("configvar plugin '%s' deinit() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("configvar plugin '%s' deinit() failed"),
 		      plugin->name.str);
     }
   }
@@ -95,7 +96,7 @@ static bool configvar_do1_iterate (Session *session, plugin_ref plugin, void *p)
     {
       /* TRANSLATORS: The leading word "configvar" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("configvar plugin '%s' configvar_func1() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("configvar plugin '%s' configvar_func1() failed"),
 		      (char *)plugin_name(plugin));
       return true;
     }
@@ -149,7 +150,7 @@ static bool configvar_do2_iterate (Session *session, plugin_ref plugin, void *p)
     {
       /* TRANSLATORS: The leading word "configvar" is the name
          of the plugin api, and so should not be translated. */
-      sql_print_error(_("configvar plugin '%s' configvar_func2() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("configvar plugin '%s' configvar_func2() failed"),
 		      (char *)plugin_name(plugin));
 
       return true;

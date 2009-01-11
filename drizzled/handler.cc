@@ -39,13 +39,12 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
+#include <drizzled/unireg.h> // for mysql_frm_type
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif
 
-
-extern HASH open_cache;
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
@@ -957,7 +956,7 @@ static bool xarecover_handlerton(Session *unused __attribute__((unused)),
   {
     while ((got= hton->recover(hton, info->list, info->len)) > 0 )
     {
-      sql_print_information(_("Found %d prepared transaction(s) in %s"),
+      errmsg_printf(ERRMSG_LVL_INFO, _("Found %d prepared transaction(s) in %s"),
                             got, ha_resolve_storage_engine_name(hton));
       for (int i=0; i < got; i ++)
       {
@@ -1009,7 +1008,7 @@ int ha_recover(HASH *commit_list)
     return(0);
 
   if (info.commit_list)
-    sql_print_information(_("Starting crash recovery..."));
+    errmsg_printf(ERRMSG_LVL_INFO, _("Starting crash recovery..."));
 
 
 #ifndef WILL_BE_DELETED_LATER
@@ -1032,7 +1031,7 @@ int ha_recover(HASH *commit_list)
   }
   if (!info.list)
   {
-    sql_print_error(ER(ER_OUTOFMEMORY), info.len*sizeof(XID));
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), info.len*sizeof(XID));
     return(1);
   }
 
@@ -1041,11 +1040,12 @@ int ha_recover(HASH *commit_list)
 
   free((unsigned char*)info.list);
   if (info.found_foreign_xids)
-    sql_print_warning(_("Found %d prepared XA transactions"),
-                      info.found_foreign_xids);
+    errmsg_printf(ERRMSG_LVL_WARN, _("Found %d prepared XA transactions"),
+                  info.found_foreign_xids);
   if (info.dry_run && info.found_my_xids)
   {
-    sql_print_error(_("Found %d prepared transactions! It means that drizzled "
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Found %d prepared transactions! It means that drizzled "
                     "was not shut down properly last time and critical "
                     "recovery information (last binlog or %s file) was "
                     "manually deleted after a crash. You have to start "
@@ -1055,7 +1055,7 @@ int ha_recover(HASH *commit_list)
     return(1);
   }
   if (info.commit_list)
-    sql_print_information(_("Crash recovery finished."));
+    errmsg_printf(ERRMSG_LVL_INFO, _("Crash recovery finished."));
   return(0);
 }
 
@@ -3002,6 +3002,7 @@ struct st_table_exists_in_engine_args
   const char *db;
   const char *name;
   int err;
+  handlerton* hton;
 };
 
 static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugin,
@@ -3017,14 +3018,19 @@ static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugi
 
   vargs->err = err;
   if (vargs->err == HA_ERR_TABLE_EXIST)
+  {
+    vargs->hton= hton;
     return true;
+  }
 
   return false;
 }
 
-int ha_table_exists_in_engine(Session* session, const char* db, const char* name)
+int ha_table_exists_in_engine(Session* session,
+                              const char* db, const char* name,
+                              handlerton **hton)
 {
-  st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE};
+  st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE, NULL};
   plugin_foreach(session, table_exists_in_engine_handlerton,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &args);
 
@@ -3039,7 +3045,16 @@ int ha_table_exists_in_engine(Session* session, const char* db, const char* name
       args.err= HA_ERR_TABLE_EXIST;
     else
       args.err= HA_ERR_NO_SUCH_TABLE;
+
+    enum legacy_db_type table_type;
+    if(args.err==HA_ERR_TABLE_EXIST && mysql_frm_type(path, &table_type)==0)
+    {
+      args.hton= ha_resolve_by_legacy_type(session, table_type);
+    }
   }
+
+  if(hton)
+    *hton= args.hton;
 
   return(args.err);
 }

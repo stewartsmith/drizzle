@@ -24,13 +24,13 @@
 #include <drizzled/session.h>
 
 /**
-    Converts current time in my_time_t to DRIZZLE_TIME represenatation for local
+    Converts current time in time_t to DRIZZLE_TIME represenatation for local
     time zone. Defines time zone (local) used for whole SYSDATE function.
 */
 void Item_func_sysdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   Session *session= current_session;
-  session->variables.time_zone->gmt_sec_to_TIME(now_time, (my_time_t) my_time(0));
+  session->variables.time_zone->gmt_sec_to_TIME(now_time, time(NULL));
 }
 
 

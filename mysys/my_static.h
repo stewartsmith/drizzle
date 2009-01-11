@@ -31,7 +31,7 @@ extern "C" {
 
 struct st_remember {
   int number;
-  RETSIGTYPE (*func)(int number);
+  void (*func)(int number);
 };
 
 /*

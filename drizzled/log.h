@@ -363,7 +363,6 @@ public:
 
 File open_binlog(IO_CACHE *log, const char *log_file_name,
                  const char **errmsg);
-bool flush_error_log(void);
 
 class Log_event_handler
 {
@@ -378,16 +377,5 @@ public:
 };
 
 extern TYPELIB binlog_format_typelib;
-
-void sql_print_error(const char *format, ...) __attribute__((format(printf, 1, 2)));
-void sql_print_warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
-void sql_print_information(const char *format, ...)
-  __attribute__((format(printf, 1, 2)));
-typedef void (*sql_print_message_func)(const char *format, ...)
-  __attribute__((format(printf, 1, 2)));
-extern sql_print_message_func sql_print_message_handlers[];
-
-void sql_perror(const char *message);
-
 
 #endif /* DRIZZLE_SERVER_LOG_H */

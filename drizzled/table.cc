@@ -499,7 +499,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     if (use_mb(default_charset_info))
     {
       /* Warn that we may be changing the size of character columns */
-      sql_print_warning(_("'%s' had no or invalid character set, "
+      errmsg_printf(ERRMSG_LVL_WARN, _("'%s' had no or invalid character set, "
                         "and default character set is multi-byte, "
                         "so character column sizes may have changed"),
                         share->path.str);
@@ -764,7 +764,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 			   interval_count*sizeof(TYPELIB)+
 			   (share->fields+interval_parts+
 			    keys+3)*sizeof(char *)+
-			   (n_length+int_length+com_length+
+			   (n_length+int_length+
 			       vcol_screen_length)))))
     goto err;                                   /* purecov: inspected */
 
@@ -783,10 +783,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     share->intervals= 0;			// For better debugging
   memcpy(names, strpos+(share->fields*field_pack_length),
 	 (uint) (n_length+int_length));
-  comment_pos= names+(n_length+int_length);
-  memcpy(comment_pos, disk_buff+read_length-com_length-vcol_screen_length,
-         com_length);
-  vcol_screen_pos= names+(n_length+int_length+com_length);
+  comment_pos= (char *)(disk_buff+read_length-com_length-vcol_screen_length);
+  vcol_screen_pos= names+(n_length+int_length);
   memcpy(vcol_screen_pos, disk_buff+read_length-vcol_screen_length,
          vcol_screen_length);
 
@@ -899,7 +897,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       }
       else
       {
-	comment.str=    (char*) comment_pos;
+	comment.str=    strmake_root(&share->mem_root, comment_pos, comment_length);
 	comment.length= comment_length;
 	comment_pos+=   comment_length;
       }
@@ -2656,14 +2654,14 @@ Table::table_check_intact(const uint32_t table_f_count,
     /* previous MySQL version */
     if (DRIZZLE_VERSION_ID > s->mysql_version)
     {
-      sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
                       alias, table_f_count, s->fields,
                       s->mysql_version, DRIZZLE_VERSION_ID);
       return(true);
     }
     else if (DRIZZLE_VERSION_ID == s->mysql_version)
     {
-      sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), alias,
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), alias,
                       table_f_count, s->fields);
       return(true);
     }
@@ -2692,7 +2690,7 @@ Table::table_check_intact(const uint32_t table_f_count,
           Still this can be a sign of a tampered table, output an error
           to the error log.
         */
-        sql_print_error(_("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d, found '%s'."),
                         s->db.str, alias, table_def->name.str, i,
                         field->field_name);
@@ -2718,7 +2716,7 @@ Table::table_check_intact(const uint32_t table_f_count,
       if (strncmp(sql_type.c_ptr_safe(), table_def->type.str,
                   table_def->type.length - 1))
       {
-        sql_print_error(_("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d to have type "
                         "%s, found type %s."), s->db.str, alias,
                         table_def->name.str, i, table_def->type.str,
@@ -2727,7 +2725,7 @@ Table::table_check_intact(const uint32_t table_f_count,
       }
       else if (table_def->cset.str && !field->has_charset())
       {
-        sql_print_error(_("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but the type has no "
                         "character set."), s->db.str, alias,
@@ -2737,7 +2735,7 @@ Table::table_check_intact(const uint32_t table_f_count,
       else if (table_def->cset.str &&
                strcmp(field->charset()->csname, table_def->cset.str))
       {
-        sql_print_error(_("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but found "
                         "character set '%s'."), s->db.str, alias,
@@ -2748,7 +2746,7 @@ Table::table_check_intact(const uint32_t table_f_count,
     }
     else
     {
-      sql_print_error(_("Incorrect definition of table %s.%s: "
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
                       "expected column '%s' at position %d to have type %s "
                       " but the column is not found."),
                       s->db.str, alias,
@@ -2856,13 +2854,6 @@ TableList *TableList::find_underlying_table(Table *table_to_find)
 
 void TableList::cleanup_items()
 {
-  if (!field_translation)
-    return;
-
-  for (Field_translator *transl= field_translation;
-       transl < field_translation_end;
-       transl++)
-    transl->item->walk(&Item::cleanup_processor, 0, 0);
 }
 
 
@@ -4868,7 +4859,7 @@ int Table::report_error(int error)
     print them to the .err log
   */
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
-    sql_print_error(_("Got error %d when reading table '%s'"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d when reading table '%s'"),
 		    error, s->path.str);
   file->print_error(error,MYF(0));
 

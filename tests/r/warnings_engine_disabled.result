@@ -1,0 +1,2 @@
+create table t1 (id int) engine=innodb;
+drop table t1;

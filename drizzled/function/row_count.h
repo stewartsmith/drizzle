@@ -21,7 +21,7 @@
 #define DRIZZLED_FUNCTION_ROW_COUNT_H
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_row_count :public Item_int_func
 {

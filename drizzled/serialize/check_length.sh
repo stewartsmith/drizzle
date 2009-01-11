@@ -2,8 +2,12 @@
 
 failed=0
 
+if test -z $BINDIR ; then
+  BINDIR=.
+fi
+
 check_encode () {
-    bytes=`./length --hex --encode $1`
+    bytes=`${BINDIR}/length --hex --encode $1`
     shift
     expected="$@"
     if test "$bytes" != "$expected"; then
@@ -13,8 +17,8 @@ check_encode () {
 }
 
 check_invertible () {
-    bytes=`./length --encode $value`
-    result=`./length --decode $bytes`
+    bytes=`${BINDIR}/length --encode $value`
+    result=`${BINDIR}/length --decode $bytes`
     if test $result -ne $value; then
         failed=`expr $failed + 1`
         echo "Got $result but expected $value"
@@ -35,4 +39,4 @@ do
     check_invertible $value
 done
 
-exit `test $failed -gt 0`
+exit $failed

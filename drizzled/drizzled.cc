@@ -34,6 +34,7 @@
 #include <drizzled/stacktrace.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
 #include <drizzled/tztime.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
@@ -45,6 +46,7 @@
 #include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
+#include <drizzled/configmake.h>
 
 
 #if TIME_WITH_SYS_TIME
@@ -179,7 +181,7 @@ inline void setup_fpu()
 extern "C" int gethostname(char *name, int namelen);
 #endif
 
-extern "C" RETSIGTYPE handle_segfault(int sig);
+extern "C" void handle_segfault(int sig);
 
 using namespace std;
 
@@ -220,6 +222,7 @@ static TYPELIB tc_heuristic_recover_typelib=
 
 const char *first_keyword= "first", *binary_keyword= "BINARY";
 const char *my_localhost= "localhost";
+const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
 
 /*
@@ -239,11 +242,11 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 /* the default log output is log tables */
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
-static bool opt_debugging= 0, opt_console= 0;
+static bool opt_debugging= 0;
 static uint32_t wake_thread;
 static uint32_t killed_threads, thread_created;
 static uint32_t max_used_connections;
-static char *drizzled_user, *drizzled_chroot, *log_error_file_ptr;
+static char *drizzled_user, *drizzled_chroot;
 static char *opt_init_slave, *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
 static char *character_set_filesystem_name;
@@ -258,9 +261,7 @@ static I_List<Session> thread_cache;
 
 bool opt_bin_log;
 bool opt_log_queries_not_using_indexes= false;
-bool opt_error_log= 0;
 bool opt_skip_show_db= false;
-bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
@@ -302,7 +303,7 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
 uint32_t drizzled_port, test_flags, select_errors, dropping_tables, ha_open_options;
 uint32_t drizzled_port_timeout;
-uint32_t delay_key_write_options, protocol_version;
+uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
@@ -377,7 +378,7 @@ time_t server_start_time, flush_status_time;
 
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
-char log_error_file[FN_REFLEN], glob_hostname[FN_REFLEN];
+char glob_hostname[FN_REFLEN];
 char drizzle_real_data_home[FN_REFLEN],
      language[FN_REFLEN], reg_ext[FN_EXTLEN], drizzle_charsets_dir[FN_REFLEN],
      *opt_init_file, *opt_tc_log_file;
@@ -423,7 +424,6 @@ const CHARSET_INFO *character_set_filesystem;
 MY_LOCALE *my_default_lc_time_names;
 
 SHOW_COMP_OPTION have_symlink;
-SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
 
@@ -432,7 +432,6 @@ pthread_key_t THR_Session;
 pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_status,
                 LOCK_global_read_lock,
-                LOCK_error_log,
                 LOCK_global_system_variables,
                 LOCK_slave_list,
                 LOCK_active_mi,
@@ -462,7 +461,6 @@ static bool kill_in_progress, segfaulted;
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 static int cleanup_done;
-static uint32_t opt_myisam_block_size;
 static char *opt_binlog_index_name;
 static char *opt_tc_heuristic_recover;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
@@ -496,7 +494,7 @@ static void get_options(int *argc,char **argv);
 extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
 static void set_server_version(void);
 static int init_thread_environment();
-static char *get_relative_path(const char *path);
+static const char *get_relative_path(const char *path);
 static void fix_paths(void);
 void handle_connections_sockets();
 pthread_handler_t kill_server_thread(void *arg);
@@ -513,6 +511,7 @@ static void clean_up_mutexes(void);
 static void wait_for_signal_thread_to_end(void);
 static void create_pid_file();
 static void drizzled_exit(int exit_code) __attribute__((noreturn));
+bool safe_read_error_impl(NET *net);
 
 /****************************************************************************
 ** Code to end drizzled
@@ -546,7 +545,7 @@ static void close_connections(void)
     }
 #ifdef EXTRA_DEBUG
     if (error != 0 && !count++)
-      sql_print_error(_("Got error %d from pthread_cond_timedwait"),error);
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d from pthread_cond_timedwait"),error);
 #endif
     close_server_sock();
   }
@@ -625,7 +624,7 @@ static void close_connections(void)
     if (tmp->vio_ok())
     {
       if (global_system_variables.log_warnings)
-        sql_print_warning(ER(ER_FORCING_CLOSE),my_progname,
+            errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
                           tmp->thread_id,
                           (tmp->security_ctx.user.c_str() ?
                            tmp->security_ctx.user.c_str() : ""));
@@ -687,9 +686,9 @@ static void *kill_server(void *sig_ptr)
   if (sig != 0) // 0 is not a valid signal number
     my_sigset(sig, SIG_IGN);                    /* purify inspected */
   if (sig == DRIZZLE_KILL_SIGNAL || sig == 0)
-    sql_print_information(_(ER(ER_NORMAL_SHUTDOWN)),my_progname);
+    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),my_progname);
   else
-    sql_print_error(_(ER(ER_GOT_SIGNAL)),my_progname,sig); /* purecov: inspected */
+    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),my_progname,sig); /* purecov: inspected */
 
   close_connections();
   if (sig != DRIZZLE_KILL_SIGNAL &&
@@ -722,10 +721,10 @@ pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
 #endif
 
 
-extern "C" RETSIGTYPE print_signal_warning(int sig)
+extern "C" void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    sql_print_warning(_("Got signal %d from thread %"PRIu64), sig,my_thread_id());
+    errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64), sig,my_thread_id());
 #ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
@@ -778,7 +777,7 @@ extern "C" void unireg_abort(int exit_code)
 {
 
   if (exit_code)
-    sql_print_error(_("Aborting\n"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
   else if (opt_help)
     usage();
   clean_up(!opt_help && (exit_code)); /* purecov: inspected */
@@ -842,7 +841,7 @@ void clean_up(bool print_message)
   (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
 
   if (print_message && server_start_time)
-    sql_print_information(_(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
+    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
   thread_scheduler.end();
   /* Returns NULL on globerrs, we don't want to try to free that */
   //void *freeme=
@@ -878,7 +877,7 @@ static void wait_for_signal_thread_to_end()
   {
     if (pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL) != ESRCH)
       break;
-    my_sleep(100);				// Give it time to die
+    usleep(100);				// Give it time to die
   }
 }
 
@@ -890,7 +889,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
-  (void) pthread_mutex_destroy(&LOCK_error_log);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
   (void) pthread_mutex_destroy(&LOCK_active_mi);
   (void) pthread_rwlock_destroy(&LOCK_sys_init_connect);
@@ -953,7 +951,7 @@ static struct passwd *check_user(const char *user)
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
           global_system_variables.log_warnings)
-        sql_print_warning(_("One can only use the --user switch "
+            errmsg_printf(ERRMSG_LVL_WARN, _("One can only use the --user switch "
                             "if running as root\n"));
       /* purecov: end */
     }
@@ -961,7 +959,7 @@ static struct passwd *check_user(const char *user)
   }
   if (!user)
   {
-    sql_print_error(_("Fatal error: Please read \"Security\" section of "
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
                       "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
 
@@ -985,7 +983,7 @@ static struct passwd *check_user(const char *user)
   /* purecov: end */
 
 err:
-  sql_print_error(_("Fatal error: Can't change to run as user '%s' ;  "
+  errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Can't change to run as user '%s' ;  "
                     "Please check that the user exists!\n"),user);
   unireg_abort(1);
 
@@ -1159,21 +1157,21 @@ static void network_init(void)
           (errno != EADDRINUSE) ||
           (waited >= drizzled_port_timeout))
         break;
-      sql_print_information(_("Retrying bind on TCP/IP port %u"), drizzled_port);
+          errmsg_printf(ERRMSG_LVL_INFO, _("Retrying bind on TCP/IP port %u"), drizzled_port);
       this_wait= retry * retry / 3 + 1;
       sleep(this_wait);
     }
     if (ret < 0)
     {
       sql_perror(_("Can't start server: Bind on TCP/IP port"));
-      sql_print_error(_("Do you already have another drizzled server running "
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Do you already have another drizzled server running "
                         "on port: %d ?"),drizzled_port);
       unireg_abort(1);
     }
     if (listen(ip_sock,(int) back_log) < 0)
     {
       sql_perror(_("Can't start server: listen() on TCP/IP port"));
-      sql_print_error(_("listen() on TCP/IP failed with error %d"),
+          errmsg_printf(ERRMSG_LVL_ERROR, _("listen() on TCP/IP failed with error %d"),
                       errno);
       unireg_abort(1);
     }
@@ -1187,7 +1185,7 @@ static void network_init(void)
 
 /** Called when a thread is aborted. */
 /* ARGSUSED */
-extern "C" RETSIGTYPE end_thread_signal(int sig __attribute__((unused)))
+extern "C" void end_thread_signal(int sig __attribute__((unused)))
 {
   Session *session=current_session;
   if (session)
@@ -1232,7 +1230,7 @@ void unlink_session(Session *session)
   @todo
     One should have to fix that thr_alarm know about this thread too.
 */
-extern "C" RETSIGTYPE abort_thread(int sig __attribute__((unused)))
+extern "C" void abort_thread(int sig __attribute__((unused)))
 {
   Session *session=current_session;
   if (session)
@@ -1250,7 +1248,7 @@ extern "C" char *my_demangle(const char *mangled_name, int *status)
 #endif
 
 
-extern "C" RETSIGTYPE handle_segfault(int sig)
+extern "C" void handle_segfault(int sig)
 {
   time_t curr_time;
   struct tm tm;
@@ -1269,7 +1267,13 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
 
   segfaulted = 1;
 
-  curr_time= my_time(0);
+  curr_time= time(NULL);
+  if(curr_time == (time_t)-1)
+  {
+    fprintf(stderr, "Fetal: time() call failed\n");
+    exit(1);
+  }
+
   localtime_r(&curr_time, &tm);
 
   fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got "
@@ -1440,7 +1444,7 @@ static void init_signals(void)
     STRUCT_RLIMIT rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-      sql_print_warning(_("setrlimit could not change the size of core files "
+        errmsg_printf(ERRMSG_LVL_WARN, _("setrlimit could not change the size of core files "
                           "to 'infinity';  We may not be able to generate a "
                           "core file on signals"));
   }
@@ -1508,7 +1512,7 @@ static void start_signal_handler(void)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   if ((error=pthread_create(&signal_thread,&thr_attr,signal_hand,0)))
   {
-    sql_print_error(_("Can't create interrupt-thread (error %d, errno: %d)"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create interrupt-thread (error %d, errno: %d)"),
                     error,errno);
     exit(1);
   }
@@ -1596,7 +1600,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
     case SIGQUIT:
     case SIGKILL:
 #ifdef EXTRA_DEBUG
-      sql_print_information(_("Got signal %d to shutdown drizzled"),sig);
+        errmsg_printf(ERRMSG_LVL_INFO, _("Got signal %d to shutdown drizzled"),sig);
 #endif
       /* switch to the old log message processing */
       if (!abort_loop)
@@ -1613,7 +1617,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
         }
 	if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
 			   (void*) &sig))
-          sql_print_error(_("Can't create thread to kill server"));
+              errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread to kill server"));
 #else
 	kill_server((void*) sig);	// MIT THREAD has a alarm thread
 #endif
@@ -1636,7 +1640,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 #endif
     default:
 #ifdef EXTRA_DEBUG
-      sql_print_warning(_("Got signal: %d  error: %d"),sig,error); /* purecov: tested */
+        errmsg_printf(ERRMSG_LVL_WARN, _("Got signal: %d  error: %d"),sig,error); /* purecov: tested */
 #endif
       break;					/* purecov: tested */
     }
@@ -1708,13 +1712,13 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
     }
   }
   if (!session || MyFlags & ME_NOREFRESH)
-    sql_print_error("%s: %s",my_progname,str); /* purecov: inspected */
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str); /* purecov: inspected */
   return;;
 }
 
 
 static const char *load_default_groups[]= {
-"drizzled","server", DRIZZLE_BASE_VERSION, 0, 0};
+DRIZZLE_CONFIG_NAME,"server", DRIZZLE_BASE_VERSION, 0, 0};
 
 
 /**
@@ -1827,14 +1831,19 @@ SHOW_VAR com_status_vars[]= {
 };
 
 static int init_common_variables(const char *conf_file_name, int argc,
-				 char **argv, const char **groups)
+                                 char **argv, const char **groups)
 {
+  time_t curr_time;
   umask(((~my_umask) & 0666));
   my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
   tzset();			// Set tzname
 
+  curr_time= time(NULL);
+  if (curr_time == (time_t)-1)
+    return 1;
+
   max_system_variables.pseudo_thread_id= UINT32_MAX;
-  server_start_time= flush_status_time= my_time(0);
+  server_start_time= flush_status_time= curr_time;
 
   if (init_thread_environment())
     return 1;
@@ -1868,7 +1877,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
-    sql_print_warning(_("gethostname failed, using '%s' as hostname"),
+      errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
                       glob_hostname);
     strncpy(pidfile_name, STRING_WITH_LEN("mysql"));
   }
@@ -1932,12 +1941,12 @@ static int init_common_variables(const char *conf_file_name, int argc,
                                           (uint32_t)TABLE_OPEN_CACHE_MIN),
                                       table_cache_size);
         if (global_system_variables.log_warnings)
-          sql_print_warning(_("Changed limits: max_open_files: %u  "
+              errmsg_printf(ERRMSG_LVL_WARN, _("Changed limits: max_open_files: %u  "
                               "max_connections: %"PRIu64"  table_cache: %"PRIu64""),
                             files, max_connections, table_cache_size);
       }
       else if (global_system_variables.log_warnings)
-        sql_print_warning(_("Could not increase number of max_open_files "
+          errmsg_printf(ERRMSG_LVL_WARN, _("Could not increase number of max_open_files "
                             "to more than %u (request: %u)"),
                           files, wanted_files);
     }
@@ -1987,12 +1996,12 @@ static int init_common_variables(const char *conf_file_name, int argc,
       get_charset_by_name(default_collation_name, MYF(0));
     if (!default_collation)
     {
-      sql_print_error(_(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
+          errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
       return 1;
     }
     if (!my_charset_same(default_charset_info, default_collation))
     {
-      sql_print_error(_(ER(ER_COLLATION_CHARSET_MISMATCH)),
+          errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
                       default_collation_name,
                       default_charset_info->csname);
       return 1;
@@ -2002,9 +2011,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
   global_system_variables.collation_database=	 default_charset_info;
-  global_system_variables.collation_connection=  default_charset_info;
-  global_system_variables.character_set_results= default_charset_info;
-  global_system_variables.character_set_client= default_charset_info;
 
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
@@ -2018,7 +2024,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (!(my_default_lc_time_names=
         my_locale_by_name(lc_time_names_name)))
   {
-    sql_print_error(_("Unknown locale: '%s'"), lc_time_names_name);
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
@@ -2060,7 +2066,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
@@ -2088,7 +2093,7 @@ static int init_thread_environment()
   if (pthread_key_create(&THR_Session,NULL) ||
       pthread_key_create(&THR_Mem_root,NULL))
   {
-    sql_print_error(_("Can't create thread-keys"));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread-keys"));
     return 1;
   }
   return 0;
@@ -2110,40 +2115,15 @@ static int init_server_components()
 
   /* Setup logs */
 
-  /*
-    Enable old-fashioned error log, except when the user has requested
-    help information. Since the implementation of plugin server
-    variables the help output is now written much later.
-  */
-  if (opt_error_log && !opt_help)
-  {
-    if (!log_error_file_ptr[0])
-      fn_format(log_error_file, pidfile_name, drizzle_data_home, ".err",
-                MY_REPLACE_EXT); /* replace '.<domain>' by '.err', bug#4997 */
-    else
-      fn_format(log_error_file, log_error_file_ptr, drizzle_data_home, ".err",
-                MY_UNPACK_FILENAME | MY_SAFE_PATH);
-    if (!log_error_file[0])
-      opt_error_log= 1;				// Too long file name
-    else
-    {
-      if (freopen(log_error_file, "a+", stdout)==NULL)
-        sql_print_error(_("Unable to reopen stdout"));
-      else
-        if(freopen(log_error_file, "a+", stderr)==NULL)
-          sql_print_error(_("Unable to reopen stderr"));
-    }
-  }
-
   if (xid_cache_init())
   {
-    sql_print_error(_("Out of memory"));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory"));
     unireg_abort(1);
   }
 
   if (opt_log_slave_updates && replicate_same_server_id)
   {
-    sql_print_error(_("using --replicate-same-server-id in conjunction with "
+      errmsg_printf(ERRMSG_LVL_ERROR, _("using --replicate-same-server-id in conjunction with "
                       "--log-slave-updates is impossible, it would lead to "
                       "infinite loops in this server."));
     unireg_abort(1);
@@ -2163,7 +2143,7 @@ static int init_server_components()
         require a name. But as we don't want to break many existing setups, we
         only give warning, not error.
       */
-      sql_print_warning(_("No argument was provided to --log-bin, and "
+          errmsg_printf(ERRMSG_LVL_WARN, _("No argument was provided to --log-bin, and "
                           "--log-bin-index was not used; so replication "
                           "may break when this Drizzle server acts as a "
                           "master and has his hostname changed!! Please "
@@ -2175,7 +2155,7 @@ static int init_server_components()
       opt_bin_logname=strdup(buf);
       if (opt_bin_logname == NULL)
       {
-        sql_print_error(_("Out of memory in init_server_components."));
+              errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory in init_server_components."));
         return(1);
       }
     }
@@ -2196,7 +2176,7 @@ static int init_server_components()
                   (opt_noacl ? PLUGIN_INIT_SKIP_PLUGIN_TABLE : 0) |
                   (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
-    sql_print_error(_("Failed to initialize plugins."));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
@@ -2237,7 +2217,7 @@ static int init_server_components()
   /* We have to initialize the storage engines before CSV logging */
   if (ha_init())
   {
-    sql_print_error(_("Can't init databases"));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't init databases"));
     unireg_abort(1);
   }
 
@@ -2257,13 +2237,13 @@ static int init_server_components()
     }
     else
     {
-      sql_print_error(_("Unknown/unsupported table type: %s"),
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
                       default_storage_engine_str);
       unireg_abort(1);
     }
     if (!ha_storage_engine_is_enabled(hton))
     {
-      sql_print_error(_("Default storage engine (%s) is not available"),
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
                       default_storage_engine_str);
       unireg_abort(1);
       assert(global_system_variables.table_plugin);
@@ -2286,7 +2266,7 @@ static int init_server_components()
 
   if (tc_log->open(opt_bin_log ? opt_bin_logname : opt_tc_log_file))
   {
-    sql_print_error(_("Can't initialize tc_log"));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't initialize tc_log"));
     unireg_abort(1);
   }
 
@@ -2317,7 +2297,7 @@ static int init_server_components()
     if (mlockall(MCL_CURRENT))
     {
       if (global_system_variables.log_warnings)
-        sql_print_warning(_("Failed to lock memory. Errno: %d\n"),errno);
+            errmsg_printf(ERRMSG_LVL_WARN, _("Failed to lock memory. Errno: %d\n"),errno);
       locked_in_memory= 0;
     }
     if (user_info)
@@ -2378,7 +2358,7 @@ int main(int argc, char **argv)
     {
       if (global_system_variables.log_warnings)
       {
-        sql_print_warning(_("Asked for %"PRIu64" thread stack, "
+            errmsg_printf(ERRMSG_LVL_WARN, _("Asked for %"PRIu64" thread stack, "
                             "but got %"PRIu64),
                           (uint64_t)my_thread_stack_size,
                           (uint64_t)stack_size);
@@ -2416,7 +2396,7 @@ int main(int argc, char **argv)
   {
     server_id= 1;
 #ifdef EXTRA_DEBUG
-    sql_print_warning(_("You have enabled the binary log, but you haven't set "
+      errmsg_printf(ERRMSG_LVL_WARN, _("You have enabled the binary log, but you haven't set "
                         "server-id to a non-zero value: we force server id to "
                         "1; updates will be logged to the binary log, but "
                         "connections from slaves will not be accepted."));
@@ -2428,6 +2408,7 @@ int main(int argc, char **argv)
 
   network_init();
 
+  safe_read_error_hook= safe_read_error_impl; 
 
   /*
     init signals & alarm
@@ -2459,7 +2440,7 @@ int main(int argc, char **argv)
     unireg_abort(1);
   }
 
-  sql_print_information(_(ER(ER_STARTUP)),my_progname,server_version,
+  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)),my_progname,server_version,
                         "", drizzled_port, COMPILATION_COMMENT);
 
 
@@ -2468,14 +2449,14 @@ int main(int argc, char **argv)
 
 
 #ifdef EXTRA_DEBUG2
-  sql_print_error(_("Before Lock_thread_count"));
+  errmsg_printf(ERRMSG_LVL_ERROR, _("Before Lock_thread_count"));
 #endif
   (void) pthread_mutex_lock(&LOCK_thread_count);
   select_thread_in_use=0;			// For close_connections
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
 #ifdef EXTRA_DEBUG2
-  sql_print_error(_("After lock_thread_count"));
+  errmsg_printf(ERRMSG_LVL_ERROR, _("After lock_thread_count"));
 #endif
 
   /* Wait until cleanup is done */
@@ -2581,7 +2562,7 @@ void handle_connections_sockets()
       if (errno != EINTR)
       {
         if (!select_errors++ && !abort_loop)	/* purecov: inspected */
-          sql_print_error(_("drizzled: Got error %d from select"),
+                errmsg_printf(ERRMSG_LVL_ERROR, _("drizzled: Got error %d from select"),
                           errno); /* purecov: inspected */
       }
       MAYBE_BROKEN_SYSCALL
@@ -2689,7 +2670,6 @@ enum options_drizzled
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_SKIP_PRIOR,
   OPT_STANDALONE,
-  OPT_CONSOLE,
   OPT_SHORT_LOG_FORMAT,
   OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          OPT_INIT_FILE,
@@ -2755,7 +2735,6 @@ enum options_drizzled
   OPT_THREAD_CONCURRENCY, OPT_THREAD_CACHE_SIZE,
   OPT_TMP_TABLE_SIZE, OPT_THREAD_STACK,
   OPT_WAIT_TIMEOUT,
-  OPT_ERROR_LOG_FILE,
   OPT_DEFAULT_WEEK_FORMAT,
   OPT_RANGE_ALLOC_BLOCK_SIZE,
   OPT_QUERY_ALLOC_BLOCK_SIZE, OPT_QUERY_PREALLOC_SIZE,
@@ -2846,11 +2825,6 @@ struct my_option my_long_options[] =
    /* sub_size */     0, /* block_size */ 256,
    /* app_type */ 0
   },
-  {"character-set-client-handshake", OPT_CHARACTER_SET_CLIENT_HANDSHAKE,
-   N_("Don't ignore client side character set value sent during handshake."),
-   (char**) &opt_character_set_client_handshake,
-   (char**) &opt_character_set_client_handshake,
-    0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"character-set-filesystem", OPT_CHARACTER_SET_FILESYSTEM,
    N_("Set the filesystem character set."),
    (char**) &character_set_filesystem_name,
@@ -2876,10 +2850,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.completion_type,
    (char**) &max_system_variables.completion_type, 0, GET_UINT,
    REQUIRED_ARG, 0, 0, 2, 0, 1, 0},
-  {"console", OPT_CONSOLE,
-   N_("Write error output on screen."),
-   (char**) &opt_console, (char**) &opt_console, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
   {"core-file", OPT_WANT_CORE,
    N_("Write core on errors."),
    0, 0, 0, GET_NO_ARG,
@@ -2970,10 +2940,6 @@ struct my_option my_long_options[] =
    N_("File that holds the names for last binary log files."),
    (char**) &opt_binlog_index_name, (char**) &opt_binlog_index_name, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-error", OPT_ERROR_LOG_FILE,
-   N_("Error log file."),
-   (char**) &log_error_file_ptr, (char**) &log_error_file_ptr, 0, GET_STR,
-   OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-isam", OPT_ISAM_LOG,
    N_("Log all MyISAM changes to file."),
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
@@ -3361,12 +3327,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"myisam_block_size", OPT_MYISAM_BLOCK_SIZE,
-   N_("Block size to be used for MyISAM index pages."),
-   (char**) &opt_myisam_block_size,
-   (char**) &opt_myisam_block_size, 0, GET_ULONG, REQUIRED_ARG,
-   MI_KEY_BLOCK_LENGTH, MI_MIN_KEY_BLOCK_LENGTH, MI_MAX_KEY_BLOCK_LENGTH,
-   0, MI_MIN_KEY_BLOCK_LENGTH, 0},
   {"myisam_data_pointer_size", OPT_MYISAM_DATA_POINTER_SIZE,
    N_("Default pointer size to be used for MyISAM tables."),
    (char**) &myisam_data_pointer_size,
@@ -3379,12 +3339,6 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.myisam_max_sort_file_size, 0,
    GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
    0, 1024*1024, 0},
-  {"myisam_repair_threads", OPT_MYISAM_REPAIR_THREADS,
-   N_("Number of threads to use when repairing MyISAM tables. The value of "
-      "1 disables parallel repair."),
-   (char**) &global_system_variables.myisam_repair_threads,
-   (char**) &max_system_variables.myisam_repair_threads, 0,
-   GET_ULONG, REQUIRED_ARG, 1, 1, ULONG_MAX, 0, 1, 0},
   {"myisam_sort_buffer_size", OPT_MYISAM_SORT_BUFFER_SIZE,
    N_("The buffer that is allocated when sorting the index when doing a "
       "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
@@ -3884,7 +3838,7 @@ static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
   opt_skip_slave_start= opt_reckless_slave = 0;
-  drizzle_home[0]= pidfile_name[0]= log_error_file[0]= 0;
+  drizzle_home[0]= pidfile_name[0]= 0;
   opt_bin_log= 0;
   opt_skip_show_db=0;
   opt_logname= opt_binlog_index_name= 0;
@@ -3926,12 +3880,10 @@ static void drizzle_init_variables(void)
     find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
-  log_error_file_ptr= log_error_file;
   language_ptr= language;
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
                         OPTION_QUOTE_SHOW_CREATE | OPTION_SQL_NOTES);
-  protocol_version= PROTOCOL_VERSION;
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
@@ -3949,7 +3901,7 @@ static void drizzle_init_variables(void)
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
-  strncpy(drizzle_real_data_home, get_relative_path(DATADIR),
+  strncpy(drizzle_real_data_home, get_relative_path(LOCALSTATEDIR),
           sizeof(drizzle_real_data_home)-1);
   drizzle_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
   drizzle_data_home_buff[1]=0;
@@ -3983,21 +3935,15 @@ static void drizzle_init_variables(void)
   global_system_variables.myisam_stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   /* Variables that depends on compile options */
-  opt_error_log= 0;
 #ifdef HAVE_BROKEN_REALPATH
   have_symlink=SHOW_OPTION_NO;
 #else
   have_symlink=SHOW_OPTION_YES;
 #endif
-#ifdef HAVE_COMPRESS
-  have_compress= SHOW_OPTION_YES;
-#else
-  have_compress= SHOW_OPTION_NO;
-#endif
 
   const char *tmpenv;
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
-    tmpenv = DEFAULT_DRIZZLE_HOME;
+    tmpenv = PREFIX;
   (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
 }
 
@@ -4031,7 +3977,7 @@ drizzled_get_one_option(int optid,
     if (!drizzled_user || !strcmp(drizzled_user, argument))
       drizzled_user= argument;
     else
-      sql_print_warning(_("Ignoring user change to '%s' because the user was "
+      errmsg_printf(ERRMSG_LVL_WARN, _("Ignoring user change to '%s' because the user was "
                           "set to '%s' earlier on the command line\n"),
                         argument, drizzled_user);
     break;
@@ -4063,9 +4009,6 @@ drizzled_get_one_option(int optid,
   case (int) OPT_BIN_LOG:
     opt_bin_log= test(argument != disabled_my_option);
     break;
-  case (int) OPT_ERROR_LOG_FILE:
-    opt_error_log= 1;
-    break;
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
     break;
@@ -4085,13 +4028,13 @@ drizzled_get_one_option(int optid,
 
       if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
       {
-        sql_print_error(_("Can't start server: cannot resolve hostname!"));
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: cannot resolve hostname!"));
         exit(1);
       }
 
       if (res_lst->ai_next)
       {
-        sql_print_error(_("Can't start server: bind-address refers to "
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: bind-address refers to "
                           "multiple interfaces!"));
         exit(1);
       }
@@ -4100,10 +4043,6 @@ drizzled_get_one_option(int optid,
     break;
   case (int) OPT_PID_FILE:
     strncpy(pidfile_name, argument, sizeof(pidfile_name)-1);
-    break;
-  case OPT_CONSOLE:
-    if (opt_console)
-      opt_error_log= 0;			// Force logs to stdout
     break;
   case OPT_SERVER_ID:
     server_id_supplied = 1;
@@ -4293,9 +4232,6 @@ static void get_options(int *argc,char **argv)
   myisam_max_temp_length=
     (my_off_t) global_system_variables.myisam_max_sort_file_size;
 
-  /* Set global variables based on startup options */
-  myisam_block_size=(uint) 1 << my_bit_log2(opt_myisam_block_size);
-
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||
       init_global_datetime_format(DRIZZLE_TIMESTAMP_TIME,
@@ -4331,17 +4267,18 @@ static void set_server_version(void)
 }
 
 
-static char *get_relative_path(const char *path)
+static const char *get_relative_path(const char *path)
 {
   if (test_if_hard_path(path) &&
-      is_prefix(path,DEFAULT_DRIZZLE_HOME) &&
-      strcmp(DEFAULT_DRIZZLE_HOME,FN_ROOTDIR))
+      is_prefix(path,PREFIX) &&
+      strcmp(PREFIX,FN_ROOTDIR))
   {
-    path+=(uint) strlen(DEFAULT_DRIZZLE_HOME);
+    if (strlen(PREFIX) < strlen(path))
+      path+=(size_t) strlen(PREFIX);
     while (*path == FN_LIBCHAR)
       path++;
   }
-  return (char*) path;
+  return path;
 }
 
 
@@ -4367,10 +4304,11 @@ static void fix_paths(void)
   (void) my_load_path(drizzle_real_data_home,drizzle_real_data_home,drizzle_home);
   (void) my_load_path(pidfile_name,pidfile_name,drizzle_real_data_home);
   (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr ? opt_plugin_dir_ptr :
-                                      get_relative_path(PLUGINDIR), drizzle_home);
+                                      get_relative_path(PKGPLUGINDIR),
+                                      drizzle_home);
   opt_plugin_dir_ptr= opt_plugin_dir;
 
-  char *sharedir=get_relative_path(SHAREDIR);
+  const char *sharedir=get_relative_path(PKGDATADIR);
   if (test_if_hard_path(sharedir))
     strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
   else
@@ -4574,6 +4512,13 @@ void refresh_status(Session *session)
   pthread_mutex_lock(&LOCK_thread_count);
   max_used_connections= thread_count;
   pthread_mutex_unlock(&LOCK_thread_count);
+}
+
+bool safe_read_error_impl(NET *net)
+{
+  if (net->vio)
+    return vio_was_interrupted(net->vio);
+  return false;
 }
 
 

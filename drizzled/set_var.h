@@ -22,6 +22,7 @@
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/set_user_var.h>
+#include <drizzled/item/string.h>
 
 #include <string>
 
@@ -80,10 +81,9 @@ public:
   const char *name;
 
   sys_after_update_func after_update;
-  bool no_support_one_shot;
   sys_var(const char *name_arg, sys_after_update_func func= NULL,
           Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :name(name_arg), after_update(func), no_support_one_shot(1),
+    :name(name_arg), after_update(func),
     binlog_status(binlog_status_arg),
     m_allow_empty_value(true)
   {}
@@ -703,28 +703,13 @@ public:
 };
 
 
-class sys_var_insert_id :public sys_var
-{
-public:
-  sys_var_insert_id(sys_var_chain *chain, const char *name_arg)
-    :sys_var(name_arg)
-  { chain_sys_var(chain); }
-  bool update(Session *session, set_var *var);
-  bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
-  SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-};
-
-
 class sys_var_collation :public sys_var_session
 {
 public:
   sys_var_collation(const char *name_arg,
                     Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     :sys_var_session(name_arg, NULL, binlog_status_arg)
-  {
-    no_support_one_shot= 0;
-  }
+  { }
   bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool check_update_type(Item_result type)
@@ -733,34 +718,6 @@ public:
   }
   bool check_default(enum_var_type) { return 0; }
   virtual void set_default(Session *session, enum_var_type type)= 0;
-};
-
-class sys_var_character_set :public sys_var_session
-{
-public:
-  bool nullable;
-  sys_var_character_set(const char *name_arg, bool is_nullable= 0,
-                        Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var_session(name_arg, NULL, binlog_status_arg), nullable(is_nullable)
-  {
-    /*
-      In fact only almost all variables derived from sys_var_character_set
-      support ONE_SHOT; character_set_results doesn't. But that's good enough.
-    */
-    no_support_one_shot= 0;
-  }
-  bool check(Session *session, set_var *var);
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool check_update_type(Item_result type)
-  {
-    return ((type != STRING_RESULT) && (type != INT_RESULT));
-  }
-  bool check_default(enum_var_type)
-  { return 0; }
-  bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  virtual void set_default(Session *session, enum_var_type type)= 0;
-  virtual const CHARSET_INFO **ci_ptr(Session *session, enum_var_type type)= 0;
 };
 
 class sys_var_collation_sv :public sys_var_collation
@@ -952,7 +909,6 @@ public:
                         Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     :sys_var_session(name_arg, NULL, binlog_status_arg)
   {
-    no_support_one_shot= 0;
     chain_sys_var(chain);
   }
   bool check(Session *session, set_var *var);
@@ -1023,7 +979,6 @@ public:
   virtual int check(Session *session)=0;	/* To check privileges etc. */
   virtual int update(Session *session)=0;	/* To set the value */
   /* light check for PS */
-  virtual bool no_support_one_shot() { return 1; }
 };
 
 
@@ -1069,7 +1024,6 @@ public:
   }
   int check(Session *session);
   int update(Session *session);
-  bool no_support_one_shot() { return var->no_support_one_shot; }
 };
 
 
@@ -1081,25 +1035,6 @@ class set_var_user: public set_var_base
 public:
   set_var_user(Item_func_set_user_var *item)
     :user_var_item(item)
-  {}
-  int check(Session *session);
-  int update(Session *session);
-};
-
-/* For SET NAMES and SET CHARACTER SET */
-
-class set_var_collation_client: public set_var_base
-{
-  const CHARSET_INFO *character_set_client;
-  const CHARSET_INFO *character_set_results;
-  const CHARSET_INFO *collation_connection;
-public:
-  set_var_collation_client(const CHARSET_INFO * const client_coll_arg,
-  			   const CHARSET_INFO * const connection_coll_arg,
-  			   const CHARSET_INFO * const result_coll_arg)
-    :character_set_client(client_coll_arg),
-     character_set_results(result_coll_arg),
-     collation_connection(connection_coll_arg)
   {}
   int check(Session *session);
   int update(Session *session);

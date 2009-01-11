@@ -994,30 +994,43 @@ before_err:
 ******************************************************************************/
 
 int check_that_all_fields_are_given_values(Session *session, Table *entry,
-                                           TableList *table_list)
+                                           TableList *)
 {
   int err= 0;
   MY_BITMAP *write_set= entry->write_set;
 
   for (Field **field=entry->field ; *field ; field++)
   {
-    if (!bitmap_is_set(write_set, (*field)->field_index) &&
-        ((*field)->flags & NO_DEFAULT_VALUE_FLAG) &&
-        ((*field)->real_type() != DRIZZLE_TYPE_ENUM))
+    if (!bitmap_is_set(write_set, (*field)->field_index))
     {
-      bool view= false;
-      if (table_list)
+      /*
+       * If the field doesn't have any default value
+       * and there is no actual value specified in the
+       * INSERT statement, throw error ER_NO_DEFAULT_FOR_FIELD.
+       */
+      if (((*field)->flags & NO_DEFAULT_VALUE_FLAG) &&
+        ((*field)->real_type() != DRIZZLE_TYPE_ENUM))
       {
-        table_list= table_list->top_table();
-        view= test(0);
+        my_error(ER_NO_DEFAULT_FOR_FIELD, MYF(0), (*field)->field_name);
+        err= 1;
       }
+    }
+    else
+    {
+      /*
+       * However, if an actual NULL value was specified
+       * for the field and the field is a NOT NULL field, 
+       * throw ER_BAD_NULL_ERROR.
+       *
+       * Per the SQL standard, inserting NULL into a NOT NULL
+       * field requires an error to be thrown.
+       */
+      if (((*field)->flags & NOT_NULL_FLAG) &&
+          (*field)->is_null())
       {
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_NO_DEFAULT_FOR_FIELD,
-                            ER(ER_NO_DEFAULT_FOR_FIELD),
-                            (*field)->field_name);
+        my_error(ER_BAD_NULL_ERROR, MYF(0), (*field)->field_name);
+        err= 1;
       }
-      err= 1;
     }
   }
   return session->abort_on_warning ? err : 0;

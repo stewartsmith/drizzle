@@ -41,10 +41,13 @@ DROP TABLE t1;
 --echo # Bug #4261
 --echo #
 
-CREATE TABLE t1 (a  VARCHAR(255)) DEFAULT CHARSET koi8r;
-INSERT INTO t1  VALUES (_koi8r x'C1C2C3C4C5'), (NULL);
---exec $DRIZZLE_DUMP --skip-comments --skip-extended-insert test t1
-DROP TABLE t1;
+#
+# @TODO Implement collation checking for UTF8 + collations
+#
+#CREATE TABLE t1 (a  VARCHAR(255)) DEFAULT CHARSET koi8r;
+#INSERT INTO t1  VALUES (_koi8r x'C1C2C3C4C5'), (NULL);
+#--exec $DRIZZLE_DUMP --skip-comments --skip-extended-insert test t1
+#DROP TABLE t1;
 
 --echo #
 --echo # Bug #2634
@@ -86,9 +89,12 @@ drop table ```a`;
 
 --exec $DRIZZLE_DUMP --skip-comments --databases test
 
-create database mysqldump_test_db character set latin2 collate latin2_bin;
---exec $DRIZZLE_DUMP --skip-comments --databases mysqldump_test_db
-drop database mysqldump_test_db;
+#
+# @TODO Implement collation checking for UTF8 + collations
+#
+#create database mysqldump_test_db character set latin2 collate latin2_bin;
+#--exec $DRIZZLE_DUMP --skip-comments --databases mysqldump_test_db
+#drop database mysqldump_test_db;
 
 --echo #
 --echo # Bug #7020
@@ -97,9 +103,12 @@ drop database mysqldump_test_db;
 --echo # --default-character-set=xxx. However, we should dump in UTF8
 --echo # if it is explicitely set.
 
-CREATE TABLE t1 (a  CHAR(10));
-INSERT INTO t1  VALUES (_latin1 'ÄÖÜß');
---exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments test t1
+#
+# @TODO Implement collation checking for UTF8 + collations
+#
+#CREATE TABLE t1 (a  CHAR(10));
+#INSERT INTO t1  VALUES (_latin1 'ÄÖÜß');
+#--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments test t1
 
 --echo #
 --echo # Bug#8063: make test mysqldump [ fail ]
@@ -109,11 +118,14 @@ INSERT INTO t1  VALUES (_latin1 'ÄÖÜß');
 --echo # checking that "mysqldump" is compiled with "latin1"
 --echo #
 
+#
+# @TODO Implement collation checking for UTF8 + collations
+#
 #--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --compatible=mysql323 test t1
---exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --compatible=mysql323 --default-character-set=cp850 test t1
---exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --default-character-set=cp850 --compatible=mysql323 test t1
---exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --default-character-set=utf8 --compatible=mysql323 test t1
-DROP TABLE t1;
+#--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --compatible=mysql323 --default-character-set=cp850 test t1
+#--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --default-character-set=cp850 --compatible=mysql323 test t1
+#--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --default-character-set=utf8 --compatible=mysql323 test t1
+#DROP TABLE t1;
 
 --echo #
 --echo # WL #2319: Exclude Tables from dump
@@ -580,9 +592,9 @@ use test;
 --echo # Bug #9657 mysqldump xml ( -x ) does not format NULL fields correctly
 --echo #
 
-create table t1 (a int(10));
+create table t1 (a int);
 create table t2 (pk int primary key auto_increment,
-a int(10), b varchar(30), c datetime, d blob, e text);
+a int, b varchar(30), c datetime, d blob, e text);
 insert into t1 values (NULL), (10), (20);
 insert into t2 (a, b) values (NULL, NULL),(10, NULL),(NULL, "twenty"),(30, "thirty");
 --exec $DRIZZLE_DUMP  --skip-comments --xml --no-create-info test
@@ -592,15 +604,18 @@ drop table t1, t2;
 --echo # BUG #12123
 --echo #
 
-create table t1 (a text character set utf8, b text character set latin1);
-insert t1 values (0x4F736E616272C3BC636B, 0x4BF66C6E);
-select * from t1;
---exec $DRIZZLE_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
---exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/t1.sql
---exec $DRIZZLE_IMPORT test $MYSQLTEST_VARDIR/tmp/t1.txt
-select * from t1;
+#
+# @TODO Implement collation checking for UTF8 + collations
+#
+#create table t1 (a text character set utf8, b text character set latin1);
+#insert t1 values (0x4F736E616272C3BC636B, 0x4BF66C6E);
+#select * from t1;
+#--exec $DRIZZLE_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
+#--exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/t1.sql
+#--exec $DRIZZLE_IMPORT test $MYSQLTEST_VARDIR/tmp/t1.txt
+#select * from t1;
 
-drop table t1;
+#drop table t1;
 
 --echo #
 --echo # BUG#15328 Segmentation fault occured if my.cnf is invalid for escape sequence
@@ -614,10 +629,10 @@ drop table t1;
 
 create table `t1` (
     t1_name varchar(255) default null,
-    t1_id int(10) not null auto_increment,
+    t1_id int not null auto_increment,
     key (t1_name),
     primary key (t1_id)
-) auto_increment = 1000 default charset=latin1;
+) auto_increment = 1000;
 
 insert into t1 (t1_name) values('bla');
 insert into t1 (t1_name) values('bla');
@@ -669,7 +684,7 @@ CREATE TABLE `t1` (
   `c"d` INT,
   `e``f` INT,
   PRIMARY KEY (`a b`, `c"d`, `e``f`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM;
 insert into t1 values (0815, 4711, 2006);
 
 --exec $DRIZZLE_DUMP --skip-comments --compatible=ansi --order-by-primary test t1

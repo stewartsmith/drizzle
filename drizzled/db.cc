@@ -33,6 +33,7 @@ using namespace std;
 #include <drizzled/db.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
+#include <drizzled/errmsg_print.h>
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
@@ -401,16 +402,16 @@ bool load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
   buffer= db.characterset();
   if (!(create->default_table_charset= get_charset_by_csname(buffer.c_str(), MY_CS_PRIMARY, MYF(0))))
   {
-    sql_print_error(_("Error while loading database options: '%s':"),path);
-    sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error while loading database options: '%s':"),path);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
     create->default_table_charset= default_charset_info;
   }
 
   buffer= db.collation();
   if (!(create->default_table_charset= get_charset_by_name(buffer.c_str(), MYF(0))))
   {
-    sql_print_error(_("Error while loading database options: '%s':"),path);
-    sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error while loading database options: '%s':"),path);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
     create->default_table_charset= default_charset_info;
   }
 
@@ -592,7 +593,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       my_error(EE_STAT, MYF(0), path, errno);
       goto exit;
     }
-    if (my_mkdir(path,0777,MYF(0)) < 0)
+    if (mkdir(path,0777) < 0)
     {
       my_error(ER_CANT_CREATE_DB, MYF(0), db, my_errno);
       error= -1;

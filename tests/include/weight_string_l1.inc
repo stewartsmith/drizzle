@@ -1,4 +1,3 @@
-select @@collation_connection;
 select hex(weight_string('a' LEVEL 1));
 select hex(weight_string('A' LEVEL 1));
 select hex(weight_string('abc' LEVEL 1));

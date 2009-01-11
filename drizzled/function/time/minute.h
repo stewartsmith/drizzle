@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_TIME_MINUTE_H
 #define DRIZZLED_FUNCTION_TIME_MINUTE_H
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_minute :public Item_int_func
 {

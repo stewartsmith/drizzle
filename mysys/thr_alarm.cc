@@ -51,7 +51,7 @@ static int alarm_aborted=1;			/* No alarm thread */
 bool thr_alarm_inited= 0;
 volatile bool alarm_thread_running= 0;
 time_t next_alarm_expire_time= ~ (time_t) 0;
-static RETSIGTYPE process_alarm_part2(int sig);
+static void process_alarm_part2(int sig);
 
 static pthread_mutex_t LOCK_alarm;
 static pthread_cond_t COND_alarm;
@@ -164,7 +164,13 @@ bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
   bool reschedule;
   struct st_my_thread_var *current_my_thread_var= my_thread_var;
 
-  now= my_time(0);
+  now= time(NULL);
+  if(now == (time_t)-1)
+  {
+    fprintf(stderr, "%s: Warning: time() call failed\n", my_progname);
+    return 1;
+  }
+
 #ifndef USE_ONE_SIGNAL_HAND
   pthread_sigmask(SIG_BLOCK,&full_signal_set,&old_mask);
 #endif
@@ -288,7 +294,7 @@ void thr_end_alarm(thr_alarm_t *alarmed)
   every second.
 */
 
-RETSIGTYPE process_alarm(int sig __attribute__((unused)))
+void process_alarm(int sig __attribute__((unused)))
 {
   sigset_t old_mask;
 
@@ -317,7 +323,7 @@ RETSIGTYPE process_alarm(int sig __attribute__((unused)))
 }
 
 
-static RETSIGTYPE process_alarm_part2(int)
+static void process_alarm_part2(int)
 {
   ALARM *alarm_data;
 
@@ -328,45 +334,45 @@ static RETSIGTYPE process_alarm_part2(int)
       uint32_t i;
       for (i=0 ; i < alarm_queue.elements ;)
       {
-	alarm_data=(ALARM*) queue_element(&alarm_queue,i);
-	alarm_data->alarmed=1;			/* Info to thread */
-	if (pthread_equal(alarm_data->thread,alarm_thread) ||
-	    pthread_kill(alarm_data->thread, thr_client_alarm))
-	{
-	  queue_remove(&alarm_queue,i);		/* No thread. Remove alarm */
-	}
-	else
-	  i++;					/* Signal next thread */
+        alarm_data=(ALARM*) queue_element(&alarm_queue,i);
+        alarm_data->alarmed=1;			/* Info to thread */
+        if (pthread_equal(alarm_data->thread,alarm_thread) ||
+            pthread_kill(alarm_data->thread, thr_client_alarm))
+        {
+          queue_remove(&alarm_queue,i);		/* No thread. Remove alarm */
+        }
+        else
+          i++;					/* Signal next thread */
       }
 #ifndef USE_ALARM_THREAD
       if (alarm_queue.elements)
-	alarm(1);				/* Signal soon again */
+        alarm(1);				/* Signal soon again */
 #endif
     }
     else
     {
-      uint32_t now=(uint32_t) my_time(0);
-      uint32_t next=now+10-(now%10);
-      while ((alarm_data=(ALARM*) queue_top(&alarm_queue))->expire_time <= now)
+      time_t now= time(NULL);
+      time_t next= now+10-(now%10);
+      while ((alarm_data= (ALARM*) queue_top(&alarm_queue))->expire_time <= now)
       {
-	alarm_data->alarmed=1;			/* Info to thread */
-	if (pthread_equal(alarm_data->thread,alarm_thread) ||
-	    pthread_kill(alarm_data->thread, thr_client_alarm))
-	{
-	  queue_remove(&alarm_queue,0);		/* No thread. Remove alarm */
-	  if (!alarm_queue.elements)
-	    break;
-	}
-	else
-	{
-	  alarm_data->expire_time=next;
-	  queue_replaced(&alarm_queue);
-	}
+        alarm_data->alarmed=1;			/* Info to thread */
+        if (pthread_equal(alarm_data->thread,alarm_thread) ||
+            pthread_kill(alarm_data->thread, thr_client_alarm))
+        {
+          queue_remove(&alarm_queue,0);		/* No thread. Remove alarm */
+          if (!alarm_queue.elements)
+            break;
+        }
+        else
+        {
+          alarm_data->expire_time=next;
+          queue_replaced(&alarm_queue);
+        }
       }
 #ifndef USE_ALARM_THREAD
       if (alarm_queue.elements)
       {
-	alarm((uint) (alarm_data->expire_time-now));
+        alarm((uint32_t) (alarm_data->expire_time-now));
         next_alarm_expire_time= alarm_data->expire_time;
       }
 #endif
@@ -473,7 +479,7 @@ void thr_alarm_info(ALARM_INFO *info)
   info->max_used_alarms= max_used_alarms;
   if ((info->active_alarms=  alarm_queue.elements))
   {
-    uint32_t now=(uint32_t) my_time(0);
+    time_t now= time(NULL);
     long time_diff;
     ALARM *alarm_data= (ALARM*) queue_top(&alarm_queue);
     time_diff= (long) (alarm_data->expire_time - now);
@@ -488,7 +494,7 @@ void thr_alarm_info(ALARM_INFO *info)
 */
 
 
-RETSIGTYPE thread_alarm(int sig)
+void thread_alarm(int sig)
 {
 #ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,thread_alarm);		/* int. thread system calls */
@@ -501,7 +507,12 @@ RETSIGTYPE thread_alarm(int sig)
 #define tv_nsec ts_nsec
 #endif
 
-/* set up a alarm thread with uses 'sleep' to sleep between alarms */
+/* 
+   Set up a alarm thread which uses 'sleep' to sleep between alarms
+
+  RETURNS
+    NULL on time() failure
+*/
 
 #ifdef USE_ALARM_THREAD
 static void *alarm_handler(void *arg __attribute__((unused)))
@@ -515,21 +526,29 @@ static void *alarm_handler(void *arg __attribute__((unused)))
   {
     if (alarm_queue.elements)
     {
-      uint32_t sleep_time,now= my_time(0);
+      uint32_t sleep_time;
+
+      time_t now= time(NULL);
+      if (now == (time_t)-1)
+      {
+        pthread_mutex_unlock(&LOCK_alarm);
+        return NULL;
+      }
+
       if (alarm_aborted)
-	sleep_time=now+1;
+        sleep_time=now+1;
       else
-	sleep_time= ((ALARM*) queue_top(&alarm_queue))->expire_time;
+        sleep_time= ((ALARM*) queue_top(&alarm_queue))->expire_time;
       if (sleep_time > now)
       {
-	abstime.tv_sec=sleep_time;
-	abstime.tv_nsec=0;
+        abstime.tv_sec=sleep_time;
+        abstime.tv_nsec=0;
         next_alarm_expire_time= sleep_time;
-	if ((error=pthread_cond_timedwait(&COND_alarm,&LOCK_alarm,&abstime)) &&
-	    error != ETIME && error != ETIMEDOUT)
-	{
+        if ((error=pthread_cond_timedwait(&COND_alarm,&LOCK_alarm,&abstime)) &&
+            error != ETIME && error != ETIMEDOUT)
+        {
           assert(1);
-	}
+        }
       }
     }
     else if (alarm_aborted == -1)

@@ -18,7 +18,7 @@
 LDADD=			$(top_builddir)/libdrizzle/libdrizzle.la \
 			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LIBINTL) -lz
+			$(LIBINTL) $(LTLIBZ)
 
 
 noinst_HEADERS =	completion_hash.h \
@@ -37,11 +37,8 @@ bin_PROGRAMS =	drizzle \
 				drizzleslap
 
 drizzle_SOURCES =		drizzle.cc readline.cc completion_hash.cc
-drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS)  \
-				$(NCURSES_LIBS) \
-				$(LDADD) $(CXXLDFLAGS)
-drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${READLINE_CFLAGS} \
-				${W_EXCEPTIONS} 
+drizzle_LDADD =			${LDADD} ${READLINE_LIBS}
+drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${W_EXCEPTIONS} 
 drizzleadmin_SOURCES =		drizzleadmin.cc
 
 drizzlecheck_SOURCES =		drizzlecheck.cc
@@ -52,9 +49,6 @@ drizzleimport_SOURCES=		drizzleimport.cc
 drizzleslap_SOURCES=            drizzleslap.cc
 
 drizzletest_SOURCES=		drizzletest.cc 
-drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
-drizzletest_CXXFLAGS = 		${AM_CXXFLAGS} ${PCRE_CFLAGS}
+drizzletest_LDADD=		${LDADD} ${PCRE_LIBS}
+drizzletest_CXXFLAGS=		${AM_CXXFLAGS} ${PCRE_CFLAGS}
 
-DEFS =	-DDEFAULT_DRIZZLE_HOME="\"$(prefix)\"" \
-	-DDATADIR="\"$(localstatedir)\"" \
-	-DLOCALEDIR=\"$(localedir)\" @DEFS@

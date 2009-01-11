@@ -163,10 +163,6 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     check_completion_type,
                                                     fix_completion_type);
 static sys_var_collation_sv
-sys_collation_connection(&vars, "collation_connection",
-                         &SV::collation_connection, &default_charset_info,
-                         sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_collation_sv
 sys_collation_database(&vars, "collation_database", &SV::collation_database,
                        &default_charset_info,
                        sys_var::SESSION_VARIABLE_IN_BINLOG);
@@ -246,7 +242,6 @@ static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
 static sys_var_session_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
-static sys_var_session_uint32_t       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
 static sys_var_session_size_t	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
 
 static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
@@ -455,7 +450,6 @@ sys_lc_time_names(&vars, "lc_time_names", sys_var::SESSION_VARIABLE_IN_BINLOG);
   statement-based logging mode: t will be different on master and
   slave).
 */
-static sys_var_insert_id sys_insert_id(&vars, "insert_id");
 static sys_var_readonly sys_error_count(&vars, "error_count",
                                         OPT_SESSION,
                                         SHOW_LONG,
@@ -483,7 +477,6 @@ sys_var_session_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
                                            &SV::keep_files_on_create);
 /* Read only variables */
 
-static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /*
   Additional variables (not derived from sys_var class, not accessible as
@@ -501,7 +494,6 @@ static SHOW_VAR fixed_vars[]= {
   {"locked_in_memory",	      (char*) &locked_in_memory,	    SHOW_MY_BOOL},
 #endif
   {"log_bin",                 (char*) &opt_bin_log,                 SHOW_BOOL},
-  {"log_error",               (char*) log_error_file,               SHOW_CHAR},
   {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
   {"open_files_limit",	      (char*) &open_files_limit,	          SHOW_LONGLONG},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
@@ -702,8 +694,8 @@ void fix_slave_exec_mode(enum_var_type)
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT) == 1 &&
       bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
   {
-    sql_print_error(_("Ambiguous slave modes combination."
-                    " STRICT will be used"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Ambiguous slave modes combination."
+                                      " STRICT will be used"));
     bit_do_clear(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT);
   }
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 0)
@@ -1371,6 +1363,14 @@ Item *sys_var::item(Session *session, enum_var_type var_type, LEX_STRING *base)
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_int((uint64_t) value);
   }
+  case SHOW_SIZE:
+  {
+    size_t value;
+    pthread_mutex_lock(&LOCK_global_system_variables);
+    value= *(size_t*) value_ptr(session, var_type, base);
+    pthread_mutex_unlock(&LOCK_global_system_variables);
+    return new Item_int((uint64_t) value);
+  }
   case SHOW_MY_BOOL:
   {
     int32_t value;
@@ -1617,61 +1617,6 @@ bool sys_var_collation::check(Session *, set_var *var)
   }
   var->save_result.charset= tmp;	// Save for update
   return 0;
-}
-
-
-bool sys_var_character_set::check(Session *, set_var *var)
-{
-  const CHARSET_INFO *tmp;
-
-  if (var->value->result_type() == STRING_RESULT)
-  {
-    char buff[STRING_BUFFER_USUAL_SIZE];
-    String str(buff,sizeof(buff), system_charset_info), *res;
-    if (!(res=var->value->val_str(&str)))
-    {
-      if (!nullable)
-      {
-        my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
-        return 1;
-      }
-      tmp= NULL;
-    }
-    else if (!(tmp= get_charset_by_csname(res->c_ptr(),MY_CS_PRIMARY,MYF(0))))
-    {
-      my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), res->c_ptr());
-      return 1;
-    }
-  }
-  else // INT_RESULT
-  {
-    if (!(tmp=get_charset((int) var->value->val_int(),MYF(0))))
-    {
-      char buf[20];
-      int10_to_str((int) var->value->val_int(), buf, -10);
-      my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), buf);
-      return 1;
-    }
-  }
-  var->save_result.charset= tmp;	// Save for update
-  return 0;
-}
-
-
-bool sys_var_character_set::update(Session *session, set_var *var)
-{
-  ci_ptr(session,var->type)[0]= var->save_result.charset;
-  session->update_charset();
-  return 0;
-}
-
-
-unsigned char *sys_var_character_set::value_ptr(Session *session,
-                                                enum_var_type type,
-                                                LEX_STRING *)
-{
-  const CHARSET_INFO * const cs= ci_ptr(session,type)[0];
-  return cs ? (unsigned char*) cs->csname : (unsigned char*) NULL;
 }
 
 
@@ -1942,33 +1887,6 @@ err:
   return result;
 }
 
-
-/*****************************************************************************
-  Functions to handle SET NAMES and SET CHARACTER SET
-*****************************************************************************/
-
-int set_var_collation_client::check(Session *)
-{
-  /* Currently, UCS-2 cannot be used as a client character set */
-  if (character_set_client->mbminlen > 1)
-  {
-    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), "character_set_client",
-             character_set_client->csname);
-    return 1;
-  }
-  return 0;
-}
-
-int set_var_collation_client::update(Session *session)
-{
-  session->variables.character_set_client= character_set_client;
-  session->variables.character_set_results= character_set_results;
-  session->variables.collation_connection= collation_connection;
-  session->update_charset();
-  session->protocol_text.init(session);
-  return 0;
-}
-
 /****************************************************************************/
 
 bool sys_var_timestamp::update(Session *session,  set_var *var)
@@ -2010,22 +1928,6 @@ unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
   */
   session->sys_var_tmp.uint64_t_value=
     session->read_first_successful_insert_id_in_prev_stmt();
-  return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
-}
-
-
-bool sys_var_insert_id::update(Session *session, set_var *var)
-{
-  session->force_one_auto_inc_interval(var->save_result.uint64_t_value);
-  return 0;
-}
-
-
-unsigned char *sys_var_insert_id::value_ptr(Session *session, enum_var_type,
-                                            LEX_STRING *)
-{
-  session->sys_var_tmp.uint64_t_value=
-    session->auto_inc_intervals_forced.minimum();
   return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
 }
 
@@ -2644,35 +2546,6 @@ int sql_set_variables(Session *session, List<set_var_base> *var_list)
 err:
   free_underlaid_joins(session, &session->lex->select_lex);
   return(error);
-}
-
-
-/**
-  Say if all variables set by a SET support the ONE_SHOT keyword
-  (currently, only character set and collation do; later timezones
-  will).
-
-  @param var_list	List of variables to update
-
-  @note
-    It has a "not_" because it makes faster tests (no need to "!")
-
-  @retval
-    0	all variables of the list support ONE_SHOT
-  @retval
-    1	at least one does not support ONE_SHOT
-*/
-
-bool not_all_support_one_shot(List<set_var_base> *var_list)
-{
-  List_iterator_fast<set_var_base> it(*var_list);
-  set_var_base *var;
-  while ((var= it++))
-  {
-    if (var->no_support_one_shot())
-      return 1;
-  }
-  return 0;
 }
 
 

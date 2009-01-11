@@ -13,8 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
+#include "heap.h"
+
 #include <storage/heap/ha_heap.h>
 #include <storage/heap/heapdef.h>
 #include <drizzled/error.h>
@@ -23,6 +24,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
+
 
 pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
 
@@ -818,6 +820,12 @@ void ha_heap::get_auto_increment(uint64_t, uint64_t, uint64_t,
   *first_value= stats.auto_increment_value;
   /* such table has only table-level locking so reserves up to +inf */
   *nb_reserved_values= UINT64_MAX;
+}
+
+
+int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
+{
+  return memcmp(ref1, ref2, sizeof(HEAP_PTR));
 }
 
 

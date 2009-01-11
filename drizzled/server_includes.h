@@ -56,6 +56,9 @@
 #include <drizzled/sql_table.h>
 #include <drizzled/log.h>
 
+/* Routines for printing error messages */
+#include <drizzled/errmsg_print.h>
+
 #include <string>
 #include <sstream>
 #include <bitset>
@@ -116,7 +119,7 @@ extern const char * const TRN_EXT;
 extern char language[FN_REFLEN];
 extern char glob_hostname[FN_REFLEN], drizzle_home[FN_REFLEN];
 extern char pidfile_name[FN_REFLEN], system_time_zone[30], *opt_init_file;
-extern char log_error_file[FN_REFLEN], *opt_tc_log_file;
+extern char *opt_tc_log_file;
 extern const double log_10[309];
 extern uint64_t log_10_int[20];
 extern uint64_t keybuff_size;
@@ -163,11 +166,10 @@ extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;
 extern bool opt_using_transactions;
 extern bool using_update_log, server_id_supplied;
-extern bool opt_update_log, opt_bin_log, opt_error_log;
+extern bool opt_update_log, opt_bin_log;
 extern bool opt_log;
 extern bool opt_slow_log;
 extern ulong log_output_options;
-extern bool opt_log_queries_not_using_indexes;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
 extern uint32_t volatile thread_count, thread_running, global_read_lock;
@@ -194,7 +196,7 @@ extern TableList general_log, slow_log;
 extern FILE *stderror_file;
 extern pthread_mutex_t LOCK_drizzle_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
-       LOCK_error_log, LOCK_uuid_generator,
+       LOCK_uuid_generator,
        LOCK_crypt, LOCK_timezone,
        LOCK_slave_list, LOCK_active_mi, LOCK_global_read_lock,
        LOCK_global_system_variables, LOCK_user_conn,
@@ -234,8 +236,6 @@ extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
 
 extern SHOW_COMP_OPTION have_symlink;
-extern SHOW_COMP_OPTION have_compress;
-
 
 extern pthread_t signal_thread;
 
@@ -262,7 +262,7 @@ uint32_t convert_period_to_month(uint32_t period);
 uint32_t convert_month_to_period(uint32_t month);
 void get_date_from_daynr(long daynr,uint32_t *year, uint32_t *month,
 			 uint32_t *day);
-my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *not_exist);
+time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *not_exist);
 bool str_to_time_with_warn(const char *str,uint32_t length,DRIZZLE_TIME *l_time);
 enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, uint32_t length,
                                          DRIZZLE_TIME *l_time, uint32_t flags);

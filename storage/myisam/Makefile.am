@@ -13,18 +13,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir =          $(prefix)
-MYSQLLIBdir =           $(pkglibdir)
-
 LDADD=			libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysys.la \
-			$(top_builddir)/mystrings/libmystrings.la -lz \
+			$(top_builddir)/mystrings/libmystrings.la \
+			$(LTLIBZ) \
 			$(LIBINTL)
-
-DEFS =                  @DEFS@
 
 EXTRA_DIST =		plug.in
 

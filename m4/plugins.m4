@@ -301,6 +301,7 @@ AC_DEFUN([DRIZZLE_CONFIGURE_PLUGINS],[
     _DRIZZLE_CHECK_PLUGIN_ARGS([$1])
     _DRIZZLE_CONFIGURE_PLUGINS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
     _DRIZZLE_EMIT_PLUGIN_ACTIONS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
+    AC_SUBST([drizzle_plugin_files])
     AC_SUBST([mysql_se_dirs])
     AC_SUBST([mysql_pg_dirs])
     AC_SUBST([mysql_se_unittest_dirs])
@@ -803,12 +804,10 @@ dnl ---------------------------------------------------------------------------
 AC_DEFUN([_DRIZZLE_INCLUDE_LIST],[
  ifelse([$1], [], [], [
   m4_define([__mysql_include__],[$1])
-  dnl We have to use builtin(), because sinclude would generate an error
-  dnl "file $1 does not exists" in aclocal-1.8 - which is a bug, clearly
-  dnl violating m4 specs, and which is fixed in aclocal-1.9
-  builtin([include],$1)
+  m4_sinclude($1)
   m4_undefine([__mysql_include__])
   _DRIZZLE_INCLUDE_LIST(m4_shift($@))
+  drizzle_plugin_files="\${top_srcdir}/$1 ${drizzle_plugin_files}"
  ])
 ])
 

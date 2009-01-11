@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_FUNCTION_TIME_EXTRACT_H
 #define DRIZZLED_FUNCTION_TIME_EXTRACT_H
 
-#include <drizzled/function/int.h>
+#include <drizzled/function/math/int.h>
 
 class Item_extract :public Item_int_func
 {

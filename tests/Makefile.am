@@ -15,14 +15,10 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 # MA 02111-1307, USA
 
-## Process this file with automake to create Makefile.in
-
-SUBDIRS = 
-
+srcdir=			${top_srcdir}/tests
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	valgrind.supp $(PRESCRIPTS)
-EXTRA_DIST = 		$(EXTRA_SCRIPTS) suite
 GENSCRIPTS =		install_test_db dtr test-run
 PRESCRIPTS =		test-run.pl stress-test.pl
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
@@ -34,56 +30,50 @@ LDADD=			$(top_builddir)/mysys/libmysys.la \
                         $(top_builddir)/mystrings/libmystrings.la \
 			$(LIBINTL)
 
-check: test-drizzle
+TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
+		${top_srcdir}/tests/test-run.pl \
+		--vardir=${top_builddir}/tests/var \
+		--testdir=${top_srcdir}/tests \
+		--mtr-build-thread=$$$$
 
-dist-hook:
-	mkdir -p \
-		$(distdir)/t \
-                $(distdir)/extra/binlog_tests \
-                $(distdir)/extra/rpl_tests \
-		$(distdir)/r \
-		$(distdir)/include \
-		$(distdir)/std_data \
-		$(distdir)/std_data/parts \
-		$(distdir)/lib \
-		$(distdir)/lib/My
-	-$(INSTALL_DATA) $(srcdir)/t/*.def $(distdir)/t
-	$(INSTALL_DATA) $(srcdir)/t/*.test $(distdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.imtest $(distdir)/t
-	$(INSTALL_DATA) $(srcdir)/t/*.sql $(distdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.disabled $(distdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.opt $(srcdir)/t/*.slave-mi $(distdir)/t
-	-$(INSTALL_SCRIPT) $(srcdir)/t/*.sh $(distdir)/t
-	$(INSTALL_DATA) $(srcdir)/extra/binlog_tests/*.test $(distdir)/extra/binlog_tests
-	$(INSTALL_DATA) $(srcdir)/extra/rpl_tests/*.test $(distdir)/extra/rpl_tests
-	-$(INSTALL_DATA) $(srcdir)/extra/binlog_tests/*.opt $(distdir)/extra/binlog_tests
-	-$(INSTALL_DATA) $(srcdir)/extra/rpl_tests/*.opt $(distdir)/extra/rpl_tests
-	$(INSTALL_DATA) $(srcdir)/include/*.inc $(distdir)/include
-	$(INSTALL_DATA) $(srcdir)/include/*.sql $(distdir)/include
-	$(INSTALL_DATA) $(srcdir)/include/*.test $(distdir)/include
-	$(INSTALL_DATA) $(srcdir)/r/*.result $(srcdir)/r/*.require $(distdir)/r
-	$(INSTALL_DATA) $(srcdir)/std_data/Moscow_leap $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/Index.xml $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.dat $(srcdir)/std_data/*.000001 $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/des_key_file $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.pem $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.frm $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.MY* $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.cnf $(distdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/parts/part_* $(distdir)/std_data/parts
-	$(INSTALL_DATA) $(srcdir)/lib/*.pl $(distdir)/lib
-	$(INSTALL_DATA) $(srcdir)/lib/My/*.pm $(distdir)/lib/My
+EXTRA_DIST = \
+	$(EXTRA_SCRIPTS) \
+	suite \
+	${srcdir}/t \
+	${srcdir}/extra/rpl_tests/*.test \
+	${srcdir}/extra/binlog_tests/*.test \
+	${srcdir}/include/*.inc \
+	${srcdir}/include/*.sql \
+	${srcdir}/include/*.test \
+	${srcdir}/r/*.result \
+	${srcdir}/r/*.require \
+	${srcdir}/std_data/Moscow_leap \
+	${srcdir}/std_data/Index.xml \
+	${srcdir}/std_data/*.dat \
+	${srcdir}/std_data/*.000001 \
+	${srcdir}/std_data/des_key_file \
+	${srcdir}/std_data/*.pem \
+	${srcdir}/std_data/*.txt \
+	${srcdir}/std_data/*.frm \
+	${srcdir}/std_data/*.MY* \
+	${srcdir}/std_data/*.cnf \
+	${srcdir}/std_data/parts/part_* \
+	${srcdir}/lib/*.pl \
+	${srcdir}/lib/My/*.pm
+
+check: test-drizzle
 
 # dtr - a shortcut for executing test-run.pl
 dtr:
 	$(RM) -f mtr dtr
-	$(LN_S) test-run.pl mtr
-	$(LN_S) test-run.pl dtr
+	$(LN_S) ${top_srcdir}/tests/test-run.pl mtr
+	$(LN_S) ${top_srcdir}/tests/test-run.pl dtr
+	$(mkdir_p) ${top_builddir}/tests/var
 
 # test-run - a shortcut for executing test-run.pl
 test-run:
 	$(RM) -f test-run
-	$(LN_S) test-run.pl test-run
+	$(LN_S) ${top_srcdir}/tests/test-run.pl test-run
 
 
 .PHONY: test \
@@ -120,15 +110,15 @@ test-run:
 
 test-nr:
 	cd tests ; \
-	  ./test-run $(force) --mysqld=--binlog-format=row
+	  $(TEST_RUN) $(force) --mysqld=--binlog-format=row
 
 test-ns:
 	cd tests ; \
-	  ./test-run $(force) $(mem) --mysqld=--binlog-format=mixed
+	  $(TEST_RUN) $(force) $(mem) --mysqld=--binlog-format=mixed
 
 test-binlog-statement:
 	cd tests ; \
-	  ./test-run $(force) --mysqld=--binlog-format=statement
+	  $(TEST_RUN) $(force) --mysqld=--binlog-format=statement
 
 test: test-drizzle
 
@@ -136,6 +126,7 @@ test: test-drizzle
 # maintenance and verification
 
 test-drizzle:
-	  $(PERL) -I$(top_srcdir)/tests/lib \
-		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
-		--suite=main,vcol
+	  $(TEST_RUN) --fast --reorder --force --suite=main,vcol
+
+distclean-local:
+	rm -rf var

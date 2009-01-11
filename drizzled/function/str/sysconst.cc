@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
+#include <drizzled/item/string.h>
 #include <drizzled/function/str/sysconst.h>
 
 Item *Item_func_sysconst::safe_charset_converter(const CHARSET_INFO * const tocs)

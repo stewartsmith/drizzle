@@ -13,15 +13,6 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-MYSQLDATAdir =$(localstatedir)
-
-MYSQLSHAREdir =$(pkgdatadir)
-
-MYSQLBASEdir=$(prefix)
-
-MYSQLLIBdir=            $(pkglibdir)
-
-pkgplugindir =$(pkglibdir)/plugin
 
 sbin_PROGRAMS= drizzled
 
@@ -31,8 +22,6 @@ bin_PROGRAMS =
 
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
-
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${EVENT_CFLAGS} ${PROTOBUF_CFLAGS}
 
 DTRACE = @DTRACE@
 
@@ -57,7 +46,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		current_session.h \
 		common.h \
 		comp_creator.h \
-		configmake.h \
 		connect.h \
 		cost_vect.h \
 		data_home.h \
@@ -66,6 +54,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		dtcollation.h \
 		errmsg.h \
 		error.h \
+		errmsg_print.h \
 		error_injection.h \
 		field.h \
 		field_iterator.h \
@@ -87,65 +76,69 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/varstring.h \
 		filesort_info.h \
 		foreign_key.h \
-		function/abs.h \
-		function/acos.h \
 		function/ascii.h \
-		function/asin.h \
-		function/atan.h \
 		function/additive_op.h \
 		function/benchmark.h \
 		function/bit.h \
 		function/bit_count.h \
 		function/bit_length.h \
-		function/ceiling.h \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
-		function/cos.h \
-		function/dec.h \
-		function/decimal_typecast.h \
-		function/divide.h \
-		function/exp.h \
 		function/field.h \
 		function/find_in_set.h \
-		function/floor.h \
 		function/found_rows.h \
 		function/func.h \
+		function/get_variable.h \
 		function/get_system_var.h \
 		function/get_user_var.h \
-		function/int.h \
-		function/integer.h \
-		function/int_divide.h \
-		function/int_val.h \
 		function/last_insert.h \
 		function/length.h \
-		function/ln.h \
 		function/locate.h \
-		function/log.h \
 		function/master_pos_wait.h \
 		function/min_max.h \
-		function/minus.h \
-		function/mod.h \
-		function/multiply.h \
-		function/neg.h \
 		function/num1.h \
 		function/numhybrid.h \
 		function/num_op.h \
-		function/ord.h \
-		function/plus.h \
-		function/pow.h \
-		function/real.h \
 		function/rollup_const.h \
-		function/round.h \
 		function/row_count.h \
 		function/set_user_var.h \
 		function/sign.h \
 		function/signed.h \
-		function/sin.h \
-		function/sqrt.h \
-		function/tan.h \
+		function/units.h \
 		function/unsigned.h \
+		function/update_hash.h \
 		function/user_var_as_out_param.h \
+		function/math/abs.h \
+		function/math/acos.h \
+		function/math/asin.h \
+		function/math/atan.h \
+		function/math/ceiling.h \
+		function/math/cos.h \
+		function/math/dec.h \
+		function/math/decimal_typecast.h \
+		function/math/divide.h \
+		function/math/exp.h \
+		function/math/floor.h \
+		function/math/int_divide.h \
+		function/math/integer.h \
+		function/math/int.h \
+		function/math/int_val.h \
+		function/math/ln.h \
+		function/math/log.h \
+		function/math/minus.h \
+		function/math/mod.h \
+		function/math/multiply.h \
+		function/math/neg.h \
+		function/math/ord.h \
+		function/math/plus.h \
+		function/math/pow.h \
+		function/math/rand.h \
+		function/math/real.h \
+		function/math/round.h \
+		function/math/sin.h \
+		function/math/sqrt.h \
+		function/math/tan.h \
 		function/str/alloc_buffer.h \
 		function/str/binary.h \
 		function/str/char.h \
@@ -177,7 +170,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/trim.h \
 		function/str/user.h \
 		function/str/uuid.h \
-		function/str/weight_string.h
+		function/str/weight_string.h \
 		function/time/add_time.h \
 		function/time/curdate.h \
 		function/time/curtime.h \
@@ -225,6 +218,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		ha_trx_info.h \
 		ha_statistics.h \
 		handler.h \
+		handlerton.h \
 		handler_structs.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
@@ -282,6 +276,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		my_decimal.h\
 		name_resolution_context.h \
 		name_resolution_context_state.h \
+		natural_join_column.h \
+		nested_join.h \
 		opt_range.h \
 		order.h \
 		parser.h \
@@ -297,6 +293,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		probes.h \
 		protocol.h \
 		qcache.h \
+		query_arena.h \
 		query_id.h \
 		rename.h \
 		replication/binlog.h \
@@ -342,12 +339,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		tmp_table.h \
 		tzfile.h \
 		tztime.h \
+		unireg.h \
 		virtual_column_info.h \
 		xid.h
 
 noinst_LTLIBRARIES = \
 		libhandler.la \
-		libyacc.la \
 		libitem.la \
 		libutil.la \
 		libfield.la \
@@ -356,17 +353,15 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(Z_LIBS) $(LIBINTL) 
+	$(LTLIBZ) $(LIBINTL)
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
-		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
-		 -lprotobuf \
-		 $(LDADD) \
-		 $(CXXLDFLAGS) \
-		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS)
+		 $(LDADD) $(LTLIBUUID) \
+		 $(LIBDL_LIBS) $(LTLIBEVENT) $(LTLIBPROTOBUF) \
+		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
 drizzled_LDFLAGS =
@@ -393,6 +388,7 @@ drizzled_SOURCES = \
 		dtcollation.cc \
 		errmsg.cc \
 		error.cc \
+		errmsg_print.cc \
 		field.cc \
 		field_conv.cc \
 		field_iterator.cc \
@@ -409,7 +405,7 @@ drizzled_SOURCES = \
 		log_event.cc \
 		logging.cc \
 		mf_iocache.cc \
-		my_decimal.cc\
+		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
 		opt_range.cc \
@@ -459,6 +455,7 @@ drizzled_SOURCES = \
 		sql_udf.cc \
 		sql_union.cc \
 		sql_update.cc \
+		sql_yacc.yy \
 		stacktrace.cc \
 		strfunc.cc \
 		table.cc \
@@ -484,10 +481,6 @@ gen_lex_hash_LDFLAGS=
 
 libhandler_la_SOURCES = handler.cc handlerton.cc
 
-# Code output from YACC contains GOBS of unused macros, and I can't
-# figure out how to turn it off.
-libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_UNUSED_MACROS}
-libyacc_la_SOURCES = sql_yacc.yy
 AM_YFLAGS = -p DRIZZLE -d --verbose
 
 # This may seem silly, but it's required to get the object files prefixed
@@ -557,70 +550,70 @@ libfield_la_SOURCES = \
 libfunction_la_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CFLAGS}
 libfunction_la_LIBADD= libutil.la
 libfunction_la_SOURCES = \
-		function/abs.cc \
-		function/acos.cc \
 		function/ascii.cc \
-		function/asin.cc \
-		function/atan.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
 		function/bit.cc \
 		function/bit_count.cc \
 		function/char_length.cc \
 		function/check_reserved_words.cc \
-		function/ceiling.cc \
 		function/connection_id.cc \
 		function/coercibility.cc \
-		function/cos.cc \
-		function/decimal_typecast.cc \
-		function/divide.cc \
-		function/exp.cc \
 		function/get_user_var.cc \
 		function/get_variable.cc \
 		function/field.cc \
 		function/find_in_set.cc \
-		function/floor.cc \
 		function/found_rows.cc \
 		function/func.cc \
 		function/get_system_var.cc \
 		function/get_variable.cc \
-		function/int.cc \
-		function/integer.cc \
-		function/int_divide.cc \
-		function/int_val.cc \
 		function/last_insert.cc \
 		function/length.cc \
-		function/ln.cc \
 		function/locate.cc \
-		function/log.cc \
 		function/master_pos_wait.cc \
 		function/min_max.cc \
-		function/minus.cc \
-		function/mod.cc \
-		function/multiply.cc \
-		function/neg.cc \
 		function/num1.cc \
 		function/numhybrid.cc \
 		function/num_op.cc \
-		function/ord.cc \
-		function/plus.cc \
-		function/pow.cc \
-		function/rand.cc \
-		function/real.cc \
-		function/round.cc \
 		function/row_count.cc \
 		function/set_user_var.cc \
 		function/shift.cc \
 		function/sign.cc \
 		function/signed.cc \
-		function/sin.cc \
-		function/sqrt.cc \
-		function/tan.cc \
 		function/update_hash.cc \
 		function/units.cc \
 		function/unsigned.cc \
 		function/user_var_as_out_param.cc \
 		function/user_var_entry.cc \
+		function/math/abs.cc \
+		function/math/acos.cc \
+		function/math/asin.cc \
+		function/math/atan.cc \
+		function/math/ceiling.cc \
+		function/math/cos.cc \
+		function/math/decimal_typecast.cc \
+		function/math/divide.cc \
+		function/math/exp.cc \
+		function/math/floor.cc \
+		function/math/int_divide.cc \
+		function/math/integer.cc \
+		function/math/int.cc \
+		function/math/int_val.cc \
+		function/math/ln.cc \
+		function/math/log.cc \
+		function/math/minus.cc \
+		function/math/mod.cc \
+		function/math/multiply.cc \
+		function/math/neg.cc \
+		function/math/ord.cc \
+		function/math/plus.cc \
+		function/math/pow.cc \
+		function/math/rand.cc \
+		function/math/real.cc \
+		function/math/round.cc \
+		function/math/sin.cc \
+		function/math/sqrt.cc \
+		function/math/tan.cc \
 		function/str/alloc_buffer.cc \
 		function/str/binary.cc \
 		function/str/char.cc \
@@ -698,15 +691,6 @@ libfunction_la_SOURCES = \
 		function/time/yearweek.cc
 
 
-
-DEFS =-DDRIZZLE_SERVER \
-      -DDEFAULT_DRIZZLE_HOME="\"$(MYSQLBASEdir)\"" \
-      -DDATADIR="\"$(MYSQLDATAdir)\"" \
-      -DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
-      -DPLUGINDIR="\"$(pkgplugindir)\"" \
-      -DLOCALEDIR=\"$(localedir)\" \
-      @DEFS@
-
 if BUILD_GCC_PCH
 PCHHEADERS = \
 		definitions.h.gch \
@@ -725,7 +709,6 @@ BUILT_MAINT_SRC = sql_yacc.cc \
 
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		lex_hash.h \
-		configvar.h \
 		$(PCHHEADERS)
 
 EXTRA_DIST = \
@@ -759,46 +742,13 @@ probes.h: probes.d
 	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
 	rm probes.h.bak
 
-configmake.h: Makefile
-	rm -f $@-t $@
-	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
-	  echo '#define PREFIX "$(prefix)"'; \
-	  echo '#define EXEC_PREFIX "$(exec_prefix)"'; \
-	  echo '#define BINDIR "$(bindir)"'; \
-	  echo '#define SBINDIR "$(sbindir)"'; \
-	  echo '#define LIBEXECDIR "$(libexecdir)"'; \
-	  echo '#define DATAROOTDIR "$(datarootdir)"'; \
-	  echo '#define DATADIR "$(datadir)"'; \
-	  echo '#define SYSCONFDIR "$(sysconfdir)"'; \
-	  echo '#define SHAREDSTATEDIR "$(sharedstatedir)"'; \
-	  echo '#define LOCALSTATEDIR "$(localstatedir)"'; \
-	  echo '#define INCLUDEDIR "$(includedir)"'; \
-	  echo '#define OLDINCLUDEDIR "$(oldincludedir)"'; \
-	  echo '#define DOCDIR "$(docdir)"'; \
-	  echo '#define INFODIR "$(infodir)"'; \
-	  echo '#define HTMLDIR "$(htmldir)"'; \
-	  echo '#define DVIDIR "$(dvidir)"'; \
-	  echo '#define PDFDIR "$(pdfdir)"'; \
-	  echo '#define PSDIR "$(psdir)"'; \
-	  echo '#define LIBDIR "$(libdir)"'; \
-	  echo '#define LISPDIR "$(lispdir)"'; \
-	  echo '#define LOCALEDIR "$(localedir)"'; \
-	  echo '#define MANDIR "$(mandir)"'; \
-	  echo '#define MANEXT "$(manext)"'; \
-	  echo '#define PKGDATADIR "$(pkgdatadir)"'; \
-	  echo '#define PKGINCLUDEDIR "$(pkgincludedir)"'; \
-	  echo '#define PKGLIBDIR "$(pkglibdir)"'; \
-	  echo '#define PKGLIBEXECDIR "$(pkglibexecdir)"'; \
-	} | sed '/""/d' > $@-t
-	mv $@-t $@
 
+SUFFIXES = .d .gch
 
 if BUILD_GCC_PCH
-%.h.gch: %.h
+.h.gch:
 	$(CXXCOMPILE) -include config.h ${NO_UNUSED_MACROS} -c $<
 endif
-
-SUFFIXES = .d
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)

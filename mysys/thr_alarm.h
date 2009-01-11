@@ -71,7 +71,7 @@ typedef int thr_alarm_entry;
 typedef thr_alarm_entry* thr_alarm_t;
 
 typedef struct st_alarm {
-  uint32_t expire_time;
+  time_t expire_time;
   thr_alarm_entry alarmed;		/* set when alarm is due */
   pthread_t thread;
   my_thread_id thread_id;
@@ -82,7 +82,7 @@ extern uint32_t thr_client_alarm;
 extern pthread_t alarm_thread;
 
 int compare_uint32_t(void *unused, unsigned char *a_ptr,unsigned char* b_ptr);
-RETSIGTYPE thread_alarm(int sig);
+void thread_alarm(int sig);
 
 #define thr_alarm_init(A) (*(A))=0
 #define thr_alarm_in_use(A) (*(A)!= 0)
@@ -92,7 +92,7 @@ bool thr_alarm(thr_alarm_t *alarmed, uint32_t sec, ALARM *buff);
 void thr_alarm_kill(my_thread_id thread_id);
 void thr_end_alarm(thr_alarm_t *alarmed);
 void end_thr_alarm(bool free_structures);
-RETSIGTYPE process_alarm(int);
+void process_alarm(int);
 #ifndef thr_got_alarm
 bool thr_got_alarm(thr_alarm_t *alrm);
 #endif

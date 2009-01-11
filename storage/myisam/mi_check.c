@@ -2884,7 +2884,7 @@ static int sort_key_read(MI_SORT_PARAM *sort_param, void *key)
      _mi_make_key(info, sort_param->key, (unsigned char*) key,
 		  sort_param->record, sort_param->filepos));
 #ifdef HAVE_purify
-  memset(key+sort_param->real_key_length, 0,
+  memset((unsigned char *)key+sort_param->real_key_length, 0,
          (sort_param->key_length-sort_param->real_key_length));
 #endif
   return(sort_write_record(sort_param));
@@ -3325,8 +3325,18 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
 	if (sort_info->buff_length < reclength)
 	{
           void *tmpptr= NULL;
-	  if (!(tmpptr= realloc(sort_info->buff, reclength)))
+	  tmpptr= realloc(sort_info->buff, reclength);
+          if(tmpptr)
+          {
 	    sort_info->buff_length=reclength;
+            sort_info->buff= tmpptr;
+          }
+          else
+          {
+            mi_check_print_error(param,"Could not realloc() sort_info->buff "
+                                 " to %ul bytes", reclength);
+            return(1);
+          }
 	}
 	from= sort_info->buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER);
       }

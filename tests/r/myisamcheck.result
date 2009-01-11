@@ -1,0 +1,15 @@
+drop table if exists t1,t2;
+create table t1(n int not null, key(n), key(n), key(n), key(n)) engine=myisam;
+check table t1 extended;
+insert into t1 values (200000);
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+drop table t1;
+CREATE TEMPORARY TABLE t1(a INT) engine=myisam;
+CHECK TABLE t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+REPAIR TABLE t1;
+Table	Op	Msg_type	Msg_text
+test.t1	repair	status	OK
+DROP TABLE t1;

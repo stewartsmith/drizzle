@@ -109,7 +109,7 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
       strcpy(to, MYSQL50_TABLE_NAME_PREFIX);
       strncat(to, from, to_length-MYSQL50_TABLE_NAME_PREFIX_LENGTH-1);
       res= strlen(to);
-      sql_print_error(_("Invalid (old?) table or database name '%s'"), from);
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid (old?) table or database name '%s'"), from);
     }
   }
 
@@ -1914,7 +1914,7 @@ bool mysql_create_table_no_lock(Session *session,
   path[path_length - reg_ext_length]= '\0'; // Remove .frm extension
   if (rea_create_table(session, path, db, table_name,
                        create_info, alter_info->create_list,
-                       key_count, key_info_buffer, file))
+                       key_count, key_info_buffer, file, false))
     goto unlock_and_end;
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
@@ -2630,16 +2630,6 @@ send_result_message:
       }
       break;
 
-    case HA_ADMIN_NOT_BASE_TABLE:
-      {
-        char buf[ERRMSGSIZE+20];
-        uint32_t length= snprintf(buf, ERRMSGSIZE,
-                              ER(ER_BAD_TABLE_ERROR), table_name);
-        protocol->store(STRING_WITH_LEN("note"), system_charset_info);
-        protocol->store(buf, length, system_charset_info);
-      }
-      break;
-
     case HA_ADMIN_OK:
       protocol->store(STRING_WITH_LEN("status"), system_charset_info);
       protocol->store(STRING_WITH_LEN("OK"), system_charset_info);
@@ -2715,7 +2705,7 @@ send_result_message:
           const char *err_msg= session->main_da.message();
           if (!session->vio_ok())
           {
-            sql_print_error("%s",err_msg);
+            errmsg_printf(ERRMSG_LVL_ERROR, "%s", err_msg);
           }
           else
           {
@@ -2736,14 +2726,6 @@ send_result_message:
       table->next_global= save_next_global;
       goto send_result_message;
     }
-    case HA_ADMIN_WRONG_CHECKSUM:
-    {
-      protocol->store(STRING_WITH_LEN("note"), system_charset_info);
-      protocol->store(ER(ER_VIEW_CHECKSUM), strlen(ER(ER_VIEW_CHECKSUM)),
-                      system_charset_info);
-      break;
-    }
-
     case HA_ADMIN_NEEDS_UPGRADE:
     case HA_ADMIN_NEEDS_ALTER:
     {
@@ -2927,21 +2909,23 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
   schema_table->table->use_all_columns();
   if (mysql_prepare_alter_table(session, schema_table->table,
                                 &local_create_info, &alter_info))
-    return(1);
+    return true;
+
   if (mysql_prepare_create_table(session, &local_create_info, &alter_info,
                                  tmp_table, &db_options,
                                  schema_table->table->file,
                                  &schema_table->table->s->key_info, &keys, 0))
-    return(1);
+    return true;
+
   local_create_info.max_rows= 0;
-  if (mysql_create_frm(session, dst_path, NULL, NULL,
+  if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
                        &local_create_info, alter_info.create_list,
                        keys, schema_table->table->s->key_info,
-                       schema_table->table->file))
-    return(1);
-  return(0);
-}
+                       schema_table->table->file, true))
+    return true;
 
+  return false;
+}
 
 /*
   Create a table identical to the specified table
@@ -5029,7 +5013,7 @@ end_online:
       free(t_table);
     }
     else
-      sql_print_warning(_("Could not open table %s.%s after rename\n"),
+      errmsg_printf(ERRMSG_LVL_WARN, _("Could not open table %s.%s after rename\n"),
                         new_db,table_name);
     ha_flush_logs(old_db_type);
   }

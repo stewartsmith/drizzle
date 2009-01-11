@@ -36,35 +36,13 @@
 #include "client_priv.h"
 #include <string>
 #include CMATH_H
+#include <algorithm>
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
 #include <sys/ioctl.h>
-
-
-#if defined(HAVE_LOCALE_H)
-#include <locale.h>
-#endif
-
-#include <drizzled/gettext.h>
-
-#if defined(CMATH_NAMESPACE)
-  using namespace CMATH_NAMESPACE;
-#endif
-
-const char *VER= "14.14";
-
-/* Don't try to make a nice table if the data is too big */
-#define MAX_COLUMN_LENGTH       (uint32_t)1024
-
-/* Buffer to hold 'version' and 'version_comment' */
-#define MAX_SERVER_VERSION_LENGTH     128
-
-void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
-void sql_element_free(void *ptr);
-
+#include <drizzled/configmake.h>
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -95,12 +73,32 @@ void sql_element_free(void *ptr);
 #endif
 #endif
 
-#undef bcmp				// Fix problem with new readline
+#ifdef HAVE_LIBREADLINE
+#  if defined(HAVE_READLINE_READLINE_H)
+#    include <readline/readline.h>
+#  elif defined(HAVE_READLINE_H)
+#    include <readline.h>
+#  else /* !defined(HAVE_READLINE_H) */
+extern char *readline ();
+#  endif /* !defined(HAVE_READLINE_H) */
+char *cmdline = NULL;
+#else /* !defined(HAVE_READLINE_READLINE_H) */
+  /* no readline */
+#  error Readline Required
+#endif /* HAVE_LIBREADLINE */
 
-#ifdef HAVE_READLINE_HISTORY_H
-#include <readline/history.h>
-#endif
-#include <readline/readline.h>
+#ifdef HAVE_READLINE_HISTORY
+#  if defined(HAVE_READLINE_HISTORY_H)
+#    include <readline/history.h>
+#  elif defined(HAVE_HISTORY_H)
+#    include <history.h>
+#  else /* !defined(HAVE_HISTORY_H) */
+extern void add_history ();
+extern int write_history ();
+extern int read_history ();
+#  endif /* defined(HAVE_READLINE_HISTORY_H) */
+    /* no history */
+#endif /* HAVE_READLINE_HISTORY */
 
 /**
  Make the old readline interface look like the new one.
@@ -111,6 +109,27 @@ typedef Function rl_compentry_func_t;
 #define rl_completion_matches(str, func) \
   completion_matches((char *)str, (CPFunction *)func)
 #endif
+
+#if defined(HAVE_LOCALE_H)
+#include <locale.h>
+#endif
+
+#include <drizzled/gettext.h>
+
+#if defined(CMATH_NAMESPACE)
+  using namespace CMATH_NAMESPACE;
+#endif
+
+const char *VER= "14.14";
+
+/* Don't try to make a nice table if the data is too big */
+#define MAX_COLUMN_LENGTH       (uint32_t)1024
+
+/* Buffer to hold 'version' and 'version_comment' */
+#define MAX_SERVER_VERSION_LENGTH     128
+
+void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
+void sql_element_free(void *ptr);
 
 
 #if !defined(HAVE_VIDATTR)
@@ -148,42 +167,44 @@ enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
 typedef enum enum_info_type INFO_TYPE;
 
 static DRIZZLE drizzle;      /* The connection */
-static bool ignore_errors=0,quick=0,
-  connected=0,opt_raw_data=0,unbuffered=0,output_tables=0,
-  opt_rehash=1,skip_updates=0,safe_updates=0,one_database=0,
-  opt_compress=0, using_opt_local_infile=0,
-  vertical=0, line_numbers=1, column_names=1,
-  opt_nopager=1, opt_outfile=0, named_cmds= 0,
-  tty_password= 0, opt_nobeep=0, opt_reconnect=1,
-  default_charset_used= 0, opt_secure_auth= 0,
-  default_pager_set= 0, opt_sigint_ignore= 0,
-  auto_vertical_output= 0,
-  show_warnings= 0, executing_query= 0, interrupted_query= 0;
+static bool ignore_errors= false, quick= false,
+  connected= false, opt_raw_data= false, unbuffered= false,
+  output_tables= false, opt_rehash= true, skip_updates= false,
+  safe_updates= false, one_database= false,
+  opt_compress= false, using_opt_local_infile= false,
+  vertical= false, line_numbers= true, column_names= true,
+  opt_nopager= true, opt_outfile= false, named_cmds= false,
+  tty_password= false, opt_nobeep= false, opt_reconnect= true,
+  default_charset_used= false, opt_secure_auth= false,
+  default_pager_set= false, opt_sigint_ignore= false,
+  auto_vertical_output= false,
+  show_warnings= false, executing_query= false, interrupted_query= false;
 static uint32_t  show_progress_size= 0;
 static bool debug_info_flag, debug_check_flag;
 static bool column_types_flag;
-static bool preserve_comments= 0;
-static uint32_t opt_max_allowed_packet, opt_net_buffer_length;
-static int verbose=0,opt_silent=0,opt_drizzle_port=0, opt_local_infile=0;
+static bool preserve_comments= false;
+static uint32_t opt_max_allowed_packet, opt_net_buffer_length,
+  opt_drizzle_port= 0;
+static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
 static uint my_end_arg;
-static char * opt_drizzle_unix_port=0;
-static int connect_flag=CLIENT_INTERACTIVE;
-static char *current_host,*current_db,*current_user=0,*opt_password=0,
-  *delimiter_str= 0,* current_prompt= 0;
+static char * opt_drizzle_unix_port= NULL;
+static int connect_flag= CLIENT_INTERACTIVE;
+static char *current_host, *current_db, *current_user= NULL,
+  *opt_password= NULL, *delimiter_str= NULL, *current_prompt= NULL;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
 static string *processed_prompt= NULL;
 static char *default_prompt= NULL;
-static char *full_username=0,*part_username=0;
+static char *full_username= NULL,*part_username= NULL;
 static STATUS status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
 static uint32_t opt_connect_timeout= 0;
 static char drizzle_charsets_dir[FN_REFLEN+1];
 // TODO: Need to i18n these
-static const char *day_names[]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-static const char *month_names[]={"Jan","Feb","Mar","Apr","May","Jun","Jul",
+static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
                                   "Aug","Sep","Oct","Nov","Dec"};
 static char default_pager[FN_REFLEN];
 static char pager[FN_REFLEN], outfile[FN_REFLEN];
@@ -1008,10 +1029,10 @@ static uint32_t start_timer(void);
 static void end_timer(uint32_t start_time,char *buff);
 static void drizzle_end_timer(uint32_t start_time,char *buff);
 static void nice_time(double sec,char *buff,bool part_second);
-extern "C" RETSIGTYPE drizzle_end(int sig);
-extern "C" RETSIGTYPE handle_sigint(int sig);
+extern "C" void drizzle_end(int sig);
+extern "C" void handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-static RETSIGTYPE window_resize(int sig);
+static void window_resize(int sig);
 #endif
 
 int main(int argc,char *argv[])
@@ -1184,7 +1205,7 @@ int main(int argc,char *argv[])
   return(0);        // Keep compiler happy
 }
 
-RETSIGTYPE drizzle_end(int sig)
+void drizzle_end(int sig)
 {
   drizzle_close(&drizzle);
   if (!status.batch && !quick && histfile)
@@ -1228,7 +1249,7 @@ RETSIGTYPE drizzle_end(int sig)
   no query in process, terminate like previous behavior
 */
 extern "C"
-RETSIGTYPE handle_sigint(int sig)
+void handle_sigint(int sig)
 {
   char kill_buffer[40];
   DRIZZLE *kill_drizzle= NULL;
@@ -1261,7 +1282,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-RETSIGTYPE window_resize(int)
+void window_resize(int)
 {
   struct winsize window_size;
 
@@ -1364,18 +1385,15 @@ static struct my_option my_long_options[] =
   {"no-pager", OPT_NOPAGER,
    N_("Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"password", 'p',
+  {"password", 'P',
    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, ")
+  {"port", 'p', N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, ")
    N_("built-in default") " (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   (char**) &opt_drizzle_port,
-   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,  0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"prompt", OPT_PROMPT, N_("Set the drizzle prompt to this value."),
    (char**) &current_prompt, (char**) &current_prompt, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"protocol", OPT_DRIZZLE_PROTOCOL, N_("The protocol of connection (tcp,socket,pipe,memory)."),
-   0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
    N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."),
    (char**) &quick, (char**) &quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -1474,6 +1492,9 @@ static void usage(int version)
 extern "C" bool
 get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch(optid) {
   case OPT_CHARSETS_DIR:
     strncpy(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
@@ -1498,14 +1519,14 @@ get_one_option(int optid, const struct my_option *, char *argument)
       {
         put_info(_("DELIMITER cannot contain a backslash character"),
                  INFO_ERROR,0,0);
-        return 0;
+        return false;
       }
     }
     delimiter_length= (uint)strlen(delimiter);
     delimiter_str= delimiter;
     break;
   case OPT_LOCAL_INFILE:
-    using_opt_local_infile=1;
+    using_opt_local_infile= 1;
     break;
   case OPT_TEE:
     if (argument == disabled_my_option)
@@ -1567,20 +1588,52 @@ get_one_option(int optid, const struct my_option *, char *argument)
       one_database= skip_updates= 1;
     break;
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      put_info(_("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead."), INFO_ERROR, 0, 0);
+      return false;
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      put_info(_("Value supplied for port is not valid."), INFO_ERROR, 0, 0);
+      return false;
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
+    /* Don't require password */
     if (argument == disabled_my_option)
-      argument= (char*) "";      // Don't require password
+    {
+      argument= (char*) "";
+    }
     if (argument)
     {
       char *start= argument;
       free(opt_password);
       opt_password= strdup(argument);
-      while (*argument) *argument++= 'x';        // Destroy argument
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-        start[1]=0 ;
+      {
+        start[1]= 0;
+      }
       tty_password= 0;
     }
     else
+    {
       tty_password= 1;
+    }
     break;
   case 's':
     if (argument == disabled_my_option)
@@ -3075,7 +3128,7 @@ print_table_data(DRIZZLE_RES *result)
 */
 static int get_field_disp_length(DRIZZLE_FIELD *field)
 {
-  uint length= column_names ? field->name_length : 0;
+  uint32_t length= column_names ? field->name_length : 0;
 
   if (quick)
     length= max(length, field->length);
@@ -3758,7 +3811,7 @@ sql_connect(char *host,char *database,char *user,char *password,
     char init_command[100];
     sprintf(init_command,
             "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
-            ",SQL_MAX_JOIN_SIZE=%"PRIu32,
+            ",MAX_JOIN_SIZE=%"PRIu32,
             select_limit, max_join_size);
     drizzle_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
   }

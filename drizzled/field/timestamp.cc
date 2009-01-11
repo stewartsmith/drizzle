@@ -152,7 +152,7 @@ int Field_timestamp::store(const char *from,
                            const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME l_time;
-  my_time_t tmp= 0;
+  time_t tmp= 0;
   int error;
   bool have_smth_to_conv;
   bool in_dst_time_gap;
@@ -212,7 +212,7 @@ int Field_timestamp::store(int64_t nr,
                            bool unsigned_val __attribute__((unused)))
 {
   DRIZZLE_TIME l_time;
-  my_time_t timestamp= 0;
+  time_t timestamp= 0;
   int error;
   bool in_dst_time_gap;
   Session *session= table ? table->in_use : current_session;
@@ -271,7 +271,7 @@ int64_t Field_timestamp::val_int(void)
   if (temp == 0L)				// No time
     return(0);					/* purecov: inspected */
 
-  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (my_time_t)temp);
+  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (time_t)temp);
 
   return time_tmp.year * INT64_C(10000000000) +
          time_tmp.month * INT64_C(100000000) +
@@ -305,7 +305,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
   }
   val_buffer->set_charset(&my_charset_bin);	// Safety
 
-  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(my_time_t)temp);
+  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(time_t)temp);
 
   temp= time_tmp.year % 100;
   if (temp < YY_PART_YEAR - 1)
@@ -369,7 +369,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
   }
   else
   {
-    session->variables.time_zone->gmt_sec_to_TIME(ltime, (my_time_t)temp);
+    session->variables.time_zone->gmt_sec_to_TIME(ltime, (time_t)temp);
   }
   return 0;
 }
@@ -466,7 +466,7 @@ long Field_timestamp::get_timestamp(bool *null_value)
 }
 
 
-void Field_timestamp::store_timestamp(my_time_t timestamp)
+void Field_timestamp::store_timestamp(time_t timestamp)
 {
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)

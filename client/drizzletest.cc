@@ -52,6 +52,9 @@
 
 #include "errname.h"
 
+/* Added this for string translation. */
+#include <drizzled/gettext.h>
+
 using namespace std;
 
 #define MAX_VAR_NAME_LENGTH    256
@@ -64,29 +67,32 @@ using namespace std;
 
 enum {
   OPT_PS_PROTOCOL, OPT_SP_PROTOCOL, OPT_CURSOR_PROTOCOL, OPT_VIEW_PROTOCOL,
-  OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES
+  OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES,
+  OPT_TESTDIR
 };
 
 static int record= 0, opt_sleep= -1;
-static char *opt_db= 0, *opt_pass= 0;
-const char *opt_user= 0, *opt_host= 0, *unix_sock= 0, *opt_basedir= "./";
+static char *opt_db= NULL, *opt_pass= NULL;
+const char *opt_user= NULL, *opt_host= NULL, *unix_sock= NULL,
+           *opt_basedir= "./";
 const char *opt_logdir= "";
-const char *opt_include= 0, *opt_charsets_dir;
-static int opt_port= 0;
+const char *opt_include= NULL, *opt_charsets_dir;
+const char *opt_testdir= NULL;
+static uint32_t opt_port= 0;
 static int opt_max_connect_retries;
-static bool opt_compress= 0, silent= 0, verbose= 0;
-static bool debug_info_flag= 0, debug_check_flag= 0;
-static bool tty_password= 0;
-static bool opt_mark_progress= 0;
-static bool parsing_disabled= 0;
+static bool opt_compress= false, silent= false, verbose= false;
+static bool debug_info_flag= false, debug_check_flag= false;
+static bool tty_password= false;
+static bool opt_mark_progress= false;
+static bool parsing_disabled= false;
 static bool display_result_vertically= false,
   display_metadata= false, display_result_sorted= false;
-static bool disable_query_log= 0, disable_result_log= 0;
-static bool disable_warnings= 0;
-static bool disable_info= 1;
-static bool abort_on_error= 1;
-static bool server_initialized= 0;
-static bool is_windows= 0;
+static bool disable_query_log= false, disable_result_log= false;
+static bool disable_warnings= false;
+static bool disable_info= true;
+static bool abort_on_error= true;
+static bool server_initialized= false;
+static bool is_windows= false;
 static char **default_argv;
 static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
@@ -164,7 +170,7 @@ typedef struct
 master_pos_st master_pos;
 
 /* if set, all results are concated and compared against this file */
-const char *result_file_name= 0;
+const char *result_file_name= NULL;
 
 typedef struct st_var
 {
@@ -1282,11 +1288,26 @@ static int compare_files2(File fd, const char* filename2)
   File fd2;
   uint len, len2;
   char buff[512], buff2[512];
+  const char *fname= filename2;
+  string tmpfile;
 
-  if ((fd2= my_open(filename2, O_RDONLY, MYF(0))) < 0)
+  if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
     my_close(fd, MYF(0));
-    die("Failed to open second file: '%s'", filename2);
+    if (opt_testdir != NULL)
+    {
+      tmpfile= opt_testdir;
+      if (tmpfile[tmpfile.length()] != '/')
+        tmpfile.append("/");
+      tmpfile.append(filename2);
+      fname= tmpfile.c_str();
+    }
+    if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
+    {
+      my_close(fd, MYF(0));
+    
+      die("Failed to open second file: '%s'", fname);
+    }
   }
   while((len= my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
@@ -2088,6 +2109,14 @@ static void do_source(struct st_command *command)
     ; /* Do nothing */
   else
   {
+    if (opt_testdir != NULL)
+    {
+      string testdir(opt_testdir);
+      if (testdir[testdir.length()] != '/')
+        testdir.append("/");
+      testdir.append(ds_filename);
+      ds_filename.swap(testdir);
+    }
     open_file(ds_filename.c_str());
   }
 
@@ -2468,8 +2497,8 @@ static void do_file_exist(struct st_command *command)
 
 static void do_mkdir(struct st_command *command)
 {
-  int error;
   string ds_dirname;
+  int error;
   const struct command_arg mkdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to create"}
   };
@@ -2479,7 +2508,7 @@ static void do_mkdir(struct st_command *command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= my_mkdir(ds_dirname.c_str(), 0777, MYF(0)) != 0;
+  error= mkdir(ds_dirname.c_str(), (0777 & my_umask_dir)) != 0;
   handle_command_error(command, error);
   return;
 }
@@ -2990,7 +3019,7 @@ do_wait_for_slave_to_stop(struct st_command *)
     drizzle_free_result(res);
     if (done)
       break;
-    my_sleep(SLAVE_POLL_INTERVAL);
+    usleep(SLAVE_POLL_INTERVAL);
   }
   return;
 }
@@ -3193,7 +3222,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
     sleep_val= opt_sleep;
 
   if (sleep_val)
-    my_sleep((uint32_t) (sleep_val * 1000000L));
+    usleep((uint32_t) (sleep_val * 1000000L));
   command->last_argument= sleep_end;
   return 0;
 }
@@ -3584,7 +3613,7 @@ static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
       verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts,
                   opt_max_connect_retries, drizzle_errno(drizzle),
                   drizzle_error(drizzle));
-      my_sleep(connection_retry_sleep);
+      usleep(connection_retry_sleep);
     }
     else
     {
@@ -4443,6 +4472,9 @@ static struct my_option my_long_options[] =
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"include", 'i', "Include SQL before each test case.", (char**) &opt_include,
    (char**) &opt_include, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"testdir", OPT_TESTDIR, "Path to use to search for test files",
+   (char**) &opt_testdir,
+   (char**) &opt_testdir, 0,GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"logdir", OPT_LOG_DIR, "Directory for log files", (char**) &opt_logdir,
    (char**) &opt_logdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"mark-progress", OPT_MARK_PROGRESS,
@@ -4453,13 +4485,12 @@ static struct my_option my_long_options[] =
    "Max number of connection attempts when connecting to server",
    (char**) &opt_max_connect_retries, (char**) &opt_max_connect_retries, 0,
    GET_INT, REQUIRED_ARG, 500, 1, 10000, 0, 0, 0},
-  {"password", 'p', "Password to use when connecting to server.",
+  {"password", 'P', "Password to use when connecting to server.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
+  {"port", 'p', "Port number to use for connection or 0 for default to, in "
    "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   (char**) &opt_port,
-   (char**) &opt_port, 0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quiet", 's', "Suppress all normal output.", (char**) &silent,
    (char**) &silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"record", 'r', "Record output of test_file into result file.",
@@ -4563,6 +4594,9 @@ static void read_embedded_server_arguments(const char *name)
 extern "C" bool
 get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch(optid) {
   case 'r':
     record = 1;
@@ -4599,6 +4633,27 @@ get_one_option(int optid, const struct my_option *, char *argument)
     break;
   }
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(1);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(1);
+    }
+    else
+    {
+      opt_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
       if (opt_pass)
@@ -4606,7 +4661,11 @@ get_one_option(int optid, const struct my_option *, char *argument)
       opt_pass = strdup(argument);
       if (opt_pass == NULL)
         die("Out of memory");
-      while (*argument) *argument++= 'x';    /* Destroy argument */
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       tty_password= 0;
     }
     else

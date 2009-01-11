@@ -57,7 +57,7 @@ public:
 
   /* Get TIMESTAMP field value as seconds since begging of Unix Epoch */
   long get_timestamp(bool *null_value);
-  void store_timestamp(my_time_t timestamp);
+  void store_timestamp(time_t timestamp);
   bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
   timestamp_auto_set_type get_auto_set_type() const;

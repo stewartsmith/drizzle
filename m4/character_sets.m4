@@ -28,7 +28,7 @@ AC_ARG_WITH(collation,
 
 AC_MSG_CHECKING("character sets")
 
-CHARSETS="$default_charset utf8 utf8mb3"
+CHARSETS="$default_charset utf8"
 
 for cs in $CHARSETS
 do
@@ -39,11 +39,6 @@ do
       AC_DEFINE(HAVE_CHARSET_utf8mb4, 1, [Define to enable ut8])
       AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, [1], [ ])
-      ;;
-    utf8mb3)
-      AC_DEFINE(HAVE_CHARSET_utf8mb3, 1, [Define to enable ut8])
-      AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
       ;;
     *)
       AC_MSG_ERROR([Charset '$cs' not available. (Available are: $CHARSETS_AVAILABLE).
@@ -67,27 +62,6 @@ case $default_charset in
       define(UTFC8, utf8_swedish_ci utf8_turkish_ci)
       define(UTFC9, utf8_unicode_ci)
       UTFC="UTFC1 UTFC2 UTFC3 UTFC4 UTFC5 UTFC6 UTFC7 UTFC8 UTFC9"
-      default_charset_collations="$UTFC"
-      ;;
-    utf8mb3)
-      default_charset_default_collation="utf8mb3_general_ci"
-      if test "$default_collation" = "utf8mb3_general_cs"; then
-        # For those who explicitly desire "utf8mb3_general_cs", support it,
-        # and then also set the CPP switch enabling that code.
-        UTFC="utf8mb3_general_cs"
-        AC_DEFINE([HAVE_UTF8_GENERAL_CS], [1], [certain Japanese customer])
-      else
-        define(UTFC1, utf8mb3_general_ci utf8mb3_bin)
-        define(UTFC2, utf8mb3_czech_ci utf8mb3_danish_ci)
-        define(UTFC3, utf8mb3_esperanto_ci utf8mb3_estonian_ci utf8mb3_icelandic_ci)
-        define(UTFC4, utf8mb3_latvian_ci utf8mb3_lithuanian_ci)
-        define(UTFC5, utf8mb3_persian_ci utf8mb3_polish_ci utf8mb3_romanian_ci)
-        define(UTFC6, utf8mb3_sinhala_ci utf8mb3_slovak_ci utf8mb3_slovenian_ci)
-        define(UTFC7, utf8mb3_spanish2_ci utf8mb3_spanish_ci)
-        define(UTFC8, utf8mb3_swedish_ci utf8mb3_turkish_ci)
-        define(UTFC9, utf8mb3_unicode_ci)
-        UTFC="UTFC1 UTFC2 UTFC3 UTFC4 UTFC5 UTFC6 UTFC7 UTFC8 UTFC9"
-      fi
       default_charset_collations="$UTFC"
       ;;
     *)

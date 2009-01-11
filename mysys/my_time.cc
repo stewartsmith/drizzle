@@ -13,12 +13,15 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/global.h>
-#include <my_time.h>
+#include "mysys_priv.h"
+
+#include "my_time.h"
+
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include <stdio.h>
 #include <drizzled/util/test.h>
+
+#include <stdio.h>
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
 
 uint64_t log_10_int[20]=
@@ -772,7 +775,7 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
 
 /*
   Convert time in DRIZZLE_TIME representation in system time zone to its
-  my_time_t form (number of seconds in UTC since begginning of Unix Epoch).
+  time_t form (number of seconds in UTC since begginning of Unix Epoch).
 
   SYNOPSIS
     my_system_gmt_sec()
@@ -792,7 +795,7 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
   RETURN VALUE
     Time in UTC seconds since Unix Epoch representation.
 */
-my_time_t
+time_t
 my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
                   bool *in_dst_time_gap)
 {
@@ -978,7 +981,7 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
   if ((tmp < TIMESTAMP_MIN_VALUE) || (tmp > TIMESTAMP_MAX_VALUE))
     tmp= 0;
 
-  return (my_time_t) tmp;
+  return (time_t) tmp;
 } /* my_system_gmt_sec */
 
 

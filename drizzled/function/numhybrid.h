@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_FUNCTION_NUMHYBRID_H
 #define DRIZZLED_FUNCTION_NUMHYBRID_H
 
-#include <drizzled/item.h>
 #include <drizzled/function/func.h>
 
 class Item_func_numhybrid: public Item_func

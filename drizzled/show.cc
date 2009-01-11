@@ -28,6 +28,7 @@
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 #include <drizzled/data_home.h>
+#include <drizzled/item/blob.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
@@ -337,7 +338,7 @@ mysqld_show_create(Session *session, TableList *table_list)
   /* Only one table for now, but VIEW can involve several tables */
   if (open_normal_and_derived_tables(session, table_list, 0))
   {
-    if (session->is_error() && session->main_da.sql_errno() != ER_VIEW_INVALID)
+    if (session->is_error())
       return(true);
 
     /*
@@ -1206,7 +1207,7 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
   pthread_mutex_unlock(&LOCK_thread_count);
 
   thread_info *session_info;
-  time_t now= my_time(0);
+  time_t now= time(NULL);
   while ((session_info=thread_infos.get()))
   {
     protocol->prepare_for_resend();
@@ -1236,7 +1237,10 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
   char *user;
-  time_t now= my_time(0);
+  time_t now= time(NULL);
+
+  if (now == (time_t)-1)
+    return 1;
 
   user= NULL;
 
@@ -2402,8 +2406,8 @@ static int fill_schema_table_names(Session *session, Table *table,
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                  ST_SCHEMA_TABLE *schema_table,
-                                  enum enum_schema_tables)
+                                      ST_SCHEMA_TABLE *schema_table,
+                                      enum enum_schema_tables)
 {
   /*
     determine which method will be used for table opening
@@ -2967,21 +2971,21 @@ static int get_schema_tables_record(Session *session, TableList *tables,
       if (file->stats.create_time)
       {
         session->variables.time_zone->gmt_sec_to_TIME(&time,
-                                                  (my_time_t) file->stats.create_time);
+                                                  (time_t) file->stats.create_time);
         table->field[14]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[14]->set_notnull();
       }
       if (file->stats.update_time)
       {
         session->variables.time_zone->gmt_sec_to_TIME(&time,
-                                                  (my_time_t) file->stats.update_time);
+                                                  (time_t) file->stats.update_time);
         table->field[15]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[15]->set_notnull();
       }
       if (file->stats.check_time)
       {
         session->variables.time_zone->gmt_sec_to_TIME(&time,
-                                                  (my_time_t) file->stats.check_time);
+                                                  (time_t) file->stats.check_time);
         table->field[16]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[16]->set_notnull();
       }
@@ -4134,7 +4138,7 @@ int make_character_sets_old_format(Session *session, ST_SCHEMA_TABLE *schema_tab
     1   error
 */
 
-int mysql_schema_table(Session *session, LEX *lex, TableList *table_list)
+int mysql_schema_table(Session *session, LEX *, TableList *table_list)
 {
   Table *table;
   if (!(table= table_list->schema_table->create_table(session, table_list)))
@@ -4157,43 +4161,6 @@ int mysql_schema_table(Session *session, LEX *lex, TableList *table_list)
   table->next= session->derived_tables;
   session->derived_tables= table;
   table_list->select_lex->options |= OPTION_SCHEMA_TABLE;
-
-  if (table_list->schema_table_reformed) // show command
-  {
-    SELECT_LEX *sel= lex->current_select;
-    Item *item;
-    Field_translator *transl, *org_transl;
-
-    if (table_list->field_translation)
-    {
-      Field_translator *end= table_list->field_translation_end;
-      for (transl= table_list->field_translation; transl < end; transl++)
-      {
-        if (!transl->item->fixed &&
-            transl->item->fix_fields(session, &transl->item))
-          return(1);
-      }
-      return(0);
-    }
-    List_iterator_fast<Item> it(sel->item_list);
-    if (!(transl=
-          (Field_translator*)(session->alloc(sel->item_list.elements *
-                                    sizeof(Field_translator)))))
-    {
-      return(1);
-    }
-    for (org_transl= transl; (item= it++); transl++)
-    {
-      transl->item= item;
-      transl->name= item->name;
-      if (!item->fixed && item->fix_fields(session, &transl->item))
-      {
-        return(1);
-      }
-    }
-    table_list->field_translation= org_transl;
-    table_list->field_translation_end= transl;
-  }
 
   return(0);
 }
@@ -4678,8 +4645,9 @@ int initialize_schema_table(st_plugin_int *plugin)
 
     if (plugin->plugin->init(schema_table))
     {
-      sql_print_error(_("Plugin '%s' init function returned error."),
-                      plugin->name.str);
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error."),
+                    plugin->name.str);
       goto err;
     }
 

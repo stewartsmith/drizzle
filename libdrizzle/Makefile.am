@@ -19,9 +19,6 @@
 
 
 
-MYSQLDATAdir =			$(localstatedir)
-MYSQLSHAREdir =			$(pkgdatadir)
-MYSQLBASEdir=			$(prefix)
 
 libdrizzleincludedir = ${includedir}/libdrizzle
 dist_libdrizzleinclude_HEADERS =	\
@@ -58,14 +55,6 @@ libdrizzle_la_SOURCES = client.c \
 
 libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@
 libdrizzle_la_LIBADD = $(Z_LIBS)
-
-DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
-			-DDATADIR="\"$(MYSQLDATAdir)\"" \
-			-DDEFAULT_HOME_ENV=DRIZZLE_HOME \
-			-DDEFAULT_GROUP_SUFFIX_ENV=DRIZZLE_GROUP_SUFFIX \
-			-DDEFAULT_SYSCONFDIR="\"$(sysconfdir)\"" \
-			-DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
-			-DUNDEF_THREADS_HACK
 
 noinst_HEADERS =	libdrizzle_priv.h \
 			local_infile.h
