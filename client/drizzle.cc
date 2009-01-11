@@ -44,29 +44,6 @@
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
 
-
-#if defined(HAVE_LOCALE_H)
-#include <locale.h>
-#endif
-
-#include <drizzled/gettext.h>
-
-#if defined(CMATH_NAMESPACE)
-  using namespace CMATH_NAMESPACE;
-#endif
-
-const char *VER= "14.14";
-
-/* Don't try to make a nice table if the data is too big */
-#define MAX_COLUMN_LENGTH       (uint32_t)1024
-
-/* Buffer to hold 'version' and 'version_comment' */
-#define MAX_SERVER_VERSION_LENGTH     128
-
-void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
-void sql_element_free(void *ptr);
-
-
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
 #ifdef __sun
@@ -96,12 +73,32 @@ void sql_element_free(void *ptr);
 #endif
 #endif
 
-#undef bcmp				// Fix problem with new readline
+#ifdef HAVE_LIBREADLINE
+#  if defined(HAVE_READLINE_READLINE_H)
+#    include <readline/readline.h>
+#  elif defined(HAVE_READLINE_H)
+#    include <readline.h>
+#  else /* !defined(HAVE_READLINE_H) */
+extern char *readline ();
+#  endif /* !defined(HAVE_READLINE_H) */
+char *cmdline = NULL;
+#else /* !defined(HAVE_READLINE_READLINE_H) */
+  /* no readline */
+#  error Readline Required
+#endif /* HAVE_LIBREADLINE */
 
-#ifdef HAVE_READLINE_HISTORY_H
-#include <readline/history.h>
-#endif
-#include <readline/readline.h>
+#ifdef HAVE_READLINE_HISTORY
+#  if defined(HAVE_READLINE_HISTORY_H)
+#    include <readline/history.h>
+#  elif defined(HAVE_HISTORY_H)
+#    include <history.h>
+#  else /* !defined(HAVE_HISTORY_H) */
+extern void add_history ();
+extern int write_history ();
+extern int read_history ();
+#  endif /* defined(HAVE_READLINE_HISTORY_H) */
+    /* no history */
+#endif /* HAVE_READLINE_HISTORY */
 
 /**
  Make the old readline interface look like the new one.
@@ -112,6 +109,27 @@ typedef Function rl_compentry_func_t;
 #define rl_completion_matches(str, func) \
   completion_matches((char *)str, (CPFunction *)func)
 #endif
+
+#if defined(HAVE_LOCALE_H)
+#include <locale.h>
+#endif
+
+#include <drizzled/gettext.h>
+
+#if defined(CMATH_NAMESPACE)
+  using namespace CMATH_NAMESPACE;
+#endif
+
+const char *VER= "14.14";
+
+/* Don't try to make a nice table if the data is too big */
+#define MAX_COLUMN_LENGTH       (uint32_t)1024
+
+/* Buffer to hold 'version' and 'version_comment' */
+#define MAX_SERVER_VERSION_LENGTH     128
+
+void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
+void sql_element_free(void *ptr);
 
 
 #if !defined(HAVE_VIDATTR)
@@ -1011,10 +1029,10 @@ static uint32_t start_timer(void);
 static void end_timer(uint32_t start_time,char *buff);
 static void drizzle_end_timer(uint32_t start_time,char *buff);
 static void nice_time(double sec,char *buff,bool part_second);
-extern "C" RETSIGTYPE drizzle_end(int sig);
-extern "C" RETSIGTYPE handle_sigint(int sig);
+extern "C" void drizzle_end(int sig);
+extern "C" void handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-static RETSIGTYPE window_resize(int sig);
+static void window_resize(int sig);
 #endif
 
 int main(int argc,char *argv[])
@@ -1187,7 +1205,7 @@ int main(int argc,char *argv[])
   return(0);        // Keep compiler happy
 }
 
-RETSIGTYPE drizzle_end(int sig)
+void drizzle_end(int sig)
 {
   drizzle_close(&drizzle);
   if (!status.batch && !quick && histfile)
@@ -1231,7 +1249,7 @@ RETSIGTYPE drizzle_end(int sig)
   no query in process, terminate like previous behavior
 */
 extern "C"
-RETSIGTYPE handle_sigint(int sig)
+void handle_sigint(int sig)
 {
   char kill_buffer[40];
   DRIZZLE *kill_drizzle= NULL;
@@ -1264,7 +1282,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-RETSIGTYPE window_resize(int)
+void window_resize(int)
 {
   struct winsize window_size;
 

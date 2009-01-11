@@ -5,7 +5,7 @@ AC_DEFUN([DRIZZLE_TYPE_ACCEPT],
 [ac_save_CXXFLAGS="$CXXFLAGS"
 AC_CACHE_CHECK([base type of last arg to accept], mysql_cv_btype_last_arg_accept,
 AC_LANG_PUSH(C++)
-if test "$ac_cv_prog_gxx" = "yes"
+if test "$GXX" = "yes"
 then
   # Add -Werror, remove -fbranch-probabilities (Bug #268)
   CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-Wcheck//'`
@@ -41,31 +41,13 @@ CXXFLAGS="$ac_save_CXXFLAGS"
 ])
 #---END:
 
-dnl Find type of qsort
-AC_DEFUN([DRIZZLE_TYPE_QSORT],
-[AC_CACHE_CHECK([return type of qsort], mysql_cv_type_qsort,
-[AC_TRY_COMPILE([#include <stdlib.h>
-#ifdef __cplusplus
-extern "C"
-#endif
-void qsort(void *base, size_t nel, size_t width,
- int (*compar) (const void *, const void *));
-],
-[int i;], mysql_cv_type_qsort=void, mysql_cv_type_qsort=int)])
-AC_DEFINE_UNQUOTED([RETQSORTTYPE], [$mysql_cv_type_qsort],
-                   [The return type of qsort (int or void).])
-if test "$mysql_cv_type_qsort" = "void"
-then
- AC_DEFINE_UNQUOTED([QSORT_TYPE_IS_VOID], [1], [qsort returns void])
-fi
-])
 
 #---START: Figure out whether to use 'struct rlimit' or 'struct rlimit64'
 AC_DEFUN([DRIZZLE_TYPE_STRUCT_RLIMIT],
 [ac_save_CXXFLAGS="$CXXFLAGS"
 AC_CACHE_CHECK([struct type to use with setrlimit], mysql_cv_btype_struct_rlimit,
 AC_LANG_PUSH(C++)
-if test "$ac_cv_prog_gxx" = "yes"
+if test "$GXX" = "yes"
 then
   # Add -Werror, remove -fbranch-probabilities (Bug #268)
   CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-Wcheck//'`
@@ -225,30 +207,6 @@ case "x$am_cv_prog_cc_stdc" in
 esac
 ])
 
-# Orginal from bash-2.0 aclocal.m4, Changed to use termcap last by monty.
- 
-AC_DEFUN([DRIZZLE_CHECK_LIB_TERMCAP],
-[
-AC_CACHE_VAL(mysql_cv_termcap_lib,
-[AC_CHECK_LIB(ncurses, tgetent, mysql_cv_termcap_lib=libncurses,
-    [AC_CHECK_LIB(curses, tgetent, mysql_cv_termcap_lib=libcurses,
-	[AC_CHECK_LIB(termcap, tgetent, mysql_cv_termcap_lib=libtermcap,
-          [AC_CHECK_LIB(tinfo, tgetent, mysql_cv_termcap_lib=libtinfo,
-	    mysql_cv_termcap_lib=NOT_FOUND)])])])])
-AC_MSG_CHECKING(for termcap functions library)
-if test "$mysql_cv_termcap_lib" = "NOT_FOUND"; then
-AC_MSG_ERROR([No curses/termcap library found])
-elif test "$mysql_cv_termcap_lib" = "libtermcap"; then
-TERMCAP_LIB=-ltermcap
-elif test "$mysql_cv_termcap_lib" = "libncurses"; then
-TERMCAP_LIB=-lncurses
-elif test "$mysql_cv_termcap_lib" = "libtinfo"; then
-TERMCAP_LIB=-ltinfo
-else
-TERMCAP_LIB=-lcurses
-fi
-AC_MSG_RESULT($TERMCAP_LIB)
-])
 
 dnl Check type of signal routines (posix, 4.2bsd, 4.1bsd or v7)
 AC_DEFUN([DRIZZLE_SIGNAL_CHECK],
@@ -271,7 +229,7 @@ AC_CACHE_VAL(mysql_cv_signal_vintage,
     [
       AC_TRY_LINK([
 	#include <signal.h>
-	RETSIGTYPE foo() { }], [
+	void foo() { }], [
 		int mask = sigmask(SIGINT);
 		sigset(SIGINT, foo); sigrelse(SIGINT);
 		sighold(SIGINT); sigpause(SIGINT);
@@ -330,24 +288,6 @@ AC_DEFINE(TIOCSTAT_IN_SYS_IOCTL, [1],
 fi
 ])
 
-AC_DEFUN([DRIZZLE_TYPE_SIGHANDLER],
-[AC_MSG_CHECKING([whether signal handlers are of type void])
-AC_CACHE_VAL(mysql_cv_void_sighandler,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <signal.h>
-#ifdef signal
-#undef signal
-#endif
-#ifdef __cplusplus
-extern "C"
-#endif
-void (*signal ()) ();],
-[int i;], mysql_cv_void_sighandler=yes, mysql_cv_void_sighandler=no)])dnl
-AC_MSG_RESULT($mysql_cv_void_sighandler)
-if test "$mysql_cv_void_sighandler" = "yes"; then
-AC_DEFINE(VOID_SIGHANDLER, [1], [sighandler type is void (*signal ()) ();])
-fi
-])
 
 AC_DEFUN([DRIZZLE_STACK_DIRECTION],
  [AC_CACHE_CHECK(stack direction for C alloca, ac_cv_c_stack_direction,

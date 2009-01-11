@@ -13,12 +13,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-#called from the top level Makefile
+LDADD= libserialize.la ${LTLIBPROTOBUF} ${LTLIBUUID}
 
-LDADD = libserialize.la ${PROTOBUF_LIBS} ${UUID_LIBS}
-
-AM_CPPFLAGS = ${PROTOBUF_CFLAGS} ${GLOBAL_CPPFLAGS}
-libserialize_la_CXXFLAGS =
+libserialize_la_CXXFLAGS= 
 
 TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
 TESTS = check_length.sh

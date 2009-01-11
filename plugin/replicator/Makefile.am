@@ -16,6 +16,4 @@
 
 noinst_LTLIBRARIES= libreplicator.la
 libreplicator_la_SOURCES=	replicator.cc
-libreplicator_la_LDFLAGS= $(top_builddir)/drizzled/serialize/libserialize.la
-libreplicator_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOBUF_CFLAGS}
-
+libreplicator_la_LIBADD= $(top_builddir)/drizzled/serialize/libserialize.la
