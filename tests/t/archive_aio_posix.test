@@ -3,15 +3,15 @@
 # Taken FROM the select test
 #
 -- source include/have_archive.inc
--- source include/have_binlog_format_mixed_or_statement.inc
 
 --disable_warnings
 DROP TABLE if exists t1,t2,t3,t4,t5,t6;
 --enable_warnings
 
 SET storage_engine=ARCHIVE;
-SET GLOBAL archive_aio=OFF;
+SET GLOBAL archive_aio=ON;
 SHOW VARIABLES LIKE "archive_%";
+
 
 CREATE TABLE t1 (
   Period int DEFAULT '0000' NOT NULL,
@@ -1353,16 +1353,8 @@ SELECT * FROM t2;
 
 # Test INSERT DELAYED and wait until the table has one more record
 SELECT COUNT(auto) FROM t2;
-INSERT DELAYED INTO t2 VALUES (99999,011403,37,'the','delayed','insert','');
-
-# Insert another record since in Archive delayed values are only
-# guaranteed to materialize based on either:
-# 1) A new row showing up from a normal insert
-# 2) A flush table  has occurred.
-INSERT INTO t2 VALUES (100000,000001,00,'after','delayed','insert','');
-
-# Wait for the delayed insert to appear
-while (`SELECT COUNT(auto)!=1215 FROM t2`)
+INSERT DELAYED INTO t2 VALUES (4,011403,37,'intercepted','audiology','tinily','');
+while (`SELECT COUNT(auto)!=1214 FROM t2`)
 {
   sleep 0.1;
 }
@@ -1371,7 +1363,7 @@ SELECT COUNT(auto) FROM t2;
 # Adding test for ALTER TABLE
 ALTER TABLE t2 DROP COLUMN fld6; 
 SHOW CREATE TABLE t2;
-SELECT * FROM t2 WHERE auto != 100000;
+SELECT * FROM t2;
 
 
 # Adding tests for autoincrement
@@ -1381,7 +1373,7 @@ CREATE TABLE `t5` (
 `a` int NOT NULL auto_increment,
 b char(12),
 PRIMARY KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 
 INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
@@ -1406,7 +1398,7 @@ CREATE TABLE `t5` (
 `a` int NOT NULL auto_increment,
 b char(12),
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5;
+) AUTO_INCREMENT=5;
 
 INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
@@ -1430,9 +1422,9 @@ DROP TABLE t5;
 
 CREATE TABLE `t5` (
 `a` int NOT NULL auto_increment,
-b blob(12),
+b blob,
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 
 INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (NULL, "We the people");
@@ -1457,10 +1449,10 @@ DROP TABLE t5;
 
 CREATE TABLE `t5` (
 `a` int NOT NULL auto_increment,
-b blob(12),
-c blob(12),
+b blob,
+c blob,
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 
 INSERT INTO t5 VALUES (NULL, "foo", "grok this!");
 INSERT INTO t5 VALUES (NULL, "We the people", NULL);
@@ -1505,7 +1497,7 @@ CREATE TABLE `t5` (
 b varchar(250),
 c varchar(800),
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 
 INSERT INTO t5 VALUES (NULL, "foo", "grok this!");
 INSERT INTO t5 VALUES (NULL, "We the people", NULL);
@@ -1514,16 +1506,16 @@ INSERT INTO t5 VALUES (NULL, "establish justice", "to ourselves and");
 INSERT INTO t5 VALUES (32, "ensure domestic tranquility", NULL);
 INSERT INTO t5 VALUES (23, "provide for the common defense", "posterity");
 INSERT INTO t5 VALUES (NULL, "promote the general welfare", "do ordain");
-INSERT INTO t5 VALUES (NULL, "abcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabc", "do ordain");
+INSERT INTO t5 VALUES (NULL, "abcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyz", "do ordain");
 
 SELECT * FROM t5;
 
 CREATE TABLE `t6` (
 `a` int NOT NULL auto_increment,
-b blob(12),
+b blob,
 c int,
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 SELECT * FROM t6;
 INSERT INTO t6 VALUES (NULL, "foo", NULL);
 INSERT INTO t6 VALUES (NULL, "We the people", 5);
@@ -1569,34 +1561,3 @@ insert into t1 set a='';
 insert into t1 set a='a';
 check table t1 extended;
 drop table t1;
-
-#
-# BUG#31036 - Using order by with archive table crashes server
-#
-
-CREATE TABLE t1(a VARCHAR(510)) ENGINE = ARCHIVE;
-
-let $bug31036=41;
---disable_query_log
-while($bug31036)
-{
-  INSERT INTO t1(a) VALUES (REPEAT('a', 510));
-  dec $bug31036;
-}
---enable_query_log
-INSERT INTO t1(a) VALUES ('');
-
---disable_result_log
-SELECT * FROM t1 ORDER BY a;
---enable_result_log
-
-DROP TABLE t1;
-
-#
-# BUG#31833 -  ORDER BY leads to wrong result when ARCHIVE, BLOB and table
-#              cache is full
-#
-CREATE TABLE t1(a INT NOT NULL AUTO_INCREMENT, b BLOB, KEY(a)) ENGINE=archive;
-INSERT INTO t1 VALUES (NULL, NULL),(NULL, NULL);
-FLUSH TABLE t1;
-SELECT * FROM t1 ORDER BY a;
