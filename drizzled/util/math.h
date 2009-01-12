@@ -27,7 +27,7 @@
  * guys to look at it.
  */
 
-#if defined(_FORTEC_)
+#if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 # if defined(HAVE_IEEEFP_H)
 #  include <ieeefp.h>
 # endif
@@ -48,7 +48,7 @@ int isfinite(double a);
 #  endif /* defined(NEED_ISFINITE) */
 
 # endif /* defined(__cplusplus) */
-#endif /* __FORTEC__ */
+#endif /* defined(__SUNPRO_C) || defined(__SUNPRO_CC) */
 
 
 #endif /* DRIZZLE_SERVER_UTIL_MATH */

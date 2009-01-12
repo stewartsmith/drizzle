@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Mark Atwood
+ *  Copyright (C) 2008 Mark Atwood, Toru Maesaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,10 +25,12 @@
 int qcache_initializer (st_plugin_int *plugin);
 int qcache_finalizer (st_plugin_int *plugin);
 
-/* todo, fill in this API */
-/* these are the functions called by the rest of the drizzle server
-   to do whatever this plugin does. */
-bool qcache_do1 (Session *session, void *parm1, void *parm2);
-bool qcache_do2 (Session *session, void *parm3, void *parm4);
+/* These are the functions called by the rest of the Drizzle server */
+bool qcache_try_fetch_and_send(Session *session, bool transactional);
+bool qcache_set(Session *session, bool transactional);
+bool qcache_invalidate_table(Session *session, bool transactional);
+bool qcache_invalidate_db(Session *session, const char *db_name,
+                          bool transactional);
+bool qcache_flush(Session *session);
 
 #endif /* DRIZZLED_QCACHE_H */

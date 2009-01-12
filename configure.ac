@@ -278,17 +278,18 @@ then
 fi
 if test "$SUNCC" = "yes"
 then
-  dnl I'm cheating here and sticking C99 support in SYMBOLS_FLAGS
-  SYMBOLS_FLAGS=""
   DEBUG_OPTIMIZE_CC=""
   if test "$target_cpu" = "sparc"
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -mt -xstrconst -D_FORTEC_ ${MEMALIGN_FLAGS}"
+  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -xlang=c99 ${MEMALIGN_FLAGS}"
+  CFLAGS="${CFLAGS} -xstrconst ${MEMALIGN_FLAGS}"
+  SYMBOLS_FLAGS="-g"
+  OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
+  OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS}"
+  OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
   DEBUG_OPTIMIZE_CXX=""
-  #Put back in once isnan is figured out
-  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -mt -D_FORTEC_ -xlang=c99 -compat=5 -library=stlport4 ${MEMALIGN_FLAGS}"
 fi
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
