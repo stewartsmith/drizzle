@@ -18,7 +18,7 @@
 LDADD=			$(top_builddir)/libdrizzle/libdrizzle.la \
 			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LIBINTL) $(LTLIBZ)
+			$(LIBINTL) $(LTLIBZ) $(LTLIBDRIZZLE)
 
 
 noinst_HEADERS =	completion_hash.h \
@@ -28,7 +28,7 @@ noinst_HEADERS =	completion_hash.h \
 
 CLEANFILES =		$(BUILT_SOURCES)
 
-bin_PROGRAMS =	drizzle \
+bin_PROGRAMS =			drizzle \
 				drizzleadmin \
 				drizzlecheck \
 				drizzledump \
@@ -39,9 +39,11 @@ bin_PROGRAMS =	drizzle \
 drizzle_SOURCES =		drizzle.cc readline.cc completion_hash.cc
 drizzle_LDADD =			${LDADD} ${READLINE_LIBS}
 drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${W_EXCEPTIONS} 
+
 drizzleadmin_SOURCES =		drizzleadmin.cc
 
 drizzlecheck_SOURCES =		drizzlecheck.cc
+
 drizzledump_SOURCES=            drizzledump.cc 
 
 drizzleimport_SOURCES=		drizzleimport.cc

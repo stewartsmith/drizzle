@@ -454,6 +454,19 @@ fi
 
 
 #--------------------------------------------------------------------
+# Check for libdrizzle
+#--------------------------------------------------------------------
+
+AC_LIB_HAVE_LINKFLAGS(drizzle,,
+[#include <libdrizzle/drizzle.h>],
+[
+  const char *version= drizzle_version()
+])
+dnl AS_IF([test x$ac_cv_libdrizzle = xno],
+dnl       AC_MSG_ERROR([libdrizzle is required for Drizzle])
+
+
+#--------------------------------------------------------------------
 # Check for libz
 #--------------------------------------------------------------------
 
