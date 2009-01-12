@@ -48,7 +48,7 @@ int isfinite(double a);
 #  endif /* defined(NEED_ISFINITE) */
 
 # endif /* defined(__cplusplus) */
-#endif /* __FORTEC__ */
+#endif /* defined(__SUNPRO_C) || defined(__SUNPRO_CC) */
 
 
 #endif /* DRIZZLE_SERVER_UTIL_MATH */
