@@ -27,7 +27,7 @@
  * guys to look at it.
  */
 
-#if defined(_FORTEC_)
+#if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 # if defined(HAVE_IEEEFP_H)
 #  include <ieeefp.h>
 # endif
