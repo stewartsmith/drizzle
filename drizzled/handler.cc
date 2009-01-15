@@ -2881,7 +2881,6 @@ err:
 void st_ha_check_opt::init()
 {
   flags= sql_flags= 0;
-  sort_buffer_size = current_session->variables.myisam_sort_buff_size;
 }
 
 

@@ -3332,12 +3332,6 @@ struct my_option my_long_options[] =
    (char**) &myisam_data_pointer_size,
    (char**) &myisam_data_pointer_size, 0, GET_ULONG, REQUIRED_ARG,
    6, 2, 7, 0, 1, 0},
-  {"myisam_sort_buffer_size", OPT_MYISAM_SORT_BUFFER_SIZE,
-   N_("The buffer that is allocated when sorting the index when doing a "
-      "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
-   (char**) &global_system_variables.myisam_sort_buff_size,
-   (char**) &max_system_variables.myisam_sort_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, SIZE_MAX, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
    N_("Specifies how MyISAM index statistics collection code should threat "
       "NULLs. Possible values of name are 'nulls_unequal' "

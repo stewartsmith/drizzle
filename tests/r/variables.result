@@ -381,7 +381,9 @@ set max_join_size=100;
 set max_sort_length=100;
 set max_tmp_tables=100;
 set global max_write_lock_count=100;
-set myisam_sort_buffer_size=100;
+set global myisam_sort_buffer_size=100;
+Warnings:
+Warning	1292	Truncated incorrect sort_buffer_size value: '100'
 set net_buffer_length=100;
 Warnings:
 Warning	1292	Truncated incorrect net_buffer_length value: '100'

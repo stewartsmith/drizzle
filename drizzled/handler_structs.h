@@ -135,7 +135,6 @@ typedef struct st_key_create_information
 typedef struct st_ha_check_opt
 {
   st_ha_check_opt() {}                        /* Remove gcc warning */
-  uint32_t sort_buffer_size;
   uint32_t flags;       /* isam layer flags (e.g. for myisamchk) */
   /* sql layer flags - for something myisamchk cannot do */
   uint32_t sql_flags;

@@ -240,7 +240,6 @@ static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
                                                  &max_write_lock_count);
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
-static sys_var_session_size_t	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
 
 static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
                                                             &SV::myisam_stats_method,
