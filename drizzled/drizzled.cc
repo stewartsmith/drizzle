@@ -3332,13 +3332,6 @@ struct my_option my_long_options[] =
    (char**) &myisam_data_pointer_size,
    (char**) &myisam_data_pointer_size, 0, GET_ULONG, REQUIRED_ARG,
    6, 2, 7, 0, 1, 0},
-  {"myisam_max_sort_file_size", OPT_MYISAM_MAX_SORT_FILE_SIZE,
-   N_("Don't use the fast sort index method to created index if the "
-      "temporary file would get bigger than this."),
-   (char**) &global_system_variables.myisam_max_sort_file_size,
-   (char**) &max_system_variables.myisam_max_sort_file_size, 0,
-   GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
-   0, 1024*1024, 0},
   {"myisam_sort_buffer_size", OPT_MYISAM_SORT_BUFFER_SIZE,
    N_("The buffer that is allocated when sorting the index when doing a "
       "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
@@ -4229,8 +4222,7 @@ static void get_options(int *argc,char **argv)
     In most cases the global variables will not be used
   */
   my_default_record_cache_size=global_system_variables.read_buff_size;
-  myisam_max_temp_length=
-    (my_off_t) global_system_variables.myisam_max_sort_file_size;
+  myisam_max_temp_length= INT32_MAX;
 
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||

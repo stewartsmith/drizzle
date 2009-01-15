@@ -116,7 +116,6 @@ static void fix_net_read_timeout(Session *session, enum_var_type type);
 static void fix_net_write_timeout(Session *session, enum_var_type type);
 static void fix_net_retry_count(Session *session, enum_var_type type);
 static void fix_max_join_size(Session *session, enum_var_type type);
-static void fix_myisam_max_sort_file_size(Session *session, enum_var_type type);
 static void fix_max_binlog_size(Session *session, enum_var_type type);
 static void fix_max_relay_log_size(Session *session, enum_var_type type);
 static void fix_max_connections(Session *session, enum_var_type type);
@@ -241,7 +240,6 @@ static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
                                                  &max_write_lock_count);
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
-static sys_var_session_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
 static sys_var_session_size_t	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
 
 static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
@@ -585,13 +583,6 @@ static void sys_default_init_slave(Session *, enum_var_type)
   update_sys_var_str(&sys_init_slave, &LOCK_sys_init_slave, 0);
 }
 
-
-static void
-fix_myisam_max_sort_file_size(Session *, enum_var_type)
-{
-  myisam_max_temp_length=
-    (my_off_t) global_system_variables.myisam_max_sort_file_size;
-}
 
 /**
   Set the OPTION_BIG_SELECTS flag if max_join_size == HA_POS_ERROR.

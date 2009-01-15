@@ -34,6 +34,7 @@ pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
 static uint32_t repair_threads;
 static uint32_t block_size;
+static uint64_t max_sort_file_size;
 
 /* bits in myisam_recover_options */
 const char *myisam_recover_names[] =
@@ -1875,9 +1876,15 @@ static DRIZZLE_SYSVAR_UINT(repair_threads, repair_threads,
                               "1 disables parallel repair."),
                            NULL, NULL, 1, 1, UINT32_MAX, 0);
 
+static DRIZZLE_SYSVAR_ULONGLONG(max_sort_file_size, max_sort_file_size,
+  PLUGIN_VAR_RQCMDARG,
+  N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."),
+  NULL, NULL, INT32_MAX, 0, UINT64_MAX, 0);
+
 static struct st_mysql_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(block_size),
   DRIZZLE_SYSVAR(repair_threads),
+  DRIZZLE_SYSVAR(max_sort_file_size),
   NULL
 };
 
