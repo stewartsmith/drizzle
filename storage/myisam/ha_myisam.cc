@@ -1888,11 +1888,18 @@ static DRIZZLE_SYSVAR_ULONGLONG(sort_buffer_size, sort_buffer_size,
                                 N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
                                 NULL, NULL, 8192*1024, 1024, UINT64_MAX, 0);
 
+extern uint32_t data_pointer_size;
+static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
+                           PLUGIN_VAR_RQCMDARG,
+                           N_("Default pointer size to be used for MyISAM tables."),
+                           NULL, NULL, 6, 2, 7, 0);
+
 static struct st_mysql_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(block_size),
   DRIZZLE_SYSVAR(repair_threads),
   DRIZZLE_SYSVAR(max_sort_file_size),
   DRIZZLE_SYSVAR(sort_buffer_size),
+  DRIZZLE_SYSVAR(data_pointer_size),
   NULL
 };
 

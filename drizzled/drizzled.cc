@@ -3327,11 +3327,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"myisam_data_pointer_size", OPT_MYISAM_DATA_POINTER_SIZE,
-   N_("Default pointer size to be used for MyISAM tables."),
-   (char**) &myisam_data_pointer_size,
-   (char**) &myisam_data_pointer_size, 0, GET_ULONG, REQUIRED_ARG,
-   6, 2, 7, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
    N_("Specifies how MyISAM index statistics collection code should threat "
       "NULLs. Possible values of name are 'nulls_unequal' "
