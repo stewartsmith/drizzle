@@ -2872,7 +2872,8 @@ err:
 
 void st_ha_check_opt::init()
 {
-  flags= sql_flags= 0;
+  flags= 0; 
+  use_frm= false;
 }
 
 

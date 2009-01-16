@@ -2267,7 +2267,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   const char **ext;
   struct stat stat_info;
 
-  if (!(check_opt->sql_flags & TT_USEFRM))
+  if (!(check_opt->use_frm))
     return(0);
 
   if (!(table= table_list->table))		/* if open_ltable failed */
@@ -2566,8 +2566,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       /* purecov: end */
     }
 
-    if (operator_func == &handler::ha_repair &&
-        !(check_opt->sql_flags & TT_USEFRM))
+    if (operator_func == &handler::ha_repair && !(check_opt->use_frm))
     {
       if ((table->table->file->check_old_types() == HA_ADMIN_NEEDS_ALTER) ||
           (table->table->file->ha_check_for_upgrade(check_opt) ==
@@ -2792,19 +2791,19 @@ err:
 bool mysql_repair_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   return(mysql_admin_table(session, tables, check_opt,
-				"repair", TL_WRITE, 1,
-                                test(check_opt->sql_flags & TT_USEFRM),
-                                HA_OPEN_FOR_REPAIR,
-				&prepare_for_repair,
-				&handler::ha_repair));
+                           "repair", TL_WRITE, 1,
+                           check_opt->use_frm,
+                           HA_OPEN_FOR_REPAIR,
+                           &prepare_for_repair,
+                           &handler::ha_repair));
 }
 
 
 bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   return(mysql_admin_table(session, tables, check_opt,
-				"optimize", TL_WRITE, 1,0,0,0,
-				&handler::ha_optimize));
+                           "optimize", TL_WRITE, 1,0,0,0,
+                           &handler::ha_optimize));
 }
 
 

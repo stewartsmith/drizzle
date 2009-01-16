@@ -349,13 +349,6 @@ extern uint32_t mi_get_pointer_length(uint64_t file_length, uint32_t def);
 
 #define T_REP_ANY               (T_REP | T_REP_BY_SORT | T_REP_PARALLEL)
 
-/*
-  Flags used by myisamchk.c or/and ha_myisam.cc that are NOT passed
-  to mi_check.c follows:
-*/
-
-#define TT_USEFRM               1
-
 #define O_NEW_INDEX	1		/* Bits set in out_flag */
 #define O_NEW_DATA	2
 #define O_DATA_LOST	4

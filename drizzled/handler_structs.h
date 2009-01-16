@@ -135,9 +135,9 @@ typedef struct st_key_create_information
 typedef struct st_ha_check_opt
 {
   st_ha_check_opt() {}                        /* Remove gcc warning */
-  uint32_t flags;       /* isam layer flags (e.g. for myisamchk) */
-  /* sql layer flags - for something myisamchk cannot do */
-  uint32_t sql_flags;
+  uint32_t flags;       /* myisam layer flags (e.g. for myisamchk) */
+  /* Just rebuild based on the defintion of the table */
+  bool use_frm;
   /* new key cache when changing key cache */
   KEY_CACHE *key_cache;
   void init();

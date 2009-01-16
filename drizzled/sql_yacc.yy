@@ -2726,7 +2726,7 @@ mi_repair_types:
 mi_repair_type:
           QUICK        { Lex->check_opt.flags|= T_QUICK; }
         | EXTENDED_SYM { Lex->check_opt.flags|= T_EXTEND; }
-        | USE_FRM      { Lex->check_opt.sql_flags|= TT_USEFRM; }
+        | USE_FRM      { Lex->check_opt.use_frm= true; }
         ;
 
 analyze:
