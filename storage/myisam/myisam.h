@@ -355,7 +355,6 @@ extern uint32_t mi_get_pointer_length(uint64_t file_length, uint32_t def);
 */
 
 #define TT_USEFRM               1
-#define TT_FOR_UPGRADE          2
 
 #define O_NEW_INDEX	1		/* Bits set in out_flag */
 #define O_NEW_DATA	2
