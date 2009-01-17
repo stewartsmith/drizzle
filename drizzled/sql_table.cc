@@ -2391,7 +2391,7 @@ end:
   if (table == &tmp_table)
   {
     pthread_mutex_lock(&LOCK_open);
-    closefrm(table, 1);				// Free allocated memory
+    table->closefrm(true);				// Free allocated memory
     pthread_mutex_unlock(&LOCK_open);
   }
   return(error);

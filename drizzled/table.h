@@ -519,6 +519,8 @@ public:
   { return s->version != refresh_version; }
 
   int report_error(int error);
+  int closefrm(bool free_share);
+  uint32_t tmpkeyval();
 };
 
 Table *create_virtual_tmp_table(Session *session,
