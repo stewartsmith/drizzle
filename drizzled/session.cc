@@ -2616,8 +2616,6 @@ void Session::close_temporary_tables()
   Table *table;
   Table *next= NULL;
   Table *prev_table;
-  /* Assume session->options has OPTION_QUOTE_SHOW_CREATE */
-  bool was_quote_show= true;
 
   if (!temporary_tables)
     return;
@@ -2681,12 +2679,6 @@ void Session::close_temporary_tables()
     }
   }
 
-  /* We always quote db,table names though it is slight overkill */
-  if (found_user_tables && !(was_quote_show= test(options & OPTION_QUOTE_SHOW_CREATE)))
-  {
-    options |= OPTION_QUOTE_SHOW_CREATE;
-  }
-
   /* scan sorted tmps to generate sequence of DROP */
   for (table= temporary_tables; table; table= next)
   {
@@ -2708,10 +2700,9 @@ void Session::close_temporary_tables()
           We are going to add 4 ` around the db/table names and possible more
           due to special characters in the names
         */
-        append_identifier(this, &s_query, table->s->db.str, strlen(table->s->db.str));
+        s_query.append_identifier(table->s->db.str, strlen(table->s->db.str));
         s_query.append('.');
-        append_identifier(this, &s_query, table->s->table_name.str,
-                          strlen(table->s->table_name.str));
+        s_query.append_identifier(table->s->table_name.str, strlen(table->s->table_name.str));
         s_query.append(',');
         next= table->next;
         close_temporary(table, 1, 1);
@@ -2740,7 +2731,6 @@ void Session::close_temporary_tables()
       close_temporary(table, 1, 1);
     }
   }
-  if (!was_quote_show)
-    options&= ~OPTION_QUOTE_SHOW_CREATE; /* restore option */
+
   temporary_tables= NULL;
 }

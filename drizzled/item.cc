@@ -398,9 +398,8 @@ void Item::print_item_w_name(String *str, enum_query_type query_type)
 
   if (name)
   {
-    Session *session= current_session;
     str->append(STRING_WITH_LEN(" AS "));
-    append_identifier(session, str, name, (uint) strlen(name));
+    str->append_identifier(name, (uint) strlen(name));
   }
 }
 

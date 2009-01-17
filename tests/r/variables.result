@@ -401,7 +401,6 @@ Warning	1292	Truncated incorrect sort_buffer_size value: '100'
 set sql_big_selects=1;
 set sql_buffer_result=1;
 set sql_log_bin=1;
-set sql_quote_show_create=1;
 set sql_safe_updates=1;
 set sql_select_limit=1;
 set sql_select_limit=default;

@@ -68,6 +68,7 @@ class String
   uint32_t str_length,Alloced_length;
   bool alloced;
   const CHARSET_INFO *str_charset;
+
 public:
   String()
   {
@@ -139,6 +140,7 @@ public:
       (void) realloc(str_length);
     return Ptr;
   }
+  void append_identifier(const char *name, uint32_t length);
 
   void set(String &str,uint32_t offset,uint32_t arg_length)
   {

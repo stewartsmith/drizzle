@@ -397,9 +397,6 @@ static sys_var_session_bit	sys_safe_updates(&vars, "sql_safe_updates", 0,
 static sys_var_session_bit	sys_buffer_results(&vars, "sql_buffer_result", 0,
 					   set_option_bit,
 					   OPTION_BUFFER_RESULT);
-static sys_var_session_bit	sys_quote_show_create(&vars, "sql_quote_show_create", 0,
-					      set_option_bit,
-					      OPTION_QUOTE_SHOW_CREATE);
 static sys_var_session_bit	sys_foreign_key_checks(&vars, "foreign_key_checks", 0,
 					       set_option_bit,
 					       OPTION_NO_FOREIGN_KEY_CHECKS,

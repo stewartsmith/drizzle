@@ -456,96 +456,6 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
 
 
 /*
-  Go through all character combinations and ensure that sql_lex.cc can
-  parse it as an identifier.
-
-  SYNOPSIS
-  require_quotes()
-  name			attribute name
-  name_length		length of name
-
-  RETURN
-    #	Pointer to conflicting character
-    0	No conflicting character
-*/
-
-static const char *require_quotes(const char *name, uint32_t name_length)
-{
-  uint32_t length;
-  bool pure_digit= true;
-  const char *end= name + name_length;
-
-  for (; name < end ; name++)
-  {
-    unsigned char chr= (unsigned char) *name;
-    length= my_mbcharlen(system_charset_info, chr);
-    if (length == 1 && !system_charset_info->ident_map[chr])
-      return name;
-    if (length == 1 && (chr < '0' || chr > '9'))
-      pure_digit= false;
-  }
-  if (pure_digit)
-    return name;
-  return 0;
-}
-
-
-/*
-  Quote the given identifier if needed and append it to the target string.
-  If the given identifier is empty, it will be quoted.
-
-  SYNOPSIS
-  append_identifier()
-  session                   thread handler
-  packet                target string
-  name                  the identifier to be appended
-  name_length           length of the appending identifier
-*/
-
-void
-append_identifier(Session *session, String *packet, const char *name, uint32_t length)
-{
-  const char *name_end;
-  char quote_char;
-  int q= get_quote_char_for_identifier(session, name, length);
-
-  if (q == EOF)
-  {
-    packet->append(name, length, packet->charset());
-    return;
-  }
-
-  /*
-    The identifier must be quoted as it includes a quote character or
-   it's a keyword
-  */
-
-  packet->reserve(length*2 + 2);
-  quote_char= (char) q;
-  packet->append(&quote_char, 1, system_charset_info);
-
-  for (name_end= name+length ; name < name_end ; name+= length)
-  {
-    unsigned char chr= (unsigned char) *name;
-    length= my_mbcharlen(system_charset_info, chr);
-    /*
-      my_mbcharlen can return 0 on a wrong multibyte
-      sequence. It is possible when upgrading from 4.0,
-      and identifier contains some accented characters.
-      The manual says it does not work. So we'll just
-      change length to 1 not to hang in the endless loop.
-    */
-    if (!length)
-      length= 1;
-    if (length == 1 && chr == (unsigned char) quote_char)
-      packet->append(&quote_char, 1, system_charset_info);
-    packet->append(name, length, system_charset_info);
-  }
-  packet->append(&quote_char, 1, system_charset_info);
-}
-
-
-/*
   Get the quote character for displaying an identifier.
 
   SYNOPSIS
@@ -568,13 +478,8 @@ append_identifier(Session *session, String *packet, const char *name, uint32_t l
     #	  Quote character
 */
 
-int get_quote_char_for_identifier(Session *session, const char *name, uint32_t length)
+int get_quote_char_for_identifier(Session *, const char *, uint32_t)
 {
-  if (length &&
-      !is_keyword(name,length) &&
-      !require_quotes(name, length) &&
-      !(session->options & OPTION_QUOTE_SHOW_CREATE))
-    return EOF;
   return '`';
 }
 
@@ -715,7 +620,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       alias= share->table_name.str;
     }
   }
-  append_identifier(session, packet, alias, strlen(alias));
+  packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
   /*
     We need this to get default values from the table
@@ -732,7 +637,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       packet->append(STRING_WITH_LEN(",\n"));
 
     packet->append(STRING_WITH_LEN("  "));
-    append_identifier(session,packet,field->field_name, strlen(field->field_name));
+    packet->append_identifier(field->field_name, strlen(field->field_name));
     packet->append(' ');
     // check for surprises from the previous call to Field::sql_type()
     if (type.ptr() != tmp)
@@ -854,7 +759,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       packet->append(STRING_WITH_LEN("KEY "));
 
     if (!found_primary)
-     append_identifier(session, packet, key_info->name, strlen(key_info->name));
+     packet->append_identifier(key_info->name, strlen(key_info->name));
 
     packet->append(STRING_WITH_LEN(" ("));
 
@@ -864,7 +769,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
         packet->append(',');
 
       if (key_part->field)
-        append_identifier(session,packet,key_part->field->field_name,
+        packet->append_identifier(key_part->field->field_name,
 			  strlen(key_part->field->field_name));
       if (key_part->field &&
           (key_part->length !=
@@ -1054,7 +959,7 @@ bool store_db_create_info(Session *session, const char *dbname, String *buffer,
   if (create_options & HA_LEX_CREATE_IF_NOT_EXISTS)
     buffer->append(STRING_WITH_LEN("IF NOT EXISTS "));
 
-  append_identifier(session, buffer, dbname, strlen(dbname));
+  buffer->append_identifier(dbname, strlen(dbname));
 
   return(false);
 }
