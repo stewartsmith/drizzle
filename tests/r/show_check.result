@@ -209,16 +209,6 @@ t1	CREATE TABLE `t1` (
   `c-b` int COMMENT 'name with a minus',
   `space 2` int COMMENT 'name with a space'
 ) ENGINE=InnoDB COMMENT='it''s a table'
-set sql_quote_show_create=0;
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `name` varchar(20) COMMENT 'O''Brien as default',
-  `c` int NOT NULL COMMENT 'int column',
-  `c-b` int COMMENT 'name with a minus',
-  `space 2` int COMMENT 'name with a space'
-) ENGINE=InnoDB COMMENT='it''s a table'
-set sql_quote_show_create=1;
 show full columns from t1;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 name	varchar(20)	utf8_general_ci	YES		NULL			O'Brien as default

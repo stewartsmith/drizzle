@@ -53,13 +53,13 @@ TABLE_CATEGORY get_table_category(const LEX_STRING *db,
                                   const LEX_STRING *name);
 
 /*
-  This structure is shared between different table objects. There is one
+  This class is shared between different table objects. There is one
   instance of table share per one table in the database.
 */
-
-typedef struct st_table_share
+class TABLE_SHARE
 {
-  st_table_share() {}                    /* Remove gcc warning */
+public:
+  TABLE_SHARE() {}                    /* Remove gcc warning */
 
   /** Category of this table. */
   TABLE_CATEGORY table_category;
@@ -72,7 +72,7 @@ typedef struct st_table_share
   TYPELIB *intervals;			/* pointer to interval info */
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
-  struct st_table_share *next,		/* Link to unused shares */
+  TABLE_SHARE *next,		/* Link to unused shares */
     **prev;
 
   /* The following is copied to each Table on OPEN */
@@ -238,7 +238,7 @@ typedef struct st_table_share
     return table_map_id;
   }
 
-} TABLE_SHARE;
+};
 
 
 extern uint32_t refresh_version;

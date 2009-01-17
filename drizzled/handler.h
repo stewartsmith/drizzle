@@ -49,7 +49,7 @@ typedef bool (*qc_engine_callback)(Session *session, char *table_key,
 
 class Table;
 class TableList;
-typedef struct st_table_share TABLE_SHARE;
+class TABLE_SHARE;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
 struct order_st;
@@ -156,8 +156,9 @@ class handler :public Sql_alloc
 {
 public:
   typedef uint64_t Table_flags;
+
 protected:
-  struct st_table_share *table_share;   /* The table definition */
+  TABLE_SHARE *table_share;   /* The table definition */
   Table *table;               /* The current open table */
   Table_flags cached_table_flags;       /* Set on init() and open() */
 

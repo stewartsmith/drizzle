@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-typedef struct st_table_share TABLE_SHARE;
+class TABLE_SHARE;
 
 void table_cache_free(void);
 bool table_cache_init(void);
