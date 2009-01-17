@@ -144,9 +144,6 @@ struct handlerton
    int  (*recover)(handlerton *hton, XID *xid_list, uint32_t len);
    int  (*commit_by_xid)(handlerton *hton, XID *xid);
    int  (*rollback_by_xid)(handlerton *hton, XID *xid);
-   void *(*create_cursor_read_view)(handlerton *hton, Session *session);
-   void (*set_cursor_read_view)(handlerton *hton, Session *session, void *read_view);
-   void (*close_cursor_read_view)(handlerton *hton, Session *session, void *read_view);
    handler *(*create)(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root);
    void (*drop_database)(handlerton *hton, char* path);
    int (*start_consistent_snapshot)(handlerton *hton, Session *session);

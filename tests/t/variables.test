@@ -212,7 +212,7 @@ set max_join_size=100;
 set max_sort_length=100;
 set max_tmp_tables=100;
 set global max_write_lock_count=100;
-set myisam_sort_buffer_size=100;
+set global myisam_sort_buffer_size=100;
 set net_buffer_length=100;
 set net_read_timeout=100;
 set net_write_timeout=100;
@@ -596,7 +596,7 @@ set global max_join_size             =@my_max_join_size;
 # No default
 #set global max_user_connections      =default;
 set global max_write_lock_count      =default;
---error 1193
+--error 1232
 set global myisam_data_pointer_size  =@my_myisam_data_pointer_size;
 set global net_buffer_length         =@my_net_buffer_length;
 set global net_write_timeout         =@my_net_write_timeout;

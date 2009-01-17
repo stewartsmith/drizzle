@@ -6,8 +6,7 @@ dnl Copying and distribution of this file, with or without modification, are per
 AC_DEFUN([AC_CXX_HEADER_STDCXX_98], [
   AC_CACHE_CHECK(for ISO C++ 98 include files,
   ac_cv_cxx_stdcxx_98,
-  [AC_LANG_SAVE
-  AC_LANG_CPLUSPLUS
+  [AC_LANG_PUSH(C++)
   AC_TRY_COMPILE([
     #include <cassert>
     #include <cctype>
@@ -60,7 +59,7 @@ AC_DEFUN([AC_CXX_HEADER_STDCXX_98], [
     #include <vector>
   ],,
   ac_cv_cxx_stdcxx_98=yes, ac_cv_cxx_stdcxx_98=no)
-  AC_LANG_RESTORE
+  AC_LANG_POP()
   ])
   if test "$ac_cv_cxx_stdcxx_98" = yes; then
     AC_DEFINE(STDCXX_98_HEADERS,,[Define if ISO C++ 1998 header files are present. ])

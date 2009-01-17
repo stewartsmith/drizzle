@@ -600,13 +600,6 @@ struct st_lex;
 class select_union;
 class TMP_TABLE_PARAM;
 
-struct Field_translator
-{
-  Item *item;
-  const char *name;
-};
-
-
 typedef struct st_changed_table_list
 {
   struct	st_changed_table_list *next;

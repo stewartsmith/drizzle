@@ -46,8 +46,6 @@ using namespace CMATH_NAMESPACE;
 #endif
 
 
-extern HASH open_cache;
-
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
 /* number of entries in handlertons[] */
@@ -2350,8 +2348,6 @@ int handler::ha_check_for_upgrade(HA_CHECK_OPT *check_opt)
         Field *field= table->field[keypart->fieldnr-1];
         if (field->type() == DRIZZLE_TYPE_BLOB)
         {
-          if (check_opt->sql_flags & TT_FOR_UPGRADE)
-            check_opt->flags= T_MEDIUM;
           return HA_ADMIN_NEEDS_CHECK;
         }
       }
@@ -2461,10 +2457,6 @@ int handler::ha_check(Session *session, HA_CHECK_OPT *check_opt)
 {
   int error;
 
-  if ((table->s->mysql_version >= DRIZZLE_VERSION_ID) &&
-      (check_opt->sql_flags & TT_FOR_UPGRADE))
-    return 0;
-
   if (table->s->mysql_version < DRIZZLE_VERSION_ID)
   {
     if ((error= check_old_types()))
@@ -2472,8 +2464,6 @@ int handler::ha_check(Session *session, HA_CHECK_OPT *check_opt)
     error= ha_check_for_upgrade(check_opt);
     if (error && (error != HA_ADMIN_NEEDS_CHECK))
       return error;
-    if (!error && (check_opt->sql_flags & TT_FOR_UPGRADE))
-      return 0;
   }
   if ((error= check(session, check_opt)))
     return error;
@@ -2882,8 +2872,8 @@ err:
 
 void st_ha_check_opt::init()
 {
-  flags= sql_flags= 0;
-  sort_buffer_size = current_session->variables.myisam_sort_buff_size;
+  flags= 0; 
+  use_frm= false;
 }
 
 

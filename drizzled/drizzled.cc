@@ -181,7 +181,7 @@ inline void setup_fpu()
 extern "C" int gethostname(char *name, int namelen);
 #endif
 
-extern "C" RETSIGTYPE handle_segfault(int sig);
+extern "C" void handle_segfault(int sig);
 
 using namespace std;
 
@@ -721,7 +721,7 @@ pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
 #endif
 
 
-extern "C" RETSIGTYPE print_signal_warning(int sig)
+extern "C" void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
     errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64), sig,my_thread_id());
@@ -1185,7 +1185,7 @@ static void network_init(void)
 
 /** Called when a thread is aborted. */
 /* ARGSUSED */
-extern "C" RETSIGTYPE end_thread_signal(int sig __attribute__((unused)))
+extern "C" void end_thread_signal(int sig __attribute__((unused)))
 {
   Session *session=current_session;
   if (session)
@@ -1230,7 +1230,7 @@ void unlink_session(Session *session)
   @todo
     One should have to fix that thr_alarm know about this thread too.
 */
-extern "C" RETSIGTYPE abort_thread(int sig __attribute__((unused)))
+extern "C" void abort_thread(int sig __attribute__((unused)))
 {
   Session *session=current_session;
   if (session)
@@ -1248,7 +1248,7 @@ extern "C" char *my_demangle(const char *mangled_name, int *status)
 #endif
 
 
-extern "C" RETSIGTYPE handle_segfault(int sig)
+extern "C" void handle_segfault(int sig)
 {
   time_t curr_time;
   struct tm tm;
@@ -3327,24 +3327,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"myisam_data_pointer_size", OPT_MYISAM_DATA_POINTER_SIZE,
-   N_("Default pointer size to be used for MyISAM tables."),
-   (char**) &myisam_data_pointer_size,
-   (char**) &myisam_data_pointer_size, 0, GET_ULONG, REQUIRED_ARG,
-   6, 2, 7, 0, 1, 0},
-  {"myisam_max_sort_file_size", OPT_MYISAM_MAX_SORT_FILE_SIZE,
-   N_("Don't use the fast sort index method to created index if the "
-      "temporary file would get bigger than this."),
-   (char**) &global_system_variables.myisam_max_sort_file_size,
-   (char**) &max_system_variables.myisam_max_sort_file_size, 0,
-   GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
-   0, 1024*1024, 0},
-  {"myisam_sort_buffer_size", OPT_MYISAM_SORT_BUFFER_SIZE,
-   N_("The buffer that is allocated when sorting the index when doing a "
-      "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
-   (char**) &global_system_variables.myisam_sort_buff_size,
-   (char**) &max_system_variables.myisam_sort_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, SIZE_MAX, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
    N_("Specifies how MyISAM index statistics collection code should threat "
       "NULLs. Possible values of name are 'nulls_unequal' "
@@ -4229,8 +4211,7 @@ static void get_options(int *argc,char **argv)
     In most cases the global variables will not be used
   */
   my_default_record_cache_size=global_system_variables.read_buff_size;
-  myisam_max_temp_length=
-    (my_off_t) global_system_variables.myisam_max_sort_file_size;
+  myisam_max_temp_length= INT32_MAX;
 
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||

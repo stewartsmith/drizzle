@@ -3,15 +3,6 @@
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
 
-Natural_join_column::Natural_join_column(Field_translator *, TableList *tab)
-{
-  assert(tab->field_translation);
-  table_field= NULL;
-  table_ref= tab;
-  is_common= false;
-}
-
-
 Natural_join_column::Natural_join_column(Field *field_param,
                                          TableList *tab)
 {

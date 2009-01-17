@@ -368,7 +368,7 @@ void my_print_open_files(void);
 #define my_print_open_files()
 #endif
 
-extern void my_remember_signal(int signal_number,RETSIGTYPE (*func)(int));
+extern void my_remember_signal(int signal_number,void (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
 extern size_t dirname_length(const char *name);
 #define base_name(A) (A+dirname_length(A))
@@ -410,17 +410,17 @@ extern int end_record_cache(RECORD_CACHE *info);
 extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
 			      const unsigned char *record,size_t length);
 extern int flush_write_cache(RECORD_CACHE *info);
-extern RETSIGTYPE sigtstp_handler(int signal_number);
+extern void sigtstp_handler(int signal_number);
 extern void handle_recived_signals(void);
 
-extern RETSIGTYPE my_set_alarm_variable(int signo);
+extern void my_set_alarm_variable(int signo);
 extern void my_string_ptr_sort(unsigned char *base,uint32_t items,size_t size);
 extern void radixsort_for_str_ptr(unsigned char* base[], uint32_t number_of_elements,
 				  size_t size_of_element,unsigned char *buffer[]);
-extern RETQSORTTYPE my_qsort(void *base_ptr, size_t total_elems, size_t size,
-                             qsort_cmp cmp);
-extern RETQSORTTYPE my_qsort2(void *base_ptr, size_t total_elems, size_t size,
-                              qsort2_cmp cmp, void *cmp_argument);
+extern void my_qsort(void *base_ptr, size_t total_elems, size_t size,
+                     qsort_cmp cmp);
+extern void my_qsort2(void *base_ptr, size_t total_elems, size_t size,
+                      qsort2_cmp cmp, void *cmp_argument);
 extern qsort2_cmp get_ptr_compare(size_t);
 void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);

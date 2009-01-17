@@ -1,0 +1,494 @@
+CREATE TABLE t1 (col1 INT);
+INSERT INTO t1 VALUES(-2147483648),(0),(2147483647),('-2147483648'),('2147483647'),(-2147483648.0),(2147483647.0);
+INSERT INTO t1 (col1) VALUES(-2147483649);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES(2147643648);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES('-2147483649');
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES('2147643648');
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES(-2147483649.0);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES(2147643648.0);
+ERROR 22003: Out of range value for column 'col1' at row 1
+UPDATE t1 SET col1 = col1 - 50 WHERE col1 < 0;
+ERROR 22003: Out of range value for column 'col1' at row 1
+UPDATE t1 SET col1 =col1 / 0 WHERE col1 > 0;
+ERROR 22012: Division by 0
+UPDATE t1 SET col1= MOD(col1,0) WHERE col1 > 0;
+ERROR 22012: Division by 0
+INSERT INTO t1 (col1) VALUES ('');
+ERROR HY000: Incorrect integer value: '' for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES ('a59b');
+ERROR HY000: Incorrect integer value: 'a59b' for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES ('1a');
+ERROR 01000: Data truncated for column 'col1' at row 1
+INSERT IGNORE INTO t1 (col1) VALUES ('2a');
+Warnings:
+Warning	1265	Data truncated for column 'col1' at row 1
+INSERT IGNORE INTO t1 values (1/0);
+Warnings:
+Error	1365	Division by 0
+INSERT IGNORE INTO t1 values (-2147483649),(2147643648);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+Warning	1264	Out of range value for column 'col1' at row 2
+INSERT IGNORE INTO t1 values ('-2147483649'),('2147643648');
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+Warning	1264	Out of range value for column 'col1' at row 2
+INSERT IGNORE INTO t1 values (-2147483649.0),(2147643648.0);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+Warning	1264	Out of range value for column 'col1' at row 2
+SELECT * FROM t1;
+col1
+-2147483648
+0
+2147483647
+-2147483648
+2147483647
+-2147483648
+2147483647
+2
+NULL
+-2147483648
+2147483647
+-2147483648
+2147483647
+-2147483648
+2147483647
+DROP TABLE t1;
+CREATE TABLE t1 (col1 BIGINT);
+INSERT INTO t1 VALUES(-9223372036854775808),(0),(9223372036854775807);
+INSERT INTO t1 VALUES('-9223372036854775808'),('9223372036854775807');
+INSERT INTO t1 VALUES(-9223372036854774000.0),(9223372036854775700.0);
+INSERT INTO t1 (col1) VALUES(-9223372036854775809);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES('-9223372036854775809');
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES('9223372036854775808');
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES(-9223372036854785809.0);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES(9223372036854785808.0);
+ERROR 22003: Out of range value for column 'col1' at row 1
+UPDATE t1 SET col1 =col1 / 0 WHERE col1 > 0;
+ERROR 22012: Division by 0
+UPDATE t1 SET col1= MOD(col1,0) WHERE col1 > 0;
+ERROR 22012: Division by 0
+INSERT INTO t1 (col1) VALUES ('');
+ERROR HY000: Incorrect integer value: '' for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES ('a59b');
+ERROR HY000: Incorrect integer value: 'a59b' for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES ('1a');
+ERROR 01000: Data truncated for column 'col1' at row 1
+INSERT IGNORE INTO t1 (col1) VALUES ('2a');
+Warnings:
+Warning	1265	Data truncated for column 'col1' at row 1
+INSERT IGNORE INTO t1 values (1/0);
+Warnings:
+Error	1365	Division by 0
+INSERT IGNORE INTO t1 VALUES(-9223372036854775809),(9223372036854775808);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+INSERT IGNORE INTO t1 VALUES('-9223372036854775809'),('9223372036854775808');
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+Warning	1264	Out of range value for column 'col1' at row 2
+INSERT IGNORE INTO t1 VALUES(-9223372036854785809.0),(9223372036854785808.0);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+Warning	1264	Out of range value for column 'col1' at row 2
+SELECT * FROM t1;
+col1
+-9223372036854775808
+0
+9223372036854775807
+-9223372036854775808
+9223372036854775807
+-9223372036854774000
+9223372036854775700
+2
+NULL
+-9223372036854775808
+-9223372036854775808
+-9223372036854775808
+9223372036854775807
+-9223372036854775808
+9223372036854775807
+DROP TABLE t1;
+CREATE TABLE t1 (col1 NUMERIC(4,2));
+INSERT INTO t1 VALUES (10.55),(10.5555),(0),(-10.55),(-10.5555),(11),(1e+01);
+Warnings:
+Note	1265	Data truncated for column 'col1' at row 2
+Note	1265	Data truncated for column 'col1' at row 5
+INSERT INTO t1 VALUES ('10.55'),('10.5555'),('-10.55'),('-10.5555'),('11'),('1e+01');
+Warnings:
+Note	1265	Data truncated for column 'col1' at row 2
+Note	1265	Data truncated for column 'col1' at row 4
+INSERT INTO t1 VALUES (101.55);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES (101);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES (-101.55);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES (1010.55);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES (1010);
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES ('101.55');
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES ('101');
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES ('-101.55');
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES ('-1010.55');
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES ('-100E+1');
+ERROR 22003: Out of range value for column 'col1' at row 1
+INSERT INTO t1 VALUES ('-100E');
+ERROR HY000: Incorrect decimal value: '-100E' for column 'col1' at row 1
+UPDATE t1 SET col1 =col1 * 50000 WHERE col1 =11;
+ERROR 22003: Out of range value for column 'col1' at row 6
+UPDATE t1 SET col1 =col1 / 0 WHERE col1 > 0;
+ERROR 22012: Division by 0
+UPDATE t1 SET col1= MOD(col1,0) WHERE col1 > 0;
+ERROR 22012: Division by 0
+INSERT INTO t1 (col1) VALUES ('');
+ERROR HY000: Incorrect decimal value: '' for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES ('a59b');
+ERROR HY000: Incorrect decimal value: 'a59b' for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES ('1a');
+ERROR HY000: Incorrect decimal value: '1a' for column 'col1' at row 1
+INSERT IGNORE INTO t1 (col1) VALUES ('2a');
+Warnings:
+Note	1265	Data truncated for column 'col1' at row 1
+INSERT IGNORE INTO t1 values (1/0);
+Warnings:
+Error	1365	Division by 0
+INSERT IGNORE INTO t1 VALUES(1000),(-1000);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+Warning	1264	Out of range value for column 'col1' at row 2
+INSERT IGNORE INTO t1 VALUES('1000'),('-1000');
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+Warning	1264	Out of range value for column 'col1' at row 2
+INSERT IGNORE INTO t1 VALUES(1000.0),(-1000.0);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+Warning	1264	Out of range value for column 'col1' at row 2
+UPDATE IGNORE t1 SET col1=1/NULL where col1=0;
+SELECT * FROM t1;
+col1
+10.55
+10.56
+NULL
+-10.55
+-10.56
+11.00
+10.00
+10.55
+10.56
+-10.55
+-10.56
+11.00
+10.00
+2.00
+NULL
+99.99
+-99.99
+99.99
+-99.99
+99.99
+-99.99
+DROP TABLE t1;
+CREATE TABLE t1 (col1 CHAR(5), col2 VARCHAR(6));
+INSERT INTO t1 VALUES ('hello', 'hello'),('he', 'he'),('hello   ', 'hello ');
+Warnings:
+Note	1265	Data truncated for column 'col1' at row 3
+INSERT INTO t1 (col1) VALUES ('hellobob');
+ERROR 22001: Data too long for column 'col1' at row 1
+INSERT INTO t1 (col2) VALUES ('hellobob');
+ERROR 22001: Data too long for column 'col2' at row 1
+INSERT INTO t1 (col2) VALUES ('hello  ');
+Warnings:
+Note	1265	Data truncated for column 'col2' at row 1
+UPDATE t1 SET col1 ='hellobob' WHERE col1 ='he';
+ERROR 22001: Data too long for column 'col1' at row 2
+UPDATE t1 SET col2 ='hellobob' WHERE col2 ='he';
+ERROR 22001: Data too long for column 'col2' at row 2
+INSERT IGNORE INTO t1 VALUES ('hellobob', 'hellobob');
+Warnings:
+Warning	1265	Data truncated for column 'col1' at row 1
+Warning	1265	Data truncated for column 'col2' at row 1
+UPDATE IGNORE t1 SET col2 ='hellotrudy' WHERE col2 ='he';
+Warnings:
+Warning	1265	Data truncated for column 'col2' at row 2
+SELECT * FROM t1;
+col1	col2
+hello	hello
+he	hellot
+hello	hello 
+NULL	hello 
+hello	hellob
+DROP TABLE t1;
+CREATE TABLE t1 (col1 enum('red','blue','green'));
+INSERT INTO t1 VALUES ('red'),('blue'),('green');
+INSERT INTO t1 (col1) VALUES ('yellow');
+ERROR 01000: Data truncated for column 'col1' at row 1
+INSERT INTO t1 (col1) VALUES ('redd');
+ERROR 01000: Data truncated for column 'col1' at row 1
+INSERT INTO t1 VALUES ('');
+ERROR 01000: Data truncated for column 'col1' at row 1
+UPDATE t1 SET col1 ='yellow' WHERE col1 ='green';
+ERROR 01000: Data truncated for column 'col1' at row 3
+INSERT IGNORE INTO t1 VALUES ('yellow');
+Warnings:
+Warning	1265	Data truncated for column 'col1' at row 1
+UPDATE IGNORE t1 SET col1 ='yellow' WHERE col1 ='blue';
+Warnings:
+Warning	1265	Data truncated for column 'col1' at row 2
+SELECT * FROM t1;
+col1
+red
+
+green
+
+DROP TABLE t1;
+CREATE TABLE t1 (col1 INT NOT NULL, col2 CHAR(5) NOT NULL, col3 DATE NOT NULL);
+INSERT INTO t1 VALUES (100, 'hello', '2004-08-20');
+INSERT INTO t1 (col1,col2,col3) VALUES (101, 'hell2', '2004-08-21');
+INSERT INTO t1 (col1,col2,col3) VALUES (NULL, '', '2004-01-01');
+ERROR 23000: Column 'col1' cannot be null
+INSERT INTO t1 (col1,col2,col3) VALUES (102, NULL, '2004-01-01');
+ERROR 23000: Column 'col2' cannot be null
+INSERT INTO t1 VALUES (103,'',NULL);
+ERROR 23000: Column 'col3' cannot be null
+UPDATE t1 SET col1=NULL WHERE col1 =100;
+ERROR 23000: Column 'col1' cannot be null
+UPDATE t1 SET col2 =NULL WHERE col2 ='hello';
+ERROR 23000: Column 'col2' cannot be null
+UPDATE t1 SET col2 =NULL where col3 IS NOT NULL;
+ERROR 23000: Column 'col2' cannot be null
+INSERT IGNORE INTO t1 values (NULL,NULL,NULL);
+Warnings:
+Warning	1048	Column 'col1' cannot be null
+Warning	1048	Column 'col2' cannot be null
+Warning	1048	Column 'col3' cannot be null
+SELECT * FROM t1;
+col1	col2	col3
+100	hello	2004-08-20
+101	hell2	2004-08-21
+0		0000-00-00
+DROP TABLE t1;
+CREATE TABLE t1 (col1 INT NOT NULL default 99, col2 CHAR(6) NOT NULL);
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `col1` int NOT NULL,
+  `col2` varchar(6) NOT NULL
+) ENGINE=InnoDB
+INSERT INTO t1 VALUES (1, 'hello');
+INSERT INTO t1 (col2) VALUES ('hello2');
+INSERT INTO t1 (col2) VALUES (NULL);
+ERROR 23000: Column 'col2' cannot be null
+INSERT INTO t1 (col1) VALUES (2);
+ERROR HY000: Field 'col2' doesn't have a default value
+INSERT INTO t1 VALUES(default(col1),default(col2));
+ERROR HY000: Field 'col2' doesn't have a default value
+INSERT INTO t1 (col1) SELECT 1;
+ERROR HY000: Field 'col2' doesn't have a default value
+INSERT INTO t1 SELECT 1,NULL;
+ERROR 23000: Column 'col2' cannot be null
+INSERT IGNORE INTO t1 values (NULL,NULL);
+Warnings:
+Warning	1048	Column 'col1' cannot be null
+Warning	1048	Column 'col2' cannot be null
+INSERT IGNORE INTO t1 (col1) values (3);
+ERROR HY000: Field 'col2' doesn't have a default value
+INSERT IGNORE INTO t1 () values ();
+ERROR HY000: Field 'col2' doesn't have a default value
+SELECT * FROM t1;
+col1	col2
+1	hello
+99	hello2
+0	
+DROP TABLE t1;
+create table t1 (charcol char(255), varcharcol varchar(255),
+varbinarycol varbinary(255));
+insert into t1 (charcol) values (repeat('x',256));
+ERROR 22001: Data too long for column 'charcol' at row 1
+insert into t1 (varcharcol) values (repeat('x',256));
+ERROR 22001: Data too long for column 'varcharcol' at row 1
+insert into t1 (varbinarycol) values (repeat('x',256));
+ERROR 22001: Data too long for column 'varbinarycol' at row 1
+select * from t1;
+charcol	varcharcol	varbinarycol
+drop table t1;
+create table t1 (col1 datetime);
+insert into t1 values(STR_TO_DATE('31.10.2004 15.30 abc','%d.%m.%Y %H.%i'));
+ERROR 22007: Truncated incorrect datetime value: '31.10.2004 15.30 abc'
+insert into t1 values(STR_TO_DATE('32.10.2004 15.30','%d.%m.%Y %H.%i'));
+ERROR HY000: Incorrect datetime value: '32.10.2004 15.30' for function str_to_date
+insert into t1 values(STR_TO_DATE('2004.12.12 22:22:33 AM','%Y.%m.%d %r'));
+ERROR HY000: Incorrect time value: '22:22:33 AM' for function str_to_date
+insert into t1 values(STR_TO_DATE('2004.12.12 abc','%Y.%m.%d %T'));
+ERROR HY000: Incorrect time value: 'abc' for function str_to_date
+insert into t1 values(STR_TO_DATE('31.10.2004 15.30 abc','%d.%m.%Y %H.%i'));
+ERROR 22007: Truncated incorrect datetime value: '31.10.2004 15.30 abc'
+insert into t1 values(STR_TO_DATE('32.10.2004 15.30','%d.%m.%Y %H.%i'));
+ERROR HY000: Incorrect datetime value: '32.10.2004 15.30' for function str_to_date
+insert into t1 values(STR_TO_DATE('2004.12.12 22:22:33 AM','%Y.%m.%d %r'));
+ERROR HY000: Incorrect time value: '22:22:33 AM' for function str_to_date
+insert into t1 values(STR_TO_DATE('2004.12.12 abc','%Y.%m.%d %T'));
+ERROR HY000: Incorrect time value: 'abc' for function str_to_date
+insert into t1 values(STR_TO_DATE('31.10.2004 15.30','%d.%m.%Y %H.%i'));
+insert into t1 values(STR_TO_DATE('2004.12.12 11:22:33 AM','%Y.%m.%d %r'));
+insert into t1 values(STR_TO_DATE('2004.12.12 10:22:59','%Y.%m.%d %T'));
+select * from t1;
+col1
+2004-10-31 15:30:00
+2004-12-12 11:22:33
+2004-12-12 10:22:59
+select count(*) from t1 where STR_TO_DATE('2004.12.12 10:22:61','%Y.%m.%d %T') IS NULL;
+count(*)
+3
+Warnings:
+Error	1411	Incorrect datetime value: '2004.12.12 10:22:61' for function str_to_date
+Error	1411	Incorrect datetime value: '2004.12.12 10:22:61' for function str_to_date
+Error	1411	Incorrect datetime value: '2004.12.12 10:22:61' for function str_to_date
+drop table t1;
+create table t1 (col1 char(3), col2 integer);
+insert into t1 (col1) values (cast(1000 as char(3)));
+ERROR 22007: Truncated incorrect CHAR(3) value: '1000'
+insert into t1 (col1) values (cast(1000E+0 as char(3)));
+ERROR 22007: Truncated incorrect CHAR(3) value: '1000'
+insert into t1 (col1) values (cast(1000.0 as char(3)));
+ERROR 22007: Truncated incorrect CHAR(3) value: '1000.0'
+insert into t1 (col2) values (cast('abc' as DECIMAL));
+ERROR 22007: Truncated incorrect DECIMAL value: 'abc'
+insert into t1 (col2) values (10E+0 + 'a');
+ERROR 22007: Truncated incorrect DOUBLE value: 'a'
+insert into t1 (col2) values ('10a');
+ERROR 01000: Data truncated for column 'col2' at row 1
+insert into t1 (col2) values (cast('10a' as DECIMAL));
+insert into t1 (col2) values (cast('10' as DECIMAL));
+insert into t1 (col2) values (cast('10' as DECIMAL));
+insert into t1 (col2) values (10E+0 + '0 ');
+select * from t1;
+col1	col2
+NULL	10
+NULL	10
+NULL	10
+NULL	10
+drop table t1;
+CREATE TABLE t1 (i int not null);
+INSERT INTO t1 VALUES ();
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 VALUES (DEFAULT);
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 VALUES (DEFAULT(i));
+ERROR HY000: Field 'i' doesn't have a default value
+ALTER TABLE t1 ADD j int;
+INSERT INTO t1 SET j = 1;
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 SET j = 1, i = DEFAULT;
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 SET j = 1, i = DEFAULT(i);
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 VALUES (DEFAULT,1);
+ERROR HY000: Field 'i' doesn't have a default value
+DROP TABLE t1;
+CREATE TABLE t1 (i int not null);
+INSERT INTO t1 VALUES ();
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 VALUES (DEFAULT);
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 VALUES (DEFAULT(i));
+ERROR HY000: Field 'i' doesn't have a default value
+ALTER TABLE t1 ADD j int;
+INSERT INTO t1 SET j = 1;
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 SET j = 1, i = DEFAULT;
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 SET j = 1, i = DEFAULT(i);
+ERROR HY000: Field 'i' doesn't have a default value
+INSERT INTO t1 VALUES (DEFAULT,1);
+ERROR HY000: Field 'i' doesn't have a default value
+DROP TABLE t1;
+create table t1(a varchar(65537));
+ERROR 42000: Column length too big for column 'a' (max = 16383); use BLOB or TEXT instead
+create table t1(a varbinary(65537));
+ERROR 42000: Column length too big for column 'a' (max = 65535); use BLOB or TEXT instead
+create table t1(a int, b date not null);
+alter table t1 modify a bigint not null;
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` bigint NOT NULL,
+  `b` date NOT NULL
+) ENGINE=InnoDB
+drop table t1;
+create table t1(a int, b timestamp);
+alter table t1 add primary key(a);
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int NOT NULL,
+  `b` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB
+drop table t1;
+create table t1(a int, b timestamp default 20050102030405);
+alter table t1 add primary key(a);
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int NOT NULL,
+  `b` timestamp NOT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB
+drop table t1;
+create table t1 (date date not null);
+create table t2 select date from t1;
+show create table t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `date` date NOT NULL
+) ENGINE=InnoDB
+drop table t2,t1;
+create table t1 (i int)
+comment '123456789*123456789*123456789*123456789*123456789*123456789*';
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `i` int
+) ENGINE=InnoDB COMMENT='123456789*123456789*123456789*123456789*123456789*123456789*'
+drop table t1;
+create table t1(col1 int, col2 int, 
+col3 int, col4 int,
+col7 int, col8 int,
+col9 bigint, col10 bigint);
+insert into t1(col1) values('-');
+ERROR HY000: Incorrect integer value: '-' for column 'col1' at row 1
+insert into t1(col2) values('+');
+ERROR HY000: Incorrect integer value: '+' for column 'col2' at row 1
+insert into t1(col3) values('-');
+ERROR HY000: Incorrect integer value: '-' for column 'col3' at row 1
+insert into t1(col4) values('+');
+ERROR HY000: Incorrect integer value: '+' for column 'col4' at row 1
+insert into t1(col7) values('-');
+ERROR HY000: Incorrect integer value: '-' for column 'col7' at row 1
+insert into t1(col8) values('+');
+ERROR HY000: Incorrect integer value: '+' for column 'col8' at row 1
+insert into t1(col9) values('-');
+ERROR HY000: Incorrect integer value: '-' for column 'col9' at row 1
+insert into t1(col10) values('+');
+ERROR HY000: Incorrect integer value: '+' for column 'col10' at row 1
+drop table t1;
+create table t1 (f1 enum('a','a'));
+ERROR HY000: Column 'f1' has duplicated value 'a' in ENUM
+End of 5.0 tests

@@ -168,33 +168,6 @@ typedef struct	st_lex_user {
 } LEX_USER;
 
 /*
-  This structure specifies the maximum amount of resources which
-  can be consumed by each account. Zero value of a member means
-  there is no limit.
-*/
-typedef struct user_resources {
-  /* Maximum number of queries/statements per hour. */
-  uint32_t questions;
-  /*
-     Maximum number of updating statements per hour (which statements are
-     updating is defined by sql_command_flags array).
-  */
-  uint32_t updates;
-  /* Maximum number of connections established per hour. */
-  uint32_t conn_per_hour;
-  /* Maximum number of concurrent connections. */
-  uint32_t user_conn;
-  /*
-     Values of this enum and specified_limits member are used by the
-     parser to store which user limits were specified in GRANT statement.
-  */
-  enum {QUERIES_PER_HOUR= 1, UPDATES_PER_HOUR= 2, CONNECTIONS_PER_HOUR= 4,
-        USER_CONNECTIONS= 8};
-  uint32_t specified_limits;
-} USER_RESOURCES;
-
-
-/*
   This structure is used for counting resources consumed and for checking
   them against specified user limits.
 */
@@ -222,8 +195,6 @@ typedef struct  user_conn {
      per hour and total number of statements per hour for this account.
   */
   uint32_t conn_per_hour, updates, questions;
-  /* Maximum amount of resources which account is allowed to consume. */
-  USER_RESOURCES user_resources;
 } USER_CONN;
 
 	/* Bits in form->update */

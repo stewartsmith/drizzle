@@ -17,8 +17,10 @@ dnl
 dnl Check to find libmemcached.
 
 AC_DEFUN([_SEARCH_FOR_LIBMEMCACHED],[
-  SEARCH_FOR_LIB(memcached,memcached_create,[libmemcached/memcached.h])
-  AM_CONDITIONAL([BUILD_MEMCACHED],[test "$ac_cv_have_memcached" = "yes"])
+  AC_LIB_HAVE_LINKFLAGS(memcached,,
+    [#include <libmemcached/memcached.h>],
+    [struct memcached_st memc])
+  AM_CONDITIONAL([BUILD_MEMCACHED],[test "x$ac_cv_libmemcached" = "xyes"])
 ])
 
 dnl Split this into a _hidden function and a public with a require. This way

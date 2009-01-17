@@ -27,10 +27,10 @@ delete from t1;
 # Populate data
 #
 
-insert into t1 values ('a'),('ae'),(_latin1 0xE4);
-insert into t1 values ('o'),('oe'),(_latin1 0xF6);
-insert into t1 values ('s'),('ss'),(_latin1 0xDF);
-insert into t1 values ('u'),('ue'),(_latin1 0xFC);
+insert into t1 values ('a'),('ae'),('ä');
+insert into t1 values ('o'),('oe'),('ö');
+insert into t1 values ('s'),('ss'),('ß');
+insert into t1 values ('u'),('ue'),('ü');
 
 #
 # Check order

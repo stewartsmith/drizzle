@@ -44,6 +44,7 @@ eval create table t9 (a int not null auto_increment, b char(16) not null, primar
 insert into t9 select * from t1;
 check table t9;
 optimize table t9;
+SET GLOBAL myisam_sort_buffer_size=1024;
 repair table t9;
 alter table t9 add column c int not null;
 
@@ -228,3 +229,4 @@ DROP TABLE t1;
 #SET @@SQL_MODE=@OLD_SQL_MODE;
 
 --echo End of 5.1 tests
+SET GLOBAL myisam_sort_buffer_size=DEFAULT;

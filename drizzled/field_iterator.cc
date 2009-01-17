@@ -79,18 +79,6 @@ void Field_iterator_table_ref::set_field_iterator()
   */
   if (table_ref->is_join_columns_complete)
   {
-    /* Necesary, but insufficient conditions. */
-    assert(table_ref->is_natural_join ||
-                table_ref->nested_join ||
-                ((table_ref->join_columns && /* This is a merge view. */
-                  (table_ref->field_translation &&
-                   table_ref->join_columns->elements ==
-                   (ulong)(table_ref->field_translation_end -
-                           table_ref->field_translation))) ||
-                 /* This is stored table or a tmptable view. */
-                 (!table_ref->field_translation &&
-                  table_ref->join_columns->elements ==
-                  table_ref->table->s->fields)));
     field_it= &natural_join_it;
   }
   /* This is a base table or stored view. */

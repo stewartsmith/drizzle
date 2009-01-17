@@ -71,7 +71,7 @@ static bool table_def_inited= 0;
 static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
-static void free_cache_entry(Table *entry);
+static void free_cache_entry(void *entry);
 static void close_old_data_files(Session *session, Table *table, bool morph_locks,
                                  bool send_refresh);
 
@@ -89,7 +89,7 @@ bool table_cache_init(void)
 {
   return hash_init(&open_cache, &my_charset_bin, table_cache_size+16,
 		   0, 0, table_cache_key,
-		   (hash_free_key) free_cache_entry, 0);
+		   free_cache_entry, 0);
 }
 
 void table_cache_free(void)
@@ -610,14 +610,15 @@ void intern_close_table(Table *table)
 
   SYNOPSIS
     free_cache_entry()
-    table		Table to remove
+    entry		Table to remove
 
   NOTE
     We need to have a lock on LOCK_open when calling this
 */
 
-static void free_cache_entry(Table *table)
+static void free_cache_entry(void *entry)
 {
+  Table *table= static_cast<Table *>(entry);
   intern_close_table(table);
   if (!table->in_use)
   {
@@ -630,7 +631,7 @@ static void free_cache_entry(Table *table)
 	unused_tables=0;
     }
   }
-  free((unsigned char*) table);
+  free(table);
   return;
 }
 
@@ -641,8 +642,8 @@ void free_io_cache(Table *table)
   if (table->sort.io_cache)
   {
     close_cached_file(table->sort.io_cache);
-    free((unsigned char*) table->sort.io_cache);
-    table->sort.io_cache=0;
+    delete table->sort.io_cache;
+    table->sort.io_cache= 0;
   }
   return;
 }
@@ -2364,25 +2365,19 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     }
 
     /* make a new table */
-    if ((table= new Table) == NULL)
+    table= (Table *) malloc(sizeof(*table));
+    if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
     }
 
     error= open_unireg_entry(session, table, table_list, alias, key, key_length);
-    /* Combine the follow two */
-    if (error > 0)
+    if (error != 0)
     {
-      delete table;
+      free(table);
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
-    }
-    if (error < 0)
-    {
-      free((unsigned char*)table);
-      pthread_mutex_unlock(&LOCK_open);
-      return(0); // VIEW
     }
     my_hash_insert(&open_cache,(unsigned char*) table);
   }
@@ -4079,9 +4074,8 @@ find_field_in_table_ref(Session *session, TableList *table_list,
           something !
   */
   if (/* Exclude nested joins. */
-      (!table_list->nested_join ||
+      (!table_list->nested_join) &&
        /* Include merge views and information schema tables. */
-       table_list->field_translation) &&
       /*
         Test if the field qualifiers match the table reference we plan
         to search.
@@ -4094,10 +4088,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
 
   *actual_table= NULL;
 
-  if (table_list->field_translation)
-  {
-  }
-  else if (!table_list->nested_join)
+  if (!table_list->nested_join)
   {
     /* 'table_list' is a stored table. */
     assert(table_list->table);

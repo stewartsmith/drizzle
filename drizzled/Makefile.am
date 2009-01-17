@@ -23,8 +23,6 @@ bin_PROGRAMS =
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${EVENT_CFLAGS} ${PROTOBUF_CFLAGS}
-
 DTRACE = @DTRACE@
 
 DTRACEFLAGS = @DTRACEFLAGS@
@@ -347,7 +345,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 
 noinst_LTLIBRARIES = \
 		libhandler.la \
-		libyacc.la \
 		libitem.la \
 		libutil.la \
 		libfield.la \
@@ -356,17 +353,14 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(Z_LIBS) $(LIBINTL)
+	$(LTLIBZ) $(LIBINTL)
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
-		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
-		 -lprotobuf \
-		 $(LDADD) \
-		 $(CXXLDFLAGS) \
-		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS) \
+		 $(LDADD) $(LTLIBUUID) \
+		 $(LIBDL_LIBS) $(LTLIBEVENT) $(LTLIBPROTOBUF) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
@@ -461,6 +455,7 @@ drizzled_SOURCES = \
 		sql_udf.cc \
 		sql_union.cc \
 		sql_update.cc \
+		sql_yacc.yy \
 		stacktrace.cc \
 		strfunc.cc \
 		table.cc \
@@ -486,10 +481,6 @@ gen_lex_hash_LDFLAGS=
 
 libhandler_la_SOURCES = handler.cc handlerton.cc
 
-# Code output from YACC contains GOBS of unused macros, and I can't
-# figure out how to turn it off.
-libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_UNUSED_MACROS}
-libyacc_la_SOURCES = sql_yacc.yy
 AM_YFLAGS = -p DRIZZLE -d --verbose
 
 # This may seem silly, but it's required to get the object files prefixed

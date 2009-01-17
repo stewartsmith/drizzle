@@ -73,8 +73,7 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint32_t flag)
     x->filenr	 = info->dfile;
     x->options	 = share->options;
     x->create_time=share->state.create_time;
-    x->reflength= mi_get_pointer_length(share->base.max_data_file_length,
-                                        myisam_data_pointer_size);
+    x->reflength= mi_get_pointer_length(share->base.max_data_file_length, data_pointer_size);
     x->record_offset= ((share->options &
 			(HA_OPTION_PACK_RECORD | HA_OPTION_COMPRESS_RECORD)) ?
 		       0L : share->base.pack_reclength);

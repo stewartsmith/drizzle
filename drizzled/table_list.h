@@ -38,11 +38,7 @@
      - information schema table
        (TableList::schema_table != NULL)
        NOTICE: for schema tables TableList::field_translation may be != NULL
-  2) view (TableList::view != NULL)
-     - merge    (TableList::effective_algorithm == VIEW_ALGORITHM_MERGE)
-           also (TableList::field_translation != NULL)
-     - tmptable (TableList::effective_algorithm == VIEW_ALGORITHM_TMPTABLE)
-           also (TableList::field_translation == NULL)
+  2) Was VIEW 
   3) nested table reference (TableList::nested_join != NULL)
      - table sequence - e.g. (t1, t2, t3)
        TODO: how to distinguish from a JOIN?
@@ -67,7 +63,6 @@ class st_select_lex_unit;
 class ST_SCHEMA_TABLE;
 class st_select_lex;
 class TMP_TABLE_PARAM;
-class Field_translator;
 class Item_subselect;
 class Table;
 
@@ -182,9 +177,6 @@ public:
   TMP_TABLE_PARAM *schema_table_param;
   /* link to select_lex where this table was used */
   st_select_lex	*select_lex;
-  Field_translator *field_translation;	/* array of VIEW fields */
-  /* pointer to element after last one in translation table above */
-  Field_translator *field_translation_end;
   /*
     List (based on next_local) of underlying tables of this view. I.e. it
     does not include the tables of subqueries used in the view. Is set only

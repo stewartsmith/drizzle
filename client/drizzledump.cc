@@ -226,7 +226,7 @@ static struct my_option my_long_options[] =
    (char**) &opt_delete_master_logs, (char**) &opt_delete_master_logs, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"disable-keys", 'K',
-   "'/*!40000 ALTER TABLE tb_name DISABLE KEYS */; and '/*!40000 ALTER TABLE tb_name ENABLE KEYS */; will be put in the output.", (char**) &opt_disable_keys,
+   "'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will be put in the output.", (char**) &opt_disable_keys,
    (char**) &opt_disable_keys, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"dump-slave", OPT_DRIZZLEDUMP_SLAVE_DATA,
    "This causes the binary log position and filename of the master to be "
@@ -329,7 +329,7 @@ static struct my_option my_long_options[] =
    (char**) &opt_autocommit, (char**) &opt_autocommit, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
   {"no-create-db", 'n',
-   "'CREATE DATABASE /*!32312 IF NOT EXISTS*/ db_name;' will not be put in the output. The above line will be added otherwise, if --databases or --all-databases option was given.}.",
+   "'CREATE DATABASE IF NOT EXISTS db_name;' will not be put in the output. The above line will be added otherwise, if --databases or --all-databases option was given.}.",
    (char**) &opt_create_db, (char**) &opt_create_db, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
   {"no-create-info", 't', "Don't write table creation info.",
@@ -466,31 +466,31 @@ static void verbose_msg(const char *fmt, ...)
 static void check_io(FILE *file)
 {
   if (ferror(file))
-    die(EX_EOF, "Got errno %d on write", errno);
+    die(EX_EOF, _("Got errno %d on write"), errno);
 }
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,DUMP_VERSION,
+  printf(_("%s  Ver %s Distrib %s, for %s (%s)\n"),my_progname,DUMP_VERSION,
          drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
 } /* print_version */
 
 
 static void short_usage_sub(void)
 {
-  printf("Usage: %s [OPTIONS] database [tables]\n", my_progname);
-  printf("OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n",
+  printf(_("Usage: %s [OPTIONS] database [tables]\n"), my_progname);
+  printf(_("OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"),
          my_progname);
-  printf("OR     %s [OPTIONS] --all-databases [OPTIONS]\n", my_progname);
+  printf(_("OR     %s [OPTIONS] --all-databases [OPTIONS]\n"), my_progname);
 }
 
 
 static void usage(void)
 {
   print_version();
-  puts("By Igor Romanenko, Monty, Jani & Sinisa");
-  puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
-  puts("Dumping definition and data DRIZZLE database or table");
+  puts(_("By Igor Romanenko, Monty, Jani & Sinisa"));
+  puts(_("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n"));
+  puts(_("Dumping definition and data DRIZZLE database or table"));
   short_usage_sub();
   print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
@@ -501,7 +501,7 @@ static void usage(void)
 static void short_usage(void)
 {
   short_usage_sub();
-  printf("For more options, use %s --help\n", my_progname);
+  printf(_("For more options, use %s --help\n"), my_progname);
 }
 
 static void write_header(FILE *sql_file, char *db_name)
@@ -537,14 +537,14 @@ static void write_header(FILE *sql_file, char *db_name)
     }
     if (opt_set_charset)
       fprintf(sql_file,
-"\n/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;"
-"\n/*!40101 SET NAMES %s */;\n",default_charset);
+"\nSET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;"
+"\nSET NAMES %s;\n",default_charset);
 
     if (!path)
     {
       fprintf(md_result_file,"\
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n\
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n\
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;\n\
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;\n\
 ");
     }
     check_io(sql_file);
@@ -564,11 +564,11 @@ static void write_footer(FILE *sql_file)
     if (!path)
     {
       fprintf(md_result_file,"\
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n\
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;\n");
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;\n\
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;\n");
     }
     if (opt_set_charset)
-      fprintf(sql_file, "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n");
+      fprintf(sql_file, "SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION;\n");
     if (opt_comments)
     {
       if (opt_dump_date)
@@ -636,8 +636,8 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
       opt_password= strdup(argument);
       if (opt_password == NULL)
       {
-        fprintf(stderr, "Memory allocation error while copying password. "
-                        "Aborting.\n");
+        fprintf(stderr, _("Memory allocation error while copying password. "
+                        "Aborting.\n"));
         exit(ENOMEM);
       }
       while (*argument)
@@ -676,7 +676,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
         a crash even if the input destination buffer is large enough
         to hold the output.
       */
-      die(EX_USAGE, "Input filename too long: %s", argument);
+      die(EX_USAGE, _("Input filename too long: %s"), argument);
     }
 
     break;
@@ -719,7 +719,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
   {
     if (!strchr(argument, '.'))
     {
-      fprintf(stderr, "Illegal use of option --ignore-table=<database>.<table>\n");
+      fprintf(stderr, _("Illegal use of option --ignore-table=<database>.<table>\n"));
       exit(1);
     }
     char * tmpptr= strdup(argument);
@@ -744,7 +744,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
       if (error_len)
       {
         strncpy(buff, err_ptr, min((uint32_t)sizeof(buff), error_len));
-        fprintf(stderr, "Invalid mode to --compatible: %s\n", buff);
+        fprintf(stderr, _("Invalid mode to --compatible: %s\n"), buff);
         exit(1);
       }
       mode= opt_compatible_mode;
@@ -804,7 +804,7 @@ static int get_options(int *argc, char ***argv)
                 fields_terminated))
   {
     fprintf(stderr,
-            "%s: You must use option --tab with --fields-...\n", my_progname);
+            _("%s: You must use option --tab with --fields-...\n"), my_progname);
     return(EX_USAGE);
   }
 
@@ -821,8 +821,8 @@ static int get_options(int *argc, char ***argv)
     opt_master_data= DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL;
   if (opt_single_transaction && opt_lock_all_tables)
   {
-    fprintf(stderr, "%s: You can't use --single-transaction and "
-            "--lock-all-tables at the same time.\n", my_progname);
+    fprintf(stderr, _("%s: You can't use --single-transaction and "
+            "--lock-all-tables at the same time.\n"), my_progname);
     return(EX_USAGE);
   }
   if (opt_master_data)
@@ -834,13 +834,13 @@ static int get_options(int *argc, char ***argv)
     lock_tables= 0;
   if (enclosed && opt_enclosed)
   {
-    fprintf(stderr, "%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n", my_progname);
+    fprintf(stderr, _("%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n"), my_progname);
     return(EX_USAGE);
   }
   if ((opt_databases || opt_alldbs) && path)
   {
     fprintf(stderr,
-            "%s: --databases or --all-databases can't be used with --tab.\n",
+            _("%s: --databases or --all-databases can't be used with --tab.\n"),
             my_progname);
     return(EX_USAGE);
   }
@@ -865,7 +865,7 @@ static int get_options(int *argc, char ***argv)
 static void DB_error(DRIZZLE *drizzle_arg, const char *when)
 {
 
-  maybe_die(EX_DRIZZLEERR, "Got error: %d: %s %s",
+  maybe_die(EX_DRIZZLEERR, _("Got error: %d: %s %s"),
           drizzle_errno(drizzle_arg), drizzle_error(drizzle_arg), when);
   return;
 }
@@ -957,7 +957,7 @@ static int drizzle_query_with_error_report(DRIZZLE *drizzle_con, DRIZZLE_RES **r
   if (drizzle_query(drizzle_con, query) ||
       (res && !((*res)= drizzle_store_result(drizzle_con))))
   {
-    maybe_die(EX_DRIZZLEERR, "Couldn't execute '%s': %s (%d)",
+    maybe_die(EX_DRIZZLEERR, _("Couldn't execute '%s': %s (%d)"),
             query, drizzle_error(drizzle_con), drizzle_errno(drizzle_con));
     return 1;
   }
@@ -1018,7 +1018,7 @@ static void maybe_exit(int error)
 
 static int connect_to_db(char *host, char *user,char *passwd)
 {
-  verbose_msg("-- Connecting to %s...\n", host ? host : "localhost");
+  verbose_msg(_("-- Connecting to %s...\n"), host ? host : "localhost");
   drizzle_create(&drizzle_connection);
   if (opt_compress)
     drizzle_options(&drizzle_connection,DRIZZLE_OPT_COMPRESS,NULL);
@@ -1039,7 +1039,7 @@ static int connect_to_db(char *host, char *user,char *passwd)
 */
 static void dbDisconnect(char *host)
 {
-  verbose_msg("-- Disconnecting from %s...\n", host ? host : "localhost");
+  verbose_msg(_("-- Disconnecting from %s...\n"), host ? host : "localhost");
   drizzle_close(drizzle);
 } /* dbDisconnect */
 
@@ -1049,7 +1049,7 @@ static void unescape(FILE *file,char *pos,uint length)
   char *tmp;
 
   if (!(tmp=(char*) malloc(length*2+1)))
-    die(EX_DRIZZLEERR, "Couldn't allocate memory");
+    die(EX_DRIZZLEERR, _("Couldn't allocate memory"));
 
   drizzle_escape_string(tmp, pos, length);
   fputc('\'', file);
@@ -1390,8 +1390,8 @@ static bool get_table_structure(char *table, char *db, char *table_type,
   if (delayed && (*ignore_flag & IGNORE_INSERT_DELAYED))
   {
     delayed= 0;
-    verbose_msg("-- Warning: Unable to use delayed inserts for table '%s' "
-                "because it's of type %s\n", table, table_type);
+    verbose_msg(_("-- Warning: Unable to use delayed inserts for table '%s' "
+                "because it's of type %s\n"), table, table_type);
   }
 
   complete_insert= 0;
@@ -1404,7 +1404,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
   insert_option= ((delayed && opt_ignore) ? " DELAYED IGNORE " :
                   delayed ? " DELAYED " : opt_ignore ? " IGNORE " : "");
 
-  verbose_msg("-- Retrieving table structure for table %s...\n", table);
+  verbose_msg(_("-- Retrieving table structure for table %s...\n"), table);
 
   result_table=     quote_name(table, table_buff, 1);
   opt_quoted_table= quote_name(table, table_buff2, 0);
@@ -1514,7 +1514,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
   }
   else
   {
-    verbose_msg("%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n",
+    verbose_msg(_("%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"),
                 my_progname, drizzle_error(drizzle));
 
     snprintf(query_buff, sizeof(query_buff), "show fields from %s",
@@ -1623,7 +1623,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
           fputs("\t\t<options Comment=\"view\" />\n", sql_file);
           goto continue_xml;
         }
-        fprintf(stderr, "%s: Can't get keys for table %s (%s)\n",
+        fprintf(stderr, _("%s: Can't get keys for table %s (%s)\n"),
                 my_progname, result_table, drizzle_error(drizzle));
         if (path)
           my_fclose(sql_file, MYF(MY_WME));
@@ -1700,14 +1700,14 @@ static bool get_table_structure(char *table, char *db, char *table_type,
         {
           if (drizzle_errno(drizzle) != ER_PARSE_ERROR)
           {                                     /* If old DRIZZLE version */
-            verbose_msg("-- Warning: Couldn't get status information for " \
-                        "table %s (%s)\n", result_table,drizzle_error(drizzle));
+            verbose_msg(_("-- Warning: Couldn't get status information for " \
+                        "table %s (%s)\n"), result_table,drizzle_error(drizzle));
           }
         }
         else if (!(row= drizzle_fetch_row(result)))
         {
           fprintf(stderr,
-                  "Error: Couldn't read status information for table %s (%s)\n",
+                  _("Error: Couldn't read status information for table %s (%s)\n"),
                   result_table,drizzle_error(drizzle));
         }
         else
@@ -1735,8 +1735,7 @@ continue_xml:
       check_io(sql_file);
     }
   }
-  if (complete_insert)
-  {
+  if (complete_insert) {
     insert_pat.append(") VALUES ");
     if (!extended_insert)
       insert_pat.append("(");
@@ -1850,14 +1849,14 @@ static void dump_table(char *table, char *db)
   */
   if (!get_table_structure(table, db, table_type, &ignore_flag, &num_fields))
   {
-    maybe_die(EX_TABLE_STATUS, "Error retrieving table structure for table: \"%s\"", table);
+    maybe_die(EX_TABLE_STATUS, _("Error retrieving table structure for table: \"%s\""), table);
     return;
   }
 
   /* Check --no-data flag */
   if (opt_no_data)
   {
-    verbose_msg("-- Skipping dump data for table '%s', --no-data was used\n",
+    verbose_msg(_("-- Skipping dump data for table '%s', --no-data was used\n"),
                 table);
     return;
   }
@@ -1868,14 +1867,14 @@ static void dump_table(char *table, char *db)
   */
   if (ignore_flag & IGNORE_DATA)
   {
-    verbose_msg("-- Warning: Skipping data for table '%s' because " \
-                "it's of type %s\n", table, table_type);
+    verbose_msg(_("-- Warning: Skipping data for table '%s' because " \
+                "it's of type %s\n"), table, table_type);
     return;
   }
   /* Check that there are any fields in the table */
   if (num_fields == 0)
   {
-    verbose_msg("-- Skipping dump data for table '%s', it has no fields\n",
+    verbose_msg(_("-- Skipping dump data for table '%s', it has no fields\n"),
                 table);
     return;
   }
@@ -1883,7 +1882,7 @@ static void dump_table(char *table, char *db)
   result_table= quote_name(table,table_buff, 1);
   opt_quoted_table= quote_name(table, table_buff2, 0);
 
-  verbose_msg("-- Sending SELECT query...\n");
+  verbose_msg(_("-- Sending SELECT query...\n"));
 
   query_string.clear();
   query_string.reserve(1024);
@@ -1938,7 +1937,7 @@ static void dump_table(char *table, char *db)
 
     if (drizzle_real_query(drizzle, query_string.c_str(), query_string.length()))
     {
-      DB_error(drizzle, "when executing 'SELECT INTO OUTFILE'");
+      DB_error(drizzle, _("when executing 'SELECT INTO OUTFILE'"));
       return;
     }
   }
@@ -1946,7 +1945,7 @@ static void dump_table(char *table, char *db)
   {
     if (!opt_xml && opt_comments)
     {
-      fprintf(md_result_file,"\n--\n-- Dumping data for table %s\n--\n",
+      fprintf(md_result_file,_("\n--\n-- Dumping data for table %s\n--\n"),
               result_table);
       check_io(md_result_file);
     }
@@ -1983,7 +1982,7 @@ static void dump_table(char *table, char *db)
     }
     if (drizzle_query_with_error_report(drizzle, 0, query_string.c_str()))
     {
-      DB_error(drizzle, "when retrieving data from server");
+      DB_error(drizzle, _("when retrieving data from server"));
       goto err;
     }
     if (quick)
@@ -1992,14 +1991,14 @@ static void dump_table(char *table, char *db)
       res=drizzle_store_result(drizzle);
     if (!res)
     {
-      DB_error(drizzle, "when retrieving data from server");
+      DB_error(drizzle, _("when retrieving data from server"));
       goto err;
     }
 
-    verbose_msg("-- Retrieving rows...\n");
+    verbose_msg(_("-- Retrieving rows...\n"));
     if (drizzle_num_fields(res) != num_fields)
     {
-      fprintf(stderr,"%s: Error in field count for table: %s !  Aborting.\n",
+      fprintf(stderr,_("%s: Error in field count for table: %s !  Aborting.\n"),
               my_progname, result_table);
       error= EX_CONSCHECK;
       goto err;
@@ -2013,7 +2012,7 @@ static void dump_table(char *table, char *db)
     /* Moved disable keys to after lock per bug 15977 */
     if (opt_disable_keys)
     {
-      fprintf(md_result_file, "/*!40000 ALTER TABLE %s DISABLE KEYS */;\n",
+      fprintf(md_result_file, "ALTER TABLE %s DISABLE KEYS;\n",
 	      opt_quoted_table);
       check_io(md_result_file);
     }
@@ -2038,7 +2037,7 @@ static void dump_table(char *table, char *db)
       rownr++;
       if ((rownr % show_progress_size) == 0)
       {
-        verbose_msg(_("-- %"PRIu32" of ~%"PRIu64" rows dumped\n"), rownr, total_rows);
+        verbose_msg(_("-- %"PRIu32" of ~%"PRIu64" rows dumped for table %s\n"), rownr, total_rows, opt_quoted_table);
       }
       if (!extended_insert && !opt_xml)
       {
@@ -2060,7 +2059,7 @@ static void dump_table(char *table, char *db)
 
         if (!(field= drizzle_fetch_field(res)))
           die(EX_CONSCHECK,
-                      "Not enough fields from table %s! Aborting.\n",
+                      _("Not enough fields from table %s! Aborting.\n"),
                       result_table);
 
         /*
@@ -2246,7 +2245,7 @@ static void dump_table(char *table, char *db)
     if (drizzle_errno(drizzle))
     {
       snprintf(buf, sizeof(buf),
-               "%s: Error %d: %s when dumping table %s at row: %d\n",
+               _("%s: Error %d: %s when dumping table %s at row: %d\n"),
                my_progname,
                drizzle_errno(drizzle),
                drizzle_error(drizzle),
@@ -2260,7 +2259,7 @@ static void dump_table(char *table, char *db)
     /* Moved enable keys to before unlock per bug 15977 */
     if (opt_disable_keys)
     {
-      fprintf(md_result_file,"/*!40000 ALTER TABLE %s ENABLE KEYS */;\n",
+      fprintf(md_result_file,"ALTER TABLE %s ENABLE KEYS;\n",
               opt_quoted_table);
       check_io(md_result_file);
     }
@@ -2372,17 +2371,17 @@ int init_dumping_tables(char *qdatabase)
       /* Old server version, dump generic CREATE DATABASE */
       if (opt_drop_database)
         fprintf(md_result_file,
-                "\n/*!40000 DROP DATABASE IF EXISTS %s*/;\n",
+                "\nDROP DATABASE IF EXISTS %s;\n",
                 qdatabase);
       fprintf(md_result_file,
-              "\nCREATE DATABASE /*!32312 IF NOT EXISTS*/ %s;\n",
+              "\nCREATE DATABASE IF NOT EXISTS %s;\n",
               qdatabase);
     }
     else
     {
       if (opt_drop_database)
         fprintf(md_result_file,
-                "\n/*!40000 DROP DATABASE IF EXISTS %s*/;\n",
+                "\nDROP DATABASE IF EXISTS %s;\n",
                 qdatabase);
       row = drizzle_fetch_row(dbinfo);
       if (row[1])
@@ -2404,7 +2403,7 @@ static int init_dumping(char *database, int init_func(char*))
 
   if (drizzle_select_db(drizzle, database))
   {
-    DB_error(drizzle, "when selecting the database");
+    DB_error(drizzle, _("when selecting the database"));
     return 1;                   /* If --force */
   }
   if (!path && !opt_xml)
@@ -2468,18 +2467,18 @@ static int dump_all_tables_in_db(char *database)
       {
         numrows++;
         query.append( quote_name(table, table_buff, 1));
-        query.append( " READ /*!32311 LOCAL */,");
+        query.append( " READ LOCAL,");
       }
     }
     if (numrows && drizzle_real_query(drizzle, query.c_str(), query.length()-1))
-      DB_error(drizzle, "when using LOCK TABLES");
+      DB_error(drizzle, _("when using LOCK TABLES"));
             /* We shall continue here, if --force was given */
     query.clear();
   }
   if (flush_logs)
   {
     if (drizzle_refresh(drizzle, REFRESH_LOG))
-      DB_error(drizzle, "when doing refresh");
+      DB_error(drizzle, _("when doing refresh"));
            /* We shall continue here, if --force was given */
   }
   while ((table= getTableName(0)))
@@ -2565,7 +2564,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
 
   init_alloc_root(&root, 8192, 0);
   if (!(dump_tables= pos= (char**) alloc_root(&root, tables * sizeof(char *))))
-     die(EX_EOM, "alloc_root failure.");
+     die(EX_EOM, _("alloc_root failure."));
 
   for (; tables > 0 ; tables-- , table_names++)
   {
@@ -2576,7 +2575,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
       if (lock_tables)
       {
         lock_tables_query.append( quote_name(*pos, table_buff, 1));
-        lock_tables_query.append( " READ /*!32311 LOCAL */,");
+        lock_tables_query.append( " READ LOCAL,");
       }
       pos++;
     }
@@ -2586,7 +2585,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
       {
         free_root(&root, MYF(0));
       }
-      maybe_die(EX_ILLEGAL_TABLE, "Couldn't find table: \"%s\"", *table_names);
+      maybe_die(EX_ILLEGAL_TABLE, _("Couldn't find table: \"%s\""), *table_names);
       /* We shall countinue here, if --force was given */
     }
   }
@@ -2601,7 +2600,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
       {
         free_root(&root, MYF(0));
       }
-      DB_error(drizzle, "when doing LOCK TABLES");
+      DB_error(drizzle, _("when doing LOCK TABLES"));
        /* We shall countinue here, if --force was given */
     }
   }
@@ -2611,7 +2610,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     {
       if (!ignore_errors)
         free_root(&root, MYF(0));
-      DB_error(drizzle, "when doing refresh");
+      DB_error(drizzle, _("when doing refresh"));
     }
      /* We shall countinue here, if --force was given */
   }
@@ -2664,7 +2663,7 @@ static int do_show_master_status(DRIZZLE *drizzle_con)
     else if (!ignore_errors)
     {
       /* SHOW MASTER STATUS reports nothing and --force is not enabled */
-      my_printf_error(0, "Error: Binlogging on server not active",
+      my_printf_error(0, _("Error: Binlogging on server not active"),
                       MYF(0));
       drizzle_free_result(master);
       maybe_exit(EX_DRIZZLEERR);
@@ -2732,7 +2731,7 @@ static int do_show_slave_status(DRIZZLE *drizzle_con)
     if (!ignore_errors)
     {
       /* SHOW SLAVE STATUS reports nothing and --force is not enabled */
-      my_printf_error(0, "Error: Slave not set up", MYF(0));
+      my_printf_error(0, _("Error: Slave not set up"), MYF(0));
     }
     return 1;
   }
@@ -2791,7 +2790,7 @@ static int do_start_slave_sql(DRIZZLE *drizzle_con)
   /* now, start slave if stopped */
   if (drizzle_query_with_error_report(drizzle_con, 0, "START SLAVE"))
   {
-    my_printf_error(0, "Error: Unable to start slave", MYF(0));
+    my_printf_error(0, _("Error: Unable to start slave"), MYF(0));
     return 1;
   }
   return(0);
@@ -2859,33 +2858,12 @@ static int purge_bin_logs_to(DRIZZLE *drizzle_con, char* log_name)
 
 static int start_transaction(DRIZZLE *drizzle_con)
 {
-  /*
-    We use BEGIN for old servers. --single-transaction --master-data will fail
-    on old servers, but that's ok as it was already silently broken (it didn't
-    do a consistent read, so better tell people frankly, with the error).
-
-    We want the first consistent read to be used for all tables to dump so we
-    need the REPEATABLE READ level (not anything lower, for example READ
-    COMMITTED would give one new consistent read per dumped table).
-  */
-  if ((drizzle_get_server_version(drizzle_con) < 40100) && opt_master_data)
-  {
-    fprintf(stderr, "-- %s: the combination of --single-transaction and "
-            "--master-data requires a DRIZZLE server version of at least 4.1 "
-            "(current server's version is %s). %s\n",
-            ignore_errors ? "Warning" : "Error",
-            drizzle_con->server_version ? drizzle_con->server_version : "unknown",
-            ignore_errors ? "Continuing due to --force, backup may not be consistent across all tables!" : "Aborting.");
-    if (!ignore_errors)
-      exit(EX_DRIZZLEERR);
-  }
-
   return (drizzle_query_with_error_report(drizzle_con, 0,
                                         "SET SESSION TRANSACTION ISOLATION "
                                         "LEVEL REPEATABLE READ") ||
           drizzle_query_with_error_report(drizzle_con, 0,
                                         "START TRANSACTION "
-                                        "/*!40100 WITH CONSISTENT SNAPSHOT */"));
+                                        "WITH CONSISTENT SNAPSHOT"));
 }
 
 
@@ -3018,15 +2996,15 @@ char check_if_ignore_table(const char *table_name, char *table_type)
   {
     if (drizzle_errno(drizzle) != ER_PARSE_ERROR)
     {                                   /* If old DRIZZLE version */
-      verbose_msg("-- Warning: Couldn't get status information for "
-                  "table %s (%s)\n", table_name, drizzle_error(drizzle));
+      verbose_msg(_("-- Warning: Couldn't get status information for "
+                  "table %s (%s)\n"), table_name, drizzle_error(drizzle));
       return(result);                       /* assume table is ok */
     }
   }
   if (!(row= drizzle_fetch_row(res)))
   {
     fprintf(stderr,
-            "Error: Couldn't read status information for table %s (%s)\n",
+            _("Error: Couldn't read status information for table %s (%s)\n"),
             table_name, drizzle_error(drizzle));
     drizzle_free_result(res);
     return(result);                         /* assume table is ok */
@@ -3094,8 +3072,8 @@ static char *primary_key_fields(const char *table_name)
   if (drizzle_query(drizzle, show_keys_buff) ||
       !(res= drizzle_store_result(drizzle)))
   {
-    fprintf(stderr, "Warning: Couldn't read keys from table %s;"
-            " records are NOT sorted (%s)\n",
+    fprintf(stderr, _("Warning: Couldn't read keys from table %s;"
+            " records are NOT sorted (%s)\n"),
             table_name, drizzle_error(drizzle));
     /* Don't exit, because it's better to print out unsorted records */
     goto cleanup;
@@ -3125,7 +3103,7 @@ static char *primary_key_fields(const char *table_name)
     result= (char *)malloc(result_length + 10);
     if (!result)
     {
-      fprintf(stderr, "Error: Not enough memory to store ORDER BY clause\n");
+      fprintf(stderr, _("Error: Not enough memory to store ORDER BY clause\n"));
       goto cleanup;
     }
     drizzle_data_seek(res, 0);

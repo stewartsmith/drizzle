@@ -12,8 +12,7 @@
 
 AC_DEFUN([AC_CXX_STL_HASH],
   [AC_MSG_CHECKING(the location of hash_map)
-  AC_LANG_SAVE
-   AC_LANG_CPLUSPLUS
+   AC_LANG_PUSH(C++)
    ac_cv_cxx_hash_map=""
    for location in ext/hash_map boost/hash_map hash_map; do
      for namespace in __gnu_cxx "" std stdext; do
@@ -25,6 +24,7 @@ AC_DEFUN([AC_CXX_STL_HASH],
        fi
      done
    done
+   AC_LANG_POP()
    ac_cv_cxx_hash_set=`echo "$ac_cv_cxx_hash_map" | sed s/map/set/`;
    if test -n "$ac_cv_cxx_hash_map"; then
       AC_DEFINE(HAVE_HASH_MAP, 1, [define if the compiler has hash_map])
