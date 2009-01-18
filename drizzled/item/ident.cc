@@ -112,7 +112,6 @@ const char *Item_ident::full_name() const
 void Item_ident::print(String *str,
                        enum_query_type)
 {
-  Session *session= current_session;
   char d_name_buff[MAX_ALIAS_NAME], t_name_buff[MAX_ALIAS_NAME];
   const char *d_name= db_name, *t_name= table_name;
   if (lower_case_table_names== 1 ||
@@ -136,29 +135,30 @@ void Item_ident::print(String *str,
   {
     const char *nm= (field_name && field_name[0]) ?
                       field_name : name ? name : "tmp_field";
-    append_identifier(session, str, nm, (uint) strlen(nm));
+    str->append_identifier(nm, (uint) strlen(nm));
+
     return;
   }
   if (db_name && db_name[0] && !alias_name_used)
   {
     {
-      append_identifier(session, str, d_name, (uint)strlen(d_name));
+      str->append_identifier(d_name, (uint)strlen(d_name));
       str->append('.');
     }
-    append_identifier(session, str, t_name, (uint)strlen(t_name));
+    str->append_identifier(t_name, (uint)strlen(t_name));
     str->append('.');
-    append_identifier(session, str, field_name, (uint)strlen(field_name));
+    str->append_identifier(field_name, (uint)strlen(field_name));
   }
   else
   {
     if (table_name[0])
     {
-      append_identifier(session, str, t_name, (uint) strlen(t_name));
+      str->append_identifier(t_name, (uint) strlen(t_name));
       str->append('.');
-      append_identifier(session, str, field_name, (uint) strlen(field_name));
+      str->append_identifier(field_name, (uint) strlen(field_name));
     }
     else
-      append_identifier(session, str, field_name, (uint) strlen(field_name));
+      str->append_identifier(field_name, (uint) strlen(field_name));
   }
 }
 

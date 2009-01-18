@@ -1827,6 +1827,11 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
   return (error);
 }
 
+/* close_temporary_tables' internal, 4 is due to uint4korr definition */
+uint32_t  Table::tmpkeyval()
+{
+  return uint4korr(s->table_cache_key.str + s->table_cache_key.length - 4);
+}
 
 /*
   Free information allocated by openfrm
@@ -1837,31 +1842,32 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
     free_share		Is 1 if we also want to free table_share
 */
 
-int closefrm(register Table *table, bool free_share)
+int Table::closefrm(bool free_share)
 {
   int error=0;
 
-  if (table->db_stat)
-    error=table->file->close();
-  free((char*) table->alias);
-  table->alias= 0;
-  if (table->field)
+  if (db_stat)
+    error= file->close();
+  free((char*) alias);
+  alias= NULL;
+  if (field)
   {
-    for (Field **ptr=table->field ; *ptr ; ptr++)
+    for (Field **ptr=field ; *ptr ; ptr++)
       delete *ptr;
-    table->field= 0;
+    field= 0;
   }
-  delete table->file;
-  table->file= 0;				/* For easier errorchecking */
+  delete file;
+  file= 0;				/* For easier errorchecking */
   if (free_share)
   {
-    if (table->s->tmp_table == NO_TMP_TABLE)
-      release_table_share(table->s, RELEASE_NORMAL);
+    if (s->tmp_table == NO_TMP_TABLE)
+      release_table_share(s, RELEASE_NORMAL);
     else
-      free_table_share(table->s);
+      free_table_share(s);
   }
-  free_root(&table->mem_root, MYF(0));
-  return(error);
+  free_root(&mem_root, MYF(0));
+
+  return error;
 }
 
 

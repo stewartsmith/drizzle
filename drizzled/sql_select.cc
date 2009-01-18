@@ -16337,7 +16337,7 @@ Index_hint::print(Session *session, String *str)
     if (session && is_primary_key_name(key_name.str))
       str->append(is_primary_key_name(key_name.str));
     else
-      append_identifier(session, str, key_name.str, key_name.length);
+      str->append_identifier(key_name.str, key_name.length);
   }
   str->append(')');
 }
@@ -16372,18 +16372,17 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
     {
       // A normal table
       {
-        append_identifier(session, str, db, db_length);
+        str->append_identifier(db, db_length);
         str->append('.');
       }
       if (schema_table)
       {
-        append_identifier(session, str, schema_table_name,
-                          strlen(schema_table_name));
+        str->append_identifier(schema_table_name, strlen(schema_table_name));
         cmp_name= schema_table_name;
       }
       else
       {
-        append_identifier(session, str, table_name, table_name_length);
+        str->append_identifier(table_name, table_name_length);
         cmp_name= table_name;
       }
     }
@@ -16403,7 +16402,7 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
         }
       }
 
-      append_identifier(session, str, t_alias, strlen(t_alias));
+      str->append_identifier(t_alias, strlen(t_alias));
     }
 
     if (index_hints)

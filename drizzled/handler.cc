@@ -2859,7 +2859,7 @@ int ha_create_table(Session *session, const char *path,
   name= check_lowercase_names(table.file, share.path.str, name_buff);
 
   error= table.file->ha_create(name, &table, create_info);
-  closefrm(&table, 0);
+  table.closefrm(false);
   if (error)
   {
     sprintf(name_buff,"%s.%s",db,table_name);

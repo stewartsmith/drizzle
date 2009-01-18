@@ -1447,8 +1447,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
       /*
         Even if the "table" is a view, we do a DROP TABLE here.
        */
-        fprintf(sql_file, "DROP TABLE IF EXISTS %s;\n",
-                opt_quoted_table);
+        fprintf(sql_file, "DROP TABLE IF EXISTS %s;\n", opt_quoted_table);
         check_io(sql_file);
       }
 

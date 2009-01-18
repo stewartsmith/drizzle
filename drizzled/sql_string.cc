@@ -1063,6 +1063,54 @@ void String::print(String *str)
   }
 }
 
+/*
+  Quote the given identifier.
+  If the given identifier is empty, it will be quoted.
+
+  SYNOPSIS
+  append_identifier()
+  name                  the identifier to be appended
+  name_length           length of the appending identifier
+*/
+
+/* Factor the extern out */
+extern const CHARSET_INFO *system_charset_info, *files_charset_info;
+
+void String::append_identifier(const char *name, uint32_t length)
+{
+  const char *name_end;
+  char quote_char;
+  int q= '`';
+
+  /*
+    The identifier must be quoted as it includes a quote character or
+   it's a keyword
+  */
+
+  reserve(length*2 + 2);
+  quote_char= (char) q;
+  append(&quote_char, 1, system_charset_info);
+
+  for (name_end= name+length ; name < name_end ; name+= length)
+  {
+    unsigned char chr= (unsigned char) *name;
+    length= my_mbcharlen(system_charset_info, chr);
+    /*
+      my_mbcharlen can return 0 on a wrong multibyte
+      sequence. It is possible when upgrading from 4.0,
+      and identifier contains some accented characters.
+      The manual says it does not work. So we'll just
+      change length to 1 not to hang in the endless loop.
+    */
+    if (!length)
+      length= 1;
+    if (length == 1 && chr == (unsigned char) quote_char)
+      append(&quote_char, 1, system_charset_info);
+    append(name, length, system_charset_info);
+  }
+  append(&quote_char, 1, system_charset_info);
+}
+
 
 /*
   Exchange state of this object and argument.

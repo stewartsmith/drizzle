@@ -369,8 +369,7 @@ void Item_ref::print(String *str, enum_query_type query_type)
     if ((*ref)->type() != Item::CACHE_ITEM &&
         !table_name && name && alias_name_used)
     {
-      Session *session= current_session;
-      append_identifier(session, str, name, (uint) strlen(name));
+      str->append_identifier(name, (uint) strlen(name));
     }
     else
       (*ref)->print(str, query_type);

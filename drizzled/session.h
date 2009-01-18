@@ -1471,6 +1471,7 @@ public:
     Close the current connection.
   */
   void close_connection(uint32_t errcode, bool lock);
+  void close_temporary_tables();
 
 private:
   const char *proc_info;
