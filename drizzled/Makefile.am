@@ -335,6 +335,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table.h \
 		table_list.h \
 		table_map_iterator.h \
+		table_share.h \
 		tableop_hooks.h \
 		tmp_table.h \
 		tzfile.h \
