@@ -508,7 +508,6 @@ void close_handle_and_leave_table_as_lock(Table *table)
 
   SYNOPSIS
     list_open_tables()
-    session			Thread Session
     wild		SQL like expression
 
   NOTES
@@ -521,8 +520,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     #		Pointer to list of names of open tables.
 */
 
-OPEN_TableList *list_open_tables(Session *session __attribute__((unused)),
-                                  const char *db, const char *wild)
+OPEN_TableList *list_open_tables(const char *db, const char *wild)
 {
   int result = 0;
   OPEN_TableList **start_list, *open_list;

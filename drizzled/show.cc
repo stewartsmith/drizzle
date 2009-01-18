@@ -3507,7 +3507,7 @@ int fill_open_tables(Session *session, TableList *tables, COND *)
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
   OPEN_TableList *open_list;
-  if (!(open_list=list_open_tables(session,session->lex->select_lex.db, wild))
+  if (!(open_list=list_open_tables(session->lex->select_lex.db, wild))
             && session->is_fatal_error)
     return(1);
 
