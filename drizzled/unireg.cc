@@ -605,7 +605,7 @@ int rename_table_proto_file(const char *from, const char* to)
 {
   string from_path(from);
   string to_path(to);
-  string file_ext = ".tabledefinition";
+  string file_ext = ".dfe";
 
   from_path.append(file_ext);
   to_path.append(file_ext);
@@ -616,7 +616,7 @@ int rename_table_proto_file(const char *from, const char* to)
 int delete_table_proto_file(char *file_name)
 {
   string new_path(file_name);
-  string file_ext = ".tabledefinition";
+  string file_ext = ".dfe";
 
   new_path.append(file_ext);
   return my_delete(new_path.c_str(), MYF(0));
@@ -631,7 +631,7 @@ bool create_table_proto_file(const char *file_name,
 {
   drizzle::Table table_proto;
   string new_path(file_name);
-  string file_ext = ".tabledefinition";
+  string file_ext = ".dfe";
 
   fill_table_proto(&table_proto, table_name, create_fields, create_info,
                    keys, key_info);
