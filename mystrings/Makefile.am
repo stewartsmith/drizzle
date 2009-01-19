@@ -29,7 +29,7 @@ libmystrings_la_SOURCES = 	bmove_upp.cc \
 				is_prefix.cc \
 				longlong2str.cc \
 				my_strtoll10.cc \
-				bchange.cc int2str.cc str2int.cc \
+				int2str.cc str2int.cc \
         llstr.cc \
         ctype.cc ctype-simple.cc ctype-mb.cc \
         ctype-utf8.cc \
