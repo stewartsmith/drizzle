@@ -477,7 +477,6 @@ static SYMBOL symbols[] = {
   { "UNLOCK",		SYM(UNLOCK_SYM)},
   { "UNTIL",		SYM(UNTIL_SYM)},
   { "UPDATE",		SYM(UPDATE_SYM)},
-  { "UPGRADE",          SYM(UPGRADE_SYM)},
   { "USAGE",		SYM(USAGE)},
   { "USE",		SYM(USE_SYM)},
   { "USER",		SYM(USER)},

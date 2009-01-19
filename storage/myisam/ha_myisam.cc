@@ -34,6 +34,8 @@ pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
 static uint32_t repair_threads;
 static uint32_t block_size;
+static uint64_t max_sort_file_size;
+static uint64_t sort_buffer_size;
 
 /* bits in myisam_recover_options */
 const char *myisam_recover_names[] =
@@ -764,7 +766,7 @@ int ha_myisam::repair(Session* session, HA_CHECK_OPT *check_opt)
   param.testflag= ((check_opt->flags & ~(T_EXTEND)) |
                    T_SILENT | T_FORCE_CREATE | T_CALC_CHECKSUM |
                    (check_opt->flags & T_EXTEND ? T_REP : T_REP_BY_SORT));
-  param.sort_buffer_length=  check_opt->sort_buffer_size;
+  param.sort_buffer_length=  sort_buffer_size;
   start_records=file->state->records;
   while ((error=repair(session,param,0)) && param.retry_repair)
   {
@@ -810,7 +812,7 @@ int ha_myisam::optimize(Session* session, HA_CHECK_OPT *check_opt)
   param.op_name= "optimize";
   param.testflag= (check_opt->flags | T_SILENT | T_FORCE_CREATE |
                    T_REP_BY_SORT | T_STATISTICS | T_SORT_INDEX);
-  param.sort_buffer_length=  check_opt->sort_buffer_size;
+  param.sort_buffer_length= sort_buffer_size;
   if ((error= repair(session,param,1)) && param.retry_repair)
   {
     errmsg_printf(ERRMSG_LVL_WARN, "Warning: Optimize table got errno %d on %s.%s, retrying",
@@ -825,7 +827,7 @@ int ha_myisam::optimize(Session* session, HA_CHECK_OPT *check_opt)
 int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
 {
   int error=0;
-  uint32_t local_testflag=param.testflag;
+  uint32_t local_testflag= param.testflag;
   bool optimize_done= !do_optimize, statistics_done=0;
   const char *old_proc_info= session->get_proc_info();
   char fixed_name[FN_REFLEN];
@@ -854,6 +856,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   param.using_global_keycache = 1;
   param.session= session;
   param.out_flag= 0;
+  param.sort_buffer_length= sort_buffer_size;
   strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
@@ -1122,7 +1125,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
     param.testflag= (T_SILENT | T_REP_BY_SORT | T_QUICK |
                      T_CREATE_MISSING_KEYS);
     param.myf_rw&= ~MY_WAIT_IF_FULL;
-    param.sort_buffer_length=  session->variables.myisam_sort_buff_size;
+    param.sort_buffer_length=  sort_buffer_size;
     param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
@@ -1875,9 +1878,28 @@ static DRIZZLE_SYSVAR_UINT(repair_threads, repair_threads,
                               "1 disables parallel repair."),
                            NULL, NULL, 1, 1, UINT32_MAX, 0);
 
+static DRIZZLE_SYSVAR_ULONGLONG(max_sort_file_size, max_sort_file_size,
+                                PLUGIN_VAR_RQCMDARG,
+                                N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."),
+                                NULL, NULL, INT32_MAX, 0, UINT64_MAX, 0);
+
+static DRIZZLE_SYSVAR_ULONGLONG(sort_buffer_size, sort_buffer_size,
+                                PLUGIN_VAR_RQCMDARG,
+                                N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
+                                NULL, NULL, 8192*1024, 1024, UINT64_MAX, 0);
+
+extern uint32_t data_pointer_size;
+static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
+                           PLUGIN_VAR_RQCMDARG,
+                           N_("Default pointer size to be used for MyISAM tables."),
+                           NULL, NULL, 6, 2, 7, 0);
+
 static struct st_mysql_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(block_size),
   DRIZZLE_SYSVAR(repair_threads),
+  DRIZZLE_SYSVAR(max_sort_file_size),
+  DRIZZLE_SYSVAR(sort_buffer_size),
+  DRIZZLE_SYSVAR(data_pointer_size),
   NULL
 };
 

@@ -252,7 +252,8 @@ extern uint32_t myisam_block_size;
 extern uint32_t myisam_concurrent_insert;
 extern bool myisam_flush,myisam_delay_key_write,myisam_single_user;
 extern my_off_t myisam_max_temp_length;
-extern uint32_t myisam_bulk_insert_tree_size, myisam_data_pointer_size;
+extern uint32_t myisam_bulk_insert_tree_size; 
+extern uint32_t data_pointer_size;
 
 	/* Prototypes for myisam-functions */
 
@@ -347,14 +348,6 @@ extern uint32_t mi_get_pointer_length(uint64_t file_length, uint32_t def);
 #define T_WRITE_LOOP            ((ulong) 1L << 31)
 
 #define T_REP_ANY               (T_REP | T_REP_BY_SORT | T_REP_PARALLEL)
-
-/*
-  Flags used by myisamchk.c or/and ha_myisam.cc that are NOT passed
-  to mi_check.c follows:
-*/
-
-#define TT_USEFRM               1
-#define TT_FOR_UPGRADE          2
 
 #define O_NEW_INDEX	1		/* Bits set in out_flag */
 #define O_NEW_DATA	2

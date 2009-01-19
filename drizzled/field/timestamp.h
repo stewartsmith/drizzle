@@ -23,7 +23,7 @@
 
 #include <drizzled/field/str.h>
 
-typedef struct st_table_share TABLE_SHARE;
+class TABLE_SHARE;
 typedef struct charset_info_st CHARSET_INFO;
 
 class Field_timestamp :public Field_str {

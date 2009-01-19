@@ -30,8 +30,11 @@ test.t9	check	status	OK
 optimize table t9;
 Table	Op	Msg_type	Msg_text
 test.t9	optimize	status	OK
+SET GLOBAL myisam_sort_buffer_size=1024;
 repair table t9;
 Table	Op	Msg_type	Msg_text
+test.t9	repair	error	myisam_sort_buffer_size is too small
+test.t9	repair	warning	Number of rows changed from 0 to 16724
 test.t9	repair	status	OK
 alter table t9 add column c int not null;
 show create table t9;
@@ -165,3 +168,4 @@ ERROR HY000: Incorrect arguments to INDEX DIRECTORY
 CREATE TABLE t1(a INT) DATA DIRECTORY='MYSQLTEST_VARDIR/tmp' INDEX DIRECTORY='MYSQLTEST_VARDIR/tmp';
 DROP TABLE t1;
 End of 5.1 tests
+SET GLOBAL myisam_sort_buffer_size=DEFAULT;

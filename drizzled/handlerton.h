@@ -31,8 +31,8 @@ class Session;
 class XID;
 class handler;
 
+class TABLE_SHARE;
 typedef struct st_mysql_lex_string LEX_STRING;
-typedef struct st_table_share TABLE_SHARE;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);

@@ -3327,24 +3327,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"myisam_data_pointer_size", OPT_MYISAM_DATA_POINTER_SIZE,
-   N_("Default pointer size to be used for MyISAM tables."),
-   (char**) &myisam_data_pointer_size,
-   (char**) &myisam_data_pointer_size, 0, GET_ULONG, REQUIRED_ARG,
-   6, 2, 7, 0, 1, 0},
-  {"myisam_max_sort_file_size", OPT_MYISAM_MAX_SORT_FILE_SIZE,
-   N_("Don't use the fast sort index method to created index if the "
-      "temporary file would get bigger than this."),
-   (char**) &global_system_variables.myisam_max_sort_file_size,
-   (char**) &max_system_variables.myisam_max_sort_file_size, 0,
-   GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
-   0, 1024*1024, 0},
-  {"myisam_sort_buffer_size", OPT_MYISAM_SORT_BUFFER_SIZE,
-   N_("The buffer that is allocated when sorting the index when doing a "
-      "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
-   (char**) &global_system_variables.myisam_sort_buff_size,
-   (char**) &max_system_variables.myisam_sort_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, SIZE_MAX, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
    N_("Specifies how MyISAM index statistics collection code should threat "
       "NULLs. Possible values of name are 'nulls_unequal' "
@@ -3882,8 +3864,7 @@ static void drizzle_init_variables(void)
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
   drizzle_data_home= drizzle_real_data_home;
-  session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
-                        OPTION_QUOTE_SHOW_CREATE | OPTION_SQL_NOTES);
+  session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG | OPTION_SQL_NOTES);
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
@@ -4229,8 +4210,7 @@ static void get_options(int *argc,char **argv)
     In most cases the global variables will not be used
   */
   my_default_record_cache_size=global_system_variables.read_buff_size;
-  myisam_max_temp_length=
-    (my_off_t) global_system_variables.myisam_max_sort_file_size;
+  myisam_max_temp_length= INT32_MAX;
 
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||

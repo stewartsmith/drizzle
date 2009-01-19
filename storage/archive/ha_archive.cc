@@ -506,6 +506,7 @@ int ha_archive::create(const char *name, Table *table_arg,
   File frm_file;                   /* File handler for readers */
   struct stat file_stat;
   unsigned char *frm_ptr;
+  int r;
 
   stats.auto_increment_value= create_info->auto_increment_value;
 
@@ -548,58 +549,61 @@ int ha_archive::create(const char *name, Table *table_arg,
     There is a chance that the file was "discovered". In this case
     just use whatever file is there.
   */
-  if (!stat(name_buff, &file_stat))
+  r= stat(name_buff, &file_stat);
+  if (r == -1 && errno!=ENOENT)
   {
-    my_errno= 0;
-    if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
-                 AZ_METHOD_BLOCK)))
-    {
-      error= errno;
-      goto error2;
-    }
-
-    if (linkname[0])
-      my_symlink(name_buff, linkname, MYF(0));
-    fn_format(name_buff, name, "", ".frm",
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-
-    /*
-      Here is where we open up the frm and pass it to archive to store
-    */
-    if ((frm_file= my_open(name_buff, O_RDONLY, MYF(0))) > 0)
-    {
-      if (fstat(frm_file, &file_stat))
-      {
-        frm_ptr= (unsigned char *)malloc(sizeof(unsigned char) *
-                                         file_stat.st_size);
-        if (frm_ptr)
-        {
-          my_read(frm_file, frm_ptr, file_stat.st_size, MYF(0));
-          azwrite_frm(&create_stream, (char *)frm_ptr, file_stat.st_size);
-          free((unsigned char*)frm_ptr);
-        }
-      }
-      my_close(frm_file, MYF(0));
-    }
-
-    if (create_info->comment.str)
-      azwrite_comment(&create_stream, create_info->comment.str,
-                      (unsigned int)create_info->comment.length);
-
-    /*
-      Yes you need to do this, because the starting value
-      for the autoincrement may not be zero.
-    */
-    create_stream.auto_increment= stats.auto_increment_value ?
-                                    stats.auto_increment_value - 1 : 0;
-    if (azclose(&create_stream))
-    {
-      error= errno;
-      goto error2;
-    }
+    return errno;
   }
-  else
-    my_errno= 0;
+  if (!r)
+    return HA_ERR_TABLE_EXIST;
+
+  my_errno= 0;
+  if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
+	       AZ_METHOD_BLOCK)))
+  {
+    error= errno;
+    goto error2;
+  }
+
+  if (linkname[0])
+    my_symlink(name_buff, linkname, MYF(0));
+  fn_format(name_buff, name, "", ".frm",
+	    MY_REPLACE_EXT | MY_UNPACK_FILENAME);
+
+  /*
+    Here is where we open up the frm and pass it to archive to store
+  */
+  if ((frm_file= my_open(name_buff, O_RDONLY, MYF(0))) > 0)
+  {
+    if (fstat(frm_file, &file_stat))
+    {
+      frm_ptr= (unsigned char *)malloc(sizeof(unsigned char) *
+				       file_stat.st_size);
+      if (frm_ptr)
+      {
+	my_read(frm_file, frm_ptr, file_stat.st_size, MYF(0));
+	azwrite_frm(&create_stream, (char *)frm_ptr, file_stat.st_size);
+	free((unsigned char*)frm_ptr);
+      }
+    }
+    my_close(frm_file, MYF(0));
+  }
+
+  if (create_info->comment.str)
+    azwrite_comment(&create_stream, create_info->comment.str,
+		    (unsigned int)create_info->comment.length);
+
+  /*
+    Yes you need to do this, because the starting value
+    for the autoincrement may not be zero.
+  */
+  create_stream.auto_increment= stats.auto_increment_value ?
+    stats.auto_increment_value - 1 : 0;
+  if (azclose(&create_stream))
+  {
+    error= errno;
+    goto error2;
+  }
 
   return(0);
 

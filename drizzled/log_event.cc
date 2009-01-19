@@ -1841,7 +1841,7 @@ int Start_log_event_v3::do_apply_event(Relay_log_info const *rli)
     */
     if (created)
     {
-      close_temporary_tables(session);
+      session->close_temporary_tables();
       cleanup_load_tmpdir();
     }
     break;
@@ -1858,7 +1858,7 @@ int Start_log_event_v3::do_apply_event(Relay_log_info const *rli)
         Can distinguish, based on the value of 'created': this event was
         generated at master startup.
       */
-      close_temporary_tables(session);
+      session->close_temporary_tables();
     }
     /*
       Otherwise, can't distinguish a Start_log_event generated at

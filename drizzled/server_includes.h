@@ -254,7 +254,6 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
                           Table *outparam, open_table_mode open_mode);
 int readfrm(const char *name, unsigned char **data, size_t *length);
 int writefrm(const char* name, const unsigned char* data, size_t len);
-int closefrm(Table *table, bool free_share);
 int read_string(File file, unsigned char* *to, size_t length);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);

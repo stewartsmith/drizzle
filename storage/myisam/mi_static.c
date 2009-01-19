@@ -35,7 +35,7 @@ bool myisam_single_user= false;
 uint32_t myisam_concurrent_insert= 2;
 my_off_t myisam_max_temp_length= MAX_FILE_SIZE;
 uint32_t myisam_bulk_insert_tree_size=8192*1024;
-uint32_t myisam_data_pointer_size=4;
+uint32_t data_pointer_size=4;
 
 /*
   read_vec[] is used for converting between P_READ_KEY.. and SEARCH_

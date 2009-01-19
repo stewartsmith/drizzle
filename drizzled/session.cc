@@ -41,6 +41,7 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
+#include <drizzled/show.h>
 
 extern scheduler_functions thread_scheduler;
 /*
@@ -730,7 +731,7 @@ void Session::cleanup(void)
   mysql_ha_cleanup(this);
   delete_dynamic(&user_var_events);
   hash_free(&user_vars);
-  close_temporary_tables(this);
+  close_temporary_tables();
   free((char*) variables.time_format);
   free((char*) variables.date_format);
   free((char*) variables.datetime_format);
@@ -2593,4 +2594,143 @@ void Session::reset_for_next_command()
   sent_row_count= examined_row_count= 0;
 
   return;
+}
+
+
+/**
+  return true if the table was created explicitly.
+*/
+inline bool is_user_table(Table * table)
+{
+  const char *name= table->s->table_name.str;
+  return strncmp(name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH);
+}
+
+/*
+  Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
+  creates one DROP TEMPORARY Table binlog event for each pseudo-thread
+*/
+
+void Session::close_temporary_tables()
+{
+  Table *table;
+  Table *next= NULL;
+  Table *prev_table;
+
+  if (!temporary_tables)
+    return;
+
+  if (!drizzle_bin_log.is_open() || true )
+  {
+    Table *tmp_next;
+    for (table= temporary_tables; table; table= tmp_next)
+    {
+      tmp_next= table->next;
+      close_temporary(table, 1, 1);
+    }
+    temporary_tables= 0;
+
+    return;
+  }
+
+  /* Better add "if exists", in case a RESET MASTER has been done */
+  const char stub[]= "DROP /*!40005 TEMPORARY */ Table IF EXISTS ";
+  uint32_t stub_len= sizeof(stub) - 1;
+  char buf[256];
+  String s_query= String(buf, sizeof(buf), system_charset_info);
+  bool found_user_tables= false;
+
+  memcpy(buf, stub, stub_len);
+
+  /*
+    Insertion sort of temp tables by pseudo_thread_id to build ordered list
+    of sublists of equal pseudo_thread_id
+  */
+
+  for (prev_table= temporary_tables, table= prev_table->next;
+       table;
+       prev_table= table, table= table->next)
+  {
+    Table *prev_sorted /* same as for prev_table */, *sorted;
+    if (is_user_table(table))
+    {
+      if (!found_user_tables)
+        found_user_tables= true;
+      for (prev_sorted= NULL, sorted= temporary_tables; sorted != table;
+           prev_sorted= sorted, sorted= sorted->next)
+      {
+        if (!is_user_table(sorted) || sorted->tmpkeyval() > table->tmpkeyval())
+        {
+          /* move into the sorted part of the list from the unsorted */
+          prev_table->next= table->next;
+          table->next= sorted;
+          if (prev_sorted)
+          {
+            prev_sorted->next= table;
+          }
+          else
+          {
+            temporary_tables= table;
+          }
+          table= prev_table;
+          break;
+        }
+      }
+    }
+  }
+
+  /* scan sorted tmps to generate sequence of DROP */
+  for (table= temporary_tables; table; table= next)
+  {
+    if (is_user_table(table))
+    {
+      my_thread_id save_pseudo_thread_id= variables.pseudo_thread_id;
+      /* Set pseudo_thread_id to be that of the processed table */
+      variables.pseudo_thread_id= table->tmpkeyval();
+      /*
+        Loop forward through all tables within the sublist of
+        common pseudo_thread_id to create single DROP query.
+      */
+      for (s_query.length(stub_len);
+           table && is_user_table(table) &&
+             table->tmpkeyval() == variables.pseudo_thread_id;
+           table= next)
+      {
+        /*
+          We are going to add 4 ` around the db/table names and possible more
+          due to special characters in the names
+        */
+        s_query.append_identifier(table->s->db.str, strlen(table->s->db.str));
+        s_query.append('.');
+        s_query.append_identifier(table->s->table_name.str, strlen(table->s->table_name.str));
+        s_query.append(',');
+        next= table->next;
+        close_temporary(table, 1, 1);
+      }
+      clear_error();
+      Query_log_event qinfo(this, s_query.ptr(),
+                            s_query.length() - 1 /* to remove trailing ',' */,
+                            0, false);
+      /*
+        Imagine the thread had created a temp table, then was doing a
+        SELECT, and the SELECT was killed. Then it's not clever to
+        mark the statement above as "killed", because it's not really
+        a statement updating data, and there are 99.99% chances it
+        will succeed on slave.  If a real update (one updating a
+        persistent table) was killed on the master, then this real
+        update will be logged with error_code=killed, rightfully
+        causing the slave to stop.
+      */
+      qinfo.error_code= 0;
+      drizzle_bin_log.write(&qinfo);
+      variables.pseudo_thread_id= save_pseudo_thread_id;
+    }
+    else
+    {
+      next= table->next;
+      close_temporary(table, 1, 1);
+    }
+  }
+
+  temporary_tables= NULL;
 }
