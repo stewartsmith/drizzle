@@ -94,7 +94,8 @@ static bool  verbose= false, opt_no_create_info= false, opt_no_data= false,
                 opt_include_master_host_port= false,
                 opt_alltspcs= false;
 static bool debug_info_flag= false, debug_check_flag= false;
-static uint32_t opt_max_allowed_packet, opt_net_buffer_length;
+static uint32_t opt_max_allowed_packet, opt_net_buffer_length, show_progress_size= 0;
+static uint64_t total_rows= 0;
 static DRIZZLE drizzle_connection, *drizzle= 0;
 static string insert_pat;
 static char  *opt_password= NULL, *current_user= NULL,
@@ -392,6 +393,9 @@ static struct my_option my_long_options[] =
    (char**) &path, (char**) &path, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tables", OPT_TABLES, "Overrides option --databases (-B).",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"show-progress-size", OPT_SHOW_PROGRESS_SIZE, N_("Number of rows before each output progress report (requires --verbose)."),
+   (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_ULONG, REQUIRED_ARG,
+   10000, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.",
    (char**) &current_user, (char**) &current_user, 0, GET_STR, REQUIRED_ARG,
@@ -417,6 +421,7 @@ static void write_header(FILE *sql_file, char *db_name);
 static void print_value(FILE *file, DRIZZLE_RES  *result, DRIZZLE_ROW row,
                         const char *prefix,const char *name,
                         int string_value);
+static const char* fetch_named_row(DRIZZLE_RES *result, DRIZZLE_ROW row, const char* name);
 static int dump_selected_tables(char *db, char **table_names, int tables);
 static int dump_all_tables_in_db(char *db);
 static int init_dumping_tables(char *);
@@ -1681,7 +1686,6 @@ static bool get_table_structure(char *table, char *db, char *table_type,
         fputs("\n)",sql_file);
         check_io(sql_file);
       }
-
       /* Get DRIZZLE specific create options */
       if (create_options)
       {
@@ -1715,6 +1719,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
             print_value(sql_file,result,row,"engine=","Engine",0);
             print_value(sql_file,result,row,"","Create_options",0);
             print_value(sql_file,result,row,"comment=","Comment",1);
+
             fputs(" */",sql_file);
             check_io(sql_file);
           }
@@ -2026,6 +2031,10 @@ static void dump_table(char *table, char *db)
       uint i;
       uint32_t *lengths= drizzle_fetch_lengths(res);
       rownr++;
+      if ((rownr % show_progress_size) == 0)
+      {
+        verbose_msg(_("-- %"PRIu32" of ~%"PRIu64" rows dumped for table %s\n"), rownr, total_rows, opt_quoted_table);
+      }
       if (!extended_insert && !opt_xml)
       {
         fputs(insert_pat.c_str(),md_result_file);
@@ -2923,6 +2932,30 @@ static void print_value(FILE *file, DRIZZLE_RES  *result, DRIZZLE_ROW row,
   return;                                       /* This shouldn't happen */
 } /* print_value */
 
+/**
+ * Fetches a row from a result based on a field name
+ * Returns const char* of the data in that row or NULL if not found
+ */
+
+static const char* fetch_named_row(DRIZZLE_RES *result, DRIZZLE_ROW row, const char *name)
+{
+  DRIZZLE_FIELD   *field;
+  drizzle_field_seek(result, 0);
+  for ( ; (field= drizzle_fetch_field(result)) ; row++)
+  {
+    if (!strcmp(field->name,name))
+    {
+      if (row[0] && row[0][0] && strcmp(row[0],"0")) /* Skip default */
+      {
+        drizzle_field_seek(result, 0);
+        return row[0];
+      }
+    }
+  }
+  drizzle_field_seek(result, 0);
+  return NULL;
+}
+
 
 /*
   SYNOPSIS
@@ -2952,9 +2985,9 @@ char check_if_ignore_table(const char *table_name, char *table_type)
 {
   char result= IGNORE_NONE;
   char buff[FN_REFLEN+80], show_name_buff[FN_REFLEN];
+  const char *number_of_rows= NULL;
   DRIZZLE_RES *res= NULL;
   DRIZZLE_ROW row;
-
 
   /* Check memory for quote_for_like() */
   assert(2*sizeof(table_name) < sizeof(show_name_buff));
@@ -2977,7 +3010,13 @@ char check_if_ignore_table(const char *table_name, char *table_type)
     drizzle_free_result(res);
     return(result);                         /* assume table is ok */
   }
-
+  else
+  {
+    if ((number_of_rows= fetch_named_row(res, row, "Rows")) != NULL)
+    {
+      total_rows= strtoul(number_of_rows, NULL, 10);
+    }
+  }
   /*
     If the table type matches any of these, we do support delayed inserts.
     Note: we do not want to skip dumping this table if if is not one of
