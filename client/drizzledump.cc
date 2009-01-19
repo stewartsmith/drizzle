@@ -2935,6 +2935,11 @@ static void print_value(FILE *file, DRIZZLE_RES  *result, DRIZZLE_ROW row,
   return;                                       /* This shouldn't happen */
 } /* print_value */
 
+/**
+ * Fetches a row from a result based on a field name
+ * Returns const char* of the data in that row or NULL if not found
+ */
+
 static const char* fetch_named_row(DRIZZLE_RES *result, DRIZZLE_ROW row, const char *name)
 {
   DRIZZLE_FIELD   *field;
