@@ -1896,9 +1896,6 @@ static void dump_table(char *table, char *db)
     /* Must delete the file that 'INTO OUTFILE' will write to */
     my_delete(filename, MYF(0));
 
-    /* convert to a unix path name to stick into the query */
-    to_unix_path(filename);
-
     /* now build the query string */
 
     query_string.append( "SELECT * INTO OUTFILE '");

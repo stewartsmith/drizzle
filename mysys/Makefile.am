@@ -70,14 +70,12 @@ libmysys_la_SOURCES= \
 		mf_iocache2.cc \
 		mf_loadpath.cc \
 		mf_pack.cc \
-		mf_path.cc \
 		mf_qsort.cc \
 		mf_qsort2.cc \
 		mf_radix.cc \
 		mf_same.cc \
 		mf_sort.cc \
 		mf_tempfile.cc \
-		mf_unixpath.cc \
 		mf_wcomp.cc \
 		mulalloc.cc \
 		my_access.cc \
@@ -96,7 +94,6 @@ libmysys_la_SOURCES= \
 		my_getsystime.cc \
 		my_init.cc \
 		my_lib.cc \
-		my_messnc.cc \
 		my_open.cc \
 		my_read.cc \
 		my_redel.cc \

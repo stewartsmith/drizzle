@@ -70,8 +70,7 @@ uint32_t my_time_to_wait_for_lock=2;	/* In seconds */
 
 	/* from errors.c */
 void_ptr_int_func my_abort_hook= (void_ptr_int_func)exit;
-error_handler_func error_handler_hook= my_message_no_curses;
-error_handler_func fatal_error_handler_hook= my_message_no_curses;
+error_handler_func error_handler_hook= NULL;
 
 	/* How to disable options */
 bool my_disable_async_io=0;
