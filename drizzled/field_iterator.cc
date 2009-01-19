@@ -137,7 +137,7 @@ const char *Field_iterator_table_ref::db_name()
     return natural_join_it.column_ref()->db_name();
 
   /*
-    Test that TableList::db is the same as st_table_share::db to
+    Test that TableList::db is the same as TABLE_SHARE::db to
     ensure consistency. An exception are I_S schema tables, which
     are inconsistent in this respect.
   */

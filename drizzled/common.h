@@ -60,7 +60,6 @@
 #define OPTION_BIG_TABLES       (UINT64_C(1) << 8)     // THD, user
 #define OPTION_BIG_SELECTS      (UINT64_C(1) << 9)     // THD, user
 #define OPTION_LOG_OFF          (UINT64_C(1) << 10)    // THD, user
-#define OPTION_QUOTE_SHOW_CREATE (UINT64_C(1) << 11)   // THD, user, unused
 #define TMP_TABLE_ALL_COLUMNS   (UINT64_C(1) << 12)    // SELECT, intern
 #define OPTION_WARNINGS         (UINT64_C(1) << 13)    // THD, user
 #define OPTION_AUTO_IS_NULL     (UINT64_C(1) << 14)    // THD, user, binlog

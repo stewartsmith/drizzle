@@ -878,7 +878,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UNLOCK_SYM
 %token  UNTIL_SYM
 %token  UPDATE_SYM                    /* SQL-2003-R */
-%token  UPGRADE_SYM
 %token  USAGE                         /* SQL-2003-N */
 %token  USER                          /* SQL-2003-R */
 %token  USE_FRM
@@ -2727,7 +2726,7 @@ mi_repair_types:
 mi_repair_type:
           QUICK        { Lex->check_opt.flags|= T_QUICK; }
         | EXTENDED_SYM { Lex->check_opt.flags|= T_EXTEND; }
-        | USE_FRM      { Lex->check_opt.sql_flags|= TT_USEFRM; }
+        | USE_FRM      { Lex->check_opt.use_frm= true; }
         ;
 
 analyze:
@@ -2777,7 +2776,6 @@ mi_check_type:
         | MEDIUM_SYM          { Lex->check_opt.flags|= T_MEDIUM; }
         | EXTENDED_SYM        { Lex->check_opt.flags|= T_EXTEND; }
         | CHANGED             { Lex->check_opt.flags|= T_CHECK_ONLY_CHANGED; }
-        | FOR_SYM UPGRADE_SYM { Lex->check_opt.sql_flags|= TT_FOR_UPGRADE; }
         ;
 
 optimize:
@@ -6142,7 +6140,6 @@ keyword:
         | START_SYM             {}
         | STOP_SYM              {}
         | TRUNCATE_SYM          {}
-        | UPGRADE_SYM           {}
         ;
 
 /*

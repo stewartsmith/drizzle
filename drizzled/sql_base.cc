@@ -48,16 +48,6 @@
 
 
 /**
-  return true if the table was created explicitly.
-*/
-inline bool is_user_table(Table * table)
-{
-  const char *name= table->s->table_name.str;
-  return strncmp(name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH);
-}
-
-
-/**
   @defgroup Data_Dictionary Data Dictionary
   @{
 */
@@ -518,7 +508,6 @@ void close_handle_and_leave_table_as_lock(Table *table)
 
   SYNOPSIS
     list_open_tables()
-    session			Thread Session
     wild		SQL like expression
 
   NOTES
@@ -531,8 +520,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     #		Pointer to list of names of open tables.
 */
 
-OPEN_TableList *list_open_tables(Session *session __attribute__((unused)),
-                                  const char *db, const char *wild)
+OPEN_TableList *list_open_tables(const char *db, const char *wild)
 {
   int result = 0;
   OPEN_TableList **start_list, *open_list;
@@ -601,7 +589,7 @@ void intern_close_table(Table *table)
 {						// Free all structures
   free_io_cache(table);
   if (table->file)                              // Not true if name lock
-    closefrm(table, 1);			// close file
+    table->closefrm(true);			// close file
   return;
 }
 
@@ -1136,155 +1124,6 @@ bool close_thread_table(Session *session, Table **table_ptr)
   return(found_old_table);
 }
 
-
-/* close_temporary_tables' internal, 4 is due to uint4korr definition */
-static inline uint32_t  tmpkeyval(Session *session __attribute__((unused)),
-                              Table *table)
-{
-  return uint4korr(table->s->table_cache_key.str + table->s->table_cache_key.length - 4);
-}
-
-
-/*
-  Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
-  creates one DROP TEMPORARY Table binlog event for each pseudo-thread
-*/
-
-void close_temporary_tables(Session *session)
-{
-  Table *table;
-  Table *next= NULL;
-  Table *prev_table;
-  /* Assume session->options has OPTION_QUOTE_SHOW_CREATE */
-  bool was_quote_show= true;
-
-  if (!session->temporary_tables)
-    return;
-
-  if (!drizzle_bin_log.is_open() || true )
-  {
-    Table *tmp_next;
-    for (table= session->temporary_tables; table; table= tmp_next)
-    {
-      tmp_next= table->next;
-      close_temporary(table, 1, 1);
-    }
-    session->temporary_tables= 0;
-    return;
-  }
-
-  /* Better add "if exists", in case a RESET MASTER has been done */
-  const char stub[]= "DROP /*!40005 TEMPORARY */ Table IF EXISTS ";
-  uint32_t stub_len= sizeof(stub) - 1;
-  char buf[256];
-  String s_query= String(buf, sizeof(buf), system_charset_info);
-  bool found_user_tables= false;
-
-  memcpy(buf, stub, stub_len);
-
-  /*
-    Insertion sort of temp tables by pseudo_thread_id to build ordered list
-    of sublists of equal pseudo_thread_id
-  */
-
-  for (prev_table= session->temporary_tables, table= prev_table->next;
-       table;
-       prev_table= table, table= table->next)
-  {
-    Table *prev_sorted /* same as for prev_table */, *sorted;
-    if (is_user_table(table))
-    {
-      if (!found_user_tables)
-        found_user_tables= true;
-      for (prev_sorted= NULL, sorted= session->temporary_tables; sorted != table;
-           prev_sorted= sorted, sorted= sorted->next)
-      {
-        if (!is_user_table(sorted) ||
-            tmpkeyval(session, sorted) > tmpkeyval(session, table))
-        {
-          /* move into the sorted part of the list from the unsorted */
-          prev_table->next= table->next;
-          table->next= sorted;
-          if (prev_sorted)
-          {
-            prev_sorted->next= table;
-          }
-          else
-          {
-            session->temporary_tables= table;
-          }
-          table= prev_table;
-          break;
-        }
-      }
-    }
-  }
-
-  /* We always quote db,table names though it is slight overkill */
-  if (found_user_tables &&
-      !(was_quote_show= test(session->options & OPTION_QUOTE_SHOW_CREATE)))
-  {
-    session->options |= OPTION_QUOTE_SHOW_CREATE;
-  }
-
-  /* scan sorted tmps to generate sequence of DROP */
-  for (table= session->temporary_tables; table; table= next)
-  {
-    if (is_user_table(table))
-    {
-      my_thread_id save_pseudo_thread_id= session->variables.pseudo_thread_id;
-      /* Set pseudo_thread_id to be that of the processed table */
-      session->variables.pseudo_thread_id= tmpkeyval(session, table);
-      /*
-        Loop forward through all tables within the sublist of
-        common pseudo_thread_id to create single DROP query.
-      */
-      for (s_query.length(stub_len);
-           table && is_user_table(table) &&
-             tmpkeyval(session, table) == session->variables.pseudo_thread_id;
-           table= next)
-      {
-        /*
-          We are going to add 4 ` around the db/table names and possible more
-          due to special characters in the names
-        */
-        append_identifier(session, &s_query, table->s->db.str, strlen(table->s->db.str));
-        s_query.append('.');
-        append_identifier(session, &s_query, table->s->table_name.str,
-                          strlen(table->s->table_name.str));
-        s_query.append(',');
-        next= table->next;
-        close_temporary(table, 1, 1);
-      }
-      session->clear_error();
-      Query_log_event qinfo(session, s_query.ptr(),
-                            s_query.length() - 1 /* to remove trailing ',' */,
-                            0, false);
-      /*
-        Imagine the thread had created a temp table, then was doing a
-        SELECT, and the SELECT was killed. Then it's not clever to
-        mark the statement above as "killed", because it's not really
-        a statement updating data, and there are 99.99% chances it
-        will succeed on slave.  If a real update (one updating a
-        persistent table) was killed on the master, then this real
-        update will be logged with error_code=killed, rightfully
-        causing the slave to stop.
-      */
-      qinfo.error_code= 0;
-      drizzle_bin_log.write(&qinfo);
-      session->variables.pseudo_thread_id= save_pseudo_thread_id;
-    }
-    else
-    {
-      next= table->next;
-      close_temporary(table, 1, 1);
-    }
-  }
-  if (!was_quote_show)
-    session->options&= ~OPTION_QUOTE_SHOW_CREATE; /* restore option */
-  session->temporary_tables=0;
-}
-
 /*
   Find table in list.
 
@@ -1557,7 +1396,7 @@ void close_temporary(Table *table, bool free_share, bool delete_table)
   handlerton *table_type= table->s->db_type();
 
   free_io_cache(table);
-  closefrm(table, 0);
+  table->closefrm(false);
 
   if (delete_table)
     rm_temporary_table(table_type, table->s->path.str);
@@ -1588,13 +1427,14 @@ bool rename_temporary_table(Session* session, Table *table, const char *db,
   TableList table_list;
 
   if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
-    return(1);				/* purecov: inspected */
+    return true;				/* purecov: inspected */
 
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
   key_length= create_table_def_key(session, key, &table_list, 1);
   share->set_table_cache_key(key, key_length);
-  return(0);
+
+  return false;
 }
 
 
@@ -2510,7 +2350,7 @@ bool reopen_table(Table *table)
   tmp.prev=		table->prev;
 
   if (table->file)
-    closefrm(table, 1);		// close file, free everything
+    table->closefrm(true);		// close file, free everything
 
   *table= tmp;
   table->default_column_bitmaps();
@@ -3126,7 +2966,7 @@ retry:
        errmsg_printf(ERRMSG_LVL_ERROR, _("Couldn't repair table: %s.%s"), share->db.str,
                        share->table_name.str);
        if (entry->file)
- 	closefrm(entry, 0);
+ 	entry->closefrm(false);
        error=1;
      }
      else
@@ -3170,7 +3010,7 @@ retry:
                           "to write 'DELETE FROM `%s`.`%s`' to the binary log"),
                         table_list->db, table_list->table_name);
         my_error(ER_OUTOFMEMORY, MYF(0), query_buf_size);
-        closefrm(entry, 0);
+        entry->closefrm(false);
         goto err;
       }
     }

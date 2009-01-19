@@ -147,7 +147,6 @@ struct system_variables
   uint32_t dynamic_variables_size;  /* how many bytes are in use */
 
   uint64_t myisam_max_extra_sort_file_size;
-  uint64_t myisam_max_sort_file_size;
   uint64_t max_heap_table_size;
   uint64_t tmp_table_size;
   ha_rows select_limit;
@@ -162,7 +161,6 @@ struct system_variables
   uint64_t max_sort_length;
   uint64_t max_tmp_tables;
   uint64_t min_examined_row_limit;
-  size_t myisam_sort_buff_size;
   uint32_t myisam_stats_method;
   uint32_t net_buffer_length;
   uint32_t net_interactive_timeout;
@@ -1473,6 +1471,7 @@ public:
     Close the current connection.
   */
   void close_connection(uint32_t errcode, bool lock);
+  void close_temporary_tables();
 
 private:
   const char *proc_info;

@@ -61,7 +61,8 @@ DROP TABLE t1;
 # BUG#23175 - MYISAM crash/repair failed during repair
 #
 CREATE TABLE t1(a CHAR(255), KEY(a)) ENGINE=MyISAM;
-SET myisam_sort_buffer_size=4096;
+SET GLOBAL myisam_sort_buffer_size=4096;
+SHOW VARIABLES LIKE "myisam_sort_buffer_size";
 # fails with ER_NOT_KEYFILE but really 'myisam_sort_buffer_size is too small'
 --error ER_NOT_KEYFILE
 INSERT INTO t1 VALUES
@@ -84,7 +85,7 @@ INSERT INTO t1 VALUES
 SET GLOBAL myisam_repair_threads=2;
 REPAIR TABLE t1;
 SET GLOBAL myisam_repair_threads=1;
-SET myisam_sort_buffer_size=@@global.myisam_sort_buffer_size;
+SET GLOBAL myisam_sort_buffer_size=DEFAULT;
 DROP TABLE t1;
 
 #
@@ -92,7 +93,7 @@ DROP TABLE t1;
 #              myisam_sort_buffer_size
 #
 CREATE TABLE t1(a CHAR(255), KEY(a)) ENGINE=MyISAM;
-SET myisam_sort_buffer_size=16384;
+SET GLOBAL myisam_sort_buffer_size=16384;
 INSERT INTO t1 VALUES
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),
 ('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),('0'),
@@ -113,7 +114,7 @@ INSERT INTO t1 VALUES
 SET GLOBAL myisam_repair_threads=2;
 REPAIR TABLE t1;
 SET GLOBAL myisam_repair_threads=1;
-SET myisam_sort_buffer_size=@@global.myisam_sort_buffer_size;
+SET GLOBAL myisam_sort_buffer_size=DEFAULT;
 DROP TABLE t1;
 
 --echo End of 4.1 tests
@@ -130,3 +131,4 @@ CREATE TEMPORARY TABLE tt1 (c1 INT);
 REPAIR TABLE tt1 USE_FRM;
 DROP TABLE tt1;
 
+SET GLOBAL myisam_sort_buffer_size=DEFAULT;

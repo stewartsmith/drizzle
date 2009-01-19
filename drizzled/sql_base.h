@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-typedef struct st_table_share TABLE_SHARE;
+class TABLE_SHARE;
 
 void table_cache_free(void);
 bool table_cache_init(void);
@@ -213,7 +213,7 @@ bool close_cached_connection_tables(Session *session, bool wait_for_refresh,
 void copy_field_from_tmp_record(Field *field,int offset);
 bool fill_record(Session * session, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
-OPEN_TableList *list_open_tables(Session *session, const char *db, const char *wild);
+OPEN_TableList *list_open_tables(const char *db, const char *wild);
 
 inline TableList *find_table_in_global_list(TableList *table,
                                              const char *db_name,

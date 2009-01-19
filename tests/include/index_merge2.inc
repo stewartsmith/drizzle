@@ -108,7 +108,7 @@ create table t1 (
   index i1(key1a, key1b),
   index i2(key2a, key2b),
   index i3(key3a, key3b)
-);
+) ENGINE=myisam;
 
 create table t2 (a int);
 insert into t2 values (0),(1),(2),(3),(4),(NULL);

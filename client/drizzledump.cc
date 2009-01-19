@@ -1376,7 +1376,6 @@ static bool get_table_structure(char *table, char *db, char *table_type,
   char	     name_buff[NAME_LEN+3],table_buff[NAME_LEN*2+3];
   char       table_buff2[NAME_LEN*2+3], query_buff[QUERY_LENGTH];
   FILE       *sql_file= md_result_file;
-  int        len;
   DRIZZLE_RES  *result;
   DRIZZLE_ROW  row;
 
@@ -1402,10 +1401,6 @@ static bool get_table_structure(char *table, char *db, char *table_type,
 
   verbose_msg(_("-- Retrieving table structure for table %s...\n"), table);
 
-  len= snprintf(query_buff, sizeof(query_buff),
-                "SET OPTION SQL_QUOTE_SHOW_CREATE=%d",
-                (opt_quoted || opt_keywords));
-
   result_table=     quote_name(table, table_buff, 1);
   opt_quoted_table= quote_name(table, table_buff2, 0);
 
@@ -1415,7 +1410,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
     order_by= primary_key_fields(result_table);
   }
 
-  if (!opt_xml && !drizzle_query_with_error_report(drizzle, 0, query_buff))
+  if (!opt_xml)
   {
     /* using SHOW CREATE statement */
     if (!opt_no_create_info)
@@ -1447,8 +1442,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
       /*
         Even if the "table" is a view, we do a DROP TABLE here.
        */
-        fprintf(sql_file, "DROP TABLE IF EXISTS %s;\n",
-                opt_quoted_table);
+        fprintf(sql_file, "DROP TABLE IF EXISTS %s;\n", opt_quoted_table);
         check_io(sql_file);
       }
 

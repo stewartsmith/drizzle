@@ -77,8 +77,6 @@ enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table);
 
 bool mysqld_show_open_tables(Session *session,const char *wild);
 bool mysqld_show_logs(Session *session);
-void append_identifier(Session *session, String *packet, const char *name,
-		       uint32_t length);
 void mysqld_list_fields(Session *session,TableList *table, const char *wild);
 int mysqld_dump_create_info(Session *session, TableList *table_list, int fd);
 bool mysqld_show_create(Session *session, TableList *table_list);

@@ -202,9 +202,9 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 					  3 : 0)));
 
   if (options & (HA_OPTION_COMPRESS_RECORD | HA_OPTION_PACK_RECORD))
-    pointer=mi_get_pointer_length(ci->data_file_length,myisam_data_pointer_size);
+    pointer=mi_get_pointer_length(ci->data_file_length, data_pointer_size);
   else
-    pointer=mi_get_pointer_length(ci->max_rows,myisam_data_pointer_size);
+    pointer=mi_get_pointer_length(ci->max_rows, data_pointer_size);
   if (!(max_rows=(uint64_t) ci->max_rows))
     max_rows= ((((uint64_t) 1 << (pointer*8)) -1) / min_pack_length);
 

@@ -42,7 +42,7 @@ class Protocol;
 class Create_field;
 class virtual_column_info;
 
-typedef struct st_table_share TABLE_SHARE;
+class TABLE_SHARE;
 
 struct st_cache_field;
 int field_conv(Field *to,Field *from);
