@@ -1189,6 +1189,11 @@ AC_ARG_ENABLE([datarace],
     [ac_datarace="$enableval"],
     [ac_datarace="no"])
 
+AC_ARG_ENABLE([exceptions],
+    [AS_HELP_STRING([--disable-exceptions],
+        [Disables use of Exceptions in the build @<:@default=on@:>@])],
+    [ac_exceptions="$enableval"],
+    [ac_exceptions="yes"])
 
 if test "$GCC" = "yes"
 then
@@ -1296,8 +1301,11 @@ void testme() {  };],[
   CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
   CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
 
-  NO_EXCEPTIONS="-fno-exceptions"
-  W_EXCEPTIONS="-fexceptions"
+  if test "$ac_exceptions" = "no"
+  then
+    NO_EXCEPTIONS="-fno-exceptions"
+    W_EXCEPTIONS="-fexceptions"
+  fi
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
@@ -1313,8 +1321,11 @@ then
   fi
   CC_WARNINGS="-v -xc99=all -errtags=yes"
   CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
-  NO_EXCEPTIONS="-features=no%except"
-  W_EXCEPTIONS="-features=except"
+  if test "$ac_exceptions" = "no"
+  then
+    NO_EXCEPTIONS="-features=no%except"
+    W_EXCEPTIONS="-features=except"
+  fi
 fi
 AM_CXXFLAGS="${CXX_WARNINGS} ${NO_EXCEPTIONS}  ${AM_CXXFLAGS}"
 AM_CFLAGS="${CC_WARNINGS} ${AM_CFLAGS}"
