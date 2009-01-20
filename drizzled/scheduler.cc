@@ -59,7 +59,7 @@ static struct event session_add_event;
 static struct event session_kill_event;
 
 static pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
-static LIST *sessions_need_adding;    /* list of sessions to add to libevent queue */
+static LIST *sessions_need_adding= NULL;    /* list of sessions to add to libevent queue */
 
 static int session_add_pipe[2]; /* pipe to signal add a connection to libevent*/
 static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent */
