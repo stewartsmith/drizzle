@@ -574,7 +574,7 @@ pthread_handler_t handle_one_connection(void *arg)
     end_connection(session);
 
 end_thread:
-    session->close_connection(NULL, true);
+    session->close_connection(0, true);
     if (thread_scheduler.end_thread(session, 1))
       return 0;                                 // Probably no-threads
 
