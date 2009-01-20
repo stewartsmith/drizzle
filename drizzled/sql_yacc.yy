@@ -1056,7 +1056,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         query verb_clause create change select drop insert replace insert2
         insert_values update delete truncate rename
         show describe load alter optimize keycache flush
-        reset purge begin commit rollback savepoint release
+        purge begin commit rollback savepoint release
         slave master_def master_defs master_file_def slave_until_opts
         repair analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
@@ -1167,7 +1167,6 @@ statement:
         | rename
         | repair
         | replace
-        | reset
         | rollback
         | savepoint
         | select
@@ -5414,46 +5413,17 @@ flush_option:
           opt_table_list {}
         | TABLES WITH READ_SYM LOCK_SYM
           { Lex->type|= REFRESH_TABLES | REFRESH_READ_LOCK; }
-        | QUERY_SYM CACHE_SYM
-          { Lex->type|= REFRESH_QUERY_CACHE_FREE; }
         | HOSTS_SYM
           { Lex->type|= REFRESH_HOSTS; }
         | LOGS_SYM
           { Lex->type|= REFRESH_LOG; }
         | STATUS_SYM
           { Lex->type|= REFRESH_STATUS; }
-        | SLAVE
-          { Lex->type|= REFRESH_SLAVE; }
-        | MASTER_SYM
-          { Lex->type|= REFRESH_MASTER; }
-        | RESOURCES
-          { Lex->type|= REFRESH_USER_RESOURCES; }
         ;
 
 opt_table_list:
           /* empty */  {}
         | table_list {}
-        ;
-
-reset:
-          RESET_SYM
-          {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_RESET; lex->type=0;
-          }
-          reset_options
-          {}
-        ;
-
-reset_options:
-          reset_options ',' reset_option
-        | reset_option
-        ;
-
-reset_option:
-          SLAVE               { Lex->type|= REFRESH_SLAVE; }
-        | MASTER_SYM          { Lex->type|= REFRESH_MASTER; }
-        | QUERY_SYM CACHE_SYM { Lex->type|= REFRESH_QUERY_CACHE;}
         ;
 
 purge:

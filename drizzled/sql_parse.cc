@@ -3369,23 +3369,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
   }
   if (session && (options & REFRESH_STATUS))
     refresh_status(session);
-  if (options & REFRESH_MASTER)
-  {
-    assert(session);
-    tmp_write_to_binlog= 0;
-    if (reset_master(session))
-    {
-      result=1;
-    }
-  }
- if (options & REFRESH_SLAVE)
- {
-   tmp_write_to_binlog= 0;
-   pthread_mutex_lock(&LOCK_active_mi);
-   if (reset_slave(session, active_mi))
-     result=1;
-   pthread_mutex_unlock(&LOCK_active_mi);
- }
  *write_to_binlog= tmp_write_to_binlog;
  return result;
 }

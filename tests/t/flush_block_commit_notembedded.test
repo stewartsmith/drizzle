@@ -15,7 +15,6 @@ connect (con2,localhost,root,,);
 # FLUSH TABLES WITH READ LOCK should block writes to binlog too
 connection con1;
 create table t1 (a int) engine=innodb;
-reset master;
 set autocommit=0;
 insert t1 values (1);
 connection con2;
