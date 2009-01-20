@@ -147,7 +147,6 @@ extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
 typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
 extern error_handler_func error_handler_hook;
-extern error_handler_func fatal_error_handler_hook;
 extern uint32_t my_file_limit;
 
 /* charsets */
@@ -372,15 +371,21 @@ extern void my_remember_signal(int signal_number,void (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
 extern size_t dirname_length(const char *name);
 #define base_name(A) (A+dirname_length(A))
-bool test_if_hard_path(const char *dir_name);
+static inline bool test_if_hard_path(const char *dir_name)
+{
+  if (dir_name[0] == FN_HOMELIB && dir_name[1] == FN_LIBCHAR)
+    return (home_dir != NULL && test_if_hard_path(home_dir));
+  if (dir_name[0] == FN_LIBCHAR)
+    return (true);
+  return false;
+} /* test_if_hard_path */
+
 extern char *convert_dirname(char *to, const char *from, const char *from_end);
-extern void to_unix_path(char * name);
 extern char * fn_ext(const char *name);
 extern char * fn_same(char * toname,const char *name,int flag);
 extern char * fn_format(char * to,const char *name,const char *dir,
 			   const char *form, uint32_t flag);
 extern size_t strlength(const char *str);
-extern void pack_dirname(char * to,const char *from);
 extern size_t unpack_dirname(char * to,const char *from);
 extern size_t cleanup_dirname(char * to,const char *from);
 extern size_t system_filename(char * to,const char *from);
@@ -388,8 +393,6 @@ extern size_t unpack_filename(char * to,const char *from);
 extern char * intern_filename(char * to,const char *from);
 extern char * directory_file_name(char * dst, const char *src);
 extern int pack_filename(char * to, const char *name, size_t max_length);
-extern char * my_path(char * to,const char *progname,
-			 const char *own_pathname_part);
 extern char * my_load_path(char * to, const char *path,
 			      const char *own_path_prefix);
 extern int wild_compare(const char *str,const char *wildstr,

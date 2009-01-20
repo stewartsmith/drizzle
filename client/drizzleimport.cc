@@ -317,7 +317,6 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
       return(1);
     }
   }
-  to_unix_path(hard_path);
   if (verbose)
   {
     if (opt_local_file)

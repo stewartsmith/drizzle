@@ -302,7 +302,6 @@ static char *slave_load_file_stem(char *buf, uint32_t file_id,
 {
   char *res;
   fn_format(buf,"SQL_LOAD-",slave_load_tmpdir, "", MY_UNPACK_FILENAME);
-  to_unix_path(buf);
 
   buf= strchr(buf, '\0');
   buf= int10_to_str(::server_id, buf, 10);

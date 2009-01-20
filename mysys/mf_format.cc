@@ -47,8 +47,6 @@ char * fn_format(char * to, const char *name, const char *dir,
     strncpy(pos,buff,sizeof(buff)-1- (int) (pos-dev));
   }
 
-  if (flag & MY_PACK_FILENAME)
-    pack_dirname(dev,dev);			/* Put in ./.. and ~/.. */
   if (flag & MY_UNPACK_FILENAME)
     (void) unpack_dirname(dev,dev);		/* Replace ~/.. with dir */
 
