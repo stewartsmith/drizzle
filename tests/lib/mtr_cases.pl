@@ -141,7 +141,6 @@ sub collect_test_cases ($) {
 	#
 	# Append the criteria for sorting, in order of importance.
 	#
-	push(@criteria, "ndb=" . ($tinfo->{'ndb_test'} ? "1" : "0"));
 	# Group test with equal options together.
 	# Ending with "~" makes empty sort later than filled
 	push(@criteria, join("!", sort @{$tinfo->{'master_opt'}}) . "~");

@@ -108,25 +108,13 @@ test-run:
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
 
-test-nr:
-	cd tests ; \
-	  $(TEST_RUN) $(force) --mysqld=--binlog-format=row
-
-test-ns:
-	cd tests ; \
-	  $(TEST_RUN) $(force) $(mem) --mysqld=--binlog-format=mixed
-
-test-binlog-statement:
-	cd tests ; \
-	  $(TEST_RUN) $(force) --mysqld=--binlog-format=statement
-
 test: test-drizzle
 
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification
 
 test-drizzle:
-	  $(TEST_RUN) --fast --reorder --force --suite=main,vcol
+	  $(TEST_RUN) --fast --force --suite=main,vcol
 
 distclean-local:
 	rm -rf var
