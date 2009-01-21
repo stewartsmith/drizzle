@@ -1053,11 +1053,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <build_method> build_method
 
 %type <NONE>
-        query verb_clause create change select drop insert replace insert2
+        query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
         show describe load alter optimize keycache flush
         begin commit rollback savepoint release
-        master_def master_defs master_file_def
         repair analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
         keycache_list assign_to_keycache
@@ -1146,7 +1145,6 @@ statement:
           alter
         | analyze
         | binlog_base64_event
-        | change
         | check
         | checksum
         | commit
@@ -1176,122 +1174,6 @@ statement:
         | unlock
         | update
         | use
-        ;
-
-
-/* change master */
-
-change:
-          CHANGE MASTER_SYM TO_SYM
-          {
-            LEX *lex = Lex;
-            lex->sql_command = SQLCOM_CHANGE_MASTER;
-            memset(&lex->mi, 0, sizeof(lex->mi));
-          }
-          master_defs
-          {}
-        ;
-
-master_defs:
-          master_def
-        | master_defs ',' master_def
-        ;
-
-master_def:
-          MASTER_HOST_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.host = $3.str;
-          }
-        | MASTER_USER_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.user = $3.str;
-          }
-        | MASTER_PASSWORD_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.password = $3.str;
-          }
-        | MASTER_PORT_SYM EQ ulong_num
-          {
-            Lex->mi.port = $3;
-          }
-        | MASTER_CONNECT_RETRY_SYM EQ ulong_num
-          {
-            Lex->mi.connect_retry = $3;
-          }
-        | MASTER_HEARTBEAT_PERIOD_SYM EQ NUM_literal
-          {
-            Lex->mi.heartbeat_period= (float) $3->val_real();
-            if (Lex->mi.heartbeat_period > SLAVE_MAX_HEARTBEAT_PERIOD ||
-                Lex->mi.heartbeat_period < 0.0)
-            {
-              char buf[sizeof(SLAVE_MAX_HEARTBEAT_PERIOD*4)];
-              sprintf(buf, "%d seconds", SLAVE_MAX_HEARTBEAT_PERIOD);
-              my_error(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
-                       MYF(0),
-                       " is negative or exceeds the maximum ",
-                       buf); 
-              DRIZZLE_YYABORT;
-            }
-            if (Lex->mi.heartbeat_period > slave_net_timeout)
-            {
-              push_warning_printf(YYSession, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                  ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
-                                  ER(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE),
-                                  " exceeds the value of `slave_net_timeout' sec.",
-                                  " A sensible value for the period should be"
-                                  " less than the timeout.");
-            }
-            if (Lex->mi.heartbeat_period < 0.001)
-            {
-              if (Lex->mi.heartbeat_period != 0.0)
-              {
-                push_warning_printf(YYSession, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                    ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
-                                    ER(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE),
-                                    " is less than 1 msec.",
-                                    " The period is reset to zero which means"
-                                    " no heartbeats will be sending");
-                Lex->mi.heartbeat_period= 0.0;
-              }
-              Lex->mi.heartbeat_opt=  LEX_MASTER_INFO::LEX_MI_DISABLE;
-            }
-            Lex->mi.heartbeat_opt=  LEX_MASTER_INFO::LEX_MI_ENABLE;
-          }
-        |
-        master_file_def
-        ;
-
-master_file_def:
-          MASTER_LOG_FILE_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.log_file_name = $3.str;
-          }
-        | MASTER_LOG_POS_SYM EQ ulonglong_num
-          {
-            Lex->mi.pos = $3;
-            /* 
-               If the user specified a value < BIN_LOG_HEADER_SIZE, adjust it
-               instead of causing subsequent errors. 
-               We need to do it in this file, because only there we know that 
-               MASTER_LOG_POS has been explicitely specified. On the contrary
-               in change_master() (sql_repl.cc) we cannot distinguish between 0
-               (MASTER_LOG_POS explicitely specified as 0) and 0 (unspecified),
-               whereas we want to distinguish (specified 0 means "read the binlog
-               from 0" (4 in fact), unspecified means "don't change the position
-               (keep the preceding value)").
-            */
-            Lex->mi.pos = cmax((uint64_t)BIN_LOG_HEADER_SIZE, Lex->mi.pos);
-          }
-        | RELAY_LOG_FILE_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.relay_log_name = $3.str;
-          }
-        | RELAY_LOG_POS_SYM EQ ulong_num
-          {
-            Lex->mi.relay_log_pos = $3;
-            /* Adjust if < BIN_LOG_HEADER_SIZE (same comment as Lex->mi.pos) */
-            Lex->mi.relay_log_pos = cmax((uint32_t)BIN_LOG_HEADER_SIZE, Lex->mi.relay_log_pos);
-          }
         ;
 
 /* create a table */
