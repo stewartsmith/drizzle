@@ -1057,7 +1057,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         insert_values update delete truncate rename
         show describe load alter optimize keycache flush
         begin commit rollback savepoint release
-        slave master_def master_defs master_file_def slave_until_opts
+        master_def master_defs master_file_def
         repair analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
         keycache_list assign_to_keycache
@@ -1171,7 +1171,6 @@ statement:
         | select
         | set
         | show
-        | slave
         | start
         | truncate
         | unlock
@@ -2588,47 +2587,6 @@ opt_to:
         | AS {}
         ;
 
-/*
-  SLAVE START and SLAVE STOP are deprecated. We keep them for compatibility.
-*/
-
-slave:
-          START_SYM SLAVE slave_thread_opts
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_SLAVE_START;
-            lex->type = 0;
-            /* We'll use mi structure for UNTIL options */
-            memset(&lex->mi, 0, sizeof(lex->mi));
-            /* If you change this code don't forget to update SLAVE START too */
-          }
-          slave_until
-          {}
-        | STOP_SYM SLAVE slave_thread_opts
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_SLAVE_STOP;
-            lex->type = 0;
-            /* If you change this code don't forget to update SLAVE STOP too */
-          }
-        | SLAVE START_SYM slave_thread_opts
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_SLAVE_START;
-            lex->type = 0;
-            /* We'll use mi structure for UNTIL options */
-            memset(&lex->mi, 0, sizeof(lex->mi));
-          }
-          slave_until
-          {}
-        | SLAVE STOP_SYM slave_thread_opts
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_SLAVE_STOP;
-            lex->type = 0;
-          }
-        ;
-
 start:
           START_SYM TRANSACTION_SYM start_transaction_opts
           {
@@ -2646,43 +2604,6 @@ start_transaction_opts:
           }
         ;
 
-slave_thread_opts:
-          { Lex->slave_session_opt= 0; }
-          slave_thread_opt_list
-          {}
-        ;
-
-slave_thread_opt_list:
-          slave_thread_opt
-        | slave_thread_opt_list ',' slave_thread_opt
-        ;
-
-slave_thread_opt:
-          /*empty*/ {}
-        | SQL_THREAD   { Lex->slave_session_opt|=SLAVE_SQL; }
-        | RELAY_THREAD { Lex->slave_session_opt|=SLAVE_IO; }
-        ;
-
-slave_until:
-          /*empty*/ {}
-        | UNTIL_SYM slave_until_opts
-          {
-            LEX *lex=Lex;
-            if (((lex->mi.log_file_name || lex->mi.pos) && (lex->mi.relay_log_name || lex->mi.relay_log_pos)) ||
-                !((lex->mi.log_file_name && lex->mi.pos) ||
-                  (lex->mi.relay_log_name && lex->mi.relay_log_pos)))
-            {
-               my_message(ER_BAD_SLAVE_UNTIL_COND,
-                          ER(ER_BAD_SLAVE_UNTIL_COND), MYF(0));
-               DRIZZLE_YYABORT;
-            }
-          }
-        ;
-
-slave_until_opts:
-          master_file_def
-        | slave_until_opts ',' master_file_def
-        ;
 
 checksum:
           CHECKSUM_SYM table_or_tables
