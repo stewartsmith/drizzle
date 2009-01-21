@@ -193,15 +193,12 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_VARIABLES]=   CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_BINLOGS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ENGINE_STATUS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_PROCESSLIST]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE_DB]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE]=  CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_MASTER_STAT]=  CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_SLAVE_STAT]=  CF_STATUS_COMMAND;
 
    sql_command_flags[SQLCOM_SHOW_TABLES]=       (CF_STATUS_COMMAND |
                                                CF_SHOW_TABLE_COMMAND);
@@ -1102,32 +1099,6 @@ mysql_execute_command(Session *session)
     my_ok(session);
     break;
 
-  case SQLCOM_PURGE:
-  {
-    res = purge_master_logs(session, lex->to_log);
-    break;
-  }
-  case SQLCOM_PURGE_BEFORE:
-  {
-    Item *it;
-
-    /* PURGE MASTER LOGS BEFORE 'data' */
-    it= (Item *)lex->value_list.head();
-    if ((!it->fixed && it->fix_fields(lex->session, &it)) ||
-        it->check_cols(1))
-    {
-      my_error(ER_WRONG_ARGUMENTS, MYF(0), "PURGE LOGS BEFORE");
-      goto error;
-    }
-    it= new Item_func_unix_timestamp(it);
-    /*
-      it is OK only emulate fix_fieds, because we need only
-      value of constant
-    */
-    it->quick_fix_field();
-    res = purge_master_logs_before_date(session, (ulong)it->val_int());
-    break;
-  }
   case SQLCOM_SHOW_WARNS:
   {
     res= mysqld_show_warnings(session, (uint32_t)
@@ -1149,35 +1120,6 @@ mysql_execute_command(Session *session)
     res= mysql_assign_to_keycache(session, first_table, &lex->ident);
     break;
   }
-  case SQLCOM_CHANGE_MASTER:
-  {
-    pthread_mutex_lock(&LOCK_active_mi);
-    res = change_master(session,active_mi);
-    pthread_mutex_unlock(&LOCK_active_mi);
-    break;
-  }
-  case SQLCOM_SHOW_SLAVE_STAT:
-  {
-    pthread_mutex_lock(&LOCK_active_mi);
-    if (active_mi != NULL)
-    {
-      res = show_master_info(session, active_mi);
-    }
-    else
-    {
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                   "the master info structure does not exist");
-      my_ok(session);
-    }
-    pthread_mutex_unlock(&LOCK_active_mi);
-    break;
-  }
-  case SQLCOM_SHOW_MASTER_STAT:
-  {
-    res = show_binlog_info(session);
-    break;
-  }
-
   case SQLCOM_SHOW_ENGINE_STATUS:
     {
       res = ha_show_status(session, lex->create_info.db_type, HA_ENGINE_STATUS);
@@ -1489,11 +1431,6 @@ end_with_restore_list:
       }
     break;
   }
-  case SQLCOM_SHOW_BINLOGS:
-    {
-      res = show_binlogs(session);
-      break;
-    }
   case SQLCOM_SHOW_CREATE:
     assert(first_table == all_tables && first_table != 0);
     {
@@ -2034,7 +1971,6 @@ end_with_restore_list:
     res= mysqld_show_create_db(session, lex->name.str, &lex->create_info);
     break;
   }
-  case SQLCOM_RESET:
   case SQLCOM_FLUSH:
   {
     bool write_to_binlog;
@@ -2192,11 +2128,6 @@ end_with_restore_list:
       }
     }
     break;
-  case SQLCOM_BINLOG_BASE64_EVENT:
-  {
-    mysql_client_binlog_statement(session);
-    break;
-  }
   default:
     assert(0);                             /* Impossible */
     my_ok(session);

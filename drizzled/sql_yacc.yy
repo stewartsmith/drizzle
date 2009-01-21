@@ -1075,7 +1075,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_extended_describe
         statement
         opt_field_or_var_spec fields_or_vars opt_load_data_set_spec
-        binlog_base64_event
         init_key_options key_options key_opts key_opt key_using_alg
         parse_vcol_expr vcol_opt_attribute vcol_opt_attribute_list
         vcol_attribute
@@ -1138,7 +1137,6 @@ verb_clause:
 statement:
           alter
         | analyze
-        | binlog_base64_event
         | check
         | checksum
         | commit
@@ -2533,14 +2531,6 @@ analyze:
           }
           table_list
           {}
-        ;
-
-binlog_base64_event:
-          BINLOG_SYM TEXT_STRING_sys
-          {
-            Lex->sql_command = SQLCOM_BINLOG_BASE64_EVENT;
-            Lex->comment= $2;
-          }
         ;
 
 check:
@@ -4057,8 +4047,7 @@ select_derived2:
           {
             LEX *lex= Lex;
             lex->derived_tables|= DERIVED_SUBQUERY;
-            if (!lex->expr_allows_subselect ||
-                lex->sql_command == (int)SQLCOM_PURGE)
+            if (!lex->expr_allows_subselect)
             {
               my_parse_error(ER(ER_SYNTAX_ERROR));
               DRIZZLE_YYABORT;
@@ -6516,8 +6505,7 @@ subselect:
 subselect_start:
           {
             LEX *lex=Lex;
-            if (!lex->expr_allows_subselect ||
-               lex->sql_command == (int)SQLCOM_PURGE)
+            if (!lex->expr_allows_subselect)
             {
               my_parse_error(ER(ER_SYNTAX_ERROR));
               DRIZZLE_YYABORT;
