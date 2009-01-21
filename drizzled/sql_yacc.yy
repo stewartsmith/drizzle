@@ -658,16 +658,12 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LOOP_SYM
 %token  LOW_PRIORITY
 %token  LT                            /* OPERATOR */
-%token  MASTER_CONNECT_RETRY_SYM
 %token  MASTER_HOST_SYM
 %token  MASTER_LOG_FILE_SYM
 %token  MASTER_LOG_POS_SYM
-%token  MASTER_PASSWORD_SYM
 %token  MASTER_PORT_SYM
 %token  MASTER_SERVER_ID_SYM
 %token  MASTER_SYM
-%token  MASTER_USER_SYM
-%token  MASTER_HEARTBEAT_PERIOD_SYM
 %token  MATCH                         /* SQL-2003-R */
 %token  MAX_CONNECTIONS_PER_HOUR
 %token  MAX_QUERIES_PER_HOUR
@@ -5982,10 +5978,7 @@ keyword_sp:
         | MASTER_PORT_SYM          {}
         | MASTER_LOG_FILE_SYM      {}
         | MASTER_LOG_POS_SYM       {}
-        | MASTER_USER_SYM          {}
-        | MASTER_PASSWORD_SYM      {}
         | MASTER_SERVER_ID_SYM     {}
-        | MASTER_CONNECT_RETRY_SYM {}
         | MAX_CONNECTIONS_PER_HOUR {}
         | MAX_QUERIES_PER_HOUR     {}
         | MAX_SIZE_SYM             {}
