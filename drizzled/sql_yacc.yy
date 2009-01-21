@@ -1056,7 +1056,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         query verb_clause create change select drop insert replace insert2
         insert_values update delete truncate rename
         show describe load alter optimize keycache flush
-        purge begin commit rollback savepoint release
+        begin commit rollback savepoint release
         slave master_def master_defs master_file_def slave_until_opts
         repair analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
@@ -1162,7 +1162,6 @@ statement:
         | optimize
         | keycache
         | parse_vcol_expr
-        | purge
         | release
         | rename
         | repair
@@ -5424,35 +5423,6 @@ flush_option:
 opt_table_list:
           /* empty */  {}
         | table_list {}
-        ;
-
-purge:
-          PURGE
-          {
-            LEX *lex=Lex;
-            lex->type=0;
-            lex->sql_command = SQLCOM_PURGE;
-          }
-          purge_options
-          {}
-        ;
-
-purge_options:
-          master_or_binary LOGS_SYM purge_option
-        ;
-
-purge_option:
-          TO_SYM TEXT_STRING_sys
-          {
-            Lex->to_log = $2.str;
-          }
-        | BEFORE_SYM expr
-          {
-            LEX *lex= Lex;
-            lex->value_list.empty();
-            lex->value_list.push_front($2);
-            lex->sql_command= SQLCOM_PURGE_BEFORE;
-          }
         ;
 
 /* kill threads */
