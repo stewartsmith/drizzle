@@ -266,7 +266,6 @@ static SYMBOL symbols[] = {
   { "LOOP",             SYM(LOOP_SYM)},
   { "LOW_PRIORITY",	SYM(LOW_PRIORITY)},
   { "MASTER",           SYM(MASTER_SYM)},
-  { "MASTER_HOST",           SYM(MASTER_HOST_SYM)},
   { "MASTER_LOG_FILE",           SYM(MASTER_LOG_FILE_SYM)},
   { "MASTER_LOG_POS",           SYM(MASTER_LOG_POS_SYM)},
   { "MASTER_PORT",           SYM(MASTER_PORT_SYM)},
