@@ -2,13 +2,7 @@ create table t1 (a int) engine=innodb;
 set autocommit=0;
 insert t1 values (1);
 flush tables with read lock;
-show master status;
-File	Position
-master-bin.000001	107
 commit;
-show master status;
-File	Position
-master-bin.000001	107
 unlock tables;
 drop table t1;
 set autocommit=1;

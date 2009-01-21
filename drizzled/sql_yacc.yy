@@ -5050,10 +5050,6 @@ show_param:
             if (prepare_schema_table(YYSession, lex, $4, SCH_COLUMNS))
               DRIZZLE_YYABORT;
           }
-        | master_or_binary LOGS_SYM
-          {
-            Lex->sql_command = SQLCOM_SHOW_BINLOGS;
-          }
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
             LEX *lex= Lex;
@@ -5102,19 +5098,6 @@ show_param:
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
           }
-        | MASTER_SYM STATUS_SYM
-          {
-            Lex->sql_command = SQLCOM_SHOW_MASTER_STAT;
-          }
-        | SLAVE STATUS_SYM
-          {
-            Lex->sql_command = SQLCOM_SHOW_SLAVE_STAT;
-          }
-
-master_or_binary:
-          MASTER_SYM
-        | BINARY
-        ;
 
 opt_db:
           /* empty */  { $$= 0; }
