@@ -6035,7 +6035,6 @@ keyword_sp:
         | SNAPSHOT_SYM             {}
         | SOURCE_SYM               {}
         | SQL_BUFFER_RESULT        {}
-        | SQL_THREAD               {}
         | STARTS_SYM               {}
         | STATUS_SYM               {}
         | STORAGE_SYM              {}
