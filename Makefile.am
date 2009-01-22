@@ -153,13 +153,16 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	  mv $@-t $@ ; \
 	fi
 
+if HAVE_LCOV
+
 lcov: lcov-clean test index.html
 
-drizzle.output:
-	lcov --directory ${top_srcdir} --capture --output-file drizzle.output
+lcov/drizzle.output: drizzled/drizzled
+	mkdir -p lcov
+	${LCOV} --directory ${top_srcdir}/lcov --capture --output-file lcov/drizzle.output
 
-index.html: drizzle.output
-	genhtml drizzle.output
+lcov/index.html: lcov/drizzle.output
+	${GENHTML} -o lcov lcov/drizzle.output
 
 lcov-clean:
 	ln -fs pars/pars0lex.l ${top_srcdir}/storage/innobase/pars0lex.l
@@ -167,5 +170,6 @@ lcov-clean:
 	ln -fs pars/pars0grm.c ${top_srcdir}/storage/innobase/pars0grm.c
 	ln -fs pars/pars0grm.y ${top_srcdir}/storage/innobase/pars0grm.y
 
-	lcov --directory ${top_srcdir} --zerocounters
+	${LCOV} --directory ${top_srcdir} --zerocounters
 
+endif
