@@ -531,7 +531,6 @@ Session::Session()
   system_thread= NON_SYSTEM_THREAD;
   cleanup_done= abort_on_warning= no_warnings_for_error= 0;
   peer_port= 0;					// For SHOW PROCESSLIST
-  transaction.m_pending_rows_event= 0;
   transaction.on= 1;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 

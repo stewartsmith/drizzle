@@ -38,13 +38,7 @@
 #include <string>
 #include <bitset>
 
-class Relay_log_info;
-
-class Query_log_event;
-class Load_log_event;
-class Slave_log_event;
 class Lex_input_stream;
-class Rows_log_event;
 class user_var_entry;
 class Copy_field;
 class Table_ident;
@@ -891,7 +885,6 @@ public:
     Session_TRANS stmt;			// Trans for current statement
     bool on;                            // see ha_enable_transaction()
     XID_STATE xid_state;
-    Rows_log_event *m_pending_rows_event;
 
     /*
        Tables changed in transaction (that must be invalidated in query cache).
@@ -1538,8 +1531,6 @@ public:
   sql_exchange(char *name, bool dumpfile_flag,
                enum_filetype filetype_arg= FILETYPE_CSV);
 };
-
-#include "log_event.h"
 
 /*
   This is used to get result from a select
