@@ -297,7 +297,6 @@ char* opt_secure_file_priv= 0;
 */
 bool opt_noacl;
 
-uint64_t opt_binlog_rows_event_max_size;
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
@@ -462,7 +461,6 @@ static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 static int cleanup_done;
 static char *opt_binlog_index_name;
-static char *opt_tc_heuristic_recover;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
 static char **defaults_argv;
@@ -2781,10 +2779,6 @@ struct my_option my_long_options[] =
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"abort-slave-event-count", OPT_ABORT_SLAVE_EVENT_COUNT,
-   N_("Option used by mysql-test for debugging and testing of replication."),
-   (char**) &abort_slave_event_count,  (char**) &abort_slave_event_count,
-   0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -2804,17 +2798,6 @@ struct my_option my_long_options[] =
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"binlog-row-event-max-size", OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
-   N_("The maximum size of a row-based binary log event in bytes. Rows will "
-      "be grouped into events smaller than this size if possible. "
-      "The value has to be a multiple of 256."),
-   (char**) &opt_binlog_rows_event_max_size,
-   (char**) &opt_binlog_rows_event_max_size, 0,
-   GET_ULL, REQUIRED_ARG,
-   /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX,
-   /* sub_size */     0, /* block_size */ 256,
-   /* app_type */ 0
-  },
   {"character-set-filesystem", OPT_CHARACTER_SET_FILESYSTEM,
    N_("Set the filesystem character set."),
    (char**) &character_set_filesystem_name,
@@ -2859,11 +2842,6 @@ struct my_option my_long_options[] =
   {"delay-key-write", OPT_DELAY_KEY_WRITE,
    N_("Type of DELAY_KEY_WRITE."),
    0,0,0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"disconnect-slave-event-count", OPT_DISCONNECT_SLAVE_EVENT_COUNT,
-   N_("Option used by mysql-test for debugging and testing of replication."),
-   (char**) &disconnect_slave_event_count,
-   (char**) &disconnect_slave_event_count, 0, GET_INT, REQUIRED_ARG, 0, 0, 0,
-   0, 0, 0},
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   {"enable-pstack", OPT_DO_PSTACK,
    N_("Print a symbolic stack trace on failure."),
@@ -2897,10 +2875,6 @@ struct my_option my_long_options[] =
    N_("Read SQL commands from this file at startup."),
    (char**) &opt_init_file, (char**) &opt_init_file, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"init-slave", OPT_INIT_SLAVE,
-   N_("Command(s) that are executed when a slave connects to this master"),
-   (char**) &opt_init_slave, (char**) &opt_init_slave, 0, GET_STR_ALLOC,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"language", 'L',
    N_("(IGNORED)"),
    (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
@@ -2926,52 +2900,15 @@ struct my_option my_long_options[] =
       "changes)"),
    (char**) &opt_bin_logname, (char**) &opt_bin_logname, 0, GET_STR_ALLOC,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-bin-index", OPT_BIN_LOG_INDEX,
-   N_("File that holds the names for last binary log files."),
-   (char**) &opt_binlog_index_name, (char**) &opt_binlog_index_name, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"log-isam", OPT_ISAM_LOG,
    N_("Log all MyISAM changes to file."),
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-slave-updates", OPT_LOG_SLAVE_UPDATES,
-   N_("Tells the slave to log the updates from the slave thread to the binary "
-      "log. You will need to turn it on if you plan to "
-      "daisy-chain the slaves."),
-   (char**) &opt_log_slave_updates, (char**) &opt_log_slave_updates,
-   0, GET_BOOL,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-tc", OPT_LOG_TC,
-   N_("Path to transaction coordinator log (used for transactions that affect "
-      "more than one storage engine, when binary log is disabled)"),
-   (char**) &opt_tc_log_file, (char**) &opt_tc_log_file, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef HAVE_MMAP
-  {"log-tc-size", OPT_LOG_TC_SIZE,
-   N_("Size of transaction coordinator log."),
-   (char**) &opt_tc_log_size, (char**) &opt_tc_log_size, 0, GET_ULL,
-   REQUIRED_ARG, TC_LOG_MIN_SIZE, TC_LOG_MIN_SIZE, ULONG_MAX, 0,
-   TC_LOG_PAGE_SIZE, 0},
-#endif
   {"log-warnings", 'W',
    N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG, 1, 0, 0,
    0, 0, 0},
-  {"master-info-file", OPT_MASTER_INFO_FILE,
-   N_("The location and name of the file that remembers the master and "
-      "where the I/O replication thread is in the master's binlogs."),
-   (char**) &master_info_file, (char**) &master_info_file, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"master-retry-count", OPT_MASTER_RETRY_COUNT,
-   N_("The number of tries the slave will make to connect to the master "
-      "before giving up."),
-   (char**) &master_retry_count, (char**) &master_retry_count, 0, GET_ULONG,
-   REQUIRED_ARG, 3600*24, 0, 0, 0, 0, 0},
-  {"max-binlog-dump-events", OPT_MAX_BINLOG_DUMP_EVENTS,
-   N_("Option used by mysql-test for debugging and testing of replication."),
-   (char**) &max_binlog_dump_events, (char**) &max_binlog_dump_events, 0,
-   GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"memlock", OPT_MEMLOCK,
    N_("Lock drizzled in memory."),
    (char**) &locked_in_memory,
@@ -3006,38 +2943,6 @@ struct my_option my_long_options[] =
       "(Default: no wait)"),
    (char**) &drizzled_port_timeout,
    (char**) &drizzled_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"relay-log", OPT_RELAY_LOG,
-   N_("The location and name to use for relay logs."),
-   (char**) &opt_relay_logname, (char**) &opt_relay_logname, 0,
-   GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"relay-log-index", OPT_RELAY_LOG_INDEX,
-   N_("The location and name to use for the file that keeps a list of the "
-      "last relay logs."),
-   (char**) &opt_relaylog_index_name, (char**) &opt_relaylog_index_name, 0,
-   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"relay-log-info-file", OPT_RELAY_LOG_INFO_FILE,
-   N_("The location and name of the file that remembers where the SQL "
-      "replication thread is in the relay logs."),
-   (char**) &relay_log_info_file, (char**) &relay_log_info_file, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-same-server-id", OPT_REPLICATE_SAME_SERVER_ID,
-   N_("In replication, if set to 1, do not skip events having our server id. "
-      "Default value is 0 (to break infinite loops in circular replication). "
-      "Can't be set to 1 if --log-slave-updates is used."),
-   (char**) &replicate_same_server_id,
-   (char**) &replicate_same_server_id,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  // In replication, we may need to tell the other servers how to connect
-  {"report-host", OPT_REPORT_HOST,
-   N_("Hostname or IP of the slave to be reported to to the master during "
-      "slave registration. Will appear in the output of SHOW SLAVE HOSTS. "
-      "Leave unset if you do not want the slave to register itself with the "
-      "master. Note that it is not sufficient for the master to simply read "
-      "the IP of the slave off the socket once the slave connects. Due to NAT "
-      "and other routing issues, that IP may not be valid for connecting to "
-      "the slave from the master or other hosts."),
-   (char**) &report_host, (char**) &report_host, 0, GET_STR, REQUIRED_ARG, 0, 0,
-   0, 0, 0, 0},
   {"safe-mode", OPT_SAFE,
    N_("Skip some optimize stages (for testing)."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -3054,10 +2959,6 @@ struct my_option my_long_options[] =
   {"skip-new", OPT_SKIP_NEW,
    N_("Don't use new, possible wrong routines."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"skip-slave-start", OPT_SKIP_SLAVE_START,
-   N_("If set, slave is not started automatically."),
-   (char**) &opt_skip_slave_start,
-   (char**) &opt_skip_slave_start, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-stack-trace", OPT_SKIP_STACK_TRACE,
    N_("Don't print a stack trace on failure."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
@@ -3066,26 +2967,6 @@ struct my_option my_long_options[] =
    N_("Don't give threads different priorities."),
    0, 0, 0, GET_NO_ARG, NO_ARG,
    DEFAULT_SKIP_THREAD_PRIORITY, 0, 0, 0, 0, 0},
-  {"slave-load-tmpdir", OPT_SLAVE_LOAD_TMPDIR,
-   N_("The location where the slave should put its temporary files when "
-      "replicating a LOAD DATA INFILE command."),
-   (char**) &slave_load_tmpdir, (char**) &slave_load_tmpdir, 0, GET_STR_ALLOC,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"slave-skip-errors", OPT_SLAVE_SKIP_ERRORS,
-   N_("Tells the slave thread to continue replication when a query event "
-      "returns an error from the provided list."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"slave-exec-mode", OPT_SLAVE_EXEC_MODE,
-   N_("Modes for how replication events should be executed.  Legal values are "
-      "STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will "
-      "not stop for operations that are idempotent. In STRICT mode, "
-      "replication will stop on any unexpected difference between the master "
-      "and the slave."),
-   (char**) &slave_exec_mode_str, (char**) &slave_exec_mode_str,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"sql-bin-update-same", OPT_SQL_BIN_UPDATE_SAME,
-   N_("(INGORED)"),
-   0, 0, 0, GET_DISABLED, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"symbolic-links", 's',
    N_("Enable symbolic link support."),
    (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
@@ -3100,11 +2981,6 @@ struct my_option my_long_options[] =
       "safe-replicable."),
    (char**) &global_system_variables.sysdate_is_now,
    0, 0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
-  {"tc-heuristic-recover", OPT_TC_HEURISTIC_RECOVER,
-   N_("Decision to use in heuristic recover process. Possible values are "
-      "COMMIT or ROLLBACK."),
-   (char**) &opt_tc_heuristic_recover, (char**) &opt_tc_heuristic_recover,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"temp-pool", OPT_TEMP_POOL,
    N_("Using this option will cause most temporary files created to use a "
       "small set of names, rather than a unique name for each new file."),
@@ -3137,12 +3013,6 @@ struct my_option my_long_options[] =
       "requests in a very short time."),
     (char**) &back_log, (char**) &back_log, 0, GET_UINT,
     REQUIRED_ARG, 50, 1, 65535, 0, 1, 0 },
-  { "binlog_cache_size", OPT_BINLOG_CACHE_SIZE,
-    N_("The size of the cache to hold the SQL statements for the binary log "
-       "during a transaction. If you often use big, multi-statement "
-       "transactions you can increase this to get more performance."),
-    (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULL,
-    REQUIRED_ARG, 32*1024L, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
   { "bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
     N_("Size of tree cache used in bulk insert optimization. Note that this is "
        "a limit per thread!"),
@@ -3238,17 +3108,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.max_allowed_packet,
    (char**) &max_system_variables.max_allowed_packet, 0, GET_ULONG,
    REQUIRED_ARG, 1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
-  {"max_binlog_cache_size", OPT_MAX_BINLOG_CACHE_SIZE,
-   N_("Can be used to restrict the total size used to cache a "
-      "multi-transaction query."),
-   (char**) &max_binlog_cache_size, (char**) &max_binlog_cache_size, 0,
-   GET_ULL, REQUIRED_ARG, ULONG_MAX, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
-  {"max_binlog_size", OPT_MAX_BINLOG_SIZE,
-   N_("Binary log will be rotated automatically when the size exceeds this "
-      "value. Will also apply to relay logs if max_relay_log_size is 0. "
-      "The minimum value for this variable is 4096."),
-   (char**) &max_binlog_size, (char**) &max_binlog_size, 0, GET_ULONG,
-   REQUIRED_ARG, 1024*1024L*1024L, IO_SIZE, 1024*1024L*1024L, 0, IO_SIZE, 0},
   {"max_connect_errors", OPT_MAX_CONNECT_ERRORS,
    N_("If there is more than this number of interrupted connections from a "
       "host this host will be blocked from further connections."),
@@ -3283,13 +3142,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.max_length_for_sort_data,
    (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULL,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
-  {"max_relay_log_size", OPT_MAX_RELAY_LOG_SIZE,
-   N_("If non-zero: relay log will be rotated automatically when the size "
-      "exceeds this value; if zero (the default): when the size exceeds "
-      "max_binlog_size. 0 excepted, the minimum value for this variable "
-      "is 4096."),
-   (char**) &max_relay_log_size, (char**) &max_relay_log_size, 0, GET_ULONG,
-   REQUIRED_ARG, 0L, 0L, 1024*1024L*1024L, 0, IO_SIZE, 0},
   { "max_seeks_for_key", OPT_MAX_SEEKS_FOR_KEY,
     N_("Limit assumed max number of seeks when looking up rows based on a key"),
     (char**) &global_system_variables.max_seeks_for_key,
@@ -3427,53 +3279,12 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.read_rnd_buff_size, 0,
    GET_UINT, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
    UINT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
-  {"relay_log_purge", OPT_RELAY_LOG_PURGE,
-   N_("0 = do not purge relay logs. "
-      "1 = purge them as soon as they are no more needed."),
-   (char**) &relay_log_purge,
-   (char**) &relay_log_purge, 0, GET_BOOL, NO_ARG,
-   1, 0, 1, 0, 1, 0},
-  {"relay_log_space_limit", OPT_RELAY_LOG_SPACE_LIMIT,
-   N_("Maximum space to use for all relay logs."),
-   (char**) &relay_log_space_limit,
-   (char**) &relay_log_space_limit, 0, GET_ULL, REQUIRED_ARG, 0L, 0L,
-   (int64_t) ULONG_MAX, 0, 1, 0},
-  {"slave_compressed_protocol", OPT_SLAVE_COMPRESSED_PROTOCOL,
-   N_("Use compression on master/slave protocol."),
-   (char**) &opt_slave_compressed_protocol,
-   (char**) &opt_slave_compressed_protocol,
-   0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
-  {"slave_net_timeout", OPT_SLAVE_NET_TIMEOUT,
-   N_("Number of seconds to wait for more data from a master/slave connection "
-      "before aborting the read."),
-   (char**) &slave_net_timeout, (char**) &slave_net_timeout, 0,
-   GET_UINT, REQUIRED_ARG, SLAVE_NET_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  {"slave_transaction_retries", OPT_SLAVE_TRANS_RETRIES,
-   N_("Number of times the slave SQL thread will retry a transaction in case "
-      "it failed with a deadlock or elapsed lock wait timeout, "
-      "before giving up and stopping."),
-   (char**) &slave_trans_retries, (char**) &slave_trans_retries, 0,
-   GET_ULL, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
-  {"slave-allow-batching", OPT_SLAVE_ALLOW_BATCHING,
-   N_("Allow slave to batch requests."),
-   (char**) &slave_allow_batching, (char**) &slave_allow_batching,
-   0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
-  {"slow_launch_time", OPT_SLOW_LAUNCH_TIME,
-   N_("If creating the thread takes longer than this value (in seconds), the "
-      "Slow_launch_threads counter will be incremented."),
-   (char**) &slow_launch_time, (char**) &slow_launch_time, 0, GET_ULL,
-   REQUIRED_ARG, 2L, 0L, LONG_TIMEOUT, 0, 1, 0},
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_ULONG, REQUIRED_ARG,
    MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
-  {"sync-binlog", OPT_SYNC_BINLOG,
-   N_("Synchronously flush binary log to disk after every #th event. "
-      "Use 0 (default) to disable synchronous flushing."),
-   (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULL,
-   REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,
