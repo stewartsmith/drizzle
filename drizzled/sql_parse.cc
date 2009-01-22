@@ -15,10 +15,8 @@
 
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
-#include <drizzled/replication/replication.h>
 #include <libdrizzle/libdrizzle.h>
 #include <mysys/hash.h>
-#include <drizzled/replication/binlog.h>
 #include <drizzled/logging.h>
 #include <drizzled/db.h>
 #include <drizzled/error.h>
@@ -3184,7 +3182,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
     */
     tmp_write_to_binlog= 0;
     pthread_mutex_lock(&LOCK_active_mi);
-    rotate_relay_log(active_mi);
     pthread_mutex_unlock(&LOCK_active_mi);
 
     if (ha_flush_logs(NULL))

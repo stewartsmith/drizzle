@@ -18,7 +18,6 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/replication/replication.h>
 #include <drizzled/error.h>
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>

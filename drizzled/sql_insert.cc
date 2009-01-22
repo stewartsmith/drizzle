@@ -25,10 +25,8 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
-#include <drizzled/replication/mi.h>
 #include <drizzled/error.h>
 #include <drizzled/name_resolution_context_state.h>
-#include <drizzled/slave.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/probes.h>
 #include <drizzled/tableop_hooks.h>

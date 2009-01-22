@@ -26,8 +26,6 @@
 #include <signal.h>
 
 #include <mysys/my_bit.h>
-#include <drizzled/replication/mi.h>
-#include <drizzled/replication/replication.h>
 #include <libdrizzle/libdrizzle.h>
 #include <mysys/hash.h>
 #include <drizzled/stacktrace.h>
@@ -599,8 +597,6 @@ static void close_connections(void)
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
-  end_slave();
-
   if (thread_count)
     sleep(2);					// Give threads time to die
 
@@ -798,8 +794,6 @@ void clean_up(bool print_message)
 
   drizzle_bin_log.cleanup();
 
-  if (use_slave_mask)
-    bitmap_free(&slave_error_mask);
   my_database_names_free();
   table_cache_free();
   table_def_free();
@@ -826,7 +820,6 @@ void clean_up(bool print_message)
   free(sys_init_connect.value);
   free(sys_init_slave.value);
   free(drizzle_tmpdir);
-  free(slave_load_tmpdir);
   if (opt_bin_logname)
     free(opt_bin_logname);
   if (opt_relay_logname)
@@ -1948,8 +1941,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   item_init();
   if (set_var_init())
     return 1;
-  if (init_replication_sys_vars())
-    return 1;
   /*
     Process a comma-separated character set list and choose
     the first available character set. This is mostly for
@@ -2105,14 +2096,6 @@ static int init_server_components()
   if (xid_cache_init())
   {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory"));
-    unireg_abort(1);
-  }
-
-  if (opt_log_slave_updates && replicate_same_server_id)
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("using --replicate-same-server-id in conjunction with "
-                      "--log-slave-updates is impossible, it would lead to "
-                      "infinite loops in this server."));
     unireg_abort(1);
   }
 
@@ -2422,10 +2405,6 @@ int main(int argc, char **argv)
     places) assume that active_mi != 0, so let's fail if it's 0 (out of
     memory); a message has already been printed.
   */
-  if (init_slave() && !active_mi)
-  {
-    unireg_abort(1);
-  }
 
   errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)),my_progname,server_version,
                         "", drizzled_port, COMPILATION_COMMENT);
@@ -3654,7 +3633,6 @@ drizzled_get_one_option(int optid,
     strncpy(language, argument, sizeof(language)-1);
     break;
   case OPT_SLAVE_SKIP_ERRORS:
-    init_slave_skip_errors(argument);
     break;
   case OPT_SLAVE_EXEC_MODE:
     break;
@@ -4015,11 +3993,6 @@ static void fix_paths(void)
     }
   }
 
-  if (!slave_load_tmpdir)
-  {
-    if (!(slave_load_tmpdir = (char*) strdup(drizzle_tmpdir)))
-      exit(1);
-  }
   /*
     Convert the secure-file-priv option to system format, allowing
     a quick strcmp to check if read or write is in an allowed dir
