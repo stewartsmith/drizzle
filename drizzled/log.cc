@@ -58,46 +58,6 @@ static int binlog_rollback(handlerton *hton, Session *session, bool all);
 static int binlog_prepare(handlerton *hton, Session *session, bool all);
 
 
-char *make_default_log_name(char *buff,const char *log_ext)
-{
-  strncpy(buff, pidfile_name, FN_REFLEN-5);
-  return fn_format(buff, buff, drizzle_data_home, log_ext,
-                   MYF(MY_UNPACK_FILENAME|MY_REPLACE_EXT));
-}
-
-/*
-  Helper class to hold a mutex for the duration of the
-  block.
-
-  Eliminates the need for explicit unlocking of mutexes on, e.g.,
-  error returns.  On passing a null pointer, the sentry will not do
-  anything.
- */
-class Mutex_sentry
-{
-public:
-  Mutex_sentry(pthread_mutex_t *mutex)
-    : m_mutex(mutex)
-  {
-    if (m_mutex)
-      pthread_mutex_lock(mutex);
-  }
-
-  ~Mutex_sentry()
-  {
-    if (m_mutex)
-      pthread_mutex_unlock(m_mutex);
-    m_mutex= 0;
-  }
-
-private:
-  pthread_mutex_t *m_mutex;
-
-  // It's not allowed to copy this object in any way
-  Mutex_sentry(Mutex_sentry const&);
-  void operator=(Mutex_sentry const&);
-};
-
 handlerton *binlog_hton;
 
 
@@ -1963,130 +1923,8 @@ uint32_t DRIZZLE_BIN_LOG::next_file_id()
     be reset as a READ_CACHE to be able to read the contents from it.
  */
 
-int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
+int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *, bool, bool)
 {
-  Mutex_sentry sentry(lock_log ? &LOCK_log : NULL);
-
-  if (reinit_io_cache(cache, READ_CACHE, 0, 0, 0))
-    return ER_ERROR_ON_WRITE;
-  uint32_t length= my_b_bytes_in_cache(cache), group, carry, hdr_offs;
-  long val;
-  unsigned char header[LOG_EVENT_HEADER_LEN];
-
-  /*
-    The events in the buffer have incorrect end_log_pos data
-    (relative to beginning of group rather than absolute),
-    so we'll recalculate them in situ so the binlog is always
-    correct, even in the middle of a group. This is possible
-    because we now know the start position of the group (the
-    offset of this cache in the log, if you will); all we need
-    to do is to find all event-headers, and add the position of
-    the group to the end_log_pos of each event.  This is pretty
-    straight forward, except that we read the cache in segments,
-    so an event-header might end up on the cache-border and get
-    split.
-  */
-
-  group= (uint)my_b_tell(&log_file);
-  hdr_offs= carry= 0;
-
-  do
-  {
-
-    /*
-      if we only got a partial header in the last iteration,
-      get the other half now and process a full header.
-    */
-    if (unlikely(carry > 0))
-    {
-      assert(carry < LOG_EVENT_HEADER_LEN);
-
-      /* assemble both halves */
-      memcpy(&header[carry], cache->read_pos, LOG_EVENT_HEADER_LEN - carry);
-
-      /* fix end_log_pos */
-      val= uint4korr(&header[LOG_POS_OFFSET]) + group;
-      int4store(&header[LOG_POS_OFFSET], val);
-
-      /* write the first half of the split header */
-      if (my_b_write(&log_file, header, carry))
-        return ER_ERROR_ON_WRITE;
-
-      /*
-        copy fixed second half of header to cache so the correct
-        version will be written later.
-      */
-      memcpy(cache->read_pos, &header[carry], LOG_EVENT_HEADER_LEN - carry);
-
-      /* next event header at ... */
-      hdr_offs = uint4korr(&header[EVENT_LEN_OFFSET]) - carry;
-
-      carry= 0;
-    }
-
-    /* if there is anything to write, process it. */
-
-    if (likely(length > 0))
-    {
-      /*
-        process all event-headers in this (partial) cache.
-        if next header is beyond current read-buffer,
-        we'll get it later (though not necessarily in the
-        very next iteration, just "eventually").
-      */
-
-      while (hdr_offs < length)
-      {
-        /*
-          partial header only? save what we can get, process once
-          we get the rest.
-        */
-
-        if (hdr_offs + LOG_EVENT_HEADER_LEN > length)
-        {
-          carry= length - hdr_offs;
-          memcpy(header, cache->read_pos + hdr_offs, carry);
-          length= hdr_offs;
-        }
-        else
-        {
-          /* we've got a full event-header, and it came in one piece */
-
-          unsigned char *log_pos= (unsigned char *)cache->read_pos + hdr_offs + LOG_POS_OFFSET;
-
-          /* fix end_log_pos */
-          val= uint4korr(log_pos) + group;
-          int4store(log_pos, val);
-
-          /* next event header at ... */
-          log_pos= (unsigned char *)cache->read_pos + hdr_offs + EVENT_LEN_OFFSET;
-          hdr_offs += uint4korr(log_pos);
-
-        }
-      }
-
-      /*
-        Adjust hdr_offs. Note that it may still point beyond the segment
-        read in the next iteration; if the current event is very long,
-        it may take a couple of read-iterations (and subsequent adjustments
-        of hdr_offs) for it to point into the then-current segment.
-        If we have a split header (!carry), hdr_offs will be set at the
-        beginning of the next iteration, overwriting the value we set here:
-      */
-      hdr_offs -= length;
-    }
-
-    /* Write data to the binary log file */
-    if (my_b_write(&log_file, cache->read_pos, length))
-      return ER_ERROR_ON_WRITE;
-    cache->read_pos=cache->read_end;		// Mark buffer used up
-  } while ((length= my_b_fill(cache)));
-
-  assert(carry == 0);
-
-  if (sync_log)
-    flush_and_sync();
-
   return 0;                                     // All OK
 }
 
@@ -2111,96 +1949,9 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
     'cache' needs to be reinitialized after this functions returns.
 */
 
-bool DRIZZLE_BIN_LOG::write(Session *session, IO_CACHE *cache, Log_event *commit_event)
+bool DRIZZLE_BIN_LOG::write(Session *, IO_CACHE *, Log_event *)
 {
-  pthread_mutex_lock(&LOCK_log);
-
-  /* NULL would represent nothing to replicate after ROLLBACK */
-  assert(commit_event != NULL);
-
-  assert(is_open());
-  if (likely(is_open()))                       // Should always be true
-  {
-    /*
-      We only bother to write to the binary log if there is anything
-      to write.
-     */
-    if (my_b_tell(cache) > 0)
-    {
-      /*
-        Log "BEGIN" at the beginning of every transaction.  Here, a
-        transaction is either a BEGIN..COMMIT block or a single
-        statement in autocommit mode.
-      */
-      Query_log_event qinfo(session, STRING_WITH_LEN("BEGIN"), true, false);
-      /*
-        Imagine this is rollback due to net timeout, after all
-        statements of the transaction succeeded. Then we want a
-        zero-error code in BEGIN.  In other words, if there was a
-        really serious error code it's already in the statement's
-        events, there is no need to put it also in this internally
-        generated event, and as this event is generated late it would
-        lead to false alarms.
-
-        This is safer than session->clear_error() against kills at shutdown.
-      */
-      qinfo.error_code= 0;
-      /*
-        Now this Query_log_event has artificial log_pos 0. It must be
-        adjusted to reflect the real position in the log. Not doing it
-        would confuse the slave: it would prevent this one from
-        knowing where he is in the master's binlog, which would result
-        in wrong positions being shown to the user, MASTER_POS_WAIT
-        undue waiting etc.
-      */
-      if (qinfo.write(&log_file))
-        goto err;
-
-      if ((write_error= write_cache(cache, false, false)))
-        goto err;
-
-      if (commit_event && commit_event->write(&log_file))
-        goto err;
-      if (flush_and_sync())
-        goto err;
-      if (cache->error)				// Error on read
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_ERROR_ON_READ), cache->file_name, errno);
-        write_error=1;				// Don't give more errors
-        goto err;
-      }
-      signal_update();
-    }
-
-    /*
-      if commit_event is Xid_log_event, increase the number of
-      prepared_xids (it's decreasd in ::unlog()). Binlog cannot be rotated
-      if there're prepared xids in it - see the comment in new_file() for
-      an explanation.
-      If the commit_event is not Xid_log_event (then it's a Query_log_event)
-      rotate binlog, if necessary.
-    */
-    if (commit_event && commit_event->get_type_code() == XID_EVENT)
-    {
-      pthread_mutex_lock(&LOCK_prep_xids);
-      prepared_xids++;
-      pthread_mutex_unlock(&LOCK_prep_xids);
-    }
-    else
-      rotate_and_purge(RP_LOCK_LOG_IS_ALREADY_LOCKED);
-  }
-  pthread_mutex_unlock(&LOCK_log);
-
-  return(0);
-
-err:
-  if (!write_error)
-  {
-    write_error= 1;
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_ERROR_ON_WRITE), name, errno);
-  }
-  pthread_mutex_unlock(&LOCK_log);
-  return(1);
+  return false;
 }
 
 
@@ -2213,15 +1964,8 @@ err:
     It will be released at the end of the function.
 */
 
-void DRIZZLE_BIN_LOG::wait_for_update_relay_log(Session* session)
+void DRIZZLE_BIN_LOG::wait_for_update_relay_log(Session*)
 {
-  const char *old_msg;
-  old_msg= session->enter_cond(&update_cond, &LOCK_log,
-                           "Slave has read all relay log; "
-                           "waiting for the slave I/O "
-                           "thread to update it" );
-  pthread_cond_wait(&update_cond, &LOCK_log);
-  session->exit_cond(old_msg);
   return;
 }
 
@@ -2273,68 +2017,14 @@ int DRIZZLE_BIN_LOG::wait_for_update_bin_log(Session* session,
     The internal structures are not freed until cleanup() is called
 */
 
-void DRIZZLE_BIN_LOG::close(uint32_t exiting)
+void DRIZZLE_BIN_LOG::close(uint32_t)
 {					// One can't set log_type here!
-  if (log_state == LOG_OPENED)
-  {
-    if (log_type == LOG_BIN && !no_auto_events &&
-	(exiting & LOG_CLOSE_STOP_EVENT))
-    {
-      Stop_log_event s;
-      s.write(&log_file);
-      bytes_written+= s.data_written;
-      signal_update();
-    }
-
-    /* don't pwrite in a file opened with O_APPEND - it doesn't work */
-    if (log_file.type == WRITE_CACHE && log_type == LOG_BIN)
-    {
-      my_off_t offset= BIN_LOG_HEADER_SIZE + FLAGS_OFFSET;
-      unsigned char flags= 0;            // clearing LOG_EVENT_BINLOG_IN_USE_F
-      assert(pwrite(log_file.file, &flags, 1, offset)==1);
-    }
-
-    /* this will cleanup IO_CACHE, sync and close the file */
-    DRIZZLE_LOG::close(exiting);
-  }
-
-  /*
-    The following test is needed even if is_open() is not set, as we may have
-    called a not complete close earlier and the index file is still open.
-  */
-
-  if ((exiting & LOG_CLOSE_INDEX) && my_b_inited(&index_file))
-  {
-    end_io_cache(&index_file);
-    if (my_close(index_file.file, MYF(0)) < 0 && ! write_error)
-    {
-      write_error= 1;
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_ERROR_ON_WRITE), index_file_name, errno);
-    }
-  }
-  log_state= (exiting & LOG_CLOSE_TO_BE_OPENED) ? LOG_TO_BE_OPENED : LOG_CLOSED;
-  if (name)
-  {
-    free(name);
-    name= NULL;
-  }
   return;
 }
 
 
-void DRIZZLE_BIN_LOG::set_max_size(ulong max_size_arg)
+void DRIZZLE_BIN_LOG::set_max_size(ulong)
 {
-  /*
-    We need to take locks, otherwise this may happen:
-    new_file() is called, calls open(old_max_size), then before open() starts,
-    set_max_size() sets max_size to max_size_arg, then open() starts and
-    uses the old_max_size argument, so max_size_arg has been overwritten and
-    it's like if the SET command was never run.
-  */
-  pthread_mutex_lock(&LOCK_log);
-  if (is_open())
-    max_size= max_size_arg;
-  pthread_mutex_unlock(&LOCK_log);
   return;
 }
 
@@ -2356,40 +2046,13 @@ void DRIZZLE_BIN_LOG::set_max_size(ulong max_size_arg)
     0	Error
 */
 
-static bool test_if_number(register const char *str,
-			   long *res, bool allow_wildcards)
+static bool test_if_number(register const char *, long *, bool)
 {
-  register int flag;
-  const char *start;
-
-  flag= 0;
-  start= str;
-  while (*str++ == ' ') ;
-  if (*--str == '-' || *str == '+')
-    str++;
-  while (my_isdigit(files_charset_info,*str) ||
-	 (allow_wildcards && (*str == wild_many || *str == wild_one)))
-  {
-    flag=1;
-    str++;
-  }
-  if (*str == '.')
-  {
-    for (str++ ;
-	 my_isdigit(files_charset_info,*str) ||
-	   (allow_wildcards && (*str == wild_many || *str == wild_one)) ;
-	 str++, flag=1) ;
-  }
-  if (*str != 0 || flag == 0)
-    return(0);
-  if (res)
-    *res=atol(start);
   return(1);			/* Number ok */
 } /* test_if_number */
 
 void DRIZZLE_BIN_LOG::signal_update()
 {
-  pthread_cond_broadcast(&update_cond);
   return;
 }
 
