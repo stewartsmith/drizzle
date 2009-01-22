@@ -792,8 +792,6 @@ void clean_up(bool print_message)
   if (cleanup_done++)
     return; /* purecov: inspected */
 
-  drizzle_bin_log.cleanup();
-
   my_database_names_free();
   table_cache_free();
   table_def_free();
@@ -2099,42 +2097,6 @@ static int init_server_components()
     unireg_abort(1);
   }
 
-  if (opt_bin_log)
-  {
-    char buf[FN_REFLEN];
-    const char *ln;
-    ln= drizzle_bin_log.generate_name(opt_bin_logname, "-bin", 1, buf);
-    if (!opt_bin_logname && !opt_binlog_index_name)
-    {
-      /*
-        User didn't give us info to name the binlog index file.
-        Picking `hostname`-bin.index like did in 4.x, causes replication to
-        fail if the hostname is changed later. So, we would like to instead
-        require a name. But as we don't want to break many existing setups, we
-        only give warning, not error.
-      */
-          errmsg_printf(ERRMSG_LVL_WARN, _("No argument was provided to --log-bin, and "
-                          "--log-bin-index was not used; so replication "
-                          "may break when this Drizzle server acts as a "
-                          "master and has his hostname changed!! Please "
-                          "use '--log-bin=%s' to avoid this problem."), ln);
-    }
-    if (ln == buf)
-    {
-      free(opt_bin_logname);
-      opt_bin_logname=strdup(buf);
-      if (opt_bin_logname == NULL)
-      {
-              errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory in init_server_components."));
-        return(1);
-      }
-    }
-    if (drizzle_bin_log.open_index_file(opt_binlog_index_name, ln))
-    {
-      unireg_abort(1);
-    }
-  }
-
   /* call ha_init_key_cache() on all key caches to init them */
   process_key_caches(&ha_init_key_cache);
 
@@ -2229,10 +2191,7 @@ static int init_server_components()
     }
   }
 
-  tc_log= (total_ha_2pc > 1 ? (opt_bin_log  ?
-                               (TC_LOG *) &drizzle_bin_log :
-                               (TC_LOG *) &tc_log_mmap) :
-           (TC_LOG *) &tc_log_dummy);
+  tc_log= (TC_LOG *) &tc_log_dummy;
 
   if (tc_log->open(opt_bin_log ? opt_bin_logname : opt_tc_log_file))
   {
@@ -2248,13 +2207,6 @@ static int init_server_components()
   if (opt_bin_log && drizzle_bin_log.open(opt_bin_logname, LOG_BIN, 0,
                                           WRITE_CACHE, 0, max_binlog_size, 0))
     unireg_abort(1);
-
-  if (opt_bin_log && expire_logs_days)
-  {
-    time_t purge_time= server_start_time - expire_logs_days*24*60*60;
-    if (purge_time >= 0)
-      drizzle_bin_log.purge_logs_before_date(purge_time);
-  }
 
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
   if (locked_in_memory && !getuid())
