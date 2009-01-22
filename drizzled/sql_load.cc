@@ -249,7 +249,7 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
 
   if (read_file_from_client)
   {
-    (void)net_request_file(&session->net,ex->file_name);
+    assert(0);
     file = -1;
   }
   else

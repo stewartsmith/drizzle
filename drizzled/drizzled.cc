@@ -18,6 +18,7 @@
  */
 
 
+#include <drizzled/configmake.h>
 #include <drizzled/server_includes.h>
 
 #include <netdb.h>
@@ -43,7 +44,6 @@
 #include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
-#include <drizzled/configmake.h>
 
 
 #if TIME_WITH_SYS_TIME
@@ -2302,15 +2302,9 @@ int main(int argc, char **argv)
       set_user(drizzled_user, user_info);
   }
 
-  if (opt_bin_log && !server_id)
+  if (server_id == 0)
   {
     server_id= 1;
-#ifdef EXTRA_DEBUG
-      errmsg_printf(ERRMSG_LVL_WARN, _("You have enabled the binary log, but you haven't set "
-                        "server-id to a non-zero value: we force server id to "
-                        "1; updates will be logged to the binary log, but "
-                        "connections from slaves will not be accepted."));
-#endif
   }
 
   if (init_server_components())

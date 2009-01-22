@@ -25,11 +25,9 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/replication/replication.h>
 #include <libdrizzle/libdrizzle.h>
 #include <drizzled/replicator.h>
 #include <mysys/hash.h>
-#include <drizzled/replication/rli.h>
 
 #include <mysys/my_dir.h>
 #include <stdarg.h>
@@ -869,54 +867,6 @@ int DRIZZLE_BIN_LOG::raw_get_current_log(LOG_INFO* linfo)
 }
 
 /**
-  Move all data up in a file in an filename index file.
-
-    We do the copy outside of the IO_CACHE as the cache buffers would just
-    make things slower and more complicated.
-    In most cases the copy loop should only do one read.
-
-  @param index_file			File to move
-  @param offset			Move everything from here to beginning
-
-  @note
-    File will be truncated to be 'offset' shorter or filled up with newlines
-
-  @retval
-    0	ok
-*/
-
-static bool copy_up_file_and_fill(IO_CACHE *index_file, my_off_t offset)
-{
-  int bytes_read;
-  my_off_t init_offset= offset;
-  File file= index_file->file;
-  unsigned char io_buf[IO_SIZE*2];
-
-  for (;; offset+= bytes_read)
-  {
-    (void) lseek(file, offset, SEEK_SET);
-    if ((bytes_read= (int) my_read(file, io_buf, sizeof(io_buf), MYF(MY_WME)))
-	< 0)
-      goto err;
-    if (!bytes_read)
-      break;					// end of file
-    (void) lseek(file, offset-init_offset, SEEK_SET);
-    if (my_write(file, io_buf, bytes_read, MYF(MY_WME | MY_NABP)))
-      goto err;
-  }
-  /* The following will either truncate the file or fill the end with \n' */
-  if (ftruncate(file, offset - init_offset) || my_sync(file, MYF(MY_WME)))
-    goto err;
-
-  /* Reset data in old index cache */
-  reinit_io_cache(index_file, READ_CACHE, (my_off_t) 0, 0, 1);
-  return(0);
-
-err:
-  return(1);
-}
-
-/**
   Find the position in the log-index-file for the given log name.
 
   @param linfo		Store here the found log file name and position to
@@ -1202,87 +1152,17 @@ err:
 */
 
 
-int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
+int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info*, bool)
 {
-  int error;
-
-  assert(is_open());
-  assert(rli->slave_running == 1);
-  assert(!strcmp(rli->linfo.log_file_name,rli->event_relay_log_name.c_str()));
-
-  pthread_mutex_lock(&LOCK_index);
-  pthread_mutex_lock(&rli->log_space_lock);
-  rli->relay_log.purge_logs(rli->group_relay_log_name.c_str(), included,
-                            0, 0, &rli->log_space_total);
-  // Tell the I/O thread to take the relay_log_space_limit into account
-  rli->ignore_log_space_limit= 0;
-  pthread_mutex_unlock(&rli->log_space_lock);
-
-  /*
-    Ok to broadcast after the critical region as there is no risk of
-    the mutex being destroyed by this thread later - this helps save
-    context switches
-  */
-  pthread_cond_broadcast(&rli->log_space_cond);
-
-  /*
-    Read the next log file name from the index file and pass it back to
-    the caller
-    If included is true, we want the first relay log;
-    otherwise we want the one after event_relay_log_name.
-  */
-  if ((included && (error=find_log_pos(&rli->linfo, NULL, 0))) ||
-      (!included &&
-       ((error=find_log_pos(&rli->linfo, rli->event_relay_log_name.c_str(), 0)) ||
-        (error=find_next_log(&rli->linfo, 0)))))
-  {
-    char buff[22];
-    errmsg_printf(ERRMSG_LVL_ERROR, _("next log error: %d  offset: %s  log: %s included: %d"),
-                    error,
-                    llstr(rli->linfo.index_file_offset,buff),
-                    rli->group_relay_log_name.c_str(),
-                    included);
-    goto err;
-  }
-
-  /*
-    Reset rli's coordinates to the current log.
-  */
-  rli->event_relay_log_pos= BIN_LOG_HEADER_SIZE;
-  rli->event_relay_log_name.assign(rli->linfo.log_file_name);
-
-  /*
-    If we removed the rli->group_relay_log_name file,
-    we must update the rli->group* coordinates, otherwise do not touch it as the
-    group's execution is not finished (e.g. COMMIT not executed)
-  */
-  if (included)
-  {
-    rli->group_relay_log_pos = BIN_LOG_HEADER_SIZE;
-    rli->group_relay_log_name.assign(rli->linfo.log_file_name);
-    rli->notify_group_relay_log_name_update();
-  }
-
-  /* Store where we are in the new file for the execution thread */
-  flush_relay_log_info(rli);
-
-err:
-  pthread_mutex_unlock(&LOCK_index);
-  return(error);
+  return 0;
 }
 
 /**
   Update log index_file.
 */
 
-int DRIZZLE_BIN_LOG::update_log_index(LOG_INFO* log_info, bool need_update_threads)
+int DRIZZLE_BIN_LOG::update_log_index(LOG_INFO*, bool)
 {
-  if (copy_up_file_and_fill(&index_file, log_info->index_file_start_offset))
-    return LOG_INFO_IO;
-
-  // now update offsets in index file for running threads
-  if (need_update_threads)
-    adjust_linfo_offsets(log_info->index_file_start_offset);
   return 0;
 }
 
@@ -1310,117 +1190,9 @@ int DRIZZLE_BIN_LOG::update_log_index(LOG_INFO* log_info, bool need_update_threa
                                 stat() or my_delete()
 */
 
-int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
-                          bool included,
-                          bool need_mutex,
-                          bool need_update_threads,
-                          uint64_t *decrease_log_space)
+int DRIZZLE_BIN_LOG::purge_logs(const char *, bool, bool, bool, uint64_t *)
 {
-  int error;
-  int ret = 0;
-  bool exit_loop= 0;
-  LOG_INFO log_info;
-
-  if (need_mutex)
-    pthread_mutex_lock(&LOCK_index);
-  if ((error=find_log_pos(&log_info, to_log, 0 /*no mutex*/)))
-    goto err;
-
-  /*
-    File name exists in index file; delete until we find this file
-    or a file that is used.
-  */
-  if ((error=find_log_pos(&log_info, NULL, 0 /*no mutex*/)))
-    goto err;
-  while ((strcmp(to_log,log_info.log_file_name) || (exit_loop=included)) &&
-         !log_in_use(log_info.log_file_name))
-  {
-    struct stat s;
-    if (stat(log_info.log_file_name, &s))
-    {
-      if (errno == ENOENT)
-      {
-        /*
-          It's not fatal if we can't stat a log file that does not exist;
-          If we could not stat, we won't delete.
-        */
-        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
-                            log_info.log_file_name);
-        errmsg_printf(ERRMSG_LVL_INFO, _("Failed to execute stat() on file '%s'"),
-			      log_info.log_file_name);
-        my_errno= 0;
-      }
-      else
-      {
-        /*
-          Other than ENOENT are fatal
-        */
-        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                            ER_BINLOG_PURGE_FATAL_ERR,
-                            _("a problem with getting info on being purged %s; "
-                            "consider examining correspondence "
-                            "of your binlog index file "
-                            "to the actual binlog files"),
-                            log_info.log_file_name);
-        error= LOG_INFO_FATAL;
-        goto err;
-      }
-    }
-    else
-    {
-      if (!my_delete(log_info.log_file_name, MYF(0)))
-      {
-        if (decrease_log_space)
-          *decrease_log_space-= s.st_size;
-      }
-      else
-      {
-        if (my_errno == ENOENT)
-        {
-          push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                              ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
-                              log_info.log_file_name);
-          errmsg_printf(ERRMSG_LVL_INFO, _("Failed to delete file '%s'"),
-                                log_info.log_file_name);
-          my_errno= 0;
-        }
-        else
-        {
-          push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                              ER_BINLOG_PURGE_FATAL_ERR,
-                              _("a problem with deleting %s; "
-                              "consider examining correspondence "
-                              "of your binlog index file "
-                              "to the actual binlog files"),
-                              log_info.log_file_name);
-          if (my_errno == EMFILE)
-          {
-            error= LOG_INFO_EMFILE;
-          }
-          error= LOG_INFO_FATAL;
-          goto err;
-        }
-      }
-    }
-
-    if (find_next_log(&log_info, 0) || exit_loop)
-      break;
-  }
-
-  /*
-    If we get killed -9 here, the sysadmin would have to edit
-    the log index file after restart - otherwise, this should be safe
-  */
-  error= update_log_index(&log_info, need_update_threads);
-  if (error == 0) {
-    error = ret;
-  }
-
-err:
-  if (need_mutex)
-    pthread_mutex_unlock(&LOCK_index);
-  return(error);
+  return 0;
 }
 
 /**
@@ -1442,98 +1214,9 @@ err:
                                 stat() or my_delete()
 */
 
-int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
+int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t)
 {
-  int error;
-  LOG_INFO log_info;
-  struct stat stat_area;
-
-  pthread_mutex_lock(&LOCK_index);
-
-  /*
-    Delete until we find curren file
-    or a file that is used or a file
-    that is older than purge_time.
-  */
-  if ((error=find_log_pos(&log_info, NULL, 0 /*no mutex*/)))
-    goto err;
-
-  while (strcmp(log_file_name, log_info.log_file_name) &&
-	 !log_in_use(log_info.log_file_name))
-  {
-    if (stat(log_info.log_file_name, &stat_area))
-    {
-      if (errno == ENOENT)
-      {
-        /*
-          It's not fatal if we can't stat a log file that does not exist.
-        */
-        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
-                            log_info.log_file_name);
-	errmsg_printf(ERRMSG_LVL_INFO, _("Failed to execute stat() on file '%s'"),
-			      log_info.log_file_name);
-        my_errno= 0;
-      }
-      else
-      {
-        /*
-          Other than ENOENT are fatal
-        */
-        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                            ER_BINLOG_PURGE_FATAL_ERR,
-                            _("a problem with getting info on being purged %s; "
-                            "consider examining correspondence "
-                            "of your binlog index file "
-                            "to the actual binlog files"),
-                            log_info.log_file_name);
-        error= LOG_INFO_FATAL;
-        goto err;
-      }
-    }
-    else
-    {
-      if (stat_area.st_mtime >= purge_time)
-        break;
-      if (my_delete(log_info.log_file_name, MYF(0)))
-      {
-        if (my_errno == ENOENT)
-        {
-          /* It's not fatal even if we can't delete a log file */
-          push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                              ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
-                              log_info.log_file_name);
-          errmsg_printf(ERRMSG_LVL_INFO, _("Failed to delete file '%s'"),
-                                log_info.log_file_name);
-          my_errno= 0;
-        }
-        else
-        {
-          push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                              ER_BINLOG_PURGE_FATAL_ERR,
-                              _("a problem with deleting %s; "
-                              "consider examining correspondence "
-                              "of your binlog index file "
-                              "to the actual binlog files"),
-                              log_info.log_file_name);
-          error= LOG_INFO_FATAL;
-          goto err;
-        }
-      }
-    }
-    if (find_next_log(&log_info, 0))
-      break;
-  }
-
-  /*
-    If we get killed -9 here, the sysadmin would have to edit
-    the log index file after restart - otherwise, this should be safe
-  */
-  error= update_log_index(&log_info, 1);
-
-err:
-  pthread_mutex_unlock(&LOCK_index);
-  return(error);
+  return 0;
 }
 
 
@@ -2686,61 +2369,11 @@ int TC_LOG_BINLOG::log_xid(Session *session, my_xid xid)
 
 void TC_LOG_BINLOG::unlog(ulong, my_xid)
 {
-  pthread_mutex_lock(&LOCK_prep_xids);
-  assert(prepared_xids > 0);
-  if (--prepared_xids == 0) {
-    pthread_cond_signal(&COND_prep_xids);
-  }
-  pthread_mutex_unlock(&LOCK_prep_xids);
-  rotate_and_purge(0);     // as ::write() did not rotate
 }
 
-int TC_LOG_BINLOG::recover(IO_CACHE *log, Format_description_log_event *fdle)
+int TC_LOG_BINLOG::recover(IO_CACHE *, Format_description_log_event *)
 {
-  Log_event  *ev;
-  HASH xids;
-  MEM_ROOT mem_root;
-
-  if (! fdle->is_valid() ||
-      hash_init(&xids, &my_charset_bin, TC_LOG_PAGE_SIZE/3, 0,
-                sizeof(my_xid), 0, 0, MYF(0)))
-    goto err1;
-
-  init_alloc_root(&mem_root, TC_LOG_PAGE_SIZE, TC_LOG_PAGE_SIZE);
-
-  fdle->flags&= ~LOG_EVENT_BINLOG_IN_USE_F; // abort on the first error
-
-  while ((ev= Log_event::read_log_event(log,0,fdle)) && ev->is_valid())
-  {
-    if (ev->get_type_code() == XID_EVENT)
-    {
-      Xid_log_event *xev=(Xid_log_event *)ev;
-      unsigned char *x= (unsigned char *) memdup_root(&mem_root, (unsigned char*) &xev->xid,
-                                      sizeof(xev->xid));
-      if (! x)
-        goto err2;
-      my_hash_insert(&xids, x);
-    }
-    delete ev;
-  }
-
-  if (ha_recover(&xids))
-    goto err2;
-
-  free_root(&mem_root, MYF(0));
-  hash_free(&xids);
   return 0;
-
-err2:
-  free_root(&mem_root, MYF(0));
-  hash_free(&xids);
-err1:
-  errmsg_printf(ERRMSG_LVL_ERROR, 
-		_("Crash recovery failed. Either correct the problem "
-                  "(if it's, for example, out of memory error) and restart, "
-                  "or delete (or rename) binary log and start mysqld with "
-                  "--tc-heuristic-recover={commit|rollback}"));
-  return 1;
 }
 
 

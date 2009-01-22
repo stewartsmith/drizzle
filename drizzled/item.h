@@ -100,9 +100,8 @@ public:
     DECIMAL_ITEM
   };
 
+  enum traverse_order { T_POSTFIX, T_PREFIX };
   enum cond_result { COND_UNDEF,COND_OK,COND_TRUE,COND_FALSE };
-
-  enum traverse_order { POSTFIX, PREFIX };
 
   /*
     str_values's main purpose is to be used to cache the value in
