@@ -1702,10 +1702,6 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     row-based replication for the statement.  If we are creating a
     temporary table, we need to start a statement transaction.
   */
-  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0
-      && drizzle_bin_log.is_open())
-  {
-  }
 
   if (!(table= create_table_from_items(session, create_info, create_table,
                                        alter_info, &values,

@@ -3191,7 +3191,7 @@ void Table::mark_columns_needed_for_delete()
     }
     file->column_bitmaps_signal();
   }
-  if (file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE || (drizzle_bin_log.is_open() && in_use))
+
   {
     /*
       If the handler has no cursor capabilites, or we have row-based
@@ -3242,8 +3242,7 @@ void Table::mark_columns_needed_for_update()
     }
     file->column_bitmaps_signal();
   }
-  if ((file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE) ||
-      (drizzle_bin_log.is_open() && in_use))
+
   {
     /*
       If the handler has no cursor capabilites, or we have row-based

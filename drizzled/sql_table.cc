@@ -4991,8 +4991,6 @@ end_online:
 
   session->set_proc_info("end");
 
-  assert(!(drizzle_bin_log.is_open() &&
-                (create_info->options & HA_LEX_CREATE_TMP_TABLE)));
   write_bin_log(session, true, session->query, session->query_length);
 
   if (ha_check_storage_engine_flag(old_db_type, HTON_BIT_FLUSH_AFTER_RENAME))
