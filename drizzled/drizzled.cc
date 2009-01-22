@@ -3563,86 +3563,6 @@ static int show_flushstatustime(Session *session, SHOW_VAR *var, char *buff)
 static st_show_var_func_container
 show_flushstatustime_cont= { &show_flushstatustime };
 
-static int show_slave_running(Session *session __attribute__((unused)),
-                              SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_MY_BOOL;
-  pthread_mutex_lock(&LOCK_active_mi);
-  var->value= buff;
-  *((bool *)buff)= (bool) (active_mi && active_mi->slave_running &&
-                                 active_mi->rli.slave_running);
-  pthread_mutex_unlock(&LOCK_active_mi);
-  return 0;
-}
-
-static st_show_var_func_container
-show_slave_running_cont= { &show_slave_running };
-
-static int show_slave_retried_trans(Session *session __attribute__((unused)),
-                                    SHOW_VAR *var, char *buff)
-{
-  /*
-    TODO: with multimaster, have one such counter per line in
-    SHOW SLAVE STATUS, and have the sum over all lines here.
-  */
-  pthread_mutex_lock(&LOCK_active_mi);
-  if (active_mi)
-  {
-    var->type= SHOW_LONG;
-    var->value= buff;
-    pthread_mutex_lock(&active_mi->rli.data_lock);
-    *((long *)buff)= (long)active_mi->rli.retried_trans;
-    pthread_mutex_unlock(&active_mi->rli.data_lock);
-  }
-  else
-    var->type= SHOW_UNDEF;
-  pthread_mutex_unlock(&LOCK_active_mi);
-  return 0;
-}
-
-static st_show_var_func_container
-show_slave_retried_trans_cont= { &show_slave_retried_trans };
-
-static int show_slave_received_heartbeats(Session *session __attribute__((unused)),
-                                          SHOW_VAR *var, char *buff)
-{
-  pthread_mutex_lock(&LOCK_active_mi);
-  if (active_mi)
-  {
-    var->type= SHOW_LONGLONG;
-    var->value= buff;
-    pthread_mutex_lock(&active_mi->rli.data_lock);
-    *((int64_t *)buff)= active_mi->received_heartbeats;
-    pthread_mutex_unlock(&active_mi->rli.data_lock);
-  }
-  else
-    var->type= SHOW_UNDEF;
-  pthread_mutex_unlock(&LOCK_active_mi);
-  return 0;
-}
-
-static st_show_var_func_container
-show_slave_received_heartbeats_cont= { &show_slave_received_heartbeats };
-
-static int show_heartbeat_period(Session *session __attribute__((unused)),
-                                 SHOW_VAR *var, char *buff)
-{
-  pthread_mutex_lock(&LOCK_active_mi);
-  if (active_mi)
-  {
-    var->type= SHOW_CHAR;
-    var->value= buff;
-    sprintf(buff, "%.3f",active_mi->heartbeat_period);
-  }
-  else
-    var->type= SHOW_UNDEF;
-  pthread_mutex_unlock(&LOCK_active_mi);
-  return 0;
-}
-
-static st_show_var_func_container
-show_heartbeat_period_cont= { &show_heartbeat_period};
-
 static int show_open_tables(Session *session __attribute__((unused)),
                             SHOW_VAR *var, char *buff)
 {
@@ -3673,8 +3593,6 @@ show_table_definitions_cont= { &show_table_definitions };
 SHOW_VAR status_vars[]= {
   {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
   {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
-  {"Binlog_cache_disk_use",    (char*) &binlog_cache_disk_use,  SHOW_LONGLONG},
-  {"Binlog_cache_use",         (char*) &binlog_cache_use,       SHOW_LONGLONG},
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
@@ -3720,11 +3638,6 @@ SHOW_VAR status_vars[]= {
   {"Select_range",             (char*) offsetof(STATUS_VAR, select_range_count), SHOW_LONG_STATUS},
   {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
   {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
-  {"Slave_open_temp_tables",   (char*) &slave_open_temp_tables, SHOW_LONGLONG},
-  {"Slave_retried_transactions",(char*) &show_slave_retried_trans_cont, SHOW_FUNC},
-  {"Slave_heartbeat_period",   (char*) &show_heartbeat_period_cont, SHOW_FUNC},
-  {"Slave_received_heartbeats",(char*) &show_slave_received_heartbeats_cont, SHOW_FUNC},
-  {"Slave_running",            (char*) &show_slave_running_cont,     SHOW_FUNC},
   {"Slow_launch_threads",      (char*) &slow_launch_threads,    SHOW_LONGLONG},
   {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
   {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
@@ -3733,11 +3646,6 @@ SHOW_VAR status_vars[]= {
   {"Sort_scan",		       (char*) offsetof(STATUS_VAR, filesort_scan_count), SHOW_LONG_STATUS},
   {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
   {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
-#ifdef HAVE_MMAP
-  {"Tc_log_max_pages_used",    (char*) &tc_log_max_pages_used,  SHOW_LONGLONG},
-  {"Tc_log_page_size",         (char*) &tc_log_page_size,       SHOW_LONGLONG},
-  {"Tc_log_page_waits",        (char*) &tc_log_page_waits,      SHOW_LONGLONG},
-#endif
   {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
   {"Threads_created",	       (char*) &thread_created,		SHOW_LONG_NOFLUSH},
   {"Threads_running",          (char*) &thread_running,         SHOW_INT},
