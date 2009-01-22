@@ -1686,15 +1686,11 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       }
 
   private:
-    virtual int do_postlock(Table **tables, uint32_t count)
+    virtual int do_postlock(Table **, uint32_t)
     {
-      Table const *const table = *tables;
-      if (drizzle_bin_log.is_open()
-          && !table->s->tmp_table
-          && !ptr->get_create_info()->table_existed)
-      {
+      /*
         ptr->binlog_show_create_table(tables, count);
-      }
+      */
       return 0;
     }
 
@@ -1766,41 +1762,6 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   table->mark_columns_needed_for_insert();
   table->file->extra(HA_EXTRA_WRITE_CACHE);
   return(0);
-}
-
-void
-select_create::binlog_show_create_table(Table **tables, uint32_t count)
-{
-  /*
-    Note 1: In RBR mode, we generate a CREATE TABLE statement for the
-    created table by calling store_create_info() (behaves as SHOW
-    CREATE TABLE).  In the event of an error, nothing should be
-    written to the binary log, even if the table is non-transactional;
-    therefore we pretend that the generated CREATE TABLE statement is
-    for a transactional table.  The event will then be put in the
-    transaction cache, and any subsequent events (e.g., table-map
-    events and binrow events) will also be put there.  We can then use
-    ha_autocommit_or_rollback() to either throw away the entire
-    kaboodle of events, or write them to the binary log.
-
-    We write the CREATE TABLE statement here and not in prepare()
-    since there potentially are sub-selects or accesses to information
-    schema that will do a close_thread_tables(), destroying the
-    statement transaction cache.
-  */
-  assert(tables && *tables && count > 0);
-
-  char buf[2048];
-  String query(buf, sizeof(buf), system_charset_info);
-  int result;
-  TableList tmp_table_list;
-
-  memset(&tmp_table_list, 0, sizeof(tmp_table_list));
-  tmp_table_list.table = *tables;
-  query.length(0);      // Have to zero it since constructor doesn't
-
-  result= store_create_info(session, &tmp_table_list, &query, create_info);
-  assert(result == 0); /* store_create_info() always return 0 */
 }
 
 void select_create::store_values(List<Item> &values)

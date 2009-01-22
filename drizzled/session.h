@@ -772,9 +772,6 @@ class Session :public Statement,
            public Open_tables_state
 {
 public:
-  /* Used to execute base64 coded binlog events in MySQL server */
-  Relay_log_info* rli_fake;
-
   /*
     Constant for Session::where initialization in the beginning of every query.
 
@@ -1742,7 +1739,6 @@ public:
     {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
 
-  void binlog_show_create_table(Table **tables, uint32_t count);
   void store_values(List<Item> &values);
   void send_error(uint32_t errcode,const char *err);
   bool send_eof();

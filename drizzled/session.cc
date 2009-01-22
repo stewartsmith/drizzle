@@ -475,7 +475,7 @@ Diagnostics_area::disable_status()
 Session::Session()
    :Statement(&main_lex, &main_mem_root,
               /* statement id */ 0),
-   Open_tables_state(refresh_version), rli_fake(0),
+   Open_tables_state(refresh_version),
    lock_id(&main_lock_id),
    user_time(0),
    arg_of_last_insert_id_function(false),
@@ -773,11 +773,6 @@ Session::~Session()
   mysys_var=0;					// Safety (shouldn't be needed)
   pthread_mutex_destroy(&LOCK_delete);
   dbug_sentry= Session_SENTRY_GONE;
-  if (rli_fake)
-  {
-    delete rli_fake;
-    rli_fake= NULL;
-  }
 
   free_root(&main_mem_root, MYF(0));
   pthread_setspecific(THR_Session,  0);
