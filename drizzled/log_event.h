@@ -1794,9 +1794,9 @@ public:
   }
 
 public:        /* !!! Public in this patch to allow old usage */
-  virtual int do_apply_event(Relay_log_info const* rli)
+  virtual int do_apply_event(Relay_log_info const*)
   {
-    return do_apply_event(session->slave_net,rli,0);
+    return 0;
   }
 
   int do_apply_event(NET *net, Relay_log_info const *rli,

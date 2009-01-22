@@ -513,7 +513,6 @@ Session::Session()
   start_time=(time_t) 0;
   start_utime= 0L;
   utime_after_lock= 0L;
-  current_linfo =  0;
   slave_thread = 0;
   memset(&variables, 0, sizeof(variables));
   thread_id= 0;
@@ -538,7 +537,6 @@ Session::Session()
   proc_info="login";
   where= Session::DEFAULT_WHERE;
   server_id = ::server_id;
-  slave_net= NULL;
   command=COM_CONNECT;
   *scramble= '\0';
 

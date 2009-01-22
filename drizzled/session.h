@@ -24,7 +24,6 @@
 /* Classes in mysql */
 
 #include <drizzled/global.h>
-#include <drizzled/log.h>
 #include <drizzled/protocol.h>
 #include <libdrizzle/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
@@ -1162,13 +1161,6 @@ public:
   bool       derived_tables_processing;
   bool    tablespace_op;	/* This is true in DISCARD/IMPORT TABLESPACE */
 
-  /*
-    If we do a purge of binary logs, log index info of the threads
-    that are currently reading it needs to be adjusted. To do that
-    each thread that is using LOG_INFO needs to adjust the pointer to it
-  */
-  LOG_INFO*  current_linfo;
-  NET*       slave_net;			// network connection from slave -> m.
   /* Used by the sys_var class to store temporary values */
   union
   {

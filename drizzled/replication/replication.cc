@@ -51,59 +51,14 @@ int max_binlog_dump_events = 0; // unlimited
       Now they sync is done for next read.
 */
 
-void adjust_linfo_offsets(my_off_t purge_offset)
+void adjust_linfo_offsets(my_off_t)
 {
-  Session *tmp;
-
-  pthread_mutex_lock(&LOCK_thread_count);
-  I_List_iterator<Session> it(threads);
-
-  while ((tmp=it++))
-  {
-    LOG_INFO* linfo;
-    if ((linfo = tmp->current_linfo))
-    {
-      pthread_mutex_lock(&linfo->lock);
-      /*
-	Index file offset can be less that purge offset only if
-	we just started reading the index file. In that case
-	we have nothing to adjust
-      */
-      if (linfo->index_file_offset < purge_offset)
-	linfo->fatal = (linfo->index_file_offset != 0);
-      else
-	linfo->index_file_offset -= purge_offset;
-      pthread_mutex_unlock(&linfo->lock);
-    }
-  }
-  pthread_mutex_unlock(&LOCK_thread_count);
 }
 
 
-bool log_in_use(const char* log_name)
+bool log_in_use(const char*)
 {
-  int log_name_len = strlen(log_name) + 1;
-  Session *tmp;
-  bool result = 0;
-
-  pthread_mutex_lock(&LOCK_thread_count);
-  I_List_iterator<Session> it(threads);
-
-  while ((tmp=it++))
-  {
-    LOG_INFO* linfo;
-    if ((linfo = tmp->current_linfo))
-    {
-      pthread_mutex_lock(&linfo->lock);
-      result = !memcmp(log_name, linfo->log_file_name, log_name_len);
-      pthread_mutex_unlock(&linfo->lock);
-      if (result)
-	break;
-    }
-  }
-
-  pthread_mutex_unlock(&LOCK_thread_count);
-  return result;
+  return 0;
 }
 
 bool purge_error_message(Session* session, int res)

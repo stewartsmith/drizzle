@@ -26,6 +26,7 @@
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_alloc.h>
+#include <drizzled/table.h>
 
 class Protocol;
 class TableList;

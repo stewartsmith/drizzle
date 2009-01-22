@@ -1964,7 +1964,6 @@ connected:
 
   // TODO: the assignment below should be under mutex (5.0)
   mi->slave_running= DRIZZLE_SLAVE_RUN_CONNECT;
-  session->slave_net = &drizzle->net;
   session->set_proc_info("Checking master version");
   if (get_master_version_and_clock(drizzle, mi))
     goto err;
