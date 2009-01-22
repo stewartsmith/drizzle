@@ -2893,13 +2893,6 @@ struct my_option my_long_options[] =
    N_("Log connections and queries to file."),
    (char**) &opt_logname,
    (char**) &opt_logname, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-bin", OPT_BIN_LOG,
-   N_("Log update queries in binary format. Optional argument is the "
-      "location for the binary log files.(Strongly "
-      "recommended to avoid replication problems if server's hostname "
-      "changes)"),
-   (char**) &opt_bin_logname, (char**) &opt_bin_logname, 0, GET_STR_ALLOC,
-   OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-isam", OPT_ISAM_LOG,
    N_("Log all MyISAM changes to file."),
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
@@ -3045,12 +3038,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.div_precincrement,
    (char**) &max_system_variables.div_precincrement, 0, GET_UINT,
    REQUIRED_ARG, 4, 0, DECIMAL_MAX_SCALE, 0, 0, 0},
-  { "expire_logs_days", OPT_EXPIRE_LOGS_DAYS,
-    N_("If non-zero, binary logs will be purged after expire_logs_days "
-       "days; possible purges happen at startup and at binary log rotation."),
-    (char**) &expire_logs_days,
-    (char**) &expire_logs_days, 0, GET_ULL,
-    REQUIRED_ARG, 0, 0, 99, 0, 1, 0},
   { "group_concat_max_len", OPT_GROUP_CONCAT_MAX_LEN,
     N_("The maximum length of the result of function  group_concat."),
     (char**) &global_system_variables.group_concat_max_len,
