@@ -26,7 +26,6 @@
 #include <signal.h>
 
 #include <mysys/my_bit.h>
-#include <drizzled/slave.h>
 #include <drizzled/replication/mi.h>
 #include <drizzled/replication/replication.h>
 #include <libdrizzle/libdrizzle.h>
