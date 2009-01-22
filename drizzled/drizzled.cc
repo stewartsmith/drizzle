@@ -1844,14 +1844,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   */
   global_system_variables.time_zone= my_tz_SYSTEM;
 
-  /*
-    Init mutexes for the global DRIZZLE_BIN_LOG objects.
-    As safe_mutex depends on what MY_INIT() does, we can't init the mutexes of
-    global DRIZZLE_BIN_LOGs in their constructors, because then they would be
-    inited before MY_INIT(). So we do it here.
-  */
-  drizzle_bin_log.init_pthread_objects();
-
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
@@ -2203,10 +2195,6 @@ static int init_server_components()
   {
     unireg_abort(1);
   }
-
-  if (opt_bin_log && drizzle_bin_log.open(opt_bin_logname, LOG_BIN, 0,
-                                          WRITE_CACHE, 0, max_binlog_size, 0))
-    unireg_abort(1);
 
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
   if (locked_in_memory && !getuid())

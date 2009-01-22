@@ -191,7 +191,6 @@ extern char *default_tz_name;
 extern char *opt_logname, *opt_slow_logname;
 extern const char *log_output_str;
 
-extern DRIZZLE_BIN_LOG drizzle_bin_log;
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
 extern pthread_mutex_t LOCK_drizzle_create_db,LOCK_open, LOCK_lock_db,
