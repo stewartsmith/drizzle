@@ -26,7 +26,6 @@
 *****************************************************************************/
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
-#include <drizzled/log_event.h>
 #include <sys/stat.h>
 #include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>
