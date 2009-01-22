@@ -52,14 +52,12 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/replication/mi.h>
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/tztime.h>
-#include <drizzled/slave.h>
 #include <drizzled/data_home.h>
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
@@ -90,16 +88,6 @@ TYPELIB delay_key_write_typelib=
   delay_key_write_type_names, NULL
 };
 
-const char *slave_exec_mode_names[]=
-{ "STRICT", "IDEMPOTENT", NULL };
-static const unsigned int slave_exec_mode_names_len[]=
-{ sizeof("STRICT") - 1, sizeof("IDEMPOTENT") - 1, 0 };
-TYPELIB slave_exec_mode_typelib=
-{
-  array_elements(slave_exec_mode_names)-1, "",
-  slave_exec_mode_names, (unsigned int *) slave_exec_mode_names_len
-};
-
 static bool sys_update_init_connect(Session*, set_var*);
 static void sys_default_init_connect(Session*, enum_var_type type);
 static bool sys_update_init_slave(Session*, set_var*);
@@ -116,8 +104,6 @@ static void fix_net_read_timeout(Session *session, enum_var_type type);
 static void fix_net_write_timeout(Session *session, enum_var_type type);
 static void fix_net_retry_count(Session *session, enum_var_type type);
 static void fix_max_join_size(Session *session, enum_var_type type);
-static void fix_max_binlog_size(Session *session, enum_var_type type);
-static void fix_max_relay_log_size(Session *session, enum_var_type type);
 static void fix_max_connections(Session *session, enum_var_type type);
 static void fix_session_mem_root(Session *session, enum_var_type type);
 static void fix_trans_mem_root(Session *session, enum_var_type type);
@@ -206,9 +192,6 @@ static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packe
                                                        &SV::max_allowed_packet);
 static sys_var_long_ptr	sys_max_binlog_cache_size(&vars, "max_binlog_cache_size",
                                                   &max_binlog_cache_size);
-static sys_var_long_ptr	sys_max_binlog_size(&vars, "max_binlog_size",
-                                            &max_binlog_size,
-                                            fix_max_binlog_size);
 static sys_var_long_ptr	sys_max_connections(&vars, "max_connections",
                                             &max_connections,
                                             fix_max_connections);
@@ -229,9 +212,6 @@ static sys_var_session_uint64_t	sys_max_seeks_for_key(&vars, "max_seeks_for_key"
                                                       &SV::max_seeks_for_key);
 static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
                                                                &SV::max_length_for_sort_data);
-static sys_var_long_ptr	sys_max_relay_log_size(&vars, "max_relay_log_size",
-                                               &max_relay_log_size,
-                                               fix_max_relay_log_size);
 static sys_var_session_uint64_t	sys_max_sort_length(&vars, "max_sort_length",
                                                     &SV::max_sort_length);
 static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
@@ -308,10 +288,6 @@ static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
 static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
                                            fix_server_id);
 
-static sys_var_bool_ptr	sys_slave_compressed_protocol(&vars, "slave_compressed_protocol",
-						      &opt_slave_compressed_protocol);
-static sys_var_bool_ptr         sys_slave_allow_batching(&vars, "slave_allow_batching",
-                                                         &slave_allow_batching);
 static sys_var_long_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
                                              &slow_launch_time);
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
@@ -464,8 +440,6 @@ sys_var_session_time_zone sys_time_zone(&vars, "time_zone",
 
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
-
-static sys_var_const_str_ptr    sys_repl_report_host(&vars, "report_host", &report_host);
 
 sys_var_session_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
                                            &SV::keep_files_on_create);
@@ -674,35 +648,6 @@ extern void fix_delay_key_write(Session *, enum_var_type)
     ha_open_options|= HA_OPEN_DELAY_KEY_WRITE;
     break;
   }
-}
-
-void fix_slave_exec_mode(enum_var_type)
-{
-  if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT) == 1 &&
-      bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Ambiguous slave modes combination."
-                                      " STRICT will be used"));
-    bit_do_clear(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT);
-  }
-  if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 0)
-    bit_do_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT);
-}
-
-
-static void fix_max_binlog_size(Session *, enum_var_type)
-{
-  drizzle_bin_log.set_max_size(max_binlog_size);
-  if (!max_relay_log_size)
-    active_mi->rli.relay_log.set_max_size(max_binlog_size);
-  return;
-}
-
-static void fix_max_relay_log_size(Session *, enum_var_type)
-{
-  active_mi->rli.relay_log.set_max_size(max_relay_log_size ?
-                                        max_relay_log_size: max_binlog_size);
-  return;
 }
 
 static void fix_max_connections(Session *, enum_var_type)

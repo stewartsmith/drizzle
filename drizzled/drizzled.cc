@@ -3756,8 +3756,6 @@ static void drizzle_init_variables(void)
   /* Things with default values that are not zero */
   delay_key_write_options= (uint) DELAY_KEY_WRITE_ON;
   slave_exec_mode_options= 0;
-  slave_exec_mode_options= (uint)
-    find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
@@ -3867,8 +3865,6 @@ drizzled_get_one_option(int optid,
     init_slave_skip_errors(argument);
     break;
   case OPT_SLAVE_EXEC_MODE:
-    slave_exec_mode_options= (uint)
-      find_bit_type_or_exit(argument, &slave_exec_mode_typelib, "");
     break;
   case 'V':
     print_version();
@@ -4096,8 +4092,6 @@ static void get_options(int *argc,char **argv)
   }
   /* Set global MyISAM variables from delay_key_write_options */
   fix_delay_key_write((Session*) 0, OPT_GLOBAL);
-  /* Set global slave_exec_mode from its option */
-  fix_slave_exec_mode(OPT_GLOBAL);
 
   if (drizzled_chroot)
     set_root(drizzled_chroot);
