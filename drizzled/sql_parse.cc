@@ -66,9 +66,7 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Ping") },
   { C_STRING_WITH_LEN("Time") },
   { C_STRING_WITH_LEN("Change user") },
-  { C_STRING_WITH_LEN("Binlog Dump") },
   { C_STRING_WITH_LEN("Connect Out") },
-  { C_STRING_WITH_LEN("Register Slave") },
   { C_STRING_WITH_LEN("Set option") },
   { C_STRING_WITH_LEN("Daemon") },
   { C_STRING_WITH_LEN("Error") }  // Last command number
@@ -687,26 +685,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     session->main_da.disable_status();              // Don't send anything back
     error=true;					// End server
     break;
-  case COM_BINLOG_DUMP:
-    {
-      ulong pos;
-      uint16_t flags;
-      uint32_t slave_server_id;
-
-      status_var_increment(session->status_var.com_other);
-      /* TODO: The following has to be changed to an 8 byte integer */
-      pos = uint4korr(packet);
-      flags = uint2korr(packet + 4);
-      session->server_id=0; /* avoid suicide */
-      if ((slave_server_id= uint4korr(packet+6))) // mysqlbinlog.server_id==0
-	kill_zombie_dump_threads(slave_server_id);
-      session->server_id = slave_server_id;
-
-      mysql_binlog_send(session, session->strdup(packet + 10), (my_off_t) pos, flags);
-      /*  fake COM_QUIT -- if we get here, the thread needs to terminate */
-      error = true;
-      break;
-    }
   case COM_SHUTDOWN:
   {
     status_var_increment(session->status_var.com_other);
@@ -1321,40 +1299,6 @@ end_with_restore_list:
                            0, (order_st*) 0, 0);
     break;
   }
-  case SQLCOM_SLAVE_START:
-  {
-    pthread_mutex_lock(&LOCK_active_mi);
-    start_slave(session,active_mi,1 /* net report*/);
-    pthread_mutex_unlock(&LOCK_active_mi);
-    break;
-  }
-  case SQLCOM_SLAVE_STOP:
-  /*
-    If the client thread has locked tables, a deadlock is possible.
-    Assume that
-    - the client thread does LOCK TABLE t READ.
-    - then the master updates t.
-    - then the SQL slave thread wants to update t,
-      so it waits for the client thread because t is locked by it.
-    - then the client thread does SLAVE STOP.
-      SLAVE STOP waits for the SQL slave thread to terminate its
-      update t, which waits for the client thread because t is locked by it.
-    To prevent that, refuse SLAVE STOP if the
-    client thread has locked tables
-  */
-  if (session->locked_tables || session->active_transaction() || session->global_read_lock)
-  {
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-    goto error;
-  }
-  {
-    pthread_mutex_lock(&LOCK_active_mi);
-    stop_slave(session,active_mi,1/* net report*/);
-    pthread_mutex_unlock(&LOCK_active_mi);
-    break;
-  }
-
   case SQLCOM_ALTER_TABLE:
     assert(first_table == all_tables && first_table != 0);
     {

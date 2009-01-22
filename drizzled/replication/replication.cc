@@ -1095,32 +1095,8 @@ err:
 */
 
 
-void kill_zombie_dump_threads(uint32_t slave_server_id)
+void kill_zombie_dump_threads(uint32_t)
 {
-  pthread_mutex_lock(&LOCK_thread_count);
-  I_List_iterator<Session> it(threads);
-  Session *tmp;
-
-  while ((tmp=it++))
-  {
-    if (tmp->command == COM_BINLOG_DUMP &&
-       tmp->server_id == slave_server_id)
-    {
-      pthread_mutex_lock(&tmp->LOCK_delete);	// Lock from delete
-      break;
-    }
-  }
-  pthread_mutex_unlock(&LOCK_thread_count);
-  if (tmp)
-  {
-    /*
-      Here we do not call kill_one_thread() as
-      it will be slow because it will iterate through the list
-      again. We just to do kill the thread ourselves.
-    */
-    tmp->awake(Session::KILL_QUERY);
-    pthread_mutex_unlock(&tmp->LOCK_delete);
-  }
 }
 
 

@@ -1102,8 +1102,7 @@ static void write_ignored_events_info_to_relay_log(Session *session,
 }
 
 
-int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
-                                 bool *suppress_warnings)
+int32_t register_slave_on_master(DRIZZLE *, Master_info *, bool *suppress_warnings)
 {
   unsigned char buf[1024], *pos= buf;
   uint32_t report_host_len, report_user_len=0, report_password_len=0;
@@ -1126,22 +1125,6 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
   /* The master will fill in master_id */
   int4store(pos, 0);                    pos+= 4;
 
-  if (simple_command(drizzle, COM_REGISTER_SLAVE, buf, (size_t) (pos- buf), 0))
-  {
-    if (drizzle_errno(drizzle) == ER_NET_READ_INTERRUPTED)
-    {
-      *suppress_warnings= true;                 // Suppress reconnect warning
-    }
-    else if (!check_io_slave_killed(mi->io_session, mi, NULL))
-    {
-      char buf[256];
-      snprintf(buf, sizeof(buf), "%s (Errno: %d)", drizzle_error(drizzle),
-               drizzle_errno(drizzle));
-      mi->report(ERROR_LEVEL, ER_SLAVE_MASTER_COM_FAILURE,
-                 ER(ER_SLAVE_MASTER_COM_FAILURE), "COM_REGISTER_SLAVE", buf);
-    }
-    return(1);
-  }
   return(0);
 }
 
@@ -1415,7 +1398,6 @@ static int32_t request_dump(DRIZZLE *drizzle, Master_info* mi,
   int4store(buf + 6, server_id);
   len = (uint32_t) strlen(logname);
   memcpy(buf + 10, logname,len);
-  if (simple_command(drizzle, COM_BINLOG_DUMP, buf, len + 10, 1))
   {
     /*
       Something went wrong, so we will just reconnect and retry later
