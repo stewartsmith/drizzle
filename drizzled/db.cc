@@ -25,7 +25,6 @@ using namespace std;
 #include <drizzled/server_includes.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_dir.h>
-#include "log.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <mysys/hash.h>
@@ -34,6 +33,7 @@ using namespace std;
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/errmsg_print.h>
+#include <drizzled/replicator.h>
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
@@ -139,14 +139,9 @@ unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
   Helper function to write a query to binlog used by mysql_rm_db()
 */
 
-static inline void write_to_binlog(Session *session, char *query, uint32_t q_len,
-                                   char *db, uint32_t db_len)
+static inline void write_to_binlog(Session *session, char *query, uint32_t query_length, char *, uint32_t)
 {
-  Query_log_event qinfo(session, query, q_len, 0, 0);
-  qinfo.error_code= 0;
-  qinfo.db= db;
-  qinfo.db_len= db_len;
-  drizzle_bin_log.write(&qinfo);
+  (void)replicator_statement(session, query, query_length);
 }
 
 
@@ -638,34 +633,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       query_length= session->query_length;
     }
 
-    if (drizzle_bin_log.is_open())
-    {
-      Query_log_event qinfo(session, query, query_length, 0,
-			    /* suppress_use */ true);
-
-      /*
-	Write should use the database being created as the "current
-        database" and not the threads current database, which is the
-        default. If we do not change the "current database" to the
-        database being created, the CREATE statement will not be
-        replicated when using --binlog-do-db to select databases to be
-        replicated.
-
-	An example (--binlog-do-db=sisyfos):
-
-          CREATE DATABASE bob;        # Not replicated
-          USE bob;                    # 'bob' is the current database
-          CREATE DATABASE sisyfos;    # Not replicated since 'bob' is
-                                      # current database.
-          USE sisyfos;                # Will give error on slave since
-                                      # database does not exist.
-      */
-      qinfo.db     = db;
-      qinfo.db_len = strlen(db);
-
-      /* These DDL methods and logging protected with LOCK_drizzle_create_db */
-      drizzle_bin_log.write(&qinfo);
-    }
+    (void)replicator_statement(session, query, query_length);
     my_ok(session, result);
   }
 
@@ -721,23 +689,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
     session->variables.collation_database= session->db_charset;
   }
 
-  if (drizzle_bin_log.is_open())
-  {
-    Query_log_event qinfo(session, session->query, session->query_length, 0,
-			  /* suppress_use */ true);
-
-    /*
-      Write should use the database being created as the "current
-      database" and not the threads current database, which is the
-      default.
-    */
-    qinfo.db     = db;
-    qinfo.db_len = strlen(db);
-
-    session->clear_error();
-    /* These DDL methods and logging protected with LOCK_drizzle_create_db */
-    drizzle_bin_log.write(&qinfo);
-  }
+  (void)replicator_statement(session, session->query, session->query_length);
   my_ok(session, result);
 
 exit:
@@ -848,28 +800,13 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
       query= session->query;
       query_length= session->query_length;
     }
-    if (drizzle_bin_log.is_open())
-    {
-      Query_log_event qinfo(session, query, query_length, 0,
-			    /* suppress_use */ true);
-      /*
-        Write should use the database being created as the "current
-        database" and not the threads current database, which is the
-        default.
-      */
-      qinfo.db     = db;
-      qinfo.db_len = strlen(db);
-
-      session->clear_error();
-      /* These DDL methods and logging protected with LOCK_drizzle_create_db */
-      drizzle_bin_log.write(&qinfo);
-    }
+    (void)replicator_statement(session, session->query, session->query_length);
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     my_ok(session, (uint32_t) deleted);
     session->server_status&= ~SERVER_STATUS_DB_DROPPED;
   }
-  else if (drizzle_bin_log.is_open())
+  else
   {
     char *query, *query_pos, *query_end, *query_data_start;
     TableList *tbl;
