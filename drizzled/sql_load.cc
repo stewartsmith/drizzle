@@ -807,10 +807,6 @@ READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * co
 
       if (get_it_from_net)
 	cache.read_function = _my_b_net_read;
-
-      if (drizzle_bin_log.is_open())
-	cache.pre_read = cache.pre_close =
-	  (IO_CACHE_CALLBACK) log_loaded_block;
     }
   }
 }

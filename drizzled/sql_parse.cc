@@ -3183,10 +3183,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
       than it would help them)
     */
     tmp_write_to_binlog= 0;
-    if (drizzle_bin_log.is_open())
-    {
-      drizzle_bin_log.rotate_and_purge(RP_FORCE_ROTATE);
-    }
     pthread_mutex_lock(&LOCK_active_mi);
     rotate_relay_log(active_mi);
     pthread_mutex_unlock(&LOCK_active_mi);
