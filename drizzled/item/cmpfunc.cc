@@ -4129,8 +4129,8 @@ void Item_cond::traverse_cond(Cond_traverser traverser,
   List_iterator<Item> li(list);
   Item *item;
 
-  switch(order) {
-  case(PREFIX):
+  switch (order) {
+  case (T_PREFIX):
     (*traverser)(this, arg);
     while ((item= li++))
     {
@@ -4138,7 +4138,7 @@ void Item_cond::traverse_cond(Cond_traverser traverser,
     }
     (*traverser)(NULL, arg);
     break;
-  case(POSTFIX):
+  case (T_POSTFIX):
     while ((item= li++))
     {
       item->traverse_cond(traverser, arg, order);

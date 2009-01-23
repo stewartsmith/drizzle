@@ -25,6 +25,7 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/param.h>
 #include CMATH_H
+#include <drizzled/sql_string.h>
 
 Item *Item_param::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
@@ -515,6 +516,145 @@ String *Item_param::val_str(String* str)
   }
   return str;
 }
+
+/* TODO: fact next two functions out */
+/**
+    Transforms a string into "" or its expression in 0x... form.
+*/
+
+static char *str_to_hex(char *to, const char *from, uint32_t len)
+{
+  if (len)
+  {
+    *to++= '0';
+    *to++= 'x';
+    to= octet2hex(to, from, len);
+  }
+  else
+    to= strcpy(to, "\"\"")+2;
+  return to;                               // pointer to end 0 of 'to'
+}
+
+
+/* Borrowed from libicu header */
+
+#define U8_IS_SINGLE(c) (((c)&0x80)==0)
+#define U8_LENGTH(c) \
+    ((uint32_t)(c)<=0x7f ? 1 : \
+        ((uint32_t)(c)<=0x7ff ? 2 : \
+            ((uint32_t)(c)<=0xd7ff ? 3 : \
+                ((uint32_t)(c)<=0xdfff || (uint32_t)(c)>0x10ffff ? 0 : \
+                    ((uint32_t)(c)<=0xffff ? 3 : 4)\
+                ) \
+            ) \
+        ) \
+    )
+
+/*
+  Add escape characters to a string (blob?) to make it suitable for a insert
+  to should at least have place for length*2+1 chars
+  Returns the length of the to string
+*/
+
+uint32_t
+drizzle_escape_string(char *to,const char *from, uint32_t length)
+{
+  const char *to_start= to;
+  const char *end, *to_end=to_start + 2*length;
+  bool overflow= false;
+  for (end= from + length; from < end; from++)
+  {
+    uint32_t tmp_length;
+    char escape= 0;
+    if (!U8_IS_SINGLE(*from))
+    {
+      tmp_length= U8_LENGTH(*from);
+      if (to + tmp_length > to_end)
+      {
+        overflow= true;
+        break;
+      }
+      while (tmp_length--)
+        *to++= *from++;
+      from--;
+      continue;
+    }
+    switch (*from) {
+    case 0:                             /* Must be escaped for 'mysql' */
+      escape= '0';
+      break;
+    case '\n':                          /* Must be escaped for logs */
+      escape= 'n';
+      break;
+    case '\r':
+      escape= 'r';
+      break;
+    case '\\':
+      escape= '\\';
+      break;
+    case '\'':
+      escape= '\'';
+      break;
+    case '"':                           /* Better safe than sorry */
+      escape= '"';
+      break;
+    case '\032':                        /* This gives problems on Win32 */
+      escape= 'Z';
+      break;
+    }
+    if (escape)
+    {
+      if (to + 2 > to_end)
+      {
+        overflow= true;
+        break;
+      }
+      *to++= '\\';
+      *to++= escape;
+    }
+    else
+    {
+      if (to + 1 > to_end)
+      {
+        overflow= true;
+        break;
+      }
+      *to++= *from;
+    }
+  }
+  *to= 0;
+  return overflow ? (size_t) -1 : (size_t) (to - to_start);
+}
+
+/**
+  Append a version of the 'from' string suitable for use in a query to
+  the 'to' string.  To generate a correct escaping, the character set
+  information in 'csinfo' is used.
+*/
+
+static int
+append_query_string(const CHARSET_INFO * const csinfo,
+                    String const *from, String *to)
+{
+  char *beg, *ptr;
+  uint32_t const orig_len= to->length();
+  if (to->reserve(orig_len + from->length()*2+3))
+    return 1;
+
+  beg= to->c_ptr_quick() + to->length();
+  ptr= beg;
+  if (csinfo->escape_with_backslash_is_dangerous)
+    ptr= str_to_hex(ptr, from->ptr(), from->length());
+  else
+  {
+    *ptr++= '\'';
+    ptr+= drizzle_escape_string(ptr, from->ptr(), from->length());
+    *ptr++='\'';
+  }
+  to->length(orig_len + ptr - beg);
+  return 0;
+}
+
 
 /**
   Return Param item values in string format, for generating the dynamic

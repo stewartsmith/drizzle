@@ -18,6 +18,7 @@
  */
 
 
+#include <drizzled/configmake.h>
 #include <drizzled/server_includes.h>
 
 #include <netdb.h>
@@ -26,9 +27,6 @@
 #include <signal.h>
 
 #include <mysys/my_bit.h>
-#include <drizzled/slave.h>
-#include <drizzled/replication/mi.h>
-#include <drizzled/replication/replication.h>
 #include <libdrizzle/libdrizzle.h>
 #include <mysys/hash.h>
 #include <drizzled/stacktrace.h>
@@ -46,7 +44,6 @@
 #include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
-#include <drizzled/configmake.h>
 
 
 #if TIME_WITH_SYS_TIME
@@ -247,7 +244,7 @@ static uint32_t wake_thread;
 static uint32_t killed_threads, thread_created;
 static uint32_t max_used_connections;
 static char *drizzled_user, *drizzled_chroot;
-static char *opt_init_slave, *language_ptr, *opt_init_connect;
+static char *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
 static char *character_set_filesystem_name;
 static char *lc_time_names_name;
@@ -288,7 +285,6 @@ handlerton *heap_hton;
 handlerton *myisam_hton;
 
 bool use_temp_pool;
-bool relay_log_purge;
 char* opt_secure_file_priv= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
@@ -297,7 +293,6 @@ char* opt_secure_file_priv= 0;
 */
 bool opt_noacl;
 
-uint64_t opt_binlog_rows_event_max_size;
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
@@ -317,27 +312,15 @@ ulong what_to_log;
 uint64_t slow_launch_time;
 uint64_t slave_open_temp_tables;
 uint64_t open_files_limit;
-uint64_t max_binlog_size;
-uint64_t max_relay_log_size;
-uint64_t slave_net_timeout;
-uint64_t slave_trans_retries;
-bool slave_allow_batching;
-ulong slave_exec_mode_options;
-const char *slave_exec_mode_str= "STRICT";
 uint64_t thread_pool_size= 0;
-uint64_t binlog_cache_size= 0;
-uint64_t max_binlog_cache_size= 0;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
-uint64_t binlog_cache_use= 0;
-uint64_t binlog_cache_disk_use= 0;
 uint64_t max_connections;
 uint64_t max_connect_errors;
 ulong thread_id=1L;
 pid_t current_pid;
 uint64_t slow_launch_threads= 0;
-uint64_t sync_binlog_period;
 uint64_t expire_logs_days= 0;
 
 const double log_10[] = {
@@ -449,9 +432,7 @@ pthread_cond_t  COND_server_started;
 uint32_t report_port= DRIZZLE_PORT;
 uint32_t master_retry_count= 0;
 char *master_info_file;
-char *relay_log_info_file;
 char *report_host;
-char *opt_relay_logname = 0, *opt_relaylog_index_name=0;
 char *opt_logname;
 
 /* Static variables */
@@ -461,8 +442,6 @@ static bool kill_in_progress, segfaulted;
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 static int cleanup_done;
-static char *opt_binlog_index_name;
-static char *opt_tc_heuristic_recover;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
 static char **defaults_argv;
@@ -601,8 +580,6 @@ static void close_connections(void)
     }
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
-
-  end_slave();
 
   if (thread_count)
     sleep(2);					// Give threads time to die
@@ -799,10 +776,6 @@ void clean_up(bool print_message)
   if (cleanup_done++)
     return; /* purecov: inspected */
 
-  drizzle_bin_log.cleanup();
-
-  if (use_slave_mask)
-    bitmap_free(&slave_error_mask);
   my_database_names_free();
   table_cache_free();
   table_def_free();
@@ -813,8 +786,6 @@ void clean_up(bool print_message)
   udf_free();
   plugin_shutdown();
   ha_end();
-  if (tc_log)
-    tc_log->close();
   xid_cache_free();
   delete_elements(&key_caches, (void (*)(const char*, unsigned char*)) free_key_cache);
   multi_keycache_free();
@@ -827,13 +798,9 @@ void clean_up(bool print_message)
   if (defaults_argv)
     free_defaults(defaults_argv);
   free(sys_init_connect.value);
-  free(sys_init_slave.value);
   free(drizzle_tmpdir);
-  free(slave_load_tmpdir);
   if (opt_bin_logname)
     free(opt_bin_logname);
-  if (opt_relay_logname)
-    free(opt_relay_logname);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
   bitmap_free(&temp_pool);
@@ -1768,9 +1735,7 @@ SHOW_VAR com_status_vars[]= {
   {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
   {"analyze",              (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},
   {"begin",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_BEGIN]), SHOW_LONG_STATUS},
-  {"binlog",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_BINLOG_BASE64_EVENT]), SHOW_LONG_STATUS},
   {"change_db",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CHANGE_DB]), SHOW_LONG_STATUS},
-  {"change_master",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CHANGE_MASTER]), SHOW_LONG_STATUS},
   {"check",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CHECK]), SHOW_LONG_STATUS},
   {"checksum",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CHECKSUM]), SHOW_LONG_STATUS},
   {"commit",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_COMMIT]), SHOW_LONG_STATUS},
@@ -1790,20 +1755,16 @@ SHOW_VAR com_status_vars[]= {
   {"load",                 (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOAD]), SHOW_LONG_STATUS},
   {"lock_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOCK_TABLES]), SHOW_LONG_STATUS},
   {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
-  {"purge",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PURGE]), SHOW_LONG_STATUS},
-  {"purge_before_date",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PURGE_BEFORE]), SHOW_LONG_STATUS},
   {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
   {"rename_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
   {"repair",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_REPAIR]), SHOW_LONG_STATUS},
   {"replace",              (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
   {"replace_select",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_REPLACE_SELECT]), SHOW_LONG_STATUS},
-  {"reset",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_RESET]), SHOW_LONG_STATUS},
   {"rollback",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ROLLBACK]), SHOW_LONG_STATUS},
   {"rollback_to_savepoint",(char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ROLLBACK_TO_SAVEPOINT]), SHOW_LONG_STATUS},
   {"savepoint",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SAVEPOINT]), SHOW_LONG_STATUS},
   {"select",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SELECT]), SHOW_LONG_STATUS},
   {"set_option",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SET_OPTION]), SHOW_LONG_STATUS},
-  {"show_binlogs",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_BINLOGS]), SHOW_LONG_STATUS},
   {"show_create_db",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
   {"show_create_table",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
   {"show_databases",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_DATABASES]), SHOW_LONG_STATUS},
@@ -1811,18 +1772,14 @@ SHOW_VAR com_status_vars[]= {
   {"show_errors",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
   {"show_fields",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
   {"show_keys",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
-  {"show_master_status",   (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_MASTER_STAT]), SHOW_LONG_STATUS},
   {"show_open_tables",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_OPEN_TABLES]), SHOW_LONG_STATUS},
   {"show_plugins",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_PLUGINS]), SHOW_LONG_STATUS},
   {"show_processlist",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_PROCESSLIST]), SHOW_LONG_STATUS},
-  {"show_slave_status",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_SLAVE_STAT]), SHOW_LONG_STATUS},
   {"show_status",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_STATUS]), SHOW_LONG_STATUS},
   {"show_table_status",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_TABLE_STATUS]), SHOW_LONG_STATUS},
   {"show_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_TABLES]), SHOW_LONG_STATUS},
   {"show_variables",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_VARIABLES]), SHOW_LONG_STATUS},
   {"show_warnings",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
-  {"slave_start",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SLAVE_START]), SHOW_LONG_STATUS},
-  {"slave_stop",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SLAVE_STOP]), SHOW_LONG_STATUS},
   {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
   {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
@@ -1865,14 +1822,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
     option we will change this value in my_tz_init().
   */
   global_system_variables.time_zone= my_tz_SYSTEM;
-
-  /*
-    Init mutexes for the global DRIZZLE_BIN_LOG objects.
-    As safe_mutex depends on what MY_INIT() does, we can't init the mutexes of
-    global DRIZZLE_BIN_LOGs in their constructors, because then they would be
-    inited before MY_INIT(). So we do it here.
-  */
-  drizzle_bin_log.init_pthread_objects();
 
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
@@ -1961,8 +1910,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   item_init();
   if (set_var_init())
     return 1;
-  if (init_replication_sys_vars())
-    return 1;
   /*
     Process a comma-separated character set list and choose
     the first available character set. This is mostly for
@@ -2035,14 +1982,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   else
     sys_init_connect.value=strdup("");
   if (sys_init_connect.value == NULL)
-    return 1;
-
-  sys_init_slave.value_length= 0;
-  if ((sys_init_slave.value= opt_init_slave))
-    sys_init_slave.value_length= strlen(opt_init_slave);
-  else
-    sys_init_slave.value=strdup("");
-  if (sys_init_slave.value == NULL)
     return 1;
 
   if (use_temp_pool && bitmap_init(&temp_pool,0,1024,1))
@@ -2119,50 +2058,6 @@ static int init_server_components()
   {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory"));
     unireg_abort(1);
-  }
-
-  if (opt_log_slave_updates && replicate_same_server_id)
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("using --replicate-same-server-id in conjunction with "
-                      "--log-slave-updates is impossible, it would lead to "
-                      "infinite loops in this server."));
-    unireg_abort(1);
-  }
-
-  if (opt_bin_log)
-  {
-    char buf[FN_REFLEN];
-    const char *ln;
-    ln= drizzle_bin_log.generate_name(opt_bin_logname, "-bin", 1, buf);
-    if (!opt_bin_logname && !opt_binlog_index_name)
-    {
-      /*
-        User didn't give us info to name the binlog index file.
-        Picking `hostname`-bin.index like did in 4.x, causes replication to
-        fail if the hostname is changed later. So, we would like to instead
-        require a name. But as we don't want to break many existing setups, we
-        only give warning, not error.
-      */
-          errmsg_printf(ERRMSG_LVL_WARN, _("No argument was provided to --log-bin, and "
-                          "--log-bin-index was not used; so replication "
-                          "may break when this Drizzle server acts as a "
-                          "master and has his hostname changed!! Please "
-                          "use '--log-bin=%s' to avoid this problem."), ln);
-    }
-    if (ln == buf)
-    {
-      free(opt_bin_logname);
-      opt_bin_logname=strdup(buf);
-      if (opt_bin_logname == NULL)
-      {
-              errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory in init_server_components."));
-        return(1);
-      }
-    }
-    if (drizzle_bin_log.open_index_file(opt_binlog_index_name, ln))
-    {
-      unireg_abort(1);
-    }
   }
 
   /* call ha_init_key_cache() on all key caches to init them */
@@ -2259,31 +2154,9 @@ static int init_server_components()
     }
   }
 
-  tc_log= (total_ha_2pc > 1 ? (opt_bin_log  ?
-                               (TC_LOG *) &drizzle_bin_log :
-                               (TC_LOG *) &tc_log_mmap) :
-           (TC_LOG *) &tc_log_dummy);
-
-  if (tc_log->open(opt_bin_log ? opt_bin_logname : opt_tc_log_file))
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't initialize tc_log"));
-    unireg_abort(1);
-  }
-
   if (ha_recover(0))
   {
     unireg_abort(1);
-  }
-
-  if (opt_bin_log && drizzle_bin_log.open(opt_bin_logname, LOG_BIN, 0,
-                                          WRITE_CACHE, 0, max_binlog_size, 0))
-    unireg_abort(1);
-
-  if (opt_bin_log && expire_logs_days)
-  {
-    time_t purge_time= server_start_time - expire_logs_days*24*60*60;
-    if (purge_time >= 0)
-      drizzle_bin_log.purge_logs_before_date(purge_time);
   }
 
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
@@ -2392,15 +2265,9 @@ int main(int argc, char **argv)
       set_user(drizzled_user, user_info);
   }
 
-  if (opt_bin_log && !server_id)
+  if (server_id == 0)
   {
     server_id= 1;
-#ifdef EXTRA_DEBUG
-      errmsg_printf(ERRMSG_LVL_WARN, _("You have enabled the binary log, but you haven't set "
-                        "server-id to a non-zero value: we force server id to "
-                        "1; updates will be logged to the binary log, but "
-                        "connections from slaves will not be accepted."));
-#endif
   }
 
   if (init_server_components())
@@ -2435,10 +2302,6 @@ int main(int argc, char **argv)
     places) assume that active_mi != 0, so let's fail if it's 0 (out of
     memory); a message has already been printed.
   */
-  if (init_slave() && !active_mi)
-  {
-    unireg_abort(1);
-  }
 
   errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)),my_progname,server_version,
                         "", drizzled_port, COMPILATION_COMMENT);
@@ -2677,9 +2540,6 @@ enum options_drizzled
   OPT_DELAY_KEY_WRITE,	       OPT_CHARSETS_DIR,
   OPT_MASTER_INFO_FILE,
   OPT_MASTER_RETRY_COUNT,      OPT_LOG_TC, OPT_LOG_TC_SIZE,
-  OPT_SQL_BIN_UPDATE_SAME,
-  OPT_LOG_SLAVE_UPDATES,
-  OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,                 OPT_MYISAM_RECOVER,
   OPT_SERVER_ID,
@@ -2690,7 +2550,6 @@ enum options_drizzled
   OPT_ENGINE_CONDITION_PUSHDOWN,
   OPT_TEMP_POOL, OPT_TX_ISOLATION, OPT_COMPLETION_TYPE,
   OPT_SKIP_STACK_TRACE, OPT_SKIP_SYMLINKS,
-  OPT_MAX_BINLOG_DUMP_EVENTS, OPT_SPORADIC_BINLOG_DUMP_FAIL,
   OPT_SAFE_USER_CREATE,
   OPT_DO_PSTACK, OPT_REPORT_HOST,
   OPT_REPORT_USER, OPT_REPORT_PASSWORD, OPT_REPORT_PORT,
@@ -2701,7 +2560,7 @@ enum options_drizzled
   OPT_SLAVE_SKIP_ERRORS, OPT_SLAVE_ALLOW_BATCHING, OPT_DES_KEY_FILE, OPT_LOCAL_INFILE,
   OPT_SSL_SSL, OPT_SSL_KEY, OPT_SSL_CERT, OPT_SSL_CA,
   OPT_SSL_CAPATH, OPT_SSL_CIPHER,
-  OPT_BACK_LOG, OPT_BINLOG_CACHE_SIZE,
+  OPT_BACK_LOG,
   OPT_CONNECT_TIMEOUT,
   OPT_FLUSH_TIME,
   OPT_INTERACTIVE_TIMEOUT, OPT_JOIN_BUFF_SIZE,
@@ -2709,7 +2568,6 @@ enum options_drizzled
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
   OPT_LONG_QUERY_TIME,
   OPT_LOWER_CASE_TABLE_NAMES, OPT_MAX_ALLOWED_PACKET,
-  OPT_MAX_BINLOG_CACHE_SIZE, OPT_MAX_BINLOG_SIZE,
   OPT_MAX_CONNECTIONS, OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
   OPT_MAX_JOIN_SIZE,
@@ -2739,7 +2597,7 @@ enum options_drizzled
   OPT_RANGE_ALLOC_BLOCK_SIZE,
   OPT_QUERY_ALLOC_BLOCK_SIZE, OPT_QUERY_PREALLOC_SIZE,
   OPT_TRANS_ALLOC_BLOCK_SIZE, OPT_TRANS_PREALLOC_SIZE,
-  OPT_SYNC_FRM, OPT_SYNC_BINLOG,
+  OPT_SYNC_FRM,
   OPT_SYNC_REPLICATION,
   OPT_SYNC_REPLICATION_SLAVE_ID,
   OPT_SYNC_REPLICATION_TIMEOUT,
@@ -2791,10 +2649,6 @@ struct my_option my_long_options[] =
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"abort-slave-event-count", OPT_ABORT_SLAVE_EVENT_COUNT,
-   N_("Option used by mysql-test for debugging and testing of replication."),
-   (char**) &abort_slave_event_count,  (char**) &abort_slave_event_count,
-   0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -2814,17 +2668,6 @@ struct my_option my_long_options[] =
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"binlog-row-event-max-size", OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
-   N_("The maximum size of a row-based binary log event in bytes. Rows will "
-      "be grouped into events smaller than this size if possible. "
-      "The value has to be a multiple of 256."),
-   (char**) &opt_binlog_rows_event_max_size,
-   (char**) &opt_binlog_rows_event_max_size, 0,
-   GET_ULL, REQUIRED_ARG,
-   /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX,
-   /* sub_size */     0, /* block_size */ 256,
-   /* app_type */ 0
-  },
   {"character-set-filesystem", OPT_CHARACTER_SET_FILESYSTEM,
    N_("Set the filesystem character set."),
    (char**) &character_set_filesystem_name,
@@ -2869,11 +2712,6 @@ struct my_option my_long_options[] =
   {"delay-key-write", OPT_DELAY_KEY_WRITE,
    N_("Type of DELAY_KEY_WRITE."),
    0,0,0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"disconnect-slave-event-count", OPT_DISCONNECT_SLAVE_EVENT_COUNT,
-   N_("Option used by mysql-test for debugging and testing of replication."),
-   (char**) &disconnect_slave_event_count,
-   (char**) &disconnect_slave_event_count, 0, GET_INT, REQUIRED_ARG, 0, 0, 0,
-   0, 0, 0},
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   {"enable-pstack", OPT_DO_PSTACK,
    N_("Print a symbolic stack trace on failure."),
@@ -2907,10 +2745,6 @@ struct my_option my_long_options[] =
    N_("Read SQL commands from this file at startup."),
    (char**) &opt_init_file, (char**) &opt_init_file, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"init-slave", OPT_INIT_SLAVE,
-   N_("Command(s) that are executed when a slave connects to this master"),
-   (char**) &opt_init_slave, (char**) &opt_init_slave, 0, GET_STR_ALLOC,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"language", 'L',
    N_("(IGNORED)"),
    (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
@@ -2929,59 +2763,15 @@ struct my_option my_long_options[] =
    N_("Log connections and queries to file."),
    (char**) &opt_logname,
    (char**) &opt_logname, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-bin", OPT_BIN_LOG,
-   N_("Log update queries in binary format. Optional argument is the "
-      "location for the binary log files.(Strongly "
-      "recommended to avoid replication problems if server's hostname "
-      "changes)"),
-   (char**) &opt_bin_logname, (char**) &opt_bin_logname, 0, GET_STR_ALLOC,
-   OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-bin-index", OPT_BIN_LOG_INDEX,
-   N_("File that holds the names for last binary log files."),
-   (char**) &opt_binlog_index_name, (char**) &opt_binlog_index_name, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"log-isam", OPT_ISAM_LOG,
    N_("Log all MyISAM changes to file."),
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-slave-updates", OPT_LOG_SLAVE_UPDATES,
-   N_("Tells the slave to log the updates from the slave thread to the binary "
-      "log. You will need to turn it on if you plan to "
-      "daisy-chain the slaves."),
-   (char**) &opt_log_slave_updates, (char**) &opt_log_slave_updates,
-   0, GET_BOOL,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-tc", OPT_LOG_TC,
-   N_("Path to transaction coordinator log (used for transactions that affect "
-      "more than one storage engine, when binary log is disabled)"),
-   (char**) &opt_tc_log_file, (char**) &opt_tc_log_file, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef HAVE_MMAP
-  {"log-tc-size", OPT_LOG_TC_SIZE,
-   N_("Size of transaction coordinator log."),
-   (char**) &opt_tc_log_size, (char**) &opt_tc_log_size, 0, GET_ULL,
-   REQUIRED_ARG, TC_LOG_MIN_SIZE, TC_LOG_MIN_SIZE, ULONG_MAX, 0,
-   TC_LOG_PAGE_SIZE, 0},
-#endif
   {"log-warnings", 'W',
    N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG, 1, 0, 0,
    0, 0, 0},
-  {"master-info-file", OPT_MASTER_INFO_FILE,
-   N_("The location and name of the file that remembers the master and "
-      "where the I/O replication thread is in the master's binlogs."),
-   (char**) &master_info_file, (char**) &master_info_file, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"master-retry-count", OPT_MASTER_RETRY_COUNT,
-   N_("The number of tries the slave will make to connect to the master "
-      "before giving up."),
-   (char**) &master_retry_count, (char**) &master_retry_count, 0, GET_ULONG,
-   REQUIRED_ARG, 3600*24, 0, 0, 0, 0, 0},
-  {"max-binlog-dump-events", OPT_MAX_BINLOG_DUMP_EVENTS,
-   N_("Option used by mysql-test for debugging and testing of replication."),
-   (char**) &max_binlog_dump_events, (char**) &max_binlog_dump_events, 0,
-   GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"memlock", OPT_MEMLOCK,
    N_("Lock drizzled in memory."),
    (char**) &locked_in_memory,
@@ -3016,38 +2806,6 @@ struct my_option my_long_options[] =
       "(Default: no wait)"),
    (char**) &drizzled_port_timeout,
    (char**) &drizzled_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"relay-log", OPT_RELAY_LOG,
-   N_("The location and name to use for relay logs."),
-   (char**) &opt_relay_logname, (char**) &opt_relay_logname, 0,
-   GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"relay-log-index", OPT_RELAY_LOG_INDEX,
-   N_("The location and name to use for the file that keeps a list of the "
-      "last relay logs."),
-   (char**) &opt_relaylog_index_name, (char**) &opt_relaylog_index_name, 0,
-   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"relay-log-info-file", OPT_RELAY_LOG_INFO_FILE,
-   N_("The location and name of the file that remembers where the SQL "
-      "replication thread is in the relay logs."),
-   (char**) &relay_log_info_file, (char**) &relay_log_info_file, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-same-server-id", OPT_REPLICATE_SAME_SERVER_ID,
-   N_("In replication, if set to 1, do not skip events having our server id. "
-      "Default value is 0 (to break infinite loops in circular replication). "
-      "Can't be set to 1 if --log-slave-updates is used."),
-   (char**) &replicate_same_server_id,
-   (char**) &replicate_same_server_id,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  // In replication, we may need to tell the other servers how to connect
-  {"report-host", OPT_REPORT_HOST,
-   N_("Hostname or IP of the slave to be reported to to the master during "
-      "slave registration. Will appear in the output of SHOW SLAVE HOSTS. "
-      "Leave unset if you do not want the slave to register itself with the "
-      "master. Note that it is not sufficient for the master to simply read "
-      "the IP of the slave off the socket once the slave connects. Due to NAT "
-      "and other routing issues, that IP may not be valid for connecting to "
-      "the slave from the master or other hosts."),
-   (char**) &report_host, (char**) &report_host, 0, GET_STR, REQUIRED_ARG, 0, 0,
-   0, 0, 0, 0},
   {"safe-mode", OPT_SAFE,
    N_("Skip some optimize stages (for testing)."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -3064,10 +2822,6 @@ struct my_option my_long_options[] =
   {"skip-new", OPT_SKIP_NEW,
    N_("Don't use new, possible wrong routines."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"skip-slave-start", OPT_SKIP_SLAVE_START,
-   N_("If set, slave is not started automatically."),
-   (char**) &opt_skip_slave_start,
-   (char**) &opt_skip_slave_start, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-stack-trace", OPT_SKIP_STACK_TRACE,
    N_("Don't print a stack trace on failure."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
@@ -3076,26 +2830,6 @@ struct my_option my_long_options[] =
    N_("Don't give threads different priorities."),
    0, 0, 0, GET_NO_ARG, NO_ARG,
    DEFAULT_SKIP_THREAD_PRIORITY, 0, 0, 0, 0, 0},
-  {"slave-load-tmpdir", OPT_SLAVE_LOAD_TMPDIR,
-   N_("The location where the slave should put its temporary files when "
-      "replicating a LOAD DATA INFILE command."),
-   (char**) &slave_load_tmpdir, (char**) &slave_load_tmpdir, 0, GET_STR_ALLOC,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"slave-skip-errors", OPT_SLAVE_SKIP_ERRORS,
-   N_("Tells the slave thread to continue replication when a query event "
-      "returns an error from the provided list."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"slave-exec-mode", OPT_SLAVE_EXEC_MODE,
-   N_("Modes for how replication events should be executed.  Legal values are "
-      "STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will "
-      "not stop for operations that are idempotent. In STRICT mode, "
-      "replication will stop on any unexpected difference between the master "
-      "and the slave."),
-   (char**) &slave_exec_mode_str, (char**) &slave_exec_mode_str,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"sql-bin-update-same", OPT_SQL_BIN_UPDATE_SAME,
-   N_("(INGORED)"),
-   0, 0, 0, GET_DISABLED, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"symbolic-links", 's',
    N_("Enable symbolic link support."),
    (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
@@ -3110,11 +2844,6 @@ struct my_option my_long_options[] =
       "safe-replicable."),
    (char**) &global_system_variables.sysdate_is_now,
    0, 0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
-  {"tc-heuristic-recover", OPT_TC_HEURISTIC_RECOVER,
-   N_("Decision to use in heuristic recover process. Possible values are "
-      "COMMIT or ROLLBACK."),
-   (char**) &opt_tc_heuristic_recover, (char**) &opt_tc_heuristic_recover,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"temp-pool", OPT_TEMP_POOL,
    N_("Using this option will cause most temporary files created to use a "
       "small set of names, rather than a unique name for each new file."),
@@ -3147,12 +2876,6 @@ struct my_option my_long_options[] =
       "requests in a very short time."),
     (char**) &back_log, (char**) &back_log, 0, GET_UINT,
     REQUIRED_ARG, 50, 1, 65535, 0, 1, 0 },
-  { "binlog_cache_size", OPT_BINLOG_CACHE_SIZE,
-    N_("The size of the cache to hold the SQL statements for the binary log "
-       "during a transaction. If you often use big, multi-statement "
-       "transactions you can increase this to get more performance."),
-    (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULL,
-    REQUIRED_ARG, 32*1024L, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
   { "bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
     N_("Size of tree cache used in bulk insert optimization. Note that this is "
        "a limit per thread!"),
@@ -3185,12 +2908,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.div_precincrement,
    (char**) &max_system_variables.div_precincrement, 0, GET_UINT,
    REQUIRED_ARG, 4, 0, DECIMAL_MAX_SCALE, 0, 0, 0},
-  { "expire_logs_days", OPT_EXPIRE_LOGS_DAYS,
-    N_("If non-zero, binary logs will be purged after expire_logs_days "
-       "days; possible purges happen at startup and at binary log rotation."),
-    (char**) &expire_logs_days,
-    (char**) &expire_logs_days, 0, GET_ULL,
-    REQUIRED_ARG, 0, 0, 99, 0, 1, 0},
   { "group_concat_max_len", OPT_GROUP_CONCAT_MAX_LEN,
     N_("The maximum length of the result of function  group_concat."),
     (char**) &global_system_variables.group_concat_max_len,
@@ -3248,17 +2965,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.max_allowed_packet,
    (char**) &max_system_variables.max_allowed_packet, 0, GET_ULONG,
    REQUIRED_ARG, 1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
-  {"max_binlog_cache_size", OPT_MAX_BINLOG_CACHE_SIZE,
-   N_("Can be used to restrict the total size used to cache a "
-      "multi-transaction query."),
-   (char**) &max_binlog_cache_size, (char**) &max_binlog_cache_size, 0,
-   GET_ULL, REQUIRED_ARG, ULONG_MAX, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
-  {"max_binlog_size", OPT_MAX_BINLOG_SIZE,
-   N_("Binary log will be rotated automatically when the size exceeds this "
-      "value. Will also apply to relay logs if max_relay_log_size is 0. "
-      "The minimum value for this variable is 4096."),
-   (char**) &max_binlog_size, (char**) &max_binlog_size, 0, GET_ULONG,
-   REQUIRED_ARG, 1024*1024L*1024L, IO_SIZE, 1024*1024L*1024L, 0, IO_SIZE, 0},
   {"max_connect_errors", OPT_MAX_CONNECT_ERRORS,
    N_("If there is more than this number of interrupted connections from a "
       "host this host will be blocked from further connections."),
@@ -3293,13 +2999,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.max_length_for_sort_data,
    (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULL,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
-  {"max_relay_log_size", OPT_MAX_RELAY_LOG_SIZE,
-   N_("If non-zero: relay log will be rotated automatically when the size "
-      "exceeds this value; if zero (the default): when the size exceeds "
-      "max_binlog_size. 0 excepted, the minimum value for this variable "
-      "is 4096."),
-   (char**) &max_relay_log_size, (char**) &max_relay_log_size, 0, GET_ULONG,
-   REQUIRED_ARG, 0L, 0L, 1024*1024L*1024L, 0, IO_SIZE, 0},
   { "max_seeks_for_key", OPT_MAX_SEEKS_FOR_KEY,
     N_("Limit assumed max number of seeks when looking up rows based on a key"),
     (char**) &global_system_variables.max_seeks_for_key,
@@ -3437,53 +3136,12 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.read_rnd_buff_size, 0,
    GET_UINT, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
    UINT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
-  {"relay_log_purge", OPT_RELAY_LOG_PURGE,
-   N_("0 = do not purge relay logs. "
-      "1 = purge them as soon as they are no more needed."),
-   (char**) &relay_log_purge,
-   (char**) &relay_log_purge, 0, GET_BOOL, NO_ARG,
-   1, 0, 1, 0, 1, 0},
-  {"relay_log_space_limit", OPT_RELAY_LOG_SPACE_LIMIT,
-   N_("Maximum space to use for all relay logs."),
-   (char**) &relay_log_space_limit,
-   (char**) &relay_log_space_limit, 0, GET_ULL, REQUIRED_ARG, 0L, 0L,
-   (int64_t) ULONG_MAX, 0, 1, 0},
-  {"slave_compressed_protocol", OPT_SLAVE_COMPRESSED_PROTOCOL,
-   N_("Use compression on master/slave protocol."),
-   (char**) &opt_slave_compressed_protocol,
-   (char**) &opt_slave_compressed_protocol,
-   0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
-  {"slave_net_timeout", OPT_SLAVE_NET_TIMEOUT,
-   N_("Number of seconds to wait for more data from a master/slave connection "
-      "before aborting the read."),
-   (char**) &slave_net_timeout, (char**) &slave_net_timeout, 0,
-   GET_UINT, REQUIRED_ARG, SLAVE_NET_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  {"slave_transaction_retries", OPT_SLAVE_TRANS_RETRIES,
-   N_("Number of times the slave SQL thread will retry a transaction in case "
-      "it failed with a deadlock or elapsed lock wait timeout, "
-      "before giving up and stopping."),
-   (char**) &slave_trans_retries, (char**) &slave_trans_retries, 0,
-   GET_ULL, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
-  {"slave-allow-batching", OPT_SLAVE_ALLOW_BATCHING,
-   N_("Allow slave to batch requests."),
-   (char**) &slave_allow_batching, (char**) &slave_allow_batching,
-   0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
-  {"slow_launch_time", OPT_SLOW_LAUNCH_TIME,
-   N_("If creating the thread takes longer than this value (in seconds), the "
-      "Slow_launch_threads counter will be incremented."),
-   (char**) &slow_launch_time, (char**) &slow_launch_time, 0, GET_ULL,
-   REQUIRED_ARG, 2L, 0L, LONG_TIMEOUT, 0, 1, 0},
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_ULONG, REQUIRED_ARG,
    MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
-  {"sync-binlog", OPT_SYNC_BINLOG,
-   N_("Synchronously flush binary log to disk after every #th event. "
-      "Use 0 (default) to disable synchronous flushing."),
-   (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULL,
-   REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,
@@ -3573,86 +3231,6 @@ static int show_flushstatustime(Session *session, SHOW_VAR *var, char *buff)
 static st_show_var_func_container
 show_flushstatustime_cont= { &show_flushstatustime };
 
-static int show_slave_running(Session *session __attribute__((unused)),
-                              SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_MY_BOOL;
-  pthread_mutex_lock(&LOCK_active_mi);
-  var->value= buff;
-  *((bool *)buff)= (bool) (active_mi && active_mi->slave_running &&
-                                 active_mi->rli.slave_running);
-  pthread_mutex_unlock(&LOCK_active_mi);
-  return 0;
-}
-
-static st_show_var_func_container
-show_slave_running_cont= { &show_slave_running };
-
-static int show_slave_retried_trans(Session *session __attribute__((unused)),
-                                    SHOW_VAR *var, char *buff)
-{
-  /*
-    TODO: with multimaster, have one such counter per line in
-    SHOW SLAVE STATUS, and have the sum over all lines here.
-  */
-  pthread_mutex_lock(&LOCK_active_mi);
-  if (active_mi)
-  {
-    var->type= SHOW_LONG;
-    var->value= buff;
-    pthread_mutex_lock(&active_mi->rli.data_lock);
-    *((long *)buff)= (long)active_mi->rli.retried_trans;
-    pthread_mutex_unlock(&active_mi->rli.data_lock);
-  }
-  else
-    var->type= SHOW_UNDEF;
-  pthread_mutex_unlock(&LOCK_active_mi);
-  return 0;
-}
-
-static st_show_var_func_container
-show_slave_retried_trans_cont= { &show_slave_retried_trans };
-
-static int show_slave_received_heartbeats(Session *session __attribute__((unused)),
-                                          SHOW_VAR *var, char *buff)
-{
-  pthread_mutex_lock(&LOCK_active_mi);
-  if (active_mi)
-  {
-    var->type= SHOW_LONGLONG;
-    var->value= buff;
-    pthread_mutex_lock(&active_mi->rli.data_lock);
-    *((int64_t *)buff)= active_mi->received_heartbeats;
-    pthread_mutex_unlock(&active_mi->rli.data_lock);
-  }
-  else
-    var->type= SHOW_UNDEF;
-  pthread_mutex_unlock(&LOCK_active_mi);
-  return 0;
-}
-
-static st_show_var_func_container
-show_slave_received_heartbeats_cont= { &show_slave_received_heartbeats };
-
-static int show_heartbeat_period(Session *session __attribute__((unused)),
-                                 SHOW_VAR *var, char *buff)
-{
-  pthread_mutex_lock(&LOCK_active_mi);
-  if (active_mi)
-  {
-    var->type= SHOW_CHAR;
-    var->value= buff;
-    sprintf(buff, "%.3f",active_mi->heartbeat_period);
-  }
-  else
-    var->type= SHOW_UNDEF;
-  pthread_mutex_unlock(&LOCK_active_mi);
-  return 0;
-}
-
-static st_show_var_func_container
-show_heartbeat_period_cont= { &show_heartbeat_period};
-
 static int show_open_tables(Session *session __attribute__((unused)),
                             SHOW_VAR *var, char *buff)
 {
@@ -3683,8 +3261,6 @@ show_table_definitions_cont= { &show_table_definitions };
 SHOW_VAR status_vars[]= {
   {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
   {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
-  {"Binlog_cache_disk_use",    (char*) &binlog_cache_disk_use,  SHOW_LONGLONG},
-  {"Binlog_cache_use",         (char*) &binlog_cache_use,       SHOW_LONGLONG},
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
@@ -3730,11 +3306,6 @@ SHOW_VAR status_vars[]= {
   {"Select_range",             (char*) offsetof(STATUS_VAR, select_range_count), SHOW_LONG_STATUS},
   {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
   {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
-  {"Slave_open_temp_tables",   (char*) &slave_open_temp_tables, SHOW_LONGLONG},
-  {"Slave_retried_transactions",(char*) &show_slave_retried_trans_cont, SHOW_FUNC},
-  {"Slave_heartbeat_period",   (char*) &show_heartbeat_period_cont, SHOW_FUNC},
-  {"Slave_received_heartbeats",(char*) &show_slave_received_heartbeats_cont, SHOW_FUNC},
-  {"Slave_running",            (char*) &show_slave_running_cont,     SHOW_FUNC},
   {"Slow_launch_threads",      (char*) &slow_launch_threads,    SHOW_LONGLONG},
   {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
   {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
@@ -3743,11 +3314,6 @@ SHOW_VAR status_vars[]= {
   {"Sort_scan",		       (char*) offsetof(STATUS_VAR, filesort_scan_count), SHOW_LONG_STATUS},
   {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
   {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
-#ifdef HAVE_MMAP
-  {"Tc_log_max_pages_used",    (char*) &tc_log_max_pages_used,  SHOW_LONGLONG},
-  {"Tc_log_page_size",         (char*) &tc_log_page_size,       SHOW_LONGLONG},
-  {"Tc_log_page_waits",        (char*) &tc_log_page_waits,      SHOW_LONGLONG},
-#endif
   {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
   {"Threads_created",	       (char*) &thread_created,		SHOW_LONG_NOFLUSH},
   {"Threads_running",          (char*) &thread_running,         SHOW_INT},
@@ -3823,7 +3389,7 @@ static void drizzle_init_variables(void)
   drizzle_home[0]= pidfile_name[0]= 0;
   opt_bin_log= 0;
   opt_skip_show_db=0;
-  opt_logname= opt_binlog_index_name= 0;
+  opt_logname= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
   segfaulted= kill_in_progress= 0;
@@ -3839,7 +3405,6 @@ static void drizzle_init_variables(void)
   abort_loop= select_thread_in_use= signal_thread_in_use= 0;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
-  binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;
   my_bind_addr_str= NULL;
@@ -3857,9 +3422,6 @@ static void drizzle_init_variables(void)
 
   /* Things with default values that are not zero */
   delay_key_write_options= (uint) DELAY_KEY_WRITE_ON;
-  slave_exec_mode_options= 0;
-  slave_exec_mode_options= (uint)
-    find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
@@ -3887,12 +3449,6 @@ static void drizzle_init_variables(void)
   drizzle_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
   drizzle_data_home_buff[1]=0;
   drizzle_data_home_len= 2;
-
-  /* Replication parameters */
-  master_info_file= (char*) "master.info",
-    relay_log_info_file= (char*) "relay-log.info";
-  report_host= 0;	/* TO BE DELETED */
-  opt_relay_logname= opt_relaylog_index_name= 0;
 
   /* Variables in libraries */
   charsets_dir= 0;
@@ -3966,11 +3522,8 @@ drizzled_get_one_option(int optid,
     strncpy(language, argument, sizeof(language)-1);
     break;
   case OPT_SLAVE_SKIP_ERRORS:
-    init_slave_skip_errors(argument);
     break;
   case OPT_SLAVE_EXEC_MODE:
-    slave_exec_mode_options= (uint)
-      find_bit_type_or_exit(argument, &slave_exec_mode_typelib, "");
     break;
   case 'V':
     print_version();
@@ -4198,8 +3751,6 @@ static void get_options(int *argc,char **argv)
   }
   /* Set global MyISAM variables from delay_key_write_options */
   fix_delay_key_write((Session*) 0, OPT_GLOBAL);
-  /* Set global slave_exec_mode from its option */
-  fix_slave_exec_mode(OPT_GLOBAL);
 
   if (drizzled_chroot)
     set_root(drizzled_chroot);
@@ -4331,11 +3882,6 @@ static void fix_paths(void)
     }
   }
 
-  if (!slave_load_tmpdir)
-  {
-    if (!(slave_load_tmpdir = (char*) strdup(drizzle_tmpdir)))
-      exit(1);
-  }
   /*
     Convert the secure-file-priv option to system format, allowing
     a quick strcmp to check if read or write is in an allowed dir

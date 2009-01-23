@@ -24,6 +24,7 @@
 #include <drizzled/item/create.h>
 #include <drizzled/item/func.h>
 #include <drizzled/error.h>
+#include <drizzled/data_home.h>
 
 #include <drizzled/function/str/binary.h>
 #include <drizzled/function/str/concat.h>
@@ -102,7 +103,6 @@
 #include <drizzled/function/math/ln.h>
 #include <drizzled/function/locate.h>
 #include <drizzled/function/math/log.h>
-#include <drizzled/function/master_pos_wait.h>
 #include <drizzled/function/min_max.h>
 #include <drizzled/function/num1.h>
 #include <drizzled/function/num_op.h>
@@ -1015,18 +1015,6 @@ protected:
   virtual ~Create_func_make_set() {}
 };
 
-
-class Create_func_master_pos_wait : public Create_native_func
-{
-public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_master_pos_wait s_singleton;
-
-protected:
-  Create_func_master_pos_wait() {}
-  virtual ~Create_func_master_pos_wait() {}
-};
 
 class Create_func_monthname : public Create_func_arg1
 {
@@ -2479,46 +2467,6 @@ Create_func_make_set::create_native(Session *session, LEX_STRING name,
 }
 
 
-Create_func_master_pos_wait Create_func_master_pos_wait::s_singleton;
-
-Item*
-Create_func_master_pos_wait::create_native(Session *session, LEX_STRING name,
-                                           List<Item> *item_list)
-
-{
-  Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  switch (arg_count) {
-  case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    func= new (session->mem_root) Item_master_pos_wait(param_1, param_2);
-    break;
-  }
-  case 3:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    Item *param_3= item_list->pop();
-    func= new (session->mem_root) Item_master_pos_wait(param_1, param_2, param_3);
-    break;
-  }
-  default:
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
-    break;
-  }
-  }
-
-  return func;
-}
-
-
 Create_func_monthname Create_func_monthname::s_singleton;
 
 Item*
@@ -2925,10 +2873,10 @@ Item*
 Create_func_version::create(Session *session)
 {
   return new (session->mem_root) Item_static_string_func("version()",
-                                                     server_version,
-                                                     (uint) strlen(server_version),
-                                                     system_charset_info,
-                                                     DERIVATION_SYSCONST);
+                                                         server_version,
+                                                         (uint) strlen(server_version),
+                                                         system_charset_info,
+                                                         DERIVATION_SYSCONST);
 }
 
 
@@ -3066,7 +3014,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("MAKEDATE") }, BUILDER(Create_func_makedate)},
   { { C_STRING_WITH_LEN("MAKETIME") }, BUILDER(Create_func_maketime)},
   { { C_STRING_WITH_LEN("MAKE_SET") }, BUILDER(Create_func_make_set)},
-  { { C_STRING_WITH_LEN("MASTER_POS_WAIT") }, BUILDER(Create_func_master_pos_wait)},
   { { C_STRING_WITH_LEN("MONTHNAME") }, BUILDER(Create_func_monthname)},
   { { C_STRING_WITH_LEN("NULLIF") }, BUILDER(Create_func_nullif)},
   { { C_STRING_WITH_LEN("OCT") }, BUILDER(Create_func_oct)},

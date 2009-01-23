@@ -30,6 +30,7 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduler.h>
 #include <drizzled/session.h>
+#include <drizzled/data_home.h>
 
 extern scheduler_functions thread_scheduler;
 

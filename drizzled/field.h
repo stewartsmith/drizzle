@@ -44,6 +44,8 @@ class virtual_column_info;
 
 class TABLE_SHARE;
 
+class Field;
+
 struct st_cache_field;
 int field_conv(Field *to,Field *from);
 

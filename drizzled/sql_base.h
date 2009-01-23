@@ -21,6 +21,7 @@
 #define DRIZZLED_SQL_BASE_H
 
 #include <stdint.h>
+#include <drizzled/table.h>
 
 class TABLE_SHARE;
 

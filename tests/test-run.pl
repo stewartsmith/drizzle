@@ -126,7 +126,7 @@ our $default_vardir;
 
 our $opt_usage;
 our $opt_suites;
-our $opt_suites_default= "main,binlog,rpl"; # Default suites to run
+our $opt_suites_default= "main"; # Default suites to run
 our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
@@ -207,7 +207,7 @@ my $opt_report_features;
 our $opt_check_testcases;
 our $opt_mark_progress;
 
-our $opt_skip_rpl;
+our $opt_skip_rpl= 1;
 our $max_slave_num= 0;
 our $max_master_num= 1;
 our $use_innodb;
@@ -250,14 +250,10 @@ our $opt_stress_test_file=     "";
 
 our $opt_warnings;
 
-our $opt_skip_master_binlog= 0;
-our $opt_skip_slave_binlog= 0;
-
 our $path_sql_dir;
 
 our @data_dir_lst;
 
-our $used_binlog_format;
 our $used_default_engine;
 our $debug_compiled_binaries;
 
@@ -468,8 +464,6 @@ sub command_line_setup () {
 
              # Control what test suites or cases to run
              'force'                    => \$opt_force,
-             'skip-master-binlog'       => \$opt_skip_master_binlog,
-             'skip-slave-binlog'        => \$opt_skip_slave_binlog,
              'do-test=s'                => \$opt_do_test,
              'start-from=s'             => \$opt_start_from,
              'suite|suites=s'           => \$opt_suites,
@@ -704,29 +698,6 @@ sub command_line_setup () {
   }
 
   # --------------------------------------------------------------------------
-  # Find out type of logging that are being used
-  # --------------------------------------------------------------------------
-  if (!$opt_extern && $mysql_version_id >= 50100 )
-  {
-    foreach my $arg ( @opt_extra_mysqld_opt )
-    {
-      if ( $arg =~ /binlog[-_]format=(\S+)/ )
-      {
-      	$used_binlog_format= $1;
-      }
-    }
-    if (defined $used_binlog_format) 
-    {
-      mtr_report("Using binlog format '$used_binlog_format'");
-    }
-    else
-    {
-      mtr_report("Using dynamic switching of binlog format");
-    }
-  }
-
-
-  # --------------------------------------------------------------------------
   # Find out default storage engine being used(if any)
   # --------------------------------------------------------------------------
   foreach my $arg ( @opt_extra_mysqld_opt )
@@ -771,20 +742,6 @@ sub command_line_setup () {
   # --------------------------------------------------------------------------
   if ( ! $opt_vardir )
   {
-    $opt_vardir= $default_vardir;
-  }
-  elsif ( $mysql_version_id < 50000 and
-	  $opt_vardir ne $default_vardir)
-  {
-    # Version 4.1 and --vardir was specified
-    # Only supported as a symlink from var/
-    # by setting up $opt_mem that symlink will be created
-    {
-      # Only platforms that have native symlinks can use the vardir trick
-      $opt_mem= $opt_vardir;
-      mtr_report("Using 4.1 vardir trick");
-    }
-
     $opt_vardir= $default_vardir;
   }
 
@@ -2085,30 +2042,6 @@ sub do_before_run_drizzletest($)
   unlink("$base_file.log");
   unlink("$base_file.warnings");
 
-  if (!$opt_extern)
-  {
-    if (defined $tinfo->{binlog_format} and  $mysql_version_id > 50100 )
-    {
-      # Dynamically switch binlog format of
-      # master, slave is always restarted
-      foreach my $server ( @$master )
-      {
-        next unless ($server->{'pid'});
-
-	mtr_init_args(\$args);
-	mtr_add_arg($args, "--no-defaults");
-	mtr_add_arg($args, "--user=root");
-	mtr_add_arg($args, "--port=$server->{'port'}");
-
-	my $sql= "include/set_binlog_format_".$tinfo->{binlog_format}.".sql";
-	mtr_verbose("Setting binlog format:", $tinfo->{binlog_format});
-	if (mtr_run($exe_drizzle, $args, $sql, "", "", "") != 0)
-	{
-	  mtr_error("Failed to switch binlog format");
-	}
-      }
-    }
-  }
 }
 
 sub do_after_run_drizzletest($)
@@ -2523,15 +2456,8 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--log=%s.log", $prefix, $log_base_path);
 
   # Check if "extra_opt" contains --skip-log-bin
-  my $skip_binlog= grep(/^--skip-log-bin/, @$extra_opt, @opt_extra_mysqld_opt);
   if ( $mysqld->{'type'} eq 'master' )
   {
-    if (! ($opt_skip_master_binlog || $skip_binlog) )
-    {
-      mtr_add_arg($args, "%s--log-bin=%s/log/master-bin%s", $prefix,
-                  $opt_vardir, $sidx);
-    }
-
     mtr_add_arg($args, "%s--server-id=%d", $prefix,
 	       $idx > 0 ? $idx + 101 : 1);
 
@@ -2552,29 +2478,10 @@ sub mysqld_arguments ($$$$) {
     mtr_error("unknown mysqld type")
       unless $mysqld->{'type'} eq 'slave';
 
-    #mtr_add_arg($args, "%s--init-rpl-role=slave", $prefix);
-    if (! ( $opt_skip_slave_binlog || $skip_binlog ))
-    {
-      mtr_add_arg($args, "%s--log-bin=%s/log/slave%s-bin", $prefix,
-                  $opt_vardir, $sidx); # FIXME use own dir for binlogs
-      mtr_add_arg($args, "%s--log-slave-updates", $prefix);
-    }
-
-    mtr_add_arg($args, "%s--master-retry-count=10", $prefix);
-
-    mtr_add_arg($args, "%s--relay-log=%s/log/slave%s-relay-bin", $prefix,
-                $opt_vardir, $sidx);
-    mtr_add_arg($args, "%s--report-host=127.0.0.1", $prefix);
-    mtr_add_arg($args, "%s--loose-skip-innodb", $prefix);
-    mtr_add_arg($args, "%s--skip-slave-start", $prefix);
-
     # Directory where slaves find the dumps generated by "load data"
     # on the server. The path need to have constant length otherwise
     # test results will vary, thus a relative path is used.
     my $slave_load_path= "../tmp";
-    mtr_add_arg($args, "%s--slave-load-tmpdir=%s", $prefix,
-                $slave_load_path);
-    mtr_add_arg($args, "%s--set-variable=slave_net_timeout=120", $prefix);
 
     if ( @$slave_master_info )
     {
@@ -2588,7 +2495,6 @@ sub mysqld_arguments ($$$$) {
       my $slave_server_id=  2 + $idx;
       my $slave_rpl_rank= $slave_server_id;
       mtr_add_arg($args, "%s--server-id=%d", $prefix, $slave_server_id);
-#      mtr_add_arg($args, "%s--rpl-recovery-rank=%d", $prefix, $slave_rpl_rank);
     }
   } # end slave
 
@@ -2620,10 +2526,6 @@ sub mysqld_arguments ($$$$) {
     if ($arg eq "--skip-core-file")
     {
       $found_skip_core= 1;
-    }
-    elsif ($skip_binlog and mtr_match_prefix($arg, "--binlog-format"))
-    {
-      ; # Dont add --binlog-format when running without binlog
     }
     else
     {
@@ -2828,7 +2730,7 @@ sub run_testcase_need_master_restart($)
     my $diff_opts= mtr_diff_opts($master->[0]->{'start_opts'},$tinfo->{'master_opt'});
     if (scalar(@$diff_opts) eq 2) 
     {
-      $do_restart= 1 unless ($diff_opts->[0] =~/^--binlog-format=/ and $diff_opts->[1] =~/^--binlog-format=/);
+      $do_restart= 1;
     }
     else
     {

@@ -15,10 +15,8 @@
 
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
-#include <drizzled/replication/replication.h>
 #include <libdrizzle/libdrizzle.h>
 #include <mysys/hash.h>
-#include <drizzled/replication/binlog.h>
 #include <drizzled/logging.h>
 #include <drizzled/db.h>
 #include <drizzled/error.h>
@@ -66,9 +64,7 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Ping") },
   { C_STRING_WITH_LEN("Time") },
   { C_STRING_WITH_LEN("Change user") },
-  { C_STRING_WITH_LEN("Binlog Dump") },
   { C_STRING_WITH_LEN("Connect Out") },
-  { C_STRING_WITH_LEN("Register Slave") },
   { C_STRING_WITH_LEN("Set option") },
   { C_STRING_WITH_LEN("Daemon") },
   { C_STRING_WITH_LEN("Error") }  // Last command number
@@ -193,15 +189,12 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_VARIABLES]=   CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_BINLOGS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ENGINE_STATUS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_PROCESSLIST]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE_DB]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE]=  CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_MASTER_STAT]=  CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_SLAVE_STAT]=  CF_STATUS_COMMAND;
 
    sql_command_flags[SQLCOM_SHOW_TABLES]=       (CF_STATUS_COMMAND |
                                                CF_SHOW_TABLE_COMMAND);
@@ -690,26 +683,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     session->main_da.disable_status();              // Don't send anything back
     error=true;					// End server
     break;
-  case COM_BINLOG_DUMP:
-    {
-      ulong pos;
-      uint16_t flags;
-      uint32_t slave_server_id;
-
-      status_var_increment(session->status_var.com_other);
-      /* TODO: The following has to be changed to an 8 byte integer */
-      pos = uint4korr(packet);
-      flags = uint2korr(packet + 4);
-      session->server_id=0; /* avoid suicide */
-      if ((slave_server_id= uint4korr(packet+6))) // mysqlbinlog.server_id==0
-	kill_zombie_dump_threads(slave_server_id);
-      session->server_id = slave_server_id;
-
-      mysql_binlog_send(session, session->strdup(packet + 10), (my_off_t) pos, flags);
-      /*  fake COM_QUIT -- if we get here, the thread needs to terminate */
-      error = true;
-      break;
-    }
   case COM_SHUTDOWN:
   {
     status_var_increment(session->status_var.com_other);
@@ -1102,32 +1075,6 @@ mysql_execute_command(Session *session)
     my_ok(session);
     break;
 
-  case SQLCOM_PURGE:
-  {
-    res = purge_master_logs(session, lex->to_log);
-    break;
-  }
-  case SQLCOM_PURGE_BEFORE:
-  {
-    Item *it;
-
-    /* PURGE MASTER LOGS BEFORE 'data' */
-    it= (Item *)lex->value_list.head();
-    if ((!it->fixed && it->fix_fields(lex->session, &it)) ||
-        it->check_cols(1))
-    {
-      my_error(ER_WRONG_ARGUMENTS, MYF(0), "PURGE LOGS BEFORE");
-      goto error;
-    }
-    it= new Item_func_unix_timestamp(it);
-    /*
-      it is OK only emulate fix_fieds, because we need only
-      value of constant
-    */
-    it->quick_fix_field();
-    res = purge_master_logs_before_date(session, (ulong)it->val_int());
-    break;
-  }
   case SQLCOM_SHOW_WARNS:
   {
     res= mysqld_show_warnings(session, (uint32_t)
@@ -1149,35 +1096,6 @@ mysql_execute_command(Session *session)
     res= mysql_assign_to_keycache(session, first_table, &lex->ident);
     break;
   }
-  case SQLCOM_CHANGE_MASTER:
-  {
-    pthread_mutex_lock(&LOCK_active_mi);
-    res = change_master(session,active_mi);
-    pthread_mutex_unlock(&LOCK_active_mi);
-    break;
-  }
-  case SQLCOM_SHOW_SLAVE_STAT:
-  {
-    pthread_mutex_lock(&LOCK_active_mi);
-    if (active_mi != NULL)
-    {
-      res = show_master_info(session, active_mi);
-    }
-    else
-    {
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                   "the master info structure does not exist");
-      my_ok(session);
-    }
-    pthread_mutex_unlock(&LOCK_active_mi);
-    break;
-  }
-  case SQLCOM_SHOW_MASTER_STAT:
-  {
-    res = show_binlog_info(session);
-    break;
-  }
-
   case SQLCOM_SHOW_ENGINE_STATUS:
     {
       res = ha_show_status(session, lex->create_info.db_type, HA_ENGINE_STATUS);
@@ -1379,40 +1297,6 @@ end_with_restore_list:
                            0, (order_st*) 0, 0);
     break;
   }
-  case SQLCOM_SLAVE_START:
-  {
-    pthread_mutex_lock(&LOCK_active_mi);
-    start_slave(session,active_mi,1 /* net report*/);
-    pthread_mutex_unlock(&LOCK_active_mi);
-    break;
-  }
-  case SQLCOM_SLAVE_STOP:
-  /*
-    If the client thread has locked tables, a deadlock is possible.
-    Assume that
-    - the client thread does LOCK TABLE t READ.
-    - then the master updates t.
-    - then the SQL slave thread wants to update t,
-      so it waits for the client thread because t is locked by it.
-    - then the client thread does SLAVE STOP.
-      SLAVE STOP waits for the SQL slave thread to terminate its
-      update t, which waits for the client thread because t is locked by it.
-    To prevent that, refuse SLAVE STOP if the
-    client thread has locked tables
-  */
-  if (session->locked_tables || session->active_transaction() || session->global_read_lock)
-  {
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-    goto error;
-  }
-  {
-    pthread_mutex_lock(&LOCK_active_mi);
-    stop_slave(session,active_mi,1/* net report*/);
-    pthread_mutex_unlock(&LOCK_active_mi);
-    break;
-  }
-
   case SQLCOM_ALTER_TABLE:
     assert(first_table == all_tables && first_table != 0);
     {
@@ -1489,11 +1373,6 @@ end_with_restore_list:
       }
     break;
   }
-  case SQLCOM_SHOW_BINLOGS:
-    {
-      res = show_binlogs(session);
-      break;
-    }
   case SQLCOM_SHOW_CREATE:
     assert(first_table == all_tables && first_table != 0);
     {
@@ -2034,7 +1913,6 @@ end_with_restore_list:
     res= mysqld_show_create_db(session, lex->name.str, &lex->create_info);
     break;
   }
-  case SQLCOM_RESET:
   case SQLCOM_FLUSH:
   {
     bool write_to_binlog;
@@ -2192,11 +2070,6 @@ end_with_restore_list:
       }
     }
     break;
-  case SQLCOM_BINLOG_BASE64_EVENT:
-  {
-    mysql_client_binlog_statement(session);
-    break;
-  }
   default:
     assert(0);                             /* Impossible */
     my_ok(session);
@@ -3308,12 +3181,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
       than it would help them)
     */
     tmp_write_to_binlog= 0;
-    if (drizzle_bin_log.is_open())
-    {
-      drizzle_bin_log.rotate_and_purge(RP_FORCE_ROTATE);
-    }
     pthread_mutex_lock(&LOCK_active_mi);
-    rotate_relay_log(active_mi);
     pthread_mutex_unlock(&LOCK_active_mi);
 
     if (ha_flush_logs(NULL))
@@ -3369,23 +3237,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
   }
   if (session && (options & REFRESH_STATUS))
     refresh_status(session);
-  if (options & REFRESH_MASTER)
-  {
-    assert(session);
-    tmp_write_to_binlog= 0;
-    if (reset_master(session))
-    {
-      result=1;
-    }
-  }
- if (options & REFRESH_SLAVE)
- {
-   tmp_write_to_binlog= 0;
-   pthread_mutex_lock(&LOCK_active_mi);
-   if (reset_slave(session, active_mi))
-     result=1;
-   pthread_mutex_unlock(&LOCK_active_mi);
- }
  *write_to_binlog= tmp_write_to_binlog;
  return result;
 }
