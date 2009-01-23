@@ -59,8 +59,11 @@ Field_blob::Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsi
 void Field_blob::store_length(unsigned char *i_ptr,
                               uint32_t i_packlength,
                               uint32_t i_number,
-                              bool )
+                              bool low_byte_first)
 {
+#ifndef WORDS_BIGENDIAN
+  (void)low_byte_first;
+#endif
   switch (i_packlength) {
   case 1:
     i_ptr[0]= (unsigned char) i_number;
@@ -99,9 +102,12 @@ void Field_blob::store_length(unsigned char *i_ptr, uint32_t i_packlength,
 
 
 uint32_t Field_blob::get_length(const unsigned char *pos,
-                              uint32_t packlength_arg,
-                              bool )
+                                uint32_t packlength_arg,
+                                bool low_byte_first)
 {
+#ifndef WORDS_BIGENDIAN
+  (void)low_byte_first;
+#endif
   switch (packlength_arg) {
   case 1:
     return (uint32_t) pos[0];
