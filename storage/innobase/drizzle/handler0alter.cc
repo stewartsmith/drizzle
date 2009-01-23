@@ -9,7 +9,6 @@ Smart ALTER TABLE
 #include <mystrings/m_ctype.h>
 #include <drizzled/field.h>
 #include <drizzled/table.h>
-#include <drizzled/log.h>
 #include <drizzled/field/varstring.h>
 
 extern "C" {
