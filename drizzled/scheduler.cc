@@ -33,10 +33,10 @@
  */
 
 static bool init_dummy(void) {return 0;}
-static void post_kill_dummy(Session *session __attribute__((unused))) {}
+static void post_kill_dummy(Session *) {}
 static void end_dummy(void) {}
-static bool end_thread_dummy(Session *session __attribute__((unused)),
-                             bool cache_thread __attribute__((unused)))
+static bool end_thread_dummy(Session *,
+                             bool )
 { return 0; }
 
 /*
@@ -456,7 +456,7 @@ static bool libevent_should_close_connection(Session* session)
   These procs only return/terminate on shutdown (kill_pool_threads == true).
 */
 
-pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
+pthread_handler_t libevent_thread_proc(void *)
 {
   if (init_new_connection_handler_thread())
   {

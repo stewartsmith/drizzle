@@ -38,7 +38,7 @@ public:
   }
   const char *func_name() const{ return "uuid"; }
   String *val_str(String *);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 

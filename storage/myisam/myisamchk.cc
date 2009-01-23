@@ -449,7 +449,7 @@ TYPELIB myisam_stats_method_typelib= {
 
 static bool
 get_one_option(int optid,
-	       const struct my_option *opt __attribute__((unused)),
+	       const struct my_option *,
 	       char *argument)
 {
   switch (optid) {
@@ -1656,7 +1656,7 @@ err:
 
 static int not_killed= 0;
 
-volatile int *killed_ptr(MI_CHECK *param __attribute__((unused)))
+volatile int *killed_ptr(MI_CHECK *)
 {
   return &not_killed;			/* always NULL */
 }
@@ -1664,7 +1664,7 @@ volatile int *killed_ptr(MI_CHECK *param __attribute__((unused)))
 	/* print warnings and errors */
 	/* VARARGS */
 
-void mi_check_print_info(MI_CHECK *param __attribute__((unused)),
+void mi_check_print_info(MI_CHECK *,
 			 const char *fmt,...)
 {
   va_list args;

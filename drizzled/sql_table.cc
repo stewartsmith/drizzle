@@ -638,7 +638,7 @@ err_with_placeholders:
     != 0        Error
 */
 
-bool quick_rm_table(handlerton *base __attribute__((unused)),const char *db,
+bool quick_rm_table(handlerton *,const char *db,
                     const char *table_name, uint32_t flags)
 {
   char path[FN_REFLEN];
@@ -803,7 +803,7 @@ void calculate_interval_lengths(const CHARSET_INFO * const cs, TYPELIB *interval
 int prepare_create_field(Create_field *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
-                         int64_t table_flags __attribute__((unused)))
+                         int64_t )
 {
   unsigned int dup_val_count;
 
@@ -1685,7 +1685,7 @@ static void set_table_default_charset(Session *session,
         In this case the error is given
 */
 
-static bool prepare_blob_field(Session *session __attribute__((unused)),
+static bool prepare_blob_field(Session *,
                                Create_field *sql_field)
 {
 
@@ -2867,7 +2867,7 @@ bool mysql_assign_to_keycache(Session* session, TableList* tables,
     0	  ok
 */
 
-int reassign_keycache_tables(Session *session __attribute__((unused)),
+int reassign_keycache_tables(Session *,
                              KEY_CACHE *src_cache,
                              KEY_CACHE *dst_cache)
 {

@@ -28,8 +28,8 @@
 /* todo, make this dynamic as needed */
 #define MAX_MSG_LEN 8192
 
-bool errmsg_stderr_func (Session *session __attribute__((unused)),
-			 int priority __attribute__((unused)),
+bool errmsg_stderr_func (Session *,
+			 int ,
 			 const char *format, va_list ap)
 {
   char msgbuf[MAX_MSG_LEN];

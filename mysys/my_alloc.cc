@@ -17,8 +17,6 @@
 
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
-#undef EXTRA_DEBUG
-#define EXTRA_DEBUG
 
 
 /*
@@ -43,7 +41,7 @@
 */
 
 void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
-		     size_t pre_alloc_size __attribute__((unused)))
+		     size_t )
 {
   mem_root->free= mem_root->used= mem_root->pre_alloc= 0;
   mem_root->min_malloc= 32;
@@ -74,12 +72,11 @@ void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
 */
 
 void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
-                         size_t pre_alloc_size __attribute__((unused)))
+                         size_t pre_alloc_size)
 {
   assert(alloc_root_inited(mem_root));
 
   mem_root->block_size= block_size - ALLOC_ROOT_MIN_BLOCK_SIZE;
-#if !(defined(HAVE_purify) && defined(EXTRA_DEBUG))
   if (pre_alloc_size)
   {
     size_t size= pre_alloc_size + ALIGN_SIZE(sizeof(USED_MEM));
@@ -123,8 +120,9 @@ void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
     }
   }
   else
-#endif
+  {
     mem_root->pre_alloc= 0;
+  }
 }
 
 

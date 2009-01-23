@@ -21,7 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/function/time/from_days.h>
 
-bool Item_func_from_days::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date __attribute__((unused)))
+bool Item_func_from_days::get_date(DRIZZLE_TIME *ltime, uint32_t )
 {
   int64_t value=args[0]->val_int();
   if ((null_value=args[0]->null_value))

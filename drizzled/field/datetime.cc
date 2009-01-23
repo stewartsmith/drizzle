@@ -39,7 +39,7 @@ using namespace CMATH_NAMESPACE;
 
 int Field_datetime::store(const char *from,
                           uint32_t len,
-                          const CHARSET_INFO * const cs __attribute__((unused)))
+                          const CHARSET_INFO * const )
 {
   DRIZZLE_TIME time_tmp;
   int error;
@@ -91,7 +91,7 @@ int Field_datetime::store(double nr)
 
 
 int Field_datetime::store(int64_t nr,
-                          bool unsigned_val __attribute__((unused)))
+                          bool )
 {
   DRIZZLE_TIME not_used;
   int error;
@@ -197,7 +197,7 @@ int64_t Field_datetime::val_int(void)
 
 
 String *Field_datetime::val_str(String *val_buffer,
-				String *val_ptr __attribute__((unused)))
+				String *)
 {
   val_buffer->alloc(field_length);
   val_buffer->length(field_length);
@@ -287,7 +287,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
     ((uint64_t) a > (uint64_t) b) ? 1 : 0;
 }
 
-void Field_datetime::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_datetime::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)

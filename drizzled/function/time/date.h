@@ -54,7 +54,7 @@ public:
     return  val_decimal_from_date(decimal_value);
   }
   int save_in_field(Field *field,
-                    bool no_conversions __attribute__((unused)))
+                    bool )
   {
     return save_date_in_field(field);
   }
@@ -80,7 +80,7 @@ public:
     return  val_decimal_from_date(decimal_value);
   }
   int save_in_field(Field *field,
-                    bool no_conversions __attribute__((unused)))
+                    bool )
   {
     return save_date_in_field(field);
   }

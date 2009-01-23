@@ -160,7 +160,7 @@ check_user(Session *session, const char *passwd,
 */
 
 extern "C" unsigned char *get_key_conn(user_conn *buff, size_t *length,
-                               bool not_used __attribute__((unused)))
+                               bool )
 {
   *length= buff->len;
   return (unsigned char*) buff->user;

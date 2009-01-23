@@ -260,7 +260,7 @@ enum Item_result Item_func_get_user_var::result_type() const
 
 
 void Item_func_get_user_var::print(String *str,
-                                   enum_query_type query_type __attribute__((unused)))
+                                   enum_query_type )
 {
   str->append(STRING_WITH_LEN("(@"));
   str->append(name.str,name.length);
@@ -269,7 +269,7 @@ void Item_func_get_user_var::print(String *str,
 
 
 bool Item_func_get_user_var::eq(const Item *item,
-                                bool binary_cmp __attribute__((unused))) const
+                                bool ) const
 {
   /* Assume we don't have rtti */
   if (this == item)

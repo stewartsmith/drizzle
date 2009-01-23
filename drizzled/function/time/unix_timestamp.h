@@ -35,7 +35,7 @@ public:
     decimals=0;
     max_length=10*MY_CHARSET_BIN_MB_MAXLEN;
   }
-  bool check_vcol_func_processor(unsigned char *int_arg  __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 

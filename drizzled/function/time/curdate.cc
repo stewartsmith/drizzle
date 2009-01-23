@@ -76,7 +76,7 @@ void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 }
 
 bool Item_func_curdate::get_date(DRIZZLE_TIME *res,
-                                 uint32_t fuzzy_date __attribute__((unused)))
+                                 uint32_t )
 {
   *res=ltime;
   return 0;

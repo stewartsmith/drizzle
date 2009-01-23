@@ -76,7 +76,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
 /* Here arg[1] is a Item_interval object */
 
-bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date __attribute__((unused)))
+bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
 {
   INTERVAL interval;
 

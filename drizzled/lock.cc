@@ -953,7 +953,7 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
 }
 
 
-void unlock_table_name(Session *session __attribute__((unused)),
+void unlock_table_name(Session *,
                        TableList *table_list)
 {
   if (table_list->table)
@@ -964,7 +964,7 @@ void unlock_table_name(Session *session __attribute__((unused)),
 }
 
 
-static bool locked_named_table(Session *session __attribute__((unused)),
+static bool locked_named_table(Session *,
                                TableList *table_list)
 {
   for (; table_list ; table_list=table_list->next_local)

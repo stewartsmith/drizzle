@@ -76,7 +76,7 @@ using namespace CMATH_NAMESPACE;
  */
 
 Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
-                                 uint32_t len_arg __attribute__((unused)),
+                                 uint32_t ,
                                  unsigned char *null_ptr_arg, unsigned char null_bit_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
@@ -149,7 +149,7 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
 
 int Field_timestamp::store(const char *from,
                            uint32_t len,
-                           const CHARSET_INFO * const cs __attribute__((unused)))
+                           const CHARSET_INFO * const )
 {
   DRIZZLE_TIME l_time;
   time_t tmp= 0;
@@ -209,7 +209,7 @@ int Field_timestamp::store(double nr)
 
 
 int Field_timestamp::store(int64_t nr,
-                           bool unsigned_val __attribute__((unused)))
+                           bool )
 {
   DRIZZLE_TIME l_time;
   time_t timestamp= 0;
@@ -407,7 +407,7 @@ int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-void Field_timestamp::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_timestamp::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)

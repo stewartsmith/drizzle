@@ -256,7 +256,7 @@ String *Item_time_typecast::val_str(String *str)
 }
 
 
-bool Item_date_typecast::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date __attribute__((unused)))
+bool Item_date_typecast::get_date(DRIZZLE_TIME *ltime, uint32_t )
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;

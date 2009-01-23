@@ -62,9 +62,12 @@ size_t my_casedn_str_mb(const CHARSET_INFO * const  cs, char *str)
 
 
 size_t my_caseup_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
-                    char *dst __attribute__((unused)),
-                    size_t dstlen __attribute__((unused)))
+                    char *dst, size_t dstlen)
 {
+#ifdef NDEBUG
+  (void)dst;
+  (void)dstlen;
+#endif
   register uint32_t l;
   register char *srcend= src + srclen;
   register unsigned char *map= cs->to_upper;
@@ -85,9 +88,12 @@ size_t my_caseup_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
 
 
 size_t my_casedn_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
-                    char *dst __attribute__((unused)),
-                    size_t dstlen __attribute__((unused)))
+                    char *dst, size_t dstlen)
 {
+#ifdef NDEBUG
+  (void)dst;
+  (void)dstlen;
+#endif
   register uint32_t l;
   register char *srcend= src + srclen;
   register unsigned char *map=cs->to_lower;
@@ -254,7 +260,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
 }
 
 
-size_t my_numchars_mb(const CHARSET_INFO * const cs __attribute__((unused)),
+size_t my_numchars_mb(const CHARSET_INFO * const cs,
 		      const char *pos, const char *end)
 {
   register size_t count= 0;
@@ -268,7 +274,7 @@ size_t my_numchars_mb(const CHARSET_INFO * const cs __attribute__((unused)),
 }
 
 
-size_t my_charpos_mb(const CHARSET_INFO * const cs __attribute__((unused)),
+size_t my_charpos_mb(const CHARSET_INFO * const cs,
 		     const char *pos, const char *end, size_t length)
 {
   const char *start= pos;

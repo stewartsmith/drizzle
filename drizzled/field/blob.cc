@@ -59,7 +59,7 @@ Field_blob::Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsi
 void Field_blob::store_length(unsigned char *i_ptr,
                               uint32_t i_packlength,
                               uint32_t i_number,
-                              bool low_byte_first __attribute__((unused)))
+                              bool )
 {
   switch (i_packlength) {
   case 1:
@@ -100,7 +100,7 @@ void Field_blob::store_length(unsigned char *i_ptr, uint32_t i_packlength,
 
 uint32_t Field_blob::get_length(const unsigned char *pos,
                               uint32_t packlength_arg,
-                              bool low_byte_first __attribute__((unused)))
+                              bool )
 {
   switch (packlength_arg) {
   case 1:
@@ -301,7 +301,7 @@ int64_t Field_blob::val_int(void)
   return my_strntoll(charset(),blob,length,10,NULL,&not_used);
 }
 
-String *Field_blob::val_str(String *val_buffer __attribute__((unused)),
+String *Field_blob::val_str(String *,
 			    String *val_ptr)
 {
   char *blob;
@@ -590,7 +590,7 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
 
    @return  New pointer into memory based on from + length of the data
 */
-const unsigned char *Field_blob::unpack(unsigned char *to __attribute__((unused)),
+const unsigned char *Field_blob::unpack(unsigned char *,
                                 const unsigned char *from,
                                 uint32_t param_data,
                                 bool low_byte_first)
@@ -653,7 +653,7 @@ int Field_blob::pack_cmp(const unsigned char *b, uint32_t key_length_arg,
 
 unsigned char *
 Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint32_t max_length,
-                     bool low_byte_first __attribute__((unused)))
+                     bool )
 {
   unsigned char *save= ptr;
   ptr= (unsigned char*) from;
@@ -698,7 +698,7 @@ Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint32_t max_
 
 const unsigned char *
 Field_blob::unpack_key(unsigned char *to, const unsigned char *from, uint32_t max_length,
-                       bool low_byte_first __attribute__((unused)))
+                       bool )
 {
   /* get length of the blob key */
   uint32_t length= *from++;
@@ -723,7 +723,7 @@ Field_blob::unpack_key(unsigned char *to, const unsigned char *from, uint32_t ma
 
 unsigned char *
 Field_blob::pack_key_from_key_image(unsigned char *to, const unsigned char *from, uint32_t max_length,
-                                    bool low_byte_first __attribute__((unused)))
+                                    bool )
 {
   uint32_t length=uint2korr(from);
   if (length > max_length)

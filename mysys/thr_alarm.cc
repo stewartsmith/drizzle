@@ -294,7 +294,7 @@ void thr_end_alarm(thr_alarm_t *alarmed)
   every second.
 */
 
-void process_alarm(int sig __attribute__((unused)))
+void process_alarm(int sig)
 {
   sigset_t old_mask;
 
@@ -515,7 +515,7 @@ void thread_alarm(int sig)
 */
 
 #ifdef USE_ALARM_THREAD
-static void *alarm_handler(void *arg __attribute__((unused)))
+static void *alarm_handler(void *)
 {
   int error;
   struct timespec abstime;

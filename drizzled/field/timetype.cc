@@ -40,7 +40,7 @@ using namespace CMATH_NAMESPACE;
 
 int Field_time::store(const char *from,
                       uint32_t len,
-                      const CHARSET_INFO * const cs __attribute__((unused)))
+                      const CHARSET_INFO * const )
 {
   DRIZZLE_TIME ltime;
   long tmp;
@@ -83,7 +83,7 @@ int Field_time::store(const char *from,
 
 
 int Field_time::store_time(DRIZZLE_TIME *ltime,
-                           enum enum_drizzle_timestamp_type time_type __attribute__((unused)))
+                           enum enum_drizzle_timestamp_type )
 {
   long tmp= ((ltime->month ? 0 : ltime->day * 24L) + ltime->hour) * 10000L +
             (ltime->minute * 100 + ltime->second);
@@ -186,7 +186,7 @@ int64_t Field_time::val_int(void)
 */
 
 String *Field_time::val_str(String *val_buffer,
-			    String *val_ptr __attribute__((unused)))
+			    String *)
 {
   DRIZZLE_TIME ltime;
   val_buffer->alloc(MAX_DATE_STRING_REP_LENGTH);
@@ -279,7 +279,7 @@ int Field_time::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_time::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_time::sort_string(unsigned char *to,uint32_t )
 {
   to[0] = (unsigned char) (ptr[2] ^ 128);
   to[1] = ptr[1];

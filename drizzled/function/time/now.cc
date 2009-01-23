@@ -70,14 +70,14 @@ void Item_func_now_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 }
 
 bool Item_func_now::get_date(DRIZZLE_TIME *res,
-                             uint32_t fuzzy_date __attribute__((unused)))
+                             uint32_t )
 {
   *res= ltime;
   return 0;
 }
 
 
-int Item_func_now::save_in_field(Field *to, bool no_conversions __attribute__((unused)))
+int Item_func_now::save_in_field(Field *to, bool )
 {
   to->set_notnull();
   return to->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);

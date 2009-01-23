@@ -36,7 +36,7 @@ public:
   }
   enum_monotonicity_info get_monotonicity_info() const;
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 

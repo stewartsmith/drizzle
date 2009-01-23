@@ -155,7 +155,7 @@ int64_t Field_varstring::val_int(void)
                      &end_not_used, &not_used);
 }
 
-String *Field_varstring::val_str(String *val_buffer __attribute__((unused)),
+String *Field_varstring::val_str(String *,
 				 String *val_ptr)
 {
   uint32_t length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
@@ -306,7 +306,7 @@ uint32_t Field_varstring::used_length()
 
 unsigned char *Field_varstring::pack(unsigned char *to, const unsigned char *from,
                              uint32_t max_length,
-                             bool low_byte_first __attribute__((unused)))
+                             bool )
 {
   uint32_t length= length_bytes == 1 ? (uint) *from : uint2korr(from);
   set_if_smaller(max_length, field_length);
@@ -327,7 +327,7 @@ unsigned char *Field_varstring::pack(unsigned char *to, const unsigned char *fro
 
 unsigned char *
 Field_varstring::pack_key(unsigned char *to, const unsigned char *key, uint32_t max_length,
-                          bool low_byte_first __attribute__((unused)))
+                          bool )
 {
   uint32_t length=  length_bytes == 1 ? (uint) *key : uint2korr(key);
   uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
@@ -364,9 +364,9 @@ Field_varstring::pack_key(unsigned char *to, const unsigned char *key, uint32_t 
 */
 
 const unsigned char *
-Field_varstring::unpack_key(unsigned char *to __attribute__((unused)),
+Field_varstring::unpack_key(unsigned char *,
                             const unsigned char *key, uint32_t max_length,
-                            bool low_byte_first __attribute__((unused)))
+                            bool )
 {
   /* get length of the blob key */
   uint32_t length= *key++;
@@ -395,7 +395,7 @@ Field_varstring::unpack_key(unsigned char *to __attribute__((unused)),
 
 unsigned char *
 Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char *from, uint32_t max_length,
-                                         bool low_byte_first __attribute__((unused)))
+                                         bool )
 {
   /* Key length is always stored as 2 bytes */
   uint32_t length= uint2korr(from);
@@ -428,7 +428,7 @@ Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char 
 const unsigned char *
 Field_varstring::unpack(unsigned char *to, const unsigned char *from,
                         uint32_t param_data,
-                        bool low_byte_first __attribute__((unused)))
+                        bool )
 {
   uint32_t length;
   uint32_t l_bytes= (param_data && (param_data < field_length)) ?
@@ -547,7 +547,7 @@ uint32_t Field_varstring::get_key_image(basic_string<unsigned char> &buff,
 
 uint32_t Field_varstring::get_key_image(unsigned char *buff,
                                     uint32_t length,
-                                    imagetype type __attribute__((unused)))
+                                    imagetype )
 {
   uint32_t f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
   uint32_t local_char_length= length / field_charset->mbmaxlen;

@@ -191,6 +191,11 @@ else
   AC_PATH_PROG(AS, as, as)
 fi
 
+AC_PATH_PROG(LCOV, lcov, lcov)
+AC_PATH_PROG(GENHTML, genhtml, genhtml)
+
+AM_CONDITIONAL(HAVE_LCOV,[test "$ac_cv_prog_lcov" != "no"])
+
 dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
 if test "$ac_cv_c_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
 then

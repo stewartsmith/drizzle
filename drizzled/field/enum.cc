@@ -135,7 +135,7 @@ int Field_enum::store(double nr)
 
 
 int Field_enum::store(int64_t nr,
-                      bool unsigned_val __attribute__((unused)))
+                      bool )
 {
   int error= 0;
   if ((uint64_t) nr > typelib->count || nr == 0)
@@ -222,7 +222,7 @@ int Field_enum::do_save_field_metadata(unsigned char *metadata_ptr)
 }
 
 
-String *Field_enum::val_str(String *val_buffer __attribute__((unused)),
+String *Field_enum::val_str(String *,
 			    String *val_ptr)
 {
   uint32_t tmp=(uint) Field_enum::val_int();
@@ -246,7 +246,7 @@ int Field_enum::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_enum::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_enum::sort_string(unsigned char *to,uint32_t )
 {
   uint64_t value=Field_enum::val_int();
   to+=packlength-1;

@@ -497,7 +497,7 @@ bool Item_sum::walk (Item_processor processor, bool walk_subquery,
 }
 
 
-Field *Item_sum::create_tmp_field(bool group __attribute__((unused)),
+Field *Item_sum::create_tmp_field(bool ,
                                   Table *table,
                                   uint32_t convert_blob_length)
 {
@@ -886,7 +886,7 @@ static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
 
 
 static int item_sum_distinct_walk(void *element,
-                                  element_count num_of_dups __attribute__((unused)),
+                                  element_count ,
                                   void *item)
 {
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
@@ -1248,7 +1248,7 @@ Item *Item_sum_avg::copy_or_same(Session* session)
 
 
 Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
-                                      uint32_t convert_blob_len __attribute__((unused)))
+                                      uint32_t )
 {
   Field *field;
   if (group)
@@ -1464,7 +1464,7 @@ Item *Item_sum_variance::copy_or_same(Session* session)
   pass around.
 */
 Field *Item_sum_variance::create_tmp_field(bool group, Table *table,
-                                           uint32_t convert_blob_len __attribute__((unused)))
+                                           uint32_t )
 {
   Field *field;
   if (group)
@@ -2517,8 +2517,8 @@ int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 extern "C" {
 #endif
 
-static int count_distinct_walk(void *elem __attribute__((unused)),
-                               element_count count __attribute__((unused)),
+static int count_distinct_walk(void *,
+                               element_count ,
                                void *arg)
 {
   (*((uint64_t*)arg))++;
@@ -2882,7 +2882,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
   Append data from current leaf to item->result.
 */
 
-int dump_leaf_key(unsigned char* key, element_count count __attribute__((unused)),
+int dump_leaf_key(unsigned char* key, element_count ,
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
@@ -3339,7 +3339,7 @@ void Item_func_group_concat::make_unique()
 }
 
 
-String* Item_func_group_concat::val_str(String* str __attribute__((unused)))
+String* Item_func_group_concat::val_str(String* )
 {
   assert(fixed == 1);
   if (null_value)

@@ -233,7 +233,7 @@ int Field_new_decimal::store_decimal(const my_decimal *decimal_value)
 
 
 int Field_new_decimal::store_time(DRIZZLE_TIME *ltime,
-                                  enum enum_drizzle_timestamp_type t_type __attribute__((unused)))
+                                  enum enum_drizzle_timestamp_type )
 {
     my_decimal decimal_value;
     return store_value(date2my_decimal(ltime, &decimal_value));
@@ -267,7 +267,7 @@ my_decimal* Field_new_decimal::val_decimal(my_decimal *decimal_value)
 
 
 String *Field_new_decimal::val_str(String *val_buffer,
-                                   String *val_ptr __attribute__((unused)))
+                                   String *)
 {
   my_decimal decimal_value;
   uint32_t fixed_precision= decimal_precision ? precision : 0;
@@ -284,7 +284,7 @@ int Field_new_decimal::cmp(const unsigned char *a,const unsigned char*b)
 
 
 void Field_new_decimal::sort_string(unsigned char *buff,
-                                    uint32_t length __attribute__((unused)))
+                                    uint32_t )
 {
   memcpy(buff, ptr, bin_size);
 }
