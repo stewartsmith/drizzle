@@ -43,7 +43,7 @@ public:
   */
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
   bool result_as_int64_t() { return true; }
-  bool check_vcol_func_processor(unsigned char *int_arg  __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 

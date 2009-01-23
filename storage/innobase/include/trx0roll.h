@@ -123,7 +123,7 @@ os_thread_ret_t
 trx_rollback_or_clean_all_recovered(
 /*================================*/
 			/* out: a dummy parameter */
-	void*	arg __attribute__((unused)));
+	void*	arg);
 			/* in: a dummy parameter required by
 			os_thread_create */
 /********************************************************************

@@ -28,7 +28,7 @@ public:
   Item_func_from_days(Item *a) :Item_date(a) {}
   const char *func_name() const { return "from_days"; }
   bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };
 
