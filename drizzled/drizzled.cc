@@ -244,7 +244,7 @@ static uint32_t wake_thread;
 static uint32_t killed_threads, thread_created;
 static uint32_t max_used_connections;
 static char *drizzled_user, *drizzled_chroot;
-static char *opt_init_slave, *language_ptr, *opt_init_connect;
+static char *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
 static char *character_set_filesystem_name;
 static char *lc_time_names_name;
@@ -285,7 +285,6 @@ handlerton *heap_hton;
 handlerton *myisam_hton;
 
 bool use_temp_pool;
-bool relay_log_purge;
 char* opt_secure_file_priv= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
@@ -313,27 +312,15 @@ ulong what_to_log;
 uint64_t slow_launch_time;
 uint64_t slave_open_temp_tables;
 uint64_t open_files_limit;
-uint64_t max_binlog_size;
-uint64_t max_relay_log_size;
-uint64_t slave_net_timeout;
-uint64_t slave_trans_retries;
-bool slave_allow_batching;
-ulong slave_exec_mode_options;
-const char *slave_exec_mode_str= "STRICT";
 uint64_t thread_pool_size= 0;
-uint64_t binlog_cache_size= 0;
-uint64_t max_binlog_cache_size= 0;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
-uint64_t binlog_cache_use= 0;
-uint64_t binlog_cache_disk_use= 0;
 uint64_t max_connections;
 uint64_t max_connect_errors;
 ulong thread_id=1L;
 pid_t current_pid;
 uint64_t slow_launch_threads= 0;
-uint64_t sync_binlog_period;
 uint64_t expire_logs_days= 0;
 
 const double log_10[] = {
@@ -445,9 +432,7 @@ pthread_cond_t  COND_server_started;
 uint32_t report_port= DRIZZLE_PORT;
 uint32_t master_retry_count= 0;
 char *master_info_file;
-char *relay_log_info_file;
 char *report_host;
-char *opt_relay_logname = 0, *opt_relaylog_index_name=0;
 char *opt_logname;
 
 /* Static variables */
@@ -457,7 +442,6 @@ static bool kill_in_progress, segfaulted;
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 static int cleanup_done;
-static char *opt_binlog_index_name;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
 static char **defaults_argv;
@@ -814,12 +798,9 @@ void clean_up(bool print_message)
   if (defaults_argv)
     free_defaults(defaults_argv);
   free(sys_init_connect.value);
-  free(sys_init_slave.value);
   free(drizzle_tmpdir);
   if (opt_bin_logname)
     free(opt_bin_logname);
-  if (opt_relay_logname)
-    free(opt_relay_logname);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
   bitmap_free(&temp_pool);
@@ -2001,14 +1982,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   else
     sys_init_connect.value=strdup("");
   if (sys_init_connect.value == NULL)
-    return 1;
-
-  sys_init_slave.value_length= 0;
-  if ((sys_init_slave.value= opt_init_slave))
-    sys_init_slave.value_length= strlen(opt_init_slave);
-  else
-    sys_init_slave.value=strdup("");
-  if (sys_init_slave.value == NULL)
     return 1;
 
   if (use_temp_pool && bitmap_init(&temp_pool,0,1024,1))
@@ -3416,7 +3389,7 @@ static void drizzle_init_variables(void)
   drizzle_home[0]= pidfile_name[0]= 0;
   opt_bin_log= 0;
   opt_skip_show_db=0;
-  opt_logname= opt_binlog_index_name= 0;
+  opt_logname= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
   segfaulted= kill_in_progress= 0;
@@ -3432,7 +3405,6 @@ static void drizzle_init_variables(void)
   abort_loop= select_thread_in_use= signal_thread_in_use= 0;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
-  binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;
   my_bind_addr_str= NULL;
@@ -3450,7 +3422,6 @@ static void drizzle_init_variables(void)
 
   /* Things with default values that are not zero */
   delay_key_write_options= (uint) DELAY_KEY_WRITE_ON;
-  slave_exec_mode_options= 0;
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
@@ -3478,12 +3449,6 @@ static void drizzle_init_variables(void)
   drizzle_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
   drizzle_data_home_buff[1]=0;
   drizzle_data_home_len= 2;
-
-  /* Replication parameters */
-  master_info_file= (char*) "master.info",
-    relay_log_info_file= (char*) "relay-log.info";
-  report_host= 0;	/* TO BE DELETED */
-  opt_relay_logname= opt_relaylog_index_name= 0;
 
   /* Variables in libraries */
   charsets_dir= 0;

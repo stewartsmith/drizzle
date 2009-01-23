@@ -90,11 +90,8 @@ TYPELIB delay_key_write_typelib=
 
 static bool sys_update_init_connect(Session*, set_var*);
 static void sys_default_init_connect(Session*, enum_var_type type);
-static bool sys_update_init_slave(Session*, set_var*);
-static void sys_default_init_slave(Session*, enum_var_type type);
 static bool set_option_bit(Session *session, set_var *var);
 static bool set_option_autocommit(Session *session, set_var *var);
-static int  check_log_update(Session *session, set_var *var);
 static int  check_pseudo_thread_id(Session *session, set_var *var);
 static int check_tx_isolation(Session *session, set_var *var);
 static void fix_tx_isolation(Session *session, enum_var_type type);
@@ -139,8 +136,6 @@ sys_auto_increment_offset(&vars, "auto_increment_offset",
                           sys_var::SESSION_VARIABLE_IN_BINLOG);
 
 static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
-static sys_var_long_ptr	sys_binlog_cache_size(&vars, "binlog_cache_size",
-                                              &binlog_cache_size);
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
                                                           &SV::bulk_insert_buff_size);
 static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
@@ -169,9 +164,6 @@ static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
 sys_var_str             sys_init_connect(&vars, "init_connect", 0,
                                          sys_update_init_connect,
                                          sys_default_init_connect,0);
-sys_var_str             sys_init_slave(&vars, "init_slave", 0,
-                                       sys_update_init_slave,
-                                       sys_default_init_slave,0);
 static sys_var_session_uint32_t	sys_interactive_timeout(&vars, "interactive_timeout",
                                                         &SV::net_interactive_timeout);
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
@@ -190,8 +182,6 @@ static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
                                          &opt_local_infile);
 static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
                                                        &SV::max_allowed_packet);
-static sys_var_long_ptr	sys_max_binlog_cache_size(&vars, "max_binlog_cache_size",
-                                                  &max_binlog_cache_size);
 static sys_var_long_ptr	sys_max_connections(&vars, "max_connections",
                                             &max_connections,
                                             fix_max_connections);
@@ -357,10 +347,6 @@ sys_var_session_bit sys_autocommit(&vars, "autocommit", 0,
 static sys_var_session_bit	sys_big_selects(&vars, "sql_big_selects", 0,
 					set_option_bit,
 					OPTION_BIG_SELECTS);
-static sys_var_session_bit	sys_log_binlog(&vars, "sql_log_bin",
-                                       check_log_update,
-				       set_option_bit,
-				       OPTION_BIN_LOG);
 static sys_var_session_bit	sys_sql_warnings(&vars, "sql_warnings", 0,
 					 set_option_bit,
 					 OPTION_WARNINGS);
@@ -539,18 +525,6 @@ static bool sys_update_init_connect(Session *, set_var *var)
 static void sys_default_init_connect(Session *, enum_var_type)
 {
   update_sys_var_str(&sys_init_connect, &LOCK_sys_init_connect, 0);
-}
-
-
-static bool sys_update_init_slave(Session *, set_var *var)
-{
-  return update_sys_var_str(&sys_init_slave, &LOCK_sys_init_slave, var);
-}
-
-
-static void sys_default_init_slave(Session *, enum_var_type)
-{
-  update_sys_var_str(&sys_init_slave, &LOCK_sys_init_slave, 0);
 }
 
 
@@ -2107,12 +2081,6 @@ static bool set_option_autocommit(Session *session, set_var *var)
   }
   return 0;
 }
-
-static int check_log_update(Session *, set_var *)
-{
-  return 0;
-}
-
 
 static int check_pseudo_thread_id(Session *, set_var *var)
 {
