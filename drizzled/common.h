@@ -152,8 +152,8 @@ enum enum_server_command
   COM_SLEEP, COM_QUIT, COM_INIT_DB, COM_QUERY, COM_FIELD_LIST,
   COM_CREATE_DB, COM_DROP_DB, COM_REFRESH, COM_SHUTDOWN,
   COM_PROCESS_INFO, COM_CONNECT, COM_PROCESS_KILL, COM_PING,
-  COM_TIME, COM_CHANGE_USER, COM_BINLOG_DUMP,
-  COM_CONNECT_OUT, COM_REGISTER_SLAVE,
+  COM_TIME, COM_CHANGE_USER,
+  COM_CONNECT_OUT,
   COM_SET_OPTION, COM_DAEMON,
   /* don't forget to update const char *command_name[] in sql_parse.cc */
 
@@ -206,21 +206,10 @@ enum enum_server_command
 #define REFRESH_TABLES		4	/* close all tables */
 #define REFRESH_HOSTS		8	/* Flush host cache */
 #define REFRESH_STATUS		16	/* Flush status variables */
-#define REFRESH_THREADS		32	/* Flush thread cache */
-#define REFRESH_SLAVE           64      /* Reset master info and restart slave
-					   thread */
-#define REFRESH_MASTER          128     /* Remove all bin logs in the index
-					   and truncate the index */
 
 /* The following can't be set with mysql_refresh() */
 #define REFRESH_READ_LOCK	16384	/* Lock tables for read */
 #define REFRESH_FAST		32768	/* Intern flag */
-
-/* RESET (remove all queries) from query cache */
-#define REFRESH_QUERY_CACHE	65536
-#define REFRESH_QUERY_CACHE_FREE 0x20000L /* pack query cache */
-#define REFRESH_DES_KEY_FILE	0x40000L
-#define REFRESH_USER_RESOURCES	0x80000L
 
 #define CLIENT_LONG_PASSWORD	1	/* new more secure passwords */
 #define CLIENT_FOUND_ROWS	2	/* Found instead of affected rows */

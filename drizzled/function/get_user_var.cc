@@ -135,8 +135,7 @@ static int get_var_with_binlog(Session *session, enum_sql_command sql_command,
     if (!(var_entry= get_variable(&session->user_vars, name, 0)))
       goto err;
   }
-  else if (var_entry->used_query_id == session->query_id ||
-           drizzle_bin_log.is_query_in_union(session, var_entry->used_query_id))
+  else if (var_entry->used_query_id == session->query_id)
   {
     /*
        If this variable was already stored in user_var_events by this query

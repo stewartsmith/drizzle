@@ -21,6 +21,7 @@
 #define DRIZZLED_SQL_ERROR_H
 
 #include <drizzled/sql_alloc.h>
+#include <drizzled/handlerton.h>
 
 class DRIZZLE_ERROR: public Sql_alloc
 {

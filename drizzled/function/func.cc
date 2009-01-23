@@ -228,14 +228,14 @@ void Item_func::traverse_cond(Cond_traverser traverser,
     Item **arg,**arg_end;
 
     switch (order) {
-    case(PREFIX):
+    case (T_PREFIX):
       (*traverser)(this, argument);
       for (arg= args, arg_end= args+arg_count; arg != arg_end; arg++)
       {
         (*arg)->traverse_cond(traverser, argument, order);
       }
       break;
-    case (POSTFIX):
+    case (T_POSTFIX):
       for (arg= args, arg_end= args+arg_count; arg != arg_end; arg++)
       {
         (*arg)->traverse_cond(traverser, argument, order);

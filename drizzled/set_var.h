@@ -419,8 +419,8 @@ class sys_var_session :public sys_var
 public:
   sys_var_session(const char *name_arg,
               sys_after_update_func func= NULL,
-              Binlog_status_enum binlog_status= NOT_IN_BINLOG)
-    :sys_var(name_arg, func, binlog_status)
+              Binlog_status_enum bl_status= NOT_IN_BINLOG)
+    :sys_var(name_arg, func, bl_status)
   {}
   bool check_type(enum_var_type)
   { return 0; }
@@ -588,9 +588,9 @@ public:
   sys_var_session_enum(sys_var_chain *chain, const char *name_arg,
                    uint32_t SV::*offset_arg, TYPELIB *typelib,
                    sys_after_update_func func= NULL,
-                   sys_check_func check= NULL)
+                   sys_check_func check_f= NULL)
     :sys_var_session(name_arg, func), offset(offset_arg),
-    enum_names(typelib), check_func(check)
+    enum_names(typelib), check_func(check_f)
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var)
   {
@@ -804,17 +804,6 @@ public:
   void set_default(Session *session, enum_var_type type);
 };
 
-
-class sys_var_log_state :public sys_var_bool_ptr
-{
-  uint32_t log_type;
-public:
-  sys_var_log_state(sys_var_chain *chain, const char *name_arg, bool *value_arg,
-                    uint32_t log_type_arg)
-    :sys_var_bool_ptr(chain, name_arg, value_arg), log_type(log_type_arg) {}
-  bool update(Session *session, set_var *var);
-  void set_default(Session *session, enum_var_type type);
-};
 
 /* Variable that you can only read from */
 

@@ -658,16 +658,11 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LOOP_SYM
 %token  LOW_PRIORITY
 %token  LT                            /* OPERATOR */
-%token  MASTER_CONNECT_RETRY_SYM
-%token  MASTER_HOST_SYM
 %token  MASTER_LOG_FILE_SYM
 %token  MASTER_LOG_POS_SYM
-%token  MASTER_PASSWORD_SYM
 %token  MASTER_PORT_SYM
 %token  MASTER_SERVER_ID_SYM
 %token  MASTER_SYM
-%token  MASTER_USER_SYM
-%token  MASTER_HEARTBEAT_PERIOD_SYM
 %token  MATCH                         /* SQL-2003-R */
 %token  MAX_CONNECTIONS_PER_HOUR
 %token  MAX_QUERIES_PER_HOUR
@@ -820,7 +815,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SQL_CALC_FOUND_ROWS
 %token  SQL_SMALL_RESULT
 %token  SQL_SYM                       /* SQL-2003-R */
-%token  SQL_THREAD
 %token  STARTING
 %token  STARTS_SYM
 %token  START_SYM                     /* SQL-2003-R */
@@ -1053,11 +1047,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <build_method> build_method
 
 %type <NONE>
-        query verb_clause create change select drop insert replace insert2
+        query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
         show describe load alter optimize keycache flush
-        reset purge begin commit rollback savepoint release
-        slave master_def master_defs master_file_def slave_until_opts
+        begin commit rollback savepoint release
         repair analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
         keycache_list assign_to_keycache
@@ -1082,7 +1075,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_extended_describe
         statement
         opt_field_or_var_spec fields_or_vars opt_load_data_set_spec
-        binlog_base64_event
         init_key_options key_options key_opts key_opt key_using_alg
         parse_vcol_expr vcol_opt_attribute vcol_opt_attribute_list
         vcol_attribute
@@ -1145,8 +1137,6 @@ verb_clause:
 statement:
           alter
         | analyze
-        | binlog_base64_event
-        | change
         | check
         | checksum
         | commit
@@ -1162,139 +1152,20 @@ statement:
         | optimize
         | keycache
         | parse_vcol_expr
-        | purge
         | release
         | rename
         | repair
         | replace
-        | reset
         | rollback
         | savepoint
         | select
         | set
         | show
-        | slave
         | start
         | truncate
         | unlock
         | update
         | use
-        ;
-
-
-/* change master */
-
-change:
-          CHANGE MASTER_SYM TO_SYM
-          {
-            LEX *lex = Lex;
-            lex->sql_command = SQLCOM_CHANGE_MASTER;
-            memset(&lex->mi, 0, sizeof(lex->mi));
-          }
-          master_defs
-          {}
-        ;
-
-master_defs:
-          master_def
-        | master_defs ',' master_def
-        ;
-
-master_def:
-          MASTER_HOST_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.host = $3.str;
-          }
-        | MASTER_USER_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.user = $3.str;
-          }
-        | MASTER_PASSWORD_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.password = $3.str;
-          }
-        | MASTER_PORT_SYM EQ ulong_num
-          {
-            Lex->mi.port = $3;
-          }
-        | MASTER_CONNECT_RETRY_SYM EQ ulong_num
-          {
-            Lex->mi.connect_retry = $3;
-          }
-        | MASTER_HEARTBEAT_PERIOD_SYM EQ NUM_literal
-          {
-            Lex->mi.heartbeat_period= (float) $3->val_real();
-            if (Lex->mi.heartbeat_period > SLAVE_MAX_HEARTBEAT_PERIOD ||
-                Lex->mi.heartbeat_period < 0.0)
-            {
-              char buf[sizeof(SLAVE_MAX_HEARTBEAT_PERIOD*4)];
-              sprintf(buf, "%d seconds", SLAVE_MAX_HEARTBEAT_PERIOD);
-              my_error(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
-                       MYF(0),
-                       " is negative or exceeds the maximum ",
-                       buf); 
-              DRIZZLE_YYABORT;
-            }
-            if (Lex->mi.heartbeat_period > slave_net_timeout)
-            {
-              push_warning_printf(YYSession, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                  ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
-                                  ER(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE),
-                                  " exceeds the value of `slave_net_timeout' sec.",
-                                  " A sensible value for the period should be"
-                                  " less than the timeout.");
-            }
-            if (Lex->mi.heartbeat_period < 0.001)
-            {
-              if (Lex->mi.heartbeat_period != 0.0)
-              {
-                push_warning_printf(YYSession, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                    ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
-                                    ER(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE),
-                                    " is less than 1 msec.",
-                                    " The period is reset to zero which means"
-                                    " no heartbeats will be sending");
-                Lex->mi.heartbeat_period= 0.0;
-              }
-              Lex->mi.heartbeat_opt=  LEX_MASTER_INFO::LEX_MI_DISABLE;
-            }
-            Lex->mi.heartbeat_opt=  LEX_MASTER_INFO::LEX_MI_ENABLE;
-          }
-        |
-        master_file_def
-        ;
-
-master_file_def:
-          MASTER_LOG_FILE_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.log_file_name = $3.str;
-          }
-        | MASTER_LOG_POS_SYM EQ ulonglong_num
-          {
-            Lex->mi.pos = $3;
-            /* 
-               If the user specified a value < BIN_LOG_HEADER_SIZE, adjust it
-               instead of causing subsequent errors. 
-               We need to do it in this file, because only there we know that 
-               MASTER_LOG_POS has been explicitely specified. On the contrary
-               in change_master() (sql_repl.cc) we cannot distinguish between 0
-               (MASTER_LOG_POS explicitely specified as 0) and 0 (unspecified),
-               whereas we want to distinguish (specified 0 means "read the binlog
-               from 0" (4 in fact), unspecified means "don't change the position
-               (keep the preceding value)").
-            */
-            Lex->mi.pos = cmax((uint64_t)BIN_LOG_HEADER_SIZE, Lex->mi.pos);
-          }
-        | RELAY_LOG_FILE_SYM EQ TEXT_STRING_sys
-          {
-            Lex->mi.relay_log_name = $3.str;
-          }
-        | RELAY_LOG_POS_SYM EQ ulong_num
-          {
-            Lex->mi.relay_log_pos = $3;
-            /* Adjust if < BIN_LOG_HEADER_SIZE (same comment as Lex->mi.pos) */
-            Lex->mi.relay_log_pos = cmax((uint32_t)BIN_LOG_HEADER_SIZE, Lex->mi.relay_log_pos);
-          }
         ;
 
 /* create a table */
@@ -2590,47 +2461,6 @@ opt_to:
         | AS {}
         ;
 
-/*
-  SLAVE START and SLAVE STOP are deprecated. We keep them for compatibility.
-*/
-
-slave:
-          START_SYM SLAVE slave_thread_opts
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_SLAVE_START;
-            lex->type = 0;
-            /* We'll use mi structure for UNTIL options */
-            memset(&lex->mi, 0, sizeof(lex->mi));
-            /* If you change this code don't forget to update SLAVE START too */
-          }
-          slave_until
-          {}
-        | STOP_SYM SLAVE slave_thread_opts
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_SLAVE_STOP;
-            lex->type = 0;
-            /* If you change this code don't forget to update SLAVE STOP too */
-          }
-        | SLAVE START_SYM slave_thread_opts
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_SLAVE_START;
-            lex->type = 0;
-            /* We'll use mi structure for UNTIL options */
-            memset(&lex->mi, 0, sizeof(lex->mi));
-          }
-          slave_until
-          {}
-        | SLAVE STOP_SYM slave_thread_opts
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_SLAVE_STOP;
-            lex->type = 0;
-          }
-        ;
-
 start:
           START_SYM TRANSACTION_SYM start_transaction_opts
           {
@@ -2648,43 +2478,6 @@ start_transaction_opts:
           }
         ;
 
-slave_thread_opts:
-          { Lex->slave_session_opt= 0; }
-          slave_thread_opt_list
-          {}
-        ;
-
-slave_thread_opt_list:
-          slave_thread_opt
-        | slave_thread_opt_list ',' slave_thread_opt
-        ;
-
-slave_thread_opt:
-          /*empty*/ {}
-        | SQL_THREAD   { Lex->slave_session_opt|=SLAVE_SQL; }
-        | RELAY_THREAD { Lex->slave_session_opt|=SLAVE_IO; }
-        ;
-
-slave_until:
-          /*empty*/ {}
-        | UNTIL_SYM slave_until_opts
-          {
-            LEX *lex=Lex;
-            if (((lex->mi.log_file_name || lex->mi.pos) && (lex->mi.relay_log_name || lex->mi.relay_log_pos)) ||
-                !((lex->mi.log_file_name && lex->mi.pos) ||
-                  (lex->mi.relay_log_name && lex->mi.relay_log_pos)))
-            {
-               my_message(ER_BAD_SLAVE_UNTIL_COND,
-                          ER(ER_BAD_SLAVE_UNTIL_COND), MYF(0));
-               DRIZZLE_YYABORT;
-            }
-          }
-        ;
-
-slave_until_opts:
-          master_file_def
-        | slave_until_opts ',' master_file_def
-        ;
 
 checksum:
           CHECKSUM_SYM table_or_tables
@@ -2738,14 +2531,6 @@ analyze:
           }
           table_list
           {}
-        ;
-
-binlog_base64_event:
-          BINLOG_SYM TEXT_STRING_sys
-          {
-            Lex->sql_command = SQLCOM_BINLOG_BASE64_EVENT;
-            Lex->comment= $2;
-          }
         ;
 
 check:
@@ -4262,8 +4047,7 @@ select_derived2:
           {
             LEX *lex= Lex;
             lex->derived_tables|= DERIVED_SUBQUERY;
-            if (!lex->expr_allows_subselect ||
-                lex->sql_command == (int)SQLCOM_PURGE)
+            if (!lex->expr_allows_subselect)
             {
               my_parse_error(ER(ER_SYNTAX_ERROR));
               DRIZZLE_YYABORT;
@@ -5254,10 +5038,6 @@ show_param:
             if (prepare_schema_table(YYSession, lex, $4, SCH_COLUMNS))
               DRIZZLE_YYABORT;
           }
-        | master_or_binary LOGS_SYM
-          {
-            Lex->sql_command = SQLCOM_SHOW_BINLOGS;
-          }
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
             LEX *lex= Lex;
@@ -5306,19 +5086,6 @@ show_param:
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
           }
-        | MASTER_SYM STATUS_SYM
-          {
-            Lex->sql_command = SQLCOM_SHOW_MASTER_STAT;
-          }
-        | SLAVE STATUS_SYM
-          {
-            Lex->sql_command = SQLCOM_SHOW_SLAVE_STAT;
-          }
-
-master_or_binary:
-          MASTER_SYM
-        | BINARY
-        ;
 
 opt_db:
           /* empty */  { $$= 0; }
@@ -5414,75 +5181,17 @@ flush_option:
           opt_table_list {}
         | TABLES WITH READ_SYM LOCK_SYM
           { Lex->type|= REFRESH_TABLES | REFRESH_READ_LOCK; }
-        | QUERY_SYM CACHE_SYM
-          { Lex->type|= REFRESH_QUERY_CACHE_FREE; }
         | HOSTS_SYM
           { Lex->type|= REFRESH_HOSTS; }
         | LOGS_SYM
           { Lex->type|= REFRESH_LOG; }
         | STATUS_SYM
           { Lex->type|= REFRESH_STATUS; }
-        | SLAVE
-          { Lex->type|= REFRESH_SLAVE; }
-        | MASTER_SYM
-          { Lex->type|= REFRESH_MASTER; }
-        | RESOURCES
-          { Lex->type|= REFRESH_USER_RESOURCES; }
         ;
 
 opt_table_list:
           /* empty */  {}
         | table_list {}
-        ;
-
-reset:
-          RESET_SYM
-          {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_RESET; lex->type=0;
-          }
-          reset_options
-          {}
-        ;
-
-reset_options:
-          reset_options ',' reset_option
-        | reset_option
-        ;
-
-reset_option:
-          SLAVE               { Lex->type|= REFRESH_SLAVE; }
-        | MASTER_SYM          { Lex->type|= REFRESH_MASTER; }
-        | QUERY_SYM CACHE_SYM { Lex->type|= REFRESH_QUERY_CACHE;}
-        ;
-
-purge:
-          PURGE
-          {
-            LEX *lex=Lex;
-            lex->type=0;
-            lex->sql_command = SQLCOM_PURGE;
-          }
-          purge_options
-          {}
-        ;
-
-purge_options:
-          master_or_binary LOGS_SYM purge_option
-        ;
-
-purge_option:
-          TO_SYM TEXT_STRING_sys
-          {
-            Lex->to_log = $2.str;
-          }
-        | BEFORE_SYM expr
-          {
-            LEX *lex= Lex;
-            lex->value_list.empty();
-            lex->value_list.push_front($2);
-            lex->sql_command= SQLCOM_PURGE_BEFORE;
-          }
         ;
 
 /* kill threads */
@@ -6235,14 +5944,10 @@ keyword_sp:
         | LOGS_SYM                 {}
         | MAX_ROWS                 {}
         | MASTER_SYM               {}
-        | MASTER_HOST_SYM          {}
         | MASTER_PORT_SYM          {}
         | MASTER_LOG_FILE_SYM      {}
         | MASTER_LOG_POS_SYM       {}
-        | MASTER_USER_SYM          {}
-        | MASTER_PASSWORD_SYM      {}
         | MASTER_SERVER_ID_SYM     {}
-        | MASTER_CONNECT_RETRY_SYM {}
         | MAX_CONNECTIONS_PER_HOUR {}
         | MAX_QUERIES_PER_HOUR     {}
         | MAX_SIZE_SYM             {}
@@ -6318,7 +6023,6 @@ keyword_sp:
         | SNAPSHOT_SYM             {}
         | SOURCE_SYM               {}
         | SQL_BUFFER_RESULT        {}
-        | SQL_THREAD               {}
         | STARTS_SYM               {}
         | STATUS_SYM               {}
         | STORAGE_SYM              {}
@@ -6801,8 +6505,7 @@ subselect:
 subselect_start:
           {
             LEX *lex=Lex;
-            if (!lex->expr_allows_subselect ||
-               lex->sql_command == (int)SQLCOM_PURGE)
+            if (!lex->expr_allows_subselect)
             {
               my_parse_error(ER(ER_SYNTAX_ERROR));
               DRIZZLE_YYABORT;

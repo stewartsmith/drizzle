@@ -18,7 +18,6 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/replication/replication.h>
 #include <drizzled/error.h>
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
@@ -250,7 +249,7 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
 
   if (read_file_from_client)
   {
-    (void)net_request_file(&session->net,ex->file_name);
+    assert(0);
     file = -1;
   }
   else
@@ -807,10 +806,6 @@ READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * co
 
       if (get_it_from_net)
 	cache.read_function = _my_b_net_read;
-
-      if (drizzle_bin_log.is_open())
-	cache.pre_read = cache.pre_close =
-	  (IO_CACHE_CALLBACK) log_loaded_block;
     }
   }
 }

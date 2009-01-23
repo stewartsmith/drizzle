@@ -113,10 +113,6 @@ create table t1 (a varchar(1024), b virtual varchar(1024) as (found_rows()));
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
 create table t1 (a virtual int as (last_insert_id()));
 
---echo # MASTER_POS_WAIT()
--- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
-create table t1 (a varchar(32), b virtual int as (master_pos_wait(a,0,2)));
-
 --echo # ROW_COUNT()
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
 create table t1 (a virtual int as (row_count()));

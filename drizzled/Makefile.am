@@ -95,7 +95,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/last_insert.h \
 		function/length.h \
 		function/locate.h \
-		function/master_pos_wait.h \
 		function/min_max.h \
 		function/num1.h \
 		function/numhybrid.h \
@@ -270,9 +269,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_string.h \
 		lex_symbol.h \
 		lock.h \
-		log_event.h \
 		logging.h \
-		log.h \
 		my_decimal.h\
 		name_resolution_context.h \
 		name_resolution_context_state.h \
@@ -296,15 +293,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		query_arena.h \
 		query_id.h \
 		rename.h \
-		replication/binlog.h \
-		replication/constants.h \
-		replication/mi.h \
-		replication/record.h \
-		replication/replication.h \
-		replication/reporting.h \
-		replication/rli.h \
-		replication/tblmap.h \
-		replication/utility.h \
 		replicator.h \
 		scheduler.h \
 		scheduling.h \
@@ -312,7 +300,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		set_var.h \
 		show.h \
 		sj_tmp_table.h \
-		slave.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -403,7 +390,6 @@ drizzled_SOURCES = \
                 key_map.cc \
 		lock.cc \
 		log.cc \
-		log_event.cc \
 		logging.cc \
 		mf_iocache.cc \
 		my_decimal.cc \
@@ -417,14 +403,6 @@ drizzled_SOURCES = \
 		query_id.cc \
 		records.cc \
 		rename.cc \
-		replication/binlog.cc \
-		replication/mi.cc \
-		replication/record.cc \
-		replication/replication.cc \
-		replication/reporting.cc \
-		replication/rli.cc \
-		replication/tblmap.cc \
-		replication/utility.cc \
 		replicator.cc \
 		scheduler.cc \
                 scheduling.cc \
@@ -432,7 +410,6 @@ drizzled_SOURCES = \
 		set_var.cc \
 		show.cc \
 		sj_tmp_table.cc \
-		slave.cc \
 		sql_base.cc \
 		sql_builtin.cc \
 		sql_client.cc \
@@ -571,7 +548,6 @@ libfunction_la_SOURCES = \
 		function/last_insert.cc \
 		function/length.cc \
 		function/locate.cc \
-		function/master_pos_wait.cc \
 		function/min_max.cc \
 		function/num1.cc \
 		function/numhybrid.cc \

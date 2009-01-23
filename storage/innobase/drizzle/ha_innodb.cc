@@ -33,7 +33,6 @@
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 #include <drizzled/field.h>
-#include <drizzled/log.h>
 #include <drizzled/session.h>
 #include <drizzled/current_session.h>
 #include <drizzled/table.h>
@@ -2273,8 +2272,9 @@ retry:
 			}
 		}
 
-		trx->mysql_log_file_name = drizzle_bin_log_file_name();
-		trx->mysql_log_offset = (ib_int64_t) drizzle_bin_log_file_pos();
+                /* Store transaction point for binlog */
+		trx->mysql_log_file_name = "foo";
+		trx->mysql_log_offset = 0;
 
 		innobase_commit_low(trx);
 

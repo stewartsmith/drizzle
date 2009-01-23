@@ -25,10 +25,8 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
-#include <drizzled/replication/mi.h>
 #include <drizzled/error.h>
 #include <drizzled/name_resolution_context_state.h>
-#include <drizzled/slave.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/probes.h>
 #include <drizzled/tableop_hooks.h>
@@ -349,10 +347,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
-  if (session->slave_thread &&
-      (info.handle_duplicates == DUP_UPDATE) &&
-      (table->next_number_field != NULL) &&
-      rpl_master_has_bug(&active_mi->rli, 24432))
+  if (session->slave_thread && (info.handle_duplicates == DUP_UPDATE) && (table->next_number_field != NULL))
     goto abort;
 
   error=0;
@@ -1219,10 +1214,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   restore_record(table,s->default_values);		// Get empty record
   table->next_number_field=table->found_next_number_field;
 
-  if (session->slave_thread &&
-      (info.handle_duplicates == DUP_UPDATE) &&
-      (table->next_number_field != NULL) &&
-      rpl_master_has_bug(&active_mi->rli, 24432))
+  if (session->slave_thread && (info.handle_duplicates == DUP_UPDATE))
     return(1);
 
   session->cuted_fields=0;
@@ -1686,15 +1678,11 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       }
 
   private:
-    virtual int do_postlock(Table **tables, uint32_t count)
+    virtual int do_postlock(Table **, uint32_t)
     {
-      Table const *const table = *tables;
-      if (drizzle_bin_log.is_open()
-          && !table->s->tmp_table
-          && !ptr->get_create_info()->table_existed)
-      {
+      /*
         ptr->binlog_show_create_table(tables, count);
-      }
+      */
       return 0;
     }
 
@@ -1712,10 +1700,6 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     row-based replication for the statement.  If we are creating a
     temporary table, we need to start a statement transaction.
   */
-  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0
-      && drizzle_bin_log.is_open())
-  {
-  }
 
   if (!(table= create_table_from_items(session, create_info, create_table,
                                        alter_info, &values,
@@ -1766,41 +1750,6 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   table->mark_columns_needed_for_insert();
   table->file->extra(HA_EXTRA_WRITE_CACHE);
   return(0);
-}
-
-void
-select_create::binlog_show_create_table(Table **tables, uint32_t count)
-{
-  /*
-    Note 1: In RBR mode, we generate a CREATE TABLE statement for the
-    created table by calling store_create_info() (behaves as SHOW
-    CREATE TABLE).  In the event of an error, nothing should be
-    written to the binary log, even if the table is non-transactional;
-    therefore we pretend that the generated CREATE TABLE statement is
-    for a transactional table.  The event will then be put in the
-    transaction cache, and any subsequent events (e.g., table-map
-    events and binrow events) will also be put there.  We can then use
-    ha_autocommit_or_rollback() to either throw away the entire
-    kaboodle of events, or write them to the binary log.
-
-    We write the CREATE TABLE statement here and not in prepare()
-    since there potentially are sub-selects or accesses to information
-    schema that will do a close_thread_tables(), destroying the
-    statement transaction cache.
-  */
-  assert(tables && *tables && count > 0);
-
-  char buf[2048];
-  String query(buf, sizeof(buf), system_charset_info);
-  int result;
-  TableList tmp_table_list;
-
-  memset(&tmp_table_list, 0, sizeof(tmp_table_list));
-  tmp_table_list.table = *tables;
-  query.length(0);      // Have to zero it since constructor doesn't
-
-  result= store_create_info(session, &tmp_table_list, &query, create_info);
-  assert(result == 0); /* store_create_info() always return 0 */
 }
 
 void select_create::store_values(List<Item> &values)

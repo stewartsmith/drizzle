@@ -680,7 +680,6 @@ int ha_commit_trans(Session *session, bool all)
   Session_TRANS *trans= all ? &session->transaction.all : &session->transaction.stmt;
   bool is_real_trans= all || session->transaction.all.ha_list == 0;
   Ha_trx_info *ha_info= trans->ha_list;
-  my_xid xid= session->transaction.xid_state.xid.get_my_xid();
 
   /*
     We must not commit the normal transaction if a statement
@@ -727,8 +726,7 @@ int ha_commit_trans(Session *session, bool all)
         }
         status_var_increment(session->status_var.ha_prepare_count);
       }
-      if (error || (is_real_trans && xid &&
-                    (error= !(cookie= tc_log->log_xid(session, xid)))))
+      if (error)
       {
         ha_rollback_trans(session, all);
         error= 1;
@@ -736,8 +734,6 @@ int ha_commit_trans(Session *session, bool all)
       }
     }
     error=ha_commit_one_phase(session, all) ? (cookie ? 2 : 1) : 0;
-    if (cookie)
-      tc_log->unlog(cookie, xid);
 end:
     if (is_real_trans)
       start_waiting_global_read_lock(session);

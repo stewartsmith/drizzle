@@ -24,8 +24,6 @@
 /* Classes in mysql */
 
 #include <drizzled/global.h>
-#include <drizzled/log.h>
-#include <drizzled/replication/tblmap.h>
 #include <drizzled/protocol.h>
 #include <libdrizzle/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
@@ -39,13 +37,7 @@
 #include <string>
 #include <bitset>
 
-class Relay_log_info;
-
-class Query_log_event;
-class Load_log_event;
-class Slave_log_event;
 class Lex_input_stream;
-class Rows_log_event;
 class user_var_entry;
 class Copy_field;
 class Table_ident;
@@ -772,9 +764,6 @@ class Session :public Statement,
            public Open_tables_state
 {
 public:
-  /* Used to execute base64 coded binlog events in MySQL server */
-  Relay_log_info* rli_fake;
-
   /*
     Constant for Session::where initialization in the beginning of every query.
 
@@ -895,7 +884,6 @@ public:
     Session_TRANS stmt;			// Trans for current statement
     bool on;                            // see ha_enable_transaction()
     XID_STATE xid_state;
-    Rows_log_event *m_pending_rows_event;
 
     /*
        Tables changed in transaction (that must be invalidated in query cache).
@@ -1173,13 +1161,6 @@ public:
   bool       derived_tables_processing;
   bool    tablespace_op;	/* This is true in DISCARD/IMPORT TABLESPACE */
 
-  /*
-    If we do a purge of binary logs, log index info of the threads
-    that are currently reading it needs to be adjusted. To do that
-    each thread that is using LOG_INFO needs to adjust the pointer to it
-  */
-  LOG_INFO*  current_linfo;
-  NET*       slave_net;			// network connection from slave -> m.
   /* Used by the sys_var class to store temporary values */
   union
   {
@@ -1543,8 +1524,6 @@ public:
                enum_filetype filetype_arg= FILETYPE_CSV);
 };
 
-#include "log_event.h"
-
 /*
   This is used to get result from a select
 */
@@ -1742,7 +1721,6 @@ public:
     {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
 
-  void binlog_show_create_table(Table **tables, uint32_t count);
   void store_values(List<Item> &values);
   void send_error(uint32_t errcode,const char *err);
   bool send_eof();
