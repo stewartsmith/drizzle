@@ -2194,9 +2194,11 @@ static void read_block(KEY_CACHE *keycache,
 unsigned char *key_cache_read(KEY_CACHE *keycache,
                       File file, my_off_t filepos, int level,
                       unsigned char *buff, uint32_t length,
-                      uint32_t block_length __attribute__((unused)),
-                      int return_buffer __attribute__((unused)))
+                      uint32_t block_length,
+                      int return_buffer)
 {
+  (void)block_length;
+  (void)return_buffer;
   bool locked_and_incremented= false;
   int error=0;
   unsigned char *start= buff;
@@ -2620,9 +2622,10 @@ int key_cache_insert(KEY_CACHE *keycache,
 int key_cache_write(KEY_CACHE *keycache,
                     File file, my_off_t filepos, int level,
                     unsigned char *buff, uint32_t length,
-                    uint32_t block_length  __attribute__((unused)),
+                    uint32_t block_length,
                     int dont_write)
 {
+  (void)block_length;
   bool locked_and_incremented= false;
   int error=0;
 
@@ -3748,9 +3751,9 @@ static int flush_all_key_blocks(KEY_CACHE *keycache)
     0 on success (always because it can't fail)
 */
 
-int reset_key_cache_counters(const char *name __attribute__((unused)),
-                             KEY_CACHE *key_cache)
+int reset_key_cache_counters(const char *name, KEY_CACHE *key_cache)
 {
+  (void)name;
   if (!key_cache->key_cache_inited)
   {
     return(0);

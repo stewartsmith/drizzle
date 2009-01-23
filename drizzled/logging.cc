@@ -70,8 +70,7 @@ int logging_finalizer(st_plugin_int *plugin)
 }
 
 /* This gets called by plugin_foreach once for each loaded logging plugin */
-static bool logging_pre_iterate (Session *session, plugin_ref plugin,
-				 void *p __attribute__ ((__unused__)))
+static bool logging_pre_iterate (Session *session, plugin_ref plugin, void *)
 {
   logging_t *l= plugin_data(plugin, logging_t *);
 
@@ -104,8 +103,7 @@ bool logging_pre_do (Session *session)
 }
 
 /* This gets called by plugin_foreach once for each loaded logging plugin */
-static bool logging_post_iterate (Session *session, plugin_ref plugin,
-				  void *p __attribute__ ((__unused__)))
+static bool logging_post_iterate (Session *session, plugin_ref plugin, void *)
 {
   logging_t *l= plugin_data(plugin, logging_t *);
 

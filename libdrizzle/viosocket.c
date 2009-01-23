@@ -32,8 +32,9 @@
 
 #include <netdb.h>
 
-int vio_errno(Vio *vio __attribute__((unused)))
+int vio_errno(Vio *vio)
 {
+  (void)vio;
   return errno;
 }
 
@@ -138,8 +139,9 @@ vio_is_blocking(Vio * vio)
 }
 
 
-int vio_fastsend(Vio * vio __attribute__((unused)))
+int vio_fastsend(Vio * vio)
 {
+  (void)vio;
   int nodelay = 1;
   int error;
 
@@ -174,8 +176,9 @@ int32_t vio_keepalive(Vio* vio, bool set_keep_alive)
 
 
 bool
-vio_should_retry(Vio * vio __attribute__((unused)))
+vio_should_retry(Vio * vio)
 {
+  (void)vio;
   int en = errno;
   return (en == EAGAIN || en == EINTR ||
 	  en == EWOULDBLOCK);
@@ -183,8 +186,9 @@ vio_should_retry(Vio * vio __attribute__((unused)))
 
 
 bool
-vio_was_interrupted(Vio *vio __attribute__((unused)))
+vio_was_interrupted(Vio *vio)
 {
+  (void)vio;
   int en= errno;
   return (en == EAGAIN || en == EINTR ||
 	  en == EWOULDBLOCK || en == ETIMEDOUT);

@@ -231,10 +231,9 @@ end:
 }
 
 static bool
-get_one_option(int optid,
-	       const struct my_option *opt __attribute__((unused)),
-	       char *argument)
+get_one_option(int optid, const struct my_option *opt, char *argument)
 {
+  (void)opt;
   switch (optid) {
   case 'b':
     opt_backup= 1;
