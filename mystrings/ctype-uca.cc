@@ -6791,7 +6791,7 @@ static uint16_t nochar[]= {0,0};
 */
 
 static void my_uca_scanner_init_ucs2(my_uca_scanner *scanner,
-                                     const CHARSET_INFO * const cs __attribute__((unused)),
+                                     const CHARSET_INFO * const ,
                                      const unsigned char *str, size_t length)
 {
   scanner->wbeg= nochar;
@@ -6943,7 +6943,7 @@ static my_uca_scanner_handler my_ucs2_uca_scanner_handler=
   The same two functions for any character set
 */
 static void my_uca_scanner_init_any(my_uca_scanner *scanner,
-				    const CHARSET_INFO * const cs __attribute__((unused)),
+				    const CHARSET_INFO * const cs,
 				    const unsigned char *str, size_t length)
 {
   /* Note, no needs to initialize scanner->wbeg */

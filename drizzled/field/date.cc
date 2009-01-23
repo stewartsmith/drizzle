@@ -57,7 +57,7 @@ using namespace CMATH_NAMESPACE;
 
 int Field_date::store(const char *from,
                          uint32_t len,
-                         const CHARSET_INFO * const cs __attribute__((unused)))
+                         const CHARSET_INFO * const )
 {
   long tmp;
   DRIZZLE_TIME l_time;
@@ -106,7 +106,7 @@ int Field_date::store(double nr)
 
 
 int Field_date::store(int64_t nr,
-                         bool unsigned_val __attribute__((unused)))
+                         bool )
 {
   DRIZZLE_TIME l_time;
   int64_t tmp;
@@ -206,7 +206,7 @@ int64_t Field_date::val_int(void)
 
 
 String *Field_date::val_str(String *val_buffer,
-			       String *val_ptr __attribute__((unused)))
+			       String *)
 {
   val_buffer->alloc(field_length);
   val_buffer->length(field_length);
@@ -261,7 +261,7 @@ int Field_date::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-void Field_date::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_date::sort_string(unsigned char *to,uint32_t )
 {
   to[0] = ptr[2];
   to[1] = ptr[1];

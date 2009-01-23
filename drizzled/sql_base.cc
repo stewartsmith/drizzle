@@ -67,7 +67,7 @@ static void close_old_data_files(Session *session, Table *table, bool morph_lock
 
 
 extern "C" unsigned char *table_cache_key(const unsigned char *record, size_t *length,
-                                  bool not_used __attribute__((unused)))
+                                  bool )
 {
   Table *entry=(Table*) record;
   *length= entry->s->table_cache_key.length;
@@ -149,7 +149,7 @@ uint32_t create_table_def_key(Session *session, char *key, TableList *table_list
 *****************************************************************************/
 
 extern "C" unsigned char *table_def_key(const unsigned char *record, size_t *length,
-                                bool not_used __attribute__((unused)))
+                                bool )
 {
   TABLE_SHARE *entry=(TABLE_SHARE*) record;
   *length= entry->table_cache_key.length;
@@ -387,7 +387,7 @@ static TABLE_SHARE
 */
 
 void release_table_share(TABLE_SHARE *share,
-                         enum release_type type __attribute__((unused)))
+                         enum release_type )
 {
   bool to_be_deleted= 0;
 
@@ -1263,8 +1263,8 @@ TableList* unique_table(Session *session, TableList *table, TableList *table_lis
 */
 
 void update_non_unique_table_error(TableList *update,
-                                   const char *operation __attribute__((unused)),
-                                   TableList *duplicate __attribute__((unused)))
+                                   const char *,
+                                   TableList *)
 {
   my_error(ER_UPDATE_TABLE_USED, MYF(0), update->alias);
 }
@@ -3710,8 +3710,8 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 
 static Field *
 find_field_in_natural_join(Session *session, TableList *table_ref, const char *name,
-                           uint32_t length __attribute__((unused)),
-                           Item **ref __attribute__((unused)), bool register_tree_change __attribute__((unused)),
+                           uint32_t ,
+                           Item **, bool register_tree_change __attribute__((unused)),
                            TableList **actual_table)
 {
   List_iterator_fast<Natural_join_column>
@@ -4819,7 +4819,7 @@ err:
 */
 
 static bool
-store_natural_using_join_columns(Session *session __attribute__((unused)),
+store_natural_using_join_columns(Session *,
                                  TableList *natural_using_join,
                                  TableList *table_ref_1,
                                  TableList *table_ref_2,
@@ -5145,7 +5145,7 @@ static bool setup_natural_join_row_types(Session *session,
 ****************************************************************************/
 
 int setup_wild(Session *session,
-               TableList *tables __attribute__((unused)),
+               TableList *,
                List<Item> &fields,
                List<Item> *sum_func_list,
                uint32_t wild_num)
@@ -5476,7 +5476,7 @@ bool get_key_map_from_key_list(key_map *map, Table *table,
 bool
 insert_fields(Session *session, Name_resolution_context *context, const char *db_name,
               const char *table_name, List_iterator<Item> *it,
-              bool any_privileges __attribute__((unused)))
+              bool )
 {
   Field_iterator_table_ref field_iterator;
   bool found;
@@ -5636,7 +5636,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     false if all is OK
 */
 
-int setup_conds(Session *session, TableList *tables __attribute__((unused)),
+int setup_conds(Session *session, TableList *,
                 TableList *leaves,
                 COND **conds)
 {
@@ -5850,7 +5850,7 @@ err:
 
 bool
 fill_record(Session *session, Field **ptr, List<Item> &values,
-            bool ignore_errors __attribute__((unused)))
+            bool )
 {
   List_iterator_fast<Item> v(values);
   Item *value;

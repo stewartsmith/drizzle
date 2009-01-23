@@ -24,7 +24,7 @@ static MEM_ROOT mem;
 static HASH udf_hash;
 
 extern "C" unsigned char* get_hash_key(const unsigned char *buff, size_t *length,
-                               bool not_used __attribute__((unused)))
+                               bool )
 {
   udf_func *udf= (udf_func*) buff;
   *length= (uint) udf->name.length;

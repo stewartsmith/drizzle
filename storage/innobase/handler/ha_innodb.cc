@@ -191,7 +191,7 @@ bool nw_panic = FALSE;
 #endif
 
 static uchar* innobase_get_key(INNOBASE_SHARE *share, size_t *length,
-	my_bool not_used __attribute__((unused)));
+	my_bool );
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 static int innobase_close_connection(handlerton *hton, THD* thd);
@@ -8156,7 +8156,7 @@ bool innobase_show_status(handlerton *hton, THD* thd,
 ****************************************************************************/
 
 static uchar* innobase_get_key(INNOBASE_SHARE* share, size_t *length,
-	my_bool not_used __attribute__((unused)))
+	my_bool )
 {
 	*length=share->table_name_length;
 

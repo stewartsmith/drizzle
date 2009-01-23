@@ -69,13 +69,13 @@ int64_t Item_user_var_as_out_param::val_int()
 }
 
 
-String* Item_user_var_as_out_param::val_str(String *str __attribute__((unused)))
+String* Item_user_var_as_out_param::val_str(String *)
 {
   assert(0);
   return 0;
 }
 
-my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *decimal_buffer __attribute__((unused)))
+my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *)
 {
   assert(0);
   return 0;
@@ -83,7 +83,7 @@ my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *decimal_buffer _
 
 
 void Item_user_var_as_out_param::print(String *str,
-                                       enum_query_type query_type __attribute__((unused)))
+                                       enum_query_type )
 {
   str->append('@');
   str->append(name.str,name.length);

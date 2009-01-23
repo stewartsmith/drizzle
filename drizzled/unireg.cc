@@ -1272,7 +1272,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
 /* save an empty record on start of formfile */
 
 static bool make_empty_rec(Session *session, File file,
-                           enum legacy_db_type table_type __attribute__((unused)),
+                           enum legacy_db_type ,
                            uint32_t table_options,
                            List<Create_field> &create_fields,
                            uint32_t reclength,

@@ -73,7 +73,7 @@ typedef struct my_dblock_st
 extern "C" unsigned char* lock_db_get_key(my_dblock_t *, size_t *, bool not_used);
 
 unsigned char* lock_db_get_key(my_dblock_t *ptr, size_t *length,
-                       bool not_used __attribute__((unused)))
+                       bool )
 {
   *length= ptr->name_length;
   return (unsigned char*) ptr->name;
@@ -128,7 +128,7 @@ extern "C" unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
                                     bool not_used);
 
 unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
-                         bool not_used __attribute__((unused)))
+                         bool )
 {
   *length= opt->name_length;
   return (unsigned char*) opt->name;

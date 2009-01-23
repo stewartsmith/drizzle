@@ -708,7 +708,7 @@ static void *kill_server(void *sig_ptr)
 
 
 #if defined(USE_ONE_SIGNAL_HAND)
-pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
+pthread_handler_t kill_server_thread(void *)
 {
   my_thread_init();				// Initialize new thread
   kill_server(0);
@@ -1185,7 +1185,7 @@ static void network_init(void)
 
 /** Called when a thread is aborted. */
 /* ARGSUSED */
-extern "C" void end_thread_signal(int sig __attribute__((unused)))
+extern "C" void end_thread_signal(int )
 {
   Session *session=current_session;
   if (session)
@@ -1230,7 +1230,7 @@ void unlink_session(Session *session)
   @todo
     One should have to fix that thr_alarm know about this thread too.
 */
-extern "C" void abort_thread(int sig __attribute__((unused)))
+extern "C" void abort_thread(int )
 {
   Session *session=current_session;
   if (session)
@@ -1526,7 +1526,7 @@ static void start_signal_handler(void)
 
 /** This threads handles all signals and alarms. */
 /* ARGSUSED */
-pthread_handler_t signal_hand(void *arg __attribute__((unused)))
+pthread_handler_t signal_hand(void *)
 {
   sigset_t set;
   int sig;
@@ -1648,7 +1648,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
   return(0);					/* purecov: deadcode */
 }
 
-static void check_data_home(const char *path __attribute__((unused)))
+static void check_data_home(const char *)
 {}
 
 #endif	/* __WIN__*/
@@ -3539,9 +3539,9 @@ struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static int show_net_compression(Session *session __attribute__((unused)),
+static int show_net_compression(Session *session,
                                 SHOW_VAR *var,
-                                char *buff __attribute__((unused)))
+                                char *)
 {
   var->type= SHOW_MY_BOOL;
   var->value= (char *)&session->net.compress;
@@ -3573,7 +3573,7 @@ static int show_flushstatustime(Session *session, SHOW_VAR *var, char *buff)
 static st_show_var_func_container
 show_flushstatustime_cont= { &show_flushstatustime };
 
-static int show_slave_running(Session *session __attribute__((unused)),
+static int show_slave_running(Session *,
                               SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_MY_BOOL;
@@ -3588,7 +3588,7 @@ static int show_slave_running(Session *session __attribute__((unused)),
 static st_show_var_func_container
 show_slave_running_cont= { &show_slave_running };
 
-static int show_slave_retried_trans(Session *session __attribute__((unused)),
+static int show_slave_retried_trans(Session *,
                                     SHOW_VAR *var, char *buff)
 {
   /*
@@ -3613,7 +3613,7 @@ static int show_slave_retried_trans(Session *session __attribute__((unused)),
 static st_show_var_func_container
 show_slave_retried_trans_cont= { &show_slave_retried_trans };
 
-static int show_slave_received_heartbeats(Session *session __attribute__((unused)),
+static int show_slave_received_heartbeats(Session *,
                                           SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -3634,7 +3634,7 @@ static int show_slave_received_heartbeats(Session *session __attribute__((unused
 static st_show_var_func_container
 show_slave_received_heartbeats_cont= { &show_slave_received_heartbeats };
 
-static int show_heartbeat_period(Session *session __attribute__((unused)),
+static int show_heartbeat_period(Session *,
                                  SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -3653,7 +3653,7 @@ static int show_heartbeat_period(Session *session __attribute__((unused)),
 static st_show_var_func_container
 show_heartbeat_period_cont= { &show_heartbeat_period};
 
-static int show_open_tables(Session *session __attribute__((unused)),
+static int show_open_tables(Session *,
                             SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
@@ -3662,7 +3662,7 @@ static int show_open_tables(Session *session __attribute__((unused)),
   return 0;
 }
 
-static int show_table_definitions(Session *session __attribute__((unused)),
+static int show_table_definitions(Session *,
                                   SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
@@ -3930,9 +3930,8 @@ static void drizzle_init_variables(void)
 
 
 bool
-drizzled_get_one_option(int optid,
-                      const struct my_option *opt __attribute__((unused)),
-                      char *argument)
+drizzled_get_one_option(int optid, const struct my_option *opt,
+                        char *argument)
 {
   switch(optid) {
   case '#':

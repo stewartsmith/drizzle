@@ -1522,7 +1522,7 @@ public:
 };
 
 static void fix_slave_net_timeout(Session *session,
-                                  enum_var_type type __attribute__((unused)))
+                                  enum_var_type )
 {
   pthread_mutex_lock(&LOCK_active_mi);
   if (active_mi && slave_net_timeout < active_mi->heartbeat_period)
@@ -1550,7 +1550,7 @@ static sys_var_slave_skip_counter sys_slave_skip_counter(&vars, "sql_slave_skip_
 static int show_slave_skip_errors(Session *session, SHOW_VAR *var, char *buff);
 
 
-static int show_slave_skip_errors(Session *session __attribute__((unused)),
+static int show_slave_skip_errors(Session *,
                                   SHOW_VAR *var, char *buff)
 {
   var->type=SHOW_CHAR;
@@ -1602,7 +1602,7 @@ static SHOW_VAR fixed_vars[]= {
   {"slave_skip_errors",       (char*) &show_slave_skip_errors_cont,      SHOW_FUNC},
 };
 
-bool sys_var_slave_skip_counter::check(Session *session __attribute__((unused)),
+bool sys_var_slave_skip_counter::check(Session *,
                                        set_var *var)
 {
   int result= 0;
@@ -1620,7 +1620,7 @@ bool sys_var_slave_skip_counter::check(Session *session __attribute__((unused)),
 }
 
 
-bool sys_var_slave_skip_counter::update(Session *session __attribute__((unused)),
+bool sys_var_slave_skip_counter::update(Session *,
                                         set_var *var)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -1642,7 +1642,7 @@ bool sys_var_slave_skip_counter::update(Session *session __attribute__((unused))
 }
 
 
-bool sys_var_sync_binlog_period::update(Session *session __attribute__((unused)),
+bool sys_var_sync_binlog_period::update(Session *,
                                         set_var *var)
 {
   sync_binlog_period= (uint32_t) var->save_result.uint64_t_value;

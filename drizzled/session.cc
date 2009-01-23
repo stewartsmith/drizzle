@@ -78,7 +78,7 @@ template class List_iterator<Alter_column>;
 ****************************************************************************/
 
 extern "C" unsigned char *get_var_key(user_var_entry *entry, size_t *length,
-                              bool not_used __attribute__((unused)))
+                              bool )
 {
   *length= entry->name.length;
   return (unsigned char*) entry->name.str;
@@ -432,7 +432,7 @@ Diagnostics_area::set_eof_status(Session *session)
 */
 
 void
-Diagnostics_area::set_error_status(Session *session __attribute__((unused)),
+Diagnostics_area::set_error_status(Session *,
                                    uint32_t sql_errno_arg,
                                    const char *message_arg)
 {
@@ -1194,14 +1194,14 @@ struct Item_change_record: public ilink
   Item **place;
   Item *old_value;
   /* Placement new was hidden by `new' in ilink (TODO: check): */
-  static void *operator new(size_t size __attribute__((unused)),
+  static void *operator new(size_t ,
                             void *mem)
     { return mem; }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *,
+                              size_t )
     {}
-  static void operator delete(void *ptr __attribute__((unused)),
-                              void *mem __attribute__((unused)))
+  static void operator delete(void *,
+                              void *)
     { /* never called */ }
 };
 
@@ -1774,7 +1774,7 @@ err:
 
 
 int
-select_dump::prepare(List<Item> &list __attribute__((unused)),
+select_dump::prepare(List<Item> &,
 		     SELECT_LEX_UNIT *u)
 {
   unit= u;
@@ -1958,7 +1958,7 @@ bool select_max_min_finder_subselect::cmp_str()
      sortcmp(val1, val2, cache->collation.collation) < 0);
 }
 
-bool select_exists_subselect::send_data(List<Item> &items __attribute__((unused)))
+bool select_exists_subselect::send_data(List<Item> &)
 {
   Item_exists_subselect *it= (Item_exists_subselect *)item;
   if (unit->offset_limit_cnt)
@@ -2300,7 +2300,7 @@ extern "C" unsigned char *xid_get_hash_key(const unsigned char *, size_t *, bool
 extern "C" void xid_free_hash(void *);
 
 unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length,
-                        bool not_used __attribute__((unused)))
+                        bool )
 {
   *length=((XID_STATE*)ptr)->xid.key_length();
   return ((XID_STATE*)ptr)->xid.key();

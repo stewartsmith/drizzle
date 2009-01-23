@@ -42,7 +42,7 @@ const char *test_names[]=
   NULL,
 };
 
-int main(int argc __attribute__((unused)), char **argv)
+int main(int , char **argv)
 {
   const char **pos;
   char buff[FN_REFLEN],buff2[FN_REFLEN];

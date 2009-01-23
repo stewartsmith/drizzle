@@ -82,7 +82,7 @@ static uint64_t get_microtime()
 /* we could just not have a pre entrypoint at all,
    and have logging_pre == NULL
    but we have this here for the sake of being an example */
-bool logging_query_func_pre (Session *session __attribute__((unused)))
+bool logging_query_func_pre (Session *)
 {
   return false;
 }

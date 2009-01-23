@@ -34,7 +34,7 @@ void Item_func_sysdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 }
 
 
-String *Item_func_sysdate_local::val_str(String *str __attribute__((unused)))
+String *Item_func_sysdate_local::val_str(String *)
 {
   assert(fixed == 1);
   store_now_in_TIME(&ltime);
@@ -68,7 +68,7 @@ void Item_func_sysdate_local::fix_length_and_dec()
 
 
 bool Item_func_sysdate_local::get_date(DRIZZLE_TIME *res,
-                                       uint32_t fuzzy_date __attribute__((unused)))
+                                       uint32_t )
 {
   store_now_in_TIME(&ltime);
   *res= ltime;
@@ -76,7 +76,7 @@ bool Item_func_sysdate_local::get_date(DRIZZLE_TIME *res,
 }
 
 
-int Item_func_sysdate_local::save_in_field(Field *to, bool no_conversions __attribute__((unused)))
+int Item_func_sysdate_local::save_in_field(Field *to, bool )
 {
   store_now_in_TIME(&ltime);
   to->set_notnull();

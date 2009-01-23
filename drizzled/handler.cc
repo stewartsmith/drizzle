@@ -187,7 +187,7 @@ int ha_end()
   return(error);
 }
 
-static bool dropdb_handlerton(Session *unused1 __attribute__((unused)),
+static bool dropdb_handlerton(Session *,
                               plugin_ref plugin,
                               void *path)
 {
@@ -205,7 +205,7 @@ void ha_drop_database(char* path)
 
 
 static bool closecon_handlerton(Session *session, plugin_ref plugin,
-                                void *unused __attribute__((unused)))
+                                void *)
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   /*
@@ -881,7 +881,7 @@ struct xahton_st {
   int result;
 };
 
-static bool xacommit_handlerton(Session *unused1 __attribute__((unused)),
+static bool xacommit_handlerton(Session *,
                                 plugin_ref plugin,
                                 void *arg)
 {
@@ -894,7 +894,7 @@ static bool xacommit_handlerton(Session *unused1 __attribute__((unused)),
   return false;
 }
 
-static bool xarollback_handlerton(Session *unused1 __attribute__((unused)),
+static bool xarollback_handlerton(Session *,
                                   plugin_ref plugin,
                                   void *arg)
 {
@@ -944,7 +944,7 @@ struct xarecover_st
   bool dry_run;
 };
 
-static bool xarecover_handlerton(Session *unused __attribute__((unused)),
+static bool xarecover_handlerton(Session *,
                                  plugin_ref plugin,
                                  void *arg)
 {
@@ -1126,7 +1126,7 @@ bool mysql_xa_recover(Session *session)
     always 0
 */
 static bool release_temporary_latches(Session *session, plugin_ref plugin,
-                                      void *unused __attribute__((unused)))
+                                      void *)
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
 
@@ -1284,9 +1284,9 @@ int ha_start_consistent_snapshot(Session *session)
 }
 
 
-static bool flush_handlerton(Session *session __attribute__((unused)),
+static bool flush_handlerton(Session *,
                              plugin_ref plugin,
-                             void *arg __attribute__((unused)))
+                             void *)
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->flush_logs &&
@@ -1351,10 +1351,10 @@ public:
 
 bool
 Ha_delete_table_error_handler::
-handle_error(uint32_t sql_errno  __attribute__((unused)),
+handle_error(uint32_t ,
              const char *message,
-             DRIZZLE_ERROR::enum_warning_level level __attribute__((unused)),
-             Session *session __attribute__((unused)))
+             DRIZZLE_ERROR::enum_warning_level ,
+             Session *)
 {
   /* Grab the error message */
   strncpy(buff, message, sizeof(buff)-1);
@@ -1369,7 +1369,7 @@ struct handlerton_delete_table_args {
   int error;
 };
 
-static bool deletetable_handlerton(Session *unused1 __attribute__((unused)),
+static bool deletetable_handlerton(Session *,
                                    plugin_ref plugin,
                                    void *args)
 {
@@ -2020,9 +2020,9 @@ void handler::column_bitmaps_signal()
   @param first_value         (OUT) the first value reserved by the handler
   @param nb_reserved_values  (OUT) how many values the handler reserved
 */
-void handler::get_auto_increment(uint64_t offset __attribute__((unused)),
-                                 uint64_t increment __attribute__((unused)),
-                                 uint64_t nb_desired_values __attribute__((unused)),
+void handler::get_auto_increment(uint64_t ,
+                                 uint64_t ,
+                                 uint64_t ,
                                  uint64_t *first_value,
                                  uint64_t *nb_reserved_values)
 {
@@ -2320,8 +2320,8 @@ void handler::print_error(int error, myf errflag)
   @return
     Returns true if this is a temporary error
 */
-bool handler::get_error_message(int error __attribute__((unused)),
-                                String* buf __attribute__((unused)))
+bool handler::get_error_message(int ,
+                                String* )
 {
   return false;
 }
@@ -2890,7 +2890,7 @@ void st_ha_check_opt::init()
 /**
   Init a key cache if it has not been initied before.
 */
-int ha_init_key_cache(const char *name __attribute__((unused)),
+int ha_init_key_cache(const char *,
                       KEY_CACHE *key_cache)
 {
   if (!key_cache->key_cache_inited)
@@ -3121,7 +3121,7 @@ double handler::index_only_read_time(uint32_t keynr, double records)
 ha_rows
 handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                      void *seq_init_param,
-                                     uint32_t n_ranges_arg __attribute__((unused)),
+                                     uint32_t ,
                                      uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   KEY_MULTI_RANGE range;
@@ -3273,7 +3273,7 @@ int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n
 int
 handler::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
                                uint32_t n_ranges, uint32_t mode,
-                               HANDLER_BUFFER *buf __attribute__((unused)))
+                               HANDLER_BUFFER *)
 {
   mrr_iter= seq_funcs->init(seq_init_param, n_ranges, mode);
   mrr_funcs= *seq_funcs;
@@ -3490,7 +3490,7 @@ static int rowid_cmp(void *h, unsigned char *a, unsigned char *b)
   @retval other  Error
 */
 
-int DsMrr_impl::dsmrr_fill_buffer(handler *unused __attribute__((unused)))
+int DsMrr_impl::dsmrr_fill_buffer(handler *)
 {
   char *range_info;
   int res = 0;
@@ -3945,7 +3945,7 @@ void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
 int handler::read_range_first(const key_range *start_key,
 			      const key_range *end_key,
 			      bool eq_range_arg,
-                              bool sorted  __attribute__((unused)))
+                              bool )
 {
   int result;
 
@@ -4076,7 +4076,7 @@ int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
   @retval
     pointer		pointer to TYPELIB structure
 */
-static bool exts_handlerton(Session *unused __attribute__((unused)),
+static bool exts_handlerton(Session *,
                             plugin_ref plugin,
                             void *arg)
 {

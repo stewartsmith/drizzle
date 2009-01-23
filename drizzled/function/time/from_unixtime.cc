@@ -66,7 +66,7 @@ int64_t Item_func_from_unixtime::val_int()
 }
 
 bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime,
-                                       uint32_t fuzzy_date __attribute__((unused)))
+                                       uint32_t )
 {
   uint64_t tmp= (uint64_t)(args[0]->val_int());
   /*

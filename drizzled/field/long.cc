@@ -150,7 +150,7 @@ int64_t Field_long::val_int(void)
 }
 
 String *Field_long::val_str(String *val_buffer,
-			    String *val_ptr __attribute__((unused)))
+			    String *)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;
@@ -196,7 +196,7 @@ int Field_long::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_long::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_long::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)

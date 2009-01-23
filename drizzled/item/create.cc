@@ -3164,7 +3164,7 @@ void item_create_cleanup()
 }
 
 Create_func *
-find_native_function_builder(Session *session __attribute__((unused)),
+find_native_function_builder(Session *,
                              LEX_STRING name)
 {
   Native_func_registry *func;
