@@ -1325,7 +1325,7 @@ then
     CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
   fi
   CC_WARNINGS="-v -xc99=all -errtags=yes"
-  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder -compat=5"
   if test "$ac_exceptions" = "no"
   then
     NO_EXCEPTIONS="-features=no%except"
