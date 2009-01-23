@@ -802,8 +802,6 @@ void clean_up(bool print_message)
   udf_free();
   plugin_shutdown();
   ha_end();
-  if (tc_log)
-    tc_log->close();
   xid_cache_free();
   delete_elements(&key_caches, (void (*)(const char*, unsigned char*)) free_key_cache);
   multi_keycache_free();
@@ -2181,14 +2179,6 @@ static int init_server_components()
       plugin_unlock(0, global_system_variables.table_plugin);
       global_system_variables.table_plugin= plugin;
     }
-  }
-
-  tc_log= (TC_LOG *) &tc_log_dummy;
-
-  if (tc_log->open(opt_bin_log ? opt_bin_logname : opt_tc_log_file))
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't initialize tc_log"));
-    unireg_abort(1);
   }
 
   if (ha_recover(0))

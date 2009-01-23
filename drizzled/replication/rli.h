@@ -20,6 +20,7 @@
 #ifndef RPL_RLI_H
 #define RPL_RLI_H
 
+#include <drizzled/log.h>
 #include <drizzled/replication/tblmap.h>
 #include <drizzled/replication/reporting.h>
 #include <drizzled/replication/utility.h>

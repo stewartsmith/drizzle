@@ -54,7 +54,6 @@
 #include <drizzled/error_injection.h>
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
-#include <drizzled/log.h>
 
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
