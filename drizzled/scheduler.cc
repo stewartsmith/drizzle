@@ -33,11 +33,8 @@ class Session;
   event
  */
 
-static bool init_dummy(void) {return 0;}
-static void post_kill_dummy(Session *session __attribute__((unused))) {}
-static void end_dummy(void) {}
-static bool end_thread_dummy(Session *session __attribute__((unused)),
-                             bool cache_thread __attribute__((unused)))
+static void post_kill_dummy(Session *) {}
+static bool end_thread_dummy(Session *, bool)
 { return 0; }
 
 /*
@@ -46,10 +43,9 @@ static bool end_thread_dummy(Session *session __attribute__((unused)),
 */
 
 scheduler_functions::scheduler_functions()
-  :init(init_dummy),
-   init_new_connection_thread(init_new_connection_handler_thread),
+  :init_new_connection_thread(init_new_connection_handler_thread),
    add_connection(0),                           // Must be defined
    post_kill_notification(post_kill_dummy),
-   end_thread(end_thread_dummy), end(end_dummy)
+   end_thread(end_thread_dummy)
 {}
 

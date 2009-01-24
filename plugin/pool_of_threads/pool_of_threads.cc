@@ -105,7 +105,7 @@ static bool libevent_init(void)
   if (init_pipe(session_add_pipe))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("init_pipe(session_add_pipe) error in libevent_init\n"));
-    return(1);
+    return true;
   }
   /* set up the pipe used to kill sessions in the event queue */
   if (init_pipe(session_kill_pipe))
@@ -113,7 +113,7 @@ static bool libevent_init(void)
     errmsg_printf(ERRMSG_LVL_ERROR, _("init_pipe(session_kill_pipe) error in libevent_init\n"));
     close(session_add_pipe[0]);
     close(session_add_pipe[1]);
-    return(1);
+   return true;
   }
   event_set(&session_add_event, session_add_pipe[0], EV_READ|EV_PERSIST,
             libevent_add_session_callback, NULL);
@@ -124,7 +124,7 @@ static bool libevent_init(void)
  {
    errmsg_printf(ERRMSG_LVL_ERROR, _("session_add_event event_add error in libevent_init\n"));
    libevent_end();
-   return(1);
+   return true;
 
  }
   /* Set up the thread pool */
@@ -142,7 +142,7 @@ static bool libevent_init(void)
                       error);
       pthread_mutex_unlock(&LOCK_thread_count);
       libevent_end();                      // Cleanup
-      return(true);
+      return true;
     }
   }
 
@@ -151,7 +151,7 @@ static bool libevent_init(void)
     pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   pthread_mutex_unlock(&LOCK_thread_count);
 
-  return(false);
+  return false;
 }
 
 
@@ -204,7 +204,7 @@ void libevent_kill_session_callback(int Fd, short, void*)
       /*
         Delete from libevent and add to the processing queue.
       */
-      event_del(scheduler->io_event);
+      event_del(&scheduler->io_event);
       sessions_waiting_for_io= list_delete(sessions_waiting_for_io,
 					   &scheduler->list);
       sessions_need_processing= list_add(sessions_need_processing,
@@ -255,7 +255,7 @@ void libevent_add_session_callback(int Fd, short, void *)
     else
     {
       /* Add to libevent */
-      if (event_add(scheduler->io_event, NULL))
+      if (event_add(&scheduler->io_event, NULL))
       {
         errmsg_printf(ERRMSG_LVL_ERROR, _("event_add error in libevent_add_session_callback\n"));
         libevent_connection_close(session);
@@ -282,11 +282,9 @@ void libevent_add_session_callback(int Fd, short, void *)
 static void libevent_add_connection(Session *session)
 {
   assert(session->scheduler == NULL);
-  session_scheduler *scheduler= new session_scheduler;
+  session_scheduler *scheduler= new session_scheduler(session);
 
-  session->scheduler= (void *)scheduler;
-
-  if (scheduler->init(session))
+  if (scheduler == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Scheduler init error in libevent_add_new_connection\n"));
     pthread_mutex_unlock(&LOCK_thread_count);
@@ -294,6 +292,8 @@ static void libevent_add_connection(Session *session)
 
     return;
   }
+  session->scheduler= (void *)scheduler;
+
   threads.append(session);
   libevent_session_add(session);
 
@@ -558,16 +558,15 @@ static int init(void *p)
 
   assert(size != 0);
   func->max_threads= size;
-  func->init= libevent_init;
-  func->end=  libevent_end;
   func->post_kill_notification= libevent_post_kill_notification;
   func->add_connection= libevent_add_connection;
 
-  return 0;
+  return (int)libevent_init();
 }
 
 static int deinit(void *)
 {
+  libevent_end();
   return 0;
 }
 

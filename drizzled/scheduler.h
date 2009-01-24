@@ -36,12 +36,10 @@ class scheduler_functions
 {
 public:
   uint32_t max_threads;
-  bool (*init)(void);
   bool (*init_new_connection_thread)(void);
   void (*add_connection)(Session *session);
   void (*post_kill_notification)(Session *session);
   bool (*end_thread)(Session *session, bool cache_thread);
-  void (*end)(void);
   scheduler_functions();
 };
 

@@ -806,7 +806,6 @@ void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
-  thread_scheduler.end();
   /* Returns NULL on globerrs, we don't want to try to free that */
   //void *freeme=
   (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
@@ -1027,9 +1026,6 @@ static void network_init(void)
   struct addrinfo *next;
   struct addrinfo hints;
   int error;
-
-  if (thread_scheduler.init())
-    unireg_abort(1);			/* purecov: inspected */
 
   set_ports();
 

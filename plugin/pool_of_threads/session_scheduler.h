@@ -14,6 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <mysys/my_list.h>
+#include <event.h>
 
 class Session;
 
@@ -21,15 +22,11 @@ class session_scheduler
 {
 public:
   bool logged_in;
-  struct event* io_event;
+  struct event io_event;
   LIST list;
   bool thread_attached;  /* Indicates if Session is attached to the OS thread */
 
-  session_scheduler();
-  ~session_scheduler();
-  session_scheduler(const session_scheduler&);
-  void operator=(const session_scheduler&);
-  bool init(Session* parent_session);
+  session_scheduler(Session *);
   bool thread_attach();
   void thread_detach();
 };

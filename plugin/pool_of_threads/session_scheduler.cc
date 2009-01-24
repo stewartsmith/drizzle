@@ -31,44 +31,16 @@ void libevent_io_callback(int Fd, short Operation, void *ctx);
 bool libevent_should_close_connection(Session* session);
 void libevent_session_add(Session* session);
 
-session_scheduler::session_scheduler()
-  : logged_in(false), io_event(NULL), thread_attached(false)
+session_scheduler::session_scheduler(Session *parent_session)
+  : logged_in(false), thread_attached(false)
 {
-}
+  memset(&io_event, 0, sizeof(struct event));
 
-
-session_scheduler::~session_scheduler()
-{
-  delete io_event;
-}
-
-
-session_scheduler::session_scheduler(const session_scheduler&)
-  : logged_in(false), io_event(NULL), thread_attached(false)
-{}
-
-void session_scheduler::operator=(const session_scheduler&)
-{}
-
-bool session_scheduler::init(Session *parent_session)
-{
-  io_event= new struct event;
-
-  if (io_event == NULL)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Memory allocation error in session_scheduler::init\n"));
-    return true;
-  }
-  memset(io_event, 0, sizeof(*io_event));
-
-  event_set(io_event, net_get_sd(&(parent_session->net)), EV_READ,
+  event_set(&io_event, net_get_sd(&(parent_session->net)), EV_READ,
             libevent_io_callback, (void*)parent_session);
 
   list.data= parent_session;
-
-  return false;
 }
-
 
 /*
   Attach/associate the connection with the OS thread, for command processing.
