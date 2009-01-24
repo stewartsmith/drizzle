@@ -39,8 +39,9 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
+#include <drizzled/plugin_scheduling.h>
 
-extern scheduler_functions thread_scheduler;
+extern scheduling_st thread_scheduler;
 /*
   The following is used to initialise Table_ident with a internal
   table name

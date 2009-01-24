@@ -25,6 +25,7 @@
 #include <string>
 using namespace std;
 
+static bool isEnabled= false;
 static bool init_dummy(void) {return 0;}
 
 /*
@@ -49,15 +50,24 @@ void handle_connection_in_main_thread(Session *session)
   End connection, in case when we are using 'no-threads'
 */
 
-static bool end_thread(Session *, bool)
+static bool end_thread(Session *session, bool)
 {
+  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
   pthread_mutex_unlock(&LOCK_thread_count);
+
   return true;                                     // Abort handle_one_connection
 }
 
 static int init(void *p)
 {
-  scheduler_functions* func= (scheduler_functions *)p;
+  scheduling_st* func= (scheduling_st *)p;
+
+  if (isEnabled == false)
+  {
+    func->is_used= false;
+    return 0;
+  }
+  func->is_used= true;
 
   func->max_threads= 1;
   func->add_connection= handle_connection_in_main_thread;
@@ -72,6 +82,18 @@ static int deinit(void *)
   return 0;
 }
 
+static DRIZZLE_SYSVAR_BOOL(enabled, isEnabled,
+                           PLUGIN_VAR_NOCMDARG,
+                           N_("Enable One Thread per Connection Scheduler"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           false /* default */);
+
+static struct st_mysql_sys_var* system_variables[]= {
+  DRIZZLE_SYSVAR(enabled),
+  NULL
+};
+
 mysql_declare_plugin(single_thread)
 {
   DRIZZLE_SCHEDULING_PLUGIN,
@@ -83,7 +105,7 @@ mysql_declare_plugin(single_thread)
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
   NULL,   /* status variables */
-  NULL,   /* system variables */
+  system_variables,   /* system variables */
   NULL    /* config options */
 }
 mysql_declare_plugin_end;

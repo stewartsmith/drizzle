@@ -874,7 +874,6 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 int plugin_init(int *argc, char **argv, int flags)
 {
   uint32_t idx;
-  uint32_t number_of_schedulers= 0; /* We must insist that only one of these plugins get loaded at a time */
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
   struct st_plugin_int tmp, *plugin_ptr;
@@ -913,9 +912,6 @@ int plugin_init(int *argc, char **argv, int flags)
   {
     for (plugin= *builtins; plugin->name; plugin++)
     {
-      if (plugin->type == DRIZZLE_SCHEDULING_PLUGIN)
-        number_of_schedulers++;
-
       memset(&tmp, 0, sizeof(tmp));
       tmp.plugin= plugin;
       tmp.name.str= (char *)plugin->name;
@@ -966,9 +962,6 @@ int plugin_init(int *argc, char **argv, int flags)
     plugin_ptr= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
     if (plugin_ptr->state == PLUGIN_IS_UNINITIALIZED)
     {
-      if (plugin_ptr->plugin->type == DRIZZLE_SCHEDULING_PLUGIN)
-        number_of_schedulers++;
-
       if (plugin_initialize(plugin_ptr))
       {
         plugin_ptr->state= PLUGIN_IS_DYING;
@@ -976,17 +969,6 @@ int plugin_init(int *argc, char **argv, int flags)
         plugin_del(plugin_ptr);
       }
     }
-  }
-
-  if (number_of_schedulers == 0)
-  {
-    fprintf(stderr, "You must load at least one scheduler plugin\n");
-    exit(1);
-  }
-  else if (number_of_schedulers > 1)
-  {
-    fprintf(stderr, "You can not load more then one scheduler plugin\n");
-    exit(1);
   }
 
 

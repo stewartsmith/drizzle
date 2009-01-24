@@ -44,6 +44,7 @@
 #include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
+#include <drizzled/plugin_scheduling.h>
 
 
 #if TIME_WITH_SYS_TIME
@@ -455,7 +456,7 @@ static uint32_t thr_kill_signal;
 
 bool mysqld_embedded=0;
 
-scheduler_functions thread_scheduler;
+extern scheduling_st thread_scheduler;
 
 /**
   Number of currently active user connections. The variable is protected by
@@ -1146,7 +1147,7 @@ extern "C" void end_thread_signal(int sig __attribute__((unused)))
   if (session)
   {
     statistic_increment(killed_threads, &LOCK_status);
-    thread_scheduler.end_thread(session,0);		/* purecov: inspected */
+    (void)thread_scheduler.end_thread(session, 0);		/* purecov: inspected */
   }
   return;;				/* purecov: deadcode */
 }
@@ -1875,11 +1876,11 @@ static int init_common_variables(const char *conf_file_name, int argc,
           happen if max_connections is decreased above).
         */
         table_cache_size= (uint32_t) cmin(cmax((files-10-max_connections)/2,
-                                          (uint32_t)TABLE_OPEN_CACHE_MIN),
-                                      table_cache_size);
+                                               (uint32_t)TABLE_OPEN_CACHE_MIN),
+                                          table_cache_size);
         if (global_system_variables.log_warnings)
               errmsg_printf(ERRMSG_LVL_WARN, _("Changed limits: max_open_files: %u  "
-                              "max_connections: %"PRIu64"  table_cache: %"PRIu64""),
+                                               "max_connections: %"PRIu64"  table_cache: %"PRIu64""),
                             files, max_connections, table_cache_size);
       }
       else if (global_system_variables.log_warnings)
@@ -2961,8 +2962,7 @@ struct my_option my_long_options[] =
   {"max_connections", OPT_MAX_CONNECTIONS,
    N_("The number of simultaneous clients allowed."),
    (char**) &max_connections,
-   (char**) &max_connections, 0, GET_ULONG, REQUIRED_ARG, 151, 1, 100000, 0, 1,
-   0},
+   (char**) &max_connections, 0, GET_ULONG, REQUIRED_ARG, 2048, 1, 100000, 0, 1, 0},
   {"max_error_count", OPT_MAX_ERROR_COUNT,
    N_("Max number of errors/warnings to store for a statement."),
    (char**) &global_system_variables.max_error_count,

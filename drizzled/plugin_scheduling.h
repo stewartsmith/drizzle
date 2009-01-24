@@ -25,15 +25,12 @@
 
 typedef struct scheduling_st
 {
-  /* todo, define this api */
-  /* this is the API that a scheduling plugin must implement.
-     it should implement each of these function pointers.
-     if a function returns bool true, that means it failed.
-     if a function pointer is NULL, that's ok.
-  */
-
-  bool (*scheduling_func1)(Session *session, void *parm1, void *parm2);
-  bool (*scheduling_func2)(Session *session, void *parm3, void *parm4);
-} scheduling_t;
+  bool is_used;
+  uint32_t max_threads;
+  bool (*init_new_connection_thread)(void);
+  void (*add_connection)(Session *session);
+  void (*post_kill_notification)(Session *session);
+  bool (*end_thread)(Session *session, bool cache_thread);
+} scheduling_st;
 
 #endif /* DRIZZLED_PLUGIN_SCHEDULING_H */

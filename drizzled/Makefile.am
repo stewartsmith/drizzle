@@ -294,7 +294,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		query_id.h \
 		rename.h \
 		replicator.h \
-		scheduler.h \
 		scheduling.h \
 		session.h \
 		set_var.h \
@@ -404,7 +403,6 @@ drizzled_SOURCES = \
 		records.cc \
 		rename.cc \
 		replicator.cc \
-		scheduler.cc \
                 scheduling.cc \
 		session.cc \
 		set_var.cc \
