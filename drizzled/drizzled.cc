@@ -416,12 +416,9 @@ pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_status,
                 LOCK_global_read_lock,
                 LOCK_global_system_variables,
-                LOCK_slave_list,
-                LOCK_active_mi,
                 LOCK_connection_count;
 
 pthread_rwlock_t	LOCK_sys_init_connect;
-pthread_rwlock_t	LOCK_sys_init_slave;
 pthread_rwlock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
 pthread_t signal_thread;
@@ -857,9 +854,7 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
-  (void) pthread_mutex_destroy(&LOCK_active_mi);
   (void) pthread_rwlock_destroy(&LOCK_sys_init_connect);
-  (void) pthread_rwlock_destroy(&LOCK_sys_init_slave);
   (void) pthread_mutex_destroy(&LOCK_global_system_variables);
   (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
   (void) pthread_mutex_destroy(&LOCK_global_read_lock);
@@ -2005,13 +2000,11 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_connection_count, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_sys_init_connect, NULL);
-  (void) pthread_rwlock_init(&LOCK_sys_init_slave, NULL);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
   (void) pthread_cond_init(&COND_global_read_lock,NULL);

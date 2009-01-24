@@ -3181,8 +3181,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
       than it would help them)
     */
     tmp_write_to_binlog= 0;
-    pthread_mutex_lock(&LOCK_active_mi);
-    pthread_mutex_unlock(&LOCK_active_mi);
 
     if (ha_flush_logs(NULL))
       result=1;
