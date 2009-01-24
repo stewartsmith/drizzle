@@ -1108,7 +1108,6 @@ public:
   /* scramble - random string sent to client on handshake */
   char	     scramble[SCRAMBLE_LENGTH+1];
 
-  bool       slave_thread;
   bool	     some_tables_deleted;
   bool       last_cuted_field;
   bool	     no_errors, password;

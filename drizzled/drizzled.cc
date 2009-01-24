@@ -312,7 +312,6 @@ ulong what_to_log;
 uint64_t slow_launch_time;
 uint64_t slave_open_temp_tables;
 uint64_t open_files_limit;
-uint64_t thread_pool_size= 0;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
@@ -412,7 +411,9 @@ SHOW_COMP_OPTION have_symlink;
 
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
-pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
+pthread_mutex_t LOCK_drizzle_create_db, 
+                LOCK_open, 
+                LOCK_thread_count,
                 LOCK_status,
                 LOCK_global_read_lock,
                 LOCK_global_system_variables,
@@ -557,10 +558,6 @@ static void close_connections(void)
   I_List_iterator<Session> it(threads);
   while ((tmp=it++))
   {
-    /* We skip slave threads & scheduler on this first loop through. */
-    if (tmp->slave_thread)
-      continue;
-
     tmp->killed= Session::KILL_CONNECTION;
     thread_scheduler.post_kill_notification(tmp);
     if (tmp->mysys_var)
@@ -1573,11 +1570,11 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
           tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
           (void)pthread_attr_setschedparam(&connection_attrib, &tmp_sched_param);
         }
-	if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
-			   (void*) &sig))
-              errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread to kill server"));
+        if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
+                           (void*) &sig))
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread to kill server"));
 #else
-	kill_server((void*) sig);	// MIT THREAD has a alarm thread
+        kill_server((void*) sig);	// MIT THREAD has a alarm thread
 #endif
       }
       break;
@@ -3144,11 +3141,6 @@ struct my_option my_long_options[] =
       "error. Used only if the connection has active cursors."),
    (char**) &table_lock_wait_timeout, (char**) &table_lock_wait_timeout,
    0, GET_ULL, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
-  {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
-    N_("How many threads we should create to handle query requests in case of "
-       "'thread_handling=pool-of-threads'"),
-    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULL,
-    REQUIRED_ARG, 8, 1, 16384, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,

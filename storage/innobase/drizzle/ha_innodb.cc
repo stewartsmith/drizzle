@@ -482,9 +482,9 @@ ibool
 thd_is_replication_slave_thread(
 /*============================*/
 			/* out: true if session is the replication thread */
-	void*	session)	/* in: thread handle (Session*) */
+	void*)	/* in: thread handle (Session*) */
 {
-	return((ibool) session_slave_thread((Session*) session));
+	return false;
 }
 
 /**********************************************************************

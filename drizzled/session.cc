@@ -514,7 +514,6 @@ Session::Session()
   start_time=(time_t) 0;
   start_utime= 0L;
   utime_after_lock= 0L;
-  slave_thread = 0;
   memset(&variables, 0, sizeof(variables));
   thread_id= 0;
   file_id = 0;
@@ -835,8 +834,7 @@ void Session::awake(Session::killed_state state_to_set)
   if (state_to_set != Session::KILL_QUERY)
   {
     thr_alarm_kill(thread_id);
-    if (!slave_thread)
-      thread_scheduler.post_kill_notification(this);
+    thread_scheduler.post_kill_notification(this);
   }
   if (mysys_var)
   {
@@ -2246,11 +2244,6 @@ extern "C" const struct charset_info_st *session_charset(Session *session)
 extern "C" char **session_query(Session *session)
 {
   return(&session->query);
-}
-
-extern "C" int session_slave_thread(const Session *session)
-{
-  return(session->slave_thread);
 }
 
 extern "C" int session_non_transactional_update(const Session *session)

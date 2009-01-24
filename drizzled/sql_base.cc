@@ -1372,12 +1372,6 @@ void close_temporary_table(Session *session, Table *table,
     if (session->temporary_tables)
       table->next->prev= 0;
   }
-  if (session->slave_thread)
-  {
-    /* natural invariant of temporary_tables */
-    assert(slave_open_temp_tables || !session->temporary_tables);
-    slave_open_temp_tables--;
-  }
   close_temporary(table, free_share, delete_table);
   return;
 }
@@ -3590,8 +3584,6 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
       tmp_table->next->prev= tmp_table;
     session->temporary_tables= tmp_table;
     session->temporary_tables->prev= 0;
-    if (session->slave_thread)
-      slave_open_temp_tables++;
   }
   tmp_table->pos_in_table_list= 0;
   return(tmp_table);

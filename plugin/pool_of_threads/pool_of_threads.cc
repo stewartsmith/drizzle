@@ -131,7 +131,7 @@ static bool libevent_init(void)
   created_threads= killed_threads= 0;
   pthread_mutex_lock(&LOCK_thread_count);
 
-  for (i= 0; i < thread_pool_size; i++)
+  for (i= 0; i < size; i++)
   {
     pthread_t thread;
     int error;
@@ -147,7 +147,7 @@ static bool libevent_init(void)
   }
 
   /* Wait until all threads are created */
-  while (created_threads != thread_pool_size)
+  while (created_threads != size)
     pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   pthread_mutex_unlock(&LOCK_thread_count);
 
@@ -386,7 +386,7 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
   */
   (void) pthread_mutex_lock(&LOCK_thread_count);
   created_threads++;
-  if (created_threads == thread_pool_size)
+  if (created_threads == size)
     (void) pthread_cond_signal(&COND_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 

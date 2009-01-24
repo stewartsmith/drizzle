@@ -285,11 +285,10 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
       }
 
       // if we are not in slave thread, the file must be:
-      if (!session->slave_thread &&
-	  !((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
-	    (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
-	    ((stat_info.st_mode & S_IFREG) == S_IFREG ||
-	     (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
+      if (!((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
+            (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
+            ((stat_info.st_mode & S_IFREG) == S_IFREG ||
+             (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
       {
 	my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), name);
 	return(true);
