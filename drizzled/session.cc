@@ -484,7 +484,8 @@ Session::Session()
    is_fatal_sub_stmt_error(0),
    in_lock_tables(0),
    derived_tables_processing(false),
-   m_lip(NULL)
+   m_lip(NULL),
+   scheduler(0)
 {
   ulong tmp;
 

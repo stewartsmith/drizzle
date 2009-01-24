@@ -29,6 +29,7 @@
 #include <drizzled/my_decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
+#include <stdint.h>
 #include <string>
 
 #define DATETIME_DEC                     6

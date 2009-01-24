@@ -45,33 +45,4 @@ public:
   scheduler_functions();
 };
 
-enum scheduler_types
-{
-  SCHEDULER_POOL_OF_THREADS
-};
-
-void one_thread_per_connection_scheduler(scheduler_functions* func);
-void one_thread_scheduler(scheduler_functions* func);
-
-#define HAVE_POOL_OF_THREADS 1
-
-class session_scheduler
-{
-public:
-  bool logged_in;
-  struct event* io_event;
-  LIST list;
-  bool thread_attached;  /* Indicates if Session is attached to the OS thread */
-
-  session_scheduler();
-  ~session_scheduler();
-  session_scheduler(const session_scheduler&);
-  void operator=(const session_scheduler&);
-  bool init(Session* parent_session);
-  bool thread_attach();
-  void thread_detach();
-};
-
-void pool_of_threads_scheduler(scheduler_functions* func);
-
 #endif /* DRIZZLE_SERVER_SCHEDULER_H */

@@ -1420,7 +1420,8 @@ public:
     a statement is parsed but before it's executed.
   */
   bool copy_db_to(char **p_db, size_t *p_db_length);
-  session_scheduler scheduler;
+  /* session_scheduler for events */
+  void *scheduler;
 
 public:
   /**

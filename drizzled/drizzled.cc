@@ -3770,8 +3770,6 @@ static void get_options(int *argc,char **argv)
       init_global_datetime_format(DRIZZLE_TIMESTAMP_DATETIME,
 				  &global_system_variables.datetime_format))
     exit(1);
-
-  pool_of_threads_scheduler(&thread_scheduler);  /* purecov: tested */
 }
 
 
