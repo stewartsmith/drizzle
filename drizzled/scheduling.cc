@@ -38,6 +38,7 @@ int scheduling_initializer(st_plugin_int *plugin)
     has_been_seen= true;
   }
 
+  assert(plugin->plugin->init); /* Find poorly designed plugins */
   if (plugin->plugin->init)
   {
 
@@ -75,6 +76,7 @@ int scheduling_initializer(st_plugin_int *plugin)
     scheduler_inited= true;
     /* We populate so we can find which plugin was initialized later on */
     plugin->data= (void *)&thread_scheduler;
+    plugin->state= PLUGIN_IS_READY;
   }
 
   return 0;
@@ -87,7 +89,7 @@ err:
 int scheduling_finalizer(st_plugin_int *plugin)
 {
   /* We know which one we initialized since its data pointer is filled */
-  if (plugin->plugin->deinit && plugin->data)
+  if (plugin->plugin->deinit && plugin->state == PLUGIN_IS_READY)
   {
     if (plugin->plugin->deinit((void *)&thread_scheduler))
     {

@@ -25,7 +25,7 @@
 #include <string>
 using namespace std;
 
-static bool isEnabled= false;
+static bool isEnabled= true;
 static bool init_dummy(void) {return 0;}
 
 /*

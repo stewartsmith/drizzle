@@ -28,7 +28,7 @@ using namespace std;
 
 static uint32_t created_threads, killed_threads;
 static bool kill_pool_threads;
-static bool isEnabled= true;
+static bool isEnabled= false;
 
 static struct event session_add_event;
 static struct event session_kill_event;

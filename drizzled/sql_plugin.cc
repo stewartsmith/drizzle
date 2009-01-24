@@ -779,6 +779,7 @@ void plugin_unlock_list(Session *session, plugin_ref *list, uint32_t count)
 
 static int plugin_initialize(struct st_plugin_int *plugin)
 {
+  plugin->state= PLUGIN_IS_UNINITIALIZED;
 
   if (plugin_type_initialize[plugin->plugin->type])
   {
@@ -797,9 +798,8 @@ static int plugin_initialize(struct st_plugin_int *plugin)
                       plugin->name.str);
       goto err;
     }
+    plugin->state= PLUGIN_IS_READY;
   }
-
-  plugin->state= PLUGIN_IS_READY;
 
   if (plugin->plugin->status_vars)
   {
