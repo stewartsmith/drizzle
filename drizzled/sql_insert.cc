@@ -60,7 +60,7 @@
 static int check_insert_fields(Session *session, TableList *table_list,
                                List<Item> &fields, List<Item> &values,
                                bool check_unique,
-                               table_map *map __attribute__((unused)))
+                               table_map *)
 {
   Table *table= table_list->table;
 
@@ -158,7 +158,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
 
 static int check_update_fields(Session *session, TableList *insert_table_list,
                                List<Item> &update_fields,
-                               table_map *map __attribute__((unused)))
+                               table_map *)
 {
   Table *table= insert_table_list->table;
   bool timestamp_mark= false;
@@ -201,10 +201,10 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
 */
 
 static
-void upgrade_lock_type(Session *session __attribute__((unused)),
+void upgrade_lock_type(Session *,
                        thr_lock_type *lock_type,
                        enum_duplicates duplic,
-                       bool is_multi_insert __attribute__((unused)))
+                       bool )
 {
   if (duplic == DUP_UPDATE ||
       (duplic == DUP_REPLACE && *lock_type == TL_WRITE_CONCURRENT_INSERT))
@@ -535,7 +535,7 @@ abort:
 */
 
 static bool mysql_prepare_insert_check_table(Session *session, TableList *table_list,
-                                             List<Item> &fields __attribute__((unused)),
+                                             List<Item> &,
                                              bool select_insert)
 {
 
@@ -593,7 +593,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
                           Table *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
-                          COND **where __attribute__((unused)),
+                          COND **,
                           bool select_insert,
                           bool check_fields, bool abort_on_warning)
 {

@@ -693,7 +693,7 @@ const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
     to hours already.
 ****************************************************************************/
 
-void make_time(const DATE_TIME_FORMAT *format __attribute__((unused)),
+void make_time(const DATE_TIME_FORMAT *,
                const DRIZZLE_TIME *l_time, String *str)
 {
   uint32_t length= (uint) my_time_to_str(l_time, (char*) str->ptr());
@@ -702,7 +702,7 @@ void make_time(const DATE_TIME_FORMAT *format __attribute__((unused)),
 }
 
 
-void make_date(const DATE_TIME_FORMAT *format __attribute__((unused)),
+void make_date(const DATE_TIME_FORMAT *,
                const DRIZZLE_TIME *l_time, String *str)
 {
   uint32_t length= (uint) my_date_to_str(l_time, (char*) str->ptr());
@@ -711,7 +711,7 @@ void make_date(const DATE_TIME_FORMAT *format __attribute__((unused)),
 }
 
 
-void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
+void make_datetime(const DATE_TIME_FORMAT *,
                    const DRIZZLE_TIME *l_time, String *str)
 {
   uint32_t length= (uint) my_datetime_to_str(l_time, (char*) str->ptr());

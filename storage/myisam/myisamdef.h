@@ -752,10 +752,8 @@ extern size_t my_pread(File Filedes,unsigned char *Buffer,size_t Count,my_off_t 
 
 /* Needed for handler */
 void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
-void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
-                        const char *message __attribute__((unused)),
-                        const char *sfile __attribute__((unused)),
-                        uint32_t sline __attribute__((unused)));
+void _mi_report_crashed(MI_INFO *file, const char *message, const char *sfile,
+                        uint32_t sline);
 
 #ifdef __cplusplus
 }

@@ -34,11 +34,6 @@
 #include <drizzled/global.h>
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
-/* System-wide common data structures */
-#include <drizzled/structs.h>
-/* Defines for the storage engine handler -- i.e. HA_XXX defines */
-/* Needed by field.h */
-#include <drizzled/base.h>
 
 /* Lots of system-wide struct definitions like IO_CACHE,
    prototypes for all my_* functions */

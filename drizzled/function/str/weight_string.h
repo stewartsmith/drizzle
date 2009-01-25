@@ -37,7 +37,7 @@ public:
     TODO: Currently this Item is not allowed for virtual columns
     only due to a bug in generating virtual column value.
   */
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 

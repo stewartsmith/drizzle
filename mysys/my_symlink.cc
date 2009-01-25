@@ -104,10 +104,9 @@ int my_symlink(const char *content, const char *linkname, myf MyFlags)
 #define BUFF_LEN FN_LEN
 #endif
 
-int my_realpath(char *to, const char *filename,
-		myf MyFlags __attribute__((unused)))
+int my_realpath(char *to, const char *filename, myf MyFlags)
 {
-#if defined(HAVE_REALPATH) && !defined(HAVE_purify) && !defined(HAVE_BROKEN_REALPATH)
+#if defined(HAVE_REALPATH) &&  !defined(HAVE_BROKEN_REALPATH)
   int result=0;
   char buff[BUFF_LEN];
   struct stat stat_buff;

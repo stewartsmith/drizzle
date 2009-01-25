@@ -719,8 +719,8 @@ public:
     0
 */
 time_t
-Time_zone_utc::TIME_to_gmt_sec(const DRIZZLE_TIME *t __attribute__((unused)),
-                               bool *in_dst_time_gap __attribute__((unused))) const
+Time_zone_utc::TIME_to_gmt_sec(const DRIZZLE_TIME *,
+                               bool *) const
 {
   /* Should be never called */
   assert(0);
@@ -932,7 +932,7 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
 */
 time_t
 Time_zone_offset::TIME_to_gmt_sec(const DRIZZLE_TIME *t,
-                                  bool *in_dst_time_gap __attribute__((unused))) const
+                                  bool *) const
 {
   time_t local_t;
   int shift= 0;
@@ -1164,8 +1164,8 @@ str_to_offset(const char *str, uint32_t length, long *offset)
 
 */
 Time_zone *
-my_tz_find(Session *session __attribute__((unused)),
-           const String *name __attribute__((unused)))
+my_tz_find(Session *,
+           const String *)
 {
   return NULL;
 }

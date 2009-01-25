@@ -185,7 +185,6 @@ bool rename_temporary_table(Session* session, Table *table, const char *new_db,
 void remove_db_from_cache(const char *db);
 void flush_tables();
 bool is_equal(const LEX_STRING *a, const LEX_STRING *b);
-char *make_default_log_name(char *buff,const char* log_ext);
 
 /* bits for last argument to remove_table_from_cache() */
 #define RTFC_NO_FLAG                0x0000

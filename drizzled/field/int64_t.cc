@@ -99,7 +99,7 @@ int Field_int64_t::store(double nr)
 }
 
 
-int Field_int64_t::store(int64_t nr, bool unsigned_val __attribute__((unused)))
+int Field_int64_t::store(int64_t nr, bool )
 {
   int error= 0;
 
@@ -145,7 +145,7 @@ int64_t Field_int64_t::val_int(void)
 
 
 String *Field_int64_t::val_str(String *val_buffer,
-				String *val_ptr __attribute__((unused)))
+				String *)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;
@@ -191,7 +191,7 @@ int Field_int64_t::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_int64_t::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_int64_t::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)

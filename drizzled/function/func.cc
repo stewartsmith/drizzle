@@ -125,7 +125,7 @@ Item_func::Item_func(Session *session, Item_func *item)
 */
 
 bool
-Item_func::fix_fields(Session *session, Item **ref __attribute__((unused)))
+Item_func::fix_fields(Session *session, Item **)
 {
   assert(fixed == 0);
   Item **arg,**arg_end;
@@ -183,7 +183,7 @@ Item_func::fix_fields(Session *session, Item **ref __attribute__((unused)))
 
 
 void Item_func::fix_after_pullout(st_select_lex *new_parent,
-                                  Item **ref __attribute__((unused)))
+                                  Item **)
 {
   Item **arg,**arg_end;
 

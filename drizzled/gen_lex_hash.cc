@@ -359,8 +359,8 @@ and you are welcome to modify and redistribute it under the GPL license\n");
 
 
 extern "C" bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-	       char *argument __attribute__((unused)))
+get_one_option(int optid, const struct my_option *,
+	       char *)
 {
   switch(optid) {
   case 'V':

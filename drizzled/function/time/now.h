@@ -41,7 +41,7 @@ public:
   void fix_length_and_dec();
   bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *)
   { return true; }
 };
 

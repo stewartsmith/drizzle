@@ -557,7 +557,7 @@ noconv:
 }
 
 
-int64_t my_strntoll_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
+int64_t my_strntoll_8bit(const CHARSET_INFO * const cs,
 			  const char *nptr, size_t l, int base,
 			  char **endptr,int *err)
 {

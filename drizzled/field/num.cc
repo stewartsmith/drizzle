@@ -110,7 +110,7 @@ int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int len
 */
 
 bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,
-                        int64_t *rnd, uint64_t unsigned_max __attribute__((unused)),
+                        int64_t *rnd, uint64_t ,
                         int64_t signed_min, int64_t signed_max)
 {
   char *end;

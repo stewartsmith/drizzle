@@ -128,7 +128,7 @@ warn:
 
 
 String *Field_double::val_str(String *val_buffer,
-			      String *val_ptr __attribute__((unused)))
+			      String *)
 {
   double nr;
 #ifdef WORDS_BIGENDIAN
@@ -182,7 +182,7 @@ int Field_double::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 
 /* The following should work for IEEE */
 
-void Field_double::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_double::sort_string(unsigned char *to,uint32_t )
 {
   double nr;
 #ifdef WORDS_BIGENDIAN
