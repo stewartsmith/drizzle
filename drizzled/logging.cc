@@ -42,6 +42,9 @@ int logging_initializer(st_plugin_int *plugin)
       goto err;
     }
   }
+
+  plugin->state= PLUGIN_IS_READY;
+
   return 0;
 
 err:

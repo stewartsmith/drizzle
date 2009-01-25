@@ -39,8 +39,9 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
+#include <drizzled/plugin_scheduling.h>
 
-extern scheduler_functions thread_scheduler;
+extern scheduling_st thread_scheduler;
 /*
   The following is used to initialise Table_ident with a internal
   table name
@@ -484,7 +485,8 @@ Session::Session()
    is_fatal_sub_stmt_error(0),
    in_lock_tables(0),
    derived_tables_processing(false),
-   m_lip(NULL)
+   m_lip(NULL),
+   scheduler(0)
 {
   ulong tmp;
 
@@ -513,7 +515,6 @@ Session::Session()
   start_time=(time_t) 0;
   start_utime= 0L;
   utime_after_lock= 0L;
-  slave_thread = 0;
   memset(&variables, 0, sizeof(variables));
   thread_id= 0;
   file_id = 0;
@@ -834,8 +835,7 @@ void Session::awake(Session::killed_state state_to_set)
   if (state_to_set != Session::KILL_QUERY)
   {
     thr_alarm_kill(thread_id);
-    if (!slave_thread)
-      thread_scheduler.post_kill_notification(this);
+    thread_scheduler.post_kill_notification(this);
   }
   if (mysys_var)
   {
@@ -2245,11 +2245,6 @@ extern "C" const struct charset_info_st *session_charset(Session *session)
 extern "C" char **session_query(Session *session)
 {
   return(&session->query);
-}
-
-extern "C" int session_slave_thread(const Session *session)
-{
-  return(session->slave_thread);
 }
 
 extern "C" int session_non_transactional_update(const Session *session)

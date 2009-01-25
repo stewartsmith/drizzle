@@ -301,6 +301,8 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
   if (strcmp(plugin->plugin->name, "MyISAM") == 0)
     myisam_hton= hton;
 
+  plugin->state= PLUGIN_IS_READY;
+
   return(0);
 err:
   return(1);

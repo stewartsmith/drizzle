@@ -347,9 +347,6 @@ bool mysql_insert(Session *session,TableList *table_list,
   session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
-  if (session->slave_thread && (info.handle_duplicates == DUP_UPDATE) && (table->next_number_field != NULL))
-    goto abort;
-
   error=0;
   session->set_proc_info("update");
   if (duplic == DUP_REPLACE)
@@ -1213,9 +1210,6 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   }
   restore_record(table,s->default_values);		// Get empty record
   table->next_number_field=table->found_next_number_field;
-
-  if (session->slave_thread && (info.handle_duplicates == DUP_UPDATE))
-    return(1);
 
   session->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)

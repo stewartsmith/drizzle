@@ -119,11 +119,8 @@ extern uint64_t log_10_int[20];
 extern uint64_t keybuff_size;
 extern uint64_t session_startup_options;
 extern ulong thread_id;
-extern uint64_t binlog_cache_use;
-extern uint64_t binlog_cache_disk_use;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
-extern uint64_t slave_open_temp_tables;
 extern uint64_t slow_launch_threads;
 extern uint64_t slow_launch_time;
 extern uint64_t table_cache_size;
@@ -131,22 +128,13 @@ extern uint64_t table_def_size;
 extern uint64_t max_connections;
 extern uint64_t max_connect_errors;
 extern uint64_t connect_timeout;
-extern bool slave_allow_batching;
-extern uint64_t slave_net_timeout;
-extern uint64_t slave_trans_retries;
 extern uint32_t max_user_connections;
 extern ulong what_to_log;
-extern uint64_t binlog_cache_size;
-extern uint64_t max_binlog_cache_size;
 extern uint64_t open_files_limit;
-extern uint64_t max_binlog_size;
 extern uint64_t max_relay_log_size;
-extern uint64_t opt_binlog_rows_event_max_size;
-extern uint64_t thread_pool_size;
 extern uint32_t back_log;
 extern pid_t current_pid;
 extern uint64_t expire_logs_days;
-extern uint64_t sync_binlog_period;
 extern uint64_t tc_log_max_pages_used;
 extern uint64_t tc_log_page_size;
 extern uint64_t opt_tc_log_size;
@@ -173,9 +161,7 @@ extern bool opt_safe_user_create;
 extern bool opt_no_mix_types;
 extern bool opt_safe_show_db, opt_myisam_use_mmap;
 extern bool opt_local_infile;
-extern bool opt_slave_compressed_protocol;
 extern bool use_temp_pool;
-extern ulong slave_exec_mode_options;
 extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern bool opt_noacl;
@@ -189,14 +175,12 @@ extern TableList general_log, slow_log;
 extern FILE *stderror_file;
 extern pthread_mutex_t LOCK_drizzle_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
-       LOCK_uuid_generator,
-       LOCK_crypt, LOCK_timezone,
-       LOCK_slave_list, LOCK_active_mi, LOCK_global_read_lock,
+       LOCK_timezone,
+       LOCK_global_read_lock,
        LOCK_global_system_variables, LOCK_user_conn,
        LOCK_bytes_sent, LOCK_bytes_received, LOCK_connection_count;
 extern pthread_mutex_t LOCK_server_started;
 extern pthread_rwlock_t LOCK_sys_init_connect;
-extern pthread_rwlock_t LOCK_sys_init_slave;
 extern pthread_rwlock_t LOCK_system_variables_hash;
 extern pthread_cond_t COND_refresh, COND_thread_count, COND_manager;
 extern pthread_cond_t COND_global_read_lock;

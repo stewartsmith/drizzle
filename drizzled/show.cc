@@ -112,8 +112,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
 ** List all table types supported
 ***************************************************************************/
 
-static bool show_plugins(Session *session, plugin_ref plugin,
-                            void *arg)
+static bool show_plugins(Session *session, plugin_ref plugin, void *arg)
 {
   Table *table= (Table*) arg;
   struct st_mysql_plugin *plug= plugin_decl(plugin);
@@ -4546,6 +4545,8 @@ int initialize_schema_table(st_plugin_int *plugin)
     /* Make sure the plugin name is not set inside the init() function. */
     schema_table->table_name= plugin->name.str;
   }
+
+  plugin->state= PLUGIN_IS_READY;
 
   return 0;
 err:

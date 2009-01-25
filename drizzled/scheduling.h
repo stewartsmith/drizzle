@@ -25,10 +25,4 @@
 int scheduling_initializer (st_plugin_int *plugin);
 int scheduling_finalizer (st_plugin_int *plugin);
 
-/* todo, fill in this API */
-/* these are the functions called by the rest of the drizzle server
-   to do whatever this plugin does. */
-bool scheduling_do1 (Session *session, void *parm1, void *parm2);
-bool scheduling_do2 (Session *session, void *parm3, void *parm4);
-
 #endif /* DRIZZLED_SCHEDULING_H */

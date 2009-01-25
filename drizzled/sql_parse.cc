@@ -1007,33 +1007,6 @@ mysql_execute_command(Session *session)
   if (all_tables || !lex->is_single_level_stmt())
     drizzle_reset_errors(session, 0);
 
-  if (unlikely(session->slave_thread))
-  {
-    /*
-      Check if statment should be skipped because of slave filtering
-      rules
-
-      Exceptions are:
-      - UPDATE MULTI: For this statement, we want to check the filtering
-        rules later in the code
-      - SET: we always execute it (Not that many SET commands exists in
-        the binary log anyway -- only 4.1 masters write SET statements,
-	in 5.0 there are no SET statements in the binary log)
-      - DROP TEMPORARY TABLE IF EXISTS: we always execute it (otherwise we
-        have stale files on slave caused by exclusion of one tmp table).
-    */
-    if (!(lex->sql_command == SQLCOM_UPDATE_MULTI) &&
-	!(lex->sql_command == SQLCOM_SET_OPTION) &&
-	!(lex->sql_command == SQLCOM_DROP_TABLE &&
-          lex->drop_temporary && lex->drop_if_exists) &&
-        all_tables_not_ok(session, all_tables))
-    {
-      /* we warn the slave SQL thread */
-      my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
-      return(0);
-    }
-  }
-
   status_var_increment(session->status_var.com_stat[lex->sql_command]);
 
   assert(session->transaction.stmt.modified_non_trans_table == false);
@@ -1459,24 +1432,6 @@ end_with_restore_list:
 
     res= mysql_multi_update_prepare(session);
 
-    /* Check slave filtering rules */
-    if (unlikely(session->slave_thread))
-    {
-      if (all_tables_not_ok(session, all_tables))
-      {
-        if (res!= 0)
-        {
-          res= 0;             /* don't care of prev failure  */
-          session->clear_error(); /* filters are of highest prior */
-        }
-        /* we warn the slave SQL thread */
-        my_error(ER_SLAVE_IGNORED_TABLE, MYF(0));
-        break;
-      }
-      if (res)
-        break;
-    }
-    else
     {
       if (res)
         break;
@@ -1677,17 +1632,6 @@ end_with_restore_list:
     }
     else
     {
-      /*
-	If this is a slave thread, we may sometimes execute some
-	DROP / * 40005 TEMPORARY * / TABLE
-	that come from parts of binlogs (likely if we use RESET SLAVE or CHANGE
-	MASTER TO), while the temporary table has already been dropped.
-	To not generate such irrelevant "table does not exist errors",
-	we silently add IF EXISTS if TEMPORARY was used.
-      */
-      if (session->slave_thread)
-        lex->drop_if_exists= 1;
-
       /* So that DROP TEMPORARY TABLE gets to binlog at commit/rollback */
       session->options|= OPTION_KEEP_LOG;
     }
@@ -2013,9 +1957,7 @@ end_with_restore_list:
         res= true; // cannot happen
       else
       {
-        if (((session->options & OPTION_KEEP_LOG) ||
-             session->transaction.all.modified_non_trans_table) &&
-            !session->slave_thread)
+        if ((session->options & OPTION_KEEP_LOG) || session->transaction.all.modified_non_trans_table)
           push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                        ER_WARNING_NOT_COMPLETE_ROLLBACK,
                        ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
@@ -3181,8 +3123,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
       than it would help them)
     */
     tmp_write_to_binlog= 0;
-    pthread_mutex_lock(&LOCK_active_mi);
-    pthread_mutex_unlock(&LOCK_active_mi);
 
     if (ha_flush_logs(NULL))
       result=1;

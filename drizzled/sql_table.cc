@@ -383,7 +383,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 {
   TableList *table;
   char path[FN_REFLEN], *alias;
-  uint32_t path_length;
+  uint32_t path_length= 0;
   String wrong_tables;
   int error= 0;
   int non_temp_tables_count= 0;

@@ -301,8 +301,6 @@ static sys_var_long_ptr	sys_table_cache_size(&vars, "table_open_cache",
 					     &table_cache_size);
 static sys_var_long_ptr	sys_table_lock_wait_timeout(&vars, "table_lock_wait_timeout",
                                                     &table_lock_wait_timeout);
-sys_var_long_ptr	sys_thread_pool_size(&vars, "thread_pool_size",
-                                       &thread_pool_size);
 static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
                                              &SV::tx_isolation,
                                              &tx_isolation_typelib,

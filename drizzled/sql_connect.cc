@@ -28,11 +28,11 @@
 #include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_parse.h>
-#include <drizzled/scheduler.h>
+#include <drizzled/plugin_scheduling.h>
 #include <drizzled/session.h>
 #include <drizzled/data_home.h>
 
-extern scheduler_functions thread_scheduler;
+extern scheduling_st thread_scheduler;
 
 #define MIN_HANDSHAKE_SIZE      6
 

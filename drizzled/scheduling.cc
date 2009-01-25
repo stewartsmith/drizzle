@@ -20,160 +20,85 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/gettext.h>
+#include <drizzled/plugin_scheduling.h>
+#include <drizzled/connect.h>
+
+scheduling_st thread_scheduler;
+static bool scheduler_inited= false; /* We must insist that only one of these plugins get loaded at a time */
+static bool has_been_seen= false; /* We are still in a single thread when we see this variable, so no lock needed. */
+
+static void post_kill_dummy(Session *) { return; }
+static bool end_thread_dummy(Session *, bool) { return false; }
 
 int scheduling_initializer(st_plugin_int *plugin)
 {
-  scheduling_t *p;
+  if (has_been_seen == false)
+  {
+    memset(&thread_scheduler, 0, sizeof(scheduling_st));
+    has_been_seen= true;
+  }
 
-  p= new scheduling_t;
-  if (p == NULL) return 1;
-  memset(p, 0, sizeof(scheduling_t));
-
-  plugin->data= (void *)p;
-
+  assert(plugin->plugin->init); /* Find poorly designed plugins */
   if (plugin->plugin->init)
   {
-    if (plugin->plugin->init((void *)p))
+
+    thread_scheduler.post_kill_notification= post_kill_dummy;
+    thread_scheduler.end_thread= end_thread_dummy;
+    thread_scheduler.init_new_connection_thread= init_new_connection_handler_thread;
+
+    if (plugin->plugin->init((void *)&thread_scheduler))
     {
-      /* TRANSLATORS: The leading word "scheduling" is the name
-         of the plugin api, and so should not be translated. */
+      /* 
+        TRANSLATORS> The leading word "scheduling" is the name
+        of the plugin api, and so should not be translated. 
+      */
       errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' init() failed"),
 		      plugin->name.str);
       goto err;
     }
   }
+
+  if (thread_scheduler.is_used == true)
+  {
+    /* We are going to assert() on any plugin that is not well written. */
+    assert(thread_scheduler.max_threads);
+    assert(thread_scheduler.init_new_connection_thread);
+    assert(thread_scheduler.add_connection);
+    assert(thread_scheduler.post_kill_notification);
+    assert(thread_scheduler.end_thread);
+
+    if (scheduler_inited)
+    {
+      fprintf(stderr, "You cannot load more then one scheduler plugin\n");
+      exit(1);
+    }
+
+    scheduler_inited= true;
+    /* We populate so we can find which plugin was initialized later on */
+    plugin->data= (void *)&thread_scheduler;
+    plugin->state= PLUGIN_IS_READY;
+  }
+
   return 0;
 
 err:
-  free(p);
+
   return 1;
 }
 
 int scheduling_finalizer(st_plugin_int *plugin)
 {
-  scheduling_t *p= (scheduling_t *) plugin->data;
-
-  if (plugin->plugin->deinit)
+  /* We know which one we initialized since its data pointer is filled */
+  if (plugin->plugin->deinit && plugin->state == PLUGIN_IS_READY)
   {
-    if (plugin->plugin->deinit((void *)p))
+    if (plugin->plugin->deinit((void *)&thread_scheduler))
     {
       /* TRANSLATORS: The leading word "scheduling" is the name
          of the plugin api, and so should not be translated. */
       errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' deinit() failed"),
-		      plugin->name.str);
+                    plugin->name.str);
     }
   }
-
-  if (p) free(p);
 
   return 0;
-}
-
-/* The plugin_foreach() iterator requires that we
-   convert all the parameters of a plugin api entry point
-   into just one single void ptr, plus the session.
-   So we will take all the additional paramters of scheduling_do1,
-   and marshall them into a struct of this type, and
-   then just pass in a pointer to it.
-*/
-typedef struct scheduling_do1_parms_st
-{
-  void *parm1;
-  void *parm2;
-} scheduling_do1_parms_t;
-
-/* This gets called by plugin_foreach once for each loaded scheduling plugin */
-static bool scheduling_do1_iterate (Session *session, plugin_ref plugin, void *p)
-{
-  scheduling_t *l= plugin_data(plugin, scheduling_t *);
-  scheduling_do1_parms_t *parms= (scheduling_do1_parms_t *) p;
-
-  /* call this loaded scheduling plugin's scheduling_func1 function pointer */
-  if (l && l->scheduling_func1)
-  {
-    if (l->scheduling_func1(session, parms->parm1, parms->parm2))
-    {
-      /* TRANSLATORS: The leading word "scheduling" is the name
-         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' scheduling_func1() failed"),
-		      (char *)plugin_name(plugin));
-      return true;
-    }
-  }
-  return false;
-}
-
-/* This is the scheduling_do1 entry point.
-   This gets called by the rest of the Drizzle server code */
-bool scheduling_do1 (Session *session, void *parm1, void *parm2)
-{
-  scheduling_do1_parms_t parms;
-  bool foreach_rv;
-
-  /* marshall the parameters so they will fit into the foreach */
-  parms.parm1= parm1;
-  parms.parm2= parm2;
-
-  /* call scheduling_do1_iterate
-     once for each loaded scheduling plugin */
-  foreach_rv= plugin_foreach(session,
-			     scheduling_do1_iterate,
-			     DRIZZLE_SCHEDULING_PLUGIN,
-			     (void *) &parms);
-  return foreach_rv;
-}
-
-/* The plugin_foreach() iterator requires that we
-   convert all the parameters of a plugin api entry point
-   into just one single void ptr, plus the session.
-   So we will take all the additional paramters of scheduling_do2,
-   and marshall them into a struct of this type, and
-   then just pass in a pointer to it.
-*/
-typedef struct scheduling_do2_parms_st
-{
-  void *parm3;
-  void *parm4;
-} scheduling_do2_parms_t;
-
-/* This gets called by plugin_foreach once for each loaded scheduling plugin */
-static bool scheduling_do2_iterate (Session *session, plugin_ref plugin, void *p)
-{
-  scheduling_t *l= plugin_data(plugin, scheduling_t *);
-  scheduling_do2_parms_t *parms= (scheduling_do2_parms_t *) p;
-
-  /* call this loaded scheduling plugin's scheduling_func1 function pointer */
-  if (l && l->scheduling_func2)
-  {
-    if (l->scheduling_func2(session, parms->parm3, parms->parm4))
-    {
-      /* TRANSLATORS: The leading word "scheduling" is the name
-         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' scheduling_func2() failed"),
-		      (char *)plugin_name(plugin));
-
-      return true;
-    }
-  }
-  return false;
-}
-
-/* This is the scheduling_do2 entry point.
-   This gets called by the rest of the Drizzle server code */
-bool scheduling_do2 (Session *session, void *parm3, void *parm4)
-{
-  scheduling_do2_parms_t parms;
-  bool foreach_rv;
-
-  /* marshall the parameters so they will fit into the foreach */
-  parms.parm3= parm3;
-  parms.parm4= parm4;
-
-  /* call scheduling_do2_iterate
-     once for each loaded scheduling plugin */
-  foreach_rv= plugin_foreach(session,
-			     scheduling_do2_iterate,
-			     DRIZZLE_SCHEDULING_PLUGIN,
-			     (void *) &parms);
-  return foreach_rv;
 }

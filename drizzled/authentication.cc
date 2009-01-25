@@ -75,6 +75,8 @@ int authentication_initializer(st_plugin_int *plugin)
   plugin->data= (void *)authen;
   are_plugins_loaded= true;
 
+  plugin->state= PLUGIN_IS_READY;
+
   return(0);
 err:
   delete authen;

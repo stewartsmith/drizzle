@@ -44,6 +44,7 @@
 #include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
+#include <drizzled/plugin_scheduling.h>
 
 
 #if TIME_WITH_SYS_TIME
@@ -312,7 +313,6 @@ ulong what_to_log;
 uint64_t slow_launch_time;
 uint64_t slave_open_temp_tables;
 uint64_t open_files_limit;
-uint64_t thread_pool_size= 0;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
@@ -412,16 +412,15 @@ SHOW_COMP_OPTION have_symlink;
 
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
-pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
+pthread_mutex_t LOCK_drizzle_create_db, 
+                LOCK_open, 
+                LOCK_thread_count,
                 LOCK_status,
                 LOCK_global_read_lock,
                 LOCK_global_system_variables,
-                LOCK_slave_list,
-                LOCK_active_mi,
                 LOCK_connection_count;
 
 pthread_rwlock_t	LOCK_sys_init_connect;
-pthread_rwlock_t	LOCK_sys_init_slave;
 pthread_rwlock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
 pthread_t signal_thread;
@@ -457,7 +456,7 @@ static uint32_t thr_kill_signal;
 
 bool mysqld_embedded=0;
 
-scheduler_functions thread_scheduler;
+extern scheduling_st thread_scheduler;
 
 /**
   Number of currently active user connections. The variable is protected by
@@ -560,10 +559,6 @@ static void close_connections(void)
   I_List_iterator<Session> it(threads);
   while ((tmp=it++))
   {
-    /* We skip slave threads & scheduler on this first loop through. */
-    if (tmp->slave_thread)
-      continue;
-
     tmp->killed= Session::KILL_CONNECTION;
     thread_scheduler.post_kill_notification(tmp);
     if (tmp->mysys_var)
@@ -809,7 +804,6 @@ void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
-  thread_scheduler.end();
   /* Returns NULL on globerrs, we don't want to try to free that */
   //void *freeme=
   (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
@@ -857,9 +851,7 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
-  (void) pthread_mutex_destroy(&LOCK_active_mi);
   (void) pthread_rwlock_destroy(&LOCK_sys_init_connect);
-  (void) pthread_rwlock_destroy(&LOCK_sys_init_slave);
   (void) pthread_mutex_destroy(&LOCK_global_system_variables);
   (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
   (void) pthread_mutex_destroy(&LOCK_global_read_lock);
@@ -1033,9 +1025,6 @@ static void network_init(void)
   struct addrinfo hints;
   int error;
 
-  if (thread_scheduler.init())
-    unireg_abort(1);			/* purecov: inspected */
-
   set_ports();
 
   memset(fds, 0, sizeof(struct pollfd) * UINT8_MAX);
@@ -1158,7 +1147,7 @@ extern "C" void end_thread_signal(int )
   if (session)
   {
     statistic_increment(killed_threads, &LOCK_status);
-    thread_scheduler.end_thread(session,0);		/* purecov: inspected */
+    (void)thread_scheduler.end_thread(session, 0);		/* purecov: inspected */
   }
   return;;				/* purecov: deadcode */
 }
@@ -1582,11 +1571,11 @@ pthread_handler_t signal_hand(void *)
           tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
           (void)pthread_attr_setschedparam(&connection_attrib, &tmp_sched_param);
         }
-	if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
-			   (void*) &sig))
-              errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread to kill server"));
+        if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
+                           (void*) &sig))
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread to kill server"));
 #else
-	kill_server((void*) sig);	// MIT THREAD has a alarm thread
+        kill_server((void*) sig);	// MIT THREAD has a alarm thread
 #endif
       }
       break;
@@ -1887,11 +1876,11 @@ static int init_common_variables(const char *conf_file_name, int argc,
           happen if max_connections is decreased above).
         */
         table_cache_size= (uint32_t) cmin(cmax((files-10-max_connections)/2,
-                                          (uint32_t)TABLE_OPEN_CACHE_MIN),
-                                      table_cache_size);
+                                               (uint32_t)TABLE_OPEN_CACHE_MIN),
+                                          table_cache_size);
         if (global_system_variables.log_warnings)
               errmsg_printf(ERRMSG_LVL_WARN, _("Changed limits: max_open_files: %u  "
-                              "max_connections: %"PRIu64"  table_cache: %"PRIu64""),
+                                               "max_connections: %"PRIu64"  table_cache: %"PRIu64""),
                             files, max_connections, table_cache_size);
       }
       else if (global_system_variables.log_warnings)
@@ -2005,13 +1994,11 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_connection_count, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_sys_init_connect, NULL);
-  (void) pthread_rwlock_init(&LOCK_sys_init_slave, NULL);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
   (void) pthread_cond_init(&COND_global_read_lock,NULL);
@@ -2975,8 +2962,7 @@ struct my_option my_long_options[] =
   {"max_connections", OPT_MAX_CONNECTIONS,
    N_("The number of simultaneous clients allowed."),
    (char**) &max_connections,
-   (char**) &max_connections, 0, GET_ULONG, REQUIRED_ARG, 151, 1, 100000, 0, 1,
-   0},
+   (char**) &max_connections, 0, GET_ULONG, REQUIRED_ARG, 2048, 1, 100000, 0, 1, 0},
   {"max_error_count", OPT_MAX_ERROR_COUNT,
    N_("Max number of errors/warnings to store for a statement."),
    (char**) &global_system_variables.max_error_count,
@@ -3155,11 +3141,6 @@ struct my_option my_long_options[] =
       "error. Used only if the connection has active cursors."),
    (char**) &table_lock_wait_timeout, (char**) &table_lock_wait_timeout,
    0, GET_ULL, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
-  {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
-    N_("How many threads we should create to handle query requests in case of "
-       "'thread_handling=pool-of-threads'"),
-    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULL,
-    REQUIRED_ARG, 8, 1, 16384, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,
@@ -3768,8 +3749,6 @@ static void get_options(int *argc,char **argv)
       init_global_datetime_format(DRIZZLE_TIMESTAMP_DATETIME,
 				  &global_system_variables.datetime_format))
     exit(1);
-
-  pool_of_threads_scheduler(&thread_scheduler);  /* purecov: tested */
 }
 
 
