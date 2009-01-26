@@ -27,7 +27,7 @@
 #include <drizzled/protocol.h>
 #include <libdrizzle/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
-#include <drizzled/scheduler.h>
+#include <drizzled/scheduling.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_tree.h>
 #include <drizzled/handler.h>
