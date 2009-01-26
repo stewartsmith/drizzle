@@ -22,7 +22,7 @@
 
   @details
   Mostly this file is used in the server. But a little part of it is used in
-  mysqlbinlog too (definition of SELECT_DISTINCT and others).
+  definition of SELECT_DISTINCT and others.
 
   @TODO Name this file better. "priv" could mean private, privileged, privileges.
 */
@@ -140,7 +140,7 @@ extern uint64_t tc_log_page_size;
 extern uint64_t opt_tc_log_size;
 extern uint64_t tc_log_page_waits;
 extern bool relay_log_purge;
-extern bool opt_innodb_safe_binlog, opt_innodb;
+extern bool opt_innodb;
 extern uint32_t test_flags,select_errors,ha_open_options;
 extern uint32_t protocol_version, drizzled_port, dropping_tables;
 extern uint32_t delay_key_write_options;
@@ -166,7 +166,6 @@ extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
-extern uint32_t opt_crash_binlog_innodb;
 extern char *default_tz_name;
 extern char *opt_logname, *opt_slow_logname;
 extern const char *log_output_str;

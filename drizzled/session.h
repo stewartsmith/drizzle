@@ -27,7 +27,6 @@
 #include <drizzled/protocol.h>
 #include <libdrizzle/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
-#include <drizzled/scheduler.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_tree.h>
 #include <drizzled/handler.h>
@@ -190,10 +189,6 @@ struct system_variables
   uint32_t trans_prealloc_size;
   bool log_warnings;
   uint64_t group_concat_max_len;
-  /*
-    In slave thread we need to know in behalf of which
-    thread the query is being run to replicate temp tables properly
-  */
   /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
 
@@ -1140,13 +1135,6 @@ public:
   /* for IS NULL => = last_insert_id() fix in remove_eq_conds() */
   bool       substitute_null_with_insert_id;
   bool	     in_lock_tables;
-  /**
-    True if a slave error. Causes the slave to stop. Not the same
-    as the statement execution error (is_error()), since
-    a statement may be expected to return an error, e.g. because
-    it returned an error on master, and this is OK on the slave.
-  */
-  bool       is_slave_error;
   bool       cleanup_done;
 
   /**  is set if some thread specific value(s) used in a statement. */
@@ -1314,7 +1302,6 @@ public:
   {
     if (main_da.is_error())
       main_da.reset_diagnostics_area();
-    is_slave_error= 0;
     return;
   }
   inline bool vio_ok() const { return net.vio != 0; }

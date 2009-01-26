@@ -1637,8 +1637,6 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
                           DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;;
 
-    session->is_slave_error=  1; // needed to catch query errors during replication
-
     /*
       session->lex->current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
