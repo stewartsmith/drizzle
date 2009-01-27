@@ -123,7 +123,7 @@ static int compressudf_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(compress)
+drizzle_declare_plugin(compress)
 {
   DRIZZLE_UDF_PLUGIN,
   "compress",

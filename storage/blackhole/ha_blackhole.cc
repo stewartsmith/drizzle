@@ -291,7 +291,7 @@ static int blackhole_fini(void *)
   return 0;
 }
 
-mysql_declare_plugin(blackhole)
+drizzle_declare_plugin(blackhole)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "BLACKHOLE",

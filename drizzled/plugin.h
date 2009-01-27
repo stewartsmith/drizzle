@@ -68,8 +68,8 @@ const char * const PLUGIN_LICENSE_GPL_STRING="GPL";
 const char * const PLUGIN_LICENSE_BSD_STRING="BSD";
 
 /*
-  Macros for beginning and ending plugin declarations.  Between
-  mysql_declare_plugin and mysql_declare_plugin_end there should
+  Macros for beginning and ending plugin declarations. Between
+  drizzle_declare_plugin and drizzle_declare_plugin_end there should
   be a st_mysql_plugin struct for each plugin to be declared.
 */
 
@@ -82,7 +82,7 @@ struct st_mysql_plugin DECLS[]= {
 struct st_mysql_plugin _mysql_plugin_declarations_[]= {
 #endif
 
-#define mysql_declare_plugin(NAME) \
+#define drizzle_declare_plugin(NAME) \
 __DRIZZLE_DECLARE_PLUGIN(NAME, \
                  builtin_ ## NAME ## _plugin)
 

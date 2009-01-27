@@ -75,7 +75,7 @@ static int uncompressed_lengthudf_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(uncompressed_length)
+drizzle_declare_plugin(uncompressed_length)
 {
   DRIZZLE_UDF_PLUGIN,
   "uncompressed_length",

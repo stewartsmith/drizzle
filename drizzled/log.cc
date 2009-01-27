@@ -272,7 +272,7 @@ static int binlog_savepoint_rollback(handlerton *, Session *session, void *)
   return error;
 }
 
-mysql_declare_plugin(binlog)
+drizzle_declare_plugin(binlog)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "binlog",

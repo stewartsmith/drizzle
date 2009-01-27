@@ -62,7 +62,7 @@ static int hello_world_plugin_deinit(void *p)
 }
 
 
-mysql_declare_plugin(hello_world)
+drizzle_declare_plugin(hello_world)
 {
   DRIZZLE_UDF_PLUGIN,
   "hello_world",

@@ -1519,7 +1519,7 @@ bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
   return COMPATIBLE_DATA_YES;
 }
 
-mysql_declare_plugin(csv)
+drizzle_declare_plugin(csv)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "CSV",

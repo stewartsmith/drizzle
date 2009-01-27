@@ -9511,7 +9511,7 @@ innodb_plugin_init(void)
 }
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
-mysql_declare_plugin(innobase)
+drizzle_declare_plugin(innobase)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   innobase_hton_name,

@@ -98,7 +98,7 @@ static int md5udf_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(md5)
+drizzle_declare_plugin(md5)
 {
   DRIZZLE_UDF_PLUGIN,
   "md5",

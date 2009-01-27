@@ -9769,7 +9769,7 @@ innodb_plugin_init(void)
 }
 #endif /* MYSQL_DYNAMIC_PLUGIN */
 
-mysql_declare_plugin(innobase)
+drizzle_declare_plugin(innobase)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
   &innobase_storage_engine,
