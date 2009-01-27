@@ -1450,13 +1450,18 @@ int ha_delete_table(Session *session, const char *path,
     dummy_share.table_name.length= strlen(alias);
     dummy_table.alias= alias;
 
-    handler *file= dtargs.file;
-    file->change_table_ptr(&dummy_table, &dummy_share);
+    if(dtargs.file)
+    {
+      handler *file= dtargs.file;
+      file->change_table_ptr(&dummy_table, &dummy_share);
 
-    session->push_internal_handler(&ha_delete_table_error_handler);
-    file->print_error(dtargs.error, 0);
+      session->push_internal_handler(&ha_delete_table_error_handler);
+      file->print_error(dtargs.error, 0);
 
-    session->pop_internal_handler();
+      session->pop_internal_handler();
+    }
+    else
+      dtargs.error= -1; /* General form of fail. maybe bad FRM */
 
     /*
       XXX: should we convert *all* errors to warnings here?
