@@ -390,7 +390,7 @@ bool mysqld_show_create_db(Session *session, char *dbname,
   String buffer(buff, sizeof(buff), system_charset_info);
   Protocol *protocol=session->protocol;
 
-  if (store_db_create_info(session, dbname, &buffer, create_info))
+  if (store_db_create_info(dbname, &buffer, create_info))
   {
     /*
       This assumes that the only reason for which store_db_create_info()
@@ -930,7 +930,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   @returns true if errors are detected, false otherwise.
 */
 
-bool store_db_create_info(Session *session, const char *dbname, String *buffer,
+bool store_db_create_info(const char *dbname, String *buffer,
                           HA_CREATE_INFO *create_info)
 {
   HA_CREATE_INFO create;
@@ -946,8 +946,6 @@ bool store_db_create_info(Session *session, const char *dbname, String *buffer,
   {
     if (check_db_dir_existence(dbname))
       return(true);
-
-    load_db_opt_by_name(session, dbname, &create);
   }
 
   buffer->length(0);
@@ -2653,7 +2651,6 @@ int fill_schema_schemata(Session *session, TableList *tables, COND *cond)
   List<LEX_STRING> db_names;
   LEX_STRING *db_name;
   bool with_i_schema;
-  HA_CREATE_INFO create;
   Table *table= tables->table;
 
   if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
@@ -2692,9 +2689,8 @@ int fill_schema_schemata(Session *session, TableList *tables, COND *cond)
       continue;
     }
     {
-      load_db_opt_by_name(session, db_name->str, &create);
       if (store_schema_shemata(session, table, db_name,
-                               create.default_table_charset))
+                               system_charset_info))
         return(1);
     }
   }

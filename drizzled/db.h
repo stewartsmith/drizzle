@@ -33,16 +33,9 @@ bool mysql_opt_change_db(Session *session,
                          bool *cur_db_changed);
 
 
-#define MY_DB_OPT_FILE "db.opt"
-bool my_database_names_init(void);
-void my_database_names_free(void);
 bool check_db_dir_existence(const char *db_name);
-bool load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create);
-bool load_db_opt_by_name(Session *session, const char *db_name,
-                         HA_CREATE_INFO *db_create_info);
 const CHARSET_INFO *get_default_db_collation(Session *session, const char *db_name);
-bool my_dbopt_init(void);
-void my_dbopt_cleanup(void);
+
 extern int creating_database; // How many database locks are made
 extern int creating_table;    // How many mysql_create_table() are running
 
