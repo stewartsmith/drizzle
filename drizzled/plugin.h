@@ -86,7 +86,7 @@ struct st_mysql_plugin _mysql_plugin_declarations_[]= {
 __DRIZZLE_DECLARE_PLUGIN(NAME, \
                  builtin_ ## NAME ## _plugin)
 
-#define mysql_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0,0}}
+#define drizzle_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0,0}}
 
 /*
   declarations for SHOW STATUS support in plugins

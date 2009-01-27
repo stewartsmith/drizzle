@@ -9532,7 +9532,7 @@ i_s_innodb_cmp,
 i_s_innodb_cmp_reset,
 i_s_innodb_cmpmem,
 i_s_innodb_cmpmem_reset
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;
 
 
 /****************************************************************************

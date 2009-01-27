@@ -1412,5 +1412,5 @@ drizzle_declare_plugin(archive)
   archive_system_variables,   /* system variables                */
   NULL                        /* config options                  */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;
 

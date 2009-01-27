@@ -285,4 +285,4 @@ drizzle_declare_plugin(logging_query)
   logging_query_system_variables,
   NULL
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

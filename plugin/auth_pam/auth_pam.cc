@@ -122,4 +122,4 @@ drizzle_declare_plugin(auth_pam)
   NULL,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

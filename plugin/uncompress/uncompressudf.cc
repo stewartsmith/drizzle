@@ -123,4 +123,4 @@ drizzle_declare_plugin(uncompress)
   NULL,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

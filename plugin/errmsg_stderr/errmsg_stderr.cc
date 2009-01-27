@@ -79,4 +79,4 @@ drizzle_declare_plugin(errmsg_stderr)
   NULL, /* system variables */
   NULL
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

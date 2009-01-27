@@ -615,4 +615,4 @@ drizzle_declare_plugin(pool_of_threads)
   system_variables,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

@@ -286,4 +286,4 @@ drizzle_declare_plugin(binlog)
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

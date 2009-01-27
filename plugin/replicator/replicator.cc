@@ -280,4 +280,4 @@ drizzle_declare_plugin(replicator)
   system_variables,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;
