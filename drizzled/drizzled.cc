@@ -253,7 +253,6 @@ static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
-static I_List<Session> thread_cache;
 
 /* Global variables */
 
@@ -3412,7 +3411,6 @@ static void drizzle_init_variables(void)
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   threads.empty();
-  thread_cache.empty();
   key_caches.empty();
   if (!(dflt_key_cache= get_or_create_key_cache(default_key_cache_base.str,
                                                 default_key_cache_base.length)))

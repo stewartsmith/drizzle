@@ -89,7 +89,7 @@ err:
 int scheduling_finalizer(st_plugin_int *plugin)
 {
   /* We know which one we initialized since its data pointer is filled */
-  if (plugin->plugin->deinit && plugin->state == PLUGIN_IS_READY)
+  if (plugin->plugin->deinit && plugin->data)
   {
     if (plugin->plugin->deinit((void *)&thread_scheduler))
     {
