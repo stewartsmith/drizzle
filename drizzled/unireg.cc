@@ -33,6 +33,7 @@
 #include <string>
 #include <fstream>
 #include <drizzled/serialize/serialize.h>
+#include <drizzled/serialize/table.pb.h>
 using namespace std;
 
 #define FCOMP			17		/* Bytes for a packed field */
@@ -88,36 +89,15 @@ handle_error(uint32_t sql_errno,
   return is_handled;
 }
 
-int mysql_frm_type(char *path, enum legacy_db_type *dbt)
+int drizzle_read_table_proto(char* path, drizzle::Table* table)
 {
-  int file;
-  unsigned char header[10];
-  int error;
-
-  *dbt= DB_TYPE_UNKNOWN;
-
-  file= open(path, O_RDONLY);
-
-  if(file < 1)
-    return 1;
-
-  error= read(file, header, sizeof(header));
-  close(file);
-
-  if (error!=sizeof(header))
-    return 1;
-
-  /*
-    This is just a check for DB_TYPE. We'll return default unknown type
-    if the following test is true (arg #3). This should not have effect
-    on return value from this function (default FRMTYPE_TABLE)
-  */
-  if (header[0] != (unsigned char)254 || header[1] != 1 ||
-      (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
-       (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
-    return 0;
-
-  *dbt= (enum legacy_db_type) (uint) *(header + 3);
+  {
+    fstream input(path, ios::in | ios::binary);
+    if (!table->ParseFromIstream(&input))
+    {
+      return 1;
+    }
+  }
   return 0;
 }
 
@@ -613,7 +593,7 @@ int rename_table_proto_file(const char *from, const char* to)
   return my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
 }
 
-int delete_table_proto_file(char *file_name)
+int delete_table_proto_file(const char *file_name)
 {
   string new_path(file_name);
   string file_ext = ".dfe";
@@ -723,7 +703,8 @@ int rea_create_table(Session *session, const char *path,
 err_handler:
   file->ha_create_handler_files(path, NULL, CHF_DELETE_FLAG, create_info);
   my_delete(frm_name, MYF(0));
-  delete_table_proto_file(frm_name);
+
+  delete_table_proto_file(path);
 
   return 1;
 } /* rea_create_table */
