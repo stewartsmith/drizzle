@@ -94,22 +94,6 @@ select last_insert_id();
 insert into t1 values (NULL);
 select * from t1;
 drop table t1;
-#
-# last_insert_id() madness
-# Bug 314554 - Autoincrement succeeds where it should have failed
-#at line 109
-#create table t1 (i int not null auto_increment primary key);
-#insert into t1 set i = 254;
-#insert into t1 set i = null;
-#select last_insert_id();
-#explain extended select last_insert_id();
-#--error ER_DUP_ENTRY
-#insert into t1 set i = 254;
-#select last_insert_id();
-#--error ER_DUP_ENTRY
-#insert into t1 set i = null;
-#select last_insert_id();
-#drop table t1;
 
 create table t1 (i int not null auto_increment, key (i));
 insert into t1 set i = 254;

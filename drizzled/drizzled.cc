@@ -45,7 +45,7 @@
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
 #include <drizzled/plugin_scheduling.h>
-
+#include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -1893,8 +1893,10 @@ static int init_common_variables(const char *conf_file_name, int argc,
   lex_init();
   if (item_create_init())
     return 1;
-  item_init();
   if (set_var_init())
+    return 1;
+  /* Creates static regex matching for temporal values */
+  if (! init_temporal_formats())
     return 1;
   /*
     Process a comma-separated character set list and choose

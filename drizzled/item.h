@@ -40,9 +40,6 @@ class Item_in_subselect;
 class Send_field;
 class Field;
 
-void item_init(void);			/* Init item functions */
-
-
 void dummy_error_processor(Session *session, void *data);
 void view_error_processor(Session *session, void *data);
 
