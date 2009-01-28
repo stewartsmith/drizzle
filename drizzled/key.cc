@@ -390,8 +390,8 @@ void key_unpack(String *to,Table *table,uint32_t idx)
           Align, returning not more than "char_length" characters.
         */
         uint32_t charpos, char_length= key_part->length / cs->mbmaxlen;
-        if ((charpos= my_charpos(cs, tmp.ptr(),
-                                 tmp.ptr() + tmp.length(),
+        if ((charpos= my_charpos(cs, tmp.c_ptr(),
+                                 tmp.c_ptr() + tmp.length(),
                                  char_length)) < key_part->length)
           tmp.length(charpos);
       }

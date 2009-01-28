@@ -41,6 +41,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		authentication.h \
 		base.h \
 		cached_item.h \
+		calendar.h \
 		check_stack_overrun.h \
 		client_settings.h \
 		current_session.h \
@@ -323,6 +324,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_map_iterator.h \
 		table_share.h \
 		tableop_hooks.h \
+		temporal.h \
+		temporal_format.h \
 		tmp_table.h \
 		tzfile.h \
 		tztime.h \
@@ -348,7 +351,7 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) $(LTLIBUUID) \
-		 $(LIBDL_LIBS) $(LTLIBEVENT) $(LTLIBPROTOBUF) \
+		 $(LIBDL_LIBS) $(LTLIBEVENT) $(LTLIBPROTOBUF) $(PCRE_LIBS) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
@@ -367,6 +370,7 @@ noinst_HEADERS = \
 drizzled_SOURCES = \
 		authentication.cc \
 		cached_item.cc \
+		calendar.cc \
 		check_stack_overrun.cc \
 		comp_creator.cc \
 		configvar.cc \
@@ -437,6 +441,8 @@ drizzled_SOURCES = \
 		table.cc \
                 table_map_iterator.cc \
 		tableop_hooks.cc \
+		temporal.cc \
+		temporal_format.cc \
 		thr_malloc.cc \
 		time.cc \
 		tmp_table.cc \

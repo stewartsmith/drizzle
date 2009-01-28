@@ -63,15 +63,6 @@ const String my_null_string("NULL", 4, default_charset_info);
 ** Item functions
 *****************************************************************************/
 
-/**
-  Init all special items.
-*/
-
-void item_init(void)
-{
-}
-
-
 bool Item::is_expensive_processor(unsigned char *)
 {
   return false;

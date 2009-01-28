@@ -470,7 +470,7 @@ update t1 set b='b ' where a=2;
 update t1 set b='b  ' where a > 1;
 ERROR 23000: Duplicate entry 'b  ' for key 'b'
 insert into t1 (b) values ('b');
-ERROR 23000: Duplicate entry 'b  ' for key 'b'
+ERROR 23000: Duplicate entry 'b' for key 'b'
 select * from t1;
 a	b
 1	a

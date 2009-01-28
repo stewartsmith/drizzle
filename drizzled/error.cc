@@ -1393,7 +1393,25 @@ N_("The value specified for virtual column '%s' in table '%s' ignored."),
 /* ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN */
 N_("'%s' is not yet supported for virtual columns."),
 /* ER_CONST_EXPR_IN_VCOL */
-N_("Constant expression in virtual column function is not allowed.")
+N_("Constant expression in virtual column function is not allowed."),
+/* ER_UNKNOWN_TEMPORAL_TYPE */
+N_("Encountered an unknown temporal type."),
+/* ER_INVALID_STRING_FORMAT_FOR_DATE */
+N_("Received an invalid string format '%s' for a date value."),
+/* ER_INVALID_STRING_FORMAT_FOR_TIME */
+N_("Received an invalid string format '%s' for a time value."),
+/* ER_INVALID_UNIX_TIMESTAMP_VALUE */
+N_("Received an invalid value '%s' for a UNIX timestamp."),
+/* ER_INVALID_DATETIME_VALUE */
+N_("Received an invalid datetime value '%s'."),
+/* ER_INVALID_NULL_ARGUMENT */
+N_("Received a NULL argument for function '%s'."),
+/* ER_INVALID_NEGATIVE_ARGUMENT */
+N_("Received an invalid negative argument '%s' for function '%s'."),
+/* ER_ARGUMENT_OUT_OF_RANGE */
+N_("Received an out-of-range argument '%s' for function '%s'."),
+/* ER_INVALID_TIME_VALUE */
+N_("Received an invalid time value '%s'."),
 };
 
 const char * error_message(unsigned int code)

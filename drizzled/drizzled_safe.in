@@ -394,7 +394,7 @@ then
 does not exist or is not executable. Please cd to the mysql installation
 directory and restart this script from there as follows:
 ./bin/drizzled_safe&
-See http://dev.mysql.com/doc/mysql/en/drizzled-safe.html for more information"
+"
   exit 1
 fi
 
