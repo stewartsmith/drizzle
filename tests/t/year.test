@@ -71,14 +71,6 @@ SELECT YEAR("9999-12-31");
 SELECT YEAR('07/31/2009');
 
 # 
-# The following tests should produce errors for YEAR().    
-# 
-
-#
-# Test boundary dates for YEAR 
-#
-
-# 
 # Tests for alternate DATETIME syntaxes 
 # in string and numeric formats. All should
 # return 2009.
@@ -113,6 +105,7 @@ CREATE TABLE t1 (
 , blob_fld BLOB NOT NULL
 );
 
+# Should all output 2007
 INSERT INTO t1 VALUES (
 20071130
 , "2007-11-30"
