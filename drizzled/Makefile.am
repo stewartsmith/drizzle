@@ -335,6 +335,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 
 noinst_LTLIBRARIES = \
 		libhandler.la \
+		libserialutil.la \
 		libitem.la \
 		libutil.la \
 		libfield.la \
@@ -374,7 +375,6 @@ drizzled_SOURCES = \
 		comp_creator.cc \
 		configvar.cc \
 		current_session.cc \
-		db.cc \
 		drizzled.cc \
 		dtcollation.cc \
 		errmsg.cc \
@@ -448,7 +448,6 @@ drizzled_SOURCES = \
 		tmp_table.cc \
 		tztime.cc \
 		uniques.cc \
-		unireg.cc \
 		virtual_column_info.cc \
 		xid.cc
 
@@ -460,6 +459,9 @@ gen_lex_hash_SOURCES= gen_lex_hash.cc
 
 gen_lex_hash_LDFLAGS= 
 
+
+libserialutil_la_SOURCES = db.cc unireg.cc
+libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${NO_SHADOW}
 
 libhandler_la_SOURCES = handler.cc handlerton.cc
 

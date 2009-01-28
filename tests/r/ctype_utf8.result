@@ -53,8 +53,8 @@ select 'A' like 'a';
 select 'A' like 'a' collate utf8_bin;
 'A' like 'a' collate utf8_bin
 0
-select 0xD0B0D0B1D0B2 like concat(_utf8'%',0xD0B1,'%');
-0xD0B0D0B1D0B2 like concat(_utf8'%',0xD0B1,'%')
+select 0xD0B0D0B1D0B2 like concat('%',0xD0B1,'%');
+0xD0B0D0B1D0B2 like concat('%',0xD0B1,'%')
 1
 select 'Günter André' like 'GÜNTER%';
 'Günter André' like 'GÜNTER%'
@@ -482,7 +482,7 @@ drop table t1;
 create table t1 (
 a enum('☃','☄','킱') not null default '킱'
 );
-create table t2 select concat(a,_utf8'') as a from t1;
+create table t2 select concat(a,'') as a from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
@@ -591,12 +591,12 @@ select ifnull(a,'') from t1;
 ifnull(a,'')
 test
 drop table t1;
-select repeat(_utf8'+',3) as h union select NULL;
+select repeat('+',3) as h union select NULL;
 h
 +++
 NULL
-select ifnull(NULL, _utf8'string');
-ifnull(NULL, _utf8'string')
+select ifnull(NULL, 'string');
+ifnull(NULL, 'string')
 string
 create table t1 (s1 char(5) collate utf8_lithuanian_ci);
 insert into t1 values ('I'),('K'),('Y');
@@ -760,9 +760,9 @@ DROP TABLE t2;
 DROP TABLE t1;
 CREATE TABLE t1 (item varchar(255));
 INSERT INTO t1 VALUES ('\\');
-INSERT INTO t1 VALUES (_utf8'\\');
+INSERT INTO t1 VALUES ('\\');
 INSERT INTO t1 VALUES ('Cote d\'Ivoire');
-INSERT INTO t1 VALUES (_utf8'Cote d\'Ivoire');
+INSERT INTO t1 VALUES ('Cote d\'Ivoire');
 SELECT item FROM t1 ORDER BY item;
 item
 Cote d'Ivoire
@@ -1090,7 +1090,7 @@ colA	colB	colA	colB
 1	foo	1	foo
 2	foo bar	2	foo bar
 DROP TABLE t1, t2;
-SELECT '½1234567890' UNION SELECT _binary '1';
+SELECT '½1234567890' UNION SELECT '1';
 ½1234567890
 ½1234567890
 1

@@ -63,7 +63,6 @@ void write_insert(drizzle::Event *record, const char *trx)
 void write_delete(drizzle::Event *record, const char *trx)
 {
   using namespace drizzle;
-  uuid_t uu;
   Event::Value *value;
 
   record->set_type(Event::DELETE);

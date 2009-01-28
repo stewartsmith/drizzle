@@ -1056,7 +1056,6 @@ static void network_init(void)
 
     /* Add options for our listening socket */
     {
-      int error;
       struct linger ling = {0, 0};
       int flags =1;
 

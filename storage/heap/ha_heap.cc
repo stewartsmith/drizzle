@@ -42,8 +42,6 @@ int heap_deinit(void *)
 
 int heap_init(void *p)
 {
-  handlerton *heap_hton;
-
   heap_hton= (handlerton *)p;
   heap_hton->state=      SHOW_OPTION_YES;
   heap_hton->create=     heap_create_handler;
@@ -829,19 +827,19 @@ int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
 }
 
 
-bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info,
+bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info_in,
 					 uint32_t table_changes)
 {
   /* Check that auto_increment value was not changed */
-  if ((info->used_fields & HA_CREATE_USED_AUTO &&
-       info->auto_increment_value != 0) ||
+  if ((info_in->used_fields & HA_CREATE_USED_AUTO &&
+       info_in->auto_increment_value != 0) ||
       table_changes == IS_EQUAL_NO ||
       table_changes & IS_EQUAL_PACK_LENGTH) // Not implemented yet
     return COMPATIBLE_DATA_NO;
   return COMPATIBLE_DATA_YES;
 }
 
-mysql_declare_plugin(heap)
+drizzle_declare_plugin(heap)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MEMORY",
@@ -855,4 +853,4 @@ mysql_declare_plugin(heap)
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

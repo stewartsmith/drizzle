@@ -42,7 +42,6 @@ int64_t Item_func_benchmark::val_int()
   {
     if (!args[0]->null_value)
     {
-      char buff[22];
       llstr(((int64_t) loop_count), buff);
       push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),

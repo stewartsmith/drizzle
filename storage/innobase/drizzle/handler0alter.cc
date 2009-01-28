@@ -593,7 +593,7 @@ int
 ha_innobase::add_index(
 /*===================*/
 				/* out: 0 or error number */
-	Table*	table,		/* in: Table where indexes are created */
+	Table*	i_table,	/* in: Table where indexes are created */
 	KEY*	key_info,	/* in: Indexes to be created */
 	uint	num_of_keys)	/* in: Number of indexes to be created */
 {
@@ -609,7 +609,7 @@ ha_innobase::add_index(
 	ulint		new_primary;
 	ulint		error;
 
-	ut_a(table);
+	ut_a(i_table);
 	ut_a(key_info);
 	ut_a(num_of_keys);
 
@@ -771,7 +771,7 @@ err_exit:
 	based on this information using temporary files and merge sort. */
 	error = row_merge_build_indexes(prebuilt->trx,
 					innodb_table, indexed_table,
-					index, num_of_idx, table);
+					index, num_of_idx, i_table);
 
 error_handling:
 #ifdef UNIV_DEBUG
@@ -899,7 +899,7 @@ int
 ha_innobase::prepare_drop_index(
 /*============================*/
 				/* out: 0 or error number */
-	Table*	table,		/* in: Table where indexes are dropped */
+	Table*	i_table,	/* in: Table where indexes are dropped */
 	uint*	key_num,	/* in: Key nums to be dropped */
 	uint	num_of_keys)	/* in: Number of keys to be dropped */
 {
@@ -907,7 +907,7 @@ ha_innobase::prepare_drop_index(
 	int		err = 0;
 	uint 		n_key;
 
-	ut_ad(table);
+	ut_ad(i_table);
 	ut_ad(key_num);
 	ut_ad(num_of_keys);
 	if (srv_created_new_raw || srv_force_recovery) {
@@ -938,7 +938,7 @@ ha_innobase::prepare_drop_index(
 		const KEY*	key;
 		dict_index_t*	index;
 
-		key = table->key_info + key_num[n_key];
+		key = i_table->key_info + key_num[n_key];
 		index = dict_table_get_index_on_name_and_min_id(
 			prebuilt->table, key->name);
 
@@ -1099,13 +1099,11 @@ int
 ha_innobase::final_drop_index(
 /*==========================*/
 				/* out: 0 or error number */
-	Table*	)		/* in: Table where indexes are dropped */
+	Table*		)	/* in: Table where indexes are dropped */
 {
 	dict_index_t*	index;		/* Index to be dropped */
 	trx_t*		trx;		/* Transaction */
 	int		err;
-
-	ut_ad(table);
 
 	if (srv_created_new_raw || srv_force_recovery) {
 		return(HA_ERR_WRONG_COMMAND);

@@ -1076,7 +1076,7 @@ void String::print(String *str)
 /* Factor the extern out */
 extern const CHARSET_INFO *system_charset_info, *files_charset_info;
 
-void String::append_identifier(const char *name, uint32_t length)
+void String::append_identifier(const char *name, uint32_t in_length)
 {
   const char *name_end;
   char quote_char;
@@ -1087,14 +1087,14 @@ void String::append_identifier(const char *name, uint32_t length)
    it's a keyword
   */
 
-  reserve(length*2 + 2);
+  reserve(in_length*2 + 2);
   quote_char= (char) q;
   append(&quote_char, 1, system_charset_info);
 
-  for (name_end= name+length ; name < name_end ; name+= length)
+  for (name_end= name+in_length ; name < name_end ; name+= in_length)
   {
     unsigned char chr= (unsigned char) *name;
-    length= my_mbcharlen(system_charset_info, chr);
+    in_length= my_mbcharlen(system_charset_info, chr);
     /*
       my_mbcharlen can return 0 on a wrong multibyte
       sequence. It is possible when upgrading from 4.0,
@@ -1102,11 +1102,11 @@ void String::append_identifier(const char *name, uint32_t length)
       The manual says it does not work. So we'll just
       change length to 1 not to hang in the endless loop.
     */
-    if (!length)
-      length= 1;
-    if (length == 1 && chr == (unsigned char) quote_char)
+    if (!in_length)
+      in_length= 1;
+    if (in_length == 1 && chr == (unsigned char) quote_char)
       append(&quote_char, 1, system_charset_info);
-    append(name, length, system_charset_info);
+    append(name, in_length, system_charset_info);
   }
   append(&quote_char, 1, system_charset_info);
 }

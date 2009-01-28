@@ -756,11 +756,11 @@ bool Field::is_null_in_record(const unsigned char *record)
 }
 
 
-bool Field::is_null_in_record_with_offset(my_ptrdiff_t offset)
+bool Field::is_null_in_record_with_offset(my_ptrdiff_t with_offset)
 {
   if (!null_ptr)
     return false;
-  return test(null_ptr[offset] & null_bit);
+  return test(null_ptr[with_offset] & null_bit);
 }
 
 
@@ -1346,9 +1346,9 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
 }
 
 
-uint32_t Field::is_equal(Create_field *new_field)
+uint32_t Field::is_equal(Create_field *new_field_ptr)
 {
-  return (new_field->sql_type == real_type());
+  return (new_field_ptr->sql_type == real_type());
 }
 
 /**
@@ -1476,7 +1476,7 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
                         const CHARSET_INFO * const fld_charset,
-                        uint32_t, enum column_format_type column_format,
+                        uint32_t, enum column_format_type column_format_in,
                         virtual_column_info *fld_vcol_info)
 {
   uint32_t sign_len, allowed_type_modifier= 0;
@@ -1486,7 +1486,7 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
   field_name= fld_name;
   def= fld_default_value;
   flags= fld_type_modifier;
-  flags|= (((uint32_t)column_format & COLUMN_FORMAT_MASK) << COLUMN_FORMAT_FLAGS);
+  flags|= (((uint32_t)column_format_in & COLUMN_FORMAT_MASK) << COLUMN_FORMAT_FLAGS);
   unireg_check= (fld_type_modifier & AUTO_INCREMENT_FLAG ?
                  Field::NEXT_NUMBER : Field::NONE);
   decimals= fld_decimals ? (uint32_t)atoi(fld_decimals) : 0;
@@ -1951,8 +1951,6 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
        old_field->table->timestamp_field != old_field ||  /* timestamp field */
        unireg_check == Field::TIMESTAMP_UN_FIELD))        /* has default val */
   {
-    char buff[MAX_FIELD_WIDTH];
-    String tmp(buff,sizeof(buff), charset);
     my_ptrdiff_t diff;
 
     /* Get the value from default_values */

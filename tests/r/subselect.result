@@ -4027,7 +4027,7 @@ drop table t_out;
 drop table t_in;
 CREATE TABLE t1 (s1 char(1)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('a');
-SELECT * FROM t1 WHERE _utf8'a' = ANY (SELECT s1 FROM t1);
+SELECT * FROM t1 WHERE 'a' = ANY (SELECT s1 FROM t1);
 s1
 a
 DROP TABLE t1;

@@ -78,8 +78,9 @@ static void safe_hash_entry_free(SAFE_HASH_ENTRY *entry)
 /* Get key and length for a SAFE_HASH_ENTRY */
 
 static unsigned char *safe_hash_entry_get(SAFE_HASH_ENTRY *entry, size_t *length,
-                                  bool not_used __attribute__((unused)))
+                                  bool not_used)
 {
+  (void)not_used;
   *length=entry->length;
   return (unsigned char*) entry->key;
 }

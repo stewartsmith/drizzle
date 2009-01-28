@@ -10,7 +10,7 @@ using namespace std;
 
 void printRecord(const drizzle::MasterList *list)
 {
-  uint32_t x;
+  int x;
 
   for (x= 0; x < list->record_size(); x++)
   {

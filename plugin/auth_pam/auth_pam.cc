@@ -108,7 +108,7 @@ static int finalize(void *p)
   return 0;
 }
 
-mysql_declare_plugin(auth_pam)
+drizzle_declare_plugin(auth_pam)
 {
   DRIZZLE_AUTH_PLUGIN,
   "pam",
@@ -122,4 +122,4 @@ mysql_declare_plugin(auth_pam)
   NULL,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

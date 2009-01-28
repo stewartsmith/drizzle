@@ -1410,11 +1410,7 @@ static bool show_status_array(Session *session, const char *wild,
   /* the variable name should not be longer than 64 characters */
   char name_buffer[64];
   int len;
-  LEX_STRING null_lex_str;
   SHOW_VAR tmp, *var;
-
-  null_lex_str.str= 0;				// For sys_var->value_ptr()
-  null_lex_str.length= 0;
 
   prefix_end= strncpy(name_buffer, prefix, sizeof(name_buffer)-1);
   prefix_end+= strlen(prefix);
@@ -1455,8 +1451,8 @@ static bool show_status_array(Session *session, const char *wild,
         if (show_type == SHOW_SYS)
         {
           show_type= ((sys_var*) value)->show_type();
-          value=     (char*) ((sys_var*) value)->value_ptr(session, value_type,
-                                                           &null_lex_str);
+          value= (char*) ((sys_var*) value)->value_ptr(session, value_type,
+                                                       &null_lex_str);
         }
 
         pos= end= buff;
@@ -1509,8 +1505,8 @@ static bool show_status_array(Session *session, const char *wild,
           break;
         case SHOW_HAVE:
         {
-          SHOW_COMP_OPTION tmp= *(SHOW_COMP_OPTION*) value;
-          pos= show_comp_option_name[(int) tmp];
+          SHOW_COMP_OPTION tmp_option= *(SHOW_COMP_OPTION *)value;
+          pos= show_comp_option_name[(int) tmp_option];
           end= strchr(pos, '\0');
           break;
         }
@@ -2547,7 +2543,6 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
                 continue;
             }
 
-            int res;
             LEX_STRING tmp_lex_string, orig_db_name;
             /*
               Set the parent lex of 'sel' because it is needed by

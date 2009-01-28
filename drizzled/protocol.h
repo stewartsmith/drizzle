@@ -75,7 +75,6 @@ public:
     return 0;
   }
   virtual bool flush();
-  virtual void end_partial_result_set(Session *session);
   virtual void prepare_for_resend()=0;
 
   virtual bool store_null()=0;

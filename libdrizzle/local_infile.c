@@ -169,8 +169,9 @@ typedef struct st_default_local_infile
 */
 
 static int default_local_infile_init(void **ptr, const char *filename,
-             void *userdata __attribute__ ((unused)))
+                                     void *userdata)
 {
+  (void)userdata;
   default_local_infile_data *data;
   char tmp_name[FN_REFLEN];
 

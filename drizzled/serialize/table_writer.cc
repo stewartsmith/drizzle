@@ -2,16 +2,16 @@
 #include <fstream>
 #include <string>
 #include <drizzled/serialize/table.pb.h>
+
 using namespace std;
+using namespace drizzle;
 
 /*
   Written from Google proto example
 */
 
-void fill_engine(drizzle::Table::StorageEngine *engine)
+void fill_engine(::drizzle::Table::StorageEngine *engine)
 {
-  using namespace drizzle;
-  using std::string;
   int16_t x;
 
   engine->set_name("InnoDB");
@@ -37,16 +37,15 @@ void fill_engine(drizzle::Table::StorageEngine *engine)
   }
 }
 
-void new_index_to_table( drizzle::Table *table,
-                         const std::string name,
-                         uint16_t num_index_parts,
-                         uint32_t field_indexes[],
-                         uint32_t compare_lengths[],
-                         bool is_primary,
-                         bool is_unique)
+void new_index_to_table(::drizzle::Table *table,
+                        const string name,
+                        uint16_t num_index_parts,
+                        uint32_t field_indexes[],
+                        uint32_t compare_lengths[],
+                        bool is_primary,
+                        bool is_unique)
 {
-  using namespace drizzle;
-  uint16_t x;
+  uint16_t x= 0;
 
   Table::Index *index;
   Table::Field *field;
@@ -73,15 +72,12 @@ void new_index_to_table( drizzle::Table *table,
   }
 }
 
-void fill_table(drizzle::Table *table, const char *name)
+void fill_table(::drizzle::Table *table, const char *name)
 {
   uint16_t x;
 
-  using namespace drizzle;
-
   Table::Field *field;
   Table::Field::FieldConstraints *field_constraints;
-  Table::Field::FieldOptions *field_options;
   Table::Field::StringFieldOptions *string_field_options;
   Table::Field::NumericFieldOptions *numeric_field_options;
   Table::Field::SetFieldOptions *set_field_options;
@@ -185,7 +181,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  drizzle::Table table;
+  Table table;
 
   fill_table(&table, "example_table");
 

@@ -25,8 +25,8 @@
 class Item_blob :public Item_string
 {
 public:
-  Item_blob(const char *name, uint32_t length) :
-    Item_string(name, length, &my_charset_bin)
+  Item_blob(const char *item_name, uint32_t length) :
+    Item_string(item_name, length, &my_charset_bin)
   { max_length= length; }
   enum Type type() const { return TYPE_HOLDER; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_BLOB; }

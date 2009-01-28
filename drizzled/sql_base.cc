@@ -3700,10 +3700,9 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 */
 
 static Field *
-find_field_in_natural_join(Session *session, TableList *table_ref, const char *name,
-                           uint32_t ,
-                           Item **, bool register_tree_change __attribute__((unused)),
-                           TableList **actual_table)
+find_field_in_natural_join(Session *session, TableList *table_ref,
+                           const char *name, uint32_t , Item **,
+                           bool, TableList **actual_table)
 {
   List_iterator_fast<Natural_join_column>
     field_it(*(table_ref->join_columns));

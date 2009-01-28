@@ -2304,8 +2304,8 @@ parse_option(const char *origin, option_string **stmt, char delm)
     }
     else
     {
-      size_t length= strlen(begin_ptr);
-      memcpy(buffer, begin_ptr, length);
+      size_t begin_len= strlen(begin_ptr);
+      memcpy(buffer, begin_ptr, begin_len);
       begin_ptr= end_ptr;
     }
 

@@ -512,10 +512,11 @@ void Item_bool_func2::fix_length_and_dec()
   }
 
   session= current_session;
+  Item_field *field_item= NULL;
 
   if (args[0]->real_item()->type() == FIELD_ITEM)
   {
-    Item_field *field_item= (Item_field*) (args[0]->real_item());
+    field_item= static_cast<Item_field*>(args[0]->real_item());
     if (field_item->field->can_be_compared_as_int64_t() &&
         !(field_item->is_datetime() && args[1]->result_type() == STRING_RESULT))
     {
@@ -530,7 +531,7 @@ void Item_bool_func2::fix_length_and_dec()
 
     if (args[1]->real_item()->type() == FIELD_ITEM)
     {
-      Item_field *field_item= (Item_field*) (args[1]->real_item());
+      field_item= static_cast<Item_field*>(args[1]->real_item());
       if (field_item->field->can_be_compared_as_int64_t() &&
           !(field_item->is_datetime() &&
             args[0]->result_type() == STRING_RESULT))
@@ -3625,9 +3626,9 @@ void Item_func_in::fix_length_and_dec()
     /* All DATE/DATETIME fields/functions has the STRING result type. */
     if (cmp_type == STRING_RESULT || cmp_type == ROW_RESULT)
     {
-      uint32_t col, cols= args[0]->cols();
+      uint32_t col, num_cols= args[0]->cols();
 
-      for (col= 0; col < cols; col++)
+      for (col= 0; col < num_cols; col++)
       {
         bool skip_column= false;
         /*
@@ -3747,10 +3748,10 @@ void Item_func_in::fix_length_and_dec()
     if (array && !(session->is_fatal_error))		// If not EOM
     {
       uint32_t j=0;
-      for (uint32_t i=1 ; i < arg_count ; i++)
+      for (uint32_t arg_num=1 ; arg_num < arg_count ; arg_num++)
       {
-	array->set(j,args[i]);
-	if (!args[i]->null_value)			// Skip NULL values
+	array->set(j,args[arg_num]);
+	if (!args[arg_num]->null_value)			// Skip NULL values
 	  j++;
 	else
 	  have_null= 1;

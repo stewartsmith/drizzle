@@ -169,8 +169,9 @@ err:
 
 int _mi_bin_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *page,
                    unsigned char *key, uint32_t key_len, uint32_t comp_flag, unsigned char **ret_pos,
-                   unsigned char *buff __attribute__((unused)), bool *last_key)
+                   unsigned char *buff, bool *last_key)
 {
+  (void)buff;
   register int start,mid,end,save_end;
   int flag;
   uint32_t totlength,nod_flag,not_used[2];
@@ -1347,11 +1348,14 @@ int _mi_search_last(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
 int
 _mi_calc_static_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,
-                           unsigned char *next_pos  __attribute__((unused)),
-                           unsigned char *org_key  __attribute__((unused)),
-                           unsigned char *prev_key __attribute__((unused)),
+                           unsigned char *next_pos,
+                           unsigned char *org_key,
+                           unsigned char *prev_key,
                            unsigned char *key, MI_KEY_PARAM *s_temp)
 {
+  (void)next_pos;
+  (void)org_key;
+  (void)prev_key;
   s_temp->key=key;
   return (int) (s_temp->totlength=keyinfo->keylength+nod_flag);
 }
@@ -1360,11 +1364,14 @@ _mi_calc_static_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,
 
 int
 _mi_calc_var_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,
-                        unsigned char *next_pos  __attribute__((unused)),
-                        unsigned char *org_key  __attribute__((unused)),
-                        unsigned char *prev_key __attribute__((unused)),
+                        unsigned char *next_pos,
+                        unsigned char *org_key,
+                        unsigned char *prev_key,
                         unsigned char *key, MI_KEY_PARAM *s_temp)
 {
+  (void)next_pos;
+  (void)org_key;
+  (void)prev_key;
   s_temp->key=key;
   return (int) (s_temp->totlength=_mi_keylength(keyinfo,key)+nod_flag);
 }
@@ -1389,8 +1396,11 @@ _mi_calc_var_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,
 */
 
 int
-_mi_calc_var_pack_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char *next_key,
-                             unsigned char *org_key, unsigned char *prev_key, unsigned char *key,
+_mi_calc_var_pack_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,
+                             unsigned char *next_key,
+                             unsigned char *org_key,
+                             unsigned char *prev_key,
+                             unsigned char *key,
                              MI_KEY_PARAM *s_temp)
 {
   register HA_KEYSEG *keyseg;
@@ -1742,10 +1752,11 @@ _mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char 
 
 /* store key without compression */
 
-void _mi_store_static_key(MI_KEYDEF *keyinfo __attribute__((unused)),
+void _mi_store_static_key(MI_KEYDEF *keyinfo,
                           register unsigned char *key_pos,
                           register MI_KEY_PARAM *s_temp)
 {
+  (void)keyinfo;
   memcpy(key_pos, s_temp->key, s_temp->totlength);
 }
 
@@ -1757,10 +1768,11 @@ void _mi_store_static_key(MI_KEYDEF *keyinfo __attribute__((unused)),
   { *((pos)++) = (unsigned char) ((length) >> 8); *((pos)++) = (unsigned char) (length);  } }
 
 
-void _mi_store_var_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
+void _mi_store_var_pack_key(MI_KEYDEF *keyinfo,
                             register unsigned char *key_pos,
                             register MI_KEY_PARAM *s_temp)
 {
+  (void)keyinfo;
   uint32_t length;
   unsigned char *start;
 
@@ -1821,10 +1833,11 @@ void _mi_store_var_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
 
 /* variable length key with prefix compression */
 
-void _mi_store_bin_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
+void _mi_store_bin_pack_key(MI_KEYDEF *keyinfo,
                             register unsigned char *key_pos,
                             register MI_KEY_PARAM *s_temp)
 {
+  (void)keyinfo;
   assert(s_temp->totlength >= s_temp->ref_length);
   store_key_length_inc(key_pos,s_temp->ref_length);
   memcpy(key_pos,s_temp->key+s_temp->ref_length,

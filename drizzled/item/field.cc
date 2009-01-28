@@ -349,11 +349,11 @@ bool Item_field::val_bool_result()
 
 bool Item_field::eq(const Item *item, bool) const
 {
-  Item *real_item= ((Item *) item)->real_item();
-  if (real_item->type() != FIELD_ITEM)
+  const Item *item_ptr= item->real_item();
+  if (item_ptr->type() != FIELD_ITEM)
     return 0;
 
-  Item_field *item_field= (Item_field*) real_item;
+  const Item_field *item_field= static_cast<const Item_field *>(item_ptr);
   if (item_field->field && field)
     return item_field->field == field;
   /*
@@ -1125,13 +1125,13 @@ Item *Item_field::replace_equal_field(unsigned char *)
 {
   if (item_equal)
   {
-    Item *const_item= item_equal->get_const();
-    if (const_item)
+    Item *const_item_ptr= item_equal->get_const();
+    if (const_item_ptr)
     {
       if (cmp_context != (Item_result)-1 &&
-          const_item->cmp_context != cmp_context)
+          const_item_ptr->cmp_context != cmp_context)
         return this;
-      return const_item;
+      return const_item_ptr;
     }
     Item_field *subst= item_equal->get_first();
     if (subst && !field->eq(subst->field))
