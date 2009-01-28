@@ -1,0 +1,123 @@
+#
+# Tests for the DAYOFYEAR() function
+#
+# The Drizzle DAYOFYEAR() function differs from the MySQL DAYOFYEAR()
+# function in these ways:
+#
+#  * Does not accept invalid parameters.  This results in an error
+#    in Drizzle.
+#
+
+# DAYOFYEAR() on a NULL should produce
+# a NULL.
+SELECT DAYOFYEAR(NULL);
+
+# 
+# Test improper argument list 
+#
+# 1 arg is required.
+--error 1582 # Wrong parameter count...
+SELECT DAYOFYEAR();
+--error 1582 # Wrong parameter count...
+SELECT DAYOFYEAR(1, 0);
+
+# 
+# Test invalid dates passed to DAYOFYEAR
+# produce an error, not a NULL or anything
+# else...
+#
+--error 1686
+SELECT DAYOFYEAR("xxx");
+
+# Indy, bad dates!
+--error 1686
+SELECT DAYOFYEAR("0000-00-00"); # No 0000-00-00 dates!...
+--error 1686
+SELECT DAYOFYEAR("0000-01-01"); # No zero year parts
+--error 1686
+SELECT DAYOFYEAR("0001-00-01"); # No zero month parts
+--error 1686
+SELECT DAYOFYEAR("0001-01-00"); # No zero day parts
+--error 1686
+SELECT DAYOFYEAR("2000-02-30"); # No Feb 30th!
+--error 1686
+SELECT DAYOFYEAR("1900-02-29"); # Not a leap DAYOFYEAR since not divisible evenly by 400...
+--error 1686
+SELECT DAYOFYEAR('1976-15-15'); # No 15th month!
+
+# A good date, which should output 1
+SELECT DAYOFYEAR("2009-01-01");
+
+# A good date, which should output 12
+SELECT DAYOFYEAR("2009-01-12");
+
+# A good date, which should output 365 - Test of 2 digit DAYOFYEAR conversion and proper day...
+SELECT DAYOFYEAR("70-12-31");
+
+# A good date, which should output 366 - Test of 2 digit DAYOFYEAR conversion and proper day in a leap year...
+SELECT DAYOFYEAR("00-12-31");
+
+# A good date, which should output 31
+SELECT DAYOFYEAR("0001-01-31");
+
+# A good date in the common USA format, should output 31+28+31+30+31+30+31= 212
+SELECT DAYOFYEAR('07/31/2009');
+
+# 
+# Tests for alternate DATETIME syntaxes 
+# in string and numeric formats. All should
+# return  31+28+31+30+31+30+31+31+16= 259
+# 
+SELECT DAYOFYEAR('20090916');
+SELECT DAYOFYEAR('20090916091528');
+SELECT DAYOFYEAR("20090916091528.000000");
+SELECT DAYOFYEAR('09-09-16');
+SELECT DAYOFYEAR('09.09.16');
+SELECT DAYOFYEAR('09/09/16');
+SELECT DAYOFYEAR('09-09-16');
+SELECT DAYOFYEAR('09-9-2');
+SELECT DAYOFYEAR(20090916);
+SELECT DAYOFYEAR(20090916091528);
+--error 1686 # Don't yet support DOUBLE -> DATETIME.
+SELECT DAYOFYEAR(20090916091528.000000);
+
+# Now test field values of different types
+
+USE test;
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+CREATE TABLE t1 (
+  int_fld INT NOT NULL
+, date_fld DATE NOT NULL
+, datetime_fld DATETIME NOT NULL
+, timestamp_fld TIMESTAMP NOT NULL
+, char_fld CHAR(22) NOT NULL
+, varchar_fld VARCHAR(22) NOT NULL
+, text_fld TEXT NOT NULL
+, blob_fld BLOB NOT NULL
+);
+
+# Should all output 31+28+30+31+31+30+31+31+30+31+30= 334
+INSERT INTO t1 VALUES (
+20071130
+, "2007-11-30"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30T16:30:19"
+);
+
+SELECT DAYOFYEAR(int_fld) FROM t1;
+SELECT DAYOFYEAR(date_fld) FROM t1;
+SELECT DAYOFYEAR(datetime_fld) FROM t1;
+SELECT DAYOFYEAR(timestamp_fld) FROM t1;
+SELECT DAYOFYEAR(char_fld) FROM t1;
+SELECT DAYOFYEAR(varchar_fld) FROM t1;
+SELECT DAYOFYEAR(text_fld) FROM t1;
+SELECT DAYOFYEAR(blob_fld) FROM t1;
+
+DROP TABLE t1;
+

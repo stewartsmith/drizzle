@@ -212,6 +212,7 @@ drop table t1;
 
 create table t1 (d date, dt datetime, t timestamp, c char(10));
 insert into t1 values ("0000-00-00", "0000-00-00", "0000-00-00", "0000-00-00");
+--error 1686 # 0000-00-00 is a bad date
 select dayofyear("0000-00-00"),dayofyear(d),dayofyear(dt),dayofyear(t),dayofyear(c) from t1;
 --error 1686 # 0000-00-00 is a bad date
 select dayofmonth("0000-00-00"),dayofmonth(d),dayofmonth(dt),dayofmonth(t),dayofmonth(c) from t1;
