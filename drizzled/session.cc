@@ -549,13 +549,6 @@ Session::Session()
 	    (hash_get_key) get_var_key,
 	    (hash_free_key) free_user_var, 0);
 
-  /* For user vars replication*/
-  if (opt_bin_log)
-    my_init_dynamic_array(&user_var_events,
-			  sizeof(BINLOG_USER_VAR_EVENT *), 16, 16);
-  else
-    memset(&user_var_events, 0, sizeof(user_var_events));
-
   /* Protocol */
   protocol= &protocol_text;			// Default protocol
   protocol_text.init(this);
@@ -724,7 +717,6 @@ void Session::cleanup(void)
     close_thread_tables(this);
   }
   mysql_ha_cleanup(this);
-  delete_dynamic(&user_var_events);
   hash_free(&user_vars);
   close_temporary_tables();
   free((char*) variables.time_format);
@@ -2567,11 +2559,6 @@ void Session::reset_for_next_command()
   }
   thread_specific_used= false;
 
-  if (opt_bin_log)
-  {
-    reset_dynamic(&user_var_events);
-    user_var_events_alloc= mem_root;
-  }
   clear_error();
   main_da.reset_diagnostics_area();
   total_warn_count=0;			// Warnings for this query

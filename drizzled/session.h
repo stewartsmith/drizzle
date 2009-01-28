@@ -53,15 +53,6 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
 
-typedef struct st_user_var_events
-{
-  user_var_entry *user_var_event;
-  char *value;
-  ulong length;
-  Item_result type;
-  uint32_t charset_number;
-} BINLOG_USER_VAR_EVENT;
-
 #define RP_LOCK_LOG_IS_ALREADY_LOCKED 1
 #define RP_FORCE_ROTATE               2
 
@@ -1086,9 +1077,6 @@ public:
   /* variables.transaction_isolation is reset to this after each commit */
   enum_tx_isolation session_tx_isolation;
   enum_check_fields count_cuted_fields;
-
-  DYNAMIC_ARRAY user_var_events;        /* For user variables replication */
-  MEM_ROOT      *user_var_events_alloc; /* Allocate above array elements here */
 
   enum killed_state
   {
