@@ -2247,7 +2247,8 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
     {
       res->append(pos, mblen);
       pos+= mblen;
-      continue;
+      if (pos >= end)
+        break;
     }
 #endif
 
