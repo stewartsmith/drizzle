@@ -574,6 +574,7 @@ static int init(void *p)
 
 static int deinit(void *)
 {
+  fprintf(stderr, "Entering pool shutdown \n");
   libevent_end();
   return 0;
 }

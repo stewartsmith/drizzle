@@ -374,46 +374,6 @@ sub mtr_kill_leftovers () {
     $srv->{'pid'}= 0; # Assume we are done with it
   }
 
-  if ( ! $::opt_skip_ndbcluster )
-  {
-
-    foreach my $cluster (@{$::clusters})
-    {
-
-      # Don't shut down a "running" cluster
-      next if $cluster->{'use_running'};
-
-      mtr_debug("  - cluster " .
-		"(pid: $cluster->{pid}; " .
-		"pid file: '$cluster->{path_pid})");
-
-      my $pid= mtr_ndbmgm_start($cluster, "shutdown");
-
-      # Save the pid of the ndb_mgm process
-      $admin_pids{$pid}= 1;
-
-      push(@kill_pids,{
-		       pid      => $cluster->{'pid'},
-		       pidfile  => $cluster->{'path_pid'}
-		      });
-
-      $cluster->{'pid'}= 0; # Assume we are done with it
-
-      foreach my $ndbd (@{$cluster->{'ndbds'}})
-      {
-	mtr_debug("    - ndbd " .
-		  "(pid: $ndbd->{pid}; " .
-		  "pid file: '$ndbd->{path_pid})");
-
-	push(@kill_pids,{
-			 pid      => $ndbd->{'pid'},
-			 pidfile  => $ndbd->{'path_pid'},
-			});
-	$ndbd->{'pid'}= 0; # Assume we are done with it
-      }
-    }
-  }
-
   # Wait for all the admin processes to complete
   mtr_wait_blocking(\%admin_pids);
 
