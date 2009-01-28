@@ -109,7 +109,7 @@ static int uncompressudf_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(uncompress)
+drizzle_declare_plugin(uncompress)
 {
   DRIZZLE_UDF_PLUGIN,
   "uncompress",
@@ -123,4 +123,4 @@ mysql_declare_plugin(uncompress)
   NULL,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

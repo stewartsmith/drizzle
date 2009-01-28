@@ -9511,7 +9511,7 @@ innodb_plugin_init(void)
 }
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
-mysql_declare_plugin(innobase)
+drizzle_declare_plugin(innobase)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   innobase_hton_name,
@@ -9532,7 +9532,7 @@ i_s_innodb_cmp,
 i_s_innodb_cmp_reset,
 i_s_innodb_cmpmem,
 i_s_innodb_cmpmem_reset
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;
 
 
 /****************************************************************************

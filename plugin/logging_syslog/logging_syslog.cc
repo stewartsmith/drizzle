@@ -124,7 +124,7 @@ static struct st_mysql_sys_var* logging_syslog_system_variables[]= {
   NULL
 };
 
-mysql_declare_plugin(logging_syslog)
+drizzle_declare_plugin(logging_syslog)
 {
   DRIZZLE_LOGGER_PLUGIN,
   "logging_syslog",
@@ -138,4 +138,4 @@ mysql_declare_plugin(logging_syslog)
   logging_syslog_system_variables,
   NULL
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

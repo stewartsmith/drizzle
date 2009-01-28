@@ -71,7 +71,7 @@ static int crc32udf_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(crc32)
+drizzle_declare_plugin(crc32)
 {
   DRIZZLE_UDF_PLUGIN,
   "crc32",
@@ -85,4 +85,4 @@ mysql_declare_plugin(crc32)
   NULL,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

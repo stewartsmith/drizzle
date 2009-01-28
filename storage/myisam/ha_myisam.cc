@@ -1904,7 +1904,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 };
 
 
-mysql_declare_plugin(myisam)
+drizzle_declare_plugin(myisam)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MyISAM",
@@ -1918,4 +1918,4 @@ mysql_declare_plugin(myisam)
   system_variables,           /* system variables */
   NULL                        /* config options                  */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;
