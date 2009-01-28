@@ -298,7 +298,7 @@ void vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout)
   error= setsockopt(vio->sd, SOL_SOCKET, is_sndtimeo ? SO_SNDTIMEO : SO_RCVTIMEO,
                     &wait_timeout,
                     (socklen_t)sizeof(struct timeval));
-  if (error != 0)
+  if (error == -1 && errno != ENOPROTOOPT)
   {
     perror("setsockopt");
     assert(error == 0);
