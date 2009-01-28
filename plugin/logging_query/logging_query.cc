@@ -73,58 +73,92 @@ static uint64_t get_microtime()
 static unsigned char *quotify (const unsigned char *src, size_t srclen,
                                unsigned char *dst, size_t dstlen)
 {
-  static char hexit[] = { '0', '1', '2', '3', '4', '5', '6', '7',
+  static char hexit[]= { '0', '1', '2', '3', '4', '5', '6', '7',
 			  '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
   size_t dst_ndx;  /* index down the dst */
   size_t src_ndx;  /* index down the src */
 
-  assert (dst);
-  assert (dstlen > 0);
+  assert(dst);
+  assert(dstlen > 0);
 
-  for (dst_ndx=0,src_ndx=0; src_ndx<srclen; src_ndx++) {
+  for (dst_ndx=0,src_ndx=0; src_ndx<srclen; src_ndx++)
+  {
 
     /* Worst case, need 5 dst bytes for the next src byte. 
        backslash x hexit hexit null
        so if not enough room, just terminate the string and return
     */
-    if ((dstlen - dst_ndx) < 5) { dst[dst_ndx] = (unsigned char) 0x00; return dst; }
-
-    if (src[src_ndx] > 0x7f) {
-      // pass thru high bit characters, they are non-ASCII UTF8 Unicode
-      dst[dst_ndx++] = src[src_ndx];
-    } else if (src[src_ndx] == 0x00) {  /* null */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = (unsigned char) '0';
-    } else if (src[src_ndx] == 0x07) {  /* bell */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] =  (unsigned char) 'a';
-    } else if (src[src_ndx] == 0x08) {  /* backspace */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = (unsigned char) 'b';
-    } else if (src[src_ndx] == 0x09) {  /* horiz tab */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = (unsigned char) 't';
-    } else if (src[src_ndx] == 0x0a) {  /* line feed */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = (unsigned char) 'n';
-    } else if (src[src_ndx] == 0x0b) {  /* vert tab */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = (unsigned char) 'v';
-    } else if (src[src_ndx] == 0x0c) {  /* formfeed */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = (unsigned char) 'f';
-    } else if (src[src_ndx] == 0x0d) {  /* carrage return */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = (unsigned char) 'r';
-    } else if (src[src_ndx] == 0x1b) {  /* escape */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = (unsigned char) 'e';
-    } else if (src[src_ndx] == 0x22) {  /* quotation mark */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = 0x22;
-    } else if (src[src_ndx] == 0x2C) {  /* comma */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = 0x2C;
-    } else if (src[src_ndx] == 0x5C) {  /* backslash */
-      dst[dst_ndx++] = 0x5C; dst[dst_ndx++] = 0x5C;
-    } else if ((src[src_ndx] < 0x20) || (src[src_ndx] == 0x7F)) {  /* other unprintable ASCII */
-      dst[dst_ndx++] = 0x5C;
-      dst[dst_ndx++] = (unsigned char) 'x';
-      dst[dst_ndx++] = hexit[(src[src_ndx] >> 4) & 0x0f];
-      dst[dst_ndx++] = hexit[src[src_ndx] & 0x0f];
-    } else {  /* everything else */
-      dst[dst_ndx++] = src[src_ndx];
+    if ((dstlen - dst_ndx) < 5)
+    {
+      dst[dst_ndx]= (unsigned char) 0x00;
+      return dst;
     }
-    dst[dst_ndx] = '\0';
+
+    if (src[src_ndx] > 0x7f)
+    {
+      // pass thru high bit characters, they are non-ASCII UTF8 Unicode
+      dst[dst_ndx++]= src[src_ndx];
+    }
+    else if (src[src_ndx] == 0x00)  // null
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) '0';
+    }
+    else if (src[src_ndx] == 0x07)  // bell
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]=  (unsigned char) 'a';
+    }
+    else if (src[src_ndx] == 0x08)  // backspace
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'b';
+    }
+    else if (src[src_ndx] == 0x09)  // horiz tab
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 't';
+    }
+    else if (src[src_ndx] == 0x0a)  // line feed
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'n';
+    }
+    else if (src[src_ndx] == 0x0b)  // vert tab
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'v';
+    }
+    else if (src[src_ndx] == 0x0c)  // formfeed
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'f';
+    }
+    else if (src[src_ndx] == 0x0d)  // carrage return
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'r';
+    }
+    else if (src[src_ndx] == 0x1b)  // escape
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'e';
+    }
+    else if (src[src_ndx] == 0x22)  // quotation mark
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= 0x22;
+    }
+    else if (src[src_ndx] == 0x2C)  // comma
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= 0x2C;
+    }
+    else if (src[src_ndx] == 0x5C)  // backslash
+    {
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= 0x5C;
+    }
+    else if ((src[src_ndx] < 0x20) || (src[src_ndx] == 0x7F))  // other unprintable ASCII
+    {
+      dst[dst_ndx++]= 0x5C;
+      dst[dst_ndx++]= (unsigned char) 'x';
+      dst[dst_ndx++]= hexit[(src[src_ndx] >> 4) & 0x0f];
+      dst[dst_ndx++]= hexit[src[src_ndx] & 0x0f];
+    }
+    else  // everything else
+    {
+      dst[dst_ndx++]= src[src_ndx];
+    }
+    dst[dst_ndx]= '\0';
   }
   return dst;
 }
@@ -146,7 +180,8 @@ bool logging_query_func_post (Session *session)
 
   assert(session != NULL);
 
-  if (fd < 0) return false;
+  if (fd < 0)
+    return false;
 
   /* Yes, we know that checking logging_query_enable,
      logging_query_threshold_big_resultset, and
@@ -156,12 +191,16 @@ bool logging_query_func_post (Session *session)
      Big deal. */
 
   // return if not enabled or query was too fast or resultset was too small
-  if (logging_query_enable == false) return false;
-  if (session->sent_row_count < logging_query_threshold_big_resultset) return false;
-  if (session->examined_row_count < logging_query_threshold_big_examined) return false;
+  if (logging_query_enable == false)
+    return false;
+  if (session->sent_row_count < logging_query_threshold_big_resultset)
+    return false;
+  if (session->examined_row_count < logging_query_threshold_big_examined)
+    return false;
 
   // logging this is far too verbose
-  if (session->command == COM_FIELD_LIST) return false;
+  if (session->command == COM_FIELD_LIST)
+    return false;
 
   /* TODO, looks like connect_utime isnt being set in the session
      object.  We could store the time this plugin was loaded, but that
@@ -175,7 +214,7 @@ bool logging_query_func_post (Session *session)
   if ((t_mark - session->start_utime) < (logging_query_threshold_slow)) return false;
 
   // buffer to quotify the query
-  char qs[255];
+  unsigned char qs[255];
 
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
@@ -183,24 +222,24 @@ bool logging_query_func_post (Session *session)
              (unsigned long long) t_mark,
              (unsigned long) session->thread_id,
              (unsigned long) session->query_id,
-             // dont need to quote the db name, never has comma, doublequote, or backslash
+             // dont need to quote the db name, always CSV safe
              session->db_length, session->db,
              // do need to quote the query
              (char *) quotify((unsigned char *) session->query, session->query_length,
-                              (unsigned char *) qs, 255),
+                              qs, sizeof(qs)),
              // command_name is defined in drizzled/sql_parse.cc
-             // dont need to quote the command name
+             // dont need to quote the command name, always CSV safe
              (int) command_name[session->command].length,
              command_name[session->command].str,
+             // counters are at end, to make it easier to add more
              (unsigned long long) (t_mark - session->connect_utime),
              (unsigned long long) (t_mark - session->start_utime),
              (unsigned long long) (t_mark - session->utime_after_lock),
              (unsigned long) session->sent_row_count,
              (unsigned long) session->examined_row_count);
 
-  // counters are at end, to make it easier to add more
 
-  // single write has a kernel lock, thus no need mutex guard this
+  // a single write has a kernel thread lock, thus no need mutex guard this
   wrv= write(fd, msgbuf, msgbuf_len);
   assert(wrv == msgbuf_len);
 
