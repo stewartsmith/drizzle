@@ -88,8 +88,9 @@ uint32_t Item_func_min_max::cmp_datetimes(uint64_t *value)
   for (uint32_t i=0; i < arg_count ; i++)
   {
     Item **arg= args + i;
-    bool is_null;
-    uint64_t res= get_datetime_value(session, &arg, 0, datetime_item, &is_null);
+    bool is_null_unused;
+    uint64_t res= get_datetime_value(session, &arg, 0, datetime_item,
+                                     &is_null_unused);
     if ((null_value= args[i]->null_value))
       return 0;
     if (i == 0 || (res < min_max ? cmp_sign : -cmp_sign) > 0)

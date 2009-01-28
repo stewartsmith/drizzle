@@ -476,6 +476,7 @@ public:
   virtual Item *copy_andor_structure(Session *session);
 
   virtual Item *real_item(void);
+  virtual const Item *real_item(void) const;
   virtual Item *get_tmp_table_item(Session *session);
 
   static const CHARSET_INFO *default_charset();

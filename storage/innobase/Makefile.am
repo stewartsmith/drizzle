@@ -140,6 +140,7 @@ noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
 			$(HANDLER_DIR)/i_s.h
 
 noinst_LTLIBRARIES=	libinnobase.la libpars.la
+libinnobase_la_CFLAGS=	${AM_CFLAGS} ${NO_SHADOW}
 libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			btr/btr0sea.c buf/buf0buddy.c			\
 			buf/buf0buf.c buf/buf0flu.c			\
@@ -183,7 +184,7 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 
 # lexyy.c has lots of redundant decls, but it's generated anyway 
 libpars_la_CFLAGS=	${AM_CFLAGS} \
-			${NO_REDUNDANT_DECLS}
+			${NO_REDUNDANT_DECLS} ${NO_SHADOW}
 libpars_la_SOURCES= 	pars/lexyy.c pars/pars0grm.c
 
 libinnobase_la_LIBADD= libpars.la
@@ -194,8 +195,8 @@ pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
 
 ha_innodb_la_SOURCES=
 ha_innodb_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)
-ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${DYNAMIC_PLUGIN}
-ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${DYNAMIC_PLUGIN}
+ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${DYNAMIC_PLUGIN} ${NO_SHADOW}
+ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${DYNAMIC_PLUGIN} ${NO_SHADOW}
 ha_innodb_la_LIBADD=	@plugin_innobase_shared_target@ \
 			libinnobase.la
 

@@ -3186,6 +3186,7 @@ static int flush_key_blocks_int(KEY_CACHE *keycache,
     BLOCK_LINK *first_in_switch= NULL;
     BLOCK_LINK *last_in_flush;
     BLOCK_LINK *last_for_update;
+    BLOCK_LINK *last_in_switch;
     BLOCK_LINK *block, *next;
 
     if (type != FLUSH_IGNORE_CHANGED)
@@ -3427,8 +3428,8 @@ restart:
 
     if (! (type == FLUSH_KEEP || type == FLUSH_FORCE_WRITE))
     {
-      BLOCK_LINK *last_for_update= NULL;
-      BLOCK_LINK *last_in_switch= NULL;
+      last_for_update= NULL;
+      last_in_switch= NULL;
       uint32_t total_found= 0;
       uint32_t found;
 

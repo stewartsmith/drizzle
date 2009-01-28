@@ -26,9 +26,11 @@
 #include <drizzled/session.h>
 
 
-Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
+Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg,
+                     unsigned char *null_ptr_arg,
                      unsigned char null_bit_arg, utype unireg_check_arg,
-                     const char *field_name_arg, const CHARSET_INFO * const charset_arg)
+                     const char *field_name_arg,
+                     const CHARSET_INFO * const charset_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
          unireg_check_arg, field_name_arg)
 {
@@ -102,23 +104,24 @@ int Field_str::store(double nr)
 
 /* If one of the fields is binary and the other one isn't return 1 else 0 */
 
-bool Field_str::compare_str_field_flags(Create_field *new_field, uint32_t flag_arg)
+bool Field_str::compare_str_field_flags(Create_field *new_field_ptr,
+                                        uint32_t flag_arg)
 {
-  return (((new_field->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
+  return (((new_field_ptr->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
           !(flag_arg & (BINCMP_FLAG | BINARY_FLAG))) ||
-         (!(new_field->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
+         (!(new_field_ptr->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
           (flag_arg & (BINCMP_FLAG | BINARY_FLAG))));
 }
 
 
-uint32_t Field_str::is_equal(Create_field *new_field)
+uint32_t Field_str::is_equal(Create_field *new_field_ptr)
 {
-  if (compare_str_field_flags(new_field, flags))
+  if (compare_str_field_flags(new_field_ptr, flags))
     return 0;
 
-  return ((new_field->sql_type == real_type()) &&
-          new_field->charset == field_charset &&
-          new_field->length == max_display_length());
+  return ((new_field_ptr->sql_type == real_type()) &&
+          new_field_ptr->charset == field_charset &&
+          new_field_ptr->length == max_display_length());
 }
 
 

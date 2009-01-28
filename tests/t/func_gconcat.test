@@ -450,7 +450,7 @@ create table t1
   x text not null,
   y integer not null
 );
-insert into t1 values (repeat('a', 1022), 0), (repeat(_utf8 0xc3b7, 4), 0);
+insert into t1 values (repeat('a', 1022), 0), (repeat( 0xc3b7, 4), 0);
 let $1= 10;
 while ($1)
 {

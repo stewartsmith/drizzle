@@ -15,7 +15,7 @@ using namespace std;
 void printRecord(const drizzle::EventList *list)
 {
   using namespace drizzle;
-  uint32_t x;
+  int32_t x;
 
   for (x= 0; x < list->event_size(); x++)
   {
@@ -31,7 +31,7 @@ void printRecord(const drizzle::EventList *list)
       break;
     case Event::INSERT:
       {
-        uint32_t x;
+        int32_t x;
 
         cout << "INSERT INTO " << event.table() << " (";
 
@@ -47,7 +47,7 @@ void printRecord(const drizzle::EventList *list)
 
         for (x= 0; x < event.values_size(); x++)
         {
-          uint32_t y;
+          int32_t y;
           Event_Value values= event.values(x);
 
           if (x != 0)
@@ -69,7 +69,7 @@ void printRecord(const drizzle::EventList *list)
       }
     case Event::DELETE:
       {
-        uint32_t x;
+        int32_t x;
         Event_Value values= event.values(0);
 
         cout << "DELETE FROM " << event.table() << " WHERE " << event.primary_key() << " IN (";
@@ -87,11 +87,11 @@ void printRecord(const drizzle::EventList *list)
       }
     case Event::UPDATE:
       {
-        uint32_t count;
+        int32_t count;
 
         for (count= 0; count < event.values_size() ; count++)
         {
-          uint32_t x;
+          int32_t x;
           Event_Value values= event.values(count);
 
           cout << "UPDATE "  << event.table() << " SET ";
@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
 
   while (1)
   {
-    uint64_t length;
+    off_t length;
     char *buffer= NULL;
     char *temp_buffer;
 

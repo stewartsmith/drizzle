@@ -87,9 +87,8 @@ Field_varstring::Field_varstring(uint32_t len_arg,bool maybe_null_arg,
 */
 int Field_varstring::do_save_field_metadata(unsigned char *metadata_ptr)
 {
-  char *ptr= (char *)metadata_ptr;
   assert(field_length <= 65535);
-  int2store(ptr, field_length);
+  int2store(metadata_ptr, field_length);
   return 2;
 }
 
@@ -630,16 +629,16 @@ Field *Field_varstring::new_key_field(MEM_ROOT *root,
 }
 
 
-uint32_t Field_varstring::is_equal(Create_field *new_field)
+uint32_t Field_varstring::is_equal(Create_field *new_field_ptr)
 {
-  if (new_field->sql_type == real_type() &&
-      new_field->charset == field_charset)
+  if (new_field_ptr->sql_type == real_type() &&
+      new_field_ptr->charset == field_charset)
   {
-    if (new_field->length == max_display_length())
+    if (new_field_ptr->length == max_display_length())
       return IS_EQUAL_YES;
-    if (new_field->length > max_display_length() &&
-	((new_field->length <= 255 && max_display_length() <= 255) ||
-	 (new_field->length > 255 && max_display_length() > 255)))
+    if (new_field_ptr->length > max_display_length() &&
+	((new_field_ptr->length <= 255 && max_display_length() <= 255) ||
+	 (new_field_ptr->length > 255 && max_display_length() > 255)))
       return IS_EQUAL_PACK_LENGTH; // VARCHAR, longer variable length
   }
   return IS_EQUAL_NO;

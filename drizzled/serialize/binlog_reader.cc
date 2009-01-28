@@ -32,7 +32,7 @@ void print_usage_and_exit(char *prog) {
 
 
 void
-print_event(BinaryLog::Event *event)
+print_event(BinaryLog::Event *)
 {
 }
 

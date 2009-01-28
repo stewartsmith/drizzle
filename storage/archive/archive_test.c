@@ -327,10 +327,10 @@ int size_test(uint64_t length, uint64_t rows_to_test_for,
   /* We do a double loop to test speed */
   for (x= 0, read_length= 0; x < 2; x++, read_length= 0)
   {
-    uint64_t count;
+    uint64_t read_count;
 
     azread_init(&reader_handle);
-    for (count= 0; count < writer_handle.rows; count++)
+    for (read_count= 0; read_count < writer_handle.rows; read_count++)
     {
       ret= azread_row(&reader_handle, &error);
       read_length+= ret;
