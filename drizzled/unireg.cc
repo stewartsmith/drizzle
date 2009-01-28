@@ -613,7 +613,7 @@ int rename_table_proto_file(const char *from, const char* to)
   return my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
 }
 
-int delete_table_proto_file(char *file_name)
+int delete_table_proto_file(const char *file_name)
 {
   string new_path(file_name);
   string file_ext = ".dfe";
@@ -723,7 +723,8 @@ int rea_create_table(Session *session, const char *path,
 err_handler:
   file->ha_create_handler_files(path, NULL, CHF_DELETE_FLAG, create_info);
   my_delete(frm_name, MYF(0));
-  delete_table_proto_file(frm_name);
+
+  delete_table_proto_file(path);
 
   return 1;
 } /* rea_create_table */
