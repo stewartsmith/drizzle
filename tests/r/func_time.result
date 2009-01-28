@@ -457,8 +457,7 @@ Warnings:
 Warning	1292	Incorrect datetime value: '0000-00-00'
 Warning	1292	Incorrect datetime value: '0000-00-00'
 select dayofmonth("0000-00-00"),dayofmonth(d),dayofmonth(dt),dayofmonth(t),dayofmonth(c) from t1;
-dayofmonth("0000-00-00")	dayofmonth(d)	dayofmonth(dt)	dayofmonth(t)	dayofmonth(c)
-0	0	0	0	0
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select month("0000-00-00"),month(d),month(dt),month(t),month(c) from t1;
 ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select quarter("0000-00-00"),quarter(d),quarter(dt),quarter(t),quarter(c) from t1;
