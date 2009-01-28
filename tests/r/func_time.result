@@ -43,8 +43,7 @@ select month("1997-01-02"),year("98-02-03"),dayofyear("1997-12-31");
 month("1997-01-02")	year("98-02-03")	dayofyear("1997-12-31")
 1	1998	365
 select month("2001-02-00"),year("2001-01-01");
-month("2001-02-00")	year("2001-01-01")
-2	2001
+ERROR HY000: Received an invalid datetime value '2001-02-00'.
 select DAYOFYEAR("1997-03-03"), WEEK("1998-03-03"), QUARTER(980303);
 DAYOFYEAR("1997-03-03")	WEEK("1998-03-03")	QUARTER(980303)
 62	9	1
@@ -430,25 +429,22 @@ drop table t1;
 create table t1 (id int);
 create table t2 (id int, date date);
 insert into t1 values (1);
-insert into t2 values (1, "0000-00-00");
+insert into t2 values (1, NULL);
 insert into t1 values (2);
 insert into t2 values (2, "2000-01-01");
 select monthname(date) from t1 inner join t2 on t1.id = t2.id;
 monthname(date)
 NULL
-January
+NULL
 select monthname(date) from t1 inner join t2 on t1.id = t2.id order by t1.id;
 monthname(date)
 NULL
-January
+NULL
 drop table t1,t2;
 CREATE TABLE t1 (updated text) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('');
 SELECT month(updated) from t1;
-month(updated)
-NULL
-Warnings:
-Warning	1292	Incorrect datetime value: ''
+ERROR HY000: Received an invalid datetime value ''.
 SELECT year(updated) from t1;
 ERROR HY000: Received an invalid datetime value ''.
 drop table t1;
@@ -464,8 +460,7 @@ select dayofmonth("0000-00-00"),dayofmonth(d),dayofmonth(dt),dayofmonth(t),dayof
 dayofmonth("0000-00-00")	dayofmonth(d)	dayofmonth(dt)	dayofmonth(t)	dayofmonth(c)
 0	0	0	0	0
 select month("0000-00-00"),month(d),month(dt),month(t),month(c) from t1;
-month("0000-00-00")	month(d)	month(dt)	month(t)	month(c)
-0	0	0	0	0
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select quarter("0000-00-00"),quarter(d),quarter(dt),quarter(t),quarter(c) from t1;
 quarter("0000-00-00")	quarter(d)	quarter(dt)	quarter(t)	quarter(c)
 0	0	0	0	0
@@ -837,8 +832,7 @@ Warnings:
 Warning	1292	Incorrect datetime value: '2005-01-00'
 select monthname(str_to_date(null, '%m')), monthname(str_to_date(null, '%m')),
 monthname(str_to_date(1, '%m')), monthname(str_to_date(0, '%m'));
-monthname(str_to_date(null, '%m'))	monthname(str_to_date(null, '%m'))	monthname(str_to_date(1, '%m'))	monthname(str_to_date(0, '%m'))
-NULL	NULL	January	NULL
+ERROR HY000: Received an invalid datetime value '0000-01-00'.
 create table t1(f1 date, f2 time, f3 datetime);
 insert into t1 values ("2006-01-01", "12:01:01", "2006-01-01 12:01:01");
 insert into t1 values ("2006-01-02", "12:01:02", "2006-01-02 12:01:02");
