@@ -23,14 +23,6 @@
 #ifndef _lex_symbol_h
 #define _lex_symbol_h
 
-#include <mysys/thr_lock.h>
-/* A helper type for transactional locking. */
-struct st_table_lock_info
-{
-  thr_lock_type lock_type;
-  int           lock_timeout;
-  bool          lock_transactional;
-};
 
 struct st_sym_group;
 
