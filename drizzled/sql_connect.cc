@@ -36,34 +36,6 @@ extern scheduling_st thread_scheduler;
 
 #define MIN_HANDSHAKE_SIZE      6
 
-/*
-  Get structure for logging connection data for the current user
-*/
-
-char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
-{
-  char *name;
-
-  int gxi_error;
-  char hostname_buff[NI_MAXHOST];
-
-  /* Historical comparison for 127.0.0.1 */
-  gxi_error= getnameinfo((struct sockaddr *)in, addrLen,
-                         hostname_buff, NI_MAXHOST,
-                         NULL, 0, NI_NUMERICHOST);
-  if (gxi_error)
-  {
-    return NULL;
-  }
-
-  if (!(name= strdup(hostname_buff)))
-  {
-    return NULL;
-  }
-
-  return NULL;
-}
-
 /**
   Check if user exist and password supplied is correct.
 
