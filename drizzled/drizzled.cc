@@ -1893,7 +1893,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   lex_init();
   if (item_create_init())
     return 1;
-  item_init();
   if (set_var_init())
     return 1;
   /*
