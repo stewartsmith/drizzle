@@ -18,10 +18,10 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/temporal.h"
 #include CSTDINT_H
-#include "drizzled/function/time/year.h"
+#include "drizzled/temporal.h"
 #include "drizzled/error.h"
+#include "drizzled/function/time/year.h"
 
 int64_t Item_func_year::val_int()
 {
