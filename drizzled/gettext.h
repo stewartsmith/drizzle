@@ -63,6 +63,7 @@
 # endif
 #endif
 
+#ifndef gettext
 /* Disabled NLS.
    The casts to 'const char *' serve the purpose of producing warnings
    for invalid uses of the value returned from these functions.
@@ -87,7 +88,7 @@
     ((void) (Domainname), (const char *) (Codeset))
 
 #endif
-
+#endif 
 /* A pseudo function call that serves as a marker for the automated
    extraction of messages, but does not call gettext().  The run-time
    translation is done at a different place in the code.
