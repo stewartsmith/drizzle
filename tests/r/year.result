@@ -1,0 +1,123 @@
+SELECT YEAR(NULL);
+YEAR(NULL)
+NULL
+SELECT YEAR();
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
+SELECT YEAR(1, 0);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ' 0)' at line 1
+SELECT YEAR("xxx");
+ERROR HY000: Received an invalid datetime value 'xxx'.
+SELECT YEAR("0000-00-00");
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
+SELECT YEAR("0000-01-01");
+ERROR HY000: Received an invalid datetime value '0000-01-01'.
+SELECT YEAR("0001-00-01");
+ERROR HY000: Received an invalid datetime value '0001-00-01'.
+SELECT YEAR("0001-01-00");
+ERROR HY000: Received an invalid datetime value '0001-01-00'.
+SELECT YEAR("2000-02-30");
+ERROR HY000: Received an invalid datetime value '2000-02-30'.
+SELECT YEAR("1900-02-29");
+ERROR HY000: Received an invalid datetime value '1900-02-29'.
+SELECT YEAR('1976-15-15');
+ERROR HY000: Received an invalid datetime value '1976-15-15'.
+SELECT YEAR("2009-01-12");
+YEAR("2009-01-12")
+2009
+SELECT YEAR("70-12-31");
+YEAR("70-12-31")
+1970
+SELECT YEAR("99-12-31");
+YEAR("99-12-31")
+1999
+SELECT YEAR("69-12-31");
+YEAR("69-12-31")
+2069
+SELECT YEAR("0001-12-31");
+YEAR("0001-12-31")
+1
+SELECT YEAR("9999-12-31");
+YEAR("9999-12-31")
+9999
+SELECT YEAR('07/31/2009');
+YEAR('07/31/2009')
+2009
+SELECT YEAR('20090916');
+YEAR('20090916')
+2009
+SELECT YEAR('20090916091528');
+YEAR('20090916091528')
+2009
+SELECT YEAR("20090916091528.000000");
+YEAR("20090916091528.000000")
+2009
+SELECT YEAR('09-09-16');
+YEAR('09-09-16')
+2009
+SELECT YEAR('09.09.16');
+YEAR('09.09.16')
+2009
+SELECT YEAR('09/09/16');
+YEAR('09/09/16')
+2009
+SELECT YEAR('09-09-16');
+YEAR('09-09-16')
+2009
+SELECT YEAR('09-9-2');
+YEAR('09-9-2')
+2009
+SELECT YEAR(20090916);
+YEAR(20090916)
+2009
+SELECT YEAR(20090916091528);
+YEAR(20090916091528)
+2009
+SELECT YEAR(20090916091528.000000);
+ERROR HY000: Received an invalid datetime value '20090916091528.000000'.
+USE test;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+int_fld INT NOT NULL
+, date_fld DATE NOT NULL
+, datetime_fld DATETIME NOT NULL
+, timestamp_fld TIMESTAMP NOT NULL
+, char_fld CHAR(22) NOT NULL
+, varchar_fld VARCHAR(22) NOT NULL
+, text_fld TEXT NOT NULL
+, blob_fld BLOB NOT NULL
+);
+INSERT INTO t1 VALUES (
+20071130
+, "2007-11-30"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30T16:30:19"
+);
+SELECT YEAR(int_fld) FROM t1;
+YEAR(int_fld)
+2007
+SELECT YEAR(date_fld) FROM t1;
+YEAR(date_fld)
+2007
+SELECT YEAR(datetime_fld) FROM t1;
+YEAR(datetime_fld)
+2007
+SELECT YEAR(timestamp_fld) FROM t1;
+YEAR(timestamp_fld)
+2007
+SELECT YEAR(char_fld) FROM t1;
+YEAR(char_fld)
+2007
+SELECT YEAR(varchar_fld) FROM t1;
+YEAR(varchar_fld)
+2007
+SELECT YEAR(text_fld) FROM t1;
+YEAR(text_fld)
+2007
+SELECT YEAR(blob_fld) FROM t1;
+YEAR(blob_fld)
+2007
+DROP TABLE t1;

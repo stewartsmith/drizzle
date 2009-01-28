@@ -1,0 +1,136 @@
+#
+# Tests for the YEAR() function
+#
+# The Drizzle YEAR() function differs from the MySQL YEAR()
+# function in these ways:
+#
+#  * Does not accept invalid parameters.  This results in an error
+#    in Drizzle.
+#
+
+# YEAR() on a NULL should produce
+# a NULL.
+SELECT YEAR(NULL);
+
+# 
+# Test improper argument list 
+#
+# 1 arg is required.
+--error 1064 
+# Wrong parameter count...but unfortunately produces 1064 Syntax Error due to limitations of 
+# the SQL parser, which considers YEAR a keyword before being a function symbol
+SELECT YEAR();
+--error 1064
+# Wrong parameter count...but unfortunately produces 1064 Syntax Error due to limitations of 
+# the SQL parser, which considers YEAR a keyword before being a function symbol
+SELECT YEAR(1, 0);
+
+# 
+# Test invalid dates passed to YEAR
+# produce an error, not a NULL or anything
+# else...
+#
+--error 1686
+SELECT YEAR("xxx");
+
+# Indy, bad dates!
+--error 1686
+SELECT YEAR("0000-00-00"); # No 0000-00-00 dates!...
+--error 1686
+SELECT YEAR("0000-01-01"); # No zero year parts
+--error 1686
+SELECT YEAR("0001-00-01"); # No zero month parts
+--error 1686
+SELECT YEAR("0001-01-00"); # No zero day parts
+--error 1686
+SELECT YEAR("2000-02-30"); # No Feb 30th!
+--error 1686
+SELECT YEAR("1900-02-29"); # Not a leap YEAR since not divisible evenly by 400...
+--error 1686
+SELECT YEAR('1976-15-15'); # No 15th month!
+
+# A good date, which should output 2009
+SELECT YEAR("2009-01-12");
+
+# A good date, which should output 1970 - Test of 2 digit YEAR conversion...
+SELECT YEAR("70-12-31");
+
+# A good date, which should output 1999 - Test of 2 digit YEAR conversion...
+SELECT YEAR("99-12-31");
+
+# A good date, which should output 2069 - Test of 2 digit YEAR conversion...
+SELECT YEAR("69-12-31");
+
+# A good date, which should output 1
+SELECT YEAR("0001-12-31");
+
+# A good date, which should output 9999
+SELECT YEAR("9999-12-31");
+
+# A good date in the common USA format, should output 2007
+SELECT YEAR('07/31/2009');
+
+# 
+# The following tests should produce errors for YEAR().    
+# 
+
+#
+# Test boundary dates for YEAR 
+#
+
+# 
+# Tests for alternate DATETIME syntaxes 
+# in string and numeric formats. All should
+# return 2009.
+#
+SELECT YEAR('20090916');
+SELECT YEAR('20090916091528');
+SELECT YEAR("20090916091528.000000");
+SELECT YEAR('09-09-16');
+SELECT YEAR('09.09.16');
+SELECT YEAR('09/09/16');
+SELECT YEAR('09-09-16');
+SELECT YEAR('09-9-2');
+SELECT YEAR(20090916);
+SELECT YEAR(20090916091528);
+--error 1686 # Don't yet support DOUBLE -> DATETIME.
+SELECT YEAR(20090916091528.000000);
+
+# Now test field values of different types
+
+USE test;
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+CREATE TABLE t1 (
+  int_fld INT NOT NULL
+, date_fld DATE NOT NULL
+, datetime_fld DATETIME NOT NULL
+, timestamp_fld TIMESTAMP NOT NULL
+, char_fld CHAR(22) NOT NULL
+, varchar_fld VARCHAR(22) NOT NULL
+, text_fld TEXT NOT NULL
+, blob_fld BLOB NOT NULL
+);
+
+INSERT INTO t1 VALUES (
+20071130
+, "2007-11-30"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30T16:30:19"
+);
+
+SELECT YEAR(int_fld) FROM t1;
+SELECT YEAR(date_fld) FROM t1;
+SELECT YEAR(datetime_fld) FROM t1;
+SELECT YEAR(timestamp_fld) FROM t1;
+SELECT YEAR(char_fld) FROM t1;
+SELECT YEAR(varchar_fld) FROM t1;
+SELECT YEAR(text_fld) FROM t1;
+SELECT YEAR(blob_fld) FROM t1;
+
+DROP TABLE t1;
