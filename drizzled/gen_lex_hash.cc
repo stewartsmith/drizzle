@@ -80,35 +80,40 @@ So, we can read full search-structure as 32-bit word
 
 */
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-
-#define NO_YACC_SYMBOLS 1
+#define NO_YACC_SYMBOLS
+#include <drizzled/global.h>
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
+#include <mysys/my_getopt.h>
 
 #include <drizzled/lex.h>
 
-#define array_elements(A) ((unsigned int) (sizeof(A)/sizeof(A[0])))
+using namespace std;
 
-#define string_eq(_STR1, _STR2) (strcmp(_STR1, _STR2) == 0)
+const char *default_dbug_option="d:t:o,/tmp/gen_lex_hash.trace";
 
-static char *my_progname;
-static int opt_debug= 0;
+struct my_option my_long_options[] =
+{
+  {"help", '?', "Display help and exit",
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"version", 'V', "Output version information and exit",
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
+};
 
-typedef struct hash_lex_st
+struct hash_lex_struct
 {
   int first_char;
   char last_char;
-  union {
-    struct hash_lex_st *char_tails;
-    long iresult;
-  } memhack;
+  union{
+    hash_lex_struct *char_tails;
+    int iresult;
+  };
   int ithis;
-} hash_lex_struct;
+};
 
-static hash_lex_struct *get_hash_struct_by_len(hash_lex_struct **root_by_len,
-                                               int len, int *max_len)
+hash_lex_struct *get_hash_struct_by_len(hash_lex_struct **root_by_len,
+					    int len, int *max_len)
 {
   if (*max_len<len){
     *root_by_len= (hash_lex_struct *)realloc((char*)*root_by_len,
@@ -121,29 +126,29 @@ static hash_lex_struct *get_hash_struct_by_len(hash_lex_struct **root_by_len,
   return (*root_by_len)+(len-1);
 }
 
-static void insert_into_hash(hash_lex_struct *root, const char *name,
-		                         int len_from_begin, int idx, int function)
+void insert_into_hash(hash_lex_struct *root, const char *name,
+		      int len_from_begin, int index, int function)
 {
   hash_lex_struct *end, *cur, *tails;
 
   if (!root->first_char)
   {
     root->first_char= -1;
-    root->memhack.iresult= idx;
+    root->iresult= index;
     return;
   }
 
   if (root->first_char == -1)
   {
-    int index2= root->memhack.iresult;
+    int index2= root->iresult;
     const char *name2= (index2 < 0 ? sql_functions[-index2-1] :
 			symbols[index2]).name + len_from_begin;
     root->first_char= (int) (unsigned char) name2[0];
     root->last_char= (char) root->first_char;
     tails= (hash_lex_struct*)malloc(sizeof(hash_lex_struct));
-    root->memhack.char_tails= tails;
+    root->char_tails= tails;
     tails->first_char= -1;
-    tails->memhack.iresult= index2;
+    tails->iresult= index2;
   }
 
   size_t real_size= (root->last_char-root->first_char+1);
@@ -152,10 +157,10 @@ static void insert_into_hash(hash_lex_struct *root, const char *name,
   {
     size_t new_size= root->last_char-(*name)+1;
     if (new_size<real_size) printf("error!!!!\n");
-    tails= root->memhack.char_tails;
+    tails= root->char_tails;
     tails= (hash_lex_struct*)realloc((char*)tails,
 				       sizeof(hash_lex_struct)*new_size);
-    root->memhack.char_tails= tails;
+    root->char_tails= tails;
     memmove(tails+(new_size-real_size),tails,real_size*sizeof(hash_lex_struct));
     end= tails + new_size - real_size;
     for (cur= tails; cur<end; cur++)
@@ -167,18 +172,18 @@ static void insert_into_hash(hash_lex_struct *root, const char *name,
   {
     size_t new_size= (*name)-root->first_char+1;
     if (new_size<real_size) printf("error!!!!\n");
-    tails= root->memhack.char_tails;
+    tails= root->char_tails;
     tails= (hash_lex_struct*)realloc((char*)tails,
 				    sizeof(hash_lex_struct)*new_size);
-    root->memhack.char_tails= tails;
+    root->char_tails= tails;
     end= tails + new_size;
     for (cur= tails+real_size; cur<end; cur++)
       cur->first_char= 0;
     root->last_char= (*name);
   }
 
-  insert_into_hash(root->memhack.char_tails+(*name)-root->first_char,
-		   name+1,len_from_begin+1,idx,function);
+  insert_into_hash(root->char_tails+(*name)-root->first_char,
+		   name+1,len_from_begin+1,index,function);
 }
 
 
@@ -188,7 +193,7 @@ int max_len=0;
 hash_lex_struct *root_by_len2= 0;
 int max_len2=0;
 
-static void insert_symbols(void)
+void insert_symbols()
 {
   size_t i= 0;
   SYMBOL *cur;
@@ -199,7 +204,7 @@ static void insert_symbols(void)
   }
 }
 
-static void insert_sql_functions(void)
+void insert_sql_functions()
 {
   int i= 0;
   SYMBOL *cur;
@@ -211,7 +216,7 @@ static void insert_sql_functions(void)
   }
 }
 
-static void calc_length(void)
+void calc_length()
 {
   SYMBOL *cur, *end= symbols + array_elements(symbols);
   for (cur= symbols; cur < end; cur++)
@@ -221,7 +226,7 @@ static void calc_length(void)
     cur->length=(unsigned char) strlen(cur->name);
 }
 
-static void generate_find_structs(void)
+void generate_find_structs()
 {
   root_by_len= 0;
   max_len=0;
@@ -248,7 +253,7 @@ static inline uint32_t array_elements_func(SYMBOL *symbol_arr) {
   return sizeof(symbol_arr)/sizeof(symbol_arr[0]);
 }
 
-static void add_struct_to_map(hash_lex_struct *st)
+void add_struct_to_map(hash_lex_struct *st)
 {
   st->ithis= size_hash_map/4;
   size_hash_map+= 4;
@@ -259,8 +264,8 @@ static void add_struct_to_map(hash_lex_struct *st)
                                      st->first_char == 0 ? 0 : st->last_char);
   if (st->first_char == -1)
   {
-    hash_map[size_hash_map-2]= ((unsigned int)(int16_t)st->memhack.iresult)&255;
-    hash_map[size_hash_map-1]= ((unsigned int)(int16_t)st->memhack.iresult)>>8;
+    hash_map[size_hash_map-2]= ((unsigned int)(int16_t)st->iresult)&255;
+    hash_map[size_hash_map-1]= ((unsigned int)(int16_t)st->iresult)>>8;
   }
   else if (st->first_char == 0)
   {
@@ -270,7 +275,7 @@ static void add_struct_to_map(hash_lex_struct *st)
 }
 
 
-static void add_structs_to_map(hash_lex_struct *st, int len)
+void add_structs_to_map(hash_lex_struct *st, int len)
 {
   hash_lex_struct *cur, *end= st+len;
   for (cur= st; cur<end; cur++)
@@ -278,27 +283,27 @@ static void add_structs_to_map(hash_lex_struct *st, int len)
   for (cur= st; cur<end; cur++)
   {
     if (cur->first_char && cur->first_char != -1)
-      add_structs_to_map(cur->memhack.char_tails,cur->last_char-cur->first_char+1);
+      add_structs_to_map(cur->char_tails,cur->last_char-cur->first_char+1);
   }
 }
 
-static void set_links(hash_lex_struct *st, int len)
+void set_links(hash_lex_struct *st, int len)
 {
   hash_lex_struct *cur, *end= st+len;
   for (cur= st; cur<end; cur++)
   {
     if (cur->first_char != 0 && cur->first_char != -1)
     {
-      int ilink= cur->memhack.char_tails->ithis;
+      int ilink= cur->char_tails->ithis;
       hash_map[cur->ithis*4+2]= ilink%256;
       hash_map[cur->ithis*4+3]= ilink/256;
-      set_links(cur->memhack.char_tails,cur->last_char-cur->first_char+1);
+      set_links(cur->char_tails,cur->last_char-cur->first_char+1);
     }
   }
 }
 
 
-static void print_hash_map(const char *name)
+void print_hash_map(const char *name)
 {
   char *cur;
   int i;
@@ -321,7 +326,7 @@ static void print_hash_map(const char *name)
 }
 
 
-static void print_find_structs(void)
+void print_find_structs()
 {
   add_structs_to_map(root_by_len,max_len);
   set_links(root_by_len,max_len);
@@ -340,45 +345,53 @@ static void print_find_structs(void)
 
 static void usage(int version)
 {
-  printf("%s  Ver 3.7\n", my_progname);
+  printf("%s  Ver 3.6 Distrib %s, for %s (%s)\n",
+	 my_progname, VERSION, SYSTEM_TYPE, MACHINE_TYPE);
   if (version)
     return;
   puts("Copyright (C) 2008 Sun Microsystems, Inc.");
-  puts("This software comes with ABSOLUTELY NO WARRANTY. "
-          "This is free software,\n"
-       "and you are welcome to modify and redistribute it "
-          "under the GPL license\n");
+  puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
+and you are welcome to modify and redistribute it under the GPL license\n");
   puts("This program generates a perfect hashing function for the sql_lex.cc");
-  printf("  --debug   Enable debug printouts\n"
-         "  --help    Display help and exit\n"
-         "  --version Output version information and exit\n");
+  printf("Usage: %s [OPTIONS]\n\n", my_progname);
+  my_print_help(my_long_options);
 }
 
 
-static void get_options(int argc, char **argv)
+extern "C" bool
+get_one_option(int optid, const struct my_option *,
+	       char *)
 {
-  int argno;
-
-  for (argno = 1; argno < argc; argno++) {
-    const char *argp= argv[argno];
-    if (string_eq(argp, "--version")) {
-      usage(1);
-      exit(0);
-    } else if (string_eq(argp, "--help")) {
-      usage(0);
-      exit(0);
-    } else if (string_eq(argp, "--debug")) {
-      opt_debug= 1;
-    } else {
-      fprintf(stderr, "ERROR: unknown option '%s'\n\n", argp);
-      usage(0);
-      exit(1);
-    }
+  switch(optid) {
+  case 'V':
+    usage(1);
+    exit(0);
+  case 'I':
+  case '?':
+    usage(0);
+    exit(0);
   }
+  return 0;
 }
 
 
-static int check_dup_symbols(SYMBOL *s1, SYMBOL *s2)
+static int get_options(int argc, char **argv)
+{
+  int ho_error;
+
+  if ((ho_error= handle_options(&argc, &argv, my_long_options, get_one_option)))
+    exit(ho_error);
+
+  if (argc >= 1)
+  {
+    usage(0);
+     exit(1);
+  }
+  return(0);
+}
+
+
+int check_dup_symbols(SYMBOL *s1, SYMBOL *s2)
 {
   if (s1->length!=s2->length || strncmp(s1->name,s2->name,s1->length))
     return 0;
@@ -393,7 +406,7 @@ your lex.h has duplicate definition for a symbol \"%s\"\n\n";
 }
 
 
-static int check_duplicates(void)
+int check_duplicates()
 {
   SYMBOL *cur1, *cur2, *s_end, *f_end;
 
@@ -428,8 +441,10 @@ static int check_duplicates(void)
 
 int main(int argc,char **argv)
 {
+  MY_INIT(argv[0]);
 
-  get_options(argc,(char **) argv);
+  if (get_options(argc,(char **) argv))
+    exit(1);
 
   /* Broken up to indicate that it's not advice to you, gentle reader. */
   printf("/*\n\n  Do " "not " "edit " "this " "file " "directly!\n\n*/\n");
@@ -545,6 +560,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
   }\n\
 }\n"
 );
-  return 0;
+  my_end(0);
+  exit(0);
 }
 
