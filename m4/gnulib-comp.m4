@@ -41,10 +41,14 @@ AC_DEFUN([gl_INIT],
   m4_pushdef([gl_LIBSOURCES_DIR], [])
   gl_COMMON
   gl_source_base='gnulib'
+  gl_GETOPT
+  AC_SUBST([LIBINTL])
+  AC_SUBST([LTLIBINTL])
   gl_FUNC_MKTIME
   gl_HEADER_TIME_H
   gl_TIME_R
   gl_FUNC_TIMEGM
+  gl_UNISTD_H
   m4_ifval(gl_LIBSOURCES_LIST, [
     m4_syscmd([test ! -d ]gl_LIBSOURCES_DIR[ ||
       for gl_file in ]gl_LIBSOURCES_LIST[ ; do
@@ -173,12 +177,20 @@ AC_DEFUN([gltests_LIBSOURCES], [
 # This macro records the list of files which have been installed by
 # gnulib-tool and may be removed by future gnulib-tool invocations.
 AC_DEFUN([gl_FILE_LIST], [
+  build-aux/link-warning.h
   lib/dummy.c
+  lib/getopt.c
+  lib/getopt.in.h
+  lib/getopt1.c
+  lib/getopt_int.h
+  lib/gettext.h
   lib/mktime.c
   lib/time.in.h
   lib/time_r.c
   lib/timegm.c
+  lib/unistd.in.h
   m4/extensions.m4
+  m4/getopt.m4
   m4/gnulib-common.m4
   m4/include_next.m4
   m4/mktime.m4
@@ -186,4 +198,5 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/time_h.m4
   m4/time_r.m4
   m4/timegm.m4
+  m4/unistd_h.m4
 ])

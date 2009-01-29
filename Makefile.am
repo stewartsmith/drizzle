@@ -35,7 +35,7 @@ SUBDIRS = ${po} . \
 	  tests \
 	  support-files
 
-EXTRA_DIST = config/config.rpath
+EXTRA_DIST = config/config.rpath m4/gnulib-cache.m4
 CLEANFILES = drizzled/configmake.h
 DISTCLEANFILES = ac_available_languages_fragment
 MAINTAINERCLEANFILES = autom4te.cache
