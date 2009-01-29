@@ -107,7 +107,7 @@ CREATE TABLE t1 (
 , blob_fld BLOB NOT NULL
 );
 
-# Should all output 19
+# Should all output 19 except first two, which should output 0
 INSERT INTO t1 VALUES (
 20071130
 , "2007-11-30"
