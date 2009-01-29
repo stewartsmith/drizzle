@@ -22,6 +22,7 @@ if BUILD_GETTEXT
 endif
 
 SUBDIRS = ${po} . \
+	  gnulib \
 	  mystrings \
 	  mysys \
 	  extra \

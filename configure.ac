@@ -25,6 +25,7 @@ then
   enable_dependency_tracking=yes
 fi
 
+gl_EARLY
 
 # See the libtool docs for information on how to do shared lib versions.
 SHARED_LIB_MAJOR_VERSION=1
@@ -37,7 +38,7 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 
-ACX_USE_SYSTEM_EXTENSIONS
+gl_USE_SYSTEM_EXTENSIONS
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
@@ -48,6 +49,7 @@ AM_PROG_CC_C_O
 # We need an ANSI C compiler
 AM_PROG_CC_STDC
 
+gl_INIT
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 ifdef([AC_PROG_CC_C99],[
@@ -1367,6 +1369,7 @@ dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
+ gnulib/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
  po/Makefile.in dnl
  libdrizzle/Makefile client/Makefile dnl
