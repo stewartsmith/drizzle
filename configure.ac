@@ -1342,7 +1342,7 @@ AC_SUBST(W_EXCEPTIONS)
 AC_SUBST(NO_REDUNDANT_DECLS)
 
 GLOBAL_CPPFLAGS='-I$(top_srcdir) -I$(top_builddir)'
-if test "$ac_cv_func_timegm" = "no"
+if test "$ac_cv_func_timegm" = "no" -o "$gl_cv_func_gnu_getopt" = "no"
 then
   GLOBAL_CPPFLAGS="${GLOBAL_CPPFLAGS} -I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib"
 fi
