@@ -34,14 +34,15 @@
  * their single parameter.
  */
 
-#include <vector>
-#include <string.h>
-
 #include "drizzled/global.h"
 #include "mystrings/m_ctype.h"
 #include "drizzled/my_decimal.h"
 #include "drizzled/temporal.h"
 #include "drizzled/temporal_format.h"
+
+#include <vector>
+#include <string.h>
+
 
 extern std::vector<drizzled::TemporalFormat *> known_datetime_formats;
 extern std::vector<drizzled::TemporalFormat *> known_date_formats;
