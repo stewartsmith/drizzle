@@ -42,7 +42,7 @@ int64_t Item_func_dayofmonth::val_int()
   {
     case STRING_RESULT:
       {
-        char buff[40];
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
         String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
         String *res= args[0]->val_str(&tmp);
         if (! temporal.from_string(res->c_ptr(), res->length()))
@@ -57,23 +57,9 @@ int64_t Item_func_dayofmonth::val_int()
       }
       break;
     case INT_RESULT:
-      if (! temporal.from_int64_t(args[0]->val_int()))
-      {
-        /* 
-        * Could not interpret the function argument as a temporal value, 
-        * so throw an error and return 0
-        */
-        null_value= true;
-        char buff[40];
-        String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
-        String *res;
-
-        res= args[0]->val_str(&tmp);
-
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
-        return 0;
-      }
-      break;
+      if (temporal.from_int64_t(args[0]->val_int()))
+        break;
+      /* Intentionally fall-through on invalid conversion from integer */
     default:
       {
         /* 
@@ -81,7 +67,7 @@ int64_t Item_func_dayofmonth::val_int()
         * so throw an error and return 0
         */
         null_value= true;
-        char buff[40];
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
         String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
         String *res;
 

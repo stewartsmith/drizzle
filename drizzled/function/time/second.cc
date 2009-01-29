@@ -51,10 +51,10 @@ int64_t Item_func_second::val_int()
    */
   drizzled::Time temporal_time;
   
-  char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
-  String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
-  String *res= args[0]->val_str(&tmp);
-  if (! temporal_time.from_string(res->c_ptr(), res->length()))
+  char time_buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+  String tmp_time(time_buff,sizeof(time_buff), &my_charset_utf8_bin);
+  String *time_res= args[0]->val_str(&tmp_time);
+  if (! temporal_time.from_string(time_res->c_ptr(), time_res->length()))
   {
     /* 
      * OK, we failed to match the first argument as a string
