@@ -850,14 +850,14 @@ bool sys_var_enum::update(Session *, set_var *var)
 }
 
 
-unsigned char *sys_var_enum::value_ptr(Session *, enum_var_type, LEX_STRING *)
+unsigned char *sys_var_enum::value_ptr(Session *, enum_var_type, const LEX_STRING *)
 {
   return (unsigned char*) enum_names->type_names[*value];
 }
 
 
 unsigned char *sys_var_enum_const::value_ptr(Session *, enum_var_type,
-                                             LEX_STRING *)
+                                             const LEX_STRING *)
 {
   return (unsigned char*) enum_names->type_names[global_system_variables.*offset];
 }
@@ -916,7 +916,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
 
 unsigned char *sys_var_session_uint32_t::value_ptr(Session *session,
                                                 enum_var_type type,
-                                                LEX_STRING *)
+                                                const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -966,7 +966,7 @@ void sys_var_session_ha_rows::set_default(Session *session, enum_var_type type)
 
 unsigned char *sys_var_session_ha_rows::value_ptr(Session *session,
                                                   enum_var_type type,
-                                                  LEX_STRING *)
+                                                  const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -1019,7 +1019,7 @@ void sys_var_session_uint64_t::set_default(Session *session, enum_var_type type)
 
 unsigned char *sys_var_session_uint64_t::value_ptr(Session *session,
                                                    enum_var_type type,
-                                                   LEX_STRING *)
+                                                   const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -1072,7 +1072,7 @@ void sys_var_session_size_t::set_default(Session *session, enum_var_type type)
 
 unsigned char *sys_var_session_size_t::value_ptr(Session *session,
                                                  enum_var_type type,
-                                                 LEX_STRING *)
+                                                 const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -1101,7 +1101,7 @@ void sys_var_session_bool::set_default(Session *session,  enum_var_type type)
 
 unsigned char *sys_var_session_bool::value_ptr(Session *session,
                                                enum_var_type type,
-                                               LEX_STRING *)
+                                               const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -1219,7 +1219,7 @@ err:
   If type is not given, return local value if exists, else global.
 */
 
-Item *sys_var::item(Session *session, enum_var_type var_type, LEX_STRING *base)
+Item *sys_var::item(Session *session, enum_var_type var_type, const LEX_STRING *base)
 {
   if (check_type(var_type))
   {
@@ -1346,7 +1346,7 @@ void sys_var_session_enum::set_default(Session *session, enum_var_type type)
 
 unsigned char *sys_var_session_enum::value_ptr(Session *session,
                                                enum_var_type type,
-                                               LEX_STRING *)
+                                               const LEX_STRING *)
 {
   uint32_t tmp= ((type == OPT_GLOBAL) ?
 	      global_system_variables.*offset :
@@ -1368,7 +1368,7 @@ bool sys_var_session_bit::update(Session *session, set_var *var)
 
 
 unsigned char *sys_var_session_bit::value_ptr(Session *session, enum_var_type,
-                                              LEX_STRING *)
+                                              const LEX_STRING *)
 {
   /*
     If reverse is 0 (default) return 1 if bit is set.
@@ -1466,7 +1466,7 @@ void sys_var_session_date_time_format::set_default(Session *session, enum_var_ty
 
 unsigned char *sys_var_session_date_time_format::value_ptr(Session *session,
                                                            enum_var_type type,
-                                                           LEX_STRING *)
+                                                           const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
   {
@@ -1551,7 +1551,7 @@ void sys_var_collation_sv::set_default(Session *session, enum_var_type type)
 
 unsigned char *sys_var_collation_sv::value_ptr(Session *session,
                                                enum_var_type type,
-                                               LEX_STRING *)
+                                               const LEX_STRING *)
 {
   const CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
                            global_system_variables.*offset :
@@ -1564,18 +1564,18 @@ LEX_STRING default_key_cache_base= {(char *) "default", 7 };
 
 static KEY_CACHE zero_key_cache;
 
-KEY_CACHE *get_key_cache(LEX_STRING *cache_name)
+KEY_CACHE *get_key_cache(const LEX_STRING *cache_name)
 {
   safe_mutex_assert_owner(&LOCK_global_system_variables);
   if (!cache_name || ! cache_name->length)
     cache_name= &default_key_cache_base;
   return ((KEY_CACHE*) find_named(&key_caches,
-                                      cache_name->str, cache_name->length, 0));
+                                  cache_name->str, cache_name->length, 0));
 }
 
 
 unsigned char *sys_var_key_cache_param::value_ptr(Session *, enum_var_type,
-                                                  LEX_STRING *base)
+                                                  const LEX_STRING *base)
 {
   KEY_CACHE *key_cache= get_key_cache(base);
   if (!key_cache)
@@ -1742,7 +1742,7 @@ void sys_var_timestamp::set_default(Session *session, enum_var_type)
 
 
 unsigned char *sys_var_timestamp::value_ptr(Session *session, enum_var_type,
-                                            LEX_STRING *)
+                                            const LEX_STRING *)
 {
   session->sys_var_tmp.long_value= (long) session->start_time;
   return (unsigned char*) &session->sys_var_tmp.long_value;
@@ -1759,7 +1759,7 @@ bool sys_var_last_insert_id::update(Session *session, set_var *var)
 
 unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
                                                  enum_var_type,
-                                                 LEX_STRING *)
+                                                 const LEX_STRING *)
 {
   /*
     this tmp var makes it robust againt change of type of
@@ -1803,7 +1803,7 @@ bool sys_var_session_time_zone::update(Session *session, set_var *var)
 
 unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
                                                     enum_var_type type,
-                                                    LEX_STRING *)
+                                                    const LEX_STRING *)
 {
   /*
     We can use ptr() instead of c_ptr() here because String contaning
@@ -1898,7 +1898,7 @@ bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
 
 unsigned char *sys_var_session_lc_time_names::value_ptr(Session *session,
                                                         enum_var_type type,
-                                                        LEX_STRING *)
+                                                        const LEX_STRING *)
 {
   return type == OPT_GLOBAL ?
                  (unsigned char *) global_system_variables.lc_time_names->name :
@@ -1960,7 +1960,7 @@ void sys_var_microseconds::set_default(Session *session, enum_var_type type)
 
 unsigned char *sys_var_microseconds::value_ptr(Session *session,
                                                enum_var_type type,
-                                               LEX_STRING *)
+                                               const LEX_STRING *)
 {
   session->tmp_double_value= (double) ((type == OPT_GLOBAL) ?
                                    global_system_variables.*offset :
@@ -2509,7 +2509,7 @@ err:
 
 unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
                                                          enum_var_type type,
-                                                         LEX_STRING *)
+                                                         const LEX_STRING *)
 {
   unsigned char* result;
   handlerton *hton;
@@ -2592,7 +2592,7 @@ symbolic_mode_representation(Session *session, uint32_t val, LEX_STRING *rep)
 
 unsigned char *sys_var_session_optimizer_switch::value_ptr(Session *session,
                                                            enum_var_type type,
-                                                           LEX_STRING *)
+                                                           const LEX_STRING *)
 {
   LEX_STRING opts;
   uint64_t val= ((type == OPT_GLOBAL) ? global_system_variables.*offset :

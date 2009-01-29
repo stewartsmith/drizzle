@@ -9769,7 +9769,7 @@ innodb_plugin_init(void)
 }
 #endif /* MYSQL_DYNAMIC_PLUGIN */
 
-mysql_declare_plugin(innobase)
+drizzle_declare_plugin(innobase)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
   &innobase_storage_engine,
@@ -9791,7 +9791,7 @@ i_s_innodb_cmp,
 i_s_innodb_cmp_reset,
 i_s_innodb_cmpmem,
 i_s_innodb_cmpmem_reset
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;
 
 #ifdef UNIV_COMPILE_TEST_FUNCS
 

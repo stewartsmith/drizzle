@@ -766,6 +766,8 @@ drop table t1;
 create table t1 select _latin1"test" union select _latin1"testt" ;
 ERROR 42S22: Unknown column '_latin1' in 'field list'
 create table t1 select _utf8"test" union select _utf8"testt" ;
+ERROR 42S22: Unknown column '_utf8' in 'field list'
+create table t1 select "test" union select "testt" ;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -1006,9 +1008,9 @@ a
 No
 drop table t1,t2,t3,t4;
 create table t1 as
-(select _utf8'test') union
-(select _utf8'TEST') union
-(select _utf8'TeST');
+(select 'test') union
+(select 'TEST') union
+(select 'TeST');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -1019,22 +1021,22 @@ count(*)
 1
 drop table t1;
 create table t1 as
-(select _utf8'test' collate utf8_bin) union
-(select _utf8'TEST') union
-(select _utf8'TeST');
+(select 'test' collate utf8_bin) union
+(select 'TEST') union
+(select 'TeST');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `_utf8'test' collate utf8_bin` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin
+  `'test' collate utf8_bin` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin
 ) ENGINE=InnoDB
 select count(*) from t1;
 count(*)
 3
 drop table t1;
 create table t1 as
-(select _utf8'test') union
-(select _utf8'TEST' collate utf8_bin) union
-(select _utf8'TeST');
+(select 'test') union
+(select 'TEST' collate utf8_bin) union
+(select 'TeST');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -1045,9 +1047,9 @@ count(*)
 3
 drop table t1;
 create table t1 as
-(select _utf8'test') union
-(select _utf8'TEST') union
-(select _utf8'TeST' collate utf8_bin);
+(select 'test') union
+(select 'TEST') union
+(select 'TeST' collate utf8_bin);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -1156,8 +1158,8 @@ select concat('value is: ', @val) union select 'some text';
 concat('value is: ', @val)
 value is: 6
 some text
-select concat(_utf8'a', _utf8'b' collate utf8_bin);
-concat(_utf8'a', _utf8'b' collate utf8_bin)
+select concat('a', 'b' collate utf8_bin);
+concat('a', 'b' collate utf8_bin)
 ab
 create table t1 (foo varchar(100)) collate utf8_bin;
 insert into t1 (foo) values ("foo");
@@ -1363,7 +1365,7 @@ drop table t1, t2;
 (select avg(1)) union (select avg(1)) union (select avg(1));
 avg(1)
 1.0000
-select _utf8'12' union select _utf8'12345';
+select '12' union select '12345';
 12
 12
 CREATE TABLE t1 (a int);

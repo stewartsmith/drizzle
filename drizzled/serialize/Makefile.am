@@ -15,7 +15,7 @@
 
 LDADD= libserialize.la ${LTLIBPROTOBUF} ${LTLIBUUID}
 
-libserialize_la_CXXFLAGS= 
+AM_CXXFLAGS=${GLOBAL_CXXFLAGS} ${NO_SHADOW}
 
 TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
 TESTS = check_length.sh
@@ -55,34 +55,24 @@ noinst_HEADERS= \
 
 
 binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
-binlog_reader_CXXFLAGS = 
 
 binlog_writer_SOURCES = binlog_writer.cc binary_log.cc
-binlog_writer_CXXFLAGS = 
 
 schema_reader_SOURCES =  schema_reader.cc
-schema_reader_CXXFLAGS =
 
 table_reader_SOURCES =  table_reader.cc
-table_reader_CXXFLAGS =
 
 table_writer_SOURCES =  table_writer.cc
-table_writer_CXXFLAGS =
 
 master_list_writer_SOURCES =  master_list_writer.cc
-master_list_writer_CXXFLAGS =
 
 master_list_reader_SOURCES =  master_list_reader.cc
-master_list_reader_CXXFLAGS =
 
 replication_event_writer_SOURCES =  replication_event_writer.cc
-replication_event_writer_CXXFLAGS =
 
 replication_event_reader_SOURCES =  replication_event_reader.cc
-replication_event_reader_CXXFLAGS =
 
 length_SOURCES = length.cc
-length_CXXFLAGS = -fexceptions
 
 EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto replication_event.proto check_length.sh
 BUILT_SOURCES = schema.pb.h \

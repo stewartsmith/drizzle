@@ -266,7 +266,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL,
 };
 
-mysql_declare_plugin(replicator)
+drizzle_declare_plugin(replicator)
 {
   DRIZZLE_REPLICATOR_PLUGIN,
   "replicator",
@@ -280,4 +280,4 @@ mysql_declare_plugin(replicator)
   system_variables,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

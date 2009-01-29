@@ -880,28 +880,6 @@ int lex_one_token(void *arg, void *yysession)
       }
       yylval->lex_str=get_token(lip, 0, length);
 
-      /*
-         Note: "SELECT _bla AS 'alias'"
-         _bla should be considered as a IDENT if charset haven't been found.
-         So we don't use MYF(MY_WME) with get_charset_by_csname to avoid
-         producing an error.
-      */
-
-      if (yylval->lex_str.str[0] == '_')
-      {
-        const CHARSET_INFO * const cs= get_charset_by_csname(yylval->lex_str.str + 1,
-                                                             MY_CS_PRIMARY, MYF(0));
-        if (cs)
-        {
-          yylval->charset= cs;
-          lip->m_underscore_cs= cs;
-
-          lip->body_utf8_append(lip->m_cpp_text_start,
-                                lip->get_cpp_tok_start() + length);
-          return(UNDERSCORE_CHARSET);
-        }
-      }
-
       lip->body_utf8_append(lip->m_cpp_text_start);
 
       lip->body_utf8_append_literal(session, &yylval->lex_str, cs,

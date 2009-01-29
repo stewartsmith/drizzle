@@ -81,26 +81,26 @@ drop table t1;
 # attributes from values they were initialized to.
 #
 
-set @a=_utf8'test';
+set @a='test';
 select collation(@a),coercibility(@a);
-select @a=_utf8'TEST';
-select @a=_utf8'TEST' collate utf8_bin;
+select @a='TEST';
+select @a='TEST' collate utf8_bin;
 
-set @a=_utf8'test' collate utf8_general_ci;
+set @a='test' collate utf8_general_ci;
 select collation(@a),coercibility(@a);
-select @a=_utf8'TEST';
-select @a=_utf8'TEST' collate utf8_bin;
+select @a='TEST';
+select @a='TEST' collate utf8_bin;
 
 #
 # Check the same invoking Item_set_user_var
 #
-select collation(@a:=_utf8'test');
-select coercibility(@a:=_utf8'test');
-select collation(@a:=_utf8'test' collate utf8_bin);
-select coercibility(@a:=_utf8'test' collate utf8_bin);
-select (@a:=_utf8'test' collate utf8_bin) = _utf8'TEST';
+select collation(@a:='test');
+select coercibility(@a:='test');
+select collation(@a:='test' collate utf8_bin);
+select coercibility(@a:='test' collate utf8_bin);
+select (@a:='test' collate utf8_bin) = 'TEST';
 select collation(@a),coercibility(@a);
-select (@a:=_utf8'test' collate utf8_bin) = _utf8'TEST' collate utf8_general_ci;
+select (@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci;
 
 #
 # Bug #6321 strange error:

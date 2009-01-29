@@ -757,15 +757,16 @@ uint32_t Field_blob::max_packed_col_length(uint32_t max_length)
 }
 
 
-uint32_t Field_blob::is_equal(Create_field *new_field)
+uint32_t Field_blob::is_equal(Create_field *new_field_ptr)
 {
-  if (compare_str_field_flags(new_field, flags))
+  if (compare_str_field_flags(new_field_ptr, flags))
     return 0;
+  Field_blob *blob_field_ptr= static_cast<Field_blob *>(new_field_ptr->field);
 
-  return ((new_field->sql_type == get_blob_type_from_length(max_data_length()))
-          && new_field->charset == field_charset &&
-          ((Field_blob *)new_field->field)->max_data_length() ==
-          max_data_length());
+  return ((new_field_ptr->sql_type == 
+             get_blob_type_from_length(max_data_length()))
+          && new_field_ptr->charset == field_charset
+          && blob_field_ptr->max_data_length() == max_data_length());
 }
 
 

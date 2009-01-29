@@ -448,17 +448,6 @@ void Protocol::init(Session *session_arg)
   convert= &session->convert_buffer;
 }
 
-/**
-  Finish the result set with EOF packet, as is expected by the client,
-  if there is an error evaluating the next row and a continue handler
-  for the error.
-*/
-
-void Protocol::end_partial_result_set(Session *session)
-{
-  net_send_eof(session, session->server_status, 0 /* no warnings, we're inside SP */);
-}
-
 
 bool Protocol::flush()
 {

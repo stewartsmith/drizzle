@@ -65,7 +65,7 @@ static int errmsg_stderr_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(errmsg_stderr)
+drizzle_declare_plugin(errmsg_stderr)
 {
   DRIZZLE_ERRMSG_PLUGIN,
   "errmsg_stderr",
@@ -79,4 +79,4 @@ mysql_declare_plugin(errmsg_stderr)
   NULL, /* system variables */
   NULL
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

@@ -34,7 +34,7 @@ public:
     { max_length=length; fixed= 1; }
   Item_int(uint64_t i, uint32_t length= MY_INT64_NUM_DECIMAL_DIGITS)
     :value((int64_t)i)
-    { max_length=length; fixed= 1; unsigned_flag= 1; }
+  { max_length=length; fixed=1; }
   Item_int(const char *str_arg,int64_t i,uint32_t length) :value(i)
     { max_length=length; name=(char*) str_arg; fixed= 1; }
   Item_int(const char *str_arg, uint32_t length=64);

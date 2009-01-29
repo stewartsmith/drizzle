@@ -1746,15 +1746,15 @@ bool Item_in_subselect::setup_engine()
   if (engine->engine_type() == subselect_engine::SINGLE_SELECT_ENGINE)
   {
     /* Create/initialize objects in permanent memory. */
-    subselect_single_select_engine *old_engine;
+    subselect_single_select_engine *old_engine_ptr;
 
-    old_engine= (subselect_single_select_engine*) engine;
+    old_engine_ptr= static_cast<subselect_single_select_engine *>(engine);
 
     if (!(new_engine= new subselect_hash_sj_engine(session, this,
-                                                   old_engine)) ||
+                                                   old_engine_ptr)) ||
         new_engine->init_permanent(unit->get_unit_column_types()))
     {
-      Item_subselect::trans_res trans_res;
+      Item_subselect::trans_res new_trans_res;
       /*
         If for some reason we cannot use materialization for this IN predicate,
         delete all materialization-related objects, and apply the IN=>EXISTS
@@ -1764,11 +1764,12 @@ bool Item_in_subselect::setup_engine()
       new_engine= NULL;
       exec_method= NOT_TRANSFORMED;
       if (left_expr->cols() == 1)
-        trans_res= single_value_in_to_exists_transformer(old_engine->join,
-                                                         Eq_creator::instance());
+        new_trans_res= single_value_in_to_exists_transformer(
+                           old_engine_ptr->join,
+                           Eq_creator::instance());
       else
-        trans_res= row_value_in_to_exists_transformer(old_engine->join);
-      res= (trans_res != Item_subselect::RES_OK);
+        new_trans_res= row_value_in_to_exists_transformer(old_engine_ptr->join);
+      res= (new_trans_res != Item_subselect::RES_OK);
     }
     if (new_engine)
       engine= new_engine;
@@ -1776,7 +1777,7 @@ bool Item_in_subselect::setup_engine()
   else
   {
     assert(engine->engine_type() == subselect_engine::HASH_SJ_ENGINE);
-    new_engine= (subselect_hash_sj_engine*) engine;
+    new_engine= static_cast<subselect_hash_sj_engine *>(engine);
   }
 
   /* Initilizations done in runtime memory, repeated for each execution. */
@@ -2197,9 +2198,11 @@ int subselect_single_select_engine::exec()
         JOIN_TAB *tab=join->join_tab+i;
         if (tab && tab->keyuse)
         {
-          for (uint32_t i= 0; i < tab->ref.key_parts; i++)
+          for (uint32_t key_part= 0;
+               key_part < tab->ref.key_parts;
+               key_part++)
           {
-            bool *cond_guard= tab->ref.cond_guards[i];
+            bool *cond_guard= tab->ref.cond_guards[key_part];
             if (cond_guard && !*cond_guard)
             {
               /* Change the access method to full table scan */

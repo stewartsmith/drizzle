@@ -638,7 +638,7 @@ create table t1
 x text not null,
 y integer not null
 );
-insert into t1 values (repeat('a', 1022), 0), (repeat(_utf8 0xc3b7, 4), 0);
+insert into t1 values (repeat('a', 1022), 0), (repeat( 0xc3b7, 4), 0);
 set group_concat_max_len= 1022 + 10;
 select @x:=group_concat(x) from t1 group by y;
 select @@group_concat_max_len, length(@x), char_length(@x), right(@x,12), right(HEX(@x),12);

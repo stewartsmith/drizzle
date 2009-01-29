@@ -44,11 +44,11 @@
 */
 
 int
-Field_longstr::report_if_important_data(const char *ptr, const char *end)
+Field_longstr::report_if_important_data(const char *field_ptr, const char *end)
 {
-  if ((ptr < end) && table->in_use->count_cuted_fields)
+  if ((field_ptr < end) && table->in_use->count_cuted_fields)
   {
-    if (test_if_important_data(field_charset, ptr, end))
+    if (test_if_important_data(field_charset, field_ptr, end))
     {
       if (table->in_use->abort_on_warning)
         set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);

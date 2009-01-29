@@ -3870,16 +3870,16 @@ ha_innobase::innobase_lock_autoinc(void)
 		etc. type of statement. */
 		if (session_sql_command(user_session) == SQLCOM_INSERT
 		    || session_sql_command(user_session) == SQLCOM_REPLACE) {
-			dict_table_t*	table = prebuilt->table;
+			dict_table_t*	d_table = prebuilt->table;
 
 			/* Acquire the AUTOINC mutex. */
-			dict_table_autoinc_lock(table);
+			dict_table_autoinc_lock(d_table);
 
 			/* We need to check that another transaction isn't
 			already holding the AUTOINC lock on the table. */
-			if (table->n_waiting_or_granted_auto_inc_locks) {
+			if (d_table->n_waiting_or_granted_auto_inc_locks) {
 				/* Release the mutex to avoid deadlocks. */
-				dict_table_autoinc_unlock(table);
+				dict_table_autoinc_unlock(d_table);
 			} else {
 				break;
 			}
@@ -8786,7 +8786,7 @@ innobase_rollback_by_xid(
 UNIV_INTERN
 bool
 ha_innobase::check_if_incompatible_data(
-	HA_CREATE_INFO*	info,
+	HA_CREATE_INFO*	create_info,
 	uint		table_changes)
 {
 	if (table_changes != IS_EQUAL_YES) {
@@ -8795,21 +8795,21 @@ ha_innobase::check_if_incompatible_data(
 	}
 
 	/* Check that auto_increment value was not changed */
-	if ((info->used_fields & HA_CREATE_USED_AUTO) &&
-		info->auto_increment_value != 0) {
+	if ((create_info->used_fields & HA_CREATE_USED_AUTO) &&
+		create_info->auto_increment_value != 0) {
 
 		return(COMPATIBLE_DATA_NO);
 	}
 
 	/* Check that row format didn't change */
-	if ((info->used_fields & HA_CREATE_USED_ROW_FORMAT) &&
-	    get_row_type() != info->row_type) {
+	if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT) &&
+	    get_row_type() != create_info->row_type) {
 
 		return(COMPATIBLE_DATA_NO);
 	}
 
 	/* Specifying KEY_BLOCK_SIZE requests a rebuild of the table. */
-	if (info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE) {
+	if (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE) {
 		return(COMPATIBLE_DATA_NO);
 	}
 
@@ -9511,7 +9511,7 @@ innodb_plugin_init(void)
 }
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
-mysql_declare_plugin(innobase)
+drizzle_declare_plugin(innobase)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   innobase_hton_name,
@@ -9532,7 +9532,7 @@ i_s_innodb_cmp,
 i_s_innodb_cmp_reset,
 i_s_innodb_cmpmem,
 i_s_innodb_cmpmem_reset
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;
 
 
 /****************************************************************************

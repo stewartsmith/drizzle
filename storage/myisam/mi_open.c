@@ -1046,11 +1046,11 @@ The argument file_to_dup is here for the future if there would on some OS
 exist a dup()-like call that would give us two different file descriptors.
 *************************************************************************/
 
-int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share,
-                     File file_to_dup __attribute__((unused)))
+int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, File file_to_dup)
 {
-    info->dfile=my_open(share->data_file_name, share->mode,
-			MYF(MY_WME));
+  (void)file_to_dup; 
+  info->dfile=my_open(share->data_file_name, share->mode,
+                      MYF(MY_WME));
   return info->dfile >= 0 ? 0 : 1;
 }
 

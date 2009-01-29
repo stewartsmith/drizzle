@@ -46,15 +46,9 @@ extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
 
-#define TC_LOG_PAGE_SIZE   8192
-#define TC_LOG_MIN_SIZE    (3*TC_LOG_PAGE_SIZE)
-
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
-
-#define RP_LOCK_LOG_IS_ALREADY_LOCKED 1
-#define RP_FORCE_ROTATE               2
 
 /*
   The COPY_INFO structure is used by INSERT/REPLACE code.
@@ -1145,32 +1139,6 @@ public:
     uint64_t uint64_t_value;
   } sys_var_tmp;
 
-  struct {
-    /*
-      If true, drizzle_bin_log::write(Log_event) call will not write events to
-      binlog, and maintain 2 below variables instead (use
-      drizzle_bin_log.start_union_events to turn this on)
-    */
-    bool do_union;
-    /*
-      If true, at least one drizzle_bin_log::write(Log_event) call has been
-      made after last drizzle_bin_log.start_union_events() call.
-    */
-    bool unioned_events;
-    /*
-      If true, at least one drizzle_bin_log::write(Log_event e), where
-      e.cache_stmt == true call has been made after last
-      drizzle_bin_log.start_union_events() call.
-    */
-    bool unioned_events_trans;
-
-    /*
-      'queries' (actually SP statements) that run under inside this binlog
-      union have session->query_id >= first_query_id.
-    */
-    query_id_t first_query_id;
-  } binlog_evt_union;
-
   /**
     Character input stream consumed by the lexical analyser,
     used during parsing.
@@ -1471,13 +1439,6 @@ my_eof(Session *session)
 {
   session->main_da.set_eof_status(session);
 }
-
-#define tmp_disable_binlog(A)       \
-  {uint64_t tmp_disable_binlog__save_options= (A)->options; \
-  (A)->options&= ~OPTION_BIN_LOG
-
-#define reenable_binlog(A)   (A)->options= tmp_disable_binlog__save_options;}
-
 
 /*
   Used to hold information about file and file structure in exchange

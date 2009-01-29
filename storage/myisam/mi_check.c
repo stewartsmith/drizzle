@@ -1755,7 +1755,7 @@ int movepoint(register MI_INFO *info, unsigned char *record, my_off_t oldpos,
 
 	/* Tell system that we want all memory for our cache */
 
-void lock_memory(MI_CHECK *param __attribute__((unused)))
+void lock_memory(MI_CHECK *param)
 {
 #ifdef SUN_OS				/* Key-cacheing thrases on sun 4.1 */
   if (param->opt_lock_memory)
@@ -1765,6 +1765,8 @@ void lock_memory(MI_CHECK *param __attribute__((unused)))
       mi_check_print_warning(param,
 			     "Failed to lock memory. errno %d",my_errno);
   }
+#else
+  (void)param;
 #endif
 } /* lock_memory */
 
@@ -1957,9 +1959,10 @@ err:
 
 int change_to_newfile(const char * filename, const char * old_ext,
 		      const char * new_ext,
-		      uint32_t raid_chunks __attribute__((unused)),
+		      uint32_t raid_chunks,
 		      myf MyFlags)
 {
+  (void)raid_chunks;
   char old_filename[FN_REFLEN],new_filename[FN_REFLEN];
   /* Get real path to filename */
   (void) fn_format(old_filename,filename,"",old_ext,2+4+32);

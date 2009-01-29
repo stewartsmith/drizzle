@@ -2718,11 +2718,11 @@ handler::ha_drop_table(const char *name)
 */
 
 int
-handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *info)
+handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
 {
   mark_trx_read_write();
 
-  return create(name, form, info);
+  return create(name, form, create_info);
 }
 
 
@@ -2734,11 +2734,11 @@ handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *info)
 
 int
 handler::ha_create_handler_files(const char *name, const char *old_name,
-                        int action_flag, HA_CREATE_INFO *info)
+                                 int action_flag, HA_CREATE_INFO *create_info)
 {
   mark_trx_read_write();
 
-  return create_handler_files(name, old_name, action_flag, info);
+  return create_handler_files(name, old_name, action_flag, create_info);
 }
 
 
@@ -3067,14 +3067,12 @@ int ha_table_exists_in_engine(Session* session,
     Estimated cost of 'index only' scan
 */
 
-double handler::index_only_read_time(uint32_t keynr, double records)
+double handler::index_only_read_time(uint32_t keynr, double key_records)
 {
-  double read_time;
   uint32_t keys_per_block= (stats.block_size/2/
 			(table->key_info[keynr].key_length + ref_length) + 1);
-  read_time=((double) (records + keys_per_block-1) /
-             (double) keys_per_block);
-  return read_time;
+  return ((double) (key_records + keys_per_block-1) /
+          (double) keys_per_block);
 }
 
 
@@ -3367,7 +3365,7 @@ scan_it_again:
   @retval other Error
 */
 
-int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
+int DsMrr_impl::dsmrr_init(handler *h_in, KEY *key,
                            RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
                            uint32_t n_ranges, uint32_t mode, HANDLER_BUFFER *buf)
 {
@@ -3375,22 +3373,22 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
   uint32_t keyno;
   Item *pushed_cond= NULL;
   handler *new_h2;
-  keyno= h->active_index;
+  keyno= h_in->active_index;
   assert(h2 == NULL);
   if (mode & HA_MRR_USE_DEFAULT_IMPL || mode & HA_MRR_SORTED)
   {
     use_default_impl= true;
-    return(h->handler::multi_range_read_init(seq_funcs, seq_init_param,
+    return(h_in->handler::multi_range_read_init(seq_funcs, seq_init_param,
                                                   n_ranges, mode, buf));
   }
   rowids_buf= buf->buffer;
   //psergey-todo: don't add key_length as it is not needed anymore
-  rowids_buf += key->key_length + h->ref_length;
+  rowids_buf += key->key_length + h_in->ref_length;
 
   is_mrr_assoc= !test(mode & HA_MRR_NO_ASSOCIATION);
   rowids_buf_end= buf->buffer_end;
 
-  elem_size= h->ref_length + (int)is_mrr_assoc * sizeof(void*);
+  elem_size= h_in->ref_length + (int)is_mrr_assoc * sizeof(void*);
   rowids_buf_last= rowids_buf +
                       ((rowids_buf_end - rowids_buf)/ elem_size)*
                       elem_size;
@@ -3398,16 +3396,16 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
 
   /* Create a separate handler object to do rndpos() calls. */
   Session *session= current_session;
-  if (!(new_h2= h->clone(session->mem_root)) ||
+  if (!(new_h2= h_in->clone(session->mem_root)) ||
       new_h2->ha_external_lock(session, F_RDLCK))
   {
     delete new_h2;
     return(1);
   }
 
-  if (keyno == h->pushed_idx_cond_keyno)
-    pushed_cond= h->pushed_idx_cond;
-  if (h->ha_index_end())
+  if (keyno == h_in->pushed_idx_cond_keyno)
+    pushed_cond= h_in->pushed_idx_cond;
+  if (h_in->ha_index_end())
   {
     new_h2= h2;
     goto error;
@@ -3435,7 +3433,7 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
   if (dsmrr_eof)
     buf->end_of_used_area= rowids_buf_last;
 
-  if (h->ha_rnd_init(false))
+  if (h_in->ha_rnd_init(false))
     goto error;
 
   return(0);
@@ -3526,12 +3524,12 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *)
   DS-MRR implementation: multi_range_read_next() function
 */
 
-int DsMrr_impl::dsmrr_next(handler *h, char **range_info)
+int DsMrr_impl::dsmrr_next(handler *h_in, char **range_info)
 {
   int res;
 
   if (use_default_impl)
-    return h->handler::multi_range_read_next(range_info);
+    return h_in->handler::multi_range_read_next(range_info);
 
   if (rowids_buf_cur == rowids_buf_last)
   {
@@ -3552,8 +3550,8 @@ int DsMrr_impl::dsmrr_next(handler *h, char **range_info)
     goto end;
   }
 
-  res= h->rnd_pos(table->record[0], rowids_buf_cur);
-  rowids_buf_cur += h->ref_length;
+  res= h_in->rnd_pos(table->record[0], rowids_buf_cur);
+  rowids_buf_cur += h_in->ref_length;
   if (is_mrr_assoc)
   {
     memcpy(range_info, rowids_buf_cur, sizeof(void*));

@@ -1182,6 +1182,12 @@ AC_ARG_ENABLE([effective-style],
     [ac_warn_effc="$enableval"],
     [ac_warn_effc="no"])
 
+AC_ARG_ENABLE([shadow],
+    [AS_HELP_STRING([--disable-shadow],
+       [Disables warnings about scope shadowing @<:@default=on@:>@])],
+    [ac_warn_shadow="$enableval"],
+    [ac_warn_shadow="yes"])
+
 AC_ARG_ENABLE([go-crazy],
     [AS_HELP_STRING([--enable-go-crazy],
        [Enables extra little warnings that might be too much @<:@default=off@:>@])],
@@ -1221,6 +1227,15 @@ then
     W_STRICT_ALIASING="-Wstrict-aliasing"
   else
     W_STRICT_ALIASING="-Wno-strict-aliasing"
+  fi
+
+  if test "$ac_warn_shadow" = "yes"
+  then
+    W_SHADOW="-Wshadow"
+    NO_SHADOW="-Wno-shadow"
+  else
+    W_SHADOW="-Wno-shadow"
+    NO_SHADOW=""
   fi
 
   if test "$ac_profiling" = "yes"
@@ -1300,11 +1315,11 @@ void testme() {  };],[
 
   if test "$ac_warn_gocrazy" = "yes"
   then
-    W_CRAZY="-Wshadow -Wconversion -Winvalid-pch"
+    W_CRAZY="-Wconversion -Winvalid-pch"
   fi
 
-  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
-  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
+  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CRAZY}"
+  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CRAZY}"
 
   if test "$ac_exceptions" = "no"
   then
@@ -1325,7 +1340,7 @@ then
     CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
   fi
   CC_WARNINGS="-v -xc99=all -errtags=yes"
-  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder -compat=5"
   if test "$ac_exceptions" = "no"
   then
     NO_EXCEPTIONS="-features=no%except"
@@ -1337,12 +1352,16 @@ AM_CFLAGS="${CC_WARNINGS} ${AM_CFLAGS}"
 
 AC_SUBST(NO_EXCEPTIONS)
 AC_SUBST(W_EXCEPTIONS)
+AC_SUBST(NO_SHADOW)
+AC_SUBST(W_SHADOW)
 AC_SUBST(NO_REDUNDANT_DECLS)
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
+AC_SUBST([GLOBAL_CXXFLAGS],[${AM_CXXFLAGS}])
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CXXFLAGS])
+
 
 # Some usefull subst
 AC_SUBST(CC)
