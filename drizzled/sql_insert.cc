@@ -1566,7 +1566,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     open_table().
   */
   {
-    tmp_disable_binlog(session);
     if (!mysql_create_table_no_lock(session, create_table->db,
                                     create_table->table_name,
                                     create_info, alter_info, 0,
@@ -1612,7 +1611,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         }
       }
     }
-    reenable_binlog(session);
     if (!table)                                   // open failed
       return(0);
   }
@@ -1767,9 +1765,7 @@ void select_create::send_error(uint32_t errcode,const char *err)
     written to the binary log.
 
   */
-  tmp_disable_binlog(session);
   select_insert::send_error(errcode, err);
-  reenable_binlog(session);
 
   return;
 }
@@ -1825,10 +1821,8 @@ void select_create::abort()
     of the table succeeded or not, since we need to reset the binary
     log state.
   */
-  tmp_disable_binlog(session);
   select_insert::abort();
   session->transaction.stmt.modified_non_trans_table= false;
-  reenable_binlog(session);
 
 
   if (m_plock)

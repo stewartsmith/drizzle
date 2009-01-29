@@ -2574,9 +2574,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       {
         ha_autocommit_or_rollback(session, 1);
         close_thread_tables(session);
-        tmp_disable_binlog(session); // binlogging is done by caller if wanted
         result_code= mysql_recreate_table(session, table);
-        reenable_binlog(session);
         /*
           mysql_recreate_table() can push OK or ERROR.
           Clear 'OK' status. If there is an error, keep it:
@@ -2677,9 +2675,7 @@ send_result_message:
       TableList *save_next_local= table->next_local,
                  *save_next_global= table->next_global;
       table->next_local= table->next_global= 0;
-      tmp_disable_binlog(session); // binlogging is done by caller if wanted
       result_code= mysql_recreate_table(session, table);
-      reenable_binlog(session);
       /*
         mysql_recreate_table() can push OK or ERROR.
         Clear 'OK' status. If there is an error, keep it:
@@ -3732,10 +3728,8 @@ int create_temporary_table(Session *session,
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
   */
-  tmp_disable_binlog(session);
   error= mysql_create_table(session, new_db, tmp_name,
                             create_info, alter_info, 1, 0);
-  reenable_binlog(session);
 
   return(error);
 }
