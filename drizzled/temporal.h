@@ -66,12 +66,15 @@
 #define DRIZZLE_SECONDS_IN_DAY (60*60*24)
 #define DRIZZLE_NANOSECONDS_IN_MICROSECOND 1000
 
+#define DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING 40
+
 #define DRIZZLE_YY_PART_YEAR  70
+
+#include "drizzled/global.h"
 
 #include <sys/time.h>
 #include <time.h>
 
-#include "drizzled/global.h"
 #include "drizzled/calendar.h"
 
 /* Outside forward declarations */
