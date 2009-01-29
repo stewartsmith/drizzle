@@ -2637,14 +2637,14 @@ struct my_option my_long_options[] =
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
-   (char**) &max_system_variables.auto_increment_increment, 0, GET_UINT,
-   OPT_ARG, 1, 1, 65535, 0, 1, 0 },
+   (char**) &max_system_variables.auto_increment_increment, 0, GET_ULL,
+   OPT_ARG, 1, 1, UINT64_MAX, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
    N_("Offset added to Auto-increment columns. Used when "
       "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
-   (char**) &max_system_variables.auto_increment_offset, 0, GET_UINT, OPT_ARG,
-   1, 1, 65535, 0, 1, 0 },
+   (char**) &max_system_variables.auto_increment_offset, 0, GET_ULL, OPT_ARG,
+   1, 1, UINT64_MAX, 0, 1, 0 },
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
       "relative to this."),
