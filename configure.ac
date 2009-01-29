@@ -1341,7 +1341,12 @@ AC_SUBST(NO_EXCEPTIONS)
 AC_SUBST(W_EXCEPTIONS)
 AC_SUBST(NO_REDUNDANT_DECLS)
 
-AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
+GLOBAL_CPPFLAGS='-I$(top_srcdir) -I$(top_builddir)'
+if test "$ac_cv_func_timegm" = "no"
+then
+  GLOBAL_CPPFLAGS="${GLOBAL_CPPFLAGS} -I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib"
+fi
+AC_SUBST([GLOBAL_CPPFLAGS])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CXXFLAGS])
