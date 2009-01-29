@@ -853,7 +853,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TO_SYM                        /* SQL-2003-R */
 %token  TRAILING                      /* SQL-2003-R */
 %token  TRANSACTION_SYM
-%token  TRANSACTIONAL_SYM
 %token  TRIM                          /* SQL-2003-N */
 %token  TRUE_SYM                      /* SQL-2003-R */
 %token  TRUNCATE_SYM
@@ -6040,7 +6039,6 @@ keyword_sp:
         | TEXT_SYM                 {}
         | THAN_SYM                 {}
         | TRANSACTION_SYM          {}
-        | TRANSACTIONAL_SYM        {}
         | TIMESTAMP                {}
         | TIMESTAMP_ADD            {}
         | TIMESTAMP_DIFF           {}
