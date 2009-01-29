@@ -89,7 +89,7 @@ handle_error(uint32_t sql_errno,
   return is_handled;
 }
 
-int drizzle_read_table_proto(char* path, drizzle::Table* table)
+int drizzle_read_table_proto(const char* path, drizzle::Table* table)
 {
   {
     fstream input(path, ios::in | ios::binary);
@@ -461,9 +461,9 @@ static void fill_table_proto(drizzle::Table *table_proto,
         {
           const char *src= field_arg->interval->type_names[pos];
 
-          set_field_options->add_value(src);
+          set_field_options->add_field_value(src);
         }
-        set_field_options->set_count_elements(set_field_options->value_size());
+        set_field_options->set_count_elements(set_field_options->field_value_size());
         break;
       }
     case DRIZZLE_TYPE_BLOB:
@@ -483,13 +483,75 @@ static void fill_table_proto(drizzle::Table *table_proto,
       attribute->set_comment(field_arg->comment.str);
   }
 
+  if (create_info->used_fields & HA_CREATE_USED_PACK_KEYS)
+  {
+    if(create_info->table_options & HA_OPTION_PACK_KEYS)
+      table_options->set_pack_keys(true);
+    else if(create_info->table_options & HA_OPTION_NO_PACK_KEYS)
+      table_options->set_pack_keys(false);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_CHECKSUM)
+  {
+    assert(create_info->table_options & (HA_OPTION_CHECKSUM | HA_OPTION_NO_CHECKSUM));
+
+    if(create_info->table_options & HA_OPTION_CHECKSUM)
+      table_options->set_checksum(true);
+    else
+      table_options->set_checksum(false);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_PAGE_CHECKSUM)
+  {
+    if (create_info->page_checksum == HA_CHOICE_YES)
+      table_options->set_page_checksum(true);
+    else if (create_info->page_checksum == HA_CHOICE_NO)
+      table_options->set_page_checksum(false);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_DELAY_KEY_WRITE)
+  {
+    if(create_info->table_options & HA_OPTION_DELAY_KEY_WRITE)
+      table_options->set_delay_key_write(true);
+    else if(create_info->table_options & HA_OPTION_NO_DELAY_KEY_WRITE)
+      table_options->set_delay_key_write(false);
+  }
+
+  switch(create_info->row_type)
+  {
+  case ROW_TYPE_DEFAULT:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_DEFAULT);
+    break;
+  case ROW_TYPE_FIXED:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_FIXED);
+    break;
+  case ROW_TYPE_DYNAMIC:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_DYNAMIC);
+    break;
+  case ROW_TYPE_COMPRESSED:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_COMPRESSED);
+    break;
+  case ROW_TYPE_REDUNDANT:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_REDUNDANT);
+    break;
+  case ROW_TYPE_COMPACT:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_COMPACT);
+    break;
+  case ROW_TYPE_PAGE:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_PAGE);
+    break;
+  default:
+    abort();
+  }
+
   if (create_info->comment.length)
     table_options->set_comment(create_info->comment.str);
 
-  if (create_info->table_charset)
+  if (create_info->default_table_charset)
   {
-    table_options->set_collation_id(field_arg->charset->number);
-    table_options->set_collation(field_arg->charset->name);
+    table_options->set_collation_id(
+			       create_info->default_table_charset->number);
+    table_options->set_collation(create_info->default_table_charset->name);
   }
 
   if (create_info->connect_string.length)
@@ -523,7 +585,7 @@ static void fill_table_proto(drizzle::Table *table_proto,
   {
     drizzle::Table::Index *idx;
 
-    idx= table_proto->add_index();
+    idx= table_proto->add_indexes();
 
     assert(test(key_info[i].flags & HA_USES_COMMENT) ==
            (key_info[i].comment.length > 0));

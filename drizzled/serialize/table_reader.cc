@@ -32,9 +32,9 @@ void print_field(const ::drizzle::Table::Field &field)
       int x;
 
       cout << " ENUM(";
-      for (x= 0; x < field.set_options().value_size() ; x++)
+      for (x= 0; x < field.set_options().field_value_size() ; x++)
       {
-        const string type= field.set_options().value(x);
+        const string type= field.set_options().field_value(x);
 
         if (x != 0)
           cout << ",";
@@ -114,7 +114,8 @@ void print_engine(const ::drizzle::Table::StorageEngine &engine)
 
   for (x= 0; x < engine.option_size(); ++x) {
     const Table::StorageEngine::EngineOption option= engine.option(x);
-    cout << "\t" << option.name() << " = " << option.value() << endl;
+    cout << "\t" << option.option_name() << " = "
+	 << option.option_value() << endl;
   }
 }
 
@@ -156,6 +157,33 @@ void print_table_options(const ::drizzle::Table::TableOptions &options)
 
   if (options.has_collation())
     cout << " COLLATE = '" << options.collation() << "' " << endl;
+
+  if (options.has_auto_increment())
+    cout << " AUTOINCREMENT_OFFSET = " << options.auto_increment() << endl;
+
+  if (options.has_collation_id())
+    cout << "-- collation_id = " << options.collation_id() << endl;
+  
+  if (options.has_connect_string())
+    cout << " CONNECT_STRING = '" << options.connect_string() << "'"<<endl;
+
+  if (options.has_row_type())
+    cout << " ROW_TYPE = " << options.row_type() << endl;
+
+/*    optional string data_file_name = 5;
+    optional string index_file_name = 6;
+    optional uint64 max_rows = 7;
+    optional uint64 min_rows = 8;
+    optional uint64 auto_increment_value = 9;
+    optional uint32 avg_row_length = 11;
+    optional uint32 key_block_size = 12;
+    optional uint32 block_size = 13;
+    optional string comment = 14;
+    optional bool pack_keys = 15;
+    optional bool checksum = 16;
+    optional bool page_checksum = 17;
+    optional bool delay_key_write = 18;
+*/
 }
 
 
@@ -180,9 +208,9 @@ void print_table(const ::drizzle::Table &table)
     print_field(field);
   }
 
-  for (x= 0; x < table.index_size() ; x++)
+  for (x= 0; x < table.indexes_size() ; x++)
   {
-    const Table::Index index= table.index(x);
+    const Table::Index index= table.indexes(x);
 
     if (x != 0)
       cout << "," << endl;;
