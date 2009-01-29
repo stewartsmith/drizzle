@@ -461,7 +461,7 @@ gen_lex_hash_LDFLAGS=
 
 
 libserialutil_la_SOURCES = db.cc unireg.cc
-libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${NO_SHADOW}
+libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
 libhandler_la_SOURCES = handler.cc handlerton.cc
 

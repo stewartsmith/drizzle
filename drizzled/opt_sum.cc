@@ -213,7 +213,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
             }
             is_exact_count= 1;                  // count is now exact
           }
-          ((Item_sum_count*) item)->make_const((int64_t) count);
+          ((Item_sum_count*) item)->make_const_count((int64_t) count);
           recalc_const_item= 1;
         }
         else

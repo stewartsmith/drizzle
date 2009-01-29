@@ -2280,7 +2280,6 @@ void handler::print_error(int error, myf errflag)
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
                ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
     return;
-    break;
   default:
     {
       /* The error was "unknown" to this function.

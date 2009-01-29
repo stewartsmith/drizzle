@@ -1331,6 +1331,7 @@ void testme() {  };],[
   # drizzled doesn't use run-time-type-checking, so we disable it.
   AM_CXXFLAGS="${AM_CXXFLAGS} -fno-rtti"
   CPPFLAGS="${CPPFLAGS} -fpch-deps"
+  PROTOSKIP_WARNINGS="${NO_SHADOW}"
 fi
 if test "$SUNCC" = "yes"
 then
@@ -1341,6 +1342,7 @@ then
   fi
   CC_WARNINGS="-v -xc99=all -errtags=yes -errwarn=%all"
   CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -errwarn=%all -erroff=attrskipunsup,doubunder -compat=5"
+  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp"
   if test "$ac_exceptions" = "no"
   then
     NO_EXCEPTIONS="-features=no%except"
@@ -1355,6 +1357,7 @@ AC_SUBST(W_EXCEPTIONS)
 AC_SUBST(NO_SHADOW)
 AC_SUBST(W_SHADOW)
 AC_SUBST(NO_REDUNDANT_DECLS)
+AC_SUBST(PROTOSKIP_WARNINGS)
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])

@@ -561,6 +561,6 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
 }\n"
 );
   my_end(0);
-  exit(0);
+  return(0);
 }
 

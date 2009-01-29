@@ -44,6 +44,7 @@ public:
   }
   Item *clone_item();
   virtual Item *real_item() { return ref; }
+  virtual const Item *real_item() const { return ref; }
 };
 
 #endif /* DRIZZLED_ITEM_INT_WITH_REF_H */

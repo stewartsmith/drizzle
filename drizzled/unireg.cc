@@ -573,7 +573,6 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
     default:
       abort(); /* Somebody's brain broke. haven't added index type to proto */
-      break;
     }
 
     if (key_info[i].flags & HA_NOSAME)
@@ -1101,7 +1100,7 @@ static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_f
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset)
 {
-  register uint32_t i;
+  register uint32_t field_element;
   uint32_t int_count, comment_length=0, vcol_info_length=0;
   unsigned char buff[MAX_FIELD_WIDTH];
   Create_field *field;
@@ -1153,18 +1152,18 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   buff[0]=(unsigned char) NAMES_SEP_CHAR;
   if (my_write(file, buff, 1, MYF_RW))
     return(1);
-  i=0;
+  field_element=0;
   it.rewind();
   while ((field=it++))
   {
     char *pos= strcpy((char*) buff,field->field_name);
     pos+= strlen(field->field_name);
     *pos++=NAMES_SEP_CHAR;
-    if (i == create_fields.elements-1)
+    if (field_element == create_fields.elements-1)
       *pos++=0;
     if (my_write(file, buff, (size_t) (pos-(char*) buff),MYF_RW))
       return(1);
-    i++;
+    field_element++;
   }
 
 	/* Write intervals */
@@ -1180,13 +1179,17 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
       {
         unsigned char  sep= 0;
         unsigned char  occ[256];
-        uint32_t           i;
+        uint32_t       length_index;
         unsigned char *val= NULL;
 
         memset(occ, 0, sizeof(occ));
 
-        for (i=0; (val= (unsigned char*) field->interval->type_names[i]); i++)
-          for (uint32_t j = 0; j < field->interval->type_lengths[i]; j++)
+        for (length_index=0;
+             (val= (unsigned char*) field->interval->type_names[length_index]);
+              length_index++)
+          for (uint32_t j = 0;
+               j < field->interval->type_lengths[length_index];
+               j++)
             occ[(unsigned int) (val[j])]= 1;
 
         if (!occ[(unsigned char)NAMES_SEP_CHAR])
@@ -1195,11 +1198,11 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
           sep= ',';
         else
         {
-          for (uint32_t i=1; i<256; i++)
+          for (uint32_t x=1; x<256; x++)
           {
-            if(!occ[i])
+            if(!occ[x])
             {
-              sep= i;
+              sep= x;
               break;
             }
           }
