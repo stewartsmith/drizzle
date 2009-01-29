@@ -1,0 +1,132 @@
+#
+# Tests for the MINUTE() function
+#
+# The Drizzle MINUTE() function differs from the MySQL MINUTE()
+# function in these ways:
+#
+#  * Does not accept invalid parameters.  This results in an error
+#    in Drizzle.
+#
+
+# MINUTE() on a NULL should produce
+# a NULL.
+SELECT MINUTE(NULL);
+
+# 
+# Test improper argument list 
+#
+# 1 arg is required.
+--error 1064 
+# Wrong parameter count...but unfortunately produces 1064 Syntax Error due to limitations of 
+# the SQL parser, which considers MINUTE a keyword before being a function symbol
+SELECT MINUTE();
+--error 1064
+# Wrong parameter count...but unfortunately produces 1064 Syntax Error due to limitations of 
+# the SQL parser, which considers MINUTE a keyword before being a function symbol
+SELECT MINUTE(1, 0);
+
+# 
+# Test invalid dates passed to MINUTE
+# produce an error, not a NULL or anything
+# else...
+#
+--error 1686
+SELECT MINUTE("xxx");
+
+# 
+# Indy, bad dates!
+#
+# The following are all bad dates, with no possibility of interpreting
+# the values as TIME-only components.
+#
+--error 1686
+SELECT MINUTE("0000-00-00"); # No 0000-00-00 dates!...
+--error 1686
+SELECT MINUTE("0000-01-01"); # No zero year parts
+--error 1686
+SELECT MINUTE("0001-00-01"); # No zero month parts
+--error 1686
+SELECT MINUTE("0001-01-00"); # No zero day parts
+--error 1686
+SELECT MINUTE("2000-02-30"); # No Feb 30th!
+--error 1686
+SELECT MINUTE("1900-02-29"); # Not a leap MINUTE since not divisible evenly by 400...
+--error 1686
+SELECT MINUTE('1976-15-15'); # No 15th month!
+--error 1686
+SELECT MINUTE('23:59:70'); # No 70th second!
+--error 1686
+SELECT MINUTE('23:70:59'); # No 70th minute!
+--error 1686
+SELECT MINUTE('26:00:00'); # No 26th hour!
+
+# A good date, which cannot be interpreted as a TIME component.  Should return 0.
+SELECT MINUTE("2009-01-12");
+
+# A good date, which should output 0 since no TIME component - Test of 2 digit year conversion...
+SELECT MINUTE("70-12-31");
+
+# A good date in the common USA format, should output 0 since no TIME component
+SELECT MINUTE('07/31/2009');
+
+# A good datetime, should output 30
+SELECT MINUTE("2008-11-30 03:30:15");
+
+# A good datetime, should output 30
+SELECT MINUTE("2008-11-30T03:30:15");
+
+# A good datetime, should output 30
+SELECT MINUTE("20081130033015");
+
+# A good datetime, interpreted int->string, should output 30
+SELECT MINUTE(20081130033015);
+
+# A good time (according to MySQL, not Jay Pipes...), should output 11
+SELECT MINUTE(231115);
+
+# A good time (according to MySQL, not Jay Pipes...), should output 11
+SELECT MINUTE("231115");
+
+# A good time, should output 59
+SELECT MINUTE("23:59:59");
+
+# Now test field values of different types
+
+USE test;
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+CREATE TABLE t1 (
+  int_fld INT NOT NULL
+, date_fld DATE NOT NULL
+, datetime_fld DATETIME NOT NULL
+, timestamp_fld TIMESTAMP NOT NULL
+, char_fld CHAR(22) NOT NULL
+, varchar_fld VARCHAR(22) NOT NULL
+, text_fld TEXT NOT NULL
+, blob_fld BLOB NOT NULL
+);
+
+# Should all output 30 except first 2, which should output 0.
+INSERT INTO t1 VALUES (
+20071130
+, "2007-11-30"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30T16:30:19"
+);
+
+SELECT MINUTE(int_fld) FROM t1;
+SELECT MINUTE(date_fld) FROM t1;
+SELECT MINUTE(datetime_fld) FROM t1;
+SELECT MINUTE(timestamp_fld) FROM t1;
+SELECT MINUTE(char_fld) FROM t1;
+SELECT MINUTE(varchar_fld) FROM t1;
+SELECT MINUTE(text_fld) FROM t1;
+SELECT MINUTE(blob_fld) FROM t1;
+
+DROP TABLE t1;
+

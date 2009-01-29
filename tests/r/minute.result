@@ -1,0 +1,106 @@
+SELECT MINUTE(NULL);
+MINUTE(NULL)
+NULL
+SELECT MINUTE();
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
+SELECT MINUTE(1, 0);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ' 0)' at line 1
+SELECT MINUTE("xxx");
+ERROR HY000: Received an invalid datetime value 'xxx'.
+SELECT MINUTE("0000-00-00");
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
+SELECT MINUTE("0000-01-01");
+ERROR HY000: Received an invalid datetime value '0000-01-01'.
+SELECT MINUTE("0001-00-01");
+ERROR HY000: Received an invalid datetime value '0001-00-01'.
+SELECT MINUTE("0001-01-00");
+ERROR HY000: Received an invalid datetime value '0001-01-00'.
+SELECT MINUTE("2000-02-30");
+ERROR HY000: Received an invalid datetime value '2000-02-30'.
+SELECT MINUTE("1900-02-29");
+ERROR HY000: Received an invalid datetime value '1900-02-29'.
+SELECT MINUTE('1976-15-15');
+ERROR HY000: Received an invalid datetime value '1976-15-15'.
+SELECT MINUTE('23:59:70');
+ERROR HY000: Received an invalid datetime value '23:59:70'.
+SELECT MINUTE('23:70:59');
+ERROR HY000: Received an invalid datetime value '23:70:59'.
+SELECT MINUTE('26:00:00');
+ERROR HY000: Received an invalid datetime value '26:00:00'.
+SELECT MINUTE("2009-01-12");
+MINUTE("2009-01-12")
+0
+SELECT MINUTE("70-12-31");
+MINUTE("70-12-31")
+0
+SELECT MINUTE('07/31/2009');
+MINUTE('07/31/2009')
+0
+SELECT MINUTE("2008-11-30 03:30:15");
+MINUTE("2008-11-30 03:30:15")
+30
+SELECT MINUTE("2008-11-30T03:30:15");
+MINUTE("2008-11-30T03:30:15")
+30
+SELECT MINUTE("20081130033015");
+MINUTE("20081130033015")
+30
+SELECT MINUTE(20081130033015);
+MINUTE(20081130033015)
+30
+SELECT MINUTE(231115);
+MINUTE(231115)
+11
+SELECT MINUTE("231115");
+MINUTE("231115")
+11
+SELECT MINUTE("23:59:59");
+MINUTE("23:59:59")
+59
+USE test;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+int_fld INT NOT NULL
+, date_fld DATE NOT NULL
+, datetime_fld DATETIME NOT NULL
+, timestamp_fld TIMESTAMP NOT NULL
+, char_fld CHAR(22) NOT NULL
+, varchar_fld VARCHAR(22) NOT NULL
+, text_fld TEXT NOT NULL
+, blob_fld BLOB NOT NULL
+);
+INSERT INTO t1 VALUES (
+20071130
+, "2007-11-30"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30T16:30:19"
+);
+SELECT MINUTE(int_fld) FROM t1;
+MINUTE(int_fld)
+0
+SELECT MINUTE(date_fld) FROM t1;
+MINUTE(date_fld)
+0
+SELECT MINUTE(datetime_fld) FROM t1;
+MINUTE(datetime_fld)
+30
+SELECT MINUTE(timestamp_fld) FROM t1;
+MINUTE(timestamp_fld)
+30
+SELECT MINUTE(char_fld) FROM t1;
+MINUTE(char_fld)
+30
+SELECT MINUTE(varchar_fld) FROM t1;
+MINUTE(varchar_fld)
+30
+SELECT MINUTE(text_fld) FROM t1;
+MINUTE(text_fld)
+30
+SELECT MINUTE(blob_fld) FROM t1;
+MINUTE(blob_fld)
+30
+DROP TABLE t1;
