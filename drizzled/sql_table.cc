@@ -3008,14 +3008,28 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto err;
     }
   }
-  else if (my_copy(src_path, dst_path, MYF(MY_DONT_OVERWRITE_FILE)))
+  else
   {
-    if (my_errno == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0),db);
-    else
-      my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
-    pthread_mutex_unlock(&LOCK_open);
-    goto err;
+    int frmcopyr= my_copy(src_path, dst_path, MYF(MY_DONT_OVERWRITE_FILE));
+
+    string dfesrc(src_path);
+    string dfedst(dst_path);
+
+    dfesrc.replace(dfesrc.find(".frm"), 4, ".dfe" );
+    dfedst.replace(dfedst.find(".frm"), 4, ".dfe" );
+
+    int dfecopyr= my_copy(dfesrc.c_str(), dfedst.c_str(),
+			  MYF(MY_DONT_OVERWRITE_FILE));
+
+    if(frmcopyr || dfecopyr) // FIXME: should handle only one fail.
+    {
+      if (my_errno == ENOENT)
+	my_error(ER_BAD_DB_ERROR,MYF(0),db);
+      else
+	my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
+      pthread_mutex_unlock(&LOCK_open);
+      goto err;
+    }
   }
 
   /*
