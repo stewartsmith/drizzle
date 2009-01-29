@@ -873,11 +873,6 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
       packet->append(ha_row_type[(uint) create_info.row_type]);
     }
-    if (share->transactional != HA_CHOICE_UNDEF)
-    {
-      packet->append(STRING_WITH_LEN(" TRANSACTIONAL="));
-      packet->append(ha_choice_values[(uint) share->transactional], 1);
-    }
     if (table->s->key_block_size)
     {
       packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
@@ -2782,14 +2777,6 @@ static int get_schema_tables_record(Session *session, TableList *tables,
       ptr= int64_t10_to_str(share->block_size, ptr, 10);
     }
 
-    if (share->transactional != HA_CHOICE_UNDEF)
-    {
-      ptr+= sprintf(ptr, " TRANSACTIONAL=%s",
-                    (share->transactional == HA_CHOICE_YES ? "1" : "0"));
-    }
-    if (share->transactional != HA_CHOICE_UNDEF)
-      ptr+= sprintf(ptr, " transactional=%s",
-                    ha_choice_values[(uint) share->transactional]);
     table->field[19]->store(option_buff+1,
                             (ptr == option_buff ? 0 :
                              (uint) (ptr-option_buff)-1), cs);
