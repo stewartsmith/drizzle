@@ -17,6 +17,7 @@ typedef struct {
     const char *password;
 } auth_pam_userinfo;
 
+extern "C"
 static int auth_pam_talker(int num_msg,
 #ifdef __sun
                            struct pam_message **msg,

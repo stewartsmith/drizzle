@@ -17,4 +17,4 @@
 noinst_LTLIBRARIES= libsingle_thread.la
 libsingle_thread_la_SOURCES=	single_thread.cc
 libsingle_thread_la_LIBADD=
-libsingle_thread_la_CXXFLAGS=	${AM_CXXFLAGS} ${NO_SHADOW}
+libsingle_thread_la_CXXFLAGS=	${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}

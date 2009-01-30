@@ -475,7 +475,7 @@ extern void print_defaults(const char *conf_file, const char **groups);
 extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
-extern uint32_t my_set_max_open_files(uint32_t files);
+extern uint64_t my_set_max_open_files(uint64_t files);
 void my_free_open_file_info(void);
 
 extern uint64_t my_getsystime(void);

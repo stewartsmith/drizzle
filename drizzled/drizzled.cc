@@ -465,7 +465,7 @@ uint32_t connection_count= 0;
 
 /* Function declarations */
 
-pthread_handler_t signal_hand(void *arg);
+extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
@@ -474,8 +474,8 @@ static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(void);
 void handle_connections_sockets();
-pthread_handler_t kill_server_thread(void *arg);
-pthread_handler_t handle_slave(void *arg);
+extern "C" pthread_handler_t kill_server_thread(void *arg);
+extern "C" pthread_handler_t handle_slave(void *arg);
 static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib);
 static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
                                    const char *option);
@@ -488,7 +488,7 @@ static void clean_up_mutexes(void);
 static void wait_for_signal_thread_to_end(void);
 static void create_pid_file();
 static void drizzled_exit(int exit_code) __attribute__((noreturn));
-bool safe_read_error_impl(NET *net);
+extern "C" bool safe_read_error_impl(NET *net);
 
 /****************************************************************************
 ** Code to end drizzled
@@ -1597,8 +1597,8 @@ pthread_handler_t signal_hand(void *)
 #endif
       break;					/* purecov: tested */
     }
+  return 0;
   }
-  return(0);					/* purecov: deadcode */
 }
 
 static void check_data_home(const char *)
@@ -1836,7 +1836,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   /* connections and databases needs lots of files */
   {
-    uint32_t files, wanted_files, max_open_files;
+    uint64_t files, wanted_files, max_open_files;
 
     /* MyISAM requires two file handles per table. */
     wanted_files= 10+max_connections+table_cache_size*2;
@@ -3381,7 +3381,8 @@ static void drizzle_init_variables(void)
   abort_loop= select_thread_in_use= signal_thread_in_use= 0;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
-  max_used_connections= slow_launch_threads = 0;
+  max_used_connections= 0;
+  slow_launch_threads= 0;
   drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;
   my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));

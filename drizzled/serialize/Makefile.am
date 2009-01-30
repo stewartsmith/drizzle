@@ -15,7 +15,7 @@
 
 LDADD= libserialize.la ${LTLIBPROTOBUF} ${LTLIBUUID}
 
-AM_CXXFLAGS=${GLOBAL_CXXFLAGS} ${PROTOSKIP_WARNINGS}
+AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
 
 TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
 TESTS = check_length.sh

@@ -331,13 +331,13 @@ bool in_unix_epoch_range(uint32_t year
  * @param Pointer to a uint32_t to hold the resulting year, which 
  *        may be incremented or decremented depending on flags
  */
-uint32_t week_number_from_gregorian_date(uint32_t year
-                                       , uint32_t month
-                                       , uint32_t day
-                                       , bool sunday_is_first_day_of_week
-                                       , bool week_range_is_ordinal
-                                       , bool use_iso_8601_1988
-                                       , uint32_t *year_out);
+int64_t week_number_from_gregorian_date(uint32_t year
+                                        , uint32_t month
+                                        , uint32_t day
+                                        , bool sunday_is_first_day_of_week
+                                        , bool week_range_is_ordinal
+                                        , bool use_iso_8601_1988
+                                        , uint32_t *year_out);
 
 #ifdef __cplusplus
 }
