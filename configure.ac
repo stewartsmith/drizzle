@@ -20,6 +20,7 @@ CFLAGS=${SAVE_CFLAGS}
 CXXFLAGS=${SAVE_CXXFLAGS}
 
 AM_INIT_AUTOMAKE(nostdinc subdir-objects -Wall -Werror)
+
 if test "x${enable_dependency_tracking}" = "x"
 then
   enable_dependency_tracking=yes
@@ -45,8 +46,6 @@ then
 fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
-# We need an ANSI C compiler
-AM_PROG_CC_STDC
 
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
@@ -62,11 +61,7 @@ then
   C99_SUPPORT_HACK="-xc99"
 fi
 ])
-
-
-# We need an assembler, too
-AM_PROG_AS
-CCASFLAGS="$CCASFLAGS $ASFLAGS"
+AC_PROG_GCC_TRADITIONAL
 
 
 # Set all version vars based on $VERSION. How do we do this more elegant ?
@@ -140,10 +135,6 @@ case $MACHINE_TYPE in
   i?86) BASE_MACHINE_TYPE=i386 ;;
 esac
 
-AM_SANITY_CHECK
-# This is needed is SUBDIRS is set
-AC_PROG_MAKE_SET
-
 
 case "$target_os" in
   *linux*)
@@ -165,17 +156,6 @@ case "$target_os" in
     ;;
 esac
 
-dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
-dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
-if test "x${CFLAGS}" = "x-g -O2"
-then
-  CFLAGS=
-fi
-if test "x${CXXFLAGS}" = "x-g -O2"
-then
-  CXXFLAGS=
-fi
-
 DRIZZLE_CHECK_C_VERSION
 DRIZZLE_CHECK_CXX_VERSION
 
@@ -183,13 +163,6 @@ AC_SYS_LARGEFILE
 
 AC_PROG_AWK
 
-if test "$ac_cv_c_compiler_gnu" = "yes"
-then
-  AS="$CC -c"
-  AC_SUBST(AS)
-else
-  AC_PATH_PROG(AS, as, as)
-fi
 
 AC_PATH_PROG(GPERF, gperf, gperf)
 if test "$ac_cv_prog_gperf" = "no"
@@ -1118,7 +1091,6 @@ fi
 #--------------------------------------------------------------------
 
 DRIZZLE_CHECK_MAX_INDEXES
-DRIZZLE_CHECK_VIO
 
 #--------------------------------------------------------------------
 # Declare our plugin modules

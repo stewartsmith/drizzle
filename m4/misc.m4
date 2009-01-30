@@ -339,49 +339,6 @@ fi
 AC_MSG_RESULT($ac_cv_conv_longlong_to_float)
 ])
 
-AC_DEFUN([DRIZZLE_CHECK_VIO], [
-dnl
-dnl we always use vio: no need for special defines 
-dnl
-  AC_DEFINE([HAVE_VIO_READ_BUFF], [1],
-            [Define to enable buffered read. This works only if syscalls
-            read/recv return as soon as there is some data in the kernel
-            buffer, no matter how big the given buffer is.])
-])
-
-# Local version of _AC_PROG_CXX_EXIT_DECLARATION that does not
-# include #stdlib.h as default as this breaks things on Solaris
-# (Conflicts with pthreads and big file handling)
-
-m4_define([_AC_PROG_CXX_EXIT_DECLARATION],
-[for ac_declaration in \
-   ''\
-   'extern "C" void std::exit (int) throw (); using std::exit;' \
-   'extern "C" void std::exit (int); using std::exit;' \
-   'extern "C" void exit (int) throw ();' \
-   'extern "C" void exit (int);' \
-   'void exit (int);' \
-   '#include <stdlib.h>'
-do
-  _AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$ac_declaration
-@%:@include <stdlib.h>],
-                                      [exit (42);])],
-                     [],
-                     [continue])
-  _AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$ac_declaration],
-                                      [exit (42);])],
-                     [break])
-done
-rm -f conftest*
-if test -n "$ac_declaration"; then
-  echo '#ifdef __cplusplus' >>confdefs.h
-  echo $ac_declaration      >>confdefs.h
-  echo '#endif'             >>confdefs.h
-fi
-])# _AC_PROG_CXX_EXIT_DECLARATION
-
-dnl ---------------------------------------------------------------------------
-
 
 dnl ---------------------------------------------------------------------------
 dnl Macro: DRIZZLE_CHECK_MAX_INDEXES

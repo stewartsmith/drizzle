@@ -76,6 +76,8 @@ static int sort_record_index(MI_SORT_PARAM *sort_param, MI_INFO *info,
                              MI_KEYDEF *keyinfo,
 			     my_off_t page,unsigned char *buff,uint32_t sortkey,
 			     File new_file, bool update_index);
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument);
 
 MI_CHECK check_param;
 
@@ -444,11 +446,7 @@ TYPELIB myisam_stats_method_typelib= {
 
 	 /* Read options */
 
-extern "C"
-static bool
-get_one_option(int optid,
-	       const struct my_option *,
-	       char *argument)
+bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   switch (optid) {
   case 'a':

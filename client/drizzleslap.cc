@@ -99,6 +99,9 @@ using namespace std;
 static char *shared_memory_base_name=0;
 #endif
 
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument);
+
 /* Global Thread counter */
 uint thread_counter;
 pthread_mutex_t counter_mutex;
@@ -731,9 +734,7 @@ static void usage(void)
   my_print_help(my_long_options);
 }
 
-extern "C"
-static bool
-get_one_option(int optid, const struct my_option *, char *argument)
+bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -1285,6 +1286,7 @@ get_options(int *argc,char ***argv)
   struct stat sbuf;
   option_string *sql_type;
   unsigned int sql_type_count= 0;
+  ssize_t bytes_read= 0;
 
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
@@ -1555,7 +1557,7 @@ get_options(int *argc,char ***argv)
         fprintf(stderr,"%s: Could not open create file\n", my_progname);
         exit(1);
       }
-      if (sbuf.st_size + 1 > SIZE_MAX)
+      if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
       {
         fprintf(stderr, "Request for more memory than architecture supports\n");
         exit(1);
@@ -1567,9 +1569,14 @@ get_options(int *argc,char ***argv)
         exit(1);
       }
       memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
-      read(data_file, (unsigned char*) tmp_string, (size_t)sbuf.st_size);
+      bytes_read= read(data_file, (unsigned char*) tmp_string,
+                       (size_t)sbuf.st_size);
       tmp_string[sbuf.st_size]= '\0';
       close(data_file);
+      if (bytes_read != sbuf.st_size)
+      {
+        fprintf(stderr, "Problem reading file: read less bytes than requested\n");
+      }
       parse_delimiter(tmp_string, &create_statements, delimiter[0]);
       free(tmp_string);
     }
@@ -1607,7 +1614,7 @@ get_options(int *argc,char ***argv)
         fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
         exit(1);
       }
-      if (sbuf.st_size + 1 > SIZE_MAX)
+      if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
       {
         fprintf(stderr, "Request for more memory than architecture supports\n");
         exit(1);
@@ -1619,9 +1626,14 @@ get_options(int *argc,char ***argv)
         exit(1);
       }
       memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
-      read(data_file, (unsigned char*) tmp_string, (size_t)sbuf.st_size);
+      bytes_read= read(data_file, (unsigned char*) tmp_string,
+                       (size_t)sbuf.st_size);
       tmp_string[sbuf.st_size]= '\0';
       close(data_file);
+      if (bytes_read != sbuf.st_size)
+      {
+        fprintf(stderr, "Problem reading file: read less bytes than requested\n");
+      }
       if (user_supplied_query)
         actual_queries= parse_delimiter(tmp_string, &query_statements[0],
                                         delimiter[0]);
@@ -1649,7 +1661,7 @@ get_options(int *argc,char ***argv)
       fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
       exit(1);
     }
-    if (sbuf.st_size + 1 > SIZE_MAX)
+    if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
     {
       fprintf(stderr, "Request for more memory than architecture supports\n");
       exit(1);
@@ -1661,9 +1673,14 @@ get_options(int *argc,char ***argv)
       exit(1);
     }
     memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
-    read(data_file, (unsigned char*) tmp_string, (size_t)sbuf.st_size);
+    bytes_read= read(data_file, (unsigned char*) tmp_string,
+                     (size_t)sbuf.st_size);
     tmp_string[sbuf.st_size]= '\0';
     close(data_file);
+    if (bytes_read != sbuf.st_size)
+    {
+      fprintf(stderr, "Problem reading file: read less bytes than requested\n");
+    }
     if (user_supplied_pre_statements)
       (void)parse_delimiter(tmp_string, &pre_statements,
                             delimiter[0]);
@@ -1692,7 +1709,7 @@ get_options(int *argc,char ***argv)
       exit(1);
     }
 
-    if (sbuf.st_size + 1 > SIZE_MAX)
+    if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
     {
       fprintf(stderr, "Request for more memory than architecture supports\n");
       exit(1);
@@ -1705,10 +1722,14 @@ get_options(int *argc,char ***argv)
     }
     memset(tmp_string, 0, (size_t)(sbuf.st_size+1));
 
-    read(data_file, (unsigned char*) tmp_string,
-         (size_t)(sbuf.st_size));
+    bytes_read= read(data_file, (unsigned char*) tmp_string,
+                     (size_t)(sbuf.st_size));
     tmp_string[sbuf.st_size]= '\0';
     close(data_file);
+    if (bytes_read != sbuf.st_size)
+    {
+      fprintf(stderr, "Problem reading file: read less bytes than requested\n");
+    }
     if (user_supplied_post_statements)
       (void)parse_delimiter(tmp_string, &post_statements,
                             delimiter[0]);

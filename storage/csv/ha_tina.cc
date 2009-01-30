@@ -1162,7 +1162,7 @@ int ha_tina::rnd_end()
     {
       bool in_hole= get_write_pos(&write_end, ptr);
       off_t write_length= write_end - write_begin;
-      if (write_length > SIZE_MAX)
+      if ((uint64_t)write_length > SIZE_MAX)
       {
         goto error;
       }
@@ -1353,7 +1353,7 @@ int ha_tina::repair(Session* session, HA_CHECK_OPT *)
     write_end= std::min(file_buff->end(), current_position);
 
     off_t write_length= write_end - write_begin;
-    if (write_length > SIZE_MAX)
+    if ((uint64_t)write_length > SIZE_MAX)
     {
       return -1;
     }

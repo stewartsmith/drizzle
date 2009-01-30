@@ -33,9 +33,6 @@
 static void vio_init(Vio* vio, enum enum_vio_type type,
                      int sd, uint32_t flags)
 {
-#ifndef HAVE_VIO_READ_BUFF
-  flags&= ~VIO_BUFFERED_READ;
-#endif
   memset(vio, 0, sizeof(*vio));
   vio->type	= type;
   vio->sd	= sd;

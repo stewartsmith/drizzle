@@ -577,7 +577,7 @@ int ha_archive::create(const char *name, Table *table_arg,
   {
     if (fstat(frm_file, &file_stat))
     {
-      if (file_stat.st_size > SIZE_MAX)
+      if ((uint64_t)file_stat.st_size > SIZE_MAX)
       {
         error= ENOMEM;
         goto error2;
