@@ -2688,9 +2688,9 @@ Table::table_check_intact(const uint32_t table_f_count,
     sql_type.length(0);
     if (i < s->fields)
     {
-      Field *field= this->field[i];
+      Field *cur_field= this->field[i];
 
-      if (strncmp(field->field_name, table_def->name.str,
+      if (strncmp(cur_field->field_name, table_def->name.str,
                   table_def->name.length))
       {
         /*
@@ -2701,9 +2701,9 @@ Table::table_check_intact(const uint32_t table_f_count,
         errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d, found '%s'."),
                         s->db.str, alias, table_def->name.str, i,
-                        field->field_name);
+                        cur_field->field_name);
       }
-      field->sql_type(sql_type);
+      cur_field->sql_type(sql_type);
       /*
         Generally, if column types don't match, then something is
         wrong.
@@ -2724,41 +2724,48 @@ Table::table_check_intact(const uint32_t table_f_count,
       if (strncmp(sql_type.c_ptr_safe(), table_def->type.str,
                   table_def->type.length - 1))
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d to have type "
-                        "%s, found type %s."), s->db.str, alias,
-                        table_def->name.str, i, table_def->type.str,
-                        sql_type.c_ptr_safe());
+                        "%s, found type %s."),
+                      s->db.str, alias,
+                      table_def->name.str, i, table_def->type.str,
+                      sql_type.c_ptr_safe());
         error= true;
       }
-      else if (table_def->cset.str && !field->has_charset())
+      else if (table_def->cset.str && !cur_field->has_charset())
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but the type has no "
-                        "character set."), s->db.str, alias,
-                        table_def->name.str, i, table_def->cset.str);
+                        "character set."),
+                      s->db.str, alias,
+                      table_def->name.str, i, table_def->cset.str);
         error= true;
       }
       else if (table_def->cset.str &&
-               strcmp(field->charset()->csname, table_def->cset.str))
+               strcmp(cur_field->charset()->csname, table_def->cset.str))
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but found "
-                        "character set '%s'."), s->db.str, alias,
-                        table_def->name.str, i, table_def->cset.str,
-                        field->charset()->csname);
+                        "character set '%s'."),
+                      s->db.str, alias,
+                      table_def->name.str, i, table_def->cset.str,
+                      cur_field->charset()->csname);
         error= true;
       }
     }
     else
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Incorrect definition of table %s.%s: "
                       "expected column '%s' at position %d to have type %s "
                       " but the column is not found."),
-                      s->db.str, alias,
-                      table_def->name.str, i, table_def->type.str);
+                    s->db.str, alias,
+                    table_def->name.str, i, table_def->type.str);
       error= true;
     }
   }
@@ -4575,17 +4582,18 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
     }
     for (uint32_t i=0; i < keyinfo->key_parts ; i++,seg++)
     {
-      Field *field=keyinfo->key_part[i].field;
+      Field *key_field=keyinfo->key_part[i].field;
       seg->flag=     0;
-      seg->language= field->charset()->number;
+      seg->language= key_field->charset()->number;
       seg->length=   keyinfo->key_part[i].length;
       seg->start=    keyinfo->key_part[i].offset;
-      if (field->flags & BLOB_FLAG)
+      if (key_field->flags & BLOB_FLAG)
       {
 	seg->type=
 	((keyinfo->key_part[i].key_type & FIELDFLAG_BINARY) ?
 	 HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2);
-	seg->bit_start= (uint8_t)(field->pack_length() - share->blob_ptr_size);
+	seg->bit_start= (uint8_t)(key_field->pack_length()
+                                  - share->blob_ptr_size);
 	seg->flag= HA_BLOB_PART;
 	seg->length=0;			// Whole blob in unique constraint
       }
@@ -4593,10 +4601,10 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       {
 	seg->type= keyinfo->key_part[i].type;
       }
-      if (!(field->flags & NOT_NULL_FLAG))
+      if (!(key_field->flags & NOT_NULL_FLAG))
       {
-	seg->null_bit= field->null_bit;
-	seg->null_pos= (uint) (field->null_ptr - (unsigned char*) record[0]);
+	seg->null_bit= key_field->null_bit;
+	seg->null_pos= (uint) (key_field->null_ptr - (unsigned char*) record[0]);
 	/*
 	  We are using a GROUP BY on something that contains NULL
 	  In this case we have to tell MyISAM that two NULL should

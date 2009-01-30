@@ -523,15 +523,15 @@ net_real_write(NET *net, const unsigned char *packet, size_t len)
   if (net->write_timeout)
   {
     struct timespec waittime;
-    socklen_t length;
+    socklen_t time_len;
 
     waittime.tv_sec= net->write_timeout;
     waittime.tv_nsec= 0;
 
     memset(&backtime, 0, sizeof(struct timespec));
-    length= sizeof(struct timespec);
+    time_len= sizeof(struct timespec);
     error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, &length);
+                      &backtime, &time_len);
     if (error != 0)
     {
       perror("getsockopt");
@@ -642,15 +642,15 @@ my_real_read(NET *net, size_t *complen)
   if (net->read_timeout)
   {
     struct timespec waittime;
-    socklen_t length;
+    socklen_t time_len;
 
     waittime.tv_sec= net->read_timeout;
     waittime.tv_nsec= 0;
 
     memset(&backtime, 0, sizeof(struct timespec));
-    length= sizeof(struct timespec);
+    time_len= sizeof(struct timespec);
     error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, &length);
+                      &backtime, &time_len);
     if (error != 0)
     {
       perror("getsockopt");

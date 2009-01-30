@@ -2574,9 +2574,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       {
         ha_autocommit_or_rollback(session, 1);
         close_thread_tables(session);
-        tmp_disable_binlog(session); // binlogging is done by caller if wanted
         result_code= mysql_recreate_table(session, table);
-        reenable_binlog(session);
         /*
           mysql_recreate_table() can push OK or ERROR.
           Clear 'OK' status. If there is an error, keep it:
@@ -2677,9 +2675,7 @@ send_result_message:
       TableList *save_next_local= table->next_local,
                  *save_next_global= table->next_global;
       table->next_local= table->next_global= 0;
-      tmp_disable_binlog(session); // binlogging is done by caller if wanted
       result_code= mysql_recreate_table(session, table);
-      reenable_binlog(session);
       /*
         mysql_recreate_table() can push OK or ERROR.
         Clear 'OK' status. If there is an error, keep it:
@@ -3286,7 +3282,7 @@ bool
 compare_tables(Session *session,
                Table *table,
                Alter_info *alter_info,
-                           HA_CREATE_INFO *create_info,
+               HA_CREATE_INFO *create_info,
                uint32_t order_num,
                HA_ALTER_FLAGS *alter_flags,
                HA_ALTER_INFO *ha_alter_info,
@@ -3316,7 +3312,7 @@ compare_tables(Session *session,
       destroy the copy.
     */
     Alter_info tmp_alter_info(*alter_info, session->mem_root);
-    Session *session= table->in_use;
+    session= table->in_use;
     uint32_t db_options= 0; /* not used */
     /* Create the prepared information. */
     if (mysql_prepare_create_table(session, create_info,
@@ -3732,10 +3728,8 @@ int create_temporary_table(Session *session,
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
   */
-  tmp_disable_binlog(session);
   error= mysql_create_table(session, new_db, tmp_name,
                             create_info, alter_info, 1, 0);
-  reenable_binlog(session);
 
   return(error);
 }
@@ -4833,12 +4827,12 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   }
   else
   {
-    char path[FN_REFLEN];
+    char tmp_path[FN_REFLEN];
     /* table is a normal table: Create temporary table in same directory */
-    build_table_filename(path, sizeof(path), new_db, tmp_name, "",
+    build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, "",
                          FN_IS_TMP);
     /* Open our intermediate table */
-    new_table=open_temporary_table(session, path, new_db, tmp_name, 0, OTM_OPEN);
+    new_table=open_temporary_table(session, tmp_path, new_db, tmp_name, 0, OTM_OPEN);
   }
   if (!new_table)
     goto err1;
@@ -5000,18 +4994,19 @@ end_online:
       have to open the new table.  If not, we get a problem on server
       shutdown. But we do not need to attach MERGE children.
     */
-    char path[FN_REFLEN];
+    char table_path[FN_REFLEN];
     Table *t_table;
-    build_table_filename(path, sizeof(path), new_db, table_name, "", 0);
-    t_table= open_temporary_table(session, path, new_db, tmp_name, false, OTM_OPEN);
+    build_table_filename(table_path, sizeof(table_path), new_db, table_name, "", 0);
+    t_table= open_temporary_table(session, table_path, new_db, tmp_name, false, OTM_OPEN);
     if (t_table)
     {
       intern_close_table(t_table);
       free(t_table);
     }
     else
-      errmsg_printf(ERRMSG_LVL_WARN, _("Could not open table %s.%s after rename\n"),
-                        new_db,table_name);
+      errmsg_printf(ERRMSG_LVL_WARN,
+                    _("Could not open table %s.%s after rename\n"),
+                    new_db,table_name);
     ha_flush_logs(old_db_type);
   }
   table_list->table=0;				// For query cache

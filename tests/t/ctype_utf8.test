@@ -31,7 +31,7 @@ select length(0xD0B1), bit_length(0xD0B1), char_length(0xD0B1);
 select 'a' like 'a';
 select 'A' like 'a';
 select 'A' like 'a' collate utf8_bin;
-select 0xD0B0D0B1D0B2 like concat(_utf8'%',0xD0B1,'%');
+select 0xD0B0D0B1D0B2 like concat('%',0xD0B1,'%');
 
 # Bug #6040: can't retrieve records with umlaut
 # characters in case insensitive manner.
@@ -68,7 +68,7 @@ DROP TABLE t1;
 #
 # Fix this, it should return 1:
 #
-#select 0xD0B0D0B1D0B2 like concat(_utf8'%',0xD091,'%');
+#select 0xD0B0D0B1D0B2 like concat('%',0xD091,'%');
 #
 
 #
@@ -469,7 +469,7 @@ drop table t1;
 create table t1 (
   a enum('☃','☄','킱') not null default '킱'
 );
-create table t2 select concat(a,_utf8'') as a from t1;
+create table t2 select concat(a,'') as a from t1;
 show create table t2;
 drop table t2;
 drop table t1;
@@ -500,8 +500,8 @@ create table t1 (a varchar(10));
 insert into t1 values ('test');
 select ifnull(a,'') from t1;
 drop table t1;
-select repeat(_utf8'+',3) as h union select NULL;
-select ifnull(NULL, _utf8'string');
+select repeat('+',3) as h union select NULL;
+select ifnull(NULL, 'string');
 
 #
 # Bug#9509 Optimizer: wrong result after AND with comparisons
@@ -658,13 +658,13 @@ DROP TABLE t2;
 DROP TABLE t1;
 
 #
-# Bug#17313: N'xxx' and _utf8'xxx' are not equivalent
+# Bug#17313: N'xxx' and 'xxx' are not equivalent
 #
 CREATE TABLE t1 (item varchar(255));
 INSERT INTO t1 VALUES ('\\');
-INSERT INTO t1 VALUES (_utf8'\\');
+INSERT INTO t1 VALUES ('\\');
 INSERT INTO t1 VALUES ('Cote d\'Ivoire');
-INSERT INTO t1 VALUES (_utf8'Cote d\'Ivoire');
+INSERT INTO t1 VALUES ('Cote d\'Ivoire');
 SELECT item FROM t1 ORDER BY item;
 DROP TABLE t1;
 
@@ -929,7 +929,7 @@ DROP TABLE t1, t2;
 # forces collation to the binary charset
 #
 
-SELECT '½1234567890' UNION SELECT _binary '1';
+SELECT '½1234567890' UNION SELECT '1';
 SELECT '½1234567890' UNION SELECT 1;
 
 SELECT '1' UNION SELECT '킱1234567890';

@@ -249,8 +249,8 @@ int size_hash_map= 0;
 /* Ok. I honestly don't know why this has no problem and
  * array_elements macro doesn't. But it works.
  */
-static inline uint32_t array_elements_func(SYMBOL * symbols) {
-  return sizeof(symbols)/sizeof(symbols[0]);
+static inline uint32_t array_elements_func(SYMBOL *symbol_arr) {
+  return sizeof(symbol_arr)/sizeof(symbol_arr[0]);
 }
 
 void add_struct_to_map(hash_lex_struct *st)

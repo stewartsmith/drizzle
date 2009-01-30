@@ -601,7 +601,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL,
 };
 
-mysql_declare_plugin(pool_of_threads)
+drizzle_declare_plugin(pool_of_threads)
 {
   DRIZZLE_SCHEDULING_PLUGIN,
   "pool_of_threads",
@@ -615,4 +615,4 @@ mysql_declare_plugin(pool_of_threads)
   system_variables,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

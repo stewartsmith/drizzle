@@ -674,9 +674,9 @@ protected:
   TMP_TABLE_PARAM *tmp_param;
 
 public:
-  subselect_hash_sj_engine(Session *session, Item_subselect *in_predicate,
+  subselect_hash_sj_engine(Session *session_in, Item_subselect *in_predicate,
                                subselect_single_select_engine *old_engine)
-    :subselect_uniquesubquery_engine(session, NULL, in_predicate, NULL),
+    :subselect_uniquesubquery_engine(session_in, NULL, in_predicate, NULL),
     is_materialized(false), materialize_engine(old_engine),
     materialize_join(NULL), tmp_param(NULL)
   {}

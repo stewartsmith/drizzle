@@ -1393,7 +1393,7 @@ CREATE TABLE t1 (
   c2 VARCHAR(1)
 ) ENGINE=MyISAM;
 # Using Tamil Letter A, Unicode U+0B85
-INSERT INTO t1 VALUES(REPEAT(_utf8 x'e0ae85',43), 'b');
+INSERT INTO t1 VALUES(REPEAT( x'e0ae85',43), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
 REPAIR TABLE t1;
@@ -1409,7 +1409,7 @@ CREATE TABLE t1 (
   c2 VARCHAR(1)
 ) ENGINE=MyISAM;
 # Using Tamil Letter A, Unicode U+0B85
-INSERT INTO t1 VALUES(REPEAT(_utf8 x'e0ae85',43), 'b');
+INSERT INTO t1 VALUES(REPEAT( x'e0ae85',43), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1 EXTENDED;
 REPAIR TABLE t1 EXTENDED;
@@ -1425,7 +1425,7 @@ CREATE TABLE t1 (
   c2 VARCHAR(1)
 ) ENGINE=MyISAM;
 # Using Tamil Letter A, Unicode U+0B85
-INSERT INTO t1 VALUES(REPEAT(_utf8 x'e0ae85',43), 'b');
+INSERT INTO t1 VALUES(REPEAT( x'e0ae85',43), 'b');
 # Insert more rows and delete one in the middle to force optimize.
 INSERT INTO t1 VALUES('b', 'b');
 INSERT INTO t1 VALUES('c', 'b');
@@ -1460,7 +1460,7 @@ while ($count)
 #
 # Change most of the rows into long character values with > 42 characters.
 # Using Tamil Letter A, Unicode U+0B85
-UPDATE t1 SET c1=REPEAT(_utf8 x'e0ae85',43) LIMIT 90;
+UPDATE t1 SET c1=REPEAT( x'e0ae85',43) LIMIT 90;
 SELECT COUNT(*) FROM t1;
 ALTER TABLE t1 ENGINE=MyISAM;
 #

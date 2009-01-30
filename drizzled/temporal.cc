@@ -34,10 +34,11 @@
  * their single parameter.
  */
 
+#include "drizzled/global.h"
+
 #include <vector>
 #include <string.h>
 
-#include "drizzled/global.h"
 #include "mystrings/m_ctype.h"
 #include "drizzled/my_decimal.h"
 #include "drizzled/temporal.h"

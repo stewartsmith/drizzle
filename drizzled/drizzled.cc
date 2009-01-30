@@ -1056,7 +1056,6 @@ static void network_init(void)
 
     /* Add options for our listening socket */
     {
-      int error;
       struct linger ling = {0, 0};
       int flags =1;
 
@@ -3405,7 +3404,7 @@ static void drizzle_init_variables(void)
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
   drizzle_data_home= drizzle_real_data_home;
-  session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG | OPTION_SQL_NOTES);
+  session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;

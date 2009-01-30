@@ -2194,9 +2194,11 @@ static void read_block(KEY_CACHE *keycache,
 unsigned char *key_cache_read(KEY_CACHE *keycache,
                       File file, my_off_t filepos, int level,
                       unsigned char *buff, uint32_t length,
-                      uint32_t block_length __attribute__((unused)),
-                      int return_buffer __attribute__((unused)))
+                      uint32_t block_length,
+                      int return_buffer)
 {
+  (void)block_length;
+  (void)return_buffer;
   bool locked_and_incremented= false;
   int error=0;
   unsigned char *start= buff;
@@ -2620,9 +2622,10 @@ int key_cache_insert(KEY_CACHE *keycache,
 int key_cache_write(KEY_CACHE *keycache,
                     File file, my_off_t filepos, int level,
                     unsigned char *buff, uint32_t length,
-                    uint32_t block_length  __attribute__((unused)),
+                    uint32_t block_length,
                     int dont_write)
 {
+  (void)block_length;
   bool locked_and_incremented= false;
   int error=0;
 
@@ -3183,6 +3186,7 @@ static int flush_key_blocks_int(KEY_CACHE *keycache,
     BLOCK_LINK *first_in_switch= NULL;
     BLOCK_LINK *last_in_flush;
     BLOCK_LINK *last_for_update;
+    BLOCK_LINK *last_in_switch;
     BLOCK_LINK *block, *next;
 
     if (type != FLUSH_IGNORE_CHANGED)
@@ -3424,8 +3428,8 @@ restart:
 
     if (! (type == FLUSH_KEEP || type == FLUSH_FORCE_WRITE))
     {
-      BLOCK_LINK *last_for_update= NULL;
-      BLOCK_LINK *last_in_switch= NULL;
+      last_for_update= NULL;
+      last_in_switch= NULL;
       uint32_t total_found= 0;
       uint32_t found;
 
@@ -3748,9 +3752,9 @@ static int flush_all_key_blocks(KEY_CACHE *keycache)
     0 on success (always because it can't fail)
 */
 
-int reset_key_cache_counters(const char *name __attribute__((unused)),
-                             KEY_CACHE *key_cache)
+int reset_key_cache_counters(const char *name, KEY_CACHE *key_cache)
 {
+  (void)name;
   if (!key_cache->key_cache_inited)
   {
     return(0);

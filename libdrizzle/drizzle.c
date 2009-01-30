@@ -201,9 +201,10 @@ DRIZZLE *
 drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
                 const char *passwd, const char *db,
                 uint32_t port,
-                const char * unix_port __attribute__((__unused__)),
+                const char * unix_port,
                 uint32_t client_flag)
 {
+  (void)unix_port;
   char          buff[NAME_LEN+USERNAME_LENGTH+100];
   char          *end,*host_info=NULL;
   uint32_t         pkt_length;

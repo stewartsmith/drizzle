@@ -1633,14 +1633,14 @@ int ha_myisam::create(const char *name, register Table *table_arg,
 		      HA_CREATE_INFO *ha_create_info)
 {
   int error;
-  uint32_t create_flags= 0, records;
+  uint32_t create_flags= 0, create_records;
   char buff[FN_REFLEN];
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo;
   MI_CREATE_INFO create_info;
   TABLE_SHARE *share= table_arg->s;
   uint32_t options= share->db_options_in_use;
-  if ((error= table2myisam(table_arg, &keydef, &recinfo, &records)))
+  if ((error= table2myisam(table_arg, &keydef, &recinfo, &create_records)))
     return(error); /* purecov: inspected */
   memset(&create_info, 0, sizeof(create_info));
   create_info.max_rows= share->max_rows;
@@ -1670,7 +1670,7 @@ int ha_myisam::create(const char *name, register Table *table_arg,
   error= mi_create(fn_format(buff, name, "", "",
                              MY_UNPACK_FILENAME|MY_APPEND_EXT),
                    share->keys, keydef,
-                   records, recinfo,
+                   create_records, recinfo,
                    0, (MI_UNIQUEDEF*) 0,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
@@ -1771,21 +1771,22 @@ uint32_t ha_myisam::checksum() const
 }
 
 
-bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *info,
+bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *create_info,
 					   uint32_t table_changes)
 {
   uint32_t options= table->s->db_options_in_use;
 
-  if (info->auto_increment_value != stats.auto_increment_value ||
-      info->data_file_name != data_file_name ||
-      info->index_file_name != index_file_name ||
+  if (create_info->auto_increment_value != stats.auto_increment_value ||
+      create_info->data_file_name != data_file_name ||
+      create_info->index_file_name != index_file_name ||
       table_changes == IS_EQUAL_NO ||
       table_changes & IS_EQUAL_PACK_LENGTH) // Not implemented yet
     return COMPATIBLE_DATA_NO;
 
   if ((options & (HA_OPTION_PACK_RECORD | HA_OPTION_CHECKSUM |
 		  HA_OPTION_DELAY_KEY_WRITE)) !=
-      (info->table_options & (HA_OPTION_PACK_RECORD | HA_OPTION_CHECKSUM |
+      (create_info->table_options & (HA_OPTION_PACK_RECORD |
+                                     HA_OPTION_CHECKSUM |
 			      HA_OPTION_DELAY_KEY_WRITE)))
     return COMPATIBLE_DATA_NO;
   return COMPATIBLE_DATA_YES;
@@ -1800,8 +1801,6 @@ int myisam_deinit(void *)
 
 static int myisam_init(void *p)
 {
-  handlerton *myisam_hton;
-
   myisam_hton= (handlerton *)p;
   myisam_hton->state= SHOW_OPTION_YES;
   myisam_hton->create= myisam_create_handler;
@@ -1904,7 +1903,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 };
 
 
-mysql_declare_plugin(myisam)
+drizzle_declare_plugin(myisam)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MyISAM",
@@ -1918,4 +1917,4 @@ mysql_declare_plugin(myisam)
   system_variables,           /* system variables */
   NULL                        /* config options                  */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

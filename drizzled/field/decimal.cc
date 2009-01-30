@@ -368,15 +368,15 @@ int Field_new_decimal::compatible_field_size(uint32_t field_metadata)
 }
 
 
-uint32_t Field_new_decimal::is_equal(Create_field *new_field)
+uint32_t Field_new_decimal::is_equal(Create_field *new_field_ptr)
 {
-  return ((new_field->sql_type == real_type()) &&
-          ((new_field->flags & UNSIGNED_FLAG) ==
-           (uint) (flags & UNSIGNED_FLAG)) &&
-          ((new_field->flags & AUTO_INCREMENT_FLAG) ==
-           (uint) (flags & AUTO_INCREMENT_FLAG)) &&
-          (new_field->length == max_display_length()) &&
-          (new_field->decimals == dec));
+  return ((new_field_ptr->sql_type == real_type()) &&
+          ((new_field_ptr->flags & UNSIGNED_FLAG) ==
+           (uint32_t) (flags & UNSIGNED_FLAG)) &&
+          ((new_field_ptr->flags & AUTO_INCREMENT_FLAG) ==
+           (uint32_t) (flags & AUTO_INCREMENT_FLAG)) &&
+          (new_field_ptr->length == max_display_length()) &&
+          (new_field_ptr->decimals == dec));
 }
 
 
@@ -417,16 +417,16 @@ Field_new_decimal::unpack(unsigned char* to,
       a decimal and write that to the raw data buffer.
     */
     decimal_digit_t dec_buf[DECIMAL_MAX_PRECISION];
-    decimal_t dec;
-    dec.len= from_precision;
-    dec.buf= dec_buf;
+    decimal_t conv_dec;
+    conv_dec.len= from_precision;
+    conv_dec.buf= dec_buf;
     /*
       Note: bin2decimal does not change the length of the field. So it is
       just the first step the resizing operation. The second step does the
       resizing using the precision and decimals from the slave.
     */
-    bin2decimal((unsigned char *)from, &dec, from_precision, from_decimal);
-    decimal2bin(&dec, to, precision, decimals());
+    bin2decimal((unsigned char *)from, &conv_dec, from_precision, from_decimal);
+    decimal2bin(&conv_dec, to, precision, decimals());
   }
   else
     memcpy(to, from, len); // Sizes are the same, just copy the data.

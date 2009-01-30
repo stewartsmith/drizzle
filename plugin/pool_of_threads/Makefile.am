@@ -17,3 +17,4 @@
 noinst_LTLIBRARIES= libpool_of_threads.la
 libpool_of_threads_la_SOURCES=	pool_of_threads.cc session_scheduler.cc
 libpool_of_threads_la_LIBADD=
+libpool_of_threads_la_CXXFLAGS=	${AM_CXXFLAGS} ${NO_SHADOW}

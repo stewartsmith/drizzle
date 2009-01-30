@@ -15,9 +15,11 @@
 
 #include "myisamdef.h"
 
-void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
-                        const char *message __attribute__((unused)),
-                        const char *sfile __attribute__((unused)),
-                        uint32_t sline __attribute__((unused)))
+void _mi_report_crashed(MI_INFO *file, const char *message,
+                        const char *sfile, uint32_t sline)
 {
+  (void)file;
+  (void)message;
+  (void)sfile;
+  (void)sline;
 }

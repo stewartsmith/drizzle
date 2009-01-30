@@ -524,7 +524,6 @@ Session::Session()
   memset(ha_data, 0, sizeof(ha_data));
   replication_data= 0;
   mysys_var=0;
-  binlog_evt_union.do_union= false;
   dbug_sentry=Session_SENTRY_MAGIC;
   net.vio= 0;
   client_capabilities= 0;                       // minimalistic client
@@ -553,10 +552,10 @@ Session::Session()
   protocol= &protocol_text;			// Default protocol
   protocol_text.init(this);
 
-  const Query_id& query_id= Query_id::get_query_id();
+  const Query_id& local_query_id= Query_id::get_query_id();
   tablespace_op= false;
   tmp= sql_rnd();
-  randominit(&rand, tmp + (ulong) &rand, tmp + query_id.value());
+  randominit(&rand, tmp + (ulong) &rand, tmp + local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
@@ -2496,15 +2495,15 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
 
   @param session		Thread handle
   @param errcode	Error code to print to console
-  @param lock	        1 if we have have to lock LOCK_thread_count
+  @param should_lock 1 if we have have to lock LOCK_thread_count
 
   @note
     For the connection that is doing shutdown, this is called twice
 */
-void Session::close_connection(uint32_t errcode, bool lock)
+void Session::close_connection(uint32_t errcode, bool should_lock)
 {
   st_vio *vio;
-  if (lock)
+  if (should_lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
   killed= Session::KILL_CONNECTION;
   if ((vio= net.vio) != 0)
@@ -2513,7 +2512,7 @@ void Session::close_connection(uint32_t errcode, bool lock)
       net_send_error(this, errcode, ER(errcode)); /* purecov: inspected */
     net_close(&net);		/* vio is freed in delete session */
   }
-  if (lock)
+  if (should_lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
 }
 

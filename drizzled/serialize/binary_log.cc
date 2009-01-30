@@ -70,6 +70,10 @@ BinaryLog::Event::read(CodedInputStream *in)
   case CHAIN:
     message= new BinaryLog::Chain;
     break;
+
+  case COUNT:
+  case UNDEF:
+    break;
   }
 
   if (!message)

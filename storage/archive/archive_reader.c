@@ -109,10 +109,10 @@ int main(int argc, char *argv[])
   if (opt_check)
   {
     int error;
-    unsigned int read;
+    unsigned int row_read;
     uint64_t row_count= 0;
 
-    while ((read= azread_row(&reader_handle, &error)))
+    while ((row_read= azread_row(&reader_handle, &error)))
     {
       if (error == Z_STREAM_ERROR)
       {
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 
       row_count++;
 
-      if (read > reader_handle.longest_row)
+      if (row_read > reader_handle.longest_row)
       {
         printf("Table is damaged, row %"PRIu64" is invalid\n", row_count);
         goto end;
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
   if (opt_backup)
   {
     int error;
-    unsigned int read;
+    unsigned int row_read;
     uint64_t row_count= 0;
     char *buffer;
 
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
       free(ptr);
     }
 
-    while ((read= azread_row(&reader_handle, &error)))
+    while ((row_read= azread_row(&reader_handle, &error)))
     {
       if (error == Z_STREAM_ERROR || error)
       {
@@ -189,12 +189,12 @@ int main(int argc, char *argv[])
       }
 
       /* If we read nothing we are at the end of the file */
-      if (read == 0)
+      if (row_read == 0)
         break;
 
       row_count++;
 
-      azwrite_row(&writer_handle, reader_handle.row_ptr, read);
+      azwrite_row(&writer_handle, reader_handle.row_ptr, row_read);
 
       if (reader_handle.rows == writer_handle.rows)
         break;
@@ -231,10 +231,9 @@ end:
 }
 
 static bool
-get_one_option(int optid,
-	       const struct my_option *opt __attribute__((unused)),
-	       char *argument)
+get_one_option(int optid, const struct my_option *opt, char *argument)
 {
+  (void)opt;
   switch (optid) {
   case 'b':
     opt_backup= 1;

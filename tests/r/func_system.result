@@ -4,20 +4,20 @@ test
 select database() = "test";
 database() = "test"
 1
-select database() = _utf8"test";
-database() = _utf8"test"
+select database() = "test";
+database() = "test"
 1
 select user() like "%@%";
 user() like "%@%"
 1
-select user() like _utf8"%@%";
-user() like _utf8"%@%"
+select user() like "%@%";
+user() like "%@%"
 1
 select version()>="3.23.29";
 version()>="3.23.29"
 1
-select version()>=_utf8"3.23.29";
-version()>=_utf8"3.23.29"
+select version()>="3.23.29";
+version()>="3.23.29"
 1
 explain extended select database(), user();
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra

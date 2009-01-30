@@ -1135,7 +1135,7 @@ int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_t no_jb
     else // DuplicateWeedout strategy
     {
       SJ_TMP_TABLE::TAB sjtabs[MAX_TABLES];
-      table_map cur_map= join->const_table_map | PSEUDO_TABLE_BITS;
+      table_map weed_cur_map= join->const_table_map | PSEUDO_TABLE_BITS;
       uint32_t jt_rowid_offset= 0; // # tuple bytes are already occupied (w/o NULL bytes)
       uint32_t jt_null_bits= 0;    // # null bits in tuple bytes
       SJ_TMP_TABLE::TAB *last_tab= sjtabs;
@@ -1162,8 +1162,8 @@ int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_t no_jb
           tab->table->prepare_for_position();
           tab->rowid_keep_flags= rowid_keep_flags;
         }
-        cur_map |= tab->table->map;
-        if (!tab->emb_sj_nest && bitmap_covers(cur_map,
+        weed_cur_map |= tab->table->map;
+        if (!tab->emb_sj_nest && bitmap_covers(weed_cur_map,
                                                dups_ranges[j].outer_tables))
           last_outer_tab= tab;
       }
@@ -7232,9 +7232,9 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
         if (*join_tab->on_expr_ref)
         {
           JOIN_TAB *cond_tab= join_tab->first_inner;
-          COND *tmp= make_cond_for_table(*join_tab->on_expr_ref,
-                                         join->const_table_map,
-                                         (table_map) 0, 0);
+          tmp= make_cond_for_table(*join_tab->on_expr_ref,
+                                   join->const_table_map,
+                                   (table_map) 0, 0);
           if (!tmp)
             continue;
           tmp= new Item_func_trig_cond(tmp, &cond_tab->not_null_compl);
@@ -7367,8 +7367,8 @@ bool uses_index_fields_only(Item *item, Table *tbl, uint32_t keyno,
     {
       /* This is a function, apply condition recursively to arguments */
       List_iterator<Item> li(*((Item_cond*)item)->argument_list());
-      Item *item;
-      while ((item=li++))
+      Item *list_item;
+      while ((list_item=li++))
       {
         if (!uses_index_fields_only(item, tbl, keyno, other_tbls_ok))
           return false;
@@ -9442,13 +9442,13 @@ static void update_const_equal_items(COND *cond, JOIN_TAB *tab)
         */
         if (!possible_keys.is_clear_all())
         {
-          Table *tab= field->table;
+          Table *field_tab= field->table;
           KEYUSE *use;
-          for (use= stat->keyuse; use && use->table == tab; use++)
+          for (use= stat->keyuse; use && use->table == field_tab; use++)
             if (possible_keys.is_set(use->key) &&
-                tab->key_info[use->key].key_part[use->keypart].field ==
+                field_tab->key_info[use->key].key_part[use->keypart].field ==
                 field)
-              tab->const_key_parts[use->key]|= use->keypart_map;
+              field_tab->const_key_parts[use->key]|= use->keypart_map;
         }
       }
     }
@@ -13168,11 +13168,11 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
       bool quick_created= false;
       if (table->quick_keys.is_set(best_key) && best_key != ref_key)
       {
-        key_map map;
-        map.clear_all();       // Force the creation of quick select
-        map.set_bit(best_key); // only best_key.
+        key_map test_map;
+        test_map.clear_all();       // Force the creation of quick select
+        test_map.set_bit(best_key); // only best_key.
         quick_created=
-          select->test_quick_select(join->session, map, 0,
+          select->test_quick_select(join->session, test_map, 0,
                                     join->select_options & OPTION_FOUND_ROWS ?
                                     HA_POS_ERROR :
                                     join->unit->select_limit_cnt,

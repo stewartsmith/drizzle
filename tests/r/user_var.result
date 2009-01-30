@@ -135,46 +135,46 @@ hello again	hello	hello again	3	hello again	hello again
 hello again	hello	hello again	3	hello again	hello again
 hello again	hello	hello again	3	hello again	hello again
 drop table t1;
-set @a=_utf8'test';
+set @a='test';
 select collation(@a),coercibility(@a);
 collation(@a)	coercibility(@a)
 utf8_general_ci	2
-select @a=_utf8'TEST';
-@a=_utf8'TEST'
+select @a='TEST';
+@a='TEST'
 1
-select @a=_utf8'TEST' collate utf8_bin;
-@a=_utf8'TEST' collate utf8_bin
+select @a='TEST' collate utf8_bin;
+@a='TEST' collate utf8_bin
 0
-set @a=_utf8'test' collate utf8_general_ci;
+set @a='test' collate utf8_general_ci;
 select collation(@a),coercibility(@a);
 collation(@a)	coercibility(@a)
 utf8_general_ci	2
-select @a=_utf8'TEST';
-@a=_utf8'TEST'
+select @a='TEST';
+@a='TEST'
 1
-select @a=_utf8'TEST' collate utf8_bin;
-@a=_utf8'TEST' collate utf8_bin
+select @a='TEST' collate utf8_bin;
+@a='TEST' collate utf8_bin
 0
-select collation(@a:=_utf8'test');
-collation(@a:=_utf8'test')
+select collation(@a:='test');
+collation(@a:='test')
 utf8_general_ci
-select coercibility(@a:=_utf8'test');
-coercibility(@a:=_utf8'test')
+select coercibility(@a:='test');
+coercibility(@a:='test')
 2
-select collation(@a:=_utf8'test' collate utf8_bin);
-collation(@a:=_utf8'test' collate utf8_bin)
+select collation(@a:='test' collate utf8_bin);
+collation(@a:='test' collate utf8_bin)
 utf8_bin
-select coercibility(@a:=_utf8'test' collate utf8_bin);
-coercibility(@a:=_utf8'test' collate utf8_bin)
+select coercibility(@a:='test' collate utf8_bin);
+coercibility(@a:='test' collate utf8_bin)
 2
-select (@a:=_utf8'test' collate utf8_bin) = _utf8'TEST';
-(@a:=_utf8'test' collate utf8_bin) = _utf8'TEST'
+select (@a:='test' collate utf8_bin) = 'TEST';
+(@a:='test' collate utf8_bin) = 'TEST'
 0
 select collation(@a),coercibility(@a);
 collation(@a)	coercibility(@a)
 utf8_bin	2
-select (@a:=_utf8'test' collate utf8_bin) = _utf8'TEST' collate utf8_general_ci;
-(@a:=_utf8'test' collate utf8_bin) = _utf8'TEST' collate utf8_general_ci
+select (@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci;
+(@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci
 1
 set @var= NULL ;
 select FIELD( @var,'1it','Hit') as my_column;
