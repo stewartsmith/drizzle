@@ -86,8 +86,41 @@ SELECT MICROSECOND("20081130033015");
 # A good datetime, should output 123456
 SELECT MICROSECOND("20081130033015.123456");
 
+# A good datetime, should output 123450
+SELECT MICROSECOND("20081130033015.12345");
+
+# A good datetime, should output 123400
+SELECT MICROSECOND("20081130033015.1234");
+
+# A good datetime, should output 123000
+SELECT MICROSECOND("20081130033015.123");
+
+# A good datetime, should output 120000
+SELECT MICROSECOND("20081130033015.12");
+
+# A good datetime, should output 100000
+SELECT MICROSECOND("20081130033015.1");
+
 # A good datetime, interpreted int->string, should output 0 since no sub-second component
 SELECT MICROSECOND(20081130033015);
+
+# A good datetime, interpreted int->string, should output 123456
+SELECT MICROSECOND(20081130033015.123456);
+
+# A good datetime, interpreted int->string, should output 123450
+SELECT MICROSECOND(20081130033015.12345);
+
+# A good datetime, interpreted int->string, should output 123400
+SELECT MICROSECOND(20081130033015.1234);
+
+# A good datetime, interpreted int->string, should output 123000
+SELECT MICROSECOND(20081130033015.123);
+
+# A good datetime, interpreted int->string, should output 120000
+SELECT MICROSECOND(20081130033015.12);
+
+# A good datetime, interpreted int->string, should output 100000
+SELECT MICROSECOND(20081130033015.1);
 
 # A good time (according to MySQL, not Jay Pipes...), should output 0 since no sub-second component
 SELECT MICROSECOND(231115);

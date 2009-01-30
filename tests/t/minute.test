@@ -81,6 +81,9 @@ SELECT MINUTE("20081130033015");
 # A good datetime, interpreted int->string, should output 30
 SELECT MINUTE(20081130033015);
 
+# A good datetime with subsecond component, interpreted int->string, should output 30
+SELECT MINUTE(20081130033015.01);
+
 # A good time (according to MySQL, not Jay Pipes...), should output 11
 SELECT MINUTE(231115);
 
