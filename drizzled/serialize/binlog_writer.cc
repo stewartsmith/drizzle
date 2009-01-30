@@ -133,5 +133,5 @@ int main(int argc, char *argv[])
   delete coded_output;
   delete raw_output;
   fb.close();
-  exit(0);
+  return 0;
 }

@@ -38,16 +38,13 @@ public:
             const char *field_name_arg, const CHARSET_INFO * const charset);
   Item_result result_type () const { return STRING_RESULT; }
   uint32_t decimals() const { return NOT_FIXED_DEC; }
+
+  using Field::store;
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val)=0;
   int  store_decimal(const my_decimal *);
   int  store(const char *to,uint32_t length, const CHARSET_INFO * const cs)=0;
-  virtual int store(const char *to, uint32_t length, 
-                    const CHARSET_INFO * const cs,
-                    enum_check_fields check_level)
-  {
-    return Field::store(to, length, cs, check_level);
-  }
+
   uint32_t size_of() const { return sizeof(*this); }
   const CHARSET_INFO *charset(void) const { return field_charset; }
   void set_charset(const CHARSET_INFO * const charset_arg)

@@ -37,6 +37,9 @@ protected:
   */
   uint32_t allowed_arg_cols;
 public:
+
+  using Item::split_sum_func;
+
   uint32_t arg_count;
   table_map used_tables_cache, not_null_tables_cache;
   bool const_item_cache;

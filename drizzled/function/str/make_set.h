@@ -28,6 +28,7 @@ class Item_func_make_set :public Item_str_func
   String tmp_str;
 
 public:
+  using Item::split_sum_func;
   Item_func_make_set(Item *a,List<Item> &list) :Item_str_func(list),item(a) {}
   String *val_str(String *str);
   bool fix_fields(Session *session, Item **ref)

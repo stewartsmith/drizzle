@@ -1417,6 +1417,9 @@ protected:
   table_map and_tables_cache;
 
 public:
+
+  using Item::split_sum_func;
+
   /* Item_cond() is only used to create top level items */
   Item_cond(): Item_bool_func(), abort_on_null(1)
   { const_item_cache=0; }

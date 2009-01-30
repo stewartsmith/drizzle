@@ -4485,7 +4485,7 @@ real_ulong_num:
         | LONG_NUM      { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
         | ULONGLONG_NUM { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
         | dec_num_error { DRIZZLE_YYABORT; }
-        ;
+	;
 
 ulonglong_num:
           NUM           { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }

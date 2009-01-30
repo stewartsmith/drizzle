@@ -577,13 +577,17 @@ int ha_archive::create(const char *name, Table *table_arg,
   {
     if (fstat(frm_file, &file_stat))
     {
-      frm_ptr= (unsigned char *)malloc(sizeof(unsigned char) *
-				       file_stat.st_size);
+      if (file_stat.st_size > SIZE_MAX)
+      {
+        error= ENOMEM;
+        goto error2;
+      }
+      frm_ptr= (unsigned char *)malloc((size_t)file_stat.st_size);
       if (frm_ptr)
       {
-	my_read(frm_file, frm_ptr, file_stat.st_size, MYF(0));
-	azwrite_frm(&create_stream, (char *)frm_ptr, file_stat.st_size);
-	free((unsigned char*)frm_ptr);
+	my_read(frm_file, frm_ptr, (size_t)file_stat.st_size, MYF(0));
+	azwrite_frm(&create_stream, (char *)frm_ptr, (size_t)file_stat.st_size);
+	free(frm_ptr);
       }
     }
     my_close(frm_file, MYF(0));

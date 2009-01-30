@@ -231,9 +231,6 @@ then
   esac
 fi
 
-# We use libtool
-AC_PROG_LIBTOOL
-
 AC_SUBST(NM)dnl
 
 AC_PROG_INSTALL
@@ -288,7 +285,7 @@ then
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -xlang=c99 ${MEMALIGN_FLAGS}"
+  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef -xlang=c99 ${MEMALIGN_FLAGS}"
   CFLAGS="${CFLAGS} -xstrconst ${MEMALIGN_FLAGS}"
   SYMBOLS_FLAGS="-g"
   OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
@@ -296,6 +293,9 @@ then
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
   DEBUG_OPTIMIZE_CXX=""
 fi
+
+# We use libtool
+AC_PROG_LIBTOOL
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
 # AX_HEADER_ASSERT
@@ -1340,9 +1340,10 @@ then
     CFLAGS="${CFLAGS} -xinstrument=datarace"
     CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
   fi
-  CC_WARNINGS="-v -xc99=all -errtags=yes -errwarn=%all"
+  CC_WARNINGS="-v -xc99=all -errtags=yes -errwarn=%all -erroff=E_ATTRIBUTE_NOT_VAR"
   CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -errwarn=%all -erroff=attrskipunsup,doubunder -compat=5"
-  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp"
+  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl"
+  NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
   if test "$ac_exceptions" = "no"
   then
     NO_EXCEPTIONS="-features=no%except"
@@ -1358,6 +1359,7 @@ AC_SUBST(NO_SHADOW)
 AC_SUBST(W_SHADOW)
 AC_SUBST(NO_REDUNDANT_DECLS)
 AC_SUBST(PROTOSKIP_WARNINGS)
+AC_SUBST(NO_UNREACHED)
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])

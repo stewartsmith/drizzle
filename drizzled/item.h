@@ -422,9 +422,9 @@ public:
                               List<Item> &fields);
 
   /* Called for items that really have to be split */
-  void real_split_sum_func(Session *session, Item **ref_pointer_array,
-                           List<Item> &fields,
-                           Item **ref, bool skip_registered);
+  void split_sum_func(Session *session, Item **ref_pointer_array,
+                      List<Item> &fields,
+                      Item **ref, bool skip_registered);
 
   virtual bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual bool get_time(DRIZZLE_TIME *ltime);

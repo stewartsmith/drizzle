@@ -26,6 +26,13 @@
 
 class Field_varstring :public Field_longstr {
 public:
+
+  using Field::store;
+  using Field::pack;
+  using Field::unpack;
+  using Field::val_int;
+  using Field::val_str;
+
   /*
     The maximum space available in a Field_varstring, in bytes. See
     length_bytes.
@@ -55,12 +62,8 @@ public:
                                     length_bytes : 0);
   }
   int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
-  virtual int store(const char *to, uint32_t length, 
-                    const CHARSET_INFO * const cs,
-                    enum_check_fields check_level)
-  {
-    return Field::store(to, length, cs, check_level);
-  }
+
+
   int  store(int64_t nr, bool unsigned_val);
   int  store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
   double val_real(void);
@@ -84,12 +87,6 @@ public:
                               uint32_t max_length,
                               bool low_byte_first);
 
-  virtual unsigned char *pack(unsigned char *to, const unsigned char *from)
-  {
-    /* Second two params are unusued in the other pack */
-    return pack(to, from, 0, true);
-  }
-
   unsigned char *pack_key(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
   unsigned char *pack_key_from_key_image(unsigned char* to, const unsigned char *from,
                                  uint32_t max_length, bool low_byte_first);
@@ -98,12 +95,6 @@ public:
                                       uint32_t param_data,
                                       bool low_byte_first);
  
-  virtual const unsigned char *unpack(unsigned char* to,
-                                      const unsigned char *from)
-  {
-    return unpack(to, from, 0, false);
-  }
-
   const unsigned char *unpack_key(unsigned char* to, const unsigned char *from,
                           uint32_t max_length, bool low_byte_first);
   int pack_cmp(const unsigned char *a, const unsigned char *b, uint32_t key_length,

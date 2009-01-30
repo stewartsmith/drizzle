@@ -128,16 +128,16 @@ public:
         const char *field_name_arg);
   virtual ~Field() {}
   /* Store functions returns 1 on overflow and -1 on fatal error */
-  virtual int  store(const char *to, uint32_t length,
-                     const CHARSET_INFO * const cs)=0;
-  virtual int  store(double nr)=0;
-  virtual int  store(int64_t nr, bool unsigned_val)=0;
-  virtual int  store_decimal(const my_decimal *d)=0;
+  virtual int store(const char *to, uint32_t length,
+                    const CHARSET_INFO * const cs)=0;
+  virtual int store(double nr)=0;
+  virtual int store(int64_t nr, bool unsigned_val)=0;
+  virtual int store_decimal(const my_decimal *d)=0;
+  int store(const char *to, uint32_t length,
+            const CHARSET_INFO * const cs,
+            enum_check_fields check_level);
   virtual int store_time(DRIZZLE_TIME *ltime,
                          enum enum_drizzle_timestamp_type t_type);
-  virtual int store(const char *to, uint32_t length,
-                    const CHARSET_INFO * const cs,
-                    enum_check_fields check_level);
   virtual double val_real(void)=0;
   virtual int64_t val_int(void)=0;
   virtual my_decimal *val_decimal(my_decimal *);
@@ -384,14 +384,33 @@ public:
     return length;
   }
   virtual void set_key_image(const unsigned char *buff,uint32_t length)
-    { set_image(buff,length, &my_charset_bin); }
+  { set_image(buff,length, &my_charset_bin); }
   inline int64_t val_int_offset(uint32_t row_offset)
-    {
-      ptr+=row_offset;
-      int64_t tmp=val_int();
-      ptr-=row_offset;
-      return tmp;
-    }
+  {
+    ptr+=row_offset;
+    int64_t tmp=val_int();
+    ptr-=row_offset;
+    return tmp;
+  }
+
+  inline int64_t val_int(const unsigned char *new_ptr)
+  {
+    unsigned char *old_ptr= ptr;
+    int64_t return_value;
+    ptr= (unsigned char*) new_ptr;
+    return_value= val_int();
+    ptr= old_ptr;
+    return return_value;
+  }
+  inline String *val_str(String *str, const unsigned char *new_ptr)
+  {
+    unsigned char *old_ptr= ptr;
+    ptr= (unsigned char*) new_ptr;
+    val_str(str);
+    ptr= old_ptr;
+    return str;
+  }
+
   virtual bool send_binary(Protocol *protocol);
 
   virtual unsigned char *pack(unsigned char *to,
@@ -399,7 +418,7 @@ public:
                               uint32_t max_length,
                               bool low_byte_first);
 
-  virtual unsigned char *pack(unsigned char *to, const unsigned char *from);
+  unsigned char *pack(unsigned char *to, const unsigned char *from);
 
   virtual const unsigned char *unpack(unsigned char* to,
                                       const unsigned char *from,
@@ -409,8 +428,8 @@ public:
      @overload Field::unpack(unsigned char*, const unsigned char*,
                              uint32_t, bool)
   */
-  virtual const unsigned char *unpack(unsigned char* to,
-                                      const unsigned char *from);
+  const unsigned char *unpack(unsigned char* to,
+                              const unsigned char *from);
 
   virtual unsigned char *pack_key(unsigned char* to, const unsigned char *from,
                           uint32_t max_length, bool low_byte_first)

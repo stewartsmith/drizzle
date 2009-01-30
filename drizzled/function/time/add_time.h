@@ -35,6 +35,7 @@ public:
   enum_field_types field_type() const { return cached_field_type; }
   void fix_length_and_dec();
 
+  using Item_func::tmp_table_field;
   Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);

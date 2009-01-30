@@ -1083,13 +1083,6 @@ unsigned char *Field::pack(unsigned char *to, const unsigned char *from)
 }
 
 
-virtual unsigned char *Field::pack(unsigned char *to,
-                                   const unsigned char *from);
-{
-  return pack(to, from, UINT32_MAX, table->s->db_low_byte_first);
-}
-
-
 /**
    Unpack a field from row data.
 
