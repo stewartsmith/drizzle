@@ -23,10 +23,8 @@ AM_CPPFLAGS=		-I$(top_srcdir) -I$(top_builddir) \
 if BUILD_DRIZZLE
 EXTRA_DEFS="-DBUILD_DRIZZLE"
 DYNAMIC_PLUGIN="-DDRIZZLE_DYNAMIC_PLUGIN"
-HANDLER_DIR=drizzle
 else
 DYNAMIC_PLUGIN="-DMYSQL_DYNAMIC_PLUGIN"
-HANDLER_DIR=handler
 endif
 
 
@@ -134,10 +132,10 @@ noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
 			include/ut0vec.ic include/ut0list.h		\
 			include/ut0list.ic include/ut0wqueue.h		\
 			include/ha_prototypes.h				\
-			$(HANDLER_DIR)/ha_innodb.h			\
+			drizzle/ha_innodb.h				\
 			include/handler0alter.h				\
-			$(HANDLER_DIR)/handler0vars.h			\
-			$(HANDLER_DIR)/i_s.h
+			drizzle/handler0vars.h				\
+			drizzle/i_s.h
 
 noinst_LTLIBRARIES=	libinnobase.la libpars.la
 libinnobase_la_CFLAGS=	${AM_CFLAGS} ${NO_SHADOW}
@@ -177,10 +175,10 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			usr/usr0sess.c ut/ut0byte.c ut/ut0dbg.c		\
 			ut/ut0list.c ut/ut0mem.c ut/ut0rnd.c		\
 			ut/ut0ut.c ut/ut0vec.c ut/ut0wqueue.c		\
-			$(HANDLER_DIR)/ha_innodb.cc			\
-			$(HANDLER_DIR)/handler0alter.cc			\
-			$(HANDLER_DIR)/i_s.cc				\
-			$(HANDLER_DIR)/mysql_addons.cc
+			drizzle/ha_innodb.cc				\
+			drizzle/handler0alter.cc			\
+			drizzle/i_s.cc					\
+			drizzle/mysql_addons.cc
 
 # lexyy.c has lots of redundant decls, but it's generated anyway 
 libpars_la_CFLAGS=	${AM_CFLAGS} \

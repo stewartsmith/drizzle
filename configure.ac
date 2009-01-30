@@ -19,7 +19,7 @@ AC_CANONICAL_TARGET
 CFLAGS=${SAVE_CFLAGS}
 CXXFLAGS=${SAVE_CXXFLAGS}
 
-AM_INIT_AUTOMAKE(nostdinc -Wall -Werror)
+AM_INIT_AUTOMAKE(nostdinc subdir-objects -Wall -Werror)
 if test "x${enable_dependency_tracking}" = "x"
 then
   enable_dependency_tracking=yes

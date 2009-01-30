@@ -16,14 +16,8 @@
 
 sbin_PROGRAMS= drizzled
 
-bin_PROGRAMS =
-
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
-
-DTRACE = @DTRACE@
-
-DTRACEFLAGS = @DTRACEFLAGS@
 
 DTRACEFILES = handler.o \
 	      filesort.o \
@@ -332,11 +326,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 
 noinst_LTLIBRARIES = \
 		libhandler.la \
-		libserialutil.la \
-		libitem.la \
-		libutil.la \
-		libfield.la \
-		libfunction.la
+		libserialutil.la
 
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
@@ -377,134 +367,6 @@ drizzled_SOURCES = \
 		errmsg.cc \
 		error.cc \
 		errmsg_print.cc \
-		field.cc \
-		field_conv.cc \
-		field_iterator.cc \
-		filesort.cc \
-		ha_trx_info.cc \
-		hybrid_type_traits.cc \
-		hybrid_type_traits_decimal.cc \
-		hybrid_type_traits_integer.cc \
-		item.cc \
-		key.cc \
-                key_map.cc \
-		lock.cc \
-		log.cc \
-		logging.cc \
-		mf_iocache.cc \
-		my_decimal.cc \
-		name_resolution_context_state.cc \
-		natural_join_column.cc \
-		opt_range.cc \
-		opt_sum.cc \
-		parser.cc \
-		protocol.cc \
-		qcache.cc \
-		query_id.cc \
-		records.cc \
-		rename.cc \
-		replicator.cc \
-                scheduling.cc \
-		session.cc \
-		set_var.cc \
-		show.cc \
-		sj_tmp_table.cc \
-		sql_base.cc \
-		sql_builtin.cc \
-		sql_client.cc \
-		sql_connect.cc \
-		sql_delete.cc \
-		sql_derived.cc \
-		sql_error.cc \
-		sql_handler.cc \
-		sql_insert.cc \
-		sql_lex.cc \
-		sql_list.cc \
-		sql_load.cc \
-		sql_locale.cc \
-		sql_olap.cc \
-		sql_parse.cc \
-		sql_plugin.cc \
-		sql_select.cc \
-		sql_state.cc \
-		sql_string.cc \
-		sql_table.cc \
-		sql_udf.cc \
-		sql_union.cc \
-		sql_update.cc \
-		sql_yacc.yy \
-		stacktrace.cc \
-		strfunc.cc \
-		table.cc \
-                table_map_iterator.cc \
-		tableop_hooks.cc \
-		temporal.cc \
-		temporal_format.cc \
-		thr_malloc.cc \
-		time.cc \
-		tmp_table.cc \
-		tztime.cc \
-		uniques.cc \
-		virtual_column_info.cc \
-		xid.cc
-
-if BUILD_DTRACE
-drizzled_SOURCES += probes.d
-endif
-
-libserialutil_la_SOURCES = db.cc unireg.cc
-libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${NO_SHADOW}
-
-libhandler_la_SOURCES = handler.cc handlerton.cc
-
-AM_YFLAGS = -p DRIZZLE -d --verbose
-
-# This may seem silly, but it's required to get the object files prefixed
-# with libitem_ so that item/field.cc and field.cc don't conflict.
-libitem_la_CXXFLAGS = ${AM_CXXFLAGS}
-libitem_la_SOURCES= \
-		item/bin_string.cc \
-		item/cache.cc \
-		item/cache_decimal.cc \
-		item/cache_int.cc \
-		item/cache_real.cc \
-		item/cache_row.cc \
-		item/cache_str.cc \
-		item/cmpfunc.cc \
-		item/copy_string.cc \
-		item/create.cc \
-		item/decimal.cc \
-		item/direct_ref.cc \
-		item/empty_string.cc \
-		item/field.cc \
-		item/float.cc \
-		item/hex_string.cc \
-		item/insert_value.cc \
-		item/int_with_ref.cc \
-		item/ident.cc \
-		item/int.cc \
-		item/null.cc \
-		item/num.cc \
-		item/outer_ref.cc \
-		item/param.cc \
-		item/ref.cc \
-		item/ref_null_helper.cc \
-		item/row.cc \
-		item/string.cc \
-		item/subselect.cc \
-		item/sum.cc \
-		item/type_holder.cc \
-		item/uint.cc
-
-
-libutil_la_CXXFLAGS = ${AM_CXXFLAGS}
-libutil_la_SOURCES = \
-		util/math.cc
-
-
-libfield_la_CXXFLAGS = ${AM_CXXFLAGS}
-libfield_la_LIBADD= libutil.la
-libfield_la_SOURCES = \
 		field/blob.cc \
 		field/date.cc \
 		field/datetime.cc \
@@ -520,12 +382,11 @@ libfield_la_SOURCES = \
 		field/str.cc \
 		field/timestamp.cc \
 		field/timetype.cc \
-		field/varstring.cc
-
-
-libfunction_la_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CFLAGS}
-libfunction_la_LIBADD= libutil.la
-libfunction_la_SOURCES = \
+		field/varstring.cc \
+		field.cc \
+		field_conv.cc \
+		field_iterator.cc \
+		filesort.cc \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
@@ -535,13 +396,12 @@ libfunction_la_SOURCES = \
 		function/check_reserved_words.cc \
 		function/connection_id.cc \
 		function/coercibility.cc \
-		function/get_user_var.cc \
-		function/get_variable.cc \
 		function/field.cc \
 		function/find_in_set.cc \
 		function/found_rows.cc \
 		function/func.cc \
 		function/get_system_var.cc \
+		function/get_user_var.cc \
 		function/get_variable.cc \
 		function/last_insert.cc \
 		function/length.cc \
@@ -663,7 +523,117 @@ libfunction_la_SOURCES = \
 		function/time/week_mode.cc \
 		function/time/weekday.cc \
 		function/time/year.cc \
-		function/time/yearweek.cc
+		function/time/yearweek.cc \
+		ha_trx_info.cc \
+		hybrid_type_traits.cc \
+		hybrid_type_traits_decimal.cc \
+		hybrid_type_traits_integer.cc \
+		item/bin_string.cc \
+		item/cache.cc \
+		item/cache_decimal.cc \
+		item/cache_int.cc \
+		item/cache_real.cc \
+		item/cache_row.cc \
+		item/cache_str.cc \
+		item/cmpfunc.cc \
+		item/copy_string.cc \
+		item/create.cc \
+		item/decimal.cc \
+		item/direct_ref.cc \
+		item/empty_string.cc \
+		item/field.cc \
+		item/float.cc \
+		item/hex_string.cc \
+		item/insert_value.cc \
+		item/int_with_ref.cc \
+		item/ident.cc \
+		item/int.cc \
+		item/null.cc \
+		item/num.cc \
+		item/outer_ref.cc \
+		item/param.cc \
+		item/ref.cc \
+		item/ref_null_helper.cc \
+		item/row.cc \
+		item/string.cc \
+		item/subselect.cc \
+		item/sum.cc \
+		item/type_holder.cc \
+		item/uint.cc \
+		item.cc \
+		key.cc \
+                key_map.cc \
+		lock.cc \
+		log.cc \
+		logging.cc \
+		mf_iocache.cc \
+		my_decimal.cc \
+		name_resolution_context_state.cc \
+		natural_join_column.cc \
+		opt_range.cc \
+		opt_sum.cc \
+		parser.cc \
+		protocol.cc \
+		qcache.cc \
+		query_id.cc \
+		records.cc \
+		rename.cc \
+		replicator.cc \
+                scheduling.cc \
+		session.cc \
+		set_var.cc \
+		show.cc \
+		sj_tmp_table.cc \
+		sql_base.cc \
+		sql_builtin.cc \
+		sql_client.cc \
+		sql_connect.cc \
+		sql_delete.cc \
+		sql_derived.cc \
+		sql_error.cc \
+		sql_handler.cc \
+		sql_insert.cc \
+		sql_lex.cc \
+		sql_list.cc \
+		sql_load.cc \
+		sql_locale.cc \
+		sql_olap.cc \
+		sql_parse.cc \
+		sql_plugin.cc \
+		sql_select.cc \
+		sql_state.cc \
+		sql_string.cc \
+		sql_table.cc \
+		sql_udf.cc \
+		sql_union.cc \
+		sql_update.cc \
+		sql_yacc.yy \
+		stacktrace.cc \
+		strfunc.cc \
+		table.cc \
+                table_map_iterator.cc \
+		tableop_hooks.cc \
+		temporal.cc \
+		temporal_format.cc \
+		thr_malloc.cc \
+		time.cc \
+		tmp_table.cc \
+		tztime.cc \
+		uniques.cc \
+		util/math.cc \
+		virtual_column_info.cc \
+		xid.cc
+
+if BUILD_DTRACE
+drizzled_SOURCES += probes.d
+endif
+
+libserialutil_la_SOURCES = db.cc unireg.cc
+libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${NO_SHADOW}
+
+libhandler_la_SOURCES = handler.cc handlerton.cc
+
+AM_YFLAGS = -p DRIZZLE -d --verbose
 
 
 if BUILD_GCC_PCH
