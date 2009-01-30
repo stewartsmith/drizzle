@@ -22,8 +22,13 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
-#include <syslog.h>
-#include <plugin/logging_syslog/names.h>
+#ifdef __sun
+# include <syslog.h>
+# include <plugin/logging_syslog/names.h>
+#else
+# define SYSLOG_NAMES 1
+# include <syslog.h>
+#endif
 
 #include <stdarg.h>
 
