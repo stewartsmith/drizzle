@@ -191,6 +191,12 @@ else
   AC_PATH_PROG(AS, as, as)
 fi
 
+AC_PATH_PROG(GPERF, gperf, gperf)
+if test "$ac_cv_prog_gperf" = "no"
+then
+  AC_MSG_ERROR("Drizzle requires gperf to build. Please install it.")
+fi
+
 AC_PATH_PROG(LCOV, lcov, lcov)
 AC_PATH_PROG(GENHTML, genhtml, genhtml)
 

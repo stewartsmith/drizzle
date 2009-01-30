@@ -773,7 +773,6 @@ void clean_up(bool print_message)
   my_database_names_free();
   table_cache_free();
   table_def_free();
-  lex_free();				/* Free some memory */
   item_create_cleanup();
   set_var_free();
   free_charsets();
@@ -1889,7 +1888,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   unireg_init(); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
-  lex_init();
   if (item_create_init())
     return 1;
   if (set_var_init())

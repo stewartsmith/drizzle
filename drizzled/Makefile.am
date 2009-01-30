@@ -16,8 +16,6 @@
 
 sbin_PROGRAMS= drizzled
 
-EXTRA_PROGRAMS= gen_lex_hash
-
 bin_PROGRAMS =
 
 bin_SCRIPTS = 	drizzledumpslow \
@@ -266,7 +264,6 @@ nobase_dist_drizzledinclude_HEADERS = \
                 key_map.h \
 		key_part_spec.h \
 		korr.h \
-		lex.h \
 		lex_string.h \
 		lex_symbol.h \
 		lock.h \
@@ -454,11 +451,6 @@ drizzled_SOURCES = \
 if BUILD_DTRACE
 drizzled_SOURCES += probes.d
 endif
-
-gen_lex_hash_SOURCES= gen_lex_hash.cc
-
-gen_lex_hash_LDFLAGS= 
-
 
 libserialutil_la_SOURCES = db.cc unireg.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${NO_SHADOW}
@@ -691,11 +683,14 @@ BUILT_MAINT_SRC = sql_yacc.cc \
 		  sql_yacc.h
 
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
-		lex_hash.h \
+		symbol_hash.h \
+		function_hash.h \
 		$(PCHHEADERS)
 
 EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
+		symbol_hash.gperf \
+		function_hash.gperf \
 		drizzledumpslow \
 		message.mc \
 		probes.d
@@ -712,13 +707,6 @@ DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 
 MAINTAINERCLEANFILES = $(BUILT_MAINT_SRC)
 
-# This generates lex_hash.h
-# NOTE Built sources should depend on their sources not the tool
-# this avoid the rebuild of the built files in a source dist
-lex_hash.h: gen_lex_hash$(EXEEXT) \
-	$(srcdir)/lex.h
-	$(top_builddir)/drizzled/gen_lex_hash$(EXEEXT) > $@
-
 probes.h: probes.d
 	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d
 	mv probes.h probes.h.bak
@@ -726,7 +714,7 @@ probes.h: probes.d
 	rm probes.h.bak
 
 
-SUFFIXES = .d .gch
+SUFFIXES = .d .gch .gperf
 
 if BUILD_GCC_PCH
 .h.gch:
@@ -735,3 +723,22 @@ endif
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
+
+function_hash.h: function_hash.gperf
+	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
+		--omit-struct-type --readonly-tables --language=C++ \
+		--class-name=Function_hash \
+		function_hash.gperf  > function_hash.h-t
+	@if ! diff function_hash.h-t function_hash.h >/dev/null 2>&1  ; then \
+		mv function_hash.h-t function_hash.h ; \
+	fi
+
+symbol_hash.h: symbol_hash.gperf
+	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
+		--omit-struct-type --readonly-tables --language=C++ \
+		--class-name=Symbol_hash \
+		symbol_hash.gperf > symbol_hash.h-t
+	@if ! diff symbol_hash.h-t symbol_hash.h >/dev/null 2>&1  ; then \
+		mv symbol_hash.h-t symbol_hash.h ; \
+	fi
+
