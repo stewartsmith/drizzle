@@ -1172,8 +1172,7 @@ public:
     enter_cond(); this mutex is then released by exit_cond().
     Usage must be: lock mutex; enter_cond(); your code; exit_cond().
   */
-  inline const char* enter_cond(pthread_cond_t *cond, pthread_mutex_t* mutex,
-			  const char* msg)
+  inline const char* enter_cond(pthread_cond_t *cond, pthread_mutex_t* mutex, const char* msg)
   {
     const char* old_msg = get_proc_info();
     safe_mutex_assert_owner(mutex);
@@ -1479,7 +1478,6 @@ public:
     unit= u;
     return 0;
   }
-  virtual int prepare2(void) { return 0; }
   /*
     Because of peculiarities of prepared statements protocol
     we need to know number of columns in the result set (if
