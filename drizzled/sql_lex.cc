@@ -682,7 +682,6 @@ int DRIZZLElex(void *arg, void *yysession)
       lip->lookahead_token= token;
       return WITH;
     }
-    break;
   default:
     break;
   }

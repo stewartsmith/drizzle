@@ -1318,8 +1318,10 @@ then
     CFLAGS="${CFLAGS} -xinstrument=datarace"
     CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
   fi
-  CC_WARNINGS="-v -xc99=all -errtags=yes -errwarn=%all -erroff=E_ATTRIBUTE_NOT_VAR"
-  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -errwarn=%all -erroff=attrskipunsup,doubunder -compat=5"
+  #CC_WARNINGS="-v -xc99=all -errtags=yes -errwarn=%all -erroff=E_ATTRIBUTE_NOT_VAR"
+  #CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -errwarn=%all -erroff=attrskipunsup,doubunder -compat=5"
+  CC_WARNINGS="-v -xc99=all -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder -compat=5"
   PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl"
   NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
   if test "$ac_exceptions" = "no"

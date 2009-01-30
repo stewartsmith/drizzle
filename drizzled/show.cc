@@ -48,6 +48,9 @@
 
 using namespace std;
 
+extern "C"
+int show_var_cmp(const void *var1, const void *var2);
+
 inline const char *
 str_or_nil(const char *str)
 {
@@ -1224,7 +1227,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
 
 static DYNAMIC_ARRAY all_status_vars;
 static bool status_vars_inited= 0;
-static int show_var_cmp(const void *var1, const void *var2)
+int show_var_cmp(const void *var1, const void *var2)
 {
   return strcmp(((SHOW_VAR*)var1)->name, ((SHOW_VAR*)var2)->name);
 }
