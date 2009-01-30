@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,32 +18,28 @@
  */
 
 
-/* This struct includes all reserved words and functions */
+#ifndef DRIZZLED_HASH_SYMBOL_H
+#define DRIZZLED_HASH_SYMBOL_H
 
-#ifndef _lex_symbol_h
-#define _lex_symbol_h
+#include <drizzled/lex_symbol.h>
+#include <drizzled/function_hash.h>
+#include <drizzled/symbol_hash.h>
 
-typedef struct st_sym_group {
-  const char *name;
-  const char *needed_define;
-} SYM_GROUP;
-
-typedef struct st_symbol {
-  const char *name;
-  uint	tok;
-} SYMBOL;
-
-typedef struct st_lex_symbol
+static const SYMBOL *get_hash_symbol(const char *s,
+                                     unsigned int len,bool function)
 {
-  const SYMBOL *symbol;
-  char   *str;
-  uint32_t   length;
-} LEX_SYMBOL;
+  const SYMBOL* ret_sym= NULL;
+  if (function)
+  {
+    ret_sym= Function_hash::in_word_set(s, len);
+    if (ret_sym && ret_sym->tok)
+      return ret_sym;
+  }
+  ret_sym= Symbol_hash::in_word_set(s, len);
+  if (ret_sym && ret_sym->tok)
+    return ret_sym;
+  return NULL;
+}
+  
 
-
-extern SYM_GROUP sym_group_common;
-extern SYM_GROUP sym_group_geom;
-extern SYM_GROUP sym_group_rtree;
-
-
-#endif /* _lex_symbol_h */
+#endif /* DRIZZLED_HASH_SYMBOL_H */

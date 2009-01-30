@@ -16,16 +16,8 @@
 
 sbin_PROGRAMS= drizzled
 
-EXTRA_PROGRAMS= gen_lex_hash
-
-bin_PROGRAMS =
-
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
-
-DTRACE = @DTRACE@
-
-DTRACEFLAGS = @DTRACEFLAGS@
 
 DTRACEFILES = handler.o \
 	      filesort.o \
@@ -266,7 +258,6 @@ nobase_dist_drizzledinclude_HEADERS = \
                 key_map.h \
 		key_part_spec.h \
 		korr.h \
-		lex.h \
 		lex_string.h \
 		lex_symbol.h \
 		lock.h \
@@ -335,11 +326,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 
 noinst_LTLIBRARIES = \
 		libhandler.la \
-		libserialutil.la \
-		libitem.la \
-		libutil.la \
-		libfield.la \
-		libfunction.la
+		libserialutil.la
 
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
@@ -380,139 +367,6 @@ drizzled_SOURCES = \
 		errmsg.cc \
 		error.cc \
 		errmsg_print.cc \
-		field.cc \
-		field_conv.cc \
-		field_iterator.cc \
-		filesort.cc \
-		ha_trx_info.cc \
-		hybrid_type_traits.cc \
-		hybrid_type_traits_decimal.cc \
-		hybrid_type_traits_integer.cc \
-		item.cc \
-		key.cc \
-                key_map.cc \
-		lock.cc \
-		log.cc \
-		logging.cc \
-		mf_iocache.cc \
-		my_decimal.cc \
-		name_resolution_context_state.cc \
-		natural_join_column.cc \
-		opt_range.cc \
-		opt_sum.cc \
-		parser.cc \
-		protocol.cc \
-		qcache.cc \
-		query_id.cc \
-		records.cc \
-		rename.cc \
-		replicator.cc \
-                scheduling.cc \
-		session.cc \
-		set_var.cc \
-		show.cc \
-		sj_tmp_table.cc \
-		sql_base.cc \
-		sql_builtin.cc \
-		sql_client.cc \
-		sql_connect.cc \
-		sql_delete.cc \
-		sql_derived.cc \
-		sql_error.cc \
-		sql_handler.cc \
-		sql_insert.cc \
-		sql_lex.cc \
-		sql_list.cc \
-		sql_load.cc \
-		sql_locale.cc \
-		sql_olap.cc \
-		sql_parse.cc \
-		sql_plugin.cc \
-		sql_select.cc \
-		sql_state.cc \
-		sql_string.cc \
-		sql_table.cc \
-		sql_udf.cc \
-		sql_union.cc \
-		sql_update.cc \
-		sql_yacc.yy \
-		stacktrace.cc \
-		strfunc.cc \
-		table.cc \
-                table_map_iterator.cc \
-		tableop_hooks.cc \
-		temporal.cc \
-		temporal_format.cc \
-		thr_malloc.cc \
-		time.cc \
-		tmp_table.cc \
-		tztime.cc \
-		uniques.cc \
-		virtual_column_info.cc \
-		xid.cc
-
-if BUILD_DTRACE
-drizzled_SOURCES += probes.d
-endif
-
-gen_lex_hash_SOURCES= gen_lex_hash.cc
-
-gen_lex_hash_LDFLAGS= 
-
-
-libserialutil_la_SOURCES = db.cc unireg.cc
-libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
-
-libhandler_la_SOURCES = handler.cc handlerton.cc
-
-AM_YFLAGS = -p DRIZZLE -d --verbose
-
-# This may seem silly, but it's required to get the object files prefixed
-# with libitem_ so that item/field.cc and field.cc don't conflict.
-libitem_la_CXXFLAGS = ${AM_CXXFLAGS}
-libitem_la_SOURCES= \
-		item/bin_string.cc \
-		item/cache.cc \
-		item/cache_decimal.cc \
-		item/cache_int.cc \
-		item/cache_real.cc \
-		item/cache_row.cc \
-		item/cache_str.cc \
-		item/cmpfunc.cc \
-		item/copy_string.cc \
-		item/create.cc \
-		item/decimal.cc \
-		item/direct_ref.cc \
-		item/empty_string.cc \
-		item/field.cc \
-		item/float.cc \
-		item/hex_string.cc \
-		item/insert_value.cc \
-		item/int_with_ref.cc \
-		item/ident.cc \
-		item/int.cc \
-		item/null.cc \
-		item/num.cc \
-		item/outer_ref.cc \
-		item/param.cc \
-		item/ref.cc \
-		item/ref_null_helper.cc \
-		item/row.cc \
-		item/string.cc \
-		item/subselect.cc \
-		item/sum.cc \
-		item/type_holder.cc \
-		item/uint.cc
-
-
-libutil_la_CXXFLAGS = ${AM_CXXFLAGS}
-libutil_la_SOURCES = \
-		util/math.cc
-
-
-libfield_la_CXXFLAGS = ${AM_CXXFLAGS}
-libfield_la_LIBADD= libutil.la
-libfield_la_SOURCES = \
 		field/blob.cc \
 		field/date.cc \
 		field/datetime.cc \
@@ -528,12 +382,11 @@ libfield_la_SOURCES = \
 		field/str.cc \
 		field/timestamp.cc \
 		field/timetype.cc \
-		field/varstring.cc
-
-
-libfunction_la_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CFLAGS}
-libfunction_la_LIBADD= libutil.la
-libfunction_la_SOURCES = \
+		field/varstring.cc \
+		field.cc \
+		field_conv.cc \
+		field_iterator.cc \
+		filesort.cc \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
@@ -543,13 +396,12 @@ libfunction_la_SOURCES = \
 		function/check_reserved_words.cc \
 		function/connection_id.cc \
 		function/coercibility.cc \
-		function/get_user_var.cc \
-		function/get_variable.cc \
 		function/field.cc \
 		function/find_in_set.cc \
 		function/found_rows.cc \
 		function/func.cc \
 		function/get_system_var.cc \
+		function/get_user_var.cc \
 		function/get_variable.cc \
 		function/last_insert.cc \
 		function/length.cc \
@@ -671,7 +523,117 @@ libfunction_la_SOURCES = \
 		function/time/week_mode.cc \
 		function/time/weekday.cc \
 		function/time/year.cc \
-		function/time/yearweek.cc
+		function/time/yearweek.cc \
+		ha_trx_info.cc \
+		hybrid_type_traits.cc \
+		hybrid_type_traits_decimal.cc \
+		hybrid_type_traits_integer.cc \
+		item/bin_string.cc \
+		item/cache.cc \
+		item/cache_decimal.cc \
+		item/cache_int.cc \
+		item/cache_real.cc \
+		item/cache_row.cc \
+		item/cache_str.cc \
+		item/cmpfunc.cc \
+		item/copy_string.cc \
+		item/create.cc \
+		item/decimal.cc \
+		item/direct_ref.cc \
+		item/empty_string.cc \
+		item/field.cc \
+		item/float.cc \
+		item/hex_string.cc \
+		item/insert_value.cc \
+		item/int_with_ref.cc \
+		item/ident.cc \
+		item/int.cc \
+		item/null.cc \
+		item/num.cc \
+		item/outer_ref.cc \
+		item/param.cc \
+		item/ref.cc \
+		item/ref_null_helper.cc \
+		item/row.cc \
+		item/string.cc \
+		item/subselect.cc \
+		item/sum.cc \
+		item/type_holder.cc \
+		item/uint.cc \
+		item.cc \
+		key.cc \
+                key_map.cc \
+		lock.cc \
+		log.cc \
+		logging.cc \
+		mf_iocache.cc \
+		my_decimal.cc \
+		name_resolution_context_state.cc \
+		natural_join_column.cc \
+		opt_range.cc \
+		opt_sum.cc \
+		parser.cc \
+		protocol.cc \
+		qcache.cc \
+		query_id.cc \
+		records.cc \
+		rename.cc \
+		replicator.cc \
+                scheduling.cc \
+		session.cc \
+		set_var.cc \
+		show.cc \
+		sj_tmp_table.cc \
+		sql_base.cc \
+		sql_builtin.cc \
+		sql_client.cc \
+		sql_connect.cc \
+		sql_delete.cc \
+		sql_derived.cc \
+		sql_error.cc \
+		sql_handler.cc \
+		sql_insert.cc \
+		sql_lex.cc \
+		sql_list.cc \
+		sql_load.cc \
+		sql_locale.cc \
+		sql_olap.cc \
+		sql_parse.cc \
+		sql_plugin.cc \
+		sql_select.cc \
+		sql_state.cc \
+		sql_string.cc \
+		sql_table.cc \
+		sql_udf.cc \
+		sql_union.cc \
+		sql_update.cc \
+		sql_yacc.yy \
+		stacktrace.cc \
+		strfunc.cc \
+		table.cc \
+                table_map_iterator.cc \
+		tableop_hooks.cc \
+		temporal.cc \
+		temporal_format.cc \
+		thr_malloc.cc \
+		time.cc \
+		tmp_table.cc \
+		tztime.cc \
+		uniques.cc \
+		util/math.cc \
+		virtual_column_info.cc \
+		xid.cc
+
+if BUILD_DTRACE
+drizzled_SOURCES += probes.d
+endif
+
+libserialutil_la_SOURCES = db.cc unireg.cc
+libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
+
+libhandler_la_SOURCES = handler.cc handlerton.cc
+
+AM_YFLAGS = -p DRIZZLE -d --verbose
 
 
 if BUILD_GCC_PCH
@@ -691,11 +653,14 @@ BUILT_MAINT_SRC = sql_yacc.cc \
 		  sql_yacc.h
 
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
-		lex_hash.h \
+		symbol_hash.h \
+		function_hash.h \
 		$(PCHHEADERS)
 
 EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
+		symbol_hash.gperf \
+		function_hash.gperf \
 		drizzledumpslow \
 		message.mc \
 		probes.d
@@ -712,13 +677,6 @@ DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 
 MAINTAINERCLEANFILES = $(BUILT_MAINT_SRC)
 
-# This generates lex_hash.h
-# NOTE Built sources should depend on their sources not the tool
-# this avoid the rebuild of the built files in a source dist
-lex_hash.h: gen_lex_hash$(EXEEXT) \
-	$(srcdir)/lex.h
-	$(top_builddir)/drizzled/gen_lex_hash$(EXEEXT) > $@
-
 probes.h: probes.d
 	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d
 	mv probes.h probes.h.bak
@@ -726,7 +684,7 @@ probes.h: probes.d
 	rm probes.h.bak
 
 
-SUFFIXES = .d .gch
+SUFFIXES = .d .gch .gperf
 
 if BUILD_GCC_PCH
 .h.gch:
@@ -735,3 +693,22 @@ endif
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
+
+function_hash.h: function_hash.gperf
+	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
+		--omit-struct-type --readonly-tables --language=C++ \
+		--class-name=Function_hash \
+		function_hash.gperf  > function_hash.h-t
+	@if ! diff function_hash.h-t function_hash.h >/dev/null 2>&1  ; then \
+		mv function_hash.h-t function_hash.h ; \
+	fi
+
+symbol_hash.h: symbol_hash.gperf
+	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
+		--omit-struct-type --readonly-tables --language=C++ \
+		--class-name=Symbol_hash \
+		symbol_hash.gperf > symbol_hash.h-t
+	@if ! diff symbol_hash.h-t symbol_hash.h >/dev/null 2>&1  ; then \
+		mv symbol_hash.h-t symbol_hash.h ; \
+	fi
+

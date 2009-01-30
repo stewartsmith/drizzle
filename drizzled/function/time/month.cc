@@ -17,23 +17,80 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "drizzled/server_includes.h"
 #include CSTDINT_H
-#include <drizzled/function/time/month.h>
-#include <drizzled/session.h>
+#include "drizzled/temporal.h"
+#include "drizzled/error.h"
+#include "drizzled/session.h"
+#include "drizzled/function/time/month.h"
 
 int64_t Item_func_month::val_int()
 {
-  assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-  (void) get_arg0_date(&ltime, TIME_FUZZY_DATE);
-  return (int64_t) ltime.month;
-}
+  assert(fixed);
 
+  if (args[0]->is_null())
+  {
+    /* For NULL argument, we return a NULL result */
+    null_value= true;
+    return 0;
+  }
+
+  /* Grab the first argument as a DateTime object */
+  drizzled::DateTime temporal;
+  Item_result arg0_result_type= args[0]->result_type();
+  
+  switch (arg0_result_type)
+  {
+    case STRING_RESULT:
+      {
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+        String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+        String *res= args[0]->val_str(&tmp);
+        if (! temporal.from_string(res->c_ptr(), res->length()))
+        {
+          /* 
+          * Could not interpret the function argument as a temporal value, 
+          * so throw an error and return 0
+          */
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          return 0;
+        }
+      }
+      break;
+    case INT_RESULT:
+      if (temporal.from_int64_t(args[0]->val_int()))
+        break;
+      /* Intentionally fall-through on invalid conversion from integer */
+    default:
+      {
+        /* 
+        * Could not interpret the function argument as a temporal value, 
+        * so throw an error and return 0
+        */
+        null_value= true;
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+        String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+        String *res;
+
+        res= args[0]->val_str(&tmp);
+
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+        return 0;
+      }
+  }
+  return (int64_t) temporal.months();
+}
 
 String* Item_func_monthname::val_str(String* str)
 {
-  assert(fixed == 1);
+  assert(fixed);
+
+  if (args[0]->is_null())
+  {
+    /* For NULL argument, we return a NULL result */
+    null_value= true;
+    return (String *) 0;
+  }
   const char *month_name;
   uint32_t   month= (uint) val_int();
   Session *session= current_session;
@@ -48,4 +105,3 @@ String* Item_func_monthname::val_str(String* str)
   str->set(month_name, strlen(month_name), system_charset_info);
   return str;
 }
-

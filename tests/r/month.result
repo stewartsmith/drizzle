@@ -1,0 +1,117 @@
+SELECT MONTH(NULL);
+MONTH(NULL)
+NULL
+SELECT MONTH();
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
+SELECT MONTH(1, 0);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ' 0)' at line 1
+SELECT MONTH("xxx");
+ERROR HY000: Received an invalid datetime value 'xxx'.
+SELECT MONTH("0000-00-00");
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
+SELECT MONTH("0000-01-01");
+ERROR HY000: Received an invalid datetime value '0000-01-01'.
+SELECT MONTH("0001-00-01");
+ERROR HY000: Received an invalid datetime value '0001-00-01'.
+SELECT MONTH("0001-01-00");
+ERROR HY000: Received an invalid datetime value '0001-01-00'.
+SELECT MONTH("2000-02-30");
+ERROR HY000: Received an invalid datetime value '2000-02-30'.
+SELECT MONTH("1900-02-29");
+ERROR HY000: Received an invalid datetime value '1900-02-29'.
+SELECT MONTH('1976-15-15');
+ERROR HY000: Received an invalid datetime value '1976-15-15'.
+SELECT MONTH("2009-01-12");
+MONTH("2009-01-12")
+1
+SELECT MONTH("99-1-31");
+MONTH("99-1-31")
+1
+SELECT MONTH("0001-09-30");
+MONTH("0001-09-30")
+9
+SELECT MONTH("9999-12-31");
+MONTH("9999-12-31")
+12
+SELECT MONTH('07/31/2009');
+MONTH('07/31/2009')
+7
+SELECT MONTH('20090916');
+MONTH('20090916')
+9
+SELECT MONTH('20090916091528');
+MONTH('20090916091528')
+9
+SELECT MONTH("20090916091528.000000");
+MONTH("20090916091528.000000")
+9
+SELECT MONTH('09-09-16');
+MONTH('09-09-16')
+9
+SELECT MONTH('09.09.16');
+MONTH('09.09.16')
+9
+SELECT MONTH('09/09/16');
+MONTH('09/09/16')
+9
+SELECT MONTH('09-09-16');
+MONTH('09-09-16')
+9
+SELECT MONTH('09-9-2');
+MONTH('09-9-2')
+9
+SELECT MONTH(20090916);
+MONTH(20090916)
+9
+SELECT MONTH(20090916091528);
+MONTH(20090916091528)
+9
+SELECT MONTH(20090916091528.000000);
+ERROR HY000: Received an invalid datetime value '20090916091528.000000'.
+USE test;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+int_fld INT NOT NULL
+, date_fld DATE NOT NULL
+, datetime_fld DATETIME NOT NULL
+, timestamp_fld TIMESTAMP NOT NULL
+, char_fld CHAR(22) NOT NULL
+, varchar_fld VARCHAR(22) NOT NULL
+, text_fld TEXT NOT NULL
+, blob_fld BLOB NOT NULL
+);
+INSERT INTO t1 VALUES (
+20071130
+, "2007-11-30"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30T16:30:19"
+);
+SELECT MONTH(int_fld) FROM t1;
+MONTH(int_fld)
+11
+SELECT MONTH(date_fld) FROM t1;
+MONTH(date_fld)
+11
+SELECT MONTH(datetime_fld) FROM t1;
+MONTH(datetime_fld)
+11
+SELECT MONTH(timestamp_fld) FROM t1;
+MONTH(timestamp_fld)
+11
+SELECT MONTH(char_fld) FROM t1;
+MONTH(char_fld)
+11
+SELECT MONTH(varchar_fld) FROM t1;
+MONTH(varchar_fld)
+11
+SELECT MONTH(text_fld) FROM t1;
+MONTH(text_fld)
+11
+SELECT MONTH(blob_fld) FROM t1;
+MONTH(blob_fld)
+11
+DROP TABLE t1;

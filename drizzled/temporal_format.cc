@@ -98,6 +98,8 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
                               + (_hour_part_index > 1 ? 1 : 0)
                               + (_minute_part_index > 1 ? 1 : 0)
                               + (_second_part_index > 1 ? 1 : 0)
+                              + (_usecond_part_index > 1 ? 1 : 0)
+                              + (_nsecond_part_index > 1 ? 1 : 0)
                               + 1; /* Add one for the entire match... */
   if (result != expected_match_count)
     return false;
@@ -157,12 +159,18 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
     size_t usecond_len= _match_vector[_usecond_part_index + 1] - _match_vector[_usecond_part_index];
     to->_useconds= atoi(copy_data.substr(usecond_start, usecond_len).c_str());
   }
+  if (_nsecond_part_index > 1)
+  {
+    size_t nsecond_start= _match_vector[_nsecond_part_index];
+    size_t nsecond_len= _match_vector[_nsecond_part_index + 1] - _match_vector[_nsecond_part_index];
+    to->_nseconds= atoi(copy_data.substr(nsecond_start, nsecond_len).c_str());
+  }
   return true;
 }
 
 } /* end namespace drizzled */
 
-#define COUNT_KNOWN_FORMATS 12
+#define COUNT_KNOWN_FORMATS 13
 
 struct temporal_format_args
 {
@@ -174,6 +182,7 @@ struct temporal_format_args
   int32_t minute_part_index;
   int32_t second_part_index;
   int32_t usecond_part_index;
+  int32_t nsecond_part_index;
 };
 
 /**
@@ -190,18 +199,19 @@ struct temporal_format_args
  */
 static struct temporal_format_args __format_args[COUNT_KNOWN_FORMATS]= 
 {
-  {"(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})", 1, 2, 3, 4, 5, 6, 0} /* YYYYMMDDHHmmSS */
-, {"(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})\\.(\\d{6})", 1, 2, 3, 4, 5, 6, 7} /* YYYYMMDDHHmmSS.uuuuuu */
-, {"(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})", 1, 2, 3, 4, 5, 6, 0} /* YYYY-MM-DD[T]HH:mm:SS, YYYY.MM.DD[T]HH:mm:SS, YYYY/MM/DD[T]HH:mm:SS*/
-, {"(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})", 1, 2, 3, 0, 0, 0, 0} /* YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD */
-, {"(\\d{4})(\\d{2})(\\d{2})", 1, 2, 3, 0, 0, 0, 0} /* YYYYMMDD */
-, {"(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{4})", 3, 1, 2, 0, 0, 0, 0} /* MM[-/.]DD[-/.]YYYY (US common format)*/
-, {"(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{2})", 1, 2, 3, 0, 0, 0, 0} /* YY[-/.]MM[-/.]DD */
-, {"(\\d{2})[-/.]*(\\d{1,2})[-/.]*(\\d{1,2})", 1, 2, 3, 0, 0, 0, 0} /* YY[-/.][M]M[-/.][D]D */
-, {"(\\d{2}):*(\\d{2}):*(\\d{2})\\.(\\d{6})", 0, 0, 0, 1, 2, 3, 4} /* HHmmSS.uuuuuu, HH:mm:SS.uuuuuu */
-, {"(\\d{1,2}):*(\\d{2}):*(\\d{2})", 0, 0, 0, 1, 2, 3, 0} /* [H]HmmSS, [H]H:mm:SS */
-, {"(\\d{1,2}):*(\\d{2})", 0, 0, 0, 0, 1, 2, 0} /* [m]mSS, [m]m:SS */
-, {"(\\d{1,2})", 0, 0, 0, 0, 0, 1, 0} /* SS, S */
+  {"^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})\\.(\\d{6})$", 1, 2, 3, 4, 5, 6, 7, 0} /* YYYYMMDDHHmmSS.uuuuuu */
+, {"^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})$", 1, 2, 3, 4, 5, 6, 0, 0} /* YYYYMMDDHHmmSS */
+, {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})\\.(\\d{6})$", 1, 2, 3, 4, 5, 6, 7, 0} /* YYYY[/-.]MM[/-.]DD[T]HH:mm:SS.uuuuuu */
+, {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})$", 1, 2, 3, 4, 5, 6, 0, 0} /* YYYY[/-.]MM[/-.]DD[T]HH:mm:SS */
+, {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD */
+, {"^(\\d{4})(\\d{2})(\\d{2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YYYYMMDD */
+, {"^(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{4})$", 3, 1, 2, 0, 0, 0, 0, 0} /* MM[-/.]DD[-/.]YYYY (US common format)*/
+, {"^(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YY[-/.]MM[-/.]DD */
+, {"^(\\d{2})[-/.]*(\\d{1,2})[-/.]*(\\d{1,2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YY[-/.][M]M[-/.][D]D */
+, {"^(\\d{2}):*(\\d{2}):*(\\d{2})\\.(\\d{6})$", 0, 0, 0, 1, 2, 3, 4, 0} /* HHmmSS.uuuuuu, HH:mm:SS.uuuuuu */
+, {"^(\\d{1,2}):*(\\d{2}):*(\\d{2})$", 0, 0, 0, 1, 2, 3, 0, 0} /* [H]HmmSS, [H]H:mm:SS */
+, {"^(\\d{1,2}):*(\\d{2})$", 0, 0, 0, 0, 1, 2, 0, 0} /* [m]mSS, [m]m:SS */
+, {"^(\\d{1,2})$", 0, 0, 0, 0, 0, 1, 0, 0} /* SS, S */
 };
 
 std::vector<drizzled::TemporalFormat*> known_datetime_formats;
@@ -231,15 +241,16 @@ bool init_temporal_formats()
     tmp->set_minute_part_index(current_format_args.minute_part_index);
     tmp->set_second_part_index(current_format_args.second_part_index);
     tmp->set_usecond_part_index(current_format_args.usecond_part_index);
+    tmp->set_nsecond_part_index(current_format_args.nsecond_part_index);
 
-    if (current_format_args.year_part_index > 0)
+    if (current_format_args.year_part_index > 0) /* A date must have a year */
     {
       known_datetime_formats.push_back(tmp);
-      if (current_format_args.hour_part_index == 0)
+      if (current_format_args.second_part_index == 0) /* A time must have seconds. */
         known_date_formats.push_back(tmp);
     }
-    if (current_format_args.hour_part_index > 0)
-      if (current_format_args.year_part_index == 0)
+    if (current_format_args.second_part_index > 0) /* A time must have seconds, but may not have minutes or hours */
+      if (current_format_args.year_part_index == 0) /* A time may not have a date part, and date parts must have a year */
         known_time_formats.push_back(tmp);
   }
   return true;

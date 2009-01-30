@@ -773,7 +773,6 @@ void clean_up(bool print_message)
   my_database_names_free();
   table_cache_free();
   table_def_free();
-  lex_free();				/* Free some memory */
   item_create_cleanup();
   set_var_free();
   free_charsets();
@@ -1889,7 +1888,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   unireg_init(); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
-  lex_init();
   if (item_create_init())
     return 1;
   if (set_var_init())
@@ -2637,14 +2635,14 @@ struct my_option my_long_options[] =
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
-   (char**) &max_system_variables.auto_increment_increment, 0, GET_UINT,
-   OPT_ARG, 1, 1, 65535, 0, 1, 0 },
+   (char**) &max_system_variables.auto_increment_increment, 0, GET_ULL,
+   OPT_ARG, 1, 1, UINT64_MAX, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
    N_("Offset added to Auto-increment columns. Used when "
       "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
-   (char**) &max_system_variables.auto_increment_offset, 0, GET_UINT, OPT_ARG,
-   1, 1, 65535, 0, 1, 0 },
+   (char**) &max_system_variables.auto_increment_offset, 0, GET_ULL, OPT_ARG,
+   1, 1, UINT64_MAX, 0, 1, 0 },
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
       "relative to this."),
@@ -3404,7 +3402,7 @@ static void drizzle_init_variables(void)
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
   drizzle_data_home= drizzle_real_data_home;
-  session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG | OPTION_SQL_NOTES);
+  session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;

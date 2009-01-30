@@ -19,7 +19,7 @@ AC_CANONICAL_TARGET
 CFLAGS=${SAVE_CFLAGS}
 CXXFLAGS=${SAVE_CXXFLAGS}
 
-AM_INIT_AUTOMAKE(nostdinc -Wall -Werror)
+AM_INIT_AUTOMAKE(nostdinc subdir-objects -Wall -Werror)
 if test "x${enable_dependency_tracking}" = "x"
 then
   enable_dependency_tracking=yes
@@ -189,6 +189,12 @@ then
   AC_SUBST(AS)
 else
   AC_PATH_PROG(AS, as, as)
+fi
+
+AC_PATH_PROG(GPERF, gperf, gperf)
+if test "$ac_cv_prog_gperf" = "no"
+then
+  AC_MSG_ERROR("Drizzle requires gperf to build. Please install it.")
 fi
 
 AC_PATH_PROG(LCOV, lcov, lcov)

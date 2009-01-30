@@ -66,7 +66,6 @@
 #define OPTION_FOUND_COMMENT    (UINT64_C(1) << 15)    // SELECT, intern, parser
 #define OPTION_SAFE_UPDATES     (UINT64_C(1) << 16)    // THD, user
 #define OPTION_BUFFER_RESULT    (UINT64_C(1) << 17)    // SELECT, user
-#define OPTION_BIN_LOG          (UINT64_C(1) << 18)    // THD, user
 #define OPTION_NOT_AUTOCOMMIT   (UINT64_C(1) << 19)    // THD, user
 #define OPTION_BEGIN            (UINT64_C(1) << 20)    // THD, intern
 #define OPTION_TABLE_LOCK       (UINT64_C(1) << 21)    // THD, intern
