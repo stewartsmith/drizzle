@@ -457,8 +457,7 @@ ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select month("0000-00-00"),month(d),month(dt),month(t),month(c) from t1;
 ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select quarter("0000-00-00"),quarter(d),quarter(dt),quarter(t),quarter(c) from t1;
-quarter("0000-00-00")	quarter(d)	quarter(dt)	quarter(t)	quarter(c)
-0	0	0	0	0
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select week("0000-00-00"),week(d),week(dt),week(t),week(c) from t1;
 week("0000-00-00")	week(d)	week(dt)	week(t)	week(c)
 NULL	NULL	NULL	NULL	NULL
@@ -1112,7 +1111,7 @@ SELECT t1, t2, SEC_TO_TIME( TIME_TO_SEC( t2 ) - TIME_TO_SEC( t1 ) ), QUARTER(d)
 FROM t1;
 t1	t2	SEC_TO_TIME( TIME_TO_SEC( t2 ) - TIME_TO_SEC( t1 ) )	QUARTER(d)
 10:00:00	NULL	NULL	NULL
-11:00:00	11:15:00	00:15:00	1
+11:00:00	11:15:00	00:15:00	NULL
 SELECT t1, t2, SEC_TO_TIME( TIME_TO_SEC( t2 ) - TIME_TO_SEC( t1 ) ), QUARTER(d)
 FROM t1 ORDER BY a DESC;
 t1	t2	SEC_TO_TIME( TIME_TO_SEC( t2 ) - TIME_TO_SEC( t1 ) )	QUARTER(d)

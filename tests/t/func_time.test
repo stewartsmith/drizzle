@@ -218,6 +218,7 @@ select dayofyear("0000-00-00"),dayofyear(d),dayofyear(dt),dayofyear(t),dayofyear
 select dayofmonth("0000-00-00"),dayofmonth(d),dayofmonth(dt),dayofmonth(t),dayofmonth(c) from t1;
 --error 1686 # 0000-00-00 is not a damn date.
 select month("0000-00-00"),month(d),month(dt),month(t),month(c) from t1;
+--error 1686 # 0000-00-00 not a date
 select quarter("0000-00-00"),quarter(d),quarter(dt),quarter(t),quarter(c) from t1;
 select week("0000-00-00"),week(d),week(dt),week(t),week(c) from t1;
 --error 1686 # Argh.  0000-00-00 is not a date.
