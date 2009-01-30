@@ -88,7 +88,7 @@ char *strptime (char const *restrict __buf, char const *restrict __format,
 # endif
 
 /* Convert TM to a time_t value, assuming UTC.  */
-# if 0
+# if 1
 #  undef timegm
 #  define timegm rpl_timegm
 time_t timegm (struct tm *__tm);

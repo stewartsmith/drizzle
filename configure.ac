@@ -290,7 +290,7 @@ then
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -xlang=c99 ${MEMALIGN_FLAGS}"
+  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef ${MEMALIGN_FLAGS}"
   CFLAGS="${CFLAGS} -xstrconst ${MEMALIGN_FLAGS}"
   SYMBOLS_FLAGS="-g"
   OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
@@ -913,7 +913,7 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
-AC_CONFIG_LIBOBJ_DIR([mystrings])
+AC_CONFIG_LIBOBJ_DIR([gnulib])
 
 AC_CHECK_FUNCS( \
   cuserid fchmod \
@@ -1327,7 +1327,7 @@ then
     CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
   fi
   CC_WARNINGS="-v -xc99=all -errtags=yes"
-  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder -compat=5"
   if test "$ac_exceptions" = "no"
   then
     NO_EXCEPTIONS="-features=no%except"

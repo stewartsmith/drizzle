@@ -35,6 +35,7 @@
  */
 
 #include "drizzled/global.h"
+
 #include "mystrings/m_ctype.h"
 #include "drizzled/my_decimal.h"
 #include "drizzled/temporal.h"
@@ -43,6 +44,10 @@
 #include <vector>
 #include <string.h>
 
+#ifndef _HAVE_DECL_TIMEGM
+#include <gnulib/time.h>
+//time_t timegm (struct tm *__tm);
+#endif
 
 extern std::vector<drizzled::TemporalFormat *> known_datetime_formats;
 extern std::vector<drizzled::TemporalFormat *> known_date_formats;

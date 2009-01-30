@@ -68,10 +68,6 @@
 
 #define DRIZZLE_YY_PART_YEAR  70
 
-#include <sys/time.h>
-#include <time.h>
-
-#include "drizzled/global.h"
 #include "drizzled/calendar.h"
 
 /* Outside forward declarations */
