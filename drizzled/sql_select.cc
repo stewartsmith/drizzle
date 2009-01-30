@@ -3095,6 +3095,23 @@ bool JOIN::flatten_subqueries()
     (*in_subq)->sj_convert_priority=
       (*in_subq)->is_correlated * MAX_TABLES + child_join->outer_tables;
   }
+  
+  /*
+   * Temporary measure: disable semi-joins when they are together with outer
+   * joins.
+   *
+   * @see LP Bug #314911
+   */
+  for (TableList *tbl= select_lex->leaf_tables; tbl; tbl=tbl->next_leaf)
+  {
+    TableList *embedding= tbl->embedding;
+    if (tbl->on_expr || (tbl->embedding && !(embedding->sj_on_expr && 
+                                            !embedding->embedding)))
+    {
+      in_subq= sj_subselects.front();
+      return false;
+    }
+  }
 
   /*
     2. Pick which subqueries to convert:
