@@ -1,0 +1,106 @@
+SELECT SECOND(NULL);
+SECOND(NULL)
+NULL
+SELECT SECOND();
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
+SELECT SECOND(1, 0);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ' 0)' at line 1
+SELECT SECOND("xxx");
+ERROR HY000: Received an invalid datetime value 'xxx'.
+SELECT SECOND("0000-00-00");
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
+SELECT SECOND("0000-01-01");
+ERROR HY000: Received an invalid datetime value '0000-01-01'.
+SELECT SECOND("0001-00-01");
+ERROR HY000: Received an invalid datetime value '0001-00-01'.
+SELECT SECOND("0001-01-00");
+ERROR HY000: Received an invalid datetime value '0001-01-00'.
+SELECT SECOND("2000-02-30");
+ERROR HY000: Received an invalid datetime value '2000-02-30'.
+SELECT SECOND("1900-02-29");
+ERROR HY000: Received an invalid datetime value '1900-02-29'.
+SELECT SECOND('1976-15-15');
+ERROR HY000: Received an invalid datetime value '1976-15-15'.
+SELECT SECOND('23:59:70');
+ERROR HY000: Received an invalid datetime value '23:59:70'.
+SELECT SECOND('23:70:59');
+ERROR HY000: Received an invalid datetime value '23:70:59'.
+SELECT SECOND('26:00:00');
+ERROR HY000: Received an invalid datetime value '26:00:00'.
+SELECT SECOND("2009-01-12");
+SECOND("2009-01-12")
+0
+SELECT SECOND("70-12-31");
+SECOND("70-12-31")
+0
+SELECT SECOND('07/31/2009');
+SECOND('07/31/2009')
+0
+SELECT SECOND("2008-11-30 03:30:15");
+SECOND("2008-11-30 03:30:15")
+15
+SELECT SECOND("2008-11-30T03:30:15");
+SECOND("2008-11-30T03:30:15")
+15
+SELECT SECOND("20081130033015");
+SECOND("20081130033015")
+15
+SELECT SECOND(20081130033015);
+SECOND(20081130033015)
+15
+SELECT SECOND(231115);
+SECOND(231115)
+15
+SELECT SECOND("231115");
+SECOND("231115")
+15
+SELECT SECOND("23:59:59");
+SECOND("23:59:59")
+59
+USE test;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+int_fld INT NOT NULL
+, date_fld DATE NOT NULL
+, datetime_fld DATETIME NOT NULL
+, timestamp_fld TIMESTAMP NOT NULL
+, char_fld CHAR(22) NOT NULL
+, varchar_fld VARCHAR(22) NOT NULL
+, text_fld TEXT NOT NULL
+, blob_fld BLOB NOT NULL
+);
+INSERT INTO t1 VALUES (
+20071130
+, "2007-11-30"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30T16:30:19"
+);
+SELECT SECOND(int_fld) FROM t1;
+SECOND(int_fld)
+0
+SELECT SECOND(date_fld) FROM t1;
+SECOND(date_fld)
+0
+SELECT SECOND(datetime_fld) FROM t1;
+SECOND(datetime_fld)
+19
+SELECT SECOND(timestamp_fld) FROM t1;
+SECOND(timestamp_fld)
+19
+SELECT SECOND(char_fld) FROM t1;
+SECOND(char_fld)
+19
+SELECT SECOND(varchar_fld) FROM t1;
+SECOND(varchar_fld)
+19
+SELECT SECOND(text_fld) FROM t1;
+SECOND(text_fld)
+19
+SELECT SECOND(blob_fld) FROM t1;
+SECOND(blob_fld)
+19
+DROP TABLE t1;

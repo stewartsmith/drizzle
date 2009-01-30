@@ -58,6 +58,7 @@ protected:
   uint32_t _minute_part_index;
   uint32_t _second_part_index;
   uint32_t _usecond_part_index;
+  uint32_t _nsecond_part_index;
 public:
   /**
    * Constructor which takes a regex string as
@@ -108,11 +109,17 @@ public:
    */
   inline void set_second_part_index(int32_t index) {_second_part_index= ((index - 1) * 2) + 2;}
   /**
-   * Sets the index for the second part of the pattern.
+   * Sets the index for the microsecond part of the pattern.
    *
    * @param index of the temporal part
    */
   inline void set_usecond_part_index(int32_t index) {_usecond_part_index= ((index - 1) * 2) + 2;}
+  /**
+   * Sets the index for the nanosecond part of the pattern.
+   *
+   * @param index of the temporal part
+   */
+  inline void set_nsecond_part_index(int32_t index) {_nsecond_part_index= ((index - 1) * 2) + 2;}
   /**
    * Returns true or false whether a supplied
    * string matches the internal pattern for this
