@@ -127,8 +127,8 @@ struct system_variables
   uint64_t tmp_table_size;
   ha_rows select_limit;
   ha_rows max_join_size;
-  uint32_t auto_increment_increment;
-  uint32_t auto_increment_offset;
+  uint64_t auto_increment_increment;
+  uint64_t auto_increment_offset;
   uint64_t bulk_insert_buff_size;
   uint64_t join_buff_size;
   uint32_t max_allowed_packet;
