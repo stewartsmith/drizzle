@@ -274,7 +274,7 @@ typedef struct {
 
 
 static COMMANDS commands[] = {
-  { "?",      '?', com_help,   1, N_("Synonym for `help'.") },
+  { "?",      '?', com_help,   0, N_("Synonym for `help'.") },
   { "clear",  'c', com_clear,  0, N_("Clear command.")},
   { "connect",'r', com_connect,1,
     N_("Reconnect to the server. Optional arguments are db and host." }),
@@ -284,7 +284,7 @@ static COMMANDS commands[] = {
     N_("Send command to drizzle server, display result vertically.")},
   { "exit",   'q', com_quit,   0, N_("Exit drizzle. Same as quit.")},
   { "go",     'g', com_go,     0, N_("Send command to drizzle server.") },
-  { "help",   'h', com_help,   1, N_("Display this help.") },
+  { "help",   'h', com_help,   0, N_("Display this help.") },
   { "nopager",'n', com_nopager,0, N_("Disable pager, print to stdout.") },
   { "notee",  't', com_notee,  0, N_("Don't write into outfile.") },
   { "pager",  'P', com_pager,  1,
@@ -2548,122 +2548,11 @@ int drizzle_store_result_for_lazy(DRIZZLE_RES **result)
   return 0;
 }
 
-static void print_help_item(DRIZZLE_ROW *cur, int num_name, int num_cat, char *last_char)
-{
-  char ccat= (*cur)[num_cat][0];
-  if (*last_char != ccat)
-  {
-    put_info(ccat == 'Y' ? _("categories:") : _("topics:"), INFO_INFO,0,0);
-    *last_char= ccat;
-  }
-  tee_fprintf(PAGER, "   %s\n", (*cur)[num_name]);
-}
-
-
-static int com_server_help(string *buffer, const char *, const char *help_arg)
-{
-  DRIZZLE_ROW cur;
-  const char *server_cmd= buffer->c_str();
-  string cmd_buf;
-  DRIZZLE_RES *result;
-  int error;
-
-  cmd_buf.reserve(100);
-  if (help_arg[0] != '\'')
-  {
-    const char *end_arg= strchr(help_arg, '\0');
-    if(--end_arg)
-    {
-      while (my_isspace(charset_info,*end_arg))
-        end_arg--;
-    }
-    cmd_buf.append("help '");
-    cmd_buf.append(help_arg, end_arg-help_arg);
-    cmd_buf.append("'");
-
-    server_cmd= cmd_buf.c_str();
-  }
-
-  if (!connected && reconnect())
-    return 1;
-
-  if ((error= drizzle_real_query_for_lazy(server_cmd,(int)strlen(server_cmd))) ||
-      (error= drizzle_store_result_for_lazy(&result)))
-    return error;
-
-  if (result)
-  {
-    unsigned int num_fields= drizzle_num_fields(result);
-    uint64_t num_rows= drizzle_num_rows(result);
-    drizzle_fetch_fields(result);
-    if (num_fields==3 && num_rows==1)
-    {
-      if (!(cur= drizzle_fetch_row(result)))
-      {
-        error= -1;
-        goto err;
-      }
-
-      init_pager();
-      tee_fprintf(PAGER,   _("Name: \'%s\'\n"), cur[0]);
-      tee_fprintf(PAGER,   _("Description:\n%s"), cur[1]);
-      if (cur[2] && *((char*)cur[2]))
-        tee_fprintf(PAGER, _("Examples:\n%s"), cur[2]);
-      tee_fprintf(PAGER,   "\n");
-      end_pager();
-    }
-    else if (num_fields >= 2 && num_rows)
-    {
-      init_pager();
-      char last_char= 0;
-
-      int num_name= 0, num_cat= 0;
-
-      if (num_fields == 2)
-      {
-        put_info(_("Many help items for your request exist."), INFO_INFO,0,0);
-        put_info(_("To make a more specific request, please type 'help <item>',\nwhere <item> is one of the following"), INFO_INFO,0,0);
-        num_name= 0;
-        num_cat= 1;
-      }
-      else if ((cur= drizzle_fetch_row(result)))
-      {
-        tee_fprintf(PAGER, _("You asked for help about help category: '%s'\n"), cur[0]);
-        put_info(_("For more information, type 'help <item>', where <item> is one of the following"), INFO_INFO,0,0);
-        num_name= 1;
-        num_cat= 2;
-        print_help_item(&cur,1,2,&last_char);
-      }
-
-      while ((cur= drizzle_fetch_row(result)))
-        print_help_item(&cur,num_name,num_cat,&last_char);
-      tee_fprintf(PAGER, "\n");
-      end_pager();
-    }
-    else
-    {
-      put_info(_("\nNothing found"), INFO_INFO,0,0);
-      put_info(_("Please try to run 'help contents' for a list of all accessible topics\n"), INFO_INFO,0,0);
-    }
-  }
-
-err:
-  drizzle_free_result(result);
-  return error;
-}
-
 static int
-com_help(string *buffer, const char *line)
+com_help(string *buffer, const char *)
 {
   register int i, j;
-  const char *help_arg= strchr(line,' ');
   char buff[32], *end;
-  if (help_arg)
-  {
-    while (my_isspace(charset_info,*help_arg))
-      help_arg++;
-    if (*help_arg) return com_server_help(buffer,line,help_arg);
-  }
 
   put_info(_("List of all Drizzle commands:"), INFO_INFO,0,0);
   if (!named_cmds)
@@ -2678,8 +2567,8 @@ com_help(string *buffer, const char *line)
       tee_fprintf(stdout, "%s(\\%c) %s\n", buff,
                   commands[i].cmd_char, _(commands[i].doc));
   }
-  if (connected && drizzle_get_server_version(&drizzle) >= 40100)
-    put_info(_("\nFor server side help, type 'help contents'\n"), INFO_INFO,0,0);
+  tee_fprintf(stdout, "\n");
+  buffer->clear();
   return 0;
 }
 
