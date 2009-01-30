@@ -22,14 +22,14 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
-/* todo, make this dynamic as needed */
+/* TODO make this dynamic as needed */
 #define MAX_MSG_LEN (32*1024)
 
-static char* logging_query_filename= NULL;
-static bool logging_query_enable= true;
-static ulong logging_query_threshold_slow= 0;
-static ulong logging_query_threshold_big_resultset= 0;
-static ulong logging_query_threshold_big_examined= 0;
+static bool sysvar_logging_query_enable= false;
+static char* sysvar_logging_query_filename= NULL;
+static ulong sysvar_logging_query_threshold_slow= 0;
+static ulong sysvar_logging_query_threshold_big_resultset= 0;
+static ulong sysvar_logging_query_threshold_big_examined= 0;
 
 static int fd= -1;
 
@@ -59,8 +59,8 @@ static uint64_t get_microtime()
    and all the ASCII unprintable characters
    as long as we pass the high-bit bytes unchanged
    this is safe to do to a UTF8 string
-   we have to be careful about overrunning the targetbuffer
-   or else a very long query can overwrite memory
+   we dont allow overrunning the targetbuffer
+   to avoid having a very long query overwrite memory
 
    TODO consider remapping the unprintables instead to "Printable
    Representation", the Unicode characters from the area U+2400 to
@@ -73,24 +73,24 @@ static uint64_t get_microtime()
 static unsigned char *quotify (const unsigned char *src, size_t srclen,
                                unsigned char *dst, size_t dstlen)
 {
-  static char hexit[]= { '0', '1', '2', '3', '4', '5', '6', '7',
+  static const char hexit[]= { '0', '1', '2', '3', '4', '5', '6', '7',
 			  '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-  size_t dst_ndx;  /* index down the dst */
-  size_t src_ndx;  /* index down the src */
+  size_t dst_ndx;  /* ndx down the dst */
+  size_t src_ndx;  /* ndx down the src */
 
   assert(dst);
   assert(dstlen > 0);
 
-  for (dst_ndx=0,src_ndx=0; src_ndx<srclen; src_ndx++)
+  for (dst_ndx= 0,src_ndx= 0; src_ndx < srclen; src_ndx++)
   {
 
-    /* Worst case, need 5 dst bytes for the next src byte. 
+    /* Worst case, need 5 dst bytes for the next src byte.
        backslash x hexit hexit null
        so if not enough room, just terminate the string and return
     */
     if ((dstlen - dst_ndx) < 5)
     {
-      dst[dst_ndx]= (unsigned char) 0x00;
+      dst[dst_ndx]= (unsigned char)0x00;
       return dst;
     }
 
@@ -105,7 +105,7 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
     }
     else if (src[src_ndx] == 0x07)  // bell
     {
-      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]=  (unsigned char) 'a';
+      dst[dst_ndx++]= 0x5C; dst[dst_ndx++]= (unsigned char) 'a';
     }
     else if (src[src_ndx] == 0x08)  // backspace
     {
@@ -183,19 +183,19 @@ bool logging_query_func_post (Session *session)
   if (fd < 0)
     return false;
 
-  /* Yes, we know that checking logging_query_enable,
-     logging_query_threshold_big_resultset, and
-     logging_query_threshold_big_examined is not threadsafe, because some
-     other thread might change these sysvars.  But we don't care.  We
-     might start logging a little late as it spreads to other threads.
-     Big deal. */
+  /* Yes, we know that checking sysvar_logging_query_enable,
+     sysvar_logging_query_threshold_big_resultset, and
+     sysvar_logging_query_threshold_big_examined is not threadsafe,
+     because some other thread might change these sysvars.  But we
+     don't care.  We might start logging a little late as it spreads
+     to other threads.  Big deal. */
 
   // return if not enabled or query was too fast or resultset was too small
-  if (logging_query_enable == false)
+  if (sysvar_logging_query_enable == false)
     return false;
-  if (session->sent_row_count < logging_query_threshold_big_resultset)
+  if (session->sent_row_count < sysvar_logging_query_threshold_big_resultset)
     return false;
-  if (session->examined_row_count < logging_query_threshold_big_examined)
+  if (session->examined_row_count < sysvar_logging_query_threshold_big_examined)
     return false;
 
   // logging this is far too verbose
@@ -211,10 +211,17 @@ bool logging_query_func_post (Session *session)
 
   uint64_t t_mark= get_microtime();
 
-  if ((t_mark - session->start_utime) < (logging_query_threshold_slow)) return false;
+  if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow))
+    return false;
 
   // buffer to quotify the query
   unsigned char qs[255];
+
+  // to avoid trying to printf %s something that is potentially NULL
+  const char *dbs= (session->db) ? session->db : "";
+  int dbl= 0;
+  if (dbs != NULL)
+    dbl= session->db_length;
 
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
@@ -223,7 +230,7 @@ bool logging_query_func_post (Session *session)
              (unsigned long) session->thread_id,
              (unsigned long) session->query_id,
              // dont need to quote the db name, always CSV safe
-             session->db_length, session->db,
+             dbl, dbs,
              // do need to quote the query
              (char *) quotify((unsigned char *) session->query, session->query_length,
                               qs, sizeof(qs)),
@@ -250,7 +257,7 @@ static int logging_query_plugin_init(void *p)
 {
   logging_t *l= (logging_t *) p;
 
-  if (logging_query_filename == NULL)
+  if (sysvar_logging_query_filename == NULL)
   {
     /* no destination filename was specified via system variables
        return now, dont set the callback pointers
@@ -258,13 +265,13 @@ static int logging_query_plugin_init(void *p)
     return 0;
   }
 
-  fd= open(logging_query_filename,
+  fd= open(sysvar_logging_query_filename,
            O_WRONLY | O_APPEND | O_CREAT,
            S_IRUSR|S_IWUSR);
   if (fd < 0)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
-                  logging_query_filename,
+                  sysvar_logging_query_filename,
                   strerror(errno));
 
     /* TODO
@@ -299,27 +306,27 @@ static int logging_query_plugin_deinit(void *p)
   return 0;
 }
 
+static DRIZZLE_SYSVAR_BOOL(
+  enable,
+  sysvar_logging_query_enable,
+  PLUGIN_VAR_NOCMDARG,
+  N_("Enable logging to CSV file"),
+  NULL, /* check func */
+  NULL, /* update func */
+  false /* default */);
+
 static DRIZZLE_SYSVAR_STR(
   filename,
-  logging_query_filename,
+  sysvar_logging_query_filename,
   PLUGIN_VAR_READONLY,
   N_("File to log to"),
   NULL, /* check func */
   NULL, /* update func*/
   NULL /* default */);
 
-static DRIZZLE_SYSVAR_BOOL(
-  enable,
-  logging_query_enable,
-  PLUGIN_VAR_NOCMDARG,
-  N_("Enable logging"),
-  NULL, /* check func */
-  NULL, /* update func */
-  true /* default */);
-
 static DRIZZLE_SYSVAR_ULONG(
   threshold_slow,
-  logging_query_threshold_slow,
+  sysvar_logging_query_threshold_slow,
   PLUGIN_VAR_OPCMDARG,
   N_("Threshold for logging slow queries, in microseconds"),
   NULL, /* check func */
@@ -331,7 +338,7 @@ static DRIZZLE_SYSVAR_ULONG(
 
 static DRIZZLE_SYSVAR_ULONG(
   threshold_big_resultset,
-  logging_query_threshold_big_resultset,
+  sysvar_logging_query_threshold_big_resultset,
   PLUGIN_VAR_OPCMDARG,
   N_("Threshold for logging big queries, for rows returned"),
   NULL, /* check func */
@@ -343,7 +350,7 @@ static DRIZZLE_SYSVAR_ULONG(
 
 static DRIZZLE_SYSVAR_ULONG(
   threshold_big_examined,
-  logging_query_threshold_big_examined,
+  sysvar_logging_query_threshold_big_examined,
   PLUGIN_VAR_OPCMDARG,
   N_("Threshold for logging big queries, for rows examined"),
   NULL, /* check func */
@@ -354,8 +361,8 @@ static DRIZZLE_SYSVAR_ULONG(
   0 /* blksiz */);
 
 static struct st_mysql_sys_var* logging_query_system_variables[]= {
-  DRIZZLE_SYSVAR(filename),
   DRIZZLE_SYSVAR(enable),
+  DRIZZLE_SYSVAR(filename),
   DRIZZLE_SYSVAR(threshold_slow),
   DRIZZLE_SYSVAR(threshold_big_resultset),
   DRIZZLE_SYSVAR(threshold_big_examined),
@@ -366,9 +373,9 @@ drizzle_declare_plugin(logging_query)
 {
   DRIZZLE_LOGGER_PLUGIN,
   "logging_query",
-  "0.1",
+  "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",
-  N_("Log queries to a file"),
+  N_("Log queries to a CSV file"),
   PLUGIN_LICENSE_GPL,
   logging_query_plugin_init,
   logging_query_plugin_deinit,
