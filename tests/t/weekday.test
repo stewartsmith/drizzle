@@ -1,0 +1,68 @@
+#
+# Tests for the WEEKDAY() function
+#
+# The Drizzle WEEKDAY() function differs from the MySQL WEEKDAY()
+# function in these ways:
+#
+#  * Does not accept invalid parameters.  This results in an error
+#    in Drizzle.
+#
+
+# WEEKDAY() on a NULL should produce
+# a NULL.
+SELECT WEEKDAY(NULL);
+
+# 
+# Test improper argument list 
+#
+# 1 arg is required.
+--error 1582 # Wrong parameter count...
+SELECT WEEKDAY();
+--error 1582 # Wrong parameter count...
+SELECT WEEKDAY(1, 0);
+
+# 
+# Test invalid dates passed to WEEKDAY
+# produce an error, not a NULL or anything
+# else...
+#
+--error 1686
+SELECT WEEKDAY("xxx");
+
+# Indy, bad dates!
+--error 1686
+SELECT WEEKDAY("0000-00-00"); # No 0000-00-00 dates!...
+--error 1686
+SELECT WEEKDAY("0000-01-01"); # No zero year parts
+--error 1686
+SELECT WEEKDAY("0001-00-01"); # No zero month parts
+--error 1686
+SELECT WEEKDAY("0001-01-00"); # No zero day parts
+--error 1686
+SELECT WEEKDAY("2000-02-30"); # No Feb 30th!
+--error 1686
+SELECT WEEKDAY("1900-02-29"); # Not a leap YEAR since not divisible evenly by 400...
+--error 1686
+SELECT WEEKDAY('1976-15-15'); # No 15th month!
+
+# A good date, which should output 0
+SELECT WEEKDAY("2009-01-12");
+
+# A good date, which should output 3 
+# Test of 2 digit year conversion...shouldn't mess with weekday functionality
+SELECT WEEKDAY("70-12-31");
+
+# A good date, which should output 4
+SELECT WEEKDAY("99-12-31");
+
+# A good date, which should output 1
+SELECT WEEKDAY("69-12-31");
+
+# A good date, which should output 0
+SELECT WEEKDAY("0001-12-31");
+
+# A good date, which should output 4
+SELECT WEEKDAY("9999-12-31");
+
+# A good date in the common USA format, should output 4
+SELECT WEEKDAY('07/31/2009');
