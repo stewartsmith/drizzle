@@ -106,7 +106,7 @@ uint64_t my_set_max_open_files(uint64_t files)
   memcpy(tmp, my_file_info,
          sizeof(*tmp) *
             (size_t)cmin(my_file_limit,
-                 cmax(files,SIZE_MAX)));
+                 cmax(files,UINT32_MAX)));
   /*
     The int cast is necessary since 'my_file_limits' might be greater
     than 'files'.
@@ -115,7 +115,7 @@ uint64_t my_set_max_open_files(uint64_t files)
          cmax((int) (files - my_file_limit), 0)*sizeof(*tmp));
   my_free_open_file_info();			/* Free if already allocated */
   my_file_info= tmp;
-  my_file_limit= (size_t)cmax(SIZE_MAX,files);
+  my_file_limit= (size_t)cmax(UINT32_MAX,files);
   return(files);
 }
 

@@ -18,14 +18,23 @@ typedef struct {
 } auth_pam_userinfo;
 
 extern "C"
-static int auth_pam_talker(int num_msg,
+int auth_pam_talker(int num_msg,
 #ifdef __sun
-                           struct pam_message **msg,
+                    struct pam_message **msg,
 #else
-                           const struct pam_message **msg,
+                    const struct pam_message **msg,
 #endif
-                           struct pam_response **resp,
-                           void *appdata_ptr)
+                    struct pam_response **resp,
+                    void *appdata_ptr);
+
+int auth_pam_talker(int num_msg,
+#ifdef __sun
+                    struct pam_message **msg,
+#else
+                    const struct pam_message **msg,
+#endif
+                    struct pam_response **resp,
+                    void *appdata_ptr)
 {
   auth_pam_userinfo *userinfo = (auth_pam_userinfo*)appdata_ptr;
   struct pam_response *response = 0;
