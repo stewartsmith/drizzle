@@ -23,13 +23,14 @@
 #include <drizzled/session.h>
 
 /* TODO make this dynamic as needed */
-#define MAX_MSG_LEN (32*1024)
+static const int MAX_MSG_LEN= 32*1024;
 
 static bool sysvar_logging_query_enable= false;
 static char* sysvar_logging_query_filename= NULL;
-static ulong sysvar_logging_query_threshold_slow= 0;
-static ulong sysvar_logging_query_threshold_big_resultset= 0;
-static ulong sysvar_logging_query_threshold_big_examined= 0;
+/* TODO fix these to not be unsigned long one we have sensible sys_var system */
+static unsigned long sysvar_logging_query_threshold_slow= 0;
+static unsigned long sysvar_logging_query_threshold_big_resultset= 0;
+static unsigned long sysvar_logging_query_threshold_big_examined= 0;
 
 static int fd= -1;
 
@@ -225,25 +226,26 @@ bool logging_query_func_post (Session *session)
 
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
-             "%lld,%ld,%ld,\"%.*s\",\"%s\",\"%.*s\",%lld,%lld,%lld,%ld,%ld\n",
-             (unsigned long long) t_mark,
-             (unsigned long) session->thread_id,
-             (unsigned long) session->query_id,
+             "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
+             "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"\n",
+             t_mark,
+             session->thread_id,
+             session->query_id,
              // dont need to quote the db name, always CSV safe
              dbl, dbs,
              // do need to quote the query
-             (char *) quotify((unsigned char *) session->query, session->query_length,
-                              qs, sizeof(qs)),
+             quotify((unsigned char *)session->query,
+                     session->query_length, qs, sizeof(qs)),
              // command_name is defined in drizzled/sql_parse.cc
              // dont need to quote the command name, always CSV safe
-             (int) command_name[session->command].length,
+             (int)command_name[session->command].length,
              command_name[session->command].str,
              // counters are at end, to make it easier to add more
-             (unsigned long long) (t_mark - session->connect_utime),
-             (unsigned long long) (t_mark - session->start_utime),
-             (unsigned long long) (t_mark - session->utime_after_lock),
-             (unsigned long) session->sent_row_count,
-             (unsigned long) session->examined_row_count);
+             (t_mark - session->connect_utime),
+             (t_mark - session->start_utime),
+             (t_mark - session->utime_after_lock),
+             session->sent_row_count,
+             session->examined_row_count);
 
 
   // a single write has a kernel thread lock, thus no need mutex guard this
@@ -255,7 +257,7 @@ bool logging_query_func_post (Session *session)
 
 static int logging_query_plugin_init(void *p)
 {
-  logging_t *l= (logging_t *) p;
+  logging_t *l= static_cast<logging_t *>(p);
 
   if (sysvar_logging_query_filename == NULL)
   {
@@ -333,7 +335,7 @@ static DRIZZLE_SYSVAR_ULONG(
   NULL, /* update func */
   0, /* default */
   0, /* min */
-  ULONG_MAX, /* max */
+  UINT32_MAX, /* max */
   0 /* blksiz */);
 
 static DRIZZLE_SYSVAR_ULONG(
@@ -345,7 +347,7 @@ static DRIZZLE_SYSVAR_ULONG(
   NULL, /* update func */
   0, /* default */
   0, /* min */
-  ULONG_MAX, /* max */
+  UINT32_MAX, /* max */
   0 /* blksiz */);
 
 static DRIZZLE_SYSVAR_ULONG(
@@ -357,7 +359,7 @@ static DRIZZLE_SYSVAR_ULONG(
   NULL, /* update func */
   0, /* default */
   0, /* min */
-  ULONG_MAX, /* max */
+  UINT32_MAX, /* max */
   0 /* blksiz */);
 
 static struct st_mysql_sys_var* logging_query_system_variables[]= {
