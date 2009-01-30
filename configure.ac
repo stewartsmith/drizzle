@@ -26,6 +26,7 @@ then
   enable_dependency_tracking=yes
 fi
 
+gl_EARLY
 
 # See the libtool docs for information on how to do shared lib versions.
 SHARED_LIB_MAJOR_VERSION=1
@@ -38,7 +39,7 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 
-ACX_USE_SYSTEM_EXTENSIONS
+gl_USE_SYSTEM_EXTENSIONS
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
@@ -47,6 +48,7 @@ fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
 
+gl_INIT
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 ifdef([AC_PROG_CC_C99],[
@@ -264,7 +266,7 @@ then
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef -xlang=c99 ${MEMALIGN_FLAGS}"
+  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef ${MEMALIGN_FLAGS}"
   CFLAGS="${CFLAGS} -xstrconst ${MEMALIGN_FLAGS}"
   SYMBOLS_FLAGS="-g"
   OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
@@ -890,7 +892,7 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
-AC_CONFIG_LIBOBJ_DIR([mystrings])
+AC_CONFIG_LIBOBJ_DIR([gnulib])
 
 AC_CHECK_FUNCS( \
   cuserid fchmod \
@@ -1341,7 +1343,12 @@ AC_SUBST(NO_REDUNDANT_DECLS)
 AC_SUBST(PROTOSKIP_WARNINGS)
 AC_SUBST(NO_UNREACHED)
 
-AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
+GLOBAL_CPPFLAGS='-I$(top_srcdir) -I$(top_builddir)'
+if test "$ac_cv_func_timegm" = "no" -o "$gl_cv_func_gnu_getopt" = "no"
+then
+  GLOBAL_CPPFLAGS="${GLOBAL_CPPFLAGS} -I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib"
+fi
+AC_SUBST([GLOBAL_CPPFLAGS])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 AC_SUBST([GLOBAL_CXXFLAGS],[${AM_CXXFLAGS}])
 AC_SUBST([AM_CFLAGS])
@@ -1371,6 +1378,7 @@ dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
+ gnulib/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
  po/Makefile.in dnl
  libdrizzle/Makefile client/Makefile dnl

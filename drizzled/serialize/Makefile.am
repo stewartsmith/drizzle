@@ -13,7 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-LDADD= libserialize.la ${LTLIBPROTOBUF} ${LTLIBUUID}
+LDADD= libserialize.la \
+	${LTLIBPROTOBUF} \
+	${LTLIBUUID} \
+	${LTLIBINTL} \
+	${top_builddir}/gnulib/libgnu.la
 
 AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
 
