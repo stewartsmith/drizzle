@@ -22,9 +22,8 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
-// defining this declares prioritynames and facilitynames from syslog.h
-#define SYSLOG_NAMES
 #include <syslog.h>
+#include <plugin/logging_syslog/names.h>
 
 #include <stdarg.h>
 
@@ -146,8 +145,6 @@ bool logging_syslog_func_post (Session *session)
 static int logging_syslog_plugin_init(void *p)
 {
   logging_t *l= (logging_t *) p;
-
-  // defining SYSLOG_NAMES before including syslog.h declares prioritynames and facilitynames
 
   syslog_facility= -1;
   for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
