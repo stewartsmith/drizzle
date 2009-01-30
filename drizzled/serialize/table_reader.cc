@@ -1,10 +1,19 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+#include <stdio.h>
+#include <errno.h>
+
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <drizzled/serialize/table.pb.h>
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 using namespace std;
 using namespace drizzle;
+using namespace google::protobuf::io;
 
 /*
   Written from Google proto example
@@ -244,9 +253,17 @@ int main(int argc, char* argv[])
   Table table;
 
   {
-    // Read the existing address book.
-    fstream input(argv[1], ios::in | ios::binary);
-    if (!table.ParseFromIstream(&input))
+    int fd= open(argv[1], O_RDONLY);
+
+    if(fd==-1)
+    {
+      perror("Failed to open table definition file");
+      return -1;
+    }
+
+    ZeroCopyInputStream* input = new FileInputStream(fd);
+
+    if (!table.ParseFromZeroCopyStream(input))
     {
       cerr << "Failed to parse table." << endl;
       return -1;
