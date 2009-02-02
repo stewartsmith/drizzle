@@ -1,3 +1,5 @@
 DRIZZLE_PLUGIN(logging_syslog,[Syslog Logging Plugin],
         [Logging Plugin that writes to syslog.])
 DRIZZLE_PLUGIN_DYNAMIC(logging_syslog, [liblogging_syslog.la])
+DRIZZLE_PLUGIN_STATIC(logging_syslog, [liblogging_syslog.a])
+DRIZZLE_PLUGIN_MANDATORY(logging_syslog)  dnl Default

@@ -554,7 +554,7 @@ class Item_sum_count :public Item_sum_int
   void clear();
   void no_rows_in_result() { count=0; }
   bool add();
-  void make_const(int64_t count_arg)
+  void make_const_count(int64_t count_arg)
   {
     count=count_arg;
     Item_sum::make_const();

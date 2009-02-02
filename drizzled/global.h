@@ -62,6 +62,20 @@
 #define EOVERFLOW 84
 #endif
 
+
+/* Including this here because the cantrip is so bloody involved */
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
+
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
   the thread headers, else the function madvise() will not be defined

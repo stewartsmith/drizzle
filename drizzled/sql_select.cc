@@ -3094,32 +3094,53 @@ bool JOIN::flatten_subqueries()
     (*in_subq)->sj_convert_priority=
       (*in_subq)->is_correlated * MAX_TABLES + child_join->outer_tables;
   }
-
+  
+  bool outer_join_disable_semi_join= false;
   /*
-    2. Pick which subqueries to convert:
-      sort the subquery array
-      - prefer correlated subqueries over uncorrelated;
-      - prefer subqueries that have greater number of outer tables;
-  */
-  sj_subselects.sort(subq_sj_candidate_cmp);
-  // #tables-in-parent-query + #tables-in-subquery < MAX_TABLES
-  /* Replace all subqueries to be flattened with Item_int(1) */
-  for (in_subq= sj_subselects.front();
-       in_subq != in_subq_end &&
-       tables + ((*in_subq)->sj_convert_priority % MAX_TABLES) < MAX_TABLES;
-       in_subq++)
+   * Temporary measure: disable semi-joins when they are together with outer
+   * joins.
+   *
+   * @see LP Bug #314911
+   */
+  for (TableList *tbl= select_lex->leaf_tables; tbl; tbl=tbl->next_leaf)
   {
-    if (replace_where_subcondition(this, *in_subq, new Item_int(1), false))
-      return(true);
+    TableList *embedding= tbl->embedding;
+    if (tbl->on_expr || (tbl->embedding && !(embedding->sj_on_expr && 
+                                            !embedding->embedding)))
+    {
+      in_subq= sj_subselects.front();
+      outer_join_disable_semi_join= true;
+    }
   }
 
-  for (in_subq= sj_subselects.front();
-       in_subq != in_subq_end &&
-       tables + ((*in_subq)->sj_convert_priority % MAX_TABLES) < MAX_TABLES;
-       in_subq++)
+  if (! outer_join_disable_semi_join)
   {
-    if (convert_subq_to_sj(this, *in_subq))
-      return(true);
+    /*
+      2. Pick which subqueries to convert:
+        sort the subquery array
+        - prefer correlated subqueries over uncorrelated;
+        - prefer subqueries that have greater number of outer tables;
+    */
+    sj_subselects.sort(subq_sj_candidate_cmp);
+    // #tables-in-parent-query + #tables-in-subquery < MAX_TABLES
+    /* Replace all subqueries to be flattened with Item_int(1) */
+    for (in_subq= sj_subselects.front();
+        in_subq != in_subq_end &&
+        tables + ((*in_subq)->sj_convert_priority % MAX_TABLES) < MAX_TABLES;
+        in_subq++)
+    {
+      if (replace_where_subcondition(this, *in_subq, new Item_int(1), false))
+        return(true);
+    }
+
+    for (in_subq= sj_subselects.front();
+        in_subq != in_subq_end &&
+        tables + ((*in_subq)->sj_convert_priority % MAX_TABLES) < MAX_TABLES;
+        in_subq++)
+    {
+      if (convert_subq_to_sj(this, *in_subq))
+        return(true);
+    }
   }
 
   /* 3. Finalize those we didn't convert */

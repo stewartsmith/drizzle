@@ -99,7 +99,11 @@ public:
   {
     (*ref)->save_in_field(result_field, no_conversions);
   }
-  Item *real_item()
+  Item *real_item(void)
+  {
+    return ref ? (*ref)->real_item() : this;
+  }
+  const Item *real_item(void) const
   {
     return ref ? (*ref)->real_item() : this;
   }

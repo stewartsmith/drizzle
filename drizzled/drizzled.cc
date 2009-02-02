@@ -27,7 +27,7 @@
 #include <signal.h>
 
 #include <mysys/my_bit.h>
-#include <libdrizzle/libdrizzle.h>
+#include <libdrizzleclient/libdrizzle.h>
 #include <mysys/hash.h>
 #include <drizzled/stacktrace.h>
 #include <mysys/mysys_err.h>
@@ -69,7 +69,7 @@
 #endif
 
 #include <mysys/thr_alarm.h>
-#include <libdrizzle/errmsg.h>
+#include <libdrizzleclient/errmsg.h>
 #include <locale.h>
 
 #define mysqld_charset &my_charset_utf8_general_ci
@@ -465,7 +465,7 @@ uint32_t connection_count= 0;
 
 /* Function declarations */
 
-pthread_handler_t signal_hand(void *arg);
+extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
@@ -474,8 +474,8 @@ static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(void);
 void handle_connections_sockets();
-pthread_handler_t kill_server_thread(void *arg);
-pthread_handler_t handle_slave(void *arg);
+extern "C" pthread_handler_t kill_server_thread(void *arg);
+extern "C" pthread_handler_t handle_slave(void *arg);
 static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib);
 static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
                                    const char *option);
@@ -488,7 +488,7 @@ static void clean_up_mutexes(void);
 static void wait_for_signal_thread_to_end(void);
 static void create_pid_file();
 static void drizzled_exit(int exit_code) __attribute__((noreturn));
-bool safe_read_error_impl(NET *net);
+extern "C" bool safe_read_error_impl(NET *net);
 
 /****************************************************************************
 ** Code to end drizzled
@@ -772,7 +772,6 @@ void clean_up(bool print_message)
 
   table_cache_free();
   table_def_free();
-  lex_free();				/* Free some memory */
   item_create_cleanup();
   set_var_free();
   free_charsets();
@@ -1597,8 +1596,8 @@ pthread_handler_t signal_hand(void *)
 #endif
       break;					/* purecov: tested */
     }
+  return 0;
   }
-  return(0);					/* purecov: deadcode */
 }
 
 static void check_data_home(const char *)
@@ -1836,7 +1835,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   /* connections and databases needs lots of files */
   {
-    uint32_t files, wanted_files, max_open_files;
+    uint64_t files, wanted_files, max_open_files;
 
     /* MyISAM requires two file handles per table. */
     wanted_files= 10+max_connections+table_cache_size*2;
@@ -1888,7 +1887,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   unireg_init(); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
-  lex_init();
   if (item_create_init())
     return 1;
   if (set_var_init())
@@ -2633,14 +2631,14 @@ struct my_option my_long_options[] =
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
-   (char**) &max_system_variables.auto_increment_increment, 0, GET_UINT,
-   OPT_ARG, 1, 1, 65535, 0, 1, 0 },
+   (char**) &max_system_variables.auto_increment_increment, 0, GET_ULL,
+   OPT_ARG, 1, 1, UINT64_MAX, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
    N_("Offset added to Auto-increment columns. Used when "
       "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
-   (char**) &max_system_variables.auto_increment_offset, 0, GET_UINT, OPT_ARG,
-   1, 1, 65535, 0, 1, 0 },
+   (char**) &max_system_variables.auto_increment_offset, 0, GET_ULL, OPT_ARG,
+   1, 1, UINT64_MAX, 0, 1, 0 },
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
       "relative to this."),
@@ -3379,7 +3377,8 @@ static void drizzle_init_variables(void)
   abort_loop= select_thread_in_use= signal_thread_in_use= 0;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
-  max_used_connections= slow_launch_threads = 0;
+  max_used_connections= 0;
+  slow_launch_threads= 0;
   drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;
   my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));

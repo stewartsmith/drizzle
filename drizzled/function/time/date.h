@@ -29,6 +29,8 @@
 class Item_date :public Item_func
 {
 public:
+  using Item_func::tmp_table_field;
+
   Item_date() :Item_func() {}
   Item_date(Item *a) :Item_func(a) {}
   enum Item_result result_type () const { return STRING_RESULT; }
@@ -43,6 +45,7 @@ public:
     decimals=0;
     max_length=MAX_DATE_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
   }
+
   Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);
@@ -68,6 +71,8 @@ public:
   Item_date_func(Item *a,Item *b) :Item_str_func(a,b) {}
   Item_date_func(Item *a,Item *b, Item *c) :Item_str_func(a,b,c) {}
   enum_field_types field_type() const { return DRIZZLE_TYPE_DATETIME; }
+
+  using Item_func::tmp_table_field;
   Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);

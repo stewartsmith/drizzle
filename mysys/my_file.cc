@@ -40,7 +40,7 @@
 #define RLIM_INFINITY ((uint) 0xffffffff)
 #endif
 
-static uint32_t set_max_open_files(uint32_t max_file_limit)
+static uint64_t set_max_open_files(uint64_t max_file_limit)
 {
   struct rlimit rlimit;
   rlim_t old_cur;
@@ -72,7 +72,7 @@ static uint32_t set_max_open_files(uint32_t max_file_limit)
 }
 
 #else
-static int set_max_open_files(uint32_t max_file_limit)
+static int set_max_open_files(uint64_t max_file_limit)
 {
   /* We don't know the limit. Return best guess */
   return cmin(max_file_limit, OS_FILE_LIMIT);
@@ -91,7 +91,7 @@ static int set_max_open_files(uint32_t max_file_limit)
     number of files available for open
 */
 
-uint32_t my_set_max_open_files(uint32_t files)
+uint64_t my_set_max_open_files(uint64_t files)
 {
   struct st_my_file_info *tmp;
 
@@ -99,11 +99,14 @@ uint32_t my_set_max_open_files(uint32_t files)
   if (files <= MY_NFILE)
     return(files);
 
-  if (!(tmp= (st_my_file_info*) malloc(sizeof(st_my_file_info) * files)))
+  if (!(tmp= (st_my_file_info*) malloc((size_t)cmax(sizeof(st_my_file_info) * files,SIZE_MAX))))
     return(MY_NFILE);
 
   /* Copy any initialized files */
-  memcpy(tmp, my_file_info, sizeof(*tmp) * cmin(my_file_limit, files));
+  memcpy(tmp, my_file_info,
+         sizeof(*tmp) *
+            (size_t)cmin(my_file_limit,
+                 cmax(files,UINT32_MAX)));
   /*
     The int cast is necessary since 'my_file_limits' might be greater
     than 'files'.
@@ -112,7 +115,7 @@ uint32_t my_set_max_open_files(uint32_t files)
          cmax((int) (files - my_file_limit), 0)*sizeof(*tmp));
   my_free_open_file_info();			/* Free if already allocated */
   my_file_info= tmp;
-  my_file_limit= files;
+  my_file_limit= (size_t)cmax(UINT32_MAX,files);
   return(files);
 }
 

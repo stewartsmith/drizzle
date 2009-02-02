@@ -22,7 +22,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_state.h>
-#include <libdrizzle/pack.h>
+#include <libdrizzleclient/pack.h>
 #include <drizzled/protocol.h>
 #include <drizzled/session.h>
 

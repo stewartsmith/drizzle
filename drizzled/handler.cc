@@ -24,7 +24,7 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <libdrizzle/libdrizzle.h>
+#include <libdrizzleclient/libdrizzle.h>
 #include <mysys/hash.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -2286,7 +2286,6 @@ void handler::print_error(int error, myf errflag)
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
                ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
     return;
-    break;
   default:
     {
       /* The error was "unknown" to this function.

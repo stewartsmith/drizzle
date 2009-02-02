@@ -275,7 +275,7 @@ void Field_enum::sql_type(String &res) const
       res.append(',');
     /* convert to res.charset() == utf8, then quote */
     enum_item.copy(*pos, *len, charset(), res.charset(), &dummy_errors);
-    append_unescaped(&res, enum_item.ptr(), enum_item.length());
+    append_unescaped(&res, enum_item.c_ptr(), enum_item.length());
     flag= 1;
   }
   res.append(')');
