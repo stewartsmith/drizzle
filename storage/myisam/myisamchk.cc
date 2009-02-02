@@ -76,6 +76,8 @@ static int sort_record_index(MI_SORT_PARAM *sort_param, MI_INFO *info,
                              MI_KEYDEF *keyinfo,
 			     my_off_t page,unsigned char *buff,uint32_t sortkey,
 			     File new_file, bool update_index);
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument);
 
 MI_CHECK check_param;
 
@@ -135,10 +137,7 @@ int main(int argc, char **argv)
 
   free_defaults(default_argv);
   my_end(check_param.testflag & T_INFO ? MY_CHECK_ERROR | MY_GIVE_INFO : MY_CHECK_ERROR);
-  exit(error);
-#ifndef _lint
-  return 0;				/* No compiler warning */
-#endif
+  return error;
 } /* main */
 
 enum options_mc {
@@ -292,17 +291,17 @@ static struct my_option my_long_options[] =
     (char**) &check_param.read_buffer_length,
     (char**) &check_param.read_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
     (long) READ_BUFFER_INIT, (long) MALLOC_OVERHEAD,
-    INT32_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
+    SIZE_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "write_buffer_size", OPT_WRITE_BUFFER_SIZE, "",
     (char**) &check_param.write_buffer_length,
     (char**) &check_param.write_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
     (long) READ_BUFFER_INIT, (long) MALLOC_OVERHEAD,
-    INT32_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
+    SIZE_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "sort_buffer_size", OPT_SORT_BUFFER_SIZE, "",
     (char**) &check_param.sort_buffer_length,
     (char**) &check_param.sort_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
     (long) SORT_BUFFER_INIT, (long) (MIN_SORT_BUFFER + MALLOC_OVERHEAD),
-    INT32_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
+    SIZE_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "sort_key_blocks", OPT_SORT_KEY_BLOCKS, "",
     (char**) &check_param.sort_key_blocks,
     (char**) &check_param.sort_key_blocks, 0, GET_ULONG, REQUIRED_ARG,
@@ -447,10 +446,7 @@ TYPELIB myisam_stats_method_typelib= {
 
 	 /* Read options */
 
-static bool
-get_one_option(int optid,
-	       const struct my_option *,
-	       char *argument)
+bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   switch (optid) {
   case 'a':

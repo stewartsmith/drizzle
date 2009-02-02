@@ -151,3 +151,5 @@ m4/ltversion.m4
 m4/lt~obsolete.m4
 *.rej
 drizzled/configmake.h
+drizzled/symbol_hash.h
+drizzled/function_hash.h

@@ -30,6 +30,11 @@
 class Field_null :public Field_str {
   static unsigned char null[1];
 public:
+
+  using Field::store;
+  using Field::val_str;
+  using Field::cmp;
+
   Field_null(unsigned char *ptr_arg, uint32_t len_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     const CHARSET_INFO * const cs)

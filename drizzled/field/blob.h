@@ -30,6 +30,15 @@ protected:
   uint32_t packlength;
   String value;				// For temporaries
 public:
+
+  using Field::store;
+  using Field::cmp;
+  using Field::pack;
+  using Field::unpack;
+  using Field::val_int;
+  using Field::val_str;
+
+
   Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     TABLE_SHARE *share, uint32_t blob_pack_length, const CHARSET_INFO * const cs);
@@ -62,9 +71,11 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_BLOB;}
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }
-  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
+  int  store(const char *to,uint32_t length,
+             const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
+
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);

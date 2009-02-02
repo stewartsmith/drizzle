@@ -68,6 +68,14 @@ typedef struct st_thr_lock_data {
   void *status_param;			/* Param to status functions */
 } THR_LOCK_DATA;
 
+/* A helper type for transactional locking. */
+struct st_table_lock_info
+{
+  enum thr_lock_type lock_type;
+  int           lock_timeout;
+  bool          lock_transactional;
+};
+
 struct st_lock_list {
   THR_LOCK_DATA *data,**last;
 };

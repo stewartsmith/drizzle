@@ -25,6 +25,9 @@
 class Item_str_timefunc :public Item_str_func
 {
 public:
+
+  using Item_func::tmp_table_field;
+
   Item_str_timefunc() :Item_str_func() {}
   Item_str_timefunc(Item *a) :Item_str_func(a) {}
   Item_str_timefunc(Item *a,Item *b) :Item_str_func(a,b) {}

@@ -2031,7 +2031,7 @@ int subselect_single_select_engine::prepare()
 
 int subselect_union_engine::prepare()
 {
-  return unit->prepare(session, result, SELECT_NO_UNLOCK);
+  return unit->prepare(session, result, (uint32_t)SELECT_NO_UNLOCK);
 }
 
 int subselect_uniquesubquery_engine::prepare()

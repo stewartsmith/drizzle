@@ -392,7 +392,6 @@ next_byte:
 	ut_error;
 #endif /* !UNIV_HOTBACKUP */
 
-	return(0);		/* Not reached */
 }
 
 /*****************************************************************

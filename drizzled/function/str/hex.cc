@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/str/hex.h>
-#include <libdrizzle/password.h>
+#include <libdrizzleclient/password.h>
 
 String *Item_func_hex::val_str(String *str)
 {

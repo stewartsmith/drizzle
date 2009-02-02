@@ -131,7 +131,7 @@ name, NODE1 and NODE2 are pointers to nodes. */
 # define UT_LIST_REMOVE_CLEAR(NAME, N)		\
 ((N)->NAME.prev = (N)->NAME.next = (void*) -1)
 #else
-# define UT_LIST_REMOVE_CLEAR(NAME, N) while (0)
+# define UT_LIST_REMOVE_CLEAR(NAME, N)
 #endif
 
 /***********************************************************************

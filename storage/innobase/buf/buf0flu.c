@@ -1130,6 +1130,7 @@ flush_next:
 		/* If we could not find anything to flush, leave the loop */
 
 		break;
+
 	}
 
 	buf_pool->init_flush[flush_type] = FALSE;

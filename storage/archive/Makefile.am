@@ -57,7 +57,7 @@ concurrency_test_SOURCES = concurrency_test.c azio.cc
 concurrency_test_CFLAGS =	$(AM_CFLAGS) 
 concurrency_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(top_builddir)/libdrizzle/libdrizzle.la \
+			$(top_builddir)/libdrizzleclient/libdrizzleclient.la \
 			$(LDADD)
 concurrency_test_LDFLAGS =
 

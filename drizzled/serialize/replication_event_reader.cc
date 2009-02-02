@@ -6,22 +6,23 @@
 #include <string>
 #include <unistd.h>
 #include <drizzled/serialize/replication_event.pb.h>
+
 using namespace std;
+using namespace drizzle;
 
 /*
   Example reader application for master.info data.
 */
 
-void printRecord(const drizzle::EventList *list)
+void printRecord(const ::drizzle::EventList *list)
 {
-  using namespace drizzle;
-  int32_t x;
+  int32_t e_size;
 
-  for (x= 0; x < list->event_size(); x++)
+  for (e_size= 0; e_size < list->event_size(); e_size++)
   {
-    const drizzle::Event event= list->event(x);
+    const Event event= list->event(e_size);
 
-    if (x != 0)
+    if (e_size != 0)
       cout << endl << "##########################################################################################" << endl << endl;
 
     switch (event.type())
@@ -139,7 +140,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  drizzle::EventList list;
+  EventList list;
 
   if ((file= open(argv[1], O_RDONLY)) == -1)
   {

@@ -2656,6 +2656,9 @@ suspend_thread:
 
 	goto loop;
 
+
+#ifndef UNIV_SOLARIS
 	OS_THREAD_DUMMY_RETURN;	/* Not reached, avoid compiler warning */
+#endif
 }
 #endif /* !UNIV_HOTBACKUP */

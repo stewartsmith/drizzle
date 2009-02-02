@@ -429,20 +429,20 @@ bool in_unix_epoch_range(uint32_t year
  * @param Pointer to a uint32_t to hold the resulting year, which 
  *        may be incremented or decremented depending on flags
  */
-uint32_t week_number_from_gregorian_date(uint32_t year
-                                       , uint32_t month
-                                       , uint32_t day
-                                       , bool sunday_is_first_day_of_week
-                                       , bool week_range_is_ordinal
-                                       , bool use_iso_8601_1988
-                                       , uint32_t *year_out)
+int64_t week_number_from_gregorian_date(uint32_t year
+                                        , uint32_t month
+                                        , uint32_t day
+                                        , bool sunday_is_first_day_of_week
+                                        , bool week_range_is_ordinal
+                                        , bool use_iso_8601_1988
+                                        , uint32_t *year_out)
 {
-  uint32_t tmp_days;
-  uint32_t day_number= julian_day_number_from_gregorian_date(year, month, day);
-  uint32_t first_day_of_year= julian_day_number_from_gregorian_date(year, 1, 1);
+  int64_t tmp_days;
+  int64_t day_number= julian_day_number_from_gregorian_date(year, month, day);
+  int64_t first_day_of_year= julian_day_number_from_gregorian_date(year, 1, 1);
   uint32_t tmp_years= year;
 
-  uint32_t week_day= day_of_week(first_day_of_year, sunday_is_first_day_of_week);
+  int64_t week_day= day_of_week(first_day_of_year, sunday_is_first_day_of_week);
 
   if (month == 1 && day <= (7 - week_day))
   {
