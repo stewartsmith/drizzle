@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,21 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDRIZZLE_PACK_H
-#define LIBDRIZZLE_PACK_H
+#ifndef LIBDRIZZLECLIENT_LOCAL_INFILE_H
+#define LIBDRIZZLECLIENT_LOCAL_INFILE_H
 
-#include <stdint.h>
+#include "drizzle.h"
 
-#ifdef __cplusplus
+#ifdef  __cplusplus
 extern "C" {
 #endif
 
-  uint32_t net_field_length(unsigned char **packet);
-  uint64_t net_field_length_ll(unsigned char **packet);
-  unsigned char *net_store_length(unsigned char *pkg, uint64_t length);
+bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
 
-#ifdef __cplusplus
+#ifdef  __cplusplus
 }
 #endif
 
-#endif /* LIBDRIZZLE_PACK_H */
+#endif /* LIBDRIZZLECLIENT_LOCAL_INFILE_H */

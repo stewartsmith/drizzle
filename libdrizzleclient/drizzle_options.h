@@ -17,16 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_drizzle_options_h
-#define _libdrizzle_drizzle_options_h
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
+#ifndef LIBDRIZZLECLIENT_DRIZZLE_OPTIONS_H
+#define LIBDRIZZLECLIENT_DRIZZLE_OPTIONS_H
 
 #if !defined(__cplusplus)
 # include <stdbool.h>
+#endif
+
+#ifdef  __cplusplus
+extern "C" {
 #endif
 
 enum drizzle_option
@@ -82,4 +81,4 @@ struct st_drizzle_options {
 }
 #endif
 
-#endif /* _libdrizzle_drizzle_options_h */
+#endif /* LIBDRIZZLECLIENT_DRIZZLE_OPTIONS_H */

@@ -17,11 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_drizzle_data_h
-#define _libdrizzle_drizzle_data_h
+#ifndef LIBDRIZZLECLIENT_DRIZZLE_DATA_H
+#define LIBDRIZZLECLIENT_DRIZZLE_DATA_H
 
-#include <libdrizzle/drizzle_rows.h>
-#include <libdrizzle/drizzle_field.h>
+#include "drizzle_rows.h"
+#include "drizzle_field.h"
 
 #include <stdint.h>
 #if !defined(__cplusplus)
@@ -47,4 +47,4 @@ extern "C" {
 }
 #endif
 
-#endif /* _libdrizzle_drizzle_data_h */
+#endif /* LIBDRIZZLECLIENT_DATA_H */

@@ -27,7 +27,7 @@
 #include <signal.h>
 
 #include <mysys/my_bit.h>
-#include <libdrizzle/libdrizzle.h>
+#include <libdrizzleclient/libdrizzle.h>
 #include <mysys/hash.h>
 #include <drizzled/stacktrace.h>
 #include <mysys/mysys_err.h>
@@ -69,7 +69,7 @@
 #endif
 
 #include <mysys/thr_alarm.h>
-#include <libdrizzle/errmsg.h>
+#include <libdrizzleclient/errmsg.h>
 #include <locale.h>
 
 #define mysqld_charset &my_charset_utf8_general_ci

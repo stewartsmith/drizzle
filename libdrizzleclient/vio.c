@@ -22,7 +22,7 @@
 
 #define DONT_MAP_VIO
 #include <drizzled/global.h>
-#include <libdrizzle/vio.h>
+#include "vio.h"
 #include <string.h>
 #include <stdint.h>
 

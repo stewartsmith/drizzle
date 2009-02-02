@@ -17,12 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_libdrizzle_priv_h_
-#define _libdrizzle_libdrizzle_priv_h_
+#ifndef LIBDRIZZLECLIENT_LIBDRIZZLE_PRIV_H
+#define LIBDRIZZLECLIENT_LIBDRIZZLE_PRIV_H
+
+#include "drizzle.h"
+#include <drizzled/korr.h>
 
 #include <sys/socket.h>
-#include <libdrizzle/drizzle.h>
-#include <drizzled/korr.h>
 
 #define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG |  \
                              CLIENT_TRANSACTIONS |                      \

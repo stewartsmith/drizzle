@@ -18,7 +18,7 @@
  */
 
 /*
-  This file is included by both libdrizzle.c (the DRIZZLE client C API)
+  This file is included by both libdrizzleclient.c (the DRIZZLE client C API)
   and the drizzled server to connect to another DRIZZLE server.
 
   The differences for the two cases are:
@@ -37,13 +37,15 @@
   server.
 */
 
-#include <stdarg.h>
 
-#include <libdrizzle/libdrizzle.h>
-#include <libdrizzle/net_serv.h>
 #include "libdrizzle_priv.h"
-#include <libdrizzle/pack.h>
+#include "net_serv.h"
+#include "pack.h"
+#include "errmsg.h"
+#include "local_infile.h"
+#include "drizzle_methods.h"
 
+#include <stdarg.h>
 #include <sys/poll.h>
 #include <sys/ioctl.h>
 
@@ -53,7 +55,6 @@
 #undef max_allowed_packet
 #undef net_buffer_length
 
-#include <libdrizzle/errmsg.h>
 
 #include <sys/stat.h>
 #include <signal.h>
@@ -79,20 +80,12 @@
 
 
 #include <drizzled/gettext.h>
-#include "local_infile.h"
-
-
-
-
-
-
 
 
 #if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
 struct passwd *getpwuid(uid_t);
 char* getlogin(void);
 #endif
-
 
 
 /*****************************************************************************

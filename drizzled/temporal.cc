@@ -46,7 +46,7 @@
 
 /* time.h may already have been included in global.h, but we
    need to pick up the extra defs as well, after the global time.h */
-#ifndef _HAVE_DECL_TIMEGM
+#ifndef HAVE_DECL_TIMEGM
 # include <gnulib/time.h>
 #endif
 

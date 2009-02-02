@@ -23,7 +23,7 @@
 */
 #include <drizzled/global.h>
 #include "libdrizzle.h"
-#include <libdrizzle/get_password.h>
+#include "get_password.h"
 
 #include <string.h>
 #include <stdio.h>

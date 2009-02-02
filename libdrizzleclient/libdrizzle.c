@@ -20,9 +20,10 @@
 #include <drizzled/global.h>
 #include "libdrizzle_priv.h"
 
-#include <libdrizzle/libdrizzle.h>
-#include <libdrizzle/pack.h>
-#include <libdrizzle/errmsg.h>
+#include "libdrizzle.h"
+#include "errmsg.h"
+#include "pack.h"
+
 #include <sys/stat.h>
 #include <signal.h>
 #include <time.h>

@@ -18,8 +18,8 @@
  * Purpose: include file for Vio that will work with C and C++
  */
 
-#ifndef LIBDRIZZLE_VIO_H
-#define	LIBDRIZZLE_VIO_H
+#ifndef LIBDRIZZLECLIENT_VIO_H
+#define	LIBDRIZZLECLIENT_VIO_H
 
 #include <sys/socket.h>
 #include <errno.h>
@@ -142,4 +142,4 @@ struct st_vio
   char                  *read_buffer;   /* buffer for vio_read_buff */
 };
 
-#endif /* LIBDRIZZLE_VIO_H */
+#endif /* LIBDRIZZLECLIENT_VIO_H */

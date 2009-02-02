@@ -17,21 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_drizzle_res_h
-#define _libdrizzle_drizzle_res_h
+#ifndef LIBDRIZZLECLIENT_DRIZZLE_RES_H
+#define LIBDRIZZLECLIENT_DRIZZLE_RES_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#include "drizzle_field.h"
+#include "drizzle_data.h"
+#include "drizzle_rows.h"
+#include "drizzle.h"
 
 #include <stdint.h>
 #if !defined(__cplusplus)
 # include <stdbool.h>
 #endif
-#include <libdrizzle/drizzle_field.h>
-#include <libdrizzle/drizzle_data.h>
-#include <libdrizzle/drizzle_rows.h>
-#include <libdrizzle/drizzle.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
   struct st_drizzle;
 
@@ -79,4 +80,4 @@ DRIZZLE_FIELD *  drizzle_fetch_field(DRIZZLE_RES *result);
 }
 #endif
 
-#endif /* _libdrizzle_drizzle_res_h */
+#endif /* LIBDRIZZLECLIENT_DRIZZLE_RES_H */

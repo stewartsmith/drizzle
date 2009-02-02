@@ -25,7 +25,7 @@
 
 #include <drizzled/global.h>
 #include <drizzled/protocol.h>
-#include <libdrizzle/password.h>     // rand_struct
+#include <libdrizzleclient/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_tree.h>

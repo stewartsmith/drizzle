@@ -21,8 +21,8 @@
 #include <drizzled/global.h>
 #include "libdrizzle.h"
 #include "libdrizzle_priv.h"
-#include <libdrizzle/errmsg.h>
-#include <libdrizzle/vio.h>
+#include "errmsg.h"
+#include "vio.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

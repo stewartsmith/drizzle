@@ -26,7 +26,7 @@ SUBDIRS = ${po} . \
 	  mystrings \
 	  mysys \
 	  extra \
-	  libdrizzle \
+	  libdrizzleclient \
 	  client \
 	  drizzled/serialize \
 	  storage \

@@ -20,8 +20,8 @@
 
 
 
-libdrizzleincludedir = ${includedir}/libdrizzle
-dist_libdrizzleinclude_HEADERS =	\
+libdrizzleclientincludedir = ${includedir}/libdrizzleclient
+dist_libdrizzleclientinclude_HEADERS =	\
 					get_password.h \
 					drizzle.h \
 					drizzle_data.h \
@@ -38,8 +38,8 @@ dist_libdrizzleinclude_HEADERS =	\
 					password.h \
 					vio.h
 
-lib_LTLIBRARIES = libdrizzle.la
-libdrizzle_la_SOURCES = client.c \
+lib_LTLIBRARIES = libdrizzleclient.la
+libdrizzleclient_la_SOURCES = client.c \
 			drizzle.c \
 			drizzle_data.c \
 			errmsg.c \
@@ -53,8 +53,8 @@ libdrizzle_la_SOURCES = client.c \
 			vio.c \
 			viosocket.c
 
-libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@
-libdrizzle_la_LIBADD = $(Z_LIBS)
+libdrizzleclient_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@
+libdrizzleclient_la_LIBADD = $(LTLIBZ)
 
 noinst_HEADERS =	libdrizzle_priv.h \
 			local_infile.h

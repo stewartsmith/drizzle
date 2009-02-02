@@ -18,20 +18,19 @@
  */
 
 #include <drizzled/global.h>
-#include <signal.h>
-#include <errno.h>
-
 #include <drizzled/common.h>
-#include <libdrizzle/libdrizzle.h>
-#include <libdrizzle/pack.h>
-#include <libdrizzle/errmsg.h>
-#include <libdrizzle/drizzle.h>
-#include <drizzled/gettext.h>
-#include <libdrizzle/net_serv.h>
-#include <libdrizzle/drizzle_data.h>
-#include <libdrizzle/local_infile.h>
 
 #include "libdrizzle_priv.h"
+
+#include "libdrizzle.h"
+#include "pack.h"
+#include "errmsg.h"
+#include "drizzle.h"
+#include "net_serv.h"
+#include "drizzle_data.h"
+#include "local_infile.h"
+
+#include <drizzled/gettext.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +40,8 @@
 #include <assert.h>
 #include <pwd.h>
 #include <sys/socket.h>
+#include <signal.h>
+#include <errno.h>
 
 
 #define CONNECT_TIMEOUT 0

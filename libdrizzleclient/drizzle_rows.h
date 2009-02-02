@@ -17,26 +17,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_drizzle_parameters_h
-#define _libdrizzle_drizzle_parameters_h
+#ifndef LIBDRIZZLECLIENT_DRIZZLE_ROWS_H
+#define LIBDRIZZLECLIENT_DRIZZLE_ROWS_H
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-#include <stdint.h>
+typedef char **DRIZZLE_ROW;    /* return data as array of strings */
 
-typedef struct st_drizzle_parameters
-{
-  uint32_t *p_max_allowed_packet;
-  uint32_t *p_net_buffer_length;
-  void *extension;
-} DRIZZLE_PARAMETERS;
+typedef struct st_drizzle_rows {
+  struct st_drizzle_rows *next;    /* list of rows */
+  DRIZZLE_ROW data;
+  unsigned long length;
+} DRIZZLE_ROWS;
 
-const DRIZZLE_PARAMETERS * drizzle_get_parameters(void);
+typedef DRIZZLE_ROWS *DRIZZLE_ROW_OFFSET;  /* offset to current row */
+
 
 #ifdef  __cplusplus
 }
 #endif
 
-#endif /* _libdrizzle_drizzle_parameters_h */
+#endif /* LIBDRIZZLECLIENT_DRIZZLE_ROWS_H */

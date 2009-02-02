@@ -17,21 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_drizzle_methods_h
-#define _libdrizzle_drizzle_methods_h
+#ifndef LIBDRIZZLECLIENT_DRIZZLE_METHODS_H
+#define LIBDRIZZLECLIENT_DRIZZLE_METHODS_h
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#include "drizzle.h"
+#include "drizzle_data.h"
+#include "drizzle_res.h"
+#include "drizzle_field.h"
 
 #include <stdint.h>
 #if !defined(__cplusplus)
 # include <stdbool.h>
 #endif
-#include <libdrizzle/drizzle.h>
-#include <libdrizzle/drizzle_data.h>
-#include <libdrizzle/drizzle_res.h>
-#include <libdrizzle/drizzle_field.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct st_drizzle_methods
 {
@@ -64,4 +65,4 @@ typedef struct st_drizzle_methods
 }
 #endif
 
-#endif /* _libdrizzle_drizzle_methods_h */
+#endif /* LIBDRIZZLECLIENT_DRIZZLE_METHODS_H */

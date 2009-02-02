@@ -15,7 +15,7 @@
 
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
-#include <libdrizzle/libdrizzle.h>
+#include <libdrizzleclient/libdrizzle.h>
 #include <mysys/hash.h>
 #include <drizzled/logging.h>
 #include <drizzled/db.h>

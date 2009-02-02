@@ -328,13 +328,12 @@ noinst_LTLIBRARIES = \
 		libhandler.la \
 		libserialutil.la
 
-LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
+LDADD = $(top_builddir)/libdrizzleclient/libdrizzleclient.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
 	$(LTLIBZ) $(LIBINTL)
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
-		 $(top_builddir)/libdrizzle/libdrizzle.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) $(LTLIBUUID) ${top_builddir}/gnulib/libgnu.la \

@@ -17,15 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_drizzle_field_h
-#define _libdrizzle_drizzle_field_h
+#ifndef LIBDRIZZLECLIENT_DRIZZLE_FIELD_H
+#define LIBDRIZZLECLIENT_DRIZZLE_FIELD_H
+
+#include <drizzled/common.h>
+
+#include <stdint.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <stdint.h>
-#include <drizzled/common.h>
 
 typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
 
@@ -58,4 +59,4 @@ typedef struct st_drizzle_field {
 }
 #endif
 
-#endif /* _libdrizzle_drizzle_field_h */
+#endif /* LIBDRIZZLECLIENT_DRIZZLE_FIELD_H */

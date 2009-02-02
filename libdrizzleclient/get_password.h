@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,19 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_local_infile_h
-#define _libdrizzle_local_infile_h
+#ifndef LIBDRIZZLECLIENT_GET_PASSWORD_H
+#define LIBDRIZZLECLIENT_GET_PASSWORD_H
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <libdrizzle/drizzle.h>
+  char *get_tty_password(const char *opt_message);
 
-bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
-
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif /* _libdrizzle_local_infile_h */
+#endif /* LIBDRIZZLECLIENT_GET_PASSWORD_H */

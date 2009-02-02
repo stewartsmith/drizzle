@@ -17,19 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_errmsg_h
-#define _libdrizzle_errmsg_h
+#ifndef LIBDRIZZLECLIENT_ERRMSG_H
+#define LIBDRIZZLECLIENT_ERRMSG_H
 
 /* Error messages for MySQL clients */
 /* (Error messages for the daemon are in sql/share/errmsg.txt) */
 
 #ifdef  __cplusplus
-extern "C" {
+extern "C"
 #endif
 const char * get_client_error(unsigned int err_index);
-#ifdef  __cplusplus
-}
-#endif
 
 #define CR_MIN_ERROR    2000  /* For easier client code */
 #define CR_MAX_ERROR    2999

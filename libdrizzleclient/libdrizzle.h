@@ -19,30 +19,31 @@
 
 /*
   This file defines the client API to DRIZZLE and also the ABI of the
-  dynamically linked libdrizzle.
+  dynamically linked libdrizzleclient.
 
   In case the file is changed so the ABI is broken, you must also
   update the SHARED_LIB_MAJOR_VERSION in configure.ac.
 
 */
 
-#ifndef _libdrizzle_libdrizzle_h
-#define _libdrizzle_libdrizzle_h
+#ifndef LIBDRIZZLECLIENT_LIBDRIZZLE_H
+#define LIBDRIZZLECLIENT_LIBDRIZZLE_H
 
 #include <drizzled/common.h>
 
 #define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
 #define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */
 
-#include <stdint.h>
-#include <libdrizzle/drizzle_field.h>
-#include <libdrizzle/drizzle_rows.h>
-#include <libdrizzle/drizzle_data.h>
-#include <libdrizzle/drizzle_options.h>
+#include "drizzle_field.h"
+#include "drizzle_rows.h"
+#include "drizzle_data.h"
+#include "drizzle_options.h"
 
-#include <libdrizzle/drizzle.h>
-#include <libdrizzle/drizzle_parameters.h>
-#include <libdrizzle/drizzle_methods.h>
+#include "drizzle.h"
+#include "drizzle_parameters.h"
+#include "drizzle_methods.h"
+
+#include <stdint.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -58,4 +59,4 @@ extern "C" {
 }
 #endif
 
-#endif /* _libdrizzle_libdrizzle_h */
+#endif /* LIBDRIZZLECLIENT_LIBDRIZZLE_H */

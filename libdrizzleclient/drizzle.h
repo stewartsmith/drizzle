@@ -17,19 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_drizzle_h
-#define _libdrizzle_drizzle_h
+#ifndef LIBDRIZZLECLIENT_DRIZZLE_H
+#define LIBDRIZZLECLIENT_DRIZZLE_H
 
+#include <drizzled/common.h>
+#include "drizzle_field.h"
+#include "drizzle_options.h"
+#include "drizzle_res.h"
+#include "net_serv.h"
 
 #include <stdint.h>
 #if !defined(__cplusplus)
 # include <stdbool.h>
 #endif
-#include <drizzled/common.h>
-#include <libdrizzle/drizzle_field.h>
-#include <libdrizzle/drizzle_options.h>
-#include <libdrizzle/drizzle_res.h>
-#include <libdrizzle/net_serv.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -178,4 +178,4 @@ extern safe_read_error_hook_func safe_read_error_hook;
 }
 #endif
 
-#endif /* _libdrizzle_drizzle_h */
+#endif /* LIBDRIZZLECLIENT_DRIZZLE_H */

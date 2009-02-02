@@ -18,24 +18,25 @@
  */
 
 
-#ifndef _libdrizzle_net_serv_h_
-#define _libdrizzle_net_serv_h_
+#ifndef LIBDRIZZLE_NET_SERV_H
+#define LIBDRIZZLE_NET_SERV_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+#define net_new_transaction(net) ((net)->pkt_nr=0)
+
+#include "vio.h"
 
 #include <stdint.h>
 #if !defined(__cplusplus)
 # include <stdbool.h>
 #endif
 
-#define net_new_transaction(net) ((net)->pkt_nr=0)
-
-#include <libdrizzle/vio.h>
-
 #define LIBDRIZZLE_ERRMSG_SIZE 512
 #define LIBDRIZZLE_SQLSTATE_LENGTH 5
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct st_net {
   Vio *vio;

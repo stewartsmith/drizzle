@@ -17,9 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "libdrizzle.h"
-#include <libdrizzle/pack.h>
-#include <drizzled/korr.h>
+#include "libdrizzle_priv.h"
+#include "pack.h"
+
 #include <stdint.h>
 
 /* Get the length of next field. Change parameter to point at fieldstart */

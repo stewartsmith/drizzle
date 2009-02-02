@@ -21,9 +21,9 @@
 
 #include "libdrizzle_priv.h"
 
-#include <libdrizzle/drizzle_data.h>
-#include <libdrizzle/drizzle_rows.h>
-#include <libdrizzle/drizzle_field.h>
+#include "drizzle_data.h"
+#include "drizzle_rows.h"
+#include "drizzle_field.h"
 
 #include <assert.h>
 #include <stdint.h>

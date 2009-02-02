@@ -337,7 +337,7 @@ if test "x$EGREP" != "x"
 then
   if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|${EGREP} -q GNU
   then
-    LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+    LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzleclient/libdrizzleclient.ver"
   fi
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
@@ -1381,14 +1381,14 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  gnulib/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
  po/Makefile.in dnl
- libdrizzle/Makefile client/Makefile dnl
+ libdrizzleclient/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/serialize/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  plugin/Makefile dnl
- drizzled/drizzled_safe support-files/libdrizzle.pc dnl
+ drizzled/drizzled_safe support-files/libdrizzleclient.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)

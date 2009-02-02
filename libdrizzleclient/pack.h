@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,26 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_drizzle_rows_h
-#define _libdrizzle_drizzle_rows_h
+#ifndef LIBDRIZZLECLIENT_PACK_H
+#define LIBDRIZZLECLIENT_PACK_H
 
-#ifdef  __cplusplus
+#include <stdint.h>
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef char **DRIZZLE_ROW;    /* return data as array of strings */
+  uint32_t net_field_length(unsigned char **packet);
+  uint64_t net_field_length_ll(unsigned char **packet);
+  unsigned char *net_store_length(unsigned char *pkg, uint64_t length);
 
-typedef struct st_drizzle_rows {
-  struct st_drizzle_rows *next;    /* list of rows */
-  DRIZZLE_ROW data;
-  unsigned long length;
-} DRIZZLE_ROWS;
-
-typedef DRIZZLE_ROWS *DRIZZLE_ROW_OFFSET;  /* offset to current row */
-
-
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif /* _libdrizzle_drizzle_rows_h */
+#endif /* LIBDRIZZLECLIENT_PACK_H */

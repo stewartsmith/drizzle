@@ -22,9 +22,10 @@
 
 #define DONT_MAP_VIO
 #include <drizzled/global.h>
-#include <libdrizzle/vio.h>
-#include <sys/socket.h>
+#include "vio.h"
 #include <drizzled/util/test.h>
+
+#include <sys/socket.h>
 #include <string.h>
 
 #include <netinet/tcp.h>

@@ -20,7 +20,7 @@
 #ifndef DRIZZLE_SERVER_SQL_ALLOC_H
 #define DRIZZLE_SERVER_SQL_ALLOC_H
 
-#include <libdrizzle/net_serv.h>
+#include <libdrizzleclient/net_serv.h>
 #include <mysys/my_alloc.h>
 #include <mystrings/m_ctype.h>
 
