@@ -3173,7 +3173,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
     else
       result= close_cached_tables(session, tables, false, (options & REFRESH_FAST) ?
                                   false : true, false);
-    my_dbopt_cleanup();
   }
   if (session && (options & REFRESH_STATUS))
     refresh_status(session);

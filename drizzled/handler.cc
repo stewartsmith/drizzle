@@ -40,6 +40,7 @@
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/unireg.h> // for mysql_frm_type
+#include <drizzled/serialize/table.pb.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
@@ -1449,13 +1450,18 @@ int ha_delete_table(Session *session, const char *path,
     dummy_share.table_name.length= strlen(alias);
     dummy_table.alias= alias;
 
-    handler *file= dtargs.file;
-    file->change_table_ptr(&dummy_table, &dummy_share);
+    if(dtargs.file)
+    {
+      handler *file= dtargs.file;
+      file->change_table_ptr(&dummy_table, &dummy_share);
 
-    session->push_internal_handler(&ha_delete_table_error_handler);
-    file->print_error(dtargs.error, 0);
+      session->push_internal_handler(&ha_delete_table_error_handler);
+      file->print_error(dtargs.error, 0);
 
-    session->pop_internal_handler();
+      session->pop_internal_handler();
+    }
+    else
+      dtargs.error= -1; /* General form of fail. maybe bad FRM */
 
     /*
       XXX: should we convert *all* errors to warnings here?
@@ -3026,16 +3032,23 @@ int ha_table_exists_in_engine(Session* session,
 
     char path[FN_REFLEN];
     build_table_filename(path, sizeof(path),
-                         db, name, ".frm", 0);
+                         db, name, ".dfe", 0);
     if (!access(path, F_OK))
       args.err= HA_ERR_TABLE_EXIST;
     else
       args.err= HA_ERR_NO_SUCH_TABLE;
 
-    enum legacy_db_type table_type;
-    if(args.err==HA_ERR_TABLE_EXIST && mysql_frm_type(path, &table_type)==0)
+    if(args.err==HA_ERR_TABLE_EXIST)
     {
-      args.hton= ha_resolve_by_legacy_type(session, table_type);
+      drizzle::Table table;
+      if(drizzle_read_table_proto(path, &table)==0)
+      {
+        LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
+                                 strlen(table.engine().name().c_str()) };
+        plugin_ref plugin= ha_resolve_by_name(session, &engine_name);
+        if(plugin)
+          args.hton= plugin_data(plugin,handlerton *);
+      }
     }
   }
 

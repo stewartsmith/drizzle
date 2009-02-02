@@ -358,7 +358,7 @@ static int rr_index(READ_RECORD *info)
 int rr_sequential(READ_RECORD *info)
 {
   int tmp;
-  while ((tmp=info->file->rnd_next(info->record)))
+  while ((tmp= info->file->rnd_next(info->record)))
   {
     if (info->session->killed)
     {
@@ -366,6 +366,7 @@ int rr_sequential(READ_RECORD *info)
       return 1;
     }
     /*
+      TODO> Fix this so that engine knows how to behave on its own.
       rnd_next can return RECORD_DELETED for MyISAM when one thread is
       reading and another deleting without locks.
     */

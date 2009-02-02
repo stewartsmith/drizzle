@@ -93,7 +93,6 @@ public:
   }
   enum row_type row_type;		/* How rows are stored */
   enum tmp_table_type tmp_table;
-  enum ha_choice transactional;
   enum ha_choice page_checksum;
 
   uint32_t ref_count;       /* How many Table objects uses this */

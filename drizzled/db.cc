@@ -35,6 +35,7 @@ using namespace std;
 #include <drizzled/errmsg_print.h>
 #include <drizzled/replicator.h>
 
+#define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
 
 const char *del_exts[]= {".frm", ".BAK", ".TMD",".opt", NULL};
@@ -55,6 +56,7 @@ static void mysql_change_db_impl(Session *session,
 /* Database lock hash */
 HASH lock_db_cache;
 pthread_mutex_t LOCK_lock_db;
+bool dbcache_init= false;
 int creating_database= 0;  // how many database locks are made
 
 
@@ -105,36 +107,6 @@ void lock_db_delete(const char *name, uint32_t length)
     hash_delete(&lock_db_cache, (unsigned char*) opt);
 }
 
-
-/* Database options hash */
-static HASH dboptions;
-static bool dboptions_init= 0;
-static pthread_rwlock_t LOCK_dboptions;
-
-/* Structure for database options */
-typedef struct my_dbopt_st
-{
-  char *name;			/* Database name                  */
-  uint32_t name_length;		/* Database length name           */
-  const CHARSET_INFO *charset;	/* Database default character set */
-} my_dbopt_t;
-
-
-/*
-  Function we use in the creation of our hash to get key.
-*/
-
-extern "C" unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
-                                    bool not_used);
-
-unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
-                         bool )
-{
-  *length= opt->name_length;
-  return (unsigned char*) opt->name;
-}
-
-
 /*
   Helper function to write a query to binlog used by mysql_rm_db()
 */
@@ -143,19 +115,6 @@ static inline void write_to_binlog(Session *session, char *query, uint32_t query
 {
   (void)replicator_statement(session, query, query_length);
 }
-
-
-/*
-  Function to free dboptions hash element
-*/
-
-extern "C" void free_dbopt(void *dbopt);
-
-void free_dbopt(void *dbopt)
-{
-  free((unsigned char*) dbopt);
-}
-
 
 /*
   Initialize database option hash and locked database hash.
@@ -174,15 +133,10 @@ void free_dbopt(void *dbopt)
 bool my_database_names_init(void)
 {
   bool error= false;
-  (void) pthread_rwlock_init(&LOCK_dboptions, NULL);
-  if (!dboptions_init)
+  if (!dbcache_init)
   {
-    dboptions_init= 1;
-    error= hash_init(&dboptions, lower_case_table_names ?
-                     &my_charset_bin : system_charset_info,
-                     32, 0, 0, (hash_get_key) dboptions_get_key,
-                     free_dbopt,0) ||
-           hash_init(&lock_db_cache, lower_case_table_names ?
+    dbcache_init= true;
+    error= hash_init(&lock_db_cache, lower_case_table_names ?
                      &my_charset_bin : system_charset_info,
                      32, 0, 0, (hash_get_key) lock_db_get_key,
                      lock_db_free_element,0);
@@ -190,285 +144,6 @@ bool my_database_names_init(void)
   }
   return error;
 }
-
-
-
-/*
-  Free database option hash and locked databases hash.
-*/
-
-void my_database_names_free(void)
-{
-  if (dboptions_init)
-  {
-    dboptions_init= 0;
-    hash_free(&dboptions);
-    (void) pthread_rwlock_destroy(&LOCK_dboptions);
-    hash_free(&lock_db_cache);
-  }
-}
-
-
-/*
-  Cleanup cached options
-*/
-
-void my_dbopt_cleanup(void)
-{
-  pthread_rwlock_wrlock(&LOCK_dboptions);
-  hash_free(&dboptions);
-  hash_init(&dboptions, lower_case_table_names ?
-            &my_charset_bin : system_charset_info,
-            32, 0, 0, (hash_get_key) dboptions_get_key,
-            free_dbopt,0);
-  pthread_rwlock_unlock(&LOCK_dboptions);
-}
-
-
-/*
-  Find database options in the hash.
-
-  DESCRIPTION
-    Search a database options in the hash, usings its path.
-    Fills "create" on success.
-
-  RETURN VALUES
-    0 on success.
-    1 on error.
-*/
-
-static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
-{
-  my_dbopt_t *opt;
-  uint32_t length;
-  bool error= true;
-
-  length= (uint) strlen(dbname);
-
-  pthread_rwlock_rdlock(&LOCK_dboptions);
-  if ((opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
-  {
-    create->default_table_charset= opt->charset;
-    error= true;
-  }
-  pthread_rwlock_unlock(&LOCK_dboptions);
-  return error;
-}
-
-
-/*
-  Writes database options into the hash.
-
-  DESCRIPTION
-    Inserts database options into the hash, or updates
-    options if they are already in the hash.
-
-  RETURN VALUES
-    0 on success.
-    1 on error.
-*/
-
-static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
-{
-  my_dbopt_t *opt;
-  uint32_t length;
-  bool error= false;
-
-  length= (uint) strlen(dbname);
-
-  pthread_rwlock_wrlock(&LOCK_dboptions);
-  if (!(opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
-  {
-    /* Options are not in the hash, insert them */
-    char *tmp_name;
-    if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
-                         &opt, (uint) sizeof(*opt), &tmp_name, (uint) length+1,
-                         NULL))
-    {
-      error= true;
-      goto end;
-    }
-
-    opt->name= tmp_name;
-    strcpy(opt->name, dbname);
-    opt->name_length= length;
-
-    if ((error= my_hash_insert(&dboptions, (unsigned char*) opt)))
-    {
-      free(opt);
-      goto end;
-    }
-  }
-
-  /* Update / write options in hash */
-  opt->charset= create->default_table_charset;
-
-end:
-  pthread_rwlock_unlock(&LOCK_dboptions);
-  return(error);
-}
-
-
-/*
-  Deletes database options from the hash.
-*/
-
-void del_dbopt(const char *path)
-{
-  my_dbopt_t *opt;
-  pthread_rwlock_wrlock(&LOCK_dboptions);
-  if ((opt= (my_dbopt_t *)hash_search(&dboptions, (const unsigned char*) path,
-                                      strlen(path))))
-    hash_delete(&dboptions, (unsigned char*) opt);
-  pthread_rwlock_unlock(&LOCK_dboptions);
-}
-
-
-/*
-  Create database options file:
-
-  DESCRIPTION
-    Currently database default charset is only stored there.
-
-  RETURN VALUES
-  0	ok
-  1	Could not create file or write to it.  Error sent through my_error()
-*/
-
-static bool write_db_opt(Session *session, const char *path, const char *name, HA_CREATE_INFO *create)
-{
-  bool error= true;
-  drizzle::Schema db;
-
-  assert(name);
-
-  if (!create->default_table_charset)
-    create->default_table_charset= session->variables.collation_server;
-
-  if (put_dbopt(path, create))
-    return 1;
-
-  db.set_name(name);
-  db.set_characterset(create->default_table_charset->csname);
-  db.set_collation(create->default_table_charset->name);
-
-  fstream output(path, ios::out | ios::trunc | ios::binary);
-  if (!db.SerializeToOstream(&output))
-    error= false;
-
-  return error;
-}
-
-
-/*
-  Load database options file
-
-  load_db_opt()
-  path		Path for option file
-  create	Where to store the read options
-
-  DESCRIPTION
-
-  RETURN VALUES
-  0	File found
-  1	No database file or could not open it
-
-*/
-
-bool load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
-{
-  bool error=1;
-  drizzle::Schema db;
-  string buffer;
-
-  memset(create, 0, sizeof(*create));
-  create->default_table_charset= session->variables.collation_server;
-
-  /* Check if options for this database are already in the hash */
-  if (!get_dbopt(path, create))
-    return(0);
-
-  fstream input(path, ios::in | ios::binary);
-  if (!input)
-    goto err1;
-  else if (!db.ParseFromIstream(&input))
-    goto err1;
-
-  buffer= db.characterset();
-  if (!(create->default_table_charset= get_charset_by_csname(buffer.c_str(), MY_CS_PRIMARY, MYF(0))))
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Error while loading database options: '%s':"),path);
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-    create->default_table_charset= default_charset_info;
-  }
-
-  buffer= db.collation();
-  if (!(create->default_table_charset= get_charset_by_name(buffer.c_str(), MYF(0))))
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Error while loading database options: '%s':"),path);
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-    create->default_table_charset= default_charset_info;
-  }
-
-  /*
-    Put the loaded value into the hash.
-    Note that another thread could've added the same
-    entry to the hash after we called get_dbopt(),
-    but it's not an error, as put_dbopt() takes this
-    possibility into account.
-  */
-  error= put_dbopt(path, create);
-
-err1:
-  return(error);
-}
-
-
-/*
-  Retrieve database options by name. Load database options file or fetch from
-  cache.
-
-  SYNOPSIS
-    load_db_opt_by_name()
-    db_name         Database name
-    db_create_info  Where to store the database options
-
-  DESCRIPTION
-    load_db_opt_by_name() is a shortcut for load_db_opt().
-
-  NOTE
-    Although load_db_opt_by_name() (and load_db_opt()) returns status of
-    the operation, it is useless usually and should be ignored. The problem
-    is that there are 1) system databases ("mysql") and 2) virtual
-    databases ("information_schema"), which do not contain options file.
-    So, load_db_opt[_by_name]() returns false for these databases, but this
-    is not an error.
-
-    load_db_opt[_by_name]() clears db_create_info structure in any case, so
-    even on failure it contains valid data. So, common use case is just
-    call load_db_opt[_by_name]() without checking return value and use
-    db_create_info right after that.
-
-  RETURN VALUES (read NOTE!)
-    false   Success
-    true    Failed to retrieve options
-*/
-
-bool load_db_opt_by_name(Session *session, const char *db_name,
-                         HA_CREATE_INFO *db_create_info)
-{
-  char db_opt_path[FN_REFLEN];
-
-  /*
-    Pass an empty file name, and the database options file name as extension
-    to avoid table name to file name encoding.
-  */
-  (void) build_table_filename(db_opt_path, sizeof(db_opt_path),
-                              db_name, "", MY_DB_OPT_FILE, 0);
-
-  return load_db_opt(session, db_opt_path, db_create_info);
-}
-
 
 /**
   Return default database collation.
@@ -487,17 +162,109 @@ const CHARSET_INFO *get_default_db_collation(Session *session, const char *db_na
   if (session->db != NULL && strcmp(db_name, session->db) == 0)
     return session->db_charset;
 
-  load_db_opt_by_name(session, db_name, &db_info);
-
   /*
-    NOTE: even if load_db_opt_by_name() fails,
     db_info.default_table_charset contains valid character set
-    (collation_server). We should not fail if load_db_opt_by_name() fails,
-    because it is valid case. If a database has been created just by
-    "mkdir", it does not contain db.opt file, but it is valid database.
+    (collation_server).
   */
 
+  load_db_opt_by_name(session, db_name, &db_info);
+
   return db_info.default_table_charset;
+}
+
+/* path is path to database, not schema file */
+static int write_schema_file(Session *session,
+			     const char *path, const char *name,
+			     HA_CREATE_INFO *create)
+{
+  drizzle::Schema db;
+  char schema_file_tmp[FN_REFLEN];
+  string schema_file(path);
+
+  assert(path);
+  assert(name);
+  assert(create);
+
+  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
+
+  schema_file.append(1, FN_LIBCHAR);
+  schema_file.append(MY_DB_OPT_FILE);
+
+  int fd= mkstemp(schema_file_tmp);
+
+  if (fd==-1)
+    return errno;
+
+  if (!create->default_table_charset)
+    create->default_table_charset= session->variables.collation_server;
+
+  db.set_name(name);
+  db.set_collation(create->default_table_charset->name);
+
+  if (!db.SerializeToFileDescriptor(fd))
+  {
+    close(fd);
+    unlink(schema_file_tmp);
+    return -1;
+  }
+
+  if (rename(schema_file_tmp, schema_file.c_str()) == -1)
+  {
+    close(fd);
+    return errno;
+  }
+
+  close(fd);
+  return 0;
+}
+
+int load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
+{
+  drizzle::Schema db;
+  string buffer;
+
+  memset(create, 0, sizeof(*create));
+  create->default_table_charset= session->variables.collation_server;
+
+  int fd= open(path, O_RDONLY);
+
+  if (fd == -1)
+    return errno;
+
+  if (!db.ParseFromFileDescriptor(fd))
+  {
+    close(fd);
+    return -1;
+  }
+  close(fd);
+
+  buffer= db.collation();
+  if (!(create->default_table_charset= get_charset_by_name(buffer.c_str(),
+							   MYF(0))))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+		  _("Error while loading database options: '%s':"),path);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+    create->default_table_charset= default_charset_info;
+    return -1;
+  }
+
+  return 0;
+}
+
+int load_db_opt_by_name(Session *session, const char *db_name,
+			HA_CREATE_INFO *db_create_info)
+{
+  char db_opt_path[FN_REFLEN];
+
+  /*
+    Pass an empty file name, and the database options file name as extension
+    to avoid table name to file name encoding.
+  */
+  (void) build_table_filename(db_opt_path, sizeof(db_opt_path),
+                              db_name, "", MY_DB_OPT_FILE, 0);
+
+  return load_db_opt(session, db_opt_path, db_create_info);
 }
 
 
@@ -531,7 +298,6 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
   char	 tmp_query[FN_REFLEN+16];
   long result= 1;
   int error= 0;
-  struct stat stat_info;
   uint32_t create_options= create_info ? create_info->options : 0;
   uint32_t path_len;
 
@@ -566,55 +332,37 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
   path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
-  if (!stat(path,&stat_info))
+  if (mkdir(path,0777) == -1)
   {
-    if (!(create_options & HA_LEX_CREATE_IF_NOT_EXISTS))
+    if (errno == EEXIST)
     {
-      my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
-      error= -1;
+      if (!(create_options & HA_LEX_CREATE_IF_NOT_EXISTS))
+      {
+	my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
+	error= -1;
+	goto exit;
+      }
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
+      if (!silent)
+	my_ok(session);
+      error= 0;
       goto exit;
     }
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
-    if (!silent)
-      my_ok(session);
-    error= 0;
+
+    my_error(ER_CANT_CREATE_DB, MYF(0), db, my_errno);
+    error= -1;
     goto exit;
   }
-  else
-  {
-    if (errno != ENOENT)
-    {
-      my_error(EE_STAT, MYF(0), path, errno);
-      goto exit;
-    }
-    if (mkdir(path,0777) < 0)
-    {
-      my_error(ER_CANT_CREATE_DB, MYF(0), db, my_errno);
-      error= -1;
-      goto exit;
-    }
-  }
 
-  path[path_len-1]= FN_LIBCHAR;
-  strncpy(path+path_len, MY_DB_OPT_FILE, sizeof(path)-path_len-1);
-  if (write_db_opt(session, path, db, create_info))
+  error= write_schema_file(session, path, db, create_info);
+  if (error && error != EEXIST)
   {
-    /*
-      Could not create options file.
-      Restore things to beginning.
-    */
-    path[path_len]= 0;
     if (rmdir(path) >= 0)
     {
       error= -1;
       goto exit;
     }
-    /*
-      We come here when we managed to create the database, but not the option
-      file.  In this case it's best to just continue as if nothing has
-      happened.  (This is a very unlikely senario)
-    */
   }
 
   if (!silent)
@@ -649,9 +397,10 @@ exit2:
 
 bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
 {
-  char path[FN_REFLEN+16];
   long result=1;
-  int error= false;
+  int error= 0;
+  char	 path[FN_REFLEN+16];
+  uint32_t path_len;
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -666,20 +415,21 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
   if ((error=wait_if_global_read_lock(session,0,1)))
-    goto exit2;
+    goto exit;
 
   pthread_mutex_lock(&LOCK_drizzle_create_db);
 
-  /*
-     Recreate db options file: /dbpath/.db.opt
-     We pass MY_DB_OPT_FILE as "extension" to avoid
-     "table name to file name" encoding.
-  */
-  build_table_filename(path, sizeof(path), db, "", MY_DB_OPT_FILE, 0);
-  if ((error=write_db_opt(session, path, db, create_info)))
-    goto exit;
-
   /* Change options if current database is being altered. */
+  path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
+  path[path_len-1]= 0;                    // Remove last '/' from path
+
+  error= write_schema_file(session, path, db, create_info);
+  if (error && error != EEXIST)
+  {
+    /* TODO: find some witty way of getting back an error message */
+    pthread_mutex_unlock(&LOCK_drizzle_create_db);
+    goto exit;
+  }
 
   if (session->db && !strcmp(session->db,db))
   {
@@ -692,10 +442,9 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
   (void)replicator_statement(session, session->query, session->query_length);
   my_ok(session, result);
 
-exit:
   pthread_mutex_unlock(&LOCK_drizzle_create_db);
   start_waiting_global_read_lock(session);
-exit2:
+exit:
   return(error);
 }
 
@@ -753,8 +502,8 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
   pthread_mutex_lock(&LOCK_drizzle_create_db);
 
   length= build_table_filename(path, sizeof(path), db, "", "", 0);
-  strcpy(path+length, MY_DB_OPT_FILE);		// Append db option file name
-  del_dbopt(path);				// Remove dboption hash entry
+  strcpy(path+length, MY_DB_OPT_FILE);         // Append db option file name
+  unlink(path);
   path[length]= '\0';				// Remove file name
 
   /* See if the directory exists */

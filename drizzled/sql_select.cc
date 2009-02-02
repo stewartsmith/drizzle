@@ -2043,7 +2043,6 @@ JOIN::exec()
 
   session->set_proc_info("executing");
   error= 0;
-  (void) result->prepare2(); // Currently, this cannot fail.
 
   if (!tables_list && (tables || !select_lex->with_sum_func))
   {                                           // Only test of functions
@@ -16570,8 +16569,7 @@ void st_select_lex::print(Session *session, String *str, enum_query_type query_t
 bool JOIN::change_result(select_result *res)
 {
   result= res;
-  if (result->prepare(fields_list, select_lex->master_unit()) ||
-                     result->prepare2())
+  if (result->prepare(fields_list, select_lex->master_unit()))
   {
     return(true);
   }
