@@ -406,6 +406,23 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
     share->keys_for_keyread.init(0);
     share->keys_in_use.init(share->keys);
 
+    if(table_options.has_connect_string())
+    {
+      size_t len= table_options.connect_string().length();
+      const char* str= table_options.connect_string().c_str();
+
+      share->connect_string.length= len;
+      share->connect_string.str= strmake_root(&share->mem_root, str, len);
+    }
+
+    if(table_options.has_comment())
+    {
+      size_t len= table_options.comment().length();
+      const char* str= table_options.comment().c_str();
+
+      share->comment.length= len;
+      share->comment.str= strmake_root(&share->mem_root, str, len);
+    }
 
 //    return 0;
   }
@@ -667,15 +684,10 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     {
       goto err;
     }
-    share->connect_string.length= uint2korr(buff);
-    if (!(share->connect_string.str= strmake_root(&share->mem_root,
-                                                  (char*) next_chunk + 2,
-                                                  share->connect_string.
-                                                  length)))
-    {
-      goto err;
-    }
-    next_chunk+= share->connect_string.length + 2;
+
+    uint32_t connect_str_length= uint2korr(buff);
+    next_chunk+= connect_str_length + 2;
+
     buff_end= buff + n_length;
     if (next_chunk + 2 < buff_end)
     {
@@ -695,14 +707,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
           free(buff);
           goto err;
       }
-      share->comment.length = uint2korr(next_chunk);
-      if (! (share->comment.str= strmake_root(&share->mem_root,
-                               (char*)next_chunk + 2, share->comment.length)))
-      {
-          free(buff);
-          goto err;
-      }
-      next_chunk+= 2 + share->comment.length;
+      uint32_t comment_str_length= uint2korr(next_chunk);
+      next_chunk+= 2 + comment_str_length;
     }
     assert(next_chunk <= buff_end);
     if (share->mysql_version >= DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE)
@@ -725,8 +731,14 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       {
         const uint32_t format_section_header_size= 8;
         uint32_t format_section_len= uint2korr(next_chunk+0);
+	uint flags=  uint4korr(next_chunk+2);
 
-        field_extra_info= next_chunk + format_section_header_size + 1;
+	(void)flags;
+
+	const char *tablespace= (const char*)next_chunk + format_section_header_size;
+        uint tablespace_len= strlen(tablespace);
+
+        field_extra_info= next_chunk + format_section_header_size + tablespace_len + 1;
         next_chunk+= format_section_len;
       }
     }
