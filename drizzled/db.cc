@@ -166,7 +166,104 @@ const CHARSET_INFO *get_default_db_collation(Session *session, const char *db_na
     (collation_server).
   */
 
+  load_db_opt_by_name(session, db_name, &db_info);
+
   return db_info.default_table_charset;
+}
+
+/* path is path to database, not schema file */
+static int write_schema_file(Session *session,
+			     const char *path, const char *name,
+			     HA_CREATE_INFO *create)
+{
+  drizzle::Schema db;
+  char schema_file_tmp[FN_REFLEN];
+  string schema_file(path);
+
+  assert(path);
+  assert(name);
+  assert(create);
+
+  snprintf(schema_file_tmp, FN_REFLEN, "%s%cdb.opt.tmpXXXXXX",path,FN_LIBCHAR);
+
+  schema_file.append(1, FN_LIBCHAR);
+  schema_file.append("db.opt");
+
+  int fd= mkstemp(schema_file_tmp);
+
+  if (fd==-1)
+    return errno;
+
+  if (!create->default_table_charset)
+    create->default_table_charset= session->variables.collation_server;
+
+  db.set_name(name);
+  db.set_collation(create->default_table_charset->name);
+
+  if (!db.SerializeToFileDescriptor(fd))
+  {
+    close(fd);
+    unlink(schema_file_tmp);
+    return -1;
+  }
+
+  if (rename(schema_file_tmp, schema_file.c_str()) == -1)
+  {
+    close(fd);
+    return errno;
+  }
+
+  close(fd);
+  return 0;
+}
+
+int load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
+{
+  drizzle::Schema db;
+  string buffer;
+
+  memset(create, 0, sizeof(*create));
+  create->default_table_charset= session->variables.collation_server;
+
+  int fd= open(path, O_RDONLY);
+
+  if (fd == -1)
+    return errno;
+
+  if (!db.ParseFromFileDescriptor(fd))
+  {
+    close(fd);
+    return -1;
+  }
+  close(fd);
+
+  buffer= db.collation();
+  if (!(create->default_table_charset= get_charset_by_name(buffer.c_str(),
+							   MYF(0))))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+		  _("Error while loading database options: '%s':"),path);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+    create->default_table_charset= default_charset_info;
+    return -1;
+  }
+
+  return 0;
+}
+
+int load_db_opt_by_name(Session *session, const char *db_name,
+			HA_CREATE_INFO *db_create_info)
+{
+  char db_opt_path[FN_REFLEN];
+
+  /*
+    Pass an empty file name, and the database options file name as extension
+    to avoid table name to file name encoding.
+  */
+  (void) build_table_filename(db_opt_path, sizeof(db_opt_path),
+                              db_name, "", "db.opt", 0);
+
+  return load_db_opt(session, db_opt_path, db_create_info);
 }
 
 
@@ -200,7 +297,6 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
   char	 tmp_query[FN_REFLEN+16];
   long result= 1;
   int error= 0;
-  struct stat stat_info;
   uint32_t create_options= create_info ? create_info->options : 0;
   uint32_t path_len;
 
@@ -235,31 +331,34 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
   path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
-  if (!stat(path,&stat_info))
+  if (mkdir(path,0777) == -1)
   {
-    if (!(create_options & HA_LEX_CREATE_IF_NOT_EXISTS))
+    if (errno == EEXIST)
     {
-      my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
-      error= -1;
+      if (!(create_options & HA_LEX_CREATE_IF_NOT_EXISTS))
+      {
+	my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
+	error= -1;
+	goto exit;
+      }
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
+      if (!silent)
+	my_ok(session);
+      error= 0;
       goto exit;
     }
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
-    if (!silent)
-      my_ok(session);
-    error= 0;
+
+    my_error(ER_CANT_CREATE_DB, MYF(0), db, my_errno);
+    error= -1;
     goto exit;
   }
-  else
+
+  error= write_schema_file(session, path, db, create_info);
+  if (error && error != EEXIST)
   {
-    if (errno != ENOENT)
+    if (rmdir(path) >= 0)
     {
-      my_error(EE_STAT, MYF(0), path, errno);
-      goto exit;
-    }
-    if (mkdir(path,0777) < 0)
-    {
-      my_error(ER_CANT_CREATE_DB, MYF(0), db, my_errno);
       error= -1;
       goto exit;
     }
@@ -298,7 +397,9 @@ exit2:
 bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
 {
   long result=1;
-  int error= false;
+  int error= 0;
+  char	 path[FN_REFLEN+16];
+  uint32_t path_len;
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -318,6 +419,16 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
   pthread_mutex_lock(&LOCK_drizzle_create_db);
 
   /* Change options if current database is being altered. */
+  path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
+  path[path_len-1]= 0;                    // Remove last '/' from path
+
+  error= write_schema_file(session, path, db, create_info);
+  if (error && error != EEXIST)
+  {
+    /* TODO: find some witty way of getting back an error message */
+    pthread_mutex_unlock(&LOCK_drizzle_create_db);
+    goto exit;
+  }
 
   if (session->db && !strcmp(session->db,db))
   {
@@ -390,6 +501,8 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
   pthread_mutex_lock(&LOCK_drizzle_create_db);
 
   length= build_table_filename(path, sizeof(path), db, "", "", 0);
+  strcpy(path+length, "db.opt");         // Append db option file name
+  unlink(path);
   path[length]= '\0';				// Remove file name
 
   /* See if the directory exists */

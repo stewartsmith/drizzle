@@ -34,6 +34,8 @@ bool mysql_opt_change_db(Session *session,
 
 
 bool check_db_dir_existence(const char *db_name);
+int load_db_opt_by_name(Session *session, const char *db_name,
+			HA_CREATE_INFO *db_create_info);
 const CHARSET_INFO *get_default_db_collation(Session *session, const char *db_name);
 
 extern int creating_database; // How many database locks are made

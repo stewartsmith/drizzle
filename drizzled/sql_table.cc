@@ -78,6 +78,24 @@ mysql_prepare_alter_table(Session *session, Table *table,
                           HA_CREATE_INFO *create_info,
                           Alter_info *alter_info);
 
+static void set_table_default_charset(Session *session,
+                                      HA_CREATE_INFO *create_info, char *db)
+{
+  /*
+    If the table character set was not given explicitly,
+    let's fetch the database default character set and
+    apply it to the table.
+  */
+  if (!create_info->default_table_charset)
+  {
+    HA_CREATE_INFO db_info;
+
+    load_db_opt_by_name(session, db, &db_info);
+
+    create_info->default_table_charset= db_info.default_table_charset;
+  }
+}
+
 /*
   Translate a file name to a table name (WL #1324).
 
@@ -1746,10 +1764,7 @@ bool mysql_create_table_no_lock(Session *session,
     return(true);
   }
 
-  if (!create_info->default_table_charset)
-  {
-    create_info->default_table_charset= system_charset_info;
-  }
+  set_table_default_charset(session, create_info, (char*) db);
 
   if (mysql_prepare_create_table(session, create_info, alter_info,
                                  internal_tmp_table,
@@ -4651,10 +4666,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   if (mysql_prepare_alter_table(session, table, create_info, alter_info))
       goto err;
 
-  if (!create_info->default_table_charset)
-  {
-    create_info->default_table_charset= system_charset_info;
-  }
+  set_table_default_charset(session, create_info, db);
 
   if (session->variables.old_alter_table
       || (table->s->db_type() != create_info->db_type)
