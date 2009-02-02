@@ -424,6 +424,9 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
       share->comment.str= strmake_root(&share->mem_root, str, len);
     }
 
+    share->key_block_size= table_options.has_key_block_size() ?
+      table_options.key_block_size() : 0;
+
 //    return 0;
   }
 
@@ -748,7 +751,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       goto err;
     }
   }
-  share->key_block_size= uint2korr(head+62);
 
   error=4;
   extra_rec_buf_length= uint2korr(head+59);
