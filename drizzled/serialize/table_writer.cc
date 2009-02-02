@@ -31,9 +31,9 @@ void fill_engine(::drizzle::Table::StorageEngine *engine)
   for (x= 0; x < 2; x++)
   {
     option= engine->add_option();
-    option->set_name(option_names[x]);
-    option->set_value(option_values[x]);
-    option->set_type(Table::StorageEngine::EngineOption::STRING);
+    option->set_option_name(option_names[x]);
+    option->set_option_value(option_values[x]);
+    option->set_option_type(Table::StorageEngine::EngineOption::STRING);
   }
 }
 
@@ -51,7 +51,7 @@ void new_index_to_table(::drizzle::Table *table,
   Table::Field *field;
   Table::Index::IndexPart *index_part;
 
-  index= table->add_index();
+  index= table->add_indexes();
 
   index->set_name(name);
   index->set_type(Table::Index::BTREE);
@@ -121,10 +121,10 @@ void fill_table(::drizzle::Table *table, const char *name)
     field->set_name("colors");
 
     set_field_options= field->mutable_set_options();
-    set_field_options->add_value("red");
-    set_field_options->add_value("blue");
-    set_field_options->add_value("green");
-    set_field_options->set_count_elements(set_field_options->value_size());
+    set_field_options->add_field_value("red");
+    set_field_options->add_field_value("blue");
+    set_field_options->add_field_value("green");
+    set_field_options->set_count_elements(set_field_options->field_value_size());
   }
   /* Write out a BLOB */
   {

@@ -547,7 +547,7 @@ drizzle_escape_string(char *to,const char *from, uint32_t length)
     char escape= 0;
     if (!U8_IS_SINGLE(*from))
     {
-      tmp_length= U8_LENGTH(*from);
+      tmp_length= U8_LENGTH(*(uint32_t*)from);
       if (to + tmp_length > to_end)
       {
         overflow= true;
