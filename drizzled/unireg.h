@@ -24,6 +24,8 @@
 #define DRIZZLED_UNIREG_H
 
 #include <drizzled/structs.h>				/* All structs we need */
+#include <drizzled/serialize/table.pb.h>
+int drizzle_read_table_proto(const char* path, drizzle::Table* table);
 
 #if defined(__cplusplus)
 extern "C" {
@@ -159,8 +161,6 @@ extern "C" {
 void unireg_init();
 void unireg_end(void) __attribute__((noreturn));
 void unireg_abort(int exit_code) __attribute__((noreturn));
-
-int mysql_frm_type(char *path, enum legacy_db_type *dbt);
 
 int rea_create_table(Session *session, const char *path,
                      const char *db, const char *table_name,

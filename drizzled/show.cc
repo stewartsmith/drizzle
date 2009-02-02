@@ -873,11 +873,6 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
       packet->append(ha_row_type[(uint) create_info.row_type]);
     }
-    if (share->transactional != HA_CHOICE_UNDEF)
-    {
-      packet->append(STRING_WITH_LEN(" TRANSACTIONAL="));
-      packet->append(ha_choice_values[(uint) share->transactional], 1);
-    }
     if (table->s->key_block_size)
     {
       packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
@@ -2648,7 +2643,6 @@ int fill_schema_schemata(Session *session, TableList *tables, COND *cond)
   List<LEX_STRING> db_names;
   LEX_STRING *db_name;
   bool with_i_schema;
-  HA_CREATE_INFO create;
   Table *table= tables->table;
 
   if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
@@ -2687,7 +2681,9 @@ int fill_schema_schemata(Session *session, TableList *tables, COND *cond)
       continue;
     }
     {
+      HA_CREATE_INFO create;
       load_db_opt_by_name(session, db_name->str, &create);
+
       if (store_schema_shemata(session, table, db_name,
                                create.default_table_charset))
         return(1);
@@ -2782,14 +2778,6 @@ static int get_schema_tables_record(Session *session, TableList *tables,
       ptr= int64_t10_to_str(share->block_size, ptr, 10);
     }
 
-    if (share->transactional != HA_CHOICE_UNDEF)
-    {
-      ptr+= sprintf(ptr, " TRANSACTIONAL=%s",
-                    (share->transactional == HA_CHOICE_YES ? "1" : "0"));
-    }
-    if (share->transactional != HA_CHOICE_UNDEF)
-      ptr+= sprintf(ptr, " transactional=%s",
-                    ha_choice_values[(uint) share->transactional]);
     table->field[19]->store(option_buff+1,
                             (ptr == option_buff ? 0 :
                              (uint) (ptr-option_buff)-1), cs);

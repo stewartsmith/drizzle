@@ -770,7 +770,6 @@ void clean_up(bool print_message)
   if (cleanup_done++)
     return; /* purecov: inspected */
 
-  my_database_names_free();
   table_cache_free();
   table_def_free();
   lex_free();				/* Free some memory */
@@ -1973,9 +1972,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   if (use_temp_pool && bitmap_init(&temp_pool,0,1024,1))
     return 1;
-  if (my_database_names_init())
-    return 1;
-
 
   /* Reset table_alias_charset, now that lower_case_table_names is set. */
   lower_case_table_names= 1; /* This we need to look at */
