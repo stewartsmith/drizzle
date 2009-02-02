@@ -1391,6 +1391,21 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  drizzled/drizzled_safe support-files/libdrizzleclient.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 
+scheduling_plugins_available="
+  pool_of_threads 
+  single_thread
+"
+
+for sched_plugin in $scheduling_plugins_available
+do
+  varname="\${with_plugin_${sched_plugin}}"
+  result=`eval "echo $varname"`
+  if test "x$result" = "xyes"
+  then
+    scheduling_plugins="$sched_plugin $scheduling_plugins"
+  fi
+done
+
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
 # Ensure that table handlers gets all modifications to CFLAGS/CXXFLAGS
@@ -1412,6 +1427,7 @@ echo "   * Debug enabled:             $with_debug"
 echo "   * Profiling enabled:         $ac_profiling"
 echo "   * Coverage enabled:          $ac_coverage"
 echo "   * Warnings as failure:       $ac_warn_fail"
+echo "   * Scheduling Plugins:        $scheduling_plugins"
 echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
 echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
 echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
