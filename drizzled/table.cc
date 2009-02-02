@@ -774,12 +774,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   vcol_screen_length= uint2korr(forminfo+286);
   share->vfields= 0;
   share->stored_fields= share->fields;
-  if (forminfo[46] != (unsigned char)255)
-  {
-    share->comment.length=  (int) (forminfo[46]);
-    share->comment.str= strmake_root(&share->mem_root, (char*) forminfo+47,
-                                     share->comment.length);
-  }
 
 
   if (!(field_ptr = (Field **)
