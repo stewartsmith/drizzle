@@ -19,15 +19,15 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/item/type_holder.h>
+#include <drizzled/sql_base.h>
 
-bool mysql_union(THD *thd,
-                 LEX *lex __attribute__((unused)),
-                 select_result *result,
+bool mysql_union(Session *session, LEX *, select_result *result,
                  SELECT_LEX_UNIT *unit, ulong setup_tables_done_option)
 {
   bool res;
-  if (!(res= unit->prepare(thd, result, SELECT_NO_UNLOCK |
+  if (!(res= unit->prepare(session, result, SELECT_NO_UNLOCK |
                            setup_tables_done_option)))
     res= unit->exec();
   if (res)
@@ -40,8 +40,7 @@ bool mysql_union(THD *thd,
 ** store records in temporary table for UNION
 ***************************************************************************/
 
-int select_union::prepare(List<Item> &list __attribute__((unused)),
-                          SELECT_LEX_UNIT *u)
+int select_union::prepare(List<Item> &, SELECT_LEX_UNIT *u)
 {
   unit= u;
   return 0;
@@ -56,15 +55,15 @@ bool select_union::send_data(List<Item> &values)
     unit->offset_limit_cnt--;
     return 0;
   }
-  fill_record(thd, table->field, values, 1);
-  if (thd->is_error())
+  fill_record(session, table->field, values, 1);
+  if (session->is_error())
     return 1;
 
   if ((error= table->file->ha_write_row(table->record[0])))
   {
     /* create_myisam_from_heap will generate error if needed */
     if (table->file->is_fatal_error(error, HA_CHECK_DUP) &&
-        create_myisam_from_heap(thd, table, tmp_table_param.start_recinfo, 
+        create_myisam_from_heap(session, table, tmp_table_param.start_recinfo,
                                 &tmp_table_param.recinfo, error, 1))
       return 1;
   }
@@ -94,7 +93,7 @@ bool select_union::flush()
 
   SYNOPSIS
     select_union::create_result_table()
-      thd                thread handle
+      session                thread handle
       column_types       a list of items used to define columns of the
                          temporary table
       is_union_distinct  if set, the temporary table will eliminate
@@ -113,7 +112,7 @@ bool select_union::flush()
 */
 
 bool
-select_union::create_result_table(THD *thd_arg, List<Item> *column_types,
+select_union::create_result_table(Session *session_arg, List<Item> *column_types,
                                   bool is_union_distinct, uint64_t options,
                                   const char *table_alias,
                                   bool bit_fields_as_long)
@@ -123,7 +122,7 @@ select_union::create_result_table(THD *thd_arg, List<Item> *column_types,
   tmp_table_param.field_count= column_types->elements;
   tmp_table_param.bit_fields_as_long= bit_fields_as_long;
 
-  if (! (table= create_tmp_table(thd_arg, &tmp_table_param, *column_types,
+  if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
                                  (order_st*) 0, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
     return true;
@@ -154,21 +153,21 @@ void select_union::cleanup()
 
   SYNOPSIS
     st_select_lex_unit::init_prepare_fake_select_lex()
-    thd		- thread handler
+    session		- thread handler
 
   RETURN
     options of SELECT
 */
 
 void
-st_select_lex_unit::init_prepare_fake_select_lex(THD *thd_arg) 
+st_select_lex_unit::init_prepare_fake_select_lex(Session *session_arg)
 {
-  thd_arg->lex->current_select= fake_select_lex;
+  session_arg->lex->current_select= fake_select_lex;
   fake_select_lex->table_list.link_in_list((unsigned char *)&result_table_list,
 					   (unsigned char **)
 					   &result_table_list.next_local);
-  fake_select_lex->context.table_list= 
-    fake_select_lex->context.first_name_resolution_table= 
+  fake_select_lex->context.table_list=
+    fake_select_lex->context.first_name_resolution_table=
     fake_select_lex->get_table_list();
 
   for (order_st *order= (order_st *) global_parameters->order_list.first;
@@ -186,10 +185,10 @@ st_select_lex_unit::init_prepare_fake_select_lex(THD *thd_arg)
 }
 
 
-bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
+bool st_select_lex_unit::prepare(Session *session_arg, select_result *sel_result,
                                  uint32_t additional_options)
 {
-  SELECT_LEX *lex_select_save= thd_arg->lex->current_select;
+  SELECT_LEX *lex_select_save= session_arg->lex->current_select;
   SELECT_LEX *sl, *first_sl= first_select();
   select_result *tmp_result;
   bool is_union_select;
@@ -225,8 +224,8 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
   }
   prepared= 1;
   saved_error= false;
-  
-  thd_arg->lex->current_select= sl= first_sl;
+
+  session_arg->lex->current_select= sl= first_sl;
   found_rows_for_union= first_sl->options & OPTION_FOUND_ROWS;
   is_union_select= is_union() || fake_select_lex;
 
@@ -248,8 +247,8 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
   {
     bool can_skip_order_by;
     sl->options|=  SELECT_NO_UNLOCK;
-    JOIN *join= new JOIN(thd_arg, sl->item_list, 
-			 sl->options | thd_arg->options | additional_options,
+    JOIN *join= new JOIN(session_arg, sl->item_list,
+			 sl->options | session_arg->options | additional_options,
 			 tmp_result);
     /*
       setup_tables_done_option should be set only for very first SELECT,
@@ -261,7 +260,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
     if (!join)
       goto err;
 
-    thd_arg->lex->current_select= sl;
+    session_arg->lex->current_select= sl;
 
     can_skip_order_by= is_union_select && !(sl->braces && sl->explicit_limit);
 
@@ -277,12 +276,12 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
                                (order_st*) sl->group_list.first,
                                sl->having,
                                (is_union_select ? (order_st*) 0 :
-                                (order_st*) thd_arg->lex->proc_list.first),
+                                (order_st*) session_arg->lex->proc_list.first),
                                sl, this);
     /* There are no * in the statement anymore (for PS) */
     sl->with_wild= 0;
 
-    if (saved_error || (saved_error= thd_arg->is_fatal_error))
+    if (saved_error || (saved_error= session_arg->is_fatal_error))
       goto err;
     /*
       Use items list of underlaid select for derived tables to preserve
@@ -299,17 +298,17 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
         field object without table.
       */
       assert(!empty_table);
-      empty_table= (Table*) thd->calloc(sizeof(Table));
+      empty_table= (Table*) session->calloc(sizeof(Table));
       types.empty();
       List_iterator_fast<Item> it(sl->item_list);
       Item *item_tmp;
       while ((item_tmp= it++))
       {
 	/* Error's in 'new' will be detected after loop */
-	types.push_back(new Item_type_holder(thd_arg, item_tmp));
+	types.push_back(new Item_type_holder(session_arg, item_tmp));
       }
 
-      if (thd_arg->is_fatal_error)
+      if (session_arg->is_fatal_error)
 	goto err; // out of memory
     }
     else
@@ -321,11 +320,11 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
 	goto err;
       }
       List_iterator_fast<Item> it(sl->item_list);
-      List_iterator_fast<Item> tp(types);	
+      List_iterator_fast<Item> tp(types);
       Item *type, *item_tmp;
       while ((type= tp++, item_tmp= it++))
       {
-        if (((Item_type_holder*)type)->join_types(thd_arg, item_tmp))
+        if (((Item_type_holder*)type)->join_types(session_arg, item_tmp))
 	  return(true);
       }
     }
@@ -350,11 +349,11 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
         goto err;
       }
     }
-    
-    create_options= (first_sl->options | thd_arg->options |
+
+    create_options= (first_sl->options | session_arg->options |
                      TMP_TABLE_ALL_COLUMNS);
 
-    if (union_result->create_result_table(thd, &types, test(union_distinct),
+    if (union_result->create_result_table(session, &types, test(union_distinct),
                                           create_options, "", false))
       goto err;
     memset(&result_table_list, 0, sizeof(result_table_list));
@@ -362,7 +361,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
     result_table_list.table_name= result_table_list.alias= (char*) "union";
     result_table_list.table= table= union_result->table;
 
-    thd_arg->lex->current_select= lex_select_save;
+    session_arg->lex->current_select= lex_select_save;
     if (!item_list.elements)
     {
       saved_error= table->fill_item_list(&item_list);
@@ -379,19 +378,19 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
     }
   }
 
-  thd_arg->lex->current_select= lex_select_save;
+  session_arg->lex->current_select= lex_select_save;
 
-  return(saved_error || thd_arg->is_fatal_error);
+  return(saved_error || session_arg->is_fatal_error);
 
 err:
-  thd_arg->lex->current_select= lex_select_save;
+  session_arg->lex->current_select= lex_select_save;
   return(true);
 }
 
 
 bool st_select_lex_unit::exec()
 {
-  SELECT_LEX *lex_select_save= thd->lex->current_select;
+  SELECT_LEX *lex_select_save= session->lex->current_select;
   SELECT_LEX *select_cursor=first_select();
   uint64_t add_rows=0;
   ha_rows examined_rows= 0;
@@ -399,7 +398,7 @@ bool st_select_lex_unit::exec()
   if (executed && !uncacheable && !describe)
     return(false);
   executed= 1;
-  
+
   if (uncacheable || !item || !item->assigned() || describe)
   {
     if (item)
@@ -421,7 +420,7 @@ bool st_select_lex_unit::exec()
     for (SELECT_LEX *sl= select_cursor; sl; sl= sl->next_select())
     {
       ha_rows records_at_start= 0;
-      thd->lex->current_select= sl;
+      session->lex->current_select= sl;
 
       if (optimized)
 	saved_error= sl->join->reinit();
@@ -444,15 +443,13 @@ bool st_select_lex_unit::exec()
           we don't calculate found_rows() per union part.
           Otherwise, SQL_CALC_FOUND_ROWS should be done on all sub parts.
         */
-        sl->join->select_options= 
+        sl->join->select_options=
           (select_limit_cnt == HA_POS_ERROR || sl->braces) ?
           sl->options & ~OPTION_FOUND_ROWS : sl->options | found_rows_for_union;
 
-        /* dump_TableList_struct(select_lex, select_lex->leaf_tables); */
         if (sl->join->flatten_subqueries())
           return(true);
 
-        /* dump_TableList_struct(select_lex, select_lex->leaf_tables); */
 	saved_error= sl->join->optimize();
       }
       if (!saved_error)
@@ -471,17 +468,17 @@ bool st_select_lex_unit::exec()
                                     0);
 	if (!saved_error)
 	{
-	  examined_rows+= thd->examined_row_count;
+	  examined_rows+= session->examined_row_count;
 	  if (union_result->flush())
 	  {
-	    thd->lex->current_select= lex_select_save;
+	    session->lex->current_select= lex_select_save;
 	    return(1);
 	  }
 	}
       }
       if (saved_error)
       {
-	thd->lex->current_select= lex_select_save;
+	session->lex->current_select= lex_select_save;
 	return(saved_error);
       }
       /* Needed for the following test and for records_at_start in next loop */
@@ -491,7 +488,7 @@ bool st_select_lex_unit::exec()
         table->file->print_error(error, MYF(0));
         return(1);
       }
-      if (found_rows_for_union && !sl->braces && 
+      if (found_rows_for_union && !sl->braces &&
           select_limit_cnt != HA_POS_ERROR)
       {
 	/*
@@ -500,7 +497,7 @@ bool st_select_lex_unit::exec()
 	  We get this from the difference of between total number of possible
 	  rows and actual rows added to the temporary table.
 	*/
-	add_rows+= (uint64_t) (thd->limit_found_rows - (uint64_t)
+	add_rows+= (uint64_t) (session->limit_found_rows - (uint64_t)
 			      ((table->file->stats.records -  records_at_start)));
       }
     }
@@ -510,10 +507,10 @@ bool st_select_lex_unit::exec()
   /* Send result to 'result' */
   saved_error= true;
   {
-    if (!thd->is_fatal_error)				// Check if EOM
+    if (!session->is_fatal_error)				// Check if EOM
     {
       set_limit(global_parameters);
-      init_prepare_fake_select_lex(thd);
+      init_prepare_fake_select_lex(session);
       JOIN *join= fake_select_lex->join;
       if (!join)
       {
@@ -525,7 +522,7 @@ bool st_select_lex_unit::exec()
           don't let it allocate the join. Perhaps this is because we need
           some special parameter values passed to join constructor?
 	*/
-	if (!(fake_select_lex->join= new JOIN(thd, item_list,
+	if (!(fake_select_lex->join= new JOIN(session, item_list,
 					      fake_select_lex->options, result)))
 	{
 	  fake_select_lex->table_list.empty();
@@ -538,7 +535,7 @@ bool st_select_lex_unit::exec()
 	  allocation.
 	*/
 	fake_select_lex->item_list= item_list;
-        saved_error= mysql_select(thd, &fake_select_lex->ref_pointer_array,
+        saved_error= mysql_select(session, &fake_select_lex->ref_pointer_array,
                               &result_table_list,
                               0, item_list, NULL,
                               global_parameters->order_list.elements,
@@ -557,11 +554,11 @@ bool st_select_lex_unit::exec()
              - 1st time is a real evaluation to get the subquery value
              - 2nd time is to produce EXPLAIN output rows.
             1st execution sets certain members (e.g. select_result) to perform
-            subquery execution rather than EXPLAIN line production. In order 
+            subquery execution rather than EXPLAIN line production. In order
             to reset them back, we re-do all of the actions (yes it is ugly):
           */
-	  join->init(thd, item_list, fake_select_lex->options, result);
-          saved_error= mysql_select(thd, &fake_select_lex->ref_pointer_array,
+	  join->init(session, item_list, fake_select_lex->options, result);
+          saved_error= mysql_select(session, &fake_select_lex->ref_pointer_array,
                                 &result_table_list,
                                 0, item_list, NULL,
                                 global_parameters->order_list.elements,
@@ -581,8 +578,8 @@ bool st_select_lex_unit::exec()
       fake_select_lex->table_list.empty();
       if (!saved_error)
       {
-	thd->limit_found_rows = (uint64_t)table->file->stats.records + add_rows;
-        thd->examined_row_count+= examined_rows;
+	session->limit_found_rows = (uint64_t)table->file->stats.records + add_rows;
+        session->examined_row_count+= examined_rows;
       }
       /*
 	Mark for slow query log if any of the union parts didn't use
@@ -590,7 +587,7 @@ bool st_select_lex_unit::exec()
       */
     }
   }
-  thd->lex->current_select= lex_select_save;
+  session->lex->current_select= lex_select_save;
   return(saved_error);
 }
 
@@ -610,7 +607,7 @@ bool st_select_lex_unit::cleanup()
     delete union_result;
     union_result=0; // Safety
     if (table)
-      table->free_tmp_table(thd);
+      table->free_tmp_table(session);
     table= 0; // Safety
   }
 

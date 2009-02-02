@@ -29,7 +29,7 @@
 #ifndef _libdrizzle_libdrizzle_h
 #define _libdrizzle_libdrizzle_h
 
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/common.h>
 
 #define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
 #define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */
@@ -53,8 +53,6 @@ extern "C" {
   unsigned int drizzle_get_default_port(void);
   uint32_t drizzle_escape_string(char *to,const char *from,
                                  uint32_t from_length);
-  uint32_t drizzle_hex_string(char *to,const char *from,
-                              uint32_t from_length);
 
 #ifdef  __cplusplus
 }

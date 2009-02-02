@@ -21,7 +21,16 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/double.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include <drizzled/protocol.h>
+
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /****************************************************************************
   double precision floating point numbers
@@ -109,7 +118,7 @@ warn:
     char buf[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
     String tmp(buf, sizeof(buf), &my_charset_utf8_general_ci), *str;
     str= val_str(&tmp, 0);
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), "INTEGER",
                         str->c_ptr());
@@ -119,7 +128,7 @@ warn:
 
 
 String *Field_double::val_str(String *val_buffer,
-			      String *val_ptr __attribute__((unused)))
+			      String *)
 {
   double nr;
 #ifdef WORDS_BIGENDIAN
@@ -171,11 +180,9 @@ int Field_double::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-#define DBL_EXP_DIG (sizeof(double)*8-DBL_MANT_DIG)
-
 /* The following should work for IEEE */
 
-void Field_double::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_double::sort_string(unsigned char *to,uint32_t )
 {
   double nr;
 #ifdef WORDS_BIGENDIAN

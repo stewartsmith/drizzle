@@ -17,12 +17,11 @@
 #ifndef HEAPDEF_H
 #define HEAPDEF_H
 
-#include <drizzled/base.h>		/* This includes global */
+#include <drizzled/global.h>
+#include <drizzled/base.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+#include <mysys/my_sys.h>
+#include <mystrings/m_ctype.h>
 #include <mysys/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
 #include <mysys/my_tree.h>
@@ -34,6 +33,10 @@ extern "C" {
   The challenge is to find the balance between allocate as few blocks
   as possible and keep memory consumption down.
 */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define HP_MIN_RECORDS_IN_BLOCK 16
 #define HP_MAX_RECORDS_IN_BLOCK 8192
@@ -69,7 +72,7 @@ typedef struct {
   uint32_t key_length;
   uint32_t search_flag;
 } heap_rb_param;
-      
+
 	/* Prototypes for intern functions */
 
 extern HP_SHARE *hp_find_named_heap(const char *name);
@@ -81,7 +84,7 @@ extern unsigned char *hp_free_level(HP_BLOCK *block,uint32_t level,HP_PTRS *pos,
 			   unsigned char *last_pos);
 extern int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
 			const unsigned char *record, unsigned char *recpos);
-extern int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, 
+extern int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
 			   const unsigned char *record, unsigned char *recpos);
 extern int hp_rb_delete_key(HP_INFO *info,HP_KEYDEF *keyinfo,
 			    const unsigned char *record,unsigned char *recpos,int flag);
@@ -116,12 +119,12 @@ extern uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsi
                            key_part_map keypart_map);
 
    /* Chunkset management (alloc/free/encode/decode) functions */
- 
+
 extern unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count);
 extern int hp_reallocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count, unsigned char* pos);
 extern void hp_free_chunks(HP_DATASPACE *info, unsigned char *pos);
 extern void hp_clear_dataspace(HP_DATASPACE *info);
- 
+
 extern uint32_t hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uint32_t *chunk_count);
 extern void hp_copy_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos);
 extern void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned char *pos);

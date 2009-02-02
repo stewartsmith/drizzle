@@ -14,22 +14,27 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include <drizzled/common_includes.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/field.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/timestamp.h>
 #include <storage/myisam/myisam.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
-#include "ha_archive.h"
+#include <storage/archive/ha_archive.h>
 
 /*
-  First, if you want to understand storage engines you should look at 
-  ha_example.cc and ha_example.h. 
+  First, if you want to understand storage engines you should look at
+  ha_example.cc and ha_example.h.
 
   This example was written as a test case for a customer who needed
   a storage engine without indexes that could compress data very well.
   So, welcome to a completely compressed storage engine. This storage
-  engine only does inserts. No replace, deletes, or updates. All reads are 
+  engine only does inserts. No replace, deletes, or updates. All reads are
   complete table scans. Compression is done through a combination of packing
   and making use of the zlib library
-  
+
   We keep a file pointer open for each instance of ha_archive for each read
   but for writes we keep one open file handle just for that. We flush it
   only if we have a read occur. azip handles compressing lots of records
@@ -39,27 +44,27 @@
   the same time since we would want to flush).
 
   A "meta" file is kept alongside the data file. This file serves two purpose.
-  The first purpose is to track the number of rows in the table. The second 
-  purpose is to determine if the table was closed properly or not. When the 
-  meta file is first opened it is marked as dirty. It is opened when the table 
-  itself is opened for writing. When the table is closed the new count for rows 
-  is written to the meta file and the file is marked as clean. If the meta file 
-  is opened and it is marked as dirty, it is assumed that a crash occured. At 
+  The first purpose is to track the number of rows in the table. The second
+  purpose is to determine if the table was closed properly or not. When the
+  meta file is first opened it is marked as dirty. It is opened when the table
+  itself is opened for writing. When the table is closed the new count for rows
+  is written to the meta file and the file is marked as clean. If the meta file
+  is opened and it is marked as dirty, it is assumed that a crash occured. At
   this point an error occurs and the user is told to rebuild the file.
   A rebuild scans the rows and rewrites the meta file. If corruption is found
   in the data file then the meta file is not repaired.
 
   At some point a recovery method for such a drastic case needs to be divised.
 
-  Locks are row level, and you will get a consistant read. 
+  Locks are row level, and you will get a consistant read.
 
   For performance as far as table scans go it is quite fast. I don't have
   good numbers but locally it has out performed both Innodb and MyISAM. For
   Innodb the question will be if the table can be fit into the buffer
   pool. For MyISAM its a question of how much the file system caches the
   MyISAM file. With enough free memory MyISAM is faster. Its only when the OS
-  doesn't have enough memory to cache entire table that archive turns out 
-  to be any faster. 
+  doesn't have enough memory to cache entire table that archive turns out
+  to be any faster.
 
   Examples between MyISAM (packed) and Archive.
 
@@ -95,22 +100,12 @@ static unsigned int global_version;
 /* The file extension */
 #define ARZ ".ARZ"               // The data file
 #define ARN ".ARN"               // Files used during an optimize call
-#define ARM ".ARM"               // Meta file (deprecated)
 
-/*
-  unsigned char + unsigned char
-*/
-#define DATA_BUFFER_SIZE 2       // Size of the data used in the data file
-#define ARCHIVE_CHECK_HEADER 254 // The number we use to determine corruption
 
 /* Static declarations for handerton */
-static handler *archive_create_handler(handlerton *hton, 
-                                       TABLE_SHARE *table, 
+static handler *archive_create_handler(handlerton *hton,
+                                       TABLE_SHARE *table,
                                        MEM_ROOT *mem_root);
-int archive_discover(handlerton *hton, THD* thd, const char *db, 
-                     const char *name,
-                     unsigned char **frmblob, 
-                     size_t *frmlen);
 
 static bool archive_use_aio= false;
 
@@ -125,7 +120,7 @@ static bool archive_use_aio= false;
 #define ARCHIVE_ROW_HEADER_SIZE 4
 
 static handler *archive_create_handler(handlerton *hton,
-                                       TABLE_SHARE *table, 
+                                       TABLE_SHARE *table,
                                        MEM_ROOT *mem_root)
 {
   return new (mem_root) ha_archive(hton, table);
@@ -134,8 +129,7 @@ static handler *archive_create_handler(handlerton *hton,
 /*
   Used for hash table that tracks open tables.
 */
-static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length,
-                             bool not_used __attribute__((unused)))
+static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length, bool)
 {
   *length=share->table_name_length;
   return (unsigned char*) share->table_name;
@@ -162,7 +156,6 @@ int archive_db_init(void *p)
   archive_hton->state= SHOW_OPTION_YES;
   archive_hton->create= archive_create_handler;
   archive_hton->flags= HTON_NO_FLAGS;
-  archive_hton->discover= archive_discover;
 
   /* When the engine starts up set the first version */
   global_version= 1;
@@ -193,7 +186,7 @@ error:
     false       OK
 */
 
-int archive_db_done(void *p __attribute__((unused)))
+int archive_db_done(void *)
 {
   hash_free(&archive_open_tables);
   pthread_mutex_destroy(&archive_mutex);
@@ -213,46 +206,6 @@ ha_archive::ha_archive(handlerton *hton, TABLE_SHARE *table_arg)
   archive_reader_open= false;
 }
 
-int archive_discover(handlerton *hton __attribute__((unused)),
-                     THD* thd __attribute__((unused)),
-                     const char *db,
-                     const char *name,
-                     unsigned char **frmblob,
-                     size_t *frmlen)
-{
-  azio_stream frm_stream;
-  char az_file[FN_REFLEN];
-  char *frm_ptr;
-  struct stat file_stat; 
-
-  fn_format(az_file, name, db, ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-
-  if (stat(az_file, &file_stat))
-    goto err;
-
-  if (!(azopen(&frm_stream, az_file, O_RDONLY, AZ_METHOD_BLOCK)))
-  {
-    if (errno == EROFS || errno == EACCES)
-      return(my_errno= errno);
-    return(HA_ERR_CRASHED_ON_USAGE);
-  }
-
-  if (frm_stream.frm_length == 0)
-    goto err;
-
-  frm_ptr= (char *)my_malloc(sizeof(char) * frm_stream.frm_length, MYF(0));
-  azread_frm(&frm_stream, frm_ptr);
-  azclose(&frm_stream);
-
-  *frmlen= frm_stream.frm_length;
-  *frmblob= (unsigned char*) frm_ptr;
-
-  return(0);
-err:
-  my_errno= 0;
-  return(1);
-}
-
 /*
   This method reads the header of a datafile and returns whether or not it was successful.
 */
@@ -269,9 +222,9 @@ int ha_archive::read_data_header(azio_stream *file_to_read)
 
 
 /*
-  We create the shared memory space that we will use for the open table. 
+  We create the shared memory space that we will use for the open table.
   No matter what we try to get or create a share. This is so that a repair
-  table operation can occur. 
+  table operation can occur.
 
   See ha_example.cc for a longer description.
 */
@@ -292,7 +245,7 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
     if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
                           &share, sizeof(*share),
                           &tmp_name, length+1,
-                          NULL)) 
+                          NULL))
     {
       pthread_mutex_unlock(&archive_mutex);
       *rc= HA_ERR_OUT_OF_MEM;
@@ -306,12 +259,12 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
     share->archive_write_open= false;
     fn_format(share->data_file_name, table_name, "",
               ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    my_stpcpy(share->table_name, table_name);
+    strcpy(share->table_name, table_name);
     /*
       We will use this lock for rows.
     */
     pthread_mutex_init(&share->mutex,MY_MUTEX_INIT_FAST);
-    
+
     /*
       We read the meta file, but do not mark it dirty. Since we are not
       doing a write we won't mark it dirty (and we won't open it for
@@ -349,7 +302,7 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
 }
 
 
-/* 
+/*
   Free the share.
   See ha_example.cc for a description.
 */
@@ -363,7 +316,7 @@ int ha_archive::free_share()
     hash_delete(&archive_open_tables, (unsigned char*) share);
     thr_lock_delete(&share->lock);
     pthread_mutex_destroy(&share->mutex);
-    /* 
+    /*
       We need to make sure we don't reset the crashed state.
       If we open a crashed file, wee need to close it as crashed unless
       it has been repaired.
@@ -384,12 +337,12 @@ int ha_archive::free_share()
 
 int ha_archive::init_archive_writer()
 {
-  /* 
+  /*
     It is expensive to open and close the data files and since you can't have
     a gzip file that can be both read and written we keep a writer open
     that is shared amoung all open tables.
   */
-  if (!(azopen(&(share->archive_write), share->data_file_name, 
+  if (!(azopen(&(share->archive_write), share->data_file_name,
                O_RDWR, AZ_METHOD_BLOCK)))
   {
     share->crashed= true;
@@ -401,12 +354,12 @@ int ha_archive::init_archive_writer()
 }
 
 
-/* 
+/*
   No locks are required because it is associated with just one handler instance
 */
 int ha_archive::init_archive_reader()
 {
-  /* 
+  /*
     It is expensive to open and close the data files and since you can't have
     a gzip file that can be both read and written we keep a writer open
     that is shared amoung all open tables.
@@ -426,7 +379,7 @@ int ha_archive::init_archive_reader()
     default:
       method= AZ_METHOD_BLOCK;
     }
-    if (!(azopen(&archive, share->data_file_name, O_RDONLY, 
+    if (!(azopen(&archive, share->data_file_name, O_RDONLY,
                  method)))
     {
       share->crashed= true;
@@ -453,15 +406,13 @@ const char **ha_archive::bas_ext() const
 }
 
 
-/* 
+/*
   When opening a file we:
   Create/get our shared structure.
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::open(const char *name,
-                     int mode __attribute__((unused)),
-                     uint32_t open_options)
+int ha_archive::open(const char *name, int, uint32_t open_options)
 {
   int rc= 0;
   share= get_share(name, &rc);
@@ -471,7 +422,7 @@ int ha_archive::open(const char *name,
     /* purecov: begin inspected */
     free_share();
     return(rc);
-    /* purecov: end */    
+    /* purecov: end */
   }
   else if (rc == HA_ERR_OUT_OF_MEM)
   {
@@ -480,7 +431,7 @@ int ha_archive::open(const char *name,
 
   assert(share);
 
-  record_buffer= create_record_buffer(table->s->reclength + 
+  record_buffer= create_record_buffer(table->s->reclength +
                                       ARCHIVE_ROW_HEADER_SIZE);
 
   if (!record_buffer)
@@ -505,7 +456,7 @@ int ha_archive::open(const char *name,
 
   SYNOPSIS
     close();
-  
+
   IMPLEMENTATION:
 
   We first close this storage engines file handle to the archive and
@@ -537,11 +488,11 @@ int ha_archive::close(void)
 
 
 /*
-  We create our data file here. The format is pretty simple. 
+  We create our data file here. The format is pretty simple.
   You can read about the format of the data file above.
-  Unlike other storage engines we do not "pack" our data. Since we 
-  are about to do a general compression, packing would just be a waste of 
-  CPU time. If the table has blobs they are written after the row in the order 
+  Unlike other storage engines we do not "pack" our data. Since we
+  are about to do a general compression, packing would just be a waste of
+  CPU time. If the table has blobs they are written after the row in the order
   of creation.
 */
 
@@ -555,6 +506,7 @@ int ha_archive::create(const char *name, Table *table_arg,
   File frm_file;                   /* File handler for readers */
   struct stat file_stat;
   unsigned char *frm_ptr;
+  int r;
 
   stats.auto_increment_value= create_info->auto_increment_value;
 
@@ -576,7 +528,7 @@ int ha_archive::create(const char *name, Table *table_arg,
     }
   }
 
-  /* 
+  /*
     We reuse name_buff since it is available.
   */
   if (create_info->data_file_name && create_info->data_file_name[0] != '#')
@@ -597,57 +549,61 @@ int ha_archive::create(const char *name, Table *table_arg,
     There is a chance that the file was "discovered". In this case
     just use whatever file is there.
   */
-  if (!stat(name_buff, &file_stat))
+  r= stat(name_buff, &file_stat);
+  if (r == -1 && errno!=ENOENT)
   {
-    my_errno= 0;
-    if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
-                 AZ_METHOD_BLOCK)))
-    {
-      error= errno;
-      goto error2;
-    }
-
-    if (linkname[0])
-      my_symlink(name_buff, linkname, MYF(0));
-    fn_format(name_buff, name, "", ".frm",
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-
-    /*
-      Here is where we open up the frm and pass it to archive to store 
-    */
-    if ((frm_file= my_open(name_buff, O_RDONLY, MYF(0))) > 0)
-    {
-      if (fstat(frm_file, &file_stat))
-      {
-        frm_ptr= (unsigned char *)my_malloc(sizeof(unsigned char) * file_stat.st_size, MYF(0));
-        if (frm_ptr)
-        {
-          my_read(frm_file, frm_ptr, file_stat.st_size, MYF(0));
-          azwrite_frm(&create_stream, (char *)frm_ptr, file_stat.st_size);
-          free((unsigned char*)frm_ptr);
-        }
-      }
-      my_close(frm_file, MYF(0));
-    }
-
-    if (create_info->comment.str)
-      azwrite_comment(&create_stream, create_info->comment.str, 
-                      (unsigned int)create_info->comment.length);
-
-    /* 
-      Yes you need to do this, because the starting value 
-      for the autoincrement may not be zero.
-    */
-    create_stream.auto_increment= stats.auto_increment_value ?
-                                    stats.auto_increment_value - 1 : 0;
-    if (azclose(&create_stream))
-    {
-      error= errno;
-      goto error2;
-    }
+    return errno;
   }
-  else
-    my_errno= 0;
+  if (!r)
+    return HA_ERR_TABLE_EXIST;
+
+  my_errno= 0;
+  if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
+	       AZ_METHOD_BLOCK)))
+  {
+    error= errno;
+    goto error2;
+  }
+
+  if (linkname[0])
+    my_symlink(name_buff, linkname, MYF(0));
+  fn_format(name_buff, name, "", ".frm",
+	    MY_REPLACE_EXT | MY_UNPACK_FILENAME);
+
+  /*
+    Here is where we open up the frm and pass it to archive to store
+  */
+  if ((frm_file= my_open(name_buff, O_RDONLY, MYF(0))) > 0)
+  {
+    if (fstat(frm_file, &file_stat))
+    {
+      frm_ptr= (unsigned char *)malloc(sizeof(unsigned char) *
+				       file_stat.st_size);
+      if (frm_ptr)
+      {
+	my_read(frm_file, frm_ptr, file_stat.st_size, MYF(0));
+	azwrite_frm(&create_stream, (char *)frm_ptr, file_stat.st_size);
+	free((unsigned char*)frm_ptr);
+      }
+    }
+    my_close(frm_file, MYF(0));
+  }
+
+  if (create_info->comment.str)
+    azwrite_comment(&create_stream, create_info->comment.str,
+		    (unsigned int)create_info->comment.length);
+
+  /*
+    Yes you need to do this, because the starting value
+    for the autoincrement may not be zero.
+  */
+  create_stream.auto_increment= stats.auto_increment_value ?
+    stats.auto_increment_value - 1 : 0;
+  if (azclose(&create_stream))
+  {
+    error= errno;
+    goto error2;
+  }
 
   return(0);
 
@@ -682,12 +638,12 @@ int ha_archive::real_write_row(unsigned char *buf, azio_stream *writer)
 }
 
 
-/* 
+/*
   Calculate max length needed for row. This includes
   the bytes required for the length in the header.
 */
 
-uint32_t ha_archive::max_row_length(const unsigned char *buf __attribute__((unused)))
+uint32_t ha_archive::max_row_length(const unsigned char *)
 {
   uint32_t length= (uint32_t)(table->getRecordLength() + table->sizeFields()*2);
   length+= ARCHIVE_ROW_HEADER_SIZE;
@@ -725,13 +681,13 @@ unsigned int ha_archive::pack_row(unsigned char *record)
 }
 
 
-/* 
+/*
   Look at ha_archive::open() for an explanation of the row format.
   Here we just write out the row.
 
   Wondering about start_bulk_insert()? We don't implement it for
   archive since it optimizes for lots of writes. The only save
-  for implementing start_bulk_insert() is that we could skip 
+  for implementing start_bulk_insert() is that we could skip
   setting dirty to true each time.
 */
 int ha_archive::write_row(unsigned char *buf)
@@ -764,7 +720,7 @@ int ha_archive::write_row(unsigned char *buf)
       We don't support decremening auto_increment. They make the performance
       just cry.
     */
-    if (temp_auto <= share->archive_write.auto_increment && 
+    if (temp_auto <= share->archive_write.auto_increment &&
         mkey->flags & HA_NOSAME)
     {
       rc= HA_ERR_FOUND_DUPP_KEY;
@@ -772,24 +728,24 @@ int ha_archive::write_row(unsigned char *buf)
     }
 #ifdef DEAD_CODE
     /*
-      Bad news, this will cause a search for the unique value which is very 
-      expensive since we will have to do a table scan which will lock up 
-      all other writers during this period. This could perhaps be optimized 
+      Bad news, this will cause a search for the unique value which is very
+      expensive since we will have to do a table scan which will lock up
+      all other writers during this period. This could perhaps be optimized
       in the future.
     */
     {
-      /* 
+      /*
         First we create a buffer that we can use for reading rows, and can pass
         to get_row().
       */
-      if (!(read_buf= (unsigned char*) my_malloc(table->s->reclength, MYF(MY_WME))))
+      if (!(read_buf= (unsigned char*) malloc(table->s->reclength)))
       {
         rc= HA_ERR_OUT_OF_MEM;
         goto error;
       }
-       /* 
+       /*
          All of the buffer must be written out or we won't see all of the
-         data 
+         data
        */
       azflush(&(share->archive_write), Z_SYNC_FLUSH);
       /*
@@ -838,18 +794,15 @@ error:
 }
 
 
-void ha_archive::get_auto_increment(uint64_t offset __attribute__((unused)),
-                                    uint64_t increment __attribute__((unused)),
-                                    uint64_t nb_desired_values __attribute__((unused)),
-                                    uint64_t *first_value __attribute__((unused)),
-                                    uint64_t *nb_reserved_values __attribute__((unused)))
+void ha_archive::get_auto_increment(uint64_t, uint64_t, uint64_t,
+                                    uint64_t *first_value, uint64_t *nb_reserved_values)
 {
   *nb_reserved_values= UINT64_MAX;
   *first_value= share->archive_write.auto_increment + 1;
 }
 
 /* Initialized at each key walk (called multiple times unlike rnd_init()) */
-int ha_archive::index_init(uint32_t keynr, bool sorted __attribute__((unused)))
+int ha_archive::index_init(uint32_t keynr, bool)
 {
   active_index= keynr;
   return(0);
@@ -870,8 +823,7 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
 
 
 int ha_archive::index_read_idx(unsigned char *buf, uint32_t index, const unsigned char *key,
-                               uint32_t key_len,
-                               enum ha_rkey_function find_flag __attribute__((unused)))
+                               uint32_t key_len, enum ha_rkey_function)
 {
   int rc;
   bool found= 0;
@@ -902,8 +854,8 @@ error:
 }
 
 
-int ha_archive::index_next(unsigned char * buf) 
-{ 
+int ha_archive::index_next(unsigned char * buf)
+{
   bool found= 0;
 
   while (!(get_row(&archive, buf)))
@@ -915,7 +867,7 @@ int ha_archive::index_next(unsigned char * buf)
     }
   }
 
-  return(found ? 0 : HA_ERR_END_OF_FILE); 
+  return(found ? 0 : HA_ERR_END_OF_FILE);
 }
 
 /*
@@ -943,7 +895,7 @@ int ha_archive::rnd_init(bool scan)
 
 
 /*
-  This is the method that is used to read a row. It assumes that the row is 
+  This is the method that is used to read a row. It assumes that the row is
   positioned where you want it.
 */
 int ha_archive::get_row(azio_stream *file_to_read, unsigned char *buf)
@@ -966,9 +918,7 @@ bool ha_archive::fix_rec_buff(unsigned int length)
   if (length > record_buffer->length)
   {
     unsigned char *newptr;
-    if (!(newptr=(unsigned char*) my_realloc((unsigned char*) record_buffer->buffer, 
-                                    length,
-				    MYF(MY_ALLOW_ZERO_PTR))))
+    if (!(newptr= (unsigned char *)realloc(record_buffer->buffer, length)))
       return(1);
     record_buffer->buffer= newptr;
     record_buffer->length= length;
@@ -1015,7 +965,7 @@ int ha_archive::get_row_version3(azio_stream *file_to_read, unsigned char *buf)
 }
 
 
-/* 
+/*
   Called during ORDER BY. Its position is either from being called sequentially
   or by having had ha_archive::rnd_pos() called before it is called.
 */
@@ -1047,7 +997,7 @@ int ha_archive::rnd_next(unsigned char *buf)
   needed.
 */
 
-void ha_archive::position(const unsigned char *record __attribute__((unused)))
+void ha_archive::position(const unsigned char *)
 {
   my_store_ptr(ref, ref_length, current_position);
   return;
@@ -1071,14 +1021,14 @@ int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
 }
 
 /*
-  This method repairs the meta file. It does this by walking the datafile and 
+  This method repairs the meta file. It does this by walking the datafile and
   rewriting the meta file. Currently it does this by calling optimize with
   the extended flag.
 */
-int ha_archive::repair(THD* thd, HA_CHECK_OPT* check_opt)
+int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
 {
   check_opt->flags= T_EXTEND;
-  int rc= optimize(thd, check_opt);
+  int rc= optimize(session, check_opt);
 
   if (rc)
     return(HA_ERR_CRASHED_ON_REPAIR);
@@ -1089,10 +1039,9 @@ int ha_archive::repair(THD* thd, HA_CHECK_OPT* check_opt)
 
 /*
   The table can become fragmented if data was inserted, read, and then
-  inserted again. What we do is open up the file and recompress it completely. 
+  inserted again. What we do is open up the file and recompress it completely.
 */
-int ha_archive::optimize(THD* thd __attribute__((unused)),
-                         HA_CHECK_OPT* check_opt __attribute__((unused)))
+int ha_archive::optimize(Session *, HA_CHECK_OPT *)
 {
   int rc= 0;
   azio_stream writer;
@@ -1108,15 +1057,15 @@ int ha_archive::optimize(THD* thd __attribute__((unused)),
   }
 
   /* Lets create a file to contain the new data */
-  fn_format(writer_filename, share->table_name, "", ARN, 
+  fn_format(writer_filename, share->table_name, "", ARN,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   if (!(azopen(&writer, writer_filename, O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
-    return(HA_ERR_CRASHED_ON_USAGE); 
+    return(HA_ERR_CRASHED_ON_USAGE);
 
-  /* 
-    An extended rebuild is a lot more effort. We open up each row and re-record it. 
-    Any dead rows are removed (aka rows that may have been partially recorded). 
+  /*
+    An extended rebuild is a lot more effort. We open up each row and re-record it.
+    Any dead rows are removed (aka rows that may have been partially recorded).
 
     As of Archive format 3, this is the only type that is performed, before this
     version it was just done on T_EXTEND
@@ -1124,15 +1073,15 @@ int ha_archive::optimize(THD* thd __attribute__((unused)),
   if (1)
   {
     /*
-      Now we will rewind the archive file so that we are positioned at the 
+      Now we will rewind the archive file so that we are positioned at the
       start of the file.
     */
     azflush(&archive, Z_SYNC_FLUSH);
     rc= read_data_header(&archive);
 
-    /* 
+    /*
       On success of writing out the new header, we now fetch each row and
-      insert it into the new archive file. 
+      insert it into the new archive file.
     */
     if (!rc)
     {
@@ -1174,11 +1123,11 @@ int ha_archive::optimize(THD* thd __attribute__((unused)),
     {
       goto error;
     }
-  } 
+  }
 
   azclose(&writer);
   share->dirty= false;
-  
+
   azclose(&archive);
 
   // make the file we just wrote be our data file
@@ -1189,13 +1138,13 @@ int ha_archive::optimize(THD* thd __attribute__((unused)),
 error:
   azclose(&writer);
 
-  return(rc); 
+  return(rc);
 }
 
-/* 
+/*
   Below is an example of how to setup row level locking.
 */
-THR_LOCK_DATA **ha_archive::store_lock(THD *thd,
+THR_LOCK_DATA **ha_archive::store_lock(Session *session,
                                        THR_LOCK_DATA **to,
                                        enum thr_lock_type lock_type)
 {
@@ -1204,29 +1153,29 @@ THR_LOCK_DATA **ha_archive::store_lock(THD *thd,
   else
     delayed_insert= false;
 
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK) 
+  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
   {
-    /* 
+    /*
       Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set 
+      If TL_UNLOCK is set
       If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers 
+      TABLESPACE, then allow multiple writers
     */
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !thd_in_lock_tables(thd)
-        && !thd_tablespace_op(thd))
+         lock_type <= TL_WRITE) && !session_in_lock_tables(session)
+        && !session_tablespace_op(session))
       lock_type = TL_WRITE_ALLOW_WRITE;
 
-    /* 
+    /*
       In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
       MySQL would use the lock TL_READ_NO_INSERT on t2, and that
       would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
       to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2. 
+      concurrent inserts to t2.
     */
 
-    if (lock_type == TL_READ_NO_INSERT && !thd_in_lock_tables(thd)) 
+    if (lock_type == TL_READ_NO_INSERT && !session_in_lock_tables(session))
       lock_type = TL_READ;
 
     lock.type=lock_type;
@@ -1257,7 +1206,7 @@ void ha_archive::update_create_info(HA_CREATE_INFO *create_info)
 */
 int ha_archive::info(uint32_t flag)
 {
-  /* 
+  /*
     If dirty, we lock, and then reset/flush the data.
     I found that just calling azflush() doesn't always work.
   */
@@ -1275,7 +1224,7 @@ int ha_archive::info(uint32_t flag)
 
   }
 
-  /* 
+  /*
     This should be an accurate number now, though bulk and delayed inserts can
     cause the number to be inaccurate.
   */
@@ -1328,7 +1277,7 @@ void ha_archive::start_bulk_insert(ha_rows rows)
 }
 
 
-/* 
+/*
   Other side of start_bulk_insert, is end_bulk_insert. Here we turn off the bulk insert
   flag, and set the share dirty so that the next select will call sync for us.
 */
@@ -1341,7 +1290,7 @@ int ha_archive::end_bulk_insert()
 
 /*
   We cancel a truncate command. The only way to delete an archive table is to drop it.
-  This is done for security reasons. In a later version we will enable this by 
+  This is done for security reasons. In a later version we will enable this by
   allowing the user to select a different row format.
 */
 int ha_archive::delete_all_rows()
@@ -1352,31 +1301,30 @@ int ha_archive::delete_all_rows()
 /*
   We just return state if asked.
 */
-bool ha_archive::is_crashed() const 
+bool ha_archive::is_crashed() const
 {
-  return(share->crashed); 
+  return(share->crashed);
 }
 
 /*
   Simple scan of the tables to make sure everything is ok.
 */
 
-int ha_archive::check(THD* thd,
-                      HA_CHECK_OPT* check_opt __attribute__((unused)))
+int ha_archive::check(Session* session, HA_CHECK_OPT *)
 {
   int rc= 0;
   const char *old_proc_info;
   uint64_t x;
 
-  old_proc_info= get_thd_proc_info(thd);
-  set_thd_proc_info(thd, "Checking table");
+  old_proc_info= get_session_proc_info(session);
+  set_session_proc_info(session, "Checking table");
   /* Flush any waiting data */
   pthread_mutex_lock(&share->mutex);
   azflush(&(share->archive_write), Z_SYNC_FLUSH);
   pthread_mutex_unlock(&share->mutex);
 
   /*
-    Now we will rewind the archive file so that we are positioned at the 
+    Now we will rewind the archive file so that we are positioned at the
     start of the file.
   */
   init_archive_reader();
@@ -1390,9 +1338,9 @@ int ha_archive::check(THD* thd,
       break;
   }
 
-  set_thd_proc_info(thd, old_proc_info);
+  set_session_proc_info(session, old_proc_info);
 
-  if ((rc && rc != HA_ERR_END_OF_FILE))  
+  if ((rc && rc != HA_ERR_END_OF_FILE))
   {
     share->crashed= false;
     return(HA_ADMIN_CORRUPT);
@@ -1406,28 +1354,25 @@ int ha_archive::check(THD* thd,
 /*
   Check and repair the table if needed.
 */
-bool ha_archive::check_and_repair(THD *thd) 
+bool ha_archive::check_and_repair(Session *session)
 {
   HA_CHECK_OPT check_opt;
 
   check_opt.init();
 
-  return(repair(thd, &check_opt));
+  return(repair(session, &check_opt));
 }
 
-archive_record_buffer *ha_archive::create_record_buffer(unsigned int length) 
+archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
 {
   archive_record_buffer *r;
-  if (!(r= 
-        (archive_record_buffer*) my_malloc(sizeof(archive_record_buffer),
-                                           MYF(MY_WME))))
+  if (!(r= (archive_record_buffer*) malloc(sizeof(archive_record_buffer))))
   {
     return(NULL); /* purecov: inspected */
   }
   r->length= (int)length;
 
-  if (!(r->buffer= (unsigned char*) my_malloc(r->length,
-                                    MYF(MY_WME))))
+  if (!(r->buffer= (unsigned char*) malloc(r->length)))
   {
     free((char*) r);
     return(NULL); /* purecov: inspected */
@@ -1436,7 +1381,7 @@ archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
   return(r);
 }
 
-void ha_archive::destroy_record_buffer(archive_record_buffer *r) 
+void ha_archive::destroy_record_buffer(archive_record_buffer *r)
 {
   free((char*) r->buffer);
   free((char*) r);
@@ -1453,7 +1398,7 @@ static struct st_mysql_sys_var* archive_system_variables[]= {
   NULL
 };
 
-mysql_declare_plugin(archive)
+drizzle_declare_plugin(archive)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "ARCHIVE",
@@ -1467,5 +1412,5 @@ mysql_declare_plugin(archive)
   archive_system_variables,   /* system variables                */
   NULL                        /* config options                  */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;
 

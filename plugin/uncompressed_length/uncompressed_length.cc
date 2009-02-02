@@ -13,8 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/common_includes.h>
-#include <drizzled/item_func.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_udf.h>
+#include <drizzled/function/math/int.h>
 
 class Item_func_uncompressed_length : public Item_int_func
 {
@@ -74,7 +75,7 @@ static int uncompressed_lengthudf_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(uncompressed_length)
+drizzle_declare_plugin(uncompressed_length)
 {
   DRIZZLE_UDF_PLUGIN,
   "uncompressed_length",
@@ -88,4 +89,4 @@ mysql_declare_plugin(uncompressed_length)
   NULL,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

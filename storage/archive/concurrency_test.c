@@ -28,7 +28,6 @@
 
 #define DEFAULT_INITIAL_LOAD 10000
 #define DEFAULT_EXECUTE_SECONDS 120
-#define DEFAULT_CONCURRENCY 8
 #define TEST_FILENAME "concurrency_test.az"
 
 #define HUGE_STRING_LENGTH 8192
@@ -47,7 +46,7 @@ pthread_cond_t timer_alarm_threshold;
 pthread_mutex_t row_lock;
 
 /* Prototypes */
-void *run_task(void *p);
+void *run_concurrent_task(void *p);
 void *timer_thread(void *p);
 void scheduler(az_method use_aio);
 void create_data_file(azio_stream *write_handler, uint64_t rows);
@@ -151,7 +150,7 @@ void scheduler(az_method use_aio)
     context[x].use_aio= use_aio;
 
     /* now you create the thread */
-    if (pthread_create(&mainthread, &attr, run_task,
+    if (pthread_create(&mainthread, &attr, run_concurrent_task,
                        (void *)context) != 0)
     {
       fprintf(stderr,"Could not create thread\n");
@@ -167,7 +166,7 @@ void scheduler(az_method use_aio)
     timer_alarm= true;
     pthread_mutex_unlock(&timer_alarm_mutex);
 
-    if (pthread_create(&mainthread, &attr, timer_thread, 
+    if (pthread_create(&mainthread, &attr, timer_thread,
                        (void *)&opt_timer_length) != 0)
     {
       fprintf(stderr,"%s: Could not create timer thread\n", my_progname);
@@ -212,8 +211,8 @@ void *timer_thread(void *p)
   time_t *timer_length= (time_t *)p;
   struct timespec abstime;
 
-  /* 
-    We lock around the initial call in case were we in a loop. This 
+  /*
+    We lock around the initial call in case were we in a loop. This
     also keeps the value properly syncronized across call threads.
   */
   pthread_mutex_lock(&sleeper_mutex);
@@ -236,7 +235,7 @@ void *timer_thread(void *p)
   return 0;
 }
 
-void *run_task(void *p)
+void *run_concurrent_task(void *p)
 {
   thread_context_st *context= (thread_context_st *)p;
   uint64_t count;
@@ -255,7 +254,7 @@ void *run_task(void *p)
   while (master_wakeup)
   {
     pthread_cond_wait(&sleep_threshhold, &sleeper_mutex);
-  } 
+  }
   pthread_mutex_unlock(&sleeper_mutex);
 
   /* Do Stuff */
@@ -313,7 +312,7 @@ unsigned int write_row(azio_stream *s)
   /* Avoid zero length strings */
   length++;
 
-  get_random_string(buffer, length); 
+  get_random_string(buffer, length);
   pthread_mutex_lock(&row_lock);
   azwrite_row(s, buffer, length);
   pthread_mutex_unlock(&row_lock);

@@ -21,6 +21,7 @@ Created 9/6/1995 Heikki Tuuri
 
 /* Type definition for an operating system mutex struct */
 struct os_mutex_struct{
+	os_event_t	event;	/* Used by sync0arr.c for queing threads */
 	void*		handle;	/* OS handle to mutex */
 	ulint		count;	/* we use this counter to check
 				that the same thread does not
@@ -33,27 +34,32 @@ struct os_mutex_struct{
 };
 
 /* Mutex protecting counts and the lists of OS mutexes and events */
-os_mutex_t	os_sync_mutex;
-ibool		os_sync_mutex_inited	= FALSE;
+UNIV_INTERN os_mutex_t	os_sync_mutex;
+static ibool		os_sync_mutex_inited	= FALSE;
+static ibool		os_sync_free_called	= FALSE;
 
 /* This is incremented by 1 in os_thread_create and decremented by 1 in
 os_thread_exit */
-ulint	os_thread_count		= 0;
+UNIV_INTERN ulint	os_thread_count		= 0;
 
 /* The list of all events created */
-UT_LIST_BASE_NODE_T(os_event_struct_t)	os_event_list;
+static UT_LIST_BASE_NODE_T(os_event_struct_t)	os_event_list;
 
 /* The list of all OS 'slow' mutexes */
-UT_LIST_BASE_NODE_T(os_mutex_str_t)	os_mutex_list;
+static UT_LIST_BASE_NODE_T(os_mutex_str_t)	os_mutex_list;
 
-ulint	os_event_count		= 0;
-ulint	os_mutex_count		= 0;
-ulint	os_fast_mutex_count	= 0;
+UNIV_INTERN ulint	os_event_count		= 0;
+UNIV_INTERN ulint	os_mutex_count		= 0;
+UNIV_INTERN ulint	os_fast_mutex_count	= 0;
 
+/* Because a mutex is embedded inside an event and there is an
+event embedded inside a mutex, on free, this generates a recursive call.
+This version of the free event function doesn't acquire the global lock */
+static void os_event_free_internal(os_event_t	event);
 
 /*************************************************************
 Initializes global event and OS 'slow' mutex lists. */
-
+UNIV_INTERN
 void
 os_sync_init(void)
 /*==============*/
@@ -68,7 +74,7 @@ os_sync_init(void)
 
 /*************************************************************
 Frees created events and OS 'slow' mutexes. */
-
+UNIV_INTERN
 void
 os_sync_free(void)
 /*==============*/
@@ -76,6 +82,7 @@ os_sync_free(void)
 	os_event_t	event;
 	os_mutex_t	mutex;
 
+	os_sync_free_called = TRUE;
 	event = UT_LIST_GET_FIRST(os_event_list);
 
 	while (event) {
@@ -99,13 +106,14 @@ os_sync_free(void)
 
 		mutex = UT_LIST_GET_FIRST(os_mutex_list);
 	}
+	os_sync_free_called = FALSE;
 }
 
 /*************************************************************
 Creates an event semaphore, i.e., a semaphore which may just have two
 states: signaled and nonsignaled. The created event is manual reset: it
 must be reset explicitly by calling sync_os_reset_event. */
-
+UNIV_INTERN
 os_event_t
 os_event_create(
 /*============*/
@@ -144,17 +152,31 @@ os_event_create(
 	ut_a(0 == pthread_cond_init(&(event->cond_var), NULL));
 #endif
 	event->is_set = FALSE;
-	event->signal_count = 0;
+
+	/* We return this value in os_event_reset(), which can then be
+	be used to pass to the os_event_wait_low(). The value of zero
+	is reserved in os_event_wait_low() for the case when the
+	caller does not want to pass any signal_count value. To
+	distinguish between the two cases we initialize signal_count
+	to 1 here. */
+	event->signal_count = 1;
 #endif /* __WIN__ */
 
-	/* Put to the list of events */
-	os_mutex_enter(os_sync_mutex);
+	/* The os_sync_mutex can be NULL because during startup an event
+	can be created [ because it's embedded in the mutex/rwlock ] before
+	this module has been initialized */
+	if (os_sync_mutex != NULL) {
+		os_mutex_enter(os_sync_mutex);
+	}
 
+	/* Put to the list of events */
 	UT_LIST_ADD_FIRST(os_event_list, os_event_list, event);
 
 	os_event_count++;
 
-	os_mutex_exit(os_sync_mutex);
+	if (os_sync_mutex != NULL) {
+		os_mutex_exit(os_sync_mutex);
+	}
 
 	return(event);
 }
@@ -163,7 +185,7 @@ os_event_create(
 /*************************************************************
 Creates an auto-reset event semaphore, i.e., an event which is automatically
 reset when a single thread is released. Works only in Windows. */
-
+UNIV_INTERN
 os_event_t
 os_event_create_auto(
 /*=================*/
@@ -203,7 +225,7 @@ os_event_create_auto(
 /**************************************************************
 Sets an event semaphore to the signaled state: lets waiting threads
 proceed. */
-
+UNIV_INTERN
 void
 os_event_set(
 /*=========*/
@@ -231,13 +253,20 @@ os_event_set(
 
 /**************************************************************
 Resets an event semaphore to the nonsignaled state. Waiting threads will
-stop to wait for the event. */
-
-void
+stop to wait for the event.
+The return value should be passed to os_even_wait_low() if it is desired
+that this thread should not wait in case of an intervening call to
+os_event_set() between this os_event_reset() and the
+os_event_wait_low() call. See comments for os_event_wait_low(). */
+UNIV_INTERN
+ib_int64_t
 os_event_reset(
 /*===========*/
+				/* out: current signal_count. */
 	os_event_t	event)	/* in: event to reset */
 {
+	ib_int64_t	ret = 0;
+
 #ifdef __WIN__
 	ut_a(event);
 
@@ -252,14 +281,45 @@ os_event_reset(
 	} else {
 		event->is_set = FALSE;
 	}
+	ret = event->signal_count;
 
 	os_fast_mutex_unlock(&(event->os_mutex));
 #endif
+	return(ret);
+}
+
+/**************************************************************
+Frees an event object, without acquiring the global lock. */
+static
+void
+os_event_free_internal(
+/*===================*/
+	os_event_t	event)	/* in: event to free */
+{
+#ifdef __WIN__
+	ut_a(event);
+
+	ut_a(CloseHandle(event->handle));
+#else
+	ut_a(event);
+
+	/* This is to avoid freeing the mutex twice */
+	os_fast_mutex_free(&(event->os_mutex));
+
+	ut_a(0 == pthread_cond_destroy(&(event->cond_var)));
+#endif
+	/* Remove from the list of events */
+
+	UT_LIST_REMOVE(os_event_list, os_event_list, event);
+
+	os_event_count--;
+
+	ut_free(event);
 }
 
 /**************************************************************
 Frees an event object. */
-
+UNIV_INTERN
 void
 os_event_free(
 /*==========*/
@@ -293,17 +353,37 @@ os_event_free(
 Waits for an event object until it is in the signaled state. If
 srv_shutdown_state == SRV_SHUTDOWN_EXIT_THREADS this also exits the
 waiting thread when the event becomes signaled (or immediately if the
-event is already in the signaled state). */
+event is already in the signaled state).
 
+Typically, if the event has been signalled after the os_event_reset()
+we'll return immediately because event->is_set == TRUE.
+There are, however, situations (e.g.: sync_array code) where we may
+lose this information. For example:
+
+thread A calls os_event_reset()
+thread B calls os_event_set()   [event->is_set == TRUE]
+thread C calls os_event_reset() [event->is_set == FALSE]
+thread A calls os_event_wait()  [infinite wait!]
+thread C calls os_event_wait()  [infinite wait!]
+
+Where such a scenario is possible, to avoid infinite wait, the
+value returned by os_event_reset() should be passed in as
+reset_sig_count. */
+UNIV_INTERN
 void
-os_event_wait(
-/*==========*/
-	os_event_t	event)	/* in: event to wait */
+os_event_wait_low(
+/*==============*/
+	os_event_t	event,		/* in: event to wait */
+	ib_int64_t	reset_sig_count)/* in: zero or the value
+					returned by previous call of
+					os_event_reset(). */
 {
 #ifdef __WIN__
 	DWORD	err;
 
 	ut_a(event);
+
+	UT_NOT_USED(reset_sig_count);
 
 	/* Specify an infinite time limit for waiting */
 	err = WaitForSingleObject(event->handle, INFINITE);
@@ -314,11 +394,15 @@ os_event_wait(
 		os_thread_exit(NULL);
 	}
 #else
-	ib_longlong	old_signal_count;
+	ib_int64_t	old_signal_count;
 
 	os_fast_mutex_lock(&(event->os_mutex));
 
-	old_signal_count = event->signal_count;
+	if (reset_sig_count) {
+		old_signal_count = reset_sig_count;
+	} else {
+		old_signal_count = event->signal_count;
+	}
 
 	for (;;) {
 		if (event->is_set == TRUE
@@ -347,7 +431,7 @@ os_event_wait(
 /**************************************************************
 Waits for an event object until it is in the signaled state or
 a timeout is exceeded. In Unix the timeout is always infinite. */
-
+UNIV_INTERN
 ulint
 os_event_wait_time(
 /*===============*/
@@ -393,7 +477,7 @@ os_event_wait_time(
 /**************************************************************
 Waits for any event in an OS native event array. Returns if even a single
 one is signaled or becomes signaled. */
-
+UNIV_INTERN
 ulint
 os_event_wait_multiple(
 /*===================*/
@@ -428,7 +512,7 @@ os_event_wait_multiple(
 /*************************************************************
 Creates an operating system mutex semaphore. Because these are slow, the
 mutex semaphore of InnoDB itself (mutex_t) should be used where possible. */
-
+UNIV_INTERN
 os_mutex_t
 os_mutex_create(
 /*============*/
@@ -458,8 +542,9 @@ os_mutex_create(
 
 	mutex_str->handle = mutex;
 	mutex_str->count = 0;
+	mutex_str->event = os_event_create(NULL);
 
-	if (os_sync_mutex_inited) {
+	if (UNIV_LIKELY(os_sync_mutex_inited)) {
 		/* When creating os_sync_mutex itself we cannot reserve it */
 		os_mutex_enter(os_sync_mutex);
 	}
@@ -468,7 +553,7 @@ os_mutex_create(
 
 	os_mutex_count++;
 
-	if (os_sync_mutex_inited) {
+	if (UNIV_LIKELY(os_sync_mutex_inited)) {
 		os_mutex_exit(os_sync_mutex);
 	}
 
@@ -477,7 +562,7 @@ os_mutex_create(
 
 /**************************************************************
 Acquires ownership of a mutex semaphore. */
-
+UNIV_INTERN
 void
 os_mutex_enter(
 /*===========*/
@@ -506,7 +591,7 @@ os_mutex_enter(
 
 /**************************************************************
 Releases ownership of a mutex. */
-
+UNIV_INTERN
 void
 os_mutex_exit(
 /*==========*/
@@ -526,7 +611,7 @@ os_mutex_exit(
 
 /**************************************************************
 Frees a mutex object. */
-
+UNIV_INTERN
 void
 os_mutex_free(
 /*==========*/
@@ -534,7 +619,11 @@ os_mutex_free(
 {
 	ut_a(mutex);
 
-	if (os_sync_mutex_inited) {
+	if (UNIV_LIKELY(!os_sync_free_called)) {
+		os_event_free_internal(mutex->event);
+	}
+
+	if (UNIV_LIKELY(os_sync_mutex_inited)) {
 		os_mutex_enter(os_sync_mutex);
 	}
 
@@ -542,7 +631,7 @@ os_mutex_free(
 
 	os_mutex_count--;
 
-	if (os_sync_mutex_inited) {
+	if (UNIV_LIKELY(os_sync_mutex_inited)) {
 		os_mutex_exit(os_sync_mutex);
 	}
 
@@ -559,7 +648,7 @@ os_mutex_free(
 
 /*************************************************************
 Initializes an operating system fast mutex semaphore. */
-
+UNIV_INTERN
 void
 os_fast_mutex_init(
 /*===============*/
@@ -576,7 +665,7 @@ os_fast_mutex_init(
 	ut_a(0 == pthread_mutex_init(fast_mutex, MY_MUTEX_INIT_FAST));
 #endif
 #endif
-	if (os_sync_mutex_inited) {
+	if (UNIV_LIKELY(os_sync_mutex_inited)) {
 		/* When creating os_sync_mutex itself (in Unix) we cannot
 		reserve it */
 
@@ -585,14 +674,14 @@ os_fast_mutex_init(
 
 	os_fast_mutex_count++;
 
-	if (os_sync_mutex_inited) {
+	if (UNIV_LIKELY(os_sync_mutex_inited)) {
 		os_mutex_exit(os_sync_mutex);
 	}
 }
 
 /**************************************************************
 Acquires ownership of a fast mutex. */
-
+UNIV_INTERN
 void
 os_fast_mutex_lock(
 /*===============*/
@@ -607,7 +696,7 @@ os_fast_mutex_lock(
 
 /**************************************************************
 Releases ownership of a fast mutex. */
-
+UNIV_INTERN
 void
 os_fast_mutex_unlock(
 /*=================*/
@@ -622,7 +711,7 @@ os_fast_mutex_unlock(
 
 /**************************************************************
 Frees a mutex object. */
-
+UNIV_INTERN
 void
 os_fast_mutex_free(
 /*===============*/
@@ -637,7 +726,7 @@ os_fast_mutex_free(
 
 	ret = pthread_mutex_destroy(fast_mutex);
 
-	if (ret != 0) {
+	if (UNIV_UNLIKELY(ret != 0)) {
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
 			"  InnoDB: error: return value %lu when calling\n"
@@ -646,10 +735,10 @@ os_fast_mutex_free(
 			"InnoDB: Byte contents of the pthread mutex at %p:\n",
 			(void*) fast_mutex);
 		ut_print_buf(stderr, fast_mutex, sizeof(os_fast_mutex_t));
-		fprintf(stderr, "\n");
+		putc('\n', stderr);
 	}
 #endif
-	if (os_sync_mutex_inited) {
+	if (UNIV_LIKELY(os_sync_mutex_inited)) {
 		/* When freeing the last mutexes, we have
 		already freed os_sync_mutex */
 
@@ -658,7 +747,7 @@ os_fast_mutex_free(
 
 	os_fast_mutex_count--;
 
-	if (os_sync_mutex_inited) {
+	if (UNIV_LIKELY(os_sync_mutex_inited)) {
 		os_mutex_exit(os_sync_mutex);
 	}
 }

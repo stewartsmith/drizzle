@@ -23,6 +23,7 @@ Created 3/26/1996 Heikki Tuuri
 #include "fut0lst.h"
 #include "fsp0fsp.h"
 #include "read0types.h"
+#include "page0types.h"
 
 /* In a MySQL replication slave, in crash recovery we store the master log
 file name and position here. We have successfully got the updates to InnoDB
@@ -30,7 +31,7 @@ up to this position. If .._pos is -1, it means no crash recovery was needed,
 or there was no master log position info inside InnoDB. */
 
 extern char		trx_sys_mysql_master_log_name[];
-extern ib_longlong	trx_sys_mysql_master_log_pos;
+extern ib_int64_t	trx_sys_mysql_master_log_pos;
 
 /* If this MySQL server uses binary logging, after InnoDB has been inited
 and if it has done a crash recovery, we store the binlog file name and position
@@ -38,7 +39,7 @@ here. If .._pos is -1, it means there was no binlog position info inside
 InnoDB. */
 
 extern char		trx_sys_mysql_bin_log_name[];
-extern ib_longlong	trx_sys_mysql_bin_log_pos;
+extern ib_int64_t	trx_sys_mysql_bin_log_pos;
 
 /* The transaction system */
 extern trx_sys_t*	trx_sys;
@@ -51,7 +52,7 @@ extern ibool			trx_sys_multiple_tablespace_format;
 /********************************************************************
 Creates the doublewrite buffer to a new InnoDB installation. The header of the
 doublewrite buffer is placed on the trx system header page. */
-
+UNIV_INTERN
 void
 trx_sys_create_doublewrite_buf(void);
 /*================================*/
@@ -62,7 +63,7 @@ upgrading to an InnoDB version which supports multiple tablespaces, then this
 function performs the necessary update operations. If we are in a crash
 recovery, this function uses a possible doublewrite buffer to restore
 half-written pages in the data files. */
-
+UNIV_INTERN
 void
 trx_sys_doublewrite_init_or_restore_pages(
 /*======================================*/
@@ -70,13 +71,13 @@ trx_sys_doublewrite_init_or_restore_pages(
 /********************************************************************
 Marks the trx sys header when we have successfully upgraded to the >= 4.1.x
 multiple tablespace format. */
-
+UNIV_INTERN
 void
 trx_sys_mark_upgraded_to_multiple_tablespaces(void);
 /*===============================================*/
 /********************************************************************
 Determines if a page number is located inside the doublewrite buffer. */
-
+UNIV_INTERN
 ibool
 trx_doublewrite_page_inside(
 /*========================*/
@@ -95,19 +96,19 @@ trx_sys_hdr_page(
 /*********************************************************************
 Creates and initializes the central memory structures for the transaction
 system. This is called when the database is started. */
-
+UNIV_INTERN
 void
 trx_sys_init_at_db_start(void);
 /*==========================*/
 /*********************************************************************
 Creates and initializes the transaction system at the database creation. */
-
+UNIV_INTERN
 void
 trx_sys_create(void);
 /*================*/
 /********************************************************************
 Looks for a free slot for a rollback segment in the trx system file copy. */
-
+UNIV_INTERN
 ulint
 trx_sysf_rseg_find_free(
 /*====================*/
@@ -220,8 +221,8 @@ UNIV_INLINE
 dulint
 trx_read_trx_id(
 /*============*/
-			/* out: id */
-	byte*	ptr);	/* in: pointer to memory from where to read */
+				/* out: id */
+	const byte*	ptr);	/* in: pointer to memory from where to read */
 /********************************************************************
 Looks for the trx handle with the given id in trx_list. */
 UNIV_INLINE
@@ -251,7 +252,7 @@ trx_is_active(
 	dulint	trx_id);/* in: trx id of the transaction */
 /********************************************************************
 Checks that trx is in the trx list. */
-
+UNIV_INTERN
 ibool
 trx_in_trx_list(
 /*============*/
@@ -262,19 +263,19 @@ Updates the offset information about the end of the MySQL binlog entry
 which corresponds to the transaction just being committed. In a MySQL
 replication slave updates the latest master binlog position up to which
 replication has proceeded. */
-
+UNIV_INTERN
 void
 trx_sys_update_mysql_binlog_offset(
 /*===============================*/
 	const char*	file_name,/* in: MySQL log file name */
-	ib_longlong	offset,	/* in: position in that log file */
+	ib_int64_t	offset,	/* in: position in that log file */
 	ulint		field,	/* in: offset of the MySQL log info field in
 				the trx sys header */
 	mtr_t*		mtr);	/* in: mtr */
 /*********************************************************************
 Prints to stderr the MySQL binlog offset info in the trx system header if
 the magic number shows it valid. */
-
+UNIV_INTERN
 void
 trx_sys_print_mysql_binlog_offset(void);
 /*===================================*/
@@ -282,21 +283,87 @@ trx_sys_print_mysql_binlog_offset(void);
 /*********************************************************************
 Prints to stderr the MySQL binlog info in the system header if the
 magic number shows it valid. */
-
+UNIV_INTERN
 void
 trx_sys_print_mysql_binlog_offset_from_page(
 /*========================================*/
-	byte*	page);	/* in: buffer containing the trx system header page,
-			i.e., page number TRX_SYS_PAGE_NO in the tablespace */
+	const byte*	page);	/* in: buffer containing the trx
+				system header page, i.e., page number
+				TRX_SYS_PAGE_NO in the tablespace */
 #endif /* UNIV_HOTBACKUP */
 /*********************************************************************
 Prints to stderr the MySQL master log offset info in the trx system header if
 the magic number shows it valid. */
-
+UNIV_INTERN
 void
 trx_sys_print_mysql_master_log_pos(void);
 /*====================================*/
-
+/*********************************************************************
+Initializes the tablespace tag system. */
+UNIV_INTERN
+void
+trx_sys_file_format_init(void);
+/*==========================*/
+/*********************************************************************
+Closes the tablespace tag system. */
+UNIV_INTERN
+void
+trx_sys_file_format_close(void);
+/*===========================*/
+/************************************************************************
+Tags the system table space with minimum format id if it has not been
+tagged yet.
+WARNING: This function is only called during the startup and AFTER the
+redo log application during recovery has finished. */
+UNIV_INTERN
+void
+trx_sys_file_format_tag_init(void);
+/*==============================*/
+/*********************************************************************
+Get the name representation of the file format from its id. */
+UNIV_INTERN
+const char*
+trx_sys_file_format_id_to_name(
+/*===========================*/
+					/* out: pointer to the name */
+	const ulint	id);		/* in: id of the file format */
+/*********************************************************************
+Set the file format id unconditionally except if it's already the
+same value. */
+UNIV_INTERN
+ibool
+trx_sys_file_format_max_set(
+/*========================*/
+					/* out: TRUE if value updated */
+	ulint		format_id,	/* in: file format id */
+	const char**	name);		/* out: max file format name or
+					NULL if not needed. */
+/*********************************************************************
+Get the name representation of the file format from its id. */
+UNIV_INTERN
+const char*
+trx_sys_file_format_max_get(void);
+/*=============================*/
+				/* out: pointer to the max format name */
+/*********************************************************************
+Check for the max file format tag stored on disk. */
+UNIV_INTERN
+ulint
+trx_sys_file_format_max_check(
+/*==========================*/
+					/* out: DB_SUCCESS or error code */
+	ulint		max_format_id);	/* in: the max format id to check */
+/************************************************************************
+Update the file format tag in the system tablespace only if the given
+format id is greater than the known max id. */
+UNIV_INTERN
+ibool
+trx_sys_file_format_max_upgrade(
+/*============================*/
+					/* out: TRUE if format_id was
+					bigger than the known max id */
+	const char**	name,		/* out: max file format name */
+	ulint		format_id);	/* in: file format identifier */
 /* The automatically created system rollback segment has this id */
 #define TRX_SYS_SYSTEM_RSEG_ID	0
 
@@ -330,24 +397,27 @@ in the transaction system array; rollback segment id must fit in one byte,
 therefore 256; each slot is currently 8 bytes in size */
 #define	TRX_SYS_N_RSEGS		256
 
-#define TRX_SYS_DRIZZLE_LOG_NAME_LEN	512
-#define TRX_SYS_DRIZZLE_LOG_MAGIC_N	873422344
+#define TRX_SYS_MYSQL_LOG_NAME_LEN	512
+#define TRX_SYS_MYSQL_LOG_MAGIC_N	873422344
 
+#if UNIV_PAGE_SIZE < 4096
+# error "UNIV_PAGE_SIZE < 4096"
+#endif
 /* The offset of the MySQL replication info in the trx system header;
-this contains the same fields as TRX_SYS_DRIZZLE_LOG_INFO below */
-#define TRX_SYS_DRIZZLE_MASTER_LOG_INFO	(UNIV_PAGE_SIZE - 2000)
+this contains the same fields as TRX_SYS_MYSQL_LOG_INFO below */
+#define TRX_SYS_MYSQL_MASTER_LOG_INFO	(UNIV_PAGE_SIZE - 2000)
 
 /* The offset of the MySQL binlog offset info in the trx system header */
-#define TRX_SYS_DRIZZLE_LOG_INFO		(UNIV_PAGE_SIZE - 1000)
-#define	TRX_SYS_DRIZZLE_LOG_MAGIC_N_FLD	0	/* magic number which shows
+#define TRX_SYS_MYSQL_LOG_INFO		(UNIV_PAGE_SIZE - 1000)
+#define	TRX_SYS_MYSQL_LOG_MAGIC_N_FLD	0	/* magic number which shows
 						if we have valid data in the
 						MySQL binlog info; the value
 						is ..._MAGIC_N if yes */
-#define TRX_SYS_DRIZZLE_LOG_OFFSET_HIGH	4	/* high 4 bytes of the offset
+#define TRX_SYS_MYSQL_LOG_OFFSET_HIGH	4	/* high 4 bytes of the offset
 						within that file */
-#define TRX_SYS_DRIZZLE_LOG_OFFSET_LOW	8	/* low 4 bytes of the offset
+#define TRX_SYS_MYSQL_LOG_OFFSET_LOW	8	/* low 4 bytes of the offset
 						within that file */
-#define TRX_SYS_DRIZZLE_LOG_NAME		12	/* MySQL log file name */
+#define TRX_SYS_MYSQL_LOG_NAME		12	/* MySQL log file name */
 
 /* The offset of the doublewrite buffer header on the trx system header page */
 #define TRX_SYS_DOUBLEWRITE		(UNIV_PAGE_SIZE - 200)
@@ -392,6 +462,15 @@ this contains the same fields as TRX_SYS_DRIZZLE_LOG_INFO below */
 
 #define TRX_SYS_DOUBLEWRITE_BLOCK_SIZE	FSP_EXTENT_SIZE
 
+/* The offset of the file format tag on the trx system header page */
+#define TRX_SYS_FILE_FORMAT_TAG		(UNIV_PAGE_SIZE - 16)
+
+/* We use these random constants to reduce the probability of reading
+garbage (from previous versions) that maps to an actual format id. We
+use these as bit masks at the time of  reading and writing from/to disk. */
+#define TRX_SYS_FILE_FORMAT_TAG_MAGIC_N_LOW	3645922177UL
+#define TRX_SYS_FILE_FORMAT_TAG_MAGIC_N_HIGH	2745987765UL
+
 /* Doublewrite control struct */
 struct trx_doublewrite_struct{
 	mutex_t	mutex;		/* mutex protecting the first_free field and
@@ -406,7 +485,7 @@ struct trx_doublewrite_struct{
 				address divisible by UNIV_PAGE_SIZE
 				(which is required by Windows aio) */
 	byte*	write_buf_unaligned; /* pointer to write_buf, but unaligned */
-	buf_block_t**
+	buf_page_t**
 		buf_block_arr;	/* array to store pointers to the buffer
 				blocks which have been cached to write_buf */
 };

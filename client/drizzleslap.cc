@@ -84,6 +84,15 @@
 #include <ctype.h>
 #include <string>
 
+/* Added this for string translation. */
+#include <drizzled/gettext.h>
+
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
+
 using namespace std;
 
 #ifdef HAVE_SMEM
@@ -122,7 +131,7 @@ const char *delimiter= "\n";
 const char *create_schema_string= "drizzleslap";
 
 static bool opt_preserve= true;
-static bool debug_info_flag= 0, debug_check_flag= 0;
+static bool debug_info_flag= false, debug_check_flag= false;
 static bool opt_only_print= false;
 static bool opt_burnin= false;
 static bool opt_ignore_sql_errors= false;
@@ -170,12 +179,12 @@ const char *concurrency_str= NULL;
 static char *create_string;
 uint *concurrency;
 
-const char *default_dbug_option="d:t:o,/tmp/drizzleslap.trace";
+const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
 const char *opt_csv_str;
 File csv_file;
 
 static int get_options(int *argc,char ***argv);
-static uint opt_drizzle_port= 0;
+static uint32_t opt_drizzle_port= 0;
 
 static const char *load_default_groups[]= { "drizzleslap","client",0 };
 
@@ -318,7 +327,7 @@ int main(int argc, char **argv)
 
   MY_INIT(argv[0]);
 
-  load_defaults("my",load_default_groups,&argc,&argv);
+  load_defaults("drizzle",load_default_groups,&argc,&argv);
   defaults_argv=argv;
   if (get_options(&argc,&argv))
   {
@@ -431,8 +440,13 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
   conclusions conclusion;
   uint64_t client_limit;
 
-  head_sptr= (stats *)my_malloc(sizeof(stats) * iterations,
-                                MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  head_sptr= (stats *)malloc(sizeof(stats) * iterations);
+  if (head_sptr == NULL)
+  {
+    fprintf(stderr,"Error allocating memory in concurrency_loop\n");
+    exit(1);
+  }
+  memset(head_sptr, 0, sizeof(stats) * iterations);
 
   memset(&conclusion, 0, sizeof(conclusions));
 
@@ -470,7 +484,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
       run_query(drizzle, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
     if (pre_system)
-      system(pre_system);
+      assert(system(pre_system)!=-1);
 
     /*
       Pre statements are always run after all other logic so they can
@@ -485,7 +499,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
       run_statements(drizzle, post_statements);
 
     if (post_system)
-      system(post_system);
+      assert(system(post_system)!=-1);
 
     /* We are finished with this run */
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
@@ -636,12 +650,11 @@ static struct my_option my_long_options[] =
    "out what it would have done instead.",
    (char**) &opt_only_print, (char**) &opt_only_print, 0, GET_BOOL,  NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"password", 'p',
+  {"password", 'P',
    "Password to use when connecting to server. If password is not given it's "
    "asked from the tty.", 0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection.", (char**) &opt_drizzle_port,
-   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
-   0},
+  {"port", 'p', "Port number to use for connection.",
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"post-query", OPT_SLAP_POST_QUERY,
    "Query to run or file containing query to execute after tests have completed.",
    (char**) &user_supplied_post_statements,
@@ -707,34 +720,70 @@ static void print_version(void)
 static void usage(void)
 {
   print_version();
-  puts("Copyright (C) 2005 DRIZZLE AB");
+  puts("Copyright (C) 2008 Sun Microsystems");
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
        \nand you are welcome to modify and redistribute it under the GPL \
        license\n");
   puts("Run a query multiple times against the server\n");
   printf("Usage: %s [OPTIONS]\n",my_progname);
-  print_defaults("my",load_default_groups);
+  print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
 }
 
 static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-               char *argument)
+get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
 
   switch(optid) {
   case 'v':
     verbose++;
     break;
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(1);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(1);
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
       char *start= argument;
-      free(opt_password);
-      opt_password= my_strdup(argument,MYF(MY_FAE));
-      while (*argument) *argument++= 'x';    /* Destroy argument */
+      if (opt_password)
+        free(opt_password);
+      opt_password = strdup(argument);
+      if (opt_password == NULL)
+      {
+        fprintf(stderr, "Memory allocation error while copying password. "
+                        "Aborting.\n");
+        exit(ENOMEM);
+      }
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-        start[1]= 0;        /* Cut length of argument */
+      {
+        /* Cut length of argument */
+        start[1]= 0;
+      }
       tty_password= 0;
     }
     else
@@ -892,13 +941,23 @@ build_table_string(void)
     }
 
   table_string.append(")");
-  ptr= (statement *)my_malloc(sizeof(statement),
-                              MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->string = (char *)my_malloc(table_string.length()+1,
-                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  ptr= (statement *)malloc(sizeof(statement));
+  if (ptr == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating table\n");
+    exit(1);
+  }
+  memset(ptr, 0, sizeof(statement));
+  ptr->string = (char *)malloc(table_string.length()+1);
+  if (ptr->string == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating table\n");
+    exit(1);
+  }
+  memset(ptr->string, 0, table_string.length()+1);
   ptr->length= table_string.length()+1;
   ptr->type= CREATE_TABLE_TYPE;
-  my_stpcpy(ptr->string, table_string.c_str());
+  strcpy(ptr->string, table_string.c_str());
   return(ptr);
 }
 
@@ -958,17 +1017,27 @@ build_update_string(void)
     update_string.append(" WHERE id = ");
 
 
-  ptr= (statement *)my_malloc(sizeof(statement),
-                              MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  ptr= (statement *)malloc(sizeof(statement));
+  if (ptr == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating update\n");
+    exit(1);
+  }
+  memset(ptr, 0, sizeof(statement));
 
-  ptr->string= (char *)my_malloc(update_string.length() + 1,
-                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
   ptr->length= update_string.length()+1;
+  ptr->string= (char *)malloc(ptr->length);
+  if (ptr->string == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating update\n");
+    exit(1);
+  }
+  memset(ptr->string, 0, ptr->length);
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
     ptr->type= UPDATE_TYPE_REQUIRES_PREFIX ;
   else
     ptr->type= UPDATE_TYPE;
-  my_stpcpy(ptr->string, update_string.c_str());
+  strncpy(ptr->string, update_string.c_str(), ptr->length);
   return(ptr);
 }
 
@@ -1055,13 +1124,13 @@ build_insert_string(void)
 
     if (num_blob_cols_size > HUGE_STRING_LENGTH)
     {
-      blob_ptr= (char *)my_malloc(sizeof(char)*num_blob_cols_size,
-                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+      blob_ptr= (char *)malloc(sizeof(char)*num_blob_cols_size);
       if (!blob_ptr)
       {
         fprintf(stderr, "Memory Allocation error in creating select\n");
         exit(1);
       }
+      memset(blob_ptr, 0, sizeof(char)*num_blob_cols_size);
     }
     else
     {
@@ -1093,19 +1162,21 @@ build_insert_string(void)
 
   insert_string.append(")", 1);
 
-  if (!(ptr= (statement *)my_malloc(sizeof(statement), MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
+  if (!(ptr= (statement *)malloc(sizeof(statement))))
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  if (!(ptr->string= (char *)my_malloc(insert_string.length() + 1, MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
-  {
-    fprintf(stderr, "Memory Allocation error in creating select\n");
-    exit(1);
-  }
+  memset(ptr, 0, sizeof(statement));
   ptr->length= insert_string.length()+1;
+  if (!(ptr->string= (char *)malloc(ptr->length)))
+  {
+    fprintf(stderr, "Memory Allocation error in creating select\n");
+    exit(1);
+  }
+  memset(ptr->string, 0, ptr->length);
   ptr->type= INSERT_TYPE;
-  my_stpcpy(ptr->string, insert_string.c_str());
+  strcpy(ptr->string, insert_string.c_str());
   return(ptr);
 }
 
@@ -1181,17 +1252,27 @@ build_select_string(bool key)
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     query_string.append(" WHERE id = ");
 
-  ptr= (statement *)my_malloc(sizeof(statement),
-                              MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->string= (char *)my_malloc(query_string.length() + 1,
-                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  ptr= (statement *)malloc(sizeof(statement));
+  if (ptr == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating select\n");
+    exit(1);
+  }
+  memset(ptr, 0, sizeof(statement));
   ptr->length= query_string.length()+1;
+  ptr->string= (char *)malloc(ptr->length);
+  if (ptr->string == NULL)
+  {
+    fprintf(stderr, "Memory Allocation error in creating select\n");
+    exit(1);
+  }
+  memset(ptr->string, 0, ptr->length);
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     ptr->type= SELECT_TYPE_REQUIRES_PREFIX;
   else
     ptr->type= SELECT_TYPE;
-  my_stpcpy(ptr->string, query_string.c_str());
+  strcpy(ptr->string, query_string.c_str());
   return(ptr);
 }
 
@@ -1347,8 +1428,13 @@ get_options(int *argc,char ***argv)
     query_statements_count=
       parse_option(opt_auto_generate_sql_type, &query_options, ',');
 
-    query_statements= (statement **)my_malloc(sizeof(statement *) * query_statements_count,
-                                              MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+    query_statements= (statement **)malloc(sizeof(statement *) * query_statements_count);
+    if (query_statements == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in Building Query Statements\n");
+      exit(1);
+    }
+    memset(query_statements, 0, sizeof(statement *) * query_statements_count);
 
     sql_type= query_options;
     do
@@ -1468,8 +1554,13 @@ get_options(int *argc,char ***argv)
         fprintf(stderr,"%s: Could not open create file\n", my_progname);
         exit(1);
       }
-      tmp_string= (char *)my_malloc(sbuf.st_size + 1,
-                                    MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+      tmp_string= (char *)malloc(sbuf.st_size + 1);
+      if (tmp_string == NULL)
+      {
+        fprintf(stderr, "Memory Allocation error in option processing\n");
+        exit(1);
+      }
+      memset(tmp_string, 0, sbuf.st_size + 1);
       my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
       tmp_string[sbuf.st_size]= '\0';
       my_close(data_file,MYF(0));
@@ -1487,8 +1578,13 @@ get_options(int *argc,char ***argv)
       query_statements_count=
         parse_option("default", &query_options, ',');
 
-      query_statements= (statement **)my_malloc(sizeof(statement *),
-                                                MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+      query_statements= (statement **)malloc(sizeof(statement *) * query_statements_count);
+      if (query_statements == NULL)
+      {
+        fprintf(stderr, "Memory Allocation error in option processing\n");
+        exit(1);
+      }
+      memset(query_statements, 0, sizeof(statement *) * query_statements_count); 
     }
 
     if (user_supplied_query && !stat(user_supplied_query, &sbuf))
@@ -1505,8 +1601,13 @@ get_options(int *argc,char ***argv)
         fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
         exit(1);
       }
-      tmp_string= (char *)my_malloc(sbuf.st_size + 1,
-                                    MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+      tmp_string= (char *)malloc(sbuf.st_size + 1);
+      if (tmp_string == NULL)
+      {
+        fprintf(stderr, "Memory Allocation error in option processing\n");
+        exit(1);
+      }
+      memset(tmp_string, 0, sbuf.st_size + 1);
       my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
       tmp_string[sbuf.st_size]= '\0';
       my_close(data_file,MYF(0));
@@ -1537,8 +1638,13 @@ get_options(int *argc,char ***argv)
       fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
       exit(1);
     }
-    tmp_string= (char *)my_malloc(sbuf.st_size + 1,
-                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+    tmp_string= (char *)malloc(sbuf.st_size + 1);
+    if (tmp_string == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in option processing\n");
+      exit(1);
+    }
+    memset(tmp_string, 0, sbuf.st_size + 1);
     my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
     tmp_string[sbuf.st_size]= '\0';
     my_close(data_file,MYF(0));
@@ -1569,8 +1675,13 @@ get_options(int *argc,char ***argv)
       fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
       exit(1);
     }
-    tmp_string= (char *)my_malloc(sbuf.st_size + 1,
-                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+    tmp_string= (char *)malloc(sbuf.st_size + 1);
+    if (tmp_string == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in option processing\n");
+      exit(1);
+    }
+    memset(tmp_string, 0, sbuf.st_size+1);
     my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
     tmp_string[sbuf.st_size]= '\0';
     my_close(data_file,MYF(0));
@@ -1627,11 +1738,22 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
                          strstr(engine_stmt->string, "blackhole")))
   {
     primary_keys_number_of= 1;
-    primary_keys= (char **)my_malloc((uint)(sizeof(char *) *
-                                            primary_keys_number_of),
-                                     MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+    primary_keys= (char **)malloc((sizeof(char *) *
+                                  primary_keys_number_of));
+    if (primary_keys == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in option processing\n");
+      exit(1);
+    }
+    
+    memset(primary_keys, 0, (sizeof(char *) * primary_keys_number_of));
     /* Yes, we strdup a const string to simplify the interface */
-    primary_keys[0]= my_strdup("796c4422-1d94-102a-9d6d-00e0812d", MYF(0));
+    primary_keys[0]= strdup("796c4422-1d94-102a-9d6d-00e0812d");
+    if (primary_keys[0] == NULL)
+    {
+      fprintf(stderr, "Memory Allocation error in option processing\n");
+      exit(1);
+    }
   }
   else
   {
@@ -1651,13 +1773,25 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
       /*
         We create the structure and loop and create the items.
       */
-      primary_keys= (char **)my_malloc((uint)(sizeof(char *) *
-                                              primary_keys_number_of),
-                                       MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+      primary_keys= (char **)malloc(sizeof(char *) *
+                                    primary_keys_number_of);
+      if (primary_keys == NULL)
+      {
+        fprintf(stderr, "Memory Allocation error in option processing\n");
+        exit(1);
+      }
+      memset(primary_keys, 0, sizeof(char *) * primary_keys_number_of);
       row= drizzle_fetch_row(result);
       for (counter= 0; counter < primary_keys_number_of;
            counter++, row= drizzle_fetch_row(result))
-        primary_keys[counter]= my_strdup(row[0], MYF(0));
+      {
+        primary_keys[counter]= strdup(row[0]);
+        if (primary_keys[counter] == NULL)
+        {
+          fprintf(stderr, "Memory Allocation error in option processing\n");
+          exit(1);
+        }
+      }
     }
 
     drizzle_free_result(result);
@@ -1884,7 +2018,12 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
     while (options_loop--)
       for (x= 0; x < concur; x++)
       {
-        con= (thread_context *)my_malloc(sizeof(thread_context), MYF(0));
+        con= (thread_context *)malloc(sizeof(thread_context));
+        if (con == NULL)
+        {
+          fprintf(stderr, "Memory Allocation error in scheduler\n");
+          exit(1);
+        }
         con->stmt= stmts[y];
         con->limit= limit;
 
@@ -2139,8 +2278,13 @@ parse_option(const char *origin, option_string **stmt, char delm)
 
   end_ptr= (char *)origin + length;
 
-  tmp= *sptr= (option_string *)my_malloc(sizeof(option_string),
-                                         MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  tmp= *sptr= (option_string *)malloc(sizeof(option_string));
+  if (tmp == NULL)
+  {
+    fprintf(stderr,"Error allocating memory while parsing options\n");
+    exit(1);
+  }
+  memset(tmp, 0, sizeof(option_string));
 
   for (begin_ptr= (char *)origin;
        begin_ptr != end_ptr;
@@ -2160,8 +2304,8 @@ parse_option(const char *origin, option_string **stmt, char delm)
     }
     else
     {
-      size_t length= strlen(begin_ptr);
-      memcpy(buffer, begin_ptr, length);
+      size_t begin_len= strlen(begin_ptr);
+      memcpy(buffer, begin_ptr, begin_len);
       begin_ptr= end_ptr;
     }
 
@@ -2173,12 +2317,23 @@ parse_option(const char *origin, option_string **stmt, char delm)
 
       /* Move past the : and the first string */
       tmp->option_length= strlen(buffer_ptr);
-      tmp->option= my_strndup(buffer_ptr, (uint)tmp->option_length,
-                              MYF(MY_FAE));
+      tmp->option= (char *)malloc(tmp->option_length + 1);
+      if (tmp->option == NULL)
+      {
+        fprintf(stderr,"Error allocating memory while parsing options\n");
+        exit(1);
+      }
+      memcpy(tmp->option, buffer_ptr, tmp->option_length);
+      tmp->option[tmp->option_length]= 0; 
     }
 
-    tmp->string= my_strndup(buffer, strlen(buffer), MYF(MY_FAE));
     tmp->length= strlen(buffer);
+    tmp->string= strdup(buffer);
+    if (tmp->string == NULL)
+    {
+      fprintf(stderr,"Error allocating memory while parsing options\n");
+      exit(1);
+    }
 
     if (isspace(*begin_ptr))
       begin_ptr++;
@@ -2186,8 +2341,16 @@ parse_option(const char *origin, option_string **stmt, char delm)
     count++;
 
     if (begin_ptr != end_ptr)
-      tmp->next= (option_string *)my_malloc(sizeof(option_string),
-                                            MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+    {
+      tmp->next= (option_string *)malloc(sizeof(option_string));
+      if (tmp->next == NULL)
+      {
+        fprintf(stderr,"Error allocating memory while parsing options\n");
+        exit(1);
+      }
+      memset(tmp->next, 0, sizeof(option_string));
+    }
+    
   }
 
   return count;
@@ -2208,16 +2371,22 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   uint length= strlen(script);
   uint count= 0; /* We know that there is always one */
 
-  for (tmp= *sptr= (statement *)my_malloc(sizeof(statement),
-                                          MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  for (tmp= *sptr= (statement *)malloc(sizeof(statement));
        (retstr= strchr(ptr, delm));
-       tmp->next=  (statement *)my_malloc(sizeof(statement),
-                                          MYF(MY_ZEROFILL|MY_FAE|MY_WME)),
-         tmp= tmp->next)
+       tmp->next=  (statement *)malloc(sizeof(statement)),
+       tmp= tmp->next)
   {
+    memset(tmp, 0, sizeof(statement));
     count++;
-    tmp->string= my_strndup(ptr, (uint)(retstr - ptr), MYF(MY_FAE));
     tmp->length= (size_t)(retstr - ptr);
+    tmp->string= (char *)malloc(tmp->length + 1);
+    if (tmp->string == NULL)
+    {
+      fprintf(stderr,"Error allocating memory while parsing delimiter\n");
+      exit(1);
+    }
+    memcpy(tmp->string, ptr, tmp->length);
+    tmp->string[tmp->length]= 0;
     ptr+= retstr - ptr + 1;
     if (isspace(*ptr))
       ptr++;
@@ -2225,9 +2394,15 @@ parse_delimiter(const char *script, statement **stmt, char delm)
 
   if (ptr != script+length)
   {
-    tmp->string= my_strndup(ptr, (uint)((script + length) - ptr),
-                            MYF(MY_FAE));
     tmp->length= (size_t)((script + length) - ptr);
+    tmp->string= (char *)malloc(tmp->length + 1);
+    if (tmp->string == NULL)
+    {
+      fprintf(stderr,"Error allocating memory while parsing delimiter\n");
+      exit(1);
+    }
+    memcpy(tmp->string, ptr, tmp->length);
+    tmp->string[tmp->length]= 0;
     count++;
   }
 
@@ -2243,17 +2418,17 @@ parse_delimiter(const char *script, statement **stmt, char delm)
 uint
 parse_comma(const char *string, uint **range)
 {
-  uint count= 1,x; /* We know that there is always one */
+  unsigned int count= 1,x; /* We know that there is always one */
   char *retstr;
   char *ptr= (char *)string;
-  uint *nptr;
+  unsigned int *nptr;
 
   for (;*ptr; ptr++)
     if (*ptr == ',') count++;
 
   /* One extra spot for the NULL */
-  nptr= *range= (uint *)my_malloc(sizeof(uint) * (count + 1),
-                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  nptr= *range= (uint *)malloc(sizeof(unsigned int) * (count + 1));
+  memset(nptr, 0, sizeof(unsigned int) * (count + 1));
 
   ptr= (char *)string;
   x= 0;
@@ -2462,7 +2637,7 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
     return;
 
   if (opt_delayed_start)
-    my_sleep(random()%opt_delayed_start);
+    usleep(random()%opt_delayed_start);
 
   drizzle_create(drizzle);
 
@@ -2483,7 +2658,7 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
       connect_error= 0;
       break;
     }
-    my_sleep(connection_retry_sleep);
+    usleep(connection_retry_sleep);
   }
   if (connect_error)
   {

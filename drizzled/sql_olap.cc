@@ -38,11 +38,11 @@
 
 static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new_fields)
 {
-  THD	*thd=current_thd;
+  Session	*session=current_session;
   Item *item, *new_item;
   Item_null *constant= new Item_null("ALL");
 
-  SELECT_LEX *new_select = (SELECT_LEX *) thd->memdup((char*) select_lex, sizeof(*select_lex));
+  SELECT_LEX *new_select = (SELECT_LEX *) session->memdup((char*) select_lex, sizeof(*select_lex));
   if (!new_select)
     return 1;
   lex->last_selects->next=new_select;
@@ -52,10 +52,10 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
   new_select->group_list.first=(unsigned char *)0;
   new_select->group_list.next=(unsigned char **)&new_select->group_list.first;
   List<Item> privlist;
-  
+
   List_iterator<Item> list_it(select_lex->item_list);
   List_iterator<Item> new_it(new_fields);
-    
+
   while ((item=list_it++))
   {
     bool not_found= true;
@@ -65,7 +65,7 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
       new_it.rewind();
       while ((new_item=new_it++))
       {
-	if (new_item->type()==Item::FIELD_ITEM && 
+	if (new_item->type()==Item::FIELD_ITEM &&
 	    !strcmp(((Item_field*)new_item)->table_name,iif->table_name) &&
 	    !strcmp(((Item_field*)new_item)->field_name,iif->field_name))
 	{
@@ -85,7 +85,7 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
       if (item->type() == Item::FIELD_ITEM)
 	privlist.push_back(constant);
       else
-	privlist.push_back((Item*)thd->memdup((char *)item,item->size_of()));
+	privlist.push_back((Item*)session->memdup((char *)item,item->size_of()));
     }
   }
   new_select->item_list=privlist;
@@ -99,8 +99,8 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
   Returns 0 if OK, 1 if error, -1 if error already printed to client
 ****************************************************************************/
 
-static int  olap_combos(List<Item> old_fields, List<Item> new_fields, Item *item, LEX *lex, 
-			      SELECT_LEX *select_lex, int position, int selection, int num_fields, 
+static int  olap_combos(List<Item> old_fields, List<Item> new_fields, Item *item, LEX *lex,
+			      SELECT_LEX *select_lex, int position, int selection, int num_fields,
 			      int num_new_fields)
 {
   int sl_return = 0;
@@ -126,7 +126,7 @@ static int  olap_combos(List<Item> old_fields, List<Item> new_fields, Item *item
 
 /****************************************************************************
   Top level function for converting OLAP clauses to multiple selects
-  This is also a place where clauses treatment depends on OLAP type 
+  This is also a place where clauses treatment depends on OLAP type
   Returns 0 if OK, 1 if error, -1 if error already printed to client
 ****************************************************************************/
 
@@ -147,12 +147,12 @@ int handle_olaps(LEX *lex, SELECT_LEX *select_lex)
   List<Item>	all_fields(select_lex->item_list);
 
 
-  if (setup_tables(lex->thd, &select_lex->context, &select_lex->top_join_list,
+  if (setup_tables(lex->session, &select_lex->context, &select_lex->top_join_list,
                    (TableList *)select_lex->table_list.first
                    &select_lex->leaf_tables, false) ||
-      setup_fields(lex->thd, 0, select_lex->item_list, MARK_COLUMNS_READ,
+      setup_fields(lex->session, 0, select_lex->item_list, MARK_COLUMNS_READ,
                    &all_fields,1) ||
-      setup_fields(lex->thd, 0, item_list_copy, MARK_COLUMNS_READ,
+      setup_fields(lex->session, 0, item_list_copy, MARK_COLUMNS_READ,
                    &all_fields, 1))
     return -1;
 

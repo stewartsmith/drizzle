@@ -13,6 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef STORAGE_CSV_HA_TINA_H
+#define STORAGE_CSV_HA_TINA_H
+
+#include <drizzled/handler.h>
+#include <mysys/thr_lock.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "transparent_file.h"
@@ -94,7 +100,7 @@ public:
       delete file_buff;
   }
   const char *table_type(void) const { return "CSV"; }
-  const char *index_type(uint32_t inx __attribute__((unused)))
+  const char *index_type(uint32_t)
   { return "NONE"; }
   const char **bas_ext() const;
   uint64_t table_flags() const
@@ -102,9 +108,7 @@ public:
     return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT |
             HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE);
   }
-  uint32_t index_flags(uint32_t idx __attribute__((unused)),
-                       uint32_t part __attribute__((unused)),
-                       bool all_parts __attribute__((unused))) const
+  uint32_t index_flags(uint32_t, uint32_t, bool) const
   {
     /*
       We will never have indexes so this will never be called(AKA we return
@@ -122,7 +126,7 @@ public:
   virtual double scan_time() { return (double) (stats.records+stats.deleted) / 20.0+10; }
   /* The next method will never be called */
   virtual bool fast_key_read() { return 1;}
-  /* 
+  /*
     TODO: return actual upper bound of number of records in the table.
     (e.g. save number of records seen on full table scan and/or use file size
     as upper bound)
@@ -137,11 +141,11 @@ public:
   int rnd_init(bool scan=1);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
-  bool check_and_repair(THD *thd);
-  int check(THD* thd, HA_CHECK_OPT* check_opt);
+  bool check_and_repair(Session *session);
+  int check(Session* session, HA_CHECK_OPT* check_opt);
   bool is_crashed() const;
   int rnd_end();
-  int repair(THD* thd, HA_CHECK_OPT* check_opt);
+  int repair(Session* session, HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */
   bool auto_repair() const { return 1; }
   void position(const unsigned char *record);
@@ -151,7 +155,7 @@ public:
   bool check_if_incompatible_data(HA_CREATE_INFO *info,
                                   uint32_t table_changes);
 
-  THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
+  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
       enum thr_lock_type lock_type);
 
   /*
@@ -167,3 +171,4 @@ public:
   int chain_append();
 };
 
+#endif /* STORAGE_CSV_HA_TINA_H */

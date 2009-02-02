@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <config.h>
+#include <drizzled/global.h>
 
 #include "libdrizzle.h"
 #include "libdrizzle_priv.h"
@@ -53,9 +53,8 @@
 #define INADDR_NONE  -1
 #endif
 
-#include <sql_common.h>
 #include "local_infile.h"
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 #define MY_ALIGN(A,L)	(((A) + (L) - 1) & ~((L) - 1))
 
@@ -170,8 +169,9 @@ typedef struct st_default_local_infile
 */
 
 static int default_local_infile_init(void **ptr, const char *filename,
-             void *userdata __attribute__ ((unused)))
+                                     void *userdata)
 {
+  (void)userdata;
   default_local_infile_data *data;
   char tmp_name[FN_REFLEN];
 

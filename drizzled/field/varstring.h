@@ -21,6 +21,9 @@
 #ifndef DRIZZLE_SERVER_FIELD_VARSTRING
 #define DRIZZLE_SERVER_FIELD_VARSTRING
 
+#include <drizzled/field/longstr.h>
+#include <string>
+
 class Field_varstring :public Field_longstr {
 public:
   /*
@@ -33,23 +36,11 @@ public:
   Field_varstring(unsigned char *ptr_arg,
                   uint32_t len_arg, uint32_t length_bytes_arg,
                   unsigned char *null_ptr_arg, unsigned char null_bit_arg,
-		  enum utype unireg_check_arg, const char *field_name_arg,
-		  TABLE_SHARE *share, const CHARSET_INFO * const cs)
-    :Field_longstr(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-                   unireg_check_arg, field_name_arg, cs),
-     length_bytes(length_bytes_arg)
-  {
-    share->varchar_fields++;
-  }
+                  enum utype unireg_check_arg, const char *field_name_arg,
+                  TABLE_SHARE *share, const CHARSET_INFO * const cs);
   Field_varstring(uint32_t len_arg,bool maybe_null_arg,
                   const char *field_name_arg,
-                  TABLE_SHARE *share, const CHARSET_INFO * const cs)
-    :Field_longstr((unsigned char*) 0,len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
-                   NONE, field_name_arg, cs),
-     length_bytes(len_arg < 256 ? 1 :2)
-  {
-    share->varchar_fields++;
-  }
+                  TABLE_SHARE *share, const CHARSET_INFO * const cs);
 
   enum_field_types type() const { return DRIZZLE_TYPE_VARCHAR; }
   enum ha_base_keytype key_type() const;
@@ -77,6 +68,8 @@ public:
   }
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t get_key_image(unsigned char *buff,uint32_t length, imagetype type);
+  uint32_t get_key_image(std::basic_string <unsigned char> &buff,
+                         uint32_t length, imagetype type);
   void set_key_image(const unsigned char *buff,uint32_t length);
   void sql_type(String &str) const;
   virtual unsigned char *pack(unsigned char *to, const unsigned char *from,

@@ -16,9 +16,11 @@
 /* The hash functions used for saveing keys */
 
 #include "heapdef.h"
+
 #include <mystrings/m_ctype.h>
 #include <drizzled/util/test.h>
 
+#include <string.h>
 
 /*
   Find out how many rows there is in the given range
@@ -159,7 +161,7 @@ unsigned char *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char 
 
   if (old_nextflag && nextflag)
     my_errno=HA_ERR_RECORD_CHANGED;		/* Didn't find old record */
-  info->current_hash_ptr=0;  
+  info->current_hash_ptr=0;
   return((info->current_ptr= 0));
 }
 
@@ -193,8 +195,8 @@ unsigned char *hp_search_next(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned 
       hashnr     Hash value
       buffmax    Value such that
                  2^(n-1) < maxlength <= 2^n = buffmax
-      maxlength  
-  
+      maxlength
+
   RETURN
     Array index, in [0..maxlength)
 */
@@ -231,7 +233,7 @@ void hp_movelink(HASH_INFO *pos, HASH_INFO *next_link, HASH_INFO *newlink)
 
 uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key)
 {
-  /*register*/ 
+  /*register*/
   uint32_t nr=1, nr2=4;
   HA_KEYSEG *seg,*endseg;
 
@@ -411,7 +413,7 @@ uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key
     {
       for ( ; pos < (unsigned char*) key ; pos++)
       {
-	nr *=16777619; 
+	nr *=16777619;
 	nr ^=(uint) *pos;
       }
     }
@@ -455,7 +457,7 @@ uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char 
       unsigned char *end= pos+seg->length;
       for ( ; pos < end ; pos++)
       {
-	nr *=16777619; 
+	nr *=16777619;
 	nr ^=(uint) *pos;
       }
     }
@@ -475,7 +477,7 @@ uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char 
     rec1		Record to compare
     rec2		Other record to compare
     diff_if_only_endspace_difference
-			Different number of end space is significant    
+			Different number of end space is significant
 
   NOTES
     diff_if_only_endspace_difference is used to allow us to insert
@@ -613,7 +615,7 @@ int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char 
         char_length_key= seg->length;
         char_length_rec= seg->length;
       }
-      
+
       if (seg->charset->coll->strnncollsp(seg->charset,
 					  (unsigned char*) pos, char_length_rec,
 					  (unsigned char*) key, char_length_key, 0))
@@ -633,7 +635,7 @@ int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char 
       if (cs->mbmaxlen > 1)
       {
         uint32_t char_length1, char_length2;
-        char_length1= char_length2= seg->length / cs->mbmaxlen; 
+        char_length1= char_length2= seg->length / cs->mbmaxlen;
         char_length1= my_charpos(cs, key, key + char_length_key, char_length1);
         set_if_smaller(char_length_key, char_length1);
         char_length2= my_charpos(cs, pos, pos + char_length_rec, char_length2);
@@ -689,7 +691,7 @@ void hp_make_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *rec
   } while(0)
 
 
-uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key, 
+uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
 		    const unsigned char *rec, unsigned char *recpos)
 {
   unsigned char *start_key= key;
@@ -707,7 +709,7 @@ uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
     {
       uint32_t length= seg->length;
       unsigned char *pos= (unsigned char*) rec + seg->start;
-      
+
 #ifdef HAVE_ISNAN
       if (seg->type == HA_KEYTYPE_FLOAT)
       {
@@ -763,7 +765,7 @@ uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
     char_length= seg->length;
     if (seg->charset->mbmaxlen > 1)
     {
-      char_length= my_charpos(seg->charset, 
+      char_length= my_charpos(seg->charset,
                               rec + seg->start, rec + seg->start + char_length,
                               char_length / seg->charset->mbmaxlen);
       set_if_smaller(char_length, seg->length); /* QQ: ok to remove? */
@@ -775,7 +777,7 @@ uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
     key+= seg->length;
   }
   memcpy(key, &recpos, sizeof(unsigned char*));
-  return (uint) (key - start_key);
+  return (uint32_t) (key - start_key);
 }
 
 
@@ -799,7 +801,7 @@ uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned ch
     {
       uint32_t length= seg->length;
       unsigned char *pos= (unsigned char*) old + length;
-      
+
       while (length--)
       {
 	*key++= *--pos;
@@ -829,7 +831,7 @@ uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned ch
                               char_length / seg->charset->mbmaxlen);
       set_if_smaller(char_length, seg->length); /* QQ: ok to remove? */
       if (char_length < seg->length)
-        seg->charset->cset->fill(seg->charset, (char*) key + char_length, 
+        seg->charset->cset->fill(seg->charset, (char*) key + char_length,
                                  seg->length - char_length, ' ');
     }
     memcpy(key, old, (size_t) char_length);
@@ -839,9 +841,9 @@ uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned ch
 }
 
 
-uint32_t hp_rb_key_length(HP_KEYDEF *keydef, 
-		      const unsigned char *key __attribute__((unused)))
+uint32_t hp_rb_key_length(HP_KEYDEF *keydef, const unsigned char *not_used)
 {
+  (void)not_used;
   return keydef->length;
 }
 
@@ -850,7 +852,7 @@ uint32_t hp_rb_null_key_length(HP_KEYDEF *keydef, const unsigned char *key)
 {
   const unsigned char *start_key= key;
   HA_KEYSEG *seg, *endseg;
-  
+
   for (seg= keydef->seg, endseg= seg + keydef->keysegs; seg < endseg; seg++)
   {
     if (seg->null_bit && !*key++)
@@ -859,13 +861,13 @@ uint32_t hp_rb_null_key_length(HP_KEYDEF *keydef, const unsigned char *key)
   }
   return (uint) (key - start_key);
 }
-                  
+
 
 uint32_t hp_rb_var_key_length(HP_KEYDEF *keydef, const unsigned char *key)
 {
   const unsigned char *start_key= key;
   HA_KEYSEG *seg, *endseg;
-  
+
   for (seg= keydef->seg, endseg= seg + keydef->keysegs; seg < endseg; seg++)
   {
     uint32_t length= seg->length;

@@ -21,6 +21,15 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/int64_t.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /****************************************************************************
  Field type int64_t int (8 bytes)
@@ -38,7 +47,7 @@ int Field_int64_t::store(const char *from,uint32_t len, const CHARSET_INFO * con
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;
   }
-  else if (table->in_use->count_cuted_fields && 
+  else if (table->in_use->count_cuted_fields &&
            check_int(cs, from, len, end, error))
     error= 1;
   else
@@ -90,7 +99,7 @@ int Field_int64_t::store(double nr)
 }
 
 
-int Field_int64_t::store(int64_t nr, bool unsigned_val __attribute__((unused)))
+int Field_int64_t::store(int64_t nr, bool )
 {
   int error= 0;
 
@@ -136,7 +145,7 @@ int64_t Field_int64_t::val_int(void)
 
 
 String *Field_int64_t::val_str(String *val_buffer,
-				String *val_ptr __attribute__((unused)))
+				String *)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;
@@ -182,7 +191,7 @@ int Field_int64_t::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_int64_t::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_int64_t::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)
@@ -216,3 +225,57 @@ void Field_int64_t::sql_type(String &res) const
   const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
 }
+
+
+unsigned char *Field_int64_t::pack(unsigned char* to, const unsigned char *from,
+                                         uint32_t,
+#ifdef WORDS_BIGENDIAN
+                                         bool low_byte_first
+#else
+                                         bool
+#endif
+)
+{
+  int64_t val;
+#ifdef WORDS_BIGENDIAN
+  if (table->s->db_low_byte_first)
+     val = sint8korr(from);
+  else
+#endif
+    int64_tget(val, from);
+
+#ifdef WORDS_BIGENDIAN
+  if (low_byte_first)
+    int8store(to, val);
+  else
+#endif
+    int64_tstore(to, val);
+  return to + sizeof(val);
+}
+
+
+const unsigned char *Field_int64_t::unpack(unsigned char* to, const unsigned char *from, uint32_t,
+#ifdef WORDS_BIGENDIAN
+                                           bool low_byte_first
+#else
+                                           bool
+#endif
+)
+{
+  int64_t val;
+#ifdef WORDS_BIGENDIAN
+  if (low_byte_first)
+    val = sint8korr(from);
+  else
+#endif
+    int64_tget(val, from);
+
+#ifdef WORDS_BIGENDIAN
+  if (table->s->db_low_byte_first)
+    int8store(to, val);
+  else
+#endif
+    int64_tstore(to, val);
+  return from + sizeof(val);
+}
+

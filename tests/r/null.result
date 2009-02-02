@@ -2,20 +2,27 @@ drop table if exists t1, t2;
 select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
 NULL	NULL	isnull(null)	isnull(1/0)	isnull(1/0 = null)	ifnull(null,1)	ifnull(null,"TRUE")	ifnull("TRUE","ERROR")	1/0 is null	1 is not null
 NULL	NULL	1	1	1	1	TRUE	TRUE	1	1
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
 explain extended select null,\N,isnull(null),isnull(1/0),isnull(1/0 = null),ifnull(null,1),ifnull(null,"TRUE"),ifnull("TRUE","ERROR"),1/0 is null,1 is not null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
 Note	1003	select NULL AS `NULL`,NULL AS `NULL`,isnull(NULL) AS `isnull(null)`,isnull((1 / 0)) AS `isnull(1/0)`,isnull(((1 / 0) = NULL)) AS `isnull(1/0 = null)`,ifnull(NULL,1) AS `ifnull(null,1)`,ifnull(NULL,'TRUE') AS `ifnull(null,"TRUE")`,ifnull('TRUE','ERROR') AS `ifnull("TRUE","ERROR")`,isnull((1 / 0)) AS `1/0 is null`,(1 is not null) AS `1 is not null`
-select 1 | NULL,1 & NULL,1+NULL,1-NULL;
-1 | NULL	1 & NULL	1+NULL	1-NULL
+select CONCAT(1, NULL),1+NULL,1-NULL;
+CONCAT(1, NULL)	1+NULL	1-NULL
+NULL	NULL	NULL
+select NULL=NULL,NULL<>NULL,IFNULL(NULL,1.1)+0,CONCAT(IFNULL(NULL,1), 0);
+NULL=NULL	NULL<>NULL	IFNULL(NULL,1.1)+0	CONCAT(IFNULL(NULL,1), 0)
+NULL	NULL	1.1	10
+select strcmp("a",NULL),(1<NULL)+0.0,null like "a%","a%" like null;
+strcmp("a",NULL)	(1<NULL)+0.0	null like "a%"	"a%" like null
 NULL	NULL	NULL	NULL
-select NULL=NULL,NULL<>NULL,IFNULL(NULL,1.1)+0,IFNULL(NULL,1) | 0;
-NULL=NULL	NULL<>NULL	IFNULL(NULL,1.1)+0	IFNULL(NULL,1) | 0
-NULL	NULL	1.1	1
-select strcmp("a",NULL),(1<NULL)+0.0,NULL regexp "a",null like "a%","a%" like null;
-strcmp("a",NULL)	(1<NULL)+0.0	NULL regexp "a"	null like "a%"	"a%" like null
-NULL	NULL	NULL	NULL	NULL
 select concat("a",NULL),replace(NULL,"a","b"),replace("string","i",NULL),replace("string",NULL,"i"),insert("abc",1,1,NULL),left(NULL,1);
 concat("a",NULL)	replace(NULL,"a","b")	replace("string","i",NULL)	replace("string",NULL,"i")	insert("abc",1,1,NULL)	left(NULL,1)
 NULL	NULL	NULL	NULL	NULL	NULL
@@ -42,14 +49,6 @@ SELECT (NULL OR NULL) IS NULL;
 select NULL AND 0, 0 and NULL;
 NULL AND 0	0 and NULL
 0	0
-select inet_ntoa(null),inet_aton(null),inet_aton("122.256"),inet_aton("122.226."),inet_aton("");
-inet_ntoa(null)	inet_aton(null)	inet_aton("122.256")	inet_aton("122.226.")	inet_aton("")
-NULL	NULL	NULL	NULL	NULL
-explain extended select inet_ntoa(null),inet_aton(null),inet_aton("122.256"),inet_aton("122.226."),inet_aton("");
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
-Warnings:
-Note	1003	select inet_ntoa(NULL) AS `inet_ntoa(null)`,inet_aton(NULL) AS `inet_aton(null)`,inet_aton('122.256') AS `inet_aton("122.256")`,inet_aton('122.226.') AS `inet_aton("122.226.")`,inet_aton('') AS `inet_aton("")`
 create table t1 (x int);
 insert into t1 values (null);
 select * from t1 where x != 0;
@@ -71,7 +70,7 @@ indexed_field
 NULL
 NULL
 DROP TABLE t1;
-create table t1 (a int, b int) engine=myisam;
+create table t1 (a int, b int);
 insert into t1 values(20,null);
 select t2.b, ifnull(t2.b,"this is null") from t1 as t2 left join t1 as t3 on
 t2.b=t3.a;
@@ -88,57 +87,46 @@ b	ifnull(t2.b,"this is null")
 NULL	this is null
 NULL	this is null
 drop table t1;
-CREATE TABLE t1 (a varchar(16) NOT NULL default '', b smallint(6) NOT NULL default 0, c datetime NOT NULL default '0000-00-00 00:00:00', d smallint(6) NOT NULL default 0);
-INSERT INTO t1 SET a = "", d= "2003-01-14 03:54:55";
-Warnings:
-Warning	1265	Data truncated for column 'd' at row 1
-UPDATE t1 SET d=1/NULL;
-ERROR 23000: Column 'd' cannot be null
-UPDATE t1 SET d=NULL;
-ERROR 23000: Column 'd' cannot be null
+CREATE TABLE t1 (a varchar(16) NOT NULL default '', b int NOT NULL default 0, c datetime NOT NULL default '0000-00-00 00:00:00', d int NOT NULL default 0);
 INSERT INTO t1 (a) values (null);
 ERROR 23000: Column 'a' cannot be null
 INSERT INTO t1 (a) values (1/null);
 ERROR 23000: Column 'a' cannot be null
 INSERT INTO t1 (a) values (null),(null);
-Warnings:
-Warning	1048	Column 'a' cannot be null
-Warning	1048	Column 'a' cannot be null
+ERROR 23000: Column 'a' cannot be null
 INSERT INTO t1 (b) values (null);
 ERROR 23000: Column 'b' cannot be null
 INSERT INTO t1 (b) values (1/null);
 ERROR 23000: Column 'b' cannot be null
 INSERT INTO t1 (b) values (null),(null);
-Warnings:
-Warning	1048	Column 'b' cannot be null
-Warning	1048	Column 'b' cannot be null
+ERROR 23000: Column 'b' cannot be null
 INSERT INTO t1 (c) values (null);
 ERROR 23000: Column 'c' cannot be null
 INSERT INTO t1 (c) values (1/null);
 ERROR 23000: Column 'c' cannot be null
 INSERT INTO t1 (c) values (null),(null);
-Warnings:
-Warning	1048	Column 'c' cannot be null
-Warning	1048	Column 'c' cannot be null
+ERROR 23000: Column 'c' cannot be null
 INSERT INTO t1 (d) values (null);
 ERROR 23000: Column 'd' cannot be null
 INSERT INTO t1 (d) values (1/null);
 ERROR 23000: Column 'd' cannot be null
 INSERT INTO t1 (d) values (null),(null);
-Warnings:
-Warning	1048	Column 'd' cannot be null
-Warning	1048	Column 'd' cannot be null
-select * from t1;
-a	b	c	d
-	0	0000-00-00 00:00:00	2003
-	0	0000-00-00 00:00:00	0
-	0	0000-00-00 00:00:00	0
-	0	0000-00-00 00:00:00	0
-	0	0000-00-00 00:00:00	0
-	0	0000-00-00 00:00:00	0
-	0	0000-00-00 00:00:00	0
-	0	0000-00-00 00:00:00	0
-	0	0000-00-00 00:00:00	0
+ERROR 23000: Column 'd' cannot be null
+UPDATE t1 SET d= NULL;
+INSERT INTO t1 VALUES ();
+UPDATE t1 SET a=1/NULL;
+ERROR 23000: Column 'a' cannot be null
+UPDATE t1 SET a=NULL;
+ERROR 23000: Column 'a' cannot be null
+UPDATE t1 SET b=NULL;
+ERROR 23000: Column 'b' cannot be null
+UPDATE t1 SET c=NULL;
+ERROR 23000: Column 'c' cannot be null
+UPDATE t1 SET d=NULL;
+ERROR 23000: Column 'd' cannot be null
+truncate table t1;
+LOAD DATA INFILE '../std_data_ln/null_test.txt' INTO TABLE t1 FIELDS ENCLOSED BY '"';
+ERROR 22004: Column set to default value; NULL supplied to NOT NULL column 'a' at row 1
 drop table t1;
 create table t1 (a int not null, b int not null, index idx(a));
 insert into t1 values
@@ -146,43 +134,11 @@ insert into t1 values
 (7,7), (8,8), (9,9), (10,10), (11,11), (12,12);
 explain select * from t1 where a between 2 and 3;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	idx	idx	4	NULL	2	Using index condition; Using MRR
+1	SIMPLE	t1	range	idx	idx	4	NULL	2	Using where; Using MRR
 explain select * from t1 where a between 2 and 3 or b is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	idx	idx	4	NULL	2	Using index condition; Using MRR
+1	SIMPLE	t1	range	idx	idx	4	NULL	2	Using where; Using MRR
 drop table t1;
-select cast(NULL as signed);
-cast(NULL as signed)
-NULL
-create table t1(i int, key(i));
-insert into t1 values(1);
-insert into t1 select i*2 from t1;
-insert into t1 select i*2 from t1;
-insert into t1 select i*2 from t1;
-insert into t1 select i*2 from t1;
-insert into t1 select i*2 from t1;
-insert into t1 select i*2 from t1;
-insert into t1 select i*2 from t1;
-insert into t1 select i*2 from t1;
-insert into t1 select i*2 from t1;
-insert into t1 values(null);
-explain select * from t1 where i=2 or i is null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref_or_null	i	i	5	const	9	Using index
-select count(*) from t1 where i=2 or i is null;
-count(*)
-10
-alter table t1 change i i int not null;
-Warnings:
-Warning	1265	Data truncated for column 'i' at row 513
-explain select * from t1 where i=2 or i is null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	i	i	4	const	7	Using index
-select count(*) from t1 where i=2 or i is null;
-count(*)
-9
-drop table t1;
-set names latin2;
 create table t1 select
 null as c00,
 if(1, null, 'string') as c01,
@@ -225,45 +181,45 @@ rpad(null, 10, 'str') as c38;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c00` binary(0) DEFAULT NULL,
-  `c01` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c02` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c03` varchar(6) CHARACTER SET latin2 NOT NULL DEFAULT '',
-  `c04` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c05` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c06` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c07` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c08` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c09` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c10` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c11` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c12` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c13` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c14` char(0) CHARACTER SET latin2 DEFAULT NULL,
-  `c15` char(0) CHARACTER SET latin2 DEFAULT NULL,
-  `c16` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c17` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c18` char(0) CHARACTER SET latin2 DEFAULT NULL,
-  `c19` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c20` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c21` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c22` varchar(6) CHARACTER SET latin2 DEFAULT NULL,
-  `c23` varchar(9) CHARACTER SET latin2 DEFAULT NULL,
-  `c24` varchar(9) CHARACTER SET latin2 DEFAULT NULL,
-  `c25` varchar(12) CHARACTER SET latin2 DEFAULT NULL,
-  `c26` varchar(7) CHARACTER SET latin2 DEFAULT NULL,
-  `c27` varchar(7) CHARACTER SET latin2 DEFAULT NULL,
-  `c29` varchar(381) CHARACTER SET latin2 DEFAULT NULL,
-  `c30` varchar(317) CHARACTER SET latin2 DEFAULT NULL,
-  `c31` varchar(192) CHARACTER SET latin2 DEFAULT NULL,
-  `c32` char(0) CHARACTER SET latin2 DEFAULT NULL,
-  `c33` varchar(3) CHARACTER SET latin2 DEFAULT NULL,
-  `c34` varchar(3) CHARACTER SET latin2 DEFAULT NULL,
-  `c35` varchar(3) CHARACTER SET latin2 DEFAULT NULL,
-  `c36` varchar(3) CHARACTER SET latin2 DEFAULT NULL,
-  `c37` varchar(10) CHARACTER SET latin2 DEFAULT NULL,
-  `c38` varchar(10) CHARACTER SET latin2 DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `c00` varbinary(0),
+  `c01` varchar(6),
+  `c02` varchar(6),
+  `c03` varchar(6) NOT NULL,
+  `c04` varchar(6),
+  `c05` varchar(6),
+  `c06` varchar(6),
+  `c07` varchar(6),
+  `c08` varchar(6),
+  `c09` varchar(6),
+  `c10` varchar(6),
+  `c11` varchar(6),
+  `c12` varchar(6),
+  `c13` varchar(6),
+  `c14` varchar(0),
+  `c15` varchar(0),
+  `c16` varchar(6),
+  `c17` varchar(6),
+  `c18` varchar(0),
+  `c19` varchar(6),
+  `c20` varchar(6),
+  `c21` varchar(6),
+  `c22` varchar(6),
+  `c23` varchar(9),
+  `c24` varchar(9),
+  `c25` varchar(12),
+  `c26` varchar(7),
+  `c27` varchar(7),
+  `c29` varchar(381),
+  `c30` varchar(317),
+  `c31` varchar(192),
+  `c32` varchar(0),
+  `c33` varchar(3),
+  `c34` varchar(3),
+  `c35` varchar(3),
+  `c36` varchar(3),
+  `c37` varchar(10),
+  `c38` varchar(10)
+) ENGINE=InnoDB
 drop table t1;
 select 
 case 'str' when 'STR' then 'str' when null then 'null' end as c01,
@@ -275,60 +231,17 @@ field('str1', null, 'STR1') as c05,
 'string' in (null, 'STRING') as c09;
 c01	c02	c03	c04	c05	c08	c09
 str	str	0	1	2	1	1
-set names latin1;
-create table bug19145a (e enum('a','b','c')          default 'b' , s set('x', 'y', 'z')          default 'y' ) engine=MyISAM;
-create table bug19145b (e enum('a','b','c')          default null, s set('x', 'y', 'z')          default null) engine=MyISAM;
-create table bug19145c (e enum('a','b','c') not null default 'b' , s set('x', 'y', 'z') not null default 'y' ) engine=MyISAM;
-create table bug19145setnotnulldefaultnull (e enum('a','b','c')          default null, s set('x', 'y', 'z') not null default null) engine=MyISAM;
-ERROR 42000: Invalid default value for 's'
-create table bug19145enumnotnulldefaultnull (e enum('a','b','c') not null default null, s set('x', 'y', 'z')          default null) engine=MyISAM;
-ERROR 42000: Invalid default value for 'e'
-alter table bug19145a alter column e set default null;
-alter table bug19145a alter column s set default null;
-alter table bug19145a add column (i int);
-alter table bug19145b alter column e set default null;
-alter table bug19145b alter column s set default null;
-alter table bug19145b add column (i int);
-alter table bug19145c alter column e set default null;
-ERROR 42000: Invalid default value for 'e'
-alter table bug19145c alter column s set default null;
-ERROR 42000: Invalid default value for 's'
-alter table bug19145c add column (i int);
-show create table bug19145a;
-Table	Create Table
-bug19145a	CREATE TABLE `bug19145a` (
-  `e` enum('a','b','c') DEFAULT NULL,
-  `s` set('x','y','z') DEFAULT NULL,
-  `i` int(11) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-show create table bug19145b;
-Table	Create Table
-bug19145b	CREATE TABLE `bug19145b` (
-  `e` enum('a','b','c') DEFAULT NULL,
-  `s` set('x','y','z') DEFAULT NULL,
-  `i` int(11) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-show create table bug19145c;
-Table	Create Table
-bug19145c	CREATE TABLE `bug19145c` (
-  `e` enum('a','b','c') NOT NULL DEFAULT 'b',
-  `s` set('x','y','z') NOT NULL DEFAULT 'y',
-  `i` int(11) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-drop table bug19145a;
-drop table bug19145b;
-drop table bug19145c;
 # End of 4.1 tests
 #
 # Bug #31471: decimal_bin_size: Assertion `scale >= 0 &&
 #             precision > 0 && scale <= precision'
 #
-CREATE TABLE t1 (a DECIMAL (1, 0) ZEROFILL, b DECIMAL (1, 0) ZEROFILL);
+CREATE TABLE t1 (a DECIMAL (1, 0) , b DECIMAL (1, 0) );
 INSERT INTO t1 (a, b) VALUES (0, 0);
 CREATE TABLE t2 SELECT IFNULL(a, b) FROM t1;
 DESCRIBE t2;
 Field	Type	Null	Key	Default	Extra
-IFNULL(a, b)	decimal(1,0) unsigned	YES		NULL	
+IFNULL(a, b)	decimal(1,0)	YES		NULL	
 DROP TABLE t2;
 CREATE TABLE t2 SELECT IFNULL(a, NULL) FROM t1;
 DESCRIBE t2;

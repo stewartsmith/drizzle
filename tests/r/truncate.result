@@ -53,10 +53,3 @@ a
 3
 4
 drop table t1;
-create table t1 (s1 int);
-insert into t1 (s1) values (1), (2), (3), (4), (5);
-create view v1 as select * from t1;
-truncate table v1;
-ERROR 42S02: Table 'test.v1' doesn't exist
-drop view v1;
-drop table t1;

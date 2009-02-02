@@ -22,8 +22,10 @@
 
 
 #include <stdint.h>
-#include <stdbool.h>
-#include <libdrizzle/drizzle_com.h>
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
+#include <drizzled/common.h>
 #include <libdrizzle/drizzle_field.h>
 #include <libdrizzle/drizzle_options.h>
 #include <libdrizzle/drizzle_res.h>
@@ -169,6 +171,8 @@ int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row);
 const char * cli_read_statistics(DRIZZLE *drizzle);
 int cli_read_change_user_result(DRIZZLE *drizzle);
 
+typedef bool (*safe_read_error_hook_func)(NET *net);
+extern safe_read_error_hook_func safe_read_error_hook;
 
 #ifdef  __cplusplus
 }

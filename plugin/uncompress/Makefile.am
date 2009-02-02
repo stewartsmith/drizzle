@@ -13,16 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir=           $(prefix)
-MYSQLLIBdir=            $(pkglibdir)
-pkgplugindir =		$(pkglibdir)/plugin
-
 AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
 EXTRA_LTLIBRARIES =	libuncompressudf.la
 pkgplugin_LTLIBRARIES =	@plugin_uncompress_shared_target@
-libuncompressudf_la_LDFLAGS =	-module -rpath $(pkgplugindir) -lz
+libuncompressudf_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir) \
+				${Z_LIBS}
 libuncompressudf_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 libuncompressudf_la_SOURCES =	uncompressudf.cc
 

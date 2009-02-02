@@ -21,7 +21,15 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/timetype.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
+
 
 /****************************************************************************
 ** time type
@@ -32,7 +40,7 @@
 
 int Field_time::store(const char *from,
                       uint32_t len,
-                      const CHARSET_INFO * const cs __attribute__((unused)))
+                      const CHARSET_INFO * const )
 {
   DRIZZLE_TIME ltime;
   long tmp;
@@ -57,7 +65,7 @@ int Field_time::store(const char *from,
     }
     if (warning & DRIZZLE_TIME_WARN_OUT_OF_RANGE)
     {
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
                            from, len, DRIZZLE_TIMESTAMP_TIME, !error);
       error= 1;
@@ -66,7 +74,7 @@ int Field_time::store(const char *from,
       ltime.day=0;
     tmp=(ltime.day*24L+ltime.hour)*10000L+(ltime.minute*100+ltime.second);
   }
-  
+
   if (ltime.neg)
     tmp= -tmp;
   int3store(ptr,tmp);
@@ -75,7 +83,7 @@ int Field_time::store(const char *from,
 
 
 int Field_time::store_time(DRIZZLE_TIME *ltime,
-                           enum enum_drizzle_timestamp_type time_type __attribute__((unused)))
+                           enum enum_drizzle_timestamp_type )
 {
   long tmp= ((ltime->month ? 0 : ltime->day * 24L) + ltime->hour) * 10000L +
             (ltime->minute * 100 + ltime->second);
@@ -99,7 +107,7 @@ int Field_time::store(double nr)
   else if (nr < (double)-TIME_MAX_VALUE)
   {
     tmp= -TIME_MAX_VALUE;
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE, nr, DRIZZLE_TIMESTAMP_TIME);
     error= 1;
   }
@@ -111,7 +119,7 @@ int Field_time::store(double nr)
     if (tmp % 100 > 59 || tmp/100 % 100 > 59)
     {
       tmp=0;
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE, nr,
                            DRIZZLE_TIMESTAMP_TIME);
       error= 1;
@@ -129,7 +137,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
   if (nr < (int64_t) -TIME_MAX_VALUE && !unsigned_val)
   {
     tmp= -TIME_MAX_VALUE;
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE, nr,
                          DRIZZLE_TIMESTAMP_TIME, 1);
     error= 1;
@@ -137,7 +145,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
   else if (nr > (int64_t) TIME_MAX_VALUE || (nr < 0 && unsigned_val))
   {
     tmp= TIME_MAX_VALUE;
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE, nr,
                          DRIZZLE_TIMESTAMP_TIME, 1);
     error= 1;
@@ -148,7 +156,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
     if (tmp % 100 > 59 || tmp/100 % 100 > 59)
     {
       tmp=0;
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE, nr,
                            DRIZZLE_TIMESTAMP_TIME, 1);
       error= 1;
@@ -178,7 +186,7 @@ int64_t Field_time::val_int(void)
 */
 
 String *Field_time::val_str(String *val_buffer,
-			    String *val_ptr __attribute__((unused)))
+			    String *)
 {
   DRIZZLE_TIME ltime;
   val_buffer->alloc(MAX_DATE_STRING_REP_LENGTH);
@@ -204,17 +212,17 @@ String *Field_time::val_str(String *val_buffer,
   get_date() here to be able to do things like
   DATE_FORMAT(time, "%l.%i %p")
 */
- 
+
 bool Field_time::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long tmp;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
   if (!(fuzzydate & TIME_FUZZY_DATE))
   {
-    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_WARN_DATA_OUT_OF_RANGE,
                         ER(ER_WARN_DATA_OUT_OF_RANGE), field_name,
-                        thd->row_count);
+                        session->row_count);
     return 1;
   }
   tmp=(long) sint3korr(ptr);
@@ -271,7 +279,7 @@ int Field_time::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_time::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_time::sort_string(unsigned char *to,uint32_t )
 {
   to[0] = (unsigned char) (ptr[2] ^ 128);
   to[1] = ptr[1];

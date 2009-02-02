@@ -1,289 +1,258 @@
-SET @save_sql_mode=@@sql_mode;
-set SQL_MODE='';
 create table ADDDATE(a int);
 drop table ADDDATE;
 create table ADDDATE (a int);
 drop table ADDDATE;
-create table BIT_AND(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'BIT_AND(a int)' at line 1
-create table BIT_AND (a int);
-drop table BIT_AND;
-create table BIT_OR(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'BIT_OR(a int)' at line 1
-create table BIT_OR (a int);
-drop table BIT_OR;
-create table BIT_XOR(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'BIT_XOR(a int)' at line 1
-create table BIT_XOR (a int);
-drop table BIT_XOR;
 create table CAST(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CAST(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CAST(a int)' at line 1
 create table CAST (a int);
-drop table CAST;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CAST (a int)' at line 1
 create table COUNT(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'COUNT(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'COUNT(a int)' at line 1
 create table COUNT (a int);
-drop table COUNT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'COUNT (a int)' at line 1
 create table CURDATE(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CURDATE(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CURDATE(a int)' at line 1
 create table CURDATE (a int);
-drop table CURDATE;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CURDATE (a int)' at line 1
 create table CURTIME(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CURTIME(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CURTIME(a int)' at line 1
 create table CURTIME (a int);
-drop table CURTIME;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CURTIME (a int)' at line 1
 create table DATE_ADD(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'DATE_ADD(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'DATE_ADD(a int)' at line 1
 create table DATE_ADD (a int);
-drop table DATE_ADD;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'DATE_ADD (a int)' at line 1
 create table DATE_SUB(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'DATE_SUB(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'DATE_SUB(a int)' at line 1
 create table DATE_SUB (a int);
-drop table DATE_SUB;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'DATE_SUB (a int)' at line 1
 create table EXTRACT(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'EXTRACT(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'EXTRACT(a int)' at line 1
 create table EXTRACT (a int);
-drop table EXTRACT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'EXTRACT (a int)' at line 1
 create table GROUP_CONCAT(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'GROUP_CONCAT(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'GROUP_CONCAT(a int)' at line 1
 create table GROUP_CONCAT (a int);
-drop table GROUP_CONCAT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'GROUP_CONCAT (a int)' at line 1
 create table GROUP_UNIQUE_USERS(a int);
 drop table GROUP_UNIQUE_USERS;
 create table GROUP_UNIQUE_USERS (a int);
 drop table GROUP_UNIQUE_USERS;
 create table MAX(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MAX(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MAX(a int)' at line 1
 create table MAX (a int);
-drop table MAX;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MAX (a int)' at line 1
 create table MID(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MID(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MID(a int)' at line 1
 create table MID (a int);
-drop table MID;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MID (a int)' at line 1
 create table MIN(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MIN(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MIN(a int)' at line 1
 create table MIN (a int);
-drop table MIN;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MIN (a int)' at line 1
 create table NOW(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOW(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'NOW(a int)' at line 1
 create table NOW (a int);
-drop table NOW;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'NOW (a int)' at line 1
 create table POSITION(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'POSITION(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'POSITION(a int)' at line 1
 create table POSITION (a int);
-drop table POSITION;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'POSITION (a int)' at line 1
 create table SESSION_USER(a int);
 drop table SESSION_USER;
 create table SESSION_USER (a int);
 drop table SESSION_USER;
 create table STD(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STD(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STD(a int)' at line 1
 create table STD (a int);
-drop table STD;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STD (a int)' at line 1
 create table STDDEV(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STDDEV(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV(a int)' at line 1
 create table STDDEV (a int);
-drop table STDDEV;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV (a int)' at line 1
 create table STDDEV_POP(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STDDEV_POP(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV_POP(a int)' at line 1
 create table STDDEV_POP (a int);
-drop table STDDEV_POP;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV_POP (a int)' at line 1
 create table STDDEV_SAMP(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STDDEV_SAMP(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV_SAMP(a int)' at line 1
 create table STDDEV_SAMP (a int);
-drop table STDDEV_SAMP;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV_SAMP (a int)' at line 1
 create table SUBDATE(a int);
 drop table SUBDATE;
 create table SUBDATE (a int);
 drop table SUBDATE;
 create table SUBSTR(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SUBSTR(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUBSTR(a int)' at line 1
 create table SUBSTR (a int);
-drop table SUBSTR;
-create table SUBSTRING(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SUBSTRING(a int)' at line 1
-create table SUBSTRING (a int);
-drop table SUBSTRING;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUBSTR (a int)' at line 1
 create table SUM(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SUM(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUM(a int)' at line 1
 create table SUM (a int);
-drop table SUM;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUM (a int)' at line 1
 create table SYSDATE(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SYSDATE(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SYSDATE(a int)' at line 1
 create table SYSDATE (a int);
-drop table SYSDATE;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SYSDATE (a int)' at line 1
 create table SYSTEM_USER(a int);
 drop table SYSTEM_USER;
 create table SYSTEM_USER (a int);
 drop table SYSTEM_USER;
 create table TRIM(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TRIM(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'TRIM(a int)' at line 1
 create table TRIM (a int);
-drop table TRIM;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'TRIM (a int)' at line 1
 create table UNIQUE_USERS(a int);
 drop table UNIQUE_USERS;
 create table UNIQUE_USERS (a int);
 drop table UNIQUE_USERS;
 create table VARIANCE(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VARIANCE(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VARIANCE(a int)' at line 1
 create table VARIANCE (a int);
-drop table VARIANCE;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VARIANCE (a int)' at line 1
 create table VAR_POP(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VAR_POP(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VAR_POP(a int)' at line 1
 create table VAR_POP (a int);
-drop table VAR_POP;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VAR_POP (a int)' at line 1
 create table VAR_SAMP(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VAR_SAMP(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VAR_SAMP(a int)' at line 1
 create table VAR_SAMP (a int);
-drop table VAR_SAMP;
-set SQL_MODE='IGNORE_SPACE';
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VAR_SAMP (a int)' at line 1
 create table ADDDATE(a int);
 drop table ADDDATE;
 create table ADDDATE (a int);
 drop table ADDDATE;
-create table BIT_AND(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'BIT_AND(a int)' at line 1
-create table BIT_AND (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'BIT_AND (a int)' at line 1
-create table BIT_OR(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'BIT_OR(a int)' at line 1
-create table BIT_OR (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'BIT_OR (a int)' at line 1
-create table BIT_XOR(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'BIT_XOR(a int)' at line 1
-create table BIT_XOR (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'BIT_XOR (a int)' at line 1
 create table CAST(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CAST(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CAST(a int)' at line 1
 create table CAST (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CAST (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CAST (a int)' at line 1
 create table COUNT(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'COUNT(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'COUNT(a int)' at line 1
 create table COUNT (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'COUNT (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'COUNT (a int)' at line 1
 create table CURDATE(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CURDATE(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CURDATE(a int)' at line 1
 create table CURDATE (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CURDATE (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CURDATE (a int)' at line 1
 create table CURTIME(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CURTIME(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CURTIME(a int)' at line 1
 create table CURTIME (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CURTIME (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'CURTIME (a int)' at line 1
 create table DATE_ADD(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'DATE_ADD(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'DATE_ADD(a int)' at line 1
 create table DATE_ADD (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'DATE_ADD (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'DATE_ADD (a int)' at line 1
 create table DATE_SUB(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'DATE_SUB(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'DATE_SUB(a int)' at line 1
 create table DATE_SUB (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'DATE_SUB (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'DATE_SUB (a int)' at line 1
 create table EXTRACT(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'EXTRACT(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'EXTRACT(a int)' at line 1
 create table EXTRACT (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'EXTRACT (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'EXTRACT (a int)' at line 1
 create table GROUP_CONCAT(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'GROUP_CONCAT(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'GROUP_CONCAT(a int)' at line 1
 create table GROUP_CONCAT (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'GROUP_CONCAT (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'GROUP_CONCAT (a int)' at line 1
 create table GROUP_UNIQUE_USERS(a int);
 drop table GROUP_UNIQUE_USERS;
 create table GROUP_UNIQUE_USERS (a int);
 drop table GROUP_UNIQUE_USERS;
 create table MAX(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MAX(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MAX(a int)' at line 1
 create table MAX (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MAX (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MAX (a int)' at line 1
 create table MID(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MID(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MID(a int)' at line 1
 create table MID (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MID (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MID (a int)' at line 1
 create table MIN(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MIN(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MIN(a int)' at line 1
 create table MIN (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MIN (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'MIN (a int)' at line 1
 create table NOW(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOW(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'NOW(a int)' at line 1
 create table NOW (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOW (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'NOW (a int)' at line 1
 create table POSITION(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'POSITION(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'POSITION(a int)' at line 1
 create table POSITION (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'POSITION (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'POSITION (a int)' at line 1
 create table SESSION_USER(a int);
 drop table SESSION_USER;
 create table SESSION_USER (a int);
 drop table SESSION_USER;
 create table STD(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STD(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STD(a int)' at line 1
 create table STD (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STD (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STD (a int)' at line 1
 create table STDDEV(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STDDEV(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV(a int)' at line 1
 create table STDDEV (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STDDEV (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV (a int)' at line 1
 create table STDDEV_POP(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STDDEV_POP(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV_POP(a int)' at line 1
 create table STDDEV_POP (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STDDEV_POP (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV_POP (a int)' at line 1
 create table STDDEV_SAMP(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STDDEV_SAMP(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV_SAMP(a int)' at line 1
 create table STDDEV_SAMP (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'STDDEV_SAMP (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'STDDEV_SAMP (a int)' at line 1
 create table SUBDATE(a int);
 drop table SUBDATE;
 create table SUBDATE (a int);
 drop table SUBDATE;
 create table SUBSTR(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SUBSTR(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUBSTR(a int)' at line 1
 create table SUBSTR (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SUBSTR (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUBSTR (a int)' at line 1
 create table SUBSTRING(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SUBSTRING(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUBSTRING(a int)' at line 1
 create table SUBSTRING (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SUBSTRING (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUBSTRING (a int)' at line 1
 create table SUM(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SUM(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUM(a int)' at line 1
 create table SUM (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SUM (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SUM (a int)' at line 1
 create table SYSDATE(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SYSDATE(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SYSDATE(a int)' at line 1
 create table SYSDATE (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SYSDATE (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'SYSDATE (a int)' at line 1
 create table SYSTEM_USER(a int);
 drop table SYSTEM_USER;
 create table SYSTEM_USER (a int);
 drop table SYSTEM_USER;
 create table TRIM(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TRIM(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'TRIM(a int)' at line 1
 create table TRIM (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TRIM (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'TRIM (a int)' at line 1
 create table UNIQUE_USERS(a int);
 drop table UNIQUE_USERS;
 create table UNIQUE_USERS (a int);
 drop table UNIQUE_USERS;
 create table VARIANCE(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VARIANCE(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VARIANCE(a int)' at line 1
 create table VARIANCE (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VARIANCE (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VARIANCE (a int)' at line 1
 create table VAR_POP(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VAR_POP(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VAR_POP(a int)' at line 1
 create table VAR_POP (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VAR_POP (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VAR_POP (a int)' at line 1
 create table VAR_SAMP(a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VAR_SAMP(a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VAR_SAMP(a int)' at line 1
 create table VAR_SAMP (a int);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VAR_SAMP (a int)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'VAR_SAMP (a int)' at line 1
 DROP TABLE IF EXISTS table_25930_a;
 DROP TABLE IF EXISTS table_25930_b;
-SET SQL_MODE = 'ANSI_QUOTES';
 CREATE TABLE table_25930_a ( "blah" INT );
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '"blah" INT )' at line 1
+CREATE TABLE table_25930_a ( blah INT );
 CREATE TABLE table_25930_b SELECT "blah" - 1 FROM table_25930_a;
 desc table_25930_b;
 Field	Type	Null	Key	Default	Extra
-"blah" - 1	bigint(12)	YES		NULL	
+"blah" - 1	double	NO		NULL	
 DROP TABLE table_25930_a;
 DROP TABLE table_25930_b;
-SET @@sql_mode=@save_sql_mode;
 select pi(3.14);
 ERROR 42000: Incorrect parameter count in the call to native function 'pi'
 select tan();
@@ -315,14 +284,6 @@ select concat_ws();
 ERROR 42000: Incorrect parameter count in the call to native function 'concat_ws'
 select concat_ws("foo");
 ERROR 42000: Incorrect parameter count in the call to native function 'concat_ws'
-select encrypt();
-ERROR 42000: Incorrect parameter count in the call to native function 'encrypt'
-select encrypt(1, 2, 3);
-ERROR 42000: Incorrect parameter count in the call to native function 'encrypt'
-select des_encrypt("p1", "p2", "not expected");
-ERROR 42000: Incorrect parameter count in the call to native function 'des_encrypt'
-select des_decrypt("p1", "p2", "not expected");
-ERROR 42000: Incorrect parameter count in the call to native function 'des_decrypt'
 select elt();
 ERROR 42000: Incorrect parameter count in the call to native function 'elt'
 select elt(1);
@@ -369,12 +330,6 @@ select make_set();
 ERROR 42000: Incorrect parameter count in the call to native function 'make_set'
 select make_set(1);
 ERROR 42000: Incorrect parameter count in the call to native function 'make_set'
-select master_pos_wait();
-ERROR 42000: Incorrect parameter count in the call to native function 'master_pos_wait'
-select master_pos_wait(1);
-ERROR 42000: Incorrect parameter count in the call to native function 'master_pos_wait'
-select master_pos_wait(1, 2, 3, 4);
-ERROR 42000: Incorrect parameter count in the call to native function 'master_pos_wait'
 select rand(1, 2, 3);
 ERROR 42000: Incorrect parameter count in the call to native function 'rand'
 select round(1, 2, 3);
@@ -497,9 +452,9 @@ SELECT "1997-12-31 23:59:59" + INTERVAL 1 SECOND;
 SELECT 1 + INTERVAL(1,0,1,2) + 1;
 1 + INTERVAL(1,0,1,2) + 1
 4
-SELECT INTERVAL(1^1,0,1,2) + 1;
-INTERVAL(1^1,0,1,2) + 1
-2
+SELECT INTERVAL(1,0,1,2) + 1;
+INTERVAL(1,0,1,2) + 1
+3
 SELECT INTERVAL(1,0+1,2,3) * 5.5;
 INTERVAL(1,0+1,2,3) * 5.5
 5.5
@@ -515,12 +470,6 @@ INTERVAL(1,0,1,2) + 1	5 * INTERVAL(1,0,1,2)
 SELECT INTERVAL(0,(1*5)/2) + INTERVAL(5,4,3);
 INTERVAL(0,(1*5)/2) + INTERVAL(5,4,3)
 2
-SELECT 1^1 + INTERVAL 1+1 SECOND & 1 + INTERVAL 1+1 SECOND;
-1^1 + INTERVAL 1+1 SECOND & 1 + INTERVAL 1+1 SECOND
-NULL
-SELECT 1%2 - INTERVAL 1^1 SECOND | 1%2 - INTERVAL 1^1 SECOND;
-1%2 - INTERVAL 1^1 SECOND | 1%2 - INTERVAL 1^1 SECOND
-NULL
 CREATE TABLE t1 (a INT, b DATETIME);
 INSERT INTO t1 VALUES (INTERVAL(3,2,1) + 1, "1997-12-31 23:59:59" + INTERVAL 1 SECOND);
 SELECT * FROM t1 WHERE a = INTERVAL(3,2,1) + 1;
@@ -548,6 +497,6 @@ SELECT a1, a4 FROM t2 WHERE a4 LIKE {fn UCASE('1789-07-14')};
 a1	a4
 DROP TABLE t1, t2, t3;
 BACKUP DATABASE *, test to 'broken.bak';
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ' test to 'broken.bak'' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'BACKUP DATABASE *, test to 'broken.bak'' at line 1
 BACKUP DATABASE *, db1, db2, db3 to 'broken.bak';
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ' db1, db2, db3 to 'broken.bak'' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'BACKUP DATABASE *, db1, db2, db3 to 'broken.bak'' at line 1

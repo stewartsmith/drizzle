@@ -40,7 +40,7 @@
 #define AZIO_AIO
 
 #include <drizzled/global.h>
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/common.h>
 #include <mysys/my_sys.h>
 
 #include <zlib.h>
@@ -298,7 +298,7 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method);
    can be checked to distinguish the two cases (if errno is zero, the
    zlib error is Z_MEM_ERROR).  */
 
-int azdopen(azio_stream *s,File fd, int Flags); 
+int azdopen(azio_stream *s,File fd, int Flags);
 /*
      azdopen() associates a azio_stream with the file descriptor fd.  File
    descriptors are obtained from calls like open, dup, creat, pipe or

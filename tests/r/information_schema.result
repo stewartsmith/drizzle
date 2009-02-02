@@ -36,14 +36,9 @@ Tables_in_test (t%)
 t2
 t3
 t5
-show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t2	InnoDB	10	Compact	0	0	16384	#	0	0	NULL	#	#	NULL	utf8_general_ci	NULL		
-t3	InnoDB	10	Compact	0	0	16384	#	16384	0	NULL	#	#	NULL	utf8_general_ci	NULL		
-t5	InnoDB	10	Compact	1	16384	16384	#	0	0	11	#	#	NULL	utf8_general_ci	NULL		
 show full columns from t3 like "a%";
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-a	int	NULL	YES	MUL	NULL			
+a	int	NULL	YES	MUL	NULL		#	
 select * from information_schema.COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
@@ -96,6 +91,8 @@ table_name	column_name	data_type
 TABLES	CREATE_TIME	datetime
 TABLES	UPDATE_TIME	datetime
 TABLES	CHECK_TIME	datetime
+INNODB_TRX	trx_started	datetime
+INNODB_TRX	trx_wait_started	datetime
 SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES A
 WHERE NOT EXISTS 
 (SELECT * FROM INFORMATION_SCHEMA.COLUMNS B
@@ -128,10 +125,10 @@ drop table t1;
 SELECT table_schema, count(*) FROM information_schema.TABLES
 WHERE table_name NOT LIKE 'ndb_%' AND table_name NOT LIKE 'falcon%' GROUP BY TABLE_SCHEMA;
 table_schema	count(*)
-information_schema	16
+information_schema	23
 show create database information_schema;
 Database	Create Database
-information_schema	CREATE DATABASE `information_schema` /*!40100 DEFAULT CHARACTER SET utf8 */
+information_schema	CREATE DATABASE `information_schema`
 create table t1(f1 LONGBLOB, f2 LONGTEXT);
 select column_name,data_type,CHARACTER_OCTET_LENGTH,
 CHARACTER_MAXIMUM_LENGTH
@@ -169,7 +166,7 @@ a	int	NO		NULL
 b	int	YES		NULL	
 drop table t1;
 alter database information_schema;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
 drop database information_schema;
 ERROR 42000: Access denied for user ''@'' to database 'information_schema'
 drop table information_schema.tables;
@@ -266,6 +263,13 @@ SESSION_VARIABLES	VARIABLE_NAME
 STATISTICS	TABLE_SCHEMA
 TABLES	TABLE_SCHEMA
 TABLE_CONSTRAINTS	CONSTRAINT_SCHEMA
+INNODB_CMP_RESET	page_size
+INNODB_TRX	trx_id
+INNODB_CMPMEM_RESET	page_size
+INNODB_LOCK_WAITS	requesting_trx_id
+INNODB_CMPMEM	page_size
+INNODB_CMP	page_size
+INNODB_LOCKS	lock_id
 SELECT t.table_name, c1.column_name
 FROM information_schema.tables t
 INNER JOIN
@@ -298,6 +302,13 @@ SESSION_VARIABLES	VARIABLE_NAME
 STATISTICS	TABLE_SCHEMA
 TABLES	TABLE_SCHEMA
 TABLE_CONSTRAINTS	CONSTRAINT_SCHEMA
+INNODB_CMP_RESET	page_size
+INNODB_TRX	trx_id
+INNODB_CMPMEM_RESET	page_size
+INNODB_LOCK_WAITS	requesting_trx_id
+INNODB_CMPMEM	page_size
+INNODB_CMP	page_size
+INNODB_LOCKS	lock_id
 SELECT MAX(table_name) FROM information_schema.tables;
 MAX(table_name)
 TABLE_CONSTRAINTS
@@ -344,6 +355,13 @@ COLLATION_CHARACTER_SET_APPLICABILITY	information_schema.COLLATION_CHARACTER_SET
 COLUMNS	information_schema.COLUMNS	1
 GLOBAL_STATUS	information_schema.GLOBAL_STATUS	1
 GLOBAL_VARIABLES	information_schema.GLOBAL_VARIABLES	1
+INNODB_CMP	information_schema.INNODB_CMP	1
+INNODB_CMPMEM	information_schema.INNODB_CMPMEM	1
+INNODB_CMPMEM_RESET	information_schema.INNODB_CMPMEM_RESET	1
+INNODB_CMP_RESET	information_schema.INNODB_CMP_RESET	1
+INNODB_LOCKS	information_schema.INNODB_LOCKS	1
+INNODB_LOCK_WAITS	information_schema.INNODB_LOCK_WAITS	1
+INNODB_TRX	information_schema.INNODB_TRX	1
 KEY_COLUMN_USAGE	information_schema.KEY_COLUMN_USAGE	1
 PLUGINS	information_schema.PLUGINS	1
 PROCESSLIST	information_schema.PROCESSLIST	1
@@ -355,9 +373,9 @@ STATISTICS	information_schema.STATISTICS	1
 TABLES	information_schema.TABLES	1
 TABLE_CONSTRAINTS	information_schema.TABLE_CONSTRAINTS	1
 alter database;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
 alter database test;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
 create table t1 (
 f1 varchar(50),
 f2 varchar(50) not null,

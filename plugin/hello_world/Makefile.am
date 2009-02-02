@@ -13,21 +13,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-#Makefile.am example for a Hello World
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir=           $(prefix)
-MYSQLLIBdir=            $(pkglibdir)
-pkgplugindir =		$(pkglibdir)/plugin
 
 EXTRA_LTLIBRARIES =	libhello_world.la
-pkgplugin_LTLIBRARIES =	@plugin_hello_world_shared_target@
-libhello_world_la_LDFLAGS =	-module -rpath $(pkgplugindir)
+pkgplugin_LTLIBRARIES =	$(plugin_hello_world_shared_target)
+libhello_world_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir)
 libhello_world_la_CPPFLAGS=	$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 libhello_world_la_SOURCES =	hello_world.cc
 
 
 EXTRA_LIBRARIES =	libhello_world.a
-noinst_LIBRARIES =	@plugin_hello_world_static_target@
+noinst_LIBRARIES =	$(plugin_hello_world_static_target)
 libhello_world_a_CPPFLAGS =	$(AM_CPPFLAGS)
 libhello_world_a_SOURCES=	hello_world.cc

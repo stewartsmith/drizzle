@@ -20,13 +20,15 @@
 #ifndef DRIZZLED_NATURAL_JOIN_COLUMN_H
 #define DRIZZLED_NATURAL_JOIN_COLUMN_H
 
+#include <drizzled/sql_alloc.h>
+
 class Field;
-class Field_translator;
+class TableList;
 
 /*
   Column reference of a NATURAL/USING join. Since column references in
   joins can be both from views and stored tables, may point to either a
-  Field (for tables), or a Field_translator (for views).
+  Field (for tables).
 */
 
 class Natural_join_column: public Sql_alloc
@@ -43,10 +45,9 @@ public:
   */
   bool is_common;
 public:
-  Natural_join_column(Field_translator *field_param, TableList *tab);
   Natural_join_column(Field *field_param, TableList *tab);
   const char *name();
-  Item *create_item(THD *thd);
+  Item *create_item(Session *session);
   Field *field();
   const char *table_name();
   const char *db_name();

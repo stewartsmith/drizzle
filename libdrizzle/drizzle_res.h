@@ -25,7 +25,9 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <stdbool.h>
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
 #include <libdrizzle/drizzle_field.h>
 #include <libdrizzle/drizzle_data.h>
 #include <libdrizzle/drizzle_rows.h>
@@ -46,7 +48,7 @@ extern "C" {
   uint32_t  field_count, current_field;
   bool  eof;      /* Used by drizzle_fetch_row */
   /* drizzle_stmt_close() had to cancel this result */
-  bool       unbuffered_fetch_cancelled; 
+  bool       unbuffered_fetch_cancelled;
   void *extension;
 } DRIZZLE_RES;
 

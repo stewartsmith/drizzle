@@ -20,11 +20,16 @@
 #ifndef _drizzled_error_h
 #define _drizzled_error_h
 
-#include <libdrizzle/gettext.h>
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+bool init_errmessage(void);
+const char * error_message(unsigned int err_index);
 
 enum drizzled_error_code {
   ER_ERROR_FIRST= 1000,
-  ER_HASHCHK= 1000,
+  ER_HASHCHK= ER_ERROR_FIRST,
   ER_NISAMCHK,
   ER_NO,
   ER_YES,
@@ -706,8 +711,21 @@ enum drizzled_error_code {
   ER_WARNING_NON_DEFAULT_VALUE_FOR_VIRTUAL_COLUMN,
   ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN,
   ER_CONST_EXPR_IN_VCOL,
-  ER_ERROR_LAST= ER_CONST_EXPR_IN_VCOL
+  ER_UNKNOWN_TEMPORAL_TYPE,
+  ER_INVALID_STRING_FORMAT_FOR_DATE,
+  ER_INVALID_STRING_FORMAT_FOR_TIME,
+  ER_INVALID_UNIX_TIMESTAMP_VALUE,
+  ER_INVALID_DATETIME_VALUE,
+  ER_INVALID_NULL_ARGUMENT,
+  ER_INVALID_NEGATIVE_ARGUMENT,
+  ER_ARGUMENT_OUT_OF_RANGE,
+  ER_INVALID_TIME_VALUE,
+  ER_ERROR_LAST= ER_ARGUMENT_OUT_OF_RANGE
 };
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif
 

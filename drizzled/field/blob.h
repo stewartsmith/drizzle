@@ -21,6 +21,10 @@
 #ifndef DRIZZLE_SERVER_FIELD_BLOB
 #define DRIZZLE_SERVER_FIELD_BLOB
 
+#include <drizzled/field/longstr.h>
+
+#include <string>
+
 class Field_blob :public Field_longstr {
 protected:
   uint32_t packlength;
@@ -29,7 +33,7 @@ public:
   Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     TABLE_SHARE *share, uint32_t blob_pack_length, const CHARSET_INFO * const cs);
-  Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
+  Field_blob(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
              const CHARSET_INFO * const cs)
     :Field_longstr((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
                    NONE, field_name_arg, cs),
@@ -37,7 +41,7 @@ public:
   {
     flags|= BLOB_FLAG;
   }
-  Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
+  Field_blob(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
 	     const CHARSET_INFO * const cs, bool set_packlength)
     :Field_longstr((unsigned char*) 0,len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
                    NONE, field_name_arg, cs)
@@ -74,11 +78,11 @@ public:
   int key_cmp(const unsigned char *str, uint32_t length);
   uint32_t key_length() const { return 0; }
   void sort_string(unsigned char *buff,uint32_t length);
-  uint32_t pack_length() const
-  { return (uint32_t) (packlength+table->s->blob_ptr_size); }
+  uint32_t pack_length() const;
+
 
   /**
-     Return the packed length without the pointer size added. 
+     Return the packed length without the pointer size added.
 
      This is used to determine the size of the actual data in the row
      buffer.
@@ -98,32 +102,30 @@ public:
 #ifndef WORDS_BIGENDIAN
   static
 #endif
-  void store_length(unsigned char *i_ptr, uint32_t i_packlength, uint32_t i_number, bool low_byte_first);
-  void store_length(unsigned char *i_ptr, uint32_t i_packlength, uint32_t i_number)
-  {
-    store_length(i_ptr, i_packlength, i_number, table->s->db_low_byte_first);
-  }
+  void store_length(unsigned char *i_ptr, uint32_t i_packlength,
+                    uint32_t i_number, bool low_byte_first);
+  void store_length(unsigned char *i_ptr, uint32_t i_packlength,
+                    uint32_t i_number);
+
   inline void store_length(uint32_t number)
   {
     store_length(ptr, packlength, number);
   }
 
   /**
-     Return the packed length plus the length of the data. 
+     Return the packed length plus the length of the data.
 
-     This is used to determine the size of the data plus the 
+     This is used to determine the size of the data plus the
      packed length portion in the row data.
 
      @returns The length in the row plus the size of the data.
   */
-  uint32_t get_packed_size(const unsigned char *ptr_arg, bool low_byte_first)
-    {return packlength + get_length(ptr_arg, packlength, low_byte_first);}
+  uint32_t get_packed_size(const unsigned char *ptr_arg, bool low_byte_first);
 
-  inline uint32_t get_length(uint32_t row_offset= 0)
-  { return get_length(ptr+row_offset, this->packlength, table->s->db_low_byte_first); }
-  uint32_t get_length(const unsigned char *ptr, uint32_t packlength, bool low_byte_first);
-  uint32_t get_length(const unsigned char *ptr_arg)
-  { return get_length(ptr_arg, this->packlength, table->s->db_low_byte_first); }
+  uint32_t get_length(uint32_t row_offset= 0);
+  uint32_t get_length(const unsigned char *ptr, uint32_t packlength,
+                      bool low_byte_first);
+  uint32_t get_length(const unsigned char *ptr_arg);
   void put_length(unsigned char *pos, uint32_t length);
   inline void get_ptr(unsigned char **str)
     {
@@ -149,6 +151,8 @@ public:
       set_ptr_offset(0, length, data);
     }
   uint32_t get_key_image(unsigned char *buff,uint32_t length, imagetype type);
+  uint32_t get_key_image(std::basic_string<unsigned char> &buff,
+                        uint32_t length, imagetype type);
   void set_key_image(const unsigned char *buff,uint32_t length);
   void sql_type(String &str) const;
   inline bool copy()
@@ -187,8 +191,8 @@ public:
   { return charset() == &my_charset_bin ? false : true; }
   uint32_t max_display_length();
   uint32_t is_equal(Create_field *new_field);
-  inline bool in_read_set() { return bitmap_is_set(table->read_set, field_index); }
-  inline bool in_write_set() { return bitmap_is_set(table->write_set, field_index); }
+  bool in_read_set();
+  bool in_write_set();
 private:
   int do_save_field_metadata(unsigned char *first_byte);
 };

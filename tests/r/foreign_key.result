@@ -1,57 +1,73 @@
-drop table if exists t1;
-create table t1 (
-a int not null references t2,
-b int not null references t2 (c),
-primary key (a,b),
-foreign key (a) references t3 match full,
-foreign key (a) references t3 match partial,
-foreign key (a,b) references t3 (c,d) on delete no action
-on update no action,
-foreign key (a,b) references t3 (c,d) on update cascade,
-foreign key (a,b) references t3 (c,d) on delete set default,
-foreign key (a,b) references t3 (c,d) on update set null);
-create index a on t1 (a);
-create unique index b on t1 (a,b);
-drop table t1;
+CREATE TABLE product (category INT NOT NULL, id INT NOT NULL,
+price DECIMAL,
+PRIMARY KEY(category, id)) ENGINE=INNODB;
+CREATE TABLE customer (id INT NOT NULL,
+PRIMARY KEY (id)) ENGINE=INNODB;
+CREATE TABLE product_order (no INT NOT NULL AUTO_INCREMENT,
+product_category INT NOT NULL,
+product_id INT NOT NULL,
+customer_id INT NOT NULL,
+PRIMARY KEY(no),
+INDEX (product_category, product_id),
+FOREIGN KEY (product_category, product_id)
+REFERENCES product(category, id)
+ON UPDATE CASCADE ON DELETE RESTRICT,
+INDEX (customer_id),
+FOREIGN KEY (customer_id)
+REFERENCES customer(id)) ENGINE=INNODB;
+show create table product_order;
+Table	Create Table
+product_order	CREATE TABLE `product_order` (
+  `no` int NOT NULL AUTO_INCREMENT,
+  `product_category` int NOT NULL,
+  `product_id` int NOT NULL,
+  `customer_id` int NOT NULL,
+  PRIMARY KEY (`no`),
+  KEY `product_category` (`product_category`,`product_id`),
+  KEY `customer_id` (`customer_id`),
+  CONSTRAINT `product_order_ibfk_1` FOREIGN KEY (`product_category`, `product_id`) REFERENCES `product` (`category`, `id`) ON UPDATE CASCADE,
+  CONSTRAINT `product_order_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`)
+) ENGINE=InnoDB
+drop table product_order, customer, product;
 drop table if exists t_34455;
 create table t_34455 (
 a int not null,
 foreign key (a) references t3 (a) match full match partial);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'match partial)' at line 3
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'match partial)' at line 3
 create table t_34455 (
 a int not null,
 foreign key (a) references t3 (a) on delete set default match full);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'match full)' at line 3
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'match full)' at line 3
 create table t_34455 (
 a int not null,
 foreign key (a) references t3 (a) on update set default match full);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'match full)' at line 3
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'match full)' at line 3
 create table t_34455 (
 a int not null,
 foreign key (a) references t3 (a)
 on delete set default on delete set default);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'delete set default)' at line 4
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'delete set default)' at line 4
 create table t_34455 (
 a int not null,
 foreign key (a) references t3 (a)
 on update set default on update set default);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'update set default)' at line 4
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'update set default)' at line 4
 create table t_34455 (a int not null);
 alter table t_34455
 add foreign key (a) references t3 (a) match full match partial);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'match partial)' at line 2
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'match partial)' at line 1
 alter table t_34455
 add foreign key (a) references t3 (a) on delete set default match full);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'match full)' at line 2
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'match full)' at line 1
 alter table t_34455
 add foreign key (a) references t3 (a) on update set default match full);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'match full)' at line 2
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'match full)' at line 1
 alter table t_34455
 add foreign key (a) references t3 (a)
 on delete set default on delete set default);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'delete set default)' at line 3
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'delete set default)' at line 2
 alter table t_34455
 add foreign key (a) references t3 (a)
 on update set default on update set default);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'update set default)' at line 3
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'update set default)' at line 2
 drop table t_34455;

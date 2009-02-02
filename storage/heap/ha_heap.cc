@@ -13,26 +13,35 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
-#include "ha_heap.h"
-#include "heapdef.h"
+#include "heap.h"
+
+#include <storage/heap/ha_heap.h>
+#include <storage/heap/heapdef.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include <drizzled/current_session.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/varstring.h>
+
+
+pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
 
 static handler *heap_create_handler(handlerton *hton,
-                                    TABLE_SHARE *table, 
+                                    TABLE_SHARE *table,
                                     MEM_ROOT *mem_root);
 
-int heap_deinit(void *p __attribute__((unused)))
-            
+int heap_deinit(void *)
 {
+  pthread_mutex_init(&THR_LOCK_heap,MY_MUTEX_INIT_FAST);
+
   return hp_panic(HA_PANIC_CLOSE);
 }
 
 
 int heap_init(void *p)
 {
-  handlerton *heap_hton;
-
   heap_hton= (handlerton *)p;
   heap_hton->state=      SHOW_OPTION_YES;
   heap_hton->create=     heap_create_handler;
@@ -42,7 +51,7 @@ int heap_init(void *p)
 }
 
 static handler *heap_create_handler(handlerton *hton,
-                                    TABLE_SHARE *table, 
+                                    TABLE_SHARE *table,
                                     MEM_ROOT *mem_root)
 {
   return new (mem_root) ha_heap(hton, table);
@@ -54,7 +63,7 @@ static handler *heap_create_handler(handlerton *hton,
 *****************************************************************************/
 
 ha_heap::ha_heap(handlerton *hton, TABLE_SHARE *table_arg)
-  :handler(hton, table_arg), file(0), records_changed(0), key_stat_version(0), 
+  :handler(hton, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
 
@@ -69,14 +78,14 @@ const char **ha_heap::bas_ext() const
 }
 
 /*
-  Hash index statistics is updated (copied from HP_KEYDEF::hash_buckets to 
-  rec_per_key) after 1/HEAP_STATS_UPDATE_THRESHOLD fraction of table records 
-  have been inserted/updated/deleted. delete_all_rows() and table flush cause 
+  Hash index statistics is updated (copied from HP_KEYDEF::hash_buckets to
+  rec_per_key) after 1/HEAP_STATS_UPDATE_THRESHOLD fraction of table records
+  have been inserted/updated/deleted. delete_all_rows() and table flush cause
   immediate update.
 
   NOTE
    hash index statistics must be updated when number of table records changes
-   from 0 to non-zero value and vice versa. Otherwise records_in_range may 
+   from 0 to non-zero value and vice versa. Otherwise records_in_range may
    erroneously return 0 and 'range' may miss records.
 */
 #define HEAP_STATS_UPDATE_THRESHOLD 10
@@ -132,9 +141,9 @@ int ha_heap::close(void)
   Create a copy of this table
 
   DESCRIPTION
-    Do same as default implementation but use file->s->name instead of 
+    Do same as default implementation but use file->s->name instead of
     table->s->path. This is needed by Windows where the clone() call sees
-    '/'-delimited path in table->s->path, while ha_peap::open() was called 
+    '/'-delimited path in table->s->path, while ha_peap::open() was called
     with '\'-delimited path.
 */
 
@@ -145,6 +154,21 @@ handler *ha_heap::clone(MEM_ROOT *mem_root)
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;  /* purecov: inspected */
+}
+
+
+const char *ha_heap::index_type(uint32_t inx)
+{
+  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
+          "BTREE" : "HASH");
+}
+
+
+uint32_t ha_heap::index_flags(uint32_t inx, uint32_t, bool) const
+{
+  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
+          HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE :
+          HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
 }
 
 
@@ -214,7 +238,7 @@ int ha_heap::write_row(unsigned char * buf)
       return res;
   }
   res= heap_write(file,buf);
-  if (!res && (++records_changed*HEAP_STATS_UPDATE_THRESHOLD > 
+  if (!res && (++records_changed*HEAP_STATS_UPDATE_THRESHOLD >
                file->s->records))
   {
     /*
@@ -233,7 +257,7 @@ int ha_heap::update_row(const unsigned char * old_data, unsigned char * new_data
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
   res= heap_update(file,old_data,new_data);
-  if (!res && ++records_changed*HEAP_STATS_UPDATE_THRESHOLD > 
+  if (!res && ++records_changed*HEAP_STATS_UPDATE_THRESHOLD >
               file->s->records)
   {
     /*
@@ -250,7 +274,7 @@ int ha_heap::delete_row(const unsigned char * buf)
   int res;
   ha_statistic_increment(&SSV::ha_delete_count);
   res= heap_delete(file,buf);
-  if (!res && table->s->tmp_table == NO_TMP_TABLE && 
+  if (!res && table->s->tmp_table == NO_TMP_TABLE &&
       ++records_changed*HEAP_STATS_UPDATE_THRESHOLD > file->s->records)
   {
     /*
@@ -354,7 +378,7 @@ int ha_heap::rnd_pos(unsigned char * buf, unsigned char *pos)
   return error;
 }
 
-void ha_heap::position(const unsigned char *record __attribute__((unused)))
+void ha_heap::position(const unsigned char *)
 {
   *(HEAP_PTR*) ref= heap_position(file);	// Ref is aligned
 }
@@ -419,8 +443,7 @@ int ha_heap::delete_all_rows()
   return 0;
 }
 
-int ha_heap::external_lock(THD *thd __attribute__((unused)),
-                           int lock_type __attribute__((unused)))
+int ha_heap::external_lock(Session *, int)
 {
   return 0;					// No external locking
 }
@@ -533,7 +556,7 @@ int ha_heap::indexes_are_disabled(void)
   return heap_indexes_are_disabled(file);
 }
 
-THR_LOCK_DATA **ha_heap::store_lock(THD *thd __attribute__((unused)),
+THR_LOCK_DATA **ha_heap::store_lock(Session *,
                                     THR_LOCK_DATA **to,
                                     enum thr_lock_type lock_type)
 {
@@ -550,12 +573,11 @@ THR_LOCK_DATA **ha_heap::store_lock(THD *thd __attribute__((unused)),
 
 int ha_heap::delete_table(const char *name)
 {
-  int error= heap_delete_table(name);
-  return error == ENOENT ? 0 : error;
+  return heap_delete_table(name);
 }
 
 
-void ha_heap::drop_table(const char *name __attribute__((unused)))
+void ha_heap::drop_table(const char *)
 {
   file->s->delete_on_close= 1;
   close();
@@ -606,7 +628,7 @@ int ha_heap::create(const char *name, Table *table_arg,
   TABLE_SHARE *share= table_arg->s;
   bool found_real_auto_increment= 0;
 
-  if (!(columndef= (HP_COLUMNDEF*) my_malloc(column_count * sizeof(HP_COLUMNDEF), MYF(MY_WME))))
+  if (!(columndef= (HP_COLUMNDEF*) malloc(column_count * sizeof(HP_COLUMNDEF))))
     return my_errno;
 
   for (column_idx= 0; column_idx < column_count; column_idx++)
@@ -641,9 +663,8 @@ int ha_heap::create(const char *name, Table *table_arg,
   for (key= parts= 0; key < keys; key++)
     parts+= table_arg->key_info[key].key_parts;
 
-  if (!(keydef= (HP_KEYDEF*) my_malloc(keys * sizeof(HP_KEYDEF) +
-				       parts * sizeof(HA_KEYSEG),
-				       MYF(MY_WME))))
+  if (!(keydef= (HP_KEYDEF*) malloc(keys * sizeof(HP_KEYDEF) +
+				    parts * sizeof(HA_KEYSEG))))
   {
     free((void *) columndef);
     return my_errno;
@@ -735,15 +756,15 @@ int ha_heap::create(const char *name, Table *table_arg,
       }
     }
   }
-  
+
   if (key_part_size < share->null_bytes + ((share->last_null_bit_pos+7) >> 3))
   {
     /* Make sure to include null fields regardless of the presense of keys */
     key_part_size = share->null_bytes + ((share->last_null_bit_pos+7) >> 3);
   }
 
-  
-  
+
+
   if (table_arg->found_next_number_field)
   {
     keydef[share->next_number_index].flag|= HA_AUTO_KEY;
@@ -754,7 +775,7 @@ int ha_heap::create(const char *name, Table *table_arg,
   hp_create_info.auto_key_type= auto_key_type;
   hp_create_info.auto_increment= (create_info->auto_increment_value ?
 				  create_info->auto_increment_value - 1 : 0);
-  hp_create_info.max_table_size=current_thd->variables.max_heap_table_size;
+  hp_create_info.max_table_size=current_session->variables.max_heap_table_size;
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;
   hp_create_info.max_chunk_size= share->block_size;
@@ -767,7 +788,7 @@ int ha_heap::create(const char *name, Table *table_arg,
          share->reclength, mem_per_row_keys,
          (uint32_t) share->max_rows, (uint32_t) share->min_rows,
          &hp_create_info, &internal_share);
-  
+
   free((unsigned char*) keydef);
   free((void *) columndef);
   assert(file == 0);
@@ -789,9 +810,7 @@ void ha_heap::update_create_info(HA_CREATE_INFO *create_info)
   }
 }
 
-void ha_heap::get_auto_increment(uint64_t offset __attribute__((unused)),
-                                 uint64_t increment __attribute__((unused)),
-                                 uint64_t nb_desired_values __attribute__((unused)),
+void ha_heap::get_auto_increment(uint64_t, uint64_t, uint64_t,
                                  uint64_t *first_value,
                                  uint64_t *nb_reserved_values)
 {
@@ -802,19 +821,25 @@ void ha_heap::get_auto_increment(uint64_t offset __attribute__((unused)),
 }
 
 
-bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info,
+int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
+{
+  return memcmp(ref1, ref2, sizeof(HEAP_PTR));
+}
+
+
+bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info_in,
 					 uint32_t table_changes)
 {
   /* Check that auto_increment value was not changed */
-  if ((info->used_fields & HA_CREATE_USED_AUTO &&
-       info->auto_increment_value != 0) ||
+  if ((info_in->used_fields & HA_CREATE_USED_AUTO &&
+       info_in->auto_increment_value != 0) ||
       table_changes == IS_EQUAL_NO ||
       table_changes & IS_EQUAL_PACK_LENGTH) // Not implemented yet
     return COMPATIBLE_DATA_NO;
   return COMPATIBLE_DATA_YES;
 }
 
-mysql_declare_plugin(heap)
+drizzle_declare_plugin(heap)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MEMORY",
@@ -828,4 +853,4 @@ mysql_declare_plugin(heap)
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

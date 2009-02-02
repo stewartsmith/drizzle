@@ -81,27 +81,26 @@ drop table t1;
 # attributes from values they were initialized to.
 #
 
-set @a=_latin2'test';
-select charset(@a),collation(@a),coercibility(@a);
-select @a=_latin2'TEST';
-select @a=_latin2'TEST' collate latin2_bin;
+set @a='test';
+select collation(@a),coercibility(@a);
+select @a='TEST';
+select @a='TEST' collate utf8_bin;
 
-set @a=_latin2'test' collate latin2_general_ci;
-select charset(@a),collation(@a),coercibility(@a);
-select @a=_latin2'TEST';
-select @a=_latin2'TEST' collate latin2_bin;
+set @a='test' collate utf8_general_ci;
+select collation(@a),coercibility(@a);
+select @a='TEST';
+select @a='TEST' collate utf8_bin;
 
 #
 # Check the same invoking Item_set_user_var
 #
-select charset(@a:=_latin2'test');
-select collation(@a:=_latin2'test');
-select coercibility(@a:=_latin2'test');
-select collation(@a:=_latin2'test' collate latin2_bin);
-select coercibility(@a:=_latin2'test' collate latin2_bin);
-select (@a:=_latin2'test' collate latin2_bin) = _latin2'TEST';
-select charset(@a),collation(@a),coercibility(@a);
-select (@a:=_latin2'test' collate latin2_bin) = _latin2'TEST' collate latin2_general_ci;
+select collation(@a:='test');
+select coercibility(@a:='test');
+select collation(@a:='test' collate utf8_bin);
+select coercibility(@a:='test' collate utf8_bin);
+select (@a:='test' collate utf8_bin) = 'TEST';
+select collation(@a),coercibility(@a);
+select (@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci;
 
 #
 # Bug #6321 strange error:
@@ -122,8 +121,6 @@ select coercibility(@v1),coercibility(@v2),coercibility(@v3),coercibility(@v4);
 #
 --error 1064
 set session @honk=99;
---error 1382
-set one_shot @honk=99;
 
 #
 # Bug #10724  @@local not preserved in column name of select
@@ -153,10 +150,14 @@ set @first_var= NULL;
 create table t1 select @first_var;
 show create table t1;
 drop table t1;
-set @first_var= cast(NULL as signed integer);
-create table t1 select @first_var;
-show create table t1;
-drop table t1;
+
+# This is not supported by Drizzle
+--error 1064
+set @first_var= cast(NULL as integer);
+#create table t1 select @first_var;
+#show create table t1;
+#drop table t1;
+
 set @first_var= NULL;
 create table t1 select @first_var;
 show create table t1;
@@ -190,7 +191,7 @@ select * from (SELECT afield FROM bigfailure) as b;
 select * from bigfailure where afield = (SELECT afield FROM bigfailure);
 select * from bigfailure where afield = 18446744071710965857;
 # This is fixed in 5.0, to be uncommented there
-#select * from bigfailure where afield = '18446744071710965857';
+select * from bigfailure where afield = '18446744071710965857';
 select * from bigfailure where afield = 18446744071710965856+1;
 
 SET @a := (SELECT afield FROM bigfailure);
@@ -210,10 +211,12 @@ create table t1(f1 int, f2 int);
 insert into t1 values (1,2),(2,3),(3,1);
 select @var:=f2 from t1 group by f1 order by f2 desc limit 1;
 select @var;
-create table t2 as select @var:=f2 from t1 group by f1 order by f2 desc limit 1;
-select * from t2;
-select @var;
-drop table t1,t2;
+# Bug 310977, uncomment this test after the bug is fixed
+#create table t2 as select @var:=f2 from t1 group by f1 order by f2 desc limit 1;
+#select * from t2;
+#select @var;
+drop table t1;
+#drop table t2;
 
 #
 # Bug#19024 - SHOW COUNT(*) WARNINGS not return Errors 

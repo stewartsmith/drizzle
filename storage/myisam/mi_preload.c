@@ -28,7 +28,7 @@
   SYNOPSIS
     mi_preload()
       info          open table
-      map           map of indexes to preload into key cache 
+      map           map of indexes to preload into key cache
       ignore_leaves only non-leaves pages are to be preloaded
 
   RETURN VALUE
@@ -71,7 +71,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   length= info->preload_buff_size/block_length * block_length;
   set_if_bigger(length, block_length);
 
-  if (!(buff= (unsigned char *) my_malloc(length, MYF(MY_WME))))
+  if (!(buff= (unsigned char *) malloc(length)))
     return(my_errno= HA_ERR_OUT_OF_MEM);
 
   if (flush_key_blocks(share->key_cache,share->kfile, FLUSH_RELEASE))

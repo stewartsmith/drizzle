@@ -26,11 +26,13 @@
 */
 #define IMPORT_VERSION "3.7"
 
-#include "config.h"
+#include "client_priv.h"
 #include <string>
 
-#include "client_priv.h"
 #include <pthread.h>
+
+/* Added this for string translation. */
+#include <drizzled/gettext.h>
 
 using namespace std;
 
@@ -45,18 +47,20 @@ static char *field_escape(char *to,const char *from,uint length);
 static char *add_load_option(char *ptr,const char *object,
            const char *statement);
 
-static bool  verbose=0,lock_tables=0,ignore_errors=0,opt_delete=0,
-  opt_replace=0,silent=0,ignore=0,opt_compress=0,
-  opt_low_priority= 0, tty_password= 0;
-static bool debug_info_flag= 0, debug_check_flag= 0;
-static uint opt_use_threads=0, opt_local_file=0, my_end_arg= 0;
-static char  *opt_password=0, *current_user=0,
-    *current_host=0, *current_db=0, *fields_terminated=0,
-    *lines_terminated=0, *enclosed=0, *opt_enclosed=0,
-    *escaped=0, *opt_columns=0,
+static bool verbose= false, lock_tables= false, ignore_errors= false,
+            opt_delete= false, opt_replace= false, silent= false,
+            ignore= false, opt_compress= false, opt_low_priority= false,
+            tty_password= false;
+static bool debug_info_flag= false, debug_check_flag= false;
+static uint opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
+static char  *opt_password= NULL, *current_user= NULL,
+    *current_host= NULL, *current_db= NULL, *fields_terminated= NULL,
+    *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
+    *escaped= NULL, *opt_columns= NULL,
     *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
-static uint     opt_drizzle_port= 0, opt_protocol= 0;
-static char * opt_drizzle_unix_port=0;
+static uint opt_protocol= 0;
+static uint32_t opt_drizzle_port= 0;
+static char * opt_drizzle_unix_port= 0;
 static int64_t opt_ignore_lines= -1;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
@@ -120,15 +124,13 @@ static struct my_option my_long_options[] =
   {"low-priority", OPT_LOW_PRIORITY,
    "Use LOW_PRIORITY when updating the table.", (char**) &opt_low_priority,
    (char**) &opt_low_priority, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"password", 'p',
+  {"password", 'P',
    "Password to use when connecting to server. If password is not given it's asked from the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+  {"port", 'p', "Port number to use for connection or 0 for default to, in "
+   "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   (char**) &opt_drizzle_port,
-   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
-   0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"protocol", OPT_DRIZZLE_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replace", 'r', "If duplicate unique key was found, replace old row.",
@@ -177,25 +179,62 @@ read the text file directly. In other cases the client will open the text\n\
 file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
 
   printf("\nUsage: %s [OPTIONS] database textfile...",my_progname);
-  print_defaults("my",load_default_groups);
+  print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
 }
 
-static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-         char *argument)
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch(optid) {
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(1);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(1);
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
       char *start=argument;
-      free(opt_password);
-      opt_password=my_strdup(argument,MYF(MY_FAE));
-      while (*argument) *argument++= 'x';    /* Destroy argument */
+      if (opt_password)
+        free(opt_password);
+      opt_password = strdup(argument);
+      if (opt_password == NULL)
+      {
+        fprintf(stderr, "Memory allocation error while copying password. "
+                        "Aborting.\n");
+        exit(ENOMEM);
+      }
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-  start[1]=0;        /* Cut length of argument */
+      {
+        /* Cut length of argument */
+        start[1]= 0;
+      }
       tty_password= 0;
     }
     else
@@ -259,7 +298,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
 
   fn_format(tablename, filename, "", "", 1 | 2); /* removes path & ext. */
   if (!opt_local_file)
-    my_stpcpy(hard_path,filename);
+    strcpy(hard_path,filename);
   else
     my_load_path(hard_path, filename, NULL); /* filename includes the path */
 
@@ -278,7 +317,6 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
       return(1);
     }
   }
-  to_unix_path(hard_path);
   if (verbose)
   {
     if (opt_local_file)
@@ -293,13 +331,14 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
     opt_local_file ? "LOCAL" : "", hard_path);
   end= strchr(sql_statement, '\0');
   if (opt_replace)
-    end= my_stpcpy(end, " REPLACE");
+    end= strcpy(end, " REPLACE")+8;
   if (ignore)
-    end= my_stpcpy(end, " IGNORE");
-  end= my_stpcpy(my_stpcpy(end, " INTO TABLE "), tablename);
+    end= strcpy(end, " IGNORE")+7;
+
+  end+= sprintf(end, " INTO TABLE %s", tablename);
 
   if (fields_terminated || enclosed || opt_enclosed || escaped)
-      end= my_stpcpy(end, " FIELDS");
+      end= strcpy(end, " FIELDS")+7;
   end= add_load_option(end, fields_terminated, " TERMINATED BY");
   end= add_load_option(end, enclosed, " ENCLOSED BY");
   end= add_load_option(end, opt_enclosed,
@@ -307,10 +346,17 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
   end= add_load_option(end, escaped, " ESCAPED BY");
   end= add_load_option(end, lines_terminated, " LINES TERMINATED BY");
   if (opt_ignore_lines >= 0)
-    end= my_stpcpy(int64_t10_to_str(opt_ignore_lines,
-          my_stpcpy(end, " IGNORE "),10), " LINES");
+  {
+    end= strcpy(end, " IGNORE ")+8;
+    end= int64_t2str(opt_ignore_lines, end, 10);
+    end= strcpy(end, " LINES")+6;
+  }
   if (opt_columns)
-    end= my_stpcpy(my_stpcpy(my_stpcpy(end, " ("), opt_columns), ")");
+  {
+    end= strcpy(end, " (")+2;
+    end= strcpy(end, opt_columns)+strlen(opt_columns);
+    end= strcpy(end, ")")+1;
+  }
   *end= '\0';
 
   if (drizzle_query(drizzle, sql_statement))
@@ -431,11 +477,11 @@ static char *add_load_option(char *ptr, const char *object,
   {
     /* Don't escape hex constants */
     if (object[0] == '0' && (object[1] == 'x' || object[1] == 'X'))
-      ptr= strxmov(ptr," ",statement," ",object,NULL);
+      ptr+= sprintf(ptr, " %s %s", statement, object);
     else
     {
       /* char constant; escape */
-      ptr= strxmov(ptr," ",statement," '",NULL);
+      ptr+= sprintf(ptr, " %s '", statement); 
       ptr= field_escape(ptr,object,(uint) strlen(object));
       *ptr++= '\'';
     }
@@ -469,13 +515,14 @@ static char *field_escape(char *to,const char *from,uint length)
   }
   /* Add missing backslashes if user has specified odd number of backs.*/
   if (end_backslashes)
-    *to++= '\\';         
+    *to++= '\\';
   return to;
 }
 
 int exitcode= 0;
 
-static void * worker_thread(void *arg)
+extern "C"
+void * worker_thread(void *arg)
 {
   int error;
   char *raw_table_name= (char *)arg;
@@ -519,7 +566,7 @@ int main(int argc, char **argv)
   char **argv_to_free;
   MY_INIT(argv[0]);
 
-  load_defaults("my",load_default_groups,&argc,&argv);
+  load_defaults("drizzle",load_default_groups,&argc,&argv);
   /* argv is changed in the program */
   argv_to_free= argv;
   if (get_options(&argc, &argv))

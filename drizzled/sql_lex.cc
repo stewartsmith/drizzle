@@ -18,8 +18,12 @@
 
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
+#include <drizzled/item/num.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 
-static int lex_one_token(void *arg, void *yythd);
+static int lex_one_token(void *arg, void *yysession);
 
 /*
   We are using pointer to this variable for distinguishing between assignment
@@ -33,9 +37,6 @@ sys_var *trg_new_row_fake_var= (sys_var*) 0x01;
 */
 const LEX_STRING null_lex_str= {NULL, 0};
 
-/* Longest standard keyword name */
-
-#define TOCK_NAME_LENGTH 24
 
 /*
   The following data is based on the latin1 character set, and is only
@@ -62,26 +63,27 @@ static unsigned char to_upper_lex[]=
   208,209,210,211,212,213,214,247,216,217,218,219,220,221,222,255
 };
 
-/* 
-  Names of the index hints (for error messages). Keep in sync with 
-  index_hint_type 
+/*
+  Names of the index hints (for error messages). Keep in sync with
+  index_hint_type
 */
 
 const char * index_hint_type_name[] =
 {
-  "IGNORE INDEX", 
-  "USE INDEX", 
+  "IGNORE INDEX",
+  "USE INDEX",
   "FORCE INDEX"
 };
 
-inline int lex_casecmp(const char *s, const char *t, uint32_t len)
+int lex_casecmp(const char *s, const char *t, uint32_t len)
 {
   while (len-- != 0 &&
 	 to_upper_lex[(unsigned char) *s++] == to_upper_lex[(unsigned char) *t++]) ;
   return (int) len+1;
 }
 
-#include <lex_hash.h>
+/* EVIL EVIL - this is included here so that it will have to_upper_lex */
+#include <drizzled/lex_hash.h>
 
 
 void lex_init(void)
@@ -105,16 +107,13 @@ void lex_free(void)
 void
 st_parsing_options::reset()
 {
-  allows_variable= true;
-  allows_select_into= true;
   allows_select_procedure= true;
-  allows_derived= true;
 }
 
-Lex_input_stream::Lex_input_stream(THD *thd,
+Lex_input_stream::Lex_input_stream(Session *session,
                                    const char* buffer,
                                    unsigned int length)
-: m_thd(thd),
+: m_session(session),
   yylineno(1),
   yytoklen(0),
   yylval(NULL),
@@ -139,7 +138,7 @@ Lex_input_stream::Lex_input_stream(THD *thd,
   in_comment(NO_COMMENT),
   m_underscore_cs(NULL)
 {
-  m_cpp_buf= (char*) thd->alloc(length + 1);
+  m_cpp_buf= (char*) session->alloc(length + 1);
   m_cpp_ptr= m_cpp_buf;
 }
 
@@ -153,21 +152,21 @@ Lex_input_stream::~Lex_input_stream()
      statement;
   2) Determine the beginning of the body.
 
-  @param thd        Thread context.
+  @param session        Thread context.
   @param begin_ptr  Pointer to the start of the body in the pre-processed
                     buffer.
 */
 
-void Lex_input_stream::body_utf8_start(THD *thd, const char *begin_ptr)
+void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
 {
   assert(begin_ptr);
   assert(m_cpp_buf <= begin_ptr && begin_ptr <= m_cpp_buf + m_buf_length);
 
   uint32_t body_utf8_length=
-    (m_buf_length / thd->variables.character_set_client->mbminlen) *
+    (m_buf_length / default_charset_info->mbminlen) *
     my_charset_utf8_bin.mbmaxlen;
 
-  m_body_utf8= (char *) thd->alloc(body_utf8_length + 1);
+  m_body_utf8= (char *) session->alloc(body_utf8_length + 1);
   m_body_utf8_ptr= m_body_utf8;
   *m_body_utf8_ptr= 0;
 
@@ -233,7 +232,7 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
   The operation converts the specified text literal to the utf8 and appends
   the result to the utf8-body.
 
-  @param thd      Thread context.
+  @param session      Thread context.
   @param txt      Text literal.
   @param txt_cs   Character set of the text literal.
   @param end_ptr  Pointer in the pre-processed buffer, to which
@@ -241,7 +240,7 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   operation.
 */
 
-void Lex_input_stream::body_utf8_append_literal(THD *thd,
+void Lex_input_stream::body_utf8_append_literal(Session *session,
                                                 const LEX_STRING *txt,
                                                 const CHARSET_INFO * const txt_cs,
                                                 const char *end_ptr)
@@ -253,7 +252,7 @@ void Lex_input_stream::body_utf8_append_literal(THD *thd,
 
   if (!my_charset_same(txt_cs, &my_charset_utf8_general_ci))
   {
-    thd->convert_string(&utf_txt,
+    session->convert_string(&utf_txt,
                         &my_charset_utf8_general_ci,
                         txt->str, txt->length,
                         txt_cs);
@@ -280,11 +279,11 @@ void Lex_input_stream::body_utf8_append_literal(THD *thd,
   (We already do too much here)
 */
 
-void lex_start(THD *thd)
+void lex_start(Session *session)
 {
-  LEX *lex= thd->lex;
+  LEX *lex= session->lex;
 
-  lex->thd= lex->unit.thd= thd;
+  lex->session= lex->unit.session= session;
 
   lex->context_stack.empty();
   lex->unit.init_query();
@@ -314,7 +313,6 @@ void lex_start(THD *thd)
   lex->lock_option= TL_READ;
   lex->leaf_tables_insert= 0;
   lex->parsing_options.reset();
-  lex->empty_field_list_on_rset= 0;
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
@@ -338,23 +336,8 @@ void lex_start(THD *thd)
   lex->nest_level=0 ;
   lex->allow_sum_func= 0;
   lex->in_sum_func= NULL;
-  /*
-    ok, there must be a better solution for this, long-term
-    I tried "memset" in the sql_yacc.yy code, but that for
-    some reason made the values zero, even if they were set
-  */
-  lex->server_options.server_name= 0;
-  lex->server_options.server_name_length= 0;
-  lex->server_options.host= 0;
-  lex->server_options.db= 0;
-  lex->server_options.username= 0;
-  lex->server_options.password= 0;
-  lex->server_options.scheme= 0;
-  lex->server_options.owner= 0;
-  lex->server_options.port= -1;
 
   lex->is_lex_started= true;
-  return;
 }
 
 void lex_end(LEX *lex)
@@ -367,15 +350,8 @@ void lex_end(LEX *lex)
     lex->yacc_yyvs= 0;
   }
 
-  /* release used plugins */
-  plugin_unlock_list(0, (plugin_ref*)lex->plugins.buffer, 
-                     lex->plugins.elements);
-  reset_dynamic(&lex->plugins);
-
   delete lex->result;
   lex->result= 0;
-
-  return;
 }
 
 
@@ -392,6 +368,7 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
 
     return symbol->tok;
   }
+
   return 0;
 }
 
@@ -427,7 +404,7 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t lengt
   LEX_STRING tmp;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length=lip->yytoklen=length;
-  tmp.str= lip->m_thd->strmake(lip->get_tok_start() + skip, tmp.length);
+  tmp.str= lip->m_session->strmake(lip->get_tok_start() + skip, tmp.length);
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.length;
@@ -435,10 +412,10 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t lengt
   return tmp;
 }
 
-/* 
- todo: 
-   There are no dangerous charsets in mysql for function 
-   get_quoted_token yet. But it should be fixed in the 
+/*
+ todo:
+   There are no dangerous charsets in mysql for function
+   get_quoted_token yet. But it should be fixed in the
    future to operate multichar strings (like ucs2)
 */
 
@@ -451,7 +428,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
   char *to;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length= lip->yytoklen=length;
-  tmp.str=(char*) lip->m_thd->alloc(tmp.length+1);
+  tmp.str=(char*) lip->m_session->alloc(tmp.length+1);
   from= lip->get_tok_start() + skip;
   to= tmp.str;
   end= to+length;
@@ -481,7 +458,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
   register unsigned char c,sep;
   uint32_t found_escape=0;
-  const CHARSET_INFO * const cs= lip->m_thd->charset();
+  const CHARSET_INFO * const cs= lip->m_session->charset();
 
   lip->tok_bitmap= 0;
   sep= lip->yyGetLast();                        // String should end with this
@@ -529,7 +506,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       end -= post_skip;
       assert(end >= str);
 
-      if (!(start= (char*) lip->m_thd->alloc((uint) (end-str)+1)))
+      if (!(start= (char*) lip->m_session->alloc((uint) (end-str)+1)))
 	return (char*) "";		// Sql_alloc has set error flag
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
@@ -694,17 +671,17 @@ static inline uint32_t int_token(const char *str,uint32_t length)
 
 
 /*
-  MYSQLlex remember the following states from the following MYSQLlex()
+  DRIZZLElex remember the following states from the following DRIZZLElex()
 
   - MY_LEX_EOQ			Found end of query
   - MY_LEX_OPERATOR_OR_IDENT	Last state was an ident, text or number
 				(which can't be followed by a signed number)
 */
 
-int MYSQLlex(void *arg, void *yythd)
+int DRIZZLElex(void *arg, void *yysession)
 {
-  THD *thd= (THD *)yythd;
-  Lex_input_stream *lip= thd->m_lip;
+  Session *session= (Session *)yysession;
+  Lex_input_stream *lip= session->m_lip;
   YYSTYPE *yylval=(YYSTYPE*) arg;
   int token;
 
@@ -721,7 +698,7 @@ int MYSQLlex(void *arg, void *yythd)
     return token;
   }
 
-  token= lex_one_token(arg, yythd);
+  token= lex_one_token(arg, yysession);
 
   switch(token) {
   case WITH:
@@ -732,7 +709,7 @@ int MYSQLlex(void *arg, void *yythd)
       to transform the grammar into a LALR(1) grammar,
       which sql_yacc.yy can process.
     */
-    token= lex_one_token(arg, yythd);
+    token= lex_one_token(arg, yysession);
     if (token == ROLLUP_SYM)
     {
       return WITH_ROLLUP_SYM;
@@ -755,18 +732,18 @@ int MYSQLlex(void *arg, void *yythd)
   return token;
 }
 
-int lex_one_token(void *arg, void *yythd)
+int lex_one_token(void *arg, void *yysession)
 {
   register unsigned char c= 0; /* Just set to shutup GCC */
   bool comment_closed;
   int	tokval, result_state;
   unsigned int length;
   enum my_lex_states state;
-  THD *thd= (THD *)yythd;
-  Lex_input_stream *lip= thd->m_lip;
-  LEX *lex= thd->lex;
+  Session *session= (Session *)yysession;
+  Lex_input_stream *lip= session->m_lip;
+  LEX *lex= session->lex;
   YYSTYPE *yylval=(YYSTYPE*) arg;
-  const CHARSET_INFO * const cs= thd->charset();
+  const CHARSET_INFO * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
 
@@ -903,31 +880,9 @@ int lex_one_token(void *arg, void *yythd)
       }
       yylval->lex_str=get_token(lip, 0, length);
 
-      /*
-         Note: "SELECT _bla AS 'alias'"
-         _bla should be considered as a IDENT if charset haven't been found.
-         So we don't use MYF(MY_WME) with get_charset_by_csname to avoid
-         producing an error.
-      */
-
-      if (yylval->lex_str.str[0] == '_')
-      {
-        const CHARSET_INFO * const cs= get_charset_by_csname(yylval->lex_str.str + 1,
-                                                             MY_CS_PRIMARY, MYF(0));
-        if (cs)
-        {
-          yylval->charset= cs;
-          lip->m_underscore_cs= cs;
-
-          lip->body_utf8_append(lip->m_cpp_text_start,
-                                lip->get_cpp_tok_start() + length);
-          return(UNDERSCORE_CHARSET);
-        }
-      }
-
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(thd, &yylval->lex_str, cs,
+      lip->body_utf8_append_literal(session, &yylval->lex_str, cs,
                                     lip->m_cpp_text_end);
 
       return(result_state);			// IDENT or IDENT_QUOTED
@@ -1030,7 +985,7 @@ int lex_one_token(void *arg, void *yythd)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(thd, &yylval->lex_str, cs,
+      lip->body_utf8_append_literal(session, &yylval->lex_str, cs,
                                     lip->m_cpp_text_end);
 
       return(result_state);
@@ -1071,7 +1026,7 @@ int lex_one_token(void *arg, void *yythd)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(thd, &yylval->lex_str, cs,
+      lip->body_utf8_append_literal(session, &yylval->lex_str, cs,
                                     lip->m_cpp_text_end);
 
       return(IDENT_QUOTED);
@@ -1185,7 +1140,7 @@ int lex_one_token(void *arg, void *yythd)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(thd, &yylval->lex_str,
+      lip->body_utf8_append_literal(session, &yylval->lex_str,
         lip->m_underscore_cs ? lip->m_underscore_cs : cs,
         lip->m_cpp_text_end);
 
@@ -1327,10 +1282,10 @@ int lex_one_token(void *arg, void *yythd)
     case MY_LEX_SEMICOLON:			// optional line terminator
       if (lip->yyPeek())
       {
-        if ((thd->client_capabilities & CLIENT_MULTI_STATEMENTS))
+        if ((session->client_capabilities & CLIENT_MULTI_STATEMENTS))
         {
           lip->found_semicolon= lip->get_ptr();
-          thd->server_status|= SERVER_MORE_RESULTS_EXISTS;
+          session->server_status|= SERVER_MORE_RESULTS_EXISTS;
           lip->next_state= MY_LEX_END;
           lip->set_echo(true);
           return (END_OF_INPUT);
@@ -1358,7 +1313,7 @@ int lex_one_token(void *arg, void *yythd)
     case MY_LEX_END:
       lip->next_state=MY_LEX_END;
       return(0);			// We found end of input last time
-      
+
       /* Actually real shouldn't start with . but allow them anyhow */
     case MY_LEX_REAL_OR_POINT:
       if (my_isdigit(cs,lip->yyPeek()))
@@ -1425,7 +1380,7 @@ int lex_one_token(void *arg, void *yythd)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(thd, &yylval->lex_str, cs,
+      lip->body_utf8_append_literal(session, &yylval->lex_str, cs,
                                     lip->m_cpp_text_end);
 
       return(result_state);
@@ -1443,7 +1398,7 @@ int lex_one_token(void *arg, void *yythd)
   statements and stored procedures and is compensated by always
   supplying a copy of Alter_info to these functions.
 
-  @return You need to use check the error in THD for out
+  @return You need to use check the error in Session for out
   of memory condition after calling this function.
 */
 
@@ -1562,7 +1517,6 @@ void st_select_lex::init_query()
   parent_lex->push_context(&context);
   cond_count= between_count= with_wild= 0;
   max_equal_elems= 0;
-  conds_processed_with_permanent_arena= 0;
   ref_pointer_array= 0;
   select_n_where_fields= 0;
   select_n_having_items= 0;
@@ -1668,7 +1622,7 @@ void st_select_lex_node::fast_exclude()
   // Remove slave structure
   for (; slave; slave= slave->next)
     slave->fast_exclude();
-  
+
 }
 
 /*
@@ -1682,8 +1636,8 @@ void st_select_lex_node::exclude()
   //exclude from other structures
   if ((*prev= next))
     next->prev= prev;
-  /* 
-     We do not need following statements, because prev pointer of first 
+  /*
+     We do not need following statements, because prev pointer of first
      list element point to master->slave
      if (master->slave == this)
        master->slave= next;
@@ -1698,7 +1652,7 @@ void st_select_lex_node::exclude()
     st_select_lex_unit::exclude_level()
 
   NOTE: units which belong to current will be brought up on level of
-  currernt unit 
+  currernt unit
 */
 void st_select_lex_unit::exclude_level()
 {
@@ -1769,11 +1723,11 @@ void st_select_lex_unit::exclude_tree()
 
 
 /*
-  st_select_lex_node::mark_as_dependent mark all st_select_lex struct from 
+  st_select_lex_node::mark_as_dependent mark all st_select_lex struct from
   this to 'last' as dependent
 
   SYNOPSIS
-    last - pointer to last st_select_lex struct, before wich all 
+    last - pointer to last st_select_lex struct, before wich all
            st_select_lex have to be marked as dependent
 
   NOTE
@@ -1812,19 +1766,14 @@ void st_select_lex::mark_as_dependent(st_select_lex *last)
   }
 }
 
-bool st_select_lex_node::set_braces(bool value __attribute__((unused)))
+bool st_select_lex_node::set_braces(bool)
 { return 1; }
 bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
 uint32_t st_select_lex_node::get_in_sum_expr()           { return 0; }
 TableList* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
-TableList *st_select_lex_node::add_table_to_list (THD *thd __attribute__((unused)),
-                                                   Table_ident *table __attribute__((unused)),
-						  LEX_STRING *alias __attribute__((unused)),
-						  uint32_t table_join_options __attribute__((unused)),
-						  thr_lock_type flags __attribute__((unused)),
-						  List<Index_hint> *hints __attribute__((unused)),
-                                                  LEX_STRING *option __attribute__((unused)))
+TableList *st_select_lex_node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
+                                                  thr_lock_type, List<Index_hint> *, LEX_STRING *)
 {
   return 0;
 }
@@ -1860,22 +1809,21 @@ st_select_lex* st_select_lex_unit::outer_select()
 }
 
 
-bool st_select_lex::add_order_to_list(THD *thd, Item *item, bool asc)
+bool st_select_lex::add_order_to_list(Session *session, Item *item, bool asc)
 {
-  return add_to_list(thd, order_list, item, asc);
+  return add_to_list(session, order_list, item, asc);
 }
 
 
-bool st_select_lex::add_item_to_list(THD *thd __attribute__((unused)),
-                                     Item *item)
+bool st_select_lex::add_item_to_list(Session *, Item *item)
 {
   return(item_list.push_back(item));
 }
 
 
-bool st_select_lex::add_group_to_list(THD *thd, Item *item, bool asc)
+bool st_select_lex::add_group_to_list(Session *session, Item *item, bool asc)
 {
-  return add_to_list(thd, group_list, item, asc);
+  return add_to_list(session, group_list, item, asc);
 }
 
 
@@ -1894,7 +1842,7 @@ st_select_lex* st_select_lex::outer_select()
 bool st_select_lex::set_braces(bool value)
 {
   braces= value;
-  return 0; 
+  return 0;
 }
 
 
@@ -1927,13 +1875,13 @@ uint32_t st_select_lex::get_table_join_options()
 }
 
 
-bool st_select_lex::setup_ref_array(THD *thd, uint32_t order_group_num)
+bool st_select_lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
   if (ref_pointer_array)
     return 0;
 
   return (ref_pointer_array=
-          (Item **)thd->alloc(sizeof(Item*) * (n_child_sum_items +
+          (Item **)session->alloc(sizeof(Item*) * (n_child_sum_items +
                                                  item_list.elements +
                                                  select_n_having_items +
                                                  select_n_where_fields +
@@ -1956,7 +1904,7 @@ void st_select_lex_unit::print(String *str, enum_query_type query_type)
     }
     if (sl->braces)
       str->append('(');
-    sl->print(thd, str, query_type);
+    sl->print(session, str, query_type);
     if (sl->braces)
       str->append(')');
   }
@@ -1970,7 +1918,7 @@ void st_select_lex_unit::print(String *str, enum_query_type query_type)
         (order_st *) fake_select_lex->order_list.first,
         query_type);
     }
-    fake_select_lex->print_limit(thd, str, query_type);
+    fake_select_lex->print_limit(session, str, query_type);
   }
 }
 
@@ -1995,10 +1943,9 @@ void st_select_lex::print_order(String *str,
       str->append(',');
   }
 }
- 
 
-void st_select_lex::print_limit(THD *thd __attribute__((unused)),
-                                String *str,
+
+void st_select_lex::print_limit(Session *, String *str,
                                 enum_query_type query_type)
 {
   SELECT_LEX_UNIT *unit= master_unit();
@@ -2038,10 +1985,10 @@ void st_select_lex::print_limit(THD *thd __attribute__((unused)),
 }
 
 /**
-  @brief Restore the LEX and THD in case of a parse error.
+  @brief Restore the LEX and Session in case of a parse error.
 
   This is a clean up call that is invoked by the Bison generated
-  parser before returning an error from MYSQLparse. If your
+  parser before returning an error from DRIZZLEparse. If your
   semantic actions manipulate with the global thread state (which
   is a very bad practice and should not normally be employed) and
   need a clean-up in case of error, and you can not use %destructor
@@ -2049,7 +1996,7 @@ void st_select_lex::print_limit(THD *thd __attribute__((unused)),
   to implement the clean up.
 */
 
-void st_lex::cleanup_lex_after_parse_error(THD *thd __attribute__((unused)))
+void LEX::cleanup_lex_after_parse_error(Session *)
 {
 }
 
@@ -2086,23 +2033,6 @@ void Query_tables_list::reset_query_tables_list(bool init)
   query_tables= 0;
   query_tables_last= &query_tables;
   query_tables_own_last= 0;
-  if (init)
-  {
-    /*
-      We delay real initialization of hash (and therefore related
-      memory allocation) until first insertion into this hash.
-    */
-    hash_clear(&sroutines);
-  }
-  else if (sroutines.records)
-  {
-    /* Non-zero sroutines.records means that hash was initialized. */
-    my_hash_reset(&sroutines);
-  }
-  sroutines_list.empty();
-  sroutines_list_own_last= sroutines_list.next;
-  sroutines_list_own_elements= 0;
-  binlog_stmt_flags= 0;
 }
 
 
@@ -2115,7 +2045,6 @@ void Query_tables_list::reset_query_tables_list(bool init)
 
 void Query_tables_list::destroy_query_tables_list()
 {
-  hash_free(&sroutines);
 }
 
 
@@ -2123,146 +2052,22 @@ void Query_tables_list::destroy_query_tables_list()
   Initialize LEX object.
 
   SYNOPSIS
-    st_lex::st_lex()
+    LEX::LEX()
 
   NOTE
     LEX object initialized with this constructor can be used as part of
-    THD object for which one can safely call open_tables(), lock_tables()
+    Session object for which one can safely call open_tables(), lock_tables()
     and close_thread_tables() functions. But it is not yet ready for
     statement parsing. On should use lex_start() function to prepare LEX
     for this.
 */
 
-st_lex::st_lex()
+LEX::LEX()
   :result(0), yacc_yyss(0), yacc_yyvs(0),
    sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
 {
 
-  my_init_dynamic_array2(&plugins, sizeof(plugin_ref),
-                         plugins_static_buffer,
-                         INITIAL_LEX_PLUGIN_LIST_SIZE, 
-                         INITIAL_LEX_PLUGIN_LIST_SIZE);
   reset_query_tables_list(true);
-}
-
-
-/*
-  Check whether the merging algorithm can be used on this VIEW
-
-  SYNOPSIS
-    st_lex::can_be_merged()
-
-  DESCRIPTION
-    We can apply merge algorithm if it is single SELECT view  with
-    subqueries only in WHERE clause (we do not count SELECTs of underlying
-    views, and second level subqueries) and we have not grpouping, ordering,
-    HAVING clause, aggregate functions, DISTINCT clause, LIMIT clause and
-    several underlying tables.
-
-  RETURN
-    false - only temporary table algorithm can be used
-    true  - merge algorithm can be used
-*/
-
-bool st_lex::can_be_merged()
-{
-  // TODO: do not forget implement case when select_lex.table_list.elements==0
-
-  /* find non VIEW subqueries/unions */
-  bool selects_allow_merge= select_lex.next_select() == 0;
-  if (selects_allow_merge)
-  {
-    for (SELECT_LEX_UNIT *tmp_unit= select_lex.first_inner_unit();
-         tmp_unit;
-         tmp_unit= tmp_unit->next_unit())
-    {
-      if (tmp_unit->first_select()->parent_lex == this &&
-          (tmp_unit->item == 0 ||
-           (tmp_unit->item->place() != IN_WHERE &&
-            tmp_unit->item->place() != IN_ON)))
-      {
-        selects_allow_merge= 0;
-        break;
-      }
-    }
-  }
-
-  return (selects_allow_merge &&
-	  select_lex.group_list.elements == 0 &&
-	  select_lex.having == 0 &&
-          select_lex.with_sum_func == 0 &&
-	  select_lex.table_list.elements >= 1 &&
-	  !(select_lex.options & SELECT_DISTINCT) &&
-          select_lex.select_limit == 0);
-}
-
-
-/*
-  check if command can use VIEW with MERGE algorithm (for top VIEWs)
-
-  SYNOPSIS
-    st_lex::can_use_merged()
-
-  DESCRIPTION
-    Only listed here commands can use merge algorithm in top level
-    SELECT_LEX (for subqueries will be used merge algorithm if
-    st_lex::can_not_use_merged() is not true).
-
-  RETURN
-    false - command can't use merged VIEWs
-    true  - VIEWs with MERGE algorithms can be used
-*/
-
-bool st_lex::can_use_merged()
-{
-  switch (sql_command)
-  {
-  case SQLCOM_SELECT:
-  case SQLCOM_CREATE_TABLE:
-  case SQLCOM_UPDATE:
-  case SQLCOM_UPDATE_MULTI:
-  case SQLCOM_DELETE:
-  case SQLCOM_DELETE_MULTI:
-  case SQLCOM_INSERT:
-  case SQLCOM_INSERT_SELECT:
-  case SQLCOM_REPLACE:
-  case SQLCOM_REPLACE_SELECT:
-  case SQLCOM_LOAD:
-    return true;
-  default:
-    return false;
-  }
-}
-
-/*
-  Check if command can't use merged views in any part of command
-
-  SYNOPSIS
-    st_lex::can_not_use_merged()
-
-  DESCRIPTION
-    Temporary table algorithm will be used on all SELECT levels for queries
-    listed here (see also st_lex::can_use_merged()).
-
-  RETURN
-    false - command can't use merged VIEWs
-    true  - VIEWs with MERGE algorithms can be used
-*/
-
-bool st_lex::can_not_use_merged()
-{
-  switch (sql_command)
-  {
-  /*
-    SQLCOM_SHOW_FIELDS is necessary to make 
-    information schema tables working correctly with views.
-    see get_schema_tables_result function
-  */
-  case SQLCOM_SHOW_FIELDS:
-    return true;
-  default:
-    return false;
-  }
 }
 
 /*
@@ -2276,7 +2081,7 @@ bool st_lex::can_not_use_merged()
     false no, we need data
 */
 
-bool st_lex::only_view_structure()
+bool LEX::only_view_structure()
 {
   switch (sql_command) {
   case SQLCOM_SHOW_CREATE:
@@ -2301,7 +2106,7 @@ bool st_lex::only_view_structure()
 */
 
 
-bool st_lex::need_correct_ident()
+bool LEX::need_correct_ident()
 {
   switch(sql_command)
   {
@@ -2320,7 +2125,7 @@ bool st_lex::need_correct_ident()
   and will initialize the destination with the default
   database of the stored routine, rather than the default
   database of the connection it is parsed in.
-  E.g. if one has no current database selected, or current database 
+  E.g. if one has no current database selected, or current database
   set to 'bar' and then issues:
 
   CREATE PROCEDURE foo.p1() BEGIN SELECT * FROM t1 END//
@@ -2334,9 +2139,9 @@ bool st_lex::need_correct_ident()
 */
 
 bool
-st_lex::copy_db_to(char **p_db, size_t *p_db_length) const
+LEX::copy_db_to(char **p_db, size_t *p_db_length) const
 {
-  return thd->copy_db_to(p_db, p_db_length);
+  return session->copy_db_to(p_db, p_db_length);
 }
 
 /*
@@ -2354,14 +2159,12 @@ void st_select_lex_unit::set_limit(st_select_lex *sl)
 
   val= sl->select_limit ? sl->select_limit->val_uint() : HA_POS_ERROR;
   select_limit_val= (ha_rows)val;
-#ifndef BIG_TABLES
-  /* 
+  /*
     Check for overflow : ha_rows can be smaller then uint64_t if
     BIG_TABLES is off.
     */
   if (val != (uint64_t)select_limit_val)
     select_limit_val= HA_POS_ERROR;
-#endif
   offset_limit_cnt= (ha_rows)(sl->offset_limit ? sl->offset_limit->val_uint() :
                                                  0UL);
   select_limit_cnt= select_limit_val + offset_limit_cnt;
@@ -2388,7 +2191,7 @@ void st_select_lex_unit::set_limit(st_select_lex *sl)
       In this case link_to_local is set.
 
 */
-TableList *st_lex::unlink_first_table(bool *link_to_local)
+TableList *LEX::unlink_first_table(bool *link_to_local)
 {
   TableList *first;
   if ((first= query_tables))
@@ -2407,7 +2210,7 @@ TableList *st_lex::unlink_first_table(bool *link_to_local)
     */
     if ((*link_to_local= test(select_lex.table_list.first)))
     {
-      select_lex.context.table_list= 
+      select_lex.context.table_list=
         select_lex.context.first_name_resolution_table= first->next_local;
       select_lex.table_list.first= (unsigned char*) (first->next_local);
       select_lex.table_list.elements--;	//safety
@@ -2428,7 +2231,7 @@ TableList *st_lex::unlink_first_table(bool *link_to_local)
   table list
 
   SYNOPSYS
-     st_lex::first_lists_tables_same()
+     LEX::first_lists_tables_same()
 
   NOTES
     In many cases (for example, usual INSERT/DELETE/...) the first table of
@@ -2439,7 +2242,7 @@ TableList *st_lex::unlink_first_table(bool *link_to_local)
     the global list first.
 */
 
-void st_lex::first_lists_tables_same()
+void LEX::first_lists_tables_same()
 {
   TableList *first_table= (TableList*) select_lex.table_list.first;
   if (query_tables != first_table && first_table != 0)
@@ -2475,7 +2278,7 @@ void st_lex::first_lists_tables_same()
     global list
 */
 
-void st_lex::link_first_table_back(TableList *first,
+void LEX::link_first_table_back(TableList *first,
 				   bool link_to_local)
 {
   if (first)
@@ -2502,7 +2305,7 @@ void st_lex::link_first_table_back(TableList *first,
   cleanup lex for case when we open table by table for processing
 
   SYNOPSIS
-    st_lex::cleanup_after_one_table_open()
+    LEX::cleanup_after_one_table_open()
 
   NOTE
     This method is mostly responsible for cleaning up of selects lists and
@@ -2510,14 +2313,14 @@ void st_lex::link_first_table_back(TableList *first,
     to call Query_tables_list::reset_query_tables_list(false).
 */
 
-void st_lex::cleanup_after_one_table_open()
+void LEX::cleanup_after_one_table_open()
 {
   /*
-    thd->lex->derived_tables & additional units may be set if we open
-    a view. It is necessary to clear thd->lex->derived_tables flag
+    session->lex->derived_tables & additional units may be set if we open
+    a view. It is necessary to clear session->lex->derived_tables flag
     to prevent processing of derived tables during next open_and_lock_tables
     if next table is a real table and cleanup & remove underlying units
-    NOTE: all units will be connected to thd->lex->select_lex, because we
+    NOTE: all units will be connected to session->lex->select_lex, because we
     have not UNION on most upper level.
     */
   if (all_selects_list != &select_lex)
@@ -2537,58 +2340,11 @@ void st_lex::cleanup_after_one_table_open()
 
 
 /*
-  Save current state of Query_tables_list for this LEX, and prepare it
-  for processing of new statemnt.
-
-  SYNOPSIS
-    reset_n_backup_query_tables_list()
-      backup  Pointer to Query_tables_list instance to be used for backup
-*/
-
-void st_lex::reset_n_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
-{
-}
-
-
-/*
-  Restore state of Query_tables_list for this LEX from backup.
-
-  SYNOPSIS
-    restore_backup_query_tables_list()
-      backup  Pointer to Query_tables_list instance used for backup
-*/
-
-void st_lex::restore_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
-{
-}
-
-
-/*
-  Checks for usage of routines and/or tables in a parsed statement
-
-  SYNOPSIS
-    st_lex:table_or_sp_used()
-
-  RETURN
-    false  No routines and tables used
-    true   Either or both routines and tables are used.
-*/
-
-bool st_lex::table_or_sp_used()
-{
-  if (sroutines.records || query_tables)
-    return(true);
-
-  return(false);
-}
-
-
-/*
   Do end-of-prepare fixup for list of tables and their merge-VIEWed tables
 
   SYNOPSIS
     fix_prepare_info_in_table_list()
-      thd  Thread handle
+      session  Thread handle
       tbl  List of tables to process
 
   DESCRIPTION
@@ -2598,16 +2354,16 @@ bool st_lex::table_or_sp_used()
 
 */
 
-static void fix_prepare_info_in_table_list(THD *thd, TableList *tbl)
+static void fix_prepare_info_in_table_list(Session *session, TableList *tbl)
 {
   for (; tbl; tbl= tbl->next_local)
   {
     if (tbl->on_expr)
     {
       tbl->prep_on_expr= tbl->on_expr;
-      tbl->on_expr= tbl->on_expr->copy_andor_structure(thd);
+      tbl->on_expr= tbl->on_expr->copy_andor_structure(session);
     }
-    fix_prepare_info_in_table_list(thd, tbl->merge_underlying_list);
+    fix_prepare_info_in_table_list(session, tbl->merge_underlying_list);
   }
 }
 
@@ -2634,14 +2390,14 @@ static void fix_prepare_info_in_table_list(THD *thd, TableList *tbl)
 
   DESCRIPTION
     Used in filling up the tagged hints list.
-    This list is filled by first setting the kind of the hint as a 
+    This list is filled by first setting the kind of the hint as a
     context variable and then adding hints of the current kind.
     Then the context variable index_hint_type can be reset to the
     next hint type.
 */
 void st_select_lex::set_index_hint_type(enum index_hint_type type_arg,
                                         index_clause_map clause)
-{ 
+{
   current_index_hint_type= type_arg;
   current_index_hint_clause= clause;
 }
@@ -2652,32 +2408,32 @@ void st_select_lex::set_index_hint_type(enum index_hint_type type_arg,
 
   SYNOPSIS
     alloc_index_hints()
-      thd         current thread.
+      session         current thread.
 */
 
-void st_select_lex::alloc_index_hints (THD *thd)
-{ 
-  index_hints= new (thd->mem_root) List<Index_hint>(); 
+void st_select_lex::alloc_index_hints (Session *session)
+{
+  index_hints= new (session->mem_root) List<Index_hint>();
 }
 
 
 
 /*
-  adds an element to the array storing index usage hints 
+  adds an element to the array storing index usage hints
   (ADD/FORCE/IGNORE INDEX).
 
   SYNOPSIS
     add_index_hint()
-      thd         current thread.
+      session         current thread.
       str         name of the index.
       length      number of characters in str.
 
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-bool st_select_lex::add_index_hint (THD *thd, char *str, uint32_t length)
+bool st_select_lex::add_index_hint (Session *session, char *str, uint32_t length)
 {
-  return index_hints->push_front (new (thd->mem_root) 
+  return index_hints->push_front (new (session->mem_root)
                                  Index_hint(current_index_hint_type,
                                             current_index_hint_clause,
                                             str, length));

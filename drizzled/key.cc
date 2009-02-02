@@ -17,6 +17,12 @@
 /* Functions to handle keys and fields in forms */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/table.h>
+#include <drizzled/field/blob.h>
+
+#include <string>
+
+using namespace std;
 
 /*
   Search after a key that starts with 'field'
@@ -90,21 +96,6 @@ int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *fie
 }
 
 
-/**
-  Copy part of a record that forms a key or key prefix to a buffer.
-
-    The function takes a complete table record (as e.g. retrieved by
-    handler::index_read()), and a description of an index on the same table,
-    and extracts the first key_length bytes of the record which are part of a
-    key into to_key. If length == 0 then copy all bytes from the record that
-    form a key.
-
-  @param to_key      buffer that will be used as a key
-  @param from_record full record to be copied from
-  @param key_info    descriptor of the index
-  @param key_length  specifies length of all keyparts that will be copied
-*/
-
 void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
               unsigned int key_length)
 {
@@ -139,6 +130,44 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
         cs->cset->fill(cs, (char*) to_key + bytes, length - bytes, ' ');
     }
     to_key+= length;
+    key_length-= length;
+  }
+}
+
+
+void key_copy(basic_string<unsigned char> &to_key,
+              unsigned char *from_record, KEY *key_info,
+              unsigned int key_length)
+{
+  uint32_t length;
+  KEY_PART_INFO *key_part;
+
+  if (key_length == 0)
+    key_length= key_info->key_length;
+  for (key_part= key_info->key_part; (int) key_length > 0; key_part++)
+  {
+    if (key_part->null_bit)
+    {
+      to_key.push_back(test(from_record[key_part->null_offset] &
+		       key_part->null_bit) ? '1' : '0');
+      key_length--;
+    }
+    if (key_part->key_part_flag & HA_BLOB_PART ||
+        key_part->key_part_flag & HA_VAR_LENGTH_PART)
+    {
+      key_length-= HA_KEY_BLOB_LENGTH;
+      length= cmin((uint16_t)key_length, key_part->length);
+      key_part->field->get_key_image(to_key, length, Field::itRAW);
+      to_key.append(HA_KEY_BLOB_LENGTH, '0');
+    }
+    else
+    {
+      length= cmin((uint16_t)key_length, key_part->length);
+      Field *field= key_part->field;
+      uint32_t bytes= field->get_key_image(to_key, length, Field::itRAW);
+      if (bytes < length)
+        to_key.append(length-bytes, ' ');
+    }
     key_length-= length;
   }
 }
@@ -262,7 +291,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
   const unsigned char *key_end= key + key_length;;
 
   for (key_part=table->key_info[idx].key_part;
-       key < key_end ; 
+       key < key_end ;
        key_part++, key+= store_length)
   {
     uint32_t length;
@@ -270,7 +299,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
 
     if (key_part->null_bit)
     {
-      if (*key != test(table->record[0][key_part->null_offset] & 
+      if (*key != test(table->record[0][key_part->null_offset] &
 		       key_part->null_bit))
 	return 1;
       if (*key)
@@ -312,7 +341,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
 /*
   unpack key-fields from record to some buffer.
 
-  This is used mainly to get a good error message.  We temporary 
+  This is used mainly to get a good error message.  We temporary
   change the column bitmap so that all columns are readable.
 
   @param
@@ -361,12 +390,12 @@ void key_unpack(String *to,Table *table,uint32_t idx)
           Align, returning not more than "char_length" characters.
         */
         uint32_t charpos, char_length= key_part->length / cs->mbmaxlen;
-        if ((charpos= my_charpos(cs, tmp.ptr(),
-                                 tmp.ptr() + tmp.length(),
+        if ((charpos= my_charpos(cs, tmp.c_ptr(),
+                                 tmp.c_ptr() + tmp.length(),
                                  char_length)) < key_part->length)
           tmp.length(charpos);
       }
-      
+
       if (key_part->length < field->pack_length())
 	tmp.length(cmin(tmp.length(),(uint32_t)key_part->length));
       to->append(tmp);

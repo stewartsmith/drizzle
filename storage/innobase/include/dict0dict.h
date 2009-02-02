@@ -29,7 +29,7 @@ Created 1/8/1996 Heikki Tuuri
 #ifndef UNIV_HOTBACKUP
 /**********************************************************************
 Makes all characters in a NUL-terminated UTF-8 string lower case. */
-
+UNIV_INTERN
 void
 dict_casedn_str(
 /*============*/
@@ -37,7 +37,7 @@ dict_casedn_str(
 #endif /* !UNIV_HOTBACKUP */
 /************************************************************************
 Get the database name length in a table name. */
-
+UNIV_INTERN
 ulint
 dict_get_db_name_len(
 /*=================*/
@@ -53,16 +53,26 @@ dict_remove_db_name(
 				/* out: table name */
 	const char*	name);	/* in: table name in the form
 				dbname '/' tablename */
+/**************************************************************************
+Returns a table object based on table id. */
+UNIV_INTERN
+dict_table_t*
+dict_table_get_on_id(
+/*=================*/
+                                /* out: table, NULL if does not exist */
+        dulint  table_id,       /* in: table id */
+        trx_t*  trx);           /* in: transaction handle */
 /************************************************************************
 Decrements the count of open MySQL handles to a table. */
-
+UNIV_INTERN
 void
 dict_table_decrement_handle_count(
 /*==============================*/
-	dict_table_t*	table);	/* in: table */
+	dict_table_t*	table,		/* in/out: table */
+	ibool		dict_locked);	/* in: TRUE=data dictionary locked */
 /**************************************************************************
 Inits the data dictionary module. */
-
+UNIV_INTERN
 void
 dict_init(void);
 /*===========*/
@@ -72,7 +82,7 @@ list and a hash table of them to the data dictionary cache. This function
 can be called at database startup if we did not need to do a crash recovery.
 In crash recovery we must scan the space id's from the .ibd files in MySQL
 database directories. */
-
+UNIV_INTERN
 void
 dict_load_space_id_list(void);
 /*=========================*/
@@ -82,14 +92,6 @@ UNIV_INLINE
 void
 dict_col_copy_type(
 /*===============*/
-	const dict_col_t*	col,	/* in: column */
-	dtype_t*		type);	/* out: data type */
-/*************************************************************************
-Gets the column data type. */
-
-void
-dict_col_copy_type_noninline(
-/*=========================*/
 	const dict_col_t*	col,	/* in: column */
 	dtype_t*		type);	/* out: data type */
 #ifdef UNIV_DEBUG
@@ -153,18 +155,10 @@ dict_col_get_clust_pos(
 /*===================*/
 	const dict_col_t*	col,		/* in: table column */
 	const dict_index_t*	clust_index);	/* in: clustered index */
-/*************************************************************************
-Gets the column position in the clustered index. */
-
-ulint
-dict_col_get_clust_pos_noninline(
-/*=============================*/
-	const dict_col_t*	col,		/* in: table column */
-	const dict_index_t*	clust_index);	/* in: clustered index */
 /********************************************************************
 If the given column name is reserved for InnoDB system columns, return
 TRUE. */
-
+UNIV_INTERN
 ibool
 dict_col_name_is_reserved(
 /*======================*/
@@ -172,49 +166,48 @@ dict_col_name_is_reserved(
 	const char*	name);	/* in: column name */
 /************************************************************************
 Acquire the autoinc lock.*/
-
+UNIV_INTERN
 void
 dict_table_autoinc_lock(
 /*====================*/
-	dict_table_t*	table);	/* in: table */
+	dict_table_t*	table);	/* in/out: table */
 /************************************************************************
-Initializes the autoinc counter. It is not an error to initialize an already
-initialized counter. */
-
+Unconditionally set the autoinc counter. */
+UNIV_INTERN
 void
 dict_table_autoinc_initialize(
 /*==========================*/
-	dict_table_t*	table,	/* in: table */
-	ib_longlong	value);	/* in: next value to assign to a row */
+	dict_table_t*	table,	/* in/out: table */
+	ib_uint64_t	value);	/* in: next value to assign to a row */
 /************************************************************************
 Reads the next autoinc value (== autoinc counter value), 0 if not yet
 initialized. */
-
-ib_longlong
+UNIV_INTERN
+ib_uint64_t
 dict_table_autoinc_read(
 /*====================*/
-				/* out: value for a new row, or 0 */
-	dict_table_t*	table);	/* in: table */
+					/* out: value for a new row, or 0 */
+	const dict_table_t*	table);	/* in: table */
 /************************************************************************
-Updates the autoinc counter if the value supplied is equal or bigger than the
-current value. If not inited, does nothing. */
-
+Updates the autoinc counter if the value supplied is greater than the
+current value. */
+UNIV_INTERN
 void
-dict_table_autoinc_update(
-/*======================*/
+dict_table_autoinc_update_if_greater(
+/*=================================*/
 
-	dict_table_t*	table,	/* in: table */
-	ib_longlong	value);	/* in: value which was assigned to a row */
+	dict_table_t*	table,	/* in/out: table */
+	ib_uint64_t	value);	/* in: value which was assigned to a row */
 /************************************************************************
 Release the autoinc lock.*/
-
+UNIV_INTERN
 void
 dict_table_autoinc_unlock(
 /*======================*/
-	dict_table_t*	table);	/* in: table */
+	dict_table_t*	table);	/* in/out: table */
 /**************************************************************************
 Adds system columns to a table object. */
-
+UNIV_INTERN
 void
 dict_table_add_system_columns(
 /*==========================*/
@@ -222,7 +215,7 @@ dict_table_add_system_columns(
 	mem_heap_t*	heap);	/* in: temporary heap */
 /**************************************************************************
 Adds a table object to the dictionary cache. */
-
+UNIV_INTERN
 void
 dict_table_add_to_cache(
 /*====================*/
@@ -230,19 +223,19 @@ dict_table_add_to_cache(
 	mem_heap_t*	heap);	/* in: temporary heap */
 /**************************************************************************
 Removes a table object from the dictionary cache. */
-
+UNIV_INTERN
 void
 dict_table_remove_from_cache(
 /*=========================*/
 	dict_table_t*	table);	/* in, own: table */
 /**************************************************************************
 Renames a table object. */
-
+UNIV_INTERN
 ibool
 dict_table_rename_in_cache(
 /*=======================*/
 					/* out: TRUE if success */
-	dict_table_t*	table,		/* in: table */
+	dict_table_t*	table,		/* in/out: table */
 	const char*	new_name,	/* in: new name */
 	ibool		rename_also_foreigns);/* in: in ALTER TABLE we want
 					to preserve the original table name
@@ -250,18 +243,18 @@ dict_table_rename_in_cache(
 /**************************************************************************
 Change the id of a table object in the dictionary cache. This is used in
 DISCARD TABLESPACE. */
-
+UNIV_INTERN
 void
 dict_table_change_id_in_cache(
 /*==========================*/
-	dict_table_t*	table,	/* in: table object already in cache */
+	dict_table_t*	table,	/* in/out: table object already in cache */
 	dulint		new_id);/* in: new id to set */
 /**************************************************************************
 Adds a foreign key constraint object to the dictionary cache. May free
 the object if there already is an object with the same identifier in.
 At least one of foreign table or referenced table must already be in
 the dictionary cache! */
-
+UNIV_INTERN
 ulint
 dict_foreign_add_to_cache(
 /*======================*/
@@ -270,25 +263,46 @@ dict_foreign_add_to_cache(
 	ibool		check_charsets);/* in: TRUE=check charset
 					compatibility */
 /*************************************************************************
-Checks if a table is referenced by foreign keys. */
-
-ibool
-dict_table_referenced_by_foreign_key(
+Check if the index is referenced by a foreign key, if TRUE return the
+matching instance NULL otherwise. */
+UNIV_INTERN
+dict_foreign_t*
+dict_table_get_referenced_constraint(
 /*=================================*/
-				/* out: TRUE if table is referenced by a
-				foreign key */
-	dict_table_t*	table);	/* in: InnoDB table */
-/**************************************************************************
-Determines whether a string starts with the specified keyword. */
-
+				/* out: pointer to foreign key struct if index
+				is defined for foreign key, otherwise NULL */
+	dict_table_t*	table,	/* in: InnoDB table */
+	dict_index_t*	index);	/* in: InnoDB index */
+/*************************************************************************
+Checks if a table is referenced by foreign keys. */
+UNIV_INTERN
 ibool
-dict_str_starts_with_keyword(
-/*=========================*/
-					/* out: TRUE if str starts
-					with keyword */
-	void*		mysql_thd,	/* in: MySQL thread handle */
-	const char*	str,		/* in: string to scan for keyword */
-	const char*	keyword);	/* in: keyword to look for */
+dict_table_is_referenced_by_foreign_key(
+/*====================================*/
+					/* out: TRUE if table is referenced
+					by a foreign key */
+	const dict_table_t*	table);	/* in: InnoDB table */
+/**************************************************************************
+Replace the index in the foreign key list that matches this index's
+definition with an equivalent index. */
+UNIV_INTERN
+void
+dict_table_replace_index_in_foreign_list(
+/*=====================================*/
+	dict_table_t*	table,  /* in/out: table */
+	dict_index_t*	index);	/* in: index to be replaced */
+/*************************************************************************
+Checks if a index is defined for a foreign key constraint. Index is a part
+of a foreign key constraint if the index is referenced by foreign key
+or index is a foreign key index */
+UNIV_INTERN
+dict_foreign_t*
+dict_table_get_foreign_constraint(
+/*==============================*/
+				/* out: pointer to foreign key struct if index
+				is defined for foreign key, otherwise NULL */
+	dict_table_t*	table,	/* in: InnoDB table */
+	dict_index_t*	index);	/* in: InnoDB index */
 /*************************************************************************
 Scans a table create SQL string and adds to the data dictionary
 the foreign key constraints declared in the string. This function
@@ -296,7 +310,7 @@ should be called after the indexes for a table have been created.
 Each foreign key constraint must be accompanied with indexes in
 bot participating tables. The indexes are allowed to contain more
 fields than mentioned in the constraint. */
-
+UNIV_INTERN
 ulint
 dict_create_foreign_constraints(
 /*============================*/
@@ -318,7 +332,7 @@ dict_create_foreign_constraints(
 					any foreign keys are found. */
 /**************************************************************************
 Parses the CONSTRAINT id's to be dropped in an ALTER TABLE statement. */
-
+UNIV_INTERN
 ulint
 dict_foreign_parse_drop_constraints(
 /*================================*/
@@ -339,7 +353,7 @@ Returns a table object and optionally increment its MySQL open handle count.
 NOTE! This is a high-level function to be used mainly from outside the
 'dict' directory. Inside this directory dict_table_get_low is usually the
 appropriate function. */
-
+UNIV_INTERN
 dict_table_t*
 dict_table_get(
 /*===========*/
@@ -350,24 +364,18 @@ dict_table_get(
 					/* in: whether to increment the open
 					handle count on the table */
 /**************************************************************************
-Returns a table object based on table id. */
-
-dict_table_t*
-dict_table_get_on_id(
-/*=================*/
-				/* out: table, NULL if does not exist */
-	dulint	table_id,	/* in: table id */
-	trx_t*	trx);		/* in: transaction handle */
-/**************************************************************************
-Returns a table object based on table id. */
-UNIV_INLINE
-dict_table_t*
-dict_table_get_on_id_low(
+Returns a index object, based on table and index id, and memoryfixes it. */
+UNIV_INTERN
+dict_index_t*
+dict_index_get_on_id_low(
 /*=====================*/
-				/* out: table, NULL if does not exist */
-	dulint	table_id);	/* in: table id */
+					/* out: index, NULL if does not
+					exist */
+	dict_table_t*	table,		/* in: table */
+	dulint		index_id);	/* in: index id */
 /**************************************************************************
 Checks if a table is in the dictionary cache. */
+
 UNIV_INLINE
 dict_table_t*
 dict_table_check_if_in_cache_low(
@@ -384,31 +392,35 @@ dict_table_get_low(
 					/* out: table, NULL if not found */
 	const char*	table_name);	/* in: table name */
 /**************************************************************************
-A noninlined version of dict_table_get_low. */
-
-dict_table_t*
-dict_table_get_low_noninlined(
-/*==========================*/
-					/* out: table, NULL if not found */
-	const char*	table_name);	/* in: table name */
-/**************************************************************************
-Returns an index object. */
+Returns a table object based on table id. */
 UNIV_INLINE
-dict_index_t*
-dict_table_get_index(
-/*=================*/
-				/* out: index, NULL if does not exist */
-	dict_table_t*	table,	/* in: table */
-	const char*	name);	/* in: index name */
+dict_table_t*
+dict_table_get_on_id_low(
+/*=====================*/
+				/* out: table, NULL if does not exist */
+	dulint	table_id);	/* in: table id */
 /**************************************************************************
-Returns an index object. */
-
+Find an index that is equivalent to the one passed in and is not marked
+for deletion. */
+UNIV_INTERN
 dict_index_t*
-dict_table_get_index_noninline(
+dict_foreign_find_equiv_index(
+/*==========================*/
+				/* out: index equivalent to
+				foreign->foreign_index, or NULL */
+	dict_foreign_t*	foreign);/* in: foreign key */
+/**************************************************************************
+Returns an index object by matching on the name and column names and if
+more than index is found return the index with the higher id.*/
+UNIV_INTERN
+dict_index_t*
+dict_table_get_index_by_max_id(
 /*===========================*/
-				/* out: index, NULL if does not exist */
+				/* out: matching index, NULL if not found */
 	dict_table_t*	table,	/* in: table */
-	const char*	name);	/* in: index name */
+	const char*	name,	/* in: the index name to find */
+	const char**	columns,/* in: array of column names */
+	ulint		n_cols);/* in: number of columns */
 /**************************************************************************
 Returns a column's name. */
 
@@ -424,28 +436,28 @@ dict_table_get_col_name(
 
 /**************************************************************************
 Prints a table definition. */
-
+UNIV_INTERN
 void
 dict_table_print(
 /*=============*/
 	dict_table_t*	table);	/* in: table */
 /**************************************************************************
 Prints a table data. */
-
+UNIV_INTERN
 void
 dict_table_print_low(
 /*=================*/
 	dict_table_t*	table);	/* in: table */
 /**************************************************************************
 Prints a table data when we know the table name. */
-
+UNIV_INTERN
 void
 dict_table_print_by_name(
 /*=====================*/
 	const char*	name);
 /**************************************************************************
 Outputs info on foreign keys of a table. */
-
+UNIV_INTERN
 void
 dict_print_info_on_foreign_keys(
 /*============================*/
@@ -459,6 +471,7 @@ dict_print_info_on_foreign_keys(
 /**************************************************************************
 Outputs info on a foreign key of a table in a format suitable for
 CREATE TABLE. */
+UNIV_INTERN
 void
 dict_print_info_on_foreign_key_in_create_format(
 /*============================================*/
@@ -468,44 +481,65 @@ dict_print_info_on_foreign_key_in_create_format(
 	ibool		add_newline);	/* in: whether to add a newline */
 /************************************************************************
 Displays the names of the index and the table. */
+UNIV_INTERN
 void
 dict_index_name_print(
 /*==================*/
 	FILE*			file,	/* in: output stream */
 	trx_t*			trx,	/* in: transaction */
 	const dict_index_t*	index);	/* in: index to print */
+#ifdef UNIV_DEBUG
 /************************************************************************
 Gets the first index on the table (the clustered index). */
 UNIV_INLINE
 dict_index_t*
 dict_table_get_first_index(
 /*=======================*/
-				/* out: index, NULL if none exists */
-	dict_table_t*	table);	/* in: table */
-/************************************************************************
-Gets the first index on the table (the clustered index). */
-
-dict_index_t*
-dict_table_get_first_index_noninline(
-/*=================================*/
-				/* out: index, NULL if none exists */
-	dict_table_t*	table);	/* in: table */
+					/* out: index, NULL if none exists */
+	const dict_table_t*	table);	/* in: table */
 /************************************************************************
 Gets the next index on the table. */
 UNIV_INLINE
 dict_index_t*
 dict_table_get_next_index(
 /*======================*/
-				/* out: index, NULL if none left */
-	dict_index_t*	index);	/* in: index */
+					/* out: index, NULL if none left */
+	const dict_index_t*	index);	/* in: index */
+#else /* UNIV_DEBUG */
+# define dict_table_get_first_index(table) UT_LIST_GET_FIRST((table)->indexes)
+# define dict_table_get_next_index(index) UT_LIST_GET_NEXT(indexes, index)
+#endif /* UNIV_DEBUG */
 /************************************************************************
-Gets the next index on the table. */
+Check whether the index is the clustered index. */
+UNIV_INLINE
+ulint
+dict_index_is_clust(
+/*================*/
+					/* out: nonzero for clustered index,
+					zero for other indexes */
+	const dict_index_t*	index)	/* in: index */
+	__attribute__((pure));
+/************************************************************************
+Check whether the index is unique. */
+UNIV_INLINE
+ulint
+dict_index_is_unique(
+/*=================*/
+					/* out: nonzero for unique index,
+					zero for other indexes */
+	const dict_index_t*	index)	/* in: index */
+	__attribute__((pure));
+/************************************************************************
+Check whether the index is the insert buffer tree. */
+UNIV_INLINE
+ulint
+dict_index_is_ibuf(
+/*===============*/
+					/* out: nonzero for insert buffer,
+					zero for other indexes */
+	const dict_index_t*	index)	/* in: index */
+	__attribute__((pure));
 
-dict_index_t*
-dict_table_get_next_index_noninline(
-/*================================*/
-				/* out: index, NULL if none left */
-	dict_index_t*	index);	/* in: index */
 /************************************************************************
 Gets the number of user-defined columns in a table in the dictionary
 cache. */
@@ -513,18 +547,19 @@ UNIV_INLINE
 ulint
 dict_table_get_n_user_cols(
 /*=======================*/
-				/* out: number of user-defined (e.g., not
-				ROW_ID) columns of a table */
-	dict_table_t*	table);	/* in: table */
+					/* out: number of user-defined
+					(e.g., not ROW_ID)
+					columns of a table */
+	const dict_table_t*	table);	/* in: table */
 /************************************************************************
 Gets the number of system columns in a table in the dictionary cache. */
 UNIV_INLINE
 ulint
 dict_table_get_n_sys_cols(
 /*======================*/
-				/* out: number of system (e.g.,
-				ROW_ID) columns of a table */
-	dict_table_t*	table);	/* in: table */
+					/* out: number of system (e.g.,
+					ROW_ID) columns of a table */
+	const dict_table_t*	table);	/* in: table */
 /************************************************************************
 Gets the number of all columns (also system) in a table in the dictionary
 cache. */
@@ -532,44 +567,50 @@ UNIV_INLINE
 ulint
 dict_table_get_n_cols(
 /*==================*/
-				/* out: number of columns of a table */
-	dict_table_t*	table);	/* in: table */
+					/* out: number of columns of a table */
+	const dict_table_t*	table);	/* in: table */
+#ifdef UNIV_DEBUG
 /************************************************************************
 Gets the nth column of a table. */
 UNIV_INLINE
-const dict_col_t*
+dict_col_t*
 dict_table_get_nth_col(
 /*===================*/
 					/* out: pointer to column object */
 	const dict_table_t*	table,	/* in: table */
 	ulint			pos);	/* in: position of column */
 /************************************************************************
-Gets the nth column of a table. */
-
-const dict_col_t*
-dict_table_get_nth_col_noninline(
-/*=============================*/
-					/* out: pointer to column object */
-	const dict_table_t*	table,	/* in: table */
-	ulint			pos);	/* in: position of column */
-/************************************************************************
 Gets the given system column of a table. */
 UNIV_INLINE
-const dict_col_t*
+dict_col_t*
 dict_table_get_sys_col(
 /*===================*/
 					/* out: pointer to column object */
 	const dict_table_t*	table,	/* in: table */
 	ulint			sys);	/* in: DATA_ROW_ID, ... */
+#else /* UNIV_DEBUG */
+#define dict_table_get_nth_col(table, pos) \
+((table)->cols + (pos))
+#define dict_table_get_sys_col(table, sys) \
+((table)->cols + (table)->n_cols + (sys) - DATA_N_SYS_COLS)
+#endif /* UNIV_DEBUG */
 /************************************************************************
 Gets the given system column number of a table. */
 UNIV_INLINE
 ulint
 dict_table_get_sys_col_no(
 /*======================*/
-				/* out: column number */
-	dict_table_t*	table,	/* in: table */
-	ulint		sys);	/* in: DATA_ROW_ID, ... */
+					/* out: column number */
+	const dict_table_t*	table,	/* in: table */
+	ulint			sys);	/* in: DATA_ROW_ID, ... */
+/************************************************************************
+Returns the minimum data size of an index record. */
+UNIV_INLINE
+ulint
+dict_index_get_min_size(
+/*====================*/
+					/* out: minimum data size in bytes */
+	const dict_index_t*	index);	/* in: index */
 /************************************************************************
 Check whether the table uses the compact page format. */
 UNIV_INLINE
@@ -580,38 +621,66 @@ dict_table_is_comp(
 					compact page format */
 	const dict_table_t*	table);	/* in: table */
 /************************************************************************
-Check whether the table uses the compact page format. */
-
-ibool
-dict_table_is_comp_noninline(
+Determine the file format of a table. */
+UNIV_INLINE
+ulint
+dict_table_get_format(
+/*==================*/
+					/* out: file format version */
+	const dict_table_t*	table);	/* in: table */
+/************************************************************************
+Set the file format of a table. */
+UNIV_INLINE
+void
+dict_table_set_format(
+/*==================*/
+	dict_table_t*	table,	/* in/out: table */
+	ulint		format);/* in: file format version */
+/************************************************************************
+Extract the compressed page size from table flags. */
+UNIV_INLINE
+ulint
+dict_table_flags_to_zip_size(
 /*=========================*/
-					/* out: TRUE if table uses the
-					compact page format */
+			/* out: compressed page size,
+			or 0 if not compressed */
+	ulint	flags)	/* in: flags */
+	__attribute__((__const__));
+/************************************************************************
+Check whether the table uses the compressed compact page format. */
+UNIV_INLINE
+ulint
+dict_table_zip_size(
+/*================*/
+					/* out: compressed page size,
+					or 0 if not compressed */
 	const dict_table_t*	table);	/* in: table */
 /************************************************************************
 Checks if a column is in the ordering columns of the clustered index of a
 table. Column prefixes are treated like whole columns. */
-
+UNIV_INTERN
 ibool
 dict_table_col_in_clustered_key(
 /*============================*/
-				/* out: TRUE if the column, or its prefix, is
-				in the clustered key */
-	dict_table_t*	table,	/* in: table */
-	ulint		n);	/* in: column number */
+					/* out: TRUE if the column, or its
+					prefix, is in the clustered key */
+	const dict_table_t*	table,	/* in: table */
+	ulint			n);	/* in: column number */
 /***********************************************************************
-Copies types of columns contained in table to tuple. */
-
+Copies types of columns contained in table to tuple and sets all
+fields of the tuple to the SQL NULL value.  This function should
+be called right after dtuple_create(). */
+UNIV_INTERN
 void
 dict_table_copy_types(
 /*==================*/
-	dtuple_t*	tuple,	/* in: data tuple */
-	dict_table_t*	table);	/* in: index */
+	dtuple_t*		tuple,	/* in/out: data tuple */
+	const dict_table_t*	table);	/* in: table */
 /**************************************************************************
 Looks for an index with the given id. NOTE that we do not reserve
 the dictionary mutex: this function is for emergency purposes like
 printing info of a corrupt database page! */
-
+UNIV_INTERN
 dict_index_t*
 dict_index_find_on_id_low(
 /*======================*/
@@ -619,14 +688,26 @@ dict_index_find_on_id_low(
 	dulint	id);	/* in: index id */
 /**************************************************************************
 Adds an index to the dictionary cache. */
-
-void
+UNIV_INTERN
+ulint
 dict_index_add_to_cache(
 /*====================*/
+				/* out: DB_SUCCESS or error code */
 	dict_table_t*	table,	/* in: table on which the index is */
 	dict_index_t*	index,	/* in, own: index; NOTE! The index memory
 				object is freed in this function! */
-	ulint		page_no);/* in: root page number of the index */
+	ulint		page_no,/* in: root page number of the index */
+	ibool		strict);/* in: TRUE=refuse to create the index
+				if records could be too big to fit in
+				an B-tree page */
+/**************************************************************************
+Removes an index from the dictionary cache. */
+UNIV_INTERN
+void
+dict_index_remove_from_cache(
+/*=========================*/
+	dict_table_t*	table,	/* in/out: table */
+	dict_index_t*	index);	/* in, own: index */
 /************************************************************************
 Gets the number of fields in the internal representation of an index,
 including fields added by the dictionary system. */
@@ -634,9 +715,10 @@ UNIV_INLINE
 ulint
 dict_index_get_n_fields(
 /*====================*/
-				/* out: number of fields */
-	dict_index_t*	index);	/* in: an internal representation of index
-				(in the dictionary cache) */
+					/* out: number of fields */
+	const dict_index_t*	index);	/* in: an internal
+					representation of index (in
+					the dictionary cache) */
 /************************************************************************
 Gets the number of fields in the internal representation of an index
 that uniquely determine the position of an index entry in the index, if
@@ -646,9 +728,9 @@ UNIV_INLINE
 ulint
 dict_index_get_n_unique(
 /*====================*/
-				/* out: number of fields */
-	dict_index_t*	index);	/* in: an internal representation of index
-				(in the dictionary cache) */
+					/* out: number of fields */
+	const dict_index_t*	index);	/* in: an internal representation
+					of index (in the dictionary cache) */
 /************************************************************************
 Gets the number of fields in the internal representation of an index
 which uniquely determine the position of an index entry in the index, if
@@ -657,9 +739,9 @@ UNIV_INLINE
 ulint
 dict_index_get_n_unique_in_tree(
 /*============================*/
-				/* out: number of fields */
-	dict_index_t*	index);	/* in: an internal representation of index
-				(in the dictionary cache) */
+					/* out: number of fields */
+	const dict_index_t*	index);	/* in: an internal representation
+					of index (in the dictionary cache) */
 /************************************************************************
 Gets the number of user-defined ordering fields in the index. In the internal
 representation we add the row id to the ordering fields to make all indexes
@@ -669,18 +751,22 @@ UNIV_INLINE
 ulint
 dict_index_get_n_ordering_defined_by_user(
 /*======================================*/
-				/* out: number of fields */
-	dict_index_t*	index);	/* in: an internal representation of index
-				(in the dictionary cache) */
+					/* out: number of fields */
+	const dict_index_t*	index);	/* in: an internal representation
+					of index (in the dictionary cache) */
+#ifdef UNIV_DEBUG
 /************************************************************************
 Gets the nth field of an index. */
 UNIV_INLINE
 dict_field_t*
 dict_index_get_nth_field(
 /*=====================*/
-				/* out: pointer to field object */
+					/* out: pointer to field object */
 	const dict_index_t*	index,	/* in: index */
-	ulint		pos);	/* in: position of field */
+	ulint			pos);	/* in: position of field */
+#else /* UNIV_DEBUG */
+# define dict_index_get_nth_field(index, pos) ((index)->fields + (pos))
+#endif /* UNIV_DEBUG */
 /************************************************************************
 Gets pointer to the nth column in an index. */
 UNIV_INLINE
@@ -701,79 +787,83 @@ dict_index_get_nth_col_no(
 	ulint			pos);	/* in: position of the field */
 /************************************************************************
 Looks for column n in an index. */
-
+UNIV_INTERN
 ulint
 dict_index_get_nth_col_pos(
 /*=======================*/
-				/* out: position in internal representation
-				of the index; if not contained, returns
-				ULINT_UNDEFINED */
-	dict_index_t*	index,	/* in: index */
-	ulint		n);	/* in: column number */
+					/* out: position in internal
+					representation of the index;
+					if not contained, returns
+					ULINT_UNDEFINED */
+	const dict_index_t*	index,	/* in: index */
+	ulint			n);	/* in: column number */
 /************************************************************************
 Returns TRUE if the index contains a column or a prefix of that column. */
-
+UNIV_INTERN
 ibool
 dict_index_contains_col_or_prefix(
 /*==============================*/
-				/* out: TRUE if contains the column or its
-				prefix */
-	dict_index_t*	index,	/* in: index */
-	ulint		n);	/* in: column number */
+					/* out: TRUE if contains the column
+					or its prefix */
+	const dict_index_t*	index,	/* in: index */
+	ulint			n);	/* in: column number */
 /************************************************************************
 Looks for a matching field in an index. The column has to be the same. The
 column in index must be complete, or must contain a prefix longer than the
 column in index2. That is, we must be able to construct the prefix in index2
 from the prefix in index. */
-
+UNIV_INTERN
 ulint
 dict_index_get_nth_field_pos(
 /*=========================*/
-				/* out: position in internal representation
-				of the index; if not contained, returns
-				ULINT_UNDEFINED */
-	dict_index_t*	index,	/* in: index from which to search */
-	dict_index_t*	index2,	/* in: index */
-	ulint		n);	/* in: field number in index2 */
+					/* out: position in internal
+					representation of the index;
+					if not contained, returns
+					ULINT_UNDEFINED */
+	const dict_index_t*	index,	/* in: index from which to search */
+	const dict_index_t*	index2,	/* in: index */
+	ulint			n);	/* in: field number in index2 */
 /************************************************************************
 Looks for column n position in the clustered index. */
-
+UNIV_INTERN
 ulint
 dict_table_get_nth_col_pos(
 /*=======================*/
-				/* out: position in internal representation
-				of the clustered index */
-	dict_table_t*	table,	/* in: table */
-	ulint		n);	/* in: column number */
+					/* out: position in internal
+					representation of
+					the clustered index */
+	const dict_table_t*	table,	/* in: table */
+	ulint			n);	/* in: column number */
 /************************************************************************
 Returns the position of a system column in an index. */
 UNIV_INLINE
 ulint
 dict_index_get_sys_col_pos(
 /*=======================*/
-				/* out: position, ULINT_UNDEFINED if not
-				contained */
-	dict_index_t*	index,	/* in: index */
-	ulint		type);	/* in: DATA_ROW_ID, ... */
+					/* out: position,
+					ULINT_UNDEFINED if not contained */
+	const dict_index_t*	index,	/* in: index */
+	ulint			type);	/* in: DATA_ROW_ID, ... */
 /***********************************************************************
 Adds a column to index. */
-
+UNIV_INTERN
 void
 dict_index_add_col(
 /*===============*/
-	dict_index_t*	index,		/* in: index */
-	dict_table_t*	table,		/* in: table */
-	dict_col_t*	col,		/* in: column */
-	ulint		prefix_len);	/* in: column prefix length */
+	dict_index_t*		index,		/* in/out: index */
+	const dict_table_t*	table,		/* in: table */
+	dict_col_t*		col,		/* in: column */
+	ulint			prefix_len);	/* in: column prefix length */
 /***********************************************************************
 Copies types of fields contained in index to tuple. */
-
+UNIV_INTERN
 void
 dict_index_copy_types(
 /*==================*/
-	dtuple_t*	tuple,		/* in: data tuple */
-	dict_index_t*	index,		/* in: index */
-	ulint		n_fields);	/* in: number of field types to copy */
+	dtuple_t*		tuple,		/* in/out: data tuple */
+	const dict_index_t*	index,		/* in: index */
+	ulint			n_fields);	/* in: number of
+						field types to copy */
 /*************************************************************************
 Gets the field column. */
 UNIV_INLINE
@@ -782,57 +872,80 @@ dict_field_get_col(
 /*===============*/
 	const dict_field_t*	field);
 
-#ifdef UNIV_DEBUG
+/**************************************************************************
+Returns an index object if it is found in the dictionary cache.
+Assumes that dict_sys->mutex is already being held. */
+UNIV_INTERN
+dict_index_t*
+dict_index_get_if_in_cache_low(
+/*===========================*/
+				/* out: index, NULL if not found */
+	dulint	index_id);	/* in: index id */
+#if defined UNIV_DEBUG || defined UNIV_BUF_DEBUG
 /**************************************************************************
 Returns an index object if it is found in the dictionary cache. */
-
+UNIV_INTERN
 dict_index_t*
 dict_index_get_if_in_cache(
 /*=======================*/
 				/* out: index, NULL if not found */
 	dulint	index_id);	/* in: index id */
+#endif /* UNIV_DEBUG || UNIV_BUF_DEBUG */
+#ifdef UNIV_DEBUG
 /**************************************************************************
 Checks that a tuple has n_fields_cmp value in a sensible range, so that
 no comparison can occur with the page number field in a node pointer. */
-
+UNIV_INTERN
 ibool
 dict_index_check_search_tuple(
 /*==========================*/
-				/* out: TRUE if ok */
-	dict_index_t*	index,	/* in: index */
-	dtuple_t*	tuple);	/* in: tuple used in a search */
+					/* out: TRUE if ok */
+	const dict_index_t*	index,	/* in: index tree */
+	const dtuple_t*		tuple);	/* in: tuple used in a search */
+/**************************************************************************
+Check for duplicate index entries in a table [using the index name] */
+UNIV_INTERN
+void
+dict_table_check_for_dup_indexes(
+/*=============================*/
+	const dict_table_t*	table);	/* in: Check for dup indexes
+					in this table */
+
 #endif /* UNIV_DEBUG */
 /**************************************************************************
 Builds a node pointer out of a physical record and a page number. */
-
+UNIV_INTERN
 dtuple_t*
 dict_index_build_node_ptr(
 /*======================*/
-				/* out, own: node pointer */
-	dict_index_t*	index,	/* in: index */
-	rec_t*		rec,	/* in: record for which to build node
-				pointer */
-	ulint		page_no,/* in: page number to put in node pointer */
-	mem_heap_t*	heap,	/* in: memory heap where pointer created */
-	ulint		level);	 /* in: level of rec in tree: 0 means leaf
-				level */
+					/* out, own: node pointer */
+	const dict_index_t*	index,	/* in: index */
+	const rec_t*		rec,	/* in: record for which to build node
+					pointer */
+	ulint			page_no,/* in: page number to put in node
+					pointer */
+	mem_heap_t*		heap,	/* in: memory heap where pointer
+					created */
+	ulint			level);	/* in: level of rec in tree:
+					0 means leaf level */
 /**************************************************************************
 Copies an initial segment of a physical record, long enough to specify an
 index entry uniquely. */
-
+UNIV_INTERN
 rec_t*
 dict_index_copy_rec_order_prefix(
 /*=============================*/
-				/* out: pointer to the prefix record */
-	dict_index_t*	index,	/* in: index */
-	rec_t*		rec,	/* in: record for which to copy prefix */
-	ulint*		n_fields,/* out: number of fields copied */
-	byte**		buf,	/* in/out: memory buffer for the copied prefix,
-				or NULL */
-	ulint*		buf_size);/* in/out: buffer size */
+					/* out: pointer to the prefix record */
+	const dict_index_t*	index,	/* in: index */
+	const rec_t*		rec,	/* in: record for which to
+					copy prefix */
+	ulint*			n_fields,/* out: number of fields copied */
+	byte**			buf,	/* in/out: memory buffer for the
+					copied prefix, or NULL */
+	ulint*			buf_size);/* in/out: buffer size */
 /**************************************************************************
 Builds a typed data tuple out of a physical record. */
-
+UNIV_INTERN
 dtuple_t*
 dict_index_build_data_tuple(
 /*========================*/
@@ -847,15 +960,15 @@ UNIV_INLINE
 ulint
 dict_index_get_space(
 /*=================*/
-				/* out: space id */
-	dict_index_t*	index);	/* in: index */
+					/* out: space id */
+	const dict_index_t*	index);	/* in: index */
 /*************************************************************************
 Sets the space id of the root of the index tree. */
 UNIV_INLINE
 void
 dict_index_set_space(
 /*=================*/
-	dict_index_t*	index,	/* in: index */
+	dict_index_t*	index,	/* in/out: index */
 	ulint		space);	/* in: space id */
 /*************************************************************************
 Gets the page number of the root of the index tree. */
@@ -863,15 +976,15 @@ UNIV_INLINE
 ulint
 dict_index_get_page(
 /*================*/
-				/* out: page number */
-	dict_index_t*	tree);	/* in: index */
+					/* out: page number */
+	const dict_index_t*	tree);	/* in: index */
 /*************************************************************************
 Sets the page number of the root of index tree. */
 UNIV_INLINE
 void
 dict_index_set_page(
 /*================*/
-	dict_index_t*	index,	/* in: index */
+	dict_index_t*	index,	/* in/out: index */
 	ulint		page);	/* in: page number */
 /*************************************************************************
 Gets the type of the index tree. */
@@ -879,8 +992,8 @@ UNIV_INLINE
 ulint
 dict_index_get_type(
 /*================*/
-				/* out: type */
-	dict_index_t*	index);	/* in: index */
+					/* out: type */
+	const dict_index_t*	index);	/* in: index */
 /*************************************************************************
 Gets the read-write lock of the index tree. */
 UNIV_INLINE
@@ -901,44 +1014,44 @@ dict_index_get_space_reserve(void);
 				reserved for updates */
 /*************************************************************************
 Calculates the minimum record length in an index. */
-
+UNIV_INTERN
 ulint
 dict_index_calc_min_rec_len(
 /*========================*/
-	dict_index_t*	index);	/* in: index */
+	const dict_index_t*	index);	/* in: index */
 /*************************************************************************
 Calculates new estimates for table and index statistics. The statistics
 are used in query optimization. */
-
+UNIV_INTERN
 void
 dict_update_statistics_low(
 /*=======================*/
-	dict_table_t*	table,		/* in: table */
+	dict_table_t*	table,		/* in/out: table */
 	ibool		has_dict_mutex);/* in: TRUE if the caller has the
 					dictionary mutex */
 /*************************************************************************
 Calculates new estimates for table and index statistics. The statistics
 are used in query optimization. */
-
+UNIV_INTERN
 void
 dict_update_statistics(
 /*===================*/
-	dict_table_t*	table);	/* in: table */
+	dict_table_t*	table);	/* in/out: table */
 /************************************************************************
 Reserves the dictionary system mutex for MySQL. */
-
+UNIV_INTERN
 void
 dict_mutex_enter_for_mysql(void);
 /*============================*/
 /************************************************************************
 Releases the dictionary system mutex for MySQL. */
-
+UNIV_INTERN
 void
 dict_mutex_exit_for_mysql(void);
 /*===========================*/
 /************************************************************************
 Checks if the database name in two table names is the same. */
-
+UNIV_INTERN
 ibool
 dict_tables_have_same_db(
 /*=====================*/
@@ -947,17 +1060,25 @@ dict_tables_have_same_db(
 				dbname '/' tablename */
 	const char*	name2);	/* in: table name in the form
 				dbname '/' tablename */
-/*************************************************************************
-Scans from pointer onwards. Stops if is at the start of a copy of
-'string' where characters are compared without case sensitivity. Stops
-also at '\0'. */
-
-const char*
-dict_scan_to(
-/*=========*/
-				/* out: scanned up to this */
-	const char*	ptr,	/* in: scan from */
-	const char*	string);/* in: look for this */
+/**************************************************************************
+Get index by name */
+UNIV_INTERN
+dict_index_t*
+dict_table_get_index_on_name(
+/*=========================*/
+				/* out: index, NULL if does not exist */
+	dict_table_t*	table,	/* in: table */
+	const char*	name);	/* in: name of the index to find */
+/**************************************************************************
+In case there is more than one index with the same name return the index
+with the min(id). */
+UNIV_INTERN
+dict_index_t*
+dict_table_get_index_on_name_and_min_id(
+/*====================================*/
+				/* out: index, NULL if does not exist */
+	dict_table_t*	table,	/* in: table */
+	const char*	name);	/* in: name of the index to find */
 /* Buffers for storing detailed information about the latest foreign key
 and unique key errors */
 extern FILE*	dict_foreign_err_file;

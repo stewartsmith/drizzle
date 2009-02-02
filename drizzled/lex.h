@@ -20,7 +20,7 @@
 
 /* This file includes all reserved words and functions */
 
-#include "lex_symbol.h"
+#include <drizzled/lex_symbol.h>
 
 SYM_GROUP sym_group_common= {"", ""};
 
@@ -68,7 +68,6 @@ static SYMBOL symbols[] = {
   { "ASCII",		SYM(ASCII_SYM)},
   { "ASENSITIVE",       SYM(ASENSITIVE_SYM)},
   { "AT",		SYM(AT_SYM)},
-  { "AUTHORS",	        SYM(AUTHORS_SYM)},
   { "AUTO_INCREMENT",	SYM(AUTO_INC)},
   { "AUTOEXTEND_SIZE",	SYM(AUTOEXTEND_SIZE_SYM)},
   { "AVG",		SYM(AVG_SYM)},
@@ -142,7 +141,7 @@ static SYMBOL symbols[] = {
   { "DAY_MICROSECOND",	SYM(DAY_MICROSECOND_SYM)},
   { "DAY_MINUTE",	SYM(DAY_MINUTE_SYM)},
   { "DAY_SECOND",	SYM(DAY_SECOND_SYM)},
-  { "DEALLOCATE",       SYM(DEALLOCATE_SYM)},     
+  { "DEALLOCATE",       SYM(DEALLOCATE_SYM)},
   { "DEC",		SYM(DECIMAL_SYM)},
   { "DECIMAL",		SYM(DECIMAL_SYM)},
   { "DECLARE",          SYM(DECLARE_SYM)},
@@ -251,6 +250,7 @@ static SYMBOL symbols[] = {
   { "LIKE",		SYM(LIKE)},
   { "LIMIT",		SYM(LIMIT)},
   { "LINEAR",		SYM(LINEAR_SYM)},
+  { "LINES",            SYM(LINES)},
   { "LIST",             SYM(LIST_SYM)},
   { "LOAD",		SYM(LOAD)},
   { "LOCAL",		SYM(LOCAL_SYM)},
@@ -266,15 +266,10 @@ static SYMBOL symbols[] = {
   { "LOOP",             SYM(LOOP_SYM)},
   { "LOW_PRIORITY",	SYM(LOW_PRIORITY)},
   { "MASTER",           SYM(MASTER_SYM)},
-  { "MASTER_CONNECT_RETRY",           SYM(MASTER_CONNECT_RETRY_SYM)},
-  { "MASTER_HOST",           SYM(MASTER_HOST_SYM)},
   { "MASTER_LOG_FILE",           SYM(MASTER_LOG_FILE_SYM)},
   { "MASTER_LOG_POS",           SYM(MASTER_LOG_POS_SYM)},
-  { "MASTER_PASSWORD",           SYM(MASTER_PASSWORD_SYM)},
   { "MASTER_PORT",           SYM(MASTER_PORT_SYM)},
   { "MASTER_SERVER_ID",           SYM(MASTER_SERVER_ID_SYM)},
-  { "MASTER_USER",           SYM(MASTER_USER_SYM)},
-  { "MASTER_HEARTBEAT_PERIOD", SYM(MASTER_HEARTBEAT_PERIOD_SYM)},
   { "MATCH",		SYM(MATCH)},
   { "MAX_CONNECTIONS_PER_HOUR", SYM(MAX_CONNECTIONS_PER_HOUR)},
   { "MAX_QUERIES_PER_HOUR", SYM(MAX_QUERIES_PER_HOUR)},
@@ -318,7 +313,6 @@ static SYMBOL symbols[] = {
   { "ON",		SYM(ON)},
   { "ONE",              SYM(ONE_SYM)},
   { "ONLINE",		SYM(ONLINE_SYM)},
-  { "ONE_SHOT",		SYM(ONE_SHOT_SYM)},
   { "OPEN",		SYM(OPEN_SYM)},
   { "OPTIMIZE",		SYM(OPTIMIZE)},
   { "OPTIONS",		SYM(OPTIONS_SYM)},
@@ -420,7 +414,6 @@ static SYMBOL symbols[] = {
   { "SQL_BUFFER_RESULT", SYM(SQL_BUFFER_RESULT)},
   { "SQL_CALC_FOUND_ROWS", SYM(SQL_CALC_FOUND_ROWS)},
   { "SQL_SMALL_RESULT", SYM(SQL_SMALL_RESULT)},
-  { "SQL_THREAD",	SYM(SQL_THREAD)},
   { "SQL_TSI_FRAC_SECOND", SYM(FRAC_SECOND_SYM)},
   { "SQL_TSI_SECOND",   SYM(SECOND_SYM)},
   { "SQL_TSI_MINUTE",   SYM(MINUTE_SYM)},
@@ -463,7 +456,6 @@ static SYMBOL symbols[] = {
   { "TO",		SYM(TO_SYM)},
   { "TRAILING",		SYM(TRAILING)},
   { "TRANSACTION",	SYM(TRANSACTION_SYM)},
-  { "TRANSACTIONAL",	SYM(TRANSACTIONAL_SYM)},
   { "TRUE",		SYM(TRUE_SYM)},
   { "TRUNCATE",		SYM(TRUNCATE_SYM)},
   { "TYPE",		SYM(TYPE_SYM)},
@@ -478,7 +470,6 @@ static SYMBOL symbols[] = {
   { "UNLOCK",		SYM(UNLOCK_SYM)},
   { "UNTIL",		SYM(UNTIL_SYM)},
   { "UPDATE",		SYM(UPDATE_SYM)},
-  { "UPGRADE",          SYM(UPGRADE_SYM)},
   { "USAGE",		SYM(USAGE)},
   { "USE",		SYM(USE_SYM)},
   { "USER",		SYM(USER)},

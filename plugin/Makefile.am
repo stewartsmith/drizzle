@@ -13,12 +13,4 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# Process this file with automake to create Makefile.in
-
-AUTOMAKE_OPTIONS =	foreign
-
-# extra plugin example files are listed here, to
-# keep its Makefile.am cleaner as a template
-
 SUBDIRS =	@mysql_pg_dirs@
-DIST_SUBDIRS =	auth_pam hello_world md5 crc32 logging_query

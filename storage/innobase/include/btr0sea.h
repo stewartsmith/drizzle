@@ -19,11 +19,25 @@ Created 2/17/1996 Heikki Tuuri
 
 /*********************************************************************
 Creates and initializes the adaptive search system at a database start. */
-
+UNIV_INTERN
 void
 btr_search_sys_create(
 /*==================*/
 	ulint	hash_size);	/* in: hash index hash table size */
+
+/************************************************************************
+Disable the adaptive hash search system and empty the index. */
+UNIV_INTERN
+void
+btr_search_disable(void);
+/*====================*/
+/************************************************************************
+Enable the adaptive hash search system. */
+UNIV_INTERN
+void
+btr_search_enable(void);
+/*====================*/
+
 /************************************************************************
 Returns search info for an index. */
 UNIV_INLINE
@@ -34,12 +48,21 @@ btr_search_get_info(
 	dict_index_t*	index);	/* in: index */
 /*********************************************************************
 Creates and initializes a search info struct. */
-
+UNIV_INTERN
 btr_search_t*
 btr_search_info_create(
 /*===================*/
 				/* out, own: search info struct */
 	mem_heap_t*	heap);	/* in: heap where created */
+/*********************************************************************
+Returns the value of ref_count. The value is protected by
+btr_search_latch. */
+UNIV_INTERN
+ulint
+btr_search_info_get_ref_count(
+/*==========================*/
+				/* out: ref_count value. */
+	btr_search_t*   info);	/* in: search info. */
 /*************************************************************************
 Updates the search info. */
 UNIV_INLINE
@@ -53,14 +76,14 @@ Tries to guess the right search position based on the hash search info
 of the index. Note that if mode is PAGE_CUR_LE, which is used in inserts,
 and the function returns TRUE, then cursor->up_match and cursor->low_match
 both have sensible values. */
-
+UNIV_INTERN
 ibool
 btr_search_guess_on_hash(
 /*=====================*/
 					/* out: TRUE if succeeded */
 	dict_index_t*	index,		/* in: index */
 	btr_search_t*	info,		/* in: index search info */
-	dtuple_t*	tuple,		/* in: logical record */
+	const dtuple_t*	tuple,		/* in: logical record */
 	ulint		mode,		/* in: PAGE_CUR_L, ... */
 	ulint		latch_mode,	/* in: BTR_SEARCH_LEAF, ... */
 	btr_cur_t*	cursor,		/* out: tree cursor */
@@ -73,33 +96,41 @@ Moves or deletes hash entries for moved records. If new_page is already hashed,
 then the hash index for page, if any, is dropped. If new_page is not hashed,
 and page is hashed, then a new hash index is built to new_page with the same
 parameters as page (this often happens when a page is split). */
-
+UNIV_INTERN
 void
 btr_search_move_or_delete_hash_entries(
 /*===================================*/
-	page_t*		new_page,	/* in: records are copied
+	buf_block_t*	new_block,	/* in: records are copied
 					to this page */
-	page_t*		page,		/* in: index page */
+	buf_block_t*	block,		/* in: index page from which
+					records were copied, and the
+					copied records will be deleted
+					from this page */
 	dict_index_t*	index);		/* in: record descriptor */
 /************************************************************************
 Drops a page hash index. */
-
+UNIV_INTERN
 void
 btr_search_drop_page_hash_index(
 /*============================*/
-	page_t*	page);	/* in: index page, s- or x-latched */
+	buf_block_t*	block);	/* in: block containing index page,
+				s- or x-latched, or an index page
+				for which we know that
+				block->buf_fix_count == 0 */
 /************************************************************************
 Drops a page hash index when a page is freed from a fseg to the file system.
 Drops possible hash index if the page happens to be in the buffer pool. */
-
+UNIV_INTERN
 void
 btr_search_drop_page_hash_when_freed(
 /*=================================*/
 	ulint	space,		/* in: space id */
+	ulint	zip_size,	/* in: compressed page size in bytes
+				or 0 for uncompressed pages */
 	ulint	page_no);	/* in: page number */
 /************************************************************************
 Updates the page hash index when a single record is inserted on a page. */
-
+UNIV_INTERN
 void
 btr_search_update_hash_node_on_insert(
 /*==================================*/
@@ -109,7 +140,7 @@ btr_search_update_hash_node_on_insert(
 				to the cursor */
 /************************************************************************
 Updates the page hash index when a single record is inserted on a page. */
-
+UNIV_INTERN
 void
 btr_search_update_hash_on_insert(
 /*=============================*/
@@ -119,7 +150,7 @@ btr_search_update_hash_on_insert(
 				to the cursor */
 /************************************************************************
 Updates the page hash index when a single record is deleted from a page. */
-
+UNIV_INTERN
 void
 btr_search_update_hash_on_delete(
 /*=============================*/
@@ -128,19 +159,29 @@ btr_search_update_hash_on_delete(
 				the record is not yet deleted */
 /************************************************************************
 Validates the search system. */
-
+UNIV_INTERN
 ibool
 btr_search_validate(void);
 /*======================*/
 				/* out: TRUE if ok */
 
+/* Flag: has the search system been disabled? */
+extern ibool btr_search_disabled;
+
 /* The search info struct in an index */
 
 struct btr_search_struct{
+	ulint	ref_count;	/* Number of blocks in this index tree
+				that have search index built
+				i.e. block->index points to this index.
+				Protected by btr_search_latch except
+				when during initialization in
+				btr_search_info_create(). */
+
 	/* The following fields are not protected by any latch.
 	Unfortunately, this means that they must be aligned to
 	the machine word, i.e., they cannot be turned into bit-fields. */
-	page_t*	root_guess;	/* the root page frame when it was last time
+	buf_block_t* root_guess;/* the root page frame when it was last time
 				fetched, or NULL */
 	ulint	hash_analysis;	/* when this exceeds BTR_SEARCH_HASH_ANALYSIS,
 				the hash analysis starts; this is reset if no

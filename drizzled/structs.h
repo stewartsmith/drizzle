@@ -20,10 +20,16 @@
 
 /* The old structures from unireg */
 
-#include <mysys/iocache.h>
+#ifndef DRIZZLED_STRUCTS_H
+#define DRIZZLED_STRUCTS_H
+
+#include <drizzled/base.h>
+#include <mysys/definitions.h>
+#include <drizzled/lex_string.h>
 
 class Table;
 class Field;
+typedef struct st_io_cache IO_CACHE;
 
 typedef struct st_date_time_format {
   unsigned char positions[8];
@@ -51,7 +57,7 @@ typedef struct st_keyfile_info {	/* used with ha_info() */
   time_t create_time;			/* When table was created */
   time_t check_time;
   time_t update_time;
-  ulong mean_rec_length;		/* physical reclength */
+  uint64_t mean_rec_length;		/* physical reclength */
 } KEYFILE_INFO;
 
 
@@ -111,7 +117,7 @@ typedef struct st_reginfo {		/* Extra info about reg */
 
 struct st_read_record;				/* For referense later */
 class SQL_SELECT;
-class THD;
+class Session;
 class handler;
 struct st_join_table;
 
@@ -120,7 +126,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
   handler *file;
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
-  THD *thd;
+  Session *session;
   SQL_SELECT *select;
   uint32_t cache_records;
   uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
@@ -136,7 +142,10 @@ typedef struct st_read_record {			/* Parameter to read_record */
 
 
 typedef struct {
-  ulong year,month,day,hour;
+  uint32_t year;
+  uint32_t month;
+  uint32_t day;
+  uint32_t hour;
   uint64_t minute,second,second_part;
   bool neg;
 } INTERVAL;
@@ -149,42 +158,14 @@ typedef struct st_known_date_time_format {
   const char *time_format;
 } KNOWN_DATE_TIME_FORMAT;
 
-enum SHOW_COMP_OPTION { SHOW_OPTION_YES, SHOW_OPTION_NO, SHOW_OPTION_DISABLED};
 
 extern const char *show_comp_option_name[];
 
-typedef int *(*update_var)(THD *, struct st_mysql_show_var *);
+typedef int *(*update_var)(Session *, struct st_mysql_show_var *);
 
 typedef struct	st_lex_user {
   LEX_STRING user, host, password;
 } LEX_USER;
-
-/*
-  This structure specifies the maximum amount of resources which
-  can be consumed by each account. Zero value of a member means
-  there is no limit.
-*/
-typedef struct user_resources {
-  /* Maximum number of queries/statements per hour. */
-  uint32_t questions;
-  /*
-     Maximum number of updating statements per hour (which statements are
-     updating is defined by sql_command_flags array).
-  */
-  uint32_t updates;
-  /* Maximum number of connections established per hour. */
-  uint32_t conn_per_hour;
-  /* Maximum number of concurrent connections. */
-  uint32_t user_conn;
-  /*
-     Values of this enum and specified_limits member are used by the
-     parser to store which user limits were specified in GRANT statement.
-  */
-  enum {QUERIES_PER_HOUR= 1, UPDATES_PER_HOUR= 2, CONNECTIONS_PER_HOUR= 4,
-        USER_CONNECTIONS= 8};
-  uint32_t specified_limits;
-} USER_RESOURCES;
-
 
 /*
   This structure is used for counting resources consumed and for checking
@@ -214,8 +195,6 @@ typedef struct  user_conn {
      per hour and total number of statements per hour for this account.
   */
   uint32_t conn_per_hour, updates, questions;
-  /* Maximum amount of resources which account is allowed to consume. */
-  USER_RESOURCES user_resources;
 } USER_CONN;
 
 	/* Bits in form->update */
@@ -245,7 +224,7 @@ typedef struct  user_conn {
   { auto_inc_interval_min + k * increment,
     0 <= k <= (auto_inc_interval_values-1) }
   Where "increment" is maintained separately by the user of this class (and is
-  currently only thd->variables.auto_increment_increment).
+  currently only session->variables.auto_increment_increment).
   It mustn't derive from Sql_alloc, because SET INSERT_ID needs to
   allocate memory which must stay allocated for use by the next statement.
 */
@@ -263,8 +242,14 @@ public:
     interval_max=    (val == UINT64_MAX) ? val : start + val * incr;
   }
   Discrete_interval(uint64_t start, uint64_t val, uint64_t incr) :
-    next(NULL) { replace(start, val, incr); };
-  Discrete_interval() : next(NULL) { replace(0, 0, 0); };
+    interval_min(start), interval_values(val),
+    interval_max((val == UINT64_MAX) ? val : start + val * incr),
+    next(NULL)
+  {};
+  Discrete_interval() :
+    interval_min(0), interval_values(0),
+    interval_max(0), next(NULL)
+  {};
   uint64_t minimum() const { return interval_min;    };
   uint64_t values()  const { return interval_values; };
   uint64_t maximum() const { return interval_max;    };
@@ -316,15 +301,20 @@ private:
     }
   }
 public:
-  Discrete_intervals_list() : head(NULL), current(NULL), elements(0) {};
-  Discrete_intervals_list(const Discrete_intervals_list& from)
+  Discrete_intervals_list() :
+    head(NULL), tail(NULL),
+    current(NULL), elements(0) {};
+  Discrete_intervals_list(const Discrete_intervals_list& from) :
+    head(NULL), tail(NULL),
+    current(NULL), elements(0)
   {
     copy_(from);
   }
-  void operator=(const Discrete_intervals_list& from)
+  Discrete_intervals_list& operator=(const Discrete_intervals_list& from)
   {
     empty();
     copy_(from);
+    return *this;
   }
   void empty_no_free()
   {
@@ -356,3 +346,5 @@ public:
   uint64_t maximum()     const { return (head ? tail->maximum() : 0); };
   uint32_t      nb_elements() const { return elements; }
 };
+
+#endif /* DRIZZLED_STRUCTS_H */

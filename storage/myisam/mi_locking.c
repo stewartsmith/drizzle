@@ -84,11 +84,11 @@ int mi_lock_database(MI_INFO *info, int lock_type)
         (info->s->nonmmaped_inserts > MAX_NONMAPPED_INSERTS))
     {
       if (info->s->concurrent_insert)
-        rw_wrlock(&info->s->mmap_lock);
+        pthread_rwlock_wrlock(&info->s->mmap_lock);
       mi_remap_file(info, info->s->state.state.data_file_length);
       info->s->nonmmaped_inserts= 0;
       if (info->s->concurrent_insert)
-        rw_unlock(&info->s->mmap_lock);
+        pthread_rwlock_unlock(&info->s->mmap_lock);
     }
 #endif
 	  share->state.process= share->last_process=share->this_process;
@@ -196,7 +196,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	}
       }
       _mi_test_if_changed(info);
-        
+
       info->lock_type=lock_type;
       info->invalidator=info->s->invalidator;
       share->w_locks++;
@@ -213,7 +213,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
     /*
        Check for bad file descriptors if this table is part
        of a merge union. Failing to capture this may cause
-       a crash on windows if the table is renamed and 
+       a crash on windows if the table is renamed and
        later on referenced by the merge table.
      */
     if( info->owned_by_merge && (info->s)->kfile < 0 )
@@ -308,7 +308,7 @@ void mi_copy_status(void* to,void *from)
 
   IMPLEMENTATION
     Allow concurrent inserts if we don't have a hole in the table or
-    if there is no active write lock and there is active read locks and 
+    if there is no active write lock and there is active read locks and
     myisam_concurrent_insert == 2. In this last case the new
     row('s) are inserted at end of file instead of filling up the hole.
 

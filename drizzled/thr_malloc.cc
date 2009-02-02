@@ -17,16 +17,17 @@
 /* Mallocs for used in threads */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/current_session.h>
+#include <drizzled/error.h>
 
 extern "C" {
   void sql_alloc_error_handler(void)
   {
-    sql_print_error(ER(ER_OUT_OF_RESOURCES));
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
   }
 }
 
-void init_sql_alloc(MEM_ROOT *mem_root, uint32_t block_size, uint32_t pre_alloc)
+void init_sql_alloc(MEM_ROOT *mem_root, size_t block_size, size_t pre_alloc)
 {
   init_alloc_root(mem_root, block_size, pre_alloc);
   mem_root->error_handler=sql_alloc_error_handler;
@@ -35,7 +36,7 @@ void init_sql_alloc(MEM_ROOT *mem_root, uint32_t block_size, uint32_t pre_alloc)
 
 void *sql_alloc(size_t Size)
 {
-  MEM_ROOT *root= *(MEM_ROOT **)pthread_getspecific(THR_MALLOC);
+  MEM_ROOT *root= current_mem_root();
   return alloc_root(root,Size);
 }
 
@@ -79,15 +80,16 @@ void* sql_memdup(const void *ptr, size_t len)
   return pos;
 }
 
-void sql_element_free(void *ptr __attribute__((unused)))
+void sql_element_free(void *)
 {} /* purecov: deadcode */
 
 
 
 char *sql_strmake_with_convert(const char *str, size_t arg_length,
-			       const CHARSET_INFO * const from_cs,
-			       size_t max_res_length,
-			       const CHARSET_INFO * const to_cs, size_t *result_length)
+                               const CHARSET_INFO * const from_cs,
+                               size_t max_res_length,
+                               const CHARSET_INFO * const to_cs,
+                               size_t *result_length)
 {
   char *pos;
   size_t new_length= to_cs->mbmaxlen*arg_length;

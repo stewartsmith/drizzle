@@ -17,4 +17,7 @@
 --source include/have_innodb.inc
 let $engine_type= InnoDB;
 
---source include/concurrent.inc
+
+## TODO: Bug lp:315676
+#--source include/concurrent.inc
+select 1;

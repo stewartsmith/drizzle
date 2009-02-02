@@ -104,7 +104,7 @@
 #include <drizzled/global.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_sys.h>
-#include <keycache.h>
+#include "keycache.h"
 #include <mystrings/m_string.h>
 #include <mysys/my_bit.h>
 #include <errno.h>
@@ -143,7 +143,6 @@
 /* types of condition variables */
 #define  COND_FOR_REQUESTED 0
 #define  COND_FOR_SAVED     1
-#define  COND_FOR_READERS   2
 
 typedef pthread_cond_t KEYCACHE_CONDVAR;
 
@@ -220,10 +219,6 @@ static void free_block(KEY_CACHE *keycache, BLOCK_LINK *block);
                                      (uint32_t) (f)) & (keycache->hash_entries-1))
 #define FILE_HASH(f)                 ((uint) (f) & (CHANGED_BLOCKS_HASH-1))
 
-#define BLOCK_NUMBER(b)                                                       \
-  ((uint) (((char*)(b)-(char *) keycache->block_root)/sizeof(BLOCK_LINK)))
-#define HASH_LINK_NUMBER(h)                                                   \
-  ((uint) (((char*)(h)-(char *) keycache->hash_link_root)/sizeof(HASH_LINK)))
 
 #ifdef KEYCACHE_TIMEOUT
 static int keycache_pthread_cond_wait(pthread_cond_t *cond,
@@ -331,8 +326,7 @@ int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
 	  Allocate memory for blocks, hash_links and hash entries;
 	  For each block 2 hash links are allocated
         */
-        if ((keycache->block_root= (BLOCK_LINK*) my_malloc(length,
-                                                           MYF(0))))
+        if ((keycache->block_root= (BLOCK_LINK*) malloc(length)))
           break;
         free(keycache->block_mem);
         keycache->block_mem= 0;
@@ -2200,9 +2194,11 @@ static void read_block(KEY_CACHE *keycache,
 unsigned char *key_cache_read(KEY_CACHE *keycache,
                       File file, my_off_t filepos, int level,
                       unsigned char *buff, uint32_t length,
-                      uint32_t block_length __attribute__((unused)),
-                      int return_buffer __attribute__((unused)))
+                      uint32_t block_length,
+                      int return_buffer)
 {
+  (void)block_length;
+  (void)return_buffer;
   bool locked_and_incremented= false;
   int error=0;
   unsigned char *start= buff;
@@ -2354,7 +2350,7 @@ no_key_cache:
 
   if (locked_and_incremented)
     keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  if (pread(file, (unsigned char*) buff, length, filepos))
+  if (!pread(file, (unsigned char*) buff, length, filepos))
     error= 1;
   if (locked_and_incremented)
     keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -2626,9 +2622,10 @@ int key_cache_insert(KEY_CACHE *keycache,
 int key_cache_write(KEY_CACHE *keycache,
                     File file, my_off_t filepos, int level,
                     unsigned char *buff, uint32_t length,
-                    uint32_t block_length  __attribute__((unused)),
+                    uint32_t block_length,
                     int dont_write)
 {
+  (void)block_length;
   bool locked_and_incremented= false;
   int error=0;
 
@@ -3189,6 +3186,7 @@ static int flush_key_blocks_int(KEY_CACHE *keycache,
     BLOCK_LINK *first_in_switch= NULL;
     BLOCK_LINK *last_in_flush;
     BLOCK_LINK *last_for_update;
+    BLOCK_LINK *last_in_switch;
     BLOCK_LINK *block, *next;
 
     if (type != FLUSH_IGNORE_CHANGED)
@@ -3215,8 +3213,7 @@ static int flush_key_blocks_int(KEY_CACHE *keycache,
         changed blocks appear while we need to wait for something.
       */
       if ((count > FLUSH_CACHE) &&
-          !(cache= (BLOCK_LINK**) my_malloc(sizeof(BLOCK_LINK*)*count,
-                                            MYF(0))))
+          !(cache= (BLOCK_LINK**) malloc(sizeof(BLOCK_LINK*)*count)))
         cache= cache_buff;
       /*
         After a restart there could be more changed blocks than now.
@@ -3431,8 +3428,8 @@ restart:
 
     if (! (type == FLUSH_KEEP || type == FLUSH_FORCE_WRITE))
     {
-      BLOCK_LINK *last_for_update= NULL;
-      BLOCK_LINK *last_in_switch= NULL;
+      last_for_update= NULL;
+      last_in_switch= NULL;
       uint32_t total_found= 0;
       uint32_t found;
 
@@ -3755,9 +3752,9 @@ static int flush_all_key_blocks(KEY_CACHE *keycache)
     0 on success (always because it can't fail)
 */
 
-int reset_key_cache_counters(const char *name __attribute__((unused)),
-                             KEY_CACHE *key_cache)
+int reset_key_cache_counters(const char *name, KEY_CACHE *key_cache)
 {
+  (void)name;
   if (!key_cache->key_cache_inited)
   {
     return(0);
@@ -3771,6 +3768,22 @@ int reset_key_cache_counters(const char *name __attribute__((unused)),
 }
 
 #if defined(KEYCACHE_TIMEOUT)
+
+
+static inline
+unsigned int hash_link_number(HASH_LINK *hash_link, KEY_CACHE *keycache)
+{
+  return ((unsigned int) (((char*)hash_link-(char *) keycache->hash_link_root)/
+		  sizeof(HASH_LINK)));
+}
+
+static inline
+unsigned int block_number(BLOCK_LINK *block, KEY_CACHE *keycache)
+{
+  return ((unsigned int) (((char*)block-(char *)keycache->block_root)/
+		  sizeof(BLOCK_LINK)));
+}
+
 
 #define KEYCACHE_DUMP_FILE  "keycache_dump.txt"
 #define MAX_QUEUE_LEN  100
@@ -3813,9 +3826,9 @@ static void keycache_dump(KEY_CACHE *keycache)
       thread=thread->next;
       hash_link= (HASH_LINK *) thread->opt_info;
       fprintf(keycache_dump_file,
-        "thread:%u hash_link:%u (file,filepos)=(%u,%u)\n",
-        thread->id, (uint) HASH_LINK_NUMBER(hash_link),
-        (uint) hash_link->file,(uint32_t) hash_link->diskpos);
+	      "thread:%u hash_link:%u (file,filepos)=(%u,%u)\n",
+	      thread->id, (uint) hash_link_number(hash_link, keycache),
+	      (uint) hash_link->file,(uint32_t) hash_link->diskpos);
       if (++i == MAX_QUEUE_LEN)
         break;
     }
@@ -3827,9 +3840,10 @@ static void keycache_dump(KEY_CACHE *keycache)
     block= &keycache->block_root[i];
     hash_link= block->hash_link;
     fprintf(keycache_dump_file,
-            "block:%u hash_link:%d status:%x #requests=%u waiting_for_readers:%d\n",
-            i, (int) (hash_link ? HASH_LINK_NUMBER(hash_link) : -1),
-            block->status, block->requests, block->condvar ? 1 : 0);
+	    "block:%u hash_link:%d status:%x #requests=%u "
+	    "waiting_for_readers:%d\n",
+	    i, (int) (hash_link ? hash_link_number(hash_link, keycache) : -1),
+	    block->status, block->requests, block->condvar ? 1 : 0);
     for (j=0 ; j < 2; j++)
     {
       KEYCACHE_WQUEUE *wqueue=&block->wqueue[j];
@@ -3857,7 +3871,7 @@ static void keycache_dump(KEY_CACHE *keycache)
     {
       block= block->next_used;
       fprintf(keycache_dump_file,
-              "block:%u, ", BLOCK_NUMBER(block));
+	      "block:%u, ", block_number(block, keycache));
     }
     while (block != keycache->used_last);
   }

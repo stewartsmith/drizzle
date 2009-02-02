@@ -362,14 +362,14 @@ opt_calc_index_goodness(
 	if (goodness >= 4 * dict_index_get_n_unique(index)) {
 		goodness += 1024;
 
-		if (index->type & DICT_CLUSTERED) {
+		if (dict_index_is_clust(index)) {
 
 			goodness += 1024;
 		}
 	}
 
 	/* We have to test for goodness here, as last_op may note be set */
-	if (goodness && index->type & DICT_CLUSTERED) {
+	if (goodness && dict_index_is_clust(index)) {
 
 		goodness++;
 	}
@@ -587,7 +587,7 @@ opt_search_plan_for_table(
 						   best_last_op);
 	}
 
-	if ((best_index->type & DICT_CLUSTERED)
+	if (dict_index_is_clust(best_index)
 	    && (plan->n_exact_match >= dict_index_get_n_unique(best_index))) {
 
 		plan->unique_search = TRUE;
@@ -819,7 +819,7 @@ already exist in the list. If the column is already in the list, puts a value
 indirection to point to the occurrence in the column list, except if the
 column occurrence we are looking at is in the column list, in which case
 nothing is done. */
-
+UNIV_INTERN
 void
 opt_find_all_cols(
 /*==============*/
@@ -906,7 +906,7 @@ opt_find_all_cols(
 
 	sym_node->field_nos[SYM_CLUST_FIELD_NO] = dict_index_get_nth_col_pos(
 		dict_table_get_first_index(index->table), sym_node->col_no);
-	if (!(index->type & DICT_CLUSTERED)) {
+	if (!dict_index_is_clust(index)) {
 
 		ut_a(plan);
 
@@ -1041,7 +1041,7 @@ opt_clust_access(
 
 	plan->no_prefetch = FALSE;
 
-	if (index->type & DICT_CLUSTERED) {
+	if (dict_index_is_clust(index)) {
 		plan->clust_map = NULL;
 		plan->clust_ref = NULL;
 
@@ -1089,7 +1089,7 @@ opt_clust_access(
 Optimizes a select. Decides which indexes to tables to use. The tables
 are accessed in the order that they were written to the FROM part in the
 select statement. */
-
+UNIV_INTERN
 void
 opt_search_plan(
 /*============*/
@@ -1162,7 +1162,7 @@ opt_search_plan(
 
 /************************************************************************
 Prints info of a query plan. */
-
+UNIV_INTERN
 void
 opt_print_query_plan(
 /*=================*/

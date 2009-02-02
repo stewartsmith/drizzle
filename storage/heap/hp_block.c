@@ -19,8 +19,8 @@
 
 /*
   Find record according to record-position.
-      
-  The record is located by factoring position number pos into (p_0, p_1, ...) 
+
+  The record is located by factoring position number pos into (p_0, p_1, ...)
   such that
      pos = SUM_i(block->level_info[i].records_under_level * p_i)
   {p_0, p_1, ...} serve as indexes to descend the blocks tree.
@@ -47,8 +47,8 @@ unsigned char *hp_find_block(HP_BLOCK *block, uint32_t pos)
     hp_get_new_block()
       block             HP_BLOCK tree-like block
       alloc_length OUT  Amount of memory allocated from the heap
-      
-  Interrupts are stopped to allow ha_panic in interrupts 
+
+  Interrupts are stopped to allow ha_panic in interrupts
   RETURN
     0  OK
     1  Out of memory
@@ -65,18 +65,18 @@ int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
 
   /*
     Allocate space for leaf block plus space for upper level blocks up to
-    first level that has a free slot to put the pointer. 
+    first level that has a free slot to put the pointer.
     In some cases we actually allocate more then we need:
     Consider e.g. a situation where we have one level 1 block and one level 0
-    block, the level 0 block is full and this function is called. We only 
-    need a leaf block in this case. Nevertheless, we will get here with i=1 
-    and will also allocate sizeof(HP_PTRS) for non-leaf block and will never 
+    block, the level 0 block is full and this function is called. We only
+    need a leaf block in this case. Nevertheless, we will get here with i=1
+    and will also allocate sizeof(HP_PTRS) for non-leaf block and will never
     use this space.
-    This doesn't add much overhead - with current values of sizeof(HP_PTRS) 
+    This doesn't add much overhead - with current values of sizeof(HP_PTRS)
     and my_default_record_cache_size we get about 1/128 unused memory.
    */
   *alloc_length=sizeof(HP_PTRS)*i+block->records_in_block* block->recbuffer;
-  if (!(root=(HP_PTRS*) my_malloc(*alloc_length,MYF(MY_WME))))
+  if (!(root=(HP_PTRS*) malloc(*alloc_length)))
     return 1;
 
   if (i == 0)
@@ -102,7 +102,7 @@ int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
     block->level_info[i].last_blocks->
       blocks[HP_PTRS_IN_NOD - block->level_info[i].free_ptrs_in_block--]=
 	(unsigned char*) root;
-    
+
     /* Add a block subtree with each node having one left-most child */
     for (j=i-1 ; j >0 ; j--)
     {
@@ -110,8 +110,8 @@ int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
       block->level_info[j].last_blocks->blocks[0]=(unsigned char*) root;
       block->level_info[j].free_ptrs_in_block=HP_PTRS_IN_NOD-1;
     }
-    
-    /* 
+
+    /*
       root now points to last (block->records_in_block* block->recbuffer)
       allocated bytes. Use it as a leaf block.
     */

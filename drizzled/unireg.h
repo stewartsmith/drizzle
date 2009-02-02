@@ -20,19 +20,22 @@
 
 /*  Extra functions used by unireg library */
 
-#ifndef _unireg_h
+#ifndef DRIZZLED_UNIREG_H
+#define DRIZZLED_UNIREG_H
 
-#include <libdrizzle/gettext.h>
+#include <drizzled/structs.h>				/* All structs we need */
+#include <drizzled/serialize/table.pb.h>
+int drizzle_read_table_proto(const char* path, drizzle::Table* table);
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 #ifndef NO_ALARM_LOOP
 #define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
 #endif
 
-#define ER(X) _(drizzled_error_messages[(X) - ER_ERROR_FIRST])
-#define ER_SAFE(X) (((X) >= ER_ERROR_FIRST && (X) <= ER_ERROR_LAST) ? ER(X) : _("Invalid error code"))
 
-
-#define ERRMAPP 1				/* Errormap f|r my_error */
 #define LIBLEN FN_REFLEN-FN_LEN			/* Max l{ngd p} dev */
 /* extra 4+4 bytes for slave tmp tables */
 #define MAX_DBKEY_LENGTH (NAME_LEN*2+1+1+4+4)
@@ -89,7 +92,6 @@
 #define EXTRA_RECORDS	10			/* Extra records in sort */
 #define SCROLL_EXTRA	5			/* Extra scroll-rows. */
 #define FIELD_NAME_USED ((uint) 32768)		/* Bit set if fieldname used */
-#define FORM_NAME_USED	((uint) 16384)		/* Bit set if formname used */
 #define FIELD_NR_MASK	16383			/* To get fieldnumber */
 #define FERR		-1			/* Error from my_functions */
 #define CREATE_MODE	0			/* Default mode on new files */
@@ -125,32 +127,12 @@
   Views are not processed.
 */
 #define OPEN_TABLE_ONLY        OPEN_FRM_FILE_ONLY*2
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine
-  The flag means that we need to process views only to get necessary data.
-  Tables are not processed.
-*/
-#define OPEN_VIEW_ONLY         OPEN_TABLE_ONLY*2
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine.
-  The flag means that we need to open a view using
-  open_normal_and_derived_tables() function.
-*/
-#define OPEN_VIEW_FULL         OPEN_VIEW_ONLY*2
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine.
-  The flag means that I_S table uses optimization algorithm.
-*/
-#define OPTIMIZE_I_S_TABLE     OPEN_VIEW_FULL*2
 
 #define SC_INFO_LENGTH 4		/* Form format constant */
 #define TE_INFO_LENGTH 3
 #define MTYP_NOEMPTY_BIT 128
 
-#define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */
+
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM 50205
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR "50205"
@@ -162,13 +144,13 @@
 */
 #define MIN_TURBOBM_PATTERN_LEN 3
 
-/* 
+/*
    Defines for binary logging.
    Do not decrease the value of BIN_LOG_HEADER_SIZE.
    Do not even increase it before checking code.
 */
 
-#define BIN_LOG_HEADER_SIZE    4 
+#define BIN_LOG_HEADER_SIZE    4
 
 #define DEFAULT_KEY_CACHE_NAME "default"
 
@@ -176,9 +158,21 @@
 #define COLUMN_FORMAT_MASK 7
 #define COLUMN_FORMAT_SHIFT 3
 
-/* Include prototypes for unireg */
+void unireg_init();
+void unireg_end(void) __attribute__((noreturn));
+void unireg_abort(int exit_code) __attribute__((noreturn));
 
-#include <drizzled/error.h>
-#include "structs.h"				/* All structs we need */
+int rea_create_table(Session *session, const char *path,
+                     const char *db, const char *table_name,
+                     HA_CREATE_INFO *create_info,
+                     List<Create_field> &create_field,
+                     uint32_t key_count,KEY *key_info,
+                     handler *file, bool is_like);
+
+
+#if defined(__cplusplus)
+}
+#endif
+
 
 #endif

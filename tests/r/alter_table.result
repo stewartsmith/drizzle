@@ -396,17 +396,17 @@ create table t1 (a int, b int, c int, d int, e int, f int, g int, h int,i int, p
 insert into t1 (a) values(1);
 show table status like 't1';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MyISAM	10	Fixed	1	37	X	X	X	X	X	X	X	X	utf8_general_ci	NULL		
+t1	MyISAM	X	Fixed	1	37	X	X	X	X	X	X	X	X	utf8_general_ci	NULL		
 alter table t1 modify a int;
 show table status like 't1';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MyISAM	10	Fixed	1	37	X	X	X	X	X	X	X	X	utf8_general_ci	NULL		
+t1	MyISAM	X	Fixed	1	37	X	X	X	X	X	X	X	X	utf8_general_ci	NULL		
 drop table t1;
 create table t1 (a int not null default 0, b int not null default 0, c int not null default 0, d int not null default 0, e int not null default 0, f int not null default 0, g int not null default 0, h int not null default 0,i int not null default 0, primary key (a,b,c,d,e,f,g,i,h)) engine=MyISAM;
 insert into t1 (a) values(1);
 show table status like 't1';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MyISAM	10	Fixed	1	37	X	X	X	X	X	X	X	X	utf8_general_ci	NULL		
+t1	MyISAM	X	Fixed	1	37	X	X	X	X	X	X	X	X	utf8_general_ci	NULL		
 drop table t1;
 CREATE TABLE t1 (a int PRIMARY KEY, b INT UNIQUE);
 ALTER TABLE t1 DROP PRIMARY KEY;
@@ -581,6 +581,8 @@ alter table test.t1 rename test.t1;
 use test;
 drop table t1;
 CREATE TABLE t1(a INT) ROW_FORMAT=FIXED;
+Warnings:
+Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
 CREATE INDEX i1 ON t1(a);
 SHOW CREATE TABLE t1;
 Table	Create Table
@@ -711,11 +713,11 @@ section	subsection	title	reviewer
 3	3	Stored Functions	You
 2	3	Server	Me
 alter table table_24562 order by 12;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '12' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '12' at line 1
 alter table table_24562 order by (section + 12);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '(section + 12)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '(section + 12)' at line 1
 alter table table_24562 order by length(title);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '(title)' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '(title)' at line 1
 alter table table_24562 order by no_such_col;
 ERROR 42S22: Unknown column 'no_such_col' in 'order clause'
 drop table table_24562;

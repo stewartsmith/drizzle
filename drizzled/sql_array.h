@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_SQL_ARRAY_H
+#define DRIZZLED_SQL_ARRAY_H
+
 #include <mysys/my_sys.h>
 
-/* 
+/*
   Array of pointers to Elem that uses memory from MEM_ROOT
 
   MEM_ROOT has no realloc() so this is supposed to be used for cases when
@@ -89,3 +92,4 @@ public:
   }
 };
 
+#endif /* DRIZZLED_SQL_ARRAY_H */

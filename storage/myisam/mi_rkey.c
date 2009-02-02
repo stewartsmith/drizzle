@@ -47,7 +47,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
     */
     key_buff=info->lastkey+info->s->base.max_key_length;
     pack_key_length= keypart_map;
-    memcpy(key_buff, key, pack_key_length);
+    memmove(key_buff, key, pack_key_length);
     last_used_keyseg= info->s->keyinfo[inx].seg + info->last_used_keyseg;
   }
   else
@@ -67,7 +67,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
     goto err;
 
   if (share->concurrent_insert)
-    rw_rdlock(&share->key_root_lock[inx]);
+    pthread_rwlock_rdlock(&share->key_root_lock[inx]);
 
   nextflag=myisam_read_vec[search_flag];
   use_key_length=pack_key_length;
@@ -101,7 +101,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
       while ((info->lastpos >= info->state->data_file_length &&
               (search_flag != HA_READ_KEY_EXACT ||
               last_used_keyseg != keyinfo->seg + keyinfo->keysegs)) ||
-             (info->index_cond_func && 
+             (info->index_cond_func &&
               !(res= mi_check_index_cond(info, inx, buf))))
       {
         uint32_t not_used[2];
@@ -134,7 +134,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
       {
         info->lastpos= HA_OFFSET_ERROR;
         if (share->concurrent_insert)
-          rw_unlock(&share->key_root_lock[inx]);
+          pthread_rwlock_unlock(&share->key_root_lock[inx]);
         return((my_errno= HA_ERR_KEY_NOT_FOUND));
       }
       /*
@@ -150,7 +150,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
     }
   }
   if (share->concurrent_insert)
-    rw_unlock(&share->key_root_lock[inx]);
+    pthread_rwlock_unlock(&share->key_root_lock[inx]);
 
   /* Calculate length of the found key;  Used by mi_rnext_same */
   if ((keyinfo->flag & HA_VAR_LENGTH_KEY) && last_used_keyseg &&

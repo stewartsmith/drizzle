@@ -14,8 +14,9 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/current_session.h>
 #include <time.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 
 /**
@@ -36,22 +37,22 @@ int decimal_operation_results(int result)
   case E_DEC_OK:
     break;
   case E_DEC_TRUNCATED:
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_DATA_TRUNCATED, ER(ER_WARN_DATA_TRUNCATED),
 			"", (long)-1);
     break;
   case E_DEC_OVERFLOW:
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE),
 			"DECIMAL", "");
     break;
   case E_DEC_DIV_ZERO:
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
 			ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
     break;
   case E_DEC_BAD_NUM:
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
 			ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
 			ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
 			"decimal", "", "", (long)-1);
@@ -234,8 +235,3 @@ void my_decimal_trim(uint32_t *precision, uint32_t *scale)
     return;
   }
 }
-
-
-/* routines for debugging print */
-#define DIG_PER_DEC1 9
-#define ROUND_UP(X)  (((X)+DIG_PER_DEC1-1)/DIG_PER_DEC1)

@@ -8,6 +8,13 @@ Created 4/24/1996 Heikki Tuuri
 *******************************************************/
 
 #include "dict0load.h"
+#ifndef UNIV_HOTBACKUP
+#if defined(BUILD_DRIZZLE)
+# include <drizzled/global.h>
+#else
+# include "mysql_version.h"
+#endif /* DRIZZLE */
+#endif /* !UNIV_HOTBACKUP */
 
 #ifdef UNIV_NONINL
 #include "dict0load.ic"
@@ -44,7 +51,7 @@ name_of_col_is(
 
 /************************************************************************
 Finds the first table name in the given database. */
-
+UNIV_INTERN
 char*
 dict_get_first_table_name_in_db(
 /*============================*/
@@ -59,8 +66,8 @@ dict_get_first_table_name_in_db(
 	dtuple_t*	tuple;
 	mem_heap_t*	heap;
 	dfield_t*	dfield;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	mtr_t		mtr;
 
@@ -85,7 +92,7 @@ dict_get_first_table_name_in_db(
 loop:
 	rec = btr_pcur_get_rec(&pcur);
 
-	if (!btr_pcur_is_on_user_rec(&pcur, &mtr)) {
+	if (!btr_pcur_is_on_user_rec(&pcur)) {
 		/* Not found */
 
 		btr_pcur_close(&pcur);
@@ -129,7 +136,7 @@ loop:
 /************************************************************************
 Prints to the standard output information on all tables found in the data
 dictionary system table. */
-
+UNIV_INTERN
 void
 dict_print(void)
 /*============*/
@@ -138,8 +145,8 @@ dict_print(void)
 	dict_index_t*	sys_index;
 	dict_table_t*	table;
 	btr_pcur_t	pcur;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	mtr_t		mtr;
 
@@ -164,7 +171,7 @@ loop:
 
 	rec = btr_pcur_get_rec(&pcur);
 
-	if (!btr_pcur_is_on_user_rec(&pcur, &mtr)) {
+	if (!btr_pcur_is_on_user_rec(&pcur)) {
 		/* end of index */
 
 		btr_pcur_close(&pcur);
@@ -220,6 +227,69 @@ loop:
 }
 
 /************************************************************************
+Determine the flags of a table described in SYS_TABLES. */
+static
+ulint
+dict_sys_tables_get_flags(
+/*======================*/
+				/* out: compressed page size in kilobytes;
+				or 0 if the tablespace is uncompressed,
+				ULINT_UNDEFINED on error */
+	const rec_t*	rec)	/* in: a record of SYS_TABLES */
+{
+	const byte*	field;
+	ulint		len;
+	ulint		n_cols;
+	ulint		flags;
+
+	field = rec_get_nth_field_old(rec, 5, &len);
+	ut_a(len == 4);
+
+	flags = mach_read_from_4(field);
+
+	if (UNIV_LIKELY(flags == DICT_TABLE_ORDINARY)) {
+		return(0);
+	}
+
+	field = rec_get_nth_field_old(rec, 4, &len);
+	n_cols = mach_read_from_4(field);
+
+	if (UNIV_UNLIKELY(!(n_cols & 0x80000000UL))) {
+		/* New file formats require ROW_FORMAT=COMPACT. */
+		return(ULINT_UNDEFINED);
+	}
+
+	switch (flags & (DICT_TF_FORMAT_MASK | DICT_TF_COMPACT)) {
+	default:
+	case DICT_TF_FORMAT_51 << DICT_TF_FORMAT_SHIFT:
+	case DICT_TF_FORMAT_51 << DICT_TF_FORMAT_SHIFT | DICT_TF_COMPACT:
+		/* flags should be DICT_TABLE_ORDINARY,
+		or DICT_TF_FORMAT_MASK should be nonzero. */
+		return(ULINT_UNDEFINED);
+
+	case DICT_TF_FORMAT_ZIP << DICT_TF_FORMAT_SHIFT | DICT_TF_COMPACT:
+#if DICT_TF_FORMAT_MAX > DICT_TF_FORMAT_ZIP
+# error "missing case labels for DICT_TF_FORMAT_ZIP .. DICT_TF_FORMAT_MAX"
+#endif
+		/* We support this format. */
+		break;
+	}
+
+	if (UNIV_UNLIKELY((flags & DICT_TF_ZSSIZE_MASK)
+			  > (DICT_TF_ZSSIZE_MAX << DICT_TF_ZSSIZE_SHIFT))) {
+		/* Unsupported compressed page size. */
+		return(ULINT_UNDEFINED);
+	}
+
+	if (UNIV_UNLIKELY(flags & (~0 << DICT_TF_BITS))) {
+		/* Some unused bits are set. */
+		return(ULINT_UNDEFINED);
+	}
+
+	return(flags);
+}
+
+/************************************************************************
 In a crash recovery we already have all the tablespace objects created.
 This function compares the space id information in the InnoDB data dictionary
 to what we already read with fil_load_single_table_tablespaces().
@@ -227,7 +297,7 @@ to what we already read with fil_load_single_table_tablespaces().
 In a normal startup, we create the tablespace objects for every table in
 InnoDB's data dictionary, if the corresponding .ibd file exists.
 We also scan the biggest space id, and store it to fil_system. */
-
+UNIV_INTERN
 void
 dict_check_tablespaces_and_store_max_id(
 /*====================================*/
@@ -236,10 +306,7 @@ dict_check_tablespaces_and_store_max_id(
 	dict_table_t*	sys_tables;
 	dict_index_t*	sys_index;
 	btr_pcur_t	pcur;
-	rec_t*		rec;
-	byte*		field;
-	ulint		len;
-	ulint		space_id;
+	const rec_t*	rec;
 	ulint		max_space_id	= 0;
 	mtr_t		mtr;
 
@@ -258,7 +325,7 @@ loop:
 
 	rec = btr_pcur_get_rec(&pcur);
 
-	if (!btr_pcur_is_on_user_rec(&pcur, &mtr)) {
+	if (!btr_pcur_is_on_user_rec(&pcur)) {
 		/* end of index */
 
 		btr_pcur_close(&pcur);
@@ -276,13 +343,34 @@ loop:
 		return;
 	}
 
-	field = rec_get_nth_field_old(rec, 0, &len);
-
 	if (!rec_get_deleted_flag(rec, 0)) {
 
 		/* We found one */
+		const byte*	field;
+		ulint		len;
+		ulint		space_id;
+		ulint		flags;
+		char*		name;
 
-		char*	name = mem_strdupl((char*) field, len);
+		field = rec_get_nth_field_old(rec, 0, &len);
+		name = mem_strdupl((char*) field, len);
+
+		flags = dict_sys_tables_get_flags(rec);
+		if (UNIV_UNLIKELY(flags == ULINT_UNDEFINED)) {
+
+			field = rec_get_nth_field_old(rec, 5, &len);
+			flags = mach_read_from_4(field);
+
+			ut_print_timestamp(stderr);
+			fputs("  InnoDB: Error: table ", stderr);
+			ut_print_filename(stderr, name);
+			fprintf(stderr, "\n"
+				"InnoDB: in InnoDB data dictionary"
+				" has unknown type %lx.\n",
+				(ulong) flags);
+
+			goto loop;
+		}
 
 		field = rec_get_nth_field_old(rec, 9, &len);
 		ut_a(len == 4);
@@ -306,7 +394,7 @@ loop:
 			object and check that the .ibd file exists. */
 
 			fil_open_single_table_tablespace(FALSE, space_id,
-							 name);
+							 flags, name);
 		}
 
 		mem_free(name);
@@ -337,8 +425,8 @@ dict_load_columns(
 	btr_pcur_t	pcur;
 	dtuple_t*	tuple;
 	dfield_t*	dfield;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	byte*		buf;
 	char*		name;
@@ -371,7 +459,7 @@ dict_load_columns(
 
 		rec = btr_pcur_get_rec(&pcur);
 
-		ut_a(btr_pcur_is_on_user_rec(&pcur, &mtr));
+		ut_a(btr_pcur_is_on_user_rec(&pcur));
 
 		ut_a(!rec_get_deleted_flag(rec, 0));
 
@@ -404,7 +492,7 @@ dict_load_columns(
 
 				prtype = dtype_form_prtype(
 					prtype,
-					DATA_DRIZZLE_BINARY_CHARSET_COLL);
+					DATA_MYSQL_BINARY_CHARSET_COLL);
 			} else {
 				/* Use the default charset for
 				other than binary columns. */
@@ -430,31 +518,11 @@ dict_load_columns(
 }
 
 /************************************************************************
-Report that an index field or index for a table has been delete marked. */
-static
-void
-dict_load_report_deleted_index(
-/*===========================*/
-	const char*	name,	/* in: table name */
-	ulint		field)	/* in: index field, or ULINT_UNDEFINED */
-{
-	fprintf(stderr, "InnoDB: Error: data dictionary entry"
-		" for table %s is corrupt!\n", name);
-	if (field != ULINT_UNDEFINED) {
-		fprintf(stderr,
-			"InnoDB: Index field %lu is delete marked.\n", field);
-	} else {
-		fputs("InnoDB: An index is delete marked.\n", stderr);
-	}
-}
-
-/************************************************************************
 Loads definitions for index fields. */
 static
 void
 dict_load_fields(
 /*=============*/
-	dict_table_t*	table,	/* in: table */
 	dict_index_t*	index,	/* in: index whose fields to load */
 	mem_heap_t*	heap)	/* in: memory heap for temporary storage */
 {
@@ -465,8 +533,8 @@ dict_load_fields(
 	dfield_t*	dfield;
 	ulint		pos_and_prefix_len;
 	ulint		prefix_len;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	byte*		buf;
 	ulint		i;
@@ -495,14 +563,19 @@ dict_load_fields(
 
 		rec = btr_pcur_get_rec(&pcur);
 
-		ut_a(btr_pcur_is_on_user_rec(&pcur, &mtr));
+		ut_a(btr_pcur_is_on_user_rec(&pcur));
+
+		/* There could be delete marked records in SYS_FIELDS
+		because SYS_FIELDS.INDEX_ID can be updated
+		by ALTER TABLE ADD INDEX. */
+
 		if (rec_get_deleted_flag(rec, 0)) {
-			dict_load_report_deleted_index(table->name, i);
+
+			goto next_rec;
 		}
 
 		field = rec_get_nth_field_old(rec, 0, &len);
 		ut_ad(len == 8);
-		ut_a(ut_memcmp(buf, field, len) == 0);
 
 		field = rec_get_nth_field_old(rec, 1, &len);
 		ut_a(len == 4);
@@ -537,6 +610,7 @@ dict_load_fields(
 							  (char*) field, len),
 					 prefix_len);
 
+next_rec:
 		btr_pcur_move_to_next_user_rec(&pcur, &mtr);
 	}
 
@@ -564,8 +638,8 @@ dict_load_indexes(
 	btr_pcur_t	pcur;
 	dtuple_t*	tuple;
 	dfield_t*	dfield;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	ulint		name_len;
 	char*		name_buf;
@@ -606,7 +680,7 @@ dict_load_indexes(
 	btr_pcur_open_on_user_rec(sys_index, tuple, PAGE_CUR_GE,
 				  BTR_SEARCH_LEAF, &pcur, &mtr);
 	for (;;) {
-		if (!btr_pcur_is_on_user_rec(&pcur, &mtr)) {
+		if (!btr_pcur_is_on_user_rec(&pcur)) {
 
 			break;
 		}
@@ -618,14 +692,9 @@ dict_load_indexes(
 
 		if (ut_memcmp(buf, field, len) != 0) {
 			break;
-		}
-
-		if (rec_get_deleted_flag(rec, 0)) {
-			dict_load_report_deleted_index(table->name,
-						       ULINT_UNDEFINED);
-
-			error = DB_CORRUPTION;
-			goto func_exit;
+		} else if (rec_get_deleted_flag(rec, 0)) {
+			/* Skip delete marked records */
+			goto next_rec;
 		}
 
 		field = rec_get_nth_field_old(rec, 1, &len);
@@ -675,12 +744,13 @@ dict_load_indexes(
 		} else if ((type & DICT_CLUSTERED) == 0
 			    && NULL == dict_table_get_first_index(table)) {
 
-			fprintf(stderr,
-				"InnoDB: Error: trying to load index %s"
-				" for table %s\n"
-				"InnoDB: but the first index"
-				" is not clustered!\n",
-				name_buf, table->name);
+			fputs("InnoDB: Error: trying to load index ",
+			      stderr);
+			ut_print_name(stderr, NULL, FALSE, name_buf);
+			fputs(" for table ", stderr);
+			ut_print_name(stderr, NULL, TRUE, table->name);
+			fputs("\nInnoDB: but the first index"
+			      " is not clustered!\n", stderr);
 
 			error = DB_CORRUPTION;
 			goto func_exit;
@@ -698,10 +768,21 @@ dict_load_indexes(
 						      space, type, n_fields);
 			index->id = id;
 
-			dict_load_fields(table, index, heap);
-			dict_index_add_to_cache(table, index, page_no);
+			dict_load_fields(index, heap);
+			error = dict_index_add_to_cache(table, index, page_no,
+							FALSE);
+			/* The data dictionary tables should never contain
+			invalid index definitions.  If we ignored this error
+			and simply did not load this index definition, the
+			.frm file would disagree with the index definitions
+			inside InnoDB. */
+			if (UNIV_UNLIKELY(error != DB_SUCCESS)) {
+
+				goto func_exit;
+			}
 		}
 
+next_rec:
 		btr_pcur_move_to_next_user_rec(&pcur, &mtr);
 	}
 
@@ -718,7 +799,7 @@ the cluster definition if the table is a member in a cluster. Also loads
 all foreign key constraints where the foreign key is in the table or where
 a foreign key references columns in this table. Adds all these to the data
 dictionary cache. */
-
+UNIV_INTERN
 dict_table_t*
 dict_load_table(
 /*============*/
@@ -738,8 +819,8 @@ dict_load_table(
 	dtuple_t*	tuple;
 	mem_heap_t*	heap;
 	dfield_t*	dfield;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	ulint		space;
 	ulint		n_cols;
@@ -767,7 +848,7 @@ dict_load_table(
 				  BTR_SEARCH_LEAF, &pcur, &mtr);
 	rec = btr_pcur_get_rec(&pcur);
 
-	if (!btr_pcur_is_on_user_rec(&pcur, &mtr)
+	if (!btr_pcur_is_on_user_rec(&pcur)
 	    || rec_get_deleted_flag(rec, 0)) {
 		/* Not found */
 err_exit:
@@ -793,6 +874,22 @@ err_exit:
 
 	/* Check if the tablespace exists and has the right name */
 	if (space != 0) {
+		flags = dict_sys_tables_get_flags(rec);
+
+		if (UNIV_UNLIKELY(flags == ULINT_UNDEFINED)) {
+			field = rec_get_nth_field_old(rec, 5, &len);
+			flags = mach_read_from_4(field);
+
+			ut_print_timestamp(stderr);
+			fputs("  InnoDB: Error: table ", stderr);
+			ut_print_filename(stderr, name);
+			fprintf(stderr, "\n"
+				"InnoDB: in InnoDB data dictionary"
+				" has unknown type %lx.\n",
+				(ulong) flags);
+			goto err_exit;
+		}
+
 		if (fil_space_for_table_exists_in_mem(space, name, FALSE,
 						      FALSE, FALSE)) {
 			/* Ok; (if we did a crash recovery then the tablespace
@@ -809,22 +906,22 @@ err_exit:
 				" Retrying an open.\n",
 				name, (ulong)space);
 			/* Try to open the tablespace */
-			if (!fil_open_single_table_tablespace(TRUE,
-							      space, name)) {
+			if (!fil_open_single_table_tablespace(
+				    TRUE, space, flags, name)) {
 				/* We failed to find a sensible tablespace
 				file */
 
 				ibd_file_missing = TRUE;
 			}
 		}
+	} else {
+		flags = 0;
 	}
 
 	ut_a(name_of_col_is(sys_tables, sys_index, 4, "N_COLS"));
 
 	field = rec_get_nth_field_old(rec, 4, &len);
 	n_cols = mach_read_from_4(field);
-
-	flags = 0;
 
 	/* The high-order bit of N_COLS is the "compact format" flag. */
 	if (n_cols & 0x80000000UL) {
@@ -841,15 +938,6 @@ err_exit:
 	field = rec_get_nth_field_old(rec, 3, &len);
 	table->id = mach_read_from_8(field);
 
-	field = rec_get_nth_field_old(rec, 5, &len);
-	if (UNIV_UNLIKELY(mach_read_from_4(field) != DICT_TABLE_ORDINARY)) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: table %s: unknown table type %lu\n",
-			name, (ulong) mach_read_from_4(field));
-		goto err_exit;
-	}
-
 	btr_pcur_close(&pcur);
 	mtr_commit(&mtr);
 
@@ -860,7 +948,7 @@ err_exit:
 	mem_heap_empty(heap);
 
 	err = dict_load_indexes(table, heap);
-
+#ifndef UNIV_HOTBACKUP
 	/* If the force recovery flag is set, we open the table irrespective
 	of the error condition, since the user may want to dump data from the
 	clustered index. However we load the foreign key information only if
@@ -871,7 +959,7 @@ err_exit:
 	} else if (err == DB_SUCCESS) {
 		err = dict_load_foreigns(table->name, TRUE);
 	}
-#if 0
+# if 0
 	if (err != DB_SUCCESS && table != NULL) {
 
 		mutex_enter(&dict_foreign_err_mutex);
@@ -894,7 +982,8 @@ err_exit:
 
 		mutex_exit(&dict_foreign_err_mutex);
 	}
-#endif /* 0 */
+# endif /* 0 */
+#endif /* !UNIV_HOTBACKUP */
 	mem_heap_free(heap);
 
 	return(table);
@@ -902,7 +991,7 @@ err_exit:
 
 /***************************************************************************
 Loads a table object based on the table id. */
-
+UNIV_INTERN
 dict_table_t*
 dict_load_table_on_id(
 /*==================*/
@@ -916,8 +1005,8 @@ dict_load_table_on_id(
 	dfield_t*	dfield;
 	dict_index_t*	sys_table_ids;
 	dict_table_t*	sys_tables;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	dict_table_t*	table;
 	mtr_t		mtr;
@@ -950,7 +1039,7 @@ dict_load_table_on_id(
 				  BTR_SEARCH_LEAF, &pcur, &mtr);
 	rec = btr_pcur_get_rec(&pcur);
 
-	if (!btr_pcur_is_on_user_rec(&pcur, &mtr)
+	if (!btr_pcur_is_on_user_rec(&pcur)
 	    || rec_get_deleted_flag(rec, 0)) {
 		/* Not found */
 
@@ -995,7 +1084,7 @@ dict_load_table_on_id(
 This function is called when the database is booted. Loads system table
 index definitions except for the clustered index which is added to the
 dictionary cache at booting before calling this function. */
-
+UNIV_INTERN
 void
 dict_load_sys_table(
 /*================*/
@@ -1012,6 +1101,7 @@ dict_load_sys_table(
 	mem_heap_free(heap);
 }
 
+#ifndef UNIV_HOTBACKUP
 /************************************************************************
 Loads foreign key constraint col names (also for the referenced table). */
 static
@@ -1027,8 +1117,8 @@ dict_load_foreign_cols(
 	btr_pcur_t	pcur;
 	dtuple_t*	tuple;
 	dfield_t*	dfield;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	ulint		i;
 	mtr_t		mtr;
@@ -1058,7 +1148,7 @@ dict_load_foreign_cols(
 
 		rec = btr_pcur_get_rec(&pcur);
 
-		ut_a(btr_pcur_is_on_user_rec(&pcur, &mtr));
+		ut_a(btr_pcur_is_on_user_rec(&pcur));
 		ut_a(!rec_get_deleted_flag(rec, 0));
 
 		field = rec_get_nth_field_old(rec, 0, &len);
@@ -1103,8 +1193,8 @@ dict_load_foreign(
 	dtuple_t*	tuple;
 	mem_heap_t*	heap2;
 	dfield_t*	dfield;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	ulint		n_fields_and_type;
 	mtr_t		mtr;
@@ -1129,7 +1219,7 @@ dict_load_foreign(
 				  BTR_SEARCH_LEAF, &pcur, &mtr);
 	rec = btr_pcur_get_rec(&pcur);
 
-	if (!btr_pcur_is_on_user_rec(&pcur, &mtr)
+	if (!btr_pcur_is_on_user_rec(&pcur)
 	    || rec_get_deleted_flag(rec, 0)) {
 		/* Not found */
 
@@ -1215,7 +1305,7 @@ holder or where the table is referenced by a foreign key. Adds these
 constraints to the data dictionary. Note that we know that the dictionary
 cache already contains all constraints where the other relevant table is
 already in the dictionary cache. */
-
+UNIV_INTERN
 ulint
 dict_load_foreigns(
 /*===============*/
@@ -1230,8 +1320,8 @@ dict_load_foreigns(
 	dfield_t*	dfield;
 	dict_index_t*	sec_index;
 	dict_table_t*	sys_foreign;
-	rec_t*		rec;
-	byte*		field;
+	const rec_t*	rec;
+	const byte*	field;
 	ulint		len;
 	char*		id ;
 	ulint		err;
@@ -1273,7 +1363,7 @@ start_load:
 loop:
 	rec = btr_pcur_get_rec(&pcur);
 
-	if (!btr_pcur_is_on_user_rec(&pcur, &mtr)) {
+	if (!btr_pcur_is_on_user_rec(&pcur)) {
 		/* End of index */
 
 		goto load_next_index;
@@ -1355,3 +1445,4 @@ load_next_index:
 
 	return(DB_SUCCESS);
 }
+#endif /* !UNIV_HOTBACKUP */

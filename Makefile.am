@@ -1,4 +1,5 @@
-# Copyright (C) 2000-2006 MySQL AB
+# test
+# # Copyright (C) 2000-2006 MySQL AB
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,19 +14,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I m4 --force
 
 # Process this file with automake to create Makefile.in
 if BUILD_GETTEXT
   po=po
 endif
 
-SUBDIRS = ${po} . vio \
+SUBDIRS = ${po} . \
 	  mystrings \
 	  mysys \
 	  extra \
 	  libdrizzle \
 	  client \
+	  drizzled/serialize \
 	  storage \
 	  plugin \
 	  drizzled \
@@ -33,17 +35,24 @@ SUBDIRS = ${po} . vio \
 	  support-files
 
 EXTRA_DIST = config/config.rpath
+CLEANFILES = drizzled/configmake.h
 DISTCLEANFILES = ac_available_languages_fragment
+MAINTAINERCLEANFILES = autom4te.cache
+
+BUILT_SOURCES = drizzled/configmake.h
+noinst_HEADERS = drizzled/configmake.h
 
 # Create empty datadir 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(localstatedir) 
 	@if test `id -u` = 0 ; then \
-		chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
+		if test -n "$(GROUPADD)" && test -n "$(USERADD)"; then \
+			$(GROUPADD) $(DRIZZLED_USER) ;\
+			$(USERADD) -g $(DRIZZLED_USER) $(DRIZZLED_USER) ;\
+			chown $(DRIZZLED_USER) $(DESTDIR)$(localstatedir) ;\
+		fi \
 	fi
 
-distclean-local:
-	@RM@ -r -f autom4te.cache
 
 .PHONY: test \
     test-force \
@@ -66,7 +75,8 @@ distclean-local:
     test-fast \
     test-fast-cursor \
     test-fast-view \
-    test-full-qa
+    test-full-qa \
+    indent
 
 # Target 'test' will run the regression test suite using the built server.
 #
@@ -96,3 +106,70 @@ test-drizzle:
 
 doxygen:
 	doxygen Doxyfile
+
+indent:
+	for f in `find ${top_srcdir} -type f | grep -v innobase |\
+                  ${EGREP} '\.(cc|c|h)$$' ` ; do \
+            uncrustify -f $$f -c ${top_srcdir}/config/uncrustify.cfg \
+               -o indentoutput.tmp && mv indentoutput.tmp "$$f" ;\
+        done
+
+drizzled/configmake.h: ${top_srcdir}/Makefile.in
+	@echo "Making $@"
+	@rm -f $@-t $@
+	@{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
+	  echo '#define PREFIX "$(prefix)"'; \
+	  echo '#define EXEC_PREFIX "$(exec_prefix)"'; \
+	  echo '#define BINDIR "$(bindir)"'; \
+	  echo '#define SBINDIR "$(sbindir)"'; \
+	  echo '#define LIBEXECDIR "$(libexecdir)"'; \
+	  echo '#define DATAROOTDIR "$(datarootdir)"'; \
+	  echo '#define DATADIR "$(datadir)"'; \
+	  echo '#define SYSCONFDIR "$(sysconfdir)"'; \
+	  echo '#define SHAREDSTATEDIR "$(sharedstatedir)"'; \
+	  echo '#define LOCALSTATEDIR "$(localstatedir)"'; \
+	  echo '#define INCLUDEDIR "$(includedir)"'; \
+	  echo '#define OLDINCLUDEDIR "$(oldincludedir)"'; \
+	  echo '#define DOCDIR "$(docdir)"'; \
+	  echo '#define INFODIR "$(infodir)"'; \
+	  echo '#define HTMLDIR "$(htmldir)"'; \
+	  echo '#define DVIDIR "$(dvidir)"'; \
+	  echo '#define PDFDIR "$(pdfdir)"'; \
+	  echo '#define PSDIR "$(psdir)"'; \
+	  echo '#define LIBDIR "$(libdir)"'; \
+	  echo '#define LISPDIR "$(lispdir)"'; \
+	  echo '#define LOCALEDIR "$(localedir)"'; \
+	  echo '#define MANDIR "$(mandir)"'; \
+	  echo '#define MANEXT "$(manext)"'; \
+	  echo '#define PKGDATADIR "$(pkgdatadir)"'; \
+	  echo '#define PKGINCLUDEDIR "$(pkgincludedir)"'; \
+	  echo '#define PKGLIBDIR "$(pkglibdir)"'; \
+	  echo '#define PKGLIBEXECDIR "$(pkglibexecdir)"'; \
+	  echo '#define PKGPLUGINDIR "$(pkgplugindir)"'; \
+	} | sed '/""/d' > $@-t
+	@if diff $@-t $@ >/dev/null 2>&1 ; then \
+	  rm @-t ; \
+	else \
+	  mv $@-t $@ ; \
+	fi
+
+if HAVE_LCOV
+
+lcov: lcov-clean test index.html
+
+lcov/drizzle.output: drizzled/drizzled
+	mkdir -p lcov
+	${LCOV} --directory ${top_srcdir}/lcov --capture --output-file lcov/drizzle.output
+
+lcov/index.html: lcov/drizzle.output
+	${GENHTML} -o lcov lcov/drizzle.output
+
+lcov-clean:
+	ln -fs pars/pars0lex.l ${top_srcdir}/storage/innobase/pars0lex.l
+	ln -fs pars/lexyy.c ${top_srcdir}/storage/innobase/lexyy.c
+	ln -fs pars/pars0grm.c ${top_srcdir}/storage/innobase/pars0grm.c
+	ln -fs pars/pars0grm.y ${top_srcdir}/storage/innobase/pars0grm.y
+
+	${LCOV} --directory ${top_srcdir} --zerocounters
+
+endif

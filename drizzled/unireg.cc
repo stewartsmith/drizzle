@@ -24,26 +24,40 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/session.h>
+#include <drizzled/unireg.h>
+
+/* For proto */
+#include <string>
+#include <fstream>
+#include <drizzled/serialize/serialize.h>
+#include <drizzled/serialize/table.pb.h>
+using namespace std;
 
 #define FCOMP			17		/* Bytes for a packed field */
 
 static unsigned char * pack_screens(List<Create_field> &create_fields,
-			    uint32_t *info_length, uint32_t *screens, bool small_file);
-static uint32_t pack_keys(unsigned char *keybuff,uint32_t key_count, KEY *key_info,
-                      ulong data_offset);
+                                    uint32_t *info_length, uint32_t *screens,
+                                    bool small_file);
+static uint32_t pack_keys(unsigned char *keybuff,uint32_t key_count,
+                          KEY *key_info, ulong data_offset);
 static bool pack_header(unsigned char *forminfo,
-			List<Create_field> &create_fields,
-			uint32_t info_length, uint32_t screens, uint32_t table_options,
-			ulong data_offset, handler *file);
-static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_fields,
-			    Create_field *last_field);
+                        List<Create_field> &create_fields,
+                        uint32_t info_length, uint32_t screens,
+                        uint32_t table_options,
+                        ulong data_offset, handler *file);
+static uint32_t get_interval_id(uint32_t *int_count,
+                                List<Create_field> &create_fields,
+                                Create_field *last_field);
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset);
-static bool make_empty_rec(THD *thd, int file, enum legacy_db_type table_type,
-			   uint32_t table_options,
-			   List<Create_field> &create_fields,
-			   uint32_t reclength, ulong data_offset,
+static bool make_empty_rec(Session *session, int file,
+                           enum legacy_db_type table_type,
+                           uint32_t table_options,
+                           List<Create_field> &create_fields,
+                           uint32_t reclength, ulong data_offset,
                            handler *handler);
 
 /**
@@ -58,7 +72,7 @@ struct Pack_header_error_handler: public Internal_error_handler
   virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
-                            THD *thd);
+                            Session *session);
   bool is_handled;
   Pack_header_error_handler() :is_handled(false) {}
 };
@@ -69,10 +83,22 @@ Pack_header_error_handler::
 handle_error(uint32_t sql_errno,
              const char * /* message */,
              DRIZZLE_ERROR::enum_warning_level /* level */,
-             THD * /* thd */)
+             Session * /* session */)
 {
   is_handled= (sql_errno == ER_TOO_MANY_FIELDS);
   return is_handled;
+}
+
+int drizzle_read_table_proto(const char* path, drizzle::Table* table)
+{
+  {
+    fstream input(path, ios::in | ios::binary);
+    if (!table->ParseFromIstream(&input))
+    {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 /*
@@ -80,7 +106,7 @@ handle_error(uint32_t sql_errno,
 
   SYNOPSIS
     mysql_create_frm()
-    thd			Thread handler
+    session			Thread handler
     file_name		Path for file (including database and .frm)
     db                  Name of database
     table               Name of table
@@ -95,7 +121,7 @@ handle_error(uint32_t sql_errno,
     1  error
 */
 
-bool mysql_create_frm(THD *thd, const char *file_name,
+bool mysql_create_frm(Session *session, const char *file_name,
                       const char *db, const char *table,
 		      HA_CREATE_INFO *create_info,
 		      List<Create_field> &create_fields,
@@ -127,14 +153,14 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     create_info->null_bits++;
   data_offset= (create_info->null_bits + 7) / 8;
 
-  thd->push_internal_handler(&pack_header_error_handler);
+  session->push_internal_handler(&pack_header_error_handler);
 
   error= pack_header(forminfo,
                      create_fields,info_length,
                      screens, create_info->table_options,
                      data_offset, db_file);
 
-  thd->pop_internal_handler();
+  session->pop_internal_handler();
 
   if (error)
   {
@@ -178,7 +204,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   tmp_len= system_charset_info->cset->charpos(system_charset_info,
                                               create_info->comment.str,
                                               create_info->comment.str +
-                                              create_info->comment.length, 
+                                              create_info->comment.length,
                                               TABLE_COMMENT_MAXLEN);
 
   if (tmp_len < create_info->comment.length)
@@ -197,7 +223,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     create_info->extra_size+= 2 + create_info->comment.length;
   }
   else{
-    strmake((char*) forminfo+47, create_info->comment.str ?
+    strncpy((char*) forminfo+47, create_info->comment.str ?
             create_info->comment.str : "", create_info->comment.length);
     forminfo[46]=(unsigned char) create_info->comment.length;
 #ifdef EXTRA_DEBUG
@@ -210,7 +236,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
 #endif
   }
 
-  if ((file=create_frm(thd, file_name, db, table, reclength, fileinfo,
+  if ((file=create_frm(session, file_name, db, table, reclength, fileinfo,
 		       create_info, keys, key_info)) < 0)
   {
     free(screen_buff);
@@ -218,7 +244,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   }
 
   key_buff_length= uint4korr(fileinfo+47);
-  keybuff=(unsigned char*) my_malloc(key_buff_length, MYF(0));
+  keybuff=(unsigned char*) malloc(key_buff_length);
   key_info_length= pack_keys(keybuff, keys, key_info, data_offset);
   get_form_pos(file,fileinfo,&formnames);
   if (!(filepos=make_new_entry(file,fileinfo,&formnames,"")))
@@ -236,10 +262,8 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   if (pwrite(file, fileinfo, 64, 0L) == 0 ||
       pwrite(file, keybuff, key_info_length, (ulong) uint2korr(fileinfo+6)) == 0)
     goto err;
-  my_seek(file,
-	       (ulong) uint2korr(fileinfo+6)+ (ulong) key_buff_length,
-	       MY_SEEK_SET,MYF(0));
-  if (make_empty_rec(thd,file,ha_legacy_type(create_info->db_type),
+  lseek(file, (off_t)(uint2korr(fileinfo+6) + key_buff_length), SEEK_SET);
+  if (make_empty_rec(session,file,ha_legacy_type(create_info->db_type),
                      create_info->table_options,
 		     create_fields,reclength, data_offset, db_file))
     goto err;
@@ -305,7 +329,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
       }
     }
   }
-  my_seek(file,filepos,MY_SEEK_SET,MYF(0));
+  lseek(file,filepos,SEEK_SET);
   if (my_write(file, forminfo, 288, MYF_RW) ||
       my_write(file, screen_buff, info_length, MYF_RW) ||
       pack_fields(file, create_fields, data_offset))
@@ -323,7 +347,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     goto err3;
 
   {
-    /* 
+    /*
       Restore all UCS2 intervals.
       HEX representation of them is not needed anymore.
     */
@@ -350,13 +374,329 @@ err3:
   return(1);
 } /* mysql_create_frm */
 
+static void fill_table_proto(drizzle::Table *table_proto,
+                             const char *table_name,
+                             List<Create_field> &create_fields,
+                             HA_CREATE_INFO *create_info,
+                             uint32_t keys,
+                             KEY *key_info)
+{
+  Create_field *field_arg;
+  List_iterator<Create_field> it(create_fields);
+  drizzle::Table::StorageEngine *engine= table_proto->mutable_engine();
+  drizzle::Table::TableOptions *table_options= table_proto->mutable_options();
+
+  engine->set_name(create_info->db_type->name);
+
+  table_proto->set_name(table_name);
+  table_proto->set_type(drizzle::Table::STANDARD);
+
+  while ((field_arg= it++))
+  {
+    drizzle::Table::Field *attribute;
+    //drizzle::Table::Field::FieldConstraints *constraints;
+
+    attribute= table_proto->add_field();
+    attribute->set_name(field_arg->field_name);
+    switch (field_arg->sql_type) {
+    case DRIZZLE_TYPE_TINY:
+      attribute->set_type(drizzle::Table::Field::TINYINT);
+      break;
+    case DRIZZLE_TYPE_LONG:
+      attribute->set_type(drizzle::Table::Field::INTEGER);
+      break;
+    case DRIZZLE_TYPE_DOUBLE:
+      attribute->set_type(drizzle::Table::Field::DOUBLE);
+      break;
+    case DRIZZLE_TYPE_NULL  :
+      assert(1); /* Not a user definable type */
+    case DRIZZLE_TYPE_TIMESTAMP:
+      attribute->set_type(drizzle::Table::Field::TIMESTAMP);
+      break;
+    case DRIZZLE_TYPE_LONGLONG:
+      attribute->set_type(drizzle::Table::Field::BIGINT);
+      break;
+    case DRIZZLE_TYPE_TIME:
+      attribute->set_type(drizzle::Table::Field::TIME);
+      break;
+    case DRIZZLE_TYPE_DATETIME:
+      attribute->set_type(drizzle::Table::Field::DATETIME);
+      break;
+    case DRIZZLE_TYPE_DATE:
+      attribute->set_type(drizzle::Table::Field::DATE);
+      break;
+    case DRIZZLE_TYPE_VARCHAR:
+      {
+        drizzle::Table::Field::StringFieldOptions *string_field_options;
+
+        string_field_options= attribute->mutable_string_options();
+        attribute->set_type(drizzle::Table::Field::VARCHAR);
+        string_field_options->set_length(field_arg->char_length);
+        string_field_options->set_collation_id(field_arg->charset->number);
+        string_field_options->set_collation(field_arg->charset->name);
+
+        break;
+      }
+    case DRIZZLE_TYPE_NEWDECIMAL:
+      {
+        drizzle::Table::Field::NumericFieldOptions *numeric_field_options;
+
+        attribute->set_type(drizzle::Table::Field::DECIMAL);
+        numeric_field_options= attribute->mutable_numeric_options();
+        /* This is magic, I hate magic numbers -Brian */
+        numeric_field_options->set_precision(field_arg->length + ( field_arg->decimals ? -2 : -1));
+        numeric_field_options->set_scale(field_arg->decimals);
+        break;
+      }
+    case DRIZZLE_TYPE_ENUM:
+      {
+        drizzle::Table::Field::SetFieldOptions *set_field_options;
+
+        assert(field_arg->interval);
+
+        attribute->set_type(drizzle::Table::Field::ENUM);
+        set_field_options= attribute->mutable_set_options();
+
+        for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
+        {
+          const char *src= field_arg->interval->type_names[pos];
+
+          set_field_options->add_field_value(src);
+        }
+        set_field_options->set_count_elements(set_field_options->field_value_size());
+        break;
+      }
+    case DRIZZLE_TYPE_BLOB:
+      attribute->set_type(drizzle::Table::Field::BLOB);
+      break;
+    default:
+      assert(1);
+    }
+
+#ifdef NOTDONE
+    field_constraints= attribute->mutable_constraints();
+    constraints->set_is_nullable(field_arg->def->null_value);
+#endif
+
+    /* Set the comment */
+    if (field_arg->comment.length)
+      attribute->set_comment(field_arg->comment.str);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_PACK_KEYS)
+  {
+    if(create_info->table_options & HA_OPTION_PACK_KEYS)
+      table_options->set_pack_keys(true);
+    else if(create_info->table_options & HA_OPTION_NO_PACK_KEYS)
+      table_options->set_pack_keys(false);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_CHECKSUM)
+  {
+    assert(create_info->table_options & (HA_OPTION_CHECKSUM | HA_OPTION_NO_CHECKSUM));
+
+    if(create_info->table_options & HA_OPTION_CHECKSUM)
+      table_options->set_checksum(true);
+    else
+      table_options->set_checksum(false);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_PAGE_CHECKSUM)
+  {
+    if (create_info->page_checksum == HA_CHOICE_YES)
+      table_options->set_page_checksum(true);
+    else if (create_info->page_checksum == HA_CHOICE_NO)
+      table_options->set_page_checksum(false);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_DELAY_KEY_WRITE)
+  {
+    if(create_info->table_options & HA_OPTION_DELAY_KEY_WRITE)
+      table_options->set_delay_key_write(true);
+    else if(create_info->table_options & HA_OPTION_NO_DELAY_KEY_WRITE)
+      table_options->set_delay_key_write(false);
+  }
+
+  switch(create_info->row_type)
+  {
+  case ROW_TYPE_DEFAULT:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_DEFAULT);
+    break;
+  case ROW_TYPE_FIXED:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_FIXED);
+    break;
+  case ROW_TYPE_DYNAMIC:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_DYNAMIC);
+    break;
+  case ROW_TYPE_COMPRESSED:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_COMPRESSED);
+    break;
+  case ROW_TYPE_REDUNDANT:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_REDUNDANT);
+    break;
+  case ROW_TYPE_COMPACT:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_COMPACT);
+    break;
+  case ROW_TYPE_PAGE:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_PAGE);
+    break;
+  default:
+    abort();
+  }
+
+  if (create_info->comment.length)
+    table_options->set_comment(create_info->comment.str);
+
+  if (create_info->default_table_charset)
+  {
+    table_options->set_collation_id(
+			       create_info->default_table_charset->number);
+    table_options->set_collation(create_info->default_table_charset->name);
+  }
+
+  if (create_info->connect_string.length)
+    table_options->set_connect_string(create_info->connect_string.str);
+
+  if (create_info->data_file_name)
+    table_options->set_data_file_name(create_info->data_file_name);
+
+  if (create_info->index_file_name)
+    table_options->set_index_file_name(create_info->index_file_name);
+
+  if (create_info->max_rows)
+    table_options->set_max_rows(create_info->max_rows);
+
+  if (create_info->min_rows)
+    table_options->set_min_rows(create_info->min_rows);
+
+  if (create_info->auto_increment_value)
+    table_options->set_auto_increment_value(create_info->auto_increment_value);
+
+  if (create_info->avg_row_length)
+    table_options->set_avg_row_length(create_info->avg_row_length);
+
+  if (create_info->key_block_size)
+    table_options->set_key_block_size(create_info->key_block_size);
+
+  if (create_info->block_size)
+    table_options->set_block_size(create_info->block_size);
+
+  for (unsigned int i= 0; i < keys; i++)
+  {
+    drizzle::Table::Index *idx;
+
+    idx= table_proto->add_indexes();
+
+    assert(test(key_info[i].flags & HA_USES_COMMENT) ==
+           (key_info[i].comment.length > 0));
+
+    idx->set_name(key_info[i].name);
+
+    if(is_primary_key_name(key_info[i].name))
+      idx->set_is_primary(true);
+    else
+      idx->set_is_primary(false);
+
+    switch(key_info[i].algorithm)
+    {
+    case HA_KEY_ALG_HASH:
+      idx->set_type(drizzle::Table::Index::HASH);
+      break;
+
+    case HA_KEY_ALG_BTREE:
+      idx->set_type(drizzle::Table::Index::BTREE);
+      break;
+
+    case HA_KEY_ALG_RTREE:
+    case HA_KEY_ALG_FULLTEXT:
+    case HA_KEY_ALG_UNDEF:
+      idx->set_type(drizzle::Table::Index::UNKNOWN_INDEX);
+      break;
+
+    default:
+      abort(); /* Somebody's brain broke. haven't added index type to proto */
+      break;
+    }
+
+    if (key_info[i].flags & HA_NOSAME)
+      idx->set_is_unique(true);
+    else
+      idx->set_is_unique(false);
+
+    /* FIXME: block_size ? */
+
+    for(unsigned int j=0; j< key_info[i].key_parts; j++)
+    {
+      drizzle::Table::Index::IndexPart *idxpart;
+      drizzle::Table::Field *field;
+
+      idxpart= idx->add_index_part();
+
+      field= idxpart->mutable_field();
+      *field= table_proto->field(key_info[i].key_part[j].fieldnr);
+
+      idxpart->set_compare_length(key_info[i].key_part[j].length);
+    }
+
+    if (key_info[i].flags & HA_USES_COMMENT)
+      idx->set_comment(key_info[i].comment.str);
+  }
+}
+
+int rename_table_proto_file(const char *from, const char* to)
+{
+  string from_path(from);
+  string to_path(to);
+  string file_ext = ".dfe";
+
+  from_path.append(file_ext);
+  to_path.append(file_ext);
+
+  return my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
+}
+
+int delete_table_proto_file(const char *file_name)
+{
+  string new_path(file_name);
+  string file_ext = ".dfe";
+
+  new_path.append(file_ext);
+  return my_delete(new_path.c_str(), MYF(0));
+}
+
+bool create_table_proto_file(const char *file_name,
+                             const char *table_name,
+                             HA_CREATE_INFO *create_info,
+                             List<Create_field> &create_fields,
+                             uint32_t keys,
+                             KEY *key_info)
+{
+  drizzle::Table table_proto;
+  string new_path(file_name);
+  string file_ext = ".dfe";
+
+  fill_table_proto(&table_proto, table_name, create_fields, create_info,
+                   keys, key_info);
+
+  new_path.replace(new_path.find(".frm"), file_ext.length(), file_ext );
+
+  fstream output(new_path.c_str(), ios::out | ios::trunc | ios::binary);
+  if (!table_proto.SerializeToOstream(&output))
+  {
+    fprintf(stderr, "Failed to write schema.\n");
+
+    return true;
+  }
+
+  return false;
+}
 
 /*
   Create a frm (table definition) file and the tables
 
   SYNOPSIS
     rea_create_table()
-    thd			Thread handler
+    session			Thread handler
     path		Name of file (including database, without .frm)
     db			Data base name
     table_name		Table name
@@ -365,42 +705,70 @@ err3:
     keys		number of keys to create
     key_info		Keys to create
     file		Handler to use
+    is_like             is true for mysql_create_like_schema_frm
 
   RETURN
     0  ok
     1  error
 */
 
-int rea_create_table(THD *thd, const char *path,
+int rea_create_table(Session *session, const char *path,
                      const char *db, const char *table_name,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_fields,
-                     uint32_t keys, KEY *key_info, handler *file)
+                     uint32_t keys, KEY *key_info, handler *file,
+                     bool is_like)
 {
-  
-
   char frm_name[FN_REFLEN];
-  strxmov(frm_name, path, reg_ext, NULL);
-  if (mysql_create_frm(thd, frm_name, db, table_name, create_info,
-                       create_fields, keys, key_info, file))
 
-    return(1);
+  /* Proto will blow up unless we give a name */
+  assert(table_name);
+
+  /* For is_like we return once the file has been created */
+  if (is_like)
+  {
+    if (mysql_create_frm(session, path, db, table_name, create_info,
+                         create_fields, keys, key_info, file))
+      return 1;
+
+    if (create_table_proto_file(path, table_name, create_info,
+                                create_fields, keys, key_info))
+      return 1;
+
+    return 0;
+  }
+  /* Here we need to build the full frm from the path */
+  else
+  {
+    sprintf(frm_name,"%s%s", path, reg_ext);
+
+    if (mysql_create_frm(session, frm_name, db, table_name, create_info,
+                         create_fields, keys, key_info, file))
+      return 1;
+
+    if (create_table_proto_file(frm_name, table_name, create_info,
+                                create_fields, keys, key_info))
+      return 1;
+  }
 
   // Make sure mysql_create_frm din't remove extension
   assert(*fn_rext(frm_name));
-  if (thd->variables.keep_files_on_create)
+  if (session->variables.keep_files_on_create)
     create_info->options|= HA_CREATE_KEEP_FILES;
   if (file->ha_create_handler_files(path, NULL, CHF_CREATE_FLAG, create_info))
     goto err_handler;
-  if (!create_info->frm_only && ha_create_table(thd, path, db, table_name,
-                                                create_info,0))
+  if (ha_create_table(session, path, db, table_name,
+                      create_info,0))
     goto err_handler;
-  return(0);
+  return 0;
 
 err_handler:
   file->ha_create_handler_files(path, NULL, CHF_DELETE_FLAG, create_info);
   my_delete(frm_name, MYF(0));
-  return(1);
+
+  delete_table_proto_file(path);
+
+  return 1;
 } /* rea_create_table */
 
 
@@ -412,22 +780,22 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
 {
   register uint32_t i;
   uint32_t row,start_row,end_row,fields_on_screen;
-  uint32_t length,cols;
+  uint32_t length,cols, cols_half_len;
   unsigned char *info,*pos,*start_screen;
   uint32_t fields=create_fields.elements;
   List_iterator<Create_field> it(create_fields);
-  
 
   start_row=4; end_row=22; cols=80; fields_on_screen=end_row+1-start_row;
+  cols_half_len= (uint32_t)(cols >> 1);
 
   *screens=(fields-1)/fields_on_screen+1;
-  length= (*screens) * (SC_INFO_LENGTH+ (cols>> 1)+4);
+  length= (*screens) * (SC_INFO_LENGTH+cols_half_len+4);
 
   Create_field *field;
   while ((field=it++))
     length+=(uint) strlen(field->field_name)+1+TE_INFO_LENGTH+cols/2;
 
-  if (!(info=(unsigned char*) my_malloc(length,MYF(MY_WME))))
+  if (!(info=(unsigned char*) malloc(length)))
     return(0);
 
   start_screen=0;
@@ -441,21 +809,22 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
     {
       if (i)
       {
-	length=(uint) (pos-start_screen);
-	int2store(start_screen,length);
-	start_screen[2]=(unsigned char) (fields_on_screen+1);
-	start_screen[3]=(unsigned char) (fields_on_screen);
+        length=(uint) (pos-start_screen);
+        int2store(start_screen,length);
+        start_screen[2]=(unsigned char) (fields_on_screen+1);
+        start_screen[3]=(unsigned char) (fields_on_screen);
       }
-      row=start_row;
+      row= start_row;
       start_screen=pos;
       pos+=4;
       pos[0]= (unsigned char) start_row-2;	/* Header string */
       pos[1]= (unsigned char) (cols >> 2);
       pos[2]= (unsigned char) (cols >> 1) +1;
-      strfill((char *) pos+3,(uint) (cols >> 1),' ');
-      pos+=(cols >> 1)+4;
+      memset((char*)pos+3,' ',cols_half_len);
+      pos[cols_half_len+3]= '\0';
+      pos+= cols_half_len+4;
     }
-    length=(uint) strlen(cfield->field_name);
+    length= (uint32_t) strlen(cfield->field_name);
     if (length > cols-3)
       length=cols-3;
 
@@ -464,7 +833,9 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
       pos[0]=(unsigned char) row;
       pos[1]=0;
       pos[2]=(unsigned char) (length+1);
-      pos=(unsigned char*) strmake((char*) pos+3,cfield->field_name,length)+1;
+      strncpy((char*)pos+3,cfield->field_name, length);
+      pos[length + 3]= '\0';
+      pos+= length + 3 + 1;
     }
     cfield->row=(uint8_t) row;
     cfield->col=(uint8_t) (length+1);
@@ -489,7 +860,7 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
   unsigned char *pos, *keyname_pos;
   KEY *key,*end;
   KEY_PART_INFO *key_part,*key_part_end;
-  
+
 
   pos=keybuff+6;
   key_parts=0;
@@ -522,7 +893,8 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
   *pos++=(unsigned char) NAMES_SEP_CHAR;
   for (key=keyinfo ; key != end ; key++)
   {
-    unsigned char *tmp=(unsigned char*) my_stpcpy((char*) pos,key->name);
+    unsigned char *tmp=(unsigned char*) strcpy((char*) pos,key->name);
+    tmp+= strlen(key->name);
     *tmp++= (unsigned char) NAMES_SEP_CHAR;
     *tmp=0;
     pos=tmp;
@@ -534,7 +906,8 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
     if (key->flags & HA_USES_COMMENT)
     {
       int2store(pos, key->comment.length);
-      unsigned char *tmp= (unsigned char*)my_stpncpy((char*) pos+2,key->comment.str,key->comment.length);
+      unsigned char *tmp= (unsigned char*)strncpy((char*) pos+2,key->comment.str,key->comment.length);
+      tmp+= key->comment.length;
       pos= tmp;
     }
   }
@@ -631,8 +1004,8 @@ static bool pack_header(unsigned char *forminfo,
 					   MTYP_NOEMPTY_BIT);
       no_empty++;
     }
-    /* 
-      We mark first TIMESTAMP field with NOW() in DEFAULT or ON UPDATE 
+    /*
+      We mark first TIMESTAMP field with NOW() in DEFAULT or ON UPDATE
       as auto-update field.
     */
     if (field->sql_type == DRIZZLE_TYPE_TIMESTAMP &&
@@ -651,24 +1024,24 @@ static bool pack_header(unsigned char *forminfo,
 
       if (field->charset->mbminlen > 1)
       {
-        /* 
+        /*
           Escape UCS2 intervals using HEX notation to avoid
           problems with delimiters between enum elements.
-          As the original representation is still needed in 
+          As the original representation is still needed in
           the function make_empty_rec to create a record of
           filled with default values it is saved in save_interval
           The HEX representation is created from this copy.
         */
         field->save_interval= field->interval;
         field->interval= (TYPELIB*) sql_alloc(sizeof(TYPELIB));
-        *field->interval= *field->save_interval; 
-        field->interval->type_names= 
-          (const char **) sql_alloc(sizeof(char*) * 
+        *field->interval= *field->save_interval;
+        field->interval->type_names=
+          (const char **) sql_alloc(sizeof(char*) *
 				    (field->interval->count+1));
         field->interval->type_names[field->interval->count]= 0;
         field->interval->type_lengths=
           (uint32_t *) sql_alloc(sizeof(uint) * field->interval->count);
- 
+
         for (uint32_t pos= 0; pos < field->interval->count; pos++)
         {
           char *dst;
@@ -706,7 +1079,7 @@ static bool pack_header(unsigned char *forminfo,
   /* Hack to avoid bugs with small static rows in MySQL */
   reclength=cmax((ulong)file->min_record_length(table_options),reclength);
   if (info_length+(ulong) create_fields.elements*FCOMP+288+
-      n_length+int_length+com_length+vcol_info_length > 65535L || 
+      n_length+int_length+com_length+vcol_info_length > 65535L ||
       int_count > 255)
   {
     my_message(ER_TOO_MANY_FIELDS, ER(ER_TOO_MANY_FIELDS), MYF(0));
@@ -775,7 +1148,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   uint32_t int_count, comment_length=0, vcol_info_length=0;
   unsigned char buff[MAX_FIELD_WIDTH];
   Create_field *field;
-  
+
 
 	/* Write field info */
 
@@ -796,14 +1169,14 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
     int2store(buff+8,field->pack_flag);
     int2store(buff+10,field->unireg_check);
     buff[12]= (unsigned char) field->interval_id;
-    buff[13]= (unsigned char) field->sql_type; 
-    if (field->charset) 
+    buff[13]= (unsigned char) field->sql_type;
+    if (field->charset)
       buff[14]= (unsigned char) field->charset->number;
     else
       buff[14]= 0;				// Numerical
     if (field->vcol_info)
     {
-      /* 
+      /*
         Use the interval_id place in the .frm file to store the length of
         virtual field's data.
       */
@@ -827,7 +1200,8 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   it.rewind();
   while ((field=it++))
   {
-    char *pos= my_stpcpy((char*) buff,field->field_name);
+    char *pos= strcpy((char*) buff,field->field_name);
+    pos+= strlen(field->field_name);
     *pos++=NAMES_SEP_CHAR;
     if (i == create_fields.elements-1)
       *pos++=0;
@@ -926,8 +1300,8 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
         buff[2]= (unsigned char) field->is_stored;
         if (my_write(file, buff, 3, MYF_RW))
           return(1);
-        if (my_write(file, 
-                     (unsigned char*) field->vcol_info->expr_str.str, 
+        if (my_write(file,
+                     (unsigned char*) field->vcol_info->expr_str.str,
                      field->vcol_info->expr_str.length,
                      MYF_RW))
           return(1);
@@ -940,8 +1314,8 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
 
 /* save an empty record on start of formfile */
 
-static bool make_empty_rec(THD *thd, File file,
-                           enum legacy_db_type table_type __attribute__((unused)),
+static bool make_empty_rec(Session *session, File file,
+                           enum legacy_db_type ,
                            uint32_t table_options,
                            List<Create_field> &create_fields,
                            uint32_t reclength,
@@ -955,20 +1329,21 @@ static bool make_empty_rec(THD *thd, File file,
   Table table;
   TABLE_SHARE share;
   Create_field *field;
-  enum_check_fields old_count_cuted_fields= thd->count_cuted_fields;
-  
+  enum_check_fields old_count_cuted_fields= session->count_cuted_fields;
+
 
   /* We need a table to generate columns for default values */
   memset(&table, 0, sizeof(table));
   memset(&share, 0, sizeof(share));
   table.s= &share;
 
-  if (!(buff=(unsigned char*) my_malloc((size_t) reclength,MYF(MY_WME | MY_ZEROFILL))))
+  if (!(buff=(unsigned char*) malloc((size_t) reclength)))
   {
     return(1);
   }
+  memset(buff, 0, (size_t) reclength);
 
-  table.in_use= thd;
+  table.in_use= session;
   table.s->db_low_byte_first= handler->low_byte_first();
   table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
@@ -981,7 +1356,7 @@ static bool make_empty_rec(THD *thd, File file,
   null_pos= buff;
 
   List_iterator<Create_field> it(create_fields);
-  thd->count_cuted_fields= CHECK_FIELD_WARN;    // To find wrong default values
+  session->count_cuted_fields= CHECK_FIELD_WARN;    // To find wrong default values
   while ((field=it++))
   {
     /*
@@ -997,7 +1372,7 @@ static bool make_empty_rec(THD *thd, File file,
                                 field->charset,
                                 field->unireg_check,
                                 field->save_interval ? field->save_interval :
-                                field->interval, 
+                                field->interval,
                                 field->field_name);
     if (!regfield)
     {
@@ -1054,6 +1429,6 @@ static bool make_empty_rec(THD *thd, File file,
 
 err:
   free(buff);
-  thd->count_cuted_fields= old_count_cuted_fields;
+  session->count_cuted_fields= old_count_cuted_fields;
   return(error);
 } /* make_empty_rec */

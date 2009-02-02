@@ -141,7 +141,6 @@ sub collect_test_cases ($) {
 	#
 	# Append the criteria for sorting, in order of importance.
 	#
-	push(@criteria, "ndb=" . ($tinfo->{'ndb_test'} ? "1" : "0"));
 	# Group test with equal options together.
 	# Ending with "~" makes empty sort later than filled
 	push(@criteria, join("!", sort @{$tinfo->{'master_opt'}}) . "~");
@@ -815,36 +814,6 @@ sub collect_one_test_case($$$$$$$$$) {
       $tinfo->{'comment'}= "Test need debug binaries";
       return;
     }
-
-    {
-      if ( $::opt_with_ndbcluster_only )
-      {
-	# Only the ndb test should be run, all other should be skipped
-	$tinfo->{'skip'}= 1;
-	$tinfo->{'comment'}= "Only ndbcluster tests(--with-ndbcluster-only)";
-	return;
-      }
-    }
-
-    if ( $tinfo->{'need_binlog'} )
-    {
-      if (grep(/^--skip-log-bin/,  @::opt_extra_mysqld_opt) )
-      {
-	$tinfo->{'skip'}= 1;
-	$tinfo->{'comment'}= "Test need binlog";
-	return;
-      }
-    }
-    else
-    {
-      if ( $::mysql_version_id >= 50100 )
-      {
-	# Test does not need binlog, add --skip-binlog to
-	# the options used when starting it
-	push(@{$tinfo->{'master_opt'}}, "--skip-log-bin");
-      }
-    }
-
   }
 }
 

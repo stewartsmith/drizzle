@@ -36,7 +36,7 @@ int mi_rnext_same(MI_INFO *info, unsigned char *buf)
     return(my_errno);
 
   if (info->s->concurrent_insert)
-    rw_rdlock(&info->s->key_root_lock[inx]);
+    pthread_rwlock_rdlock(&info->s->key_root_lock[inx]);
 
   switch (keyinfo->key_alg)
   {
@@ -62,13 +62,13 @@ int mi_rnext_same(MI_INFO *info, unsigned char *buf)
           break;
         }
         /* Skip rows that are inserted by other threads since we got a lock */
-        if (info->lastpos < info->state->data_file_length && 
+        if (info->lastpos < info->state->data_file_length &&
             (!info->index_cond_func || mi_check_index_cond(info, inx, buf)))
           break;
       }
   }
   if (info->s->concurrent_insert)
-    rw_unlock(&info->s->key_root_lock[inx]);
+    pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
 	/* Don't clear if database-changed */
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
   info->update|= HA_STATE_NEXT_FOUND | HA_STATE_RNEXT_SAME;

@@ -23,56 +23,15 @@ extern "C" {
 
 #include <mysys/my_pthread.h>
 #include <mysys/my_list.h>
+#include <mysys/definitions.h>
 
 struct st_thr_lock;
 extern uint32_t locks_immediate,locks_waited ;
 extern pthread_mutex_t THR_LOCK_lock;
 
-enum thr_lock_type { TL_IGNORE=-1,
-		     TL_UNLOCK,			/* UNLOCK ANY LOCK */
-		     TL_READ,			/* Read lock */
-		     TL_READ_WITH_SHARED_LOCKS,
-		     /* High prior. than TL_WRITE. Allow concurrent insert */
-		     TL_READ_HIGH_PRIORITY,
-		     /* READ, Don't allow concurrent insert */
-		     TL_READ_NO_INSERT,
-		     /* 
-			Write lock, but allow other threads to read / write.
-			Used by BDB tables in MySQL to mark that someone is
-			reading/writing to the table.
-		      */
-		     TL_WRITE_ALLOW_WRITE,
-		     /*
-			Write lock, but allow other threads to read.
-			Used by ALTER TABLE in MySQL to allow readers
-			to use the table until ALTER TABLE is finished.
-		     */
-		     TL_WRITE_ALLOW_READ,
-		     /*
-		       WRITE lock used by concurrent insert. Will allow
-		       READ, if one could use concurrent insert on table.
-		     */
-		     TL_WRITE_CONCURRENT_INSERT,
-		     /* Write used by INSERT DELAYED.  Allows READ locks */
-		     TL_WRITE_DELAYED,
-                     /* 
-                       parser only! Late bound low_priority flag. 
-                       At open_tables() becomes thd->update_lock_default.
-                     */
-                     TL_WRITE_DEFAULT,
-		     /* WRITE lock that has lower priority than TL_READ */
-		     TL_WRITE_LOW_PRIORITY,
-		     /* Normal WRITE lock */
-		     TL_WRITE,
-		     /* Abort new lock request with an error */
-		     TL_WRITE_ONLY};
 
-enum enum_thr_lock_result { THR_LOCK_SUCCESS= 0, THR_LOCK_ABORTED= 1,
-                            THR_LOCK_WAIT_TIMEOUT= 2, THR_LOCK_DEADLOCK= 3 };
-
-
-extern ulong max_write_lock_count;
-extern ulong table_lock_wait_timeout;
+extern uint64_t max_write_lock_count;
+extern uint64_t table_lock_wait_timeout;
 extern bool thr_lock_inited;
 extern enum thr_lock_type thr_upgraded_concurrent_insert_lock;
 

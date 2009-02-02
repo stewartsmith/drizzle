@@ -28,9 +28,8 @@ extern "C" {
 #ifndef _keycache_h
 #include "keycache.h"
 #endif
-#include <mysys/my_handler.h>
+#include <storage/myisam/my_handler.h>
 #include <mysys/iocache.h>
-#include <drizzled/plugin.h>
 
 /*
   Limit max keys according to HA_MAX_POSSIBLE_KEY
@@ -253,7 +252,8 @@ extern uint32_t myisam_block_size;
 extern uint32_t myisam_concurrent_insert;
 extern bool myisam_flush,myisam_delay_key_write,myisam_single_user;
 extern my_off_t myisam_max_temp_length;
-extern uint32_t myisam_bulk_insert_tree_size, myisam_data_pointer_size;
+extern uint32_t myisam_bulk_insert_tree_size; 
+extern uint32_t data_pointer_size;
 
 	/* Prototypes for myisam-functions */
 
@@ -349,14 +349,6 @@ extern uint32_t mi_get_pointer_length(uint64_t file_length, uint32_t def);
 
 #define T_REP_ANY               (T_REP | T_REP_BY_SORT | T_REP_PARALLEL)
 
-/*
-  Flags used by myisamchk.c or/and ha_myisam.cc that are NOT passed
-  to mi_check.c follows:
-*/
-
-#define TT_USEFRM               1
-#define TT_FOR_UPGRADE          2
-
 #define O_NEW_INDEX	1		/* Bits set in out_flag */
 #define O_NEW_DATA	2
 #define O_DATA_LOST	4
@@ -372,13 +364,13 @@ typedef struct st_sort_key_blocks		/* Used when sorting */
 } SORT_KEY_BLOCKS;
 
 
-/* 
-  MyISAM supports several statistics collection methods. Currently statistics 
-  collection method is not stored in MyISAM file and has to be specified for 
+/*
+  MyISAM supports several statistics collection methods. Currently statistics
+  collection method is not stored in MyISAM file and has to be specified for
   each table analyze/repair operation in  MI_CHECK::stats_method.
 */
 
-typedef enum 
+typedef enum
 {
   /* Treat NULLs as inequal when collecting statistics (default for 4.1/5.0) */
   MI_STATS_METHOD_NULLS_NOT_EQUAL,
@@ -408,21 +400,20 @@ typedef struct st_mi_check_param
   bool using_global_keycache, opt_lock_memory, opt_follow_links;
   bool retry_repair, force_sort;
   char temp_filename[FN_REFLEN],*isam_file_name;
-  MY_TMPDIR *tmpdir;
   int tmpfile_createflag;
   myf myf_rw;
   IO_CACHE read_cache;
-  
-  /* 
+
+  /*
     The next two are used to collect statistics, see update_key_parts for
     description.
   */
   uint64_t unique_count[MI_MAX_KEY_SEG+1];
   uint64_t notnull_count[MI_MAX_KEY_SEG+1];
-  
+
   ha_checksum key_crc[HA_MAX_POSSIBLE_KEY];
   ulong rec_per_key_part[MI_MAX_KEY_SEG*HA_MAX_POSSIBLE_KEY];
-  void *thd;
+  void *session;
   const char *db_name, *table_name;
   const char *op_name;
   enum_mi_stats_method stats_method;
@@ -467,7 +458,7 @@ void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
 			       bool repair);
 int update_state_info(MI_CHECK *param, MI_INFO *info,uint32_t update);
 void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
-                      uint64_t *unique, uint64_t *notnull, 
+                      uint64_t *unique, uint64_t *notnull,
                       uint64_t records);
 int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
 	     my_off_t length, const char *type);
@@ -482,7 +473,7 @@ bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
 int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows);
 void mi_flush_bulk_insert(MI_INFO *info, uint32_t inx);
 void mi_end_bulk_insert(MI_INFO *info);
-int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map, 
+int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map,
 			   KEY_CACHE *key_cache);
 void mi_change_key_cache(KEY_CACHE *old_key_cache,
 			 KEY_CACHE *new_key_cache);

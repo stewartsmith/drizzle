@@ -76,43 +76,43 @@ insert into t2 select * from t1;
 alter table t1 modify b blob not null, add c int not null, drop key a, add unique key (a,b(20),c), drop key b, add key (b(10));
 explain select * from t1 where a is null and b = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a,b	a	5	const	3	Using where
+1	SIMPLE	t1	ref	a,b	a	5	const	X	Using where
 explain select * from t1 where a is null and b = 2 and c=0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a,b	a	5	const	3	Using where
+1	SIMPLE	t1	ref	a,b	a	5	const	X	Using where
 explain select * from t1 where a is null and b = 7 and c=0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a,b	a	5	const	3	Using where
+1	SIMPLE	t1	ref	a,b	a	5	const	X	Using where
 explain select * from t1 where a=2 and b = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a,b	a	5	const	1	Using where
+1	SIMPLE	t1	ref	a,b	a	5	const	X	Using where
 explain select * from t1 where a<=>b limit 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	12	Using where
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	X	Using where
 explain select * from t1 where (a is null or a > 0 and a < 3) and b < 5 and c=0 limit 3;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a,b	a	5	NULL	5	Using where
+1	SIMPLE	t1	range	a,b	a	5	NULL	X	Using where
 explain select * from t1 where (a is null or a = 7) and b=7 and c=0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref_or_null	a,b	a	5	const	4	Using where
+1	SIMPLE	t1	ref_or_null	a,b	a	5	const	X	Using where
 explain select * from t1 where (a is null and b>a) or a is null and b=7 limit 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a,b	a	5	const	3	Using where
+1	SIMPLE	t1	ref	a,b	a	5	const	X	Using where
 explain select * from t1 where a is null and b=9 or a is null and b=7 limit 3;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a,b	a	5	const	3	Using where
+1	SIMPLE	t1	ref	a,b	a	5	const	X	Using where
 explain select * from t1 where a > 1 and a < 3 limit 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	5	NULL	1	Using where
+1	SIMPLE	t1	range	a	a	5	NULL	X	Using where
 explain select * from t1 where a is null and b=7 or a > 1 and a < 3 limit 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a,b	a	5	NULL	4	Using where
+1	SIMPLE	t1	range	a,b	a	5	NULL	X	Using where
 explain select * from t1 where a > 8 and a < 9;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	5	NULL	1	Using where
+1	SIMPLE	t1	range	a	a	5	NULL	X	Using where
 explain select * from t1 where b like "6%";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	b	b	12	NULL	1	Using where
+1	SIMPLE	t1	range	b	b	12	NULL	X	Using where
 select * from t1 where a is null;
 a	b	c
 NULL	7	0
@@ -146,7 +146,8 @@ select * from t1 where b like "6%";
 a	b	c
 6	6	0
 drop table t1;
-rename table t2 to t1;
+drop table t2;
+create table t1 (a int, b int not null,unique key (a,b),index(b)) engine=myisam;
 alter table t1 modify b int null;
 insert into t1 values (7,null), (8,null), (8,7);
 explain select * from t1 where a = 7 and (b=7 or b is null);
@@ -154,111 +155,89 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref_or_null	a,b	a	10	const,const	2	Using index
 select * from t1 where a = 7 and (b=7 or b is null);
 a	b
-7	7
 7	NULL
 explain select * from t1 where (a = 7 or a is null) and (b=7 or b is null);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref_or_null	a,b	a	5	const	4	Using where; Using index
+1	SIMPLE	t1	ref_or_null	a,b	a	5	const	2	Using where; Using index
 select * from t1 where (a = 7 or a is null) and (b=7 or b is null);
 a	b
 7	NULL
-7	7
-NULL	7
 explain select * from t1 where (a = 7 or a is null) and (a = 7 or a is null);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref_or_null	a	a	5	const	5	Using index
+1	SIMPLE	t1	ref_or_null	a	a	5	const	2	Using index
 select * from t1 where (a = 7 or a is null) and (a = 7 or a is null);
 a	b
 7	NULL
-7	7
-NULL	7
-NULL	9
-NULL	9
 create table t2 (a int);
 insert into t2 values (7),(8);
 explain select * from t2 straight_join t1 where t1.a=t2.a and b is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ref	a,b	a	10	test.t2.a,const	2	Using where; Using index
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	X	
+1	SIMPLE	t1	ref	a,b	b	5	const	X	Using where
 drop index b on t1;
 explain select * from t2,t1 where t1.a=t2.a and b is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ref	a	a	10	test.t2.a,const	2	Using where; Using index
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	X	
+1	SIMPLE	t1	ref	a	a	10	test.t2.a,const	X	Using where; Using index
 select * from t2,t1 where t1.a=t2.a and b is null;
 a	a	b
 7	7	NULL
 8	8	NULL
 explain select * from t2,t1 where t1.a=t2.a and (b= 7 or b is null);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ref_or_null	a	a	10	test.t2.a,const	4	Using index
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	X	
+1	SIMPLE	t1	ref_or_null	a	a	10	test.t2.a,const	X	Using index
 select * from t2,t1 where t1.a=t2.a and (b= 7 or b is null);
 a	a	b
-7	7	7
 7	7	NULL
 8	8	7
 8	8	NULL
 explain select * from t2,t1 where (t1.a=t2.a or t1.a is null) and b= 7;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ref_or_null	a	a	10	test.t2.a,const	4	Using index
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	X	
+1	SIMPLE	t1	ref_or_null	a	a	10	test.t2.a,const	X	Using index
 select * from t2,t1 where (t1.a=t2.a or t1.a is null) and b= 7;
 a	a	b
-7	7	7
-7	NULL	7
 8	8	7
-8	NULL	7
 explain select * from t2,t1 where (t1.a=t2.a or t1.a is null) and (b= 7 or b is null);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ref_or_null	a	a	5	test.t2.a	4	Using where; Using index
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	X	
+1	SIMPLE	t1	ref_or_null	a	a	5	test.t2.a	X	Using where; Using index
 select * from t2,t1 where (t1.a=t2.a or t1.a is null) and (b= 7 or b is null);
 a	a	b
 7	7	NULL
-7	7	7
-7	NULL	7
 8	8	NULL
 8	8	7
-8	NULL	7
 insert into t2 values (null),(6);
 delete from t1 where a=8;
 explain select * from t2,t1 where t1.a=t2.a or t1.a is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	4	
-1	SIMPLE	t1	ref_or_null	a	a	5	test.t2.a	4	Using index
+1	SIMPLE	t1	system	a	NULL	NULL	NULL	X	
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	X	Using where
 explain select * from t2,t1 where t1.a<=>t2.a or (t1.a is null and t1.b <> 9);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	4	
-1	SIMPLE	t1	ref_or_null	a	a	5	test.t2.a	4	Using where; Using index
+1	SIMPLE	t1	system	a	NULL	NULL	NULL	X	
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	X	Using where
 select * from t2,t1 where t1.a<=>t2.a or (t1.a is null and t1.b <> 9);
 a	a	b
 7	7	NULL
-7	7	7
-7	NULL	7
-8	NULL	7
-NULL	NULL	7
-NULL	NULL	9
-NULL	NULL	9
-6	6	6
-6	NULL	7
 drop table t1,t2;
 CREATE TABLE t1 (
-id int(10) unsigned NOT NULL auto_increment,
-uniq_id int(10) unsigned default NULL,
+id int NOT NULL auto_increment,
+uniq_id int default NULL,
 PRIMARY KEY  (id),
 UNIQUE KEY idx1 (uniq_id)
 ) ENGINE=MyISAM;
 CREATE TABLE t2 (
-id int(10) unsigned NOT NULL auto_increment,
-uniq_id int(10) unsigned default NULL,
+id int NOT NULL auto_increment,
+uniq_id int default NULL,
 PRIMARY KEY  (id)
 ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,NULL),(2,NULL),(3,1),(4,2),(5,NULL),(6,NULL),(7,3),(8,4),(9,NULL),(10,NULL);
 INSERT INTO t2 VALUES (1,NULL),(2,NULL),(3,1),(4,2),(5,NULL),(6,NULL),(7,3),(8,4),(9,NULL),(10,NULL);
 explain select id from t1 where uniq_id is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1	idx1	5	const	5	Using index condition
+1	SIMPLE	t1	ref	idx1	idx1	5	const	5	Using where
 explain select id from t1 where uniq_id =1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	const	idx1	idx1	5	const	1	
@@ -298,13 +277,13 @@ DROP table t1,t2;
 CREATE TABLE `t1` (
 `order_id` char(32) NOT NULL default '',
 `product_id` char(32) NOT NULL default '',
-`product_type` int(11) NOT NULL default '0',
+`product_type` int NOT NULL default '0',
 PRIMARY KEY  (`order_id`,`product_id`,`product_type`)
 ) ENGINE=MyISAM;
 CREATE TABLE `t2` (
 `order_id` char(32) NOT NULL default '',
 `product_id` char(32) NOT NULL default '',
-`product_type` int(11) NOT NULL default '0',
+`product_type` int NOT NULL default '0',
 PRIMARY KEY  (`order_id`,`product_id`,`product_type`)
 ) ENGINE=MyISAM;
 INSERT INTO t1 (order_id, product_id, product_type) VALUES
@@ -341,33 +320,22 @@ index (id),
 index (id2)
 );
 insert into t1 values(null,null),(1,1);
-Warnings:
-Warning	1048	Column 'id2' cannot be null
+ERROR 23000: Column 'id2' cannot be null
 select * from t1;
 id	id2
-NULL	0
-1	1
 select * from t1 where id <=> null;
 id	id2
-NULL	0
 select * from t1 where id <=> null or id > 0;
 id	id2
-NULL	0
-1	1
 select * from t1 where id is null or id > 0;
 id	id2
-NULL	0
-1	1
 select * from t1 where id2 <=> null or id2 > 0;
 id	id2
-1	1
 select * from t1 where id2 is null or id2 > 0;
 id	id2
-1	1
 delete from t1 where id <=> NULL;
 select * from t1;
 id	id2
-1	1
 drop table t1;
 CREATE TABLE t1 (a int);
 CREATE TABLE t2 (a int, b int, INDEX idx(a));
@@ -406,9 +374,9 @@ COUNT(*)
 EXPLAIN SELECT SQL_CALC_FOUND_ROWS * FROM t1 LEFT JOIN t2 ON t1.a=t2.a
 LEFT JOIN t3 ON t2.b=t3.b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	4	
-1	SIMPLE	t2	ref	idx	idx	5	test.t1.a	1	
-1	SIMPLE	t3	ref	idx	idx	5	test.t2.b	1	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	X	
+1	SIMPLE	t2	ref	idx	idx	5	test.t1.a	X	
+1	SIMPLE	t3	ref	idx	idx	5	test.t2.b	X	Using index
 FLUSH STATUS ;
 SELECT SQL_CALC_FOUND_ROWS * FROM t1 LEFT JOIN t2 ON t1.a=t2.a
 LEFT JOIN t3 ON t2.b=t3.b;
@@ -422,22 +390,22 @@ FOUND_ROWS()
 4
 SHOW STATUS LIKE "handler_read%";
 Variable_name	Value
-Handler_read_first	0
-Handler_read_key	6
+Handler_read_first	1
+Handler_read_key	10
 Handler_read_next	2
 Handler_read_prev	0
 Handler_read_rnd	0
 Handler_read_rnd_next	5
 DROP TABLE t1,t2,t3,t4;
 CREATE TABLE t1 (
-a int(11) default NULL,
-b int(11) default NULL,
+a int default NULL,
+b int default NULL,
 KEY a (a,b)
 );
 INSERT INTO t1 VALUES (0,10),(0,11),(0,12);
 CREATE TABLE t2 (
-a int(11) default NULL,
-b int(11) default NULL,
+a int default NULL,
+b int default NULL,
 KEY a (a)
 );
 INSERT INTO t2 VALUES (3,NULL),(3,11),(3,12);

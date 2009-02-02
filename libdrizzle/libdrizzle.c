@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "libdrizzle.h"
+#include <drizzled/global.h>
 #include "libdrizzle_priv.h"
-#include "errmsg.h"
+
+#include <libdrizzle/libdrizzle.h>
+#include <libdrizzle/pack.h>
+#include <libdrizzle/errmsg.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <time.h>
@@ -51,9 +54,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sql_common.h>
-#include <drizzled/version.h>
-
 /* Borrowed from libicu header */
 
 #define U8_IS_SINGLE(c) (((c)&0x80)==0)
@@ -78,14 +78,6 @@ uint32_t    max_allowed_packet= 1024L*1024L*1024L;
 unsigned int drizzle_port=0;
 
 #include <errno.h>
-#define SOCKET_ERROR -1
-
-/*
-  If allowed through some configuration, then this needs to
-  be changed
-*/
-#define MAX_LONG_DATA_LENGTH 8192
-#define unsigned_field(A) ((A)->flags & UNSIGNED_FLAG)
 
 
 static DRIZZLE_PARAMETERS drizzle_internal_parameters=
@@ -141,7 +133,7 @@ int cli_read_change_user_result(DRIZZLE *drizzle)
   uint32_t pkt_length;
 
   pkt_length= cli_safe_read(drizzle);
-  
+
   if (pkt_length == packet_error)
     return 1;
 
@@ -449,7 +441,7 @@ drizzle_get_proto_info(const DRIZZLE *drizzle)
 const char *
 drizzle_get_client_info(void)
 {
-  return (char*) DRIZZLE_SERVER_VERSION;
+  return (char*) VERSION;
 }
 
 uint32_t drizzle_get_client_version(void)
@@ -538,39 +530,6 @@ void my_net_local_init(NET *net)
 }
 
 /*
-  This function is used to create HEX string that you
-  can use in a SQL statement in of the either ways:
-    INSERT INTO blob_column VALUES (0xAABBCC);  (any DRIZZLE version)
-    INSERT INTO blob_column VALUES (X'AABBCC'); 
-  
-  The string in "from" is encoded to a HEX string.
-  The result is placed in "to" and a terminating null byte is appended.
-  
-  The string pointed to by "from" must be "length" bytes long.
-  You must allocate the "to" buffer to be at least length*2+1 bytes long.
-  Each character needs two bytes, and you need room for the terminating
-  null byte. When drizzle_hex_string() returns, the contents of "to" will
-  be a null-terminated string. The return value is the length of the
-  encoded string, not including the terminating null character.  The return value does not contain any leading 0x or a leading X' and
-  trailing '. The caller must supply whichever of those is desired.
-*/
-
-uint32_t
-drizzle_hex_string(char *to, const char *from, uint32_t length)
-{
-  char *to0= to;
-  const char *end;
-            
-  for (end= from + length; from < end; from++)
-  {
-    *to++= _dig_vec_upper[((unsigned char) *from) >> 4];
-    *to++= _dig_vec_upper[((unsigned char) *from) & 0x0F];
-  }
-  *to= '\0';
-  return (uint32_t) (to-to0);
-}
-
-/*
   Add escape characters to a string (blob?) to make it suitable for a insert
   to should at least have place for length*2+1 chars
   Returns the length of the to string
@@ -588,7 +547,7 @@ drizzle_escape_string(char *to,const char *from, uint32_t length)
     char escape= 0;
     if (!U8_IS_SINGLE(*from))
     {
-      tmp_length= U8_LENGTH(*from);
+      tmp_length= U8_LENGTH(*(uint32_t*)from);
       if (to + tmp_length > to_end)
       {
         overflow= true;

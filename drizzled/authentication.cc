@@ -20,11 +20,12 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/authentication.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
+#include <drizzled/errmsg_print.h>
 
 static bool are_plugins_loaded= false;
 
-static bool authenticate_by(THD *thd, plugin_ref plugin, void* p_data)
+static bool authenticate_by(Session *session, plugin_ref plugin, void* p_data)
 {
   const char *password= (const char *)p_data;
   authentication_st *auth= plugin_data(plugin, authentication_st *);
@@ -33,20 +34,20 @@ static bool authenticate_by(THD *thd, plugin_ref plugin, void* p_data)
 
   if (auth && auth->authenticate)
   {
-    if (auth->authenticate(thd, password))
+    if (auth->authenticate(session, password))
       return true;
   }
 
   return false;
 }
 
-bool authenticate_user(THD *thd, const char *password)
+bool authenticate_user(Session *session, const char *password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (are_plugins_loaded != true)
     return true;
 
-  return plugin_foreach(thd, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
+  return plugin_foreach(session, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
 }
 
 
@@ -54,8 +55,10 @@ int authentication_initializer(st_plugin_int *plugin)
 {
   authentication_st *authen;
 
-  if ((authen= (authentication_st *)malloc(sizeof(authentication_st))) == 0)
-      return(1);
+  authen= new authentication_st;
+
+  if (authen == NULL)
+    return 1;
 
   memset(authen, 0, sizeof(authentication_st));
 
@@ -63,7 +66,7 @@ int authentication_initializer(st_plugin_int *plugin)
   {
     if (plugin->plugin->init(authen))
     {
-      sql_print_error(_("Plugin '%s' init function returned error."),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }
@@ -72,9 +75,11 @@ int authentication_initializer(st_plugin_int *plugin)
   plugin->data= (void *)authen;
   are_plugins_loaded= true;
 
+  plugin->state= PLUGIN_IS_READY;
+
   return(0);
 err:
-  free(authen);
+  delete authen;
   return(1);
 }
 
@@ -86,7 +91,7 @@ int authentication_finalizer(st_plugin_int *plugin)
   if (authen && plugin->plugin->deinit)
     plugin->plugin->deinit(authen);
 
-  free(authen);
+  delete authen;
 
   return(0);
 }

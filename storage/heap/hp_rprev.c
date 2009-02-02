@@ -15,6 +15,8 @@
 
 #include "heapdef.h"
 
+#include <string.h>
+
 	/* Read prev record for key */
 
 
@@ -40,7 +42,7 @@ int heap_rprev(HP_INFO *info, unsigned char *record)
       custom_arg.keyseg = keyinfo->seg;
       custom_arg.key_length = keyinfo->length;
       custom_arg.search_flag = SEARCH_SAME;
-      pos = tree_search_key(&keyinfo->rb_tree, info->lastkey, info->parents, 
+      pos = tree_search_key(&keyinfo->rb_tree, info->lastkey, info->parents,
                            &info->last_pos, info->last_find_flag, &custom_arg);
     }
     if (pos)

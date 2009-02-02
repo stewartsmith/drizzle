@@ -21,7 +21,9 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/num.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
 /**
   Numeric fields base class constructor.
@@ -108,7 +110,7 @@ int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int len
 */
 
 bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,
-                        int64_t *rnd, uint64_t unsigned_max __attribute__((unused)),
+                        int64_t *rnd, uint64_t ,
                         int64_t signed_min, int64_t signed_max)
 {
   char *end;
@@ -201,14 +203,14 @@ bool Field_num::eq_def(Field *field)
   return 1;
 }
 
-uint32_t Field_num::is_equal(Create_field *new_field)
+uint32_t Field_num::is_equal(Create_field *new_field_ptr)
 {
-  return ((new_field->sql_type == real_type()) &&
-          ((new_field->flags & UNSIGNED_FLAG) == (uint32_t) (flags &
-                                                         UNSIGNED_FLAG)) &&
-          ((new_field->flags & AUTO_INCREMENT_FLAG) ==
+  return ((new_field_ptr->sql_type == real_type()) &&
+          ((new_field_ptr->flags & UNSIGNED_FLAG) ==
+           (uint32_t) (flags & UNSIGNED_FLAG)) &&
+          ((new_field_ptr->flags & AUTO_INCREMENT_FLAG) ==
            (uint32_t) (flags & AUTO_INCREMENT_FLAG)) &&
-          (new_field->length <= max_display_length()));
+          (new_field_ptr->length <= max_display_length()));
 }
 
 

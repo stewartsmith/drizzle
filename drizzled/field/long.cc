@@ -21,6 +21,14 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/long.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /****************************************************************************
 ** long int
@@ -31,7 +39,7 @@ int Field_long::store(const char *from,uint32_t len, const CHARSET_INFO * const 
   long store_tmp;
   int error;
   int64_t rnd;
-  
+
   error= get_int(cs, from, len, &rnd, UINT32_MAX, INT32_MIN, INT32_MAX);
   store_tmp= (long) rnd;
 #ifdef WORDS_BIGENDIAN
@@ -87,7 +95,7 @@ int Field_long::store(int64_t nr, bool unsigned_val)
 
   if (nr < 0 && unsigned_val)
     nr= ((int64_t) INT32_MAX) + 1;           // Generate overflow
-  if (nr < (int64_t) INT32_MIN) 
+  if (nr < (int64_t) INT32_MIN)
   {
     res=(int32_t) INT32_MIN;
     error= 1;
@@ -131,7 +139,7 @@ int64_t Field_long::val_int(void)
 {
   int32_t j;
   /* See the comment in Field_long::store(int64_t) */
-  assert(table->in_use == current_thd);
+  assert(table->in_use == current_session);
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
     j=sint4korr(ptr);
@@ -142,7 +150,7 @@ int64_t Field_long::val_int(void)
 }
 
 String *Field_long::val_str(String *val_buffer,
-			    String *val_ptr __attribute__((unused)))
+			    String *)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;
@@ -188,7 +196,7 @@ int Field_long::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_long::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_long::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)
@@ -213,5 +221,57 @@ void Field_long::sql_type(String &res) const
 {
   const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "int"));
+}
+
+unsigned char *Field_long::pack(unsigned char* to, const unsigned char *from,
+                                         uint32_t,
+#ifdef WORDS_BIGENDIAN
+                                         bool low_byte_first
+#else
+                                         bool
+#endif
+)
+{
+  int32_t val;
+#ifdef WORDS_BIGENDIAN
+  if (table->s->db_low_byte_first)
+    val = sint4korr(from);
+  else
+#endif
+    longget(val, from);
+
+#ifdef WORDS_BIGENDIAN
+  if (low_byte_first)
+    int4store(to, val);
+  else
+#endif
+    longstore(to, val);
+  return to + sizeof(val);
+}
+
+
+const unsigned char *Field_long::unpack(unsigned char* to, const unsigned char *from, uint32_t,
+#ifdef WORDS_BIGENDIAN
+                                           bool low_byte_first
+#else
+                                           bool
+#endif
+)
+{
+  int32_t val;
+#ifdef WORDS_BIGENDIAN
+  if (low_byte_first)
+    val = sint4korr(from);
+  else
+#endif
+    longget(val, from);
+
+#ifdef WORDS_BIGENDIAN
+  if (table->s->db_low_byte_first)
+    int4store(to, val);
+  else
+#endif
+    longstore(to, val);
+  return from + sizeof(val);
 }
 

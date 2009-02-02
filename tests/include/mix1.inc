@@ -35,8 +35,8 @@ drop table if exists t1,t2,t3,t1m,t1i,t2m,t2i,t4;
 # BUG#16798: Uninitialized row buffer reads in ref-or-null optimizer
 # (repeatable only w/innodb).
 create table t1 (
-  c_id int(11) not null default '0',
-  org_id int(11) default null,
+  c_id int not null default '0',
+  org_id int default null,
   unique key contacts$c_id (c_id),
   key contacts$org_id (org_id)
 );
@@ -46,20 +46,20 @@ insert into t1 values
   (246,3),(253,3),(269,3),(285,3),(291,3),(293,3),(131,4),(230,4),(231,4);
 
 create table t2 (
-  slai_id int(11) not null default '0',
-  owner_tbl int(11) default null,
-  owner_id int(11) default null,
-  sla_id int(11) default null,
-  inc_web int(11) default null,
-  inc_email int(11) default null,
-  inc_chat int(11) default null,
-  inc_csr int(11) default null,
-  inc_total int(11) default null,
-  time_billed int(11) default null,
+  slai_id int not null default '0',
+  owner_tbl int default null,
+  owner_id int default null,
+  sla_id int default null,
+  inc_web int default null,
+  inc_email int default null,
+  inc_chat int default null,
+  inc_csr int default null,
+  inc_total int default null,
+  time_billed int default null,
   activedate timestamp null default null,
   expiredate timestamp null default null,
-  state int(11) default null,
-  sla_set int(11) default null,
+  state int default null,
+  sla_set int default null,
   unique key t2$slai_id (slai_id),
   key t2$owner_id (owner_id),
   key t2$sla_id (sla_id)
@@ -109,12 +109,12 @@ INSERT INTO t3 SELECT a + 4, a + 4, 3 FROM t3;
 
 # demonstrate a problem when a must-use-sort table flag
 # (sort_by_table=1) is being neglected.
-SELECT STRAIGHT_JOIN SQL_NO_CACHE t1.b, t1.a FROM t1, t3, t2 WHERE
+SELECT STRAIGHT_JOIN t1.b, t1.a FROM t1, t3, t2 WHERE
   t3.a = t2.a AND t2.b = t1.a AND t3.b = 1 AND t3.c IN (1, 2)
   ORDER BY t1.b LIMIT 2;
 
 # demonstrate the problem described in the bug report
-SELECT STRAIGHT_JOIN SQL_NO_CACHE t1.b, t1.a FROM t1, t3, t2 WHERE
+SELECT STRAIGHT_JOIN t1.b, t1.a FROM t1, t3, t2 WHERE
   t3.a = t2.a AND t2.b = t1.a AND t3.b = 1 AND t3.c IN (1, 2)
   ORDER BY t1.b LIMIT 5;
 DROP TABLE t1, t2, t3;
@@ -152,7 +152,7 @@ DROP TABLE t1, t2;
 #
 
 CREATE TABLE t1(c1 TEXT, UNIQUE (c1(1)), cnt INT DEFAULT 1)
-  ENGINE=INNODB CHARACTER SET UTF8;
+  ENGINE=INNODB;
 INSERT INTO t1 (c1) VALUES ('1a');
 SELECT * FROM t1;
 INSERT INTO t1 (c1) VALUES ('1b') ON DUPLICATE KEY UPDATE cnt=cnt+1;
@@ -160,7 +160,7 @@ SELECT * FROM t1;
 DROP TABLE t1;
 
 CREATE TABLE t1(c1 VARCHAR(2), UNIQUE (c1(1)), cnt INT DEFAULT 1)
-  ENGINE=INNODB CHARACTER SET UTF8;
+  ENGINE=INNODB;
 INSERT INTO t1 (c1) VALUES ('1a');
 SELECT * FROM t1;
 INSERT INTO t1 (c1) VALUES ('1b') ON DUPLICATE KEY UPDATE cnt=cnt+1;
@@ -168,7 +168,7 @@ SELECT * FROM t1;
 DROP TABLE t1;
 
 CREATE TABLE t1(c1 CHAR(2), UNIQUE (c1(1)), cnt INT DEFAULT 1)
-  ENGINE=INNODB CHARACTER SET UTF8;
+  ENGINE=INNODB;
 INSERT INTO t1 (c1) VALUES ('1a');
 SELECT * FROM t1;
 INSERT INTO t1 (c1) VALUES ('1b') ON DUPLICATE KEY UPDATE cnt=cnt+1;
@@ -186,7 +186,7 @@ CREATE TABLE t1 (
   a4 blob,
   a5 char(175) DEFAULT NULL,
   a6 timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  a7 tinyblob,
+  a7 blob,
   INDEX idx (a6,a7(239),a5)
 ) ENGINE=InnoDB;
 
@@ -363,10 +363,10 @@ drop table t1;
 # Test for bug #17164: ORed FALSE blocked conversion of outer join into join
 #
 
-CREATE TABLE t1 (id int(11) NOT NULL PRIMARY KEY, name varchar(20),
+CREATE TABLE t1 (id int NOT NULL PRIMARY KEY, name varchar(20),
                  INDEX (name));
-CREATE TABLE t2 (id int(11) NOT NULL PRIMARY KEY, fkey int(11));
-# CREATE TABLE t2 (id int(11) NOT NULL PRIMARY KEY, fkey int(11),
+CREATE TABLE t2 (id int NOT NULL PRIMARY KEY, fkey int);
+# CREATE TABLE t2 (id int NOT NULL PRIMARY KEY, fkey int,
 #                  FOREIGN KEY (fkey) REFERENCES t2(id));
 if ($test_foreign_keys)
 {
@@ -393,7 +393,7 @@ CREATE TABLE t1 (
   id int NOT NULL,
   name varchar(20) NOT NULL,
   dept varchar(20) NOT NULL,
-  age tinyint(3) NOT NULL,
+  age int NOT NULL,
   PRIMARY KEY (id),
   INDEX (name,dept)
 ) ENGINE=InnoDB;
@@ -422,7 +422,7 @@ connection con1;
 drop table if exists `test`;
 CREATE TABLE `test` (`test1` varchar(3) NOT NULL,
   `test2` varchar(4) NOT NULL,PRIMARY KEY  (`test1`))
-  ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  ENGINE=InnoDB;
 INSERT INTO `test` (`test1`, `test2`) VALUES ('tes', '5678');
 disconnect con1;
 connect (con2,localhost,root,,);
@@ -483,60 +483,61 @@ select * from t1;
 
 drop table t1;
 
+# Test needs to be rewritten to not use divide by zero
+##
+## Bug #28189: optimizer erroniously prefers ref access to range access 
+##             for an InnoDB table
+##
 #
-# Bug #28189: optimizer erroniously prefers ref access to range access 
-#             for an InnoDB table
+#CREATE TABLE t1(
+#  id int AUTO_INCREMENT PRIMARY KEY,
+#  stat_id int NOT NULL,
+#  acct_id int DEFAULT NULL,
+#  INDEX idx1 (stat_id, acct_id),
+#  INDEX idx2 (acct_id)
+#) ENGINE=MyISAM;
 #
-
-CREATE TABLE t1(
-  id int AUTO_INCREMENT PRIMARY KEY,
-  stat_id int NOT NULL,
-  acct_id int DEFAULT NULL,
-  INDEX idx1 (stat_id, acct_id),
-  INDEX idx2 (acct_id)
-) ENGINE=MyISAM;
-
-CREATE TABLE t2(
-  id int AUTO_INCREMENT PRIMARY KEY,
-  stat_id int NOT NULL,
-  acct_id int DEFAULT NULL,
-  INDEX idx1 (stat_id, acct_id),
-  INDEX idx2 (acct_id)
-) ENGINE=InnoDB;
-
-INSERT INTO t1(stat_id,acct_id) VALUES
-  (1,759), (2,831), (3,785), (4,854), (1,921),
-  (1,553), (2,589), (3,743), (2,827), (2,545),
-  (4,779), (4,783), (1,597), (1,785), (4,832),
-  (1,741), (1,833), (3,788), (2,973), (1,907);
-
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
-UPDATE t1 SET acct_id=785 
-  WHERE MOD(stat_id,2)=0 AND MOD(id,stat_id)=MOD(acct_id,stat_id);
-OPTIMIZE TABLE t1;
-
-SELECT COUNT(*) FROM t1;
-SELECT COUNT(*) FROM t1 WHERE acct_id=785;
-
-EXPLAIN SELECT COUNT(*) FROM t1 WHERE stat_id IN (1,3) AND acct_id=785; 
-
-INSERT INTO t2 SELECT * FROM t1;
-OPTIMIZE TABLE t2;
-
-EXPLAIN SELECT COUNT(*) FROM t2 WHERE stat_id IN (1,3) AND acct_id=785;
-
-DROP TABLE t1,t2; 
-
+#CREATE TABLE t2(
+#  id int AUTO_INCREMENT PRIMARY KEY,
+#  stat_id int NOT NULL,
+#  acct_id int DEFAULT NULL,
+#  INDEX idx1 (stat_id, acct_id),
+#  INDEX idx2 (acct_id)
+#) ENGINE=InnoDB;
+#
+#INSERT INTO t1(stat_id,acct_id) VALUES
+#  (1,759), (2,831), (3,785), (4,854), (1,921),
+#  (1,553), (2,589), (3,743), (2,827), (2,545),
+#  (4,779), (4,783), (1,597), (1,785), (4,832),
+#  (1,741), (1,833), (3,788), (2,973), (1,907);
+#
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#INSERT INTO t1(stat_id,acct_id) SELECT stat_id, mod(id+100000, acct_id) FROM t1;
+#UPDATE t1 SET acct_id=785 
+#  WHERE MOD(stat_id,2)=0 AND MOD(id,stat_id)=MOD(acct_id,stat_id);
+#OPTIMIZE TABLE t1;
+#
+#SELECT COUNT(*) FROM t1;
+#SELECT COUNT(*) FROM t1 WHERE acct_id=785;
+#
+#EXPLAIN SELECT COUNT(*) FROM t1 WHERE stat_id IN (1,3) AND acct_id=785; 
+#
+#INSERT INTO t2 SELECT * FROM t1;
+#OPTIMIZE TABLE t2;
+#
+#EXPLAIN SELECT COUNT(*) FROM t2 WHERE stat_id IN (1,3) AND acct_id=785;
+#
+#DROP TABLE t1,t2; 
+#
 #
 # Bug #28652: assert when alter innodb table operation
 #
@@ -548,7 +549,7 @@ drop table t1;
 #
 # Bug #25866: Getting "#HY000 Can't find record in..." on and INSERT
 #
-CREATE TABLE t1 (a CHAR(2), KEY (a)) ENGINE = InnoDB DEFAULT CHARSET=UTF8;
+CREATE TABLE t1 (a CHAR(2), KEY (a)) ENGINE = InnoDB;
 INSERT INTO t1 VALUES ('uk'),('bg');
 SELECT * FROM t1 WHERE a = 'uk';
 DELETE FROM t1 WHERE a = 'uk';
@@ -575,21 +576,6 @@ UPDATE t3 SET a = 'us' WHERE a = 'uk';
 SELECT * FROM t3 WHERE a = 'uk';
 
 DROP TABLE t1,t2,t3;
-
-#
-# Test bug when trying to drop data file which no InnoDB directory entry
-#
-
-create table t1 (a int) engine=innodb;
-copy_file $MYSQLTEST_VARDIR/master-data/test/t1.frm $MYSQLTEST_VARDIR/master-data/test/bug29807.frm;
---error 1146
-select * from bug29807;
-drop table t1;
---error 1051
-drop table bug29807;
-create table bug29807 (a int);
-drop table bug29807;
-
 
 #
 # Bug #29154: LOCK TABLES is not atomic when >1 InnoDB tables are locked
@@ -731,8 +717,7 @@ drop table t1,t2;
 #
 # Bug#17530: Incorrect key truncation on table creation caused server crash.
 #
-create table t1(f1 varchar(800) binary not null, key(f1))
-  character set utf8 collate utf8_general_ci;
+create table t1(f1 varchar(800) not null, key(f1));
 insert into t1 values('aaa');
 drop table t1;
 
@@ -841,7 +826,7 @@ DROP TABLE t1,t2;
 #
 # Bug #28125: ERROR 2013 when adding index.
 #
-create table t1(a text) engine=innodb default charset=utf8; 
+create table t1(a text) engine=innodb;
 insert into t1 values('aaa');
 alter table t1 add index(a(1024));
 show create table t1;
@@ -1017,9 +1002,9 @@ set global innodb_commit_concurrency=@my_innodb_commit_concurrency;
 # UPDATE": if the row is updated, it's like a regular UPDATE:
 # LAST_INSERT_ID() is not affected.
 CREATE TABLE `t2` (
-  `k` int(11) NOT NULL auto_increment,
-  `a` int(11) default NULL,
-  `c` int(11) default NULL,
+  `k` int NOT NULL auto_increment,
+  `a` int default NULL,
+  `c` int default NULL,
   PRIMARY KEY  (`k`),
   UNIQUE KEY `idx_1` (`a`)
 );
@@ -1176,6 +1161,7 @@ if ($test_foreign_keys)
 #             auto_increment keys
 #
 create table t1 (a int auto_increment primary key) engine=innodb;
+--error 1105
 alter table t1 order by a;
 drop table t1;
 

@@ -1,14 +1,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/natural_join_column.h>
-
-Natural_join_column::Natural_join_column(Field_translator *field_param __attribute__((unused)), TableList *tab)
-{
-  assert(tab->field_translation);
-  table_field= NULL;
-  table_ref= tab;
-  is_common= false;
-}
-
+#include <drizzled/table_list.h>
+#include <drizzled/session.h>
 
 Natural_join_column::Natural_join_column(Field *field_param,
                                          TableList *tab)
@@ -26,9 +19,9 @@ const char *Natural_join_column::name()
 }
 
 
-Item *Natural_join_column::create_item(THD *thd)
+Item *Natural_join_column::create_item(Session *session)
 {
-  return new Item_field(thd, &thd->lex->current_select->context, table_field);
+  return new Item_field(session, &session->lex->current_select->context, table_field);
 }
 
 
@@ -48,7 +41,7 @@ const char *Natural_join_column::table_name()
 const char *Natural_join_column::db_name()
 {
   /*
-    Test that TableList::db is the same as st_table_share::db to
+    Test that TableList::db is the same as TABLE_SHARE::db to
     ensure consistency. An exception are I_S schema tables, which
     are inconsistent in this respect.
   */

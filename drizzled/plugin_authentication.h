@@ -1,5 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+
+ *  Definitions required for Authentication plugin
+
  *
  *  Copyright (C) 2008 Brian Aker
  *
@@ -26,7 +29,7 @@
 
 typedef struct authentication_st
 {
-  bool (*authenticate)(THD *thd, const char *password);
+  bool (*authenticate)(Session *session, const char *password);
 } authentication_st;
 
 #endif /* DRIZZLED_PLUGIN_AUTHENTICATION_H */

@@ -21,13 +21,21 @@
 #ifndef _libdrizzle_net_serv_h_
 #define _libdrizzle_net_serv_h_
 
-#include <vio/violite.h>
-
-#define net_new_transaction(net) ((net)->pkt_nr=0)
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdint.h>
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
+
+#define net_new_transaction(net) ((net)->pkt_nr=0)
+
+#include <libdrizzle/vio.h>
+
+#define LIBDRIZZLE_ERRMSG_SIZE 512
+#define LIBDRIZZLE_SQLSTATE_LENGTH 5
 
 typedef struct st_net {
   Vio *vio;
@@ -58,11 +66,11 @@ typedef struct st_net {
   */
   unsigned char *unused;
   unsigned int last_errno;
-  unsigned char error; 
+  unsigned char error;
   /** Client library error message buffer. Actually belongs to struct MYSQL. */
-  char last_error[DRIZZLE_ERRMSG_SIZE];
+  char last_error[LIBDRIZZLE_ERRMSG_SIZE];
   /** Client library sqlstate buffer. Set along with the error message. */
-  char sqlstate[SQLSTATE_LENGTH+1];
+  char sqlstate[LIBDRIZZLE_SQLSTATE_LENGTH+1];
   void *extension;
 } NET;
 

@@ -5,7 +5,7 @@ AC_DEFUN([DRIZZLE_TYPE_ACCEPT],
 [ac_save_CXXFLAGS="$CXXFLAGS"
 AC_CACHE_CHECK([base type of last arg to accept], mysql_cv_btype_last_arg_accept,
 AC_LANG_PUSH(C++)
-if test "$ac_cv_prog_gxx" = "yes"
+if test "$GXX" = "yes"
 then
   # Add -Werror, remove -fbranch-probabilities (Bug #268)
   CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-Wcheck//'`
@@ -41,31 +41,13 @@ CXXFLAGS="$ac_save_CXXFLAGS"
 ])
 #---END:
 
-dnl Find type of qsort
-AC_DEFUN([DRIZZLE_TYPE_QSORT],
-[AC_CACHE_CHECK([return type of qsort], mysql_cv_type_qsort,
-[AC_TRY_COMPILE([#include <stdlib.h>
-#ifdef __cplusplus
-extern "C"
-#endif
-void qsort(void *base, size_t nel, size_t width,
- int (*compar) (const void *, const void *));
-],
-[int i;], mysql_cv_type_qsort=void, mysql_cv_type_qsort=int)])
-AC_DEFINE_UNQUOTED([RETQSORTTYPE], [$mysql_cv_type_qsort],
-                   [The return type of qsort (int or void).])
-if test "$mysql_cv_type_qsort" = "void"
-then
- AC_DEFINE_UNQUOTED([QSORT_TYPE_IS_VOID], [1], [qsort returns void])
-fi
-])
 
 #---START: Figure out whether to use 'struct rlimit' or 'struct rlimit64'
 AC_DEFUN([DRIZZLE_TYPE_STRUCT_RLIMIT],
 [ac_save_CXXFLAGS="$CXXFLAGS"
 AC_CACHE_CHECK([struct type to use with setrlimit], mysql_cv_btype_struct_rlimit,
 AC_LANG_PUSH(C++)
-if test "$ac_cv_prog_gxx" = "yes"
+if test "$GXX" = "yes"
 then
   # Add -Werror, remove -fbranch-probabilities (Bug #268)
   CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-Wcheck//'`
@@ -225,30 +207,6 @@ case "x$am_cv_prog_cc_stdc" in
 esac
 ])
 
-# Orginal from bash-2.0 aclocal.m4, Changed to use termcap last by monty.
- 
-AC_DEFUN([DRIZZLE_CHECK_LIB_TERMCAP],
-[
-AC_CACHE_VAL(mysql_cv_termcap_lib,
-[AC_CHECK_LIB(ncurses, tgetent, mysql_cv_termcap_lib=libncurses,
-    [AC_CHECK_LIB(curses, tgetent, mysql_cv_termcap_lib=libcurses,
-	[AC_CHECK_LIB(termcap, tgetent, mysql_cv_termcap_lib=libtermcap,
-          [AC_CHECK_LIB(tinfo, tgetent, mysql_cv_termcap_lib=libtinfo,
-	    mysql_cv_termcap_lib=NOT_FOUND)])])])])
-AC_MSG_CHECKING(for termcap functions library)
-if test "$mysql_cv_termcap_lib" = "NOT_FOUND"; then
-AC_MSG_ERROR([No curses/termcap library found])
-elif test "$mysql_cv_termcap_lib" = "libtermcap"; then
-TERMCAP_LIB=-ltermcap
-elif test "$mysql_cv_termcap_lib" = "libncurses"; then
-TERMCAP_LIB=-lncurses
-elif test "$mysql_cv_termcap_lib" = "libtinfo"; then
-TERMCAP_LIB=-ltinfo
-else
-TERMCAP_LIB=-lcurses
-fi
-AC_MSG_RESULT($TERMCAP_LIB)
-])
 
 dnl Check type of signal routines (posix, 4.2bsd, 4.1bsd or v7)
 AC_DEFUN([DRIZZLE_SIGNAL_CHECK],
@@ -271,7 +229,7 @@ AC_CACHE_VAL(mysql_cv_signal_vintage,
     [
       AC_TRY_LINK([
 	#include <signal.h>
-	RETSIGTYPE foo() { }], [
+	void foo() { }], [
 		int mask = sigmask(SIGINT);
 		sigset(SIGINT, foo); sigrelse(SIGINT);
 		sighold(SIGINT); sigpause(SIGINT);
@@ -317,18 +275,6 @@ AC_DEFINE([GWINSZ_IN_SYS_IOCTL], [1],
 fi
 ])
 
-AC_DEFUN([DRIZZLE_HAVE_FIONREAD],
-[AC_MSG_CHECKING(for FIONREAD in sys/ioctl.h)
-AC_CACHE_VAL(mysql_cv_fionread_in_ioctl,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/ioctl.h>], [int x = FIONREAD;],
-  mysql_cv_fionread_in_ioctl=yes,mysql_cv_fionread_in_ioctl=no)])
-AC_MSG_RESULT($mysql_cv_fionread_in_ioctl)
-if test "$mysql_cv_fionread_in_ioctl" = "yes"; then   
-AC_DEFINE([FIONREAD_IN_SYS_IOCTL], [1], [Do we have FIONREAD])
-fi
-])
-
 AC_DEFUN([DRIZZLE_HAVE_TIOCSTAT],
 [AC_MSG_CHECKING(for TIOCSTAT in sys/ioctl.h)
 AC_CACHE_VAL(mysql_cv_tiocstat_in_ioctl,
@@ -342,112 +288,6 @@ AC_DEFINE(TIOCSTAT_IN_SYS_IOCTL, [1],
 fi
 ])
 
-AC_DEFUN([DRIZZLE_STRUCT_DIRENT_D_INO],
-[AC_REQUIRE([AC_HEADER_DIRENT])
-AC_MSG_CHECKING(if struct dirent has a d_ino member)
-AC_CACHE_VAL(mysql_cv_dirent_has_dino,
-[AC_TRY_COMPILE([
-#include <stdio.h>
-#include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#if defined(HAVE_DIRENT_H)
-# include <dirent.h>
-#else
-# define dirent direct
-# ifdef HAVE_SYS_NDIR_H
-#  include <sys/ndir.h>
-# endif /* SYSNDIR */
-# ifdef HAVE_SYS_DIR_H
-#  include <sys/dir.h>
-# endif /* SYSDIR */
-# ifdef HAVE_NDIR_H
-#  include <ndir.h>
-# endif
-#endif /* HAVE_DIRENT_H */
-],[
-struct dirent d; int z; z = d.d_ino;
-], mysql_cv_dirent_has_dino=yes, mysql_cv_dirent_has_dino=no)])
-AC_MSG_RESULT($mysql_cv_dirent_has_dino)
-if test "$mysql_cv_dirent_has_dino" = "yes"; then
-AC_DEFINE(STRUCT_DIRENT_HAS_D_INO, [1],
-          [d_ino member present in struct dirent])
-fi
-])
-
-AC_DEFUN([DRIZZLE_STRUCT_DIRENT_D_NAMLEN],
-[AC_REQUIRE([AC_HEADER_DIRENT])
-AC_MSG_CHECKING(if struct dirent has a d_namlen member)
-AC_CACHE_VAL(mysql_cv_dirent_has_dnamlen,
-[AC_TRY_COMPILE([
-#include <stdio.h>
-#include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#if defined(HAVE_DIRENT_H)
-# include <dirent.h>
-#else
-# define dirent direct
-# ifdef HAVE_SYS_NDIR_H
-#  include <sys/ndir.h>
-# endif /* SYSNDIR */
-# ifdef HAVE_SYS_DIR_H
-#  include <sys/dir.h>
-# endif /* SYSDIR */
-# ifdef HAVE_NDIR_H
-#  include <ndir.h>
-# endif
-#endif /* HAVE_DIRENT_H */
-],[
-struct dirent d; int z; z = (int)d.d_namlen;
-], mysql_cv_dirent_has_dnamlen=yes, mysql_cv_dirent_has_dnamlen=no)])
-AC_MSG_RESULT($mysql_cv_dirent_has_dnamlen)
-if test "$mysql_cv_dirent_has_dnamlen" = "yes"; then
-AC_DEFINE(STRUCT_DIRENT_HAS_D_NAMLEN, [1],
-          [d_namlen member present in struct dirent])
-fi
-])
-
-
-AC_DEFUN([DRIZZLE_TYPE_SIGHANDLER],
-[AC_MSG_CHECKING([whether signal handlers are of type void])
-AC_CACHE_VAL(mysql_cv_void_sighandler,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <signal.h>
-#ifdef signal
-#undef signal
-#endif
-#ifdef __cplusplus
-extern "C"
-#endif
-void (*signal ()) ();],
-[int i;], mysql_cv_void_sighandler=yes, mysql_cv_void_sighandler=no)])dnl
-AC_MSG_RESULT($mysql_cv_void_sighandler)
-if test "$mysql_cv_void_sighandler" = "yes"; then
-AC_DEFINE(VOID_SIGHANDLER, [1], [sighandler type is void (*signal ()) ();])
-fi
-])
-
-AC_DEFUN([DRIZZLE_CXX_BOOL],
-[
-AC_REQUIRE([AC_PROG_CXX])
-AC_MSG_CHECKING(if ${CXX} supports bool types)
-AC_CACHE_VAL(mysql_cv_have_bool,
-[
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
-AC_TRY_COMPILE(,[bool b = true;],
-mysql_cv_have_bool=yes,
-mysql_cv_have_bool=no)
-AC_LANG_RESTORE
-])
-AC_MSG_RESULT($mysql_cv_have_bool)
-if test "$mysql_cv_have_bool" = yes; then
-AC_DEFINE([HAVE_BOOL], [1], [bool is not defined by all C++ compilators])
-fi
-])dnl
 
 AC_DEFUN([DRIZZLE_STACK_DIRECTION],
  [AC_CACHE_CHECK(stack direction for C alloca, ac_cv_c_stack_direction,
@@ -544,34 +384,6 @@ dnl ---------------------------------------------------------------------------
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: DRIZZLE_CHECK_BIG_TABLES
-dnl Sets BIG_TABLES if --with-big-tables is used
-dnl ---------------------------------------------------------------------------
-AC_DEFUN([DRIZZLE_CHECK_BIG_TABLES], [
-  AC_ARG_WITH([big-tables],
-  AS_HELP_STRING([--with-big-tables],
-              [Support tables with more than 4 G rows even on 32 bit platforms]),
-              [bigtables="$withval"],
-              [bigtables=no])
-  AC_MSG_CHECKING([for big tables support])
-
-  case "$bigtables" in
-    yes )
-      AC_DEFINE([BIG_TABLES], [1], [Support big tables])
-      AC_MSG_RESULT([yes])
-      ;;
-    * )
-      AC_MSG_RESULT([no])
-      ;;
-  esac
-
-])
-dnl ---------------------------------------------------------------------------
-dnl END OF DRIZZLE_CHECK_BIG_TABLES SECTION
-dnl ---------------------------------------------------------------------------
-
-
-dnl ---------------------------------------------------------------------------
 dnl Macro: DRIZZLE_CHECK_MAX_INDEXES
 dnl Sets MAX_INDEXES
 dnl ---------------------------------------------------------------------------
@@ -590,33 +402,38 @@ dnl ---------------------------------------------------------------------------
 dnl END OF DRIZZLE_CHECK_MAX_INDEXES SECTION
 dnl ---------------------------------------------------------------------------
 
+AC_DEFUN([DRIZZLE_CHECK_C_VERSION],[
+
+  dnl Print version of C compiler
+  AC_MSG_CHECKING("C Compiler version")
+  if test "$GCC" = "yes"
+  then
+    CC_VERSION=`$CC --version | sed 1q`
+  elif test "$SUNCC" = "yes"
+  then
+    CC_VERSION=`$CC -V 2>&1 | sed 1q`
+  else
+    CC_VERSION=""
+  fi
+  AC_MSG_RESULT("$CC_VERSION")
+  AC_SUBST(CC_VERSION)
+])
+
 
 AC_DEFUN([DRIZZLE_CHECK_CXX_VERSION], [
-case $SYSTEM_TYPE in
-  *netware*)
-    CXX_VERSION=`$CXX -version | grep -i version`
-  ;;
-  *)
+  dnl Print version of CXX compiler
+  AC_MSG_CHECKING("C++ Compiler version")
+  if test "$GCC" = "yes"
+  then
     CXX_VERSION=`$CXX --version | sed 1q`
-    if test $? -ne "0" -o -z "$CXX_VERSION"
-    then
-      CXX_VERSION=`$CXX -V 2>&1|sed 1q` # trying harder for Sun and SGI
-    fi
-    if test $? -ne "0" -o -z "$CXX_VERSION"
-    then
-      CXX_VERSION=`$CXX -v 2>&1|sed 1q` # even harder for Alpha
-    fi
-    if test $? -ne "0" -o -z "$CXX_VERSION"
-    then
-      CXX_VERSION=""
-    fi
-esac
-if test "$CXX_VERSION"
-then
-  AC_MSG_CHECKING("C++ compiler version")
-  AC_MSG_RESULT("$CXX $CXX_VERSION")
-fi
-AC_SUBST(CXX_VERSION)
+  elif test "$SUNCC" = "yes"
+  then
+    CXX_VERSION=`$CXX -V 2>&1 | sed 1q`
+  else
+    CXX_VERSION=""
+  fi
+  AC_MSG_RESULT("$CXX_VERSION")
+  AC_SUBST(CXX_VERSION)
 ])
 
 AC_DEFUN([DRIZZLE_PROG_AR], [

@@ -16,6 +16,8 @@
 /* Write a row to a MyISAM table */
 
 #include "myisamdef.h"
+
+#include <mystrings/m_string.h>
 #include <drizzled/util/test.h>
 
 
@@ -97,7 +99,7 @@ int mi_write(MI_INFO *info, unsigned char *record)
                                   is_tree_inited(&info->bulk_insert[i])));
       if (local_lock_tree)
       {
-	rw_wrlock(&share->key_root_lock[i]);
+	pthread_rwlock_wrlock(&share->key_root_lock[i]);
 	share->keyinfo[i].version++;
       }
       {
@@ -105,7 +107,7 @@ int mi_write(MI_INFO *info, unsigned char *record)
 			_mi_make_key(info,i,buff,record,filepos)))
         {
           if (local_lock_tree)
-            rw_unlock(&share->key_root_lock[i]);
+            pthread_rwlock_unlock(&share->key_root_lock[i]);
           goto err;
         }
       }
@@ -114,7 +116,7 @@ int mi_write(MI_INFO *info, unsigned char *record)
       info->update&= ~HA_STATE_RNEXT_SAME;
 
       if (local_lock_tree)
-        rw_unlock(&share->key_root_lock[i]);
+        pthread_rwlock_unlock(&share->key_root_lock[i]);
     }
   }
   if (share->calc_checksum)
@@ -172,18 +174,18 @@ err:
                                   !(info->bulk_insert &&
                                     is_tree_inited(&info->bulk_insert[i])));
 	if (local_lock_tree)
-	  rw_wrlock(&share->key_root_lock[i]);
+	  pthread_rwlock_wrlock(&share->key_root_lock[i]);
 	{
 	  uint32_t key_length=_mi_make_key(info,i,buff,record,filepos);
 	  if (_mi_ck_delete(info,i,buff,key_length))
 	  {
 	    if (local_lock_tree)
-	      rw_unlock(&share->key_root_lock[i]);
+	      pthread_rwlock_unlock(&share->key_root_lock[i]);
 	    break;
 	  }
 	}
 	if (local_lock_tree)
-	  rw_unlock(&share->key_root_lock[i]);
+	  pthread_rwlock_unlock(&share->key_root_lock[i]);
       }
     }
   }
@@ -301,8 +303,8 @@ static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   my_off_t next_page, dupp_key_pos;
 
   search_key_length= (comp_flag & SEARCH_FIND) ? key_length : USE_WHOLE_KEY;
-  if (!(temp_buff= (unsigned char*) my_alloca((uint) keyinfo->block_length+
-				      MI_MAX_KEY_BUFF*2)))
+  if (!(temp_buff= (unsigned char*) malloc(keyinfo->block_length+
+				           MI_MAX_KEY_BUFF*2)))
     return(-1);
   if (!_mi_fetch_keypage(info,keyinfo,page,DFLT_INIT_HITS,temp_buff,0))
     goto err;
@@ -322,7 +324,7 @@ static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
     {
       info->dupp_key_pos= dupp_key_pos;
-      my_afree((unsigned char*) temp_buff);
+      free(temp_buff);
       my_errno=HA_ERR_FOUND_DUPP_KEY;
       return(-1);
     }
@@ -341,10 +343,10 @@ static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     if (_mi_write_keypage(info,keyinfo,page,DFLT_INIT_HITS,temp_buff))
       goto err;
   }
-  my_afree((unsigned char*) temp_buff);
+  free(temp_buff);
   return(error);
 err:
-  my_afree((unsigned char*) temp_buff);
+  free(temp_buff);
   return (-1);
 } /* w_search */
 
@@ -411,7 +413,7 @@ int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
       my_errno=HA_ERR_CRASHED;
       return(-1);
     }
-    memcpy(key_pos, key_pos - t_length, endpos - key_pos + t_length);
+    memmove(key_pos, key_pos - t_length, endpos - key_pos + t_length);
   }
   (*keyinfo->store_key)(keyinfo,key_pos,&s_temp);
   a_length+=t_length;
@@ -653,7 +655,7 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
       memcpy(pos+k_length, buff+2, length);
       pos=buff+2+length;
       memcpy(father_key_pos, pos, k_length);
-      memcpy(buff+2, pos+k_length, new_right_length);
+      memmove(buff+2, pos+k_length, new_right_length);
     }
     else
     {						/* Move keys -> buff */
@@ -766,7 +768,7 @@ static int keys_free(unsigned char *key, TREE_FREE mode, bulk_insert_param *para
   case free_init:
     if (param->info->s->concurrent_insert)
     {
-      rw_wrlock(&param->info->s->key_root_lock[param->keynr]);
+      pthread_rwlock_wrlock(&param->info->s->key_root_lock[param->keynr]);
       param->info->s->keyinfo[param->keynr].version++;
     }
     return 0;
@@ -778,7 +780,7 @@ static int keys_free(unsigned char *key, TREE_FREE mode, bulk_insert_param *para
 			      keylen - param->info->s->rec_reflength);
   case free_end:
     if (param->info->s->concurrent_insert)
-      rw_unlock(&param->info->s->key_root_lock[param->keynr]);
+      pthread_rwlock_unlock(&param->info->s->key_root_lock[param->keynr]);
     return 0;
   }
   return -1;
@@ -818,8 +820,8 @@ int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
     cache_size/=total_keylength*16;
 
   info->bulk_insert=(TREE *)
-    my_malloc((sizeof(TREE)*share->base.keys+
-               sizeof(bulk_insert_param)*num_keys),MYF(0));
+    malloc((sizeof(TREE)*share->base.keys+
+           sizeof(bulk_insert_param)*num_keys));
 
   if (!info->bulk_insert)
     return(HA_ERR_OUT_OF_MEM);

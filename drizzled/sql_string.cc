@@ -42,7 +42,7 @@ bool String::real_alloc(uint32_t arg_length)
   if (Alloced_length < arg_length)
   {
     free();
-    if (!(Ptr=(char*) my_malloc(arg_length,MYF(MY_WME))))
+    if (!(Ptr=(char*) malloc(arg_length)))
       return true;
     Alloced_length=arg_length;
     alloced=1;
@@ -65,7 +65,7 @@ bool String::realloc(uint32_t alloc_length)
     char *new_ptr;
     if (alloced)
     {
-      if ((new_ptr= (char*) my_realloc(Ptr,len,MYF(MY_WME))))
+      if ((new_ptr= (char*) ::realloc(Ptr,len)))
       {
 	Ptr=new_ptr;
 	Alloced_length=len;
@@ -73,7 +73,7 @@ bool String::realloc(uint32_t alloc_length)
       else
 	return true;				// Signal error
     }
-    else if ((new_ptr= (char*) my_malloc(len,MYF(MY_WME))))
+    else if ((new_ptr= (char*) malloc(len)))
     {
       if (str_length)				// Avoid bugs in memcpy on AIX
 	memcpy(new_ptr,Ptr,str_length);
@@ -181,7 +181,7 @@ bool String::needs_conversion(uint32_t arg_length,
 {
   *offset= 0;
   if (!to_cs ||
-      (to_cs == &my_charset_bin) || 
+      (to_cs == &my_charset_bin) ||
       (to_cs == from_cs) ||
       my_charset_same(from_cs, to_cs) ||
       ((from_cs == &my_charset_bin) &&
@@ -206,8 +206,8 @@ bool String::needs_conversion(uint32_t arg_length,
   NOTES
     For real multi-byte, ascii incompatible charactser sets,
     like UCS-2, add leading zeros if we have an incomplete character.
-    Thus, 
-      SELECT _ucs2 0xAA 
+    Thus,
+      SELECT _ucs2 0xAA
     will automatically be converted into
       SELECT _ucs2 0x00AA
 
@@ -226,7 +226,7 @@ bool String::copy_aligned(const char *str,uint32_t arg_length, uint32_t offset,
   uint32_t aligned_length= arg_length + offset;
   if (alloc(aligned_length))
     return true;
-  
+
   /*
     Note, this is only safe for big-endian UCS-2.
     If we add little-endian UCS-2 sometimes, this code
@@ -246,8 +246,8 @@ bool String::set_or_copy_aligned(const char *str,uint32_t arg_length,
                                  const CHARSET_INFO * const cs)
 {
   /* How many bytes are in incomplete character */
-  uint32_t offset= (arg_length % cs->mbminlen); 
-  
+  uint32_t offset= (arg_length % cs->mbminlen);
+
   if (!offset) /* All characters are complete, just copy */
   {
     set(str, arg_length, cs);
@@ -285,7 +285,7 @@ bool String::copy(const char *str, uint32_t arg_length,
 
 /*
   Set a string to the value of a latin1-string, keeping the original charset
-  
+
   SYNOPSIS
     copy_or_set()
     str			String of a simple charset (latin1)
@@ -396,19 +396,19 @@ bool String::append(const char *s)
 bool String::append(const char *s,uint32_t arg_length, const CHARSET_INFO * const cs)
 {
   uint32_t dummy_offset;
-  
+
   if (needs_conversion(arg_length, cs, str_charset, &dummy_offset))
   {
     uint32_t add_length= arg_length / cs->mbminlen * str_charset->mbmaxlen;
     uint32_t dummy_errors;
-    if (realloc(str_length + add_length)) 
+    if (realloc(str_length + add_length))
       return true;
     str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
 				  s, arg_length, cs, &dummy_errors);
   }
   else
   {
-    if (realloc(str_length + arg_length)) 
+    if (realloc(str_length + arg_length))
       return true;
     memcpy(Ptr + str_length, s, arg_length);
     str_length+= arg_length;
@@ -537,8 +537,8 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
     {
       if (to_length)
 	memcpy(Ptr+offset,to,to_length);
-      memcpy(Ptr+offset+to_length, Ptr+offset+arg_length,
-             str_length-offset-arg_length);
+      memmove(Ptr+offset+to_length, Ptr+offset+arg_length,
+              str_length-offset-arg_length);
     }
     else
     {
@@ -679,7 +679,7 @@ String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
 
 /*
   copy a string from one character set to another
-  
+
   SYNOPSIS
     copy_and_convert()
     to			Store result here
@@ -698,7 +698,7 @@ String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
 
 static uint32_t
 copy_and_convert_extended(char *to, uint32_t to_length,
-                          const CHARSET_INFO * const to_cs, 
+                          const CHARSET_INFO * const to_cs,
                           const char *from, uint32_t from_length,
                           const CHARSET_INFO * const from_cs,
                           uint32_t *errors)
@@ -757,7 +757,7 @@ outp:
   Optimized for quick copying of ASCII characters in the range 0x00..0x7F.
 */
 uint32_t
-copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs, 
+copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
                  const char *from, uint32_t from_length,
 				 const CHARSET_INFO * const from_cs, uint32_t *errors)
 {
@@ -820,9 +820,9 @@ copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
   are read from "src". Any sequences of bytes representing
   a not-well-formed substring (according to cs) are hex-encoded,
   and all well-formed substrings (according to cs) are copied as is.
-  Not more than "dstlen" bytes are written to "dst". The number 
+  Not more than "dstlen" bytes are written to "dst". The number
   of bytes written to "dst" is returned.
-  
+
    @param      cs       character set pointer of the destination string
    @param[out] dst      destination string
    @param      dstlen   size of dst
@@ -878,7 +878,7 @@ my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
   copy a string,
   with optional character set conversion,
   with optional left padding (for binary -> UCS2 conversion)
-  
+
   SYNOPSIS
     well_formed_copy_nchars()
     to			     Store result here
@@ -913,7 +913,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
 {
   uint32_t res;
 
-  if ((to_cs == &my_charset_bin) || 
+  if ((to_cs == &my_charset_bin) ||
       (from_cs == &my_charset_bin) ||
       (to_cs == from_cs) ||
       my_charset_same(from_cs, to_cs))
@@ -1040,27 +1040,75 @@ void String::print(String *str)
     switch (c)
     {
     case '\\':
-      str->append(STRING_WITH_LEN("\\\\"));
+      str->append("\\\\", sizeof("\\\\")-1);
       break;
     case '\0':
-      str->append(STRING_WITH_LEN("\\0"));
+      str->append("\\0", sizeof("\\0")-1);
       break;
     case '\'':
-      str->append(STRING_WITH_LEN("\\'"));
+      str->append("\\'", sizeof("\\'")-1);
       break;
     case '\n':
-      str->append(STRING_WITH_LEN("\\n"));
+      str->append("\\n", sizeof("\\n")-1);
       break;
     case '\r':
-      str->append(STRING_WITH_LEN("\\r"));
+      str->append("\\r", sizeof("\\r")-1);
       break;
     case '\032': // Ctrl-Z
-      str->append(STRING_WITH_LEN("\\Z"));
+      str->append("\\Z", sizeof("\\Z")-1);
       break;
     default:
       str->append(c);
     }
   }
+}
+
+/*
+  Quote the given identifier.
+  If the given identifier is empty, it will be quoted.
+
+  SYNOPSIS
+  append_identifier()
+  name                  the identifier to be appended
+  name_length           length of the appending identifier
+*/
+
+/* Factor the extern out */
+extern const CHARSET_INFO *system_charset_info, *files_charset_info;
+
+void String::append_identifier(const char *name, uint32_t in_length)
+{
+  const char *name_end;
+  char quote_char;
+  int q= '`';
+
+  /*
+    The identifier must be quoted as it includes a quote character or
+   it's a keyword
+  */
+
+  reserve(in_length*2 + 2);
+  quote_char= (char) q;
+  append(&quote_char, 1, system_charset_info);
+
+  for (name_end= name+in_length ; name < name_end ; name+= in_length)
+  {
+    unsigned char chr= (unsigned char) *name;
+    in_length= my_mbcharlen(system_charset_info, chr);
+    /*
+      my_mbcharlen can return 0 on a wrong multibyte
+      sequence. It is possible when upgrading from 4.0,
+      and identifier contains some accented characters.
+      The manual says it does not work. So we'll just
+      change length to 1 not to hang in the endless loop.
+    */
+    if (!in_length)
+      in_length= 1;
+    if (in_length == 1 && chr == (unsigned char) quote_char)
+      append(&quote_char, 1, system_charset_info);
+    append(name, in_length, system_charset_info);
+  }
+  append(&quote_char, 1, system_charset_info);
 }
 
 
@@ -1082,3 +1130,15 @@ void String::swap(String &s)
   std::swap(alloced, s.alloced);
   std::swap(str_charset, s.str_charset);
 }
+
+
+bool operator==(const String &s1, const String &s2)
+{
+  return stringcmp(&s1,&s2) == 0;
+}
+
+bool operator!=(const String &s1, const String &s2)
+{
+  return !(s1 == s2);
+}
+

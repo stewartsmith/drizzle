@@ -17,35 +17,41 @@
 
 #define CHECK_VERSION "2.5.0"
 
-#include "config.h"
+#include "client_priv.h"
 #include <vector>
 #include <string>
-#include "client_priv.h"
 #include <mystrings/m_ctype.h>
 
-template class std::vector<std::string>;
+/* Added this for string translation. */
+#include <drizzled/gettext.h>
+
 
 using namespace std;
+
+template class vector<string>;
+
 /* Exit codes */
 
 #define EX_USAGE 1
 #define EX_MYSQLERR 2
 
-static DRIZZLE drizzle_connection, *sock = 0;
-static bool opt_alldbs = 0, opt_check_only_changed = 0, opt_extended = 0,
-               opt_compress = 0, opt_databases = 0, opt_fast = 0,
-               opt_medium_check = 0, opt_quick = 0, opt_all_in_1 = 0,
-               opt_silent = 0, opt_auto_repair = 0, ignore_errors = 0,
-               tty_password= 0, opt_frm= 0, debug_info_flag= 0, debug_check_flag= 0,
-               opt_fix_table_names= 0, opt_fix_db_names= 0, opt_upgrade= 0,
-               opt_write_binlog= 1;
-static uint verbose = 0, opt_mysql_port=0;
+static DRIZZLE drizzle_connection, *sock= 0;
+static bool opt_alldbs= false, opt_check_only_changed= false,
+            opt_extended= false, opt_compress= false, opt_databases= false,
+            opt_fast= false, opt_medium_check= false, opt_quick= false,
+            opt_all_in_1= false, opt_silent= false, opt_auto_repair= false,
+            ignore_errors= false, tty_password= false, opt_frm= false,
+            debug_info_flag= false, debug_check_flag= false,
+            opt_fix_table_names= false, opt_fix_db_names= false,
+            opt_upgrade= false, opt_write_binlog= true;
+static uint verbose= 0;
+static uint32_t opt_drizzle_port= 0;
 static int my_end_arg;
-static char * opt_mysql_unix_port = 0;
-static char *opt_password = 0, *current_user = 0,
-      *default_charset = (char *)DRIZZLE_DEFAULT_CHARSET_NAME,
-      *current_host = 0;
-static int first_error = 0;
+static char * opt_drizzle_unix_port= NULL;
+static char *opt_password= NULL, *current_user= NULL,
+      *default_charset= (char *)DRIZZLE_DEFAULT_CHARSET_NAME,
+      *current_host= NULL;
+static int first_error= 0;
 vector<string> tables4repair;
 static uint opt_protocol=0;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
@@ -124,15 +130,13 @@ static struct my_option my_long_options[] =
    1, 0, 0, 0, 0, 0},
   {"optimize", 'o', "Optimize table.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"password", 'p',
+  {"password", 'P',
    "Password to use when connecting to server. If password is not given it's solicited on the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+  {"port", 'p', "Port number to use for connection or 0 for default to, in "
+   "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   (char**) &opt_mysql_port,
-   (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
-   0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"protocol", OPT_DRIZZLE_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
@@ -145,7 +149,7 @@ static struct my_option my_long_options[] =
   {"silent", 's', "Print only error messages.", (char**) &opt_silent,
    (char**) &opt_silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
-   (char**) &opt_mysql_unix_port, (char**) &opt_mysql_unix_port, 0, GET_STR,
+   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tables", OPT_TABLES, "Overrides option --databases (-B).", 0, 0, 0,
    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -214,15 +218,17 @@ static void usage(void)
   printf("OR     %s [OPTIONS] --databases DB1 [DB2 DB3...]\n",
    my_progname);
   printf("OR     %s [OPTIONS] --all-databases\n", my_progname);
-  print_defaults("my", load_default_groups);
+  print_defaults("drizzle", load_default_groups);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
 } /* usage */
 
-static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-         char *argument)
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch(optid) {
   case 'a':
     what_to_do = DO_ANALYZE;
@@ -255,14 +261,49 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     default_charset= (char*) "utf8";
     break;
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(EX_USAGE);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(EX_USAGE);
+    }
+    else
+    {
+      opt_drizzle_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
-      char *start = argument;
-      free(opt_password);
-      opt_password = my_strdup(argument, MYF(MY_FAE));
-      while (*argument) *argument++= 'x';    /* Destroy argument */
+      char *start= argument;
+      if (opt_password)
+        free(opt_password);
+      opt_password = strdup(argument);
+      if (opt_password == NULL)
+      {
+        fprintf(stderr, "Memory allocation error while copying password. "
+                        "Aborting.\n");
+        exit(ENOMEM);
+      }
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-  start[1] = 0;                             /* Cut length of argument */
+      {
+        /* Cut length of argument */
+        start[1] = 0;
+      }
       tty_password= 0;
     }
     else
@@ -299,7 +340,7 @@ static int get_options(int *argc, char ***argv)
     exit(0);
   }
 
-  load_defaults("my", load_default_groups, argc, argv);
+  load_defaults("drizzle", load_default_groups, argc, argv);
 
   if ((ho_error=handle_options(argc, argv, my_long_options, get_one_option)))
     exit(ho_error);
@@ -394,7 +435,7 @@ static int process_selected_tables(char *db, char **table_names, int tables)
       We need table list in form `a`, `b`, `c`
       that's why we need 2 more chars added to to each table name
       space is for more readable output in logs and in case of error
-    */   
+    */
     char *table_names_comma_sep, *end;
     int i, tot_length = 0;
 
@@ -402,11 +443,11 @@ static int process_selected_tables(char *db, char **table_names, int tables)
       tot_length+= fixed_name_length(*(table_names + i)) + 2;
 
     if (!(table_names_comma_sep = (char *)
-    my_malloc((sizeof(char) * tot_length) + 4, MYF(MY_WME))))
+          malloc((sizeof(char) * tot_length) + 4)))
       return 1;
 
     for (end = table_names_comma_sep + 1; tables > 0;
-   tables--, table_names++)
+         tables--, table_names++)
     {
       end= fix_table_name(end, *table_names);
       *end++= ',';
@@ -426,7 +467,7 @@ static uint fixed_name_length(const char *name)
 {
   const char *p;
   uint extra_length= 2;  /* count the first/last backticks */
- 
+
   for (p= name; *p; p++)
   {
     if (*p == '`')
@@ -490,7 +531,7 @@ static int process_all_tables_in_db(char *database)
       tot_length+= fixed_name_length(row[0]) + 2;
     drizzle_data_seek(res, 0);
 
-    if (!(tables=(char *) my_malloc(sizeof(char)*tot_length+4, MYF(MY_WME))))
+    if (!(tables=(char *) malloc(sizeof(char)*tot_length+4)))
     {
       drizzle_free_result(res);
       return 1;
@@ -603,18 +644,18 @@ static int handle_request_for_tables(const char *tables, uint length)
   switch (what_to_do) {
   case DO_CHECK:
     op = "CHECK";
-    if (opt_quick)              end = my_stpcpy(end, " QUICK");
-    if (opt_fast)               end = my_stpcpy(end, " FAST");
-    if (opt_medium_check)       end = my_stpcpy(end, " MEDIUM"); /* Default */
-    if (opt_extended)           end = my_stpcpy(end, " EXTENDED");
-    if (opt_check_only_changed) end = my_stpcpy(end, " CHANGED");
-    if (opt_upgrade)            end = my_stpcpy(end, " FOR UPGRADE");
+    if (opt_quick)              end = strcpy(end, " QUICK")+6;
+    if (opt_fast)               end = strcpy(end, " FAST")+5;
+    if (opt_medium_check)       end = strcpy(end, " MEDIUM")+7; /* Default */
+    if (opt_extended)           end = strcpy(end, " EXTENDED")+9;
+    if (opt_check_only_changed) end = strcpy(end, " CHANGED")+8;
+    if (opt_upgrade)            end = strcpy(end, " FOR UPGRADE")+12;
     break;
   case DO_REPAIR:
     op= (opt_write_binlog) ? "REPAIR" : "REPAIR NO_WRITE_TO_BINLOG";
-    if (opt_quick)              end = my_stpcpy(end, " QUICK");
-    if (opt_extended)           end = my_stpcpy(end, " EXTENDED");
-    if (opt_frm)                end = my_stpcpy(end, " USE_FRM");
+    if (opt_quick)              end = strcpy(end, " QUICK")+6;
+    if (opt_extended)           end = strcpy(end, " EXTENDED")+9;
+    if (opt_frm)                end = strcpy(end, " USE_FRM")+8;
     break;
   case DO_ANALYZE:
     op= (opt_write_binlog) ? "ANALYZE" : "ANALYZE NO_WRITE_TO_BINLOG";
@@ -626,7 +667,7 @@ static int handle_request_for_tables(const char *tables, uint length)
     return fix_table_storage_name(tables);
   }
 
-  if (!(query =(char *) my_malloc((sizeof(char)*(length+110)), MYF(MY_WME))))
+  if (!(query =(char *) malloc((sizeof(char)*(length+110)))))
     return 1;
   if (opt_all_in_1)
   {
@@ -636,10 +677,11 @@ static int handle_request_for_tables(const char *tables, uint length)
   else
   {
     char *ptr;
-
-    ptr= my_stpcpy(my_stpcpy(query, op), " TABLE ");
+    ptr= query;
+    ptr= strcpy(query, op)+strlen(op);
+    ptr= strcpy(ptr, " TABLE ")+7;
     ptr= fix_table_name(ptr, tables);
-    ptr= strxmov(ptr, " ", options, NULL);
+    ptr+= sprintf(ptr," %s",options);
     query_length= (uint) (ptr - query);
   }
   if (drizzle_real_query(sock, query, query_length))
@@ -694,7 +736,7 @@ static void print_result()
     }
     else
       printf("%-9s: %s", row[2], row[3]);
-    my_stpcpy(prev, row[0]);
+    strcpy(prev, row[0]);
     putchar('\n');
   }
   /* add the last table to be repaired to the list */
@@ -717,7 +759,7 @@ static int dbConnect(char *host, char *user, char *passwd)
   if (opt_protocol)
     drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (!(sock = drizzle_connect(&drizzle_connection, host, user, passwd,
-         NULL, opt_mysql_port, opt_mysql_unix_port, 0)))
+         NULL, opt_drizzle_port, opt_drizzle_unix_port, 0)))
   {
     DBerror(&drizzle_connection, "when trying to connect");
     return 1;

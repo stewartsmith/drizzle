@@ -15,6 +15,8 @@
 
 #include "heapdef.h"
 
+#include <string.h>
+
 /* Read next record with the same key */
 
 int heap_rnext(HP_INFO *info, unsigned char *record)
@@ -22,7 +24,7 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
   unsigned char *pos;
   HP_SHARE *share=info->s;
   HP_KEYDEF *keyinfo;
-  
+
   if (info->lastinx < 0)
     return(my_errno=HA_ERR_WRONG_INDEX);
 
@@ -69,12 +71,12 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
       custom_arg.keyseg = keyinfo->seg;
       custom_arg.key_length = info->lastkey_len;
       custom_arg.search_flag = SEARCH_SAME | SEARCH_FIND;
-      pos = tree_search_key(&keyinfo->rb_tree, info->lastkey, info->parents, 
+      pos = tree_search_key(&keyinfo->rb_tree, info->lastkey, info->parents,
                            &info->last_pos, info->last_find_flag, &custom_arg);
     }
     if (pos)
     {
-      memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos), 
+      memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos),
 	     sizeof(unsigned char*));
       info->current_ptr = pos;
     }

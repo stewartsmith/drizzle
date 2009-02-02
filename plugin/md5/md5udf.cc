@@ -13,11 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/common_includes.h>
-#include <drizzled/item_func.h>
-#include <drizzled/item_strfunc.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_udf.h>
+#include <drizzled/item/func.h>
+#include <drizzled/function/str/strfunc.h>
 
 #include <openssl/md5.h>
+
+#include <stdio.h>
+
+using namespace std;
 
 class Item_func_md5 : public Item_str_func
 {
@@ -93,7 +98,7 @@ static int md5udf_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(md5)
+drizzle_declare_plugin(md5)
 {
   DRIZZLE_UDF_PLUGIN,
   "md5",
@@ -107,4 +112,4 @@ mysql_declare_plugin(md5)
   NULL,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

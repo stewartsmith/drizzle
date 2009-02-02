@@ -13,16 +13,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir=           $(prefix)
-MYSQLLIBdir=            $(pkglibdir)
-
 LDADD =			libheap.la \
 			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/strings/libmystrings.la
 
-DEFS =                  @DEFS@
 noinst_LTLIBRARIES  =	libheap.la
 noinst_HEADERS =	heapdef.h ha_heap.h heap.h
 libheap_la_SOURCES =	hp_open.c hp_extra.c hp_close.c hp_panic.c hp_info.c \

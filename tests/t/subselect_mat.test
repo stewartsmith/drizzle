@@ -7,9 +7,9 @@
 drop table if exists t1, t2, t3, t1i, t2i, t3i;
 --enable_warnings
 
-create table t1 (a1 char(8), a2 char(8));
-create table t2 (b1 char(8), b2 char(8));
-create table t3 (c1 char(8), c2 char(8));
+create table t1 (a1 char(8), a2 char(8)) ENGINE=MyISAM;
+create table t2 (b1 char(8), b2 char(8)) ENGINE=MyISAM;
+create table t3 (c1 char(8), c2 char(8)) ENGINE=MyISAM;
 
 insert into t1 values ('1 - 00', '2 - 00');
 insert into t1 values ('1 - 01', '2 - 01');
@@ -27,9 +27,9 @@ insert into t3 values ('1 - 03', '2 - 03');
 insert into t3 values ('1 - 04', '2 - 04');
 
 # Indexed columns
-create table t1i (a1 char(8), a2 char(8));
-create table t2i (b1 char(8), b2 char(8));
-create table t3i (c1 char(8), c2 char(8));
+create table t1i (a1 char(8), a2 char(8)) ENGINE=MyISAM;
+create table t2i (b1 char(8), b2 char(8)) ENGINE=MyISAM;
+create table t3i (c1 char(8), c2 char(8)) ENGINE=MyISAM;
 create index it1i1 on t1i (a1);
 create index it1i2 on t1i (a2);
 create index it1i3 on t1i (a1, a2);
@@ -227,9 +227,6 @@ where (a1, a2) in (select b1, b2 from t2
 explain extended
 select * from t1 where (a1, a2) in (select '1 - 01', '2 - 01');
 select * from t1 where (a1, a2) in (select '1 - 01', '2 - 01');
-explain extended
-select * from t1 where (a1, a2) in (select '1 - 01', '2 - 01' from dual);
-select * from t1 where (a1, a2) in (select '1 - 01', '2 - 01' from dual);
 
 
 /******************************************************************************
@@ -240,7 +237,7 @@ select * from t1 where (a1, a2) in (select '1 - 01', '2 - 01' from dual);
 select ((a1,a2) IN (select * from t2 where b2 > '0')) IS NULL from t1;
 
 /* GROUP BY clause */
-create table columns (col int key);
+create table columns (col int key) ENGINE=MyISAM;
 insert into columns values (1), (2);
 
 explain extended
@@ -271,9 +268,9 @@ set @prefix_len = 6;
 set @blob_len = 16;
 set @suffix_len = @blob_len - @prefix_len;
 
-create table t1_16 (a1 blob(16), a2 blob(16));
-create table t2_16 (b1 blob(16), b2 blob(16));
-create table t3_16 (c1 blob(16), c2 blob(16));
+create table t1_16 (a1 blob, a2 blob) ENGINE=MyISAM;
+create table t2_16 (b1 blob, b2 blob) ENGINE=MyISAM;
+create table t3_16 (c1 blob, c2 blob) ENGINE=MyISAM;
 
 insert into t1_16 values
  (concat('1 - 00', repeat('x', @suffix_len)), concat('2 - 00', repeat('x', @suffix_len)));
@@ -364,9 +361,9 @@ drop table t1_16, t2_16, t3_16;
 set @blob_len = 512;
 set @suffix_len = @blob_len - @prefix_len;
 
-create table t1_512 (a1 blob(512), a2 blob(512));
-create table t2_512 (b1 blob(512), b2 blob(512));
-create table t3_512 (c1 blob(512), c2 blob(512));
+create table t1_512 (a1 blob, a2 blob) ENGINE=MyISAM;
+create table t2_512 (b1 blob, b2 blob) ENGINE=MyISAM;
+create table t3_512 (c1 blob, c2 blob) ENGINE=MyISAM;
 
 insert into t1_512 values
  (concat('1 - 00', repeat('x', @suffix_len)), concat('2 - 00', repeat('x', @suffix_len)));
@@ -446,9 +443,9 @@ drop table t1_512, t2_512, t3_512;
 set @blob_len = 1024;
 set @suffix_len = @blob_len - @prefix_len;
 
-create table t1_1024 (a1 blob(1024), a2 blob(1024));
-create table t2_1024 (b1 blob(1024), b2 blob(1024));
-create table t3_1024 (c1 blob(1024), c2 blob(1024));
+create table t1_1024 (a1 blob, a2 blob) ENGINE=MyISAM;
+create table t2_1024 (b1 blob, b2 blob) ENGINE=MyISAM;
+create table t3_1024 (c1 blob, c2 blob) ENGINE=MyISAM;
 
 insert into t1_1024 values
  (concat('1 - 00', repeat('x', @suffix_len)), concat('2 - 00', repeat('x', @suffix_len)));
@@ -528,9 +525,9 @@ drop table t1_1024, t2_1024, t3_1024;
 set @blob_len = 1025;
 set @suffix_len = @blob_len - @prefix_len;
 
-create table t1_1025 (a1 blob(1025), a2 blob(1025));
-create table t2_1025 (b1 blob(1025), b2 blob(1025));
-create table t3_1025 (c1 blob(1025), c2 blob(1025));
+create table t1_1025 (a1 blob, a2 blob) ENGINE=MyISAM;
+create table t2_1025 (b1 blob, b2 blob) ENGINE=MyISAM;
+create table t3_1025 (c1 blob, c2 blob) ENGINE=MyISAM;
 
 insert into t1_1025 values
  (concat('1 - 00', repeat('x', @suffix_len)), concat('2 - 00', repeat('x', @suffix_len)));
@@ -604,53 +601,7 @@ from t1_1025
 where a1 in (select group_concat(b1) from t2_1025 group by b2);
 
 drop table t1_1025, t2_1025, t3_1025;
-
-# test for BIT fields
-create table t1bit (a1 bit(3), a2 bit(3));
-create table t2bit (b1 bit(3), b2 bit(3));
-
-insert into t1bit values (b'000', b'100');
-insert into t1bit values (b'001', b'101');
-insert into t1bit values (b'010', b'110');
-
-insert into t2bit values (b'001', b'101');
-insert into t2bit values (b'010', b'110');
-insert into t2bit values (b'110', b'111');
-
-set @@optimizer_switch=no_semijoin;
-
-explain extended select bin(a1), bin(a2)
-from t1bit
-where (a1, a2) in (select b1, b2 from t2bit);
-
-select bin(a1), bin(a2)
-from t1bit
-where (a1, a2) in (select b1, b2 from t2bit);
-
-drop table t1bit, t2bit;
-
-# test mixture of BIT and BLOB
-create table t1bb (a1 bit(3), a2 blob(3));
-create table t2bb (b1 bit(3), b2 blob(3));
-
-insert into t1bb values (b'000', '100');
-insert into t1bb values (b'001', '101');
-insert into t1bb values (b'010', '110');
-
-insert into t2bb values (b'001', '101');
-insert into t2bb values (b'010', '110');
-insert into t2bb values (b'110', '111');
-
-explain extended select bin(a1), a2
-from t1bb
-where (a1, a2) in (select b1, b2 from t2bb);
-
-select bin(a1), a2
-from t1bb
-where (a1, a2) in (select b1, b2 from t2bb);
-
-drop table t1bb, t2bb;
-drop table t1, t2, t3, t1i, t2i, t3i, columns;
+drop table t1, t2, t3;
 
 /******************************************************************************
 * Test the cache of the left operand of IN.
@@ -658,16 +609,16 @@ drop table t1, t2, t3, t1i, t2i, t3i, columns;
 set @@optimizer_switch=no_semijoin;
 
 # Test that default values of Cached_item are not used for comparison
-create table t1 (s1 int);
-create table t2 (s2 int);
+create table t1 (s1 int) ENGINE=MyISAM;
+create table t2 (s2 int) ENGINE=MyISAM;
 insert into t1 values (5),(1),(0);
 insert into t2 values (0), (1);
 select s2 from t2 where s2 in (select s1 from t1);
 drop table t1, t2;
 
-create table t1 (a int not null, b int not null);
-create table t2 (c int not null, d int not null);
-create table t3 (e int not null);
+create table t1 (a int not null, b int not null) ENGINE=MyISAM;
+create table t2 (c int not null, d int not null) ENGINE=MyISAM;
+create table t3 (e int not null) ENGINE=MyISAM;
 
 # the first outer row has no matching inner row
 insert into t1 values (1,10);

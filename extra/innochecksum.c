@@ -23,14 +23,6 @@
   Published with a permission.
 */
 
-/* needed to have access to 64 bit file functions */
-#define _LARGEFILE_SOURCE
-#define _LARGEFILE64_SOURCE
-
-#ifndef __sun
-#define _XOPEN_SOURCE 500 /* needed to include getopt.h on some platforms. */
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -43,7 +35,7 @@
 /* all of these ripped from InnoDB code from MySQL 4.0.22 */
 #define UT_HASH_RANDOM_MASK     1463735687
 #define UT_HASH_RANDOM_MASK2    1653893711
-#define FIL_PAGE_LSN          16 
+#define FIL_PAGE_LSN          16
 #define FIL_PAGE_FILE_FLUSH_LSN 26
 #define FIL_PAGE_OFFSET     4
 #define FIL_PAGE_DATA       38
@@ -185,11 +177,9 @@ int main(int argc, char **argv)
     case ':':
       fprintf(stderr, "option -%c requires an argument\n", optopt);
       return 1;
-      break;
     case '?':
       fprintf(stderr, "unrecognized option: -%c\n", optopt);
       return 1;
-      break;
     }
   }
 

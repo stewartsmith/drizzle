@@ -1,14 +1,14 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "master_list.pb.h"
+#include <drizzled/serialize/master_list.pb.h>
 using namespace std;
 
-/* 
+/*
   Example script for reader a Drizzle master replication list.
 */
 
-void fill_master_record(drizzle::MasterList_Record *record, const char *hostname) 
+void fill_master_record(drizzle::MasterList_Record *record, const char *hostname)
 {
   using namespace drizzle;
   record->set_hostname(hostname);
@@ -20,7 +20,7 @@ void fill_master_record(drizzle::MasterList_Record *record, const char *hostname
   record->set_log_position(0);
 }
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
   fill_master_record(list.add_record(), "foo.example.com");
 
   fstream output(argv[1], ios::out | ios::trunc | ios::binary);
-  if (!list.SerializeToOstream(&output)) 
+  if (!list.SerializeToOstream(&output))
   {
     cerr << "Failed to write master_list." << endl;
     return -1;

@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 # -*- cperl -*-
 
+use utf8;
+
 #
 ##############################################################################
 #
@@ -63,7 +65,8 @@ use File::Path;
 use File::Basename;
 use File::Copy;
 use File::Temp qw /tempdir/;
-use File::Spec::Functions qw /splitdir/;
+use File::Spec::Functions qw /splitdir catpath catdir
+                              updir curdir splitpath rel2abs/;
 use Cwd;
 use Getopt::Long;
 use IO::Socket;
@@ -102,6 +105,8 @@ our $glob_scriptname=             undef;
 our $glob_timers=                 undef;
 our @glob_test_mode;
 
+our $glob_builddir;
+
 our $glob_basedir;
 
 our $path_client_bindir;
@@ -114,13 +119,14 @@ our $path_my_basedir;
 our $opt_vardir;                 # A path but set directly on cmd line
 our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
+our $opt_testdir;
 
 
 our $default_vardir;
 
 our $opt_usage;
 our $opt_suites;
-our $opt_suites_default= "main,binlog,rpl"; # Default suites to run
+our $opt_suites_default= "main"; # Default suites to run
 our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
@@ -180,7 +186,8 @@ our $opt_client_ddd;
 our $opt_manual_gdb;
 our $opt_manual_ddd;
 our $opt_manual_debug;
-our $opt_mtr_build_thread=0;
+# Magic number -69.4 results in traditional test ports starting from 9306.
+our $opt_mtr_build_thread=-69.4;
 our $opt_debugger;
 our $opt_client_debugger;
 
@@ -200,7 +207,7 @@ my $opt_report_features;
 our $opt_check_testcases;
 our $opt_mark_progress;
 
-our $opt_skip_rpl;
+our $opt_skip_rpl= 1;
 our $max_slave_num= 0;
 our $max_master_num= 1;
 our $use_innodb;
@@ -243,14 +250,10 @@ our $opt_stress_test_file=     "";
 
 our $opt_warnings;
 
-our $opt_skip_master_binlog= 0;
-our $opt_skip_slave_binlog= 0;
-
 our $path_sql_dir;
 
 our @data_dir_lst;
 
-our $used_binlog_format;
 our $used_default_engine;
 our $debug_compiled_binaries;
 
@@ -294,6 +297,7 @@ sub mysqld_start ($$$);
 sub mysqld_arguments ($$$$);
 sub stop_all_servers ();
 sub run_drizzletest ($);
+sub collapse_path ($);
 sub usage ($);
 
 
@@ -419,9 +423,6 @@ sub command_line_setup () {
 
   my $opt_comment;
 
-  # Magic number -69.4 results in traditional test ports starting from 9306.
-  set_mtr_build_thread_ports(-69.4);
-
   # If so requested, we try to avail ourselves of a unique build thread number.
   if ( $ENV{'MTR_BUILD_THREAD'} ) {
     if ( lc($ENV{'MTR_BUILD_THREAD'}) eq 'auto' ) {
@@ -463,8 +464,6 @@ sub command_line_setup () {
 
              # Control what test suites or cases to run
              'force'                    => \$opt_force,
-             'skip-master-binlog'       => \$opt_skip_master_binlog,
-             'skip-slave-binlog'        => \$opt_skip_slave_binlog,
              'do-test=s'                => \$opt_do_test,
              'start-from=s'             => \$opt_start_from,
              'suite|suites=s'           => \$opt_suites,
@@ -541,6 +540,7 @@ sub command_line_setup () {
 	     # Directories
              'tmpdir=s'                 => \$opt_tmpdir,
              'vardir=s'                 => \$opt_vardir,
+	     'testdir=s'		=> \$opt_testdir,
              'benchdir=s'               => \$glob_mysql_bench_dir,
              'mem'                      => \$opt_mem,
 
@@ -582,22 +582,20 @@ sub command_line_setup () {
     $opt_mtr_build_thread= $ENV{'MTR_BUILD_THREAD'};
   }
 
-  # We require that we are in the "mysql-test" directory
-  # to run drizzle-test-run
-  if (! -f $glob_scriptname)
-  {
-    mtr_error("Can't find the location for the drizzle-test-run script\n" .
-              "Go to to the mysql-test directory and execute the script " .
-              "as follows:\n./$glob_scriptname");
-  }
-
   if ( -d "../drizzled" )
   {
     $source_dist=  1;
   }
 
   # Find the absolute path to the test directory
-  $glob_mysql_test_dir=  cwd();
+  if ( ! $opt_testdir )
+  {
+    $glob_mysql_test_dir=  cwd();
+  } 
+  else
+  {
+    $glob_mysql_test_dir= $opt_testdir;
+  }
   $default_vardir= "$glob_mysql_test_dir/var";
 
   # In most cases, the base directory we find everything relative to,
@@ -613,6 +611,17 @@ sub command_line_setup () {
   if ( ! $source_dist and ! -d "$glob_basedir/bin" )
   {
     $glob_basedir= dirname($glob_basedir);
+  }
+
+  if ( $opt_testdir and -d $opt_testdir and $opt_vardir and -d $opt_vardir
+         and -f "$opt_vardir/../../drizzled/drizzled")
+  {
+    # probably in a VPATH build
+    $glob_builddir= "$opt_vardir/../..";
+  }
+  else
+  {
+    $glob_builddir="..";
   }
 
   # Expect mysql-bench to be located adjacent to the source tree, by default
@@ -632,7 +641,8 @@ sub command_line_setup () {
   #
 
   # Look for the client binaries directory
-  $path_client_bindir= mtr_path_exists("$glob_basedir/client",
+  $path_client_bindir= mtr_path_exists("$glob_builddir/client",
+                                       "$glob_basedir/client",
 				       "$glob_basedir/bin");
 
   if (!$opt_extern)
@@ -641,7 +651,8 @@ sub command_line_setup () {
 				       "$path_client_bindir/drizzled",
 				       "$glob_basedir/libexec/drizzled",
 				       "$glob_basedir/bin/drizzled",
-				       "$glob_basedir/sbin/drizzled");
+				       "$glob_basedir/sbin/drizzled",
+                                       "$glob_builddir/drizzled/drizzled");
 
     # Use the mysqld found above to find out what features are available
     collect_mysqld_features();
@@ -685,29 +696,6 @@ sub command_line_setup () {
       push(@opt_cases, $arg);
     }
   }
-
-  # --------------------------------------------------------------------------
-  # Find out type of logging that are being used
-  # --------------------------------------------------------------------------
-  if (!$opt_extern && $mysql_version_id >= 50100 )
-  {
-    foreach my $arg ( @opt_extra_mysqld_opt )
-    {
-      if ( $arg =~ /binlog[-_]format=(\S+)/ )
-      {
-      	$used_binlog_format= $1;
-      }
-    }
-    if (defined $used_binlog_format) 
-    {
-      mtr_report("Using binlog format '$used_binlog_format'");
-    }
-    else
-    {
-      mtr_report("Using dynamic switching of binlog format");
-    }
-  }
-
 
   # --------------------------------------------------------------------------
   # Find out default storage engine being used(if any)
@@ -756,31 +744,12 @@ sub command_line_setup () {
   {
     $opt_vardir= $default_vardir;
   }
-  elsif ( $mysql_version_id < 50000 and
-	  $opt_vardir ne $default_vardir)
-  {
-    # Version 4.1 and --vardir was specified
-    # Only supported as a symlink from var/
-    # by setting up $opt_mem that symlink will be created
-    {
-      # Only platforms that have native symlinks can use the vardir trick
-      $opt_mem= $opt_vardir;
-      mtr_report("Using 4.1 vardir trick");
-    }
-
-    $opt_vardir= $default_vardir;
-  }
 
   $path_vardir_trace= $opt_vardir;
   # Chop off any "c:", DBUG likes a unix path ex: c:/src/... => /src/...
   $path_vardir_trace=~ s/^\w://;
 
-  # We make the path absolute, as the server will do a chdir() before usage
-  unless ( $opt_vardir =~ m,^/,)
-  {
-    # Make absolute path, relative test dir
-    $opt_vardir= "$glob_mysql_test_dir/$opt_vardir";
-  }
+  $opt_vardir= collapse_path($opt_vardir);
 
   # --------------------------------------------------------------------------
   # Set tmpdir
@@ -1065,9 +1034,11 @@ sub set_mtr_build_thread_ports($) {
     print "got ".$mtr_build_thread."\n";
   }
 
+  $mtr_build_thread= (($mtr_build_thread * 10) % 2000) - 1000;
+
   # Up to two masters, up to three slaves
   # A magic value in command_line_setup depends on these equations.
-  $opt_master_myport=         $mtr_build_thread * 10 + 10000; # and 1
+  $opt_master_myport=         $mtr_build_thread + 9000; # and 1
   $opt_slave_myport=          $opt_master_myport + 2;  # and 3 4
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
@@ -1230,7 +1201,8 @@ sub executable_setup () {
   $exe_my_print_defaults=
     mtr_exe_exists(
         "$path_client_bindir/my_print_defaults",
-        "$glob_basedir/extra/my_print_defaults");
+        "$glob_basedir/extra/my_print_defaults",
+        "$glob_builddir/extra/my_print_defaults");
 
 # Look for perror
   $exe_perror= "perror";
@@ -1407,7 +1379,7 @@ sub environment_setup () {
   
   $ENV{'LC_COLLATE'}=         "C";
   $ENV{'USE_RUNNING_SERVER'}= $opt_extern;
-  $ENV{'DRIZZLE_TEST_DIR'}=     $glob_mysql_test_dir;
+  $ENV{'DRIZZLE_TEST_DIR'}=     collapse_path($glob_mysql_test_dir);
   $ENV{'MYSQLTEST_VARDIR'}=   $opt_vardir;
   $ENV{'DRIZZLE_TMP_DIR'}=      $opt_tmpdir;
   $ENV{'MASTER_MYSOCK'}=      $master->[0]->{'path_sock'};
@@ -1420,7 +1392,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'port'};
 
-  $ENV{MTR_BUILD_THREAD}=      $opt_mtr_build_thread;
+  $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
 
   $ENV{'EXE_MYSQL'}=          $exe_drizzle;
 
@@ -1766,7 +1738,8 @@ sub setup_vardir() {
   }
 
   # Make a link std_data_ln in var/ that points to std_data
-  symlink("$glob_mysql_test_dir/std_data", "$opt_vardir/std_data_ln");
+  symlink(collapse_path("$glob_mysql_test_dir/std_data"),
+          "$opt_vardir/std_data_ln");
 
   # Remove old log files
   foreach my $name (glob("r/*.progress r/*.log r/*.warnings"))
@@ -2069,30 +2042,6 @@ sub do_before_run_drizzletest($)
   unlink("$base_file.log");
   unlink("$base_file.warnings");
 
-  if (!$opt_extern)
-  {
-    if (defined $tinfo->{binlog_format} and  $mysql_version_id > 50100 )
-    {
-      # Dynamically switch binlog format of
-      # master, slave is always restarted
-      foreach my $server ( @$master )
-      {
-        next unless ($server->{'pid'});
-
-	mtr_init_args(\$args);
-	mtr_add_arg($args, "--no-defaults");
-	mtr_add_arg($args, "--user=root");
-	mtr_add_arg($args, "--port=$server->{'port'}");
-
-	my $sql= "include/set_binlog_format_".$tinfo->{binlog_format}.".sql";
-	mtr_verbose("Setting binlog format:", $tinfo->{binlog_format});
-	if (mtr_run($exe_drizzle, $args, $sql, "", "", "") != 0)
-	{
-	  mtr_error("Failed to switch binlog format");
-	}
-      }
-    }
-  }
 }
 
 sub do_after_run_drizzletest($)
@@ -2465,6 +2414,7 @@ sub mysqld_arguments ($$$$) {
 
   mtr_add_arg($args, "%s--no-defaults", $prefix);
 
+  $path_my_basedir= collapse_path($path_my_basedir);
   mtr_add_arg($args, "%s--basedir=%s", $prefix, $path_my_basedir);
 
   if ($opt_engine)
@@ -2506,20 +2456,15 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--log=%s.log", $prefix, $log_base_path);
 
   # Check if "extra_opt" contains --skip-log-bin
-  my $skip_binlog= grep(/^--skip-log-bin/, @$extra_opt, @opt_extra_mysqld_opt);
   if ( $mysqld->{'type'} eq 'master' )
   {
-    if (! ($opt_skip_master_binlog || $skip_binlog) )
-    {
-      mtr_add_arg($args, "%s--log-bin=%s/log/master-bin%s", $prefix,
-                  $opt_vardir, $sidx);
-    }
-
     mtr_add_arg($args, "%s--server-id=%d", $prefix,
 	       $idx > 0 ? $idx + 101 : 1);
 
     mtr_add_arg($args, "%s--loose-innodb_data_file_path=ibdata1:10M:autoextend",
 		$prefix);
+
+    mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
 
     mtr_add_arg($args, "%s--local-infile", $prefix);
 
@@ -2533,32 +2478,10 @@ sub mysqld_arguments ($$$$) {
     mtr_error("unknown mysqld type")
       unless $mysqld->{'type'} eq 'slave';
 
-    #mtr_add_arg($args, "%s--init-rpl-role=slave", $prefix);
-    if (! ( $opt_skip_slave_binlog || $skip_binlog ))
-    {
-      mtr_add_arg($args, "%s--log-bin=%s/log/slave%s-bin", $prefix,
-                  $opt_vardir, $sidx); # FIXME use own dir for binlogs
-      mtr_add_arg($args, "%s--log-slave-updates", $prefix);
-    }
-
-    mtr_add_arg($args, "%s--master-retry-count=10", $prefix);
-
-    mtr_add_arg($args, "%s--relay-log=%s/log/slave%s-relay-bin", $prefix,
-                $opt_vardir, $sidx);
-    mtr_add_arg($args, "%s--report-host=127.0.0.1", $prefix);
-    mtr_add_arg($args, "%s--report-port=%d", $prefix,
-                $mysqld->{'port'});
-#    mtr_add_arg($args, "%s--report-user=root", $prefix);
-    mtr_add_arg($args, "%s--loose-skip-innodb", $prefix);
-    mtr_add_arg($args, "%s--skip-slave-start", $prefix);
-
     # Directory where slaves find the dumps generated by "load data"
     # on the server. The path need to have constant length otherwise
     # test results will vary, thus a relative path is used.
     my $slave_load_path= "../tmp";
-    mtr_add_arg($args, "%s--slave-load-tmpdir=%s", $prefix,
-                $slave_load_path);
-    mtr_add_arg($args, "%s--set-variable=slave_net_timeout=120", $prefix);
 
     if ( @$slave_master_info )
     {
@@ -2572,7 +2495,6 @@ sub mysqld_arguments ($$$$) {
       my $slave_server_id=  2 + $idx;
       my $slave_rpl_rank= $slave_server_id;
       mtr_add_arg($args, "%s--server-id=%d", $prefix, $slave_server_id);
-#      mtr_add_arg($args, "%s--rpl-recovery-rank=%d", $prefix, $slave_rpl_rank);
     }
   } # end slave
 
@@ -2604,10 +2526,6 @@ sub mysqld_arguments ($$$$) {
     if ($arg eq "--skip-core-file")
     {
       $found_skip_core= 1;
-    }
-    elsif ($skip_binlog and mtr_match_prefix($arg, "--binlog-format"))
-    {
-      ; # Dont add --binlog-format when running without binlog
     }
     else
     {
@@ -2812,7 +2730,7 @@ sub run_testcase_need_master_restart($)
     my $diff_opts= mtr_diff_opts($master->[0]->{'start_opts'},$tinfo->{'master_opt'});
     if (scalar(@$diff_opts) eq 2) 
     {
-      $do_restart= 1 unless ($diff_opts->[0] =~/^--binlog-format=/ and $diff_opts->[1] =~/^--binlog-format=/);
+      $do_restart= 1;
     }
     else
     {
@@ -3074,6 +2992,11 @@ sub run_check_testcase ($$) {
     mtr_add_arg($args, "--record");
   }
 
+  if ( $opt_testdir )
+  {
+    mtr_add_arg($args, "--testdir=%s", $opt_testdir);
+  }
+
   my $res = mtr_run_test($exe_drizzletest,$args,
 	        "include/check-testcase.test", "", "", "");
 
@@ -3179,6 +3102,12 @@ sub run_drizzletest ($) {
     mtr_add_arg($args, "--debug=d:t:A,%s/log/drizzletest.trace",
 		$path_vardir_trace);
   }
+
+  if ( $opt_testdir )
+  {
+    mtr_add_arg($args, "--testdir=%s", $opt_testdir);
+  }
+
 
   # ----------------------------------------------------------------------
   # export DRIZZLE_TEST variable containing <path>/drizzletest <args>
@@ -3482,6 +3411,33 @@ sub mysqld_wait_started($){
   return 0;
 }
 
+sub collapse_path ($) {
+
+    my $c_path= rel2abs(shift);
+    my $updir  = updir($c_path);
+    my $curdir = curdir($c_path);
+
+    my($vol, $dirs, $file) = splitpath($c_path);
+    my @dirs = splitdir($dirs);
+
+    my @collapsed;
+    foreach my $dir (@dirs) {
+        if( $dir eq $updir              and   # if we have an updir
+            @collapsed                  and   # and something to collapse
+            length $collapsed[-1]       and   # and its not the rootdir
+            $collapsed[-1] ne $updir    and   # nor another updir
+            $collapsed[-1] ne $curdir         # nor the curdir
+          )
+        {                                     # then
+            pop @collapsed;                   # collapse
+        }
+        else {                                # else
+            push @collapsed, $dir;            # just hang onto it
+        }
+    }
+
+    return catpath($vol, catdir(@collapsed), $file);
+}
 
 ##############################################################################
 #

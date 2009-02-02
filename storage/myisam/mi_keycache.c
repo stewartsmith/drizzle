@@ -25,7 +25,7 @@
   SYNOPSIS
     mi_assign_to_key_cache()
       info          open table
-      key_map       map of indexes to assign to the key cache 
+      key_map       map of indexes to assign to the key cache
       key_cache_ptr pointer to the key cache handle
       assign_lock   Mutex to lock during assignment
 
@@ -46,10 +46,10 @@
     #  Error code
 */
 
-int mi_assign_to_key_cache(MI_INFO *info,
-			   uint64_t key_map __attribute__((unused)),
+int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map,
 			   KEY_CACHE *key_cache)
 {
+  (void)key_map;
   int error= 0;
   MYISAM_SHARE* share= info->s;
 

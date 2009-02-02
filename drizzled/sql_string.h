@@ -27,26 +27,40 @@
 #define NOT_FIXED_DEC			31
 #endif
 
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/common.h>
 #include <mysys/iocache.h>
+#include <stdlib.h>
+#include <string.h>
 
 class String;
-int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
-String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
-uint32_t copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
-			const char *from, uint32_t from_length,
-			const CHARSET_INFO * const from_cs, uint32_t *errors);
-uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
-                               char *to, uint32_t to_length,
-                               const CHARSET_INFO * const from_cs,
-                               const char *from, uint32_t from_length,
-                               uint32_t nchars,
-                               const char **well_formed_error_pos,
-                               const char **cannot_convert_error_pos,
-                               const char **from_end_pos);
-size_t my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
-                                 char *dst, size_t dstlen,
-                                 const char *src, size_t srclen);
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+  int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
+  int stringcmp(const String *a,const String *b);
+  String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
+  uint32_t copy_and_convert(char *to, uint32_t to_length,
+                            const CHARSET_INFO * const to_cs,
+                            const char *from, uint32_t from_length,
+                            const CHARSET_INFO * const from_cs,
+                            uint32_t *errors);
+  uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
+                                   char *to, uint32_t to_length,
+                                   const CHARSET_INFO * const from_cs,
+                                   const char *from, uint32_t from_length,
+                                   uint32_t nchars,
+                                   const char **well_formed_error_pos,
+                                   const char **cannot_convert_error_pos,
+                                   const char **from_end_pos);
+  size_t my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
+                                   char *dst, size_t dstlen,
+                                   const char *src, size_t srclen);
+
+#if defined(__cplusplus)
+}
+#endif
 
 class String
 {
@@ -54,45 +68,44 @@ class String
   uint32_t str_length,Alloced_length;
   bool alloced;
   const CHARSET_INFO *str_charset;
+
 public:
   String()
-  { 
-    Ptr=0; str_length=Alloced_length=0; alloced=0; 
-    str_charset= &my_charset_bin; 
+  {
+    Ptr=0; str_length=Alloced_length=0; alloced=0;
+    str_charset= &my_charset_bin;
   }
   String(uint32_t length_arg)
-  { 
-    alloced=0; Alloced_length=0; (void) real_alloc(length_arg); 
+  {
+    alloced=0; Alloced_length=0; (void) real_alloc(length_arg);
     str_charset= &my_charset_bin;
   }
   String(const char *str, const CHARSET_INFO * const cs)
-  { 
+  {
     Ptr=(char*) str; str_length=(uint) strlen(str); Alloced_length=0; alloced=0;
     str_charset=cs;
   }
   String(const char *str,uint32_t len, const CHARSET_INFO * const cs)
-  { 
+  {
     Ptr=(char*) str; str_length=len; Alloced_length=0; alloced=0;
     str_charset=cs;
   }
   String(char *str,uint32_t len, const CHARSET_INFO * const cs)
-  { 
+  {
     Ptr=(char*) str; Alloced_length=str_length=len; alloced=0;
     str_charset=cs;
   }
   String(const String &str)
-  { 
+  {
     Ptr=str.Ptr ; str_length=str.str_length ;
-    Alloced_length=str.Alloced_length; alloced=0; 
+    Alloced_length=str.Alloced_length; alloced=0;
     str_charset=str.str_charset;
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint) size); }
-  static void operator delete(void *ptr_arg __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *, size_t)
   { TRASH(ptr_arg, size); }
-  static void operator delete(void *ptr_arg __attribute__((unused)),
-                              MEM_ROOT *mem_root __attribute__((unused)))
+  static void operator delete(void *, MEM_ROOT *)
   { /* never called */ }
   ~String() { free(); }
 
@@ -127,6 +140,7 @@ public:
       (void) realloc(str_length);
     return Ptr;
   }
+  void append_identifier(const char *name, uint32_t length);
 
   void set(String &str,uint32_t offset,uint32_t arg_length)
   {
@@ -176,8 +190,8 @@ public:
     statement to be run on the remote server, and have a comma after each.
     When the list is complete, I "chop" off the trailing comma
 
-    ex. 
-      String stringobj; 
+    ex.
+      String stringobj;
       stringobj.append("VALUES ('foo', 'fi', 'fo',");
       stringobj.chop();
       stringobj.append(")");
@@ -187,11 +201,11 @@ public:
     VALUES ('foo', 'fi', 'fo',
     VALUES ('foo', 'fi', 'fo'
     VALUES ('foo', 'fi', 'fo')
-      
+
   */
   inline void chop()
   {
-    Ptr[str_length--]= '\0'; 
+    Ptr[str_length--]= '\0';
   }
 
   inline void free()
@@ -218,7 +232,7 @@ public:
     if (arg_length < Alloced_length)
     {
       char *new_ptr;
-      if (!(new_ptr=(char*) my_realloc(Ptr,arg_length,MYF(0))))
+      if (!(new_ptr=(char*) ::realloc(Ptr,arg_length)))
       {
 	Alloced_length = 0;
 	real_alloc(arg_length);
@@ -236,7 +250,7 @@ public:
     if (&s != this)
     {
       /*
-        It is forbidden to do assignments like 
+        It is forbidden to do assignments like
         some_string = substring_of_that_string
        */
       assert(!s.uses_buffer_owned_by(this));
@@ -263,7 +277,7 @@ public:
   bool append(const char *s,uint32_t arg_length);
   bool append(const char *s,uint32_t arg_length, const CHARSET_INFO * const cs);
   bool append(IO_CACHE* file, uint32_t arg_length);
-  bool append_with_prefill(const char *s, uint32_t arg_length, 
+  bool append_with_prefill(const char *s, uint32_t arg_length,
 			   uint32_t full_length, char fill_char);
   int strstr(const String &search,uint32_t offset=0); // Returns offset to substring or -1
   int strrstr(const String &search,uint32_t offset=0); // Returns offset to substring or -1
@@ -377,22 +391,15 @@ public:
   }
 };
 
-static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str, 
+static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                                            char *end)
 {
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
 }
 
-inline
-bool operator==(const String &s1, const String &s2)
-{
-  return stringcmp(&s1,&s2) == 0;
-}
-
-inline
-bool operator!=(const String &s1, const String &s2)
-{
-  return !(s1 == s2);
+extern "C++" {
+bool operator==(const String &s1, const String &s2);
+bool operator!=(const String &s1, const String &s2);
 }
 
 #endif /* DRIZZLE_SERVER_SQL_STRING_H */

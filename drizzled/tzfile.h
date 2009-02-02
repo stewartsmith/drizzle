@@ -51,7 +51,7 @@ struct tzhead {
 
 /*
   . . .followed by. . .
-  
+
   tzh_timecnt (char [4])s               coded transition times a la time(2)
   tzh_timecnt (unsigned char)s          types of local time starting at above
   tzh_typecnt repetitions of

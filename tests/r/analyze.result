@@ -30,7 +30,7 @@ check table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 drop table t1;
-create table t1 (a mediumtext, fulltext key key1(a)) charset utf8 collate utf8_general_ci engine myisam;
+create table t1 (a varchar(10), key key1(a)) collate utf8_general_ci engine myisam;
 insert into t1 values ('hello');
 analyze table t1;
 Table	Op	Msg_type	Msg_text
@@ -49,10 +49,4 @@ Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_par
 t1	1	a	1	a	A	5	NULL	NULL	YES	BTREE		
 drop table t1;
 End of 4.1 tests
-create table t1(a int);
-analyze table t1 extended;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'extended' at line 1
-optimize table t1 extended;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'extended' at line 1
-drop table t1;
 End of 5.0 tests

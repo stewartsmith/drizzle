@@ -36,9 +36,9 @@ template <uint32_t default_width> class Bitmap
   MY_BITMAP map;
   uint32_t buffer[(default_width+31)/32];
 public:
-  Bitmap() { init(); }
-  Bitmap(const Bitmap& from) { *this=from; }
-  explicit Bitmap(uint32_t prefix_to_set) { init(prefix_to_set); }
+  Bitmap() : map() { init(); }
+  Bitmap(const Bitmap& from) : map() { *this=from; }
+  explicit Bitmap(uint32_t prefix_to_set) : map(0) { init(prefix_to_set); }
   void init() { bitmap_init(&map, buffer, default_width, 0); }
   void init(uint32_t prefix_to_set) { init(); set_prefix(prefix_to_set); }
   uint32_t length() const { return default_width; }
@@ -164,8 +164,8 @@ template <> class Bitmap<64>
 {
   uint64_t map;
 public:
-  Bitmap<64>() { map= 0; }
-  explicit Bitmap<64>(uint32_t prefix_to_set) { set_prefix(prefix_to_set); }
+  Bitmap<64>() : map(0) { }
+  explicit Bitmap<64>(uint32_t prefix_to_set) : map(0) { set_prefix(prefix_to_set); }
   void init() { }
   void init(uint32_t prefix_to_set) { set_prefix(prefix_to_set); }
   uint32_t length() const { return 64; }
@@ -197,60 +197,23 @@ public:
 };
 
 
-/* An iterator to quickly walk over bits in unint64_t bitmap. */
-class Table_map_iterator
-{
-  uint64_t bmp;
-  uint32_t no;
-public:
-  Table_map_iterator(uint64_t t) : bmp(t), no(0) {}
-  int next_bit()
-  {
-    static const char last_bit[16]= {32, 0, 1, 0, 
-                                      2, 0, 1, 0, 
-                                      3, 0, 1, 0,
-                                      2, 0, 1, 0};
-    uint32_t bit;
-    while ((bit= last_bit[bmp & 0xF]) == 32)
-    {
-      no += 4;
-      bmp= bmp >> 4;
-      if (!bmp)
-        return BITMAP_END;
-    }
-    bmp &= ~(1 << bit);
-    return no + bit;
-  }
-  enum { BITMAP_END= 64 };
-};
-
-
-#if 0
-void print_bits(table_map bmp)
-{
-  Table_map_iterator it(bmp);
-  int i, first= 1;
-  fprintf(stderr, "0x%llx = ", bmp);
-  while ((i= it.next_bit()) != Table_map_iterator::BITMAP_END)
-  {
-    fprintf(stderr, " %s 2^%d", (first?"":"+"), i);
-    if (first)
-      first= 0;
-  }
-  fprintf(stderr, "\n");
-}
-
-int main()
-{
-  print_bits(1024);
-  print_bits(3);
-  print_bits(0xF);
-  print_bits(0xF0);
-  print_bits(35);
-  print_bits(1LL<<63);
-  print_bits(0);
-  print_bits(-1LL);
-}
+typedef uint64_t table_map;          /* Used for table bits in join */
+#if MAX_INDEXES <= 64
+typedef Bitmap<64>  key_map;          /* Used for finding keys */
+#else
+typedef Bitmap<((MAX_INDEXES+7)/8*8)> key_map; /* Used for finding keys */
 #endif
+typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
+
+/*
+  Used to identify NESTED_JOIN structures within a join (applicable only to
+  structures that have not been simplified away and embed more the one
+  element)
+*/
+typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
+
+/* useful constants */#
+extern const key_map key_map_empty;
+extern key_map key_map_full;          /* Should be threaded as const */
 
 #endif /* _SQL_BITMAP_H_ */

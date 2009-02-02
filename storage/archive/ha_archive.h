@@ -17,6 +17,9 @@
 #include <inttypes.h>
 #include <zlib.h>
 #include "azio.h"
+#include <mysys/thr_lock.h>
+#include <mysys/hash.h>
+#include <drizzled/handler.h>
 
 /*
   Please read ha_archive.cc first. If you are looking for more general
@@ -59,7 +62,7 @@ class ha_archive: public handler
 {
   THR_LOCK_DATA lock;        /* MySQL lock */
   ARCHIVE_SHARE *share;      /* Shared lock info */
-  
+
   azio_stream archive;            /* Archive file we are working with */
   my_off_t current_position;  /* The position of the row we just read */
   unsigned char byte_buffer[IO_SIZE]; /* Initial buffer for our string */
@@ -82,7 +85,7 @@ public:
   {
   }
   const char *table_type() const { return "ARCHIVE"; }
-  const char *index_type(uint32_t inx __attribute__((unused)))
+  const char *index_type(uint32_t)
   { return "NONE"; }
   const char **bas_ext() const;
   uint64_t table_flags() const
@@ -93,16 +96,12 @@ public:
             HA_HAS_RECORDS |
             HA_FILE_BASED);
   }
-  uint32_t index_flags(uint32_t idx __attribute__((unused)),
-                       uint32_t part __attribute__((unused)),
-                       bool all_parts __attribute__((unused))) const
+  uint32_t index_flags(uint32_t, uint32_t, bool) const
   {
     return HA_ONLY_WHOLE_INDEX;
   }
-  virtual void get_auto_increment(uint64_t offset, uint64_t increment,
-                                  uint64_t nb_desired_values,
-                                  uint64_t *first_value,
-                                  uint64_t *nb_reserved_values);
+  void get_auto_increment(uint64_t, uint64_t, uint64_t,
+                          uint64_t *first_value, uint64_t *nb_reserved_values);
   uint32_t max_supported_keys()          const { return 1; }
   uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
   uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
@@ -134,19 +133,19 @@ public:
   int info(uint);
   void update_create_info(HA_CREATE_INFO *create_info);
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
-  int optimize(THD* thd, HA_CHECK_OPT* check_opt);
-  int repair(THD* thd, HA_CHECK_OPT* check_opt);
+  int optimize(Session* session, HA_CHECK_OPT* check_opt);
+  int repair(Session* session, HA_CHECK_OPT* check_opt);
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
-  enum row_type get_row_type() const 
-  { 
+  enum row_type get_row_type() const
+  {
     return ROW_TYPE_COMPRESSED;
   }
-  THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
+  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
   bool is_crashed() const;
-  int check(THD* thd, HA_CHECK_OPT* check_opt);
-  bool check_and_repair(THD *thd);
+  int check(Session* session, HA_CHECK_OPT* check_opt);
+  bool check_and_repair(Session *session);
   uint32_t max_row_length(const unsigned char *buf);
   bool fix_rec_buff(unsigned int length);
   int unpack_row(azio_stream *file_to_read, unsigned char *record);

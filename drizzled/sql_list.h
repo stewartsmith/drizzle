@@ -17,12 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef INCLUDES_DRIZZLE_SQL_LIST_H
-#define INCLUDES_DRIZZLE_SQL_LIST_H
+#ifndef DRIZZLED_SQL_LIST_H
+#define DRIZZLED_SQL_LIST_H
 
 
 #include <utility>
 #include <algorithm>
+#include <stdlib.h>
+#include <drizzled/sql_alloc.h>
 
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {
@@ -65,46 +67,6 @@ typedef struct st_sql_list {
     }
   }
 } SQL_LIST;
-
-/* mysql standard class memory allocator */
-class Sql_alloc
-{
-public:
-  static void *operator new(size_t size) throw ()
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new[](size_t size)
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new[](size_t size, MEM_ROOT *mem_root) throw ()
-  { return alloc_root(mem_root, size); }
-  static void *operator new(size_t size, MEM_ROOT *mem_root) throw ()
-  { return alloc_root(mem_root, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
-  { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              MEM_ROOT *mem_root __attribute__((unused)))
-  { /* never called */ }
-  static void operator delete[](void *ptr __attribute__((unused)),
-                                MEM_ROOT *mem_root __attribute__((unused)))
-  { /* never called */ }
-  static void operator delete[](void *ptr __attribute__((unused)),
-                                size_t size __attribute__((unused)))
-  { TRASH(ptr, size); }
-#ifdef HAVE_purify
-  bool dummy;
-  inline Sql_alloc() :dummy(0) {}
-  inline ~Sql_alloc() {}
-#else
-  inline Sql_alloc() {}
-  inline ~Sql_alloc() {}
-#endif
-
-};
-
 
 /*
   Basic single linked list
@@ -171,7 +133,7 @@ public:
     list_copy_and_replace_each_value after creating a copy.
   */
   base_list(const base_list &rhs, MEM_ROOT *mem_root);
-  inline base_list(bool error __attribute__((unused))) { }
+  inline base_list(bool) { }
   inline bool push_back(void *info)
   {
     if (((*last)=new list_node(info, &end_of_list)))
@@ -287,7 +249,7 @@ public:
       check_list()
         name  Name to print to trace file
 
-    RETURN 
+    RETURN
       1  The list is Ok.
       0  List invariants are not met.
   */
@@ -343,11 +305,11 @@ protected:
     ls.elements= elm;
   }
 public:
-  base_list_iterator() 
+  base_list_iterator()
     :list(0), el(0), prev(0), current(0)
   {}
 
-  base_list_iterator(base_list &list_par) 
+  base_list_iterator(base_list &list_par)
   { init(list_par); }
 
   inline void init(base_list &list_par)
@@ -469,10 +431,10 @@ public:
 template <class T> class List_iterator_fast :public base_list_iterator
 {
 protected:
-  inline T *replace(T *a __attribute__((unused)))   { return (T*) 0; }
-  inline T *replace(List<T> &a __attribute__((unused))) { return (T*) 0; }
+  inline T *replace(T *)   { return (T*) 0; }
+  inline T *replace(List<T> &) { return (T*) 0; }
   inline void remove(void)  { }
-  inline void after(T *a __attribute__((unused)))   { }
+  inline void after(T *a)   { }
   inline T** ref(void)	    { return (T**) 0; }
 
 public:
@@ -490,7 +452,7 @@ public:
 
 /*
   A simple intrusive list which automaticly removes element from list
-  on delete (for THD element)
+  on delete (for Session element)
 */
 
 struct ilink
@@ -498,10 +460,9 @@ struct ilink
   struct ilink **prev,*next;
   static void *operator new(size_t size)
   {
-    return (void*)my_malloc((uint)size, MYF(MY_WME | MY_FAE | ME_FATALERROR));
+    return (void*)malloc((uint)size);
   }
-  static void operator delete(void* ptr_arg,
-                              size_t size __attribute__((unused)))
+  static void operator delete(void* ptr_arg, size_t)
   {
      free((unsigned char*)ptr_arg);
   }
@@ -538,7 +499,7 @@ public:
   const char* key;
   const char* val;
   i_string_pair():key(0),val(0) { }
-  i_string_pair(const char* key_arg, const char* val_arg) : 
+  i_string_pair(const char* key_arg, const char* val_arg) :
     key(key_arg),val(val_arg) {}
 };
 
@@ -609,7 +570,7 @@ class I_List :private base_ilist
 public:
   I_List() :base_ilist()	{}
   inline void empty()		{ base_ilist::empty(); }
-  inline bool is_empty()        { return base_ilist::is_empty(); } 
+  inline bool is_empty()        { return base_ilist::is_empty(); }
   inline void append(T* a)	{ base_ilist::append(a); }
   inline void push_back(T* a)	{ base_ilist::push_back(a); }
   inline T* get()		{ return (T*) base_ilist::get(); }
@@ -638,7 +599,7 @@ public:
   Evidently not all template arguments have clone() method with
   the right signature.
 
-  @return You must query the error state in THD for out-of-memory
+  @return You must query the error state in Session for out-of-memory
   situation after calling this function.
 */
 
@@ -654,4 +615,9 @@ list_copy_and_replace_each_value(List<T> &list, MEM_ROOT *mem_root)
     it.replace(el->clone(mem_root));
 }
 
-#endif // INCLUDES_DRIZZLE_SQL_LIST_H
+/* sql_list.cc */
+void free_list(I_List <i_string_pair> *list);
+void free_list(I_List <i_string> *list);
+
+
+#endif // DRIZZLED_SQL_LIST_H

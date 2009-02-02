@@ -48,11 +48,11 @@
            hash_stage2=sha1(hash_stage1)
            reply=xor(hash_stage1, sha1(public_seed,hash_stage2)
 
-           // this three steps are done in scramble() 
+           // this three steps are done in scramble()
 
            send(reply)
 
-     
+
   SERVER:  recv(reply)
            hash_stage1=xor(reply, sha1(public_seed,hash_stage2))
            candidate_hash2=sha1(hash_stage1)
@@ -64,6 +64,7 @@
 
 #include "libdrizzle.h"
 #include "libdrizzle_priv.h"
+#include <libdrizzle/password.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -106,7 +107,7 @@ double my_rnd(struct rand_struct *rand_st)
 
 
 /*
-    Generate binary hash from raw text string 
+    Generate binary hash from raw text string
     Used for Pre-4.1 password handling
   SYNOPSIS
     hash_password()
@@ -164,10 +165,6 @@ void create_random_string(char *to, uint32_t length, struct rand_struct *rand_st
 }
 
 
-/* Character to use as version identifier for version 4.1 */
-
-#define PVERSION41_CHAR '*'
-
 
 /*
     Convert given octet sequence to asciiz string of hex characters;
@@ -183,7 +180,9 @@ void create_random_string(char *to, uint32_t length, struct rand_struct *rand_st
 
 char *octet2hex(char *to, const char *str, uint32_t len)
 {
-  const char *str_end= str + len; 
+  static const char _dig_vec_upper[]= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  const char *str_end= str + len;
   for (; str != str_end; ++str)
   {
     *to++= _dig_vec_upper[((unsigned char) *str) >> 4];

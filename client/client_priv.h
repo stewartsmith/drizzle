@@ -20,6 +20,8 @@
 #include <mystrings/m_string.h>
 #include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/errmsg.h>
+#include <libdrizzle/password.h>
+#include <libdrizzle/get_password.h>
 #include <mysys/my_getopt.h>
 
 #if TIME_WITH_SYS_TIME
@@ -31,7 +33,7 @@
 # else
 #  include <time.h>
 # endif
-#endif  
+#endif
 
 
 enum options_client
@@ -90,7 +92,8 @@ enum options_client
   OPT_SLAP_AUTO_GENERATE_SELECT_COLUMNS,
   OPT_FIX_TABLE_NAMES, OPT_FIX_DB_NAMES, OPT_SSL_VERIFY_SERVER_CERT,
   OPT_AUTO_VERTICAL_OUTPUT,
-  OPT_DEBUG_INFO, OPT_DEBUG_CHECK, OPT_COLUMN_TYPES, OPT_ERROR_LOG_FILE,
+  OPT_DEBUG_INFO, OPT_DEBUG_CHECK, OPT_COLUMN_TYPES,
   OPT_WRITE_BINLOG, OPT_DUMP_DATE,
-  OPT_MAX_CLIENT_OPTION
+  OPT_MAX_CLIENT_OPTION,
+  OPT_SHOW_PROGRESS_SIZE
 };

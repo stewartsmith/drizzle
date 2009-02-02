@@ -1,7 +1,7 @@
-/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,53 +21,62 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/timestamp.h>
+#include <drizzled/error.h>
+#include <drizzled/tztime.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /**
-  TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to 
-  2038-01-01 00:00:00 UTC stored as number of seconds since Unix 
+  TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to
+  2038-01-01 00:00:00 UTC stored as number of seconds since Unix
   Epoch in UTC.
-  
-  Up to one of timestamps columns in the table can be automatically 
+
+  Up to one of timestamps columns in the table can be automatically
   set on row update and/or have NOW() as default value.
-  TABLE::timestamp_field points to Field object for such timestamp with 
+  TABLE::timestamp_field points to Field object for such timestamp with
   auto-set-on-update. TABLE::time_stamp holds offset in record + 1 for this
   field, and is used by handler code which performs updates required.
-  
+
   Actually SQL-99 says that we should allow niladic functions (like NOW())
-  as defaults for any field. Current limitations (only NOW() and only 
-  for one TIMESTAMP field) are because of restricted binary .frm format 
+  as defaults for any field. Current limitations (only NOW() and only
+  for one TIMESTAMP field) are because of restricted binary .frm format
   and should go away in the future.
-  
+
   Also because of this limitation of binary .frm format we use 5 different
   unireg_check values with TIMESTAMP field to distinguish various cases of
   DEFAULT or ON UPDATE values. These values are:
-  
+
   TIMESTAMP_OLD_FIELD - old timestamp, if there was not any fields with
-    auto-set-on-update (or now() as default) in this table before, then this 
-    field has NOW() as default and is updated when row changes, else it is 
+    auto-set-on-update (or now() as default) in this table before, then this
+    field has NOW() as default and is updated when row changes, else it is
     field which has 0 as default value and is not automatically updated.
   TIMESTAMP_DN_FIELD - field with NOW() as default but not set on update
     automatically (TIMESTAMP DEFAULT NOW())
-  TIMESTAMP_UN_FIELD - field which is set on update automatically but has not 
-    NOW() as default (but it may has 0 or some other const timestamp as 
+  TIMESTAMP_UN_FIELD - field which is set on update automatically but has not
+    NOW() as default (but it may has 0 or some other const timestamp as
     default) (TIMESTAMP ON UPDATE NOW()).
-  TIMESTAMP_DNUN_FIELD - field which has now() as default and is auto-set on 
+  TIMESTAMP_DNUN_FIELD - field which has now() as default and is auto-set on
     update. (TIMESTAMP DEFAULT NOW() ON UPDATE NOW())
-  NONE - field which is not auto-set on update with some other than NOW() 
+  NONE - field which is not auto-set on update with some other than NOW()
     default value (TIMESTAMP DEFAULT 0).
 
-  Note that TIMESTAMP_OLD_FIELDs are never created explicitly now, they are 
-  left only for preserving ability to read old tables. Such fields replaced 
-  with their newer analogs in CREATE TABLE and in SHOW CREATE TABLE. This is 
-  because we want to prefer NONE unireg_check before TIMESTAMP_OLD_FIELD for 
-  "TIMESTAMP DEFAULT 'Const'" field. (Old timestamps allowed such 
-  specification too but ignored default value for first timestamp, which of 
+  Note that TIMESTAMP_OLD_FIELDs are never created explicitly now, they are
+  left only for preserving ability to read old tables. Such fields replaced
+  with their newer analogs in CREATE TABLE and in SHOW CREATE TABLE. This is
+  because we want to prefer NONE unireg_check before TIMESTAMP_OLD_FIELD for
+  "TIMESTAMP DEFAULT 'Const'" field. (Old timestamps allowed such
+  specification too but ignored default value for first timestamp, which of
   course is non-standard.) In most cases user won't notice any change, only
   exception is different behavior of old/new timestamps during ALTER TABLE.
  */
 
 Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
-                                 uint32_t len_arg __attribute__((unused)),
+                                 uint32_t ,
                                  unsigned char *null_ptr_arg, unsigned char null_bit_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
@@ -140,14 +149,14 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
 
 int Field_timestamp::store(const char *from,
                            uint32_t len,
-                           const CHARSET_INFO * const cs __attribute__((unused)))
+                           const CHARSET_INFO * const )
 {
   DRIZZLE_TIME l_time;
-  my_time_t tmp= 0;
+  time_t tmp= 0;
   int error;
   bool have_smth_to_conv;
   bool in_dst_time_gap;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   have_smth_to_conv= (str_to_datetime(from, len, &l_time, 1, &error) >
@@ -163,7 +172,7 @@ int Field_timestamp::store(const char *from,
   /* Only convert a correct date (not a zero date) */
   if (have_smth_to_conv && l_time.month)
   {
-    if (!(tmp= TIME_to_timestamp(thd, &l_time, &in_dst_time_gap)))
+    if (!(tmp= TIME_to_timestamp(session, &l_time, &in_dst_time_gap)))
     {
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
@@ -200,16 +209,16 @@ int Field_timestamp::store(double nr)
 
 
 int Field_timestamp::store(int64_t nr,
-                           bool unsigned_val __attribute__((unused)))
+                           bool )
 {
   DRIZZLE_TIME l_time;
-  my_time_t timestamp= 0;
+  time_t timestamp= 0;
   int error;
   bool in_dst_time_gap;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
-  int64_t tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
+  int64_t tmp= number_to_datetime(nr, &l_time, (session->variables.sql_mode &
                                                  MODE_NO_ZERO_DATE), &error);
   if (tmp == INT64_C(-1))
   {
@@ -218,7 +227,7 @@ int Field_timestamp::store(int64_t nr,
 
   if (!error && tmp)
   {
-    if (!(timestamp= TIME_to_timestamp(thd, &l_time, &in_dst_time_gap)))
+    if (!(timestamp= TIME_to_timestamp(session, &l_time, &in_dst_time_gap)))
     {
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
@@ -250,9 +259,8 @@ int64_t Field_timestamp::val_int(void)
 {
   uint32_t temp;
   DRIZZLE_TIME time_tmp;
-  THD  *thd= table ? table->in_use : current_thd;
+  Session  *session= table ? table->in_use : current_session;
 
-  thd->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp=uint4korr(ptr);
@@ -262,9 +270,9 @@ int64_t Field_timestamp::val_int(void)
 
   if (temp == 0L)				// No time
     return(0);					/* purecov: inspected */
-  
-  thd->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (my_time_t)temp);
-  
+
+  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (time_t)temp);
+
   return time_tmp.year * INT64_C(10000000000) +
          time_tmp.month * INT64_C(100000000) +
          time_tmp.day * 1000000 + time_tmp.hour * 10000 +
@@ -276,14 +284,13 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 {
   uint32_t temp, temp2;
   DRIZZLE_TIME time_tmp;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
   char *to;
 
   val_buffer->alloc(field_length+1);
   to= (char*) val_buffer->ptr();
   val_buffer->length(field_length);
 
-  thd->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp=uint4korr(ptr);
@@ -297,8 +304,8 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
     return val_ptr;
   }
   val_buffer->set_charset(&my_charset_bin);	// Safety
-  
-  thd->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(my_time_t)temp);
+
+  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(time_t)temp);
 
   temp= time_tmp.year % 100;
   if (temp < YY_PART_YEAR - 1)
@@ -347,8 +354,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long temp;
-  THD *thd= table ? table->in_use : current_thd;
-  thd->time_zone_used= 1;
+  Session *session= table ? table->in_use : current_session;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp=uint4korr(ptr);
@@ -363,7 +369,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
   }
   else
   {
-    thd->variables.time_zone->gmt_sec_to_TIME(ltime, (my_time_t)temp);
+    session->variables.time_zone->gmt_sec_to_TIME(ltime, (time_t)temp);
   }
   return 0;
 }
@@ -401,7 +407,7 @@ int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-void Field_timestamp::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_timestamp::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)
@@ -430,9 +436,45 @@ void Field_timestamp::sql_type(String &res) const
 
 void Field_timestamp::set_time()
 {
-  THD *thd= table ? table->in_use : current_thd;
-  long tmp= (long) thd->query_start();
+  Session *session= table ? table->in_use : current_session;
+  long tmp= (long) session->query_start();
   set_notnull();
   store_timestamp(tmp);
+}
+
+
+void Field_timestamp::set_default()
+{
+  if (table->timestamp_field == this &&
+      unireg_check != TIMESTAMP_UN_FIELD)
+    set_time();
+  else
+    Field::set_default();
+}
+
+long Field_timestamp::get_timestamp(bool *null_value)
+{
+  if ((*null_value= is_null()))
+    return 0;
+#ifdef WORDS_BIGENDIAN
+  if (table && table->s->db_low_byte_first)
+    return sint4korr(ptr);
+#endif
+  long tmp;
+  longget(tmp,ptr);
+  return tmp;
+}
+
+
+void Field_timestamp::store_timestamp(time_t timestamp)
+{
+#ifdef WORDS_BIGENDIAN
+  if (table && table->s->db_low_byte_first)
+  {
+    int4store(ptr,timestamp);
+  }
+  else
+#endif
+    longstore(ptr,(uint32_t) timestamp);
 }
 

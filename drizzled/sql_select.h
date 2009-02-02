@@ -17,6 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_SQL_SELECT_H
+#define DRIZZLED_SQL_SELECT_H
+
+#include <drizzled/cached_item.h>
+#include <drizzled/session.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/item/null.h>
+
+class select_result;
+
 /**
   @file
 
@@ -29,6 +39,7 @@
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 
 #include <storage/myisam/myisam.h>
+#include <drizzled/sql_array.h>
 
 /* Values in optimize */
 #define KEY_OPTIMIZE_EXISTS		1
@@ -49,8 +60,8 @@ typedef struct keyuse_t {
   bool null_rejecting;
   /*
     !NULL - This KEYUSE was created from an equality that was wrapped into
-            an Item_func_trig_cond. This means the equality (and validity of 
-            this KEYUSE element) can be turned on and off. The on/off state 
+            an Item_func_trig_cond. This means the equality (and validity of
+            this KEYUSE element) can be turned on and off. The on/off state
             is indicted by the pointed value:
               *cond_guard == true <=> equality condition is on
               *cond_guard == false <=> equality condition is off
@@ -77,15 +88,15 @@ typedef struct st_table_ref
   unsigned char *key_buff2;               ///< key_buff+key_length
   store_key     **key_copy;               //
   Item          **items;                  ///< val()'s for each keypart
-  /*  
+  /*
     Array of pointers to trigger variables. Some/all of the pointers may be
     NULL.  The ref access can be used iff
-    
-      for each used key part i, (!cond_guards[i] || *cond_guards[i]) 
+
+      for each used key part i, (!cond_guards[i] || *cond_guards[i])
 
     This array is used by subquery code. The subquery code may inject
-    triggered conditions, i.e. conditions that can be 'switched off'. A ref 
-    access created from such condition is not valid when at least one of the 
+    triggered conditions, i.e. conditions that can be 'switched off'. A ref
+    access created from such condition is not valid when at least one of the
     underlying conditions is switched off (see subquery code for more details)
   */
   bool          **cond_guards;
@@ -112,8 +123,8 @@ typedef struct st_table_ref
 */
 
 typedef struct st_cache_field {
-  /* 
-    Where source data is located (i.e. this points to somewhere in 
+  /*
+    Where source data is located (i.e. this points to somewhere in
     tableX->record[0])
   */
   unsigned char *str;
@@ -126,23 +137,23 @@ typedef struct st_cache_field {
 } CACHE_FIELD;
 
 
-typedef struct st_join_cache 
+typedef struct st_join_cache
 {
   unsigned char *buff;
   unsigned char *pos;    /* Start of free space in the buffer */
   unsigned char *end;
   uint32_t records;  /* # of row cominations currently stored in the cache */
   uint32_t record_nr;
-  uint32_t ptr_record; 
-  /* 
+  uint32_t ptr_record;
+  /*
     Number of fields (i.e. cache_field objects). Those correspond to table
     columns, and there are also special fields for
      - table's column null bits
      - table's null-complementation byte
      - [new] table's rowid.
   */
-  uint32_t fields; 
-  uint32_t length; 
+  uint32_t fields;
+  uint32_t length;
   uint32_t blobs;
   CACHE_FIELD *field;
   CACHE_FIELD **blob_ptr;
@@ -188,7 +199,7 @@ typedef struct st_join_table {
   SQL_SELECT	*select;
   COND		*select_cond;
   QUICK_SELECT_I *quick;
-  /* 
+  /*
     The value of select_cond before we've attempted to do Index Condition
     Pushdown. We may need to restore everything back if we first choose one
     index but then reconsider (see test_if_skip_sort_order() for such
@@ -204,10 +215,10 @@ typedef struct st_join_table {
   st_join_table *last_inner;    /**< last table table for embedding outer join */
   st_join_table *first_upper;  /**< first inner table for embedding outer join */
   st_join_table *first_unmatched; /**< used for optimization purposes only     */
-  
+
   /* Special content for EXPLAIN 'Extra' column or NULL if none */
   const char	*info;
-  /* 
+  /*
     Bitmap of TAB_INFO_* bits that encodes special line for EXPLAIN 'Extra'
     column, or 0 if there is no info.
   */
@@ -216,12 +227,12 @@ typedef struct st_join_table {
   Read_record_func read_first_record;
   Next_select_func next_select;
   READ_RECORD	read_record;
-  /* 
+  /*
     Currently the following two fields are used only for a [NOT] IN subquery
     if it is executed by an alternative full table scan when the left operand of
     the subquery predicate is evaluated to NULL.
-  */  
-  Read_record_func save_read_first_record;/* to save read_first_record */ 
+  */
+  Read_record_func save_read_first_record;/* to save read_first_record */
   int (*save_read_record) (READ_RECORD *);/* to save read_record.read_record */
   double	worst_seeks;
   key_map	const_keys;			/**< Keys with constant part */
@@ -242,7 +253,7 @@ typedef struct st_join_table {
     E(#records) is in found_records.
   */
   ha_rows       read_time;
-  
+
   table_map	dependent,key_dependent;
   uint		use_quick,index;
   uint		status;				///< Save status for cache
@@ -251,12 +262,12 @@ typedef struct st_join_table {
   bool		cached_eq_ref_table,eq_ref_table,not_used_in_distinct;
   /* true <=> index-based access method must return records in order */
   bool		sorted;
-  /* 
+  /*
     If it's not 0 the number stored this field indicates that the index
-    scan has been chosen to access the table data and we expect to scan 
+    scan has been chosen to access the table data and we expect to scan
     this number of rows for the table.
-  */ 
-  ha_rows       limit; 
+  */
+  ha_rows       limit;
   TABLE_REF	ref;
   JOIN_CACHE	cache;
   JOIN		*join;
@@ -273,9 +284,9 @@ typedef struct st_join_table {
   SJ_TMP_TABLE  *flush_weedout_table;
   SJ_TMP_TABLE  *check_weed_out_table;
   struct st_join_table  *do_firstmatch;
- 
-  /* 
-     ptr  - this join tab should do an InsideOut scan. Points 
+
+  /*
+     ptr  - this join tab should do an InsideOut scan. Points
             to the tab for which we'll need to check tab->found_match.
 
      NULL - Not an insideout scan.
@@ -286,10 +297,10 @@ typedef struct st_join_table {
   /* Used by InsideOut scan. Just set to true when have found a row. */
   bool found_match;
 
-  enum { 
+  enum {
     /* If set, the rowid of this table must be put into the temptable. */
-    KEEP_ROWID=1, 
-    /* 
+    KEEP_ROWID=1,
+    /*
       If set, one should call h->position() to obtain the rowid,
       otherwise, the rowid is assumed to already be in h->ref
       (this is because join caching and filesort() save the rowid and then
@@ -335,9 +346,9 @@ typedef struct st_position
   */
   double records_read;
 
-  /* 
+  /*
     Cost accessing the table in course of the entire complete join execution,
-    i.e. cost of one access method use (e.g. 'range' or 'ref' scan ) times 
+    i.e. cost of one access method use (e.g. 'range' or 'ref' scan ) times
     number the access method will be invoked.
   */
   double read_time;
@@ -405,9 +416,9 @@ public:
   */
   ha_rows  fetch_limit;
   POSITION positions[MAX_TABLES+1],best_positions[MAX_TABLES+1];
-  
+
   /* *
-    Bitmap of nested joins embedding the position at the end of the current 
+    Bitmap of nested joins embedding the position at the end of the current
     partial join (valid only during join optimizer run).
   */
   nested_join_map cur_embedding_map;
@@ -418,7 +429,7 @@ public:
   Table    *tmp_table;
   /// used to store 2 possible tmp table of SELECT
   Table    *exec_tmp_table1, *exec_tmp_table2;
-  THD	   *thd;
+  Session	   *session;
   Item_sum  **sum_funcs, ***sum_funcs_end;
   /** second copy of sumfuncs (for queries with 2 temporary tables */
   Item_sum  **sum_funcs2, ***sum_funcs_end2;
@@ -433,15 +444,15 @@ public:
   SELECT_LEX_UNIT *unit;
   /// select that processed
   SELECT_LEX *select_lex;
-  /** 
+  /**
     true <=> optimizer must not mark any table as a constant table.
     This is needed for subqueries in form "a IN (SELECT .. UNION SELECT ..):
     when we optimize the select that reads the results of the union from a
     temporary table, we must not mark the temp. table as constant because
     the number of rows in it may vary from one subquery execution to another.
   */
-  bool no_const_tables; 
-  
+  bool no_const_tables;
+
   JOIN *tmp_join; ///< copy of this JOIN to be used with temporary tables
   ROLLUP rollup;				///< Used with rollup
 
@@ -493,10 +504,10 @@ public:
   Item **items0, **items1, **items2, **items3, **current_ref_pointer_array;
   uint32_t ref_pointer_array_size; ///< size of above in bytes
   const char *zero_result_cause; ///< not 0 if exec must return zero result
-  
-  bool union_part; ///< this subselect is part of union 
+
+  bool union_part; ///< this subselect is part of union
   bool optimized; ///< flag to avoid double optimization in EXPLAIN
-  
+
   Array<Item_in_subselect> sj_subselects;
 
   /* Descriptions of temporary tables used to weed-out semi-join duplicates */
@@ -504,26 +515,26 @@ public:
 
   table_map cur_emb_sj_nests;
 
-  /* 
-    storage for caching buffers allocated during query execution. 
+  /*
+    storage for caching buffers allocated during query execution.
     These buffers allocations need to be cached as the thread memory pool is
     cleared only at the end of the execution of the whole query and not caching
-    allocations that occur in repetition at execution time will result in 
+    allocations that occur in repetition at execution time will result in
     excessive memory usage.
-  */  
+  */
   SORT_FIELD *sortorder;                        // make_unireg_sortorder()
   Table **table_reexec;                         // make_simple_join()
   JOIN_TAB *join_tab_reexec;                    // make_simple_join()
   /* end of allocation caching storage */
 
-  JOIN(THD *thd_arg, List<Item> &fields_arg, uint64_t select_options_arg,
+  JOIN(Session *session_arg, List<Item> &fields_arg, uint64_t select_options_arg,
        select_result *result_arg)
-    :fields_list(fields_arg), sj_subselects(thd_arg->mem_root, 4)
+    :fields_list(fields_arg), sj_subselects(session_arg->mem_root, 4)
   {
-    init(thd_arg, fields_arg, select_options_arg, result_arg);
+    init(session_arg, fields_arg, select_options_arg, result_arg);
   }
 
-  void init(THD *thd_arg, List<Item> &fields_arg, uint64_t select_options_arg,
+  void init(Session *session_arg, List<Item> &fields_arg, uint64_t select_options_arg,
        select_result *result_arg)
   {
     join_tab= join_tab_save= 0;
@@ -544,12 +555,12 @@ public:
     sortorder= 0;
     table_reexec= 0;
     join_tab_reexec= 0;
-    thd= thd_arg;
+    session= session_arg;
     sum_funcs= sum_funcs2= 0;
     having= tmp_having= having_history= 0;
     select_options= select_options_arg;
     result= result_arg;
-    lock= thd_arg->lock;
+    lock= session_arg->lock;
     select_lex= 0; //for safety
     tmp_join= 0;
     select_distinct= test(select_options & SELECT_DISTINCT);
@@ -633,7 +644,7 @@ public:
   bool change_result(select_result *result);
   bool is_top_level_join() const
   {
-    return (unit == &thd->lex->unit && (unit->fake_select_lex == 0 ||
+    return (unit == &session->lex->unit && (unit->fake_select_lex == 0 ||
                                         select_lex == unit->fake_select_lex));
   }
 };
@@ -648,23 +659,23 @@ void TEST_join(JOIN *join);
 
 /* Extern functions in sql_select.cc */
 bool store_val_in_field(Field *field, Item *val, enum_check_fields check_flag);
-Table *create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
+Table *create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
 			order_st *group, bool distinct, bool save_sum_fields,
 			uint64_t select_options, ha_rows rows_limit,
 			char* alias);
-void free_tmp_table(THD *thd, Table *entry);
-void count_field_types(SELECT_LEX *select_lex, TMP_TABLE_PARAM *param, 
+void free_tmp_table(Session *session, Table *entry);
+void count_field_types(SELECT_LEX *select_lex, TMP_TABLE_PARAM *param,
                        List<Item> &fields, bool reset_with_sum_func);
-bool setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
+bool setup_copy_fields(Session *session, TMP_TABLE_PARAM *param,
 		       Item **ref_pointer_array,
 		       List<Item> &new_list1, List<Item> &new_list2,
 		       uint32_t elements, List<Item> &fields);
 void copy_fields(TMP_TABLE_PARAM *param);
 void copy_funcs(Item **func_ptr);
-Field* create_tmp_field_from_field(THD *thd, Field* org_field,
+Field* create_tmp_field_from_field(Session *session, Field* org_field,
                                    const char *name, Table *table,
                                    Item_field *item, uint32_t convert_blob_length);
-                                                                      
+
 /* functions from opt_sum.cc */
 bool simple_pred(Item_func *func_item, Item **args, bool *inv_order);
 int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds);
@@ -679,22 +690,22 @@ class store_key :public Sql_alloc
 public:
   bool null_key; /* true <=> the value of the key has a null part */
   enum store_key_result { STORE_KEY_OK, STORE_KEY_FATAL, STORE_KEY_CONV };
-  store_key(THD *thd, Field *field_arg, unsigned char *ptr, unsigned char *null, uint32_t length)
+  store_key(Session *session, Field *field_arg, unsigned char *ptr, unsigned char *null, uint32_t length)
     :null_key(0), null_ptr(null), err(0)
   {
     if (field_arg->type() == DRIZZLE_TYPE_BLOB)
     {
-      /* 
+      /*
         Key segments are always packed with a 2 byte length prefix.
         See mi_rkey for details.
       */
-      to_field= new Field_varstring(ptr, length, 2, null, 1, 
+      to_field= new Field_varstring(ptr, length, 2, null, 1,
                                     Field::NONE, field_arg->field_name,
                                     field_arg->table->s, field_arg->charset());
       to_field->init(field_arg->table);
     }
     else
-      to_field=field_arg->new_key_field(thd->mem_root, field_arg->table,
+      to_field=field_arg->new_key_field(session->mem_root, field_arg->table,
                                         ptr, null, 1);
   }
   virtual ~store_key() {}			/** Not actually needed */
@@ -709,14 +720,14 @@ public:
   enum store_key_result copy()
   {
     enum store_key_result result;
-    THD *thd= to_field->table->in_use;
-    enum_check_fields saved_count_cuted_fields= thd->count_cuted_fields;
+    Session *session= to_field->table->in_use;
+    enum_check_fields saved_count_cuted_fields= session->count_cuted_fields;
 
-    thd->count_cuted_fields= CHECK_FIELD_IGNORE;
+    session->count_cuted_fields= CHECK_FIELD_IGNORE;
 
     result= copy_inner();
 
-    thd->count_cuted_fields= saved_count_cuted_fields;
+    session->count_cuted_fields= saved_count_cuted_fields;
 
     return result;
   }
@@ -735,10 +746,10 @@ class store_key_field: public store_key
   Copy_field copy_field;
   const char *field_name;
  public:
-  store_key_field(THD *thd, Field *to_field_arg, unsigned char *ptr,
+  store_key_field(Session *session, Field *to_field_arg, unsigned char *ptr,
                   unsigned char *null_ptr_arg,
 		  uint32_t length, Field *from_field, const char *name_arg)
-    :store_key(thd, to_field_arg,ptr,
+    :store_key(session, to_field_arg,ptr,
 	       null_ptr_arg ? null_ptr_arg : from_field->maybe_null() ? &err
 	       : (unsigned char*) 0, length), field_name(name_arg)
   {
@@ -749,7 +760,7 @@ class store_key_field: public store_key
   }
   const char *name() const { return field_name; }
 
- protected: 
+ protected:
   enum store_key_result copy_inner()
   {
     copy_field.do_copy(&copy_field);
@@ -764,20 +775,20 @@ class store_key_item :public store_key
  protected:
   Item *item;
 public:
-  store_key_item(THD *thd, Field *to_field_arg, unsigned char *ptr,
+  store_key_item(Session *session, Field *to_field_arg, unsigned char *ptr,
                  unsigned char *null_ptr_arg, uint32_t length, Item *item_arg)
-    :store_key(thd, to_field_arg, ptr,
+    :store_key(session, to_field_arg, ptr,
 	       null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
 	       &err : (unsigned char*) 0, length), item(item_arg)
   {}
   const char *name() const { return "func"; }
 
- protected:  
+ protected:
   enum store_key_result copy_inner()
   {
     int res= item->save_in_field(to_field, 1);
     null_key= to_field->is_null() || item->null_value;
-    return (err != 0 || res > 2 ? STORE_KEY_FATAL : (store_key_result) res); 
+    return (err != 0 || res > 2 ? STORE_KEY_FATAL : (store_key_result) res);
   }
 };
 
@@ -786,17 +797,17 @@ class store_key_const_item :public store_key_item
 {
   bool inited;
 public:
-  store_key_const_item(THD *thd, Field *to_field_arg, unsigned char *ptr,
+  store_key_const_item(Session *session, Field *to_field_arg, unsigned char *ptr,
 		       unsigned char *null_ptr_arg, uint32_t length,
 		       Item *item_arg)
-    :store_key_item(thd, to_field_arg,ptr,
+    :store_key_item(session, to_field_arg,ptr,
 		    null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
 		    &err : (unsigned char*) 0, length, item_arg), inited(0)
   {
   }
   const char *name() const { return "const"; }
 
-protected:  
+protected:
   enum store_key_result copy_inner()
   {
     int res;
@@ -804,7 +815,7 @@ protected:
     {
       inited=1;
       if ((res= item->save_in_field(to_field, 1)))
-      {       
+      {
         if (!err)
           err= res;
       }
@@ -814,8 +825,10 @@ protected:
   }
 };
 
-bool cp_buffer_from_ref(THD *thd, TABLE_REF *ref);
+bool cp_buffer_from_ref(Session *session, TABLE_REF *ref);
 bool error_if_full_join(JOIN *join);
 int safe_index_read(JOIN_TAB *tab);
-COND *remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value);
+COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value);
 int test_if_item_cache_changed(List<Cached_item> &list);
+
+#endif /* DRIZZLED_SQL_SELECT_H */

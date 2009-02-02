@@ -24,20 +24,16 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
-#include <drizzled/sql_show.h>
-#include "rpl_mi.h"
-#include <drizzled/drizzled_error_messages.h>
-
-/* Define to force use of my_malloc() if the allocated memory block is big */
-
-#ifndef HAVE_ALLOCA
-#define my_safe_alloca(size, min_length) my_alloca(size)
-#define my_safe_afree(ptr, size, min_length) my_afree(ptr)
-#else
-#define my_safe_alloca(size, min_length) ((size <= min_length) ? my_alloca(size) : malloc(size))
-#define my_safe_afree(ptr, size, min_length) if (size > min_length) free(ptr)
-#endif
-
+#include <drizzled/show.h>
+#include <drizzled/error.h>
+#include <drizzled/name_resolution_context_state.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/probes.h>
+#include <drizzled/tableop_hooks.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_load.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/lock.h>
 
 
 /*
@@ -45,7 +41,7 @@
 
   SYNOPSIS
     check_insert_fields()
-    thd                         The current thread.
+    session                         The current thread.
     table                       The table for insert.
     fields                      The insert fields.
     values                      The insert values.
@@ -61,10 +57,10 @@
     -1          Error
 */
 
-static int check_insert_fields(THD *thd, TableList *table_list,
+static int check_insert_fields(Session *session, TableList *table_list,
                                List<Item> &fields, List<Item> &values,
                                bool check_unique,
-                               table_map *map __attribute__((unused)))
+                               table_map *)
 {
   Table *table= table_list->table;
 
@@ -85,7 +81,7 @@ static int check_insert_fields(THD *thd, TableList *table_list,
   }
   else
   {						// Part field list
-    SELECT_LEX *select_lex= &thd->lex->select_lex;
+    SELECT_LEX *select_lex= &session->lex->select_lex;
     Name_resolution_context *context= &select_lex->context;
     Name_resolution_context_state ctx_state;
     int res;
@@ -96,7 +92,7 @@ static int check_insert_fields(THD *thd, TableList *table_list,
       return -1;
     }
 
-    thd->dup_field= 0;
+    session->dup_field= 0;
 
     /* Save the state of the current name resolution context. */
     ctx_state.save_state(context, table_list);
@@ -107,7 +103,7 @@ static int check_insert_fields(THD *thd, TableList *table_list,
     */
     table_list->next_local= 0;
     context->resolve_in_table_list_only(table_list);
-    res= setup_fields(thd, 0, fields, MARK_COLUMNS_WRITE, 0, 0);
+    res= setup_fields(session, 0, fields, MARK_COLUMNS_WRITE, 0, 0);
 
     /* Restore the current context. */
     ctx_state.restore_state(context, table_list);
@@ -115,9 +111,9 @@ static int check_insert_fields(THD *thd, TableList *table_list,
     if (res)
       return -1;
 
-    if (check_unique && thd->dup_field)
+    if (check_unique && session->dup_field)
     {
-      my_error(ER_FIELD_SPECIFIED_TWICE, MYF(0), thd->dup_field->field_name);
+      my_error(ER_FIELD_SPECIFIED_TWICE, MYF(0), session->dup_field->field_name);
       return -1;
     }
     if (table->timestamp_field)	// Don't automaticly set timestamp if used
@@ -146,7 +142,7 @@ static int check_insert_fields(THD *thd, TableList *table_list,
 
   SYNOPSIS
     check_update_fields()
-    thd                         The current thread.
+    session                         The current thread.
     insert_table_list           The insert table list.
     table                       The table for update.
     update_fields               The update fields.
@@ -160,9 +156,9 @@ static int check_insert_fields(THD *thd, TableList *table_list,
     -1          Error
 */
 
-static int check_update_fields(THD *thd, TableList *insert_table_list,
+static int check_update_fields(Session *session, TableList *insert_table_list,
                                List<Item> &update_fields,
-                               table_map *map __attribute__((unused)))
+                               table_map *)
 {
   Table *table= insert_table_list->table;
   bool timestamp_mark= false;
@@ -178,7 +174,7 @@ static int check_update_fields(THD *thd, TableList *insert_table_list,
   }
 
   /* Check the fields we are going to modify */
-  if (setup_fields(thd, 0, update_fields, MARK_COLUMNS_WRITE, 0, 0))
+  if (setup_fields(session, 0, update_fields, MARK_COLUMNS_WRITE, 0, 0))
     return -1;
 
   if (table->timestamp_field)
@@ -205,10 +201,10 @@ static int check_update_fields(THD *thd, TableList *insert_table_list,
 */
 
 static
-void upgrade_lock_type(THD *thd __attribute__((unused)),
+void upgrade_lock_type(Session *,
                        thr_lock_type *lock_type,
                        enum_duplicates duplic,
-                       bool is_multi_insert __attribute__((unused)))
+                       bool )
 {
   if (duplic == DUP_UPDATE ||
       (duplic == DUP_REPLACE && *lock_type == TL_WRITE_CONCURRENT_INSERT))
@@ -227,7 +223,7 @@ void upgrade_lock_type(THD *thd __attribute__((unused)),
   end of dispatch_command().
 */
 
-bool mysql_insert(THD *thd,TableList *table_list,
+bool mysql_insert(Session *session,TableList *table_list,
                   List<Item> &fields,
                   List<List_item> &values_list,
                   List<Item> &update_fields,
@@ -250,13 +246,13 @@ bool mysql_insert(THD *thd,TableList *table_list,
   Name_resolution_context_state ctx_state;
   thr_lock_type lock_type;
   Item *unused_conds= 0;
-  
+
 
   /*
     Upgrade lock type if the requested lock is incompatible with
     the current connection mode or table operation.
   */
-  upgrade_lock_type(thd, &table_list->lock_type, duplic,
+  upgrade_lock_type(session, &table_list->lock_type, duplic,
                     values_list.elements > 1);
 
   /*
@@ -265,8 +261,8 @@ bool mysql_insert(THD *thd,TableList *table_list,
     never be able to get a lock on the table. QQQ: why not
     upgrade the lock here instead?
   */
-  if (table_list->lock_type == TL_WRITE_DELAYED && thd->locked_tables &&
-      find_locked_table(thd, table_list->db, table_list->table_name))
+  if (table_list->lock_type == TL_WRITE_DELAYED && session->locked_tables &&
+      find_locked_table(session, table_list->db, table_list->table_name))
   {
     my_error(ER_DELAYED_INSERT_TABLE_LOCKED, MYF(0),
              table_list->table_name);
@@ -274,17 +270,17 @@ bool mysql_insert(THD *thd,TableList *table_list,
   }
 
   {
-    if (open_and_lock_tables(thd, table_list))
+    if (open_and_lock_tables(session, table_list))
       return(true);
   }
   lock_type= table_list->lock_type;
 
-  thd->set_proc_info("init");
-  thd->used_tables=0;
+  session->set_proc_info("init");
+  session->used_tables=0;
   values= its++;
   value_count= values->elements;
 
-  if (mysql_prepare_insert(thd, table_list, table, fields, values,
+  if (mysql_prepare_insert(session, table_list, table, fields, values,
 			   update_fields, update_values, duplic, &unused_conds,
                            false,
                            (fields.elements || !value_count ||
@@ -294,7 +290,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
   /* mysql_prepare_insert set table_list->table if it was not set */
   table= table_list->table;
 
-  context= &thd->lex->select_lex.context;
+  context= &session->lex->select_lex.context;
   /*
     These three asserts test the hypothesis that the resetting of the name
     resolution context below is not necessary at all since the list of local
@@ -322,11 +318,11 @@ bool mysql_insert(THD *thd,TableList *table_list,
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), counter);
       goto abort;
     }
-    if (setup_fields(thd, 0, *values, MARK_COLUMNS_READ, 0, 0))
+    if (setup_fields(session, 0, *values, MARK_COLUMNS_READ, 0, 0))
       goto abort;
   }
   its.rewind ();
- 
+
   /* Restore the current context. */
   ctx_state.restore_state(context, table_list);
 
@@ -344,21 +340,15 @@ bool mysql_insert(THD *thd,TableList *table_list,
     For single line insert, generate an error if try to set a NOT NULL field
     to NULL.
   */
-  thd->count_cuted_fields= ((values_list.elements == 1 &&
+  session->count_cuted_fields= ((values_list.elements == 1 &&
                              !ignore) ?
 			    CHECK_FIELD_ERROR_FOR_NULL :
 			    CHECK_FIELD_WARN);
-  thd->cuted_fields = 0L;
+  session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
-  if (thd->slave_thread &&
-      (info.handle_duplicates == DUP_UPDATE) &&
-      (table->next_number_field != NULL) &&
-      rpl_master_has_bug(&active_mi->rli, 24432))
-    goto abort;
-
   error=0;
-  thd->set_proc_info("update");
+  session->set_proc_info("update");
   if (duplic == DUP_REPLACE)
     table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
   if (duplic == DUP_UPDATE)
@@ -370,7 +360,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
   }
 
 
-  thd->abort_on_warning= !ignore;
+  session->abort_on_warning= !ignore;
 
   table->mark_columns_needed_for_insert();
 
@@ -379,15 +369,15 @@ bool mysql_insert(THD *thd,TableList *table_list,
     if (fields.elements || !value_count)
     {
       restore_record(table,s->default_values);	// Get empty record
-      if (fill_record(thd, fields, *values, 0))
+      if (fill_record(session, fields, *values, 0))
       {
-	if (values_list.elements != 1 && ! thd->is_error())
+	if (values_list.elements != 1 && ! session->is_error())
 	{
 	  info.records++;
 	  continue;
 	}
 	/*
-	  TODO: set thd->abort_on_warning if values_list.elements == 1
+	  TODO: set session->abort_on_warning if values_list.elements == 1
 	  and check that all items return warning in case of problem with
 	  storing field.
         */
@@ -397,7 +387,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
     }
     else
     {
-      if (thd->used_tables)			// Column used in values()
+      if (session->used_tables)			// Column used in values()
 	restore_record(table,s->default_values);	// Get empty record
       else
       {
@@ -408,9 +398,9 @@ bool mysql_insert(THD *thd,TableList *table_list,
         */
 	table->record[0][0]= table->s->default_values[0];
       }
-      if (fill_record(thd, table->field, *values, 0))
+      if (fill_record(session, table->field, *values, 0))
       {
-	if (values_list.elements != 1 && ! thd->is_error())
+	if (values_list.elements != 1 && ! session->is_error())
 	{
 	  info.records++;
 	  continue;
@@ -420,13 +410,13 @@ bool mysql_insert(THD *thd,TableList *table_list,
       }
     }
 
-    error=write_record(thd, table ,&info);
+    error=write_record(session, table ,&info);
     if (error)
       break;
-    thd->row_count++;
+    session->row_count++;
   }
 
-  free_underlaid_joins(thd, &thd->lex->select_lex);
+  free_underlaid_joins(session, &session->lex->select_lex);
   joins_freed= true;
 
   /*
@@ -457,54 +447,16 @@ bool mysql_insert(THD *thd,TableList *table_list,
         before binlog writing and ha_autocommit_or_rollback
       */
     }
-    if ((changed && error <= 0) || thd->transaction.stmt.modified_non_trans_table || was_insert_delayed)
+    if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table || was_insert_delayed)
     {
-      if (mysql_bin_log.is_open())
-      {
-	if (error <= 0)
-        {
-	  /*
-	    [Guilhem wrote] Temporary errors may have filled
-	    thd->net.last_error/errno.  For example if there has
-	    been a disk full error when writing the row, and it was
-	    MyISAM, then thd->net.last_error/errno will be set to
-	    "disk full"... and the my_pwrite() will wait until free
-	    space appears, and so when it finishes then the
-	    write_row() was entirely successful
-	  */
-	  /* todo: consider removing */
-	  thd->clear_error();
-	}
-	/* bug#22725:
-
-	A query which per-row-loop can not be interrupted with
-	KILLED, like INSERT, and that does not invoke stored
-	routines can be binlogged with neglecting the KILLED error.
-        
-	If there was no error (error == zero) until after the end of
-	inserting loop the KILLED flag that appeared later can be
-	disregarded since previously possible invocation of stored
-	routines did not result in any error due to the KILLED.  In
-	such case the flag is ignored for constructing binlog event.
-	*/
-	assert(thd->killed != THD::KILL_BAD_DATA || error > 0);
-	if (thd->binlog_query(THD::ROW_QUERY_TYPE,
-			      thd->query, thd->query_length,
-			      transactional_table, false,
-			      (error>0) ? thd->killed : THD::NOT_KILLED) &&
-	    transactional_table)
-        {
-	  error=1;
-	}
-      }
-      if (thd->transaction.stmt.modified_non_trans_table)
-	thd->transaction.all.modified_non_trans_table= true;
+      if (session->transaction.stmt.modified_non_trans_table)
+	session->transaction.all.modified_non_trans_table= true;
     }
-    assert(transactional_table || !changed || 
-                thd->transaction.stmt.modified_non_trans_table);
+    assert(transactional_table || !changed ||
+                session->transaction.stmt.modified_non_trans_table);
 
   }
-  thd->set_proc_info("end");
+  session->set_proc_info("end");
   /*
     We'll report to the client this id:
     - if the table contains an autoincrement column and we successfully
@@ -515,43 +467,43 @@ bool mysql_insert(THD *thd,TableList *table_list,
     inserted, the id of the last "inserted" row (if IGNORE, that value may not
     have been really inserted but ignored).
   */
-  id= (thd->first_successful_insert_id_in_cur_stmt > 0) ?
-    thd->first_successful_insert_id_in_cur_stmt :
-    (thd->arg_of_last_insert_id_function ?
-     thd->first_successful_insert_id_in_prev_stmt :
+  id= (session->first_successful_insert_id_in_cur_stmt > 0) ?
+    session->first_successful_insert_id_in_cur_stmt :
+    (session->arg_of_last_insert_id_function ?
+     session->first_successful_insert_id_in_prev_stmt :
      ((table->next_number_field && info.copied) ?
      table->next_number_field->val_int() : 0));
   table->next_number_field=0;
-  thd->count_cuted_fields= CHECK_FIELD_IGNORE;
+  session->count_cuted_fields= CHECK_FIELD_IGNORE;
   table->auto_increment_field_not_null= false;
   if (duplic == DUP_REPLACE)
     table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
 
   if (error)
     goto abort;
-  if (values_list.elements == 1 && (!(thd->options & OPTION_WARNINGS) ||
-				    !thd->cuted_fields))
+  if (values_list.elements == 1 && (!(session->options & OPTION_WARNINGS) ||
+				    !session->cuted_fields))
   {
-    thd->row_count_func= info.copied + info.deleted +
-                         ((thd->client_capabilities & CLIENT_FOUND_ROWS) ?
+    session->row_count_func= info.copied + info.deleted +
+                         ((session->client_capabilities & CLIENT_FOUND_ROWS) ?
                           info.touched : info.updated);
-    my_ok(thd, (ulong) thd->row_count_func, id);
+    my_ok(session, (ulong) session->row_count_func, id);
   }
   else
   {
     char buff[160];
-    ha_rows updated=((thd->client_capabilities & CLIENT_FOUND_ROWS) ?
+    ha_rows updated=((session->client_capabilities & CLIENT_FOUND_ROWS) ?
                      info.touched : info.updated);
     if (ignore)
       sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
-              (ulong) (info.records - info.copied), (ulong) thd->cuted_fields);
+              (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
     else
       sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
-	      (ulong) (info.deleted + updated), (ulong) thd->cuted_fields);
-    thd->row_count_func= info.copied + info.deleted + updated;
-    ::my_ok(thd, (ulong) thd->row_count_func, id, buff);
+	      (ulong) (info.deleted + updated), (ulong) session->cuted_fields);
+    session->row_count_func= info.copied + info.deleted + updated;
+    ::my_ok(session, (ulong) session->row_count_func, id, buff);
   }
-  thd->abort_on_warning= 0;
+  session->abort_on_warning= 0;
   DRIZZLE_INSERT_END();
   return(false);
 
@@ -559,8 +511,8 @@ abort:
   if (table != NULL)
     table->file->ha_release_auto_increment();
   if (!joins_freed)
-    free_underlaid_joins(thd, &thd->lex->select_lex);
-  thd->abort_on_warning= 0;
+    free_underlaid_joins(session, &session->lex->select_lex);
+  session->abort_on_warning= 0;
   DRIZZLE_INSERT_END();
   return(true);
 }
@@ -571,7 +523,7 @@ abort:
 
   SYNOPSIS
      mysql_prepare_insert_check_table()
-     thd		Thread handle
+     session		Thread handle
      table_list		Table list
      fields		List of fields to be updated
      where		Pointer to where clause
@@ -582,11 +534,11 @@ abort:
      true  ERROR
 */
 
-static bool mysql_prepare_insert_check_table(THD *thd, TableList *table_list,
-                                             List<Item> &fields __attribute__((unused)),
+static bool mysql_prepare_insert_check_table(Session *session, TableList *table_list,
+                                             List<Item> &,
                                              bool select_insert)
 {
-  
+
 
   /*
      first table in list is the one we'll INSERT into, requires INSERT_ACL.
@@ -595,10 +547,10 @@ static bool mysql_prepare_insert_check_table(THD *thd, TableList *table_list,
      than INSERT.
   */
 
-  if (setup_tables_and_check_access(thd, &thd->lex->select_lex.context,
-                                    &thd->lex->select_lex.top_join_list,
+  if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
+                                    &session->lex->select_lex.top_join_list,
                                     table_list,
-                                    &thd->lex->select_lex.leaf_tables,
+                                    &session->lex->select_lex.leaf_tables,
                                     select_insert))
     return(true);
 
@@ -611,15 +563,15 @@ static bool mysql_prepare_insert_check_table(THD *thd, TableList *table_list,
 
   SYNOPSIS
     mysql_prepare_insert()
-    thd			Thread handler
+    session			Thread handler
     table_list	        Global/local table list
     table		Table to insert into (can be NULL if table should
-			be taken from table_list->table)    
+			be taken from table_list->table)
     where		Where clause (for insert ... select)
     select_insert	true if INSERT ... SELECT statement
-    check_fields        true if need to check that all INSERT fields are 
+    check_fields        true if need to check that all INSERT fields are
                         given values.
-    abort_on_warning    whether to report if some INSERT field is not 
+    abort_on_warning    whether to report if some INSERT field is not
                         assigned as an error (true) or as a warning (false).
 
   TODO (in far future)
@@ -631,27 +583,27 @@ static bool mysql_prepare_insert_check_table(THD *thd, TableList *table_list,
   WARNING
     You MUST set table->insert_values to 0 after calling this function
     before releasing the table object.
-  
+
   RETURN VALUE
     false OK
     true  error
 */
 
-bool mysql_prepare_insert(THD *thd, TableList *table_list,
+bool mysql_prepare_insert(Session *session, TableList *table_list,
                           Table *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
-                          COND **where __attribute__((unused)),
+                          COND **,
                           bool select_insert,
                           bool check_fields, bool abort_on_warning)
 {
-  SELECT_LEX *select_lex= &thd->lex->select_lex;
+  SELECT_LEX *select_lex= &session->lex->select_lex;
   Name_resolution_context *context= &select_lex->context;
   Name_resolution_context_state ctx_state;
   bool insert_into_view= (0 != 0);
   bool res= 0;
   table_map map= 0;
-  
+
   /* INSERT should have a SELECT or VALUES clause */
   assert (!select_insert || !values);
 
@@ -678,11 +630,11 @@ bool mysql_prepare_insert(THD *thd, TableList *table_list,
   if (duplic == DUP_UPDATE)
   {
     /* it should be allocated before Item::fix_fields() */
-    if (table_list->set_insert_values(thd->mem_root))
+    if (table_list->set_insert_values(session->mem_root))
       return(true);
   }
 
-  if (mysql_prepare_insert_check_table(thd, table_list, fields, select_insert))
+  if (mysql_prepare_insert_check_table(session, table_list, fields, select_insert))
     return(true);
 
 
@@ -702,31 +654,31 @@ bool mysql_prepare_insert(THD *thd, TableList *table_list,
     table_list->next_local= 0;
     context->resolve_in_table_list_only(table_list);
 
-    res= check_insert_fields(thd, context->table_list, fields, *values,
+    res= check_insert_fields(session, context->table_list, fields, *values,
                              !insert_into_view, &map) ||
-      setup_fields(thd, 0, *values, MARK_COLUMNS_READ, 0, 0);
+      setup_fields(session, 0, *values, MARK_COLUMNS_READ, 0, 0);
 
     if (!res && check_fields)
     {
-      bool saved_abort_on_warning= thd->abort_on_warning;
-      thd->abort_on_warning= abort_on_warning;
-      res= check_that_all_fields_are_given_values(thd, 
-                                                  table ? table : 
+      bool saved_abort_on_warning= session->abort_on_warning;
+      session->abort_on_warning= abort_on_warning;
+      res= check_that_all_fields_are_given_values(session,
+                                                  table ? table :
                                                   context->table_list->table,
                                                   context->table_list);
-      thd->abort_on_warning= saved_abort_on_warning;
+      session->abort_on_warning= saved_abort_on_warning;
     }
 
     if (!res && duplic == DUP_UPDATE)
     {
-      res= check_update_fields(thd, context->table_list, update_fields, &map);
+      res= check_update_fields(session, context->table_list, update_fields, &map);
     }
 
     /* Restore the current context. */
     ctx_state.restore_state(context, table_list);
 
     if (!res)
-      res= setup_fields(thd, 0, update_values, MARK_COLUMNS_READ, 0, 0);
+      res= setup_fields(session, 0, update_values, MARK_COLUMNS_READ, 0, 0);
   }
 
   if (res)
@@ -738,7 +690,7 @@ bool mysql_prepare_insert(THD *thd, TableList *table_list,
   if (!select_insert)
   {
     TableList *duplicate;
-    if ((duplicate= unique_table(thd, table_list, table_list->next_global, 1)))
+    if ((duplicate= unique_table(session, table_list, table_list->next_global, 1)))
     {
       update_non_unique_table_error(table_list, "INSERT", duplicate);
       return(true);
@@ -767,7 +719,7 @@ static int last_uniq_key(Table *table,uint32_t keynr)
 
   SYNOPSIS
      write_record()
-      thd   - thread context
+      session   - thread context
       table - table to which record should be written
       info  - COPY_INFO structure describing handling of duplicates
               and which is used for counting number of records inserted
@@ -779,7 +731,7 @@ static int last_uniq_key(Table *table,uint32_t keynr)
     then both on update triggers will work instead. Similarly both on
     delete triggers will be invoked if we will delete conflicting records.
 
-    Sets thd->transaction.stmt.modified_non_trans_table to true if table which is updated didn't have
+    Sets session->transaction.stmt.modified_non_trans_table to true if table which is updated didn't have
     transactions.
 
   RETURN VALUE
@@ -788,14 +740,14 @@ static int last_uniq_key(Table *table,uint32_t keynr)
 */
 
 
-int write_record(THD *thd, Table *table,COPY_INFO *info)
+int write_record(Session *session, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
   MY_BITMAP *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->file->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
-  
+
 
   info->records++;
   save_read_set=  table->read_set;
@@ -811,7 +763,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
         If we do more than one iteration of this loop, from the second one the
         row will have an explicit value in the autoinc field, which was set at
         the first call of handler::update_auto_increment(). So we must save
-        the autogenerated value to avoid thd->insert_id_for_cur_row to become
+        the autogenerated value to avoid session->insert_id_for_cur_row to become
         0.
       */
       if (table->file->insert_id_for_cur_row > 0)
@@ -865,8 +817,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
 
 	if (!key)
 	{
-	  if (!(key=(char*) my_safe_alloca(table->s->max_unique_length,
-					   MAX_KEY_LENGTH)))
+	  if (!(key=(char*) malloc(table->s->max_unique_length)))
 	  {
 	    error=ENOMEM;
 	    goto err;
@@ -890,7 +841,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
         restore_record(table,record[1]);
         assert(info->update_fields->elements ==
                     info->update_values->elements);
-        if (fill_record(thd, *info->update_fields,
+        if (fill_record(session, *info->update_fields,
                                                  *info->update_values,
                                                  info->ignore))
           goto before_err;
@@ -925,7 +876,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
             like a regular UPDATE statement: it should not affect the value of a
             next SELECT LAST_INSERT_ID() or mysql_insert_id().
             Except if LAST_INSERT_ID(#) was in the INSERT query, which is
-            handled separately by THD::arg_of_last_insert_id_function.
+            handled separately by Session::arg_of_last_insert_id_function.
           */
           insert_id_for_cur_row= table->file->insert_id_for_cur_row= 0;
           info->copied++;
@@ -945,7 +896,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
 	  an INSERT or DELETE(s) + INSERT; FOREIGN KEY checks in
 	  InnoDB do not function in the defined way if we allow MySQL
 	  to convert the latter operation internally to an UPDATE.
-          We also should not perform this conversion if we have 
+          We also should not perform this conversion if we have
           timestamp field with ON UPDATE which is different from DEFAULT.
           Another case when conversion should not be performed is when
           we have ON DELETE trigger on table so user may notice that
@@ -967,7 +918,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
             info->deleted++;
           else
             error= 0;
-          thd->record_first_successful_insert_id_in_cur_stmt(table->file->insert_id_for_cur_row);
+          session->record_first_successful_insert_id_in_cur_stmt(table->file->insert_id_for_cur_row);
           /*
             Since we pretend that we have done insert we should call
             its after triggers.
@@ -980,12 +931,12 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
             goto err;
           info->deleted++;
           if (!table->file->has_transactions())
-            thd->transaction.stmt.modified_non_trans_table= true;
+            session->transaction.stmt.modified_non_trans_table= true;
           /* Let us attempt do write_row() once more */
         }
       }
     }
-    thd->record_first_successful_insert_id_in_cur_stmt(table->file->insert_id_for_cur_row);
+    session->record_first_successful_insert_id_in_cur_stmt(table->file->insert_id_for_cur_row);
     /*
       Restore column maps if they where replaced during an duplicate key
       problem.
@@ -1005,26 +956,26 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
 
 after_n_copied_inc:
   info->copied++;
-  thd->record_first_successful_insert_id_in_cur_stmt(table->file->insert_id_for_cur_row);
+  session->record_first_successful_insert_id_in_cur_stmt(table->file->insert_id_for_cur_row);
 
 gok_or_after_err:
   if (key)
-    my_safe_afree(key,table->s->max_unique_length,MAX_KEY_LENGTH);
+    free(key);
   if (!table->file->has_transactions())
-    thd->transaction.stmt.modified_non_trans_table= true;
+    session->transaction.stmt.modified_non_trans_table= true;
   return(0);
 
 err:
   info->last_errno= error;
   /* current_select is NULL if this is a delayed insert */
-  if (thd->lex->current_select)
-    thd->lex->current_select->no_error= 0;        // Give error
+  if (session->lex->current_select)
+    session->lex->current_select->no_error= 0;        // Give error
   table->file->print_error(error,MYF(0));
-  
+
 before_err:
   table->file->restore_auto_increment(prev_insert_id);
   if (key)
-    my_safe_afree(key, table->s->max_unique_length, MAX_KEY_LENGTH);
+    free(key);
   table->column_bitmaps_set(save_read_set, save_write_set);
   return(1);
 }
@@ -1034,34 +985,47 @@ before_err:
   Check that all fields with arn't null_fields are used
 ******************************************************************************/
 
-int check_that_all_fields_are_given_values(THD *thd, Table *entry,
-                                           TableList *table_list)
+int check_that_all_fields_are_given_values(Session *session, Table *entry,
+                                           TableList *)
 {
   int err= 0;
   MY_BITMAP *write_set= entry->write_set;
 
   for (Field **field=entry->field ; *field ; field++)
   {
-    if (!bitmap_is_set(write_set, (*field)->field_index) &&
-        ((*field)->flags & NO_DEFAULT_VALUE_FLAG) &&
-        ((*field)->real_type() != DRIZZLE_TYPE_ENUM))
+    if (!bitmap_is_set(write_set, (*field)->field_index))
     {
-      bool view= false;
-      if (table_list)
+      /*
+       * If the field doesn't have any default value
+       * and there is no actual value specified in the
+       * INSERT statement, throw error ER_NO_DEFAULT_FOR_FIELD.
+       */
+      if (((*field)->flags & NO_DEFAULT_VALUE_FLAG) &&
+        ((*field)->real_type() != DRIZZLE_TYPE_ENUM))
       {
-        table_list= table_list->top_table();
-        view= test(0);
+        my_error(ER_NO_DEFAULT_FOR_FIELD, MYF(0), (*field)->field_name);
+        err= 1;
       }
+    }
+    else
+    {
+      /*
+       * However, if an actual NULL value was specified
+       * for the field and the field is a NOT NULL field, 
+       * throw ER_BAD_NULL_ERROR.
+       *
+       * Per the SQL standard, inserting NULL into a NOT NULL
+       * field requires an error to be thrown.
+       */
+      if (((*field)->flags & NOT_NULL_FLAG) &&
+          (*field)->is_null())
       {
-        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_NO_DEFAULT_FOR_FIELD,
-                            ER(ER_NO_DEFAULT_FOR_FIELD),
-                            (*field)->field_name);
+        my_error(ER_BAD_NULL_ERROR, MYF(0), (*field)->field_name);
+        err= 1;
       }
-      err= 1;
     }
   }
-  return thd->abort_on_warning ? err : 0;
+  return session->abort_on_warning ? err : 0;
 }
 
 /***************************************************************************
@@ -1074,38 +1038,24 @@ int check_that_all_fields_are_given_values(THD *thd, Table *entry,
 
   SYNOPSIS
     mysql_insert_select_prepare()
-    thd         thread handler
+    session         thread handler
 
   RETURN
     false OK
     true  Error
 */
 
-bool mysql_insert_select_prepare(THD *thd)
+bool mysql_insert_select_prepare(Session *session)
 {
-  LEX *lex= thd->lex;
+  LEX *lex= session->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
-  
 
-  /*
-    Statement-based replication of INSERT ... SELECT ... LIMIT is not safe
-    as order of rows is not defined, so in mixed mode we go to row-based.
-
-    Note that we may consider a statement as safe if ORDER BY primary_key
-    is present or we SELECT a constant. However it may confuse users to
-    see very similiar statements replicated differently.
-  */
-  if (lex->current_select->select_limit)
-  {
-    lex->set_stmt_unsafe();
-    thd->set_current_stmt_binlog_row_based_if_mixed();
-  }
   /*
     SELECT_LEX do not belong to INSERT statement, so we can't add WHERE
     clause if table is VIEW
   */
-  
-  if (mysql_prepare_insert(thd, lex->query_tables,
+
+  if (mysql_prepare_insert(session, lex->query_tables,
                            lex->query_tables->table, lex->field_list, 0,
                            lex->update_list, lex->value_list,
                            lex->duplicates,
@@ -1145,11 +1095,11 @@ select_insert::select_insert(TableList *table_list_par, Table *table_par,
 int
 select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 {
-  LEX *lex= thd->lex;
+  LEX *lex= session->lex;
   int res;
   table_map map= 0;
   SELECT_LEX *lex_current_select_save= lex->current_select;
-  
+
 
   unit= u;
 
@@ -1159,17 +1109,17 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     we are fixing fields from insert list.
   */
   lex->current_select= &lex->select_lex;
-  res= check_insert_fields(thd, table_list, *fields, values,
+  res= check_insert_fields(session, table_list, *fields, values,
                            !insert_into_view, &map) ||
-       setup_fields(thd, 0, values, MARK_COLUMNS_READ, 0, 0);
+       setup_fields(session, 0, values, MARK_COLUMNS_READ, 0, 0);
 
   if (!res && fields->elements)
   {
-    bool saved_abort_on_warning= thd->abort_on_warning;
-    thd->abort_on_warning= !info.ignore;
-    res= check_that_all_fields_are_given_values(thd, table_list->table, 
+    bool saved_abort_on_warning= session->abort_on_warning;
+    session->abort_on_warning= !info.ignore;
+    res= check_that_all_fields_are_given_values(session, table_list->table,
                                                 table_list);
-    thd->abort_on_warning= saved_abort_on_warning;
+    session->abort_on_warning= saved_abort_on_warning;
   }
 
   if (info.handle_duplicates == DUP_UPDATE && !res)
@@ -1184,10 +1134,10 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     table_list->next_local= 0;
     context->resolve_in_table_list_only(table_list);
 
-    res= res || check_update_fields(thd, context->table_list,
+    res= res || check_update_fields(session, context->table_list,
                                     *info.update_fields, &map);
     /*
-      When we are not using GROUP BY and there are no ungrouped aggregate functions 
+      When we are not using GROUP BY and there are no ungrouped aggregate functions
       we can refer to other tables in the ON DUPLICATE KEY part.
       We use next_name_resolution_table descructively, so check it first (views?)
     */
@@ -1198,11 +1148,11 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
         We must make a single context out of the two separate name resolution contexts :
         the INSERT table and the tables in the SELECT part of INSERT ... SELECT.
         To do that we must concatenate the two lists
-      */  
-      table_list->next_name_resolution_table= 
+      */
+      table_list->next_name_resolution_table=
         ctx_state.get_first_name_resolution_table();
 
-    res= res || setup_fields(thd, 0, *info.update_values,
+    res= res || setup_fields(session, 0, *info.update_values,
                              MARK_COLUMNS_READ, 0, 0);
     if (!res)
     {
@@ -1239,7 +1189,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     Is table which we are changing used somewhere in other parts of
     query
   */
-  if (unique_table(thd, table_list, table_list->next_global, 0))
+  if (unique_table(session, table_list, table_list->next_global, 0))
   {
     /* Using same table for INSERT and SELECT */
     lex->current_select->options|= OPTION_BUFFER_RESULT;
@@ -1248,8 +1198,8 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   else if (!(lex->current_select->options & OPTION_BUFFER_RESULT))
   {
     /*
-      We must not yet prepare the result table if it is the same as one of the 
-      source tables (INSERT SELECT). The preparation may disable 
+      We must not yet prepare the result table if it is the same as one of the
+      source tables (INSERT SELECT). The preparation may disable
       indexes on the result table, which may be used during the select, if it
       is the same table (Bug #6034). Do the preparation after the select phase
       in select_insert::prepare2().
@@ -1261,20 +1211,14 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   restore_record(table,s->default_values);		// Get empty record
   table->next_number_field=table->found_next_number_field;
 
-  if (thd->slave_thread &&
-      (info.handle_duplicates == DUP_UPDATE) &&
-      (table->next_number_field != NULL) &&
-      rpl_master_has_bug(&active_mi->rli, 24432))
-    return(1);
-
-  thd->cuted_fields=0;
+  session->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
     table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
   if (info.handle_duplicates == DUP_REPLACE)
     table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
   if (info.handle_duplicates == DUP_UPDATE)
     table->file->extra(HA_EXTRA_INSERT_WITH_UPDATE);
-  thd->abort_on_warning= !info.ignore;
+  session->abort_on_warning= !info.ignore;
   table->mark_columns_needed_for_insert();
 
 
@@ -1293,15 +1237,15 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     If the result table is the same as one of the source tables (INSERT SELECT),
     the result table is not finally prepared at the join prepair phase.
     Do the final preparation now.
-		       
+
   RETURN
     0   OK
 */
 
 int select_insert::prepare2(void)
 {
-  
-  if (thd->lex->current_select->options & OPTION_BUFFER_RESULT)
+
+  if (session->lex->current_select->options & OPTION_BUFFER_RESULT)
     table->file->ha_start_bulk_insert((ha_rows) 0);
   return(0);
 }
@@ -1315,22 +1259,22 @@ void select_insert::cleanup()
 
 select_insert::~select_insert()
 {
-  
+
   if (table)
   {
     table->next_number_field=0;
     table->auto_increment_field_not_null= false;
     table->file->ha_reset();
   }
-  thd->count_cuted_fields= CHECK_FIELD_IGNORE;
-  thd->abort_on_warning= 0;
+  session->count_cuted_fields= CHECK_FIELD_IGNORE;
+  session->abort_on_warning= 0;
   return;
 }
 
 
 bool select_insert::send_data(List<Item> &values)
 {
-  
+
   bool error=0;
 
   if (unit->offset_limit_cnt)
@@ -1339,14 +1283,14 @@ bool select_insert::send_data(List<Item> &values)
     return(0);
   }
 
-  thd->count_cuted_fields= CHECK_FIELD_WARN;	// Calculate cuted fields
+  session->count_cuted_fields= CHECK_FIELD_WARN;	// Calculate cuted fields
   store_values(values);
-  thd->count_cuted_fields= CHECK_FIELD_IGNORE;
-  if (thd->is_error())
+  session->count_cuted_fields= CHECK_FIELD_IGNORE;
+  if (session->is_error())
     return(1);
 
-  error= write_record(thd, table, &info);
-    
+  error= write_record(session, table, &info);
+
   if (!error)
   {
     if (info.handle_duplicates == DUP_UPDATE)
@@ -1354,7 +1298,7 @@ bool select_insert::send_data(List<Item> &values)
       /*
         Restore fields of the record since it is possible that they were
         changed by ON DUPLICATE KEY UPDATE clause.
-    
+
         If triggers exist then whey can modify some fields which were not
         originally touched by INSERT ... SELECT, so we have to restore
         their original values for the next row.
@@ -1367,8 +1311,8 @@ bool select_insert::send_data(List<Item> &values)
         If no value has been autogenerated so far, we need to remember the
         value we just saw, we may need to send it to client in the end.
       */
-      if (thd->first_successful_insert_id_in_cur_stmt == 0) // optimization
-        autoinc_value_of_last_inserted_row= 
+      if (session->first_successful_insert_id_in_cur_stmt == 0) // optimization
+        autoinc_value_of_last_inserted_row=
           table->next_number_field->val_int();
       /*
         Clear auto-increment field for the next record, if triggers are used
@@ -1384,14 +1328,14 @@ bool select_insert::send_data(List<Item> &values)
 void select_insert::store_values(List<Item> &values)
 {
   if (fields->elements)
-    fill_record(thd, *fields, values, 1);
+    fill_record(session, *fields, values, 1);
   else
-    fill_record(thd, table->field, values, 1);
+    fill_record(session, table->field, values, 1);
 }
 
 void select_insert::send_error(uint32_t errcode,const char *err)
 {
-  
+
 
   my_message(errcode, err, MYF(0));
 
@@ -1405,8 +1349,7 @@ bool select_insert::send_eof()
   bool const trans_table= table->file->has_transactions();
   uint64_t id;
   bool changed;
-  THD::killed_state killed_status= thd->killed;
-  
+
   error= table->file->ha_end_bulk_insert();
   table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
   table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
@@ -1417,26 +1360,12 @@ bool select_insert::send_eof()
       We must invalidate the table in the query cache before binlog writing
       and ha_autocommit_or_rollback.
     */
-    if (thd->transaction.stmt.modified_non_trans_table)
-      thd->transaction.all.modified_non_trans_table= true;
+    if (session->transaction.stmt.modified_non_trans_table)
+      session->transaction.all.modified_non_trans_table= true;
   }
-  assert(trans_table || !changed || 
-              thd->transaction.stmt.modified_non_trans_table);
+  assert(trans_table || !changed ||
+              session->transaction.stmt.modified_non_trans_table);
 
-  /*
-    Write to binlog before commiting transaction.  No statement will
-    be written by the binlog_query() below in RBR mode.  All the
-    events are in the transaction cache and will be written when
-    ha_autocommit_or_rollback() is issued below.
-  */
-  if (mysql_bin_log.is_open())
-  {
-    if (!error)
-      thd->clear_error();
-    thd->binlog_query(THD::ROW_QUERY_TYPE,
-                      thd->query, thd->query_length,
-                      trans_table, false, killed_status);
-  }
   table->file->ha_release_auto_increment();
 
   if (error)
@@ -1447,26 +1376,26 @@ bool select_insert::send_eof()
   char buff[160];
   if (info.ignore)
     sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
-	    (ulong) (info.records - info.copied), (ulong) thd->cuted_fields);
+	    (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
   else
     sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
-	    (ulong) (info.deleted+info.updated), (ulong) thd->cuted_fields);
-  thd->row_count_func= info.copied + info.deleted +
-                       ((thd->client_capabilities & CLIENT_FOUND_ROWS) ?
+	    (ulong) (info.deleted+info.updated), (ulong) session->cuted_fields);
+  session->row_count_func= info.copied + info.deleted +
+                       ((session->client_capabilities & CLIENT_FOUND_ROWS) ?
                         info.touched : info.updated);
 
-  id= (thd->first_successful_insert_id_in_cur_stmt > 0) ?
-    thd->first_successful_insert_id_in_cur_stmt :
-    (thd->arg_of_last_insert_id_function ?
-     thd->first_successful_insert_id_in_prev_stmt :
+  id= (session->first_successful_insert_id_in_cur_stmt > 0) ?
+    session->first_successful_insert_id_in_cur_stmt :
+    (session->arg_of_last_insert_id_function ?
+     session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  ::my_ok(thd, (ulong) thd->row_count_func, id, buff);
+  ::my_ok(session, (ulong) session->row_count_func, id, buff);
   return(0);
 }
 
 void select_insert::abort() {
 
-  
+
   /*
     If the creation of the table failed (due to a syntax error, for
     example), no table will have been opened and therefore 'table'
@@ -1495,16 +1424,8 @@ void select_insert::abort() {
     */
     changed= (info.copied || info.deleted || info.updated);
     transactional_table= table->file->has_transactions();
-    if (thd->transaction.stmt.modified_non_trans_table)
-    {
-        if (mysql_bin_log.is_open())
-          thd->binlog_query(THD::ROW_QUERY_TYPE, thd->query, thd->query_length,
-                            transactional_table, false);
-        if (!thd->current_stmt_binlog_row_based && !can_rollback_data())
-          thd->transaction.all.modified_non_trans_table= true;
-    }
     assert(transactional_table || !changed ||
-		thd->transaction.stmt.modified_non_trans_table);
+		session->transaction.stmt.modified_non_trans_table);
     table->file->ha_release_auto_increment();
   }
 
@@ -1522,7 +1443,7 @@ void select_insert::abort() {
 
   SYNOPSIS
     create_table_from_items()
-      thd          in     Thread object
+      session          in     Thread object
       create_info  in     Create information (like MAX_ROWS, ENGINE or
                           temporary table flag)
       create_table in     Pointer to TableList object providing database
@@ -1535,7 +1456,7 @@ void select_insert::abort() {
       lock         out    Pointer to the DRIZZLE_LOCK object for table created
                           (or open temporary table) will be returned in this
                           parameter. Since this table is not included in
-                          THD::lock caller is responsible for explicitly
+                          Session::lock caller is responsible for explicitly
                           unlocking this table.
       hooks
 
@@ -1558,12 +1479,12 @@ void select_insert::abort() {
     0         Error
 */
 
-static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
+static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
                                       Alter_info *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock,
-                                      TABLEOP_HOOKS *hooks)
+                                      Tableop_hooks *hooks)
 {
   Table tmp_table;		// Used during 'Create_field()'
   TABLE_SHARE share;
@@ -1582,7 +1503,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
     if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
     {
       create_info->table_existed= 1;		// Mark that table existed
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                           create_table->table_name);
       return(create_table->table);
@@ -1595,11 +1516,11 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
   tmp_table.alias= 0;
   tmp_table.timestamp_field= 0;
   tmp_table.s= &share;
-  init_tmp_table_share(thd, &share, "", 0, "", "");
+  init_tmp_table_share(session, &share, "", 0, "", "");
 
   tmp_table.s->db_create_options=0;
   tmp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
-  tmp_table.s->db_low_byte_first= 
+  tmp_table.s->db_low_byte_first=
         test(create_info->db_type == myisam_hton ||
              create_info->db_type == heap_hton);
   tmp_table.null_row= false;
@@ -1615,7 +1536,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
       else
         field= item->tmp_table_field_from_field_type(&tmp_table, 0);
     else
-      field= create_tmp_field(thd, &tmp_table, item, item->type(),
+      field= create_tmp_field(session, &tmp_table, item, item->type(),
                               (Item ***) 0, &tmp_field, &def_field, 0, 0, 0, 0,
                               0);
     if (!field ||
@@ -1645,8 +1566,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
     open_table().
   */
   {
-    tmp_disable_binlog(thd);
-    if (!mysql_create_table_no_lock(thd, create_table->db,
+    if (!mysql_create_table_no_lock(session, create_table->db,
                                     create_table->table_name,
                                     create_info, alter_info, 0,
                                     select_field_count, true))
@@ -1666,7 +1586,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
       if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
       {
         pthread_mutex_lock(&LOCK_open);
-        if (reopen_name_locked_table(thd, create_table, false))
+        if (reopen_name_locked_table(session, create_table, false))
         {
           quick_rm_table(create_info->db_type, create_table->db,
                          table_case_name(create_info, create_table->table_name),
@@ -1678,7 +1598,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
       }
       else
       {
-        if (!(table= open_table(thd, create_table, (bool*) 0,
+        if (!(table= open_table(session, create_table, (bool*) 0,
                                 DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
             !create_info->table_existed)
         {
@@ -1687,29 +1607,28 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
             it preparable for open. But let us do close_temporary_table() here
             just in case.
           */
-          drop_temporary_table(thd, create_table);
+          drop_temporary_table(session, create_table);
         }
       }
     }
-    reenable_binlog(thd);
     if (!table)                                   // open failed
       return(0);
   }
 
   table->reginfo.lock_type=TL_WRITE;
   hooks->prelock(&table, 1);                    // Call prelock hooks
-  if (! ((*lock)= mysql_lock_tables(thd, &table, 1,
+  if (! ((*lock)= mysql_lock_tables(session, &table, 1,
                                     DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)) ||
         hooks->postlock(&table, 1))
   {
     if (*lock)
     {
-      mysql_unlock_tables(thd, *lock);
+      mysql_unlock_tables(session, *lock);
       *lock= 0;
     }
 
     if (!create_info->table_existed)
-      drop_open_table(thd, table, create_table->db, create_table->table_name);
+      drop_open_table(session, table, create_table->db, create_table->table_name);
     return(0);
   }
   return(table);
@@ -1720,9 +1639,9 @@ int
 select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 {
   DRIZZLE_LOCK *extra_lock= NULL;
-  
 
-  TABLEOP_HOOKS *hook_ptr= NULL;
+
+  Tableop_hooks *hook_ptr= NULL;
   /*
     For row-based replication, the CREATE-SELECT statement is written
     in two pieces: the first one contain the CREATE TABLE statement
@@ -1741,7 +1660,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     slave.  Hence, we have to hold on to the CREATE part of the
     statement until the statement has finished.
    */
-  class MY_HOOKS : public TABLEOP_HOOKS {
+  class MY_HOOKS : public Tableop_hooks {
   public:
     MY_HOOKS(select_create *x, TableList *create_table,
              TableList *select_tables)
@@ -1751,19 +1670,11 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       }
 
   private:
-    virtual int do_postlock(Table **tables, uint32_t count)
+    virtual int do_postlock(Table **, uint32_t)
     {
-      THD *thd= const_cast<THD*>(ptr->get_thd());
-      if (int error= decide_logging_format(thd, &all_tables))
-        return error;
-
-      Table const *const table = *tables;
-      if (thd->current_stmt_binlog_row_based  &&
-          !table->s->tmp_table &&
-          !ptr->get_create_info()->table_existed)
-      {
+      /*
         ptr->binlog_show_create_table(tables, count);
-      }
+      */
       return 0;
     }
 
@@ -1781,13 +1692,8 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     row-based replication for the statement.  If we are creating a
     temporary table, we need to start a statement transaction.
   */
-  if ((thd->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0 &&
-      thd->current_stmt_binlog_row_based)
-  {
-    thd->binlog_start_trans_and_stmt();
-  }
 
-  if (!(table= create_table_from_items(thd, create_info, create_table,
+  if (!(table= create_table_from_items(session, create_info, create_table,
                                        alter_info, &values,
                                        &extra_lock, hook_ptr)))
     return(-1);				// abort() deletes table
@@ -1799,7 +1705,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
       m_plock= &m_lock;
     else
-      m_plock= &thd->extra_lock;
+      m_plock= &session->extra_lock;
 
     *m_plock= extra_lock;
   }
@@ -1822,7 +1728,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   table->next_number_field=table->found_next_number_field;
 
   restore_record(table,s->default_values);      // Get empty record
-  thd->cuted_fields=0;
+  session->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
     table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
   if (info.handle_duplicates == DUP_REPLACE)
@@ -1830,64 +1736,23 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   if (info.handle_duplicates == DUP_UPDATE)
     table->file->extra(HA_EXTRA_INSERT_WITH_UPDATE);
   table->file->ha_start_bulk_insert((ha_rows) 0);
-  thd->abort_on_warning= !info.ignore;
-  if (check_that_all_fields_are_given_values(thd, table, table_list))
+  session->abort_on_warning= !info.ignore;
+  if (check_that_all_fields_are_given_values(session, table, table_list))
     return(1);
   table->mark_columns_needed_for_insert();
   table->file->extra(HA_EXTRA_WRITE_CACHE);
   return(0);
 }
 
-void
-select_create::binlog_show_create_table(Table **tables, uint32_t count)
-{
-  /*
-    Note 1: In RBR mode, we generate a CREATE TABLE statement for the
-    created table by calling store_create_info() (behaves as SHOW
-    CREATE TABLE).  In the event of an error, nothing should be
-    written to the binary log, even if the table is non-transactional;
-    therefore we pretend that the generated CREATE TABLE statement is
-    for a transactional table.  The event will then be put in the
-    transaction cache, and any subsequent events (e.g., table-map
-    events and binrow events) will also be put there.  We can then use
-    ha_autocommit_or_rollback() to either throw away the entire
-    kaboodle of events, or write them to the binary log.
-
-    We write the CREATE TABLE statement here and not in prepare()
-    since there potentially are sub-selects or accesses to information
-    schema that will do a close_thread_tables(), destroying the
-    statement transaction cache.
-  */
-  assert(thd->current_stmt_binlog_row_based);
-  assert(tables && *tables && count > 0);
-
-  char buf[2048];
-  String query(buf, sizeof(buf), system_charset_info);
-  int result;
-  TableList tmp_table_list;
-
-  memset(&tmp_table_list, 0, sizeof(tmp_table_list));
-  tmp_table_list.table = *tables;
-  query.length(0);      // Have to zero it since constructor doesn't
-
-  result= store_create_info(thd, &tmp_table_list, &query, create_info);
-  assert(result == 0); /* store_create_info() always return 0 */
-
-  thd->binlog_query(THD::STMT_QUERY_TYPE,
-                    query.ptr(), query.length(),
-                    /* is_trans */ true,
-                    /* suppress_use */ false);
-}
-
 void select_create::store_values(List<Item> &values)
 {
-  fill_record(thd, field, values, 1);
+  fill_record(session, field, values, 1);
 }
 
 
 void select_create::send_error(uint32_t errcode,const char *err)
 {
-  
+
 
   /*
     This will execute any rollbacks that are necessary before writing
@@ -1900,9 +1765,7 @@ void select_create::send_error(uint32_t errcode,const char *err)
     written to the binary log.
 
   */
-  tmp_disable_binlog(thd);
   select_insert::send_error(errcode, err);
-  reenable_binlog(thd);
 
   return;
 }
@@ -1922,15 +1785,15 @@ bool select_create::send_eof()
     */
     if (!table->s->tmp_table)
     {
-      ha_autocommit_or_rollback(thd, 0);
-      end_active_trans(thd);
+      ha_autocommit_or_rollback(session, 0);
+      end_active_trans(session);
     }
 
     table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
     table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
     if (m_plock)
     {
-      mysql_unlock_tables(thd, *m_plock);
+      mysql_unlock_tables(session, *m_plock);
       *m_plock= NULL;
       m_plock= NULL;
     }
@@ -1941,7 +1804,7 @@ bool select_create::send_eof()
 
 void select_create::abort()
 {
-  
+
 
   /*
     In select_insert::abort() we roll back the statement, including
@@ -1958,15 +1821,13 @@ void select_create::abort()
     of the table succeeded or not, since we need to reset the binary
     log state.
   */
-  tmp_disable_binlog(thd);
   select_insert::abort();
-  thd->transaction.stmt.modified_non_trans_table= false;
-  reenable_binlog(thd);
+  session->transaction.stmt.modified_non_trans_table= false;
 
 
   if (m_plock)
   {
-    mysql_unlock_tables(thd, *m_plock);
+    mysql_unlock_tables(session, *m_plock);
     *m_plock= NULL;
     m_plock= NULL;
   }
@@ -1976,7 +1837,7 @@ void select_create::abort()
     table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
     table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
     if (!create_info->table_existed)
-      drop_open_table(thd, table, create_table->db, create_table->table_name);
+      drop_open_table(session, table, create_table->db, create_table->table_name);
     table=0;                                    // Safety
   }
   return;

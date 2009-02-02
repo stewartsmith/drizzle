@@ -13,23 +13,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-#called from the top level Makefile
+LDADD= libserialize.la ${LTLIBPROTOBUF} ${LTLIBUUID}
 
-LDADD = libserialize.la -lprotobuf
+AM_CXXFLAGS=${GLOBAL_CXXFLAGS} ${NO_SHADOW}
 
-libserialize_la_CXXFLAGS =
-
-TESTS_ENVIRONMENT = sh
+TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
 TESTS = check_length.sh
 
-PROTOC = protoc
-
-%.pb.h %.pb.cc : %.proto
-	$(PROTOC) --cpp_out=${top_builddir}/drizzled/serialize $<
-
-bin_PROGRAMS = \
+noinst_PROGRAMS = \
 	       table_reader \
 	       table_writer \
+	       replication_event_reader \
+	       replication_event_writer \
                master_list_reader \
                master_list_writer \
                binlog_reader \
@@ -41,54 +36,66 @@ check_PROGRAMS = length
 noinst_LTLIBRARIES = libserialize.la
 
 libserialize_la_SOURCES = \
-			  table.pb.cc \
-			  master_list.pb.cc \
-			  binary_log.pb.cc \
-			  schema.pb.cc
+		binary_log.pb.cc \
+		master_list.pb.cc \
+		replication_event.pb.cc \
+		schema.pb.cc \
+		table.pb.cc
 
-noinst_HEADERS = table.pb.h \
-		 master_list.pb.h \
-		 schema.pb.h \
-		 binary_log.pb.h \
-		 binlog_encoding.h \
-		 serialize.h
+noinst_HEADERS= \
+		binary_log.h \
+		binary_log.pb.h \
+		binlog_encoding.h \
+		ioutil.h \
+		master_list.pb.h \
+		replication_event.pb.h \
+		schema.pb.h \
+		serialize.h \
+		table.pb.h
 
-DEFS= @DEFS@
 
 binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
-binlog_reader_CXXFLAGS = 
 
 binlog_writer_SOURCES = binlog_writer.cc binary_log.cc
-binlog_writer_CXXFLAGS = 
 
 schema_reader_SOURCES =  schema_reader.cc
-schema_reader_CXXFLAGS =
 
 table_reader_SOURCES =  table_reader.cc
-table_reader_CXXFLAGS =
 
 table_writer_SOURCES =  table_writer.cc
-table_writer_CXXFLAGS =
 
 master_list_writer_SOURCES =  master_list_writer.cc
-master_list_writer_CXXFLAGS =
 
 master_list_reader_SOURCES =  master_list_reader.cc
-master_list_reader_CXXFLAGS =
+
+replication_event_writer_SOURCES =  replication_event_writer.cc
+
+replication_event_reader_SOURCES =  replication_event_reader.cc
 
 length_SOURCES = length.cc
-length_CXXFLAGS = -fexceptions
 
-EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto
+EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto replication_event.proto check_length.sh
 BUILT_SOURCES = schema.pb.h \
 		table.pb.h \
-		schema.pb.cc \
-		table.pb.cc \
-		binary_log.pb.cc
+		binary_log.pb.h \
+		replication_event.pb.h \
+		master_list.pb.h
 
 CLEANFILES =  binary_log.pb.h \
               binary_log.pb.cc \
               schema.pb.h \
               schema.pb.cc \
               table.pb.h \
-              table.pb.cc
+              table.pb.cc \
+	      replication_event.pb.h \
+              replication_event.pb.cc \
+              master_list.pb.h \
+              master_list.pb.cc
+
+SUFFIXES = .proto .pb.cc .pb.h
+.proto.pb.cc:
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
+		--cpp_out=${top_builddir}/drizzled/serialize $<
+.proto.pb.h:
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
+		--cpp_out=${top_builddir}/drizzled/serialize $<

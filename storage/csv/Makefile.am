@@ -13,19 +13,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-#called from the top level Makefile
 
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir=           $(prefix)
-MYSQLLIBdir=            $(pkglibdir)
-
-DEFS =	@DEFS@
 noinst_HEADERS	  =	ha_tina.h transparent_file.h
 
 EXTRA_LTLIBRARIES =	ha_csv.la
 pkglib_LTLIBRARIES =	@plugin_csv_shared_target@
-ha_csv_la_LDFLAGS =	-module -rpath $(MYSQLLIBdir)
+ha_csv_la_LDFLAGS =	-module -avoid-version -rpath $(MYSQLLIBdir)
 ha_csv_la_CXXFLAGS =	$(AM_CXXFLAGS) -DDRIZZLE_PLUGIN
 ha_csv_la_SOURCES =	transparent_file.cc ha_tina.cc 
 

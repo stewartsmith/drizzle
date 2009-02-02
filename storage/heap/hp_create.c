@@ -14,8 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "heapdef.h"
-#include "libdrizzle/drizzle_com.h"
-#include "drizzled/error.h"
+
+#include <drizzled/common.h>
+#include <drizzled/error.h>
+
+#include <string.h>
 
 static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);
 static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_records,
@@ -23,7 +26,7 @@ static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_recor
 
 #define FIXED_REC_OVERHEAD (sizeof(unsigned char))
 #define VARIABLE_REC_OVERHEAD (sizeof(unsigned char**) + sizeof(unsigned char))
- 
+
 /* Minimum size that a chunk can take, 12 bytes on 32bit, 24 bytes on 64bit */
 #define VARIABLE_MIN_CHUNK_SIZE \
         ((sizeof(unsigned char**) + VARIABLE_REC_OVERHEAD + sizeof(unsigned char**) - 1) & ~(sizeof(unsigned char**) - 1))
@@ -51,7 +54,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       hp_free(share);
       share= 0;
     }
-  }  
+  }
 
   if (!share)
   {
@@ -173,7 +176,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     chunk_length= (uint) (chunk_length + sizeof(unsigned char**) - 1) & ~(sizeof(unsigned char**) - 1);
 
 
-    
+
     for (i= key_segs= max_length= 0, keyinfo= keydef; i < keys; i++, keyinfo++)
     {
       memset(&keyinfo->block, 0, sizeof(keyinfo->block));
@@ -232,7 +235,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	}
       }
       keyinfo->length= length;
-      length+= keyinfo->rb_tree.size_of_element + 
+      length+= keyinfo->rb_tree.size_of_element +
 	       ((keyinfo->algorithm == HA_KEY_ALG_BTREE) ? sizeof(unsigned char*) : 0);
       if (length > max_length)
 	max_length= length;
@@ -248,12 +251,15 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
           keyinfo->get_key_length= hp_rb_key_length;
       }
     }
-    if (!(share= (HP_SHARE*) my_malloc((uint) sizeof(HP_SHARE)+
-				       keys*sizeof(HP_KEYDEF)+
-                                       columns*sizeof(HP_COLUMNDEF)+
-				       key_segs*sizeof(HA_KEYSEG),
-				       MYF(MY_ZEROFILL))))
+    if (!(share= (HP_SHARE*) malloc(sizeof(HP_SHARE)+
+				    keys*sizeof(HP_KEYDEF)+
+                                    columns*sizeof(HP_COLUMNDEF)+
+				    key_segs*sizeof(HA_KEYSEG))))
       goto err;
+    memset(share, 0, sizeof(HP_SHARE)+
+                     keys*sizeof(HP_KEYDEF)+
+                     columns*sizeof(HP_COLUMNDEF)+
+                     key_segs*sizeof(HA_KEYSEG));
 
     /*
        Max_records is used for estimating block sizes and for enforcement.
@@ -262,13 +268,13 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     */
     max_rows_for_stated_memory= (ha_rows) (create_info->max_table_size /
       (keys_memory_size + chunk_length));
-    max_records = ((max_records && max_records < max_rows_for_stated_memory) ? 
+    max_records = ((max_records && max_records < max_rows_for_stated_memory) ?
                       max_records : max_rows_for_stated_memory);
- 
+
     share->column_defs= (HP_COLUMNDEF*) (share + 1);
     memcpy(share->column_defs, columndef, (size_t) (sizeof(columndef[0]) * columns));
 
-    share->keydef= (HP_KEYDEF*) (share->column_defs + columns);    
+    share->keydef= (HP_KEYDEF*) (share->column_defs + columns);
     share->key_stat_version= 1;
     keyseg= (HA_KEYSEG*) (share->keydef + keys);
     init_block(&share->recordspace.block, chunk_length, min_records, max_records);
@@ -336,7 +342,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     }
 
     /* Must be allocated separately for rename to work */
-    if (!(share->name= my_strdup(name,MYF(0))))
+    if (!(share->name= strdup(name)))
     {
       free((unsigned char*) share);
       goto err;
@@ -367,7 +373,7 @@ err:
 static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2)
 {
   uint32_t not_used[2];
-  return ha_key_cmp(param->keyseg, key1, key2, param->key_length, 
+  return ha_key_cmp(param->keyseg, key1, key2, param->key_length,
 		    param->search_flag, not_used);
 }
 
@@ -379,9 +385,9 @@ static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_reco
   max_records= cmax(min_records,max_records);
   if (!max_records)
     max_records= 1000;			/* As good as quess as anything */
-  
+
   /* we want to start each chunk at 8 bytes boundary, round recbuffer to the next 8 */
-  recbuffer= (uint) (chunk_length + sizeof(unsigned char**) - 1) & ~(sizeof(unsigned char**) - 1);  
+  recbuffer= (uint) (chunk_length + sizeof(unsigned char**) - 1) & ~(sizeof(unsigned char**) - 1);
   records_in_block= max_records / 10;
   if (records_in_block < 10 && max_records)
     records_in_block= 10;

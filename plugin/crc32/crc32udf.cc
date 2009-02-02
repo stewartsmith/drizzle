@@ -1,23 +1,25 @@
-/* Copyright (C) 2006 MySQL AB
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
-
-#include "config.h"
-
-#include CSTDINT_H
-#include <drizzled/common_includes.h>
-#include <drizzled/item_func.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_udf.h>
+#include <drizzled/item/func.h>
 #include <zlib.h>
 
 class Item_func_crc32 :public Item_int_func
@@ -69,7 +71,7 @@ static int crc32udf_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(crc32)
+drizzle_declare_plugin(crc32)
 {
   DRIZZLE_UDF_PLUGIN,
   "crc32",
@@ -83,4 +85,4 @@ mysql_declare_plugin(crc32)
   NULL,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

@@ -17,10 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_SQL_UDF_H
+#define DRIZZLED_SQL_UDF_H
+
 /* This file defines structures needed by udf functions */
 
-
-#include "item_func.h"
+#include <stdint.h>
+#include <drizzled/function/func.h>
 
 enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
 
@@ -35,4 +38,6 @@ struct udf_func
 void udf_init(void),udf_free(void);
 udf_func *find_udf(const char *name, uint32_t len=0);
 void free_udf(udf_func *udf);
-int mysql_create_function(THD *thd,udf_func *udf);
+int mysql_create_function(Session *session,udf_func *udf);
+
+#endif /* DRIZZLED_SQL_UDF_H */

@@ -36,21 +36,6 @@ extern "C" {
 extern uint64_t log_10_int[20];
 extern unsigned char days_in_month[];
 
-/*
-  Portable time_t replacement.
-  Should be signed and hold seconds for 1902 -- 2038-01-19 range
-  i.e at least a 32bit variable
-
-  Using the system built in time_t is not an option as
-  we rely on the above requirements in the time functions
-
-  For example QNX has an unsigned time_t type
-*/
-typedef long my_time_t;
-
-#define MY_TIME_T_MAX INT32_MAX
-#define MY_TIME_T_MIN INT32_MIN
-
 /* Time handling defaults */
 #define TIMESTAMP_MAX_YEAR 2038
 #define TIMESTAMP_MIN_YEAR (1900 + YY_PART_YEAR - 1)
@@ -129,7 +114,7 @@ static inline bool validate_timestamp_range(const DRIZZLE_TIME *t)
   return true;
 }
 
-my_time_t 
+time_t
 my_system_gmt_sec(const DRIZZLE_TIME *t, long *my_timezone,
                   bool *in_dst_time_gap);
 
@@ -150,18 +135,18 @@ int my_date_to_str(const DRIZZLE_TIME *l_time, char *to);
 int my_datetime_to_str(const DRIZZLE_TIME *l_time, char *to);
 int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to);
 
-/* 
+/*
   Available interval types used in any statement.
 
   'interval_type' must be sorted so that simple intervals comes first,
   ie year, quarter, month, week, day, hour, etc. The order based on
   interval size is also important and the intervals should be kept in a
   large to smaller order. (get_interval_value() depends on this)
- 
-  Note: If you change the order of elements in this enum you should fix 
-  order of elements in 'interval_type_to_name' and 'interval_names' 
-  arrays 
-  
+
+  Note: If you change the order of elements in this enum you should fix
+  order of elements in 'interval_type_to_name' and 'interval_names'
+  arrays
+
   See also interval_type_to_name, get_interval_value, interval_names
 */
 

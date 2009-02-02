@@ -19,8 +19,8 @@
  */
 
 
-#ifndef DRIZZLED_TMP_TABLE_H
-#define DRIZZLED_TMP_TABLE_H
+#ifndef DRIZZLED_TABLE_LIST_H
+#define DRIZZLED_TABLE_LIST_H
 
 /*
   Table reference in the FROM clause.
@@ -38,11 +38,7 @@
      - information schema table
        (TableList::schema_table != NULL)
        NOTICE: for schema tables TableList::field_translation may be != NULL
-  2) view (TableList::view != NULL)
-     - merge    (TableList::effective_algorithm == VIEW_ALGORITHM_MERGE)
-           also (TableList::field_translation != NULL)
-     - tmptable (TableList::effective_algorithm == VIEW_ALGORITHM_TMPTABLE)
-           also (TableList::field_translation == NULL)
+  2) Was VIEW 
   3) nested table reference (TableList::nested_join != NULL)
      - table sequence - e.g. (t1, t2, t3)
        TODO: how to distinguish from a JOIN?
@@ -57,7 +53,7 @@
 */
 
 
-#include "table.h"
+#include <drizzled/table.h>
 
 class Index_hint;
 class COND_EQUAL;
@@ -67,17 +63,10 @@ class st_select_lex_unit;
 class ST_SCHEMA_TABLE;
 class st_select_lex;
 class TMP_TABLE_PARAM;
-class Field_translator;
 class Item_subselect;
 class Table;
 
-enum enum_schema_table_state
-{ 
-  NOT_PROCESSED= 0,
-  PROCESSED_BY_CREATE_SORT_INDEX,
-  PROCESSED_BY_JOIN_EXEC
-};
-
+struct nested_join_st;
 
 class TableList
 {
@@ -118,7 +107,7 @@ public:
   */
   table_map     sj_inner_tables;
   /* Number of IN-compared expressions */
-  uint32_t          sj_in_exprs; 
+  uint32_t          sj_in_exprs;
   /*
     The structure of ON expression presented in the member above
     can be changed during certain optimizations. This member
@@ -188,9 +177,6 @@ public:
   TMP_TABLE_PARAM *schema_table_param;
   /* link to select_lex where this table was used */
   st_select_lex	*select_lex;
-  Field_translator *field_translation;	/* array of VIEW fields */
-  /* pointer to element after last one in translation table above */
-  Field_translator *field_translation_end;
   /*
     List (based on next_local) of underlying tables of this view. I.e. it
     does not include the tables of subqueries used in the view. Is set only
@@ -243,17 +229,14 @@ public:
   uint32_t table_open_method;
   enum enum_schema_table_state schema_table_state;
   void set_underlying_merge();
-  bool setup_underlying(THD *thd);
+  bool setup_underlying(Session *session);
   void cleanup_items();
   /*
     If you change placeholder(), please check the condition in
     check_transactional_lock() too.
   */
-  bool placeholder()
-  {
-    return derived || schema_table || (create && !table->getDBStat()) || !table;
-  }
-  void print(THD *thd, String *str, enum_query_type query_type);
+  bool placeholder();
+  void print(Session *session, String *str, enum_query_type query_type);
   bool set_insert_values(MEM_ROOT *mem_root);
   TableList *find_underlying_table(Table *table);
   TableList *first_leaf_for_name_resolution();
@@ -266,14 +249,17 @@ public:
     Cleanup for re-execution in a prepared statement or a stored
     procedure.
   */
-  void reinit_before_use(THD *thd);
+  void reinit_before_use(Session *session);
   Item_subselect *containing_subselect();
 
-  /* 
+  /*
     Compiles the tagged hints list and fills up st_table::keys_in_use_for_query,
     st_table::keys_in_use_for_group_by, st_table::keys_in_use_for_order_by,
     st_table::force_index and st_table::covering_keys.
   */
   bool process_index_hints(Table *table);
 };
-#endif /* DRIZZLED_TMP_TABLE_H */
+
+void close_thread_tables(Session *session);
+
+#endif /* DRIZZLED_TABLE_LIST_H */

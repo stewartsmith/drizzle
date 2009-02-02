@@ -6,8 +6,7 @@
 
 AC_DEFUN([AC_CXX_CSTDINT],
   [AC_MSG_CHECKING(the location of cstdint)
-  AC_LANG_SAVE
-   AC_LANG_CPLUSPLUS
+   AC_LANG_PUSH(C++)
    ac_cv_cxx_cstdint=""
    for location in tr1/cstdint boost/cstdint cstdint; do
      if test -z "$ac_cv_cxx_cstdint"; then
@@ -16,10 +15,12 @@ AC_DEFUN([AC_CXX_CSTDINT],
                       [ac_cv_cxx_cstdint="<$location>";])
      fi
    done
+   AC_LANG_POP()
    if test -n "$ac_cv_cxx_cstdint"; then
       AC_MSG_RESULT([$ac_cv_cxx_cstdint])
    else
-      CXXFLAGS="${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"
+      AC_DEFINE([__STDC_CONSTANT_MACROS],[1],[Use STDC Constant Macros in C++])
+      AC_DEFINE([__STDC_FORMAT_MACROS],[1],[Use STDC Format Macros in C++])
       ac_cv_cxx_cstdint="<stdint.h>"
       AC_MSG_RESULT()
       AC_MSG_WARN([Could not find a cstdint header.])

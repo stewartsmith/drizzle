@@ -13,27 +13,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir =          $(prefix)
-MYSQLLIBdir =           $(pkglibdir)
-
 LDADD=			libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysys.la \
-			$(top_builddir)/mystrings/libmystrings.la -lz \
+			$(top_builddir)/mystrings/libmystrings.la \
+			$(LTLIBZ) \
 			$(LIBINTL)
-
-DEFS =                  @DEFS@
 
 EXTRA_DIST =		plug.in
 
 noinst_LTLIBRARIES =	libmyisam.la libmyisamutil.la \
 			libmyisamha.la libmyisamnone.la
 bin_PROGRAMS =		myisamchk
+
 noinst_HEADERS =	myisamdef.h \
 			ha_myisam.h \
 			keycache.h \
+			my_handler.h \
 			myisam.h \
 			myisampack.h
 
@@ -52,8 +48,11 @@ libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_changed.c mi_static.c mi_delete_all.c \
 			mi_delete_table.c mi_rename.c  mi_check.c \
 			mi_keycache.c mi_preload.c \
+			my_handler.c \
+			my_handler_errors.c \
 			sort.c 
 libmyisamha_la_SOURCES = ha_myisam.cc
 libmyisamnone_la_SOURCES = mi_reportnone.c
 libmyisam_la_SOURCES = 
 libmyisam_la_LIBADD = libmyisamha.la libmyisamutil.la
+myisamchk_SOURCES = myisamchk.cc 

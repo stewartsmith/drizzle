@@ -21,6 +21,8 @@
 #ifndef DRIZZLE_SERVER_FIELD_LONG
 #define DRIZZLE_SERVER_FIELD_LONG
 
+#include <drizzled/field/num.h>
+
 class Field_long :public Field_num {
 public:
   Field_long(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
@@ -54,46 +56,12 @@ public:
   void sql_type(String &str) const;
   uint32_t max_display_length() { return MY_INT32_NUM_DECIMAL_DIGITS; }
   virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
-                      uint32_t max_length __attribute__((unused)),
-                      bool low_byte_first __attribute__((unused)))
-  {
-    int32_t val;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      val = sint4korr(from);
-    else
-#endif
-      longget(val, from);
-
-#ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-      int4store(to, val);
-    else
-#endif
-      longstore(to, val);
-    return to + sizeof(val);
-  }
+                      uint32_t max_length,
+                      bool low_byte_first);
 
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data __attribute__((unused)),
-                              bool low_byte_first __attribute__((unused)))
-  {
-    int32_t val;
-#ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-      val = sint4korr(from);
-    else
-#endif
-      longget(val, from);
-
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      int4store(to, val);
-    else
-#endif
-      longstore(to, val);
-    return from + sizeof(val);
-  }
+                              uint32_t param_data,
+                              bool low_byte_first);
 };
 
 #endif

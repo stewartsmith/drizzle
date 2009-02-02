@@ -21,6 +21,14 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/datetime.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /****************************************************************************
 ** datetime type
@@ -31,17 +39,17 @@
 
 int Field_datetime::store(const char *from,
                           uint32_t len,
-                          const CHARSET_INFO * const cs __attribute__((unused)))
+                          const CHARSET_INFO * const )
 {
   DRIZZLE_TIME time_tmp;
   int error;
   uint64_t tmp= 0;
   enum enum_drizzle_timestamp_type func_res;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
 
   func_res= str_to_datetime(from, len, &time_tmp,
                             (TIME_FUZZY_DATE |
-                             (thd->variables.sql_mode &
+                             (session->variables.sql_mode &
                               (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
                             &error);
   if ((int) func_res > (int) DRIZZLE_TIMESTAMP_ERROR)
@@ -71,7 +79,7 @@ int Field_datetime::store(double nr)
   int error= 0;
   if (nr < 0.0 || nr > 99991231235959.0)
   {
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE,
                          nr, DRIZZLE_TIMESTAMP_DATETIME);
     nr= 0.0;
@@ -83,15 +91,15 @@ int Field_datetime::store(double nr)
 
 
 int Field_datetime::store(int64_t nr,
-                          bool unsigned_val __attribute__((unused)))
+                          bool )
 {
   DRIZZLE_TIME not_used;
   int error;
   int64_t initial_nr= nr;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
 
   nr= number_to_datetime(nr, &not_used, (TIME_FUZZY_DATE |
-                                         (thd->variables.sql_mode &
+                                         (session->variables.sql_mode &
                                           (MODE_NO_ZERO_DATE |
                                            MODE_INVALID_DATES))), &error);
 
@@ -135,7 +143,7 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime,
 	 (ltime->hour*10000L+ltime->minute*100+ltime->second));
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
-                    (current_thd->variables.sql_mode &
+                    (current_session->variables.sql_mode &
                      (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), &error))
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
@@ -189,7 +197,7 @@ int64_t Field_datetime::val_int(void)
 
 
 String *Field_datetime::val_str(String *val_buffer,
-				String *val_ptr __attribute__((unused)))
+				String *)
 {
   val_buffer->alloc(field_length);
   val_buffer->length(field_length);
@@ -279,7 +287,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
     ((uint64_t) a > (uint64_t) b) ? 1 : 0;
 }
 
-void Field_datetime::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_datetime::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)

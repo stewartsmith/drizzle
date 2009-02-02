@@ -18,15 +18,22 @@
 #ifndef MYISAMDEF_H
 #define MYISAMDEF_H
 
+#include <drizzled/global.h>
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
 #include <mysys/my_tree.h>
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/common.h>
+
+#include <string.h>
 
 #if defined(my_write)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
+#endif
+
+#ifdef	__cplusplus
+extern "C" {
 #endif
 
 typedef struct st_mi_status_info
@@ -152,7 +159,7 @@ typedef struct st_mi_isam_pack {
   unsigned char version;
 } MI_PACK;
 
-#define MAX_NONMAPPED_INSERTS 1000      
+#define MAX_NONMAPPED_INSERTS 1000
 
 typedef struct st_mi_isam_share {	/* Shared between opens */
   MI_STATE_INFO state;
@@ -212,11 +219,11 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
     concurrent_insert;
   THR_LOCK lock;
   pthread_mutex_t intern_lock;		/* Locking for use with _locking */
-  rw_lock_t *key_root_lock;
+  pthread_rwlock_t *key_root_lock;
   my_off_t mmaped_length;
   uint32_t     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */
-  rw_lock_t mmap_lock;
+  pthread_rwlock_t mmap_lock;
 } MYISAM_SHARE;
 
 
@@ -335,7 +342,6 @@ typedef struct st_mi_sort_param
   void *wordlist, *wordptr;
   MEM_ROOT wordroot;
   unsigned char *record;
-  MY_TMPDIR *tmpdir;
   int (*key_cmp)(struct st_mi_sort_param *, const void *, const void *);
   int (*key_read)(struct st_mi_sort_param *,void *);
   int (*key_write)(struct st_mi_sort_param *, const void *);
@@ -536,7 +542,7 @@ void _mi_store_bin_pack_key(MI_KEYDEF *keyinfo,  unsigned char *key_pos,
 			    MI_KEY_PARAM *s_temp);
 
 extern int _mi_ck_delete(MI_INFO *info,uint32_t keynr,unsigned char *key,uint32_t key_length);
-extern int _mi_readinfo(MI_INFO *info,int lock_flag,int check_keybuffer);
+int _mi_readinfo(MI_INFO *info,int lock_flag,int check_keybuffer);
 extern int _mi_writeinfo(MI_INFO *info,uint32_t options);
 extern int _mi_test_if_changed(MI_INFO *info);
 extern int _mi_mark_file_changed(MI_INFO *info);
@@ -557,7 +563,7 @@ extern my_off_t _mi_kpos(uint32_t nod_flag,unsigned char *after_key);
 extern void _mi_kpointer(MI_INFO *info,unsigned char *buff,my_off_t pos);
 extern my_off_t _mi_dpos(MI_INFO *info, uint32_t nod_flag,unsigned char *after_key);
 extern my_off_t _mi_rec_pos(MYISAM_SHARE *info, unsigned char *ptr);
-extern void _mi_dpointer(MI_INFO *info, unsigned char *buff,my_off_t pos);
+void _mi_dpointer(MI_INFO *info, unsigned char *buff,my_off_t pos);
 extern uint32_t _mi_get_static_key(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char * *page,
 			       unsigned char *key);
 extern uint32_t _mi_get_pack_key(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char * *page,
@@ -594,7 +600,7 @@ extern int _mi_read_cache(IO_CACHE *info,unsigned char *buff,my_off_t pos,
 			  uint32_t length,int re_read_if_possibly);
 extern uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record);
 
-extern unsigned char *mi_alloc_rec_buff(MI_INFO *,ulong, unsigned char**);
+unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **buf);
 #define mi_get_rec_buff_ptr(info,buf)                              \
         ((((info)->s->options & HA_OPTION_PACK_RECORD) && (buf)) ? \
         (buf) - MI_REC_BUFF_OFFSET : (buf))
@@ -662,10 +668,6 @@ typedef struct st_mi_block_info {	/* Parameter to _mi_get_block_info */
 
 #define fast_mi_writeinfo(INFO) if (!(INFO)->s->tot_locks) (void) _mi_writeinfo((INFO),0)
 #define fast_mi_readinfo(INFO) ((INFO)->lock_type == F_UNLCK) && _mi_readinfo((INFO),F_RDLCK,1)
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
 
 extern uint32_t _mi_get_block_info(MI_BLOCK_INFO *,File, my_off_t);
 extern uint32_t _mi_rec_pack(MI_INFO *info,unsigned char *to,const unsigned char *from);
@@ -738,7 +740,7 @@ pthread_handler_t thr_find_all_keys(void *arg);
 int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, File file);
 
 int sort_write_record(MI_SORT_PARAM *sort_param);
-int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, uint32_t);
+int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, size_t);
 
 extern void mi_set_index_cond_func(MI_INFO *info, index_cond_func_t func,
                                    void *func_arg);
@@ -750,10 +752,8 @@ extern size_t my_pread(File Filedes,unsigned char *Buffer,size_t Count,my_off_t 
 
 /* Needed for handler */
 void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
-void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
-                        const char *message __attribute__((unused)),
-                        const char *sfile __attribute__((unused)),
-                        uint32_t sline __attribute__((unused)));
+void _mi_report_crashed(MI_INFO *file, const char *message, const char *sfile,
+                        uint32_t sline);
 
 #ifdef __cplusplus
 }

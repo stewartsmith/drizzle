@@ -26,24 +26,26 @@
 #include <sys/stat.h>
 
 /* Added this for string translation. */
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 #define ADMIN_VERSION "8.42"
 #define SHUTDOWN_DEF_TIMEOUT 3600		/* Wait for shutdown */
 
 char *host= NULL, *user= NULL, *opt_password= NULL;
-static bool interrupted= false, opt_verbose= false,tty_password= false; 
+static bool interrupted= false, opt_verbose= false,tty_password= false;
 static uint32_t tcp_port= 0, option_wait= 0, option_silent= 0;
 static uint32_t my_end_arg;
 static uint32_t opt_connect_timeout, opt_shutdown_timeout;
 static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 
+using namespace std;
+
 /*
-  Forward declarations 
+  Forward declarations
 */
 static void usage(void);
 static void print_version(void);
-extern "C" RETSIGTYPE endprog(int signal_number);
+extern "C" void endprog(int signal_number);
 extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                char *argument);
 static int execute_commands(DRIZZLE *drizzle,int argc, char **argv);
@@ -74,14 +76,13 @@ static struct my_option my_long_options[] =
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', N_("Connect to host."), (char**) &host, (char**) &host, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"password", 'p',
+  {"password", 'P',
    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', N_("Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+  {"port", 'p', N_("Port number to use for connection or 0 for default to, in "
+   "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
-   (char**) &tcp_port,
-   (char**) &tcp_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', N_("Silently exit if one can't connect to server."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
@@ -107,25 +108,62 @@ static struct my_option my_long_options[] =
 static const char *load_default_groups[]= { "drizzleadmin","client",0 };
 
 bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-               char *argument)
+get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
   int error = 0;
 
   switch(optid) {
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(1);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(1);
+    }
+    else
+    {
+      tcp_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
       char *start=argument;
-      free(opt_password);
-      opt_password= my_strdup(argument,MYF(MY_FAE));
-      while (*argument) *argument++= 'x';   /* Destroy argument */
+      if (opt_password)
+        free(opt_password);
+
+      opt_password= strdup(argument);
+      if (opt_password == NULL)
+      {
+        fprintf(stderr, _("Memory allocation error while copying password. "
+                          "Aborting.\n"));
+        exit(ENOMEM);
+      }
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       if (*start)
-        start[1]=0; /* Cut length of argument */
+      {
+        /* Cut length of argument */
+        start[1]= 0;
+      }
       tty_password= 0;
     }
-    else 
-      tty_password= 1; 
+    else
+      tty_password= 1;
     break;
   case 's':
     option_silent++;
@@ -133,7 +171,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case 'V':
     print_version();
     exit(0);
-    break;
   case 'w':
     if (argument)
     {
@@ -165,7 +202,7 @@ int main(int argc,char *argv[])
 
   MY_INIT(argv[0]);
   drizzle_create(&drizzle);
-  load_defaults("my",load_default_groups,&argc,&argv);
+  load_defaults("drizzle",load_default_groups,&argc,&argv);
   save_argv = argv;				/* Save for free_defaults */
   if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
   {
@@ -221,10 +258,10 @@ int main(int argc,char *argv[])
   free(user);
   free_defaults(save_argv);
   my_end(my_end_arg);
-  exit(error ? 1 : 0);
+  return error ? 1 : 0;
 }
 
-RETSIGTYPE endprog(int signal_number __attribute__((unused)))
+void endprog(int)
 {
   interrupted=1;
 }

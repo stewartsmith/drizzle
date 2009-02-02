@@ -17,22 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <config.h>
+#include <drizzled/global.h>
+#include <signal.h>
+#include <errno.h>
 
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/common.h>
 #include <libdrizzle/libdrizzle.h>
+#include <libdrizzle/pack.h>
 #include <libdrizzle/errmsg.h>
 #include <libdrizzle/drizzle.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 #include <libdrizzle/net_serv.h>
 #include <libdrizzle/drizzle_data.h>
 #include <libdrizzle/local_infile.h>
 
 #include "libdrizzle_priv.h"
-
-#include <vio/violite.h>
-
-#include <drizzled/version.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +49,7 @@ static bool drizzle_client_init= false;
 unsigned int drizzle_server_last_errno;
 
 /* Server error code and message */
-char drizzle_server_last_error[DRIZZLE_ERRMSG_SIZE];
+char drizzle_server_last_error[LIBDRIZZLE_ERRMSG_SIZE];
 
 /*
   Note that the drizzle argument must be initialized with drizzle_init()
@@ -202,9 +201,10 @@ DRIZZLE *
 drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
                 const char *passwd, const char *db,
                 uint32_t port,
-                const char * unix_port __attribute__((__unused__)),
+                const char * unix_port,
                 uint32_t client_flag)
 {
+  (void)unix_port;
   char          buff[NAME_LEN+USERNAME_LENGTH+100];
   char          *end,*host_info=NULL;
   uint32_t         pkt_length;
@@ -246,7 +246,7 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
     char port_buf[NI_MAXSERV];
 
     if (!port)
-      port= drizzle_port;
+      port= drizzle_get_default_port();
 
     if (!host)
       host= LOCAL_HOST;
@@ -451,7 +451,14 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
   /* Add database if needed */
   if (db && (drizzle->server_capabilities & CLIENT_CONNECT_WITH_DB))
   {
-    end= strncpy(end, db, NAME_LEN) + NAME_LEN + 1;
+    size_t db_len= strlen(db);
+
+    if (db_len >= NAME_LEN)
+      db_len= NAME_LEN - 1;
+    end= memcpy(end, db, db_len);
+    end[db_len]= 0;
+    end+= (db_len + 1);
+
     drizzle->db= strdup(db);
     db= 0;
   }

@@ -21,7 +21,8 @@ select date_format("1997-01-02 03:04:05", "%M %W %D %Y %y %m %d %h %i %s %w");
 select date_format("1997-01-02", concat("%M %W %D ","%Y %y %m %d %h %i %s %w"));
 select dayofmonth("1997-01-02"),dayofmonth(19970323);
 select month("1997-01-02"),year("98-02-03"),dayofyear("1997-12-31");
-select month("2001-02-00"),year("2001-00-00");
+--error 1686 # No more bad dates!
+select month("2001-02-00"),year("2001-01-01");
 select DAYOFYEAR("1997-03-03"), WEEK("1998-03-03"), QUARTER(980303);
 select HOUR("1997-03-03 23:03:22"), MINUTE("23:03:22"), SECOND(230322);
 
@@ -186,7 +187,7 @@ drop table t1;
 create table t1 (id int);
 create table t2 (id int, date date);
 insert into t1 values (1);
-insert into t2 values (1, "0000-00-00");
+insert into t2 values (1, NULL);
 insert into t1 values (2);
 insert into t2 values (2, "2000-01-01");
 select monthname(date) from t1 inner join t2 on t1.id = t2.id;
@@ -198,7 +199,9 @@ drop table t1,t2;
 
 CREATE TABLE t1 (updated text) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('');
+--error 1686 # "" is not a date!
 SELECT month(updated) from t1;
+--error 1686 # "" is not a date for pete's sake.
 SELECT year(updated) from t1;
 drop table t1;
 
@@ -209,11 +212,15 @@ drop table t1;
 
 create table t1 (d date, dt datetime, t timestamp, c char(10));
 insert into t1 values ("0000-00-00", "0000-00-00", "0000-00-00", "0000-00-00");
+--error 1686 # 0000-00-00 is a bad date
 select dayofyear("0000-00-00"),dayofyear(d),dayofyear(dt),dayofyear(t),dayofyear(c) from t1;
+--error 1686 # 0000-00-00 is a bad date
 select dayofmonth("0000-00-00"),dayofmonth(d),dayofmonth(dt),dayofmonth(t),dayofmonth(c) from t1;
+--error 1686 # 0000-00-00 is not a damn date.
 select month("0000-00-00"),month(d),month(dt),month(t),month(c) from t1;
 select quarter("0000-00-00"),quarter(d),quarter(dt),quarter(t),quarter(c) from t1;
 select week("0000-00-00"),week(d),week(dt),week(t),week(c) from t1;
+--error 1686 # Argh.  0000-00-00 is not a date.
 select year("0000-00-00"),year(d),year(dt),year(t),year(c) from t1;
 select yearweek("0000-00-00"),yearweek(d),yearweek(dt),yearweek(t),yearweek(c) from t1;
 select to_days("0000-00-00"),to_days(d),to_days(dt),to_days(t),to_days(c) from t1;
@@ -437,6 +444,7 @@ select last_day('2005-01-00');
 # Bug #18501: monthname and NULLs
 #
 
+--error 1686 # Once again no bad dates allowed!
 select monthname(str_to_date(null, '%m')), monthname(str_to_date(null, '%m')),
        monthname(str_to_date(1, '%m')), monthname(str_to_date(0, '%m'));
 

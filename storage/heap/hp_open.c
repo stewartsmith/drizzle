@@ -16,15 +16,12 @@
 /* open a heap-database */
 
 #include "heapdef.h"
-#ifdef VMS
-#include "hp_static.c"			/* Stupid vms-linker */
-#endif
 
-#include <mysys/my_sys.h>
+#include <string.h>
 
 /*
   Open heap table based on HP_SHARE structure
-  
+
   NOTE
     This doesn't register the table in the open table list.
 */
@@ -33,13 +30,12 @@ HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
 {
   HP_INFO *info;
 
-  if (!(info= (HP_INFO*) my_malloc((uint) sizeof(HP_INFO) +
-				  2 * share->max_key_length,
-				  MYF(MY_ZEROFILL))))
+  if (!(info= (HP_INFO*) malloc(sizeof(HP_INFO) + 2 * share->max_key_length)))
   {
     return(0);
   }
-  share->open_count++; 
+  memset(info, 0, sizeof(HP_INFO) + 2 * share->max_key_length);
+  share->open_count++;
   thr_lock_data_init(&share->lock,&info->lock,NULL);
   info->s= share;
   info->lastkey= (unsigned char*) (info + 1);

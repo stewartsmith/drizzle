@@ -1,15 +1,34 @@
-#ifndef BINLOG_ENCODE_H_INCLUDED
-#define BINLOG_ENCODE_H_INCLUDED
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#ifndef DRIZZLED_SERIALIZE_BINLOG_ENCODING_H
+#define DRIZZLED_SERIALIZE_BINLOG_ENCODING_H
 
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
-#include CSTDINT_H
+#include <stdint.h>
 
-#define LENGTH_ENCODE_MAX_BYTES (sizeof(size_t) + 1)
+#define LENGTH_ENCODE_MAX_BYTES (sizeof(std::size_t) + 1)
 
 inline unsigned char *
-length_encode(size_t length, unsigned char *buf)
+length_encode(std::size_t length, unsigned char *buf)
 {
   unsigned char *ptr= buf;
   assert(length > 1);
@@ -38,7 +57,7 @@ length_encode(size_t length, unsigned char *buf)
       }
     }
     // Clear the remaining bytes up to the next power of two
-    memset(ptr + 1, 0, pow2 - (ptr - buf));
+    std::memset(ptr + 1, 0, pow2 - (ptr - buf));
     *buf= log2m1;
     ptr= buf + pow2 + 1;
   }
@@ -46,16 +65,16 @@ length_encode(size_t length, unsigned char *buf)
 }
 
 inline unsigned char *
-length_decode(unsigned char *buf, size_t *plen)
+length_decode(unsigned char *buf, std::size_t *plen)
 {
   if (*buf > 1) {
     *plen = *buf;
     return buf + 1;
   }
 
-  size_t bytes= 1 << (*buf + 1);
+  std::size_t bytes= 1 << (*buf + 1);
   unsigned char *ptr= buf + 1;
-  size_t length= 0;
+  std::size_t length= 0;
   for (unsigned int i = 0 ; i < bytes ; ++i)
     length |= *ptr++ << (8 * i);
   *plen= length;
@@ -71,10 +90,10 @@ length_decode(unsigned char *buf, size_t *plen)
    computed.
 
  */
-inline size_t
+inline std::size_t
 length_decode_bytes(int peek)
 {
   return (peek < 2) ? (1 << (peek + 1)) + 1 : 1;
 }
 
-#endif /* BINLOG_ENCODE_H_INCLUDED */
+#endif /*  DRIZZLED_SERIALIZE_BINLOG_ENCODING_H */

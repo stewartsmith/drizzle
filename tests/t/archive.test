@@ -3,7 +3,6 @@
 # Taken FROM the select test
 #
 -- source include/have_archive.inc
--- source include/have_binlog_format_mixed_or_statement.inc
 
 --disable_warnings
 DROP TABLE if exists t1,t2,t3,t4,t5,t6;
@@ -1381,7 +1380,7 @@ CREATE TABLE `t5` (
 `a` int NOT NULL auto_increment,
 b char(12),
 PRIMARY KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 
 INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
@@ -1406,7 +1405,7 @@ CREATE TABLE `t5` (
 `a` int NOT NULL auto_increment,
 b char(12),
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5;
+) AUTO_INCREMENT=5;
 
 INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
@@ -1430,9 +1429,9 @@ DROP TABLE t5;
 
 CREATE TABLE `t5` (
 `a` int NOT NULL auto_increment,
-b blob(12),
+b blob,
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 
 INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (NULL, "We the people");
@@ -1457,10 +1456,10 @@ DROP TABLE t5;
 
 CREATE TABLE `t5` (
 `a` int NOT NULL auto_increment,
-b blob(12),
-c blob(12),
+b blob,
+c blob,
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 
 INSERT INTO t5 VALUES (NULL, "foo", "grok this!");
 INSERT INTO t5 VALUES (NULL, "We the people", NULL);
@@ -1505,7 +1504,7 @@ CREATE TABLE `t5` (
 b varchar(250),
 c varchar(800),
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 
 INSERT INTO t5 VALUES (NULL, "foo", "grok this!");
 INSERT INTO t5 VALUES (NULL, "We the people", NULL);
@@ -1514,16 +1513,16 @@ INSERT INTO t5 VALUES (NULL, "establish justice", "to ourselves and");
 INSERT INTO t5 VALUES (32, "ensure domestic tranquility", NULL);
 INSERT INTO t5 VALUES (23, "provide for the common defense", "posterity");
 INSERT INTO t5 VALUES (NULL, "promote the general welfare", "do ordain");
-INSERT INTO t5 VALUES (NULL, "abcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabc", "do ordain");
+INSERT INTO t5 VALUES (NULL, "abcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyzabcdeghijklmnopqrstuvwxyz", "do ordain");
 
 SELECT * FROM t5;
 
 CREATE TABLE `t6` (
 `a` int NOT NULL auto_increment,
-b blob(12),
+b blob,
 c int,
 KEY  (`a`)
-)  DEFAULT CHARSET=latin1;
+);
 SELECT * FROM t6;
 INSERT INTO t6 VALUES (NULL, "foo", NULL);
 INSERT INTO t6 VALUES (NULL, "We the people", 5);
@@ -1564,7 +1563,7 @@ drop table t1;
 #
 # BUG#29207 - archive table reported as corrupt by check table
 #
-create table t1(a longblob) engine=archive;
+create table t1(a blob) engine=archive;
 insert into t1 set a='';
 insert into t1 set a='a';
 check table t1 extended;

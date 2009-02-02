@@ -1,5 +1,27 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #include <drizzled/server_includes.h>
 #include <drizzled/field_iterator.h>
+#include <drizzled/table_list.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
 
 const char *Field_iterator_table::name()
 {
@@ -7,34 +29,23 @@ const char *Field_iterator_table::name()
 }
 
 
-
-void Field_iterator_table::set(TableList *table) 
-{ 
-  ptr= table->table->field; 
-}
-
-
-void Field_iterator_table::set_table(Table *table) 
-{ 
-  ptr= table->field; 
-}
-
-
-Item *Field_iterator_table::create_item(THD *thd)
+void Field_iterator_table::set(TableList *table)
 {
-  SELECT_LEX *select= thd->lex->current_select;
+  ptr= table->table->field;
+}
 
-  Item_field *item= new Item_field(thd, &select->context, *ptr);
 
-#ifdef DEAD_CODE
+void Field_iterator_table::set_table(Table *table)
+{
+  ptr= table->field;
+}
 
-  if (item && thd->variables.sql_mode & MODE_ONLY_FULL_GROUP_BY &&
-      !thd->lex->in_sum_func && select->cur_pos_in_select_list != UNDEF_POS)
-  {
-    select->non_agg_fields.push_back(item);
-    item->marker= select->cur_pos_in_select_list;
-  }
-#endif
+
+Item *Field_iterator_table::create_item(Session *session)
+{
+  SELECT_LEX *select= session->lex->current_select;
+
+  Item_field *item= new Item_field(session, &select->context, *ptr);
 
   return item;
 }
@@ -68,12 +79,6 @@ void Field_iterator_table_ref::set_field_iterator()
   */
   if (table_ref->is_join_columns_complete)
   {
-    /* Necesary, but insufficient conditions. */
-    assert(table_ref->is_natural_join ||
-                table_ref->nested_join ||
-                ((table_ref->join_columns && /* This is a merge view. */ (table_ref->field_translation && table_ref->join_columns->elements == (ulong)(table_ref->field_translation_end - table_ref->field_translation))) ||
-                 /* This is stored table or a tmptable view. */
-                 (!table_ref->field_translation && table_ref->join_columns->elements == table_ref->table->s->fields)));
     field_it= &natural_join_it;
   }
   /* This is a base table or stored view. */
@@ -132,7 +137,7 @@ const char *Field_iterator_table_ref::db_name()
     return natural_join_it.column_ref()->db_name();
 
   /*
-    Test that TableList::db is the same as st_table_share::db to
+    Test that TableList::db is the same as TABLE_SHARE::db to
     ensure consistency. An exception are I_S schema tables, which
     are inconsistent in this respect.
   */

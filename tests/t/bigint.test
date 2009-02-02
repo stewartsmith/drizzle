@@ -11,12 +11,11 @@ drop table if exists t1, t2;
 select 0,256,00000000000000065536,2147483647,-2147483648,2147483648,+4294967296;
 select 9223372036854775807,-009223372036854775808;
 select +9999999999999999999,-9999999999999999999;
-select cast(9223372036854775808 as)+1;
+select 9223372036854775808 +1;
 select 9223372036854775808+1;
 select -(0-3),round(-(0-3)), round(9999999999999999999);
 select 1,11,101,1001,10001,100001,1000001,10000001,100000001,1000000001,10000000001,100000000001,1000000000001,10000000000001,100000000000001,1000000000000001,10000000000000001,100000000000000001,1000000000000000001,10000000000000000001;
 select -1,-11,-101,-1001,-10001,-100001,-1000001,-10000001,-100000001,-1000000001,-10000000001,-100000000001,-1000000000001,-10000000000001,-100000000000001,-1000000000000001,-10000000000000001,-100000000000000001,-1000000000000000001,-10000000000000000001;
-select conv(1,10,16),conv((1<<2)-1,10,16),conv((1<<10)-2,10,16),conv((1<<16)-3,10,16),conv((1<<25)-4,10,16),conv((1<<31)-5,10,16),conv((1<<36)-6,10,16),conv((1<<47)-7,10,16),conv((1<<48)-8,10,16),conv((1<<55)-9,10,16),conv((1<<56)-10,10,16),conv((1<<63)-11,10,16);
 
 #
 # In 3.23 we have to disable the test of column to bigint as
@@ -25,7 +24,8 @@ select conv(1,10,16),conv((1<<2)-1,10,16),conv((1<<10)-2,10,16),conv((1<<16)-3,1
 #
 
 create table t1 (a bigint not null, primary key(a));
-insert into t1 values (18446744073709551615), (0xFFFFFFFFFFFFFFFE), (18446744073709551613), (18446744073709551612);
+insert into t1 values (9223372036854775808);
+insert into t1 values (0x7000000000000000);
 select * from t1;
 select * from t1 where a=18446744073709551615;
 # select * from t1 where a='18446744073709551615';
@@ -34,14 +34,14 @@ select * from t1;
 drop table t1;
 
 create table t1 ( a int not null default 1, big bigint );
-insert into t1 (big) values (-1),(12345678901234567),(9223372036854775807),(18446744073709551615);
+insert into t1 (big) values (-1),(9223372036854775808),(9223372036854775807),(9223372036854775808);
 select * from t1;
 select min(big),max(big),max(big)-1 from t1;
 select min(big),max(big),max(big)-1 from t1 group by a;
 alter table t1 modify big bigint not null;
 select min(big),max(big),max(big)-1 from t1;
 select min(big),max(big),max(big)-1 from t1 group by a;
-insert into t1 (big) values (18446744073709551615);
+insert into t1 (big) values (9223372036854775808);
 select * from t1;
 select min(big),max(big),max(big)-1 from t1;
 select min(big),max(big),max(big)-1 from t1 group by a;
@@ -148,12 +148,12 @@ insert into t1 values(
   18446744073709551615, 18446744073709551615
 );
 
-insert into t1 values (-1 | 0,-1 | 0,-1 | 0 ,-1 | 0);
+insert into t1 values (-1,-1,-1,-1);
 select * from t1;
 drop table t1;
 
 create table t1 ( quantity decimal(2));
-insert into t1 values (500), (-500), (~0), (-1);
+insert into t1 values (50), (-50), (0), (-1);
 select * from t1;
 drop table t1;
 
@@ -163,24 +163,24 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  `col1` INT(1) NULL,
-  `col2` INT(2) NULL,
-  `col3` INT(3) NULL,
-  `col4` INT(4) NULL,
-  `col5` INT(5) NULL,
-  `col6` INT(6) NULL,
-  `col7` INT(7) NULL,
-  `col8` INT(8) NULL,
-  `col9` INT(9) NULL,
-  `col10` BIGINT(10) NULL,
-  `col11` BIGINT(11) NULL,
-  `col12` BIGINT(12) NULL,
-  `col13` BIGINT(13) NULL,
-  `col14` BIGINT(14) NULL,
-  `col15` BIGINT(15) NULL,
-  `col16` BIGINT(16) NULL,
-  `col17` BIGINT(17) NULL,
-  `col18` BIGINT(18) NULL,
+  `col1` INT NULL,
+  `col2` INT NULL,
+  `col3` INT NULL,
+  `col4` INT NULL,
+  `col5` INT NULL,
+  `col6` INT NULL,
+  `col7` INT NULL,
+  `col8` INT NULL,
+  `col9` INT NULL,
+  `col10` BIGINT NULL,
+  `col11` BIGINT NULL,
+  `col12` BIGINT NULL,
+  `col13` BIGINT NULL,
+  `col14` BIGINT NULL,
+  `col15` BIGINT NULL,
+  `col16` BIGINT NULL,
+  `col17` BIGINT NULL,
+  `col18` BIGINT NULL,
   `col19` DECIMAL(19, 0) NULL,
   `col20` DECIMAL(20, 0) NULL,
   `col21` DECIMAL(21, 0) NULL,
@@ -290,19 +290,12 @@ drop table t1;
 --echo
 --echo bug 19955 -- mod is signed with bigint
 
-select cast(10000002383263201056 as) mod 50 as result;
+select 10000002383263201056 mod 50 as result;
 
 create table t1 (c1 bigint);
 insert into t1 values (10000002383263201056);
 select c1 mod 50 as result from t1;
 drop table t1;
-
-#
-# Bug #8663 cant use bgint as input to cast
-#
-
-select cast(19999999999999999999 as signed);
-select cast(-19999999999999999999 as signed);
 
 #
 # Bug #28625: -9223372036854775808 doesn't fit in BIGINT.

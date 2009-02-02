@@ -6,7 +6,8 @@
 drop table if exists t1;
 --enable_warnings
 
-set global myisam_data_pointer_size=2;
+#Drizzle does not support global myisam_data_pointer_size system variable
+#set global myisam_data_pointer_size=2;
 CREATE TABLE t1 (a int auto_increment primary key not null, b longtext) ENGINE=MyISAM;
 
 --disable_query_log
@@ -18,24 +19,24 @@ while ($1)
 }
 --enable_query_log
 
-DELETE FROM t1 WHERE a=1 or a=5;
+#DELETE FROM t1 WHERE a=1 or a=5;
 
 --error 1114
-INSERT INTO t1 SET b=repeat('a',600);
-CHECK TABLE t1 EXTENDED;
+#INSERT INTO t1 SET b=repeat('a',600);
+#CHECK TABLE t1 EXTENDED;
 
 --error 1114
-UPDATE t1 SET b=repeat('a', 800) where a=10;
-CHECK TABLE t1 EXTENDED;
+#UPDATE t1 SET b=repeat('a', 800) where a=10;
+#CHECK TABLE t1 EXTENDED;
 
-INSERT INTO t1 SET b=repeat('a',400);
-CHECK TABLE t1 EXTENDED;
+#INSERT INTO t1 SET b=repeat('a',400);
+#CHECK TABLE t1 EXTENDED;
 
-DELETE FROM t1 WHERE a=2 or a=6;
-UPDATE t1 SET b=repeat('a', 600) where a=11;
-CHECK TABLE t1 EXTENDED;
-drop table t1;
+#DELETE FROM t1 WHERE a=2 or a=6;
+#UPDATE t1 SET b=repeat('a', 600) where a=11;
+#CHECK TABLE t1 EXTENDED;
+#drop table t1;
 
-set global myisam_data_pointer_size=default;
+#set global myisam_data_pointer_size=default;
 
 # End of 4.1 tests

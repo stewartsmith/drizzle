@@ -24,7 +24,7 @@
 #include <drizzled/global.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_sys.h>
-#include <keycache.h>
+#include "keycache.h"
 #include <mysys/hash.h>
 #include <mystrings/m_string.h>
 
@@ -55,7 +55,7 @@ typedef struct st_safe_hash_entry
 
 typedef struct st_safe_hash_with_default
 {
-  rw_lock_t mutex;
+  pthread_rwlock_t mutex;
   HASH hash;
   unsigned char *default_value;
   SAFE_HASH_ENTRY *root;
@@ -78,8 +78,9 @@ static void safe_hash_entry_free(SAFE_HASH_ENTRY *entry)
 /* Get key and length for a SAFE_HASH_ENTRY */
 
 static unsigned char *safe_hash_entry_get(SAFE_HASH_ENTRY *entry, size_t *length,
-                                  bool not_used __attribute__((unused)))
+                                  bool not_used)
 {
+  (void)not_used;
   *length=entry->length;
   return (unsigned char*) entry->key;
 }
@@ -113,7 +114,7 @@ static bool safe_hash_init(SAFE_HASH *hash, uint32_t elements,
     hash->default_value= 0;
     return(1);
   }
-  my_rwlock_init(&hash->mutex, 0);
+  pthread_rwlock_init(&hash->mutex, 0);
   hash->default_value= default_value;
   hash->root= 0;
   return(0);
@@ -136,7 +137,7 @@ static void safe_hash_free(SAFE_HASH *hash)
   if (hash->default_value)
   {
     hash_free(&hash->hash);
-    rwlock_destroy(&hash->mutex);
+    pthread_rwlock_destroy(&hash->mutex);
     hash->default_value=0;
   }
 }
@@ -148,9 +149,9 @@ static void safe_hash_free(SAFE_HASH *hash)
 static unsigned char *safe_hash_search(SAFE_HASH *hash, const unsigned char *key, uint32_t length)
 {
   unsigned char *result;
-  rw_rdlock(&hash->mutex);
+  pthread_rwlock_rdlock(&hash->mutex);
   result= hash_search(&hash->hash, key, length);
-  rw_unlock(&hash->mutex);
+  pthread_rwlock_unlock(&hash->mutex);
   if (!result)
     result= hash->default_value;
   else
@@ -185,7 +186,7 @@ static bool safe_hash_set(SAFE_HASH *hash, const unsigned char *key, uint32_t le
   SAFE_HASH_ENTRY *entry;
   bool error= 0;
 
-  rw_wrlock(&hash->mutex);
+  pthread_rwlock_wrlock(&hash->mutex);
   entry= (SAFE_HASH_ENTRY*) hash_search(&hash->hash, key, length);
 
   if (data == hash->default_value)
@@ -210,8 +211,7 @@ static bool safe_hash_set(SAFE_HASH *hash, const unsigned char *key, uint32_t le
   }
   else
   {
-    if (!(entry= (SAFE_HASH_ENTRY *) my_malloc(sizeof(*entry) + length,
-					       MYF(MY_WME))))
+    if (!(entry= (SAFE_HASH_ENTRY *) malloc(sizeof(*entry) + length)))
     {
       error= 1;
       goto end;
@@ -235,7 +235,7 @@ static bool safe_hash_set(SAFE_HASH *hash, const unsigned char *key, uint32_t le
   }
 
 end:
-  rw_unlock(&hash->mutex);
+  pthread_rwlock_unlock(&hash->mutex);
   return(error);
 }
 
@@ -259,7 +259,7 @@ static void safe_hash_change(SAFE_HASH *hash, unsigned char *old_data, unsigned 
 {
   SAFE_HASH_ENTRY *entry, *next;
 
-  rw_wrlock(&hash->mutex);
+  pthread_rwlock_wrlock(&hash->mutex);
 
   for (entry= hash->root ; entry ; entry= next)
   {
@@ -277,7 +277,7 @@ static void safe_hash_change(SAFE_HASH *hash, unsigned char *old_data, unsigned 
     }
   }
 
-  rw_unlock(&hash->mutex);
+  pthread_rwlock_unlock(&hash->mutex);
   return;
 }
 

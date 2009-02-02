@@ -20,7 +20,7 @@ Created 5/11/1994 Heikki Tuuri
 typedef struct ut_mem_block_struct ut_mem_block_t;
 
 /* The total amount of memory currently allocated from the OS with malloc */
-ulint	ut_total_allocated_memory	= 0;
+UNIV_INTERN ulint	ut_total_allocated_memory	= 0;
 
 struct ut_mem_block_struct{
 	UT_LIST_NODE_T(ut_mem_block_t) mem_block_list;
@@ -33,13 +33,13 @@ struct ut_mem_block_struct{
 
 /* List of all memory blocks allocated from the operating system
 with malloc */
-UT_LIST_BASE_NODE_T(ut_mem_block_t)   ut_mem_block_list;
+static UT_LIST_BASE_NODE_T(ut_mem_block_t)   ut_mem_block_list;
 
-os_fast_mutex_t ut_list_mutex;	/* this protects the list */
+static os_fast_mutex_t ut_list_mutex;	/* this protects the list */
 
-ibool  ut_mem_block_list_inited = FALSE;
+static ibool  ut_mem_block_list_inited = FALSE;
 
-ulint*	ut_mem_null_ptr	= NULL;
+static ulint*	ut_mem_null_ptr	= NULL;
 
 /**************************************************************************
 Initializes the mem block list at database startup. */
@@ -56,7 +56,7 @@ ut_mem_block_list_init(void)
 /**************************************************************************
 Allocates memory. Sets it also to zero if UNIV_SET_MEM_TO_ZERO is
 defined and set_to_zero is TRUE. */
-
+UNIV_INTERN
 void*
 ut_malloc_low(
 /*==========*/
@@ -138,6 +138,7 @@ retry:
 		trace */
 		/* Intentional segfault on NetWare causes an abend. Avoid this
 		by graceful exit handling in ut_a(). */
+#if (!defined __NETWARE__)
 		if (assert_on_error) {
 			ut_print_timestamp(stderr);
 
@@ -150,6 +151,9 @@ retry:
 		} else {
 			return(NULL);
 		}
+#else
+		ut_a(0);
+#endif
 	}
 
 	if (set_to_zero) {
@@ -175,7 +179,7 @@ retry:
 /**************************************************************************
 Allocates memory. Sets it also to zero if UNIV_SET_MEM_TO_ZERO is
 defined. */
-
+UNIV_INTERN
 void*
 ut_malloc(
 /*======*/
@@ -189,7 +193,7 @@ ut_malloc(
 Tests if malloc of n bytes would succeed. ut_malloc() asserts if memory runs
 out. It cannot be used if we want to return an error message. Prints to
 stderr a message if fails. */
-
+UNIV_INTERN
 ibool
 ut_test_malloc(
 /*===========*/
@@ -227,7 +231,7 @@ ut_test_malloc(
 
 /**************************************************************************
 Frees a memory block allocated with ut_malloc. */
-
+UNIV_INTERN
 void
 ut_free(
 /*====*/
@@ -274,7 +278,7 @@ RETURN VALUE
        be passed to free() is returned.	 If realloc()  fails  the
        original	 block	is  left  untouched  - it is not freed or
        moved. */
-
+UNIV_INTERN
 void*
 ut_realloc(
 /*=======*/
@@ -327,7 +331,7 @@ ut_realloc(
 
 /**************************************************************************
 Frees in shutdown all allocated memory not freed yet. */
-
+UNIV_INTERN
 void
 ut_free_all_mem(void)
 /*=================*/
@@ -359,7 +363,7 @@ ut_free_all_mem(void)
 Copies up to size - 1 characters from the NUL-terminated string src to
 dst, NUL-terminating the result. Returns strlen(src), so truncation
 occurred if the return value >= size. */
-
+UNIV_INTERN
 ulint
 ut_strlcpy(
 /*=======*/
@@ -383,7 +387,7 @@ ut_strlcpy(
 /**************************************************************************
 Like ut_strlcpy, but if src doesn't fit in dst completely, copies the last
 (size - 1) bytes of src, not the first. */
-
+UNIV_INTERN
 ulint
 ut_strlcpy_rev(
 /*===========*/
@@ -407,7 +411,7 @@ ut_strlcpy_rev(
 Make a quoted copy of a NUL-terminated string.	Leading and trailing
 quotes will not be included; only embedded quotes will be escaped.
 See also ut_strlenq() and ut_memcpyq(). */
-
+UNIV_INTERN
 char*
 ut_strcpyq(
 /*=======*/
@@ -429,7 +433,7 @@ ut_strcpyq(
 Make a quoted copy of a fixed-length string.  Leading and trailing
 quotes will not be included; only embedded quotes will be escaped.
 See also ut_strlenq() and ut_strcpyq(). */
-
+UNIV_INTERN
 char*
 ut_memcpyq(
 /*=======*/
@@ -453,7 +457,7 @@ ut_memcpyq(
 /**************************************************************************
 Return the number of times s2 occurs in s1. Overlapping instances of s2
 are only counted once. */
-
+UNIV_INTERN
 ulint
 ut_strcount(
 /*========*/
@@ -487,8 +491,8 @@ ut_strcount(
 /**************************************************************************
 Replace every occurrence of s1 in str with s2. Overlapping instances of s1
 are only replaced once. */
-
-char *
+UNIV_INTERN
+char*
 ut_strreplace(
 /*==========*/
 				/* out, own: modified string, must be
@@ -542,3 +546,83 @@ ut_strreplace(
 
 	return(new_str);
 }
+
+#ifdef UNIV_COMPILE_TEST_FUNCS
+
+void
+test_ut_str_sql_format()
+{
+	char	buf[128];
+	ulint	ret;
+
+#define CALL_AND_TEST(str, str_len, buf, buf_size, ret_expected, buf_expected)\
+	do {\
+		ibool	ok = TRUE;\
+		memset(buf, 'x', 10);\
+		buf[10] = '\0';\
+		fprintf(stderr, "TESTING \"%s\", %lu, %lu\n",\
+			str, (ulint) str_len, (ulint) buf_size);\
+		ret = ut_str_sql_format(str, str_len, buf, buf_size);\
+		if (ret != ret_expected) {\
+			fprintf(stderr, "expected ret %lu, got %lu\n",\
+				(ulint) ret_expected, ret);\
+			ok = FALSE;\
+		}\
+		if (strcmp((char*) buf, buf_expected) != 0) {\
+			fprintf(stderr, "expected buf \"%s\", got \"%s\"\n",\
+				buf_expected, buf);\
+			ok = FALSE;\
+		}\
+		if (ok) {\
+			fprintf(stderr, "OK: %lu, \"%s\"\n\n",\
+				(ulint) ret, buf);\
+		} else {\
+			return;\
+		}\
+	} while (0)
+
+	CALL_AND_TEST("abcd", 4, buf, 0, 0, "xxxxxxxxxx");
+
+	CALL_AND_TEST("abcd", 4, buf, 1, 1, "");
+
+	CALL_AND_TEST("abcd", 4, buf, 2, 1, "");
+
+	CALL_AND_TEST("abcd", 0, buf, 3, 3, "''");
+	CALL_AND_TEST("abcd", 1, buf, 3, 1, "");
+	CALL_AND_TEST("abcd", 2, buf, 3, 1, "");
+	CALL_AND_TEST("abcd", 3, buf, 3, 1, "");
+	CALL_AND_TEST("abcd", 4, buf, 3, 1, "");
+
+	CALL_AND_TEST("abcd", 0, buf, 4, 3, "''");
+	CALL_AND_TEST("abcd", 1, buf, 4, 4, "'a'");
+	CALL_AND_TEST("abcd", 2, buf, 4, 4, "'a'");
+	CALL_AND_TEST("abcd", 3, buf, 4, 4, "'a'");
+	CALL_AND_TEST("abcd", 4, buf, 4, 4, "'a'");
+	CALL_AND_TEST("abcde", 5, buf, 4, 4, "'a'");
+	CALL_AND_TEST("'", 1, buf, 4, 3, "''");
+	CALL_AND_TEST("''", 2, buf, 4, 3, "''");
+	CALL_AND_TEST("a'", 2, buf, 4, 4, "'a'");
+	CALL_AND_TEST("'a", 2, buf, 4, 3, "''");
+	CALL_AND_TEST("ab", 2, buf, 4, 4, "'a'");
+
+	CALL_AND_TEST("abcdef", 0, buf, 5, 3, "''");
+	CALL_AND_TEST("abcdef", 1, buf, 5, 4, "'a'");
+	CALL_AND_TEST("abcdef", 2, buf, 5, 5, "'ab'");
+	CALL_AND_TEST("abcdef", 3, buf, 5, 5, "'ab'");
+	CALL_AND_TEST("abcdef", 4, buf, 5, 5, "'ab'");
+	CALL_AND_TEST("abcdef", 5, buf, 5, 5, "'ab'");
+	CALL_AND_TEST("abcdef", 6, buf, 5, 5, "'ab'");
+	CALL_AND_TEST("'", 1, buf, 5, 5, "''''");
+	CALL_AND_TEST("''", 2, buf, 5, 5, "''''");
+	CALL_AND_TEST("a'", 2, buf, 5, 4, "'a'");
+	CALL_AND_TEST("'a", 2, buf, 5, 5, "''''");
+	CALL_AND_TEST("ab", 2, buf, 5, 5, "'ab'");
+	CALL_AND_TEST("abc", 3, buf, 5, 5, "'ab'");
+
+	CALL_AND_TEST("ab", 2, buf, 6, 5, "'ab'");
+
+	CALL_AND_TEST("a'b'c", 5, buf, 32, 10, "'a''b''c'");
+	CALL_AND_TEST("a'b'c'", 6, buf, 32, 12, "'a''b''c'''");
+}
+
+#endif /* UNIV_COMPILE_TEST_FUNCS */

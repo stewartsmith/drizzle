@@ -13,16 +13,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir=           $(prefix)
-MYSQLLIBdir=            $(pkglibdir)
-pkgplugindir =		$(pkglibdir)/plugin
-
 AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
 EXTRA_LTLIBRARIES =	libuncompressed_lengthudf.la
 pkgplugin_LTLIBRARIES =	@plugin_uncompressed_length_shared_target@
-libuncompressed_lengthudf_la_LDFLAGS =	-module -rpath $(pkgplugindir)
+libuncompressed_lengthudf_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir)
 libuncompressed_lengthudf_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 libuncompressed_lengthudf_la_SOURCES =	uncompressed_length.cc
 

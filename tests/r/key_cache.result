@@ -2,7 +2,7 @@ drop table if exists t1, t2, t3;
 SET @save_key_buffer=@@key_buffer_size;
 SELECT @@key_buffer_size, @@small.key_buffer_size;
 @@key_buffer_size	@@small.key_buffer_size
-2097152	131072
+1048576	0
 SET @@global.key_buffer_size=16*1024*1024;
 SET @@global.default.key_buffer_size=16*1024*1024;
 SET @@global.default.key_buffer_size=16*1024*1024;
@@ -39,7 +39,7 @@ SELECT @@medium.key_buffer_size;
 0
 SET @@global.key_buffer_size=@save_key_buffer;
 SELECT @@default.key_buffer_size;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'default.key_buffer_size' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'default.key_buffer_size' at line 1
 SELECT @@skr.storage_engine="test";
 ERROR HY000: Variable 'storage_engine' is not a variable component (can't be used as XXXX.variable_name)
 select @@keycache1.key_cache_block_size;
@@ -78,19 +78,19 @@ select @@keycache1.key_cache_block_size;
 2048
 select @@key_buffer_size;
 @@key_buffer_size
-2097152
+1048576
 select @@key_cache_block_size;
 @@key_cache_block_size
 1024
 set global keycache1.key_buffer_size=1024*1024;
-create table t1 (p int primary key, a char(10)) delay_key_write=1;
-create table t2 (p int primary key, i int, a char(10), key k1(i), key k2(a));
+create table t1 (p int primary key, a char(10)) delay_key_write=1 ENGINE=myisam;
+create table t2 (p int primary key, i int, a char(10), key k1(i), key k2(a)) ENGINE=myisam;
 show status like 'key_blocks_used';
 Variable_name	Value
 Key_blocks_used	0
 show status like 'key_blocks_unused';
 Variable_name	Value
-Key_blocks_unused	KEY_BLOCKS_UNUSED
+Key_blocks_unused	837
 insert into t1 values (1, 'qqqq'), (11, 'yyyy');
 insert into t2 values (1, 1, 'qqqq'), (2, 1, 'pppp'),
 (3, 1, 'yyyy'), (4, 3, 'zzzz');
@@ -111,7 +111,7 @@ Variable_name	Value
 Key_blocks_used	4
 show status like 'key_blocks_unused';
 Variable_name	Value
-Key_blocks_unused	KEY_BLOCKS_UNUSED
+Key_blocks_unused	833
 cache index t1 key (`primary`) in keycache1;
 Table	Op	Msg_type	Msg_text
 test.t1	assign_to_keycache	status	OK
@@ -179,7 +179,7 @@ i
 3
 explain select a from t2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	NULL	k2	11	NULL	5	Using index
+1	SIMPLE	t2	index	NULL	k2	43	NULL	5	Using index
 select a from t2;
 a
 pppp
@@ -239,7 +239,7 @@ i
 3
 explain select a from t2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	NULL	k2	11	NULL	5	Using index
+1	SIMPLE	t2	index	NULL	k2	43	NULL	5	Using index
 select a from t2;
 a
 pppp
@@ -273,25 +273,15 @@ Variable_name	Value
 Key_blocks_used	4
 show status like 'key_blocks_unused';
 Variable_name	Value
-Key_blocks_unused	KEY_BLOCKS_UNUSED
+Key_blocks_unused	837
 set global keycache2.key_buffer_size=0;
 set global keycache3.key_buffer_size=100;
 Warnings:
 Warning	1292	Truncated incorrect key_buffer_size value: '100'
 set global keycache3.key_buffer_size=0;
-create table t1 (mytext text, FULLTEXT (mytext));
-insert t1 values ('aaabbb');
-check table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-set @my_key_cache_block_size= @@global.key_cache_block_size;
-set GLOBAL key_cache_block_size=2048;
-check table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-drop table t1;
 set global key_cache_block_size= @my_key_cache_block_size;
-CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY);
+ERROR 42000: Incorrect argument type to variable 'key_cache_block_size'
+CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=MYISAM;
 SET @my_key_cache_block_size= @@global.key_cache_block_size;
 SET GLOBAL key_cache_block_size=1536;
 INSERT INTO t1 VALUES (1);
@@ -302,8 +292,8 @@ CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 DROP TABLE t1;
-CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int);
-CREATE TABLE t2(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int);
+CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
+CREATE TABLE t2(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
 SET GLOBAL key_cache_block_size=1536;
 INSERT INTO t1 VALUES (1,0);
 INSERT INTO t2(b) SELECT b FROM t1;
@@ -340,14 +330,14 @@ Warnings:
 Warning	1438	Cannot drop default keycache
 select @@global.key_buffer_size;
 @@global.key_buffer_size
-2097152
+1048576
 SET @bug28478_key_cache_block_size= @@global.key_cache_block_size;
 SET GLOBAL key_cache_block_size= 1536;
 CREATE TABLE t1 (
 id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-c1 CHAR(150),
-c2 CHAR(150),
-c3 CHAR(150),
+c1 CHAR(50),
+c2 CHAR(50),
+c3 CHAR(50),
 KEY(c1, c2, c3)
 ) ENGINE= MyISAM;
 INSERT INTO t1 (c1, c2, c3) VALUES

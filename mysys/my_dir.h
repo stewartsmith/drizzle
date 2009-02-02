@@ -22,6 +22,7 @@ extern "C" {
 #ifndef MY_DIR_H
 #define MY_DIR_H
 
+#include <drizzled/definitions.h>
 #include <sys/stat.h>
 
 #define MY_DONT_SORT	512	/* my_lib; Don't sort files */
@@ -37,7 +38,7 @@ typedef struct fileinfo
 typedef struct st_my_dir	/* Struct returned from my_dir */
 {
   /*
-    These members are just copies of parts of DYNAMIC_ARRAY structure, 
+    These members are just copies of parts of DYNAMIC_ARRAY structure,
     which is allocated right after the end of MY_DIR structure (MEM_ROOT
     for storing names is also resides there). We've left them here because
     we don't want to change code that uses my_dir.
@@ -46,7 +47,7 @@ typedef struct st_my_dir	/* Struct returned from my_dir */
   uint			number_off_files;
 } MY_DIR;
 
-extern MY_DIR *my_dir(const char *path,myf MyFlags);
+extern MY_DIR *my_dir(const char *path, myf MyFlags);
 extern void my_dirend(MY_DIR *buffer);
 
 #endif /* MY_DIR_H */

@@ -84,9 +84,9 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     ci->reloc_rows=ci->max_rows;		/* Check if wrong parameter */
 
   if (!(rec_per_key_part=
-	(ulong*) my_malloc((keys + uniques)*MI_MAX_KEY_SEG*sizeof(long),
-			   MYF(MY_WME | MY_ZEROFILL))))
+	(ulong*) malloc((keys + uniques)*MI_MAX_KEY_SEG*sizeof(long))))
     return(my_errno);
+  memset(rec_per_key_part, 0, (keys + uniques)*MI_MAX_KEY_SEG*sizeof(long));
 
 	/* Start by checking fields and field-types used */
 
@@ -202,9 +202,9 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 					  3 : 0)));
 
   if (options & (HA_OPTION_COMPRESS_RECORD | HA_OPTION_PACK_RECORD))
-    pointer=mi_get_pointer_length(ci->data_file_length,myisam_data_pointer_size);
+    pointer=mi_get_pointer_length(ci->data_file_length, data_pointer_size);
   else
-    pointer=mi_get_pointer_length(ci->max_rows,myisam_data_pointer_size);
+    pointer=mi_get_pointer_length(ci->max_rows, data_pointer_size);
   if (!(max_rows=(uint64_t) ci->max_rows))
     max_rows= ((((uint64_t) 1 << (pointer*8)) -1) / min_pack_length);
 
@@ -352,7 +352,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       share.state.rec_per_key_part[key_segs-1]=1L;
     length+=key_length;
     /* Get block length for key, if defined by user */
-    block_length= (keydef->block_length ? 
+    block_length= (keydef->block_length ?
                    my_round_up_to_next_power(keydef->block_length) :
                    myisam_block_size);
     block_length= cmax(block_length, MI_MIN_KEY_BLOCK_LENGTH);
@@ -414,7 +414,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     goto err;
   }
 
-  memcpy(share.state.header.file_version,myisam_file_magic,4);
+  memmove(share.state.header.file_version,myisam_file_magic,4);
   ci->old_options=options| (ci->old_options & HA_OPTION_TEMP_COMPRESS_RECORD ?
 			HA_OPTION_COMPRESS_RECORD |
 			HA_OPTION_TEMP_COMPRESS_RECORD: 0);

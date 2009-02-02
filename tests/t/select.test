@@ -1417,9 +1417,7 @@ drop table tmp;
 
 # big table done
 
-SET SQL_BIG_TABLES=1;
 select distinct concat(fld3," ",fld3) as namn from t2,t3 where t2.fld1=t3.t2nr order by namn limit 10;
-SET SQL_BIG_TABLES=0;
 select distinct concat(fld3," ",fld3) from t2,t3 where t2.fld1=t3.t2nr order by fld3 limit 10;
 select distinct fld5 from t2 limit 10;
 
@@ -1428,9 +1426,7 @@ select distinct fld5 from t2 limit 10;
 #
 
 select distinct fld3,count(*) from t2 group by companynr,fld3 limit 10;
-SET SQL_BIG_TABLES=1; # Force use of MyISAM
 select distinct fld3,count(*) from t2 group by companynr,fld3 limit 10;
-SET SQL_BIG_TABLES=0;
 select distinct fld3,repeat("a",length(fld3)),count(*) from t2 group by companynr,fld3 limit 100,10;
 
 #
@@ -2177,7 +2173,7 @@ drop table t1,t2;
 create table t1 (f1 int not null auto_increment primary key, f2 varchar(10));
 create table t11 like t1;
 insert into t1 values(1,""),(2,"");
---replace_column 7 X 8 X 9 X 10 X 11 X 12 X 13 X 14 X
+--replace_column 3 X 7 X 8 X 9 X 10 X 11 X 12 X 13 X 14 X
 show table status like 't1%';
 select 123 as a from t1 where f1 is null;
 drop table t1,t11;

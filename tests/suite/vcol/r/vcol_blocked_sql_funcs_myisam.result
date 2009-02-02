@@ -76,9 +76,6 @@ ERROR HY000: Non-deterministic expression for virtual column 'b'.
 # LAST_INSERT_ID()
 create table t1 (a virtual int as (last_insert_id()));
 ERROR HY000: Non-deterministic expression for virtual column 'a'.
-# MASTER_POS_WAIT()
-create table t1 (a varchar(32), b virtual int as (master_pos_wait(a,0,2)));
-ERROR HY000: Non-deterministic expression for virtual column 'b'.
 # ROW_COUNT()
 create table t1 (a virtual int as (row_count()));
 ERROR HY000: Non-deterministic expression for virtual column 'a'.
@@ -159,7 +156,7 @@ ERROR HY000: Invalid use of group function
 #
 create table t1 (a int);
 create table t2 (a int, b virtual int as (select count(*) from t1));
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'select count(*) from t1))' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'select count(*) from t1))' at line 1
 drop table t1;
 #
 # Long expression

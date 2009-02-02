@@ -21,6 +21,12 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/varstring.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+
+#include <string>
+
+using namespace std;
 
 /****************************************************************************
   VARCHAR type
@@ -40,6 +46,34 @@
 
 const uint32_t Field_varstring::MAX_SIZE= UINT16_MAX;
 
+Field_varstring::Field_varstring(unsigned char *ptr_arg,
+                                 uint32_t len_arg, uint32_t length_bytes_arg,
+                                 unsigned char *null_ptr_arg,
+                                 unsigned char null_bit_arg,
+                                 enum utype unireg_check_arg,
+                                 const char *field_name_arg,
+                                 TABLE_SHARE *share,
+                                 const CHARSET_INFO * const cs)
+  :Field_longstr(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
+                 unireg_check_arg, field_name_arg, cs),
+   length_bytes(length_bytes_arg)
+{
+  share->varchar_fields++;
+}
+
+Field_varstring::Field_varstring(uint32_t len_arg,bool maybe_null_arg,
+                                 const char *field_name_arg,
+                                 TABLE_SHARE *share,
+                                 const CHARSET_INFO * const cs)
+  :Field_longstr((unsigned char*) 0,len_arg,
+                 maybe_null_arg ? (unsigned char*) "": 0, 0,
+                 NONE, field_name_arg, cs),
+   length_bytes(len_arg < 256 ? 1 :2)
+{
+  share->varchar_fields++;
+}
+
+
 /**
    Save the field metadata for varstring fields.
 
@@ -53,9 +87,8 @@ const uint32_t Field_varstring::MAX_SIZE= UINT16_MAX;
 */
 int Field_varstring::do_save_field_metadata(unsigned char *metadata_ptr)
 {
-  char *ptr= (char *)metadata_ptr;
   assert(field_length <= 65535);
-  int2store(ptr, field_length);
+  int2store(metadata_ptr, field_length);
   return 2;
 }
 
@@ -121,7 +154,7 @@ int64_t Field_varstring::val_int(void)
                      &end_not_used, &not_used);
 }
 
-String *Field_varstring::val_str(String *val_buffer __attribute__((unused)),
+String *Field_varstring::val_str(String *,
 				 String *val_ptr)
 {
   uint32_t length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
@@ -181,7 +214,7 @@ int Field_varstring::key_cmp(const unsigned char *key_ptr, uint32_t max_key_leng
   local_char_length= my_charpos(field_charset, ptr + length_bytes,
                           ptr + length_bytes + length, local_char_length);
   set_if_smaller(length, local_char_length);
-  return field_charset->coll->strnncollsp(field_charset, 
+  return field_charset->coll->strnncollsp(field_charset,
                                           ptr + length_bytes,
                                           length,
                                           key_ptr+
@@ -222,7 +255,7 @@ void Field_varstring::sort_string(unsigned char *to,uint32_t length)
       mi_int2store(to+length-2, tot_length);
     length-= length_bytes;
   }
- 
+
   tot_length= my_strnxfrm(field_charset,
 			  to, length, ptr + length_bytes,
 			  tot_length);
@@ -272,7 +305,7 @@ uint32_t Field_varstring::used_length()
 
 unsigned char *Field_varstring::pack(unsigned char *to, const unsigned char *from,
                              uint32_t max_length,
-                             bool low_byte_first __attribute__((unused)))
+                             bool )
 {
   uint32_t length= length_bytes == 1 ? (uint) *from : uint2korr(from);
   set_if_smaller(max_length, field_length);
@@ -293,7 +326,7 @@ unsigned char *Field_varstring::pack(unsigned char *to, const unsigned char *fro
 
 unsigned char *
 Field_varstring::pack_key(unsigned char *to, const unsigned char *key, uint32_t max_length,
-                          bool low_byte_first __attribute__((unused)))
+                          bool )
 {
   uint32_t length=  length_bytes == 1 ? (uint) *key : uint2korr(key);
   uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
@@ -330,9 +363,9 @@ Field_varstring::pack_key(unsigned char *to, const unsigned char *key, uint32_t 
 */
 
 const unsigned char *
-Field_varstring::unpack_key(unsigned char *to __attribute__((unused)),
+Field_varstring::unpack_key(unsigned char *,
                             const unsigned char *key, uint32_t max_length,
-                            bool low_byte_first __attribute__((unused)))
+                            bool )
 {
   /* get length of the blob key */
   uint32_t length= *key++;
@@ -361,7 +394,7 @@ Field_varstring::unpack_key(unsigned char *to __attribute__((unused)),
 
 unsigned char *
 Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char *from, uint32_t max_length,
-                                         bool low_byte_first __attribute__((unused)))
+                                         bool )
 {
   /* Key length is always stored as 2 bytes */
   uint32_t length= uint2korr(from);
@@ -384,7 +417,7 @@ Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char 
 
    @note
    The string length is always packed little-endian.
-  
+
    @param   to         Destination of the data
    @param   from       Source of the data
    @param   param_data Length bytes from the master's field data
@@ -394,10 +427,10 @@ Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char 
 const unsigned char *
 Field_varstring::unpack(unsigned char *to, const unsigned char *from,
                         uint32_t param_data,
-                        bool low_byte_first __attribute__((unused)))
+                        bool )
 {
   uint32_t length;
-  uint32_t l_bytes= (param_data && (param_data < field_length)) ? 
+  uint32_t l_bytes= (param_data && (param_data < field_length)) ?
                 (param_data <= 255) ? 1 : 2 : length_bytes;
   if (l_bytes == 1)
   {
@@ -484,9 +517,36 @@ uint32_t Field_varstring::max_packed_col_length(uint32_t max_length)
   return (max_length > 255 ? 2 : 1)+max_length;
 }
 
+uint32_t Field_varstring::get_key_image(basic_string<unsigned char> &buff,
+                                        uint32_t length, imagetype)
+{
+  /* Key is always stored with 2 bytes */
+  const uint32_t key_len= 2;
+  uint32_t f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t local_char_length= length / field_charset->mbmaxlen;
+  unsigned char *pos= ptr+length_bytes;
+  local_char_length= my_charpos(field_charset, pos, pos + f_length,
+                                local_char_length);
+  set_if_smaller(f_length, local_char_length);
+  unsigned char len_buff[key_len];
+  int2store(len_buff,f_length);
+  buff.append(len_buff);
+  buff.append(pos, f_length);
+  if (f_length < length)
+  {
+    /*
+      Must clear this as we do a memcmp in opt_range.cc to detect
+      identical keys
+    */
+    buff.append(length-f_length, 0);
+  }
+  return key_len+f_length;
+}
+
+
 uint32_t Field_varstring::get_key_image(unsigned char *buff,
                                     uint32_t length,
-                                    imagetype type __attribute__((unused)))
+                                    imagetype )
 {
   uint32_t f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
   uint32_t local_char_length= length / field_charset->mbmaxlen;
@@ -569,16 +629,16 @@ Field *Field_varstring::new_key_field(MEM_ROOT *root,
 }
 
 
-uint32_t Field_varstring::is_equal(Create_field *new_field)
+uint32_t Field_varstring::is_equal(Create_field *new_field_ptr)
 {
-  if (new_field->sql_type == real_type() &&
-      new_field->charset == field_charset)
+  if (new_field_ptr->sql_type == real_type() &&
+      new_field_ptr->charset == field_charset)
   {
-    if (new_field->length == max_display_length())
+    if (new_field_ptr->length == max_display_length())
       return IS_EQUAL_YES;
-    if (new_field->length > max_display_length() &&
-	((new_field->length <= 255 && max_display_length() <= 255) ||
-	 (new_field->length > 255 && max_display_length() > 255)))
+    if (new_field_ptr->length > max_display_length() &&
+	((new_field_ptr->length <= 255 && max_display_length() <= 255) ||
+	 (new_field_ptr->length > 255 && max_display_length() > 255)))
       return IS_EQUAL_PACK_LENGTH; // VARCHAR, longer variable length
   }
   return IS_EQUAL_NO;

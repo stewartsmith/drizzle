@@ -47,7 +47,7 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint32_t length,
   *err_pos= 0;                  // No error yet
   if (str != end)
   {
-    const char *start= str;    
+    const char *start= str;
     for (;;)
     {
       const char *pos= start;
@@ -59,7 +59,7 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint32_t length,
         for ( ; pos < end; pos+= mblen)
         {
           my_wc_t wc;
-          if ((mblen= cs->cset->mb_wc(cs, &wc, (const unsigned char *) pos, 
+          if ((mblen= cs->cset->mb_wc(cs, &wc, (const unsigned char *) pos,
                                                (const unsigned char *) end)) < 1)
             mblen= 1; // Not to hang on a wrong multibyte sequence
           if (wc == (my_wc_t) field_separator)
@@ -113,8 +113,8 @@ uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
   const char *j;
   for (uint32_t pos=0 ; (j=lib->type_names[pos++]) ; )
   {
-    for (i=find ; i != end && 
-	   my_toupper(system_charset_info,*i) == 
+    for (i=find ; i != end &&
+	   my_toupper(system_charset_info,*i) ==
 	   my_toupper(system_charset_info,*j) ; i++, j++) ;
     if (i == end)
     {

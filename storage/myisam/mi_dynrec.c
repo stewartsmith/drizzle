@@ -15,7 +15,7 @@
 
 /*
   Functions to handle space-packed-records and blobs
- 
+
   A row may be stored in one or more linked blocks.
   The block size is between MI_MIN_BLOCK_LENGTH and MI_MAX_BLOCK_LENGTH.
   Each block is aligned on MI_DYN_ALIGN_SIZE.
@@ -46,12 +46,6 @@ static int delete_dynamic_record(MI_INFO *info,my_off_t filepos,
 				 uint32_t second_read);
 static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos,
 			  uint32_t length);
-
-/* Play it safe; We have a small stack when using threads */
-#undef my_alloca
-#undef my_afree
-#define my_alloca(A) malloc((A))
-#define my_afree(A) free((A))
 
 	/* Interface function from MI_INFO */
 
@@ -94,7 +88,8 @@ bool mi_dynmap_file(MI_INFO *info, my_off_t size)
     info->s->file_map= NULL;
     return(1);
   }
-#if defined(HAVE_MADVISE)
+/* per krow we should look at removing the following code */
+#if defined(HAVE_MADVISE) && !defined(TARGET_OS_SOLARIS)
   madvise((char*) info->s->file_map, size, MADV_RANDOM);
 #endif
   info->s->mmaped_length= size;
@@ -133,7 +128,7 @@ void mi_remap_file(MI_INFO *info, my_off_t size)
     Buffer              Input buffer
     Count               Count of bytes for read
     offset              Start position
-    MyFlags             
+    MyFlags
 
   RETURN
     0  ok
@@ -143,7 +138,7 @@ size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
                     size_t Count, my_off_t offset, myf MyFlags)
 {
   if (info->s->concurrent_insert)
-    rw_rdlock(&info->s->mmap_lock);
+    pthread_rwlock_rdlock(&info->s->mmap_lock);
 
   /*
     The following test may fail in the following cases:
@@ -156,13 +151,13 @@ size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
   {
     memcpy(Buffer, info->s->file_map + offset, Count);
     if (info->s->concurrent_insert)
-      rw_unlock(&info->s->mmap_lock);
+      pthread_rwlock_unlock(&info->s->mmap_lock);
     return 0;
   }
   else
   {
     if (info->s->concurrent_insert)
-      rw_unlock(&info->s->mmap_lock);
+      pthread_rwlock_unlock(&info->s->mmap_lock);
     return my_pread(info->dfile, Buffer, Count, offset, MyFlags);
   }
 }
@@ -186,7 +181,7 @@ size_t mi_nommap_pread(MI_INFO *info, unsigned char *Buffer,
     Buffer              Output buffer
     Count               Count of bytes for write
     offset              Start position
-    MyFlags             
+    MyFlags
 
   RETURN
     0  ok
@@ -197,7 +192,7 @@ size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,
                       size_t Count, my_off_t offset, myf MyFlags)
 {
   if (info->s->concurrent_insert)
-    rw_rdlock(&info->s->mmap_lock);
+    pthread_rwlock_rdlock(&info->s->mmap_lock);
 
   /*
     The following test may fail in the following cases:
@@ -208,16 +203,16 @@ size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,
 
   if (info->s->mmaped_length >= offset + Count)
   {
-    memcpy(info->s->file_map + offset, Buffer, Count); 
+    memcpy(info->s->file_map + offset, Buffer, Count);
     if (info->s->concurrent_insert)
-      rw_unlock(&info->s->mmap_lock);
+      pthread_rwlock_unlock(&info->s->mmap_lock);
     return 0;
   }
   else
   {
     info->s->nonmmaped_inserts++;
     if (info->s->concurrent_insert)
-      rw_unlock(&info->s->mmap_lock);
+      pthread_rwlock_unlock(&info->s->mmap_lock);
     return my_pwrite(info->dfile, Buffer, Count, offset, MyFlags);
   }
 
@@ -262,7 +257,7 @@ int _mi_write_blob_record(MI_INFO *info, const unsigned char *record)
     return -1;
   }
 #endif
-  if (!(rec_buff=(unsigned char*) my_alloca(reclength)))
+  if (!(rec_buff=(unsigned char*) malloc(reclength)))
   {
     my_errno= HA_ERR_OUT_OF_MEM; /* purecov: inspected */
     return(-1);
@@ -272,7 +267,7 @@ int _mi_write_blob_record(MI_INFO *info, const unsigned char *record)
   assert(reclength2 <= reclength);
   error=write_dynamic_record(info,rec_buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER),
 			     reclength2);
-  my_afree(rec_buff);
+  free(rec_buff);
   return(error);
 }
 
@@ -294,7 +289,7 @@ int _mi_update_blob_record(MI_INFO *info, my_off_t pos, const unsigned char *rec
     return -1;
   }
 #endif
-  if (!(rec_buff=(unsigned char*) my_alloca(reclength)))
+  if (!(rec_buff=(unsigned char*) malloc(reclength)))
   {
     my_errno= HA_ERR_OUT_OF_MEM; /* purecov: inspected */
     return(-1);
@@ -304,7 +299,7 @@ int _mi_update_blob_record(MI_INFO *info, my_off_t pos, const unsigned char *rec
   error=update_dynamic_record(info,pos,
 			      rec_buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER),
 			      reclength);
-  my_afree(rec_buff);
+  free(rec_buff);
   return(error);
 }
 
@@ -688,7 +683,7 @@ int _mi_write_part_record(MI_INFO *info,
 	/* Make a long block for one write */
   record_end= *record+length-head_length;
   del_length=(res_length ? MI_DYN_DELETE_BLOCK_HEADER : 0);
-  memcpy(*record - head_length, temp, head_length);
+  memmove(*record - head_length, temp, head_length);
   memcpy(temp,record_end,(size_t) (extra_length+del_length));
   memset(record_end, 0, extra_length);
 
@@ -1507,7 +1502,7 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
   unsigned char *rec_buff,*old_record;
   int error;
 
-  if (!(old_record=my_alloca(info->s->base.reclength)))
+  if (!(old_record=malloc(info->s->base.reclength)))
     return(1);
 
   /* Don't let the compare destroy blobs that may be in use */
@@ -1524,7 +1519,7 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
       free(rec_buff_ptr);
     info->rec_buff=rec_buff;
   }
-  my_afree(old_record);
+  free(old_record);
   return(error);
 }
 
@@ -1553,7 +1548,7 @@ int _mi_cmp_dynamic_record(register MI_INFO *info, register const unsigned char 
   {						/* If check isn't disabled  */
     if (info->s->base.blobs)
     {
-      if (!(buffer=(unsigned char*) my_alloca(info->s->base.pack_reclength+
+      if (!(buffer=(unsigned char*) malloc(info->s->base.pack_reclength+
 				     _my_calc_total_blob_length(info,record))))
 	return(-1);
     }
@@ -1601,7 +1596,7 @@ int _mi_cmp_dynamic_record(register MI_INFO *info, register const unsigned char 
   my_errno=0;
 err:
   if (buffer != info->rec_buff)
-    my_afree((unsigned char*) buffer);
+    free((unsigned char*) buffer);
   return(my_errno);
 }
 
@@ -1797,7 +1792,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
             block_info.filepos + block_info.data_len &&
             flush_io_cache(&info->rec_cache))
           goto err;
-	/* my_seek(info->dfile,filepos,MY_SEEK_SET,MYF(0)); */
+	/* lseek(info->dfile,filepos,SEEK_SET); */
 	if (my_read(info->dfile,(unsigned char*) to,block_info.data_len,MYF(MY_NABP)))
 	{
 	  if (my_errno == -1)
@@ -1850,7 +1845,7 @@ uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
       pointer set to the end of the header after this function.
       my_pread() may leave the file pointer untouched.
     */
-    my_seek(file,filepos,MY_SEEK_SET,MYF(0));
+    lseek(file,filepos,SEEK_SET);
     if (my_read(file, header, sizeof(info->header),MYF(0)) !=
 	sizeof(info->header))
       goto err;

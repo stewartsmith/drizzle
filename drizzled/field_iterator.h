@@ -21,6 +21,10 @@
 #ifndef DRIZZLED_FIELD_ITERATOR_H
 #define DRIZZLED_FIELD_ITERATOR_H
 
+#include <drizzled/sql_alloc.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/natural_join_column.h>
+
 class Table;
 class TableList;
 
@@ -37,12 +41,12 @@ public:
   virtual void next()= 0;
   virtual bool end_of_fields()= 0;              /* Return 1 at end of list */
   virtual const char *name()= 0;
-  virtual Item *create_item(THD *)= 0;
+  virtual Item *create_item(Session *)= 0;
   virtual Field *field()= 0;
 };
 
 
-/* 
+/*
   Iterator over the fields of a base table, view with temporary
   table, or subquery.
 */
@@ -57,7 +61,7 @@ public:
   void next() { ptr++; }
   bool end_of_fields() { return *ptr == 0; }
   const char *name();
-  Item *create_item(THD *thd);
+  Item *create_item(Session *session);
   Field *field() { return *ptr; }
 };
 
@@ -80,7 +84,7 @@ public:
   void next();
   bool end_of_fields() { return !cur_column_ref; }
   const char *name() { return cur_column_ref->name(); }
-  Item *create_item(THD *thd) { return cur_column_ref->create_item(thd); }
+  Item *create_item(Session *session) { return cur_column_ref->create_item(session); }
   Field *field() { return cur_column_ref->field(); }
   Natural_join_column *column_ref() { return cur_column_ref; }
 };
@@ -118,7 +122,7 @@ public:
   const char *name() { return field_it->name(); }
   const char *table_name();
   const char *db_name();
-  Item *create_item(THD *thd) { return field_it->create_item(thd); }
+  Item *create_item(Session *session) { return field_it->create_item(session); }
   Field *field() { return field_it->field(); }
   Natural_join_column *get_or_create_column_ref(TableList *parent_table_ref);
   Natural_join_column *get_natural_column_ref();

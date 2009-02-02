@@ -31,11 +31,16 @@
 */
 
 #include <drizzled/server_includes.h>
-#include "sql_sort.h"
+#include <drizzled/sql_sort.h>
+#include <drizzled/session.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 
-int unique_write_to_file(unsigned char* key,
-                         element_count count __attribute__((unused)),
+int unique_write_to_file(unsigned char* key, element_count,
                          Unique *unique)
 {
   /*
@@ -48,8 +53,7 @@ int unique_write_to_file(unsigned char* key,
 }
 
 int unique_write_to_ptrs(unsigned char* key,
-                         element_count count __attribute__((unused)),
-                         Unique *unique)
+                         element_count, Unique *unique)
 {
   memcpy(unique->record_pointers, key, unique->size);
   unique->record_pointers+=unique->size;
@@ -57,7 +61,7 @@ int unique_write_to_ptrs(unsigned char* key,
 }
 
 Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
-	       uint32_t size_arg, uint64_t max_in_memory_size_arg)
+	       uint32_t size_arg, size_t max_in_memory_size_arg)
   :max_in_memory_size(max_in_memory_size_arg), size(size_arg), elements(0)
 {
   my_b_clear(&file);
@@ -70,7 +74,7 @@ Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
   */
   max_elements= (ulong) (max_in_memory_size /
                          ALIGN_SIZE(sizeof(TREE_ELEMENT)+size));
-  open_cached_file(&file, mysql_tmpdir,TEMP_PREFIX, DISK_BUFFER_SIZE,
+  open_cached_file(&file, drizzle_tmpdir,TEMP_PREFIX, DISK_BUFFER_SIZE,
                    MYF(MY_WME));
 }
 
@@ -126,8 +130,7 @@ inline double log2_n_fact(double x)
       total_buf_elems* log2(n_buffers) / TIME_FOR_COMPARE_ROWID;
 */
 
-static double get_merge_buffers_cost(uint32_t *buff_elems __attribute__((unused)),
-                                     uint32_t elem_size,
+static double get_merge_buffers_cost(uint32_t *, uint32_t elem_size,
                                      uint32_t *first, uint32_t *last)
 {
   uint32_t total_buf_elems= 0;
@@ -264,7 +267,7 @@ static double get_merge_many_buffs_cost(uint32_t *buffer,
 */
 
 double Unique::get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size,
-                            uint64_t max_in_memory_size)
+                            size_t max_in_memory_size)
 {
   ulong max_elements_in_tree;
   ulong last_tree_elems;
@@ -563,7 +566,7 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
     return 1;
   if (flush_io_cache(&file) || reinit_io_cache(&file, READ_CACHE, 0L, 0, 0))
     return 1;
-  if (!(merge_buffer= (unsigned char *) my_malloc((ulong) max_in_memory_size, MYF(0))))
+  if (!(merge_buffer= (unsigned char *) malloc(max_in_memory_size)))
     return 1;
   res= merge_walk(merge_buffer, (ulong) max_in_memory_size, size,
                   (BUFFPEK *) file_ptrs.buffer,
@@ -588,7 +591,7 @@ bool Unique::get(Table *table)
   {
     /* Whole tree is in memory;  Don't use disk if you don't need to */
     if ((record_pointers=table->sort.record_pointers= (unsigned char*)
-	 my_malloc(size * tree.elements_in_tree, MYF(0))))
+	 malloc(size * tree.elements_in_tree)))
     {
       (void) tree_walk(&tree, (tree_walk_action) unique_write_to_ptrs,
 		       this, left_root_right);
@@ -607,12 +610,12 @@ bool Unique::get(Table *table)
   bool error=1;
 
       /* Open cached file if it isn't open */
-  outfile=table->sort.io_cache=(IO_CACHE*) my_malloc(sizeof(IO_CACHE),
-                                MYF(MY_ZEROFILL));
+  outfile=table->sort.io_cache= new IO_CACHE;
+  memset(outfile, 0, sizeof(IO_CACHE));
 
-  if (!outfile || (! my_b_inited(outfile) && open_cached_file(outfile,mysql_tmpdir,TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME))))
+  if (!outfile || (! my_b_inited(outfile) && open_cached_file(outfile,drizzle_tmpdir,TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME))))
     return 1;
-  reinit_io_cache(outfile,WRITE_CACHE,0L,0,0);
+  reinit_io_cache(outfile, WRITE_CACHE, 0L, 0, 0);
 
   memset(&sort_param, 0, sizeof(sort_param));
   sort_param.max_rows= elements;
@@ -622,9 +625,8 @@ bool Unique::get(Table *table)
   sort_param.keys= (uint) (max_in_memory_size / sort_param.sort_length);
   sort_param.not_killable=1;
 
-  if (!(sort_buffer=(unsigned char*) my_malloc((sort_param.keys+1) *
-				       sort_param.sort_length,
-				       MYF(0))))
+  if (!(sort_buffer=(unsigned char*) malloc((sort_param.keys+1) *
+				            sort_param.sort_length)))
     return 1;
   sort_param.unique_buff= sort_buffer+(sort_param.keys*
 				       sort_param.sort_length);

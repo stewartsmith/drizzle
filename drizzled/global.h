@@ -26,7 +26,7 @@
 #define __i386__
 #endif
 
-#include "config.h"
+#include <config.h>
 
 #if defined(__cplusplus)
 
@@ -36,12 +36,12 @@
 
 # include CSTDINT_H
 # include CINTTYPES_H
-# include CMATH_H
 # include <cstdio>
 # include <cstdlib>
 # include <cstddef>
 # include <cassert>
 # include <cerrno>
+# include <sstream>
 #else
 # include <stdint.h>
 # include <inttypes.h>
@@ -58,17 +58,9 @@
 
 #endif // __cplusplus
 
-/*
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif */ /* TIME_WITH_SYS_TIME */
+#ifndef EOVERFLOW
+#define EOVERFLOW 84
+#endif
 
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
@@ -97,14 +89,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#if defined(__cplusplus) && defined(NO_CPLUSPLUS_ALLOCA)
-#undef HAVE_ALLOCA
-#undef HAVE_ALLOCA_H
-#endif
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 
 
 #ifdef HAVE_SYS_STAT_H
@@ -243,10 +227,15 @@ typedef unsigned long ulong;      /* Short for unsigned long */
 
 typedef uint64_t my_off_t;
 
-#define MY_FILEPOS_ERROR  (UINT64_MAX)
+#if defined(SIZEOF_OFF_T)
+# if (SIZEOF_OFF_T == 8)
+#  define OFF_T_MAX (INT64_MAX)
+# else
+#  define OFF_T_MAX (INT32_MAX)
+# endif
+#endif
 
-typedef int    myf;  /* Type of MyFlags in my_funcs */
-#define MYF(v)		(myf) (v)
+#define MY_FILEPOS_ERROR  -1
 
 /* Defines for time function */
 #define SCALE_SEC  100
@@ -271,11 +260,61 @@ typedef int    myf;  /* Type of MyFlags in my_funcs */
 #define cmax(a, b)       ((a) > (b) ? (a) : (b))
 #define cmin(a, b)       ((a) < (b) ? (a) : (b))
 
+#define DRIZZLE_SERVER
+
 /* Length of decimal number represented by INT32. */
 #define MY_INT32_NUM_DECIMAL_DIGITS 11
 
 /* Length of decimal number represented by INT64. */
 #define MY_INT64_NUM_DECIMAL_DIGITS 21
+
+#define PROTOCOL_VERSION 10
+/*
+  Io buffer size; Must be a power of 2 and
+  a multiple of 512. May be
+  smaller what the disk page size. This influences the speed of the
+  isam btree library. eg to big to slow.
+*/
+#define IO_SIZE 4096
+/* Max file name len */
+#define FN_LEN 256
+/* Max length of extension (part of FN_LEN) */
+#define FN_EXTLEN 20
+/* Max length of full path-name */
+#define FN_REFLEN 512
+/* File extension character */
+#define FN_EXTCHAR '.'
+/* ~ is used as abbrev for home dir */
+#define FN_HOMELIB '~'
+/* ./ is used as abbrev for current dir */
+#define FN_CURLIB '.'
+/* Parent directory; Must be a string */
+#define FN_PARENTDIR ".."
+
+/* Quote argument (before cpp) */
+#ifndef QUOTE_ARG
+# define QUOTE_ARG(x) #x
+#endif
+/* Quote argument, (after cpp) */
+#ifndef STRINGIFY_ARG
+# define STRINGIFY_ARG(x) QUOTE_ARG(x)
+#endif
+
+/*
+ * The macros below are borrowed from include/linux/compiler.h in the
+ * Linux kernel. Use them to indicate the likelyhood of the truthfulness
+ * of a condition. This serves two purposes - newer versions of gcc will be
+ * able to optimize for branch predication, which could yield siginficant
+ * performance gains in frequently executed sections of the code, and the
+ * other reason to use them is for documentation
+ */
+#if !defined(__GNUC__)
+#define __builtin_expect(x, expected_value) (x)
+#endif
+
+#define likely(x)  __builtin_expect((x),1)
+#define unlikely(x)  __builtin_expect((x),0)
+
 
 /*
   Only Linux is known to need an explicit sync of the directory to make sure a
@@ -285,6 +324,10 @@ typedef int    myf;  /* Type of MyFlags in my_funcs */
 #define NEED_EXPLICIT_SYNC_DIR 1
 #endif
 
-#include <libdrizzle/gettext.h>
+/* We need to turn off _DTRACE_VERSION if we're not going to use dtrace */
+#if !defined(HAVE_DTRACE)
+# undef _DTRACE_VERSION
+# define _DTRACE_VERSION 0
+#endif
 
 #endif /* DRIZZLE_SERVER_GLOBAL_H */

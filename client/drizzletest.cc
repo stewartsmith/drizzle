@@ -38,7 +38,6 @@
 
 #define MTEST_VERSION "3.3"
 
-#include "config.h"
 #include "client_priv.h"
 
 #include <queue>
@@ -46,12 +45,15 @@
 #include <string>
 #include <vector>
 
-#include <pcrecpp.h>
+#include <pcre.h>
 
 #include <mysys/hash.h>
 #include <stdarg.h>
 
 #include "errname.h"
+
+/* Added this for string translation. */
+#include <drizzled/gettext.h>
 
 using namespace std;
 
@@ -59,36 +61,38 @@ using namespace std;
 #define MAX_COLUMNS            256
 #define MAX_EMBEDDED_SERVER_ARGS 64
 #define MAX_DELIMITER_LENGTH 16
-
 /* Flags controlling send and reap */
 #define QUERY_SEND_FLAG  1
 #define QUERY_REAP_FLAG  2
 
 enum {
   OPT_PS_PROTOCOL, OPT_SP_PROTOCOL, OPT_CURSOR_PROTOCOL, OPT_VIEW_PROTOCOL,
-  OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES
+  OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES,
+  OPT_TESTDIR
 };
 
 static int record= 0, opt_sleep= -1;
-static char *opt_db= 0, *opt_pass= 0;
-const char *opt_user= 0, *opt_host= 0, *unix_sock= 0, *opt_basedir= "./";
+static char *opt_db= NULL, *opt_pass= NULL;
+const char *opt_user= NULL, *opt_host= NULL, *unix_sock= NULL,
+           *opt_basedir= "./";
 const char *opt_logdir= "";
-const char *opt_include= 0, *opt_charsets_dir;
-static int opt_port= 0;
+const char *opt_include= NULL, *opt_charsets_dir;
+const char *opt_testdir= NULL;
+static uint32_t opt_port= 0;
 static int opt_max_connect_retries;
-static bool opt_compress= 0, silent= 0, verbose= 0;
-static bool debug_info_flag= 0, debug_check_flag= 0;
-static bool tty_password= 0;
-static bool opt_mark_progress= 0;
-static bool parsing_disabled= 0;
+static bool opt_compress= false, silent= false, verbose= false;
+static bool debug_info_flag= false, debug_check_flag= false;
+static bool tty_password= false;
+static bool opt_mark_progress= false;
+static bool parsing_disabled= false;
 static bool display_result_vertically= false,
   display_metadata= false, display_result_sorted= false;
-static bool disable_query_log= 0, disable_result_log= 0;
-static bool disable_warnings= 0;
-static bool disable_info= 1;
-static bool abort_on_error= 1;
-static bool server_initialized= 0;
-static bool is_windows= 0;
+static bool disable_query_log= false, disable_result_log= false;
+static bool disable_warnings= false;
+static bool disable_info= true;
+static bool abort_on_error= true;
+static bool server_initialized= false;
+static bool is_windows= false;
 static char **default_argv;
 static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
@@ -166,7 +170,7 @@ typedef struct
 master_pos_st master_pos;
 
 /* if set, all results are concated and compared against this file */
-const char *result_file_name= 0;
+const char *result_file_name= NULL;
 
 typedef struct st_var
 {
@@ -389,7 +393,7 @@ void log_msg(const char *fmt, ...)
 VAR* var_from_env(const char *, const char *);
 VAR* var_init(VAR* v, const char *name, int name_len, const char *val,
               int val_len);
-void var_free(void* v);
+extern "C" void var_free(void* v);
 VAR* var_get(const char *var_name, const char** var_name_end,
              bool raw, bool ignore_not_existing);
 void eval_expr(VAR* v, const char *p, const char** p_end);
@@ -838,7 +842,7 @@ static void free_used_memory(void)
   vector<struct st_command *>::iterator iter;
   for (iter= q_lines.begin() ; iter < q_lines.end() ; iter++)
   {
-    struct st_command * q_line= *(iter.base());
+    struct st_command * q_line= *iter;
     if (q_line->query_buf != NULL)
     {
       free(q_line->query_buf);
@@ -1207,7 +1211,6 @@ static void show_diff(string* ds,
                "2>&1",
                NULL) > 1) /* Most "diff" tools return >1 if error */
   {
-    ds_tmp= "";
 
     /* Fallback to context diff with "diff -c" */
     if (run_tool("diff",
@@ -1222,7 +1225,7 @@ static void show_diff(string* ds,
         Fallback to dump both files to result file and inform
         about installing "diff"
       */
-      ds_tmp= "";
+      ds_tmp.clear();
 
       ds_tmp.append(
                     "\n"
@@ -1285,11 +1288,26 @@ static int compare_files2(File fd, const char* filename2)
   File fd2;
   uint len, len2;
   char buff[512], buff2[512];
+  const char *fname= filename2;
+  string tmpfile;
 
-  if ((fd2= my_open(filename2, O_RDONLY, MYF(0))) < 0)
+  if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
     my_close(fd, MYF(0));
-    die("Failed to open second file: '%s'", filename2);
+    if (opt_testdir != NULL)
+    {
+      tmpfile= opt_testdir;
+      if (tmpfile[tmpfile.length()] != '/')
+        tmpfile.append("/");
+      tmpfile.append(filename2);
+      fname= tmpfile.c_str();
+    }
+    if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
+    {
+      my_close(fd, MYF(0));
+    
+      die("Failed to open second file: '%s'", fname);
+    }
   }
   while((len= my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
@@ -1382,7 +1400,7 @@ static int string_cmp(string* ds, const char *fname)
   /* Write ds to temporary file and set file pos to beginning*/
   if (my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
                MYF(MY_FNABP | MY_WME)) ||
-      my_seek(fd, 0, SEEK_SET, MYF(0)) == MY_FILEPOS_ERROR)
+      lseek(fd, 0, SEEK_SET) == MY_FILEPOS_ERROR)
   {
     my_close(fd, MYF(0));
     /* Remove the temporary file */
@@ -1455,7 +1473,7 @@ static void check_result(string* ds)
     ds->erase(); /* Don't create a .log file */
 
     show_diff(NULL, result_file_name, reject_file);
-    die(mess);
+    die("%s",mess);
     break;
   }
   default: /* impossible */
@@ -1539,8 +1557,8 @@ static void strip_parentheses(struct st_command *command)
 }
 
 
-static unsigned char *get_var_key(const unsigned char* var, size_t *len,
-                          bool __attribute__((unused)) t)
+extern "C"
+unsigned char *get_var_key(const unsigned char* var, size_t *len, bool)
 {
   register char* key;
   key = ((VAR*)var)->name;
@@ -1559,14 +1577,14 @@ VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
   if (!val_len && val)
     val_len = strlen(val) ;
   val_alloc_len = val_len + 16; /* room to grow */
-  if (!(tmp_var=v) && !(tmp_var = (VAR*)my_malloc(sizeof(*tmp_var)
-                                                  + name_len+1, MYF(MY_WME))))
+  if (!(tmp_var=v) && !(tmp_var = (VAR*)malloc(sizeof(*tmp_var)
+                                               + name_len+1)))
     die("Out of memory");
 
   tmp_var->name = (name) ? (char*) tmp_var + sizeof(*tmp_var) : 0;
   tmp_var->alloced = (v == 0);
 
-  if (!(tmp_var->str_val = (char *)my_malloc(val_alloc_len+1, MYF(MY_WME))))
+  if (!(tmp_var->str_val = (char *)malloc(val_alloc_len+1)))
     die("Out of memory");
 
   memcpy(tmp_var->name, name, name_len);
@@ -1637,7 +1655,8 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
                                  length)))
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
-      strmake(buff, save_var_name, length);
+      strncpy(buff, save_var_name, length);
+      buff[length]= '\0';
       v= var_from_env(buff, "");
     }
     var_name--;  /* Point at last character */
@@ -1712,7 +1731,7 @@ static void var_set(const char *var_name, const char *var_name_end,
     snprintf(buf, sizeof(buf), "%.*s=%.*s",
              v->name_len, v->name,
              v->str_val_len, v->str_val);
-    if (!(v->env_s= my_strdup(buf, MYF(MY_WME))))
+    if (!(v->env_s= strdup(buf)))
       die("Out of memory");
     putenv(v->env_s);
     free(old_env_s);
@@ -1890,7 +1909,8 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
   char * unstripped_query= strdup(ds_query.c_str());
   if (strip_surrounding(unstripped_query, '"', '"'))
     die("Mismatched \"'s around query '%s'", ds_query.c_str());
-  ds_query= unstripped_query;
+  ds_query.clear();
+  ds_query.append(unstripped_query);
 
   /* Run the query */
   if (drizzle_real_query(drizzle, ds_query.c_str(), ds_query.length()))
@@ -1956,11 +1976,13 @@ static void var_copy(VAR *dest, VAR *src)
   dest->int_dirty= src->int_dirty;
 
   /* Alloc/realloc data for str_val in dest */
-  if (dest->alloced_len < src->alloced_len &&
-      !(dest->str_val= dest->str_val
-        ? (char *)my_realloc(dest->str_val, src->alloced_len, MYF(MY_WME))
-        : (char *)my_malloc(src->alloced_len, MYF(MY_WME))))
-    die("Out of memory");
+  if (dest->alloced_len < src->alloced_len)
+  {
+    char *tmpptr= (char *)realloc(dest->str_val, src->alloced_len);
+    if (tmpptr == NULL)
+      die("Out of memory");
+    dest->str_val= tmpptr;
+  }
   else
     dest->alloced_len= src->alloced_len;
 
@@ -2012,11 +2034,10 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
       static int MIN_VAR_ALLOC= 32;
       v->alloced_len = (new_val_len < MIN_VAR_ALLOC - 1) ?
         MIN_VAR_ALLOC : new_val_len + 1;
-      if (!(v->str_val =
-            v->str_val ? (char *)my_realloc(v->str_val, v->alloced_len+1,
-                                            MYF(MY_WME)) :
-            (char *)my_malloc(v->alloced_len+1, MYF(MY_WME))))
+      char *tmpptr= (char *)realloc(v->str_val, v->alloced_len+1);
+      if (tmpptr == NULL)
         die("Out of memory");
+      v->str_val= tmpptr;
     }
     v->str_val_len = new_val_len;
     memcpy(v->str_val, p, new_val_len);
@@ -2034,7 +2055,7 @@ static int open_file(const char *name)
 
   if (!test_if_hard_path(name))
   {
-    strxmov(buff, opt_basedir, name, NULL);
+    sprintf(buff,"%s%s",opt_basedir,name);
     name=buff;
   }
   fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -2047,7 +2068,8 @@ static int open_file(const char *name)
     cur_file--;
     die("Could not open '%s' for reading", buff);
   }
-  cur_file->file_name= my_strdup(buff, MYF(MY_FAE));
+  if (!(cur_file->file_name= strdup(buff)))
+    die("Out of memory");
   cur_file->lineno=1;
   return(0);
 }
@@ -2087,6 +2109,14 @@ static void do_source(struct st_command *command)
     ; /* Do nothing */
   else
   {
+    if (opt_testdir != NULL)
+    {
+      string testdir(opt_testdir);
+      if (testdir[testdir.length()] != '/')
+        testdir.append("/");
+      testdir.append(ds_filename);
+      ds_filename.swap(testdir);
+    }
     open_file(ds_filename.c_str());
   }
 
@@ -2467,8 +2497,8 @@ static void do_file_exist(struct st_command *command)
 
 static void do_mkdir(struct st_command *command)
 {
-  int error;
   string ds_dirname;
+  int error;
   const struct command_arg mkdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to create"}
   };
@@ -2478,7 +2508,7 @@ static void do_mkdir(struct st_command *command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= my_mkdir(ds_dirname.c_str(), 0777, MYF(0)) != 0;
+  error= mkdir(ds_dirname.c_str(), (0777 & my_umask_dir)) != 0;
   handle_command_error(command, error);
   return;
 }
@@ -2598,7 +2628,7 @@ static void do_write_file_command(struct st_command *command, bool append)
 
   /* If no delimiter was provided, use EOF */
   if (ds_delimiter.length() == 0)
-    ds_delimiter= "EOF";
+    ds_delimiter.append("EOF");
 
   if (!append && access(ds_filename.c_str(), F_OK) == 0)
   {
@@ -2834,13 +2864,13 @@ static void do_change_user(struct st_command *command)
                      ',');
 
   if (!ds_user.length())
-    ds_user= drizzle->user;
+    ds_user.append(drizzle->user);
 
   if (!ds_passwd.length())
-    ds_passwd= drizzle->passwd;
+    ds_passwd.append(drizzle->passwd);
 
   if (!ds_db.length())
-    ds_db= drizzle->db;
+    ds_db.append(drizzle->db);
 
   if (drizzle_change_user(drizzle, ds_user.c_str(),
                           ds_passwd.c_str(), ds_db.c_str()))
@@ -2892,7 +2922,7 @@ static void do_perl(struct st_command *command)
 
   /* If no delimiter was provided, use EOF */
   if (ds_delimiter.length() == 0)
-    ds_delimiter= "EOF";
+    ds_delimiter.append("EOF");
 
   read_until_delimiter(&ds_script, &ds_delimiter);
 
@@ -2966,7 +2996,7 @@ static int do_echo(struct st_command *command)
 
 
 static void
-do_wait_for_slave_to_stop(struct st_command *c __attribute__((unused)))
+do_wait_for_slave_to_stop(struct st_command *)
 {
   static int SLAVE_POLL_INTERVAL= 300000;
   DRIZZLE *drizzle= &cur_con->drizzle;
@@ -2989,7 +3019,7 @@ do_wait_for_slave_to_stop(struct st_command *c __attribute__((unused)))
     drizzle_free_result(res);
     if (done)
       break;
-    my_sleep(SLAVE_POLL_INTERVAL);
+    usleep(SLAVE_POLL_INTERVAL);
   }
   return;
 }
@@ -3082,7 +3112,7 @@ static int do_save_master_pos(void)
     die("drizzle_store_result() retuned NULL for '%s'", query);
   if (!(row = drizzle_fetch_row(res)))
     die("empty result in show master status");
-  my_stpncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
+  strncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
   master_pos.pos = strtoul(row[1], (char**) 0, 10);
   drizzle_free_result(res);
   return(0);
@@ -3192,7 +3222,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
     sleep_val= opt_sleep;
 
   if (sleep_val)
-    my_sleep((uint32_t) (sleep_val * 1000000L));
+    usleep((uint32_t) (sleep_val * 1000000L));
   command->last_argument= sleep_end;
   return 0;
 }
@@ -3210,7 +3240,7 @@ static void do_get_file_name(struct st_command *command,
   if (*p)
     *p++= 0;
   command->last_argument= p;
-  strmake(dest, name, dest_max_len - 1);
+  strncpy(dest, name, dest_max_len - 1);
 }
 
 
@@ -3525,7 +3555,7 @@ static void do_close_connection(struct st_command *command)
     When the connection is closed set name to "-closed_connection-"
     to make it possible to reuse the connection name.
   */
-  if (!(con->name = my_strdup("-closed_connection-", MYF(MY_WME))))
+  if (!(con->name = strdup("-closed_connection-")))
     die("Out of memory");
 
   return;
@@ -3583,7 +3613,7 @@ static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
       verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts,
                   opt_max_connect_retries, drizzle_errno(drizzle),
                   drizzle_error(drizzle));
-      my_sleep(connection_retry_sleep);
+      usleep(connection_retry_sleep);
     }
     else
     {
@@ -3745,7 +3775,8 @@ static void do_connect(struct st_command *command)
     {
       char buff[FN_REFLEN];
       fn_format(buff, ds_sock.c_str(), TMPDIR, "", 0);
-      ds_sock= buff;
+      ds_sock.clear();
+      ds_sock.append(buff);
     }
   }
 
@@ -3794,11 +3825,11 @@ static void do_connect(struct st_command *command)
 
   /* Use default db name */
   if (ds_database.length() == 0)
-    ds_database= opt_db;
+    ds_database.append(opt_db);
 
   /* Special database to allow one to connect without a database name */
   if (ds_database.length() && !strcmp(ds_database.c_str(),"*NO-ONE*"))
-    ds_database= "";
+    ds_database.clear();
 
   if (connect_n_handle_errors(command, &con_slot->drizzle,
                               ds_host.c_str(),ds_user.c_str(),
@@ -3946,7 +3977,7 @@ static void do_delimiter(struct st_command* command)
   if (!(*p))
     die("Can't set empty delimiter");
 
-  strmake(delimiter, p, sizeof(delimiter) - 1);
+  strncpy(delimiter, p, sizeof(delimiter) - 1);
   delimiter_length= strlen(delimiter);
 
   command->last_argument= p + delimiter_length;
@@ -4367,9 +4398,9 @@ static int read_command(struct st_command** command_ptr)
     return(0);
   }
   if (!(*command_ptr= command=
-        (struct st_command*) my_malloc(sizeof(*command),
-                                       MYF(MY_WME|MY_ZEROFILL))))
+        (struct st_command*) malloc(sizeof(*command))))
     die(NULL);
+  memset(command, 0, sizeof(*command));
   q_lines.push_back(command);
   command->type= Q_UNKNOWN;
 
@@ -4396,7 +4427,7 @@ static int read_command(struct st_command** command_ptr)
   while (*p && my_isspace(charset_info, *p))
     p++;
 
-  if (!(command->query_buf= command->query= my_strdup(p, MYF(MY_WME))))
+  if (!(command->query_buf= command->query= strdup(p)))
     die("Out of memory");
 
   /* Calculate first word length(the command), terminated by space or ( */
@@ -4441,6 +4472,9 @@ static struct my_option my_long_options[] =
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"include", 'i', "Include SQL before each test case.", (char**) &opt_include,
    (char**) &opt_include, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"testdir", OPT_TESTDIR, "Path to use to search for test files",
+   (char**) &opt_testdir,
+   (char**) &opt_testdir, 0,GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"logdir", OPT_LOG_DIR, "Directory for log files", (char**) &opt_logdir,
    (char**) &opt_logdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"mark-progress", OPT_MARK_PROGRESS,
@@ -4451,13 +4485,12 @@ static struct my_option my_long_options[] =
    "Max number of connection attempts when connecting to server",
    (char**) &opt_max_connect_retries, (char**) &opt_max_connect_retries, 0,
    GET_INT, REQUIRED_ARG, 500, 1, 10000, 0, 0, 0},
-  {"password", 'p', "Password to use when connecting to server.",
+  {"password", 'P', "Password to use when connecting to server.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+  {"port", 'p', "Port number to use for connection or 0 for default to, in "
+   "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   (char**) &opt_port,
-   (char**) &opt_port, 0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quiet", 's', "Suppress all normal output.", (char**) &silent,
    (char**) &silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"record", 'r', "Record output of test_file into result file.",
@@ -4524,7 +4557,7 @@ static void read_embedded_server_arguments(const char *name)
 
   if (!test_if_hard_path(name))
   {
-    strxmov(buff, opt_basedir, name, NULL);
+    sprintf(buff,"%s%s",opt_basedir,name);
     name=buff;
   }
   fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -4542,7 +4575,7 @@ static void read_embedded_server_arguments(const char *name)
   {
     *(strchr(str, '\0')-1)=0;        /* Remove end newline */
     if (!(embedded_server_args[embedded_server_arg_count]=
-          (char*) my_strdup(str,MYF(MY_WME))))
+          (char*) strdup(str)))
     {
       my_fclose(file,MYF(0));
       die("Out of memory");
@@ -4558,10 +4591,12 @@ static void read_embedded_server_arguments(const char *name)
 }
 
 
-static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-               char *argument)
+extern "C" bool
+get_one_option(int optid, const struct my_option *, char *argument)
 {
+  char *endchar= NULL;
+  uint64_t temp_drizzle_port= 0;
+
   switch(optid) {
   case 'r':
     record = 1;
@@ -4571,7 +4606,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     char buff[FN_REFLEN];
     if (!test_if_hard_path(argument))
     {
-      strxmov(buff, opt_basedir, argument, NULL);
+      sprintf(buff,"%s%s",opt_basedir,argument);
       argument= buff;
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4579,7 +4614,8 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (!(cur_file->file=
           my_fopen(buff, O_RDONLY, MYF(0))))
       die("Could not open '%s' for reading: errno = %d", buff, errno);
-    cur_file->file_name= my_strdup(buff, MYF(MY_FAE));
+    if (!(cur_file->file_name= strdup(buff)))
+      die("Out of memory");
     cur_file->lineno= 1;
     break;
   }
@@ -4588,7 +4624,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     static char buff[FN_REFLEN];
     if (!test_if_hard_path(argument))
     {
-      strxmov(buff, opt_basedir, argument, NULL);
+      sprintf(buff,"%s%s",opt_basedir,argument);
       argument= buff;
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4597,18 +4633,46 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     break;
   }
   case 'p':
+    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
+    /* if there is an alpha character this is not a valid port */
+    if (strlen(endchar) != 0)
+    {
+      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
+      exit(1);
+    }
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+    {
+      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+      exit(1);
+    }
+    else
+    {
+      opt_port= (uint32_t) temp_drizzle_port;
+    }
+    break;
+  case 'P':
     if (argument)
     {
-      free(opt_pass);
-      opt_pass= my_strdup(argument, MYF(MY_FAE));
-      while (*argument) *argument++= 'x';    /* Destroy argument */
+      if (opt_pass)
+        free(opt_pass);
+      opt_pass = strdup(argument);
+      if (opt_pass == NULL)
+        die("Out of memory");
+      while (*argument)
+      {
+        /* Overwriting password with 'x' */
+        *argument++= 'x';
+      }
       tty_password= 0;
     }
     else
       tty_password= 1;
     break;
   case 't':
-    my_stpncpy(TMPDIR, argument, sizeof(TMPDIR));
+    strncpy(TMPDIR, argument, sizeof(TMPDIR));
     break;
   case 'A':
     if (!embedded_server_arg_count)
@@ -4618,7 +4682,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     }
     if (embedded_server_arg_count == MAX_EMBEDDED_SERVER_ARGS-1 ||
         !(embedded_server_args[embedded_server_arg_count++]=
-          my_strdup(argument, MYF(MY_FAE))))
+          strdup(argument)))
     {
       die("Can't use server argument");
     }
@@ -4639,7 +4703,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 
 static int parse_args(int argc, char **argv)
 {
-  load_defaults("my",load_default_groups,&argc,&argv);
+  load_defaults("drizzle",load_default_groups,&argc,&argv);
   default_argv= argv;
 
   if ((handle_options(&argc, &argv, my_long_options, get_one_option)))
@@ -4680,7 +4744,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   int flags= O_WRONLY | O_CREAT;
   if (!test_if_hard_path(fname))
   {
-    strxmov(buff, opt_basedir, fname, NULL);
+    sprintf(buff,"%s%s",opt_basedir,fname);
     fname= buff;
   }
   fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);
@@ -4690,7 +4754,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   if ((fd= my_open(buff, flags,
                    MYF(MY_WME | MY_FFNF))) < 0)
     die("Could not open '%s' for writing: errno = %d", buff, errno);
-  if (append && my_seek(fd, 0, SEEK_END, MYF(0)) == MY_FILEPOS_ERROR)
+  if (append && lseek(fd, 0, SEEK_END) == MY_FILEPOS_ERROR)
     die("Could not find end of file '%s': errno = %d", buff, errno);
   if (my_write(fd, (unsigned char*)str, size, MYF(MY_WME|MY_FNABP)))
     die("write failed");
@@ -5392,8 +5456,7 @@ static void get_command_type(struct st_command* command)
 
 */
 
-static void mark_progress(struct st_command* command __attribute__((unused)),
-                          int line)
+static void mark_progress(struct st_command*, int line)
 {
   char buf[32], *end;
   uint64_t timer= timer_now();
@@ -5483,7 +5546,9 @@ int main(int argc, char **argv)
   if (cur_file == file_stack && cur_file->file == 0)
   {
     cur_file->file= stdin;
-    cur_file->file_name= my_strdup("<stdin>", MYF(MY_WME));
+    cur_file->file_name= strdup("<stdin>");
+    if (cur_file->file_name == NULL)
+      die("Out of memory");
     cur_file->lineno= 1;
   }
   cur_con= connections;
@@ -5493,7 +5558,7 @@ int main(int argc, char **argv)
     drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   drizzle_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
 
-  if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
+  if (!(cur_con->name = strdup("default")))
     die("Out of memory");
 
   safe_connect(&cur_con->drizzle, cur_con->name, opt_host, opt_user, opt_pass,
@@ -5630,7 +5695,7 @@ int main(int argc, char **argv)
 
         if (save_file[0])
         {
-          strmake(command->require_file, save_file, sizeof(save_file) - 1);
+          strncpy(command->require_file, save_file, sizeof(save_file) - 1);
           save_file[0]= 0;
         }
         run_query(cur_con, command, flags);
@@ -5928,7 +5993,7 @@ void do_get_replace_column(struct st_command *command)
     die("Missing argument in %s", command->query);
 
   /* Allocate a buffer for results */
-  start= buff= (char *)my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
+  start= buff= (char *)malloc(strlen(from)+1);
   while (*from)
   {
     char *to;
@@ -5941,7 +6006,9 @@ void do_get_replace_column(struct st_command *command)
       die("Wrong number of arguments to replace_column in '%s'", command->query);
     to= get_string(&buff, &from, command);
     free(replace_column[column_number-1]);
-    replace_column[column_number-1]= my_strdup(to, MYF(MY_WME | MY_FAE));
+    replace_column[column_number-1]= strdup(to);
+    if (replace_column[column_number-1] == NULL)
+      die("Out of memory");
     set_if_bigger(max_replace_column, column_number);
   }
   free(start);
@@ -6011,7 +6078,7 @@ void do_get_replace(struct st_command *command)
   memset(&from_array, 0, sizeof(from_array));
   if (!*from)
     die("Missing argument in %s", command->query);
-  start= buff= (char *)my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
+  start= buff= (char *)malloc(strlen(from)+1);
   while (*from)
   {
     char *to= buff;
@@ -6190,9 +6257,9 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   char last_c = 0;
   struct st_regex reg;
 
-  /* my_malloc() will die on fail with MY_FAE */
-  res=(struct st_replace_regex*)my_malloc(
-                                          sizeof(*res)+expr_len ,MYF(MY_FAE+MY_WME));
+  res=(st_replace_regex*)malloc(sizeof(*res)+expr_len);
+  if (!res)
+    return NULL;
   my_init_dynamic_array(&res->regex_arr,sizeof(struct st_regex),128,128);
 
   buf= (char*)res + sizeof(*res);
@@ -6249,8 +6316,8 @@ static struct st_replace_regex* init_replace_regex(char* expr)
       die("Out of memory");
   }
   res->odd_buf_len= res->even_buf_len= 8192;
-  res->even_buf= (char*)my_malloc(res->even_buf_len,MYF(MY_WME+MY_FAE));
-  res->odd_buf= (char*)my_malloc(res->odd_buf_len,MYF(MY_WME+MY_FAE));
+  res->even_buf= (char*)malloc(res->even_buf_len);
+  res->odd_buf= (char*)malloc(res->odd_buf_len);
   res->buf= res->even_buf;
 
   return res;
@@ -6358,18 +6425,6 @@ void free_replace_regex()
 
 
 /*
-  auxiluary macro used by reg_replace
-  makes sure the result buffer has sufficient length
-*/
-#define SECURE_REG_BUF   if (buf_len < need_buf_len)                    \
-  {                                                                     \
-    int off= res_p - buf;                                               \
-    buf= (char*)my_realloc(buf,need_buf_len,MYF(MY_WME+MY_FAE));        \
-    res_p= buf + off;                                                   \
-    buf_len= need_buf_len;                                              \
-  }                                                                     \
-                                                                        \
-/*
   Performs a regex substitution
 
   IN:
@@ -6385,25 +6440,44 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
                 char *replace, char *in_string, int icase)
 {
   string string_to_match(in_string);
-  pcrecpp::RE_Options opt;
+  const char *error= NULL;
+  int erroffset;
+  int ovector[3];
+  pcre *re= pcre_compile(pattern,
+                         icase ? PCRE_CASELESS : 0,
+                         &error, &erroffset, NULL);
+  if (re == NULL)
+    return 1;
 
-  if (icase)
-    opt.set_caseless(true);
-
-  if (!pcrecpp::RE(pattern, opt).Replace(replace,&string_to_match)){
+  int rc= pcre_exec(re, NULL, in_string, (int)strlen(in_string),
+                    0, 0, ovector, 3);
+  if (rc < 0)
+  {
+    pcre_free(re);
     return 1;
   }
 
-  const char * new_str= string_to_match.c_str();
-  *buf_len_p= strlen(new_str);
+  char *substring_to_replace= in_string + ovector[0];
+  int substring_length= ovector[1] - ovector[0];
+  *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
   char * new_buf = (char *)malloc(*buf_len_p+1);
   if (new_buf == NULL)
   {
+    pcre_free(re);
     return 1;
   }
-  strcpy(new_buf, new_str);
+
+  memset(new_buf, 0, *buf_len_p+1);
+  strncpy(new_buf, in_string, substring_to_replace-in_string);
+  strncpy(new_buf+(substring_to_replace-in_string), replace, strlen(replace));
+  strncpy(new_buf+(substring_to_replace-in_string)+strlen(replace),
+          substring_to_replace + substring_length,
+          strlen(in_string)
+            - substring_length
+            - (substring_to_replace-in_string));
   *buf_p= new_buf;
 
+  pcre_free(re);
   return 0;
 }
 
@@ -6520,8 +6594,8 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   if (init_sets(&sets,states))
     return(0);
   found_sets=0;
-  if (!(found_set= (FOUND_SET*) my_malloc(sizeof(FOUND_SET)*max_length*count,
-                                          MYF(MY_WME))))
+  if (!(found_set= (FOUND_SET*) malloc(sizeof(FOUND_SET)*max_length*count)))
+                                
   {
     free_sets(&sets);
     return(0);
@@ -6531,7 +6605,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   used_sets=-1;
   word_states=make_new_set(&sets);    /* Start of new word */
   start_states=make_new_set(&sets);    /* This is first state */
-  if (!(follow=(FOLLOWS*) my_malloc((states+2)*sizeof(FOLLOWS),MYF(MY_WME))))
+  if (!(follow=(FOLLOWS*) malloc((states+2)*sizeof(FOLLOWS))))
   {
     free_sets(&sets);
     free(found_set);
@@ -6723,18 +6797,20 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
 
   /* Alloc replace structure for the replace-state-machine */
 
-  if ((replace=(REPLACE*) my_malloc(sizeof(REPLACE)*(sets.count)+
-                                    sizeof(REPLACE_STRING)*(found_sets+1)+
-                                    sizeof(char *)*count+result_len,
-                                    MYF(MY_WME | MY_ZEROFILL))))
+  if ((replace=(REPLACE*) malloc(sizeof(REPLACE)*(sets.count)+
+                                 sizeof(REPLACE_STRING)*(found_sets+1)+
+                                 sizeof(char *)*count+result_len)))
   {
+    memset(replace, 0, sizeof(REPLACE)*(sets.count)+
+                       sizeof(REPLACE_STRING)*(found_sets+1)+
+                       sizeof(char *)*count+result_len);
     rep_str=(REPLACE_STRING*) (replace+sets.count);
     to_array= (char **) (rep_str+found_sets+1);
     to_pos=(char *) (to_array+count);
     for (i=0 ; i < count ; i++)
     {
       to_array[i]=to_pos;
-      to_pos=my_stpcpy(to_pos,to[i])+1;
+      to_pos=strcpy(to_pos,to[i])+strlen(to[i])+1;
     }
     rep_str[0].found=1;
     rep_str[0].replace_string=0;
@@ -6767,11 +6843,10 @@ int init_sets(REP_SETS *sets,uint states)
 {
   memset(sets, 0, sizeof(*sets));
   sets->size_of_bits=((states+7)/8);
-  if (!(sets->set_buffer=(REP_SET*) my_malloc(sizeof(REP_SET)*SET_MALLOC_HUNC,
-                                              MYF(MY_WME))))
+  if (!(sets->set_buffer=(REP_SET*) malloc(sizeof(REP_SET)*SET_MALLOC_HUNC)))
     return 1;
-  if (!(sets->bit_buffer=(uint*) my_malloc(sizeof(uint)*sets->size_of_bits*
-                                           SET_MALLOC_HUNC,MYF(MY_WME))))
+  if (!(sets->bit_buffer=(uint*) malloc(sizeof(uint)*sets->size_of_bits*
+                                        SET_MALLOC_HUNC)))
   {
     free(sets->set);
     return 1;
@@ -6805,15 +6880,13 @@ REP_SET *make_new_set(REP_SETS *sets)
     return set;
   }
   count=sets->count+sets->invisible+SET_MALLOC_HUNC;
-  if (!(set=(REP_SET*) my_realloc((unsigned char*) sets->set_buffer,
-                                  sizeof(REP_SET)*count,
-                                  MYF(MY_WME))))
+  if (!(set=(REP_SET*) realloc((unsigned char*) sets->set_buffer,
+                                  sizeof(REP_SET)*count)))
     return 0;
   sets->set_buffer=set;
   sets->set=set+sets->invisible;
-  if (!(bit_buffer=(uint*) my_realloc((unsigned char*) sets->bit_buffer,
-                                      (sizeof(uint)*sets->size_of_bits)*count,
-                                      MYF(MY_WME))))
+  if (!(bit_buffer=(uint*) realloc((unsigned char*) sets->bit_buffer,
+                                   (sizeof(uint)*sets->size_of_bits)*count)))
     return 0;
   sets->bit_buffer=bit_buffer;
   for (i=0 ; i < count ; i++)
@@ -6965,12 +7038,11 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   if (! pa->typelib.count)
   {
     if (!(pa->typelib.type_names=(const char **)
-          my_malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
+          malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
                      (sizeof(char *)+sizeof(*pa->flag))*
-                     (sizeof(char *)+sizeof(*pa->flag))),MYF(MY_WME))))
+                     (sizeof(char *)+sizeof(*pa->flag))))))
       return(-1);
-    if (!(pa->str= (unsigned char*) my_malloc((uint) (PS_MALLOC-MALLOC_OVERHEAD),
-                                      MYF(MY_WME))))
+    if (!(pa->str= (unsigned char*) malloc(PS_MALLOC-MALLOC_OVERHEAD)))
     {
       free((char*) pa->typelib.type_names);
       return (-1);
@@ -6985,9 +7057,8 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   length=(uint) strlen(name)+1;
   if (pa->length+length >= pa->max_length)
   {
-    if (!(new_pos= (unsigned char*) my_realloc((unsigned char*) pa->str,
-                                       (uint) (pa->max_length+PS_MALLOC),
-                                       MYF(MY_WME))))
+    if (!(new_pos= (unsigned char*)realloc((unsigned char*)pa->str,
+                                           (size_t)(pa->max_length+PS_MALLOC))))
       return(1);
     if (new_pos != pa->str)
     {
@@ -7001,14 +7072,14 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   }
   if (pa->typelib.count >= pa->max_count-1)
   {
-    int len;
+    size_t len;
     pa->array_allocs++;
     len=(PC_MALLOC*pa->array_allocs - MALLOC_OVERHEAD);
-    if (!(new_array=(const char **) my_realloc((unsigned char*) pa->typelib.type_names,
-                                               (uint) len/
-                                               (sizeof(unsigned char*)+sizeof(*pa->flag))*
-                                               (sizeof(unsigned char*)+sizeof(*pa->flag)),
-                                               MYF(MY_WME))))
+    if (!(new_array=
+         (const char **)realloc((unsigned char*) pa->typelib.type_names,
+                                 len/
+                                  (sizeof(unsigned char*)+sizeof(*pa->flag))*
+                                  (sizeof(unsigned char*)+sizeof(*pa->flag)))))
       return(1);
     pa->typelib.type_names=new_array;
     old_count=pa->max_count;
@@ -7020,7 +7091,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   pa->flag[pa->typelib.count]=0;      /* Reset flag */
   pa->typelib.type_names[pa->typelib.count++]= (char*) pa->str+pa->length;
   pa->typelib.type_names[pa->typelib.count]= NULL;  /* Put end-mark */
-  my_stpcpy((char*) pa->str+pa->length,name);
+  strcpy((char*) pa->str+pa->length,name);
   pa->length+=length;
   return(0);
 } /* insert_pointer_name */

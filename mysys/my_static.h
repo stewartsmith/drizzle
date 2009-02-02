@@ -31,7 +31,7 @@ extern "C" {
 
 struct st_remember {
   int number;
-  RETSIGTYPE (*func)(int number);
+  void (*func)(int number);
 };
 
 /*
@@ -59,9 +59,6 @@ extern volatile int _my_signals;
 extern struct st_remember _my_sig_remember[MAX_SIGNALS];
 
 extern const char *soundex_map;
-
-extern USED_MEM* my_once_root_block;
-extern uint	 my_once_extra;
 
 extern unsigned char	*sf_min_adress,*sf_max_adress;
 extern uint	sf_malloc_count;

@@ -17,12 +17,12 @@ Created 12/29/1997 Heikki Tuuri
 #include "row0sel.h"
 
 /* The RND function seed */
-ulint	eval_rnd	= 128367121;
+static ulint	eval_rnd	= 128367121;
 
 /* Dummy adress used when we should allocate a buffer of size 0 in
 the function below */
 
-byte	eval_dummy;
+static byte	eval_dummy;
 
 /*********************************************************************
 Allocate a buffer from global dynamic memory for a value of a que_node.
@@ -30,7 +30,7 @@ NOTE that this memory must be explicitly freed when the query graph is
 freed. If the node already has an allocated buffer, that buffer is freed
 here. NOTE that this is the only function where dynamic memory should be
 allocated for a query node val field. */
-
+UNIV_INTERN
 byte*
 eval_node_alloc_val_buf(
 /*====================*/
@@ -71,7 +71,7 @@ eval_node_alloc_val_buf(
 Free the buffer from global dynamic memory for a value of a que_node,
 if it has been allocated in the above function. The freeing for pushed
 column values is done in sel_col_prefetch_buf_free. */
-
+UNIV_INTERN
 void
 eval_node_free_val_buf(
 /*===================*/
@@ -96,7 +96,7 @@ eval_node_free_val_buf(
 
 /*********************************************************************
 Evaluates a comparison node. */
-
+UNIV_INTERN
 ibool
 eval_cmp(
 /*=====*/
@@ -746,8 +746,7 @@ eval_predefined(
 			}
 		}
 
-		dfield_set_len((dfield_t*) que_node_get_val(func_node),
-			       int_len);
+		dfield_set_len(que_node_get_val(func_node), int_len);
 
 		return;
 
@@ -769,7 +768,7 @@ eval_predefined(
 
 /*********************************************************************
 Evaluates a function node. */
-
+UNIV_INTERN
 void
 eval_func(
 /*======*/
@@ -781,7 +780,7 @@ eval_func(
 
 	ut_ad(que_node_get_type(func_node) == QUE_NODE_FUNC);
 
-	class = func_node->klass;
+	class = func_node->class;
 	func = func_node->func;
 
 	arg = func_node->args;
@@ -793,7 +792,7 @@ eval_func(
 		/* The functions are not defined for SQL null argument
 		values, except for eval_cmp and notfound */
 
-		if ((dfield_get_len(que_node_get_val(arg)) == UNIV_SQL_NULL)
+		if (dfield_is_null(que_node_get_val(arg))
 		    && (class != PARS_FUNC_CMP)
 		    && (func != PARS_NOTFOUND_TOKEN)
 		    && (func != PARS_PRINTF_TOKEN)) {

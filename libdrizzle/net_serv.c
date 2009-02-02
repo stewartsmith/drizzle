@@ -18,12 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#define __need_timeval 1
-
+#include <drizzled/global.h>
 #include "libdrizzle.h"
 #include "libdrizzle_priv.h"
 #include <libdrizzle/errmsg.h>
-#include <vio/violite.h>
+#include <libdrizzle/vio.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,12 +43,7 @@
 */
 
 
-#define update_statistics(A)
-#define thd_increment_bytes_sent(N)
-
-#define TEST_BLOCKING        8
 #define MAX_PACKET_LENGTH (256L*256L*256L-1)
-#define MIN_COMPRESS_LENGTH		50	/* Don't compress small bl. */
 
 static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
 
@@ -61,7 +55,7 @@ bool my_net_init(NET *net, Vio* vio)
   net->vio = vio;
   my_net_local_init(net);            /* Set some limits */
   if (!(net->buff=(unsigned char*) malloc((size_t) net->max_packet+
-                                  NET_HEADER_SIZE + COMP_HEADER_SIZE)))
+                                          NET_HEADER_SIZE + COMP_HEADER_SIZE)))
     return(1);
   net->buff_end=net->buff+net->max_packet;
   net->error=0; net->return_status=0;
@@ -109,7 +103,7 @@ void net_end(NET *net)
 {
   if (net->buff != NULL)
     free(net->buff);
-  net->buff=0;
+  net->buff= NULL;
   return;
 }
 
@@ -460,10 +454,10 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
   in the server, yield to another process and come back later.
 */
 int
-net_real_write(NET *net,const unsigned char *packet, size_t len)
+net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
   size_t length;
-  const unsigned char *pos,*end;
+  const unsigned char *pos, *end;
   uint32_t retry_count= 0;
 
   /* Backup of the original SO_RCVTIMEO timeout */
@@ -529,15 +523,15 @@ net_real_write(NET *net,const unsigned char *packet, size_t len)
   if (net->write_timeout)
   {
     struct timespec waittime;
-    socklen_t length;
+    socklen_t time_len;
 
     waittime.tv_sec= net->write_timeout;
     waittime.tv_nsec= 0;
 
     memset(&backtime, 0, sizeof(struct timespec));
-    length= sizeof(struct timespec);
+    time_len= sizeof(struct timespec);
     error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, &length);
+                      &backtime, &time_len);
     if (error != 0)
     {
       perror("getsockopt");
@@ -554,7 +548,8 @@ net_real_write(NET *net,const unsigned char *packet, size_t len)
   /* Loop until we have read everything */
   while (pos != end)
   {
-    if ((long) (length= vio_write(net->vio,pos,(size_t) (end-pos))) <= 0)
+    assert(pos);
+    if ((long) (length= vio_write(net->vio, pos, (size_t) (end-pos))) <= 0)
     {
       const bool interrupted= vio_should_retry(net->vio);
       /*
@@ -593,7 +588,6 @@ net_real_write(NET *net,const unsigned char *packet, size_t len)
       break;
     }
     pos+=length;
-    update_statistics(thd_increment_bytes_sent(length));
   }
 end:
   if ((net->compress) && (packet != NULL))
@@ -648,15 +642,15 @@ my_real_read(NET *net, size_t *complen)
   if (net->read_timeout)
   {
     struct timespec waittime;
-    socklen_t length;
+    socklen_t time_len;
 
     waittime.tv_sec= net->read_timeout;
     waittime.tv_nsec= 0;
 
     memset(&backtime, 0, sizeof(struct timespec));
-    length= sizeof(struct timespec);
+    time_len= sizeof(struct timespec);
     error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, &length);
+                      &backtime, &time_len);
     if (error != 0)
     {
       perror("getsockopt");
@@ -696,7 +690,6 @@ my_real_read(NET *net, size_t *complen)
       }
       remain -= (uint32_t) length;
       pos+= length;
-      update_statistics(thd_increment_bytes_received(length));
     }
     if (i == 0)
     {                    /* First parts is packet length */

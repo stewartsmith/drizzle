@@ -17,13 +17,28 @@
 /* Some general useful functions */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
-#include "tmp_table.h"
-#include "sj_tmp_table.h"
+#include <drizzled/tmp_table.h>
+#include <drizzled/sj_tmp_table.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/data_home.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/table_list.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/field/double.h>
+#include <string>
 
-/* INFORMATION_SCHEMA name */
-LEX_STRING INFORMATION_SCHEMA_NAME= {C_STRING_WITH_LEN("information_schema")};
+#include <drizzled/unireg.h>
+#include <drizzled/serialize/table.pb.h>
+
+using namespace std;
 
 /* Keyword for parsing virtual column functions */
 LEX_STRING parse_vcol_keyword= { C_STRING_WITH_LEN("PARSE_VCOL_EXPR ") };
@@ -32,18 +47,18 @@ LEX_STRING parse_vcol_keyword= { C_STRING_WITH_LEN("PARSE_VCOL_EXPR ") };
 
 void open_table_error(TABLE_SHARE *share, int error, int db_errno,
                       myf errortype, int errarg);
-static int open_binary_frm(THD *thd, TABLE_SHARE *share,
+static int open_binary_frm(Session *session, TABLE_SHARE *share,
                            unsigned char *head, File file);
 static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
-			      uint32_t types, char **names);
-static uint32_t find_field(Field **fields, unsigned char *record, uint32_t start, uint32_t length);
+                              uint32_t types, char **names);
+static uint32_t find_field(Field **fields, unsigned char *record,
+                           uint32_t start, uint32_t length);
 
 /*************************************************************************/
 
 /* Get column name from column hash */
 
-static unsigned char *get_field_name(Field **buff, size_t *length,
-                             bool not_used __attribute__((unused)))
+static unsigned char *get_field_name(Field **buff, size_t *length, bool)
 {
   *length= (uint) strlen((*buff)->field_name);
   return (unsigned char*) (*buff)->field_name;
@@ -59,7 +74,7 @@ static unsigned char *get_field_name(Field **buff, size_t *length,
 
   DESCRIPTION
     Checks file name part starting with the rightmost '.' character,
-    and returns it if it is equal to '.frm'. 
+    and returns it if it is equal to '.frm'.
 
   TODO
     It is a good idea to get rid of this function modifying the code
@@ -84,9 +99,9 @@ TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
   assert(db != NULL);
   assert(name != NULL);
 
-  if ((db->length == INFORMATION_SCHEMA_NAME.length) &&
+  if ((db->length == INFORMATION_SCHEMA_NAME.length()) &&
       (my_strcasecmp(system_charset_info,
-                    INFORMATION_SCHEMA_NAME.str,
+                    INFORMATION_SCHEMA_NAME.c_str(),
                     db->str) == 0))
   {
     return TABLE_CATEGORY_INFORMATION;
@@ -135,7 +150,7 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
 
     share->path.str= path_buff;
     share->path.length= path_length;
-    my_stpcpy(share->path.str, path);
+    strcpy(share->path.str, path);
     share->normalized_path.str=    share->path.str;
     share->normalized_path.length= path_length;
 
@@ -171,10 +186,10 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
 
   SYNOPSIS
     init_tmp_table_share()
-    thd         thread handle
+    session         thread handle
     share	Share to fill
     key		Table_cache_key, as generated from create_table_def_key.
-		must start with db name.    
+		must start with db name.
     key_length	Length of key
     table_name	Table name
     path	Path to file (possible in lower case) without .frm
@@ -184,12 +199,12 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
     don't have to be shared between threads or put into the table def
     cache, so we can do some things notable simpler and faster
 
-    If table is not put in thd->temporary_tables (happens only when
+    If table is not put in session->temporary_tables (happens only when
     one uses OPEN TEMPORARY) then one can specify 'db' as key and
     use key_length= 0 as neither table_cache_key or key_length will be used).
 */
 
-void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
+void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
                           uint32_t key_length, const char *table_name,
                           const char *path)
 {
@@ -207,7 +222,7 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
   share->path.str=               (char*) path;
   share->normalized_path.str=    (char*) path;
   share->path.length= share->normalized_path.length= strlen(path);
-  share->frm_version= 		 FRM_VER_TRUE_VARCHAR;
+
   /*
     Temporary tables are not replicated, but we set up these fields
     anyway to be able to catch errors.
@@ -219,7 +234,7 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
     table_map_id is also used for MERGE tables to suppress repeated
     compatibility checks.
   */
-  share->table_map_id= (ulong) thd->query_id;
+  share->table_map_id= (ulong) session->query_id;
 
   return;
 }
@@ -259,7 +274,7 @@ void free_table_share(TABLE_SHARE *share)
     pthread_cond_destroy(&share->cond);
   }
   hash_free(&share->name_hash);
-  
+
   plugin_unlock(NULL, share->db_plugin);
   share->db_plugin= NULL;
 
@@ -271,10 +286,10 @@ void free_table_share(TABLE_SHARE *share)
 
 /*
   Read table definition from a binary / text based .frm file
-  
+
   SYNOPSIS
   open_table_def()
-  thd		Thread handler
+  session		Thread handler
   share		Fill this with table definition
   db_flags	Bit mask of the following flags: OPEN_VIEW
 
@@ -294,29 +309,136 @@ void free_table_share(TABLE_SHARE *share)
    6    Unknown .frm version
 */
 
-int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute__((unused)))
+int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
 {
   int error, table_type;
   bool error_given;
   File file;
   unsigned char head[64], *disk_buff;
-  char	path[FN_REFLEN];
+  string	path("");
+
   MEM_ROOT **root_ptr, *old_root;
 
   error= 1;
   error_given= 0;
   disk_buff= NULL;
 
-  strxmov(path, share->normalized_path.str, reg_ext, NULL);
-  if ((file= open(path, O_RDONLY)) < 0)
+  path.reserve(FN_REFLEN);
+  path.append(share->normalized_path.str);
+  string proto_path= path;
+
+  path.append(reg_ext);
+
+  proto_path.append(".dfe");
+
+  drizzle::Table table;
+
+  if(drizzle_read_table_proto(proto_path.c_str(), &table)==0)
+  {
+    {
+      LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
+				strlen(table.engine().name().c_str()) };
+      share->db_plugin= ha_resolve_by_name(session, &engine_name);
+    }
+
+    // share->db_create_options FAIL
+    // share->db_options_in_use FAIL
+    share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
+    share->null_field_first= 0;
+
+    drizzle::Table::TableOptions table_options;
+    
+    if(table.has_options())
+      table_options= table.options();
+
+    share->avg_row_length= table_options.has_avg_row_length() ?
+      table_options.avg_row_length() : 0;
+
+    share->page_checksum= table_options.has_page_checksum() ?
+      (table_options.page_checksum()?HA_CHOICE_YES:HA_CHOICE_NO)
+      : HA_CHOICE_UNDEF;
+
+    share->row_type= table_options.has_row_type() ?
+      (enum row_type) table_options.row_type() : ROW_TYPE_DEFAULT;
+
+    share->block_size= table_options.has_block_size() ?
+      table_options.block_size() : 0;
+
+    share->table_charset= get_charset(table_options.has_collation_id()?
+				      table_options.collation_id() : 0,
+				      MYF(0));
+
+    if (!share->table_charset)
+    {
+      /* unknown charset in head[38] or pre-3.23 frm */
+      if (use_mb(default_charset_info))
+      {
+	/* Warn that we may be changing the size of character columns */
+	errmsg_printf(ERRMSG_LVL_WARN,
+		      _("'%s' had no or invalid character set, "
+			"and default character set is multi-byte, "
+			"so character column sizes may have changed"),
+		      share->path.str);
+      }
+      share->table_charset= default_charset_info;
+    }
+
+    share->null_field_first= 1;
+
+    share->db_record_offset= 1;
+
+    share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
+
+    share->db_low_byte_first= true;
+
+    share->max_rows= table_options.has_max_rows() ?
+      table_options.max_rows() : 0;
+
+    share->min_rows= table_options.has_min_rows() ?
+      table_options.min_rows() : 0;
+
+    share->keys= table.indexes_size();
+
+    share->key_parts= 0;
+    for(int indx= 0; indx < table.indexes_size(); indx++)
+      share->key_parts+= table.indexes(indx).index_part_size();
+
+    share->keys_for_keyread.init(0);
+    share->keys_in_use.init(share->keys);
+
+    if(table_options.has_connect_string())
+    {
+      size_t len= table_options.connect_string().length();
+      const char* str= table_options.connect_string().c_str();
+
+      share->connect_string.length= len;
+      share->connect_string.str= strmake_root(&share->mem_root, str, len);
+    }
+
+    if(table_options.has_comment())
+    {
+      size_t len= table_options.comment().length();
+      const char* str= table_options.comment().c_str();
+
+      share->comment.length= len;
+      share->comment.str= strmake_root(&share->mem_root, str, len);
+    }
+
+    share->key_block_size= table_options.has_key_block_size() ?
+      table_options.key_block_size() : 0;
+
+//    return 0;
+  }
+
+  if ((file= open(path.c_str(), O_RDONLY)) < 0)
   {
     /*
       We don't try to open 5.0 unencoded name, if
-      - non-encoded name contains '@' signs, 
+      - non-encoded name contains '@' signs,
         because '@' can be misinterpreted.
         It is not clear if '@' is escape character in 5.1,
         or a normal character in 5.0.
-        
+
       - non-encoded db or table name contain "#mysql50#" prefix.
         This kind of tables must have been opened only by the
         open() above.
@@ -329,11 +451,16 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute_
       goto err_not_open;
 
     /* Try unencoded 5.0 name */
-    uint32_t length;
-    strxnmov(path, sizeof(path)-1,
-             mysql_data_home, "/", share->db.str, "/",
-             share->table_name.str, reg_ext, NULL);
-    length= unpack_filename(path, path) - reg_ext_length;
+    size_t length;
+    char unpacked_path[FN_REFLEN];
+    path.clear();
+    path.append(drizzle_data_home);
+    path.append("/");
+    path.append(share->db.str);
+    path.append("/");
+    path.append(share->table_name.str);
+    path.append(reg_ext);
+    length= unpack_filename(unpacked_path, path.c_str()) - reg_ext_length;
     /*
       The following is a safety test and should never fail
       as the old file name should never be longer than the new one.
@@ -345,12 +472,12 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute_
       so no need to check the old file name.
     */
     if (length == share->normalized_path.length ||
-        ((file= open(path, O_RDONLY)) < 0))
+        ((file= open(unpacked_path, O_RDONLY)) < 0))
       goto err_not_open;
 
     /* Unencoded 5.0 table name found */
-    path[length]= '\0'; // Remove .frm extension
-    my_stpcpy(share->normalized_path.str, path);
+    unpacked_path[length]= '\0'; // Remove .frm extension
+    strcpy(share->normalized_path.str, unpacked_path);
     share->normalized_path.length= length;
   }
 
@@ -377,10 +504,10 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute_
   /* No handling of text based files yet */
   if (table_type == 1)
   {
-    root_ptr= (MEM_ROOT **)pthread_getspecific(THR_MALLOC);
+    root_ptr= current_mem_root_ptr();
     old_root= *root_ptr;
     *root_ptr= &share->mem_root;
-    error= open_binary_frm(thd, share, head, file);
+    error= open_binary_frm(session, share, head, file);
     *root_ptr= old_root;
     error_given= 1;
   }
@@ -390,7 +517,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute_
   share->table_category= get_table_category(& share->db, & share->table_name);
 
   if (!error)
-    thd->status_var.opened_shares++;
+    session->status_var.opened_shares++;
 
 err:
   my_close(file, MYF(MY_WME));
@@ -410,7 +537,7 @@ err_not_open:
   Read data from a binary .frm file from MySQL 3.23 - 5.0 into TABLE_SHARE
 */
 
-static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
+static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *head,
                            File file)
 {
   int error, errarg= 0;
@@ -432,7 +559,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
   KEY_PART_INFO *key_part;
   Field  **field_ptr, *reg_field;
   const char **interval_array;
-  enum legacy_db_type legacy_db_type;
   my_bitmap_map *bitmaps;
   unsigned char *buff= 0;
   unsigned char *field_extra_info= 0;
@@ -445,69 +571,18 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
   error= 3;
   if (!(pos=get_form_pos(file,head,(TYPELIB*) 0)))
     goto err;                                   /* purecov: inspected */
-  my_seek(file,pos,MY_SEEK_SET,MYF(0));
+  lseek(file,pos,SEEK_SET);
   if (my_read(file,forminfo,288,MYF(MY_NABP)))
     goto err;
 
-  share->frm_version= head[2];
-  /*
-    Check if .frm file created by MySQL 5.0. In this case we want to
-    display CHAR fields as CHAR and not as VARCHAR.
-    We do it this way as we want to keep the old frm version to enable
-    MySQL 4.1 to read these files.
-  */
-  if (share->frm_version == FRM_VER_TRUE_VARCHAR -1 && head[33] == 5)
-    share->frm_version= FRM_VER_TRUE_VARCHAR;
-
-  legacy_db_type= DB_TYPE_FIRST_DYNAMIC;
-  assert(share->db_plugin == NULL);
-  /*
-    if the storage engine is dynamic, no point in resolving it by its
-    dynamically allocated legacy_db_type. We will resolve it later by name.
-  */
-  if (legacy_db_type > DB_TYPE_UNKNOWN && 
-      legacy_db_type < DB_TYPE_FIRST_DYNAMIC)
-    share->db_plugin= ha_lock_engine(NULL, 
-                                     ha_checktype(thd, legacy_db_type, 0, 0));
   share->db_create_options= db_create_options= uint2korr(head+30);
   share->db_options_in_use= share->db_create_options;
-  share->mysql_version= uint4korr(head+51);
-  share->null_field_first= 0;
-  if (!head[32])				// New frm file in 3.23
-  {
-    share->avg_row_length= uint4korr(head+34);
-    share->transactional= (ha_choice) (head[39] & 3);
-    share->page_checksum= (ha_choice) ((head[39] >> 2) & 3);
-    share->row_type= (row_type) head[40];
-    share->block_size= uint4korr(head+43);
-    share->table_charset= get_charset((uint) head[38],MYF(0));
-    share->null_field_first= 1;
-  }
-  if (!share->table_charset)
-  {
-    /* unknown charset in head[38] or pre-3.23 frm */
-    if (use_mb(default_charset_info))
-    {
-      /* Warn that we may be changing the size of character columns */
-      sql_print_warning(_("'%s' had no or invalid character set, "
-                        "and default character set is multi-byte, "
-                        "so character column sizes may have changed"),
-                        share->path.str);
-    }
-    share->table_charset= default_charset_info;
-  }
-  share->db_record_offset= 1;
-  if (db_create_options & HA_OPTION_LONG_BLOB_PTR)
-    share->blob_ptr_size= portable_sizeof_char_ptr;
-  /* Set temporarily a good value for db_low_byte_first */
-  share->db_low_byte_first= true;
+
   error=4;
-  share->max_rows= uint4korr(head+18);
-  share->min_rows= uint4korr(head+22);
 
   /* Read keyinformation */
   key_info_length= (uint) uint2korr(head+28);
-  my_seek(file,(ulong) uint2korr(head+6),MY_SEEK_SET,MYF(0));
+  lseek(file,(ulong) uint2korr(head+6),SEEK_SET);
   if (read_string(file,(unsigned char**) &disk_buff,key_info_length))
     goto err;                                   /* purecov: inspected */
   if (disk_buff[0] & 0x80)
@@ -579,7 +654,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
     }
   }
   keynames=(char*) key_part;
-  strpos+= (my_stpcpy(keynames, (char *) strpos) - keynames)+1;
+  strpos+= (strcpy(keynames, (char*)strpos)+strlen((char*)strpos)-keynames)+1;
 
   //reading index comments
   for (keyinfo= share->key_info, i=0; i < keys; i++, keyinfo++)
@@ -590,8 +665,8 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
       keyinfo->comment.str= strmake_root(&share->mem_root, (char*) strpos+2,
                                          keyinfo->comment.length);
       strpos+= 2 + keyinfo->comment.length;
-    } 
-    assert(test(keyinfo->flags & HA_USES_COMMENT) == 
+    }
+    assert(test(keyinfo->flags & HA_USES_COMMENT) ==
                (keyinfo->comment.length > 0));
   }
 
@@ -601,63 +676,25 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
   record_offset= (ulong) (uint2korr(head+6)+
                           ((uint2korr(head+14) == 0xffff ?
                             uint4korr(head+47) : uint2korr(head+14))));
- 
+
   if ((n_length= uint4korr(head+55)))
   {
     /* Read extra data segment */
     unsigned char *next_chunk, *buff_end;
-    if (!(next_chunk= buff= (unsigned char*) my_malloc(n_length, MYF(MY_WME))))
+    if (!(next_chunk= buff= (unsigned char*) malloc(n_length)))
       goto err;
     if (pread(file, buff, n_length, record_offset + share->reclength) == 0)
     {
       goto err;
     }
-    share->connect_string.length= uint2korr(buff);
-    if (!(share->connect_string.str= strmake_root(&share->mem_root,
-                                                  (char*) next_chunk + 2,
-                                                  share->connect_string.
-                                                  length)))
-    {
-      goto err;
-    }
-    next_chunk+= share->connect_string.length + 2;
+
+    uint32_t connect_str_length= uint2korr(buff);
+    next_chunk+= connect_str_length + 2;
+
     buff_end= buff + n_length;
     if (next_chunk + 2 < buff_end)
     {
       uint32_t str_db_type_length= uint2korr(next_chunk);
-      LEX_STRING name;
-      name.str= (char*) next_chunk + 2;
-      name.length= str_db_type_length;
-
-      plugin_ref tmp_plugin= ha_resolve_by_name(thd, &name);
-      if (tmp_plugin != NULL && !plugin_equals(tmp_plugin, share->db_plugin))
-      {
-        if (legacy_db_type > DB_TYPE_UNKNOWN &&
-            legacy_db_type < DB_TYPE_FIRST_DYNAMIC &&
-            legacy_db_type != ha_legacy_type(
-                plugin_data(tmp_plugin, handlerton *)))
-        {
-          /* bad file, legacy_db_type did not match the name */
-          free(buff);
-          goto err;
-        }
-        /*
-          tmp_plugin is locked with a local lock.
-          we unlock the old value of share->db_plugin before
-          replacing it with a globally locked version of tmp_plugin
-        */
-        plugin_unlock(NULL, share->db_plugin);
-        share->db_plugin= my_plugin_lock(NULL, &tmp_plugin);
-      }
-      else if (!tmp_plugin)
-      {
-        /* purecov: begin inspected */
-        error= 8;
-        my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), name.str);
-        free(buff);
-        goto err;
-        /* purecov: end */
-      }
       next_chunk+= str_db_type_length + 2;
     }
     if (share->mysql_version >= 50110)
@@ -673,14 +710,8 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
           free(buff);
           goto err;
       }
-      share->comment.length = uint2korr(next_chunk);
-      if (! (share->comment.str= strmake_root(&share->mem_root,
-                               (char*)next_chunk + 2, share->comment.length)))
-      {
-          free(buff);
-          goto err;
-      }
-      next_chunk+= 2 + share->comment.length;
+      uint32_t comment_str_length= uint2korr(next_chunk);
+      next_chunk+= 2 + comment_str_length;
     }
     assert(next_chunk <= buff_end);
     if (share->mysql_version >= DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE)
@@ -703,8 +734,14 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
       {
         const uint32_t format_section_header_size= 8;
         uint32_t format_section_len= uint2korr(next_chunk+0);
+	uint flags=  uint4korr(next_chunk+2);
 
-        field_extra_info= next_chunk + format_section_header_size + 1;
+	(void)flags;
+
+	const char *tablespace= (const char*)next_chunk + format_section_header_size;
+        uint tablespace_len= strlen(tablespace);
+
+        field_extra_info= next_chunk + format_section_header_size + tablespace_len + 1;
         next_chunk+= format_section_len;
       }
     }
@@ -714,7 +751,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
       goto err;
     }
   }
-  share->key_block_size= uint2korr(head+62);
 
   error=4;
   extra_rec_buf_length= uint2korr(head+59);
@@ -727,7 +763,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
   if (pread(file, record, (size_t) share->reclength, record_offset) == 0)
     goto err;                                   /* purecov: inspected */
 
-  my_seek(file,pos+288,MY_SEEK_SET,MYF(0));
+  lseek(file,pos+288,SEEK_SET);
 
   share->fields= uint2korr(forminfo+258);
   pos= uint2korr(forminfo+260);			/* Length of all screens */
@@ -740,12 +776,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
   vcol_screen_length= uint2korr(forminfo+286);
   share->vfields= 0;
   share->stored_fields= share->fields;
-  if (forminfo[46] != (unsigned char)255)
-  {
-    share->comment.length=  (int) (forminfo[46]);
-    share->comment.str= strmake_root(&share->mem_root, (char*) forminfo+47,
-                                     share->comment.length);
-  }
 
 
   if (!(field_ptr = (Field **)
@@ -754,7 +784,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
 			   interval_count*sizeof(TYPELIB)+
 			   (share->fields+interval_parts+
 			    keys+3)*sizeof(char *)+
-			   (n_length+int_length+com_length+
+			   (n_length+int_length+
 			       vcol_screen_length)))))
     goto err;                                   /* purecov: inspected */
 
@@ -773,11 +803,9 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
     share->intervals= 0;			// For better debugging
   memcpy(names, strpos+(share->fields*field_pack_length),
 	 (uint) (n_length+int_length));
-  comment_pos= names+(n_length+int_length);
-  memcpy(comment_pos, disk_buff+read_length-com_length-vcol_screen_length, 
-         com_length);
-  vcol_screen_pos= names+(n_length+int_length+com_length);
-  memcpy(vcol_screen_pos, disk_buff+read_length-vcol_screen_length, 
+  comment_pos= (char *)(disk_buff+read_length-com_length-vcol_screen_length);
+  vcol_screen_pos= names+(n_length+int_length);
+  memcpy(vcol_screen_pos, disk_buff+read_length-vcol_screen_length,
          vcol_screen_length);
 
   fix_type_pointers(&interval_array, &share->fieldnames, 1, &names);
@@ -810,7 +838,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
     fix_type_pointers(&interval_array, &share->keynames, 1, &keynames);
 
  /* Allocate handler */
-  if (!(handler_file= get_new_handler(share, thd->mem_root,
+  if (!(handler_file= get_new_handler(share, session->mem_root,
                                       share->db_type())))
     goto err;
 
@@ -875,7 +903,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
       if (field_type == DRIZZLE_TYPE_VIRTUAL)
       {
         assert(interval_nr); // Expect non-null expression
-        /* 
+        /*
           The interval_id byte in the .frm file stores the length of the
           expression statement for a virtual column.
         */
@@ -889,7 +917,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
       }
       else
       {
-	comment.str=    (char*) comment_pos;
+	comment.str=    strmake_root(&share->mem_root, comment_pos, comment_length);
 	comment.length= comment_length;
 	comment_pos+=   comment_length;
       }
@@ -935,9 +963,9 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
       {
         /*
           Try to choose the best 4.1 type:
-          - for 4.0 "CHAR(N) BINARY" or "VARCHAR(N) BINARY" 
+          - for 4.0 "CHAR(N) BINARY" or "VARCHAR(N) BINARY"
             try to find a binary collation for character set.
-          - for other types (e.g. BLOB) just use my_charset_bin. 
+          - for other types (e.g. BLOB) just use my_charset_bin.
         */
         if (!f_is_blob(pack_flag))
         {
@@ -1015,7 +1043,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
   /* Fix key->name and key_part->field */
   if (key_parts)
   {
-    uint32_t primary_key=(uint) (find_type((char*) primary_key_name,
+    uint32_t primary_key=(uint) (find_type((char*) "PRIMARY",
 				       &share->keynames, 3) - 1);
     int64_t ha_option= handler_file->ha_table_flags();
     keyinfo= share->key_info;
@@ -1168,7 +1196,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
   {
     /* Old file format with default as not null */
     uint32_t null_length= (share->null_fields+7)/8;
-    memset(share->default_values + (null_flags - (unsigned char*) record), 
+    memset(share->default_values + (null_flags - (unsigned char*) record),
           null_length, 255);
   }
 
@@ -1264,14 +1292,14 @@ static void clear_field_flag(Table *table)
 }
 
 /*
-  The function uses the feature in fix_fields where the flag 
+  The function uses the feature in fix_fields where the flag
   GET_FIXED_FIELDS_FLAG is set for all fields in the item tree.
   This field must always be reset before returning from the function
   since it is used for other purposes as well.
 
   SYNOPSIS
     fix_fields_vcol_func()
-    thd                  The thread object
+    session                  The thread object
     func_item            The item tree reference of the virtual columnfunction
     table                The table object
     field_name           The name of the processed field
@@ -1282,7 +1310,7 @@ static void clear_field_flag(Table *table)
     false                Ok, a partition field array was created
 */
 
-bool fix_fields_vcol_func(THD *thd,
+bool fix_fields_vcol_func(Session *session,
                           Item* func_expr,
                           Table *table,
                           const char *field_name)
@@ -1298,7 +1326,7 @@ bool fix_fields_vcol_func(THD *thd,
   char db_name_string[FN_REFLEN];
   bool save_use_only_table_context;
   Field **ptr, *field;
-  enum_mark_columns save_mark_used_columns= thd->mark_used_columns;
+  enum_mark_columns save_mark_used_columns= session->mark_used_columns;
   assert(func_expr);
 
   /*
@@ -1321,9 +1349,9 @@ bool fix_fields_vcol_func(THD *thd,
   db_name= &db_name_string[home_dir_length];
   tables.db= db_name;
 
-  thd->mark_used_columns= MARK_COLUMNS_NONE;
+  session->mark_used_columns= MARK_COLUMNS_NONE;
 
-  context= thd->lex->current_context();
+  context= session->lex->current_context();
   table->map= 1; //To ensure correct calculation of const item
   table->get_fields_in_item_tree= true;
   save_table_list= context->table_list;
@@ -1333,16 +1361,16 @@ bool fix_fields_vcol_func(THD *thd,
   context->first_name_resolution_table= &tables;
   context->last_name_resolution_table= NULL;
   func_expr->walk(&Item::change_context_processor, 0, (unsigned char*) context);
-  save_where= thd->where;
-  thd->where= "virtual column function";
+  save_where= session->where;
+  session->where= "virtual column function";
 
   /* Save the context before fixing the fields*/
-  save_use_only_table_context= thd->lex->use_only_table_context;
-  thd->lex->use_only_table_context= true;
+  save_use_only_table_context= session->lex->use_only_table_context;
+  session->lex->use_only_table_context= true;
   /* Fix fields referenced to by the virtual column function */
-  error= func_expr->fix_fields(thd, (Item**)0);
+  error= func_expr->fix_fields(session, (Item**)0);
   /* Restore the original context*/
-  thd->lex->use_only_table_context= save_use_only_table_context;
+  session->lex->use_only_table_context= save_use_only_table_context;
   context->table_list= save_table_list;
   context->first_name_resolution_table= save_first_table;
   context->last_name_resolution_table= save_last_table;
@@ -1352,9 +1380,9 @@ bool fix_fields_vcol_func(THD *thd,
     clear_field_flag(table);
     goto end;
   }
-  thd->where= save_where;
-  /* 
-    Walk through the Item tree checking if all items are valid 
+  session->where= save_where;
+  /*
+    Walk through the Item tree checking if all items are valid
    to be part of the virtual column
  */
   error= func_expr->walk(&Item::check_vcol_func_processor, 0, NULL);
@@ -1372,7 +1400,7 @@ bool fix_fields_vcol_func(THD *thd,
   }
   /* Ensure that this virtual column is not based on another virtual field. */
   ptr= table->field;
-  while ((field= *(ptr++))) 
+  while ((field= *(ptr++)))
   {
     if ((field->flags & GET_FIXED_FIELDS_FLAG) &&
         (field->vcol_info))
@@ -1391,7 +1419,7 @@ bool fix_fields_vcol_func(THD *thd,
 
 end:
   table->get_fields_in_item_tree= false;
-  thd->mark_used_columns= save_mark_used_columns;
+  session->mark_used_columns= save_mark_used_columns;
   table->map= 0; //Restore old value
   return(result);
 }
@@ -1401,7 +1429,7 @@ end:
 
   SYNOPSIS
     unpack_vcol_info_from_frm()
-    thd                  Thread handler
+    session                  Thread handler
     table                Table with the checked field
     field                Pointer to Field object
     open_mode            Open table mode needed to determine
@@ -1413,7 +1441,7 @@ end:
     true            Failure
     false           Success
 */
-bool unpack_vcol_info_from_frm(THD *thd,
+bool unpack_vcol_info_from_frm(Session *session,
                                Table *table,
                                Field *field,
                                LEX_STRING *vcol_expr,
@@ -1422,16 +1450,16 @@ bool unpack_vcol_info_from_frm(THD *thd,
 {
   assert(vcol_expr);
 
-  /* 
+  /*
     Step 1: Construct a statement for the parser.
     The parsed string needs to take the following format:
     "PARSE_VCOL_EXPR (<expr_string_from_frm>)"
   */
   char *vcol_expr_str;
   int str_len= 0;
-  
+
   if (!(vcol_expr_str= (char*) alloc_root(&table->mem_root,
-                                          vcol_expr->length + 
+                                          vcol_expr->length +
                                             parse_vcol_keyword.length + 3)))
   {
     return(true);
@@ -1442,46 +1470,46 @@ bool unpack_vcol_info_from_frm(THD *thd,
   str_len= parse_vcol_keyword.length;
   memcpy(vcol_expr_str + str_len, "(", 1);
   str_len++;
-  memcpy(vcol_expr_str + str_len, 
-         (char*) vcol_expr->str, 
+  memcpy(vcol_expr_str + str_len,
+         (char*) vcol_expr->str,
          vcol_expr->length);
   str_len+= vcol_expr->length;
   memcpy(vcol_expr_str + str_len, ")", 1);
   str_len++;
   memcpy(vcol_expr_str + str_len, "\0", 1);
   str_len++;
-  Lex_input_stream lip(thd, vcol_expr_str, str_len);
+  Lex_input_stream lip(session, vcol_expr_str, str_len);
 
-  /* 
-    Step 2: Setup thd for parsing.
+  /*
+    Step 2: Setup session for parsing.
     1) make Item objects be created in the memory allocated for the Table
        object (not TABLE_SHARE)
-    2) ensure that created Item's are not put on to thd->free_list 
-       (which is associated with the parsed statement and hence cleared after 
+    2) ensure that created Item's are not put on to session->free_list
+       (which is associated with the parsed statement and hence cleared after
        the parsing)
-    3) setup a flag in the LEX structure to allow "PARSE_VCOL_EXPR" 
+    3) setup a flag in the LEX structure to allow "PARSE_VCOL_EXPR"
        to be parsed as a SQL command.
   */
   MEM_ROOT **root_ptr, *old_root;
-  Item *backup_free_list= thd->free_list;
-  root_ptr= (MEM_ROOT **)pthread_getspecific(THR_MALLOC);
+  Item *backup_free_list= session->free_list;
+  root_ptr= current_mem_root_ptr();
   old_root= *root_ptr;
   *root_ptr= &table->mem_root;
-  thd->free_list= NULL;
-  thd->lex->parse_vcol_expr= true;
+  session->free_list= NULL;
+  session->lex->parse_vcol_expr= true;
 
-  /* 
+  /*
     Step 3: Use the parser to build an Item object from.
   */
-  if (parse_sql(thd, &lip))
+  if (parse_sql(session, &lip))
   {
     goto parse_err;
   }
   /* From now on use vcol_info generated by the parser. */
-  field->vcol_info= thd->lex->vcol_info;
+  field->vcol_info= session->lex->vcol_info;
 
   /* Validate the Item tree. */
-  if (fix_fields_vcol_func(thd,
+  if (fix_fields_vcol_func(session,
                            field->vcol_info->expr_item,
                            table,
                            field->field_name))
@@ -1498,17 +1526,17 @@ bool unpack_vcol_info_from_frm(THD *thd,
     field->vcol_info= NULL;
     goto parse_err;
   }
-  field->vcol_info->item_free_list= thd->free_list;
-  thd->free_list= backup_free_list;
+  field->vcol_info->item_free_list= session->free_list;
+  session->free_list= backup_free_list;
   *root_ptr= old_root;
 
   return(false);
 
 parse_err:
-  thd->lex->parse_vcol_expr= false;
-  thd->free_items();
+  session->lex->parse_vcol_expr= false;
+  session->free_items();
   *root_ptr= old_root;
-  thd->free_list= backup_free_list;
+  session->free_list= backup_free_list;
   return(true);
 }
 
@@ -1518,7 +1546,7 @@ parse_err:
 
   SYNOPSIS
     open_table_from_share()
-    thd			Thread handler
+    session			Thread handler
     share		Table definition
     alias       	Alias for table
     db_stat		open flags (for example HA_OPEN_KEYFILE|
@@ -1541,7 +1569,7 @@ parse_err:
    7    Table definition has changed in engine
 */
 
-int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
+int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode)
 {
@@ -1551,19 +1579,19 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   unsigned char *record, *bitmaps;
   Field **field_ptr, **vfield_ptr;
 
-  /* Parsing of partitioning information from .frm needs thd->lex set up. */
-  assert(thd->lex->is_lex_started);
+  /* Parsing of partitioning information from .frm needs session->lex set up. */
+  assert(session->lex->is_lex_started);
 
   error= 1;
   memset(outparam, 0, sizeof(*outparam));
-  outparam->in_use= thd;
+  outparam->in_use= session;
   outparam->s= share;
   outparam->db_stat= db_stat;
   outparam->write_row_record= NULL;
 
   init_sql_alloc(&outparam->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
-  if (!(outparam->alias= my_strdup(alias, MYF(MY_WME))))
+  if (!(outparam->alias= strdup(alias)))
     goto err;
   outparam->quick_keys.init();
   outparam->covering_keys.init();
@@ -1664,7 +1692,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
       goto err;
     outparam->key_info= key_info;
     key_part= (reinterpret_cast<KEY_PART_INFO*> (key_info+share->keys));
-    
+
     memcpy(key_info, share->key_info, sizeof(*key_info)*share->keys);
     memcpy(key_part, share->key_info[0].key_part, (sizeof(*key_part) *
                                                    share->key_parts));
@@ -1708,12 +1736,12 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
     goto err;
 
   outparam->vfield= vfield_ptr;
-  
+
   for (field_ptr= outparam->field; *field_ptr; field_ptr++)
   {
     if ((*field_ptr)->vcol_info)
     {
-      if (unpack_vcol_info_from_frm(thd,
+      if (unpack_vcol_info_from_frm(session,
                                     outparam,
                                     *field_ptr,
                                     &(*field_ptr)->vcol_info->expr_str,
@@ -1728,11 +1756,11 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   }
   *vfield_ptr= NULL;                              // End marker
   /* Check virtual columns against table's storage engine. */
-  if ((share->vfields && outparam->file) && 
+  if ((share->vfields && outparam->file) &&
         (not outparam->file->check_if_supported_virtual_columns()))
   {
     my_error(ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN,
-             MYF(0), 
+             MYF(0),
              "Specified storage engine");
     error_reported= true;
     goto err;
@@ -1799,12 +1827,12 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
     }
   }
 
-#if defined(HAVE_purify) 
+#if defined(HAVE_purify)
   memset(bitmaps, 0, bitmap_size*3);
 #endif
 
   outparam->no_replicate= outparam->file;
-  thd->status_var.opened_tables++;
+  session->status_var.opened_tables++;
 
   return (0);
 
@@ -1819,6 +1847,11 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   return (error);
 }
 
+/* close_temporary_tables' internal, 4 is due to uint4korr definition */
+uint32_t  Table::tmpkeyval()
+{
+  return uint4korr(s->table_cache_key.str + s->table_cache_key.length - 4);
+}
 
 /*
   Free information allocated by openfrm
@@ -1829,31 +1862,32 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
     free_share		Is 1 if we also want to free table_share
 */
 
-int closefrm(register Table *table, bool free_share)
+int Table::closefrm(bool free_share)
 {
   int error=0;
 
-  if (table->db_stat)
-    error=table->file->close();
-  free((char*) table->alias);
-  table->alias= 0;
-  if (table->field)
+  if (db_stat)
+    error= file->close();
+  free((char*) alias);
+  alias= NULL;
+  if (field)
   {
-    for (Field **ptr=table->field ; *ptr ; ptr++)
+    for (Field **ptr=field ; *ptr ; ptr++)
       delete *ptr;
-    table->field= 0;
+    field= 0;
   }
-  delete table->file;
-  table->file= 0;				/* For easier errorchecking */
+  delete file;
+  file= 0;				/* For easier errorchecking */
   if (free_share)
   {
-    if (table->s->tmp_table == NO_TMP_TABLE)
-      release_table_share(table->s, RELEASE_NORMAL);
+    if (s->tmp_table == NO_TMP_TABLE)
+      release_table_share(s, RELEASE_NORMAL);
     else
-      free_table_share(table->s);
+      free_table_share(s);
   }
-  free_root(&table->mem_root, MYF(0));
-  return(error);
+  free_root(&mem_root, MYF(0));
+
+  return error;
 }
 
 
@@ -1889,9 +1923,8 @@ ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names)
   if (names)
   {
     length=uint2korr(head+4);
-    my_seek(file,64L,MY_SEEK_SET,MYF(0));
-    if (!(buf= (unsigned char*) my_malloc((size_t) length+a_length+names*4,
-				  MYF(MY_WME))) ||
+    lseek(file,64,SEEK_SET);
+    if (!(buf= (unsigned char*) malloc(length+a_length+names*4)) ||
 	my_read(file, buf+a_length, (size_t) (length+names*4),
 		MYF(MY_NABP)))
     {						/* purecov: inspected */
@@ -1931,7 +1964,7 @@ int read_string(File file, unsigned char**to, size_t length)
 
   if (*to)
     free(*to);
-  if (!(*to= (unsigned char*) my_malloc(length+1,MYF(MY_WME))) ||
+  if (!(*to= (unsigned char*) malloc(length+1)) ||
       my_read(file, *to, length,MYF(MY_NABP)))
   {
     if (*to)
@@ -1950,7 +1983,7 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 		     const char *newname)
 {
   uint32_t i,bufflength,maxlength,n_length,length,names;
-  ulong endpos,newpos;
+  off_t endpos,newpos;
   unsigned char buff[IO_SIZE];
   unsigned char *pos;
 
@@ -1964,28 +1997,27 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
   {						/* Expand file */
     newpos+=IO_SIZE;
     int4store(fileinfo+10,newpos);
-    endpos=(ulong) my_seek(file,0L,MY_SEEK_END,MYF(0));/* Copy from file-end */
+    endpos= lseek(file,0,SEEK_END);/* Copy from file-end */
     bufflength= (uint) (endpos & (IO_SIZE-1));	/* IO_SIZE is a power of 2 */
 
     while (endpos > maxlength)
     {
-      my_seek(file,(ulong) (endpos-bufflength),MY_SEEK_SET,MYF(0));
+      lseek(file,(off_t) (endpos-bufflength),SEEK_SET);
       if (my_read(file, buff, bufflength, MYF(MY_NABP+MY_WME)))
-	return(0L);
-      my_seek(file,(ulong) (endpos-bufflength+IO_SIZE),MY_SEEK_SET,
-		   MYF(0));
+        return(0L);
+      lseek(file,(off_t) (endpos-bufflength+IO_SIZE),SEEK_SET);
       if ((my_write(file, buff,bufflength,MYF(MY_NABP+MY_WME))))
-	return(0);
+        return(0);
       endpos-=bufflength; bufflength=IO_SIZE;
     }
     memset(buff, 0, IO_SIZE);			/* Null new block */
-    my_seek(file,(ulong) maxlength,MY_SEEK_SET,MYF(0));
+    lseek(file,(ulong) maxlength,SEEK_SET);
     if (my_write(file,buff,bufflength,MYF(MY_NABP+MY_WME)))
-	return(0L);
+      return(0L);
     maxlength+=IO_SIZE;				/* Fix old ref */
     int2store(fileinfo+6,maxlength);
-    for (i=names, pos= (unsigned char*) *formnames->type_names+n_length-1; i-- ;
-	 pos+=4)
+    for (i=names, pos= (unsigned char*) *formnames->type_names+n_length-1; i--;
+         pos+=4)
     {
       endpos=uint4korr(pos)+IO_SIZE;
       int4store(pos,endpos);
@@ -1995,11 +2027,11 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
   if (n_length == 1 )
   {						/* First name */
     length++;
-    strxmov((char*) buff,"/",newname,"/",NULL);
+    sprintf((char*)buff,"/%s/",newname);
   }
   else
-    strxmov((char*) buff,newname,"/",NULL); /* purecov: inspected */
-  my_seek(file,63L+(ulong) n_length,MY_SEEK_SET,MYF(0));
+    sprintf((char*)buff,"%s/",newname); /* purecov: inspected */
+  lseek(file, 63 + n_length,SEEK_SET);
   if (my_write(file, buff, (size_t) length+1,MYF(MY_NABP+MY_WME)) ||
       (names && my_write(file,(unsigned char*) (*formnames->type_names+n_length-1),
 			 names*4, MYF(MY_NABP+MY_WME))) ||
@@ -2008,7 +2040,7 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 
   int2store(fileinfo+8,names+1);
   int2store(fileinfo+4,n_length+length);
-  (void)ftruncate(file, newpos);/* Append file with '\0' */
+  assert(ftruncate(file, newpos)==0);/* Append file with '\0' */
   return(newpos);
 } /* make_new_entry */
 
@@ -2028,7 +2060,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
       my_error(ER_NO_SUCH_TABLE, MYF(0), share->db.str, share->table_name.str);
     else
     {
-      strxmov(buff, share->normalized_path.str, reg_ext, NULL);
+      sprintf(buff,"%s%s",share->normalized_path.str,reg_ext);
       my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
                errortype, buff, db_errno);
     }
@@ -2037,10 +2069,10 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
   {
     handler *file= 0;
     const char *datext= "";
-    
+
     if (share->db_type() != NULL)
     {
-      if ((file= get_new_handler(share, current_thd->mem_root,
+      if ((file= get_new_handler(share, current_session->mem_root,
                                  share->db_type())))
       {
         if (!(datext= *file->bas_ext()))
@@ -2049,7 +2081,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     }
     err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
       ER_FILE_USED : ER_CANT_OPEN_FILE;
-    strxmov(buff, share->normalized_path.str, datext, NULL);
+    sprintf(buff,"%s%s", share->normalized_path.str,datext);
     my_error(err_no,errortype, buff, db_errno);
     delete file;
     break;
@@ -2064,22 +2096,22 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
       csname= tmp;
     }
     my_printf_error(ER_UNKNOWN_COLLATION,
-                    _("Unknown collation '%s' in table '%-.64s' definition"), 
+                    _("Unknown collation '%s' in table '%-.64s' definition"),
                     MYF(0), csname, share->table_name.str);
     break;
   }
   case 6:
-    strxmov(buff, share->normalized_path.str, reg_ext, NULL);
+    sprintf(buff,"%s%s",share->normalized_path.str,reg_ext);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
-                    "of MySQL and cannot be read"), 
+                    "of Drizzle and cannot be read"),
                     MYF(0), buff);
     break;
   case 8:
     break;
   default:				/* Better wrong error than none */
   case 4:
-    strxmov(buff, share->normalized_path.str, reg_ext, NULL);
+    sprintf(buff,"%s%s",share->normalized_path.str,reg_ext);
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
@@ -2155,7 +2187,7 @@ TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
  Search after a field with given start & length
  If an exact field isn't found, return longest field with starts
  at right position.
- 
+
  NOTES
    This is needed because in some .frm fields 'fieldnr' was saved wrong
 
@@ -2210,7 +2242,7 @@ ulong next_io_size(register ulong pos)
 /*
   Store an SQL quoted string.
 
-  SYNOPSIS  
+  SYNOPSIS
     append_unescaped()
     res		result String
     pos		string to be quoted
@@ -2271,7 +2303,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
 
 	/* Create a .frm file */
 
-File create_frm(THD *thd, const char *name, const char *db,
+File create_frm(Session *session, const char *name, const char *db,
                 const char *table, uint32_t reclength, unsigned char *fileinfo,
   		HA_CREATE_INFO *create_info, uint32_t keys, KEY *key_info)
 {
@@ -2302,12 +2334,12 @@ File create_frm(THD *thd, const char *name, const char *db,
     fileinfo[2]= FRM_VER+3+ test(create_info->varchar);
 
     fileinfo[3]= (unsigned char) ha_legacy_type(
-          ha_checktype(thd,ha_legacy_type(create_info->db_type),0,0));
+          ha_checktype(session,ha_legacy_type(create_info->db_type),0,0));
     fileinfo[4]=1;
     int2store(fileinfo+6,IO_SIZE);		/* Next block starts here */
     for (i= 0; i < keys; i++)
     {
-      assert(test(key_info[i].flags & HA_USES_COMMENT) == 
+      assert(test(key_info[i].flags & HA_USES_COMMENT) ==
                  (key_info[i].comment.length > 0));
       if (key_info[i].flags & HA_USES_COMMENT)
         key_comment_total_bytes += 2 + key_info[i].comment.length;
@@ -2351,7 +2383,7 @@ File create_frm(THD *thd, const char *name, const char *db,
     fileinfo[41]= 0;
     fileinfo[42]= 0;
     int4store(fileinfo+43,create_info->block_size);
- 
+
     fileinfo[44]= 0;
     fileinfo[45]= 0;
     fileinfo[46]= 0;
@@ -2424,13 +2456,15 @@ void Table::updateCreateInfo(HA_CREATE_INFO *create_info)
   return;
 }
 
-int
-rename_file_ext(const char * from,const char * to,const char * ext)
+int rename_file_ext(const char * from,const char * to,const char * ext)
 {
-  char from_b[FN_REFLEN],to_b[FN_REFLEN];
-  strxmov(from_b,from,ext,NULL);
-  strxmov(to_b,to,ext,NULL);
-  return (my_rename(from_b,to_b,MYF(MY_WME)));
+  string from_s, to_s;
+
+  from_s.append(from);
+  from_s.append(ext);
+  to_s.append(to);
+  to_s.append(ext);
+  return (my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
 }
 
 
@@ -2501,7 +2535,7 @@ char *get_field(MEM_ROOT *mem, Field *field)
     that are present in this value, returns the length of the value
 */
 uint32_t calculate_key_len(Table *table, uint32_t key,
-                       const unsigned char *buf __attribute__((unused)),
+                       const unsigned char *,
                        key_part_map keypart_map)
 {
   /* works only with key prefixes */
@@ -2578,14 +2612,14 @@ bool check_column_name(const char *name)
 {
   uint32_t name_length= 0;  // name length in symbols
   bool last_char_is_space= true;
-  
+
   while (*name)
   {
 #if defined(USE_MB) && defined(USE_MB_IDENT)
     last_char_is_space= my_isspace(system_charset_info, *name);
     if (use_mb(system_charset_info))
     {
-      int len=my_ismbchar(system_charset_info, name, 
+      int len=my_ismbchar(system_charset_info, name,
                           name+system_charset_info->mbmaxlen);
       if (len)
       {
@@ -2646,14 +2680,14 @@ Table::table_check_intact(const uint32_t table_f_count,
     /* previous MySQL version */
     if (DRIZZLE_VERSION_ID > s->mysql_version)
     {
-      sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
                       alias, table_f_count, s->fields,
                       s->mysql_version, DRIZZLE_VERSION_ID);
       return(true);
     }
     else if (DRIZZLE_VERSION_ID == s->mysql_version)
     {
-      sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), alias,
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), alias,
                       table_f_count, s->fields);
       return(true);
     }
@@ -2672,9 +2706,9 @@ Table::table_check_intact(const uint32_t table_f_count,
     sql_type.length(0);
     if (i < s->fields)
     {
-      Field *field= this->field[i];
+      Field *cur_field= this->field[i];
 
-      if (strncmp(field->field_name, table_def->name.str,
+      if (strncmp(cur_field->field_name, table_def->name.str,
                   table_def->name.length))
       {
         /*
@@ -2682,12 +2716,12 @@ Table::table_check_intact(const uint32_t table_f_count,
           Still this can be a sign of a tampered table, output an error
           to the error log.
         */
-        sql_print_error(_("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d, found '%s'."),
                         s->db.str, alias, table_def->name.str, i,
-                        field->field_name);
+                        cur_field->field_name);
       }
-      field->sql_type(sql_type);
+      cur_field->sql_type(sql_type);
       /*
         Generally, if column types don't match, then something is
         wrong.
@@ -2708,41 +2742,48 @@ Table::table_check_intact(const uint32_t table_f_count,
       if (strncmp(sql_type.c_ptr_safe(), table_def->type.str,
                   table_def->type.length - 1))
       {
-        sql_print_error(_("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d to have type "
-                        "%s, found type %s."), s->db.str, alias,
-                        table_def->name.str, i, table_def->type.str,
-                        sql_type.c_ptr_safe());
+                        "%s, found type %s."),
+                      s->db.str, alias,
+                      table_def->name.str, i, table_def->type.str,
+                      sql_type.c_ptr_safe());
         error= true;
       }
-      else if (table_def->cset.str && !field->has_charset())
+      else if (table_def->cset.str && !cur_field->has_charset())
       {
-        sql_print_error(_("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but the type has no "
-                        "character set."), s->db.str, alias,
-                        table_def->name.str, i, table_def->cset.str);
+                        "character set."),
+                      s->db.str, alias,
+                      table_def->name.str, i, table_def->cset.str);
         error= true;
       }
       else if (table_def->cset.str &&
-               strcmp(field->charset()->csname, table_def->cset.str))
+               strcmp(cur_field->charset()->csname, table_def->cset.str))
       {
-        sql_print_error(_("Incorrect definition of table %s.%s: "
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but found "
-                        "character set '%s'."), s->db.str, alias,
-                        table_def->name.str, i, table_def->cset.str,
-                        field->charset()->csname);
+                        "character set '%s'."),
+                      s->db.str, alias,
+                      table_def->name.str, i, table_def->cset.str,
+                      cur_field->charset()->csname);
         error= true;
       }
     }
     else
     {
-      sql_print_error(_("Incorrect definition of table %s.%s: "
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Incorrect definition of table %s.%s: "
                       "expected column '%s' at position %d to have type %s "
                       " but the column is not found."),
-                      s->db.str, alias,
-                      table_def->name.str, i, table_def->type.str);
+                    s->db.str, alias,
+                    table_def->name.str, i, table_def->type.str);
       error= true;
     }
   }
@@ -2760,7 +2801,7 @@ Table::table_check_intact(const uint32_t table_f_count,
   DESCRIPTION
     Create Item_field object for each column in the table and
     initialize it with the corresponding Field. New items are
-    created in the current THD memory root.
+    created in the current Session memory root.
 
   RETURN VALUE
     0                    success
@@ -2846,13 +2887,12 @@ TableList *TableList::find_underlying_table(Table *table_to_find)
 
 void TableList::cleanup_items()
 {
-  if (!field_translation)
-    return;
+}
 
-  for (Field_translator *transl= field_translation;
-       transl < field_translation_end;
-       transl++)
-    transl->item->walk(&Item::cleanup_processor, 0, 0);
+
+bool TableList::placeholder()
+{
+  return derived || schema_table || (create && !table->getDBStat()) || !table;
 }
 
 
@@ -3038,7 +3078,7 @@ void Table::clear_column_bitmaps()
 
 /*
   Tell handler we are going to call position() and rnd_pos() later.
-  
+
   NOTES:
   This is needed for handlers that uses the primary key to find the
   row. In this case we have to extend the read bitmap with the primary
@@ -3119,7 +3159,7 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index,
     if (key_part->field->vcol_info &&
         key_part->field->vcol_info->expr_item)
       key_part->field->vcol_info->
-               expr_item->walk(&Item::register_field_in_bitmap, 
+               expr_item->walk(&Item::register_field_in_bitmap,
                                1, (unsigned char *) bitmap);
   }
 }
@@ -3178,8 +3218,7 @@ void Table::mark_columns_needed_for_delete()
     }
     file->column_bitmaps_signal();
   }
-  if (file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE ||
-      (mysql_bin_log.is_open() && in_use && in_use->current_stmt_binlog_row_based))
+
   {
     /*
       If the handler has no cursor capabilites, or we have row-based
@@ -3230,8 +3269,7 @@ void Table::mark_columns_needed_for_update()
     }
     file->column_bitmaps_signal();
   }
-  if ((file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE) ||
-      (mysql_bin_log.is_open() && in_use && in_use->current_stmt_binlog_row_based))
+
   {
     /*
       If the handler has no cursor capabilites, or we have row-based
@@ -3268,7 +3306,7 @@ void Table::mark_columns_needed_for_insert()
   mark_virtual_columns();
 }
 
-/* 
+/*
   @brief Update the write and read table bitmap to allow
          using procedure save_in_field for all virtual columns
          in the table.
@@ -3290,7 +3328,7 @@ void Table::mark_virtual_columns(void)
   {
     tmp_vfield= *vfield_ptr;
     assert(tmp_vfield->vcol_info && tmp_vfield->vcol_info->expr_item);
-    tmp_vfield->vcol_info->expr_item->walk(&Item::register_field_in_read_map, 
+    tmp_vfield->vcol_info->expr_item->walk(&Item::register_field_in_read_map,
                                            1, (unsigned char *) 0);
     bitmap_set_bit(read_set, tmp_vfield->field_index);
     bitmap_set_bit(write_set, tmp_vfield->field_index);
@@ -3308,7 +3346,7 @@ void Table::mark_virtual_columns(void)
     TableList::reinit_before_use()
 */
 
-void TableList::reinit_before_use(THD *thd)
+void TableList::reinit_before_use(Session *session)
 {
   /*
     Reset old pointers to TABLEs: they are not valid since the tables
@@ -3324,7 +3362,7 @@ void TableList::reinit_before_use(THD *thd)
   {
     embedded= parent_embedding;
     if (embedded->prep_on_expr)
-      embedded->on_expr= embedded->prep_on_expr->copy_andor_structure(thd);
+      embedded->on_expr= embedded->prep_on_expr->copy_andor_structure(session);
     parent_embedding= embedded->embedding;
   }
   while (parent_embedding &&
@@ -3336,7 +3374,7 @@ void TableList::reinit_before_use(THD *thd)
 
   SYNOPSIS
     TableList::containing_subselect()
- 
+
   RETURN
     Subselect item for the subquery that contains the FROM list
     this table is taken from if there is any
@@ -3345,7 +3383,7 @@ void TableList::reinit_before_use(THD *thd)
 */
 
 Item_subselect *TableList::containing_subselect()
-{    
+{
   return (select_lex ? select_lex->master_unit()->item : 0);
 }
 
@@ -3357,24 +3395,24 @@ Item_subselect *TableList::containing_subselect()
       table         the Table to operate on.
 
   DESCRIPTION
-    The parser collects the index hints for each table in a "tagged list" 
+    The parser collects the index hints for each table in a "tagged list"
     (TableList::index_hints). Using the information in this tagged list
-    this function sets the members Table::keys_in_use_for_query, 
+    this function sets the members Table::keys_in_use_for_query,
     Table::keys_in_use_for_group_by, Table::keys_in_use_for_order_by,
     Table::force_index and Table::covering_keys.
 
     Current implementation of the runtime does not allow mixing FORCE INDEX
-    and USE INDEX, so this is checked here. Then the FORCE INDEX list 
+    and USE INDEX, so this is checked here. Then the FORCE INDEX list
     (if non-empty) is appended to the USE INDEX list and a flag is set.
 
-    Multiple hints of the same kind are processed so that each clause 
+    Multiple hints of the same kind are processed so that each clause
     is applied to what is computed in the previous clause.
     For example:
         USE INDEX (i1) USE INDEX (i2)
     is equivalent to
         USE INDEX (i1,i2)
     and means "consider only i1 and i2".
-        
+
     Similarly
         USE INDEX () USE INDEX (i1)
     is equivalent to
@@ -3383,7 +3421,7 @@ Item_subselect *TableList::containing_subselect()
 
     It is OK to have the same index several times, e.g. "USE INDEX (i1,i1)" is
     not an error.
-        
+
     Different kind of hints (USE/FORCE/IGNORE) are processed in the following
     order:
       1. All indexes in USE (or FORCE) INDEX are added to the mask.
@@ -3392,8 +3430,8 @@ Item_subselect *TableList::containing_subselect()
     e.g. "USE INDEX i1, IGNORE INDEX i1, USE INDEX i1" will not use i1 at all
     as if we had "USE INDEX i1, USE INDEX i1, IGNORE INDEX i1".
 
-    As an optimization if there is a covering index, and we have 
-    IGNORE INDEX FOR GROUP/order_st, and this index is used for the JOIN part, 
+    As an optimization if there is a covering index, and we have
+    IGNORE INDEX FOR GROUP/order_st, and this index is used for the JOIN part,
     then we have to ignore the IGNORE INDEX FROM GROUP/order_st.
 
   RETURN VALUE
@@ -3403,7 +3441,7 @@ Item_subselect *TableList::containing_subselect()
 bool TableList::process_index_hints(Table *tbl)
 {
   /* initialize the result variables */
-  tbl->keys_in_use_for_query= tbl->keys_in_use_for_group_by= 
+  tbl->keys_in_use_for_query= tbl->keys_in_use_for_group_by=
     tbl->keys_in_use_for_order_by= tbl->s->keys_in_use;
 
   /* index hint list processing */
@@ -3414,7 +3452,7 @@ bool TableList::process_index_hints(Table *tbl)
     key_map index_group[INDEX_HINT_FORCE + 1];
     Index_hint *hint;
     int type;
-    bool have_empty_use_join= false, have_empty_use_order= false, 
+    bool have_empty_use_join= false, have_empty_use_order= false,
          have_empty_use_group= false;
     List_iterator <Index_hint> iter(*index_hints);
 
@@ -3452,9 +3490,9 @@ bool TableList::process_index_hints(Table *tbl)
         continue;
       }
 
-      /* 
-        Check if an index with the given name exists and get his offset in 
-        the keys bitmask for the table 
+      /*
+        Check if an index with the given name exists and get his offset in
+        the keys bitmask for the table
       */
       if (tbl->s->keynames.type_names == 0 ||
           (pos= find_type(&tbl->s->keynames, hint->key_name.str,
@@ -3535,61 +3573,18 @@ size_t Table::max_row_length(const unsigned char *data)
   return length;
 }
 
-/*
-  Check type of .frm if we are not going to parse it
-
-  SYNOPSIS
-  mysql_frm_type()
-  path        path to file
-
-  RETURN
-  false       error
-  true       table
-*/
-
-bool mysql_frm_type(THD *thd __attribute__((unused)),
-                    char *path, enum legacy_db_type *dbt)
-{
-  File file;
-  unsigned char header[10];     /* This should be optimized */
-  int error;
-
-  *dbt= DB_TYPE_UNKNOWN;
-
-  if ((file= open(path, O_RDONLY)) < 0)
-    return false;
-  error= my_read(file, (unsigned char*) header, sizeof(header), MYF(MY_NABP));
-  my_close(file, MYF(MY_WME));
-
-  if (error)
-    return false;
-
-  /*  
-    This is just a check for DB_TYPE. We'll return default unknown type
-    if the following test is true (arg #3). This should not have effect
-    on return value from this function (default FRMTYPE_TABLE)
-   */  
-  if (header[0] != (unsigned char) 254 || header[1] != 1 ||
-      (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
-       (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
-    return true;
-
-  *dbt= (enum legacy_db_type) (uint) *(header + 3);
-  return true;                   // Is probably a .frm table
-}
-
 /****************************************************************************
  Functions for creating temporary tables.
 ****************************************************************************/
 
 
 /* Prototypes */
-void free_tmp_table(THD *thd, Table *entry);
+void free_tmp_table(Session *session, Table *entry);
 
 /**
   Create field for temporary table from given field.
 
-  @param thd	       Thread handler
+  @param session	       Thread handler
   @param org_field    field from which new field will be created
   @param name         New field name
   @param table	       Temporary table
@@ -3608,15 +3603,15 @@ void free_tmp_table(THD *thd, Table *entry);
     new_created field
 */
 
-Field *create_tmp_field_from_field(THD *thd, Field *org_field,
+Field *create_tmp_field_from_field(Session *session, Field *org_field,
                                    const char *name, Table *table,
                                    Item_field *item, uint32_t convert_blob_length)
 {
   Field *new_field;
 
-  /* 
-    Make sure that the blob fits into a Field_varstring which has 
-    2-byte lenght. 
+  /*
+    Make sure that the blob fits into a Field_varstring which has
+    2-byte lenght.
   */
   if (convert_blob_length && convert_blob_length <= Field_varstring::MAX_SIZE &&
       (org_field->flags & BLOB_FLAG))
@@ -3625,7 +3620,7 @@ Field *create_tmp_field_from_field(THD *thd, Field *org_field,
                                    org_field->field_name, table->s,
                                    org_field->charset());
   else
-    new_field= org_field->new_field(thd->mem_root, table,
+    new_field= org_field->new_field(session->mem_root, table,
                                     table == org_field->table);
   if (new_field)
   {
@@ -3646,145 +3641,11 @@ Field *create_tmp_field_from_field(THD *thd, Field *org_field,
   return new_field;
 }
 
-/**
-  Create field for temporary table using type of given item.
-
-  @param thd                   Thread handler
-  @param item                  Item to create a field for
-  @param table                 Temporary table
-  @param copy_func             If set and item is a function, store copy of
-                               item in this array
-  @param modify_item           1 if item->result_field should point to new
-                               item. This is relevent for how fill_record()
-                               is going to work:
-                               If modify_item is 1 then fill_record() will
-                               update the record in the original table.
-                               If modify_item is 0 then fill_record() will
-                               update the temporary table
-  @param convert_blob_length   If >0 create a varstring(convert_blob_length)
-                               field instead of blob.
-
-  @retval
-    0  on error
-  @retval
-    new_created field
-*/
-
-static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
-                                         Item *item, Table *table,
-                                         Item ***copy_func, bool modify_item,
-                                         uint32_t convert_blob_length)
-{
-  bool maybe_null= item->maybe_null;
-  Field *new_field;
-
-  switch (item->result_type()) {
-  case REAL_RESULT:
-    new_field= new Field_double(item->max_length, maybe_null,
-                                item->name, item->decimals, true);
-    break;
-  case INT_RESULT:
-    /* 
-      Select an integer type with the minimal fit precision.
-      MY_INT32_NUM_DECIMAL_DIGITS is sign inclusive, don't consider the sign.
-      Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into 
-      Field_long : make them Field_int64_t.  
-    */
-    if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
-      new_field=new Field_int64_t(item->max_length, maybe_null,
-                                   item->name, item->unsigned_flag);
-    else
-      new_field=new Field_long(item->max_length, maybe_null,
-                               item->name, item->unsigned_flag);
-    break;
-  case STRING_RESULT:
-    assert(item->collation.collation);
-  
-    enum enum_field_types type;
-    /*
-      DATE/TIME fields have STRING_RESULT result type. 
-      To preserve type they needed to be handled separately.
-    */
-    if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
-        type == DRIZZLE_TYPE_TIME || type == DRIZZLE_TYPE_NEWDATE ||
-        type == DRIZZLE_TYPE_TIMESTAMP)
-      new_field= item->tmp_table_field_from_field_type(table, 1);
-    /* 
-      Make sure that the blob fits into a Field_varstring which has 
-      2-byte lenght. 
-    */
-    else if (item->max_length/item->collation.collation->mbmaxlen > 255 &&
-             convert_blob_length <= Field_varstring::MAX_SIZE && 
-             convert_blob_length)
-      new_field= new Field_varstring(convert_blob_length, maybe_null,
-                                     item->name, table->s,
-                                     item->collation.collation);
-    else
-      new_field= item->make_string_field(table);
-    new_field->set_derivation(item->collation.derivation);
-    break;
-  case DECIMAL_RESULT:
-  {
-    uint8_t dec= item->decimals;
-    uint8_t intg= ((Item_decimal *) item)->decimal_precision() - dec;
-    uint32_t len= item->max_length;
-
-    /*
-      Trying to put too many digits overall in a DECIMAL(prec,dec)
-      will always throw a warning. We must limit dec to
-      DECIMAL_MAX_SCALE however to prevent an assert() later.
-    */
-
-    if (dec > 0)
-    {
-      signed int overflow;
-
-      dec= cmin(dec, (uint8_t)DECIMAL_MAX_SCALE);
-
-      /*
-        If the value still overflows the field with the corrected dec,
-        we'll throw out decimals rather than integers. This is still
-        bad and of course throws a truncation warning.
-        +1: for decimal point
-      */
-
-      overflow= my_decimal_precision_to_length(intg + dec, dec,
-                                               item->unsigned_flag) - len;
-
-      if (overflow > 0)
-        dec= cmax(0, dec - overflow);            // too long, discard fract
-      else
-        len -= item->decimals - dec;            // corrected value fits
-    }
-
-    new_field= new Field_new_decimal(len, maybe_null, item->name,
-                                     dec, item->unsigned_flag);
-    break;
-  }
-  case ROW_RESULT:
-  default:
-    // This case should never be choosen
-    assert(0);
-    new_field= 0;
-    break;
-  }
-  if (new_field)
-    new_field->init(table);
-    
-  if (copy_func && item->is_result_field())
-    *((*copy_func)++) = item;			// Save for copy_funcs
-  if (modify_item)
-    item->set_result_field(new_field);
-  if (item->type() == Item::NULL_ITEM)
-    new_field->is_created_from_null_item= true;
-  return new_field;
-}
-
 
 /**
   Create field for information schema table.
 
-  @param thd		Thread handler
+  @param session		Thread handler
   @param table		Temporary table
   @param item		Item to create a field for
 
@@ -3794,8 +3655,7 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
     new_created field
 */
 
-Field *create_tmp_field_for_schema(THD *thd __attribute__((unused)),
-                                   Item *item, Table *table)
+Field *create_tmp_field_for_schema(Session *, Item *item, Table *table)
 {
   if (item->field_type() == DRIZZLE_TYPE_VARCHAR)
   {
@@ -3816,130 +3676,6 @@ Field *create_tmp_field_for_schema(THD *thd __attribute__((unused)),
 
 
 /**
-  Create field for temporary table.
-
-  @param thd		Thread handler
-  @param table		Temporary table
-  @param item		Item to create a field for
-  @param type		Type of item (normally item->type)
-  @param copy_func	If set and item is a function, store copy of item
-                       in this array
-  @param from_field    if field will be created using other field as example,
-                       pointer example field will be written here
-  @param default_field	If field has a default value field, store it here
-  @param group		1 if we are going to do a relative group by on result
-  @param modify_item	1 if item->result_field should point to new item.
-                       This is relevent for how fill_record() is going to
-                       work:
-                       If modify_item is 1 then fill_record() will update
-                       the record in the original table.
-                       If modify_item is 0 then fill_record() will update
-                       the temporary table
-  @param convert_blob_length If >0 create a varstring(convert_blob_length)
-                             field instead of blob.
-
-  @retval
-    0			on error
-  @retval
-    new_created field
-*/
-
-Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
-                        Item ***copy_func, Field **from_field,
-                        Field **default_field,
-                        bool group, bool modify_item,
-                        bool table_cant_handle_bit_fields __attribute__((unused)),
-                        bool make_copy_field,
-                        uint32_t convert_blob_length)
-{
-  Field *result;
-  Item::Type orig_type= type;
-  Item *orig_item= 0;
-
-  if (type != Item::FIELD_ITEM &&
-      item->real_item()->type() == Item::FIELD_ITEM)
-  {
-    orig_item= item;
-    item= item->real_item();
-    type= Item::FIELD_ITEM;
-  }
-
-  switch (type) {
-  case Item::SUM_FUNC_ITEM:
-  {
-    Item_sum *item_sum=(Item_sum*) item;
-    result= item_sum->create_tmp_field(group, table, convert_blob_length);
-    if (!result)
-      my_error(ER_OUT_OF_RESOURCES, MYF(ME_FATALERROR));
-    return result;
-  }
-  case Item::FIELD_ITEM:
-  case Item::DEFAULT_VALUE_ITEM:
-  {
-    Item_field *field= (Item_field*) item;
-    bool orig_modify= modify_item;
-    if (orig_type == Item::REF_ITEM)
-      modify_item= 0;
-    /*
-      If item have to be able to store NULLs but underlaid field can't do it,
-      create_tmp_field_from_field() can't be used for tmp field creation.
-    */
-    if (field->maybe_null && !field->field->maybe_null())
-    {
-      result= create_tmp_field_from_item(thd, item, table, NULL,
-                                         modify_item, convert_blob_length);
-      *from_field= field->field;
-      if (result && modify_item)
-        field->result_field= result;
-    } 
-    else
-      result= create_tmp_field_from_field(thd, (*from_field= field->field),
-                                          orig_item ? orig_item->name :
-                                          item->name,
-                                          table,
-                                          modify_item ? field :
-                                          NULL,
-                                          convert_blob_length);
-    if (orig_type == Item::REF_ITEM && orig_modify)
-      ((Item_ref*)orig_item)->set_result_field(result);
-    if (field->field->eq_def(result))
-      *default_field= field->field;
-    return result;
-  }
-  /* Fall through */
-  case Item::FUNC_ITEM:
-    /* Fall through */
-  case Item::COND_ITEM:
-  case Item::FIELD_AVG_ITEM:
-  case Item::FIELD_STD_ITEM:
-  case Item::SUBSELECT_ITEM:
-    /* The following can only happen with 'CREATE TABLE ... SELECT' */
-  case Item::PROC_ITEM:
-  case Item::INT_ITEM:
-  case Item::REAL_ITEM:
-  case Item::DECIMAL_ITEM:
-  case Item::STRING_ITEM:
-  case Item::REF_ITEM:
-  case Item::NULL_ITEM:
-  case Item::VARBIN_ITEM:
-    if (make_copy_field)
-    {
-      assert(((Item_result_field*)item)->result_field);
-      *from_field= ((Item_result_field*)item)->result_field;
-    }
-    return create_tmp_field_from_item(thd, item, table,
-                                      (make_copy_field ? 0 : copy_func),
-                                       modify_item, convert_blob_length);
-  case Item::TYPE_HOLDER:  
-    result= ((Item_type_holder *)item)->make_field_by_type(table);
-    result->set_derivation(item->collation.derivation);
-    return result;
-  default:					// Dosen't have to be stored
-    return 0;
-  }
-}
-
-/**
   Create a temp table according to a field list.
 
   Given field pointers are changed to point at tmp_table for
@@ -3950,9 +3686,9 @@ Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
   corresponding Item_field items, pointing at the fields in the
   temporary table, unless this was prohibited by true
   value of argument save_sum_fields. The Item_field objects
-  are created in THD memory root.
+  are created in Session memory root.
 
-  @param thd                  thread handle
+  @param session                  thread handle
   @param param                a description used as input to create the table
   @param fields               list of items that will be used to define
                               column types of the table (also see NOTES)
@@ -3968,10 +3704,9 @@ Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
 #define STRING_TOTAL_LENGTH_TO_PACK_ROWS 128
 #define AVG_STRING_LENGTH_TO_PACK_ROWS   64
 #define RATIO_TO_PACK_ROWS	       2
-#define MIN_STRING_LENGTH_TO_PACK_ROWS   10
 
 Table *
-create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
+create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
 		 order_st *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 char *table_alias)
@@ -4002,26 +3737,26 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   uint32_t total_uneven_bit_length= 0;
   bool force_copy_fields= param->force_copy_fields;
 
-  status_var_increment(thd->status_var.created_tmp_tables);
+  status_var_increment(session->status_var.created_tmp_tables);
 
   if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
     temp_pool_slot = bitmap_lock_set_next(&temp_pool);
 
   if (temp_pool_slot != MY_BIT_NONE) // we got a slot
-    sprintf(path, "%s_%lx_%i", tmp_file_prefix,
-            current_pid, temp_pool_slot);
+    sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
+            (unsigned long)current_pid, temp_pool_slot);
   else
   {
     /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%lx_%x", tmp_file_prefix,current_pid,
-            thd->thread_id, thd->tmp_table++);
+    sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
+            session->thread_id, session->tmp_table++);
   }
 
   /*
     No need to change table name to lower case as we are only creating
     MyISAM or HEAP tables here
   */
-  fn_format(path, path, mysql_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+  fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
 
   if (group)
@@ -4058,7 +3793,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   */
   if (param->precomputed_group_by)
     copy_func_count+= param->sum_func_count;
-  
+
   init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
   if (!multi_alloc_root(&own_root,
@@ -4084,8 +3819,8 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return(NULL);				/* purecov: inspected */
   }
-  /* Copy_field belongs to TMP_TABLE_PARAM, allocate it in THD mem_root */
-  if (!(param->copy_field= copy= new (thd->mem_root) Copy_field[field_count]))
+  /* Copy_field belongs to TMP_TABLE_PARAM, allocate it in Session mem_root */
+  if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
   {
     if (temp_pool_slot != MY_BIT_NONE)
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
@@ -4093,7 +3828,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     return(NULL);				/* purecov: inspected */
   }
   param->items_to_copy= copy_func;
-  my_stpcpy(tmpname,path);
+  strcpy(tmpname,path);
   /* make table according to fields */
 
   memset(table, 0, sizeof(*table));
@@ -4102,8 +3837,8 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   memset(from_field, 0, sizeof(Field*)*field_count);
 
   table->mem_root= own_root;
-  mem_root_save= thd->mem_root;
-  thd->mem_root= &table->mem_root;
+  mem_root_save= session->mem_root;
+  session->mem_root= &table->mem_root;
 
   table->field=reg_field;
   table->alias= table_alias;
@@ -4112,13 +3847,13 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   table->map=1;
   table->temp_pool_slot = temp_pool_slot;
   table->copy_blobs= 1;
-  table->in_use= thd;
+  table->in_use= session;
   table->quick_keys.init();
   table->covering_keys.init();
   table->keys_in_use_for_query.init();
 
   table->setShare(share);
-  init_tmp_table_share(thd, share, "", 0, tmpname, tmpname);
+  init_tmp_table_share(session, share, "", 0, tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
@@ -4170,7 +3905,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 	if (!arg->const_item())
 	{
 	  Field *new_field=
-            create_tmp_field(thd, table, arg, arg->type(), &copy_func,
+            create_tmp_field(session, table, arg, arg->type(), &copy_func,
                              tmp_from_field, &default_field[fieldnr],
                              group != 0,not_all_columns,
                              distinct, 0,
@@ -4190,9 +3925,9 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
             string_count++;
             string_total_length+= new_field->pack_length();
           }
-          thd->mem_root= mem_root_save;
-          thd->change_item_tree(argp, new Item_field(new_field));
-          thd->mem_root= &table->mem_root;
+          session->mem_root= mem_root_save;
+          session->change_item_tree(argp, new Item_field(new_field));
+          session->mem_root= &table->mem_root;
 	  if (!(new_field->flags & NOT_NULL_FLAG))
           {
 	    null_count++;
@@ -4219,8 +3954,8 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 	that in the later case group is set to the row pointer.
       */
       Field *new_field= (param->schema_table) ?
-        create_tmp_field_for_schema(thd, item, table) :
-        create_tmp_field(thd, table, item, type, &copy_func,
+        create_tmp_field_for_schema(session, item, table) :
+        create_tmp_field(session, table, item, type, &copy_func,
                          tmp_from_field, &default_field[fieldnr],
                          group != 0,
                          !force_copy_fields &&
@@ -4238,7 +3973,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 
       if (!new_field)
       {
-	if (thd->is_fatal_error)
+	if (session->is_fatal_error)
 	  goto err;				// Got OOM
 	continue;				// Some kindf of const item
       }
@@ -4340,7 +4075,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     share->default_values= table->record[1]+alloc_length;
   }
   copy_func[0]=0;				// End marker
-  param->func_count= copy_func - param->items_to_copy; 
+  param->func_count= copy_func - param->items_to_copy;
 
   table->setup_tmp_table_column_bitmaps(bitmaps);
 
@@ -4400,7 +4135,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     */
     if (default_field[i] && default_field[i]->ptr)
     {
-      /* 
+      /*
          default_field[i] is set only in the cases  when 'field' can
          inherit the default value that is defined for the field referred
          by the Item_field object from which 'field' has been created.
@@ -4419,7 +4154,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
         memcpy(field->ptr, orig_field->ptr, field->pack_length());
       }
       orig_field->move_field_offset(-diff);     // Back to record[0]
-    } 
+    }
 
     if (from_field[i])
     {						/* Not a table Item */
@@ -4446,13 +4181,13 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   param->recinfo=recinfo;
   store_record(table,s->default_values);        // Make empty default record
 
-  if (thd->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
+  if (session->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
-                                 cmin(thd->variables.tmp_table_size,
-                                     thd->variables.max_heap_table_size) :
-                                 thd->variables.tmp_table_size) /
+                                 cmin(session->variables.tmp_table_size,
+                                     session->variables.max_heap_table_size) :
+                                 session->variables.tmp_table_size) /
 			         share->reclength);
   set_if_bigger(share->max_rows,1);		// For dummy start options
   /*
@@ -4496,7 +4231,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       if (!using_unique_constraint)
       {
 	cur_group->buff=(char*) group_buff;
-	if (!(cur_group->field= field->new_key_field(thd->mem_root,table,
+	if (!(cur_group->field= field->new_key_field(session->mem_root,table,
                                                      group_buff +
                                                      test(maybe_null),
                                                      field->null_ptr,
@@ -4576,7 +4311,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
                                                 (unsigned char*) 0,
                                                 (uint) 0,
                                                 Field::NONE,
-                                                NULL, 
+                                                NULL,
                                                 table->s,
                                                 &my_charset_bin);
       if (!key_part_info->field)
@@ -4607,7 +4342,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 
       if ((*reg_field)->real_maybe_null())
         key_part_info->store_length+= HA_KEY_NULL_LENGTH;
-      if ((*reg_field)->type() == DRIZZLE_TYPE_BLOB || 
+      if ((*reg_field)->type() == DRIZZLE_TYPE_BLOB ||
           (*reg_field)->real_type() == DRIZZLE_TYPE_VARCHAR)
         key_part_info->store_length+= HA_KEY_BLOB_LENGTH;
 
@@ -4620,7 +4355,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     }
   }
 
-  if (thd->is_fatal_error)				// If end of memory
+  if (session->is_fatal_error)				// If end of memory
     goto err;					 /* purecov: inspected */
   share->db_record_offset= 1;
   if (share->db_type() == myisam_hton)
@@ -4632,13 +4367,13 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   if (table->open_tmp_table())
     goto err;
 
-  thd->mem_root= mem_root_save;
+  session->mem_root= mem_root_save;
 
   return(table);
 
 err:
-  thd->mem_root= mem_root_save;
-  table->free_tmp_table(thd);                    /* purecov: inspected */
+  session->mem_root= mem_root_save;
+  table->free_tmp_table(session);                    /* purecov: inspected */
   if (temp_pool_slot != MY_BIT_NONE)
     bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
   return(NULL);				/* purecov: inspected */
@@ -4655,17 +4390,17 @@ err:
     The sole purpose of this Table object is to use the power of Field
     class to read/write data to/from table->record[0]. Then one can store
     the record in any container (RB tree, hash, etc).
-    The table is created in THD mem_root, so are the table's fields.
+    The table is created in Session mem_root, so are the table's fields.
     Consequently, if you don't BLOB fields, you don't need to free it.
 
-  @param thd         connection handle
+  @param session         connection handle
   @param field_list  list of column definitions
 
   @return
     0 if out of memory, Table object in case of success
 */
 
-Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
+Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list)
 {
   uint32_t field_count= field_list.elements;
   uint32_t blob_count= 0;
@@ -4679,7 +4414,7 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
   Table *table;
   TABLE_SHARE *share;
 
-  if (!multi_alloc_root(thd->mem_root,
+  if (!multi_alloc_root(session->mem_root,
                         &table, sizeof(*table),
                         &share, sizeof(*share),
                         &field, (field_count + 1) * sizeof(Field*),
@@ -4726,7 +4461,7 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
   null_pack_length= (null_count + 7)/8;
   share->reclength= record_length + null_pack_length;
   share->rec_buff_length= ALIGN_SIZE(share->reclength + 1);
-  table->record[0]= (unsigned char*) thd->alloc(share->rec_buff_length);
+  table->record[0]= (unsigned char*) session->alloc(share->rec_buff_length);
   if (!table->record[0])
     goto error;
 
@@ -4737,7 +4472,7 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
     share->null_bytes= null_pack_length;
   }
 
-  table->in_use= thd;           /* field->reset() may access table->in_use */
+  table->in_use= session;           /* field->reset() may access table->in_use */
   {
     /* Set up field pointers */
     unsigned char *null_pos= table->record[0];
@@ -4796,7 +4531,7 @@ bool Table::open_tmp_table()
       start_recinfo   MyISAM's column descriptions
       recinfo INOUT   End of MyISAM's column descriptions
       options         Option bits
-   
+
   DESCRIPTION
     Create a MyISAM temporary table according to passed description. The is
     assumed to have one unique index or constraint.
@@ -4807,7 +4542,7 @@ bool Table::open_tmp_table()
          when there are many nullable columns)
       2. Table columns
       3. One free MI_COLUMNDEF element (*recinfo points here)
-   
+
     This function may use the free element to create hash column for unique
     constraint.
 
@@ -4816,9 +4551,9 @@ bool Table::open_tmp_table()
      true  - Error
 */
 
-bool Table::create_myisam_tmp_table(KEY *keyinfo, 
+bool Table::create_myisam_tmp_table(KEY *keyinfo,
                                     MI_COLUMNDEF *start_recinfo,
-                                    MI_COLUMNDEF **recinfo, 
+                                    MI_COLUMNDEF **recinfo,
 				    uint64_t options)
 {
   int error;
@@ -4865,17 +4600,18 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
     }
     for (uint32_t i=0; i < keyinfo->key_parts ; i++,seg++)
     {
-      Field *field=keyinfo->key_part[i].field;
+      Field *key_field=keyinfo->key_part[i].field;
       seg->flag=     0;
-      seg->language= field->charset()->number;
+      seg->language= key_field->charset()->number;
       seg->length=   keyinfo->key_part[i].length;
       seg->start=    keyinfo->key_part[i].offset;
-      if (field->flags & BLOB_FLAG)
+      if (key_field->flags & BLOB_FLAG)
       {
 	seg->type=
 	((keyinfo->key_part[i].key_type & FIELDFLAG_BINARY) ?
 	 HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2);
-	seg->bit_start= (uint8_t)(field->pack_length() - share->blob_ptr_size);
+	seg->bit_start= (uint8_t)(key_field->pack_length()
+                                  - share->blob_ptr_size);
 	seg->flag= HA_BLOB_PART;
 	seg->length=0;			// Whole blob in unique constraint
       }
@@ -4883,10 +4619,10 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       {
 	seg->type= keyinfo->key_part[i].type;
       }
-      if (!(field->flags & NOT_NULL_FLAG))
+      if (!(key_field->flags & NOT_NULL_FLAG))
       {
-	seg->null_bit= field->null_bit;
-	seg->null_pos= (uint) (field->null_ptr - (unsigned char*) record[0]);
+	seg->null_bit= key_field->null_bit;
+	seg->null_pos= (uint) (key_field->null_ptr - (unsigned char*) record[0]);
 	/*
 	  We are using a GROUP BY on something that contains NULL
 	  In this case we have to tell MyISAM that two NULL should
@@ -4923,13 +4659,13 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 }
 
 
-void Table::free_tmp_table(THD *thd)
+void Table::free_tmp_table(Session *session)
 {
   MEM_ROOT own_root= mem_root;
   const char *save_proc_info;
 
-  save_proc_info=thd->get_proc_info();
-  thd->set_proc_info("removing tmp table");
+  save_proc_info=session->get_proc_info();
+  session->set_proc_info("removing tmp table");
 
   if (file)
   {
@@ -4951,7 +4687,7 @@ void Table::free_tmp_table(THD *thd)
   plugin_unlock(0, s->db_plugin);
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
-  thd->set_proc_info(save_proc_info);
+  session->set_proc_info(save_proc_info);
 
   return;
 }
@@ -4961,9 +4697,9 @@ void Table::free_tmp_table(THD *thd)
   to this.
 */
 
-bool create_myisam_from_heap(THD *thd, Table *table,
+bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF *start_recinfo,
-                             MI_COLUMNDEF **recinfo, 
+                             MI_COLUMNDEF **recinfo,
 			     int error, bool ignore_last_dupp_key_error)
 {
   Table new_table;
@@ -4971,7 +4707,7 @@ bool create_myisam_from_heap(THD *thd, Table *table,
   const char *save_proc_info;
   int write_err;
 
-  if (table->s->db_type() != heap_hton || 
+  if (table->s->db_type() != heap_hton ||
       error != HA_ERR_RECORD_FILE_FULL)
   {
     table->file->print_error(error,MYF(0));
@@ -4980,17 +4716,17 @@ bool create_myisam_from_heap(THD *thd, Table *table,
   new_table= *table;
   share= *table->s;
   new_table.s= &share;
-  new_table.s->db_plugin= ha_lock_engine(thd, myisam_hton);
+  new_table.s->db_plugin= ha_lock_engine(session, myisam_hton);
   if (!(new_table.file= get_new_handler(&share, &new_table.mem_root,
                                         new_table.s->db_type())))
     return(1);				// End of memory
 
-  save_proc_info=thd->get_proc_info();
-  thd->set_proc_info("converting HEAP to MyISAM");
+  save_proc_info=session->get_proc_info();
+  session->set_proc_info("converting HEAP to MyISAM");
 
   if (new_table.create_myisam_tmp_table(table->key_info, start_recinfo,
-					recinfo, thd->lex->select_lex.options | 
-					thd->options))
+					recinfo, session->lex->select_lex.options |
+					session->options))
     goto err2;
   if (new_table.open_tmp_table())
     goto err1;
@@ -5004,17 +4740,8 @@ bool create_myisam_from_heap(THD *thd, Table *table,
     new_table.no_rows=1;
   }
 
-#ifdef TO_BE_DONE_LATER_IN_4_1
-  /*
-    To use start_bulk_insert() (which is new in 4.1) we need to find
-    all places where a corresponding end_bulk_insert() should be put.
-  */
-  table->file->info(HA_STATUS_VARIABLE); /* update table->file->stats.records */
-  new_table.file->ha_start_bulk_insert(table->file->stats.records);
-#else
   /* HA_EXTRA_WRITE_CACHE can stay until close, no need to disable it */
   new_table.file->extra(HA_EXTRA_WRITE_CACHE);
-#endif
 
   /*
     copy all old rows from heap table to MyISAM table
@@ -5045,7 +4772,7 @@ bool create_myisam_from_heap(THD *thd, Table *table,
   new_table.s= table->s;                       // Keep old share
   *table= new_table;
   *table->s= share;
-  
+
   table->file->change_table_ptr(table, table->s);
   table->use_all_columns();
   if (save_proc_info)
@@ -5053,7 +4780,7 @@ bool create_myisam_from_heap(THD *thd, Table *table,
     const char *new_proc_info=
       (!strcmp(save_proc_info,"Copying to tmp table") ?
       "Copying to tmp table on disk" : save_proc_info);
-    thd->set_proc_info(new_proc_info);
+    session->set_proc_info(new_proc_info);
   }
   return(0);
 
@@ -5065,7 +4792,7 @@ bool create_myisam_from_heap(THD *thd, Table *table,
   new_table.file->ha_delete_table(new_table.s->table_name.str);
  err2:
   delete new_table.file;
-  thd->set_proc_info(save_proc_info);
+  session->set_proc_info(save_proc_info);
   table->mem_root= new_table.mem_root;
   return(1);
 }
@@ -5165,7 +4892,7 @@ int Table::report_error(int error)
     print them to the .err log
   */
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
-    sql_print_error(_("Got error %d when reading table '%s'"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d when reading table '%s'"),
 		    error, s->path.str);
   file->print_error(error,MYF(0));
 
@@ -5184,7 +4911,7 @@ int Table::report_error(int error)
                            fields do not need updating.
                            This value is false when during INSERT and UPDATE
                            and true in all other cases.
- 
+
   RETURN
     0  - Success
     >0 - Error occurred during the generation/calculation of a virtual field value
@@ -5217,6 +4944,27 @@ int update_virtual_fields_marked_for_write(Table *table,
     }
   }
   return(0);
+}
+
+
+void setup_table_map(Table *table, TableList *table_list, uint32_t tablenr)
+{
+  table->used_fields= 0;
+  table->const_table= 0;
+  table->null_row= 0;
+  table->status= STATUS_NO_RECORD;
+  table->maybe_null= table_list->outer_join;
+  TableList *embedding= table_list->embedding;
+  while (!table->maybe_null && embedding)
+  {
+    table->maybe_null= embedding->outer_join;
+    embedding= embedding->embedding;
+  }
+  table->tablenr= tablenr;
+  table->map= (table_map) 1 << tablenr;
+  table->force_index= table_list->force_index;
+  table->covering_keys= table->s->keys_for_keyread;
+  table->merge_keys.clear_all();
 }
 
 

@@ -135,49 +135,46 @@ hello again	hello	hello again	3	hello again	hello again
 hello again	hello	hello again	3	hello again	hello again
 hello again	hello	hello again	3	hello again	hello again
 drop table t1;
-set @a=_latin2'test';
-select charset(@a),collation(@a),coercibility(@a);
-charset(@a)	collation(@a)	coercibility(@a)
-latin2	latin2_general_ci	2
-select @a=_latin2'TEST';
-@a=_latin2'TEST'
+set @a='test';
+select collation(@a),coercibility(@a);
+collation(@a)	coercibility(@a)
+utf8_general_ci	2
+select @a='TEST';
+@a='TEST'
 1
-select @a=_latin2'TEST' collate latin2_bin;
-@a=_latin2'TEST' collate latin2_bin
+select @a='TEST' collate utf8_bin;
+@a='TEST' collate utf8_bin
 0
-set @a=_latin2'test' collate latin2_general_ci;
-select charset(@a),collation(@a),coercibility(@a);
-charset(@a)	collation(@a)	coercibility(@a)
-latin2	latin2_general_ci	2
-select @a=_latin2'TEST';
-@a=_latin2'TEST'
+set @a='test' collate utf8_general_ci;
+select collation(@a),coercibility(@a);
+collation(@a)	coercibility(@a)
+utf8_general_ci	2
+select @a='TEST';
+@a='TEST'
 1
-select @a=_latin2'TEST' collate latin2_bin;
-@a=_latin2'TEST' collate latin2_bin
+select @a='TEST' collate utf8_bin;
+@a='TEST' collate utf8_bin
 0
-select charset(@a:=_latin2'test');
-charset(@a:=_latin2'test')
-latin2
-select collation(@a:=_latin2'test');
-collation(@a:=_latin2'test')
-latin2_general_ci
-select coercibility(@a:=_latin2'test');
-coercibility(@a:=_latin2'test')
+select collation(@a:='test');
+collation(@a:='test')
+utf8_general_ci
+select coercibility(@a:='test');
+coercibility(@a:='test')
 2
-select collation(@a:=_latin2'test' collate latin2_bin);
-collation(@a:=_latin2'test' collate latin2_bin)
-latin2_bin
-select coercibility(@a:=_latin2'test' collate latin2_bin);
-coercibility(@a:=_latin2'test' collate latin2_bin)
+select collation(@a:='test' collate utf8_bin);
+collation(@a:='test' collate utf8_bin)
+utf8_bin
+select coercibility(@a:='test' collate utf8_bin);
+coercibility(@a:='test' collate utf8_bin)
 2
-select (@a:=_latin2'test' collate latin2_bin) = _latin2'TEST';
-(@a:=_latin2'test' collate latin2_bin) = _latin2'TEST'
+select (@a:='test' collate utf8_bin) = 'TEST';
+(@a:='test' collate utf8_bin) = 'TEST'
 0
-select charset(@a),collation(@a),coercibility(@a);
-charset(@a)	collation(@a)	coercibility(@a)
-latin2	latin2_bin	2
-select (@a:=_latin2'test' collate latin2_bin) = _latin2'TEST' collate latin2_general_ci;
-(@a:=_latin2'test' collate latin2_bin) = _latin2'TEST' collate latin2_general_ci
+select collation(@a),coercibility(@a);
+collation(@a)	coercibility(@a)
+utf8_bin	2
+select (@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci;
+(@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci
 1
 set @var= NULL ;
 select FIELD( @var,'1it','Hit') as my_column;
@@ -191,9 +188,7 @@ select coercibility(@v1),coercibility(@v2),coercibility(@v3),coercibility(@v4);
 coercibility(@v1)	coercibility(@v2)	coercibility(@v3)	coercibility(@v4)
 2	2	2	2
 set session @honk=99;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '@honk=99' at line 1
-set one_shot @honk=99;
-ERROR HY000: The 'SET ONE_SHOT' syntax is reserved for purposes internal to the MySQL server
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '@honk=99' at line 1
 select @@local.max_allowed_packet;
 @@local.max_allowed_packet
 #
@@ -221,32 +216,26 @@ create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` longblob
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `@first_var` blob
+) ENGINE=InnoDB
 drop table t1;
-set @first_var= cast(NULL as signed integer);
-create table t1 select @first_var;
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `@first_var` bigint(20) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-drop table t1;
+set @first_var= cast(NULL as integer);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'integer)' at line 1
 set @first_var= NULL;
 create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` bigint(20) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `@first_var` blob
+) ENGINE=InnoDB
 drop table t1;
 set @first_var= concat(NULL);
 create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` longblob
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `@first_var` blob
+) ENGINE=InnoDB
 drop table t1;
 set @first_var=1;
 set @first_var= cast(NULL as CHAR);
@@ -254,63 +243,58 @@ create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` longtext
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `@first_var` text
+) ENGINE=InnoDB
 drop table t1;
 set @a=18446744071710965857;
 select @a;
 @a
 18446744071710965857
 CREATE TABLE `bigfailure` (
-`afield` BIGINT UNSIGNED NOT NULL
+`afield` BIGINT NOT NULL
 );
 INSERT INTO `bigfailure` VALUES (18446744071710965857);
 SELECT * FROM bigfailure;
 afield
-18446744071710965857
+-1998585759
 select * from (SELECT afield FROM bigfailure) as b;
 afield
-18446744071710965857
+-1998585759
 select * from bigfailure where afield = (SELECT afield FROM bigfailure);
 afield
-18446744071710965857
+-1998585759
 select * from bigfailure where afield = 18446744071710965857;
 afield
-18446744071710965857
+-1998585759
+select * from bigfailure where afield = '18446744071710965857';
+afield
 select * from bigfailure where afield = 18446744071710965856+1;
 afield
-18446744071710965857
+-1998585759
 SET @a := (SELECT afield FROM bigfailure);
 SELECT @a;
 @a
-18446744071710965857
+-1998585759
 SET @a := (select afield from (SELECT afield FROM bigfailure) as b);
 SELECT @a;
 @a
-18446744071710965857
+-1998585759
 SET @a := (select * from bigfailure where afield = (SELECT afield FROM bigfailure));
 SELECT @a;
 @a
-18446744071710965857
+-1998585759
 drop table bigfailure;
 create table t1(f1 int, f2 int);
 insert into t1 values (1,2),(2,3),(3,1);
 select @var:=f2 from t1 group by f1 order by f2 desc limit 1;
-@var:=f2
+@var:=f2 
 3
 select @var;
 @var
 3
-create table t2 as select @var:=f2 from t1 group by f1 order by f2 desc limit 1;
-select * from t2;
-@var:=f2
-3
-select @var;
-@var
-3
-drop table t1,t2;
+drop table t1;
 insert into city 'blah';
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''blah'' at line 1
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ''blah'' at line 1
 SHOW COUNT(*) WARNINGS;
 @@session.warning_count
 1

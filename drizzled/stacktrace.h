@@ -23,11 +23,11 @@
 extern "C" {
 #endif
 
-#if HAVE_BACKTRACE && HAVE_BACKTRACE_SYMBOLS && HAVE_CXXABI_H && HAVE_ABI_CXA_DEMANGLE
+#if defined(HAVE_BACKTRACE) && HAVE_BACKTRACE_SYMBOLS && HAVE_CXXABI_H && HAVE_ABI_CXA_DEMANGLE
 #define BACKTRACE_DEMANGLE 1
 #endif
 
-#if BACKTRACE_DEMANGLE
+#if defined(BACKTRACE_DEMANGLE)
   char *my_demangle(const char *mangled_name, int *status);
 #endif
 
@@ -47,7 +47,7 @@ extern "C" {
 #endif /* defined HAVE_OS_LINUX */
 
 #ifdef HAVE_STACKTRACE
-  void print_stacktrace(unsigned char* stack_bottom, ulong thread_stack);
+  void print_stacktrace(unsigned char* stack_bottom, size_t thread_stack);
   void safe_print_str(const char* name, const char* val, int max_len);
 #else
 /* Define empty prototypes for functions that are not implemented */

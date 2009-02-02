@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** 
- * @TODO There is plugin.h and also sql_plugin.h.  Ostensibly,  
+/**
+ * @TODO There is plugin.h and also sql_plugin.h.  Ostensibly,
  * it seems that the two files exist so that plugin.h can provide an
  * external API for plugin developers and sql_plugin.h will provide
  * and internal server API for dealing with those plugins.
@@ -36,7 +36,11 @@
 #ifndef DRIZZLE_SERVER_PLUGIN_H
 #define DRIZZLE_SERVER_PLUGIN_H
 
+#include <drizzled/lex_string.h>
+#include <mysys/my_alloc.h>
+
 class sys_var;
+class Session;
 
 /*
   the following flags are valid for plugin_init()
@@ -123,26 +127,26 @@ extern int plugin_init(int *argc, char **argv, int init_flags);
 extern void plugin_shutdown(void);
 extern void my_print_help_inc_plugins(struct my_option *options, uint32_t size);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
-#define my_plugin_lock_by_name(A,B,C) plugin_lock_by_name(A,B,C CALLER_INFO)
-#define my_plugin_lock_by_name_ci(A,B,C) plugin_lock_by_name(A,B,C ORIG_CALLER_INFO)
-#define my_plugin_lock(A,B) plugin_lock(A,B CALLER_INFO)
-#define my_plugin_lock_ci(A,B) plugin_lock(A,B ORIG_CALLER_INFO)
-extern plugin_ref plugin_lock(THD *thd, plugin_ref *ptr CALLER_INFO_PROTO);
-extern plugin_ref plugin_lock_by_name(THD *thd, const LEX_STRING *name,
-                                      int type CALLER_INFO_PROTO);
-extern void plugin_unlock(THD *thd, plugin_ref plugin);
-extern void plugin_unlock_list(THD *thd, plugin_ref *list, uint32_t count);
-extern bool mysql_install_plugin(THD *thd, const LEX_STRING *name,
+#define my_plugin_lock_by_name(A,B,C) plugin_lock_by_name(A,B,C)
+#define my_plugin_lock_by_name_ci(A,B,C) plugin_lock_by_name(A,B,C)
+#define my_plugin_lock(A,B) plugin_lock(A,B)
+#define my_plugin_lock_ci(A,B) plugin_lock(A,B)
+extern plugin_ref plugin_lock(Session *session, plugin_ref *ptr);
+extern plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name,
+                                      int type);
+extern void plugin_unlock(Session *session, plugin_ref plugin);
+extern void plugin_unlock_list(Session *session, plugin_ref *list, uint32_t count);
+extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
-extern bool mysql_uninstall_plugin(THD *thd, const LEX_STRING *name);
+extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
 extern bool plugin_register_builtin(struct st_mysql_plugin *plugin);
-extern void plugin_thdvar_init(THD *thd);
-extern void plugin_thdvar_cleanup(THD *thd);
+extern void plugin_sessionvar_init(Session *session);
+extern void plugin_sessionvar_cleanup(Session *session);
 
-typedef bool (plugin_foreach_func)(THD *thd,
+typedef bool (plugin_foreach_func)(Session *session,
                                    plugin_ref plugin,
                                    void *arg);
 #define plugin_foreach(A,B,C,D) plugin_foreach_with_mask(A,B,C,PLUGIN_IS_READY,D)
-extern bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
+extern bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
                                      int type, uint32_t state_mask, void *arg);
 #endif /* DRIZZLE_SERVER_PLUGIN_H */

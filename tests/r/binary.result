@@ -1,79 +1,35 @@
 drop table if exists t1,t2;
-create table t1 (name char(20) not null, primary key (name));
-create table t2 (name char(20) binary not null, primary key (name));
-insert into t1 values ("å");
-insert into t1 values ("ä");
-insert into t1 values ("ö");
-insert into t2 select * from t1;
-select * from t1 order by name;
-name
-å
-ä
-ö
-select concat("*",name,"*") from t1 order by 1;
-concat("*",name,"*")
-*å*
-*ä*
-*ö*
-select min(name),min(concat("*",name,"*")),max(name),max(concat("*",name,"*")) from t1;
-min(name)	min(concat("*",name,"*"))	max(name)	max(concat("*",name,"*"))
-å	*å*	ö	*ö*
-select * from t2 order by name;
-name
-ä
-å
-ö
-select concat("*",name,"*") from t2 order by 1;
-concat("*",name,"*")
-*ä*
-*å*
-*ö*
-select min(name),min(concat("*",name,"*")),max(name),max(concat("*",name,"*")) from t2;
-min(name)	min(concat("*",name,"*"))	max(name)	max(concat("*",name,"*"))
-ä	*ä*	ö	*ö*
-select name from t1 where name between 'Ä' and 'Ö';
-name
-ä
-ö
-select name from t2 where name between 'ä' and 'ö';
-name
-ä
-å
-ö
-select name from t2 where name between 'Ä' and 'Ö';
-name
-drop table t1,t2;
 create table t1 (a char(10) not null, b char(10) binary not null,key (a), key(b));
 insert into t1 values ("hello ","hello "),("hello2 ","hello2 ");
 select concat("-",a,"-",b,"-") from t1 where a="hello";
 concat("-",a,"-",b,"-")
--hello-hello-
+-hello -hello -
 select concat("-",a,"-",b,"-") from t1 where a="hello ";
 concat("-",a,"-",b,"-")
--hello-hello-
+-hello -hello -
 select concat("-",a,"-",b,"-") from t1 ignore index (a) where a="hello ";
 concat("-",a,"-",b,"-")
--hello-hello-
+-hello -hello -
 select concat("-",a,"-",b,"-") from t1 where b="hello";
 concat("-",a,"-",b,"-")
--hello-hello-
+-hello -hello -
 select concat("-",a,"-",b,"-") from t1 where b="hello ";
 concat("-",a,"-",b,"-")
--hello-hello-
+-hello -hello -
 select concat("-",a,"-",b,"-") from t1 ignore index (b) where b="hello ";
 concat("-",a,"-",b,"-")
--hello-hello-
+-hello -hello -
 alter table t1 modify b tinytext not null, drop key b, add key (b(100));
 select concat("-",a,"-",b,"-") from t1;
 concat("-",a,"-",b,"-")
--hello-hello-
--hello2-hello2-
+-hello -hello -
+-hello2 -hello2 -
 select concat("-",a,"-",b,"-") from t1 where b="hello ";
 concat("-",a,"-",b,"-")
--hello-hello-
+-hello -hello -
 select concat("-",a,"-",b,"-") from t1 ignore index (b) where b="hello ";
 concat("-",a,"-",b,"-")
--hello-hello-
+-hello -hello -
 drop table t1;
 create table t1 (b char(8));
 insert into t1 values(NULL);
@@ -85,7 +41,7 @@ NULL
 select b from t1 having binary b like '';
 b
 drop table t1;
-create table t1 (a char(3) binary, b binary(3));
+create table t1 (a char(3) binary, b varbinary(3));
 insert into t1 values ('aaa','bbb'),('AAA','BBB');
 select upper(a),upper(b) from t1;
 upper(a)	upper(b)
@@ -109,12 +65,9 @@ AAA	BBB
 select * from t1 where lower(b)='bbb';
 a	b
 aaa	bbb
-select charset(a), charset(b), charset(binary 'ccc') from t1 limit 1;
-charset(a)	charset(b)	charset(binary 'ccc')
-latin1	binary	binary
 select collation(a), collation(b), collation(binary 'ccc') from t1 limit 1;
 collation(a)	collation(b)	collation(binary 'ccc')
-latin1_bin	binary	binary
+utf8_bin	binary	binary
 drop table t1;
 create table t1( firstname char(20), lastname char(20));
 insert into t1 values ("john","doe"),("John","Doe");
@@ -134,34 +87,36 @@ select * from t1 where firstname='john' and firstname like binary 'John';
 firstname	lastname
 John	Doe
 drop table t1;
-create table t1 (a binary);
+create table t1 (a char);
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" binary(1)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `a` varchar(1)
+) ENGINE=InnoDB
 drop table t1;
-create table t1 (col1 binary(4));
+create table t2 (a varbinary);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
+create table t1 (col1 char(4));
 insert into t1 values ('a'),('a ');
 select hex(col1) from t1;
 hex(col1)
-61000000
-61200000
-alter table t1 modify col1 binary(10);
+61
+6120
+alter table t1 modify col1 char(10);
 select hex(col1) from t1;
 hex(col1)
-61000000000000000000
-61200000000000000000
+61
+6120
 insert into t1 values ('b'),('b ');
 select hex(col1) from t1;
 hex(col1)
-61000000000000000000
-61200000000000000000
-62000000000000000000
-62200000000000000000
+61
+6120
+62
+6220
 drop table t1;
 CREATE TABLE t1 (
-a binary(20) NOT NULL DEFAULT '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0', 
+a varbinary(20) NOT NULL DEFAULT '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0', 
 index idx(a)
 );
 INSERT INTO t1 SET a=unhex('1F9480179366F2BF567E1C4B964C1EF029087575');
@@ -174,14 +129,14 @@ hex(a)
 1F9480179366F2BF567E1C4B964C1EF029087575
 EXPLAIN SELECT hex(a) FROM t1 order by a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	idx	20	NULL	3	Using index
+1	SIMPLE	t1	index	NULL	idx	22	NULL	3	Using index
 SELECT hex(a) from t1 WHERE a=unhex('1F9480179366F2BF567E1C4B964C1EF029082020');
 hex(a)
 1F9480179366F2BF567E1C4B964C1EF029082020
 EXPLAIN
 SELECT hex(a) from t1 WHERE a=unhex('1F9480179366F2BF567E1C4B964C1EF029082020');
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx	idx	20	const	1	Using where; Using index
+1	SIMPLE	t1	ref	idx	idx	22	const	1	Using where; Using index
 SELECT hex(a) from t1 WHERE a=unhex('1F9480179366F2BF567E1C4B964C1EF02908');
 hex(a)
 DROP TABLE t1;

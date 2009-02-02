@@ -17,15 +17,12 @@
 
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
+#include <mystrings/m_string.h>
 #include <drizzled/util/test.h>
 
-static void setup_key_functions(MI_KEYDEF *keyinfo);
-#define get_next_element(to,pos,size) \
-  do {                                \
-    memcpy(to, pos, size);            \
-    pos+=size;                        \
-  } while (0)
+#include <string.h>
 
+static void setup_key_functions(MI_KEYDEF *keyinfo);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -137,7 +134,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     /* Don't call realpath() if the name can't be a link */
     if (!strcmp(name_buff, org_name) ||
         my_readlink(index_name, org_name, MYF(0)) == -1)
-      (void) my_stpcpy(index_name, org_name);
+      (void) strcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
     (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,
                      MY_APPEND_EXT|MY_UNPACK_FILENAME|MY_RESOLVE_SYMLINKS);
@@ -152,7 +149,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     end_pos=disk_cache+info_length;
     errpos=2;
 
-    my_seek(kfile,0L,MY_SEEK_SET,MYF(0));
+    lseek(kfile,0,SEEK_SET);
     errpos=3;
     if (my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
     {
@@ -206,8 +203,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       mi_safe_mul(MI_MIN_KEY_BLOCK_LENGTH,
 		  ((uint64_t) 1 << (share->base.key_reflength*8))-1);
 #if SIZEOF_OFF_T == 4
-    set_if_smaller(max_data_file_length, INT_MAX32);
-    set_if_smaller(max_key_file_length, INT_MAX32);
+    set_if_smaller(max_data_file_length, INT32_MAX);
+    set_if_smaller(max_key_file_length, INT32_MAX);
 #endif
     if (share->base.raid_type)
     {
@@ -240,8 +237,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 			 &share->state.key_root,keys*sizeof(my_off_t),
 			 &share->state.key_del,
 			 (share->state.header.max_block_size_index*sizeof(my_off_t)),
-			 &share->key_root_lock,sizeof(rw_lock_t)*keys,
-			 &share->mmap_lock,sizeof(rw_lock_t),
+			 &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
+			 &share->mmap_lock,sizeof(pthread_rwlock_t),
 			 NULL))
       goto err;
     errpos=4;
@@ -252,10 +249,10 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
            sizeof(my_off_t)*keys);
     memcpy(share->state.key_del, key_del,
            sizeof(my_off_t) * share->state.header.max_block_size_index);
-    my_stpcpy(share->unique_file_name, name_buff);
+    strcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
-    my_stpcpy(share->index_file_name,  index_name);
-    my_stpcpy(share->data_file_name,   data_name);
+    strcpy(share->index_file_name,  index_name);
+    strcpy(share->data_file_name,   data_name);
 
     share->blocksize=cmin(IO_SIZE,myisam_block_size);
     {
@@ -387,8 +384,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     thr_lock_init(&share->lock);
     pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST);
     for (i=0; i<keys; i++)
-      my_rwlock_init(&share->key_root_lock[i], NULL);
-    my_rwlock_init(&share->mmap_lock, NULL);
+      pthread_rwlock_init(&share->key_root_lock[i], NULL);
+    pthread_rwlock_init(&share->mmap_lock, NULL);
     if (!thr_lock_inited)
     {
       /* Probably a single threaded program; Don't use concurrent inserts */
@@ -450,7 +447,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   if (!have_rtree)
     info.rtree_recursion_state= NULL;
 
-  my_stpcpy(info.filename,name);
+  strcpy(info.filename,name);
   memcpy(info.blobs,share->blobs,sizeof(MI_BLOB)*share->base.blobs);
   info.lastkey2=info.lastkey+share->base.max_key_length;
 
@@ -547,7 +544,7 @@ err:
 } /* mi_open */
 
 
-unsigned char *mi_alloc_rec_buff(MI_INFO *info, ulong length, unsigned char **buf)
+unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **buf)
 {
   uint32_t extra;
   uint32_t old_length= 0;
@@ -574,9 +571,10 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, ulong length, unsigned char **bu
 	    MI_REC_BUFF_OFFSET : 0);
     if (extra && newptr)
       newptr-= MI_REC_BUFF_OFFSET;
-    if (!(newptr=(unsigned char*) my_realloc((unsigned char*)newptr, length+extra+8,
-                                     MYF(MY_ALLOW_ZERO_PTR))))
+    void *tmpnewptr= NULL;
+    if (!(tmpnewptr= realloc(newptr, length+extra+8))) 
       return newptr;
+    newptr= tmpnewptr;
     *((uint32_t *) newptr)= (uint32_t) length;
     *buf= newptr+(extra ?  MI_REC_BUFF_OFFSET : 0);
   }
@@ -899,7 +897,7 @@ unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
   base->extra_alloc_procent = *ptr++;
 
   /* advance past raid_type (1) raid_chunks (2) and raid_chunksize (4) */
-  ptr+= 7; 
+  ptr+= 7;
 
   ptr+=6;
   return ptr;
@@ -962,7 +960,7 @@ int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
   pos= keyseg->null_bit ? keyseg->null_pos : keyseg->bit_pos;
   mi_int4store(ptr, pos);
   ptr+=4;
-  
+
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
@@ -1048,11 +1046,11 @@ The argument file_to_dup is here for the future if there would on some OS
 exist a dup()-like call that would give us two different file descriptors.
 *************************************************************************/
 
-int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share,
-                     File file_to_dup __attribute__((unused)))
+int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, File file_to_dup)
 {
-    info->dfile=my_open(share->data_file_name, share->mode,
-			MYF(MY_WME));
+  (void)file_to_dup; 
+  info->dfile=my_open(share->data_file_name, share->mode,
+                      MYF(MY_WME));
   return info->dfile >= 0 ? 0 : 1;
 }
 

@@ -17,8 +17,10 @@
 /* Implements various base record-related functions, such as encode and decode into chunks */
 
 #include "heapdef.h"
-#include <libdrizzle/drizzle_com.h>
 
+#include <drizzled/common.h>
+
+#include <string.h>
 
 /**
   Calculate size of the record for the purpose of storing in chunks

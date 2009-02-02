@@ -1,9 +1,11 @@
 /*
-  Sections of this where taken/modified from mod_auth_path for Apache 
+ -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+  Sections of this where taken/modified from mod_auth_path for Apache
 */
 
-#define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
+#include <drizzled/session.h>
 #include <drizzled/plugin_authentication.h>
 #include <security/pam_appl.h>
 #ifndef __sun
@@ -38,14 +40,14 @@ static int auth_pam_talker(int num_msg,
     return PAM_CONV_ERR;
 
   /* copy values */
-  for(x= 0; x < num_msg; x++) 
+  for(x= 0; x < num_msg; x++)
   {
     /* initialize to safe values */
     response[x].resp_retcode= 0;
     response[x].resp= 0;
 
     /* select response based on requested output style */
-    switch(msg[x]->msg_style) 
+    switch(msg[x]->msg_style)
     {
     case PAM_PROMPT_ECHO_ON:
       /* on memory allocation failure, auth fails */
@@ -67,14 +69,14 @@ static int auth_pam_talker(int num_msg,
   return PAM_SUCCESS;
 }
 
-static bool authenticate(THD *thd, const char *password)
+static bool authenticate(Session *session, const char *password)
 {
   int retval;
   auth_pam_userinfo userinfo= { NULL, NULL };
   struct pam_conv conv_info= { &auth_pam_talker, (void*)&userinfo };
   pam_handle_t *pamh= NULL;
 
-  userinfo.name= thd->main_security_ctx.user;
+  userinfo.name= session->security_ctx.user.c_str();
   userinfo.password= password;
 
   retval= pam_start("check_user", userinfo.name, &conv_info, &pamh);
@@ -93,7 +95,7 @@ static bool authenticate(THD *thd, const char *password)
 static int initialize(void *p)
 {
   authentication_st *auth= (authentication_st *)p;
-  
+
   auth->authenticate= authenticate;
 
   return 0;
@@ -106,7 +108,7 @@ static int finalize(void *p)
   return 0;
 }
 
-mysql_declare_plugin(auth_pam)
+drizzle_declare_plugin(auth_pam)
 {
   DRIZZLE_AUTH_PLUGIN,
   "pam",
@@ -120,4 +122,4 @@ mysql_declare_plugin(auth_pam)
   NULL,   /* system variables */
   NULL    /* config options */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

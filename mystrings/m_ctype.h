@@ -21,6 +21,12 @@
 #ifndef _m_ctype_h
 #define _m_ctype_h
 
+#include <stdint.h>
+#include <sys/types.h>
+#if !defined(__cplusplus)
+# include <stdbool.h>
+#endif
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -34,7 +40,7 @@ extern "C" {
 
 #define CHARSET_DIR	"charsets/"
 
-#define my_wc_t ulong
+#define my_wc_t unsigned long
 
 typedef struct unicase_info_st
 {
@@ -82,8 +88,8 @@ extern MY_UNI_CTYPE my_uni_ctype[256];
 #define MY_CS_UNICODE	128    /* is a charset is full unicode   */
 #define MY_CS_READY	256    /* if a charset is initialized    */
 #define MY_CS_AVAILABLE	512    /* If either compiled-in or loaded*/
-#define MY_CS_CSSORT	1024   /* if case sensitive sort order   */	
-#define MY_CS_HIDDEN	2048   /* don't display in SHOW          */	
+#define MY_CS_CSSORT	1024   /* if case sensitive sort order   */
+#define MY_CS_HIDDEN	2048   /* don't display in SHOW          */
 #define MY_CS_PUREASCII 4096   /* if a charset is pure ascii     */
 #define MY_CS_NONASCII  8192   /* if not ASCII-compatible        */
 #define MY_CHARSET_UNDEFINED 0
@@ -142,14 +148,14 @@ typedef struct
 
 enum my_lex_states
 {
-  MY_LEX_START, MY_LEX_CHAR, MY_LEX_IDENT, 
+  MY_LEX_START, MY_LEX_CHAR, MY_LEX_IDENT,
   MY_LEX_IDENT_SEP, MY_LEX_IDENT_START,
   MY_LEX_REAL, MY_LEX_HEX_NUMBER, MY_LEX_BIN_NUMBER,
   MY_LEX_CMP_OP, MY_LEX_LONG_CMP_OP, MY_LEX_STRING, MY_LEX_COMMENT, MY_LEX_END,
   MY_LEX_OPERATOR_OR_IDENT, MY_LEX_NUMBER_IDENT, MY_LEX_INT_OR_REAL,
-  MY_LEX_REAL_OR_POINT, MY_LEX_BOOL, MY_LEX_EOL, MY_LEX_ESCAPE, 
-  MY_LEX_LONG_COMMENT, MY_LEX_END_LONG_COMMENT, MY_LEX_SEMICOLON, 
-  MY_LEX_SET_VAR, MY_LEX_USER_END, MY_LEX_HOSTNAME, MY_LEX_SKIP, 
+  MY_LEX_REAL_OR_POINT, MY_LEX_BOOL, MY_LEX_EOL, MY_LEX_ESCAPE,
+  MY_LEX_LONG_COMMENT, MY_LEX_END_LONG_COMMENT, MY_LEX_SEMICOLON,
+  MY_LEX_SET_VAR, MY_LEX_USER_END, MY_LEX_HOSTNAME, MY_LEX_SKIP,
   MY_LEX_USER_VARIABLE_DELIMITER, MY_LEX_SYSTEM_VAR,
   MY_LEX_IDENT_OR_KEYWORD,
   MY_LEX_IDENT_OR_HEX, MY_LEX_IDENT_OR_BIN,
@@ -185,15 +191,15 @@ typedef struct my_collation_handler_st
                      int escape,int w_one, int w_many);
 
   int  (*strcasecmp)(const struct charset_info_st * const, const char *, const char *);
-  
+
   uint32_t (*instr)(const struct charset_info_st * const,
                 const char *b, size_t b_length,
                 const char *s, size_t s_length,
                 my_match_t *match, uint32_t nmatch);
-  
+
   /* Hash calculation */
   void (*hash_sort)(const struct charset_info_st *cs, const unsigned char *key, size_t len,
-                    uint32_t *nr1, uint32_t *nr2); 
+                    uint32_t *nr1, uint32_t *nr2);
   bool (*propagate)(const struct charset_info_st *cs, const unsigned char *str, size_t len);
 } MY_COLLATION_HANDLER;
 
@@ -226,7 +232,7 @@ typedef struct my_charset_handler_st
                              size_t nchars, int *error);
   size_t  (*lengthsp)(const struct charset_info_st * const, const char *ptr, size_t length);
   size_t  (*numcells)(const struct charset_info_st * const, const char *b, const char *e);
-  
+
   /* Unicode conversion */
   my_charset_conv_mb_wc mb_wc;
   my_charset_conv_wc_mb wc_mb;
@@ -234,7 +240,7 @@ typedef struct my_charset_handler_st
   /* CTYPE scanner */
   int (*ctype)(const struct charset_info_st *cs, int *ctype,
                const unsigned char *s, const unsigned char *e);
-  
+
   /* Functions for case and sort conversion */
   size_t  (*caseup_str)(const struct charset_info_st * const, char *);
   size_t  (*casedn_str)(const struct charset_info_st * const, char *);
@@ -250,13 +256,13 @@ typedef struct my_charset_handler_st
                           int radix, long int val);
   size_t (*int64_t10_to_str)(const struct charset_info_st * const, char *to, size_t n,
                               int radix, int64_t val);
-  
+
   void (*fill)(const struct charset_info_st * const, char *to, size_t len, int fill);
-  
+
   /* String-to-number conversion routines */
   long        (*strntol)(const struct charset_info_st * const, const char *s, size_t l,
 			 int base, char **e, int *err);
-  ulong      (*strntoul)(const struct charset_info_st * const, const char *s, size_t l,
+  unsigned long      (*strntoul)(const struct charset_info_st * const, const char *s, size_t l,
 			 int base, char **e, int *err);
   int64_t   (*strntoll)(const struct charset_info_st * const, const char *s, size_t l,
 			 int base, char **e, int *err);
@@ -311,11 +317,16 @@ typedef struct charset_info_st
   bool   escape_with_backslash_is_dangerous;
   unsigned char     levels_for_compare;
   unsigned char     levels_for_order;
-  
+
   MY_CHARSET_HANDLER *cset;
   MY_COLLATION_HANDLER *coll;
-  
+
 } CHARSET_INFO;
+
+uint32_t strconvert(const CHARSET_INFO *from_cs, const char *from,
+                const CHARSET_INFO *to_cs, char *to, uint32_t to_length,
+                uint32_t *errors);
+
 #define ILLEGAL_CHARSET_INFO_NUMBER (UINT32_MAX)
 
 
@@ -352,7 +363,7 @@ extern int  my_strnncollsp_simple(const CHARSET_INFO * const, const unsigned cha
 
 extern void my_hash_sort_simple(const CHARSET_INFO * const cs,
 				const unsigned char *key, size_t len,
-				uint32_t *nr1, uint32_t *nr2); 
+				uint32_t *nr1, uint32_t *nr2);
 
 extern size_t my_lengthsp_8bit(const CHARSET_INFO * const cs, const char *ptr, size_t length);
 
@@ -386,7 +397,7 @@ size_t my_snprintf_8bit(const CHARSET_INFO * const, char *to, size_t n,
 
 long       my_strntol_8bit(const CHARSET_INFO * const, const char *s, size_t l, int base,
                            char **e, int *err);
-ulong      my_strntoul_8bit(const CHARSET_INFO * const, const char *s, size_t l, int base,
+unsigned long      my_strntoul_8bit(const CHARSET_INFO * const, const char *s, size_t l, int base,
 			    char **e, int *err);
 int64_t   my_strntoll_8bit(const CHARSET_INFO * const, const char *s, size_t l, int base,
 			    char **e, int *err);
@@ -401,13 +412,13 @@ size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const, char *to, size_t l, 
 
 int64_t my_strtoll10_8bit(const CHARSET_INFO * const cs,
                            const char *nptr, char **endptr, int *error);
-int64_t my_strtoll10_ucs2(CHARSET_INFO *cs, 
+int64_t my_strtoll10_ucs2(CHARSET_INFO *cs,
                            const char *nptr, char **endptr, int *error);
 
 uint64_t my_strntoull10rnd_8bit(const CHARSET_INFO * const cs,
                                  const char *str, size_t length, int
                                  unsigned_fl, char **endptr, int *error);
-uint64_t my_strntoull10rnd_ucs2(CHARSET_INFO *cs, 
+uint64_t my_strntoull10rnd_ucs2(CHARSET_INFO *cs,
                                  const char *str, size_t length,
                                  int unsigned_fl, char **endptr, int *error);
 
@@ -464,6 +475,9 @@ size_t my_numcells_8bit(const CHARSET_INFO * const, const char *b, const char *e
 size_t my_charpos_8bit(const CHARSET_INFO * const, const char *b, const char *e, size_t pos);
 size_t my_well_formed_len_8bit(const CHARSET_INFO * const, const char *b, const char *e,
                              size_t pos, int *error);
+typedef  void *(*cs_alloc_func)(size_t);
+bool my_coll_init_simple(CHARSET_INFO *cs, cs_alloc_func alloc);
+bool my_cset_init_8bit(CHARSET_INFO *cs, cs_alloc_func alloc);
 uint32_t my_mbcharlen_8bit(const CHARSET_INFO * const, uint32_t c);
 
 
@@ -505,10 +519,9 @@ int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
                       const char *wildstr,const char *wildend,
                       int escape, int w_one, int w_many);
 
-int my_strcasecmp_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
-                         const char *s, const char *t);
+int my_strcasecmp_mb_bin(const CHARSET_INFO * const, const char *s, const char *t);
 
-void my_hash_sort_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
+void my_hash_sort_mb_bin(const CHARSET_INFO *,
                          const unsigned char *key, size_t len, uint32_t *nr1, uint32_t *nr2);
 
 size_t my_strnxfrm_mb(const CHARSET_INFO * const,
@@ -528,7 +541,7 @@ bool my_propagate_simple(const CHARSET_INFO * const cs, const unsigned char *str
 bool my_propagate_complex(const CHARSET_INFO * const cs, const unsigned char *str, size_t len);
 
 
-uint32_t my_string_repertoire(const CHARSET_INFO * const cs, const char *str, ulong len);
+uint32_t my_string_repertoire(const CHARSET_INFO * const cs, const char *str, unsigned long len);
 bool my_charset_is_ascii_based(const CHARSET_INFO * const cs);
 bool my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs);
 
@@ -541,6 +554,216 @@ size_t my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
                                        uint32_t nweights, uint32_t flags, uint32_t level);
 
 bool my_charset_is_ascii_compatible(const CHARSET_INFO * const cs);
+
+int
+my_strnncoll_utf8mb3(const CHARSET_INFO * const cs,
+                     const unsigned char *s, size_t slen,
+                     const unsigned char *t, size_t tlen,
+                     bool t_is_prefix);
+
+int
+my_strnncollsp_utf8mb3(const CHARSET_INFO * const cs,
+                       const unsigned char *s, size_t slen,
+                       const unsigned char *t, size_t tlen,
+                       bool diff_if_only_endspace_difference);
+
+size_t
+my_strnxfrm_utf8mb3(const CHARSET_INFO * const cs,
+                    unsigned char *dst, size_t dstlen, uint32_t nweights,
+                    const unsigned char *src, size_t srclen, uint32_t flags);
+
+size_t
+my_strnxfrmlen_utf8mb3(const CHARSET_INFO * const cs, size_t len);
+
+size_t my_strnxfrm_utf8mb3_bin(const CHARSET_INFO * const cs,
+                               unsigned char *dst, size_t dstlen,
+                               uint32_t nweights, const unsigned char *src,
+                               size_t srclen, uint32_t flags);
+/*
+  Compare 0-terminated UTF8 strings.
+
+  SYNOPSIS
+    my_strcasecmp_utf8mb3()
+    cs                  character set handler
+    s                   First 0-terminated string to compare
+    t                   Second 0-terminated string to compare
+
+  IMPLEMENTATION
+
+  RETURN
+    - negative number if s < t
+    - positive number if s > t
+    - 0 is the strings are equal
+*/
+int
+my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs,
+                      const char *s, const char *t);
+
+int
+my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs,
+                        const unsigned char *s, size_t slen,
+                        const unsigned char *t, size_t tlen,
+                        bool t_is_prefix);
+
+int
+my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs,
+                          const unsigned char *s, size_t slen,
+                          const unsigned char *t, size_t tlen,
+                          bool diff_if_only_endspace_difference);
+
+int
+my_wildcmp_utf8mb3(const CHARSET_INFO * const cs,
+                   const char *str,const char *str_end,
+                   const char *wildstr,const char *wildend,
+                   int escape, int w_one, int w_many);
+
+unsigned int
+my_ismbchar_utf8mb3(const CHARSET_INFO * const cs,
+                    const char *b, const char *e);
+
+int
+my_wc_mb_filename(const CHARSET_INFO * const,
+                  my_wc_t wc, unsigned char *s, unsigned char *e);
+
+int
+my_mb_wc_filename(const CHARSET_INFO * const,
+                  my_wc_t *pwc, const unsigned char *s, const unsigned char *e);
+
+size_t
+my_caseup_str_utf8mb3(const CHARSET_INFO * const cs, char *src);
+size_t
+my_casedn_str_utf8mb3(const CHARSET_INFO * const cs, char *src);
+size_t
+my_caseup_utf8mb3(const CHARSET_INFO * const cs, char *src, size_t srclen,
+                  char *dst, size_t dstlen);
+size_t
+my_casedn_utf8mb3(const CHARSET_INFO * const cs, char *src, size_t srclen,
+                  char *dst, size_t dstlen);
+
+int my_mb_wc_utf8mb3(const CHARSET_INFO * const, my_wc_t * pwc,
+                     const unsigned char *s, const unsigned char *e);
+int my_wc_mb_utf8mb3(const CHARSET_INFO * const,
+                     my_wc_t wc, unsigned char *r, unsigned char *e);
+
+unsigned int
+my_mbcharlen_utf8mb3(const CHARSET_INFO * const, uint32_t c);
+
+unsigned int my_ismbchar_utf8mb4(const CHARSET_INFO * const cs,                                  const char *b, const char *e);
+unsigned int my_mbcharlen_utf8mb4(const CHARSET_INFO * const, uint32_t c);
+
+size_t my_strnxfrmlen_utf8mb4(const CHARSET_INFO * const, size_t len);
+size_t
+my_strnxfrm_utf8mb4(const CHARSET_INFO * const cs,
+                    unsigned char *dst, size_t dstlen, uint32_t nweights,
+                    const unsigned char *src, size_t srclen, uint32_t flags);
+
+int
+my_wildcmp_utf8mb4(const CHARSET_INFO * const cs,
+                   const char *str, const char *strend,
+                   const char *wildstr, const char *wildend,
+                   int escape, int w_one, int w_many);
+int
+my_strnncollsp_utf8mb4(const CHARSET_INFO * const cs,
+                       const unsigned char *s, size_t slen,
+                       const unsigned char *t, size_t tlen,
+                       bool diff_if_only_endspace_difference);
+int my_strcasecmp_utf8mb4(const CHARSET_INFO * const cs,
+                          const char *s, const char *t);
+
+int
+my_strnncoll_utf8mb4(const CHARSET_INFO * const cs,
+                     const unsigned char *s, size_t slen,
+                     const unsigned char *t, size_t tlen,
+                     bool t_is_prefix);
+
+int
+my_mb_wc_utf8mb4(const CHARSET_INFO * const cs,
+                 my_wc_t * pwc, const unsigned char *s, const unsigned char *e);
+
+int
+my_wc_mb_utf8mb4(const CHARSET_INFO * const cs,
+                 my_wc_t wc, unsigned char *r, unsigned char *e);
+
+size_t my_caseup_str_utf8mb4(const CHARSET_INFO * const cs, char *src);
+size_t my_casedn_str_utf8mb4(const CHARSET_INFO * const cs, char *src);
+
+size_t
+my_caseup_utf8mb4(const CHARSET_INFO * const cs, char *src, size_t srclen,
+                  char *dst, size_t dstlen);
+size_t
+my_casedn_utf8mb4(const CHARSET_INFO * const cs,
+                  char *src, size_t srclen,
+                  char *dst, size_t dstlen);
+
+
+bool my_coll_init_uca(CHARSET_INFO *cs, cs_alloc_func alloc);
+
+int my_strnncoll_any_uca(const CHARSET_INFO * const cs,
+                         const unsigned char *s, size_t slen,
+                         const unsigned char *t, size_t tlen,
+                         bool t_is_prefix);
+
+int my_strnncollsp_any_uca(const CHARSET_INFO * const cs,
+                           const unsigned char *s, size_t slen,
+                           const unsigned char *t, size_t tlen,
+                           bool diff_if_only_endspace_difference);
+
+void my_hash_sort_any_uca(const CHARSET_INFO * const cs,
+                          const unsigned char *s, size_t slen,
+                          uint32_t *n1, uint32_t *n2);
+
+size_t my_strnxfrm_any_uca(const CHARSET_INFO * const cs,
+                           unsigned char *dst, size_t dstlen, uint32_t nweights,
+                           const unsigned char *src, size_t srclen,
+                           uint32_t flags);
+
+int my_wildcmp_uca(const CHARSET_INFO * const cs,
+                   const char *str,const char *str_end,
+                   const char *wildstr,const char *wildend,
+                   int escape, int w_one, int w_many);
+
+int my_strnncoll_8bit_bin(const CHARSET_INFO * const,
+                          const unsigned char *s, size_t slen,
+                          const unsigned char *t, size_t tlen,
+                          bool t_is_prefix);
+int my_strnncollsp_8bit_bin(const CHARSET_INFO * const,
+                            const unsigned char *a, size_t a_length,
+                            const unsigned char *b, size_t b_length,
+                            bool diff_if_only_endspace_difference);
+size_t my_case_str_bin(const CHARSET_INFO * const, char *);
+size_t my_case_bin(const CHARSET_INFO * const, char *,
+                   size_t srclen, char *, size_t);
+int my_strcasecmp_bin(const CHARSET_INFO * const,
+                      const char *s, const char *t);
+size_t
+my_strnxfrm_8bit_bin(const CHARSET_INFO * const cs,
+                     unsigned char * dst, size_t dstlen, uint32_t nweights,
+                     const unsigned char *src, size_t srclen, uint32_t flags);
+uint32_t my_instr_bin(const CHARSET_INFO * const,
+                      const char *b, size_t b_length,
+                      const char *s, size_t s_length,
+                      my_match_t *match, uint32_t nmatch);
+size_t my_lengthsp_binary(const CHARSET_INFO * const,
+                          const char *, size_t length);
+int my_mb_wc_bin(const CHARSET_INFO * const,
+                 my_wc_t *wc, const unsigned char *str,
+                 const unsigned char *end);
+int my_wc_mb_bin(const CHARSET_INFO * const, my_wc_t wc,
+                 unsigned char *str, unsigned char *end);
+void my_hash_sort_8bit_bin(const CHARSET_INFO * const,
+                           const unsigned char *key, size_t len,
+                           uint32_t *nr1, uint32_t *nr2);
+bool my_coll_init_8bit_bin(CHARSET_INFO *cs,
+                           cs_alloc_func);
+int my_strnncoll_binary(const CHARSET_INFO * const,
+                        const unsigned char *s, size_t slen,
+                        const unsigned char *t, size_t tlen,
+                        bool t_is_prefix);
+int my_strnncollsp_binary(const CHARSET_INFO * const cs,
+                          const unsigned char *s, size_t slen,
+                          const unsigned char *t, size_t tlen,
+                          bool);
+
 
 #define	_MY_U	01	/* Upper case */
 #define	_MY_L	02	/* Lower case */

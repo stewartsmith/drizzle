@@ -1,8 +1,9 @@
-#include "config.h"
+#include <drizzled/global.h>
 
-#include "binary_log.h"
+#include <drizzled/serialize/binary_log.h>
 
 #include <iostream>
+#include <fstream>
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -31,7 +32,7 @@ void print_usage_and_exit(char *prog) {
 
 
 void
-print_event(BinaryLog::Event *event)
+print_event(BinaryLog::Event *)
 {
 }
 
@@ -64,8 +65,12 @@ main(int argc, char *argv[])
   if (optind > argc)
     print_usage_and_exit(argv[0]);
 
-  int fd = open(file_name, O_RDONLY);
-  ZeroCopyInputStream* raw_input = new FileInputStream(fd);
+  filebuf fb;
+
+  fb.open(file_name, std::ios::in);
+  istream is(&fb);
+
+  ZeroCopyInputStream* raw_input = new IstreamInputStream(&is);
   CodedInputStream *coded_input = new CodedInputStream(raw_input);
 
   BinaryLog::Event event;
@@ -74,5 +79,5 @@ main(int argc, char *argv[])
 
   delete coded_input;
   delete raw_input;
-  close(fd);
+  fb.close();
 }

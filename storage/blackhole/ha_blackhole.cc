@@ -13,7 +13,8 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/common_includes.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/table.h>
 #include "ha_blackhole.h"
 
 /* Static declarations for handlerton */
@@ -53,8 +54,15 @@ const char **ha_blackhole::bas_ext() const
   return ha_blackhole_exts;
 }
 
-int ha_blackhole::open(const char *name, int mode __attribute__((unused)),
-                       uint32_t test_if_locked __attribute__((unused)))
+
+uint32_t ha_blackhole::index_flags(uint32_t inx, uint32_t, bool) const
+{
+  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
+          0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
+          HA_READ_ORDER | HA_KEYREAD_ONLY);
+}
+
+int ha_blackhole::open(const char *name, int, uint32_t)
 {
   if (!(share= get_share(name)))
     return(HA_ERR_OUT_OF_MEM);
@@ -69,44 +77,41 @@ int ha_blackhole::close(void)
   return(0);
 }
 
-int ha_blackhole::create(const char *name __attribute__((unused)),
-                         Table *table_arg __attribute__((unused)),
-                         HA_CREATE_INFO *create_info __attribute__((unused)))
+int ha_blackhole::create(const char *, Table *, HA_CREATE_INFO *)
 {
   return(0);
 }
 
-const char *ha_blackhole::index_type(uint32_t key_number __attribute__((unused)))
+const char *ha_blackhole::index_type(uint32_t)
 {
   return("BTREE");
 }
 
-int ha_blackhole::write_row(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::write_row(unsigned char *)
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }
 
-int ha_blackhole::rnd_init(bool scan __attribute__((unused)))
+int ha_blackhole::rnd_init(bool)
 {
   return(0);
 }
 
 
-int ha_blackhole::rnd_next(unsigned char *buf __attribute__((unused)))
+int ha_blackhole::rnd_next(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::rnd_pos(unsigned char * buf __attribute__((unused)),
-                          unsigned char *pos __attribute__((unused)))
+int ha_blackhole::rnd_pos(unsigned char *, unsigned char *)
 {
   assert(0);
   return(0);
 }
 
 
-void ha_blackhole::position(const unsigned char *record __attribute__((unused)))
+void ha_blackhole::position(const unsigned char *)
 {
   assert(0);
   return;
@@ -121,14 +126,13 @@ int ha_blackhole::info(uint32_t flag)
   return(0);
 }
 
-int ha_blackhole::external_lock(THD *thd __attribute__((unused)),
-                                int lock_type __attribute__((unused)))
+int ha_blackhole::external_lock(Session *, int)
 {
   return(0);
 }
 
 
-THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
+THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
                                          THR_LOCK_DATA **to,
                                          enum thr_lock_type lock_type)
 {
@@ -142,8 +146,8 @@ THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
     */
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !thd_in_lock_tables(thd)
-        && !thd_tablespace_op(thd))
+         lock_type <= TL_WRITE) && !session_in_lock_tables(session)
+        && !session_tablespace_op(session))
       lock_type = TL_WRITE_ALLOW_WRITE;
 
     /*
@@ -154,7 +158,7 @@ THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
       concurrent inserts to t2.
     */
 
-    if (lock_type == TL_READ_NO_INSERT && !thd_in_lock_tables(thd))
+    if (lock_type == TL_READ_NO_INSERT && !session_in_lock_tables(session))
       lock_type = TL_READ;
 
     lock.type= lock_type;
@@ -164,52 +168,45 @@ THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
 }
 
 
-int ha_blackhole::index_read_map(unsigned char * buf __attribute__((unused)),
-                                 const unsigned char * key __attribute__((unused)),
-                                 key_part_map keypart_map  __attribute__((unused)),
-                                 enum ha_rkey_function find_flag __attribute__((unused)))
+int ha_blackhole::index_read_map(unsigned char *, const unsigned char *,
+                                 key_part_map, enum ha_rkey_function)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_read_idx_map(unsigned char * buf __attribute__((unused)),
-                                     uint32_t idx __attribute__((unused)),
-                                     const unsigned char * key __attribute__((unused)),
-                                     key_part_map keypart_map __attribute__((unused)),
-                                     enum ha_rkey_function find_flag __attribute__((unused)))
+int ha_blackhole::index_read_idx_map(unsigned char *, uint32_t, const unsigned char *,
+                                     key_part_map, enum ha_rkey_function)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_read_last_map(unsigned char * buf __attribute__((unused)),
-                                      const unsigned char * key __attribute__((unused)),
-                                      key_part_map keypart_map __attribute__((unused)))
+int ha_blackhole::index_read_last_map(unsigned char *, const unsigned char *, key_part_map)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_next(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::index_next(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_prev(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::index_prev(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_first(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::index_first(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_last(unsigned char * buf __attribute__((unused)))
+int ha_blackhole::index_last(unsigned char *)
 {
   return(HA_ERR_END_OF_FILE);
 }
@@ -222,29 +219,29 @@ static st_blackhole_share *get_share(const char *table_name)
 
   length= (uint) strlen(table_name);
   pthread_mutex_lock(&blackhole_mutex);
-    
+
   if (!(share= (st_blackhole_share*) hash_search(&blackhole_open_tables,
                                                  (unsigned char*) table_name, length)))
   {
-    if (!(share= (st_blackhole_share*) my_malloc(sizeof(st_blackhole_share) +
-                                                 length,
-                                                 MYF(MY_WME | MY_ZEROFILL))))
+    if (!(share= (st_blackhole_share*) malloc(sizeof(st_blackhole_share) +
+                                              length)))
       goto error;
+    memset(share, 0, sizeof(st_blackhole_share) + length);
 
     share->table_name_length= length;
-    my_stpcpy(share->table_name, table_name);
-    
+    strcpy(share->table_name, table_name);
+
     if (my_hash_insert(&blackhole_open_tables, (unsigned char*) share))
     {
       free((unsigned char*) share);
       share= NULL;
       goto error;
     }
-    
+
     thr_lock_init(&share->lock);
   }
   share->use_count++;
-  
+
 error:
   pthread_mutex_unlock(&blackhole_mutex);
   return share;
@@ -264,8 +261,7 @@ static void blackhole_free_key(st_blackhole_share *share)
   free((unsigned char*) share);
 }
 
-static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *length,
-                                bool not_used __attribute__((unused)))
+static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *length, bool)
 {
   *length= share->table_name_length;
   return (unsigned char*) share->table_name;
@@ -278,7 +274,7 @@ static int blackhole_init(void *p)
   blackhole_hton->state= SHOW_OPTION_YES;
   blackhole_hton->create= blackhole_create_handler;
   blackhole_hton->flags= HTON_CAN_RECREATE;
-  
+
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
   (void) hash_init(&blackhole_open_tables, system_charset_info,32,0,0,
                    (hash_get_key) blackhole_get_key,
@@ -287,7 +283,7 @@ static int blackhole_init(void *p)
   return 0;
 }
 
-static int blackhole_fini(void *p __attribute__((unused)))
+static int blackhole_fini(void *)
 {
   hash_free(&blackhole_open_tables);
   pthread_mutex_destroy(&blackhole_mutex);
@@ -295,7 +291,7 @@ static int blackhole_fini(void *p __attribute__((unused)))
   return 0;
 }
 
-mysql_declare_plugin(blackhole)
+drizzle_declare_plugin(blackhole)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "BLACKHOLE",
@@ -309,4 +305,4 @@ mysql_declare_plugin(blackhole)
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }
-mysql_declare_plugin_end;
+drizzle_declare_plugin_end;

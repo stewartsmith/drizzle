@@ -25,20 +25,15 @@ noinst_HEADERS =	my_uctype.h \
 			t_ctype.h
 
 
-# IFF the don't exist on
-# the target system. This helps prevent empty object file problems.
-libmystrings_la_LIBADD = $(LTLIBOBJS)
-libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c \
-				strfill.c is_prefix.c \
-				strmake.c longlong2str.c \
-				my_strtoll10.c \
-				bchange.c strxnmov.c int2str.c str2int.c \
-                                llstr.c \
-				stpcpy.c \
-				stpncpy.c \
-                                ctype.c ctype-simple.c ctype-mb.c \
-                                ctype-utf8.c \
-                                ctype-uca.c ctype-bin.c \
-                                decimal.c ctype-extra.c str_alloc.c \
-                                dtoa.c 
+libmystrings_la_SOURCES = 	bmove_upp.cc \
+				is_prefix.cc \
+				longlong2str.cc \
+				my_strtoll10.cc \
+				int2str.cc str2int.cc \
+        llstr.cc \
+        ctype.cc ctype-simple.cc ctype-mb.cc \
+        ctype-utf8.cc \
+        ctype-uca.cc ctype-bin.cc \
+        decimal.cc ctype-extra.cc \
+        dtoa.cc 
 

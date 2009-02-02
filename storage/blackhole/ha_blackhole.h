@@ -14,6 +14,16 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
+#ifndef STORAGE_BLACKHOLE_HA_BLACKHOLE_H
+#define STORAGE_BLACKHOLE_HA_BLACKHOLE_H
+
+#include <drizzled/handler.h>
+#include <mysys/thr_lock.h>
+
+#define BLACKHOLE_MAX_KEY	64		/* Max allowed keys */
+#define BLACKHOLE_MAX_KEY_SEG	16		/* Max segments for key */
+#define BLACKHOLE_MAX_KEY_LENGTH 1000
+
 /*
   Shared structure for correct LOCK operation
 */
@@ -51,21 +61,12 @@ public:
   {
     return(HA_NULL_IN_KEY |
            HA_BINLOG_STMT_CAPABLE |
-           HA_CAN_INDEX_BLOBS | 
+           HA_CAN_INDEX_BLOBS |
            HA_AUTO_PART_KEY |
            HA_FILE_BASED);
   }
-  uint32_t index_flags(uint32_t inx, uint32_t part __attribute__((unused)),
-                       bool all_parts __attribute__((unused))) const
-  {
-    return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
-            0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
-            HA_READ_ORDER | HA_KEYREAD_ONLY);
-  }
+  uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
   /* The following defines can be increased if necessary */
-#define BLACKHOLE_MAX_KEY	64		/* Max allowed keys */
-#define BLACKHOLE_MAX_KEY_SEG	16		/* Max segments for key */
-#define BLACKHOLE_MAX_KEY_LENGTH 1000
   uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return BLACKHOLE_MAX_KEY_LENGTH; }
   uint32_t max_supported_key_part_length() const { return BLACKHOLE_MAX_KEY_LENGTH; }
@@ -87,10 +88,12 @@ public:
   int index_last(unsigned char * buf);
   void position(const unsigned char *record);
   int info(uint32_t flag);
-  int external_lock(THD *thd, int lock_type);
+  int external_lock(Session *session, int lock_type);
   int create(const char *name, Table *table_arg,
              HA_CREATE_INFO *create_info);
-  THR_LOCK_DATA **store_lock(THD *thd,
+  THR_LOCK_DATA **store_lock(Session *session,
                              THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
 };
+
+#endif /* STORAGE_BLACKHOLE_HA_BLACKHOLE_H */

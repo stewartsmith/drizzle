@@ -25,6 +25,28 @@
 */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+
+#include <drizzled/field/str.h>
+#include <drizzled/field/longstr.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/decimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/long.h>
+#include <drizzled/field/int64_t.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/timetype.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/varstring.h>
+
 
 static void do_field_eq(Copy_field *copy)
 {
@@ -188,7 +210,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
 }
 
 
-static void do_skip(Copy_field *copy __attribute__((unused)))
+static void do_skip(Copy_field *)
 {
 }
 
@@ -373,7 +395,7 @@ static void do_cut_string_complex(Copy_field *copy)
   const unsigned char *from_end= copy->from_ptr + copy->from_length;
   uint32_t copy_length= cs->cset->well_formed_len(cs,
                                               (char*) copy->from_ptr,
-                                              (char*) from_end, 
+                                              (char*) from_end,
                                               copy->to_length / cs->mbmaxlen,
                                               &well_formed_error);
   if (copy->to_length < copy_length)
@@ -444,7 +466,7 @@ static void do_varstring1_mb(Copy_field *copy)
                                          to_char_length, &well_formed_error);
   if (length < from_length)
   {
-    if (current_thd->count_cuted_fields)
+    if (current_session->count_cuted_fields)
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }
@@ -481,14 +503,14 @@ static void do_varstring2_mb(Copy_field *copy)
                                          char_length, &well_formed_error);
   if (length < from_length)
   {
-    if (current_thd->count_cuted_fields)
+    if (current_session->count_cuted_fields)
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
-  }  
+  }
   int2store(copy->to_ptr, length);
   memcpy(copy->to_ptr+HA_KEY_BLOB_LENGTH, from_beg, length);
 }
- 
+
 
 /***************************************************************************
 ** The different functions that fills in a Copy_field class
@@ -531,18 +553,18 @@ void Copy_field::set(unsigned char *to,Field *from)
 
 
 /*
-  To do: 
+  To do:
 
   If 'save\ is set to true and the 'from' is a blob field, do_copy is set to
   do_save_blob rather than do_conv_blob.  The only differences between them
   appears to be:
 
-  - do_save_blob allocates and uses an intermediate buffer before calling 
-    Field_blob::store. Is this in order to trigger the call to 
+  - do_save_blob allocates and uses an intermediate buffer before calling
+    Field_blob::store. Is this in order to trigger the call to
     well_formed_copy_nchars, by changing the pointer copy->tmp.ptr()?
     That call will take place anyway in all known cases.
 
-  - The above causes a truncation to MAX_FIELD_WIDTH. Is this the intended 
+  - The above causes a truncation to MAX_FIELD_WIDTH. Is this the intended
     effect? Truncation is handled by well_formed_copy_nchars anyway.
  */
 void Copy_field::set(Field *to,Field *from,bool save)
@@ -637,7 +659,7 @@ Copy_field::get_copy_func(Field *to,Field *from)
       */
       if (to->real_type() != from->real_type() ||
           !compatible_db_low_byte_first ||
-          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_NEWDATE) || to->type() == DRIZZLE_TYPE_DATETIME))
+          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_DATE) || to->type() == DRIZZLE_TYPE_DATETIME))
       {
 	if (from->real_type() == DRIZZLE_TYPE_ENUM)
 	  if (to->result_type() != STRING_RESULT)
@@ -723,19 +745,17 @@ int field_conv(Field *to,Field *from)
       !(to->type() == DRIZZLE_TYPE_BLOB && to->table->copy_blobs))
   {
     /* Please god, will someone rewrite this to be readable :( */
-    if (to->pack_length() == from->pack_length() && 
-        !(to->flags & UNSIGNED_FLAG && !(from->flags & UNSIGNED_FLAG)) && 
-        to->real_type() != DRIZZLE_TYPE_ENUM && 
+    if (to->pack_length() == from->pack_length() &&
+        !(to->flags & UNSIGNED_FLAG && !(from->flags & UNSIGNED_FLAG)) &&
+        to->real_type() != DRIZZLE_TYPE_ENUM &&
         (to->real_type() != DRIZZLE_TYPE_NEWDECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
 	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
-        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_NEWDATE && to->type() != DRIZZLE_TYPE_DATETIME)) && 
+        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_DATE && to->type() != DRIZZLE_TYPE_DATETIME)) &&
         (from->real_type() != DRIZZLE_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
     {						// Identical fields
-#ifdef HAVE_purify
       /* This may happen if one does 'UPDATE ... SET x=x' */
       if (to->ptr != from->ptr)
-#endif
         memcpy(to->ptr,from->ptr,to->pack_length());
       return 0;
     }

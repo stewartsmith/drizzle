@@ -7,9 +7,6 @@
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
 
-#define BUFFER_LEN 1024
-#define ARCHIVE_ROW_HEADER_SIZE 4
-
 #define SHOW_VERSION "0.1"
 
 static void get_options(int *argc,char * * *argv);
@@ -61,7 +58,7 @@ int main(int argc, char *argv[])
       new_auto_increment_value= reader_handle.auto_increment + 1;
     }
 
-    if (!(ret= azopen(&writer_handle, argv[0], O_CREAT|O_RDWR, 
+    if (!(ret= azopen(&writer_handle, argv[0], O_CREAT|O_RDWR,
                       AZ_METHOD_BLOCK)))
     {
       printf("Could not open file for update: %s\n", argv[0]);
@@ -97,7 +94,7 @@ int main(int argc, char *argv[])
       char *comment =
         (char *) malloc(sizeof(char) * reader_handle.comment_length);
       azread_comment(&reader_handle, comment);
-      printf("\tComment length %u\n\t\t%.*s\n", reader_handle.comment_length, 
+      printf("\tComment length %u\n\t\t%.*s\n", reader_handle.comment_length,
              reader_handle.comment_length, comment);
       free(comment);
     }
@@ -112,10 +109,10 @@ int main(int argc, char *argv[])
   if (opt_check)
   {
     int error;
-    unsigned int read;
+    unsigned int row_read;
     uint64_t row_count= 0;
 
-    while ((read= azread_row(&reader_handle, &error)))
+    while ((row_read= azread_row(&reader_handle, &error)))
     {
       if (error == Z_STREAM_ERROR)
       {
@@ -125,7 +122,7 @@ int main(int argc, char *argv[])
 
       row_count++;
 
-      if (read > reader_handle.longest_row)
+      if (row_read > reader_handle.longest_row)
       {
         printf("Table is damaged, row %"PRIu64" is invalid\n", row_count);
         goto end;
@@ -138,7 +135,7 @@ int main(int argc, char *argv[])
   if (opt_backup)
   {
     int error;
-    unsigned int read;
+    unsigned int row_read;
     uint64_t row_count= 0;
     char *buffer;
 
@@ -163,7 +160,12 @@ int main(int argc, char *argv[])
     if (reader_handle.frm_length)
     {
       char *ptr;
-      ptr= (char *)my_malloc(sizeof(char) * reader_handle.frm_length, MYF(0));
+      ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
+      if (ptr == NULL)
+      {
+        printf("Could not allocate enough memory\n");
+        goto end;
+      }
       azread_frm(&reader_handle, ptr);
       azwrite_frm(&writer_handle, ptr, reader_handle.frm_length);
       free(ptr);
@@ -172,13 +174,13 @@ int main(int argc, char *argv[])
     if (reader_handle.comment_length)
     {
       char *ptr;
-      ptr= (char *)my_malloc(sizeof(char) * reader_handle.comment_length, MYF(0));
+      ptr= (char *)malloc(sizeof(char) * reader_handle.comment_length);
       azread_comment(&reader_handle, ptr);
       azwrite_comment(&writer_handle, ptr, reader_handle.comment_length);
       free(ptr);
     }
 
-    while ((read= azread_row(&reader_handle, &error)))
+    while ((row_read= azread_row(&reader_handle, &error)))
     {
       if (error == Z_STREAM_ERROR || error)
       {
@@ -187,12 +189,12 @@ int main(int argc, char *argv[])
       }
 
       /* If we read nothing we are at the end of the file */
-      if (read == 0)
+      if (row_read == 0)
         break;
 
       row_count++;
 
-      azwrite_row(&writer_handle, reader_handle.row_ptr, read);
+      azwrite_row(&writer_handle, reader_handle.row_ptr, row_read);
 
       if (reader_handle.rows == writer_handle.rows)
         break;
@@ -208,7 +210,12 @@ int main(int argc, char *argv[])
     File frm_file;
     char *ptr;
     frm_file= my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
-    ptr= (char *)my_malloc(sizeof(char) * reader_handle.frm_length, MYF(0));
+    ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
+    if (ptr == NULL)
+    {
+      printf("Could not allocate enough memory\n");
+      goto end;
+    }
     azread_frm(&reader_handle, ptr);
     my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));
     my_close(frm_file, MYF(0));
@@ -224,10 +231,9 @@ end:
 }
 
 static bool
-get_one_option(int optid,
-	       const struct my_option *opt __attribute__((unused)),
-	       char *argument)
+get_one_option(int optid, const struct my_option *opt, char *argument)
 {
+  (void)opt;
   switch (optid) {
   case 'b':
     opt_backup= 1;
@@ -313,7 +319,7 @@ static void usage(void)
        license\n");
   puts("Read and modify Archive files directly\n");
   printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", my_progname);
-  print_defaults("my", load_default_groups);
+  print_defaults("drizzle", load_default_groups);
   my_print_help(my_long_options);
 }
 
@@ -325,7 +331,7 @@ static void print_version(void)
 
 static void get_options(int *argc, char ***argv)
 {
-  load_defaults("my", load_default_groups, argc, argv);
+  load_defaults("drizzle", load_default_groups, argc, argv);
   default_argv= *argv;
 
   handle_options(argc, argv, my_long_options, get_one_option);

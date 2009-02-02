@@ -21,6 +21,9 @@
   Functions for easy reading of records, possible through a cache
 */
 #include <drizzled/server_includes.h>
+#include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
 static int rr_quick(READ_RECORD *info);
 int rr_sequential(READ_RECORD *info);
@@ -29,7 +32,7 @@ static int rr_unpack_from_tempfile(READ_RECORD *info);
 static int rr_unpack_from_buffer(READ_RECORD *info);
 static int rr_from_pointers(READ_RECORD *info);
 static int rr_from_cache(READ_RECORD *info);
-static int init_rr_cache(THD *thd, READ_RECORD *info);
+static int init_rr_cache(Session *session, READ_RECORD *info);
 static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(READ_RECORD *info);
 static int rr_index(READ_RECORD *info);
@@ -44,16 +47,14 @@ static int rr_index(READ_RECORD *info);
     join_read_first/next functions.
 
   @param info         READ_RECORD structure to initialize.
-  @param thd          Thread handle
+  @param session          Thread handle
   @param table        Table to be accessed
   @param print_error  If true, call table->file->print_error() if an error
                       occurs (except for end-of-records error)
   @param idx          index to scan
 */
 
-void init_read_record_idx(READ_RECORD *info,
-                          THD *thd __attribute__((unused)),
-                          Table *table,
+void init_read_record_idx(READ_RECORD *info, Session *, Table *table,
                           bool print_error, uint32_t idx)
 {
   empty_record(table);
@@ -116,7 +117,7 @@ void init_read_record_idx(READ_RECORD *info,
     rr_from_tempfile:
     -----------------
       Same as rr_from_pointers except that references are fetched from
-      temporary file instead of from 
+      temporary file instead of from
     rr_from_cache:
     --------------
       This is a special variant of rr_from_tempfile that can be used for
@@ -139,22 +140,22 @@ void init_read_record_idx(READ_RECORD *info,
     This is the most basic access method of a table using rnd_init,
     rnd_next and rnd_end. No indexes are used.
 */
-void init_read_record(READ_RECORD *info,THD *thd, Table *table,
+void init_read_record(READ_RECORD *info,Session *session, Table *table,
 		      SQL_SELECT *select,
 		      int use_record_cache, bool print_error)
 {
   IO_CACHE *tempfile;
 
   memset(info, 0, sizeof(*info));
-  info->thd=thd;
+  info->session=session;
   info->table=table;
   info->file= table->file;
   info->forms= &info->table;		/* Only one table */
-  
+
   if (table->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE &&
       !table->sort.addon_field)
     table->file->extra(HA_EXTRA_MMAP);
-  
+
   if (table->sort.addon_field)
   {
     info->rec_buf= table->sort.addon_buf;
@@ -191,7 +192,7 @@ void init_read_record(READ_RECORD *info,THD *thd, Table *table,
       and table->sort.io_cache is read sequentially
     */
     if (!table->sort.addon_field &&
-	thd->variables.read_rnd_buff_size &&
+	session->variables.read_rnd_buff_size &&
 	!(table->file->ha_table_flags() & HA_FAST_KEY_READ) &&
 	(table->db_stat & HA_READ_ONLY ||
 	 table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
@@ -203,7 +204,7 @@ void init_read_record(READ_RECORD *info,THD *thd, Table *table,
 	!table->s->blob_fields &&
         info->ref_length <= MAX_REFLENGTH)
     {
-      if (! init_rr_cache(thd, info))
+      if (! init_rr_cache(session, info))
       {
 	info->read_record=rr_from_cache;
       }
@@ -217,7 +218,7 @@ void init_read_record(READ_RECORD *info,THD *thd, Table *table,
   {
     table->file->ha_rnd_init(0);
     info->cache_pos=table->sort.record_pointers;
-    info->cache_end=info->cache_pos+ 
+    info->cache_end=info->cache_pos+
                     table->sort.found_records*info->ref_length;
     info->read_record= (table->sort.addon_field ?
                         rr_unpack_from_buffer : rr_from_pointers);
@@ -233,15 +234,15 @@ void init_read_record(READ_RECORD *info,THD *thd, Table *table,
 	 !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD) ||
 	 (use_record_cache < 0 &&
 	  !(table->file->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
-      table->file->extra_opt(HA_EXTRA_CACHE, thd->variables.read_buff_size);
+      table->file->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
   }
-  /* 
+  /*
     Do condition pushdown for UPDATE/DELETE.
-    TODO: Remove this from here as it causes two condition pushdown calls 
+    TODO: Remove this from here as it causes two condition pushdown calls
     when we're running a SELECT and the condition cannot be pushed down.
   */
-  if (thd->variables.engine_condition_pushdown && 
-      select && select->cond && 
+  if (session->variables.engine_condition_pushdown &&
+      select && select->cond &&
       (select->cond->used_tables() & table->map) &&
       !table->file->pushed_cond)
     table->file->cond_push(select->cond);
@@ -290,7 +291,7 @@ static int rr_quick(READ_RECORD *info)
   int tmp;
   while ((tmp= info->select->quick->get_next()))
   {
-    if (info->thd->killed)
+    if (info->session->killed)
     {
       my_error(ER_SERVER_SHUTDOWN, MYF(0));
       return 1;
@@ -357,14 +358,15 @@ static int rr_index(READ_RECORD *info)
 int rr_sequential(READ_RECORD *info)
 {
   int tmp;
-  while ((tmp=info->file->rnd_next(info->record)))
+  while ((tmp= info->file->rnd_next(info->record)))
   {
-    if (info->thd->killed)
+    if (info->session->killed)
     {
-      info->thd->send_kill_message();
+      info->session->send_kill_message();
       return 1;
     }
     /*
+      TODO> Fix this so that engine knows how to behave on its own.
       rnd_next can return RECORD_DELETED for MyISAM when one thread is
       reading and another deleting without locks.
     */
@@ -404,7 +406,7 @@ static int rr_from_tempfile(READ_RECORD *info)
   Read a result set record from a temporary file after sorting.
 
   The function first reads the next sorted record from the temporary file.
-  into a buffer. If a success it calls a callback function that unpacks 
+  into a buffer. If a success it calls a callback function that unpacks
   the fields values use in the result set from this buffer into their
   positions in the regular record buffer.
 
@@ -455,7 +457,7 @@ static int rr_from_pointers(READ_RECORD *info)
   Read a result set record from a buffer after sorting.
 
   The function first reads the next sorted record from the sort buffer.
-  If a success it calls a callback function that unpacks 
+  If a success it calls a callback function that unpacks
   the fields values use in the result set from this buffer into their
   positions in the regular record buffer.
 
@@ -479,7 +481,7 @@ static int rr_unpack_from_buffer(READ_RECORD *info)
 }
 	/* cacheing of records from a database */
 
-static int init_rr_cache(THD *thd, READ_RECORD *info)
+static int init_rr_cache(Session *session, READ_RECORD *info)
 {
   uint32_t rec_cache_size;
 
@@ -489,16 +491,15 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
     info->reclength= ALIGN_SIZE(info->struct_length);
 
   info->error_offset= info->table->s->reclength;
-  info->cache_records= (thd->variables.read_rnd_buff_size /
+  info->cache_records= (session->variables.read_rnd_buff_size /
                         (info->reclength+info->struct_length));
   rec_cache_size= info->cache_records*info->reclength;
   info->rec_cache_size= info->cache_records*info->ref_length;
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
   if (info->cache_records <= 2 ||
-      !(info->cache=(unsigned char*) my_malloc_lock(rec_cache_size+info->cache_records*
-					   info->struct_length+1,
-					   MYF(0))))
+      !(info->cache=(unsigned char*) malloc(rec_cache_size+info->cache_records*
+					    info->struct_length+1)))
     return(1);
 #ifdef HAVE_purify
   // Avoid warnings in qsort

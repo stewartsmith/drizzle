@@ -72,11 +72,11 @@ select concat(':',product,':'), sum(profit),avg(profit) from t1 group by product
 # Error handling
 
 # Cube is not yet implemented
---error 1235
+--error 1064
 select product, country_id , year, sum(profit) from t1 group by product, country_id, year with cube;
---error 1235
+--error 1064
 explain select product, country_id , year, sum(profit) from t1 group by product, country_id, year with cube;
---error 1235
+--error 1064
 select product, country_id , year, sum(profit) from t1 group by product, country_id, year with cube union all select product, country_id , year, sum(profit) from t1 group by product, country_id, year with rollup;
 
 drop table t1,t2;
@@ -188,7 +188,7 @@ DROP TABLE t1;
 #                      a group by field declared as NOT NULL
 #
 
-CREATE TABLE t1 (a int(11) NOT NULL);
+CREATE TABLE t1 (a int NOT NULL);
 INSERT INTO t1 VALUES (1),(2);
 
 SELECT a, SUM(a) m FROM  t1 GROUP BY a WITH ROLLUP;
@@ -201,7 +201,7 @@ set div_precision_increment= @sav_dpi;
 # Tests for bug #7914: ROLLUP over expressions on temporary table
 #
 
-CREATE TABLE t1 (a int(11));
+CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (1),(2);
 
 SELECT a, SUM(a), SUM(a)+1 FROM (SELECT a FROM t1 UNION select 2) d 
@@ -224,7 +224,7 @@ DROP TABLE t1;
 # Tests for bug #7894: ROLLUP over expressions on group by attributes
 #
 
-CREATE TABLE t1 (a int(11));
+CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (1),(2);
 
 SELECT a, a+1, SUM(a) FROM t1 GROUP BY a WITH ROLLUP;
@@ -254,7 +254,7 @@ DROP TABLE t1,t2;
 # Test for bug #11543: ROLLUP query with a repeated column in GROUP BY 
 #
 
-CREATE TABLE t1 (a INT(10) NOT NULL, b INT(10) NOT NULL);
+CREATE TABLE t1 (a INT NOT NULL, b INT NOT NULL);
 INSERT INTO t1 VALUES (1, 1);
 INSERT INTO t1 VALUES (1, 2);
 
@@ -266,7 +266,7 @@ DROP TABLE t1;
 #                ROLLUP over expressions on not nullable group by attributes 
 #
 
-CREATE TABLE t1 (a int(11) NOT NULL);
+CREATE TABLE t1 (a int NOT NULL);
 INSERT INTO t1 VALUES (1),(2);
 
 SELECT * FROM (SELECT a, a + 1, COUNT(*) FROM t1 GROUP BY a WITH ROLLUP) t;
@@ -312,40 +312,6 @@ SELECT DISTINCT 'x', a, SUM(b) FROM t1 GROUP BY 1,2 WITH ROLLUP;
 DROP TABLE t1;
 
 # End of 4.1 tests
-
-#
-# Tests for bug #11639: ROLLUP over view executed through filesort
-#
-
-CREATE TABLE t1(id int, type char(1));
-INSERT INTO t1 VALUES
-  (1,"A"),(2,"C"),(3,"A"),(4,"A"),(5,"B"),
-  (6,"B"),(7,"A"),(8,"C"),(9,"A"),(10,"C");
-CREATE VIEW v1 AS SELECT * FROM t1;
-
-SELECT type FROM t1 GROUP BY type WITH ROLLUP;
-SELECT type FROM v1 GROUP BY type WITH ROLLUP;
-EXPLAIN SELECT type FROM v1 GROUP BY type WITH ROLLUP;
-
-DROP VIEW v1;
-DROP TABLE t1;
-
-#
-# Bug #12885(2): view specified by a subquery with
-#                ROLLUP over expressions on not nullable group by attributes 
-#
-
-CREATE TABLE t1 (a int(11) NOT NULL);
-INSERT INTO t1 VALUES (1),(2);
-
-CREATE VIEW v1 AS
-  SELECT a, LENGTH(a), COUNT(*) FROM t1 GROUP BY a WITH ROLLUP;
-
-DESC v1;
-SELECT * FROM v1;
-
-DROP VIEW v1;
-DROP TABLE t1;
 
 #
 # Bug #26830: derived table with ROLLUP 

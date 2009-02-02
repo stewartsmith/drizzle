@@ -29,10 +29,10 @@
   - Support for reading local file with LOAD DATA LOCAL
   - SHARED memory handling
   - Prepared statements
- 
+
   - Things that only works for the server
   - Alarm handling on connect
- 
+
   In all other cases, the code should be idential for the client and
   server.
 */
@@ -42,6 +42,7 @@
 #include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/net_serv.h>
 #include "libdrizzle_priv.h"
+#include <libdrizzle/pack.h>
 
 #include <sys/poll.h>
 #include <sys/ioctl.h>
@@ -53,7 +54,6 @@
 #undef net_buffer_length
 
 #include <libdrizzle/errmsg.h>
-#include <vio/violite.h>
 
 #include <sys/stat.h>
 #include <signal.h>
@@ -76,12 +76,9 @@
 #include <sys/un.h>
 
 #include <errno.h>
-#define SOCKET_ERROR -1
 
 
-#include <drizzled/version.h>
-#include <libdrizzle/sql_common.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 #include "local_infile.h"
 
 
@@ -102,6 +99,7 @@ char* getlogin(void);
   Read a packet from server. Give error message if socket was down
   or packet is an error message
 *****************************************************************************/
+safe_read_error_hook_func safe_read_error_hook= NULL;
 
 uint32_t cli_safe_read(DRIZZLE *drizzle)
 {
@@ -113,10 +111,9 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
 
   if (len == packet_error || len == 0)
   {
-#ifdef DRIZZLE_SERVER
-    if (net->vio && vio_was_interrupted(net->vio))
-      return (packet_error);
-#endif /*DRIZZLE_SERVER*/
+    if (safe_read_error_hook != NULL)
+      if (safe_read_error_hook(net))
+        return (packet_error);
     drizzle_disconnect(drizzle);
     drizzle_set_error(drizzle, net->last_errno == CR_NET_PACKET_TOO_LARGE ?
                       CR_NET_PACKET_TOO_LARGE : CR_SERVER_LOST,
@@ -133,8 +130,8 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
       len-=2;
       if (pos[0] == '#')
       {
-        strncpy(net->sqlstate, pos+1, SQLSTATE_LENGTH);
-        pos+= SQLSTATE_LENGTH+1;
+        strncpy(net->sqlstate, pos+1, LIBDRIZZLE_SQLSTATE_LENGTH);
+        pos+= LIBDRIZZLE_SQLSTATE_LENGTH+1;
       }
       else
       {
@@ -587,7 +584,7 @@ unsigned int drizzle_num_fields(const DRIZZLE_RES *res)
 
   EXAMPLE
     4.1.0-alfa ->  40100
- 
+
   NOTES
     We will ensure that a newer server always has a bigger number.
 

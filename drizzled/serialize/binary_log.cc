@@ -1,5 +1,5 @@
-#include "config.h"
-#include "binary_log.h"
+#include <drizzled/global.h>
+#include <drizzled/serialize/binary_log.h>
 
 #include <google/protobuf/io/coded_stream.h>
 
@@ -69,6 +69,10 @@ BinaryLog::Event::read(CodedInputStream *in)
 
   case CHAIN:
     message= new BinaryLog::Chain;
+    break;
+
+  case COUNT:
+  case UNDEF:
     break;
   }
 

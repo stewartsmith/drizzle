@@ -21,8 +21,10 @@
 #ifndef DRIZZLE_SERVER_FIELD_NULL
 #define DRIZZLE_SERVER_FIELD_NULL
 
-/* 
-  Everything saved in this will disappear. It will always return NULL 
+#include <drizzled/field/str.h>
+
+/*
+ * Everything saved in this will disappear. It will always return NULL
  */
 
 class Field_null :public Field_str {
@@ -35,16 +37,13 @@ public:
 	       unireg_check_arg, field_name_arg, cs)
     {}
   enum_field_types type() const { return DRIZZLE_TYPE_NULL;}
-  int  store(const char *to __attribute__((unused)),
-             uint32_t length __attribute__((unused)),
-             const CHARSET_INFO * const cs __attribute__((unused)))
+  int  store(const char *, uint32_t, const CHARSET_INFO * const)
   { null[0]=1; return 0; }
-  int store(double nr __attribute__((unused)))
+  int store(double)
   { null[0]=1; return 0; }
-  int store(int64_t nr __attribute__((unused)),
-            bool unsigned_val __attribute__((unused)))
+  int store(int64_t, bool)
   { null[0]=1; return 0; }
-  int store_decimal(const my_decimal *d __attribute__((unused)))
+  int store_decimal(const my_decimal *)
   { null[0]=1; return 0; }
   int reset(void)
   { return 0; }
@@ -53,13 +52,10 @@ public:
   int64_t val_int(void)
   { return 0;}
   my_decimal *val_decimal(my_decimal *) { return 0; }
-  String *val_str(String *value __attribute__((unused)),
-                  String *value2)
+  String *val_str(String *, String *value2)
   { value2->length(0); return value2;}
-  int cmp(const unsigned char *a __attribute__((unused)),
-          const unsigned char *b __attribute__((unused))) { return 0;}
-  void sort_string(unsigned char *buff __attribute__((unused)),
-                   uint32_t length __attribute__((unused)))  {}
+  int cmp(const unsigned char *, const unsigned char *) { return 0;}
+  void sort_string(unsigned char *, uint32_t)  {}
   uint32_t pack_length() const { return 0; }
   void sql_type(String &str) const;
   uint32_t size_of() const { return sizeof(*this); }

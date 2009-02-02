@@ -37,6 +37,8 @@ extern "C" {
 #endif
 
 #include <mystrings/decimal.h>
+#include <mysys/my_time.h>
+#include <drizzled/sql_string.h>
 
 #ifdef __cplusplus
 }
@@ -110,7 +112,7 @@ public:
   {
     len= DECIMAL_BUFF_LENGTH;
     buf= buffer;
-#if !defined (HAVE_purify) 
+#if !defined (HAVE_purify)
     /* Set buffer to 'random' value to find wrong buffer usage */
     for (uint32_t i= 0; i < DECIMAL_BUFF_LENGTH; i++)
       buffer[i]= i;
@@ -236,7 +238,7 @@ int my_decimal_round(uint32_t mask, const my_decimal *from, int scale,
                      bool truncate, my_decimal *to)
 {
   return check_result(mask, decimal_round((decimal_t*) from, to, scale,
-					  (truncate ? TRUNCATE : HALF_UP)));
+                                          (truncate ? TRUNCATE : HALF_UP)));
 }
 
 
@@ -255,11 +257,11 @@ int my_decimal_ceiling(uint32_t mask, const my_decimal *from, my_decimal *to)
 
 
 int my_decimal2string(uint32_t mask, const my_decimal *d, uint32_t fixed_prec,
-		      uint32_t fixed_dec, char filler, String *str);
+                      uint32_t fixed_dec, char filler, String *str);
 
 inline
 int my_decimal2int(uint32_t mask, const my_decimal *d, bool unsigned_flag,
-		   int64_t *l)
+                   int64_t *l)
 {
   my_decimal rounded;
   /* decimal_round can return only E_DEC_TRUNCATED */
@@ -271,8 +273,7 @@ int my_decimal2int(uint32_t mask, const my_decimal *d, bool unsigned_flag,
 
 
 inline
-int my_decimal2double(uint32_t mask __attribute__((unused)), 
-                      const my_decimal *d, double *result)
+int my_decimal2double(uint32_t, const my_decimal *d, double *result)
 {
   /* No need to call check_result as this will always succeed */
   return decimal2double((decimal_t*) d, result);
@@ -290,7 +291,6 @@ int str2my_decimal(uint32_t mask, char *str, my_decimal *d, char **end)
 int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
                    const CHARSET_INFO * charset, my_decimal *decimal_value);
 
-#if defined(DRIZZLE_SERVER)
 inline
 int string2my_decimal(uint32_t mask, const String *str, my_decimal *d)
 {
@@ -300,8 +300,6 @@ int string2my_decimal(uint32_t mask, const String *str, my_decimal *d)
 
 my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec);
 
-
-#endif /*defined(DRIZZLE_SERVER) */
 
 inline
 int double2my_decimal(uint32_t mask, double val, my_decimal *d)

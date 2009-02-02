@@ -20,10 +20,10 @@ alter table t1 add constraint unique key_1(a);
 alter table t1 add constraint constraint_2 unique key_2(a);
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" int(11),
-  UNIQUE KEY "constraint_1" ("a"),
-  UNIQUE KEY "key_1" ("a"),
-  UNIQUE KEY "key_2" ("a")
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `a` int,
+  UNIQUE KEY `constraint_1` (`a`),
+  UNIQUE KEY `key_1` (`a`),
+  UNIQUE KEY `key_2` (`a`)
+) ENGINE=InnoDB
 drop table t1;

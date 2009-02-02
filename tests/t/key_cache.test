@@ -63,8 +63,8 @@ select @@key_cache_block_size;
 
 set global keycache1.key_buffer_size=1024*1024;
 
-create table t1 (p int primary key, a char(10)) delay_key_write=1;
-create table t2 (p int primary key, i int, a char(10), key k1(i), key k2(a));
+create table t1 (p int primary key, a char(10)) delay_key_write=1 ENGINE=myisam;
+create table t2 (p int primary key, i int, a char(10), key k1(i), key k2(a)) ENGINE=myisam;
 
 show status like 'key_blocks_used';
 
@@ -158,24 +158,15 @@ set global keycache2.key_buffer_size=0;
 set global keycache3.key_buffer_size=100;
 set global keycache3.key_buffer_size=0;
 
-# Test case for bug 6447
-
-create table t1 (mytext text, FULLTEXT (mytext));
-insert t1 values ('aaabbb');
-
-check table t1;
-set @my_key_cache_block_size= @@global.key_cache_block_size;
-set GLOBAL key_cache_block_size=2048;
-check table t1;
-drop table t1;
 # Restore the changed variable value
+-- error 1232
 set global key_cache_block_size= @my_key_cache_block_size;
 
 #
 # Bug #19079: corrupted index when key_cache_block_size is not multiple of
 #             myisam_block_size
 
-CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=MYISAM;
 SET @my_key_cache_block_size= @@global.key_cache_block_size;
 SET GLOBAL key_cache_block_size=1536;
 INSERT INTO t1 VALUES (1);
@@ -183,8 +174,8 @@ SELECT @@key_cache_block_size;
 CHECK TABLE t1;
 DROP TABLE t1;
 
-CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int);
-CREATE TABLE t2(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int);
+CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
+CREATE TABLE t2(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
 SET GLOBAL key_cache_block_size=1536;
 INSERT INTO t1 VALUES (1,0);
 INSERT INTO t2(b) SELECT b FROM t1;
@@ -226,9 +217,9 @@ SET @bug28478_key_cache_block_size= @@global.key_cache_block_size;
 SET GLOBAL key_cache_block_size= 1536;
 CREATE TABLE t1 (
   id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  c1 CHAR(150),
-  c2 CHAR(150),
-  c3 CHAR(150),
+  c1 CHAR(50),
+  c2 CHAR(50),
+  c3 CHAR(50),
   KEY(c1, c2, c3)
   ) ENGINE= MyISAM;
 INSERT INTO t1 (c1, c2, c3) VALUES

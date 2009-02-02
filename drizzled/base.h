@@ -19,9 +19,9 @@
 
 /* This file includes constants used with all databases */
 
-/** 
- * @TODO Name this file something better and split it out if necessary.  
- * base.h isn't descriptive, especially compared to global.h 
+/**
+ * @TODO Name this file something better and split it out if necessary.
+ * base.h isn't descriptive, especially compared to global.h
  *
  * @TODO Convert HA_XXX defines into enums and/or bitmaps
  */
@@ -29,20 +29,7 @@
 #ifndef DRIZZLE_SERVER_BASE_H
 #define DRIZZLE_SERVER_BASE_H
 
-#ifndef stdin				/* Included first in handler */
 #define CHSIZE_USED
-#include <drizzled/global.h>
-#include <mysys/my_dir.h>		/* This includes types */
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
-#include <errno.h>
-
-#ifndef EOVERFLOW
-#define EOVERFLOW 84
-#endif
-
-#endif	/* stdin */
-#include <mysys/my_list.h>
 
 /* The following is bits in the flag parameter to ha_open() */
 
@@ -108,10 +95,10 @@ enum ha_key_alg {
 
 	/* Index and table build methods */
 
-enum ha_build_method { 
-  HA_BUILD_DEFAULT, 
+enum ha_build_method {
+  HA_BUILD_DEFAULT,
   HA_BUILD_ONLINE,
-  HA_BUILD_OFFLINE 
+  HA_BUILD_OFFLINE
 };
 
 	/* The following is parameter to ha_extra() */
@@ -154,7 +141,7 @@ enum ha_extra_function {
   HA_EXTRA_CHANGE_KEY_TO_UNIQUE,
   HA_EXTRA_CHANGE_KEY_TO_DUP,
   /*
-    When using HA_EXTRA_KEYREAD, overwrite only key member fields and keep 
+    When using HA_EXTRA_KEYREAD, overwrite only key member fields and keep
     other fields intact. When this is off (by default) InnoDB will use memcpy
     to overwrite entire row.
   */
@@ -180,7 +167,7 @@ enum ha_extra_function {
   HA_EXTRA_WRITE_CANNOT_REPLACE,
   /*
     Inform handler that delete_row()/update_row() cannot batch deletes/updates
-    and should perform them immediately. This may be needed when table has 
+    and should perform them immediately. This may be needed when table has
     AFTER DELETE/UPDATE triggers which access to subject table.
     These flags are reset by the handler::extra(HA_EXTRA_RESET) call.
   */
@@ -512,22 +499,22 @@ enum data_file_type {
 /* X > key, i.e. not including the right endpoint */
 #define NEAR_MAX	8
 
-/* 
-  This flag means that index is a unique index, and the interval is 
+/*
+  This flag means that index is a unique index, and the interval is
   equivalent to "AND(keypart_i = const_i)", where all of const_i are not NULLs.
 */
 #define UNIQUE_RANGE	16
 
-/* 
-  This flag means that the interval is equivalent to 
-  "AND(keypart_i = const_i)", where not all key parts may be used but all of 
+/*
+  This flag means that the interval is equivalent to
+  "AND(keypart_i = const_i)", where not all key parts may be used but all of
   const_i are not NULLs.
 */
 #define EQ_RANGE	32
 
 /*
   This flag has the same meaning as UNIQUE_RANGE, except that for at least
-  one keypart the condition is "keypart IS NULL". 
+  one keypart the condition is "keypart IS NULL".
 */
 #define NULL_RANGE	64
 
