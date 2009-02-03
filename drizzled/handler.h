@@ -670,46 +670,6 @@ public:
   virtual uint8_t table_cache_type() { return HA_CACHE_TBL_NONTRANSACT; }
 
 
-  /**
-    @brief Register a named table with a call back function to the query cache.
-
-    @param session The thread handle
-    @param table_key A pointer to the table name in the table cache
-    @param key_length The length of the table name
-    @param[out] engine_callback The pointer to the storage engine call back
-      function
-    @param[out] engine_data Storage engine specific data which could be
-      anything
-
-    This method offers the storage engine, the possibility to store a reference
-    to a table name which is going to be used with query cache.
-    The method is called each time a statement is written to the cache and can
-    be used to verify if a specific statement is cachable. It also offers
-    the possibility to register a generic (but static) call back function which
-    is called each time a statement is matched against the query cache.
-
-    @note If engine_data supplied with this function is different from
-      engine_data supplied with the callback function, and the callback returns
-      false, a table invalidation on the current table will occur.
-
-    @return Upon success the engine_callback will point to the storage engine
-      call back function, if any, and engine_data will point to any storage
-      engine data used in the specific implementation.
-      @retval true Success
-      @retval false The specified table or current statement should not be
-        cached
-  */
-
-  virtual bool
-    register_query_cache_table(Session *, char *, uint32_t,
-                               qc_engine_callback *engine_callback,
-                               uint64_t *)
-  {
-    *engine_callback= 0;
-    return true;
-  }
-
-
  /*
    @retval true   Primary key (if there is one) is clustered
                   key covering all fields
