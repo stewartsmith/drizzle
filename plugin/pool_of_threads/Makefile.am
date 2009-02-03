@@ -14,6 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
+noinst_HEADERS= session_scheduler.h
 noinst_LTLIBRARIES= libpool_of_threads.la
 libpool_of_threads_la_SOURCES=	pool_of_threads.cc session_scheduler.cc
 libpool_of_threads_la_LIBADD=
