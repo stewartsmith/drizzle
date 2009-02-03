@@ -1310,7 +1310,8 @@ sub environment_setup () {
     push(@ld_library_paths, "$glob_basedir/libdrizzleclient/.libs/",
                             "$glob_basedir/mysys/.libs/",
                             "$glob_basedir/mystrings/.libs/",
-                            "$glob_basedir/drizzled/.libs/");
+                            "$glob_basedir/drizzled/.libs/",
+			    "/usr/local/lib");
   }
   else
   {
