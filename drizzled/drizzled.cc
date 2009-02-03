@@ -1596,8 +1596,8 @@ pthread_handler_t signal_hand(void *)
 #endif
       break;					/* purecov: tested */
     }
-  return 0;
   }
+  return 0;
 }
 
 static void check_data_home(const char *)
