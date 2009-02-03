@@ -962,7 +962,6 @@ mysql_execute_command(Session *session)
 {
   int res= false;
   bool need_start_waiting= false; // have protection against global read lock
-  int  up_result= 0;
   LEX  *lex= session->lex;
   /* first SELECT_LEX (have special meaning for many of non-SELECTcommands) */
   SELECT_LEX *select_lex= &lex->select_lex;
@@ -1406,37 +1405,23 @@ end_with_restore_list:
       break;
     assert(select_lex->offset_limit == 0);
     unit->set_limit(select_lex);
-    res= (up_result= mysql_update(session, all_tables,
-                                  select_lex->item_list,
-                                  lex->value_list,
-                                  select_lex->where,
-                                  select_lex->order_list.elements,
-                                  (order_st *) select_lex->order_list.first,
-                                  unit->select_limit_cnt,
-                                  lex->duplicates, lex->ignore));
-    /* mysql_update return 2 if we need to switch to multi-update */
-    if (up_result != 2)
-      break;
-    /* Fall through */
+    res= mysql_update(session, all_tables,
+                      select_lex->item_list,
+                      lex->value_list,
+                      select_lex->where,
+                      select_lex->order_list.elements,
+                      (order_st *) select_lex->order_list.first,
+                      unit->select_limit_cnt,
+                      lex->duplicates, lex->ignore);
+    break;
   case SQLCOM_UPDATE_MULTI:
   {
     assert(first_table == all_tables && first_table != 0);
-    /* if we switched from normal update, rights are checked */
-    if (up_result != 2)
-    {
-      if ((res= multi_update_precheck(session, all_tables)))
-        break;
-    }
-    else
-      res= 0;
+    if ((res= multi_update_precheck(session, all_tables)))
+      break;
 
-    res= mysql_multi_update_prepare(session);
-
-    {
-      if (res)
-        break;
-
-    }  /* unlikely */
+    if ((res= mysql_multi_update_prepare(session)))
+      break;
 
     res= mysql_multi_update(session, all_tables,
                             &select_lex->item_list,
