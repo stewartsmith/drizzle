@@ -783,7 +783,7 @@ void ha_tina::update_status()
 int ha_tina::open(const char *name, int, uint32_t open_options)
 {
   if (!(share= get_share(name, table)))
-    return(HA_ERR_OUT_OF_MEM);
+    return(ENOENT);
 
   if (share->crashed && !(open_options & HA_OPEN_FOR_REPAIR))
   {

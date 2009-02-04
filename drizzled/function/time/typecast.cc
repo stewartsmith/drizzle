@@ -117,7 +117,7 @@ String *Item_char_typecast::val_str(String *str)
       char char_type[40];
       snprintf(char_type, sizeof(char_type), "%s(%lu)",
                cast_cs == &my_charset_bin ? "BINARY" : "CHAR",
-               (ulong) length);
+               (ulong) cast_length);
 
       if (!res->alloced_length())
       {                                         // Don't change const str
