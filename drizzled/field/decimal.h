@@ -28,6 +28,13 @@ class Field_new_decimal :public Field_num {
 private:
   int do_save_field_metadata(unsigned char *first_byte);
 public:
+  using Field::store;
+  using Field::val_int;
+  using Field::val_str;
+  using Field::cmp;
+  using Field::unpack;
+
+
   /* The maximum number of decimal digits can be stored */
   uint32_t precision;
   uint32_t bin_size;

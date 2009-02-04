@@ -296,8 +296,8 @@ void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
 TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
 ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
-ulong make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
-		     const char *newname);
+uint64_t make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
+                        const char *newname);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 int create_frm(Session *session, const char *name, const char *db, const char *table,

@@ -2649,53 +2649,47 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
 
   error= 1;
 
+  for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
   {
-    for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
+    if (((o= *opt)->flags & PLUGIN_VAR_NOSYSVAR))
+      continue;
+
+    if ((var= find_bookmark(tmp->name.str, o->name, o->flags)))
+      v= new (mem_root) sys_var_pluginvar(var->key + 1, o);
+    else
     {
-      if (((o= *opt)->flags & PLUGIN_VAR_NOSYSVAR))
-        continue;
+      len= tmp->name.length + strlen(o->name) + 2;
+      varname= (char*) alloc_root(mem_root, len);
+      sprintf(varname,"%s-%s",tmp->name.str,o->name);
+      my_casedn_str(&my_charset_utf8_general_ci, varname);
 
-      if ((var= find_bookmark(tmp->name.str, o->name, o->flags)))
-        v= new (mem_root) sys_var_pluginvar(var->key + 1, o);
-      else
-      {
-        len= tmp->name.length + strlen(o->name) + 2;
-        varname= (char*) alloc_root(mem_root, len);
-        sprintf(varname,"%s-%s",tmp->name.str,o->name);
-        my_casedn_str(&my_charset_utf8_general_ci, varname);
+      for (p= varname; *p; p++)
+        if (*p == '-')
+          *p= '_';
 
-        for (p= varname; *p; p++)
-          if (*p == '-')
-            *p= '_';
-
-        v= new (mem_root) sys_var_pluginvar(varname, o);
-      }
-      assert(v); /* check that an object was actually constructed */
-
-      /*
-        Add to the chain of variables.
-        Done like this for easier debugging so that the
-        pointer to v is not lost on optimized builds.
-      */
-      v->chain_sys_var(&chain);
+      v= new (mem_root) sys_var_pluginvar(varname, o);
     }
-    if (chain.first)
-    {
-      chain.last->next = NULL;
-      if (mysql_add_sys_var_chain(chain.first, NULL))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has conflicting system variables"),
-                        tmp->name.str);
-        goto err;
-      }
-      tmp->system_vars= chain.first;
-    }
-    return(0);
+    assert(v); /* check that an object was actually constructed */
+
+    /*
+      Add to the chain of variables.
+      Done like this for easier debugging so that the
+      pointer to v is not lost on optimized builds.
+    */
+    v->chain_sys_var(&chain);
   }
-
-  if (enabled_saved && global_system_variables.log_warnings)
-    errmsg_printf(ERRMSG_LVL_INFO, _("Plugin '%s' disabled by command line option"),
-                          tmp->name.str);
+  if (chain.first)
+  {
+    chain.last->next = NULL;
+    if (mysql_add_sys_var_chain(chain.first, NULL))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has conflicting system variables"),
+                      tmp->name.str);
+      goto err;
+    }
+    tmp->system_vars= chain.first;
+  }
+  return(0);
 err:
   if (opts)
     my_cleanup_options(opts);

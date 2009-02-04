@@ -1541,7 +1541,6 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
     case Item::PARAM_ITEM:
          my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
          return true;
-         break;
     default:
       // Continue with the field creation
       break;
@@ -1767,9 +1766,7 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   case DRIZZLE_TYPE_BLOB:		return 4+portable_sizeof_char_ptr;
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_NEWDECIMAL:
-    abort(); return 0;                          // This shouldn't happen
-  default:
-    return 0;
+    abort();
   }
 }
 

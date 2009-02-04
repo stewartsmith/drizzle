@@ -26,6 +26,9 @@
 /* base class for float and double and decimal (old one) */
 class Field_real :public Field_num {
 public:
+  using Field::pack;
+  using Field::unpack;
+
   bool not_fixed;
 
   Field_real(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,

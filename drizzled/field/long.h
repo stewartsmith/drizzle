@@ -25,6 +25,12 @@
 
 class Field_long :public Field_num {
 public:
+  using Field::cmp;
+  using Field::store;
+  using Field::val_int;
+  using Field::val_str;
+  using Field::pack;
+  using Field::unpack;
   Field_long(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
 	     unsigned char null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
