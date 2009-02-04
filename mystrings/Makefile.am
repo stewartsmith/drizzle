@@ -19,7 +19,8 @@ noinst_LTLIBRARIES =	libmystrings.la
 mystringsincludedir = ${includedir}/mystrings
 dist_mystringsinclude_HEADERS = 	decimal.h \
 					m_ctype.h \
-					m_string.h
+					m_string.h \
+				utf8.h
 
 noinst_HEADERS =	my_uctype.h \
 			t_ctype.h

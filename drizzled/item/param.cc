@@ -26,6 +26,7 @@
 #include <drizzled/item/param.h>
 #include CMATH_H
 #include <drizzled/sql_string.h>
+#include <mystrings/utf8.h>
 
 Item *Item_param::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
@@ -536,19 +537,6 @@ static char *str_to_hex(char *to, const char *from, uint32_t len)
 }
 
 
-/* Borrowed from libicu header */
-
-#define U8_IS_SINGLE(c) (((c)&0x80)==0)
-#define U8_LENGTH(c) \
-    ((uint32_t)(c)<=0x7f ? 1 : \
-        ((uint32_t)(c)<=0x7ff ? 2 : \
-            ((uint32_t)(c)<=0xd7ff ? 3 : \
-                ((uint32_t)(c)<=0xdfff || (uint32_t)(c)>0x10ffff ? 0 : \
-                    ((uint32_t)(c)<=0xffff ? 3 : 4)\
-                ) \
-            ) \
-        ) \
-    )
 
 /*
   Add escape characters to a string (blob?) to make it suitable for a insert
