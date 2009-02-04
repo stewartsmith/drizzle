@@ -1,4 +1,4 @@
-# Copyright (C) 2000-2006 MySQL AB
+# Copyright (C) 2009 Sun Microsystems
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,28 +13,34 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-noinst_LTLIBRARIES =	libmystrings.la
+noinst_LTLIBRARIES=	libmystrings.la
 
 
-mystringsincludedir = ${includedir}/mystrings
-dist_mystringsinclude_HEADERS = 	decimal.h \
-					m_ctype.h \
-					m_string.h \
+mystringsincludedir= ${includedir}/mystrings
+dist_mystringsinclude_HEADERS=	decimal.h \
+				m_ctype.h \
+				m_string.h \
 				utf8.h
 
-noinst_HEADERS =	my_uctype.h \
-			t_ctype.h
+noinst_HEADERS=			my_uctype.h \
+				t_ctype.h
 
 
-libmystrings_la_SOURCES = 	bmove_upp.cc \
+libmystrings_la_SOURCES = 	\
+				bmove_upp.cc \
+				ctype-bin.cc \
+				ctype-extra.cc \
+				ctype-mb.cc \
+				ctype-simple.cc \
+				ctype-uca.cc \
+				ctype.cc \
+				decimal.cc \
+				dtoa.cc \ 
+				int2str.cc \
 				is_prefix.cc \
 				longlong2str.cc \
 				my_strtoll10.cc \
-				int2str.cc str2int.cc \
-        llstr.cc \
-        ctype.cc ctype-simple.cc ctype-mb.cc \
-        ctype-utf8.cc \
-        ctype-uca.cc ctype-bin.cc \
-        decimal.cc ctype-extra.cc \
-        dtoa.cc 
+				str2int.cc \
+			        ctype-utf8.cc \
+			        llstr.cc
 
