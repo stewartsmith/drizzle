@@ -63,17 +63,14 @@
 #endif
 
 
-/* Including this here because the cantrip is so bloody involved */
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
+#include <gnulib/time.h>
+
+#ifndef HAVE_DECL_TIMEGM
+# if defined(__cplusplus)
+extern "C"
 # endif
-#endif
+time_t timegm (struct tm *__tm);
+#endif /* HAVE_DECL_TIMEGM */
 
 
 /*
