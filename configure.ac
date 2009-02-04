@@ -1406,7 +1406,27 @@ do
   fi
 done
 
-AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
+AC_CONFIG_COMMANDS([timestamp-h], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
+
+AC_CONFIG_COMMANDS([po/POTFILES.in],[
+if test "x$EGREP" != "x"
+then
+  echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
+  for f in `find . | ${EGREP} '\.(cc|c|h|yy)$' | cut -c3- | sort`
+  do
+    if grep gettext.h "$f" | grep include >/dev/null 2>&1
+    then
+      echo "$f" >> po/POTFILES.in.in
+    fi
+  done
+  if ! diff po/POTFILES.in.in po/POTFILES.in >/dev/null 2>&1
+  then
+    mv po/POTFILES.in.in po/POTFILES.in
+  else
+    rm po/POTFILES.in.in
+  fi
+fi
+])
 
 # Ensure that table handlers gets all modifications to CFLAGS/CXXFLAGS
 AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
