@@ -63,9 +63,18 @@
 #endif
 
 
-#include <gnulib/time.h>
-
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
 #ifndef HAVE_DECL_TIMEGM
+#include <gnulib/time.h>
 # if defined(__cplusplus)
 extern "C"
 # endif

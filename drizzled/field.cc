@@ -1766,8 +1766,12 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   case DRIZZLE_TYPE_BLOB:		return 4+portable_sizeof_char_ptr;
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_NEWDECIMAL:
+  case DRIZZLE_TYPE_VIRTUAL:
     abort();
   }
+#ifndef __sun
+  return 0;
+#endif
 }
 
 

@@ -2597,7 +2597,6 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
-  bool enabled_saved= true;
   bool can_disable;
   MEM_ROOT *mem_root= alloc_root_inited(&tmp->mem_root) ?
                       &tmp->mem_root : &plugin_mem_root;
