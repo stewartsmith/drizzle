@@ -747,9 +747,10 @@ static void intern_plugin_unlock(LEX *, plugin_ref plugin)
   pi= plugin_ref_to_int(plugin);
 
   free((void *) plugin);
-
-  assert(pi->ref_count);
-  pi->ref_count--;
+ 
+  //assert(pi->ref_count);
+  if (pi->ref_count > 0)
+    pi->ref_count--;
 
   if (pi->state == PLUGIN_IS_DELETED && !pi->ref_count)
     reap_needed= true;
