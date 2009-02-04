@@ -43,7 +43,7 @@ void Item_extract::print(String *str, enum_query_type query_type)
 
 void Item_extract::fix_length_and_dec()
 {
-  value.alloc(32);				// alloc buffer
+  value.alloc(DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING);				
 
   maybe_null= 1;					/* If NULL supplied only */
   switch (int_type) {
@@ -229,8 +229,11 @@ int64_t Item_extract::val_int()
       /* If we're here, our time failed, but our datetime succeeded... */
       temporal= &datetime_temporal;
     }
-    /* If we're here, our time succeeded... */
-    temporal= &time_temporal;
+    else
+    {
+      /* If we're here, our time succeeded... */
+      temporal= &time_temporal;
+    }
   }
 
   /* Return the requested datetime component */
