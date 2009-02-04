@@ -1270,7 +1270,6 @@ bool mysql_insert(Session *session,TableList *table,List<Item> &fields,
                   bool ignore);
 int check_that_all_fields_are_given_values(Session *session, Table *entry,
                                            TableList *table_list);
-void prepare_triggers_for_insert_stmt(Table *table);
 int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds);
 bool mysql_delete(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows rows, uint64_t options,
