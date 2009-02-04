@@ -1498,7 +1498,7 @@ QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param,
 int QUICK_ROR_UNION_SELECT::init()
 {
   if (init_queue(&queue, quick_selects.elements, 0,
-                 false , quick_ror_union_select_queue_cmp,
+                 false , QUICK_ROR_UNION_SELECT::queue_cmp,
                  (void*) this))
   {
     memset(&queue, 0, sizeof(QUEUE));
@@ -1523,7 +1523,7 @@ int QUICK_ROR_UNION_SELECT::init()
       val2  Second merged select
 */
 
-int quick_ror_union_select_queue_cmp(void *arg, unsigned char *val1, unsigned char *val2)
+int QUICK_ROR_UNION_SELECT::queue_cmp(void *arg, unsigned char *val1, unsigned char *val2)
 {
   QUICK_ROR_UNION_SELECT *self= (QUICK_ROR_UNION_SELECT*)arg;
   return self->head->file->cmp_ref(((QUICK_SELECT_I*)val1)->last_rowid,

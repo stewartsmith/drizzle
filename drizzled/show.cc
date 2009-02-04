@@ -1006,7 +1006,7 @@ public:
   static void operator delete(void *, size_t)
   { TRASH(ptr, size); }
 
-  my_thread_id thread_id;
+  ulong thread_id;
   time_t start_time;
   uint32_t   command;
   const char *user,*host,*db,*proc_info,*state_info;

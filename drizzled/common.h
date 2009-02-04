@@ -50,43 +50,43 @@
    TODO: separate three contexts above, move them to separate bitfields.
 */
 
-#define SELECT_DISTINCT         (UINT32_C(1) << 0)     // SELECT, user
-#define SELECT_STRAIGHT_JOIN    (UINT32_C(1) << 1)     // SELECT, user
-#define SELECT_DESCRIBE         (UINT32_C(1) << 2)     // SELECT, user
-#define SELECT_SMALL_RESULT     (UINT32_C(1) << 3)     // SELECT, user
-#define SELECT_BIG_RESULT       (UINT32_C(1) << 4)     // SELECT, user
-#define OPTION_FOUND_ROWS       (UINT32_C(1) << 5)     // SELECT, user
-#define SELECT_NO_JOIN_CACHE    (UINT32_C(1) << 7)     // intern
-#define OPTION_BIG_TABLES       (UINT32_C(1) << 8)     // THD, user
-#define OPTION_BIG_SELECTS      (UINT32_C(1) << 9)     // THD, user
-#define OPTION_LOG_OFF          (UINT32_C(1) << 10)    // THD, user
-#define TMP_TABLE_ALL_COLUMNS   (UINT32_C(1) << 12)    // SELECT, intern
-#define OPTION_WARNINGS         (UINT32_C(1) << 13)    // THD, user
-#define OPTION_AUTO_IS_NULL     (UINT32_C(1) << 14)    // THD, user, binlog
-#define OPTION_FOUND_COMMENT    (UINT32_C(1) << 15)    // SELECT, intern, parser
-#define OPTION_SAFE_UPDATES     (UINT32_C(1) << 16)    // THD, user
-#define OPTION_BUFFER_RESULT    (UINT32_C(1) << 17)    // SELECT, user
-#define OPTION_NOT_AUTOCOMMIT   (UINT32_C(1) << 19)    // THD, user
-#define OPTION_BEGIN            (UINT32_C(1) << 20)    // THD, intern
-#define OPTION_TABLE_LOCK       (UINT32_C(1) << 21)    // THD, intern
-#define OPTION_QUICK            (UINT32_C(1) << 22)    // SELECT (for DELETE)
-#define OPTION_KEEP_LOG         (UINT32_C(1) << 23)    // THD, user
+#define SELECT_DISTINCT         (UINT64_C(1) << 0)     // SELECT, user
+#define SELECT_STRAIGHT_JOIN    (UINT64_C(1) << 1)     // SELECT, user
+#define SELECT_DESCRIBE         (UINT64_C(1) << 2)     // SELECT, user
+#define SELECT_SMALL_RESULT     (UINT64_C(1) << 3)     // SELECT, user
+#define SELECT_BIG_RESULT       (UINT64_C(1) << 4)     // SELECT, user
+#define OPTION_FOUND_ROWS       (UINT64_C(1) << 5)     // SELECT, user
+#define SELECT_NO_JOIN_CACHE    (UINT64_C(1) << 7)     // intern
+#define OPTION_BIG_TABLES       (UINT64_C(1) << 8)     // THD, user
+#define OPTION_BIG_SELECTS      (UINT64_C(1) << 9)     // THD, user
+#define OPTION_LOG_OFF          (UINT64_C(1) << 10)    // THD, user
+#define TMP_TABLE_ALL_COLUMNS   (UINT64_C(1) << 12)    // SELECT, intern
+#define OPTION_WARNINGS         (UINT64_C(1) << 13)    // THD, user
+#define OPTION_AUTO_IS_NULL     (UINT64_C(1) << 14)    // THD, user, binlog
+#define OPTION_FOUND_COMMENT    (UINT64_C(1) << 15)    // SELECT, intern, parser
+#define OPTION_SAFE_UPDATES     (UINT64_C(1) << 16)    // THD, user
+#define OPTION_BUFFER_RESULT    (UINT64_C(1) << 17)    // SELECT, user
+#define OPTION_NOT_AUTOCOMMIT   (UINT64_C(1) << 19)    // THD, user
+#define OPTION_BEGIN            (UINT64_C(1) << 20)    // THD, intern
+#define OPTION_TABLE_LOCK       (UINT64_C(1) << 21)    // THD, intern
+#define OPTION_QUICK            (UINT64_C(1) << 22)    // SELECT (for DELETE)
+#define OPTION_KEEP_LOG         (UINT64_C(1) << 23)    // THD, user
 
 /* The following is used to detect a conflict with DISTINCT */
-#define SELECT_ALL              (UINT32_C(1) << 24)    // SELECT, user, parser
+#define SELECT_ALL              (UINT64_C(1) << 24)    // SELECT, user, parser
 
 /** The following can be set when importing tables in a 'wrong order'
    to suppress foreign key checks */
-#define OPTION_NO_FOREIGN_KEY_CHECKS    (UINT32_C(1) << 26) // THD, user, binlog
+#define OPTION_NO_FOREIGN_KEY_CHECKS    (UINT64_C(1) << 26) // THD, user, binlog
 /** The following speeds up inserts to InnoDB tables by suppressing unique
    key checks in some cases */
-#define OPTION_RELAXED_UNIQUE_CHECKS    (UINT32_C(1) << 27) // THD, user, binlog
-#define SELECT_NO_UNLOCK                (UINT32_C(1) << 28) // SELECT, intern
-#define OPTION_SCHEMA_TABLE             (UINT32_C(1) << 29) // SELECT, intern
+#define OPTION_RELAXED_UNIQUE_CHECKS    (UINT64_C(1) << 27) // THD, user, binlog
+#define SELECT_NO_UNLOCK                (UINT64_C(1) << 28) // SELECT, intern
+#define OPTION_SCHEMA_TABLE             (UINT64_C(1) << 29) // SELECT, intern
 /** Flag set if setup_tables already done */
-#define OPTION_SETUP_TABLES_DONE        (UINT32_C(1) << 30) // intern
+#define OPTION_SETUP_TABLES_DONE        (UINT64_C(1) << 30) // intern
 /** If not set then the thread will ignore all warnings with level notes. */
-#define OPTION_SQL_NOTES                (UINT32_C(1) << 31) // THD, user
+#define OPTION_SQL_NOTES                (UINT64_C(1) << 31) // THD, user
 /**
   Force the used temporary table to be a MyISAM table (because we will use
   fulltext functions when reading from it.
