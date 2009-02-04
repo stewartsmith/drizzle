@@ -33,8 +33,7 @@
 #ifdef _LIBC
 # include <libintl.h>
 #else
-# include "gettext.h"
-# define _(msgid) gettext (msgid)
+# include "drizzled/gettext.h"
 #endif
 
 #if defined _LIBC && defined USE_IN_LIBIO
@@ -1101,7 +1100,7 @@ _getopt_internal (int argc, char **argv, const char *optstring,
 
 /* glibc gets a LSB-compliant getopt.
    Standalone applications get a POSIX-compliant getopt.  */
-#if _LIBC
+#ifdef _LIBC
 enum { POSIXLY_CORRECT = 0 };
 #else
 enum { POSIXLY_CORRECT = 1 };
