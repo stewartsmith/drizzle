@@ -33,14 +33,13 @@ libmystrings_la_SOURCES = 	\
 				ctype-mb.cc \
 				ctype-simple.cc \
 				ctype-uca.cc \
+			        ctype-utf8.cc \
 				ctype.cc \
 				decimal.cc \
-				dtoa.cc \ 
+				dtoa.cc \
 				int2str.cc \
 				is_prefix.cc \
+			        llstr.cc \
 				longlong2str.cc \
 				my_strtoll10.cc \
-				str2int.cc \
-			        ctype-utf8.cc \
-			        llstr.cc
-
+				str2int.cc
