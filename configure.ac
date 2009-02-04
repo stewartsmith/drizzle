@@ -1412,7 +1412,8 @@ AC_CONFIG_COMMANDS([po/POTFILES.in],[
 if test "x$EGREP" != "x"
 then
   echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
-  for f in `find . | ${EGREP} '\.(cc|c|h|yy)$' | cut -c3- | sort`
+  # The grep -v 'drizzle-' is to exclude any distcheck leftovers
+  for f in `find . | grep -v 'drizzle-' | ${EGREP} '\.(cc|c|h|yy)$' | cut -c3- | sort`
   do
     if grep gettext.h "$f" | grep include >/dev/null 2>&1
     then

@@ -1307,9 +1307,11 @@ sub environment_setup () {
   # --------------------------------------------------------------------------
   if ( $source_dist )
   {
-    push(@ld_library_paths, "$glob_basedir/libmysql/.libs/",
-                            "$glob_basedir/libmysql_r/.libs/",
-                            "$glob_basedir/zlib.libs/");
+    push(@ld_library_paths, "$glob_basedir/libdrizzleclient/.libs/",
+                            "$glob_basedir/mysys/.libs/",
+                            "$glob_basedir/mystrings/.libs/",
+                            "$glob_basedir/drizzled/.libs/",
+			    "/usr/local/lib");
   }
   else
   {
