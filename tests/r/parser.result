@@ -334,10 +334,6 @@ select rand(1, 2, 3);
 ERROR 42000: Incorrect parameter count in the call to native function 'rand'
 select round(1, 2, 3);
 ERROR 42000: Incorrect parameter count in the call to native function 'round'
-select yearweek();
-ERROR 42000: Incorrect parameter count in the call to native function 'yearweek'
-select yearweek(1, 2, 3);
-ERROR 42000: Incorrect parameter count in the call to native function 'yearweek'
 select abs(3);
 abs(3)
 3
