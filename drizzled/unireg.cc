@@ -33,6 +33,7 @@
 #include <string>
 #include <fstream>
 #include <drizzled/serialize/serialize.h>
+#include <drizzled/serialize/table.pb.h>
 using namespace std;
 
 #define FCOMP			17		/* Bytes for a packed field */
@@ -88,36 +89,15 @@ handle_error(uint32_t sql_errno,
   return is_handled;
 }
 
-int mysql_frm_type(char *path, enum legacy_db_type *dbt)
+int drizzle_read_table_proto(const char* path, drizzle::Table* table)
 {
-  int file;
-  unsigned char header[10];
-  int error;
-
-  *dbt= DB_TYPE_UNKNOWN;
-
-  file= open(path, O_RDONLY);
-
-  if(file < 1)
-    return 1;
-
-  error= read(file, header, sizeof(header));
-  close(file);
-
-  if (error!=sizeof(header))
-    return 1;
-
-  /*
-    This is just a check for DB_TYPE. We'll return default unknown type
-    if the following test is true (arg #3). This should not have effect
-    on return value from this function (default FRMTYPE_TABLE)
-  */
-  if (header[0] != (unsigned char)254 || header[1] != 1 ||
-      (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
-       (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
-    return 0;
-
-  *dbt= (enum legacy_db_type) (uint) *(header + 3);
+  {
+    fstream input(path, ios::in | ios::binary);
+    if (!table->ParseFromIstream(&input))
+    {
+      return 1;
+    }
+  }
   return 0;
 }
 
@@ -481,9 +461,9 @@ static void fill_table_proto(drizzle::Table *table_proto,
         {
           const char *src= field_arg->interval->type_names[pos];
 
-          set_field_options->add_value(src);
+          set_field_options->add_field_value(src);
         }
-        set_field_options->set_count_elements(set_field_options->value_size());
+        set_field_options->set_count_elements(set_field_options->field_value_size());
         break;
       }
     case DRIZZLE_TYPE_BLOB:
@@ -503,13 +483,75 @@ static void fill_table_proto(drizzle::Table *table_proto,
       attribute->set_comment(field_arg->comment.str);
   }
 
+  if (create_info->used_fields & HA_CREATE_USED_PACK_KEYS)
+  {
+    if(create_info->table_options & HA_OPTION_PACK_KEYS)
+      table_options->set_pack_keys(true);
+    else if(create_info->table_options & HA_OPTION_NO_PACK_KEYS)
+      table_options->set_pack_keys(false);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_CHECKSUM)
+  {
+    assert(create_info->table_options & (HA_OPTION_CHECKSUM | HA_OPTION_NO_CHECKSUM));
+
+    if(create_info->table_options & HA_OPTION_CHECKSUM)
+      table_options->set_checksum(true);
+    else
+      table_options->set_checksum(false);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_PAGE_CHECKSUM)
+  {
+    if (create_info->page_checksum == HA_CHOICE_YES)
+      table_options->set_page_checksum(true);
+    else if (create_info->page_checksum == HA_CHOICE_NO)
+      table_options->set_page_checksum(false);
+  }
+
+  if (create_info->used_fields & HA_CREATE_USED_DELAY_KEY_WRITE)
+  {
+    if(create_info->table_options & HA_OPTION_DELAY_KEY_WRITE)
+      table_options->set_delay_key_write(true);
+    else if(create_info->table_options & HA_OPTION_NO_DELAY_KEY_WRITE)
+      table_options->set_delay_key_write(false);
+  }
+
+  switch(create_info->row_type)
+  {
+  case ROW_TYPE_DEFAULT:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_DEFAULT);
+    break;
+  case ROW_TYPE_FIXED:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_FIXED);
+    break;
+  case ROW_TYPE_DYNAMIC:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_DYNAMIC);
+    break;
+  case ROW_TYPE_COMPRESSED:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_COMPRESSED);
+    break;
+  case ROW_TYPE_REDUNDANT:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_REDUNDANT);
+    break;
+  case ROW_TYPE_COMPACT:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_COMPACT);
+    break;
+  case ROW_TYPE_PAGE:
+    table_options->set_row_type(drizzle::Table::TableOptions::ROW_TYPE_PAGE);
+    break;
+  default:
+    abort();
+  }
+
   if (create_info->comment.length)
     table_options->set_comment(create_info->comment.str);
 
-  if (create_info->table_charset)
+  if (create_info->default_table_charset)
   {
-    table_options->set_collation_id(field_arg->charset->number);
-    table_options->set_collation(field_arg->charset->name);
+    table_options->set_collation_id(
+			       create_info->default_table_charset->number);
+    table_options->set_collation(create_info->default_table_charset->name);
   }
 
   if (create_info->connect_string.length)
@@ -543,7 +585,7 @@ static void fill_table_proto(drizzle::Table *table_proto,
   {
     drizzle::Table::Index *idx;
 
-    idx= table_proto->add_index();
+    idx= table_proto->add_indexes();
 
     assert(test(key_info[i].flags & HA_USES_COMMENT) ==
            (key_info[i].comment.length > 0));
@@ -573,7 +615,6 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
     default:
       abort(); /* Somebody's brain broke. haven't added index type to proto */
-      break;
     }
 
     if (key_info[i].flags & HA_NOSAME)
@@ -613,7 +654,7 @@ int rename_table_proto_file(const char *from, const char* to)
   return my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
 }
 
-int delete_table_proto_file(char *file_name)
+int delete_table_proto_file(const char *file_name)
 {
   string new_path(file_name);
   string file_ext = ".dfe";
@@ -723,7 +764,8 @@ int rea_create_table(Session *session, const char *path,
 err_handler:
   file->ha_create_handler_files(path, NULL, CHF_DELETE_FLAG, create_info);
   my_delete(frm_name, MYF(0));
-  delete_table_proto_file(frm_name);
+
+  delete_table_proto_file(path);
 
   return 1;
 } /* rea_create_table */
@@ -1101,7 +1143,7 @@ static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_f
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset)
 {
-  register uint32_t i;
+  register uint32_t field_element;
   uint32_t int_count, comment_length=0, vcol_info_length=0;
   unsigned char buff[MAX_FIELD_WIDTH];
   Create_field *field;
@@ -1153,18 +1195,18 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   buff[0]=(unsigned char) NAMES_SEP_CHAR;
   if (my_write(file, buff, 1, MYF_RW))
     return(1);
-  i=0;
+  field_element=0;
   it.rewind();
   while ((field=it++))
   {
     char *pos= strcpy((char*) buff,field->field_name);
     pos+= strlen(field->field_name);
     *pos++=NAMES_SEP_CHAR;
-    if (i == create_fields.elements-1)
+    if (field_element == create_fields.elements-1)
       *pos++=0;
     if (my_write(file, buff, (size_t) (pos-(char*) buff),MYF_RW))
       return(1);
-    i++;
+    field_element++;
   }
 
 	/* Write intervals */
@@ -1180,13 +1222,17 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
       {
         unsigned char  sep= 0;
         unsigned char  occ[256];
-        uint32_t           i;
+        uint32_t       length_index;
         unsigned char *val= NULL;
 
         memset(occ, 0, sizeof(occ));
 
-        for (i=0; (val= (unsigned char*) field->interval->type_names[i]); i++)
-          for (uint32_t j = 0; j < field->interval->type_lengths[i]; j++)
+        for (length_index=0;
+             (val= (unsigned char*) field->interval->type_names[length_index]);
+              length_index++)
+          for (uint32_t j = 0;
+               j < field->interval->type_lengths[length_index];
+               j++)
             occ[(unsigned int) (val[j])]= 1;
 
         if (!occ[(unsigned char)NAMES_SEP_CHAR])
@@ -1195,11 +1241,11 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
           sep= ',';
         else
         {
-          for (uint32_t i=1; i<256; i++)
+          for (uint32_t x=1; x<256; x++)
           {
-            if(!occ[i])
+            if(!occ[x])
             {
-              sep= i;
+              sep= x;
               break;
             }
           }

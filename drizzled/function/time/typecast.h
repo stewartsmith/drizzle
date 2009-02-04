@@ -25,6 +25,8 @@
 class Item_typecast :public Item_str_func
 {
 public:
+  using Item_func::tmp_table_field;
+
   Item_typecast(Item *a) :Item_str_func(a) {}
   String *val_str(String *a)
   {
@@ -63,6 +65,8 @@ class Item_char_typecast :public Item_typecast
   bool charset_conversion;
   String tmp_value;
 public:
+  using Item_func::tmp_table_field;
+
   Item_char_typecast(Item *a, int length_arg, const CHARSET_INFO * const cs_arg)
     :Item_typecast(a), cast_length(length_arg), cast_cs(cs_arg) {}
   enum Functype functype() const { return CHAR_TYPECAST_FUNC; }
@@ -77,6 +81,8 @@ public:
 class Item_date_typecast :public Item_typecast_maybe_null
 {
 public:
+  using Item_func::tmp_table_field;
+
   Item_date_typecast(Item *a) :Item_typecast_maybe_null(a) {}
   const char *func_name() const { return "cast_as_date"; }
   String *val_str(String *str);
@@ -112,6 +118,8 @@ public:
 class Item_time_typecast :public Item_typecast_maybe_null
 {
 public:
+  using Item_func::tmp_table_field;
+
   Item_time_typecast(Item *a) :Item_typecast_maybe_null(a) {}
   const char *func_name() const { return "cast_as_time"; }
   String *val_str(String *str);
@@ -140,6 +148,8 @@ public:
 class Item_datetime_typecast :public Item_typecast_maybe_null
 {
 public:
+  using Item_func::tmp_table_field;
+
   Item_datetime_typecast(Item *a) :Item_typecast_maybe_null(a) {}
   const char *func_name() const { return "cast_as_datetime"; }
   String *val_str(String *str);

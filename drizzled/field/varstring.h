@@ -26,6 +26,13 @@
 
 class Field_varstring :public Field_longstr {
 public:
+
+  using Field::store;
+  using Field::pack;
+  using Field::unpack;
+  using Field::val_int;
+  using Field::val_str;
+
   /*
     The maximum space available in a Field_varstring, in bytes. See
     length_bytes.
@@ -55,13 +62,17 @@ public:
                                     length_bytes : 0);
   }
   int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
+
+
   int  store(int64_t nr, bool unsigned_val);
   int  store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
+  inline String *val_str(String *str) { return val_str(str, str); }
   my_decimal *val_decimal(my_decimal *);
   int cmp_max(const unsigned char *, const unsigned char *, uint32_t max_length);
+  inline  int cmp(const unsigned char *str) { return cmp(ptr,str); }
   int cmp(const unsigned char *a,const unsigned char *b)
   {
     return cmp_max(a, b, UINT32_MAX);
@@ -73,12 +84,17 @@ public:
   void set_key_image(const unsigned char *buff,uint32_t length);
   void sql_type(String &str) const;
   virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
-                      uint32_t max_length, bool low_byte_first);
+                              uint32_t max_length,
+                              bool low_byte_first);
+
   unsigned char *pack_key(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
   unsigned char *pack_key_from_key_image(unsigned char* to, const unsigned char *from,
                                  uint32_t max_length, bool low_byte_first);
-  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data, bool low_byte_first);
+  virtual const unsigned char *unpack(unsigned char* to,
+                                      const unsigned char *from,
+                                      uint32_t param_data,
+                                      bool low_byte_first);
+ 
   const unsigned char *unpack_key(unsigned char* to, const unsigned char *from,
                           uint32_t max_length, bool low_byte_first);
   int pack_cmp(const unsigned char *a, const unsigned char *b, uint32_t key_length,

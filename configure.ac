@@ -19,12 +19,14 @@ AC_CANONICAL_TARGET
 CFLAGS=${SAVE_CFLAGS}
 CXXFLAGS=${SAVE_CXXFLAGS}
 
-AM_INIT_AUTOMAKE(nostdinc -Wall -Werror)
+AM_INIT_AUTOMAKE(nostdinc subdir-objects -Wall -Werror)
+
 if test "x${enable_dependency_tracking}" = "x"
 then
   enable_dependency_tracking=yes
 fi
 
+gl_EARLY
 
 # See the libtool docs for information on how to do shared lib versions.
 SHARED_LIB_MAJOR_VERSION=1
@@ -37,7 +39,7 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 
-ACX_USE_SYSTEM_EXTENSIONS
+gl_USE_SYSTEM_EXTENSIONS
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
@@ -45,9 +47,8 @@ then
 fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
-# We need an ANSI C compiler
-AM_PROG_CC_STDC
 
+gl_INIT
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 ifdef([AC_PROG_CC_C99],[
@@ -62,11 +63,7 @@ then
   C99_SUPPORT_HACK="-xc99"
 fi
 ])
-
-
-# We need an assembler, too
-AM_PROG_AS
-CCASFLAGS="$CCASFLAGS $ASFLAGS"
+AC_PROG_GCC_TRADITIONAL
 
 
 # Set all version vars based on $VERSION. How do we do this more elegant ?
@@ -140,10 +137,6 @@ case $MACHINE_TYPE in
   i?86) BASE_MACHINE_TYPE=i386 ;;
 esac
 
-AM_SANITY_CHECK
-# This is needed is SUBDIRS is set
-AC_PROG_MAKE_SET
-
 
 case "$target_os" in
   *linux*)
@@ -165,17 +158,6 @@ case "$target_os" in
     ;;
 esac
 
-dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
-dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
-if test "x${CFLAGS}" = "x-g -O2"
-then
-  CFLAGS=
-fi
-if test "x${CXXFLAGS}" = "x-g -O2"
-then
-  CXXFLAGS=
-fi
-
 DRIZZLE_CHECK_C_VERSION
 DRIZZLE_CHECK_CXX_VERSION
 
@@ -183,12 +165,11 @@ AC_SYS_LARGEFILE
 
 AC_PROG_AWK
 
-if test "$ac_cv_c_compiler_gnu" = "yes"
+
+AC_PATH_PROG(GPERF, gperf, gperf)
+if test "$ac_cv_prog_gperf" = "no"
 then
-  AS="$CC -c"
-  AC_SUBST(AS)
-else
-  AC_PATH_PROG(AS, as, as)
+  AC_MSG_ERROR("Drizzle requires gperf to build. Please install it.")
 fi
 
 AC_PATH_PROG(LCOV, lcov, lcov)
@@ -230,9 +211,6 @@ then
     ;;
   esac
 fi
-
-# We use libtool
-AC_PROG_LIBTOOL
 
 AC_SUBST(NM)dnl
 
@@ -288,7 +266,7 @@ then
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -xlang=c99 ${MEMALIGN_FLAGS}"
+  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef ${MEMALIGN_FLAGS}"
   CFLAGS="${CFLAGS} -xstrconst ${MEMALIGN_FLAGS}"
   SYMBOLS_FLAGS="-g"
   OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
@@ -296,6 +274,9 @@ then
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
   DEBUG_OPTIMIZE_CXX=""
 fi
+
+# We use libtool
+AC_PROG_LIBTOOL
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
 # AX_HEADER_ASSERT
@@ -356,7 +337,7 @@ if test "x$EGREP" != "x"
 then
   if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|${EGREP} -q GNU
   then
-    LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+    LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzleclient/libdrizzleclient.ver"
   fi
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
@@ -911,7 +892,7 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
-AC_CONFIG_LIBOBJ_DIR([mystrings])
+AC_CONFIG_LIBOBJ_DIR([gnulib])
 
 AC_CHECK_FUNCS( \
   cuserid fchmod \
@@ -1112,7 +1093,6 @@ fi
 #--------------------------------------------------------------------
 
 DRIZZLE_CHECK_MAX_INDEXES
-DRIZZLE_CHECK_VIO
 
 #--------------------------------------------------------------------
 # Declare our plugin modules
@@ -1331,6 +1311,7 @@ void testme() {  };],[
   # drizzled doesn't use run-time-type-checking, so we disable it.
   AM_CXXFLAGS="${AM_CXXFLAGS} -fno-rtti"
   CPPFLAGS="${CPPFLAGS} -fpch-deps"
+  PROTOSKIP_WARNINGS="${NO_SHADOW}"
 fi
 if test "$SUNCC" = "yes"
 then
@@ -1339,8 +1320,12 @@ then
     CFLAGS="${CFLAGS} -xinstrument=datarace"
     CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
   fi
-  CC_WARNINGS="-v -xc99=all -errtags=yes"
+  #CC_WARNINGS="-v -xc99=all -errtags=yes -errwarn=%all -erroff=E_ATTRIBUTE_NOT_VAR"
+  #CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -errwarn=%all -erroff=attrskipunsup,doubunder -compat=5"
+  CC_WARNINGS="-v -xc99=all -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR"
   CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder -compat=5"
+  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl"
+  NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
   if test "$ac_exceptions" = "no"
   then
     NO_EXCEPTIONS="-features=no%except"
@@ -1355,8 +1340,15 @@ AC_SUBST(W_EXCEPTIONS)
 AC_SUBST(NO_SHADOW)
 AC_SUBST(W_SHADOW)
 AC_SUBST(NO_REDUNDANT_DECLS)
+AC_SUBST(PROTOSKIP_WARNINGS)
+AC_SUBST(NO_UNREACHED)
 
-AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
+GLOBAL_CPPFLAGS='-I$(top_srcdir) -I$(top_builddir)'
+if test "$ac_cv_func_timegm" = "no" -o "$gl_cv_func_gnu_getopt" = "no"
+then
+  GLOBAL_CPPFLAGS="${GLOBAL_CPPFLAGS} -I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib"
+fi
+AC_SUBST([GLOBAL_CPPFLAGS])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 AC_SUBST([GLOBAL_CXXFLAGS],[${AM_CXXFLAGS}])
 AC_SUBST([AM_CFLAGS])
@@ -1386,19 +1378,55 @@ dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
+ gnulib/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
  po/Makefile.in dnl
- libdrizzle/Makefile client/Makefile dnl
+ libdrizzleclient/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/serialize/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  plugin/Makefile dnl
- drizzled/drizzled_safe support-files/libdrizzle.pc dnl
+ drizzled/drizzled_safe support-files/libdrizzleclient.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 
-AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
+scheduling_plugins_available="
+  pool_of_threads 
+  single_thread
+"
+
+for sched_plugin in $scheduling_plugins_available
+do
+  varname="\${with_plugin_${sched_plugin}}"
+  result=`eval "echo $varname"`
+  if test "x$result" = "xyes"
+  then
+    scheduling_plugins="$sched_plugin $scheduling_plugins"
+  fi
+done
+
+AC_CONFIG_COMMANDS([timestamp-h], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
+
+AC_CONFIG_COMMANDS([po/POTFILES.in],[
+if test "x$EGREP" != "x"
+then
+  echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
+  for f in `find . | ${EGREP} '\.(cc|c|h|yy)$' | cut -c3- | sort`
+  do
+    if grep gettext.h "$f" | grep include >/dev/null 2>&1
+    then
+      echo "$f" >> po/POTFILES.in.in
+    fi
+  done
+  if ! diff po/POTFILES.in.in po/POTFILES.in >/dev/null 2>&1
+  then
+    mv po/POTFILES.in.in po/POTFILES.in
+  else
+    rm po/POTFILES.in.in
+  fi
+fi
+])
 
 # Ensure that table handlers gets all modifications to CFLAGS/CXXFLAGS
 AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
@@ -1419,6 +1447,7 @@ echo "   * Debug enabled:             $with_debug"
 echo "   * Profiling enabled:         $ac_profiling"
 echo "   * Coverage enabled:          $ac_coverage"
 echo "   * Warnings as failure:       $ac_warn_fail"
+echo "   * Scheduling Plugins:        $scheduling_plugins"
 echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
 echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
 echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"

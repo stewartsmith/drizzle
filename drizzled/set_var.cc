@@ -126,11 +126,11 @@ static unsigned char *get_tmpdir(Session *session);
 
 static sys_var_chain vars = { NULL, NULL };
 
-static sys_var_session_uint32_t
+static sys_var_session_uint64_t
 sys_auto_increment_increment(&vars, "auto_increment_increment",
                              &SV::auto_increment_increment, NULL, NULL,
                              sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_session_uint32_t
+static sys_var_session_uint64_t
 sys_auto_increment_offset(&vars, "auto_increment_offset",
                           &SV::auto_increment_offset, NULL, NULL,
                           sys_var::SESSION_VARIABLE_IN_BINLOG);

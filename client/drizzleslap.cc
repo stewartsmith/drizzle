@@ -99,6 +99,9 @@ using namespace std;
 static char *shared_memory_base_name=0;
 #endif
 
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument);
+
 /* Global Thread counter */
 uint thread_counter;
 pthread_mutex_t counter_mutex;
@@ -115,7 +118,8 @@ pthread_cond_t timer_alarm_threshold;
 static char **defaults_argv;
 
 char **primary_keys;
-uint64_t primary_keys_number_of;
+/* This gets passed to malloc, so lets set it to an arch-dependant size */
+size_t primary_keys_number_of;
 
 static char *host= NULL, *opt_password= NULL, *user= NULL,
   *user_supplied_query= NULL,
@@ -289,8 +293,8 @@ static int create_schema(DRIZZLE *drizzle, const char *db, statement *stmt,
                          option_string *engine_stmt, stats *sptr);
 static int run_scheduler(stats *sptr, statement **stmts, uint concur,
                          uint64_t limit);
-pthread_handler_t run_task(void *p);
-pthread_handler_t timer_thread(void *p);
+extern "C" pthread_handler_t run_task(void *p);
+extern "C" pthread_handler_t timer_thread(void *p);
 void statement_cleanup(statement *stmt);
 void option_cleanup(option_string *stmt);
 void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr);
@@ -730,8 +734,7 @@ static void usage(void)
   my_print_help(my_long_options);
 }
 
-static bool
-get_one_option(int optid, const struct my_option *, char *argument)
+bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -792,7 +795,6 @@ get_one_option(int optid, const struct my_option *, char *argument)
   case 'V':
     print_version();
     exit(0);
-    break;
   case '?':
   case 'I':          /* Info */
     usage();
@@ -1284,6 +1286,7 @@ get_options(int *argc,char ***argv)
   struct stat sbuf;
   option_string *sql_type;
   unsigned int sql_type_count= 0;
+  ssize_t bytes_read= 0;
 
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
@@ -1554,16 +1557,26 @@ get_options(int *argc,char ***argv)
         fprintf(stderr,"%s: Could not open create file\n", my_progname);
         exit(1);
       }
-      tmp_string= (char *)malloc(sbuf.st_size + 1);
+      if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
+      {
+        fprintf(stderr, "Request for more memory than architecture supports\n");
+        exit(1);
+      }
+      tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
       if (tmp_string == NULL)
       {
         fprintf(stderr, "Memory Allocation error in option processing\n");
         exit(1);
       }
-      memset(tmp_string, 0, sbuf.st_size + 1);
-      my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
+      memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
+      bytes_read= read(data_file, (unsigned char*) tmp_string,
+                       (size_t)sbuf.st_size);
       tmp_string[sbuf.st_size]= '\0';
-      my_close(data_file,MYF(0));
+      close(data_file);
+      if (bytes_read != sbuf.st_size)
+      {
+        fprintf(stderr, "Problem reading file: read less bytes than requested\n");
+      }
       parse_delimiter(tmp_string, &create_statements, delimiter[0]);
       free(tmp_string);
     }
@@ -1601,16 +1614,26 @@ get_options(int *argc,char ***argv)
         fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
         exit(1);
       }
-      tmp_string= (char *)malloc(sbuf.st_size + 1);
+      if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
+      {
+        fprintf(stderr, "Request for more memory than architecture supports\n");
+        exit(1);
+      }
+      tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
       if (tmp_string == NULL)
       {
         fprintf(stderr, "Memory Allocation error in option processing\n");
         exit(1);
       }
-      memset(tmp_string, 0, sbuf.st_size + 1);
-      my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
+      memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
+      bytes_read= read(data_file, (unsigned char*) tmp_string,
+                       (size_t)sbuf.st_size);
       tmp_string[sbuf.st_size]= '\0';
-      my_close(data_file,MYF(0));
+      close(data_file);
+      if (bytes_read != sbuf.st_size)
+      {
+        fprintf(stderr, "Problem reading file: read less bytes than requested\n");
+      }
       if (user_supplied_query)
         actual_queries= parse_delimiter(tmp_string, &query_statements[0],
                                         delimiter[0]);
@@ -1638,16 +1661,26 @@ get_options(int *argc,char ***argv)
       fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
       exit(1);
     }
-    tmp_string= (char *)malloc(sbuf.st_size + 1);
+    if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
+    {
+      fprintf(stderr, "Request for more memory than architecture supports\n");
+      exit(1);
+    }
+    tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
     if (tmp_string == NULL)
     {
       fprintf(stderr, "Memory Allocation error in option processing\n");
       exit(1);
     }
-    memset(tmp_string, 0, sbuf.st_size + 1);
-    my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
+    memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
+    bytes_read= read(data_file, (unsigned char*) tmp_string,
+                     (size_t)sbuf.st_size);
     tmp_string[sbuf.st_size]= '\0';
-    my_close(data_file,MYF(0));
+    close(data_file);
+    if (bytes_read != sbuf.st_size)
+    {
+      fprintf(stderr, "Problem reading file: read less bytes than requested\n");
+    }
     if (user_supplied_pre_statements)
       (void)parse_delimiter(tmp_string, &pre_statements,
                             delimiter[0]);
@@ -1675,16 +1708,28 @@ get_options(int *argc,char ***argv)
       fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
       exit(1);
     }
-    tmp_string= (char *)malloc(sbuf.st_size + 1);
+
+    if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
+    {
+      fprintf(stderr, "Request for more memory than architecture supports\n");
+      exit(1);
+    }
+    tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
     if (tmp_string == NULL)
     {
       fprintf(stderr, "Memory Allocation error in option processing\n");
       exit(1);
     }
-    memset(tmp_string, 0, sbuf.st_size+1);
-    my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
+    memset(tmp_string, 0, (size_t)(sbuf.st_size+1));
+
+    bytes_read= read(data_file, (unsigned char*) tmp_string,
+                     (size_t)(sbuf.st_size));
     tmp_string[sbuf.st_size]= '\0';
-    my_close(data_file,MYF(0));
+    close(data_file);
+    if (bytes_read != sbuf.st_size)
+    {
+      fprintf(stderr, "Problem reading file: read less bytes than requested\n");
+    }
     if (user_supplied_post_statements)
       (void)parse_delimiter(tmp_string, &post_statements,
                             delimiter[0]);
@@ -1765,7 +1810,13 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
     }
 
     result= drizzle_store_result(drizzle);
-    primary_keys_number_of= drizzle_num_rows(result);
+    uint64_t num_rows_ret= drizzle_num_rows(result);
+    if (num_rows_ret > SIZE_MAX)
+    {
+      fprintf(stderr, "More primary keys than than architecture supports\n");
+      exit(1);
+    }
+    primary_keys_number_of= (size_t)num_rows_ret;
 
     /* So why check this? Blackhole :) */
     if (primary_keys_number_of)
@@ -1780,7 +1831,7 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
         fprintf(stderr, "Memory Allocation error in option processing\n");
         exit(1);
       }
-      memset(primary_keys, 0, sizeof(char *) * primary_keys_number_of);
+      memset(primary_keys, 0, (size_t)(sizeof(char *) * primary_keys_number_of));
       row= drizzle_fetch_row(result);
       for (counter= 0; counter < primary_keys_number_of;
            counter++, row= drizzle_fetch_row(result))

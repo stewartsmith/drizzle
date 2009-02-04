@@ -54,20 +54,20 @@ public:
   enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
   virtual bool send_fields(List<Item> *list, uint32_t flags);
 
-  bool store(I_List<i_string> *str_list);
-  bool store(const char *from, const CHARSET_INFO * const cs);
+  virtual bool store(I_List<i_string> *str_list);
+  virtual bool store(const char *from, const CHARSET_INFO * const cs);
   String *storage_packet() { return packet; }
   void free();
   virtual bool write();
-  inline  bool store(int from)
+  virtual bool store(int from)
   { return store_long((int64_t) from); }
-  inline  bool store(uint32_t from)
+  virtual  bool store(uint32_t from)
   { return store_long((int64_t) from); }
-  inline  bool store(int64_t from)
+  virtual bool store(int64_t from)
   { return store_int64_t((int64_t) from, 0); }
-  inline  bool store(uint64_t from)
+  virtual bool store(uint64_t from)
   { return store_int64_t((int64_t) from, 1); }
-  bool store(String *str);
+  virtual bool store(String *str);
 
   virtual bool prepare_for_send(List<Item> *item_list)
   {
@@ -113,12 +113,32 @@ public:
   Protocol_text() {}
   Protocol_text(Session *session_arg) :Protocol(session_arg) {}
   virtual void prepare_for_resend();
+  virtual bool store(I_List<i_string> *str_list)
+  {
+    return Protocol::store(str_list);
+  }
+  virtual bool store(const char *from, const CHARSET_INFO * const cs)
+  {
+    return Protocol::store(from, cs);
+  }
   virtual bool store_null();
   virtual bool store_tiny(int64_t from);
   virtual bool store_short(int64_t from);
   virtual bool store_long(int64_t from);
   virtual bool store_int64_t(int64_t from, bool unsigned_flag);
   virtual bool store_decimal(const my_decimal *);
+  virtual bool store(int from)
+  { return store_long((int64_t) from); }
+  virtual  bool store(uint32_t from)
+  { return store_long((int64_t) from); }
+  virtual bool store(int64_t from)
+  { return store_int64_t((int64_t) from, 0); }
+  virtual bool store(uint64_t from)
+  { return store_int64_t((int64_t) from, 1); }
+  virtual bool store(String *str)
+  {
+    return Protocol::store(str);
+  }
   virtual bool store(const char *from, size_t length, const CHARSET_INFO * const cs);
   virtual bool store(const char *from, size_t length,
                      const CHARSET_INFO * const fromcs,  const CHARSET_INFO * const tocs);

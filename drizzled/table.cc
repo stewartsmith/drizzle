@@ -35,6 +35,9 @@
 #include <drizzled/field/double.h>
 #include <string>
 
+#include <drizzled/unireg.h>
+#include <drizzled/serialize/table.pb.h>
+
 using namespace std;
 
 /* Keyword for parsing virtual column functions */
@@ -322,7 +325,111 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
 
   path.reserve(FN_REFLEN);
   path.append(share->normalized_path.str);
+  string proto_path= path;
+
   path.append(reg_ext);
+
+  proto_path.append(".dfe");
+
+  drizzle::Table table;
+
+  if(drizzle_read_table_proto(proto_path.c_str(), &table)==0)
+  {
+    {
+      LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
+				strlen(table.engine().name().c_str()) };
+      share->db_plugin= ha_resolve_by_name(session, &engine_name);
+    }
+
+    // share->db_create_options FAIL
+    // share->db_options_in_use FAIL
+    share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
+    share->null_field_first= 0;
+
+    drizzle::Table::TableOptions table_options;
+    
+    if(table.has_options())
+      table_options= table.options();
+
+    share->avg_row_length= table_options.has_avg_row_length() ?
+      table_options.avg_row_length() : 0;
+
+    share->page_checksum= table_options.has_page_checksum() ?
+      (table_options.page_checksum()?HA_CHOICE_YES:HA_CHOICE_NO)
+      : HA_CHOICE_UNDEF;
+
+    share->row_type= table_options.has_row_type() ?
+      (enum row_type) table_options.row_type() : ROW_TYPE_DEFAULT;
+
+    share->block_size= table_options.has_block_size() ?
+      table_options.block_size() : 0;
+
+    share->table_charset= get_charset(table_options.has_collation_id()?
+				      table_options.collation_id() : 0,
+				      MYF(0));
+
+    if (!share->table_charset)
+    {
+      /* unknown charset in head[38] or pre-3.23 frm */
+      if (use_mb(default_charset_info))
+      {
+	/* Warn that we may be changing the size of character columns */
+	errmsg_printf(ERRMSG_LVL_WARN,
+		      _("'%s' had no or invalid character set, "
+			"and default character set is multi-byte, "
+			"so character column sizes may have changed"),
+		      share->path.str);
+      }
+      share->table_charset= default_charset_info;
+    }
+
+    share->null_field_first= 1;
+
+    share->db_record_offset= 1;
+
+    share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
+
+    share->db_low_byte_first= true;
+
+    share->max_rows= table_options.has_max_rows() ?
+      table_options.max_rows() : 0;
+
+    share->min_rows= table_options.has_min_rows() ?
+      table_options.min_rows() : 0;
+
+    share->keys= table.indexes_size();
+
+    share->key_parts= 0;
+    for(int indx= 0; indx < table.indexes_size(); indx++)
+      share->key_parts+= table.indexes(indx).index_part_size();
+
+    share->keys_for_keyread.init(0);
+    share->keys_in_use.init(share->keys);
+
+    if(table_options.has_connect_string())
+    {
+      size_t len= table_options.connect_string().length();
+      const char* str= table_options.connect_string().c_str();
+
+      share->connect_string.length= len;
+      share->connect_string.str= strmake_root(&share->mem_root, str, len);
+    }
+
+    if(table_options.has_comment())
+    {
+      size_t len= table_options.comment().length();
+      const char* str= table_options.comment().c_str();
+
+      share->comment.length= len;
+      share->comment.str= strmake_root(&share->mem_root, str, len);
+    }
+
+    share->key_block_size= table_options.has_key_block_size() ?
+      table_options.key_block_size() : 0;
+
+//    return 0;
+  }
+
   if ((file= open(path.c_str(), O_RDONLY)) < 0)
   {
     /*
@@ -452,7 +559,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   KEY_PART_INFO *key_part;
   Field  **field_ptr, *reg_field;
   const char **interval_array;
-  enum legacy_db_type legacy_db_type;
   my_bitmap_map *bitmaps;
   unsigned char *buff= 0;
   unsigned char *field_extra_info= 0;
@@ -469,51 +575,10 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   if (my_read(file,forminfo,288,MYF(MY_NABP)))
     goto err;
 
-  legacy_db_type= DB_TYPE_FIRST_DYNAMIC;
-  assert(share->db_plugin == NULL);
-  /*
-    if the storage engine is dynamic, no point in resolving it by its
-    dynamically allocated legacy_db_type. We will resolve it later by name.
-  */
-  if (legacy_db_type > DB_TYPE_UNKNOWN &&
-      legacy_db_type < DB_TYPE_FIRST_DYNAMIC)
-    share->db_plugin= ha_lock_engine(NULL,
-                                     ha_checktype(session, legacy_db_type, 0, 0));
   share->db_create_options= db_create_options= uint2korr(head+30);
   share->db_options_in_use= share->db_create_options;
-  share->mysql_version= uint4korr(head+51);
-  share->null_field_first= 0;
-  if (!head[32])				// New frm file in 3.23
-  {
-    share->avg_row_length= uint4korr(head+34);
-    share->transactional= (ha_choice) (head[39] & 3);
-    share->page_checksum= (ha_choice) ((head[39] >> 2) & 3);
-    share->row_type= (row_type) head[40];
-    share->block_size= uint4korr(head+43);
-    share->table_charset= get_charset((uint) head[38],MYF(0));
-    share->null_field_first= 1;
-  }
-  if (!share->table_charset)
-  {
-    /* unknown charset in head[38] or pre-3.23 frm */
-    if (use_mb(default_charset_info))
-    {
-      /* Warn that we may be changing the size of character columns */
-      errmsg_printf(ERRMSG_LVL_WARN, _("'%s' had no or invalid character set, "
-                        "and default character set is multi-byte, "
-                        "so character column sizes may have changed"),
-                        share->path.str);
-    }
-    share->table_charset= default_charset_info;
-  }
-  share->db_record_offset= 1;
-  if (db_create_options & HA_OPTION_LONG_BLOB_PTR)
-    share->blob_ptr_size= portable_sizeof_char_ptr;
-  /* Set temporarily a good value for db_low_byte_first */
-  share->db_low_byte_first= true;
+
   error=4;
-  share->max_rows= uint4korr(head+18);
-  share->min_rows= uint4korr(head+22);
 
   /* Read keyinformation */
   key_info_length= (uint) uint2korr(head+28);
@@ -622,52 +687,14 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     {
       goto err;
     }
-    share->connect_string.length= uint2korr(buff);
-    if (!(share->connect_string.str= strmake_root(&share->mem_root,
-                                                  (char*) next_chunk + 2,
-                                                  share->connect_string.
-                                                  length)))
-    {
-      goto err;
-    }
-    next_chunk+= share->connect_string.length + 2;
+
+    uint32_t connect_str_length= uint2korr(buff);
+    next_chunk+= connect_str_length + 2;
+
     buff_end= buff + n_length;
     if (next_chunk + 2 < buff_end)
     {
       uint32_t str_db_type_length= uint2korr(next_chunk);
-      LEX_STRING name;
-      name.str= (char*) next_chunk + 2;
-      name.length= str_db_type_length;
-
-      plugin_ref tmp_plugin= ha_resolve_by_name(session, &name);
-      if (tmp_plugin != NULL && !plugin_equals(tmp_plugin, share->db_plugin))
-      {
-        if (legacy_db_type > DB_TYPE_UNKNOWN &&
-            legacy_db_type < DB_TYPE_FIRST_DYNAMIC &&
-            legacy_db_type != ha_legacy_type(
-                plugin_data(tmp_plugin, handlerton *)))
-        {
-          /* bad file, legacy_db_type did not match the name */
-          free(buff);
-          goto err;
-        }
-        /*
-          tmp_plugin is locked with a local lock.
-          we unlock the old value of share->db_plugin before
-          replacing it with a globally locked version of tmp_plugin
-        */
-        plugin_unlock(NULL, share->db_plugin);
-        share->db_plugin= my_plugin_lock(NULL, &tmp_plugin);
-      }
-      else if (!tmp_plugin)
-      {
-        /* purecov: begin inspected */
-        error= 8;
-        my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), name.str);
-        free(buff);
-        goto err;
-        /* purecov: end */
-      }
       next_chunk+= str_db_type_length + 2;
     }
     if (share->mysql_version >= 50110)
@@ -683,14 +710,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
           free(buff);
           goto err;
       }
-      share->comment.length = uint2korr(next_chunk);
-      if (! (share->comment.str= strmake_root(&share->mem_root,
-                               (char*)next_chunk + 2, share->comment.length)))
-      {
-          free(buff);
-          goto err;
-      }
-      next_chunk+= 2 + share->comment.length;
+      uint32_t comment_str_length= uint2korr(next_chunk);
+      next_chunk+= 2 + comment_str_length;
     }
     assert(next_chunk <= buff_end);
     if (share->mysql_version >= DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE)
@@ -713,8 +734,14 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       {
         const uint32_t format_section_header_size= 8;
         uint32_t format_section_len= uint2korr(next_chunk+0);
+	uint flags=  uint4korr(next_chunk+2);
 
-        field_extra_info= next_chunk + format_section_header_size + 1;
+	(void)flags;
+
+	const char *tablespace= (const char*)next_chunk + format_section_header_size;
+        uint tablespace_len= strlen(tablespace);
+
+        field_extra_info= next_chunk + format_section_header_size + tablespace_len + 1;
         next_chunk+= format_section_len;
       }
     }
@@ -724,7 +751,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       goto err;
     }
   }
-  share->key_block_size= uint2korr(head+62);
 
   error=4;
   extra_rec_buf_length= uint2korr(head+59);
@@ -750,12 +776,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   vcol_screen_length= uint2korr(forminfo+286);
   share->vfields= 0;
   share->stored_fields= share->fields;
-  if (forminfo[46] != (unsigned char)255)
-  {
-    share->comment.length=  (int) (forminfo[46]);
-    share->comment.str= strmake_root(&share->mem_root, (char*) forminfo+47,
-                                     share->comment.length);
-  }
 
 
   if (!(field_ptr = (Field **)
@@ -2247,6 +2267,8 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
     {
       res->append(pos, mblen);
       pos+= mblen;
+      if (pos >= end)
+        break;
       continue;
     }
 #endif

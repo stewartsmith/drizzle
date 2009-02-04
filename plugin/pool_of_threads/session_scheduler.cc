@@ -27,6 +27,7 @@
 #include "session_scheduler.h"
 
 /* Prototype */
+extern "C"
 void libevent_io_callback(int Fd, short Operation, void *ctx);
 bool libevent_should_close_connection(Session* session);
 void libevent_session_add(Session* session);

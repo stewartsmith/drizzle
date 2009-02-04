@@ -23,38 +23,27 @@
 #ifndef _lex_symbol_h
 #define _lex_symbol_h
 
-#include <mysys/thr_lock.h>
-/* A helper type for transactional locking. */
-struct st_table_lock_info
-{
-  thr_lock_type lock_type;
-  int           lock_timeout;
-  bool          lock_transactional;
-};
-
-struct st_sym_group;
-
-typedef struct st_symbol {
-  const char *name;
-  uint	tok;
-  uint32_t length;
-  struct st_sym_group *group;
-} SYMBOL;
-
-typedef struct st_lex_symbol
-{
-  SYMBOL *symbol;
-  char   *str;
-  uint32_t   length;
-} LEX_SYMBOL;
-
 typedef struct st_sym_group {
   const char *name;
   const char *needed_define;
 } SYM_GROUP;
 
+typedef struct st_symbol {
+  const char *name;
+  uint	tok;
+} SYMBOL;
+
+typedef struct st_lex_symbol
+{
+  const SYMBOL *symbol;
+  char   *str;
+  uint32_t   length;
+} LEX_SYMBOL;
+
+
 extern SYM_GROUP sym_group_common;
 extern SYM_GROUP sym_group_geom;
 extern SYM_GROUP sym_group_rtree;
+
 
 #endif /* _lex_symbol_h */

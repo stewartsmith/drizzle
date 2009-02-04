@@ -1,0 +1,72 @@
+%{
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+
+/* This file includes all functions */
+
+#include <drizzled/sql_yacc.h>
+#include <drizzled/lex_symbol.h>
+
+/*
+  Symbols are broken into separated arrays to allow field names with
+  same name as functions.
+  These are kept sorted for human lookup (the symbols are hashed).
+
+  NOTE! The symbol tables should be the same regardless of what features
+  are compiled into the server. Don't add ifdef'ed symbols to the
+  lists
+*/
+%}
+struct st_symbol {
+  const char *name;
+  unsigned int  tok;
+};
+%%
+ADDDATE,ADDDATE_SYM
+CAST,CAST_SYM
+COUNT,COUNT_SYM
+CURDATE,CURDATE
+CURTIME,CURTIME
+DATE_ADD,DATE_ADD_INTERVAL
+DATE_SUB,DATE_SUB_INTERVAL
+EXTRACT,EXTRACT_SYM
+GROUP_CONCAT,GROUP_CONCAT_SYM
+MAX,MAX_SYM
+# unireg function
+MID,SUBSTRING
+MIN,MIN_SYM
+NOW,NOW_SYM
+POSITION,POSITION_SYM
+SESSION_USER,USER
+STD,STD_SYM
+STDDEV,STD_SYM
+STDDEV_POP,STD_SYM
+STDDEV_SAMP,STDDEV_SAMP_SYM
+SUBDATE,SUBDATE_SYM
+SUBSTR,SUBSTRING
+SUBSTRING,SUBSTRING
+SUM,SUM_SYM
+SYSDATE,SYSDATE
+SYSTEM_USER,USER
+TRIM,TRIM
+VARIANCE,VARIANCE_SYM
+VAR_POP,VARIANCE_SYM
+VAR_SAMP,VAR_SAMP_SYM
+%%

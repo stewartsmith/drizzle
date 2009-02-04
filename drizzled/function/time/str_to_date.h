@@ -24,6 +24,9 @@
 
 class Item_func_str_to_date :public Item_str_func
 {
+
+  using Item_func::tmp_table_field;
+
   enum_field_types cached_field_type;
   date_time_format_types cached_format_type;
   enum enum_drizzle_timestamp_type cached_timestamp_type;

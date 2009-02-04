@@ -1483,16 +1483,12 @@ struct st_lex_local: public LEX
   { /* Never called */ }
 };
 
-extern void lex_init(void);
-extern void lex_free(void);
 extern void lex_start(Session *session);
 extern void lex_end(LEX *lex);
 
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
 
 extern bool is_lex_native_function(const LEX_STRING *name);
-
-int lex_casecmp(const char *s, const char *t, uint32_t len);
 
 /**
   @} (End of group Semantic_Analysis)

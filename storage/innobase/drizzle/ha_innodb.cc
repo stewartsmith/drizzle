@@ -6249,7 +6249,8 @@ ha_innobase::delete_table(
 
 	trx_free_for_mysql(trx);
 
-	error = convert_error_code_to_mysql(error, 0, NULL);
+	if(error!=ENOENT)
+	  error = convert_error_code_to_mysql(error, 0, NULL);
 
 	return(error);
 }

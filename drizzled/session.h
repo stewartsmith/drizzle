@@ -25,7 +25,7 @@
 
 #include <drizzled/global.h>
 #include <drizzled/protocol.h>
-#include <libdrizzle/password.h>     // rand_struct
+#include <libdrizzleclient/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_tree.h>
@@ -127,8 +127,8 @@ struct system_variables
   uint64_t tmp_table_size;
   ha_rows select_limit;
   ha_rows max_join_size;
-  uint32_t auto_increment_increment;
-  uint32_t auto_increment_offset;
+  uint64_t auto_increment_increment;
+  uint64_t auto_increment_offset;
   uint64_t bulk_insert_buff_size;
   uint64_t join_buff_size;
   uint32_t max_allowed_packet;
@@ -1171,8 +1171,7 @@ public:
     enter_cond(); this mutex is then released by exit_cond().
     Usage must be: lock mutex; enter_cond(); your code; exit_cond().
   */
-  inline const char* enter_cond(pthread_cond_t *cond, pthread_mutex_t* mutex,
-			  const char* msg)
+  inline const char* enter_cond(pthread_cond_t *cond, pthread_mutex_t* mutex, const char* msg)
   {
     const char* old_msg = get_proc_info();
     safe_mutex_assert_owner(mutex);
@@ -1478,7 +1477,6 @@ public:
     unit= u;
     return 0;
   }
-  virtual int prepare2(void) { return 0; }
   /*
     Because of peculiarities of prepared statements protocol
     we need to know number of columns in the result set (if

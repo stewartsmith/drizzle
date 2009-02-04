@@ -268,7 +268,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
         b+= b_length;
         break;
       }
-      break;
     case HA_KEYTYPE_VARBINARY1:
     case HA_KEYTYPE_VARBINARY2:
       {
@@ -286,7 +285,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
         b+=b_length;
         break;
       }
-      break;
     case HA_KEYTYPE_INT8:
     {
       int i_1= (int) *((signed char*) a);

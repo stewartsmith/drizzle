@@ -37,6 +37,9 @@ protected:
   */
   uint32_t allowed_arg_cols;
 public:
+
+  using Item::split_sum_func;
+
   uint32_t arg_count;
   table_map used_tables_cache, not_null_tables_cache;
   bool const_item_cache;
@@ -136,7 +139,9 @@ public:
   void set_arguments(List<Item> &list);
   uint32_t argument_count() const { return arg_count; }
   void remove_arguments() { arg_count=0; }
-  void split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields);
+  virtual void split_sum_func(Session *session, Item **ref_pointer_array,
+                              List<Item> &fields);
+
   virtual void print(String *str, enum_query_type query_type);
   void print_op(String *str, enum_query_type query_type);
   void print_args(String *str, uint32_t from, enum_query_type query_type);
@@ -152,8 +157,9 @@ public:
 
   void signal_divide_by_null();
 
-  Field *tmp_table_field() { return result_field; }
-  Field *tmp_table_field(Table *t_arg);
+  virtual Field *tmp_table_field() { return result_field; }
+  virtual Field *tmp_table_field(Table *t_arg);
+
   Item *get_tmp_table_item(Session *session);
 
   my_decimal *val_decimal(my_decimal *);

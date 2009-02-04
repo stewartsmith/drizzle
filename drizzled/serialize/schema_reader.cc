@@ -13,8 +13,6 @@ void printSchema(const drizzle::Schema *schema)
   cout << "CREATE SCHEMA `" << schema->name() << "` ";
   if (schema->has_collation())
     cout << "COLLATE `" << schema->collation() << "` ";
-  if (schema->has_characterset())
-    cout << "CHARACTER SET `" << schema->characterset() <<"` ";
   cout << ";" << endl;
 }
 

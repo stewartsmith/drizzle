@@ -28,6 +28,11 @@ typedef struct charset_info_st CHARSET_INFO;
 
 class Field_timestamp :public Field_str {
 public:
+
+  using Field::val_int;
+  using Field::val_str;
+  using Field::cmp;
+  using Field::store;
   Field_timestamp(unsigned char *ptr_arg, uint32_t len_arg,
                   unsigned char *null_ptr_arg, unsigned char null_bit_arg,
                   enum utype unireg_check_arg, const char *field_name_arg,

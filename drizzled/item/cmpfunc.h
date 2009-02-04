@@ -695,6 +695,10 @@ public:
   enum_field_types field_type() const;
   void fix_length_and_dec();
   const char *func_name() const { return "ifnull"; }
+  Field *tmp_table_field()
+  {
+    return Item_func::tmp_table_field();
+  }
   Field *tmp_table_field(Table *table);
   uint32_t decimal_precision() const;
 };
@@ -1413,6 +1417,9 @@ protected:
   table_map and_tables_cache;
 
 public:
+
+  using Item::split_sum_func;
+
   /* Item_cond() is only used to create top level items */
   Item_cond(): Item_bool_func(), abort_on_null(1)
   { const_item_cache=0; }

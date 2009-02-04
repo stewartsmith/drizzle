@@ -523,7 +523,7 @@ sub mtr_check_stop_servers ($) {
   # many process's will exit sucessfully.
   # This is the normal case.
   # ----------------------------------------------------------------------
-  my $wait_counter= 50; # Max number of times to redo the loop
+  my $wait_counter= 100; # Max number of times to redo the loop
   foreach my $srv ( @$spec )
   {
     my $pid= $srv->{'pid'};

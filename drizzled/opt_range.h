@@ -544,6 +544,7 @@ public:
 
 */
 
+extern "C" {
 class QUICK_ROR_UNION_SELECT : public QUICK_SELECT_I
 {
 public:
@@ -576,6 +577,7 @@ private:
   static int queue_cmp(void *arg, unsigned char *val1, unsigned char *val2);
   bool scans_inited;
 };
+}
 
 
 /*

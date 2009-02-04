@@ -28,6 +28,9 @@ class Item_row: public Item
   bool const_item_cache;
   bool with_null;
 public:
+
+  using Item::split_sum_func;
+
   Item_row(List<Item> &);
   Item_row(Item_row *item):
     Item(),

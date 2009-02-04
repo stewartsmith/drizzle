@@ -8,7 +8,9 @@
 #include <uuid/uuid.h>
 
 #include <drizzled/serialize/replication_event.pb.h>
+
 using namespace std;
+using namespace drizzle;
 
 static uint64_t query_id= 0;
 char transaction_id[37];
@@ -17,14 +19,13 @@ char transaction_id[37];
   Example script for reader a Drizzle master replication list.
 */
 
-void write_ddl(drizzle::Event *record, const char *sql)
+void write_ddl(::drizzle::Event *record, const char *sql)
 {
   uuid_t uu;
 
   uuid_generate_time(uu);
   uuid_unparse(uu, transaction_id);
 
-  using namespace drizzle;
   record->set_type(Event::DDL);
   record->set_autocommit(true);
   record->set_server_id("localhost");
@@ -34,9 +35,8 @@ void write_ddl(drizzle::Event *record, const char *sql)
   record->set_sql(sql);
 }
 
-void write_insert(drizzle::Event *record, const char *trx)
+void write_insert(::drizzle::Event *record, const char *trx)
 {
-  using namespace drizzle;
   Event::Value *value;
 
   record->set_type(Event::INSERT);
@@ -60,9 +60,8 @@ void write_insert(drizzle::Event *record, const char *trx)
   value->add_value("2");
 }
 
-void write_delete(drizzle::Event *record, const char *trx)
+void write_delete(::drizzle::Event *record, const char *trx)
 {
-  using namespace drizzle;
   Event::Value *value;
 
   record->set_type(Event::DELETE);
@@ -83,9 +82,8 @@ void write_delete(drizzle::Event *record, const char *trx)
   value->add_value("2");
 }
 
-void write_update(drizzle::Event *record, const char *trx)
+void write_update(::drizzle::Event *record, const char *trx)
 {
-  using namespace drizzle;
   Event::Value *value;
 
   record->set_type(Event::UPDATE);
@@ -112,10 +110,10 @@ void write_update(drizzle::Event *record, const char *trx)
   value->add_value("6");
 }
 
-void write_to_disk(int file, drizzle::EventList *list)
+void write_to_disk(int file, ::drizzle::EventList *list)
 {
   std::string buffer;
-  uint64_t length;
+  size_t length;
   size_t written;
 
   list->SerializePartialToString(&buffer);
@@ -155,7 +153,7 @@ int main(int argc, char* argv[])
    exit(0);
   }
 
-  drizzle::EventList list;
+  EventList list;
 
   /* Write first set of records */
   write_ddl(list.add_event(), "CREATE TABLE A (a int) ENGINE=innodb");

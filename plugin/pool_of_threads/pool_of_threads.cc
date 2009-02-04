@@ -47,15 +47,17 @@ static pthread_mutex_t LOCK_event_loop;
 static LIST *sessions_need_processing; /* list of sessions that needs some processing */
 static LIST *sessions_waiting_for_io; /* list of sessions with added events */
 
-pthread_handler_t libevent_thread_proc(void *arg);
 static void libevent_end();
 static bool libevent_needs_immediate_processing(Session *session);
 static void libevent_connection_close(Session *session);
 void libevent_session_add(Session* session);
 bool libevent_should_close_connection(Session* session);
-void libevent_io_callback(int Fd, short Operation, void *ctx);
-void libevent_add_session_callback(int Fd, short Operation, void *ctx);
-void libevent_kill_session_callback(int Fd, short Operation, void *ctx);
+extern "C" {
+  pthread_handler_t libevent_thread_proc(void *arg);
+  void libevent_io_callback(int Fd, short Operation, void *ctx);
+  void libevent_add_session_callback(int Fd, short Operation, void *ctx);
+  void libevent_kill_session_callback(int Fd, short Operation, void *ctx);
+}
 
 static uint32_t size= 0;
 
@@ -69,7 +71,7 @@ static bool init_pipe(int pipe_fds[])
   int flags;
   return pipe(pipe_fds) < 0 ||
           (flags= fcntl(pipe_fds[0], F_GETFL)) == -1 ||
-          fcntl(pipe_fds[0], F_SETFL, flags | O_NONBLOCK) == -1;
+          fcntl(pipe_fds[0], F_SETFL, flags | O_NONBLOCK) == -1 ||
           (flags= fcntl(pipe_fds[1], F_GETFL)) == -1 ||
           fcntl(pipe_fds[1], F_SETFL, flags | O_NONBLOCK) == -1;
 }
@@ -372,7 +374,7 @@ bool libevent_should_close_connection(Session* session)
   These procs only return/terminate on shutdown (kill_pool_threads == true).
 */
 
-pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
+pthread_handler_t libevent_thread_proc(void *)
 {
   if (init_new_connection_handler_thread())
   {

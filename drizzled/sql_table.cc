@@ -78,6 +78,24 @@ mysql_prepare_alter_table(Session *session, Table *table,
                           HA_CREATE_INFO *create_info,
                           Alter_info *alter_info);
 
+static void set_table_default_charset(Session *session,
+                                      HA_CREATE_INFO *create_info, char *db)
+{
+  /*
+    If the table character set was not given explicitly,
+    let's fetch the database default character set and
+    apply it to the table.
+  */
+  if (!create_info->default_table_charset)
+  {
+    HA_CREATE_INFO db_info;
+
+    load_db_opt_by_name(session, db, &db_info);
+
+    create_info->default_table_charset= db_info.default_table_charset;
+  }
+}
+
 /*
   Translate a file name to a table name (WL #1324).
 
@@ -1639,39 +1657,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
   return(false);
 }
 
-
-/*
-  Set table default charset, if not set
-
-  SYNOPSIS
-    set_table_default_charset()
-    create_info        Table create information
-
-  DESCRIPTION
-    If the table character set was not given explicitely,
-    let's fetch the database default character set and
-    apply it to the table.
-*/
-
-static void set_table_default_charset(Session *session,
-                                      HA_CREATE_INFO *create_info, char *db)
-{
-  /*
-    If the table character set was not given explicitly,
-    let's fetch the database default character set and
-    apply it to the table.
-  */
-  if (!create_info->default_table_charset)
-  {
-    HA_CREATE_INFO db_info;
-
-    load_db_opt_by_name(session, db, &db_info);
-
-    create_info->default_table_charset= db_info.default_table_charset;
-  }
-}
-
-
 /*
   Extend long VARCHAR fields to blob & prepare field if it's a blob
 
@@ -3008,14 +2993,28 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto err;
     }
   }
-  else if (my_copy(src_path, dst_path, MYF(MY_DONT_OVERWRITE_FILE)))
+  else
   {
-    if (my_errno == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0),db);
-    else
-      my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
-    pthread_mutex_unlock(&LOCK_open);
-    goto err;
+    int frmcopyr= my_copy(src_path, dst_path, MYF(MY_DONT_OVERWRITE_FILE));
+
+    string dfesrc(src_path);
+    string dfedst(dst_path);
+
+    dfesrc.replace(dfesrc.find(".frm"), 4, ".dfe" );
+    dfedst.replace(dfedst.find(".frm"), 4, ".dfe" );
+
+    int dfecopyr= my_copy(dfesrc.c_str(), dfedst.c_str(),
+			  MYF(MY_DONT_OVERWRITE_FILE));
+
+    if(frmcopyr || dfecopyr) // FIXME: should handle only one fail.
+    {
+      if (my_errno == ENOENT)
+	my_error(ER_BAD_DB_ERROR,MYF(0),db);
+      else
+	my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
+      pthread_mutex_unlock(&LOCK_open);
+      goto err;
+    }
   }
 
   /*
@@ -4668,7 +4667,6 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
       goto err;
 
   set_table_default_charset(session, create_info, db);
-
 
   if (session->variables.old_alter_table
       || (table->s->db_type() != create_info->db_type)
