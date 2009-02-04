@@ -31,7 +31,6 @@ drizzled/sql_udf.cc
 drizzled/table.cc
 drizzled/tztime.cc
 gnulib/getopt.c
-gnulib/gettext.h
 libdrizzleclient/client.c
 libdrizzleclient/drizzle.c
 libdrizzleclient/errmsg.c

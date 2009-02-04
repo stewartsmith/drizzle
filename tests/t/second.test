@@ -81,6 +81,9 @@ SELECT SECOND("20081130033015");
 # A good datetime, interpreted int->string, should output 15
 SELECT SECOND(20081130033015);
 
+# A good datetime with subsecond component, interpreted int->string, should output 15
+SELECT SECOND(20081130033015.01);
+
 # A good time (according to MySQL, not Jay Pipes...), should output 15
 SELECT SECOND(231115);
 
@@ -107,7 +110,7 @@ CREATE TABLE t1 (
 , blob_fld BLOB NOT NULL
 );
 
-# Should all output 19
+# Should all output 19 except first two, which should output 0
 INSERT INTO t1 VALUES (
 20071130
 , "2007-11-30"

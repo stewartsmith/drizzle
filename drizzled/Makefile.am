@@ -69,6 +69,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/varstring.h \
 		filesort_info.h \
 		foreign_key.h \
+		function_hash.h \
 		function/ascii.h \
 		function/additive_op.h \
 		function/benchmark.h \
@@ -202,16 +203,14 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/to_days.h \
 		function/time/typecast.h \
 		function/time/unix_timestamp.h \
-		function/time/week.h \
-		function/time/week_mode.h \
 		function/time/weekday.h \
 		function/time/year.h  \
-		function/time/yearweek.h \
 		ha_trx_info.h \
 		ha_statistics.h \
 		handler.h \
 		handlerton.h \
 		handler_structs.h \
+		hash_symbol.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
 		hybrid_type_traits_decimal.h \
@@ -310,11 +309,11 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_udf.h \
 		stacktrace.h \
 		structs.h \
+		symbol_hash.h \
 		table.h \
 		table_list.h \
 		table_map_iterator.h \
 		table_share.h \
-		tableop_hooks.h \
 		temporal.h \
 		temporal_format.h \
 		tmp_table.h \
@@ -518,11 +517,8 @@ drizzled_SOURCES = \
 		function/time/to_days.cc \
 		function/time/typecast.cc \
 		function/time/unix_timestamp.cc \
-		function/time/week.cc \
-		function/time/week_mode.cc \
 		function/time/weekday.cc \
 		function/time/year.cc \
-		function/time/yearweek.cc \
 		ha_trx_info.cc \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \
@@ -611,7 +607,6 @@ drizzled_SOURCES = \
 		strfunc.cc \
 		table.cc \
                 table_map_iterator.cc \
-		tableop_hooks.cc \
 		temporal.cc \
 		temporal_format.cc \
 		thr_malloc.cc \
@@ -697,17 +692,25 @@ function_hash.h: function_hash.gperf
 	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=Function_hash \
-		function_hash.gperf  > function_hash.h-t
-	@if ! diff function_hash.h-t function_hash.h >/dev/null 2>&1  ; then \
-		mv function_hash.h-t function_hash.h ; \
+		${top_srcdir}/drizzled/function_hash.gperf  > \
+			${top_builddir}/drizzled/function_hash.h-t
+	@if ! diff ${top_builddir}/drizzled/function_hash.h-t \
+		   ${top_builddir}/drizzled/function_hash.h >/dev/null 2>&1 ; \
+	then \
+		mv ${top_builddir}/drizzled/function_hash.h-t \
+		   ${top_builddir}/drizzled/function_hash.h ; \
 	fi
 
 symbol_hash.h: symbol_hash.gperf
 	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=Symbol_hash \
-		symbol_hash.gperf > symbol_hash.h-t
-	@if ! diff symbol_hash.h-t symbol_hash.h >/dev/null 2>&1  ; then \
-		mv symbol_hash.h-t symbol_hash.h ; \
+		${top_srcdir}/drizzled/symbol_hash.gperf > \
+			${top_builddir}/drizzled/symbol_hash.h-t
+	@if ! diff ${top_builddir}/drizzled/symbol_hash.h-t \
+	   	   ${top_builddir}/drizzled/symbol_hash.h >/dev/null 2>&1  ; \
+	then \
+		mv ${top_builddir}/drizzled/symbol_hash.h-t \
+		   ${top_builddir}/drizzled/symbol_hash.h ; \
 	fi
 

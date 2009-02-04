@@ -36,11 +36,11 @@ bin_PROGRAMS =			drizzle \
 				drizzletest \
 				drizzleslap
 
-drizzle_SOURCES =		drizzle.cc readline.cc completion_hash.cc
-drizzle_LDADD =			${LDADD} ${READLINE_LIBS}
+drizzle_SOURCES=		drizzle.cc readline.cc completion_hash.cc
+drizzle_LDADD=			${LDADD} ${READLINE_LIBS}
 drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${W_EXCEPTIONS} 
 
-drizzleadmin_SOURCES =		drizzleadmin.cc
+drizzleadmin_SOURCES=		drizzleadmin.cc
 
 drizzlecheck_SOURCES =		drizzlecheck.cc
 

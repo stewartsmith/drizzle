@@ -274,71 +274,46 @@ bool in_unix_epoch_range(uint32_t year
                        , uint32_t minute
                        , uint32_t second);
 
-/* 
- * I don't like using these defines, but probably good to keep in sync
- * with MySQL's week mode stuff.. 
- */
-#define DRIZZLE_WEEK_MODE_MONDAY_FIRST_DAY   1
-#define DRIZZLE_WEEK_MODE_USE_ISO_8601_1988  2
-#define DRIZZLE_WEEK_MODE_WEEK_RANGE_IS_ORDINAL 4
-
 /**
  * Returns the number of the week from a supplied year, month, and
- * date in the Gregorian proleptic calendar.
- *
- * The week number returned will depend on the values of the
- * various boolean flags passed to the function.
- *
- * The flags influence returned values in the following ways:
- *
- * sunday_is_first_day_of_week
- *
- * If TRUE, Sunday is first day of week
- * If FALSE,	Monday is first day of week
- *
- * week_range_is_ordinal
- *
- * If FALSE, the week is in range 0-53
- *
- * Week 0 is returned for the the last week of the previous year (for
- * a date at start of january) In this case one can get 53 for the
- * first week of next year.  This flag ensures that the week is
- * relevant for the given year. 
- *
- * If TRUE, the week is in range 1-53.
- *
- * In this case one may get week 53 for a date in January (when
- * the week is that last week of previous year) and week 1 for a
- * date in December.
- *
- * use_iso_8601_1988
- *
- * If TRUE, the weeks are numbered according to ISO 8601:1988
- *
- * ISO 8601:1988 means that if the week containing January 1 has
- * four or more days in the new year, then it is week 1;
- * Otherwise it is the last week of the previous year, and the
- * next week is week 1.
- *
- * If FALSE, the week that contains the first 'first-day-of-week' is week 1.
+ * date in the Gregorian proleptic calendar.  We use strftime() and
+ * the %U, %W, and %V format specifiers depending on the value
+ * of the sunday_is_first_day_of_week parameter.
  *
  * @param Subject year
  * @param Subject month
  * @param Subject day
  * @param Is sunday the first day of the week?
- * @param Is the week range ordinal?
- * @param Should we use ISO 8601:1988 rules?
  * @param Pointer to a uint32_t to hold the resulting year, which 
  *        may be incremented or decremented depending on flags
  */
-int64_t week_number_from_gregorian_date(uint32_t year
-                                        , uint32_t month
-                                        , uint32_t day
-                                        , bool sunday_is_first_day_of_week
-                                        , bool week_range_is_ordinal
-                                        , bool use_iso_8601_1988
-                                        , uint32_t *year_out);
+uint32_t week_number_from_gregorian_date(uint32_t year
+                                       , uint32_t month
+                                       , uint32_t day
+                                       , bool sunday_is_first_day_of_week);
 
+/**
+ * Returns the ISO week number of a supplied year, month, and
+ * date in the Gregorian proleptic calendar.  We use strftime() and
+ * the %V format specifier to do the calculation, which yields a
+ * correct ISO 8601:1988 week number.
+ *
+ * The final year_out parameter is a pointer to an integer which will
+ * be set to the year in which the week belongs, according to ISO8601:1988, 
+ * which may be different from the Gregorian calendar year.
+ *
+ * @see http://en.wikipedia.org/wiki/ISO_8601
+ *
+ * @param Subject year
+ * @param Subject month
+ * @param Subject day
+ * @param Pointer to a uint32_t to hold the resulting year, which 
+ *        may be incremented or decremented depending on flags
+ */
+uint32_t iso_week_number_from_gregorian_date(uint32_t year
+                                           , uint32_t month
+                                           , uint32_t day
+                                           , uint32_t *year_out);
 #ifdef __cplusplus
 }
 #endif

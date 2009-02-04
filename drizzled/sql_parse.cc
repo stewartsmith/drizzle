@@ -962,7 +962,6 @@ mysql_execute_command(Session *session)
 {
   int res= false;
   bool need_start_waiting= false; // have protection against global read lock
-  int  up_result= 0;
   LEX  *lex= session->lex;
   /* first SELECT_LEX (have special meaning for many of non-SELECTcommands) */
   SELECT_LEX *select_lex= &lex->select_lex;
@@ -1402,41 +1401,27 @@ end_with_restore_list:
   }
   case SQLCOM_UPDATE:
     assert(first_table == all_tables && first_table != 0);
-    if (update_precheck(session, all_tables))
+    if ((res= update_precheck(session, all_tables)))
       break;
     assert(select_lex->offset_limit == 0);
     unit->set_limit(select_lex);
-    res= (up_result= mysql_update(session, all_tables,
-                                  select_lex->item_list,
-                                  lex->value_list,
-                                  select_lex->where,
-                                  select_lex->order_list.elements,
-                                  (order_st *) select_lex->order_list.first,
-                                  unit->select_limit_cnt,
-                                  lex->duplicates, lex->ignore));
-    /* mysql_update return 2 if we need to switch to multi-update */
-    if (up_result != 2)
-      break;
-    /* Fall through */
+    res= mysql_update(session, all_tables,
+                      select_lex->item_list,
+                      lex->value_list,
+                      select_lex->where,
+                      select_lex->order_list.elements,
+                      (order_st *) select_lex->order_list.first,
+                      unit->select_limit_cnt,
+                      lex->duplicates, lex->ignore);
+    break;
   case SQLCOM_UPDATE_MULTI:
   {
     assert(first_table == all_tables && first_table != 0);
-    /* if we switched from normal update, rights are checked */
-    if (up_result != 2)
-    {
-      if ((res= multi_update_precheck(session, all_tables)))
-        break;
-    }
-    else
-      res= 0;
+    if ((res= update_precheck(session, all_tables)))
+      break;
 
-    res= mysql_multi_update_prepare(session);
-
-    {
-      if (res)
-        break;
-
-    }  /* unlikely */
+    if ((res= mysql_multi_update_prepare(session)))
+      break;
 
     res= mysql_multi_update(session, all_tables,
                             &select_lex->item_list,
@@ -3326,7 +3311,7 @@ Item * all_any_subquery_creator(Item *left_expr,
 
 
 /**
-  Multi update query pre-check.
+  Update query pre-check.
 
   @param session		Thread handler
   @param tables	Global/local table list (have to be the same)
@@ -3337,26 +3322,29 @@ Item * all_any_subquery_creator(Item *left_expr,
     true  Error
 */
 
-bool multi_update_precheck(Session *session, TableList *)
+bool update_precheck(Session *session, TableList *)
 {
   const char *msg= 0;
   LEX *lex= session->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
 
-  if (select_lex->item_list.elements != lex->value_list.elements)
+  if (session->lex->select_lex.item_list.elements != session->lex->value_list.elements)
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
     return(true);
   }
 
-  if (select_lex->order_list.elements)
-    msg= "ORDER BY";
-  else if (select_lex->select_limit)
-    msg= "LIMIT";
-  if (msg)
+  if (session->lex->select_lex.table_list.elements > 1)
   {
-    my_error(ER_WRONG_USAGE, MYF(0), "UPDATE", msg);
-    return(true);
+    if (select_lex->order_list.elements)
+      msg= "ORDER BY";
+    else if (select_lex->select_limit)
+      msg= "LIMIT";
+    if (msg)
+    {
+      my_error(ER_WRONG_USAGE, MYF(0), "UPDATE", msg);
+      return(true);
+    }
   }
   return(false);
 }
@@ -3482,29 +3470,6 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
     walk->updating= target_tbl->updating;
     walk->lock_type= target_tbl->lock_type;
     target_tbl->correspondent_table= walk;	// Remember corresponding table
-  }
-  return(false);
-}
-
-
-/**
-  simple UPDATE query pre-check.
-
-  @param session		Thread handler
-  @param tables	Global table list
-
-  @retval
-    false OK
-  @retval
-    true  Error
-*/
-
-bool update_precheck(Session *session, TableList *)
-{
-  if (session->lex->select_lex.item_list.elements != session->lex->value_list.elements)
-  {
-    my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(true);
   }
   return(false);
 }

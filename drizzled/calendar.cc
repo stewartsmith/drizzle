@@ -382,108 +382,100 @@ bool in_unix_epoch_range(uint32_t year
 
 /**
  * Returns the number of the week from a supplied year, month, and
- * date in the Gregorian proleptic calendar.
- *
- * The week number returned will depend on the values of the
- * various boolean flags passed to the function.
- *
- * The flags influence returned values in the following ways:
- *
- * sunday_is_first_day_of_week
- *
- * If TRUE, Sunday is first day of week
- * If FALSE,	Monday is first day of week
- *
- * week_range_is_ordinal
- *
- * If FALSE, the week is in range 0-53
- *
- * Week 0 is returned for the the last week of the previous year (for
- * a date at start of january) In this case one can get 53 for the
- * first week of next year.  This flag ensures that the week is
- * relevant for the given year. 
- *
- * If TRUE, the week is in range 1-53.
- *
- * In this case one may get week 53 for a date in January (when
- * the week is that last week of previous year) and week 1 for a
- * date in December.
- *
- * use_iso_8601_1988
- *
- * If TRUE, the weeks are numbered according to ISO 8601:1988
- *
- * ISO 8601:1988 means that if the week containing January 1 has
- * four or more days in the new year, then it is week 1;
- * Otherwise it is the last week of the previous year, and the
- * next week is week 1.
- *
- * If FALSE, the week that contains the first 'first-day-of-week' is week 1.
+ * date in the Gregorian proleptic calendar.  We use strftime() and
+ * the %U, %W, and %V format specifiers depending on the value
+ * of the sunday_is_first_day_of_week parameter.
  *
  * @param Subject year
  * @param Subject month
  * @param Subject day
  * @param Is sunday the first day of the week?
- * @param Is the week range ordinal?
- * @param Should we use ISO 8601:1988 rules?
  * @param Pointer to a uint32_t to hold the resulting year, which 
  *        may be incremented or decremented depending on flags
  */
-int64_t week_number_from_gregorian_date(uint32_t year
-                                        , uint32_t month
-                                        , uint32_t day
-                                        , bool sunday_is_first_day_of_week
-                                        , bool week_range_is_ordinal
-                                        , bool use_iso_8601_1988
-                                        , uint32_t *year_out)
+uint32_t week_number_from_gregorian_date(uint32_t year
+                                       , uint32_t month
+                                       , uint32_t day
+                                       , bool sunday_is_first_day_of_week)
 {
-  int64_t tmp_days;
-  int64_t day_number= julian_day_number_from_gregorian_date(year, month, day);
-  int64_t first_day_of_year= julian_day_number_from_gregorian_date(year, 1, 1);
-  uint32_t tmp_years= year;
+  struct tm broken_time;
 
-  int64_t week_day= day_of_week(first_day_of_year, sunday_is_first_day_of_week);
+  broken_time.tm_year= year;
+  broken_time.tm_mon= month - 1; /* struct tm has non-ordinal months */
+  broken_time.tm_mday= day;
 
-  if (month == 1 && day <= (7 - week_day))
-  {
-    if (
-        (! week_range_is_ordinal) 
-        && 
-        ( (use_iso_8601_1988 && week_day != 0) 
-          || (!use_iso_8601_1988 && (week_day >= 4))
-        )
-    )
-    {
-      if (year_out != NULL)
-        *year_out= tmp_years;
-      return 0;
-    }
-    week_range_is_ordinal= true;
-    tmp_years--;
-    tmp_days= days_in_year(tmp_years, GREGORIAN);
-    first_day_of_year-= tmp_days;
-    week_day= (week_day + (53 * 7) - tmp_days) % 7;
-  }
+  /* fill out the rest of our tm fields. */
+  (void) mktime(&broken_time);
 
-  if ((!use_iso_8601_1988 && week_day != 0) 
-      || (use_iso_8601_1988 && week_day >= 4))
-    tmp_days= day_number - (first_day_of_year + (7 - week_day));
-  else
-    tmp_days= day_number - (first_day_of_year - week_day);
+  char result[3]; /* 3 is enough space for a max 2-digit week number */
+  size_t result_len= strftime(result
+                            , sizeof(result)
+                            , (sunday_is_first_day_of_week ? "%U" : "%W")
+                            , &broken_time);
 
-  if (week_range_is_ordinal && tmp_days >= (52 * 7))
-  {
-    week_day= (week_day + days_in_year(tmp_years, GREGORIAN)) % 7;
-    if ((!use_iso_8601_1988 && week_day < 4) 
-        || (use_iso_8601_1988 && week_day == 0))
-    {
-      tmp_years++;
-      if (year_out != NULL)
-        *year_out= tmp_years;
-      return 1;
-    }
-  }
+  if (result_len != 0)
+    return (uint32_t) atoi(result);
+  return 0;
+}
+
+/**
+ * Returns the ISO week number of a supplied year, month, and
+ * date in the Gregorian proleptic calendar.  We use strftime() and
+ * the %V format specifier to do the calculation, which yields a
+ * correct ISO 8601:1988 week number.
+ *
+ * The final year_out parameter is a pointer to an integer which will
+ * be set to the year in which the week belongs, according to ISO8601:1988, 
+ * which may be different from the Gregorian calendar year.
+ *
+ * @see http://en.wikipedia.org/wiki/ISO_8601
+ *
+ * @param Subject year
+ * @param Subject month
+ * @param Subject day
+ * @param Pointer to a uint32_t to hold the resulting year, which 
+ *        may be incremented or decremented depending on flags
+ */
+uint32_t iso_week_number_from_gregorian_date(uint32_t year
+                                           , uint32_t month
+                                           , uint32_t day
+                                           , uint32_t *year_out)
+{
+  struct tm broken_time;
+
   if (year_out != NULL)
-    *year_out= tmp_years;
-  return (tmp_days / 7) + 1;
+    *year_out= year;
+
+  broken_time.tm_year= year;
+  broken_time.tm_mon= month - 1; /* struct tm has non-ordinal months */
+  broken_time.tm_mday= day;
+
+  /* fill out the rest of our tm fields. */
+  (void) mktime(&broken_time);
+
+  char result[3]; /* 3 is enough space for a max 2-digit week number */
+  size_t result_len= strftime(result
+                            , sizeof(result)
+                            , "%V"
+                            , &broken_time);
+
+
+  if (result_len == 0)
+    return 0; /* Not valid for ISO8601:1988 */
+
+  uint32_t week_number= (uint32_t) atoi(result);
+
+  /* 
+   * ISO8601:1988 states that if the first week in January
+   * does not contain 4 days, then the resulting week number
+   * shall be 52 or 53, depending on the number of days in the
+   * previous year.  In this case, we adjust the outbound
+   * year parameter down a year.
+   */
+  if (year_out != NULL)
+    if (week_number == 53 || week_number == 52)
+      if (month == 1)
+        *year_out--;
+
+  return week_number;
 }

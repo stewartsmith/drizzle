@@ -27,9 +27,7 @@
 #include <drizzled/show.h>
 #include <drizzled/error.h>
 #include <drizzled/name_resolution_context_state.h>
-#include <drizzled/sql_parse.h>
 #include <drizzled/probes.h>
-#include <drizzled/tableop_hooks.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_load.h>
 #include <drizzled/field/timestamp.h>
@@ -1483,8 +1481,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       TableList *create_table,
                                       Alter_info *alter_info,
                                       List<Item> *items,
-                                      DRIZZLE_LOCK **lock,
-                                      Tableop_hooks *hooks)
+                                      DRIZZLE_LOCK **lock)
 {
   Table tmp_table;		// Used during 'Create_field()'
   TABLE_SHARE share;
@@ -1616,10 +1613,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   }
 
   table->reginfo.lock_type=TL_WRITE;
-  hooks->prelock(&table, 1);                    // Call prelock hooks
   if (! ((*lock)= mysql_lock_tables(session, &table, 1,
-                                    DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)) ||
-        hooks->postlock(&table, 1))
+                                    DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
   {
     if (*lock)
     {
@@ -1639,9 +1634,6 @@ int
 select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 {
   DRIZZLE_LOCK *extra_lock= NULL;
-
-
-  Tableop_hooks *hook_ptr= NULL;
   /*
     For row-based replication, the CREATE-SELECT statement is written
     in two pieces: the first one contain the CREATE TABLE statement
@@ -1660,30 +1652,6 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     slave.  Hence, we have to hold on to the CREATE part of the
     statement until the statement has finished.
    */
-  class MY_HOOKS : public Tableop_hooks {
-  public:
-    MY_HOOKS(select_create *x, TableList *create_table,
-             TableList *select_tables)
-      : ptr(x), all_tables(*create_table)
-      {
-        all_tables.next_global= select_tables;
-      }
-
-  private:
-    virtual int do_postlock(Table **, uint32_t)
-    {
-      /*
-        ptr->binlog_show_create_table(tables, count);
-      */
-      return 0;
-    }
-
-    select_create *ptr;
-    TableList all_tables;
-  };
-
-  MY_HOOKS hooks(this, create_table, select_tables);
-  hook_ptr= &hooks;
 
   unit= u;
 
@@ -1695,7 +1663,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 
   if (!(table= create_table_from_items(session, create_info, create_table,
                                        alter_info, &values,
-                                       &extra_lock, hook_ptr)))
+                                       &extra_lock)))
     return(-1);				// abort() deletes table
 
   if (extra_lock)
