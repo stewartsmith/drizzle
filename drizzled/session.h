@@ -165,7 +165,6 @@ struct system_variables
   uint32_t completion_type;
   /* Determines which non-standard SQL behaviour should be enabled */
   uint32_t sql_mode;
-  uint32_t default_week_format;
   uint64_t max_seeks_for_key;
   size_t range_alloc_block_size;
   uint32_t query_alloc_block_size;

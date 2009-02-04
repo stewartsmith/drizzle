@@ -413,9 +413,6 @@ static sys_var_readonly sys_warning_count(&vars, "warning_count",
                                           SHOW_LONG,
                                           get_warning_count);
 
-static sys_var_session_uint32_t sys_default_week_format(&vars, "default_week_format",
-                                                        &SV::default_week_format);
-
 sys_var_session_uint64_t sys_group_concat_max_len(&vars, "group_concat_max_len",
                                                   &SV::group_concat_max_len);
 

@@ -2882,11 +2882,6 @@ struct my_option my_long_options[] =
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  { "default_week_format", OPT_DEFAULT_WEEK_FORMAT,
-    N_("The default week format used by WEEK() functions."),
-    (char**) &global_system_variables.default_week_format,
-    (char**) &max_system_variables.default_week_format,
-    0, GET_ULONG, REQUIRED_ARG, 0, 0, 7L, 0, 1, 0},
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),

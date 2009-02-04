@@ -62,8 +62,6 @@
 #include <drizzled/function/time/to_days.h>
 #include <drizzled/function/time/typecast.h>
 #include <drizzled/function/time/unix_timestamp.h>
-#include <drizzled/function/time/yearweek.h>
-#include <drizzled/function/time/week.h>
 #include <drizzled/function/time/weekday.h>
 
 #include <drizzled/item/cmpfunc.h>
@@ -1483,33 +1481,6 @@ protected:
   virtual ~Create_func_weekday() {}
 };
 
-
-class Create_func_weekofyear : public Create_func_arg1
-{
-public:
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_weekofyear s_singleton;
-
-protected:
-  Create_func_weekofyear() {}
-  virtual ~Create_func_weekofyear() {}
-};
-
-
-class Create_func_year_week : public Create_native_func
-{
-public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_year_week s_singleton;
-
-protected:
-  Create_func_year_week() {}
-  virtual ~Create_func_year_week() {}
-};
-
-
 /*
 =============================================================================
   IMPLEMENTATION
@@ -2888,55 +2859,6 @@ Create_func_weekday::create(Session *session, Item *arg1)
   return new (session->mem_root) Item_func_weekday(arg1, 0);
 }
 
-
-Create_func_weekofyear Create_func_weekofyear::s_singleton;
-
-Item*
-Create_func_weekofyear::create(Session *session, Item *arg1)
-{
-  Item *i1= new (session->mem_root) Item_int((char*) "0", 3, 1);
-  return new (session->mem_root) Item_func_week(arg1, i1);
-}
-
-
-Create_func_year_week Create_func_year_week::s_singleton;
-
-Item*
-Create_func_year_week::create_native(Session *session, LEX_STRING name,
-                                     List<Item> *item_list)
-{
-  Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  switch (arg_count) {
-  case 1:
-  {
-    Item *param_1= item_list->pop();
-    Item *i0= new (session->mem_root) Item_int((char*) "0", 0, 1);
-    func= new (session->mem_root) Item_func_yearweek(param_1, i0);
-    break;
-  }
-  case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    func= new (session->mem_root) Item_func_yearweek(param_1, param_2);
-    break;
-  }
-  default:
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
-    break;
-  }
-  }
-
-  return func;
-}
-
-
 struct Native_func_registry
 {
   LEX_STRING name;
@@ -3052,8 +2974,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("UUID") }, BUILDER(Create_func_uuid)},
   { { C_STRING_WITH_LEN("VERSION") }, BUILDER(Create_func_version)},
   { { C_STRING_WITH_LEN("WEEKDAY") }, BUILDER(Create_func_weekday)},
-  { { C_STRING_WITH_LEN("WEEKOFYEAR") }, BUILDER(Create_func_weekofyear)},
-  { { C_STRING_WITH_LEN("YEARWEEK") }, BUILDER(Create_func_year_week)},
 
   { {0, 0}, NULL}
 };

@@ -210,11 +210,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/to_days.h \
 		function/time/typecast.h \
 		function/time/unix_timestamp.h \
-		function/time/week.h \
-		function/time/week_mode.h \
 		function/time/weekday.h \
 		function/time/year.h  \
-		function/time/yearweek.h \
 		ha_trx_info.h \
 		ha_statistics.h \
 		handler.h \
@@ -667,11 +664,8 @@ libfunction_la_SOURCES = \
 		function/time/to_days.cc \
 		function/time/typecast.cc \
 		function/time/unix_timestamp.cc \
-		function/time/week.cc \
-		function/time/week_mode.cc \
 		function/time/weekday.cc \
-		function/time/year.cc \
-		function/time/yearweek.cc
+		function/time/year.cc
 
 
 if BUILD_GCC_PCH

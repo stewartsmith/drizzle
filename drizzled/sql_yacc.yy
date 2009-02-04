@@ -72,7 +72,6 @@
 #include <drizzled/function/time/sysdate_local.h>
 #include <drizzled/function/time/timestamp_diff.h>
 #include <drizzled/function/time/typecast.h>
-#include <drizzled/function/time/week.h>
 #include <drizzled/function/time/year.h>
 
 #include <drizzled/error.h>
@@ -3372,17 +3371,6 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_reverse($3); }
         | TRUNCATE_SYM '(' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
-        | WEEK_SYM '(' expr ')'
-          {
-            Session *session= YYSession;
-            Item *i1= new (session->mem_root) Item_int((char*) "0",
-                                           session->variables.default_week_format,
-                                                   1);
-
-            $$= new (session->mem_root) Item_func_week($3, i1);
-          }
-        | WEEK_SYM '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_week($3,$5); }
         | WEIGHT_STRING_SYM '(' expr opt_ws_levels ')'
           { $$= new (YYSession->mem_root) Item_func_weight_string($3, 0, $4); }
         | WEIGHT_STRING_SYM '(' expr AS CHAR_SYM ws_nweights opt_ws_levels ')'
