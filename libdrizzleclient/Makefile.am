@@ -59,7 +59,7 @@ libdrizzleclient_la_LIBADD = $(LTLIBZ)
 noinst_HEADERS =	libdrizzle_priv.h \
 			local_infile.h
 
-EXTRA_DIST =		libdrizzle.ver
+EXTRA_DIST =		libdrizzleclient.ver
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
 			$(target) $(BUILT_SOURCES)
 
