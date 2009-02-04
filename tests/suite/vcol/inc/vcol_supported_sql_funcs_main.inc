@@ -974,32 +974,14 @@ let $values1 = '2007-10-07',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
---echo # WEEK()
-let $cols = a datetime, b virtual int as (week(a));
-let $values1 = '2008-09-01',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
 --echo # WEEKDAY()
 let $cols = a datetime, b virtual int as (weekday(a));
 let $values1 = '2008-09-01',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
---echo # WEEKOFYEAR()
-let $cols = a datetime, b virtual int as (weekofyear(a));
-let $values1 = '2008-09-01',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
 --echo # YEAR()
 let $cols = a datetime, b virtual int as (year(a));
-let $values1 = '2008-09-01',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # YEARWEEK()
-let $cols = a datetime, b virtual int as (yearweek(a));
 let $values1 = '2008-09-01',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc

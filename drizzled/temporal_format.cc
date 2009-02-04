@@ -52,6 +52,7 @@ namespace drizzled
 , _minute_part_index(0)
 , _second_part_index(0)
 , _usecond_part_index(0)
+, _nsecond_part_index(0)
 {
   /* Make sure we've got no junk in the match_vector. */
   memset(_match_vector, 0, sizeof(_match_vector));
@@ -157,20 +158,46 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
   {
     size_t usecond_start= _match_vector[_usecond_part_index];
     size_t usecond_len= _match_vector[_usecond_part_index + 1] - _match_vector[_usecond_part_index];
-    to->_useconds= atoi(copy_data.substr(usecond_start, usecond_len).c_str());
+    /* 
+     * For microseconds, which are millionth of 1 second, 
+     * we must ensure that we produce a correct result, 
+     * even if < 6 places were specified.  For instance, if we get .1, 
+     * we must produce 100000. .11 should produce 110000, etc.
+     */
+    uint32_t multiplier= 1;
+    int32_t x= usecond_len;
+    while (x < 6)
+    {
+      multiplier*= 10;
+      ++x;
+    }
+    to->_useconds= atoi(copy_data.substr(usecond_start, usecond_len).c_str()) * multiplier;
   }
   if (_nsecond_part_index > 1)
   {
     size_t nsecond_start= _match_vector[_nsecond_part_index];
     size_t nsecond_len= _match_vector[_nsecond_part_index + 1] - _match_vector[_nsecond_part_index];
-    to->_nseconds= atoi(copy_data.substr(nsecond_start, nsecond_len).c_str());
+    /* 
+     * For nanoseconds, which are 1 billionth of a second, 
+     * we must ensure that we produce a correct result, 
+     * even if < 9 places were specified.  For instance, if we get .1, 
+     * we must produce 100000000. .11 should produce 110000000, etc.
+     */
+    uint32_t multiplier= 1;
+    int32_t x= nsecond_len;
+    while (x < 9)
+    {
+      multiplier*= 10;
+      ++x;
+    }
+    to->_nseconds= atoi(copy_data.substr(nsecond_start, nsecond_len).c_str()) * multiplier;
   }
   return true;
 }
 
 } /* end namespace drizzled */
 
-#define COUNT_KNOWN_FORMATS 13
+#define COUNT_KNOWN_FORMATS 14
 
 struct temporal_format_args
 {
@@ -199,19 +226,20 @@ struct temporal_format_args
  */
 static struct temporal_format_args __format_args[COUNT_KNOWN_FORMATS]= 
 {
-  {"^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})\\.(\\d{6})$", 1, 2, 3, 4, 5, 6, 7, 0} /* YYYYMMDDHHmmSS.uuuuuu */
+  {"^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})\\.(\\d{1,6})$", 1, 2, 3, 4, 5, 6, 7, 0} /* YYYYMMDDHHmmSS.uuuuuu */
 , {"^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})$", 1, 2, 3, 4, 5, 6, 0, 0} /* YYYYMMDDHHmmSS */
-, {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})\\.(\\d{6})$", 1, 2, 3, 4, 5, 6, 7, 0} /* YYYY[/-.]MM[/-.]DD[T]HH:mm:SS.uuuuuu */
+, {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})\\.(\\d{1,6})$", 1, 2, 3, 4, 5, 6, 7, 0} /* YYYY[/-.]MM[/-.]DD[T]HH:mm:SS.uuuuuu */
 , {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})$", 1, 2, 3, 4, 5, 6, 0, 0} /* YYYY[/-.]MM[/-.]DD[T]HH:mm:SS */
 , {"^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD */
 , {"^(\\d{4})(\\d{2})(\\d{2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YYYYMMDD */
 , {"^(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{4})$", 3, 1, 2, 0, 0, 0, 0, 0} /* MM[-/.]DD[-/.]YYYY (US common format)*/
 , {"^(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YY[-/.]MM[-/.]DD */
 , {"^(\\d{2})[-/.]*(\\d{1,2})[-/.]*(\\d{1,2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YY[-/.][M]M[-/.][D]D */
-, {"^(\\d{2}):*(\\d{2}):*(\\d{2})\\.(\\d{6})$", 0, 0, 0, 1, 2, 3, 4, 0} /* HHmmSS.uuuuuu, HH:mm:SS.uuuuuu */
+, {"^(\\d{2}):*(\\d{2}):*(\\d{2})\\.(\\d{1,6})$", 0, 0, 0, 1, 2, 3, 4, 0} /* HHmmSS.uuuuuu, HH:mm:SS.uuuuuu */
 , {"^(\\d{1,2}):*(\\d{2}):*(\\d{2})$", 0, 0, 0, 1, 2, 3, 0, 0} /* [H]HmmSS, [H]H:mm:SS */
 , {"^(\\d{1,2}):*(\\d{2})$", 0, 0, 0, 0, 1, 2, 0, 0} /* [m]mSS, [m]m:SS */
 , {"^(\\d{1,2})$", 0, 0, 0, 0, 0, 1, 0, 0} /* SS, S */
+, {"^(\\d{1,2})\\.(\\d{1,6})$", 0, 0, 0, 0, 0, 1, 2, 0} /* [S]S.uuuuuu */
 };
 
 std::vector<drizzled::TemporalFormat*> known_datetime_formats;

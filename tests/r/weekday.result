@@ -1,0 +1,44 @@
+SELECT WEEKDAY(NULL);
+WEEKDAY(NULL)
+NULL
+SELECT WEEKDAY();
+ERROR 42000: Incorrect parameter count in the call to native function 'WEEKDAY'
+SELECT WEEKDAY(1, 0);
+ERROR 42000: Incorrect parameter count in the call to native function 'WEEKDAY'
+SELECT WEEKDAY("xxx");
+ERROR HY000: Received an invalid datetime value 'xxx'.
+SELECT WEEKDAY("0000-00-00");
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
+SELECT WEEKDAY("0000-01-01");
+ERROR HY000: Received an invalid datetime value '0000-01-01'.
+SELECT WEEKDAY("0001-00-01");
+ERROR HY000: Received an invalid datetime value '0001-00-01'.
+SELECT WEEKDAY("0001-01-00");
+ERROR HY000: Received an invalid datetime value '0001-01-00'.
+SELECT WEEKDAY("2000-02-30");
+ERROR HY000: Received an invalid datetime value '2000-02-30'.
+SELECT WEEKDAY("1900-02-29");
+ERROR HY000: Received an invalid datetime value '1900-02-29'.
+SELECT WEEKDAY('1976-15-15');
+ERROR HY000: Received an invalid datetime value '1976-15-15'.
+SELECT WEEKDAY("2009-01-12");
+WEEKDAY("2009-01-12")
+0
+SELECT WEEKDAY("70-12-31");
+WEEKDAY("70-12-31")
+3
+SELECT WEEKDAY("99-12-31");
+WEEKDAY("99-12-31")
+4
+SELECT WEEKDAY("69-12-31");
+WEEKDAY("69-12-31")
+1
+SELECT WEEKDAY("0001-12-31");
+WEEKDAY("0001-12-31")
+0
+SELECT WEEKDAY("9999-12-31");
+WEEKDAY("9999-12-31")
+4
+SELECT WEEKDAY('07/31/2009');
+WEEKDAY('07/31/2009')
+4
