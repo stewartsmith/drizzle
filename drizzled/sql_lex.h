@@ -88,22 +88,6 @@ typedef struct st_lex_server_options
   char *server_name, *host, *db, *username, *password, *scheme, *owner;
 } LEX_SERVER_OPTIONS;
 
-typedef struct st_lex_master_info
-{
-  char *host, *user, *password, *log_file_name;
-  uint32_t port, connect_retry;
-  float heartbeat_period;
-  uint64_t pos;
-  uint32_t server_id;
-  /*
-    Enum is used for making it possible to detect if the user
-    changed variable or if it should be left at old value
-   */
-  enum {LEX_MI_UNCHANGED, LEX_MI_DISABLE, LEX_MI_ENABLE} heartbeat_opt;
-  char *relay_log_name;
-  uint32_t relay_log_pos;
-} LEX_MASTER_INFO;
-
 
 enum sub_select_type
 {
@@ -1271,8 +1255,6 @@ public:
 
   char *length,*dec,*change;
   LEX_STRING name;
-  char *help_arg;
-  char* to_log;                                 /* For PURGE MASTER LOGS TO */
   String *wild;
   file_exchange *exchange;
   select_result *result;
@@ -1319,7 +1301,6 @@ public:
   HA_CHECK_OPT   check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
   KEY_CREATE_INFO key_create_info;
-  LEX_MASTER_INFO mi;				// used by CHANGE MASTER
   uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
