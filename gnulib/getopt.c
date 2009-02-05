@@ -227,6 +227,9 @@ static const char *
 _getopt_initialize (int argc, char **argv, const char *optstring,
 		    int posixly_correct, struct _getopt_data *d)
 {
+  (void) argc;
+  (void) argv;
+
   /* Start processing options with ARGV-element 1 (since ARGV-element 0
      is the program name); the sequence of previously skipped
      non-option ARGV-elements is empty.  */
