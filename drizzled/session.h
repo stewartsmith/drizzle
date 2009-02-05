@@ -1444,7 +1444,7 @@ my_eof(Session *session)
   XXX: We never call destructor for objects of this class.
 */
 
-class sql_exchange :public Sql_alloc
+class file_exchange :public Sql_alloc
 {
 public:
   enum enum_filetype filetype; /* load XML, Added by Arnold & Erik */
@@ -1454,7 +1454,7 @@ public:
   bool dumpfile;
   ulong skip_lines;
   const CHARSET_INFO *cs;
-  sql_exchange(char *name, bool dumpfile_flag,
+  file_exchange(char *name, bool dumpfile_flag,
                enum_filetype filetype_arg= FILETYPE_CSV);
 };
 
@@ -1538,14 +1538,14 @@ public:
 
 class select_to_file :public select_result_interceptor {
 protected:
-  sql_exchange *exchange;
+  file_exchange *exchange;
   File file;
   IO_CACHE cache;
   ha_rows row_count;
   char path[FN_REFLEN];
 
 public:
-  select_to_file(sql_exchange *ex) :exchange(ex), file(-1),row_count(0L)
+  select_to_file(file_exchange *ex) :exchange(ex), file(-1),row_count(0L)
   { path[0]=0; }
   ~select_to_file();
   void send_error(uint32_t errcode,const char *err);
@@ -1587,7 +1587,7 @@ class select_export :public select_to_file {
   bool is_unsafe_field_sep;
   bool fixed_row_size;
 public:
-  select_export(sql_exchange *ex) :select_to_file(ex) {}
+  select_export(file_exchange *ex) :select_to_file(ex) {}
   ~select_export();
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
@@ -1596,7 +1596,7 @@ public:
 
 class select_dump :public select_to_file {
 public:
-  select_dump(sql_exchange *ex) :select_to_file(ex) {}
+  select_dump(file_exchange *ex) :select_to_file(ex) {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
 };

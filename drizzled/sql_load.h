@@ -25,13 +25,13 @@
 #include <drizzled/item.h>
 
 class TableList;
-class sql_exchange;
+class file_exchange;
 class Session;
 class Table;
 
 typedef struct st_copy_info COPY_INFO;
 
-int mysql_load(Session *session, sql_exchange *ex, TableList *table_list,
+int mysql_load(Session *session, file_exchange *ex, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values_list,
                enum enum_duplicates handle_duplicates, bool ignore,

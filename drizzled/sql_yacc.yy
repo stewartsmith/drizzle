@@ -4539,7 +4539,7 @@ into_destination:
           OUTFILE TEXT_STRING_filesystem
           {
             LEX *lex= Lex;
-            if (!(lex->exchange= new sql_exchange($2.str, 0)) ||
+            if (!(lex->exchange= new file_exchange($2.str, 0)) ||
                 !(lex->result= new select_export(lex->exchange)))
               DRIZZLE_YYABORT;
           }
@@ -4549,7 +4549,7 @@ into_destination:
             LEX *lex=Lex;
             if (!lex->describe)
             {
-              if (!(lex->exchange= new sql_exchange($2.str,1)))
+              if (!(lex->exchange= new file_exchange($2.str,1)))
                 DRIZZLE_YYABORT;
               if (!(lex->result= new select_dump(lex->exchange)))
                 DRIZZLE_YYABORT;
@@ -5230,7 +5230,7 @@ load:
             lex->local_file=  $5;
             lex->duplicates= DUP_ERROR;
             lex->ignore= 0;
-            if (!(lex->exchange= new sql_exchange($7.str, 0, $2)))
+            if (!(lex->exchange= new file_exchange($7.str, 0, $2)))
               DRIZZLE_YYABORT;
           }
           opt_duplicate INTO

@@ -44,7 +44,7 @@ class virtual_column_info;
 
 /* These may not be declared yet */
 class Table_ident;
-class sql_exchange;
+class file_exchange;
 class LEX_COLUMN;
 class Item_outer_ref;
 
@@ -1274,7 +1274,7 @@ public:
   char *help_arg;
   char* to_log;                                 /* For PURGE MASTER LOGS TO */
   String *wild;
-  sql_exchange *exchange;
+  file_exchange *exchange;
   select_result *result;
   Item *default_value, *on_update_value;
   LEX_STRING comment, ident;
