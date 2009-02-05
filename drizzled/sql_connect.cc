@@ -97,18 +97,7 @@ check_user(Session *session, const char *passwd,
 
   session->security_ctx.skip_grants();
 
-  if (check_count)
-  {
-    pthread_mutex_lock(&LOCK_connection_count);
-    bool count_ok= connection_count <= max_connections;
-    pthread_mutex_unlock(&LOCK_connection_count);
-
-    if (!count_ok)
-    {                                         // too many connections
-      my_error(ER_CON_COUNT_ERROR, MYF(0));
-      return(1);
-    }
-  }
+  (void) check_count;  // TODO, get rid of this
 
   /* Change database if necessary */
   if (db && db[0])
