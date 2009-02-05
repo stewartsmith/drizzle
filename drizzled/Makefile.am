@@ -692,7 +692,8 @@ endif
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
 
-function_hash.h: function_hash.gperf
+function_hash.h: function_hash-stamp
+function_hash-stamp: function_hash.gperf
 	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=Function_hash \
@@ -704,8 +705,10 @@ function_hash.h: function_hash.gperf
 		mv ${top_builddir}/drizzled/function_hash.h-t \
 		   ${top_builddir}/drizzled/function_hash.h ; \
 	fi
+	@touch function_hash-stamp
 
-symbol_hash.h: symbol_hash.gperf
+symbol_hash.h: symbol_hash-stamp
+symbol_hash-stamp: symbol_hash.gperf
 	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=Symbol_hash \
@@ -717,4 +720,5 @@ symbol_hash.h: symbol_hash.gperf
 		mv ${top_builddir}/drizzled/symbol_hash.h-t \
 		   ${top_builddir}/drizzled/symbol_hash.h ; \
 	fi
+	@touch symbol_hash-stamp
 
