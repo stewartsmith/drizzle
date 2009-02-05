@@ -33,6 +33,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/query_arena.h>
+#include <drizzled/file_exchange.h>
 #include <string>
 #include <bitset>
 
@@ -1437,26 +1438,6 @@ my_eof(Session *session)
 {
   session->main_da.set_eof_status(session);
 }
-
-/*
-  Used to hold information about file and file structure in exchange
-  via non-DB file (...INTO OUTFILE..., ...LOAD DATA...)
-  XXX: We never call destructor for objects of this class.
-*/
-
-class file_exchange :public Sql_alloc
-{
-public:
-  enum enum_filetype filetype; /* load XML, Added by Arnold & Erik */
-  char *file_name;
-  String *field_term,*enclosed,*line_term,*line_start,*escaped;
-  bool opt_enclosed;
-  bool dumpfile;
-  ulong skip_lines;
-  const CHARSET_INFO *cs;
-  file_exchange(char *name, bool dumpfile_flag,
-               enum_filetype filetype_arg= FILETYPE_CSV);
-};
 
 /*
   This is used to get result from a select
