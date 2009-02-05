@@ -2279,21 +2279,7 @@ int main(int argc, char **argv)
 static void create_new_thread(Session *session)
 {
 
-  /*
-    Don't allow too many connections. We roughly check here that we allow
-    only (max_connections + 1) connections.
-  */
-
   pthread_mutex_lock(&LOCK_connection_count);
-
-  if (connection_count >= max_connections + 1 || abort_loop)
-  {
-    pthread_mutex_unlock(&LOCK_connection_count);
-
-    session->close_connection(ER_CON_COUNT_ERROR, 1);
-    delete session;
-    return;;
-  }
 
   ++connection_count;
 
