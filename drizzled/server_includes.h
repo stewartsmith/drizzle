@@ -125,7 +125,6 @@ extern uint64_t slow_launch_threads;
 extern uint64_t slow_launch_time;
 extern uint64_t table_cache_size;
 extern uint64_t table_def_size;
-extern uint64_t max_connections;
 extern uint64_t max_connect_errors;
 extern uint64_t connect_timeout;
 extern uint32_t max_user_connections;

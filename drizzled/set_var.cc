@@ -181,8 +181,6 @@ static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
                                          &opt_local_infile);
 static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
                                                        &SV::max_allowed_packet);
-static sys_var_long_ptr	sys_max_connections(&vars, "max_connections",
-                                            &max_connections);
 static sys_var_long_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
                                                &max_connect_errors);
 static sys_var_session_uint64_t	sys_max_error_count(&vars, "max_error_count",

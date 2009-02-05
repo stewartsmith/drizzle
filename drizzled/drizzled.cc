@@ -315,7 +315,6 @@ uint64_t open_files_limit;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
-uint64_t max_connections;
 uint64_t max_connect_errors;
 ulong thread_id=1L;
 pid_t current_pid;
@@ -2484,7 +2483,7 @@ enum options_drizzled
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
   OPT_LONG_QUERY_TIME,
   OPT_LOWER_CASE_TABLE_NAMES, OPT_MAX_ALLOWED_PACKET,
-  OPT_MAX_CONNECTIONS, OPT_MAX_CONNECT_ERRORS,
+  OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
   OPT_MAX_JOIN_SIZE,
   OPT_MAX_RELAY_LOG_SIZE, OPT_MAX_SORT_LENGTH,
@@ -2881,12 +2880,6 @@ struct my_option my_long_options[] =
       "host this host will be blocked from further connections."),
    (char**) &max_connect_errors, (char**) &max_connect_errors, 0, GET_ULONG,
    REQUIRED_ARG, MAX_CONNECT_ERRORS, 1, ULONG_MAX, 0, 1, 0},
-  // Default max_connections of 151 is larger than Apache's default max
-  // children, to avoid "too many connections" error in a common setup
-  {"max_connections", OPT_MAX_CONNECTIONS,
-   N_("The number of simultaneous clients allowed."),
-   (char**) &max_connections,
-   (char**) &max_connections, 0, GET_ULONG, REQUIRED_ARG, 2048, 1, 100000, 0, 1, 0},
   {"max_error_count", OPT_MAX_ERROR_COUNT,
    N_("Max number of errors/warnings to store for a statement."),
    (char**) &global_system_variables.max_error_count,
