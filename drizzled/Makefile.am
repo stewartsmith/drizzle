@@ -287,6 +287,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		rename.h \
 		replicator.h \
 		scheduling.h \
+		select_result.h \
+		select_result_interceptor.h \
+		select_send.h \
 		session.h \
 		set_var.h \
 		show.h \

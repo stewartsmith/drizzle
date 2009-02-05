@@ -34,6 +34,7 @@
 #include <drizzled/sql_error.h>
 #include <drizzled/query_arena.h>
 #include <drizzled/file_exchange.h>
+#include <drizzled/select_result_interceptor.h>
 #include <string>
 #include <bitset>
 
@@ -1439,77 +1440,6 @@ public:
 */
 
 class JOIN;
-
-class select_result :public Sql_alloc {
-protected:
-  Session *session;
-  SELECT_LEX_UNIT *unit;
-public:
-  select_result();
-  virtual ~select_result() {};
-  virtual int prepare(List<Item> &,
-                      SELECT_LEX_UNIT *u)
-  {
-    unit= u;
-    return 0;
-  }
-  /*
-    Because of peculiarities of prepared statements protocol
-    we need to know number of columns in the result set (if
-    there is a result set) apart from sending columns metadata.
-  */
-  virtual uint32_t field_count(List<Item> &fields) const
-  { return fields.elements; }
-  virtual bool send_fields(List<Item> &list, uint32_t flags)=0;
-  virtual bool send_data(List<Item> &items)=0;
-  virtual bool initialize_tables (JOIN *)
-  { return 0; }
-  virtual void send_error(uint32_t errcode,const char *err);
-  virtual bool send_eof()=0;
-  virtual void abort() {}
-  /*
-    Cleanup instance of this class for next execution of a prepared
-    statement/stored procedure.
-  */
-  virtual void cleanup();
-  void set_session(Session *session_arg) { session= session_arg; }
-  void begin_dataset() {}
-};
-
-
-/*
-  Base class for select_result descendands which intercept and
-  transform result set rows. As the rows are not sent to the client,
-  sending of result set metadata should be suppressed as well.
-*/
-
-class select_result_interceptor: public select_result
-{
-public:
-  select_result_interceptor() {}              /* Remove gcc warning */
-  uint32_t field_count(List<Item> &) const
-  { return 0; }
-  bool send_fields(List<Item> &,
-                   uint32_t)
-  { return false; }
-};
-
-
-class select_send :public select_result {
-  /**
-    True if we have sent result set metadata to the client.
-    In this case the client always expects us to end the result
-    set with an eof or error packet
-  */
-  bool is_result_set_started;
-public:
-  select_send() :is_result_set_started(false) {}
-  bool send_fields(List<Item> &list, uint32_t flags);
-  bool send_data(List<Item> &items);
-  bool send_eof();
-  void abort();
-  virtual void cleanup();
-};
 
 
 class select_to_file :public select_result_interceptor {

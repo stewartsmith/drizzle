@@ -35,6 +35,7 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/connect.h>
 #include <drizzled/lock.h>
+#include <drizzled/select_send.h>
 #include <bitset>
 
 using namespace std;
