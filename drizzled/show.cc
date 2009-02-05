@@ -3873,7 +3873,7 @@ int make_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
         field->set_name(field_info->old_name,
                         strlen(field_info->old_name),
                         system_charset_info);
-        if (add_item_to_list(session, field))
+        if (session->add_item_to_list(field))
           return 1;
       }
     }
@@ -3895,7 +3895,7 @@ int make_schemata_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
     String buffer(tmp,sizeof(tmp), system_charset_info);
     Item_field *field= new Item_field(context,
                                       NULL, NULL, field_info->field_name);
-    if (!field || add_item_to_list(session, field))
+    if (!field || session->add_item_to_list(field))
       return 1;
     buffer.length(0);
     buffer.append(field_info->old_name);
@@ -3930,7 +3930,7 @@ int make_table_names_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
   }
   Item_field *field= new Item_field(context,
                                     NULL, NULL, field_info->field_name);
-  if (add_item_to_list(session, field))
+  if (session->add_item_to_list(field))
     return 1;
   field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
   if (session->lex->verbose)
@@ -3938,7 +3938,7 @@ int make_table_names_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
     field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
     field_info= &schema_table->fields_info[3];
     field= new Item_field(context, NULL, NULL, field_info->field_name);
-    if (add_item_to_list(session, field))
+    if (session->add_item_to_list(field))
       return 1;
     field->set_name(field_info->old_name, strlen(field_info->old_name),
                     system_charset_info);
@@ -3968,7 +3968,7 @@ int make_columns_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
       field->set_name(field_info->old_name,
                       strlen(field_info->old_name),
                       system_charset_info);
-      if (add_item_to_list(session, field))
+      if (session->add_item_to_list(field))
         return 1;
     }
   }
@@ -3993,7 +3993,7 @@ int make_character_sets_old_format(Session *session, ST_SCHEMA_TABLE *schema_tab
       field->set_name(field_info->old_name,
                       strlen(field_info->old_name),
                       system_charset_info);
-      if (add_item_to_list(session, field))
+      if (session->add_item_to_list(field))
         return 1;
     }
   }

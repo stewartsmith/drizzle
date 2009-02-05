@@ -2799,10 +2799,9 @@ select_item_list:
         | '*'
           {
             Session *session= YYSession;
-            if (add_item_to_list(session,
-                                 new Item_field(&session->lex->current_select->
-                                                context,
-                                                NULL, NULL, "*")))
+            if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                          context,
+                                                          NULL, NULL, "*")))
               DRIZZLE_YYABORT;
             (session->lex->current_select->with_wild)++;
           }
@@ -2813,7 +2812,7 @@ select_item:
           {
             Session *session= YYSession;
 
-            if (add_item_to_list(session, $2))
+            if (session->add_item_to_list($2))
               DRIZZLE_YYABORT;
           }
         | remember_name expr remember_end select_alias
@@ -2821,7 +2820,7 @@ select_item:
             Session *session= YYSession;
             assert($1 < $3);
 
-            if (add_item_to_list(session, $2))
+            if (session->add_item_to_list($2))
               DRIZZLE_YYABORT;
             if ($4.str)
             {
@@ -4288,9 +4287,9 @@ group_clause:
 
 group_list:
           group_list ',' order_ident order_dir
-          { if (add_group_to_list(YYSession, $3,(bool) $4)) DRIZZLE_YYABORT; }
+          { if (YYSession->add_group_to_list($3,(bool) $4)) DRIZZLE_YYABORT; }
         | order_ident order_dir
-          { if (add_group_to_list(YYSession, $1,(bool) $2)) DRIZZLE_YYABORT; }
+          { if (YYSession->add_group_to_list($1,(bool) $2)) DRIZZLE_YYABORT; }
         ;
 
 olap_opt:
@@ -4333,7 +4332,7 @@ alter_order_item:
           {
             Session *session= YYSession;
             bool ascending= ($2 == 1) ? true : false;
-            if (add_order_to_list(session, $1, ascending))
+            if (session->add_order_to_list($1, ascending))
               DRIZZLE_YYABORT;
           }
         ;
@@ -4384,9 +4383,9 @@ order_clause:
 
 order_list:
           order_list ',' order_ident order_dir
-          { if (add_order_to_list(YYSession, $3,(bool) $4)) DRIZZLE_YYABORT; }
+          { if (YYSession->add_order_to_list($3,(bool) $4)) DRIZZLE_YYABORT; }
         | order_ident order_dir
-          { if (add_order_to_list(YYSession, $1,(bool) $2)) DRIZZLE_YYABORT; }
+          { if (YYSession->add_order_to_list($1,(bool) $2)) DRIZZLE_YYABORT; }
         ;
 
 order_dir:
@@ -4843,7 +4842,7 @@ update_list:
 update_elem:
           simple_ident_nospvar equal expr_or_default
           {
-            if (add_item_to_list(YYSession, $1) || add_value_to_list(YYSession, $3))
+            if (YYSession->add_item_to_list($1) || YYSession->add_value_to_list($3))
               DRIZZLE_YYABORT;
           }
         ;

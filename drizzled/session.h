@@ -541,9 +541,7 @@ public:
 /* Flags for the Session::system_thread variable */
 enum enum_thread_type
 {
-  NON_SYSTEM_THREAD,
-  SYSTEM_THREAD_SLAVE_IO,
-  SYSTEM_THREAD_SLAVE_SQL
+  NON_SYSTEM_THREAD
 };
 
 
@@ -1433,6 +1431,28 @@ public:
   {
     main_da.set_eof_status(this);
   }
+
+  /* Some inline functions for more speed */
+
+  inline bool add_item_to_list(Item *item)
+  {
+    return lex->current_select->add_item_to_list(this, item);
+  }
+
+  inline bool add_value_to_list(Item *value)
+  {
+    return lex->value_list.push_back(value);
+  }
+
+  inline bool add_order_to_list(Item *item, bool asc)
+  {
+    return lex->current_select->add_order_to_list(this, item, asc);
+  }
+
+  inline bool add_group_to_list(Item *item, bool asc)
+  {
+    return lex->current_select->add_group_to_list(this, item, asc);
+  }
 };
 
 /*
@@ -1955,27 +1975,5 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
-
-/* Some inline functions for more speed */
-
-inline bool add_item_to_list(Session *session, Item *item)
-{
-  return session->lex->current_select->add_item_to_list(session, item);
-}
-
-inline bool add_value_to_list(Session *session, Item *value)
-{
-  return session->lex->value_list.push_back(value);
-}
-
-inline bool add_order_to_list(Session *session, Item *item, bool asc)
-{
-  return session->lex->current_select->add_order_to_list(session, item, asc);
-}
-
-inline bool add_group_to_list(Session *session, Item *item, bool asc)
-{
-  return session->lex->current_select->add_group_to_list(session, item, asc);
-}
 
 #endif /* DRIZZLED_SQL_CLASS_H */

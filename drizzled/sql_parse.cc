@@ -1575,7 +1575,7 @@ end_with_restore_list:
     /* condition will be true on SP re-excuting */
     if (select_lex->item_list.elements != 0)
       select_lex->item_list.empty();
-    if (add_item_to_list(session, new Item_null()))
+    if (session->add_item_to_list(new Item_null()))
       goto error;
 
     session->set_proc_info("init");
@@ -2234,7 +2234,7 @@ void create_select_for_variable(const char *var_name)
   {
     end+= sprintf(buff, "@@session.%s", var_name);
     var->set_name(buff, end-buff, system_charset_info);
-    add_item_to_list(session, var);
+    session->add_item_to_list(var);
   }
   return;
 }
