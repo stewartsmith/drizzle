@@ -33,6 +33,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/query_arena.h>
+#include <drizzled/file_exchange.h>
 #include <string>
 #include <bitset>
 
@@ -1439,26 +1440,6 @@ my_eof(Session *session)
 }
 
 /*
-  Used to hold information about file and file structure in exchange
-  via non-DB file (...INTO OUTFILE..., ...LOAD DATA...)
-  XXX: We never call destructor for objects of this class.
-*/
-
-class sql_exchange :public Sql_alloc
-{
-public:
-  enum enum_filetype filetype; /* load XML, Added by Arnold & Erik */
-  char *file_name;
-  String *field_term,*enclosed,*line_term,*line_start,*escaped;
-  bool opt_enclosed;
-  bool dumpfile;
-  ulong skip_lines;
-  const CHARSET_INFO *cs;
-  sql_exchange(char *name, bool dumpfile_flag,
-               enum_filetype filetype_arg= FILETYPE_CSV);
-};
-
-/*
   This is used to get result from a select
 */
 
@@ -1538,14 +1519,14 @@ public:
 
 class select_to_file :public select_result_interceptor {
 protected:
-  sql_exchange *exchange;
+  file_exchange *exchange;
   File file;
   IO_CACHE cache;
   ha_rows row_count;
   char path[FN_REFLEN];
 
 public:
-  select_to_file(sql_exchange *ex) :exchange(ex), file(-1),row_count(0L)
+  select_to_file(file_exchange *ex) :exchange(ex), file(-1),row_count(0L)
   { path[0]=0; }
   ~select_to_file();
   void send_error(uint32_t errcode,const char *err);
@@ -1587,7 +1568,7 @@ class select_export :public select_to_file {
   bool is_unsafe_field_sep;
   bool fixed_row_size;
 public:
-  select_export(sql_exchange *ex) :select_to_file(ex) {}
+  select_export(file_exchange *ex) :select_to_file(ex) {}
   ~select_export();
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
@@ -1596,7 +1577,7 @@ public:
 
 class select_dump :public select_to_file {
 public:
-  select_dump(sql_exchange *ex) :select_to_file(ex) {}
+  select_dump(file_exchange *ex) :select_to_file(ex) {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
 };

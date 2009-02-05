@@ -67,6 +67,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/timestamp.h \
 		field/timetype.h \
 		field/varstring.h \
+		file_exchange.h \
 		filesort_info.h \
 		foreign_key.h \
 		function_hash.h \

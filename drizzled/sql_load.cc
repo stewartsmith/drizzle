@@ -92,7 +92,7 @@ static int read_sep_field(Session *session, COPY_INFO &info, TableList *table_li
   SYNOPSYS
     mysql_load()
       session - current thread
-      ex  - sql_exchange object representing source file and its parsing rules
+      ex  - file_exchange object representing source file and its parsing rules
       table_list  - list of tables to which we are loading data
       fields_vars - list of fields and variables to which we read
                     data from file
@@ -107,7 +107,7 @@ static int read_sep_field(Session *session, COPY_INFO &info, TableList *table_li
     true - error / false - success
 */
 
-int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
+int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore,

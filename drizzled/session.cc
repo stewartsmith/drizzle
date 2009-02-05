@@ -1250,22 +1250,6 @@ void select_result::cleanup()
   /* do nothing */
 }
 
-static String default_line_term("\n",default_charset_info);
-static String default_escaped("\\",default_charset_info);
-static String default_field_term("\t",default_charset_info);
-
-sql_exchange::sql_exchange(char *name, bool flag,
-                           enum enum_filetype filetype_arg)
-  :file_name(name), opt_enclosed(0), dumpfile(flag), skip_lines(0)
-{
-  filetype= filetype_arg;
-  field_term= &default_field_term;
-  enclosed=   line_start= &my_empty_string;
-  line_term=  &default_line_term;
-  escaped=    &default_escaped;
-  cs= NULL;
-}
-
 bool select_send::send_fields(List<Item> &list, uint32_t flags)
 {
   bool res;
@@ -1442,7 +1426,7 @@ select_export::~select_export()
 */
 
 
-static File create_file(Session *session, char *path, sql_exchange *exchange,
+static File create_file(Session *session, char *path, file_exchange *exchange,
 			IO_CACHE *cache)
 {
   File file;
