@@ -67,6 +67,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/timestamp.h \
 		field/timetype.h \
 		field/varstring.h \
+		file_exchange.h \
 		filesort_info.h \
 		foreign_key.h \
 		function_hash.h \
@@ -286,6 +287,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		rename.h \
 		replicator.h \
 		scheduling.h \
+		select_result.h \
+		select_result_interceptor.h \
+		select_send.h \
 		session.h \
 		set_var.h \
 		show.h \
@@ -314,7 +318,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_list.h \
 		table_map_iterator.h \
 		table_share.h \
-		tableop_hooks.h \
 		temporal.h \
 		temporal_format.h \
 		tmp_table.h \
@@ -608,7 +611,6 @@ drizzled_SOURCES = \
 		strfunc.cc \
 		table.cc \
                 table_map_iterator.cc \
-		tableop_hooks.cc \
 		temporal.cc \
 		temporal_format.cc \
 		thr_malloc.cc \

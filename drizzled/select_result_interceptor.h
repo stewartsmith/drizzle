@@ -17,20 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
-#include <drizzled/tableop_hooks.h>
-#include CSTDINT_H
 
-class Table;
+#ifndef DRIZZLED_SELECT_RESULT_INTERCEPTOR_H
+#define DRIZZLED_SELECT_RESULT_INTERCEPTOR_H
 
-void Tableop_hooks::do_prelock(Table **, uint32_t)
+#include <drizzled/select_result.h>
+
+/*
+  Base class for select_result descendands which intercept and
+  transform result set rows. As the rows are not sent to the client,
+  sending of result set metadata should be suppressed as well.
+*/
+
+class select_result_interceptor: public select_result
 {
-  /* Default is to do nothing */
-}
+public:
+  select_result_interceptor() {}              /* Remove gcc warning */
+  uint32_t field_count(List<Item> &) const
+  { return 0; }
+  bool send_fields(List<Item> &, uint32_t)
+  { return false; }
+};
 
 
-int Tableop_hooks::do_postlock(Table **, uint32_t)
-{
-  /* Default is to do nothing */
-  return 0;
-}
+#endif /* DRIZZLED_SELECT_RESULT_INTERCEPTOR_H */

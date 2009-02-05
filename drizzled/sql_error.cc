@@ -233,6 +233,6 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
     if (protocol->write())
       return(true);
   }
-  my_eof(session);
+  session->my_eof();
   return(false);
 }

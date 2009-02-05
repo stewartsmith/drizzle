@@ -1230,132 +1230,6 @@ void Session::rollback_item_tree_changes()
 }
 
 
-/*****************************************************************************
-** Functions to provide a interface to select results
-*****************************************************************************/
-
-select_result::select_result()
-{
-  session=current_session;
-}
-
-void select_result::send_error(uint32_t errcode,const char *err)
-{
-  my_message(errcode, err, MYF(0));
-}
-
-
-void select_result::cleanup()
-{
-  /* do nothing */
-}
-
-static String default_line_term("\n",default_charset_info);
-static String default_escaped("\\",default_charset_info);
-static String default_field_term("\t",default_charset_info);
-
-sql_exchange::sql_exchange(char *name, bool flag,
-                           enum enum_filetype filetype_arg)
-  :file_name(name), opt_enclosed(0), dumpfile(flag), skip_lines(0)
-{
-  filetype= filetype_arg;
-  field_term= &default_field_term;
-  enclosed=   line_start= &my_empty_string;
-  line_term=  &default_line_term;
-  escaped=    &default_escaped;
-  cs= NULL;
-}
-
-bool select_send::send_fields(List<Item> &list, uint32_t flags)
-{
-  bool res;
-  if (!(res= session->protocol->send_fields(&list, flags)))
-    is_result_set_started= 1;
-  return res;
-}
-
-void select_send::abort()
-{
-  return;
-}
-
-
-/**
-  Cleanup an instance of this class for re-use
-  at next execution of a prepared statement/
-  stored procedure statement.
-*/
-
-void select_send::cleanup()
-{
-  is_result_set_started= false;
-}
-
-/* Send data to client. Returns 0 if ok */
-
-bool select_send::send_data(List<Item> &items)
-{
-  if (unit->offset_limit_cnt)
-  {						// using limit offset,count
-    unit->offset_limit_cnt--;
-    return 0;
-  }
-
-  /*
-    We may be passing the control from mysqld to the client: release the
-    InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
-    by session
-  */
-  ha_release_temporary_latches(session);
-
-  List_iterator_fast<Item> li(items);
-  Protocol *protocol= session->protocol;
-  char buff[MAX_FIELD_WIDTH];
-  String buffer(buff, sizeof(buff), &my_charset_bin);
-
-  protocol->prepare_for_resend();
-  Item *item;
-  while ((item=li++))
-  {
-    if (item->send(protocol, &buffer))
-    {
-      protocol->free();				// Free used buffer
-      my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-      break;
-    }
-  }
-  session->sent_row_count++;
-  if (session->is_error())
-  {
-    protocol->remove_last_row();
-    return(1);
-  }
-  if (session->vio_ok())
-    return(protocol->write());
-  return(0);
-}
-
-bool select_send::send_eof()
-{
-  /*
-    We may be passing the control from mysqld to the client: release the
-    InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
-    by session
-  */
-  ha_release_temporary_latches(session);
-
-  /* Unlock tables before sending packet to gain some speed */
-  if (session->lock)
-  {
-    mysql_unlock_tables(session, session->lock);
-    session->lock=0;
-  }
-  ::my_eof(session);
-  is_result_set_started= 0;
-  return false;
-}
-
-
 /************************************************************************
   Handling writing to file
 ************************************************************************/
@@ -1385,7 +1259,7 @@ bool select_to_file::send_eof()
       function, SELECT INTO has to have an own SQLCOM.
       TODO: split from SQLCOM_SELECT
     */
-    ::my_ok(session,row_count);
+    session->my_ok(row_count);
   }
   file= -1;
   return error;
@@ -1442,7 +1316,7 @@ select_export::~select_export()
 */
 
 
-static File create_file(Session *session, char *path, sql_exchange *exchange,
+static File create_file(Session *session, char *path, file_exchange *exchange,
 			IO_CACHE *cache)
 {
   File file;
@@ -2071,7 +1945,7 @@ bool select_dumpvar::send_eof()
     function, SELECT INTO has to have an own SQLCOM.
     TODO: split from SQLCOM_SELECT
   */
-  ::my_ok(session,row_count);
+  session->my_ok(row_count);
   return 0;
 }
 

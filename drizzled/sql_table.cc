@@ -362,7 +362,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 
   if (error)
     return(true);
-  my_ok(session);
+  session->my_ok();
   return(false);
 }
 
@@ -2756,7 +2756,7 @@ send_result_message:
       goto err;
   }
 
-  my_eof(session);
+  session->my_eof();
   return(false);
 
 err:
@@ -3201,7 +3201,7 @@ err:
 
   if (error == 0)
   {
-    my_ok(session);
+    session->my_ok();
     return(0);
   }
 
@@ -4634,7 +4634,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     if (!error)
     {
       write_bin_log(session, true, session->query, session->query_length);
-      my_ok(session);
+      session->my_ok();
   }
     else if (error > 0)
   {
@@ -5027,7 +5027,7 @@ end_temporary:
   snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
            (ulong) (copied + deleted), (ulong) deleted,
            (ulong) session->cuted_fields);
-  my_ok(session, copied + deleted, 0L, tmp_name);
+  session->my_ok(copied + deleted, 0L, tmp_name);
   session->some_tables_deleted=0;
   return(false);
 
@@ -5445,7 +5445,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
       goto err;
   }
 
-  my_eof(session);
+  session->my_eof();
   return(false);
 
  err:

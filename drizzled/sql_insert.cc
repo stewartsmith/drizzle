@@ -27,9 +27,7 @@
 #include <drizzled/show.h>
 #include <drizzled/error.h>
 #include <drizzled/name_resolution_context_state.h>
-#include <drizzled/sql_parse.h>
 #include <drizzled/probes.h>
-#include <drizzled/tableop_hooks.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_load.h>
 #include <drizzled/field/timestamp.h>
@@ -234,7 +232,6 @@ bool mysql_insert(Session *session,TableList *table_list,
   int error;
   bool transactional_table, joins_freed= false;
   bool changed;
-  bool was_insert_delayed= (table_list->lock_type ==  TL_WRITE_DELAYED);
   uint32_t value_count;
   ulong counter = 1;
   uint64_t id;
@@ -255,24 +252,9 @@ bool mysql_insert(Session *session,TableList *table_list,
   upgrade_lock_type(session, &table_list->lock_type, duplic,
                     values_list.elements > 1);
 
-  /*
-    We can't write-delayed into a table locked with LOCK TABLES:
-    this will lead to a deadlock, since the delayed thread will
-    never be able to get a lock on the table. QQQ: why not
-    upgrade the lock here instead?
-  */
-  if (table_list->lock_type == TL_WRITE_DELAYED && session->locked_tables &&
-      find_locked_table(session, table_list->db, table_list->table_name))
-  {
-    my_error(ER_DELAYED_INSERT_TABLE_LOCKED, MYF(0),
-             table_list->table_name);
+  if (open_and_lock_tables(session, table_list))
     return(true);
-  }
 
-  {
-    if (open_and_lock_tables(session, table_list))
-      return(true);
-  }
   lock_type= table_list->lock_type;
 
   session->set_proc_info("init");
@@ -439,21 +421,13 @@ bool mysql_insert(Session *session,TableList *table_list,
 
     transactional_table= table->file->has_transactions();
 
-    if ((changed= (info.copied || info.deleted || info.updated)))
-    {
-      /*
-        Invalidate the table in the query cache if something changed.
-        For the transactional algorithm to work the invalidation must be
-        before binlog writing and ha_autocommit_or_rollback
-      */
-    }
-    if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table || was_insert_delayed)
+    changed= (info.copied || info.deleted || info.updated);
+    if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table)
     {
       if (session->transaction.stmt.modified_non_trans_table)
 	session->transaction.all.modified_non_trans_table= true;
     }
-    assert(transactional_table || !changed ||
-                session->transaction.stmt.modified_non_trans_table);
+    assert(transactional_table || !changed || session->transaction.stmt.modified_non_trans_table);
 
   }
   session->set_proc_info("end");
@@ -487,7 +461,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     session->row_count_func= info.copied + info.deleted +
                          ((session->client_capabilities & CLIENT_FOUND_ROWS) ?
                           info.touched : info.updated);
-    my_ok(session, (ulong) session->row_count_func, id);
+    session->my_ok((ulong) session->row_count_func, id);
   }
   else
   {
@@ -501,7 +475,7 @@ bool mysql_insert(Session *session,TableList *table_list,
       sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + updated;
-    ::my_ok(session, (ulong) session->row_count_func, id, buff);
+    session->my_ok((ulong) session->row_count_func, id, buff);
   }
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_END();
@@ -753,8 +727,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
   save_read_set=  table->read_set;
   save_write_set= table->write_set;
 
-  if (info->handle_duplicates == DUP_REPLACE ||
-      info->handle_duplicates == DUP_UPDATE)
+  if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE)
   {
     while ((error=table->file->ha_write_row(table->record[0])))
     {
@@ -1389,7 +1362,7 @@ bool select_insert::send_eof()
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  ::my_ok(session, (ulong) session->row_count_func, id, buff);
+  session->my_ok((ulong) session->row_count_func, id, buff);
   return(0);
 }
 
@@ -1483,8 +1456,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       TableList *create_table,
                                       Alter_info *alter_info,
                                       List<Item> *items,
-                                      DRIZZLE_LOCK **lock,
-                                      Tableop_hooks *hooks)
+                                      DRIZZLE_LOCK **lock)
 {
   Table tmp_table;		// Used during 'Create_field()'
   TABLE_SHARE share;
@@ -1616,10 +1588,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   }
 
   table->reginfo.lock_type=TL_WRITE;
-  hooks->prelock(&table, 1);                    // Call prelock hooks
   if (! ((*lock)= mysql_lock_tables(session, &table, 1,
-                                    DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)) ||
-        hooks->postlock(&table, 1))
+                                    DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)))
   {
     if (*lock)
     {
@@ -1639,9 +1609,6 @@ int
 select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 {
   DRIZZLE_LOCK *extra_lock= NULL;
-
-
-  Tableop_hooks *hook_ptr= NULL;
   /*
     For row-based replication, the CREATE-SELECT statement is written
     in two pieces: the first one contain the CREATE TABLE statement
@@ -1660,30 +1627,6 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     slave.  Hence, we have to hold on to the CREATE part of the
     statement until the statement has finished.
    */
-  class MY_HOOKS : public Tableop_hooks {
-  public:
-    MY_HOOKS(select_create *x, TableList *create_table,
-             TableList *select_tables)
-      : ptr(x), all_tables(*create_table)
-      {
-        all_tables.next_global= select_tables;
-      }
-
-  private:
-    virtual int do_postlock(Table **, uint32_t)
-    {
-      /*
-        ptr->binlog_show_create_table(tables, count);
-      */
-      return 0;
-    }
-
-    select_create *ptr;
-    TableList all_tables;
-  };
-
-  MY_HOOKS hooks(this, create_table, select_tables);
-  hook_ptr= &hooks;
 
   unit= u;
 
@@ -1695,7 +1638,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 
   if (!(table= create_table_from_items(session, create_info, create_table,
                                        alter_info, &values,
-                                       &extra_lock, hook_ptr)))
+                                       &extra_lock)))
     return(-1);				// abort() deletes table
 
   if (extra_lock)
