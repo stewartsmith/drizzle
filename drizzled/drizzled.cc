@@ -1257,8 +1257,7 @@ extern "C" void handle_segfault(int sig)
           (uint64_t)(((uint32_t) dflt_key_cache->key_cache_mem_size +
                      (global_system_variables.read_buff_size +
                       global_system_variables.sortbuff_size) *
-                     thread_scheduler.max_threads +
-                     max_connections * sizeof(Session)) / 1024));
+                     thread_scheduler.max_threads) / 1024));
 
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
