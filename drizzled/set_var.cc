@@ -621,7 +621,7 @@ extern void fix_delay_key_write(Session *, enum_var_type)
 
 static void fix_max_connections(Session *, enum_var_type)
 {
-  resize_thr_alarm(max_connections +  10);
+  return;
 }
 
 
