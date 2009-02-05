@@ -1833,56 +1833,8 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
 
   /* connections and databases needs lots of files */
-  {
-    uint64_t files, wanted_files, max_open_files;
+  open_files_limit= my_set_max_open_files(0xFFFFFFFF);
 
-    /* MyISAM requires two file handles per table. */
-    wanted_files= 10+max_connections+table_cache_size*2;
-    /*
-      We are trying to allocate no less than max_connections*5 file
-      handles (i.e. we are trying to set the limit so that they will
-      be available).  In addition, we allocate no less than how much
-      was already allocated.  However below we report a warning and
-      recompute values only if we got less file handles than were
-      explicitly requested.  No warning and re-computation occur if we
-      can't get max_connections*5 but still got no less than was
-      requested (value of wanted_files).
-    */
-    max_open_files= cmax(cmax((uint32_t)wanted_files, max_connections*5),
-                         open_files_limit);
-    files= my_set_max_open_files(max_open_files);
-
-    if (files < wanted_files)
-    {
-      if (!open_files_limit)
-      {
-        /*
-          If we have requested too much file handles than we bring
-          max_connections in supported bounds.
-        */
-        max_connections= (uint32_t) cmin((uint32_t)files-10-TABLE_OPEN_CACHE_MIN*2,
-                                     max_connections);
-        /*
-          Decrease table_cache_size according to max_connections, but
-          not below TABLE_OPEN_CACHE_MIN.  Outer cmin() ensures that we
-          never increase table_cache_size automatically (that could
-          happen if max_connections is decreased above).
-        */
-        table_cache_size= (uint32_t) cmin(cmax((files-10-max_connections)/2,
-                                               (uint32_t)TABLE_OPEN_CACHE_MIN),
-                                          table_cache_size);
-        if (global_system_variables.log_warnings)
-              errmsg_printf(ERRMSG_LVL_WARN, _("Changed limits: max_open_files: %u  "
-                                               "max_connections: %"PRIu64"  table_cache: %"PRIu64""),
-                            files, max_connections, table_cache_size);
-      }
-      else if (global_system_variables.log_warnings)
-          errmsg_printf(ERRMSG_LVL_WARN, _("Could not increase number of max_open_files "
-                            "to more than %u (request: %u)"),
-                          files, wanted_files);
-    }
-    open_files_limit= files;
-  }
   unireg_init(); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
