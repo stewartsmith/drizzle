@@ -40,6 +40,15 @@ int64_t Item_func_dayofmonth::val_int()
   
   switch (arg0_result_type)
   {
+    case DECIMAL_RESULT: 
+      /* 
+       * For doubles supplied, interpret the arg as a string, 
+       * so intentionally fall-through here...
+       * This allows us to accept double parameters like 
+       * 19971231235959.01 and interpret it the way MySQL does:
+       * as a TIMESTAMP-like thing with a microsecond component.
+       * Ugh, but need to keep backwards-compat.
+       */
     case STRING_RESULT:
       {
         char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];

@@ -146,8 +146,6 @@ static void prepare_record_for_error_message(int error, Table *table)
 
   RETURN
     0  - OK
-    2  - privilege check and openning table passed, but we need to convert to
-         multi-update because of view substitution
     1  - error
 */
 

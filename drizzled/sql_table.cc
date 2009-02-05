@@ -1857,10 +1857,11 @@ bool mysql_create_table_no_lock(Session *session,
         break;
       case HA_ERR_TABLE_EXIST:
 
-        if (create_if_not_exists)
-          goto warn;
-        my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
-        goto unlock_and_end;
+      if (create_if_not_exists)
+        goto warn;
+      my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
+      goto unlock_and_end;
+        break;
       default:
         my_error(retcode, MYF(0),table_name);
         goto unlock_and_end;
@@ -3785,6 +3786,7 @@ Table *create_altered_table(Session *session,
                                       OTM_ALTER);
   return(altered_table);
 
+  return(NULL);
 }
 
 

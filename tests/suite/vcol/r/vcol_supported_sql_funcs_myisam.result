@@ -2392,21 +2392,6 @@ a	b
 2007-10-07 00:00:00	733321
 drop table t1;
 set sql_warnings = 0;
-# WEEK()
-set sql_warnings = 1;
-create table t1 (a datetime, b virtual int as (week(a)));
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `a` datetime,
-  `b` VIRTUAL int AS (week(a))
-) ENGINE=MyISAM
-insert into t1 values ('2008-09-01',default);
-select * from t1;
-a	b
-2008-09-01 00:00:00	35
-drop table t1;
-set sql_warnings = 0;
 # WEEKDAY()
 set sql_warnings = 1;
 create table t1 (a datetime, b virtual int as (weekday(a)));
@@ -2422,21 +2407,6 @@ a	b
 2008-09-01 00:00:00	0
 drop table t1;
 set sql_warnings = 0;
-# WEEKOFYEAR()
-set sql_warnings = 1;
-create table t1 (a datetime, b virtual int as (weekofyear(a)));
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `a` datetime,
-  `b` VIRTUAL int AS (weekofyear(a))
-) ENGINE=MyISAM
-insert into t1 values ('2008-09-01',default);
-select * from t1;
-a	b
-2008-09-01 00:00:00	36
-drop table t1;
-set sql_warnings = 0;
 # YEAR()
 set sql_warnings = 1;
 create table t1 (a datetime, b virtual int as (year(a)));
@@ -2450,21 +2420,6 @@ insert into t1 values ('2008-09-01',default);
 select * from t1;
 a	b
 2008-09-01 00:00:00	2008
-drop table t1;
-set sql_warnings = 0;
-# YEARWEEK()
-set sql_warnings = 1;
-create table t1 (a datetime, b virtual int as (yearweek(a)));
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `a` datetime,
-  `b` VIRTUAL int AS (yearweek(a))
-) ENGINE=MyISAM
-insert into t1 values ('2008-09-01',default);
-select * from t1;
-a	b
-2008-09-01 00:00:00	200835
 drop table t1;
 set sql_warnings = 0;
 #

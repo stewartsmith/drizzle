@@ -89,8 +89,8 @@ static bool best_extension_by_limited_search(JOIN *join,
                                              double read_time, uint32_t depth,
                                              uint32_t prune_level);
 static uint32_t determine_search_depth(JOIN* join);
-extern "C" int join_tab_cmp(const void* ptr1, const void* ptr2);
-extern "C" int join_tab_cmp_straight(const void* ptr1, const void* ptr2);
+static int join_tab_cmp(const void* ptr1, const void* ptr2);
+static int join_tab_cmp_straight(const void* ptr1, const void* ptr2);
 /*
   TODO: 'find_best' is here only temporarily until 'greedy_search' is
   tested and approved.
@@ -5659,7 +5659,7 @@ choose_plan(JOIN *join, table_map join_tables)
     0  if equal
 */
 
-int
+static int
 join_tab_cmp(const void* ptr1, const void* ptr2)
 {
   JOIN_TAB *jt1= *(JOIN_TAB**) ptr1;
@@ -5681,7 +5681,7 @@ join_tab_cmp(const void* ptr1, const void* ptr2)
   Same as join_tab_cmp, but for use with SELECT_STRAIGHT_JOIN.
 */
 
-int
+static int
 join_tab_cmp_straight(const void* ptr1, const void* ptr2)
 {
   JOIN_TAB *jt1= *(JOIN_TAB**) ptr1;
@@ -13859,9 +13859,7 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
   cache->length=length+blobs*sizeof(char*);
   cache->blobs=blobs;
   *blob_ptr= NULL;					/* End sequentel */
-  size= (size_t)cmax(SIZE_MAX, cmax(session->variables.join_buff_size,
-                                    cache->length));
-
+  size= cmax(session->variables.join_buff_size, (uint32_t)cache->length);
   if (!(cache->buff=(unsigned char*) malloc(size)))
     return 1;				/* Don't use cache */ /* purecov: inspected */
   cache->end=cache->buff+size;

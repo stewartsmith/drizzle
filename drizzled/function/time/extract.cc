@@ -17,11 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "drizzled/server_includes.h"
 #include CSTDINT_H
-#include <drizzled/function/time/week_mode.h>
-#include <drizzled/function/time/extract.h>
-#include <drizzled/session.h>
+#include "drizzled/temporal.h"
+#include "drizzled/error.h"
+#include "drizzled/session.h"
+#include "drizzled/calendar.h"
+#include "drizzled/function/time/extract.h"
 
 /*
    'interval_names' reflects the order of the enumeration interval_type.
@@ -29,18 +31,6 @@
  */
 
 extern const char *interval_names[];
-/*
-static const char *interval_names[]=
-{
-  "year", "quarter", "month", "week", "day",
-  "hour", "minute", "second", "microsecond",
-  "year_month", "day_hour", "day_minute",
-  "day_second", "hour_minute", "hour_second",
-  "minute_second", "day_microsecond",
-  "hour_microsecond", "minute_microsecond",
-  "second_microsecond"
-};
-*/
 
 void Item_extract::print(String *str, enum_query_type query_type)
 {
@@ -53,9 +43,9 @@ void Item_extract::print(String *str, enum_query_type query_type)
 
 void Item_extract::fix_length_and_dec()
 {
-  value.alloc(32);				// alloc buffer
+  value.alloc(DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING);				
 
-  maybe_null=1;					// If wrong date
+  maybe_null= 1;					/* If NULL supplied only */
   switch (int_type) {
   case INTERVAL_YEAR:		max_length=4; date_value=1; break;
   case INTERVAL_YEAR_MONTH:	max_length=6; date_value=1; break;
@@ -81,75 +71,258 @@ void Item_extract::fix_length_and_dec()
   }
 }
 
-
 int64_t Item_extract::val_int()
 {
-  assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-  uint32_t year;
-  ulong week_format;
-  long neg;
+  assert(fixed);
+
+  if (args[0]->is_null())
+  {
+    /* For NULL argument, we return a NULL result */
+    null_value= true;
+    return 0;
+  }
+
+  /* We could have either a datetime or a time.. */
+  drizzled::DateTime datetime_temporal;
+  drizzled::Time time_temporal;
+
+  /* Abstract pointer type we'll use in the final switch */
+  drizzled::Temporal *temporal;
+
   if (date_value)
   {
-    if (get_arg0_date(&ltime, TIME_FUZZY_DATE))
-      return 0;
-    neg=1;
+    /* Grab the first argument as a DateTime object */
+    Item_result arg0_result_type= args[0]->result_type();
+    
+    switch (arg0_result_type)
+    {
+      case DECIMAL_RESULT: 
+        /* 
+        * For doubles supplied, interpret the arg as a string, 
+        * so intentionally fall-through here...
+        * This allows us to accept double parameters like 
+        * 19971231235959.01 and interpret it the way MySQL does:
+        * as a TIMESTAMP-like thing with a microsecond component.
+        * Ugh, but need to keep backwards-compat.
+        */
+      case STRING_RESULT:
+        {
+          char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+          String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+          String *res= args[0]->val_str(&tmp);
+          if (! datetime_temporal.from_string(res->c_ptr(), res->length()))
+          {
+            /* 
+            * Could not interpret the function argument as a temporal value, 
+            * so throw an error and return 0
+            */
+            my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+            return 0;
+          }
+        }
+        break;
+      case INT_RESULT:
+        if (datetime_temporal.from_int64_t(args[0]->val_int()))
+          break;
+        /* Intentionally fall-through on invalid conversion from integer */
+      default:
+        {
+          /* 
+          * Could not interpret the function argument as a temporal value, 
+          * so throw an error and return 0
+          */
+          null_value= true;
+          char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+          String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+          String *res;
+
+          res= args[0]->val_str(&tmp);
+
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          return 0;
+        }
+    }
+    /* 
+     * If we got here, we have a successfully converted DateTime temporal. 
+     * Point our working temporal to this.
+     */
+    temporal= &datetime_temporal;
   }
   else
   {
-    String *res= args[0]->val_str(&value);
-    if (!res || str_to_time_with_warn(res->ptr(), res->length(), &ltime))
+    /* 
+     * Because of the ridiculous way in which MySQL handles
+     * TIME values (it does implicit integer -> string conversions
+     * but only for DATETIME, not TIME values) we must first 
+     * try a conversion into a TIME from a string.  If this
+     * fails, we fall back on a DATETIME conversion.  This is
+     * necessary because of the fact that DateTime::from_string()
+     * looks first for DATETIME, then DATE regex matches.  6 consecutive
+     * numbers, say 231130, will match the DATE regex YYMMDD
+     * with no TIME part, but MySQL actually implicitly treats
+     * parameters to SECOND(), HOUR(), and MINUTE() as TIME-only
+     * values and matches 231130 as HHmmSS!
+     *
+     * Oh, and Brian Aker MADE me do this. :) --JRP
+     */
+    
+    char time_buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+    String tmp_time(time_buff,sizeof(time_buff), &my_charset_utf8_bin);
+    String *time_res= args[0]->val_str(&tmp_time);
+    if (! time_temporal.from_string(time_res->c_ptr(), time_res->length()))
     {
-      null_value=1;
-      return 0;
+      /* 
+       * OK, we failed to match the first argument as a string
+       * representing a time value, so we grab the first argument 
+       * as a DateTime object and try that for a match...
+       */
+      Item_result arg0_result_type= args[0]->result_type();
+      
+      switch (arg0_result_type)
+      {
+        case DECIMAL_RESULT: 
+          /* 
+           * For doubles supplied, interpret the arg as a string, 
+           * so intentionally fall-through here...
+           * This allows us to accept double parameters like 
+           * 19971231235959.01 and interpret it the way MySQL does:
+           * as a TIMESTAMP-like thing with a microsecond component.
+           * Ugh, but need to keep backwards-compat.
+           */
+        case STRING_RESULT:
+          {
+            char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+            String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+            String *res= args[0]->val_str(&tmp);
+            if (! datetime_temporal.from_string(res->c_ptr(), res->length()))
+            {
+              /* 
+               * Could not interpret the function argument as a temporal value, 
+               * so throw an error and return 0
+               */
+              my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+              return 0;
+            }
+          }
+          break;
+        case INT_RESULT:
+          if (datetime_temporal.from_int64_t(args[0]->val_int()))
+            break;
+          /* Intentionally fall-through on invalid conversion from integer */
+        default:
+          {
+            /* 
+             * Could not interpret the function argument as a temporal value, 
+             * so throw an error and return 0
+             */
+            null_value= true;
+            char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+            String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+            String *res;
+
+            res= args[0]->val_str(&tmp);
+
+            my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+            return 0;
+          }
+      }
+      /* If we're here, our time failed, but our datetime succeeded... */
+      temporal= &datetime_temporal;
     }
-    neg= ltime.neg ? -1 : 1;
-    null_value=0;
+    else
+    {
+      /* If we're here, our time succeeded... */
+      temporal= &time_temporal;
+    }
   }
+
+  /* Return the requested datetime component */
   switch (int_type) {
-  case INTERVAL_YEAR:		return ltime.year;
-  case INTERVAL_YEAR_MONTH:	return ltime.year*100L+ltime.month;
-  case INTERVAL_QUARTER:	return (ltime.month+2)/3;
-  case INTERVAL_MONTH:		return ltime.month;
-  case INTERVAL_WEEK:
-  {
-    week_format= current_session->variables.default_week_format;
-    return calc_week(&ltime, week_mode(week_format), &year);
+    case INTERVAL_YEAR:		
+      return (int64_t) temporal->years();
+    case INTERVAL_YEAR_MONTH:	
+      return (int64_t) ((temporal->years() * 100L) + temporal->months());
+    case INTERVAL_QUARTER:
+      return (int64_t) (temporal->months() + 2) / 3;
+    case INTERVAL_MONTH:
+      return (int64_t) temporal->months();
+    case INTERVAL_WEEK:
+      return iso_week_number_from_gregorian_date(temporal->years()
+                                               , temporal->months()
+                                               , temporal->days()
+                                               , NULL); /* NULL is year_out parameter, which is not needed */
+    case INTERVAL_DAY:
+      return (int64_t) temporal->days();
+    case INTERVAL_DAY_HOUR:	
+      return (int64_t) ((temporal->days() * 100L) + temporal->hours());
+    case INTERVAL_DAY_MINUTE:	
+      return (int64_t) ((temporal->days() * 10000L)
+            + (temporal->hours() * 100L) 
+            + temporal->minutes());
+    case INTERVAL_DAY_SECOND:	 
+      return (int64_t) (
+              (int64_t) (temporal->days() * 1000000L) 
+            + (int64_t) (temporal->hours() * 10000L)
+            + (temporal->minutes() * 100L) 
+            + temporal->seconds());
+    case INTERVAL_HOUR:		
+      return (int64_t) temporal->hours();
+    case INTERVAL_HOUR_MINUTE:	
+      return (int64_t) (temporal->hours() * 100L) 
+            + temporal->minutes();
+    case INTERVAL_HOUR_SECOND:	
+      return (int64_t) (temporal->hours() * 10000L) 
+            + (temporal->minutes() * 100L) 
+            + temporal->seconds();
+    case INTERVAL_MINUTE:
+      return (int64_t) temporal->minutes();
+    case INTERVAL_MINUTE_SECOND:	
+      return (int64_t) (temporal->minutes() * 100L) + temporal->seconds();
+    case INTERVAL_SECOND:
+      return (int64_t) temporal->seconds();
+    case INTERVAL_MICROSECOND:	
+      return (int64_t) temporal->useconds();
+    case INTERVAL_DAY_MICROSECOND: 
+      return (int64_t) 
+              (
+              (
+              (int64_t) (temporal->days() * 1000000L) 
+            + (int64_t) (temporal->hours() * 10000L) 
+            + (temporal->minutes() * 100L) 
+            + temporal->seconds()
+              ) 
+              * 1000000L
+              ) 
+            + temporal->useconds();
+    case INTERVAL_HOUR_MICROSECOND:
+        return (int64_t)
+              (
+              (
+              (int64_t) (temporal->hours() * 10000L) 
+            + (temporal->minutes() * 100L) 
+            + temporal->seconds()
+              ) 
+              * 1000000L
+              ) 
+            + temporal->useconds();
+    case INTERVAL_MINUTE_MICROSECOND:
+        return (int64_t)
+              (
+              (
+              (temporal->minutes() * 100L) 
+            + temporal->seconds()
+              ) 
+              * 1000000L
+              ) 
+            + temporal->useconds();
+    case INTERVAL_SECOND_MICROSECOND: 
+        return (int64_t) (temporal->seconds() * 1000000L)
+            + temporal->useconds();
+    case INTERVAL_LAST: 
+    default:
+        assert(0); 
+        return 0;  /* purecov: deadcode */
   }
-  case INTERVAL_DAY:		return ltime.day;
-  case INTERVAL_DAY_HOUR:	return (long) (ltime.day*100L+ltime.hour)*neg;
-  case INTERVAL_DAY_MINUTE:	return (long) (ltime.day*10000L+
-					       ltime.hour*100L+
-					       ltime.minute)*neg;
-  case INTERVAL_DAY_SECOND:	 return ((int64_t) ltime.day*1000000L+
-					 (int64_t) (ltime.hour*10000L+
-						     ltime.minute*100+
-						     ltime.second))*neg;
-  case INTERVAL_HOUR:		return (long) ltime.hour*neg;
-  case INTERVAL_HOUR_MINUTE:	return (long) (ltime.hour*100+ltime.minute)*neg;
-  case INTERVAL_HOUR_SECOND:	return (long) (ltime.hour*10000+ltime.minute*100+
-					       ltime.second)*neg;
-  case INTERVAL_MINUTE:		return (long) ltime.minute*neg;
-  case INTERVAL_MINUTE_SECOND:	return (long) (ltime.minute*100+ltime.second)*neg;
-  case INTERVAL_SECOND:		return (long) ltime.second*neg;
-  case INTERVAL_MICROSECOND:	return (long) ltime.second_part*neg;
-  case INTERVAL_DAY_MICROSECOND: return (((int64_t)ltime.day*1000000L +
-					  (int64_t)ltime.hour*10000L +
-					  ltime.minute*100 +
-					  ltime.second)*1000000L +
-					 ltime.second_part)*neg;
-  case INTERVAL_HOUR_MICROSECOND: return (((int64_t)ltime.hour*10000L +
-					   ltime.minute*100 +
-					   ltime.second)*1000000L +
-					  ltime.second_part)*neg;
-  case INTERVAL_MINUTE_MICROSECOND: return (((int64_t)(ltime.minute*100+
-							ltime.second))*1000000L+
-					    ltime.second_part)*neg;
-  case INTERVAL_SECOND_MICROSECOND: return ((int64_t)ltime.second*1000000L+
-					    ltime.second_part)*neg;
-  case INTERVAL_LAST: assert(0); break;  /* purecov: deadcode */
-  }
-  return 0;					// Impossible
 }
 
 bool Item_extract::eq(const Item *item, bool binary_cmp) const
@@ -168,4 +341,3 @@ bool Item_extract::eq(const Item *item, bool binary_cmp) const
       return 0;
   return 1;
 }
-

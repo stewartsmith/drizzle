@@ -1,0 +1,127 @@
+SELECT QUARTER(NULL);
+QUARTER(NULL)
+NULL
+SELECT QUARTER();
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
+SELECT QUARTER(1, 0);
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ' 0)' at line 1
+SELECT QUARTER("xxx");
+ERROR HY000: Received an invalid datetime value 'xxx'.
+SELECT QUARTER("0000-00-00");
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
+SELECT QUARTER("0000-01-01");
+ERROR HY000: Received an invalid datetime value '0000-01-01'.
+SELECT QUARTER("0001-00-01");
+ERROR HY000: Received an invalid datetime value '0001-00-01'.
+SELECT QUARTER("0001-01-00");
+ERROR HY000: Received an invalid datetime value '0001-01-00'.
+SELECT QUARTER("2000-02-30");
+ERROR HY000: Received an invalid datetime value '2000-02-30'.
+SELECT QUARTER("1900-02-29");
+ERROR HY000: Received an invalid datetime value '1900-02-29'.
+SELECT QUARTER('1976-15-15');
+ERROR HY000: Received an invalid datetime value '1976-15-15'.
+SELECT QUARTER("2009-01-12");
+QUARTER("2009-01-12")
+1
+SELECT QUARTER("2009-04-22");
+QUARTER("2009-04-22")
+2
+SELECT QUARTER("70-12-31");
+QUARTER("70-12-31")
+4
+SELECT QUARTER("99-12-31");
+QUARTER("99-12-31")
+4
+SELECT QUARTER("69-12-31");
+QUARTER("69-12-31")
+4
+SELECT QUARTER("0001-12-31");
+QUARTER("0001-12-31")
+4
+SELECT QUARTER("9999-12-31");
+QUARTER("9999-12-31")
+4
+SELECT QUARTER('07/31/2009');
+QUARTER('07/31/2009')
+3
+SELECT QUARTER('20090916');
+QUARTER('20090916')
+3
+SELECT QUARTER('20090916091528');
+QUARTER('20090916091528')
+3
+SELECT QUARTER("20090916091528.000000");
+QUARTER("20090916091528.000000")
+3
+SELECT QUARTER('09-09-16');
+QUARTER('09-09-16')
+3
+SELECT QUARTER('09.09.16');
+QUARTER('09.09.16')
+3
+SELECT QUARTER('09/09/16');
+QUARTER('09/09/16')
+3
+SELECT QUARTER('09-09-16');
+QUARTER('09-09-16')
+3
+SELECT QUARTER('09-9-2');
+QUARTER('09-9-2')
+3
+SELECT QUARTER(20090916);
+QUARTER(20090916)
+3
+SELECT QUARTER(20090916091528);
+QUARTER(20090916091528)
+3
+SELECT QUARTER(20090916091528.000001);
+QUARTER(20090916091528.000001)
+3
+USE test;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+int_fld INT NOT NULL
+, date_fld DATE NOT NULL
+, datetime_fld DATETIME NOT NULL
+, timestamp_fld TIMESTAMP NOT NULL
+, char_fld CHAR(22) NOT NULL
+, varchar_fld VARCHAR(22) NOT NULL
+, text_fld TEXT NOT NULL
+, blob_fld BLOB NOT NULL
+);
+INSERT INTO t1 VALUES (
+20071130
+, "2007-11-30"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30 16:30:19"
+, "2007-11-30T16:30:19"
+, "2007-11-30T16:30:19"
+);
+SELECT QUARTER(int_fld) FROM t1;
+QUARTER(int_fld)
+4
+SELECT QUARTER(date_fld) FROM t1;
+QUARTER(date_fld)
+4
+SELECT QUARTER(datetime_fld) FROM t1;
+QUARTER(datetime_fld)
+4
+SELECT QUARTER(timestamp_fld) FROM t1;
+QUARTER(timestamp_fld)
+4
+SELECT QUARTER(char_fld) FROM t1;
+QUARTER(char_fld)
+4
+SELECT QUARTER(varchar_fld) FROM t1;
+QUARTER(varchar_fld)
+4
+SELECT QUARTER(text_fld) FROM t1;
+QUARTER(text_fld)
+4
+SELECT QUARTER(blob_fld) FROM t1;
+QUARTER(blob_fld)
+4
+DROP TABLE t1;

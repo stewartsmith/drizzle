@@ -32,7 +32,6 @@ class Field_null :public Field_str {
 public:
 
   using Field::store;
-  using Field::val_int;
   using Field::val_str;
   using Field::cmp;
 

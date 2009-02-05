@@ -455,11 +455,6 @@ select rand(1, 2, 3);
 -- error ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT
 select round(1, 2, 3);
 
--- error ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT
-select yearweek();
--- error ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT
-select yearweek(1, 2, 3);
-
 #
 # Bug#24736: UDF functions parsed as Stored Functions
 #
