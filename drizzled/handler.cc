@@ -1099,7 +1099,7 @@ bool mysql_xa_recover(Session *session)
   }
 
   pthread_mutex_unlock(&LOCK_xid_cache);
-  my_eof(session);
+  session->my_eof();
   return(0);
 }
 
@@ -4172,7 +4172,7 @@ bool ha_show_status(Session *session, handlerton *db_type, enum ha_stat_type sta
     db_type->show_status(db_type, session, stat_print, stat) ? 1 : 0;
 
   if (!result)
-    my_eof(session);
+    session->my_eof();
   return result;
 }
 

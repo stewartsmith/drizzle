@@ -399,7 +399,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     session->transaction.all.modified_non_trans_table= true;
 
   /* ok to client sent only after binlog write and engine commit */
-  my_ok(session, info.copied + info.deleted, 0L, name);
+  session->my_ok(info.copied + info.deleted, 0L, name);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
               session->transaction.stmt.modified_non_trans_table);

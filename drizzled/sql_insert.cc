@@ -461,7 +461,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     session->row_count_func= info.copied + info.deleted +
                          ((session->client_capabilities & CLIENT_FOUND_ROWS) ?
                           info.touched : info.updated);
-    my_ok(session, (ulong) session->row_count_func, id);
+    session->my_ok((ulong) session->row_count_func, id);
   }
   else
   {
@@ -475,7 +475,7 @@ bool mysql_insert(Session *session,TableList *table_list,
       sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + updated;
-    ::my_ok(session, (ulong) session->row_count_func, id, buff);
+    session->my_ok((ulong) session->row_count_func, id, buff);
   }
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_END();
@@ -1362,7 +1362,7 @@ bool select_insert::send_eof()
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  ::my_ok(session, (ulong) session->row_count_func, id, buff);
+  session->my_ok((ulong) session->row_count_func, id, buff);
   return(0);
 }
 

@@ -382,7 +382,7 @@ mysqld_show_create(Session *session, TableList *table_list)
   if (protocol->write())
     return(true);
 
-  my_eof(session);
+  session->my_eof();
   return(false);
 }
 
@@ -417,7 +417,7 @@ bool mysqld_show_create_db(Session *session, char *dbname,
 
   if (protocol->write())
     return(true);
-  my_eof(session);
+  session->my_eof();
   return(false);
 }
 
@@ -452,7 +452,7 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
   table->use_all_columns();
   if (session->protocol->send_fields(&field_list, Protocol::SEND_DEFAULTS))
     return;
-  my_eof(session);
+  session->my_eof();
   return;
 }
 
@@ -1117,7 +1117,7 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
     if (protocol->write())
       break; /* purecov: inspected */
   }
-  my_eof(session);
+  session->my_eof();
   return;
 }
 
@@ -2501,7 +2501,7 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
       List_iterator_fast<LEX_STRING> it_files(table_names);
       while ((table_name= it_files++))
       {
-	restore_record(table, s->default_values);
+        restore_record(table, s->default_values);
         table->field[schema_table->idx_field1]->
           store(db_name->str, db_name->length, system_charset_info);
         table->field[schema_table->idx_field2]->
@@ -2550,7 +2550,7 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
             sel.parent_lex= lex;
             /* db_name can be changed in make_table_list() func */
             if (!session->make_lex_string(&orig_db_name, db_name->str,
-                                      db_name->length, false))
+                                          db_name->length, false))
               goto err;
             if (make_table_list(session, &sel, db_name, table_name))
               goto err;
@@ -2564,12 +2564,12 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
                                                 DRIZZLE_LOCK_IGNORE_FLUSH);
             lex->sql_command= save_sql_command;
             /*
-              XXX:  show_table_list has a flag i_is_requested,
-              and when it's set, open_normal_and_derived_tables()
-              can return an error without setting an error message
-              in Session, which is a hack. This is why we have to
-              check for res, then for session->is_error() only then
-              for session->main_da.sql_errno().
+XXX:  show_table_list has a flag i_is_requested,
+and when it's set, open_normal_and_derived_tables()
+can return an error without setting an error message
+in Session, which is a hack. This is why we have to
+check for res, then for session->is_error() only then
+for session->main_da.sql_errno().
             */
             if (res && session->is_error() &&
                 session->main_da.sql_errno() == ER_NO_SUCH_TABLE)
@@ -2593,7 +2593,7 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
                 in this case.
               */
               session->make_lex_string(&tmp_lex_string, show_table_list->alias,
-                                   strlen(show_table_list->alias), false);
+                                       strlen(show_table_list->alias), false);
               res= schema_table->process_table(session, show_table_list, table,
                                                res, &orig_db_name,
                                                &tmp_lex_string);

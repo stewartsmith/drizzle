@@ -473,7 +473,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                         packet, packet_length, session->charset());
     if (!mysql_change_db(session, &tmp, false))
     {
-      my_ok(session);
+      session->my_ok();
     }
     break;
   }
@@ -686,7 +686,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   case COM_SHUTDOWN:
   {
     status_var_increment(session->status_var.com_other);
-    my_eof(session);
+    session->my_eof();
     close_thread_tables(session);			// Free before kill
     kill_drizzle();
     error=true;
@@ -694,7 +694,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
   case COM_PING:
     status_var_increment(session->status_var.com_other);
-    my_ok(session);				// Tell client we are alive
+    session->my_ok();				// Tell client we are alive
     break;
   case COM_PROCESS_INFO:
     status_var_increment(session->status_var.com_stat[SQLCOM_SHOW_PROCESSLIST]);
@@ -715,11 +715,11 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     switch (opt_command) {
     case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_ON:
       session->client_capabilities|= CLIENT_MULTI_STATEMENTS;
-      my_eof(session);
+      session->my_eof();
       break;
     case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_OFF:
       session->client_capabilities&= ~CLIENT_MULTI_STATEMENTS;
-      my_eof(session);
+      session->my_eof();
       break;
     default:
       my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
@@ -1044,7 +1044,7 @@ mysql_execute_command(Session *session)
     break;
   }
   case SQLCOM_EMPTY_QUERY:
-    my_ok(session);
+    session->my_ok();
     break;
 
   case SQLCOM_SHOW_WARNS:
@@ -1228,7 +1228,7 @@ mysql_execute_command(Session *session)
                                 &alter_info, 0, 0);
       }
       if (!res)
-	my_ok(session);
+	session->my_ok();
     }
 
     /* put tables back for PS rexecuting */
@@ -1637,7 +1637,7 @@ end_with_restore_list:
     LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
 
     if (!mysql_change_db(session, &db_str, false))
-      my_ok(session);
+      session->my_ok();
 
     break;
   }
@@ -1672,7 +1672,7 @@ end_with_restore_list:
       goto error;
     if (!(res= sql_set_variables(session, lex_var_list)))
     {
-      my_ok(session);
+      session->my_ok();
     }
     else
     {
@@ -1704,7 +1704,7 @@ end_with_restore_list:
     }
     if (session->global_read_lock)
       unlock_global_read_lock(session);
-    my_ok(session);
+    session->my_ok();
     break;
   case SQLCOM_LOCK_TABLES:
     /*
@@ -1723,7 +1723,7 @@ end_with_restore_list:
         goto error;
       if (rc == 0)
       {
-        my_ok(session);
+        session->my_ok();
         break;
       }
       /*
@@ -1754,7 +1754,7 @@ end_with_restore_list:
       session->locked_tables=session->lock;
       session->lock=0;
       (void) set_handler_table_locks(session, all_tables, false);
-      my_ok(session);
+      session->my_ok();
     }
     else
     {
@@ -1860,7 +1860,7 @@ end_with_restore_list:
         Presumably, RESET and binlog writing doesn't require synchronization
       */
       write_bin_log(session, false, session->query, session->query_length);
-      my_ok(session);
+      session->my_ok();
     }
 
     break;
@@ -1890,19 +1890,19 @@ end_with_restore_list:
     */
     if (begin_trans(session))
       goto error;
-    my_ok(session);
+    session->my_ok();
     break;
   case SQLCOM_COMMIT:
     if (end_trans(session, lex->tx_release ? COMMIT_RELEASE :
                               lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
       goto error;
-    my_ok(session);
+    session->my_ok();
     break;
   case SQLCOM_ROLLBACK:
     if (end_trans(session, lex->tx_release ? ROLLBACK_RELEASE :
                               lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
       goto error;
-    my_ok(session);
+    session->my_ok();
     break;
   case SQLCOM_RELEASE_SAVEPOINT:
   {
@@ -1919,7 +1919,7 @@ end_with_restore_list:
       if (ha_release_savepoint(session, sv))
         res= true; // cannot happen
       else
-        my_ok(session);
+        session->my_ok();
       session->transaction.savepoints=sv->prev;
     }
     else
@@ -1946,7 +1946,7 @@ end_with_restore_list:
           push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                        ER_WARNING_NOT_COMPLETE_ROLLBACK,
                        ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
-        my_ok(session);
+        session->my_ok();
       }
       session->transaction.savepoints=sv;
     }
@@ -1956,7 +1956,7 @@ end_with_restore_list:
   }
   case SQLCOM_SAVEPOINT:
     if (!(session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) || !opt_using_transactions)
-      my_ok(session);
+      session->my_ok();
     else
     {
       SAVEPOINT **sv, *newsv;
@@ -1993,13 +1993,13 @@ end_with_restore_list:
       {
         newsv->prev=session->transaction.savepoints;
         session->transaction.savepoints=newsv;
-        my_ok(session);
+        session->my_ok();
       }
     }
     break;
   default:
     assert(0);                             /* Impossible */
-    my_ok(session);
+    session->my_ok();
     break;
   }
   session->set_proc_info("query end");
@@ -3219,7 +3219,7 @@ void sql_kill(Session *session, ulong id, bool only_kill_query)
 {
   uint32_t error;
   if (!(error= kill_one_thread(session, id, only_kill_query)))
-    my_ok(session);
+    session->my_ok();
   else
     my_error(error, MYF(0), id);
 }

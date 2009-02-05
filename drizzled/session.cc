@@ -1334,7 +1334,7 @@ bool select_send::send_eof()
     mysql_unlock_tables(session, session->lock);
     session->lock=0;
   }
-  ::my_eof(session);
+  session->my_eof();
   is_result_set_started= 0;
   return false;
 }
@@ -1369,7 +1369,7 @@ bool select_to_file::send_eof()
       function, SELECT INTO has to have an own SQLCOM.
       TODO: split from SQLCOM_SELECT
     */
-    ::my_ok(session,row_count);
+    session->my_ok(row_count);
   }
   file= -1;
   return error;
@@ -2055,7 +2055,7 @@ bool select_dumpvar::send_eof()
     function, SELECT INTO has to have an own SQLCOM.
     TODO: split from SQLCOM_SELECT
   */
-  ::my_ok(session,row_count);
+  session->my_ok(row_count);
   return 0;
 }
 

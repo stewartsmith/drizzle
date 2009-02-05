@@ -1417,27 +1417,22 @@ private:
     tree itself is reused between executions and thus is stored elsewhere.
   */
   MEM_ROOT main_mem_root;
+
+public:
+  /** A short cut for session->main_da.set_ok_status(). */
+  inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
+  {
+    main_da.set_ok_status(this, affected_rows, passed_id, message);
+  }
+
+
+  /** A short cut for session->main_da.set_eof_status(). */
+
+  inline void my_eof()
+  {
+    main_da.set_eof_status(this);
+  }
 };
-
-
-
-/** A short cut for session->main_da.set_ok_status(). */
-
-inline void
-my_ok(Session *session, ha_rows affected_rows= 0, uint64_t id= 0,
-        const char *message= NULL)
-{
-  session->main_da.set_ok_status(session, affected_rows, id, message);
-}
-
-
-/** A short cut for session->main_da.set_eof_status(). */
-
-inline void
-my_eof(Session *session)
-{
-  session->main_da.set_eof_status(session);
-}
 
 /*
   This is used to get result from a select
