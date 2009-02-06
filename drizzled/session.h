@@ -33,6 +33,8 @@
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/query_arena.h>
+#include <drizzled/file_exchange.h>
+#include <drizzled/select_result_interceptor.h>
 #include <string>
 #include <bitset>
 
@@ -539,9 +541,7 @@ public:
 /* Flags for the Session::system_thread variable */
 enum enum_thread_type
 {
-  NON_SYSTEM_THREAD,
-  SYSTEM_THREAD_SLAVE_IO,
-  SYSTEM_THREAD_SLAVE_SQL
+  NON_SYSTEM_THREAD
 };
 
 
@@ -1416,46 +1416,43 @@ private:
     tree itself is reused between executions and thus is stored elsewhere.
   */
   MEM_ROOT main_mem_root;
-};
 
-
-
-/** A short cut for session->main_da.set_ok_status(). */
-
-inline void
-my_ok(Session *session, ha_rows affected_rows= 0, uint64_t id= 0,
-        const char *message= NULL)
-{
-  session->main_da.set_ok_status(session, affected_rows, id, message);
-}
-
-
-/** A short cut for session->main_da.set_eof_status(). */
-
-inline void
-my_eof(Session *session)
-{
-  session->main_da.set_eof_status(session);
-}
-
-/*
-  Used to hold information about file and file structure in exchange
-  via non-DB file (...INTO OUTFILE..., ...LOAD DATA...)
-  XXX: We never call destructor for objects of this class.
-*/
-
-class sql_exchange :public Sql_alloc
-{
 public:
-  enum enum_filetype filetype; /* load XML, Added by Arnold & Erik */
-  char *file_name;
-  String *field_term,*enclosed,*line_term,*line_start,*escaped;
-  bool opt_enclosed;
-  bool dumpfile;
-  ulong skip_lines;
-  const CHARSET_INFO *cs;
-  sql_exchange(char *name, bool dumpfile_flag,
-               enum_filetype filetype_arg= FILETYPE_CSV);
+  /** A short cut for session->main_da.set_ok_status(). */
+  inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
+  {
+    main_da.set_ok_status(this, affected_rows, passed_id, message);
+  }
+
+
+  /** A short cut for session->main_da.set_eof_status(). */
+
+  inline void my_eof()
+  {
+    main_da.set_eof_status(this);
+  }
+
+  /* Some inline functions for more speed */
+
+  inline bool add_item_to_list(Item *item)
+  {
+    return lex->current_select->add_item_to_list(this, item);
+  }
+
+  inline bool add_value_to_list(Item *value)
+  {
+    return lex->value_list.push_back(value);
+  }
+
+  inline bool add_order_to_list(Item *item, bool asc)
+  {
+    return lex->current_select->add_order_to_list(this, item, asc);
+  }
+
+  inline bool add_group_to_list(Item *item, bool asc)
+  {
+    return lex->current_select->add_group_to_list(this, item, asc);
+  }
 };
 
 /*
@@ -1464,88 +1461,17 @@ public:
 
 class JOIN;
 
-class select_result :public Sql_alloc {
-protected:
-  Session *session;
-  SELECT_LEX_UNIT *unit;
-public:
-  select_result();
-  virtual ~select_result() {};
-  virtual int prepare(List<Item> &,
-                      SELECT_LEX_UNIT *u)
-  {
-    unit= u;
-    return 0;
-  }
-  /*
-    Because of peculiarities of prepared statements protocol
-    we need to know number of columns in the result set (if
-    there is a result set) apart from sending columns metadata.
-  */
-  virtual uint32_t field_count(List<Item> &fields) const
-  { return fields.elements; }
-  virtual bool send_fields(List<Item> &list, uint32_t flags)=0;
-  virtual bool send_data(List<Item> &items)=0;
-  virtual bool initialize_tables (JOIN *)
-  { return 0; }
-  virtual void send_error(uint32_t errcode,const char *err);
-  virtual bool send_eof()=0;
-  virtual void abort() {}
-  /*
-    Cleanup instance of this class for next execution of a prepared
-    statement/stored procedure.
-  */
-  virtual void cleanup();
-  void set_session(Session *session_arg) { session= session_arg; }
-  void begin_dataset() {}
-};
-
-
-/*
-  Base class for select_result descendands which intercept and
-  transform result set rows. As the rows are not sent to the client,
-  sending of result set metadata should be suppressed as well.
-*/
-
-class select_result_interceptor: public select_result
-{
-public:
-  select_result_interceptor() {}              /* Remove gcc warning */
-  uint32_t field_count(List<Item> &) const
-  { return 0; }
-  bool send_fields(List<Item> &,
-                   uint32_t)
-  { return false; }
-};
-
-
-class select_send :public select_result {
-  /**
-    True if we have sent result set metadata to the client.
-    In this case the client always expects us to end the result
-    set with an eof or error packet
-  */
-  bool is_result_set_started;
-public:
-  select_send() :is_result_set_started(false) {}
-  bool send_fields(List<Item> &list, uint32_t flags);
-  bool send_data(List<Item> &items);
-  bool send_eof();
-  void abort();
-  virtual void cleanup();
-};
-
 
 class select_to_file :public select_result_interceptor {
 protected:
-  sql_exchange *exchange;
+  file_exchange *exchange;
   File file;
   IO_CACHE cache;
   ha_rows row_count;
   char path[FN_REFLEN];
 
 public:
-  select_to_file(sql_exchange *ex) :exchange(ex), file(-1),row_count(0L)
+  select_to_file(file_exchange *ex) :exchange(ex), file(-1),row_count(0L)
   { path[0]=0; }
   ~select_to_file();
   void send_error(uint32_t errcode,const char *err);
@@ -1587,7 +1513,7 @@ class select_export :public select_to_file {
   bool is_unsafe_field_sep;
   bool fixed_row_size;
 public:
-  select_export(sql_exchange *ex) :select_to_file(ex) {}
+  select_export(file_exchange *ex) :select_to_file(ex) {}
   ~select_export();
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
@@ -1596,7 +1522,7 @@ public:
 
 class select_dump :public select_to_file {
 public:
-  select_dump(sql_exchange *ex) :select_to_file(ex) {}
+  select_dump(file_exchange *ex) :select_to_file(ex) {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
 };
@@ -2049,27 +1975,5 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
-
-/* Some inline functions for more speed */
-
-inline bool add_item_to_list(Session *session, Item *item)
-{
-  return session->lex->current_select->add_item_to_list(session, item);
-}
-
-inline bool add_value_to_list(Session *session, Item *value)
-{
-  return session->lex->value_list.push_back(value);
-}
-
-inline bool add_order_to_list(Session *session, Item *item, bool asc)
-{
-  return session->lex->current_select->add_order_to_list(session, item, asc);
-}
-
-inline bool add_group_to_list(Session *session, Item *item, bool asc)
-{
-  return session->lex->current_select->add_group_to_list(session, item, asc);
-}
 
 #endif /* DRIZZLED_SQL_CLASS_H */

@@ -17,26 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_LOAD_H
-#define DRIZZLED_SQL_LOAD_H
 
-#include <drizzled/definitions.h>
-#include <drizzled/sql_list.h>
-#include <drizzled/item.h>
+#ifndef DRIZZLED_SELECT_RESULT_INTERCEPTOR_H
+#define DRIZZLED_SELECT_RESULT_INTERCEPTOR_H
 
-class TableList;
-class file_exchange;
-class Session;
-class Table;
+#include <drizzled/select_result.h>
 
-typedef struct st_copy_info COPY_INFO;
+/*
+  Base class for select_result descendands which intercept and
+  transform result set rows. As the rows are not sent to the client,
+  sending of result set metadata should be suppressed as well.
+*/
 
-int mysql_load(Session *session, file_exchange *ex, TableList *table_list,
-               List<Item> &fields_vars, List<Item> &set_fields,
-               List<Item> &set_values_list,
-               enum enum_duplicates handle_duplicates, bool ignore,
-               bool local_file);
-int write_record(Session *session, Table *table, COPY_INFO *info);
+class select_result_interceptor: public select_result
+{
+public:
+  select_result_interceptor() {}              /* Remove gcc warning */
+  uint32_t field_count(List<Item> &) const
+  { return 0; }
+  bool send_fields(List<Item> &, uint32_t)
+  { return false; }
+};
 
 
-#endif /* DRIZZLED_SQL_LOAD_H */
+#endif /* DRIZZLED_SELECT_RESULT_INTERCEPTOR_H */

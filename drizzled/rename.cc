@@ -95,7 +95,7 @@ bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
   if (!silent && !error)
   {
     write_bin_log(session, true, session->query, session->query_length);
-    my_ok(session);
+    session->my_ok();
   }
 
   pthread_mutex_lock(&LOCK_open);

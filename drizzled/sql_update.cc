@@ -267,7 +267,7 @@ int mysql_update(Session *session, TableList *table_list,
     if (error)
       goto abort;				// Error in where
     DRIZZLE_UPDATE_END();
-    my_ok(session);				// No matching records
+    session->my_ok();				// No matching records
     return(0);
   }
   if (!select && limit != HA_POS_ERROR)
@@ -686,7 +686,7 @@ int mysql_update(Session *session, TableList *table_list,
 	    (ulong) session->cuted_fields);
     session->row_count_func=
       (session->client_capabilities & CLIENT_FOUND_ROWS) ? found : updated;
-    my_ok(session, (ulong) session->row_count_func, id, buff);
+    session->my_ok((ulong) session->row_count_func, id, buff);
   }
   session->count_cuted_fields= CHECK_FIELD_IGNORE;		/* calc cuted fields */
   session->abort_on_warning= 0;
@@ -739,7 +739,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
       select_lex->setup_ref_array(session, order_num) ||
       setup_order(session, select_lex->ref_pointer_array,
 		  table_list, all_fields, all_fields, order))
-    return(true);
+    return true;
 
   /* Check that we are not using table that we are updating in a sub select */
   {
@@ -748,11 +748,11 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
     {
       update_non_unique_table_error(table_list, "UPDATE", duplicate);
       my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
-      return(true);
+      return true;
     }
   }
 
-  return(false);
+  return false;
 }
 
 
@@ -816,7 +816,7 @@ reopen_tables:
   if (((original_multiupdate || need_reopen) &&
        open_tables(session, &table_list, &table_count, 0)) ||
       mysql_handle_derived(lex, &mysql_derived_prepare))
-    return(true);
+    return true;
   /*
     setup_tables() need for VIEWs. JOIN::prepare() will call setup_tables()
     second time, but this call will do nothing (there are check for second
@@ -827,14 +827,14 @@ reopen_tables:
                                     &lex->select_lex.top_join_list,
                                     table_list,
                                     &lex->select_lex.leaf_tables, false))
-    return(true);
+    return true;
 
   if (setup_fields_with_no_wrap(session, 0, *fields, MARK_COLUMNS_WRITE, 0, 0))
-    return(true);
+    return true;
 
   if (update_view && check_fields(session, *fields))
   {
-    return(true);
+    return true;
   }
 
   tables_for_update= get_table_map(fields);
@@ -880,7 +880,7 @@ reopen_tables:
   if (lock_tables(session, table_list, table_count, &need_reopen))
   {
     if (!need_reopen)
-      return(true);
+      return true;
 
     /*
       We have to reopen tables since some of them were altered or dropped
@@ -916,7 +916,7 @@ reopen_tables:
       if ((duplicate= unique_table(session, tl, table_list, 0)))
       {
         update_non_unique_table_error(table_list, "UPDATE", duplicate);
-        return(true);
+        return true;
       }
     }
   }
@@ -928,7 +928,7 @@ reopen_tables:
 
   if (session->fill_derived_tables() &&
       mysql_handle_derived(lex, &mysql_derived_filling))
-    return(true);
+    return true;
 
   return (false);
 }
@@ -954,7 +954,7 @@ bool mysql_multi_update(Session *session,
 				 session->lex->select_lex.leaf_tables,
 				 fields, values,
 				 handle_duplicates, ignore)))
-    return(true);
+    return true;
 
   session->abort_on_warning= true;
 
@@ -976,7 +976,7 @@ bool mysql_multi_update(Session *session,
   }
   delete result;
   session->abort_on_warning= 0;
-  return(false);
+  return false;
 }
 
 
@@ -1672,7 +1672,7 @@ bool multi_update::send_eof()
     /* Safety: If we haven't got an error before (can happen in do_updates) */
     my_message(ER_UNKNOWN_ERROR, "An error occured in multi-table update",
 	       MYF(0));
-    return(true);
+    return true;
   }
 
   id= session->arg_of_last_insert_id_function ?
@@ -1681,6 +1681,7 @@ bool multi_update::send_eof()
 	  (ulong) session->cuted_fields);
   session->row_count_func=
     (session->client_capabilities & CLIENT_FOUND_ROWS) ? found : updated;
-  ::my_ok(session, (ulong) session->row_count_func, id, buff);
-  return(false);
+  session->my_ok((ulong) session->row_count_func, id, buff);
+
+  return false;
 }

@@ -67,6 +67,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/timestamp.h \
 		field/timetype.h \
 		field/varstring.h \
+		file_exchange.h \
 		filesort_info.h \
 		foreign_key.h \
 		function_hash.h \
@@ -286,6 +287,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		rename.h \
 		replicator.h \
 		scheduling.h \
+		select_result.h \
+		select_result_interceptor.h \
+		select_send.h \
 		session.h \
 		set_var.h \
 		show.h \

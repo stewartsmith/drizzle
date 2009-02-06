@@ -149,7 +149,7 @@ bool mysql_ha_close(Session *session, TableList *tables)
     return(true);
   }
 
-  my_ok(session);
+  session->my_ok();
   return(false);
 }
 

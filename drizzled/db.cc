@@ -345,7 +345,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
       if (!silent)
-	my_ok(session);
+	session->my_ok();
       error= 0;
       goto exit;
     }
@@ -382,7 +382,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
     }
 
     (void)replicator_statement(session, query, query_length);
-    my_ok(session, result);
+    session->my_ok(result);
   }
 
 exit:
@@ -440,7 +440,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
   }
 
   (void)replicator_statement(session, session->query, session->query_length);
-  my_ok(session, result);
+  session->my_ok(result);
 
   pthread_mutex_unlock(&LOCK_drizzle_create_db);
   start_waiting_global_read_lock(session);
@@ -552,7 +552,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
     (void)replicator_statement(session, session->query, session->query_length);
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
-    my_ok(session, (uint32_t) deleted);
+    session->my_ok((uint32_t) deleted);
     session->server_status&= ~SERVER_STATUS_DB_DROPPED;
   }
   else
