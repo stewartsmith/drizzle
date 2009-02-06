@@ -54,7 +54,7 @@ libdrizzleclient_la_SOURCES = client.c \
 			viosocket.c
 
 libdrizzleclient_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@
-libdrizzleclient_la_LIBADD = $(LTLIBZ)
+libdrizzleclient_la_LIBADD = $(LIBZ)
 
 noinst_HEADERS =	libdrizzle_priv.h \
 			local_infile.h
