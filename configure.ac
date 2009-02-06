@@ -105,7 +105,13 @@ AC_SUBST(AVAILABLE_LANGUAGES)
 
 m4_include(m4/gettext.m4)
 AM_GNU_GETTEXT(external, need-formatstring-macros)
+if test "x$MSGMERGE" = "x" -a "x$MSGMERGE" = "x:"
+then
+AM_PATH_PROG_WITH_TEST(MSGMERGE, gmsgmerge,
+    [$ac_dir/$ac_word --update -q /dev/null /dev/null >&]AS_MESSAGE_LOG_FD[ 2>&1], :)
+fi
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
+
 
 # Set this for plugins to use
 ac_build_drizzle="yes"
