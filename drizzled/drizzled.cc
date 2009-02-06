@@ -311,7 +311,6 @@ uint64_t table_def_size;
 ulong what_to_log;
 uint64_t slow_launch_time;
 uint64_t slave_open_temp_tables;
-uint64_t open_files_limit;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
@@ -1832,7 +1831,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
 
   /* connections and databases needs lots of files */
-  open_files_limit= my_set_max_open_files(0xFFFFFFFF);
+  (void) my_set_max_open_files(0xFFFFFFFF);
 
   unireg_init(); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
@@ -2497,7 +2496,6 @@ enum options_drizzled
   OPT_MYISAM_STATS_METHOD,
   OPT_NET_BUFFER_LENGTH, OPT_NET_RETRY_COUNT,
   OPT_NET_READ_TIMEOUT, OPT_NET_WRITE_TIMEOUT,
-  OPT_OPEN_FILES_LIMIT,
   OPT_PRELOAD_BUFFER_SIZE,
   OPT_RECORD_BUFFER,
   OPT_RECORD_RND_BUFFER, OPT_DIV_PRECINCREMENT, OPT_RELAY_LOG_SPACE_LIMIT,
@@ -2964,13 +2962,6 @@ struct my_option my_long_options[] =
     (char**) &global_system_variables.old_mode,
     (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG,
     0, 0, 0, 0, 0, 0},
-  {"open_files_limit", OPT_OPEN_FILES_LIMIT,
-   N_("If this is not 0, then drizzled will use this value to reserve file "
-      "descriptors to use with setrlimit(). If this value is 0 then drizzled "
-      "will reserve max_connections*5 or max_connections + table_cache*2 "
-      "(whichever is larger) number of files."),
-   (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULL,
-   REQUIRED_ARG, 0, 0, OS_FILE_LIMIT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "

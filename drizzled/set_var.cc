@@ -440,7 +440,6 @@ static SHOW_VAR fixed_vars[]= {
 #endif
   {"log_bin",                 (char*) &opt_bin_log,                 SHOW_BOOL},
   {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
-  {"open_files_limit",	      (char*) &open_files_limit,	          SHOW_LONGLONG},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
   {"port",                    (char*) &drizzled_port,               SHOW_INT},

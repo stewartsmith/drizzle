@@ -2546,7 +2546,8 @@ sub mysqld_arguments ($$$$) {
   }
   elsif ( $mysqld->{'type'} eq 'master' )
   {
-    mtr_add_arg($args, "%s--open-files-limit=1024", $prefix);
+    # open-files-limit has been removed
+    #mtr_add_arg($args, "%s--open-files-limit=1024", $prefix);
   }
 
   return $args;

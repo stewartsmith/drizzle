@@ -129,7 +129,6 @@ extern uint64_t max_connect_errors;
 extern uint64_t connect_timeout;
 extern uint32_t max_user_connections;
 extern ulong what_to_log;
-extern uint64_t open_files_limit;
 extern uint64_t max_relay_log_size;
 extern uint32_t back_log;
 extern pid_t current_pid;
