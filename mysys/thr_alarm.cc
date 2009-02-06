@@ -95,16 +95,16 @@ class alarm_if_time
     if (current_alarm->expire_time <= alarm_time)
     {
       current_alarm->alarmed= 1;          /* Info to thread */
-        if (pthread_equal(current_alarm->thread,alarm_thread) ||
-            pthread_kill(current_alarm->thread,thr_client_alarm))
-        {
-          return true;
-        }
-        else
-        {
-          current_alarm->expire_time= alarm_time_next;
-        }
+      if (pthread_equal(current_alarm->thread,alarm_thread) ||
+          pthread_kill(current_alarm->thread,thr_client_alarm))
+      {
+        return true;
       }
+      else
+      {
+        current_alarm->expire_time= alarm_time_next;
+      }
+    }
     return false;
   }
 };
@@ -120,7 +120,7 @@ void init_thr_alarm(uint32_t max_alarms)
   sigset_t s;
   alarm_aborted=0;
   next_alarm_expire_time= ~ (time_t) 0;
-  alarm_stack.reserve(max_alarms);
+  alarm_stack.reserve(max_alarms+1);
   sigfillset(&full_signal_set);			/* Neaded to block signals */
   pthread_mutex_init(&LOCK_alarm,MY_MUTEX_INIT_FAST);
   pthread_cond_init(&COND_alarm,NULL);
@@ -172,7 +172,7 @@ void resize_thr_alarm(uint32_t max_alarms)
     than max_alarms
   */
   if (alarm_stack.capacity() < max_alarms)
-    alarm_stack.resize(max_alarms);
+    alarm_stack.resize(max_alarms+1);
   pthread_mutex_unlock(&LOCK_alarm);
 }
 
@@ -390,8 +390,27 @@ static void process_alarm_part2(int)
 #ifndef USE_ALARM_THREAD
       if (alarm_stack.size())
       {
-        //alarm((uint32_t) (alarm_data->expire_time-now));
-        //next_alarm_expire_time= alarm_data->expire_time;
+        std::vector<ALARM*>::iterator p= alarm_stack.begin();
+        ALARM *smallest_expire_time;
+        while (p != alarm_stack.end())
+        {
+          ALARM *current_alarm= *p;
+          if (!smallest_expire_time)
+          {
+            smallest_expire_time= current_alarm;
+          }
+          else
+          {
+            if (current_alarm->expire_time < smallest_expire_time->expire_time)
+              smallest_expire_time= current_alarm;
+          }
+          p++;
+        }
+        if (smallest_expire_time)
+        {
+          alarm((uint32_t) (smallest_expire_time->expire_time-now));
+          next_alarm_expire_time= smallest_expire_time->expire_time;
+        }
       }
 #endif
     }
@@ -478,9 +497,7 @@ void thr_alarm_kill(my_thread_id thread_id)
   {
     ALARM *current_alarm= *p;
     if (current_alarm->thread_id == thread_id)
-    {
       break;
-    }
     p++;
   }
   if (p != alarm_stack.end())
