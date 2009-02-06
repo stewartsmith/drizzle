@@ -54,12 +54,6 @@ EXTRA_libgnu_la_SOURCES += getopt.c getopt1.c
 
 ## end   gnulib module getopt
 
-## begin gnulib module gettext-h
-
-libgnu_la_SOURCES += gettext.h
-
-## end   gnulib module gettext-h
-
 ## begin gnulib module link-warning
 
 LINK_WARNING_H=$(top_srcdir)/config/link-warning.h

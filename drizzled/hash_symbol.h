@@ -31,11 +31,11 @@ static const SYMBOL *get_hash_symbol(const char *s,
   const SYMBOL* ret_sym= NULL;
   if (function)
   {
-    ret_sym= Function_hash::in_word_set(s, len);
+    ret_sym= function_hash::in_word_set(s, len);
     if (ret_sym && ret_sym->tok)
       return ret_sym;
   }
-  ret_sym= Symbol_hash::in_word_set(s, len);
+  ret_sym= symbol_hash::in_word_set(s, len);
   if (ret_sym && ret_sym->tok)
     return ret_sym;
   return NULL;

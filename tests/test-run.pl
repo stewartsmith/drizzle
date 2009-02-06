@@ -1154,6 +1154,7 @@ sub run_query($$) {
   mtr_init_args(\$args);
 
   mtr_add_arg($args, "--no-defaults");
+  mtr_add_arg($args, "--skip-stack-trace");
   mtr_add_arg($args, "--user=%s", $opt_user);
   mtr_add_arg($args, "--port=%d", $mysqld->{'port'});
   mtr_add_arg($args, "--silent"); # Tab separated output

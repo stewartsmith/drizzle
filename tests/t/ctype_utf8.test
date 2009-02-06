@@ -999,5 +999,11 @@ INSERT INTO t1 VALUES (19, x'E0B696'), (30, x'E0B69AE0B798'), (61, x'E0B6AF'), (
 SELECT predicted_order, hex(utf8_encoding) FROM t1 ORDER BY utf8_encoding COLLATE utf8_sinhala_ci;
 DROP TABLE t1;
 
-
+#
+# Bug#309118
+# When warning of a cast truncation occurs the reported warning
+# shows the wrong char size in it
+#
+select CAST('☂ ' as char(1));
+show warnings;
 
