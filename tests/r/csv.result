@@ -5333,4 +5333,8 @@ select * from t1;
 c1
 That
 drop table t1;
+drop table if exists t1;
+create table t1 (val int not null) engine=csv;
+select * from t1;
+ERROR HY000: Can't find file: 't1' (errno: 2)
 End of 5.1 tests

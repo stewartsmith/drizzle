@@ -119,7 +119,7 @@ check_user(Session *session, const char *passwd,
       return(1);
     }
   }
-  my_ok(session);
+  session->my_ok();
   session->password= test(passwd_len);          // remember for error messages
   /* Ready to handle queries */
   return(0);

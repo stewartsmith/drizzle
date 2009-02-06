@@ -282,6 +282,9 @@ _getopt_initialize (int argc, char **argv, const char *optstring,
     }
   else
     d->__nonoption_flags_len = 0;
+#else 
+  (void)argc;
+  (void)argv;
 #endif
 
   return optstring;

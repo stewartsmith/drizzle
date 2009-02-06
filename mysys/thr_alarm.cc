@@ -19,7 +19,6 @@
 #include <mysys/my_pthread.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <mysys/queues.h>
 #include <mysys/thr_alarm.h>
 
 #include <stdio.h>

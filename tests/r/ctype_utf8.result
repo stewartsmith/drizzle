@@ -1457,3 +1457,11 @@ predicted_order	hex(utf8_encoding)
 100	E0B78AE2808DE0B6BA
 101	E0B78AE2808DE0B6BB
 DROP TABLE t1;
+select CAST('☂ ' as char(1));
+CAST('☂ ' as char(1))
+☂
+Warnings:
+Warning	1292	Truncated incorrect CHAR(1) value: '☂ '
+show warnings;
+Level	Code	Message
+Warning	1292	Truncated incorrect CHAR(1) value: '☂ '

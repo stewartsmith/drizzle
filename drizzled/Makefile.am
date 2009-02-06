@@ -67,6 +67,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/timestamp.h \
 		field/timetype.h \
 		field/varstring.h \
+		file_exchange.h \
 		filesort_info.h \
 		foreign_key.h \
 		function_hash.h \
@@ -286,6 +287,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		rename.h \
 		replicator.h \
 		scheduling.h \
+		select_result.h \
+		select_result_interceptor.h \
+		select_send.h \
 		session.h \
 		set_var.h \
 		show.h \
@@ -661,8 +665,11 @@ EXTRA_DIST = \
 
 CLEANFILES = \
 		configmake.h \
-		lex_hash.h \
+		function_hash.h \
+		function_hash.stamp-h \
 		sql_yacc.output \
+		symbol_hash.h \
+		symbol_hash.stamp-h \
 		$(PCHHEADERS) \
 		$(nodist_drizzled_SOURCES)
 
@@ -678,7 +685,7 @@ probes.h: probes.d
 	rm probes.h.bak
 
 
-SUFFIXES = .d .gch .gperf
+SUFFIXES = .d .gch .gperf .stamp-h
 
 if BUILD_GCC_PCH
 .h.gch:
@@ -688,29 +695,16 @@ endif
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
 
-function_hash.h: function_hash.gperf
-	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
-		--omit-struct-type --readonly-tables --language=C++ \
-		--class-name=Function_hash \
-		${top_srcdir}/drizzled/function_hash.gperf  > \
-			${top_builddir}/drizzled/function_hash.h-t
-	@if ! diff ${top_builddir}/drizzled/function_hash.h-t \
-		   ${top_builddir}/drizzled/function_hash.h >/dev/null 2>&1 ; \
-	then \
-		mv ${top_builddir}/drizzled/function_hash.h-t \
-		   ${top_builddir}/drizzled/function_hash.h ; \
-	fi
+function_hash.h: function_hash.stamp-h
+symbol_hash.h: symbol_hash.stamp-h
 
-symbol_hash.h: symbol_hash.gperf
+.gperf.stamp-h:
 	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
-		--class-name=Symbol_hash \
-		${top_srcdir}/drizzled/symbol_hash.gperf > \
-			${top_builddir}/drizzled/symbol_hash.h-t
-	@if ! diff ${top_builddir}/drizzled/symbol_hash.h-t \
-	   	   ${top_builddir}/drizzled/symbol_hash.h >/dev/null 2>&1  ; \
+		--class-name=$* $<  > $@
+	@if ! diff $@ \
+		   ${top_builddir}/drizzled/$*.h >/dev/null 2>&1 ; \
 	then \
-		mv ${top_builddir}/drizzled/symbol_hash.h-t \
-		   ${top_builddir}/drizzled/symbol_hash.h ; \
+		cp $@ ${top_builddir}/drizzled/$*.h ; \
 	fi
 

@@ -163,7 +163,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     free_underlaid_joins(session, select_lex);
     session->row_count_func= 0;
     DRIZZLE_DELETE_END();
-    my_ok(session, (ha_rows) session->row_count_func);
+    session->my_ok((ha_rows) session->row_count_func);
     /*
       We don't need to call reset_auto_increment in this case, because
       mysql_truncate always gives a NULL conds argument, hence we never
@@ -326,7 +326,7 @@ cleanup:
   if (error < 0 || (session->lex->ignore && !session->is_fatal_error))
   {
     session->row_count_func= deleted;
-    my_ok(session, (ha_rows) session->row_count_func);
+    session->my_ok((ha_rows) session->row_count_func);
   }
   return(error >= 0 || session->is_error());
 
@@ -760,7 +760,7 @@ bool multi_delete::send_eof()
   if (!local_error)
   {
     session->row_count_func= deleted;
-    ::my_ok(session, (ha_rows) session->row_count_func);
+    session->my_ok((ha_rows) session->row_count_func);
   }
   return 0;
 }
@@ -846,7 +846,7 @@ end:
         we don't test current_stmt_binlog_row_based.
       */
       write_bin_log(session, true, session->query, session->query_length);
-      my_ok(session);		// This should return record count
+      session->my_ok();		// This should return record count
     }
     pthread_mutex_lock(&LOCK_open);
     unlock_table_name(session, table_list);

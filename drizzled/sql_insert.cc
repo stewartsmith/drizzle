@@ -232,7 +232,6 @@ bool mysql_insert(Session *session,TableList *table_list,
   int error;
   bool transactional_table, joins_freed= false;
   bool changed;
-  bool was_insert_delayed= (table_list->lock_type ==  TL_WRITE_DELAYED);
   uint32_t value_count;
   ulong counter = 1;
   uint64_t id;
@@ -253,24 +252,9 @@ bool mysql_insert(Session *session,TableList *table_list,
   upgrade_lock_type(session, &table_list->lock_type, duplic,
                     values_list.elements > 1);
 
-  /*
-    We can't write-delayed into a table locked with LOCK TABLES:
-    this will lead to a deadlock, since the delayed thread will
-    never be able to get a lock on the table. QQQ: why not
-    upgrade the lock here instead?
-  */
-  if (table_list->lock_type == TL_WRITE_DELAYED && session->locked_tables &&
-      find_locked_table(session, table_list->db, table_list->table_name))
-  {
-    my_error(ER_DELAYED_INSERT_TABLE_LOCKED, MYF(0),
-             table_list->table_name);
+  if (open_and_lock_tables(session, table_list))
     return(true);
-  }
 
-  {
-    if (open_and_lock_tables(session, table_list))
-      return(true);
-  }
   lock_type= table_list->lock_type;
 
   session->set_proc_info("init");
@@ -437,21 +421,13 @@ bool mysql_insert(Session *session,TableList *table_list,
 
     transactional_table= table->file->has_transactions();
 
-    if ((changed= (info.copied || info.deleted || info.updated)))
-    {
-      /*
-        Invalidate the table in the query cache if something changed.
-        For the transactional algorithm to work the invalidation must be
-        before binlog writing and ha_autocommit_or_rollback
-      */
-    }
-    if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table || was_insert_delayed)
+    changed= (info.copied || info.deleted || info.updated);
+    if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table)
     {
       if (session->transaction.stmt.modified_non_trans_table)
 	session->transaction.all.modified_non_trans_table= true;
     }
-    assert(transactional_table || !changed ||
-                session->transaction.stmt.modified_non_trans_table);
+    assert(transactional_table || !changed || session->transaction.stmt.modified_non_trans_table);
 
   }
   session->set_proc_info("end");
@@ -485,7 +461,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     session->row_count_func= info.copied + info.deleted +
                          ((session->client_capabilities & CLIENT_FOUND_ROWS) ?
                           info.touched : info.updated);
-    my_ok(session, (ulong) session->row_count_func, id);
+    session->my_ok((ulong) session->row_count_func, id);
   }
   else
   {
@@ -499,7 +475,7 @@ bool mysql_insert(Session *session,TableList *table_list,
       sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + updated;
-    ::my_ok(session, (ulong) session->row_count_func, id, buff);
+    session->my_ok((ulong) session->row_count_func, id, buff);
   }
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_END();
@@ -751,8 +727,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
   save_read_set=  table->read_set;
   save_write_set= table->write_set;
 
-  if (info->handle_duplicates == DUP_REPLACE ||
-      info->handle_duplicates == DUP_UPDATE)
+  if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE)
   {
     while ((error=table->file->ha_write_row(table->record[0])))
     {
@@ -1387,7 +1362,7 @@ bool select_insert::send_eof()
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  ::my_ok(session, (ulong) session->row_count_func, id, buff);
+  session->my_ok((ulong) session->row_count_func, id, buff);
   return(0);
 }
 

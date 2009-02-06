@@ -50,7 +50,7 @@ session_scheduler::session_scheduler(Session *parent_session)
 bool session_scheduler::thread_attach()
 {
   assert(!thread_attached);
-  Session* session = (Session*)list.data;
+  Session* session = static_cast<Session*>(list.data);
   if (libevent_should_close_connection(session) ||
       setup_connection_thread_globals(session))
   {
@@ -72,7 +72,7 @@ void session_scheduler::thread_detach()
 {
   if (thread_attached)
   {
-    Session* session = (Session*)list.data;
+    Session* session = static_cast<Session*>(list.data);
     session->mysys_var= NULL;
     thread_attached= false;
   }
