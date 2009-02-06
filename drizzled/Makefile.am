@@ -665,8 +665,11 @@ EXTRA_DIST = \
 
 CLEANFILES = \
 		configmake.h \
-		lex_hash.h \
+		function_hash.h \
+		function_hash.stamp-h \
 		sql_yacc.output \
+		symbol_hash.h \
+		symbol_hash.stamp-h \
 		$(PCHHEADERS) \
 		$(nodist_drizzled_SOURCES)
 
