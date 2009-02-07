@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-02-03 14:23-0800\n"
+"POT-Creation-Date: 2009-02-06 03:35-0800\n"
 "PO-Revision-Date: 2008-11-27 15:28+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
@@ -1021,7 +1021,7 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
 #: drizzled/authentication.cc:69 drizzled/handlerton.cc:238
-#: drizzled/show.cc:4526 drizzled/sql_plugin.cc:798
+#: drizzled/show.cc:4526 drizzled/sql_plugin.cc:799
 #, c-format
 msgid "Plugin '%s' init function returned error."
 msgstr "Initialisatie-functie van plugin '%s' gaf een fout terug."
@@ -1615,21 +1615,17 @@ msgid "The DATETIME/TIMESTAMP format (for future)."
 msgstr "Het DATETIME/TIMESTAMP formaat (voor de toekomst)."
 
 #: drizzled/drizzled.cc:2880
-msgid "The default week format used by WEEK() functions."
-msgstr "Het standaard week formaat gebruikt door de WEEK() functies."
-
-#: drizzled/drizzled.cc:2885
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
 msgstr ""
 "Precisie van het resultaat van de '/' operator zal verhoogd worden bij deze "
 "waarde."
 
-#: drizzled/drizzled.cc:2891
+#: drizzled/drizzled.cc:2886
 msgid "The maximum length of the result of function  group_concat."
 msgstr "De maximale lengte van het resultaat van de group_concat functie."
 
-#: drizzled/drizzled.cc:2896
+#: drizzled/drizzled.cc:2891
 msgid ""
 "The number of seconds the server waits for activity on an interactive "
 "connection before closing it."
@@ -1637,17 +1633,17 @@ msgstr ""
 "Het aantal seconden dat de server wacht op activiteit in een interactieve "
 "verbinding vooraleer ze af te sluiten."
 
-#: drizzled/drizzled.cc:2902
+#: drizzled/drizzled.cc:2897
 msgid "The size of the buffer that is used for full joins."
 msgstr "De grootte van de buffer die gebruikt wordt voor full joins."
 
-#: drizzled/drizzled.cc:2908
+#: drizzled/drizzled.cc:2903
 msgid "Don't overwrite stale .MYD and .MYI even if no directory is specified."
 msgstr ""
 "Overschrijf geen oude .MYD en .MYI bestanden, zelfs niet indien er geen "
 "directory opgegeven werd."
 
-#: drizzled/drizzled.cc:2913
+#: drizzled/drizzled.cc:2908
 msgid ""
 "The size of the buffer used for index blocks for MyISAM tables. Increase "
 "this to get better index handling (for all reads and multiple writes) to as "
@@ -1657,7 +1653,7 @@ msgstr ""
 "Verhoogd dit voor een betere indexwerking (voor alle leesoperaties en "
 "meerdere schrijfoperaties) tot wat je je maar kan veroorloven;"
 
-#: drizzled/drizzled.cc:2922
+#: drizzled/drizzled.cc:2917
 msgid ""
 "This characterizes the number of hits a hot block has to be untouched until "
 "it is considered aged enough to be downgraded to a warm block. This "
@@ -1669,19 +1665,19 @@ msgstr ""
 "block'. Het is het percentage van het aantal 'hits' ten opzichte van het "
 "totaal aantal blokken in de key cache"
 
-#: drizzled/drizzled.cc:2931
+#: drizzled/drizzled.cc:2926
 msgid "The default size of key cache blocks"
 msgstr "De standaard grootte van de key cache blokken"
 
-#: drizzled/drizzled.cc:2937
+#: drizzled/drizzled.cc:2932
 msgid "The minimum percentage of warm blocks in key cache"
 msgstr "Het minimale aantal warme blokken in de key cache"
 
-#: drizzled/drizzled.cc:2943
+#: drizzled/drizzled.cc:2938
 msgid "Max packetlength to send/receive from to server."
 msgstr "Maximale pakketlengte voor verzending naar /ontvangst van de server."
 
-#: drizzled/drizzled.cc:2948
+#: drizzled/drizzled.cc:2943
 msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
@@ -1689,20 +1685,20 @@ msgstr ""
 "Indien er meer onderbroken verbindingen van een host zijn dan deze waarde, "
 "dan wordt deze host geblokkeerd voor verdere verbindingen."
 
-#: drizzled/drizzled.cc:2955
+#: drizzled/drizzled.cc:2950
 msgid "The number of simultaneous clients allowed."
 msgstr "Het aantal gelijktijdig toegestane clients."
 
-#: drizzled/drizzled.cc:2959
+#: drizzled/drizzled.cc:2954
 msgid "Max number of errors/warnings to store for a statement."
 msgstr ""
 "Maximaal aantal fouten/waarschuwingen bij te houden voor een statement."
 
-#: drizzled/drizzled.cc:2964
+#: drizzled/drizzled.cc:2959
 msgid "Don't allow creation of heap tables bigger than this."
 msgstr "Sta de aanmaak van grotere heap tabellen niet toe."
 
-#: drizzled/drizzled.cc:2970
+#: drizzled/drizzled.cc:2965
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
 "an error."
@@ -1710,17 +1706,17 @@ msgstr ""
 "Joins die meer waarschijnlijk meer dan  max_join_size records zullen lezen "
 "geven een fout terug."
 
-#: drizzled/drizzled.cc:2976
+#: drizzled/drizzled.cc:2971
 msgid "Max number of bytes in sorted records."
 msgstr "Maximaal aantal bytes in gesorteerde records."
 
-#: drizzled/drizzled.cc:2981
+#: drizzled/drizzled.cc:2976
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
 "Beperk het verwachte maximaal aantal zoekoperaties indien rijen opgezocht "
 "worden op basis van een sleutel."
 
-#: drizzled/drizzled.cc:2986
+#: drizzled/drizzled.cc:2981
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
@@ -1728,19 +1724,19 @@ msgstr ""
 "Het aantal bytes te gebruiken voor het sorteren van BLOB en TEXT waarden "
 "(enkel de eerste max_sort_length bytes van elke waarde worden gebruikt)."
 
-#: drizzled/drizzled.cc:2993
+#: drizzled/drizzled.cc:2988
 msgid "Maximum number of temporary tables a client can keep open at a time."
 msgstr ""
 "Maximaal aantal tijdelijke tabellen die een client gelijktijdig kan "
 "openhouden."
 
-#: drizzled/drizzled.cc:2998
+#: drizzled/drizzled.cc:2993
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
 "Sta de uitvoering van enkele leesvergrendelingen toe na zoveel "
 "schrijfvergrendelingen."
 
-#: drizzled/drizzled.cc:3002
+#: drizzled/drizzled.cc:2997
 msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
@@ -1748,7 +1744,7 @@ msgstr ""
 "Log geen queries die minder dan min_examined_row_limit rijen onderzoeken "
 "naar een bestand."
 
-#: drizzled/drizzled.cc:3008
+#: drizzled/drizzled.cc:3003
 msgid ""
 "Specifies how MyISAM index statistics collection code should threat NULLs. "
 "Possible values of name are 'nulls_unequal' (default behavior), "
@@ -1758,11 +1754,11 @@ msgstr ""
 "waarden behandelt. Mogelijke waarden zijn 'nulls_unequal' (standaardgerag), "
 "'nulls_equal' (emuleer MySQL 4.0 gedrag), en 'nulls_ignored'."
 
-#: drizzled/drizzled.cc:3015
+#: drizzled/drizzled.cc:3010
 msgid "Buffer length for TCP/IP and socket communication."
 msgstr "Buffer lengte voor TCP/IP en socket communicatie"
 
-#: drizzled/drizzled.cc:3020
+#: drizzled/drizzled.cc:3015
 msgid ""
 "Number of seconds to wait for more data from a connection before aborting "
 "the read."
@@ -1770,7 +1766,7 @@ msgstr ""
 "Aantal seconden dat gewacht wordt op meer data voordat de leesoperatie "
 "afgebroken wordt."
 
-#: drizzled/drizzled.cc:3026
+#: drizzled/drizzled.cc:3021
 msgid ""
 "If a read on a communication port is interrupted, retry this many times "
 "before giving up."
@@ -1778,7 +1774,7 @@ msgstr ""
 "Indien het lezen van een communicatiepoort onderbroken wordt, probeer dan "
 "dit aantal keer opnieuw alvorens op te geven."
 
-#: drizzled/drizzled.cc:3032
+#: drizzled/drizzled.cc:3027
 msgid ""
 "Number of seconds to wait for a block to be written to a connection before "
 "aborting the write."
@@ -1786,11 +1782,11 @@ msgstr ""
 "Aantal seconden dat gewacht wordt tot een blok geschreven is voordat de "
 "schrijfoperatie afgebroken wordt."
 
-#: drizzled/drizzled.cc:3038
+#: drizzled/drizzled.cc:3033
 msgid "Use compatible behavior."
 msgstr "Gebruik compatibel gedrag."
 
-#: drizzled/drizzled.cc:3043
+#: drizzled/drizzled.cc:3038
 msgid ""
 "If this is not 0, then drizzled will use this value to reserve file "
 "descriptors to use with setrlimit(). If this value is 0 then drizzled will "
@@ -1802,7 +1798,7 @@ msgstr ""
 "drizzled max_connections*5 of max_connections + table_cache*2 (welke de "
 "grootste is) bestanden reserveren."
 
-#: drizzled/drizzled.cc:3050
+#: drizzled/drizzled.cc:3045
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
 "promising partial plans from the optimizer search space. Meaning: false - do "
@@ -1815,7 +1811,7 @@ msgstr ""
 "uitgebreide zoekopdracht; true - schrap plannen op basis van het aantal "
 "opgehaalde rijen."
 
-#: drizzled/drizzled.cc:3058
+#: drizzled/drizzled.cc:3053
 msgid ""
 "Maximum depth of search performed by the query optimizer. Values larger than "
 "the number of relations in a query result in better query plans, but take "
@@ -1834,11 +1830,11 @@ msgstr ""
 "optimizer overschakelennaar de originele waarde (gebruikt voor testen/"
 "vergelijken)."
 
-#: drizzled/drizzled.cc:3070
+#: drizzled/drizzled.cc:3065
 msgid "Directory for plugins."
 msgstr "Directory voor plugins"
 
-#: drizzled/drizzled.cc:3074
+#: drizzled/drizzled.cc:3069
 msgid ""
 "Optional colon (or semicolon) separated list of plugins to load,where each "
 "plugin is identified by the name of the shared library. [for example: --"
@@ -1849,26 +1845,26 @@ msgstr ""
 "naam van zijn gedeelde bibliotheek. [bijvoorbeeld: --plugin_load=libmd5udf."
 "so:libauth_pam.so]"
 
-#: drizzled/drizzled.cc:3080
+#: drizzled/drizzled.cc:3075
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr ""
 "De grootte van de buffer die toegewezen wordt bij het voorladen van indexen."
 
-#: drizzled/drizzled.cc:3085
+#: drizzled/drizzled.cc:3080
 msgid "Allocation block size for query parsing and execution"
 msgstr "Grootte van toegewezen blokken voor query parsing en uitvoering"
 
-#: drizzled/drizzled.cc:3090
+#: drizzled/drizzled.cc:3085
 msgid "Persistent buffer for query parsing and execution"
 msgstr "Blijvende buffer voor query parsing en uitvoering"
 
-#: drizzled/drizzled.cc:3096
+#: drizzled/drizzled.cc:3091
 msgid "Allocation block size for storing ranges during optimization"
 msgstr ""
 "Grootte van toegewezen blokken voor opslag van bereiken tijdens de "
 "optimalisering"
 
-#: drizzled/drizzled.cc:3102
+#: drizzled/drizzled.cc:3097
 msgid ""
 "Each thread that does a sequential scan allocates a buffer of this size for "
 "each table it scans. If you do many sequential scans, you may want to "
@@ -1878,7 +1874,7 @@ msgstr ""
 "toe voor elke gescande tabel. Indien je veel sequentiële scans doet, zou het "
 "kunnen dat je deze waarde wil verhogen."
 
-#: drizzled/drizzled.cc:3110
+#: drizzled/drizzled.cc:3105
 msgid ""
 "When reading rows in sorted order after a sort, the rows are read through "
 "this buffer to avoid a disk seeks. If not set, then it's set to the value of "
@@ -1888,19 +1884,19 @@ msgstr ""
 "worden de records gelezen via deze buffer om zoeken op schijf te vermijden. "
 "Indien niet ingesteld, wordt de waarde van record_buffer gebruikt."
 
-#: drizzled/drizzled.cc:3118
+#: drizzled/drizzled.cc:3113
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
 msgstr "Elke thread die moet sorteren wijst een buffer van deze grootte toe."
 
-#: drizzled/drizzled.cc:3124
+#: drizzled/drizzled.cc:3119
 msgid "The number of cached table definitions."
 msgstr "Het aantal tabeldefinities in de cache."
 
-#: drizzled/drizzled.cc:3128
+#: drizzled/drizzled.cc:3123
 msgid "The number of cached open tables."
 msgstr "Het aantal open tabellen in de cache."
 
-#: drizzled/drizzled.cc:3132
+#: drizzled/drizzled.cc:3127
 msgid ""
 "Timeout in seconds to wait for a table level lock before returning an error. "
 "Used only if the connection has active cursors."
@@ -1909,15 +1905,15 @@ msgstr ""
 "voordat een fout teruggegeven wordt. Enkel gebruikt indien de verbinding "
 "actieve cursors heeft."
 
-#: drizzled/drizzled.cc:3137
+#: drizzled/drizzled.cc:3132
 msgid "The stack size for each thread."
 msgstr "De grootte van de stack voor elke thread."
 
-#: drizzled/drizzled.cc:3143
+#: drizzled/drizzled.cc:3138
 msgid "The TIME format (for future)."
 msgstr "Het TIME formaat (voor de toekomst)"
 
-#: drizzled/drizzled.cc:3148
+#: drizzled/drizzled.cc:3143
 #, fuzzy
 msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
@@ -1927,19 +1923,19 @@ msgstr ""
 "overschrijdt, zal MySQL ze automatisch converteren in een MyIsam tabel op de "
 "schijf."
 
-#: drizzled/drizzled.cc:3154
+#: drizzled/drizzled.cc:3149
 msgid "Allocation block size for transactions to be stored in binary log"
 msgstr ""
 "Toewijzingsblokgrootte voor de transacties die opgeslagen moeten worden in "
 "de binaire log."
 
-#: drizzled/drizzled.cc:3159
+#: drizzled/drizzled.cc:3154
 msgid "Persistent buffer for transactions to be stored in binary log"
 msgstr ""
 "Persistente buffer voor de transacties die opgeslagen moeten worden in de "
 "binaire log."
 
-#: drizzled/drizzled.cc:3164
+#: drizzled/drizzled.cc:3159
 msgid ""
 "The number of seconds the server waits for activity on a connection before "
 "closing it."
@@ -1947,7 +1943,7 @@ msgstr ""
 "Het aantal seconden dat de server op activiteit van een verbinding wacht "
 "voordat ze afgesloten wordt."
 
-#: drizzled/drizzled.cc:3317
+#: drizzled/drizzled.cc:3312
 #, fuzzy
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
@@ -1962,12 +1958,12 @@ msgstr ""
 "\n"
 "Start de Drizzle databank server\n"
 
-#: drizzled/drizzled.cc:3324
+#: drizzled/drizzled.cc:3319
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
 msgstr "Gebruik: %s [OPTIES]\n"
 
-#: drizzled/drizzled.cc:3335
+#: drizzled/drizzled.cc:3330
 msgid ""
 "\n"
 "To see what values a running Drizzle server is using, type\n"
@@ -1977,7 +1973,7 @@ msgstr ""
 "Om te zien welke waarden een draaiende Drizzle server gebruikt, type\n"
 "'drizzleadmin variables' in plaats van 'drizzled --help'."
 
-#: drizzled/drizzled.cc:3488
+#: drizzled/drizzled.cc:3483
 #, c-format
 msgid ""
 "Ignoring user change to '%s' because the user was set to '%s' earlier on the "
@@ -1986,27 +1982,27 @@ msgstr ""
 "Negeert instellen van gebruiker op '%s' omdat de gebruiker op '%s' ingesteld "
 "werd via de commandolijn\n"
 
-#: drizzled/drizzled.cc:3536
+#: drizzled/drizzled.cc:3531
 msgid "Can't start server: cannot resolve hostname!"
 msgstr "Kan de server niet starten: kan de hostnaam niet oplossen!"
 
-#: drizzled/drizzled.cc:3542
+#: drizzled/drizzled.cc:3537
 msgid "Can't start server: bind-address refers to multiple interfaces!"
 msgstr ""
 "Kan de server niet starten: het verbindingsadres verwijst naar meerdere "
 "interfaces!"
 
-#: drizzled/drizzled.cc:3880
+#: drizzled/drizzled.cc:3875
 #, c-format
 msgid "No option given to %s\n"
 msgstr "Geen optie gegeven bij %s\n"
 
-#: drizzled/drizzled.cc:3882
+#: drizzled/drizzled.cc:3877
 #, c-format
 msgid "Wrong option to %s. Option(s) given: %s\n"
 msgstr "Foute optie bij %s. Opgegeven optie(s): %s\n"
 
-#: drizzled/drizzled.cc:3884
+#: drizzled/drizzled.cc:3879
 #, c-format
 msgid "Alternatives are: '%s'"
 msgstr "Alternatieven zijn: '%s'"
@@ -6042,46 +6038,46 @@ msgstr "Plugin '%s' van type %s kon niet gedeïnitialiseerd worden"
 msgid "Plugin '%s' has ref_count=%d after deinitialization."
 msgstr "Plugin '%s' heeft ref_count=%d na deïnitialisatie."
 
-#: drizzled/sql_plugin.cc:789
+#: drizzled/sql_plugin.cc:790
 #, c-format
 msgid "Plugin '%s' registration as a %s failed."
 msgstr "Plugin '%s' registratie als %s mislukt."
 
-#: drizzled/sql_plugin.cc:1027
+#: drizzled/sql_plugin.cc:1028
 msgid "plugin-load parameter too long"
 msgstr "parameter voor het laden van de plugin te lang"
 
-#: drizzled/sql_plugin.cc:1087
+#: drizzled/sql_plugin.cc:1088
 #, c-format
 msgid "Couldn't load plugin named '%s' with soname '%s'."
 msgstr "Kon plugin met de naam '%s' niet laden met soname '%s'."
 
-#: drizzled/sql_plugin.cc:1140
+#: drizzled/sql_plugin.cc:1141
 #, fuzzy, c-format
 msgid "Forcing shutdown of %<PRIu64> plugins"
 msgstr "Forceert afsluiten van %d plugins"
 
-#: drizzled/sql_plugin.cc:1163
+#: drizzled/sql_plugin.cc:1164
 #, c-format
 msgid "Plugin '%s' will be forced to shutdown"
 msgstr "Plugin '%s' zal gedwongen worden om af te sluiten"
 
-#: drizzled/sql_plugin.cc:1179
+#: drizzled/sql_plugin.cc:1180
 #, c-format
 msgid "Plugin '%s' has ref_count=%d after shutdown."
 msgstr "Plugin '%s' heeft ref_count=%d na afsluiten."
 
-#: drizzled/sql_plugin.cc:1569
+#: drizzled/sql_plugin.cc:1570
 #, fuzzy
 msgid "Out of memory."
 msgstr "Te weinig geheugen"
 
-#: drizzled/sql_plugin.cc:2418 drizzled/sql_plugin.cc:2481
+#: drizzled/sql_plugin.cc:2419 drizzled/sql_plugin.cc:2482
 #, c-format
 msgid "Unknown variable type code 0x%x in plugin '%s'."
 msgstr "Onbekende variabele type code 0x%x in plugin '%s'."
 
-#: drizzled/sql_plugin.cc:2461
+#: drizzled/sql_plugin.cc:2462
 #, c-format
 msgid ""
 "Server variable %s of plugin %s was forced to be read-only: string variable "
@@ -6090,37 +6086,37 @@ msgstr ""
 "Server variabele %s van plugin %s werd geforceerd read-only: string "
 "variabele zonder update_func en PLUGIN_VAR_MEMALLOC vlag"
 
-#: drizzled/sql_plugin.cc:2492
+#: drizzled/sql_plugin.cc:2493
 #, c-format
 msgid "Missing variable name in plugin '%s'."
 msgstr "Ontbrekende variabele naam in plugin '%s'."
 
-#: drizzled/sql_plugin.cc:2509
+#: drizzled/sql_plugin.cc:2510
 #, c-format
 msgid "Thread local variable '%s' not allocated in plugin '%s'."
 msgstr "Locale thread variabele '%s' niet toegewezen in plugin '%s'."
 
-#: drizzled/sql_plugin.cc:2628
+#: drizzled/sql_plugin.cc:2629
 #, c-format
 msgid "Out of memory for plugin '%s'."
 msgstr "Geheugen tekort in plugin '%s'."
 
-#: drizzled/sql_plugin.cc:2635
+#: drizzled/sql_plugin.cc:2636
 #, c-format
 msgid "Bad options for plugin '%s'."
 msgstr "Slechte opties voor plugin '%s'."
 
-#: drizzled/sql_plugin.cc:2644
+#: drizzled/sql_plugin.cc:2645
 #, c-format
 msgid "Parsing options for plugin '%s' failed."
 msgstr "Interpreteren van opties voor plugin '%s' mislukt."
 
-#: drizzled/sql_plugin.cc:2687
+#: drizzled/sql_plugin.cc:2688
 #, c-format
 msgid "Plugin '%s' has conflicting system variables"
 msgstr "Plugin '%s' heeft conflicterende systeem variabelen"
 
-#: drizzled/sql_plugin.cc:2697
+#: drizzled/sql_plugin.cc:2698
 #, c-format
 msgid "Plugin '%s' disabled by command line option"
 msgstr "Plugin '%s' uitgeschakeld via opdrachtregeloptie"
@@ -6231,59 +6227,59 @@ msgstr "Kreeg fout %d bij het lezen van tabel '%s'"
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
 msgstr "Fatale fout: Ongeldige of onbekende standaard tijdzone '%s'"
 
-#: gnulib/getopt.c:526 gnulib/getopt.c:542
+#: gnulib/getopt.c:528 gnulib/getopt.c:544
 #, fuzzy, c-format
 msgid "%s: option `%s' is ambiguous\n"
 msgstr "Kolom '%-.192s' in %-.192s is dubbelzinnig"
 
-#: gnulib/getopt.c:575 gnulib/getopt.c:579
+#: gnulib/getopt.c:577 gnulib/getopt.c:581
 #, c-format
 msgid "%s: option `--%s' doesn't allow an argument\n"
 msgstr ""
 
-#: gnulib/getopt.c:588 gnulib/getopt.c:593
+#: gnulib/getopt.c:590 gnulib/getopt.c:595
 #, c-format
 msgid "%s: option `%c%s' doesn't allow an argument\n"
 msgstr ""
 
-#: gnulib/getopt.c:636 gnulib/getopt.c:655 gnulib/getopt.c:971
-#: gnulib/getopt.c:990
+#: gnulib/getopt.c:638 gnulib/getopt.c:657 gnulib/getopt.c:973
+#: gnulib/getopt.c:992
 #, c-format
 msgid "%s: option `%s' requires an argument\n"
 msgstr ""
 
-#: gnulib/getopt.c:693 gnulib/getopt.c:696
+#: gnulib/getopt.c:695 gnulib/getopt.c:698
 #, c-format
 msgid "%s: unrecognized option `--%s'\n"
 msgstr ""
 
-#: gnulib/getopt.c:704 gnulib/getopt.c:707
+#: gnulib/getopt.c:706 gnulib/getopt.c:709
 #, c-format
 msgid "%s: unrecognized option `%c%s'\n"
 msgstr ""
 
-#: gnulib/getopt.c:759 gnulib/getopt.c:762
+#: gnulib/getopt.c:761 gnulib/getopt.c:764
 #, c-format
 msgid "%s: illegal option -- %c\n"
 msgstr ""
 
-#: gnulib/getopt.c:768 gnulib/getopt.c:771
+#: gnulib/getopt.c:770 gnulib/getopt.c:773
 #, c-format
 msgid "%s: invalid option -- %c\n"
 msgstr ""
 
-#: gnulib/getopt.c:823 gnulib/getopt.c:839 gnulib/getopt.c:1043
-#: gnulib/getopt.c:1061
+#: gnulib/getopt.c:825 gnulib/getopt.c:841 gnulib/getopt.c:1045
+#: gnulib/getopt.c:1063
 #, c-format
 msgid "%s: option requires an argument -- %c\n"
 msgstr ""
 
-#: gnulib/getopt.c:892 gnulib/getopt.c:908
+#: gnulib/getopt.c:894 gnulib/getopt.c:910
 #, c-format
 msgid "%s: option `-W %s' is ambiguous\n"
 msgstr ""
 
-#: gnulib/getopt.c:932 gnulib/getopt.c:950
+#: gnulib/getopt.c:934 gnulib/getopt.c:952
 #, c-format
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr ""
@@ -7211,6 +7207,9 @@ msgstr "Onbestaande tablespace"
 #: storage/myisam/my_handler_errors.c:155
 msgid "Tablespace not empty"
 msgstr "Tablespace is niet leeg"
+
+#~ msgid "The default week format used by WEEK() functions."
+#~ msgstr "Het standaard week formaat gebruikt door de WEEK() functies."
 
 #~ msgid "categories:"
 #~ msgstr "categoriën:"
