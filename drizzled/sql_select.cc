@@ -69,7 +69,7 @@ static bool update_ref_and_keys(Session *session, DYNAMIC_ARRAY *keyuse,
                                 JOIN_TAB *join_tab,
                                 uint32_t tables, COND *conds,
                                 COND_EQUAL *cond_equal,
-                                table_map table_map, SELECT_LEX *select_lex,
+                                table_map table_map, Select_Lex *select_lex,
                                 st_sargable_param **sargables);
 static int sort_keyuse(KEYUSE *a,KEYUSE *b);
 static void set_position(JOIN *join,uint32_t index,JOIN_TAB *table,KEYUSE *key);
@@ -268,7 +268,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
                    ulong setup_tables_done_option)
 {
   bool res;
-  register SELECT_LEX *select_lex = &lex->select_lex;
+  register Select_Lex *select_lex = &lex->select_lex;
   DRIZZLE_SELECT_START();
 
   if (select_lex->master_unit()->is_union() ||
@@ -276,7 +276,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
     res= mysql_union(session, lex, result, &lex->unit, setup_tables_done_option);
   else
   {
-    SELECT_LEX_UNIT *unit= &lex->unit;
+    Select_Lex_UNIT *unit= &lex->unit;
     unit->set_limit(unit->global_parameters);
     session->session_marker= 0;
     /*
@@ -349,7 +349,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 */
 
 bool
-fix_inner_refs(Session *session, List<Item> &all_fields, SELECT_LEX *select,
+fix_inner_refs(Session *session, List<Item> &all_fields, Select_Lex *select,
                  Item **ref_pointer_array)
 {
   Item_outer_ref *ref;
@@ -468,8 +468,8 @@ JOIN::prepare(Item ***rref_pointer_array,
 	      uint32_t wild_num, COND *conds_init, uint32_t og_num,
 	      order_st *order_init, order_st *group_init,
 	      Item *having_init,
-	      order_st *proc_param_init, SELECT_LEX *select_lex_arg,
-	      SELECT_LEX_UNIT *unit_arg)
+	      order_st *proc_param_init, Select_Lex *select_lex_arg,
+	      Select_Lex_UNIT *unit_arg)
 {
   // to prevent double initialization on EXPLAIN
   if (optimized)
@@ -2612,7 +2612,7 @@ JOIN::destroy()
                               This object is responsible for send result
                               set rows to the client or inserting them
                               into a table.
-  @param select_lex           the only SELECT_LEX of this query
+  @param select_lex           the only Select_Lex of this query
   @param unit                 top-level UNIT of this query
                               UNIT is an artificial object created by the
                               parser for every SELECT clause.
@@ -2631,8 +2631,8 @@ mysql_select(Session *session, Item ***rref_pointer_array,
 	     TableList *tables, uint32_t wild_num, List<Item> &fields,
 	     COND *conds, uint32_t og_num,  order_st *order, order_st *group,
 	     Item *having, order_st *proc_param, uint64_t select_options,
-	     select_result *result, SELECT_LEX_UNIT *unit,
-	     SELECT_LEX *select_lex)
+	     select_result *result, Select_Lex_UNIT *unit,
+	     Select_Lex *select_lex)
 {
   bool err;
   bool free_join= 1;
@@ -2749,7 +2749,7 @@ static TableList *alloc_join_nest(Session *session)
 }
 
 
-void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TableList> *tlist)
+void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *tlist)
 {
   List_iterator<TableList> it(*tlist);
   TableList *table;
@@ -2793,7 +2793,7 @@ void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TableList> *tlist)
 
 bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
 {
-  SELECT_LEX *parent_lex= parent_join->select_lex;
+  Select_Lex *parent_lex= parent_join->select_lex;
   TableList *emb_tbl_nest= NULL;
   List<TableList> *emb_join_list= &parent_lex->top_join_list;
   Session *session= parent_join->session;
@@ -2920,7 +2920,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     2. Walk through subquery's top list and set 'embedding' to point to the
        sj-nest.
   */
-  st_select_lex *subq_lex= subq_pred->unit->first_select();
+  Select_Lex *subq_lex= subq_pred->unit->first_select();
   nested_join->join_list.empty();
   List_iterator_fast<TableList> li(subq_lex->top_join_list);
   TableList *tl, *last_leaf;
@@ -2965,7 +2965,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
   {
     tl->table->tablenr= table_no;
     tl->table->map= ((table_map)1) << table_no;
-    SELECT_LEX *old_sl= tl->select_lex;
+    Select_Lex *old_sl= tl->select_lex;
     tl->select_lex= parent_join->select_lex;
     for(TableList *emb= tl->embedding; emb && emb->select_lex == old_sl; emb= emb->embedding)
       emb->select_lex= parent_join->select_lex;
@@ -2976,7 +2976,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     Put the subquery's WHERE into semi-join's sj_on_expr
     Add the subquery-induced equalities too.
   */
-  SELECT_LEX *save_lex= session->lex->current_select;
+  Select_Lex *save_lex= session->lex->current_select;
   session->lex->current_select=subq_lex;
   if (!subq_pred->left_expr->fixed &&
        subq_pred->left_expr->fix_fields(session, &subq_pred->left_expr))
@@ -3195,10 +3195,10 @@ bool JOIN::flatten_subqueries()
 
 bool JOIN::setup_subquery_materialization()
 {
-  for (SELECT_LEX_UNIT *un= select_lex->first_inner_unit(); un;
+  for (Select_Lex_UNIT *un= select_lex->first_inner_unit(); un;
        un= un->next_unit())
   {
-    for (SELECT_LEX *sl= un->first_select(); sl; sl= sl->next_select())
+    for (Select_Lex *sl= un->first_select(); sl; sl= sl->next_select())
     {
       Item_subselect *subquery_predicate= sl->master_unit()->item;
       if (subquery_predicate &&
@@ -4610,7 +4610,7 @@ static void add_key_fields_for_nj(JOIN *join, TableList *nested_join_table,
 static bool
 update_ref_and_keys(Session *session, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
                     uint32_t tables, COND *cond, COND_EQUAL *,
-                    table_map normal_tables, SELECT_LEX *select_lex,
+                    table_map normal_tables, Select_Lex *select_lex,
                     SARGABLE_PARAM **sargables)
 {
   uint	and_level,i,found_eq_constant;
@@ -7991,8 +7991,8 @@ void JOIN_TAB::cleanup()
 
 void JOIN::join_free()
 {
-  SELECT_LEX_UNIT *tmp_unit;
-  SELECT_LEX *sl;
+  Select_Lex_UNIT *tmp_unit;
+  Select_Lex *sl;
   /*
     Optimization: if not EXPLAIN and we are done with the JOIN,
     free all tables.
@@ -14455,7 +14455,7 @@ next_item:
 */
 
 void
-count_field_types(SELECT_LEX *select_lex, TMP_TABLE_PARAM *param,
+count_field_types(Select_Lex *select_lex, TMP_TABLE_PARAM *param,
                   List<Item> &fields, bool reset_with_sum_func)
 {
   List_iterator<Item> li(fields);
@@ -15268,12 +15268,12 @@ static bool add_ref_to_table_cond(Session *session, JOIN_TAB *join_tab)
   Free joins of subselect of this select.
 
   @param session      Session pointer
-  @param select   pointer to st_select_lex which subselects joins we will free
+  @param select   pointer to Select_Lex which subselects joins we will free
 */
 
-void free_underlaid_joins(Session *, SELECT_LEX *select)
+void free_underlaid_joins(Session *, Select_Lex *select)
 {
-  for (SELECT_LEX_UNIT *unit= select->first_inner_unit();
+  for (Select_Lex_UNIT *unit= select->first_inner_unit();
        unit;
        unit= unit->next_unit())
     unit->cleanup();
@@ -15772,7 +15772,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 					cs));
     /* table */
     {
-      SELECT_LEX *sl= join->unit->first_select();
+      Select_Lex *sl= join->unit->first_select();
       uint32_t len= 6, lastop= 0;
       memcpy(table_name_buffer, STRING_WITH_LEN("<union"));
       for (; sl && len + lastop + 5 < NAME_LEN; sl= sl->next_select())
@@ -16187,7 +16187,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	join->error= 1;
     }
   }
-  for (SELECT_LEX_UNIT *unit= join->select_lex->first_inner_unit();
+  for (Select_Lex_UNIT *unit= join->select_lex->first_inner_unit();
        unit;
        unit= unit->next_unit())
   {
@@ -16198,12 +16198,12 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 }
 
 
-bool mysql_explain_union(Session *session, SELECT_LEX_UNIT *unit, select_result *result)
+bool mysql_explain_union(Session *session, Select_Lex_UNIT *unit, select_result *result)
 {
   bool res= 0;
-  SELECT_LEX *first= unit->first_select();
+  Select_Lex *first= unit->first_select();
 
-  for (SELECT_LEX *sl= first;
+  for (Select_Lex *sl= first;
        sl;
        sl= sl->next_select())
   {
@@ -16440,7 +16440,7 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
 }
 
 
-void st_select_lex::print(Session *session, String *str, enum_query_type query_type)
+void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
 {
   /* QQ: session may not be set for sub queries, but this should be fixed */
   if (!session)

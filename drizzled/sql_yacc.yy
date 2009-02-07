@@ -254,7 +254,7 @@ Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
     if (expr2->substype() == Item_subselect::SINGLEROW_SUBS)
     {
       Item_singlerow_subselect *expr3 = (Item_singlerow_subselect*) expr2;
-      st_select_lex *subselect;
+      Select_Lex *subselect;
 
       /*
         Implement the mandated change, by altering the semantic tree:
@@ -283,11 +283,11 @@ Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
 }
 
 /**
-   @brief Creates a new SELECT_LEX for a UNION branch.
+   @brief Creates a new Select_Lex for a UNION branch.
 
-   Sets up and initializes a SELECT_LEX structure for a query once the parser
-   discovers a UNION token. The current SELECT_LEX is pushed on the stack and
-   the new SELECT_LEX becomes the current one..=
+   Sets up and initializes a Select_Lex structure for a query once the parser
+   discovers a UNION token. The current Select_Lex is pushed on the stack and
+   the new Select_Lex becomes the current one..=
 
    @lex The parser state.
 
@@ -323,7 +323,7 @@ bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
 }
 
 /**
-   @brief Initializes a SELECT_LEX for a query within parentheses (aka
+   @brief Initializes a Select_Lex for a query within parentheses (aka
    braces).
 
    @return false if successful, true if an error was reported. In the latter
@@ -331,7 +331,7 @@ bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
  */
 bool setup_select_in_parentheses(LEX *lex) 
 {
-  SELECT_LEX * sel= lex->current_select;
+  Select_Lex * sel= lex->current_select;
   if (sel->set_braces(1))
   {
     my_parse_error(ER(ER_SYNTAX_ERROR));
@@ -395,7 +395,7 @@ bool setup_select_in_parentheses(LEX *lex)
   struct st_table_lock_info table_lock_info;
   interval_type interval, interval_time_st;
   enum enum_drizzle_timestamp_type date_time_type;
-  st_select_lex *select_lex;
+  Select_Lex *select_lex;
   chooser_compare_func_creator boolfunc2creator;
   struct sp_cond_type *spcondtype;
   struct { int vars, conds, hndlrs, curs; } spblock;
@@ -2591,7 +2591,7 @@ table_to_table:
           table_ident TO_SYM table_ident
           {
             LEX *lex=Lex;
-            SELECT_LEX *sl= lex->current_select;
+            Select_Lex *sl= lex->current_select;
             if (!sl->add_table_to_list(lex->session, $1,NULL,TL_OPTION_UPDATING,
                                        TL_IGNORE) ||
                 !sl->add_table_to_list(lex->session, $3,NULL,TL_OPTION_UPDATING,
@@ -2686,7 +2686,7 @@ select_init2:
           select_part2
           {
             LEX *lex= Lex;
-            SELECT_LEX * sel= lex->current_select;
+            Select_Lex * sel= lex->current_select;
             if (lex->current_select->set_braces(0))
             {
               my_parse_error(ER(ER_SYNTAX_ERROR));
@@ -2705,7 +2705,7 @@ select_init2:
 select_part2:
           {
             LEX *lex= Lex;
-            SELECT_LEX *sel= lex->current_select;
+            Select_Lex *sel= lex->current_select;
             if (sel->linkage != UNION_TYPE)
               mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
@@ -3528,7 +3528,7 @@ sum_expr:
           opt_gconcat_separator
           ')'
           {
-            SELECT_LEX *sel= Select;
+            Select_Lex *sel= Select;
             sel->in_sum_expr--;
             $$=new Item_func_group_concat(Lex->current_context(), $3, $5,
                                           sel->gorder_list, $7);
@@ -3587,7 +3587,7 @@ opt_gorder_clause:
           }
         | order_clause
           {
-            SELECT_LEX *select= Select;
+            Select_Lex *select= Select;
             select->gorder_list=
               (SQL_LIST*) sql_memdup((char*) &select->order_list,
                                      sizeof(st_sql_list));
@@ -3857,7 +3857,7 @@ normal_join:
 /* Warning - may return NULL in case of incomplete SELECT */
 table_factor:
           {
-            SELECT_LEX *sel= Select;
+            Select_Lex *sel= Select;
             sel->table_join_options= 0;
           }
           table_ident opt_table_alias opt_key_definition
@@ -3872,7 +3872,7 @@ table_factor:
         | select_derived_init get_select_lex select_derived2
           {
             LEX *lex= Lex;
-            SELECT_LEX *sel= lex->current_select;
+            Select_Lex *sel= lex->current_select;
             if ($1)
             {
               if (sel->set_braces(1))
@@ -3928,8 +3928,8 @@ table_factor:
                  are no outer parentheses, add_table_to_list() will throw
                  error in this case */
               LEX *lex=Lex;
-              SELECT_LEX *sel= lex->current_select;
-              SELECT_LEX_UNIT *unit= sel->master_unit();
+              Select_Lex *sel= lex->current_select;
+              Select_Lex_UNIT *unit= sel->master_unit();
               lex->current_select= sel= unit->outer_select();
               if (!($$= sel->add_table_to_list(lex->session,
                                                new Table_ident(unit), $5, 0,
@@ -3975,7 +3975,7 @@ select_init2_derived:
           select_part2_derived
           {
             LEX *lex= Lex;
-            SELECT_LEX * sel= lex->current_select;
+            Select_Lex * sel= lex->current_select;
             if (lex->current_select->set_braces(0))
             {
               my_parse_error(ER(ER_SYNTAX_ERROR));
@@ -3994,7 +3994,7 @@ select_init2_derived:
 select_part2_derived:
           {
             LEX *lex= Lex;
-            SELECT_LEX *sel= lex->current_select;
+            Select_Lex *sel= lex->current_select;
             if (sel->linkage != UNION_TYPE)
               mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
@@ -4062,7 +4062,7 @@ select_derived_init:
           {
             LEX *lex= Lex;
 
-            SELECT_LEX *sel= lex->current_select;
+            Select_Lex *sel= lex->current_select;
             TableList *embedding;
             if (!sel->embedding || sel->end_nested_join(lex->session))
             {
@@ -4239,7 +4239,7 @@ where_clause:
           }
           expr
           {
-            SELECT_LEX *select= Select;
+            Select_Lex *select= Select;
             select->where= $3;
             select->parsing_place= NO_MATTER;
             if ($3)
@@ -4255,7 +4255,7 @@ having_clause:
           }
           expr
           {
-            SELECT_LEX *sel= Select;
+            Select_Lex *sel= Select;
             sel->having= $3;
             sel->parsing_place= NO_MATTER;
             if ($3)
@@ -4350,8 +4350,8 @@ order_clause:
           ORDER_SYM BY
           {
             LEX *lex=Lex;
-            SELECT_LEX *sel= lex->current_select;
-            SELECT_LEX_UNIT *unit= sel-> master_unit();
+            Select_Lex *sel= lex->current_select;
+            Select_Lex_UNIT *unit= sel-> master_unit();
             if (sel->linkage != GLOBAL_OPTIONS_TYPE &&
                 sel->olap != UNSPECIFIED_OLAP_TYPE &&
                 (sel->linkage != UNION_TYPE || sel->braces))
@@ -4367,10 +4367,10 @@ order_clause:
                 executed in the same way as the query
                 SELECT ... ORDER BY order_list
                 unless the SELECT construct contains ORDER BY or LIMIT clauses.
-                Otherwise we create a fake SELECT_LEX if it has not been created
+                Otherwise we create a fake Select_Lex if it has not been created
                 yet.
               */
-              SELECT_LEX *first_sl= unit->first_select();
+              Select_Lex *first_sl= unit->first_select();
               if (!unit->is_union() &&
                   (first_sl->order_list.elements || 
                    first_sl->select_limit) &&            
@@ -4398,7 +4398,7 @@ opt_limit_clause_init:
           /* empty */
           {
             LEX *lex= Lex;
-            SELECT_LEX *sel= lex->current_select;
+            Select_Lex *sel= lex->current_select;
             sel->offset_limit= 0;
             sel->select_limit= 0;
           }
@@ -4417,21 +4417,21 @@ limit_clause:
 limit_options:
           limit_option
           {
-            SELECT_LEX *sel= Select;
+            Select_Lex *sel= Select;
             sel->select_limit= $1;
             sel->offset_limit= 0;
             sel->explicit_limit= 1;
           }
         | limit_option ',' limit_option
           {
-            SELECT_LEX *sel= Select;
+            Select_Lex *sel= Select;
             sel->select_limit= $3;
             sel->offset_limit= $1;
             sel->explicit_limit= 1;
           }
         | limit_option OFFSET_SYM limit_option
           {
-            SELECT_LEX *sel= Select;
+            Select_Lex *sel= Select;
             sel->select_limit= $1;
             sel->offset_limit= $3;
             sel->explicit_limit= 1;
@@ -4452,7 +4452,7 @@ delete_limit_clause:
           }
         | LIMIT limit_option
           {
-            SELECT_LEX *sel= Select;
+            Select_Lex *sel= Select;
             sel->select_limit= $2;
             sel->explicit_limit= 1;
           }
@@ -5573,13 +5573,13 @@ insert_ident:
 table_wild:
           ident '.' '*'
           {
-            SELECT_LEX *sel= Select;
+            Select_Lex *sel= Select;
             $$ = new Item_field(Lex->current_context(), NULL, $1.str, "*");
             sel->with_wild++;
           }
         | ident '.' ident '.' '*'
           {
-            SELECT_LEX *sel= Select;
+            Select_Lex *sel= Select;
             $$ = new Item_field(Lex->current_context(), (YYSession->client_capabilities &
                                 CLIENT_NO_SCHEMA ? NULL : $1.str),
                                 $3.str,"*");
@@ -5595,7 +5595,7 @@ simple_ident:
           ident
           {
             {
-              SELECT_LEX *sel=Select;
+              Select_Lex *sel=Select;
               $$= (sel->parsing_place != IN_HAVING ||
                   sel->get_in_sum_expr() > 0) ?
                   (Item*) new Item_field(Lex->current_context(),
@@ -5610,7 +5610,7 @@ simple_ident:
 simple_ident_nospvar:
           ident
           {
-            SELECT_LEX *sel=Select;
+            Select_Lex *sel=Select;
             $$= (sel->parsing_place != IN_HAVING ||
                 sel->get_in_sum_expr() > 0) ?
                 (Item*) new Item_field(Lex->current_context(),
@@ -5628,7 +5628,7 @@ simple_ident_q:
             LEX *lex= session->lex;
 
             {
-              SELECT_LEX *sel= lex->current_select;
+              Select_Lex *sel= lex->current_select;
               if (sel->no_table_names_allowed)
               {
                 my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
@@ -5646,7 +5646,7 @@ simple_ident_q:
           {
             Session *session= YYSession;
             LEX *lex= session->lex;
-            SELECT_LEX *sel= lex->current_select;
+            Select_Lex *sel= lex->current_select;
             if (sel->no_table_names_allowed)
             {
               my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
@@ -5662,7 +5662,7 @@ simple_ident_q:
           {
             Session *session= YYSession;
             LEX *lex= session->lex;
-            SELECT_LEX *sel= lex->current_select;
+            Select_Lex *sel= lex->current_select;
             if (sel->no_table_names_allowed)
             {
               my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
@@ -6424,9 +6424,9 @@ union_order_or_limit:
             Session *session= YYSession;
             LEX *lex= session->lex;
             assert(lex->current_select->linkage != GLOBAL_OPTIONS_TYPE);
-            SELECT_LEX *sel= lex->current_select;
-            SELECT_LEX_UNIT *unit= sel->master_unit();
-            SELECT_LEX *fake= unit->fake_select_lex;
+            Select_Lex *sel= lex->current_select;
+            Select_Lex_UNIT *unit= sel->master_unit();
+            Select_Lex *fake= unit->fake_select_lex;
             if (fake)
             {
               unit->global_parameters= fake;
@@ -6512,7 +6512,7 @@ subselect_end:
           {
             LEX *lex=Lex;
             lex->pop_context();
-            SELECT_LEX *child= lex->current_select;
+            Select_Lex *child= lex->current_select;
             lex->current_select = lex->current_select->return_after_parsing();
             lex->nest_level--;
             lex->current_select->n_child_sum_items += child->n_sum_items;

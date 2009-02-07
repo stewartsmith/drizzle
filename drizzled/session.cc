@@ -1367,7 +1367,7 @@ static File create_file(Session *session, char *path, file_exchange *exchange, I
 
 
 int
-select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
+select_export::prepare(List<Item> &list, Select_Lex_UNIT *u)
 {
   bool blob_flag=0;
   bool string_results= false, non_string_results= false;
@@ -1627,7 +1627,7 @@ err:
 
 
 int
-select_dump::prepare(List<Item> &, SELECT_LEX_UNIT *u)
+select_dump::prepare(List<Item> &, Select_Lex_UNIT *u)
 {
   unit= u;
   return (int) ((file= create_file(session, path, exchange, &cache)) < 0);
@@ -1828,7 +1828,7 @@ bool select_exists_subselect::send_data(List<Item> &)
   Dump of select to variables
 ***************************************************************************/
 
-int select_dumpvar::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
+int select_dumpvar::prepare(List<Item> &list, Select_Lex_UNIT *u)
 {
   unit= u;
 

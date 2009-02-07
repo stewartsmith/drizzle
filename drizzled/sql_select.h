@@ -441,9 +441,9 @@ public:
   TMP_TABLE_PARAM tmp_table_param;
   DRIZZLE_LOCK *lock;
   /// unit structure (with global parameters) for this select
-  SELECT_LEX_UNIT *unit;
+  Select_Lex_UNIT *unit;
   /// select that processed
-  SELECT_LEX *select_lex;
+  Select_Lex *select_lex;
   /**
     true <=> optimizer must not mark any table as a constant table.
     This is needed for subqueries in form "a IN (SELECT .. UNION SELECT ..):
@@ -593,8 +593,8 @@ public:
 
   int prepare(Item ***rref_pointer_array, TableList *tables, uint32_t wind_num,
 	      COND *conds, uint32_t og_num, order_st *order, order_st *group,
-	      Item *having, order_st *proc_param, SELECT_LEX *select,
-	      SELECT_LEX_UNIT *unit);
+	      Item *having, order_st *proc_param, Select_Lex *select,
+	      Select_Lex_UNIT *unit);
   int optimize();
   int reinit();
   void exec();
@@ -664,7 +664,7 @@ Table *create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fiel
 			uint64_t select_options, ha_rows rows_limit,
 			char* alias);
 void free_tmp_table(Session *session, Table *entry);
-void count_field_types(SELECT_LEX *select_lex, TMP_TABLE_PARAM *param,
+void count_field_types(Select_Lex *select_lex, TMP_TABLE_PARAM *param,
                        List<Item> &fields, bool reset_with_sum_func);
 bool setup_copy_fields(Session *session, TMP_TABLE_PARAM *param,
 		       Item **ref_pointer_array,

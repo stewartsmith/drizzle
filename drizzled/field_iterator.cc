@@ -43,7 +43,7 @@ void Field_iterator_table::set_table(Table *table)
 
 Item *Field_iterator_table::create_item(Session *session)
 {
-  SELECT_LEX *select= session->lex->current_select;
+  Select_Lex *select= session->lex->current_select;
 
   Item_field *item= new Item_field(session, &select->context, *ptr);
 

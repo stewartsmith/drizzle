@@ -48,7 +48,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   bool          const_cond_result;
   ha_rows	deleted= 0;
   uint32_t usable_index= MAX_KEY;
-  SELECT_LEX   *select_lex= &session->lex->select_lex;
+  Select_Lex   *select_lex= &session->lex->select_lex;
   Session::killed_state killed_status= Session::NOT_KILLED;
 
 
@@ -351,7 +351,7 @@ err:
 */
 int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
 {
-  SELECT_LEX *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &session->lex->select_lex;
 
   List<Item> all_fields;
 
@@ -414,7 +414,7 @@ int mysql_multi_delete_prepare(Session *session)
     setup_tables() need for VIEWs. JOIN::prepare() will not do it second
     time.
 
-    lex->query_tables also point on local list of DELETE SELECT_LEX
+    lex->query_tables also point on local list of DELETE Select_Lex
   */
   if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
                                     &session->lex->select_lex.top_join_list,
@@ -465,7 +465,7 @@ multi_delete::multi_delete(TableList *dt, uint32_t num_of_tables_arg)
 
 
 int
-multi_delete::prepare(List<Item> &, SELECT_LEX_UNIT *u)
+multi_delete::prepare(List<Item> &, Select_Lex_UNIT *u)
 {
 
   unit= u;

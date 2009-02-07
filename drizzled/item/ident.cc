@@ -78,7 +78,7 @@ void Item_ident::cleanup()
 
 bool Item_ident::remove_dependence_processor(unsigned char * arg)
 {
-  if (depended_from == (st_select_lex *) arg)
+  if (depended_from == (Select_Lex *) arg)
     depended_from= 0;
   return(0);
 }

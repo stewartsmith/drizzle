@@ -36,8 +36,8 @@
 
 class Item;
 class Item_subselect;
-class st_select_lex_unit;
-class st_select_lex;
+class Select_Lex_unit;
+class Select_Lex;
 class COND_EQUAL;
 class Security_context;
 class TableList;

@@ -168,7 +168,7 @@ int mysql_update(Session *session, TableList *table_list,
   Table		*table;
   SQL_SELECT	*select;
   READ_RECORD	info;
-  SELECT_LEX    *select_lex= &session->lex->select_lex;
+  Select_Lex    *select_lex= &session->lex->select_lex;
   bool          need_reopen;
   uint64_t     id;
   List<Item> all_fields;
@@ -726,7 +726,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
 			 Item **conds, uint32_t order_num, order_st *order)
 {
   List<Item> all_fields;
-  SELECT_LEX *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &session->lex->select_lex;
 
   session->lex->allow_sum_func= 0;
 
@@ -945,7 +945,7 @@ bool mysql_multi_update(Session *session,
                         COND *conds,
                         uint64_t options,
                         enum enum_duplicates handle_duplicates, bool ignore,
-                        SELECT_LEX_UNIT *unit, SELECT_LEX *select_lex)
+                        Select_Lex_UNIT *unit, Select_Lex *select_lex)
 {
   multi_update *result;
   bool res;
@@ -998,7 +998,7 @@ multi_update::multi_update(TableList *table_list,
 */
 
 int multi_update::prepare(List<Item> &,
-                          SELECT_LEX_UNIT *)
+                          Select_Lex_UNIT *)
 {
   TableList *table_ref;
   SQL_LIST update;

@@ -27,8 +27,8 @@
 #include <drizzled/item/ref.h>
 #include <drizzled/item/field.h>
 
-class st_select_lex;
-class st_select_lex_unit;
+class Select_Lex;
+class Select_Lex_unit;
 class JOIN;
 class select_result_interceptor;
 class subselect_engine;
@@ -52,7 +52,7 @@ public:
   Item *substitution;
   /* unit of subquery */
 public:
-  st_select_lex_unit *unit;
+  Select_Lex_unit *unit;
 protected:
   /* engine that perform execution of subselect (single select or union) */
   subselect_engine *engine;
@@ -91,7 +91,7 @@ public:
     pointer in constructor initialization list, but we need to pass a pointer
     to subselect Item class to select_result_interceptor's constructor.
   */
-  virtual void init (st_select_lex *select_lex,
+  virtual void init (Select_Lex *select_lex,
 		     select_result_interceptor *result);
 
   ~Item_subselect();
@@ -144,10 +144,10 @@ public:
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
 
   /**
-    Get the SELECT_LEX structure associated with this Item.
-    @return the SELECT_LEX structure associated with this Item
+    Get the Select_Lex structure associated with this Item.
+    @return the Select_Lex structure associated with this Item
   */
-  st_select_lex* get_select_lex();
+  Select_Lex* get_select_lex();
 
   friend class select_result_interceptor;
   friend class Item_in_optimizer;
@@ -155,7 +155,7 @@ public:
   friend int  Item_field::fix_outer_field(Session *, Field **, Item **);
   friend bool Item_ref::fix_fields(Session *, Item **);
   friend void mark_select_range_as_dependent(Session*,
-                                             st_select_lex*, st_select_lex*,
+                                             Select_Lex*, Select_Lex*,
                                              Field*, Item*, Item_ident*);
 };
 
@@ -167,7 +167,7 @@ class Item_singlerow_subselect :public Item_subselect
 protected:
   Item_cache *value, **row;
 public:
-  Item_singlerow_subselect(st_select_lex *select_lex);
+  Item_singlerow_subselect(Select_Lex *select_lex);
   Item_singlerow_subselect() :Item_subselect(), value(0), row (0) {}
 
   void cleanup();
@@ -198,13 +198,13 @@ public:
     The only caller of this method is handle_sql2003_note184_exception(),
     see the code there for more details.
     Note that this method breaks the object internal integrity, by
-    removing it's association with the corresponding SELECT_LEX,
+    removing it's association with the corresponding Select_Lex,
     making this object orphan from the parse tree.
     No other method, beside the destructor, should be called on this
     object, as it is now invalid.
-    @return the SELECT_LEX structure that was given in the constructor.
+    @return the Select_Lex structure that was given in the constructor.
   */
-  st_select_lex* invalidate_and_restore_select_lex();
+  Select_Lex* invalidate_and_restore_select_lex();
 
   friend class select_singlerow_subselect;
 };
@@ -218,7 +218,7 @@ protected:
   bool was_values;  // Set if we have found at least one row
 public:
   Item_maxmin_subselect(Session *session, Item_subselect *parent,
-			st_select_lex *select_lex, bool max);
+			Select_Lex *select_lex, bool max);
   virtual void print(String *str, enum_query_type query_type);
   void cleanup();
   bool any_value() { return was_values; }
@@ -234,7 +234,7 @@ protected:
   bool value; /* value of this item (boolean: exists/not-exists) */
 
 public:
-  Item_exists_subselect(st_select_lex *select_lex);
+  Item_exists_subselect(Select_Lex *select_lex);
   Item_exists_subselect(): Item_subselect() {}
 
   subs_type substype() { return EXISTS_SUBS; }
@@ -330,7 +330,7 @@ public:
 
   Item_func_not_all *upper_item; // point on NOT/NOP before ALL/SOME subquery
 
-  Item_in_subselect(Item * left_expr, st_select_lex *select_lex);
+  Item_in_subselect(Item * left_expr, Select_Lex *select_lex);
   Item_in_subselect()
     :Item_exists_subselect(), left_expr_cache(0), first_execution(true),
     optimizer(0), abort_on_null(0), pushed_cond_guards(NULL),
@@ -360,7 +360,7 @@ public:
   bool val_bool();
   void top_level_item() { abort_on_null=1; }
   inline bool is_top_level_item() { return abort_on_null; }
-  bool test_limit(st_select_lex_unit *unit);
+  bool test_limit(Select_Lex_unit *unit);
   virtual void print(String *str, enum_query_type query_type);
   bool fix_fields(Session *session, Item **ref);
   bool setup_engine();
@@ -384,7 +384,7 @@ public:
   bool all;
 
   Item_allany_subselect(Item * left_expr, chooser_compare_func_creator fc,
-                        st_select_lex *select_lex, bool all);
+                        Select_Lex *select_lex, bool all);
 
   // only ALL subquery has upper not
   subs_type substype() { return all?ALL_SUBS:ANY_SUBS; }
@@ -476,10 +476,10 @@ class subselect_single_select_engine: public subselect_engine
   bool prepared; /* simple subselect is prepared */
   bool optimized; /* simple subselect is optimized */
   bool executed; /* simple subselect is executed */
-  st_select_lex *select_lex; /* corresponding select_lex */
+  Select_Lex *select_lex; /* corresponding select_lex */
   JOIN * join; /* corresponding JOIN structure */
 public:
-  subselect_single_select_engine(st_select_lex *select,
+  subselect_single_select_engine(Select_Lex *select,
 				 select_result_interceptor *result,
 				 Item_subselect *item);
   void cleanup();
@@ -505,9 +505,9 @@ public:
 
 class subselect_union_engine: public subselect_engine
 {
-  st_select_lex_unit *unit;  /* corresponding unit structure */
+  Select_Lex_unit *unit;  /* corresponding unit structure */
 public:
-  subselect_union_engine(st_select_lex_unit *u,
+  subselect_union_engine(Select_Lex_unit *u,
 			 select_result_interceptor *result,
 			 Item_subselect *item);
   void cleanup();

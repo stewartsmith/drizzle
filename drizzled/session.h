@@ -1515,7 +1515,7 @@ class select_export :public select_to_file {
 public:
   select_export(file_exchange *ex) :select_to_file(ex) {}
   ~select_export();
-  int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
+  int prepare(List<Item> &list, Select_Lex_UNIT *u);
   bool send_data(List<Item> &items);
 };
 
@@ -1523,7 +1523,7 @@ public:
 class select_dump :public select_to_file {
 public:
   select_dump(file_exchange *ex) :select_to_file(ex) {}
-  int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
+  int prepare(List<Item> &list, Select_Lex_UNIT *u);
   bool send_data(List<Item> &items);
 };
 
@@ -1541,7 +1541,7 @@ class select_insert :public select_result_interceptor {
 		List<Item> *update_fields, List<Item> *update_values,
 		enum_duplicates duplic, bool ignore);
   ~select_insert();
-  int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
+  int prepare(List<Item> &list, Select_Lex_UNIT *u);
   virtual int prepare2(void);
   bool send_data(List<Item> &items);
   virtual void store_values(List<Item> &values);
@@ -1578,7 +1578,7 @@ public:
     alter_info(alter_info_arg),
     m_plock(NULL)
     {}
-  int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
+  int prepare(List<Item> &list, Select_Lex_UNIT *u);
 
   void store_values(List<Item> &values);
   void send_error(uint32_t errcode,const char *err);
@@ -1662,7 +1662,7 @@ public:
   Table *table;
 
   select_union() :table(0) {}
-  int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
+  int prepare(List<Item> &list, Select_Lex_UNIT *u);
   bool send_data(List<Item> &items);
   bool send_eof();
   bool flush();
@@ -1748,10 +1748,10 @@ class Table_ident :public Sql_alloc
 public:
   LEX_STRING db;
   LEX_STRING table;
-  SELECT_LEX_UNIT *sel;
+  Select_Lex_UNIT *sel;
   inline Table_ident(Session *session, LEX_STRING db_arg, LEX_STRING table_arg,
 		     bool force)
-    :table(table_arg), sel((SELECT_LEX_UNIT *)0)
+    :table(table_arg), sel((Select_Lex_UNIT *)0)
   {
     if (!force && (session->client_capabilities & CLIENT_NO_SCHEMA))
       db.str=0;
@@ -1759,7 +1759,7 @@ public:
       db= db_arg;
   }
   inline Table_ident(LEX_STRING table_arg)
-    :table(table_arg), sel((SELECT_LEX_UNIT *)0)
+    :table(table_arg), sel((Select_Lex_UNIT *)0)
   {
     db.str=0;
   }
@@ -1769,7 +1769,7 @@ public:
     Later, if there was an alias specified for the table, it will be set
     by add_table_to_list.
   */
-  inline Table_ident(SELECT_LEX_UNIT *s) : sel(s)
+  inline Table_ident(Select_Lex_UNIT *s) : sel(s)
   {
     /* We must have a table name here as this is used with add_table_to_list */
     db.str= empty_c_string;                    /* a subject to casedn_str */
@@ -1876,7 +1876,7 @@ class multi_delete :public select_result_interceptor
 public:
   multi_delete(TableList *dt, uint32_t num_of_tables);
   ~multi_delete();
-  int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
+  int prepare(List<Item> &list, Select_Lex_UNIT *u);
   bool send_data(List<Item> &items);
   bool initialize_tables (JOIN *join);
   void send_error(uint32_t errcode,const char *err);
@@ -1919,7 +1919,7 @@ public:
 	       List<Item> *fields, List<Item> *values,
 	       enum_duplicates handle_duplicates, bool ignore);
   ~multi_update();
-  int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
+  int prepare(List<Item> &list, Select_Lex_UNIT *u);
   bool send_data(List<Item> &items);
   bool initialize_tables (JOIN *join);
   void send_error(uint32_t errcode,const char *err);
@@ -1946,7 +1946,7 @@ public:
   List<my_var> var_list;
   select_dumpvar()  { var_list.empty(); row_count= 0;}
   ~select_dumpvar() {}
-  int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
+  int prepare(List<Item> &list, Select_Lex_UNIT *u);
   bool send_data(List<Item> &items);
   bool send_eof();
   void cleanup();

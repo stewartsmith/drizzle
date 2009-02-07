@@ -182,7 +182,7 @@ Item_func::fix_fields(Session *session, Item **)
 }
 
 
-void Item_func::fix_after_pullout(st_select_lex *new_parent,
+void Item_func::fix_after_pullout(Select_Lex *new_parent,
                                   Item **)
 {
   Item **arg,**arg_end;

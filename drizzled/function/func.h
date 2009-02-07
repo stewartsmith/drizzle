@@ -115,7 +115,7 @@ public:
   // Constructor used for Item_cond_and/or (see Item comment)
   Item_func(Session *session, Item_func *item);
   bool fix_fields(Session *, Item **ref);
-  void fix_after_pullout(st_select_lex *new_parent, Item **ref);
+  void fix_after_pullout(Select_Lex *new_parent, Item **ref);
   table_map used_tables() const;
   table_map not_null_tables() const;
   void update_used_tables();

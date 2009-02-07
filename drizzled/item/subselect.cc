@@ -56,7 +56,7 @@ Item_subselect::Item_subselect():
 }
 
 
-void Item_subselect::init(st_select_lex *select_lex,
+void Item_subselect::init(Select_Lex *select_lex,
 			  select_result_interceptor *result)
 {
   /*
@@ -80,7 +80,7 @@ void Item_subselect::init(st_select_lex *select_lex,
   }
   else
   {
-    SELECT_LEX *outer_select= unit->outer_select();
+    Select_Lex *outer_select= unit->outer_select();
     /*
       do not take into account expression inside aggregate functions because
       they can access original table fields
@@ -94,14 +94,14 @@ void Item_subselect::init(st_select_lex *select_lex,
       engine= new subselect_single_select_engine(select_lex, result, this);
   }
   {
-    SELECT_LEX *upper= unit->outer_select();
+    Select_Lex *upper= unit->outer_select();
     if (upper->parsing_place == IN_HAVING)
       upper->subquery_in_having= 1;
   }
   return;
 }
 
-st_select_lex *
+Select_Lex *
 Item_subselect::get_select_lex()
 {
   return unit->first_select();
@@ -234,7 +234,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
 
   if (walk_subquery)
   {
-    for (SELECT_LEX *lex= unit->first_select(); lex; lex= lex->next_select())
+    for (Select_Lex *lex= unit->first_select(); lex; lex= lex->next_select())
     {
       List_iterator<Item> li(lex->item_list);
       Item *item;
@@ -377,7 +377,7 @@ void Item_subselect::print(String *str, enum_query_type query_type)
 }
 
 
-Item_singlerow_subselect::Item_singlerow_subselect(st_select_lex *select_lex)
+Item_singlerow_subselect::Item_singlerow_subselect(Select_Lex *select_lex)
   :Item_subselect(), value(0)
 {
   init(select_lex, new select_singlerow_subselect(this));
@@ -386,18 +386,18 @@ Item_singlerow_subselect::Item_singlerow_subselect(st_select_lex *select_lex)
   return;
 }
 
-st_select_lex *
+Select_Lex *
 Item_singlerow_subselect::invalidate_and_restore_select_lex()
 {
-  st_select_lex *result= get_select_lex();
+  Select_Lex *result= get_select_lex();
 
   assert(result);
 
   /*
     This code restore the parse tree in it's state before the execution of
     Item_singlerow_subselect::Item_singlerow_subselect(),
-    and in particular decouples this object from the SELECT_LEX,
-    so that the SELECT_LEX can be used with a different flavor
+    and in particular decouples this object from the Select_Lex,
+    so that the Select_Lex can be used with a different flavor
     or Item_subselect instead, as part of query rewriting.
   */
   unit->item= NULL;
@@ -407,7 +407,7 @@ Item_singlerow_subselect::invalidate_and_restore_select_lex()
 
 Item_maxmin_subselect::Item_maxmin_subselect(Session *session_param,
                                              Item_subselect *parent,
-					     st_select_lex *select_lex,
+					     Select_Lex *select_lex,
 					     bool max_arg)
   :Item_singlerow_subselect(), was_values(true)
 {
@@ -481,7 +481,7 @@ Item_singlerow_subselect::select_transformer(JOIN *join)
   if (changed)
     return(RES_OK);
 
-  SELECT_LEX *select_lex= join->select_lex;
+  Select_Lex *select_lex= join->select_lex;
 
   if (!select_lex->master_unit()->is_union() &&
       !select_lex->table_list.elements &&
@@ -668,7 +668,7 @@ bool Item_singlerow_subselect::val_bool()
 }
 
 
-Item_exists_subselect::Item_exists_subselect(st_select_lex *select_lex):
+Item_exists_subselect::Item_exists_subselect(Select_Lex *select_lex):
   Item_subselect()
 {
   bool val_bool();
@@ -688,13 +688,13 @@ void Item_exists_subselect::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_in_subselect::test_limit(st_select_lex_unit *unit_arg)
+bool Item_in_subselect::test_limit(Select_Lex_unit *unit_arg)
 {
   if (unit_arg->fake_select_lex &&
       unit_arg->fake_select_lex->test_limit())
     return(1);
 
-  SELECT_LEX *sl= unit_arg->first_select();
+  Select_Lex *sl= unit_arg->first_select();
   for (; sl; sl= sl->next_select())
   {
     if (sl->test_limit())
@@ -704,7 +704,7 @@ bool Item_in_subselect::test_limit(st_select_lex_unit *unit_arg)
 }
 
 Item_in_subselect::Item_in_subselect(Item * left_exp,
-				     st_select_lex *select_lex):
+				     Select_Lex *select_lex):
   Item_exists_subselect(), left_expr_cache(0), first_execution(true),
   optimizer(0), pushed_cond_guards(NULL), exec_method(NOT_TRANSFORMED),
   upper_item(0)
@@ -722,7 +722,7 @@ Item_in_subselect::Item_in_subselect(Item * left_exp,
 
 Item_allany_subselect::Item_allany_subselect(Item * left_exp,
                                              chooser_compare_func_creator fc,
-					     st_select_lex *select_lex,
+					     Select_Lex *select_lex,
 					     bool all_arg)
   :Item_in_subselect(), func_creator(fc), all(all_arg)
 {
@@ -953,7 +953,7 @@ Item_subselect::trans_res
 Item_in_subselect::single_value_transformer(JOIN *join,
 					    const Comp_creator *func)
 {
-  SELECT_LEX *select_lex= join->select_lex;
+  Select_Lex *select_lex= join->select_lex;
 
   /*
     Check that the right part of the subselect contains no more than one
@@ -1050,10 +1050,10 @@ Item_in_subselect::single_value_transformer(JOIN *join,
   if (!substitution)
   {
     /* We're invoked for the 1st (or the only) SELECT in the subquery UNION */
-    SELECT_LEX_UNIT *master_unit= select_lex->master_unit();
+    Select_Lex_UNIT *master_unit= select_lex->master_unit();
     substitution= optimizer;
 
-    SELECT_LEX *current= session->lex->current_select, *up;
+    Select_Lex *current= session->lex->current_select, *up;
 
     session->lex->current_select= up= current->return_after_parsing();
     //optimizer never use Item **ref => we can pass 0 as parameter
@@ -1134,7 +1134,7 @@ Item_in_subselect::single_value_transformer(JOIN *join,
 Item_subselect::trans_res
 Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp_creator *func)
 {
-  SELECT_LEX *select_lex= join->select_lex;
+  Select_Lex *select_lex= join->select_lex;
 
   select_lex->uncacheable|= UNCACHEABLE_DEPENDENT;
   if (join->having || select_lex->with_sum_func ||
@@ -1310,7 +1310,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
 Item_subselect::trans_res
 Item_in_subselect::row_value_transformer(JOIN *join)
 {
-  SELECT_LEX *select_lex= join->select_lex;
+  Select_Lex *select_lex= join->select_lex;
   uint32_t cols_num= left_expr->cols();
 
   if (select_lex->item_list.elements != left_expr->cols())
@@ -1326,10 +1326,10 @@ Item_in_subselect::row_value_transformer(JOIN *join)
   if (!substitution)
   {
     //first call for this unit
-    SELECT_LEX_UNIT *master_unit= select_lex->master_unit();
+    Select_Lex_UNIT *master_unit= select_lex->master_unit();
     substitution= optimizer;
 
-    SELECT_LEX *current= session->lex->current_select, *up;
+    Select_Lex *current= session->lex->current_select, *up;
     session->lex->current_select= up= current->return_after_parsing();
     //optimizer never use Item **ref => we can pass 0 as parameter
     if (!optimizer || optimizer->fix_left(session, 0))
@@ -1387,7 +1387,7 @@ Item_in_subselect::row_value_transformer(JOIN *join)
 Item_subselect::trans_res
 Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
 {
-  SELECT_LEX *select_lex= join->select_lex;
+  Select_Lex *select_lex= join->select_lex;
   Item *having_item= 0;
   uint32_t cols_num= left_expr->cols();
   bool is_having_used= (join->having || select_lex->with_sum_func ||
@@ -1613,7 +1613,7 @@ Item_in_subselect::select_transformer(JOIN *join)
 Item_subselect::trans_res
 Item_in_subselect::select_in_like_transformer(JOIN *join, const Comp_creator *func)
 {
-  SELECT_LEX *current= session->lex->current_select, *up;
+  Select_Lex *current= session->lex->current_select, *up;
   const char *save_where= session->where;
   Item_subselect::trans_res res= RES_ERROR;
   bool result;
@@ -1623,7 +1623,7 @@ Item_in_subselect::select_in_like_transformer(JOIN *join, const Comp_creator *fu
       IN/SOME/ALL/ANY subqueries aren't support LIMIT clause. Without it
       order_st BY clause becomes meaningless thus we drop it here.
     */
-    SELECT_LEX *sl= current->master_unit()->first_select();
+    Select_Lex *sl= current->master_unit()->first_select();
     for (; sl; sl= sl->next_select())
     {
       if (sl->join)
@@ -1902,7 +1902,7 @@ void subselect_engine::set_session(Session *session_arg)
 
 
 subselect_single_select_engine::
-subselect_single_select_engine(st_select_lex *select,
+subselect_single_select_engine(Select_Lex *select,
 			       select_result_interceptor *result_arg,
 			       Item_subselect *item_arg)
   :subselect_engine(item_arg, result_arg),
@@ -1966,7 +1966,7 @@ void subselect_uniquesubquery_engine::cleanup()
 }
 
 
-subselect_union_engine::subselect_union_engine(st_select_lex_unit *u,
+subselect_union_engine::subselect_union_engine(Select_Lex_unit *u,
 					       select_result_interceptor *result_arg,
 					       Item_subselect *item_arg)
   :subselect_engine(item_arg, result_arg)
@@ -2011,7 +2011,7 @@ int subselect_single_select_engine::prepare()
   if (!join || !result)
     return 1; /* Fatal error is set already. */
   prepared= 1;
-  SELECT_LEX *save_select= session->lex->current_select;
+  Select_Lex *save_select= session->lex->current_select;
   session->lex->current_select= select_lex;
   if (join->prepare(&select_lex->ref_pointer_array,
 		    (TableList*) select_lex->table_list.first,
@@ -2128,11 +2128,11 @@ int join_read_next_same_or_null(READ_RECORD *info);
 int subselect_single_select_engine::exec()
 {
   char const *save_where= session->where;
-  SELECT_LEX *save_select= session->lex->current_select;
+  Select_Lex *save_select= session->lex->current_select;
   session->lex->current_select= select_lex;
   if (!join->optimized)
   {
-    SELECT_LEX_UNIT *unit= select_lex->master_unit();
+    Select_Lex_UNIT *unit= select_lex->master_unit();
 
     unit->set_limit(unit->global_parameters);
     if (join->flatten_subqueries())
@@ -2878,7 +2878,7 @@ bool subselect_single_select_engine::may_be_null()
 */
 bool subselect_union_engine::no_tables()
 {
-  for (SELECT_LEX *sl= unit->first_select(); sl; sl= sl->next_select())
+  for (Select_Lex *sl= unit->first_select(); sl; sl= sl->next_select())
   {
     if (sl->table_list.elements)
       return false;
@@ -3104,7 +3104,7 @@ int subselect_hash_sj_engine::exec()
   if (!is_materialized)
   {
     int res= 0;
-    SELECT_LEX *save_select= session->lex->current_select;
+    Select_Lex *save_select= session->lex->current_select;
     session->lex->current_select= materialize_engine->select_lex;
     if ((res= materialize_join->optimize()))
       goto err;

@@ -32,7 +32,7 @@ class Protocol;
 class TableList;
 class Item_field;
 class Name_resolution_context;
-class st_select_lex;
+class Select_Lex;
 class Item_equal;
 class user_var_entry;
 class Item_sum;
@@ -162,7 +162,7 @@ public:
     Fix after some tables has been pulled out. Basically re-calculate all
     attributes that are dependent on the tables.
   */
-  virtual void fix_after_pullout(st_select_lex *new_parent, Item **ref);
+  virtual void fix_after_pullout(Select_Lex *new_parent, Item **ref);
 
   /*
     should be used in case where we are sure that we do not need
@@ -588,19 +588,19 @@ public:
 #include <drizzled/item/ident.h>
 
 void mark_as_dependent(Session *session,
-		       st_select_lex *last,
-                       st_select_lex *current,
+		       Select_Lex *last,
+                       Select_Lex *current,
                        Item_ident *resolved_item,
                        Item_ident *mark_item);
 
 Item** resolve_ref_in_select_and_group(Session *session,
 			               Item_ident *ref,
-				       st_select_lex *select);
+				       Select_Lex *select);
 
 
 void mark_select_range_as_dependent(Session *session,
-                                    st_select_lex *last_select,
-                                    st_select_lex *current_sel,
+                                    Select_Lex *last_select,
+                                    Select_Lex *current_sel,
                                     Field *found_field, Item *found_item,
                                     Item_ident *resolved_item);
 
