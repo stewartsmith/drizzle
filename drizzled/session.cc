@@ -1316,8 +1316,7 @@ select_export::~select_export()
 */
 
 
-static File create_file(Session *session, char *path, file_exchange *exchange,
-			IO_CACHE *cache)
+static File create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
 {
   File file;
   uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
@@ -1628,8 +1627,7 @@ err:
 
 
 int
-select_dump::prepare(List<Item> &,
-		     SELECT_LEX_UNIT *u)
+select_dump::prepare(List<Item> &, SELECT_LEX_UNIT *u)
 {
   unit= u;
   return (int) ((file= create_file(session, path, exchange, &cache)) < 0);
