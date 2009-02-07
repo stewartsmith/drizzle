@@ -255,7 +255,7 @@ void lex_start(Session *session)
   lex->select_lex.master= &lex->unit;
   lex->select_lex.prev= &lex->unit.slave;
   lex->select_lex.link_next= lex->select_lex.slave= lex->select_lex.next= 0;
-  lex->select_lex.link_prev= (Select_Lex_node**)&(lex->all_selects_list);
+  lex->select_lex.link_prev= (Select_Lex_Node**)&(lex->all_selects_list);
   lex->select_lex.options= 0;
   lex->select_lex.init_order();
   lex->select_lex.group_list.empty();
@@ -1417,7 +1417,7 @@ void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
   Select_Lex structures initialisations
 */
 
-void Select_Lex_node::init_query()
+void Select_Lex_Node::init_query()
 {
   options= 0;
   linkage= UNSPECIFIED_TYPE;
@@ -1425,13 +1425,13 @@ void Select_Lex_node::init_query()
   uncacheable= 0;
 }
 
-void Select_Lex_node::init_select()
+void Select_Lex_Node::init_select()
 {
 }
 
 void Select_Lex_unit::init_query()
 {
-  Select_Lex_node::init_query();
+  Select_Lex_Node::init_query();
   linkage= GLOBAL_OPTIONS_TYPE;
   global_parameters= first_select();
   select_limit_cnt= HA_POS_ERROR;
@@ -1450,7 +1450,7 @@ void Select_Lex_unit::init_query()
 
 void Select_Lex::init_query()
 {
-  Select_Lex_node::init_query();
+  Select_Lex_Node::init_query();
   table_list.empty();
   top_join_list.empty();
   join_list= &top_join_list;
@@ -1487,7 +1487,7 @@ void Select_Lex::init_query()
 
 void Select_Lex::init_select()
 {
-  Select_Lex_node::init_select();
+  Select_Lex_Node::init_select();
   sj_nests.empty();
   group_list.empty();
   type= db= 0;
@@ -1521,7 +1521,7 @@ void Select_Lex::init_select()
 */
 
 /* include on level down */
-void Select_Lex_node::include_down(Select_Lex_node *upper)
+void Select_Lex_Node::include_down(Select_Lex_Node *upper)
 {
   if ((next= upper->slave))
     next->prev= &next;
@@ -1535,12 +1535,12 @@ void Select_Lex_node::include_down(Select_Lex_node *upper)
   include on level down (but do not link)
 
   SYNOPSYS
-    Select_Lex_node::include_standalone()
+    Select_Lex_Node::include_standalone()
     upper - reference on node underr which this node should be included
     ref - references on reference on this node
 */
-void Select_Lex_node::include_standalone(Select_Lex_node *upper,
-					    Select_Lex_node **ref)
+void Select_Lex_Node::include_standalone(Select_Lex_Node *upper,
+					    Select_Lex_Node **ref)
 {
   next= 0;
   prev= ref;
@@ -1549,7 +1549,7 @@ void Select_Lex_node::include_standalone(Select_Lex_node *upper,
 }
 
 /* include neighbour (on same level) */
-void Select_Lex_node::include_neighbour(Select_Lex_node *before)
+void Select_Lex_Node::include_neighbour(Select_Lex_Node *before)
 {
   if ((next= before->next))
     next->prev= &next;
@@ -1560,7 +1560,7 @@ void Select_Lex_node::include_neighbour(Select_Lex_node *before)
 }
 
 /* including in global Select_Lex list */
-void Select_Lex_node::include_global(Select_Lex_node **plink)
+void Select_Lex_Node::include_global(Select_Lex_Node **plink)
 {
   if ((link_next= *plink))
     link_next->link_prev= &link_next;
@@ -1569,7 +1569,7 @@ void Select_Lex_node::include_global(Select_Lex_node **plink)
 }
 
 //excluding from global list (internal function)
-void Select_Lex_node::fast_exclude()
+void Select_Lex_Node::fast_exclude()
 {
   if (link_prev)
   {
@@ -1586,7 +1586,7 @@ void Select_Lex_node::fast_exclude()
   excluding select_lex structure (except first (first select can't be
   deleted, because it is most upper select))
 */
-void Select_Lex_node::exclude()
+void Select_Lex_Node::exclude()
 {
   //exclude from global list
   fast_exclude();
@@ -1639,7 +1639,7 @@ void Select_Lex_unit::exclude_level()
     (*prev)= units;
     (*units_last)= (Select_Lex_UNIT*)next;
     if (next)
-      next->prev= (Select_Lex_NODE**)units_last;
+      next->prev= (Select_Lex_Node**)units_last;
     units->prev= prev;
   }
   else
@@ -1680,7 +1680,7 @@ void Select_Lex_unit::exclude_tree()
 
 
 /*
-  Select_Lex_node::mark_as_dependent mark all Select_Lex struct from
+  Select_Lex_Node::mark_as_dependent mark all Select_Lex struct from
   this to 'last' as dependent
 
   SYNOPSIS
@@ -1688,7 +1688,7 @@ void Select_Lex_unit::exclude_tree()
            Select_Lex have to be marked as dependent
 
   NOTE
-    'last' should be reachable from this Select_Lex_node
+    'last' should be reachable from this Select_Lex_Node
 */
 
 void Select_Lex::mark_as_dependent(Select_Lex *last)
@@ -1723,18 +1723,18 @@ void Select_Lex::mark_as_dependent(Select_Lex *last)
   }
 }
 
-bool Select_Lex_node::set_braces(bool)
+bool Select_Lex_Node::set_braces(bool)
 { return 1; }
-bool Select_Lex_node::inc_in_sum_expr()           { return 1; }
-uint32_t Select_Lex_node::get_in_sum_expr()           { return 0; }
-TableList* Select_Lex_node::get_table_list()     { return 0; }
-List<Item>* Select_Lex_node::get_item_list()      { return 0; }
-TableList *Select_Lex_node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
+bool Select_Lex_Node::inc_in_sum_expr()           { return 1; }
+uint32_t Select_Lex_Node::get_in_sum_expr()           { return 0; }
+TableList* Select_Lex_Node::get_table_list()     { return 0; }
+List<Item>* Select_Lex_Node::get_item_list()      { return 0; }
+TableList *Select_Lex_Node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
                                                   thr_lock_type, List<Index_hint> *, LEX_STRING *)
 {
   return 0;
 }
-uint32_t Select_Lex_node::get_table_join_options()
+uint32_t Select_Lex_Node::get_table_join_options()
 {
   return 0;
 }

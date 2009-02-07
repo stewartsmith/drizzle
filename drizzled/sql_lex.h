@@ -269,9 +269,9 @@ public:
 class LEX;
 class Select_Lex;
 class Select_Lex_unit;
-class Select_Lex_node {
+class Select_Lex_Node {
 protected:
-  Select_Lex_node *next, **prev,   /* neighbor list */
+  Select_Lex_Node *next, **prev,   /* neighbor list */
     *master, *slave,                  /* vertical links */
     *link_next, **link_prev;          /* list of whole Select_Lex */
 public:
@@ -301,15 +301,15 @@ public:
   { TRASH(ptr, size); }
   static void operator delete(void *, MEM_ROOT *)
   {}
-  Select_Lex_node(): linkage(UNSPECIFIED_TYPE) {}
-  virtual ~Select_Lex_node() {}
-  inline Select_Lex_node* get_master() { return master; }
+  Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
+  virtual ~Select_Lex_Node() {}
+  inline Select_Lex_Node* get_master() { return master; }
   virtual void init_query();
   virtual void init_select();
-  void include_down(Select_Lex_node *upper);
-  void include_neighbour(Select_Lex_node *before);
-  void include_standalone(Select_Lex_node *sel, Select_Lex_node **ref);
-  void include_global(Select_Lex_node **plink);
+  void include_down(Select_Lex_Node *upper);
+  void include_neighbour(Select_Lex_Node *before);
+  void include_standalone(Select_Lex_Node *sel, Select_Lex_Node **ref);
+  void include_global(Select_Lex_Node **plink);
   void exclude();
 
   virtual Select_Lex_unit* master_unit()= 0;
@@ -336,7 +336,6 @@ public:
 private:
   void fast_exclude();
 };
-typedef class Select_Lex_node Select_Lex_NODE;
 
 /*
    Select_Lex_UNIT - unit of selects (UNION, INTERSECT, ...) group
@@ -346,7 +345,7 @@ class Session;
 class select_result;
 class JOIN;
 class select_union;
-class Select_Lex_unit: public Select_Lex_node {
+class Select_Lex_unit: public Select_Lex_Node {
 protected:
   TableList result_table_list;
   select_union *union_result;
@@ -441,7 +440,7 @@ typedef class Select_Lex_unit Select_Lex_UNIT;
 /*
   Select_Lex - store information of parsed SELECT statment
 */
-class Select_Lex: public Select_Lex_node
+class Select_Lex: public Select_Lex_Node
 {
 public:
   Name_resolution_context context;
@@ -570,7 +569,7 @@ public:
   {
     return (Select_Lex*) link_next;
   }
-  Select_Lex_node** next_select_in_list_addr()
+  Select_Lex_Node** next_select_in_list_addr()
   {
     return &link_next;
   }
@@ -670,7 +669,6 @@ private:
   /* a list of USE/FORCE/IGNORE INDEX */
   List<Index_hint> *index_hints;
 };
-typedef class Select_Lex Select_Lex;
 
 inline bool Select_Lex_unit::is_union ()
 {

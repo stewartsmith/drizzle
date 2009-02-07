@@ -2190,7 +2190,7 @@ mysql_new_select(LEX *lex, bool move_down)
   }
 
   select_lex->master_unit()->global_parameters= select_lex;
-  select_lex->include_global((Select_Lex_node**)&lex->all_selects_list);
+  select_lex->include_global((Select_Lex_Node**)&lex->all_selects_list);
   lex->current_select= select_lex;
   /*
     in subquery is SELECT query and we allow resolution of names in SELECT
@@ -2929,7 +2929,7 @@ bool Select_Lex_unit::add_fake_select_lex(Session *session_arg)
   if (!(fake_select_lex= new (session_arg->mem_root) Select_Lex()))
       return(1);
   fake_select_lex->include_standalone(this,
-                                      (Select_Lex_NODE**)&fake_select_lex);
+                                      (Select_Lex_Node**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;
   fake_select_lex->parent_lex= session_arg->lex; /* Used in init_query. */
   fake_select_lex->make_empty_select();
