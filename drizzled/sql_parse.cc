@@ -970,8 +970,8 @@ mysql_execute_command(Session *session)
   TableList *first_table= (TableList*) select_lex->table_list.first;
   /* list of all tables in query */
   TableList *all_tables;
-  /* most outer Select_Lex_UNIT of query */
-  Select_Lex_UNIT *unit= &lex->unit;
+  /* most outer Select_Lex_Unit of query */
+  Select_Lex_Unit *unit= &lex->unit;
   /* Saved variable value */
 
   /*
@@ -2154,10 +2154,10 @@ mysql_new_select(LEX *lex, bool move_down)
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
-    Select_Lex_UNIT *unit;
+    Select_Lex_Unit *unit;
     lex->subqueries= true;
     /* first select_lex of subselect or derived table */
-    if (!(unit= new (session->mem_root) Select_Lex_UNIT()))
+    if (!(unit= new (session->mem_root) Select_Lex_Unit()))
       return(1);
 
     unit->init_query();
@@ -2182,7 +2182,7 @@ mysql_new_select(LEX *lex, bool move_down)
       return(1);
     }
     select_lex->include_neighbour(lex->current_select);
-    Select_Lex_UNIT *unit= select_lex->master_unit();
+    Select_Lex_Unit *unit= select_lex->master_unit();
     if (!unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
       return(1);
     select_lex->context.outer_context=
@@ -2921,7 +2921,7 @@ void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
     0     on success
 */
 
-bool Select_Lex_unit::add_fake_select_lex(Session *session_arg)
+bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
 {
   Select_Lex *first_sl= first_select();
   assert(!fake_select_lex);

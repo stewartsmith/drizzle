@@ -51,6 +51,7 @@ typedef bool (*qc_engine_callback)(Session *session, char *table_key,
 class Table;
 class TableList;
 class TABLE_SHARE;
+class Select_Lex_Unit;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
 struct order_st;
@@ -60,7 +61,6 @@ struct st_table_log_memory_entry;
 
 class LEX;
 class Select_Lex;
-typedef class Select_Lex_unit Select_Lex_UNIT;
 class Alter_info;
 class select_result;
 class Create_field;
@@ -1206,15 +1206,15 @@ bool mysql_select(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
                   COND *conds, uint32_t og_num, order_st *order, order_st *group,
                   Item *having, order_st *proc_param, uint64_t select_type,
-                  select_result *result, Select_Lex_UNIT *unit,
+                  select_result *result, Select_Lex_Unit *unit,
                   Select_Lex *select_lex);
 void free_underlaid_joins(Session *session, Select_Lex *select);
-bool mysql_explain_union(Session *session, Select_Lex_UNIT *unit,
+bool mysql_explain_union(Session *session, Select_Lex_Unit *unit,
                          select_result *result);
 int mysql_explain_select(Session *session, Select_Lex *sl, char const *type,
                          select_result *result);
 bool mysql_union(Session *session, LEX *lex, select_result *result,
-                 Select_Lex_UNIT *unit, ulong setup_tables_done_option);
+                 Select_Lex_Unit *unit, ulong setup_tables_done_option);
 bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       LEX *lex,
                                                       TableList *table));
@@ -1258,7 +1258,7 @@ bool mysql_multi_update(Session *session, TableList *table_list,
                         List<Item> *fields, List<Item> *values,
                         COND *conds, uint64_t options,
                         enum enum_duplicates handle_duplicates, bool ignore,
-                        Select_Lex_UNIT *unit, Select_Lex *select_lex);
+                        Select_Lex_Unit *unit, Select_Lex *select_lex);
 bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,
                           List<Item> &update_fields,

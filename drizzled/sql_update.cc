@@ -945,7 +945,7 @@ bool mysql_multi_update(Session *session,
                         COND *conds,
                         uint64_t options,
                         enum enum_duplicates handle_duplicates, bool ignore,
-                        Select_Lex_UNIT *unit, Select_Lex *select_lex)
+                        Select_Lex_Unit *unit, Select_Lex *select_lex)
 {
   multi_update *result;
   bool res;
@@ -998,7 +998,7 @@ multi_update::multi_update(TableList *table_list,
 */
 
 int multi_update::prepare(List<Item> &,
-                          Select_Lex_UNIT *)
+                          Select_Lex_Unit *)
 {
   TableList *table_ref;
   SQL_LIST update;

@@ -441,7 +441,7 @@ public:
   TMP_TABLE_PARAM tmp_table_param;
   DRIZZLE_LOCK *lock;
   /// unit structure (with global parameters) for this select
-  Select_Lex_UNIT *unit;
+  Select_Lex_Unit *unit;
   /// select that processed
   Select_Lex *select_lex;
   /**
@@ -594,7 +594,7 @@ public:
   int prepare(Item ***rref_pointer_array, TableList *tables, uint32_t wind_num,
 	      COND *conds, uint32_t og_num, order_st *order, order_st *group,
 	      Item *having, order_st *proc_param, Select_Lex *select,
-	      Select_Lex_UNIT *unit);
+	      Select_Lex_Unit *unit);
   int optimize();
   int reinit();
   void exec();

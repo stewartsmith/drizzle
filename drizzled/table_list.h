@@ -59,7 +59,7 @@ class Index_hint;
 class COND_EQUAL;
 class Natural_join_column;
 class select_union;
-class Select_Lex_unit;
+class Select_Lex_Unit;
 class ST_SCHEMA_TABLE;
 class Select_Lex;
 class TMP_TABLE_PARAM;
@@ -166,7 +166,7 @@ public:
     can see this lists can't be merged)
   */
   TableList	*correspondent_table;
-  Select_Lex_unit *derived;		/* Select_Lex_UNIT of derived table */
+  Select_Lex_Unit *derived;		/* Select_Lex_Unit of derived table */
   ST_SCHEMA_TABLE *schema_table;        /* Information_schema table */
   Select_Lex	*schema_select_lex;
   /*

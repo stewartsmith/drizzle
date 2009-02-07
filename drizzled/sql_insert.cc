@@ -588,7 +588,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
   */
   if (!select_insert)
   {
-    for (Select_Lex_UNIT *un= select_lex->first_inner_unit();
+    for (Select_Lex_Unit *un= select_lex->first_inner_unit();
          un;
          un= un->next_unit())
     {
@@ -1066,7 +1066,7 @@ select_insert::select_insert(TableList *table_list_par, Table *table_par,
 
 
 int
-select_insert::prepare(List<Item> &values, Select_Lex_UNIT *u)
+select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
   LEX *lex= session->lex;
   int res;
@@ -1606,7 +1606,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
 
 int
-select_create::prepare(List<Item> &values, Select_Lex_UNIT *u)
+select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
   DRIZZLE_LOCK *extra_lock= NULL;
   /*

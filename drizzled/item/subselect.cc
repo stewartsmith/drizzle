@@ -688,7 +688,7 @@ void Item_exists_subselect::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_in_subselect::test_limit(Select_Lex_unit *unit_arg)
+bool Item_in_subselect::test_limit(Select_Lex_Unit *unit_arg)
 {
   if (unit_arg->fake_select_lex &&
       unit_arg->fake_select_lex->test_limit())
@@ -1050,7 +1050,7 @@ Item_in_subselect::single_value_transformer(JOIN *join,
   if (!substitution)
   {
     /* We're invoked for the 1st (or the only) SELECT in the subquery UNION */
-    Select_Lex_UNIT *master_unit= select_lex->master_unit();
+    Select_Lex_Unit *master_unit= select_lex->master_unit();
     substitution= optimizer;
 
     Select_Lex *current= session->lex->current_select, *up;
@@ -1326,7 +1326,7 @@ Item_in_subselect::row_value_transformer(JOIN *join)
   if (!substitution)
   {
     //first call for this unit
-    Select_Lex_UNIT *master_unit= select_lex->master_unit();
+    Select_Lex_Unit *master_unit= select_lex->master_unit();
     substitution= optimizer;
 
     Select_Lex *current= session->lex->current_select, *up;
@@ -1966,7 +1966,7 @@ void subselect_uniquesubquery_engine::cleanup()
 }
 
 
-subselect_union_engine::subselect_union_engine(Select_Lex_unit *u,
+subselect_union_engine::subselect_union_engine(Select_Lex_Unit *u,
 					       select_result_interceptor *result_arg,
 					       Item_subselect *item_arg)
   :subselect_engine(item_arg, result_arg)
@@ -2132,7 +2132,7 @@ int subselect_single_select_engine::exec()
   session->lex->current_select= select_lex;
   if (!join->optimized)
   {
-    Select_Lex_UNIT *unit= select_lex->master_unit();
+    Select_Lex_Unit *unit= select_lex->master_unit();
 
     unit->set_limit(unit->global_parameters);
     if (join->flatten_subqueries())

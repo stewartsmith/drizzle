@@ -114,7 +114,7 @@ public:
 
   friend class Item_default_value;
   friend class Item_insert_value;
-  friend class Select_Lex_unit;
+  friend class Select_Lex_Unit;
 };
 
 #endif /* DRIZZLED_ITEM_FIELD_H */

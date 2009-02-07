@@ -264,11 +264,11 @@ public:
 
 /*
     Base class for Select_Lex (Select_Lex) &
-    Select_Lex_unit (Select_Lex_UNIT)
+    Select_Lex_Unit (Select_Lex_Unit)
 */
 class LEX;
 class Select_Lex;
-class Select_Lex_unit;
+class Select_Lex_Unit;
 class Select_Lex_Node {
 protected:
   Select_Lex_Node *next, **prev,   /* neighbor list */
@@ -312,7 +312,7 @@ public:
   void include_global(Select_Lex_Node **plink);
   void exclude();
 
-  virtual Select_Lex_unit* master_unit()= 0;
+  virtual Select_Lex_Unit* master_unit()= 0;
   virtual Select_Lex* outer_select()= 0;
   virtual Select_Lex* return_after_parsing()= 0;
 
@@ -331,21 +331,21 @@ public:
   virtual void set_lock_for_tables(thr_lock_type)
   {}
 
-  friend class Select_Lex_unit;
+  friend class Select_Lex_Unit;
   friend bool mysql_new_select(LEX *lex, bool move_down);
 private:
   void fast_exclude();
 };
 
 /*
-   Select_Lex_UNIT - unit of selects (UNION, INTERSECT, ...) group
+   Select_Lex_Unit - unit of selects (UNION, INTERSECT, ...) group
    Select_Lexs
 */
 class Session;
 class select_result;
 class JOIN;
 class select_union;
-class Select_Lex_unit: public Select_Lex_Node {
+class Select_Lex_Unit: public Select_Lex_Node {
 protected:
   TableList result_table_list;
   select_union *union_result;
@@ -398,15 +398,15 @@ public:
   bool describe; /* union exec() called for EXPLAIN */
 
   void init_query();
-  Select_Lex_unit* master_unit();
+  Select_Lex_Unit* master_unit();
   Select_Lex* outer_select();
   Select_Lex* first_select()
   {
     return reinterpret_cast<Select_Lex*>(slave);
   }
-  Select_Lex_unit* next_unit()
+  Select_Lex_Unit* next_unit()
   {
-    return reinterpret_cast<Select_Lex_unit*>(next);
+    return reinterpret_cast<Select_Lex_Unit*>(next);
   }
   Select_Lex* return_after_parsing() { return return_to; }
   void exclude_level();
@@ -434,8 +434,6 @@ public:
 
   List<Item> *get_unit_column_types();
 };
-
-typedef class Select_Lex_unit Select_Lex_UNIT;
 
 /*
   Select_Lex - store information of parsed SELECT statment
@@ -558,10 +556,10 @@ public:
   uint8_t full_group_by_flag;
   void init_query();
   void init_select();
-  Select_Lex_unit* master_unit();
-  Select_Lex_unit* first_inner_unit()
+  Select_Lex_Unit* master_unit();
+  Select_Lex_Unit* first_inner_unit()
   {
-    return (Select_Lex_unit*) slave;
+    return (Select_Lex_Unit*) slave;
   }
   Select_Lex* outer_select();
   Select_Lex* next_select() { return (Select_Lex*) next; }
@@ -612,7 +610,7 @@ public:
     This method created for reiniting LEX in mysql_admin_table() and can be
     used only if you are going remove all Select_Lex & units except belonger
     to LEX (LEX::unit & LEX::select, for other purposes there are
-    Select_Lex_UNIT::exclude_level & Select_Lex_UNIT::exclude_tree
+    Select_Lex_Unit::exclude_level & Select_Lex_Unit::exclude_tree
   */
   void cut_subtree() { slave= 0; }
   bool test_limit();
@@ -633,7 +631,7 @@ public:
   void fix_prepare_information(Session *session, Item **conds, Item **having_conds);
   /*
     Destroy the used execution plan (JOIN) of this subtree (this
-    Select_Lex and all nested Select_Lexes and Select_Lex_UNITs).
+    Select_Lex and all nested Select_Lexes and Select_Lex_Units).
   */
   bool cleanup();
   /*
@@ -670,7 +668,7 @@ private:
   List<Index_hint> *index_hints;
 };
 
-inline bool Select_Lex_unit::is_union ()
+inline bool Select_Lex_Unit::is_union ()
 {
   return first_select()->next_select() &&
     first_select()->next_select()->linkage == UNION_TYPE;
@@ -1244,7 +1242,7 @@ public:
 class LEX : public Query_tables_list
 {
 public:
-  Select_Lex_UNIT unit;                         /* most upper unit */
+  Select_Lex_Unit unit;                         /* most upper unit */
   Select_Lex select_lex;                        /* first Select_Lex */
   /* current Select_Lex in parsing */
   Select_Lex *current_select;

@@ -28,7 +28,7 @@
 #include <drizzled/item/field.h>
 
 class Select_Lex;
-class Select_Lex_unit;
+class Select_Lex_Unit;
 class JOIN;
 class select_result_interceptor;
 class subselect_engine;
@@ -52,7 +52,7 @@ public:
   Item *substitution;
   /* unit of subquery */
 public:
-  Select_Lex_unit *unit;
+  Select_Lex_Unit *unit;
 protected:
   /* engine that perform execution of subselect (single select or union) */
   subselect_engine *engine;
@@ -360,7 +360,7 @@ public:
   bool val_bool();
   void top_level_item() { abort_on_null=1; }
   inline bool is_top_level_item() { return abort_on_null; }
-  bool test_limit(Select_Lex_unit *unit);
+  bool test_limit(Select_Lex_Unit *unit);
   virtual void print(String *str, enum_query_type query_type);
   bool fix_fields(Session *session, Item **ref);
   bool setup_engine();
@@ -505,9 +505,9 @@ public:
 
 class subselect_union_engine: public subselect_engine
 {
-  Select_Lex_unit *unit;  /* corresponding unit structure */
+  Select_Lex_Unit *unit;  /* corresponding unit structure */
 public:
-  subselect_union_engine(Select_Lex_unit *u,
+  subselect_union_engine(Select_Lex_Unit *u,
 			 select_result_interceptor *result,
 			 Item_subselect *item);
   void cleanup();

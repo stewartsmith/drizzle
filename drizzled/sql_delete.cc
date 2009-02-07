@@ -465,7 +465,7 @@ multi_delete::multi_delete(TableList *dt, uint32_t num_of_tables_arg)
 
 
 int
-multi_delete::prepare(List<Item> &, Select_Lex_UNIT *u)
+multi_delete::prepare(List<Item> &, Select_Lex_Unit *u)
 {
 
   unit= u;

@@ -95,7 +95,7 @@ out:
 bool mysql_derived_prepare(Session *session, LEX *,
                            TableList *orig_table_list)
 {
-  Select_Lex_UNIT *unit= orig_table_list->derived;
+  Select_Lex_Unit *unit= orig_table_list->derived;
   uint64_t create_options;
   bool res= false;
   if (unit)
@@ -111,7 +111,7 @@ bool mysql_derived_prepare(Session *session, LEX *,
     if (!(derived_result= new select_union))
       return(true); // out of memory
 
-    // Select_Lex_unit::prepare correctly work for single select
+    // Select_Lex_Unit::prepare correctly work for single select
     if ((res= unit->prepare(session, derived_result, 0)))
       goto exit;
 
@@ -200,7 +200,7 @@ exit:
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_list)
 {
   Table *table= orig_table_list->table;
-  Select_Lex_UNIT *unit= orig_table_list->derived;
+  Select_Lex_Unit *unit= orig_table_list->derived;
   bool res= false;
 
   /*check that table creation pass without problem and it is derived table */

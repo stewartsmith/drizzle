@@ -1429,7 +1429,7 @@ void Select_Lex_Node::init_select()
 {
 }
 
-void Select_Lex_unit::init_query()
+void Select_Lex_Unit::init_query()
 {
   Select_Lex_Node::init_query();
   linkage= GLOBAL_OPTIONS_TYPE;
@@ -1606,14 +1606,14 @@ void Select_Lex_Node::exclude()
   Exclude level of current unit from tree of SELECTs
 
   SYNOPSYS
-    Select_Lex_unit::exclude_level()
+    Select_Lex_Unit::exclude_level()
 
   NOTE: units which belong to current will be brought up on level of
   currernt unit
 */
-void Select_Lex_unit::exclude_level()
+void Select_Lex_Unit::exclude_level()
 {
-  Select_Lex_UNIT *units= 0, **units_last= &units;
+  Select_Lex_Unit *units= 0, **units_last= &units;
   for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
   {
     // unlink current level from global SELECTs list
@@ -1621,11 +1621,11 @@ void Select_Lex_unit::exclude_level()
       sl->link_next->link_prev= sl->link_prev;
 
     // bring up underlay levels
-    Select_Lex_UNIT **last= 0;
-    for (Select_Lex_UNIT *u= sl->first_inner_unit(); u; u= u->next_unit())
+    Select_Lex_Unit **last= 0;
+    for (Select_Lex_Unit *u= sl->first_inner_unit(); u; u= u->next_unit())
     {
       u->master= master;
-      last= (Select_Lex_UNIT**)&(u->next);
+      last= (Select_Lex_Unit**)&(u->next);
     }
     if (last)
     {
@@ -1637,7 +1637,7 @@ void Select_Lex_unit::exclude_level()
   {
     // include brought up levels in place of current
     (*prev)= units;
-    (*units_last)= (Select_Lex_UNIT*)next;
+    (*units_last)= (Select_Lex_Unit*)next;
     if (next)
       next->prev= (Select_Lex_Node**)units_last;
     units->prev= prev;
@@ -1656,9 +1656,9 @@ void Select_Lex_unit::exclude_level()
   Exclude subtree of current unit from tree of SELECTs
 
   SYNOPSYS
-    Select_Lex_unit::exclude_tree()
+    Select_Lex_Unit::exclude_tree()
 */
-void Select_Lex_unit::exclude_tree()
+void Select_Lex_Unit::exclude_tree()
 {
   for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
   {
@@ -1667,7 +1667,7 @@ void Select_Lex_unit::exclude_tree()
       sl->link_next->link_prev= sl->link_prev;
 
     // unlink underlay levels
-    for (Select_Lex_UNIT *u= sl->first_inner_unit(); u; u= u->next_unit())
+    for (Select_Lex_Unit *u= sl->first_inner_unit(); u; u= u->next_unit())
     {
       u->exclude_level();
     }
@@ -1706,7 +1706,7 @@ void Select_Lex::mark_as_dependent(Select_Lex *last)
       // Select is dependent of outer select
       s->uncacheable= (s->uncacheable & ~UNCACHEABLE_UNITED) |
                        UNCACHEABLE_DEPENDENT;
-      Select_Lex_UNIT *munit= s->master_unit();
+      Select_Lex_Unit *munit= s->master_unit();
       munit->uncacheable= (munit->uncacheable & ~UNCACHEABLE_UNITED) |
                        UNCACHEABLE_DEPENDENT;
       for (Select_Lex *sl= munit->first_select(); sl ; sl= sl->next_select())
@@ -1754,13 +1754,13 @@ bool Select_Lex::test_limit()
 }
 
 
-Select_Lex_unit* Select_Lex_unit::master_unit()
+Select_Lex_Unit* Select_Lex_Unit::master_unit()
 {
     return this;
 }
 
 
-Select_Lex* Select_Lex_unit::outer_select()
+Select_Lex* Select_Lex_Unit::outer_select()
 {
   return (Select_Lex*) master;
 }
@@ -1784,9 +1784,9 @@ bool Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
 }
 
 
-Select_Lex_unit* Select_Lex::master_unit()
+Select_Lex_Unit* Select_Lex::master_unit()
 {
-  return (Select_Lex_unit*) master;
+  return (Select_Lex_Unit*) master;
 }
 
 
@@ -1846,7 +1846,7 @@ bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 }
 
 
-void Select_Lex_unit::print(String *str, enum_query_type query_type)
+void Select_Lex_Unit::print(String *str, enum_query_type query_type)
 {
   bool union_all= !union_distinct;
   for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
@@ -1905,7 +1905,7 @@ void Select_Lex::print_order(String *str,
 void Select_Lex::print_limit(Session *, String *str,
                                 enum_query_type query_type)
 {
-  Select_Lex_UNIT *unit= master_unit();
+  Select_Lex_Unit *unit= master_unit();
   Item_subselect *item= unit->item;
 
   if (item && unit->global_parameters == this)
@@ -2105,11 +2105,11 @@ LEX::copy_db_to(char **p_db, size_t *p_db_length) const
   initialize limit counters
 
   SYNOPSIS
-    Select_Lex_unit::set_limit()
+    Select_Lex_Unit::set_limit()
     values	- Select_Lex with initial values for counters
 */
 
-void Select_Lex_unit::set_limit(Select_Lex *sl)
+void Select_Lex_Unit::set_limit(Select_Lex *sl)
 {
   ha_rows select_limit_val;
   uint64_t val;
@@ -2284,7 +2284,7 @@ void LEX::cleanup_after_one_table_open()
   {
     derived_tables= 0;
     /* cleunup underlying units (units of VIEW) */
-    for (Select_Lex_UNIT *un= select_lex.first_inner_unit();
+    for (Select_Lex_Unit *un= select_lex.first_inner_unit();
          un;
          un= un->next_unit())
       un->cleanup();
@@ -2331,9 +2331,9 @@ static void fix_prepare_info_in_table_list(Session *session, TableList *tbl)
 
   Select_Lex::print is in sql_select.cc
 
-  Select_Lex_unit::prepare, Select_Lex_unit::exec,
-  Select_Lex_unit::cleanup, Select_Lex_unit::reinit_exec_mechanism,
-  Select_Lex_unit::change_result
+  Select_Lex_Unit::prepare, Select_Lex_Unit::exec,
+  Select_Lex_Unit::cleanup, Select_Lex_Unit::reinit_exec_mechanism,
+  Select_Lex_Unit::change_result
   are in sql_union.cc
 */
 

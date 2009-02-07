@@ -276,7 +276,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
     res= mysql_union(session, lex, result, &lex->unit, setup_tables_done_option);
   else
   {
-    Select_Lex_UNIT *unit= &lex->unit;
+    Select_Lex_Unit *unit= &lex->unit;
     unit->set_limit(unit->global_parameters);
     session->session_marker= 0;
     /*
@@ -469,7 +469,7 @@ JOIN::prepare(Item ***rref_pointer_array,
 	      order_st *order_init, order_st *group_init,
 	      Item *having_init,
 	      order_st *proc_param_init, Select_Lex *select_lex_arg,
-	      Select_Lex_UNIT *unit_arg)
+	      Select_Lex_Unit *unit_arg)
 {
   // to prevent double initialization on EXPLAIN
   if (optimized)
@@ -2631,7 +2631,7 @@ mysql_select(Session *session, Item ***rref_pointer_array,
 	     TableList *tables, uint32_t wild_num, List<Item> &fields,
 	     COND *conds, uint32_t og_num,  order_st *order, order_st *group,
 	     Item *having, order_st *proc_param, uint64_t select_options,
-	     select_result *result, Select_Lex_UNIT *unit,
+	     select_result *result, Select_Lex_Unit *unit,
 	     Select_Lex *select_lex)
 {
   bool err;
@@ -3195,7 +3195,7 @@ bool JOIN::flatten_subqueries()
 
 bool JOIN::setup_subquery_materialization()
 {
-  for (Select_Lex_UNIT *un= select_lex->first_inner_unit(); un;
+  for (Select_Lex_Unit *un= select_lex->first_inner_unit(); un;
        un= un->next_unit())
   {
     for (Select_Lex *sl= un->first_select(); sl; sl= sl->next_select())
@@ -7991,7 +7991,7 @@ void JOIN_TAB::cleanup()
 
 void JOIN::join_free()
 {
-  Select_Lex_UNIT *tmp_unit;
+  Select_Lex_Unit *tmp_unit;
   Select_Lex *sl;
   /*
     Optimization: if not EXPLAIN and we are done with the JOIN,
@@ -15273,7 +15273,7 @@ static bool add_ref_to_table_cond(Session *session, JOIN_TAB *join_tab)
 
 void free_underlaid_joins(Session *, Select_Lex *select)
 {
-  for (Select_Lex_UNIT *unit= select->first_inner_unit();
+  for (Select_Lex_Unit *unit= select->first_inner_unit();
        unit;
        unit= unit->next_unit())
     unit->cleanup();
@@ -16187,7 +16187,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	join->error= 1;
     }
   }
-  for (Select_Lex_UNIT *unit= join->select_lex->first_inner_unit();
+  for (Select_Lex_Unit *unit= join->select_lex->first_inner_unit();
        unit;
        unit= unit->next_unit())
   {
@@ -16198,7 +16198,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 }
 
 
-bool mysql_explain_union(Session *session, Select_Lex_UNIT *unit, select_result *result)
+bool mysql_explain_union(Session *session, Select_Lex_Unit *unit, select_result *result)
 {
   bool res= 0;
   Select_Lex *first= unit->first_select();
