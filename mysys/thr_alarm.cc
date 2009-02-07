@@ -262,9 +262,8 @@ bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
   alarm_data->alarmed=0;
   alarm_data->thread=    current_my_thread_var->pthread_self;
   alarm_data->thread_id= current_my_thread_var->id;
-  std::vector<ALARM*>::iterator p= alarm_stack.begin();
   /* No need to coerce to uchar* since std::vector<> is templatized */
-  alarm_stack.insert(p, alarm_data);
+  alarm_stack.insert(alarm_stack.begin(),alarm_data);
 
   /* Reschedule alarm if the current one has more than sec left */
   if (reschedule)
@@ -502,10 +501,7 @@ void thr_alarm_kill(my_thread_id thread_id)
   }
   if (p != alarm_stack.end())
   {
-    ALARM *tmp= *p;
-    alarm_stack.erase(p);
-    tmp->expire_time= 0;
-    alarm_stack.insert(p,tmp);
+    (*p)->expire_time= 0;
     reschedule_alarms();
   }
   pthread_mutex_unlock(&LOCK_alarm);
