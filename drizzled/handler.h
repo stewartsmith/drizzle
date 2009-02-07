@@ -21,6 +21,7 @@
 #define DRIZZLED_HANDLER_H
 
 #include <drizzled/xid.h>
+#include <drizzled/discrete_interval.h>
 
 /* Definitions for parameters to do with handler-routines */
 

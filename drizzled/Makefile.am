@@ -44,6 +44,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		data_home.h \
 		db.h \
 		definitions.h \
+		discrete_interval.h \
 		dtcollation.h \
 		errmsg.h \
 		error.h \
