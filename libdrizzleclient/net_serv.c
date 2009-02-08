@@ -50,10 +50,10 @@ static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
 
 /** Init with packet info. */
 
-bool my_net_init(NET *net, Vio* vio)
+bool drizzleclient_net_init(NET *net, Vio* vio)
 {
   net->vio = vio;
-  my_net_local_init(net);            /* Set some limits */
+  drizzleclient_net_local_init(net);            /* Set some limits */
   if (!(net->buff=(unsigned char*) malloc((size_t) net->max_packet+
                                           NET_HEADER_SIZE + COMP_HEADER_SIZE)))
     return(1);
@@ -82,7 +82,7 @@ bool net_init_sock(NET * net, int sock, int flags)
   if (vio_tmp == NULL)
     return true;
   else
-    if (my_net_init(net, vio_tmp))
+    if (drizzleclient_net_init(net, vio_tmp))
     {
       /* Only delete the temporary vio if we didn't already attach it to the
        * NET object.
@@ -274,7 +274,7 @@ bool net_flush(NET *net)
 */
 
 bool
-my_net_write(NET *net,const unsigned char *packet,size_t len)
+drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
 {
   unsigned char buff[NET_HEADER_SIZE];
   if (unlikely(!net->vio)) /* nowhere to write */
@@ -606,7 +606,7 @@ end:
 
 /**
    Reads one packet to net->buff + net->where_b.
-   Long packets are handled by my_net_read().
+   Long packets are handled by drizzleclient_net_read().
    This function reallocates the net->buff buffer if necessary.
 
    @return
@@ -632,7 +632,7 @@ my_real_read(NET *net, size_t *complen)
   *complen = 0;
 
   net->reading_or_writing= 1;
-  /* Read timeout is set in my_net_set_read_timeout */
+  /* Read timeout is set in drizzleclient_net_set_read_timeout */
 
   pos = net->buff + net->where_b;        /* net->packet -4 */
 
@@ -759,7 +759,7 @@ end:
 */
 
 uint32_t
-my_net_read(NET *net)
+drizzleclient_net_read(NET *net)
 {
   size_t len, complen;
 
@@ -909,7 +909,7 @@ my_net_read(NET *net)
   }
 
 
-void my_net_set_read_timeout(NET *net, uint32_t timeout)
+void drizzleclient_net_set_read_timeout(NET *net, uint32_t timeout)
 {
   net->read_timeout= timeout;
 #ifndef __sun
@@ -920,7 +920,7 @@ void my_net_set_read_timeout(NET *net, uint32_t timeout)
 }
 
 
-void my_net_set_write_timeout(NET *net, uint32_t timeout)
+void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout)
 {
   net->write_timeout= timeout;
 #ifndef __sun

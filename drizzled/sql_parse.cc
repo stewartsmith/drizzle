@@ -347,7 +347,7 @@ bool do_command(Session *session)
     the client, the connection is closed or "net_wait_timeout"
     number of seconds has passed
   */
-  my_net_set_read_timeout(net, session->variables.net_wait_timeout);
+  drizzleclient_net_set_read_timeout(net, session->variables.net_wait_timeout);
 
   /*
     XXX: this code is here only to clear possible errors of init_connect.
@@ -358,7 +358,7 @@ bool do_command(Session *session)
 
   net_new_transaction(net);
 
-  packet_length= my_net_read(net);
+  packet_length= drizzleclient_net_read(net);
   if (packet_length == packet_error)
   {
     /* Check if we can continue without closing the connection */
@@ -383,10 +383,10 @@ bool do_command(Session *session)
   packet= (char*) net->read_pos;
   /*
     'packet_length' contains length of data, as it was stored in packet
-    header. In case of malformed header, my_net_read returns zero.
-    If packet_length is not zero, my_net_read ensures that the returned
+    header. In case of malformed header, drizzleclient_net_read returns zero.
+    If packet_length is not zero, drizzleclient_net_read ensures that the returned
     number of bytes was actually read from network.
-    There is also an extra safety measure in my_net_read:
+    There is also an extra safety measure in drizzleclient_net_read:
     it sets packet[packet_length]= 0, but only for non-zero packets.
   */
   if (packet_length == 0)                       /* safety */
@@ -395,7 +395,7 @@ bool do_command(Session *session)
     packet[0]= (unsigned char) COM_SLEEP;
     packet_length= 1;
   }
-  /* Do not rely on my_net_read, extra safety against programming errors. */
+  /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
   packet[packet_length]= '\0';                  /* safety */
 
   command= (enum enum_server_command) (unsigned char) packet[0];
@@ -404,7 +404,7 @@ bool do_command(Session *session)
     command= COM_END;                           // Wrong command
 
   /* Restore read timeout value */
-  my_net_set_read_timeout(net, session->variables.net_read_timeout);
+  drizzleclient_net_set_read_timeout(net, session->variables.net_read_timeout);
 
   assert(packet_length);
   return_value= dispatch_command(command, session, packet+1, (uint32_t) (packet_length-1));

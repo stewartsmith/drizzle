@@ -22,16 +22,16 @@
 extern struct system_variables global_system_variables;
 
 /*
-  Function called by my_net_init() to set some check variables
+  Function called by drizzleclient_net_init() to set some check variables
 */
 
 extern "C" {
-void my_net_local_init(NET *net)
+void drizzleclient_net_local_init(NET *net)
 {
   net->max_packet=   (uint) global_system_variables.net_buffer_length;
 
-  my_net_set_read_timeout(net, (uint)global_system_variables.net_read_timeout);
-  my_net_set_write_timeout(net,
+  drizzleclient_net_set_read_timeout(net, (uint)global_system_variables.net_read_timeout);
+  drizzleclient_net_set_write_timeout(net,
                            (uint)global_system_variables.net_write_timeout);
 
   net->retry_count=  (uint) global_system_variables.net_retry_count;

@@ -35,7 +35,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
-		client_settings.h \
 		common.h \
 		comp_creator.h \
 		connect.h \

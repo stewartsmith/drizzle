@@ -301,7 +301,7 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
     goto error;
   }
 
-  if (my_net_init(net, net->vio))
+  if (drizzleclient_net_init(net, net->vio))
   {
     vio_delete(net->vio);
     net->vio = 0;
@@ -312,11 +312,11 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
 
   /* If user set read_timeout, let it override the default */
   if (drizzle->options.read_timeout)
-    my_net_set_read_timeout(net, drizzle->options.read_timeout);
+    drizzleclient_net_set_read_timeout(net, drizzle->options.read_timeout);
 
   /* If user set write_timeout, let it override the default */
   if (drizzle->options.write_timeout)
-    my_net_set_write_timeout(net, drizzle->options.write_timeout);
+    drizzleclient_net_set_write_timeout(net, drizzle->options.write_timeout);
 
   if (drizzle->options.max_allowed_packet)
     net->max_packet_size= drizzle->options.max_allowed_packet;
@@ -464,7 +464,7 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
     db= 0;
   }
   /* Write authentication package */
-  if (my_net_write(net, (unsigned char*) buff, (size_t) (end-buff)) || net_flush(net))
+  if (drizzleclient_net_write(net, (unsigned char*) buff, (size_t) (end-buff)) || net_flush(net))
   {
     drizzle_set_extended_error(drizzle, CR_SERVER_LOST, sqlstate_get_unknown(),
                                ER(CR_SERVER_LOST_SEND_AUTH),

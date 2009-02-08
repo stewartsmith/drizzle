@@ -504,14 +504,14 @@ uint32_t drizzle_thread_id(const DRIZZLE *drizzle)
 ****************************************************************************/
 
 /*
-  Functions called my my_net_init() to set some application specific variables
+  Functions called my drizzleclient_net_init() to set some application specific variables
 */
 
-void my_net_local_init(NET *net)
+void drizzleclient_net_local_init(NET *net)
 {
   net->max_packet=   (uint32_t) net_buffer_length;
-  my_net_set_read_timeout(net, CLIENT_NET_READ_TIMEOUT);
-  my_net_set_write_timeout(net, CLIENT_NET_WRITE_TIMEOUT);
+  drizzleclient_net_set_read_timeout(net, CLIENT_NET_READ_TIMEOUT);
+  drizzleclient_net_set_write_timeout(net, CLIENT_NET_WRITE_TIMEOUT);
   net->retry_count=  1;
   net->max_packet_size= (net_buffer_length > max_allowed_packet) ?
     net_buffer_length : max_allowed_packet;

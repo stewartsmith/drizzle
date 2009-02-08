@@ -103,7 +103,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
   protocol->store(msg_type, system_charset_info);
   protocol->store(msgbuf, msg_length, system_charset_info);
   if (protocol->write())
-    errmsg_printf(ERRMSG_LVL_ERROR, "Failed on my_net_write, writing to stderr instead: %s\n",
+    errmsg_printf(ERRMSG_LVL_ERROR, "Failed on drizzleclient_net_write, writing to stderr instead: %s\n",
 		    msgbuf);
   return;
 }

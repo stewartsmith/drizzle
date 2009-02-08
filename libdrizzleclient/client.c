@@ -100,7 +100,7 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
   uint32_t len=0;
 
   if (net->vio != 0)
-    len=my_net_read(net);
+    len=drizzleclient_net_read(net);
 
   if (len == packet_error || len == 0)
   {

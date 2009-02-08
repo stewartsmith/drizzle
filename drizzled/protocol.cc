@@ -187,7 +187,7 @@ net_send_ok(Session *session,
 
   if (message && message[0])
     pos= net_store_data(pos, (unsigned char*) message, strlen(message));
-  my_net_write(net, buff, (size_t) (pos-buff));
+  drizzleclient_net_write(net, buff, (size_t) (pos-buff));
   net_flush(net);
 
   session->main_da.can_overwrite_status= false;
@@ -252,7 +252,7 @@ static void write_eof_packet(Session *session, NET *net,
   if (session->is_fatal_error)
     server_status&= ~SERVER_MORE_RESULTS_EXISTS;
   int2store(buff + 3, server_status);
-  my_net_write(net, buff, 5);
+  drizzleclient_net_write(net, buff, 5);
 }
 
 void net_send_error_packet(Session *session, uint32_t sql_errno, const char *err)
@@ -486,7 +486,7 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
   if (flags & SEND_NUM_ROWS)
   {				// Packet with number of elements
     unsigned char *pos= net_store_length(buff, list->elements);
-    (void) my_net_write(&session->net, buff, (size_t) (pos-buff));
+    (void) drizzleclient_net_write(&session->net, buff, (size_t) (pos-buff));
   }
 
   while ((item=it++))
@@ -574,7 +574,7 @@ err:
 
 bool Protocol::write()
 {
-  return(my_net_write(&session->net, (unsigned char*) packet->ptr(),
+  return(drizzleclient_net_write(&session->net, (unsigned char*) packet->ptr(),
                            packet->length()));
 }
 

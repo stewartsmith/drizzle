@@ -89,7 +89,7 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   if ((*options->local_infile_init)(&li_ptr, net_filename,
     options->local_infile_userdata))
   {
-    (void)my_net_write(net,(const unsigned char*) "",0); /* Server needs one packet */
+    (void)drizzleclient_net_write(net,(const unsigned char*) "",0); /* Server needs one packet */
     net_flush(net);
     strcpy(net->sqlstate, sqlstate_get_unknown());
     net->last_errno=
@@ -104,14 +104,14 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
     (*options->local_infile_read)(li_ptr, buf,
           packet_length)) > 0)
   {
-    if (my_net_write(net, (unsigned char*) buf, readcount))
+    if (drizzleclient_net_write(net, (unsigned char*) buf, readcount))
     {
       goto err;
     }
   }
 
   /* Send empty packet to mark end of file */
-  if (my_net_write(net, (const unsigned char*) "", 0) || net_flush(net))
+  if (drizzleclient_net_write(net, (const unsigned char*) "", 0) || net_flush(net))
   {
     drizzle_set_error(drizzle, CR_SERVER_LOST, sqlstate_get_unknown());
     goto err;

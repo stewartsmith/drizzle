@@ -222,7 +222,7 @@ static int check_connection(Session *session)
     /* At this point we write connection message and read reply */
     if (net_write_command(net, (unsigned char) protocol_version, (unsigned char*) "", 0,
                           (unsigned char*) buff, (size_t) (end-buff)) ||
-	(pkt_len= my_net_read(net)) == packet_error ||
+	(pkt_len= drizzleclient_net_read(net)) == packet_error ||
 	pkt_len < MIN_HANDSHAKE_SIZE)
     {
       my_error(ER_HANDSHAKE_ERROR, MYF(0),
@@ -368,8 +368,8 @@ bool login_connection(Session *session)
   int error;
 
   /* Use "connect_timeout" value during connection phase */
-  my_net_set_read_timeout(net, connect_timeout);
-  my_net_set_write_timeout(net, connect_timeout);
+  drizzleclient_net_set_read_timeout(net, connect_timeout);
+  drizzleclient_net_set_write_timeout(net, connect_timeout);
 
   lex_start(session);
 
@@ -382,8 +382,8 @@ bool login_connection(Session *session)
     return(1);
   }
   /* Connect completed, set read/write timeouts back to default */
-  my_net_set_read_timeout(net, session->variables.net_read_timeout);
-  my_net_set_write_timeout(net, session->variables.net_write_timeout);
+  drizzleclient_net_set_read_timeout(net, session->variables.net_read_timeout);
+  drizzleclient_net_set_write_timeout(net, session->variables.net_write_timeout);
   return(0);
 }
 

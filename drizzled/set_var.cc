@@ -581,14 +581,14 @@ static int check_completion_type(Session *, set_var *var)
 static void fix_net_read_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    my_net_set_read_timeout(&session->net, session->variables.net_read_timeout);
+    drizzleclient_net_set_read_timeout(&session->net, session->variables.net_read_timeout);
 }
 
 
 static void fix_net_write_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    my_net_set_write_timeout(&session->net, session->variables.net_write_timeout);
+    drizzleclient_net_set_write_timeout(&session->net, session->variables.net_write_timeout);
 }
 
 static void fix_net_retry_count(Session *session, enum_var_type type)
