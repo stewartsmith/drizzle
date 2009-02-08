@@ -557,7 +557,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     /* Clear variables that are allocated */
     session->user_connect= 0;
-    res= check_user(session, passwd, passwd_len, db, false);
+    res= check_user(session, passwd, passwd_len, db);
 
     if (res)
     {

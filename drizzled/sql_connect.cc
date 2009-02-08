@@ -46,9 +46,6 @@ extern scheduling_st thread_scheduler;
   @param  passwd      scrambled password received from client
   @param  passwd_len  length of scrambled password
   @param  db          database name to connect to, may be NULL
-  @param  check_count true if establishing a new connection. In this case
-                      check that we have not exceeded the global
-                      max_connections limist
 
   @note Host, user and passwd may point to communication buffer.
   Current implementation does not depend on that, but future changes
@@ -62,8 +59,7 @@ extern scheduling_st thread_scheduler;
 
 int
 check_user(Session *session, const char *passwd,
-           uint32_t passwd_len, const char *db,
-           bool check_count)
+           uint32_t passwd_len, const char *db)
 {
   LEX_STRING db_str= { (char *) db, db ? strlen(db) : 0 };
   bool is_authenticated;
@@ -96,19 +92,6 @@ check_user(Session *session, const char *passwd,
 
 
   session->security_ctx.skip_grants();
-
-  if (check_count)
-  {
-    pthread_mutex_lock(&LOCK_connection_count);
-    bool count_ok= connection_count <= max_connections;
-    pthread_mutex_unlock(&LOCK_connection_count);
-
-    if (!count_ok)
-    {                                         // too many connections
-      my_error(ER_CON_COUNT_ERROR, MYF(0));
-      return(1);
-    }
-  }
 
   /* Change database if necessary */
   if (db && db[0])
@@ -333,7 +316,7 @@ static int check_connection(Session *session)
 
   session->security_ctx.user.assign(user);
 
-  return check_user(session, passwd, passwd_len, db, true);
+  return check_user(session, passwd, passwd_len, db);
 }
 
 

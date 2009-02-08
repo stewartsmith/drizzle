@@ -311,11 +311,9 @@ uint64_t table_def_size;
 ulong what_to_log;
 uint64_t slow_launch_time;
 uint64_t slave_open_temp_tables;
-uint64_t open_files_limit;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
-uint64_t max_connections;
 uint64_t max_connect_errors;
 ulong thread_id=1L;
 pid_t current_pid;
@@ -1257,8 +1255,7 @@ extern "C" void handle_segfault(int sig)
           (uint64_t)(((uint32_t) dflt_key_cache->key_cache_mem_size +
                      (global_system_variables.read_buff_size +
                       global_system_variables.sortbuff_size) *
-                     thread_scheduler.max_threads +
-                     max_connections * sizeof(Session)) / 1024));
+                     thread_scheduler.max_threads) / 1024));
 
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
@@ -1834,56 +1831,8 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
 
   /* connections and databases needs lots of files */
-  {
-    uint64_t files, wanted_files, max_open_files;
+  (void) my_set_max_open_files(0xFFFFFFFF);
 
-    /* MyISAM requires two file handles per table. */
-    wanted_files= 10+max_connections+table_cache_size*2;
-    /*
-      We are trying to allocate no less than max_connections*5 file
-      handles (i.e. we are trying to set the limit so that they will
-      be available).  In addition, we allocate no less than how much
-      was already allocated.  However below we report a warning and
-      recompute values only if we got less file handles than were
-      explicitly requested.  No warning and re-computation occur if we
-      can't get max_connections*5 but still got no less than was
-      requested (value of wanted_files).
-    */
-    max_open_files= cmax(cmax((uint32_t)wanted_files, max_connections*5),
-                         open_files_limit);
-    files= my_set_max_open_files(max_open_files);
-
-    if (files < wanted_files)
-    {
-      if (!open_files_limit)
-      {
-        /*
-          If we have requested too much file handles than we bring
-          max_connections in supported bounds.
-        */
-        max_connections= (uint32_t) cmin((uint32_t)files-10-TABLE_OPEN_CACHE_MIN*2,
-                                     max_connections);
-        /*
-          Decrease table_cache_size according to max_connections, but
-          not below TABLE_OPEN_CACHE_MIN.  Outer cmin() ensures that we
-          never increase table_cache_size automatically (that could
-          happen if max_connections is decreased above).
-        */
-        table_cache_size= (uint32_t) cmin(cmax((files-10-max_connections)/2,
-                                               (uint32_t)TABLE_OPEN_CACHE_MIN),
-                                          table_cache_size);
-        if (global_system_variables.log_warnings)
-              errmsg_printf(ERRMSG_LVL_WARN, _("Changed limits: max_open_files: %u  "
-                                               "max_connections: %"PRIu64"  table_cache: %"PRIu64""),
-                            files, max_connections, table_cache_size);
-      }
-      else if (global_system_variables.log_warnings)
-          errmsg_printf(ERRMSG_LVL_WARN, _("Could not increase number of max_open_files "
-                            "to more than %u (request: %u)"),
-                          files, wanted_files);
-    }
-    open_files_limit= files;
-  }
   unireg_init(); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
@@ -2328,21 +2277,7 @@ int main(int argc, char **argv)
 static void create_new_thread(Session *session)
 {
 
-  /*
-    Don't allow too many connections. We roughly check here that we allow
-    only (max_connections + 1) connections.
-  */
-
   pthread_mutex_lock(&LOCK_connection_count);
-
-  if (connection_count >= max_connections + 1 || abort_loop)
-  {
-    pthread_mutex_unlock(&LOCK_connection_count);
-
-    session->close_connection(ER_CON_COUNT_ERROR, 1);
-    delete session;
-    return;;
-  }
 
   ++connection_count;
 
@@ -2547,7 +2482,7 @@ enum options_drizzled
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
   OPT_LONG_QUERY_TIME,
   OPT_LOWER_CASE_TABLE_NAMES, OPT_MAX_ALLOWED_PACKET,
-  OPT_MAX_CONNECTIONS, OPT_MAX_CONNECT_ERRORS,
+  OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
   OPT_MAX_JOIN_SIZE,
   OPT_MAX_RELAY_LOG_SIZE, OPT_MAX_SORT_LENGTH,
@@ -2561,7 +2496,6 @@ enum options_drizzled
   OPT_MYISAM_STATS_METHOD,
   OPT_NET_BUFFER_LENGTH, OPT_NET_RETRY_COUNT,
   OPT_NET_READ_TIMEOUT, OPT_NET_WRITE_TIMEOUT,
-  OPT_OPEN_FILES_LIMIT,
   OPT_PRELOAD_BUFFER_SIZE,
   OPT_RECORD_BUFFER,
   OPT_RECORD_RND_BUFFER, OPT_DIV_PRECINCREMENT, OPT_RELAY_LOG_SPACE_LIMIT,
@@ -2944,12 +2878,6 @@ struct my_option my_long_options[] =
       "host this host will be blocked from further connections."),
    (char**) &max_connect_errors, (char**) &max_connect_errors, 0, GET_ULONG,
    REQUIRED_ARG, MAX_CONNECT_ERRORS, 1, ULONG_MAX, 0, 1, 0},
-  // Default max_connections of 151 is larger than Apache's default max
-  // children, to avoid "too many connections" error in a common setup
-  {"max_connections", OPT_MAX_CONNECTIONS,
-   N_("The number of simultaneous clients allowed."),
-   (char**) &max_connections,
-   (char**) &max_connections, 0, GET_ULONG, REQUIRED_ARG, 2048, 1, 100000, 0, 1, 0},
   {"max_error_count", OPT_MAX_ERROR_COUNT,
    N_("Max number of errors/warnings to store for a statement."),
    (char**) &global_system_variables.max_error_count,
@@ -3034,13 +2962,6 @@ struct my_option my_long_options[] =
     (char**) &global_system_variables.old_mode,
     (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG,
     0, 0, 0, 0, 0, 0},
-  {"open_files_limit", OPT_OPEN_FILES_LIMIT,
-   N_("If this is not 0, then drizzled will use this value to reserve file "
-      "descriptors to use with setrlimit(). If this value is 0 then drizzled "
-      "will reserve max_connections*5 or max_connections + table_cache*2 "
-      "(whichever is larger) number of files."),
-   (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULL,
-   REQUIRED_ARG, 0, 0, OS_FILE_LIMIT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "

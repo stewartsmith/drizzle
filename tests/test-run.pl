@@ -2540,16 +2540,6 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s%s", $prefix, "--core-file");
   }
 
-  if ( $opt_bench )
-  {
-    #mtr_add_arg($args, "%s--rpl-recovery-rank=1", $prefix);
-    #mtr_add_arg($args, "%s--init-rpl-role=master", $prefix);
-  }
-  elsif ( $mysqld->{'type'} eq 'master' )
-  {
-    mtr_add_arg($args, "%s--open-files-limit=1024", $prefix);
-  }
-
   return $args;
 }
 
