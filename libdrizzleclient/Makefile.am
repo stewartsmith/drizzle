@@ -27,13 +27,13 @@ dist_libdrizzleclientinclude_HEADERS =	\
 					drizzle_data.h \
 					drizzle_field.h \
 					drizzle_methods.h \
-					drizzle_options.h \
 					drizzle_parameters.h \
 					drizzle_res.h \
 					drizzle_rows.h \
 					libdrizzle.h \
 					errmsg.h \
 					net_serv.h \
+					options.h \
 					pack.h \
 					password.h \
 					vio.h

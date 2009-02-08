@@ -33,7 +33,7 @@ typedef struct st_drizzle_parameters
   void *extension;
 } DRIZZLE_PARAMETERS;
 
-const DRIZZLE_PARAMETERS * drizzle_get_parameters(void);
+const DRIZZLE_PARAMETERS * drizzleclient_get_parameters(void);
 
 #ifdef  __cplusplus
 }

@@ -409,7 +409,7 @@ SHOW_COMP_OPTION have_symlink;
 
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
-pthread_mutex_t LOCK_drizzle_create_db, 
+pthread_mutex_t LOCK_drizzleclient_create_db, 
                 LOCK_open, 
                 LOCK_thread_count,
                 LOCK_status,
@@ -840,7 +840,7 @@ static void wait_for_signal_thread_to_end()
 
 static void clean_up_mutexes()
 {
-  (void) pthread_mutex_destroy(&LOCK_drizzle_create_db);
+  (void) pthread_mutex_destroy(&LOCK_drizzleclient_create_db);
   (void) pthread_mutex_destroy(&LOCK_lock_db);
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
@@ -1930,7 +1930,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
 static int init_thread_environment()
 {
-  (void) pthread_mutex_init(&LOCK_drizzle_create_db,MY_MUTEX_INIT_SLOW);
+  (void) pthread_mutex_init(&LOCK_drizzleclient_create_db,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_lock_db,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);

@@ -783,7 +783,7 @@ drizzleclient_net_read(NET *net)
     }
     net->read_pos = net->buff + net->where_b;
     if (len != packet_error)
-      net->read_pos[len]=0;        /* Safeguard for drizzle_use_result */
+      net->read_pos[len]=0;        /* Safeguard for drizzleclient_use_result */
     return len;
   }
   else
@@ -903,7 +903,7 @@ drizzleclient_net_read(NET *net)
     len = ((uint32_t) (start_of_packet - first_packet_offset) - NET_HEADER_SIZE -
            multi_byte_packet);
     net->save_char= net->read_pos[len];    /* Must be saved */
-    net->read_pos[len]=0;        /* Safeguard for drizzle_use_result */
+    net->read_pos[len]=0;        /* Safeguard for drizzleclient_use_result */
   }
   return len;
   }

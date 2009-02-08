@@ -45,9 +45,9 @@ const char * drizzleclient_sqlstate_get_unknown(void);
 const char * drizzleclient_sqlstate_get_not_error(void);
 const char * drizzleclient_sqlstate_get_cant_connect(void);
 
-void drizzle_set_default_port(unsigned int port);
-void drizzle_set_error(DRIZZLE *drizzle, int errcode, const char *sqlstate);
-void drizzle_set_extended_error(DRIZZLE *drizzle, int errcode,
+void drizzleclient_set_default_port(unsigned int port);
+void drizzleclient_set_error(DRIZZLE *drizzle, int errcode, const char *sqlstate);
+void drizzleclient_set_extended_error(DRIZZLE *drizzle, int errcode,
                                 const char *sqlstate,
                                 const char *format, ...);
 void drizzleclient_free_old_query(DRIZZLE *drizzle);
@@ -55,8 +55,8 @@ void drizzleclient_free_old_query(DRIZZLE *drizzle);
 int drizzleclient_connect_with_timeout(int fd, const struct sockaddr *name,
                          unsigned int namelen, int32_t timeout);
 
-void drizzle_close_free_options(DRIZZLE *drizzle);
-void drizzle_close_free(DRIZZLE *drizzle);
+void drizzleclient_close_free_options(DRIZZLE *drizzle);
+void drizzleclient_close_free(DRIZZLE *drizzle);
 
 /* Hook Methods */
 bool drizzleclient_cli_read_query_result(DRIZZLE *drizzle);

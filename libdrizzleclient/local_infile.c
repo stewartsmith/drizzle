@@ -66,7 +66,7 @@ bool drizzleclient_handle_local_infile(DRIZZLE *drizzle, const char *net_filenam
   int readcount;
   void *li_ptr;          /* pass state to local_infile functions */
   char *buf;    /* buffer to be filled by local_infile_read */
-  struct st_drizzle_options *options= &drizzle->options;
+  struct st_drizzleclient_options *options= &drizzle->options;
 
   /* check that we've got valid callback functions */
   if (!(options->local_infile_init &&
@@ -75,13 +75,13 @@ bool drizzleclient_handle_local_infile(DRIZZLE *drizzle, const char *net_filenam
   options->local_infile_error))
   {
     /* if any of the functions is invalid, set the default */
-    drizzle_set_local_infile_default(drizzle);
+    drizzleclient_set_local_infile_default(drizzle);
   }
 
   /* copy filename into local memory and allocate read buffer */
   if (!(buf=malloc(packet_length)))
   {
-    drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, drizzleclient_sqlstate_get_unknown());
+    drizzleclient_set_error(drizzle, CR_OUT_OF_MEMORY, drizzleclient_sqlstate_get_unknown());
     return(1);
   }
 
@@ -113,7 +113,7 @@ bool drizzleclient_handle_local_infile(DRIZZLE *drizzle, const char *net_filenam
   /* Send empty packet to mark end of file */
   if (drizzleclient_net_write(net, (const unsigned char*) "", 0) || drizzleclient_net_flush(net))
   {
-    drizzle_set_error(drizzle, CR_SERVER_LOST, drizzleclient_sqlstate_get_unknown());
+    drizzleclient_set_error(drizzle, CR_SERVER_LOST, drizzleclient_sqlstate_get_unknown());
     goto err;
   }
 
@@ -278,7 +278,7 @@ default_local_infile_error(void *ptr, char *error_msg, uint32_t error_msg_len)
 
 
 void
-drizzle_set_local_infile_handler(DRIZZLE *drizzle,
+drizzleclient_set_local_infile_handler(DRIZZLE *drizzle,
                                int (*local_infile_init)(void **, const char *,
                                void *),
                                int (*local_infile_read)(void *, char *, uint32_t),
@@ -294,7 +294,7 @@ drizzle_set_local_infile_handler(DRIZZLE *drizzle,
 }
 
 
-void drizzle_set_local_infile_default(DRIZZLE *drizzle)
+void drizzleclient_set_local_infile_default(DRIZZLE *drizzle)
 {
   drizzle->options.local_infile_init=  default_local_infile_init;
   drizzle->options.local_infile_read=  default_local_infile_read;
