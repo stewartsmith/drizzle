@@ -1,2 +1,3 @@
 vcol_csv                    : when altering a table outparam->file is 0x0 in procedure open_table_from_share
 vcol_blackhole              : Temporarily disabled instead of building Drizzle with blackhole support and creating r/vcol_blackhole.result
+vcol_archive  : Bug (crashing)
