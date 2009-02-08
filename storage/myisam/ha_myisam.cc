@@ -75,7 +75,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
   msg_length= vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
   msgbuf[sizeof(msgbuf) - 1] = 0; // healthy paranoia
 
-  if (!session->vio_ok())
+  if (!session->drizzleclient_vio_ok())
   {
     errmsg_printf(ERRMSG_LVL_ERROR, "%s",msgbuf);
     return;
@@ -103,7 +103,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
   protocol->store(msg_type, system_charset_info);
   protocol->store(msgbuf, msg_length, system_charset_info);
   if (protocol->write())
-    errmsg_printf(ERRMSG_LVL_ERROR, "Failed on my_net_write, writing to stderr instead: %s\n",
+    errmsg_printf(ERRMSG_LVL_ERROR, "Failed on drizzleclient_net_write, writing to stderr instead: %s\n",
 		    msgbuf);
   return;
 }

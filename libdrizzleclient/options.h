@@ -41,7 +41,7 @@ enum drizzle_option
   DRIZZLE_OPT_SSL_VERIFY_SERVER_CERT
 };
 
-struct st_drizzle_options {
+struct st_drizzleclient_options {
   unsigned int connect_timeout, read_timeout, write_timeout;
   unsigned int port;
   unsigned long client_flag;

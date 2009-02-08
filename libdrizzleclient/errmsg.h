@@ -26,12 +26,12 @@
 #ifdef  __cplusplus
 extern "C"
 #endif
-const char * get_client_error(unsigned int err_index);
+const char * drizzleclient_get_client_error(unsigned int err_index);
 
 #define CR_MIN_ERROR    2000  /* For easier client code */
 #define CR_MAX_ERROR    2999
 #if !defined(ER)
-#define ER(X) get_client_error((X)-CR_MIN_ERROR)
+#define ER(X) drizzleclient_get_client_error((X)-CR_MIN_ERROR)
 #endif
 #define CLIENT_ERRMAP    2  /* Errormap used by my_error() */
 

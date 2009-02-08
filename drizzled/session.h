@@ -979,7 +979,7 @@ public:
       main_da.reset_diagnostics_area();
     return;
   }
-  inline bool vio_ok() const { return net.vio != 0; }
+  inline bool drizzleclient_vio_ok() const { return net.vio != 0; }
 
   /**
     Mark the current error as fatal. Warning: this does not

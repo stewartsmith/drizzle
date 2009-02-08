@@ -38,7 +38,7 @@ typedef struct st_drizzle_field {
   char *org_table;            /* Org table name, if table was an alias */
   char *db;                   /* Database for table */
   char *catalog;        /* Catalog for table */
-  char *def;                  /* Default value (set by drizzle_list_fields) */
+  char *def;                  /* Default value (set by drizzleclient_list_fields) */
   uint32_t length;       /* Width of column (create length) */
   uint32_t max_length;   /* Max width for selected set */
   unsigned int name_length;

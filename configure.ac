@@ -105,7 +105,14 @@ AC_SUBST(AVAILABLE_LANGUAGES)
 
 m4_include(m4/gettext.m4)
 AM_GNU_GETTEXT(external, need-formatstring-macros)
+if test "x$MSGMERGE" = "x" -o "x$MSGMERGE" = "x:"
+then
+  AM_PATH_PROG_WITH_TEST(GMSGMERGE, gmsgmerge,
+    [$ac_dir/$ac_word --update -q /dev/null /dev/null >&]AS_MESSAGE_LOG_FD[ 2>&1], :)
+  MSGMERGE="${GMSGMERGE}"
+fi
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
+
 
 # Set this for plugins to use
 ac_build_drizzle="yes"
@@ -166,14 +173,11 @@ AC_SYS_LARGEFILE
 AC_PROG_AWK
 
 
-AC_PATH_PROG(GPERF, gperf, gperf)
-if test "$ac_cv_prog_gperf" = "no"
-then
-  AC_MSG_ERROR("Drizzle requires gperf to build. Please install it.")
-fi
+AC_PATH_PROG(GPERF, gperf,
+             AC_MSG_ERROR("Drizzle requires gperf to build. Please install it."))
 
-AC_PATH_PROG(LCOV, lcov, lcov)
-AC_PATH_PROG(GENHTML, genhtml, genhtml)
+AC_PATH_PROG(LCOV, lcov)
+AC_PATH_PROG(GENHTML, genhtml)
 
 AM_CONDITIONAL(HAVE_LCOV,[test "$ac_cv_prog_lcov" != "no"])
 
@@ -791,6 +795,51 @@ then
 fi
 
 AM_CONDITIONAL(BUILD_FAST_MUTEX,[test "$with_fast_mutexes" != "no"])
+
+AC_ARG_WITH([atomic-ops],
+    [AS_HELP_STRING([--with-atomic-ops=rwlocks|smp|up],
+       [Implement atomic operations using pthread rwlocks or atomic CPU
+        instructions for multi-processor or uniprocessor
+        configuration. By default gcc built-in sync functions are used,
+        if available and 'smp' configuration otherwise.])],
+    [with_atomic_ops="$withval"],
+    [with_atomic_ops=smp])
+
+case "$with_atomic_ops" in
+  "up") AC_DEFINE([MY_ATOMIC_MODE_DUMMY], [1],
+                  [Assume single-CPU mode, no concurrency]) ;;
+  "rwlocks") AC_DEFINE([MY_ATOMIC_MODE_RWLOCKS], [1],
+                  [Use pthread rwlocks for atomic ops]) ;;
+  "smp") ;;
+  "")
+    AC_CACHE_CHECK(
+      [whether the compiler provides atomic builtins],
+      [ac_cv_gcc_atomic_builtins],
+      [AC_TRY_COMPILE([],
+        [int main()
+        {
+          int foo= -10; int bar= 10;
+          if (!__sync_fetch_and_add(&foo, bar) || foo)
+            return -1;
+          bar= __sync_lock_test_and_set(&foo, bar);
+          if (bar || foo != 10)
+            return -1;
+          bar= __sync_val_compare_and_swap(&bar, foo, 15);
+          if (bar)
+            return -1;
+          return 0;
+        }],
+       [ac_cv_gcc_atomic_builtins=yes],
+       [ac_cv_gcc_atomic_builtins=no])])
+
+    if test "x$ac_cv_gcc_atomic_builtins" = "xyes"; then
+      AC_DEFINE(HAVE_GCC_ATOMIC_BUILTINS, 1,
+                [Define to 1 if compiler provides atomic builtins.])
+    fi
+   ;;
+   *) AC_MSG_ERROR(["$with_atomic_ops" is not a valid value for --with-atomic-ops]) ;;
+esac
+
 
 AC_ARG_WITH([comment],
     [AS_HELP_STRING([--with-comment],

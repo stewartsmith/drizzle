@@ -394,6 +394,6 @@ typedef struct st_udf_init
 #define COMP_HEADER_SIZE 3		/* compression header extra size */
 
 
-#define NULL_LENGTH UINT32_MAX /* For net_store_length */
+#define NULL_LENGTH UINT32_MAX /* For drizzleclient_net_store_length */
 
 #endif

@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-  char *get_tty_password(const char *opt_message);
+  char *drizzleclient_get_tty_password(const char *opt_message);
 
 #ifdef __cplusplus
 }

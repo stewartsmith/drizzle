@@ -17,7 +17,7 @@ LDADD=			libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LTLIBZ) \
+			$(LIBZ) \
 			$(LIBINTL)
 
 EXTRA_DIST =		plug.in

@@ -18,7 +18,7 @@
 LDADD=			$(top_builddir)/libdrizzleclient/libdrizzleclient.la \
 			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LIBINTL) $(LTLIBZ) $(LTLIBDRIZZLE)
+			$(LIBINTL) $(LIBZ) 
 
 
 noinst_HEADERS =	completion_hash.h \

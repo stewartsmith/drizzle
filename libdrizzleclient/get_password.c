@@ -91,7 +91,7 @@ static void get_password(char *to, uint32_t length,int fd, bool echo)
 }
 
 
-char *get_tty_password(const char *opt_message)
+char *drizzleclient_get_tty_password(const char *opt_message)
 {
   TERMIO org,tmp;
   char buff[80];

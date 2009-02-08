@@ -17,7 +17,7 @@ AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
 EXTRA_LTLIBRARIES =	libcrc32udf.la
 pkgplugin_LTLIBRARIES =	@plugin_crc32_shared_target@
 libcrc32udf_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir)
-libcrc32udf_la_LIBADD =		$(LTLIBZ)
+libcrc32udf_la_LIBADD =		$(LIBZ)
 libcrc32udf_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 libcrc32udf_la_SOURCES =	crc32udf.cc
 

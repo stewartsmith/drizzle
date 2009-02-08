@@ -2683,7 +2683,7 @@ send_result_message:
         if (session->is_error())
         {
           const char *err_msg= session->main_da.message();
-          if (!session->vio_ok())
+          if (!session->drizzleclient_vio_ok())
           {
             errmsg_printf(ERRMSG_LVL_ERROR, "%s", err_msg);
           }

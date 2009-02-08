@@ -39,9 +39,9 @@ typedef struct st_drizzle_data {
 extern "C" {
 #endif
 
-  DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
+  DRIZZLE_FIELD *drizzleclient_unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
                                bool default_value);
-  void free_rows(DRIZZLE_DATA *cur);
+  void drizzleclient_free_rows(DRIZZLE_DATA *cur);
 
 #ifdef  __cplusplus
 }

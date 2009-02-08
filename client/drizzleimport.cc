@@ -162,7 +162,7 @@ static const char *load_default_groups[]= { "drizzleimport","client",0 };
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n" ,my_progname,
-    IMPORT_VERSION, drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
+    IMPORT_VERSION, drizzleclient_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 
@@ -285,7 +285,7 @@ static int get_options(int *argc, char ***argv)
   current_db= *((*argv)++);
   (*argc)--;
   if (tty_password)
-    opt_password=get_tty_password(NULL);
+    opt_password=drizzleclient_get_tty_password(NULL);
   return(0);
 }
 
@@ -311,7 +311,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
 #else
     sprintf(sql_statement, "DELETE FROM %s", tablename);
 #endif
-    if (drizzle_query(drizzle, sql_statement))
+    if (drizzleclient_query(drizzle, sql_statement))
     {
       db_error_with_table(drizzle, tablename);
       return(1);
@@ -359,17 +359,17 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
   }
   *end= '\0';
 
-  if (drizzle_query(drizzle, sql_statement))
+  if (drizzleclient_query(drizzle, sql_statement))
   {
     db_error_with_table(drizzle, tablename);
     return(1);
   }
   if (!silent)
   {
-    if (drizzle_info(drizzle)) /* If NULL-pointer, print nothing */
+    if (drizzleclient_info(drizzle)) /* If NULL-pointer, print nothing */
     {
       fprintf(stdout, "%s.%s: %s\n", current_db, tablename,
-        drizzle_info(drizzle));
+        drizzleclient_info(drizzle));
     }
   }
   return(0);
@@ -392,7 +392,7 @@ static void lock_table(DRIZZLE *drizzle, int tablecount, char **raw_tablename)
     query.append(tablename);
     query.append(" WRITE,");
   }
-  if (drizzle_real_query(drizzle, query.c_str(), query.length()-1))
+  if (drizzleclient_real_query(drizzle, query.c_str(), query.length()-1))
     db_error(drizzle); /* We shall countinue here, if --force was given */
 }
 
@@ -405,16 +405,16 @@ static DRIZZLE *db_connect(char *host, char *database,
   DRIZZLE *drizzle;
   if (verbose)
     fprintf(stdout, "Connecting to %s\n", host ? host : "localhost");
-  if (!(drizzle= drizzle_create(NULL)))
+  if (!(drizzle= drizzleclient_create(NULL)))
     return 0;
   if (opt_compress)
-    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NULL);
+    drizzleclient_options(drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   if (opt_local_file)
-    drizzle_options(drizzle,DRIZZLE_OPT_LOCAL_INFILE,
+    drizzleclient_options(drizzle,DRIZZLE_OPT_LOCAL_INFILE,
       (char*) &opt_local_file);
   if (opt_protocol)
-    drizzle_options(drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (!(drizzle_connect(drizzle,host,user,passwd,
+    drizzleclient_options(drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
+  if (!(drizzleclient_connect(drizzle,host,user,passwd,
                            database,opt_drizzle_port,opt_drizzle_unix_port,
                            0)))
   {
@@ -424,7 +424,7 @@ static DRIZZLE *db_connect(char *host, char *database,
   drizzle->reconnect= 0;
   if (verbose)
     fprintf(stdout, "Selecting database %s\n", database);
-  if (drizzle_select_db(drizzle, database))
+  if (drizzleclient_select_db(drizzle, database))
   {
     ignore_errors=0;
     db_error(drizzle);
@@ -438,7 +438,7 @@ static void db_disconnect(char *host, DRIZZLE *drizzle)
 {
   if (verbose)
     fprintf(stdout, "Disconnecting from %s\n", host ? host : "localhost");
-  drizzle_close(drizzle);
+  drizzleclient_close(drizzle);
 }
 
 
@@ -448,7 +448,7 @@ static void safe_exit(int error, DRIZZLE *drizzle)
   if (ignore_errors)
     return;
   if (drizzle)
-    drizzle_close(drizzle);
+    drizzleclient_close(drizzle);
   exit(error);
 }
 
@@ -457,7 +457,7 @@ static void safe_exit(int error, DRIZZLE *drizzle)
 static void db_error_with_table(DRIZZLE *drizzle, char *table)
 {
   my_printf_error(0,"Error: %d, %s, when using table: %s",
-      MYF(0), drizzle_errno(drizzle), drizzle_error(drizzle), table);
+      MYF(0), drizzleclient_errno(drizzle), drizzleclient_error(drizzle), table);
   safe_exit(1, drizzle);
 }
 
@@ -465,7 +465,7 @@ static void db_error_with_table(DRIZZLE *drizzle, char *table)
 
 static void db_error(DRIZZLE *drizzle)
 {
-  my_printf_error(0,"Error: %d %s", MYF(0), drizzle_errno(drizzle), drizzle_error(drizzle));
+  my_printf_error(0,"Error: %d %s", MYF(0), drizzleclient_errno(drizzle), drizzleclient_error(drizzle));
   safe_exit(1, drizzle);
 }
 
@@ -533,7 +533,7 @@ void * worker_thread(void *arg)
     goto error;
   }
 
-  if (drizzle_query(drizzle, "/*!40101 set @@character_set_database=binary */;"))
+  if (drizzleclient_query(drizzle, "/*!40101 set @@character_set_database=binary */;"))
   {
     db_error(drizzle); /* We shall countinue here, if --force was given */
     goto error;
@@ -638,7 +638,7 @@ int main(int argc, char **argv)
       return(1); /* purecov: deadcode */
     }
 
-    if (drizzle_query(drizzle, "/*!40101 set @@character_set_database=binary */;"))
+    if (drizzleclient_query(drizzle, "/*!40101 set @@character_set_database=binary */;"))
     {
       db_error(drizzle); /* We shall countinue here, if --force was given */
       return(1);

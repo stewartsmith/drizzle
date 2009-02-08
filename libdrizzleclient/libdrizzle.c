@@ -71,17 +71,17 @@ unsigned int drizzle_port=0;
 static DRIZZLE_PARAMETERS drizzle_internal_parameters=
 {&max_allowed_packet, &net_buffer_length, 0};
 
-const DRIZZLE_PARAMETERS * drizzle_get_parameters(void)
+const DRIZZLE_PARAMETERS * drizzleclient_get_parameters(void)
 {
   return &drizzle_internal_parameters;
 }
 
-unsigned int drizzle_get_default_port(void)
+unsigned int drizzleclient_get_default_port(void)
 {
   return drizzle_port;
 }
 
-void drizzle_set_default_port(unsigned int port)
+void drizzleclient_set_default_port(unsigned int port)
 {
   drizzle_port= port;
 }
@@ -116,11 +116,11 @@ append_wild(char *to, char *end, const char *wild)
   Change user and database
 **************************************************************************/
 
-int cli_read_change_user_result(DRIZZLE *drizzle)
+int drizzleclient_cli_read_change_user_result(DRIZZLE *drizzle)
 {
   uint32_t pkt_length;
 
-  pkt_length= cli_safe_read(drizzle);
+  pkt_length= drizzleclient_cli_safe_read(drizzle);
 
   if (pkt_length == packet_error)
     return 1;
@@ -128,7 +128,7 @@ int cli_read_change_user_result(DRIZZLE *drizzle)
   return 0;
 }
 
-bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
+bool drizzleclient_change_user(DRIZZLE *drizzle, const char *user,
                                  const char *passwd, const char *db)
 {
   char buff[USERNAME_LENGTH+SCRAMBLED_PASSWORD_CHAR_LENGTH+NAME_LEN+2];
@@ -196,13 +196,13 @@ char* getlogin(void);
 
 /**************************************************************************
   Do a query. If query returned rows, free old rows.
-  Read data by drizzle_store_result or by repeat call of drizzle_fetch_row
+  Read data by drizzleclient_store_result or by repeat call of drizzleclient_fetch_row
 **************************************************************************/
 
 int
-drizzle_query(DRIZZLE *drizzle, const char *query)
+drizzleclient_query(DRIZZLE *drizzle, const char *query)
 {
-  return drizzle_real_query(drizzle,query, (uint32_t) strlen(query));
+  return drizzleclient_real_query(drizzle,query, (uint32_t) strlen(query));
 }
 
 
@@ -211,7 +211,7 @@ drizzle_query(DRIZZLE *drizzle, const char *query)
 **************************************************************************/
 
 DRIZZLE_FIELD *
-drizzle_fetch_field(DRIZZLE_RES *result)
+drizzleclient_fetch_field(DRIZZLE_RES *result)
 {
   if (result->current_field >= result->field_count)
     return(NULL);
@@ -224,7 +224,7 @@ drizzle_fetch_field(DRIZZLE_RES *result)
 **************************************************************************/
 
 void
-drizzle_data_seek(DRIZZLE_RES *result, uint64_t row)
+drizzleclient_data_seek(DRIZZLE_RES *result, uint64_t row)
 {
   DRIZZLE_ROWS  *tmp=0;
   if (result->data)
@@ -236,12 +236,12 @@ drizzle_data_seek(DRIZZLE_RES *result, uint64_t row)
 
 /*************************************************************************
   put the row or field cursor one a position one got from DRIZZLE_ROW_tell()
-  This doesn't restore any data. The next drizzle_fetch_row or
-  drizzle_fetch_field will return the next row or field after the last used
+  This doesn't restore any data. The next drizzleclient_fetch_row or
+  drizzleclient_fetch_field will return the next row or field after the last used
 *************************************************************************/
 
 DRIZZLE_ROW_OFFSET
-drizzle_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET row)
+drizzleclient_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET row)
 {
   DRIZZLE_ROW_OFFSET return_value=result->data_cursor;
   result->current_row= 0;
@@ -251,7 +251,7 @@ drizzle_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET row)
 
 
 DRIZZLE_FIELD_OFFSET
-drizzle_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET field_offset)
+drizzleclient_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET field_offset)
 {
   DRIZZLE_FIELD_OFFSET return_value=result->current_field;
   result->current_field=field_offset;
@@ -265,27 +265,27 @@ drizzle_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET field_offset)
 *****************************************************************************/
 
 DRIZZLE_RES *
-drizzle_list_tables(DRIZZLE *drizzle, const char *wild)
+drizzleclient_list_tables(DRIZZLE *drizzle, const char *wild)
 {
   char buff[255];
   char *ptr= strcpy(buff, "show tables");
   ptr+= 11; /* strlen("show tables"); */
 
   append_wild(ptr,buff+sizeof(buff),wild);
-  if (drizzle_query(drizzle,buff))
+  if (drizzleclient_query(drizzle,buff))
     return(0);
-  return (drizzle_store_result(drizzle));
+  return (drizzleclient_store_result(drizzle));
 }
 
 
-DRIZZLE_FIELD *cli_list_fields(DRIZZLE *drizzle)
+DRIZZLE_FIELD *drizzleclient_cli_list_fields(DRIZZLE *drizzle)
 {
   DRIZZLE_DATA *query;
-  if (!(query= cli_read_rows(drizzle,(DRIZZLE_FIELD*) 0, 8)))
+  if (!(query= drizzleclient_cli_read_rows(drizzle,(DRIZZLE_FIELD*) 0, 8)))
     return NULL;
 
   drizzle->field_count= (uint32_t) query->rows;
-  return unpack_fields(query, drizzle->field_count, 1);
+  return drizzleclient_unpack_fields(query, drizzle->field_count, 1);
 }
 
 
@@ -297,7 +297,7 @@ DRIZZLE_FIELD *cli_list_fields(DRIZZLE *drizzle)
 **************************************************************************/
 
 DRIZZLE_RES *
-drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
+drizzleclient_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
 {
   DRIZZLE_RES   *result;
   DRIZZLE_FIELD *fields;
@@ -306,7 +306,7 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
   end= strncpy(buff, table, 128) + 128;
   end= strncpy(end+1, wild ? wild : "", 128) + 128;
 
-  free_old_query(drizzle);
+  drizzleclient_free_old_query(drizzle);
   if (simple_command(drizzle, COM_FIELD_LIST, (unsigned char*) buff,
                      (uint32_t) (end-buff), 1) ||
       !(fields= (*drizzle->methods->list_fields)(drizzle)))
@@ -328,7 +328,7 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
 /* List all running processes (threads) in server */
 
 DRIZZLE_RES *
-drizzle_list_processes(DRIZZLE *drizzle)
+drizzleclient_list_processes(DRIZZLE *drizzle)
 {
   DRIZZLE_DATA *fields;
   uint32_t field_count;
@@ -336,28 +336,28 @@ drizzle_list_processes(DRIZZLE *drizzle)
 
   if (simple_command(drizzle,COM_PROCESS_INFO,0,0,0))
     return(0);
-  free_old_query(drizzle);
+  drizzleclient_free_old_query(drizzle);
   pos=(unsigned char*) drizzle->net.read_pos;
-  field_count=(uint32_t) net_field_length(&pos);
+  field_count=(uint32_t) drizzleclient_net_field_length(&pos);
   if (!(fields = (*drizzle->methods->read_rows)(drizzle,(DRIZZLE_FIELD*) 0, 7)))
     return(NULL);
-  if (!(drizzle->fields=unpack_fields(fields, field_count, 0)))
+  if (!(drizzle->fields=drizzleclient_unpack_fields(fields, field_count, 0)))
     return(0);
   drizzle->status=DRIZZLE_STATUS_GET_RESULT;
   drizzle->field_count=field_count;
-  return(drizzle_store_result(drizzle));
+  return(drizzleclient_store_result(drizzle));
 }
 
 
 int
-drizzle_shutdown(DRIZZLE *drizzle)
+drizzleclient_shutdown(DRIZZLE *drizzle)
 {
   return(simple_command(drizzle, COM_SHUTDOWN, 0, 0, 0));
 }
 
 
 int
-drizzle_refresh(DRIZZLE *drizzle, uint32_t options)
+drizzleclient_refresh(DRIZZLE *drizzle, uint32_t options)
 {
   unsigned char bits[1];
   bits[0]= (unsigned char) options;
@@ -366,7 +366,7 @@ drizzle_refresh(DRIZZLE *drizzle, uint32_t options)
 
 
 int32_t
-drizzle_kill(DRIZZLE *drizzle, uint32_t pid)
+drizzleclient_kill(DRIZZLE *drizzle, uint32_t pid)
 {
   unsigned char buff[4];
   int4store(buff,pid);
@@ -375,7 +375,7 @@ drizzle_kill(DRIZZLE *drizzle, uint32_t pid)
 
 
 int
-drizzle_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option)
+drizzleclient_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option)
 {
   unsigned char buff[2];
   int2store(buff, (uint32_t) option);
@@ -383,12 +383,12 @@ drizzle_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option)
 }
 
 
-const char *cli_read_statistics(DRIZZLE *drizzle)
+const char *drizzleclient_cli_read_statistics(DRIZZLE *drizzle)
 {
   drizzle->net.read_pos[drizzle->packet_length]=0;  /* End of stat string */
   if (!drizzle->net.read_pos[0])
   {
-    drizzle_set_error(drizzle, CR_WRONG_HOST_INFO, sqlstate_get_unknown());
+    drizzleclient_set_error(drizzle, CR_WRONG_HOST_INFO, drizzleclient_sqlstate_get_unknown());
     return drizzle->net.last_error;
   }
   return (char*) drizzle->net.read_pos;
@@ -396,7 +396,7 @@ const char *cli_read_statistics(DRIZZLE *drizzle)
 
 
 int
-drizzle_ping(DRIZZLE *drizzle)
+drizzleclient_ping(DRIZZLE *drizzle)
 {
   int res;
   res= simple_command(drizzle,COM_PING,0,0,0);
@@ -407,94 +407,94 @@ drizzle_ping(DRIZZLE *drizzle)
 
 
 const char *
-drizzle_get_server_info(const DRIZZLE *drizzle)
+drizzleclient_get_server_info(const DRIZZLE *drizzle)
 {
   return((char*) drizzle->server_version);
 }
 
 
 const char *
-drizzle_get_host_info(const DRIZZLE *drizzle)
+drizzleclient_get_host_info(const DRIZZLE *drizzle)
 {
   return(drizzle->host_info);
 }
 
 
 uint32_t
-drizzle_get_proto_info(const DRIZZLE *drizzle)
+drizzleclient_get_proto_info(const DRIZZLE *drizzle)
 {
   return (drizzle->protocol_version);
 }
 
 const char *
-drizzle_get_client_info(void)
+drizzleclient_get_client_info(void)
 {
   return (char*) VERSION;
 }
 
-uint32_t drizzle_get_client_version(void)
+uint32_t drizzleclient_get_client_version(void)
 {
   return DRIZZLE_VERSION_ID;
 }
 
-bool drizzle_eof(const DRIZZLE_RES *res)
+bool drizzleclient_eof(const DRIZZLE_RES *res)
 {
   return res->eof;
 }
 
-const DRIZZLE_FIELD * drizzle_fetch_field_direct(const DRIZZLE_RES *res, unsigned int fieldnr)
+const DRIZZLE_FIELD * drizzleclient_fetch_field_direct(const DRIZZLE_RES *res, unsigned int fieldnr)
 {
   return &(res)->fields[fieldnr];
 }
 
-const DRIZZLE_FIELD * drizzle_fetch_fields(const DRIZZLE_RES *res)
+const DRIZZLE_FIELD * drizzleclient_fetch_fields(const DRIZZLE_RES *res)
 {
   return res->fields;
 }
 
-DRIZZLE_ROW_OFFSET drizzle_row_tell(const DRIZZLE_RES *res)
+DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res)
 {
   return res->data_cursor;
 }
 
-DRIZZLE_FIELD_OFFSET drizzle_field_tell(const DRIZZLE_RES *res)
+DRIZZLE_FIELD_OFFSET drizzleclient_field_tell(const DRIZZLE_RES *res)
 {
   return res->current_field;
 }
 
 /* DRIZZLE */
 
-unsigned int drizzle_field_count(const DRIZZLE *drizzle)
+unsigned int drizzleclient_field_count(const DRIZZLE *drizzle)
 {
   return drizzle->field_count;
 }
 
-uint64_t drizzle_affected_rows(const DRIZZLE *drizzle)
+uint64_t drizzleclient_affected_rows(const DRIZZLE *drizzle)
 {
   return drizzle->affected_rows;
 }
 
-uint64_t drizzle_insert_id(const DRIZZLE *drizzle)
+uint64_t drizzleclient_insert_id(const DRIZZLE *drizzle)
 {
   return drizzle->insert_id;
 }
 
-const char * drizzle_sqlstate(const DRIZZLE *drizzle)
+const char * drizzleclient_sqlstate(const DRIZZLE *drizzle)
 {
-  return drizzle ? drizzle->net.sqlstate : sqlstate_get_cant_connect();
+  return drizzle ? drizzle->net.sqlstate : drizzleclient_sqlstate_get_cant_connect();
 }
 
-uint32_t drizzle_warning_count(const DRIZZLE *drizzle)
+uint32_t drizzleclient_warning_count(const DRIZZLE *drizzle)
 {
   return drizzle->warning_count;
 }
 
-const char * drizzle_info(const DRIZZLE *drizzle)
+const char * drizzleclient_info(const DRIZZLE *drizzle)
 {
   return drizzle->info;
 }
 
-uint32_t drizzle_thread_id(const DRIZZLE *drizzle)
+uint32_t drizzleclient_thread_id(const DRIZZLE *drizzle)
 {
   return drizzle->thread_id;
 }
@@ -504,14 +504,14 @@ uint32_t drizzle_thread_id(const DRIZZLE *drizzle)
 ****************************************************************************/
 
 /*
-  Functions called my my_net_init() to set some application specific variables
+  Functions called my drizzleclient_net_init() to set some application specific variables
 */
 
-void my_net_local_init(NET *net)
+void drizzleclient_net_local_init(NET *net)
 {
   net->max_packet=   (uint32_t) net_buffer_length;
-  my_net_set_read_timeout(net, CLIENT_NET_READ_TIMEOUT);
-  my_net_set_write_timeout(net, CLIENT_NET_WRITE_TIMEOUT);
+  drizzleclient_net_set_read_timeout(net, CLIENT_NET_READ_TIMEOUT);
+  drizzleclient_net_set_write_timeout(net, CLIENT_NET_WRITE_TIMEOUT);
   net->retry_count=  1;
   net->max_packet_size= (net_buffer_length > max_allowed_packet) ?
     net_buffer_length : max_allowed_packet;
@@ -524,7 +524,7 @@ void my_net_local_init(NET *net)
 */
 
 uint32_t
-drizzle_escape_string(char *to,const char *from, uint32_t length)
+drizzleclient_escape_string(char *to,const char *from, uint32_t length)
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + 2*length;
@@ -593,9 +593,9 @@ drizzle_escape_string(char *to,const char *from, uint32_t length)
   return overflow ? (size_t) -1 : (size_t) (to - to_start);
 }
 
-int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
+int drizzleclient_cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
 {
-  if (packet_error == cli_safe_read(drizzle))
+  if (packet_error == drizzleclient_cli_safe_read(drizzle))
     return 1;
 
   *row= ((drizzle->net.read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA) ? NULL :
@@ -611,18 +611,18 @@ int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
   Commit the current transaction
 */
 
-bool drizzle_commit(DRIZZLE *drizzle)
+bool drizzleclient_commit(DRIZZLE *drizzle)
 {
-  return((bool) drizzle_real_query(drizzle, "commit", 6));
+  return((bool) drizzleclient_real_query(drizzle, "commit", 6));
 }
 
 /*
   Rollback the current transaction
 */
 
-bool drizzle_rollback(DRIZZLE *drizzle)
+bool drizzleclient_rollback(DRIZZLE *drizzle)
 {
-  return((bool) drizzle_real_query(drizzle, "rollback", 8));
+  return((bool) drizzleclient_real_query(drizzle, "rollback", 8));
 }
 
 
@@ -630,9 +630,9 @@ bool drizzle_rollback(DRIZZLE *drizzle)
   Set autocommit to either true or false
 */
 
-bool drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode)
+bool drizzleclient_autocommit(DRIZZLE *drizzle, bool auto_mode)
 {
-  return((bool) drizzle_real_query(drizzle, auto_mode ?
+  return((bool) drizzleclient_real_query(drizzle, auto_mode ?
                                          "set autocommit=1":"set autocommit=0",
                                          16));
 }
@@ -644,10 +644,10 @@ bool drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode)
 
 /*
   Returns true/false to indicate whether any more query results exist
-  to be read using drizzle_next_result()
+  to be read using drizzleclient_next_result()
 */
 
-bool drizzle_more_results(const DRIZZLE *drizzle)
+bool drizzleclient_more_results(const DRIZZLE *drizzle)
 {
   return (drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? true:false;
 }
@@ -656,15 +656,15 @@ bool drizzle_more_results(const DRIZZLE *drizzle)
 /*
   Reads and returns the next query results
 */
-int drizzle_next_result(DRIZZLE *drizzle)
+int drizzleclient_next_result(DRIZZLE *drizzle)
 {
   if (drizzle->status != DRIZZLE_STATUS_READY)
   {
-    drizzle_set_error(drizzle, CR_COMMANDS_OUT_OF_SYNC, sqlstate_get_unknown());
+    drizzleclient_set_error(drizzle, CR_COMMANDS_OUT_OF_SYNC, drizzleclient_sqlstate_get_unknown());
     return(1);
   }
 
-  net_clear_error(&drizzle->net);
+  drizzleclient_drizzleclient_net_clear_error(&drizzle->net);
   drizzle->affected_rows= ~(uint64_t) 0;
 
   if (drizzle->server_status & SERVER_MORE_RESULTS_EXISTS)
@@ -674,12 +674,12 @@ int drizzle_next_result(DRIZZLE *drizzle)
 }
 
 
-DRIZZLE_RES * drizzle_use_result(DRIZZLE *drizzle)
+DRIZZLE_RES * drizzleclient_use_result(DRIZZLE *drizzle)
 {
   return (*drizzle->methods->use_result)(drizzle);
 }
 
-bool drizzle_read_query_result(DRIZZLE *drizzle)
+bool drizzleclient_read_query_result(DRIZZLE *drizzle)
 {
   return (*drizzle->methods->read_query_result)(drizzle);
 }

@@ -36,7 +36,6 @@ static bool interrupted= false, opt_verbose= false,tty_password= false;
 static uint32_t tcp_port= 0, option_wait= 0, option_silent= 0;
 static uint32_t my_end_arg;
 static uint32_t opt_connect_timeout, opt_shutdown_timeout;
-static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 
 using namespace std;
 
@@ -201,7 +200,7 @@ int main(int argc,char *argv[])
   char **commands, **save_argv;
 
   MY_INIT(argv[0]);
-  drizzle_create(&drizzle);
+  drizzleclient_create(&drizzle);
   load_defaults("drizzle",load_default_groups,&argc,&argv);
   save_argv = argv;				/* Save for free_defaults */
   if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
@@ -218,7 +217,7 @@ int main(int argc,char *argv[])
 
   commands = argv;
   if (tty_password)
-    opt_password = get_tty_password(NULL);
+    opt_password = drizzleclient_get_tty_password(NULL);
 
   signal(SIGINT,endprog);			/* Here if abort */
   signal(SIGTERM,endprog);		/* Here if abort */
@@ -226,14 +225,12 @@ int main(int argc,char *argv[])
   if (opt_connect_timeout)
   {
     uint tmp=opt_connect_timeout;
-    drizzle_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT, (char*) &tmp);
+    drizzleclient_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT, (char*) &tmp);
   }
-
-  error_flags= (myf)0;
 
   if (sql_connect(&drizzle, option_wait))
   {
-    unsigned int err= drizzle_errno(&drizzle);
+    unsigned int err= drizzleclient_errno(&drizzle);
     if (err >= CR_MIN_ERROR && err <= CR_MAX_ERROR)
       error= 1;
     else
@@ -252,7 +249,7 @@ int main(int argc,char *argv[])
   else
   {
     error=execute_commands(&drizzle,argc,commands);
-    drizzle_close(&drizzle);
+    drizzleclient_close(&drizzle);
   }
   free(opt_password);
   free(user);
@@ -272,7 +269,7 @@ static bool sql_connect(DRIZZLE *drizzle, uint wait)
 
   for (;;)
   {
-    if (drizzle_connect(drizzle,host,user,opt_password,NULL,tcp_port,NULL,0))
+    if (drizzleclient_connect(drizzle,host,user,opt_password,NULL,tcp_port,NULL,0))
     {
       drizzle->reconnect= 1;
       if (info)
@@ -290,27 +287,27 @@ static bool sql_connect(DRIZZLE *drizzle, uint wait)
         if (!host)
           host= (char*) LOCAL_HOST;
 
-        my_printf_error(0,_("connect to server at '%s' failed\nerror: '%s'"),
-        error_flags, host, drizzle_error(drizzle));
+        fprintf(stderr,_("connect to server at '%s' failed\nerror: '%s'"),
+                host, drizzleclient_error(drizzle));
 
-        if (drizzle_errno(drizzle) == CR_CONN_HOST_ERROR ||
-          drizzle_errno(drizzle) == CR_UNKNOWN_HOST)
+        if (drizzleclient_errno(drizzle) == CR_CONN_HOST_ERROR ||
+          drizzleclient_errno(drizzle) == CR_UNKNOWN_HOST)
         {
           fprintf(stderr,_("Check that drizzled is running on %s"),host);
           fprintf(stderr,_(" and that the port is %d.\n"),
-          tcp_port ? tcp_port: drizzle_get_default_port());
+          tcp_port ? tcp_port: drizzleclient_get_default_port());
           fprintf(stderr,_("You can check this by doing 'telnet %s %d'\n"),
-                  host, tcp_port ? tcp_port: drizzle_get_default_port());
+                  host, tcp_port ? tcp_port: drizzleclient_get_default_port());
         }
       }
       return 1;
     }
     if (wait != UINT32_MAX)
       wait--;				/* One less retry */
-    if ((drizzle_errno(drizzle) != CR_CONN_HOST_ERROR) &&
-        (drizzle_errno(drizzle) != CR_CONNECTION_ERROR))
+    if ((drizzleclient_errno(drizzle) != CR_CONN_HOST_ERROR) &&
+        (drizzleclient_errno(drizzle) != CR_CONNECTION_ERROR))
     {
-      fprintf(stderr,_("Got error: %s\n"), drizzle_error(drizzle));
+      fprintf(stderr,_("Got error: %s\n"), drizzleclient_error(drizzle));
     }
     else if (!option_silent)
     {
@@ -352,13 +349,13 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       if (opt_verbose)
         printf(_("shutting down drizzled...\n"));
 
-      if (drizzle_shutdown(drizzle))
+      if (drizzleclient_shutdown(drizzle))
       {
-        my_printf_error(0, _("shutdown failed; error: '%s'"), error_flags,
-                        drizzle_error(drizzle));
+        fprintf(stderr, _("shutdown failed; error: '%s'"),
+                drizzleclient_error(drizzle));
         return -1;
       }
-      drizzle_close(drizzle);	/* Close connection to avoid error messages */
+      drizzleclient_close(drizzle);	/* Close connection to avoid error messages */
 
       if (opt_verbose)
         printf(_("done\n"));
@@ -368,23 +365,23 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
     }
     case ADMIN_PING:
       drizzle->reconnect=0;	/* We want to know of reconnects */
-      if (!drizzle_ping(drizzle))
+      if (!drizzleclient_ping(drizzle))
       {
         if (option_silent < 2)
           puts(_("drizzled is alive"));
       }
       else
       {
-        if (drizzle_errno(drizzle) == CR_SERVER_GONE_ERROR)
+        if (drizzleclient_errno(drizzle) == CR_SERVER_GONE_ERROR)
         {
           drizzle->reconnect=1;
-          if (!drizzle_ping(drizzle))
+          if (!drizzleclient_ping(drizzle))
             puts(_("connection was down, but drizzled is now alive"));
         }
         else
 	      {
-          my_printf_error(0,_("drizzled doesn't answer to ping, error: '%s'"),
-          error_flags, drizzle_error(drizzle));
+          fprintf(stderr,_("drizzled doesn't answer to ping, error: '%s'"),
+                  drizzleclient_error(drizzle));
           return -1;
         }
       }
@@ -392,7 +389,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       break;
 
     default:
-      my_printf_error(0, _("Unknown command: '%-.60s'"), error_flags, argv[0]);
+      fprintf(stderr, _("Unknown command: '%-.60s'"), argv[0]);
       return 1;
     }
   }
@@ -402,7 +399,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
 static void print_version(void)
 {
   printf(_("%s  Ver %s Distrib %s, for %s on %s\n"),my_progname,ADMIN_VERSION,
-	 drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
+	 drizzleclient_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 static void usage(void)
