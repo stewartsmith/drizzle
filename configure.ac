@@ -797,13 +797,13 @@ fi
 AM_CONDITIONAL(BUILD_FAST_MUTEX,[test "$with_fast_mutexes" != "no"])
 
 AC_ARG_WITH([atomic-ops],
-            AC_HELP_STRING([--with-atomic-ops=rwlocks|smp|up],
-            [Implement atomic operations using pthread rwlocks or atomic CPU
-             instructions for multi-processor or uniprocessor
-             configuration. By default gcc built-in sync functions are used,
-             if available and 'smp' configuration otherwise.],
-            [with_atomic_ops="$withval"],
-            [with_atomic_ops=smp]))
+    [AS_HELP_STRING([--with-atomic-ops=rwlocks|smp|up],
+       [Implement atomic operations using pthread rwlocks or atomic CPU
+        instructions for multi-processor or uniprocessor
+        configuration. By default gcc built-in sync functions are used,
+        if available and 'smp' configuration otherwise.])],
+    [with_atomic_ops="$withval"],
+    [with_atomic_ops=smp])
 
 case "$with_atomic_ops" in
   "up") AC_DEFINE([MY_ATOMIC_MODE_DUMMY], [1],
