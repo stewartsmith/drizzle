@@ -112,7 +112,7 @@ public:
   /* See if this can be blown away */
   inline uint32_t getDBStat () { return db_stat; }
   inline uint32_t setDBStat () { return db_stat; }
-  uint		db_stat;		/* mode of file as in handler.h */
+  uint32_t db_stat;		/* mode of file as in handler.h */
 
   handler	*file;
   Table *next, *prev;
