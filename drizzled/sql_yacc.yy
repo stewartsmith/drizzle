@@ -658,19 +658,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LOOP_SYM
 %token  LOW_PRIORITY
 %token  LT                            /* OPERATOR */
-%token  MASTER_LOG_FILE_SYM
-%token  MASTER_LOG_POS_SYM
-%token  MASTER_PORT_SYM
-%token  MASTER_SERVER_ID_SYM
-%token  MASTER_SYM
 %token  MATCH                         /* SQL-2003-R */
-%token  MAX_CONNECTIONS_PER_HOUR
-%token  MAX_QUERIES_PER_HOUR
 %token  MAX_ROWS
 %token  MAX_SIZE_SYM
 %token  MAX_SYM                       /* SQL-2003-N */
-%token  MAX_UPDATES_PER_HOUR
-%token  MAX_USER_CONNECTIONS_SYM
 %token  MAX_VALUE_SYM                 /* SQL-2003-N */
 %token  MEDIUM_SYM
 %token  MERGE_SYM                     /* SQL-2003-R */
@@ -3929,7 +3920,7 @@ table_factor:
                  error in this case */
               LEX *lex=Lex;
               Select_Lex *sel= lex->current_select;
-              Select_Lex_UNIT *unit= sel->master_unit();
+              Select_Lex_Unit *unit= sel->master_unit();
               lex->current_select= sel= unit->outer_select();
               if (!($$= sel->add_table_to_list(lex->session,
                                                new Table_ident(unit), $5, 0,
@@ -4351,7 +4342,7 @@ order_clause:
           {
             LEX *lex=Lex;
             Select_Lex *sel= lex->current_select;
-            Select_Lex_UNIT *unit= sel-> master_unit();
+            Select_Lex_Unit *unit= sel-> master_unit();
             if (sel->linkage != GLOBAL_OPTIONS_TYPE &&
                 sel->olap != UNSPECIFIED_OLAP_TYPE &&
                 (sel->linkage != UNION_TYPE || sel->braces))
@@ -5930,16 +5921,7 @@ keyword_sp:
         | LOGFILE_SYM              {}
         | LOGS_SYM                 {}
         | MAX_ROWS                 {}
-        | MASTER_SYM               {}
-        | MASTER_PORT_SYM          {}
-        | MASTER_LOG_FILE_SYM      {}
-        | MASTER_LOG_POS_SYM       {}
-        | MASTER_SERVER_ID_SYM     {}
-        | MAX_CONNECTIONS_PER_HOUR {}
-        | MAX_QUERIES_PER_HOUR     {}
         | MAX_SIZE_SYM             {}
-        | MAX_UPDATES_PER_HOUR     {}
-        | MAX_USER_CONNECTIONS_SYM {}
         | MAX_VALUE_SYM            {}
         | MEDIUM_SYM               {}
         | MERGE_SYM                {}
@@ -6425,7 +6407,7 @@ union_order_or_limit:
             LEX *lex= session->lex;
             assert(lex->current_select->linkage != GLOBAL_OPTIONS_TYPE);
             Select_Lex *sel= lex->current_select;
-            Select_Lex_UNIT *unit= sel->master_unit();
+            Select_Lex_Unit *unit= sel->master_unit();
             Select_Lex *fake= unit->fake_select_lex;
             if (fake)
             {
