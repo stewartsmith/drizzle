@@ -360,8 +360,10 @@ char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 char drizzle_real_data_home[FN_REFLEN],
-     language[FN_REFLEN], reg_ext[FN_EXTLEN], drizzle_charsets_dir[FN_REFLEN],
-     *opt_init_file, *opt_tc_log_file;
+     language[FN_REFLEN], 
+     reg_ext[FN_EXTLEN],
+     *opt_init_file, 
+     *opt_tc_log_file;
 char drizzle_unpacked_real_data_home[FN_REFLEN];
 uint32_t reg_ext_length;
 const key_map key_map_empty(0);
@@ -2434,7 +2436,7 @@ enum options_drizzled
   OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          OPT_INIT_FILE,
   OPT_DELAY_KEY_WRITE_ALL,
-  OPT_DELAY_KEY_WRITE,	       OPT_CHARSETS_DIR,
+  OPT_DELAY_KEY_WRITE,
   OPT_MASTER_INFO_FILE,
   OPT_MASTER_RETRY_COUNT,      OPT_LOG_TC, OPT_LOG_TC_SIZE,
   OPT_WANT_CORE,
@@ -2573,9 +2575,6 @@ struct my_option my_long_options[] =
    N_("Set the default character set."),
    (char**) &default_character_set_name, (char**) &default_character_set_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"character-sets-dir", OPT_CHARSETS_DIR,
-   N_("Directory where character sets are."), (char**) &charsets_dir,
-   (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
    (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
@@ -3322,7 +3321,6 @@ static void drizzle_init_variables(void)
   drizzle_data_home_len= 2;
 
   /* Variables in libraries */
-  charsets_dir= 0;
   default_character_set_name= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
   default_collation_name= compiled_default_collation_name;
   character_set_filesystem_name= (char*) "binary";
@@ -3466,10 +3464,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       type= find_type_or_exit(argument, &delay_key_write_typelib, opt->name);
       delay_key_write_options= (uint) type-1;
     }
-    break;
-  case OPT_CHARSETS_DIR:
-    strncpy(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir)-1);
-    charsets_dir = drizzle_charsets_dir;
     break;
   case OPT_TX_ISOLATION:
     {
@@ -3699,15 +3693,15 @@ static void fix_paths(void)
                    (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
   (void) unpack_dirname(drizzle_unpacked_real_data_home, buff);
   convert_dirname(language,language,NULL);
-  (void) my_load_path(drizzle_home,drizzle_home,""); // Resolve current dir
-  (void) my_load_path(drizzle_real_data_home,drizzle_real_data_home,drizzle_home);
-  (void) my_load_path(pidfile_name,pidfile_name,drizzle_real_data_home);
+  (void) my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
+  (void) my_load_path(drizzle_real_data_home, drizzle_real_data_home,drizzle_home);
+  (void) my_load_path(pidfile_name, pidfile_name,drizzle_real_data_home);
   (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr ? opt_plugin_dir_ptr :
                                       get_relative_path(PKGPLUGINDIR),
                                       drizzle_home);
   opt_plugin_dir_ptr= opt_plugin_dir;
 
-  const char *sharedir=get_relative_path(PKGDATADIR);
+  const char *sharedir= get_relative_path(PKGDATADIR);
   if (test_if_hard_path(sharedir))
     strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
   else
@@ -3717,17 +3711,6 @@ static void fix_paths(void)
   }
   convert_dirname(buff,buff,NULL);
   (void) my_load_path(language,language,buff);
-
-  /* If --character-sets-dir isn't given, use shared library dir */
-  if (charsets_dir != drizzle_charsets_dir)
-  {
-    strcpy(drizzle_charsets_dir, buff);
-    strncat(drizzle_charsets_dir, CHARSET_DIR,
-            sizeof(drizzle_charsets_dir)-strlen(buff)-1);
-  }
-  (void) my_load_path(drizzle_charsets_dir, drizzle_charsets_dir, buff);
-  convert_dirname(drizzle_charsets_dir, drizzle_charsets_dir, NULL);
-  charsets_dir=drizzle_charsets_dir;
 
   {
     char *tmp_string;
