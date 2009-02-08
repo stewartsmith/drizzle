@@ -169,7 +169,7 @@ Item_field::Item_field(Name_resolution_context *context_arg,
    field(0), result_field(0), item_equal(0), no_const_subst(0),
    have_privileges(0), any_privileges(0)
 {
-  SELECT_LEX *select= current_session->lex->current_select;
+  Select_Lex *select= current_session->lex->current_select;
   collation.set(DERIVATION_IMPLICIT);
   if (select && select->parsing_place != IN_HAVING)
       select->select_n_where_fields++;
@@ -402,7 +402,7 @@ enum_field_types Item_field::field_type() const
 }
 
 
-void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **)
+void Item_field::fix_after_pullout(Select_Lex *new_parent, Item **)
 {
   if (new_parent == depended_from)
     depended_from= NULL;
@@ -493,9 +493,9 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
   */
   Name_resolution_context *last_checked_context= context;
   Item **ref= (Item **) not_found_item;
-  SELECT_LEX *current_sel= (SELECT_LEX *) session->lex->current_select;
+  Select_Lex *current_sel= (Select_Lex *) session->lex->current_select;
   Name_resolution_context *outer_context= 0;
-  SELECT_LEX *select= 0;
+  Select_Lex *select= 0;
   /* Currently derived tables cannot be correlated */
   if (current_sel->master_unit()->first_select()->linkage !=
       DERIVED_TABLE_TYPE)
@@ -1244,7 +1244,7 @@ void Item_field::update_null_value()
 
 Item *Item_field::update_value_transformer(unsigned char *select_arg)
 {
-  SELECT_LEX *select= (SELECT_LEX*)select_arg;
+  Select_Lex *select= (Select_Lex*)select_arg;
   assert(fixed);
 
   if (field->table != select->context.table_list->table)

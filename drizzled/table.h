@@ -36,8 +36,8 @@
 
 class Item;
 class Item_subselect;
-class st_select_lex_unit;
-class st_select_lex;
+class Select_Lex_Unit;
+class Select_Lex;
 class COND_EQUAL;
 class Security_context;
 class TableList;
@@ -112,7 +112,7 @@ public:
   /* See if this can be blown away */
   inline uint32_t getDBStat () { return db_stat; }
   inline uint32_t setDBStat () { return db_stat; }
-  uint		db_stat;		/* mode of file as in handler.h */
+  uint32_t db_stat;		/* mode of file as in handler.h */
 
   handler	*file;
   Table *next, *prev;
@@ -413,7 +413,7 @@ struct ST_SCHEMA_TABLE
 
 struct st_lex;
 class select_union;
-class TMP_TABLE_PARAM;
+class Tmp_Table_Param;
 
 typedef struct st_changed_table_list
 {

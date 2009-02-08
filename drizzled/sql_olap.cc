@@ -36,13 +36,13 @@
 ****************************************************************************/
 
 
-static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new_fields)
+static int make_new_olap_select(LEX *lex, Select_Lex *select_lex, List<Item> new_fields)
 {
   Session	*session=current_session;
   Item *item, *new_item;
   Item_null *constant= new Item_null("ALL");
 
-  SELECT_LEX *new_select = (SELECT_LEX *) session->memdup((char*) select_lex, sizeof(*select_lex));
+  Select_Lex *new_select = (Select_Lex *) session->memdup((char*) select_lex, sizeof(*select_lex));
   if (!new_select)
     return 1;
   lex->last_selects->next=new_select;
@@ -100,7 +100,7 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
 ****************************************************************************/
 
 static int  olap_combos(List<Item> old_fields, List<Item> new_fields, Item *item, LEX *lex,
-			      SELECT_LEX *select_lex, int position, int selection, int num_fields,
+			      Select_Lex *select_lex, int position, int selection, int num_fields,
 			      int num_new_fields)
 {
   int sl_return = 0;
@@ -130,7 +130,7 @@ static int  olap_combos(List<Item> old_fields, List<Item> new_fields, Item *item
   Returns 0 if OK, 1 if error, -1 if error already printed to client
 ****************************************************************************/
 
-int handle_olaps(LEX *lex, SELECT_LEX *select_lex)
+int handle_olaps(LEX *lex, Select_Lex *select_lex)
 {
   List<Item> item_list_copy, new_item_list;
   item_list_copy.empty();

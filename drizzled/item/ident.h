@@ -53,7 +53,7 @@ public:
     0 - means no cached value.
   */
   TableList *cached_table;
-  st_select_lex *depended_from;
+  Select_Lex *depended_from;
   Item_ident(Name_resolution_context *context_arg,
              const char *db_name_arg, const char *table_name_arg,
              const char *field_name_arg);

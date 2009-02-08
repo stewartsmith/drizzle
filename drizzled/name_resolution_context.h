@@ -23,20 +23,20 @@
 class TableList;
 class Security_context;
 class Session;
-class st_select_lex;
+class Select_Lex;
 
 /*
   Instances of Name_resolution_context store the information necesary for
   name resolution of Items and other context analysis of a query made in
   fix_fields().
 
-  This structure is a part of SELECT_LEX, a pointer to this structure is
+  This structure is a part of Select_Lex, a pointer to this structure is
   assigned when an item is created (which happens mostly during  parsing
   (sql_yacc.yy)), but the structure itself will be initialized after parsing
   is complete
 
   TODO: move subquery of INSERT ... SELECT and CREATE ... SELECT to
-  separate SELECT_LEX which allow to remove tricks of changing this
+  separate Select_Lex which allow to remove tricks of changing this
   structure before and after INSERT/CREATE and its SELECT to make correct
   field name resolution.
 */
@@ -54,7 +54,7 @@ public:
     List of tables used to resolve the items of this context.  Usually these
     are tables from the FROM clause of SELECT statement.  The exceptions are
     INSERT ... SELECT and CREATE ... SELECT statements, where SELECT
-    subquery is not moved to a separate SELECT_LEX.  For these types of
+    subquery is not moved to a separate Select_Lex.  For these types of
     statements we have to change this member dynamically to ensure correct
     name resolution of different parts of the statement.
   */
@@ -74,11 +74,11 @@ public:
   TableList *last_name_resolution_table;
 
   /*
-    SELECT_LEX item belong to, in case of merged VIEW it can differ from
-    SELECT_LEX where item was created, so we can't use table_list/field_list
+    Select_Lex item belong to, in case of merged VIEW it can differ from
+    Select_Lex where item was created, so we can't use table_list/field_list
     from there
   */
-  st_select_lex *select_lex;
+  Select_Lex *select_lex;
 
   /*
     Processor of errors caused during Item name resolving, now used only to

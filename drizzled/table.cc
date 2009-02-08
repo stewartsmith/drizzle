@@ -3708,7 +3708,7 @@ Field *create_tmp_field_for_schema(Session *, Item *item, Table *table)
 #define RATIO_TO_PACK_ROWS	       2
 
 Table *
-create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
+create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 order_st *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 char *table_alias)
@@ -3790,7 +3790,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
     When loose index scan is employed as access method, it already
     computes all groups and the result of all aggregate functions. We
     make space for the items of the aggregate function in the list of
-    functions TMP_TABLE_PARAM::items_to_copy, so that the values of
+    functions Tmp_Table_Param::items_to_copy, so that the values of
     these items are stored in the temporary table.
   */
   if (param->precomputed_group_by)
@@ -3821,7 +3821,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return(NULL);				/* purecov: inspected */
   }
-  /* Copy_field belongs to TMP_TABLE_PARAM, allocate it in Session mem_root */
+  /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
   {
     if (temp_pool_slot != MY_BIT_NONE)

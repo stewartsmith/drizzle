@@ -59,10 +59,10 @@ class Index_hint;
 class COND_EQUAL;
 class Natural_join_column;
 class select_union;
-class st_select_lex_unit;
+class Select_Lex_Unit;
 class ST_SCHEMA_TABLE;
-class st_select_lex;
-class TMP_TABLE_PARAM;
+class Select_Lex;
+class Tmp_Table_Param;
 class Item_subselect;
 class Table;
 
@@ -90,7 +90,7 @@ public:
   /*
     List of tables local to a subquery (used by SQL_LIST). Considers
     views as leaves (unlike 'next_leaf' below). Created at parse time
-    in st_select_lex::add_table_to_list() -> table_list.link_in_list().
+    in Select_Lex::add_table_to_list() -> table_list.link_in_list().
   */
   TableList *next_local;
   /* link in a global list of all queries tables */
@@ -166,17 +166,17 @@ public:
     can see this lists can't be merged)
   */
   TableList	*correspondent_table;
-  st_select_lex_unit *derived;		/* SELECT_LEX_UNIT of derived table */
+  Select_Lex_Unit *derived;		/* Select_Lex_Unit of derived table */
   ST_SCHEMA_TABLE *schema_table;        /* Information_schema table */
-  st_select_lex	*schema_select_lex;
+  Select_Lex	*schema_select_lex;
   /*
     True when the view field translation table is used to convert
     schema table fields for backwards compatibility with SHOW command.
   */
   bool schema_table_reformed;
-  TMP_TABLE_PARAM *schema_table_param;
+  Tmp_Table_Param *schema_table_param;
   /* link to select_lex where this table was used */
-  st_select_lex	*select_lex;
+  Select_Lex	*select_lex;
   /*
     List (based on next_local) of underlying tables of this view. I.e. it
     does not include the tables of subqueries used in the view. Is set only

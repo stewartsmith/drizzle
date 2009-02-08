@@ -61,7 +61,7 @@ bool push_new_name_resolution_context(Session *session,
                                       TableList *right_op);
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,
-                      SELECT_LEX *lex);
+                      Select_Lex *lex);
 bool add_proc_to_list(Session *session, Item *item);
 void unlink_open_table(Session *session, Table *find, bool unlock);
 void drop_open_table(Session *session, Table *table, const char *db_name,
@@ -136,8 +136,8 @@ inline bool setup_fields_with_no_wrap(Session *session, Item **ref_pointer_array
 }
 int setup_conds(Session *session, TableList *tables, TableList *leaves,
 		COND **conds);
-int setup_ftfuncs(SELECT_LEX* select);
-int init_ftfuncs(Session *session, SELECT_LEX* select, bool no_order);
+int setup_ftfuncs(Select_Lex* select);
+int init_ftfuncs(Session *session, Select_Lex* select, bool no_order);
 void wait_for_condition(Session *session, pthread_mutex_t *mutex,
                         pthread_cond_t *cond);
 int open_tables(Session *session, TableList **tables, uint32_t *counter, uint32_t flags);

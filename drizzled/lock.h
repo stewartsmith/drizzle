@@ -25,7 +25,7 @@
 class Session;
 class Table;
 class TableList;
-typedef struct st_mysql_lock DRIZZLE_LOCK;
+typedef struct drizzled_lock_st DRIZZLE_LOCK;
 
 DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **table, uint32_t count,
                                 uint32_t flags, bool *need_reopen);

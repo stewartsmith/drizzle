@@ -792,7 +792,7 @@ void log_slow_statement(Session *session)
 
     This function is used in the parser to convert a SHOW or DESCRIBE
     table_name command to a SELECT from INFORMATION_SCHEMA.
-    It prepares a SELECT_LEX and a TableList object to represent the
+    It prepares a Select_Lex and a TableList object to represent the
     given command as a SELECT parse tree.
 
   @param session              thread handle
@@ -816,7 +816,7 @@ void log_slow_statement(Session *session)
 int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
                          enum enum_schema_tables schema_table_idx)
 {
-  SELECT_LEX *schema_select_lex= NULL;
+  Select_Lex *schema_select_lex= NULL;
 
   switch (schema_table_idx) {
   case SCH_SCHEMATA:
@@ -831,7 +831,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
       {
         return(1);
       }
-      schema_select_lex= new SELECT_LEX();
+      schema_select_lex= new Select_Lex();
       db.str= schema_select_lex->db= lex->select_lex.db;
       schema_select_lex->table_list.first= NULL;
       db.length= strlen(db.str);
@@ -848,7 +848,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   {
     assert(table_ident);
     TableList **query_tables_last= lex->query_tables_last;
-    schema_select_lex= new SELECT_LEX();
+    schema_select_lex= new Select_Lex();
     /* 'parent_lex' is used in init_query() so it must be before it. */
     schema_select_lex->parent_lex= lex;
     schema_select_lex->init_query();
@@ -869,7 +869,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
     break;
   }
 
-  SELECT_LEX *select_lex= lex->current_select;
+  Select_Lex *select_lex= lex->current_select;
   assert(select_lex);
   if (make_schema_select(session, select_lex, schema_table_idx))
   {
@@ -964,28 +964,28 @@ mysql_execute_command(Session *session)
   int res= false;
   bool need_start_waiting= false; // have protection against global read lock
   LEX  *lex= session->lex;
-  /* first SELECT_LEX (have special meaning for many of non-SELECTcommands) */
-  SELECT_LEX *select_lex= &lex->select_lex;
-  /* first table of first SELECT_LEX */
+  /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
+  Select_Lex *select_lex= &lex->select_lex;
+  /* first table of first Select_Lex */
   TableList *first_table= (TableList*) select_lex->table_list.first;
   /* list of all tables in query */
   TableList *all_tables;
-  /* most outer SELECT_LEX_UNIT of query */
-  SELECT_LEX_UNIT *unit= &lex->unit;
+  /* most outer Select_Lex_Unit of query */
+  Select_Lex_Unit *unit= &lex->unit;
   /* Saved variable value */
 
   /*
-    In many cases first table of main SELECT_LEX have special meaning =>
+    In many cases first table of main Select_Lex have special meaning =>
     check that it is first table in global list and relink it first in
     queries_tables list if it is necessary (we need such relinking only
     for queries with subqueries in select list, in this case tables of
     subqueries will go to global list first)
 
-    all_tables will differ from first_table only if most upper SELECT_LEX
+    all_tables will differ from first_table only if most upper Select_Lex
     do not contain tables.
 
     Because of above in place where should be at least one table in most
-    outer SELECT_LEX we have following check:
+    outer Select_Lex we have following check:
     assert(first_table == all_tables);
     assert(first_table == all_tables && first_table != 0);
   */
@@ -1202,7 +1202,7 @@ mysql_execute_command(Session *session)
                                        select_tables)))
         {
           /*
-            CREATE from SELECT give its SELECT_LEX for SELECT,
+            CREATE from SELECT give its Select_Lex for SELECT,
             and item_list belong to SELECT
           */
           res= handle_select(session, lex, result, 0);
@@ -2038,7 +2038,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
   bool res;
   /* assign global limit variable if limit is not given */
   {
-    SELECT_LEX *param= lex->unit.global_parameters;
+    Select_Lex *param= lex->unit.global_parameters;
     if (!param->explicit_limit)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
@@ -2122,7 +2122,7 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 void
 mysql_init_select(LEX *lex)
 {
-  SELECT_LEX *select_lex= lex->current_select;
+  Select_Lex *select_lex= lex->current_select;
   select_lex->init_select();
   lex->wild= 0;
   if (select_lex == &lex->select_lex)
@@ -2136,10 +2136,10 @@ mysql_init_select(LEX *lex)
 bool
 mysql_new_select(LEX *lex, bool move_down)
 {
-  SELECT_LEX *select_lex;
+  Select_Lex *select_lex;
   Session *session= lex->session;
 
-  if (!(select_lex= new (session->mem_root) SELECT_LEX()))
+  if (!(select_lex= new (session->mem_root) Select_Lex()))
     return(1);
   select_lex->select_number= ++session->select_number;
   select_lex->parent_lex= lex; /* Used in init_query. */
@@ -2154,10 +2154,10 @@ mysql_new_select(LEX *lex, bool move_down)
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
-    SELECT_LEX_UNIT *unit;
+    Select_Lex_Unit *unit;
     lex->subqueries= true;
     /* first select_lex of subselect or derived table */
-    if (!(unit= new (session->mem_root) SELECT_LEX_UNIT()))
+    if (!(unit= new (session->mem_root) Select_Lex_Unit()))
       return(1);
 
     unit->init_query();
@@ -2182,7 +2182,7 @@ mysql_new_select(LEX *lex, bool move_down)
       return(1);
     }
     select_lex->include_neighbour(lex->current_select);
-    SELECT_LEX_UNIT *unit= select_lex->master_unit();
+    Select_Lex_Unit *unit= select_lex->master_unit();
     if (!unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
       return(1);
     select_lex->context.outer_context=
@@ -2190,7 +2190,7 @@ mysql_new_select(LEX *lex, bool move_down)
   }
 
   select_lex->master_unit()->global_parameters= select_lex;
-  select_lex->include_global((st_select_lex_node**)&lex->all_selects_list);
+  select_lex->include_global((Select_Lex_Node**)&lex->all_selects_list);
   lex->current_select= select_lex;
   /*
     in subquery is SELECT query and we allow resolution of names in SELECT
@@ -2524,7 +2524,7 @@ bool add_to_list(Session *session, SQL_LIST &list,Item *item,bool asc)
     \#	Pointer to TableList element added to the total table list
 */
 
-TableList *st_select_lex::add_table_to_list(Session *session,
+TableList *Select_Lex::add_table_to_list(Session *session,
 					     Table_ident *table,
 					     LEX_STRING *alias,
 					     uint32_t table_options,
@@ -2672,7 +2672,7 @@ TableList *st_select_lex::add_table_to_list(Session *session,
     The function initializes a structure of the TableList type
     for a nested join. It sets up its nested join list as empty.
     The created structure is added to the front of the current
-    join list in the st_select_lex object. Then the function
+    join list in the Select_Lex object. Then the function
     changes the current nest level for joins to refer to the newly
     created empty list after having saved the info on the old level
     in the initialized structure.
@@ -2685,7 +2685,7 @@ TableList *st_select_lex::add_table_to_list(Session *session,
     1   otherwise
 */
 
-bool st_select_lex::init_nested_join(Session *session)
+bool Select_Lex::init_nested_join(Session *session)
 {
   TableList *ptr;
   nested_join_st *nested_join;
@@ -2721,7 +2721,7 @@ bool st_select_lex::init_nested_join(Session *session)
     - 0, otherwise
 */
 
-TableList *st_select_lex::end_nested_join(Session *)
+TableList *Select_Lex::end_nested_join(Session *)
 {
   TableList *ptr;
   nested_join_st *nested_join;
@@ -2762,7 +2762,7 @@ TableList *st_select_lex::end_nested_join(Session *)
     \#  Pointer to TableList element created for the new nested join
 */
 
-TableList *st_select_lex::nest_last_join(Session *session)
+TableList *Select_Lex::nest_last_join(Session *session)
 {
   TableList *ptr;
   nested_join_st *nested_join;
@@ -2807,7 +2807,7 @@ TableList *st_select_lex::nest_last_join(Session *session)
   Add a table to the current join list.
 
     The function puts a table in front of the current join list
-    of st_select_lex object.
+    of Select_Lex object.
     Thus, joined tables are put into this list in the reverse order
     (the most outer join operation follows first).
 
@@ -2817,7 +2817,7 @@ TableList *st_select_lex::nest_last_join(Session *session)
     None
 */
 
-void st_select_lex::add_joined_table(TableList *table)
+void Select_Lex::add_joined_table(TableList *table)
 {
   join_list->push_front(table);
   table->join_list= join_list;
@@ -2857,7 +2857,7 @@ void st_select_lex::add_joined_table(TableList *table)
     - 0, otherwise
 */
 
-TableList *st_select_lex::convert_right_join()
+TableList *Select_Lex::convert_right_join()
 {
   TableList *tab2= join_list->pop();
   TableList *tab1= join_list->pop();
@@ -2880,7 +2880,7 @@ TableList *st_select_lex::convert_right_join()
     query
 */
 
-void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
+void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
 {
   bool for_update= lock_type >= TL_READ_NO_INSERT;
 
@@ -2896,9 +2896,9 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
 
 
 /**
-  Create a fake SELECT_LEX for a unit.
+  Create a fake Select_Lex for a unit.
 
-    The method create a fake SELECT_LEX object for a unit.
+    The method create a fake Select_Lex object for a unit.
     This object is created for any union construct containing a union
     operation and also for any single select union construct of the form
     @verbatim
@@ -2921,15 +2921,15 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
     0     on success
 */
 
-bool st_select_lex_unit::add_fake_select_lex(Session *session_arg)
+bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
 {
-  SELECT_LEX *first_sl= first_select();
+  Select_Lex *first_sl= first_select();
   assert(!fake_select_lex);
 
-  if (!(fake_select_lex= new (session_arg->mem_root) SELECT_LEX()))
+  if (!(fake_select_lex= new (session_arg->mem_root) Select_Lex()))
       return(1);
   fake_select_lex->include_standalone(this,
-                                      (SELECT_LEX_NODE**)&fake_select_lex);
+                                      (Select_Lex_Node**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;
   fake_select_lex->parent_lex= session_arg->lex; /* Used in init_query. */
   fake_select_lex->make_empty_select();
@@ -3061,7 +3061,7 @@ void add_join_on(TableList *b, Item *expr)
 */
 
 void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
-                      SELECT_LEX *lex)
+                      Select_Lex *lex)
 {
   b->natural_join= a;
   lex->prev_join_using= using_fields;
@@ -3294,7 +3294,7 @@ bool check_simple_select()
 Item * all_any_subquery_creator(Item *left_expr,
                                 chooser_compare_func_creator cmp,
                                 bool all,
-                                SELECT_LEX *select_lex)
+                                Select_Lex *select_lex)
 {
   if ((cmp == &comp_eq_creator) && !all)       //  = ANY <=> IN
     return new Item_in_subselect(left_expr, select_lex);
@@ -3327,7 +3327,7 @@ bool update_precheck(Session *session, TableList *)
 {
   const char *msg= 0;
   LEX *lex= session->lex;
-  SELECT_LEX *select_lex= &lex->select_lex;
+  Select_Lex *select_lex= &lex->select_lex;
 
   if (session->lex->select_lex.item_list.elements != session->lex->value_list.elements)
   {
@@ -3364,7 +3364,7 @@ bool update_precheck(Session *session, TableList *)
 
 bool multi_delete_precheck(Session *session, TableList *)
 {
-  SELECT_LEX *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &session->lex->select_lex;
   TableList **save_query_tables_own_last= session->lex->query_tables_own_last;
 
   session->lex->query_tables_own_last= 0;

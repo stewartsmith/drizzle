@@ -124,7 +124,7 @@ void Item_row::update_used_tables()
   }
 }
 
-void Item_row::fix_after_pullout(st_select_lex *new_parent, Item **)
+void Item_row::fix_after_pullout(Select_Lex *new_parent, Item **)
 {
   used_tables_cache= 0;
   const_item_cache= 1;

@@ -1316,8 +1316,7 @@ select_export::~select_export()
 */
 
 
-static File create_file(Session *session, char *path, file_exchange *exchange,
-			IO_CACHE *cache)
+static File create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
 {
   File file;
   uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
@@ -1368,7 +1367,7 @@ static File create_file(Session *session, char *path, file_exchange *exchange,
 
 
 int
-select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
+select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
 {
   bool blob_flag=0;
   bool string_results= false, non_string_results= false;
@@ -1628,8 +1627,7 @@ err:
 
 
 int
-select_dump::prepare(List<Item> &,
-		     SELECT_LEX_UNIT *u)
+select_dump::prepare(List<Item> &, Select_Lex_Unit *u)
 {
   unit= u;
   return (int) ((file= create_file(session, path, exchange, &cache)) < 0);
@@ -1830,7 +1828,7 @@ bool select_exists_subselect::send_data(List<Item> &)
   Dump of select to variables
 ***************************************************************************/
 
-int select_dumpvar::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
+int select_dumpvar::prepare(List<Item> &list, Select_Lex_Unit *u)
 {
   unit= u;
 
@@ -1950,10 +1948,10 @@ bool select_dumpvar::send_eof()
 }
 
 /****************************************************************************
-  TMP_TABLE_PARAM
+  Tmp_Table_Param
 ****************************************************************************/
 
-void TMP_TABLE_PARAM::init()
+void Tmp_Table_Param::init()
 {
   field_count= sum_func_count= func_count= hidden_field_count= 0;
   group_parts= group_length= group_null_parts= 0;
@@ -1964,7 +1962,7 @@ void TMP_TABLE_PARAM::init()
   return;
 }
 
-void TMP_TABLE_PARAM::cleanup(void)
+void Tmp_Table_Param::cleanup(void)
 {
   /* Fix for Intel compiler */
   if (copy_field)

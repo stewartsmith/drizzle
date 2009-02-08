@@ -100,7 +100,7 @@ bool Item_sum::init_sum_func_check(Session *session)
     If the context conditions are not met the method reports an error.
     If the set function is aggregated in some outer subquery the method
     adds it to the chain of items for such set functions that is attached
-    to the the st_select_lex structure for this subquery.
+    to the the Select_Lex structure for this subquery.
 
     A number of designated members of the object are used to check the
     conditions. They are specified in the comment before the Item_sum
@@ -251,7 +251,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
     List_iterator<Item_field> of(outer_fields);
     while ((field= of++))
     {
-      SELECT_LEX *sel= field->cached_table->select_lex;
+      Select_Lex *sel= field->cached_table->select_lex;
       if (sel->nest_level < aggr_level)
       {
         if (in_sum_func)
@@ -308,7 +308,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
 
 bool Item_sum::register_sum_func(Session *session, Item **ref)
 {
-  SELECT_LEX *sl;
+  Select_Lex *sl;
   nesting_map allow_sum_func= session->lex->allow_sum_func;
   for (sl= session->lex->current_select->master_unit()->outer_select() ;
        sl && sl->nest_level > max_arg_level;
@@ -350,7 +350,7 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
       Mark Item_subselect(s) as containing aggregate function all the way up
       to aggregate function's calculation context.
       Note that we must not mark the Item of calculation context itself
-      because with_sum_func on the calculation context st_select_lex is
+      because with_sum_func on the calculation context Select_Lex is
       already set above.
 
       with_sum_func being set for an Item means that this Item refers
@@ -358,7 +358,7 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
       or through intermediate items to an aggregate function that is calculated
       in a context "outside" of the Item (e.g. in the current or outer select).
 
-      with_sum_func being set for an st_select_lex means that this st_select_lex
+      with_sum_func being set for an Select_Lex means that this Select_Lex
       has aggregate functions directly referenced (i.e. not through a sub-select).
     */
     for (sl= session->lex->current_select;
@@ -412,7 +412,7 @@ Item_sum::Item_sum(Session *session, Item_sum *item):
 
 void Item_sum::mark_as_sum_func()
 {
-  SELECT_LEX *cur_select= current_session->lex->current_select;
+  Select_Lex *cur_select= current_session->lex->current_select;
   cur_select->n_sum_items++;
   cur_select->with_sum_func= 1;
   with_sum_func= 1;
@@ -2585,7 +2585,7 @@ Item_sum_count_distinct::~Item_sum_count_distinct()
 bool Item_sum_count_distinct::setup(Session *session)
 {
   List<Item> list;
-  SELECT_LEX *select_lex= session->lex->current_select;
+  Select_Lex *select_lex= session->lex->current_select;
 
   /*
     Setup can be called twice for ROLLUP items. This is a bug.
@@ -2595,7 +2595,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   if (tree || table || tmp_table_param)
     return false;
 
-  if (!(tmp_table_param= new TMP_TABLE_PARAM))
+  if (!(tmp_table_param= new Tmp_Table_Param))
     return true;
 
   /* Create a table with an unique key over all parameters */
@@ -3223,7 +3223,7 @@ Item_func_group_concat::fix_fields(Session *session, Item **ref)
 bool Item_func_group_concat::setup(Session *session)
 {
   List<Item> list;
-  SELECT_LEX *select_lex= session->lex->current_select;
+  Select_Lex *select_lex= session->lex->current_select;
 
   /*
     Currently setup() can be called twice. Please add
@@ -3232,7 +3232,7 @@ bool Item_func_group_concat::setup(Session *session)
   if (table || tree)
     return(false);
 
-  if (!(tmp_table_param= new TMP_TABLE_PARAM))
+  if (!(tmp_table_param= new Tmp_Table_Param))
     return(true);
 
   /* We'll convert all blobs to varchar fields in the temporary table */

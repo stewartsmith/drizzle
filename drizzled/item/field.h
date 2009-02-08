@@ -71,7 +71,7 @@ public:
   bool send(Protocol *protocol, String *str_arg);
   void reset_field(Field *f);
   bool fix_fields(Session *, Item **);
-  void fix_after_pullout(st_select_lex *new_parent, Item **ref);
+  void fix_after_pullout(Select_Lex *new_parent, Item **ref);
   void make_field(Send_field *tmp_field);
   int save_in_field(Field *field,bool no_conversions);
   void save_org_in_field(Field *field);
@@ -114,7 +114,7 @@ public:
 
   friend class Item_default_value;
   friend class Item_insert_value;
-  friend class st_select_lex_unit;
+  friend class Select_Lex_Unit;
 };
 
 #endif /* DRIZZLED_ITEM_FIELD_H */

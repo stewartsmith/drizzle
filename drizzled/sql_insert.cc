@@ -79,7 +79,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
   }
   else
   {						// Part field list
-    SELECT_LEX *select_lex= &session->lex->select_lex;
+    Select_Lex *select_lex= &session->lex->select_lex;
     Name_resolution_context *context= &select_lex->context;
     Name_resolution_context_state ctx_state;
     int res;
@@ -571,7 +571,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
                           bool select_insert,
                           bool check_fields, bool abort_on_warning)
 {
-  SELECT_LEX *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &session->lex->select_lex;
   Name_resolution_context *context= &select_lex->context;
   Name_resolution_context_state ctx_state;
   bool insert_into_view= (0 != 0);
@@ -584,15 +584,15 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
   /*
     For subqueries in VALUES() we should not see the table in which we are
     inserting (for INSERT ... SELECT this is done by changing table_list,
-    because INSERT ... SELECT share SELECT_LEX it with SELECT.
+    because INSERT ... SELECT share Select_Lex it with SELECT.
   */
   if (!select_insert)
   {
-    for (SELECT_LEX_UNIT *un= select_lex->first_inner_unit();
+    for (Select_Lex_Unit *un= select_lex->first_inner_unit();
          un;
          un= un->next_unit())
     {
-      for (SELECT_LEX *sl= un->first_select();
+      for (Select_Lex *sl= un->first_select();
            sl;
            sl= sl->next_select())
       {
@@ -1021,10 +1021,10 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 bool mysql_insert_select_prepare(Session *session)
 {
   LEX *lex= session->lex;
-  SELECT_LEX *select_lex= &lex->select_lex;
+  Select_Lex *select_lex= &lex->select_lex;
 
   /*
-    SELECT_LEX do not belong to INSERT statement, so we can't add WHERE
+    Select_Lex do not belong to INSERT statement, so we can't add WHERE
     clause if table is VIEW
   */
 
@@ -1066,12 +1066,12 @@ select_insert::select_insert(TableList *table_list_par, Table *table_par,
 
 
 int
-select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
+select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
   LEX *lex= session->lex;
   int res;
   table_map map= 0;
-  SELECT_LEX *lex_current_select_save= lex->current_select;
+  Select_Lex *lex_current_select_save= lex->current_select;
 
 
   unit= u;
@@ -1606,7 +1606,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
 
 int
-select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
+select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
   DRIZZLE_LOCK *extra_lock= NULL;
   /*

@@ -3994,7 +3994,7 @@ Item_cond::fix_fields(Session *session, Item **)
 }
 
 
-void Item_cond::fix_after_pullout(st_select_lex *new_parent, Item **)
+void Item_cond::fix_after_pullout(Select_Lex *new_parent, Item **)
 {
   List_iterator<Item> li(list);
   Item *item;

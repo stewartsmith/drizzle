@@ -255,7 +255,7 @@ void lex_start(Session *session)
   lex->select_lex.master= &lex->unit;
   lex->select_lex.prev= &lex->unit.slave;
   lex->select_lex.link_next= lex->select_lex.slave= lex->select_lex.next= 0;
-  lex->select_lex.link_prev= (st_select_lex_node**)&(lex->all_selects_list);
+  lex->select_lex.link_prev= (Select_Lex_Node**)&(lex->all_selects_list);
   lex->select_lex.options= 0;
   lex->select_lex.init_order();
   lex->select_lex.group_list.empty();
@@ -1414,10 +1414,10 @@ void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
 
 
 /*
-  st_select_lex structures initialisations
+  Select_Lex structures initialisations
 */
 
-void st_select_lex_node::init_query()
+void Select_Lex_Node::init_query()
 {
   options= 0;
   linkage= UNSPECIFIED_TYPE;
@@ -1425,13 +1425,13 @@ void st_select_lex_node::init_query()
   uncacheable= 0;
 }
 
-void st_select_lex_node::init_select()
+void Select_Lex_Node::init_select()
 {
 }
 
-void st_select_lex_unit::init_query()
+void Select_Lex_Unit::init_query()
 {
-  st_select_lex_node::init_query();
+  Select_Lex_Node::init_query();
   linkage= GLOBAL_OPTIONS_TYPE;
   global_parameters= first_select();
   select_limit_cnt= HA_POS_ERROR;
@@ -1448,9 +1448,9 @@ void st_select_lex_unit::init_query()
   found_rows_for_union= 0;
 }
 
-void st_select_lex::init_query()
+void Select_Lex::init_query()
 {
-  st_select_lex_node::init_query();
+  Select_Lex_Node::init_query();
   table_list.empty();
   top_join_list.empty();
   join_list= &top_join_list;
@@ -1485,9 +1485,9 @@ void st_select_lex::init_query()
   link_next= 0;
 }
 
-void st_select_lex::init_select()
+void Select_Lex::init_select()
 {
-  st_select_lex_node::init_select();
+  Select_Lex_Node::init_select();
   sj_nests.empty();
   group_list.empty();
   type= db= 0;
@@ -1517,11 +1517,11 @@ void st_select_lex::init_select()
 }
 
 /*
-  st_select_lex structures linking
+  Select_Lex structures linking
 */
 
 /* include on level down */
-void st_select_lex_node::include_down(st_select_lex_node *upper)
+void Select_Lex_Node::include_down(Select_Lex_Node *upper)
 {
   if ((next= upper->slave))
     next->prev= &next;
@@ -1535,12 +1535,12 @@ void st_select_lex_node::include_down(st_select_lex_node *upper)
   include on level down (but do not link)
 
   SYNOPSYS
-    st_select_lex_node::include_standalone()
+    Select_Lex_Node::include_standalone()
     upper - reference on node underr which this node should be included
     ref - references on reference on this node
 */
-void st_select_lex_node::include_standalone(st_select_lex_node *upper,
-					    st_select_lex_node **ref)
+void Select_Lex_Node::include_standalone(Select_Lex_Node *upper,
+					    Select_Lex_Node **ref)
 {
   next= 0;
   prev= ref;
@@ -1549,7 +1549,7 @@ void st_select_lex_node::include_standalone(st_select_lex_node *upper,
 }
 
 /* include neighbour (on same level) */
-void st_select_lex_node::include_neighbour(st_select_lex_node *before)
+void Select_Lex_Node::include_neighbour(Select_Lex_Node *before)
 {
   if ((next= before->next))
     next->prev= &next;
@@ -1559,8 +1559,8 @@ void st_select_lex_node::include_neighbour(st_select_lex_node *before)
   slave= 0;
 }
 
-/* including in global SELECT_LEX list */
-void st_select_lex_node::include_global(st_select_lex_node **plink)
+/* including in global Select_Lex list */
+void Select_Lex_Node::include_global(Select_Lex_Node **plink)
 {
   if ((link_next= *plink))
     link_next->link_prev= &link_next;
@@ -1569,7 +1569,7 @@ void st_select_lex_node::include_global(st_select_lex_node **plink)
 }
 
 //excluding from global list (internal function)
-void st_select_lex_node::fast_exclude()
+void Select_Lex_Node::fast_exclude()
 {
   if (link_prev)
   {
@@ -1586,7 +1586,7 @@ void st_select_lex_node::fast_exclude()
   excluding select_lex structure (except first (first select can't be
   deleted, because it is most upper select))
 */
-void st_select_lex_node::exclude()
+void Select_Lex_Node::exclude()
 {
   //exclude from global list
   fast_exclude();
@@ -1606,26 +1606,26 @@ void st_select_lex_node::exclude()
   Exclude level of current unit from tree of SELECTs
 
   SYNOPSYS
-    st_select_lex_unit::exclude_level()
+    Select_Lex_Unit::exclude_level()
 
   NOTE: units which belong to current will be brought up on level of
   currernt unit
 */
-void st_select_lex_unit::exclude_level()
+void Select_Lex_Unit::exclude_level()
 {
-  SELECT_LEX_UNIT *units= 0, **units_last= &units;
-  for (SELECT_LEX *sl= first_select(); sl; sl= sl->next_select())
+  Select_Lex_Unit *units= 0, **units_last= &units;
+  for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
   {
     // unlink current level from global SELECTs list
     if (sl->link_prev && (*sl->link_prev= sl->link_next))
       sl->link_next->link_prev= sl->link_prev;
 
     // bring up underlay levels
-    SELECT_LEX_UNIT **last= 0;
-    for (SELECT_LEX_UNIT *u= sl->first_inner_unit(); u; u= u->next_unit())
+    Select_Lex_Unit **last= 0;
+    for (Select_Lex_Unit *u= sl->first_inner_unit(); u; u= u->next_unit())
     {
       u->master= master;
-      last= (SELECT_LEX_UNIT**)&(u->next);
+      last= (Select_Lex_Unit**)&(u->next);
     }
     if (last)
     {
@@ -1637,9 +1637,9 @@ void st_select_lex_unit::exclude_level()
   {
     // include brought up levels in place of current
     (*prev)= units;
-    (*units_last)= (SELECT_LEX_UNIT*)next;
+    (*units_last)= (Select_Lex_Unit*)next;
     if (next)
-      next->prev= (SELECT_LEX_NODE**)units_last;
+      next->prev= (Select_Lex_Node**)units_last;
     units->prev= prev;
   }
   else
@@ -1656,18 +1656,18 @@ void st_select_lex_unit::exclude_level()
   Exclude subtree of current unit from tree of SELECTs
 
   SYNOPSYS
-    st_select_lex_unit::exclude_tree()
+    Select_Lex_Unit::exclude_tree()
 */
-void st_select_lex_unit::exclude_tree()
+void Select_Lex_Unit::exclude_tree()
 {
-  for (SELECT_LEX *sl= first_select(); sl; sl= sl->next_select())
+  for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
   {
     // unlink current level from global SELECTs list
     if (sl->link_prev && (*sl->link_prev= sl->link_next))
       sl->link_next->link_prev= sl->link_prev;
 
     // unlink underlay levels
-    for (SELECT_LEX_UNIT *u= sl->first_inner_unit(); u; u= u->next_unit())
+    for (Select_Lex_Unit *u= sl->first_inner_unit(); u; u= u->next_unit())
     {
       u->exclude_level();
     }
@@ -1680,24 +1680,24 @@ void st_select_lex_unit::exclude_tree()
 
 
 /*
-  st_select_lex_node::mark_as_dependent mark all st_select_lex struct from
+  Select_Lex_Node::mark_as_dependent mark all Select_Lex struct from
   this to 'last' as dependent
 
   SYNOPSIS
-    last - pointer to last st_select_lex struct, before wich all
-           st_select_lex have to be marked as dependent
+    last - pointer to last Select_Lex struct, before wich all
+           Select_Lex have to be marked as dependent
 
   NOTE
-    'last' should be reachable from this st_select_lex_node
+    'last' should be reachable from this Select_Lex_Node
 */
 
-void st_select_lex::mark_as_dependent(st_select_lex *last)
+void Select_Lex::mark_as_dependent(Select_Lex *last)
 {
   /*
     Mark all selects from resolved to 1 before select where was
     found table as depended (of select where was found table)
   */
-  for (SELECT_LEX *s= this;
+  for (Select_Lex *s= this;
        s && s != last;
        s= s->outer_select())
   {
@@ -1706,10 +1706,10 @@ void st_select_lex::mark_as_dependent(st_select_lex *last)
       // Select is dependent of outer select
       s->uncacheable= (s->uncacheable & ~UNCACHEABLE_UNITED) |
                        UNCACHEABLE_DEPENDENT;
-      SELECT_LEX_UNIT *munit= s->master_unit();
+      Select_Lex_Unit *munit= s->master_unit();
       munit->uncacheable= (munit->uncacheable & ~UNCACHEABLE_UNITED) |
                        UNCACHEABLE_DEPENDENT;
-      for (SELECT_LEX *sl= munit->first_select(); sl ; sl= sl->next_select())
+      for (Select_Lex *sl= munit->first_select(); sl ; sl= sl->next_select())
       {
         if (sl != s &&
             !(sl->uncacheable & (UNCACHEABLE_DEPENDENT | UNCACHEABLE_UNITED)))
@@ -1723,18 +1723,18 @@ void st_select_lex::mark_as_dependent(st_select_lex *last)
   }
 }
 
-bool st_select_lex_node::set_braces(bool)
+bool Select_Lex_Node::set_braces(bool)
 { return 1; }
-bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
-uint32_t st_select_lex_node::get_in_sum_expr()           { return 0; }
-TableList* st_select_lex_node::get_table_list()     { return 0; }
-List<Item>* st_select_lex_node::get_item_list()      { return 0; }
-TableList *st_select_lex_node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
+bool Select_Lex_Node::inc_in_sum_expr()           { return 1; }
+uint32_t Select_Lex_Node::get_in_sum_expr()           { return 0; }
+TableList* Select_Lex_Node::get_table_list()     { return 0; }
+List<Item>* Select_Lex_Node::get_item_list()      { return 0; }
+TableList *Select_Lex_Node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
                                                   thr_lock_type, List<Index_hint> *, LEX_STRING *)
 {
   return 0;
 }
-uint32_t st_select_lex_node::get_table_join_options()
+uint32_t Select_Lex_Node::get_table_join_options()
 {
   return 0;
 }
@@ -1742,7 +1742,7 @@ uint32_t st_select_lex_node::get_table_join_options()
 /*
   prohibit using LIMIT clause
 */
-bool st_select_lex::test_limit()
+bool Select_Lex::test_limit()
 {
   if (select_limit != 0)
   {
@@ -1754,85 +1754,85 @@ bool st_select_lex::test_limit()
 }
 
 
-st_select_lex_unit* st_select_lex_unit::master_unit()
+Select_Lex_Unit* Select_Lex_Unit::master_unit()
 {
     return this;
 }
 
 
-st_select_lex* st_select_lex_unit::outer_select()
+Select_Lex* Select_Lex_Unit::outer_select()
 {
-  return (st_select_lex*) master;
+  return (Select_Lex*) master;
 }
 
 
-bool st_select_lex::add_order_to_list(Session *session, Item *item, bool asc)
+bool Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
 {
   return add_to_list(session, order_list, item, asc);
 }
 
 
-bool st_select_lex::add_item_to_list(Session *, Item *item)
+bool Select_Lex::add_item_to_list(Session *, Item *item)
 {
   return(item_list.push_back(item));
 }
 
 
-bool st_select_lex::add_group_to_list(Session *session, Item *item, bool asc)
+bool Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
 {
   return add_to_list(session, group_list, item, asc);
 }
 
 
-st_select_lex_unit* st_select_lex::master_unit()
+Select_Lex_Unit* Select_Lex::master_unit()
 {
-  return (st_select_lex_unit*) master;
+  return (Select_Lex_Unit*) master;
 }
 
 
-st_select_lex* st_select_lex::outer_select()
+Select_Lex* Select_Lex::outer_select()
 {
-  return (st_select_lex*) master->get_master();
+  return (Select_Lex*) master->get_master();
 }
 
 
-bool st_select_lex::set_braces(bool value)
+bool Select_Lex::set_braces(bool value)
 {
   braces= value;
   return 0;
 }
 
 
-bool st_select_lex::inc_in_sum_expr()
+bool Select_Lex::inc_in_sum_expr()
 {
   in_sum_expr++;
   return 0;
 }
 
 
-uint32_t st_select_lex::get_in_sum_expr()
+uint32_t Select_Lex::get_in_sum_expr()
 {
   return in_sum_expr;
 }
 
 
-TableList* st_select_lex::get_table_list()
+TableList* Select_Lex::get_table_list()
 {
   return (TableList*) table_list.first;
 }
 
-List<Item>* st_select_lex::get_item_list()
+List<Item>* Select_Lex::get_item_list()
 {
   return &item_list;
 }
 
-uint32_t st_select_lex::get_table_join_options()
+uint32_t Select_Lex::get_table_join_options()
 {
   return table_join_options;
 }
 
 
-bool st_select_lex::setup_ref_array(Session *session, uint32_t order_group_num)
+bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
   if (ref_pointer_array)
     return 0;
@@ -1846,10 +1846,10 @@ bool st_select_lex::setup_ref_array(Session *session, uint32_t order_group_num)
 }
 
 
-void st_select_lex_unit::print(String *str, enum_query_type query_type)
+void Select_Lex_Unit::print(String *str, enum_query_type query_type)
 {
   bool union_all= !union_distinct;
-  for (SELECT_LEX *sl= first_select(); sl; sl= sl->next_select())
+  for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
   {
     if (sl != first_select())
     {
@@ -1880,7 +1880,7 @@ void st_select_lex_unit::print(String *str, enum_query_type query_type)
 }
 
 
-void st_select_lex::print_order(String *str,
+void Select_Lex::print_order(String *str,
                                 order_st *order,
                                 enum_query_type query_type)
 {
@@ -1902,10 +1902,10 @@ void st_select_lex::print_order(String *str,
 }
 
 
-void st_select_lex::print_limit(Session *, String *str,
+void Select_Lex::print_limit(Session *, String *str,
                                 enum_query_type query_type)
 {
-  SELECT_LEX_UNIT *unit= master_unit();
+  Select_Lex_Unit *unit= master_unit();
   Item_subselect *item= unit->item;
 
   if (item && unit->global_parameters == this)
@@ -2105,11 +2105,11 @@ LEX::copy_db_to(char **p_db, size_t *p_db_length) const
   initialize limit counters
 
   SYNOPSIS
-    st_select_lex_unit::set_limit()
-    values	- SELECT_LEX with initial values for counters
+    Select_Lex_Unit::set_limit()
+    values	- Select_Lex with initial values for counters
 */
 
-void st_select_lex_unit::set_limit(st_select_lex *sl)
+void Select_Lex_Unit::set_limit(Select_Lex *sl)
 {
   ha_rows select_limit_val;
   uint64_t val;
@@ -2192,7 +2192,7 @@ TableList *LEX::unlink_first_table(bool *link_to_local)
 
   NOTES
     In many cases (for example, usual INSERT/DELETE/...) the first table of
-    main SELECT_LEX have special meaning => check that it is the first table
+    main Select_Lex have special meaning => check that it is the first table
     in global list and re-link to be first in the global list if it is
     necessary.  We need such re-linking only for queries with sub-queries in
     the select list, as only in this case tables of sub-queries will go to
@@ -2284,7 +2284,7 @@ void LEX::cleanup_after_one_table_open()
   {
     derived_tables= 0;
     /* cleunup underlying units (units of VIEW) */
-    for (SELECT_LEX_UNIT *un= select_lex.first_inner_unit();
+    for (Select_Lex_Unit *un= select_lex.first_inner_unit();
          un;
          un= un->next_unit())
       un->cleanup();
@@ -2326,14 +2326,14 @@ static void fix_prepare_info_in_table_list(Session *session, TableList *tbl)
 
 
 /*
-  There are st_select_lex::add_table_to_list &
-  st_select_lex::set_lock_for_tables are in sql_parse.cc
+  There are Select_Lex::add_table_to_list &
+  Select_Lex::set_lock_for_tables are in sql_parse.cc
 
-  st_select_lex::print is in sql_select.cc
+  Select_Lex::print is in sql_select.cc
 
-  st_select_lex_unit::prepare, st_select_lex_unit::exec,
-  st_select_lex_unit::cleanup, st_select_lex_unit::reinit_exec_mechanism,
-  st_select_lex_unit::change_result
+  Select_Lex_Unit::prepare, Select_Lex_Unit::exec,
+  Select_Lex_Unit::cleanup, Select_Lex_Unit::reinit_exec_mechanism,
+  Select_Lex_Unit::change_result
   are in sql_union.cc
 */
 
@@ -2352,7 +2352,7 @@ static void fix_prepare_info_in_table_list(Session *session, TableList *tbl)
     Then the context variable index_hint_type can be reset to the
     next hint type.
 */
-void st_select_lex::set_index_hint_type(enum index_hint_type type_arg,
+void Select_Lex::set_index_hint_type(enum index_hint_type type_arg,
                                         index_clause_map clause)
 {
   current_index_hint_type= type_arg;
@@ -2368,7 +2368,7 @@ void st_select_lex::set_index_hint_type(enum index_hint_type type_arg,
       session         current thread.
 */
 
-void st_select_lex::alloc_index_hints (Session *session)
+void Select_Lex::alloc_index_hints (Session *session)
 {
   index_hints= new (session->mem_root) List<Index_hint>();
 }
@@ -2388,7 +2388,7 @@ void st_select_lex::alloc_index_hints (Session *session)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-bool st_select_lex::add_index_hint (Session *session, char *str, uint32_t length)
+bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
 {
   return index_hints->push_front (new (session->mem_root)
                                  Index_hint(current_index_hint_type,

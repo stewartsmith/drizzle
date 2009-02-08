@@ -24,7 +24,7 @@
 #include <drizzled/sql_base.h>
 
 bool mysql_union(Session *session, LEX *, select_result *result,
-                 SELECT_LEX_UNIT *unit, ulong setup_tables_done_option)
+                 Select_Lex_Unit *unit, ulong setup_tables_done_option)
 {
   bool res;
   if (!(res= unit->prepare(session, result, SELECT_NO_UNLOCK |
@@ -40,7 +40,7 @@ bool mysql_union(Session *session, LEX *, select_result *result,
 ** store records in temporary table for UNION
 ***************************************************************************/
 
-int select_union::prepare(List<Item> &, SELECT_LEX_UNIT *u)
+int select_union::prepare(List<Item> &, Select_Lex_Unit *u)
 {
   unit= u;
   return 0;
@@ -152,7 +152,7 @@ void select_union::cleanup()
   initialization procedures before fake_select_lex preparation()
 
   SYNOPSIS
-    st_select_lex_unit::init_prepare_fake_select_lex()
+    Select_Lex_Unit::init_prepare_fake_select_lex()
     session		- thread handler
 
   RETURN
@@ -160,7 +160,7 @@ void select_union::cleanup()
 */
 
 void
-st_select_lex_unit::init_prepare_fake_select_lex(Session *session_arg)
+Select_Lex_Unit::init_prepare_fake_select_lex(Session *session_arg)
 {
   session_arg->lex->current_select= fake_select_lex;
   fake_select_lex->table_list.link_in_list((unsigned char *)&result_table_list,
@@ -185,11 +185,11 @@ st_select_lex_unit::init_prepare_fake_select_lex(Session *session_arg)
 }
 
 
-bool st_select_lex_unit::prepare(Session *session_arg, select_result *sel_result,
+bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                  uint32_t additional_options)
 {
-  SELECT_LEX *lex_select_save= session_arg->lex->current_select;
-  SELECT_LEX *sl, *first_sl= first_select();
+  Select_Lex *lex_select_save= session_arg->lex->current_select;
+  Select_Lex *sl, *first_sl= first_select();
   select_result *tmp_result;
   bool is_union_select;
   Table *empty_table= 0;
@@ -388,10 +388,10 @@ err:
 }
 
 
-bool st_select_lex_unit::exec()
+bool Select_Lex_Unit::exec()
 {
-  SELECT_LEX *lex_select_save= session->lex->current_select;
-  SELECT_LEX *select_cursor=first_select();
+  Select_Lex *lex_select_save= session->lex->current_select;
+  Select_Lex *select_cursor=first_select();
   uint64_t add_rows=0;
   ha_rows examined_rows= 0;
 
@@ -417,7 +417,7 @@ bool st_select_lex_unit::exec()
         assert(0);
       }
     }
-    for (SELECT_LEX *sl= select_cursor; sl; sl= sl->next_select())
+    for (Select_Lex *sl= select_cursor; sl; sl= sl->next_select())
     {
       ha_rows records_at_start= 0;
       session->lex->current_select= sl;
@@ -531,7 +531,7 @@ bool st_select_lex_unit::exec()
         fake_select_lex->join->no_const_tables= true;
 
 	/*
-	  Fake st_select_lex should have item list for correctref_array
+	  Fake Select_Lex should have item list for correctref_array
 	  allocation.
 	*/
 	fake_select_lex->item_list= item_list;
@@ -592,7 +592,7 @@ bool st_select_lex_unit::exec()
 }
 
 
-bool st_select_lex_unit::cleanup()
+bool Select_Lex_Unit::cleanup()
 {
   int error= 0;
 
@@ -611,7 +611,7 @@ bool st_select_lex_unit::cleanup()
     table= 0; // Safety
   }
 
-  for (SELECT_LEX *sl= first_select(); sl; sl= sl->next_select())
+  for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
     error|= sl->cleanup();
 
   if (fake_select_lex)
@@ -635,7 +635,7 @@ bool st_select_lex_unit::cleanup()
 }
 
 
-void st_select_lex_unit::reinit_exec_mechanism()
+void Select_Lex_Unit::reinit_exec_mechanism()
 {
   prepared= optimized= executed= 0;
 }
@@ -645,7 +645,7 @@ void st_select_lex_unit::reinit_exec_mechanism()
   change select_result object of unit
 
   SYNOPSIS
-    st_select_lex_unit::change_result()
+    Select_Lex_Unit::change_result()
     result	new select_result object
     old_result	old select_result object
 
@@ -654,11 +654,11 @@ void st_select_lex_unit::reinit_exec_mechanism()
     true  - error
 */
 
-bool st_select_lex_unit::change_result(select_result_interceptor *new_result,
+bool Select_Lex_Unit::change_result(select_result_interceptor *new_result,
                                        select_result_interceptor *old_result)
 {
   bool res= false;
-  for (SELECT_LEX *sl= first_select(); sl; sl= sl->next_select())
+  for (Select_Lex *sl= first_select(); sl; sl= sl->next_select())
   {
     if (sl->join && sl->join->result == old_result)
       if (sl->join->change_result(new_result))
@@ -673,23 +673,23 @@ bool st_select_lex_unit::change_result(select_result_interceptor *new_result,
   Get column type information for this unit.
 
   SYNOPSIS
-    st_select_lex_unit::get_unit_column_types()
+    Select_Lex_Unit::get_unit_column_types()
 
   DESCRIPTION
     For a single-select the column types are taken
     from the list of selected items. For a union this function
-    assumes that st_select_lex_unit::prepare has been called
+    assumes that Select_Lex_Unit::prepare has been called
     and returns the type holders that were created for unioned
     column types of all selects.
 
   NOTES
     The implementation of this function should be in sync with
-    st_select_lex_unit::prepare()
+    Select_Lex_Unit::prepare()
 */
 
-List<Item> *st_select_lex_unit::get_unit_column_types()
+List<Item> *Select_Lex_Unit::get_unit_column_types()
 {
-  SELECT_LEX *sl= first_select();
+  Select_Lex *sl= first_select();
 
   if (is_union())
   {
@@ -701,18 +701,18 @@ List<Item> *st_select_lex_unit::get_unit_column_types()
   return &sl->item_list;
 }
 
-bool st_select_lex::cleanup()
+bool Select_Lex::cleanup()
 {
   bool error= false;
 
   if (join)
   {
-    assert((st_select_lex*)join->select_lex == this);
+    assert((Select_Lex*)join->select_lex == this);
     error= join->destroy();
     delete join;
     join= 0;
   }
-  for (SELECT_LEX_UNIT *lex_unit= first_inner_unit(); lex_unit ;
+  for (Select_Lex_Unit *lex_unit= first_inner_unit(); lex_unit ;
        lex_unit= lex_unit->next_unit())
   {
     error= (bool) ((uint) error | (uint) lex_unit->cleanup());
@@ -723,10 +723,10 @@ bool st_select_lex::cleanup()
 }
 
 
-void st_select_lex::cleanup_all_joins(bool full)
+void Select_Lex::cleanup_all_joins(bool full)
 {
-  SELECT_LEX_UNIT *unit;
-  SELECT_LEX *sl;
+  Select_Lex_Unit *unit;
+  Select_Lex *sl;
 
   if (join)
     join->cleanup(full);

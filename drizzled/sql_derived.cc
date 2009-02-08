@@ -39,7 +39,7 @@ mysql_handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*))
   if (lex->derived_tables)
   {
     lex->session->derived_tables_processing= true;
-    for (SELECT_LEX *sl= lex->all_selects_list;
+    for (Select_Lex *sl= lex->all_selects_list;
 	 sl;
 	 sl= sl->next_select_in_list())
     {
@@ -95,23 +95,23 @@ out:
 bool mysql_derived_prepare(Session *session, LEX *,
                            TableList *orig_table_list)
 {
-  SELECT_LEX_UNIT *unit= orig_table_list->derived;
+  Select_Lex_Unit *unit= orig_table_list->derived;
   uint64_t create_options;
   bool res= false;
   if (unit)
   {
-    SELECT_LEX *first_select= unit->first_select();
+    Select_Lex *first_select= unit->first_select();
     Table *table= 0;
     select_union *derived_result;
 
     /* prevent name resolving out of derived table */
-    for (SELECT_LEX *sl= first_select; sl; sl= sl->next_select())
+    for (Select_Lex *sl= first_select; sl; sl= sl->next_select())
       sl->context.outer_context= 0;
 
     if (!(derived_result= new select_union))
       return(true); // out of memory
 
-    // st_select_lex_unit::prepare correctly work for single select
+    // Select_Lex_Unit::prepare correctly work for single select
     if ((res= unit->prepare(session, derived_result, 0)))
       goto exit;
 
@@ -200,15 +200,15 @@ exit:
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_list)
 {
   Table *table= orig_table_list->table;
-  SELECT_LEX_UNIT *unit= orig_table_list->derived;
+  Select_Lex_Unit *unit= orig_table_list->derived;
   bool res= false;
 
   /*check that table creation pass without problem and it is derived table */
   if (table && unit)
   {
-    SELECT_LEX *first_select= unit->first_select();
+    Select_Lex *first_select= unit->first_select();
     select_union *derived_result= orig_table_list->derived_result;
-    SELECT_LEX *save_current_select= lex->current_select;
+    Select_Lex *save_current_select= lex->current_select;
     if (unit->is_union())
     {
       // execute union without clean up

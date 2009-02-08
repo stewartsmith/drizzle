@@ -45,7 +45,7 @@ class virtual_column_info;
 /* These may not be declared yet */
 class Table_ident;
 class file_exchange;
-class LEX_COLUMN;
+class Lex_Column;
 class Item_outer_ref;
 
 /*
@@ -263,17 +263,17 @@ public:
 */
 
 /*
-    Base class for st_select_lex (SELECT_LEX) &
-    st_select_lex_unit (SELECT_LEX_UNIT)
+    Base class for Select_Lex (Select_Lex) &
+    Select_Lex_Unit (Select_Lex_Unit)
 */
 class LEX;
-class st_select_lex;
-class st_select_lex_unit;
-class st_select_lex_node {
+class Select_Lex;
+class Select_Lex_Unit;
+class Select_Lex_Node {
 protected:
-  st_select_lex_node *next, **prev,   /* neighbor list */
+  Select_Lex_Node *next, **prev,   /* neighbor list */
     *master, *slave,                  /* vertical links */
-    *link_next, **link_prev;          /* list of whole SELECT_LEX */
+    *link_next, **link_prev;          /* list of whole Select_Lex */
 public:
 
   uint64_t options;
@@ -301,20 +301,20 @@ public:
   { TRASH(ptr, size); }
   static void operator delete(void *, MEM_ROOT *)
   {}
-  st_select_lex_node(): linkage(UNSPECIFIED_TYPE) {}
-  virtual ~st_select_lex_node() {}
-  inline st_select_lex_node* get_master() { return master; }
+  Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
+  virtual ~Select_Lex_Node() {}
+  inline Select_Lex_Node* get_master() { return master; }
   virtual void init_query();
   virtual void init_select();
-  void include_down(st_select_lex_node *upper);
-  void include_neighbour(st_select_lex_node *before);
-  void include_standalone(st_select_lex_node *sel, st_select_lex_node **ref);
-  void include_global(st_select_lex_node **plink);
+  void include_down(Select_Lex_Node *upper);
+  void include_neighbour(Select_Lex_Node *before);
+  void include_standalone(Select_Lex_Node *sel, Select_Lex_Node **ref);
+  void include_global(Select_Lex_Node **plink);
   void exclude();
 
-  virtual st_select_lex_unit* master_unit()= 0;
-  virtual st_select_lex* outer_select()= 0;
-  virtual st_select_lex* return_after_parsing()= 0;
+  virtual Select_Lex_Unit* master_unit()= 0;
+  virtual Select_Lex* outer_select()= 0;
+  virtual Select_Lex* return_after_parsing()= 0;
 
   virtual bool set_braces(bool value);
   virtual bool inc_in_sum_expr();
@@ -331,22 +331,21 @@ public:
   virtual void set_lock_for_tables(thr_lock_type)
   {}
 
-  friend class st_select_lex_unit;
+  friend class Select_Lex_Unit;
   friend bool mysql_new_select(LEX *lex, bool move_down);
 private:
   void fast_exclude();
 };
-typedef class st_select_lex_node SELECT_LEX_NODE;
 
 /*
-   SELECT_LEX_UNIT - unit of selects (UNION, INTERSECT, ...) group
-   SELECT_LEXs
+   Select_Lex_Unit - unit of selects (UNION, INTERSECT, ...) group
+   Select_Lexs
 */
 class Session;
 class select_result;
 class JOIN;
 class select_union;
-class st_select_lex_unit: public st_select_lex_node {
+class Select_Lex_Unit: public Select_Lex_Node {
 protected:
   TableList result_table_list;
   select_union *union_result;
@@ -380,9 +379,9 @@ public:
     Pointer to 'last' select or pointer to unit where stored
     global parameters for union
   */
-  st_select_lex *global_parameters;
+  Select_Lex *global_parameters;
   //node on wich we should return current_select pointer after parsing subquery
-  st_select_lex *return_to;
+  Select_Lex *return_to;
   /* LIMIT clause runtime counters */
   ha_rows select_limit_cnt, offset_limit_cnt;
   /* not NULL if unit used in subselect, point to subselect item */
@@ -390,26 +389,26 @@ public:
   /* thread handler */
   Session *session;
   /*
-    SELECT_LEX for hidden SELECT in onion which process global
+    Select_Lex for hidden SELECT in onion which process global
     ORDER BY and LIMIT
   */
-  st_select_lex *fake_select_lex;
+  Select_Lex *fake_select_lex;
 
-  st_select_lex *union_distinct; /* pointer to the last UNION DISTINCT */
+  Select_Lex *union_distinct; /* pointer to the last UNION DISTINCT */
   bool describe; /* union exec() called for EXPLAIN */
 
   void init_query();
-  st_select_lex_unit* master_unit();
-  st_select_lex* outer_select();
-  st_select_lex* first_select()
+  Select_Lex_Unit* master_unit();
+  Select_Lex* outer_select();
+  Select_Lex* first_select()
   {
-    return reinterpret_cast<st_select_lex*>(slave);
+    return reinterpret_cast<Select_Lex*>(slave);
   }
-  st_select_lex_unit* next_unit()
+  Select_Lex_Unit* next_unit()
   {
-    return reinterpret_cast<st_select_lex_unit*>(next);
+    return reinterpret_cast<Select_Lex_Unit*>(next);
   }
-  st_select_lex* return_after_parsing() { return return_to; }
+  Select_Lex* return_after_parsing() { return return_to; }
   void exclude_level();
   void exclude_tree();
 
@@ -426,7 +425,7 @@ public:
   void init_prepare_fake_select_lex(Session *session);
   bool change_result(select_result_interceptor *result,
                      select_result_interceptor *old_result);
-  void set_limit(st_select_lex *values);
+  void set_limit(Select_Lex *values);
   void set_session(Session *session_arg) { session= session_arg; }
   inline bool is_union ();
 
@@ -436,12 +435,10 @@ public:
   List<Item> *get_unit_column_types();
 };
 
-typedef class st_select_lex_unit SELECT_LEX_UNIT;
-
 /*
-  SELECT_LEX - store information of parsed SELECT statment
+  Select_Lex - store information of parsed SELECT statment
 */
-class st_select_lex: public st_select_lex_node
+class Select_Lex: public Select_Lex_Node
 {
 public:
   Name_resolution_context context;
@@ -537,7 +534,7 @@ public:
     This is a copy of the original JOIN USING list that comes from
     the parser. The parser :
       1. Sets the natural_join of the second TableList in the join
-         and the st_select_lex::prev_join_using.
+         and the Select_Lex::prev_join_using.
       2. Makes a parent TableList and sets its is_natural_join/
        join_using_fields members.
       3. Uses the wrapper TableList as a table in the upper level.
@@ -559,27 +556,27 @@ public:
   uint8_t full_group_by_flag;
   void init_query();
   void init_select();
-  st_select_lex_unit* master_unit();
-  st_select_lex_unit* first_inner_unit()
+  Select_Lex_Unit* master_unit();
+  Select_Lex_Unit* first_inner_unit()
   {
-    return (st_select_lex_unit*) slave;
+    return (Select_Lex_Unit*) slave;
   }
-  st_select_lex* outer_select();
-  st_select_lex* next_select() { return (st_select_lex*) next; }
-  st_select_lex* next_select_in_list()
+  Select_Lex* outer_select();
+  Select_Lex* next_select() { return (Select_Lex*) next; }
+  Select_Lex* next_select_in_list()
   {
-    return (st_select_lex*) link_next;
+    return (Select_Lex*) link_next;
   }
-  st_select_lex_node** next_select_in_list_addr()
+  Select_Lex_Node** next_select_in_list_addr()
   {
     return &link_next;
   }
-  st_select_lex* return_after_parsing()
+  Select_Lex* return_after_parsing()
   {
     return master_unit()->return_after_parsing();
   }
 
-  void mark_as_dependent(st_select_lex *last);
+  void mark_as_dependent(Select_Lex *last);
 
   bool set_braces(bool value);
   bool inc_in_sum_expr();
@@ -611,15 +608,15 @@ public:
   }
   /*
     This method created for reiniting LEX in mysql_admin_table() and can be
-    used only if you are going remove all SELECT_LEX & units except belonger
+    used only if you are going remove all Select_Lex & units except belonger
     to LEX (LEX::unit & LEX::select, for other purposes there are
-    SELECT_LEX_UNIT::exclude_level & SELECT_LEX_UNIT::exclude_tree
+    Select_Lex_Unit::exclude_level & Select_Lex_Unit::exclude_tree
   */
   void cut_subtree() { slave= 0; }
   bool test_limit();
 
   friend void lex_start(Session *session);
-  st_select_lex() : n_sum_items(0), n_child_sum_items(0) {}
+  Select_Lex() : n_sum_items(0), n_child_sum_items(0) {}
   void make_empty_select()
   {
     init_query();
@@ -634,7 +631,7 @@ public:
   void fix_prepare_information(Session *session, Item **conds, Item **having_conds);
   /*
     Destroy the used execution plan (JOIN) of this subtree (this
-    SELECT_LEX and all nested SELECT_LEXes and SELECT_LEX_UNITs).
+    Select_Lex and all nested Select_Lexes and Select_Lex_Units).
   */
   bool cleanup();
   /*
@@ -670,9 +667,8 @@ private:
   /* a list of USE/FORCE/IGNORE INDEX */
   List<Index_hint> *index_hints;
 };
-typedef class st_select_lex SELECT_LEX;
 
-inline bool st_select_lex_unit::is_union ()
+inline bool Select_Lex_Unit::is_union ()
 {
   return first_select()->next_select() &&
     first_select()->next_select()->linkage == UNION_TYPE;
@@ -1246,12 +1242,12 @@ public:
 class LEX : public Query_tables_list
 {
 public:
-  SELECT_LEX_UNIT unit;                         /* most upper unit */
-  SELECT_LEX select_lex;                        /* first SELECT_LEX */
-  /* current SELECT_LEX in parsing */
-  SELECT_LEX *current_select;
-  /* list of all SELECT_LEX */
-  SELECT_LEX *all_selects_list;
+  Select_Lex_Unit unit;                         /* most upper unit */
+  Select_Lex select_lex;                        /* first Select_Lex */
+  /* current Select_Lex in parsing */
+  Select_Lex *current_select;
+  /* list of all Select_Lex */
+  Select_Lex *all_selects_list;
 
   char *length,*dec,*change;
   LEX_STRING name;
@@ -1273,7 +1269,7 @@ public:
   List<Key_part_spec> col_list;
   List<Key_part_spec> ref_list;
   List<String>	      interval_list;
-  List<LEX_COLUMN>    columns;
+  List<Lex_Column>    columns;
   List<Item>	      *insert_list,field_list,value_list,update_list;
   List<List_item>     many_values;
   List<set_var_base>  var_list;
