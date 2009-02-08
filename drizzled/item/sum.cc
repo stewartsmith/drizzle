@@ -2595,7 +2595,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   if (tree || table || tmp_table_param)
     return false;
 
-  if (!(tmp_table_param= new TMP_TABLE_PARAM))
+  if (!(tmp_table_param= new Tmp_Table_Param))
     return true;
 
   /* Create a table with an unique key over all parameters */
@@ -3232,7 +3232,7 @@ bool Item_func_group_concat::setup(Session *session)
   if (table || tree)
     return(false);
 
-  if (!(tmp_table_param= new TMP_TABLE_PARAM))
+  if (!(tmp_table_param= new Tmp_Table_Param))
     return(true);
 
   /* We'll convert all blobs to varchar fields in the temporary table */

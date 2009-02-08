@@ -568,13 +568,13 @@ class Item_sum_count :public Item_sum_int
 };
 
 
-class TMP_TABLE_PARAM;
+class Tmp_Table_Param;
 
 class Item_sum_count_distinct :public Item_sum_int
 {
   Table *table;
   uint32_t *field_lengths;
-  TMP_TABLE_PARAM *tmp_table_param;
+  Tmp_Table_Param *tmp_table_param;
   bool force_copy_fields;
   /*
     If there are no blobs, we can use a tree, which
@@ -958,7 +958,7 @@ class DRIZZLE_ERROR;
 
 class Item_func_group_concat : public Item_sum
 {
-  TMP_TABLE_PARAM *tmp_table_param;
+  Tmp_Table_Param *tmp_table_param;
   DRIZZLE_ERROR *warning;
   String result;
   String *separator;

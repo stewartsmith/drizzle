@@ -62,7 +62,7 @@ class select_union;
 class Select_Lex_Unit;
 class ST_SCHEMA_TABLE;
 class Select_Lex;
-class TMP_TABLE_PARAM;
+class Tmp_Table_Param;
 class Item_subselect;
 class Table;
 
@@ -174,7 +174,7 @@ public:
     schema table fields for backwards compatibility with SHOW command.
   */
   bool schema_table_reformed;
-  TMP_TABLE_PARAM *schema_table_param;
+  Tmp_Table_Param *schema_table_param;
   /* link to select_lex where this table was used */
   Select_Lex	*select_lex;
   /*

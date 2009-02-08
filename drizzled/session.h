@@ -81,10 +81,7 @@ typedef struct st_copy_info {
 } COPY_INFO;
 
 
-
-
-
-typedef struct st_mysql_lock
+typedef struct drizzled_lock_st
 {
   Table **table;
   uint32_t table_count,lock_count;
@@ -92,13 +89,7 @@ typedef struct st_mysql_lock
 } DRIZZLE_LOCK;
 
 
-class LEX_COLUMN : public Sql_alloc
-{
-public:
-  String column;
-  uint32_t rights;
-  LEX_COLUMN (const String& x,const  uint& y ): column (x),rights (y) {}
-};
+#include <drizzled/lex_column.h>
 
 class select_result;
 class Time_zone;
@@ -410,31 +401,7 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state);
 bool xid_cache_insert(XID_STATE *xid_state);
 void xid_cache_delete(XID_STATE *xid_state);
 
-/**
-  @class Security_context
-  @brief A set of Session members describing the current authenticated user.
-*/
-
-class Security_context {
-public:
-  Security_context() {}
-  /*
-    host - host of the client
-    user - user of the client, set to NULL until the user has been read from
-    the connection
-    priv_user - The user privilege we are using. May be "" for anonymous user.
-    ip - client IP
-  */
-  std::string user;
-  std::string ip;
-
-  void skip_grants();
-  inline const char *priv_host_name()
-  {
-    return (ip.c_str() ? ip.c_str() : (char *)"%");
-  }
-};
-
+#include <drizzled/security_context.h>
 
 /**
   A registry for item tree transformations performed during
@@ -447,96 +414,7 @@ struct Item_change_record;
 typedef I_List<Item_change_record> Item_change_list;
 
 
-/**
-  Class that holds information about tables which were opened and locked
-  by the thread. It is also used to save/restore this information in
-  push_open_tables_state()/pop_open_tables_state().
-*/
-
-class Open_tables_state
-{
-public:
-  /**
-    List of regular tables in use by this thread. Contains temporary and
-    base tables that were opened with @see open_tables().
-  */
-  Table *open_tables;
-  /**
-    List of temporary tables used by this thread. Contains user-level
-    temporary tables, created with CREATE TEMPORARY TABLE, and
-    internal temporary tables, created, e.g., to resolve a SELECT,
-    or for an intermediate table used in ALTER.
-    XXX Why are internal temporary tables added to this list?
-  */
-  Table *temporary_tables;
-  /**
-    List of tables that were opened with HANDLER OPEN and are
-    still in use by this thread.
-  */
-  Table *handler_tables;
-  Table *derived_tables;
-  /*
-    During a MySQL session, one can lock tables in two modes: automatic
-    or manual. In automatic mode all necessary tables are locked just before
-    statement execution, and all acquired locks are stored in 'lock'
-    member. Unlocking takes place automatically as well, when the
-    statement ends.
-    Manual mode comes into play when a user issues a 'LOCK TABLES'
-    statement. In this mode the user can only use the locked tables.
-    Trying to use any other tables will give an error. The locked tables are
-    stored in 'locked_tables' member.  Manual locking is described in
-    the 'LOCK_TABLES' chapter of the MySQL manual.
-    See also lock_tables() for details.
-  */
-  DRIZZLE_LOCK *lock;
-  /*
-    Tables that were locked with explicit or implicit LOCK TABLES.
-    (Implicit LOCK TABLES happens when we are prelocking tables for
-     execution of statement which uses stored routines. See description
-     Session::prelocked_mode for more info.)
-  */
-  DRIZZLE_LOCK *locked_tables;
-
-  /*
-    CREATE-SELECT keeps an extra lock for the table being
-    created. This field is used to keep the extra lock available for
-    lower level routines, which would otherwise miss that lock.
-   */
-  DRIZZLE_LOCK *extra_lock;
-
-  ulong	version;
-  uint32_t current_tablenr;
-
-  enum enum_flags {
-    BACKUPS_AVAIL = (1U << 0)     /* There are backups available */
-  };
-
-  /*
-    Flags with information about the open tables state.
-  */
-  uint32_t state_flags;
-
-  /*
-    This constructor serves for creation of Open_tables_state instances
-    which are used as backup storage.
-  */
-  Open_tables_state() : state_flags(0U) { }
-
-  Open_tables_state(ulong version_arg);
-
-  void set_open_tables_state(Open_tables_state *state)
-  {
-    *this= *state;
-  }
-
-  void reset_open_tables_state()
-  {
-    open_tables= temporary_tables= handler_tables= derived_tables= 0;
-    extra_lock= lock= locked_tables= 0;
-    state_flags= 0U;
-  }
-};
-
+#include <drizzled/open_tables_state.h>
 
 /* Flags for the Session::system_thread variable */
 enum enum_thread_type
@@ -545,166 +423,9 @@ enum enum_thread_type
 };
 
 
-/**
-  This class represents the interface for internal error handlers.
-  Internal error handlers are exception handlers used by the server
-  implementation.
-*/
-class Internal_error_handler
-{
-protected:
-  Internal_error_handler() {}
-  virtual ~Internal_error_handler() {}
 
-public:
-  /**
-    Handle an error condition.
-    This method can be implemented by a subclass to achieve any of the
-    following:
-    - mask an error internally, prevent exposing it to the user,
-    - mask an error and throw another one instead.
-    When this method returns true, the error condition is considered
-    'handled', and will not be propagated to upper layers.
-    It is the responsability of the code installing an internal handler
-    to then check for trapped conditions, and implement logic to recover
-    from the anticipated conditions trapped during runtime.
-
-    This mechanism is similar to C++ try/throw/catch:
-    - 'try' correspond to <code>Session::push_internal_handler()</code>,
-    - 'throw' correspond to <code>my_error()</code>,
-    which invokes <code>my_message_sql()</code>,
-    - 'catch' correspond to checking how/if an internal handler was invoked,
-    before removing it from the exception stack with
-    <code>Session::pop_internal_handler()</code>.
-
-    @param sql_errno the error number
-    @param level the error level
-    @param session the calling thread
-    @return true if the error is handled
-  */
-  virtual bool handle_error(uint32_t sql_errno,
-                            const char *message,
-                            DRIZZLE_ERROR::enum_warning_level level,
-                            Session *session) = 0;
-};
-
-
-/**
-  Stores status of the currently executed statement.
-  Cleared at the beginning of the statement, and then
-  can hold either OK, ERROR, or EOF status.
-  Can not be assigned twice per statement.
-*/
-
-class Diagnostics_area
-{
-public:
-  enum enum_diagnostics_status
-  {
-    /** The area is cleared at start of a statement. */
-    DA_EMPTY= 0,
-    /** Set whenever one calls my_ok(). */
-    DA_OK,
-    /** Set whenever one calls my_eof(). */
-    DA_EOF,
-    /** Set whenever one calls my_error() or my_message(). */
-    DA_ERROR,
-    /** Set in case of a custom response, such as one from COM_STMT_PREPARE. */
-    DA_DISABLED
-  };
-  /** True if status information is sent to the client. */
-  bool is_sent;
-  /** Set to make set_error_status after set_{ok,eof}_status possible. */
-  bool can_overwrite_status;
-
-  void set_ok_status(Session *session, ha_rows affected_rows_arg,
-                     uint64_t last_insert_id_arg,
-                     const char *message);
-  void set_eof_status(Session *session);
-  void set_error_status(Session *session, uint32_t sql_errno_arg, const char *message_arg);
-
-  void disable_status();
-
-  void reset_diagnostics_area();
-
-  bool is_set() const { return m_status != DA_EMPTY; }
-  bool is_error() const { return m_status == DA_ERROR; }
-  bool is_eof() const { return m_status == DA_EOF; }
-  bool is_ok() const { return m_status == DA_OK; }
-  bool is_disabled() const { return m_status == DA_DISABLED; }
-  enum_diagnostics_status status() const { return m_status; }
-
-  const char *message() const
-  { assert(m_status == DA_ERROR || m_status == DA_OK); return m_message; }
-
-  uint32_t sql_errno() const
-  { assert(m_status == DA_ERROR); return m_sql_errno; }
-
-  uint32_t server_status() const
-  {
-    assert(m_status == DA_OK || m_status == DA_EOF);
-    return m_server_status;
-  }
-
-  ha_rows affected_rows() const
-  { assert(m_status == DA_OK); return m_affected_rows; }
-
-  uint64_t last_insert_id() const
-  { assert(m_status == DA_OK); return m_last_insert_id; }
-
-  uint32_t total_warn_count() const
-  {
-    assert(m_status == DA_OK || m_status == DA_EOF);
-    return m_total_warn_count;
-  }
-
-  Diagnostics_area() { reset_diagnostics_area(); }
-
-private:
-  /** Message buffer. Can be used by OK or ERROR status. */
-  char m_message[DRIZZLE_ERRMSG_SIZE];
-  /**
-    SQL error number. One of ER_ codes from share/errmsg.txt.
-    Set by set_error_status.
-  */
-  uint32_t m_sql_errno;
-
-  /**
-    Copied from session->server_status when the diagnostics area is assigned.
-    We need this member as some places in the code use the following pattern:
-    session->server_status|= ...
-    my_eof(session);
-    session->server_status&= ~...
-    Assigned by OK, EOF or ERROR.
-  */
-  uint32_t m_server_status;
-  /**
-    The number of rows affected by the last statement. This is
-    semantically close to session->row_count_func, but has a different
-    life cycle. session->row_count_func stores the value returned by
-    function ROW_COUNT() and is cleared only by statements that
-    update its value, such as INSERT, UPDATE, DELETE and few others.
-    This member is cleared at the beginning of the next statement.
-
-    We could possibly merge the two, but life cycle of session->row_count_func
-    can not be changed.
-  */
-  ha_rows    m_affected_rows;
-  /**
-    Similarly to the previous member, this is a replacement of
-    session->first_successful_insert_id_in_prev_stmt, which is used
-    to implement LAST_INSERT_ID().
-  */
-  uint64_t   m_last_insert_id;
-  /** The total number of warnings. */
-  uint	     m_total_warn_count;
-  enum_diagnostics_status m_status;
-  /**
-    @todo: the following Session members belong here:
-    - warn_list, warn_count,
-  */
-};
-
+#include <drizzled/internal_error_handler.h> 
+#include <drizzled/diagnostics_area.h> 
 
 /**
   Storage engine specific thread local data.
@@ -1478,131 +1199,15 @@ class JOIN;
 
 #include <storage/myisam/myisam.h>
 
-/*
-  Param to create temporary tables when doing SELECT:s
-  NOTE
-    This structure is copied using memcpy as a part of JOIN.
-*/
+#include <drizzled/tmp_table_param.h>
 
-class TMP_TABLE_PARAM :public Sql_alloc
-{
-private:
-  /* Prevent use of these (not safe because of lists and copy_field) */
-  TMP_TABLE_PARAM(const TMP_TABLE_PARAM &);
-  void operator=(TMP_TABLE_PARAM &);
+#include <drizzled/select_union.h>
 
-public:
-  List<Item> copy_funcs;
-  List<Item> save_copy_funcs;
-  Copy_field *copy_field, *copy_field_end;
-  Copy_field *save_copy_field, *save_copy_field_end;
-  unsigned char	    *group_buff;
-  Item	    **items_to_copy;			/* Fields in tmp table */
-  MI_COLUMNDEF *recinfo,*start_recinfo;
-  KEY *keyinfo;
-  ha_rows end_write_records;
-  uint	field_count,sum_func_count,func_count;
-  uint32_t  hidden_field_count;
-  uint	group_parts,group_length,group_null_parts;
-  uint	quick_group;
-  bool  using_indirect_summary_function;
-  /* If >0 convert all blob fields to varchar(convert_blob_length) */
-  uint32_t  convert_blob_length;
-  const CHARSET_INFO *table_charset;
-  bool schema_table;
-  /*
-    True if GROUP BY and its aggregate functions are already computed
-    by a table access method (e.g. by loose index scan). In this case
-    query execution should not perform aggregation and should treat
-    aggregate functions as normal functions.
-  */
-  bool precomputed_group_by;
-  bool force_copy_fields;
-  /*
-    If true, create_tmp_field called from create_tmp_table will convert
-    all BIT fields to 64-bit longs. This is a workaround the limitation
-    that MEMORY tables cannot index BIT columns.
-  */
-  bool bit_fields_as_long;
+#include <drizzled/select_subselect.h>
 
-  TMP_TABLE_PARAM()
-    :copy_field(0), group_parts(0),
-     group_length(0), group_null_parts(0), convert_blob_length(0),
-     schema_table(0), precomputed_group_by(0), force_copy_fields(0),
-     bit_fields_as_long(0)
-  {}
-  ~TMP_TABLE_PARAM()
-  {
-    cleanup();
-  }
-  void init(void);
-  void cleanup(void);
-};
-
-class select_union :public select_result_interceptor
-{
-  TMP_TABLE_PARAM tmp_table_param;
-public:
-  Table *table;
-
-  select_union() :table(0) {}
-  int prepare(List<Item> &list, Select_Lex_Unit *u);
-  bool send_data(List<Item> &items);
-  bool send_eof();
-  bool flush();
-  void cleanup();
-  bool create_result_table(Session *session, List<Item> *column_types,
-                           bool is_distinct, uint64_t options,
-                           const char *alias, bool bit_fields_as_long);
-};
-
-/* Base subselect interface class */
-class select_subselect :public select_result_interceptor
-{
-protected:
-  Item_subselect *item;
-public:
-  select_subselect(Item_subselect *item);
-  bool send_data(List<Item> &items)=0;
-  bool send_eof() { return 0; };
-};
-
-/* Single value subselect interface class */
-class select_singlerow_subselect :public select_subselect
-{
-public:
-  select_singlerow_subselect(Item_subselect *item_arg)
-    :select_subselect(item_arg)
-  {}
-  bool send_data(List<Item> &items);
-};
-
-/* used in independent ALL/ANY optimisation */
-class select_max_min_finder_subselect :public select_subselect
-{
-  Item_cache *cache;
-  bool (select_max_min_finder_subselect::*op)();
-  bool fmax;
-public:
-  select_max_min_finder_subselect(Item_subselect *item_arg, bool mx)
-    :select_subselect(item_arg), cache(0), fmax(mx)
-  {}
-  void cleanup();
-  bool send_data(List<Item> &items);
-  bool cmp_real();
-  bool cmp_int();
-  bool cmp_decimal();
-  bool cmp_str();
-};
-
-/* EXISTS subselect interface class */
-class select_exists_subselect :public select_subselect
-{
-public:
-  select_exists_subselect(Item_subselect *item_arg)
-    :select_subselect(item_arg){}
-  bool send_data(List<Item> &items);
-};
+#include <drizzled/select_singlerow_subselect.h>
+#include <drizzled/select_max_min_finder_subselect.h>
+#include <drizzled/select_exists_subselect.h>
 
 /* Structs used when sorting */
 
@@ -1625,216 +1230,14 @@ typedef struct st_sort_buffer {
   SORT_FIELD *sortorder;
 } SORT_BUFFER;
 
-/* Structure for db & table in sql_yacc */
 
-class Table_ident :public Sql_alloc
-{
-public:
-  LEX_STRING db;
-  LEX_STRING table;
-  Select_Lex_Unit *sel;
-  inline Table_ident(Session *session, LEX_STRING db_arg, LEX_STRING table_arg,
-		     bool force)
-    :table(table_arg), sel((Select_Lex_Unit *)0)
-  {
-    if (!force && (session->client_capabilities & CLIENT_NO_SCHEMA))
-      db.str=0;
-    else
-      db= db_arg;
-  }
-  inline Table_ident(LEX_STRING table_arg)
-    :table(table_arg), sel((Select_Lex_Unit *)0)
-  {
-    db.str=0;
-  }
-  /*
-    This constructor is used only for the case when we create a derived
-    table. A derived table has no name and doesn't belong to any database.
-    Later, if there was an alias specified for the table, it will be set
-    by add_table_to_list.
-  */
-  inline Table_ident(Select_Lex_Unit *s) : sel(s)
-  {
-    /* We must have a table name here as this is used with add_table_to_list */
-    db.str= empty_c_string;                    /* a subject to casedn_str */
-    db.length= 0;
-    table.str= internal_table_name;
-    table.length=1;
-  }
-  bool is_derived_table() const { return test(sel); }
-  inline void change_db(char *db_name)
-  {
-    db.str= db_name; db.length= (uint) strlen(db_name);
-  }
-};
-
-// this is needed for user_vars hash
-class user_var_entry
-{
- public:
-  user_var_entry() {}                         /* Remove gcc warning */
-  LEX_STRING name;
-  char *value;
-  ulong length;
-  query_id_t update_query_id, used_query_id;
-  Item_result type;
-  bool unsigned_flag;
-
-  double val_real(bool *null_value);
-  int64_t val_int(bool *null_value) const;
-  String *val_str(bool *null_value, String *str, uint32_t decimals);
-  my_decimal *val_decimal(bool *null_value, my_decimal *result);
-  DTCollation collation;
-};
-
-/*
-   Unique -- class for unique (removing of duplicates).
-   Puts all values to the TREE. If the tree becomes too big,
-   it's dumped to the file. User can request sorted values, or
-   just iterate through them. In the last case tree merging is performed in
-   memory simultaneously with iteration, so it should be ~2-3x faster.
- */
-
-class Unique :public Sql_alloc
-{
-  DYNAMIC_ARRAY file_ptrs;
-  ulong max_elements;
-  size_t max_in_memory_size;
-  IO_CACHE file;
-  TREE tree;
-  unsigned char *record_pointers;
-  bool flush();
-  uint32_t size;
-
-public:
-  ulong elements;
-  Unique(qsort_cmp2 comp_func, void *comp_func_fixed_arg,
-	 uint32_t size_arg, size_t max_in_memory_size_arg);
-  ~Unique();
-  ulong elements_in_tree() { return tree.elements_in_tree; }
-  inline bool unique_add(void *ptr)
-  {
-    if (tree.elements_in_tree > max_elements && flush())
-      return(1);
-    return(!tree_insert(&tree, ptr, 0, tree.custom_arg));
-  }
-
-  bool get(Table *table);
-  static double get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size,
-                             size_t max_in_memory_size);
-  inline static int get_cost_calc_buff_size(ulong nkeys, uint32_t key_size,
-                                            size_t max_in_memory_size)
-  {
-    register size_t max_elems_in_tree=
-      (1 + max_in_memory_size / ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
-    return (int) (sizeof(uint)*(1 + nkeys/max_elems_in_tree));
-  }
-
-  void reset();
-  bool walk(tree_walk_action action, void *walk_action_arg);
-
-  friend int unique_write_to_file(unsigned char* key, element_count count, Unique *unique);
-  friend int unique_write_to_ptrs(unsigned char* key, element_count count, Unique *unique);
-};
-
-
-class multi_delete :public select_result_interceptor
-{
-  TableList *delete_tables, *table_being_deleted;
-  Unique **tempfiles;
-  ha_rows deleted, found;
-  uint32_t num_of_tables;
-  int error;
-  bool do_delete;
-  /* True if at least one table we delete from is transactional */
-  bool transactional_tables;
-  /* True if at least one table we delete from is not transactional */
-  bool normal_tables;
-  bool delete_while_scanning;
-  /*
-     error handling (rollback and binlogging) can happen in send_eof()
-     so that afterward send_error() needs to find out that.
-  */
-  bool error_handled;
-
-public:
-  multi_delete(TableList *dt, uint32_t num_of_tables);
-  ~multi_delete();
-  int prepare(List<Item> &list, Select_Lex_Unit *u);
-  bool send_data(List<Item> &items);
-  bool initialize_tables (JOIN *join);
-  void send_error(uint32_t errcode,const char *err);
-  int  do_deletes();
-  bool send_eof();
-  virtual void abort();
-};
-
-
-class multi_update :public select_result_interceptor
-{
-  TableList *all_tables; /* query/update command tables */
-  TableList *leaves;     /* list of leves of join table tree */
-  TableList *update_tables, *table_being_updated;
-  Table **tmp_tables, *main_table, *table_to_update;
-  TMP_TABLE_PARAM *tmp_table_param;
-  ha_rows updated, found;
-  List <Item> *fields, *values;
-  List <Item> **fields_for_table, **values_for_table;
-  uint32_t table_count;
-  /*
-   List of tables referenced in the CHECK OPTION condition of
-   the updated view excluding the updated table.
-  */
-  List <Table> unupdated_check_opt_tables;
-  Copy_field *copy_field;
-  enum enum_duplicates handle_duplicates;
-  bool do_update, trans_safe;
-  /* True if the update operation has made a change in a transactional table */
-  bool transactional_tables;
-  bool ignore;
-  /*
-     error handling (rollback and binlogging) can happen in send_eof()
-     so that afterward send_error() needs to find out that.
-  */
-  bool error_handled;
-
-public:
-  multi_update(TableList *ut, TableList *leaves_list,
-	       List<Item> *fields, List<Item> *values,
-	       enum_duplicates handle_duplicates, bool ignore);
-  ~multi_update();
-  int prepare(List<Item> &list, Select_Lex_Unit *u);
-  bool send_data(List<Item> &items);
-  bool initialize_tables (JOIN *join);
-  void send_error(uint32_t errcode,const char *err);
-  int  do_updates();
-  bool send_eof();
-  virtual void abort();
-};
-
-class my_var : public Sql_alloc  {
-public:
-  LEX_STRING s;
-  bool local;
-  uint32_t offset;
-  enum_field_types type;
-  my_var (LEX_STRING& j, bool i, uint32_t o, enum_field_types t)
-    :s(j), local(i), offset(o), type(t)
-  {}
-  ~my_var() {}
-};
-
-class select_dumpvar :public select_result_interceptor {
-  ha_rows row_count;
-public:
-  List<my_var> var_list;
-  select_dumpvar()  { var_list.empty(); row_count= 0;}
-  ~select_dumpvar() {}
-  int prepare(List<Item> &list, Select_Lex_Unit *u);
-  bool send_data(List<Item> &items);
-  bool send_eof();
-  void cleanup();
-};
+#include <drizzled/table_ident.h>
+#include <drizzled/user_var_entry.h>
+#include <drizzled/unique.h>
+#include <drizzled/multi_delete.h>
+#include <drizzled/multi_update.h>
+#include <drizzled/my_var.h>
+#include <drizzled/select_dumpvar.h>
 
 /* Bits in sql_command_flags */
 

@@ -10545,7 +10545,7 @@ const_expression_in_where(COND *cond, Item *comp_item, Item **const_item)
 Next_select_func setup_end_select_func(JOIN *join)
 {
   Table *table= join->tmp_table;
-  TMP_TABLE_PARAM *tmp_tbl= &join->tmp_table_param;
+  Tmp_Table_Param *tmp_tbl= &join->tmp_table_param;
   Next_select_func end_select;
 
   /* Set up select_end */
@@ -10575,7 +10575,7 @@ Next_select_func setup_end_select_func(JOIN *join)
         /*
           A preceding call to create_tmp_table in the case when loose
           index scan is used guarantees that
-          TMP_TABLE_PARAM::items_to_copy has enough space for the group
+          Tmp_Table_Param::items_to_copy has enough space for the group
           by functions. It is OK here to use memcpy since we copy
           Item_sum pointers into an array of Item pointers.
         */
@@ -14455,7 +14455,7 @@ next_item:
 */
 
 void
-count_field_types(Select_Lex *select_lex, TMP_TABLE_PARAM *param,
+count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param,
                   List<Item> &fields, bool reset_with_sum_func)
 {
   List_iterator<Item> li(fields);
@@ -14746,7 +14746,7 @@ int test_if_item_cache_changed(List<Cached_item> &list)
 */
 
 bool
-setup_copy_fields(Session *session, TMP_TABLE_PARAM *param,
+setup_copy_fields(Session *session, Tmp_Table_Param *param,
 		  Item **ref_pointer_array,
 		  List<Item> &res_selected_fields, List<Item> &res_all_fields,
 		  uint32_t elements, List<Item> &all_fields)
@@ -14883,7 +14883,7 @@ err2:
 */
 
 void
-copy_fields(TMP_TABLE_PARAM *param)
+copy_fields(Tmp_Table_Param *param)
 {
   Copy_field *ptr=param->copy_field;
   Copy_field *end=param->copy_field_end;

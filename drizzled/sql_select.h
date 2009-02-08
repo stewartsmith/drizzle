@@ -438,7 +438,7 @@ public:
   Item      *having_history; ///< Store having for explain
   uint64_t  select_options;
   select_result *result;
-  TMP_TABLE_PARAM tmp_table_param;
+  Tmp_Table_Param tmp_table_param;
   DRIZZLE_LOCK *lock;
   /// unit structure (with global parameters) for this select
   Select_Lex_Unit *unit;
@@ -659,18 +659,18 @@ void TEST_join(JOIN *join);
 
 /* Extern functions in sql_select.cc */
 bool store_val_in_field(Field *field, Item *val, enum_check_fields check_flag);
-Table *create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
+Table *create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 			order_st *group, bool distinct, bool save_sum_fields,
 			uint64_t select_options, ha_rows rows_limit,
 			char* alias);
 void free_tmp_table(Session *session, Table *entry);
-void count_field_types(Select_Lex *select_lex, TMP_TABLE_PARAM *param,
+void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param,
                        List<Item> &fields, bool reset_with_sum_func);
-bool setup_copy_fields(Session *session, TMP_TABLE_PARAM *param,
+bool setup_copy_fields(Session *session, Tmp_Table_Param *param,
 		       Item **ref_pointer_array,
 		       List<Item> &new_list1, List<Item> &new_list2,
 		       uint32_t elements, List<Item> &fields);
-void copy_fields(TMP_TABLE_PARAM *param);
+void copy_fields(Tmp_Table_Param *param);
 void copy_funcs(Item **func_ptr);
 Field* create_tmp_field_from_field(Session *session, Field* org_field,
                                    const char *name, Table *table,

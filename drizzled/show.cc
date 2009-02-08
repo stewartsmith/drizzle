@@ -1607,7 +1607,7 @@ bool schema_table_store_record(Session *session, Table *table)
   int error;
   if ((error= table->file->ha_write_row(table->record[0])))
   {
-    TMP_TABLE_PARAM *param= table->pos_in_table_list->schema_table_param;
+    Tmp_Table_Param *param= table->pos_in_table_list->schema_table_param;
 
     if (create_myisam_from_heap(session, table, param->start_recinfo,
                                 &param->recinfo, error, 0))
@@ -3819,8 +3819,8 @@ Table *create_schema_table(Session *session, TableList *table_list)
     item->maybe_null= (fields_info->field_flags & MY_I_S_MAYBE_NULL);
     field_count++;
   }
-  TMP_TABLE_PARAM *tmp_table_param =
-    (TMP_TABLE_PARAM*) (session->alloc(sizeof(TMP_TABLE_PARAM)));
+  Tmp_Table_Param *tmp_table_param =
+    (Tmp_Table_Param*) (session->alloc(sizeof(Tmp_Table_Param)));
   tmp_table_param->init();
   tmp_table_param->table_charset= cs;
   tmp_table_param->field_count= field_count;

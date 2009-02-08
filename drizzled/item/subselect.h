@@ -37,7 +37,7 @@ class Item_bool_func2;
 class Cached_item;
 class Item_in_optimizer;
 class Item_func_not_all;
-class TMP_TABLE_PARAM;
+class Tmp_Table_Param;
 
 
 /* base class for subselects */
@@ -671,7 +671,7 @@ protected:
   */
   JOIN *materialize_join;
   /* Temp table context of the outer select's JOIN. */
-  TMP_TABLE_PARAM *tmp_param;
+  Tmp_Table_Param *tmp_param;
 
 public:
   subselect_hash_sj_engine(Session *session_in, Item_subselect *in_predicate,

@@ -1060,7 +1060,7 @@ int multi_update::prepare(List<Item> &,
   update_tables= (TableList*) update.first;
 
   tmp_tables = (Table**) session->calloc(sizeof(Table *) * table_count);
-  tmp_table_param = (TMP_TABLE_PARAM*) session->calloc(sizeof(TMP_TABLE_PARAM) *
+  tmp_table_param = (Tmp_Table_Param*) session->calloc(sizeof(Tmp_Table_Param) *
 						   table_count);
   fields_for_table= (List_item **) session->alloc(sizeof(List_item *) *
 					      table_count);
@@ -1190,7 +1190,7 @@ multi_update::initialize_tables(JOIN *join)
     uint32_t cnt= table_ref->shared;
     List<Item> temp_fields;
     order_st     group;
-    TMP_TABLE_PARAM *tmp_param;
+    Tmp_Table_Param *tmp_param;
 
     table->mark_columns_needed_for_update();
     if (ignore)

@@ -45,7 +45,7 @@ class virtual_column_info;
 /* These may not be declared yet */
 class Table_ident;
 class file_exchange;
-class LEX_COLUMN;
+class Lex_Column;
 class Item_outer_ref;
 
 /*
@@ -1269,7 +1269,7 @@ public:
   List<Key_part_spec> col_list;
   List<Key_part_spec> ref_list;
   List<String>	      interval_list;
-  List<LEX_COLUMN>    columns;
+  List<Lex_Column>    columns;
   List<Item>	      *insert_list,field_list,value_list,update_list;
   List<List_item>     many_values;
   List<set_var_base>  var_list;

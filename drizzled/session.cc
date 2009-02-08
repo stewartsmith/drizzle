@@ -1948,10 +1948,10 @@ bool select_dumpvar::send_eof()
 }
 
 /****************************************************************************
-  TMP_TABLE_PARAM
+  Tmp_Table_Param
 ****************************************************************************/
 
-void TMP_TABLE_PARAM::init()
+void Tmp_Table_Param::init()
 {
   field_count= sum_func_count= func_count= hidden_field_count= 0;
   group_parts= group_length= group_null_parts= 0;
@@ -1962,7 +1962,7 @@ void TMP_TABLE_PARAM::init()
   return;
 }
 
-void TMP_TABLE_PARAM::cleanup(void)
+void Tmp_Table_Param::cleanup(void)
 {
   /* Fix for Intel compiler */
   if (copy_field)

@@ -413,7 +413,7 @@ struct ST_SCHEMA_TABLE
 
 struct st_lex;
 class select_union;
-class TMP_TABLE_PARAM;
+class Tmp_Table_Param;
 
 typedef struct st_changed_table_list
 {
