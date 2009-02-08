@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 /* Get the length of next field. Change parameter to point at fieldstart */
-uint32_t net_field_length(unsigned char **packet)
+uint32_t drizzleclient_net_field_length(unsigned char **packet)
 {
   register unsigned char *pos= (unsigned char *)*packet;
   if (*pos < 251)
@@ -51,7 +51,7 @@ uint32_t net_field_length(unsigned char **packet)
 }
 
 /* The same as above but returns int64_t */
-uint64_t net_field_length_ll(unsigned char **packet)
+uint64_t drizzleclient_drizzleclient_net_field_length_ll(unsigned char **packet)
 {
   register unsigned char *pos= *packet;
   if (*pos < 251)
@@ -86,7 +86,7 @@ uint64_t net_field_length_ll(unsigned char **packet)
   Store an integer with simple packing into a output package
 
   SYNOPSIS
-    net_store_length()
+    drizzleclient_net_store_length()
     pkg      Store the packed integer here
     length    integers to store
 
@@ -99,7 +99,7 @@ uint64_t net_field_length_ll(unsigned char **packet)
    Position in 'pkg' after the packed length
 */
 
-unsigned char *net_store_length(unsigned char *packet, uint64_t length)
+unsigned char *drizzleclient_net_store_length(unsigned char *packet, uint64_t length)
 {
   if (length < (uint64_t) 251LL)
   {

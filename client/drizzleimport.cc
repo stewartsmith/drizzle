@@ -285,7 +285,7 @@ static int get_options(int *argc, char ***argv)
   current_db= *((*argv)++);
   (*argc)--;
   if (tty_password)
-    opt_password=get_tty_password(NULL);
+    opt_password=drizzleclient_get_tty_password(NULL);
   return(0);
 }
 

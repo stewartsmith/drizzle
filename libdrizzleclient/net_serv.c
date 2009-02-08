@@ -75,7 +75,7 @@ bool drizzleclient_net_init(NET *net, Vio* vio)
   return(0);
 }
 
-bool net_init_sock(NET * net, int sock, int flags)
+bool drizzleclient_net_init_sock(NET * net, int sock, int flags)
 {
 
   Vio *drizzleclient_vio_tmp= drizzleclient_vio_new(sock, VIO_TYPE_TCPIP, flags);
@@ -99,7 +99,7 @@ bool net_init_sock(NET * net, int sock, int flags)
   return false;
 }
 
-void net_end(NET *net)
+void drizzleclient_net_end(NET *net)
 {
   if (net->buff != NULL)
     free(net->buff);
@@ -107,7 +107,7 @@ void net_end(NET *net)
   return;
 }
 
-void net_close(NET *net)
+void drizzleclient_net_close(NET *net)
 {
   if (net->vio != NULL)
   {
@@ -116,34 +116,34 @@ void net_close(NET *net)
   }
 }
 
-bool net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
+bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
 {
   return drizzleclient_vio_peer_addr(net->vio, buf, port, buflen);
 }
 
-void net_keepalive(NET *net, bool flag)
+void drizzleclient_net_keepalive(NET *net, bool flag)
 {
   drizzleclient_vio_keepalive(net->vio, flag);
 }
 
-int net_get_sd(NET *net)
+int drizzleclient_net_get_sd(NET *net)
 {
   return net->vio->sd;
 }
 
-bool net_should_close(NET *net)
+bool drizzleclient_net_should_close(NET *net)
 {
   return net->error || (net->vio == 0);
 }
 
-bool net_more_data(NET *net)
+bool drizzleclient_net_more_data(NET *net)
 {
   return (net->vio == 0 || net->vio->read_pos < net->vio->read_end);
 }
 
 /** Realloc the packet buffer. */
 
-bool net_realloc(NET *net, size_t length)
+bool drizzleclient_net_realloc(NET *net, size_t length)
 {
   unsigned char *buff;
   size_t pkt_length;
@@ -209,7 +209,7 @@ static bool net_data_is_ready(int sd)
    Read from socket until there is nothing more to read. Discard
    what is read.
 
-   If there is anything when to read 'net_clear' is called this
+   If there is anything when to read 'drizzleclient_net_clear' is called this
    normally indicates an error in the protocol.
 
    When connection is properly closed (for TCP it means with
@@ -220,7 +220,7 @@ static bool net_data_is_ready(int sd)
    @param clear_buffer           if <> 0, then clear all data from comm buff
 */
 
-void net_clear(NET *net, bool clear_buffer)
+void drizzleclient_net_clear(NET *net, bool clear_buffer)
 {
   if (clear_buffer)
   {
@@ -243,12 +243,12 @@ void net_clear(NET *net, bool clear_buffer)
 
 /** Flush write_buffer if not empty. */
 
-bool net_flush(NET *net)
+bool drizzleclient_net_flush(NET *net)
 {
   bool error= 0;
   if (net->buff != net->write_pos)
   {
-    error=net_real_write(net, net->buff,
+    error=drizzleclient_net_real_write(net, net->buff,
                          (size_t) (net->write_pos - net->buff)) ? 1 : 0;
     net->write_pos=net->buff;
   }
@@ -331,7 +331,7 @@ drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
 */
 
 bool
-net_write_command(NET *net,unsigned char command,
+drizzleclient_net_write_command(NET *net,unsigned char command,
                   const unsigned char *header, size_t head_len,
                   const unsigned char *packet, size_t len)
 {
@@ -365,7 +365,7 @@ net_write_command(NET *net,unsigned char command,
   buff[3]= (unsigned char) net->pkt_nr++;
   return((net_write_buff(net, buff, header_size) ||
           (head_len && net_write_buff(net, header, head_len)) ||
-          net_write_buff(net, packet, len) || net_flush(net)) ? 1 : 0 );
+          net_write_buff(net, packet, len) || drizzleclient_net_flush(net)) ? 1 : 0 );
 }
 
 /**
@@ -383,9 +383,9 @@ net_write_command(NET *net,unsigned char command,
    @param len        Length of packet
 
    @note
-   The cached buffer can be sent as it is with 'net_flush()'.
+   The cached buffer can be sent as it is with 'drizzleclient_net_flush()'.
    In this code we have to be careful to not send a packet longer than
-   MAX_PACKET_LENGTH to net_real_write() if we are using the compressed
+   MAX_PACKET_LENGTH to drizzleclient_net_real_write() if we are using the compressed
    protocol as we store the length of the compressed packet in 3 bytes.
 
    @retval
@@ -409,7 +409,7 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
     {
       /* Fill up already used packet and write it */
       memcpy(net->write_pos,packet,left_length);
-      if (net_real_write(net, net->buff,
+      if (drizzleclient_net_real_write(net, net->buff,
                          (size_t) (net->write_pos - net->buff) + left_length))
         return 1;
       net->write_pos= net->buff;
@@ -425,14 +425,14 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
       left_length= MAX_PACKET_LENGTH;
       while (len > left_length)
       {
-        if (net_real_write(net, packet, left_length))
+        if (drizzleclient_net_real_write(net, packet, left_length))
           return 1;
         packet+= left_length;
         len-= left_length;
       }
     }
     if (len > net->max_packet)
-      return net_real_write(net, packet, len) ? 1 : 0;
+      return drizzleclient_net_real_write(net, packet, len) ? 1 : 0;
     /* Send out rest of the blocks as full sized blocks */
   }
   memcpy(net->write_pos,packet,len);
@@ -454,7 +454,7 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
   in the server, yield to another process and come back later.
 */
 int
-net_real_write(NET *net, const unsigned char *packet, size_t len)
+drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
   size_t length;
   const unsigned char *pos, *end;
@@ -718,7 +718,7 @@ my_real_read(NET *net, size_t *complen)
       /* The necessary size of net->buff */
       if (helping >= net->max_packet)
       {
-        if (net_realloc(net,helping))
+        if (drizzleclient_net_realloc(net,helping))
         {
           len= packet_error;          /* Return error and close connection */
           goto end;
@@ -935,10 +935,10 @@ void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout)
   @param net  clear the state of the argument
 */
 
-void net_clear_error(NET *net)
+void drizzleclient_drizzleclient_net_clear_error(NET *net)
 {
   net->last_errno= 0;
   net->last_error[0]= '\0';
-  strcpy(net->sqlstate, sqlstate_get_not_error());
+  strcpy(net->sqlstate, drizzleclient_sqlstate_get_not_error());
 }
 

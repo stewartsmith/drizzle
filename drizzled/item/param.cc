@@ -529,7 +529,7 @@ static char *str_to_hex(char *to, const char *from, uint32_t len)
   {
     *to++= '0';
     *to++= 'x';
-    to= octet2hex(to, from, len);
+    to= drizzleclient_drizzleclient_octet2hex(to, from, len);
   }
   else
     to= strcpy(to, "\"\"")+2;

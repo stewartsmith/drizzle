@@ -381,7 +381,7 @@ static int get_options(int *argc, char ***argv)
     return 1;
   }
   if (tty_password)
-    opt_password = get_tty_password(NULL);
+    opt_password = drizzleclient_get_tty_password(NULL);
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)

@@ -1976,7 +1976,7 @@ static int init_server_components()
   if (table_cache_init() | table_def_init())
     unireg_abort(1);
 
-  randominit(&sql_rand,(uint32_t) server_start_time,(uint32_t) server_start_time/2);
+  drizzleclient_drizzleclient_randominit(&sql_rand,(uint32_t) server_start_time,(uint32_t) server_start_time/2);
   setup_fpu();
   init_thr_lock();
 
@@ -2421,7 +2421,7 @@ void handle_connections_sockets()
       close(new_sock);
       continue;
     }
-    if (net_init_sock(&session->net, new_sock, sock == 0))
+    if (drizzleclient_net_init_sock(&session->net, new_sock, sock == 0))
     {
       delete session;
       continue;

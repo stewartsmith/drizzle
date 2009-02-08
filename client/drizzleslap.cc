@@ -1748,7 +1748,7 @@ get_options(int *argc,char ***argv)
     parse_option(default_engine, &engine_options, ',');
 
   if (tty_password)
-    opt_password= get_tty_password(NULL);
+    opt_password= drizzleclient_get_tty_password(NULL);
   return(0);
 }
 

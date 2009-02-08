@@ -217,7 +217,7 @@ int main(int argc,char *argv[])
 
   commands = argv;
   if (tty_password)
-    opt_password = get_tty_password(NULL);
+    opt_password = drizzleclient_get_tty_password(NULL);
 
   signal(SIGINT,endprog);			/* Here if abort */
   signal(SIGTERM,endprog);		/* Here if abort */

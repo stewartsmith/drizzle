@@ -1363,7 +1363,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
     enum DRIZZLE_ERROR::enum_warning_level level;
     uint32_t diff= str->length() - wlen;
     set_if_smaller(diff, 3);
-    octet2hex(hexbuf, str->ptr() + wlen, diff);
+    drizzleclient_drizzleclient_octet2hex(hexbuf, str->ptr() + wlen, diff);
     if (send_error)
     {
       my_error(ER_INVALID_CHARACTER_STRING, MYF(0),

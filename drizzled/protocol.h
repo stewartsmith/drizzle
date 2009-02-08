@@ -153,7 +153,7 @@ public:
 
 void send_warning(Session *session, uint32_t sql_errno, const char *err=0);
 void net_send_error(Session *session, uint32_t sql_errno=0, const char *err=0);
-void net_end_statement(Session *session);
+void drizzleclient_net_end_statement(Session *session);
 unsigned char *net_store_data(unsigned char *to,const unsigned char *from, size_t length);
 unsigned char *net_store_data(unsigned char *to,int32_t from);
 unsigned char *net_store_data(unsigned char *to,int64_t from);

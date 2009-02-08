@@ -58,7 +58,7 @@
 
 #define MY_ALIGN(A,L)	(((A) + (L) - 1) & ~((L) - 1))
 
-bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
+bool drizzleclient_handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
 {
   bool result= true;
   uint32_t packet_length=MY_ALIGN(drizzle->net.max_packet-16,IO_SIZE);
@@ -81,7 +81,7 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   /* copy filename into local memory and allocate read buffer */
   if (!(buf=malloc(packet_length)))
   {
-    drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, sqlstate_get_unknown());
+    drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, drizzleclient_sqlstate_get_unknown());
     return(1);
   }
 
@@ -90,8 +90,8 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
     options->local_infile_userdata))
   {
     (void)drizzleclient_net_write(net,(const unsigned char*) "",0); /* Server needs one packet */
-    net_flush(net);
-    strcpy(net->sqlstate, sqlstate_get_unknown());
+    drizzleclient_net_flush(net);
+    strcpy(net->sqlstate, drizzleclient_sqlstate_get_unknown());
     net->last_errno=
       (*options->local_infile_error)(li_ptr,
                                      net->last_error,
@@ -111,9 +111,9 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   }
 
   /* Send empty packet to mark end of file */
-  if (drizzleclient_net_write(net, (const unsigned char*) "", 0) || net_flush(net))
+  if (drizzleclient_net_write(net, (const unsigned char*) "", 0) || drizzleclient_net_flush(net))
   {
-    drizzle_set_error(drizzle, CR_SERVER_LOST, sqlstate_get_unknown());
+    drizzle_set_error(drizzle, CR_SERVER_LOST, drizzleclient_sqlstate_get_unknown());
     goto err;
   }
 

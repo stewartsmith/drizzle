@@ -37,12 +37,12 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length)
   size_t packet_length= packet->length();
   /*
      The +9 comes from that strings of length longer than 16M require
-     9 bytes to be stored (see net_store_length).
+     9 bytes to be stored (see drizzleclient_net_store_length).
   */
   if (packet_length+9+length > packet->alloced_length() &&
       packet->realloc(packet_length+9+length))
     return 1;
-  unsigned char *to= net_store_length((unsigned char*) packet->ptr()+packet_length, length);
+  unsigned char *to= drizzleclient_net_store_length((unsigned char*) packet->ptr()+packet_length, length);
   memcpy(to,from,length);
   packet->length((size_t) (to+length-(unsigned char*) packet->ptr()));
   return 0;
@@ -100,7 +100,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
   to+= copy_and_convert(to, conv_length, to_cs,
                         (const char*) from, length, from_cs, &dummy_errors);
 
-  net_store_length((unsigned char*) length_pos, to - length_pos - 1);
+  drizzleclient_net_store_length((unsigned char*) length_pos, to - length_pos - 1);
   packet->length((uint) (to - packet->ptr()));
   return 0;
 }
@@ -172,8 +172,8 @@ net_send_ok(Session *session,
   }
 
   buff[0]=0;					// No fields
-  pos=net_store_length(buff+1,affected_rows);
-  pos=net_store_length(pos, id);
+  pos=drizzleclient_net_store_length(buff+1,affected_rows);
+  pos=drizzleclient_net_store_length(pos, id);
 
   int2store(pos, server_status);
   pos+=2;
@@ -188,7 +188,7 @@ net_send_ok(Session *session,
   if (message && message[0])
     pos= net_store_data(pos, (unsigned char*) message, strlen(message));
   drizzleclient_net_write(net, buff, (size_t) (pos-buff));
-  net_flush(net);
+  drizzleclient_net_flush(net);
 
   session->main_da.can_overwrite_status= false;
 }
@@ -221,7 +221,7 @@ net_send_eof(Session *session, uint32_t server_status, uint32_t total_warn_count
   {
     session->main_da.can_overwrite_status= true;
     write_eof_packet(session, net, server_status, total_warn_count);
-    net_flush(net);
+    drizzleclient_net_flush(net);
     session->main_da.can_overwrite_status= false;
   }
 }
@@ -283,13 +283,13 @@ void net_send_error_packet(Session *session, uint32_t sql_errno, const char *err
   length= (uint32_t)(tmp-(char*)buff);
   err= (char*) buff;
 
-  net_write_command(net,(unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
+  drizzleclient_net_write_command(net,(unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
   return;
 }
 
 
 /**
-  Faster net_store_length when we know that length is less than 65536.
+  Faster drizzleclient_net_store_length when we know that length is less than 65536.
   We keep a separate version for that range because it's widely used in
   libmysql.
 
@@ -299,7 +299,7 @@ void net_send_error_packet(Session *session, uint32_t sql_errno, const char *err
   - uint64_t for bigger numbers.
 */
 
-static unsigned char *net_store_length_fast(unsigned char *packet, uint32_t length)
+static unsigned char *drizzleclient_net_store_length_fast(unsigned char *packet, uint32_t length)
 {
   if (length < 251)
   {
@@ -362,7 +362,7 @@ static unsigned char *net_store_length_fast(unsigned char *packet, uint32_t leng
           Diagnostics_area::is_sent is set for debugging purposes only.
 */
 
-void net_end_statement(Session *session)
+void drizzleclient_net_end_statement(Session *session)
 {
   assert(! session->main_da.is_sent);
 
@@ -413,7 +413,7 @@ void net_end_statement(Session *session)
 
 unsigned char *net_store_data(unsigned char *to, const unsigned char *from, size_t length)
 {
-  to=net_store_length_fast(to,length);
+  to=drizzleclient_net_store_length_fast(to,length);
   memcpy(to,from,length);
   return to+length;
 }
@@ -422,7 +422,7 @@ unsigned char *net_store_data(unsigned char *to,int32_t from)
 {
   char buff[20];
   uint32_t length=(uint) (int10_to_str(from,buff,10)-buff);
-  to=net_store_length_fast(to,length);
+  to=drizzleclient_net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
 }
@@ -431,7 +431,7 @@ unsigned char *net_store_data(unsigned char *to,int64_t from)
 {
   char buff[22];
   uint32_t length=(uint) (int64_t10_to_str(from,buff,10)-buff);
-  to=net_store_length_fast(to,length);
+  to=drizzleclient_net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
 }
@@ -451,7 +451,7 @@ void Protocol::init(Session *session_arg)
 
 bool Protocol::flush()
 {
-  return net_flush(&session->net);
+  return drizzleclient_net_flush(&session->net);
 }
 
 
@@ -485,7 +485,7 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
 
   if (flags & SEND_NUM_ROWS)
   {				// Packet with number of elements
-    unsigned char *pos= net_store_length(buff, list->elements);
+    unsigned char *pos= drizzleclient_net_store_length(buff, list->elements);
     (void) drizzleclient_net_write(&session->net, buff, (size_t) (pos-buff));
   }
 

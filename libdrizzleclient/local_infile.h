@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
+bool drizzleclient_handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
 
 #ifdef  __cplusplus
 }

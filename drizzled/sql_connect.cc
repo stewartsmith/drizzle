@@ -163,7 +163,7 @@ static int check_connection(Session *session)
   {
     char ip[NI_MAXHOST];
 
-    if (net_peer_addr(net, ip, &session->peer_port, NI_MAXHOST))
+    if (drizzleclient_net_peer_addr(net, ip, &session->peer_port, NI_MAXHOST))
     {
       my_error(ER_BAD_HOST_ERROR, MYF(0), session->security_ctx.ip.c_str());
       return 1;
@@ -171,7 +171,7 @@ static int check_connection(Session *session)
 
     session->security_ctx.ip.assign(ip);
   }
-  net_keepalive(net, true);
+  drizzleclient_net_keepalive(net, true);
 
   uint32_t server_capabilites;
   {
@@ -199,7 +199,7 @@ static int check_connection(Session *session)
       procedure, scramble is set here. This gives us new scramble for
       each handshake.
     */
-    create_random_string(session->scramble, SCRAMBLE_LENGTH, &session->rand);
+    drizzleclient_create_random_string(session->scramble, SCRAMBLE_LENGTH, &session->rand);
     /*
       Old clients does not understand long scrambles, but can ignore packet
       tail: that's why first part of the scramble is placed here, and second
@@ -220,7 +220,7 @@ static int check_connection(Session *session)
     end+= scramble_len + 1;
 
     /* At this point we write connection message and read reply */
-    if (net_write_command(net, (unsigned char) protocol_version, (unsigned char*) "", 0,
+    if (drizzleclient_net_write_command(net, (unsigned char) protocol_version, (unsigned char*) "", 0,
                           (unsigned char*) buff, (size_t) (end-buff)) ||
 	(pkt_len= drizzleclient_net_read(net)) == packet_error ||
 	pkt_len < MIN_HANDSHAKE_SIZE)
@@ -374,7 +374,7 @@ bool login_connection(Session *session)
   lex_start(session);
 
   error= check_connection(session);
-  net_end_statement(session);
+  drizzleclient_net_end_statement(session);
 
   if (error)
   {						// Wrong permissions

@@ -94,7 +94,7 @@ char* getlogin(void);
 *****************************************************************************/
 safe_read_error_hook_func safe_read_error_hook= NULL;
 
-uint32_t cli_safe_read(DRIZZLE *drizzle)
+uint32_t drizzleclient_cli_safe_read(DRIZZLE *drizzle)
 {
   NET *net= &drizzle->net;
   uint32_t len=0;
@@ -110,7 +110,7 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
     drizzle_disconnect(drizzle);
     drizzle_set_error(drizzle, net->last_errno == CR_NET_PACKET_TOO_LARGE ?
                       CR_NET_PACKET_TOO_LARGE : CR_SERVER_LOST,
-                      sqlstate_get_unknown());
+                      drizzleclient_sqlstate_get_unknown());
     return (packet_error);
   }
   if (net->read_pos[0] == 255)
@@ -133,14 +133,14 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
           (unknown error sql state).
         */
 
-        strcpy(net->sqlstate, sqlstate_get_unknown());
+        strcpy(net->sqlstate, drizzleclient_sqlstate_get_unknown());
       }
 
       strncpy(net->last_error,(char*) pos, min((uint32_t) len,
               (uint32_t) sizeof(net->last_error)-1));
     }
     else
-      drizzle_set_error(drizzle, CR_UNKNOWN_ERROR, sqlstate_get_unknown());
+      drizzle_set_error(drizzle, CR_UNKNOWN_ERROR, drizzleclient_sqlstate_get_unknown());
     /*
       Cover a protocol design error: error packet does not
       contain the server status. Therefore, the client has no way
@@ -158,7 +158,7 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
 }
 
 bool
-cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
+drizzleclient_cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
          const unsigned char *header, uint32_t header_length,
          const unsigned char *arg, uint32_t arg_length, bool skip_check)
 {
@@ -175,11 +175,11 @@ cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
       drizzle->server_status & SERVER_MORE_RESULTS_EXISTS)
   {
     drizzle_set_error(drizzle, CR_COMMANDS_OUT_OF_SYNC,
-                      sqlstate_get_unknown());
+                      drizzleclient_sqlstate_get_unknown());
     return(1);
   }
 
-  net_clear_error(net);
+  drizzleclient_drizzleclient_net_clear_error(net);
   drizzle->info=0;
   drizzle->affected_rows= ~(uint64_t) 0;
   /*
@@ -187,35 +187,35 @@ cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
     the previous command was a shutdown command, we may have the
     response for the COM_QUIT already in the communication buffer
   */
-  net_clear(&drizzle->net, (command != COM_QUIT));
+  drizzleclient_net_clear(&drizzle->net, (command != COM_QUIT));
 
-  if (net_write_command(net,(unsigned char) command, header, header_length,
+  if (drizzleclient_net_write_command(net,(unsigned char) command, header, header_length,
       arg, arg_length))
   {
     if (net->last_errno == CR_NET_PACKET_TOO_LARGE)
     {
-      drizzle_set_error(drizzle, CR_NET_PACKET_TOO_LARGE, sqlstate_get_unknown());
+      drizzle_set_error(drizzle, CR_NET_PACKET_TOO_LARGE, drizzleclient_sqlstate_get_unknown());
       goto end;
     }
     drizzle_disconnect(drizzle);
     if (drizzle_reconnect(drizzle) || stmt_skip)
       goto end;
-    if (net_write_command(net,(unsigned char) command, header, header_length,
+    if (drizzleclient_net_write_command(net,(unsigned char) command, header, header_length,
         arg, arg_length))
     {
-      drizzle_set_error(drizzle, CR_SERVER_GONE_ERROR, sqlstate_get_unknown());
+      drizzle_set_error(drizzle, CR_SERVER_GONE_ERROR, drizzleclient_sqlstate_get_unknown());
       goto end;
     }
   }
   result=0;
   if (!skip_check)
-    result= ((drizzle->packet_length=cli_safe_read(drizzle)) == packet_error ?
+    result= ((drizzle->packet_length=drizzleclient_cli_safe_read(drizzle)) == packet_error ?
        1 : 0);
 end:
   return(result);
 }
 
-void free_old_query(DRIZZLE *drizzle)
+void drizzleclient_free_old_query(DRIZZLE *drizzle)
 {
   if (drizzle->fields)
   {
@@ -260,7 +260,7 @@ drizzle_free_result(DRIZZLE_RES *result)
           *drizzle->unbuffered_fetch_owner= true;
       }
     }
-    free_rows(result->data);
+    drizzleclient_free_rows(result->data);
     /* TODO: free result->fields */
     if (result->row)
       free((unsigned char*) result->row);
@@ -273,7 +273,7 @@ drizzle_free_result(DRIZZLE_RES *result)
 
 /* Read all rows (fields or data) from server */
 
-DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uint32_t fields)
+DRIZZLE_DATA *drizzleclient_cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uint32_t fields)
 {
   uint32_t  field;
   uint32_t pkt_len;
@@ -284,12 +284,12 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
   DRIZZLE_ROWS **prev_ptr,*cur;
   NET *net = &drizzle->net;
 
-  if ((pkt_len= cli_safe_read(drizzle)) == packet_error)
+  if ((pkt_len= drizzleclient_cli_safe_read(drizzle)) == packet_error)
     return(0);
   if (!(result=(DRIZZLE_DATA*) malloc(sizeof(DRIZZLE_DATA))))
   {
     drizzle_set_error(drizzle, CR_OUT_OF_MEMORY,
-                      sqlstate_get_unknown());
+                      drizzleclient_sqlstate_get_unknown());
     return(0);
   }
   memset(result, 0, sizeof(DRIZZLE_DATA));
@@ -301,7 +301,7 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
     The last EOF packet is either a 254 (0xFE) character followed by 1-7 status bytes.
 
     This doesn't conflict with normal usage of 254 which stands for a
-    string where the length of the string is 8 bytes. (see net_field_length())
+    string where the length of the string is 8 bytes. (see drizzleclient_net_field_length())
   */
 
   while (*(cp=net->read_pos) != DRIZZLE_PROTOCOL_NO_MORE_DATA || pkt_len >= 8)
@@ -310,8 +310,8 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
     if (!(cur= (DRIZZLE_ROWS*) malloc(sizeof(DRIZZLE_ROWS))) ||
         !(cur->data= ((DRIZZLE_ROW) malloc((fields+1)*sizeof(char *)+pkt_len))))
     {
-      free_rows(result);
-      drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, sqlstate_get_unknown());
+      drizzleclient_free_rows(result);
+      drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, drizzleclient_sqlstate_get_unknown());
       return(0);
     }
     *prev_ptr=cur;
@@ -320,7 +320,7 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
     end_to=to+pkt_len-1;
     for (field=0 ; field < fields ; field++)
     {
-      if ((len= net_field_length(&cp)) == NULL_LENGTH)
+      if ((len= drizzleclient_net_field_length(&cp)) == NULL_LENGTH)
       {            /* null field */
         cur->data[field] = 0;
       }
@@ -329,9 +329,9 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
         cur->data[field] = to;
         if (len > (uint32_t) (end_to - to))
         {
-          free_rows(result);
+          drizzleclient_free_rows(result);
           drizzle_set_error(drizzle, CR_MALFORMED_PACKET,
-                            sqlstate_get_unknown());
+                            drizzleclient_sqlstate_get_unknown());
           return(0);
         }
         memcpy(to, cp, len);
@@ -346,9 +346,9 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
       }
     }
     cur->data[field]=to;      /* End of last field */
-    if ((pkt_len=cli_safe_read(drizzle)) == packet_error)
+    if ((pkt_len=drizzleclient_cli_safe_read(drizzle)) == packet_error)
     {
-      free_rows(result);
+      drizzleclient_free_rows(result);
       return(0);
     }
   }
@@ -375,7 +375,7 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
   unsigned char *pos, *prev_pos, *end_pos;
   NET *net= &drizzle->net;
 
-  if ((pkt_len=cli_safe_read(drizzle)) == packet_error)
+  if ((pkt_len=drizzleclient_cli_safe_read(drizzle)) == packet_error)
     return -1;
   if (pkt_len <= 8 && net->read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA)
   {
@@ -391,7 +391,7 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
   end_pos=pos+pkt_len;
   for (field=0 ; field < fields ; field++)
   {
-    if ((len= net_field_length(&pos)) == NULL_LENGTH)
+    if ((len= drizzleclient_net_field_length(&pos)) == NULL_LENGTH)
     {            /* null field */
       row[field] = 0;
       *lengths++=0;
@@ -401,7 +401,7 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
       if (len > (uint32_t) (end_pos - pos))
       {
         drizzle_set_error(drizzle, CR_UNKNOWN_ERROR,
-                          sqlstate_get_unknown());
+                          drizzleclient_sqlstate_get_unknown());
         return -1;
       }
       row[field] = (char*) pos;
@@ -435,7 +435,7 @@ drizzle_fetch_row(DRIZZLE_RES *res)
         drizzle_set_error(drizzle,
                           res->unbuffered_fetch_cancelled ?
                           CR_FETCH_CANCELED : CR_COMMANDS_OUT_OF_SYNC,
-                          sqlstate_get_unknown());
+                          drizzleclient_sqlstate_get_unknown());
       }
       else if (!(read_one_row(drizzle, res->field_count, res->row, res->lengths)))
       {

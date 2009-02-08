@@ -40,7 +40,7 @@
 
   The new authentication is performed in following manner:
 
-  SERVER:  public_seed=create_random_string()
+  SERVER:  public_seed=drizzleclient_create_random_string()
            send(public_seed)
 
   CLIENT:  recv(public_seed)
@@ -73,13 +73,13 @@
 /*
   New (MySQL 3.21+) random generation structure initialization
   SYNOPSIS
-    randominit()
+    drizzleclient_drizzleclient_randominit()
     rand_st    OUT  Structure to initialize
     seed1      IN   First initialization parameter
     seed2      IN   Second initialization parameter
 */
 
-void randominit(struct rand_struct *rand_st, uint32_t seed1, uint32_t seed2)
+void drizzleclient_drizzleclient_randominit(struct rand_struct *rand_st, uint32_t seed1, uint32_t seed2)
 {                                               /* For mysql 3.21.# */
   memset(rand_st, 0, sizeof(*rand_st));      /* Avoid UMC varnings */
   rand_st->max_value= 0x3FFFFFFFL;
@@ -92,13 +92,13 @@ void randominit(struct rand_struct *rand_st, uint32_t seed1, uint32_t seed2)
 /*
     Generate random number.
   SYNOPSIS
-    my_rnd()
+    drizzleclient_my_rnd()
     rand_st    INOUT  Structure used for number generation
   RETURN VALUE
     generated pseudo random number
 */
 
-double my_rnd(struct rand_struct *rand_st)
+double drizzleclient_my_rnd(struct rand_struct *rand_st)
 {
   rand_st->seed1=(rand_st->seed1*3+rand_st->seed2) % rand_st->max_value;
   rand_st->seed2=(rand_st->seed1+rand_st->seed2+33) % rand_st->max_value;
@@ -110,13 +110,13 @@ double my_rnd(struct rand_struct *rand_st)
     Generate binary hash from raw text string
     Used for Pre-4.1 password handling
   SYNOPSIS
-    hash_password()
+    drizzleclient_hash_password()
     result       OUT store hash in this location
     password     IN  plain text password to build hash
     password_len IN  password length (password may be not null-terminated)
 */
 
-void hash_password(uint32_t *result, const char *password, uint32_t password_len)
+void drizzleclient_hash_password(uint32_t *result, const char *password, uint32_t password_len)
 {
   register uint32_t nr=1345345333L, add=7, nr2=0x12345671L;
   uint32_t tmp;
@@ -148,19 +148,19 @@ static inline uint8_t char_val(uint8_t X)
 /*
     Generate string of printable random characters of requested length
   SYNOPSIS
-    create_random_string()
+    drizzleclient_create_random_string()
     to       OUT   buffer for generation; must be at least length+1 bytes
                    long; result string is always null-terminated
     length   IN    how many random characters to put in buffer
     rand_st  INOUT structure used for number generation
 */
 
-void create_random_string(char *to, uint32_t length, struct rand_struct *rand_st)
+void drizzleclient_create_random_string(char *to, uint32_t length, struct rand_struct *rand_st)
 {
   char *end= to + length;
   /* Use pointer arithmetics as it is faster way to do so. */
   for (; to < end; to++)
-    *to= (char) (my_rnd(rand_st)*94+33);
+    *to= (char) (drizzleclient_my_rnd(rand_st)*94+33);
   *to= '\0';
 }
 
@@ -170,7 +170,7 @@ void create_random_string(char *to, uint32_t length, struct rand_struct *rand_st
     Convert given octet sequence to asciiz string of hex characters;
     str..str+len and 'to' may not overlap.
   SYNOPSIS
-    octet2hex()
+    drizzleclient_drizzleclient_octet2hex()
     buf       OUT output buffer. Must be at least 2*len+1 bytes
     str, len  IN  the beginning and the length of the input string
 
@@ -178,7 +178,7 @@ void create_random_string(char *to, uint32_t length, struct rand_struct *rand_st
     buf+len*2
 */
 
-char *octet2hex(char *to, const char *str, uint32_t len)
+char *drizzleclient_drizzleclient_octet2hex(char *to, const char *str, uint32_t len)
 {
   static const char _dig_vec_upper[]= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

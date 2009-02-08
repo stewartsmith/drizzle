@@ -41,28 +41,28 @@
 #define min(a, b)       ((a) < (b) ? (a) : (b))
 #endif
 
-const char * sqlstate_get_unknown(void);
-const char * sqlstate_get_not_error(void);
-const char * sqlstate_get_cant_connect(void);
+const char * drizzleclient_sqlstate_get_unknown(void);
+const char * drizzleclient_sqlstate_get_not_error(void);
+const char * drizzleclient_sqlstate_get_cant_connect(void);
 
 void drizzle_set_default_port(unsigned int port);
 void drizzle_set_error(DRIZZLE *drizzle, int errcode, const char *sqlstate);
 void drizzle_set_extended_error(DRIZZLE *drizzle, int errcode,
                                 const char *sqlstate,
                                 const char *format, ...);
-void free_old_query(DRIZZLE *drizzle);
+void drizzleclient_free_old_query(DRIZZLE *drizzle);
 
-int connect_with_timeout(int fd, const struct sockaddr *name,
+int drizzleclient_connect_with_timeout(int fd, const struct sockaddr *name,
                          unsigned int namelen, int32_t timeout);
 
 void drizzle_close_free_options(DRIZZLE *drizzle);
 void drizzle_close_free(DRIZZLE *drizzle);
 
 /* Hook Methods */
-bool cli_read_query_result(DRIZZLE *drizzle);
-DRIZZLE_RES *cli_use_result(DRIZZLE *drizzle);
-void cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column,
+bool drizzleclient_cli_read_query_result(DRIZZLE *drizzle);
+DRIZZLE_RES *drizzleclient_cli_use_result(DRIZZLE *drizzle);
+void drizzleclient_cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column,
                        uint32_t field_count);
-void cli_flush_use_result(DRIZZLE *drizzle);
+void drizzleclient_cli_flush_use_result(DRIZZLE *drizzle);
 
 #endif

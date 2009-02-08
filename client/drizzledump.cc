@@ -854,7 +854,7 @@ static int get_options(int *argc, char ***argv)
     return EX_USAGE;
   }
   if (tty_password)
-    opt_password=get_tty_password(NULL);
+    opt_password=drizzleclient_get_tty_password(NULL);
   return(0);
 } /* get_options */
 
@@ -2095,7 +2095,7 @@ static void dump_table(char *table, char *db)
                 if (opt_hex_blob && is_blob)
                 {
                   extended_row.append("0x");
-                  octet2hex(tmp_str, row[i], length);
+                  drizzleclient_drizzleclient_octet2hex(tmp_str, row[i], length);
                   extended_row.append(tmp_str);
                 }
                 else

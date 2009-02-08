@@ -46,7 +46,7 @@ drizzleclient_unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
   field= result= (DRIZZLE_FIELD*) malloc((unsigned int) sizeof(*field)*fields);
   if (!result)
   {
-    free_rows(data);        /* Free old data */
+    drizzleclient_free_rows(data);        /* Free old data */
     return(0);
   }
   memset((char*) field, 0, (unsigned int) sizeof(DRIZZLE_FIELD)*fields);
@@ -56,7 +56,7 @@ drizzleclient_unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
     unsigned char *pos;
     /* fields count may be wrong */
     assert((unsigned int) (field - result) < fields);
-    cli_fetch_lengths(&lengths[0], row->data, default_value ? 8 : 7);
+    drizzleclient_cli_fetch_lengths(&lengths[0], row->data, default_value ? 8 : 7);
     field->catalog=   strdup((char*) row->data[0]);
     field->db=        strdup((char*) row->data[1]);
     field->table=     strdup((char*) row->data[2]);
@@ -96,11 +96,11 @@ drizzleclient_unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
     field->max_length= 0;
   }
 
-  free_rows(data);        /* Free old data */
+  drizzleclient_free_rows(data);        /* Free old data */
   return(result);
 }
 
-void free_rows(DRIZZLE_DATA *cur)
+void drizzleclient_free_rows(DRIZZLE_DATA *cur)
 {
   if (cur)
   {

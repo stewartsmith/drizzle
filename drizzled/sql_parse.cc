@@ -367,7 +367,7 @@ bool do_command(Session *session)
     /* This assert is killing me - and tracking down why the error isn't
      * set here is a waste since the protocol lib is being replaced. */ 
     //assert(session->is_error());
-    net_end_statement(session);
+    drizzleclient_net_end_statement(session);
 
     if (net->error != 3)
     {
@@ -591,7 +591,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     {
       char *beginning_of_next_stmt= (char*) end_of_stmt;
 
-      net_end_statement(session);
+      drizzleclient_net_end_statement(session);
       /*
         Multiple queries exits, execute them individually
       */
@@ -757,7 +757,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     session->mysys_var->abort= 0;
   }
 
-  net_end_statement(session);
+  drizzleclient_net_end_statement(session);
 
   session->set_proc_info("closing tables");
   /* Free tables */

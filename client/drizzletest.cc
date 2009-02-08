@@ -3539,7 +3539,7 @@ static void do_close_connection(struct st_command *command)
   {
     if (con->drizzle.net.vio)
     {
-      net_close(&(con->drizzle.net));
+      drizzleclient_net_close(&(con->drizzle.net));
     }
   }
 
@@ -4717,7 +4717,7 @@ static int parse_args(int argc, char **argv)
   if (argc == 1)
     opt_db= *argv;
   if (tty_password)
-    opt_pass= get_tty_password(NULL);          /* purify tested */
+    opt_pass= drizzleclient_get_tty_password(NULL);          /* purify tested */
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
