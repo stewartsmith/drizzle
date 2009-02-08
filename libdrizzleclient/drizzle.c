@@ -275,7 +275,7 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
       if (sock < 0)
         continue;
 
-      net->vio= vio_new(sock, VIO_TYPE_TCPIP, VIO_BUFFERED_READ);
+      net->vio= drizzleclient_vio_new(sock, VIO_TYPE_TCPIP, VIO_BUFFERED_READ);
       if (! net->vio )
       {
         close(sock);
@@ -284,7 +284,7 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
 
       if (connect_with_timeout(sock, t_res->ai_addr, t_res->ai_addrlen, drizzle->options.connect_timeout))
       {
-        vio_delete(net->vio);
+        drizzleclient_vio_delete(net->vio);
         net->vio= 0;
         continue;
       }
@@ -303,12 +303,12 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
 
   if (drizzleclient_net_init(net, net->vio))
   {
-    vio_delete(net->vio);
+    drizzleclient_vio_delete(net->vio);
     net->vio = 0;
     drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, sqlstate_get_unknown());
     goto error;
   }
-  vio_keepalive(net->vio,true);
+  drizzleclient_vio_keepalive(net->vio,true);
 
   /* If user set read_timeout, let it override the default */
   if (drizzle->options.read_timeout)
@@ -324,7 +324,7 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
   /* Get version info */
   drizzle->protocol_version= PROTOCOL_VERSION;  /* Assume this */
   if (drizzle->options.connect_timeout &&
-      vio_poll_read(net->vio, drizzle->options.connect_timeout))
+      drizzleclient_vio_poll_read(net->vio, drizzle->options.connect_timeout))
   {
     drizzle_set_extended_error(drizzle, CR_SERVER_LOST, sqlstate_get_unknown(),
                                ER(CR_SERVER_LOST_INITIAL_COMM_WAIT),
@@ -583,7 +583,7 @@ void drizzle_disconnect(DRIZZLE *drizzle)
   int save_errno= errno;
   if (drizzle->net.vio != 0)
   {
-    vio_delete(drizzle->net.vio);
+    drizzleclient_vio_delete(drizzle->net.vio);
     drizzle->net.vio= 0;          /* Marker */
   }
   net_end(&drizzle->net);

@@ -75,7 +75,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
   msg_length= vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
   msgbuf[sizeof(msgbuf) - 1] = 0; // healthy paranoia
 
-  if (!session->vio_ok())
+  if (!session->drizzleclient_vio_ok())
   {
     errmsg_printf(ERRMSG_LVL_ERROR, "%s",msgbuf);
     return;

@@ -590,7 +590,7 @@ static void close_connections(void)
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
-    if (tmp->vio_ok())
+    if (tmp->drizzleclient_vio_ok())
     {
       if (global_system_variables.log_warnings)
             errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
@@ -3928,7 +3928,7 @@ void refresh_status(Session *session)
 bool safe_read_error_impl(NET *net)
 {
   if (net->vio)
-    return vio_was_interrupted(net->vio);
+    return drizzleclient_vio_was_interrupted(net->vio);
   return false;
 }
 
