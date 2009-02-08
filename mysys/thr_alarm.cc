@@ -459,7 +459,8 @@ void end_thr_alarm(bool free_structures)
     {
       struct timespec abstime;
 
-      assert(!alarm_stack.size());
+      // TODO: Is this assert a sensible thing?
+      //assert(!alarm_stack.size());
 
       /* Wait until alarm thread dies */
       set_timespec(abstime, 10);		/* Wait up to 10 seconds */
