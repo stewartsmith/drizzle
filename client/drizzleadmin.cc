@@ -36,7 +36,6 @@ static bool interrupted= false, opt_verbose= false,tty_password= false;
 static uint32_t tcp_port= 0, option_wait= 0, option_silent= 0;
 static uint32_t my_end_arg;
 static uint32_t opt_connect_timeout, opt_shutdown_timeout;
-static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 
 using namespace std;
 
@@ -229,8 +228,6 @@ int main(int argc,char *argv[])
     drizzle_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT, (char*) &tmp);
   }
 
-  error_flags= (myf)0;
-
   if (sql_connect(&drizzle, option_wait))
   {
     unsigned int err= drizzle_errno(&drizzle);
@@ -290,8 +287,8 @@ static bool sql_connect(DRIZZLE *drizzle, uint wait)
         if (!host)
           host= (char*) LOCAL_HOST;
 
-        my_printf_error(0,_("connect to server at '%s' failed\nerror: '%s'"),
-        error_flags, host, drizzle_error(drizzle));
+        fprintf(stderr,_("connect to server at '%s' failed\nerror: '%s'"),
+                host, drizzle_error(drizzle));
 
         if (drizzle_errno(drizzle) == CR_CONN_HOST_ERROR ||
           drizzle_errno(drizzle) == CR_UNKNOWN_HOST)
@@ -354,8 +351,8 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
 
       if (drizzle_shutdown(drizzle))
       {
-        my_printf_error(0, _("shutdown failed; error: '%s'"), error_flags,
-                        drizzle_error(drizzle));
+        fprintf(stderr, _("shutdown failed; error: '%s'"),
+                drizzle_error(drizzle));
         return -1;
       }
       drizzle_close(drizzle);	/* Close connection to avoid error messages */
@@ -383,8 +380,8 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
         }
         else
 	      {
-          my_printf_error(0,_("drizzled doesn't answer to ping, error: '%s'"),
-          error_flags, drizzle_error(drizzle));
+          fprintf(stderr,_("drizzled doesn't answer to ping, error: '%s'"),
+                  drizzle_error(drizzle));
           return -1;
         }
       }
@@ -392,7 +389,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       break;
 
     default:
-      my_printf_error(0, _("Unknown command: '%-.60s'"), error_flags, argv[0]);
+      fprintf(stderr, _("Unknown command: '%-.60s'"), argv[0]);
       return 1;
     }
   }
