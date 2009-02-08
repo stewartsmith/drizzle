@@ -19,12 +19,15 @@
 #include <mysys/my_pthread.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <mysys/queues.h>
 #include <mysys/thr_alarm.h>
+#include <drizzled/gettext.h>
 
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
+
+#include <vector>
+#include <algorithm>
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>				/* AIX needs this for fd_set */
@@ -56,7 +59,7 @@ static void process_alarm_part2(int sig);
 static pthread_mutex_t LOCK_alarm;
 static pthread_cond_t COND_alarm;
 static sigset_t full_signal_set;
-static QUEUE alarm_queue;
+static std::vector<ALARM*> alarm_stack;
 static uint32_t max_used_alarms=0;
 pthread_t alarm_thread;
 
@@ -67,6 +70,46 @@ static void *alarm_handler(void *arg);
 #define reschedule_alarms() pthread_kill(alarm_thread,THR_SERVER_ALARM)
 #endif
 
+class alarm_if 
+{
+  public:
+  inline bool operator()(ALARM *current_alarm)
+  {
+    current_alarm->alarmed= 1;           /* Info to thread */
+    if (pthread_equal(current_alarm->thread,alarm_thread) ||
+        pthread_kill(current_alarm->thread, thr_client_alarm))
+    {
+      return true;
+    }
+    return false;
+  }
+};
+
+class alarm_if_time
+{
+  time_t alarm_time;
+  time_t alarm_time_next;
+  public:
+  alarm_if_time(time_t now, time_t next) : alarm_time(now), alarm_time_next(next) { }
+  inline bool operator()(ALARM *current_alarm)
+  {
+    if (current_alarm->expire_time <= alarm_time)
+    {
+      current_alarm->alarmed= 1;          /* Info to thread */
+      if (pthread_equal(current_alarm->thread,alarm_thread) ||
+          pthread_kill(current_alarm->thread,thr_client_alarm))
+      {
+        return true;
+      }
+      else
+      {
+        current_alarm->expire_time= alarm_time_next;
+      }
+    }
+    return false;
+  }
+};
+      
 int compare_uint32_t(void *, unsigned char *a_ptr,unsigned char* b_ptr)
 {
   uint32_t a=*((uint32_t*) a_ptr),b= *((uint32_t*) b_ptr);
@@ -78,8 +121,7 @@ void init_thr_alarm(uint32_t max_alarms)
   sigset_t s;
   alarm_aborted=0;
   next_alarm_expire_time= ~ (time_t) 0;
-  init_queue(&alarm_queue,max_alarms+1,offsetof(ALARM,expire_time),0,
-	     compare_uint32_t,NULL);
+  alarm_stack.reserve(max_alarms+1);
   sigfillset(&full_signal_set);			/* Neaded to block signals */
   pthread_mutex_init(&LOCK_alarm,MY_MUTEX_INIT_FAST);
   pthread_cond_init(&COND_alarm,NULL);
@@ -130,8 +172,8 @@ void resize_thr_alarm(uint32_t max_alarms)
     It's ok not to shrink the queue as there may be more pending alarms than
     than max_alarms
   */
-  if (alarm_queue.elements < max_alarms)
-    resize_queue(&alarm_queue,max_alarms+1);
+  if (alarm_stack.capacity() < max_alarms)
+    alarm_stack.resize(max_alarms+1);
   pthread_mutex_unlock(&LOCK_alarm);
 }
 
@@ -167,7 +209,7 @@ bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
   now= time(NULL);
   if(now == (time_t)-1)
   {
-    fprintf(stderr, "%s: Warning: time() call failed\n", my_progname);
+    fprintf(stderr, _("%s: Warning: time() call failed\n"), my_progname);
     return 1;
   }
 
@@ -187,11 +229,11 @@ bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
   if (alarm_aborted < 0)
     sec= 1;					/* Abort mode */
 
-  if (alarm_queue.elements >= max_used_alarms)
+  if (alarm_stack.size() >= max_used_alarms)
   {
-    if (alarm_queue.elements == alarm_queue.max_elements)
+    if (alarm_stack.size() == alarm_stack.capacity())
     {
-      fprintf(stderr,"Warning: thr_alarm queue is full\n");
+      fprintf(stderr,_("Warning: thr_alarm queue is full\n"));
       *alrm= 0;					/* No alarm */
       pthread_mutex_unlock(&LOCK_alarm);
 #ifndef USE_ONE_SIGNAL_HAND
@@ -199,7 +241,7 @@ bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
 #endif
       return(1);
     }
-    max_used_alarms=alarm_queue.elements+1;
+    max_used_alarms= alarm_stack.size() + 1;
   }
   reschedule= (uint32_t) next_alarm_expire_time > (uint32_t) now + sec;
   if (!alarm_data)
@@ -221,7 +263,8 @@ bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
   alarm_data->alarmed=0;
   alarm_data->thread=    current_my_thread_var->pthread_self;
   alarm_data->thread_id= current_my_thread_var->id;
-  queue_insert(&alarm_queue,(unsigned char*) alarm_data);
+  /* No need to coerce to uchar* since std::vector<> is templatized */
+  alarm_stack.insert(alarm_stack.begin(),alarm_data);
 
   /* Reschedule alarm if the current one has more than sec left */
   if (reschedule)
@@ -253,7 +296,7 @@ void thr_end_alarm(thr_alarm_t *alarmed)
 #ifndef USE_ONE_SIGNAL_HAND
   sigset_t old_mask;
 #endif
-  uint32_t i, found=0;
+  uint32_t found=0;
 
 #ifndef USE_ONE_SIGNAL_HAND
   pthread_sigmask(SIG_BLOCK,&full_signal_set,&old_mask);
@@ -261,23 +304,24 @@ void thr_end_alarm(thr_alarm_t *alarmed)
   pthread_mutex_lock(&LOCK_alarm);
 
   alarm_data= (ALARM*) ((unsigned char*) *alarmed - offsetof(ALARM,alarmed));
-  for (i=0 ; i < alarm_queue.elements ; i++)
+  std::vector<ALARM*>::iterator p= alarm_stack.begin();
+  while (p != alarm_stack.end() && *p != alarm_data)
+    p++;
+  if (p != alarm_stack.end())
   {
-    if ((ALARM*) queue_element(&alarm_queue,i) == alarm_data)
-    {
-      queue_remove(&alarm_queue,i);
-      if (alarm_data->malloced)
-	free((unsigned char*) alarm_data);
-      found++;
-      break;
-    }
+    /* p now points to the current alarm pointer; remove it */
+    if (alarm_data->malloced)
+      free(*p);
+    alarm_stack.erase(p);
+    found= 1;
   }
   assert(!*alarmed || found == 1);
   if (!found)
   {
     if (*alarmed)
-      fprintf(stderr,"Warning: Didn't find alarm 0x%lx in queue of %d alarms\n",
-	      (long) *alarmed, alarm_queue.elements);
+      fprintf(stderr,_("Warning: Didn't find alarm 0x%lx"
+                       "in queue of %"PRIu64" alarms\n"),
+	      (long)*alarmed, (uint64_t)alarm_stack.size());
   }
   pthread_mutex_unlock(&LOCK_alarm);
 #ifndef USE_ONE_SIGNAL_HAND
@@ -325,27 +369,15 @@ void process_alarm(int sig)
 
 static void process_alarm_part2(int)
 {
-  ALARM *alarm_data;
-
-  if (alarm_queue.elements)
+  if (alarm_stack.size())
   {
     if (alarm_aborted)
     {
-      uint32_t i;
-      for (i=0 ; i < alarm_queue.elements ;)
-      {
-        alarm_data=(ALARM*) queue_element(&alarm_queue,i);
-        alarm_data->alarmed=1;			/* Info to thread */
-        if (pthread_equal(alarm_data->thread,alarm_thread) ||
-            pthread_kill(alarm_data->thread, thr_client_alarm))
-        {
-          queue_remove(&alarm_queue,i);		/* No thread. Remove alarm */
-        }
-        else
-          i++;					/* Signal next thread */
-      }
+      alarm_stack.erase(remove_if(alarm_stack.begin(),alarm_stack.end(),
+                        alarm_if()),alarm_stack.end());
+
 #ifndef USE_ALARM_THREAD
-      if (alarm_queue.elements)
+      if (alarm_stack.size())
         alarm(1);				/* Signal soon again */
 #endif
     }
@@ -353,27 +385,33 @@ static void process_alarm_part2(int)
     {
       time_t now= time(NULL);
       time_t next= now+10-(now%10);
-      while ((alarm_data= (ALARM*) queue_top(&alarm_queue))->expire_time <= now)
-      {
-        alarm_data->alarmed=1;			/* Info to thread */
-        if (pthread_equal(alarm_data->thread,alarm_thread) ||
-            pthread_kill(alarm_data->thread, thr_client_alarm))
-        {
-          queue_remove(&alarm_queue,0);		/* No thread. Remove alarm */
-          if (!alarm_queue.elements)
-            break;
-        }
-        else
-        {
-          alarm_data->expire_time=next;
-          queue_replaced(&alarm_queue);
-        }
-      }
+
+      alarm_stack.erase(remove_if(alarm_stack.begin(),alarm_stack.end(),
+                        alarm_if_time(now, next)),alarm_stack.end());
 #ifndef USE_ALARM_THREAD
-      if (alarm_queue.elements)
+      if (alarm_stack.size())
       {
-        alarm((uint32_t) (alarm_data->expire_time-now));
-        next_alarm_expire_time= alarm_data->expire_time;
+        std::vector<ALARM*>::iterator p= alarm_stack.begin();
+        ALARM *smallest_expire_time;
+        while (p != alarm_stack.end())
+        {
+          ALARM *current_alarm= *p;
+          if (!smallest_expire_time)
+          {
+            smallest_expire_time= current_alarm;
+          }
+          else
+          {
+            if (current_alarm->expire_time < smallest_expire_time->expire_time)
+              smallest_expire_time= current_alarm;
+          }
+          p++;
+        }
+        if (smallest_expire_time)
+        {
+          alarm((uint32_t) (smallest_expire_time->expire_time-now));
+          next_alarm_expire_time= smallest_expire_time->expire_time;
+        }
       }
 #endif
     }
@@ -410,7 +448,7 @@ void end_thr_alarm(bool free_structures)
   {
     pthread_mutex_lock(&LOCK_alarm);
     alarm_aborted= -1;				/* mark aborted */
-    if (alarm_queue.elements || (alarm_thread_running && free_structures))
+    if (alarm_stack.size() || (alarm_thread_running && free_structures))
     {
       if (pthread_equal(pthread_self(),alarm_thread))
 	alarm(1);				/* Shut down everything soon */
@@ -421,7 +459,7 @@ void end_thr_alarm(bool free_structures)
     {
       struct timespec abstime;
 
-      assert(!alarm_queue.elements);
+      assert(!alarm_stack.size());
 
       /* Wait until alarm thread dies */
       set_timespec(abstime, 10);		/* Wait up to 10 seconds */
@@ -431,7 +469,6 @@ void end_thr_alarm(bool free_structures)
 	if (error == ETIME || error == ETIMEDOUT)
 	  break;				/* Don't wait forever */
       }
-      delete_queue(&alarm_queue);
       alarm_aborted= 1;
       pthread_mutex_unlock(&LOCK_alarm);
       if (!alarm_thread_running)              /* Safety */
@@ -453,20 +490,21 @@ void end_thr_alarm(bool free_structures)
 
 void thr_alarm_kill(my_thread_id thread_id)
 {
-  uint32_t i;
   if (alarm_aborted)
     return;
   pthread_mutex_lock(&LOCK_alarm);
-  for (i=0 ; i < alarm_queue.elements ; i++)
+  std::vector<ALARM*>::iterator p= alarm_stack.begin();
+  while (p != alarm_stack.end())
   {
-    if (((ALARM*) queue_element(&alarm_queue,i))->thread_id == thread_id)
-    {
-      ALARM *tmp=(ALARM*) queue_remove(&alarm_queue,i);
-      tmp->expire_time=0;
-      queue_insert(&alarm_queue,(unsigned char*) tmp);
-      reschedule_alarms();
+    ALARM *current_alarm= *p;
+    if (current_alarm->thread_id == thread_id)
       break;
-    }
+    p++;
+  }
+  if (p != alarm_stack.end())
+  {
+    (*p)->expire_time= 0;
+    reschedule_alarms();
   }
   pthread_mutex_unlock(&LOCK_alarm);
 }
@@ -477,11 +515,11 @@ void thr_alarm_info(ALARM_INFO *info)
   pthread_mutex_lock(&LOCK_alarm);
   info->next_alarm_time= 0;
   info->max_used_alarms= max_used_alarms;
-  if ((info->active_alarms=  alarm_queue.elements))
+  if ((info->active_alarms=  alarm_stack.size()))
   {
     time_t now= time(NULL);
     long time_diff;
-    ALARM *alarm_data= (ALARM*) queue_top(&alarm_queue);
+    ALARM *alarm_data= (ALARM*) alarm_stack.front();
     time_diff= (long) (alarm_data->expire_time - now);
     info->next_alarm_time= (uint32_t) (time_diff < 0 ? 0 : time_diff);
   }
@@ -524,7 +562,7 @@ static void *alarm_handler(void *)
   pthread_mutex_lock(&LOCK_alarm);
   for (;;)
   {
-    if (alarm_queue.elements)
+    if (alarm_stack.size())
     {
       uint32_t sleep_time;
 
@@ -538,7 +576,7 @@ static void *alarm_handler(void *)
       if (alarm_aborted)
         sleep_time=now+1;
       else
-        sleep_time= ((ALARM*) queue_top(&alarm_queue))->expire_time;
+        sleep_time= ((ALARM*) alarm_stack.front())->expire_time;
       if (sleep_time > now)
       {
         abstime.tv_sec=sleep_time;

@@ -65,7 +65,7 @@ typedef bool ALARM;
 
 #else
 
-typedef int thr_alarm_entry;
+typedef unsigned int thr_alarm_entry;
 #define thr_got_alarm(thr_alarm) (**(thr_alarm))
 
 typedef thr_alarm_entry* thr_alarm_t;
