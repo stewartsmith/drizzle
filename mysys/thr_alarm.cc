@@ -373,7 +373,7 @@ static void process_alarm_part2(int)
   {
     if (alarm_aborted)
     {
-      alarm_stack.erase(remove_if(alarm_stack.begin(),alarm_stack.end(),
+      alarm_stack.erase(std::remove_if(alarm_stack.begin(),alarm_stack.end(),
                         alarm_if()),alarm_stack.end());
 
 #ifndef USE_ALARM_THREAD
@@ -386,7 +386,7 @@ static void process_alarm_part2(int)
       time_t now= time(NULL);
       time_t next= now+10-(now%10);
 
-      alarm_stack.erase(remove_if(alarm_stack.begin(),alarm_stack.end(),
+      alarm_stack.erase(std::remove_if(alarm_stack.begin(),alarm_stack.end(),
                         alarm_if_time(now, next)),alarm_stack.end());
 #ifndef USE_ALARM_THREAD
       if (alarm_stack.size())
