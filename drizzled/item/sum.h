@@ -30,7 +30,7 @@
 #include <drizzled/item/bin_string.h>
 
 
-class st_select_lex;
+class Select_Lex;
 struct order_st;
 
 /*
@@ -215,7 +215,7 @@ struct order_st;
   and reports an error if it is illegal.
   The method register_sum_func serves to link the items for the set functions
   that are aggregated in the embedding (sub)queries. Circular chains of such
-  functions are attached to the corresponding st_select_lex structures
+  functions are attached to the corresponding Select_Lex structures
   through the field inner_sum_func_list.
 
   Exploiting the fact that the members mentioned above are used in one
@@ -242,7 +242,7 @@ public:
   Item_sum *next; /* next in the circular chain of registered objects  */
   uint32_t arg_count;
   Item_sum *in_sum_func;  /* embedding set function if any */
-  st_select_lex * aggr_sel; /* select where the function is aggregated       */
+  Select_Lex * aggr_sel; /* select where the function is aggregated       */
   int8_t nest_level;        /* number of the nesting level of the set function */
   int8_t aggr_level;        /* nesting level of the aggregating subquery       */
   int8_t max_arg_level;     /* max level of unbound column references          */
@@ -381,7 +381,7 @@ public:
   bool init_sum_func_check(Session *session);
   bool check_sum_func(Session *session, Item **ref);
   bool register_sum_func(Session *session, Item **ref);
-  st_select_lex *depended_from()
+  Select_Lex *depended_from()
     { return (nest_level == aggr_level ? 0 : aggr_sel); }
 };
 
@@ -568,13 +568,13 @@ class Item_sum_count :public Item_sum_int
 };
 
 
-class TMP_TABLE_PARAM;
+class Tmp_Table_Param;
 
 class Item_sum_count_distinct :public Item_sum_int
 {
   Table *table;
   uint32_t *field_lengths;
-  TMP_TABLE_PARAM *tmp_table_param;
+  Tmp_Table_Param *tmp_table_param;
   bool force_copy_fields;
   /*
     If there are no blobs, we can use a tree, which
@@ -958,7 +958,7 @@ class DRIZZLE_ERROR;
 
 class Item_func_group_concat : public Item_sum
 {
-  TMP_TABLE_PARAM *tmp_table_param;
+  Tmp_Table_Param *tmp_table_param;
   DRIZZLE_ERROR *warning;
   String result;
   String *separator;

@@ -68,7 +68,7 @@ bool Item::is_expensive_processor(unsigned char *)
   return false;
 }
 
-void Item::fix_after_pullout(st_select_lex *, Item **)
+void Item::fix_after_pullout(Select_Lex *, Item **)
 {}
 
 
@@ -982,7 +982,7 @@ bool Item::fix_fields(Session *, Item **)
 
 
 /**
-  Mark item and SELECT_LEXs as dependent if item was resolved in
+  Mark item and Select_Lexs as dependent if item was resolved in
   outer SELECT.
 
   @param session             thread handler
@@ -993,7 +993,7 @@ bool Item::fix_fields(Session *, Item **)
                          substitution)
 */
 
-void mark_as_dependent(Session *session, SELECT_LEX *last, SELECT_LEX *current,
+void mark_as_dependent(Session *session, Select_Lex *last, Select_Lex *current,
                               Item_ident *resolved_item,
                               Item_ident *mark_item)
 {
@@ -1001,7 +1001,7 @@ void mark_as_dependent(Session *session, SELECT_LEX *last, SELECT_LEX *current,
                         resolved_item->db_name : "");
   const char *table_name= (resolved_item->table_name ?
                            resolved_item->table_name : "");
-  /* store pointer on SELECT_LEX from which item is dependent */
+  /* store pointer on Select_Lex from which item is dependent */
   if (mark_item)
     mark_item->depended_from= last;
   current->mark_as_dependent(last);
@@ -1040,8 +1040,8 @@ void mark_as_dependent(Session *session, SELECT_LEX *last, SELECT_LEX *current,
 */
 
 void mark_select_range_as_dependent(Session *session,
-                                    SELECT_LEX *last_select,
-                                    SELECT_LEX *current_sel,
+                                    Select_Lex *last_select,
+                                    Select_Lex *current_sel,
                                     Field *found_field, Item *found_item,
                                     Item_ident *resolved_item)
 {
@@ -1051,7 +1051,7 @@ void mark_select_range_as_dependent(Session *session,
     done once when we resolved this field and cached result of
     resolving)
   */
-  SELECT_LEX *previous_select= current_sel;
+  Select_Lex *previous_select= current_sel;
   for (; previous_select->outer_select() != last_select;
        previous_select= previous_select->outer_select())
   {
@@ -1226,7 +1226,7 @@ static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
 */
 
 Item**
-resolve_ref_in_select_and_group(Session *session, Item_ident *ref, SELECT_LEX *select)
+resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select_Lex *select)
 {
   Item **group_by_ref= NULL;
   Item **select_ref= NULL;

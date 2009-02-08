@@ -4138,8 +4138,8 @@ find_field_in_tables(Session *session, Item_ident *item,
         fields.
       */
       {
-        SELECT_LEX *current_sel= session->lex->current_select;
-        SELECT_LEX *last_select= table_ref->select_lex;
+        Select_Lex *current_sel= session->lex->current_select;
+        Select_Lex *last_select= table_ref->select_lex;
         /*
           If the field was an outer referencee, mark all selects using this
           sub query as dependent on the outer query
@@ -4914,7 +4914,7 @@ err:
     and materializes the row types of NATURAL/USING joins in a
     bottom-up manner until it reaches the TableList elements that
     represent the top-most NATURAL/USING joins. The procedure should be
-    applied to each element of SELECT_LEX::top_join_list (i.e. to each
+    applied to each element of Select_Lex::top_join_list (i.e. to each
     top-level element of the FROM clause).
 
   IMPLEMENTATION
@@ -5630,11 +5630,11 @@ int setup_conds(Session *session, TableList *,
                 TableList *leaves,
                 COND **conds)
 {
-  SELECT_LEX *select_lex= session->lex->current_select;
+  Select_Lex *select_lex= session->lex->current_select;
   TableList *table= NULL;	// For HP compilers
   void *save_session_marker= session->session_marker;
   /*
-    it_is_update set to true when tables of primary SELECT_LEX (SELECT_LEX
+    it_is_update set to true when tables of primary Select_Lex (Select_Lex
     which belong to LEX, i.e. most up SELECT) will be updated by
     INSERT/UPDATE/LOAD
     NOTE: using this condition helps to prevent call of prepare_check_option()

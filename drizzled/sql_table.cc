@@ -2403,7 +2403,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
                                                             HA_CHECK_OPT *))
 {
   TableList *table;
-  SELECT_LEX *select= &session->lex->select_lex;
+  Select_Lex *select= &session->lex->select_lex;
   List<Item> field_list;
   Item *item;
   Protocol *protocol= session->protocol;

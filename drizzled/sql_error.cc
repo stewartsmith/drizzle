@@ -208,8 +208,8 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
     return(true);
 
   DRIZZLE_ERROR *err;
-  SELECT_LEX *sel= &session->lex->select_lex;
-  SELECT_LEX_UNIT *unit= &session->lex->unit;
+  Select_Lex *sel= &session->lex->select_lex;
+  Select_Lex_Unit *unit= &session->lex->unit;
   ha_rows idx= 0;
   Protocol *protocol=session->protocol;
 

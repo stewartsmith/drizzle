@@ -42,7 +42,7 @@
    values, or it will break replication between version.
 
    context is encoded as following:
-   SELECT - SELECT_LEX_NODE::options
+   SELECT - Select_Lex_Node::options
    THD    - THD::options
    intern - neither. used only as
             func(..., select_node->options | thd->options | OPTION_XXX, ...)

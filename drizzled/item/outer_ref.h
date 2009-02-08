@@ -69,7 +69,7 @@ public:
     outer_ref->save_org_in_field(result_field);
   }
   bool fix_fields(Session *, Item **);
-  void fix_after_pullout(st_select_lex *new_parent, Item **ref);
+  void fix_after_pullout(Select_Lex *new_parent, Item **ref);
   table_map used_tables() const
   {
     return (*ref)->const_item() ? 0 : OUTER_REF_TABLE_BIT;

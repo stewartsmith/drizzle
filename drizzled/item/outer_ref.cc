@@ -49,7 +49,7 @@ bool Item_outer_ref::fix_fields(Session *session, Item **reference)
   return err;
 }
 
-void Item_outer_ref::fix_after_pullout(st_select_lex *new_parent,
+void Item_outer_ref::fix_after_pullout(Select_Lex *new_parent,
                                        Item **ref_item)
 {
   if (depended_from == new_parent)

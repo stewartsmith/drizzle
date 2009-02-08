@@ -168,7 +168,7 @@ int mysql_update(Session *session, TableList *table_list,
   Table		*table;
   SQL_SELECT	*select;
   READ_RECORD	info;
-  SELECT_LEX    *select_lex= &session->lex->select_lex;
+  Select_Lex    *select_lex= &session->lex->select_lex;
   bool          need_reopen;
   uint64_t     id;
   List<Item> all_fields;
@@ -726,7 +726,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
 			 Item **conds, uint32_t order_num, order_st *order)
 {
   List<Item> all_fields;
-  SELECT_LEX *select_lex= &session->lex->select_lex;
+  Select_Lex *select_lex= &session->lex->select_lex;
 
   session->lex->allow_sum_func= 0;
 
@@ -945,7 +945,7 @@ bool mysql_multi_update(Session *session,
                         COND *conds,
                         uint64_t options,
                         enum enum_duplicates handle_duplicates, bool ignore,
-                        SELECT_LEX_UNIT *unit, SELECT_LEX *select_lex)
+                        Select_Lex_Unit *unit, Select_Lex *select_lex)
 {
   multi_update *result;
   bool res;
@@ -998,7 +998,7 @@ multi_update::multi_update(TableList *table_list,
 */
 
 int multi_update::prepare(List<Item> &,
-                          SELECT_LEX_UNIT *)
+                          Select_Lex_Unit *)
 {
   TableList *table_ref;
   SQL_LIST update;
@@ -1060,7 +1060,7 @@ int multi_update::prepare(List<Item> &,
   update_tables= (TableList*) update.first;
 
   tmp_tables = (Table**) session->calloc(sizeof(Table *) * table_count);
-  tmp_table_param = (TMP_TABLE_PARAM*) session->calloc(sizeof(TMP_TABLE_PARAM) *
+  tmp_table_param = (Tmp_Table_Param*) session->calloc(sizeof(Tmp_Table_Param) *
 						   table_count);
   fields_for_table= (List_item **) session->alloc(sizeof(List_item *) *
 					      table_count);
@@ -1190,7 +1190,7 @@ multi_update::initialize_tables(JOIN *join)
     uint32_t cnt= table_ref->shared;
     List<Item> temp_fields;
     order_st     group;
-    TMP_TABLE_PARAM *tmp_param;
+    Tmp_Table_Param *tmp_param;
 
     table->mark_columns_needed_for_update();
     if (ignore)

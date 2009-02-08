@@ -61,8 +61,7 @@
 extern const CHARSET_INFO *system_charset_info, *files_charset_info ;
 extern const CHARSET_INFO *national_charset_info, *table_alias_charset;
 
-typedef class st_select_lex SELECT_LEX;
-typedef struct st_mysql_lock DRIZZLE_LOCK;
+typedef struct drizzled_lock_st DRIZZLE_LOCK;
 typedef struct st_ha_create_information HA_CREATE_INFO;
 
 /* information schema */

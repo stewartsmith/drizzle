@@ -1607,7 +1607,7 @@ bool schema_table_store_record(Session *session, Table *table)
   int error;
   if ((error= table->file->ha_write_row(table->record[0])))
   {
-    TMP_TABLE_PARAM *param= table->pos_in_table_list->schema_table_param;
+    Tmp_Table_Param *param= table->pos_in_table_list->schema_table_param;
 
     if (create_myisam_from_heap(session, table, param->start_recinfo,
                                 &param->recinfo, error, 0))
@@ -1617,7 +1617,7 @@ bool schema_table_store_record(Session *session, Table *table)
 }
 
 
-int make_table_list(Session *session, SELECT_LEX *sel,
+int make_table_list(Session *session, Select_Lex *sel,
                     LEX_STRING *db_name, LEX_STRING *table_name)
 {
   Table_ident *table_ident;
@@ -2402,11 +2402,11 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
 {
   LEX *lex= session->lex;
   Table *table= tables->table;
-  SELECT_LEX *old_all_select_lex= lex->all_selects_list;
+  Select_Lex *old_all_select_lex= lex->all_selects_list;
   enum_sql_command save_sql_command= lex->sql_command;
-  SELECT_LEX *lsel= tables->schema_select_lex;
+  Select_Lex *lsel= tables->schema_select_lex;
   ST_SCHEMA_TABLE *schema_table= tables->schema_table;
-  SELECT_LEX sel;
+  Select_Lex sel;
   LOOKUP_FIELD_VALUES lookup_field_vals;
   LEX_STRING *db_name, *table_name;
   bool with_i_schema;
@@ -3819,13 +3819,13 @@ Table *create_schema_table(Session *session, TableList *table_list)
     item->maybe_null= (fields_info->field_flags & MY_I_S_MAYBE_NULL);
     field_count++;
   }
-  TMP_TABLE_PARAM *tmp_table_param =
-    (TMP_TABLE_PARAM*) (session->alloc(sizeof(TMP_TABLE_PARAM)));
+  Tmp_Table_Param *tmp_table_param =
+    (Tmp_Table_Param*) (session->alloc(sizeof(Tmp_Table_Param)));
   tmp_table_param->init();
   tmp_table_param->table_charset= cs;
   tmp_table_param->field_count= field_count;
   tmp_table_param->schema_table= 1;
-  SELECT_LEX *select_lex= session->lex->current_select;
+  Select_Lex *select_lex= session->lex->current_select;
   if (!(table= create_tmp_table(session, tmp_table_param,
                                 field_list, (order_st*) 0, 0, 0,
                                 (select_lex->options | session->options |
@@ -3886,7 +3886,7 @@ int make_schemata_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
 {
   char tmp[128];
   LEX *lex= session->lex;
-  SELECT_LEX *sel= lex->current_select;
+  Select_Lex *sel= lex->current_select;
   Name_resolution_context *context= &sel->context;
 
   if (!sel->item_list.elements)
@@ -4049,7 +4049,7 @@ int mysql_schema_table(Session *session, LEX *, TableList *table_list)
   SYNOPSIS
     make_schema_select()
     session                  thread handler
-    sel                  pointer to SELECT_LEX
+    sel                  pointer to Select_Lex
     schema_table_idx     index of 'schema_tables' element
 
   RETURN
@@ -4057,7 +4057,7 @@ int mysql_schema_table(Session *session, LEX *, TableList *table_list)
     1   error
 */
 
-int make_schema_select(Session *session, SELECT_LEX *sel,
+int make_schema_select(Session *session, Select_Lex *sel,
 		       enum enum_schema_tables schema_table_idx)
 {
   ST_SCHEMA_TABLE *schema_table= get_schema_table(schema_table_idx);

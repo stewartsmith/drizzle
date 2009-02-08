@@ -21,6 +21,7 @@
 #define DRIZZLED_HANDLER_H
 
 #include <drizzled/xid.h>
+#include <drizzled/discrete_interval.h>
 
 /* Definitions for parameters to do with handler-routines */
 
@@ -50,6 +51,7 @@ typedef bool (*qc_engine_callback)(Session *session, char *table_key,
 class Table;
 class TableList;
 class TABLE_SHARE;
+class Select_Lex_Unit;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
 struct order_st;
@@ -58,8 +60,7 @@ class Item;
 struct st_table_log_memory_entry;
 
 class LEX;
-typedef class st_select_lex SELECT_LEX;
-typedef class st_select_lex_unit SELECT_LEX_UNIT;
+class Select_Lex;
 class Alter_info;
 class select_result;
 class Create_field;
@@ -1196,7 +1197,7 @@ int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,
 int setup_group(Session *session, Item **ref_pointer_array, TableList *tables,
                 List<Item> &fields, List<Item> &all_fields, order_st *order,
                 bool *hidden_group_fields);
-bool fix_inner_refs(Session *session, List<Item> &all_fields, SELECT_LEX *select,
+bool fix_inner_refs(Session *session, List<Item> &all_fields, Select_Lex *select,
                     Item **ref_pointer_array);
 
 bool handle_select(Session *session, LEX *lex, select_result *result,
@@ -1205,15 +1206,15 @@ bool mysql_select(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
                   COND *conds, uint32_t og_num, order_st *order, order_st *group,
                   Item *having, order_st *proc_param, uint64_t select_type,
-                  select_result *result, SELECT_LEX_UNIT *unit,
-                  SELECT_LEX *select_lex);
-void free_underlaid_joins(Session *session, SELECT_LEX *select);
-bool mysql_explain_union(Session *session, SELECT_LEX_UNIT *unit,
+                  select_result *result, Select_Lex_Unit *unit,
+                  Select_Lex *select_lex);
+void free_underlaid_joins(Session *session, Select_Lex *select);
+bool mysql_explain_union(Session *session, Select_Lex_Unit *unit,
                          select_result *result);
-int mysql_explain_select(Session *session, SELECT_LEX *sl, char const *type,
+int mysql_explain_select(Session *session, Select_Lex *sl, char const *type,
                          select_result *result);
 bool mysql_union(Session *session, LEX *lex, select_result *result,
-                 SELECT_LEX_UNIT *unit, ulong setup_tables_done_option);
+                 Select_Lex_Unit *unit, ulong setup_tables_done_option);
 bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       LEX *lex,
                                                       TableList *table));
@@ -1257,7 +1258,7 @@ bool mysql_multi_update(Session *session, TableList *table_list,
                         List<Item> *fields, List<Item> *values,
                         COND *conds, uint64_t options,
                         enum enum_duplicates handle_duplicates, bool ignore,
-                        SELECT_LEX_UNIT *unit, SELECT_LEX *select_lex);
+                        Select_Lex_Unit *unit, Select_Lex *select_lex);
 bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,
                           List<Item> &update_fields,

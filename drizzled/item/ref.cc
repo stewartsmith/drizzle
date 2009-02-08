@@ -108,7 +108,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
 {
   enum_parsing_place place= NO_MATTER;
   assert(fixed == 0);
-  SELECT_LEX *current_sel= session->lex->current_select;
+  Select_Lex *current_sel= session->lex->current_select;
 
   if (!ref || ref == not_found_item)
   {
@@ -144,7 +144,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
 
       do
       {
-        SELECT_LEX *select= outer_context->select_lex;
+        Select_Lex *select= outer_context->select_lex;
         Item_subselect *prev_subselect_item=
           last_checked_context->select_lex->master_unit()->item;
         last_checked_context= outer_context;
@@ -564,7 +564,7 @@ Item *Item_ref::get_tmp_table_item(Session *session)
   return item;
 }
 
-void Item_ref::fix_after_pullout(st_select_lex *new_parent, Item **)
+void Item_ref::fix_after_pullout(Select_Lex *new_parent, Item **)
 {
   if (depended_from == new_parent)
   {

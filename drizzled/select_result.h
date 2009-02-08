@@ -24,7 +24,7 @@
 class select_result :public Sql_alloc {
 protected:
   Session *session;
-  SELECT_LEX_UNIT *unit;
+  Select_Lex_Unit *unit;
 public:
   select_result()
   {
@@ -32,7 +32,7 @@ public:
   }
   virtual ~select_result() {};
   virtual int prepare(List<Item> &,
-                      SELECT_LEX_UNIT *u)
+                      Select_Lex_Unit *u)
   {
     unit= u;
     return 0;
