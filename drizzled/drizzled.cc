@@ -1169,7 +1169,8 @@ void unlink_session(Session *session)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   thread_count--;
   delete session;
-  return;;
+  pthread_mutex_unlock(&LOCK_thread_count);
+  return;
 }
 
 
@@ -1523,8 +1524,6 @@ pthread_handler_t signal_hand(void *)
     At this pointer there is no other threads running, so there
     should not be any other pthread_cond_signal() calls.
   */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
 
   (void) pthread_sigmask(SIG_BLOCK,&set,NULL);
