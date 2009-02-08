@@ -334,13 +334,13 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzleclient/libdrizzleclient.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(LTLIBZ) $(LIBINTL)
+	$(LIBZ) $(LIBINTL)
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 @mysql_plugin_libs@ \
-		 $(LDADD) $(LTLIBUUID) ${top_builddir}/gnulib/libgnu.la \
-		 $(LIBDL_LIBS) $(LTLIBEVENT) $(LTLIBPROTOBUF) $(PCRE_LIBS) \
+		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
+		 $(LIBDL_LIBS) $(LIBEVENT) $(LIBPROTOBUF) $(PCRE_LIBS) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
