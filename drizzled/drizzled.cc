@@ -243,7 +243,6 @@ static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
 static uint32_t wake_thread;
 static uint32_t killed_threads, thread_created;
-static uint32_t max_used_connections;
 static char *drizzled_user, *drizzled_chroot;
 static char *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
@@ -253,6 +252,8 @@ static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
+static struct pollfd fds[UINT8_MAX];
+static uint8_t pollfd_count= 0;
 
 /* Global variables */
 
@@ -269,12 +270,10 @@ bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
 bool opt_reckless_slave = 0;
 bool opt_enable_named_pipe= 0;
 bool opt_local_infile;
-bool opt_slave_compressed_protocol;
 bool opt_safe_user_create = 0;
 bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
 bool opt_log_slave_updates= 0;
-static struct pollfd fds[UINT8_MAX];
-static uint8_t pollfd_count= 0;
+uint32_t max_used_connections;
 
 size_t my_thread_stack_size= 65536;
 
@@ -354,7 +353,8 @@ const double log_10[] = {
   1e300, 1e301, 1e302, 1e303, 1e304, 1e305, 1e306, 1e307, 1e308
 };
 
-time_t server_start_time, flush_status_time;
+time_t server_start_time;
+time_t flush_status_time;
 
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
@@ -568,6 +568,7 @@ static void close_connections(void)
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
+  /* TODO This is a crappy way to handle this. Fix for proper shutdown. */
   if (thread_count)
     sleep(2);					// Give threads time to die
 
@@ -3875,36 +3876,6 @@ static void create_pid_file()
   }
   sql_perror("Can't start server: can't create PID file");
   exit(1);
-}
-
-/** Clear most status variables. */
-void refresh_status(Session *session)
-{
-  pthread_mutex_lock(&LOCK_status);
-
-  /* Add thread's status variabes to global status */
-  add_to_status(&global_status_var, &session->status_var);
-
-  /* Reset thread's status variables */
-  memset(&session->status_var, 0, sizeof(session->status_var));
-
-  /* Reset some global variables */
-  reset_status_vars();
-
-  /* Reset the counters of all key caches (default and named). */
-  process_key_caches(reset_key_cache_counters);
-  flush_status_time= time((time_t*) 0);
-  pthread_mutex_unlock(&LOCK_status);
-
-  /*
-    Set max_used_connections to the number of currently open
-    connections.  Lock LOCK_thread_count out of LOCK_status to avoid
-    deadlocks.  Status reset becomes not atomic, but status data is
-    not exact anyway.
-  */
-  pthread_mutex_lock(&LOCK_thread_count);
-  max_used_connections= thread_count;
-  pthread_mutex_unlock(&LOCK_thread_count);
 }
 
 bool safe_read_error_impl(NET *net)

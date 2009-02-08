@@ -1174,6 +1174,7 @@ public:
   {
     return lex->current_select->add_group_to_list(this, item, asc);
   }
+  void refresh_status();
 };
 
 /*
