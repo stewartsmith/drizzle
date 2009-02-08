@@ -285,7 +285,7 @@ DRIZZLE_FIELD *cli_list_fields(DRIZZLE *drizzle)
     return NULL;
 
   drizzle->field_count= (uint32_t) query->rows;
-  return unpack_fields(query, drizzle->field_count, 1);
+  return drizzleclient_unpack_fields(query, drizzle->field_count, 1);
 }
 
 
@@ -341,7 +341,7 @@ drizzle_list_processes(DRIZZLE *drizzle)
   field_count=(uint32_t) net_field_length(&pos);
   if (!(fields = (*drizzle->methods->read_rows)(drizzle,(DRIZZLE_FIELD*) 0, 7)))
     return(NULL);
-  if (!(drizzle->fields=unpack_fields(fields, field_count, 0)))
+  if (!(drizzle->fields=drizzleclient_unpack_fields(fields, field_count, 0)))
     return(0);
   drizzle->status=DRIZZLE_STATUS_GET_RESULT;
   drizzle->field_count=field_count;

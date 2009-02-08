@@ -36,7 +36,7 @@
 ***************************************************************************/
 
 DRIZZLE_FIELD *
-unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
+drizzleclient_unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
               bool default_value)
 {
   DRIZZLE_ROWS  *row;

@@ -54,7 +54,6 @@ void free_old_query(DRIZZLE *drizzle);
 
 int connect_with_timeout(int fd, const struct sockaddr *name,
                          unsigned int namelen, int32_t timeout);
-int wait_for_data(int fd, int32_t timeout);
 
 void drizzle_close_free_options(DRIZZLE *drizzle);
 void drizzle_close_free(DRIZZLE *drizzle);

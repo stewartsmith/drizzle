@@ -703,7 +703,7 @@ get_info:
 
   if (!(fields=cli_read_rows(drizzle,(DRIZZLE_FIELD*)0, 7)))
     return(1);
-  if (!(drizzle->fields= unpack_fields(fields, (uint32_t) field_count, 0)))
+  if (!(drizzle->fields= drizzleclient_unpack_fields(fields, (uint32_t) field_count, 0)))
     return(1);
   drizzle->status= DRIZZLE_STATUS_GET_RESULT;
   drizzle->field_count= (uint32_t) field_count;
