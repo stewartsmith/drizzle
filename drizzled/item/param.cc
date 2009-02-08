@@ -529,7 +529,7 @@ static char *str_to_hex(char *to, const char *from, uint32_t len)
   {
     *to++= '0';
     *to++= 'x';
-    to= octet2hex(to, from, len);
+    to= drizzleclient_drizzleclient_octet2hex(to, from, len);
   }
   else
     to= strcpy(to, "\"\"")+2;
@@ -545,7 +545,7 @@ static char *str_to_hex(char *to, const char *from, uint32_t len)
 */
 
 uint32_t
-drizzle_escape_string(char *to,const char *from, uint32_t length)
+drizzleclient_escape_string(char *to,const char *from, uint32_t length)
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + 2*length;
@@ -636,7 +636,7 @@ append_query_string(const CHARSET_INFO * const csinfo,
   else
   {
     *ptr++= '\'';
-    ptr+= drizzle_escape_string(ptr, from->ptr(), from->length());
+    ptr+= drizzleclient_escape_string(ptr, from->ptr(), from->length());
     *ptr++='\'';
   }
   to->length(orig_len + ptr - beg);

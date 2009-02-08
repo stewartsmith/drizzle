@@ -30,7 +30,7 @@
  * Helper to fill most of the Vio* with defaults.
  */
 
-static void vio_init(Vio* vio, enum enum_vio_type type,
+static void drizzleclient_vio_init(Vio* vio, enum enum_vio_type type,
                      int sd, uint32_t flags)
 {
   memset(vio, 0, sizeof(*vio));
@@ -40,42 +40,42 @@ static void vio_init(Vio* vio, enum enum_vio_type type,
       !(vio->read_buffer= (char*)malloc(VIO_READ_BUFFER_SIZE)))
     flags&= ~VIO_BUFFERED_READ;
   {
-    vio->viodelete	=vio_delete;
-    vio->vioerrno	=vio_errno;
-    vio->read= (flags & VIO_BUFFERED_READ) ? vio_read_buff : vio_read;
-    vio->write		=vio_write;
-    vio->fastsend	=vio_fastsend;
-    vio->viokeepalive	=vio_keepalive;
-    vio->should_retry	=vio_should_retry;
-    vio->was_interrupted=vio_was_interrupted;
-    vio->vioclose	=vio_close;
-    vio->peer_addr	=vio_peer_addr;
-    vio->vioblocking	=vio_blocking;
-    vio->is_blocking	=vio_is_blocking;
-    vio->timeout	=vio_timeout;
+    vio->viodelete	=drizzleclient_vio_delete;
+    vio->vioerrno	=drizzleclient_vio_errno;
+    vio->read= (flags & VIO_BUFFERED_READ) ? drizzleclient_vio_read_buff : drizzleclient_vio_read;
+    vio->write		=drizzleclient_vio_write;
+    vio->fastsend	=drizzleclient_vio_fastsend;
+    vio->viokeepalive	=drizzleclient_vio_keepalive;
+    vio->should_retry	=drizzleclient_vio_should_retry;
+    vio->was_interrupted=drizzleclient_vio_was_interrupted;
+    vio->vioclose	=drizzleclient_vio_close;
+    vio->peer_addr	=drizzleclient_vio_peer_addr;
+    vio->vioblocking	=drizzleclient_vio_blocking;
+    vio->is_blocking	=drizzleclient_vio_is_blocking;
+    vio->timeout	=drizzleclient_vio_timeout;
   }
 }
 
 
 /* Reset initialized VIO to use with another transport type */
 
-void vio_reset(Vio* vio, enum enum_vio_type type,
+void drizzleclient_vio_reset(Vio* vio, enum enum_vio_type type,
                int sd, uint32_t flags)
 {
   free(vio->read_buffer);
-  vio_init(vio, type, sd, flags);
+  drizzleclient_vio_init(vio, type, sd, flags);
 }
 
 
 /* Open the socket or TCP/IP connection and read the fnctl() status */
 
-Vio *vio_new(int sd, enum enum_vio_type type, uint32_t flags)
+Vio *drizzleclient_vio_new(int sd, enum enum_vio_type type, uint32_t flags)
 {
   Vio *vio = (Vio*) malloc(sizeof(Vio));
 
   if (vio != NULL)
   {
-    vio_init(vio, type, sd, flags);
+    drizzleclient_vio_init(vio, type, sd, flags);
     sprintf(vio->desc, "TCP/IP (%d)", vio->sd);
     /*
       We call fcntl() to set the flags and then immediately read them back
@@ -94,7 +94,7 @@ Vio *vio_new(int sd, enum enum_vio_type type, uint32_t flags)
 }
 
 
-void vio_delete(Vio* vio)
+void drizzleclient_vio_delete(Vio* vio)
 {
   if (!vio)
     return; /* It must be safe to delete null pointers. */
@@ -111,6 +111,6 @@ void vio_delete(Vio* vio)
   components below it when application finish
 
 */
-void vio_end(void)
+void drizzleclient_vio_end(void)
 {
 }

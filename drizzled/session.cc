@@ -555,7 +555,7 @@ Session::Session()
   const Query_id& local_query_id= Query_id::get_query_id();
   tablespace_op= false;
   tmp= sql_rnd();
-  randominit(&rand, tmp + (ulong) &rand, tmp + local_query_id.value());
+  drizzleclient_drizzleclient_randominit(&rand, tmp + (ulong) &rand, tmp + local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
@@ -740,8 +740,8 @@ Session::~Session()
   /* Close connection */
   if (net.vio)
   {
-    net_close(&net);
-    net_end(&net);
+    drizzleclient_net_close(&net);
+    drizzleclient_net_end(&net);
   }
   if (!cleanup_done)
     cleanup();
@@ -2382,7 +2382,7 @@ void Session::close_connection(uint32_t errcode, bool should_lock)
   {
     if (errcode)
       net_send_error(this, errcode, ER(errcode)); /* purecov: inspected */
-    net_close(&net);		/* vio is freed in delete session */
+    drizzleclient_net_close(&net);		/* vio is freed in delete session */
   }
   if (should_lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);

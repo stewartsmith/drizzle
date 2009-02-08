@@ -33,18 +33,18 @@
 
 #include <netdb.h>
 
-int vio_errno(Vio *vio)
+int drizzleclient_vio_errno(Vio *vio)
 {
   (void)vio;
   return errno;
 }
 
 
-size_t vio_read(Vio * vio, unsigned char* buf, size_t size)
+size_t drizzleclient_vio_read(Vio * vio, unsigned char* buf, size_t size)
 {
   size_t r;
 
-  /* Ensure nobody uses vio_read_buff and vio_read simultaneously */
+  /* Ensure nobody uses drizzleclient_vio_read_buff and drizzleclient_vio_read simultaneously */
   assert(vio->read_end == vio->read_pos);
   r= read(vio->sd, buf, size);
 
@@ -57,7 +57,7 @@ size_t vio_read(Vio * vio, unsigned char* buf, size_t size)
   reduce number of syscalls.
 */
 
-size_t vio_read_buff(Vio *vio, unsigned char* buf, size_t size)
+size_t drizzleclient_vio_read_buff(Vio *vio, unsigned char* buf, size_t size)
 {
   size_t rc;
 #define VIO_UNBUFFERED_READ_MIN_SIZE 2048
@@ -69,13 +69,13 @@ size_t vio_read_buff(Vio *vio, unsigned char* buf, size_t size)
     vio->read_pos+= rc;
     /*
       Do not try to read from the socket now even if rc < size:
-      vio_read can return -1 due to an error or non-blocking mode, and
+      drizzleclient_vio_read can return -1 due to an error or non-blocking mode, and
       the safest way to handle it is to move to a separate branch.
     */
   }
   else if (size < VIO_UNBUFFERED_READ_MIN_SIZE)
   {
-    rc= vio_read(vio, (unsigned char*) vio->read_buffer, VIO_READ_BUFFER_SIZE);
+    rc= drizzleclient_vio_read(vio, (unsigned char*) vio->read_buffer, VIO_READ_BUFFER_SIZE);
     if (rc != 0 && rc != (size_t) -1)
     {
       if (rc > size)
@@ -88,14 +88,14 @@ size_t vio_read_buff(Vio *vio, unsigned char* buf, size_t size)
     }
   }
   else
-    rc= vio_read(vio, buf, size);
+    rc= drizzleclient_vio_read(vio, buf, size);
 
   return rc;
 #undef VIO_UNBUFFERED_READ_MIN_SIZE
 }
 
 
-size_t vio_write(Vio * vio, const unsigned char* buf, size_t size)
+size_t drizzleclient_vio_write(Vio * vio, const unsigned char* buf, size_t size)
 {
   size_t r;
 
@@ -104,7 +104,7 @@ size_t vio_write(Vio * vio, const unsigned char* buf, size_t size)
   return r;
 }
 
-int vio_blocking(Vio * vio, bool set_blocking_mode, bool *old_mode)
+int drizzleclient_vio_blocking(Vio * vio, bool set_blocking_mode, bool *old_mode)
 {
   int r=0;
 
@@ -131,7 +131,7 @@ int vio_blocking(Vio * vio, bool set_blocking_mode, bool *old_mode)
 }
 
 bool
-vio_is_blocking(Vio * vio)
+drizzleclient_vio_is_blocking(Vio * vio)
 {
   bool r;
   r = !(vio->fcntl_mode & O_NONBLOCK);
@@ -140,7 +140,7 @@ vio_is_blocking(Vio * vio)
 }
 
 
-int vio_fastsend(Vio * vio)
+int drizzleclient_vio_fastsend(Vio * vio)
 {
   (void)vio;
   int nodelay = 1;
@@ -157,7 +157,7 @@ int vio_fastsend(Vio * vio)
   return error;
 }
 
-int32_t vio_keepalive(Vio* vio, bool set_keep_alive)
+int32_t drizzleclient_vio_keepalive(Vio* vio, bool set_keep_alive)
 {
   int r= 0;
   uint32_t opt= 0;
@@ -177,7 +177,7 @@ int32_t vio_keepalive(Vio* vio, bool set_keep_alive)
 
 
 bool
-vio_should_retry(Vio * vio)
+drizzleclient_vio_should_retry(Vio * vio)
 {
   (void)vio;
   int en = errno;
@@ -187,7 +187,7 @@ vio_should_retry(Vio * vio)
 
 
 bool
-vio_was_interrupted(Vio *vio)
+drizzleclient_vio_was_interrupted(Vio *vio)
 {
   (void)vio;
   int en= errno;
@@ -196,7 +196,7 @@ vio_was_interrupted(Vio *vio)
 }
 
 
-int vio_close(Vio * vio)
+int drizzleclient_vio_close(Vio * vio)
 {
   int r=0;
  if (vio->type != VIO_CLOSED)
@@ -214,22 +214,22 @@ int vio_close(Vio * vio)
 }
 
 
-const char *vio_description(Vio * vio)
+const char *drizzleclient_vio_description(Vio * vio)
 {
   return vio->desc;
 }
 
-enum enum_vio_type vio_type(Vio* vio)
+enum enum_vio_type drizzleclient_vio_type(Vio* vio)
 {
   return vio->type;
 }
 
-int vio_fd(Vio* vio)
+int drizzleclient_vio_fd(Vio* vio)
 {
   return vio->sd;
 }
 
-bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen)
+bool drizzleclient_vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen)
 {
   int error;
   char port_buf[NI_MAXSERV];
@@ -258,7 +258,7 @@ bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen)
 
 /* Return 0 if there is data to be read */
 
-bool vio_poll_read(Vio *vio, int32_t timeout)
+bool drizzleclient_vio_poll_read(Vio *vio, int32_t timeout)
 {
   struct pollfd fds;
   int res;
@@ -274,7 +274,7 @@ bool vio_poll_read(Vio *vio, int32_t timeout)
 }
 
 
-bool vio_peek_read(Vio *vio, uint32_t *bytes)
+bool drizzleclient_vio_peek_read(Vio *vio, uint32_t *bytes)
 {
   char buf[1024];
   ssize_t res= recv(vio->sd, &buf, sizeof(buf), MSG_PEEK);
@@ -285,7 +285,7 @@ bool vio_peek_read(Vio *vio, uint32_t *bytes)
   return false;
 }
 
-void vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout)
+void drizzleclient_vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout)
 {
   int error;
 

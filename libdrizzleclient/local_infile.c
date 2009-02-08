@@ -58,7 +58,7 @@
 
 #define MY_ALIGN(A,L)	(((A) + (L) - 1) & ~((L) - 1))
 
-bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
+bool drizzleclient_handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
 {
   bool result= true;
   uint32_t packet_length=MY_ALIGN(drizzle->net.max_packet-16,IO_SIZE);
@@ -66,7 +66,7 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   int readcount;
   void *li_ptr;          /* pass state to local_infile functions */
   char *buf;    /* buffer to be filled by local_infile_read */
-  struct st_drizzle_options *options= &drizzle->options;
+  struct st_drizzleclient_options *options= &drizzle->options;
 
   /* check that we've got valid callback functions */
   if (!(options->local_infile_init &&
@@ -75,13 +75,13 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   options->local_infile_error))
   {
     /* if any of the functions is invalid, set the default */
-    drizzle_set_local_infile_default(drizzle);
+    drizzleclient_set_local_infile_default(drizzle);
   }
 
   /* copy filename into local memory and allocate read buffer */
   if (!(buf=malloc(packet_length)))
   {
-    drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, sqlstate_get_unknown());
+    drizzleclient_set_error(drizzle, CR_OUT_OF_MEMORY, drizzleclient_sqlstate_get_unknown());
     return(1);
   }
 
@@ -89,9 +89,9 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   if ((*options->local_infile_init)(&li_ptr, net_filename,
     options->local_infile_userdata))
   {
-    (void)my_net_write(net,(const unsigned char*) "",0); /* Server needs one packet */
-    net_flush(net);
-    strcpy(net->sqlstate, sqlstate_get_unknown());
+    (void)drizzleclient_net_write(net,(const unsigned char*) "",0); /* Server needs one packet */
+    drizzleclient_net_flush(net);
+    strcpy(net->sqlstate, drizzleclient_sqlstate_get_unknown());
     net->last_errno=
       (*options->local_infile_error)(li_ptr,
                                      net->last_error,
@@ -104,16 +104,16 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
     (*options->local_infile_read)(li_ptr, buf,
           packet_length)) > 0)
   {
-    if (my_net_write(net, (unsigned char*) buf, readcount))
+    if (drizzleclient_net_write(net, (unsigned char*) buf, readcount))
     {
       goto err;
     }
   }
 
   /* Send empty packet to mark end of file */
-  if (my_net_write(net, (const unsigned char*) "", 0) || net_flush(net))
+  if (drizzleclient_net_write(net, (const unsigned char*) "", 0) || drizzleclient_net_flush(net))
   {
-    drizzle_set_error(drizzle, CR_SERVER_LOST, sqlstate_get_unknown());
+    drizzleclient_set_error(drizzle, CR_SERVER_LOST, drizzleclient_sqlstate_get_unknown());
     goto err;
   }
 
@@ -278,7 +278,7 @@ default_local_infile_error(void *ptr, char *error_msg, uint32_t error_msg_len)
 
 
 void
-drizzle_set_local_infile_handler(DRIZZLE *drizzle,
+drizzleclient_set_local_infile_handler(DRIZZLE *drizzle,
                                int (*local_infile_init)(void **, const char *,
                                void *),
                                int (*local_infile_read)(void *, char *, uint32_t),
@@ -294,7 +294,7 @@ drizzle_set_local_infile_handler(DRIZZLE *drizzle,
 }
 
 
-void drizzle_set_local_infile_default(DRIZZLE *drizzle)
+void drizzleclient_set_local_infile_default(DRIZZLE *drizzle)
 {
   drizzle->options.local_infile_init=  default_local_infile_init;
   drizzle->options.local_infile_read=  default_local_infile_read;

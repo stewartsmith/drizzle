@@ -30,7 +30,7 @@ void Item_func_rand::seed_random(Item *arg)
     args[0] is a constant.
   */
   uint32_t tmp= (uint32_t) arg->val_int();
-  randominit(rand, (uint32_t) (tmp*0x10001L+55555555L),
+  drizzleclient_drizzleclient_randominit(rand, (uint32_t) (tmp*0x10001L+55555555L),
              (uint32_t) (tmp*0x10000001L));
 }
 
@@ -71,6 +71,6 @@ double Item_func_rand::val_real()
   assert(fixed == 1);
   if (arg_count && !args[0]->const_item())
     seed_random (args[0]);
-  return my_rnd(rand);
+  return drizzleclient_my_rnd(rand);
 }
 

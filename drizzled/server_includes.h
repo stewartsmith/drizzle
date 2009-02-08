@@ -124,12 +124,10 @@ extern uint64_t slow_launch_threads;
 extern uint64_t slow_launch_time;
 extern uint64_t table_cache_size;
 extern uint64_t table_def_size;
-extern uint64_t max_connections;
 extern uint64_t max_connect_errors;
 extern uint64_t connect_timeout;
 extern uint32_t max_user_connections;
 extern ulong what_to_log;
-extern uint64_t open_files_limit;
 extern uint64_t max_relay_log_size;
 extern uint32_t back_log;
 extern pid_t current_pid;
@@ -171,7 +169,7 @@ extern const char *log_output_str;
 
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
-extern pthread_mutex_t LOCK_drizzle_create_db,LOCK_open, LOCK_lock_db,
+extern pthread_mutex_t LOCK_drizzleclient_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
        LOCK_timezone,
        LOCK_global_read_lock,

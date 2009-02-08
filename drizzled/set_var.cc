@@ -101,7 +101,6 @@ static void fix_net_read_timeout(Session *session, enum_var_type type);
 static void fix_net_write_timeout(Session *session, enum_var_type type);
 static void fix_net_retry_count(Session *session, enum_var_type type);
 static void fix_max_join_size(Session *session, enum_var_type type);
-static void fix_max_connections(Session *session, enum_var_type type);
 static void fix_session_mem_root(Session *session, enum_var_type type);
 static void fix_trans_mem_root(Session *session, enum_var_type type);
 static void fix_server_id(Session *session, enum_var_type type);
@@ -182,9 +181,6 @@ static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
                                          &opt_local_infile);
 static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
                                                        &SV::max_allowed_packet);
-static sys_var_long_ptr	sys_max_connections(&vars, "max_connections",
-                                            &max_connections,
-                                            fix_max_connections);
 static sys_var_long_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
                                                &max_connect_errors);
 static sys_var_session_uint64_t	sys_max_error_count(&vars, "max_error_count",
@@ -444,7 +440,6 @@ static SHOW_VAR fixed_vars[]= {
 #endif
   {"log_bin",                 (char*) &opt_bin_log,                 SHOW_BOOL},
   {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
-  {"open_files_limit",	      (char*) &open_files_limit,	          SHOW_LONGLONG},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
   {"port",                    (char*) &drizzled_port,               SHOW_INT},
@@ -586,14 +581,14 @@ static int check_completion_type(Session *, set_var *var)
 static void fix_net_read_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    my_net_set_read_timeout(&session->net, session->variables.net_read_timeout);
+    drizzleclient_net_set_read_timeout(&session->net, session->variables.net_read_timeout);
 }
 
 
 static void fix_net_write_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    my_net_set_write_timeout(&session->net, session->variables.net_write_timeout);
+    drizzleclient_net_set_write_timeout(&session->net, session->variables.net_write_timeout);
 }
 
 static void fix_net_retry_count(Session *session, enum_var_type type)
@@ -617,11 +612,6 @@ extern void fix_delay_key_write(Session *, enum_var_type)
     ha_open_options|= HA_OPEN_DELAY_KEY_WRITE;
     break;
   }
-}
-
-static void fix_max_connections(Session *, enum_var_type)
-{
-  resize_thr_alarm(max_connections +  10);
 }
 
 

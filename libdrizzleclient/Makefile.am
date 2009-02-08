@@ -27,13 +27,13 @@ dist_libdrizzleclientinclude_HEADERS =	\
 					drizzle_data.h \
 					drizzle_field.h \
 					drizzle_methods.h \
-					drizzle_options.h \
 					drizzle_parameters.h \
 					drizzle_res.h \
 					drizzle_rows.h \
 					libdrizzle.h \
 					errmsg.h \
 					net_serv.h \
+					options.h \
 					pack.h \
 					password.h \
 					vio.h
@@ -54,7 +54,7 @@ libdrizzleclient_la_SOURCES = client.c \
 			viosocket.c
 
 libdrizzleclient_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@
-libdrizzleclient_la_LIBADD = $(LTLIBZ)
+libdrizzleclient_la_LIBADD = $(LIBZ)
 
 noinst_HEADERS =	libdrizzle_priv.h \
 			local_infile.h

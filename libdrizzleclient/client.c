@@ -25,7 +25,7 @@
 
   - Things that only works for the client:
   - Trying to automaticly determinate user name if not supplied to
-    drizzle_connect()
+    drizzleclient_connect()
   - Support for reading local file with LOAD DATA LOCAL
   - SHARED memory handling
   - Prepared statements
@@ -94,23 +94,23 @@ char* getlogin(void);
 *****************************************************************************/
 safe_read_error_hook_func safe_read_error_hook= NULL;
 
-uint32_t cli_safe_read(DRIZZLE *drizzle)
+uint32_t drizzleclient_cli_safe_read(DRIZZLE *drizzle)
 {
   NET *net= &drizzle->net;
   uint32_t len=0;
 
   if (net->vio != 0)
-    len=my_net_read(net);
+    len=drizzleclient_net_read(net);
 
   if (len == packet_error || len == 0)
   {
     if (safe_read_error_hook != NULL)
       if (safe_read_error_hook(net))
         return (packet_error);
-    drizzle_disconnect(drizzle);
-    drizzle_set_error(drizzle, net->last_errno == CR_NET_PACKET_TOO_LARGE ?
+    drizzleclient_disconnect(drizzle);
+    drizzleclient_set_error(drizzle, net->last_errno == CR_NET_PACKET_TOO_LARGE ?
                       CR_NET_PACKET_TOO_LARGE : CR_SERVER_LOST,
-                      sqlstate_get_unknown());
+                      drizzleclient_sqlstate_get_unknown());
     return (packet_error);
   }
   if (net->read_pos[0] == 255)
@@ -133,14 +133,14 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
           (unknown error sql state).
         */
 
-        strcpy(net->sqlstate, sqlstate_get_unknown());
+        strcpy(net->sqlstate, drizzleclient_sqlstate_get_unknown());
       }
 
       strncpy(net->last_error,(char*) pos, min((uint32_t) len,
               (uint32_t) sizeof(net->last_error)-1));
     }
     else
-      drizzle_set_error(drizzle, CR_UNKNOWN_ERROR, sqlstate_get_unknown());
+      drizzleclient_set_error(drizzle, CR_UNKNOWN_ERROR, drizzleclient_sqlstate_get_unknown());
     /*
       Cover a protocol design error: error packet does not
       contain the server status. Therefore, the client has no way
@@ -158,7 +158,7 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
 }
 
 bool
-cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
+drizzleclient_cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
          const unsigned char *header, uint32_t header_length,
          const unsigned char *arg, uint32_t arg_length, bool skip_check)
 {
@@ -168,18 +168,18 @@ cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
 
   if (drizzle->net.vio == 0)
   {            /* Do reconnect if possible */
-    if (drizzle_reconnect(drizzle) || stmt_skip)
+    if (drizzleclient_reconnect(drizzle) || stmt_skip)
       return(1);
   }
   if (drizzle->status != DRIZZLE_STATUS_READY ||
       drizzle->server_status & SERVER_MORE_RESULTS_EXISTS)
   {
-    drizzle_set_error(drizzle, CR_COMMANDS_OUT_OF_SYNC,
-                      sqlstate_get_unknown());
+    drizzleclient_set_error(drizzle, CR_COMMANDS_OUT_OF_SYNC,
+                      drizzleclient_sqlstate_get_unknown());
     return(1);
   }
 
-  net_clear_error(net);
+  drizzleclient_drizzleclient_net_clear_error(net);
   drizzle->info=0;
   drizzle->affected_rows= ~(uint64_t) 0;
   /*
@@ -187,35 +187,35 @@ cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
     the previous command was a shutdown command, we may have the
     response for the COM_QUIT already in the communication buffer
   */
-  net_clear(&drizzle->net, (command != COM_QUIT));
+  drizzleclient_net_clear(&drizzle->net, (command != COM_QUIT));
 
-  if (net_write_command(net,(unsigned char) command, header, header_length,
+  if (drizzleclient_net_write_command(net,(unsigned char) command, header, header_length,
       arg, arg_length))
   {
     if (net->last_errno == CR_NET_PACKET_TOO_LARGE)
     {
-      drizzle_set_error(drizzle, CR_NET_PACKET_TOO_LARGE, sqlstate_get_unknown());
+      drizzleclient_set_error(drizzle, CR_NET_PACKET_TOO_LARGE, drizzleclient_sqlstate_get_unknown());
       goto end;
     }
-    drizzle_disconnect(drizzle);
-    if (drizzle_reconnect(drizzle) || stmt_skip)
+    drizzleclient_disconnect(drizzle);
+    if (drizzleclient_reconnect(drizzle) || stmt_skip)
       goto end;
-    if (net_write_command(net,(unsigned char) command, header, header_length,
+    if (drizzleclient_net_write_command(net,(unsigned char) command, header, header_length,
         arg, arg_length))
     {
-      drizzle_set_error(drizzle, CR_SERVER_GONE_ERROR, sqlstate_get_unknown());
+      drizzleclient_set_error(drizzle, CR_SERVER_GONE_ERROR, drizzleclient_sqlstate_get_unknown());
       goto end;
     }
   }
   result=0;
   if (!skip_check)
-    result= ((drizzle->packet_length=cli_safe_read(drizzle)) == packet_error ?
+    result= ((drizzle->packet_length=drizzleclient_cli_safe_read(drizzle)) == packet_error ?
        1 : 0);
 end:
   return(result);
 }
 
-void free_old_query(DRIZZLE *drizzle)
+void drizzleclient_free_old_query(DRIZZLE *drizzle)
 {
   if (drizzle->fields)
   {
@@ -243,7 +243,7 @@ void free_old_query(DRIZZLE *drizzle)
 
 
 void
-drizzle_free_result(DRIZZLE_RES *result)
+drizzleclient_free_result(DRIZZLE_RES *result)
 {
   if (result)
   {
@@ -260,7 +260,7 @@ drizzle_free_result(DRIZZLE_RES *result)
           *drizzle->unbuffered_fetch_owner= true;
       }
     }
-    free_rows(result->data);
+    drizzleclient_free_rows(result->data);
     /* TODO: free result->fields */
     if (result->row)
       free((unsigned char*) result->row);
@@ -273,7 +273,7 @@ drizzle_free_result(DRIZZLE_RES *result)
 
 /* Read all rows (fields or data) from server */
 
-DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uint32_t fields)
+DRIZZLE_DATA *drizzleclient_cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uint32_t fields)
 {
   uint32_t  field;
   uint32_t pkt_len;
@@ -284,12 +284,12 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
   DRIZZLE_ROWS **prev_ptr,*cur;
   NET *net = &drizzle->net;
 
-  if ((pkt_len= cli_safe_read(drizzle)) == packet_error)
+  if ((pkt_len= drizzleclient_cli_safe_read(drizzle)) == packet_error)
     return(0);
   if (!(result=(DRIZZLE_DATA*) malloc(sizeof(DRIZZLE_DATA))))
   {
-    drizzle_set_error(drizzle, CR_OUT_OF_MEMORY,
-                      sqlstate_get_unknown());
+    drizzleclient_set_error(drizzle, CR_OUT_OF_MEMORY,
+                      drizzleclient_sqlstate_get_unknown());
     return(0);
   }
   memset(result, 0, sizeof(DRIZZLE_DATA));
@@ -301,7 +301,7 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
     The last EOF packet is either a 254 (0xFE) character followed by 1-7 status bytes.
 
     This doesn't conflict with normal usage of 254 which stands for a
-    string where the length of the string is 8 bytes. (see net_field_length())
+    string where the length of the string is 8 bytes. (see drizzleclient_net_field_length())
   */
 
   while (*(cp=net->read_pos) != DRIZZLE_PROTOCOL_NO_MORE_DATA || pkt_len >= 8)
@@ -310,8 +310,8 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
     if (!(cur= (DRIZZLE_ROWS*) malloc(sizeof(DRIZZLE_ROWS))) ||
         !(cur->data= ((DRIZZLE_ROW) malloc((fields+1)*sizeof(char *)+pkt_len))))
     {
-      free_rows(result);
-      drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, sqlstate_get_unknown());
+      drizzleclient_free_rows(result);
+      drizzleclient_set_error(drizzle, CR_OUT_OF_MEMORY, drizzleclient_sqlstate_get_unknown());
       return(0);
     }
     *prev_ptr=cur;
@@ -320,7 +320,7 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
     end_to=to+pkt_len-1;
     for (field=0 ; field < fields ; field++)
     {
-      if ((len= net_field_length(&cp)) == NULL_LENGTH)
+      if ((len= drizzleclient_net_field_length(&cp)) == NULL_LENGTH)
       {            /* null field */
         cur->data[field] = 0;
       }
@@ -329,9 +329,9 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
         cur->data[field] = to;
         if (len > (uint32_t) (end_to - to))
         {
-          free_rows(result);
-          drizzle_set_error(drizzle, CR_MALFORMED_PACKET,
-                            sqlstate_get_unknown());
+          drizzleclient_free_rows(result);
+          drizzleclient_set_error(drizzle, CR_MALFORMED_PACKET,
+                            drizzleclient_sqlstate_get_unknown());
           return(0);
         }
         memcpy(to, cp, len);
@@ -346,9 +346,9 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
       }
     }
     cur->data[field]=to;      /* End of last field */
-    if ((pkt_len=cli_safe_read(drizzle)) == packet_error)
+    if ((pkt_len=drizzleclient_cli_safe_read(drizzle)) == packet_error)
     {
-      free_rows(result);
+      drizzleclient_free_rows(result);
       return(0);
     }
   }
@@ -375,7 +375,7 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
   unsigned char *pos, *prev_pos, *end_pos;
   NET *net= &drizzle->net;
 
-  if ((pkt_len=cli_safe_read(drizzle)) == packet_error)
+  if ((pkt_len=drizzleclient_cli_safe_read(drizzle)) == packet_error)
     return -1;
   if (pkt_len <= 8 && net->read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA)
   {
@@ -391,7 +391,7 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
   end_pos=pos+pkt_len;
   for (field=0 ; field < fields ; field++)
   {
-    if ((len= net_field_length(&pos)) == NULL_LENGTH)
+    if ((len= drizzleclient_net_field_length(&pos)) == NULL_LENGTH)
     {            /* null field */
       row[field] = 0;
       *lengths++=0;
@@ -400,8 +400,8 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
     {
       if (len > (uint32_t) (end_pos - pos))
       {
-        drizzle_set_error(drizzle, CR_UNKNOWN_ERROR,
-                          sqlstate_get_unknown());
+        drizzleclient_set_error(drizzle, CR_UNKNOWN_ERROR,
+                          drizzleclient_sqlstate_get_unknown());
         return -1;
       }
       row[field] = (char*) pos;
@@ -423,7 +423,7 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
 **************************************************************************/
 
 DRIZZLE_ROW
-drizzle_fetch_row(DRIZZLE_RES *res)
+drizzleclient_fetch_row(DRIZZLE_RES *res)
 {
   if (!res->data)
   {            /* Unbufferred fetch */
@@ -432,10 +432,10 @@ drizzle_fetch_row(DRIZZLE_RES *res)
       DRIZZLE *drizzle= res->handle;
       if (drizzle->status != DRIZZLE_STATUS_USE_RESULT)
       {
-        drizzle_set_error(drizzle,
+        drizzleclient_set_error(drizzle,
                           res->unbuffered_fetch_cancelled ?
                           CR_FETCH_CANCELED : CR_COMMANDS_OUT_OF_SYNC,
-                          sqlstate_get_unknown());
+                          drizzleclient_sqlstate_get_unknown());
       }
       else if (!(read_one_row(drizzle, res->field_count, res->row, res->lengths)))
       {
@@ -450,7 +450,7 @@ drizzle_fetch_row(DRIZZLE_RES *res)
       */
       if (drizzle->unbuffered_fetch_owner == &res->unbuffered_fetch_cancelled)
         drizzle->unbuffered_fetch_owner= 0;
-      /* Don't clear handle in drizzle_free_result */
+      /* Don't clear handle in drizzleclient_free_result */
       res->handle=0;
     }
     return((DRIZZLE_ROW) NULL);
@@ -470,12 +470,12 @@ drizzle_fetch_row(DRIZZLE_RES *res)
 
 /**************************************************************************
   Get column lengths of the current row
-  If one uses drizzle_use_result, res->lengths contains the length information,
+  If one uses drizzleclient_use_result, res->lengths contains the length information,
   else the lengths are calculated from the offset between pointers.
 **************************************************************************/
 
 uint32_t *
-drizzle_fetch_lengths(DRIZZLE_RES *res)
+drizzleclient_fetch_lengths(DRIZZLE_RES *res)
 {
   DRIZZLE_ROW column;
 
@@ -488,7 +488,7 @@ drizzle_fetch_lengths(DRIZZLE_RES *res)
 
 
 int
-drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
+drizzleclient_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
 {
   switch (option) {
   case DRIZZLE_OPT_CONNECT_TIMEOUT:
@@ -557,12 +557,12 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
 ****************************************************************************/
 
 /* DRIZZLE_RES */
-uint64_t drizzle_num_rows(const DRIZZLE_RES *res)
+uint64_t drizzleclient_num_rows(const DRIZZLE_RES *res)
 {
   return res->row_count;
 }
 
-unsigned int drizzle_num_fields(const DRIZZLE_RES *res)
+unsigned int drizzleclient_num_fields(const DRIZZLE_RES *res)
 {
   return res->field_count;
 }
@@ -572,7 +572,7 @@ unsigned int drizzle_num_fields(const DRIZZLE_RES *res)
   Get version number for server in a form easy to test on
 
   SYNOPSIS
-    drizzle_get_server_version()
+    drizzleclient_get_server_version()
     drizzle Connection
 
   EXAMPLE
@@ -586,7 +586,7 @@ unsigned int drizzle_num_fields(const DRIZZLE_RES *res)
 */
 
 uint32_t
-drizzle_get_server_version(const DRIZZLE *drizzle)
+drizzleclient_get_server_version(const DRIZZLE *drizzle)
 {
   uint32_t major, minor, version;
   char *pos= drizzle->server_version, *end_pos;

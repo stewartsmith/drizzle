@@ -26,9 +26,9 @@
 extern "C" {
 #endif
 
-  uint32_t net_field_length(unsigned char **packet);
-  uint64_t net_field_length_ll(unsigned char **packet);
-  unsigned char *net_store_length(unsigned char *pkg, uint64_t length);
+  uint32_t drizzleclient_net_field_length(unsigned char **packet);
+  uint64_t drizzleclient_drizzleclient_net_field_length_ll(unsigned char **packet);
+  unsigned char *drizzleclient_net_store_length(unsigned char *pkg, uint64_t length);
 
 #ifdef __cplusplus
 }

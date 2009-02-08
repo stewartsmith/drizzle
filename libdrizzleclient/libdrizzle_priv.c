@@ -28,31 +28,54 @@ const char  *unknown_sqlstate= "HY000";
 const char  *not_error_sqlstate= "00000";
 const char  *cant_connect_sqlstate= "08001";
 
-const char * sqlstate_get_unknown(void)
+const char * drizzleclient_sqlstate_get_unknown(void)
 {
   return unknown_sqlstate;
 }
 
-const char * sqlstate_get_not_error(void)
+const char * drizzleclient_sqlstate_get_not_error(void)
 {
   return not_error_sqlstate;
 }
 
-const char * sqlstate_get_cant_connect(void)
+const char * drizzleclient_sqlstate_get_cant_connect(void)
 {
   return cant_connect_sqlstate;
 }
 
+/*
+  Wait up to timeout seconds for a connection to be established.
+
+  We prefer to do this with poll() as there is no limitations with this.
+  If not, we will use select()
+*/
+
+static int wait_for_data(int fd, int32_t timeout)
+{
+  struct pollfd ufds;
+  int res;
+
+  ufds.fd= fd;
+  ufds.events= POLLIN | POLLPRI;
+  if (!(res= poll(&ufds, 1, (int) timeout*1000)))
+  {
+    errno= EINTR;
+    return -1;
+  }
+  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)) || (ufds.revents & POLLHUP))
+    return -1;
+  return 0;
+}
 /****************************************************************************
-  A modified version of connect().  connect_with_timeout() allows you to specify
+  A modified version of connect().  drizzleclient_connect_with_timeout() allows you to specify
   a timeout value, in seconds, that we should wait until we
   derermine we can't connect to a particular host.  If timeout is 0,
-  connect_with_timeout() will behave exactly like connect().
+  drizzleclient_connect_with_timeout() will behave exactly like connect().
 
   Base version coded by Steve Bernacki, Jr. <steve@navinet.net>
 *****************************************************************************/
 
-int connect_with_timeout(int fd, const struct sockaddr *name, uint32_t namelen, int32_t timeout)
+int drizzleclient_connect_with_timeout(int fd, const struct sockaddr *name, uint32_t namelen, int32_t timeout)
 {
   int flags, res, s_err;
 
@@ -83,26 +106,3 @@ int connect_with_timeout(int fd, const struct sockaddr *name, uint32_t namelen, 
   return wait_for_data(fd, timeout);
 }
 
-/*
-  Wait up to timeout seconds for a connection to be established.
-
-  We prefer to do this with poll() as there is no limitations with this.
-  If not, we will use select()
-*/
-
-int wait_for_data(int fd, int32_t timeout)
-{
-  struct pollfd ufds;
-  int res;
-
-  ufds.fd= fd;
-  ufds.events= POLLIN | POLLPRI;
-  if (!(res= poll(&ufds, 1, (int) timeout*1000)))
-  {
-    errno= EINTR;
-    return -1;
-  }
-  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)) || (ufds.revents & POLLHUP))
-    return -1;
-  return 0;
-}

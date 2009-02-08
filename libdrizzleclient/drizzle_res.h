@@ -47,7 +47,7 @@ extern "C" {
   DRIZZLE_ROW  row;      /* If unbuffered read */
   DRIZZLE_ROW  current_row;    /* buffer to current row */
   uint32_t  field_count, current_field;
-  bool  eof;      /* Used by drizzle_fetch_row */
+  bool  eof;      /* Used by drizzleclient_fetch_row */
   /* drizzle_stmt_close() had to cancel this result */
   bool       unbuffered_fetch_cancelled;
   void *extension;
@@ -59,22 +59,22 @@ extern "C" {
   Should definitely be used if one uses shared libraries.
 */
 
-uint64_t drizzle_num_rows(const DRIZZLE_RES *res);
-unsigned int drizzle_num_fields(const DRIZZLE_RES *res);
-bool drizzle_eof(const DRIZZLE_RES *res);
-const DRIZZLE_FIELD * drizzle_fetch_field_direct(const DRIZZLE_RES *res,
+uint64_t drizzleclient_num_rows(const DRIZZLE_RES *res);
+unsigned int drizzleclient_num_fields(const DRIZZLE_RES *res);
+bool drizzleclient_eof(const DRIZZLE_RES *res);
+const DRIZZLE_FIELD * drizzleclient_fetch_field_direct(const DRIZZLE_RES *res,
                 unsigned int fieldnr);
-const DRIZZLE_FIELD * drizzle_fetch_fields(const DRIZZLE_RES *res);
-DRIZZLE_ROW_OFFSET drizzle_row_tell(const DRIZZLE_RES *res);
-DRIZZLE_FIELD_OFFSET drizzle_field_tell(const DRIZZLE_RES *res);
+const DRIZZLE_FIELD * drizzleclient_fetch_fields(const DRIZZLE_RES *res);
+DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res);
+DRIZZLE_FIELD_OFFSET drizzleclient_field_tell(const DRIZZLE_RES *res);
 
-void    drizzle_free_result(DRIZZLE_RES *result);
-void    drizzle_data_seek(DRIZZLE_RES *result, uint64_t offset);
-DRIZZLE_ROW_OFFSET drizzle_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET offset);
-DRIZZLE_FIELD_OFFSET drizzle_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET offset);
-DRIZZLE_ROW  drizzle_fetch_row(DRIZZLE_RES *result);
-uint32_t * drizzle_fetch_lengths(DRIZZLE_RES *result);
-DRIZZLE_FIELD *  drizzle_fetch_field(DRIZZLE_RES *result);
+void    drizzleclient_free_result(DRIZZLE_RES *result);
+void    drizzleclient_data_seek(DRIZZLE_RES *result, uint64_t offset);
+DRIZZLE_ROW_OFFSET drizzleclient_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET offset);
+DRIZZLE_FIELD_OFFSET drizzleclient_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET offset);
+DRIZZLE_ROW  drizzleclient_fetch_row(DRIZZLE_RES *result);
+uint32_t * drizzleclient_fetch_lengths(DRIZZLE_RES *result);
+DRIZZLE_FIELD *  drizzleclient_fetch_field(DRIZZLE_RES *result);
 
 #ifdef  __cplusplus
 }

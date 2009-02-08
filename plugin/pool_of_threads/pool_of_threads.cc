@@ -341,7 +341,7 @@ static void libevent_connection_close(Session *session)
   assert(scheduler);
   session->killed= Session::KILL_CONNECTION;          // Avoid error messages
 
-  if (net_get_sd(&(session->net)) >= 0)                  // not already closed
+  if (drizzleclient_net_get_sd(&(session->net)) >= 0)                  // not already closed
   {
     end_connection(session);
     session->close_connection(0, 1);
@@ -364,7 +364,7 @@ static void libevent_connection_close(Session *session)
 
 bool libevent_should_close_connection(Session* session)
 {
-  return net_should_close(&(session->net)) ||
+  return drizzleclient_net_should_close(&(session->net)) ||
          session->killed == Session::KILL_CONNECTION;
 }
 
@@ -490,7 +490,7 @@ static bool libevent_needs_immediate_processing(Session *session)
     Note: we cannot add for event processing because the whole request might
     already be buffered and we wouldn't receive an event.
   */
-  if (net_more_data(&(session->net)))
+  if (drizzleclient_net_more_data(&(session->net)))
     return true;
 
   scheduler->thread_detach();

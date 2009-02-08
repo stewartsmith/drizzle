@@ -35,29 +35,28 @@ nobase_dist_drizzledinclude_HEADERS = \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
-		client_settings.h \
-		current_session.h \
 		common.h \
 		comp_creator.h \
 		connect.h \
 		cost_vect.h \
+		current_session.h \
 		data_home.h \
 		db.h \
 		definitions.h \
+		diagnostics_area.h \
 		discrete_interval.h \
 		dtcollation.h \
 		errmsg.h \
-		error.h \
 		errmsg_print.h \
+		error.h \
 		error_injection.h \
 		field.h \
-		field_iterator.h \
 		field/blob.h \
 		field/date.h \
 		field/datetime.h \
-		field/enum.h \
 		field/decimal.h \
 		field/double.h \
+		field/enum.h \
 		field/int64_t.h \
 		field/long.h \
 		field/longstr.h \
@@ -68,12 +67,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/timestamp.h \
 		field/timetype.h \
 		field/varstring.h \
+		field_iterator.h \
 		file_exchange.h \
 		filesort_info.h \
 		foreign_key.h \
-		function_hash.h \
-		function/ascii.h \
 		function/additive_op.h \
+		function/ascii.h \
 		function/benchmark.h \
 		function/bit.h \
 		function/bit_count.h \
@@ -85,25 +84,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/find_in_set.h \
 		function/found_rows.h \
 		function/func.h \
-		function/get_variable.h \
 		function/get_system_var.h \
 		function/get_user_var.h \
+		function/get_variable.h \
 		function/last_insert.h \
 		function/length.h \
 		function/locate.h \
-		function/min_max.h \
-		function/num1.h \
-		function/numhybrid.h \
-		function/num_op.h \
-		function/rollup_const.h \
-		function/row_count.h \
-		function/set_user_var.h \
-		function/sign.h \
-		function/signed.h \
-		function/units.h \
-		function/unsigned.h \
-		function/update_hash.h \
-		function/user_var_as_out_param.h \
 		function/math/abs.h \
 		function/math/acos.h \
 		function/math/asin.h \
@@ -115,10 +101,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/math/divide.h \
 		function/math/exp.h \
 		function/math/floor.h \
-		function/math/int_divide.h \
-		function/math/integer.h \
 		function/math/int.h \
+		function/math/int_divide.h \
 		function/math/int_val.h \
+		function/math/integer.h \
 		function/math/ln.h \
 		function/math/log.h \
 		function/math/minus.h \
@@ -134,6 +120,15 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/math/sin.h \
 		function/math/sqrt.h \
 		function/math/tan.h \
+		function/min_max.h \
+		function/num1.h \
+		function/num_op.h \
+		function/numhybrid.h \
+		function/rollup_const.h \
+		function/row_count.h \
+		function/set_user_var.h \
+		function/sign.h \
+		function/signed.h \
 		function/str/alloc_buffer.h \
 		function/str/binary.h \
 		function/str/char.h \
@@ -182,42 +177,48 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/get_interval_value.h \
 		function/time/hour.h \
 		function/time/last_day.h \
-		function/time/makedate.h \
-		function/time/make_datetime_with_warn.h \
 		function/time/make_datetime.h \
-		function/time/maketime.h \
+		function/time/make_datetime_with_warn.h \
 		function/time/make_time_with_warn.h \
+		function/time/makedate.h \
+		function/time/maketime.h \
 		function/time/microsecond.h \
 		function/time/minute.h \
 		function/time/month.h \
 		function/time/now.h \
-		function/time/quarter.h \
 		function/time/period_add.h \
 		function/time/period_diff.h \
+		function/time/quarter.h \
 		function/time/sec_to_time.h \
 		function/time/second.h \
+		function/time/str_timefunc.h \
 		function/time/str_to_date.h \
 		function/time/sysdate_local.h \
-		function/time/str_timefunc.h \
+		function/time/time_to_sec.h \
 		function/time/timediff.h \
 		function/time/timestamp_diff.h \
-		function/time/time_to_sec.h \
 		function/time/to_days.h \
 		function/time/typecast.h \
 		function/time/unix_timestamp.h \
 		function/time/weekday.h \
 		function/time/year.h  \
-		ha_trx_info.h \
+		function/units.h \
+		function/unsigned.h \
+		function/update_hash.h \
+		function/user_var_as_out_param.h \
+		function_hash.h \
 		ha_statistics.h \
+		ha_trx_info.h \
 		handler.h \
-		handlerton.h \
 		handler_structs.h \
+		handlerton.h \
 		hash_symbol.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
-	       	item.h \
+		internal_error_handler.h \
+		item.h \
 		item/basic_constant.h \
 		item/bin_string.h \
 		item/blob.h \
@@ -235,12 +236,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/empty_string.h \
 		item/field.h \
 		item/float.h \
-		item/hex_string.h \
-		item/insert_value.h \
-		item/int_with_ref.h \
 		item/func.h \
+		item/hex_string.h \
 		item/ident.h \
+		item/insert_value.h \
 		item/int.h \
+		item/int_with_ref.h \
 		item/null.h \
 		item/num.h \
 		item/outer_ref.h \
@@ -256,30 +257,35 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/type_holder.h \
 		item/uint.h \
 		key.h \
-                key_map.h \
+		key_map.h \
 		key_part_spec.h \
 		korr.h \
+		lex_column.h \
 		lex_string.h \
 		lex_symbol.h \
 		lock.h \
 		logging.h \
+		multi_delete.h \
+		multi_update.h \
 		my_decimal.h\
+		my_var.h \
 		name_resolution_context.h \
 		name_resolution_context_state.h \
 		natural_join_column.h \
 		nested_join.h \
+		open_tables_state.h \
 		opt_range.h \
 		order.h \
 		parser.h \
 		plugin.h \
 		plugin_authentication.h \
 		plugin_configvar.h \
-		plugin_replicator.h \
 		plugin_errmsg.h \
 		plugin_logging.h \
-		plugin_qcache.h \
 		plugin_parser.h \
-	 	plugin_scheduling.h \
+		plugin_qcache.h \
+		plugin_replicator.h \
+		plugin_scheduling.h \
 		probes.h \
 		protocol.h \
 		qcache.h \
@@ -288,9 +294,21 @@ nobase_dist_drizzledinclude_HEADERS = \
 		rename.h \
 		replicator.h \
 		scheduling.h \
+		security_context.h \
+		select_create.h \
+		select_dump.h \
+		select_dumpvar.h \
+		select_exists_subselect.h \
+		select_export.h \
+		select_insert.h \
+		select_max_min_finder_subselect.h \
 		select_result.h \
 		select_result_interceptor.h \
 		select_send.h \
+		select_singlerow_subselect.h \
+		select_subselect.h \
+		select_to_file.h \
+		select_union.h \
 		session.h \
 		set_var.h \
 		show.h \
@@ -316,15 +334,19 @@ nobase_dist_drizzledinclude_HEADERS = \
 		structs.h \
 		symbol_hash.h \
 		table.h \
+		table_ident.h \
 		table_list.h \
 		table_map_iterator.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
 		tmp_table.h \
+		tmp_table_param.h \
 		tzfile.h \
 		tztime.h \
+		unique.h \
 		unireg.h \
+		user_var_entry.h \
 		virtual_column_info.h \
 		xid.h
 
@@ -335,13 +357,13 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzleclient/libdrizzleclient.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(LTLIBZ) $(LIBINTL)
+	$(LIBZ) $(LIBINTL)
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 @mysql_plugin_libs@ \
-		 $(LDADD) $(LTLIBUUID) ${top_builddir}/gnulib/libgnu.la \
-		 $(LIBDL_LIBS) $(LTLIBEVENT) $(LTLIBPROTOBUF) $(PCRE_LIBS) \
+		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
+		 $(LIBDL_LIBS) $(LIBEVENT) $(LIBPROTOBUF) $(PCRE_LIBS) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 

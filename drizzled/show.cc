@@ -1050,7 +1050,7 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
     {
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if ((tmp->vio_ok() || tmp->system_thread) && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if ((tmp->drizzleclient_vio_ok() || tmp->system_thread) && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
         thread_info *session_info= new thread_info;
 
@@ -1146,7 +1146,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       struct st_my_thread_var *mysys_var;
       const char *val;
 
-      if ((!tmp->vio_ok() && !tmp->system_thread))
+      if ((!tmp->drizzleclient_vio_ok() && !tmp->system_thread))
         continue;
 
       restore_record(table, s->default_values);

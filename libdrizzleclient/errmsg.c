@@ -108,7 +108,7 @@ const char *client_errors[]=
 
 
 const char *
-get_client_error(unsigned int err_index)
+drizzleclient_get_client_error(unsigned int err_index)
 {
   return _(client_errors[err_index]);
 }

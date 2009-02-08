@@ -50,10 +50,10 @@ static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
 
 /** Init with packet info. */
 
-bool my_net_init(NET *net, Vio* vio)
+bool drizzleclient_net_init(NET *net, Vio* vio)
 {
   net->vio = vio;
-  my_net_local_init(net);            /* Set some limits */
+  drizzleclient_net_local_init(net);            /* Set some limits */
   if (!(net->buff=(unsigned char*) malloc((size_t) net->max_packet+
                                           NET_HEADER_SIZE + COMP_HEADER_SIZE)))
     return(1);
@@ -69,26 +69,26 @@ bool my_net_init(NET *net, Vio* vio)
 
   if (vio != 0)                    /* If real connection */
   {
-    net->fd  = vio_fd(vio);            /* For perl DBI/DBD */
-    vio_fastsend(vio);
+    net->fd  = drizzleclient_vio_fd(vio);            /* For perl DBI/DBD */
+    drizzleclient_vio_fastsend(vio);
   }
   return(0);
 }
 
-bool net_init_sock(NET * net, int sock, int flags)
+bool drizzleclient_net_init_sock(NET * net, int sock, int flags)
 {
 
-  Vio *vio_tmp= vio_new(sock, VIO_TYPE_TCPIP, flags);
-  if (vio_tmp == NULL)
+  Vio *drizzleclient_vio_tmp= drizzleclient_vio_new(sock, VIO_TYPE_TCPIP, flags);
+  if (drizzleclient_vio_tmp == NULL)
     return true;
   else
-    if (my_net_init(net, vio_tmp))
+    if (drizzleclient_net_init(net, drizzleclient_vio_tmp))
     {
       /* Only delete the temporary vio if we didn't already attach it to the
        * NET object.
        */
-      if (vio_tmp && (net->vio != vio_tmp))
-        vio_delete(vio_tmp);
+      if (drizzleclient_vio_tmp && (net->vio != drizzleclient_vio_tmp))
+        drizzleclient_vio_delete(drizzleclient_vio_tmp);
       else
       {
         (void) shutdown(sock, SHUT_RDWR);
@@ -99,7 +99,7 @@ bool net_init_sock(NET * net, int sock, int flags)
   return false;
 }
 
-void net_end(NET *net)
+void drizzleclient_net_end(NET *net)
 {
   if (net->buff != NULL)
     free(net->buff);
@@ -107,43 +107,43 @@ void net_end(NET *net)
   return;
 }
 
-void net_close(NET *net)
+void drizzleclient_net_close(NET *net)
 {
   if (net->vio != NULL)
   {
-    vio_delete(net->vio);
+    drizzleclient_vio_delete(net->vio);
     net->vio= 0;
   }
 }
 
-bool net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
+bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
 {
-  return vio_peer_addr(net->vio, buf, port, buflen);
+  return drizzleclient_vio_peer_addr(net->vio, buf, port, buflen);
 }
 
-void net_keepalive(NET *net, bool flag)
+void drizzleclient_net_keepalive(NET *net, bool flag)
 {
-  vio_keepalive(net->vio, flag);
+  drizzleclient_vio_keepalive(net->vio, flag);
 }
 
-int net_get_sd(NET *net)
+int drizzleclient_net_get_sd(NET *net)
 {
   return net->vio->sd;
 }
 
-bool net_should_close(NET *net)
+bool drizzleclient_net_should_close(NET *net)
 {
   return net->error || (net->vio == 0);
 }
 
-bool net_more_data(NET *net)
+bool drizzleclient_net_more_data(NET *net)
 {
   return (net->vio == 0 || net->vio->read_pos < net->vio->read_end);
 }
 
 /** Realloc the packet buffer. */
 
-bool net_realloc(NET *net, size_t length)
+bool drizzleclient_net_realloc(NET *net, size_t length)
 {
   unsigned char *buff;
   size_t pkt_length;
@@ -209,7 +209,7 @@ static bool net_data_is_ready(int sd)
    Read from socket until there is nothing more to read. Discard
    what is read.
 
-   If there is anything when to read 'net_clear' is called this
+   If there is anything when to read 'drizzleclient_net_clear' is called this
    normally indicates an error in the protocol.
 
    When connection is properly closed (for TCP it means with
@@ -220,14 +220,14 @@ static bool net_data_is_ready(int sd)
    @param clear_buffer           if <> 0, then clear all data from comm buff
 */
 
-void net_clear(NET *net, bool clear_buffer)
+void drizzleclient_net_clear(NET *net, bool clear_buffer)
 {
   if (clear_buffer)
   {
     while (net_data_is_ready(net->vio->sd) > 0)
     {
       /* The socket is ready */
-      if (vio_read(net->vio, net->buff,
+      if (drizzleclient_vio_read(net->vio, net->buff,
                    (size_t) net->max_packet) <= 0)
       {
         net->error= 2;
@@ -243,12 +243,12 @@ void net_clear(NET *net, bool clear_buffer)
 
 /** Flush write_buffer if not empty. */
 
-bool net_flush(NET *net)
+bool drizzleclient_net_flush(NET *net)
 {
   bool error= 0;
   if (net->buff != net->write_pos)
   {
-    error=net_real_write(net, net->buff,
+    error=drizzleclient_net_real_write(net, net->buff,
                          (size_t) (net->write_pos - net->buff)) ? 1 : 0;
     net->write_pos=net->buff;
   }
@@ -274,7 +274,7 @@ bool net_flush(NET *net)
 */
 
 bool
-my_net_write(NET *net,const unsigned char *packet,size_t len)
+drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
 {
   unsigned char buff[NET_HEADER_SIZE];
   if (unlikely(!net->vio)) /* nowhere to write */
@@ -331,7 +331,7 @@ my_net_write(NET *net,const unsigned char *packet,size_t len)
 */
 
 bool
-net_write_command(NET *net,unsigned char command,
+drizzleclient_net_write_command(NET *net,unsigned char command,
                   const unsigned char *header, size_t head_len,
                   const unsigned char *packet, size_t len)
 {
@@ -365,7 +365,7 @@ net_write_command(NET *net,unsigned char command,
   buff[3]= (unsigned char) net->pkt_nr++;
   return((net_write_buff(net, buff, header_size) ||
           (head_len && net_write_buff(net, header, head_len)) ||
-          net_write_buff(net, packet, len) || net_flush(net)) ? 1 : 0 );
+          net_write_buff(net, packet, len) || drizzleclient_net_flush(net)) ? 1 : 0 );
 }
 
 /**
@@ -383,9 +383,9 @@ net_write_command(NET *net,unsigned char command,
    @param len        Length of packet
 
    @note
-   The cached buffer can be sent as it is with 'net_flush()'.
+   The cached buffer can be sent as it is with 'drizzleclient_net_flush()'.
    In this code we have to be careful to not send a packet longer than
-   MAX_PACKET_LENGTH to net_real_write() if we are using the compressed
+   MAX_PACKET_LENGTH to drizzleclient_net_real_write() if we are using the compressed
    protocol as we store the length of the compressed packet in 3 bytes.
 
    @retval
@@ -409,7 +409,7 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
     {
       /* Fill up already used packet and write it */
       memcpy(net->write_pos,packet,left_length);
-      if (net_real_write(net, net->buff,
+      if (drizzleclient_net_real_write(net, net->buff,
                          (size_t) (net->write_pos - net->buff) + left_length))
         return 1;
       net->write_pos= net->buff;
@@ -425,14 +425,14 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
       left_length= MAX_PACKET_LENGTH;
       while (len > left_length)
       {
-        if (net_real_write(net, packet, left_length))
+        if (drizzleclient_net_real_write(net, packet, left_length))
           return 1;
         packet+= left_length;
         len-= left_length;
       }
     }
     if (len > net->max_packet)
-      return net_real_write(net, packet, len) ? 1 : 0;
+      return drizzleclient_net_real_write(net, packet, len) ? 1 : 0;
     /* Send out rest of the blocks as full sized blocks */
   }
   memcpy(net->write_pos,packet,len);
@@ -454,7 +454,7 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
   in the server, yield to another process and come back later.
 */
 int
-net_real_write(NET *net, const unsigned char *packet, size_t len)
+drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
   size_t length;
   const unsigned char *pos, *end;
@@ -549,9 +549,9 @@ net_real_write(NET *net, const unsigned char *packet, size_t len)
   while (pos != end)
   {
     assert(pos);
-    if ((long) (length= vio_write(net->vio, pos, (size_t) (end-pos))) <= 0)
+    if ((long) (length= drizzleclient_vio_write(net->vio, pos, (size_t) (end-pos))) <= 0)
     {
-      const bool interrupted= vio_should_retry(net->vio);
+      const bool interrupted= drizzleclient_vio_should_retry(net->vio);
       /*
         If we read 0, or we were interrupted this means that
         we need to switch to blocking mode and wait until the timeout
@@ -561,9 +561,9 @@ net_real_write(NET *net, const unsigned char *packet, size_t len)
       {
         bool old_mode;
 
-        while (vio_blocking(net->vio, true, &old_mode) < 0)
+        while (drizzleclient_vio_blocking(net->vio, true, &old_mode) < 0)
         {
-          if (vio_should_retry(net->vio) && retry_count++ < net->retry_count)
+          if (drizzleclient_vio_should_retry(net->vio) && retry_count++ < net->retry_count)
             continue;
           net->error= 2;                     /* Close socket */
           net->last_errno= CR_NET_PACKET_TOO_LARGE;
@@ -578,7 +578,7 @@ net_real_write(NET *net, const unsigned char *packet, size_t len)
           continue;
       }
 
-      if (vio_errno(net->vio) == EINTR)
+      if (drizzleclient_vio_errno(net->vio) == EINTR)
       {
         continue;
       }
@@ -606,7 +606,7 @@ end:
 
 /**
    Reads one packet to net->buff + net->where_b.
-   Long packets are handled by my_net_read().
+   Long packets are handled by drizzleclient_net_read().
    This function reallocates the net->buff buffer if necessary.
 
    @return
@@ -632,7 +632,7 @@ my_real_read(NET *net, size_t *complen)
   *complen = 0;
 
   net->reading_or_writing= 1;
-  /* Read timeout is set in my_net_set_read_timeout */
+  /* Read timeout is set in drizzleclient_net_set_read_timeout */
 
   pos = net->buff + net->where_b;        /* net->packet -4 */
 
@@ -667,22 +667,22 @@ my_real_read(NET *net, size_t *complen)
     while (remain > 0)
     {
       /* First read is done with non blocking mode */
-      if ((long) (length= vio_read(net->vio, pos, remain)) <= 0L)
+      if ((long) (length= drizzleclient_vio_read(net->vio, pos, remain)) <= 0L)
       {
-        const bool interrupted = vio_should_retry(net->vio);
+        const bool interrupted = drizzleclient_vio_should_retry(net->vio);
 
         if (interrupted)
         {                    /* Probably in MIT threads */
           if (retry_count++ < net->retry_count)
             continue;
         }
-        if (vio_errno(net->vio) == EINTR)
+        if (drizzleclient_vio_errno(net->vio) == EINTR)
         {
           continue;
         }
         len= packet_error;
         net->error= 2;                /* Close socket */
-        net->last_errno= (vio_was_interrupted(net->vio) ?
+        net->last_errno= (drizzleclient_vio_was_interrupted(net->vio) ?
                           CR_NET_READ_INTERRUPTED :
                           CR_NET_READ_ERROR);
         ER(net->last_errno);
@@ -718,7 +718,7 @@ my_real_read(NET *net, size_t *complen)
       /* The necessary size of net->buff */
       if (helping >= net->max_packet)
       {
-        if (net_realloc(net,helping))
+        if (drizzleclient_net_realloc(net,helping))
         {
           len= packet_error;          /* Return error and close connection */
           goto end;
@@ -759,7 +759,7 @@ end:
 */
 
 uint32_t
-my_net_read(NET *net)
+drizzleclient_net_read(NET *net)
 {
   size_t len, complen;
 
@@ -783,7 +783,7 @@ my_net_read(NET *net)
     }
     net->read_pos = net->buff + net->where_b;
     if (len != packet_error)
-      net->read_pos[len]=0;        /* Safeguard for drizzle_use_result */
+      net->read_pos[len]=0;        /* Safeguard for drizzleclient_use_result */
     return len;
   }
   else
@@ -903,29 +903,29 @@ my_net_read(NET *net)
     len = ((uint32_t) (start_of_packet - first_packet_offset) - NET_HEADER_SIZE -
            multi_byte_packet);
     net->save_char= net->read_pos[len];    /* Must be saved */
-    net->read_pos[len]=0;        /* Safeguard for drizzle_use_result */
+    net->read_pos[len]=0;        /* Safeguard for drizzleclient_use_result */
   }
   return len;
   }
 
 
-void my_net_set_read_timeout(NET *net, uint32_t timeout)
+void drizzleclient_net_set_read_timeout(NET *net, uint32_t timeout)
 {
   net->read_timeout= timeout;
 #ifndef __sun
   if (net->vio)
-    vio_timeout(net->vio, 0, timeout);
+    drizzleclient_vio_timeout(net->vio, 0, timeout);
 #endif
   return;
 }
 
 
-void my_net_set_write_timeout(NET *net, uint32_t timeout)
+void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout)
 {
   net->write_timeout= timeout;
 #ifndef __sun
   if (net->vio)
-    vio_timeout(net->vio, 1, timeout);
+    drizzleclient_vio_timeout(net->vio, 1, timeout);
 #endif
   return;
 }
@@ -935,10 +935,10 @@ void my_net_set_write_timeout(NET *net, uint32_t timeout)
   @param net  clear the state of the argument
 */
 
-void net_clear_error(NET *net)
+void drizzleclient_drizzleclient_net_clear_error(NET *net)
 {
   net->last_errno= 0;
   net->last_error[0]= '\0';
-  strcpy(net->sqlstate, sqlstate_get_not_error());
+  strcpy(net->sqlstate, drizzleclient_sqlstate_get_not_error());
 }
 

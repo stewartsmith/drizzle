@@ -1051,7 +1051,7 @@ static bool pack_header(unsigned char *forminfo,
           field->interval->type_lengths[pos]= hex_length;
           field->interval->type_names[pos]= dst= (char*) sql_alloc(hex_length +
                                                                    1);
-          octet2hex(dst, src, length);
+          drizzleclient_drizzleclient_octet2hex(dst, src, length);
         }
       }
 

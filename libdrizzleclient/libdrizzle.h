@@ -37,7 +37,7 @@
 #include "drizzle_field.h"
 #include "drizzle_rows.h"
 #include "drizzle_data.h"
-#include "drizzle_options.h"
+#include "options.h"
 
 #include "drizzle.h"
 #include "drizzle_parameters.h"
@@ -49,10 +49,10 @@
 extern "C" {
 #endif
 
-  const char * drizzle_get_client_info(void);
-  uint32_t drizzle_get_client_version(void);
-  unsigned int drizzle_get_default_port(void);
-  uint32_t drizzle_escape_string(char *to,const char *from,
+  const char * drizzleclient_get_client_info(void);
+  uint32_t drizzleclient_get_client_version(void);
+  unsigned int drizzleclient_get_default_port(void);
+  uint32_t drizzleclient_escape_string(char *to,const char *from,
                                  uint32_t from_length);
 
 #ifdef  __cplusplus

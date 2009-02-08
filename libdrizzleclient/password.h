@@ -36,12 +36,12 @@ extern "C" {
   };
 
 
-  void randominit(struct rand_struct *, uint32_t seed1, uint32_t seed2);
-  double my_rnd(struct rand_struct *);
-  void create_random_string(char *to, unsigned int length,
+  void drizzleclient_drizzleclient_randominit(struct rand_struct *, uint32_t seed1, uint32_t seed2);
+  double drizzleclient_my_rnd(struct rand_struct *);
+  void drizzleclient_create_random_string(char *to, unsigned int length,
                             struct rand_struct *rand_st);
 
-  void hash_password(uint32_t *to, const char *password,
+  void drizzleclient_hash_password(uint32_t *to, const char *password,
                      uint32_t password_len);
 
   void make_scrambled_password(char *to, const char *password);
@@ -50,7 +50,7 @@ extern "C" {
                       const unsigned char *hash_stage2);
   void get_salt_from_password(unsigned char *res, const char *password);
   void make_password_from_salt(char *to, const unsigned char *hash_stage2);
-  char *octet2hex(char *to, const char *str, unsigned int len);
+  char *drizzleclient_drizzleclient_octet2hex(char *to, const char *str, unsigned int len);
 
 #ifdef __cplusplus
 }

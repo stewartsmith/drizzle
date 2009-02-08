@@ -35,7 +35,7 @@ template class vector<string>;
 #define EX_USAGE 1
 #define EX_MYSQLERR 2
 
-static DRIZZLE drizzle_connection, *sock= 0;
+static DRIZZLE drizzleclient_connection, *sock= 0;
 static bool opt_alldbs= false, opt_check_only_changed= false,
             opt_extended= false, opt_compress= false, opt_databases= false,
             opt_fast= false, opt_medium_check= false, opt_quick= false,
@@ -193,7 +193,7 @@ int what_to_do = 0;
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n", my_progname, CHECK_VERSION,
-   drizzle_get_client_info(), SYSTEM_TYPE, MACHINE_TYPE);
+   drizzleclient_get_client_info(), SYSTEM_TYPE, MACHINE_TYPE);
 } /* print_version */
 
 static void usage(void)
@@ -381,7 +381,7 @@ static int get_options(int *argc, char ***argv)
     return 1;
   }
   if (tty_password)
-    opt_password = get_tty_password(NULL);
+    opt_password = drizzleclient_get_tty_password(NULL);
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
@@ -396,14 +396,14 @@ static int process_all_databases()
   DRIZZLE_RES *tableres;
   int result = 0;
 
-  if (drizzle_query(sock, "SHOW DATABASES") ||
-      !(tableres = drizzle_store_result(sock)))
+  if (drizzleclient_query(sock, "SHOW DATABASES") ||
+      !(tableres = drizzleclient_store_result(sock)))
   {
     my_printf_error(0, "Error: Couldn't execute 'SHOW DATABASES': %s",
-        MYF(0), drizzle_error(sock));
+        MYF(0), drizzleclient_error(sock));
     return 1;
   }
-  while ((row = drizzle_fetch_row(tableres)))
+  while ((row = drizzleclient_fetch_row(tableres)))
   {
     if (process_one_db(row[0]))
       result = 1;
@@ -510,11 +510,11 @@ static int process_all_tables_in_db(char *database)
 
   if (use_db(database))
     return 1;
-  if (drizzle_query(sock, "SHOW /*!50002 FULL*/ TABLES") ||
-  !((res= drizzle_store_result(sock))))
+  if (drizzleclient_query(sock, "SHOW /*!50002 FULL*/ TABLES") ||
+  !((res= drizzleclient_store_result(sock))))
     return 1;
 
-  num_columns= drizzle_num_fields(res);
+  num_columns= drizzleclient_num_fields(res);
 
   if (opt_all_in_1)
   {
@@ -527,16 +527,16 @@ static int process_all_tables_in_db(char *database)
     char *tables, *end;
     uint tot_length = 0;
 
-    while ((row = drizzle_fetch_row(res)))
+    while ((row = drizzleclient_fetch_row(res)))
       tot_length+= fixed_name_length(row[0]) + 2;
-    drizzle_data_seek(res, 0);
+    drizzleclient_data_seek(res, 0);
 
     if (!(tables=(char *) malloc(sizeof(char)*tot_length+4)))
     {
-      drizzle_free_result(res);
+      drizzleclient_free_result(res);
       return 1;
     }
-    for (end = tables + 1; (row = drizzle_fetch_row(res)) ;)
+    for (end = tables + 1; (row = drizzleclient_fetch_row(res)) ;)
     {
       if ((num_columns == 2) && (strcmp(row[1], "VIEW") == 0))
         continue;
@@ -551,7 +551,7 @@ static int process_all_tables_in_db(char *database)
   }
   else
   {
-    while ((row = drizzle_fetch_row(res)))
+    while ((row = drizzleclient_fetch_row(res)))
     {
       /* Skip views if we don't perform renaming. */
       if ((what_to_do != DO_UPGRADE) && (num_columns == 2) && (strcmp(row[1], "VIEW") == 0))
@@ -560,7 +560,7 @@ static int process_all_tables_in_db(char *database)
       handle_request_for_tables(row[0], fixed_name_length(row[0]));
     }
   }
-  drizzle_free_result(res);
+  drizzleclient_free_result(res);
   return 0;
 } /* process_all_tables_in_db */
 
@@ -573,10 +573,10 @@ static int fix_table_storage_name(const char *name)
   if (strncmp(name, "#mysql50#", 9))
     return 1;
   sprintf(qbuf, "RENAME TABLE `%s` TO `%s`", name, name + 9);
-  if (drizzle_query(sock, qbuf))
+  if (drizzleclient_query(sock, qbuf))
   {
     fprintf(stderr, "Failed to %s\n", qbuf);
-    fprintf(stderr, "Error: %s\n", drizzle_error(sock));
+    fprintf(stderr, "Error: %s\n", drizzleclient_error(sock));
     rc= 1;
   }
   if (verbose)
@@ -591,10 +591,10 @@ static int fix_database_storage_name(const char *name)
   if (strncmp(name, "#mysql50#", 9))
     return 1;
   sprintf(qbuf, "ALTER DATABASE `%s` UPGRADE DATA DIRECTORY NAME", name);
-  if (drizzle_query(sock, qbuf))
+  if (drizzleclient_query(sock, qbuf))
   {
     fprintf(stderr, "Failed to %s\n", qbuf);
-    fprintf(stderr, "Error: %s\n", drizzle_error(sock));
+    fprintf(stderr, "Error: %s\n", drizzleclient_error(sock));
     rc= 1;
   }
   if (verbose)
@@ -621,10 +621,10 @@ static int process_one_db(char *database)
 
 static int use_db(char *database)
 {
-  if (drizzle_get_server_version(sock) >= 50003 &&
+  if (drizzleclient_get_server_version(sock) >= 50003 &&
       !my_strcasecmp(&my_charset_utf8_general_ci, database, "information_schema"))
     return 1;
-  if (drizzle_select_db(sock, database))
+  if (drizzleclient_select_db(sock, database))
   {
     DBerror(sock, "when selecting the database");
     return 1;
@@ -684,7 +684,7 @@ static int handle_request_for_tables(const char *tables, uint length)
     ptr+= sprintf(ptr," %s",options);
     query_length= (uint) (ptr - query);
   }
-  if (drizzle_real_query(sock, query, query_length))
+  if (drizzleclient_real_query(sock, query, query_length))
   {
     sprintf(message, "when executing '%s TABLE ... %s'", op, options);
     DBerror(sock, message);
@@ -704,10 +704,10 @@ static void print_result()
   uint i;
   bool found_error=0;
 
-  res = drizzle_use_result(sock);
+  res = drizzleclient_use_result(sock);
 
   prev[0] = '\0';
-  for (i = 0; (row = drizzle_fetch_row(res)); i++)
+  for (i = 0; (row = drizzleclient_fetch_row(res)); i++)
   {
     int changed = strcmp(prev, row[0]);
     bool status = !strcmp(row[2], "status");
@@ -742,7 +742,7 @@ static void print_result()
   /* add the last table to be repaired to the list */
   if (found_error && opt_auto_repair && what_to_do != DO_REPAIR)
     tables4repair.push_back(string(prev));
-  drizzle_free_result(res);
+  drizzleclient_free_result(res);
 }
 
 
@@ -753,18 +753,18 @@ static int dbConnect(char *host, char *user, char *passwd)
   {
     fprintf(stderr, "# Connecting to %s...\n", host ? host : "localhost");
   }
-  drizzle_create(&drizzle_connection);
+  drizzleclient_create(&drizzleclient_connection);
   if (opt_compress)
-    drizzle_options(&drizzle_connection, DRIZZLE_OPT_COMPRESS, NULL);
+    drizzleclient_options(&drizzleclient_connection, DRIZZLE_OPT_COMPRESS, NULL);
   if (opt_protocol)
-    drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (!(sock = drizzle_connect(&drizzle_connection, host, user, passwd,
+    drizzleclient_options(&drizzleclient_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
+  if (!(sock = drizzleclient_connect(&drizzleclient_connection, host, user, passwd,
          NULL, opt_drizzle_port, opt_drizzle_unix_port, 0)))
   {
-    DBerror(&drizzle_connection, "when trying to connect");
+    DBerror(&drizzleclient_connection, "when trying to connect");
     return 1;
   }
-  drizzle_connection.reconnect= 1;
+  drizzleclient_connection.reconnect= 1;
   return 0;
 } /* dbConnect */
 
@@ -773,14 +773,14 @@ static void dbDisconnect(char *host)
 {
   if (verbose)
     fprintf(stderr, "# Disconnecting from %s...\n", host ? host : "localhost");
-  drizzle_close(sock);
+  drizzleclient_close(sock);
 } /* dbDisconnect */
 
 
 static void DBerror(DRIZZLE *drizzle, const char *when)
 {
   my_printf_error(0,"Got error: %d: %s %s", MYF(0),
-      drizzle_errno(drizzle), drizzle_error(drizzle), when);
+      drizzleclient_errno(drizzle), drizzleclient_error(drizzle), when);
   safe_exit(EX_MYSQLERR);
   return;
 } /* DBerror */
@@ -793,7 +793,7 @@ static void safe_exit(int error)
   if (ignore_errors)
     return;
   if (sock)
-    drizzle_close(sock);
+    drizzleclient_close(sock);
   exit(error);
 }
 
