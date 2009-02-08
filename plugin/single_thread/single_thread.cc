@@ -35,7 +35,7 @@ static bool init_dummy(void) {return 0;}
   This is only used for debugging, when starting mysqld with
   --thread-handling=no-threads or --one-thread
 
-  When we enter this function, LOCK_thread_count is hold!
+  When we enter this function, LOCK_thread_count is held!
 */
 
 void handle_connection_in_main_thread(Session *session)
@@ -50,9 +50,8 @@ void handle_connection_in_main_thread(Session *session)
   End connection, in case when we are using 'no-threads'
 */
 
-static bool end_thread(Session *session, bool)
+static bool end_thread(Session *, bool)
 {
-  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
   pthread_mutex_unlock(&LOCK_thread_count);
 
   return true;                                     // Abort handle_one_connection

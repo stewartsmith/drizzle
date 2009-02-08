@@ -352,7 +352,6 @@ static void libevent_connection_close(Session *session)
   session->scheduler= NULL;
 
   unlink_session(session);   /* locks LOCK_thread_count and deletes session */
-  pthread_mutex_unlock(&LOCK_thread_count);
 
   return;
 }

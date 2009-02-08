@@ -243,7 +243,6 @@ static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
 static uint32_t wake_thread;
 static uint32_t killed_threads, thread_created;
-static uint32_t max_used_connections;
 static char *drizzled_user, *drizzled_chroot;
 static char *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
@@ -253,6 +252,8 @@ static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
+static struct pollfd fds[UINT8_MAX];
+static uint8_t pollfd_count= 0;
 
 /* Global variables */
 
@@ -269,12 +270,10 @@ bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
 bool opt_reckless_slave = 0;
 bool opt_enable_named_pipe= 0;
 bool opt_local_infile;
-bool opt_slave_compressed_protocol;
 bool opt_safe_user_create = 0;
 bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
 bool opt_log_slave_updates= 0;
-static struct pollfd fds[UINT8_MAX];
-static uint8_t pollfd_count= 0;
+uint32_t max_used_connections;
 
 size_t my_thread_stack_size= 65536;
 
@@ -354,14 +353,17 @@ const double log_10[] = {
   1e300, 1e301, 1e302, 1e303, 1e304, 1e305, 1e306, 1e307, 1e308
 };
 
-time_t server_start_time, flush_status_time;
+time_t server_start_time;
+time_t flush_status_time;
 
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 char drizzle_real_data_home[FN_REFLEN],
-     language[FN_REFLEN], reg_ext[FN_EXTLEN], drizzle_charsets_dir[FN_REFLEN],
-     *opt_init_file, *opt_tc_log_file;
+     language[FN_REFLEN], 
+     reg_ext[FN_EXTLEN],
+     *opt_init_file, 
+     *opt_tc_log_file;
 char drizzle_unpacked_real_data_home[FN_REFLEN];
 uint32_t reg_ext_length;
 const key_map key_map_empty(0);
@@ -414,8 +416,7 @@ pthread_mutex_t LOCK_drizzleclient_create_db,
                 LOCK_thread_count,
                 LOCK_status,
                 LOCK_global_read_lock,
-                LOCK_global_system_variables,
-                LOCK_connection_count;
+                LOCK_global_system_variables;
 
 pthread_rwlock_t	LOCK_sys_init_connect;
 pthread_rwlock_t	LOCK_system_variables_hash;
@@ -449,15 +450,11 @@ struct passwd *user_info;
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
 
-/* OS specific variables */
-
-bool mysqld_embedded=0;
-
 extern scheduling_st thread_scheduler;
 
 /**
   Number of currently active user connections. The variable is protected by
-  LOCK_connection_count.
+  LOCK_thread_count.
 */
 uint32_t connection_count= 0;
 
@@ -573,6 +570,7 @@ static void close_connections(void)
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
+  /* TODO This is a crappy way to handle this. Fix for proper shutdown. */
   if (thread_count)
     sleep(2);					// Give threads time to die
 
@@ -845,7 +843,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
-  (void) pthread_mutex_destroy(&LOCK_connection_count);
   (void) pthread_rwlock_destroy(&LOCK_sys_init_connect);
   (void) pthread_mutex_destroy(&LOCK_global_system_variables);
   (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
@@ -1162,14 +1159,12 @@ void unlink_session(Session *session)
 {
   session->cleanup();
 
-  pthread_mutex_lock(&LOCK_connection_count);
-  --connection_count;
-  pthread_mutex_unlock(&LOCK_connection_count);
-
   (void) pthread_mutex_lock(&LOCK_thread_count);
+  connection_count--;
   thread_count--;
   delete session;
-  return;;
+  pthread_mutex_unlock(&LOCK_thread_count);
+  return;
 }
 
 
@@ -1523,8 +1518,6 @@ pthread_handler_t signal_hand(void *)
     At this pointer there is no other threads running, so there
     should not be any other pthread_cond_signal() calls.
   */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
 
   (void) pthread_sigmask(SIG_BLOCK,&set,NULL);
@@ -1938,7 +1931,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_connection_count, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_sys_init_connect, NULL);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
@@ -2276,19 +2268,12 @@ int main(int argc, char **argv)
 
 static void create_new_thread(Session *session)
 {
-
-  pthread_mutex_lock(&LOCK_connection_count);
+  pthread_mutex_lock(&LOCK_thread_count);
 
   ++connection_count;
 
   if (connection_count > max_used_connections)
     max_used_connections= connection_count;
-
-  pthread_mutex_unlock(&LOCK_connection_count);
-
-  /* Start a new thread to handle connection. */
-
-  pthread_mutex_lock(&LOCK_thread_count);
 
   /*
     The initialization of thread_id is done in create_embedded_session() for
@@ -2451,7 +2436,7 @@ enum options_drizzled
   OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          OPT_INIT_FILE,
   OPT_DELAY_KEY_WRITE_ALL,
-  OPT_DELAY_KEY_WRITE,	       OPT_CHARSETS_DIR,
+  OPT_DELAY_KEY_WRITE,
   OPT_MASTER_INFO_FILE,
   OPT_MASTER_RETRY_COUNT,      OPT_LOG_TC, OPT_LOG_TC_SIZE,
   OPT_WANT_CORE,
@@ -2590,9 +2575,6 @@ struct my_option my_long_options[] =
    N_("Set the default character set."),
    (char**) &default_character_set_name, (char**) &default_character_set_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"character-sets-dir", OPT_CHARSETS_DIR,
-   N_("Directory where character sets are."), (char**) &charsets_dir,
-   (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
    (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
@@ -3339,7 +3321,6 @@ static void drizzle_init_variables(void)
   drizzle_data_home_len= 2;
 
   /* Variables in libraries */
-  charsets_dir= 0;
   default_character_set_name= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
   default_collation_name= compiled_default_collation_name;
   character_set_filesystem_name= (char*) "binary";
@@ -3483,10 +3464,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       type= find_type_or_exit(argument, &delay_key_write_typelib, opt->name);
       delay_key_write_options= (uint) type-1;
     }
-    break;
-  case OPT_CHARSETS_DIR:
-    strncpy(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir)-1);
-    charsets_dir = drizzle_charsets_dir;
     break;
   case OPT_TX_ISOLATION:
     {
@@ -3716,15 +3693,15 @@ static void fix_paths(void)
                    (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
   (void) unpack_dirname(drizzle_unpacked_real_data_home, buff);
   convert_dirname(language,language,NULL);
-  (void) my_load_path(drizzle_home,drizzle_home,""); // Resolve current dir
-  (void) my_load_path(drizzle_real_data_home,drizzle_real_data_home,drizzle_home);
-  (void) my_load_path(pidfile_name,pidfile_name,drizzle_real_data_home);
+  (void) my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
+  (void) my_load_path(drizzle_real_data_home, drizzle_real_data_home,drizzle_home);
+  (void) my_load_path(pidfile_name, pidfile_name,drizzle_real_data_home);
   (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr ? opt_plugin_dir_ptr :
                                       get_relative_path(PKGPLUGINDIR),
                                       drizzle_home);
   opt_plugin_dir_ptr= opt_plugin_dir;
 
-  const char *sharedir=get_relative_path(PKGDATADIR);
+  const char *sharedir= get_relative_path(PKGDATADIR);
   if (test_if_hard_path(sharedir))
     strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
   else
@@ -3734,17 +3711,6 @@ static void fix_paths(void)
   }
   convert_dirname(buff,buff,NULL);
   (void) my_load_path(language,language,buff);
-
-  /* If --character-sets-dir isn't given, use shared library dir */
-  if (charsets_dir != drizzle_charsets_dir)
-  {
-    strcpy(drizzle_charsets_dir, buff);
-    strncat(drizzle_charsets_dir, CHARSET_DIR,
-            sizeof(drizzle_charsets_dir)-strlen(buff)-1);
-  }
-  (void) my_load_path(drizzle_charsets_dir, drizzle_charsets_dir, buff);
-  convert_dirname(drizzle_charsets_dir, drizzle_charsets_dir, NULL);
-  charsets_dir=drizzle_charsets_dir;
 
   {
     char *tmp_string;
@@ -3893,36 +3859,6 @@ static void create_pid_file()
   }
   sql_perror("Can't start server: can't create PID file");
   exit(1);
-}
-
-/** Clear most status variables. */
-void refresh_status(Session *session)
-{
-  pthread_mutex_lock(&LOCK_status);
-
-  /* Add thread's status variabes to global status */
-  add_to_status(&global_status_var, &session->status_var);
-
-  /* Reset thread's status variables */
-  memset(&session->status_var, 0, sizeof(session->status_var));
-
-  /* Reset some global variables */
-  reset_status_vars();
-
-  /* Reset the counters of all key caches (default and named). */
-  process_key_caches(reset_key_cache_counters);
-  flush_status_time= time((time_t*) 0);
-  pthread_mutex_unlock(&LOCK_status);
-
-  /*
-    Set max_used_connections to the number of currently open
-    connections.  Lock LOCK_thread_count out of LOCK_status to avoid
-    deadlocks.  Status reset becomes not atomic, but status data is
-    not exact anyway.
-  */
-  pthread_mutex_lock(&LOCK_thread_count);
-  max_used_connections= thread_count;
-  pthread_mutex_unlock(&LOCK_thread_count);
 }
 
 bool safe_read_error_impl(NET *net)

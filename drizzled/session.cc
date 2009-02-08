@@ -2470,3 +2470,28 @@ void Session::close_temporary_tables()
 
   return;
 }
+
+
+/** Clear most status variables. */
+extern time_t flush_status_time;
+extern uint32_t max_used_connections;
+
+void Session::refresh_status()
+{
+  pthread_mutex_lock(&LOCK_status);
+
+  /* Add thread's status variabes to global status */
+  add_to_status(&global_status_var, &status_var);
+
+  /* Reset thread's status variables */
+  memset(&status_var, 0, sizeof(status_var));
+
+  /* Reset some global variables */
+  reset_status_vars();
+
+  /* Reset the counters of all key caches (default and named). */
+  process_key_caches(reset_key_cache_counters);
+  flush_status_time= time((time_t*) 0);
+  max_used_connections= 1; /* We set it to one, because we know we exist */
+  pthread_mutex_unlock(&LOCK_status);
+}

@@ -3087,8 +3087,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     @retval !=0  Error; session->killed is set or session->is_error() is true
 */
 
-bool reload_cache(Session *session, ulong options, TableList *tables,
-                          bool *write_to_binlog)
+bool reload_cache(Session *session, ulong options, TableList *tables, bool *write_to_binlog)
 {
   bool result=0;
   select_errors=0;				/* Write if more errors */
@@ -3161,8 +3160,9 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
                                   false : true, false);
   }
   if (session && (options & REFRESH_STATUS))
-    refresh_status(session);
+    session->refresh_status();
  *write_to_binlog= tmp_write_to_binlog;
+
  return result;
 }
 
