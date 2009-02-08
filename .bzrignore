@@ -172,3 +172,5 @@ tests/dtr
 tests/mtr
 tests/test-run
 gnulib/unistd.h
+gnulib/time.h
+*stamp-h
