@@ -795,6 +795,51 @@ fi
 
 AM_CONDITIONAL(BUILD_FAST_MUTEX,[test "$with_fast_mutexes" != "no"])
 
+AC_ARG_WITH([atomic-ops],
+            AC_HELP_STRING([--with-atomic-ops=rwlocks|smp|up],
+            [Implement atomic operations using pthread rwlocks or atomic CPU
+             instructions for multi-processor or uniprocessor
+             configuration. By default gcc built-in sync functions are used,
+             if available and 'smp' configuration otherwise.],
+            [with_atomic_ops="$withval"],
+            [with_atomic_ops=smp]))
+
+case "$with_atomic_ops" in
+  "up") AC_DEFINE([MY_ATOMIC_MODE_DUMMY], [1],
+                  [Assume single-CPU mode, no concurrency]) ;;
+  "rwlocks") AC_DEFINE([MY_ATOMIC_MODE_RWLOCKS], [1],
+                  [Use pthread rwlocks for atomic ops]) ;;
+  "smp") ;;
+  "")
+    AC_CACHE_CHECK(
+      [whether the compiler provides atomic builtins],
+      [ac_cv_gcc_atomic_builtins],
+      [AC_TRY_COMPILE([],
+        [int main()
+        {
+          int foo= -10; int bar= 10;
+          if (!__sync_fetch_and_add(&foo, bar) || foo)
+            return -1;
+          bar= __sync_lock_test_and_set(&foo, bar);
+          if (bar || foo != 10)
+            return -1;
+          bar= __sync_val_compare_and_swap(&bar, foo, 15);
+          if (bar)
+            return -1;
+          return 0;
+        }],
+       [ac_cv_gcc_atomic_builtins=yes],
+       [ac_cv_gcc_atomic_builtins=no])])
+
+    if test "x$ac_cv_gcc_atomic_builtins" = "xyes"; then
+      AC_DEFINE(HAVE_GCC_ATOMIC_BUILTINS, 1,
+                [Define to 1 if compiler provides atomic builtins.])
+    fi
+   ;;
+   *) AC_MSG_ERROR(["$with_atomic_ops" is not a valid value for --with-atomic-ops]) ;;
+esac
+
+
 AC_ARG_WITH([comment],
     [AS_HELP_STRING([--with-comment],
             [Comment about compilation environment. @<:@default=off@:>@])],
