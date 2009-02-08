@@ -2904,7 +2904,28 @@ print_table_data(DRIZZLE_RES *result)
   separator.append("+");
   while ((field = drizzle_fetch_field(result)))
   {
-    uint32_t length= column_names ? field->name_length : 0;
+    uint32_t x, length= 0;
+
+    if (column_names)
+    {
+      /* Check if the max_byte value is really the maximum in terms
+         of visual length since multibyte characters can affect the
+         length of the separator. */
+      length= charset_info->cset->numcells(charset_info,
+                                           field->name,
+                                           field->name+field->name_length);
+
+      if (field->name_length == field->max_length)
+      {
+        if (length < field->max_length)
+          field->max_length= length;
+      }
+      else
+      {
+        length= field->name_length;
+      }
+    }
+  
     if (quick)
       length=max(length,field->length);
     else
@@ -2913,7 +2934,7 @@ print_table_data(DRIZZLE_RES *result)
       // Room for "NULL"
       length=4;
     field->max_length=length;
-    uint x;
+
     for (x=0; x< (length+2); x++)
       separator.append("-");
     separator.append("+");
