@@ -414,8 +414,7 @@ pthread_mutex_t LOCK_drizzleclient_create_db,
                 LOCK_thread_count,
                 LOCK_status,
                 LOCK_global_read_lock,
-                LOCK_global_system_variables,
-                LOCK_connection_count;
+                LOCK_global_system_variables;
 
 pthread_rwlock_t	LOCK_sys_init_connect;
 pthread_rwlock_t	LOCK_system_variables_hash;
@@ -449,15 +448,11 @@ struct passwd *user_info;
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
 
-/* OS specific variables */
-
-bool mysqld_embedded=0;
-
 extern scheduling_st thread_scheduler;
 
 /**
   Number of currently active user connections. The variable is protected by
-  LOCK_connection_count.
+  LOCK_thread_count.
 */
 uint32_t connection_count= 0;
 
@@ -845,7 +840,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
-  (void) pthread_mutex_destroy(&LOCK_connection_count);
   (void) pthread_rwlock_destroy(&LOCK_sys_init_connect);
   (void) pthread_mutex_destroy(&LOCK_global_system_variables);
   (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
@@ -1162,11 +1156,8 @@ void unlink_session(Session *session)
 {
   session->cleanup();
 
-  pthread_mutex_lock(&LOCK_connection_count);
-  --connection_count;
-  pthread_mutex_unlock(&LOCK_connection_count);
-
   (void) pthread_mutex_lock(&LOCK_thread_count);
+  connection_count--;
   thread_count--;
   delete session;
   pthread_mutex_unlock(&LOCK_thread_count);
@@ -1937,7 +1928,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_connection_count, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_sys_init_connect, NULL);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
@@ -2275,19 +2265,12 @@ int main(int argc, char **argv)
 
 static void create_new_thread(Session *session)
 {
-
-  pthread_mutex_lock(&LOCK_connection_count);
+  pthread_mutex_lock(&LOCK_thread_count);
 
   ++connection_count;
 
   if (connection_count > max_used_connections)
     max_used_connections= connection_count;
-
-  pthread_mutex_unlock(&LOCK_connection_count);
-
-  /* Start a new thread to handle connection. */
-
-  pthread_mutex_lock(&LOCK_thread_count);
 
   /*
     The initialization of thread_id is done in create_embedded_session() for

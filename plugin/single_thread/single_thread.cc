@@ -35,7 +35,7 @@ static bool init_dummy(void) {return 0;}
   This is only used for debugging, when starting mysqld with
   --thread-handling=no-threads or --one-thread
 
-  When we enter this function, LOCK_thread_count is hold!
+  When we enter this function, LOCK_thread_count is held!
 */
 
 void handle_connection_in_main_thread(Session *session)
