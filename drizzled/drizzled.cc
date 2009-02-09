@@ -1517,7 +1517,14 @@ pthread_handler_t signal_hand(void *)
     after which we signal it that we are ready.
     At this pointer there is no other threads running, so there
     should not be any other pthread_cond_signal() calls.
+
+    We call lock/unlock to out wait any thread/session which is
+    dieing. Since only comes from this code, this should be safe.
+    (Asked MontyW over the phone about this.) -Brian
+
   */
+  if (pthread_mutex_lock(&LOCK_thread_count) == 0)
+    (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
 
   (void) pthread_sigmask(SIG_BLOCK,&set,NULL);
