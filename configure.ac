@@ -86,6 +86,8 @@ AC_DEFINE_UNQUOTED(DRIZZLE_BASE_VERSION,["$DRIZZLE_BASE_VERSION"],
 AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
 		   [Version ID that can be easily used for numeric comparison])
 
+AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warning in gcc])
+
 # The port should be constant for a LONG time
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
