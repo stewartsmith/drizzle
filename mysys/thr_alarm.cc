@@ -392,7 +392,7 @@ static void process_alarm_part2(int)
       if (alarm_stack.size())
       {
         std::vector<ALARM*>::iterator p= alarm_stack.begin();
-        ALARM *smallest_expire_time;
+        ALARM *smallest_expire_time= NULL;
         while (p != alarm_stack.end())
         {
           ALARM *current_alarm= *p;
