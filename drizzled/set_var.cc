@@ -1490,7 +1490,7 @@ bool sys_var_collation::check(Session *, set_var *var)
       my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
       return 1;
     }
-    if (!(tmp=get_charset_by_name(res->c_ptr(),MYF(0))))
+    if (!(tmp=get_charset_by_name(res->c_ptr())))
     {
       my_error(ER_UNKNOWN_COLLATION, MYF(0), res->c_ptr());
       return 1;
@@ -1498,7 +1498,7 @@ bool sys_var_collation::check(Session *, set_var *var)
   }
   else // INT_RESULT
   {
-    if (!(tmp=get_charset((int) var->value->val_int(),MYF(0))))
+    if (!(tmp=get_charset((int) var->value->val_int())))
     {
       char buf[20];
       int10_to_str((int) var->value->val_int(), buf, -10);

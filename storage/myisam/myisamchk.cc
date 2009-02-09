@@ -160,9 +160,6 @@ static struct my_option my_long_options[] =
   {"backup", 'B',
    "Make a backup of the .MYD file as 'filename-time.BAK'.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"character-sets-dir", OPT_CHARSETS_DIR,
-   "Directory where character sets are.",
-   (char**) &charsets_dir, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"check", 'c',
    "Check table for errors.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -733,8 +730,7 @@ static void get_options(register int *argc,register char ***argv)
   check_param.key_cache_block_size= opt_key_cache_block_size;
 
   if (set_collation_name)
-    if (!(set_collation= get_charset_by_name(set_collation_name,
-                                             MYF(MY_WME))))
+    if (!(set_collation= get_charset_by_name(set_collation_name)))
       exit(1);
 
   myisam_block_size=(uint) 1 << my_bit_log2(opt_myisam_block_size);

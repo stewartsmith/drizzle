@@ -28,7 +28,7 @@ typedef struct scheduling_st
   bool is_used;
   uint32_t max_threads;
   bool (*init_new_connection_thread)(void);
-  void (*add_connection)(Session *session);
+  bool (*add_connection)(Session *session);
   void (*post_kill_notification)(Session *session);
   bool (*end_thread)(Session *session, bool cache_thread);
 } scheduling_st;

@@ -3144,7 +3144,7 @@ innobase_mysql_cmp(
 		if (charset_number == default_charset_info->number) {
 			charset = default_charset_info;
 		} else {
-			charset = get_charset(charset_number, MYF(MY_WME));
+			charset = get_charset(charset_number);
 
 			if (charset == NULL) {
 			  errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB needs charset %lu for doing "
@@ -8564,7 +8564,7 @@ innobase_get_at_most_n_mbchars(
 	ulint n_chars;		/* number of characters in prefix */
 	const CHARSET_INFO* charset;	/* charset used in the field */
 
-	charset = get_charset((uint) charset_id, MYF(MY_WME));
+	charset = get_charset((uint) charset_id);
 
 	ut_ad(charset);
 	ut_ad(charset->mbmaxlen);

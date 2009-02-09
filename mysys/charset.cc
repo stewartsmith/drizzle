@@ -116,29 +116,7 @@ static bool init_state_maps(CHARSET_INFO *cs)
 }
 
 
-#define MY_CHARSET_INDEX "Index.xml"
-
-const char *charsets_dir= NULL;
-static int charset_initialized=0;
-
-
-char *get_charsets_dir(char *buf)
-{
-  char *res;
-
-  if (charsets_dir != NULL)
-    strncpy(buf, charsets_dir, FN_REFLEN-1);
-  else
-  {
-    if (test_if_hard_path(PKGDATADIR) ||
-        is_prefix(PKGDATADIR, PREFIX))
-      sprintf(buf,"%s/%s",PKGDATADIR,CHARSET_DIR);
-    else
-      sprintf(buf,"%s/%s/%s",PREFIX,PKGDATADIR,CHARSET_DIR);
-  }
-  res= convert_dirname(buf,buf,NULL);
-  return(res);
-}
+static bool charset_initialized= false;
 
 CHARSET_INFO *all_charsets[256];
 const CHARSET_INFO *default_charset_info = &my_charset_utf8_general_ci;
@@ -157,50 +135,41 @@ void *cs_alloc(size_t size)
 
 static bool init_available_charsets(myf myflags)
 {
-  char fname[FN_REFLEN + sizeof(MY_CHARSET_INDEX)];
-  bool error=false;
+  bool error= false;
   /*
     We have to use charset_initialized to not lock on THR_LOCK_charset
     inside get_internal_charset...
   */
-  if (!charset_initialized)
+  if (charset_initialized == false)
   {
     CHARSET_INFO **cs;
-    /*
-      To make things thread safe we are not allowing other threads to interfere
-      while we may changing the cs_info_table
-    */
-    pthread_mutex_lock(&THR_LOCK_charset);
-    if (!charset_initialized)
+    memset(&all_charsets, 0, sizeof(all_charsets));
+    init_compiled_charsets(myflags);
+
+    /* Copy compiled charsets */
+    for (cs=all_charsets;
+         cs < all_charsets+array_elements(all_charsets)-1 ;
+         cs++)
     {
-      memset(&all_charsets, 0, sizeof(all_charsets));
-      init_compiled_charsets(myflags);
-
-      /* Copy compiled charsets */
-      for (cs=all_charsets;
-           cs < all_charsets+array_elements(all_charsets)-1 ;
-           cs++)
+      if (*cs)
       {
-        if (*cs)
-        {
-          if (cs[0]->ctype)
-            if (init_state_maps(*cs))
-              *cs= NULL;
-        }
+        if (cs[0]->ctype)
+          if (init_state_maps(*cs))
+            *cs= NULL;
       }
-
-      strcpy(get_charsets_dir(fname), MY_CHARSET_INDEX);
-      charset_initialized=1;
     }
-    pthread_mutex_unlock(&THR_LOCK_charset);
+
+    charset_initialized= true;
   }
+  assert(charset_initialized);
+
   return error;
 }
 
 
 void free_charsets(void)
 {
-  charset_initialized=0;
+  charset_initialized= true;
 }
 
 
@@ -248,7 +217,6 @@ static const CHARSET_INFO *get_internal_charset(uint32_t cs_number)
     To make things thread safe we are not allowing other threads to interfere
     while we may changing the cs_info_table
   */
-  pthread_mutex_lock(&THR_LOCK_charset);
   if ((cs= all_charsets[cs_number]))
   {
     if (!(cs->state & MY_CS_COMPILED) && !(cs->state & MY_CS_LOADED))
@@ -265,12 +233,12 @@ static const CHARSET_INFO *get_internal_charset(uint32_t cs_number)
     else
       cs->state|= MY_CS_READY;
   }
-  pthread_mutex_unlock(&THR_LOCK_charset);
+
   return cs;
 }
 
 
-const CHARSET_INFO *get_charset(uint32_t cs_number, myf flags)
+const CHARSET_INFO *get_charset(uint32_t cs_number)
 {
   const CHARSET_INFO *cs;
   if (cs_number == default_charset_info->number)
@@ -283,18 +251,10 @@ const CHARSET_INFO *get_charset(uint32_t cs_number, myf flags)
 
   cs= get_internal_charset(cs_number);
 
-  if (!cs && (flags & MY_WME))
-  {
-    char index_file[FN_REFLEN + sizeof(MY_CHARSET_INDEX)], cs_string[23];
-    strcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
-    cs_string[0]='#';
-    int10_to_str(cs_number, cs_string+1, 10);
-    my_error(EE_UNKNOWN_CHARSET, MYF(ME_BELL), cs_string, index_file);
-  }
   return cs;
 }
 
-const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
+const CHARSET_INFO *get_charset_by_name(const char *cs_name)
 {
   uint32_t cs_number;
   const CHARSET_INFO *cs;
@@ -303,20 +263,11 @@ const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
   cs_number=get_collation_number(cs_name);
   cs= cs_number ? get_internal_charset(cs_number) : NULL;
 
-  if (!cs && (flags & MY_WME))
-  {
-    char index_file[FN_REFLEN + sizeof(MY_CHARSET_INDEX)];
-    strcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
-    my_error(EE_UNKNOWN_COLLATION, MYF(ME_BELL), cs_name, index_file);
-  }
-
   return cs;
 }
 
 
-const CHARSET_INFO *get_charset_by_csname(const char *cs_name,
-				    uint32_t cs_flags,
-				    myf flags)
+const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags)
 {
   uint32_t cs_number;
   const CHARSET_INFO *cs;
@@ -325,13 +276,6 @@ const CHARSET_INFO *get_charset_by_csname(const char *cs_name,
 
   cs_number= get_charset_number(cs_name, cs_flags);
   cs= cs_number ? get_internal_charset(cs_number) : NULL;
-
-  if (!cs && (flags & MY_WME))
-  {
-    char index_file[FN_REFLEN + sizeof(MY_CHARSET_INDEX)];
-    strcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
-    my_error(EE_UNKNOWN_CHARSET, MYF(ME_BELL), cs_name, index_file);
-  }
 
   return(cs);
 }
@@ -357,7 +301,7 @@ bool resolve_charset(const char *cs_name,
                      const CHARSET_INFO *default_cs,
                      const CHARSET_INFO **cs)
 {
-  *cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY, MYF(0));
+  *cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY);
 
   if (*cs == NULL)
   {
@@ -389,7 +333,7 @@ bool resolve_collation(const char *cl_name,
                        const CHARSET_INFO *default_cl,
                        const CHARSET_INFO **cl)
 {
-  *cl= get_charset_by_name(cl_name, MYF(0));
+  *cl= get_charset_by_name(cl_name);
 
   if (*cl == NULL)
   {

@@ -26,7 +26,7 @@
 using namespace std;
 
 static bool isEnabled= false;
-static bool init_dummy(void) {return 0;}
+static bool init_new_connection_thread(void) {return 0;}
 
 /*
   Simple scheduler that use the main thread to handle the request
@@ -38,11 +38,13 @@ static bool init_dummy(void) {return 0;}
   When we enter this function, LOCK_thread_count is held!
 */
 
-void handle_connection_in_main_thread(Session *session)
+bool add_connection(Session *session)
 {
   safe_mutex_assert_owner(&LOCK_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   handle_one_connection((void*) session);
+
+  return false;
 }
 
 
@@ -50,9 +52,9 @@ void handle_connection_in_main_thread(Session *session)
   End connection, in case when we are using 'no-threads'
 */
 
-static bool end_thread(Session *, bool)
+static bool end_thread(Session *session, bool)
 {
-  pthread_mutex_unlock(&LOCK_thread_count);
+  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
 
   return true;                                     // Abort handle_one_connection
 }
@@ -69,8 +71,8 @@ static int init(void *p)
   func->is_used= true;
 
   func->max_threads= 1;
-  func->add_connection= handle_connection_in_main_thread;
-  func->init_new_connection_thread= init_dummy;
+  func->add_connection= add_connection;
+  func->init_new_connection_thread= init_new_connection_thread;
   func->end_thread= end_thread;
 
   return 0;

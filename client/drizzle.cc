@@ -201,7 +201,6 @@ static STATUS status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
 static uint32_t opt_connect_timeout= 0;
-static char drizzle_charsets_dir[FN_REFLEN+1];
 // TODO: Need to i18n these
 static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
@@ -1309,9 +1308,6 @@ static struct my_option my_long_options[] =
    (char**) &auto_vertical_output, (char**) &auto_vertical_output, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"batch", 'B',
    N_("Don't use history file. Disable interactive behavior. (Enables --silent)"), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"character-sets-dir", OPT_CHARSETS_DIR,
-   N_("Directory where character sets are."), (char**) &charsets_dir,
-   (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"column-type-info", OPT_COLUMN_TYPES, N_("Display column type information."),
    (char**) &column_types_flag, (char**) &column_types_flag,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -1496,10 +1492,6 @@ get_one_option(int optid, const struct my_option *, char *argument)
   uint64_t temp_drizzle_port= 0;
 
   switch(optid) {
-  case OPT_CHARSETS_DIR:
-    strncpy(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
-    charsets_dir = drizzle_charsets_dir;
-    break;
   case  OPT_DEFAULT_CHARSET:
     default_charset_used= 1;
     break;

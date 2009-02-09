@@ -39,11 +39,10 @@ void Item_func_set_collation::fix_length_and_dec()
   String tmp, *str= args[1]->val_str(&tmp);
   colname= str->c_ptr();
   if (colname == binary_keyword)
-    set_collation= get_charset_by_csname(args[0]->collation.collation->csname,
-                                         MY_CS_BINSORT,MYF(0));
+    set_collation= get_charset_by_csname(args[0]->collation.collation->csname, MY_CS_BINSORT);
   else
   {
-    if (!(set_collation= get_charset_by_name(colname,MYF(0))))
+    if (!(set_collation= get_charset_by_name(colname)))
     {
       my_error(ER_UNKNOWN_COLLATION, MYF(0), colname);
       return;

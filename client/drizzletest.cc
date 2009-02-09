@@ -3258,7 +3258,7 @@ static void do_set_charset(struct st_command *command)
   if(*p)
     *p++= 0;
   command->last_argument= p;
-  charset_info= get_charset_by_csname(charset_name,MY_CS_PRIMARY,MYF(MY_WME));
+  charset_info= get_charset_by_csname(charset_name, MY_CS_PRIMARY);
   if (!charset_info)
     abort_not_supported_test("Test requires charset '%s'", charset_name);
 }

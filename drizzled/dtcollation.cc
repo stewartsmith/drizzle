@@ -197,9 +197,7 @@ bool DTCollation::aggregate(DTCollation &dt, uint32_t flags)
         set(dt);
         return 0;
       }
-      const CHARSET_INFO * const bin= get_charset_by_csname(collation->csname,
-                                                            MY_CS_BINSORT,
-                                                            MYF(0));
+      const CHARSET_INFO * const bin= get_charset_by_csname(collation->csname, MY_CS_BINSORT);
       set(bin, DERIVATION_NONE);
     }
   }
