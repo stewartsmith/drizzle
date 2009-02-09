@@ -135,23 +135,38 @@ message Table {
   message Index {
 
     enum IndexType {
+    /* Kept in sync with enum ha_key_alg if only for stewart's sanity. */
       UNKNOWN_INDEX = 0;
-      HASH = 1;
-      BTREE = 2;
+      BTREE = 1;
+      RTREE = 2;
+      HASH  = 3;
+      FULLTEXT = 4;
     }
 
     message IndexPart {
-      required Field field = 1;
+      required uint32 fieldnr = 1;
       optional int32 compare_length = 2;
       optional bool in_reverse_order = 3 [default = false];
     }
+
+    message IndexOptions {
+      optional bool pack_key = 1;
+      optional bool binary_pack_key = 2;
+      optional bool var_length_key = 3;
+      optional bool null_part_key = 4;
+      optional uint32 key_block_size = 5;
+      optional bool has_partial_segments =6;
+      optional bool auto_generated_key = 7;
+    }      
 
     required string name = 1;
     required bool is_primary = 2;
     required bool is_unique = 3;
     required IndexType type = 4 [default = UNKNOWN_INDEX];
-    repeated IndexPart index_part = 5;
-    optional string comment = 6;
+    required uint32 key_length = 5;
+    repeated IndexPart index_part = 6;
+    optional IndexOptions options= 7;
+    optional string comment = 8;
   }
 
   required string name = 1;

@@ -48,7 +48,6 @@ void new_index_to_table(::drizzle::Table *table,
   uint16_t x= 0;
 
   Table::Index *index;
-  Table::Field *field;
   Table::Index::IndexPart *index_part;
 
   index= table->add_indexes();
@@ -62,8 +61,7 @@ void new_index_to_table(::drizzle::Table *table,
   {
     index_part= index->add_index_part();
 
-    field= index_part->mutable_field();
-    *field= table->field(field_indexes[x]);
+    index_part->set_fieldnr(field_indexes[x]);
 
     if (compare_lengths[x] > 0)
       index_part->set_compare_length(compare_lengths[x]);

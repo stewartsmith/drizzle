@@ -592,6 +592,8 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
     idx->set_name(key_info[i].name);
 
+    idx->set_key_length(key_info[i].key_length);
+
     if(is_primary_key_name(key_info[i].name))
       idx->set_is_primary(true);
     else
@@ -608,7 +610,9 @@ static void fill_table_proto(drizzle::Table *table_proto,
       break;
 
     case HA_KEY_ALG_RTREE:
+      idx->set_type(drizzle::Table::Index::RTREE);
     case HA_KEY_ALG_FULLTEXT:
+      idx->set_type(drizzle::Table::Index::FULLTEXT);
     case HA_KEY_ALG_UNDEF:
       idx->set_type(drizzle::Table::Index::UNKNOWN_INDEX);
       break;
@@ -622,23 +626,45 @@ static void fill_table_proto(drizzle::Table *table_proto,
     else
       idx->set_is_unique(false);
 
-    /* FIXME: block_size ? */
+    drizzle::Table::Index::IndexOptions *index_options= idx->mutable_options();
+
+    if(key_info[i].flags & HA_USES_BLOCK_SIZE)
+      index_options->set_key_block_size(key_info[i].block_size);
+
+    if(key_info[i].flags & HA_PACK_KEY)
+      index_options->set_pack_key(true);
+
+    if(key_info[i].flags & HA_BINARY_PACK_KEY)
+      index_options->set_binary_pack_key(true);
+
+    if(key_info[i].flags & HA_VAR_LENGTH_PART)
+      index_options->set_var_length_key(true);
+
+    if(key_info[i].flags & HA_NULL_PART_KEY)
+      index_options->set_null_part_key(true);
+
+    if(key_info[i].flags & HA_KEY_HAS_PART_KEY_SEG)
+      index_options->set_has_partial_segments(true);
+
+    if(key_info[i].flags & HA_GENERATED_KEY)
+      index_options->set_auto_generated_key(true);
+
+    if (key_info[i].flags & HA_USES_COMMENT)
+      idx->set_comment(key_info[i].comment.str);
+
+    if(key_info[i].flags & ~(HA_NOSAME | HA_PACK_KEY | HA_USES_BLOCK_SIZE | HA_BINARY_PACK_KEY | HA_VAR_LENGTH_PART | HA_NULL_PART_KEY | HA_KEY_HAS_PART_KEY_SEG | HA_GENERATED_KEY | HA_USES_COMMENT))
+      abort(); // Invalid (unknown) index flag.
 
     for(unsigned int j=0; j< key_info[i].key_parts; j++)
     {
       drizzle::Table::Index::IndexPart *idxpart;
-      drizzle::Table::Field *field;
 
       idxpart= idx->add_index_part();
 
-      field= idxpart->mutable_field();
-      *field= table_proto->field(key_info[i].key_part[j].fieldnr);
+      idxpart->set_fieldnr(key_info[i].key_part[j].fieldnr+1);
 
       idxpart->set_compare_length(key_info[i].key_part[j].length);
     }
-
-    if (key_info[i].flags & HA_USES_COMMENT)
-      idx->set_comment(key_info[i].comment.str);
   }
 }
 
