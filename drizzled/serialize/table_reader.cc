@@ -145,7 +145,7 @@ void print_index(const ::drizzle::Table::Index &index)
 
       if (x != 0)
         cout << ",";
-      cout << "`" << part.field().name() << "`";
+      cout << "`" << part.fieldnr() << "`"; /* FIXME */
       if (part.has_compare_length())
         cout << "(" << part.compare_length() << ")";
     }

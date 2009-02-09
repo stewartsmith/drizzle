@@ -51,8 +51,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share,
                            unsigned char *head, File file);
 static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
                               uint32_t types, char **names);
-static uint32_t find_field(Field **fields, unsigned char *record,
-                           uint32_t start, uint32_t length);
 
 /*************************************************************************/
 
@@ -403,6 +401,152 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
     for(int indx= 0; indx < table.indexes_size(); indx++)
       share->key_parts+= table.indexes(indx).index_part_size();
 
+    share->key_info= (KEY*) alloc_root(&share->mem_root,
+				       table.indexes_size() * sizeof(KEY)
+				       +share->key_parts*sizeof(KEY_PART_INFO));
+
+    KEY_PART_INFO *key_part;
+
+    key_part= reinterpret_cast<KEY_PART_INFO*>
+      (share->key_info+table.indexes_size());
+
+
+    ulong *rec_per_key= (ulong*) alloc_root(&share->mem_root,
+					    sizeof(ulong*)*share->key_parts);
+
+    share->keynames.count= table.indexes_size();
+    share->keynames.name= NULL;
+    share->keynames.type_names= (const char**)
+      alloc_root(&share->mem_root, sizeof(char*) * (table.indexes_size()+1));
+
+    share->keynames.type_lengths= (unsigned int*)
+      alloc_root(&share->mem_root,
+		 sizeof(unsigned int) * (table.indexes_size()+1));
+
+    share->keynames.type_names[share->keynames.count]= NULL;
+    share->keynames.type_lengths[share->keynames.count]= 0;
+
+    KEY* keyinfo= share->key_info;
+    for (int keynr=0; keynr < table.indexes_size(); keynr++, keyinfo++)
+    {
+      drizzle::Table::Index indx= table.indexes(keynr);
+
+      keyinfo->table= 0;
+      keyinfo->flags= 0;
+
+      if(indx.is_unique())
+	keyinfo->flags|= HA_NOSAME;
+
+      if(indx.has_options())
+      {
+	drizzle::Table::Index::IndexOptions indx_options= indx.options();
+	if(indx_options.pack_key())
+	  keyinfo->flags|= HA_PACK_KEY;
+
+	if(indx_options.var_length_key())
+	  keyinfo->flags|= HA_VAR_LENGTH_PART;
+
+	if(indx_options.null_part_key())
+	  keyinfo->flags|= HA_NULL_PART_KEY;
+
+	if(indx_options.binary_pack_key())
+	  keyinfo->flags|= HA_BINARY_PACK_KEY;
+
+	if(indx_options.has_partial_segments())
+	  keyinfo->flags|= HA_KEY_HAS_PART_KEY_SEG;
+
+	if(indx_options.auto_generated_key())
+	  keyinfo->flags|= HA_GENERATED_KEY;
+
+	if(indx_options.has_key_block_size())
+	{
+	  keyinfo->flags|= HA_USES_BLOCK_SIZE;
+	  keyinfo->block_size= indx_options.key_block_size();
+	}
+	else
+	{
+	  keyinfo->block_size= 0;
+	}
+
+      }
+
+      switch(indx.type())
+      {
+      case drizzle::Table::Index::UNKNOWN_INDEX:
+	keyinfo->algorithm= HA_KEY_ALG_UNDEF;
+	break;
+      case drizzle::Table::Index::BTREE:
+	keyinfo->algorithm= HA_KEY_ALG_BTREE;
+	break;
+      case drizzle::Table::Index::RTREE:
+	keyinfo->algorithm= HA_KEY_ALG_RTREE;
+	break;
+      case drizzle::Table::Index::HASH:
+	keyinfo->algorithm= HA_KEY_ALG_HASH;
+	break;
+      case drizzle::Table::Index::FULLTEXT:
+	keyinfo->algorithm= HA_KEY_ALG_FULLTEXT;
+
+      default:
+	/* TODO: suitable warning ? */
+	keyinfo->algorithm= HA_KEY_ALG_UNDEF;
+	break;
+      }
+      
+      keyinfo->key_length= indx.key_length();
+
+      keyinfo->key_parts= indx.index_part_size();
+
+      keyinfo->key_part= key_part;
+      keyinfo->rec_per_key= rec_per_key;
+
+      for(unsigned int partnr= 0;
+	  partnr < keyinfo->key_parts;
+	  partnr++, key_part++)
+      {
+	drizzle::Table::Index::IndexPart part;
+	part= indx.index_part(partnr);
+
+	*rec_per_key++=0;
+
+	key_part->field= NULL;
+	key_part->fieldnr= part.fieldnr();
+	key_part->null_bit= 0;
+	/* key_part->offset= ASS ASS ASS. Set later in the frm code */
+	/* key_part->null_offset is only set if null_bit (see later) */
+	/* key_part->key_type= */ /* I *THINK* this may be okay.... */
+	/* key_part->type ???? */
+	key_part->key_part_flag= 0;
+	if(part.has_in_reverse_order())
+	  key_part->key_part_flag= part.in_reverse_order()? HA_REVERSE_SORT : 0;
+
+	key_part->length= part.compare_length();
+
+	key_part->store_length= key_part->length;
+      }
+
+      if(!indx.has_comment())
+      {
+	keyinfo->comment.length= 0;
+	keyinfo->comment.str= NULL;
+      }
+      else
+      {
+	keyinfo->flags|= HA_USES_COMMENT;
+	keyinfo->comment.length= indx.comment().length();
+	keyinfo->comment.str= strmake_root(&share->mem_root,
+					   indx.comment().c_str(),
+					   keyinfo->comment.length);
+      }
+
+      keyinfo->name= strmake_root(&share->mem_root,
+				  indx.name().c_str(),
+				  indx.name().length());
+
+      share->keynames.type_names[keynr]= keyinfo->name;
+      share->keynames.type_lengths[keynr]= indx.name().length();
+    }
+
     share->keys_for_keyread.init(0);
     share->keys_in_use.init(share->keys);
 
@@ -426,6 +570,8 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
 
     share->key_block_size= table_options.has_key_block_size() ?
       table_options.key_block_size() : 0;
+
+
 
 //    return 0;
   }
@@ -550,10 +696,10 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   uint32_t i,j;
   bool use_hash;
   unsigned char forminfo[288];
-  char *keynames, *names, *comment_pos, *vcol_screen_pos;
+  char *names, *comment_pos, *vcol_screen_pos;
   unsigned char *record;
   unsigned char *disk_buff, *strpos, *null_flags=NULL, *null_pos=NULL;
-  ulong pos, record_offset, *rec_per_key, rec_buff_length;
+  ulong pos, record_offset, rec_buff_length;
   handler *handler_file= 0;
   KEY	*keyinfo;
   KEY_PART_INFO *key_part;
@@ -587,87 +733,86 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     goto err;                                   /* purecov: inspected */
   if (disk_buff[0] & 0x80)
   {
-    share->keys=      keys=      (disk_buff[1] << 7) | (disk_buff[0] & 0x7f);
-    share->key_parts= key_parts= uint2korr(disk_buff+2);
+    /*share->keys=*/      keys=      (disk_buff[1] << 7) | (disk_buff[0] & 0x7f);
+    /*share->key_parts=*/ key_parts= uint2korr(disk_buff+2);
   }
   else
   {
-    share->keys=      keys=      disk_buff[0];
-    share->key_parts= key_parts= disk_buff[1];
+    /*share->keys=      */keys=      disk_buff[0];
+    /*share->key_parts=*/ key_parts= disk_buff[1];
   }
-  share->keys_for_keyread.init(0);
-  share->keys_in_use.init(keys);
+//  share->keys_for_keyread.init(0);
+//  share->keys_in_use.init(keys);
 
-  n_length=keys*sizeof(KEY)+key_parts*sizeof(KEY_PART_INFO);
-  if (!(keyinfo = (KEY*) alloc_root(&share->mem_root,
-				    n_length + uint2korr(disk_buff+4))))
-    goto err;                                   /* purecov: inspected */
-  memset(keyinfo, 0, n_length);
-  share->key_info= keyinfo;
+//  n_length=keys*sizeof(KEY)+key_parts*sizeof(KEY_PART_INFO);
+//  if (!(keyinfo = (KEY*) alloc_root(&share->mem_root,
+//				    n_length + uint2korr(disk_buff+4))))
+
+    /* the magic uint2korr(disk_buff+4) is  the key names size */
+
+//    goto err;                                   /* purecov: inspected */
+//  memset(keyinfo, 0, n_length);
+//  share->key_info= keyinfo;
+
+  keyinfo= share->key_info;
   key_part= reinterpret_cast<KEY_PART_INFO*> (keyinfo+keys);
   strpos=disk_buff+6;
 
-  if (!(rec_per_key= (ulong*) alloc_root(&share->mem_root,
-					 sizeof(ulong*)*key_parts)))
-    goto err;
+//  if (!(rec_per_key= (ulong*) alloc_root(&share->mem_root,
+//					 sizeof(ulong*)*key_parts)))
+//    goto err;
 
   for (i=0 ; i < keys ; i++, keyinfo++)
   {
-    keyinfo->table= 0;                           // Updated in open_frm
+//    keyinfo->table= 0;                           // Updated in open_frm
     if (new_frm_ver >= 3)
     {
-      keyinfo->flags=	   (uint) uint2korr(strpos) ^ HA_NOSAME;
-      keyinfo->key_length= (uint) uint2korr(strpos+2);
-      keyinfo->key_parts=  (uint) strpos[4];
-      keyinfo->algorithm=  (enum ha_key_alg) strpos[5];
-      keyinfo->block_size= uint2korr(strpos+6);
+      /*keyinfo->flags=*/	   (uint) uint2korr(strpos) ^ HA_NOSAME;
+      /*keyinfo->key_length=*/ (uint) uint2korr(strpos+2);
+      /*keyinfo->key_parts=*/  (uint) strpos[4];
+//      /*keyinfo->algorithm=*/  (enum ha_key_alg) strpos[5];
+//      /*keyinfo->block_size=*/ uint2korr(strpos+6);
       strpos+=8;
     }
 
-    keyinfo->key_part=	 key_part;
-    keyinfo->rec_per_key= rec_per_key;
+//    keyinfo->key_part=	 key_part;
+//    keyinfo->rec_per_key= rec_per_key;
     for (j=keyinfo->key_parts ; j-- ; key_part++)
     {
-      *rec_per_key++=0;
-      key_part->fieldnr=	(uint16_t) (uint2korr(strpos) & FIELD_NR_MASK);
+//      *rec_per_key++=0;
+      //key_part->fieldnr=	(uint16_t) (uint2korr(strpos) & FIELD_NR_MASK);
       key_part->offset= (uint) uint2korr(strpos+2)-1;
       key_part->key_type=	(uint) uint2korr(strpos+5);
       // key_part->field=	(Field*) 0;	// Will be fixed later
       if (new_frm_ver >= 1)
       {
-	key_part->key_part_flag= *(strpos+4);
-	key_part->length=	(uint) uint2korr(strpos+7);
+	//key_part->key_part_flag= *(strpos+4);
+	//key_part->length=	(uint) uint2korr(strpos+7);
 	strpos+=9;
       }
       else
       {
-	key_part->length=	*(strpos+4);
-	key_part->key_part_flag=0;
-	if (key_part->length > 128)
-	{
-	  key_part->length&=127;		/* purecov: inspected */
-	  key_part->key_part_flag=HA_REVERSE_SORT; /* purecov: inspected */
-	}
-	strpos+=7;
+	abort(); // Old FRM version, we abort as we should never see it.
       }
-      key_part->store_length=key_part->length;
+      //key_part->store_length=key_part->length;
     }
   }
-  keynames=(char*) key_part;
-  strpos+= (strcpy(keynames, (char*)strpos)+strlen((char*)strpos)-keynames)+1;
+
+//  keynames=(char*) key_part;
+//  strpos+= (strcpy(keynames, (char*)strpos)+strlen((char*)strpos)-keynames)+1;
 
   //reading index comments
   for (keyinfo= share->key_info, i=0; i < keys; i++, keyinfo++)
   {
     if (keyinfo->flags & HA_USES_COMMENT)
     {
-      keyinfo->comment.length= uint2korr(strpos);
-      keyinfo->comment.str= strmake_root(&share->mem_root, (char*) strpos+2,
-                                         keyinfo->comment.length);
-      strpos+= 2 + keyinfo->comment.length;
+//      keyinfo->comment.length= uint2korr(strpos);
+//      keyinfo->comment.str= strmake_root(&share->mem_root, (char*) strpos+2,
+//                                         keyinfo->comment.length);
+      strpos+= 2 + uint2korr(strpos);//keyinfo->comment.length;
     }
-    assert(test(keyinfo->flags & HA_USES_COMMENT) ==
-               (keyinfo->comment.length > 0));
+//    assert(test(keyinfo->flags & HA_USES_COMMENT) ==
+//               (keyinfo->comment.length > 0));
   }
 
   share->reclength = uint2korr((head+16));
@@ -834,8 +979,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     }
   }
 
-  if (keynames)
-    fix_type_pointers(&interval_array, &share->keynames, 1, &keynames);
+/*  if (keynames)
+    fix_type_pointers(&interval_array, &share->keynames, 1, &keynames);*/
 
  /* Allocate handler */
   if (!(handler_file= get_new_handler(share, session->mem_root,
@@ -1052,7 +1197,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     for (uint32_t key=0 ; key < share->keys ; key++,keyinfo++)
     {
       uint32_t usable_parts= 0;
-      keyinfo->name=(char*) share->keynames.type_names[key];
+//      keyinfo->name=(char*) share->keynames.type_names[key];
 
       if (primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
       {
@@ -1069,7 +1214,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 	      share->field[fieldnr-1]->key_length() !=
 	      key_part[i].length)
 	  {
-	    primary_key=MAX_KEY;		// Can't be used
+	    primary_key=MAX_KEY;                // Can't be used
 	    break;
 	  }
 	}
@@ -1078,11 +1223,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       for (i=0 ; i < keyinfo->key_parts ; key_part++,i++)
       {
         Field *field;
-	if (new_field_pack_flag <= 1)
-	  key_part->fieldnr= (uint16_t) find_field(share->field,
-                                                 share->default_values,
-                                                 (uint) key_part->offset,
-                                                 (uint) key_part->length);
 	if (!key_part->fieldnr)
         {
           error= 4;                             // Wrong file
@@ -2181,41 +2321,6 @@ TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
   result->type_lengths[result->count]= 0;
   return result;
 }
-
-
-/*
- Search after a field with given start & length
- If an exact field isn't found, return longest field with starts
- at right position.
-
- NOTES
-   This is needed because in some .frm fields 'fieldnr' was saved wrong
-
- RETURN
-   0  error
-   #  field number +1
-*/
-
-static uint32_t find_field(Field **fields, unsigned char *record, uint32_t start, uint32_t length)
-{
-  Field **field;
-  uint32_t i, pos;
-
-  pos= 0;
-  for (field= fields, i=1 ; *field ; i++,field++)
-  {
-    if ((*field)->offset(record) == start)
-    {
-      if ((*field)->key_length() == length)
-	return (i);
-      if (!pos || fields[pos-1]->pack_length() <
-	  (*field)->pack_length())
-	pos= i;
-    }
-  }
-  return (pos);
-}
-
 
 	/* Check that the integer is in the internal */
 
