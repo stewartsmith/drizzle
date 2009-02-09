@@ -371,7 +371,7 @@ bool libevent_should_close_connection(Session* session)
 
 pthread_handler_t libevent_thread_proc(void *)
 {
-  if (init_new_connection_handler_thread())
+  if (my_thread_init())
   {
     my_thread_global_end();
     errmsg_printf(ERRMSG_LVL_ERROR, _("libevent_thread_proc: my_thread_init() failed\n"));
