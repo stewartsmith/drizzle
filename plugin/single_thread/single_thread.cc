@@ -52,9 +52,9 @@ bool add_connection(Session *session)
   End connection, in case when we are using 'no-threads'
 */
 
-static bool end_thread(Session *, bool)
+static bool end_thread(Session *session, bool)
 {
-  pthread_mutex_unlock(&LOCK_thread_count);
+  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
 
   return true;                                     // Abort handle_one_connection
 }

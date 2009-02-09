@@ -1517,7 +1517,14 @@ pthread_handler_t signal_hand(void *)
     after which we signal it that we are ready.
     At this pointer there is no other threads running, so there
     should not be any other pthread_cond_signal() calls.
+
+    We call lock/unlock to out wait any thread/session which is
+    dieing. Since only comes from this code, this should be safe.
+    (Asked MontyW over the phone about this.) -Brian
+
   */
+  if (pthread_mutex_lock(&LOCK_thread_count) == 0)
+    (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
 
   (void) pthread_sigmask(SIG_BLOCK,&set,NULL);
@@ -1848,8 +1855,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     if (next_character_set_name)
       *next_character_set_name++= '\0';
     if (!(default_charset_info=
-          get_charset_by_csname(default_character_set_name,
-                                MY_CS_PRIMARY, MYF(MY_WME))))
+          get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
     {
       if (next_character_set_name)
       {
@@ -1865,8 +1871,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   if (default_collation_name)
   {
-    const CHARSET_INFO * const default_collation=
-      get_charset_by_name(default_collation_name, MYF(0));
+    const CHARSET_INFO * const default_collation= get_charset_by_name(default_collation_name);
     if (!default_collation)
     {
           errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
@@ -1889,8 +1894,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   global_system_variables.optimizer_switch= 0;
 
   if (!(character_set_filesystem=
-        get_charset_by_csname(character_set_filesystem_name,
-                              MY_CS_PRIMARY, MYF(MY_WME))))
+        get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
     return 1;
   global_system_variables.character_set_filesystem= character_set_filesystem;
 
@@ -3224,9 +3228,7 @@ static void print_version(void)
 
 static void usage(void)
 {
-  if (!(default_charset_info= get_charset_by_csname(default_character_set_name,
-					           MY_CS_PRIMARY,
-						   MYF(MY_WME))))
+  if (!(default_charset_info= get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
     exit(1);
   if (!default_collation_name)
     default_collation_name= (char*) default_charset_info->name;

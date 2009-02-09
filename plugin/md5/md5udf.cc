@@ -33,7 +33,7 @@ public:
     max_length=32;
     args[0]->collation.set(
       get_charset_by_csname(args[0]->collation.collation->csname,
-                            MY_CS_BINSORT,MYF(0)), DERIVATION_COERCIBLE);
+                            MY_CS_BINSORT), DERIVATION_COERCIBLE);
   }
 
 };

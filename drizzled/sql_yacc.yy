@@ -1907,7 +1907,7 @@ now_or_signed_literal:
 collation_name:
           ident_or_text
           {
-            if (!($$=get_charset_by_name($1.str,MYF(0))))
+            if (!($$=get_charset_by_name($1.str)))
             {
               my_error(ER_UNKNOWN_COLLATION, MYF(0), $1.str);
               DRIZZLE_YYABORT;

@@ -181,9 +181,6 @@ static struct my_option my_long_options[] =
    "Adds 'STOP SLAVE' prior to 'CHANGE MASTER' and 'START SLAVE' to bottom of dump.",
    (char**) &opt_slave_apply, (char**) &opt_slave_apply, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"character-sets-dir", OPT_CHARSETS_DIR,
-   "Directory where character sets are.", (char**) &charsets_dir,
-   (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"comments", 'i', "Write additional information.",
    (char**) &opt_comments, (char**) &opt_comments, 0, GET_BOOL, NO_ARG,
    1, 0, 0, 0, 0, 0},
@@ -845,8 +842,7 @@ static int get_options(int *argc, char ***argv)
     return(EX_USAGE);
   }
   if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset,
-                                            MY_CS_PRIMARY, MYF(MY_WME))))
+      !(charset_info= get_charset_by_csname(default_charset, MY_CS_PRIMARY)))
     exit(1);
   if ((*argc < 1 && !opt_alldbs) || (*argc > 0 && opt_alldbs))
   {

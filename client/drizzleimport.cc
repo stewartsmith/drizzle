@@ -66,9 +66,6 @@ static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 static struct my_option my_long_options[] =
 {
-  {"character-sets-dir", OPT_CHARSETS_DIR,
-   "Directory where character sets are.", (char**) &charsets_dir,
-   (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-character-set", OPT_DEFAULT_CHARSET,
    "Set the default character set.", (char**) &default_charset,
    (char**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -274,8 +271,7 @@ static int get_options(int *argc, char ***argv)
     return(1);
   }
   if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset,
-                MY_CS_PRIMARY, MYF(MY_WME))))
+      !(charset_info= get_charset_by_csname(default_charset, MY_CS_PRIMARY)))
     exit(1);
   if (*argc < 2)
   {
