@@ -119,7 +119,7 @@ static bool init_state_maps(CHARSET_INFO *cs)
 #define MY_CHARSET_INDEX "Index.xml"
 
 const char *charsets_dir= NULL;
-static int charset_initialized=0;
+static bool charset_initialized= false;
 
 
 char *get_charsets_dir(char *buf)
@@ -163,44 +163,37 @@ static bool init_available_charsets(myf myflags)
     We have to use charset_initialized to not lock on THR_LOCK_charset
     inside get_internal_charset...
   */
-  if (!charset_initialized)
+  if (charset_initialized == false)
   {
     CHARSET_INFO **cs;
-    /*
-      To make things thread safe we are not allowing other threads to interfere
-      while we may changing the cs_info_table
-    */
-    pthread_mutex_lock(&THR_LOCK_charset);
-    if (!charset_initialized)
+    memset(&all_charsets, 0, sizeof(all_charsets));
+    init_compiled_charsets(myflags);
+
+    /* Copy compiled charsets */
+    for (cs=all_charsets;
+         cs < all_charsets+array_elements(all_charsets)-1 ;
+         cs++)
     {
-      memset(&all_charsets, 0, sizeof(all_charsets));
-      init_compiled_charsets(myflags);
-
-      /* Copy compiled charsets */
-      for (cs=all_charsets;
-           cs < all_charsets+array_elements(all_charsets)-1 ;
-           cs++)
+      if (*cs)
       {
-        if (*cs)
-        {
-          if (cs[0]->ctype)
-            if (init_state_maps(*cs))
-              *cs= NULL;
-        }
+        if (cs[0]->ctype)
+          if (init_state_maps(*cs))
+            *cs= NULL;
       }
-
-      strcpy(get_charsets_dir(fname), MY_CHARSET_INDEX);
-      charset_initialized=1;
     }
-    pthread_mutex_unlock(&THR_LOCK_charset);
+
+    strcpy(get_charsets_dir(fname), MY_CHARSET_INDEX);
+    charset_initialized= true;
   }
+  assert(charset_initialized);
+
   return error;
 }
 
 
 void free_charsets(void)
 {
-  charset_initialized=0;
+  charset_initialized= true;
 }
 
 
@@ -248,7 +241,6 @@ static const CHARSET_INFO *get_internal_charset(uint32_t cs_number)
     To make things thread safe we are not allowing other threads to interfere
     while we may changing the cs_info_table
   */
-  pthread_mutex_lock(&THR_LOCK_charset);
   if ((cs= all_charsets[cs_number]))
   {
     if (!(cs->state & MY_CS_COMPILED) && !(cs->state & MY_CS_LOADED))
@@ -265,7 +257,7 @@ static const CHARSET_INFO *get_internal_charset(uint32_t cs_number)
     else
       cs->state|= MY_CS_READY;
   }
-  pthread_mutex_unlock(&THR_LOCK_charset);
+
   return cs;
 }
 

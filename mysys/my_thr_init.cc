@@ -41,7 +41,6 @@ uint32_t thd_lib_detected= 0;
 pthread_key_t THR_KEY_mysys;
 pthread_mutex_t THR_LOCK_open;
 pthread_mutex_t THR_LOCK_lock;
-pthread_mutex_t THR_LOCK_charset;
 pthread_mutex_t THR_LOCK_threads;
 pthread_mutex_t THR_LOCK_time;
 pthread_cond_t  THR_COND_threads;
@@ -122,7 +121,6 @@ bool my_thread_global_init(void)
 
   pthread_mutex_init(&THR_LOCK_open,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_lock,MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&THR_LOCK_charset,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_threads,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_time,MY_MUTEX_INIT_FAST);
   pthread_cond_init(&THR_COND_threads, NULL);
@@ -175,7 +173,6 @@ void my_thread_global_end(void)
   pthread_mutex_destroy(&THR_LOCK_open);
   pthread_mutex_destroy(&THR_LOCK_lock);
   pthread_mutex_destroy(&THR_LOCK_time);
-  pthread_mutex_destroy(&THR_LOCK_charset);
   if (all_threads_killed)
   {
     pthread_mutex_destroy(&THR_LOCK_threads);
