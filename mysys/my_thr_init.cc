@@ -38,11 +38,7 @@
 
 uint32_t thd_lib_detected= 0;
 
-#ifdef USE_TLS
 pthread_key_t THR_KEY_mysys;
-#else
-pthread_key_t THR_KEY_mysys;
-#endif /* USE_TLS */
 pthread_mutex_t THR_LOCK_open;
 pthread_mutex_t THR_LOCK_lock;
 pthread_mutex_t THR_LOCK_charset;
@@ -273,11 +269,7 @@ void my_thread_end(void)
     pthread_cond_destroy(&tmp->suspend);
 #endif
     pthread_mutex_destroy(&tmp->mutex);
-#if defined(USE_TLS)
-    free(tmp);
-#else
     tmp->init= 0;
-#endif
 
     /*
       Decrement counter for number of running threads. We are using this
@@ -291,23 +283,11 @@ void my_thread_end(void)
       pthread_cond_signal(&THR_COND_threads);
    pthread_mutex_unlock(&THR_LOCK_threads);
   }
-  /* The following free has to be done, even if my_thread_var() is 0 */
-#if defined(USE_TLS)
-  pthread_setspecific(THR_KEY_mysys,0);
-#endif
 }
 
 struct st_my_thread_var *_my_thread_var(void)
 {
   struct st_my_thread_var *tmp= (struct st_my_thread_var*)pthread_getspecific(THR_KEY_mysys);
-#if defined(USE_TLS)
-  /* This can only happen in a .DLL */
-  if (!tmp)
-  {
-    my_thread_init();
-    tmp=(struct st_my_thread_var*)pthread_getspecific(THR_KEY_mysys);
-  }
-#endif
   return tmp;
 }
 
