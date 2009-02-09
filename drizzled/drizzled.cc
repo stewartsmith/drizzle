@@ -2284,7 +2284,26 @@ static void create_new_thread(Session *session)
 
   thread_count++;
 
-  thread_scheduler.add_connection(session);
+  /* 
+    If we error on creation we drop the connection and delete the session.
+  */
+  if (thread_scheduler.add_connection(session))
+  {
+    char error_message_buff[DRIZZLE_ERRMSG_SIZE];
+
+    session->killed= Session::KILL_CONNECTION;                        // Safety
+
+    statistic_increment(aborted_connects, &LOCK_status);
+
+    /* Can't use my_error() since store_globals has not been called. */
+    snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
+    net_send_error(session, ER_CANT_CREATE_THREAD, error_message_buff);
+    (void) pthread_mutex_lock(&LOCK_thread_count);
+    --connection_count;
+    session->close_connection(0, 0);
+    delete session;
+    (void) pthread_mutex_unlock(&LOCK_thread_count);
+  }
 }
 
 

@@ -282,26 +282,22 @@ void libevent_add_session_callback(int Fd, short, void *)
     LOCK_thread_count is locked on entry. This function MUST unlock it!
 */
 
-static void libevent_add_connection(Session *session)
+static bool add_connection(Session *session)
 {
   assert(session->scheduler == NULL);
   session_scheduler *scheduler= new session_scheduler(session);
 
   if (scheduler == NULL)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Scheduler init error in libevent_add_new_connection\n"));
-    pthread_mutex_unlock(&LOCK_thread_count);
-    libevent_connection_close(session);
+    return true;
 
-    return;
-  }
   session->scheduler= (void *)scheduler;
 
   threads.append(session);
   libevent_session_add(session);
 
   pthread_mutex_unlock(&LOCK_thread_count);
-  return;
+
+  return false;
 }
 
 
@@ -315,7 +311,7 @@ static void libevent_add_connection(Session *session)
   @param[in]  session The connection to kill
 */
 
-static void libevent_post_kill_notification(Session *)
+static void post_kill_notification(Session *)
 {
   /*
     Note, we just wake up libevent with an event that a Session should be killed,
@@ -567,8 +563,8 @@ static int init(void *p)
 
   assert(size != 0);
   func->max_threads= size;
-  func->post_kill_notification= libevent_post_kill_notification;
-  func->add_connection= libevent_add_connection;
+  func->post_kill_notification= post_kill_notification;
+  func->add_connection= add_connection;
 
   return (int)libevent_init();
 }
