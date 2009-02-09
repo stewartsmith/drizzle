@@ -239,8 +239,7 @@ int load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
   close(fd);
 
   buffer= db.collation();
-  if (!(create->default_table_charset= get_charset_by_name(buffer.c_str(),
-							   MYF(0))))
+  if (!(create->default_table_charset= get_charset_by_name(buffer.c_str())))
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
 		  _("Error while loading database options: '%s':"),path);

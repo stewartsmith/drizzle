@@ -74,9 +74,6 @@ static struct my_option my_long_options[] =
    "If a checked table is corrupted, automatically fix it. Repairing will be done after all tables have been checked, if corrupted ones were found.",
    (char**) &opt_auto_repair, (char**) &opt_auto_repair, 0, GET_BOOL, NO_ARG, 0,
    0, 0, 0, 0, 0},
-  {"character-sets-dir", OPT_CHARSETS_DIR,
-   "Directory where character sets are.", (char**) &charsets_dir,
-   (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"check", 'c', "Check table for errors.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
   {"check-only-changed", 'C',
@@ -363,8 +360,7 @@ static int get_options(int *argc, char ***argv)
 
   /* TODO: This variable is not yet used */
   if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset,
-                MY_CS_PRIMARY, MYF(MY_WME))))
+      !(charset_info= get_charset_by_csname(default_charset, MY_CS_PRIMARY)))
       exit(1);
   if (*argc > 0 && opt_alldbs)
   {

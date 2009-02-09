@@ -979,8 +979,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 
     save_cs= sql_field->charset;
     if ((sql_field->flags & BINCMP_FLAG) &&
-        !(sql_field->charset= get_charset_by_csname(sql_field->charset->csname,
-                                                    MY_CS_BINSORT,MYF(0))))
+        !(sql_field->charset= get_charset_by_csname(sql_field->charset->csname, MY_CS_BINSORT)))
     {
       char tmp[64];
       char *tmp_pos= tmp;

@@ -365,8 +365,7 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
       table_options.block_size() : 0;
 
     share->table_charset= get_charset(table_options.has_collation_id()?
-				      table_options.collation_id() : 0,
-				      MYF(0));
+				      table_options.collation_id() : 0);
 
     if (!share->table_charset)
     {
@@ -893,7 +892,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       {
         if (!strpos[14])
           charset= &my_charset_bin;
-        else if (!(charset=get_charset((uint) strpos[14], MYF(0))))
+        else if (!(charset=get_charset((uint) strpos[14])))
         {
           error= 5; // Unknown or unavailable charset
           errarg= (int) strpos[14];
@@ -970,8 +969,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
         if (!f_is_blob(pack_flag))
         {
           // 3.23 or 4.0 string
-          if (!(charset= get_charset_by_csname(share->table_charset->csname,
-                                               MY_CS_BINSORT, MYF(0))))
+          if (!(charset= get_charset_by_csname(share->table_charset->csname, MY_CS_BINSORT)))
             charset= &my_charset_bin;
         }
         else

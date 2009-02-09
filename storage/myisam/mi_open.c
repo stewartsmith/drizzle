@@ -281,7 +281,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	  {
 	    if (!pos->language)
 	      pos->charset=default_charset_info;
-	    else if (!(pos->charset= get_charset(pos->language, MYF(MY_WME))))
+	    else if (!(pos->charset= get_charset(pos->language)))
 	    {
 	      my_errno=HA_ERR_UNKNOWN_CHARSET;
 	      goto err;
@@ -313,7 +313,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	  {
 	    if (!pos->language)
 	      pos->charset=default_charset_info;
-	    else if (!(pos->charset= get_charset(pos->language, MYF(MY_WME))))
+	    else if (!(pos->charset= get_charset(pos->language)))
 	    {
 	      my_errno=HA_ERR_UNKNOWN_CHARSET;
 	      goto err;
