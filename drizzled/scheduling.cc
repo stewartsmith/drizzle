@@ -25,18 +25,24 @@
 
 scheduling_st thread_scheduler;
 static bool scheduler_inited= false; /* We must insist that only one of these plugins get loaded at a time */
-static bool has_been_seen= false; /* We are still in a single thread when we see this variable, so no lock needed. */
 
 static void post_kill_dummy(Session *) { return; }
 static bool end_thread_dummy(Session *, bool) { return false; }
 
+extern char *opt_scheduler;
+
 int scheduling_initializer(st_plugin_int *plugin)
 {
-  if (has_been_seen == false)
+  if (memcmp(plugin->plugin->name, opt_scheduler, strlen(opt_scheduler)))
+    return 0;
+
+  if (scheduler_inited)
   {
-    memset(&thread_scheduler, 0, sizeof(scheduling_st));
-    has_been_seen= true;
+    fprintf(stderr, "You cannot load more then one scheduler plugin\n");
+    exit(1);
   }
+
+  memset(&thread_scheduler, 0, sizeof(scheduling_st));
 
   assert(plugin->plugin->init); /* Find poorly designed plugins */
   if (plugin->plugin->init)
@@ -58,26 +64,17 @@ int scheduling_initializer(st_plugin_int *plugin)
     }
   }
 
-  if (thread_scheduler.is_used == true)
-  {
-    /* We are going to assert() on any plugin that is not well written. */
-    assert(thread_scheduler.max_threads);
-    assert(thread_scheduler.init_new_connection_thread);
-    assert(thread_scheduler.add_connection);
-    assert(thread_scheduler.post_kill_notification);
-    assert(thread_scheduler.end_thread);
+  /* We are going to assert() on any plugin that is not well written. */
+  assert(thread_scheduler.max_threads);
+  assert(thread_scheduler.init_new_connection_thread);
+  assert(thread_scheduler.add_connection);
+  assert(thread_scheduler.post_kill_notification);
+  assert(thread_scheduler.end_thread);
 
-    if (scheduler_inited)
-    {
-      fprintf(stderr, "You cannot load more then one scheduler plugin\n");
-      exit(1);
-    }
-
-    scheduler_inited= true;
-    /* We populate so we can find which plugin was initialized later on */
-    plugin->data= (void *)&thread_scheduler;
-    plugin->state= PLUGIN_IS_READY;
-  }
+  scheduler_inited= true;
+  /* We populate so we can find which plugin was initialized later on */
+  plugin->data= (void *)&thread_scheduler;
+  plugin->state= PLUGIN_IS_READY;
 
   return 0;
 

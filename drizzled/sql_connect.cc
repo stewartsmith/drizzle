@@ -133,8 +133,6 @@ extern "C" void free_user(struct user_conn *uc)
 
 bool init_new_connection_handler_thread()
 {
-  pthread_detach_this_thread();
-  /* Win32 calls this in pthread_create */
   if (my_thread_init())
     return 1;
   return 0;
