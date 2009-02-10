@@ -21,6 +21,7 @@
 #include <storage/myisam/myisam.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <stdio.h>
 
 #include <storage/archive/ha_archive.h>
 
@@ -501,9 +502,9 @@ int ha_archive::create(const char *name, Table *table_arg,
 {
   char name_buff[FN_REFLEN];
   char linkname[FN_REFLEN];
-  int error;
+  int error= 0;
   azio_stream create_stream;            /* Archive file we are working with */
-  File frm_file;                   /* File handler for readers */
+  FILE *frm_file;                   /* File handler for readers */
   struct stat file_stat;
   unsigned char *frm_ptr;
   int r;
@@ -573,9 +574,9 @@ int ha_archive::create(const char *name, Table *table_arg,
   /*
     Here is where we open up the frm and pass it to archive to store
   */
-  if ((frm_file= my_open(name_buff, O_RDONLY, MYF(0))) > 0)
+  if ((frm_file= fopen(name_buff, "r")) > 0)
   {
-    if (fstat(frm_file, &file_stat))
+    if (fstat(fileno(frm_file), &file_stat))
     {
       if ((uint64_t)file_stat.st_size > SIZE_MAX)
       {
@@ -585,17 +586,39 @@ int ha_archive::create(const char *name, Table *table_arg,
       frm_ptr= (unsigned char *)malloc((size_t)file_stat.st_size);
       if (frm_ptr)
       {
-	my_read(frm_file, frm_ptr, (size_t)file_stat.st_size, MYF(0));
-	azwrite_frm(&create_stream, (char *)frm_ptr, (size_t)file_stat.st_size);
+        size_t length_io;
+	length_io= read(fileno(frm_file), frm_ptr, (size_t)file_stat.st_size);
+
+        if (length_io != (size_t)file_stat.st_size)
+        {
+          free(frm_ptr);
+          goto error2;
+        }
+
+	length_io= azwrite_frm(&create_stream, (char *)frm_ptr, (size_t)file_stat.st_size);
+
+        if (length_io != (size_t)file_stat.st_size)
+        {
+          free(frm_ptr);
+          goto error2;
+        }
+
 	free(frm_ptr);
       }
     }
-    my_close(frm_file, MYF(0));
+    fclose(frm_file);
   }
 
   if (create_info->comment.str)
-    azwrite_comment(&create_stream, create_info->comment.str,
-		    (unsigned int)create_info->comment.length);
+  {
+    size_t write_length;
+
+    write_length= azwrite_comment(&create_stream, create_info->comment.str,
+                                  (unsigned int)create_info->comment.length);
+
+    if (write_length == (size_t)create_info->comment.length)
+      goto error2;
+  }
 
   /*
     Yes you need to do this, because the starting value
@@ -623,7 +646,7 @@ error:
 */
 int ha_archive::real_write_row(unsigned char *buf, azio_stream *writer)
 {
-  my_off_t written;
+  off_t written;
   unsigned int r_pack_length;
 
   /* We pack the row for writing */
