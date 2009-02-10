@@ -282,6 +282,248 @@ void free_table_share(TABLE_SHARE *share)
   return;
 }
 
+int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *share)
+{
+  {
+    LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
+			      strlen(table.engine().name().c_str()) };
+    share->db_plugin= ha_resolve_by_name(session, &engine_name);
+  }
+
+  // share->db_create_options FAIL
+  // share->db_options_in_use FAIL
+  share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
+  share->null_field_first= 0;
+
+  drizzle::Table::TableOptions table_options;
+
+  if(table.has_options())
+    table_options= table.options();
+
+  share->avg_row_length= table_options.has_avg_row_length() ?
+    table_options.avg_row_length() : 0;
+
+  share->page_checksum= table_options.has_page_checksum() ?
+    (table_options.page_checksum()?HA_CHOICE_YES:HA_CHOICE_NO)
+    : HA_CHOICE_UNDEF;
+
+  share->row_type= table_options.has_row_type() ?
+    (enum row_type) table_options.row_type() : ROW_TYPE_DEFAULT;
+
+  share->block_size= table_options.has_block_size() ?
+    table_options.block_size() : 0;
+
+  share->table_charset= get_charset(table_options.has_collation_id()?
+				    table_options.collation_id() : 0);
+
+  if (!share->table_charset)
+  {
+    /* unknown charset in head[38] or pre-3.23 frm */
+    if (use_mb(default_charset_info))
+    {
+      /* Warn that we may be changing the size of character columns */
+      errmsg_printf(ERRMSG_LVL_WARN,
+		    _("'%s' had no or invalid character set, "
+		      "and default character set is multi-byte, "
+		      "so character column sizes may have changed"),
+		    share->path.str);
+    }
+    share->table_charset= default_charset_info;
+  }
+
+  share->null_field_first= 1;
+
+  share->db_record_offset= 1;
+
+  share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
+
+  share->db_low_byte_first= true;
+
+  share->max_rows= table_options.has_max_rows() ?
+    table_options.max_rows() : 0;
+
+  share->min_rows= table_options.has_min_rows() ?
+    table_options.min_rows() : 0;
+
+  share->keys= table.indexes_size();
+
+  share->key_parts= 0;
+  for(int indx= 0; indx < table.indexes_size(); indx++)
+    share->key_parts+= table.indexes(indx).index_part_size();
+
+  share->key_info= (KEY*) alloc_root(&share->mem_root,
+				     table.indexes_size() * sizeof(KEY)
+				     +share->key_parts*sizeof(KEY_PART_INFO));
+
+  KEY_PART_INFO *key_part;
+
+  key_part= reinterpret_cast<KEY_PART_INFO*>
+    (share->key_info+table.indexes_size());
+
+
+  ulong *rec_per_key= (ulong*) alloc_root(&share->mem_root,
+					    sizeof(ulong*)*share->key_parts);
+
+  share->keynames.count= table.indexes_size();
+  share->keynames.name= NULL;
+  share->keynames.type_names= (const char**)
+    alloc_root(&share->mem_root, sizeof(char*) * (table.indexes_size()+1));
+
+  share->keynames.type_lengths= (unsigned int*)
+    alloc_root(&share->mem_root,
+	       sizeof(unsigned int) * (table.indexes_size()+1));
+
+  share->keynames.type_names[share->keynames.count]= NULL;
+  share->keynames.type_lengths[share->keynames.count]= 0;
+
+  KEY* keyinfo= share->key_info;
+  for (int keynr=0; keynr < table.indexes_size(); keynr++, keyinfo++)
+  {
+    drizzle::Table::Index indx= table.indexes(keynr);
+
+    keyinfo->table= 0;
+    keyinfo->flags= 0;
+
+    if(indx.is_unique())
+      keyinfo->flags|= HA_NOSAME;
+
+    if(indx.has_options())
+    {
+      drizzle::Table::Index::IndexOptions indx_options= indx.options();
+      if(indx_options.pack_key())
+	keyinfo->flags|= HA_PACK_KEY;
+
+      if(indx_options.var_length_key())
+	keyinfo->flags|= HA_VAR_LENGTH_PART;
+
+      if(indx_options.null_part_key())
+	keyinfo->flags|= HA_NULL_PART_KEY;
+
+      if(indx_options.binary_pack_key())
+	keyinfo->flags|= HA_BINARY_PACK_KEY;
+
+      if(indx_options.has_partial_segments())
+	keyinfo->flags|= HA_KEY_HAS_PART_KEY_SEG;
+
+      if(indx_options.auto_generated_key())
+	keyinfo->flags|= HA_GENERATED_KEY;
+
+      if(indx_options.has_key_block_size())
+      {
+	keyinfo->flags|= HA_USES_BLOCK_SIZE;
+	keyinfo->block_size= indx_options.key_block_size();
+      }
+      else
+      {
+	keyinfo->block_size= 0;
+      }
+
+    }
+
+    switch(indx.type())
+    {
+    case drizzle::Table::Index::UNKNOWN_INDEX:
+      keyinfo->algorithm= HA_KEY_ALG_UNDEF;
+      break;
+    case drizzle::Table::Index::BTREE:
+      keyinfo->algorithm= HA_KEY_ALG_BTREE;
+      break;
+    case drizzle::Table::Index::RTREE:
+      keyinfo->algorithm= HA_KEY_ALG_RTREE;
+      break;
+    case drizzle::Table::Index::HASH:
+      keyinfo->algorithm= HA_KEY_ALG_HASH;
+      break;
+    case drizzle::Table::Index::FULLTEXT:
+      keyinfo->algorithm= HA_KEY_ALG_FULLTEXT;
+
+    default:
+      /* TODO: suitable warning ? */
+      keyinfo->algorithm= HA_KEY_ALG_UNDEF;
+      break;
+    }
+
+    keyinfo->key_length= indx.key_length();
+
+    keyinfo->key_parts= indx.index_part_size();
+
+    keyinfo->key_part= key_part;
+    keyinfo->rec_per_key= rec_per_key;
+
+    for(unsigned int partnr= 0;
+	partnr < keyinfo->key_parts;
+	partnr++, key_part++)
+    {
+      drizzle::Table::Index::IndexPart part;
+      part= indx.index_part(partnr);
+
+      *rec_per_key++=0;
+
+      key_part->field= NULL;
+      key_part->fieldnr= part.fieldnr();
+      key_part->null_bit= 0;
+      /* key_part->offset= ASS ASS ASS. Set later in the frm code */
+      /* key_part->null_offset is only set if null_bit (see later) */
+      /* key_part->key_type= */ /* I *THINK* this may be okay.... */
+      /* key_part->type ???? */
+      key_part->key_part_flag= 0;
+      if(part.has_in_reverse_order())
+	key_part->key_part_flag= part.in_reverse_order()? HA_REVERSE_SORT : 0;
+
+      key_part->length= part.compare_length();
+
+      key_part->store_length= key_part->length;
+    }
+
+    if(!indx.has_comment())
+    {
+      keyinfo->comment.length= 0;
+      keyinfo->comment.str= NULL;
+    }
+    else
+    {
+      keyinfo->flags|= HA_USES_COMMENT;
+      keyinfo->comment.length= indx.comment().length();
+      keyinfo->comment.str= strmake_root(&share->mem_root,
+					 indx.comment().c_str(),
+					 keyinfo->comment.length);
+    }
+
+    keyinfo->name= strmake_root(&share->mem_root,
+				indx.name().c_str(),
+				indx.name().length());
+
+    share->keynames.type_names[keynr]= keyinfo->name;
+    share->keynames.type_lengths[keynr]= indx.name().length();
+  }
+
+  share->keys_for_keyread.init(0);
+  share->keys_in_use.init(share->keys);
+
+  if(table_options.has_connect_string())
+  {
+    size_t len= table_options.connect_string().length();
+    const char* str= table_options.connect_string().c_str();
+
+    share->connect_string.length= len;
+    share->connect_string.str= strmake_root(&share->mem_root, str, len);
+  }
+
+  if(table_options.has_comment())
+  {
+    size_t len= table_options.comment().length();
+    const char* str= table_options.comment().c_str();
+
+    share->comment.length= len;
+    share->comment.str= strmake_root(&share->mem_root, str, len);
+  }
+
+  share->key_block_size= table_options.has_key_block_size() ?
+    table_options.key_block_size() : 0;
+
+  return 0;
+}
+
 /*
   Read table definition from a binary / text based .frm file
 
@@ -331,249 +573,26 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
 
   drizzle::Table table;
 
-  if(drizzle_read_table_proto(proto_path.c_str(), &table)==0)
+  if((error= drizzle_read_table_proto(proto_path.c_str(), &table)))
   {
+    if(error>0)
     {
-      LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
-				strlen(table.engine().name().c_str()) };
-      share->db_plugin= ha_resolve_by_name(session, &engine_name);
+      my_errno= error;
+      error= 1;
     }
-
-    // share->db_create_options FAIL
-    // share->db_options_in_use FAIL
-    share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
-    share->null_field_first= 0;
-
-    drizzle::Table::TableOptions table_options;
-    
-    if(table.has_options())
-      table_options= table.options();
-
-    share->avg_row_length= table_options.has_avg_row_length() ?
-      table_options.avg_row_length() : 0;
-
-    share->page_checksum= table_options.has_page_checksum() ?
-      (table_options.page_checksum()?HA_CHOICE_YES:HA_CHOICE_NO)
-      : HA_CHOICE_UNDEF;
-
-    share->row_type= table_options.has_row_type() ?
-      (enum row_type) table_options.row_type() : ROW_TYPE_DEFAULT;
-
-    share->block_size= table_options.has_block_size() ?
-      table_options.block_size() : 0;
-
-    share->table_charset= get_charset(table_options.has_collation_id()?
-				      table_options.collation_id() : 0);
-
-    if (!share->table_charset)
+    else
     {
-      /* unknown charset in head[38] or pre-3.23 frm */
-      if (use_mb(default_charset_info))
+      if(!table.IsInitialized())
       {
-	/* Warn that we may be changing the size of character columns */
-	errmsg_printf(ERRMSG_LVL_WARN,
-		      _("'%s' had no or invalid character set, "
-			"and default character set is multi-byte, "
-			"so character column sizes may have changed"),
-		      share->path.str);
+	error= 4;
       }
-      share->table_charset= default_charset_info;
     }
-
-    share->null_field_first= 1;
-
-    share->db_record_offset= 1;
-
-    share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
-
-    share->db_low_byte_first= true;
-
-    share->max_rows= table_options.has_max_rows() ?
-      table_options.max_rows() : 0;
-
-    share->min_rows= table_options.has_min_rows() ?
-      table_options.min_rows() : 0;
-
-    share->keys= table.indexes_size();
-
-    share->key_parts= 0;
-    for(int indx= 0; indx < table.indexes_size(); indx++)
-      share->key_parts+= table.indexes(indx).index_part_size();
-
-    share->key_info= (KEY*) alloc_root(&share->mem_root,
-				       table.indexes_size() * sizeof(KEY)
-				       +share->key_parts*sizeof(KEY_PART_INFO));
-
-    KEY_PART_INFO *key_part;
-
-    key_part= reinterpret_cast<KEY_PART_INFO*>
-      (share->key_info+table.indexes_size());
-
-
-    ulong *rec_per_key= (ulong*) alloc_root(&share->mem_root,
-					    sizeof(ulong*)*share->key_parts);
-
-    share->keynames.count= table.indexes_size();
-    share->keynames.name= NULL;
-    share->keynames.type_names= (const char**)
-      alloc_root(&share->mem_root, sizeof(char*) * (table.indexes_size()+1));
-
-    share->keynames.type_lengths= (unsigned int*)
-      alloc_root(&share->mem_root,
-		 sizeof(unsigned int) * (table.indexes_size()+1));
-
-    share->keynames.type_names[share->keynames.count]= NULL;
-    share->keynames.type_lengths[share->keynames.count]= 0;
-
-    KEY* keyinfo= share->key_info;
-    for (int keynr=0; keynr < table.indexes_size(); keynr++, keyinfo++)
-    {
-      drizzle::Table::Index indx= table.indexes(keynr);
-
-      keyinfo->table= 0;
-      keyinfo->flags= 0;
-
-      if(indx.is_unique())
-	keyinfo->flags|= HA_NOSAME;
-
-      if(indx.has_options())
-      {
-	drizzle::Table::Index::IndexOptions indx_options= indx.options();
-	if(indx_options.pack_key())
-	  keyinfo->flags|= HA_PACK_KEY;
-
-	if(indx_options.var_length_key())
-	  keyinfo->flags|= HA_VAR_LENGTH_PART;
-
-	if(indx_options.null_part_key())
-	  keyinfo->flags|= HA_NULL_PART_KEY;
-
-	if(indx_options.binary_pack_key())
-	  keyinfo->flags|= HA_BINARY_PACK_KEY;
-
-	if(indx_options.has_partial_segments())
-	  keyinfo->flags|= HA_KEY_HAS_PART_KEY_SEG;
-
-	if(indx_options.auto_generated_key())
-	  keyinfo->flags|= HA_GENERATED_KEY;
-
-	if(indx_options.has_key_block_size())
-	{
-	  keyinfo->flags|= HA_USES_BLOCK_SIZE;
-	  keyinfo->block_size= indx_options.key_block_size();
-	}
-	else
-	{
-	  keyinfo->block_size= 0;
-	}
-
-      }
-
-      switch(indx.type())
-      {
-      case drizzle::Table::Index::UNKNOWN_INDEX:
-	keyinfo->algorithm= HA_KEY_ALG_UNDEF;
-	break;
-      case drizzle::Table::Index::BTREE:
-	keyinfo->algorithm= HA_KEY_ALG_BTREE;
-	break;
-      case drizzle::Table::Index::RTREE:
-	keyinfo->algorithm= HA_KEY_ALG_RTREE;
-	break;
-      case drizzle::Table::Index::HASH:
-	keyinfo->algorithm= HA_KEY_ALG_HASH;
-	break;
-      case drizzle::Table::Index::FULLTEXT:
-	keyinfo->algorithm= HA_KEY_ALG_FULLTEXT;
-
-      default:
-	/* TODO: suitable warning ? */
-	keyinfo->algorithm= HA_KEY_ALG_UNDEF;
-	break;
-      }
-      
-      keyinfo->key_length= indx.key_length();
-
-      keyinfo->key_parts= indx.index_part_size();
-
-      keyinfo->key_part= key_part;
-      keyinfo->rec_per_key= rec_per_key;
-
-      for(unsigned int partnr= 0;
-	  partnr < keyinfo->key_parts;
-	  partnr++, key_part++)
-      {
-	drizzle::Table::Index::IndexPart part;
-	part= indx.index_part(partnr);
-
-	*rec_per_key++=0;
-
-	key_part->field= NULL;
-	key_part->fieldnr= part.fieldnr();
-	key_part->null_bit= 0;
-	/* key_part->offset= ASS ASS ASS. Set later in the frm code */
-	/* key_part->null_offset is only set if null_bit (see later) */
-	/* key_part->key_type= */ /* I *THINK* this may be okay.... */
-	/* key_part->type ???? */
-	key_part->key_part_flag= 0;
-	if(part.has_in_reverse_order())
-	  key_part->key_part_flag= part.in_reverse_order()? HA_REVERSE_SORT : 0;
-
-	key_part->length= part.compare_length();
-
-	key_part->store_length= key_part->length;
-      }
-
-      if(!indx.has_comment())
-      {
-	keyinfo->comment.length= 0;
-	keyinfo->comment.str= NULL;
-      }
-      else
-      {
-	keyinfo->flags|= HA_USES_COMMENT;
-	keyinfo->comment.length= indx.comment().length();
-	keyinfo->comment.str= strmake_root(&share->mem_root,
-					   indx.comment().c_str(),
-					   keyinfo->comment.length);
-      }
-
-      keyinfo->name= strmake_root(&share->mem_root,
-				  indx.name().c_str(),
-				  indx.name().length());
-
-      share->keynames.type_names[keynr]= keyinfo->name;
-      share->keynames.type_lengths[keynr]= indx.name().length();
-    }
-
-    share->keys_for_keyread.init(0);
-    share->keys_in_use.init(share->keys);
-
-    if(table_options.has_connect_string())
-    {
-      size_t len= table_options.connect_string().length();
-      const char* str= table_options.connect_string().c_str();
-
-      share->connect_string.length= len;
-      share->connect_string.str= strmake_root(&share->mem_root, str, len);
-    }
-
-    if(table_options.has_comment())
-    {
-      size_t len= table_options.comment().length();
-      const char* str= table_options.comment().c_str();
-
-      share->comment.length= len;
-      share->comment.str= strmake_root(&share->mem_root, str, len);
-    }
-
-    share->key_block_size= table_options.has_key_block_size() ?
-      table_options.key_block_size() : 0;
-
-
-
-//    return 0;
+    goto err_not_open;
   }
+
+  parse_table_proto(session, table, share);
+
+  /* end of proto code... now to get some scraps from FRM */
 
   if ((file= open(path.c_str(), O_RDONLY)) < 0)
   {
