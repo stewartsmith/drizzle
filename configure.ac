@@ -494,10 +494,18 @@ if test "$found_pcre" = "no"
 then
   save_LIBS="${LIBS}"
   AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
-  AS_IF([test "x$ac_cv_libpcre" = "xno"],
-        AC_MSG_ERROR([libpcre is required for Drizzle]))
+  AS_IF([test "x$ac_cv_libpcre" = "xno"],[
+    AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
+      AS_IF([test "x$ac_cv_libpcre" = "xno"],
+            [AC_MSG_ERROR([libpcre is required for Drizzle])]
+            [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
+    ],[
+      AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
+    ])
   PCRE_LIBS="${LTLIBPCRE}"
   LIBS="${save_LIBS}"
+else
+  AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
 fi
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)

@@ -28,14 +28,15 @@
  * Implementation of the server's date and time string matching utility.
  */
 
-#include <string> /** C++ string class used */
-#include <string.h>
-#include <vector>
-#include <pcre.h>
 
 #include "drizzled/global.h"
 #include "drizzled/temporal_format.h"
 #include "drizzled/temporal.h"
+
+#include <string> /** C++ string class used */
+#include <string.h>
+#include <vector>
+#include PCRE_HEADER
 
 namespace drizzled
 {
