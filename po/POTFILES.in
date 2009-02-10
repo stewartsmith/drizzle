@@ -38,7 +38,6 @@ libdrizzleclient/local_infile.c
 mysys/errors.cc
 mysys/my_error.cc
 mysys/my_getopt.cc
-mysys/thr_alarm.cc
 plugin/errmsg_stderr/errmsg_stderr.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_syslog/logging_syslog.cc
