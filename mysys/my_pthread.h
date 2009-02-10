@@ -49,7 +49,6 @@ extern "C" {
 #endif
 
 #define pthread_key(T,V) pthread_key_t V
-#define pthread_detach_this_thread()
 #define pthread_handler_t void *
 typedef void *(* pthread_handler)(void *);
 

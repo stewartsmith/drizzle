@@ -17,7 +17,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin_scheduling.h>
-#include <drizzled/serialize/serialize.h>
 #include <drizzled/connect.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
@@ -25,23 +24,18 @@
 #include <string>
 using namespace std;
 
-static bool init_new_connection_thread(void) {return 0;}
+pthread_attr_t multi_thread_attrib;
+static uint32_t max_threads;
 
-/*
-  Simple scheduler that use the main thread to handle the request
-
-  NOTES
-  This is only used for debugging, when starting mysqld with
-  --thread-handling=no-threads or --one-thread
-
-  When we enter this function, LOCK_thread_count is held!
-*/
-
-bool add_connection(Session *session)
+static bool add_connection(Session *session)
 {
+  int error;
+
   safe_mutex_assert_owner(&LOCK_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
-  handle_one_connection((void*) session);
+
+  if ((error= pthread_create(&session->real_id, &multi_thread_attrib, handle_one_connection, (void*) session)))
+    return true;
 
   return false;
 }
@@ -54,38 +48,53 @@ bool add_connection(Session *session)
 static bool end_thread(Session *session, bool)
 {
   unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+  pthread_mutex_unlock(&LOCK_thread_count);
 
-  return true;                                     // Abort handle_one_connection
+  pthread_exit(0);
+  return true; // We should never reach this point
 }
 
 static int init(void *p)
 {
   scheduling_st* func= (scheduling_st *)p;
 
-  func->max_threads= 1;
+  func->max_threads= max_threads; /* This will create an upper limit on max connections */
   func->add_connection= add_connection;
-  func->init_new_connection_thread= init_new_connection_thread;
   func->end_thread= end_thread;
+
+  /* Parameter for threads created for connections */
+  (void) pthread_attr_init(&multi_thread_attrib);
+  (void) pthread_attr_setdetachstate(&multi_thread_attrib,
+                                     PTHREAD_CREATE_DETACHED);
+  pthread_attr_setscope(&multi_thread_attrib, PTHREAD_SCOPE_SYSTEM);
 
   return 0;
 }
 
 static int deinit(void *)
 {
+  pthread_attr_destroy(&multi_thread_attrib);
+
   return 0;
 }
 
+static DRIZZLE_SYSVAR_UINT(max_threads, max_threads,
+                           PLUGIN_VAR_RQCMDARG,
+                           N_("Maximum number of user threads available."),
+                           NULL, NULL, 2048, 1, 4048, 0);
+
 static struct st_mysql_sys_var* system_variables[]= {
+  DRIZZLE_SYSVAR(max_threads),
   NULL
 };
 
-drizzle_declare_plugin(single_thread)
+drizzle_declare_plugin(multi_thread)
 {
   DRIZZLE_SCHEDULING_PLUGIN,
-  "single_thread",
+  "multi_thread",
   "0.1",
   "Brian Aker",
-  "Single Thread Scheduler",
+  "One Thread Perl Session Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
