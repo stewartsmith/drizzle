@@ -521,6 +521,8 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   share->key_block_size= table_options.has_key_block_size() ?
     table_options.key_block_size() : 0;
 
+  share->fields= table.field_size();
+
   return 0;
 }
 
@@ -928,7 +930,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 
   lseek(file,pos+288,SEEK_SET);
 
-  share->fields= uint2korr(forminfo+258);
+//  share->fields= uint2korr(forminfo+258);
   pos= uint2korr(forminfo+260);			/* Length of all screens */
   n_length= uint2korr(forminfo+268);
   interval_count= uint2korr(forminfo+270);
