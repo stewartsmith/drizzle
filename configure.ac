@@ -272,8 +272,8 @@ then
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef ${MEMALIGN_FLAGS}"
-  CFLAGS="${CFLAGS} -xstrconst ${MEMALIGN_FLAGS}"
+  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef -xprefetch=explicit ${MEMALIGN_FLAGS}"
+  CFLAGS="${CFLAGS} -xstrconst -xprefetch=explicit ${MEMALIGN_FLAGS}"
   SYMBOLS_FLAGS="-g"
   OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
   OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS}"
