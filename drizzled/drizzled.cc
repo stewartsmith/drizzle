@@ -274,6 +274,7 @@ bool opt_safe_user_create = 0;
 bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
 bool opt_log_slave_updates= 0;
 uint32_t max_used_connections;
+const char *opt_scheduler= "pool_of_threads";
 
 size_t my_thread_stack_size= 65536;
 
@@ -2512,6 +2513,7 @@ enum options_drizzled
   OPT_DEFAULT_TIME_ZONE,
   OPT_SYSDATE_IS_NOW,
   OPT_OPTIMIZER_SEARCH_DEPTH,
+  OPT_SCHEDULER,
   OPT_OPTIMIZER_PRUNE_LEVEL,
   OPT_UPDATABLE_VIEWS_WITH_LIMIT,
   OPT_AUTO_INCREMENT, OPT_AUTO_INCREMENT_OFFSET,
@@ -3000,6 +3002,10 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.read_rnd_buff_size, 0,
    GET_UINT, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
    UINT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
+  {"scheduler", OPT_SCHEDULER,
+   N_("Select scheduler to be used (by default pool-of-threads)."),
+   (char**) &opt_scheduler, (char**) &opt_scheduler, 0,
+   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,

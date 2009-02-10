@@ -28,7 +28,6 @@ using namespace std;
 
 static uint32_t created_threads, killed_threads;
 static bool kill_pool_threads;
-static bool isEnabled= true;
 
 static struct event session_add_event;
 static struct event session_kill_event;
@@ -554,13 +553,6 @@ static int init(void *p)
 {
   scheduling_st* func= (scheduling_st *)p;
 
-  if (isEnabled == false)
-  {
-    func->is_used= false;
-    return 0;
-  }
-  func->is_used= true;
-
   assert(size != 0);
   func->max_threads= size;
   func->post_kill_notification= post_kill_notification;
@@ -585,16 +577,8 @@ static DRIZZLE_SYSVAR_UINT(size, size,
                            N_("Size of Pool."),
                            NULL, NULL, 8, 1, 1024, 0);
 
-static DRIZZLE_SYSVAR_BOOL(enabled, isEnabled,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("Enable Pool of Threads Scheduler"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           true /* default */);
-
 static struct st_mysql_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(size),
-  DRIZZLE_SYSVAR(enabled),
   NULL,
 };
 
