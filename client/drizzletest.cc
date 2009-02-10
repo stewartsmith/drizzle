@@ -45,7 +45,7 @@
 #include <string>
 #include <vector>
 
-#include <pcre.h>
+#include PCRE_HEADER
 
 #include <mysys/hash.h>
 #include <stdarg.h>
