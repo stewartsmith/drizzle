@@ -719,7 +719,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   uint32_t db_create_options, keys, key_parts, n_length;
   uint32_t key_info_length, com_length, null_bit_pos=0;
   uint32_t vcol_screen_length;
-  uint32_t extra_rec_buf_length;
   uint32_t i,j;
   bool use_hash;
   unsigned char forminfo[288];
@@ -926,8 +925,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   }
 
   error=4;
-  extra_rec_buf_length= uint2korr(head+59);
-  rec_buff_length= ALIGN_SIZE(share->reclength + 1 + extra_rec_buf_length);
+  /* head+59 was extra_rec_buf_length */
+  rec_buff_length= ALIGN_SIZE(share->reclength + 1);
   share->rec_buff_length= rec_buff_length;
   if (!(record= (unsigned char *) alloc_root(&share->mem_root,
                                      rec_buff_length)))
@@ -2499,7 +2498,7 @@ File create_frm(Session *session, const char *name, const char *db,
     int4store(fileinfo+51, tmp);
     int4store(fileinfo+55, create_info->extra_size);
     /*
-      59-60 is reserved for extra_rec_buf_length,
+      59-60 is reserved for extra_rec_buf_length (always 0),
       61 for default_part_db_type
     */
     int2store(fileinfo+62, create_info->key_block_size);

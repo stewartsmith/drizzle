@@ -267,7 +267,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
   int2store(fileinfo+28,key_info_length);
 
 
-  int2store(fileinfo+59,db_file->extra_rec_buf_length());
+  int2store(fileinfo+59, 0); /* was: extra_rec_buf_length */
 
   if (pwrite(file, fileinfo, 64, 0L) == 0 ||
       pwrite(file, keybuff, key_info_length, (ulong) uint2korr(fileinfo+6)) == 0)
