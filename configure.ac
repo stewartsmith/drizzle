@@ -175,13 +175,14 @@ AC_SYS_LARGEFILE
 AC_PROG_AWK
 
 
-AC_PATH_PROG(GPERF, gperf,
-             AC_MSG_ERROR("Drizzle requires gperf to build. Please install it."))
+AC_PATH_PROG(GPERF, gperf)
+AS_IF([test "x$GPERF" = "x"],
+      AC_MSG_ERROR("Drizzle requires gperf to build. Please install it."))
 
 AC_PATH_PROG(LCOV, lcov)
 AC_PATH_PROG(GENHTML, genhtml)
 
-AM_CONDITIONAL(HAVE_LCOV,[test "$ac_cv_prog_lcov" != "no"])
+AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
 
 dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
 if test "$ac_cv_c_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
@@ -466,6 +467,8 @@ AS_IF([test x$ac_cv_libz = xno],
 save_LIBS="${LIBS}"
 LIBS=""
 VL_LIB_READLINE
+AS_IF([test "x$vl_cv_lib_readline" = "xno"],
+      AC_MSG_ERROR([libreadline is required for Drizzle]))
 READLINE_LIBS="${LIBS}"
 LIBS="${save_LIBS}"
 AC_SUBST(READLINE_LIBS)
