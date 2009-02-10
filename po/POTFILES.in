@@ -42,6 +42,7 @@ mysys/thr_alarm.cc
 plugin/errmsg_stderr/errmsg_stderr.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_syslog/logging_syslog.cc
+plugin/multi_thread/multi_thread.cc
 plugin/pool_of_threads/pool_of_threads.cc
 plugin/pool_of_threads/session_scheduler.cc
 plugin/replicator/replicator.cc
