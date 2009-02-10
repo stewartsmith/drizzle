@@ -1053,7 +1053,7 @@ buf_flush_batch(
 	buf_pool->init_flush[flush_type] = TRUE;
 
 	bool done_with_loop= false;
-	for (;; done_with_loop==true) {
+	for (;done_with_loop != true;) {
 flush_next:
 		/* If we have flushed enough, leave the loop */
 		if (page_count >= min_n) {
