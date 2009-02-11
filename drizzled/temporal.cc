@@ -1229,27 +1229,30 @@ bool DateTime::from_int64_t(const int64_t from)
   int64_t part1;
   int64_t part2;
 
-  if (! (copy_from == 0LL || copy_from >= 10000101000000LL))
+  if (copy_from == 0LL)
+    return false;
+
+  if (copy_from < 10000101000000LL)
   {
     if (copy_from < 101)
       return false;
-    if (copy_from <= (DRIZZLE_YY_PART_YEAR-1)*10000L+1231L)
+    else if (copy_from <= (DRIZZLE_YY_PART_YEAR-1)*10000L+1231L)
       copy_from= (copy_from+20000000L)*1000000L;                 /* YYMMDD, year: 2000-2069 */
-    if (copy_from < (DRIZZLE_YY_PART_YEAR)*10000L+101L)
+    else if (copy_from < (DRIZZLE_YY_PART_YEAR)*10000L+101L)
       return false;
-    if (copy_from <= 991231L)
+    else if (copy_from <= 991231L)
       copy_from= (copy_from+19000000L)*1000000L;                 /* YYMMDD, year: 1970-1999 */
-    if (copy_from < 10000101L)
+    else if (copy_from < 10000101L)
       return false;
-    if (copy_from <= 99991231L)
+    else if (copy_from <= 99991231L)
       copy_from= copy_from*1000000L;
-    if (copy_from < 101000000L)
+    else if (copy_from < 101000000L)
       return false;
-    if (copy_from <= (DRIZZLE_YY_PART_YEAR-1) * 10000000000LL + 1231235959LL)
+    else if (copy_from <= (DRIZZLE_YY_PART_YEAR-1) * 10000000000LL + 1231235959LL)
       copy_from= copy_from + 20000000000000LL;                   /* YYMMDDHHMMSS, 2000-2069 */
-    if (copy_from <  DRIZZLE_YY_PART_YEAR * 10000000000LL + 101000000LL)
+    else if (copy_from <  DRIZZLE_YY_PART_YEAR * 10000000000LL + 101000000LL)
       return false;
-    if (copy_from <= 991231235959LL)
+    else if (copy_from <= 991231235959LL)
       copy_from= copy_from + 19000000000000LL;		/* YYMMDDHHMMSS, 1970-1999 */
   }
 

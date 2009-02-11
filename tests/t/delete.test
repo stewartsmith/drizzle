@@ -215,17 +215,6 @@ select * from t3;
 drop table t1,t2,t3;
 
 #
-# Bug #8143: deleting '0000-00-00' values using IS NULL
-#
-
-create table t1(a date not null);
-insert into t1 values (0);
-select * from t1 where a is null;
-delete from t1 where a is null;
-select count(*) from t1;
-drop table t1;
-
-#
 # Bug #26186: delete order by, sometimes accept unknown column
 #
 CREATE TABLE t1 (a INT); INSERT INTO t1 VALUES (1);
