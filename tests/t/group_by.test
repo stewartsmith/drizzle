@@ -63,7 +63,7 @@ drop table t1,t2;
 CREATE TABLE t1 (
   PID int NOT NULL auto_increment,
   payDate date,
-  recDate datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  recDate datetime,
   URID int DEFAULT '0' NOT NULL,
   CRID int DEFAULT '0' NOT NULL,
   amount int DEFAULT '0' NOT NULL,

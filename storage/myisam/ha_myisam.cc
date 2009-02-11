@@ -767,6 +767,10 @@ int ha_myisam::repair(Session* session, HA_CHECK_OPT *check_opt)
                    T_SILENT | T_FORCE_CREATE | T_CALC_CHECKSUM |
                    (check_opt->flags & T_EXTEND ? T_REP : T_REP_BY_SORT));
   param.sort_buffer_length=  (size_t)sort_buffer_size;
+
+  // Release latches since this can take a long time
+  ha_release_temporary_latches(session);
+
   start_records=file->state->records;
   while ((error=repair(session,param,0)) && param.retry_repair)
   {

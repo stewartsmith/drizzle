@@ -27,6 +27,7 @@
 #define DRIZZLE_SERVER_CONNECT_H
 
 int check_user(Session *session, const char *passwd, uint32_t passwd_len, const char *db);
+extern "C"
 pthread_handler_t handle_one_connection(void *arg);
 bool init_new_connection_handler_thread();
 void time_out_user_resource_limits(Session *session, USER_CONN *uc);

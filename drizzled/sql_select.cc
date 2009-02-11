@@ -10281,64 +10281,67 @@ remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value)
 {
   if (cond->type() == Item::COND_ITEM)
   {
-    bool and_level= ((Item_cond*) cond)->functype()
-      == Item_func::COND_AND_FUNC;
+    bool and_level= (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC);
+
     List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
     Item::cond_result tmp_cond_value;
-    bool should_fix_fields=0;
+    bool should_fix_fields= false;
 
-    *cond_value=Item::COND_UNDEF;
+    *cond_value= Item::COND_UNDEF;
     Item *item;
-    while ((item=li++))
+    while ((item= li++))
     {
-      Item *new_item=remove_eq_conds(session, item, &tmp_cond_value);
-      if (!new_item)
-	li.remove();
+      Item *new_item= remove_eq_conds(session, item, &tmp_cond_value);
+      if (! new_item)
+	      li.remove();
       else if (item != new_item)
       {
-	li.replace(new_item);
-	should_fix_fields=1;
+        li.replace(new_item);
+        should_fix_fields= true;
       }
       if (*cond_value == Item::COND_UNDEF)
-	*cond_value=tmp_cond_value;
-      switch (tmp_cond_value) {
-      case Item::COND_OK:			// Not true or false
-	if (and_level || *cond_value == Item::COND_FALSE)
-	  *cond_value=tmp_cond_value;
-	break;
-      case Item::COND_FALSE:
-	if (and_level)
-	{
-	  *cond_value=tmp_cond_value;
-	  return (COND*) 0;			// Always false
-	}
-	break;
-      case Item::COND_TRUE:
-	if (!and_level)
-	{
-	  *cond_value= tmp_cond_value;
-	  return (COND*) 0;			// Always true
-	}
-	break;
-      case Item::COND_UNDEF:			// Impossible
-	break; /* purecov: deadcode */
+	      *cond_value= tmp_cond_value;
+
+      switch (tmp_cond_value) 
+      {
+        case Item::COND_OK:			/* Not true or false */
+          if (and_level || (*cond_value == Item::COND_FALSE))
+            *cond_value= tmp_cond_value;
+          break;
+        case Item::COND_FALSE:
+          if (and_level)
+          {
+            *cond_value= tmp_cond_value;
+            return (COND *) NULL;			/* Always false */
+          }
+          break;
+        case Item::COND_TRUE:
+          if (! and_level)
+          {
+            *cond_value= tmp_cond_value;
+            return (COND *) NULL;			/* Always true */
+          }
+          break;
+        case Item::COND_UNDEF:			/* Impossible */
+          break; /* purecov: deadcode */
       }
     }
+
     if (should_fix_fields)
       cond->update_used_tables();
 
-    if (!((Item_cond*) cond)->argument_list()->elements ||
-	*cond_value != Item::COND_OK)
-      return (COND*) 0;
+    if (! ((Item_cond*) cond)->argument_list()->elements || *cond_value != Item::COND_OK)
+      return (COND*) NULL;
+
     if (((Item_cond*) cond)->argument_list()->elements == 1)
-    {						// Remove list
+    {						
+      /* Argument list contains only one element, so reduce it so a single item, then remove list */
       item= ((Item_cond*) cond)->argument_list()->head();
       ((Item_cond*) cond)->argument_list()->empty();
       return item;
     }
   }
-  else if (cond->type() == Item::FUNC_ITEM &&
-	   ((Item_func*) cond)->functype() == Item_func::ISNULL_FUNC)
+  else if (cond->type() == Item::FUNC_ITEM && ((Item_func*) cond)->functype() == Item_func::ISNULL_FUNC)
   {
     /*
       Handles this special case for some ODBC applications:
@@ -10350,59 +10353,64 @@ remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value)
       SELECT * from table_name where auto_increment_column = LAST_INSERT_ID
     */
 
-    Item_func_isnull *func=(Item_func_isnull*) cond;
+    Item_func_isnull *func= (Item_func_isnull*) cond;
     Item **args= func->arguments();
     if (args[0]->type() == Item::FIELD_ITEM)
     {
-      Field *field=((Item_field*) args[0])->field;
-      if (field->flags & AUTO_INCREMENT_FLAG && !field->table->maybe_null &&
-	  (session->options & OPTION_AUTO_IS_NULL) &&
-	  (session->first_successful_insert_id_in_prev_stmt > 0 &&
-           session->substitute_null_with_insert_id))
+      Field *field= ((Item_field*) args[0])->field;
+      if (field->flags & AUTO_INCREMENT_FLAG 
+          && ! field->table->maybe_null 
+          && session->options & OPTION_AUTO_IS_NULL
+          && (
+            session->first_successful_insert_id_in_prev_stmt > 0 
+            && session->substitute_null_with_insert_id
+            )
+          )
       {
-	COND *new_cond;
-	if ((new_cond= new Item_func_eq(args[0],
-					new Item_int("last_insert_id()",
-                                                     session->read_first_successful_insert_id_in_prev_stmt(),
-                                                     MY_INT64_NUM_DECIMAL_DIGITS))))
-	{
-	  cond=new_cond;
+        COND *new_cond;
+        if ((new_cond= new Item_func_eq(args[0], new Item_int("last_insert_id()",
+                                                          session->read_first_successful_insert_id_in_prev_stmt(),
+                                                          MY_INT64_NUM_DECIMAL_DIGITS))))
+        {
+          cond= new_cond;
           /*
             Item_func_eq can't be fixed after creation so we do not check
             cond->fixed, also it do not need tables so we use 0 as second
             argument.
           */
-	  cond->fix_fields(session, &cond);
-	}
+          cond->fix_fields(session, &cond);
+        }
         /*
           IS NULL should be mapped to LAST_INSERT_ID only for first row, so
           clear for next row
         */
         session->substitute_null_with_insert_id= false;
       }
+#ifdef NOTDEFINED
       /* fix to replace 'NULL' dates with '0' (shreeve@uci.edu) */
-      else if (((field->type() == DRIZZLE_TYPE_DATE) ||
-		(field->type() == DRIZZLE_TYPE_DATETIME)) &&
-		(field->flags & NOT_NULL_FLAG) &&
-	       !field->table->maybe_null)
+      else if (
+          ((field->type() == DRIZZLE_TYPE_DATE) || (field->type() == DRIZZLE_TYPE_DATETIME)) 
+          && (field->flags & NOT_NULL_FLAG) 
+          && ! field->table->maybe_null)
       {
-	COND *new_cond;
-	if ((new_cond= new Item_func_eq(args[0],new Item_int("0", 0, 2))))
-	{
-	  cond=new_cond;
+        COND *new_cond;
+        if ((new_cond= new Item_func_eq(args[0],new Item_int("0", 0, 2))))
+        {
+          cond= new_cond;
           /*
             Item_func_eq can't be fixed after creation so we do not check
             cond->fixed, also it do not need tables so we use 0 as second
             argument.
           */
-	  cond->fix_fields(session, &cond);
-	}
+          cond->fix_fields(session, &cond);
+        }
       }
+#endif /* NOTDEFINED */
     }
     if (cond->const_item())
     {
       *cond_value= eval_const_cond(cond) ? Item::COND_TRUE : Item::COND_FALSE;
-      return (COND*) 0;
+      return (COND *) NULL;
     }
   }
   else if (cond->const_item() && !cond->is_expensive())
@@ -10418,21 +10426,21 @@ remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value)
   */
   {
     *cond_value= eval_const_cond(cond) ? Item::COND_TRUE : Item::COND_FALSE;
-    return (COND*) 0;
+    return (COND *) NULL;
   }
   else if ((*cond_value= cond->eq_cmp_result()) != Item::COND_OK)
-  {						// boolan compare function
+  {						
+    /* boolan compare function */
     Item *left_item=	((Item_func*) cond)->arguments()[0];
     Item *right_item= ((Item_func*) cond)->arguments()[1];
     if (left_item->eq(right_item,1))
     {
-      if (!left_item->maybe_null ||
-	  ((Item_func*) cond)->functype() == Item_func::EQUAL_FUNC)
-	return (COND*) 0;			// Compare of identical items
+      if (!left_item->maybe_null || ((Item_func*) cond)->functype() == Item_func::EQUAL_FUNC)
+	      return (COND*) NULL;			/* Comparison of identical items */
     }
   }
-  *cond_value=Item::COND_OK;
-  return cond;					// Point at next and level
+  *cond_value= Item::COND_OK;
+  return cond;					/* Point at next and return into recursion */
 }
 
 /*

@@ -302,7 +302,7 @@ drop table t1;
 CREATE TABLE `t1` (
 `post_id` int NOT NULL auto_increment,
 `topic_id` int NOT NULL default '0',
-`post_time` datetime NOT NULL default '0000-00-00 00:00:00',
+`post_time` datetime,
 `post_text` text NOT NULL,
 `icon_url` varchar(10) NOT NULL default '',
 `sign` int NOT NULL default '0',

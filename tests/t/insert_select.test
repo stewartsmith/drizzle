@@ -27,7 +27,7 @@ CREATE TABLE `t1` (
   `numreponse` bigint NOT NULL auto_increment,
   `contenu` text NOT NULL,
   `pseudo` varchar(50) NOT NULL default '',
-  `date` datetime NOT NULL default '0000-00-00 00:00:00',
+  `date` datetime,
   `ip` bigint NOT NULL default '0',
   `signature` int NOT NULL default '0',
   PRIMARY KEY  (`numeropost`,`numreponse`)
@@ -43,7 +43,7 @@ CREATE TABLE `t2` (
   `numreponse` bigint NOT NULL auto_increment,
   `contenu` text NOT NULL,
   `pseudo` varchar(50) NOT NULL default '',
-  `date` datetime NOT NULL default '0000-00-00 00:00:00',
+  `date` datetime,
   `ip` bigint NOT NULL default '0',
   `signature` int NOT NULL default '0',
   PRIMARY KEY  (`numeropost`,`numreponse`),
