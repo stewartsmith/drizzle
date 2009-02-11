@@ -904,7 +904,7 @@ let $rows = 1;
 
 --echo # SECOND()
 let $cols = a datetime, b virtual int as (second(a));
-let $values1 = '10:05:03',default;
+let $values1 = '2009-02-10 10:05:03',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 

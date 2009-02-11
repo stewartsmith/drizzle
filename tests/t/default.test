@@ -102,7 +102,7 @@ drop table t2;
 #      occurs, but if this happens for the second or subsequent row of a
 #      multiple-row statement, the preceding rows will have been inserted.
 #
-create table bug20691 (i int, d datetime NOT NULL, dn datetime not null default '0000-00-00 00:00:00');
+create table bug20691 (i int, d datetime NOT NULL, dn datetime NULL);
 --error 1364
 insert into bug20691 values (7, DEFAULT, DEFAULT), (7, '1975-07-10 07:10:03', '1978-01-13 14:08:51'), (7, DEFAULT, DEFAULT);
 insert into bug20691 values (7, '1975-07-10 07:10:03', DEFAULT);

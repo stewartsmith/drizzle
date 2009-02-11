@@ -2217,10 +2217,10 @@ t1	CREATE TABLE `t1` (
   `a` datetime,
   `b` VIRTUAL int AS (second(a))
 ) ENGINE=InnoDB
-insert into t1 values ('10:05:03',default);
+insert into t1 values ('2009-02-10 10:05:03',default);
 select * from t1;
 a	b
-2010-05-03 00:00:00	0
+2009-02-10 10:05:03	3
 drop table t1;
 set sql_warnings = 0;
 # STR_TO_DATE()
