@@ -160,8 +160,6 @@ SELECT CAST(CAST('10:11:12.098700' AS TIME) AS DECIMAL(20,6));
 CAST(CAST('10:11:12.098700' AS TIME) AS DECIMAL(20,6))
 101112.098700
 create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '1962-03-03');
-Warnings:
-Note	1265	Data truncated for column 'da' at row 1
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -170,16 +168,10 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
-Warnings:
-Note	1265	Data truncated for column 'da' at row 1
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
-Warnings:
-Note	1265	Data truncated for column 'da' at row 1
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
-Warnings:
-Note	1265	Data truncated for column 'da' at row 1
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
-ERROR 22007: Incorrect date value: '2007-03-32' for column 'da' at row 1
+ERROR HY000: Received an invalid datetime value '2007-03-32'.
 select * from t1;
 da	dt
 1962-03-03	1962-03-03 00:00:00
@@ -188,7 +180,7 @@ da	dt
 2007-03-23	2007-03-23 13:49:38
 drop table t1;
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
-ERROR 42000: Invalid default value for 'da'
+ERROR HY000: Received an invalid datetime value '1962-03-32 23:33:34'.
 create table t1 (t time default '916:00:00 a');
 ERROR 42000: Invalid default value for 't'
 create table t1 (f1 date, f2 datetime, f3 timestamp);
@@ -468,8 +460,6 @@ id	cur_date
 drop table t1,t2;
 End of 5.0 tests
 create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '1962-03-03');
-Warnings:
-Note	1265	Data truncated for column 'da' at row 1
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -478,16 +468,10 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
-Warnings:
-Note	1265	Data truncated for column 'da' at row 1
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
-Warnings:
-Note	1265	Data truncated for column 'da' at row 1
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
-Warnings:
-Note	1265	Data truncated for column 'da' at row 1
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
-ERROR 22007: Incorrect date value: '2007-03-32' for column 'da' at row 1
+ERROR HY000: Received an invalid datetime value '2007-03-32'.
 select * from t1;
 da	dt
 1962-03-03	1962-03-03 00:00:00
@@ -496,6 +480,6 @@ da	dt
 2007-03-23	2007-03-23 13:49:38
 drop table t1;
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
-ERROR 42000: Invalid default value for 'da'
+ERROR HY000: Received an invalid datetime value '1962-03-32 23:33:34'.
 create table t1 (t time default '916:00:00 a');
 ERROR 42000: Invalid default value for 't'

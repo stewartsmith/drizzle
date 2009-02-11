@@ -154,11 +154,11 @@ insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 # Test error handling
---error ER_TRUNCATED_WRONG_VALUE
+--error 1686 # Bad date
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
 select * from t1;
 drop table t1;
---error ER_INVALID_DEFAULT
+--error 1686 # Bad datetime
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
 --error ER_INVALID_DEFAULT
 create table t1 (t time default '916:00:00 a');
@@ -347,11 +347,11 @@ insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 # Test error handling
---error 1292
+--error 1686 # Bad date
 insert into t1 values ('2007-03-32','2007-03-23 13:49:38');
 select * from t1;
 drop table t1;
---error 1067
+--error 1686 # Bad date
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
 --error 1067
 create table t1 (t time default '916:00:00 a');

@@ -1,6 +1,6 @@
 drop table if exists t1, t2, t3;
 CREATE TABLE t1 (
-event_date date DEFAULT '0000-00-00' NOT NULL,
+event_date date NULL,
 type int DEFAULT '0' NOT NULL,
 event_id int DEFAULT '0' NOT NULL,
 PRIMARY KEY (event_date,type,event_id)
@@ -49,7 +49,7 @@ PAPER_ID int DEFAULT '0' NOT NULL,
 YEAR int DEFAULT '0' NOT NULL,
 ISSUE int DEFAULT '0' NOT NULL,
 CLOSED int DEFAULT '0' NOT NULL,
-ISS_DATE date DEFAULT '0000-00-00' NOT NULL,
+ISS_DATE date,
 PRIMARY KEY (PAPER_ID,YEAR,ISSUE)
 );
 INSERT INTO t1 VALUES (3,1999,34,0,'1999-07-12'), (1,1999,111,0,'1999-03-23'),

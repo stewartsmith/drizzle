@@ -19,11 +19,12 @@
  */
 
 
-#include <drizzled/server_includes.h>
-#include <drizzled/field/date.h>
-#include <drizzled/error.h>
-#include <drizzled/table.h>
-#include <drizzled/session.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/field/date.h"
+#include "drizzled/error.h"
+#include "drizzled/table.h"
+#include "drizzled/temporal.h"
+#include "drizzled/session.h"
 
 #include CMATH_H
 
@@ -59,6 +60,7 @@ int Field_date::store(const char *from,
                          uint32_t len,
                          const CHARSET_INFO * const )
 {
+#ifdef NOTDEFINED
   long tmp;
   DRIZZLE_TIME l_time;
   int error;
@@ -88,9 +90,24 @@ int Field_date::store(const char *from,
                          from, len, DRIZZLE_TIMESTAMP_DATE, 1);
 
   int3store(ptr, tmp);
-  return error;
+#endif /* NOTDEFINED */
+  /* 
+   * Try to create a DateTime from the supplied string.  Throw an error
+   * if unable to create a valid DateTime.  A DateTime is used so that
+   * automatic conversion from the higher-storage DateTime can be used
+   * and matches on datetime format strings can occur.
+   */
+  drizzled::DateTime temporal;
+  if (! temporal.from_string(from, (size_t) len))
+  {
+    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), from);
+    return 2;
+  }
+  /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
+  uint32_t int_value= (temporal.years() * 16 * 32) + (temporal.months() * 32) + temporal.days();
+  int3store(ptr, int_value);
+  return 0;
 }
-
 
 int Field_date::store(double nr)
 {
