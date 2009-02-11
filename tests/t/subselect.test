@@ -138,7 +138,7 @@ CREATE TABLE t3 (a varchar(20),b char(1) NOT NULL default '0') ENGINE=MyISAM;
 INSERT INTO t3 VALUES ('W','a'),('A','c'),('J','b');
 CREATE TABLE t2 (a varchar(20),b int NOT NULL default '0') ENGINE=MyISAM;
 INSERT INTO t2 VALUES ('W','1'),('A','3'),('J','2');
-CREATE TABLE t1 (a varchar(20),b date NOT NULL default '0000-00-00') ENGINE=MyISAM;
+CREATE TABLE t1 (a varchar(20),b date NULL) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('W','1732-02-22'),('A','1735-10-30'),('J','1743-04-13');
 SELECT * FROM t1 WHERE b = (SELECT MIN(b) FROM t1);
 SELECT * FROM t2 WHERE b = (SELECT MIN(b) FROM t2);
@@ -170,7 +170,7 @@ drop table if exists t1,t2,t3,t4,t5,t6,t7,t8;
 #searchconthardwarefr3 forumconthardwarefr7
 CREATE TABLE `t1` (
   `topic` bigint NOT NULL default '0',
-  `date` date NOT NULL default '0000-00-00',
+  `date` date NULL,
   `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`pseudo`,`date`,`topic`),
   KEY `topic` (`topic`)
@@ -200,7 +200,7 @@ INSERT INTO t1 (numeropost,maxnumrep) VALUES (40143,1),(43506,2);
 CREATE TABLE `t2` (
       `mot` varchar(30) NOT NULL default '',
       `topic` bigint NOT NULL default '0',
-      `date` date NOT NULL default '0000-00-00',
+      `date` date NULL,
       `pseudo` varchar(35) NOT NULL default '',
        PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`)
     ) ENGINE=MyISAM ROW_FORMAT=DYNAMIC;
@@ -521,7 +521,7 @@ drop table t1;
 CREATE TABLE `t1` (
   `mot` varchar(30) NOT NULL default '',
   `topic` bigint NOT NULL default '0',
-  `date` date NOT NULL default '0000-00-00',
+  `date` date NULL,
   `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
   KEY `pseudo` (`pseudo`,`date`,`topic`),
@@ -531,7 +531,7 @@ CREATE TABLE `t1` (
 CREATE TABLE `t2` (
   `mot` varchar(30) NOT NULL default '',
   `topic` bigint NOT NULL default '0',
-  `date` date NOT NULL default '0000-00-00',
+  `date` date NULL,
   `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
   KEY `pseudo` (`pseudo`,`date`,`topic`),
