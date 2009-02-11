@@ -34,6 +34,8 @@
 #include <fstream>
 #include <drizzled/serialize/serialize.h>
 #include <drizzled/serialize/table.pb.h>
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 using namespace std;
 
 #define FCOMP			17		/* Bytes for a packed field */
@@ -91,13 +93,21 @@ handle_error(uint32_t sql_errno,
 
 int drizzle_read_table_proto(const char* path, drizzle::Table* table)
 {
+  int fd= open(path, O_RDONLY);
+
+  if(fd==-1)
+    return errno;
+
+  google::protobuf::io::ZeroCopyInputStream* input=
+    new google::protobuf::io::FileInputStream(fd);
+
+  if (!table->ParseFromZeroCopyStream(input))
   {
-    fstream input(path, ios::in | ios::binary);
-    if (!table->ParseFromIstream(&input))
-    {
-      return 1;
-    }
+    close(fd);
+    return -1;
   }
+
+  close(fd);
   return 0;
 }
 

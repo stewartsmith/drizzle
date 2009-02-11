@@ -266,8 +266,11 @@ int main(int argc, char* argv[])
     if (!table.ParseFromZeroCopyStream(input))
     {
       cerr << "Failed to parse table." << endl;
+      close(fd);
       return -1;
     }
+
+    close(fd);
   }
 
   print_table(table);

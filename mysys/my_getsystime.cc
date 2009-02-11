@@ -114,40 +114,16 @@ uint64_t my_micro_time()
 
 uint64_t my_micro_time_and_time(time_t *time_arg)
 {
-#if defined(HAVE_GETHRTIME)
-  /*
-    Solaris has a very slow time() call. We optimize this by using the very
-    fast gethrtime() call and only calling time() every 1/2 second
-  */
-
-#define DELTA_FOR_SECONDS 500000000LL  /* Half a second */
-
-  static hrtime_t prev_gethrtime= 0;
-  static time_t cur_time= 0;
-  hrtime_t cur_gethrtime;
-
-  pthread_mutex_lock(&THR_LOCK_time);
-  cur_gethrtime= gethrtime();
-  if ((cur_gethrtime - prev_gethrtime) > DELTA_FOR_SECONDS)
-  {
-    cur_time= time(0);
-    prev_gethrtime= cur_gethrtime;
-  }
-  *time_arg= cur_time;
-  pthread_mutex_unlock(&THR_LOCK_time);
-  return cur_gethrtime/1000;
-#else
   uint64_t newtime;
   struct timeval t;
   /*
     The following loop is here because gettimeofday may fail on some systems
   */
-  while (gettimeofday(&t, NULL) != 0)
-  {}
+  while (gettimeofday(&t, NULL) != 0) {}
   *time_arg= t.tv_sec;
   newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
+
   return newtime;
-#endif  /* defined(HAVE_GETHRTIME) */
 }
 
 
@@ -169,11 +145,6 @@ uint64_t my_micro_time_and_time(time_t *time_arg)
 
 time_t my_time_possible_from_micro(uint64_t microtime)
 {
-#if defined(HAVE_GETHRTIME)
-  (void) microtime;
-  return time(0);                            /* Cached time */
-#else
   return (time_t) (microtime / 1000000);
-#endif  /* defined(HAVE_GETHRTIME) */
 }
 

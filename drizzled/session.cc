@@ -27,7 +27,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <sys/stat.h>
-#include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
@@ -825,7 +824,6 @@ void Session::awake(Session::killed_state state_to_set)
   killed= state_to_set;
   if (state_to_set != Session::KILL_QUERY)
   {
-    thr_alarm_kill(thread_id);
     thread_scheduler.post_kill_notification(this);
   }
   if (mysys_var)

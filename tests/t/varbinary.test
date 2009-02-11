@@ -53,7 +53,7 @@ copy_file std_data/bug19371.MYD $MYSQLTEST_VARDIR/master-data/test/t1.MYD;
 chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.MYD;
 copy_file std_data/bug19371.MYI $MYSQLTEST_VARDIR/master-data/test/t1.MYI;
 chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.MYI;
---error 1033
+--error ER_NO_SUCH_TABLE
 show create table t1;
 drop table t1;
 
