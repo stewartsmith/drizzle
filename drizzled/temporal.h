@@ -125,7 +125,7 @@ public:
    * Sets the epoch_seconds component automatically, 
    * based on the temporal's components. 
    */
-  virtual void set_epoch_seconds();
+  void set_epoch_seconds();
   /** Sets the epch_seconds component manually. */
   inline void set_epoch_seconds(const uint32_t epoch_second) {_epoch_seconds= epoch_second;}
   /** Returns the UNIX epoch seconds component. */
@@ -218,10 +218,10 @@ public:
    *
    * @param Temporal instance to add/subtract to/from
    */
-  const Date operator-(const Date &rhs);
-  const Date operator+(const Date &rhs);
-  Date& operator+=(const Date &rhs);
-  Date& operator-=(const Date &rhs);
+  virtual const Date operator-(const Date &rhs);
+  virtual const Date operator+(const Date &rhs);
+  virtual Date& operator+=(const Date &rhs);
+  virtual Date& operator-=(const Date &rhs);
 
   /**
    * Operator overload for when a DateTime instance is
@@ -495,12 +495,12 @@ public:
    *
    * @param DateTime to compare against.
    */
-  bool operator==(const DateTime &rhs);
-  bool operator!=(const DateTime &rhs);
-  bool operator>(const DateTime &rhs);
-  bool operator>=(const DateTime &rhs);
-  bool operator<(const DateTime &rhs);
-  bool operator<=(const DateTime &rhs);
+  virtual bool operator==(const DateTime &rhs);
+  virtual bool operator!=(const DateTime &rhs);
+  virtual bool operator>(const DateTime &rhs);
+  virtual bool operator>=(const DateTime &rhs);
+  virtual bool operator<(const DateTime &rhs);
+  virtual bool operator<=(const DateTime &rhs);
   /**
    * Operator to add/subtract a Time from a Time.  
    * We can return a Time new temporal instance.
@@ -549,8 +549,8 @@ public:
    * It's not possible to convert to and from a DateTime and 
    * a 4-byte integer, so let us know if we try and do it!
    */
-  inline void to_int32_t(int32_t *) {assert(0);}
-  inline bool from_int32_t(int32_t) {assert(0); return false;}
+  void to_int32_t(int32_t *) const {assert(0);}
+  bool from_int32_t(int32_t) {assert(0); return false;}
 
   /**
    * Fills a supplied char string with a
@@ -572,7 +572,7 @@ public:
    * @param String to convert from
    * @param Length of supplied string
    */
-  virtual bool from_string(const char *from, size_t from_len);
+  bool from_string(const char *from, size_t from_len);
 
   /**
    * Fills a supplied 8-byte integer pointer with an
@@ -581,7 +581,7 @@ public:
    *
    * @param Integer to fill.
    */
-  virtual void to_int64_t(int64_t *to) const;
+  void to_int64_t(int64_t *to) const;
 
   /**
    * Attempts to populate the DateTime instance based
@@ -592,7 +592,7 @@ public:
    *
    * @param time_t to convert from
    */
-  virtual bool from_time_t(const time_t from);
+  bool from_time_t(const time_t from);
 
   /**
    * Attempts to populate the DateTime instance based
@@ -603,7 +603,7 @@ public:
    *
    * @param Integer to convert from
    */
-  virtual bool from_int64_t(const int64_t from);
+  bool from_int64_t(const int64_t from);
 
   /**
    * Fills a supplied tm pointer with an
@@ -612,7 +612,7 @@ public:
    *
    * @param tm to fill.
    */
-  virtual void to_tm(struct tm *to) const;
+  void to_tm(struct tm *to) const;
 
   /**
    * Fills a supplied my_decimal with a representation of 
@@ -620,7 +620,7 @@ public:
    *
    * @param Pointer to the my_decimal to fill
    */
-  virtual void to_decimal(my_decimal *to) const;
+  void to_decimal(my_decimal *to) const;
 };
 
 /**
@@ -642,7 +642,7 @@ public:
   bool operator<(const Timestamp &rhs);
   bool operator<=(const Timestamp &rhs);
 
-  inline bool is_valid_timestamp() const {return is_valid();}
+  bool is_valid_timestamp() const {return is_valid();}
   /** Returns whether the temporal value is valid timestamp. */
   virtual bool is_valid() const;
 
@@ -652,7 +652,7 @@ public:
    *
    * @param Pointer to a time_t to convert to
    */
-  virtual void to_time_t(time_t *to) const;
+  void to_time_t(time_t *to) const;
 };
 
 /**
@@ -673,7 +673,7 @@ public:
    * @param C-String to fill.
    * @param Length of filled string (out param)
    */
-  virtual void to_string(char *to, size_t *to_len) const;
+  void to_string(char *to, size_t *to_len) const;
 
   /**
    * Fills a supplied timeval pointer with an
@@ -685,7 +685,7 @@ public:
    *
    * @param timeval to fill.
    */
-  virtual void to_timeval(struct timeval *to) const;
+  void to_timeval(struct timeval *to) const;
 };
 
 /**
