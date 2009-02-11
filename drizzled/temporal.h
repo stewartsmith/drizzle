@@ -232,15 +232,6 @@ public:
    */
   Date& operator=(const DateTime &rhs);
 
-  /**
-   * Operator overload for when a DateTime instance is
-   * assigned to a Date.  We do a copy of the DateTime's
-   * date-related components.
-   *
-   * @param The DateTime to copy from
-   */
-  Date& operator=(const DateTime &rhs);
-
   virtual bool is_valid_date() const {return is_valid();}
   virtual bool is_valid_datetime() const {return is_valid();}
   virtual bool is_valid_time() const {return false;}
