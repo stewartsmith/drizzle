@@ -78,6 +78,13 @@ class my_decimal;
 namespace drizzled 
 {
 
+/* Forward declaration needed */
+class TemporalInterval;
+class TemporalIntervalYear;
+class TemporalIntervalDayOrLess;
+class TemporalIntervalDayOrWeek;
+class TemporalIntervalYearMonth;
+
 /**
  * Base class for all temporal data classes.
  */
@@ -94,22 +101,33 @@ protected:
   time_t _epoch_seconds;
   uint32_t _useconds;
   uint32_t _nseconds;
+  /** Set on some operator overloads.  Indicates that an overflow occurred. */
+  bool _overflow;
   /** Returns number of seconds in time components (hour + minute + second) */
   uint64_t _cumulative_seconds_in_time() const;
+  /** Resets all temporal components to zero */
+  inline void _reset() {_years= _months= _days= _hours= _minutes= _seconds= _epoch_seconds= _useconds= _nseconds= 0;}
 public:
   Temporal();
   virtual ~Temporal() {}
 
   /** Returns the calendar component. */
   inline enum calendar calendar() const {return _calendar;}
+  /** Sets the nseconds component. */
+  inline void set_nseconds(const uint32_t nsecond) {_nseconds= nsecond;}
   /** Returns the nanoseconds component. */
   inline uint32_t nseconds() const {return _nseconds;}
   /** Sets the useconds component. */
   inline void set_useconds(const uint32_t usecond) {_useconds= usecond;}
   /** Returns the microsseconds component. */
   inline uint32_t useconds() const {return _useconds;}
-  /** Sets the epoch_seconds component. */
+  /** 
+   * Sets the epoch_seconds component automatically, 
+   * based on the temporal's components. 
+   */
   virtual void set_epoch_seconds();
+  /** Sets the epch_seconds component manually. */
+  inline void set_epoch_seconds(const uint32_t epoch_second) {_epoch_seconds= epoch_second;}
   /** Returns the UNIX epoch seconds component. */
   inline time_t epoch_seconds() const {return _epoch_seconds;}
   /** Sets the seconds component. */
@@ -136,6 +154,8 @@ public:
   inline void set_years(const uint32_t year) {_years= year;}
   /** Returns the years component. */
   inline uint32_t years() const {return _years;}
+  /** Returns whether the overflow flag was set (which can occur during an overloaded operator's execution) */
+  inline bool overflow() const {return _overflow;}
 
   /** Returns whether the temporal value is valid as a date. */
   virtual bool is_valid_date() const= 0;
@@ -166,9 +186,11 @@ public:
    * This minimizes the repeated bounds-checking to
    * just the conversion from_xxx routines.
    */
-
   friend class TemporalFormat;
 };
+
+/* Forward declaration needed */
+class DateTime;
 
 /**
  * Class representing temporal components in a valid
@@ -200,6 +222,15 @@ public:
   const Date operator+(const Date &rhs);
   Date& operator+=(const Date &rhs);
   Date& operator-=(const Date &rhs);
+
+  /**
+   * Operator overload for when a DateTime instance is
+   * assigned to a Date.  We do a copy of the DateTime's
+   * date-related components.
+   *
+   * @param The DateTime to copy from
+   */
+  Date& operator=(const DateTime &rhs);
 
   virtual bool is_valid_date() const {return is_valid();}
   virtual bool is_valid_datetime() const {return is_valid();}
@@ -262,6 +293,21 @@ public:
   virtual bool from_int32_t(const int32_t from);
 
   /**
+   * Fills a supplied int64_t with the Julian Day Number
+   * representation of this Date.
+   *
+   * @note Julian Day Number != julian day!
+   *
+   * Julian Day Number is the monotonically increasing number
+   * of days from the start of the Julian calendar (~4713 B.C.)
+   *
+   * julian day is the ordinal day number of a day in a year.
+   *
+   * @param int64_t to fill
+   */
+  void to_julian_day_number(int64_t *to) const;
+
+  /**
    * Attempts to populate the Date instance based
    * on the contents of a supplied Julian Day Number
    *
@@ -270,7 +316,7 @@ public:
    *
    * @param Integer to convert from
    */
-  virtual bool from_julian_day_number(const int64_t from);
+  bool from_julian_day_number(const int64_t from);
 
   /**
    * Fills a supplied tm pointer with an
@@ -319,6 +365,8 @@ public:
    * @param Pointer to the my_decimal to fill
    */
   virtual void to_decimal(my_decimal *to) const;
+
+  friend class TemporalInterval;
 };
 
 /* Forward declare needed for friendship */
@@ -331,6 +379,9 @@ class DateTime;
 class Time: public Temporal
 {
 public:
+
+  /* Maximum number of seconds in 23:59:59 (24 * 60 * 60) */
+  const static uint32_t MAX_CUMULATIVE_SECONDS= 86400L;
 
   /**
    * Comparison operator overloads to compare a Time against
@@ -355,12 +406,12 @@ public:
   Time& operator-=(const Time &rhs);
   Time& operator+=(const Time &rhs);
 
-  virtual bool is_valid_date() const {return false;}
-  virtual bool is_valid_datetime() const {return false;}
-  virtual bool is_valid_time() const {return is_valid();}
-  virtual bool is_valid_timestamp() const {return false;}
+  bool is_valid_date() const {return false;}
+  bool is_valid_datetime() const {return false;}
+  bool is_valid_time() const {return is_valid();}
+  bool is_valid_timestamp() const {return false;}
   /** Returns whether the temporal value is valid date. */
-  virtual bool is_valid() const;
+  bool is_valid() const;
 
   /**
    * Fills a supplied char string with a
@@ -370,7 +421,7 @@ public:
    * @param C-String to fill.
    * @param Length of filled string (out param)
    */
-  virtual void to_string(char *to, size_t *to_len) const;
+  void to_string(char *to, size_t *to_len) const;
 
   /**
    * Attempts to populate the Time instance based
@@ -382,7 +433,7 @@ public:
    * @param String to convert from
    * @param Length of supplied string
    */
-  virtual bool from_string(const char *from, size_t from_len);
+  bool from_string(const char *from, size_t from_len);
 
   /**
    * Fills a supplied 4-byte integer pointer with an
@@ -391,7 +442,7 @@ public:
    *
    * @param Integer to fill.
    */
-  virtual void to_int32_t(int32_t *to) const;
+  void to_int32_t(int32_t *to) const;
 
   /**
    * Attempts to populate the Time instance based
@@ -402,7 +453,23 @@ public:
    *
    * @param Integer to convert from
    */
-  virtual bool from_int32_t(const int32_t from);
+  bool from_int32_t(const int32_t from);
+
+  /**
+   * Attempts to populate the Time instance based
+   * on the contents of a supplied time_t
+   *
+   * Returns whether the conversion was 
+   * successful.
+   *
+   * @note
+   *
+   * We can only convert *from* a time_t, not back 
+   * to a time_t since it would be a lossy conversion.
+   *
+   * @param time_t to convert from
+   */
+  bool from_time_t(const time_t from);
 
   /**
    * Fills a supplied my_decimal with a representation of 
@@ -410,7 +477,7 @@ public:
    *
    * @param Pointer to the my_decimal to fill
    */
-  virtual void to_decimal(my_decimal *to) const;
+  void to_decimal(my_decimal *to) const;
 
   friend class DateTime;
 };
@@ -455,6 +522,23 @@ public:
   const DateTime operator+(const DateTime &rhs);
   DateTime& operator+=(const DateTime &rhs);
   DateTime& operator-=(const DateTime &rhs);
+
+  /**
+   * Operator overload for adding/subtracting a TemporalInterval
+   * instance to this temporal.
+   *
+   * @param TemporalInterval instance to add/subtract to/from
+   */
+  DateTime& operator+=(const TemporalIntervalYear &rhs);
+  DateTime& operator+=(const TemporalIntervalDayOrLess &rhs);
+  DateTime& operator+=(const TemporalIntervalDayOrWeek &rhs);
+  DateTime& operator+=(const TemporalIntervalYearMonth &rhs);
+  DateTime& operator-=(const TemporalIntervalYear &rhs);
+  DateTime& operator-=(const TemporalIntervalDayOrLess &rhs);
+  DateTime& operator-=(const TemporalIntervalDayOrWeek &rhs);
+  DateTime& operator-=(const TemporalIntervalYearMonth &rhs);
+
+  friend class TemporalInterval;
 
   /* Returns whether the DateTime (or subclass) instance is in the Unix Epoch. */
   bool in_unix_epoch() const;
