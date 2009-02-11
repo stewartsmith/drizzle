@@ -28,15 +28,14 @@
  * Implementation of the server's date and time string matching utility.
  */
 
+#include <string> /** C++ string class used */
+#include <string.h>
+#include <vector>
+#include <pcre.h>
 
 #include "drizzled/global.h"
 #include "drizzled/temporal_format.h"
 #include "drizzled/temporal.h"
-
-#include <string> /** C++ string class used */
-#include <string.h>
-#include <vector>
-#include PCRE_HEADER
 
 namespace drizzled
 {
@@ -198,7 +197,7 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
 
 } /* end namespace drizzled */
 
-#define COUNT_KNOWN_FORMATS 14
+#define COUNT_KNOWN_FORMATS 16
 
 struct temporal_format_args
 {
@@ -236,8 +235,10 @@ static struct temporal_format_args __format_args[COUNT_KNOWN_FORMATS]=
 , {"^(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{4})$", 3, 1, 2, 0, 0, 0, 0, 0} /* MM[-/.]DD[-/.]YYYY (US common format)*/
 , {"^(\\d{2})[-/.]*(\\d{2})[-/.]*(\\d{2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YY[-/.]MM[-/.]DD */
 , {"^(\\d{2})[-/.]*(\\d{1,2})[-/.]*(\\d{1,2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YY[-/.][M]M[-/.][D]D */
+, {"^(\\d{4})[-/.]*(\\d{1,2})[-/.]*(\\d{1,2})$", 1, 2, 3, 0, 0, 0, 0, 0} /* YYYY[-/.][M]M[-/.][D]D */
 , {"^(\\d{2}):*(\\d{2}):*(\\d{2})\\.(\\d{1,6})$", 0, 0, 0, 1, 2, 3, 4, 0} /* HHmmSS.uuuuuu, HH:mm:SS.uuuuuu */
 , {"^(\\d{1,2}):*(\\d{2}):*(\\d{2})$", 0, 0, 0, 1, 2, 3, 0, 0} /* [H]HmmSS, [H]H:mm:SS */
+, {"^(\\d{1,2}):(\\d{1,2}):(\\d{1,2})$", 0, 0, 0, 1, 2, 3, 0, 0} /* [H]H:[m]m:[S]S */
 , {"^(\\d{1,2}):*(\\d{2})$", 0, 0, 0, 0, 1, 2, 0, 0} /* [m]mSS, [m]m:SS */
 , {"^(\\d{1,2})$", 0, 0, 0, 0, 0, 1, 0, 0} /* SS, S */
 , {"^(\\d{1,2})\\.(\\d{1,6})$", 0, 0, 0, 0, 0, 1, 2, 0} /* [S]S.uuuuuu */

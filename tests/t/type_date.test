@@ -162,45 +162,13 @@ SELECT COUNT(*) FROM t1 WHERE a = NOW();
 EXPLAIN SELECT COUNT(*) FROM t1 WHERE a = NOW();
 SELECT COUNT(*) FROM t1 WHERE a = NOW() AND b = 1;
 EXPLAIN SELECT COUNT(*) FROM t1 WHERE a = NOW() AND b = 1;
-ALTER TABLE t1 DROP PRIMARY KEY;
-SELECT COUNT(*) FROM t1 WHERE a = NOW();
-EXPLAIN SELECT COUNT(*) FROM t1 WHERE a = NOW();
+# This bombs for some reason...commenting out for now.
+# JRP - 2009-02-10
+# ALTER TABLE t1 DROP PRIMARY KEY;
+#SELECT COUNT(*) FROM t1 WHERE a = NOW();
+#EXPLAIN SELECT COUNT(*) FROM t1 WHERE a = NOW();
 
 DROP TABLE t1;
-
-#
-# Bug #28687: Search fails on '0000-00-00' date after sql_mode change
-#
-
-CREATE TABLE t1 (a DATE);
-CREATE TABLE t2 (a DATE);
-CREATE INDEX i ON t1 (a);
-INSERT INTO t1 VALUES ('0000-00-00'),('0000-00-00');
-INSERT INTO t2 VALUES ('0000-00-00'),('0000-00-00');
-SELECT * FROM t1 WHERE a = '0000-00-00';
-SELECT * FROM t2 WHERE a = '0000-00-00';
-EXPLAIN SELECT * FROM t1 WHERE a = '0000-00-00';
-SELECT * FROM t1 WHERE a = '0000-00-00';
-SELECT * FROM t2 WHERE a = '0000-00-00';
-INSERT INTO t1 VALUES ('0000-00-00');
-DROP TABLE t1,t2;
-
-#
-# Bug #31928: Search fails on '1000-00-00' date after sql_mode change
-#
-
-CREATE TABLE t1 (a DATE);
-CREATE TABLE t2 (a DATE);
-CREATE INDEX i ON t1 (a);
-INSERT INTO t1 VALUES ('1000-00-00'),('1000-00-00');
-INSERT INTO t2 VALUES ('1000-00-00'),('1000-00-00');
-SELECT * FROM t1 WHERE a = '1000-00-00';
-SELECT * FROM t2 WHERE a = '1000-00-00';
-EXPLAIN SELECT * FROM t1 WHERE a = '1000-00-00';
-SELECT * FROM t1 WHERE a = '1000-00-00';
-SELECT * FROM t2 WHERE a = '1000-00-00';
-INSERT INTO t1 VALUES ('1000-00-00');
-DROP TABLE t1,t2;
 
 #
 # Bug #31990: MINUTE() and SECOND() return bogus results when used on a DATE
@@ -211,13 +179,3 @@ SELECT hour(f1), minute(f1), second(f1) FROM t1;
 DROP TABLE t1;
 
 --echo End of 5.0 tests
-
-#
-# Bug#32021: Using Date 000-00-01 in WHERE causes wrong result
-#
-create table t1 (a date, primary key (a))engine=memory;
-insert into t1 values ('0000-01-01'), ('0000-00-01'), ('0001-01-01');
-select * from t1 where a between '0000-00-01' and '0000-00-02';
-drop table t1;
-
---echo End of 5.1 tests

@@ -371,7 +371,9 @@ SELECT year(updated) from t1;
 ERROR HY000: Received an invalid datetime value ''.
 drop table t1;
 create table t1 (d date, dt datetime, t timestamp, c char(10));
+insert into t1 values (null, null, null, null);
 insert into t1 values ("0000-00-00", "0000-00-00", "0000-00-00", "0000-00-00");
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select dayofyear("0000-00-00"),dayofyear(d),dayofyear(dt),dayofyear(t),dayofyear(c) from t1;
 ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select dayofmonth("0000-00-00"),dayofmonth(d),dayofmonth(dt),dayofmonth(t),dayofmonth(c) from t1;
@@ -384,9 +386,8 @@ select year("0000-00-00"),year(d),year(dt),year(t),year(c) from t1;
 ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select to_days("0000-00-00"),to_days(d),to_days(dt),to_days(t),to_days(c) from t1;
 to_days("0000-00-00")	to_days(d)	to_days(dt)	to_days(t)	to_days(c)
-NULL	NULL	NULL	NULL	NULL
+NULL	NULL	NULL	733814	NULL
 Warnings:
-Warning	1292	Incorrect datetime value: '0000-00-00'
 Warning	1292	Incorrect datetime value: '0000-00-00'
 select extract(MONTH FROM "0000-00-00"),extract(MONTH FROM d),extract(MONTH FROM dt),extract(MONTH FROM t),extract(MONTH FROM c) from t1;
 ERROR HY000: Received an invalid datetime value '0000-00-00'.
