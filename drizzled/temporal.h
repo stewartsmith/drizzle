@@ -205,12 +205,12 @@ public:
    *
    * @param Date to compare against.
    */
-  bool operator==(const Date &rhs);
-  bool operator!=(const Date &rhs);
-  bool operator>(const Date &rhs);
-  bool operator>=(const Date &rhs);
-  bool operator<(const Date &rhs);
-  bool operator<=(const Date &rhs);
+  virtual bool operator==(const Date &rhs);
+  virtual bool operator!=(const Date &rhs);
+  virtual bool operator>(const Date &rhs);
+  virtual bool operator>=(const Date &rhs);
+  virtual bool operator<(const Date &rhs);
+  virtual bool operator<=(const Date &rhs);
   /**
    * Operator overload for adding/subtracting another Date
    * (or subclass) to/from this temporal.  When subtracting 
