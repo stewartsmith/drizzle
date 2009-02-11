@@ -1,6 +1,21 @@
 drop table if exists t1;
 create table t1 (t datetime);
-insert into t1 values (101),(691231),(700101),(991231),(10000101),(99991231),(101000000),(691231000000),(700101000000),(991231235959),(10000101000000),(99991231235959),(20030100000000),(20030000000000);
+insert into t1 values (101);
+insert into t1 values (691231);
+insert into t1 values (700101);
+insert into t1 values (991231);
+insert into t1 values (10000101);
+insert into t1 values (99991231);
+insert into t1 values (101000000);
+insert into t1 values (691231000000);
+insert into t1 values (700101000000);
+insert into t1 values (991231235959);
+insert into t1 values (10000101000000);
+insert into t1 values (99991231235959);
+insert into t1 values (20030100000000);
+ERROR HY000: Received an invalid datetime value '20030100000000'.
+insert into t1 values (20030000000000);
+ERROR HY000: Received an invalid datetime value '20030000000000'.
 select * from t1;
 t
 2000-01-01 00:00:00
@@ -15,9 +30,9 @@ t
 1999-12-31 23:59:59
 1000-01-01 00:00:00
 9999-12-31 23:59:59
-2003-01-00 00:00:00
-2003-00-00 00:00:00
 delete from t1 where t > 0;
+ERROR HY000: Received an invalid datetime value '0'.
+delete from t1 where t > "0001-01-01 00:00:00";
 optimize table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	optimize	status	OK
@@ -80,10 +95,9 @@ date_format(a,"%Y-%m-%d")=b	right(a+0,6)=c+0	a=d+0
 1	1	1
 drop table t1;
 CREATE TABLE t1 (a datetime not null);
-insert into t1 values (0);
+insert into t1 values ("2009-02-11 00:00:00");
 select * from t1 where a is null;
 a
-0000-00-00 00:00:00
 drop table t1;
 create table t1 (id int, dt datetime);
 insert into t1 values (1,"2001-08-14 00:00:00"),(2,"2001-08-15 00:00:00"),(3,"2001-08-16 00:00:00"),(4,"2003-09-15 01:20:30");
@@ -128,7 +142,7 @@ drop table t1;
 create table t1 (t datetime);
 insert into t1 values (20030102030460),(20030102036301),(20030102240401),
 (20030132030401),(20031302030401),(100001202030401);
-ERROR 22007: Incorrect datetime value: '20030102030460' for column 't' at row 1
+ERROR HY000: Received an invalid datetime value '20030102036301'.
 select * from t1;
 t
 delete from t1;
@@ -331,15 +345,9 @@ select * from t1 where f1 between 20020101 and 20070101000000;
 f1
 2002-02-02 00:00:00
 select * from t1 where f1 between 2002010 and 20070101000000;
-f1
-2001-01-01 00:00:00
-2002-02-02 00:00:00
-Warnings:
-Warning	1292	Incorrect datetime value: '2002010' for column 'f1' at row 1
+ERROR HY000: Received an invalid datetime value '2002010'.
 select * from t1 where f1 between 20020101 and 2007010100000;
-f1
-Warnings:
-Warning	1292	Incorrect datetime value: '2007010100000' for column 'f1' at row 1
+ERROR HY000: Received an invalid datetime value '2007010100000'.
 drop table t1;
 #
 # Bug#27216: functions with parameters of different date types may
@@ -427,10 +435,10 @@ select * from t1
 where id in (select id from t1 as x1 where (t1.cur_date is null));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	Using where
-2	DEPENDENT SUBQUERY	x1	ALL	NULL	NULL	NULL	NULL	1	100.00	Using where
+2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
 Warnings:
 Note	1276	Field or reference 'test.t1.cur_date' of SELECT #2 was resolved in SELECT #1
-Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`cur_date` AS `cur_date` from `test`.`t1` where <in_optimizer>(`test`.`t1`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t1` `x1` where ((`test`.`t1`.`cur_date` = 0) and (<cache>(`test`.`t1`.`id`) = `test`.`x1`.`id`))))
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`cur_date` AS `cur_date` from `test`.`t1` where <in_optimizer>(`test`.`t1`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t1` `x1` where 0))
 select * from t1
 where id in (select id from t1 as x1 where (t1.cur_date is null));
 id	cur_date
@@ -439,10 +447,10 @@ select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	Using where
-2	DEPENDENT SUBQUERY	x1	ALL	NULL	NULL	NULL	NULL	1	100.00	Using where
+2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
 Warnings:
 Note	1276	Field or reference 'test.t2.cur_date' of SELECT #2 was resolved in SELECT #1
-Note	1003	select `test`.`t2`.`id` AS `id`,`test`.`t2`.`cur_date` AS `cur_date` from `test`.`t2` where <in_optimizer>(`test`.`t2`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t2` `x1` where ((`test`.`t2`.`cur_date` = 0) and (<cache>(`test`.`t2`.`id`) = `test`.`x1`.`id`))))
+Note	1003	select `test`.`t2`.`id` AS `id`,`test`.`t2`.`cur_date` AS `cur_date` from `test`.`t2` where <in_optimizer>(`test`.`t2`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t2` `x1` where 0))
 select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
 id	cur_date
@@ -453,10 +461,10 @@ select * from t1
 where id in (select id from t1 as x1 where (t1.cur_date is null));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
-2	DEPENDENT SUBQUERY	x1	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
+2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
 Warnings:
 Note	1276	Field or reference 'test.t1.cur_date' of SELECT #2 was resolved in SELECT #1
-Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`cur_date` AS `cur_date` from `test`.`t1` where <in_optimizer>(`test`.`t1`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t1` `x1` where ((`test`.`t1`.`cur_date` = 0) and (<cache>(`test`.`t1`.`id`) = `test`.`x1`.`id`))))
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`cur_date` AS `cur_date` from `test`.`t1` where <in_optimizer>(`test`.`t1`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t1` `x1` where 0))
 select * from t1
 where id in (select id from t1 as x1 where (t1.cur_date is null));
 id	cur_date
@@ -465,10 +473,10 @@ select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
-2	DEPENDENT SUBQUERY	x1	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
+2	DEPENDENT SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
 Warnings:
 Note	1276	Field or reference 'test.t2.cur_date' of SELECT #2 was resolved in SELECT #1
-Note	1003	select `test`.`t2`.`id` AS `id`,`test`.`t2`.`cur_date` AS `cur_date` from `test`.`t2` where <in_optimizer>(`test`.`t2`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t2` `x1` where ((`test`.`t2`.`cur_date` = 0) and (<cache>(`test`.`t2`.`id`) = `test`.`x1`.`id`))))
+Note	1003	select `test`.`t2`.`id` AS `id`,`test`.`t2`.`cur_date` AS `cur_date` from `test`.`t2` where <in_optimizer>(`test`.`t2`.`id`,<exists>(select 1 AS `Not_used` from `test`.`t2` `x1` where 0))
 select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
 id	cur_date

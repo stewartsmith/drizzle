@@ -7,9 +7,27 @@ drop table if exists t1;
 --enable_warnings
 
 create table t1 (t datetime);
-insert into t1 values (101),(691231),(700101),(991231),(10000101),(99991231),(101000000),(691231000000),(700101000000),(991231235959),(10000101000000),(99991231235959),(20030100000000),(20030000000000);
+insert into t1 values (101);
+insert into t1 values (691231);
+insert into t1 values (700101);
+insert into t1 values (991231);
+insert into t1 values (10000101);
+insert into t1 values (99991231);
+insert into t1 values (101000000);
+insert into t1 values (691231000000);
+insert into t1 values (700101000000);
+insert into t1 values (991231235959);
+insert into t1 values (10000101000000);
+insert into t1 values (99991231235959);
+--error 1686 # Bad datetime
+insert into t1 values (20030100000000);
+--error 1686 # Bad datetime
+insert into t1 values (20030000000000);
 select * from t1;
+--error 1686 # Bad datetime
 delete from t1 where t > 0;
+# try earliest datetime end point which is actually a friggin datetime, not a 0.
+delete from t1 where t > "0001-01-01 00:00:00";
 optimize table t1;
 check table t1;
 delete from t1;
@@ -69,7 +87,7 @@ drop table t1;
 #
 
 CREATE TABLE t1 (a datetime not null);
-insert into t1 values (0);
+insert into t1 values ("2009-02-11 00:00:00");
 select * from t1 where a is null;
 drop table t1;
 
@@ -115,7 +133,7 @@ drop table t1;
 # warnings (for both strings and numbers)
 #
 create table t1 (t datetime);
---error 1292
+--error 1686 # Bad datetime
 insert into t1 values (20030102030460),(20030102036301),(20030102240401),
                       (20030132030401),(20031302030401),(100001202030401);
 select * from t1;
@@ -266,7 +284,9 @@ drop table t1;
 create table t1(f1 datetime);
 insert into t1 values('2001-01-01'),('2002-02-02');
 select * from t1 where f1 between 20020101 and 20070101000000;
+--error 1686 # 2002010 is not a datetime.
 select * from t1 where f1 between 2002010 and 20070101000000;
+--error 1686 # 2007010100000 is not a datetime.
 select * from t1 where f1 between 20020101 and 2007010100000;
 drop table t1;
 
