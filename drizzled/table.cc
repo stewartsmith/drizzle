@@ -4793,6 +4793,9 @@ void Table::free_tmp_table(Session *session)
   save_proc_info=session->get_proc_info();
   session->set_proc_info("removing tmp table");
 
+  // Release latches since this can take a long time
+  ha_release_temporary_latches(session);
+
   if (file)
   {
     if (db_stat)
@@ -4839,6 +4842,10 @@ bool create_myisam_from_heap(Session *session, Table *table,
     table->file->print_error(error,MYF(0));
     return(1);
   }
+
+  // Release latches since this can take a long time
+  ha_release_temporary_latches(session);
+
   new_table= *table;
   share= *table->s;
   new_table.s= &share;

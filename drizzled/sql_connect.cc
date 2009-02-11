@@ -31,6 +31,7 @@
 #include <drizzled/plugin_scheduling.h>
 #include <drizzled/session.h>
 #include <drizzled/data_home.h>
+#include <drizzled/connect.h>
 
 extern scheduling_st thread_scheduler;
 
