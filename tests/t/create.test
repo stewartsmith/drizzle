@@ -1341,12 +1341,11 @@ ALTER TABLE t1 ADD INDEX(c1);
 --echo
 
 CREATE TABLE t3(c1 DATETIME NOT NULL);
+--error 1686 # Bad datetime
 INSERT INTO t3 VALUES (0);
 
 --echo
-# The following is broken for now... commenting out until I root out the issues
-# - JRP 2008-02-10
-# ALTER TABLE t3 ADD INDEX(c1);
+ALTER TABLE t3 ADD INDEX(c1);
 
 --echo
 --echo # -- Cleanup.

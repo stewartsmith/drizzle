@@ -1607,7 +1607,9 @@ ALTER TABLE t1 ADD INDEX(c1);
 
 CREATE TABLE t3(c1 DATETIME NOT NULL);
 INSERT INTO t3 VALUES (0);
+ERROR HY000: Received an invalid datetime value '0'.
 
+ALTER TABLE t3 ADD INDEX(c1);
 
 # -- Cleanup.
 DROP TABLE t1;
