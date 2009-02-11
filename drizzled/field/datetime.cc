@@ -18,12 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "drizzled/server_includes.h"
+#include "drizzled/field/datetime.h"
+#include "drizzled/error.h"
+#include "drizzled/table.h"
+#include "drizzled/temporal.h"
+#include "drizzled/session.h"
 
-#include <drizzled/server_includes.h>
-#include <drizzled/field/datetime.h>
-#include <drizzled/error.h>
-#include <drizzled/table.h>
-#include <drizzled/session.h>
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -41,6 +42,7 @@ int Field_datetime::store(const char *from,
                           uint32_t len,
                           const CHARSET_INFO * const )
 {
+#ifdef NOTDEFINED
   DRIZZLE_TIME time_tmp;
   int error;
   uint64_t tmp= 0;
@@ -70,9 +72,30 @@ int Field_datetime::store(const char *from,
   else
 #endif
     int64_tstore(ptr,tmp);
-  return error;
+#endif /* NOTDEFINED */
+  /* 
+   * Try to create a DateTime from the supplied string.  Throw an error
+   * if unable to create a valid DateTime.  
+   */
+  drizzled::DateTime temporal;
+  if (! temporal.from_string(from, (size_t) len))
+  {
+    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), from);
+    return 2;
+  }
+  /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
+  int64_t int_value;
+  temporal.to_int64_t(&int_value);
+#ifdef WORDS_BIGENDIAN
+  if (table && table->s->db_low_byte_first)
+  {
+    int8store(ptr, int_value);
+  }
+  else
+#endif
+    int64_tstore(ptr, int_value);
+  return 0;
 }
-
 
 int Field_datetime::store(double nr)
 {

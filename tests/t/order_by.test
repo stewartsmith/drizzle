@@ -324,7 +324,7 @@ drop table t1,t2,t3;
 CREATE TABLE t1 (
   `titre` char(80) NOT NULL default '',
   `numeropost` int NOT NULL auto_increment,
-  `date` datetime NOT NULL default '0000-00-00 00:00:00',
+  `date` datetime,
   `auteur` char(35) NOT NULL default '',
   `icone` int NOT NULL default '0',
   `lastauteur` char(35) NOT NULL default '',
