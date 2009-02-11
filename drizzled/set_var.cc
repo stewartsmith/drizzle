@@ -66,12 +66,17 @@
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
 
+#include <map>
+#include <algorithm>
+
+using namespace std;
+
 extern const CHARSET_INFO *character_set_filesystem;
 extern I_List<NAMED_LIST> key_caches;
 extern size_t my_thread_stack_size;
 
 static DYNAMIC_ARRAY fixed_show_vars;
-static HASH system_variable_hash;
+static map<const string, sys_var *> system_variable_hash;
 extern char *opt_drizzle_tmpdir;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
@@ -445,7 +450,6 @@ static SHOW_VAR fixed_vars[]= {
   {"protocol_version",        (char*) &protocol_version,            SHOW_INT},
   {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_INT},
 };
-
 
 bool sys_var::check(Session *, set_var *var)
 {
@@ -2083,18 +2087,6 @@ static struct my_option *find_option(struct my_option *opt, const char *name)
 }
 
 
-/**
-  Return variable name and length for hashing of variables.
-*/
-
-static unsigned char *get_sys_var_length(const sys_var *var, size_t *length,
-                                         bool)
-{
-  *length= var->name_length;
-  return (unsigned char*) var->name;
-}
-
-
 /*
   Add variables to the dynamic hash of system variables
 
@@ -2112,24 +2104,43 @@ static unsigned char *get_sys_var_length(const sys_var *var, size_t *length,
 int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
 {
   sys_var *var;
-
   /* A write lock should be held on LOCK_system_variables_hash */
 
   for (var= first; var; var= var->next)
   {
-    var->name_length= strlen(var->name);
-    /* this fails if there is a conflicting variable name. see HASH_UNIQUE */
-    if (my_hash_insert(&system_variable_hash, (unsigned char*) var))
-      goto error;
+    /* Make a temp string to hold this and then make it lower so that matching
+     * happens case-insensitive.
+     */
+    string var_name(var->name);
+    transform(var_name.begin(), var_name.end(), var_name.begin(), ::tolower);
+    var->name_length= var_name.length();
+
+    /* this fails if there is a conflicting variable name. */
+    if (system_variable_hash.count(var_name) == 0)
+    {
+      system_variable_hash[var_name]= var;
+    } 
+    else
+    {
+      for (; first != var; first= first->next)
+      {
+        /*
+         * This is slightly expensive, since we have to do the transform 
+         * _again_ but should rarely happen unless there is a pretty
+         * major problem in the code
+         */
+        var_name= first->name;
+        transform(var_name.begin(), var_name.end(),
+                  var_name.begin(), ::tolower);
+        system_variable_hash.erase(var_name);
+      }
+      return 1;
+    }
     if (long_options)
       var->option_limits= find_option(long_options, var->name);
   }
   return 0;
 
-error:
-  for (; first != var; first= first->next)
-    hash_delete(&system_variable_hash, (unsigned char*) first);
-  return 1;
 }
 
 
@@ -2148,20 +2159,20 @@ error:
 int mysql_del_sys_var_chain(sys_var *first)
 {
   int result= 0;
+  string var_name;
 
   /* A write lock should be held on LOCK_system_variables_hash */
-
   for (sys_var *var= first; var; var= var->next)
-    result|= hash_delete(&system_variable_hash, (unsigned char*) var);
+  {
+    var_name= var->name;
+    transform(var_name.begin(), var_name.end(),
+              var_name.begin(), ::tolower);
+    result|= system_variable_hash.erase(var_name);
+  }
 
   return result;
 }
 
-
-static int show_cmp(SHOW_VAR *a, SHOW_VAR *b)
-{
-  return strcmp(a->name, b->name);
-}
 
 
 /*
@@ -2177,11 +2188,10 @@ static int show_cmp(SHOW_VAR *a, SHOW_VAR *b)
     NULL        FAILURE
 */
 
-SHOW_VAR* enumerate_sys_vars(Session *session, bool sorted)
+SHOW_VAR* enumerate_sys_vars(Session *session, bool)
 {
-  int count= system_variable_hash.records, i;
   int fixed_count= fixed_show_vars.elements;
-  int size= sizeof(SHOW_VAR) * (count + fixed_count + 1);
+  int size= sizeof(SHOW_VAR) * (system_variable_hash.size() + fixed_count + 1);
   SHOW_VAR *result= (SHOW_VAR*) session->alloc(size);
 
   if (result)
@@ -2189,19 +2199,17 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool sorted)
     SHOW_VAR *show= result + fixed_count;
     memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(SHOW_VAR));
 
-    for (i= 0; i < count; i++)
+    map<string, sys_var *>::iterator iter;
+    for(iter= system_variable_hash.begin();
+        iter != system_variable_hash.end();
+        iter++)
     {
-      sys_var *var= (sys_var*) hash_element(&system_variable_hash, i);
+      sys_var *var= (*iter).second;
       show->name= var->name;
       show->value= (char*) var;
       show->type= SHOW_SYS;
       show++;
     }
-
-    /* sort into order */
-    if (sorted)
-      my_qsort(result, count + fixed_count, sizeof(SHOW_VAR),
-               (qsort_cmp) show_cmp);
 
     /* make last element empty */
     memset(show, 0, sizeof(SHOW_VAR));
@@ -2249,10 +2257,6 @@ int set_var_init()
   fixed_show_vars.elements= FIXED_VARS_SIZE;
   memcpy(fixed_show_vars.buffer, fixed_vars, sizeof(fixed_vars));
 
-  if (hash_init(&system_variable_hash, system_charset_info, count, 0,
-                0, (hash_get_key) get_sys_var_length, 0, HASH_UNIQUE))
-    goto error;
-
   vars.last->next= NULL;
   if (mysql_add_sys_var_chain(vars.first, my_long_options))
     goto error;
@@ -2267,7 +2271,6 @@ error:
 
 void set_var_free()
 {
-  hash_free(&system_variable_hash);
   delete_dynamic(&fixed_show_vars);
 }
 
@@ -2307,20 +2310,20 @@ int mysql_append_static_vars(const SHOW_VAR *show_vars, uint32_t count)
     0		Unknown variable (error message is given)
 */
 
-sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error)
+sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
 {
-  sys_var *var;
-
   /*
     This function is only called from the sql_plugin.cc.
     A lock on LOCK_system_variable_hash should be held
   */
-  var= (sys_var*) hash_search(&system_variable_hash,
-			      (unsigned char*) str, length ? length : strlen(str));
-  if (!(var || no_error))
+  string lower_var(str);
+  transform(lower_var.begin(), lower_var.end(), lower_var.begin(), ::tolower);
+  map<string, sys_var *>::iterator result_iter=
+    system_variable_hash.find(lower_var);
+  if (result_iter == system_variable_hash.end() && (!no_error))
     my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), (char*) str);
 
-  return var;
+  return (*result_iter).second;
 }
 
 
