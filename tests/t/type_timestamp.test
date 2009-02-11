@@ -18,7 +18,7 @@ SET TIMESTAMP=1235;
 insert into t1 values(3,NULL);
 SET TIMESTAMP=1236;
 insert into t1 (a) values(4);
-insert into t2 values(5,"2002-03-04"),(6,NULL),(7,"2002-03-05"),(8,"00-00-00");
+insert into t2 values(5,"2002-03-04"),(6,NULL),(7,"2002-03-05"),(8,NULL);
 SET TIMESTAMP=1237;
 insert into t1 select * from t2;
 SET TIMESTAMP=1238;
