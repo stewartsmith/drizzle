@@ -592,7 +592,7 @@ public:
   const CHARSET_INFO *charset;
   Field *field;				// For alter table
 
-  uint8_t row,col,sc_length,interval_id;	// For rea_create_table
+  uint8_t       interval_id;	// For rea_create_table
   uint32_t	offset,pack_flag;
 
   /* Virtual column expression statement */

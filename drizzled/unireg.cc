@@ -872,9 +872,6 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
       pos[length + 3]= '\0';
       pos+= length + 3 + 1;
     }
-    cfield->row=(uint8_t) row;
-    cfield->col=(uint8_t) (length+1);
-    cfield->sc_length=(uint8_t) cmin(cfield->length,(uint32_t)cols-(length+2));
   }
   length=(uint) (pos-start_screen);
   int2store(start_screen,length);
@@ -1194,9 +1191,9 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   {
     uint32_t recpos;
     uint32_t cur_vcol_expr_len= 0;
-    buff[0]= (unsigned char) field->row;
-    buff[1]= (unsigned char) field->col;
-    buff[2]= (unsigned char) field->sc_length;
+    buff[0]= 0; //(unsigned char) field->row;
+    buff[1]= 0; //(unsigned char) field->col;
+    buff[2]= 0; //(unsigned char) field->sc_length;
     int2store(buff+3, field->length);
     /* The +1 is here becasue the col offset in .frm file have offset 1 */
     recpos= field->offset+1 + (uint) data_offset;
