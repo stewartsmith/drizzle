@@ -69,7 +69,18 @@ public:
     return ptr;
   }
 
-  void free_items();
+  void free_items()
+  {
+    Item *next;
+    /* This works because items are allocated with sql_alloc() */
+    for (; free_list; free_list= next)
+    {
+      next= free_list->next;
+      free_list->delete_self();
+    }
+    /* Postcondition: free_list is 0 */
+    return;
+  }
 };
 
 
