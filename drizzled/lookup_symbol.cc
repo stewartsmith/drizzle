@@ -17,16 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <drizzled/server_includes.h>
+#include <drizzled/item/num.h>
+#include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/lookup_symbol.h>
 
-#ifndef DRIZZLED_HASH_SYMBOL_H
-#define DRIZZLED_HASH_SYMBOL_H
+#include "drizzled/lex_symbol.h"
+#include "function_hash.h"
+#include "symbol_hash.h"
 
-#include <drizzled/lex_symbol.h>
-#include <drizzled/function_hash.h>
-#include <drizzled/symbol_hash.h>
-
-static const SYMBOL *get_hash_symbol(const char *s,
-                                     unsigned int len,bool function)
+const SYMBOL *lookup_symbol(const char *s,
+                            unsigned int len,bool function)
 {
   const SYMBOL* ret_sym= NULL;
   if (function)
@@ -41,5 +44,3 @@ static const SYMBOL *get_hash_symbol(const char *s,
   return NULL;
 }
   
-
-#endif /* DRIZZLED_HASH_SYMBOL_H */
