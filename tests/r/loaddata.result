@@ -169,11 +169,11 @@ create table t1(f1 int, f2 timestamp not null default current_timestamp);
 create table t2(f1 int);
 insert into t2 values(1),(2);
 ERROR 01000: Row 1 doesn't contain data for all columns
-select f1 from t1 where f2 <> '0000-00-00 00:00:00' order by f1;
+select f1 from t1 where f2 IS NOT NULL order by f1;
 f1
 delete from t1;
 ERROR 01000: Row 1 doesn't contain data for all columns
-select f1 from t1 where f2 <> '0000-00-00 00:00:00' order by f1;
+select f1 from t1 where f2 IS NOT NULL order by f1;
 f1
 drop table t1,t2;
 CREATE TABLE t1 (c1 INT, c2 TIMESTAMP, c3 REAL, c4 DOUBLE);

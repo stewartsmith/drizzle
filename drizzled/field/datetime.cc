@@ -120,7 +120,7 @@ int Field_datetime::store(double from)
 int Field_datetime::store(int64_t from, bool)
 {
   /* 
-   * Try to create a DateTime from the supplied string.  Throw an error
+   * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
    */
   drizzled::DateTime temporal;
