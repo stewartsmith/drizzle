@@ -21,15 +21,16 @@
   This file defines all compare functions
 */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_select.h>
-#include <drizzled/error.h>
-#include <drizzled/item/cmpfunc.h>
-#include <drizzled/cached_item.h>
-#include <drizzled/item/cache_int.h>
-#include <drizzled/item/int_with_ref.h>
-#include <drizzled/function/bit.h>
-#include <drizzled/check_stack_overrun.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/sql_select.h"
+#include "drizzled/error.h"
+#include "drizzled/temporal.h"
+#include "drizzled/item/cmpfunc.h"
+#include "drizzled/cached_item.h"
+#include "drizzled/item/cache_int.h"
+#include "drizzled/item/int_with_ref.h"
+#include "drizzled/function/bit.h"
+#include "drizzled/check_stack_overrun.h"
 
 #include CMATH_H
 
@@ -730,10 +731,10 @@ get_date_from_str(Session *session, String *str, enum enum_drizzle_timestamp_typ
          int result and the other item (b or a) is an item with string result.
          If the second item is a constant one then it's checked to be
          convertible to the DATE/DATETIME type. If the constant can't be
-         converted to a DATE/DATETIME then the compare_datetime() comparator
-         isn't used and the warning about wrong DATE/DATETIME value is issued.
+         converted to a DATE/DATETIME then an error is issued back to the Session.
       In all other cases (date-[int|real|decimal]/[int|real|decimal]-date)
       the comparison is handled by other comparators.
+
     If the datetime comparator can be used and one the operands of the
     comparison is a string constant that was successfully converted to a
     DATE/DATETIME type then the result of the conversion is returned in the
@@ -782,19 +783,53 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
         (str_arg->type() != Item::FUNC_ITEM ||
         ((Item_func*)str_arg)->functype() != Item_func::GUSERVAR_FUNC))
     {
-      Session *session= current_session;
+      /*
+       * OK, we are here if we've got a date field (or something which can be 
+       * compared as a date field) on one side of the equation, and a constant
+       * string on the other side.  In this case, we must verify that the constant
+       * string expression can indeed be evaluated as a datetime.  If it cannot, 
+       * we throw an error here and stop processsing.  Bad data should ALWAYS 
+       * produce an error, and no implicit conversion or truncation should take place.
+       *
+       * If the conversion to a DateTime temporal is successful, then we convert
+       * the Temporal instance to a uint64_t for the comparison operator, which
+       * compares date(times) using int64_t semantics.
+       *
+       * @TODO
+       *
+       * Does a uint64_t conversion really have to happen here?  Fields return int64_t
+       * from val_int(), not uint64_t...
+       */
       uint64_t value;
-      bool error;
-      String tmp, *str_val= 0;
-      enum enum_drizzle_timestamp_type t_type= (date_arg->field_type() == DRIZZLE_TYPE_DATE ?
-                              DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME);
+      String *str_val;
+      String tmp;
+      /* DateTime used to pick up as many string conversion possibilities as possible. */
+      drizzled::DateTime temporal;
 
       str_val= str_arg->val_str(&tmp);
-      if (str_arg->null_value)
+      if (! str_val)
+      {
+        /* 
+         * If we are here, it is most likely due to the comparison item
+         * being a NULL.  Although this is incorrect (SQL demands that the term IS NULL
+         * be used, not = NULL since no item can be equal to NULL).
+         *
+         * So, return gracefully.
+         */
         return CMP_DATE_DFLT;
-      value= get_date_from_str(session, str_val, t_type, date_arg->name, &error);
-      if (error)
-        return CMP_DATE_DFLT;
+      }
+      if (! temporal.from_string(str_val->c_ptr(), str_val->length()))
+      {
+        /* Chuck an error. Bad datetime input. */
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), str_val->c_ptr());
+        return CMP_DATE_DFLT; /* :( What else can I return... */
+      }
+
+      /* String conversion was good.  Convert to an integer for comparison purposes. */
+      int64_t int_value;
+      temporal.to_int64_t(&int_value);
+      value= (uint64_t) int_value;
+
       if (const_value)
         *const_value= value;
     }
