@@ -16416,7 +16416,7 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
     }
     if (my_strcasecmp(table_alias_charset, cmp_name, alias))
     {
-      char t_alias_buff[MAX_ALIAS_NAME];
+      string t_alias_buff(alias);
       const char *t_alias= alias;
 
       str->append(' ');
@@ -16424,9 +16424,8 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
       {
         if (alias && alias[0])
         {
-          strcpy(t_alias_buff, alias);
-          my_casedn_str(files_charset_info, t_alias_buff);
-          t_alias= t_alias_buff;
+          std::transform(t_alias_buff.begin(), t_alias_buff.end(), t_alias_buff.begin(), (int(*)(int))tolower);
+          t_alias= t_alias_buff.c_str();
         }
       }
 

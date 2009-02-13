@@ -51,7 +51,6 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
-#include <mystrings/utf8.h>
 
 
 #if defined(CMATH_NAMESPACE)
@@ -524,27 +523,11 @@ void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const
   {
     size_t res_length;
     name= sql_strmake_with_convert(str, name_length= length, cs,
-				   MAX_ALIAS_NAME, system_charset_info,
+				   length, system_charset_info,
 				   &res_length);
   }
   else
-  {
-    if (U8_IS_LEAD(*(uint8_t*)str)) 
-    {
-      /* get the length of UTF8 str in characters */
-      uint32_t num_chars= 0;
-      for (uint32_t i= 0; str[i]; i++)
-      {
-        if (!U8_IS_TRAIL(str[i]))
-          num_chars++;
-      }
-      name= sql_strmake(str, (num_chars > MAX_ALIAS_NAME) ? MAX_ALIAS_NAME : length);
-    }
-    else
-    {
-      name= sql_strmake(str, (name_length= cmin(length,(unsigned int)MAX_ALIAS_NAME)));
-    }
-  }
+      name= sql_strmake(str, length);
 }
 
 
