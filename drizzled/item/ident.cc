@@ -114,8 +114,13 @@ const char *Item_ident::full_name() const
 void Item_ident::print(String *str,
                        enum_query_type)
 {
-  string d_name_buff(db_name), t_name_buff(table_name);
+  string d_name_buff, t_name_buff;
   const char *d_name= db_name, *t_name= table_name;
+  if (db_name)
+    d_name_buff.assign(db_name);
+  if (table_name)
+    t_name_buff.assign(table_name);
+
   if (lower_case_table_names== 1 ||
       (lower_case_table_names == 2 && !alias_name_used))
   {

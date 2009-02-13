@@ -16416,8 +16416,10 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
     }
     if (my_strcasecmp(table_alias_charset, cmp_name, alias))
     {
-      string t_alias_buff(alias);
+      string t_alias_buff;
       const char *t_alias= alias;
+      if (alias)
+        t_alias_buff.assign(alias);
 
       str->append(' ');
       if (lower_case_table_names== 1)
