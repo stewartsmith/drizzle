@@ -16416,22 +16416,19 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
     }
     if (my_strcasecmp(table_alias_charset, cmp_name, alias))
     {
-      string t_alias_buff;
-      const char *t_alias= alias;
-      if (alias)
-        t_alias_buff.assign(alias);
 
-      str->append(' ');
-      if (lower_case_table_names== 1)
+      if (alias && alias[0])
       {
-        if (alias && alias[0])
-        {
-          std::transform(t_alias_buff.begin(), t_alias_buff.end(), t_alias_buff.begin(), (int(*)(int))tolower);
-          t_alias= t_alias_buff.c_str();
-        }
+        str->append(' ');
+
+        string t_alias(alias);
+        if (lower_case_table_names== 1)
+          transform(t_alias.begin(), t_alias.end(),
+                    t_alias.begin(), ::tolower);
+
+        str->append_identifier(t_alias.c_str(), t_alias.length());
       }
 
-      str->append_identifier(t_alias, strlen(t_alias));
     }
 
     if (index_hints)

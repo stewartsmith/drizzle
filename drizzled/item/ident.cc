@@ -114,26 +114,26 @@ const char *Item_ident::full_name() const
 void Item_ident::print(String *str,
                        enum_query_type)
 {
-  string d_name_buff, t_name_buff;
-  const char *d_name= db_name, *t_name= table_name;
-  if (db_name)
-    d_name_buff.assign(db_name);
-  if (table_name)
-    t_name_buff.assign(table_name);
+  string d_name, t_name;
 
-  if (lower_case_table_names== 1 ||
-      (lower_case_table_names == 2 && !alias_name_used))
+  if (table_name && table_name[0])
   {
-    if (table_name && table_name[0])
-    {
-      std::transform(t_name_buff.begin(), t_name_buff.end(), t_name_buff.begin(), (int(*)(int))tolower);
-      t_name= t_name_buff.c_str();
-    }
-    if (db_name && db_name[0])
-    {
-      std::transform(d_name_buff.begin(), d_name_buff.end(), d_name_buff.begin(), (int(*)(int))tolower);
-      d_name= d_name_buff.c_str();
-    }
+    t_name.assign(table_name);
+    if (lower_case_table_names== 1 ||
+        (lower_case_table_names == 2 && !alias_name_used))
+      // Keeping the std:: here, since Item_ident has a transform method
+      std::transform(t_name.begin(), t_name.end(),
+                     t_name.begin(), ::tolower);
+  }
+ 
+  if (db_name && db_name[0])
+  {
+    d_name.assign(db_name);
+    if (lower_case_table_names== 1 ||
+        (lower_case_table_names == 2 && !alias_name_used))
+      // Keeping the std:: prefix here, since Item_ident has a transform method
+      std::transform(d_name.begin(), d_name.end(),
+                     d_name.begin(), ::tolower);
   }
 
   if (!table_name || !field_name || !field_name[0])
@@ -147,10 +147,10 @@ void Item_ident::print(String *str,
   if (db_name && db_name[0] && !alias_name_used)
   {
     {
-      str->append_identifier(d_name, (uint)strlen(d_name));
+      str->append_identifier(d_name.c_str(), d_name.length());
       str->append('.');
     }
-    str->append_identifier(t_name, (uint)strlen(t_name));
+    str->append_identifier(t_name.c_str(), t_name.length());
     str->append('.');
     str->append_identifier(field_name, (uint)strlen(field_name));
   }
@@ -158,7 +158,7 @@ void Item_ident::print(String *str,
   {
     if (table_name[0])
     {
-      str->append_identifier(t_name, (uint) strlen(t_name));
+      str->append_identifier(t_name.c_str(), t_name.length());
       str->append('.');
       str->append_identifier(field_name, (uint) strlen(field_name));
     }
