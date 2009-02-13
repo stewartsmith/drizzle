@@ -1822,44 +1822,6 @@ bool select_exists_subselect::send_data(List<Item> &)
 }
 
 
-/***************************************************************************
-  Dump of select to variables
-***************************************************************************/
-
-int select_dumpvar::prepare(List<Item> &list, Select_Lex_Unit *u)
-{
-  unit= u;
-
-  if (var_list.elements != list.elements)
-  {
-    my_message(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT,
-               ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT), MYF(0));
-    return 1;
-  }
-  return 0;
-}
-
-
-void select_dumpvar::cleanup()
-{
-  row_count= 0;
-}
-
-
-void Query_arena::free_items()
-{
-  Item *next;
-  /* This works because items are allocated with sql_alloc() */
-  for (; free_list; free_list= next)
-  {
-    next= free_list->next;
-    free_list->delete_self();
-  }
-  /* Postcondition: free_list is 0 */
-  return;
-}
-
-
 /*
   Statement functions
 */
@@ -1900,50 +1862,6 @@ bool Session::copy_db_to(char **p_db, size_t *p_db_length)
   return false;
 }
 
-
-bool select_dumpvar::send_data(List<Item> &items)
-{
-  List_iterator_fast<my_var> var_li(var_list);
-  List_iterator<Item> it(items);
-  Item *item;
-  my_var *mv;
-
-  if (unit->offset_limit_cnt)
-  {						// using limit offset,count
-    unit->offset_limit_cnt--;
-    return(0);
-  }
-  if (row_count++)
-  {
-    my_message(ER_TOO_MANY_ROWS, ER(ER_TOO_MANY_ROWS), MYF(0));
-    return(1);
-  }
-  while ((mv= var_li++) && (item= it++))
-  {
-    if (mv->local == 0)
-    {
-      Item_func_set_user_var *suv= new Item_func_set_user_var(mv->s, item);
-      suv->fix_fields(session, 0);
-      suv->check(0);
-      suv->update();
-    }
-  }
-  return(session->is_error());
-}
-
-bool select_dumpvar::send_eof()
-{
-  if (! row_count)
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                 ER_SP_FETCH_NO_DATA, ER(ER_SP_FETCH_NO_DATA));
-  /*
-    In order to remember the value of affected rows for ROW_COUNT()
-    function, SELECT INTO has to have an own SQLCOM.
-    TODO: split from SQLCOM_SELECT
-  */
-  session->my_ok(row_count);
-  return 0;
-}
 
 /****************************************************************************
   Tmp_Table_Param
@@ -2332,32 +2250,6 @@ namespace {
     unsigned char *m_memory;
     unsigned char *m_ptr[2];
   };
-}
-
-bool Discrete_intervals_list::append(uint64_t start, uint64_t val,
-                                 uint64_t incr)
-{
-  /* first, see if this can be merged with previous */
-  if ((head == NULL) || tail->merge_if_contiguous(start, val, incr))
-  {
-    /* it cannot, so need to add a new interval */
-    Discrete_interval *new_interval= new Discrete_interval(start, val, incr);
-    return(append(new_interval));
-  }
-  return(0);
-}
-
-bool Discrete_intervals_list::append(Discrete_interval *new_interval)
-{
-  if (unlikely(new_interval == NULL))
-    return(1);
-  if (head == NULL)
-    head= current= new_interval;
-  else
-    tail->next= new_interval;
-  tail= new_interval;
-  elements++;
-  return(0);
 }
 
 /**

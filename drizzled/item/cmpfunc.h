@@ -22,17 +22,15 @@
 
 /* compare and test functions */
 
-#include <drizzled/comp_creator.h>
-#include <drizzled/item/row.h>
-#include <drizzled/item/sum.h>
-#include <drizzled/item/int.h>
-#include <drizzled/item/float.h>
-#include <drizzled/item/decimal.h>
-#include <drizzled/function/math/int.h>
-#include <drizzled/function/numhybrid.h>
-#include <drizzled/session.h>
-
-
+#include "drizzled/comp_creator.h"
+#include "drizzled/item/row.h"
+#include "drizzled/item/sum.h"
+#include "drizzled/item/int.h"
+#include "drizzled/item/float.h"
+#include "drizzled/item/decimal.h"
+#include "drizzled/function/math/int.h"
+#include "drizzled/function/numhybrid.h"
+#include "drizzled/session.h"
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
 class Item_bool_func2;

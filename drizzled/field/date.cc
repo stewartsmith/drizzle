@@ -18,13 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include "drizzled/server_includes.h"
 #include "drizzled/field/date.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
 #include "drizzled/temporal.h"
 #include "drizzled/session.h"
+
+#include <sstream>
+#include <string>
 
 #include CMATH_H
 
@@ -55,7 +57,6 @@ using namespace CMATH_NAMESPACE;
        nearly-identical class Field_date doesn't ever return 3 from its
        store function.
 */
-
 int Field_date::store(const char *from,
                          uint32_t len,
                          const CHARSET_INFO * const )
@@ -109,53 +110,45 @@ int Field_date::store(const char *from,
   return 0;
 }
 
-int Field_date::store(double nr)
+int Field_date::store(double from)
 {
-  if (nr < 0.0 || nr > 99991231235959.0)
+  if (from < 0.0 || from > 99991231235959.0)
   {
-    int3store(ptr,(int32_t) 0);
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_TRUNCATED, nr, DRIZZLE_TIMESTAMP_DATE);
-    return 1;
+    /* Convert the double to a string using stringstream */
+    std::stringstream ss;
+    std::string tmp;
+    ss.precision(18); /* 18 places should be fine for error display of double input. */
+    ss << from; ss >> tmp;
+
+    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    return 2;
   }
-  return Field_date::store((int64_t) rint(nr), false);
+  return Field_date::store((int64_t) rint(from), false);
 }
 
-
-int Field_date::store(int64_t nr,
-                         bool )
+int Field_date::store(int64_t from, bool)
 {
-  DRIZZLE_TIME l_time;
-  int64_t tmp;
-  int error;
-  Session *session= table ? table->in_use : current_session;
-  if (number_to_datetime(nr, &l_time,
-                         (TIME_FUZZY_DATE |
-                          (session->variables.sql_mode &
-                           (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
-                         &error) == INT64_C(-1))
+  /* 
+   * Try to create a DateTime from the supplied integer.  Throw an error
+   * if unable to create a valid DateTime.  
+   */
+  drizzled::DateTime temporal;
+  if (! temporal.from_int64_t(from))
   {
-    tmp= 0L;
-    error= 2;
+    /* Convert the integer to a string using stringstream */
+    std::stringstream ss;
+    std::string tmp;
+    ss << from; ss >> tmp;
+
+    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    return 2;
   }
-  else
-    tmp= l_time.day + l_time.month*32 + l_time.year*16*32;
 
-  if (!error && l_time.time_type != DRIZZLE_TIMESTAMP_DATE &&
-      (l_time.hour || l_time.minute || l_time.second || l_time.second_part))
-    error= 3;
-
-  if (error)
-    set_datetime_warning(error == 3 ? DRIZZLE_ERROR::WARN_LEVEL_NOTE :
-                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         error == 2 ?
-                         ER_WARN_DATA_OUT_OF_RANGE : ER_WARN_DATA_TRUNCATED,
-                         nr,DRIZZLE_TIMESTAMP_DATE, 1);
-
-  int3store(ptr,tmp);
-  return error;
+  /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
+  uint32_t int_value= (temporal.years() * 16 * 32) + (temporal.months() * 32) + temporal.days();
+  int3store(ptr, int_value);
+  return 0;
 }
-
 
 int Field_date::store_time(DRIZZLE_TIME *ltime,
                               enum enum_drizzle_timestamp_type time_type)
@@ -199,7 +192,6 @@ int Field_date::store_time(DRIZZLE_TIME *ltime,
   return error;
 }
 
-
 bool Field_date::send_binary(Protocol *protocol)
 {
   DRIZZLE_TIME tm;
@@ -207,12 +199,10 @@ bool Field_date::send_binary(Protocol *protocol)
   return protocol->store_date(&tm);
 }
 
-
 double Field_date::val_real(void)
 {
   return (double) Field_date::val_int();
 }
-
 
 int64_t Field_date::val_int(void)
 {
@@ -220,7 +210,6 @@ int64_t Field_date::val_int(void)
   j= (j % 32L)+(j / 32L % 16L)*100L + (j/(16L*32L))*10000L;
   return (int64_t) j;
 }
-
 
 String *Field_date::val_str(String *val_buffer,
 			       String *)
@@ -249,7 +238,6 @@ String *Field_date::val_str(String *val_buffer,
   return val_buffer;
 }
 
-
 bool Field_date::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   uint32_t tmp=(uint32_t) uint3korr(ptr);
@@ -262,12 +250,10 @@ bool Field_date::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
           1 : 0);
 }
 
-
 bool Field_date::get_time(DRIZZLE_TIME *ltime)
 {
   return Field_date::get_date(ltime,0);
 }
-
 
 int Field_date::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
@@ -277,7 +263,6 @@ int Field_date::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-
 void Field_date::sort_string(unsigned char *to,uint32_t )
 {
   to[0] = ptr[2];
@@ -285,9 +270,7 @@ void Field_date::sort_string(unsigned char *to,uint32_t )
   to[2] = ptr[0];
 }
 
-
 void Field_date::sql_type(String &res) const
 {
   res.set_ascii(STRING_WITH_LEN("date"));
 }
-
