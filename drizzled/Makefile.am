@@ -346,6 +346,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		tztime.h \
 		unique.h \
 		unireg.h \
+		utf8.h \
+		utf8/checked.h \
+		utf8/core.h \
+		utf8/unchecked.h \
 		user_var_entry.h \
 		virtual_column_info.h \
 		xid.h
