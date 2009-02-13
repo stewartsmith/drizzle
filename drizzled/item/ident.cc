@@ -24,6 +24,8 @@
 #include <drizzled/current_session.h>
 #include <drizzled/item/ident.h>
 
+using namespace std;
+
 const uint32_t NO_CACHED_FIELD_INDEX= UINT32_MAX;
 
 Item_ident::Item_ident(Name_resolution_context *context_arg,
@@ -112,22 +114,25 @@ const char *Item_ident::full_name() const
 void Item_ident::print(String *str,
                        enum_query_type)
 {
-  char d_name_buff[MAX_ALIAS_NAME], t_name_buff[MAX_ALIAS_NAME];
+  string d_name_buff, t_name_buff;
   const char *d_name= db_name, *t_name= table_name;
+  if (db_name)
+    d_name_buff.assign(db_name);
+  if (table_name)
+    t_name_buff.assign(table_name);
+
   if (lower_case_table_names== 1 ||
       (lower_case_table_names == 2 && !alias_name_used))
   {
     if (table_name && table_name[0])
     {
-      strcpy(t_name_buff, table_name);
-      my_casedn_str(files_charset_info, t_name_buff);
-      t_name= t_name_buff;
+      std::transform(t_name_buff.begin(), t_name_buff.end(), t_name_buff.begin(), (int(*)(int))tolower);
+      t_name= t_name_buff.c_str();
     }
     if (db_name && db_name[0])
     {
-      strcpy(d_name_buff, db_name);
-      my_casedn_str(files_charset_info, d_name_buff);
-      d_name= d_name_buff;
+      std::transform(d_name_buff.begin(), d_name_buff.end(), d_name_buff.begin(), (int(*)(int))tolower);
+      d_name= d_name_buff.c_str();
     }
   }
 
