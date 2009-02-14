@@ -330,24 +330,6 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   return 0;
 }
 
-/*
-  Check if name is a keyword
-
-  SYNOPSIS
-    is_keyword()
-    name      checked name (must not be empty)
-    len       length of checked name
-
-  RETURN VALUES
-    0         name is a keyword
-    1         name isn't a keyword
-*/
-
-bool is_keyword(const char *name, uint32_t len)
-{
-  assert(len != 0);
-  return lookup_symbol(name,len,0)!=0;
-}
 
 bool is_lex_native_function(const LEX_STRING *name)
 {

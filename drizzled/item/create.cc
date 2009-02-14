@@ -2992,7 +2992,6 @@ static map<string, Native_func_registry *> native_functions_map;
 int item_create_init()
 {
   string func_name;
-  func_name.reserve(255);
 
   Native_func_registry *func;
   for (func= func_array; func->builder != NULL; func++)

@@ -21,9 +21,9 @@
 #ifndef DRIZZLED_LOOKUP_SYMBOL_H
 #define DRIZZLED_LOOKUP_SYMBOL_H
 
-#include <drizzled/lex_symbol.h>
+#include "drizzled/lex_symbol.h"
 
-const SYMBOL *lookup_symbol(const char *s,
-                            unsigned int len,bool function);
+/* len is unsigned int instead of size_t to match the in_word_set method */
+const SYMBOL *lookup_symbol(const char *s, unsigned int len, bool function);
 
 #endif /* DRIZZLED_LOOKUP_SYMBOL_H */
