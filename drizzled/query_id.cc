@@ -43,6 +43,7 @@ query_id_t Query_id::next()
   pthread_mutex_lock(&LOCK_query_id);
   query_id_t ret= the_query_id++;
   pthread_mutex_unlock(&LOCK_query_id);
+
   return ret;
 }
 

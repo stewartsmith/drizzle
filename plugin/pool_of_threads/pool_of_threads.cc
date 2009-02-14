@@ -29,6 +29,8 @@ using namespace std;
 static uint32_t created_threads, killed_threads;
 static bool kill_pool_threads;
 
+static int deinit(void *);
+
 static struct event session_add_event;
 static struct event session_kill_event;
 
@@ -46,7 +48,6 @@ static pthread_mutex_t LOCK_event_loop;
 static LIST *sessions_need_processing; /* list of sessions that needs some processing */
 static LIST *sessions_waiting_for_io; /* list of sessions with added events */
 
-static void libevent_end();
 static bool libevent_needs_immediate_processing(Session *session);
 static void libevent_connection_close(Session *session);
 void libevent_session_add(Session* session);
@@ -125,7 +126,7 @@ static bool libevent_init(void)
  if (event_add(&session_add_event, NULL) || event_add(&session_kill_event, NULL))
  {
    errmsg_printf(ERRMSG_LVL_ERROR, _("session_add_event event_add error in libevent_init\n"));
-   libevent_end();
+   deinit(NULL);
    return true;
 
  }
@@ -143,7 +144,7 @@ static bool libevent_init(void)
       errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
                       error);
       pthread_mutex_unlock(&LOCK_thread_count);
-      libevent_end();                      // Cleanup
+      deinit(NULL);                      // Cleanup
       return true;
     }
   }
@@ -522,7 +523,7 @@ void libevent_session_add(Session* session)
   Wait until all pool threads have been deleted for clean shutdown
 */
 
-static void libevent_end()
+static int deinit(void *)
 {
   (void) pthread_mutex_lock(&LOCK_thread_count);
 
@@ -546,7 +547,8 @@ static void libevent_end()
 
   (void) pthread_mutex_destroy(&LOCK_event_loop);
   (void) pthread_mutex_destroy(&LOCK_session_add);
-  return;
+
+  return 0;
 }
 
 static int init(void *p)
@@ -559,13 +561,6 @@ static int init(void *p)
   func->add_connection= add_connection;
 
   return (int)libevent_init();
-}
-
-static int deinit(void *)
-{
-  fprintf(stderr, "Entering pool shutdown \n");
-  libevent_end();
-  return 0;
 }
 
 /* 
