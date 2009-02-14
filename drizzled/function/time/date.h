@@ -20,12 +20,13 @@
 #ifndef DRIZZLED_FUNCTION_TIME_DATE_H
 #define DRIZZLED_FUNCTION_TIME_DATE_H
 
-#include <drizzled/function/func.h>
-#include <drizzled/function/str/strfunc.h>
-/*
-  This can't be a Item_str_func, because the val_real() functions are special
-*/
+#include "drizzled/function/func.h"
+#include "drizzled/function/str/strfunc.h"
 
+/* forward declarations */
+namespace drizzled {class Date;}
+
+/* A function which evaluates to a Date */
 class Item_date :public Item_func
 {
 public:
@@ -45,7 +46,18 @@ public:
     decimals=0;
     max_length=MAX_DATE_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
   }
-
+  /**
+   * All functions which inherit from Item_date must implement
+   * their own get_temporal() method, which takes a supplied
+   * drizzled::Date reference and populates it with a correct
+   * date based on the semantics of the function.
+   *
+   * Returns whether the function was able to correctly fill
+   * the supplied date temporal with a proper date.
+   *
+   * @param Reference to a drizzled::Date to populate
+   */
+  virtual bool get_temporal(drizzled::Date &temporal)= 0;
   Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);

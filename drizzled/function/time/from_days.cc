@@ -17,18 +17,42 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "drizzled/server_includes.h"
 #include CSTDINT_H
-#include <drizzled/function/time/from_days.h>
+#include "drizzled/function/time/from_days.h"
+#include "drizzled/error.h"
+#include "drizzled/temporal.h"
 
-bool Item_func_from_days::get_date(DRIZZLE_TIME *ltime, uint32_t )
+#include <sstream>
+#include <string>
+
+/**
+ * Interpret the first argument as a Julian Day Number and fill
+ * our supplied temporal object.
+ */
+bool Item_func_from_days::get_temporal(drizzled::Date &to)
 {
-  int64_t value=args[0]->val_int();
-  if ((null_value=args[0]->null_value))
-    return 1;
-  memset(ltime, 0, sizeof(DRIZZLE_TIME));
-  get_date_from_daynr((long) value, &ltime->year, &ltime->month, &ltime->day);
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
-  return 0;
-}
+  assert(fixed);
 
+  /* We return NULL from FROM_DAYS() only when supplied a NULL argument */
+  if (args[0]->null_value)
+  {
+    null_value= true;
+    return false;
+  }
+
+  int64_t int_value= args[0]->val_int();
+
+  /* OK, now try to convert from our integer */
+  if (! to.from_julian_day_number(int_value))
+  {
+    /* Bad input, throw an error */
+    std::stringstream ss;
+    std::string tmp;
+    ss << int_value; ss >> tmp;
+
+    my_error(ER_ARGUMENT_OUT_OF_RANGE, MYF(ME_FATALERROR), tmp.c_str(), func_name());
+    return false;
+  }
+  return true;
+}

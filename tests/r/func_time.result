@@ -385,10 +385,7 @@ ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select year("0000-00-00"),year(d),year(dt),year(t),year(c) from t1;
 ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select to_days("0000-00-00"),to_days(d),to_days(dt),to_days(c) from t1;
-to_days("0000-00-00")	to_days(d)	to_days(dt)	to_days(c)
-NULL	NULL	NULL	NULL
-Warnings:
-Warning	1292	Incorrect datetime value: '0000-00-00'
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
 select extract(MONTH FROM "0000-00-00"),extract(MONTH FROM d),extract(MONTH FROM dt),extract(MONTH FROM t),extract(MONTH FROM c) from t1;
 ERROR HY000: Received an invalid datetime value '0000-00-00'.
 drop table t1;
@@ -653,14 +650,26 @@ NULL
 Warnings:
 Warning	1264	Out of range value for column 'time' at row 1
 drop table t1;
-select last_day('2000-02-05') as f1, last_day('2002-12-31') as f2,
-last_day('2003-03-32') as f3, last_day('2003-04-01') as f4,
-last_day('2001-01-01 01:01:01') as f5, last_day(NULL),
-last_day('2001-02-12');
-f1	f2	f3	f4	f5	last_day(NULL)	last_day('2001-02-12')
-2000-02-29	2002-12-31	NULL	2003-04-30	2001-01-31	NULL	2001-02-28
-Warnings:
-Warning	1292	Incorrect datetime value: '2003-03-32'
+select last_day('2000-02-05');
+last_day('2000-02-05')
+2000-02-29
+select last_day('2002-12-31');
+last_day('2002-12-31')
+2002-12-31
+select last_day('2003-03-32');
+ERROR HY000: Received an invalid datetime value '2003-03-32'.
+select last_day('2003-04-01');
+last_day('2003-04-01')
+2003-04-30
+select last_day('2001-01-01 01:01:01');
+last_day('2001-01-01 01:01:01')
+2001-01-31
+select last_day(NULL);
+last_day(NULL)
+NULL
+select last_day('2001-02-12');
+last_day('2001-02-12')
+2001-02-28
 create table t1 select last_day('2000-02-05') as a,
 from_days(to_days("960101")) as b;
 describe t1;
@@ -720,20 +729,11 @@ count(*)
 3
 DROP TABLE t1;
 select last_day('2005-00-00');
-last_day('2005-00-00')
-NULL
-Warnings:
-Warning	1292	Incorrect datetime value: '2005-00-00'
+ERROR HY000: Received an invalid datetime value '2005-00-00'.
 select last_day('2005-00-01');
-last_day('2005-00-01')
-NULL
-Warnings:
-Warning	1292	Incorrect datetime value: '2005-00-01'
+ERROR HY000: Received an invalid datetime value '2005-00-01'.
 select last_day('2005-01-00');
-last_day('2005-01-00')
-NULL
-Warnings:
-Warning	1292	Incorrect datetime value: '2005-01-00'
+ERROR HY000: Received an invalid datetime value '2005-01-00'.
 select monthname(str_to_date(null, '%m')), monthname(str_to_date(null, '%m')),
 monthname(str_to_date(1, '%m')), monthname(str_to_date(0, '%m'));
 ERROR HY000: Received an invalid datetime value '0000-01-00'.
@@ -899,8 +899,7 @@ union
 H
 5
 select last_day('0000-00-00');
-last_day('0000-00-00')
-NULL
+ERROR HY000: Received an invalid datetime value '0000-00-00'.
 End of 4.1 tests
 explain extended select timestampdiff(SQL_TSI_WEEK, '2001-02-01', '2001-05-01') as a1,
 timestampdiff(SQL_TSI_FRAC_SECOND, '2001-02-01 12:59:59.120000', '2001-05-01 12:58:58.119999') as a2;

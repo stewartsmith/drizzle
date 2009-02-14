@@ -17,12 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "drizzled/server_includes.h"
 #include CSTDINT_H
-#include <drizzled/function/time/curdate.h>
-#include <drizzled/tztime.h>
-
-#include <drizzled/session.h>
+#include "drizzled/function/time/curdate.h"
+#include "drizzled/tztime.h"
+#include "drizzled/temporal.h"
+#include "drizzled/session.h"
 
 void Item_func_curdate::fix_length_and_dec()
 {
@@ -35,19 +35,14 @@ void Item_func_curdate::fix_length_and_dec()
   /* We don't need to set second_part and neg because they already 0 */
   ltime.hour= ltime.minute= ltime.second= 0;
   ltime.time_type= DRIZZLE_TIMESTAMP_DATE;
-  value= (int64_t) TIME_to_uint64_t_date(&ltime);
-}
 
-String *Item_func_curdate::val_str(String *str)
-{
-  assert(fixed == 1);
-  if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
-  {
-    null_value= 1;
-    return (String *) 0;
-  }
-  make_date((DATE_TIME_FORMAT *) 0, &ltime, str);
-  return str;
+  /** 
+   * @TODO Remove ltime completely when timezones are reworked.  Using this
+   * technique now to avoid a large patch...
+   */
+  cached_temporal.set_years(ltime.year);
+  cached_temporal.set_months(ltime.month);
+  cached_temporal.set_days(ltime.day);
 }
 
 /**
@@ -75,11 +70,8 @@ void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
   */
 }
 
-bool Item_func_curdate::get_date(DRIZZLE_TIME *res,
-                                 uint32_t )
+bool Item_func_curdate::get_temporal(drizzled::Date &to)
 {
-  *res=ltime;
-  return 0;
+  to= cached_temporal;
+  return true;
 }
-
-
