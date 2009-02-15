@@ -87,7 +87,7 @@ b	ifnull(t2.b,"this is null")
 NULL	this is null
 NULL	this is null
 drop table t1;
-CREATE TABLE t1 (a varchar(16) NOT NULL default '', b int NOT NULL default 0, c datetime NOT NULL default '0000-00-00 00:00:00', d int NOT NULL default 0);
+CREATE TABLE t1 (a varchar(16) NOT NULL default '', b int NOT NULL default 0, c datetime NOT NULL default '2009-02-10 00:00:00', d int NOT NULL default 0);
 INSERT INTO t1 (a) values (null);
 ERROR 23000: Column 'a' cannot be null
 INSERT INTO t1 (a) values (1/null);

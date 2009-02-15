@@ -205,7 +205,7 @@ CREATE TABLE t1 (
   wijk varchar(40) NOT NULL default '',
   plaats varchar(50) NOT NULL default '',
   telefoon varchar(10) NOT NULL default '',
-  geboortedatum date NOT NULL default '0000-00-00',
+  geboortedatum date,
   geslacht varchar(5) NOT NULL default '',
   email varchar(80) NOT NULL default '',
   uin varchar(15) NOT NULL default '',
@@ -324,7 +324,7 @@ drop table t1,t2,t3;
 CREATE TABLE t1 (
   `titre` char(80) NOT NULL default '',
   `numeropost` int NOT NULL auto_increment,
-  `date` datetime NOT NULL default '0000-00-00 00:00:00',
+  `date` datetime,
   `auteur` char(35) NOT NULL default '',
   `icone` int NOT NULL default '0',
   `lastauteur` char(35) NOT NULL default '',

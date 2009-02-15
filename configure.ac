@@ -175,13 +175,14 @@ AC_SYS_LARGEFILE
 AC_PROG_AWK
 
 
-AC_PATH_PROG(GPERF, gperf,
-             AC_MSG_ERROR("Drizzle requires gperf to build. Please install it."))
+AC_PATH_PROG(GPERF, gperf)
+AS_IF([test "x$GPERF" = "x"],
+      AC_MSG_ERROR("Drizzle requires gperf to build. Please install it."))
 
 AC_PATH_PROG(LCOV, lcov)
 AC_PATH_PROG(GENHTML, genhtml)
 
-AM_CONDITIONAL(HAVE_LCOV,[test "$ac_cv_prog_lcov" != "no"])
+AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
 
 dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
 if test "$ac_cv_c_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
@@ -212,8 +213,8 @@ if test "$GCC" = "yes"
 then
   case "$target_os" in
     *solaris*)
-    CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
-    CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
+    AC_DEFINE([_XOPEN_SOURCE],[600],[Turn on XOpen 6.0 Features])
+    AC_DEFINE([__C99FEATURES__],[1],[Turn on C99 Features for C++])
     ;;
   esac
 fi
@@ -221,7 +222,6 @@ fi
 AC_SUBST(NM)dnl
 
 AC_PROG_INSTALL
-test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
 # Look for "(group|user)add". 
 # TODO: If the programs do not exist, inform the DBA that the user
@@ -245,8 +245,8 @@ if test "$GCC" = "yes"
 then
   case "$host_cpu" in
     *ppc* | *powerpc*)
-      AM_CFLAGS="$CFLAGS -mno-fused-madd"
-      AM_CXXFLAGS="$CXXFLAGS -mno-fused-madd"
+      AM_CFLAGS="$AM_CFLAGS -mno-fused-madd"
+      AM_CXXFLAGS="$AM_CXXFLAGS -mno-fused-madd"
     ;;
   esac
 fi
@@ -272,8 +272,8 @@ then
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  CXXFLAGS="${CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef ${MEMALIGN_FLAGS}"
-  CFLAGS="${CFLAGS} -xstrconst ${MEMALIGN_FLAGS}"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef -xprefetch=explicit ${MEMALIGN_FLAGS}"
+  AM_CFLAGS="${AM_CFLAGS} -xstrconst -xprefetch=explicit ${MEMALIGN_FLAGS}"
   SYMBOLS_FLAGS="-g"
   OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
   OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS}"
@@ -301,8 +301,8 @@ AC_DEFUN([AX_HEADER_ASSERT],
 
 AX_HEADER_ASSERT
 
-CFLAGS="${SYMBOLS_FLAGS} ${CFLAGS}"
-CXXFLAGS="${SYMBOLS_FLAGS} ${CXXFLAGS}"
+AM_CFLAGS="${SYMBOLS_FLAGS} ${AM_CFLAGS}"
+AM_CXXFLAGS="${SYMBOLS_FLAGS} ${AM_CXXFLAGS}"
 
 AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],
@@ -312,24 +312,14 @@ AC_ARG_WITH([debug],
 if test "$with_debug" = "yes"
 then
   # Medium debug.
-  CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG $CFLAGS ${SAVE_CFLAGS}"
-  CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG $CXXFLAGS ${SAVE_CXXFLAGS}"
+  AM_CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG ${AM_CFLAGS} ${SAVE_CFLAGS}"
+  AM_CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG ${AM_CXXFLAGS} ${SAVE_CXXFLAGS}"
 else
   # Optimized version. No debug
-  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS} ${SAVE_CFLAGS}"
-  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS ${SAVE_CXXFLAGS}"
+  AM_CFLAGS="${OPTIMIZE_CFLAGS} ${AM_CFLAGS} ${SAVE_CFLAGS}"
+  AM_CXXFLAGS="$OPTIMIZE_CXXFLAGS ${AM_CXXFLAGS} ${SAVE_CXXFLAGS}"
 fi
 
-AC_SUBST(CC)
-AC_SUBST(CFLAGS)
-AC_SUBST(CXX)
-AC_SUBST(CXXFLAGS)
-AC_SUBST(ASFLAGS)
-AC_SUBST(LD)
-AC_SUBST(INSTALL_SCRIPT)
-
-
-export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 
 AC_CXX_STL_HASH
 AC_CXX_CSTDINT
@@ -421,7 +411,7 @@ AS_IF([test x$ac_cv_libevent = xno],
 
 ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
 LIBS="$PTHREAD_LIBS $LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+AM_CFLAGS="${AM_CFLAGS} $PTHREAD_CFLAGS"
 CC="$PTHREAD_CC"
 
 #--------------------------------------------------------------------
@@ -477,6 +467,8 @@ AS_IF([test x$ac_cv_libz = xno],
 save_LIBS="${LIBS}"
 LIBS=""
 VL_LIB_READLINE
+AS_IF([test "x$vl_cv_lib_readline" = "xno"],
+      AC_MSG_ERROR([libreadline is required for Drizzle]))
 READLINE_LIBS="${LIBS}"
 LIBS="${save_LIBS}"
 AC_SUBST(READLINE_LIBS)
@@ -494,10 +486,18 @@ if test "$found_pcre" = "no"
 then
   save_LIBS="${LIBS}"
   AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
-  AS_IF([test "x$ac_cv_libpcre" = "xno"],
-        AC_MSG_ERROR([libpcre is required for Drizzle]))
+  AS_IF([test "x$ac_cv_libpcre" = "xno"],[
+    AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
+      AS_IF([test "x$ac_cv_libpcre" = "xno"],
+            [AC_MSG_ERROR([libpcre is required for Drizzle])]
+            [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
+    ],[
+      AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
+    ])
   PCRE_LIBS="${LTLIBPCRE}"
   LIBS="${save_LIBS}"
+else
+  AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
 fi
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
@@ -979,8 +979,6 @@ AC_LANG_POP()
 AM_CONDITIONAL(BUILD_THR_RWLOCK,[test "$ac_cv_func_rwlock_init" -a "$ac_cv_funn_pthread_rwlock_rdlock"])
 
 
-CFLAGS="$ORG_CFLAGS"
-
 # Sanity check: We chould not have any fseeko symbol unless
 # large_file_support=yes
 AC_CHECK_FUNC(fseeko,
@@ -1361,15 +1359,15 @@ void testme() {  };],[
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
   AM_CXXFLAGS="${AM_CXXFLAGS} -fno-rtti"
-  CPPFLAGS="${CPPFLAGS} -fpch-deps"
+  AM_CPPFLAGS="${AM_CPPFLAGS} -fpch-deps"
   PROTOSKIP_WARNINGS="${NO_SHADOW}"
 fi
 if test "$SUNCC" = "yes"
 then
   if test "$ac_datarace" = "yes"
   then
-    CFLAGS="${CFLAGS} -xinstrument=datarace"
-    CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
+    AM_CFLAGS="${AM_CFLAGS} -xinstrument=datarace"
+    AM_CXXFLAGS="${AM_CXXFLAGS} -xinstrument=datarace"
   fi
   #CC_WARNINGS="-v -xc99=all -errtags=yes -errwarn=%all -erroff=E_ATTRIBUTE_NOT_VAR"
   #CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -errwarn=%all -erroff=attrskipunsup,doubunder -compat=5"

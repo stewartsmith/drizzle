@@ -18,12 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "drizzled/server_includes.h"
+#include "drizzled/field/datetime.h"
+#include "drizzled/error.h"
+#include "drizzled/table.h"
+#include "drizzled/temporal.h"
+#include "drizzled/session.h"
 
-#include <drizzled/server_includes.h>
-#include <drizzled/field/datetime.h>
-#include <drizzled/error.h>
-#include <drizzled/table.h>
-#include <drizzled/session.h>
+#include <sstream>
+#include <string>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -41,6 +45,7 @@ int Field_datetime::store(const char *from,
                           uint32_t len,
                           const CHARSET_INFO * const )
 {
+#ifdef NOTDEFINED
   DRIZZLE_TIME time_tmp;
   int error;
   uint64_t tmp= 0;
@@ -70,62 +75,84 @@ int Field_datetime::store(const char *from,
   else
 #endif
     int64_tstore(ptr,tmp);
-  return error;
-}
-
-
-int Field_datetime::store(double nr)
-{
-  int error= 0;
-  if (nr < 0.0 || nr > 99991231235959.0)
+#endif /* NOTDEFINED */
+  /* 
+   * Try to create a DateTime from the supplied string.  Throw an error
+   * if unable to create a valid DateTime.  
+   */
+  drizzled::DateTime temporal;
+  if (! temporal.from_string(from, (size_t) len))
   {
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_OUT_OF_RANGE,
-                         nr, DRIZZLE_TIMESTAMP_DATETIME);
-    nr= 0.0;
-    error= 1;
+    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), from);
+    return 2;
   }
-  error|= Field_datetime::store((int64_t) rint(nr), false);
-  return error;
-}
-
-
-int Field_datetime::store(int64_t nr,
-                          bool )
-{
-  DRIZZLE_TIME not_used;
-  int error;
-  int64_t initial_nr= nr;
-  Session *session= table ? table->in_use : current_session;
-
-  nr= number_to_datetime(nr, &not_used, (TIME_FUZZY_DATE |
-                                         (session->variables.sql_mode &
-                                          (MODE_NO_ZERO_DATE |
-                                           MODE_INVALID_DATES))), &error);
-
-  if (nr == INT64_C(-1))
-  {
-    nr= 0;
-    error= 2;
-  }
-
-  if (error)
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         error == 2 ? ER_WARN_DATA_OUT_OF_RANGE :
-                         ER_WARN_DATA_TRUNCATED, initial_nr,
-                         DRIZZLE_TIMESTAMP_DATETIME, 1);
+  /* Create the stored integer format. @TODO This should go away. Should be up to engine... */
+  int64_t int_value;
+  temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
   {
-    int8store(ptr,nr);
+    int8store(ptr, int_value);
   }
   else
 #endif
-    int64_tstore(ptr,nr);
-  return error;
+    int64_tstore(ptr, int_value);
+  return 0;
 }
 
+int Field_datetime::store(double from)
+{
+  if (from < 0.0 || from > 99991231235959.0)
+  {
+    /* Convert the double to a string using stringstream */
+    std::stringstream ss;
+    std::string tmp;
+    ss.precision(18); /* 18 places should be fine for error display of double input. */
+    ss << from; ss >> tmp;
+
+    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    return 2;
+  }
+  return Field_datetime::store((int64_t) rint(from), false);
+}
+
+int Field_datetime::store(int64_t from, bool)
+{
+  /* 
+   * Try to create a DateTime from the supplied integer.  Throw an error
+   * if unable to create a valid DateTime.  
+   */
+  drizzled::DateTime temporal;
+  if (! temporal.from_int64_t(from))
+  {
+    /* Convert the integer to a string using stringstream */
+    std::stringstream ss;
+    std::string tmp;
+    ss << from; ss >> tmp;
+
+    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    return 2;
+  }
+
+  /* 
+   * Because "from" may be a silly MySQL-like "datetime number" (like, oh, 101)
+   * we must here get the value of the DateTime as its *real* int64_t, after
+   * the conversion above has been done...yuck. God, save us.
+   */
+  int64_t int_value;
+  temporal.to_int64_t(&int_value);
+
+#ifdef WORDS_BIGENDIAN
+  if (table && table->s->db_low_byte_first)
+  {
+    int8store(ptr, int_value);
+  }
+  else
+#endif
+    int64_tstore(ptr, int_value);
+  return 0;
+}
 
 int Field_datetime::store_time(DRIZZLE_TIME *ltime,
                                enum enum_drizzle_timestamp_type time_type)

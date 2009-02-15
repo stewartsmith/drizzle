@@ -264,7 +264,7 @@ postcode varchar(10) NOT NULL default '',
 wijk varchar(40) NOT NULL default '',
 plaats varchar(50) NOT NULL default '',
 telefoon varchar(10) NOT NULL default '',
-geboortedatum date NOT NULL default '0000-00-00',
+geboortedatum date,
 geslacht varchar(5) NOT NULL default '',
 email varchar(80) NOT NULL default '',
 uin varchar(15) NOT NULL default '',
@@ -497,7 +497,7 @@ drop table t1,t2,t3;
 CREATE TABLE t1 (
 `titre` char(80) NOT NULL default '',
 `numeropost` int NOT NULL auto_increment,
-`date` datetime NOT NULL default '0000-00-00 00:00:00',
+`date` datetime,
 `auteur` char(35) NOT NULL default '',
 `icone` int NOT NULL default '0',
 `lastauteur` char(35) NOT NULL default '',
@@ -524,16 +524,16 @@ INSERT INTO t1 (titre,auteur,dest) VALUES ('test','joce','bug');
 INSERT INTO t2 (numeropost,pseudo) VALUES (1,'joce'),(1,'bug');
 SELECT titre,t1.numeropost,auteur,icone,nbrep,0,date,vue,ouvert,lastauteur,dest FROM t2 LEFT JOIN t1 USING(numeropost) WHERE t2.pseudo='joce' ORDER BY date DESC LIMIT 0,30;
 titre	numeropost	auteur	icone	nbrep	0	date	vue	ouvert	lastauteur	dest
-test	1	joce	0	0	0	0000-00-00 00:00:00	0	1		bug
+test	1	joce	0	0	0	NULL	0	1		bug
 SELECT titre,numeropost,auteur,icone,nbrep,0,date,vue,ouvert,lastauteur,dest FROM t2 LEFT JOIN t1 USING(numeropost) WHERE t2.pseudo='joce' ORDER BY date DESC LIMIT 0,30;
 titre	numeropost	auteur	icone	nbrep	0	date	vue	ouvert	lastauteur	dest
-test	1	joce	0	0	0	0000-00-00 00:00:00	0	1		bug
+test	1	joce	0	0	0	NULL	0	1		bug
 SELECT titre,t1.numeropost,auteur,icone,nbrep,'0',date,vue,ouvert,lastauteur,dest FROM t2 LEFT JOIN t1 USING(numeropost) WHERE t2.pseudo='joce' ORDER BY date DESC LIMIT 0,30;
 titre	numeropost	auteur	icone	nbrep	0	date	vue	ouvert	lastauteur	dest
-test	1	joce	0	0	0	0000-00-00 00:00:00	0	1		bug
+test	1	joce	0	0	0	NULL	0	1		bug
 SELECT titre,numeropost,auteur,icone,nbrep,'0',date,vue,ouvert,lastauteur,dest FROM t2 LEFT JOIN t1 USING(numeropost) WHERE t2.pseudo='joce' ORDER BY date DESC LIMIT 0,30;
 titre	numeropost	auteur	icone	nbrep	0	date	vue	ouvert	lastauteur	dest
-test	1	joce	0	0	0	0000-00-00 00:00:00	0	1		bug
+test	1	joce	0	0	0	NULL	0	1		bug
 drop table t1,t2;
 CREATE TABLE t1 (a int, b int);
 INSERT INTO t1 VALUES (1, 2);

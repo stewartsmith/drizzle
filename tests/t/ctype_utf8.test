@@ -557,7 +557,7 @@ CREATE TABLE t1 (
   `content` varchar(160) NOT NULL default '',
   `second_token` varchar(160) default NULL,
   `gateway_id` int NOT NULL default '0',
-  `created` datetime NOT NULL default '0000-00-00 00:00:00',
+  `created` datetime NULL,
   `msisdn` varchar(15) NOT NULL default '',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `MSCCSPK_20030521130957121` (`momid`),
@@ -574,7 +574,7 @@ INSERT INTO t1 VALUES
 CREATE TABLE t2 (
   `msisdn` varchar(15) NOT NULL default '',
   `operator_id` int NOT NULL default '0',
-  `created` datetime NOT NULL default '0000-00-00 00:00:00',
+  `created` datetime NULL,
   UNIQUE KEY `PK_user` (`msisdn`)
 ) ENGINE=InnoDB;
 --enable_warnings

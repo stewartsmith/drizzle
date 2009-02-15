@@ -144,11 +144,35 @@ public:
     return tmp;
   }
   ~Discrete_intervals_list() { empty(); };
-  bool append(uint64_t start, uint64_t val, uint64_t incr);
-  bool append(Discrete_interval *interval);
   uint64_t minimum()     const { return (head ? head->minimum() : 0); };
   uint64_t maximum()     const { return (head ? tail->maximum() : 0); };
   uint32_t      nb_elements() const { return elements; }
+
+  bool append(uint64_t start, uint64_t val, uint64_t incr)
+  {
+    /* first, see if this can be merged with previous */
+    if ((head == NULL) || tail->merge_if_contiguous(start, val, incr))
+    {
+      /* it cannot, so need to add a new interval */
+      Discrete_interval *new_interval= new Discrete_interval(start, val, incr);
+      return(append(new_interval));
+    }
+    return(0);
+  }
+
+  bool append(Discrete_interval *new_interval)
+  {
+    if (unlikely(new_interval == NULL))
+      return(1);
+    if (head == NULL)
+      head= current= new_interval;
+    else
+      tail->next= new_interval;
+    tail= new_interval;
+    elements++;
+    return(0);
+  }
+
 };
 
 #endif /* DRIZZLED_DISCRETE_INTERVALS_H */

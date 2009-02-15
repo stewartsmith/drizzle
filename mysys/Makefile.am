@@ -42,7 +42,6 @@ noinst_HEADERS=	\
 		mysys_priv.h \
 		queues.h \
 		sha1.h \
-		thr_alarm.h \
 		thr_lock.h
 
 if BUILD_FAST_MUTEX
@@ -108,7 +107,6 @@ libmysys_la_SOURCES= \
 		ptr_cmp.cc \
 		queues.cc \
 		sha1.cc \
-		thr_alarm.cc \
 		thr_lock.cc \
 		tree.cc \
 		typelib.cc \

@@ -61,7 +61,7 @@ drop table t1;
 #
 # Test inserting and updating with NULL
 #
-CREATE TABLE t1 (a varchar(16) NOT NULL default '', b int NOT NULL default 0, c datetime NOT NULL default '0000-00-00 00:00:00', d int NOT NULL default 0);
+CREATE TABLE t1 (a varchar(16) NOT NULL default '', b int NOT NULL default 0, c datetime NOT NULL default '2009-02-10 00:00:00', d int NOT NULL default 0);
 
 # Test INSERT with NULL
 

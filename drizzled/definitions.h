@@ -179,14 +179,12 @@
 /***************************************************************************
   Configuration parameters
 ****************************************************************************/
-#define ACL_CACHE_SIZE		256
 #define MAX_PASSWORD_LENGTH	32
-#define HOST_CACHE_SIZE		128
 #define MAX_ACCEPT_RETRY	10	// Test accept this many times
 #define MAX_FIELDS_BEFORE_HASH	32
 #define USER_VARS_HASH_SIZE     16
 #define TABLE_OPEN_CACHE_MIN    64
-#define TABLE_OPEN_CACHE_DEFAULT 64
+#define TABLE_OPEN_CACHE_DEFAULT 1024
 
 /*
  Value of 9236 discovered through binary search 2006-09-26 on Ubuntu Dapper

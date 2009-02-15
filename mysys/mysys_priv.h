@@ -28,7 +28,6 @@
 #include <mysys/thr_lock.h>
 extern pthread_mutex_t THR_LOCK_malloc, THR_LOCK_open, THR_LOCK_keycache;
 extern pthread_mutex_t THR_LOCK_net;
-extern pthread_mutex_t THR_LOCK_time;
 
 /*
   EDQUOT is used only in 3 C files only in mysys/. If it does not exist on

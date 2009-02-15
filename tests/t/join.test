@@ -67,7 +67,7 @@ CREATE TABLE t1 (
   count int DEFAULT '0' NOT NULL,
   qty int,
   phone char(1) DEFAULT '' NOT NULL,
-  timestamp datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  timestamp datetime,
   PRIMARY KEY (id),
   KEY token (token(15)),
   KEY timestamp (timestamp),
@@ -145,9 +145,9 @@ DROP TABLE t1, t2;
 # TEST LEFT JOIN with DATE columns
 #
 
-CREATE TABLE t1 (d DATE NOT NULL);
-CREATE TABLE t2 (d DATE NOT NULL);
-INSERT INTO t1 (d) VALUES ('2001-08-01'),('0000-00-00');
+CREATE TABLE t1 (d DATE);
+CREATE TABLE t2 (d DATE);
+INSERT INTO t1 (d) VALUES ('2001-08-01'),(NULL);
 SELECT * FROM t1 LEFT JOIN t2 USING (d) WHERE t2.d IS NULL;
 SELECT * FROM t1 LEFT JOIN t2 USING (d) WHERE d IS NULL;
 SELECT * from t1 WHERE t1.d IS NULL;
