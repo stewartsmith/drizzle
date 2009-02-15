@@ -94,7 +94,7 @@ public:
   */
   enum utype  { NONE,DATE,
                 UNKNOWN_FIELD,NEXT_NUMBER,INTERVAL_FIELD,
-                BIT_FIELD, TIMESTAMP_OLD_FIELD, BLOB_FIELD,
+                TIMESTAMP_OLD_FIELD,
                 TIMESTAMP_DN_FIELD, TIMESTAMP_UN_FIELD, TIMESTAMP_DNUN_FIELD};
   enum imagetype { itRAW, itMBR};
 
