@@ -130,7 +130,6 @@ extern "C" {
 
 #define SC_INFO_LENGTH 4		/* Form format constant */
 #define TE_INFO_LENGTH 3
-#define MTYP_NOEMPTY_BIT 128
 
 
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120

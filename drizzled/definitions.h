@@ -149,7 +149,6 @@
 
 #define SC_INFO_LENGTH 4		/* Form format constant */
 #define TE_INFO_LENGTH 3
-#define MTYP_NOEMPTY_BIT 128
 
 #define FRM_VER 6
 #define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */

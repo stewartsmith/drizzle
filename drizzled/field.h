@@ -92,8 +92,8 @@ public:
     in more clean way with transition to new text based .frm format.
     See also comment for Field_timestamp::Field_timestamp().
   */
-  enum utype  { NONE,DATE,NOEMPTY,REL,
-                CHECK,EMPTY,UNKNOWN_FIELD,NEXT_NUMBER,INTERVAL_FIELD,
+  enum utype  { NONE,DATE,
+                UNKNOWN_FIELD,NEXT_NUMBER,INTERVAL_FIELD,
                 BIT_FIELD, TIMESTAMP_OLD_FIELD, BLOB_FIELD,
                 TIMESTAMP_DN_FIELD, TIMESTAMP_UN_FIELD, TIMESTAMP_DNUN_FIELD};
   enum imagetype { itRAW, itMBR};
