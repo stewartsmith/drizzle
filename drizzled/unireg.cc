@@ -1445,10 +1445,6 @@ static bool make_empty_rec(Session *session, File file,
       regfield->set_notnull();
       regfield->store((int64_t) 1, true);
     }
-    else if (type == Field::YES)		// Old unireg type
-      regfield->store(ER(ER_YES),(uint) strlen(ER(ER_YES)),system_charset_info);
-    else if (type == Field::NO)			// Old unireg type
-      regfield->store(ER(ER_NO), (uint) strlen(ER(ER_NO)),system_charset_info);
     else
       regfield->reset();
   }
