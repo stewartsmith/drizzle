@@ -839,7 +839,6 @@ int prepare_create_field(Create_field *sql_field,
     if (sql_field->charset->state & MY_CS_BINSORT)
       sql_field->pack_flag|=FIELDFLAG_BINARY;
     sql_field->length=8;			// Unireg field length
-    sql_field->unireg_check=Field::BLOB_FIELD;
     (*blob_columns)++;
     break;
   case DRIZZLE_TYPE_VARCHAR:
@@ -852,7 +851,6 @@ int prepare_create_field(Create_field *sql_field,
       FIELDFLAG_INTERVAL;
     if (sql_field->charset->state & MY_CS_BINSORT)
       sql_field->pack_flag|=FIELDFLAG_BINARY;
-    sql_field->unireg_check=Field::INTERVAL_FIELD;
     if (check_duplicates_in_interval("ENUM",sql_field->field_name,
                                  sql_field->interval,
                                      sql_field->charset, &dup_val_count))
@@ -4865,7 +4863,8 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     if (end_active_trans(session))
       error= 1;
   }
-  session->count_cuted_fields= CHECK_FIELD_IGNORE;
+  /* We must not ignore bad input! */;
+  session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
 
   if (table->s->tmp_table != NO_TMP_TABLE)
   {
@@ -5023,12 +5022,25 @@ end_online:
   }
 
 end_temporary:
-  snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
-           (ulong) (copied + deleted), (ulong) deleted,
-           (ulong) session->cuted_fields);
-  session->my_ok(copied + deleted, 0L, tmp_name);
-  session->some_tables_deleted=0;
-  return(false);
+  /*
+   * Field::store() may have called my_error().  If this is 
+   * the case, we must not send an ok packet, since 
+   * Diagnostics_area::is_set() will fail an assert.
+   */
+  if (! session->is_error())
+  {
+    snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
+            (ulong) (copied + deleted), (ulong) deleted,
+            (ulong) session->cuted_fields);
+    session->my_ok(copied + deleted, 0L, tmp_name);
+    session->some_tables_deleted=0;
+    return false;
+  }
+  else
+  {
+    /* my_error() was called.  Return true (which means error...) */
+    return true;
+  }
 
 err1:
   if (new_table)

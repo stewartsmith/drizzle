@@ -302,8 +302,8 @@ a	b
 22	3
 23	3
 drop table t1;
-create table t1 (f1 date not null);
-insert into t1 values('2000-01-01'),('0000-00-00');
+create table t1 (f1 date NULL);
+insert into t1 values('2000-01-01'),(NULL);
 update t1 set f1='2002-02-02' where f1 is null;
 select * from t1;
 f1
@@ -349,7 +349,7 @@ drop table t1;
 CREATE TABLE t1 (
 request_id int NOT NULL auto_increment,
 user_id varchar(12) default NULL,
-time_stamp datetime NOT NULL default '0000-00-00 00:00:00',
+time_stamp datetime,
 ip_address varchar(15) default NULL,
 PRIMARY KEY (request_id),
 KEY user_id_2 (user_id,time_stamp)

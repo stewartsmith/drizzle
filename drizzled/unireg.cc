@@ -969,7 +969,7 @@ static bool pack_header(unsigned char *forminfo,
                         uint32_t info_length, uint32_t screens, uint32_t table_options,
                         ulong data_offset, handler *file)
 {
-  uint32_t length,int_count,int_length,no_empty, int_parts;
+  uint32_t length,int_count,int_length, int_parts;
   uint32_t time_stamp_pos,null_fields;
   ulong reclength, totlength, n_length, com_length, vcol_info_length;
 
@@ -982,7 +982,7 @@ static bool pack_header(unsigned char *forminfo,
 
   totlength= 0L;
   reclength= data_offset;
-  no_empty=int_count=int_parts=int_length=time_stamp_pos=null_fields=
+  int_count=int_parts=int_length=time_stamp_pos=null_fields=
     com_length=vcol_info_length=0;
   n_length=2L;
 
@@ -1029,13 +1029,6 @@ static bool pack_header(unsigned char *forminfo,
 
     totlength+= field->length;
     com_length+= field->comment.length;
-    if (MTYP_TYPENR(field->unireg_check) == Field::NOEMPTY ||
-	field->unireg_check & MTYP_NOEMPTY_BIT)
-    {
-      field->unireg_check= (Field::utype) ((uint) field->unireg_check |
-					   MTYP_NOEMPTY_BIT);
-      no_empty++;
-    }
     /*
       We mark first TIMESTAMP field with NOW() in DEFAULT or ON UPDATE
       as auto-update field.
@@ -1126,7 +1119,7 @@ static bool pack_header(unsigned char *forminfo,
   int2store(forminfo+258,create_fields.elements);
   int2store(forminfo+260,info_length);
   int2store(forminfo+262,totlength);
-  int2store(forminfo+264,no_empty);
+  int2store(forminfo+264,0); // no_empty
   int2store(forminfo+266,reclength);
   int2store(forminfo+268,n_length);
   int2store(forminfo+270,int_count);
@@ -1445,10 +1438,6 @@ static bool make_empty_rec(Session *session, File file,
       regfield->set_notnull();
       regfield->store((int64_t) 1, true);
     }
-    else if (type == Field::YES)		// Old unireg type
-      regfield->store(ER(ER_YES),(uint) strlen(ER(ER_YES)),system_charset_info);
-    else if (type == Field::NO)			// Old unireg type
-      regfield->store(ER(ER_NO), (uint) strlen(ER(ER_NO)),system_charset_info);
     else
       regfield->reset();
   }

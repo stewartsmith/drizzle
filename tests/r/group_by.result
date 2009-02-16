@@ -8,10 +8,10 @@ score int,
 lsg char(40),
 date date
 );
-INSERT INTO t1 VALUES (1,1,1,'','0000-00-00');
-INSERT INTO t1 VALUES (2,2,2,'','0000-00-00');
-INSERT INTO t1 VALUES (2,1,1,'','0000-00-00');
-INSERT INTO t1 VALUES (3,3,3,'','0000-00-00');
+INSERT INTO t1 VALUES (1,1,1,'',NULL);
+INSERT INTO t1 VALUES (2,2,2,'',NULL);
+INSERT INTO t1 VALUES (2,1,1,'',NULL);
+INSERT INTO t1 VALUES (3,3,3,'',NULL);
 CREATE TABLE t2 (
 userID int NOT NULL auto_increment,
 niName char(15),
@@ -60,8 +60,8 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 drop table t1,t2;
 CREATE TABLE t1 (
 PID int NOT NULL auto_increment,
-payDate date DEFAULT '0000-00-00' NOT NULL,
-recDate datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+payDate date,
+recDate datetime,
 URID int DEFAULT '0' NOT NULL,
 CRID int DEFAULT '0' NOT NULL,
 amount int DEFAULT '0' NOT NULL,

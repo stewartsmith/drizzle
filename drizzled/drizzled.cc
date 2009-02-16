@@ -68,7 +68,6 @@
 #define DEFAULT_SKIP_THREAD_PRIORITY 0
 #endif
 
-#include <mysys/thr_alarm.h>
 #include <libdrizzleclient/errmsg.h>
 #include <locale.h>
 
@@ -504,10 +503,6 @@ static void close_connections(void)
     struct timespec abstime;
     int error;
 
-#ifndef DONT_USE_THR_ALARM
-    if (pthread_kill(select_thread, thr_client_alarm))
-      break;					// allready dead
-#endif
     set_timespec(abstime, 2);
     for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
     {
@@ -539,8 +534,6 @@ static void close_connections(void)
       }
     }
   }
-
-  end_thr_alarm(0);			 // Abort old alarms.
 
   /*
     First signal all threads that it's time to die
@@ -779,7 +772,6 @@ void clean_up(bool print_message)
   delete_elements(&key_caches, (void (*)(const char*, unsigned char*)) free_key_cache);
   multi_keycache_free();
   free_status_vars();
-  end_thr_alarm(1);			/* Free allocated memory */
   my_free_open_file_info();
   free((char*) global_system_variables.date_format);
   free((char*) global_system_variables.time_format);
@@ -1363,8 +1355,6 @@ static void init_signals(void)
   sigset_t set;
   struct sigaction sa;
 
-  my_sigset(THR_SERVER_ALARM,print_signal_warning); // Should never be called!
-
   if (!(test_flags & TEST_NO_STACKTRACE) || (test_flags & TEST_CORE_ON_SIGNAL))
   {
     sa.sa_flags = SA_RESETHAND | SA_NODEFER;
@@ -1414,8 +1404,6 @@ static void init_signals(void)
 #ifdef SIGTSTP
   sigaddset(&set,SIGTSTP);
 #endif
-  if (thd_lib_detected != THD_LIB_LT)
-    sigaddset(&set,THR_SERVER_ALARM);
   if (test_flags & TEST_SIGINT)
   {
     my_sigset(thr_kill_signal, end_thread_signal);
@@ -1478,12 +1466,6 @@ pthread_handler_t signal_hand(void *)
   my_thread_init();				// Init new thread
   signal_thread_in_use= 1;
 
-  /*
-    Setup alarm handler
-    This should actually be '+ max_number_of_slaves' instead of +10,
-    but the +10 should be quite safe.
-  */
-  init_thr_alarm(thread_scheduler.max_threads + 10);
   if (thd_lib_detected != THD_LIB_LT && (test_flags & TEST_SIGINT))
   {
     (void) sigemptyset(&set);			// Setup up SIGINT for debug

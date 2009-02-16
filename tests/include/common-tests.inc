@@ -1770,7 +1770,7 @@ CREATE TABLE t1 (
   aufnr int NOT NULL default '0',
   username varchar(50) NOT NULL default '',
   hdl_nr int NOT NULL default '0',
-  eintrag date NOT NULL default '0000-00-00',
+  eintrag date NULL,
   st_klasse varchar(40) NOT NULL default '',
   st_wert varchar(40) NOT NULL default '',
   st_zusatz varchar(40) NOT NULL default '',

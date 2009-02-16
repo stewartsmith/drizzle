@@ -25,7 +25,6 @@ SELECT * FROM t2 FOR UPDATE;
 	ROLLBACK;
 
 	-- connection con1
-	-- error ER_LOCK_DEADLOCK
 	-- reap
 -- }
 # else
@@ -39,7 +38,6 @@ SELECT * FROM t2 FOR UPDATE;
 	ROLLBACK;
 
 	-- connection con2
-	-- error ER_LOCK_DEADLOCK
 	-- reap
 -- }
 

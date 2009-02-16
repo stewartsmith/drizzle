@@ -392,6 +392,9 @@ bool mysql_insert(Session *session,TableList *table_list,
       }
     }
 
+    // Release latches in case bulk insert takes a long time
+    ha_release_temporary_latches(session);
+
     error=write_record(session, table ,&info);
     if (error)
       break;

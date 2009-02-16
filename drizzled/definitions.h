@@ -67,8 +67,6 @@
 /* Max column width +1 */
 #define MAX_FIELD_WIDTH		(MAX_FIELD_CHARLENGTH*MAX_MBWIDTH+1)
 
-#define MAX_BIT_FIELD_LENGTH    64      /* Max length in bits for bit fields */
-
 #define MAX_DATE_WIDTH		10	/* YYYY-MM-DD */
 #define MAX_TIME_WIDTH		23	/* -DDDDDD HH:MM:SS.###### */
 #define MAX_DATETIME_FULL_WIDTH 29	/* YYYY-MM-DD HH:MM:SS.###### AM */
@@ -149,7 +147,6 @@
 
 #define SC_INFO_LENGTH 4		/* Form format constant */
 #define TE_INFO_LENGTH 3
-#define MTYP_NOEMPTY_BIT 128
 
 #define FRM_VER 6
 #define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */
@@ -182,14 +179,12 @@
 /***************************************************************************
   Configuration parameters
 ****************************************************************************/
-#define ACL_CACHE_SIZE		256
 #define MAX_PASSWORD_LENGTH	32
-#define HOST_CACHE_SIZE		128
 #define MAX_ACCEPT_RETRY	10	// Test accept this many times
 #define MAX_FIELDS_BEFORE_HASH	32
 #define USER_VARS_HASH_SIZE     16
 #define TABLE_OPEN_CACHE_MIN    64
-#define TABLE_OPEN_CACHE_DEFAULT 64
+#define TABLE_OPEN_CACHE_DEFAULT 1024
 
 /*
  Value of 9236 discovered through binary search 2006-09-26 on Ubuntu Dapper

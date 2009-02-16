@@ -293,9 +293,9 @@ empty_char char(0),
 type_char char(2),
 type_varchar varchar(10),
 type_timestamp timestamp not null,
-type_date date not null default '0000-00-00',
+type_date date,
 type_time time not null default '00:00:00',
-type_datetime datetime not null default '0000-00-00 00:00:00',
+type_datetime datetime,
 type_enum enum ('red', 'green', 'blue'),
 type_set enum ('red', 'green', 'blue'),
 type_blob blob,
@@ -312,9 +312,9 @@ t1	CREATE TABLE `t1` (
   `type_char` varchar(2),
   `type_varchar` varchar(10),
   `type_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `type_date` date NOT NULL,
+  `type_date` date,
   `type_time` time NOT NULL,
-  `type_datetime` datetime NOT NULL,
+  `type_datetime` datetime,
   `type_enum` enum('red','green','blue'),
   `type_set` enum('red','green','blue'),
   `type_blob` blob,
@@ -323,7 +323,7 @@ t1	CREATE TABLE `t1` (
 insert into t1 (type_timestamp) values ("2003-02-07 10:00:01");
 select * from t1;
 type_int	type_bigint	type_decimal	type_numeric	empty_char	type_char	type_varchar	type_timestamp	type_date	type_time	type_datetime	type_enum	type_set	type_blob
-NULL	NULL	NULL	NULL	NULL	NULL	NULL	2003-02-07 10:00:01	0000-00-00	00:00:00	0000-00-00 00:00:00	NULL	NULL	NULL
+NULL	NULL	NULL	NULL	NULL	NULL	NULL	2003-02-07 10:00:01	NULL	00:00:00	NULL	NULL	NULL	NULL
 drop table t1;
 create table t1 (a int not null);
 create table t2 select max(a) from t1;
