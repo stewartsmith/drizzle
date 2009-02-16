@@ -169,7 +169,7 @@ static char*	innobase_log_arch_dir			= NULL;
 #endif /* UNIV_LOG_ARCHIVE */
 static my_bool	innobase_use_doublewrite		= TRUE;
 static my_bool	innobase_use_checksums			= TRUE;
-static my_bool	innobase_locks_unsafe_for_binlog	= FALSE;
+static my_bool	innobase_locks_unsafe_for_binlog	= TRUE;
 static my_bool	innobase_rollback_on_timeout		= FALSE;
 static my_bool	innobase_create_status_file		= FALSE;
 static my_bool	innobase_stats_on_metadata		= TRUE;
@@ -9147,7 +9147,7 @@ static DRIZZLE_SYSVAR_STR(flush_method, innobase_unix_file_flush_method,
 static DRIZZLE_SYSVAR_BOOL(locks_unsafe_for_binlog, innobase_locks_unsafe_for_binlog,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
   "Force InnoDB to not use next-key locking, to use only row-level locking.",
-  NULL, NULL, FALSE);
+  NULL, NULL, TRUE);
 
 #ifdef UNIV_LOG_ARCHIVE
 static DRIZZLE_SYSVAR_STR(log_arch_dir, innobase_log_arch_dir,
