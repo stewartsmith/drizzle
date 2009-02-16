@@ -155,11 +155,6 @@ int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char
     there is no index change there could be data change.
   */
   _mi_writeinfo(info, WRITEINFO_UPDATE_KEYFILE);
-  if (info->invalidator != 0)
-  {
-    (*info->invalidator)(info->filename);
-    info->invalidator=0;
-  }
   return(0);
 
 err:

@@ -135,11 +135,6 @@ int mi_write(MI_INFO *info, unsigned char *record)
   info->state->records++;
   info->lastpos=filepos;
   _mi_writeinfo(info, WRITEINFO_UPDATE_KEYFILE);
-  if (info->invalidator != 0)
-  {
-    (*info->invalidator)(info->filename);
-    info->invalidator=0;
-  }
 
   /*
     Update status of the table. We need to do so after each row write

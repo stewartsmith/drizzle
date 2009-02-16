@@ -88,11 +88,6 @@ int mi_delete(MI_INFO *info,const unsigned char *record)
 
   mi_sizestore(lastpos,info->lastpos);
   _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
-  if (info->invalidator != 0)
-  {
-    (*info->invalidator)(info->filename);
-    info->invalidator=0;
-  }
   return(0);
 
 err:
