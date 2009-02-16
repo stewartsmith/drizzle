@@ -761,60 +761,32 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     /*share->keys=      */keys=      disk_buff[0];
     /*share->key_parts=*/ key_parts= disk_buff[1];
   }
-//  share->keys_for_keyread.init(0);
-//  share->keys_in_use.init(keys);
-
-//  n_length=keys*sizeof(KEY)+key_parts*sizeof(KEY_PART_INFO);
-//  if (!(keyinfo = (KEY*) alloc_root(&share->mem_root,
-//				    n_length + uint2korr(disk_buff+4))))
 
     /* the magic uint2korr(disk_buff+4) is  the key names size */
-
-//    goto err;                                   /* purecov: inspected */
-//  memset(keyinfo, 0, n_length);
-//  share->key_info= keyinfo;
 
   keyinfo= share->key_info;
   key_part= reinterpret_cast<KEY_PART_INFO*> (keyinfo+keys);
   strpos=disk_buff+6;
 
-//  if (!(rec_per_key= (ulong*) alloc_root(&share->mem_root,
-//					 sizeof(ulong*)*key_parts)))
-//    goto err;
-
   for (i=0 ; i < keys ; i++, keyinfo++)
   {
-//    keyinfo->table= 0;                           // Updated in open_frm
     if (new_frm_ver >= 3)
     {
-      /*keyinfo->flags=*/	   (uint) uint2korr(strpos) ^ HA_NOSAME;
-      /*keyinfo->key_length=*/ (uint) uint2korr(strpos+2);
-      /*keyinfo->key_parts=*/  (uint) strpos[4];
-//      /*keyinfo->algorithm=*/  (enum ha_key_alg) strpos[5];
-//      /*keyinfo->block_size=*/ uint2korr(strpos+6);
       strpos+=8;
     }
 
-//    keyinfo->key_part=	 key_part;
-//    keyinfo->rec_per_key= rec_per_key;
     for (j=keyinfo->key_parts ; j-- ; key_part++)
     {
-//      *rec_per_key++=0;
-      //key_part->fieldnr=	(uint16_t) (uint2korr(strpos) & FIELD_NR_MASK);
       key_part->offset= (uint) uint2korr(strpos+2)-1;
       key_part->key_type=	(uint) uint2korr(strpos+5);
-      // key_part->field=	(Field*) 0;	// Will be fixed later
       if (new_frm_ver >= 1)
       {
-	//key_part->key_part_flag= *(strpos+4);
-	//key_part->length=	(uint) uint2korr(strpos+7);
 	strpos+=9;
       }
       else
       {
 	abort(); // Old FRM version, we abort as we should never see it.
       }
-      //key_part->store_length=key_part->length;
     }
   }
 
