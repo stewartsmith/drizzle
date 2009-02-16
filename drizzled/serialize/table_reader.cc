@@ -77,6 +77,9 @@ void print_field(const ::drizzle::Table::Field &field)
   case Table::Field::DATETIME:
     cout << " DATETIME ";
     break;
+  case Table::Field::VIRTUAL:
+    cout << " VIRTUAL"; // FIXME
+    break;
   }
 
   if (field.type() == Table::Field::INTEGER

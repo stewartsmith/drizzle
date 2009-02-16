@@ -86,10 +86,18 @@ message Table {
       TIMESTAMP = 10;
       DATETIME = 11;
       TINYINT = 12;
+      VIRTUAL = 13;
+    }
+
+    enum FieldFormatType {
+      DefaultFormat= 0;
+      FixedFormat= 1;
+      DynamicFormat= 2;
     }
 
     message FieldOptions {
       optional string default_value = 1;
+      optional string update_value = 2;
     }
 
     message TimestampFieldOptions {
@@ -121,15 +129,31 @@ message Table {
       repeated string field_value = 2;
     }
 
+    message VirtualFieldOptions {
+      required FieldType type = 1;
+      required bool physically_stored = 2;
+      /* optional as we could optimise some cases in future */
+      optional string expression = 3;
+    }
+
     required string name = 1;
     required FieldType type = 2;
-    optional FieldOptions options = 3;
-    optional FieldConstraints constraints = 4;
-    optional NumericFieldOptions numeric_options = 5;
-    optional StringFieldOptions string_options = 6;
+    optional FieldFormatType format = 3;
+    optional FieldOptions options = 4;
+    optional FieldConstraints constraints = 5;
+    optional NumericFieldOptions numeric_options = 6;
+    optional StringFieldOptions string_options = 7;
+    optional VirtualFieldOptions virtual_options = 8;
+
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
     optional SetFieldOptions set_options = 17;
     optional TimestampFieldOptions timestamp_options = 18;
+
+    /* The below should all die a horrible death and never see release */
+    optional uint32 recpos = 100;
+    optional uint32 pack_flag = 101;
+    optional uint32 field_length = 103;
+    optional uint32 interval_nr = 104;
   }
 
   message Index {

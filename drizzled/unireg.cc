@@ -408,6 +408,7 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
     attribute= table_proto->add_field();
     attribute->set_name(field_arg->field_name);
+
     switch (field_arg->sql_type) {
     case DRIZZLE_TYPE_TINY:
       attribute->set_type(drizzle::Table::Field::TINYINT);
@@ -480,7 +481,20 @@ static void fill_table_proto(drizzle::Table *table_proto,
       attribute->set_type(drizzle::Table::Field::BLOB);
       break;
     default:
-      assert(1);
+      abort();
+    }
+
+    if(field_arg->vcol_info)
+    {
+      drizzle::Table::Field::VirtualFieldOptions *field_options;
+
+      field_options= attribute->mutable_virtual_options();
+
+      field_options->set_type(attribute->type());
+      attribute->set_type(drizzle::Table::Field::VIRTUAL);
+
+      field_options->set_expression(field_arg->vcol_info->expr_str.str);
+      field_options->set_physically_stored(field_arg->is_stored);
     }
 
 #ifdef NOTDONE
@@ -488,9 +502,72 @@ static void fill_table_proto(drizzle::Table *table_proto,
     constraints->set_is_nullable(field_arg->def->null_value);
 #endif
 
-    /* Set the comment */
+    switch(field_arg->column_format())
+    {
+    case COLUMN_FORMAT_TYPE_NOT_USED:
+      break;
+    case COLUMN_FORMAT_TYPE_DEFAULT:
+      attribute->set_format(drizzle::Table::Field::DefaultFormat);
+      break;
+    case COLUMN_FORMAT_TYPE_FIXED:
+      attribute->set_format(drizzle::Table::Field::FixedFormat);
+      break;
+    case COLUMN_FORMAT_TYPE_DYNAMIC:
+      attribute->set_format(drizzle::Table::Field::DynamicFormat);
+      break;
+    default:
+      abort();
+    }
+
     if (field_arg->comment.length)
       attribute->set_comment(field_arg->comment.str);
+
+    if(field_arg->unireg_check == Field::NEXT_NUMBER)
+    {
+      drizzle::Table::Field::NumericFieldOptions *field_options;
+      field_options= attribute->mutable_numeric_options();
+      field_options->set_is_autoincrement(true);
+    }
+
+    if(field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD
+       || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD)
+    {
+      drizzle::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+      field_options->set_default_value("NOW()");
+    }
+
+    if(field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
+       || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD)
+    {
+      drizzle::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+      field_options->set_update_value("NOW()");
+    }
+
+    assert(field_arg->unireg_check == Field::NONE
+	   || field_arg->unireg_check == Field::NEXT_NUMBER
+	   || field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD
+	   || field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
+	   || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD);
+
+    /* Fuck me. seriously, wtf */
+    ulong data_offset= (create_info->null_bits + 7)/8;
+    attribute->set_recpos(field_arg->offset+1 + (uint)data_offset);
+
+    /* Because:
+       - flag should never mean flag
+       - unireg_check/unireg_type should exist
+       - and field length should be specified for fixed sized types.
+
+       NOT.
+
+       These should all die a horrible death. A freeze-ray is too good for them.
+       A death-ray is way better.
+    */
+    attribute->set_pack_flag(field_arg->pack_flag);
+    attribute->set_field_length(field_arg->length);
+    attribute->set_interval_nr(field_arg->interval_id);
   }
 
   if (create_info->used_fields & HA_CREATE_USED_PACK_KEYS)
