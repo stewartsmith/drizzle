@@ -22,7 +22,7 @@
 #include <drizzled/error.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include <drizzled/hash_symbol.h>
+#include <drizzled/lookup_symbol.h>
 
 
 
@@ -317,7 +317,7 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
     tok_upper[tok_pos]=my_toupper(system_charset_info, tok[tok_pos]);
   tok_upper[tok_pos]=0;
 
-  const SYMBOL *symbol= get_hash_symbol(tok_upper, len, function);
+  const SYMBOL *symbol= lookup_symbol(tok_upper, len, function);
   if (symbol)
   {
     lip->yylval->symbol.symbol=symbol;
@@ -330,29 +330,11 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   return 0;
 }
 
-/*
-  Check if name is a keyword
-
-  SYNOPSIS
-    is_keyword()
-    name      checked name (must not be empty)
-    len       length of checked name
-
-  RETURN VALUES
-    0         name is a keyword
-    1         name isn't a keyword
-*/
-
-bool is_keyword(const char *name, uint32_t len)
-{
-  assert(len != 0);
-  return get_hash_symbol(name,len,0)!=0;
-}
 
 bool is_lex_native_function(const LEX_STRING *name)
 {
   assert(name != NULL);
-  return (get_hash_symbol(name->str, name->length, 1) != 0);
+  return (lookup_symbol(name->str, name->length, 1) != 0);
 }
 
 /* make a copy of token before ptr and set yytoklen */

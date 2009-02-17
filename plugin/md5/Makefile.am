@@ -20,7 +20,7 @@ EXTRA_LTLIBRARIES=	libmd5udf.la
 pkgplugin_LTLIBRARIES=	@plugin_md5_shared_target@
 libmd5udf_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)
 libmd5udf_la_LIBADD=	$(CRYPTO_LIBS)
-libmd5udf_la_CXXFLAGS=	-DDRIZZLE_DYNAMIC_PLUGIN
+libmd5udf_la_CXXFLAGS=	${AM_CXXFLAGS} -DDRIZZLE_DYNAMIC_PLUGIN
 libmd5udf_la_SOURCES=	md5udf.cc
 
 EXTRA_LIBRARIES=	libmd5udf.a

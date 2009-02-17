@@ -34,6 +34,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -130,7 +131,7 @@ static bool initialized= 0;
 
 static DYNAMIC_ARRAY plugin_dl_array;
 static DYNAMIC_ARRAY plugin_array;
-static HASH plugin_hash[DRIZZLE_MAX_PLUGIN_TYPE_NUM];
+static map<string, st_plugin_int *> plugin_map[DRIZZLE_MAX_PLUGIN_TYPE_NUM];
 static bool reap_needed= false;
 static int plugin_array_version=0;
 
@@ -474,20 +475,25 @@ static struct st_plugin_int *plugin_find_internal(const LEX_STRING *name, int ty
   uint32_t i;
   if (! initialized)
     return(0);
+  string find_str(name->str,name->length);
+  transform(find_str.begin(), find_str.end(), find_str.begin(), ::tolower);
 
+  map<string, st_plugin_int *>::iterator map_iter;
   if (type == DRIZZLE_ANY_PLUGIN)
   {
     for (i= 0; i < DRIZZLE_MAX_PLUGIN_TYPE_NUM; i++)
     {
-      struct st_plugin_int *plugin= (st_plugin_int *)
-        hash_search(&plugin_hash[i], (const unsigned char *)name->str, name->length);
-      if (plugin)
-        return(plugin);
+      map_iter= plugin_map[i].find(find_str);
+      if (map_iter != plugin_map[i].end())
+        return (*map_iter).second;
     }
   }
   else
-    return((st_plugin_int *)
-        hash_search(&plugin_hash[type], (const unsigned char *)name->str, name->length));
+  {
+    map_iter= plugin_map[type].find(find_str);
+    if (map_iter != plugin_map[type].end())
+      return (*map_iter).second;
+  }
   return(0);
 }
 
@@ -633,12 +639,13 @@ static bool plugin_add(MEM_ROOT *tmp_root,
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
           plugin_array_version++;
-          if (!my_hash_insert(&plugin_hash[plugin->type], (unsigned char*)tmp_plugin_ptr))
-          {
-            init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
-            return(false);
-          }
-          tmp_plugin_ptr->state= PLUGIN_IS_FREED;
+          string add_str(plugin->name);
+          transform(add_str.begin(), add_str.end(),
+                    add_str.begin(), ::tolower);
+
+          plugin_map[plugin->type][add_str]= tmp_plugin_ptr;
+          init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
+          return(false);
         }
         mysql_del_sys_var_chain(tmp.system_vars);
         goto err;
@@ -707,7 +714,6 @@ static void plugin_del(struct st_plugin_int *plugin)
 {
   /* Free allocated strings before deleting the plugin. */
   plugin_vars_free_values(plugin->system_vars);
-  hash_delete(&plugin_hash[plugin->plugin->type], (unsigned char*)plugin);
   if (plugin->plugin_dl)
     plugin_dl_del(&plugin->plugin_dl->dl);
   plugin->state= PLUGIN_IS_FREED;
@@ -846,16 +852,7 @@ err:
 }
 
 
-extern "C" unsigned char *get_plugin_hash_key(const unsigned char *, size_t *, bool);
 extern "C" unsigned char *get_bookmark_hash_key(const unsigned char *, size_t *, bool);
-
-
-unsigned char *get_plugin_hash_key(const unsigned char *buff, size_t *length, bool)
-{
-  struct st_plugin_int *plugin= (st_plugin_int *)buff;
-  *length= (uint)plugin->name.length;
-  return((unsigned char *)plugin->name.str);
-}
 
 
 unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, bool)
@@ -897,13 +894,6 @@ int plugin_init(int *argc, char **argv, int flags)
       my_init_dynamic_array(&plugin_array,
                             sizeof(struct st_plugin_int *),16,16))
     goto err;
-
-  for (idx= 0; idx < DRIZZLE_MAX_PLUGIN_TYPE_NUM; idx++)
-  {
-    if (hash_init(&plugin_hash[idx], system_charset_info, 16, 0, 0,
-                  get_plugin_hash_key, NULL, HASH_UNIQUE))
-      goto err;
-  }
 
   initialized= 1;
 
@@ -1003,8 +993,11 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
         (struct st_plugin_int *) memdup_root(&plugin_mem_root, (unsigned char*)tmp,
                                              sizeof(struct st_plugin_int));
 
-  if (my_hash_insert(&plugin_hash[plugin->type],(unsigned char*) *ptr))
-    return(1);
+  string add_str(plugin->name);
+  transform(add_str.begin(), add_str.end(),
+            add_str.begin(), ::tolower);
+
+  plugin_map[plugin->type][add_str]= *ptr;
 
   return(0);
 }
@@ -1196,8 +1189,6 @@ void plugin_shutdown(void)
 
   /* Dispose of the memory */
 
-  for (idx= 0; idx < DRIZZLE_MAX_PLUGIN_TYPE_NUM; idx++)
-    hash_free(&plugin_hash[idx]);
   delete_dynamic(&plugin_array);
 
   count= plugin_dl_array.elements;
@@ -1222,7 +1213,6 @@ bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
                        int type, uint32_t state_mask, void *arg)
 {
   uint32_t idx;
-  size_t total;
   struct st_plugin_int *plugin;
   vector<st_plugin_int *> plugins;
   int version=plugin_array_version;
@@ -1232,13 +1222,11 @@ bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
 
   state_mask= ~state_mask; // do it only once
 
-  total= type == DRIZZLE_ANY_PLUGIN ? plugin_array.elements
-                                  : plugin_hash[type].records;
-  plugins.reserve(total);
-
+  
   if (type == DRIZZLE_ANY_PLUGIN)
   {
-    for (idx= 0; idx < total; idx++)
+    plugins.reserve(plugin_array.elements);
+    for (idx= 0; idx < plugin_array.elements; idx++)
     {
       plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
       plugins.push_back(!(plugin->state & state_mask) ? plugin : NULL);
@@ -1246,22 +1234,33 @@ bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
   }
   else
   {
-    HASH *hash= plugin_hash + type;
-    for (idx= 0; idx < total; idx++)
+    plugins.reserve(plugin_map[type].size());
+    map<string, st_plugin_int *>::iterator map_iter;
+
+    for (map_iter= plugin_map[type].begin();
+         map_iter != plugin_map[type].end();
+         map_iter++)
     {
-      plugin= (struct st_plugin_int *) hash_element(hash, idx);
+      plugin= (*map_iter).second;
       plugins.push_back(!(plugin->state & state_mask) ? plugin : NULL);
     }
   }
-  for (idx= 0; idx < total; idx++)
+
+  vector<st_plugin_int *>::iterator plugin_iter;
+  for (plugin_iter= plugins.begin();
+       plugin_iter != plugins.end();
+       plugin_iter++)
   {
     if (unlikely(version != plugin_array_version))
     {
-      for (uint32_t i=idx; i < total; i++)
-        if (plugins[i] && plugins[i]->state & state_mask)
-          plugins[i]=0;
+      vector<st_plugin_int *>::iterator reset_iter;
+      for (reset_iter= plugin_iter;
+           reset_iter != plugins.end();
+           reset_iter++)
+        if (*reset_iter && (*reset_iter)->state & state_mask)
+          *reset_iter=0;
     }
-    plugin= plugins[idx];
+    plugin= *plugin_iter;
     /* It will stop iterating on first engine error when "func" returns true */
     if (plugin && func(session, plugin_int_to_ref(plugin), arg))
         goto err;

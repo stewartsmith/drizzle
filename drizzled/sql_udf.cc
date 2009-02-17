@@ -19,9 +19,14 @@
 #include <mysys/hash.h>
 #include <drizzled/sql_udf.h>
 
+#include <map>
+#include <string>
+
+using namespace std;
+
 static bool udf_startup= false; /* We do not lock because startup is single threaded */
 static MEM_ROOT mem;
-static HASH udf_hash;
+static map<string, udf_func *> udf_map;
 
 extern "C" unsigned char* get_hash_key(const unsigned char *buff, size_t *length,
                                bool )
@@ -35,42 +40,41 @@ extern "C" unsigned char* get_hash_key(const unsigned char *buff, size_t *length
 void udf_init()
 {
   init_sql_alloc(&mem, UDF_ALLOC_BLOCK_SIZE, 0);
-
-  if (hash_init(&udf_hash, system_charset_info, 32, 0, 0, get_hash_key, NULL, 0))
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Can't allocate memory for udf structures"));
-    hash_free(&udf_hash);
-    free_root(&mem, MYF(0));
-    return;
-  }
 }
 
 /* called by mysqld.cc clean_up() */
 void udf_free()
 {
-  hash_free(&udf_hash);
   free_root(&mem, MYF(0));
 }
 
 /* This is only called if using_udf_functions != 0 */
 udf_func *find_udf(const char *name, uint32_t length)
 {
-  udf_func *udf;
+  udf_func *udf= NULL;
 
   if (udf_startup == false)
     return NULL;
 
-  udf= (udf_func*) hash_search(&udf_hash,
-                               (unsigned char*) name,
-                               length ? length : (uint) strlen(name));
+  string find_str(name, length);
+  transform(find_str.begin(), find_str.end(),
+            find_str.begin(), ::tolower);
+
+  map<string, udf_func *>::iterator find_iter;
+  find_iter=  udf_map.find(find_str);
+  if (find_iter != udf_map.end())
+    udf= (*find_iter).second;
 
   return (udf);
 }
 
 static bool add_udf(udf_func *udf)
 {
-  if (my_hash_insert(&udf_hash, (unsigned char*) udf))
-    return false;
+  string add_str(udf->name.str, udf->name.length);
+  transform(add_str.begin(), add_str.end(),
+            add_str.begin(), ::tolower);
+
+  udf_map[add_str]= udf;
 
   using_udf_functions= 1;
 
