@@ -411,7 +411,7 @@ ERROR HY000: Received an out-of-range argument '1' for function 'from_days'.
 create table t1 as
 select from_days(s) as date,t
 from (select TO_DAYS("0001-01-01") as s,'t' as t union select null, null ) as sub1;
-ERROR HY000: Received an out-of-range argument '0' for function 'from_days'.
+drop table t1;
 CREATE TABLE t1 (
 qty decimal(16,6) default NULL, 
 dps int default NULL 
