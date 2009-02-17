@@ -1406,7 +1406,7 @@ void Create_field::create_length_to_internal_length(void)
     pack_length= calc_pack_length(sql_type, length);
     break;
   case DRIZZLE_TYPE_ENUM:
-    /* Pack_length already calculated in sql_parse.cc */
+    /* Pack_length already calculated in ::init() */
     length*= charset->mbmaxlen;
     key_length= pack_length;
     break;
