@@ -1349,7 +1349,7 @@ end_with_restore_list:
   case SQLCOM_SHOW_CREATE:
     assert(first_table == all_tables && first_table != 0);
     {
-      res= mysqld_show_create(session, first_table);
+      res= drizzled_show_create(session, first_table);
       break;
     }
   case SQLCOM_CHECKSUM:

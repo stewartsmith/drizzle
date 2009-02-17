@@ -307,13 +307,13 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
       if (wild)
       {
-	if (lower_case_table_names)
-	{
-	  if (wild_case_compare(files_charset_info, uname, wild))
-	    continue;
-	}
-	else if (wild_compare(uname, wild, 0))
-	  continue;
+        if (lower_case_table_names)
+        {
+          if (wild_case_compare(files_charset_info, uname, wild))
+            continue;
+        }
+        else if (wild_compare(uname, wild, 0))
+          continue;
       }
     }
     if (!(file_name=
@@ -330,8 +330,7 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
 }
 
 
-bool
-mysqld_show_create(Session *session, TableList *table_list)
+bool drizzled_show_create(Session *session, TableList *table_list)
 {
   Protocol *protocol= session->protocol;
   char buff[2048];
@@ -367,7 +366,9 @@ mysqld_show_create(Session *session, TableList *table_list)
 
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  {
     return(true);
+  }
   protocol->prepare_for_resend();
   {
     if (table_list->schema_table)
@@ -523,8 +524,7 @@ static bool get_field_default_value(Session *,
 
   has_default= (field->type() != DRIZZLE_TYPE_BLOB &&
                 !(field->flags & NO_DEFAULT_VALUE_FLAG) &&
-                field->unireg_check != Field::NEXT_NUMBER
-                  && has_now_default);
+                field->unireg_check != Field::NEXT_NUMBER);
 
   def_value->length(0);
   if (has_default)
@@ -555,7 +555,6 @@ static bool get_field_default_value(Session *,
       def_value->append(STRING_WITH_LEN("NULL"));    // Null as default
     else
       return 0;
-
   }
   return has_default;
 }
@@ -618,9 +617,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     if (lower_case_table_names == 2)
       alias= table->alias;
     else
-    {
       alias= share->table_name.str;
-    }
   }
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
@@ -670,17 +667,18 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     {
       if (field->charset() != share->table_charset)
       {
-	packet->append(STRING_WITH_LEN(" CHARACTER SET "));
-	packet->append(field->charset()->csname);
+        packet->append(STRING_WITH_LEN(" CHARACTER SET "));
+        packet->append(field->charset()->csname);
       }
+
       /*
-	For string types dump collation name only if
-	collation is not primary for the given charset
+        For string types dump collation name only if
+        collation is not primary for the given charset
       */
       if (!(field->charset()->state & MY_CS_PRIMARY))
       {
-	packet->append(STRING_WITH_LEN(" COLLATE "));
-	packet->append(field->charset()->name);
+        packet->append(STRING_WITH_LEN(" COLLATE "));
+        packet->append(field->charset()->name);
       }
     }
 
@@ -772,7 +770,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
 
       if (key_part->field)
         packet->append_identifier(key_part->field->field_name,
-			  strlen(key_part->field->field_name));
+                                  strlen(key_part->field->field_name));
       if (key_part->field &&
           (key_part->length !=
            table->field[key_part->fieldnr-1]->key_length()))
