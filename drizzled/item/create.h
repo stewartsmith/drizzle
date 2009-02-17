@@ -111,11 +111,10 @@ protected:
 
 /**
   Find the native function builder associated with a given function name.
-  @param session The current thread
   @param name The native function name
   @return The native function builder associated with the name, or NULL
 */
-extern Create_func * find_native_function_builder(Session *session, LEX_STRING name);
+extern Create_func * find_native_function_builder(LEX_STRING name);
 
 
 /**

@@ -212,7 +212,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		handler.h \
 		handler_structs.h \
 		handlerton.h \
-		hash_symbol.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
 		hybrid_type_traits_decimal.h \
@@ -265,6 +264,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_symbol.h \
 		lock.h \
 		logging.h \
+		lookup_symbol.h \
 		multi_delete.h \
 		multi_update.h \
 		my_decimal.h\
@@ -346,6 +346,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		tztime.h \
 		unique.h \
 		unireg.h \
+		utf8.h \
+		utf8/checked.h \
+		utf8/core.h \
+		utf8/unchecked.h \
 		user_var_entry.h \
 		virtual_column_info.h \
 		xid.h
@@ -588,6 +592,7 @@ drizzled_SOURCES = \
 		lock.cc \
 		log.cc \
 		logging.cc \
+		lookup_symbol.cc \
 		mf_iocache.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
@@ -725,9 +730,12 @@ symbol_hash.h: symbol_hash.stamp-h
 	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=$* $<  > $@
-	@if ! diff $@ \
-		   ${top_builddir}/drizzled/$*.h >/dev/null 2>&1 ; \
-	then \
-		cp $@ ${top_builddir}/drizzled/$*.h ; \
+	@if ! test $$? ; then rm $@ ; fi
+	@if test -f $@ ; then \
+		if ! diff $@ \
+			   ${top_builddir}/drizzled/$*.h >/dev/null 2>&1 ; \
+		then \
+			cp $@ ${top_builddir}/drizzled/$*.h ; \
+		fi \
 	fi
 

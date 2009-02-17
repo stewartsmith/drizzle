@@ -1,3 +1,4 @@
+#include <drizzled/global.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -149,7 +150,7 @@ int main(int argc, char* argv[])
 
   while (1)
   {
-    off_t length;
+    uint64_t length;
     char *buffer= NULL;
     char *temp_buffer;
 
@@ -157,7 +158,12 @@ int main(int argc, char* argv[])
     if (read(file, &length, sizeof(uint64_t)) != sizeof(uint64_t))
       break;
 
-    temp_buffer= (char *)realloc(buffer, length);
+    if (length > SIZE_MAX)
+    {
+      cerr << "Attempted to read record bigger than SIZE_MAX" << endl;
+      exit(1);
+    }
+    temp_buffer= (char *)realloc(buffer, (size_t)length);
     if (temp_buffer == NULL)
     {
       cerr << "Memory allocation failure trying to " << length << "."  << endl;
@@ -166,7 +172,7 @@ int main(int argc, char* argv[])
     buffer= temp_buffer;
 
     /* Read the record */
-    if (read(file, buffer, length) != length)
+    if (read(file, buffer, (off_t)length) != (off_t)length)
     {
       cerr << "Could not read entire record." << endl;
       exit(1);

@@ -16416,21 +16416,19 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
     }
     if (my_strcasecmp(table_alias_charset, cmp_name, alias))
     {
-      char t_alias_buff[MAX_ALIAS_NAME];
-      const char *t_alias= alias;
 
-      str->append(' ');
-      if (lower_case_table_names== 1)
+      if (alias && alias[0])
       {
-        if (alias && alias[0])
-        {
-          strcpy(t_alias_buff, alias);
-          my_casedn_str(files_charset_info, t_alias_buff);
-          t_alias= t_alias_buff;
-        }
+        str->append(' ');
+
+        string t_alias(alias);
+        if (lower_case_table_names== 1)
+          transform(t_alias.begin(), t_alias.end(),
+                    t_alias.begin(), ::tolower);
+
+        str->append_identifier(t_alias.c_str(), t_alias.length());
       }
 
-      str->append_identifier(t_alias, strlen(t_alias));
     }
 
     if (index_hints)

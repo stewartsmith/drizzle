@@ -96,8 +96,6 @@ int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
                          const CHARSET_INFO * const cs);
 
 
-bool is_keyword(const char *name, uint32_t len);
-
 /*
   External variables
 */
