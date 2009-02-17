@@ -762,7 +762,6 @@ void clean_up(bool print_message)
 
   table_cache_free();
   table_def_free();
-  item_create_cleanup();
   set_var_free();
   free_charsets();
   udf_free();

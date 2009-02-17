@@ -95,9 +95,8 @@ static void die(const char* fmt, ...)
 }
 
 
-static bool
-get_one_option(int optid, const struct my_option *,
-	       char *)
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *)
 {
   switch(optid) {
   case 'V':

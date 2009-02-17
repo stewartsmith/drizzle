@@ -121,6 +121,9 @@
 #include <drizzled/function/unsigned.h>
 #include <drizzled/function/update_hash.h>
 
+#include <map>
+
+using namespace std;
 
 class Item;
 
@@ -2978,16 +2981,7 @@ static Native_func_registry func_array[] =
   { {0, 0}, NULL}
 };
 
-static HASH native_functions_hash;
-
-extern "C" unsigned char*
-get_native_fct_hash_key(const unsigned char *buff, size_t *length,
-                        bool /* unused */)
-{
-  Native_func_registry *func= (Native_func_registry*) buff;
-  *length= func->name.length;
-  return (unsigned char*) func->name.str;
-}
+static map<string, Native_func_registry *> native_functions_map;
 
 /*
   Load the hash table for native functions.
@@ -2997,53 +2991,36 @@ get_native_fct_hash_key(const unsigned char *buff, size_t *length,
 
 int item_create_init()
 {
+  string func_name;
+
   Native_func_registry *func;
-
-  if (hash_init(& native_functions_hash,
-                system_charset_info,
-                array_elements(func_array),
-                0,
-                0,
-                (hash_get_key) get_native_fct_hash_key,
-                NULL,                          /* Nothing to free */
-                MYF(0)))
-    return(1);
-
   for (func= func_array; func->builder != NULL; func++)
   {
-    if (my_hash_insert(& native_functions_hash, (unsigned char*) func))
-      return(1);
+    func_name.assign(func->name.str, func->name.length);
+    transform(func_name.begin(), func_name.end(), func_name.begin(), ::tolower);
+
+    native_functions_map[func_name]= func;
   }
 
-  return(0);
+  return 0;
 }
 
-/*
-  Empty the hash table for native functions.
-  Note: this code is not thread safe, and is intended to be used at server
-  shutdown only (after thread requests have been executed).
-*/
-
-void item_create_cleanup()
-{
-  hash_free(& native_functions_hash);
-  return;
-}
 
 Create_func *
-find_native_function_builder(Session *,
-                             LEX_STRING name)
+find_native_function_builder(LEX_STRING name)
 {
   Native_func_registry *func;
   Create_func *builder= NULL;
 
-  /* Thread safe */
-  func= (Native_func_registry*) hash_search(& native_functions_hash,
-                                            (unsigned char*) name.str,
-                                             name.length);
+  string func_name(name.str, name.length);
+  transform(func_name.begin(), func_name.end(), func_name.begin(), ::tolower);
 
-  if (func)
+  map<string, Native_func_registry *>::iterator func_iter=
+    native_functions_map.find(func_name);
+
+  if (func_iter != native_functions_map.end())
   {
+    func= (*func_iter).second;
     builder= func->builder;
   }
 

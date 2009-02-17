@@ -3410,7 +3410,7 @@ function_call_generic:
 
               This will be revised with WL#2128 (SQL PATH)
             */
-            builder= find_native_function_builder(session, $1);
+            builder= find_native_function_builder($1);
             if (builder)
             {
               item= builder->create(session, $1, $4);
