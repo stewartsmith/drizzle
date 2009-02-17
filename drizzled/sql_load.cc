@@ -298,7 +298,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     }
     if ((file=my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
     {
-      my_error(ER_CANT_OPEN_FILE, MYF(0), my_errno);
+      my_error(ER_CANT_OPEN_FILE, MYF(0), name, my_errno);
       return(true);
     }
   }
