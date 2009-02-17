@@ -47,7 +47,6 @@ public:
   int64_t val_int(void);
   String *val_str(String*,String *);
   bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate);
-  bool send_binary(Protocol *protocol);
   bool get_time(DRIZZLE_TIME *ltime);
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);

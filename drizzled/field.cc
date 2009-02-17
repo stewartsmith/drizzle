@@ -983,16 +983,6 @@ void Field::copy_from_tmp(int row_offset)
   }
 }
 
-
-bool Field::send_binary(Protocol *protocol)
-{
-  char buff[MAX_FIELD_WIDTH];
-  String tmp(buff,sizeof(buff),charset());
-  val_str(&tmp);
-  return protocol->store(tmp.ptr(), tmp.length(), tmp.charset());
-}
-
-
 /**
    Check to see if field size is compatible with destination.
 

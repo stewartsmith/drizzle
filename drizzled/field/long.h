@@ -48,7 +48,6 @@ public:
   int reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=0; return 0; }
   double val_real(void);
   int64_t val_int(void);
-  bool send_binary(Protocol *protocol);
   String *val_str(String*,String *);
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);

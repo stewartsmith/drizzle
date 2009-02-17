@@ -405,8 +405,6 @@ public:
     return str;
   }
 
-  virtual bool send_binary(Protocol *protocol);
-
   virtual unsigned char *pack(unsigned char *to,
                               const unsigned char *from,
                               uint32_t max_length,
