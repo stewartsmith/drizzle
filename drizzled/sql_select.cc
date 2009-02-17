@@ -47,12 +47,14 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/outer_ref.h>
 
-
+#include <string>
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif
+
+using namespace std;
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 			      "MAYBE_REF","ALL","range","index",
