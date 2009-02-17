@@ -267,7 +267,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
   int2store(fileinfo+28,key_info_length);
 
 
-  int2store(fileinfo+59,db_file->extra_rec_buf_length());
+  int2store(fileinfo+59, 0); /* was: extra_rec_buf_length */
 
   if (pwrite(file, fileinfo, 64, 0L) == 0 ||
       pwrite(file, keybuff, key_info_length, (ulong) uint2korr(fileinfo+6)) == 0)
@@ -408,6 +408,7 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
     attribute= table_proto->add_field();
     attribute->set_name(field_arg->field_name);
+
     switch (field_arg->sql_type) {
     case DRIZZLE_TYPE_TINY:
       attribute->set_type(drizzle::Table::Field::TINYINT);
@@ -480,7 +481,20 @@ static void fill_table_proto(drizzle::Table *table_proto,
       attribute->set_type(drizzle::Table::Field::BLOB);
       break;
     default:
-      assert(1);
+      abort();
+    }
+
+    if(field_arg->vcol_info)
+    {
+      drizzle::Table::Field::VirtualFieldOptions *field_options;
+
+      field_options= attribute->mutable_virtual_options();
+
+      field_options->set_type(attribute->type());
+      attribute->set_type(drizzle::Table::Field::VIRTUAL);
+
+      field_options->set_expression(field_arg->vcol_info->expr_str.str);
+      field_options->set_physically_stored(field_arg->is_stored);
     }
 
 #ifdef NOTDONE
@@ -488,9 +502,72 @@ static void fill_table_proto(drizzle::Table *table_proto,
     constraints->set_is_nullable(field_arg->def->null_value);
 #endif
 
-    /* Set the comment */
+    switch(field_arg->column_format())
+    {
+    case COLUMN_FORMAT_TYPE_NOT_USED:
+      break;
+    case COLUMN_FORMAT_TYPE_DEFAULT:
+      attribute->set_format(drizzle::Table::Field::DefaultFormat);
+      break;
+    case COLUMN_FORMAT_TYPE_FIXED:
+      attribute->set_format(drizzle::Table::Field::FixedFormat);
+      break;
+    case COLUMN_FORMAT_TYPE_DYNAMIC:
+      attribute->set_format(drizzle::Table::Field::DynamicFormat);
+      break;
+    default:
+      abort();
+    }
+
     if (field_arg->comment.length)
       attribute->set_comment(field_arg->comment.str);
+
+    if(field_arg->unireg_check == Field::NEXT_NUMBER)
+    {
+      drizzle::Table::Field::NumericFieldOptions *field_options;
+      field_options= attribute->mutable_numeric_options();
+      field_options->set_is_autoincrement(true);
+    }
+
+    if(field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD
+       || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD)
+    {
+      drizzle::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+      field_options->set_default_value("NOW()");
+    }
+
+    if(field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
+       || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD)
+    {
+      drizzle::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+      field_options->set_update_value("NOW()");
+    }
+
+    assert(field_arg->unireg_check == Field::NONE
+	   || field_arg->unireg_check == Field::NEXT_NUMBER
+	   || field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD
+	   || field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
+	   || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD);
+
+    /* Fuck me. seriously, wtf */
+    ulong data_offset= (create_info->null_bits + 7)/8;
+    attribute->set_recpos(field_arg->offset+1 + (uint)data_offset);
+
+    /* Because:
+       - flag should never mean flag
+       - unireg_check/unireg_type should exist
+       - and field length should be specified for fixed sized types.
+
+       NOT.
+
+       These should all die a horrible death. A freeze-ray is too good for them.
+       A death-ray is way better.
+    */
+    attribute->set_pack_flag(field_arg->pack_flag);
+    attribute->set_field_length(field_arg->length);
+    attribute->set_interval_nr(field_arg->interval_id);
   }
 
   if (create_info->used_fields & HA_CREATE_USED_PACK_KEYS)
@@ -872,9 +949,6 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
       pos[length + 3]= '\0';
       pos+= length + 3 + 1;
     }
-    cfield->row=(uint8_t) row;
-    cfield->col=(uint8_t) (length+1);
-    cfield->sc_length=(uint8_t) cmin(cfield->length,(uint32_t)cols-(length+2));
   }
   length=(uint) (pos-start_screen);
   int2store(start_screen,length);
@@ -972,7 +1046,7 @@ static bool pack_header(unsigned char *forminfo,
                         uint32_t info_length, uint32_t screens, uint32_t table_options,
                         ulong data_offset, handler *file)
 {
-  uint32_t length,int_count,int_length,no_empty, int_parts;
+  uint32_t length,int_count,int_length, int_parts;
   uint32_t time_stamp_pos,null_fields;
   ulong reclength, totlength, n_length, com_length, vcol_info_length;
 
@@ -985,7 +1059,7 @@ static bool pack_header(unsigned char *forminfo,
 
   totlength= 0L;
   reclength= data_offset;
-  no_empty=int_count=int_parts=int_length=time_stamp_pos=null_fields=
+  int_count=int_parts=int_length=time_stamp_pos=null_fields=
     com_length=vcol_info_length=0;
   n_length=2L;
 
@@ -1032,13 +1106,6 @@ static bool pack_header(unsigned char *forminfo,
 
     totlength+= field->length;
     com_length+= field->comment.length;
-    if (MTYP_TYPENR(field->unireg_check) == Field::NOEMPTY ||
-	field->unireg_check & MTYP_NOEMPTY_BIT)
-    {
-      field->unireg_check= (Field::utype) ((uint) field->unireg_check |
-					   MTYP_NOEMPTY_BIT);
-      no_empty++;
-    }
     /*
       We mark first TIMESTAMP field with NOW() in DEFAULT or ON UPDATE
       as auto-update field.
@@ -1129,7 +1196,7 @@ static bool pack_header(unsigned char *forminfo,
   int2store(forminfo+258,create_fields.elements);
   int2store(forminfo+260,info_length);
   int2store(forminfo+262,totlength);
-  int2store(forminfo+264,no_empty);
+  int2store(forminfo+264,0); // no_empty
   int2store(forminfo+266,reclength);
   int2store(forminfo+268,n_length);
   int2store(forminfo+270,int_count);
@@ -1194,9 +1261,9 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   {
     uint32_t recpos;
     uint32_t cur_vcol_expr_len= 0;
-    buff[0]= (unsigned char) field->row;
-    buff[1]= (unsigned char) field->col;
-    buff[2]= (unsigned char) field->sc_length;
+    buff[0]= 0; //(unsigned char) field->row;
+    buff[1]= 0; //(unsigned char) field->col;
+    buff[2]= 0; //(unsigned char) field->sc_length;
     int2store(buff+3, field->length);
     /* The +1 is here becasue the col offset in .frm file have offset 1 */
     recpos= field->offset+1 + (uint) data_offset;
@@ -1448,10 +1515,6 @@ static bool make_empty_rec(Session *session, File file,
       regfield->set_notnull();
       regfield->store((int64_t) 1, true);
     }
-    else if (type == Field::YES)		// Old unireg type
-      regfield->store(ER(ER_YES),(uint) strlen(ER(ER_YES)),system_charset_info);
-    else if (type == Field::NO)			// Old unireg type
-      regfield->store(ER(ER_NO), (uint) strlen(ER(ER_NO)),system_charset_info);
     else
       regfield->reset();
   }

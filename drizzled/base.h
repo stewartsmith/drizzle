@@ -550,7 +550,4 @@ typedef uint64_t	ha_rows;
 
 #define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)
 
-/* invalidator function reference for Query Cache */
-typedef void (* invalidator_by_filename)(const char * filename);
-
 #endif /* DRIZZLE_SERVER_BASE_H */

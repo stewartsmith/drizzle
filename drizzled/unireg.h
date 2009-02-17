@@ -61,8 +61,6 @@ extern "C" {
 /* Max column width +1 */
 #define MAX_FIELD_WIDTH		(MAX_FIELD_CHARLENGTH*MAX_MBWIDTH+1)
 
-#define MAX_BIT_FIELD_LENGTH    64      /* Max length in bits for bit fields */
-
 #define MAX_DATE_WIDTH		10	/* YYYY-MM-DD */
 #define MAX_TIME_WIDTH		23	/* -DDDDDD HH:MM:SS.###### */
 #define MAX_DATETIME_FULL_WIDTH 29	/* YYYY-MM-DD HH:MM:SS.###### AM */
@@ -130,7 +128,6 @@ extern "C" {
 
 #define SC_INFO_LENGTH 4		/* Form format constant */
 #define TE_INFO_LENGTH 3
-#define MTYP_NOEMPTY_BIT 128
 
 
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120

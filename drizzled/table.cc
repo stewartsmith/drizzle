@@ -522,6 +522,13 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     table_options.key_block_size() : 0;
 
   share->fields= table.field_size();
+  share->vfields= 0;
+  share->stored_fields= share->fields;
+
+/*  share->field= (Field**) alloc_root(&share->mem_root,
+				     (share->fields * sizeof(Field*)));
+
+*/
 
   return 0;
 }
@@ -712,7 +719,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   uint32_t db_create_options, keys, key_parts, n_length;
   uint32_t key_info_length, com_length, null_bit_pos=0;
   uint32_t vcol_screen_length;
-  uint32_t extra_rec_buf_length;
   uint32_t i,j;
   bool use_hash;
   unsigned char forminfo[288];
@@ -731,7 +737,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 
   new_field_pack_flag= head[27];
   new_frm_ver= (head[2] - FRM_VER);
-  field_pack_length= new_frm_ver < 2 ? 11 : 17;
+  assert(new_frm_ver >= 2); /* If this fails, we're on old FRM */
+  field_pack_length= 17;
   disk_buff= 0;
 
   error= 3;
@@ -890,8 +897,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   }
 
   error=4;
-  extra_rec_buf_length= uint2korr(head+59);
-  rec_buff_length= ALIGN_SIZE(share->reclength + 1 + extra_rec_buf_length);
+  /* head+59 was extra_rec_buf_length */
+  rec_buff_length= ALIGN_SIZE(share->reclength + 1);
   share->rec_buff_length= rec_buff_length;
   if (!(record= (unsigned char *) alloc_root(&share->mem_root,
                                      rec_buff_length)))
@@ -911,10 +918,11 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   share->null_fields= uint2korr(forminfo+282);
   com_length= uint2korr(forminfo+284);
   vcol_screen_length= uint2korr(forminfo+286);
-  share->vfields= 0;
-  share->stored_fields= share->fields;
+//  share->vfields= 0;
+//  share->stored_fields= share->fields;
 
 
+  /* WTF is with the share->fields+1 here... */
   if (!(field_ptr = (Field **)
 	alloc_root(&share->mem_root,
 		   (uint) ((share->fields+1)*sizeof(Field*)+
@@ -1087,35 +1095,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     }
     else
     {
-      field_length= (uint) strpos[3];
-      recpos=	    uint2korr(strpos+4),
-      pack_flag=    uint2korr(strpos+6);
-      pack_flag&=   ~FIELDFLAG_NO_DEFAULT;     // Safety for old files
-      unireg_type=  (uint) strpos[8];
-      interval_nr=  (uint) strpos[10];
-
-      /* old frm file */
-      field_type= (enum_field_types) f_packtype(pack_flag);
-      if (f_is_binary(pack_flag))
-      {
-        /*
-          Try to choose the best 4.1 type:
-          - for 4.0 "CHAR(N) BINARY" or "VARCHAR(N) BINARY"
-            try to find a binary collation for character set.
-          - for other types (e.g. BLOB) just use my_charset_bin.
-        */
-        if (!f_is_blob(pack_flag))
-        {
-          // 3.23 or 4.0 string
-          if (!(charset= get_charset_by_csname(share->table_charset->csname, MY_CS_BINSORT)))
-            charset= &my_charset_bin;
-        }
-        else
-          charset= &my_charset_bin;
-      }
-      else
-        charset= share->table_charset;
-      memset(&comment, 0, sizeof(comment));
+      assert(false); /* Old (pre-4.1) FRM file. This is Drizzle. */
     }
 
     if (interval_nr && charset->mbminlen > 1)
@@ -2490,7 +2470,7 @@ File create_frm(Session *session, const char *name, const char *db,
     int4store(fileinfo+51, tmp);
     int4store(fileinfo+55, create_info->extra_size);
     /*
-      59-60 is reserved for extra_rec_buf_length,
+      59-60 is reserved for extra_rec_buf_length (always 0),
       61 for default_part_db_type
     */
     int2store(fileinfo+62, create_info->key_block_size);

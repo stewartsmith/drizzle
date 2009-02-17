@@ -92,9 +92,9 @@ public:
     in more clean way with transition to new text based .frm format.
     See also comment for Field_timestamp::Field_timestamp().
   */
-  enum utype  { NONE,DATE,SHIELD,NOEMPTY,CASEUP,PNR,BGNR,PGNR,YES,NO,REL,
-                CHECK,EMPTY,UNKNOWN_FIELD,CASEDN,NEXT_NUMBER,INTERVAL_FIELD,
-                BIT_FIELD, TIMESTAMP_OLD_FIELD, CAPITALIZE, BLOB_FIELD,
+  enum utype  { NONE,
+                NEXT_NUMBER,
+                TIMESTAMP_OLD_FIELD,
                 TIMESTAMP_DN_FIELD, TIMESTAMP_UN_FIELD, TIMESTAMP_DNUN_FIELD};
   enum imagetype { itRAW, itMBR};
 
@@ -592,7 +592,7 @@ public:
   const CHARSET_INFO *charset;
   Field *field;				// For alter table
 
-  uint8_t row,col,sc_length,interval_id;	// For rea_create_table
+  uint8_t       interval_id;	// For rea_create_table
   uint32_t	offset,pack_flag;
 
   /* Virtual column expression statement */
