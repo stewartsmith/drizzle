@@ -10,7 +10,7 @@ create table t1 (a int, b virtual int as (abs(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (abs(a))
 ) ENGINE=MyISAM
 insert into t1 values (-1, default);
@@ -25,7 +25,7 @@ create table t1 (a double, b virtual double as (format(acos(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(acos(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (1, default);
@@ -44,7 +44,7 @@ create table t1 (a double, b virtual double as (format(asin(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(asin(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (0.2, default);
@@ -61,8 +61,8 @@ create table t1 (a double, b double, c virtual double as (format(atan(a,b),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
-  `b` double,
+  `a` double DEFAULT NULL,
+  `b` double DEFAULT NULL,
   `c` VIRTUAL double AS (format(atan(a,b),6))
 ) ENGINE=MyISAM
 insert into t1 values (-2,2,default);
@@ -78,7 +78,7 @@ create table t1 (a double, c virtual double as (format(atan(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `c` VIRTUAL double AS (format(atan(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (-2,default);
@@ -95,8 +95,8 @@ create table t1 (a double, b double, c virtual double as (format(atan2(a,b),6)))
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
-  `b` double,
+  `a` double DEFAULT NULL,
+  `b` double DEFAULT NULL,
   `c` VIRTUAL double AS (format(atan2(a,b),6))
 ) ENGINE=MyISAM
 insert into t1 values (-2,2,default);
@@ -113,7 +113,7 @@ create table t1 (a double, b virtual int as (ceil(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL int AS (ceil(a))
 ) ENGINE=MyISAM
 insert into t1 values (1.23,default);
@@ -130,9 +130,9 @@ create table t1 (a varchar(10), b int, c int, d virtual varchar(10) as (conv(a,b
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` int,
-  `c` int,
+  `a` varchar(10) DEFAULT NULL,
+  `b` int DEFAULT NULL,
+  `c` int DEFAULT NULL,
   `d` VIRTUAL varchar(10) AS (conv(a,b,c))
 ) ENGINE=MyISAM
 insert into t1 values ('a',16,2,default);
@@ -153,7 +153,7 @@ create table t1 (a double, b virtual double as (format(cos(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(cos(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (format(PI(),6),default);
@@ -168,7 +168,7 @@ create table t1 (a double, b virtual double as (format(cot(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(cot(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (12,default);
@@ -189,7 +189,7 @@ create table t1 (a double, b virtual double as (format(degrees(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(degrees(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (format(PI(),6),default);
@@ -206,7 +206,7 @@ create table t1 (a double, b virtual double as (a/2));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (a/2)
 ) ENGINE=MyISAM
 insert into t1 values (2,default);
@@ -221,7 +221,7 @@ create table t1 (a double, b virtual double as (format(exp(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(exp(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (2,default);
@@ -240,7 +240,7 @@ create table t1 (a double, b virtual int as (floor(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL int AS (floor(a))
 ) ENGINE=MyISAM
 insert into t1 values (1.23,default);
@@ -257,7 +257,7 @@ create table t1 (a double, b virtual double as (format(ln(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(ln(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (2,default);
@@ -278,8 +278,8 @@ create table t1 (a double, b double, c virtual double as (format(log(a,b),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
-  `b` double,
+  `a` double DEFAULT NULL,
+  `b` double DEFAULT NULL,
   `c` VIRTUAL double AS (format(log(a,b),6))
 ) ENGINE=MyISAM
 insert into t1 values (2,65536,default);
@@ -301,7 +301,7 @@ create table t1 (a double, b virtual double as (format(log(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(log(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (2,default);
@@ -322,7 +322,7 @@ create table t1 (a double, b virtual double as (format(log2(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(log2(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (65536,default);
@@ -343,7 +343,7 @@ create table t1 (a double, b virtual double as (format(log10(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(log10(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (2,default);
@@ -366,7 +366,7 @@ create table t1 (a double, b virtual double as (a-1));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (a-1)
 ) ENGINE=MyISAM
 insert into t1 values (2,default);
@@ -381,7 +381,7 @@ create table t1 (a int, b virtual int as (mod(a,10)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (mod(a,10))
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
@@ -398,7 +398,7 @@ create table t1 (a int, b virtual int as (a % 10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a % 10)
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
@@ -415,7 +415,7 @@ create table t1 (a double, b virtual varchar(10) as (oct(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (oct(a))
 ) ENGINE=MyISAM
 insert into t1 values (12,default);
@@ -430,7 +430,7 @@ create table t1 (a double, b virtual double as (format(PI()*a*a,6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(PI()*a*a,6))
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
@@ -445,7 +445,7 @@ create table t1 (a int, b virtual int as (a+1));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a+1)
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
@@ -460,7 +460,7 @@ create table t1 (a int, b virtual int as (pow(a,2)), c virtual int as (power(a,2
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (pow(a,2)),
   `c` VIRTUAL int AS (power(a,2))
 ) ENGINE=MyISAM
@@ -478,7 +478,7 @@ create table t1 (a double, b virtual double as (format(radians(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(radians(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (90,default);
@@ -493,7 +493,7 @@ create table t1 (a double, b virtual int as (round(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL int AS (round(a))
 ) ENGINE=MyISAM
 insert into t1 values (-1.23,default);
@@ -511,8 +511,8 @@ create table t1 (a double, b double, c virtual int as (round(a,b)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
-  `b` double,
+  `a` double DEFAULT NULL,
+  `b` double DEFAULT NULL,
   `c` VIRTUAL int AS (round(a,b))
 ) ENGINE=MyISAM
 insert into t1 values (1.298,1,default);
@@ -531,7 +531,7 @@ create table t1 (a double, b virtual int as (sign(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL int AS (sign(a))
 ) ENGINE=MyISAM
 insert into t1 values (-32,default);
@@ -550,7 +550,7 @@ create table t1 (a double, b virtual double as (format(sin(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(sin(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (format(PI()/2,6),default);
@@ -565,7 +565,7 @@ create table t1 (a double, b virtual double as (format(sqrt(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(sqrt(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (4,default);
@@ -584,7 +584,7 @@ create table t1 (a double, b virtual double as (format(tan(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (format(tan(a),6))
 ) ENGINE=MyISAM
 insert into t1 values (format(PI(),6),default);
@@ -601,7 +601,7 @@ create table t1 (a double, b virtual double as (a*3));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (a*3)
 ) ENGINE=MyISAM
 insert into t1 values (0,default);
@@ -620,7 +620,7 @@ create table t1 (a double, b virtual double as (truncate(a,4)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (truncate(a,4))
 ) ENGINE=MyISAM
 insert into t1 values (1.223,default);
@@ -641,7 +641,7 @@ create table t1 (a double, b virtual double as (-a));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL double AS (-a)
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
@@ -661,7 +661,7 @@ create table t1 (a char(2), b virtual int as (ascii(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(2),
+  `a` varchar(2) DEFAULT NULL,
   `b` VIRTUAL int AS (ascii(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2',default);
@@ -680,7 +680,7 @@ create table t1 (a int, b virtual varchar(10) as (bin(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (bin(a))
 ) ENGINE=MyISAM
 insert into t1 values (12,default);
@@ -695,7 +695,7 @@ create table t1 (a varchar(10), b virtual int as (bit_length(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL int AS (bit_length(a))
 ) ENGINE=MyISAM
 insert into t1 values ('text',default);
@@ -710,7 +710,7 @@ create table t1 (a varchar(10), b virtual int as (char_length(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL int AS (char_length(a))
 ) ENGINE=MyISAM
 insert into t1 values ('text',default);
@@ -725,8 +725,8 @@ create table t1 (a int, b int, c virtual varbinary(10) as (char(a,b)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
-  `b` int,
+  `a` int DEFAULT NULL,
+  `b` int DEFAULT NULL,
   `c` VIRTUAL varbinary(10) AS (char(a,b))
 ) ENGINE=MyISAM
 insert into t1 values (77,121,default);
@@ -741,7 +741,7 @@ create table t1 (a varchar(10), b virtual int as (character_length(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL int AS (character_length(a))
 ) ENGINE=MyISAM
 insert into t1 values ('text',default);
@@ -756,8 +756,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual varchar(20) as (concat_
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL varchar(20) AS (concat_ws(',',a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('value1','value2',default);
@@ -772,8 +772,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual varchar(20) as (concat(
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL varchar(20) AS (concat(a,',',b))
 ) ENGINE=MyISAM
 insert into t1 values ('value1','value2',default);
@@ -788,9 +788,9 @@ create table t1 (a varchar(10), b varchar(10), c int, d virtual varchar(10) as (
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
-  `c` int,
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
+  `c` int DEFAULT NULL,
   `d` VIRTUAL varchar(10) AS (elt(c,a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('value1','value2',1,default);
@@ -807,7 +807,7 @@ create table t1 (a int, b virtual varchar(10) as (export_set(a,'1','0','',10)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (export_set(a,'1','0','',10))
 ) ENGINE=MyISAM
 insert into t1 values (6,default);
@@ -822,8 +822,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (field('aa',a,b)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (field('aa',a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('aa','bb',default);
@@ -840,8 +840,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (find_in_set(a,b
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (find_in_set(a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('aa','aa,bb,cc',default);
@@ -858,7 +858,7 @@ create table t1 (a double, b virtual varchar(20) as (format(a,2)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL varchar(20) AS (format(a,2))
 ) ENGINE=MyISAM
 insert into t1 values (12332.123456,default);
@@ -873,7 +873,7 @@ create table t1 (a double, b virtual varchar(10) as (hex(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` double DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (hex(a))
 ) ENGINE=MyISAM
 insert into t1 values (17,default);
@@ -887,7 +887,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (hex(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (hex(a))
 ) ENGINE=MyISAM
 insert into t1 values ('abc',default);
@@ -902,8 +902,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual varchar(20) as (insert(
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL varchar(20) AS (insert(a,length(a),length(b),b))
 ) ENGINE=MyISAM
 insert into t1 values ('start,','end',default);
@@ -918,8 +918,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (instr(a,b)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (instr(a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('foobarbar,','bar',default);
@@ -936,7 +936,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (lcase(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (lcase(a))
 ) ENGINE=MyISAM
 insert into t1 values ('MySQL',default);
@@ -951,7 +951,7 @@ create table t1 (a varchar(10), b virtual varchar(5) as (left(a,5)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(5) AS (left(a,5))
 ) ENGINE=MyISAM
 insert into t1 values ('foobarbar',default);
@@ -966,7 +966,7 @@ create table t1 (a varchar(10), b virtual int as (length(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL int AS (length(a))
 ) ENGINE=MyISAM
 insert into t1 values ('text',default);
@@ -981,7 +981,7 @@ create table t1 (a varchar(10), b virtual int as (a like 'H%o'));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL int AS (a like 'H%o')
 ) ENGINE=MyISAM
 insert into t1 values ('Hello',default);
@@ -998,7 +998,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (locate('bar',a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (locate('bar',a))
 ) ENGINE=MyISAM
 insert into t1 values ('foobarbar',default);
@@ -1013,7 +1013,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (lower(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (lower(a))
 ) ENGINE=MyISAM
 insert into t1 values ('MySQL',default);
@@ -1028,7 +1028,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (lpad(a,4,' ')));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (lpad(a,4,' '))
 ) ENGINE=MyISAM
 insert into t1 values ('MySQL',default);
@@ -1045,7 +1045,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (ltrim(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (ltrim(a))
 ) ENGINE=MyISAM
 insert into t1 values ('  MySQL',default);
@@ -1062,9 +1062,9 @@ create table t1 (a varchar(10), b varchar(10), c int, d virtual varchar(30) as (
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
-  `c` int,
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
+  `c` int DEFAULT NULL,
   `d` VIRTUAL varchar(30) AS (make_set(c,a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('a','b',1,default);
@@ -1081,7 +1081,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (mid(a,1,2)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (mid(a,1,2))
 ) ENGINE=MyISAM
 insert into t1 values ('foobarbar',default);
@@ -1096,7 +1096,7 @@ create table t1 (a varchar(10), b virtual int as (a not like 'H%o'));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL int AS (a not like 'H%o')
 ) ENGINE=MyISAM
 insert into t1 values ('Hello',default);
@@ -1113,7 +1113,7 @@ create table t1 (a varchar(10), b virtual int as (octet_length(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL int AS (octet_length(a))
 ) ENGINE=MyISAM
 insert into t1 values ('text',default);
@@ -1128,7 +1128,7 @@ create table t1 (a varchar(10), b virtual int as (ord(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL int AS (ord(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2',default);
@@ -1143,7 +1143,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (position('bar' in a)))
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (position('bar' in a))
 ) ENGINE=MyISAM
 insert into t1 values ('foobarbar',default);
@@ -1158,7 +1158,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (quote(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (quote(a))
 ) ENGINE=MyISAM
 insert into t1 values ('Don\'t',default);
@@ -1173,7 +1173,7 @@ create table t1 (a varchar(10), b virtual varchar(30) as (repeat(a,3)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(30) AS (repeat(a,3))
 ) ENGINE=MyISAM
 insert into t1 values ('MySQL',default);
@@ -1188,7 +1188,7 @@ create table t1 (a varchar(10), b virtual varchar(30) as (replace(a,'aa','bb')))
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(30) AS (replace(a,'aa','bb'))
 ) ENGINE=MyISAM
 insert into t1 values ('maa',default);
@@ -1203,7 +1203,7 @@ create table t1 (a varchar(10), b virtual varchar(30) as (reverse(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(30) AS (reverse(a))
 ) ENGINE=MyISAM
 insert into t1 values ('maa',default);
@@ -1218,7 +1218,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (right(a,4)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (right(a,4))
 ) ENGINE=MyISAM
 insert into t1 values ('foobarbar',default);
@@ -1233,7 +1233,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (rpad(a,4,'??')));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (rpad(a,4,'??'))
 ) ENGINE=MyISAM
 insert into t1 values ('He',default);
@@ -1248,7 +1248,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (rtrim(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (rtrim(a))
 ) ENGINE=MyISAM
 insert into t1 values ('Hello  ',default);
@@ -1263,7 +1263,7 @@ create table t1 (a varchar(5), b virtual varchar(10) as (concat(a,space(5))));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(5),
+  `a` varchar(5) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (concat(a,space(5)))
 ) ENGINE=MyISAM
 insert into t1 values ('Hello', default);
@@ -1278,8 +1278,8 @@ create table t1 (a varchar(9), b varchar(9), c virtual int as (strcmp(a,b)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(9),
-  `b` varchar(9),
+  `a` varchar(9) DEFAULT NULL,
+  `b` varchar(9) DEFAULT NULL,
   `c` VIRTUAL int AS (strcmp(a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('Hello','Hello', default);
@@ -1296,7 +1296,7 @@ create table t1 (a varchar(5), b virtual varchar(10) as (substr(a,2)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(5),
+  `a` varchar(5) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (substr(a,2))
 ) ENGINE=MyISAM
 insert into t1 values ('Hello',default);
@@ -1311,7 +1311,7 @@ create table t1 (a varchar(15), b virtual varchar(10) as (substring_index(a,'.',
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(15),
+  `a` varchar(15) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (substring_index(a,'.',2))
 ) ENGINE=MyISAM
 insert into t1 values ('www.mysql.com',default);
@@ -1326,7 +1326,7 @@ create table t1 (a varchar(5), b virtual varchar(10) as (substring(a from 2 for 
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(5),
+  `a` varchar(5) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (substring(a from 2 for 2))
 ) ENGINE=MyISAM
 insert into t1 values ('Hello',default);
@@ -1341,7 +1341,7 @@ create table t1 (a varchar(15), b virtual varchar(10) as (trim(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(15),
+  `a` varchar(15) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (trim(a))
 ) ENGINE=MyISAM
 insert into t1 values (' aa ',default);
@@ -1356,7 +1356,7 @@ create table t1 (a varchar(5), b virtual varchar(10) as (ucase(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(5),
+  `a` varchar(5) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (ucase(a))
 ) ENGINE=MyISAM
 insert into t1 values ('MySQL',default);
@@ -1371,7 +1371,7 @@ create table t1 (a varchar(15), b virtual varchar(10) as (unhex(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(15),
+  `a` varchar(15) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (unhex(a))
 ) ENGINE=MyISAM
 insert into t1 values ('4D7953514C',default);
@@ -1386,7 +1386,7 @@ create table t1 (a varchar(5), b virtual varchar(10) as (upper(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(5),
+  `a` varchar(5) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (upper(a))
 ) ENGINE=MyISAM
 insert into t1 values ('MySQL',default);
@@ -1404,7 +1404,7 @@ create table t1 (a varchar(10), b virtual varchar(16) as (case a when NULL then 
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(16) AS (case a when NULL then 'asd' when 'b' then 'B' else a end)
 ) ENGINE=MyISAM
 insert into t1 values (NULL,default);
@@ -1423,8 +1423,8 @@ create table t1 (a int, b int, c virtual int as (if(a=1,a,b)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
-  `b` int,
+  `a` int DEFAULT NULL,
+  `b` int DEFAULT NULL,
   `c` VIRTUAL int AS (if(a=1,a,b))
 ) ENGINE=MyISAM
 insert into t1 values (1,2,default);
@@ -1441,8 +1441,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual varchar(10) as (ifnull(
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL varchar(10) AS (ifnull(a,'DEFAULT'))
 ) ENGINE=MyISAM
 insert into t1 values (NULL,'adf',default);
@@ -1459,7 +1459,7 @@ create table t1 (a varchar(10), b virtual varchar(10) as (nullif(a,'DEFAULT')));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (nullif(a,'DEFAULT'))
 ) ENGINE=MyISAM
 insert into t1 values ('DEFAULT',default);
@@ -1479,7 +1479,7 @@ create table t1 (a int, b virtual int as (a>0 and a<2));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a>0 and a<2)
 ) ENGINE=MyISAM
 insert into t1 values (-1,default);
@@ -1496,7 +1496,7 @@ create table t1 (a int, b virtual int as (a between 0 and 2));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a between 0 and 2)
 ) ENGINE=MyISAM
 insert into t1 values (-1,default);
@@ -1513,7 +1513,7 @@ create table t1 (a varchar(10), b virtual varbinary(10) as (binary a));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
   `b` VIRTUAL varbinary(10) AS (binary a)
 ) ENGINE=MyISAM
 insert into t1 values ('11',default);
@@ -1530,7 +1530,7 @@ create table t1 (a int, b virtual int as (a div 5));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a div 5)
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
@@ -1547,8 +1547,8 @@ create table t1 (a int, b int, c virtual int as (a <=> b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
-  `b` int,
+  `a` int DEFAULT NULL,
+  `b` int DEFAULT NULL,
   `c` VIRTUAL int AS (a <=> b)
 ) ENGINE=MyISAM
 insert into t1 values (1,1,default);
@@ -1567,8 +1567,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (a=b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (a=b)
 ) ENGINE=MyISAM
 insert into t1 values ('a','b',default);
@@ -1585,8 +1585,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (a >= b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (a >= b)
 ) ENGINE=MyISAM
 insert into t1 values ('a','b',default);
@@ -1603,8 +1603,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (a > b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (a > b)
 ) ENGINE=MyISAM
 insert into t1 values ('a','b',default);
@@ -1621,7 +1621,7 @@ create table t1 (a int, b virtual int as (a is not null));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a is not null)
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
@@ -1638,7 +1638,7 @@ create table t1 (a int, b virtual int as (a is null));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a is null)
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
@@ -1655,8 +1655,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (a <= b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (a <= b)
 ) ENGINE=MyISAM
 insert into t1 values ('b','a',default);
@@ -1675,8 +1675,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (a < b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (a < b)
 ) ENGINE=MyISAM
 insert into t1 values ('b','a',default);
@@ -1695,7 +1695,7 @@ create table t1 (a int, b virtual int as (a not between 0 and 2));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a not between 0 and 2)
 ) ENGINE=MyISAM
 insert into t1 values (-1,default);
@@ -1712,8 +1712,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (a <> b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (a <> b)
 ) ENGINE=MyISAM
 insert into t1 values ('b','a',default);
@@ -1732,8 +1732,8 @@ create table t1 (a varchar(10), b varchar(10), c virtual int as (a != b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10),
-  `b` varchar(10),
+  `a` varchar(10) DEFAULT NULL,
+  `b` varchar(10) DEFAULT NULL,
   `c` VIRTUAL int AS (a != b)
 ) ENGINE=MyISAM
 insert into t1 values ('b','a',default);
@@ -1752,7 +1752,7 @@ create table t1 (a int, b virtual int as (a>5 or a<3));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a>5 or a<3)
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
@@ -1769,7 +1769,7 @@ create table t1 (a int, b virtual int as (a xor 5));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a xor 5)
 ) ENGINE=MyISAM
 insert into t1 values (0,default);
@@ -1791,7 +1791,7 @@ create table t1 (a datetime, b virtual datetime as (adddate(a,interval 1 month))
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL datetime AS (adddate(a,interval 1 month))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1806,7 +1806,7 @@ create table t1 (a datetime, b virtual datetime as (addtime(a,'02:00:00')));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL datetime AS (addtime(a,'02:00:00'))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1821,7 +1821,7 @@ create table t1 (a datetime, b virtual datetime as (date_add(a,interval 1 month)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL datetime AS (date_add(a,interval 1 month))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1836,7 +1836,7 @@ create table t1 (a datetime, b virtual varchar(64) as (date_format(a,'%W %M %D')
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL varchar(64) AS (date_format(a,'%W %M %D'))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1851,7 +1851,7 @@ create table t1 (a datetime, b virtual datetime as (date_sub(a,interval 1 month)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL datetime AS (date_sub(a,interval 1 month))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1866,7 +1866,7 @@ create table t1 (a datetime, b virtual datetime as (date(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL datetime AS (date(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31 02:00:00',default);
@@ -1881,7 +1881,7 @@ create table t1 (a datetime, b virtual int as (datediff(a,'2000-01-01')));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (datediff(a,'2000-01-01'))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1896,7 +1896,7 @@ create table t1 (a datetime, b virtual int as (day(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (day(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1911,7 +1911,7 @@ create table t1 (a datetime, b virtual varchar(10) as (dayname(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL varchar(10) AS (dayname(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1926,7 +1926,7 @@ create table t1 (a datetime, b virtual int as (dayofmonth(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (dayofmonth(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1941,7 +1941,7 @@ create table t1 (a datetime, b virtual int as (dayofweek(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (dayofweek(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1956,7 +1956,7 @@ create table t1 (a datetime, b virtual int as (dayofyear(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (dayofyear(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1971,7 +1971,7 @@ create table t1 (a datetime, b virtual int as (extract(year from a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (extract(year from a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -1986,7 +1986,7 @@ create table t1 (a int, b virtual datetime as (from_days(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL datetime AS (from_days(a))
 ) ENGINE=MyISAM
 insert into t1 values (730669,default);
@@ -2001,7 +2001,7 @@ create table t1 (a int, b virtual datetime as (from_unixtime(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL datetime AS (from_unixtime(a))
 ) ENGINE=MyISAM
 insert into t1 values (1196440219,default);
@@ -2016,7 +2016,7 @@ create table t1 (a datetime, b virtual varchar(32) as (date_format(a,get_format(
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL varchar(32) AS (date_format(a,get_format(DATE,'EUR')))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -2031,7 +2031,7 @@ create table t1 (a time, b virtual int as (hour(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` time,
+  `a` time DEFAULT NULL,
   `b` VIRTUAL int AS (hour(a))
 ) ENGINE=MyISAM
 insert into t1 values ('10:05:03',default);
@@ -2046,7 +2046,7 @@ create table t1 (a datetime, b virtual datetime as (last_day(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL datetime AS (last_day(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2003-02-05',default);
@@ -2061,7 +2061,7 @@ create table t1 (a int, b virtual datetime as (makedate(a,1)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL datetime AS (makedate(a,1))
 ) ENGINE=MyISAM
 insert into t1 values (2001,default);
@@ -2076,7 +2076,7 @@ create table t1 (a int, b virtual time as (maketime(a,1,3)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL time AS (maketime(a,1,3))
 ) ENGINE=MyISAM
 insert into t1 values (12,default);
@@ -2091,7 +2091,7 @@ create table t1 (a datetime, b virtual int as (microsecond(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (microsecond(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2009-12-31 12:00:00.123456',default);
@@ -2108,7 +2108,7 @@ create table t1 (a datetime, b virtual int as (minute(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (minute(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2009-12-31 23:59:59.000010',default);
@@ -2123,7 +2123,7 @@ create table t1 (a datetime, b virtual int as (month(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (month(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2009-12-31 23:59:59.000010',default);
@@ -2138,7 +2138,7 @@ create table t1 (a datetime, b virtual varchar(16) as (monthname(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL varchar(16) AS (monthname(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2009-12-31 23:59:59.000010',default);
@@ -2153,7 +2153,7 @@ create table t1 (a int, b virtual int as (period_add(a,2)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (period_add(a,2))
 ) ENGINE=MyISAM
 insert into t1 values (200801,default);
@@ -2168,8 +2168,8 @@ create table t1 (a int, b int, c virtual int as (period_diff(a,b)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
-  `b` int,
+  `a` int DEFAULT NULL,
+  `b` int DEFAULT NULL,
   `c` VIRTUAL int AS (period_diff(a,b))
 ) ENGINE=MyISAM
 insert into t1 values (200802,200703,default);
@@ -2184,7 +2184,7 @@ create table t1 (a datetime, b virtual int as (quarter(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (quarter(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -2199,7 +2199,7 @@ create table t1 (a int, b virtual time as (sec_to_time(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL time AS (sec_to_time(a))
 ) ENGINE=MyISAM
 insert into t1 values (2378,default);
@@ -2214,7 +2214,7 @@ create table t1 (a datetime, b virtual int as (second(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (second(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2009-02-10 10:05:03',default);
@@ -2229,7 +2229,7 @@ create table t1 (a varchar(64), b virtual datetime as (str_to_date(a,'%m/%d/%Y')
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(64),
+  `a` varchar(64) DEFAULT NULL,
   `b` VIRTUAL datetime AS (str_to_date(a,'%m/%d/%Y'))
 ) ENGINE=MyISAM
 insert into t1 values ('04/30/2004',default);
@@ -2244,7 +2244,7 @@ create table t1 (a datetime, b virtual datetime as (subdate(a,interval 1 month))
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL datetime AS (subdate(a,interval 1 month))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -2259,7 +2259,7 @@ create table t1 (a datetime, b virtual datetime as (subtime(a,'02:00:00')));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL datetime AS (subtime(a,'02:00:00'))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31',default);
@@ -2274,7 +2274,7 @@ create table t1 (a datetime, b virtual varchar(32) as (time_format(a,'%r')));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL varchar(32) AS (time_format(a,'%r'))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31 02:03:04',default);
@@ -2289,7 +2289,7 @@ create table t1 (a time, b virtual int as (time_to_sec(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` time,
+  `a` time DEFAULT NULL,
   `b` VIRTUAL int AS (time_to_sec(a))
 ) ENGINE=MyISAM
 insert into t1 values ('22:23:00',default);
@@ -2304,7 +2304,7 @@ create table t1 (a datetime, b virtual time as (time(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL time AS (time(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-08-31 02:03:04',default);
@@ -2319,8 +2319,8 @@ create table t1 (a datetime, b datetime, c virtual int as (timediff(a,b)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
-  `b` datetime,
+  `a` datetime DEFAULT NULL,
+  `b` datetime DEFAULT NULL,
   `c` VIRTUAL int AS (timediff(a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-12-31 23:59:59.000001','2008-12-30 01:01:01.000002',default);
@@ -2337,7 +2337,7 @@ create table t1 (a datetime, b virtual timestamp as (timestamp(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL timestamp AS (timestamp(a)) NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM
 insert into t1 values ('2008-12-31',default);
@@ -2352,7 +2352,7 @@ create table t1 (a datetime, b virtual timestamp as (timestampadd(minute,1,a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL timestamp AS (timestampadd(minute,1,a)) NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM
 insert into t1 values ('2003-01-02',default);
@@ -2368,7 +2368,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `b` timestamp NOT NULL,
+  `b` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   `c` VIRTUAL int AS (timestampdiff(MONTH, a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('2003-02-01','2003-05-01',default);
@@ -2383,7 +2383,7 @@ create table t1 (a datetime, b virtual int as (to_days(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (to_days(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2007-10-07',default);
@@ -2398,7 +2398,7 @@ create table t1 (a datetime, b virtual int as (weekday(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (weekday(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-09-01',default);
@@ -2413,7 +2413,7 @@ create table t1 (a datetime, b virtual int as (year(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` datetime,
+  `a` datetime DEFAULT NULL,
   `b` VIRTUAL int AS (year(a))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-09-01',default);
@@ -2434,7 +2434,7 @@ create table t1 (a varchar(32), b virtual datetime as (cast(a as datetime)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(32),
+  `a` varchar(32) DEFAULT NULL,
   `b` VIRTUAL datetime AS (cast(a as datetime))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-10-09',default);
@@ -2448,7 +2448,7 @@ create table t1 (a varchar(32), b virtual datetime as (convert(a, datetime)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(32),
+  `a` varchar(32) DEFAULT NULL,
   `b` VIRTUAL datetime AS (convert(a, datetime))
 ) ENGINE=MyISAM
 insert into t1 values ('2008-10-09',default);
@@ -2466,7 +2466,7 @@ create table t1 (a int, b virtual int as (bit_count(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (bit_count(a))
 ) ENGINE=MyISAM
 insert into t1 values (5,default);
@@ -2481,7 +2481,7 @@ create table t1 (a varchar(1024), b virtual int as (coercibility(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1024),
+  `a` varchar(1024) DEFAULT NULL,
   `b` VIRTUAL int AS (coercibility(a))
 ) ENGINE=MyISAM
 insert into t1 values ('abc',default);
@@ -2496,7 +2496,7 @@ create table t1 (a varchar(1024), b virtual varchar(1024) as (collation(a)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1024),
+  `a` varchar(1024) DEFAULT NULL,
   `b` VIRTUAL varchar(1024) AS (collation(a))
 ) ENGINE=MyISAM
 insert into t1 values ('abc',default);
@@ -2511,7 +2511,7 @@ create table t1 (a varchar(1024) default 'aaa', b virtual varchar(1024) as (ifnu
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1024),
+  `a` varchar(1024) DEFAULT 'aaa',
   `b` VIRTUAL varchar(1024) AS (ifnull(a,default(a)))
 ) ENGINE=MyISAM
 insert into t1 values ('any value',default);

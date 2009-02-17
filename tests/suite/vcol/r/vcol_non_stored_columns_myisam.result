@@ -82,7 +82,7 @@ ERROR HY000: 'Changing the STORED status' is not yet supported for virtual colum
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a % 2) STORED
 ) ENGINE=MyISAM
 drop table t1;
@@ -93,7 +93,7 @@ ERROR HY000: 'Changing the STORED status' is not yet supported for virtual colum
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a % 2)
 ) ENGINE=MyISAM
 drop table t1;
@@ -132,8 +132,8 @@ b	c
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `b` int,
-  `c` varchar(5)
+  `b` int DEFAULT NULL,
+  `c` varchar(5) DEFAULT NULL
 ) ENGINE=MyISAM
 drop table t1;
 # Case 11. ALTER. Dropping a virtual stored column.
@@ -154,8 +154,8 @@ b	c
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `b` int,
-  `c` varchar(5)
+  `b` int DEFAULT NULL,
+  `c` varchar(5) DEFAULT NULL
 ) ENGINE=MyISAM
 drop table t1;
 # Case 12. ALTER. Adding a new virtual non-stored column.
@@ -174,9 +174,9 @@ a	c	b
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `c` VIRTUAL int AS (dayofyear(b)),
-  `b` datetime
+  `b` datetime DEFAULT NULL
 ) ENGINE=MyISAM
 drop table t1;
 # Case 13. ALTER. Adding a new virtual stored column.
@@ -195,9 +195,9 @@ a	c	b
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `c` VIRTUAL int AS (dayofyear(b)) STORED,
-  `b` datetime
+  `b` datetime DEFAULT NULL
 ) ENGINE=MyISAM
 drop table t1;
 # Case 14. ALTER. Changing the expression of a virtual stored column.
@@ -216,8 +216,8 @@ a	b	c
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
-  `b` datetime,
+  `a` int DEFAULT NULL,
+  `b` datetime DEFAULT NULL,
   `c` VIRTUAL int AS (month(b)) STORED
 ) ENGINE=MyISAM
 drop table t1;
@@ -237,8 +237,8 @@ a	b	c
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
-  `b` datetime,
+  `a` int DEFAULT NULL,
+  `b` datetime DEFAULT NULL,
   `c` VIRTUAL int AS (month(b))
 ) ENGINE=MyISAM
 drop table t1;

@@ -100,7 +100,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
-  `b` int
+  `b` int DEFAULT NULL
 ) ENGINE=MyISAM
 alter table t1 index directory="MYSQLTEST_VARDIR/log";
 Warnings:
@@ -109,7 +109,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
-  `b` int
+  `b` int DEFAULT NULL
 ) ENGINE=MyISAM
 drop table t1;
 CREATE TABLE t1(a INT)
@@ -126,13 +126,13 @@ create temporary table t1 (a int) engine=myisam data directory="MYSQLTEST_VARDIR
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int
+  `a` int DEFAULT NULL
 ) ENGINE=MyISAM DATA DIRECTORY='MYSQLTEST_VARDIR/log/'
 create temporary table t1 (a int) engine=myisam data directory="MYSQLTEST_VARDIR/log" select 99 a;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int
+  `a` int DEFAULT NULL
 ) ENGINE=MyISAM DATA DIRECTORY='MYSQLTEST_VARDIR/log/'
 create table t1 (a int) engine=myisam select 42 a;
 select * from t1;

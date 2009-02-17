@@ -12,7 +12,7 @@ create table t1 (a int, b virtual int as (a*2) stored unique);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a*2) STORED,
   UNIQUE KEY `b` (`b`)
 ) ENGINE=MyISAM
@@ -27,7 +27,7 @@ create table t1 (a int, b virtual int as (a*2) stored, unique (b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a*2) STORED,
   UNIQUE KEY `b` (`b`)
 ) ENGINE=MyISAM
@@ -57,7 +57,7 @@ create table t1 (a int, b virtual int as (a*2) stored, index (b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a*2) STORED,
   KEY `b` (`b`)
 ) ENGINE=MyISAM
@@ -70,7 +70,7 @@ create table t1 (a int, b virtual int as (a*2) stored, index (a,b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   `b` VIRTUAL int AS (a*2) STORED,
   KEY `a` (`a`,`b`)
 ) ENGINE=MyISAM

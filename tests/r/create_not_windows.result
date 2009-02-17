@@ -8,7 +8,7 @@ show create table `about:text`;
 Table	Create Table
 about:text	CREATE TABLE `about:text` (
   `_id` int NOT NULL AUTO_INCREMENT,
-  `about:text` varchar(255) NOT NULL,
+  `about:text` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`_id`)
 ) ENGINE=MyISAM
 drop table `about:text`;

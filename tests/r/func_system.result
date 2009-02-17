@@ -28,9 +28,9 @@ create table t1 (version char(60)) select database(), user(), version() as 'vers
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `database()` varchar(34),
-  `user()` varchar(77),
-  `version` varchar(60)
+  `database()` varchar(34) DEFAULT NULL,
+  `user()` varchar(77) DEFAULT NULL,
+  `version` varchar(60) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 select TRUE,FALSE,NULL;

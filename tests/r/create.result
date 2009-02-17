@@ -41,7 +41,7 @@ create table `a/a` (a int);
 show create table `a/a`;
 Table	Create Table
 a/a	CREATE TABLE `a/a` (
-  `a` int
+  `a` int DEFAULT NULL
 ) ENGINE=InnoDB
 create table t1 like `a/a`;
 drop table `a/a`;
@@ -118,10 +118,10 @@ describe t2;
 Field	Type	Null	Key	Default	Extra
 a	datetime	YES		NULL	
 b	time	YES		NULL	
-c	date	NO		NULL	
-d	int	NO		NULL	
-e	decimal(3,1)	NO		NULL	
-f	bigint	NO		NULL	
+c	date	NO		0000-00-00	
+d	int	NO		0	
+e	decimal(3,1)	NO		0.0	
+f	bigint	NO		0	
 drop table t2;
 create table t2 select CAST("2001-12-29" AS DATE) as d, CAST("20:45:11" AS TIME) as t, CAST("2001-12-29  20:45:11" AS DATETIME) as dt;
 describe t2;
@@ -169,7 +169,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
-  `b` int,
+  `b` int DEFAULT NULL,
   PRIMARY KEY (`a`),
   KEY `b` (`b`),
   KEY `b_2` (`b`),
@@ -305,7 +305,7 @@ show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
   `id` int NOT NULL,
-  `name` varchar(20)
+  `name` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB
 select * from t3;
 id	name
@@ -328,7 +328,7 @@ show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
   `id` int NOT NULL,
-  `name` varchar(20)
+  `name` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB
 select * from t3;
 id	name
@@ -340,14 +340,14 @@ show create table t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
   `id` int NOT NULL,
-  `name` varchar(20)
+  `name` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB
 create table t2 like t3;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `id` int NOT NULL,
-  `name` varchar(20)
+  `name` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB
 select * from t2;
 id	name
@@ -423,8 +423,8 @@ from t1;
 explain t2;
 Field	Type	Null	Key	Default	Extra
 a	int	YES		NULL	
-b	bigint	NO		NULL	
-c	bigint	NO		NULL	
+b	bigint	NO		0	
+c	bigint	NO		0	
 d	date	YES		NULL	
 e	varchar(1)	YES		NULL	
 f	datetime	YES		NULL	
@@ -441,28 +441,28 @@ create table t2 select ifnull(a,a), ifnull(b,b), ifnull(d,d), ifnull(e,e), ifnul
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `ifnull(a,a)` int,
-  `ifnull(b,b)` int,
-  `ifnull(d,d)` int,
-  `ifnull(e,e)` bigint,
-  `ifnull(f,f)` double(3,2),
-  `ifnull(g,g)` double(4,3),
-  `ifnull(h,h)` decimal(5,4),
-  `ifnull(j,j)` date,
-  `ifnull(k,k)` timestamp NOT NULL,
-  `ifnull(l,l)` datetime,
-  `ifnull(m,m)` varchar(1),
-  `ifnull(o,o)` varchar(10)
+  `ifnull(a,a)` int DEFAULT NULL,
+  `ifnull(b,b)` int DEFAULT NULL,
+  `ifnull(d,d)` int DEFAULT NULL,
+  `ifnull(e,e)` bigint DEFAULT NULL,
+  `ifnull(f,f)` double(3,2) DEFAULT NULL,
+  `ifnull(g,g)` double(4,3) DEFAULT NULL,
+  `ifnull(h,h)` decimal(5,4) DEFAULT NULL,
+  `ifnull(j,j)` date DEFAULT NULL,
+  `ifnull(k,k)` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `ifnull(l,l)` datetime DEFAULT NULL,
+  `ifnull(m,m)` varchar(1) DEFAULT NULL,
+  `ifnull(o,o)` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1,t2;
 create table t1(str varchar(10) default 'def',strnull varchar(10),intg int default '10',rel double default '3.14');
 insert into t1 values ('','',0,0.0);
 describe t1;
 Field	Type	Null	Key	Default	Extra
-str	varchar(10)	YES		NULL	
+str	varchar(10)	YES		def	
 strnull	varchar(10)	YES		NULL	
-intg	int	YES		NULL	
-rel	double	YES		NULL	
+intg	int	YES		10	
+rel	double	YES		3.14	
 create table t2 select default(str) as str, default(strnull) as strnull, default(intg) as intg, default(rel) as rel from t1;
 describe t2;
 Field	Type	Null	Key	Default	Extra
@@ -475,12 +475,12 @@ create table t1(name varchar(10), age int default -1);
 describe t1;
 Field	Type	Null	Key	Default	Extra
 name	varchar(10)	YES		NULL	
-age	int	YES		NULL	
+age	int	YES		-1	
 create table t2(name varchar(10), age int default - 1);
 describe t2;
 Field	Type	Null	Key	Default	Extra
 name	varchar(10)	YES		NULL	
-age	int	YES		NULL	
+age	int	YES		-1	
 drop table t1, t2;
 create table t1(cenum enum('a'));
 create table t2(cenum enum('a','a'));
@@ -593,9 +593,9 @@ b int null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `b` int,
+  `b` int DEFAULT NULL,
   `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-  `c` int NOT NULL,
+  `c` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`a`)
 ) ENGINE=InnoDB
 drop table t1;
@@ -618,7 +618,7 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '',
   `b` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=InnoDB
@@ -654,29 +654,29 @@ select a1,a2 from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` int,
-  `b` int,
-  `a1` int,
-  `a2` int
+  `a` int DEFAULT '3',
+  `b` int DEFAULT '3',
+  `a1` int DEFAULT NULL,
+  `a2` int DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1, t2;
 create table t1 (i int) engine=myisam max_rows=100000000000;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i` int
+  `i` int DEFAULT NULL
 ) ENGINE=MyISAM MAX_ROWS=4294967295
 alter table t1 max_rows=100;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i` int
+  `i` int DEFAULT NULL
 ) ENGINE=MyISAM MAX_ROWS=100
 alter table t1 max_rows=100000000000;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i` int
+  `i` int DEFAULT NULL
 ) ENGINE=MyISAM MAX_ROWS=4294967295
 drop table t1;
 create table t1 select * from t2;
@@ -891,22 +891,22 @@ c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int,
-  `c2` int,
-  `c3` int,
-  `c4` int,
-  `c5` int,
-  `c6` int,
-  `c7` int,
-  `c8` int,
-  `c9` int,
-  `c10` int,
-  `c11` int,
-  `c12` int,
-  `c13` int,
-  `c14` int,
-  `c15` int,
-  `c16` int,
+  `c1` int DEFAULT NULL,
+  `c2` int DEFAULT NULL,
+  `c3` int DEFAULT NULL,
+  `c4` int DEFAULT NULL,
+  `c5` int DEFAULT NULL,
+  `c6` int DEFAULT NULL,
+  `c7` int DEFAULT NULL,
+  `c8` int DEFAULT NULL,
+  `c9` int DEFAULT NULL,
+  `c10` int DEFAULT NULL,
+  `c11` int DEFAULT NULL,
+  `c12` int DEFAULT NULL,
+  `c13` int DEFAULT NULL,
+  `c14` int DEFAULT NULL,
+  `c15` int DEFAULT NULL,
+  `c16` int DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -976,22 +976,22 @@ flush tables;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int,
-  `c2` int,
-  `c3` int,
-  `c4` int,
-  `c5` int,
-  `c6` int,
-  `c7` int,
-  `c8` int,
-  `c9` int,
-  `c10` int,
-  `c11` int,
-  `c12` int,
-  `c13` int,
-  `c14` int,
-  `c15` int,
-  `c16` int,
+  `c1` int DEFAULT NULL,
+  `c2` int DEFAULT NULL,
+  `c3` int DEFAULT NULL,
+  `c4` int DEFAULT NULL,
+  `c5` int DEFAULT NULL,
+  `c6` int DEFAULT NULL,
+  `c7` int DEFAULT NULL,
+  `c8` int DEFAULT NULL,
+  `c9` int DEFAULT NULL,
+  `c10` int DEFAULT NULL,
+  `c11` int DEFAULT NULL,
+  `c12` int DEFAULT NULL,
+  `c13` int DEFAULT NULL,
+  `c14` int DEFAULT NULL,
+  `c15` int DEFAULT NULL,
+  `c16` int DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -1192,22 +1192,22 @@ c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int,
-  `c2` int,
-  `c3` int,
-  `c4` int,
-  `c5` int,
-  `c6` int,
-  `c7` int,
-  `c8` int,
-  `c9` int,
-  `c10` int,
-  `c11` int,
-  `c12` int,
-  `c13` int,
-  `c14` int,
-  `c15` int,
-  `c16` int,
+  `c1` int DEFAULT NULL,
+  `c2` int DEFAULT NULL,
+  `c3` int DEFAULT NULL,
+  `c4` int DEFAULT NULL,
+  `c5` int DEFAULT NULL,
+  `c6` int DEFAULT NULL,
+  `c7` int DEFAULT NULL,
+  `c8` int DEFAULT NULL,
+  `c9` int DEFAULT NULL,
+  `c10` int DEFAULT NULL,
+  `c11` int DEFAULT NULL,
+  `c12` int DEFAULT NULL,
+  `c13` int DEFAULT NULL,
+  `c14` int DEFAULT NULL,
+  `c15` int DEFAULT NULL,
+  `c16` int DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -1277,22 +1277,22 @@ flush tables;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int,
-  `c2` int,
-  `c3` int,
-  `c4` int,
-  `c5` int,
-  `c6` int,
-  `c7` int,
-  `c8` int,
-  `c9` int,
-  `c10` int,
-  `c11` int,
-  `c12` int,
-  `c13` int,
-  `c14` int,
-  `c15` int,
-  `c16` int,
+  `c1` int DEFAULT NULL,
+  `c2` int DEFAULT NULL,
+  `c3` int DEFAULT NULL,
+  `c4` int DEFAULT NULL,
+  `c5` int DEFAULT NULL,
+  `c6` int DEFAULT NULL,
+  `c7` int DEFAULT NULL,
+  `c8` int DEFAULT NULL,
+  `c9` int DEFAULT NULL,
+  `c10` int DEFAULT NULL,
+  `c11` int DEFAULT NULL,
+  `c12` int DEFAULT NULL,
+  `c13` int DEFAULT NULL,
+  `c14` int DEFAULT NULL,
+  `c15` int DEFAULT NULL,
+  `c16` int DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -1375,23 +1375,23 @@ ERROR 42000: Identifier name 'a001_long_123456789_123456789_123456789_123456789_
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int,
-  `c2` int,
-  `c3` int,
-  `c4` int,
-  `c5` int,
-  `c6` int,
-  `c7` int,
-  `c8` int,
-  `c9` int,
-  `c10` int,
-  `c11` int,
-  `c12` int,
-  `c13` int,
-  `c14` int,
-  `c15` int,
-  `c16` int,
-  `c17` int
+  `c1` int DEFAULT NULL,
+  `c2` int DEFAULT NULL,
+  `c3` int DEFAULT NULL,
+  `c4` int DEFAULT NULL,
+  `c5` int DEFAULT NULL,
+  `c6` int DEFAULT NULL,
+  `c7` int DEFAULT NULL,
+  `c8` int DEFAULT NULL,
+  `c9` int DEFAULT NULL,
+  `c10` int DEFAULT NULL,
+  `c11` int DEFAULT NULL,
+  `c12` int DEFAULT NULL,
+  `c13` int DEFAULT NULL,
+  `c14` int DEFAULT NULL,
+  `c15` int DEFAULT NULL,
+  `c16` int DEFAULT NULL,
+  `c17` int DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 
@@ -1502,7 +1502,7 @@ INDEX_NAME
 show create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 Table	Create Table
 имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48	CREATE TABLE `имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48` (
-  `имя_поля_в_кодировке_утф8_длиной_больше_чем_45` int,
+  `имя_поля_в_кодировке_утф8_длиной_больше_чем_45` int DEFAULT NULL,
   KEY `имя_индекса_в_кодировке_утф8_длиной_больше_чем_48` (`имя_поля_в_кодировке_утф8_длиной_больше_чем_45`)
 ) ENGINE=InnoDB
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
@@ -1510,13 +1510,13 @@ create table t1 like information_schema.processlist;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ID` bigint NOT NULL,
-  `USER` varchar(16) NOT NULL,
-  `HOST` varchar(64) NOT NULL,
-  `DB` varchar(64),
-  `COMMAND` varchar(16) NOT NULL,
-  `TIME` bigint NOT NULL,
-  `STATE` varchar(64),
+  `ID` bigint NOT NULL DEFAULT '0',
+  `USER` varchar(16) NOT NULL DEFAULT '',
+  `HOST` varchar(64) NOT NULL DEFAULT '',
+  `DB` varchar(64) DEFAULT NULL,
+  `COMMAND` varchar(16) NOT NULL DEFAULT '',
+  `TIME` bigint NOT NULL DEFAULT '0',
+  `STATE` varchar(64) DEFAULT NULL,
   `INFO` text
 ) ENGINE=MyISAM
 drop table t1;
@@ -1524,13 +1524,13 @@ create temporary table t1 like information_schema.processlist;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `ID` bigint NOT NULL,
-  `USER` varchar(16) NOT NULL,
-  `HOST` varchar(64) NOT NULL,
-  `DB` varchar(64),
-  `COMMAND` varchar(16) NOT NULL,
-  `TIME` bigint NOT NULL,
-  `STATE` varchar(64),
+  `ID` bigint NOT NULL DEFAULT '0',
+  `USER` varchar(16) NOT NULL DEFAULT '',
+  `HOST` varchar(64) NOT NULL DEFAULT '',
+  `DB` varchar(64) DEFAULT NULL,
+  `COMMAND` varchar(16) NOT NULL DEFAULT '',
+  `TIME` bigint NOT NULL DEFAULT '0',
+  `STATE` varchar(64) DEFAULT NULL,
   `INFO` text
 ) ENGINE=MyISAM
 drop table t1;
@@ -1555,12 +1555,12 @@ COLLATE utf8_bin;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int COMMENT 'column1',
-  `c2` int COMMENT 'column2',
+  `c1` int DEFAULT '12' COMMENT 'column1',
+  `c2` int DEFAULT NULL COMMENT 'column2',
   `c3` int NOT NULL COMMENT 'column3',
-  `c4` varchar(255) COLLATE utf8_bin NOT NULL,
-  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
-  `c6` varchar(255) COLLATE utf8_bin
+  `c4` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
+  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c6` varchar(255) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=InnoDB
 
 CREATE TABLE t2 AS SELECT * FROM t1;
@@ -1568,12 +1568,12 @@ CREATE TABLE t2 AS SELECT * FROM t1;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `c1` int COMMENT 'column1',
-  `c2` int COMMENT 'column2',
+  `c1` int DEFAULT '12' COMMENT 'column1',
+  `c2` int DEFAULT NULL COMMENT 'column2',
   `c3` int NOT NULL COMMENT 'column3',
-  `c4` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
-  `c6` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin
+  `c4` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT 'a',
+  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c6` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=InnoDB
 
 DROP TABLE t2;

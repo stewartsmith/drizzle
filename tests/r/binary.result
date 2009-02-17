@@ -91,7 +91,7 @@ create table t1 (a char);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1)
+  `a` varchar(1) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t2 (a varbinary);
