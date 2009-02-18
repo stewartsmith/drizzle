@@ -2658,14 +2658,14 @@ ha_innobase::index_flags(uint idx, uint, bool) const
 }
 
 UNIV_INTERN
-uint
+uint32_t
 ha_innobase::max_supported_keys() const
 {
 	return(MAX_KEY);
 }
 
 UNIV_INTERN
-uint
+uint32_t
 ha_innobase::max_supported_key_length() const
 {
 	/* An InnoDB page must store >= 2 keys; a secondary key record
@@ -3005,7 +3005,7 @@ retry:
 }
 
 UNIV_INTERN
-uint
+uint32_t
 ha_innobase::max_supported_key_part_length() const
 {
 	return(DICT_MAX_INDEX_COL_LEN - 1);
