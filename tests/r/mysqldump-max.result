@@ -72,8 +72,8 @@ CREATE DATABASE IF NOT EXISTS `test`;
 USE `test`;
 DROP TABLE IF EXISTS `t1`;
 CREATE TABLE `t1` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=InnoDB;
 
 ALTER TABLE `t1` DISABLE KEYS;
@@ -81,8 +81,8 @@ INSERT  IGNORE INTO `t1` VALUES ('1','first value'),('2','first value'),('3','fi
 ALTER TABLE `t1` ENABLE KEYS;
 DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=MyISAM;
 
 ALTER TABLE `t2` DISABLE KEYS;
@@ -90,8 +90,8 @@ INSERT  DELAYED IGNORE INTO `t2` VALUES ('1','first value'),('2','first value'),
 ALTER TABLE `t2` ENABLE KEYS;
 DROP TABLE IF EXISTS `t3`;
 CREATE TABLE `t3` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=MEMORY;
 
 ALTER TABLE `t3` DISABLE KEYS;
@@ -99,8 +99,8 @@ INSERT  DELAYED IGNORE INTO `t3` VALUES ('1','first value'),('2','first value'),
 ALTER TABLE `t3` ENABLE KEYS;
 DROP TABLE IF EXISTS `t4`;
 CREATE TABLE `t4` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=MEMORY;
 
 ALTER TABLE `t4` DISABLE KEYS;
@@ -108,8 +108,8 @@ INSERT  DELAYED IGNORE INTO `t4` VALUES ('1','first value'),('2','first value'),
 ALTER TABLE `t4` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=InnoDB;
 
 ALTER TABLE `t6` DISABLE KEYS;
@@ -125,8 +125,8 @@ CREATE DATABASE IF NOT EXISTS `test`;
 USE `test`;
 DROP TABLE IF EXISTS `t1`;
 CREATE TABLE `t1` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=InnoDB;
 
 ALTER TABLE `t1` DISABLE KEYS;
@@ -134,8 +134,8 @@ INSERT INTO `t1` VALUES ('1','first value'),('2','first value'),('3','first valu
 ALTER TABLE `t1` ENABLE KEYS;
 DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=MyISAM;
 
 ALTER TABLE `t2` DISABLE KEYS;
@@ -143,8 +143,8 @@ INSERT  DELAYED INTO `t2` VALUES ('1','first value'),('2','first value'),('3','f
 ALTER TABLE `t2` ENABLE KEYS;
 DROP TABLE IF EXISTS `t3`;
 CREATE TABLE `t3` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=MEMORY;
 
 ALTER TABLE `t3` DISABLE KEYS;
@@ -152,8 +152,8 @@ INSERT  DELAYED INTO `t3` VALUES ('1','first value'),('2','first value'),('3','f
 ALTER TABLE `t3` ENABLE KEYS;
 DROP TABLE IF EXISTS `t4`;
 CREATE TABLE `t4` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=MEMORY;
 
 ALTER TABLE `t4` DISABLE KEYS;
@@ -161,8 +161,8 @@ INSERT  DELAYED INTO `t4` VALUES ('1','first value'),('2','first value'),('3','f
 ALTER TABLE `t4` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
-  `id` int,
-  `name` varchar(32)
+  `id` int DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL
 ) ENGINE=InnoDB;
 
 ALTER TABLE `t6` DISABLE KEYS;

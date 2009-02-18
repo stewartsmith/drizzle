@@ -2064,19 +2064,19 @@ Tables_in_test (t?)
 show full columns from t2;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 auto	int	NULL	NO	PRI	NULL	auto_increment	#	
-fld1	int	NULL	NO	UNI	NULL		#	
-companynr	int	NULL	NO		NULL		#	
-fld3	varchar(30)	utf8_general_ci	NO	MUL	NULL		#	
-fld4	varchar(35)	utf8_general_ci	NO		NULL		#	
-fld5	varchar(35)	utf8_general_ci	NO		NULL		#	
-fld6	varchar(4)	utf8_general_ci	NO		NULL		#	
+fld1	int	NULL	NO	UNI	0		#	
+companynr	int	NULL	NO		0		#	
+fld3	varchar(30)	utf8_general_ci	NO	MUL			#	
+fld4	varchar(35)	utf8_general_ci	NO				#	
+fld5	varchar(35)	utf8_general_ci	NO				#	
+fld6	varchar(4)	utf8_general_ci	NO				#	
 show full columns from t2 from test like 'f%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-fld1	int	NULL	NO	UNI	NULL		#	
-fld3	varchar(30)	utf8_general_ci	NO	MUL	NULL		#	
-fld4	varchar(35)	utf8_general_ci	NO		NULL		#	
-fld5	varchar(35)	utf8_general_ci	NO		NULL		#	
-fld6	varchar(4)	utf8_general_ci	NO		NULL		#	
+fld1	int	NULL	NO	UNI	0		#	
+fld3	varchar(30)	utf8_general_ci	NO	MUL			#	
+fld4	varchar(35)	utf8_general_ci	NO				#	
+fld5	varchar(35)	utf8_general_ci	NO				#	
+fld6	varchar(4)	utf8_general_ci	NO				#	
 show full columns from t2 from test like 's%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 show keys from t2;

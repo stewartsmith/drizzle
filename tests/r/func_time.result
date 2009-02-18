@@ -665,7 +665,7 @@ create table t1 select last_day('2000-02-05') as a,
 from_days(to_days("960101")) as b;
 describe t1;
 Field	Type	Null	Key	Default	Extra
-a	date	NO		NULL	
+a	date	NO		0000-00-00	
 b	date	YES		NULL	
 select * from t1;
 a	b
@@ -784,10 +784,10 @@ sec_to_time(1) + 0, from_unixtime(1) + 0;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `now() - now()` double(23,6),
-  `curtime() - curtime()` double(23,6),
-  `sec_to_time(1) + 0` double(23,6),
-  `from_unixtime(1) + 0` double(23,6)
+  `now() - now()` double(23,6) DEFAULT NULL,
+  `curtime() - curtime()` double(23,6) DEFAULT NULL,
+  `sec_to_time(1) + 0` double(23,6) DEFAULT NULL,
+  `from_unixtime(1) + 0` double(23,6) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 SELECT SEC_TO_TIME(3300000);

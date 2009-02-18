@@ -78,7 +78,7 @@ bool mysqld_show_open_tables(Session *session,const char *wild);
 bool mysqld_show_logs(Session *session);
 void mysqld_list_fields(Session *session,TableList *table, const char *wild);
 int mysqld_dump_create_info(Session *session, TableList *table_list, int fd);
-bool mysqld_show_create(Session *session, TableList *table_list);
+bool drizzled_show_create(Session *session, TableList *table_list);
 bool mysqld_show_create_db(Session *session, char *dbname, HA_CREATE_INFO *create);
 
 int mysqld_show_status(Session *session);

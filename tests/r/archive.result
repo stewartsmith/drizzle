@@ -11137,12 +11137,12 @@ ALTER TABLE t2 DROP COLUMN fld6;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `auto` int,
-  `fld1` int NOT NULL,
-  `companynr` int NOT NULL,
-  `fld3` varchar(30) NOT NULL,
-  `fld4` varchar(35) NOT NULL,
-  `fld5` varchar(35) NOT NULL
+  `auto` int DEFAULT NULL,
+  `fld1` int NOT NULL DEFAULT '0',
+  `companynr` int NOT NULL DEFAULT '0',
+  `fld3` varchar(30) NOT NULL DEFAULT '',
+  `fld4` varchar(35) NOT NULL DEFAULT '',
+  `fld5` varchar(35) NOT NULL DEFAULT ''
 ) ENGINE=ARCHIVE
 SELECT * FROM t2 WHERE auto != 100000;
 auto	fld1	companynr	fld3	fld4	fld5
@@ -12665,7 +12665,7 @@ Table	Create Table
 t6	CREATE TABLE `t6` (
   `a` int NOT NULL AUTO_INCREMENT,
   `b` blob,
-  `c` int,
+  `c` int DEFAULT NULL,
   KEY `a` (`a`)
 ) ENGINE=ARCHIVE AUTO_INCREMENT=36
 DROP TABLE t1, t2, t4, t5, t6;

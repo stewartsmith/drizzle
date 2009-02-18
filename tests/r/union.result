@@ -548,7 +548,7 @@ a
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) NOT NULL
+  `a` varchar(1) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT 12 as a UNION select "aa" as a;
@@ -559,7 +559,7 @@ aa
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varbinary(4) NOT NULL
+  `a` varbinary(4) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT 12 as a UNION select 12.2 as a;
@@ -570,7 +570,7 @@ a
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` decimal(3,1) NOT NULL
+  `a` decimal(3,1) NOT NULL DEFAULT '0.0'
 ) ENGINE=InnoDB
 drop table t1;
 create table t2 (it1 int, it2 int not null, i int not null, ib int, f float, d double, da date, dt datetime, sc char(10), sv varchar(10), b blob, tx text);
@@ -583,7 +583,7 @@ NULL
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `it2` int
+  `it2` int DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT it2 from t2 UNION select i from t2;
@@ -594,7 +594,7 @@ it2
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `it2` int NOT NULL
+  `it2` int NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT i from t2 UNION select f from t2;
@@ -605,7 +605,7 @@ i
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i` double
+  `i` double DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT f from t2 UNION select d from t2;
@@ -616,7 +616,7 @@ f
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f` double
+  `f` double DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT ib from t2 UNION select f from t2;
@@ -627,7 +627,7 @@ ib
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ib` double
+  `ib` double DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT ib from t2 UNION select d from t2;
@@ -638,7 +638,7 @@ ib
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ib` double
+  `ib` double DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT f from t2 UNION select da from t2;
@@ -649,7 +649,7 @@ f
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f` varbinary(22)
+  `f` varbinary(22) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT da from t2 UNION select dt from t2;
@@ -660,7 +660,7 @@ da
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `da` datetime
+  `da` datetime DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT dt from t2 UNION select trim(sc) from t2;
@@ -671,7 +671,7 @@ testc
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `dt` varbinary(19)
+  `dt` varbinary(19) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT dt from t2 UNION select sv from t2;
@@ -682,7 +682,7 @@ testv
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `dt` varbinary(40)
+  `dt` varbinary(40) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT sc from t2 UNION select sv from t2;
@@ -693,7 +693,7 @@ testv
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `sc` varchar(10)
+  `sc` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 SELECT dt from t2 UNION select b from t2;
@@ -760,7 +760,7 @@ select * from t1;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `1` bigint NOT NULL
+  `1` bigint NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 select _latin1"test" union select _latin1"testt" ;
@@ -771,7 +771,7 @@ create table t1 select "test" union select "testt" ;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) NOT NULL
+  `test` varchar(4) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 (s char(200));
@@ -1014,7 +1014,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) NOT NULL
+  `test` varchar(4) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB
 select count(*) from t1;
 count(*)
@@ -1027,7 +1027,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `'test' collate utf8_bin` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin
+  `'test' collate utf8_bin` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=InnoDB
 select count(*) from t1;
 count(*)
@@ -1040,7 +1040,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin
+  `test` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=InnoDB
 select count(*) from t1;
 count(*)
@@ -1053,7 +1053,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin
+  `test` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=InnoDB
 select count(*) from t1;
 count(*)
@@ -1081,7 +1081,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_swedish_ci
+  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_swedish_ci DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 as
@@ -1091,7 +1091,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_spanish_ci
+  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_spanish_ci DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 drop table t2;
@@ -1201,7 +1201,7 @@ create table t2 select * from t1 union select 'abcdefghijkl';
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` varchar(5)
+  `a` varchar(5) DEFAULT NULL
 ) ENGINE=InnoDB
 select row_format from information_schema.TABLES where table_schema="test" and table_name="t2";
 row_format
@@ -1213,7 +1213,7 @@ Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` varchar(5)
+  `a` varchar(5) DEFAULT NULL
 ) ENGINE=InnoDB ROW_FORMAT=FIXED
 drop table t1,t2;
 CREATE TABLE t1 (a mediumtext);
@@ -1310,12 +1310,12 @@ create table t2 as select *, f6 as f8 from t1 union select *, f7 from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `f1` varchar(1),
-  `f2` varchar(5),
+  `f1` varchar(1) DEFAULT NULL,
+  `f2` varchar(5) DEFAULT NULL,
   `f3` blob,
   `f4` blob,
-  `f5` timestamp NOT NULL,
-  `f6` varchar(1),
+  `f5` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `f6` varchar(1) DEFAULT NULL,
   `f7` text,
   `f8` text
 ) ENGINE=InnoDB

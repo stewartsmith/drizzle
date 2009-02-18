@@ -1633,7 +1633,7 @@ create table t1 (a enum (' ','a','b ') not null default 'b ');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` enum(' ','a','b') NOT NULL
+  `a` enum(' ','a','b') NOT NULL DEFAULT 'b'
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 (a enum ('0','1'));
@@ -1648,13 +1648,14 @@ drop table t1;
 create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
-a	enum('	NO		NULL	
+a	enum('	NO			
 Warnings:
+Warning	1366	Incorrect string value: '\xE4' for column 'COLUMN_DEFAULT' at row 1
 Warning	1366	Incorrect string value: '\xE4','1'...' for column 'COLUMN_TYPE' at row 1
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` enum('ä','1','2') NOT NULL
+  `a` enum('ä','1','2') NOT NULL DEFAULT 'ä'
 ) ENGINE=InnoDB
 drop table t1;
 CREATE TABLE t1 (c enum('a', 'A') BINARY);
@@ -1679,29 +1680,29 @@ alter table t1 add f2 enum(0xFFFF);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f1` int,
-  `f2` enum('ÿÿ')
+  `f1` int DEFAULT NULL,
+  `f2` enum('ÿÿ') DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `russian` enum('E','F','EÿF','FÿE') NOT NULL
+  `russian` enum('E','F','EÿF','FÿE') NOT NULL DEFAULT 'E'
 ) ENGINE=InnoDB
 drop table t1;
 create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `denormal` enum('E','F','E,F','F,E') NOT NULL
+  `denormal` enum('E','F','E,F','F,E') NOT NULL DEFAULT 'E'
 ) ENGINE=InnoDB
 drop table t1;
 create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `russian_deviant` enum('E','F','EÿF','F,E') NOT NULL
+  `russian_deviant` enum('E','F','EÿF','F,E') NOT NULL DEFAULT 'E'
 ) ENGINE=InnoDB
 drop table t1;
 create table t1(exhausting_charset enum('ABCDEFGHIJKLMNOPQRSTUVWXYZ','	

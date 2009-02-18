@@ -273,7 +273,7 @@ MySQL	1002
 SHOW CREATE TABLE `t1`;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `t1_name` varchar(255),
+  `t1_name` varchar(255) DEFAULT NULL,
   `t1_id` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`t1_id`),
   KEY `t1_name` (`t1_name`())

@@ -390,22 +390,22 @@ select column_default from information_schema.columns where table_name= 't1';
 column_default
 NULL
 NULL
+
 NULL
 NULL
+10
 NULL
-NULL
-NULL
-NULL
+2006-01-01 00:00:00
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
 f1	varchar(50)	YES		NULL	
 f2	varchar(50)	NO		NULL	
-f3	varchar(50)	YES		NULL	
+f3	varchar(50)	YES			
 f4	varchar(50)	YES		NULL	
 f5	bigint	NO		NULL	
-f6	bigint	NO		NULL	
+f6	bigint	NO		10	
 f7	datetime	NO		NULL	
-f8	datetime	YES		NULL	
+f8	datetime	YES		2006-01-01 00:00:00	
 drop table t1;
 show fields from information_schema.table_names;
 ERROR 42S02: Unknown table 'table_names' in information_schema

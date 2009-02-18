@@ -455,11 +455,11 @@ c5 bigint);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int,
-  `c2` int,
-  `c3` int,
-  `c4` int,
-  `c5` bigint
+  `c1` int DEFAULT NULL,
+  `c2` int DEFAULT NULL,
+  `c3` int DEFAULT NULL,
+  `c4` int DEFAULT NULL,
+  `c5` bigint DEFAULT NULL
 ) ENGINE=MyISAM
 drop table t1;
 set @arg00= 8, @arg01= 8.8, @arg02= 'a string', @arg03= 0.2e0;
@@ -467,10 +467,10 @@ create table t1 as select @arg00 as c1, @arg01 as c2, @arg02 as c3, @arg03 as c4
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` bigint,
-  `c2` decimal(65,30),
+  `c1` bigint DEFAULT NULL,
+  `c2` decimal(65,30) DEFAULT NULL,
   `c3` text,
-  `c4` double
+  `c4` double DEFAULT NULL
 ) ENGINE=MyISAM
 drop table t1;
 SET GLOBAL table_open_cache=-1;

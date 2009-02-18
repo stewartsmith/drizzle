@@ -3,5 +3,5 @@ CREATE TABLE t1 (a enum('aaaa', '킱'));
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` enum('aaaa','킱')
+  `a` enum('aaaa','킱') DEFAULT NULL
 ) ENGINE=InnoDB

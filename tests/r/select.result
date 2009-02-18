@@ -1937,19 +1937,19 @@ Tables_in_test (t?)
 show full columns from t2;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 auto	int	NULL	NO	PRI	NULL	auto_increment	#	
-fld1	int	NULL	NO	UNI	NULL		#	
-companynr	int	NULL	NO		NULL		#	
-fld3	varchar(30)	utf8_general_ci	NO	MUL	NULL		#	
-fld4	varchar(35)	utf8_general_ci	NO		NULL		#	
-fld5	varchar(35)	utf8_general_ci	NO		NULL		#	
-fld6	varchar(4)	utf8_general_ci	NO		NULL		#	
+fld1	int	NULL	NO	UNI	0		#	
+companynr	int	NULL	NO		0		#	
+fld3	varchar(30)	utf8_general_ci	NO	MUL			#	
+fld4	varchar(35)	utf8_general_ci	NO				#	
+fld5	varchar(35)	utf8_general_ci	NO				#	
+fld6	varchar(4)	utf8_general_ci	NO				#	
 show full columns from t2 from test like 'f%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-fld1	int	NULL	NO	UNI	NULL		#	
-fld3	varchar(30)	utf8_general_ci	NO	MUL	NULL		#	
-fld4	varchar(35)	utf8_general_ci	NO		NULL		#	
-fld5	varchar(35)	utf8_general_ci	NO		NULL		#	
-fld6	varchar(4)	utf8_general_ci	NO		NULL		#	
+fld1	int	NULL	NO	UNI	0		#	
+fld3	varchar(30)	utf8_general_ci	NO	MUL			#	
+fld4	varchar(35)	utf8_general_ci	NO				#	
+fld5	varchar(35)	utf8_general_ci	NO				#	
+fld6	varchar(4)	utf8_general_ci	NO				#	
 show full columns from t2 from test like 's%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 drop table t4, t3, t2, t1;
@@ -3246,9 +3246,9 @@ coalesce(9223372036854775808, 1) co;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i` decimal(19,0) NOT NULL,
-  `c` decimal(19,0) NOT NULL,
-  `co` decimal(19,0) NOT NULL
+  `i` decimal(19,0) NOT NULL DEFAULT '0',
+  `c` decimal(19,0) NOT NULL DEFAULT '0',
+  `co` decimal(19,0) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB
 drop table t1;
 select 

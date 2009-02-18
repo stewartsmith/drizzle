@@ -5,7 +5,7 @@ Table	Create Table
 abs	CREATE TABLE `abs` (
   `col1` int NOT NULL,
   `col2` int NOT NULL,
-  `col3` varchar(10),
+  `col3` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`col1`,`col2`)
 ) ENGINE=InnoDB
 SHOW CREATE TABLE bug21114_child;
@@ -30,7 +30,7 @@ Table	Create Table
 field	CREATE TABLE `field` (
   `col1` int NOT NULL,
   `col2` int NOT NULL,
-  `col3` varchar(10),
+  `col3` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`col1`,`col2`)
 ) ENGINE=InnoDB
 SHOW CREATE TABLE bug21114_child;
@@ -55,7 +55,7 @@ Table	Create Table
 format	CREATE TABLE `format` (
   `col1` int NOT NULL,
   `col2` int NOT NULL,
-  `col3` varchar(10),
+  `col3` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`col1`,`col2`)
 ) ENGINE=InnoDB
 SHOW CREATE TABLE bug21114_child;
