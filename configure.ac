@@ -1210,7 +1210,7 @@ AC_ARG_ENABLE([exceptions],
     [AS_HELP_STRING([--disable-exceptions],
         [Disables use of Exceptions in the build @<:@default=on@:>@])],
     [ac_exceptions="$enableval"],
-    [ac_exceptions="no"])
+    [ac_exceptions="yes"])
 
 if test "$GCC" = "yes"
 then
