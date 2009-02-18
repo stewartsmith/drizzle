@@ -34,14 +34,19 @@ bool Item_func_from_days::get_temporal(drizzled::Date &to)
 {
   assert(fixed);
 
+  /* 
+   * We MUST call val_int() before checking null_value because, stupidly, 
+   * a subselect does not evaluate it's scalar items as null until val_xxx()
+   * has been called. :(
+   */
+  int64_t int_value= args[0]->val_int();
+
   /* We return NULL from FROM_DAYS() only when supplied a NULL argument */
   if (args[0]->null_value)
   {
     null_value= true;
     return false;
   }
-
-  int64_t int_value= args[0]->val_int();
 
   /* OK, now try to convert from our integer */
   if (! to.from_julian_day_number(int_value))
