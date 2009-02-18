@@ -166,13 +166,6 @@ String *Field_int64_t::val_str(String *val_buffer,
   return val_buffer;
 }
 
-
-bool Field_int64_t::send_binary(Protocol *protocol)
-{
-  return protocol->store_int64_t(Field_int64_t::val_int(), false);
-}
-
-
 int Field_int64_t::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;

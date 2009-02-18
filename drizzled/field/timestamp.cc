@@ -379,15 +379,6 @@ bool Field_timestamp::get_time(DRIZZLE_TIME *ltime)
   return Field_timestamp::get_date(ltime,0);
 }
 
-
-bool Field_timestamp::send_binary(Protocol *protocol)
-{
-  DRIZZLE_TIME tm;
-  Field_timestamp::get_date(&tm, 0);
-  return protocol->store(&tm);
-}
-
-
 int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;

@@ -17,32 +17,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "drizzled/server_includes.h"
 #include CSTDINT_H
-#include <drizzled/function/time/date.h>
+#include "drizzled/function/time/date.h"
+#include "drizzled/temporal.h"
 
 String *Item_date::val_str(String *str)
 {
-  assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-  if (get_date(&ltime, TIME_FUZZY_DATE))
-    return (String *) 0;
+  assert(fixed);
+
+  /* We have our subclass convert a Date temporal for us */
+  drizzled::Date temporal;
+  if (! get_temporal(temporal))
+    return (String *) NULL; /* get_temporal throws error. */
+
   if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
   {
-    null_value= 1;
-    return (String *) 0;
+    null_value= true;
+    return (String *) NULL;
   }
-  make_date((DATE_TIME_FORMAT *) 0, &ltime, str);
+
+  /* Convert the Date to a string and return it */
+  size_t new_length;
+  temporal.to_string(str->c_ptr(), &new_length);
+  str->length((uint32_t) new_length);
   return str;
 }
 
-
 int64_t Item_date::val_int()
 {
-  assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-  if (get_date(&ltime, TIME_FUZZY_DATE))
-    return 0;
-  return (int64_t) (ltime.year*10000L+ltime.month*100+ltime.day);
-}
+  assert(fixed);
 
+  /* We have our subclass convert a Date temporal for us */
+  drizzled::Date temporal;
+  if (! get_temporal(temporal))
+    return 0; /* get_temporal throws error. */
+
+  /* Convert the Date to a string and return it */
+  int32_t int_value;
+  temporal.to_int32_t(&int_value);
+  return (int64_t) int_value;
+}

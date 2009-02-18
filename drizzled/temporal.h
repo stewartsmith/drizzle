@@ -199,6 +199,7 @@ class DateTime;
 class Date: public Temporal 
 {
 public:
+  Date() :Temporal() {}
   /**
    * Comparison operator overloads to compare a Date against
    * another Date value.
@@ -379,7 +380,7 @@ class DateTime;
 class Time: public Temporal
 {
 public:
-
+  Time() :Temporal() {}
   /* Maximum number of seconds in 23:59:59 (24 * 60 * 60) */
   const static uint32_t MAX_CUMULATIVE_SECONDS= 86400L;
 
@@ -489,6 +490,7 @@ public:
 class DateTime: public Date
 {
 public:
+  DateTime() :Date() {}
   /**
    * Comparison operator overloads to compare a DateTime against
    * another DateTime value.
@@ -629,6 +631,7 @@ public:
 class Timestamp: public DateTime 
 {
 public:
+  Timestamp() :DateTime() {}
   /**
    * Comparison operator overloads to compare a Timestamp against
    * another Timestamp value.
@@ -662,6 +665,7 @@ public:
 class MicroTimestamp: public Timestamp
 {
 public:
+  MicroTimestamp() :Timestamp() {}
   /** Returns whether the temporal value is valid micro-timestamp. */
   bool is_valid() const;
 
@@ -695,6 +699,7 @@ public:
 class NanoTimestamp: public Timestamp
 {
 public:
+  NanoTimestamp() :Timestamp() {}
   /** Returns whether the temporal value is valid nano-timestamp. */
   bool is_valid() const;
 

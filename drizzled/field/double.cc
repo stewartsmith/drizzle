@@ -155,12 +155,6 @@ String *Field_double::val_str(String *val_buffer,
   return val_buffer;
 }
 
-bool Field_double::send_binary(Protocol *protocol)
-{
-  return protocol->store((double) Field_double::val_real(), dec, (String*) 0);
-}
-
-
 int Field_double::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   double a,b;

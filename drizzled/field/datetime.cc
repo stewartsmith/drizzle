@@ -197,14 +197,6 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime,
   return error;
 }
 
-bool Field_datetime::send_binary(Protocol *protocol)
-{
-  DRIZZLE_TIME tm;
-  Field_datetime::get_date(&tm, TIME_FUZZY_DATE);
-  return protocol->store(&tm);
-}
-
-
 double Field_datetime::val_real(void)
 {
   return (double) Field_datetime::val_int();

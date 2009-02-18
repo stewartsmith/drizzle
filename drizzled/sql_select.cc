@@ -2047,7 +2047,8 @@ JOIN::exec()
   error= 0;
 
   if (!tables_list && (tables || !select_lex->with_sum_func))
-  {                                           // Only test of functions
+  {                                           
+    /* Only test of functions */
     if (select_options & SELECT_DESCRIBE)
       select_describe(this, false, false, false,
 		      (zero_result_cause?zero_result_cause:"No tables used"));
@@ -2064,18 +2065,17 @@ JOIN::exec()
           (!conds || conds->val_int()) &&
           (!having || having->val_int()))
       {
-	if (do_send_rows && result->send_data(fields_list))
-	  error= 1;
-	else
-	{
-	  error= (int) result->send_eof();
-	  send_records= ((select_options & OPTION_FOUND_ROWS) ? 1 :
-                         session->sent_row_count);
-	}
+        if (do_send_rows && result->send_data(fields_list))
+          error= 1;
+        else
+        {
+          error= (int) result->send_eof();
+          send_records= ((select_options & OPTION_FOUND_ROWS) ? 1 : session->sent_row_count);
+        }
       }
       else
       {
-	error=(int) result->send_eof();
+        error= (int) result->send_eof();
         send_records= 0;
       }
     }

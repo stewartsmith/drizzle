@@ -413,13 +413,15 @@ drop table t1;
 #
 # Bug#22183: Unhandled NULL caused server crash
 #
+--error 1689 # 1 is not a valid Julian Day Number for SQL date range
 create table t1 as
  select from_days(s) as date,t
  from (select 1 as s,'t' as t union select null, null ) as sub1;
---error 1686 # Bad datetime
-select group_concat(t) from t1 group by extract(week from date)/10;
+# This errors out when it shouldn't!
+create table t1 as
+ select from_days(s) as date,t
+ from (select TO_DAYS("0001-01-01") as s,'t' as t union select null, null ) as sub1;
 drop table t1;
-
 #
 # Bug#28980: ROUND(<dec expr>, <int col>) returned double values
 #

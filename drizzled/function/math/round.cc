@@ -111,14 +111,31 @@ double my_double_round(double value, int64_t dec, bool dec_unsigned,
     tmp2 is here to avoid return the value with 80 bit precision
     This will fix that the test round(0.1,1) = round(0.1,1) is true
   */
-  volatile double tmp2;
+  double tmp2;
 
   tmp=(abs_dec < array_elements(log_10) ?
        log_10[abs_dec] : pow(10.0,(double) abs_dec));
 
+  double value_times_tmp= value * tmp;
+
+  /*
+    NOTE: This is a workaround for a gcc 4.3 bug on Intel x86 32bit
+    See http://gcc.gnu.org/bugzilla/show_bug.cgi?id=39228
+    See http://bugs.mysql.com/bug.php?id=42965
+
+    This forces the compiler to store/load the value as 64bit and avoids
+    an optimisation that *could* have the isinf() be done on the 80bit
+    representation.
+   */
+  if(sizeof(double) < sizeof(double_t))
+  {
+    volatile double t= value_times_tmp;
+    value_times_tmp= t;
+  }
+
   if (dec_negative && isinf(tmp))
     tmp2= 0;
-  else if (!dec_negative && isinf(value * tmp))
+  else if (!dec_negative && isinf(value_times_tmp))
     tmp2= value;
   else if (truncate)
   {

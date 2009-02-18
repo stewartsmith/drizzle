@@ -17,26 +17,111 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "drizzled/server_includes.h"
 #include CSTDINT_H
-#include <drizzled/function/time/last_day.h>
+#include "drizzled/function/time/last_day.h"
+#include "drizzled/error.h"
+#include "drizzled/calendar.h"
+#include "drizzled/temporal.h"
 
-bool Item_func_last_day::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date)
+#include <sstream>
+#include <string>
+
+/**
+ * Interpret the first argument as a DateTime string and then populate
+ * our supplied temporal object with a Date representing the last day of 
+ * the corresponding month and year.
+ */
+bool Item_func_last_day::get_temporal(drizzled::Date &to)
 {
-  if (get_arg0_date(ltime, fuzzy_date & ~TIME_FUZZY_DATE) ||
-      (ltime->month == 0))
-  {
-    null_value= 1;
-    return 1;
-  }
-  null_value= 0;
-  uint32_t month_idx= ltime->month-1;
-  ltime->day= days_in_month[month_idx];
-  if ( month_idx == 1 && calc_days_in_year(ltime->year) == 366)
-    ltime->day= 29;
-  ltime->hour= ltime->minute= ltime->second= 0;
-  ltime->second_part= 0;
-  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
-  return 0;
-}
+  assert(fixed);
 
+  /* We return NULL from LAST_DAY() only when supplied a NULL argument */
+  if (args[0]->null_value)
+  {
+    null_value= true;
+    return false;
+  }
+
+  /* We use a DateTime to match as many temporal formats as possible. */
+  drizzled::DateTime temporal;
+  Item_result arg0_result_type= args[0]->result_type();
+  
+  switch (arg0_result_type)
+  {
+    case REAL_RESULT:
+    case DECIMAL_RESULT: 
+      /* 
+       * For doubles supplied, interpret the arg as a string, 
+       * so intentionally fall-through here...
+       * This allows us to accept double parameters like 
+       * 19971231235959.01 and interpret it the way MySQL does:
+       * as a TIMESTAMP-like thing with a microsecond component.
+       * Ugh, but need to keep backwards-compat.
+       */
+    case STRING_RESULT:
+      {
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+        String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+        String *res= args[0]->val_str(&tmp);
+
+        if (! res)
+        {
+          /* 
+           * Likely a nested function issue where the nested
+           * function had bad input.  We rely on the nested
+           * function my_error() and simply return false here.
+           */
+          return false;
+        }
+
+        if (! temporal.from_string(res->c_ptr(), res->length()))
+        {
+          /* 
+          * Could not interpret the function argument as a temporal value, 
+          * so throw an error and return 0
+          */
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          return false;
+        }
+      }
+      break;
+    case INT_RESULT:
+      if (temporal.from_int64_t(args[0]->val_int()))
+        break;
+      /* Intentionally fall-through on invalid conversion from integer */
+    default:
+      {
+        /* 
+        * Could not interpret the function argument as a temporal value, 
+        * so throw an error and return 0
+        */
+        null_value= true;
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+        String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+        String *res;
+
+        res= args[0]->val_str(&tmp);
+
+        if (! res)
+        {
+          /* 
+           * Likely a nested function issue where the nested
+           * function had bad input.  We rely on the nested
+           * function my_error() and simply return false here.
+           */
+          return false;
+        }
+
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+        return false;
+      }
+  }
+  null_value= false;
+
+  /* Now strip to the last day of the month... */
+  temporal.set_days(days_in_gregorian_year_month(temporal.years(), temporal.months()));
+  to= temporal; /* Operator overload in effect for assign DateTime to Date. */
+
+  return true;
+}

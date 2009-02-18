@@ -20,20 +20,32 @@
 #ifndef DRIZZLED_FUNCTION_TIME_CURDATE_H
 #define DRIZZLED_FUNCTION_TIME_CURDATE_H
 
-#include <drizzled/function/time/date.h>
+#include "drizzled/function/time/date.h"
+#include "drizzled/temporal.h"
 
 /* Abstract CURDATE function. See also Item_func_curtime. */
-
 class Item_func_curdate :public Item_date
 {
-  int64_t value;
   DRIZZLE_TIME ltime;
+  drizzled::Date cached_temporal;
 public:
   Item_func_curdate() :Item_date() {}
-  int64_t val_int() { assert(fixed == 1); return (value) ; }
-  String *val_str(String *str);
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+  /**
+   * All functions which inherit from Item_date must implement
+   * their own get_temporal() method, which takes a supplied
+   * drizzled::Date reference and populates it with a correct
+   * date based on the semantics of the function.
+   *
+   * For CURDATE() and sisters, there is no argument, and we 
+   * return a cached Date value that we create during fix_length_and_dec.
+   *
+   * Always returns true, since a Date can always be constructed
+   * from a time_t
+   *
+   * @param Reference to a drizzled::Date to populate
+   */
+  bool get_temporal(drizzled::Date &temporal);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
   bool check_vcol_func_processor(unsigned char *)
   { return true; }

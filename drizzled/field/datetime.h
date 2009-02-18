@@ -52,7 +52,6 @@ public:
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
-  bool send_binary(Protocol *protocol);
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 8; }
