@@ -1252,6 +1252,11 @@ then
   if test "$ac_profiling" = "yes"
   then
     GPROF_PROFILING="-pg"
+    save_LIBS="${LIBS}"
+    LIBS=""
+    AC_CHECK_LIB(c_p, read)
+    LIBC_P="${LIBS}"
+    LIBS="${save_LIBS}"
   else
     GPROF_PROFILING=" "
   fi
