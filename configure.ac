@@ -1187,6 +1187,12 @@ AC_ARG_ENABLE([cast-warnings],
     [ac_warn_cast="$enableval"],
     [ac_warn_cast="no"])
 
+AC_ARG_ENABLE([overloaded-virtual],
+    [AS_HELP_STRING([--enable-overloaded-virtual],
+       [Enable warnings about overloaded virtuals @<:@default=off@:>@])],
+    [ac_warn_virtual="$enableval"],
+    [ac_warn_virtual="no"])
+
 AC_ARG_ENABLE([effective-style],
     [AS_HELP_STRING([--enable-effective-style],
        [Enable warnings violating Effective C++ Style Guidelines @<:@default=off@:>@])],
@@ -1324,6 +1330,11 @@ void testme() {  };],[
     W_CAST="-Wold-style-cast"
   fi
 
+  if test "$ac_warn_virtual" = "yes"
+  then
+    W_VIRTUAL="-Woverloaded-virtual"
+  fi
+
   if test "$ac_warn_effc" = "yes"
   then
     W_EFFC="-Weffc++"
@@ -1335,7 +1346,7 @@ void testme() {  };],[
   fi
 
   CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CRAZY}"
-  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CRAZY}"
+  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CRAZY} ${W_VIRTUAL}"
 
   if test "$ac_exceptions" = "no"
   then
