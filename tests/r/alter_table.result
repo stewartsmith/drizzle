@@ -52,8 +52,8 @@ KEY NAME (NAME));
 ALTER TABLE t1 CHANGE NAME NAME CHAR(80) not null;
 SHOW FULL COLUMNS FROM t1;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-GROUP_ID	int	NULL	NO	PRI	NULL		#	
-LANG_ID	int	NULL	NO	PRI	NULL		#	
+GROUP_ID	int	NULL	NO	PRI	0		#	
+LANG_ID	int	NULL	NO	PRI	0		#	
 NAME	varchar(80)	utf8_general_ci	NO	MUL	NULL		#	
 DROP TABLE t1;
 create table t1 (n int);
@@ -414,7 +414,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
-  `b` int,
+  `b` int DEFAULT NULL,
   UNIQUE KEY `b` (`b`)
 ) ENGINE=InnoDB
 ALTER TABLE t1 DROP PRIMARY KEY;
@@ -587,14 +587,14 @@ CREATE INDEX i1 ON t1(a);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
+  `a` int DEFAULT NULL,
   KEY `i1` (`a`)
 ) ENGINE=InnoDB ROW_FORMAT=FIXED
 DROP INDEX i1 ON t1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int
+  `a` int DEFAULT NULL
 ) ENGINE=InnoDB ROW_FORMAT=FIXED
 DROP TABLE t1;
 DROP TABLE IF EXISTS bug24219;
@@ -725,7 +725,7 @@ create table t1 (mycol int not null);
 alter table t1 alter column mycol set default 0;
 desc t1;
 Field	Type	Null	Key	Default	Extra
-mycol	int	NO		NULL	
+mycol	int	NO		0	
 drop table t1;
 create table t1(id int primary key auto_increment) engine=heap;
 insert into t1 values (null);
@@ -915,12 +915,12 @@ ERROR 42S01: Table 'tt+2' already exists
 SHOW CREATE TABLE `tt+1`;
 Table	Create Table
 tt+1	CREATE TEMPORARY TABLE `tt+1` (
-  `c1` int
+  `c1` int DEFAULT NULL
 ) ENGINE=InnoDB
 SHOW CREATE TABLE `tt+2`;
 Table	Create Table
 tt+2	CREATE TEMPORARY TABLE `tt+2` (
-  `c1` int
+  `c1` int DEFAULT NULL
 ) ENGINE=InnoDB
 DROP TABLE   `tt+1`, `tt+2`;
 CREATE TEMPORARY TABLE `#sql1` (c1 INT);
@@ -936,12 +936,12 @@ INSERT INTO `@0023sql1`  VALUES (2);
 SHOW CREATE TABLE `#sql2`;
 Table	Create Table
 #sql2	CREATE TEMPORARY TABLE `#sql2` (
-  `c1` int
+  `c1` int DEFAULT NULL
 ) ENGINE=InnoDB
 SHOW CREATE TABLE `@0023sql1`;
 Table	Create Table
 @0023sql1	CREATE TEMPORARY TABLE `@0023sql1` (
-  `c1` int
+  `c1` int DEFAULT NULL
 ) ENGINE=InnoDB
 DROP TABLE `#sql2`, `@0023sql1`;
 DROP TABLE IF EXISTS t1;

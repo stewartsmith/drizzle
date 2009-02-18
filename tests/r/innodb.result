@@ -819,7 +819,7 @@ create table t1 (a char(20), index (a(5))) engine=innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(20),
+  `a` varchar(20) DEFAULT NULL,
   KEY `a` (`a`())
 ) ENGINE=InnoDB
 drop table t1;
@@ -930,7 +930,7 @@ drop table t1;
 create table t1 (t int not null default 1, key (t)) engine=innodb;
 desc t1;
 Field	Type	Null	Key	Default	Extra
-t	int	NO	MUL	NULL	
+t	int	NO	MUL	1	
 drop table t1;
 CREATE TABLE t1 (
 number bigint NOT NULL default '0',
@@ -1571,7 +1571,7 @@ show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` int NOT NULL AUTO_INCREMENT,
-  `b` int,
+  `b` int DEFAULT NULL,
   PRIMARY KEY (`a`),
   UNIQUE KEY `b_2` (`b`),
   KEY `b` (`b`),
@@ -1583,7 +1583,7 @@ show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` int NOT NULL AUTO_INCREMENT,
-  `b` int,
+  `b` int DEFAULT NULL,
   PRIMARY KEY (`a`),
   UNIQUE KEY `b` (`b`),
   CONSTRAINT `t2_ibfk_1` FOREIGN KEY (`b`) REFERENCES `t1` (`id`),
@@ -1779,40 +1779,40 @@ concat('*',v,'*',c,'*',t,'*')
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10),
-  `c` varchar(10),
+  `v` varchar(10) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text
 ) ENGINE=InnoDB
 create table t2 like t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `v` varchar(10),
-  `c` varchar(10),
+  `v` varchar(10) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text
 ) ENGINE=InnoDB
 create table t3 select * from t1;
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `v` varchar(10),
-  `c` varchar(10),
+  `v` varchar(10) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text
 ) ENGINE=InnoDB
 alter table t1 modify c varchar(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10),
-  `c` varchar(10),
+  `v` varchar(10) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text
 ) ENGINE=InnoDB
 alter table t1 modify v char(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10),
-  `c` varchar(10),
+  `v` varchar(10) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text
 ) ENGINE=InnoDB
 alter table t1 modify t varchar(10);
@@ -1821,9 +1821,9 @@ Note	1265	Data truncated for column 't' at row 2
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10),
-  `c` varchar(10),
-  `t` varchar(10)
+  `v` varchar(10) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
+  `t` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
@@ -1834,8 +1834,8 @@ create table t1 (v varchar(10), c char(10), t text, key(v), key(c), key(t(10)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10),
-  `c` varchar(10),
+  `v` varchar(10) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text,
   KEY `v` (`v`),
   KEY `c` (`c`),
@@ -2057,8 +2057,8 @@ Warning	1071	Specified key was too long; max key length is 767 bytes
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(300),
-  `c` varchar(10),
+  `v` varchar(300) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text,
   KEY `c` (`c`),
   KEY `t` (`t`()),
@@ -2137,8 +2137,8 @@ alter table t1 drop key v, add key v (v(30));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(300),
-  `c` varchar(10),
+  `v` varchar(300) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text,
   KEY `c` (`c`),
   KEY `t` (`t`()),
@@ -2221,8 +2221,8 @@ Warning	1071	Specified key was too long; max key length is 767 bytes
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(600),
-  `c` varchar(10),
+  `v` varchar(600) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text,
   KEY `c` (`c`),
   KEY `t` (`t`()),
@@ -2299,8 +2299,8 @@ create table t1 (v varchar(10), c char(10), t text, key(v(5)), key(c(5)), key(t(
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10),
-  `c` varchar(10),
+  `v` varchar(10) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL,
   `t` text,
   KEY `v` (`v`()),
   KEY `c` (`c`()),
@@ -2311,7 +2311,7 @@ create table t1 (v char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10)
+  `v` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 (v varchar(10), c char(10)) row_format=fixed;
@@ -2320,8 +2320,8 @@ Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10),
-  `c` varchar(10)
+  `v` varchar(10) DEFAULT NULL,
+  `c` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB ROW_FORMAT=FIXED
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;
@@ -2346,14 +2346,14 @@ create table t1 (v varchar(16383));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(16383)
+  `v` varchar(16383) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 (v varchar(16383));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(16383)
+  `v` varchar(16383) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 set storage_engine=InnoDB;
@@ -2489,8 +2489,8 @@ Warning	1071	Specified key was too long; max key length is 767 bytes
 show create table t9;
 Table	Create Table
 t9	CREATE TABLE `t9` (
-  `col1` varchar(512),
-  `col2` varchar(512),
+  `col1` varchar(512) DEFAULT NULL,
+  `col2` varchar(512) DEFAULT NULL,
   KEY `col1` (`col1`(),`col2`())
 ) ENGINE=InnoDB
 drop table t1, t2, t4, t5, t6, t7, t8, t9;
@@ -2513,7 +2513,7 @@ Warning	1071	Specified key was too long; max key length is 767 bytes
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `col1` varchar(768),
+  `col1` varchar(768) DEFAULT NULL,
   KEY `col1` (`col1`())
 ) ENGINE=InnoDB
 drop table t1, t2, t3, t4;
@@ -2745,7 +2745,7 @@ ALTER TABLE t2 DROP FOREIGN KEY t2_ibfk_0;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` int,
+  `a` int DEFAULT NULL,
   KEY `t2_ibfk_0` (`a`)
 ) ENGINE=InnoDB
 DROP TABLE t2,t1;

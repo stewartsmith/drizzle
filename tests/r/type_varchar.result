@@ -3,9 +3,9 @@ create table t1 (v varchar(30), c char(3), e enum('abc','def','ghi'), t text);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(30),
-  `c` varchar(3),
-  `e` enum('abc','def','ghi'),
+  `v` varchar(30) DEFAULT NULL,
+  `c` varchar(3) DEFAULT NULL,
+  `e` enum('abc','def','ghi') DEFAULT NULL,
   `t` text
 ) ENGINE=InnoDB
 insert into t1 values ('abc', 'de', 'ghi', 'jkl');
@@ -367,14 +367,14 @@ create index index1 on t1(f1(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f1` varchar(6500),
+  `f1` varchar(6500) DEFAULT NULL,
   KEY `index1` (`f1`())
 ) ENGINE=InnoDB
 alter table t1 modify f1 varchar(255);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f1` varchar(255),
+  `f1` varchar(255) DEFAULT NULL,
   KEY `index1` (`f1`())
 ) ENGINE=InnoDB
 alter table t1 modify f1 tinytext;
