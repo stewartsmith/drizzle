@@ -260,17 +260,6 @@ bool Field_time::get_time(DRIZZLE_TIME *ltime)
   return 0;
 }
 
-
-bool Field_time::send_binary(Protocol *protocol)
-{
-  DRIZZLE_TIME tm;
-  Field_time::get_time(&tm);
-  tm.day= tm.hour/24;				// Move hours to days
-  tm.hour-= tm.day*24;
-  return protocol->store_time(&tm);
-}
-
-
 int Field_time::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;

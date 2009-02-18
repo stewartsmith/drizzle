@@ -171,12 +171,6 @@ String *Field_long::val_str(String *val_buffer,
   return val_buffer;
 }
 
-
-bool Field_long::send_binary(Protocol *protocol)
-{
-  return protocol->store_long(Field_long::val_int());
-}
-
 int Field_long::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;

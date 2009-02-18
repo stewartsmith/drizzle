@@ -983,16 +983,6 @@ void Field::copy_from_tmp(int row_offset)
   }
 }
 
-
-bool Field::send_binary(Protocol *protocol)
-{
-  char buff[MAX_FIELD_WIDTH];
-  String tmp(buff,sizeof(buff),charset());
-  val_str(&tmp);
-  return protocol->store(tmp.ptr(), tmp.length(), tmp.charset());
-}
-
-
 /**
    Check to see if field size is compatible with destination.
 
@@ -1406,7 +1396,7 @@ void Create_field::create_length_to_internal_length(void)
     pack_length= calc_pack_length(sql_type, length);
     break;
   case DRIZZLE_TYPE_ENUM:
-    /* Pack_length already calculated in sql_parse.cc */
+    /* Pack_length already calculated in ::init() */
     length*= charset->mbmaxlen;
     key_length= pack_length;
     break;

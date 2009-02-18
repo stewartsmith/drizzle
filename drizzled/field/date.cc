@@ -192,13 +192,6 @@ int Field_date::store_time(DRIZZLE_TIME *ltime,
   return error;
 }
 
-bool Field_date::send_binary(Protocol *protocol)
-{
-  DRIZZLE_TIME tm;
-  Field_date::get_date(&tm,0);
-  return protocol->store_date(&tm);
-}
-
 double Field_date::val_real(void)
 {
   return (double) Field_date::val_int();

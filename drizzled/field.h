@@ -56,12 +56,6 @@ inline uint32_t get_enum_pack_length(int elements)
   return elements < 256 ? 1 : 2;
 }
 
-inline uint32_t get_set_pack_length(int elements)
-{
-  uint32_t len= (elements + 7) / 8;
-  return len > 4 ? 8 : len;
-}
-
 class Field
 {
   Field(const Item &);				/* Prevent use of these */
@@ -410,8 +404,6 @@ public:
     ptr= old_ptr;
     return str;
   }
-
-  virtual bool send_binary(Protocol *protocol);
 
   virtual unsigned char *pack(unsigned char *to,
                               const unsigned char *from,
