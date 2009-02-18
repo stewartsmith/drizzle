@@ -50,6 +50,8 @@ AM_PROG_CC_C_O
 
 gl_INIT
 
+AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
+
 AC_PROG_GCC_TRADITIONAL
 
 
@@ -256,13 +258,13 @@ then
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  AM_CXXFLAGS="${AM_CXXFLAGS} -xc99 -g -compat=5 -library=stlport4 -template=no%extdef -xprefetch=explicit ${MEMALIGN_FLAGS}"
-  AM_CFLAGS="${AM_CFLAGS} -xc99 -g -xstrconst -xprefetch=explicit ${MEMALIGN_FLAGS}"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -xlang=c99 -g -compat=5 -library=stlport4 -template=no%extdef ${MEMALIGN_FLAGS}"
+  AM_CFLAGS="${AM_CFLAGS} -g ${MEMALIGN_FLAGS}"
   DEBUG_CFLAGS="-xO0"
   DEBUG_CXXFLAGS="-xO0" 
 
-  OPTIMIZE_FLAGS="-fast -xO4 -xlibmil -xdepend -Xa -mt -xstrconst -xtarget=native -xipo=2"
-  OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS}"
+  OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend -xprefetch=explicit"
+  OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS} -Xa -xstrconst"
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
 fi
 
@@ -461,25 +463,15 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 # Check for libpcre
 #--------------------------------------------------------------------
 
-if test "$found_pcre" = "no"
-then
-  save_LIBS="${LIBS}"
-  AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
-  AS_IF([test "x$ac_cv_libpcre" = "xno"],[
-    AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
-      AS_IF([test "x$ac_cv_libpcre" = "xno"],
-            [AC_MSG_ERROR([libpcre is required for Drizzle])]
-            [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
-    ],[
-      AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
-    ])
-  PCRE_LIBS="${LTLIBPCRE}"
-  LIBS="${save_LIBS}"
-else
-  AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
-fi
-AC_SUBST(PCRE_LIBS)
-AC_SUBST(PCRE_CFLAGS)
+AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
+AS_IF([test "x$ac_cv_libpcre" = "xno"],[
+  AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
+    AS_IF([test "x$ac_cv_libpcre" = "xno"],
+          [AC_MSG_ERROR([libpcre is required for Drizzle])]
+          [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
+  ],[
+    AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
+  ])
 
 
 dnl Find paths to some shell programs
