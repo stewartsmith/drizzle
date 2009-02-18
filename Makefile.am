@@ -156,7 +156,7 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 if HAVE_LCOV
 
-lcov: lcov-clean test index.html
+lcov: lcov-clean test lcov/index.html
 
 lcov/drizzle.output: drizzled/drizzled
 	mkdir -p lcov

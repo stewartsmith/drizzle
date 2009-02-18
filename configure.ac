@@ -50,19 +50,6 @@ AM_PROG_CC_C_O
 
 gl_INIT
 
-AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
-ifdef([AC_PROG_CC_C99],[
-    AC_PROG_CC_C99([$1],[$2],[$3])
-],[
-if "x$GCC" = "xyes"
-then
-  C99_SUPPORT_HACK="-std=gnu99"
-fi
-if "x$SUNCC" = "xyes"
-then
-  C99_SUPPORT_HACK="-xc99"
-fi
-])
 AC_PROG_GCC_TRADITIONAL
 
 
@@ -252,33 +239,31 @@ then
 fi
 # Build optimized or debug version ?
 # First check for gcc and g++
-SYMBOLS_FLAGS="-g"
-DEBUG_OPTIMIZE_CC=""
-OPTIMIZE_CFLAGS="-O"
-DEBUG_OPTIMIZE_CXX=""
-OPTIMIZE_CXXFLAGS="-O"
 if test "$GCC" = "yes"
 then
-  SYMBOLS_FLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CC="-O0"
+  AM_CFLAGS="${AM_CPPFLAGS} -ggdb3 -std=gnu99"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -ggdb3 -std=gnu++98"
+
+  DEBUG_CFLAGS="-O0"
+  DEBUG_CXXFLAGS="-O0"
+
   OPTIMIZE_CFLAGS="-O3"
-  DEBUG_OPTIMIZE_CXX="-O0"
   OPTIMIZE_CXXFLAGS="-O3"
 fi
 if test "$SUNCC" = "yes"
 then
-  DEBUG_OPTIMIZE_CC=""
   if test "$target_cpu" = "sparc"
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  AM_CXXFLAGS="${AM_CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef -xprefetch=explicit ${MEMALIGN_FLAGS}"
-  AM_CFLAGS="${AM_CFLAGS} -xstrconst -xprefetch=explicit ${MEMALIGN_FLAGS}"
-  SYMBOLS_FLAGS="-g"
-  OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -xc99 -g -compat=5 -library=stlport4 -template=no%extdef -xprefetch=explicit ${MEMALIGN_FLAGS}"
+  AM_CFLAGS="${AM_CFLAGS} -xc99 -g -xstrconst -xprefetch=explicit ${MEMALIGN_FLAGS}"
+  DEBUG_CFLAGS="-xO0"
+  DEBUG_CXXFLAGS="-xO0" 
+
+  OPTIMIZE_FLAGS="-fast -xO4 -xlibmil -xdepend -Xa -mt -xstrconst -xtarget=native -xipo=2"
   OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS}"
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
-  DEBUG_OPTIMIZE_CXX=""
 fi
 
 # We use libtool
@@ -301,9 +286,6 @@ AC_DEFUN([AX_HEADER_ASSERT],
 
 AX_HEADER_ASSERT
 
-AM_CFLAGS="${SYMBOLS_FLAGS} ${AM_CFLAGS}"
-AM_CXXFLAGS="${SYMBOLS_FLAGS} ${AM_CXXFLAGS}"
-
 AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],
        [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
@@ -311,13 +293,13 @@ AC_ARG_WITH([debug],
     [with_debug=no])
 if test "$with_debug" = "yes"
 then
-  # Medium debug.
-  AM_CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG ${AM_CFLAGS} ${SAVE_CFLAGS}"
-  AM_CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG ${AM_CXXFLAGS} ${SAVE_CXXFLAGS}"
+  # Debuging. No optimization.
+  AM_CFLAGS="${OPTIMIZE_CFLAGS} -DDEBUG ${AM_CFLAGS}"
+  AM_CXXFLAGS="${OPTIMIZE_CXXFLAGS} -DDEBUG ${AM_CXXFLAGS}"
 else
   # Optimized version. No debug
-  AM_CFLAGS="${OPTIMIZE_CFLAGS} ${AM_CFLAGS} ${SAVE_CFLAGS}"
-  AM_CXXFLAGS="$OPTIMIZE_CXXFLAGS ${AM_CXXFLAGS} ${SAVE_CXXFLAGS}"
+  AM_CFLAGS="${OPTIMIZE_CFLAGS} ${AM_CFLAGS}"
+  AM_CXXFLAGS="$OPTIMIZE_CXXFLAGS ${AM_CXXFLAGS}"
 fi
 
 
