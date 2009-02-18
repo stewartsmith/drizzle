@@ -403,10 +403,17 @@ static void fill_table_proto(drizzle::Table *table_proto,
   while ((field_arg= it++))
   {
     drizzle::Table::Field *attribute;
-    //drizzle::Table::Field::FieldConstraints *constraints;
 
     attribute= table_proto->add_field();
     attribute->set_name(field_arg->field_name);
+
+    if(f_maybe_null(field_arg->pack_flag))
+    {
+      drizzle::Table::Field::FieldConstraints *constraints;
+
+      constraints= attribute->mutable_constraints();
+      constraints->set_is_nullable(true);
+    }
 
     switch (field_arg->sql_type) {
     case DRIZZLE_TYPE_TINY:
