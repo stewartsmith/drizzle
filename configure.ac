@@ -461,9 +461,6 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 # Check for libpcre
 #--------------------------------------------------------------------
 
-AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcre >= 3], [found_pcre="yes"],[found_pcre="no"])
-
 if test "$found_pcre" = "no"
 then
   save_LIBS="${LIBS}"
