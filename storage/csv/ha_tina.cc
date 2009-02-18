@@ -836,9 +836,6 @@ int ha_tina::write_row(unsigned char * buf)
 
   ha_statistic_increment(&SSV::ha_write_count);
 
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-    table->timestamp_field->set_time();
-
   size= encode_quote(buf);
 
   if (!share->tina_write_opened)

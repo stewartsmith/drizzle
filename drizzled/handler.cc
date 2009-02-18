@@ -4279,6 +4279,15 @@ int handler::ha_write_row(unsigned char *buf)
   int error;
   DRIZZLE_INSERT_ROW_START();
 
+  /* 
+   * If we have a timestamp column, update it to the current time 
+   * 
+   * @TODO Technically, the below two lines can be take even further out of the
+   * handler interface and into the fill_record() method.
+   */
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
+    table->timestamp_field->set_time();
+
   mark_trx_read_write();
 
   if (unlikely(error= write_row(buf)))

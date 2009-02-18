@@ -728,8 +728,6 @@ int ha_archive::write_row(unsigned char *buf)
     return(HA_ERR_CRASHED_ON_USAGE);
 
   ha_statistic_increment(&SSV::ha_write_count);
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-    table->timestamp_field->set_time();
   pthread_mutex_lock(&share->mutex);
 
   if (share->archive_write_open == false)
