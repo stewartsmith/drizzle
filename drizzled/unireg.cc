@@ -48,7 +48,6 @@ static uint32_t pack_keys(unsigned char *keybuff,uint32_t key_count,
 static bool pack_header(unsigned char *forminfo,
                         List<Create_field> &create_fields,
                         uint32_t info_length, uint32_t screens,
-                        uint32_t table_options,
                         ulong data_offset, handler *file);
 static uint32_t get_interval_id(uint32_t *int_count,
                                 List<Create_field> &create_fields,
@@ -167,7 +166,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
 
   error= pack_header(forminfo,
                      create_fields,info_length,
-                     screens, create_info->table_options,
+                     screens,
                      data_offset, db_file);
 
   session->pop_internal_handler();
@@ -183,7 +182,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
       return(1);
     if (pack_header(forminfo,
                     create_fields,info_length,
-		    screens, create_info->table_options, data_offset, db_file))
+		    screens, data_offset, db_file))
     {
       free(screen_buff);
       return(1);
@@ -1043,7 +1042,7 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
 
 static bool pack_header(unsigned char *forminfo,
                         List<Create_field> &create_fields,
-                        uint32_t info_length, uint32_t screens, uint32_t table_options,
+                        uint32_t info_length, uint32_t screens,
                         ulong data_offset, handler *file)
 {
   uint32_t length,int_count,int_length, int_parts;
@@ -1178,8 +1177,7 @@ static bool pack_header(unsigned char *forminfo,
     my_error(ER_TOO_BIG_ROWSIZE, MYF(0), (uint) file->max_record_length());
     return(1);
   }
-  /* Hack to avoid bugs with small static rows in MySQL */
-  reclength=cmax((ulong)file->min_record_length(table_options),reclength);
+
   if (info_length+(ulong) create_fields.elements*FCOMP+288+
       n_length+int_length+com_length+vcol_info_length > 65535L ||
       int_count > 255)
