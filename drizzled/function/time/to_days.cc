@@ -17,19 +17,114 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "drizzled/server_includes.h"
 #include CSTDINT_H
-#include <drizzled/function/time/to_days.h>
+#include "drizzled/function/time/to_days.h"
+#include "drizzled/error.h"
+#include "drizzled/temporal.h"
 
+/* 
+ * We intepret the first argument as a DateTime and then convert
+ * it to a Julian Day Number and return it.
+ */
 int64_t Item_func_to_days::val_int()
 {
-  assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-  if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
-    return 0;
-  return (int64_t) calc_daynr(ltime.year,ltime.month,ltime.day);
-}
+  assert(fixed);
 
+  /* We return NULL from FROM_DAYS() only when supplied a NULL argument */
+  if (args[0]->null_value)
+  {
+    null_value= true;
+    return false;
+  }
+
+  /*
+   * We attempt to convert the first argument into a
+   * temporal value.  If the conversion is successful, 
+   * we know that a conversion to a Julian Day Number
+   * is always possible.  Upon successful conversion, 
+   * we return the Julian Day Number.  If no conversion
+   * was possible into a temporal value, we throw an 
+   * error and return 0, setting the null_value flag to true.
+   */
+  /* Grab the first argument as a DateTime object */
+  drizzled::DateTime temporal;
+  Item_result arg0_result_type= args[0]->result_type();
+  
+  switch (arg0_result_type)
+  {
+    case REAL_RESULT:
+    case DECIMAL_RESULT: 
+      /* 
+       * For doubles supplied, interpret the arg as a string, 
+       * so intentionally fall-through here...
+       * This allows us to accept double parameters like 
+       * 19971231235959.01 and interpret it the way MySQL does:
+       * as a TIMESTAMP-like thing with a microsecond component.
+       * Ugh, but need to keep backwards-compat.
+       */
+    case STRING_RESULT:
+      {
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+        String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+        String *res= args[0]->val_str(&tmp);
+
+        if (! res)
+        {
+          /* 
+           * Likely a nested function issue where the nested
+           * function had bad input.  We rely on the nested
+           * function my_error() and simply return false here.
+           */
+          return false;
+        }
+
+        if (! temporal.from_string(res->c_ptr(), res->length()))
+        {
+          /* 
+          * Could not interpret the function argument as a temporal value, 
+          * so throw an error and return 0
+          */
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          return 0;
+        }
+      }
+      break;
+    case INT_RESULT:
+      if (temporal.from_int64_t(args[0]->val_int()))
+        break;
+      /* Intentionally fall-through on invalid conversion from integer */
+    default:
+      {
+        /* 
+        * Could not interpret the function argument as a temporal value, 
+        * so throw an error and return 0
+        */
+        null_value= true;
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+        String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+        String *res;
+
+        res= args[0]->val_str(&tmp);
+
+        if (! res)
+        {
+          /* 
+           * Likely a nested function issue where the nested
+           * function had bad input.  We rely on the nested
+           * function my_error() and simply return false here.
+           */
+          return false;
+        }
+
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+        return 0;
+      }
+  }
+  int64_t julian_day_number;
+  temporal.to_julian_day_number(&julian_day_number);
+  return julian_day_number;
+}
 
 /*
   Get information about this Item tree monotonicity
@@ -44,7 +139,6 @@ int64_t Item_func_to_days::val_int()
   RETURN
     See enum_monotonicity_info.
 */
-
 enum_monotonicity_info Item_func_to_days::get_monotonicity_info() const
 {
   if (args[0]->type() == Item::FIELD_ITEM)
@@ -59,20 +153,105 @@ enum_monotonicity_info Item_func_to_days::get_monotonicity_info() const
 
 int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
 {
-  assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-  int64_t res;
-  if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
+  assert(fixed);
+
+  /*
+   * We attempt to convert the first argument into a
+   * temporal value.  If the conversion is successful, 
+   * we know that a conversion to a Julian Day Number
+   * is always possible. Depending on whether the 
+   * first argument is a Date, or a DateTime with no
+   * time-portion, we return the Julian Day Number or
+   * the appropriate end-point integer.
+   */
+  /* Grab the first argument as a DateTime object */
+  drizzled::DateTime temporal;
+  Item_result arg0_result_type= args[0]->result_type();
+  
+  switch (arg0_result_type)
+  {
+    case REAL_RESULT:
+    case DECIMAL_RESULT: 
+      /* 
+       * For doubles supplied, interpret the arg as a string, 
+       * so intentionally fall-through here...
+       * This allows us to accept double parameters like 
+       * 19971231235959.01 and interpret it the way MySQL does:
+       * as a TIMESTAMP-like thing with a microsecond component.
+       * Ugh, but need to keep backwards-compat.
+       */
+    case STRING_RESULT:
+      {
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+        String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+        String *res= args[0]->val_str(&tmp);
+
+        if (! res)
+        {
+          /* 
+           * Likely a nested function issue where the nested
+           * function had bad input.  We rely on the nested
+           * function my_error() and simply return false here.
+           */
+          return 0;
+        }
+
+        if (! temporal.from_string(res->c_ptr(), res->length()))
+        {
+          /* 
+          * Could not interpret the function argument as a temporal value, 
+          * so throw an error and return 0
+          */
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+          return 0;
+        }
+      }
+      break;
+    case INT_RESULT:
+      if (temporal.from_int64_t(args[0]->val_int()))
+        break;
+      /* Intentionally fall-through on invalid conversion from integer */
+    default:
+      {
+        /* 
+        * Could not interpret the function argument as a temporal value, 
+        * so throw an error and return 0
+        */
+        null_value= true;
+        char buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
+        String tmp(buff,sizeof(buff), &my_charset_utf8_bin);
+        String *res;
+
+        res= args[0]->val_str(&tmp);
+
+        if (! res)
+        {
+          /* 
+           * Likely a nested function issue where the nested
+           * function had bad input.  We rely on the nested
+           * function my_error() and simply return false here.
+           */
+          return 0;
+        }
+
+        my_error(ER_INVALID_DATETIME_VALUE, MYF(0), res->c_ptr());
+        return 0;
+      }
+  }
+
+  if (null_value == true)
   {
     /* got NULL, leave the incl_endp intact */
     return INT64_MIN;
   }
-  res=(int64_t) calc_daynr(ltime.year,ltime.month,ltime.day);
+
+  int64_t julian_day_number;
+  temporal.to_julian_day_number(&julian_day_number);
 
   if (args[0]->field_type() == DRIZZLE_TYPE_DATE)
   {
-    // TO_DAYS() is strictly monotonic for dates, leave incl_endp intact
-    return res;
+    /* TO_DAYS() is strictly monotonic for dates, leave incl_endp intact */
+    return julian_day_number;
   }
 
   /*
@@ -86,11 +265,16 @@ int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
 
       col < '2007-09-15 12:34:56'  -> TO_DAYS(col) <= TO_DAYS('2007-09-15')
   */
-  if (!left_endp && !(ltime.hour || ltime.minute || ltime.second ||
-                      ltime.second_part))
+  if (!left_endp && ! (
+                    temporal.hours() 
+                    || temporal.minutes()
+                    || temporal.seconds() 
+                    || temporal.useconds()
+                    || temporal.nseconds()
+                    )
+                    )
     ; /* do nothing */
   else
     *incl_endp= true;
-  return res;
+  return julian_day_number;
 }
-

@@ -230,8 +230,6 @@ int ha_heap::write_row(unsigned char * buf)
 {
   int res;
   ha_statistic_increment(&SSV::ha_write_count);
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-    table->timestamp_field->set_time();
   if (table->next_number_field && buf == table->record[0])
   {
     if ((res= update_auto_increment()))

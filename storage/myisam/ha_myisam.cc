@@ -609,10 +609,6 @@ int ha_myisam::write_row(unsigned char *buf)
 {
   ha_statistic_increment(&SSV::ha_write_count);
 
-  /* If we have a timestamp column, update it to the current time */
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-    table->timestamp_field->set_time();
-
   /*
     If we have an auto_increment column and we are writing a changed row
     or a new row, then update the auto_increment value in the record.

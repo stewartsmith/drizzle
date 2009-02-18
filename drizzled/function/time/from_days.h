@@ -20,14 +20,35 @@
 #ifndef DRIZZLED_FUNCTION_TIME_FROM_DAYS_H
 #define DRIZZLED_FUNCTION_TIME_FROM_DAYS_H
 
-#include <drizzled/function/time/date.h>
+#include "drizzled/function/time/date.h"
+
+/* forward declarations */
+namespace drizzled {class Date;}
 
 class Item_func_from_days :public Item_date
 {
 public:
   Item_func_from_days(Item *a) :Item_date(a) {}
   const char *func_name() const { return "from_days"; }
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+  /**
+   * All functions which inherit from Item_date must implement
+   * their own get_temporal() method, which takes a supplied
+   * drizzled::Date reference and populates it with a correct
+   * date based on the semantics of the function.
+   *
+   * For FROM_DAYS(), we interpret the function's argument
+   * as a Julian Day Number and populate our supplied Date
+   * reference accordingly.
+   *
+   * Returns whether the function was able to correctly fill
+   * the supplied date temporal with a proper date.
+   *
+   * For a NULL parameter, we return false and set null_value
+   * to true.
+   *
+   * @param Reference to a drizzled::Date to populate
+   */
+  bool get_temporal(drizzled::Date &temporal);
   bool check_vcol_func_processor(unsigned char *)
   { return false; }
 };

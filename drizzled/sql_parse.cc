@@ -2035,7 +2035,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
 {
   LEX	*lex= session->lex;
   select_result *result=lex->result;
-  bool res;
+  bool res= false;
   /* assign global limit variable if limit is not given */
   {
     Select_Lex *param= lex->unit.global_parameters;
@@ -2054,7 +2054,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         even if the query itself redirects the output.
       */
       if (!(result= new select_send()))
-        return 1;                               /* purecov: inspected */
+        return true;                               /* purecov: inspected */
       session->send_explain_fields(result);
       res= mysql_explain_union(session, &session->lex->unit, result);
       if (lex->describe & DESCRIBE_EXTENDED)
@@ -2076,7 +2076,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     else
     {
       if (!result && !(result= new select_send()))
-        return 1;                               /* purecov: inspected */
+        return true;                               /* purecov: inspected */
       res= handle_select(session, lex, result, 0);
       if (result != lex->result)
         delete result;

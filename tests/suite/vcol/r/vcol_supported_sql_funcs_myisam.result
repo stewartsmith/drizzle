@@ -1989,10 +1989,10 @@ t1	CREATE TABLE `t1` (
   `a` int DEFAULT NULL,
   `b` VIRTUAL datetime AS (from_days(a))
 ) ENGINE=MyISAM
-insert into t1 values (730669,default);
+insert into t1 values (2454877,default);
 select * from t1;
 a	b
-730669	2000-07-03 00:00:00
+2454877	2009-02-14 00:00:00
 drop table t1;
 set sql_warnings = 0;
 # FROM_UNIXTIME()
@@ -2389,7 +2389,7 @@ t1	CREATE TABLE `t1` (
 insert into t1 values ('2007-10-07',default);
 select * from t1;
 a	b
-2007-10-07 00:00:00	733321
+2007-10-07 00:00:00	2454381
 drop table t1;
 set sql_warnings = 0;
 # WEEKDAY()

@@ -17,8 +17,8 @@
   Derived tables
   These were introduced by Sinisa <sinisa@mysql.com>
 */
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_select.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/sql_select.h"
 
 /*
   Call given derived table processor (preparing or filling tables)
@@ -32,32 +32,27 @@
     false  OK
     true   Error
 */
-bool
-mysql_handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*))
+bool mysql_handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*))
 {
   bool res= false;
   if (lex->derived_tables)
   {
     lex->session->derived_tables_processing= true;
-    for (Select_Lex *sl= lex->all_selects_list;
-	 sl;
-	 sl= sl->next_select_in_list())
+    for (Select_Lex *sl= lex->all_selects_list; sl; sl= sl->next_select_in_list())
     {
-      for (TableList *cursor= sl->get_table_list();
-	   cursor;
-	   cursor= cursor->next_local)
+      for (TableList *cursor= sl->get_table_list(); cursor; cursor= cursor->next_local)
       {
-	if ((res= (*processor)(lex->session, lex, cursor)))
-	  goto out;
+        if ((res= (*processor)(lex->session, lex, cursor)))
+          goto out;
       }
       if (lex->describe)
       {
-	/*
-	  Force join->join_tmp creation, because we will use this JOIN
-	  twice for EXPLAIN and we have to have unchanged join for EXPLAINing
-	*/
-	sl->uncacheable|= UNCACHEABLE_EXPLAIN;
-	sl->master_unit()->uncacheable|= UNCACHEABLE_EXPLAIN;
+        /*
+          Force join->join_tmp creation, because we will use this JOIN
+          twice for EXPLAIN and we have to have unchanged join for EXPLAINing
+        */
+        sl->uncacheable|= UNCACHEABLE_EXPLAIN;
+        sl->master_unit()->uncacheable|= UNCACHEABLE_EXPLAIN;
       }
     }
   }
@@ -65,7 +60,6 @@ out:
   lex->session->derived_tables_processing= false;
   return res;
 }
-
 
 /*
   Create temporary table structure (but do not fill it)
@@ -91,9 +85,7 @@ out:
     false  OK
     true   Error
 */
-
-bool mysql_derived_prepare(Session *session, LEX *,
-                           TableList *orig_table_list)
+bool mysql_derived_prepare(Session *session, LEX *, TableList *orig_table_list)
 {
   Select_Lex_Unit *unit= orig_table_list->derived;
   uint64_t create_options;
@@ -115,8 +107,7 @@ bool mysql_derived_prepare(Session *session, LEX *,
     if ((res= unit->prepare(session, derived_result, 0)))
       goto exit;
 
-    create_options= (first_select->options | session->options |
-                     TMP_TABLE_ALL_COLUMNS);
+    create_options= (first_select->options | session->options | TMP_TABLE_ALL_COLUMNS);
     /*
       Temp table is created so that it hounours if UNION without ALL is to be
       processed
@@ -144,15 +135,15 @@ exit:
     if (res)
     {
       if (table)
-	  table->free_tmp_table(session);
+        table->free_tmp_table(session);
       delete derived_result;
     }
     else
     {
-      if (!session->fill_derived_tables())
+      if (! session->fill_derived_tables())
       {
-	delete derived_result;
-	derived_result= NULL;
+        delete derived_result;
+        derived_result= NULL;
       }
       orig_table_list->derived_result= derived_result;
       orig_table_list->table= table;
@@ -162,7 +153,7 @@ exit:
       table->s->tmp_table= NON_TRANSACTIONAL_TMP_TABLE;
       orig_table_list->db= (char *)"";
       orig_table_list->db_length= 0;
-      // Force read of table stats in the optimizer
+      /* Force read of table stats in the optimizer */
       table->file->info(HA_STATUS_VARIABLE);
       /* Add new temporary table to list of open derived tables */
       table->next= session->derived_tables;
@@ -172,7 +163,6 @@ exit:
 
   return(res);
 }
-
 
 /*
   fill derived table
@@ -196,7 +186,6 @@ exit:
     false  OK
     true   Error
 */
-
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_list)
 {
   Table *table= orig_table_list->table;
@@ -211,31 +200,31 @@ bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_lis
     Select_Lex *save_current_select= lex->current_select;
     if (unit->is_union())
     {
-      // execute union without clean up
+      /* execute union without clean up */
       res= unit->exec();
     }
     else
     {
       unit->set_limit(first_select);
       if (unit->select_limit_cnt == HA_POS_ERROR)
-	first_select->options&= ~OPTION_FOUND_ROWS;
+	      first_select->options&= ~OPTION_FOUND_ROWS;
 
       lex->current_select= first_select;
       res= mysql_select(session, &first_select->ref_pointer_array,
-			(TableList*) first_select->table_list.first,
-			first_select->with_wild,
-			first_select->item_list, first_select->where,
-			(first_select->order_list.elements+
-			 first_select->group_list.elements),
-			(order_st *) first_select->order_list.first,
-			(order_st *) first_select->group_list.first,
-			first_select->having, (order_st*) NULL,
-			(first_select->options | session->options |
-			 SELECT_NO_UNLOCK),
-			derived_result, unit, first_select);
+                        (TableList*) first_select->table_list.first,
+                        first_select->with_wild,
+                        first_select->item_list, first_select->where,
+                        (first_select->order_list.elements+
+                        first_select->group_list.elements),
+                        (order_st *) first_select->order_list.first,
+                        (order_st *) first_select->group_list.first,
+                        first_select->having, (order_st*) NULL,
+                        (first_select->options | session->options |
+                        SELECT_NO_UNLOCK),
+                        derived_result, unit, first_select);
     }
 
-    if (!res)
+    if (! res)
     {
       /*
         Here we entirely fix both TableList and list of SELECT's as
@@ -244,7 +233,7 @@ bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_lis
       if (derived_result->flush())
         res= true;
 
-      if (!lex->describe)
+      if (! lex->describe)
         unit->cleanup();
     }
     else
