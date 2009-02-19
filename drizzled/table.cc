@@ -293,7 +293,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   // share->db_create_options FAIL
   // share->db_options_in_use FAIL
   share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
-  share->null_field_first= 0;
 
   drizzle::Table::TableOptions table_options;
 
@@ -330,8 +329,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     }
     share->table_charset= default_charset_info;
   }
-
-  share->null_field_first= 1;
 
   share->db_record_offset= 1;
 
@@ -988,17 +985,15 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     goto err;
 
   record= share->default_values-1;              /* Fieldstart = 1 */
-  if (share->null_field_first)
-  {
-    null_flags= null_pos= (unsigned char*) record+1;
-    null_bit_pos= (db_create_options & HA_OPTION_PACK_RECORD) ? 0 : 1;
-    /*
-      null_bytes below is only correct under the condition that
-      there are no bit fields.  Correct values is set below after the
-      table struct is initialized
-    */
-    share->null_bytes= (share->null_fields + null_bit_pos + 7) / 8;
-  }
+
+  null_flags= null_pos= (unsigned char*) record+1;
+  null_bit_pos= (db_create_options & HA_OPTION_PACK_RECORD) ? 0 : 1;
+  /*
+    null_bytes below is only correct under the condition that
+    there are no bit fields.  Correct values is set below after the
+    table struct is initialized
+  */
+  share->null_bytes= (share->null_fields + null_bit_pos + 7) / 8;
 
   use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
   if (use_hash)
@@ -1771,11 +1766,8 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
   outparam->field= field_ptr;
 
   record= (unsigned char*) outparam->record[0]-1;	/* Fieldstart = 1 */
-  if (share->null_field_first)
-    outparam->null_flags= (unsigned char*) record+1;
-  else
-    outparam->null_flags= (unsigned char*) (record+ 1+ share->reclength -
-                                    share->null_bytes);
+
+  outparam->null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
   for (i=0 ; i < share->fields; i++, field_ptr++)

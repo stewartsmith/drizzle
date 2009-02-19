@@ -125,7 +125,6 @@ public:
   uint32_t column_bitmap_size;
 
   uint32_t vfields;                         /* Number of virtual fields */
-  bool null_field_first;
   bool db_low_byte_first;		/* Portable row format */
   bool crashed;
   bool name_lock, replace_with_name_lock;

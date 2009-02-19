@@ -86,7 +86,6 @@ public:
   inline uint32_t getNullFields() { return s->null_fields; }
   inline unsigned char *getDefaultValues() { return s->default_values; }
 
-  inline bool isNullFieldFirst() { return s->null_field_first; }
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; }		/* Portable row format */
   inline bool isCrashed() { return s->crashed; }
   inline bool isNameLock() { return s->name_lock; }
