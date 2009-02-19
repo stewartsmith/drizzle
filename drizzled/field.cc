@@ -1396,7 +1396,7 @@ void Create_field::create_length_to_internal_length(void)
     pack_length= calc_pack_length(sql_type, length);
     break;
   case DRIZZLE_TYPE_ENUM:
-    pack_length= get_enum_pack_length(interval_list.elements);
+    /* Pack_length already calculated in ::init() */
     length*= charset->mbmaxlen;
     key_length= pack_length;
     break;
@@ -1689,6 +1689,9 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
     break;
   case DRIZZLE_TYPE_ENUM:
     {
+      /* Should be safe. */
+      pack_length= get_enum_pack_length(fld_interval_list->elements);
+
       List_iterator<String> it(*fld_interval_list);
       String *tmp;
       while ((tmp= it++))

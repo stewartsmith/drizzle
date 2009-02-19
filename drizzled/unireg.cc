@@ -448,7 +448,8 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
         string_field_options= attribute->mutable_string_options();
         attribute->set_type(drizzle::Table::Field::VARCHAR);
-        string_field_options->set_length(field_arg->char_length);
+        string_field_options->set_length(field_arg->length
+					 / field_arg->charset->mbmaxlen);
         string_field_options->set_collation_id(field_arg->charset->number);
         string_field_options->set_collation(field_arg->charset->name);
 
@@ -557,23 +558,6 @@ static void fill_table_proto(drizzle::Table *table_proto,
 	   || field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
 	   || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD);
 
-    /* Fuck me. seriously, wtf */
-    ulong data_offset= (create_info->null_bits + 7)/8;
-    attribute->set_recpos(field_arg->offset+1 + (uint)data_offset);
-
-    /* Because:
-       - flag should never mean flag
-       - unireg_check/unireg_type should exist
-       - and field length should be specified for fixed sized types.
-
-       NOT.
-
-       These should all die a horrible death. A freeze-ray is too good for them.
-       A death-ray is way better.
-    */
-    attribute->set_pack_flag(field_arg->pack_flag);
-    attribute->set_field_length(field_arg->length);
-    attribute->set_interval_nr(field_arg->interval_id);
   }
 
   if (create_info->used_fields & HA_CREATE_USED_PACK_KEYS)
@@ -636,6 +620,9 @@ static void fill_table_proto(drizzle::Table *table_proto,
   default:
     abort();
   }
+
+  table_options->set_pack_record(create_info->table_options
+				 & HA_OPTION_PACK_RECORD);
 
   if (create_info->comment.length)
     table_options->set_comment(create_info->comment.str);
