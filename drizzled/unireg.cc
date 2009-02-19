@@ -48,7 +48,6 @@ static uint32_t pack_keys(unsigned char *keybuff,uint32_t key_count,
 static bool pack_header(unsigned char *forminfo,
                         List<Create_field> &create_fields,
                         uint32_t info_length, uint32_t screens,
-                        uint32_t table_options,
                         ulong data_offset, handler *file);
 static uint32_t get_interval_id(uint32_t *int_count,
                                 List<Create_field> &create_fields,
@@ -167,7 +166,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
 
   error= pack_header(forminfo,
                      create_fields,info_length,
-                     screens, create_info->table_options,
+                     screens,
                      data_offset, db_file);
 
   session->pop_internal_handler();
@@ -183,7 +182,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
       return(1);
     if (pack_header(forminfo,
                     create_fields,info_length,
-		    screens, create_info->table_options, data_offset, db_file))
+		    screens, data_offset, db_file))
     {
       free(screen_buff);
       return(1);
@@ -404,10 +403,17 @@ static void fill_table_proto(drizzle::Table *table_proto,
   while ((field_arg= it++))
   {
     drizzle::Table::Field *attribute;
-    //drizzle::Table::Field::FieldConstraints *constraints;
 
     attribute= table_proto->add_field();
     attribute->set_name(field_arg->field_name);
+
+    if(f_maybe_null(field_arg->pack_flag))
+    {
+      drizzle::Table::Field::FieldConstraints *constraints;
+
+      constraints= attribute->mutable_constraints();
+      constraints->set_is_nullable(true);
+    }
 
     switch (field_arg->sql_type) {
     case DRIZZLE_TYPE_TINY:
@@ -442,7 +448,8 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
         string_field_options= attribute->mutable_string_options();
         attribute->set_type(drizzle::Table::Field::VARCHAR);
-        string_field_options->set_length(field_arg->char_length);
+        string_field_options->set_length(field_arg->length
+					 / field_arg->charset->mbmaxlen);
         string_field_options->set_collation_id(field_arg->charset->number);
         string_field_options->set_collation(field_arg->charset->name);
 
@@ -551,23 +558,6 @@ static void fill_table_proto(drizzle::Table *table_proto,
 	   || field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
 	   || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD);
 
-    /* Fuck me. seriously, wtf */
-    ulong data_offset= (create_info->null_bits + 7)/8;
-    attribute->set_recpos(field_arg->offset+1 + (uint)data_offset);
-
-    /* Because:
-       - flag should never mean flag
-       - unireg_check/unireg_type should exist
-       - and field length should be specified for fixed sized types.
-
-       NOT.
-
-       These should all die a horrible death. A freeze-ray is too good for them.
-       A death-ray is way better.
-    */
-    attribute->set_pack_flag(field_arg->pack_flag);
-    attribute->set_field_length(field_arg->length);
-    attribute->set_interval_nr(field_arg->interval_id);
   }
 
   if (create_info->used_fields & HA_CREATE_USED_PACK_KEYS)
@@ -630,6 +620,9 @@ static void fill_table_proto(drizzle::Table *table_proto,
   default:
     abort();
   }
+
+  table_options->set_pack_record(create_info->table_options
+				 & HA_OPTION_PACK_RECORD);
 
   if (create_info->comment.length)
     table_options->set_comment(create_info->comment.str);
@@ -1043,7 +1036,7 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
 
 static bool pack_header(unsigned char *forminfo,
                         List<Create_field> &create_fields,
-                        uint32_t info_length, uint32_t screens, uint32_t table_options,
+                        uint32_t info_length, uint32_t screens,
                         ulong data_offset, handler *file)
 {
   uint32_t length,int_count,int_length, int_parts;
@@ -1178,8 +1171,7 @@ static bool pack_header(unsigned char *forminfo,
     my_error(ER_TOO_BIG_ROWSIZE, MYF(0), (uint) file->max_record_length());
     return(1);
   }
-  /* Hack to avoid bugs with small static rows in MySQL */
-  reclength=cmax((ulong)file->min_record_length(table_options),reclength);
+
   if (info_length+(ulong) create_fields.elements*FCOMP+288+
       n_length+int_length+com_length+vcol_info_length > 65535L ||
       int_count > 255)

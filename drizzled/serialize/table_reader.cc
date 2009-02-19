@@ -96,8 +96,8 @@ void print_field(const ::drizzle::Table::Field &field)
       cout << " AUTOINCREMENT ";
   }
 
-  if (! field.has_constraints()
-      && field.constraints().is_nullable())
+  if (!( field.has_constraints()
+	 && field.constraints().is_nullable()))
     cout << " NOT NULL ";
 
   if (field.type() == Table::Field::TEXT

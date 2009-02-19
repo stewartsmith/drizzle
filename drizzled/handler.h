@@ -631,8 +631,6 @@ public:
   virtual uint32_t max_supported_key_parts(void) const { return MAX_REF_PARTS; }
   virtual uint32_t max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
-  virtual uint32_t min_record_length(uint32_t) const
-  { return 1; }
 
   virtual bool low_byte_first(void) const { return 1; }
   virtual uint32_t checksum(void) const { return 0; }

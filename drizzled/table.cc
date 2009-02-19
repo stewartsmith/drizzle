@@ -282,6 +282,58 @@ void free_table_share(TABLE_SHARE *share)
   return;
 }
 
+enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
+{
+  enum_field_types field_type;
+
+  switch(proto_field_type)
+  {
+  case drizzle::Table::Field::TINYINT:
+    field_type= DRIZZLE_TYPE_TINY;
+    break;
+  case drizzle::Table::Field::INTEGER:
+    field_type= DRIZZLE_TYPE_LONG;
+    break;
+  case drizzle::Table::Field::DOUBLE:
+    field_type= DRIZZLE_TYPE_DOUBLE;
+    break;
+  case drizzle::Table::Field::TIMESTAMP:
+    field_type= DRIZZLE_TYPE_TIMESTAMP;
+    break;
+  case drizzle::Table::Field::BIGINT:
+    field_type= DRIZZLE_TYPE_LONGLONG;
+    break;
+  case drizzle::Table::Field::TIME:
+    field_type= DRIZZLE_TYPE_TIME;
+    break;
+  case drizzle::Table::Field::DATETIME:
+    field_type= DRIZZLE_TYPE_DATETIME;
+    break;
+  case drizzle::Table::Field::DATE:
+    field_type= DRIZZLE_TYPE_DATE;
+    break;
+  case drizzle::Table::Field::VARCHAR:
+    field_type= DRIZZLE_TYPE_VARCHAR;
+    break;
+  case drizzle::Table::Field::DECIMAL:
+    field_type= DRIZZLE_TYPE_NEWDECIMAL;
+    break;
+  case drizzle::Table::Field::ENUM:
+    field_type= DRIZZLE_TYPE_ENUM;
+    break;
+  case drizzle::Table::Field::BLOB:
+    field_type= DRIZZLE_TYPE_BLOB;
+    break;
+  case drizzle::Table::Field::VIRTUAL:
+    field_type= DRIZZLE_TYPE_VIRTUAL;
+    break;
+  default:
+    abort();
+  }
+
+  return field_type;
+}
+
 int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *share)
 {
   {
@@ -293,7 +345,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   // share->db_create_options FAIL
   // share->db_options_in_use FAIL
   share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
-  share->null_field_first= 0;
 
   drizzle::Table::TableOptions table_options;
 
@@ -330,8 +381,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     }
     share->table_charset= default_charset_info;
   }
-
-  share->null_field_first= 1;
 
   share->db_record_offset= 1;
 
@@ -527,8 +576,213 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
 /*  share->field= (Field**) alloc_root(&share->mem_root,
 				     (share->fields * sizeof(Field*)));
-
 */
+  uint32_t null_fields= 0;
+  share->reclength= 0;
+
+  uint32_t *field_offsets= (uint32_t*)malloc(share->fields * sizeof(uint32_t));
+  uint32_t *field_pack_length=(uint32_t*)malloc(share->fields*sizeof(uint32_t));
+
+  assert(field_offsets && field_pack_length); // TODO: fixme
+
+  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  {
+    drizzle::Table::Field pfield= table.field(fieldnr);
+    if(pfield.has_constraints() && pfield.constraints().is_nullable())
+      null_fields++;
+
+    field_offsets[fieldnr]= share->reclength;
+
+    enum_field_types drizzle_field_type=
+      proto_field_type_to_drizzle_type(pfield.type());
+
+    if(drizzle_field_type==DRIZZLE_TYPE_VIRTUAL)
+    {
+      drizzle::Table::Field::VirtualFieldOptions field_options=
+	pfield.virtual_options();
+
+      drizzle_field_type=proto_field_type_to_drizzle_type(field_options.type());
+    }
+
+    /* the below switch is very similar to
+       Create_field::create_length_to_internal_length in field.cc
+       (which should one day be replace by just this code)
+    */
+    switch(drizzle_field_type)
+    {
+    case DRIZZLE_TYPE_BLOB:
+    case DRIZZLE_TYPE_VARCHAR:
+      {
+	drizzle::Table::Field::StringFieldOptions field_options=
+	  pfield.string_options();
+
+	const CHARSET_INFO *cs= get_charset(field_options.has_collation_id()?
+					    field_options.collation_id() : 0);
+
+	if (!cs)
+	  cs= default_charset_info;
+
+	field_pack_length[fieldnr]=
+	  calc_pack_length(drizzle_field_type,
+			   field_options.length() * cs->mbmaxlen);
+
+      }
+      break;
+    case DRIZZLE_TYPE_ENUM:
+      {
+	drizzle::Table::Field::SetFieldOptions field_options=
+	  pfield.set_options();
+
+	field_pack_length[fieldnr]=
+	  get_enum_pack_length(field_options.field_value_size());
+      }
+      break;
+    case DRIZZLE_TYPE_NEWDECIMAL:
+      {
+	drizzle::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
+
+	field_pack_length[fieldnr]=
+	  my_decimal_get_binary_size(fo.precision(), fo.scale());
+      }
+      break;
+    default:
+      /* Zero is okay here as length is fixed for other types. */
+      field_pack_length[fieldnr]= calc_pack_length(drizzle_field_type, 0);
+    }
+
+    share->reclength+= field_pack_length[fieldnr];
+  }
+
+  ulong null_bits= null_fields;
+  if(!table_options.pack_record())
+    null_bits++;
+  ulong data_offset= (null_bits + 7)/8;
+
+  share->reclength+= data_offset;
+
+  ulong rec_buff_length;
+
+  rec_buff_length= ALIGN_SIZE(share->reclength + 1);
+  share->rec_buff_length= rec_buff_length;
+
+  unsigned char* record= NULL;
+
+  if (!(record= (unsigned char *) alloc_root(&share->mem_root,
+                                     rec_buff_length)))
+    abort();
+
+  share->default_values= record;
+
+  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  {
+    drizzle::Table::Field pfield= table.field(fieldnr);
+
+    enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
+
+    switch(pfield.format())
+    {
+    case drizzle::Table::Field::DefaultFormat:
+      column_format= COLUMN_FORMAT_TYPE_DEFAULT;
+      break;
+    case drizzle::Table::Field::FixedFormat:
+      column_format= COLUMN_FORMAT_TYPE_FIXED;
+      break;
+    case drizzle::Table::Field::DynamicFormat:
+      column_format= COLUMN_FORMAT_TYPE_DYNAMIC;
+      break;
+    default:
+      abort();
+    }
+
+    Field::utype unireg_type= Field::NONE;
+
+    if(pfield.has_numeric_options()
+       && pfield.numeric_options().is_autoincrement())
+    {
+      unireg_type= Field::NEXT_NUMBER;
+    }
+
+    if(pfield.has_options()
+       && pfield.options().has_default_value()
+       && pfield.options().default_value().compare("NOW()")==0)
+    {
+      if(pfield.options().has_update_value()
+	 && pfield.options().update_value().compare("NOW()")==0)
+      {
+	unireg_type= Field::TIMESTAMP_DNUN_FIELD;
+      }
+      else if (!pfield.options().has_update_value())
+      {
+	unireg_type= Field::TIMESTAMP_DN_FIELD;
+      }
+      else
+	abort(); // Invalid update value.
+    }
+    else if (pfield.has_options()
+	     && pfield.options().has_update_value()
+	     && pfield.options().update_value().compare("NOW()")==0)
+    {
+      unireg_type= Field::TIMESTAMP_UN_FIELD;
+    }
+
+    LEX_STRING comment;
+    if(!pfield.has_comment())
+    {
+      comment.str= (char*)"";
+      comment.length= 0;
+    }
+    else
+    {
+      size_t len= pfield.comment().length();
+      const char* str= pfield.comment().c_str();
+
+      comment.str= strmake_root(&share->mem_root, str, len);
+      comment.length= len;
+    }
+
+    enum_field_types field_type;
+    virtual_column_info *vcol_info= NULL;
+    bool field_is_stored= true;
+
+
+    field_type= proto_field_type_to_drizzle_type(pfield.type());
+
+    if(field_type==DRIZZLE_TYPE_VIRTUAL)
+    {
+      drizzle::Table::Field::VirtualFieldOptions field_options=
+	pfield.virtual_options();
+
+      vcol_info= new virtual_column_info();
+      field_type= proto_field_type_to_drizzle_type(field_options.type());
+      field_is_stored= field_options.physically_stored();
+
+      size_t len= field_options.expression().length();
+      const char* str= field_options.expression().c_str();
+
+      vcol_info->expr_str.str= strmake_root(&share->mem_root, str, len);
+      vcol_info->expr_str.length= len;
+
+      share->vfields++;
+    }
+
+    // TODO: charset (well... collation)
+
+/*    share->field[fieldnr]= make_field(share, record+recordpos,
+				      field_length,
+				      null_pos, null_bit_pos,
+				      pack_flag,
+				      field_type,
+				      charset,
+				      (Field::utype) MTYP_TYPENR(unireg_type),
+				      (interval_nr ?
+				       share->intervals+interval_nr-1 :
+				       (TYPELIB*) 0),
+				      share->fieldnames.type_names[i]);
+*/
+  }
+
+  free(field_offsets);
+  free(field_pack_length);
 
   return 0;
 }
@@ -814,7 +1068,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 //               (keyinfo->comment.length > 0));
   }
 
-  share->reclength = uint2korr((head+16));
+  assert(share->reclength == uint2korr((head+16)));
   share->stored_rec_length= share->reclength;
 
   record_offset= (ulong) (uint2korr(head+6)+
@@ -988,17 +1242,15 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     goto err;
 
   record= share->default_values-1;              /* Fieldstart = 1 */
-  if (share->null_field_first)
-  {
-    null_flags= null_pos= (unsigned char*) record+1;
-    null_bit_pos= (db_create_options & HA_OPTION_PACK_RECORD) ? 0 : 1;
-    /*
-      null_bytes below is only correct under the condition that
-      there are no bit fields.  Correct values is set below after the
-      table struct is initialized
-    */
-    share->null_bytes= (share->null_fields + null_bit_pos + 7) / 8;
-  }
+
+  null_flags= null_pos= (unsigned char*) record+1;
+  null_bit_pos= (db_create_options & HA_OPTION_PACK_RECORD) ? 0 : 1;
+  /*
+    null_bytes below is only correct under the condition that
+    there are no bit fields.  Correct values is set below after the
+    table struct is initialized
+  */
+  share->null_bytes= (share->null_fields + null_bit_pos + 7) / 8;
 
   use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
   if (use_hash)
@@ -1771,11 +2023,8 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
   outparam->field= field_ptr;
 
   record= (unsigned char*) outparam->record[0]-1;	/* Fieldstart = 1 */
-  if (share->null_field_first)
-    outparam->null_flags= (unsigned char*) record+1;
-  else
-    outparam->null_flags= (unsigned char*) (record+ 1+ share->reclength -
-                                    share->null_bytes);
+
+  outparam->null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
   for (i=0 ; i < share->fields; i++, field_ptr++)

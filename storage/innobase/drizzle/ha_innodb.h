@@ -104,9 +104,9 @@ class ha_innobase: public handler
 	const char** bas_ext() const;
 	Table_flags table_flags() const;
 	uint32_t index_flags(uint idx, uint part, bool all_parts) const;
-	uint max_supported_keys() const;
-	uint max_supported_key_length() const;
-	uint max_supported_key_part_length() const;
+	uint32_t max_supported_keys() const;
+	uint32_t max_supported_key_length() const;
+	uint32_t max_supported_key_part_length() const;
 	const key_map* keys_to_use_for_scanning();
 
 	int open(const char *name, int mode, uint test_if_locked);

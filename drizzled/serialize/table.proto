@@ -40,9 +40,10 @@ message Table {
     optional uint32 block_size = 13;
     optional string comment = 14;
     optional bool pack_keys = 15;
-    optional bool checksum = 16;
-    optional bool page_checksum = 17;
-    optional bool delay_key_write = 18;
+    optional bool pack_record = 16;
+    optional bool checksum = 17;
+    optional bool page_checksum = 18;
+    optional bool delay_key_write = 19;
 
     enum RowType {
     	 ROW_TYPE_DEFAULT = 0;
@@ -54,7 +55,7 @@ message Table {
 	 ROW_TYPE_PAGE = 6;
     }
 
-    optional RowType row_type = 19;
+    optional RowType row_type = 20;
   }
 
   message TableStats {
@@ -148,12 +149,6 @@ message Table {
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
     optional SetFieldOptions set_options = 17;
     optional TimestampFieldOptions timestamp_options = 18;
-
-    /* The below should all die a horrible death and never see release */
-    optional uint32 recpos = 100;
-    optional uint32 pack_flag = 101;
-    optional uint32 field_length = 103;
-    optional uint32 interval_nr = 104;
   }
 
   message Index {
