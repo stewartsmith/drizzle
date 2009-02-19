@@ -51,18 +51,7 @@ AM_PROG_CC_C_O
 gl_INIT
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
-ifdef([AC_PROG_CC_C99],[
-    AC_PROG_CC_C99([$1],[$2],[$3])
-],[
-if "x$GCC" = "xyes"
-then
-  C99_SUPPORT_HACK="-std=gnu99"
-fi
-if "x$SUNCC" = "xyes"
-then
-  C99_SUPPORT_HACK="-xc99"
-fi
-])
+
 AC_PROG_GCC_TRADITIONAL
 
 
@@ -252,33 +241,31 @@ then
 fi
 # Build optimized or debug version ?
 # First check for gcc and g++
-SYMBOLS_FLAGS="-g"
-DEBUG_OPTIMIZE_CC=""
-OPTIMIZE_CFLAGS="-O"
-DEBUG_OPTIMIZE_CXX=""
-OPTIMIZE_CXXFLAGS="-O"
 if test "$GCC" = "yes"
 then
-  SYMBOLS_FLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CC="-O0"
+  AM_CFLAGS="${AM_CPPFLAGS} -ggdb3 -std=gnu99"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -ggdb3 -std=gnu++98"
+
+  DEBUG_CFLAGS="-O0"
+  DEBUG_CXXFLAGS="-O0"
+
   OPTIMIZE_CFLAGS="-O3"
-  DEBUG_OPTIMIZE_CXX="-O0"
   OPTIMIZE_CXXFLAGS="-O3"
 fi
 if test "$SUNCC" = "yes"
 then
-  DEBUG_OPTIMIZE_CC=""
   if test "$target_cpu" = "sparc"
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
-  AM_CXXFLAGS="${AM_CXXFLAGS} -compat=5 -library=stlport4 -template=no%extdef -xprefetch=explicit ${MEMALIGN_FLAGS}"
-  AM_CFLAGS="${AM_CFLAGS} -xstrconst -xprefetch=explicit ${MEMALIGN_FLAGS}"
-  SYMBOLS_FLAGS="-g"
-  OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
-  OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS}"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -xlang=c99 -g -compat=5 -library=stlport4 -template=no%extdef ${MEMALIGN_FLAGS}"
+  AM_CFLAGS="${AM_CFLAGS} -g ${MEMALIGN_FLAGS}"
+  DEBUG_CFLAGS="-xO0"
+  DEBUG_CXXFLAGS="-xO0" 
+
+  OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend -xprefetch=explicit"
+  OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS} -Xa -xstrconst"
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
-  DEBUG_OPTIMIZE_CXX=""
 fi
 
 # We use libtool
@@ -301,9 +288,6 @@ AC_DEFUN([AX_HEADER_ASSERT],
 
 AX_HEADER_ASSERT
 
-AM_CFLAGS="${SYMBOLS_FLAGS} ${AM_CFLAGS}"
-AM_CXXFLAGS="${SYMBOLS_FLAGS} ${AM_CXXFLAGS}"
-
 AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],
        [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
@@ -311,13 +295,13 @@ AC_ARG_WITH([debug],
     [with_debug=no])
 if test "$with_debug" = "yes"
 then
-  # Medium debug.
-  AM_CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG ${AM_CFLAGS} ${SAVE_CFLAGS}"
-  AM_CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG ${AM_CXXFLAGS} ${SAVE_CXXFLAGS}"
+  # Debuging. No optimization.
+  AM_CFLAGS="${OPTIMIZE_CFLAGS} -DDEBUG ${AM_CFLAGS}"
+  AM_CXXFLAGS="${OPTIMIZE_CXXFLAGS} -DDEBUG ${AM_CXXFLAGS}"
 else
   # Optimized version. No debug
-  AM_CFLAGS="${OPTIMIZE_CFLAGS} ${AM_CFLAGS} ${SAVE_CFLAGS}"
-  AM_CXXFLAGS="$OPTIMIZE_CXXFLAGS ${AM_CXXFLAGS} ${SAVE_CXXFLAGS}"
+  AM_CFLAGS="${OPTIMIZE_CFLAGS} ${AM_CFLAGS}"
+  AM_CXXFLAGS="$OPTIMIZE_CXXFLAGS ${AM_CXXFLAGS}"
 fi
 
 
@@ -479,28 +463,15 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 # Check for libpcre
 #--------------------------------------------------------------------
 
-AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcre >= 3], [found_pcre="yes"],[found_pcre="no"])
-
-if test "$found_pcre" = "no"
-then
-  save_LIBS="${LIBS}"
-  AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
-  AS_IF([test "x$ac_cv_libpcre" = "xno"],[
-    AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
-      AS_IF([test "x$ac_cv_libpcre" = "xno"],
-            [AC_MSG_ERROR([libpcre is required for Drizzle])]
-            [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
-    ],[
-      AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
-    ])
-  PCRE_LIBS="${LTLIBPCRE}"
-  LIBS="${save_LIBS}"
-else
-  AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
-fi
-AC_SUBST(PCRE_LIBS)
-AC_SUBST(PCRE_CFLAGS)
+AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
+AS_IF([test "x$ac_cv_libpcre" = "xno"],[
+  AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
+    AS_IF([test "x$ac_cv_libpcre" = "xno"],
+          [AC_MSG_ERROR([libpcre is required for Drizzle])]
+          [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
+  ],[
+    AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
+  ])
 
 
 dnl Find paths to some shell programs
@@ -1205,6 +1176,12 @@ AC_ARG_ENABLE([cast-warnings],
     [ac_warn_cast="$enableval"],
     [ac_warn_cast="no"])
 
+AC_ARG_ENABLE([overloaded-virtual],
+    [AS_HELP_STRING([--enable-overloaded-virtual],
+       [Enable warnings about overloaded virtuals @<:@default=off@:>@])],
+    [ac_warn_virtual="$enableval"],
+    [ac_warn_virtual="no"])
+
 AC_ARG_ENABLE([effective-style],
     [AS_HELP_STRING([--enable-effective-style],
        [Enable warnings violating Effective C++ Style Guidelines @<:@default=off@:>@])],
@@ -1270,6 +1247,11 @@ then
   if test "$ac_profiling" = "yes"
   then
     GPROF_PROFILING="-pg"
+    save_LIBS="${LIBS}"
+    LIBS=""
+    AC_CHECK_LIB(c_p, read)
+    LIBC_P="${LIBS}"
+    LIBS="${save_LIBS}"
   else
     GPROF_PROFILING=" "
   fi
@@ -1337,6 +1319,11 @@ void testme() {  };],[
     W_CAST="-Wold-style-cast"
   fi
 
+  if test "$ac_warn_virtual" = "yes"
+  then
+    W_VIRTUAL="-Woverloaded-virtual"
+  fi
+
   if test "$ac_warn_effc" = "yes"
   then
     W_EFFC="-Weffc++"
@@ -1348,7 +1335,7 @@ void testme() {  };],[
   fi
 
   CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CRAZY}"
-  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CRAZY}"
+  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CRAZY} ${W_VIRTUAL}"
 
   if test "$ac_exceptions" = "no"
   then
