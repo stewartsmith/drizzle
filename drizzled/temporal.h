@@ -206,12 +206,12 @@ public:
    *
    * @param Date to compare against.
    */
-  virtual bool operator==(const Date &rhs);
-  virtual bool operator!=(const Date &rhs);
-  virtual bool operator>(const Date &rhs);
-  virtual bool operator>=(const Date &rhs);
-  virtual bool operator<(const Date &rhs);
-  virtual bool operator<=(const Date &rhs);
+  bool operator==(const Date &rhs);
+  bool operator!=(const Date &rhs);
+  bool operator>(const Date &rhs);
+  bool operator>=(const Date &rhs);
+  bool operator<(const Date &rhs);
+  bool operator<=(const Date &rhs);
   /**
    * Operator overload for adding/subtracting another Date
    * (or subclass) to/from this temporal.  When subtracting 
@@ -219,10 +219,10 @@ public:
    *
    * @param Temporal instance to add/subtract to/from
    */
-  virtual const Date operator-(const Date &rhs);
-  virtual const Date operator+(const Date &rhs);
-  virtual Date& operator+=(const Date &rhs);
-  virtual Date& operator-=(const Date &rhs);
+  const Date operator-(const Date &rhs);
+  const Date operator+(const Date &rhs);
+  Date& operator+=(const Date &rhs);
+  Date& operator-=(const Date &rhs);
 
   /**
    * Operator overload for when a DateTime instance is
@@ -497,12 +497,12 @@ public:
    *
    * @param DateTime to compare against.
    */
-  virtual bool operator==(const DateTime &rhs);
-  virtual bool operator!=(const DateTime &rhs);
-  virtual bool operator>(const DateTime &rhs);
-  virtual bool operator>=(const DateTime &rhs);
-  virtual bool operator<(const DateTime &rhs);
-  virtual bool operator<=(const DateTime &rhs);
+  bool operator==(const DateTime &rhs);
+  bool operator!=(const DateTime &rhs);
+  bool operator>(const DateTime &rhs);
+  bool operator>=(const DateTime &rhs);
+  bool operator<(const DateTime &rhs);
+  bool operator<=(const DateTime &rhs);
   /**
    * Operator to add/subtract a Time from a Time.  
    * We can return a Time new temporal instance.
