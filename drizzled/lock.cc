@@ -1566,11 +1566,10 @@ int try_transactional_lock(Session *session, TableList *table_list)
     -1                  Error: Lock conversion is prohibited.
 */
 
-int check_transactional_lock(Session *session, TableList *table_list)
+int check_transactional_lock(Session *, TableList *table_list)
 {
   TableList    *tlist;
   int           result= 0;
-  char          warn_buff[DRIZZLE_ERRMSG_SIZE];
 
   for (tlist= table_list; tlist; tlist= tlist->next_global)
   {
