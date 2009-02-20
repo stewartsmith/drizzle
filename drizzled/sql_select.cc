@@ -16208,7 +16208,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 
 bool mysql_explain_union(Session *session, Select_Lex_Unit *unit, select_result *result)
 {
-  bool res= 0;
+  bool res= false;
   Select_Lex *first= unit->first_select();
 
   for (Select_Lex *sl= first;

@@ -469,7 +469,6 @@ static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(void);
 void handle_connections_sockets();
-extern "C" pthread_handler_t kill_server_thread(void *arg);
 extern "C" pthread_handler_t handle_slave(void *arg);
 static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib);
 static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
@@ -666,20 +665,6 @@ static void *kill_server(void *sig_ptr)
 
   RETURN_FROM_KILL_SERVER;
 }
-
-
-#if defined(USE_ONE_SIGNAL_HAND)
-pthread_handler_t kill_server_thread(void *)
-{
-  my_thread_init();				// Initialize new thread
-  kill_server(0);
-  /* purecov: begin deadcode */
-  my_thread_end();
-  pthread_exit(0);
-  return 0;
-  /* purecov: end */
-}
-#endif
 
 
 extern "C" void print_signal_warning(int sig)
@@ -1472,9 +1457,6 @@ pthread_handler_t signal_hand(void *)
     (void) pthread_sigmask(SIG_UNBLOCK,&set,NULL);
   }
   (void) sigemptyset(&set);			// Setup up SIGINT for debug
-#ifdef USE_ONE_SIGNAL_HAND
-  (void) sigaddset(&set,THR_SERVER_ALARM);	// For alarms
-#endif
 #ifndef IGNORE_SIGHUP_SIGQUIT
   (void) sigaddset(&set,SIGQUIT);
   (void) sigaddset(&set,SIGHUP);
@@ -1537,21 +1519,7 @@ pthread_handler_t signal_hand(void *)
       if (!abort_loop)
       {
 	abort_loop=1;				// mark abort for threads
-#ifdef USE_ONE_SIGNAL_HAND
-	pthread_t tmp;
-        {
-          struct sched_param tmp_sched_param;
-
-          memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-          tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
-          (void)pthread_attr_setschedparam(&connection_attrib, &tmp_sched_param);
-        }
-        if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
-                           (void*) &sig))
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread to kill server"));
-#else
         kill_server((void*) sig);	// MIT THREAD has a alarm thread
-#endif
       }
       break;
     case SIGHUP:
@@ -1564,15 +1532,7 @@ pthread_handler_t signal_hand(void *)
                      (TableList*) 0, &not_used); // Flush logs
       }
       break;
-#ifdef USE_ONE_SIGNAL_HAND
-    case THR_SERVER_ALARM:
-      process_alarm(sig);			// Trigger alarms.
-      break;
-#endif
     default:
-#ifdef EXTRA_DEBUG
-        errmsg_printf(ERRMSG_LVL_WARN, _("Got signal: %d  error: %d"),sig,error); /* purecov: tested */
-#endif
       break;					/* purecov: tested */
     }
   }
