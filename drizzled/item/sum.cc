@@ -1041,8 +1041,9 @@ bool Item_sum_distinct::setup(Session *session)
     simple_raw_key_cmp because the table contains numbers only; decimals
     are converted to binary representation as well.
   */
-  tree= new Unique(simple_raw_key_cmp, &tree_key_length, tree_key_length,
-                   session->variables.max_heap_table_size);
+  tree= new Unique(simple_raw_key_cmp, &tree_key_length,
+                   tree_key_length,
+                   (size_t)session->variables.max_heap_table_size);
 
   is_evaluated= false;
   return(tree == 0);
@@ -2679,7 +2680,7 @@ bool Item_sum_count_distinct::setup(Session *session)
     }
     assert(tree == 0);
     tree= new Unique(compare_key, cmp_arg, tree_key_length,
-                     session->variables.max_heap_table_size);
+                     (size_t)session->variables.max_heap_table_size);
     /*
       The only time tree_key_length could be 0 is if someone does
       count(distinct) on a char(0) field - stupid thing to do,
@@ -3189,7 +3190,7 @@ Item_func_group_concat::fix_fields(Session *session, Item **ref)
   result.set_charset(collation.collation);
   result_field= 0;
   null_value= 1;
-  max_length= session->variables.group_concat_max_len;
+  max_length= (size_t)session->variables.group_concat_max_len;
 
   uint32_t offset;
   if (separator->needs_conversion(separator->length(), separator->charset(),
@@ -3321,7 +3322,7 @@ bool Item_func_group_concat::setup(Session *session)
     unique_filter= new Unique(group_concat_key_cmp_with_distinct,
                               (void*)this,
                               tree_key_length,
-                              session->variables.max_heap_table_size);
+                              (size_t)session->variables.max_heap_table_size);
 
   return(false);
 }

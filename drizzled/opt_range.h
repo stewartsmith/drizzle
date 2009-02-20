@@ -544,7 +544,6 @@ public:
 
 */
 
-extern "C" {
 class QUICK_ROR_UNION_SELECT : public QUICK_SELECT_I
 {
 public:
@@ -574,11 +573,12 @@ public:
   bool have_prev_rowid; /* true if prev_rowid has valid data */
   uint32_t rowid_length;    /* table rowid length */
 private:
-  static int queue_cmp(void *arg, unsigned char *val1, unsigned char *val2);
   bool scans_inited;
 };
-}
 
+extern "C"
+int quick_ror_union_select_queue_cmp(void *arg, unsigned char *val1,
+                                     unsigned char *val2);
 
 /*
   Index scan for GROUP-BY queries with MIN/MAX aggregate functions.

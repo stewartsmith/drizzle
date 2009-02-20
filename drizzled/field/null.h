@@ -34,6 +34,7 @@ public:
   using Field::store;
   using Field::val_str;
   using Field::cmp;
+  using Field::val_int;
 
   Field_null(unsigned char *ptr_arg, uint32_t len_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
