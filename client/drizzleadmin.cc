@@ -48,7 +48,7 @@ extern "C" void endprog(int signal_number);
 extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                char *argument);
 static int execute_commands(DRIZZLE *drizzle,int argc, char **argv);
-static bool sql_connect(DRIZZLE *drizzle, uint wait);
+static bool sql_connect(DRIZZLE *drizzle, uint32_t wait);
 
 /*
   The order of commands must be the same as command_names,
@@ -224,7 +224,7 @@ int main(int argc,char *argv[])
 
   if (opt_connect_timeout)
   {
-    uint tmp=opt_connect_timeout;
+    uint32_t tmp=opt_connect_timeout;
     drizzleclient_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT, (char*) &tmp);
   }
 
@@ -263,7 +263,7 @@ void endprog(int)
   interrupted=1;
 }
 
-static bool sql_connect(DRIZZLE *drizzle, uint wait)
+static bool sql_connect(DRIZZLE *drizzle, uint32_t wait)
 {
   bool info=0;
 

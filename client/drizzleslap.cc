@@ -103,10 +103,10 @@ extern "C"
 bool get_one_option(int optid, const struct my_option *, char *argument);
 
 /* Global Thread counter */
-uint thread_counter;
+uint32_t thread_counter;
 pthread_mutex_t counter_mutex;
 pthread_cond_t count_threshhold;
-uint master_wakeup;
+uint32_t master_wakeup;
 pthread_mutex_t sleeper_mutex;
 pthread_cond_t sleep_threshhold;
 
@@ -150,10 +150,10 @@ static unsigned long connect_flags= CLIENT_MULTI_RESULTS |
   CLIENT_MULTI_STATEMENTS;
 
 static int verbose, delimiter_length;
-static uint commit_rate;
-static uint detach_rate;
-static uint opt_timer_length;
-static uint opt_delayed_start;
+static uint32_t commit_rate;
+static uint32_t detach_rate;
+static uint32_t opt_timer_length;
+static uint32_t opt_delayed_start;
 const char *num_int_cols_opt;
 const char *num_char_cols_opt;
 const char *num_blob_cols_opt;
@@ -171,7 +171,7 @@ static unsigned int num_blob_cols_size_min;
 static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
 static unsigned int iterations;
-static uint my_end_arg= 0;
+static uint32_t my_end_arg= 0;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
 static uint64_t auto_generate_sql_unique_write_number;
@@ -181,7 +181,7 @@ static uint64_t num_of_query;
 static uint64_t auto_generate_sql_number;
 const char *concurrency_str= NULL;
 static char *create_string;
-uint *concurrency;
+uint32_t *concurrency;
 
 const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
 const char *opt_csv_str;
@@ -228,8 +228,8 @@ typedef struct stats stats;
 
 struct stats {
   long int timing;
-  uint users;
-  uint real_users;
+  uint32_t users;
+  uint32_t real_users;
   uint64_t rows;
   long int create_timing;
   uint64_t create_count;
@@ -249,8 +249,8 @@ struct conclusions {
   long int avg_timing;
   long int max_timing;
   long int min_timing;
-  uint users;
-  uint real_users;
+  uint32_t users;
+  uint32_t real_users;
   uint64_t avg_rows;
   long int sum_of_time;
   long int std_dev;
@@ -278,11 +278,11 @@ static unsigned int query_statements_count;
 void print_conclusions(conclusions *con);
 void print_conclusions_csv(conclusions *con);
 void generate_stats(conclusions *con, option_string *eng, stats *sptr);
-uint parse_comma(const char *string, uint **range);
-uint parse_delimiter(const char *script, statement **stmt, char delm);
-uint parse_option(const char *origin, option_string **stmt, char delm);
+uint32_t parse_comma(const char *string, uint32_t **range);
+uint32_t parse_delimiter(const char *script, statement **stmt, char delm);
+uint32_t parse_option(const char *origin, option_string **stmt, char delm);
 static int drop_schema(DRIZZLE *drizzle, const char *db);
-uint get_random_string(char *buf, size_t size);
+uint32_t get_random_string(char *buf, size_t size);
 static statement *build_table_string(void);
 static statement *build_insert_string(void);
 static statement *build_update_string(void);
@@ -291,13 +291,13 @@ static int generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stm
 static int drop_primary_key_list(void);
 static int create_schema(DRIZZLE *drizzle, const char *db, statement *stmt,
                          option_string *engine_stmt, stats *sptr);
-static int run_scheduler(stats *sptr, statement **stmts, uint concur,
+static int run_scheduler(stats *sptr, statement **stmts, uint32_t concur,
                          uint64_t limit);
 extern "C" pthread_handler_t run_task(void *p);
 extern "C" pthread_handler_t timer_thread(void *p);
 void statement_cleanup(statement *stmt);
 void option_cleanup(option_string *stmt);
-void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr);
+void concurrency_loop(DRIZZLE *drizzle, uint32_t current, option_string *eptr);
 static int run_statements(DRIZZLE *drizzle, statement *stmt);
 void slap_connect(DRIZZLE *drizzle, bool connect_to_schema);
 void slap_close(DRIZZLE *drizzle);
@@ -375,7 +375,7 @@ burnin:
   do
   {
     /* For the final stage we run whatever queries we were asked to run */
-    uint *current;
+    uint32_t *current;
 
     if (verbose >= 2)
       printf("Starting Concurrency Test\n");
@@ -387,7 +387,7 @@ burnin:
     }
     else
     {
-      uint infinite= 1;
+      uint32_t infinite= 1;
       do {
         concurrency_loop(&drizzle, infinite, eptr);
       }
@@ -436,7 +436,7 @@ burnin:
   return 0;
 }
 
-void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
+void concurrency_loop(DRIZZLE *drizzle, uint32_t current, option_string *eptr)
 {
   unsigned int x;
   stats *head_sptr;
@@ -2028,10 +2028,10 @@ run_statements(DRIZZLE *drizzle, statement *stmt)
 }
 
 static int
-run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
+run_scheduler(stats *sptr, statement **stmts, uint32_t concur, uint64_t limit)
 {
-  uint x;
-  uint y;
+  uint32_t x;
+  uint32_t y;
   unsigned int real_concurrency;
   struct timeval start_time, end_time;
   option_string *sql_type;
@@ -2145,7 +2145,7 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
 
 pthread_handler_t timer_thread(void *p)
 {
-  uint *timer_length= (uint *)p;
+  uint32_t *timer_length= (uint32_t *)p;
   struct timespec abstime;
 
 
@@ -2324,8 +2324,8 @@ parse_option(const char *origin, option_string **stmt, char delm)
   char *end_ptr;
   option_string **sptr= stmt;
   option_string *tmp;
-  uint length= strlen(origin);
-  uint count= 0; /* We know that there is always one */
+  uint32_t length= strlen(origin);
+  uint32_t count= 0; /* We know that there is always one */
 
   end_ptr= (char *)origin + length;
 
@@ -2419,8 +2419,8 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   char *ptr= (char *)script;
   statement **sptr= stmt;
   statement *tmp;
-  uint length= strlen(script);
-  uint count= 0; /* We know that there is always one */
+  uint32_t length= strlen(script);
+  uint32_t count= 0; /* We know that there is always one */
 
   for (tmp= *sptr= (statement *)malloc(sizeof(statement));
        (retstr= strchr(ptr, delm));
@@ -2467,7 +2467,7 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   In restrospect, this is a lousy name from this function.
 */
 uint
-parse_comma(const char *string, uint **range)
+parse_comma(const char *string, uint32_t **range)
 {
   unsigned int count= 1,x; /* We know that there is always one */
   char *retstr;
@@ -2478,7 +2478,7 @@ parse_comma(const char *string, uint **range)
     if (*ptr == ',') count++;
 
   /* One extra spot for the NULL */
-  nptr= *range= (uint *)malloc(sizeof(unsigned int) * (count + 1));
+  nptr= *range= (uint32_t *)malloc(sizeof(unsigned int) * (count + 1));
   memset(nptr, 0, sizeof(unsigned int) * (count + 1));
 
   ptr= (char *)string;

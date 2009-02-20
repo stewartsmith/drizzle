@@ -111,8 +111,8 @@ init_line_buffer(LINE_BUFFER *buffer,File file,uint32_t size,uint32_t max_buffer
 */
 static bool init_line_buffer_from_string(LINE_BUFFER *buffer,char * str)
 {
-  uint old_length=(uint)(buffer->end - buffer->buffer);
-  uint length= (uint) strlen(str);
+  uint32_t old_length=(uint)(buffer->end - buffer->buffer);
+  uint32_t length= (uint) strlen(str);
   char * tmpptr= (char*)realloc(buffer->buffer, old_length+length+2);
   if (tmpptr == NULL)
     return 1;
@@ -140,7 +140,7 @@ static bool init_line_buffer_from_string(LINE_BUFFER *buffer,char * str)
 static size_t fill_buffer(LINE_BUFFER *buffer)
 {
   size_t read_count;
-  uint bufbytes= (uint) (buffer->end - buffer->start_of_line);
+  uint32_t bufbytes= (uint) (buffer->end - buffer->start_of_line);
 
   if (buffer->eof)
     return 0;					/* Everything read */
@@ -149,7 +149,7 @@ static size_t fill_buffer(LINE_BUFFER *buffer)
 
   for (;;)
   {
-    uint start_offset=(uint) (buffer->start_of_line - buffer->buffer);
+    uint32_t start_offset=(uint) (buffer->start_of_line - buffer->buffer);
     read_count=(buffer->bufread - bufbytes)/IO_SIZE;
     if ((read_count*=IO_SIZE))
       break;

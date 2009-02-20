@@ -1132,12 +1132,12 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       {
         const uint32_t format_section_header_size= 8;
         uint32_t format_section_len= uint2korr(next_chunk+0);
-	uint flags=  uint4korr(next_chunk+2);
+	uint32_t flags=  uint4korr(next_chunk+2);
 
 	(void)flags;
 
 	const char *tablespace= (const char*)next_chunk + format_section_header_size;
-        uint tablespace_len= strlen(tablespace);
+        uint32_t tablespace_len= strlen(tablespace);
 
         field_extra_info= next_chunk + format_section_header_size + tablespace_len + 1;
         next_chunk+= format_section_len;
@@ -1678,7 +1678,7 @@ bool fix_fields_vcol_func(Session *session,
                           Table *table,
                           const char *field_name)
 {
-  uint dir_length, home_dir_length;
+  uint32_t dir_length, home_dir_length;
   bool result= true;
   TableList tables;
   TableList *save_table_list, *save_first_table, *save_last_table;

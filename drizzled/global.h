@@ -115,12 +115,6 @@ time_t timegm (struct tm *__tm);
 # include <sys/stat.h>
 #endif
 
-#if !defined(HAVE_UINT)
-#undef HAVE_UINT
-#define HAVE_UINT
-typedef unsigned int uint;
-#endif
-
 /* Declared in int2str() */
 extern char _dig_vec_upper[];
 extern char _dig_vec_lower[];

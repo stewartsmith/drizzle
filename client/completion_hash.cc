@@ -24,9 +24,9 @@
 #include <mystrings/m_string.h>
 #include "completion_hash.h"
 
-uint hashpjw(const char *arKey, uint nKeyLength)
+uint32_t hashpjw(const char *arKey, uint32_t nKeyLength)
 {
-  uint h = 0, g, i;
+  uint32_t h = 0, g, i;
 
   for (i = 0; i < nKeyLength; i++) {
     h = (h << 4) + arKey[i];
@@ -38,7 +38,7 @@ uint hashpjw(const char *arKey, uint nKeyLength)
   return h;
 }
 
-int completion_hash_init(HashTable *ht, uint nSize)
+int completion_hash_init(HashTable *ht, uint32_t nSize)
 {
   ht->arBuckets = (Bucket **) malloc(nSize* sizeof(Bucket *));
   memset(ht->arBuckets, 0, nSize* sizeof(Bucket *));
@@ -56,10 +56,10 @@ int completion_hash_init(HashTable *ht, uint nSize)
 }
 
 
-int completion_hash_update(HashTable *ht, char *arKey, uint nKeyLength,
+int completion_hash_update(HashTable *ht, char *arKey, uint32_t nKeyLength,
 			   char *str)
 {
-  uint h, nIndex;
+  uint32_t h, nIndex;
 
   Bucket *p;
 
@@ -110,9 +110,9 @@ int completion_hash_update(HashTable *ht, char *arKey, uint nKeyLength,
 }
 
 static Bucket *completion_hash_find(HashTable *ht, const char *arKey,
-				    uint nKeyLength)
+				    uint32_t nKeyLength)
 {
-  uint h, nIndex;
+  uint32_t h, nIndex;
   Bucket *p;
 
   h = ht->pHashFunction(arKey, nKeyLength);
@@ -132,9 +132,9 @@ static Bucket *completion_hash_find(HashTable *ht, const char *arKey,
 }
 
 
-int completion_hash_exists(HashTable *ht, char *arKey, uint nKeyLength)
+int completion_hash_exists(HashTable *ht, char *arKey, uint32_t nKeyLength)
 {
-  uint h, nIndex;
+  uint32_t h, nIndex;
   Bucket *p;
 
   h = ht->pHashFunction(arKey, nKeyLength);
@@ -154,8 +154,8 @@ int completion_hash_exists(HashTable *ht, char *arKey, uint nKeyLength)
   return 0;
 }
 
-Bucket *find_all_matches(HashTable *ht, const char *str, uint length,
-			 uint *res_length)
+Bucket *find_all_matches(HashTable *ht, const char *str, uint32_t length,
+			 uint32_t *res_length)
 {
   Bucket *b;
 
@@ -169,13 +169,13 @@ Bucket *find_all_matches(HashTable *ht, const char *str, uint length,
   }
 }
 
-Bucket *find_longest_match(HashTable *ht, char *str, uint length,
-			   uint *res_length)
+Bucket *find_longest_match(HashTable *ht, char *str, uint32_t length,
+			   uint32_t *res_length)
 {
   Bucket *b,*return_b;
   char *s;
-  uint count;
-  uint lm;
+  uint32_t count;
+  uint32_t lm;
 
   b = completion_hash_find(ht,str,length);
   if (!b) {

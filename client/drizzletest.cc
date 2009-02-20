@@ -97,14 +97,14 @@ static char **default_argv;
 static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
 
-static uint start_lineno= 0; /* Start line of current command */
-static uint my_end_arg= 0;
+static uint32_t start_lineno= 0; /* Start line of current command */
+static uint32_t my_end_arg= 0;
 
 /* Number of lines of the result to include in failure report */
-static uint opt_tail_lines= 0;
+static uint32_t opt_tail_lines= 0;
 
 static char delimiter[MAX_DELIMITER_LENGTH]= ";";
-static uint delimiter_length= 1;
+static uint32_t delimiter_length= 1;
 
 static char TMPDIR[FN_REFLEN];
 
@@ -130,7 +130,7 @@ struct st_test_file
 {
   FILE* file;
   const char *file_name;
-  uint lineno; /* Current line in file */
+  uint32_t lineno; /* Current line in file */
 };
 
 static struct st_test_file file_stack[16];
@@ -350,7 +350,7 @@ struct st_match_err
   enum match_err_type type;
   union
   {
-    uint errnum;
+    uint32_t errnum;
     char sqlstate[SQLSTATE_LENGTH+1];  /* \0 terminated string */
   } code;
 };
@@ -358,7 +358,7 @@ struct st_match_err
 struct st_expected_errors
 {
   struct st_match_err err[10];
-  uint count;
+  uint32_t count;
 };
 static struct st_expected_errors saved_expected_errors;
 
@@ -397,7 +397,7 @@ extern "C" void var_free(void* v);
 VAR* var_get(const char *var_name, const char** var_name_end,
              bool raw, bool ignore_not_existing);
 void eval_expr(VAR* v, const char *p, const char** p_end);
-bool match_delimiter(int c, const char *delim, uint length);
+bool match_delimiter(int c, const char *delim, uint32_t length);
 void dump_result_to_reject_file(char *buf, int size);
 void dump_result_to_log_file(const char *buf, int size);
 void dump_warning_messages(void);
@@ -410,7 +410,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append);
 
 /* For replace_column */
 static char *replace_column[MAX_COLUMNS];
-static uint max_replace_column= 0;
+static uint32_t max_replace_column= 0;
 void do_get_replace_column(struct st_command*);
 void free_replace_column(void);
 
@@ -435,7 +435,7 @@ void free_all_replace(void){
 void replace_append_mem(string *ds, const char *val,
                         int len);
 void replace_append(string *ds, const char *val);
-void replace_append_uint(string *ds, uint val);
+void replace_append_uint(string *ds, uint32_t val);
 void append_sorted(string* ds, string* ds_input);
 
 void handle_error(struct st_command*,
@@ -519,7 +519,7 @@ void do_eval(string *query_eval, const char *query,
 void append_os_quoted(string *str, const char *append, ...)
 {
   const char *quote_str= "\'";
-  const uint  quote_len= 1;
+  const uint32_t  quote_len= 1;
 
   va_list dirty_text;
 
@@ -767,12 +767,12 @@ static void check_command_args(struct st_command *command,
 }
 
 
-static void handle_command_error(struct st_command *command, uint error)
+static void handle_command_error(struct st_command *command, uint32_t error)
 {
 
   if (error != 0)
   {
-    uint i;
+    uint32_t i;
 
     if (command->abort_on_error)
       die("command \"%.*s\" failed with error %d",
@@ -832,7 +832,7 @@ static void close_files(void)
 
 static void free_used_memory(void)
 {
-  uint i;
+  uint32_t i;
 
 
   close_connections();
@@ -1079,7 +1079,7 @@ void log_msg(const char *fmt, ...)
 static void cat_file(string* ds, const char* filename)
 {
   int fd;
-  uint len;
+  uint32_t len;
   char buff[512];
 
   if ((fd= my_open(filename, O_RDONLY, MYF(0))) < 0)
@@ -1286,7 +1286,7 @@ static int compare_files2(File fd, const char* filename2)
 {
   int error= RESULT_OK;
   File fd2;
-  uint len, len2;
+  uint32_t len, len2;
   char buff[512], buff2[512];
   const char *fname= filename2;
   string tmpfile;
@@ -1637,7 +1637,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
   if (digit < 0 || digit >= 10)
   {
     const char *save_var_name = var_name, *end;
-    uint length;
+    uint32_t length;
     end = (var_name_end) ? *var_name_end : 0;
     while (my_isvar(charset_info,*var_name) && var_name != end)
       var_name++;
@@ -1921,8 +1921,8 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
 
   {
     /* Find column number from the given column name */
-    uint i;
-    uint num_fields= drizzleclient_num_fields(res);
+    uint32_t i;
+    uint32_t num_fields= drizzleclient_num_fields(res);
     const DRIZZLE_FIELD *fields= drizzleclient_fetch_fields(res);
 
     for (i= 0; i < num_fields; i++)
@@ -2228,7 +2228,7 @@ static void do_exec(struct st_command *command)
   error= pclose(res_file);
   if (error > 0)
   {
-    uint status= WEXITSTATUS(error), i;
+    uint32_t status= WEXITSTATUS(error), i;
     bool ok= 0;
 
     if (command->abort_on_error)
@@ -3229,7 +3229,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
 
 
 static void do_get_file_name(struct st_command *command,
-                             char* dest, uint dest_max_len)
+                             char* dest, uint32_t dest_max_len)
 {
   char *p= command->first_argument, *name;
   if (!*p)
@@ -3263,7 +3263,7 @@ static void do_set_charset(struct st_command *command)
     abort_not_supported_test("Test requires charset '%s'", charset_name);
 }
 
-static uint get_errcode_from_name(char *error_name, char *error_end)
+static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 {
   /* SQL error as string */
   st_error *e= global_error_names;
@@ -3291,7 +3291,7 @@ static void do_get_errcodes(struct st_command *command)
 {
   struct st_match_err *to= saved_expected_errors.err;
   char *p= command->first_argument;
-  uint count= 0;
+  uint32_t count= 0;
 
 
 
@@ -3985,9 +3985,9 @@ static void do_delimiter(struct st_command* command)
 }
 
 
-bool match_delimiter(int c, const char *delim, uint length)
+bool match_delimiter(int c, const char *delim, uint32_t length)
 {
-  uint i;
+  uint32_t i;
   char tmp[MAX_DELIMITER_LENGTH];
 
   if (c != *delim)
@@ -4287,7 +4287,7 @@ static void scan_command_for_warnings(struct st_command *command)
         ptr[2] && ptr[2] == '-' &&
         ptr[3])
     {
-      uint type;
+      uint32_t type;
       char save;
       char *end, *start= (char*)ptr+3;
       /* Skip leading spaces */
@@ -4813,7 +4813,7 @@ void dump_warning_messages(void)
   Append the result for one field to the dynamic string ds
 */
 
-static void append_field(string *ds, uint col_idx, const DRIZZLE_FIELD* field,
+static void append_field(string *ds, uint32_t col_idx, const DRIZZLE_FIELD* field,
                          const char* val, uint64_t len, bool is_null)
 {
   if (col_idx < max_replace_column && replace_column[col_idx])
@@ -4875,7 +4875,7 @@ static void append_result(string *ds, DRIZZLE_RES *res)
 
 static void append_metadata(string *ds,
                             const DRIZZLE_FIELD *field,
-                            uint num_fields)
+                            uint32_t num_fields)
 {
   const DRIZZLE_FIELD *field_end;
   ds->append("Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
@@ -4946,9 +4946,9 @@ static void append_info(string *ds, uint64_t affected_rows,
 
 static void append_table_headings(string *ds,
                                   const DRIZZLE_FIELD *field,
-                                  uint num_fields)
+                                  uint32_t num_fields)
 {
-  uint col_idx;
+  uint32_t col_idx;
   for (col_idx= 0; col_idx < num_fields; col_idx++)
   {
     if (col_idx)
@@ -4967,7 +4967,7 @@ static void append_table_headings(string *ds,
 
 static int append_warnings(string *ds, DRIZZLE *drizzle)
 {
-  uint count;
+  uint32_t count;
   DRIZZLE_RES *warn_res;
 
 
@@ -5062,7 +5062,7 @@ static void run_query_normal(struct st_connection *cn,
       if (res)
       {
         const DRIZZLE_FIELD *fields= drizzleclient_fetch_fields(res);
-        uint num_fields= drizzleclient_num_fields(res);
+        uint32_t num_fields= drizzleclient_num_fields(res);
 
         if (display_metadata)
           append_metadata(ds, fields, num_fields);
@@ -5149,7 +5149,7 @@ void handle_error(struct st_command *command,
                   unsigned int err_errno, const char *err_error,
                   const char *err_sqlstate, string *ds)
 {
-  uint i;
+  uint32_t i;
 
 
   if (command->require_file[0])
@@ -5373,7 +5373,7 @@ static void run_query(struct st_connection *cn,
 static void get_command_type(struct st_command* command)
 {
   char save;
-  uint type;
+  uint32_t type;
 
 
   if (*command->query == '}')
@@ -5492,7 +5492,7 @@ int main(int argc, char **argv)
 {
   struct st_command *command;
   bool q_send_flag= 0, abort_flag= 0;
-  uint command_executed= 0, last_command_executed= 0;
+  uint32_t command_executed= 0, last_command_executed= 0;
   char save_file[FN_REFLEN];
   struct stat res_info;
   MY_INIT(argv[0]);
@@ -5997,7 +5997,7 @@ void do_get_replace_column(struct st_command *command)
   while (*from)
   {
     char *to;
-    uint column_number;
+    uint32_t column_number;
 
     to= get_string(&buff, &from, command);
     if (!(column_number= atoi(to)) || column_number > MAX_COLUMNS)
@@ -6018,7 +6018,7 @@ void do_get_replace_column(struct st_command *command)
 
 void free_replace_column()
 {
-  uint i;
+  uint32_t i;
   for (i=0 ; i < max_replace_column ; i++)
   {
     if (replace_column[i])
@@ -6042,11 +6042,11 @@ typedef struct st_pointer_array {    /* when using array-strings */
   TYPELIB typelib;        /* Pointer to strings */
   unsigned char  *str;          /* Strings is here */
   uint8_t *flag;          /* Flag about each var. */
-  uint  array_allocs,max_count,length,max_length;
+  uint32_t  array_allocs,max_count,length,max_length;
 } POINTER_ARRAY;
 
 struct st_replace;
-struct st_replace *init_replace(char * *from, char * *to, uint count,
+struct st_replace *init_replace(char * *from, char * *to, uint32_t count,
                                 char * word_end_chars);
 int insert_pointer_name(POINTER_ARRAY *pa,char * name);
 void replace_strings_append(struct st_replace *rep, string* ds,
@@ -6065,7 +6065,7 @@ struct st_replace *glob_replace;
 
 void do_get_replace(struct st_command *command)
 {
-  uint i;
+  uint32_t i;
   char *from= command->first_argument;
   char *buff, *start;
   char word_end_chars[256], *pos;
@@ -6127,7 +6127,7 @@ typedef struct st_replace {
 typedef struct st_replace_found {
   bool found;
   char *replace_string;
-  uint to_offset;
+  uint32_t to_offset;
   int from_offset;
 } REPLACE_STRING;
 
@@ -6253,7 +6253,7 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   char* buf,*expr_end;
   char* p;
   char* buf_p;
-  uint expr_len= strlen(expr);
+  uint32_t expr_len= strlen(expr);
   char last_c = 0;
   struct st_regex reg;
 
@@ -6349,7 +6349,7 @@ err:
 
 static int multi_reg_replace(struct st_replace_regex* r,char* val)
 {
-  uint i;
+  uint32_t i;
   char* in_buf, *out_buf;
   int* buf_len_p;
 
@@ -6490,58 +6490,58 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
 #define LAST_CHAR_CODE 259
 
 typedef struct st_rep_set {
-  uint  *bits;        /* Pointer to used sets */
+  uint32_t  *bits;        /* Pointer to used sets */
   short next[LAST_CHAR_CODE];    /* Pointer to next sets */
-  uint  found_len;      /* Best match to date */
+  uint32_t  found_len;      /* Best match to date */
   int  found_offset;
-  uint  table_offset;
-  uint  size_of_bits;      /* For convinience */
+  uint32_t  table_offset;
+  uint32_t  size_of_bits;      /* For convinience */
 } REP_SET;
 
 typedef struct st_rep_sets {
-  uint    count;      /* Number of sets */
-  uint    extra;      /* Extra sets in buffer */
-  uint    invisible;    /* Sets not chown */
-  uint    size_of_bits;
+  uint32_t    count;      /* Number of sets */
+  uint32_t    extra;      /* Extra sets in buffer */
+  uint32_t    invisible;    /* Sets not chown */
+  uint32_t    size_of_bits;
   REP_SET  *set,*set_buffer;
-  uint    *bit_buffer;
+  uint32_t    *bit_buffer;
 } REP_SETS;
 
 typedef struct st_found_set {
-  uint table_offset;
+  uint32_t table_offset;
   int found_offset;
 } FOUND_SET;
 
 typedef struct st_follow {
   int chr;
-  uint table_offset;
-  uint len;
+  uint32_t table_offset;
+  uint32_t len;
 } FOLLOWS;
 
 
-int init_sets(REP_SETS *sets,uint states);
+int init_sets(REP_SETS *sets,uint32_t states);
 REP_SET *make_new_set(REP_SETS *sets);
 void make_sets_invisible(REP_SETS *sets);
 void free_last_set(REP_SETS *sets);
 void free_sets(REP_SETS *sets);
-void internal_set_bit(REP_SET *set, uint bit);
-void internal_clear_bit(REP_SET *set, uint bit);
+void internal_set_bit(REP_SET *set, uint32_t bit);
+void internal_clear_bit(REP_SET *set, uint32_t bit);
 void or_bits(REP_SET *to,REP_SET *from);
 void copy_bits(REP_SET *to,REP_SET *from);
 int cmp_bits(REP_SET *set1,REP_SET *set2);
-int get_next_bit(REP_SET *set,uint lastpos);
+int get_next_bit(REP_SET *set,uint32_t lastpos);
 int find_set(REP_SETS *sets,REP_SET *find);
-int find_found(FOUND_SET *found_set,uint table_offset,
+int find_found(FOUND_SET *found_set,uint32_t table_offset,
                int found_offset);
-uint start_at_word(char * pos);
-uint end_of_word(char * pos);
+uint32_t start_at_word(char * pos);
+uint32_t end_of_word(char * pos);
 
-static uint found_sets=0;
+static uint32_t found_sets=0;
 
 
-static uint replace_len(char * str)
+static uint32_t replace_len(char * str)
 {
-  uint len=0;
+  uint32_t len=0;
   while (*str)
   {
     if (str[0] == '\\' && str[1])
@@ -6554,14 +6554,14 @@ static uint replace_len(char * str)
 
 /* Init a replace structure for further calls */
 
-REPLACE *init_replace(char * *from, char * *to,uint count,
+REPLACE *init_replace(char * *from, char * *to,uint32_t count,
                       char * word_end_chars)
 {
   static const int SPACE_CHAR= 256;
   static const int START_OF_LINE= 257;
   static const int END_OF_LINE= 258;
 
-  uint i,j,states,set_nr,len,result_len,max_length,found_end,bits_set,bit_nr;
+  uint32_t i,j,states,set_nr,len,result_len,max_length,found_end,bits_set,bit_nr;
   int used_sets,chr,default_state;
   char used_chars[LAST_CHAR_CODE],is_word_end[256];
   char * pos, *to_pos, **to_array;
@@ -6839,7 +6839,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
 }
 
 
-int init_sets(REP_SETS *sets,uint states)
+int init_sets(REP_SETS *sets,uint32_t states)
 {
   memset(sets, 0, sizeof(*sets));
   sets->size_of_bits=((states+7)/8);
@@ -6865,7 +6865,7 @@ void make_sets_invisible(REP_SETS *sets)
 
 REP_SET *make_new_set(REP_SETS *sets)
 {
-  uint i,count,*bit_buffer;
+  uint32_t i,count,*bit_buffer;
   REP_SET *set;
   if (sets->extra)
   {
@@ -6912,13 +6912,13 @@ void free_sets(REP_SETS *sets)
   return;
 }
 
-void internal_set_bit(REP_SET *set, uint bit)
+void internal_set_bit(REP_SET *set, uint32_t bit)
 {
   set->bits[bit / WORD_BIT] |= 1 << (bit % WORD_BIT);
   return;
 }
 
-void internal_clear_bit(REP_SET *set, uint bit)
+void internal_clear_bit(REP_SET *set, uint32_t bit)
 {
   set->bits[bit / WORD_BIT] &= ~ (1 << (bit % WORD_BIT));
   return;
@@ -6927,7 +6927,7 @@ void internal_clear_bit(REP_SET *set, uint bit)
 
 void or_bits(REP_SET *to,REP_SET *from)
 {
-  register uint i;
+  register uint32_t i;
   for (i=0 ; i < to->size_of_bits ; i++)
     to->bits[i]|=from->bits[i];
   return;
@@ -6947,9 +6947,9 @@ int cmp_bits(REP_SET *set1,REP_SET *set2)
 
 /* Get next set bit from set. */
 
-int get_next_bit(REP_SET *set,uint lastpos)
+int get_next_bit(REP_SET *set,uint32_t lastpos)
 {
-  uint pos,*start,*end,bits;
+  uint32_t pos,*start,*end,bits;
 
   start=set->bits+ ((lastpos+1) / WORD_BIT);
   end=set->bits + set->size_of_bits;
@@ -6974,7 +6974,7 @@ int get_next_bit(REP_SET *set,uint lastpos)
 
 int find_set(REP_SETS *sets,REP_SET *find)
 {
-  uint i;
+  uint32_t i;
   for (i=0 ; i < sets->count-1 ; i++)
   {
     if (!cmp_bits(sets->set+i,find))
@@ -6993,7 +6993,7 @@ int find_set(REP_SETS *sets,REP_SET *find)
    set->next[] == -1 is reserved for end without replaces.
 */
 
-int find_found(FOUND_SET *found_set,uint table_offset, int found_offset)
+int find_found(FOUND_SET *found_set,uint32_t table_offset, int found_offset)
 {
   int i;
   for (i=0 ; (uint) i < found_sets ; i++)
@@ -7008,13 +7008,13 @@ int find_found(FOUND_SET *found_set,uint table_offset, int found_offset)
 
 /* Return 1 if regexp starts with \b or ends with \b*/
 
-uint start_at_word(char * pos)
+uint32_t start_at_word(char * pos)
 {
   return (((!memcmp(pos, "\\b",2) && pos[2]) ||
            !memcmp(pos, "\\^", 2)) ? 1 : 0);
 }
 
-uint end_of_word(char * pos)
+uint32_t end_of_word(char * pos)
 {
   char * end= strchr(pos, '\0');
   return ((end > pos+2 && !memcmp(end-2, "\\b", 2)) ||
@@ -7030,7 +7030,7 @@ uint end_of_word(char * pos)
 
 int insert_pointer_name(POINTER_ARRAY *pa,char * name)
 {
-  uint i,length,old_count;
+  uint32_t i,length,old_count;
   unsigned char *new_pos;
   const char **new_array;
 
@@ -7147,8 +7147,8 @@ void replace_append(string *ds, const char *val)
   replace_append_mem(ds, val, strlen(val));
 }
 
-/* Append uint to ds, with optional replace */
-void replace_append_uint(string *ds, uint val)
+/* Append uint32_t to ds, with optional replace */
+void replace_append_uint(string *ds, uint32_t val)
 {
   char buff[22]; /* This should be enough for any int */
   char *end= int64_t10_to_str(val, buff, 10);
