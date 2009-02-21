@@ -1177,12 +1177,6 @@ AC_ARG_ENABLE([cast-warnings],
     [ac_warn_cast="$enableval"],
     [ac_warn_cast="no"])
 
-AC_ARG_ENABLE([overloaded-virtual],
-    [AS_HELP_STRING([--enable-overloaded-virtual],
-       [Enable warnings about overloaded virtuals @<:@default=off@:>@])],
-    [ac_warn_virtual="$enableval"],
-    [ac_warn_virtual="no"])
-
 AC_ARG_ENABLE([effective-style],
     [AS_HELP_STRING([--enable-effective-style],
        [Enable warnings violating Effective C++ Style Guidelines @<:@default=off@:>@])],
@@ -1288,7 +1282,7 @@ template <> void C<int>::foo();
     fi
     
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
-    GXX_PEDANTIC="-pedantic -Wundef ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
+    GXX_PEDANTIC="-pedantic -Wundef -Woverloaded-virtual ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
 
     AC_CACHE_CHECK([whether __attribute__ visibility "hidden" is supported],
       [ac_cv_can_use_hidden_],
@@ -1315,14 +1309,10 @@ void testme() {  };],[
   then
     W_UNREACHABLE="-Wunreachable-code"
   fi
+
   if test "$ac_warn_cast" = "yes"
   then
     W_CAST="-Wold-style-cast"
-  fi
-
-  if test "$ac_warn_virtual" = "yes"
-  then
-    W_VIRTUAL="-Woverloaded-virtual"
   fi
 
   if test "$ac_warn_effc" = "yes"
@@ -1330,13 +1320,13 @@ void testme() {  };],[
     W_EFFC="-Weffc++"
   fi
 
-  if test "$ac_warn_gocrazy" = "yes"
+  if test "$ac_warn_go_crazy" = "yes"
   then
-    W_CRAZY="-Wconversion -Winvalid-pch"
+    W_CRAZY="-Wconversion -Winvalid-pch -Wnon-virtual-dtor -Wctor-dtor-privacy"
   fi
 
   CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CRAZY}"
-  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CRAZY} ${W_VIRTUAL}"
+  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CRAZY}"
 
   if test "$ac_exceptions" = "no"
   then
