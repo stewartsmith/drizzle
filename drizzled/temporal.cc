@@ -378,7 +378,7 @@ bool Date::operator>=(const DateTime& rhs)
  * We can add or subtract a Time value to/from a DateTime value 
  * as well...it always produces a DateTime.
  */
-const DateTime DateTime::operator-(const Time& rhs)
+const Date Date::operator-(const Time& rhs)
 {
   DateTime result;
 
@@ -422,7 +422,7 @@ const DateTime DateTime::operator-(const Time& rhs)
 
   return result;
 }
-const DateTime DateTime::operator+(const Time& rhs)
+const Date Date::operator+(const Time& rhs)
 {
   DateTime result;
 
@@ -469,7 +469,7 @@ const DateTime DateTime::operator+(const Time& rhs)
  * Variation of + and - operator which returns a reference to the left-hand
  * side DateTime object and adds the right-hand side Time to itself.
  */
-DateTime& DateTime::operator+=(const Time& rhs)
+Date& Date::operator+=(const Time& rhs)
 {
   int64_t second_diff= _cumulative_seconds_in_time() + rhs._cumulative_seconds_in_time();
   /* 
@@ -502,7 +502,7 @@ DateTime& DateTime::operator+=(const Time& rhs)
    */
   return *this;
 }
-DateTime& DateTime::operator-=(const Time& rhs)
+Date& Date::operator-=(const Time& rhs)
 {
   int64_t second_diff= _cumulative_seconds_in_time() - rhs._cumulative_seconds_in_time();
 

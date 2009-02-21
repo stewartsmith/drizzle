@@ -199,6 +199,7 @@ public:
 /* Forward declaration needed */
 class DateTime;
 class Timestamp;
+class Time;
 
 /**
  * Class representing temporal components in a valid
@@ -258,6 +259,17 @@ public:
   const Date operator+(const Date &rhs);
   Date& operator+=(const Date &rhs);
   Date& operator-=(const Date &rhs);
+
+  /**
+   * Operator to add/subtract a Time from a Time.
+   * We can return a Time new temporal instance.
+   *
+   * @param Temporal instance to add/subtract to/from
+   */
+  const Date operator-(const Time &rhs);
+  const Date operator+(const Time &rhs);
+  Date& operator-=(const Time &rhs);
+  Date& operator+=(const Time &rhs);
 
 
   /**
@@ -532,6 +544,7 @@ public:
    */
   void to_decimal(my_decimal *to) const;
 
+  friend class Date;
   friend class DateTime;
 };
 
@@ -543,16 +556,6 @@ class DateTime: public Date
 {
 public:
   DateTime() :Date() {}
-  /**
-   * Operator to add/subtract a Time from a Time.
-   * We can return a Time new temporal instance.
-   *
-   * @param Temporal instance to add/subtract to/from
-   */
-  const DateTime operator-(const Time &rhs);
-  const DateTime operator+(const Time &rhs);
-  DateTime& operator-=(const Time &rhs);
-  DateTime& operator+=(const Time &rhs);
 
   /**
    * Operator overload for adding/subtracting a TemporalInterval
