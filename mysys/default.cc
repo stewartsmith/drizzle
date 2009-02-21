@@ -394,7 +394,7 @@ int load_defaults(const char *conf_file, const char **groups,
       goto err;
     res= (char**) (ptr+sizeof(alloc));
     res[0]= **argv;				/* Copy program name */
-    for (i=2 ; i < (uint) *argc ; i++)
+    for (i=2 ; i < (uint32_t) *argc ; i++)
       res[i-1]=argv[0][i];
     res[i-1]=0;					/* End pointer */
     (*argc)--;
@@ -669,7 +669,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
         if (!(search_dir= my_dir(ptr, MYF(MY_WME))))
           goto err;
 
-        for (i= 0; i < (uint) search_dir->number_off_files; i++)
+        for (i= 0; i < (uint32_t) search_dir->number_off_files; i++)
         {
           search_file= search_dir->dir_entry + i;
           ext= fn_ext(search_file->name);

@@ -7308,7 +7308,7 @@ static size_t my_strnxfrm_uca(const CHARSET_INFO * const cs,
 
   if (dst < de && nweights && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
-    uint32_t space_count= cmin((uint) (de - dst) / 2, nweights);
+    uint32_t space_count= cmin((uint32_t) (de - dst) / 2, nweights);
     s_res= cs->sort_order_big[0][0x20 * cs->sort_order[0]];
     for (; space_count ; space_count--)
     {

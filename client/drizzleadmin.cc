@@ -177,7 +177,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
         option_wait=1;
     }
     else
-      option_wait= ~(uint)0;
+      option_wait= ~(uint32_t)0;
     break;
   case '?':
   case 'I':					/* Info */

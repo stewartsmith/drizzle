@@ -1026,7 +1026,7 @@ public:
     {
       Item_field *item= (Item_field*) value_arg;
       if (!(value=new Item_string(item->field_name,
-                  (uint) strlen(item->field_name),
+                  (uint32_t) strlen(item->field_name),
 				  item->collation.collation)))
 	value=value_arg;			/* Give error message later */
     }

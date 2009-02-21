@@ -101,7 +101,7 @@ int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
     }
   }
   if (find == 0 && (full_name & 4) && x[0] == '#' && strchr(x, '\0')[-1] == '#' &&
-      (findpos=atoi(x+1)-1) >= 0 && (uint) findpos < typelib->count)
+      (findpos=atoi(x+1)-1) >= 0 && (uint32_t) findpos < typelib->count)
     find=1;
   else if (find == 0 || ! x[0])
   {
@@ -136,7 +136,7 @@ void make_type(register char * to, register uint32_t nr,
 
 const char *get_type(TYPELIB *typelib, uint32_t nr)
 {
-  if (nr < (uint) typelib->count && typelib->type_names)
+  if (nr < (uint32_t) typelib->count && typelib->type_names)
     return(typelib->type_names[nr]);
   return "?";
 }

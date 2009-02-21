@@ -58,7 +58,7 @@ static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
 
 static unsigned char *get_field_name(Field **buff, size_t *length, bool)
 {
-  *length= (uint) strlen((*buff)->field_name);
+  *length= (uint32_t) strlen((*buff)->field_name);
   return (unsigned char*) (*buff)->field_name;
 }
 
@@ -1008,7 +1008,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   error=4;
 
   /* Read keyinformation */
-  key_info_length= (uint) uint2korr(head+28);
+  key_info_length= (uint32_t) uint2korr(head+28);
   lseek(file,(ulong) uint2korr(head+6),SEEK_SET);
   if (read_string(file,(unsigned char**) &disk_buff,key_info_length))
     goto err;                                   /* purecov: inspected */
@@ -1038,8 +1038,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 
     for (j=keyinfo->key_parts ; j-- ; key_part++)
     {
-      key_part->offset= (uint) uint2korr(strpos+2)-1;
-      key_part->key_type=	(uint) uint2korr(strpos+5);
+      key_part->offset= (uint32_t) uint2korr(strpos+2)-1;
+      key_part->key_type=	(uint32_t) uint2korr(strpos+5);
       if (new_frm_ver >= 1)
       {
 	strpos+=9;
@@ -1179,7 +1179,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   /* WTF is with the share->fields+1 here... */
   if (!(field_ptr = (Field **)
 	alloc_root(&share->mem_root,
-		   (uint) ((share->fields+1)*sizeof(Field*)+
+		   (uint32_t) ((share->fields+1)*sizeof(Field*)+
 			   interval_count*sizeof(TYPELIB)+
 			   (share->fields+interval_parts+
 			    keys+3)*sizeof(char *)+
@@ -1188,8 +1188,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     goto err;                                   /* purecov: inspected */
 
   share->field= field_ptr;
-  read_length=(uint) (share->fields * field_pack_length +
-		      pos+ (uint) (n_length+int_length+com_length+
+  read_length=(uint32_t) (share->fields * field_pack_length +
+		      pos+ (uint32_t) (n_length+int_length+com_length+
 		                   vcol_screen_length));
   if (read_string(file,(unsigned char**) &disk_buff,read_length))
     goto err;                                   /* purecov: inspected */
@@ -1201,7 +1201,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   if (!interval_count)
     share->intervals= 0;			// For better debugging
   memcpy(names, strpos+(share->fields*field_pack_length),
-	 (uint) (n_length+int_length));
+	 (uint32_t) (n_length+int_length));
   comment_pos= (char *)(disk_buff+read_length-com_length-vcol_screen_length);
   vcol_screen_pos= names+(n_length+int_length);
   memcpy(vcol_screen_pos, disk_buff+read_length-vcol_screen_length,
@@ -1220,7 +1220,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
          interval < share->intervals + interval_count;
          interval++)
     {
-      uint32_t count= (uint) (interval->count + 1) * sizeof(uint);
+      uint32_t count= (uint32_t) (interval->count + 1) * sizeof(uint32_t);
       if (!(interval->type_lengths= (uint32_t *) alloc_root(&share->mem_root,
                                                         count)))
         goto err;
@@ -1282,15 +1282,15 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       field_length= uint2korr(strpos+3);
       recpos=	    uint3korr(strpos+5);
       pack_flag=    uint2korr(strpos+8);
-      unireg_type=  (uint) strpos[10];
-      interval_nr=  (uint) strpos[12];
+      unireg_type=  (uint32_t) strpos[10];
+      interval_nr=  (uint32_t) strpos[12];
       uint32_t comment_length=uint2korr(strpos+15);
-      field_type=(enum_field_types) (uint) strpos[13];
+      field_type=(enum_field_types) (uint32_t) strpos[13];
 
       {
         if (!strpos[14])
           charset= &my_charset_bin;
-        else if (!(charset=get_charset((uint) strpos[14])))
+        else if (!(charset=get_charset((uint32_t) strpos[14])))
         {
           error= 5; // Unknown or unavailable charset
           errarg= (int) strpos[14];
@@ -1328,19 +1328,19 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
           byte 4-...  = virtual column expression (text data)
         */
         vcol_info= new virtual_column_info();
-        if ((uint)vcol_screen_pos[0] != 1)
+        if ((uint32_t)vcol_screen_pos[0] != 1)
         {
           error= 4;
           goto err;
         }
         field_type= (enum_field_types) (unsigned char) vcol_screen_pos[1];
-        fld_is_stored= (bool) (uint) vcol_screen_pos[2];
+        fld_is_stored= (bool) (uint32_t) vcol_screen_pos[2];
         vcol_info->expr_str.str= (char *)memdup_root(&share->mem_root,
                                                      vcol_screen_pos+
-                                                       (uint)FRM_VCOL_HEADER_SIZE,
+                                                       (uint32_t)FRM_VCOL_HEADER_SIZE,
                                                      vcol_info_length-
-                                                       (uint)FRM_VCOL_HEADER_SIZE);
-        vcol_info->expr_str.length= vcol_info_length-(uint)FRM_VCOL_HEADER_SIZE;
+                                                       (uint32_t)FRM_VCOL_HEADER_SIZE);
+        vcol_info->expr_str.length= vcol_info_length-(uint32_t)FRM_VCOL_HEADER_SIZE;
         vcol_screen_pos+= vcol_info_length;
         share->vfields++;
       }
@@ -1375,7 +1375,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
       goto err;			/* purecov: inspected */
     }
 
-    reg_field->flags|= ((uint)column_format << COLUMN_FORMAT_FLAGS);
+    reg_field->flags|= ((uint32_t)column_format << COLUMN_FORMAT_FLAGS);
     reg_field->field_index= i;
     reg_field->comment=comment;
     reg_field->vcol_info= vcol_info;
@@ -1411,7 +1411,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   /* Fix key->name and key_part->field */
   if (key_parts)
   {
-    uint32_t primary_key=(uint) (find_type((char*) "PRIMARY",
+    uint32_t primary_key=(uint32_t) (find_type((char*) "PRIMARY",
 				       &share->keynames, 3) - 1);
     int64_t ha_option= handler_file->ha_table_flags();
     keyinfo= share->key_info;
@@ -1455,7 +1455,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
         key_part->type= field->key_type();
         if (field->null_ptr)
         {
-          key_part->null_offset=(uint) ((unsigned char*) field->null_ptr -
+          key_part->null_offset=(uint32_t) ((unsigned char*) field->null_ptr -
                                         share->default_values);
           key_part->null_bit= field->null_bit;
           key_part->store_length+=HA_KEY_NULL_LENGTH;
@@ -1566,7 +1566,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   if (share->found_next_number_field)
   {
     reg_field= *share->found_next_number_field;
-    if ((int) (share->next_number_index= (uint)
+    if ((int) (share->next_number_index= (uint32_t)
 	       find_ref_key(share->key_info, share->keys,
                             share->default_values, reg_field,
 			    &share->next_number_key_offset,
@@ -1588,7 +1588,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     /* Store offsets to blob fields to find them fast */
     if (!(share->blob_field= save=
 	  (uint*) alloc_root(&share->mem_root,
-                             (uint) (share->blob_fields* sizeof(uint)))))
+                             (uint32_t) (share->blob_fields* sizeof(uint32_t)))))
       goto err;
     for (k=0, ptr= share->field ; *ptr ; ptr++, k++)
     {
@@ -2016,7 +2016,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
 #endif
 
   if (!(field_ptr = (Field **) alloc_root(&outparam->mem_root,
-                                          (uint) ((share->fields+1)*
+                                          (uint32_t) ((share->fields+1)*
                                                   sizeof(Field*)))))
     goto err;                                   /* purecov: inspected */
 
@@ -2036,7 +2036,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
 
   if (share->found_next_number_field)
     outparam->found_next_number_field=
-      outparam->field[(uint) (share->found_next_number_field - share->field)];
+      outparam->field[(uint32_t) (share->found_next_number_field - share->field)];
   if (share->timestamp_field)
     outparam->timestamp_field= (Field_timestamp*) outparam->field[share->timestamp_field_offset];
 
@@ -2091,7 +2091,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
     Process virtual columns, if any.
   */
   if (not (vfield_ptr = (Field **) alloc_root(&outparam->mem_root,
-                                              (uint) ((share->vfields+1)*
+                                              (uint32_t) ((share->vfields+1)*
                                                       sizeof(Field*)))))
     goto err;
 
@@ -2347,7 +2347,7 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
   unsigned char buff[IO_SIZE];
   unsigned char *pos;
 
-  length=(uint) strlen(newname)+1;
+  length=(uint32_t) strlen(newname)+1;
   n_length=uint2korr(fileinfo+4);
   maxlength=uint2korr(fileinfo+6);
   names=uint2korr(fileinfo+8);
@@ -2358,7 +2358,7 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
     newpos+=IO_SIZE;
     int4store(fileinfo+10,newpos);
     endpos= lseek(file,0,SEEK_END);/* Copy from file-end */
-    bufflength= (uint) (endpos & (IO_SIZE-1));	/* IO_SIZE is a power of 2 */
+    bufflength= (uint32_t) (endpos & (IO_SIZE-1));	/* IO_SIZE is a power of 2 */
 
     while (endpos > maxlength)
     {
@@ -2448,7 +2448,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
   }
   case 5:
   {
-    const char *csname= get_charset_name((uint) errarg);
+    const char *csname= get_charset_name((uint32_t) errarg);
     char tmp[10];
     if (!csname || csname[0] =='?')
     {
@@ -2510,7 +2510,7 @@ fix_type_pointers(const char ***array, TYPELIB *point_to_type, uint32_t types,
     }
     else
       ptr++;
-    point_to_type->count= (uint) (*array - point_to_type->type_names);
+    point_to_type->count= (uint32_t) (*array - point_to_type->type_names);
     point_to_type++;
     *((*array)++)= NULL;		/* End of type */
   }
@@ -2526,7 +2526,7 @@ TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
     return 0;
   result->count=strings.elements;
   result->name="";
-  uint32_t nbytes= (sizeof(char*) + sizeof(uint)) * (result->count + 1);
+  uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
   if (!(result->type_names= (const char**) alloc_root(mem_root, nbytes)))
     return 0;
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
@@ -2851,7 +2851,7 @@ char *get_field(MEM_ROOT *mem, Field *field)
   length= str.length();
   if (!length || !(to= (char*) alloc_root(mem,length+1)))
     return NULL;
-  memcpy(to,str.ptr(),(uint) length);
+  memcpy(to,str.ptr(),(uint32_t) length);
   to[length]=0;
   return to;
 }
@@ -2971,7 +2971,7 @@ bool check_column_name(const char *name)
     name_length++;
   }
   /* Error if empty or too long column name */
-  return last_char_is_space || (uint) name_length > NAME_CHAR_LEN;
+  return last_char_is_space || (uint32_t) name_length > NAME_CHAR_LEN;
 }
 
 
@@ -4128,7 +4128,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         &share, sizeof(*share),
                         &reg_field, sizeof(Field*) * (field_count+1),
                         &default_field, sizeof(Field*) * (field_count),
-                        &blob_field, sizeof(uint)*(field_count+1),
+                        &blob_field, sizeof(uint32_t)*(field_count+1),
                         &from_field, sizeof(Field*)*field_count,
                         &copy_func, sizeof(*copy_func)*(copy_func_count+1),
                         &param->keyinfo, sizeof(*param->keyinfo),
@@ -4136,7 +4136,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         sizeof(*key_part_info)*(param->group_parts+1),
                         &param->start_recinfo,
                         sizeof(*param->recinfo)*(field_count*2+4),
-                        &tmpname, (uint) strlen(path)+1,
+                        &tmpname, (uint32_t) strlen(path)+1,
                         &group_buff, (group && ! using_unique_constraint ?
                                       param->group_length : 0),
                         &bitmaps, bitmap_buffer_size(field_count)*2,
@@ -4338,8 +4338,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       null_count= 0;
     }
   }
-  assert(fieldnr == (uint) (reg_field - table->field));
-  assert(field_count >= (uint) (reg_field - table->field));
+  assert(fieldnr == (uint32_t) (reg_field - table->field));
+  assert(field_count >= (uint32_t) (reg_field - table->field));
   field_count= fieldnr;
   *reg_field= 0;
   *blob_field= 0;				// End marker
@@ -4574,7 +4574,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	  */
 	  keyinfo->flags|= HA_NULL_ARE_EQUAL;	// def. that NULL == NULL
 	  key_part_info->null_bit=field->null_bit;
-	  key_part_info->null_offset= (uint) (field->null_ptr -
+	  key_part_info->null_offset= (uint32_t) (field->null_ptr -
 					      (unsigned char*) table->record[0]);
           cur_group->buff++;                        // Pointer to field data
 	  group_buff++;                         // Skipp null flag
@@ -4636,7 +4636,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                                                 (uint32_t) key_part_info->length,
                                                 0,
                                                 (unsigned char*) 0,
-                                                (uint) 0,
+                                                (uint32_t) 0,
                                                 Field::NONE,
                                                 NULL,
                                                 table->s,
@@ -4745,7 +4745,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
                         &table, sizeof(*table),
                         &share, sizeof(*share),
                         &field, (field_count + 1) * sizeof(Field*),
-                        &blob_field, (field_count+1) *sizeof(uint),
+                        &blob_field, (field_count+1) *sizeof(uint32_t),
                         &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
     return 0;
@@ -4777,7 +4777,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
       null_count++;
 
     if ((*field)->flags & BLOB_FLAG)
-      share->blob_field[blob_count++]= (uint) (field - table->field);
+      share->blob_field[blob_count++]= (uint32_t) (field - table->field);
 
     field++;
   }
@@ -4949,7 +4949,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       if (!(key_field->flags & NOT_NULL_FLAG))
       {
 	seg->null_bit= key_field->null_bit;
-	seg->null_pos= (uint) (key_field->null_ptr - (unsigned char*) record[0]);
+	seg->null_pos= (uint32_t) (key_field->null_ptr - (unsigned char*) record[0]);
 	/*
 	  We are using a GROUP BY on something that contains NULL
 	  In this case we have to tell MyISAM that two NULL should
@@ -4968,7 +4968,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
     create_info.data_file_length= ~(uint64_t) 0;
 
   if ((error=mi_create(share->table_name.str, share->keys, &keydef,
-		       (uint) (*recinfo-start_recinfo),
+		       (uint32_t) (*recinfo-start_recinfo),
 		       start_recinfo,
 		       share->uniques, &uniquedef,
 		       &create_info,

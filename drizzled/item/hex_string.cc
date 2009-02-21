@@ -25,7 +25,7 @@
 
 inline uint32_t char_val(char X)
 {
-  return (uint) (X >= '0' && X <= '9' ? X-'0' :
+  return (uint32_t) (X >= '0' && X <= '9' ? X-'0' :
                  X >= 'A' && X <= 'Z' ? X-'A'+10 :
                  X-'a'+10);
 }

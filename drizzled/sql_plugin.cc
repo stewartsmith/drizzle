@@ -193,7 +193,7 @@ public:
   struct st_mysql_sys_var *plugin_var;
 
   static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint) size); }
+  { return (void*) alloc_root(mem_root, (uint32_t) size); }
   static void operator delete(void *, size_t)
   { TRASH(ptr_arg, size); }
 
@@ -1362,7 +1362,7 @@ static int check_func_int(Session *session, struct st_mysql_sys_var *var,
   plugin_opt_set_limits(&options, var);
 
   if (var->flags & PLUGIN_VAR_UNSIGNED)
-    *(uint32_t *)save= (uint) getopt_ull_limit_value((uint64_t) tmp, &options,
+    *(uint32_t *)save= (uint32_t) getopt_ull_limit_value((uint64_t) tmp, &options,
                                                    &fixed);
   else
     *(int *)save= (int) getopt_ll_limit_value(tmp, &options, &fixed);
@@ -1772,7 +1772,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool global_lock)
 {
   assert(offset >= 0);
-  assert((uint)offset <= global_system_variables.dynamic_variables_head);
+  assert((uint32_t)offset <= global_system_variables.dynamic_variables_head);
 
   if (!session)
     return (unsigned char*) global_system_variables.dynamic_variables_ptr + offset;
@@ -1781,7 +1781,7 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
     dynamic_variables_head points to the largest valid offset
   */
   if (!session->variables.dynamic_variables_ptr ||
-      (uint)offset > session->variables.dynamic_variables_head)
+      (uint32_t)offset > session->variables.dynamic_variables_head)
   {
     uint32_t idx;
 

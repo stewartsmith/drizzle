@@ -197,10 +197,10 @@ String *Field_time::val_str(String *val_buffer,
     tmp= -tmp;
     ltime.neg= 1;
   }
-  ltime.day= (uint) 0;
-  ltime.hour= (uint) (tmp/10000);
-  ltime.minute= (uint) (tmp/100 % 100);
-  ltime.second= (uint) (tmp % 100);
+  ltime.day= (uint32_t) 0;
+  ltime.hour= (uint32_t) (tmp/10000);
+  ltime.minute= (uint32_t) (tmp/100 % 100);
+  ltime.second= (uint32_t) (tmp % 100);
   make_time((DATE_TIME_FORMAT*) 0, &ltime, val_buffer);
   return val_buffer;
 }

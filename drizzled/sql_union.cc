@@ -715,7 +715,7 @@ bool Select_Lex::cleanup()
   for (Select_Lex_Unit *lex_unit= first_inner_unit(); lex_unit ;
        lex_unit= lex_unit->next_unit())
   {
-    error= (bool) ((uint) error | (uint) lex_unit->cleanup());
+    error= (bool) ((uint32_t) error | (uint32_t) lex_unit->cleanup());
   }
   non_agg_fields.empty();
   inner_refs_list.empty();

@@ -201,7 +201,7 @@ str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
        pos++)
     ;
 
-  digits= (uint) (pos-str);
+  digits= (uint32_t) (pos-str);
   start_loop= 0;                                /* Start of scan loop */
   date_len[format_position[0]]= 0;              /* Length of year field */
   if (pos == end || *pos == '.')
@@ -250,8 +250,8 @@ str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
     2003-03-03 20:00:20 AM
     20:00:20.000000 AM 03-03-2000
   */
-  i= cmax((uint) format_position[0], (uint) format_position[1]);
-  set_if_bigger(i, (uint) format_position[2]);
+  i= cmax((uint32_t) format_position[0], (uint32_t) format_position[1]);
+  set_if_bigger(i, (uint32_t) format_position[2]);
   allow_space= ((1 << i) | (1 << format_position[6]));
   allow_space&= (1 | 2 | 4 | 8);
 
@@ -262,14 +262,14 @@ str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
        i++)
   {
     const char *start= str;
-    uint32_t tmp_value= (uint) (unsigned char) (*str++ - '0');
+    uint32_t tmp_value= (uint32_t) (unsigned char) (*str++ - '0');
     while (str != end && my_isdigit(&my_charset_utf8_general_ci,str[0]) &&
            (!is_internal_format || --field_length))
     {
       tmp_value=tmp_value*10 + (uint32_t) (unsigned char) (*str - '0');
       str++;
     }
-    date_len[i]= (uint) (str - start);
+    date_len[i]= (uint32_t) (str - start);
     if (tmp_value > 999999)                     /* Impossible date part */
     {
       *was_cut= 1;
@@ -355,24 +355,24 @@ str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
 
   if (!is_internal_format)
   {
-    year_length= date_len[(uint) format_position[0]];
+    year_length= date_len[(uint32_t) format_position[0]];
     if (!year_length)                           /* Year must be specified */
     {
       *was_cut= 1;
       return(DRIZZLE_TIMESTAMP_NONE);
     }
 
-    l_time->year=               date[(uint) format_position[0]];
-    l_time->month=              date[(uint) format_position[1]];
-    l_time->day=                date[(uint) format_position[2]];
-    l_time->hour=               date[(uint) format_position[3]];
-    l_time->minute=             date[(uint) format_position[4]];
-    l_time->second=             date[(uint) format_position[5]];
+    l_time->year=               date[(uint32_t) format_position[0]];
+    l_time->month=              date[(uint32_t) format_position[1]];
+    l_time->day=                date[(uint32_t) format_position[2]];
+    l_time->hour=               date[(uint32_t) format_position[3]];
+    l_time->minute=             date[(uint32_t) format_position[4]];
+    l_time->second=             date[(uint32_t) format_position[5]];
 
-    frac_pos= (uint) format_position[6];
+    frac_pos= (uint32_t) format_position[6];
     frac_len= date_len[frac_pos];
     if (frac_len < 6)
-      date[frac_pos]*= (uint) log_10_int[6 - frac_len];
+      date[frac_pos]*= (uint32_t) log_10_int[6 - frac_len];
     l_time->second_part= date[frac_pos];
 
     if (format_position[7] != (unsigned char) 255)
@@ -394,7 +394,7 @@ str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
     l_time->minute=     date[4];
     l_time->second=     date[5];
     if (date_len[6] < 6)
-      date[6]*= (uint) log_10_int[6 - date_len[6]];
+      date[6]*= (uint32_t) log_10_int[6 - date_len[6]];
     l_time->second_part=date[6];
   }
   l_time->neg= 0;
@@ -520,7 +520,7 @@ bool str_to_time(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
     ;
 
   found_days=found_hours=0;
-  if ((uint) (end-str) > 1 && str != end_of_days &&
+  if ((uint32_t) (end-str) > 1 && str != end_of_days &&
       my_isdigit(&my_charset_utf8_general_ci, *str))
   {                                             /* Found days part */
     date[0]= (uint32_t) value;
@@ -577,11 +577,11 @@ fractional:
   if ((end-str) >= 2 && *str == '.' && my_isdigit(&my_charset_utf8_general_ci,str[1]))
   {
     int field_length= 5;
-    str++; value=(uint) (unsigned char) (*str - '0');
+    str++; value=(uint32_t) (unsigned char) (*str - '0');
     while (++str != end && my_isdigit(&my_charset_utf8_general_ci, *str))
     {
       if (field_length-- > 0)
-        value= value*10 + (uint) (unsigned char) (*str - '0');
+        value= value*10 + (uint32_t) (unsigned char) (*str - '0');
     }
     if (field_length > 0)
       value*= (long) log_10_int[field_length];
@@ -712,12 +712,12 @@ void init_time(void)
   localtime_r(&seconds,&tm_tmp);
   l_time= &tm_tmp;
   my_time_zone=		3600;		/* Comp. for -3600 in my_gmt_sec */
-  my_time.year=		(uint) l_time->tm_year+1900;
-  my_time.month=	(uint) l_time->tm_mon+1;
-  my_time.day=		(uint) l_time->tm_mday;
-  my_time.hour=		(uint) l_time->tm_hour;
-  my_time.minute=	(uint) l_time->tm_min;
-  my_time.second=	(uint) l_time->tm_sec;
+  my_time.year=		(uint32_t) l_time->tm_year+1900;
+  my_time.month=	(uint32_t) l_time->tm_mon+1;
+  my_time.day=		(uint32_t) l_time->tm_mday;
+  my_time.hour=		(uint32_t) l_time->tm_hour;
+  my_time.minute=	(uint32_t) l_time->tm_min;
+  my_time.second=	(uint32_t) l_time->tm_sec;
   my_system_gmt_sec(&my_time, &my_time_zone, &not_used); /* Init my_time_zone */
 }
 
@@ -869,7 +869,7 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
   if ((t->year == TIMESTAMP_MAX_YEAR) && (t->month == 1) && (t->day > 4))
   {
     /*
-      Below we will pass (uint) (t->day - shift) to calc_daynr.
+      Below we will pass (uint32_t) (t->day - shift) to calc_daynr.
       As we don't want to get an overflow here, we will shift
       only safe dates. That's why we have (t->day > 4) above.
     */
@@ -906,7 +906,7 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
   }
 #endif
 
-  tmp= (time_t) (((calc_daynr((uint) t->year, (uint) t->month, (uint) t->day) -
+  tmp= (time_t) (((calc_daynr((uint32_t) t->year, (uint32_t) t->month, (uint32_t) t->day) -
                    (long) days_at_timestart)*86400L + (long) t->hour*3600L +
                   (long) (t->minute*60 + t->second)) + (time_t) my_time_zone -
                  3600);
@@ -916,9 +916,9 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
   l_time=&tm_tmp;
   for (loop=0;
        loop < 2 &&
-	 (t->hour != (uint) l_time->tm_hour ||
-	  t->minute != (uint) l_time->tm_min ||
-          t->second != (uint) l_time->tm_sec);
+	 (t->hour != (uint32_t) l_time->tm_hour ||
+	  t->minute != (uint32_t) l_time->tm_min ||
+          t->second != (uint32_t) l_time->tm_sec);
        loop++)
   {					/* One check should be enough ? */
     /* Get difference in days */
@@ -945,7 +945,7 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
     general time correction like it happened for Africa/Monrovia time zone
     in year 1972).
   */
-  if (loop == 2 && t->hour != (uint) l_time->tm_hour)
+  if (loop == 2 && t->hour != (uint32_t) l_time->tm_hour)
   {
     int days= t->day - l_time->tm_mday;
     if (days < -1)

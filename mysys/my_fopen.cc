@@ -59,7 +59,7 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
       on some OS (SUNOS). Actually the filename save isn't that important
       so we can ignore if this doesn't work.
     */
-    if ((uint) fileno(fd) >= my_file_limit)
+    if ((uint32_t) fileno(fd) >= my_file_limit)
     {
       thread_safe_increment(my_stream_opened,&THR_LOCK_open);
       return(fd);				/* safeguard */
@@ -105,7 +105,7 @@ int my_fclose(FILE *fd, myf MyFlags)
   }
   else
     my_stream_opened--;
-  if ((uint) file < my_file_limit && my_file_info[file].type != UNOPEN)
+  if ((uint32_t) file < my_file_limit && my_file_info[file].type != UNOPEN)
   {
     my_file_info[file].type = UNOPEN;
     free(my_file_info[file].name);

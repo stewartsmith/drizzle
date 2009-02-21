@@ -313,8 +313,8 @@ void my_hash_sort_simple(const CHARSET_INFO * const cs,
 
   for (; key < end ; key++)
   {
-    nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) *
-	     ((uint) sort_order[(uint) *key])) + (nr1[0] << 8);
+    nr1[0]^=(ulong) ((((uint32_t) nr1[0] & 63)+nr2[0]) *
+	     ((uint32_t) sort_order[(uint32_t) *key])) + (nr1[0] << 8);
     nr2[0]+=3;
   }
 }
@@ -388,7 +388,7 @@ long my_strntol_8bit(const CHARSET_INFO * const cs,
 
   save = s;
   cutoff = (UINT32_MAX) / (uint32_t) base;
-  cutlim = (uint) ((UINT32_MAX) % (uint32_t) base);
+  cutlim = (uint32_t) ((UINT32_MAX) % (uint32_t) base);
 
   overflow = 0;
   i = 0;
@@ -510,7 +510,7 @@ ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
 
   save = s;
   cutoff = (UINT32_MAX) / (uint32_t) base;
-  cutlim = (uint) ((UINT32_MAX) % (uint32_t) base);
+  cutlim = (uint32_t) ((UINT32_MAX) % (uint32_t) base);
   overflow = 0;
   i = 0;
 
@@ -624,7 +624,7 @@ int64_t my_strntoll_8bit(const CHARSET_INFO * const cs,
   save = s;
 
   cutoff = (~(uint64_t) 0) / (unsigned long int) base;
-  cutlim = (uint) ((~(uint64_t) 0) % (unsigned long int) base);
+  cutlim = (uint32_t) ((~(uint64_t) 0) % (unsigned long int) base);
 
   overflow = 0;
   i = 0;
@@ -747,7 +747,7 @@ uint64_t my_strntoull_8bit(const CHARSET_INFO * const cs,
   save = s;
 
   cutoff = (~(uint64_t) 0) / (unsigned long int) base;
-  cutlim = (uint) ((~(uint64_t) 0) % (unsigned long int) base);
+  cutlim = (uint32_t) ((~(uint64_t) 0) % (unsigned long int) base);
 
   overflow = 0;
   i = 0;
@@ -911,8 +911,8 @@ size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const,
 
   while (uval > (uint64_t) LONG_MAX)
   {
-    uint64_t quo= uval/(uint) 10;
-    uint32_t rem= (uint) (uval- quo* (uint) 10);
+    uint64_t quo= uval/(uint32_t) 10;
+    uint32_t rem= (uint32_t) (uval- quo* (uint32_t) 10);
     *--p = '0' + rem;
     uval= quo;
   }
@@ -1889,7 +1889,7 @@ my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
 {
   if (nweights && frmend < strend && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
-    uint32_t fill_length= cmin((uint) (strend - frmend), nweights * cs->mbminlen);
+    uint32_t fill_length= cmin((uint32_t) (strend - frmend), nweights * cs->mbminlen);
     cs->cset->fill(cs, (char*) frmend, fill_length, cs->pad_char);
     frmend+= fill_length;
   }

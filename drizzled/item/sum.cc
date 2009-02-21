@@ -3311,7 +3311,7 @@ bool Item_func_group_concat::setup(Session *session)
       syntax of this function). If there is no order_st BY clause, we don't
       create this tree.
     */
-    init_tree(tree, (uint) cmin(session->variables.max_heap_table_size,
+    init_tree(tree, (uint32_t) cmin(session->variables.max_heap_table_size,
                                session->variables.sortbuff_size/16), 0,
               tree_key_length,
               group_concat_key_cmp_with_order , 0, NULL, (void*) this);

@@ -2848,7 +2848,7 @@ Create_func_version::create(Session *session)
 {
   return new (session->mem_root) Item_static_string_func("version()",
                                                          server_version,
-                                                         (uint) strlen(server_version),
+                                                         (uint32_t) strlen(server_version),
                                                          system_charset_info,
                                                          DERIVATION_SYSCONST);
 }

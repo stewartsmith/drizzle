@@ -1370,7 +1370,7 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
   bool blob_flag=0;
   bool string_results= false, non_string_results= false;
   unit= u;
-  if ((uint) strlen(exchange->file_name) + NAME_LEN >= FN_REFLEN)
+  if ((uint32_t) strlen(exchange->file_name) + NAME_LEN >= FN_REFLEN)
     strncpy(path,exchange->file_name,FN_REFLEN-1);
 
   /* Check if there is any blobs in data */
@@ -1565,13 +1565,13 @@ bool select_export::send_data(List<Item> &items)
                           is_ambiguous_field_sep) ?
                           field_sep_char : escape_char;
 	    tmp_buff[1]= *pos ? *pos : '0';
-	    if (my_b_write(&cache,(unsigned char*) start,(uint) (pos-start)) ||
+	    if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
 		my_b_write(&cache,(unsigned char*) tmp_buff,2))
 	      goto err;
 	    start=pos+1;
 	  }
 	}
-	if (my_b_write(&cache,(unsigned char*) start,(uint) (pos-start)))
+	if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)))
 	  goto err;
       }
       else if (my_b_write(&cache,(unsigned char*) res->ptr(),used_length))

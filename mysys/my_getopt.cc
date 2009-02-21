@@ -211,7 +211,7 @@ int handle_options(int *argc, char ***argv,
 	optend= strrchr(opt_str, '=');
 	if (optend != NULL)
         {
-	  length= (uint) (optend - opt_str);
+	  length= (uint32_t) (optend - opt_str);
 	  optend++;
         }
 	else
@@ -370,7 +370,7 @@ int handle_options(int *argc, char ***argv,
 	  return EXIT_NO_ARGUMENT_ALLOWED;
 	}
 	value= optp->var_type & GET_ASK_ADDR ?
-	  (*getopt_get_addr)(key_name, (uint) strlen(key_name), optp) : optp->value;
+	  (*getopt_get_addr)(key_name, (uint32_t) strlen(key_name), optp) : optp->value;
 
 	if (optp->arg_type == NO_ARG)
 	{
@@ -579,7 +579,7 @@ static char *check_struct_option(char *cur_arg, char *key_name)
   */
   if ((ptr != NULL) && (end != NULL) && (end - ptr > 1))
   {
-    uint32_t len= (uint) (ptr - cur_arg);
+    uint32_t len= (uint32_t) (ptr - cur_arg);
     set_if_smaller(len, FN_REFLEN-1);
     strncpy(key_name, cur_arg, len);
     return ++ptr;
@@ -616,7 +616,7 @@ static int setval(const struct my_option *opts, char **value, char *argument,
       *((int32_t*) result_pos)= (int) getopt_ll(argument, opts, &err);
       break;
     case GET_UINT:
-      *((uint32_t*) result_pos)= (uint) getopt_ull(argument, opts, &err);
+      *((uint32_t*) result_pos)= (uint32_t) getopt_ull(argument, opts, &err);
       break;
     case GET_LONG:
       *((long*) result_pos)= (long) getopt_ll(argument, opts, &err);
@@ -991,7 +991,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     break;
   case GET_UINT:
   case GET_ENUM:
-    *((uint*) variable)= (uint) value;
+    *((uint*) variable)= (uint32_t) value;
     break;
   case GET_LONG:
     *((long*) variable)= (long) value;
@@ -1136,7 +1136,7 @@ void my_print_help(const struct my_option *options)
     if (strlen(optp->name))
     {
       printf("--%s", optp->name);
-      col+= 2 + (uint) strlen(optp->name);
+      col+= 2 + (uint32_t) strlen(optp->name);
       if ((optp->var_type & GET_TYPE_MASK) == GET_STR ||
 	  (optp->var_type & GET_TYPE_MASK) == GET_STR_ALLOC)
       {
@@ -1168,7 +1168,7 @@ void my_print_help(const struct my_option *options)
     {
       const char *comment= _(optp->comment), *end= strchr(comment, '\0');
 
-      while ((uint) (end - comment) > comment_space)
+      while ((uint32_t) (end - comment) > comment_space)
       {
 	for (line_end= comment + comment_space; *line_end != ' '; line_end--)
           {}
@@ -1217,7 +1217,7 @@ void my_print_variables(const struct my_option *options)
     if (value)
     {
       printf("%s ", optp->name);
-      length= (uint) strlen(optp->name)+1;
+      length= (uint32_t) strlen(optp->name)+1;
       for (; length < name_space; length++)
 	putchar(' ');
       switch ((optp->var_type & GET_TYPE_MASK)) {

@@ -111,8 +111,8 @@ init_line_buffer(LINE_BUFFER *buffer,File file,uint32_t size,uint32_t max_buffer
 */
 static bool init_line_buffer_from_string(LINE_BUFFER *buffer,char * str)
 {
-  uint32_t old_length=(uint)(buffer->end - buffer->buffer);
-  uint32_t length= (uint) strlen(str);
+  uint32_t old_length=(uint32_t)(buffer->end - buffer->buffer);
+  uint32_t length= (uint32_t) strlen(str);
   char * tmpptr= (char*)realloc(buffer->buffer, old_length+length+2);
   if (tmpptr == NULL)
     return 1;
@@ -140,7 +140,7 @@ static bool init_line_buffer_from_string(LINE_BUFFER *buffer,char * str)
 static size_t fill_buffer(LINE_BUFFER *buffer)
 {
   size_t read_count;
-  uint32_t bufbytes= (uint) (buffer->end - buffer->start_of_line);
+  uint32_t bufbytes= (uint32_t) (buffer->end - buffer->start_of_line);
 
   if (buffer->eof)
     return 0;					/* Everything read */
@@ -149,14 +149,14 @@ static size_t fill_buffer(LINE_BUFFER *buffer)
 
   for (;;)
   {
-    uint32_t start_offset=(uint) (buffer->start_of_line - buffer->buffer);
+    uint32_t start_offset=(uint32_t) (buffer->start_of_line - buffer->buffer);
     read_count=(buffer->bufread - bufbytes)/IO_SIZE;
     if ((read_count*=IO_SIZE))
       break;
     buffer->bufread *= 2;
     if (!(buffer->buffer = (char*) realloc(buffer->buffer,
                                            buffer->bufread+1)))
-      return (uint) -1;
+      return (uint32_t) -1;
     buffer->start_of_line=buffer->buffer+start_offset;
     buffer->end=buffer->buffer+bufbytes;
   }
@@ -164,7 +164,7 @@ static size_t fill_buffer(LINE_BUFFER *buffer)
   /* Shift stuff down. */
   if (buffer->start_of_line != buffer->buffer)
   {
-    memmove(buffer->buffer, buffer->start_of_line, (uint) bufbytes);
+    memmove(buffer->buffer, buffer->start_of_line, (uint32_t) bufbytes);
     buffer->end=buffer->buffer+bufbytes;
   }
 
@@ -201,7 +201,7 @@ char *intern_read_line(LINE_BUFFER *buffer,uint32_t *out_length)
       pos++;
     if (pos == buffer->end)
     {
-      if ((uint) (pos - buffer->start_of_line) < buffer->max_size)
+      if ((uint32_t) (pos - buffer->start_of_line) < buffer->max_size)
       {
 	if (!(length=fill_buffer(buffer)) || length == (size_t) -1)
 	  return(0);

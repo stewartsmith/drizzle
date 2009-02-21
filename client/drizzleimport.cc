@@ -478,7 +478,7 @@ static char *add_load_option(char *ptr, const char *object,
     {
       /* char constant; escape */
       ptr+= sprintf(ptr, " %s '", statement); 
-      ptr= field_escape(ptr,object,(uint) strlen(object));
+      ptr= field_escape(ptr,object,(uint32_t) strlen(object));
       *ptr++= '\'';
     }
   }

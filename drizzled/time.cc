@@ -157,9 +157,9 @@ void get_date_from_daynr(long daynr,uint32_t *ret_year,uint32_t *ret_month,
   }
   else
   {
-    year= (uint) (daynr*100 / 36525L);
+    year= (uint32_t) (daynr*100 / 36525L);
     temp=(((year-1)/100+1)*3)/4;
-    day_of_year=(uint) (daynr - (long) year * 365L) - (year-1)/4 +temp;
+    day_of_year=(uint32_t) (daynr - (long) year * 365L) - (year-1)/4 +temp;
     while (day_of_year > (days_in_year= calc_days_in_year(year)))
     {
       day_of_year-=days_in_year;
@@ -177,7 +177,7 @@ void get_date_from_daynr(long daynr,uint32_t *ret_year,uint32_t *ret_month,
     }
     *ret_month=1;
     for (month_pos= days_in_month ;
-	 day_of_year > (uint) *month_pos ;
+	 day_of_year > (uint32_t) *month_pos ;
 	 day_of_year-= *(month_pos++), (*ret_month)++)
       ;
     *ret_year=year;
@@ -696,7 +696,7 @@ const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
 void make_time(const DATE_TIME_FORMAT *,
                const DRIZZLE_TIME *l_time, String *str)
 {
-  uint32_t length= (uint) my_time_to_str(l_time, (char*) str->ptr());
+  uint32_t length= (uint32_t) my_time_to_str(l_time, (char*) str->ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -705,7 +705,7 @@ void make_time(const DATE_TIME_FORMAT *,
 void make_date(const DATE_TIME_FORMAT *,
                const DRIZZLE_TIME *l_time, String *str)
 {
-  uint32_t length= (uint) my_date_to_str(l_time, (char*) str->ptr());
+  uint32_t length= (uint32_t) my_date_to_str(l_time, (char*) str->ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -714,7 +714,7 @@ void make_date(const DATE_TIME_FORMAT *,
 void make_datetime(const DATE_TIME_FORMAT *,
                    const DRIZZLE_TIME *l_time, String *str)
 {
-  uint32_t length= (uint) my_datetime_to_str(l_time, (char*) str->ptr());
+  uint32_t length= (uint32_t) my_datetime_to_str(l_time, (char*) str->ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -812,10 +812,10 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
       days--;
       sec+= 3600*24L;
     }
-    ltime->second_part= (uint) microseconds;
-    ltime->second= (uint) (sec % 60);
-    ltime->minute= (uint) (sec/60 % 60);
-    ltime->hour=   (uint) (sec/3600);
+    ltime->second_part= (uint32_t) microseconds;
+    ltime->second= (uint32_t) (sec % 60);
+    ltime->minute= (uint32_t) (sec/60 % 60);
+    ltime->hour=   (uint32_t) (sec/3600);
     daynr= calc_daynr(ltime->year,ltime->month,1) + days;
     /* Day number from year 0 to 9999-12-31 */
     if ((uint64_t) daynr > MAX_DAY_NUMBER)
@@ -848,8 +848,8 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
 	     ltime->month-1 + sign * (long) interval.month);
     if (period >= 120000L)
       goto invalid_date;
-    ltime->year= (uint) (period / 12);
-    ltime->month= (uint) (period % 12L)+1;
+    ltime->year= (uint32_t) (period / 12);
+    ltime->month= (uint32_t) (period % 12L)+1;
     /* Adjust day if the new month doesn't have enough days */
     if (ltime->day > days_in_month[ltime->month-1])
     {
@@ -917,15 +917,15 @@ calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign, int64_t
     days= (long)l_time1->day - l_sign * (long)l_time2->day;
   else
   {
-    days= calc_daynr((uint) l_time1->year,
-		     (uint) l_time1->month,
-		     (uint) l_time1->day);
+    days= calc_daynr((uint32_t) l_time1->year,
+		     (uint32_t) l_time1->month,
+		     (uint32_t) l_time1->day);
     if (l_time2->time_type == DRIZZLE_TIMESTAMP_TIME)
       days-= l_sign * (long)l_time2->day;
     else
-      days-= l_sign*calc_daynr((uint) l_time2->year,
-			       (uint) l_time2->month,
-			       (uint) l_time2->day);
+      days-= l_sign*calc_daynr((uint32_t) l_time2->year,
+			       (uint32_t) l_time2->month,
+			       (uint32_t) l_time2->day);
   }
 
   microseconds= ((int64_t)days*86400L +

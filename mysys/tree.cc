@@ -84,7 +84,7 @@ void init_tree(TREE *tree, uint32_t default_alloc_size, uint32_t memory_limit,
   memset(&tree->null_element, 0, sizeof(tree->null_element));
   tree->root= &tree->null_element;
   tree->compare=compare;
-  tree->size_of_element=size > 0 ? (uint) size : 0;
+  tree->size_of_element=size > 0 ? (uint32_t) size : 0;
   tree->memory_limit=memory_limit;
   tree->free=free_element;
   tree->allocated=0;
@@ -94,7 +94,7 @@ void init_tree(TREE *tree, uint32_t default_alloc_size, uint32_t memory_limit,
   tree->null_element.left=tree->null_element.right=0;
   tree->flag= 0;
   if (!free_element && size >= 0 &&
-      ((uint) size <= sizeof(void*) || ((uint) size & (sizeof(void*)-1))))
+      ((uint32_t) size <= sizeof(void*) || ((uint32_t) size & (sizeof(void*)-1))))
   {
     /*
       We know that the data doesn't have to be aligned (like if the key
@@ -115,7 +115,7 @@ void init_tree(TREE *tree, uint32_t default_alloc_size, uint32_t memory_limit,
   }
   if (!(tree->with_delete=with_delete))
   {
-    init_alloc_root(&tree->mem_root, (uint) default_alloc_size, 0);
+    init_alloc_root(&tree->mem_root, (uint32_t) default_alloc_size, 0);
     tree->mem_root.min_malloc=(sizeof(TREE_ELEMENT)+tree->size_of_element);
   }
   return;

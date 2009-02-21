@@ -35,7 +35,7 @@ int getpid(void)
 
 void *	__CDECL halloc(long count,size_t length)
 {
-   return (void*) MK_FP(dos_alloc((uint) ((count*length+15) >> 4)),0);
+   return (void*) MK_FP(dos_alloc((uint32_t) ((count*length+15) >> 4)),0);
 }
 
 void __CDECL hfree(void *ptr)

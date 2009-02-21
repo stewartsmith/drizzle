@@ -1946,7 +1946,7 @@ limit_not_met:
       if (run_query(drizzle, buffer, strlen(buffer)))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint)ptr->length, ptr->string, drizzleclient_error(drizzle));
+                my_progname, (uint32_t)ptr->length, ptr->string, drizzleclient_error(drizzle));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
@@ -1957,7 +1957,7 @@ limit_not_met:
       if (run_query(drizzle, ptr->string, ptr->length))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint)ptr->length, ptr->string, drizzleclient_error(drizzle));
+                my_progname, (uint32_t)ptr->length, ptr->string, drizzleclient_error(drizzle));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
@@ -2011,7 +2011,7 @@ run_statements(DRIZZLE *drizzle, statement *stmt)
     if (run_query(drizzle, ptr->string, ptr->length))
     {
       fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-              my_progname, (uint)ptr->length, ptr->string, drizzleclient_error(drizzle));
+              my_progname, (uint32_t)ptr->length, ptr->string, drizzleclient_error(drizzle));
       exit(1);
     }
     if (!opt_only_print)
@@ -2244,7 +2244,7 @@ limit_not_met:
         if (run_query(&drizzle, buffer, length))
         {
           fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                  my_progname, (uint)length, buffer, drizzleclient_error(&drizzle));
+                  my_progname, (uint32_t)length, buffer, drizzleclient_error(&drizzle));
           exit(1);
         }
       }
@@ -2254,7 +2254,7 @@ limit_not_met:
       if (run_query(&drizzle, ptr->string, ptr->length))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint)ptr->length, ptr->string, drizzleclient_error(&drizzle));
+                my_progname, (uint32_t)ptr->length, ptr->string, drizzleclient_error(&drizzle));
         exit(1);
       }
     }
@@ -2575,7 +2575,7 @@ print_conclusions_csv(conclusions *con)
            con->real_users, /* Children used max_timing */
            con->avg_rows  /* Queries run */
            );
-  my_write(csv_file, (unsigned char*) buffer, (uint)strlen(buffer), MYF(0));
+  my_write(csv_file, (unsigned char*) buffer, (uint32_t)strlen(buffer), MYF(0));
 }
 
 void

@@ -219,7 +219,7 @@ typedef struct system_status_var
   uint64_t bytes_received;
   uint64_t bytes_sent;
   ulong com_other;
-  ulong com_stat[(uint) SQLCOM_END];
+  ulong com_stat[(uint32_t) SQLCOM_END];
   ulong created_tmp_disk_tables;
   ulong created_tmp_tables;
   ulong ha_commit_count;
@@ -756,7 +756,7 @@ public:
     statement/cursor settle here.
   */
   List	     <DRIZZLE_ERROR> warn_list;
-  uint	     warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_END];
+  uint	     warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint	     total_warn_count;
   Diagnostics_area main_da;
 

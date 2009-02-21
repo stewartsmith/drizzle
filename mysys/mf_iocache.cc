@@ -1561,7 +1561,7 @@ int my_block_write(register IO_CACHE *info, const unsigned char *Buffer, size_t 
     if (pos + Count <= info->pos_in_file)
       return (pwrite(info->file, Buffer, Count, pos) == 0);
     /* Write the part of the block that is before buffer */
-    length= (uint) (info->pos_in_file - pos);
+    length= (uint32_t) (info->pos_in_file - pos);
     if (pwrite(info->file, Buffer, length, pos) == 0)
       info->error= error= -1;
     Buffer+=length;

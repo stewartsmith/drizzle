@@ -16,7 +16,7 @@
 #ifndef _my_bitmap_h_
 #define _my_bitmap_h_
 
-#define MY_BIT_NONE (~(uint) 0)
+#define MY_BIT_NONE (~(uint32_t) 0)
 
 #include <mystrings/m_string.h>
 
@@ -101,7 +101,7 @@ extern void bitmap_lock_invert(MY_BITMAP *map);
                                   ^= (1 << ((BIT) & 7)))
 #define _bitmap_clear_bit(MAP, BIT) (((unsigned char*)(MAP)->bitmap)[(BIT) / 8] \
                                   &= ~ (1 << ((BIT) & 7)))
-#define _bitmap_is_set(MAP, BIT) (uint) (((unsigned char*)(MAP)->bitmap)[(BIT) / 8] \
+#define _bitmap_is_set(MAP, BIT) (uint32_t) (((unsigned char*)(MAP)->bitmap)[(BIT) / 8] \
                                          & (1 << ((BIT) & 7)))
 /*
   NEVER use an increment/decrement operator with the 'bit' argument.

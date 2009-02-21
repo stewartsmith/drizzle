@@ -856,7 +856,7 @@ static void set_ports()
       drizzled_port= ntohs((u_short) serv_ptr->s_port); /* purecov: inspected */
 
     if ((env = getenv("DRIZZLE_TCP_PORT")))
-      drizzled_port= (uint) atoi(env);		/* purecov: inspected */
+      drizzled_port= (uint32_t) atoi(env);		/* purecov: inspected */
 
     assert(drizzled_port);
   }
@@ -1652,60 +1652,60 @@ static bool init_global_datetime_format(enum enum_drizzle_timestamp_type format_
 
 SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
-  {"assign_to_keycache",   (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ASSIGN_TO_KEYCACHE]), SHOW_LONG_STATUS},
-  {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
-  {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
-  {"analyze",              (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},
-  {"begin",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_BEGIN]), SHOW_LONG_STATUS},
-  {"change_db",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CHANGE_DB]), SHOW_LONG_STATUS},
-  {"check",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CHECK]), SHOW_LONG_STATUS},
-  {"checksum",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CHECKSUM]), SHOW_LONG_STATUS},
-  {"commit",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_COMMIT]), SHOW_LONG_STATUS},
-  {"create_db",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CREATE_DB]), SHOW_LONG_STATUS},
-  {"create_index",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CREATE_INDEX]), SHOW_LONG_STATUS},
-  {"create_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CREATE_TABLE]), SHOW_LONG_STATUS},
-  {"delete",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DELETE]), SHOW_LONG_STATUS},
-  {"delete_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DELETE_MULTI]), SHOW_LONG_STATUS},
-  {"drop_db",              (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DROP_DB]), SHOW_LONG_STATUS},
-  {"drop_index",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DROP_INDEX]), SHOW_LONG_STATUS},
-  {"drop_table",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DROP_TABLE]), SHOW_LONG_STATUS},
-  {"empty_query",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_EMPTY_QUERY]), SHOW_LONG_STATUS},
-  {"flush",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_FLUSH]), SHOW_LONG_STATUS},
-  {"insert",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_INSERT]), SHOW_LONG_STATUS},
-  {"insert_select",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_INSERT_SELECT]), SHOW_LONG_STATUS},
-  {"kill",                 (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_KILL]), SHOW_LONG_STATUS},
-  {"load",                 (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOAD]), SHOW_LONG_STATUS},
-  {"lock_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOCK_TABLES]), SHOW_LONG_STATUS},
-  {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
-  {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"rename_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
-  {"repair",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_REPAIR]), SHOW_LONG_STATUS},
-  {"replace",              (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
-  {"replace_select",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_REPLACE_SELECT]), SHOW_LONG_STATUS},
-  {"rollback",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ROLLBACK]), SHOW_LONG_STATUS},
-  {"rollback_to_savepoint",(char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ROLLBACK_TO_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"savepoint",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"select",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SELECT]), SHOW_LONG_STATUS},
-  {"set_option",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SET_OPTION]), SHOW_LONG_STATUS},
-  {"show_create_db",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
-  {"show_create_table",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
-  {"show_databases",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_DATABASES]), SHOW_LONG_STATUS},
-  {"show_engine_status",   (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_ENGINE_STATUS]), SHOW_LONG_STATUS},
-  {"show_errors",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
-  {"show_fields",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
-  {"show_keys",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
-  {"show_open_tables",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_OPEN_TABLES]), SHOW_LONG_STATUS},
-  {"show_plugins",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_PLUGINS]), SHOW_LONG_STATUS},
-  {"show_processlist",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_PROCESSLIST]), SHOW_LONG_STATUS},
-  {"show_status",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_STATUS]), SHOW_LONG_STATUS},
-  {"show_table_status",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_TABLE_STATUS]), SHOW_LONG_STATUS},
-  {"show_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_TABLES]), SHOW_LONG_STATUS},
-  {"show_variables",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_VARIABLES]), SHOW_LONG_STATUS},
-  {"show_warnings",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
-  {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
-  {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
-  {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
-  {"update_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE_MULTI]), SHOW_LONG_STATUS},
+  {"assign_to_keycache",   (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ASSIGN_TO_KEYCACHE]), SHOW_LONG_STATUS},
+  {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
+  {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
+  {"analyze",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},
+  {"begin",                (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_BEGIN]), SHOW_LONG_STATUS},
+  {"change_db",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CHANGE_DB]), SHOW_LONG_STATUS},
+  {"check",                (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CHECK]), SHOW_LONG_STATUS},
+  {"checksum",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CHECKSUM]), SHOW_LONG_STATUS},
+  {"commit",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_COMMIT]), SHOW_LONG_STATUS},
+  {"create_db",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_DB]), SHOW_LONG_STATUS},
+  {"create_index",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_INDEX]), SHOW_LONG_STATUS},
+  {"create_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_TABLE]), SHOW_LONG_STATUS},
+  {"delete",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DELETE]), SHOW_LONG_STATUS},
+  {"delete_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DELETE_MULTI]), SHOW_LONG_STATUS},
+  {"drop_db",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_DB]), SHOW_LONG_STATUS},
+  {"drop_index",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_INDEX]), SHOW_LONG_STATUS},
+  {"drop_table",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_TABLE]), SHOW_LONG_STATUS},
+  {"empty_query",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_EMPTY_QUERY]), SHOW_LONG_STATUS},
+  {"flush",                (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_FLUSH]), SHOW_LONG_STATUS},
+  {"insert",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_INSERT]), SHOW_LONG_STATUS},
+  {"insert_select",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_INSERT_SELECT]), SHOW_LONG_STATUS},
+  {"kill",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_KILL]), SHOW_LONG_STATUS},
+  {"load",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_LOAD]), SHOW_LONG_STATUS},
+  {"lock_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_LOCK_TABLES]), SHOW_LONG_STATUS},
+  {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
+  {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
+  {"rename_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
+  {"repair",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPAIR]), SHOW_LONG_STATUS},
+  {"replace",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
+  {"replace_select",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE_SELECT]), SHOW_LONG_STATUS},
+  {"rollback",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ROLLBACK]), SHOW_LONG_STATUS},
+  {"rollback_to_savepoint",(char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ROLLBACK_TO_SAVEPOINT]), SHOW_LONG_STATUS},
+  {"savepoint",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SAVEPOINT]), SHOW_LONG_STATUS},
+  {"select",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SELECT]), SHOW_LONG_STATUS},
+  {"set_option",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SET_OPTION]), SHOW_LONG_STATUS},
+  {"show_create_db",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
+  {"show_create_table",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
+  {"show_databases",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_DATABASES]), SHOW_LONG_STATUS},
+  {"show_engine_status",   (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_ENGINE_STATUS]), SHOW_LONG_STATUS},
+  {"show_errors",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
+  {"show_fields",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
+  {"show_keys",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
+  {"show_open_tables",     (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_OPEN_TABLES]), SHOW_LONG_STATUS},
+  {"show_plugins",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_PLUGINS]), SHOW_LONG_STATUS},
+  {"show_processlist",     (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_PROCESSLIST]), SHOW_LONG_STATUS},
+  {"show_status",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_STATUS]), SHOW_LONG_STATUS},
+  {"show_table_status",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_TABLE_STATUS]), SHOW_LONG_STATUS},
+  {"show_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_TABLES]), SHOW_LONG_STATUS},
+  {"show_variables",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_VARIABLES]), SHOW_LONG_STATUS},
+  {"show_warnings",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
+  {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
+  {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
+  {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
+  {"update_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UPDATE_MULTI]), SHOW_LONG_STATUS},
   {NULL, NULL, SHOW_LONGLONG}
 };
 
@@ -3225,13 +3225,13 @@ static void drizzle_init_variables(void)
   opt_date_time_formats[0]= opt_date_time_formats[1]= opt_date_time_formats[2]= 0;
 
   /* Things with default values that are not zero */
-  delay_key_write_options= (uint) DELAY_KEY_WRITE_ON;
+  delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_ON;
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
-  what_to_log= ~ (1L << (uint) COM_TIME);
+  what_to_log= ~ (1L << (uint32_t) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
   strcpy(server_version, VERSION);
@@ -3334,7 +3334,7 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       global_system_variables.log_warnings= atoi(argument);
     break;
   case 'T':
-    test_flags= argument ? (uint) atoi(argument) : 0;
+    test_flags= argument ? (uint32_t) atoi(argument) : 0;
     opt_endinfo=1;
     break;
   case (int) OPT_BIN_LOG:
@@ -3384,14 +3384,14 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
     /* Fall through */
   case OPT_DELAY_KEY_WRITE:
     if (argument == disabled_my_option)
-      delay_key_write_options= (uint) DELAY_KEY_WRITE_NONE;
+      delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_NONE;
     else if (! argument)
-      delay_key_write_options= (uint) DELAY_KEY_WRITE_ON;
+      delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_ON;
     else
     {
       int type;
       type= find_type_or_exit(argument, &delay_key_write_typelib, opt->name);
-      delay_key_write_options= (uint) type-1;
+      delay_key_write_options= (uint32_t) type-1;
     }
     break;
   case OPT_TX_ISOLATION:
@@ -3779,7 +3779,7 @@ static void create_pid_file()
     char buff[21], *end;
     end= int10_to_str((long) getpid(), buff, 10);
     *end++= '\n';
-    if (!my_write(file, (unsigned char*) buff, (uint) (end-buff), MYF(MY_WME | MY_NABP)))
+    if (!my_write(file, (unsigned char*) buff, (uint32_t) (end-buff), MYF(MY_WME | MY_NABP)))
     {
       (void) my_close(file, MYF(0));
       return;

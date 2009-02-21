@@ -2107,8 +2107,8 @@ void handler::print_keydup_error(uint32_t key_nr, const char *msg)
   else
   {
     /* Table is opened and defined at this point */
-    key_unpack(&str,table,(uint) key_nr);
-    uint32_t max_length=DRIZZLE_ERRMSG_SIZE-(uint) strlen(msg);
+    key_unpack(&str,table,(uint32_t) key_nr);
+    uint32_t max_length=DRIZZLE_ERRMSG_SIZE-(uint32_t) strlen(msg);
     if (str.length() >= max_length)
     {
       str.length(max_length-4);
@@ -2171,9 +2171,9 @@ void handler::print_error(int error, myf errflag)
       char key[MAX_KEY_LENGTH];
       String str(key,sizeof(key),system_charset_info);
       /* Table is opened and defined at this point */
-      key_unpack(&str,table,(uint) key_nr);
+      key_unpack(&str,table,(uint32_t) key_nr);
       max_length= (DRIZZLE_ERRMSG_SIZE-
-                   (uint) strlen(ER(ER_FOREIGN_DUPLICATE_KEY)));
+                   (uint32_t) strlen(ER(ER_FOREIGN_DUPLICATE_KEY)));
       if (str.length() >= max_length)
       {
         str.length(max_length-4);
@@ -2370,7 +2370,7 @@ int handler::check_old_types()
 */
 uint32_t handler::get_dup_key(int error)
 {
-  table->file->errkey  = (uint) -1;
+  table->file->errkey  = (uint32_t) -1;
   if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||
       error == HA_ERR_FOUND_DUPP_UNIQUE ||
       error == HA_ERR_DROP_INDEX_FK)
@@ -2850,7 +2850,7 @@ int ha_create_table(Session *session, const char *path,
 
   init_tmp_table_share(session, &share, db, 0, table_name, path);
   if (open_table_def(session, &share, 0) ||
-      open_table_from_share(session, &share, "", 0, (uint) READ_ALL, 0, &table,
+      open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0, &table,
                             OTM_CREATE))
     goto err;
 
@@ -2898,7 +2898,7 @@ int ha_init_key_cache(const char *,
   {
     pthread_mutex_lock(&LOCK_global_system_variables);
     uint32_t tmp_buff_size= (uint32_t) key_cache->param_buff_size;
-    uint32_t tmp_block_size= (uint) key_cache->param_block_size;
+    uint32_t tmp_block_size= (uint32_t) key_cache->param_block_size;
     uint32_t division_limit= key_cache->param_division_limit;
     uint32_t age_threshold=  key_cache->param_age_threshold;
     pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -3173,7 +3173,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
     cost->zero();
     cost->avg_io_cost= 1; /* assume random seeks */
     if ((*flags & HA_MRR_INDEX_ONLY) && total_rows > 2)
-      cost->io_count= index_only_read_time(keyno, (uint)total_rows);
+      cost->io_count= index_only_read_time(keyno, (uint32_t)total_rows);
     else
       cost->io_count= read_time(keyno, n_ranges, total_rows);
     cost->cpu_cost= (double) total_rows / TIME_FOR_COMPARE + 0.01;
@@ -3780,7 +3780,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
     return true; /* Buffer has not enough space for even 1 rowid */
 
   /* Number of iterations we'll make with full buffer */
-  n_full_steps= (uint)floor(rows2double(rows) / max_buff_entries);
+  n_full_steps= (uint32_t)floor(rows2double(rows) / max_buff_entries);
 
   /*
     Get numbers of rows we'll be processing in
@@ -3902,7 +3902,7 @@ void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
   if (table->file->primary_key_is_clustered())
   {
     cost->io_count= table->file->read_time(table->s->primary_key,
-                                           (uint) nrows, nrows);
+                                           (uint32_t) nrows, nrows);
   }
   else
   {

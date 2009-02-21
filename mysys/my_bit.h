@@ -26,7 +26,7 @@ static inline uint32_t my_count_bits(uint64_t v)
   /* The following code is a bit faster on 16 bit machines than if we would
      only shift v */
   uint32_t v2=(uint32_t) (v >> 32);
-  return (uint) (unsigned char) (_my_bits_nbits[(unsigned char)  v] +
+  return (uint32_t) (unsigned char) (_my_bits_nbits[(unsigned char)  v] +
                          _my_bits_nbits[(unsigned char) (v >> 8)] +
                          _my_bits_nbits[(unsigned char) (v >> 16)] +
                          _my_bits_nbits[(unsigned char) (v >> 24)] +

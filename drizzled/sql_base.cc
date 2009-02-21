@@ -2233,7 +2233,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   /* Fix alias if table name changes */
   if (strcmp(table->alias, alias))
   {
-    uint32_t length=(uint) strlen(alias)+1;
+    uint32_t length=(uint32_t) strlen(alias)+1;
     table->alias= (char*) realloc((char*) table->alias, length);
     memcpy((void*) table->alias, alias, length);
   }
@@ -2514,7 +2514,7 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
       already locked.
     */
     session->some_tables_deleted=0;
-    if ((lock= mysql_lock_tables(session, tables, (uint) (tables_ptr - tables),
+    if ((lock= mysql_lock_tables(session, tables, (uint32_t) (tables_ptr - tables),
                                  flags, &not_used)))
     {
       session->locked_tables=mysql_lock_merge(session->locked_tables,lock);
@@ -2885,7 +2885,7 @@ retry:
     return(1);
 
   while ((error= open_table_from_share(session, share, alias,
-                                       (uint) (HA_OPEN_KEYFILE |
+                                       (uint32_t) (HA_OPEN_KEYFILE |
                                                HA_OPEN_RNDFILE |
                                                HA_GET_INDEX |
                                                HA_TRY_READ_ONLY),
@@ -2946,7 +2946,7 @@ retry:
      session->clear_error();				// Clear error message
      error= 0;
      if (open_table_from_share(session, share, alias,
-                               (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
+                               (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                        HA_GET_INDEX |
                                        HA_TRY_READ_ONLY),
                                EXTRA_RECORD,
@@ -3439,7 +3439,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
 	*(ptr++)= table->table;
     }
 
-    if (!(session->lock= mysql_lock_tables(session, start, (uint) (ptr - start),
+    if (!(session->lock= mysql_lock_tables(session, start, (uint32_t) (ptr - start),
                                        lock_flag, need_reopen)))
     {
       return(-1);
@@ -3549,7 +3549,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   if (open_table_def(session, share, 0) ||
       open_table_from_share(session, share, table_name,
                             (open_mode == OTM_ALTER) ? 0 :
-                            (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
+                            (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                     HA_GET_INDEX),
                             (open_mode == OTM_ALTER) ?
                               (EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
@@ -4088,7 +4088,7 @@ find_field_in_tables(Session *session, Item_ident *item,
   const char *db= item->db_name;
   const char *table_name= item->table_name;
   const char *name= item->field_name;
-  uint32_t length=(uint) strlen(name);
+  uint32_t length=(uint32_t) strlen(name);
   char name_buff[NAME_LEN+1];
   TableList *cur_table= first_table;
   TableList *actual_table;
@@ -5942,7 +5942,7 @@ bool drizzle_rm_tmp_tables(void)
   if ((dirp = my_dir(drizzle_tmpdir ,MYF(MY_WME | MY_DONT_SORT))))
   {
     /* Remove all SQLxxx tables from directory */
-    for (idx=0 ; idx < (uint) dirp->number_off_files ; idx++)
+    for (idx=0 ; idx < (uint32_t) dirp->number_off_files ; idx++)
     {
       file=dirp->dir_entry+idx;
 

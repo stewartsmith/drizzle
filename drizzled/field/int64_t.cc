@@ -160,7 +160,7 @@ String *Field_int64_t::val_str(String *val_buffer,
 #endif
     int64_tget(j,ptr);
 
-  length=(uint) (cs->cset->int64_t10_to_str)(cs,to,mlength, -10, j);
+  length=(uint32_t) (cs->cset->int64_t10_to_str)(cs,to,mlength, -10, j);
   val_buffer->length(length);
 
   return val_buffer;

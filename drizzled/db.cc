@@ -624,7 +624,7 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
   tot_list_next= &tot_list;
 
   for (uint32_t idx=0 ;
-       idx < (uint) dirp->number_off_files && !session->killed ;
+       idx < (uint32_t) dirp->number_off_files && !session->killed ;
        idx++)
   {
     FILEINFO *file=dirp->dir_entry+idx;

@@ -32,7 +32,7 @@ extern "C" unsigned char* get_hash_key(const unsigned char *buff, size_t *length
                                bool )
 {
   udf_func *udf= (udf_func*) buff;
-  *length= (uint) udf->name.length;
+  *length= (uint32_t) udf->name.length;
   return (unsigned char*) udf->name.str;
 }
 

@@ -61,7 +61,7 @@ public:
   {
     register size_t max_elems_in_tree=
       (1 + max_in_memory_size / ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
-    return (int) (sizeof(uint)*(1 + nkeys/max_elems_in_tree));
+    return (int) (sizeof(uint32_t)*(1 + nkeys/max_elems_in_tree));
   }
 
   void reset();

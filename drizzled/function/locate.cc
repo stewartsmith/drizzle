@@ -61,7 +61,7 @@ int64_t Item_func_locate::val_int()
 
   if (!cmp_collation.collation->coll->instr(cmp_collation.collation,
                                             a->ptr()+start,
-                                            (uint) (a->length()-start),
+                                            (uint32_t) (a->length()-start),
                                             b->ptr(), b->length(),
                                             &match, 1))
     return 0;

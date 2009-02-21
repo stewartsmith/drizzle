@@ -314,7 +314,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
 	return 1;
       continue;
     }
-    length= cmin((uint) (key_end-key), store_length);
+    length= cmin((uint32_t) (key_end-key), store_length);
     if (!(key_part->key_type & (FIELDFLAG_NUMBER+FIELDFLAG_BINARY+
                                 FIELDFLAG_PACK)))
     {

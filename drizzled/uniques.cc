@@ -432,13 +432,13 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
   QUEUE queue;
   if (end <= begin ||
       merge_buffer_size < (ulong) (key_length * (end - begin + 1)) ||
-      init_queue(&queue, (uint) (end - begin), offsetof(BUFFPEK, key), 0,
+      init_queue(&queue, (uint32_t) (end - begin), offsetof(BUFFPEK, key), 0,
                  buffpek_compare, &compare_context))
     return 1;
   /* we need space for one key when a piece of merge buffer is re-read */
   merge_buffer_size-= key_length;
   unsigned char *save_key_buff= merge_buffer + merge_buffer_size;
-  uint32_t max_key_count_per_piece= (uint) (merge_buffer_size/(end-begin) /
+  uint32_t max_key_count_per_piece= (uint32_t) (merge_buffer_size/(end-begin) /
                                         key_length);
   /* if piece_size is aligned reuse_freed_buffer will always hit */
   uint32_t piece_size= max_key_count_per_piece * key_length;
@@ -456,7 +456,7 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
     top->base= merge_buffer + (top - begin) * piece_size;
     top->max_keys= max_key_count_per_piece;
     bytes_read= read_to_buffer(file, top, key_length);
-    if (bytes_read == (uint) (-1))
+    if (bytes_read == (uint32_t) (-1))
       goto end;
     assert(bytes_read);
     queue_insert(&queue, (unsigned char *) top);
@@ -485,7 +485,7 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
       memcpy(save_key_buff, old_key, key_length);
       old_key= save_key_buff;
       bytes_read= read_to_buffer(file, top, key_length);
-      if (bytes_read == (uint) (-1))
+      if (bytes_read == (uint32_t) (-1))
         goto end;
       else if (bytes_read > 0)      /* top->key, top->mem_count are reset */
         queue_replaced(&queue);     /* in read_to_buffer */
@@ -522,7 +522,7 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
     }
     while (--top->mem_count);
     bytes_read= read_to_buffer(file, top, key_length);
-    if (bytes_read == (uint) (-1))
+    if (bytes_read == (uint32_t) (-1))
       goto end;
   }
   while (bytes_read);
@@ -622,7 +622,7 @@ bool Unique::get(Table *table)
   sort_param.sort_form=table;
   sort_param.rec_length= sort_param.sort_length= sort_param.ref_length=
     size;
-  sort_param.keys= (uint) (max_in_memory_size / sort_param.sort_length);
+  sort_param.keys= (uint32_t) (max_in_memory_size / sort_param.sort_length);
   sort_param.not_killable=1;
 
   if (!(sort_buffer=(unsigned char*) malloc((sort_param.keys+1) *

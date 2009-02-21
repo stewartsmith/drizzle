@@ -4475,7 +4475,7 @@ add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
       if (!(form->keys_in_use_for_query.is_set(key)))
 	continue;
 
-      uint32_t key_parts= (uint) form->key_info[key].key_parts;
+      uint32_t key_parts= (uint32_t) form->key_info[key].key_parts;
       for (uint32_t part=0 ; part <  key_parts ; part++)
       {
 	if (field->eq(form->key_info[key].key_part[part].field))
@@ -4750,7 +4750,7 @@ update_ref_and_keys(Session *session, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
       use->table->reginfo.join_tab->checked_keys.set_bit(use->key);
       save_pos++;
     }
-    i=(uint) (save_pos-(KEYUSE*) keyuse->buffer);
+    i=(uint32_t) (save_pos-(KEYUSE*) keyuse->buffer);
     set_dynamic(keyuse,(unsigned char*) &key_end,i);
     keyuse->elements=i;
   }
@@ -6292,9 +6292,9 @@ static void calc_used_field_length(Session *, JOIN_TAB *join_tab)
     rec_length+=sizeof(bool);
   if (blobs)
   {
-    uint32_t blob_length=(uint) (join_tab->table->file->stats.mean_rec_length-
+    uint32_t blob_length=(uint32_t) (join_tab->table->file->stats.mean_rec_length-
 			     (join_tab->table->getRecordLength()- rec_length));
-    rec_length+=(uint) cmax((uint)4,blob_length);
+    rec_length+=(uint32_t) cmax((uint32_t)4,blob_length);
   }
   join_tab->used_fields=fields;
   join_tab->used_fieldlength=rec_length;
@@ -7033,7 +7033,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
       used_tables|=current_map;
 
       if (tab->type == JT_REF && tab->quick &&
-	  (uint) tab->ref.key == tab->quick->index &&
+	  (uint32_t) tab->ref.key == tab->quick->index &&
 	  tab->ref.key_length < tab->quick->max_used_key_length)
       {
 	/* Range uses longer key;  Use this instead of ref on key */
@@ -7124,7 +7124,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	  /* Use quick key read if it's a constant and it's not used
 	     with key reading */
 	  if (tab->needed_reg.is_clear_all() && tab->type != JT_EQ_REF
-	      && (tab->type != JT_REF || (uint) tab->ref.key == tab->quick->index))
+	      && (tab->type != JT_REF || (uint32_t) tab->ref.key == tab->quick->index))
 	  {
 	    sel->quick=tab->quick;		// Use value from get_quick_...
 	    sel->quick_keys.clear_all();
@@ -7136,7 +7136,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	  }
 	  tab->quick=0;
 	}
-	uint32_t ref_key=(uint) sel->head->reginfo.join_tab->ref.key+1;
+	uint32_t ref_key=(uint32_t) sel->head->reginfo.join_tab->ref.key+1;
 	if (i == join->const_tables && ref_key)
 	{
 	  if (!tab->const_keys.is_clear_all() &&
@@ -8404,7 +8404,7 @@ class COND_CMP :public ilink {
 public:
   static void *operator new(size_t size)
   {
-    return (void*) sql_alloc((uint) size);
+    return (void*) sql_alloc((uint32_t) size);
   }
   static void operator delete(void *, size_t)
   { TRASH(ptr, size); }
@@ -12020,7 +12020,7 @@ end_send_group(JOIN *join, JOIN_TAB *, bool end_of_records)
 	  }
 	  if (join->rollup.state != ROLLUP::STATE_NONE && error <= 0)
 	  {
-	    if (join->rollup_send_data((uint) (idx+1)))
+	    if (join->rollup_send_data((uint32_t) (idx+1)))
 	      error= 1;
 	  }
 	}
@@ -12285,7 +12285,7 @@ end_write_group(JOIN *join, JOIN_TAB *,
         }
         if (join->rollup.state != ROLLUP::STATE_NONE)
 	{
-	  if (join->rollup_write_data((uint) (idx+1), table))
+	  if (join->rollup_write_data((uint32_t) (idx+1), table))
 	    return(NESTED_LOOP_ERROR);
 	}
 	if (end_of_records)
@@ -12670,7 +12670,7 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx,
     key_part++;
   }
   *used_key_parts= on_primary_key ? table->key_info[idx].key_parts :
-    (uint) (key_part - table->key_info[idx].key_part);
+    (uint32_t) (key_part - table->key_info[idx].key_part);
   if (reverse == -1 && !(table->file->index_flags(idx, *used_key_parts-1, 1) &
                          HA_READ_PREV))
     reverse= 0;                                 // Index can't be used
@@ -13394,7 +13394,7 @@ create_sort_index(Session *session, JOIN *join, order_st *order,
         We can only use 'Only index' if quick key is same as ref_key
         and in index_merge 'Only index' cannot be used
       */
-      if (table->key_read && ((uint) tab->ref.key != select->quick->index))
+      if (table->key_read && ((uint32_t) tab->ref.key != select->quick->index))
       {
 	table->key_read=0;
 	table->file->extra(HA_EXTRA_NO_KEYREAD);
@@ -13622,10 +13622,10 @@ static int remove_dup_with_hash_index(Session *session, Table *table,
 
   if (!my_multi_malloc(MYF(MY_WME),
 		       &key_buffer,
-		       (uint) ((key_length + extra_length) *
+		       (uint32_t) ((key_length + extra_length) *
 			       (long) file->stats.records),
 		       &field_lengths,
-		       (uint) (field_count*sizeof(*field_lengths)),
+		       (uint32_t) (field_count*sizeof(*field_lengths)),
 		       NULL))
     return(1);
 
@@ -13643,7 +13643,7 @@ static int remove_dup_with_hash_index(Session *session, Table *table,
     extra_length= ALIGN_SIZE(key_length)-key_length;
   }
 
-  if (hash_init(&hash, &my_charset_bin, (uint) file->stats.records, 0,
+  if (hash_init(&hash, &my_charset_bin, (uint32_t) file->stats.records, 0,
 		key_length, (hash_get_key) 0, 0, 0))
   {
     free((char*) key_buffer);
@@ -13939,7 +13939,7 @@ store_record_in_cache(JOIN_CACHE *cache)
 	for (str=copy->str,end= str+copy->length;
 	     end > str && end[-1] == ' ' ;
 	     end--) ;
-	length=(uint) (end-str);
+	length=(uint32_t) (end-str);
 	memcpy(pos+2, str, length);
         int2store(pos, length);
 	pos+= length+2;
@@ -14137,7 +14137,7 @@ find_order_in_list(Session *session, Item **ref_pointer_array, TableList *tables
   */
   if (order_item->type() == Item::INT_ITEM && order_item->basic_const_item())
   {						/* Order by position */
-    uint32_t count= (uint) order_item->val_int();
+    uint32_t count= (uint32_t) order_item->val_int();
     if (!count || count > fields.elements)
     {
       my_error(ER_BAD_FIELD_ERROR, MYF(0),

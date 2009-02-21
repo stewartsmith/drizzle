@@ -378,7 +378,7 @@ void mysql_unlock_read_tables(Session *session, DRIZZLE_LOCK *sql_lock)
   for (i=found=0 ; i < sql_lock->table_count ; i++)
   {
     assert(sql_lock->table[i]->lock_position == i);
-    if ((uint) sql_lock->table[i]->reginfo.lock_type >= TL_WRITE_ALLOW_READ)
+    if ((uint32_t) sql_lock->table[i]->reginfo.lock_type >= TL_WRITE_ALLOW_READ)
     {
       std::swap(*table, sql_lock->table[i]);
       table++;
@@ -798,9 +798,9 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
                                    lock_type);
     if (flags & GET_LOCK_STORE_LOCKS)
     {
-      table->lock_position=   (uint) (to - table_buf);
-      table->lock_data_start= (uint) (locks_start - locks_buf);
-      table->lock_count=      (uint) (locks - locks_start);
+      table->lock_position=   (uint32_t) (to - table_buf);
+      table->lock_data_start= (uint32_t) (locks_start - locks_buf);
+      table->lock_count=      (uint32_t) (locks - locks_start);
     }
     *to++= table;
   }

@@ -1184,7 +1184,7 @@ int main(int argc,char *argv[])
       if (verbose)
         tee_fprintf(stdout, _("Reading history-file %s\n"),histfile);
       read_history(histfile);
-      if (!(histfile_tmp= (char*) malloc((uint) strlen(histfile) + 5)))
+      if (!(histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5)))
       {
         fprintf(stderr, _("Couldn't allocate memory for temp histfile!\n"));
         exit(1);
@@ -1514,7 +1514,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
         return false;
       }
     }
-    delimiter_length= (uint)strlen(delimiter);
+    delimiter_length= (uint32_t)strlen(delimiter);
     delimiter_str= delimiter;
     break;
   case OPT_LOCAL_INFILE:
@@ -1844,14 +1844,14 @@ static COMMANDS *find_command(const char *name,char cmd_char)
       return((COMMANDS *) 0);
     if ((end=strcont(name," \t")))
     {
-      len=(uint) (end - name);
+      len=(uint32_t) (end - name);
       while (my_isspace(charset_info,*end))
         end++;
       if (!*end)
         end=0;          // no arguments to function
     }
     else
-      len=(uint) strlen(name);
+      len=(uint32_t) strlen(name);
   }
 
   for (uint32_t i= 0; commands[i].name; i++)
@@ -1880,7 +1880,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
     return(0);
   if (status.add_to_history && line[0] && not_in_history(line))
     add_history(line);
-  char *end_of_line=line+(uint) strlen(line);
+  char *end_of_line=line+(uint32_t) strlen(line);
 
   for (pos=out=line ; (inchar= (unsigned char) *pos) ; pos++)
   {
@@ -2124,7 +2124,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
   if (out != line || (buffer->length() > 0))
   {
     *out++='\n';
-    uint32_t length=(uint) (out-line);
+    uint32_t length=(uint32_t) (out-line);
     if ((!*ml_comment || preserve_comments))
       buffer->append(line, length);
   }
@@ -2257,7 +2257,7 @@ char *new_command_generator(const char *text,int state)
   static uint32_t i;
 
   if (!state)
-    textlen=(uint) strlen(text);
+    textlen=(uint32_t) strlen(text);
 
   if (textlen>0)
   {            /* lookup in the hash */
@@ -2265,7 +2265,7 @@ char *new_command_generator(const char *text,int state)
     {
       uint32_t len;
 
-      b = find_all_matches(&ht,text,(uint) strlen(text),&len);
+      b = find_all_matches(&ht,text,(uint32_t) strlen(text),&len);
       if (!b)
         return NULL;
       e = b->pData;
@@ -2297,7 +2297,7 @@ char *new_command_generator(const char *text,int state)
     ptr= NULL;
     while (e && !ptr)
     {          /* find valid entry in bucket */
-      if ((uint) strlen(e->str) == b->nKeyLength)
+      if ((uint32_t) strlen(e->str) == b->nKeyLength)
         ptr = strdup(e->str);
       /* find the next used entry */
       e = e->pNext;
@@ -2393,7 +2393,7 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
       {
         char *str=strdup_root(&hash_mem_root, (char*) table_row[0]);
         if (str &&
-            !completion_hash_exists(&ht,(char*) str, (uint) strlen(str)))
+            !completion_hash_exists(&ht,(char*) str, (uint32_t) strlen(str)))
           add_word(&ht,str);
       }
     }
@@ -2406,7 +2406,7 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
   }
   drizzleclient_data_seek(tables,0);
   if (!(field_names= (char ***) alloc_root(&hash_mem_root,sizeof(char **) *
-                                           (uint) (drizzleclient_num_rows(tables)+1))))
+                                           (uint32_t) (drizzleclient_num_rows(tables)+1))))
   {
     drizzleclient_free_result(tables);
     return;
@@ -2434,7 +2434,7 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
         field_names[i][num_fields+j] = strdup_root(&hash_mem_root,
                                                    sql_field->name);
         if (!completion_hash_exists(&ht,field_names[i][num_fields+j],
-                                    (uint) strlen(field_names[i][num_fields+j])))
+                                    (uint32_t) strlen(field_names[i][num_fields+j])))
           add_word(&ht,field_names[i][num_fields+j]);
         j++;
       }
@@ -2939,7 +2939,7 @@ print_table_data(DRIZZLE_RES *result)
     (void) tee_fputs("|", PAGER);
     for (uint32_t off=0; (field = drizzleclient_fetch_field(result)) ; off++)
     {
-      uint32_t name_length= (uint) strlen(field->name);
+      uint32_t name_length= (uint32_t) strlen(field->name);
       uint32_t numcells= charset_info->cset->numcells(charset_info,
                                                   field->name,
                                                   field->name + name_length);
@@ -2977,7 +2977,7 @@ print_table_data(DRIZZLE_RES *result)
       else
       {
         buffer= cur[off];
-        data_length= (uint) lengths[off];
+        data_length= (uint32_t) lengths[off];
       }
 
       field= drizzleclient_fetch_field(result);
@@ -3160,7 +3160,7 @@ static void print_warnings()
     messages.  To be safe, skip printing the duplicate only if it is the only
     warning.
   */
-  if (!cur || (num_rows == 1 && error == (uint) strtoul(cur[1], NULL, 10)))
+  if (!cur || (num_rows == 1 && error == (uint32_t) strtoul(cur[1], NULL, 10)))
     goto end;
 
   /* Print the warnings */

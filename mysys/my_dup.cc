@@ -23,7 +23,7 @@ File my_dup(File file, myf MyFlags)
   File fd;
   const char *filename;
   fd = dup(file);
-  filename= (((uint) file < my_file_limit) ?
+  filename= (((uint32_t) file < my_file_limit) ?
 	     my_file_info[(int) file].name : "Unknown");
   return(my_register_filename(fd, filename, FILE_BY_DUP,
 				   EE_FILENOTFOUND, MyFlags));

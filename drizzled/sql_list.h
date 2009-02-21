@@ -460,7 +460,7 @@ struct ilink
   struct ilink **prev,*next;
   static void *operator new(size_t size)
   {
-    return (void*)malloc((uint)size);
+    return (void*)malloc((uint32_t)size);
   }
   static void operator delete(void* ptr_arg, size_t)
   {

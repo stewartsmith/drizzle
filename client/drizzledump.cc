@@ -2012,7 +2012,7 @@ static void dump_table(char *table, char *db)
     total_length= opt_net_buffer_length;                /* Force row break */
     row_break=0;
     rownr=0;
-    init_length=(uint) insert_pat.length()+4;
+    init_length=(uint32_t) insert_pat.length()+4;
     if (opt_xml)
       print_xml_tag(md_result_file, "\t", "\n", "table_data", "name=", table,
               NULL);
@@ -2917,7 +2917,7 @@ static void print_value(FILE *file, DRIZZLE_RES  *result, DRIZZLE_ROW row,
         fputc(' ',file);
         fputs(prefix, file);
         if (string_value)
-          unescape(file,row[0],(uint) strlen(row[0]));
+          unescape(file,row[0],(uint32_t) strlen(row[0]));
         else
           fputs(row[0], file);
         check_io(file);

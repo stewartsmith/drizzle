@@ -554,7 +554,7 @@ bool perform_ins_del(QUEUE *queue, bool max_ind)
     if (j++ >= no_loops)
     {
       calculate_end_next(part);
-      queue_remove(queue, (uint) 0);
+      queue_remove(queue, (uint32_t) 0);
     }
     else
     {
@@ -601,7 +601,7 @@ static void stop_measurement()
   uint32_t time_in_micros;
   stop_time-= start_time;
   stop_time/= 10; /* Convert to microseconds */
-  time_in_micros= (uint)stop_time;
+  time_in_micros= (uint32_t)stop_time;
   printf("Time expired is %u microseconds \n", time_in_micros);
 }
 
@@ -659,7 +659,7 @@ static void benchmark_test()
     queue_replaced(queue);
   }
   for (i= 0; i < 16; i++)
-    queue_remove(queue, (uint) 0);
+    queue_remove(queue, (uint32_t) 0);
   queue_remove_all(queue);
   stop_measurement();
 }

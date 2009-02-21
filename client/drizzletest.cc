@@ -1647,7 +1647,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
         return(0);
       die("Empty variable");
     }
-    length= (uint) (var_name - save_var_name);
+    length= (uint32_t) (var_name - save_var_name);
     if (length >= MAX_VAR_NAME_LENGTH)
       die("Too long variable name: %s", save_var_name);
 
@@ -1712,7 +1712,7 @@ static void var_set(const char *var_name, const char *var_name_end,
   digit= *var_name - '0';
   if (!(digit < 10 && digit >= 0))
   {
-    v= var_obtain(var_name, (uint) (var_name_end - var_name));
+    v= var_obtain(var_name, (uint32_t) (var_name_end - var_name));
   }
   else
     v= var_reg + digit;
@@ -3277,7 +3277,7 @@ static uint32_t get_errcode_from_name(char *error_name, char *error_end)
       (as in ER_WRONG_VALUE vs. ER_WRONG_VALUE_COUNT).
     */
     if (!strncmp(error_name, e->name, (int) (error_end - error_name)) &&
-        (uint) strlen(e->name) == (uint) (error_end - error_name))
+        (uint32_t) strlen(e->name) == (uint32_t) (error_end - error_name))
     {
       return(e->code);
     }
@@ -3370,7 +3370,7 @@ static void do_get_errcodes(struct st_command *command)
       if (!str2int(start, 10, (long) INT_MIN, (long) INT_MAX, &val))
         die("Invalid argument to error: '%s'", command->first_argument);
 
-      to->code.errnum= (uint) val;
+      to->code.errnum= (uint32_t) val;
       to->type= ERR_ERRNO;
     }
     to++;
@@ -4434,7 +4434,7 @@ static int read_command(struct st_command** command_ptr)
   p= command->query;
   while (*p && !my_isspace(charset_info, *p) && *p != '(')
     p++;
-  command->first_word_len= (uint) (p - command->query);
+  command->first_word_len= (uint32_t) (p - command->query);
 
   /* Skip spaces between command and first argument */
   while (*p && my_isspace(charset_info, *p))
@@ -5172,7 +5172,7 @@ void handle_error(struct st_command *command,
   if (command->abort_on_error)
     die("query '%s' failed: %d: %s", command->query, err_errno, err_error);
 
-  for (i= 0 ; (uint) i < command->expected_errors.count ; i++)
+  for (i= 0 ; (uint32_t) i < command->expected_errors.count ; i++)
   {
     if (((command->expected_errors.err[i].type == ERR_ERRNO) &&
          (command->expected_errors.err[i].code.errnum == err_errno)) ||
@@ -6096,7 +6096,7 @@ void do_get_replace(struct st_command *command)
   *pos=0;          /* End pointer */
   if (!(glob_replace= init_replace((char**) from_array.typelib.type_names,
                                    (char**) to_array.typelib.type_names,
-                                   (uint) from_array.typelib.count,
+                                   (uint32_t) from_array.typelib.count,
                                    word_end_chars)))
     die("Can't initialize replace from '%s'", command->query);
   free_pointer_array(&from_array);
@@ -6483,7 +6483,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
 
 
 #ifndef WORD_BIT
-#define WORD_BIT (8*sizeof(uint))
+#define WORD_BIT (8*sizeof(uint32_t))
 #endif
 
 #define SET_MALLOC_HUNC 64
@@ -6583,7 +6583,7 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
       return(0);
     }
     states+=len+1;
-    result_len+=(uint) strlen(to[i])+1;
+    result_len+=(uint32_t) strlen(to[i])+1;
     if (len > max_length)
       max_length=len;
   }
@@ -6681,7 +6681,7 @@ REPLACE *init_replace(char * *from, char * *to,uint32_t count,
     follow_ptr->table_offset=i;
     follow_ptr->len=len;
     follow_ptr++;
-    states+=(uint) len+1;
+    states+=(uint32_t) len+1;
   }
 
 
@@ -6845,7 +6845,7 @@ int init_sets(REP_SETS *sets,uint32_t states)
   sets->size_of_bits=((states+7)/8);
   if (!(sets->set_buffer=(REP_SET*) malloc(sizeof(REP_SET)*SET_MALLOC_HUNC)))
     return 1;
-  if (!(sets->bit_buffer=(uint*) malloc(sizeof(uint)*sets->size_of_bits*
+  if (!(sets->bit_buffer=(uint*) malloc(sizeof(uint32_t)*sets->size_of_bits*
                                         SET_MALLOC_HUNC)))
   {
     free(sets->set);
@@ -6871,7 +6871,7 @@ REP_SET *make_new_set(REP_SETS *sets)
   {
     sets->extra--;
     set=sets->set+ sets->count++;
-    memset(set->bits, 0, sizeof(uint)*sets->size_of_bits);
+    memset(set->bits, 0, sizeof(uint32_t)*sets->size_of_bits);
     memset(&set->next[0], 0, sizeof(set->next[0])*LAST_CHAR_CODE);
     set->found_offset=0;
     set->found_len=0;
@@ -6886,7 +6886,7 @@ REP_SET *make_new_set(REP_SETS *sets)
   sets->set_buffer=set;
   sets->set=set+sets->invisible;
   if (!(bit_buffer=(uint*) realloc((unsigned char*) sets->bit_buffer,
-                                   (sizeof(uint)*sets->size_of_bits)*count)))
+                                   (sizeof(uint32_t)*sets->size_of_bits)*count)))
     return 0;
   sets->bit_buffer=bit_buffer;
   for (i=0 ; i < count ; i++)
@@ -6936,12 +6936,12 @@ void or_bits(REP_SET *to,REP_SET *from)
 void copy_bits(REP_SET *to,REP_SET *from)
 {
   memcpy(to->bits,from->bits,
-         (size_t) (sizeof(uint) * to->size_of_bits));
+         (size_t) (sizeof(uint32_t) * to->size_of_bits));
 }
 
 int cmp_bits(REP_SET *set1,REP_SET *set2)
 {
-  return memcmp(set1->bits,set2->bits, sizeof(uint) * set1->size_of_bits);
+  return memcmp(set1->bits,set2->bits, sizeof(uint32_t) * set1->size_of_bits);
 }
 
 
@@ -6959,7 +6959,7 @@ int get_next_bit(REP_SET *set,uint32_t lastpos)
     bits=start[0];
   if (!bits)
     return 0;
-  pos=(uint) (start-set->bits)*WORD_BIT;
+  pos=(uint32_t) (start-set->bits)*WORD_BIT;
   while (! (bits & 1))
   {
     bits>>=1;
@@ -6996,7 +6996,7 @@ int find_set(REP_SETS *sets,REP_SET *find)
 int find_found(FOUND_SET *found_set,uint32_t table_offset, int found_offset)
 {
   int i;
-  for (i=0 ; (uint) i < found_sets ; i++)
+  for (i=0 ; (uint32_t) i < found_sets ; i++)
     if (found_set[i].table_offset == table_offset &&
         found_set[i].found_offset == found_offset)
       return -i-2;
@@ -7054,7 +7054,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
     pa->max_length=PS_MALLOC-MALLOC_OVERHEAD;
     pa->array_allocs=1;
   }
-  length=(uint) strlen(name)+1;
+  length=(uint32_t) strlen(name)+1;
   if (pa->length+length >= pa->max_length)
   {
     if (!(new_pos= (unsigned char*)realloc((unsigned char*)pa->str,
