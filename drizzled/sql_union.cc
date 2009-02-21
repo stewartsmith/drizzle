@@ -186,7 +186,7 @@ Select_Lex_Unit::init_prepare_fake_select_lex(Session *session_arg)
 
 
 bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
-                                 uint32_t additional_options)
+                              uint64_t additional_options)
 {
   Select_Lex *lex_select_save= session_arg->lex->current_select;
   Select_Lex *sl, *first_sl= first_select();
