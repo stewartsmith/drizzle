@@ -153,8 +153,8 @@ static sys_var_collation_sv
 sys_collation_server(&vars, "collation_server", &SV::collation_server,
                      &default_charset_info,
                      sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_long_ptr	sys_connect_timeout(&vars, "connect_timeout",
-                                            &connect_timeout);
+static sys_var_uint32_t_ptr	sys_connect_timeout(&vars, "connect_timeout",
+                                                &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
 static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    &delay_key_write_options,

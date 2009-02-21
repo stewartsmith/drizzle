@@ -1954,7 +1954,9 @@ static int init_server_components()
   if (table_cache_init() | table_def_init())
     unireg_abort(1);
 
-  drizzleclient_drizzleclient_randominit(&sql_rand,(uint32_t) server_start_time,(uint32_t) server_start_time/2);
+  drizzleclient_randominit(&sql_rand,
+                           (uint64_t) server_start_time,
+                           (uint64_t) server_start_time/2);
   setup_fpu();
   init_thr_lock();
 
