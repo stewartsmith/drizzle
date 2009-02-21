@@ -326,7 +326,7 @@ bool Date::operator>=(const Date& rhs)
  * are easy.  We simply compare the cumulative time
  * value of each.
  */
-bool DateTime::operator==(const DateTime& rhs)
+bool Date::operator==(const DateTime& rhs)
 {
   return (
           _years == rhs._years
@@ -339,11 +339,11 @@ bool DateTime::operator==(const DateTime& rhs)
        && _nseconds == rhs._nseconds
       );
 }
-bool DateTime::operator!=(const DateTime& rhs)
+bool Date::operator!=(const DateTime& rhs)
 {
   return ! (*this == rhs);
 }
-bool DateTime::operator<(const DateTime& rhs)
+bool Date::operator<(const DateTime& rhs)
 {
   int64_t days_left= julian_day_number_from_gregorian_date(_years, _months, _days);
   int64_t days_right= julian_day_number_from_gregorian_date(rhs._years, rhs._months, rhs._days);
@@ -354,7 +354,7 @@ bool DateTime::operator<(const DateTime& rhs)
   /* Here if both dates are the same, so compare times */
   return (_cumulative_seconds_in_time() < rhs._cumulative_seconds_in_time());
 }
-bool DateTime::operator<=(const DateTime& rhs)
+bool Date::operator<=(const DateTime& rhs)
 {
   int64_t days_left= julian_day_number_from_gregorian_date(_years, _months, _days);
   int64_t days_right= julian_day_number_from_gregorian_date(rhs._years, rhs._months, rhs._days);
@@ -365,11 +365,11 @@ bool DateTime::operator<=(const DateTime& rhs)
   /* Here if both dates are the same, so compare times */
   return (_cumulative_seconds_in_time() <= rhs._cumulative_seconds_in_time());
 }
-bool DateTime::operator>(const DateTime& rhs)
+bool Date::operator>(const DateTime& rhs)
 {
   return ! (*this <= rhs);
 }
-bool DateTime::operator>=(const DateTime& rhs)
+bool Date::operator>=(const DateTime& rhs)
 {
   return ! (*this < rhs);
 }
@@ -378,7 +378,7 @@ bool DateTime::operator>=(const DateTime& rhs)
  * We can add or subtract a Time value to/from a DateTime value 
  * as well...it always produces a DateTime.
  */
-const DateTime DateTime::operator-(const Time& rhs)
+const Date Date::operator-(const Time& rhs)
 {
   DateTime result;
 
@@ -422,7 +422,7 @@ const DateTime DateTime::operator-(const Time& rhs)
 
   return result;
 }
-const DateTime DateTime::operator+(const Time& rhs)
+const Date Date::operator+(const Time& rhs)
 {
   DateTime result;
 
@@ -469,7 +469,7 @@ const DateTime DateTime::operator+(const Time& rhs)
  * Variation of + and - operator which returns a reference to the left-hand
  * side DateTime object and adds the right-hand side Time to itself.
  */
-DateTime& DateTime::operator+=(const Time& rhs)
+Date& Date::operator+=(const Time& rhs)
 {
   int64_t second_diff= _cumulative_seconds_in_time() + rhs._cumulative_seconds_in_time();
   /* 
@@ -502,7 +502,7 @@ DateTime& DateTime::operator+=(const Time& rhs)
    */
   return *this;
 }
-DateTime& DateTime::operator-=(const Time& rhs)
+Date& Date::operator-=(const Time& rhs)
 {
   int64_t second_diff= _cumulative_seconds_in_time() - rhs._cumulative_seconds_in_time();
 
@@ -616,7 +616,7 @@ Date& Date::operator=(const DateTime &rhs)
  * We can add/subtract two DateTimes to/from each other.  The result
  * is always another DateTime instance.
  */
-const DateTime DateTime::operator-(const DateTime &rhs)
+const Date Date::operator-(const DateTime &rhs)
 {
   /* Figure out the difference in days between the two dates. */
   int64_t day_left= julian_day_number_from_gregorian_date(_years, _months, _days);
@@ -660,9 +660,9 @@ const DateTime DateTime::operator-(const DateTime &rhs)
 
   return result;
 }
-const DateTime DateTime::operator+(const DateTime &rhs)
+const Date Date::operator+(const DateTime &rhs)
 {
-  /* 
+  /*
    * Figure out the new Julian Day Number by adding the JDNs of both
    * dates together.
    */
@@ -707,7 +707,7 @@ const DateTime DateTime::operator+(const DateTime &rhs)
   return result;
 }
 /* Similar to the above, but we add/subtract the right side to this object itself */
-DateTime& DateTime::operator-=(const DateTime &rhs)
+Date& Date::operator-=(const DateTime &rhs)
 {
   /* Figure out the difference in days between the two dates.  */
   int64_t day_left= julian_day_number_from_gregorian_date(_years, _months, _days);
@@ -750,7 +750,7 @@ DateTime& DateTime::operator-=(const DateTime &rhs)
 
   return *this;
 }
-DateTime& DateTime::operator+=(const DateTime &rhs)
+Date& Date::operator+=(const DateTime &rhs)
 {
   /* 
    * Figure out the new Julian Day Number by adding the JDNs of both
@@ -796,7 +796,7 @@ DateTime& DateTime::operator+=(const DateTime &rhs)
   return *this;
 }
 #ifdef NOTYETIMPLEMENTED
-DateTime& DateTime::operator+=(const TemporalIntervalYear &rhs)
+Date& Date::operator+=(const TemporalIntervalYear &rhs)
 {
   /* Simple one...add the years and adjust for any leaps */
   int64_t new_years= _years;
@@ -817,7 +817,7 @@ DateTime& DateTime::operator+=(const TemporalIntervalYear &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator-=(const TemporalIntervalYear &rhs)
+Date& Date::operator-=(const TemporalIntervalYear &rhs)
 {
   /* Simple one...subtract the years and adjust for any leaps */
   int64_t new_years= _years;
@@ -838,7 +838,7 @@ DateTime& DateTime::operator-=(const TemporalIntervalYear &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator+=(const TemporalIntervalDayOrWeek &rhs)
+Date& Date::operator+=(const TemporalIntervalDayOrWeek &rhs)
 {
   /* Simple one...add the days */
   int64_t julian_day= julian_day_number_from_gregorian_date(_years, _months, _days) + rhs._days;
@@ -846,7 +846,7 @@ DateTime& DateTime::operator+=(const TemporalIntervalDayOrWeek &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator-=(const TemporalIntervalDayOrWeek &rhs)
+Date& Date::operator-=(const TemporalIntervalDayOrWeek &rhs)
 {
   /* Simple one...subtract the days */
   int64_t julian_day= julian_day_number_from_gregorian_date(_years, _months, _days) - rhs._days;
@@ -854,7 +854,7 @@ DateTime& DateTime::operator-=(const TemporalIntervalDayOrWeek &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator+=(const TemporalIntervalYearMonth &rhs)
+Date& Date::operator+=(const TemporalIntervalYearMonth &rhs)
 {
   /* Simple one...add the months in the period adjust */
   int64_t period= (_years * 12) + (rhs._years * 12) + (_months - 1) + rhs._months;
@@ -879,7 +879,7 @@ DateTime& DateTime::operator+=(const TemporalIntervalYearMonth &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator-=(const TemporalIntervalYearMonth &rhs)
+Date& Date::operator-=(const TemporalIntervalYearMonth &rhs)
 {
   /* Simple one...subtract the months in the period and adjust */
   int64_t period= (_years * 12) - (rhs._years * 12) + (_months - 1) - rhs._months;
@@ -904,7 +904,7 @@ DateTime& DateTime::operator-=(const TemporalIntervalYearMonth &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator+=(const TemporalIntervalDayOrLess &rhs)
+Date& Date::operator+=(const TemporalIntervalDayOrLess &rhs)
 {
   /* 
    * Convert the temporal and the interval into a number of 
@@ -946,7 +946,7 @@ DateTime& DateTime::operator+=(const TemporalIntervalDayOrLess &rhs)
   return *this;
 }
 
-DateTime& DateTime::operator-=(const TemporalIntervalDayOrLess &rhs)
+Date& Date::operator-=(const TemporalIntervalDayOrLess &rhs)
 {
   /* 
    * Convert the temporal and the interval into a number of 
@@ -991,35 +991,35 @@ DateTime& DateTime::operator-=(const TemporalIntervalDayOrLess &rhs)
 /*
  * Comparison operators between two Timestamps
  */
-bool Timestamp::operator==(const Timestamp& rhs)
+bool Date::operator==(const Timestamp& rhs)
 {
   return (_epoch_seconds == rhs._epoch_seconds);
 }
-bool Timestamp::operator!=(const Timestamp& rhs)
+bool Date::operator!=(const Timestamp& rhs)
 {
   return ! (*this == rhs);
 }
-bool Timestamp::operator<(const Timestamp& rhs)
+bool Date::operator<(const Timestamp& rhs)
 {
   return (_epoch_seconds < rhs._epoch_seconds);
 }
-bool Timestamp::operator<=(const Timestamp& rhs)
+bool Date::operator<=(const Timestamp& rhs)
 {
   return (_epoch_seconds <= rhs._epoch_seconds);
 }
-bool Timestamp::operator>(const Timestamp& rhs)
+bool Date::operator>(const Timestamp& rhs)
 {
   return ! (*this < rhs);
 }
-bool Timestamp::operator>=(const Timestamp& rhs)
+bool Date::operator>=(const Timestamp& rhs)
 {
   return ! (*this <= rhs);
 }
 
 bool Time::from_string(const char *from, size_t from_len)
 {
-  /* 
-   * Loop through the known time formats and see if 
+  /*
+   * Loop through the known time formats and see if
    * there is a match.
    */
   bool matched= false;
