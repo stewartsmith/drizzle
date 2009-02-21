@@ -198,6 +198,7 @@ public:
 
 /* Forward declaration needed */
 class DateTime;
+class Timestamp;
 
 /**
  * Class representing temporal components in a valid
@@ -219,17 +220,57 @@ public:
   bool operator>=(const Date &rhs);
   bool operator<(const Date &rhs);
   bool operator<=(const Date &rhs);
+
+  /**
+   * Comparison operator overloads to compare a Date against
+   * a DateTime value.
+   *
+   * @param DateTime to compare against.
+   */
+  bool operator==(const DateTime &rhs);
+  bool operator!=(const DateTime &rhs);
+  bool operator>(const DateTime &rhs);
+  bool operator>=(const DateTime &rhs);
+  bool operator<(const DateTime &rhs);
+  bool operator<=(const DateTime &rhs);
+
+  /**
+   * Comparison operator overloads to compare a Date against
+   * a Timestamp value.
+   *
+   * @param Timestamp to compare against.
+   */
+  bool operator==(const Timestamp &rhs);
+  bool operator!=(const Timestamp &rhs);
+  bool operator>(const Timestamp &rhs);
+  bool operator>=(const Timestamp &rhs);
+  bool operator<(const Timestamp &rhs);
+  bool operator<=(const Timestamp &rhs);
+
   /**
    * Operator overload for adding/subtracting another Date
    * (or subclass) to/from this temporal.  When subtracting
    * or adding two Dates, we return a new Date instance.
    *
-   * @param Temporal instance to add/subtract to/from
+   * @param Date instance to add/subtract to/from
    */
   const Date operator-(const Date &rhs);
   const Date operator+(const Date &rhs);
   Date& operator+=(const Date &rhs);
   Date& operator-=(const Date &rhs);
+
+
+  /**
+   * Operator overload for adding/subtracting a DateTime
+   * (or subclass) to/from this temporal.  When subtracting
+   * or adding two Dates, we return a new Date instance.
+   *
+   * @param DateTime instance to add/subtract to/from
+   */
+  const Date operator-(const DateTime &rhs);
+  const Date operator+(const DateTime &rhs);
+  Date& operator+=(const DateTime &rhs);
+  Date& operator-=(const DateTime &rhs);
 
   /**
    * Operator overload for when a DateTime instance is
@@ -503,18 +544,6 @@ class DateTime: public Date
 public:
   DateTime() :Date() {}
   /**
-   * Comparison operator overloads to compare a DateTime against
-   * another DateTime value.
-   *
-   * @param DateTime to compare against.
-   */
-  bool operator==(const DateTime &rhs);
-  bool operator!=(const DateTime &rhs);
-  bool operator>(const DateTime &rhs);
-  bool operator>=(const DateTime &rhs);
-  bool operator<(const DateTime &rhs);
-  bool operator<=(const DateTime &rhs);
-  /**
    * Operator to add/subtract a Time from a Time.
    * We can return a Time new temporal instance.
    *
@@ -524,17 +553,6 @@ public:
   const DateTime operator+(const Time &rhs);
   DateTime& operator-=(const Time &rhs);
   DateTime& operator+=(const Time &rhs);
-  /**
-   * Operator overload for adding/subtracting another DateTime
-   * (or subclass) to/from this temporal.  When subtracting
-   * or adding two DateTimes, we return a new DateTime instance.
-   *
-   * @param Temporal instance to add/subtract to/from
-   */
-  const DateTime operator-(const DateTime &rhs);
-  const DateTime operator+(const DateTime &rhs);
-  DateTime& operator+=(const DateTime &rhs);
-  DateTime& operator-=(const DateTime &rhs);
 
   /**
    * Operator overload for adding/subtracting a TemporalInterval
@@ -645,18 +663,6 @@ class Timestamp: public DateTime
 {
 public:
   Timestamp() :DateTime() {}
-  /**
-   * Comparison operator overloads to compare a Timestamp against
-   * another Timestamp value.
-   *
-   * @param Timestamp to compare against.
-   */
-  bool operator==(const Timestamp &rhs);
-  bool operator!=(const Timestamp &rhs);
-  bool operator>(const Timestamp &rhs);
-  bool operator>=(const Timestamp &rhs);
-  bool operator<(const Timestamp &rhs);
-  bool operator<=(const Timestamp &rhs);
 
   bool is_valid_timestamp() const {return is_valid();}
   /** Returns whether the temporal value is valid timestamp. */
