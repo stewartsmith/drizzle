@@ -468,7 +468,6 @@ Field *Item_func::tmp_table_field(Table *table)
     break;
   case STRING_RESULT:
     return make_string_field(table);
-    break;
   case DECIMAL_RESULT:
     field= new Field_new_decimal(
                        my_decimal_precision_to_length(decimal_precision(),

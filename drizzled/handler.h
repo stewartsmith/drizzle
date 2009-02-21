@@ -1198,7 +1198,7 @@ bool fix_inner_refs(Session *session, List<Item> &all_fields, Select_Lex *select
                     Item **ref_pointer_array);
 
 bool handle_select(Session *session, LEX *lex, select_result *result,
-                   ulong setup_tables_done_option);
+                   uint64_t setup_tables_done_option);
 bool mysql_select(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
                   COND *conds, uint32_t og_num, order_st *order, order_st *group,

@@ -701,7 +701,7 @@ static bool get_size_t(Session *, set_var *var)
     var->save_result.uint64_t_value= (size_t) var->value->val_int();
   else
   {
-    ssize_t v= var->value->val_int();
+    ssize_t v= (ssize_t)var->value->val_int();
     var->save_result.uint64_t_value= (size_t) ((v < 0) ? 0 : v);
   }
   return 0;
@@ -769,8 +769,8 @@ void sys_var_uint32_t_ptr::set_default(Session *, enum_var_type)
 {
   bool not_used;
   pthread_mutex_lock(&LOCK_global_system_variables);
-  *value= getopt_ull_limit_value((uint32_t) option_limits->def_value,
-                                 option_limits, &not_used);
+  *value= (uint32_t)getopt_ull_limit_value((uint32_t) option_limits->def_value,
+                                           option_limits, &not_used);
   pthread_mutex_unlock(&LOCK_global_system_variables);
 }
 
@@ -1051,8 +1051,8 @@ void sys_var_session_size_t::set_default(Session *session, enum_var_type type)
     bool not_used;
     pthread_mutex_lock(&LOCK_global_system_variables);
     global_system_variables.*offset=
-      getopt_ull_limit_value((size_t) option_limits->def_value,
-                             option_limits, &not_used);
+      (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
+                                     option_limits, &not_used);
     pthread_mutex_unlock(&LOCK_global_system_variables);
   }
   else
@@ -2584,7 +2584,7 @@ unsigned char *sys_var_session_optimizer_switch::value_ptr(Session *session,
                                                            const LEX_STRING *)
 {
   LEX_STRING opts;
-  uint64_t val= ((type == OPT_GLOBAL) ? global_system_variables.*offset :
+  uint32_t val= ((type == OPT_GLOBAL) ? global_system_variables.*offset :
                   session->variables.*offset);
   (void) symbolic_mode_representation(session, val, &opts);
   return (unsigned char *) opts.str;

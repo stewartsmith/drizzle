@@ -2693,9 +2693,6 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     return(0);
   }
 
-  if (enabled_saved && global_system_variables.log_warnings)
-    errmsg_printf(ERRMSG_LVL_INFO, _("Plugin '%s' disabled by command line option"),
-                          tmp->name.str);
 err:
   if (opts)
     my_cleanup_options(opts);

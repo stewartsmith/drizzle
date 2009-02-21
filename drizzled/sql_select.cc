@@ -267,7 +267,7 @@ static bool bitmap_covers(const table_map x, const table_map y)
 */
 
 bool handle_select(Session *session, LEX *lex, select_result *result,
-                   ulong setup_tables_done_option)
+                   uint64_t setup_tables_done_option)
 {
   bool res;
   register Select_Lex *select_lex = &lex->select_lex;

@@ -61,7 +61,7 @@ static bool table_def_inited= 0;
 static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
-static void free_cache_entry(void *entry);
+extern "C" void free_cache_entry(void *entry);
 static void close_old_data_files(Session *session, Table *table, bool morph_locks,
                                  bool send_refresh);
 
@@ -77,7 +77,8 @@ extern "C" unsigned char *table_cache_key(const unsigned char *record, size_t *l
 
 bool table_cache_init(void)
 {
-  return hash_init(&open_cache, &my_charset_bin, table_cache_size+16,
+  return hash_init(&open_cache, &my_charset_bin,
+                   (size_t) table_cache_size+16,
 		   0, 0, table_cache_key,
 		   free_cache_entry, 0);
 }
@@ -179,7 +180,7 @@ bool table_def_init(void)
   oldest_unused_share= &end_of_unused_share;
   end_of_unused_share.prev= &oldest_unused_share;
 
-  return hash_init(&table_def_cache, &my_charset_bin, table_def_size,
+  return hash_init(&table_def_cache, &my_charset_bin, (size_t)table_def_size,
 		   0, 0, table_def_key,
 		   (hash_free_key) table_def_free_entry, 0);
 }
@@ -604,7 +605,7 @@ void intern_close_table(Table *table)
     We need to have a lock on LOCK_open when calling this
 */
 
-static void free_cache_entry(void *entry)
+void free_cache_entry(void *entry)
 {
   Table *table= static_cast<Table *>(entry);
   intern_close_table(table);
