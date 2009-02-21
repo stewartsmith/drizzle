@@ -47,7 +47,6 @@
 #include <drizzled/field/long.h>
 #include <drizzled/field/int64_t.h>
 #include <drizzled/field/num.h>
-#include <drizzled/field/timetype.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
@@ -1497,9 +1496,6 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   case DRIZZLE_TYPE_DATE:
     field= new Field_date(maybe_null, name, &my_charset_bin);
     break;
-  case DRIZZLE_TYPE_TIME:
-    field= new Field_time(maybe_null, name, &my_charset_bin);
-    break;
   case DRIZZLE_TYPE_TIMESTAMP:
     field= new Field_timestamp(maybe_null, name, &my_charset_bin);
     break;
@@ -1650,14 +1646,6 @@ bool Item::send(Protocol *protocol, String *buffer)
       else
 	result= protocol->store(&tm);
     }
-    break;
-  }
-  case DRIZZLE_TYPE_TIME:
-  {
-    DRIZZLE_TIME tm;
-    get_time(&tm);
-    if (!null_value)
-      result= protocol->store_time(&tm);
     break;
   }
   }
@@ -2002,7 +1990,7 @@ static Field *create_tmp_field_from_item(Session *,
       To preserve type they needed to be handled separately.
     */
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
-        type == DRIZZLE_TYPE_TIME || type == DRIZZLE_TYPE_DATE ||
+        type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
       new_field= item->tmp_table_field_from_field_type(table, 1);
     /*

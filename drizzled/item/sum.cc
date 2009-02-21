@@ -33,7 +33,6 @@
 #include <drizzled/field/double.h>
 #include <drizzled/field/int64_t.h>
 #include <drizzled/field/date.h>
-#include <drizzled/field/timetype.h>
 #include <drizzled/field/datetime.h>
 
 #include CMATH_H
@@ -721,9 +720,6 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   switch (args[0]->field_type()) {
   case DRIZZLE_TYPE_DATE:
     field= new Field_date(maybe_null, name, collation.collation);
-    break;
-  case DRIZZLE_TYPE_TIME:
-    field= new Field_time(maybe_null, name, collation.collation);
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:

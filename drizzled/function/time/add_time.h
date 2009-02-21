@@ -46,16 +46,12 @@ public:
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
     assert(fixed == 1);
-    if (cached_field_type == DRIZZLE_TYPE_TIME)
-      return  val_decimal_from_time(decimal_value);
     if (cached_field_type == DRIZZLE_TYPE_DATETIME)
       return  val_decimal_from_date(decimal_value);
     return Item_str_func::val_decimal(decimal_value);
   }
   int save_in_field(Field *field, bool no_conversions)
   {
-    if (cached_field_type == DRIZZLE_TYPE_TIME)
-      return save_time_in_field(field);
     if (cached_field_type == DRIZZLE_TYPE_DATETIME)
       return save_date_in_field(field);
     return Item_str_func::save_in_field(field, no_conversions);

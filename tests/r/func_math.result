@@ -210,12 +210,6 @@ RAND(2) * 1000	RAND(a) * 1000
 122.34661925802624	405.40353712197725
 644.97318737672	405.40353712197725
 DROP TABLE t1;
-create table t1 (a varchar(90), ts datetime not null, index (a)) engine=innodb;
-insert into t1 values ('http://www.foo.com/', now());
-select a from t1 where a='http://www.foo.com/' order by abs(timediff(ts, 0));
-a
-http://www.foo.com/
-drop table t1;
 select round(111,-10);
 round(111,-10)
 0

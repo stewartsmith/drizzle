@@ -196,21 +196,6 @@ WHERE
 drop table t1,t2,t3;
 
 #
-# Test using DISTINCT on a function that contains a group function
-# This also test the case when one doesn't use all fields in GROUP BY.
-#
-
-create table t1 (a int not null, b int not null, t time);
-insert into t1 values (1,1,"00:06:15"),(1,2,"00:06:15"),(1,2,"00:30:15"),(1,3,"00:06:15"),(1,3,"00:30:15");
-select a,sec_to_time(sum(time_to_sec(t))) from t1 group by a,b;
-select distinct a,sec_to_time(sum(time_to_sec(t))) from t1 group by a,b;
-create table t2 (a int not null primary key, b int);
-insert into t2 values (1,1),(2,2),(3,3);
-select t1.a,sec_to_time(sum(time_to_sec(t))) from t1 left join t2 on (t1.b=t2.a) group by t1.a,t2.b;
-select distinct t1.a,sec_to_time(sum(time_to_sec(t))) from t1 left join t2 on (t1.b=t2.a) group by t1.a,t2.b;
-drop table t1,t2;
-
-#
 # Test problem with DISTINCT and HAVING
 #
 create table t1 (a int not null,b char(5), c text);

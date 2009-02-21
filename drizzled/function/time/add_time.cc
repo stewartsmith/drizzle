@@ -46,8 +46,6 @@ void Item_func_add_time::fix_length_and_dec()
       arg0_field_type == DRIZZLE_TYPE_DATETIME ||
       arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
     cached_field_type= DRIZZLE_TYPE_DATETIME;
-  else if (arg0_field_type == DRIZZLE_TYPE_TIME)
-    cached_field_type= DRIZZLE_TYPE_TIME;
 }
 
 /**

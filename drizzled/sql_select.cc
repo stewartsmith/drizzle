@@ -14608,8 +14608,7 @@ calc_group_buffer(JOIN *join,order_st *group)
           have STRING_RESULT result type, we increase the length
           by 8 as maximum pack length of such fields.
         */
-        if (type == DRIZZLE_TYPE_TIME ||
-            type == DRIZZLE_TYPE_DATE ||
+        if (type == DRIZZLE_TYPE_DATE ||
             type == DRIZZLE_TYPE_DATETIME ||
             type == DRIZZLE_TYPE_TIMESTAMP)
         {
