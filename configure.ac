@@ -1189,11 +1189,11 @@ AC_ARG_ENABLE([shadow],
     [ac_warn_shadow="$enableval"],
     [ac_warn_shadow="yes"])
 
-AC_ARG_ENABLE([go-crazy],
-    [AS_HELP_STRING([--enable-go-crazy],
-       [Enables extra little warnings that might be too much @<:@default=off@:>@])],
-    [ac_warn_go_crazy="$enableval"],
-    [ac_warn_go_crazy="no"])
+AC_ARG_ENABLE([conversion],
+    [AS_HELP_STRING([--enable-conversion],
+       [Enables conversion warnings @<:@default=off@:>@])],
+    [ac_warn_conversion="$enableval"],
+    [ac_warn_conversion="no"])
 
 AC_ARG_ENABLE([datarace],
     [AS_HELP_STRING([--enable-datarace],
@@ -1282,7 +1282,7 @@ template <> void C<int>::foo();
     fi
     
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
-    GXX_PEDANTIC="-pedantic -Wundef -Woverloaded-virtual ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
+    GXX_PEDANTIC="-pedantic -Wundef -Woverloaded-virtual  -Wnon-virtual-dtor -Wctor-dtor-privacy ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
 
     AC_CACHE_CHECK([whether __attribute__ visibility "hidden" is supported],
       [ac_cv_can_use_hidden_],
@@ -1320,13 +1320,13 @@ void testme() {  };],[
     W_EFFC="-Weffc++"
   fi
 
-  if test "$ac_warn_go_crazy" = "yes"
+  if test "$ac_warn_conversion" = "yes"
   then
-    W_CRAZY="-Wconversion -Winvalid-pch -Wnon-virtual-dtor -Wctor-dtor-privacy"
+    W_CONVERSION="-Wconversion"
   fi
 
-  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CRAZY}"
-  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CRAZY}"
+  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CONVERSION}"
+  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CONVERSION}"
 
   if test "$ac_exceptions" = "no"
   then
