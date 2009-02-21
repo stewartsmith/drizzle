@@ -1230,7 +1230,7 @@ public:
     Item_int_func::cleanup();
     delete array;
     array= 0;
-    for (i= 0; i <= (uint)DECIMAL_RESULT + 1; i++)
+    for (i= 0; i <= (uint32_t)DECIMAL_RESULT + 1; i++)
     {
       delete cmp_items[i];
       cmp_items[i]= 0;

@@ -37,13 +37,13 @@
 using namespace std;
 
 /* Global Thread counter */
-uint counter;
+uint32_t counter;
 pthread_mutex_t counter_mutex;
 pthread_cond_t count_threshhold;
 
 static void db_error_with_table(DRIZZLE *drizzle, char *table);
 static void db_error(DRIZZLE *drizzle);
-static char *field_escape(char *to,const char *from,uint length);
+static char *field_escape(char *to,const char *from,uint32_t length);
 static char *add_load_option(char *ptr,const char *object,
            const char *statement);
 
@@ -52,13 +52,13 @@ static bool verbose= false, lock_tables= false, ignore_errors= false,
             ignore= false, opt_compress= false, opt_low_priority= false,
             tty_password= false;
 static bool debug_info_flag= false, debug_check_flag= false;
-static uint opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
+static uint32_t opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
 static char  *opt_password= NULL, *current_user= NULL,
     *current_host= NULL, *current_db= NULL, *fields_terminated= NULL,
     *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
     *escaped= NULL, *opt_columns= NULL,
     *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
-static uint opt_protocol= 0;
+static uint32_t opt_protocol= 0;
 static uint32_t opt_drizzle_port= 0;
 static char * opt_drizzle_unix_port= 0;
 static int64_t opt_ignore_lines= -1;
@@ -478,7 +478,7 @@ static char *add_load_option(char *ptr, const char *object,
     {
       /* char constant; escape */
       ptr+= sprintf(ptr, " %s '", statement); 
-      ptr= field_escape(ptr,object,(uint) strlen(object));
+      ptr= field_escape(ptr,object,(uint32_t) strlen(object));
       *ptr++= '\'';
     }
   }
@@ -492,10 +492,10 @@ static char *add_load_option(char *ptr, const char *object,
 ** syntax errors from the SQL parser.
 */
 
-static char *field_escape(char *to,const char *from,uint length)
+static char *field_escape(char *to,const char *from,uint32_t length)
 {
   const char *end;
-  uint end_backslashes=0;
+  uint32_t end_backslashes=0;
 
   for (end= from+length; from != end; from++)
   {

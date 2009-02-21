@@ -109,7 +109,7 @@ base64_encode(const void *src, size_t src_len, char *dst)
 static inline uint
 pos(unsigned char c)
 {
-  return (uint) (strchr(base64_table, c) - base64_table);
+  return (uint32_t) (strchr(base64_table, c) - base64_table);
 }
 
 
@@ -289,7 +289,7 @@ main(void)
       printf("       --------- src ---------   --------- dst ---------\n");
       for (k= 0; k<src_len; k+=8)
       {
-        printf("%.4x   ", (uint) k);
+        printf("%.4x   ", (uint32_t) k);
         for (l=0; l<8 && k+l<src_len; l++)
         {
           unsigned char c= src[k+l];
@@ -306,7 +306,7 @@ main(void)
         printf("\n");
       }
       printf("src length: %.8x, dst length: %.8x\n",
-             (uint) src_len, (uint) dst_len);
+             (uint32_t) src_len, (uint32_t) dst_len);
       require(0);
     }
   }

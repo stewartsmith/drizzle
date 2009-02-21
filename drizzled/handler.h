@@ -494,7 +494,7 @@ public:
   virtual ha_rows records_in_range(uint32_t, key_range *, key_range *)
     { return (ha_rows) 10; }
   virtual void position(const unsigned char *record)=0;
-  virtual int info(uint)=0; // see my_base.h for full description
+  virtual int info(uint32_t)=0; // see my_base.h for full description
   virtual uint32_t calculate_key_hash_value(Field **)
   { assert(0); return 0; }
   virtual int extra(enum ha_extra_function)

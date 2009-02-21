@@ -51,7 +51,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg() { value= -value; return this; }
   uint32_t decimal_precision() const
-  { return (uint)(max_length - test(value < 0)); }
+  { return (uint32_t)(max_length - test(value < 0)); }
   bool eq(const Item *, bool binary_cmp) const;
   bool check_vcol_func_processor(unsigned char *)
   { return false; }

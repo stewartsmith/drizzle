@@ -31,32 +31,32 @@ typedef struct _entry {
 
 typedef struct bucket
 {
-  uint h;					/* Used for numeric indexing */
+  uint32_t h;					/* Used for numeric indexing */
   char *arKey;
-  uint nKeyLength;
-  uint count;
+  uint32_t nKeyLength;
+  uint32_t count;
   entry *pData;
   struct bucket *pNext;
 } Bucket;
 
 typedef struct hashtable {
-  uint nTableSize;
-  uint initialized;
+  uint32_t nTableSize;
+  uint32_t initialized;
   MEM_ROOT mem_root;
-  uint(*pHashFunction) (const char *arKey, uint nKeyLength);
+  uint(*pHashFunction) (const char *arKey, uint32_t nKeyLength);
   Bucket **arBuckets;
 } HashTable;
 
-extern int completion_hash_init(HashTable *ht, uint nSize);
-extern int completion_hash_update(HashTable *ht, char *arKey, uint nKeyLength, char *str);
+extern int completion_hash_init(HashTable *ht, uint32_t nSize);
+extern int completion_hash_update(HashTable *ht, char *arKey, uint32_t nKeyLength, char *str);
 extern int hash_exists(HashTable *ht, char *arKey);
-extern Bucket *find_all_matches(HashTable *ht, const char *str, uint length, uint *res_length);
-extern Bucket *find_longest_match(HashTable *ht, char *str, uint length, uint *res_length);
+extern Bucket *find_all_matches(HashTable *ht, const char *str, uint32_t length, uint32_t *res_length);
+extern Bucket *find_longest_match(HashTable *ht, char *str, uint32_t length, uint32_t *res_length);
 extern void add_word(HashTable *ht,char *str);
 extern void completion_hash_clean(HashTable *ht);
-extern int completion_hash_exists(HashTable *ht, char *arKey, uint nKeyLength);
+extern int completion_hash_exists(HashTable *ht, char *arKey, uint32_t nKeyLength);
 extern void completion_hash_free(HashTable *ht);
 
-uint hashpjw(const char *arKey, uint nKeyLength);
+uint32_t hashpjw(const char *arKey, uint32_t nKeyLength);
 
 #endif /* _HASH_ */

@@ -44,7 +44,7 @@ static bool opt_alldbs= false, opt_check_only_changed= false,
             debug_info_flag= false, debug_check_flag= false,
             opt_fix_table_names= false, opt_fix_db_names= false,
             opt_upgrade= false, opt_write_binlog= true;
-static uint verbose= 0;
+static uint32_t verbose= 0;
 static uint32_t opt_drizzle_port= 0;
 static int my_end_arg;
 static char * opt_drizzle_unix_port= NULL;
@@ -53,7 +53,7 @@ static char *opt_password= NULL, *current_user= NULL,
       *current_host= NULL;
 static int first_error= 0;
 vector<string> tables4repair;
-static uint opt_protocol=0;
+static uint32_t opt_protocol=0;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 enum operations { DO_CHECK, DO_REPAIR, DO_ANALYZE, DO_OPTIMIZE, DO_UPGRADE };
@@ -177,13 +177,13 @@ static int process_selected_tables(char *db, char **table_names, int tables);
 static int process_all_tables_in_db(char *database);
 static int process_one_db(char *database);
 static int use_db(char *database);
-static int handle_request_for_tables(const char *tables, uint length);
+static int handle_request_for_tables(const char *tables, uint32_t length);
 static int dbConnect(char *host, char *user,char *passwd);
 static void dbDisconnect(char *host);
 static void DBerror(DRIZZLE *drizzle, const char *when);
 static void safe_exit(int error);
 static void print_result(void);
-static uint fixed_name_length(const char *name);
+static uint32_t fixed_name_length(const char *name);
 static char *fix_table_name(char *dest, const char *src);
 int what_to_do = 0;
 
@@ -459,10 +459,10 @@ static int process_selected_tables(char *db, char **table_names, int tables)
 } /* process_selected_tables */
 
 
-static uint fixed_name_length(const char *name)
+static uint32_t fixed_name_length(const char *name)
 {
   const char *p;
-  uint extra_length= 2;  /* count the first/last backticks */
+  uint32_t extra_length= 2;  /* count the first/last backticks */
 
   for (p= name; *p; p++)
   {
@@ -502,7 +502,7 @@ static int process_all_tables_in_db(char *database)
 {
   DRIZZLE_RES *res;
   DRIZZLE_ROW row;
-  uint num_columns;
+  uint32_t num_columns;
 
   if (use_db(database))
     return 1;
@@ -521,7 +521,7 @@ static int process_all_tables_in_db(char *database)
      */
 
     char *tables, *end;
-    uint tot_length = 0;
+    uint32_t tot_length = 0;
 
     while ((row = drizzleclient_fetch_row(res)))
       tot_length+= fixed_name_length(row[0]) + 2;
@@ -629,10 +629,10 @@ static int use_db(char *database)
 } /* use_db */
 
 
-static int handle_request_for_tables(const char *tables, uint length)
+static int handle_request_for_tables(const char *tables, uint32_t length)
 {
   char *query, *end, options[100], message[100];
-  uint query_length= 0;
+  uint32_t query_length= 0;
   const char *op = 0;
 
   options[0] = 0;
@@ -678,7 +678,7 @@ static int handle_request_for_tables(const char *tables, uint length)
     ptr= strcpy(ptr, " TABLE ")+7;
     ptr= fix_table_name(ptr, tables);
     ptr+= sprintf(ptr," %s",options);
-    query_length= (uint) (ptr - query);
+    query_length= (uint32_t) (ptr - query);
   }
   if (drizzleclient_real_query(sock, query, query_length))
   {
@@ -697,7 +697,7 @@ static void print_result()
   DRIZZLE_RES *res;
   DRIZZLE_ROW row;
   char prev[NAME_LEN*2+2];
-  uint i;
+  uint32_t i;
   bool found_error=0;
 
   res = drizzleclient_use_result(sock);

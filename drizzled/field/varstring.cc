@@ -125,7 +125,7 @@ int Field_varstring::store(int64_t nr, bool unsigned_val)
 {
   char buff[64];
   uint32_t  length;
-  length= (uint) (field_charset->cset->int64_t10_to_str)(field_charset,
+  length= (uint32_t) (field_charset->cset->int64_t10_to_str)(field_charset,
                                                           buff,
                                                           sizeof(buff),
                                                           (unsigned_val ? 10:
@@ -139,7 +139,7 @@ double Field_varstring::val_real(void)
 {
   int not_used;
   char *end_not_used;
-  uint32_t length= length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t length= length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
   return my_strntod(field_charset, (char*) ptr+length_bytes, length,
                     &end_not_used, &not_used);
 }
@@ -149,7 +149,7 @@ int64_t Field_varstring::val_int(void)
 {
   int not_used;
   char *end_not_used;
-  uint32_t length= length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t length= length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
   return my_strntoll(field_charset, (char*) ptr+length_bytes, length, 10,
                      &end_not_used, &not_used);
 }
@@ -157,7 +157,7 @@ int64_t Field_varstring::val_int(void)
 String *Field_varstring::val_str(String *,
 				 String *val_ptr)
 {
-  uint32_t length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
   val_ptr->set((const char*) ptr+length_bytes, length, field_charset);
   return val_ptr;
 }
@@ -165,7 +165,7 @@ String *Field_varstring::val_str(String *,
 
 my_decimal *Field_varstring::val_decimal(my_decimal *decimal_value)
 {
-  uint32_t length= length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t length= length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
   str2my_decimal(E_DEC_FATAL_ERROR, (char*) ptr+length_bytes, length,
                  charset(), decimal_value);
   return decimal_value;
@@ -180,8 +180,8 @@ int Field_varstring::cmp_max(const unsigned char *a_ptr, const unsigned char *b_
 
   if (length_bytes == 1)
   {
-    a_length= (uint) *a_ptr;
-    b_length= (uint) *b_ptr;
+    a_length= (uint32_t) *a_ptr;
+    b_length= (uint32_t) *b_ptr;
   }
   else
   {
@@ -208,7 +208,7 @@ int Field_varstring::cmp_max(const unsigned char *a_ptr, const unsigned char *b_
 
 int Field_varstring::key_cmp(const unsigned char *key_ptr, uint32_t max_key_length)
 {
-  uint32_t length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
   uint32_t local_char_length= max_key_length / field_charset->mbmaxlen;
 
   local_char_length= my_charpos(field_charset, ptr + length_bytes,
@@ -244,7 +244,7 @@ int Field_varstring::key_cmp(const unsigned char *a,const unsigned char *b)
 
 void Field_varstring::sort_string(unsigned char *to,uint32_t length)
 {
-  uint32_t tot_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t tot_length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
 
   if (field_charset == &my_charset_bin)
   {
@@ -307,7 +307,7 @@ unsigned char *Field_varstring::pack(unsigned char *to, const unsigned char *fro
                              uint32_t max_length,
                              bool )
 {
-  uint32_t length= length_bytes == 1 ? (uint) *from : uint2korr(from);
+  uint32_t length= length_bytes == 1 ? (uint32_t) *from : uint2korr(from);
   set_if_smaller(max_length, field_length);
   if (length > max_length)
     length=max_length;
@@ -328,7 +328,7 @@ unsigned char *
 Field_varstring::pack_key(unsigned char *to, const unsigned char *key, uint32_t max_length,
                           bool )
 {
-  uint32_t length=  length_bytes == 1 ? (uint) *key : uint2korr(key);
+  uint32_t length=  length_bytes == 1 ? (uint32_t) *key : uint2korr(key);
   uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
                      max_length/field_charset->mbmaxlen : max_length);
   key+= length_bytes;
@@ -463,8 +463,8 @@ int Field_varstring::pack_cmp(const unsigned char *a, const unsigned char *b,
   }
   else
   {
-    a_length= (uint) *a++;
-    b_length= (uint) *b++;
+    a_length= (uint32_t) *a++;
+    b_length= (uint32_t) *b++;
   }
   return field_charset->coll->strnncollsp(field_charset,
                                           a, a_length,
@@ -477,7 +477,7 @@ int Field_varstring::pack_cmp(const unsigned char *b, uint32_t key_length_arg,
                               bool insert_or_update)
 {
   unsigned char *a= ptr+ length_bytes;
-  uint32_t a_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t a_length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
   uint32_t b_length;
   uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
                            key_length_arg / field_charset->mbmaxlen :
@@ -488,7 +488,7 @@ int Field_varstring::pack_cmp(const unsigned char *b, uint32_t key_length_arg,
     b_length=uint2korr(b); b+= HA_KEY_BLOB_LENGTH;
   }
   else
-    b_length= (uint) *b++;
+    b_length= (uint32_t) *b++;
 
   if (a_length > local_char_length)
   {
@@ -508,7 +508,7 @@ uint32_t Field_varstring::packed_col_length(const unsigned char *data_ptr, uint3
 {
   if (length > 255)
     return uint2korr(data_ptr)+2;
-  return (uint) *data_ptr + 1;
+  return (uint32_t) *data_ptr + 1;
 }
 
 
@@ -522,7 +522,7 @@ uint32_t Field_varstring::get_key_image(basic_string<unsigned char> &buff,
 {
   /* Key is always stored with 2 bytes */
   const uint32_t key_len= 2;
-  uint32_t f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t f_length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
   uint32_t local_char_length= length / field_charset->mbmaxlen;
   unsigned char *pos= ptr+length_bytes;
   local_char_length= my_charpos(field_charset, pos, pos + f_length,
@@ -548,7 +548,7 @@ uint32_t Field_varstring::get_key_image(unsigned char *buff,
                                     uint32_t length,
                                     imagetype )
 {
-  uint32_t f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+  uint32_t f_length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
   uint32_t local_char_length= length / field_charset->mbmaxlen;
   unsigned char *pos= ptr+length_bytes;
   local_char_length= my_charpos(field_charset, pos, pos + f_length,
@@ -584,8 +584,8 @@ int Field_varstring::cmp_binary(const unsigned char *a_ptr, const unsigned char 
 
   if (length_bytes == 1)
   {
-    a_length= (uint) *a_ptr;
-    b_length= (uint) *b_ptr;
+    a_length= (uint32_t) *a_ptr;
+    b_length= (uint32_t) *b_ptr;
   }
   else
   {
@@ -653,7 +653,7 @@ void Field_varstring::hash(uint32_t *nr, uint32_t *nr2)
   }
   else
   {
-    uint32_t len=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+    uint32_t len=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
     const CHARSET_INFO * const cs= charset();
     cs->coll->hash_sort(cs, ptr + length_bytes, len, nr, nr2);
   }

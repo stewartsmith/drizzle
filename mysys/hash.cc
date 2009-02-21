@@ -373,7 +373,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
           {
             /* Change link of previous LOW-key */
             gpos->data=ptr_to_rec;
-            gpos->next= (uint) (pos-data);
+            gpos->next= (uint32_t) (pos-data);
             flag= (flag & HIGHFIND) | (LOWFIND | LOWUSED);
           }
           gpos=pos;
@@ -396,7 +396,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
           {
             /* Change link of previous hash-key and save */
             gpos2->data=ptr_to_rec2;
-            gpos2->next=(uint) (pos-data);
+            gpos2->next=(uint32_t) (pos-data);
             flag= (flag & LOWFIND) | (HIGHFIND | HIGHUSED);
           }
           gpos2=pos;
@@ -434,13 +434,13 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
     if (pos == gpos)
     {
       pos->data=(unsigned char*) record;
-      pos->next=(uint) (empty - data);
+      pos->next=(uint32_t) (empty - data);
     }
     else
     {
       pos->data=(unsigned char*) record;
       pos->next=NO_RECORD;
-      movelink(data,(uint) (pos-data),(uint) (gpos-data),(uint) (empty-data));
+      movelink(data,(uint32_t) (pos-data),(uint32_t) (gpos-data),(uint32_t) (empty-data));
     }
   }
   if (++info->records == info->blength)
@@ -482,7 +482,7 @@ bool hash_delete(HASH *hash,unsigned char *record)
   lastpos=data+hash->records;
 
   /* Remove link to record */
-  empty=pos; empty_index=(uint) (empty-data);
+  empty=pos; empty_index=(uint32_t) (empty-data);
   if (gpos)
     /* unlink current ptr */
     gpos->next=pos->next;
@@ -514,7 +514,7 @@ bool hash_delete(HASH *hash,unsigned char *record)
   {					/* pos is on wrong posit */
     empty[0]=pos[0];			/* Save it here */
     pos[0]=lastpos[0];			/* This should be here */
-    movelink(data,(uint) (pos-data),(uint) (pos3-data),empty_index);
+    movelink(data,(uint32_t) (pos-data),(uint32_t) (pos3-data),empty_index);
     goto exit;
   }
   pos2= hash_mask(lastpos_hashnr,blength,hash->records+1);
@@ -523,10 +523,10 @@ bool hash_delete(HASH *hash,unsigned char *record)
     if (pos2 != hash->records)
     {
       empty[0]=lastpos[0];
-      movelink(data,(uint) (lastpos-data),(uint) (pos-data),empty_index);
+      movelink(data,(uint32_t) (lastpos-data),(uint32_t) (pos-data),empty_index);
       goto exit;
     }
-    idx= (uint) (pos-data);		/* Link pos->next after lastpos */
+    idx= (uint32_t) (pos-data);		/* Link pos->next after lastpos */
   }
   else idx= NO_RECORD;		/* Different positions merge */
 

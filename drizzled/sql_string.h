@@ -82,7 +82,7 @@ public:
   }
   String(const char *str, const CHARSET_INFO * const cs)
   {
-    Ptr=(char*) str; str_length=(uint) strlen(str); Alloced_length=0; alloced=0;
+    Ptr=(char*) str; str_length=(uint32_t) strlen(str); Alloced_length=0; alloced=0;
     str_charset=cs;
   }
   String(const char *str,uint32_t len, const CHARSET_INFO * const cs)
@@ -102,7 +102,7 @@ public:
     str_charset=str.str_charset;
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint) size); }
+  { return (void*) alloc_root(mem_root, (uint32_t) size); }
   static void operator delete(void *, size_t)
   { TRASH(ptr_arg, size); }
   static void operator delete(void *, MEM_ROOT *)

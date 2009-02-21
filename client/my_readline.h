@@ -20,8 +20,8 @@ typedef struct st_line_buffer
   char *buffer;			/* The buffer itself, grown as needed. */
   char *end;			/* Pointer at buffer end */
   char *start_of_line,*end_of_line;
-  uint bufread;			/* Number of bytes to get with each read(). */
-  uint eof;
+  uint32_t bufread;			/* Number of bytes to get with each read(). */
+  uint32_t eof;
   uint32_t max_size;
   uint32_t read_length;		/* Length of last read string */
 } LINE_BUFFER;

@@ -835,7 +835,7 @@ void sys_var_bool_ptr::set_default(Session *, enum_var_type)
 
 bool sys_var_enum::update(Session *, set_var *var)
 {
-  *value= (uint) var->save_result.uint32_t_value;
+  *value= (uint32_t) var->save_result.uint32_t_value;
   return 0;
 }
 
@@ -1845,7 +1845,7 @@ bool sys_var_session_lc_time_names::check(Session *, set_var *var)
 
   if (var->value->result_type() == INT_RESULT)
   {
-    if (!(locale_match= my_locale_by_number((uint) var->value->val_int())))
+    if (!(locale_match= my_locale_by_number((uint32_t) var->value->val_int())))
     {
       char buf[20];
       int10_to_str((int) var->value->val_int(), buf, -10);

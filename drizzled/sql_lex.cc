@@ -446,7 +446,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       end -= post_skip;
       assert(end >= str);
 
-      if (!(start= (char*) lip->m_session->alloc((uint) (end-str)+1)))
+      if (!(start= (char*) lip->m_session->alloc((uint32_t) (end-str)+1)))
 	return (char*) "";		// Sql_alloc has set error flag
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
@@ -454,7 +454,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 
       if (!found_escape)
       {
-	lip->yytoklen=(uint) (end-str);
+	lip->yytoklen=(uint32_t) (end-str);
 	memcpy(start,str,lip->yytoklen);
 	start[lip->yytoklen]=0;
       }
@@ -510,7 +510,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 	    *to++ = *str;
 	}
 	*to=0;
-	lip->yytoklen=(uint) (to-start);
+	lip->yytoklen=(uint32_t) (to-start);
       }
       return start;
     }

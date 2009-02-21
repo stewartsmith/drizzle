@@ -221,7 +221,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
   {
     my_error(ER_WRONG_STRING_LENGTH, MYF(0),
              create_info->comment.str,"Table COMMENT",
-             (uint) TABLE_COMMENT_MAXLEN);
+             (uint32_t) TABLE_COMMENT_MAXLEN);
     free(screen_buff);
     return(1);
   }
@@ -259,7 +259,7 @@ bool mysql_create_frm(Session *session, const char *file_name,
   get_form_pos(file,fileinfo,&formnames);
   if (!(filepos=make_new_entry(file,fileinfo,&formnames,"")))
     goto err;
-  maxlength=(uint) next_io_size((ulong) (uint2korr(forminfo)+1000));
+  maxlength=(uint32_t) next_io_size((ulong) (uint2korr(forminfo)+1000));
   int2store(forminfo+2,maxlength);
   int4store(fileinfo+10,(ulong) (filepos+maxlength));
   fileinfo[26]= (unsigned char) test((create_info->max_rows == 1) &&
@@ -899,7 +899,7 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
 
   Create_field *field;
   while ((field=it++))
-    length+=(uint) strlen(field->field_name)+1+TE_INFO_LENGTH+cols/2;
+    length+=(uint32_t) strlen(field->field_name)+1+TE_INFO_LENGTH+cols/2;
 
   if (!(info=(unsigned char*) malloc(length)))
     return(0);
@@ -915,7 +915,7 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
     {
       if (i)
       {
-        length=(uint) (pos-start_screen);
+        length=(uint32_t) (pos-start_screen);
         int2store(start_screen,length);
         start_screen[2]=(unsigned char) (fields_on_screen+1);
         start_screen[3]=(unsigned char) (fields_on_screen);
@@ -944,12 +944,12 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
       pos+= length + 3 + 1;
     }
   }
-  length=(uint) (pos-start_screen);
+  length=(uint32_t) (pos-start_screen);
   int2store(start_screen,length);
   start_screen[2]=(unsigned char) (row-start_row+2);
   start_screen[3]=(unsigned char) (row-start_row+1);
 
-  *info_length=(uint) (pos-info);
+  *info_length=(uint32_t) (pos-info);
   return(info);
 } /* pack_screens */
 
@@ -983,7 +983,7 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
     {
       uint32_t offset;
       int2store(pos,key_part->fieldnr+1+FIELD_NAME_USED);
-      offset= (uint) (key_part->offset+data_offset+1);
+      offset= (uint32_t) (key_part->offset+data_offset+1);
       int2store(pos+2, offset);
       pos[4]=0;					// Sort order
       int2store(pos+5,key_part->key_type);
@@ -1027,9 +1027,9 @@ static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyin
     keybuff[1]=(unsigned char) key_parts;
     keybuff[2]= keybuff[3]= 0;
   }
-  length=(uint) (pos-keyname_pos);
+  length=(uint32_t) (pos-keyname_pos);
   int2store(keybuff+4,length);
-  return((uint) (pos-keybuff));
+  return((uint32_t) (pos-keybuff));
 } /* pack_keys */
 
 
@@ -1073,7 +1073,7 @@ static bool pack_header(unsigned char *forminfo,
     {
       my_error(ER_WRONG_STRING_LENGTH, MYF(0),
                field->comment.str,"COLUMN COMMENT",
-               (uint) COLUMN_COMMENT_MAXLEN);
+               (uint32_t) COLUMN_COMMENT_MAXLEN);
       return(1);
     }
     if (field->vcol_info)
@@ -1088,14 +1088,14 @@ static bool pack_header(unsigned char *forminfo,
       {
         my_error(ER_WRONG_STRING_LENGTH, MYF(0),
                  field->vcol_info->expr_str.str,"VIRTUAL COLUMN EXPRESSION",
-                 (uint) VIRTUAL_COLUMN_EXPRESSION_MAXLEN);
+                 (uint32_t) VIRTUAL_COLUMN_EXPRESSION_MAXLEN);
         return(1);
       }
       /*
         Sum up the length of the expression string and mandatory header bytes
         to the total length.
       */
-      vcol_info_length+= field->vcol_info->expr_str.length+(uint)FRM_VCOL_HEADER_SIZE;
+      vcol_info_length+= field->vcol_info->expr_str.length+(uint32_t)FRM_VCOL_HEADER_SIZE;
     }
 
     totlength+= field->length;
@@ -1107,10 +1107,10 @@ static bool pack_header(unsigned char *forminfo,
     if (field->sql_type == DRIZZLE_TYPE_TIMESTAMP &&
         MTYP_TYPENR(field->unireg_check) != Field::NONE &&
 	!time_stamp_pos)
-      time_stamp_pos= (uint) field->offset+ (uint) data_offset + 1;
+      time_stamp_pos= (uint32_t) field->offset+ (uint32_t) data_offset + 1;
     length=field->pack_length;
-    if ((uint) field->offset+ (uint) data_offset+ length > reclength)
-      reclength=(uint) (field->offset+ data_offset + length);
+    if ((uint32_t) field->offset+ (uint32_t) data_offset+ length > reclength)
+      reclength=(uint32_t) (field->offset+ data_offset + length);
     n_length+= (ulong) strlen(field->field_name)+1;
     field->interval_id=0;
     field->save_interval= 0;
@@ -1136,7 +1136,7 @@ static bool pack_header(unsigned char *forminfo,
 				    (field->interval->count+1));
         field->interval->type_names[field->interval->count]= 0;
         field->interval->type_lengths=
-          (uint32_t *) sql_alloc(sizeof(uint) * field->interval->count);
+          (uint32_t *) sql_alloc(sizeof(uint32_t) * field->interval->count);
 
         for (uint32_t pos= 0; pos < field->interval->count; pos++)
         {
@@ -1156,7 +1156,7 @@ static bool pack_header(unsigned char *forminfo,
       if (old_int_count != int_count)
       {
 	for (const char **pos=field->interval->type_names ; *pos ; pos++)
-	  int_length+=(uint) strlen(*pos)+1;	// field + suffix prefix
+	  int_length+=(uint32_t) strlen(*pos)+1;	// field + suffix prefix
 	int_parts+=field->interval->count+1;
       }
     }
@@ -1169,7 +1169,7 @@ static bool pack_header(unsigned char *forminfo,
 
   if (reclength > (ulong) file->max_record_length())
   {
-    my_error(ER_TOO_BIG_ROWSIZE, MYF(0), (uint) file->max_record_length());
+    my_error(ER_TOO_BIG_ROWSIZE, MYF(0), (uint32_t) file->max_record_length());
     return(1);
   }
 
@@ -1259,7 +1259,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
     buff[2]= 0; //(unsigned char) field->sc_length;
     int2store(buff+3, field->length);
     /* The +1 is here becasue the col offset in .frm file have offset 1 */
-    recpos= field->offset+1 + (uint) data_offset;
+    recpos= field->offset+1 + (uint32_t) data_offset;
     int3store(buff+5,recpos);
     int2store(buff+8,field->pack_flag);
     int2store(buff+10,field->unireg_check);
@@ -1276,8 +1276,8 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
         virtual field's data.
       */
       buff[12]= cur_vcol_expr_len= field->vcol_info->expr_str.length +
-                (uint)FRM_VCOL_HEADER_SIZE;
-      vcol_info_length+= cur_vcol_expr_len+(uint)FRM_VCOL_HEADER_SIZE;
+                (uint32_t)FRM_VCOL_HEADER_SIZE;
+      vcol_info_length+= cur_vcol_expr_len+(uint32_t)FRM_VCOL_HEADER_SIZE;
       buff[13]= (unsigned char) DRIZZLE_TYPE_VIRTUAL;
     }
     int2store(buff+15, field->comment.length);

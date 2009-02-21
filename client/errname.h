@@ -25,7 +25,7 @@
 typedef struct
 {
   const char *name;
-  uint        code;
+  uint32_t        code;
 } st_error;
 
 static st_error global_error_names[]=

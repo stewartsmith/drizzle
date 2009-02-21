@@ -685,7 +685,7 @@ end:
 */
 
 
-#define LOCK_CMP(A,B) ((unsigned char*) (A->lock) - (uint) ((A)->type) < (unsigned char*) (B->lock)- (uint) ((B)->type))
+#define LOCK_CMP(A,B) ((unsigned char*) (A->lock) - (uint32_t) ((A)->type) < (unsigned char*) (B->lock)- (uint32_t) ((B)->type))
 
 static void sort_locks(THR_LOCK_DATA **data,uint32_t count)
 {
@@ -720,7 +720,7 @@ thr_multi_lock(THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
     enum enum_thr_lock_result result= thr_lock(*pos, owner, (*pos)->type);
     if (result != THR_LOCK_SUCCESS)
     {						/* Aborted */
-      thr_multi_unlock(data,(uint) (pos-data));
+      thr_multi_unlock(data,(uint32_t) (pos-data));
       return(result);
     }
   }

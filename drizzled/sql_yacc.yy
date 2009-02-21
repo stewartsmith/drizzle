@@ -1703,7 +1703,7 @@ virtual_column_func:
               my_error(ER_OUTOFMEMORY, MYF(0), sizeof(virtual_column_info));
               DRIZZLE_YYABORT;
             }
-            uint expr_len= (uint)($3 - $1) - 1;
+            uint32_t expr_len= (uint)($3 - $1) - 1;
             Lex->vcol_info->expr_str.str= (char* ) sql_memdup($1 + 1, expr_len);
             Lex->vcol_info->expr_str.length= expr_len;
             Lex->vcol_info->expr_item= $2;

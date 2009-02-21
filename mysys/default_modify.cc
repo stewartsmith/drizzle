@@ -131,7 +131,7 @@ int modify_defaults_file(const char *file_location, const char *option,
       reserve_occupied+= (int) new_opt_len - (int) (src_ptr - old_src_ptr);
       if (reserve_occupied >= (int) reserve_extended)
       {
-        reserve_extended= (uint) reserve_occupied + RESERVE;
+        reserve_extended= (uint32_t) reserve_occupied + RESERVE;
         if (!(file_buffer= (char*) realloc(file_buffer, buffer_size +
                                            reserve_extended)))
           goto malloc_err;

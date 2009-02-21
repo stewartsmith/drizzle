@@ -153,7 +153,7 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 
   if (from[0] == '#' && !strncmp(from, MYSQL50_TABLE_NAME_PREFIX,
                                  MYSQL50_TABLE_NAME_PREFIX_LENGTH))
-    return((uint) (strncpy(to, from+MYSQL50_TABLE_NAME_PREFIX_LENGTH,
+    return((uint32_t) (strncpy(to, from+MYSQL50_TABLE_NAME_PREFIX_LENGTH,
                            to_length-1) -
                            (from + MYSQL50_TABLE_NAME_PREFIX_LENGTH)));
   length= strconvert(system_charset_info, from,
@@ -860,7 +860,7 @@ int prepare_create_field(Create_field *sql_field,
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_NULL:
-    sql_field->pack_flag=f_settype((uint) sql_field->sql_type);
+    sql_field->pack_flag=f_settype((uint32_t) sql_field->sql_type);
     break;
   case DRIZZLE_TYPE_NEWDECIMAL:
     sql_field->pack_flag=(FIELDFLAG_NUMBER |
@@ -890,7 +890,7 @@ int prepare_create_field(Create_field *sql_field,
     sql_field->pack_flag=(FIELDFLAG_NUMBER |
                           (sql_field->flags & UNSIGNED_FLAG ? 0 :
                            FIELDFLAG_DECIMAL) |
-                          f_settype((uint) sql_field->sql_type) |
+                          f_settype((uint32_t) sql_field->sql_type) |
                           (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
     break;
   }
@@ -1380,7 +1380,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
     {
       my_error(ER_WRONG_STRING_LENGTH, MYF(0),
                key->key_create_info.comment.str,"INDEX COMMENT",
-               (uint) INDEX_COMMENT_MAXLEN);
+               (uint32_t) INDEX_COMMENT_MAXLEN);
       return(-1);
     }
 
@@ -3322,9 +3322,9 @@ compare_tables(Session *session,
       return(true);
     /* Allocate result buffers. */
     if (! (ha_alter_info->index_drop_buffer=
-           (uint*) session->alloc(sizeof(uint) * table->s->keys)) ||
+           (uint*) session->alloc(sizeof(uint32_t) * table->s->keys)) ||
         ! (ha_alter_info->index_add_buffer=
-           (uint*) session->alloc(sizeof(uint) *
+           (uint*) session->alloc(sizeof(uint32_t) *
                               tmp_alter_info.key_list.elements)))
       return(true);
   }
@@ -3442,7 +3442,7 @@ compare_tables(Session *session,
 
       /* Check that NULL behavior is same for old and new fields */
       if ((new_field->flags & NOT_NULL_FLAG) !=
-          (uint) (field->flags & NOT_NULL_FLAG))
+          (uint32_t) (field->flags & NOT_NULL_FLAG))
       {
         *table_changes= IS_EQUAL_NO;
         *alter_flags|= HA_ALTER_COLUMN_NULLABLE;

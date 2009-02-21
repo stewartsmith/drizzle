@@ -2223,8 +2223,8 @@ void my_hash_sort_utf8mb4(const CHARSET_INFO * const cs,
   while ((res= my_mb_wc_utf8mb4(cs, &wc, (const unsigned char*) s, (const unsigned char*) e)) > 0)
   {
     my_tosort_utf8mb4(uni_plane, &wc);
-    my_hash_add(n1, n2, (uint) (wc & 0xFF));
-    my_hash_add(n1, n2, (uint) (wc >> 8)  & 0xFF);
+    my_hash_add(n1, n2, (uint32_t) (wc & 0xFF));
+    my_hash_add(n1, n2, (uint32_t) (wc >> 8)  & 0xFF);
     if (wc > 0xFFFF)
     {
        /*
@@ -2234,7 +2234,7 @@ void my_hash_sort_utf8mb4(const CHARSET_INFO * const cs,
         This is useful to keep order of records in
         test results, e.g. for "SHOW GRANTS".
       */
-      my_hash_add(n1, n2, (uint) (wc >> 16) & 0xFF);
+      my_hash_add(n1, n2, (uint32_t) (wc >> 16) & 0xFF);
     }
     s+= res;
   }

@@ -58,7 +58,7 @@ inline bool
 check_and_unset_inject_value(int value)
 {
   Session *session= current_session;
-  if (session->error_inject_value == (uint)value)
+  if (session->error_inject_value == (uint32_t)value)
   {
     session->error_inject_value= 0;
     return 1;

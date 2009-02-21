@@ -1911,7 +1911,7 @@ public:
 
   /* Table read plans are allocated on MEM_ROOT and are never deleted */
   static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint) size); }
+  { return (void*) alloc_root(mem_root, (uint32_t) size); }
   static void operator delete(void *, size_t)
     { TRASH(ptr, size); }
   static void operator delete(void *, MEM_ROOT *)
@@ -2594,7 +2594,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   }
 
   imerge_cost +=
-    Unique::get_use_cost(param->imerge_cost_buff, (uint)non_cpk_scan_records,
+    Unique::get_use_cost(param->imerge_cost_buff, (uint32_t)non_cpk_scan_records,
                          param->table->file->ref_length,
                          param->session->variables.sortbuff_size);
   if (imerge_cost < read_time)
@@ -4331,7 +4331,7 @@ static SEL_ARG *
 get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
             KEY_PART *key_part, Item_func::Functype type,Item *value)
 {
-  uint32_t maybe_null=(uint) field->real_maybe_null();
+  uint32_t maybe_null=(uint32_t) field->real_maybe_null();
   bool optimize_range;
   SEL_ARG *tree= 0;
   MEM_ROOT *alloc= param->mem_root;
@@ -6126,7 +6126,7 @@ walk_up_n_right:
     range->end_key.keypart_map= make_prev_keypart_map(cur->max_key_parts);
 
     if (!(cur->min_key_flag & ~NULL_RANGE) && !cur->max_key_flag &&
-        (uint)key_tree->part+1 == seq->param->table->key_info[seq->real_keyno].key_parts &&
+        (uint32_t)key_tree->part+1 == seq->param->table->key_info[seq->real_keyno].key_parts &&
         (seq->param->table->key_info[seq->real_keyno].flags & (HA_NOSAME)) ==
         HA_NOSAME &&
         range->start_key.length == range->end_key.length &&
@@ -6152,7 +6152,7 @@ walk_up_n_right:
     }
   }
   seq->param->range_count++;
-  seq->param->max_key_part=cmax(seq->param->max_key_part,(uint)key_tree->part);
+  seq->param->max_key_part=cmax(seq->param->max_key_part,(uint32_t)key_tree->part);
   return 0;
 }
 
@@ -6427,7 +6427,7 @@ get_quick_keys(PARAM *param,QUICK_RANGE_SELECT *quick,KEY_PART *key,
       key_tree->next_key_part->type == SEL_ARG::KEY_RANGE)
   {						  // const key as prefix
     if ((tmp_min_key - min_key) == (tmp_max_key - max_key) &&
-         memcmp(min_key, max_key, (uint)(tmp_max_key - max_key))==0 &&
+         memcmp(min_key, max_key, (uint32_t)(tmp_max_key - max_key))==0 &&
 	 key_tree->min_flag==0 && key_tree->max_flag==0)
     {
       if (get_quick_keys(param,quick,key,key_tree->next_key_part,
@@ -6468,8 +6468,8 @@ get_quick_keys(PARAM *param,QUICK_RANGE_SELECT *quick,KEY_PART *key,
   }
   if (flag == 0)
   {
-    uint32_t length= (uint) (tmp_min_key - param->min_key);
-    if (length == (uint) (tmp_max_key - param->max_key) &&
+    uint32_t length= (uint32_t) (tmp_min_key - param->min_key);
+    if (length == (uint32_t) (tmp_max_key - param->max_key) &&
 	!memcmp(param->min_key,param->max_key,length))
     {
       KEY *table_key=quick->head->key_info+quick->index;
@@ -6480,7 +6480,7 @@ get_quick_keys(PARAM *param,QUICK_RANGE_SELECT *quick,KEY_PART *key,
 	if (!(table_key->flags & HA_NULL_PART_KEY) ||
 	    !null_part_in_key(key,
 			      param->min_key,
-			      (uint) (tmp_min_key - param->min_key)))
+			      (uint32_t) (tmp_min_key - param->min_key)))
 	  flag|= UNIQUE_RANGE;
 	else
 	  flag|= NULL_RANGE;
@@ -6490,17 +6490,17 @@ get_quick_keys(PARAM *param,QUICK_RANGE_SELECT *quick,KEY_PART *key,
 
   /* Get range for retrieving rows in QUICK_SELECT::get_next */
   if (!(range= new QUICK_RANGE(param->min_key,
-			       (uint) (tmp_min_key - param->min_key),
+			       (uint32_t) (tmp_min_key - param->min_key),
                                min_part >=0 ? make_keypart_map(min_part) : 0,
 			       param->max_key,
-			       (uint) (tmp_max_key - param->max_key),
+			       (uint32_t) (tmp_max_key - param->max_key),
                                max_part >=0 ? make_keypart_map(max_part) : 0,
 			       flag)))
     return 1;			// out of memory
 
   set_if_bigger(quick->max_used_key_length, range->min_length);
   set_if_bigger(quick->max_used_key_length, range->max_length);
-  set_if_bigger(quick->used_key_parts, (uint) key_tree->part+1);
+  set_if_bigger(quick->used_key_parts, (uint32_t) key_tree->part+1);
   if (insert_dynamic(&quick->ranges, (unsigned char*) &range))
     return 1;
 
@@ -6706,7 +6706,7 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
     quick->mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   quick->mrr_buf_size= session->variables.read_rnd_buff_size;
-  if (table->file->multi_range_read_info(quick->index, 1, (uint)records,
+  if (table->file->multi_range_read_info(quick->index, 1, (uint32_t)records,
                                          &quick->mrr_buf_size,
                                          &quick->mrr_flags, &cost))
     goto err;
@@ -8625,21 +8625,21 @@ void cost_group_min_max(Table* table, KEY *index_info, uint32_t used_key_parts,
   keys_per_block= (table->file->stats.block_size / 2 /
                    (index_info->key_length + table->file->ref_length)
                         + 1);
-  num_blocks= (uint)(table_records / keys_per_block) + 1;
+  num_blocks= (uint32_t)(table_records / keys_per_block) + 1;
 
   /* Compute the number of keys in a group. */
   keys_per_group= index_info->rec_per_key[group_key_parts - 1];
   if (keys_per_group == 0) /* If there is no statistics try to guess */
     /* each group contains 10% of all records */
-    keys_per_group= (uint)(table_records / 10) + 1;
-  num_groups= (uint)(table_records / keys_per_group) + 1;
+    keys_per_group= (uint32_t)(table_records / 10) + 1;
+  num_groups= (uint32_t)(table_records / keys_per_group) + 1;
 
   /* Apply the selectivity of the quick select for group prefixes. */
   if (range_tree && (quick_prefix_records != HA_POS_ERROR))
   {
     quick_prefix_selectivity= (double) quick_prefix_records /
                               (double) table_records;
-    num_groups= (uint) rint(num_groups * quick_prefix_selectivity);
+    num_groups= (uint32_t) rint(num_groups * quick_prefix_selectivity);
     set_if_bigger(num_groups, 1);
   }
 

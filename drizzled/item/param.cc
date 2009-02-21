@@ -130,7 +130,7 @@ void Item_param::set_decimal(char *str, ulong length)
   char *end;
 
   end= str+length;
-  str2my_decimal((uint)E_DEC_FATAL_ERROR, str, &decimal_value, &end);
+  str2my_decimal((uint32_t)E_DEC_FATAL_ERROR, str, &decimal_value, &end);
   state= DECIMAL_VALUE;
   decimals= decimal_value.frac;
   max_length= my_decimal_precision_to_length(decimal_value.precision(),
@@ -506,7 +506,7 @@ String *Item_param::val_str(String* str)
   {
     if (str->reserve(MAX_DATE_STRING_REP_LENGTH))
       break;
-    str->length((uint) my_TIME_to_str(&value.time, (char*) str->ptr()));
+    str->length((uint32_t) my_TIME_to_str(&value.time, (char*) str->ptr()));
     str->set_charset(&my_charset_bin);
     return str;
   }
@@ -684,7 +684,7 @@ const String *Item_param::query_val_str(String* str) const
       buf= str->c_ptr_quick();
       ptr= buf;
       *ptr++= '\'';
-      ptr+= (uint) my_TIME_to_str(&value.time, ptr);
+      ptr+= (uint32_t) my_TIME_to_str(&value.time, ptr);
       *ptr++= '\'';
       str->length((uint32_t) (ptr - buf));
       break;

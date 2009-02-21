@@ -78,7 +78,7 @@ int my_close(File fd, myf MyFlags)
     if (MyFlags & (MY_FAE | MY_WME))
       my_error(EE_BADCLOSE, MYF(ME_BELL+ME_WAITTANG),my_filename(fd),errno);
   }
-  if ((uint) fd < my_file_limit && my_file_info[fd].type != UNOPEN)
+  if ((uint32_t) fd < my_file_limit && my_file_info[fd].type != UNOPEN)
   {
     free(my_file_info[fd].name);
 #if !defined(HAVE_PREAD)
@@ -114,7 +114,7 @@ File my_register_filename(File fd, const char *FileName, enum file_type
 {
   if ((int) fd >= 0)
   {
-    if ((uint) fd >= my_file_limit)
+    if ((uint32_t) fd >= my_file_limit)
     {
 #if !defined(HAVE_PREAD)
       my_errno= EMFILE;

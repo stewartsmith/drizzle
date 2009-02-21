@@ -141,7 +141,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
     if ((err= new (&session->warn_root) DRIZZLE_ERROR(session, code, level, msg)))
       session->warn_list.push_back(err, &session->warn_root);
   }
-  session->warn_count[(uint) level]++;
+  session->warn_count[(uint32_t) level]++;
   session->total_warn_count++;
   return(err);
 }

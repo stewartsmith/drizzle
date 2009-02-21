@@ -482,7 +482,7 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
       {
 	uint32_t length;
 	unsigned char save_chr;
-	if ((length=(uint) (read_info.row_end-pos)) >
+	if ((length=(uint32_t) (read_info.row_end-pos)) >
 	    field->field_length)
 	  length=field->field_length;
 	save_chr=pos[length]; pos[length]='\0'; // Safeguard aganst malloc
@@ -571,7 +571,7 @@ read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
         continue;
 
       pos=read_info.row_start;
-      length=(uint) (read_info.row_end-pos);
+      length=(uint32_t) (read_info.row_end-pos);
 
       real_item= item->real_item();
 

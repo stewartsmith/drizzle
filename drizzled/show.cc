@@ -258,7 +258,7 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
     return(FIND_FILES_DIR);
   }
 
-  for (i=0 ; i < (uint) dirp->number_off_files  ; i++)
+  for (i=0 ; i < (uint32_t) dirp->number_off_files  ; i++)
   {
     char uname[NAME_LEN + 1];                   /* Unencoded name */
     file=dirp->dir_entry+i;
@@ -865,14 +865,14 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     if (share->page_checksum != HA_CHOICE_UNDEF)
     {
       packet->append(STRING_WITH_LEN(" PAGE_CHECKSUM="));
-      packet->append(ha_choice_values[(uint) share->page_checksum], 1);
+      packet->append(ha_choice_values[(uint32_t) share->page_checksum], 1);
     }
     if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
       packet->append(STRING_WITH_LEN(" DELAY_KEY_WRITE=1"));
     if (create_info.row_type != ROW_TYPE_DEFAULT)
     {
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
-      packet->append(ha_row_type[(uint) create_info.row_type]);
+      packet->append(ha_row_type[(uint32_t) create_info.row_type]);
     }
     if (table->s->key_block_size)
     {
@@ -976,7 +976,7 @@ static void store_key_options(Session *,
   {
     packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
     end= int64_t10_to_str(key_info->block_size, buff, 10);
-    packet->append(buff, (uint) (end - buff));
+    packet->append(buff, (uint32_t) (end - buff));
   }
 
   assert(test(key_info->flags & HA_USES_COMMENT) ==
@@ -999,7 +999,7 @@ class thread_info :public ilink {
 public:
   static void *operator new(size_t size)
   {
-    return (void*) sql_alloc((uint) size);
+    return (void*) sql_alloc((uint32_t) size);
   }
   static void operator delete(void *, size_t)
   { TRASH(ptr, size); }
@@ -2308,7 +2308,7 @@ static uint32_t get_table_open_method(TableList *tables,
     return table_open_method;
   }
   /* I_S tables which use get_all_tables but can not be optimized */
-  return (uint) OPEN_FULL_TABLE;
+  return (uint32_t) OPEN_FULL_TABLE;
 }
 
 
@@ -2768,11 +2768,11 @@ static int get_schema_tables_record(Session *session, TableList *tables,
       ptr= strcpy(ptr," checksum=1")+11;
     if (share->page_checksum != HA_CHOICE_UNDEF)
       ptr+= sprintf(ptr, " page_checksum=%s",
-                    ha_choice_values[(uint) share->page_checksum]);
+                    ha_choice_values[(uint32_t) share->page_checksum]);
     if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
       ptr= strcpy(ptr," delay_key_write=1")+18;
     if (share->row_type != ROW_TYPE_DEFAULT)
-      ptr+= sprintf(ptr, " row_format=%s", ha_row_type[(uint)share->row_type]);
+      ptr+= sprintf(ptr, " row_format=%s", ha_row_type[(uint32_t)share->row_type]);
     if (share->block_size)
     {
       ptr= strcpy(ptr, " block_size=")+12;
@@ -2781,7 +2781,7 @@ static int get_schema_tables_record(Session *session, TableList *tables,
 
     table->field[19]->store(option_buff+1,
                             (ptr == option_buff ? 0 :
-                             (uint) (ptr-option_buff)-1), cs);
+                             (uint32_t) (ptr-option_buff)-1), cs);
 
     tmp_buff= (share->table_charset ?
                share->table_charset->name : "default");

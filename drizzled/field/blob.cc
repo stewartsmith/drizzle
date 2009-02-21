@@ -269,7 +269,7 @@ int Field_blob::store(double nr)
 {
   const CHARSET_INFO * const cs=charset();
   value.set_real(nr, NOT_FIXED_DEC, cs);
-  return Field_blob::store(value.ptr(),(uint) value.length(), cs);
+  return Field_blob::store(value.ptr(),(uint32_t) value.length(), cs);
 }
 
 
@@ -277,7 +277,7 @@ int Field_blob::store(int64_t nr, bool unsigned_val)
 {
   const CHARSET_INFO * const cs=charset();
   value.set_int(nr, unsigned_val, cs);
-  return Field_blob::store(value.ptr(), (uint) value.length(), cs);
+  return Field_blob::store(value.ptr(), (uint32_t) value.length(), cs);
 }
 
 
@@ -403,7 +403,7 @@ uint32_t Field_blob::get_key_image(unsigned char *buff,
       identical keys
     */
     memset(buff+HA_KEY_BLOB_LENGTH+blob_length, 0, (length-blob_length));
-    length=(uint) blob_length;
+    length=(uint32_t) blob_length;
   }
   int2store(buff,length);
   memcpy(buff+HA_KEY_BLOB_LENGTH, blob, length);
@@ -624,8 +624,8 @@ int Field_blob::pack_cmp(const unsigned char *a, const unsigned char *b, uint32_
   }
   else
   {
-    a_length= (uint) *a++;
-    b_length= (uint) *b++;
+    a_length= (uint32_t) *a++;
+    b_length= (uint32_t) *b++;
   }
   return field_charset->coll->strnncollsp(field_charset,
                                           a, a_length,
@@ -649,7 +649,7 @@ int Field_blob::pack_cmp(const unsigned char *b, uint32_t key_length_arg,
     b_length= uint2korr(b); b+=2;
   }
   else
-    b_length= (uint) *b++;
+    b_length= (uint32_t) *b++;
   return field_charset->coll->strnncollsp(field_charset,
                                           a, a_length,
                                           b, b_length,
@@ -748,7 +748,7 @@ uint32_t Field_blob::packed_col_length(const unsigned char *data_ptr, uint32_t l
 {
   if (length > 255)
     return uint2korr(data_ptr)+2;
-  return (uint) *data_ptr + 1;
+  return (uint32_t) *data_ptr + 1;
 }
 
 

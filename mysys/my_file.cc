@@ -37,7 +37,7 @@
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_NOFILE)
 
 #ifndef RLIM_INFINITY
-#define RLIM_INFINITY ((uint) 0xffffffff)
+#define RLIM_INFINITY ((uint32_t) 0xffffffff)
 #endif
 
 static uint64_t set_max_open_files(uint64_t max_file_limit)

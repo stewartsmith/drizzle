@@ -25,7 +25,7 @@
 
 char * my_filename(File fd)
 {
-  if ((uint) fd >= (uint) my_file_limit)
+  if ((uint32_t) fd >= (uint32_t) my_file_limit)
     return((char*) "UNKNOWN");
   if (fd >= 0 && my_file_info[fd].type != UNOPEN)
   {

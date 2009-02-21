@@ -28,7 +28,7 @@ int64_t Item_func_shift_left::val_int()
   assert(fixed == 1);
   uint32_t shift;
   uint64_t res= ((uint64_t) args[0]->val_int() <<
-                  (shift=(uint) args[1]->val_int()));
+                  (shift=(uint32_t) args[1]->val_int()));
   if (args[0]->null_value || args[1]->null_value)
   {
     null_value=1;
@@ -43,7 +43,7 @@ int64_t Item_func_shift_right::val_int()
   assert(fixed == 1);
   uint32_t shift;
   uint64_t res= (uint64_t) args[0]->val_int() >>
-    (shift=(uint) args[1]->val_int());
+    (shift=(uint32_t) args[1]->val_int());
   if (args[0]->null_value || args[1]->null_value)
   {
     null_value=1;

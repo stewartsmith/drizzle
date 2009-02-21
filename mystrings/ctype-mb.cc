@@ -579,8 +579,8 @@ void my_hash_sort_mb_bin(const CHARSET_INFO * const,
 
   for (; pos < (const unsigned char*) key ; pos++)
   {
-    nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) *
-	     ((uint)*pos)) + (nr1[0] << 8);
+    nr1[0]^=(ulong) ((((uint32_t) nr1[0] & 63)+nr2[0]) *
+	     ((uint32_t)*pos)) + (nr1[0] << 8);
     nr2[0]+=3;
   }
 }

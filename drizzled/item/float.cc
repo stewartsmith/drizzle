@@ -44,7 +44,7 @@ static uint32_t nr_of_decimals(const char *str, const char *end)
     ;
   if (*str == 'e' || *str == 'E')
     return NOT_FIXED_DEC;
-  return (uint) (str - decimal_point);
+  return (uint32_t) (str - decimal_point);
 }
 
 String *Item_float::val_str(String *str)

@@ -186,7 +186,7 @@ static bool preserve_comments= false;
 static uint32_t opt_max_allowed_packet, opt_net_buffer_length,
   opt_drizzle_port= 0;
 static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
-static uint my_end_arg;
+static uint32_t my_end_arg;
 static char * opt_drizzle_unix_port= NULL;
 static int connect_flag= CLIENT_INTERACTIVE;
 static char *current_host, *current_db, *current_user= NULL,
@@ -209,9 +209,9 @@ static char default_pager[FN_REFLEN];
 static char pager[FN_REFLEN], outfile[FN_REFLEN];
 static FILE *PAGER, *OUTFILE;
 static MEM_ROOT hash_mem_root;
-static uint prompt_counter;
+static uint32_t prompt_counter;
 static char delimiter[16]= DEFAULT_DELIMITER;
-static uint delimiter_length= 1;
+static uint32_t delimiter_length= 1;
 unsigned short terminal_width= 80;
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
@@ -243,9 +243,9 @@ static int com_quit(string *str,const char*),
 
 static int read_and_execute(bool interactive);
 static int sql_connect(char *host,char *database,char *user,char *password,
-                       uint silent);
+                       uint32_t silent);
 static const char *server_version_string(DRIZZLE *drizzle);
-static int put_info(const char *str,INFO_TYPE info,uint error,
+static int put_info(const char *str,INFO_TYPE info,uint32_t error,
                     const char *sql_state);
 static int put_error(DRIZZLE *drizzle);
 static void safe_put_field(const char *pos,uint32_t length);
@@ -1184,7 +1184,7 @@ int main(int argc,char *argv[])
       if (verbose)
         tee_fprintf(stdout, _("Reading history-file %s\n"),histfile);
       read_history(histfile);
-      if (!(histfile_tmp= (char*) malloc((uint) strlen(histfile) + 5)))
+      if (!(histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5)))
       {
         fprintf(stderr, _("Couldn't allocate memory for temp histfile!\n"));
         exit(1);
@@ -1514,7 +1514,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
         return false;
       }
     }
-    delimiter_length= (uint)strlen(delimiter);
+    delimiter_length= (uint32_t)strlen(delimiter);
     delimiter_str= delimiter;
     break;
   case OPT_LOCAL_INFILE:
@@ -1818,7 +1818,7 @@ static int read_and_execute(bool interactive)
 
 static COMMANDS *find_command(const char *name,char cmd_char)
 {
-  uint len;
+  uint32_t len;
   const char *end;
 
   if (!name)
@@ -1844,17 +1844,17 @@ static COMMANDS *find_command(const char *name,char cmd_char)
       return((COMMANDS *) 0);
     if ((end=strcont(name," \t")))
     {
-      len=(uint) (end - name);
+      len=(uint32_t) (end - name);
       while (my_isspace(charset_info,*end))
         end++;
       if (!*end)
         end=0;          // no arguments to function
     }
     else
-      len=(uint) strlen(name);
+      len=(uint32_t) strlen(name);
   }
 
-  for (uint i= 0; commands[i].name; i++)
+  for (uint32_t i= 0; commands[i].name; i++)
   {
     if (commands[i].func &&
         ((name && !my_strnncoll(charset_info,(const unsigned char*)name,len, (const unsigned char*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
@@ -1880,7 +1880,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
     return(0);
   if (status.add_to_history && line[0] && not_in_history(line))
     add_history(line);
-  char *end_of_line=line+(uint) strlen(line);
+  char *end_of_line=line+(uint32_t) strlen(line);
 
   for (pos=out=line ; (inchar= (unsigned char) *pos) ; pos++)
   {
@@ -2124,7 +2124,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
   if (out != line || (buffer->length() > 0))
   {
     *out++='\n';
-    uint length=(uint) (out-line);
+    uint32_t length=(uint32_t) (out-line);
     if ((!*ml_comment || preserve_comments))
       buffer->append(line, length);
   }
@@ -2254,18 +2254,18 @@ char *new_command_generator(const char *text,int state)
   char *ptr;
   static Bucket *b;
   static entry *e;
-  static uint i;
+  static uint32_t i;
 
   if (!state)
-    textlen=(uint) strlen(text);
+    textlen=(uint32_t) strlen(text);
 
   if (textlen>0)
   {            /* lookup in the hash */
     if (!state)
     {
-      uint len;
+      uint32_t len;
 
-      b = find_all_matches(&ht,text,(uint) strlen(text),&len);
+      b = find_all_matches(&ht,text,(uint32_t) strlen(text),&len);
       if (!b)
         return NULL;
       e = b->pData;
@@ -2297,7 +2297,7 @@ char *new_command_generator(const char *text,int state)
     ptr= NULL;
     while (e && !ptr)
     {          /* find valid entry in bucket */
-      if ((uint) strlen(e->str) == b->nKeyLength)
+      if ((uint32_t) strlen(e->str) == b->nKeyLength)
         ptr = strdup(e->str);
       /* find the next used entry */
       e = e->pNext;
@@ -2393,7 +2393,7 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
       {
         char *str=strdup_root(&hash_mem_root, (char*) table_row[0]);
         if (str &&
-            !completion_hash_exists(&ht,(char*) str, (uint) strlen(str)))
+            !completion_hash_exists(&ht,(char*) str, (uint32_t) strlen(str)))
           add_word(&ht,str);
       }
     }
@@ -2406,7 +2406,7 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
   }
   drizzleclient_data_seek(tables,0);
   if (!(field_names= (char ***) alloc_root(&hash_mem_root,sizeof(char **) *
-                                           (uint) (drizzleclient_num_rows(tables)+1))))
+                                           (uint32_t) (drizzleclient_num_rows(tables)+1))))
   {
     drizzleclient_free_result(tables);
     return;
@@ -2434,7 +2434,7 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
         field_names[i][num_fields+j] = strdup_root(&hash_mem_root,
                                                    sql_field->name);
         if (!completion_hash_exists(&ht,field_names[i][num_fields+j],
-                                    (uint) strlen(field_names[i][num_fields+j])))
+                                    (uint32_t) strlen(field_names[i][num_fields+j])))
           add_word(&ht,field_names[i][num_fields+j]);
         j++;
       }
@@ -2516,7 +2516,7 @@ static void get_current_db(void)
 
 int drizzleclient_real_query_for_lazy(const char *buf, int length)
 {
-  for (uint retry=0;; retry++)
+  for (uint32_t retry=0;; retry++)
   {
     int error;
     if (!drizzleclient_real_query(&drizzle,buf,length))
@@ -2588,7 +2588,7 @@ com_go(string *buffer, const char *)
   char          time_buff[52+3+1]; /* time max + space&parens + NUL */
   DRIZZLE_RES     *result;
   uint32_t         timer, warnings= 0;
-  uint          error= 0;
+  uint32_t          error= 0;
   int           err= 0;
 
   interrupted_query= 0;
@@ -2814,7 +2814,7 @@ static const char *fieldtype2str(enum enum_field_types type)
   }
 }
 
-static char *fieldflags2str(uint f) {
+static char *fieldflags2str(uint32_t f) {
   static char buf[1024];
   char *s=buf;
   *s=0;
@@ -2849,7 +2849,7 @@ static void
 print_field_types(DRIZZLE_RES *result)
 {
   DRIZZLE_FIELD   *field;
-  uint i=0;
+  uint32_t i=0;
 
   while ((field = drizzleclient_fetch_field(result)))
   {
@@ -2937,10 +2937,10 @@ print_table_data(DRIZZLE_RES *result)
   {
     drizzleclient_field_seek(result,0);
     (void) tee_fputs("|", PAGER);
-    for (uint off=0; (field = drizzleclient_fetch_field(result)) ; off++)
+    for (uint32_t off=0; (field = drizzleclient_fetch_field(result)) ; off++)
     {
-      uint name_length= (uint) strlen(field->name);
-      uint numcells= charset_info->cset->numcells(charset_info,
+      uint32_t name_length= (uint32_t) strlen(field->name);
+      uint32_t numcells= charset_info->cset->numcells(charset_info,
                                                   field->name,
                                                   field->name + name_length);
       uint32_t display_length= field->max_length + name_length - numcells;
@@ -2961,13 +2961,13 @@ print_table_data(DRIZZLE_RES *result)
     uint32_t *lengths= drizzleclient_fetch_lengths(result);
     (void) tee_fputs("| ", PAGER);
     drizzleclient_field_seek(result, 0);
-    for (uint off= 0; off < drizzleclient_num_fields(result); off++)
+    for (uint32_t off= 0; off < drizzleclient_num_fields(result); off++)
     {
       const char *buffer;
-      uint data_length;
-      uint field_max_length;
-      uint visible_length;
-      uint extra_padding;
+      uint32_t data_length;
+      uint32_t field_max_length;
+      uint32_t visible_length;
+      uint32_t extra_padding;
 
       if (cur[off] == NULL)
       {
@@ -2977,7 +2977,7 @@ print_table_data(DRIZZLE_RES *result)
       else
       {
         buffer= cur[off];
-        data_length= (uint) lengths[off];
+        data_length= (uint32_t) lengths[off];
       }
 
       field= drizzleclient_fetch_field(result);
@@ -3102,26 +3102,26 @@ static void
 print_table_data_vertically(DRIZZLE_RES *result)
 {
   DRIZZLE_ROW  cur;
-  uint    max_length=0;
+  uint32_t    max_length=0;
   DRIZZLE_FIELD  *field;
 
   while ((field = drizzleclient_fetch_field(result)))
   {
-    uint length= field->name_length;
+    uint32_t length= field->name_length;
     if (length > max_length)
       max_length= length;
     field->max_length=length;
   }
 
   drizzleclient_field_seek(result,0);
-  for (uint row_count=1; (cur= drizzleclient_fetch_row(result)); row_count++)
+  for (uint32_t row_count=1; (cur= drizzleclient_fetch_row(result)); row_count++)
   {
     if (interrupted_query)
       break;
     drizzleclient_field_seek(result,0);
     tee_fprintf(PAGER,
                 "*************************** %d. row ***************************\n", row_count);
-    for (uint off=0; off < drizzleclient_num_fields(result); off++)
+    for (uint32_t off=0; off < drizzleclient_num_fields(result); off++)
     {
       field= drizzleclient_fetch_field(result);
       tee_fprintf(PAGER, "%*s: ",(int) max_length,field->name);
@@ -3141,7 +3141,7 @@ static void print_warnings()
   uint64_t num_rows;
 
   /* Save current error before calling "show warnings" */
-  uint error= drizzleclient_errno(&drizzle);
+  uint32_t error= drizzleclient_errno(&drizzle);
 
   /* Get the warnings */
   query= "show warnings";
@@ -3160,7 +3160,7 @@ static void print_warnings()
     messages.  To be safe, skip printing the duplicate only if it is the only
     warning.
   */
-  if (!cur || (num_rows == 1 && error == (uint) strtoul(cur[1], NULL, 10)))
+  if (!cur || (num_rows == 1 && error == (uint32_t) strtoul(cur[1], NULL, 10)))
     goto end;
 
   /* Print the warnings */
@@ -3235,7 +3235,7 @@ print_tab_data(DRIZZLE_RES *result)
   {
     lengths= drizzleclient_fetch_lengths(result);
     safe_put_field(cur[0],lengths[0]);
-    for (uint off=1 ; off < drizzleclient_num_fields(result); off++)
+    for (uint32_t off=1 ; off < drizzleclient_num_fields(result); off++)
     {
       (void) tee_fputs("\t", PAGER);
       safe_put_field(cur[off], lengths[off]);
@@ -3688,7 +3688,7 @@ char *get_arg(char *line, bool get_next_arg)
 
 static int
 sql_connect(char *host,char *database,char *user,char *password,
-                 uint silent)
+                 uint32_t silent)
 {
   if (connected)
   {
@@ -3698,7 +3698,7 @@ sql_connect(char *host,char *database,char *user,char *password,
   drizzleclient_create(&drizzle);
   if (opt_connect_timeout)
   {
-    uint timeout=opt_connect_timeout;
+    uint32_t timeout=opt_connect_timeout;
     drizzleclient_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT,
                   (char*) &timeout);
   }
@@ -3863,7 +3863,7 @@ server_version_string(DRIZZLE *con)
 }
 
 static int
-put_info(const char *str,INFO_TYPE info_type, uint error, const char *sqlstate)
+put_info(const char *str,INFO_TYPE info_type, uint32_t error, const char *sqlstate)
 {
   FILE *file= (info_type == INFO_ERROR ? stderr : stdout);
   static int inited=0;
@@ -3948,7 +3948,7 @@ static void remove_cntrl(string *buffer)
   const char *end= start + (buffer->length());
   while (start < end && !my_isgraph(charset_info,end[-1]))
     end--;
-  uint pos_to_truncate= (end-start);
+  uint32_t pos_to_truncate= (end-start);
   if (buffer->length() > pos_to_truncate)
     buffer->erase(pos_to_truncate);
 }

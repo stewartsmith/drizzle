@@ -92,16 +92,16 @@ const char *Item_ident::full_name() const
     return field_name ? field_name : name ? name : "tmp_field";
   if (db_name && db_name[0])
   {
-    tmp=(char*) sql_alloc((uint) strlen(db_name)+(uint) strlen(table_name)+
-                          (uint) strlen(field_name)+3);
+    tmp=(char*) sql_alloc((uint32_t) strlen(db_name)+(uint32_t) strlen(table_name)+
+                          (uint32_t) strlen(field_name)+3);
     sprintf(tmp,"%s.%s.%s",db_name,table_name,field_name);
   }
   else
   {
     if (table_name[0])
     {
-      tmp= (char*) sql_alloc((uint) strlen(table_name) +
-                             (uint) strlen(field_name) + 2);
+      tmp= (char*) sql_alloc((uint32_t) strlen(table_name) +
+                             (uint32_t) strlen(field_name) + 2);
       sprintf(tmp, "%s.%s", table_name, field_name);
     }
     else
@@ -140,7 +140,7 @@ void Item_ident::print(String *str,
   {
     const char *nm= (field_name && field_name[0]) ?
                       field_name : name ? name : "tmp_field";
-    str->append_identifier(nm, (uint) strlen(nm));
+    str->append_identifier(nm, (uint32_t) strlen(nm));
 
     return;
   }
@@ -152,7 +152,7 @@ void Item_ident::print(String *str,
     }
     str->append_identifier(t_name.c_str(), t_name.length());
     str->append('.');
-    str->append_identifier(field_name, (uint)strlen(field_name));
+    str->append_identifier(field_name, (uint32_t)strlen(field_name));
   }
   else
   {
@@ -160,10 +160,10 @@ void Item_ident::print(String *str,
     {
       str->append_identifier(t_name.c_str(), t_name.length());
       str->append('.');
-      str->append_identifier(field_name, (uint) strlen(field_name));
+      str->append_identifier(field_name, (uint32_t) strlen(field_name));
     }
     else
-      str->append_identifier(field_name, (uint) strlen(field_name));
+      str->append_identifier(field_name, (uint32_t) strlen(field_name));
   }
 }
 

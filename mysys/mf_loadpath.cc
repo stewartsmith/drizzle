@@ -38,7 +38,7 @@ char * my_load_path(char * to, const char *path,
   {
     if (is_cur)
       is_cur=2;					/* Remove current dir */
-    if (! getcwd(buff,(uint) (FN_REFLEN-strlen(path)+is_cur)))
+    if (! getcwd(buff,(uint32_t) (FN_REFLEN-strlen(path)+is_cur)))
       strcat(buff,path+is_cur);
     else
       strcpy(buff,path);			/* Return org file name */

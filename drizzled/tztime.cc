@@ -159,14 +159,14 @@ sec_to_TIME(DRIZZLE_TIME * tmp, time_t t, long offset)
     rem -= SECS_PER_DAY;
     days++;
   }
-  tmp->hour= (uint)(rem / SECS_PER_HOUR);
+  tmp->hour= (uint32_t)(rem / SECS_PER_HOUR);
   rem= rem % SECS_PER_HOUR;
-  tmp->minute= (uint)(rem / SECS_PER_MIN);
+  tmp->minute= (uint32_t)(rem / SECS_PER_MIN);
   /*
     A positive leap second requires a special
     representation.  This uses "... ??:59:60" et seq.
   */
-  tmp->second= (uint)(rem % SECS_PER_MIN);
+  tmp->second= (uint32_t)(rem % SECS_PER_MIN);
 
   y= EPOCH_YEAR;
   while (days < 0 || days >= (long)year_lengths[yleap= isleap(y)])
@@ -187,7 +187,7 @@ sec_to_TIME(DRIZZLE_TIME * tmp, time_t t, long offset)
   for (tmp->month= 0; days >= (long) ip[tmp->month]; tmp->month++)
     days= days - (long) ip[tmp->month];
   tmp->month++;
-  tmp->day= (uint)(days + 1);
+  tmp->day= (uint32_t)(days + 1);
 
   /* filling MySQL specific DRIZZLE_TIME members */
   tmp->neg= 0; tmp->second_part= 0;

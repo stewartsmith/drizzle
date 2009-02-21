@@ -101,7 +101,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
                         (const char*) from, length, from_cs, &dummy_errors);
 
   drizzleclient_net_store_length((unsigned char*) length_pos, to - length_pos - 1);
-  packet->length((uint) (to - packet->ptr()));
+  packet->length((uint32_t) (to - packet->ptr()));
   return 0;
 }
 
@@ -179,7 +179,7 @@ net_send_ok(Session *session,
   pos+=2;
 
   /* We can only return up to 65535 warnings in two bytes */
-  uint32_t tmp= cmin(total_warn_count, (uint)65535);
+  uint32_t tmp= cmin(total_warn_count, (uint32_t)65535);
   int2store(pos, tmp);
   pos+= 2;
 
@@ -241,7 +241,7 @@ static void write_eof_packet(Session *session, NET *net,
     Don't send warn count during SP execution, as the warn_list
     is cleared between substatements, and mysqltest gets confused
   */
-  uint32_t tmp= cmin(total_warn_count, (uint)65535);
+  uint32_t tmp= cmin(total_warn_count, (uint32_t)65535);
   buff[0]= DRIZZLE_PROTOCOL_NO_MORE_DATA;
   int2store(buff+1, tmp);
   /*
@@ -421,7 +421,7 @@ unsigned char *net_store_data(unsigned char *to, const unsigned char *from, size
 unsigned char *net_store_data(unsigned char *to,int32_t from)
 {
   char buff[20];
-  uint32_t length=(uint) (int10_to_str(from,buff,10)-buff);
+  uint32_t length=(uint32_t) (int10_to_str(from,buff,10)-buff);
   to=drizzleclient_net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
@@ -430,7 +430,7 @@ unsigned char *net_store_data(unsigned char *to,int32_t from)
 unsigned char *net_store_data(unsigned char *to,int64_t from)
 {
   char buff[22];
-  uint32_t length=(uint) (int64_t10_to_str(from,buff,10)-buff);
+  uint32_t length=(uint32_t) (int64_t10_to_str(from,buff,10)-buff);
   to=drizzleclient_net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
@@ -500,15 +500,15 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
 
 
     if (prot.store(STRING_WITH_LEN("def"), cs, session_charset) ||
-        prot.store(field.db_name, (uint) strlen(field.db_name),
+        prot.store(field.db_name, (uint32_t) strlen(field.db_name),
                    cs, session_charset) ||
-        prot.store(field.table_name, (uint) strlen(field.table_name),
+        prot.store(field.table_name, (uint32_t) strlen(field.table_name),
                    cs, session_charset) ||
-        prot.store(field.org_table_name, (uint) strlen(field.org_table_name),
+        prot.store(field.org_table_name, (uint32_t) strlen(field.org_table_name),
                    cs, session_charset) ||
-        prot.store(field.col_name, (uint) strlen(field.col_name),
+        prot.store(field.col_name, (uint32_t) strlen(field.col_name),
                    cs, session_charset) ||
-        prot.store(field.org_col_name, (uint) strlen(field.org_col_name),
+        prot.store(field.org_col_name, (uint32_t) strlen(field.org_col_name),
                    cs, session_charset) ||
         local_packet->realloc(local_packet->length()+12))
       goto err;
@@ -547,7 +547,7 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
     pos[11]= 0;				// For the future
     pos+= 12;
 
-    local_packet->length((uint) (pos - local_packet->ptr()));
+    local_packet->length((uint32_t) (pos - local_packet->ptr()));
     if (flags & SEND_DEFAULTS)
       item->send(&prot, &tmp);			// Send default value
     if (prot.write())

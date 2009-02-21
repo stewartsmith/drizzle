@@ -62,7 +62,7 @@ public:
   bool is_derived_table() const { return test(sel); }
   inline void change_db(char *db_name)
   {
-    db.str= db_name; db.length= (uint) strlen(db_name);
+    db.str= db_name; db.length= (uint32_t) strlen(db_name);
   }
 };
 

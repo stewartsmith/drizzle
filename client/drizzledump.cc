@@ -69,8 +69,8 @@ using namespace std;
 
 static void add_load_option(string &str, const char *option,
                             const char *option_value);
-static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
-                      char **err_pos, uint *err_len);
+static uint32_t find_set(TYPELIB *lib, const char *x, uint32_t length,
+                      char **err_pos, uint32_t *err_len);
 
 static void field_escape(string &in, const char *from);
 static bool  verbose= false, opt_no_create_info= false, opt_no_data= false,
@@ -113,9 +113,9 @@ static uint32_t opt_compatible_mode= 0;
 #define DRIZZLE_OPT_SLAVE_DATA_EFFECTIVE_SQL 1
 #define DRIZZLE_OPT_SLAVE_DATA_COMMENTED_SQL 2
 static uint32_t opt_drizzle_port= 0;
-static uint opt_master_data;
-static uint opt_slave_data;
-static uint my_end_arg;
+static uint32_t opt_master_data;
+static uint32_t opt_slave_data;
+static uint32_t my_end_arg;
 static int first_error= 0;
 static string extended_row;
 FILE *md_result_file= 0;
@@ -1040,7 +1040,7 @@ static void dbDisconnect(char *host)
 } /* dbDisconnect */
 
 
-static void unescape(FILE *file,char *pos,uint length)
+static void unescape(FILE *file,char *pos,uint32_t length)
 {
   char *tmp;
 
@@ -1306,7 +1306,7 @@ static void print_xml_null_tag(FILE * xml_file, const char* sbeg,
 static void print_xml_row(FILE *xml_file, const char *row_name,
                           DRIZZLE_RES *tableRes, DRIZZLE_ROW *row)
 {
-  uint i;
+  uint32_t i;
   DRIZZLE_FIELD *field;
   uint32_t *lengths= drizzleclient_fetch_lengths(tableRes);
 
@@ -1608,7 +1608,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
     {
       /* Make an sql-file, if path was given iow. option -T was given */
       char buff[20+FN_REFLEN];
-      uint keynr,primary_key;
+      uint32_t keynr,primary_key;
       snprintf(buff, sizeof(buff), "show keys from %s", result_table);
       if (drizzleclient_query_with_error_report(drizzle, &result, buff))
       {
@@ -1777,7 +1777,7 @@ static void add_load_option(string &str, const char *option,
 
 static void field_escape(string &in, const char *from)
 {
-  uint end_backslashes= 0;
+  uint32_t end_backslashes= 0;
 
   in.append("'");
 
@@ -2012,7 +2012,7 @@ static void dump_table(char *table, char *db)
     total_length= opt_net_buffer_length;                /* Force row break */
     row_break=0;
     rownr=0;
-    init_length=(uint) insert_pat.length()+4;
+    init_length=(uint32_t) insert_pat.length()+4;
     if (opt_xml)
       print_xml_tag(md_result_file, "\t", "\n", "table_data", "name=", table,
               NULL);
@@ -2024,7 +2024,7 @@ static void dump_table(char *table, char *db)
 
     while ((row= drizzleclient_fetch_row(res)))
     {
-      uint i;
+      uint32_t i;
       uint32_t *lengths= drizzleclient_fetch_lengths(res);
       rownr++;
       if ((rownr % show_progress_size) == 0)
@@ -2437,7 +2437,7 @@ static bool include_table(const unsigned char *hash_key, size_t len)
 static int dump_all_tables_in_db(char *database)
 {
   char *table;
-  uint numrows;
+  uint32_t numrows;
   char table_buff[NAME_LEN*2+3];
   char hash_key[2*NAME_LEN+2];  /* "db.tablename" */
   char *afterdot;
@@ -2813,7 +2813,7 @@ static int do_unlock_tables(DRIZZLE *drizzle_con)
 }
 
 static int get_bin_log_name(DRIZZLE *drizzle_con,
-                            char* buff_log_name, uint buff_len)
+                            char* buff_log_name, uint32_t buff_len)
 {
   DRIZZLE_RES *res;
   DRIZZLE_ROW row;
@@ -2859,12 +2859,12 @@ static int start_transaction(DRIZZLE *drizzle_con)
 }
 
 
-static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
-                      char **err_pos, uint *err_len)
+static uint32_t find_set(TYPELIB *lib, const char *x, uint32_t length,
+                      char **err_pos, uint32_t *err_len)
 {
   const char *end= x + length;
   uint32_t found= 0;
-  uint find;
+  uint32_t find;
   char buff[255];
 
   *err_pos= 0;                  /* No error yet */
@@ -2917,7 +2917,7 @@ static void print_value(FILE *file, DRIZZLE_RES  *result, DRIZZLE_ROW row,
         fputc(' ',file);
         fputs(prefix, file);
         if (string_value)
-          unescape(file,row[0],(uint) strlen(row[0]));
+          unescape(file,row[0],(uint32_t) strlen(row[0]));
         else
           fputs(row[0], file);
         check_io(file);
@@ -3059,7 +3059,7 @@ static char *primary_key_fields(const char *table_name)
   DRIZZLE_ROW  row;
   /* SHOW KEYS FROM + table name * 2 (escaped) + 2 quotes + \0 */
   char show_keys_buff[15 + NAME_LEN * 2 + 3];
-  uint result_length= 0;
+  uint32_t result_length= 0;
   char *result= 0;
   char buff[NAME_LEN * 2 + 3];
   char *quoted_field;

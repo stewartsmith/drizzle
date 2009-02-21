@@ -228,7 +228,7 @@ static uint32_t collect_cmp_types(Item **items, uint32_t nitems)
          items[i]->result_type() == ROW_RESULT) &&
         cmp_row_type(items[0], items[i]))
       return 0;
-    found_types|= 1<< (uint)item_cmp_type(left_result,
+    found_types|= 1<< (uint32_t)item_cmp_type(left_result,
                                            items[i]->result_type());
   }
   return found_types;
@@ -2655,15 +2655,15 @@ Item *Item_func_case::find_item(String *)
     {
       cmp_type= item_cmp_type(left_result_type, args[i]->result_type());
       assert(cmp_type != ROW_RESULT);
-      assert(cmp_items[(uint)cmp_type]);
-      if (!(value_added_map & (1<<(uint)cmp_type)))
+      assert(cmp_items[(uint32_t)cmp_type]);
+      if (!(value_added_map & (1<<(uint32_t)cmp_type)))
       {
-        cmp_items[(uint)cmp_type]->store_value(args[first_expr_num]);
+        cmp_items[(uint32_t)cmp_type]->store_value(args[first_expr_num]);
         if ((null_value=args[first_expr_num]->null_value))
           return else_expr_num != -1 ? args[else_expr_num] : 0;
-        value_added_map|= 1<<(uint)cmp_type;
+        value_added_map|= 1<<(uint32_t)cmp_type;
       }
-      if (!cmp_items[(uint)cmp_type]->cmp(args[i]) && !args[i]->null_value)
+      if (!cmp_items[(uint32_t)cmp_type]->cmp(args[i]) && !args[i]->null_value)
         return args[i + 1];
     }
   }
@@ -2825,7 +2825,7 @@ void Item_func_case::fix_length_and_dec()
     if (!(found_types= collect_cmp_types(agg, nagg)))
       return;
 
-    for (i= 0; i <= (uint)DECIMAL_RESULT; i++)
+    for (i= 0; i <= (uint32_t)DECIMAL_RESULT; i++)
     {
       if (found_types & (1 << i) && !cmp_items[i])
       {
@@ -2913,7 +2913,7 @@ void Item_func_case::cleanup()
 {
   uint32_t i;
   Item_func::cleanup();
-  for (i= 0; i <= (uint)DECIMAL_RESULT; i++)
+  for (i= 0; i <= (uint32_t)DECIMAL_RESULT; i++)
   {
     delete cmp_items[i];
     cmp_items[i]= 0;
@@ -3619,7 +3619,7 @@ void Item_func_in::fix_length_and_dec()
       break;
     }
   }
-  for (i= 0; i <= (uint)DECIMAL_RESULT; i++)
+  for (i= 0; i <= (uint32_t)DECIMAL_RESULT; i++)
   {
     if (found_types & 1 << i)
     {
@@ -3801,7 +3801,7 @@ void Item_func_in::fix_length_and_dec()
       cmp_items[STRING_RESULT]= new cmp_item_datetime(date_arg);
     else
     {
-      for (i= 0; i <= (uint) DECIMAL_RESULT; i++)
+      for (i= 0; i <= (uint32_t) DECIMAL_RESULT; i++)
       {
         if (found_types & (1 << i) && !cmp_items[i])
         {
@@ -3873,15 +3873,15 @@ int64_t Item_func_in::val_int()
   for (uint32_t i= 1 ; i < arg_count ; i++)
   {
     Item_result cmp_type= item_cmp_type(left_result_type, args[i]->result_type());
-    in_item= cmp_items[(uint)cmp_type];
+    in_item= cmp_items[(uint32_t)cmp_type];
     assert(in_item);
-    if (!(value_added_map & (1 << (uint)cmp_type)))
+    if (!(value_added_map & (1 << (uint32_t)cmp_type)))
     {
       in_item->store_value(args[0]);
       if ((null_value=args[0]->null_value))
         return 0;
       have_null= 0;
-      value_added_map|= 1 << (uint)cmp_type;
+      value_added_map|= 1 << (uint32_t)cmp_type;
     }
     if (!in_item->cmp(args[i]) && !args[i]->null_value)
       return (int64_t) (!negated);
@@ -4717,12 +4717,12 @@ void Item_func_like::turboBM_compute_bad_character_shifts()
   if (!cs->sort_order)
   {
     for (j = 0; j < plm1; j++)
-      bmBc[(uint) (unsigned char) pattern[j]] = plm1 - j;
+      bmBc[(uint32_t) (unsigned char) pattern[j]] = plm1 - j;
   }
   else
   {
     for (j = 0; j < plm1; j++)
-      bmBc[(uint) likeconv(cs,pattern[j])] = plm1 - j;
+      bmBc[(uint32_t) likeconv(cs,pattern[j])] = plm1 - j;
   }
 }
 
@@ -4763,7 +4763,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
 
       register const int v = plm1 - i;
       turboShift = u - v;
-      bcShift    = bmBc[(uint) (unsigned char) text[i + j]] - plm1 + i;
+      bcShift    = bmBc[(uint32_t) (unsigned char) text[i + j]] - plm1 + i;
       shift      = (turboShift > bcShift) ? turboShift : bcShift;
       shift      = (shift > bmGs[i]) ? shift : bmGs[i];
       if (shift == bmGs[i])
@@ -4794,7 +4794,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
 
       register const int v = plm1 - i;
       turboShift = u - v;
-      bcShift    = bmBc[(uint) likeconv(cs, text[i + j])] - plm1 + i;
+      bcShift    = bmBc[(uint32_t) likeconv(cs, text[i + j])] - plm1 + i;
       shift      = (turboShift > bcShift) ? turboShift : bcShift;
       shift      = cmax(shift, bmGs[i]);
       if (shift == bmGs[i])

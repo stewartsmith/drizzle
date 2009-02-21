@@ -68,7 +68,7 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint32_t length,
       }
       else
         for (; pos != end && *pos != field_separator; pos++) ;
-      var_len= (uint) (pos - start);
+      var_len= (uint32_t) (pos - start);
       uint32_t find= cs ? find_type2(lib, start, var_len, cs) :
                       find_type(lib, start, var_len, (bool) 0);
       if (!find)
@@ -228,7 +228,7 @@ uint32_t check_word(TYPELIB *lib, const char *val, const char *end,
   /* Fiend end of word */
   for (ptr= val ; ptr < end && my_isalpha(&my_charset_utf8_general_ci, *ptr) ; ptr++)
     ;
-  if ((res=find_type(lib, val, (uint) (ptr - val), 1)) > 0)
+  if ((res=find_type(lib, val, (uint32_t) (ptr - val), 1)) > 0)
     *end_of_word= ptr;
   return res;
 }

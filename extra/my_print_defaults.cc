@@ -28,7 +28,7 @@
 #include <stdio.h>
 
 const char *config_file="drizzle";		/* Default config file */
-uint verbose= 0, opt_defaults_file_used= 0;
+uint32_t verbose= 0, opt_defaults_file_used= 0;
 
 static struct my_option my_long_options[] =
 {

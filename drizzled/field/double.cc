@@ -41,7 +41,7 @@ int Field_double::store(const char *from,uint32_t len, const CHARSET_INFO * cons
   int error;
   char *end;
   double nr= my_strntod(cs,(char*) from, len, &end, &error);
-  if (error || (!len || (((uint) (end-from) != len) && table->in_use->count_cuted_fields)))
+  if (error || (!len || (((uint32_t) (end-from) != len) && table->in_use->count_cuted_fields)))
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                 (error ? ER_WARN_DATA_OUT_OF_RANGE : ER_WARN_DATA_TRUNCATED), 1);
@@ -150,7 +150,7 @@ String *Field_double::val_str(String *val_buffer,
   else
     len= my_fcvt(nr, dec, to, NULL);
 
-  val_buffer->length((uint) len);
+  val_buffer->length((uint32_t) len);
 
   return val_buffer;
 }

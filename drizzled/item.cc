@@ -389,7 +389,7 @@ void Item::print_item_w_name(String *str, enum_query_type query_type)
   if (name)
   {
     str->append(STRING_WITH_LEN(" AS "));
-    str->append_identifier(name, (uint) strlen(name));
+    str->append_identifier(name, (uint32_t) strlen(name));
   }
 }
 

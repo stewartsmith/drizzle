@@ -245,7 +245,7 @@ enum ha_base_keytype {
 #define HA_VAR_LENGTH_KEY	 8
 #define HA_NULL_PART_KEY	 64
 #define HA_USES_COMMENT          4096
-#define HA_USES_BLOCK_SIZE	 ((uint) 32768)
+#define HA_USES_BLOCK_SIZE	 ((uint32_t) 32768)
 #define HA_SORT_ALLOWS_SAME      512    /* Intern bit when sorting records */
 
 	/* These flags can be added to key-seg-flag */
@@ -278,8 +278,8 @@ enum ha_base_keytype {
 #define HA_OPTION_RELIES_ON_SQL_LAYER   512
 #define HA_OPTION_NULL_FIELDS		1024
 #define HA_OPTION_PAGE_CHECKSUM		2048
-#define HA_OPTION_TEMP_COMPRESS_RECORD	((uint) 16384)	/* set by isamchk */
-#define HA_OPTION_READ_ONLY_DATA	((uint) 32768)	/* Set by isamchk */
+#define HA_OPTION_TEMP_COMPRESS_RECORD	((uint32_t) 16384)	/* set by isamchk */
+#define HA_OPTION_READ_ONLY_DATA	((uint32_t) 32768)	/* Set by isamchk */
 
 	/* Bits in flag to create() */
 
@@ -424,7 +424,7 @@ enum ha_base_keytype {
 	/* Other constants */
 
 #define HA_NAMELEN 64			/* Max length of saved filename */
-#define NO_SUCH_KEY (~(uint)0)          /* used as a key no. */
+#define NO_SUCH_KEY (~(uint32_t)0)          /* used as a key no. */
 
 typedef ulong key_part_map;
 #define HA_WHOLE_KEY  (~(key_part_map)0)

@@ -30,6 +30,6 @@
 
 ha_checksum my_checksum(ha_checksum crc, const unsigned char *pos, size_t length)
 {
-  return (ha_checksum)crc32((uint)crc, pos, length);
+  return (ha_checksum)crc32((uint32_t)crc, pos, length);
 }
 

@@ -166,7 +166,7 @@ inline int check_result_and_overflow(uint32_t mask, int result, my_decimal *val)
 inline uint32_t my_decimal_length_to_precision(uint32_t length, uint32_t scale,
                                            bool unsigned_flag)
 {
-  return (uint) (length - (scale>0 ? 1:0) - (unsigned_flag ? 0:1));
+  return (uint32_t) (length - (scale>0 ? 1:0) - (unsigned_flag ? 0:1));
 }
 
 inline uint32_t my_decimal_precision_to_length(uint32_t precision, uint8_t scale,

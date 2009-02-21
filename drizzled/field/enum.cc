@@ -111,7 +111,7 @@ int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * co
     {
       /* This is for reading numbers with LOAD DATA INFILE */
       char *end;
-      tmp=(uint) my_strntoul(cs,from,length,10,&end,&err);
+      tmp=(uint32_t) my_strntoul(cs,from,length,10,&end,&err);
       if (err || end != from+length || tmp > typelib->count)
       {
 	tmp=0;
@@ -147,7 +147,7 @@ int Field_enum::store(int64_t nr,
       error= 1;
     }
   }
-  store_type((uint64_t) (uint) nr);
+  store_type((uint64_t) (uint32_t) nr);
   return error;
 }
 
@@ -225,7 +225,7 @@ int Field_enum::do_save_field_metadata(unsigned char *metadata_ptr)
 String *Field_enum::val_str(String *,
 			    String *val_ptr)
 {
-  uint32_t tmp=(uint) Field_enum::val_int();
+  uint32_t tmp=(uint32_t) Field_enum::val_int();
   if (!tmp || tmp > typelib->count)
     val_ptr->set("", 0, field_charset);
   else
