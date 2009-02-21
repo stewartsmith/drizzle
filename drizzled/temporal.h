@@ -284,6 +284,23 @@ public:
   Date& operator+=(const DateTime &rhs);
   Date& operator-=(const DateTime &rhs);
 
+
+  /**
+   * Operator overload for adding/subtracting a TemporalInterval
+   * instance to this temporal.
+   *
+   * @param TemporalInterval instance to add/subtract to/from
+   */
+  Date& operator+=(const TemporalIntervalYear &rhs);
+  Date& operator+=(const TemporalIntervalDayOrLess &rhs);
+  Date& operator+=(const TemporalIntervalDayOrWeek &rhs);
+  Date& operator+=(const TemporalIntervalYearMonth &rhs);
+  Date& operator-=(const TemporalIntervalYear &rhs);
+  Date& operator-=(const TemporalIntervalDayOrLess &rhs);
+  Date& operator-=(const TemporalIntervalDayOrWeek &rhs);
+  Date& operator-=(const TemporalIntervalYearMonth &rhs);
+
+
   /**
    * Operator overload for when a DateTime instance is
    * assigned to a Date.  We do a copy of the DateTime's
@@ -556,21 +573,6 @@ class DateTime: public Date
 {
 public:
   DateTime() :Date() {}
-
-  /**
-   * Operator overload for adding/subtracting a TemporalInterval
-   * instance to this temporal.
-   *
-   * @param TemporalInterval instance to add/subtract to/from
-   */
-  DateTime& operator+=(const TemporalIntervalYear &rhs);
-  DateTime& operator+=(const TemporalIntervalDayOrLess &rhs);
-  DateTime& operator+=(const TemporalIntervalDayOrWeek &rhs);
-  DateTime& operator+=(const TemporalIntervalYearMonth &rhs);
-  DateTime& operator-=(const TemporalIntervalYear &rhs);
-  DateTime& operator-=(const TemporalIntervalDayOrLess &rhs);
-  DateTime& operator-=(const TemporalIntervalDayOrWeek &rhs);
-  DateTime& operator-=(const TemporalIntervalYearMonth &rhs);
 
   friend class TemporalInterval;
 

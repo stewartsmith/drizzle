@@ -796,7 +796,7 @@ Date& Date::operator+=(const DateTime &rhs)
   return *this;
 }
 #ifdef NOTYETIMPLEMENTED
-DateTime& DateTime::operator+=(const TemporalIntervalYear &rhs)
+Date& Date::operator+=(const TemporalIntervalYear &rhs)
 {
   /* Simple one...add the years and adjust for any leaps */
   int64_t new_years= _years;
@@ -817,7 +817,7 @@ DateTime& DateTime::operator+=(const TemporalIntervalYear &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator-=(const TemporalIntervalYear &rhs)
+Date& Date::operator-=(const TemporalIntervalYear &rhs)
 {
   /* Simple one...subtract the years and adjust for any leaps */
   int64_t new_years= _years;
@@ -838,7 +838,7 @@ DateTime& DateTime::operator-=(const TemporalIntervalYear &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator+=(const TemporalIntervalDayOrWeek &rhs)
+Date& Date::operator+=(const TemporalIntervalDayOrWeek &rhs)
 {
   /* Simple one...add the days */
   int64_t julian_day= julian_day_number_from_gregorian_date(_years, _months, _days) + rhs._days;
@@ -846,7 +846,7 @@ DateTime& DateTime::operator+=(const TemporalIntervalDayOrWeek &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator-=(const TemporalIntervalDayOrWeek &rhs)
+Date& Date::operator-=(const TemporalIntervalDayOrWeek &rhs)
 {
   /* Simple one...subtract the days */
   int64_t julian_day= julian_day_number_from_gregorian_date(_years, _months, _days) - rhs._days;
@@ -854,7 +854,7 @@ DateTime& DateTime::operator-=(const TemporalIntervalDayOrWeek &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator+=(const TemporalIntervalYearMonth &rhs)
+Date& Date::operator+=(const TemporalIntervalYearMonth &rhs)
 {
   /* Simple one...add the months in the period adjust */
   int64_t period= (_years * 12) + (rhs._years * 12) + (_months - 1) + rhs._months;
@@ -879,7 +879,7 @@ DateTime& DateTime::operator+=(const TemporalIntervalYearMonth &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator-=(const TemporalIntervalYearMonth &rhs)
+Date& Date::operator-=(const TemporalIntervalYearMonth &rhs)
 {
   /* Simple one...subtract the months in the period and adjust */
   int64_t period= (_years * 12) - (rhs._years * 12) + (_months - 1) - rhs._months;
@@ -904,7 +904,7 @@ DateTime& DateTime::operator-=(const TemporalIntervalYearMonth &rhs)
   return *this;
 } 
 
-DateTime& DateTime::operator+=(const TemporalIntervalDayOrLess &rhs)
+Date& Date::operator+=(const TemporalIntervalDayOrLess &rhs)
 {
   /* 
    * Convert the temporal and the interval into a number of 
@@ -946,7 +946,7 @@ DateTime& DateTime::operator+=(const TemporalIntervalDayOrLess &rhs)
   return *this;
 }
 
-DateTime& DateTime::operator-=(const TemporalIntervalDayOrLess &rhs)
+Date& Date::operator-=(const TemporalIntervalDayOrLess &rhs)
 {
   /* 
    * Convert the temporal and the interval into a number of 
