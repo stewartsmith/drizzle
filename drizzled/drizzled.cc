@@ -1509,7 +1509,7 @@ pthread_handler_t signal_hand(void *)
       /* switch to the old log message processing */
       if (!abort_loop)
       {
-	abort_loop=1;				// mark abort for threads
+        abort_loop=1;				// mark abort for threads
         kill_server((void*) sig);	// MIT THREAD has a alarm thread
       }
       break;
@@ -1527,7 +1527,6 @@ pthread_handler_t signal_hand(void *)
       break;					/* purecov: tested */
     }
   }
-//  return NULL;
 }
 
 static void check_data_home(const char *)
