@@ -491,9 +491,6 @@ extern "C" bool safe_read_error_impl(NET *net);
 
 static void close_connections(void)
 {
-#ifdef EXTRA_DEBUG
-  int count=0;
-#endif
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -511,10 +508,6 @@ static void close_connections(void)
       if (error != EINTR)
 	break;
     }
-#ifdef EXTRA_DEBUG
-    if (error != 0 && !count++)
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d from pthread_cond_timedwait"),error);
-#endif
     close_server_sock();
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -666,20 +659,6 @@ static void *kill_server(void *sig_ptr)
 
   RETURN_FROM_KILL_SERVER;
 }
-
-
-#if defined(USE_ONE_SIGNAL_HAND)
-pthread_handler_t kill_server_thread(void *)
-{
-  my_thread_init();				// Initialize new thread
-  kill_server(0);
-  /* purecov: begin deadcode */
-  my_thread_end();
-  pthread_exit(0);
-  return 0;
-  /* purecov: end */
-}
-#endif
 
 
 extern "C" void print_signal_warning(int sig)
@@ -1438,8 +1417,9 @@ static void start_signal_handler(void)
     stack size in reality, so we have to double it here
   */
   pthread_attr_setstacksize(&thr_attr,my_thread_stack_size*2);
-#else
+# else
   pthread_attr_setstacksize(&thr_attr,my_thread_stack_size);
+#endif
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   if ((error=pthread_create(&signal_thread,&thr_attr,signal_hand,0)))
@@ -1472,9 +1452,6 @@ pthread_handler_t signal_hand(void *)
     (void) pthread_sigmask(SIG_UNBLOCK,&set,NULL);
   }
   (void) sigemptyset(&set);			// Setup up SIGINT for debug
-#ifdef USE_ONE_SIGNAL_HAND
-  (void) sigaddset(&set,THR_SERVER_ALARM);	// For alarms
-#endif
 #ifndef IGNORE_SIGHUP_SIGQUIT
   (void) sigaddset(&set,SIGQUIT);
   (void) sigaddset(&set,SIGHUP);
@@ -1524,34 +1501,17 @@ pthread_handler_t signal_hand(void *)
     {
       my_thread_end();
       signal_thread_in_use= 0;
-      pthread_exit(0);				// Safety
+      return NULL;
     }
     switch (sig) {
     case SIGTERM:
     case SIGQUIT:
     case SIGKILL:
-#ifdef EXTRA_DEBUG
-        errmsg_printf(ERRMSG_LVL_INFO, _("Got signal %d to shutdown drizzled"),sig);
-#endif
       /* switch to the old log message processing */
       if (!abort_loop)
       {
 	abort_loop=1;				// mark abort for threads
-#ifdef USE_ONE_SIGNAL_HAND
-	pthread_t tmp;
-        {
-          struct sched_param tmp_sched_param;
-
-          memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-          tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
-          (void)pthread_attr_setschedparam(&connection_attrib, &tmp_sched_param);
-        }
-        if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
-                           (void*) &sig))
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread to kill server"));
-#else
         kill_server((void*) sig);	// MIT THREAD has a alarm thread
-#endif
       }
       break;
     case SIGHUP:
@@ -1564,25 +1524,15 @@ pthread_handler_t signal_hand(void *)
                      (TableList*) 0, &not_used); // Flush logs
       }
       break;
-#ifdef USE_ONE_SIGNAL_HAND
-    case THR_SERVER_ALARM:
-      process_alarm(sig);			// Trigger alarms.
-      break;
-#endif
     default:
-#ifdef EXTRA_DEBUG
-        errmsg_printf(ERRMSG_LVL_WARN, _("Got signal: %d  error: %d"),sig,error); /* purecov: tested */
-#endif
       break;					/* purecov: tested */
     }
   }
-  return 0;
+//  return NULL;
 }
 
 static void check_data_home(const char *)
 {}
-
-#endif	/* __WIN__*/
 
 
 /**
@@ -2219,16 +2169,10 @@ int main(int argc, char **argv)
   /* (void) pthread_attr_destroy(&connection_attrib); */
 
 
-#ifdef EXTRA_DEBUG2
-  errmsg_printf(ERRMSG_LVL_ERROR, _("Before Lock_thread_count"));
-#endif
   (void) pthread_mutex_lock(&LOCK_thread_count);
   select_thread_in_use=0;			// For close_connections
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
-#ifdef EXTRA_DEBUG2
-  errmsg_printf(ERRMSG_LVL_ERROR, _("After lock_thread_count"));
-#endif
 
   /* Wait until cleanup is done */
   (void) pthread_mutex_lock(&LOCK_thread_count);
