@@ -1423,7 +1423,7 @@ static void start_signal_handler(void)
     stack size in reality, so we have to double it here
   */
   pthread_attr_setstacksize(&thr_attr,my_thread_stack_size*2);
-#else
+#endif
   pthread_attr_setstacksize(&thr_attr,my_thread_stack_size);
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -1512,9 +1512,6 @@ pthread_handler_t signal_hand(void *)
     case SIGTERM:
     case SIGQUIT:
     case SIGKILL:
-#ifdef EXTRA_DEBUG
-        errmsg_printf(ERRMSG_LVL_INFO, _("Got signal %d to shutdown drizzled"),sig);
-#endif
       /* switch to the old log message processing */
       if (!abort_loop)
       {
@@ -1536,13 +1533,12 @@ pthread_handler_t signal_hand(void *)
       break;					/* purecov: tested */
     }
   }
+
   return 0;
 }
 
 static void check_data_home(const char *)
 {}
-
-#endif	/* __WIN__*/
 
 
 /**
