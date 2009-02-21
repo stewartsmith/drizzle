@@ -23,12 +23,12 @@
  */
 
 /**
- * @file 
+ * @file
  *
  * Defines the API for dealing with temporal data inside the server.
  *
  * The Temporal class is the base class for all data of any temporal
- * type.  A number of derived classes define specialized classes 
+ * type.  A number of derived classes define specialized classes
  * representng various date, date-time, time, or timestamp types.
  *
  * All Temporal derived classes are ValueObjects.  That is to say that
@@ -75,7 +75,7 @@
 /* Outside forward declarations */
 class my_decimal;
 
-namespace drizzled 
+namespace drizzled
 {
 
 /* Forward declaration needed */
@@ -106,7 +106,12 @@ protected:
   /** Returns number of seconds in time components (hour + minute + second) */
   uint64_t _cumulative_seconds_in_time() const;
   /** Resets all temporal components to zero */
-  inline void _reset() {_years= _months= _days= _hours= _minutes= _seconds= _epoch_seconds= _useconds= _nseconds= 0;}
+  inline void _reset()
+  {
+    _years= _months= _days= _hours= _minutes=
+      _seconds= _epoch_seconds= _useconds= _nseconds= 0;
+  }
+
 public:
   Temporal();
   virtual ~Temporal() {}
@@ -121,13 +126,14 @@ public:
   inline void set_useconds(const uint32_t usecond) {_useconds= usecond;}
   /** Returns the microsseconds component. */
   inline uint32_t useconds() const {return _useconds;}
-  /** 
-   * Sets the epoch_seconds component automatically, 
-   * based on the temporal's components. 
+  /**
+   * Sets the epoch_seconds component automatically,
+   * based on the temporal's components.
    */
   void set_epoch_seconds();
   /** Sets the epch_seconds component manually. */
-  inline void set_epoch_seconds(const uint32_t epoch_second) {_epoch_seconds= epoch_second;}
+  inline void set_epoch_seconds(const uint32_t epoch_second)
+  {_epoch_seconds= epoch_second;}
   /** Returns the UNIX epoch seconds component. */
   inline time_t epoch_seconds() const {return _epoch_seconds;}
   /** Sets the seconds component. */
@@ -154,7 +160,8 @@ public:
   inline void set_years(const uint32_t year) {_years= year;}
   /** Returns the years component. */
   inline uint32_t years() const {return _years;}
-  /** Returns whether the overflow flag was set (which can occur during an overloaded operator's execution) */
+  /** Returns whether the overflow flag was set
+   *  (which can occur during an overloaded operator's execution) */
   inline bool overflow() const {return _overflow;}
 
   /** Returns whether the temporal value is valid as a date. */
@@ -176,7 +183,7 @@ public:
   /**
    * All Temporal derived classes must implement
    * conversion routines for converting to and from
-   * a string. Subclasses implement other conversion 
+   * a string. Subclasses implement other conversion
    * routines, but should always follow these notes:
    *
    * 1) Ensure that ALL from_xxx methods call is_valid()
@@ -196,7 +203,7 @@ class DateTime;
  * Class representing temporal components in a valid
  * SQL date range, with no time component
  */
-class Date: public Temporal 
+class Date: public Temporal
 {
 public:
   Date() :Temporal() {}
@@ -214,7 +221,7 @@ public:
   bool operator<=(const Date &rhs);
   /**
    * Operator overload for adding/subtracting another Date
-   * (or subclass) to/from this temporal.  When subtracting 
+   * (or subclass) to/from this temporal.  When subtracting
    * or adding two Dates, we return a new Date instance.
    *
    * @param Temporal instance to add/subtract to/from
@@ -236,7 +243,11 @@ public:
   virtual bool is_valid_date() const {return is_valid();}
   virtual bool is_valid_datetime() const {return is_valid();}
   virtual bool is_valid_time() const {return false;}
-  virtual bool is_valid_timestamp() const {return is_valid() && in_unix_epoch();}
+  virtual bool is_valid_timestamp() const
+  {
+    return is_valid() && in_unix_epoch();
+  }
+
   /** Returns whether the temporal value is valid date. */
   virtual bool is_valid() const;
   /* Returns whether the Date (or subclass) instance is in the Unix Epoch. */
@@ -244,7 +255,7 @@ public:
 
   /**
    * Fills a supplied char string with a
-   * string representation of the Date  
+   * string representation of the Date
    * value.
    *
    * @param C-String to fill.
@@ -256,7 +267,7 @@ public:
    * Attempts to populate the Date instance based
    * on the contents of a supplied string.
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param String to convert from
@@ -286,7 +297,7 @@ public:
    * Attempts to populate the Date instance based
    * on the contents of a supplied 4-byte integer.
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param Integer to convert from
@@ -312,7 +323,7 @@ public:
    * Attempts to populate the Date instance based
    * on the contents of a supplied Julian Day Number
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param Integer to convert from
@@ -321,7 +332,7 @@ public:
 
   /**
    * Fills a supplied tm pointer with an
-   * representation of the Date 
+   * representation of the Date
    * value.
    *
    * @param tm to fill.
@@ -333,7 +344,7 @@ public:
    * on the contents of a supplied pointer to struct tm
    * (broken time).
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param Pointe rto the struct tm to convert from
@@ -352,7 +363,7 @@ public:
    * Attempts to populate the Date instance based
    * on the contents of a supplied time_t
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param time_t to convert from
@@ -360,7 +371,7 @@ public:
   virtual bool from_time_t(const time_t from);
 
   /**
-   * Fills a supplied my_decimal with a representation of 
+   * Fills a supplied my_decimal with a representation of
    * the Date value.
    *
    * @param Pointer to the my_decimal to fill
@@ -397,7 +408,7 @@ public:
   bool operator<(const Time &rhs);
   bool operator<=(const Time &rhs);
   /**
-   * Operator to add/subtract a Time from a Time.  
+   * Operator to add/subtract a Time from a Time.
    * We can return a Time new temporal instance.
    *
    * @param Temporal instance to add/subtract to/from
@@ -416,7 +427,7 @@ public:
 
   /**
    * Fills a supplied char string with a
-   * string representation of the Time  
+   * string representation of the Time
    * value.
    *
    * @param C-String to fill.
@@ -428,7 +439,7 @@ public:
    * Attempts to populate the Time instance based
    * on the contents of a supplied string.
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param String to convert from
@@ -449,7 +460,7 @@ public:
    * Attempts to populate the Time instance based
    * on the contents of a supplied 4-byte integer.
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param Integer to convert from
@@ -460,12 +471,12 @@ public:
    * Attempts to populate the Time instance based
    * on the contents of a supplied time_t
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @note
    *
-   * We can only convert *from* a time_t, not back 
+   * We can only convert *from* a time_t, not back
    * to a time_t since it would be a lossy conversion.
    *
    * @param time_t to convert from
@@ -473,7 +484,7 @@ public:
   bool from_time_t(const time_t from);
 
   /**
-   * Fills a supplied my_decimal with a representation of 
+   * Fills a supplied my_decimal with a representation of
    * the Time value.
    *
    * @param Pointer to the my_decimal to fill
@@ -504,7 +515,7 @@ public:
   bool operator<(const DateTime &rhs);
   bool operator<=(const DateTime &rhs);
   /**
-   * Operator to add/subtract a Time from a Time.  
+   * Operator to add/subtract a Time from a Time.
    * We can return a Time new temporal instance.
    *
    * @param Temporal instance to add/subtract to/from
@@ -515,7 +526,7 @@ public:
   DateTime& operator+=(const Time &rhs);
   /**
    * Operator overload for adding/subtracting another DateTime
-   * (or subclass) to/from this temporal.  When subtracting 
+   * (or subclass) to/from this temporal.  When subtracting
    * or adding two DateTimes, we return a new DateTime instance.
    *
    * @param Temporal instance to add/subtract to/from
@@ -542,13 +553,15 @@ public:
 
   friend class TemporalInterval;
 
-  /* Returns whether the DateTime (or subclass) instance is in the Unix Epoch. */
+  /** Returns whether the DateTime (or subclass) instance
+   *  is in the Unix Epoch.
+   */
   bool in_unix_epoch() const;
   /** Returns whether the temporal value is valid datetime. */
   virtual bool is_valid() const;
 
   /**
-   * It's not possible to convert to and from a DateTime and 
+   * It's not possible to convert to and from a DateTime and
    * a 4-byte integer, so let us know if we try and do it!
    */
   void to_int32_t(int32_t *) const {assert(0);}
@@ -568,7 +581,7 @@ public:
    * Attempts to populate the DateTime instance based
    * on the contents of a supplied string.
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param String to convert from
@@ -589,7 +602,7 @@ public:
    * Attempts to populate the DateTime instance based
    * on the contents of a supplied time_t
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param time_t to convert from
@@ -600,7 +613,7 @@ public:
    * Attempts to populate the DateTime instance based
    * on the contents of a supplied 8-byte integer.
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param Integer to convert from
@@ -617,7 +630,7 @@ public:
   void to_tm(struct tm *to) const;
 
   /**
-   * Fills a supplied my_decimal with a representation of 
+   * Fills a supplied my_decimal with a representation of
    * the DateTime value.
    *
    * @param Pointer to the my_decimal to fill
@@ -628,7 +641,7 @@ public:
 /**
  * Class representing temporal components in the UNIX epoch
  */
-class Timestamp: public DateTime 
+class Timestamp: public DateTime
 {
 public:
   Timestamp() :DateTime() {}
@@ -684,7 +697,7 @@ public:
    * representation of the MicroTimestamp
    * value.
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param timeval to fill.
@@ -708,7 +721,7 @@ public:
    * representation of the NanoTimestamp
    * value.
    *
-   * Returns whether the conversion was 
+   * Returns whether the conversion was
    * successful.
    *
    * @param timespec to fill.
