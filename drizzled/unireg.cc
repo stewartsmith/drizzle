@@ -141,7 +141,8 @@ bool mysql_create_frm(Session *session, const char *file_name,
   uint32_t reclength, info_length, screens, key_info_length, maxlength, tmp_len;
   ulong key_buff_length;
   File file;
-  ulong filepos, data_offset;
+  off_t filepos;
+  unsigned long data_offset;
   unsigned char fileinfo[64],forminfo[288],*keybuff;
   TYPELIB formnames;
   unsigned char *screen_buff;

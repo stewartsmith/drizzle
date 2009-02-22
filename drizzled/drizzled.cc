@@ -303,7 +303,7 @@ uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
 uint64_t session_startup_options;
 uint32_t back_log;
-uint64_t connect_timeout;
+uint32_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
@@ -490,9 +490,6 @@ extern "C" bool safe_read_error_impl(NET *net);
 
 static void close_connections(void)
 {
-#ifdef EXTRA_DEBUG
-  int count=0;
-#endif
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -510,10 +507,6 @@ static void close_connections(void)
       if (error != EINTR)
 	break;
     }
-#ifdef EXTRA_DEBUG
-    if (error != 0 && !count++)
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d from pthread_cond_timedwait"),error);
-#endif
     close_server_sock();
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -1423,8 +1416,9 @@ static void start_signal_handler(void)
     stack size in reality, so we have to double it here
   */
   pthread_attr_setstacksize(&thr_attr,my_thread_stack_size*2);
-#endif
+# else
   pthread_attr_setstacksize(&thr_attr,my_thread_stack_size);
+#endif
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   if ((error=pthread_create(&signal_thread,&thr_attr,signal_hand,0)))
@@ -1506,7 +1500,7 @@ pthread_handler_t signal_hand(void *)
     {
       my_thread_end();
       signal_thread_in_use= 0;
-      pthread_exit(0);				// Safety
+      return NULL;
     }
     switch (sig) {
     case SIGTERM:
@@ -1515,7 +1509,7 @@ pthread_handler_t signal_hand(void *)
       /* switch to the old log message processing */
       if (!abort_loop)
       {
-	abort_loop=1;				// mark abort for threads
+        abort_loop=1;				// mark abort for threads
         kill_server((void*) sig);	// MIT THREAD has a alarm thread
       }
       break;
@@ -1533,8 +1527,6 @@ pthread_handler_t signal_hand(void *)
       break;					/* purecov: tested */
     }
   }
-
-  return 0;
 }
 
 static void check_data_home(const char *)
@@ -1910,7 +1902,9 @@ static int init_server_components()
   if (table_cache_init() | table_def_init())
     unireg_abort(1);
 
-  drizzleclient_drizzleclient_randominit(&sql_rand,(uint32_t) server_start_time,(uint32_t) server_start_time/2);
+  drizzleclient_randominit(&sql_rand,
+                           (uint64_t) server_start_time,
+                           (uint64_t) server_start_time/2);
   setup_fpu();
   init_thr_lock();
 
@@ -2173,16 +2167,10 @@ int main(int argc, char **argv)
   /* (void) pthread_attr_destroy(&connection_attrib); */
 
 
-#ifdef EXTRA_DEBUG2
-  errmsg_printf(ERRMSG_LVL_ERROR, _("Before Lock_thread_count"));
-#endif
   (void) pthread_mutex_lock(&LOCK_thread_count);
   select_thread_in_use=0;			// For close_connections
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
-#ifdef EXTRA_DEBUG2
-  errmsg_printf(ERRMSG_LVL_ERROR, _("After lock_thread_count"));
-#endif
 
   /* Wait until cleanup is done */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -2708,7 +2696,7 @@ struct my_option my_long_options[] =
     N_("The number of seconds the drizzled server is waiting for a connect "
        "packet before responding with 'Bad handshake'."),
     (char**) &connect_timeout, (char**) &connect_timeout,
-    0, GET_ULL, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
+    0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "date_format", OPT_DATE_FORMAT,
     N_("The DATE format (For future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],

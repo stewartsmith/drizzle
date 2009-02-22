@@ -29,6 +29,7 @@ public:
   bool not_fixed;
 
   using Field::unpack;
+  using Field::pack;
 
   Field_real(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
              unsigned char null_bit_arg, utype unireg_check_arg,

@@ -24,7 +24,7 @@
 int64_t Item_func_period_add::val_int()
 {
   assert(fixed == 1);
-  uint32_t period= args[0]->val_int();
+  uint32_t period= (uint32_t)args[0]->val_int();
   int months=(int) args[1]->val_int();
 
   if ((null_value=args[0]->null_value || args[1]->null_value) ||

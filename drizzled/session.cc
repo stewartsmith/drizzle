@@ -487,7 +487,7 @@ Session::Session()
    m_lip(NULL),
    scheduler(0)
 {
-  ulong tmp;
+  uint64_t tmp;
 
   /*
     Pass nominal parameters to init_alloc_root only to ensure that
@@ -554,7 +554,8 @@ Session::Session()
   const Query_id& local_query_id= Query_id::get_query_id();
   tablespace_op= false;
   tmp= sql_rnd();
-  drizzleclient_drizzleclient_randominit(&rand, tmp + (ulong) &rand, tmp + local_query_id.value());
+  drizzleclient_randominit(&rand, tmp + (uint64_t) &rand,
+                           tmp + (uint64_t)local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);

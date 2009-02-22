@@ -2597,7 +2597,6 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
-  bool enabled_saved= true;
   bool can_disable;
   MEM_ROOT *mem_root= alloc_root_inited(&tmp->mem_root) ?
                       &tmp->mem_root : &plugin_mem_root;
@@ -2693,9 +2692,6 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     return(0);
   }
 
-  if (enabled_saved && global_system_variables.log_warnings)
-    errmsg_printf(ERRMSG_LVL_INFO, _("Plugin '%s' disabled by command line option"),
-                          tmp->name.str);
 err:
   if (opts)
     my_cleanup_options(opts);

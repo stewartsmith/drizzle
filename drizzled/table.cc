@@ -2339,7 +2339,7 @@ int read_string(File file, unsigned char**to, size_t length)
 
 	/* Add a new form to a form file */
 
-ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
+off_t make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 		     const char *newname)
 {
   uint32_t i,bufflength,maxlength,n_length,length,names;
