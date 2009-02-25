@@ -1854,6 +1854,7 @@ bool fix_fields_vcol_func(Session *session,
   memcpy(db_name_string,
          table->s->normalized_path.str,
          table->s->normalized_path.length);
+  db_name_string[table->s->normalized_path.length]= '\0';
   dir_length= dirname_length(db_name_string);
   db_name_string[dir_length - 1]= 0;
   home_dir_length= dirname_length(db_name_string);
