@@ -23,7 +23,16 @@ using namespace google::protobuf::io;
 void print_field(const ::drizzle::Table::Field &field)
 {
   cout << "\t`" << field.name() << "`";
-  switch (field.type())
+
+  Table::Field::FieldType field_type= field.type();
+
+  if(field_type==Table::Field::VIRTUAL)
+  {
+    cout << " VIRTUAL"; // FIXME
+    field_type= field.virtual_options().type();
+  }
+
+  switch (field_type)
   {
     case Table::Field::DOUBLE:
     cout << " DOUBLE ";
@@ -77,8 +86,14 @@ void print_field(const ::drizzle::Table::Field &field)
     cout << " DATETIME ";
     break;
   case Table::Field::VIRTUAL:
-    cout << " VIRTUAL"; // FIXME
-    break;
+    abort(); // handled above.
+  }
+
+  if(field.type()==Table::Field::VIRTUAL)
+  {
+    cout << " AS (" << field.virtual_options().expression() << ") ";
+    if(field.virtual_options().physically_stored())
+      cout << " STORED ";
   }
 
   if (field.type() == Table::Field::INTEGER
