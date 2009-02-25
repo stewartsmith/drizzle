@@ -166,6 +166,8 @@ message Table {
       required uint32 fieldnr = 1;
       optional int32 compare_length = 2;
       optional bool in_reverse_order = 3 [default = false];
+      optional uint32 offset = 100; /* THIS MUST DIE. is computable */
+      optional uint32 key_type = 101; /* THIS MUST DIE. Along with pack_flag*/
     }
 
     message IndexOptions {

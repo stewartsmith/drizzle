@@ -522,6 +522,10 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       key_part->length= part.compare_length();
 
       key_part->store_length= key_part->length;
+
+      key_part->offset= part.offset();
+      key_part->key_type= part.key_type();
+
     }
 
     if(!indx.has_comment())
@@ -657,6 +661,22 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   if(!table_options.pack_record())
     null_bits++;
   ulong data_offset= (null_bits + 7)/8;
+
+  keyinfo= share->key_info;
+  for (unsigned int keynr=0; keynr < share->keys; keynr++, keyinfo++)
+  {
+    key_part= keyinfo->key_part;
+
+    for(unsigned int partnr= 0;
+	partnr < keyinfo->key_parts;
+	partnr++, key_part++)
+    {
+      /* Fix up key_part->offset by adding data_offset.
+	 We really should compute offset as well.
+	 But at least this way we are a little better. */
+      key_part->offset+= data_offset;
+    }
+  }
 
   share->reclength+= data_offset;
 
@@ -1038,8 +1058,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 
     for (j=keyinfo->key_parts ; j-- ; key_part++)
     {
-      key_part->offset= (uint32_t) uint2korr(strpos+2)-1;
-      key_part->key_type=	(uint32_t) uint2korr(strpos+5);
       if (new_frm_ver >= 1)
       {
 	strpos+=9;
