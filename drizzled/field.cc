@@ -1607,6 +1607,13 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
       /* Allow empty as default value. */
       String str,*res;
       res= fld_default_value->val_str(&str);
+      if (res->length())
+      {
+        my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0),
+                 fld_name);
+        return(true);
+      }
+
     }
     flags|= BLOB_FLAG;
     break;

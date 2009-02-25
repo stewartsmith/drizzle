@@ -110,6 +110,16 @@ void print_field(const ::drizzle::Table::Field &field)
   if (field.options().has_default_value())
     cout << " DEFAULT `" << field.options().default_value() << "` " ;
 
+  if (field.options().has_default_bin_value())
+  {
+    string v= field.options().default_bin_value();
+    cout << " DEFAULT 0x";
+    for(unsigned int i=0; i< v.length(); i++)
+    {
+      printf("%.2x", *(v.c_str()+i));
+    }
+  }
+
   if (field.type() == Table::Field::TIMESTAMP)
     if (field.timestamp_options().has_auto_updates()
       && field.timestamp_options().auto_updates())

@@ -565,8 +565,21 @@ static void fill_table_proto(drizzle::Table *table_proto,
       }
       else
       {
-	String s;
-	field_options->set_default_value(field_arg->def->val_str(&s)->c_ptr());
+	String d;
+	String *default_value= field_arg->def->val_str(&d);
+
+	if(field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
+	   && field_arg->charset==&my_charset_bin)
+	{
+	  string bin_default;
+	  bin_default.assign(default_value->c_ptr(),
+			     default_value->length());
+	  field_options->set_default_bin_value(bin_default);
+	}
+	else
+	{
+	  field_options->set_default_value(default_value->c_ptr());
+	}
       }
     }
 

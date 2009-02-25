@@ -341,8 +341,10 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
   return field_type;
 }
 
-Item * default_value_item(enum_field_types field_type, bool default_null,
-			  string default_value)
+Item * default_value_item(enum_field_types field_type,
+			  const CHARSET_INFO *charset,
+			  bool default_null, string default_value,
+			  string default_bin_value)
 {
   Item *default_item= NULL;
   int error= 0;
@@ -367,15 +369,33 @@ Item * default_value_item(enum_field_types field_type, bool default_null,
     default_item= new Item_float(default_value.c_str(), default_value.length());
     break;
   case DRIZZLE_TYPE_NULL:
+    abort();
+    break;
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
-    break;
-  case DRIZZLE_TYPE_VARCHAR:
+    if(default_value.compare("NOW()")==0)
+      break;
+  case DRIZZLE_TYPE_ENUM:
     default_item= new Item_string(default_value.c_str(),
 				  default_value.length(),
 				  system_charset_info);
+    break;
+  case DRIZZLE_TYPE_VARCHAR:
+  case DRIZZLE_TYPE_BLOB: /* Blob is here due to TINYTEXT. Feel the hate. */
+    if(charset==&my_charset_bin)
+    {
+      default_item= new Item_string(default_bin_value.c_str(),
+				    default_bin_value.length(),
+				    &my_charset_bin);
+    }
+    else
+    {
+      default_item= new Item_string(default_value.c_str(),
+				    default_value.length(),
+				    system_charset_info);
+    }
     break;
   case DRIZZLE_TYPE_VIRTUAL:
     break;
@@ -383,11 +403,6 @@ Item * default_value_item(enum_field_types field_type, bool default_null,
     default_item= new Item_decimal(default_value.c_str(),
 				   default_value.length(),
 				   system_charset_info);
-    break;
-  case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_BLOB:
-    const char* foo= default_value.c_str();
-    foo= NULL;
     break;
   }
 
@@ -649,6 +664,10 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
   assert(field_offsets && field_pack_length); // TODO: fixme
 
+  uint32_t interval_count= 0;
+  uint32_t interval_parts= 0;
+
+
   for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
     drizzle::Table::Field pfield= table.field(fieldnr);
@@ -699,6 +718,9 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
 	field_pack_length[fieldnr]=
 	  get_enum_pack_length(field_options.field_value_size());
+
+	interval_count++;
+	interval_parts+= field_options.field_value_size();
       }
       break;
     case DRIZZLE_TYPE_NEWDECIMAL:
@@ -751,11 +773,71 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
                                      rec_buff_length)))
     abort();
 
-  share->default_values= record;
-
-  ulong recordpos= 0;
+  memset(record, 0, rec_buff_length);
 
   int null_count= 0;
+
+  if(!table_options.pack_record())
+  {
+    null_count++; // one bit for delete mark.
+    *record|= 1;
+  }
+
+  share->default_values= record;
+  share->stored_rec_length= share->reclength;
+
+  if(interval_count)
+  {
+    share->intervals= (TYPELIB*)alloc_root(&share->mem_root,
+					   interval_count*sizeof(TYPELIB));
+  }
+  else
+    share->intervals= NULL;
+
+  /* Now fix the TYPELIBs for the intervals (enum values) */
+
+  uint32_t interval_nr= 0;
+
+  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  {
+    drizzle::Table::Field pfield= table.field(fieldnr);
+
+    if(pfield.type() != drizzle::Table::Field::ENUM)
+      continue;
+
+    drizzle::Table::Field::SetFieldOptions field_options=
+      pfield.set_options();
+
+    TYPELIB *t= &(share->intervals[interval_nr]);
+
+    t->type_names= (const char**)alloc_root(&share->mem_root,
+			   (field_options.field_value_size()+1)*sizeof(char*));
+
+    t->type_lengths= (unsigned int*) alloc_root(&share->mem_root,
+		     (field_options.field_value_size()+1)*sizeof(unsigned int));
+
+    t->type_names[field_options.field_value_size()]= NULL;
+    t->type_lengths[field_options.field_value_size()]= 0;
+
+    t->count= field_options.field_value_size();
+    t->name= NULL;
+
+    for(int n=0; n < field_options.field_value_size(); n++)
+    {
+      t->type_names[n]= strmake_root(&share->mem_root,
+				     field_options.field_value(n).c_str(),
+				     field_options.field_value(n).length());
+
+      t->type_lengths[n]= field_options.field_value(n).length();
+    }
+    interval_nr++;
+  }
+
+
+  /* and read the fields */
+  ulong recordpos= 0;
+
+  interval_nr= 0;
 
   for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
@@ -849,7 +931,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       share->vfields++;
     }
 
-
     const CHARSET_INFO *charset= &my_charset_bin;
 
     if(field_type==DRIZZLE_TYPE_BLOB
@@ -869,21 +950,27 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     Item *default_value= NULL;
 
     if(pfield.options().has_default_value()
-       || pfield.options().has_default_null())
+       || pfield.options().has_default_null()
+       || pfield.options().has_default_bin_value())
     {
       default_value= default_value_item(field_type,
+					charset,
 					pfield.options().default_null(),
-					pfield.options().default_value());
+					pfield.options().default_value(),
+					pfield.options().default_bin_value());
     }
-
-    if(pfield.has_constraints() && pfield.constraints().is_nullable())
-      null_count++;
 
     uint32_t pack_flag= pfield.pack_flag(); /* TODO: MUST DIE */
 
     TABLE_SHARE temp_share;
+    Table temp_table;
 
-    memset(&temp_share, 0, sizeof(share));
+    memset(&temp_share, 0, sizeof(temp_share));
+    memset(&temp_table, 0, sizeof(temp_table));
+    temp_table.s= &temp_share;
+    temp_table.in_use= session;
+    temp_table.s->db_low_byte_first= 1; //handler->low_byte_first();
+    temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
     Field* f= make_field(&temp_share, record+recordpos+data_offset,
 			 pfield.options().length(),
@@ -893,20 +980,43 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 			 field_type,
 			 charset,
 			 (Field::utype) MTYP_TYPENR(unireg_type),
-//			 (interval_nr ?
-//			  share->intervals+interval_nr-1 :
-			 (			  (TYPELIB*) 0),
+			 ((field_type==DRIZZLE_TYPE_ENUM)?
+			 share->intervals+(interval_nr++)
+			 : (TYPELIB*) 0),
 			 pfield.name().c_str());
-    (void)f;
+
+    f->init(&temp_table);
+
+    if(!(f->flags & NOT_NULL_FLAG))
+    {
+      *f->null_ptr|= f->null_bit;
+      null_count++;
+    }
 
     if(default_value)
     {
       int res= default_value->save_in_field(f, 1);
       (void)res; // TODO error handle;
     }
+    else if(f->real_type() == DRIZZLE_TYPE_ENUM &&
+	    (f->flags & NOT_NULL_FLAG))
+    {
+      f->set_notnull();
+      f->store((int64_t) 1, true);
+    }
+    else
+      f->reset();
 
     recordpos+= field_pack_length[fieldnr];
   }
+
+  /*
+    We need to set the unused bits to 1. If the number of bits is a multiple
+    of 8 there are no unused bits.
+  */
+
+  if (null_count & 7)
+    *(record + null_count / 8)|= ~(((unsigned char) 1 << (null_count & 7)) - 1);
 
   free(field_offsets);
   free(field_pack_length);
@@ -1194,7 +1304,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   }
 
   assert(share->reclength == uint2korr((head+16)));
-  share->stored_rec_length= share->reclength;
 
   record_offset= (ulong) (uint2korr(head+6)+
                           ((uint2korr(head+14) == 0xffff ?
@@ -1278,13 +1387,15 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   error=4;
   /* head+59 was extra_rec_buf_length */
   rec_buff_length= ALIGN_SIZE(share->reclength + 1);
-  share->rec_buff_length= rec_buff_length;
+
   if (!(record= (unsigned char *) alloc_root(&share->mem_root,
                                      rec_buff_length)))
     goto err;                                   /* purecov: inspected */
-  share->default_values= record;
+
   if (pread(file, record, (size_t) share->reclength, record_offset) == 0)
     goto err;                                   /* purecov: inspected */
+
+  assert(memcmp(share->default_values, record, share->reclength)==0);
 
   lseek(file,pos+288,SEEK_SET);
 
@@ -1320,11 +1431,10 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     goto err;                                   /* purecov: inspected */
   strpos= disk_buff+pos;
 
-  share->intervals= (TYPELIB*) (field_ptr+share->fields+1);
-  interval_array= (const char **) (share->intervals+interval_count);
+//  share->intervals= (TYPELIB*) (field_ptr+share->fields+1);
+  interval_array= (const char **) ((field_ptr+share->fields+1)+interval_count);
   names= (char*) (interval_array+share->fields+interval_parts+keys+3);
-  if (!interval_count)
-    share->intervals= 0;			// For better debugging
+
   memcpy(names, strpos+(share->fields*field_pack_length),
 	 (uint32_t) (n_length+int_length));
   comment_pos= (char *)(disk_buff+read_length-com_length-vcol_screen_length);
@@ -1335,28 +1445,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   fix_type_pointers(&interval_array, &share->fieldnames, 1, &names);
   if (share->fieldnames.count != share->fields)
     goto err;
-  fix_type_pointers(&interval_array, share->intervals, interval_count,
-		    &names);
-
-  {
-    /* Set ENUM and SET lengths */
-    TYPELIB *interval;
-    for (interval= share->intervals;
-         interval < share->intervals + interval_count;
-         interval++)
-    {
-      uint32_t count= (uint32_t) (interval->count + 1) * sizeof(uint32_t);
-      if (!(interval->type_lengths= (uint32_t *) alloc_root(&share->mem_root,
-                                                        count)))
-        goto err;
-      for (count= 0; count < interval->count; count++)
-      {
-        char *val= (char*) interval->type_names[count];
-        interval->type_lengths[count]= strlen(val);
-      }
-      interval->type_lengths[count]= 0;
-    }
-  }
 
 /*  if (keynames)
     fix_type_pointers(&interval_array, &share->keynames, 1, &keynames);*/

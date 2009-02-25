@@ -100,6 +100,8 @@ message Table {
       optional string default_value = 1;
       optional string update_value = 2;
       optional bool default_null = 3 [default = false];
+      optional bytes default_bin_value = 4;
+
       optional int32 length = 100; /* TODO: should go away */
     }
 
