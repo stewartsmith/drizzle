@@ -38,6 +38,13 @@
 #include <drizzled/unireg.h>
 #include <drizzled/serialize/table.pb.h>
 
+#include <drizzled/item/string.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/decimal.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/null.h>
+
+
 using namespace std;
 
 /* Keyword for parsing virtual column functions */
@@ -332,6 +339,59 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
   }
 
   return field_type;
+}
+
+Item * default_value_item(enum_field_types field_type, bool default_null,
+			  string default_value)
+{
+  Item *default_item= NULL;
+  int error= 0;
+
+  if(default_null)
+  {
+    return new Item_null();
+  }
+
+  switch(field_type)
+  {
+  case DRIZZLE_TYPE_TINY:
+  case DRIZZLE_TYPE_LONG:
+  case DRIZZLE_TYPE_LONGLONG:
+    default_item= new Item_int(default_value.c_str(),
+			       (int64_t) my_strtoll10(default_value.c_str(),
+						      NULL,
+						      &error),
+			       default_value.length());
+    break;
+  case DRIZZLE_TYPE_DOUBLE:
+    default_item= new Item_float(default_value.c_str(), default_value.length());
+    break;
+  case DRIZZLE_TYPE_NULL:
+  case DRIZZLE_TYPE_TIMESTAMP:
+  case DRIZZLE_TYPE_TIME:
+  case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_DATE:
+    break;
+  case DRIZZLE_TYPE_VARCHAR:
+    default_item= new Item_string(default_value.c_str(),
+				  default_value.length(),
+				  system_charset_info);
+    break;
+  case DRIZZLE_TYPE_VIRTUAL:
+    break;
+  case DRIZZLE_TYPE_NEWDECIMAL:
+    default_item= new Item_decimal(default_value.c_str(),
+				   default_value.length(),
+				   system_charset_info);
+    break;
+  case DRIZZLE_TYPE_ENUM:
+  case DRIZZLE_TYPE_BLOB:
+    const char* foo= default_value.c_str();
+    foo= NULL;
+    break;
+  }
+
+  return default_item;
 }
 
 int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *share)
@@ -693,6 +753,10 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
   share->default_values= record;
 
+  ulong recordpos= 0;
+
+  int null_count= 0;
+
   for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
     drizzle::Table::Field pfield= table.field(fieldnr);
@@ -785,20 +849,63 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       share->vfields++;
     }
 
-    // TODO: charset (well... collation)
 
-/*    share->field[fieldnr]= make_field(share, record+recordpos,
-				      field_length,
-				      null_pos, null_bit_pos,
-				      pack_flag,
-				      field_type,
-				      charset,
-				      (Field::utype) MTYP_TYPENR(unireg_type),
-				      (interval_nr ?
-				       share->intervals+interval_nr-1 :
-				       (TYPELIB*) 0),
-				      share->fieldnames.type_names[i]);
-*/
+    const CHARSET_INFO *charset= &my_charset_bin;
+
+    if(field_type==DRIZZLE_TYPE_BLOB
+       || field_type==DRIZZLE_TYPE_VARCHAR)
+    {
+      drizzle::Table::Field::StringFieldOptions field_options=
+	pfield.string_options();
+
+      charset= get_charset(field_options.has_collation_id()?
+			   field_options.collation_id() : 0);
+
+      if (!charset)
+	charset= default_charset_info;
+
+    }
+
+    Item *default_value= NULL;
+
+    if(pfield.options().has_default_value()
+       || pfield.options().has_default_null())
+    {
+      default_value= default_value_item(field_type,
+					pfield.options().default_null(),
+					pfield.options().default_value());
+    }
+
+    if(pfield.has_constraints() && pfield.constraints().is_nullable())
+      null_count++;
+
+    uint32_t pack_flag= pfield.pack_flag(); /* TODO: MUST DIE */
+
+    TABLE_SHARE temp_share;
+
+    memset(&temp_share, 0, sizeof(share));
+
+    Field* f= make_field(&temp_share, record+recordpos+data_offset,
+			 pfield.options().length(),
+			 record + null_count / 8,
+			 null_count & 7,
+			 pack_flag,
+			 field_type,
+			 charset,
+			 (Field::utype) MTYP_TYPENR(unireg_type),
+//			 (interval_nr ?
+//			  share->intervals+interval_nr-1 :
+			 (			  (TYPELIB*) 0),
+			 pfield.name().c_str());
+    (void)f;
+
+    if(default_value)
+    {
+      int res= default_value->save_in_field(f, 1);
+      (void)res; // TODO error handle;
+    }
+
+    recordpos+= field_pack_length[fieldnr];
   }
 
   free(field_offsets);

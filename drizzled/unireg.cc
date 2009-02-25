@@ -407,6 +407,8 @@ static void fill_table_proto(drizzle::Table *table_proto,
     attribute= table_proto->add_field();
     attribute->set_name(field_arg->field_name);
 
+    attribute->set_pack_flag(field_arg->pack_flag); /* TODO: MUST DIE */
+
     if(f_maybe_null(field_arg->pack_flag))
     {
       drizzle::Table::Field::FieldConstraints *constraints;
@@ -550,6 +552,29 @@ static void fill_table_proto(drizzle::Table *table_proto,
       drizzle::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
       field_options->set_update_value("NOW()");
+    }
+
+    if(field_arg->def)
+    {
+      drizzle::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+
+      if(field_arg->def->is_null())
+      {
+	field_options->set_default_null(true);
+      }
+      else
+      {
+	String s;
+	field_options->set_default_value(field_arg->def->val_str(&s)->c_ptr());
+      }
+    }
+
+    {
+      drizzle::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+
+      field_options->set_length(field_arg->length);
     }
 
     assert(field_arg->unireg_check == Field::NONE
