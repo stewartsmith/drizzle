@@ -600,10 +600,10 @@ alter table t1 add key (a,b,d,e);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL DEFAULT '0',
-  `b` int NOT NULL DEFAULT '0',
+  `a` int NOT NULL,
+  `b` int NOT NULL,
   `c` blob NOT NULL,
-  `d` int NOT NULL DEFAULT '0',
+  `d` int NOT NULL,
   `e` int DEFAULT NULL,
   PRIMARY KEY (`a`,`b`,`c`(),`d`),
   KEY `a` (`a`,`b`,`d`,`e`)

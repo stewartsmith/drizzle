@@ -76,18 +76,17 @@ message Table {
     enum FieldType {
       DOUBLE = 0;
       VARCHAR = 1;
-      TEXT = 2;
-      BLOB = 3;
-      ENUM = 4;
-      INTEGER = 5;
-      BIGINT = 6;
-      DECIMAL = 7;
-      DATE = 8;
-      TIME = 9;
-      TIMESTAMP = 10;
-      DATETIME = 11;
-      TINYINT = 12;
-      VIRTUAL = 13;
+      BLOB = 2;
+      ENUM = 3;
+      INTEGER = 4;
+      BIGINT = 5;
+      DECIMAL = 6;
+      DATE = 7;
+      TIME = 8;
+      TIMESTAMP = 9;
+      DATETIME = 10;
+      TINYINT = 11;
+      VIRTUAL = 12;
     }
 
     enum FieldFormatType {
@@ -131,7 +130,9 @@ message Table {
 
     message SetFieldOptions {
       required int32 count_elements = 1;
-      repeated string field_value = 2;
+      optional uint32 collation_id = 2;
+      optional string collation = 3;
+      repeated string field_value = 4;
     }
 
     message VirtualFieldOptions {

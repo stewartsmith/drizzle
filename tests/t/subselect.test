@@ -521,7 +521,7 @@ drop table t1;
 CREATE TABLE `t1` (
   `mot` varchar(30) NOT NULL default '',
   `topic` bigint NOT NULL default '0',
-  `date` date NULL,
+  `date` date NULL DEFAULT '2009-01-20',
   `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
   KEY `pseudo` (`pseudo`,`date`,`topic`),
@@ -531,7 +531,7 @@ CREATE TABLE `t1` (
 CREATE TABLE `t2` (
   `mot` varchar(30) NOT NULL default '',
   `topic` bigint NOT NULL default '0',
-  `date` date NULL,
+  `date` date NULL default '1997-08-29',
   `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
   KEY `pseudo` (`pseudo`,`date`,`topic`),

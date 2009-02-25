@@ -653,9 +653,10 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   share->vfields= 0;
   share->stored_fields= share->fields;
 
-/*  share->field= (Field**) alloc_root(&share->mem_root,
-				     (share->fields * sizeof(Field*)));
-*/
+  share->field= (Field**) alloc_root(&share->mem_root,
+				     ((share->fields+1) * sizeof(Field*)));
+  share->field[share->fields]= NULL;
+
   uint32_t null_fields= 0;
   share->reclength= 0;
 
@@ -794,7 +795,20 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   else
     share->intervals= NULL;
 
-  /* Now fix the TYPELIBs for the intervals (enum values) */
+  share->fieldnames.type_names= (const char**)alloc_root(&share->mem_root,
+			          (share->fields+1)*sizeof(char*));
+
+  share->fieldnames.type_lengths= (unsigned int*) alloc_root(&share->mem_root,
+				  (share->fields+1)*sizeof(unsigned int));
+
+  share->fieldnames.type_names[share->fields]= NULL;
+  share->fieldnames.type_lengths[share->fields]= 0;
+  share->fieldnames.count= share->fields;
+
+
+  /* Now fix the TYPELIBs for the intervals (enum values)
+     and field names.
+   */
 
   uint32_t interval_nr= 0;
 
@@ -802,11 +816,25 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   {
     drizzle::Table::Field pfield= table.field(fieldnr);
 
+    /* field names */
+    share->fieldnames.type_names[fieldnr]= strmake_root(&share->mem_root,
+							pfield.name().c_str(),
+							pfield.name().length());
+
+    share->fieldnames.type_lengths[fieldnr]= pfield.name().length();
+
+    /* enum typelibs */
     if(pfield.type() != drizzle::Table::Field::ENUM)
       continue;
 
     drizzle::Table::Field::SetFieldOptions field_options=
       pfield.set_options();
+
+    const CHARSET_INFO *charset= get_charset(field_options.has_collation_id()?
+					     field_options.collation_id() : 0);
+
+    if (!charset)
+      charset= default_charset_info;
 
     TYPELIB *t= &(share->intervals[interval_nr]);
 
@@ -828,7 +856,13 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 				     field_options.field_value(n).c_str(),
 				     field_options.field_value(n).length());
 
-      t->type_lengths[n]= field_options.field_value(n).length();
+      /* Go ask the charset what the length is as for "" length=1
+	 and there's stripping spaces or some other crack going on.
+       */
+      uint32_t lengthsp;
+      lengthsp= charset->cset->lengthsp(charset, t->type_names[n],
+					field_options.field_value(n).length());
+      t->type_lengths[n]= lengthsp;
     }
     interval_nr++;
   }
@@ -838,6 +872,17 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   ulong recordpos= 0;
 
   interval_nr= 0;
+
+  bool use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
+
+  if(use_hash)
+    use_hash= !hash_init(&share->name_hash,
+			 system_charset_info,
+			 share->fields, 0, 0,
+			 (hash_get_key) get_field_name, 0, 0);
+
+  unsigned char* null_pos= record;;
+  int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
   for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
@@ -947,6 +992,19 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
     }
 
+    if(field_type==DRIZZLE_TYPE_ENUM)
+    {
+      drizzle::Table::Field::SetFieldOptions field_options=
+	pfield.set_options();
+
+      charset= get_charset(field_options.has_collation_id()?
+			   field_options.collation_id() : 0);
+
+      if (!charset)
+	charset= default_charset_info;
+
+    }
+
     Item *default_value= NULL;
 
     if(pfield.options().has_default_value()
@@ -962,20 +1020,17 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
     uint32_t pack_flag= pfield.pack_flag(); /* TODO: MUST DIE */
 
-    TABLE_SHARE temp_share;
-    Table temp_table;
-
-    memset(&temp_share, 0, sizeof(temp_share));
+    Table temp_table; /* Use this so that BLOB DEFAULT '' works */
     memset(&temp_table, 0, sizeof(temp_table));
-    temp_table.s= &temp_share;
+    temp_table.s= share;
     temp_table.in_use= session;
     temp_table.s->db_low_byte_first= 1; //handler->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
-    Field* f= make_field(&temp_share, record+recordpos+data_offset,
+    Field* f= make_field(share, &share->mem_root, record+recordpos+data_offset,
 			 pfield.options().length(),
-			 record + null_count / 8,
-			 null_count & 7,
+			 null_pos,
+			 null_bit_pos,
 			 pack_flag,
 			 field_type,
 			 charset,
@@ -983,13 +1038,17 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 			 ((field_type==DRIZZLE_TYPE_ENUM)?
 			 share->intervals+(interval_nr++)
 			 : (TYPELIB*) 0),
-			 pfield.name().c_str());
+			share->fieldnames.type_names[fieldnr]);
 
-    f->init(&temp_table);
+    share->field[fieldnr]= f;
+
+    f->init(&temp_table); /* blob default values need table obj */
 
     if(!(f->flags & NOT_NULL_FLAG))
     {
       *f->null_ptr|= f->null_bit;
+      if (!(null_bit_pos= (null_bit_pos + 1) & 7))
+	null_pos++;
       null_count++;
     }
 
@@ -1007,7 +1066,39 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     else
       f->reset();
 
+    /* hack to undo f->init() */
+    f->table= NULL;
+    f->orig_table= NULL;
+
     recordpos+= field_pack_length[fieldnr];
+
+    f->field_index= fieldnr;
+    f->comment= comment;
+    f->vcol_info= vcol_info;
+    f->is_stored= field_is_stored;
+    if(!default_value
+       && !(f->unireg_check==Field::NEXT_NUMBER)
+       && (f->flags & NOT_NULL_FLAG)
+       && (f->real_type() != DRIZZLE_TYPE_TIMESTAMP))
+      f->flags|= NO_DEFAULT_VALUE_FLAG;
+
+    if(f->unireg_check == Field::NEXT_NUMBER)
+      share->found_next_number_field= &(share->field[fieldnr]);
+
+    if(share->timestamp_field == f)
+      share->timestamp_field_offset= fieldnr;
+
+    if (use_hash) /* supposedly this never fails... but comments lie */
+      (void) my_hash_insert(&share->name_hash,
+			    (unsigned char*)&(share->field[fieldnr]));
+
+    if(!f->is_stored)
+    {
+      share->stored_fields--;
+      if(share->stored_rec_length>=recordpos)
+	share->stored_rec_length= recordpos-1;
+    }
+
   }
 
   /*
@@ -1018,8 +1109,168 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   if (null_count & 7)
     *(record + null_count / 8)|= ~(((unsigned char) 1 << (null_count & 7)) - 1);
 
+  share->null_bytes= (null_pos - (unsigned char*) record +
+		      (null_bit_pos + 7) / 8);
+
+  share->last_null_bit_pos= null_bit_pos;
+
   free(field_offsets);
   free(field_pack_length);
+
+  handler *handler_file;
+
+  if(!(handler_file= get_new_handler(share, session->mem_root,
+				     share->db_type())))
+    abort(); // FIXME
+
+  /* Fix key stuff */
+  if (share->key_parts)
+  {
+    uint32_t primary_key=(uint32_t) (find_type((char*) "PRIMARY",
+				       &share->keynames, 3) - 1);
+
+    int64_t ha_option= handler_file->ha_table_flags();
+
+    keyinfo= share->key_info;
+    key_part= keyinfo->key_part;
+
+    for (uint32_t key=0 ; key < share->keys ; key++,keyinfo++)
+    {
+      uint32_t usable_parts= 0;
+
+      if (primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
+      {
+	/*
+	  If the UNIQUE key doesn't have NULL columns and is not a part key
+	  declare this as a primary key.
+	*/
+	primary_key=key;
+	for (uint32_t i=0 ; i < keyinfo->key_parts ;i++)
+	{
+	  uint32_t fieldnr= key_part[i].fieldnr;
+	  if (!fieldnr ||
+	      share->field[fieldnr-1]->null_ptr ||
+	      share->field[fieldnr-1]->key_length() !=
+	      key_part[i].length)
+	  {
+	    primary_key=MAX_KEY;                // Can't be used
+	    break;
+	  }
+	}
+      }
+
+      for (uint32_t i=0 ; i < keyinfo->key_parts ; key_part++,i++)
+      {
+        Field *field;
+	if (!key_part->fieldnr)
+        {
+//          error= 4;                             // Wrong file
+	  abort(); // goto err;
+        }
+        field= key_part->field= share->field[key_part->fieldnr-1];
+        key_part->type= field->key_type();
+        if (field->null_ptr)
+        {
+          key_part->null_offset=(uint32_t) ((unsigned char*) field->null_ptr -
+                                        share->default_values);
+          key_part->null_bit= field->null_bit;
+          key_part->store_length+=HA_KEY_NULL_LENGTH;
+          keyinfo->flags|=HA_NULL_PART_KEY;
+          keyinfo->extra_length+= HA_KEY_NULL_LENGTH;
+          keyinfo->key_length+= HA_KEY_NULL_LENGTH;
+        }
+        if (field->type() == DRIZZLE_TYPE_BLOB ||
+            field->real_type() == DRIZZLE_TYPE_VARCHAR)
+        {
+          if (field->type() == DRIZZLE_TYPE_BLOB)
+            key_part->key_part_flag|= HA_BLOB_PART;
+          else
+            key_part->key_part_flag|= HA_VAR_LENGTH_PART;
+          keyinfo->extra_length+=HA_KEY_BLOB_LENGTH;
+          key_part->store_length+=HA_KEY_BLOB_LENGTH;
+          keyinfo->key_length+= HA_KEY_BLOB_LENGTH;
+        }
+        if (i == 0 && key != primary_key)
+          field->flags |= (((keyinfo->flags & HA_NOSAME) &&
+                           (keyinfo->key_parts == 1)) ?
+                           UNIQUE_KEY_FLAG : MULTIPLE_KEY_FLAG);
+        if (i == 0)
+          field->key_start.set_bit(key);
+        if (field->key_length() == key_part->length &&
+            !(field->flags & BLOB_FLAG))
+        {
+          if (handler_file->index_flags(key, i, 0) & HA_KEYREAD_ONLY)
+          {
+            share->keys_for_keyread.set_bit(key);
+            field->part_of_key.set_bit(key);
+            field->part_of_key_not_clustered.set_bit(key);
+          }
+          if (handler_file->index_flags(key, i, 1) & HA_READ_ORDER)
+            field->part_of_sortkey.set_bit(key);
+        }
+        if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
+            usable_parts == i)
+          usable_parts++;			// For FILESORT
+        field->flags|= PART_KEY_FLAG;
+        if (key == primary_key)
+        {
+          field->flags|= PRI_KEY_FLAG;
+          /*
+            If this field is part of the primary key and all keys contains
+            the primary key, then we can use any key to find this column
+          */
+          if (ha_option & HA_PRIMARY_KEY_IN_READ_INDEX)
+          {
+            field->part_of_key= share->keys_in_use;
+            if (field->part_of_sortkey.is_set(key))
+              field->part_of_sortkey= share->keys_in_use;
+          }
+        }
+        if (field->key_length() != key_part->length)
+        {
+          key_part->key_part_flag|= HA_PART_KEY_SEG;
+        }
+      }
+      keyinfo->usable_key_parts= usable_parts; // Filesort
+
+      set_if_bigger(share->max_key_length,keyinfo->key_length+
+                    keyinfo->key_parts);
+      share->total_key_length+= keyinfo->key_length;
+      /*
+        MERGE tables do not have unique indexes. But every key could be
+        an unique index on the underlying MyISAM table. (Bug #10400)
+      */
+      if ((keyinfo->flags & HA_NOSAME) ||
+          (ha_option & HA_ANY_INDEX_MAY_BE_UNIQUE))
+        set_if_bigger(share->max_unique_length,keyinfo->key_length);
+    }
+    if (primary_key < MAX_KEY &&
+	(share->keys_in_use.is_set(primary_key)))
+    {
+      share->primary_key= primary_key;
+      /*
+	If we are using an integer as the primary key then allow the user to
+	refer to it as '_rowid'
+      */
+      if (share->key_info[primary_key].key_parts == 1)
+      {
+	Field *field= share->key_info[primary_key].key_part[0].field;
+	if (field && field->result_type() == INT_RESULT)
+        {
+          /* note that fieldnr here (and rowid_field_offset) starts from 1 */
+	  share->rowid_field_offset= (share->key_info[primary_key].key_part[0].
+                                      fieldnr);
+        }
+      }
+
+    }
+    else
+      share->primary_key = MAX_KEY; // we do not have a primary key
+  }
+  else
+    share->primary_key= MAX_KEY;
+
+  delete handler_file;
 
   return 0;
 }
@@ -1208,14 +1459,13 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   uint32_t new_frm_ver, field_pack_length, new_field_pack_flag;
   uint32_t interval_count, interval_parts, read_length, int_length;
   uint32_t db_create_options, keys, key_parts, n_length;
-  uint32_t key_info_length, com_length, null_bit_pos=0;
+  uint32_t key_info_length, com_length;
   uint32_t vcol_screen_length;
   uint32_t i,j;
-  bool use_hash;
   unsigned char forminfo[288];
   char *names, *comment_pos, *vcol_screen_pos;
   unsigned char *record;
-  unsigned char *disk_buff, *strpos, *null_flags=NULL, *null_pos=NULL;
+  unsigned char *disk_buff, *strpos;
   ulong pos, record_offset, rec_buff_length;
   handler *handler_file= 0;
   KEY	*keyinfo;
@@ -1423,7 +1673,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 			       vcol_screen_length)))))
     goto err;                                   /* purecov: inspected */
 
-  share->field= field_ptr;
+//  share->field= field_ptr;
   read_length=(uint32_t) (share->fields * field_pack_length +
 		      pos+ (uint32_t) (n_length+int_length+com_length+
 		                   vcol_screen_length));
@@ -1442,9 +1692,8 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   memcpy(vcol_screen_pos, disk_buff+read_length-vcol_screen_length,
          vcol_screen_length);
 
-  fix_type_pointers(&interval_array, &share->fieldnames, 1, &names);
-  if (share->fieldnames.count != share->fields)
-    goto err;
+//  fix_type_pointers(&interval_array, &share->fieldnames, 1, &names);
+  assert(share->fieldnames.count == share->fields);
 
 /*  if (keynames)
     fix_type_pointers(&interval_array, &share->keynames, 1, &keynames);*/
@@ -1456,325 +1705,14 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 
   record= share->default_values-1;              /* Fieldstart = 1 */
 
-  null_flags= null_pos= (unsigned char*) record+1;
-  null_bit_pos= (db_create_options & HA_OPTION_PACK_RECORD) ? 0 : 1;
-  /*
-    null_bytes below is only correct under the condition that
-    there are no bit fields.  Correct values is set below after the
-    table struct is initialized
-  */
-  share->null_bytes= (share->null_fields + null_bit_pos + 7) / 8;
-
-  use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
-  if (use_hash)
-    use_hash= !hash_init(&share->name_hash,
-			 system_charset_info,
-			 share->fields,0,0,
-			 (hash_get_key) get_field_name,0,0);
-
-  for (i=0 ; i < share->fields; i++, strpos+=field_pack_length, field_ptr++)
-  {
-    uint32_t pack_flag, interval_nr, unireg_type, recpos, field_length;
-    uint32_t vcol_info_length=0;
-    enum_field_types field_type;
-    enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-    const CHARSET_INFO *charset= NULL;
-    LEX_STRING comment;
-    virtual_column_info *vcol_info= NULL;
-    bool fld_is_stored= true;
-
-    if (field_extra_info)
-    {
-      char tmp= field_extra_info[i];
-      column_format= (enum column_format_type)
-                    ((tmp >> COLUMN_FORMAT_SHIFT) & COLUMN_FORMAT_MASK);
-    }
-    if (new_frm_ver >= 3)
-    {
-      /* new frm file in 4.1 */
-      field_length= uint2korr(strpos+3);
-      recpos=	    uint3korr(strpos+5);
-      pack_flag=    uint2korr(strpos+8);
-      unireg_type=  (uint32_t) strpos[10];
-      interval_nr=  (uint32_t) strpos[12];
-      uint32_t comment_length=uint2korr(strpos+15);
-      field_type=(enum_field_types) (uint32_t) strpos[13];
-
-      {
-        if (!strpos[14])
-          charset= &my_charset_bin;
-        else if (!(charset=get_charset((uint32_t) strpos[14])))
-        {
-          error= 5; // Unknown or unavailable charset
-          errarg= (int) strpos[14];
-          goto err;
-        }
-      }
-      if (field_type == DRIZZLE_TYPE_VIRTUAL)
-      {
-        assert(interval_nr); // Expect non-null expression
-        /*
-          The interval_id byte in the .frm file stores the length of the
-          expression statement for a virtual column.
-        */
-        vcol_info_length= interval_nr;
-        interval_nr= 0;
-      }
-      if (!comment_length)
-      {
-	comment.str= (char*) "";
-	comment.length=0;
-      }
-      else
-      {
-	comment.str=    strmake_root(&share->mem_root, comment_pos, comment_length);
-	comment.length= comment_length;
-	comment_pos+=   comment_length;
-      }
-      if (vcol_info_length)
-      {
-        /*
-          Get virtual column data stored in the .frm file as follows:
-          byte 1      = 1 (always 1 to allow for future extensions)
-          byte 2      = sql_type
-          byte 3      = flags (as of now, 0 - no flags, 1 - field is physically stored)
-          byte 4-...  = virtual column expression (text data)
-        */
-        vcol_info= new virtual_column_info();
-        if ((uint32_t)vcol_screen_pos[0] != 1)
-        {
-          error= 4;
-          goto err;
-        }
-        field_type= (enum_field_types) (unsigned char) vcol_screen_pos[1];
-        fld_is_stored= (bool) (uint32_t) vcol_screen_pos[2];
-        vcol_info->expr_str.str= (char *)memdup_root(&share->mem_root,
-                                                     vcol_screen_pos+
-                                                       (uint32_t)FRM_VCOL_HEADER_SIZE,
-                                                     vcol_info_length-
-                                                       (uint32_t)FRM_VCOL_HEADER_SIZE);
-        vcol_info->expr_str.length= vcol_info_length-(uint32_t)FRM_VCOL_HEADER_SIZE;
-        vcol_screen_pos+= vcol_info_length;
-        share->vfields++;
-      }
-    }
-    else
-    {
-      assert(false); /* Old (pre-4.1) FRM file. This is Drizzle. */
-    }
-
-    if (interval_nr && charset->mbminlen > 1)
-    {
-      /* Unescape UCS2 intervals from HEX notation */
-      TYPELIB *interval= share->intervals + interval_nr - 1;
-      unhex_type2(interval);
-    }
-
-    *field_ptr= reg_field=
-      make_field(share, record+recpos,
-		 (uint32_t) field_length,
-		 null_pos, null_bit_pos,
-		 pack_flag,
-		 field_type,
-		 charset,
-		 (Field::utype) MTYP_TYPENR(unireg_type),
-		 (interval_nr ?
-		  share->intervals+interval_nr-1 :
-		  (TYPELIB*) 0),
-		 share->fieldnames.type_names[i]);
-    if (!reg_field)				// Not supported field type
-    {
-      error= 4;
-      goto err;			/* purecov: inspected */
-    }
-
-    reg_field->flags|= ((uint32_t)column_format << COLUMN_FORMAT_FLAGS);
-    reg_field->field_index= i;
-    reg_field->comment=comment;
-    reg_field->vcol_info= vcol_info;
-    reg_field->is_stored= fld_is_stored;
-    if (!(reg_field->flags & NOT_NULL_FLAG))
-    {
-      if (!(null_bit_pos= (null_bit_pos + 1) & 7))
-        null_pos++;
-    }
-    if (f_no_default(pack_flag))
-      reg_field->flags|= NO_DEFAULT_VALUE_FLAG;
-
-    if (reg_field->unireg_check == Field::NEXT_NUMBER)
-      share->found_next_number_field= field_ptr;
-    if (share->timestamp_field == reg_field)
-      share->timestamp_field_offset= i;
-
-    if (use_hash)
-      (void) my_hash_insert(&share->name_hash,
-                            (unsigned char*) field_ptr); // never fail
-    if (!reg_field->is_stored)
-    {
-      share->stored_fields--;
-      if (share->stored_rec_length>=recpos)
-        share->stored_rec_length= recpos-1;
-    }
-  }
-  *field_ptr=0;					// End marker
   /* Sanity checks: */
   assert(share->fields>=share->stored_fields);
   assert(share->reclength>=share->stored_rec_length);
 
-  /* Fix key->name and key_part->field */
-  if (key_parts)
-  {
-    uint32_t primary_key=(uint32_t) (find_type((char*) "PRIMARY",
-				       &share->keynames, 3) - 1);
-    int64_t ha_option= handler_file->ha_table_flags();
-    keyinfo= share->key_info;
-    key_part= keyinfo->key_part;
 
-    for (uint32_t key=0 ; key < share->keys ; key++,keyinfo++)
-    {
-      uint32_t usable_parts= 0;
-//      keyinfo->name=(char*) share->keynames.type_names[key];
-
-      if (primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
-      {
-	/*
-	  If the UNIQUE key doesn't have NULL columns and is not a part key
-	  declare this as a primary key.
-	*/
-	primary_key=key;
-	for (i=0 ; i < keyinfo->key_parts ;i++)
-	{
-	  uint32_t fieldnr= key_part[i].fieldnr;
-	  if (!fieldnr ||
-	      share->field[fieldnr-1]->null_ptr ||
-	      share->field[fieldnr-1]->key_length() !=
-	      key_part[i].length)
-	  {
-	    primary_key=MAX_KEY;                // Can't be used
-	    break;
-	  }
-	}
-      }
-
-      for (i=0 ; i < keyinfo->key_parts ; key_part++,i++)
-      {
-        Field *field;
-	if (!key_part->fieldnr)
-        {
-          error= 4;                             // Wrong file
-          goto err;
-        }
-        field= key_part->field= share->field[key_part->fieldnr-1];
-        key_part->type= field->key_type();
-        if (field->null_ptr)
-        {
-          key_part->null_offset=(uint32_t) ((unsigned char*) field->null_ptr -
-                                        share->default_values);
-          key_part->null_bit= field->null_bit;
-          key_part->store_length+=HA_KEY_NULL_LENGTH;
-          keyinfo->flags|=HA_NULL_PART_KEY;
-          keyinfo->extra_length+= HA_KEY_NULL_LENGTH;
-          keyinfo->key_length+= HA_KEY_NULL_LENGTH;
-        }
-        if (field->type() == DRIZZLE_TYPE_BLOB ||
-            field->real_type() == DRIZZLE_TYPE_VARCHAR)
-        {
-          if (field->type() == DRIZZLE_TYPE_BLOB)
-            key_part->key_part_flag|= HA_BLOB_PART;
-          else
-            key_part->key_part_flag|= HA_VAR_LENGTH_PART;
-          keyinfo->extra_length+=HA_KEY_BLOB_LENGTH;
-          key_part->store_length+=HA_KEY_BLOB_LENGTH;
-          keyinfo->key_length+= HA_KEY_BLOB_LENGTH;
-        }
-        if (i == 0 && key != primary_key)
-          field->flags |= (((keyinfo->flags & HA_NOSAME) &&
-                           (keyinfo->key_parts == 1)) ?
-                           UNIQUE_KEY_FLAG : MULTIPLE_KEY_FLAG);
-        if (i == 0)
-          field->key_start.set_bit(key);
-        if (field->key_length() == key_part->length &&
-            !(field->flags & BLOB_FLAG))
-        {
-          if (handler_file->index_flags(key, i, 0) & HA_KEYREAD_ONLY)
-          {
-            share->keys_for_keyread.set_bit(key);
-            field->part_of_key.set_bit(key);
-            field->part_of_key_not_clustered.set_bit(key);
-          }
-          if (handler_file->index_flags(key, i, 1) & HA_READ_ORDER)
-            field->part_of_sortkey.set_bit(key);
-        }
-        if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
-            usable_parts == i)
-          usable_parts++;			// For FILESORT
-        field->flags|= PART_KEY_FLAG;
-        if (key == primary_key)
-        {
-          field->flags|= PRI_KEY_FLAG;
-          /*
-            If this field is part of the primary key and all keys contains
-            the primary key, then we can use any key to find this column
-          */
-          if (ha_option & HA_PRIMARY_KEY_IN_READ_INDEX)
-          {
-            field->part_of_key= share->keys_in_use;
-            if (field->part_of_sortkey.is_set(key))
-              field->part_of_sortkey= share->keys_in_use;
-          }
-        }
-        if (field->key_length() != key_part->length)
-        {
-          key_part->key_part_flag|= HA_PART_KEY_SEG;
-        }
-      }
-      keyinfo->usable_key_parts= usable_parts; // Filesort
-
-      set_if_bigger(share->max_key_length,keyinfo->key_length+
-                    keyinfo->key_parts);
-      share->total_key_length+= keyinfo->key_length;
-      /*
-        MERGE tables do not have unique indexes. But every key could be
-        an unique index on the underlying MyISAM table. (Bug #10400)
-      */
-      if ((keyinfo->flags & HA_NOSAME) ||
-          (ha_option & HA_ANY_INDEX_MAY_BE_UNIQUE))
-        set_if_bigger(share->max_unique_length,keyinfo->key_length);
-    }
-    if (primary_key < MAX_KEY &&
-	(share->keys_in_use.is_set(primary_key)))
-    {
-      share->primary_key= primary_key;
-      /*
-	If we are using an integer as the primary key then allow the user to
-	refer to it as '_rowid'
-      */
-      if (share->key_info[primary_key].key_parts == 1)
-      {
-	Field *field= share->key_info[primary_key].key_part[0].field;
-	if (field && field->result_type() == INT_RESULT)
-        {
-          /* note that fieldnr here (and rowid_field_offset) starts from 1 */
-	  share->rowid_field_offset= (share->key_info[primary_key].key_part[0].
-                                      fieldnr);
-        }
-      }
-    }
-    else
-      share->primary_key = MAX_KEY; // we do not have a primary key
-  }
-  else
-    share->primary_key= MAX_KEY;
   if (disk_buff)
     free(disk_buff);
   disk_buff= NULL;
-  if (new_field_pack_flag <= 1)
-  {
-    /* Old file format with default as not null */
-    uint32_t null_length= (share->null_fields+7)/8;
-    memset(share->default_values + (null_flags - (unsigned char*) record),
-          null_length, 255);
-  }
 
   if (share->found_next_number_field)
   {
@@ -1814,9 +1752,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     the correct null_bytes can now be set, since bitfields have been taken
     into account
   */
-  share->null_bytes= (null_pos - (unsigned char*) null_flags +
-                      (null_bit_pos + 7) / 8);
-  share->last_null_bit_pos= null_bit_pos;
 
   share->db_low_byte_first= handler_file->low_byte_first();
   share->column_bitmap_size= bitmap_buffer_size(share->fields);
@@ -4976,7 +4911,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
   List_iterator_fast<Create_field> it(field_list);
   while ((cdef= it++))
   {
-    *field= make_field(share, 0, cdef->length,
+    *field= make_field(share, NULL, 0, cdef->length,
                        (unsigned char*) (f_maybe_null(cdef->pack_flag) ? "" : 0),
                        f_maybe_null(cdef->pack_flag) ? 1 : 0,
                        cdef->pack_flag, cdef->sql_type, cdef->charset,

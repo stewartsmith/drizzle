@@ -31,11 +31,10 @@ void print_field(const ::drizzle::Table::Field &field)
   case Table::Field::VARCHAR:
     cout << " VARCHAR(" << field.string_options().length() << ")";
     break;
-  case Table::Field::TEXT:
-    cout << " TEXT ";
-    break;
   case Table::Field::BLOB:
-    cout << " BLOB ";
+    cout << " BLOB "; /* FIXME: or text, depends on collation */
+    if(field.string_options().has_collation_id())
+      cout << "COLLATION=" << field.string_options().collation_id() << " ";
     break;
   case Table::Field::ENUM:
     {
@@ -100,7 +99,7 @@ void print_field(const ::drizzle::Table::Field &field)
 	 && field.constraints().is_nullable()))
     cout << " NOT NULL ";
 
-  if (field.type() == Table::Field::TEXT
+  if (field.type() == Table::Field::BLOB
       || field.type() == Table::Field::VARCHAR)
   {
     if (field.string_options().has_collation())

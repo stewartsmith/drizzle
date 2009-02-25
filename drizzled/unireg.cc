@@ -484,10 +484,21 @@ static void fill_table_proto(drizzle::Table *table_proto,
           set_field_options->add_field_value(src);
         }
         set_field_options->set_count_elements(set_field_options->field_value_size());
+	set_field_options->set_collation_id(field_arg->charset->number);
+        set_field_options->set_collation(field_arg->charset->name);
         break;
       }
     case DRIZZLE_TYPE_BLOB:
-      attribute->set_type(drizzle::Table::Field::BLOB);
+      {
+	attribute->set_type(drizzle::Table::Field::BLOB);
+
+        drizzle::Table::Field::StringFieldOptions *string_field_options;
+
+        string_field_options= attribute->mutable_string_options();
+        string_field_options->set_collation_id(field_arg->charset->number);
+        string_field_options->set_collation(field_arg->charset->name);
+      }
+
       break;
     default:
       abort();
@@ -568,8 +579,10 @@ static void fill_table_proto(drizzle::Table *table_proto,
 	String d;
 	String *default_value= field_arg->def->val_str(&d);
 
-	if(field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
-	   && field_arg->charset==&my_charset_bin)
+	if((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
+	    && field_arg->charset==&my_charset_bin)
+	   || (field_arg->sql_type==DRIZZLE_TYPE_BLOB
+	    && field_arg->charset==&my_charset_bin))
 	{
 	  string bin_default;
 	  bin_default.assign(default_value->c_ptr(),
@@ -1502,7 +1515,7 @@ static bool make_empty_rec(Session *session, File file,
     /*
       regfield don't have to be deleted as it's allocated with sql_alloc()
     */
-    Field *regfield= make_field(&share,
+    Field *regfield= make_field(&share, NULL,
                                 buff+field->offset + data_offset,
                                 field->length,
                                 null_pos + null_count / 8,
