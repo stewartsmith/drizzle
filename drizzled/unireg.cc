@@ -513,7 +513,10 @@ static void fill_table_proto(drizzle::Table *table_proto,
       field_options->set_type(attribute->type());
       attribute->set_type(drizzle::Table::Field::VIRTUAL);
 
-      field_options->set_expression(field_arg->vcol_info->expr_str.str);
+      string expr(field_arg->vcol_info->expr_str.str,
+		  field_arg->vcol_info->expr_str.length);
+
+      field_options->set_expression(expr);
       field_options->set_physically_stored(field_arg->is_stored);
     }
 
