@@ -296,8 +296,8 @@ AC_ARG_WITH([debug],
 if test "$with_debug" = "yes"
 then
   # Debuging. No optimization.
-  AM_CFLAGS="${OPTIMIZE_CFLAGS} -DDEBUG ${AM_CFLAGS}"
-  AM_CXXFLAGS="${OPTIMIZE_CXXFLAGS} -DDEBUG ${AM_CXXFLAGS}"
+  AM_CFLAGS="${DEBUG_CFLAGS} -DDEBUG ${AM_CFLAGS}"
+  AM_CXXFLAGS="${DEBUG_CXXFLAGS} -DDEBUG ${AM_CXXFLAGS}"
 else
   # Optimized version. No debug
   AM_CFLAGS="${OPTIMIZE_CFLAGS} ${AM_CFLAGS}"
