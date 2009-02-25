@@ -102,10 +102,12 @@ int drizzle_read_table_proto(const char* path, drizzle::Table* table)
 
   if (!table->ParseFromZeroCopyStream(input))
   {
+    delete input;
     close(fd);
     return -1;
   }
 
+  delete input;
   close(fd);
   return 0;
 }
