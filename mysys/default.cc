@@ -393,6 +393,7 @@ int load_defaults(const char *conf_file, const char **groups,
 				 (*argc + 1)*sizeof(char*))))
       goto err;
     res= (char**) (ptr+sizeof(alloc));
+    memset(res,0,(*argc + 1));
     res[0]= **argv;				/* Copy program name */
     for (i=2 ; i < (uint32_t) *argc ; i++)
       res[i-1]=argv[0][i];
@@ -626,6 +627,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   if (!(fp= my_fopen(name, O_RDONLY, MYF(0))))
     return 1;					/* Ignore wrong files */
 
+  memset(buff,0,sizeof(buff));
   while (fgets(buff, sizeof(buff) - 1, fp))
   {
     line++;
@@ -742,7 +744,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     end= remove_end_comment(ptr);
     if ((value= strchr(ptr, '=')))
       end= value;				/* Option without argument */
-    for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
+    for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) || end[-1]== '\n'; end--) ;
     if (!value)
     {
       strncpy(strcpy(option,"--")+2,ptr,strlen(ptr)+1);
@@ -771,7 +773,10 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
         value++;
         value_end--;
       }
+      
+      memset(option,0,2+(size_t)(end-ptr)+1);
       ptr= strncpy(strcpy(option,"--")+2,ptr,(size_t) (end-ptr));
+      ptr[end-ptr]= '\0';
       ptr+= strlen(ptr);
       *ptr++= '=';
 
