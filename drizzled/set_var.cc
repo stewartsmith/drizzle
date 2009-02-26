@@ -2320,8 +2320,18 @@ sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
   transform(lower_var.begin(), lower_var.end(), lower_var.begin(), ::tolower);
   map<string, sys_var *>::iterator result_iter=
     system_variable_hash.find(lower_var);
-  if (result_iter == system_variable_hash.end() && (!no_error))
-    my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), (char*) str);
+  if (result_iter == system_variable_hash.end())
+  {
+    if (no_error)
+    {
+      return NULL;
+    }
+    else
+    {
+      my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), (char*) str);
+      return NULL;
+    }
+  }
 
   return (*result_iter).second;
 }
