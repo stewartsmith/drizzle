@@ -27,6 +27,7 @@ using namespace std;
 class Item_func_md5 : public Item_str_func
 {
 public:
+  Item_func_md5() : Item_str_func() {}
   const char *func_name() const { return "md5"; }
   String *val_str(String*);
   void fix_length_and_dec() {

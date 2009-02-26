@@ -101,6 +101,7 @@ class Time_zone;
 
 struct system_variables
 {
+  system_variables() {};
   /*
     How dynamically allocated system variables are handled:
 
