@@ -29,9 +29,9 @@ void Item_func_rand::seed_random(Item *arg)
     TODO: do not do reinit 'rand' for every execute of PS/SP if
     args[0] is a constant.
   */
-  uint32_t tmp= (uint32_t) arg->val_int();
-  drizzleclient_drizzleclient_randominit(rand, (uint32_t) (tmp*0x10001L+55555555L),
-             (uint32_t) (tmp*0x10000001L));
+  uint64_t tmp= (uint64_t) arg->val_int();
+  drizzleclient_randominit(rand, (tmp*0x10001L+55555555L),
+                           (tmp*0x10000001L));
 }
 
 bool Item_func_rand::fix_fields(Session *session,Item **ref)

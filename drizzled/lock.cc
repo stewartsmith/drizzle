@@ -1566,11 +1566,10 @@ int try_transactional_lock(Session *session, TableList *table_list)
     -1                  Error: Lock conversion is prohibited.
 */
 
-int check_transactional_lock(Session *session, TableList *table_list)
+int check_transactional_lock(Session *, TableList *table_list)
 {
   TableList    *tlist;
   int           result= 0;
-  char          warn_buff[DRIZZLE_ERRMSG_SIZE];
 
   for (tlist= table_list; tlist; tlist= tlist->next_global)
   {
@@ -1594,20 +1593,6 @@ int check_transactional_lock(Session *session, TableList *table_list)
       continue;
     }
 
-    /* We must not convert the lock method within an active transaction. */
-    if (session->active_transaction())
-    {
-      my_error(ER_NO_AUTO_CONVERT_LOCK_TRANSACTION, MYF(0),
-               tlist->alias ? tlist->alias : tlist->table_name);
-      result= -1;
-      continue;
-    }
-
-    /* Warn about the conversion. */
-    snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_AUTO_CONVERT_LOCK),
-             tlist->alias ? tlist->alias : tlist->table_name);
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                 ER_WARN_AUTO_CONVERT_LOCK, warn_buff);
   }
 
   return(result);

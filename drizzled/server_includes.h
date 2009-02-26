@@ -123,7 +123,7 @@ extern uint64_t slow_launch_time;
 extern uint64_t table_cache_size;
 extern uint64_t table_def_size;
 extern uint64_t max_connect_errors;
-extern uint64_t connect_timeout;
+extern uint32_t connect_timeout;
 extern uint32_t back_log;
 extern pid_t current_pid;
 extern uint64_t expire_logs_days;
@@ -286,7 +286,7 @@ void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
 TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
 ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
-ulong make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
+off_t make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
 		     const char *newname);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);

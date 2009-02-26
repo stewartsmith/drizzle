@@ -73,13 +73,15 @@
 /*
   New (MySQL 3.21+) random generation structure initialization
   SYNOPSIS
-    drizzleclient_drizzleclient_randominit()
+    drizzleclient_randominit()
     rand_st    OUT  Structure to initialize
     seed1      IN   First initialization parameter
     seed2      IN   Second initialization parameter
 */
 
-void drizzleclient_drizzleclient_randominit(struct rand_struct *rand_st, uint32_t seed1, uint32_t seed2)
+void drizzleclient_randominit(struct rand_struct *rand_st,
+                              uint64_t seed1,
+                              uint64_t seed2)
 {                                               /* For mysql 3.21.# */
   memset(rand_st, 0, sizeof(*rand_st));      /* Avoid UMC varnings */
   rand_st->max_value= 0x3FFFFFFFL;
