@@ -668,6 +668,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   uint32_t interval_count= 0;
   uint32_t interval_parts= 0;
 
+  uint32_t stored_columns_reclength= 0;
 
   for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
@@ -675,7 +676,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     if(pfield.has_constraints() && pfield.constraints().is_nullable())
       null_fields++;
 
-    field_offsets[fieldnr]= share->reclength;
+    bool field_is_stored= true;
 
     enum_field_types drizzle_field_type=
       proto_field_type_to_drizzle_type(pfield.type());
@@ -686,7 +687,11 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 	pfield.virtual_options();
 
       drizzle_field_type=proto_field_type_to_drizzle_type(field_options.type());
+
+      field_is_stored= field_options.physically_stored();
     }
+
+    field_offsets[fieldnr]= stored_columns_reclength;
 
     /* the below switch is very similar to
        Create_field::create_length_to_internal_length in field.cc
@@ -738,6 +743,40 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     }
 
     share->reclength+= field_pack_length[fieldnr];
+
+    if(field_is_stored)
+      stored_columns_reclength+= field_pack_length[fieldnr];
+  }
+
+  share->stored_rec_length= stored_columns_reclength;
+
+  /* fix up offsets for non-stored fields (at end of record) */
+  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  {
+    drizzle::Table::Field pfield= table.field(fieldnr);
+    if(pfield.has_constraints() && pfield.constraints().is_nullable())
+      null_fields++;
+
+    bool field_is_stored= true;
+
+    enum_field_types drizzle_field_type=
+      proto_field_type_to_drizzle_type(pfield.type());
+
+    if(drizzle_field_type==DRIZZLE_TYPE_VIRTUAL)
+    {
+      drizzle::Table::Field::VirtualFieldOptions field_options=
+	pfield.virtual_options();
+
+      drizzle_field_type=proto_field_type_to_drizzle_type(field_options.type());
+
+      field_is_stored= field_options.physically_stored();
+    }
+
+    if(!field_is_stored)
+    {
+      field_offsets[fieldnr]= stored_columns_reclength;
+      stored_columns_reclength+= field_pack_length[fieldnr];
+    }
   }
 
   ulong null_bits= null_fields;
@@ -785,7 +824,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   }
 
   share->default_values= record;
-  share->stored_rec_length= share->reclength;
 
   if(interval_count)
   {
@@ -869,8 +907,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
 
   /* and read the fields */
-  ulong recordpos= 0;
-
   interval_nr= 0;
 
   bool use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
@@ -1027,7 +1063,8 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     temp_table.s->db_low_byte_first= 1; //handler->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
-    Field* f= make_field(share, &share->mem_root, record+recordpos+data_offset,
+    Field* f= make_field(share, &share->mem_root,
+			 record+field_offsets[fieldnr]+data_offset,
 			 pfield.options().length(),
 			 null_pos,
 			 null_bit_pos,
@@ -1070,8 +1107,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     f->table= NULL;
     f->orig_table= NULL;
 
-    recordpos+= field_pack_length[fieldnr];
-
     f->field_index= fieldnr;
     f->comment= comment;
     f->vcol_info= vcol_info;
@@ -1095,10 +1130,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     if(!f->is_stored)
     {
       share->stored_fields--;
-      if(share->stored_rec_length>=recordpos)
-	share->stored_rec_length= recordpos-1;
     }
-
   }
 
   /*
