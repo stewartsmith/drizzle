@@ -754,8 +754,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
     drizzle::Table::Field pfield= table.field(fieldnr);
-    if(pfield.has_constraints() && pfield.constraints().is_nullable())
-      null_fields++;
 
     bool field_is_stored= true;
 
