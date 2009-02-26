@@ -1606,6 +1606,13 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
       /* Allow empty as default value. */
       String str,*res;
       res= fld_default_value->val_str(&str);
+      if (res->length())
+      {
+        my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0),
+                 fld_name);
+        return(true);
+      }
+
     }
     flags|= BLOB_FLAG;
     break;
@@ -1776,7 +1783,8 @@ uint32_t pack_length_to_packflag(uint32_t type)
 }
 
 
-Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
+Field *make_field(TABLE_SHARE *share, MEM_ROOT *root,
+                  unsigned char *ptr, uint32_t field_length,
 		  unsigned char *null_pos, unsigned char null_bit,
 		  uint32_t pack_flag,
 		  enum_field_types field_type,
@@ -1785,6 +1793,10 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
 		  TYPELIB *interval,
 		  const char *field_name)
 {
+
+  if(!root)
+    root= current_mem_root();
+
   if (!f_maybe_null(pack_flag))
   {
     null_pos=0;
@@ -1809,7 +1821,7 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
     if (!f_is_packed(pack_flag))
     {
       if (field_type == DRIZZLE_TYPE_VARCHAR)
-        return new Field_varstring(ptr,field_length,
+        return new (root) Field_varstring(ptr,field_length,
                                    HA_VARCHAR_PACKLENGTH(field_length),
                                    null_pos,null_bit,
                                    unireg_check, field_name,
@@ -1823,30 +1835,30 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
 				      field_length);
 
     if (f_is_blob(pack_flag))
-      return new Field_blob(ptr,null_pos,null_bit,
+      return new (root) Field_blob(ptr,null_pos,null_bit,
 			    unireg_check, field_name, share,
 			    pack_length, field_charset);
     if (interval)
     {
       if (f_is_enum(pack_flag))
-{
-	return new Field_enum(ptr,field_length,null_pos,null_bit,
+      {
+        return new (root) Field_enum(ptr,field_length,null_pos,null_bit,
 				  unireg_check, field_name,
 				  get_enum_pack_length(interval->count),
                                   interval, field_charset);
-}
+      }
     }
   }
 
   switch (field_type) {
   case DRIZZLE_TYPE_NEWDECIMAL:
-    return new Field_new_decimal(ptr,field_length,null_pos,null_bit,
+    return new (root) Field_new_decimal(ptr,field_length,null_pos,null_bit,
                                  unireg_check, field_name,
                                  f_decimals(pack_flag),
                                  f_is_decimal_precision(pack_flag) != 0,
                                  f_is_dec(pack_flag) == 0);
   case DRIZZLE_TYPE_DOUBLE:
-    return new Field_double(ptr,field_length,null_pos,null_bit,
+    return new (root) Field_double(ptr,field_length,null_pos,null_bit,
 			    unireg_check, field_name,
 			    f_decimals(pack_flag),
 			    false,
@@ -1854,30 +1866,30 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
   case DRIZZLE_TYPE_TINY:
     assert(0);
   case DRIZZLE_TYPE_LONG:
-    return new Field_long(ptr,field_length,null_pos,null_bit,
+    return new (root) Field_long(ptr,field_length,null_pos,null_bit,
 			   unireg_check, field_name,
                            false,
 			   f_is_dec(pack_flag) == 0);
   case DRIZZLE_TYPE_LONGLONG:
-    return new Field_int64_t(ptr,field_length,null_pos,null_bit,
+    return new (root) Field_int64_t(ptr,field_length,null_pos,null_bit,
 			      unireg_check, field_name,
                               false,
 			      f_is_dec(pack_flag) == 0);
   case DRIZZLE_TYPE_TIMESTAMP:
-    return new Field_timestamp(ptr,field_length, null_pos, null_bit,
+    return new (root) Field_timestamp(ptr,field_length, null_pos, null_bit,
                                unireg_check, field_name, share,
                                field_charset);
   case DRIZZLE_TYPE_DATE:
-    return new Field_date(ptr,null_pos,null_bit,
+    return new (root) Field_date(ptr,null_pos,null_bit,
 			     unireg_check, field_name, field_charset);
   case DRIZZLE_TYPE_TIME:
-    return new Field_time(ptr,null_pos,null_bit,
+    return new (root) Field_time(ptr,null_pos,null_bit,
 			  unireg_check, field_name, field_charset);
   case DRIZZLE_TYPE_DATETIME:
-    return new Field_datetime(ptr,null_pos,null_bit,
+    return new (root) Field_datetime(ptr,null_pos,null_bit,
 			      unireg_check, field_name, field_charset);
   case DRIZZLE_TYPE_NULL:
-    return new Field_null(ptr, field_length, unireg_check, field_name,
+    return new (root) Field_null(ptr, field_length, unireg_check, field_name,
                           field_charset);
   case DRIZZLE_TYPE_VIRTUAL:                    // Must not happen
     assert(0);
@@ -1934,7 +1946,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
   def=0;
   char_length= length;
 
-  if (!(flags & (NO_DEFAULT_VALUE_FLAG | BLOB_FLAG)) &&
+  if (!(flags & (NO_DEFAULT_VALUE_FLAG )) &&
       old_field->ptr && orig_field &&
       (sql_type != DRIZZLE_TYPE_TIMESTAMP ||                /* set def only if */
        old_field->table->timestamp_field != old_field ||  /* timestamp field */
