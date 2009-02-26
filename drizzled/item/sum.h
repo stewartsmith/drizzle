@@ -29,6 +29,13 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
 
+extern "C"
+int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
+                                       const void* key2);
+
+extern "C"
+int group_concat_key_cmp_with_order(void* arg, const void* key1,
+                                    const void* key2);
 
 class Select_Lex;
 struct order_st;

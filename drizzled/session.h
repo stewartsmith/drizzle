@@ -101,6 +101,7 @@ class Time_zone;
 
 struct system_variables
 {
+  system_variables() {};
   /*
     How dynamically allocated system variables are handled:
 
@@ -1215,7 +1216,7 @@ class JOIN;
 typedef struct st_sort_field {
   Field *field;				/* Field to sort */
   Item	*item;				/* Item if not sorting fields */
-  uint	 length;			/* Length of sort field */
+  size_t length;			/* Length of sort field */
   uint32_t   suffix_length;                 /* Length suffix (0-4) */
   Item_result result_type;		/* Type of item */
   bool reverse;				/* if descending sort */

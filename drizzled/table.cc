@@ -20,7 +20,6 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include <drizzled/tmp_table.h>
 #include <drizzled/sj_tmp_table.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/data_home.h>
@@ -2339,7 +2338,7 @@ int read_string(File file, unsigned char**to, size_t length)
 
 	/* Add a new form to a form file */
 
-ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
+off_t make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 		     const char *newname)
 {
   uint32_t i,bufflength,maxlength,n_length,length,names;
