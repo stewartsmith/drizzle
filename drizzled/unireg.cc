@@ -503,7 +503,8 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
       break;
     default:
-      abort();
+      assert(0); /* Tell us, since this shouldn't happend */
+      return;
     }
 
     if(field_arg->vcol_info)
@@ -541,7 +542,8 @@ static void fill_table_proto(drizzle::Table *table_proto,
       attribute->set_format(drizzle::Table::Field::DynamicFormat);
       break;
     default:
-      abort();
+      assert(0); /* Tell us, since this shouldn't happend */
+      return;
     }
 
     if (field_arg->comment.length)
