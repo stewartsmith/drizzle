@@ -453,8 +453,10 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       db_create_options|= HA_OPTION_NO_DELAY_KEY_WRITE;
   }
 
-
-  share->db_create_options= db_create_options;
+  /* db_create_options was stored as 2 bytes in FRM
+     Any HA_OPTION_ that doesn't fit into 2 bytes was silently truncated away.
+   */
+  share->db_create_options= (db_create_options & 0x0000FFFF);
   share->db_options_in_use= share->db_create_options;
 
 
