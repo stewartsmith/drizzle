@@ -1347,8 +1347,14 @@ then
     AM_CFLAGS="${AM_CFLAGS} -xinstrument=datarace"
     AM_CXXFLAGS="${AM_CXXFLAGS} -xinstrument=datarace"
   fi
-  CC_WARNINGS="-v -xc99=all -errtags=yes -errwarn=%all -erroff=E_ATTRIBUTE_NOT_VAR"
-  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -errwarn=%all -erroff=attrskipunsup,doubunder,reftotemp,inllargeuse -compat=5"
+
+  if test "$ac_warn_fail" = "yes"
+  then
+    W_FAIL="-errwarn=%all"
+  fi
+
+  CC_WARNINGS="-v -xc99=all -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder,reftotemp,inllargeuse -compat=5"
   #CC_WARNINGS="-v -xc99=all -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR"
   #CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder -compat=5"
   PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse"
