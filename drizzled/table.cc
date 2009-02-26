@@ -747,6 +747,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       stored_columns_reclength+= field_pack_length[fieldnr];
   }
 
+  /* data_offset added to stored_rec_length later */
   share->stored_rec_length= stored_columns_reclength;
 
   /* fix up offsets for non-stored fields (at end of record) */
@@ -783,6 +784,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
 
   share->reclength+= data_offset;
+  share->stored_rec_length+= data_offset;
 
   ulong rec_buff_length;
 
