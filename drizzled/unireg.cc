@@ -797,11 +797,10 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
       idxpart= idx->add_index_part();
 
-      idxpart->set_fieldnr(key_info[i].key_part[j].fieldnr+1);
+      idxpart->set_fieldnr(key_info[i].key_part[j].fieldnr);
 
       idxpart->set_compare_length(key_info[i].key_part[j].length);
 
-      idxpart->set_offset(key_info[i].key_part[j].offset);
       idxpart->set_key_type(key_info[i].key_part[j].key_type);
 
     }

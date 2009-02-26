@@ -584,9 +584,8 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       *rec_per_key++=0;
 
       key_part->field= NULL;
-      key_part->fieldnr= part.fieldnr();
+      key_part->fieldnr= part.fieldnr() + 1; // start from 1.
       key_part->null_bit= 0;
-      /* key_part->offset= ASS ASS ASS. Set later in the frm code */
       /* key_part->null_offset is only set if null_bit (see later) */
       /* key_part->key_type= */ /* I *THINK* this may be okay.... */
       /* key_part->type ???? */
@@ -598,7 +597,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
       key_part->store_length= key_part->length;
 
-      key_part->offset= part.offset();
+      /* key_part->offset is set later */
       key_part->key_type= part.key_type();
 
     }
@@ -782,21 +781,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     null_bits++;
   ulong data_offset= (null_bits + 7)/8;
 
-  keyinfo= share->key_info;
-  for (unsigned int keynr=0; keynr < share->keys; keynr++, keyinfo++)
-  {
-    key_part= keyinfo->key_part;
-
-    for(unsigned int partnr= 0;
-	partnr < keyinfo->key_parts;
-	partnr++, key_part++)
-    {
-      /* Fix up key_part->offset by adding data_offset.
-	 We really should compute offset as well.
-	 But at least this way we are a little better. */
-      key_part->offset+= data_offset;
-    }
-  }
 
   share->reclength+= data_offset;
 
@@ -1128,6 +1112,22 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     if(!f->is_stored)
     {
       share->stored_fields--;
+    }
+  }
+
+  keyinfo= share->key_info;
+  for (unsigned int keynr=0; keynr < share->keys; keynr++, keyinfo++)
+  {
+    key_part= keyinfo->key_part;
+
+    for(unsigned int partnr= 0;
+	partnr < keyinfo->key_parts;
+	partnr++, key_part++)
+    {
+      /* Fix up key_part->offset by adding data_offset.
+	 We really should compute offset as well.
+	 But at least this way we are a little better. */
+      key_part->offset= field_offsets[key_part->fieldnr-1] + data_offset;
     }
   }
 
