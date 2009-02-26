@@ -417,14 +417,46 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     share->db_plugin= ha_resolve_by_name(session, &engine_name);
   }
 
-  // share->db_create_options FAIL
-  // share->db_options_in_use FAIL
   share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
 
   drizzle::Table::TableOptions table_options;
 
   if(table.has_options())
     table_options= table.options();
+
+  uint32_t db_create_options= HA_OPTION_LONG_BLOB_PTR;
+
+  if(table_options.has_pack_keys())
+  {
+    if(table_options.pack_keys())
+      db_create_options|= HA_OPTION_PACK_KEYS;
+    else
+      db_create_options|= HA_OPTION_NO_PACK_KEYS;
+  }
+
+  if(table_options.pack_record())
+    db_create_options|= HA_OPTION_PACK_RECORD;
+
+  if(table_options.has_checksum())
+  {
+    if(table_options.checksum())
+      db_create_options|= HA_OPTION_CHECKSUM;
+    else
+      db_create_options|= HA_OPTION_NO_CHECKSUM;
+  }
+
+  if(table_options.has_delay_key_write())
+  {
+    if(table_options.delay_key_write())
+      db_create_options|= HA_OPTION_DELAY_KEY_WRITE;
+    else
+      db_create_options|= HA_OPTION_NO_DELAY_KEY_WRITE;
+  }
+
+
+  share->db_create_options= db_create_options;
+  share->db_options_in_use= share->db_create_options;
+
 
   share->avg_row_length= table_options.has_avg_row_length() ?
     table_options.avg_row_length() : 0;
@@ -1488,7 +1520,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   int error, errarg= 0;
   uint32_t new_frm_ver, field_pack_length, new_field_pack_flag;
   uint32_t interval_count, interval_parts, read_length, int_length;
-  uint32_t db_create_options, keys, key_parts, n_length;
+  uint32_t keys, key_parts, n_length;
   uint32_t key_info_length, com_length;
   uint32_t vcol_screen_length;
   uint32_t i,j;
@@ -1519,8 +1551,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   if (my_read(file,forminfo,288,MYF(MY_NABP)))
     goto err;
 
-  share->db_create_options= db_create_options= uint2korr(head+30);
-  share->db_options_in_use= share->db_create_options;
+  assert(share->db_create_options==uint2korr(head+30));
 
   error=4;
 
