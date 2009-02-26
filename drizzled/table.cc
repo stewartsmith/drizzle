@@ -767,8 +767,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       drizzle::Table::Field::VirtualFieldOptions field_options=
 	pfield.virtual_options();
 
-      drizzle_field_type=proto_field_type_to_drizzle_type(field_options.type());
-
       field_is_stored= field_options.physically_stored();
     }
 
