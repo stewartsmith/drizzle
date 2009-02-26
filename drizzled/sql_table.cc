@@ -4018,7 +4018,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
     */
   Field **f_ptr,*field;
   for (f_ptr=table->field ; (field= *f_ptr) ; f_ptr++)
-    {
+  {
     /* Check if field should be dropped */
     Alter_drop *drop;
     drop_it.rewind();
@@ -4026,19 +4026,19 @@ mysql_prepare_alter_table(Session *session, Table *table,
     {
       if (drop->type == Alter_drop::COLUMN &&
 	  !my_strcasecmp(system_charset_info,field->field_name, drop->name))
-    {
+      {
 	/* Reset auto_increment value if it was dropped */
 	if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
 	    !(used_fields & HA_CREATE_USED_AUTO))
-      {
+	{
 	  create_info->auto_increment_value=0;
 	  create_info->used_fields|=HA_CREATE_USED_AUTO;
-      }
+	}
 	break;
+      }
     }
-  }
     if (drop)
-      {
+    {
       drop_it.remove();
       continue;
     }
@@ -4061,13 +4061,13 @@ mysql_prepare_alter_table(Session *session, Table *table,
         goto err;
       }
       if (!def->after)
-	{
+      {
 	new_create_list.push_back(def);
 	def_it.remove();
-	}
       }
-      else
-      {
+    }
+    else
+    {
       /*
         This field was not dropped and not changed, add it to the list
         for the new table.
@@ -4077,12 +4077,12 @@ mysql_prepare_alter_table(Session *session, Table *table,
       alter_it.rewind();			// Change default if ALTER
       Alter_column *alter;
       while ((alter=alter_it++))
-        {
+      {
 	if (!my_strcasecmp(system_charset_info,field->field_name, alter->name))
 	  break;
-        }
+      }
       if (alter)
-	{
+      {
 	if (def->sql_type == DRIZZLE_TYPE_BLOB)
 	{
 	  my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
@@ -4104,21 +4104,21 @@ mysql_prepare_alter_table(Session *session, Table *table,
       my_error(ER_BAD_FIELD_ERROR, MYF(0), def->change, table->s->table_name.str);
       goto err;
     }
-      /*
+    /*
       Check that the DATE/DATETIME not null field we are going to add is
       either has a default value or the '0000-00-00' is allowed by the
       set sql mode.
       If the '0000-00-00' value isn't allowed then raise the error_if_not_empty
       flag to allow ALTER Table only if the table to be altered is empty.
-      */
+    */
     if ((def->sql_type == DRIZZLE_TYPE_DATE ||
          def->sql_type == DRIZZLE_TYPE_DATETIME) &&
-         !alter_info->datetime_field &&
-         !(~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
-         session->variables.sql_mode & MODE_NO_ZERO_DATE)
+	!alter_info->datetime_field &&
+	!(~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
+	session->variables.sql_mode & MODE_NO_ZERO_DATE)
     {
-        alter_info->datetime_field= def;
-        alter_info->error_if_not_empty= true;
+      alter_info->datetime_field= def;
+      alter_info->error_if_not_empty= true;
     }
     if (!def->after)
       new_create_list.push_back(def);
@@ -4132,12 +4132,12 @@ mysql_prepare_alter_table(Session *session, Table *table,
       {
 	if (!my_strcasecmp(system_charset_info,def->after, find->field_name))
 	  break;
-  }
+      }
       if (!find)
-  {
+      {
 	my_error(ER_BAD_FIELD_ERROR, MYF(0), def->after, table->s->table_name.str);
-    goto err;
-  }
+	goto err;
+      }
       find_it.after(def);			// Put element after this
       /*
         XXX: hack for Bug#28427.
@@ -4162,32 +4162,32 @@ mysql_prepare_alter_table(Session *session, Table *table,
     my_error(ER_BAD_FIELD_ERROR, MYF(0),
              alter_info->alter_list.head()->name, table->s->table_name.str);
     goto err;
-    }
+  }
   if (!new_create_list.elements)
-    {
+  {
     my_message(ER_CANT_REMOVE_ALL_FIELDS, ER(ER_CANT_REMOVE_ALL_FIELDS),
                MYF(0));
     goto err;
-    }
+  }
 
-    /*
+  /*
     Collect all keys which isn't in drop list. Add only those
     for which some fields exists.
-    */
+  */
 
   for (uint32_t i=0 ; i < table->s->keys ; i++,key_info++)
-    {
+  {
     char *key_name= key_info->name;
     Alter_drop *drop;
     drop_it.rewind();
     while ((drop=drop_it++))
-      {
+    {
       if (drop->type == Alter_drop::KEY &&
 	  !my_strcasecmp(system_charset_info,key_name, drop->name))
 	break;
-      }
+    }
     if (drop)
-        {
+    {
       drop_it.remove();
       continue;
     }
@@ -4202,9 +4202,9 @@ mysql_prepare_alter_table(Session *session, Table *table,
       Create_field *cfield;
       field_it.rewind();
       while ((cfield=field_it++))
-    {
+      {
 	if (cfield->change)
-    {
+	{
 	  if (!my_strcasecmp(system_charset_info, key_part_name,
 			     cfield->change))
 	    break;

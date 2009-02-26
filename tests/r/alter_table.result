@@ -393,7 +393,7 @@ flush tables;
 alter table t1 modify a varchar(10) not null;
 drop table if exists t1;
 create table t1 (a int, b int, c int, d int, e int, f int, g int, h int,i int, primary key (a,b,c,d,e,f,g,i,h)) engine=MyISAM;
-insert into t1 (a) values(1);
+insert into t1 (a,b,c,d,e,f,g,h,i) values(1,1,1,1,1,1,1,1,1);
 show table status like 't1';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 t1	MyISAM	X	Fixed	1	37	X	X	X	X	X	X	X	X	utf8_general_ci	NULL		

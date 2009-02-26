@@ -645,7 +645,7 @@ a	a	b
 1	1	3
 DROP TABLE t1;
 End of 5.0 tests
-CREATE TABLE t1(a INT, b INT, c INT, d INT, e INT,
+CREATE TABLE t1(a INT, b INT, c INT, d INT DEFAULT 0, e INT DEFAULT 0,
 PRIMARY KEY(a,b,c,d,e),
 KEY(a,b,d,c)
 );

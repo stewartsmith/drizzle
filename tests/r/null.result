@@ -184,7 +184,7 @@ t1	CREATE TABLE `t1` (
   `c00` varbinary(0) DEFAULT NULL,
   `c01` varchar(6) DEFAULT NULL,
   `c02` varchar(6) DEFAULT NULL,
-  `c03` varchar(6) NOT NULL DEFAULT '',
+  `c03` varchar(6) NOT NULL,
   `c04` varchar(6) DEFAULT NULL,
   `c05` varchar(6) DEFAULT NULL,
   `c06` varchar(6) DEFAULT NULL,
