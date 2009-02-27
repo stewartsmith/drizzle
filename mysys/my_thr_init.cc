@@ -144,7 +144,6 @@ void my_thread_global_end(void)
                                       &abstime);
     if (error == ETIMEDOUT || error == ETIME)
     {
-#ifdef HAVE_PTHREAD_KILL
       /*
         We shouldn't give an error here, because if we don't have
         pthread_kill(), programs like mysqld can't ensure that all threads
@@ -154,7 +153,6 @@ void my_thread_global_end(void)
         fprintf(stderr,
                 "Error in my_thread_global_end(): %d threads didn't exit\n",
                 THR_thread_count);
-#endif
       all_threads_killed= 0;
       break;
     }
