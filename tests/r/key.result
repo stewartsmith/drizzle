@@ -397,8 +397,8 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `c1` int DEFAULT NULL,
-  `c2` varchar(12) NOT NULL DEFAULT '',
-  `c3` varchar(123) NOT NULL DEFAULT '',
+  `c2` varchar(12) NOT NULL,
+  `c3` varchar(123) NOT NULL,
   `c4` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`c2`,`c3`),
   UNIQUE KEY `i4` (`c4`),
@@ -429,9 +429,9 @@ ERROR 42000: Can't DROP 'PRIMARY'; check that column/key exists
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int NOT NULL DEFAULT '0',
-  `c2` varchar(12) NOT NULL DEFAULT '',
-  `c3` varchar(123) NOT NULL DEFAULT '',
+  `c1` int NOT NULL,
+  `c2` varchar(12) NOT NULL,
+  `c3` varchar(123) NOT NULL,
   `c4` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY `i1` (`c1`),
   KEY `i5` (`c1`,`c2`,`c3`,`c4`),

@@ -168,8 +168,6 @@ inline void setup_fpu()
 
 } /* cplusplus */
 
-#define DRIZZLE_KILL_SIGNAL SIGTERM
-
 #include <mysys/my_pthread.h>			// For thr_setconcurency()
 
 #include <drizzled/gettext.h>
@@ -237,7 +235,7 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 /* static variables */
 
 /* the default log output is log tables */
-static bool volatile select_thread_in_use, signal_thread_in_use;
+static bool volatile select_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
 static uint32_t wake_thread;
@@ -303,7 +301,7 @@ uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
 uint64_t session_startup_options;
 uint32_t back_log;
-uint64_t connect_timeout;
+uint32_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
@@ -434,11 +432,11 @@ char *opt_logname;
 
 /* Static variables */
 
-static bool kill_in_progress, segfaulted;
+static bool segfaulted;
 #ifdef HAVE_STACK_TRACE_ON_SEGV
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-static int cleanup_done;
+int cleanup_done;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
 static char **defaults_argv;
@@ -476,11 +474,8 @@ static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
 static void clean_up(bool print_message);
 
 static void usage(void);
-static void start_signal_handler(void);
 static void close_server_sock();
 static void clean_up_mutexes(void);
-static void wait_for_signal_thread_to_end(void);
-static void create_pid_file();
 static void drizzled_exit(int exit_code) __attribute__((noreturn));
 extern "C" bool safe_read_error_impl(NET *net);
 
@@ -488,11 +483,8 @@ extern "C" bool safe_read_error_impl(NET *net);
 ** Code to end drizzled
 ****************************************************************************/
 
-static void close_connections(void)
+void close_connections(void)
 {
-#ifdef EXTRA_DEBUG
-  int count=0;
-#endif
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -510,10 +502,6 @@ static void close_connections(void)
       if (error != EINTR)
 	break;
     }
-#ifdef EXTRA_DEBUG
-    if (error != 0 && !count++)
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d from pthread_cond_timedwait"),error);
-#endif
     close_server_sock();
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -622,51 +610,6 @@ static void close_server_sock()
 }
 
 
-
-/**
-  Force server down. Kill all connections and threads and exit.
-
-  @param  sig_ptr       Signal number that caused kill_server to be called.
-
-  @note
-    A signal number of 0 mean that the function was not called
-    from a signal handler and there is thus no signal to block
-    or stop, we just want to kill the server.
-*/
-
-static void *kill_server(void *sig_ptr)
-#define RETURN_FROM_KILL_SERVER return(0)
-{
-  int sig=(int) (long) sig_ptr;			// This is passed a int
-  // if there is a signal during the kill in progress, ignore the other
-  if (kill_in_progress)				// Safety
-    RETURN_FROM_KILL_SERVER;
-  kill_in_progress=true;
-  abort_loop=1;					// This should be set
-  if (sig != 0) // 0 is not a valid signal number
-    my_sigset(sig, SIG_IGN);                    /* purify inspected */
-  if (sig == DRIZZLE_KILL_SIGNAL || sig == 0)
-    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),my_progname);
-  else
-    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),my_progname,sig); /* purecov: inspected */
-
-  close_connections();
-  if (sig != DRIZZLE_KILL_SIGNAL &&
-      sig != 0)
-    unireg_abort(1);				/* purecov: inspected */
-  else
-    unireg_end();
-
-  /* purecov: begin deadcode */
-
-  my_thread_end();
-  pthread_exit(0);
-  /* purecov: end */
-
-  RETURN_FROM_KILL_SERVER;
-}
-
-
 extern "C" void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
@@ -707,7 +650,7 @@ void unireg_init()
   @note
     This function never returns.
 */
-void unireg_end(void)
+extern "C" void unireg_end(void)
 {
   clean_up(1);
   my_thread_end();
@@ -733,7 +676,6 @@ extern "C" void unireg_abort(int exit_code)
 
 static void drizzled_exit(int exit_code)
 {
-  wait_for_signal_thread_to_end();
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
   exit(exit_code); /* purecov: inspected */
@@ -791,26 +733,6 @@ void clean_up(bool print_message)
     killed us
   */
 } /* clean_up */
-
-
-/**
-  This is mainly needed when running with purify, but it's still nice to
-  know that all child threads have died when drizzled exits.
-*/
-static void wait_for_signal_thread_to_end()
-{
-  uint32_t i;
-  /*
-    Wait up to 10 seconds for signal thread to die. We use this mainly to
-    avoid getting warnings that my_thread_end has not been called
-  */
-  for (i= 0 ; i < 100 && signal_thread_in_use; i++)
-  {
-    if (pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL) != ESRCH)
-      break;
-    usleep(100);				// Give it time to die
-  }
-}
 
 
 static void clean_up_mutexes()
@@ -1401,142 +1323,6 @@ static void init_signals(void)
   return;;
 }
 
-
-static void start_signal_handler(void)
-{
-  int error;
-  pthread_attr_t thr_attr;
-
-  (void) pthread_attr_init(&thr_attr);
-  pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
-  (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
-  {
-    struct sched_param tmp_sched_param;
-
-    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-    tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
-    (void)pthread_attr_setschedparam(&thr_attr, &tmp_sched_param);
-  }
-#if defined(__ia64__) || defined(__ia64)
-  /*
-    Peculiar things with ia64 platforms - it seems we only have half the
-    stack size in reality, so we have to double it here
-  */
-  pthread_attr_setstacksize(&thr_attr,my_thread_stack_size*2);
-#endif
-  pthread_attr_setstacksize(&thr_attr,my_thread_stack_size);
-
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  if ((error=pthread_create(&signal_thread,&thr_attr,signal_hand,0)))
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create interrupt-thread (error %d, errno: %d)"),
-                    error,errno);
-    exit(1);
-  }
-  (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-  pthread_mutex_unlock(&LOCK_thread_count);
-
-  (void) pthread_attr_destroy(&thr_attr);
-  return;;
-}
-
-
-/** This threads handles all signals and alarms. */
-/* ARGSUSED */
-pthread_handler_t signal_hand(void *)
-{
-  sigset_t set;
-  int sig;
-  my_thread_init();				// Init new thread
-  signal_thread_in_use= 1;
-
-  if (thd_lib_detected != THD_LIB_LT && (test_flags & TEST_SIGINT))
-  {
-    (void) sigemptyset(&set);			// Setup up SIGINT for debug
-    (void) sigaddset(&set,SIGINT);		// For debugging
-    (void) pthread_sigmask(SIG_UNBLOCK,&set,NULL);
-  }
-  (void) sigemptyset(&set);			// Setup up SIGINT for debug
-#ifndef IGNORE_SIGHUP_SIGQUIT
-  (void) sigaddset(&set,SIGQUIT);
-  (void) sigaddset(&set,SIGHUP);
-#endif
-  (void) sigaddset(&set,SIGTERM);
-  (void) sigaddset(&set,SIGTSTP);
-
-  /* Save pid to this process (or thread on Linux) */
-  create_pid_file();
-
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-  if (opt_do_pstack)
-  {
-    sprintf(pstack_file_name,"drizzled-%lu-%%d-%%d.backtrace", (uint32_t)getpid());
-    pstack_install_segv_action(pstack_file_name);
-  }
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
-
-  /*
-    signal to start_signal_handler that we are ready
-    This works by waiting for start_signal_handler to free mutex,
-    after which we signal it that we are ready.
-    At this pointer there is no other threads running, so there
-    should not be any other pthread_cond_signal() calls.
-
-    We call lock/unlock to out wait any thread/session which is
-    dieing. Since only comes from this code, this should be safe.
-    (Asked MontyW over the phone about this.) -Brian
-
-  */
-  if (pthread_mutex_lock(&LOCK_thread_count) == 0)
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
-  (void) pthread_cond_broadcast(&COND_thread_count);
-
-  (void) pthread_sigmask(SIG_BLOCK,&set,NULL);
-  for (;;)
-  {
-    int error;					// Used when debugging
-    if (shutdown_in_progress && !abort_loop)
-    {
-      sig= SIGTERM;
-      error=0;
-    }
-    else
-      while ((error= sigwait(&set,&sig)) == EINTR) ;
-    if (cleanup_done)
-    {
-      my_thread_end();
-      signal_thread_in_use= 0;
-      pthread_exit(0);				// Safety
-    }
-    switch (sig) {
-    case SIGTERM:
-    case SIGQUIT:
-    case SIGKILL:
-      /* switch to the old log message processing */
-      if (!abort_loop)
-      {
-	abort_loop=1;				// mark abort for threads
-        kill_server((void*) sig);	// MIT THREAD has a alarm thread
-      }
-      break;
-    case SIGHUP:
-      if (!abort_loop)
-      {
-        bool not_used;
-        reload_cache((Session*) 0,
-                     (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST |
-                      REFRESH_HOSTS),
-                     (TableList*) 0, &not_used); // Flush logs
-      }
-      break;
-    default:
-      break;					/* purecov: tested */
-    }
-  }
-
-  return 0;
-}
-
 static void check_data_home(const char *)
 {}
 
@@ -1910,7 +1696,9 @@ static int init_server_components()
   if (table_cache_init() | table_def_init())
     unireg_abort(1);
 
-  drizzleclient_drizzleclient_randominit(&sql_rand,(uint32_t) server_start_time,(uint32_t) server_start_time/2);
+  drizzleclient_randominit(&sql_rand,
+                           (uint64_t) server_start_time,
+                           (uint64_t) server_start_time/2);
   setup_fpu();
   init_thr_lock();
 
@@ -2081,7 +1869,7 @@ int main(int argc, char **argv)
 
   init_signals();
 
-  pthread_attr_setstacksize(&connection_attrib,my_thread_stack_size);
+  pthread_attr_setstacksize(&connection_attrib, my_thread_stack_size);
 
 #ifdef HAVE_PTHREAD_ATTR_GETSTACKSIZE
   {
@@ -2144,13 +1932,12 @@ int main(int argc, char **argv)
     After this we can't quit by a simple unireg_abort
   */
   error_handler_hook= my_message_sql;
-  start_signal_handler();				// Creates pidfile
 
   if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop=1;
     select_thread_in_use=0;
-    (void) pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL);
+    (void) pthread_kill(signal_thread, SIGTERM);
 
     (void) my_delete(pidfile_name,MYF(MY_WME));	// Not needed anymore
 
@@ -2173,16 +1960,10 @@ int main(int argc, char **argv)
   /* (void) pthread_attr_destroy(&connection_attrib); */
 
 
-#ifdef EXTRA_DEBUG2
-  errmsg_printf(ERRMSG_LVL_ERROR, _("Before Lock_thread_count"));
-#endif
   (void) pthread_mutex_lock(&LOCK_thread_count);
   select_thread_in_use=0;			// For close_connections
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
-#ifdef EXTRA_DEBUG2
-  errmsg_printf(ERRMSG_LVL_ERROR, _("After lock_thread_count"));
-#endif
 
   /* Wait until cleanup is done */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -2249,22 +2030,6 @@ static void create_new_thread(Session *session)
 }
 
 
-#ifdef SIGNALS_DONT_BREAK_READ
-inline void kill_broken_server()
-{
-  /* hack to get around signals ignored in syscalls for problem OS's */
-  if ((ip_sock == -1))
-  {
-    select_thread_in_use = 0;
-    /* The following call will never return */
-    kill_server((void*) DRIZZLE_KILL_SIGNAL);
-  }
-}
-#define MAYBE_BROKEN_SYSCALL kill_broken_server();
-#else
-#define MAYBE_BROKEN_SYSCALL
-#endif
-
 	/* Handle new connections and spawn new process to handle them */
 
 void handle_connections_sockets()
@@ -2275,7 +2040,6 @@ void handle_connections_sockets()
   Session *session;
   struct sockaddr_storage cAddr;
 
-  MAYBE_BROKEN_SYSCALL;
   while (!abort_loop)
   {
     int number_of;
@@ -2288,7 +2052,6 @@ void handle_connections_sockets()
                 errmsg_printf(ERRMSG_LVL_ERROR, _("drizzled: Got error %d from select"),
                           errno); /* purecov: inspected */
       }
-      MAYBE_BROKEN_SYSCALL
       continue;
     }
     if (number_of == 0)
@@ -2300,7 +2063,6 @@ void handle_connections_sockets()
 
     if (abort_loop)
     {
-      MAYBE_BROKEN_SYSCALL;
       break;
     }
 
@@ -2328,7 +2090,6 @@ void handle_connections_sockets()
     {
       if ((error_count++ & 255) == 0)		// This can happen often
         sql_perror("Error in accept");
-      MAYBE_BROKEN_SYSCALL;
       if (errno == ENFILE || errno == EMFILE)
         sleep(1);				// Give other threads some time
       continue;
@@ -2708,7 +2469,7 @@ struct my_option my_long_options[] =
     N_("The number of seconds the drizzled server is waiting for a connect "
        "packet before responding with 'Bad handshake'."),
     (char**) &connect_timeout, (char**) &connect_timeout,
-    0, GET_ULL, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
+    0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "date_format", OPT_DATE_FORMAT,
     N_("The DATE format (For future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
@@ -3191,7 +2952,7 @@ static void drizzle_init_variables(void)
   opt_logname= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
-  segfaulted= kill_in_progress= 0;
+  segfaulted= 0;
   cleanup_done= 0;
   defaults_argc= 0;
   defaults_argv= 0;
@@ -3201,7 +2962,7 @@ static void drizzle_init_variables(void)
   slave_open_temp_tables= 0;
   opt_endinfo= using_udf_functions= 0;
   opt_using_transactions= false;
-  abort_loop= select_thread_in_use= signal_thread_in_use= 0;
+  abort_loop= select_thread_in_use= 0;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
@@ -3762,29 +3523,6 @@ skip: ;
   return(found);
 } /* find_bit_type */
 
-
-/**
-  Create file to store pid number.
-*/
-static void create_pid_file()
-{
-  File file;
-  if ((file = my_create(pidfile_name,0664,
-			O_WRONLY | O_TRUNC, MYF(MY_WME))) >= 0)
-  {
-    char buff[21], *end;
-    end= int10_to_str((long) getpid(), buff, 10);
-    *end++= '\n';
-    if (!my_write(file, (unsigned char*) buff, (uint32_t) (end-buff), MYF(MY_WME | MY_NABP)))
-    {
-      (void) my_close(file, MYF(0));
-      return;
-    }
-    (void) my_close(file, MYF(0));
-  }
-  sql_perror("Can't start server: can't create PID file");
-  exit(1);
-}
 
 bool safe_read_error_impl(NET *net)
 {

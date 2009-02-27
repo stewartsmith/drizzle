@@ -921,7 +921,7 @@ drop table t1;
 CREATE TABLE `t1` (
 `mot` varchar(30) NOT NULL default '',
 `topic` bigint NOT NULL default '0',
-`date` date NULL,
+`date` date NULL DEFAULT '2009-01-20',
 `pseudo` varchar(35) NOT NULL default '',
 PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
 KEY `pseudo` (`pseudo`,`date`,`topic`),
@@ -930,7 +930,7 @@ KEY `topic` (`topic`)
 CREATE TABLE `t2` (
 `mot` varchar(30) NOT NULL default '',
 `topic` bigint NOT NULL default '0',
-`date` date NULL,
+`date` date NULL default '1997-08-29',
 `pseudo` varchar(35) NOT NULL default '',
 PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
 KEY `pseudo` (`pseudo`,`date`,`topic`),
@@ -951,13 +951,13 @@ topic
 2
 select * from t1;
 mot	topic	date	pseudo
-joce	1	0000-00-00	joce
-test	2	0000-00-00	test
+joce	1	2009-01-20	joce
+test	2	2009-01-20	test
 DELETE FROM t1 WHERE topic IN (SELECT DISTINCT topic FROM t2 WHERE NOT
 EXISTS(SELECT * FROM t3 WHERE numeropost=topic));
 select * from t1;
 mot	topic	date	pseudo
-joce	1	0000-00-00	joce
+joce	1	2009-01-20	joce
 drop table t1, t2, t3;
 SELECT * FROM (SELECT 1 as a,(SELECT a)) a;
 a	(SELECT a)
@@ -993,7 +993,7 @@ a
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` bigint NOT NULL DEFAULT '0'
+  `a` bigint NOT NULL
 ) ENGINE=MyISAM
 drop table t1;
 create table t1 (a int) ENGINE=MyISAM;

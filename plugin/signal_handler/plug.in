@@ -1,0 +1,3 @@
+DRIZZLE_PLUGIN(signal_handler,  [Default Signal Handler])
+DRIZZLE_PLUGIN_STATIC(signal_handler,   [libsignal_handler.la])
+DRIZZLE_PLUGIN_MANDATORY(signal_handler)  dnl Default

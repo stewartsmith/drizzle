@@ -76,18 +76,17 @@ message Table {
     enum FieldType {
       DOUBLE = 0;
       VARCHAR = 1;
-      TEXT = 2;
-      BLOB = 3;
-      ENUM = 4;
-      INTEGER = 5;
-      BIGINT = 6;
-      DECIMAL = 7;
-      DATE = 8;
-      TIME = 9;
-      TIMESTAMP = 10;
-      DATETIME = 11;
-      TINYINT = 12;
-      VIRTUAL = 13;
+      BLOB = 2;
+      ENUM = 3;
+      INTEGER = 4;
+      BIGINT = 5;
+      DECIMAL = 6;
+      DATE = 7;
+      TIME = 8;
+      TIMESTAMP = 9;
+      DATETIME = 10;
+      TINYINT = 11;
+      VIRTUAL = 12;
     }
 
     enum FieldFormatType {
@@ -99,6 +98,10 @@ message Table {
     message FieldOptions {
       optional string default_value = 1;
       optional string update_value = 2;
+      optional bool default_null = 3 [default = false];
+      optional bytes default_bin_value = 4;
+
+      optional int32 length = 100; /* TODO: should go away */
     }
 
     message TimestampFieldOptions {
@@ -127,7 +130,9 @@ message Table {
 
     message SetFieldOptions {
       required int32 count_elements = 1;
-      repeated string field_value = 2;
+      optional uint32 collation_id = 2;
+      optional string collation = 3;
+      repeated string field_value = 4;
     }
 
     message VirtualFieldOptions {
@@ -149,6 +154,8 @@ message Table {
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
     optional SetFieldOptions set_options = 17;
     optional TimestampFieldOptions timestamp_options = 18;
+
+    optional uint32 pack_flag = 100; /* MUST DIE */
   }
 
   message Index {
@@ -166,6 +173,8 @@ message Table {
       required uint32 fieldnr = 1;
       optional int32 compare_length = 2;
       optional bool in_reverse_order = 3 [default = false];
+
+      optional uint32 key_type = 101; /* THIS MUST DIE. Along with pack_flag*/
     }
 
     message IndexOptions {

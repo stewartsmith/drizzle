@@ -37,6 +37,8 @@ typedef struct st_key_cache KEY_CACHE;
 
 struct Session_TRANS
 {
+  Session_TRANS() {};
+
   /* true is not all entries in the ht[] support 2pc */
   bool        no_2pc;
   /* storage engines that registered in this transaction */

@@ -190,14 +190,14 @@ drop table t2;
 create table t2 (primary key (auto)) select auto+1 as auto,1 as t1, 'a' as t2, repeat('a',256) as t3, binary repeat('b',256) as t4, repeat('a',4096) as t5, binary repeat('b',4096) as t6, '' as t7, binary '' as t8 from t1;
 show full columns from t2;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-auto	bigint	NULL	NO	PRI	0		#	
-t1	int	NULL	NO		0		#	
-t2	varchar(1)	utf8_general_ci	NO				#	
+auto	bigint	NULL	NO	PRI	NULL		#	
+t1	int	NULL	NO		NULL		#	
+t2	varchar(1)	utf8_general_ci	NO		NULL		#	
 t3	varchar(256)	utf8_general_ci	YES		NULL		#	
 t4	varbinary(256)	NULL	YES		NULL		#	
 t5	text	utf8_general_ci	YES		NULL		#	
 t6	blob	NULL	YES		NULL		#	
-t7	varchar(0)	utf8_general_ci	NO				#	
+t7	varchar(0)	utf8_general_ci	NO		NULL		#	
 t8	varbinary(0)	NULL	YES		NULL		#	
 select t1,t2,length(t3),length(t4),length(t5),length(t6),t7,t8 from t2;
 t1	t2	length(t3)	length(t4)	length(t5)	length(t6)	t7	t8
@@ -215,7 +215,7 @@ show full columns from t3;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 c1	int	NULL	YES		NULL		#	
 c2	int	NULL	YES		NULL		#	
-const	int	NULL	NO		0		#	
+const	int	NULL	NO		NULL		#	
 drop table t1,t2,t3;
 create table t1 ( myfield INT NOT NULL, UNIQUE INDEX (myfield), unique (myfield), index(myfield));
 drop table t1;

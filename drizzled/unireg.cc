@@ -102,10 +102,12 @@ int drizzle_read_table_proto(const char* path, drizzle::Table* table)
 
   if (!table->ParseFromZeroCopyStream(input))
   {
+    delete input;
     close(fd);
     return -1;
   }
 
+  delete input;
   close(fd);
   return 0;
 }
@@ -141,7 +143,8 @@ bool mysql_create_frm(Session *session, const char *file_name,
   uint32_t reclength, info_length, screens, key_info_length, maxlength, tmp_len;
   ulong key_buff_length;
   File file;
-  ulong filepos, data_offset;
+  off_t filepos;
+  unsigned long data_offset;
   unsigned char fileinfo[64],forminfo[288],*keybuff;
   TYPELIB formnames;
   unsigned char *screen_buff;
@@ -407,6 +410,8 @@ static void fill_table_proto(drizzle::Table *table_proto,
     attribute= table_proto->add_field();
     attribute->set_name(field_arg->field_name);
 
+    attribute->set_pack_flag(field_arg->pack_flag); /* TODO: MUST DIE */
+
     if(f_maybe_null(field_arg->pack_flag))
     {
       drizzle::Table::Field::FieldConstraints *constraints;
@@ -482,13 +487,25 @@ static void fill_table_proto(drizzle::Table *table_proto,
           set_field_options->add_field_value(src);
         }
         set_field_options->set_count_elements(set_field_options->field_value_size());
+	set_field_options->set_collation_id(field_arg->charset->number);
+        set_field_options->set_collation(field_arg->charset->name);
         break;
       }
     case DRIZZLE_TYPE_BLOB:
-      attribute->set_type(drizzle::Table::Field::BLOB);
+      {
+	attribute->set_type(drizzle::Table::Field::BLOB);
+
+        drizzle::Table::Field::StringFieldOptions *string_field_options;
+
+        string_field_options= attribute->mutable_string_options();
+        string_field_options->set_collation_id(field_arg->charset->number);
+        string_field_options->set_collation(field_arg->charset->name);
+      }
+
       break;
     default:
-      abort();
+      assert(0); /* Tell us, since this shouldn't happend */
+      return;
     }
 
     if(field_arg->vcol_info)
@@ -500,7 +517,10 @@ static void fill_table_proto(drizzle::Table *table_proto,
       field_options->set_type(attribute->type());
       attribute->set_type(drizzle::Table::Field::VIRTUAL);
 
-      field_options->set_expression(field_arg->vcol_info->expr_str.str);
+      string expr(field_arg->vcol_info->expr_str.str,
+		  field_arg->vcol_info->expr_str.length);
+
+      field_options->set_expression(expr);
       field_options->set_physically_stored(field_arg->is_stored);
     }
 
@@ -523,7 +543,8 @@ static void fill_table_proto(drizzle::Table *table_proto,
       attribute->set_format(drizzle::Table::Field::DynamicFormat);
       break;
     default:
-      abort();
+      assert(0); /* Tell us, since this shouldn't happend */
+      return;
     }
 
     if (field_arg->comment.length)
@@ -550,6 +571,44 @@ static void fill_table_proto(drizzle::Table *table_proto,
       drizzle::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
       field_options->set_update_value("NOW()");
+    }
+
+    if(field_arg->def)
+    {
+      drizzle::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+
+      if(field_arg->def->is_null())
+      {
+	field_options->set_default_null(true);
+      }
+      else
+      {
+	String d;
+	String *default_value= field_arg->def->val_str(&d);
+
+	if((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
+	    && field_arg->charset==&my_charset_bin)
+	   || (field_arg->sql_type==DRIZZLE_TYPE_BLOB
+	    && field_arg->charset==&my_charset_bin))
+	{
+	  string bin_default;
+	  bin_default.assign(default_value->c_ptr(),
+			     default_value->length());
+	  field_options->set_default_bin_value(bin_default);
+	}
+	else
+	{
+	  field_options->set_default_value(default_value->c_ptr());
+	}
+      }
+    }
+
+    {
+      drizzle::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+
+      field_options->set_length(field_arg->length);
     }
 
     assert(field_arg->unireg_check == Field::NONE
@@ -741,9 +800,12 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
       idxpart= idx->add_index_part();
 
-      idxpart->set_fieldnr(key_info[i].key_part[j].fieldnr+1);
+      idxpart->set_fieldnr(key_info[i].key_part[j].fieldnr);
 
       idxpart->set_compare_length(key_info[i].key_part[j].length);
+
+      idxpart->set_key_type(key_info[i].key_part[j].key_type);
+
     }
   }
 }
@@ -1460,7 +1522,7 @@ static bool make_empty_rec(Session *session, File file,
     /*
       regfield don't have to be deleted as it's allocated with sql_alloc()
     */
-    Field *regfield= make_field(&share,
+    Field *regfield= make_field(&share, NULL,
                                 buff+field->offset + data_offset,
                                 field->length,
                                 null_pos + null_count / 8,

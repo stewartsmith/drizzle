@@ -25,6 +25,7 @@
 class Item_func_hello_world : public Item_str_func
 {
 public:
+  Item_func_hello_world() : Item_str_func() {}
   const char *func_name() const { return "hello_world"; }
   String *val_str(String* s) {
     s->set(STRING_WITH_LEN("Hello World!"),system_charset_info);

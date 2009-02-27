@@ -27,6 +27,12 @@ class Field_enum :public Field_str {
 protected:
   uint32_t packlength;
 public:
+
+  using Field::store;
+  using Field::val_int;
+  using Field::val_str;
+  using Field::cmp;
+
   TYPELIB *typelib;
   Field_enum(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,

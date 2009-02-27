@@ -23,7 +23,16 @@ using namespace google::protobuf::io;
 void print_field(const ::drizzle::Table::Field &field)
 {
   cout << "\t`" << field.name() << "`";
-  switch (field.type())
+
+  Table::Field::FieldType field_type= field.type();
+
+  if(field_type==Table::Field::VIRTUAL)
+  {
+    cout << " VIRTUAL"; // FIXME
+    field_type= field.virtual_options().type();
+  }
+
+  switch (field_type)
   {
     case Table::Field::DOUBLE:
     cout << " DOUBLE ";
@@ -31,11 +40,10 @@ void print_field(const ::drizzle::Table::Field &field)
   case Table::Field::VARCHAR:
     cout << " VARCHAR(" << field.string_options().length() << ")";
     break;
-  case Table::Field::TEXT:
-    cout << " TEXT ";
-    break;
   case Table::Field::BLOB:
-    cout << " BLOB ";
+    cout << " BLOB "; /* FIXME: or text, depends on collation */
+    if(field.string_options().has_collation_id())
+      cout << "COLLATION=" << field.string_options().collation_id() << " ";
     break;
   case Table::Field::ENUM:
     {
@@ -78,8 +86,14 @@ void print_field(const ::drizzle::Table::Field &field)
     cout << " DATETIME ";
     break;
   case Table::Field::VIRTUAL:
-    cout << " VIRTUAL"; // FIXME
-    break;
+    abort(); // handled above.
+  }
+
+  if(field.type()==Table::Field::VIRTUAL)
+  {
+    cout << " AS (" << field.virtual_options().expression() << ") ";
+    if(field.virtual_options().physically_stored())
+      cout << " STORED ";
   }
 
   if (field.type() == Table::Field::INTEGER
@@ -100,7 +114,7 @@ void print_field(const ::drizzle::Table::Field &field)
 	 && field.constraints().is_nullable()))
     cout << " NOT NULL ";
 
-  if (field.type() == Table::Field::TEXT
+  if (field.type() == Table::Field::BLOB
       || field.type() == Table::Field::VARCHAR)
   {
     if (field.string_options().has_collation())
@@ -109,6 +123,16 @@ void print_field(const ::drizzle::Table::Field &field)
 
   if (field.options().has_default_value())
     cout << " DEFAULT `" << field.options().default_value() << "` " ;
+
+  if (field.options().has_default_bin_value())
+  {
+    string v= field.options().default_bin_value();
+    cout << " DEFAULT 0x";
+    for(unsigned int i=0; i< v.length(); i++)
+    {
+      printf("%.2x", *(v.c_str()+i));
+    }
+  }
 
   if (field.type() == Table::Field::TIMESTAMP)
     if (field.timestamp_options().has_auto_updates()

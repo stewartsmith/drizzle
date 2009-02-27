@@ -25,6 +25,12 @@
 
 class Field_time :public Field_str {
 public:
+
+  using Field::val_int;
+  using Field::val_str;
+  using Field::cmp;
+  using Field::store;
+
   Field_time(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     const CHARSET_INFO * const cs)
