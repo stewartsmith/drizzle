@@ -175,7 +175,7 @@ void gregorian_date_from_julian_day_number(int64_t julian_day
   int64_t d = da - (m + 4) * 153 / 5 + 122;
   int64_t Y = y - 4800 + (m + 2) / 12;
   int64_t M = (m + 2) % 12 + 1;
-  int64_t D = d + 1.5;
+  int64_t D = (int64_t)((double)d + 1.5);
 
   /* Push out parameters */
   *year_out= (uint32_t) Y;
