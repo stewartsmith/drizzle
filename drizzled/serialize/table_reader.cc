@@ -207,20 +207,43 @@ void print_table_options(const ::drizzle::Table::TableOptions &options)
   if (options.has_row_type())
     cout << " ROW_TYPE = " << options.row_type() << endl;
 
-/*    optional string data_file_name = 5;
-    optional string index_file_name = 6;
-    optional uint64 max_rows = 7;
-    optional uint64 min_rows = 8;
-    optional uint64 auto_increment_value = 9;
-    optional uint32 avg_row_length = 11;
-    optional uint32 key_block_size = 12;
-    optional uint32 block_size = 13;
-    optional string comment = 14;
-    optional bool pack_keys = 15;
-    optional bool checksum = 16;
-    optional bool page_checksum = 17;
-    optional bool delay_key_write = 18;
-*/
+  if (options.has_data_file_name())
+    cout << " DATA_FILE_NAME = '" << options.data_file_name() << "'" << endl;
+
+  if (options.has_index_file_name())
+    cout << " INDEX_FILE_NAME = '" << options.index_file_name() << "'" << endl;
+
+  if (options.has_max_rows())
+    cout << " MAX_ROWS = " << options.max_rows() << endl;
+
+  if (options.has_min_rows())
+    cout << " MIN_ROWS = " << options.min_rows() << endl;
+
+  if (options.has_auto_increment_value())
+    cout << " AUTO_INCREMENT = " << options.auto_increment_value() << endl;
+
+  if (options.has_avg_row_length())
+    cout << " AVG_ROW_LENGTH = " << options.avg_row_length() << endl;
+
+  if (options.has_key_block_size())
+    cout << " KEY_BLOCK_SIZE = "  << options.key_block_size() << endl;
+
+  if (options.has_block_size())
+    cout << " BLOCK_SIZE = " << options.block_size() << endl;
+
+  if (options.has_comment())
+    cout << " COMMENT = '" << options.comment() << "'" << endl;
+
+  if (options.has_pack_keys())
+    cout << " PACK_KEYS = " << options.pack_keys() << endl;
+  if (options.has_pack_record())
+    cout << " PACK_RECORD = " << options.pack_record() << endl;
+  if (options.has_checksum())
+    cout << " CHECKSUM = " << options.checksum() << endl;
+  if (options.has_page_checksum())
+    cout << " PAGE_CHECKSUM = " << options.page_checksum() << endl;
+  if (options.has_delay_key_write())
+    cout << " DELAY_KEY_WRITE = " << options.delay_key_write() << endl;
 }
 
 

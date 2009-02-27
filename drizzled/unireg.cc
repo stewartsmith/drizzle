@@ -626,6 +626,10 @@ static void fill_table_proto(drizzle::Table *table_proto,
     else if(create_info->table_options & HA_OPTION_NO_PACK_KEYS)
       table_options->set_pack_keys(false);
   }
+  else
+    if(create_info->table_options & HA_OPTION_PACK_KEYS)
+      table_options->set_pack_keys(true);
+
 
   if (create_info->used_fields & HA_CREATE_USED_CHECKSUM)
   {
@@ -636,6 +640,9 @@ static void fill_table_proto(drizzle::Table *table_proto,
     else
       table_options->set_checksum(false);
   }
+  else if(create_info->table_options & HA_OPTION_CHECKSUM)
+    table_options->set_checksum(true);
+
 
   if (create_info->used_fields & HA_CREATE_USED_PAGE_CHECKSUM)
   {
@@ -644,6 +651,9 @@ static void fill_table_proto(drizzle::Table *table_proto,
     else if (create_info->page_checksum == HA_CHOICE_NO)
       table_options->set_page_checksum(false);
   }
+  else if (create_info->page_checksum == HA_CHOICE_YES)
+    table_options->set_page_checksum(true);
+
 
   if (create_info->used_fields & HA_CREATE_USED_DELAY_KEY_WRITE)
   {
@@ -652,6 +662,9 @@ static void fill_table_proto(drizzle::Table *table_proto,
     else if(create_info->table_options & HA_OPTION_NO_DELAY_KEY_WRITE)
       table_options->set_delay_key_write(false);
   }
+  else if(create_info->table_options & HA_OPTION_DELAY_KEY_WRITE)
+    table_options->set_delay_key_write(true);
+
 
   switch(create_info->row_type)
   {
