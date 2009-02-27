@@ -808,6 +808,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       stored_columns_reclength+= field_pack_length[fieldnr];
     }
   }
+  share->null_fields= null_fields;
 
   ulong null_bits= null_fields;
   if(!table_options.pack_record())
@@ -1718,7 +1719,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   interval_count= uint2korr(forminfo+270);
   interval_parts= uint2korr(forminfo+272);
   int_length= uint2korr(forminfo+274);
-  share->null_fields= uint2korr(forminfo+282);
+  assert(share->null_fields== uint2korr(forminfo+282));
   com_length= uint2korr(forminfo+284);
   vcol_screen_length= uint2korr(forminfo+286);
 //  share->vfields= 0;
