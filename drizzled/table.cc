@@ -1371,9 +1371,27 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     }
   }
 
-err:
-  delete handler_file;
+  share->db_low_byte_first= handler_file->low_byte_first();
+  share->column_bitmap_size= bitmap_buffer_size(share->fields);
 
+  my_bitmap_map *bitmaps;
+
+  if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
+                                             share->column_bitmap_size)))
+    goto err;
+  bitmap_init(&share->all_set, bitmaps, share->fields, false);
+  bitmap_set_all(&share->all_set);
+
+  delete handler_file;
+  return (0);
+
+err:
+  share->error= error;
+  share->open_errno= my_errno;
+  share->errarg= 0;
+  hash_free(&share->name_hash);
+  delete handler_file;
+  open_table_error(share, error, share->open_errno, 0);
   return error;
 }
 
@@ -1574,7 +1592,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   KEY_PART_INFO *key_part;
   Field  **field_ptr;
   const char **interval_array;
-  my_bitmap_map *bitmaps;
   unsigned char *buff= 0;
   unsigned char *field_extra_info= 0;
 
@@ -1815,19 +1832,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     free(disk_buff);
   disk_buff= NULL;
 
-  /*
-    the correct null_bytes can now be set, since bitfields have been taken
-    into account
-  */
-
-  share->db_low_byte_first= handler_file->low_byte_first();
-  share->column_bitmap_size= bitmap_buffer_size(share->fields);
-
-  if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
-                                             share->column_bitmap_size)))
-    goto err;
-  bitmap_init(&share->all_set, bitmaps, share->fields, false);
-  bitmap_set_all(&share->all_set);
 
   delete handler_file;
   if (buff)
