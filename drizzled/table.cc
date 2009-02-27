@@ -411,6 +411,8 @@ Item * default_value_item(enum_field_types field_type,
 
 int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *share)
 {
+  int error= 0;
+
   {
     LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
 			      strlen(table.engine().name().c_str()) };
@@ -1335,9 +1337,44 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   else
     share->primary_key= MAX_KEY;
 
+  if (share->found_next_number_field)
+  {
+    Field *reg_field= *share->found_next_number_field;
+    if ((int) (share->next_number_index= (uint32_t)
+	       find_ref_key(share->key_info, share->keys,
+                            share->default_values, reg_field,
+			    &share->next_number_key_offset,
+                            &share->next_number_keypart)) < 0)
+    {
+      /* Wrong field definition */
+      error= 4;
+      goto err;
+    }
+    else
+      reg_field->flags |= AUTO_INCREMENT_FLAG;
+  }
+
+  if (share->blob_fields)
+  {
+    Field **ptr;
+    uint32_t k, *save;
+
+    /* Store offsets to blob fields to find them fast */
+    if (!(share->blob_field= save=
+	  (uint*) alloc_root(&share->mem_root,
+                             (uint32_t) (share->blob_fields* sizeof(uint32_t)))))
+      goto err;
+    for (k=0, ptr= share->field ; *ptr ; ptr++, k++)
+    {
+      if ((*ptr)->flags & BLOB_FLAG)
+	(*save++)= k;
+    }
+  }
+
+err:
   delete handler_file;
 
-  return 0;
+  return error;
 }
 
 /*
@@ -1535,7 +1572,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   handler *handler_file= 0;
   KEY	*keyinfo;
   KEY_PART_INFO *key_part;
-  Field  **field_ptr, *reg_field;
+  Field  **field_ptr;
   const char **interval_array;
   my_bitmap_map *bitmaps;
   unsigned char *buff= 0;
@@ -1777,40 +1814,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   if (disk_buff)
     free(disk_buff);
   disk_buff= NULL;
-
-  if (share->found_next_number_field)
-  {
-    reg_field= *share->found_next_number_field;
-    if ((int) (share->next_number_index= (uint32_t)
-	       find_ref_key(share->key_info, share->keys,
-                            share->default_values, reg_field,
-			    &share->next_number_key_offset,
-                            &share->next_number_keypart)) < 0)
-    {
-      /* Wrong field definition */
-      error= 4;
-      goto err;
-    }
-    else
-      reg_field->flags |= AUTO_INCREMENT_FLAG;
-  }
-
-  if (share->blob_fields)
-  {
-    Field **ptr;
-    uint32_t k, *save;
-
-    /* Store offsets to blob fields to find them fast */
-    if (!(share->blob_field= save=
-	  (uint*) alloc_root(&share->mem_root,
-                             (uint32_t) (share->blob_fields* sizeof(uint32_t)))))
-      goto err;
-    for (k=0, ptr= share->field ; *ptr ; ptr++, k++)
-    {
-      if ((*ptr)->flags & BLOB_FLAG)
-	(*save++)= k;
-    }
-  }
 
   /*
     the correct null_bytes can now be set, since bitfields have been taken
