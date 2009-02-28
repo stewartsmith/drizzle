@@ -1332,8 +1332,7 @@ void reset_status_vars()
 */
 void free_status_vars()
 {
-  //delete_dynamic(&all_status_vars);
-  // what should I put here?
+  all_status_vars.clear();
 }
 
 /*
