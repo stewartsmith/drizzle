@@ -1249,10 +1249,10 @@ class show_var_cmp_functor
   }
 };
 
-class show_var_if
+class show_var_remove_if
 {
   public:
-  show_var_if() { }
+  show_var_remove_if() { }
   inline bool operator()(SHOW_VAR *curr)
   {
     return (curr->type == SHOW_UNDEF);
@@ -1375,7 +1375,7 @@ void remove_status_vars(SHOW_VAR *list)
     }
     /* removes all the SHOW_UNDEF elements from the vector */
     all_status_vars.erase(remove_if(all_status_vars.begin(),
-                            all_status_vars.end(),show_var_if()),
+                            all_status_vars.end(),show_var_remove_if()),
                             all_status_vars.end());
     pthread_mutex_unlock(&LOCK_status);
   }
@@ -1395,7 +1395,7 @@ void remove_status_vars(SHOW_VAR *list)
     }
     /* removes all the SHOW_UNDEF elements from the vector */
     all_status_vars.erase(remove_if(all_status_vars.begin(),
-                            all_status_vars.end(),show_var_if()),
+                            all_status_vars.end(),show_var_remove_if()),
                             all_status_vars.end());
   }
 }
