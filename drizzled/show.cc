@@ -1231,6 +1231,24 @@ int show_var_cmp(const void *var1, const void *var2)
   return strcmp(((SHOW_VAR*)var1)->name, ((SHOW_VAR*)var2)->name);
 }
 
+class show_var_cmp_func
+{
+  public:
+  show_var_cmp_func() { }
+  inline bool operator()(SHOW_VAR *var1, SHOW_VAR *var2)
+  {
+    int val;
+    if ((val = strcmp(var1->name, var2->name)) < 0)
+    {
+      return true;
+    }
+    else 
+    {
+      return false;
+    }
+  }
+};
+
 class show_var_if
 {
   public:
@@ -1266,13 +1284,13 @@ int add_status_vars(SHOW_VAR *list)
   if (status_vars_inited)
     pthread_mutex_lock(&LOCK_status);
   while (list->name)
-    all_status_vars.insert(all_status_vars.begin(), list++);
+   all_status_vars.insert(all_status_vars.begin(), list++);
   //all_status_vars.insert(all_status_vars.begin(), list); // appending NULL-element
   //all_status_vars.elements--; // but next insert_dynamic should overwite it
   /* not sure about this^^ statement */
   if (status_vars_inited)
     sort(all_status_vars.begin(), all_status_vars.end(),
-           show_var_cmp);
+           show_var_cmp_func());
   if (status_vars_inited)
     pthread_mutex_unlock(&LOCK_status);
   return res;
@@ -1290,7 +1308,7 @@ void init_status_vars()
 {
   status_vars_inited= 1;
   sort(all_status_vars.begin(), all_status_vars.end(),
-         show_var_cmp);
+         show_var_cmp_func());
 }
 
 void reset_status_vars()
