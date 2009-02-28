@@ -1265,4 +1265,4 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
 
-#endif /* DRIZZLED_SQL_CLASS_H */
+#endif /* DRIZZLED_SESSION_H */
