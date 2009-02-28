@@ -1885,9 +1885,8 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     for (table= session->temporary_tables; table ; table=table->next)
     {
       if (table->s->table_cache_key.length == key_length +
-          TMP_TABLE_KEY_EXTRA &&
-	  !memcmp(table->s->table_cache_key.str, key,
-		  key_length + TMP_TABLE_KEY_EXTRA))
+          TMP_TABLE_KEY_EXTRA && !memcmp(table->s->table_cache_key.str, key,
+          key_length + TMP_TABLE_KEY_EXTRA))
       {
         /*
           We're trying to use the same temporary table twice in a query.
@@ -1895,13 +1894,13 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
           is always represented by only one Table object in Session, and
           it can not be cloned. Emit an error for an unsupported behaviour.
         */
-	if (table->query_id)
-	{
-	  my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
-	  return(0);
-	}
-	table->query_id= session->query_id;
-	session->thread_specific_used= true;
+        if (table->query_id)
+        {
+          my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
+          return(0);
+        }
+        table->query_id= session->query_id;
+        session->thread_specific_used= true;
         goto reset;
       }
     }
@@ -1921,14 +1920,14 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     TODO: move this block into a separate function.
   */
   if (session->locked_tables)
-  {						// Using table locks
+  { // Using table locks
     Table *best_table= 0;
     int best_distance= INT_MIN;
     bool check_if_used= false;
     for (table=session->open_tables; table ; table=table->next)
     {
       if (table->s->table_cache_key.length == key_length &&
-	  !memcmp(table->s->table_cache_key.str, key, key_length))
+          !memcmp(table->s->table_cache_key.str, key, key_length))
       {
         if (check_if_used && table->query_id &&
             table->query_id != session->query_id)
@@ -2093,7 +2092,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
       /* Avoid self-deadlocks by detecting self-dependencies. */
       if (table->open_placeholder && table->in_use == session)
       {
-	pthread_mutex_unlock(&LOCK_open);
+        pthread_mutex_unlock(&LOCK_open);
         my_error(ER_UPDATE_TABLE_USED, MYF(0), table->s->table_name.str);
         return(0);
       }
@@ -2134,14 +2133,14 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
       }
       else
       {
-	pthread_mutex_unlock(&LOCK_open);
+        pthread_mutex_unlock(&LOCK_open);
       }
       /*
         There is a refresh in progress for this table.
         Signal the caller that it has to try again.
       */
       if (refresh)
-	*refresh=1;
+        *refresh=1;
       return(0);
     }
   }
@@ -2149,12 +2148,12 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   {
     /* Unlink the table from "unused_tables" list. */
     if (table == unused_tables)
-    {						// First unused
-      unused_tables=unused_tables->next;	// Remove from link
+    {  // First unused
+      unused_tables=unused_tables->next; // Remove from link
       if (table == unused_tables)
-	unused_tables=0;
+        unused_tables=0;
     }
-    table->prev->next=table->next;		/* Remove from unused list */
+    table->prev->next=table->next; /* Remove from unused list */
     table->next->prev=table->prev;
     table->in_use= session;
   }
@@ -2220,10 +2219,10 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   pthread_mutex_unlock(&LOCK_open);
   if (refresh)
   {
-    table->next=session->open_tables;		/* Link into simple list */
+    table->next=session->open_tables; /* Link into simple list */
     session->open_tables=table;
   }
-  table->reginfo.lock_type=TL_READ;		/* Assume read */
+  table->reginfo.lock_type=TL_READ; /* Assume read */
 
  reset:
   assert(table->s->ref_count > 0 || table->s->tmp_table != NO_TMP_TABLE);
@@ -2272,7 +2271,7 @@ Table *find_locked_table(Session *session, const char *db,const char *table_name
   for (Table *table=session->open_tables; table ; table=table->next)
   {
     if (table->s->table_cache_key.length == key_length &&
-	!memcmp(table->s->table_cache_key.str, key, key_length))
+        !memcmp(table->s->table_cache_key.str, key, key_length))
       return table;
   }
   return(0);
