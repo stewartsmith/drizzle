@@ -185,35 +185,6 @@ void get_date_from_daynr(long daynr,uint32_t *ret_year,uint32_t *ret_month,
   return;
 }
 
-	/* Functions to handle periods */
-
-uint32_t convert_period_to_month(uint32_t period)
-{
-  uint32_t a,b;
-  if (period == 0)
-    return 0L;
-  if ((a=period/100) < YY_PART_YEAR)
-    a+=2000;
-  else if (a < 100)
-    a+=1900;
-  b=period%100;
-  return a*12+b-1;
-}
-
-
-uint32_t convert_month_to_period(uint32_t month)
-{
-  uint32_t year;
-  if (month == 0L)
-    return 0L;
-  if ((year=month/12) < 100)
-  {
-    year+=(year < YY_PART_YEAR) ? 2000 : 1900;
-  }
-  return year*100+month%12+1;
-}
-
-
 /*
   Convert a timestamp string to a DRIZZLE_TIME value and produce a warning
   if string was truncated during conversion.
