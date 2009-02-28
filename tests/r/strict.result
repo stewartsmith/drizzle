@@ -406,7 +406,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
-  `b` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `b` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=InnoDB
 drop table t1;
@@ -416,7 +416,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
-  `b` timestamp NOT NULL DEFAULT '2005-01-02 03:04:05',
+  `b` timestamp NULL DEFAULT '2005-01-02 03:04:05',
   PRIMARY KEY (`a`)
 ) ENGINE=InnoDB
 drop table t1;
