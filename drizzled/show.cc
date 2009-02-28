@@ -1227,6 +1227,23 @@ int show_var_cmp(const void *var1, const void *var2)
   return strcmp(((SHOW_VAR*)var1)->name, ((SHOW_VAR*)var2)->name);
 }
 
+class show_var_if
+{
+  public:
+  show_var_if() { }
+  inline bool operator()(SHOW_VAR *curr)
+  {
+    if (curr->type == SHOW_UNDEF)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+};
+
 /*
   deletes all the SHOW_UNDEF elements from the array and calls
   delete_dynamic() if it's completely empty.
@@ -1367,6 +1384,9 @@ void remove_status_vars(SHOW_VAR *list)
     }
     //shrink_var_array(&all_status_vars);
     // use remove_if here...will need a functor also for removal
+    all_status_vars.erase(remove_if(all_status_vars.begin(),
+                            all_status_vars.end(),show_var_if()),
+                            all_status_vars.end());
     pthread_mutex_unlock(&LOCK_status);
   }
   else
@@ -1385,6 +1405,9 @@ void remove_status_vars(SHOW_VAR *list)
     }
     //shrink_var_array(&all_status_vars);
     // use remove_if here...
+    all_status_vars.erase(remove_if(all_status_vars.begin(),
+                            all_status_vars.end(),show_var_if()),
+                            all_status_vars.end());
   }
 }
 
