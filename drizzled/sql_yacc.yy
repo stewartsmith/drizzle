@@ -4463,7 +4463,7 @@ real_ulong_num:
         | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
         | LONG_NUM      { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
         | ULONGLONG_NUM { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | dec_num_error { DRIZZLE_YYABORT; }
+        | dec_num_error { }
 	;
 
 ulonglong_num:

@@ -33,11 +33,14 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_sort.h>
 #include <drizzled/session.h>
+#include <queue>
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif
+
+using namespace std;
 
 
 int unique_write_to_file(unsigned char* key, element_count,
@@ -386,7 +389,24 @@ static int buffpek_compare(void *arg, unsigned char *key_ptr1, unsigned char *ke
 }
 #endif
 
+/*
+ The comparison function object, passed to a priority_queue in merge_walk()
+ as its sort function parameter.
+*/
 
+class buffpek_compare_functor
+{
+  qsort_cmp2 key_compare;
+  void *key_compare_arg;
+  public:
+  buffpek_compare_functor(qsort_cmp2 in_key_compare, void *in_compare_arg)
+    : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
+  inline bool operator()(BUFFPEK *i, BUFFPEK *j)
+  {
+    return key_compare(key_compare_arg,
+                    i->key, j->key);
+  }
+};
 
 /*
   DESCRIPTION
@@ -428,13 +448,11 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
                        qsort_cmp2 compare, void *compare_arg,
                        IO_CACHE *file)
 {
-  BUFFPEK_COMPARE_CONTEXT compare_context = { compare, compare_arg };
-  QUEUE queue;
   if (end <= begin ||
-      merge_buffer_size < (ulong) (key_length * (end - begin + 1)) ||
-      init_queue(&queue, (uint32_t) (end - begin), offsetof(BUFFPEK, key), 0,
-                 buffpek_compare, &compare_context))
+      merge_buffer_size < (ulong) (key_length * (end - begin + 1))) 
     return 1;
+  priority_queue<BUFFPEK *, vector<BUFFPEK *>, buffpek_compare_functor >
+    queue(buffpek_compare_functor(compare, compare_arg));
   /* we need space for one key when a piece of merge buffer is re-read */
   merge_buffer_size-= key_length;
   unsigned char *save_key_buff= merge_buffer + merge_buffer_size;
@@ -459,10 +477,10 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
     if (bytes_read == (uint32_t) (-1))
       goto end;
     assert(bytes_read);
-    queue_insert(&queue, (unsigned char *) top);
+    queue.push(top);
   }
-  top= (BUFFPEK *) queue_top(&queue);
-  while (queue.elements > 1)
+  top= queue.top();
+  while (queue.size() > 1)
   {
     /*
       Every iteration one element is removed from the queue, and one is
@@ -478,7 +496,10 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
     */
     top->key+= key_length;
     if (--top->mem_count)
-      queue_replaced(&queue);
+    {
+      queue.pop();
+      queue.push(top);
+    }
     else /* next piece should be read */
     {
       /* save old_key not to overwrite it in read_to_buffer */
@@ -487,19 +508,20 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
       bytes_read= read_to_buffer(file, top, key_length);
       if (bytes_read == (uint32_t) (-1))
         goto end;
-      else if (bytes_read > 0)      /* top->key, top->mem_count are reset */
-        queue_replaced(&queue);     /* in read_to_buffer */
+      else if (bytes_read > 0) /* top->key, top->mem_count are reset */
+      {                        /* in read_to_buffer */
+        queue.pop();
+        queue.push(top);
+      }
       else
       {
         /*
-          Tree for old 'top' element is empty: remove it from the queue and
-          give all its memory to the nearest tree.
+          Tree for old 'top' element is empty: remove it from the queue. 
         */
-        queue_remove(&queue, 0);
-        reuse_freed_buff(&queue, top, key_length);
+        queue.pop();
       }
     }
-    top= (BUFFPEK *) queue_top(&queue);
+    top= queue.top();
     /* new top has been obtained; if old top is unique, apply the action */
     if (compare(compare_arg, old_key, top->key))
     {
@@ -528,7 +550,6 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
   while (bytes_read);
   res= 0;
 end:
-  delete_queue(&queue);
   return res;
 }
 

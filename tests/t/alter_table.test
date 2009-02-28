@@ -250,7 +250,7 @@ drop table if exists t1;
 # not null columns for primary keys)
 
 create table t1 (a int, b int, c int, d int, e int, f int, g int, h int,i int, primary key (a,b,c,d,e,f,g,i,h)) engine=MyISAM;
-insert into t1 (a) values(1);
+insert into t1 (a,b,c,d,e,f,g,h,i) values(1,1,1,1,1,1,1,1,1);
 --replace_column 3 X 7 X 8 X 9 X 10 X 11 X 12 X 13 X 14 X
 show table status like 't1';
 alter table t1 modify a int;

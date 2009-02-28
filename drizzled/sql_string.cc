@@ -807,8 +807,9 @@ copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
     }
   }
 
-  assert(false); // Should never get to here
+#ifndef __sun
   return 0;           // Make compiler happy
+#endif
 }
 
 

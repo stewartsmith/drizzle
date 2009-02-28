@@ -25,6 +25,8 @@
 class Item_basic_constant :public Item
 {
 public:
+  Item_basic_constant() : Item() {};
+
   /* to prevent drop fixed flag (no need parent cleanup call) */
   void cleanup()
   {

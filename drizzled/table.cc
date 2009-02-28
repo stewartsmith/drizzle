@@ -20,7 +20,6 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include <drizzled/tmp_table.h>
 #include <drizzled/sj_tmp_table.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/data_home.h>
@@ -38,6 +37,13 @@
 #include <drizzled/unireg.h>
 #include <drizzled/serialize/table.pb.h>
 
+#include <drizzled/item/string.h>
+#include <drizzled/item/int.h>
+#include <drizzled/item/decimal.h>
+#include <drizzled/item/float.h>
+#include <drizzled/item/null.h>
+
+
 using namespace std;
 
 /* Keyword for parsing virtual column functions */
@@ -47,8 +53,6 @@ LEX_STRING parse_vcol_keyword= { C_STRING_WITH_LEN("PARSE_VCOL_EXPR ") };
 
 void open_table_error(TABLE_SHARE *share, int error, int db_errno,
                       myf errortype, int errarg);
-static int open_binary_frm(Session *session, TABLE_SHARE *share,
-                           unsigned char *head, File file);
 static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
                               uint32_t types, char **names);
 
@@ -328,28 +332,133 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
     field_type= DRIZZLE_TYPE_VIRTUAL;
     break;
   default:
-    abort();
+    field_type= DRIZZLE_TYPE_TINY; /* Set value to kill GCC warning */
+    assert(1);
   }
 
   return field_type;
 }
 
+Item * default_value_item(enum_field_types field_type,
+			  const CHARSET_INFO *charset,
+			  bool default_null, string default_value,
+			  string default_bin_value)
+{
+  Item *default_item= NULL;
+  int error= 0;
+
+  if(default_null)
+  {
+    return new Item_null();
+  }
+
+  switch(field_type)
+  {
+  case DRIZZLE_TYPE_TINY:
+  case DRIZZLE_TYPE_LONG:
+  case DRIZZLE_TYPE_LONGLONG:
+    default_item= new Item_int(default_value.c_str(),
+			       (int64_t) my_strtoll10(default_value.c_str(),
+						      NULL,
+						      &error),
+			       default_value.length());
+    break;
+  case DRIZZLE_TYPE_DOUBLE:
+    default_item= new Item_float(default_value.c_str(), default_value.length());
+    break;
+  case DRIZZLE_TYPE_NULL:
+    return new Item_null();
+    break;
+  case DRIZZLE_TYPE_TIMESTAMP:
+  case DRIZZLE_TYPE_TIME:
+  case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_DATE:
+    if(default_value.compare("NOW()")==0)
+      break;
+  case DRIZZLE_TYPE_ENUM:
+    default_item= new Item_string(default_value.c_str(),
+				  default_value.length(),
+				  system_charset_info);
+    break;
+  case DRIZZLE_TYPE_VARCHAR:
+  case DRIZZLE_TYPE_BLOB: /* Blob is here due to TINYTEXT. Feel the hate. */
+    if(charset==&my_charset_bin)
+    {
+      default_item= new Item_string(default_bin_value.c_str(),
+				    default_bin_value.length(),
+				    &my_charset_bin);
+    }
+    else
+    {
+      default_item= new Item_string(default_value.c_str(),
+				    default_value.length(),
+				    system_charset_info);
+    }
+    break;
+  case DRIZZLE_TYPE_VIRTUAL:
+    break;
+  case DRIZZLE_TYPE_NEWDECIMAL:
+    default_item= new Item_decimal(default_value.c_str(),
+				   default_value.length(),
+				   system_charset_info);
+    break;
+  }
+
+  return default_item;
+}
+
 int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *share)
 {
+  int error= 0;
+
   {
     LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
 			      strlen(table.engine().name().c_str()) };
     share->db_plugin= ha_resolve_by_name(session, &engine_name);
   }
 
-  // share->db_create_options FAIL
-  // share->db_options_in_use FAIL
   share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
 
   drizzle::Table::TableOptions table_options;
 
   if(table.has_options())
     table_options= table.options();
+
+  uint32_t db_create_options= HA_OPTION_LONG_BLOB_PTR;
+
+  if(table_options.has_pack_keys())
+  {
+    if(table_options.pack_keys())
+      db_create_options|= HA_OPTION_PACK_KEYS;
+    else
+      db_create_options|= HA_OPTION_NO_PACK_KEYS;
+  }
+
+  if(table_options.pack_record())
+    db_create_options|= HA_OPTION_PACK_RECORD;
+
+  if(table_options.has_checksum())
+  {
+    if(table_options.checksum())
+      db_create_options|= HA_OPTION_CHECKSUM;
+    else
+      db_create_options|= HA_OPTION_NO_CHECKSUM;
+  }
+
+  if(table_options.has_delay_key_write())
+  {
+    if(table_options.delay_key_write())
+      db_create_options|= HA_OPTION_DELAY_KEY_WRITE;
+    else
+      db_create_options|= HA_OPTION_NO_DELAY_KEY_WRITE;
+  }
+
+  /* db_create_options was stored as 2 bytes in FRM
+     Any HA_OPTION_ that doesn't fit into 2 bytes was silently truncated away.
+   */
+  share->db_create_options= (db_create_options & 0x0000FFFF);
+  share->db_options_in_use= share->db_create_options;
+
 
   share->avg_row_length= table_options.has_avg_row_length() ?
     table_options.avg_row_length() : 0;
@@ -509,9 +618,8 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       *rec_per_key++=0;
 
       key_part->field= NULL;
-      key_part->fieldnr= part.fieldnr();
+      key_part->fieldnr= part.fieldnr() + 1; // start from 1.
       key_part->null_bit= 0;
-      /* key_part->offset= ASS ASS ASS. Set later in the frm code */
       /* key_part->null_offset is only set if null_bit (see later) */
       /* key_part->key_type= */ /* I *THINK* this may be okay.... */
       /* key_part->type ???? */
@@ -522,6 +630,10 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       key_part->length= part.compare_length();
 
       key_part->store_length= key_part->length;
+
+      /* key_part->offset is set later */
+      key_part->key_type= part.key_type();
+
     }
 
     if(!indx.has_comment())
@@ -574,9 +686,10 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   share->vfields= 0;
   share->stored_fields= share->fields;
 
-/*  share->field= (Field**) alloc_root(&share->mem_root,
-				     (share->fields * sizeof(Field*)));
-*/
+  share->field= (Field**) alloc_root(&share->mem_root,
+				     ((share->fields+1) * sizeof(Field*)));
+  share->field[share->fields]= NULL;
+
   uint32_t null_fields= 0;
   share->reclength= 0;
 
@@ -585,13 +698,18 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
   assert(field_offsets && field_pack_length); // TODO: fixme
 
+  uint32_t interval_count= 0;
+  uint32_t interval_parts= 0;
+
+  uint32_t stored_columns_reclength= 0;
+
   for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
     drizzle::Table::Field pfield= table.field(fieldnr);
     if(pfield.has_constraints() && pfield.constraints().is_nullable())
       null_fields++;
 
-    field_offsets[fieldnr]= share->reclength;
+    bool field_is_stored= true;
 
     enum_field_types drizzle_field_type=
       proto_field_type_to_drizzle_type(pfield.type());
@@ -602,7 +720,11 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 	pfield.virtual_options();
 
       drizzle_field_type=proto_field_type_to_drizzle_type(field_options.type());
+
+      field_is_stored= field_options.physically_stored();
     }
+
+    field_offsets[fieldnr]= stored_columns_reclength;
 
     /* the below switch is very similar to
        Create_field::create_length_to_internal_length in field.cc
@@ -635,6 +757,9 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
 	field_pack_length[fieldnr]=
 	  get_enum_pack_length(field_options.field_value_size());
+
+	interval_count++;
+	interval_parts+= field_options.field_value_size();
       }
       break;
     case DRIZZLE_TYPE_NEWDECIMAL:
@@ -651,14 +776,48 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
     }
 
     share->reclength+= field_pack_length[fieldnr];
+
+    if(field_is_stored)
+      stored_columns_reclength+= field_pack_length[fieldnr];
   }
+
+  /* data_offset added to stored_rec_length later */
+  share->stored_rec_length= stored_columns_reclength;
+
+  /* fix up offsets for non-stored fields (at end of record) */
+  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  {
+    drizzle::Table::Field pfield= table.field(fieldnr);
+
+    bool field_is_stored= true;
+
+    enum_field_types drizzle_field_type=
+      proto_field_type_to_drizzle_type(pfield.type());
+
+    if(drizzle_field_type==DRIZZLE_TYPE_VIRTUAL)
+    {
+      drizzle::Table::Field::VirtualFieldOptions field_options=
+	pfield.virtual_options();
+
+      field_is_stored= field_options.physically_stored();
+    }
+
+    if(!field_is_stored)
+    {
+      field_offsets[fieldnr]= stored_columns_reclength;
+      stored_columns_reclength+= field_pack_length[fieldnr];
+    }
+  }
+  share->null_fields= null_fields;
 
   ulong null_bits= null_fields;
   if(!table_options.pack_record())
     null_bits++;
   ulong data_offset= (null_bits + 7)/8;
 
+
   share->reclength+= data_offset;
+  share->stored_rec_length+= data_offset;
 
   ulong rec_buff_length;
 
@@ -671,7 +830,112 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
                                      rec_buff_length)))
     abort();
 
+  memset(record, 0, rec_buff_length);
+
+  int null_count= 0;
+
+  if(!table_options.pack_record())
+  {
+    null_count++; // one bit for delete mark.
+    *record|= 1;
+  }
+
   share->default_values= record;
+
+  if(interval_count)
+  {
+    share->intervals= (TYPELIB*)alloc_root(&share->mem_root,
+					   interval_count*sizeof(TYPELIB));
+  }
+  else
+    share->intervals= NULL;
+
+  share->fieldnames.type_names= (const char**)alloc_root(&share->mem_root,
+			          (share->fields+1)*sizeof(char*));
+
+  share->fieldnames.type_lengths= (unsigned int*) alloc_root(&share->mem_root,
+				  (share->fields+1)*sizeof(unsigned int));
+
+  share->fieldnames.type_names[share->fields]= NULL;
+  share->fieldnames.type_lengths[share->fields]= 0;
+  share->fieldnames.count= share->fields;
+
+
+  /* Now fix the TYPELIBs for the intervals (enum values)
+     and field names.
+   */
+
+  uint32_t interval_nr= 0;
+
+  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  {
+    drizzle::Table::Field pfield= table.field(fieldnr);
+
+    /* field names */
+    share->fieldnames.type_names[fieldnr]= strmake_root(&share->mem_root,
+							pfield.name().c_str(),
+							pfield.name().length());
+
+    share->fieldnames.type_lengths[fieldnr]= pfield.name().length();
+
+    /* enum typelibs */
+    if(pfield.type() != drizzle::Table::Field::ENUM)
+      continue;
+
+    drizzle::Table::Field::SetFieldOptions field_options=
+      pfield.set_options();
+
+    const CHARSET_INFO *charset= get_charset(field_options.has_collation_id()?
+					     field_options.collation_id() : 0);
+
+    if (!charset)
+      charset= default_charset_info;
+
+    TYPELIB *t= &(share->intervals[interval_nr]);
+
+    t->type_names= (const char**)alloc_root(&share->mem_root,
+			   (field_options.field_value_size()+1)*sizeof(char*));
+
+    t->type_lengths= (unsigned int*) alloc_root(&share->mem_root,
+		     (field_options.field_value_size()+1)*sizeof(unsigned int));
+
+    t->type_names[field_options.field_value_size()]= NULL;
+    t->type_lengths[field_options.field_value_size()]= 0;
+
+    t->count= field_options.field_value_size();
+    t->name= NULL;
+
+    for(int n=0; n < field_options.field_value_size(); n++)
+    {
+      t->type_names[n]= strmake_root(&share->mem_root,
+				     field_options.field_value(n).c_str(),
+				     field_options.field_value(n).length());
+
+      /* Go ask the charset what the length is as for "" length=1
+	 and there's stripping spaces or some other crack going on.
+       */
+      uint32_t lengthsp;
+      lengthsp= charset->cset->lengthsp(charset, t->type_names[n],
+					field_options.field_value(n).length());
+      t->type_lengths[n]= lengthsp;
+    }
+    interval_nr++;
+  }
+
+
+  /* and read the fields */
+  interval_nr= 0;
+
+  bool use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
+
+  if(use_hash)
+    use_hash= !hash_init(&share->name_hash,
+			 system_charset_info,
+			 share->fields, 0, 0,
+			 (hash_get_key) get_field_name, 0, 0);
+
+  unsigned char* null_pos= record;;
+  int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
   for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
@@ -691,7 +955,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       column_format= COLUMN_FORMAT_TYPE_DYNAMIC;
       break;
     default:
-      abort();
+      assert(1);
     }
 
     Field::utype unireg_type= Field::NONE;
@@ -716,7 +980,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 	unireg_type= Field::TIMESTAMP_DN_FIELD;
       }
       else
-	abort(); // Invalid update value.
+	assert(1); // Invalid update value.
     }
     else if (pfield.has_options()
 	     && pfield.options().has_update_value()
@@ -765,662 +1029,179 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       share->vfields++;
     }
 
-    // TODO: charset (well... collation)
+    const CHARSET_INFO *charset= &my_charset_bin;
 
-/*    share->field[fieldnr]= make_field(share, record+recordpos,
-				      field_length,
-				      null_pos, null_bit_pos,
-				      pack_flag,
-				      field_type,
-				      charset,
-				      (Field::utype) MTYP_TYPENR(unireg_type),
-				      (interval_nr ?
-				       share->intervals+interval_nr-1 :
-				       (TYPELIB*) 0),
-				      share->fieldnames.type_names[i]);
-*/
+    if(field_type==DRIZZLE_TYPE_BLOB
+       || field_type==DRIZZLE_TYPE_VARCHAR)
+    {
+      drizzle::Table::Field::StringFieldOptions field_options=
+	pfield.string_options();
+
+      charset= get_charset(field_options.has_collation_id()?
+			   field_options.collation_id() : 0);
+
+      if (!charset)
+	charset= default_charset_info;
+
+    }
+
+    if(field_type==DRIZZLE_TYPE_ENUM)
+    {
+      drizzle::Table::Field::SetFieldOptions field_options=
+	pfield.set_options();
+
+      charset= get_charset(field_options.has_collation_id()?
+			   field_options.collation_id() : 0);
+
+      if (!charset)
+	charset= default_charset_info;
+
+    }
+
+    Item *default_value= NULL;
+
+    if(pfield.options().has_default_value()
+       || pfield.options().has_default_null()
+       || pfield.options().has_default_bin_value())
+    {
+      default_value= default_value_item(field_type,
+					charset,
+					pfield.options().default_null(),
+					pfield.options().default_value(),
+					pfield.options().default_bin_value());
+    }
+
+    uint32_t pack_flag= pfield.pack_flag(); /* TODO: MUST DIE */
+
+    Table temp_table; /* Use this so that BLOB DEFAULT '' works */
+    memset(&temp_table, 0, sizeof(temp_table));
+    temp_table.s= share;
+    temp_table.in_use= session;
+    temp_table.s->db_low_byte_first= 1; //handler->low_byte_first();
+    temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
+
+    Field* f= make_field(share, &share->mem_root,
+			 record+field_offsets[fieldnr]+data_offset,
+			 pfield.options().length(),
+			 null_pos,
+			 null_bit_pos,
+			 pack_flag,
+			 field_type,
+			 charset,
+			 (Field::utype) MTYP_TYPENR(unireg_type),
+			 ((field_type==DRIZZLE_TYPE_ENUM)?
+			 share->intervals+(interval_nr++)
+			 : (TYPELIB*) 0),
+			share->fieldnames.type_names[fieldnr]);
+
+    share->field[fieldnr]= f;
+
+    f->init(&temp_table); /* blob default values need table obj */
+
+    if(!(f->flags & NOT_NULL_FLAG))
+    {
+      *f->null_ptr|= f->null_bit;
+      if (!(null_bit_pos= (null_bit_pos + 1) & 7))
+	null_pos++;
+      null_count++;
+    }
+
+    if(default_value)
+    {
+      int res= default_value->save_in_field(f, 1);
+      (void)res; // TODO error handle;
+    }
+    else if(f->real_type() == DRIZZLE_TYPE_ENUM &&
+	    (f->flags & NOT_NULL_FLAG))
+    {
+      f->set_notnull();
+      f->store((int64_t) 1, true);
+    }
+    else
+      f->reset();
+
+    /* hack to undo f->init() */
+    f->table= NULL;
+    f->orig_table= NULL;
+
+    f->field_index= fieldnr;
+    f->comment= comment;
+    f->vcol_info= vcol_info;
+    f->is_stored= field_is_stored;
+    if(!default_value
+       && !(f->unireg_check==Field::NEXT_NUMBER)
+       && (f->flags & NOT_NULL_FLAG)
+       && (f->real_type() != DRIZZLE_TYPE_TIMESTAMP))
+      f->flags|= NO_DEFAULT_VALUE_FLAG;
+
+    if(f->unireg_check == Field::NEXT_NUMBER)
+      share->found_next_number_field= &(share->field[fieldnr]);
+
+    if(share->timestamp_field == f)
+      share->timestamp_field_offset= fieldnr;
+
+    if (use_hash) /* supposedly this never fails... but comments lie */
+      (void) my_hash_insert(&share->name_hash,
+			    (unsigned char*)&(share->field[fieldnr]));
+
+    if(!f->is_stored)
+    {
+      share->stored_fields--;
+    }
   }
+
+  keyinfo= share->key_info;
+  for (unsigned int keynr=0; keynr < share->keys; keynr++, keyinfo++)
+  {
+    key_part= keyinfo->key_part;
+
+    for(unsigned int partnr= 0;
+	partnr < keyinfo->key_parts;
+	partnr++, key_part++)
+    {
+      /* Fix up key_part->offset by adding data_offset.
+	 We really should compute offset as well.
+	 But at least this way we are a little better. */
+      key_part->offset= field_offsets[key_part->fieldnr-1] + data_offset;
+    }
+  }
+
+  /*
+    We need to set the unused bits to 1. If the number of bits is a multiple
+    of 8 there are no unused bits.
+  */
+
+  if (null_count & 7)
+    *(record + null_count / 8)|= ~(((unsigned char) 1 << (null_count & 7)) - 1);
+
+  share->null_bytes= (null_pos - (unsigned char*) record +
+		      (null_bit_pos + 7) / 8);
+
+  share->last_null_bit_pos= null_bit_pos;
 
   free(field_offsets);
   free(field_pack_length);
 
-  return 0;
-}
+  handler *handler_file;
 
-/*
-  Read table definition from a binary / text based .frm file
+  if(!(handler_file= get_new_handler(share, session->mem_root,
+				     share->db_type())))
+    abort(); // FIXME
 
-  SYNOPSIS
-  open_table_def()
-  session		Thread handler
-  share		Fill this with table definition
-  db_flags	Bit mask of the following flags: OPEN_VIEW
-
-  NOTES
-    This function is called when the table definition is not cached in
-    table_def_cache
-    The data is returned in 'share', which is alloced by
-    alloc_table_share().. The code assumes that share is initialized.
-
-  RETURN VALUES
-   0	ok
-   1	Error (see open_table_error)
-   2    Error (see open_table_error)
-   3    Wrong data in .frm file
-   4    Error (see open_table_error)
-   5    Error (see open_table_error: charset unavailable)
-   6    Unknown .frm version
-*/
-
-int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
-{
-  int error, table_type;
-  bool error_given;
-  File file;
-  unsigned char head[64], *disk_buff;
-  string	path("");
-
-  MEM_ROOT **root_ptr, *old_root;
-
-  error= 1;
-  error_given= 0;
-  disk_buff= NULL;
-
-  path.reserve(FN_REFLEN);
-  path.append(share->normalized_path.str);
-  string proto_path= path;
-
-  path.append(reg_ext);
-
-  proto_path.append(".dfe");
-
-  drizzle::Table table;
-
-  if((error= drizzle_read_table_proto(proto_path.c_str(), &table)))
-  {
-    if(error>0)
-    {
-      my_errno= error;
-      error= 1;
-    }
-    else
-    {
-      if(!table.IsInitialized())
-      {
-	error= 4;
-      }
-    }
-    goto err_not_open;
-  }
-
-  parse_table_proto(session, table, share);
-
-  /* end of proto code... now to get some scraps from FRM */
-
-  if ((file= open(path.c_str(), O_RDONLY)) < 0)
-  {
-    /*
-      We don't try to open 5.0 unencoded name, if
-      - non-encoded name contains '@' signs,
-        because '@' can be misinterpreted.
-        It is not clear if '@' is escape character in 5.1,
-        or a normal character in 5.0.
-
-      - non-encoded db or table name contain "#mysql50#" prefix.
-        This kind of tables must have been opened only by the
-        open() above.
-    */
-    if (strchr(share->table_name.str, '@') ||
-        !strncmp(share->db.str, MYSQL50_TABLE_NAME_PREFIX,
-                 MYSQL50_TABLE_NAME_PREFIX_LENGTH) ||
-        !strncmp(share->table_name.str, MYSQL50_TABLE_NAME_PREFIX,
-                 MYSQL50_TABLE_NAME_PREFIX_LENGTH))
-      goto err_not_open;
-
-    /* Try unencoded 5.0 name */
-    size_t length;
-    char unpacked_path[FN_REFLEN];
-    path.clear();
-    path.append(drizzle_data_home);
-    path.append("/");
-    path.append(share->db.str);
-    path.append("/");
-    path.append(share->table_name.str);
-    path.append(reg_ext);
-    length= unpack_filename(unpacked_path, path.c_str()) - reg_ext_length;
-    /*
-      The following is a safety test and should never fail
-      as the old file name should never be longer than the new one.
-    */
-    assert(length <= share->normalized_path.length);
-    /*
-      If the old and the new names have the same length,
-      then table name does not have tricky characters,
-      so no need to check the old file name.
-    */
-    if (length == share->normalized_path.length ||
-        ((file= open(unpacked_path, O_RDONLY)) < 0))
-      goto err_not_open;
-
-    /* Unencoded 5.0 table name found */
-    unpacked_path[length]= '\0'; // Remove .frm extension
-    strcpy(share->normalized_path.str, unpacked_path);
-    share->normalized_path.length= length;
-  }
-
-  error= 4;
-  if (my_read(file, head, 64, MYF(MY_NABP)))
-    goto err;
-
-  if (head[0] == (unsigned char) 254 && head[1] == 1)
-  {
-    if (head[2] == FRM_VER || head[2] == FRM_VER+1 ||
-        (head[2] >= FRM_VER+3 && head[2] <= FRM_VER+4))
-    {
-      table_type= 1;
-    }
-    else
-    {
-      error= 6;                                 // Unkown .frm version
-      goto err;
-    }
-  }
-  else
-    goto err;
-
-  /* No handling of text based files yet */
-  if (table_type == 1)
-  {
-    root_ptr= current_mem_root_ptr();
-    old_root= *root_ptr;
-    *root_ptr= &share->mem_root;
-    error= open_binary_frm(session, share, head, file);
-    *root_ptr= old_root;
-    error_given= 1;
-  }
-  else
-    assert(1);
-
-  share->table_category= get_table_category(& share->db, & share->table_name);
-
-  if (!error)
-    session->status_var.opened_shares++;
-
-err:
-  my_close(file, MYF(MY_WME));
-
-err_not_open:
-  if (error && !error_given)
-  {
-    share->error= error;
-    open_table_error(share, error, (share->open_errno= my_errno), 0);
-  }
-
-  return(error);
-}
-
-
-/*
-  Read data from a binary .frm file from MySQL 3.23 - 5.0 into TABLE_SHARE
-*/
-
-static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *head,
-                           File file)
-{
-  int error, errarg= 0;
-  uint32_t new_frm_ver, field_pack_length, new_field_pack_flag;
-  uint32_t interval_count, interval_parts, read_length, int_length;
-  uint32_t db_create_options, keys, key_parts, n_length;
-  uint32_t key_info_length, com_length, null_bit_pos=0;
-  uint32_t vcol_screen_length;
-  uint32_t i,j;
-  bool use_hash;
-  unsigned char forminfo[288];
-  char *names, *comment_pos, *vcol_screen_pos;
-  unsigned char *record;
-  unsigned char *disk_buff, *strpos, *null_flags=NULL, *null_pos=NULL;
-  ulong pos, record_offset, rec_buff_length;
-  handler *handler_file= 0;
-  KEY	*keyinfo;
-  KEY_PART_INFO *key_part;
-  Field  **field_ptr, *reg_field;
-  const char **interval_array;
-  my_bitmap_map *bitmaps;
-  unsigned char *buff= 0;
-  unsigned char *field_extra_info= 0;
-
-  new_field_pack_flag= head[27];
-  new_frm_ver= (head[2] - FRM_VER);
-  assert(new_frm_ver >= 2); /* If this fails, we're on old FRM */
-  field_pack_length= 17;
-  disk_buff= 0;
-
-  error= 3;
-  if (!(pos=get_form_pos(file,head,(TYPELIB*) 0)))
-    goto err;                                   /* purecov: inspected */
-  lseek(file,pos,SEEK_SET);
-  if (my_read(file,forminfo,288,MYF(MY_NABP)))
-    goto err;
-
-  share->db_create_options= db_create_options= uint2korr(head+30);
-  share->db_options_in_use= share->db_create_options;
-
-  error=4;
-
-  /* Read keyinformation */
-  key_info_length= (uint32_t) uint2korr(head+28);
-  lseek(file,(ulong) uint2korr(head+6),SEEK_SET);
-  if (read_string(file,(unsigned char**) &disk_buff,key_info_length))
-    goto err;                                   /* purecov: inspected */
-  if (disk_buff[0] & 0x80)
-  {
-    /*share->keys=*/      keys=      (disk_buff[1] << 7) | (disk_buff[0] & 0x7f);
-    /*share->key_parts=*/ key_parts= uint2korr(disk_buff+2);
-  }
-  else
-  {
-    /*share->keys=      */keys=      disk_buff[0];
-    /*share->key_parts=*/ key_parts= disk_buff[1];
-  }
-
-    /* the magic uint2korr(disk_buff+4) is  the key names size */
-
-  keyinfo= share->key_info;
-  key_part= reinterpret_cast<KEY_PART_INFO*> (keyinfo+keys);
-  strpos=disk_buff+6;
-
-  for (i=0 ; i < keys ; i++, keyinfo++)
-  {
-    if (new_frm_ver >= 3)
-    {
-      strpos+=8;
-    }
-
-    for (j=keyinfo->key_parts ; j-- ; key_part++)
-    {
-      key_part->offset= (uint32_t) uint2korr(strpos+2)-1;
-      key_part->key_type=	(uint32_t) uint2korr(strpos+5);
-      if (new_frm_ver >= 1)
-      {
-	strpos+=9;
-      }
-      else
-      {
-	abort(); // Old FRM version, we abort as we should never see it.
-      }
-    }
-  }
-
-//  keynames=(char*) key_part;
-//  strpos+= (strcpy(keynames, (char*)strpos)+strlen((char*)strpos)-keynames)+1;
-
-  //reading index comments
-  for (keyinfo= share->key_info, i=0; i < keys; i++, keyinfo++)
-  {
-    if (keyinfo->flags & HA_USES_COMMENT)
-    {
-//      keyinfo->comment.length= uint2korr(strpos);
-//      keyinfo->comment.str= strmake_root(&share->mem_root, (char*) strpos+2,
-//                                         keyinfo->comment.length);
-      strpos+= 2 + uint2korr(strpos);//keyinfo->comment.length;
-    }
-//    assert(test(keyinfo->flags & HA_USES_COMMENT) ==
-//               (keyinfo->comment.length > 0));
-  }
-
-  assert(share->reclength == uint2korr((head+16)));
-  share->stored_rec_length= share->reclength;
-
-  record_offset= (ulong) (uint2korr(head+6)+
-                          ((uint2korr(head+14) == 0xffff ?
-                            uint4korr(head+47) : uint2korr(head+14))));
-
-  if ((n_length= uint4korr(head+55)))
-  {
-    /* Read extra data segment */
-    unsigned char *next_chunk, *buff_end;
-    if (!(next_chunk= buff= (unsigned char*) malloc(n_length)))
-      goto err;
-    if (pread(file, buff, n_length, record_offset + share->reclength) == 0)
-    {
-      goto err;
-    }
-
-    uint32_t connect_str_length= uint2korr(buff);
-    next_chunk+= connect_str_length + 2;
-
-    buff_end= buff + n_length;
-    if (next_chunk + 2 < buff_end)
-    {
-      uint32_t str_db_type_length= uint2korr(next_chunk);
-      next_chunk+= str_db_type_length + 2;
-    }
-    if (share->mysql_version >= 50110)
-    {
-      /* New auto_partitioned indicator introduced in 5.1.11 */
-      next_chunk++;
-    }
-    if (forminfo[46] == (unsigned char)255)
-    {
-      //reading long table comment
-      if (next_chunk + 2 > buff_end)
-      {
-          free(buff);
-          goto err;
-      }
-      uint32_t comment_str_length= uint2korr(next_chunk);
-      next_chunk+= 2 + comment_str_length;
-    }
-    assert(next_chunk <= buff_end);
-    if (share->mysql_version >= DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE)
-    {
-      /*
-       New frm format in mysql_version 5.2.5 (originally in
-       mysql-5.1.22-ndb-6.2.5)
-       New column properties added:
-       COLUMN_FORMAT DYNAMIC|FIXED and STORAGE DISK|MEMORY
-       TABLESPACE name is now stored in frm
-      */
-      if (next_chunk >= buff_end)
-      {
-        if (share->mysql_version >= DRIZZLE_VERSION_TABLESPACE_IN_FRM)
-        {
-          goto err;
-        }
-      }
-      else
-      {
-        const uint32_t format_section_header_size= 8;
-        uint32_t format_section_len= uint2korr(next_chunk+0);
-	uint32_t flags=  uint4korr(next_chunk+2);
-
-	(void)flags;
-
-	const char *tablespace= (const char*)next_chunk + format_section_header_size;
-        uint32_t tablespace_len= strlen(tablespace);
-
-        field_extra_info= next_chunk + format_section_header_size + tablespace_len + 1;
-        next_chunk+= format_section_len;
-      }
-    }
-    assert (next_chunk <= buff_end);
-    if (next_chunk > buff_end)
-    {
-      goto err;
-    }
-  }
-
-  error=4;
-  /* head+59 was extra_rec_buf_length */
-  rec_buff_length= ALIGN_SIZE(share->reclength + 1);
-  share->rec_buff_length= rec_buff_length;
-  if (!(record= (unsigned char *) alloc_root(&share->mem_root,
-                                     rec_buff_length)))
-    goto err;                                   /* purecov: inspected */
-  share->default_values= record;
-  if (pread(file, record, (size_t) share->reclength, record_offset) == 0)
-    goto err;                                   /* purecov: inspected */
-
-  lseek(file,pos+288,SEEK_SET);
-
-//  share->fields= uint2korr(forminfo+258);
-  pos= uint2korr(forminfo+260);			/* Length of all screens */
-  n_length= uint2korr(forminfo+268);
-  interval_count= uint2korr(forminfo+270);
-  interval_parts= uint2korr(forminfo+272);
-  int_length= uint2korr(forminfo+274);
-  share->null_fields= uint2korr(forminfo+282);
-  com_length= uint2korr(forminfo+284);
-  vcol_screen_length= uint2korr(forminfo+286);
-//  share->vfields= 0;
-//  share->stored_fields= share->fields;
-
-
-  /* WTF is with the share->fields+1 here... */
-  if (!(field_ptr = (Field **)
-	alloc_root(&share->mem_root,
-		   (uint32_t) ((share->fields+1)*sizeof(Field*)+
-			   interval_count*sizeof(TYPELIB)+
-			   (share->fields+interval_parts+
-			    keys+3)*sizeof(char *)+
-			   (n_length+int_length+
-			       vcol_screen_length)))))
-    goto err;                                   /* purecov: inspected */
-
-  share->field= field_ptr;
-  read_length=(uint32_t) (share->fields * field_pack_length +
-		      pos+ (uint32_t) (n_length+int_length+com_length+
-		                   vcol_screen_length));
-  if (read_string(file,(unsigned char**) &disk_buff,read_length))
-    goto err;                                   /* purecov: inspected */
-  strpos= disk_buff+pos;
-
-  share->intervals= (TYPELIB*) (field_ptr+share->fields+1);
-  interval_array= (const char **) (share->intervals+interval_count);
-  names= (char*) (interval_array+share->fields+interval_parts+keys+3);
-  if (!interval_count)
-    share->intervals= 0;			// For better debugging
-  memcpy(names, strpos+(share->fields*field_pack_length),
-	 (uint32_t) (n_length+int_length));
-  comment_pos= (char *)(disk_buff+read_length-com_length-vcol_screen_length);
-  vcol_screen_pos= names+(n_length+int_length);
-  memcpy(vcol_screen_pos, disk_buff+read_length-vcol_screen_length,
-         vcol_screen_length);
-
-  fix_type_pointers(&interval_array, &share->fieldnames, 1, &names);
-  if (share->fieldnames.count != share->fields)
-    goto err;
-  fix_type_pointers(&interval_array, share->intervals, interval_count,
-		    &names);
-
-  {
-    /* Set ENUM and SET lengths */
-    TYPELIB *interval;
-    for (interval= share->intervals;
-         interval < share->intervals + interval_count;
-         interval++)
-    {
-      uint32_t count= (uint32_t) (interval->count + 1) * sizeof(uint32_t);
-      if (!(interval->type_lengths= (uint32_t *) alloc_root(&share->mem_root,
-                                                        count)))
-        goto err;
-      for (count= 0; count < interval->count; count++)
-      {
-        char *val= (char*) interval->type_names[count];
-        interval->type_lengths[count]= strlen(val);
-      }
-      interval->type_lengths[count]= 0;
-    }
-  }
-
-/*  if (keynames)
-    fix_type_pointers(&interval_array, &share->keynames, 1, &keynames);*/
-
- /* Allocate handler */
-  if (!(handler_file= get_new_handler(share, session->mem_root,
-                                      share->db_type())))
-    goto err;
-
-  record= share->default_values-1;              /* Fieldstart = 1 */
-
-  null_flags= null_pos= (unsigned char*) record+1;
-  null_bit_pos= (db_create_options & HA_OPTION_PACK_RECORD) ? 0 : 1;
-  /*
-    null_bytes below is only correct under the condition that
-    there are no bit fields.  Correct values is set below after the
-    table struct is initialized
-  */
-  share->null_bytes= (share->null_fields + null_bit_pos + 7) / 8;
-
-  use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
-  if (use_hash)
-    use_hash= !hash_init(&share->name_hash,
-			 system_charset_info,
-			 share->fields,0,0,
-			 (hash_get_key) get_field_name,0,0);
-
-  for (i=0 ; i < share->fields; i++, strpos+=field_pack_length, field_ptr++)
-  {
-    uint32_t pack_flag, interval_nr, unireg_type, recpos, field_length;
-    uint32_t vcol_info_length=0;
-    enum_field_types field_type;
-    enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-    const CHARSET_INFO *charset= NULL;
-    LEX_STRING comment;
-    virtual_column_info *vcol_info= NULL;
-    bool fld_is_stored= true;
-
-    if (field_extra_info)
-    {
-      char tmp= field_extra_info[i];
-      column_format= (enum column_format_type)
-                    ((tmp >> COLUMN_FORMAT_SHIFT) & COLUMN_FORMAT_MASK);
-    }
-    if (new_frm_ver >= 3)
-    {
-      /* new frm file in 4.1 */
-      field_length= uint2korr(strpos+3);
-      recpos=	    uint3korr(strpos+5);
-      pack_flag=    uint2korr(strpos+8);
-      unireg_type=  (uint32_t) strpos[10];
-      interval_nr=  (uint32_t) strpos[12];
-      uint32_t comment_length=uint2korr(strpos+15);
-      field_type=(enum_field_types) (uint32_t) strpos[13];
-
-      {
-        if (!strpos[14])
-          charset= &my_charset_bin;
-        else if (!(charset=get_charset((uint32_t) strpos[14])))
-        {
-          error= 5; // Unknown or unavailable charset
-          errarg= (int) strpos[14];
-          goto err;
-        }
-      }
-      if (field_type == DRIZZLE_TYPE_VIRTUAL)
-      {
-        assert(interval_nr); // Expect non-null expression
-        /*
-          The interval_id byte in the .frm file stores the length of the
-          expression statement for a virtual column.
-        */
-        vcol_info_length= interval_nr;
-        interval_nr= 0;
-      }
-      if (!comment_length)
-      {
-	comment.str= (char*) "";
-	comment.length=0;
-      }
-      else
-      {
-	comment.str=    strmake_root(&share->mem_root, comment_pos, comment_length);
-	comment.length= comment_length;
-	comment_pos+=   comment_length;
-      }
-      if (vcol_info_length)
-      {
-        /*
-          Get virtual column data stored in the .frm file as follows:
-          byte 1      = 1 (always 1 to allow for future extensions)
-          byte 2      = sql_type
-          byte 3      = flags (as of now, 0 - no flags, 1 - field is physically stored)
-          byte 4-...  = virtual column expression (text data)
-        */
-        vcol_info= new virtual_column_info();
-        if ((uint32_t)vcol_screen_pos[0] != 1)
-        {
-          error= 4;
-          goto err;
-        }
-        field_type= (enum_field_types) (unsigned char) vcol_screen_pos[1];
-        fld_is_stored= (bool) (uint32_t) vcol_screen_pos[2];
-        vcol_info->expr_str.str= (char *)memdup_root(&share->mem_root,
-                                                     vcol_screen_pos+
-                                                       (uint32_t)FRM_VCOL_HEADER_SIZE,
-                                                     vcol_info_length-
-                                                       (uint32_t)FRM_VCOL_HEADER_SIZE);
-        vcol_info->expr_str.length= vcol_info_length-(uint32_t)FRM_VCOL_HEADER_SIZE;
-        vcol_screen_pos+= vcol_info_length;
-        share->vfields++;
-      }
-    }
-    else
-    {
-      assert(false); /* Old (pre-4.1) FRM file. This is Drizzle. */
-    }
-
-    if (interval_nr && charset->mbminlen > 1)
-    {
-      /* Unescape UCS2 intervals from HEX notation */
-      TYPELIB *interval= share->intervals + interval_nr - 1;
-      unhex_type2(interval);
-    }
-
-    *field_ptr= reg_field=
-      make_field(share, record+recpos,
-		 (uint32_t) field_length,
-		 null_pos, null_bit_pos,
-		 pack_flag,
-		 field_type,
-		 charset,
-		 (Field::utype) MTYP_TYPENR(unireg_type),
-		 (interval_nr ?
-		  share->intervals+interval_nr-1 :
-		  (TYPELIB*) 0),
-		 share->fieldnames.type_names[i]);
-    if (!reg_field)				// Not supported field type
-    {
-      error= 4;
-      goto err;			/* purecov: inspected */
-    }
-
-    reg_field->flags|= ((uint32_t)column_format << COLUMN_FORMAT_FLAGS);
-    reg_field->field_index= i;
-    reg_field->comment=comment;
-    reg_field->vcol_info= vcol_info;
-    reg_field->is_stored= fld_is_stored;
-    if (!(reg_field->flags & NOT_NULL_FLAG))
-    {
-      if (!(null_bit_pos= (null_bit_pos + 1) & 7))
-        null_pos++;
-    }
-    if (f_no_default(pack_flag))
-      reg_field->flags|= NO_DEFAULT_VALUE_FLAG;
-
-    if (reg_field->unireg_check == Field::NEXT_NUMBER)
-      share->found_next_number_field= field_ptr;
-    if (share->timestamp_field == reg_field)
-      share->timestamp_field_offset= i;
-
-    if (use_hash)
-      (void) my_hash_insert(&share->name_hash,
-                            (unsigned char*) field_ptr); // never fail
-    if (!reg_field->is_stored)
-    {
-      share->stored_fields--;
-      if (share->stored_rec_length>=recpos)
-        share->stored_rec_length= recpos-1;
-    }
-  }
-  *field_ptr=0;					// End marker
-  /* Sanity checks: */
-  assert(share->fields>=share->stored_fields);
-  assert(share->reclength>=share->stored_rec_length);
-
-  /* Fix key->name and key_part->field */
-  if (key_parts)
+  /* Fix key stuff */
+  if (share->key_parts)
   {
     uint32_t primary_key=(uint32_t) (find_type((char*) "PRIMARY",
 				       &share->keynames, 3) - 1);
+
     int64_t ha_option= handler_file->ha_table_flags();
+
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
 
     for (uint32_t key=0 ; key < share->keys ; key++,keyinfo++)
     {
       uint32_t usable_parts= 0;
-//      keyinfo->name=(char*) share->keynames.type_names[key];
 
       if (primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
       {
@@ -1429,7 +1210,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 	  declare this as a primary key.
 	*/
 	primary_key=key;
-	for (i=0 ; i < keyinfo->key_parts ;i++)
+	for (uint32_t i=0 ; i < keyinfo->key_parts ;i++)
 	{
 	  uint32_t fieldnr= key_part[i].fieldnr;
 	  if (!fieldnr ||
@@ -1443,13 +1224,13 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
 	}
       }
 
-      for (i=0 ; i < keyinfo->key_parts ; key_part++,i++)
+      for (uint32_t i=0 ; i < keyinfo->key_parts ; key_part++,i++)
       {
         Field *field;
 	if (!key_part->fieldnr)
         {
-          error= 4;                             // Wrong file
-          goto err;
+//          error= 4;                             // Wrong file
+	  abort(); // goto err;
         }
         field= key_part->field= share->field[key_part->fieldnr-1];
         key_part->type= field->key_type();
@@ -1546,26 +1327,17 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
                                       fieldnr);
         }
       }
+
     }
     else
       share->primary_key = MAX_KEY; // we do not have a primary key
   }
   else
     share->primary_key= MAX_KEY;
-  if (disk_buff)
-    free(disk_buff);
-  disk_buff= NULL;
-  if (new_field_pack_flag <= 1)
-  {
-    /* Old file format with default as not null */
-    uint32_t null_length= (share->null_fields+7)/8;
-    memset(share->default_values + (null_flags - (unsigned char*) record),
-          null_length, 255);
-  }
 
   if (share->found_next_number_field)
   {
-    reg_field= *share->found_next_number_field;
+    Field *reg_field= *share->found_next_number_field;
     if ((int) (share->next_number_index= (uint32_t)
 	       find_ref_key(share->key_info, share->keys,
                             share->default_values, reg_field,
@@ -1597,16 +1369,10 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
     }
   }
 
-  /*
-    the correct null_bytes can now be set, since bitfields have been taken
-    into account
-  */
-  share->null_bytes= (null_pos - (unsigned char*) null_flags +
-                      (null_bit_pos + 7) / 8);
-  share->last_null_bit_pos= null_bit_pos;
-
   share->db_low_byte_first= handler_file->low_byte_first();
   share->column_bitmap_size= bitmap_buffer_size(share->fields);
+
+  my_bitmap_map *bitmaps;
 
   if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
                                              share->column_bitmap_size)))
@@ -1615,25 +1381,95 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   bitmap_set_all(&share->all_set);
 
   delete handler_file;
-  if (buff)
-    free(buff);
   return (0);
 
- err:
-  if (buff)
-    free(buff);
+err:
   share->error= error;
   share->open_errno= my_errno;
-  share->errarg= errarg;
-  if (disk_buff)
-    free(disk_buff);
-  delete handler_file;
+  share->errarg= 0;
   hash_free(&share->name_hash);
+  delete handler_file;
+  open_table_error(share, error, share->open_errno, 0);
+  return error;
+}
 
-  open_table_error(share, error, share->open_errno, errarg);
+/*
+  Read table definition from a binary / text based .frm file
+
+  SYNOPSIS
+  open_table_def()
+  session		Thread handler
+  share		Fill this with table definition
+  db_flags	Bit mask of the following flags: OPEN_VIEW
+
+  NOTES
+    This function is called when the table definition is not cached in
+    table_def_cache
+    The data is returned in 'share', which is alloced by
+    alloc_table_share().. The code assumes that share is initialized.
+
+  RETURN VALUES
+   0	ok
+   1	Error (see open_table_error)
+   2    Error (see open_table_error)
+   3    Wrong data in .frm file
+   4    Error (see open_table_error)
+   5    Error (see open_table_error: charset unavailable)
+   6    Unknown .frm version
+*/
+
+int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
+{
+  int error;
+  bool error_given;
+  string	path("");
+
+  error= 1;
+  error_given= 0;
+
+  path.reserve(FN_REFLEN);
+  path.append(share->normalized_path.str);
+  string proto_path= path;
+
+  path.append(reg_ext);
+
+  proto_path.append(".dfe");
+
+  drizzle::Table table;
+
+  if((error= drizzle_read_table_proto(proto_path.c_str(), &table)))
+  {
+    if(error>0)
+    {
+      my_errno= error;
+      error= 1;
+    }
+    else
+    {
+      if(!table.IsInitialized())
+      {
+	error= 4;
+      }
+    }
+    goto err_not_open;
+  }
+
+  parse_table_proto(session, table, share);
+
+  share->table_category= get_table_category(& share->db, & share->table_name);
+
+  if (!error)
+    session->status_var.opened_shares++;
+
+err_not_open:
+  if (error && !error_given)
+  {
+    share->error= error;
+    open_table_error(share, error, (share->open_errno= my_errno), 0);
+  }
+
   return(error);
-} /* open_binary_frm */
-
+}
 
 /*
   Clear flag GET_FIXED_FIELDS_FLAG in all fields of the table.
@@ -1706,6 +1542,7 @@ bool fix_fields_vcol_func(Session *session,
   memcpy(db_name_string,
          table->s->normalized_path.str,
          table->s->normalized_path.length);
+  db_name_string[table->s->normalized_path.length]= '\0';
   dir_length= dirname_length(db_name_string);
   db_name_string[dir_length - 1]= 0;
   home_dir_length= dirname_length(db_name_string);
@@ -2339,7 +2176,7 @@ int read_string(File file, unsigned char**to, size_t length)
 
 	/* Add a new form to a form file */
 
-ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
+off_t make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 		     const char *newname)
 {
   uint32_t i,bufflength,maxlength,n_length,length,names;
@@ -4763,7 +4600,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
   List_iterator_fast<Create_field> it(field_list);
   while ((cdef= it++))
   {
-    *field= make_field(share, 0, cdef->length,
+    *field= make_field(share, NULL, 0, cdef->length,
                        (unsigned char*) (f_maybe_null(cdef->pack_flag) ? "" : 0),
                        f_maybe_null(cdef->pack_flag) ? 1 : 0,
                        cdef->pack_flag, cdef->sql_type, cdef->charset,

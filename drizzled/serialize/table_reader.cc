@@ -23,7 +23,16 @@ using namespace google::protobuf::io;
 void print_field(const ::drizzle::Table::Field &field)
 {
   cout << "\t`" << field.name() << "`";
-  switch (field.type())
+
+  Table::Field::FieldType field_type= field.type();
+
+  if(field_type==Table::Field::VIRTUAL)
+  {
+    cout << " VIRTUAL"; // FIXME
+    field_type= field.virtual_options().type();
+  }
+
+  switch (field_type)
   {
     case Table::Field::DOUBLE:
     cout << " DOUBLE ";
@@ -31,11 +40,10 @@ void print_field(const ::drizzle::Table::Field &field)
   case Table::Field::VARCHAR:
     cout << " VARCHAR(" << field.string_options().length() << ")";
     break;
-  case Table::Field::TEXT:
-    cout << " TEXT ";
-    break;
   case Table::Field::BLOB:
-    cout << " BLOB ";
+    cout << " BLOB "; /* FIXME: or text, depends on collation */
+    if(field.string_options().has_collation_id())
+      cout << "COLLATION=" << field.string_options().collation_id() << " ";
     break;
   case Table::Field::ENUM:
     {
@@ -78,8 +86,14 @@ void print_field(const ::drizzle::Table::Field &field)
     cout << " DATETIME ";
     break;
   case Table::Field::VIRTUAL:
-    cout << " VIRTUAL"; // FIXME
-    break;
+    abort(); // handled above.
+  }
+
+  if(field.type()==Table::Field::VIRTUAL)
+  {
+    cout << " AS (" << field.virtual_options().expression() << ") ";
+    if(field.virtual_options().physically_stored())
+      cout << " STORED ";
   }
 
   if (field.type() == Table::Field::INTEGER
@@ -100,7 +114,7 @@ void print_field(const ::drizzle::Table::Field &field)
 	 && field.constraints().is_nullable()))
     cout << " NOT NULL ";
 
-  if (field.type() == Table::Field::TEXT
+  if (field.type() == Table::Field::BLOB
       || field.type() == Table::Field::VARCHAR)
   {
     if (field.string_options().has_collation())
@@ -109,6 +123,16 @@ void print_field(const ::drizzle::Table::Field &field)
 
   if (field.options().has_default_value())
     cout << " DEFAULT `" << field.options().default_value() << "` " ;
+
+  if (field.options().has_default_bin_value())
+  {
+    string v= field.options().default_bin_value();
+    cout << " DEFAULT 0x";
+    for(unsigned int i=0; i< v.length(); i++)
+    {
+      printf("%.2x", *(v.c_str()+i));
+    }
+  }
 
   if (field.type() == Table::Field::TIMESTAMP)
     if (field.timestamp_options().has_auto_updates()
@@ -183,20 +207,43 @@ void print_table_options(const ::drizzle::Table::TableOptions &options)
   if (options.has_row_type())
     cout << " ROW_TYPE = " << options.row_type() << endl;
 
-/*    optional string data_file_name = 5;
-    optional string index_file_name = 6;
-    optional uint64 max_rows = 7;
-    optional uint64 min_rows = 8;
-    optional uint64 auto_increment_value = 9;
-    optional uint32 avg_row_length = 11;
-    optional uint32 key_block_size = 12;
-    optional uint32 block_size = 13;
-    optional string comment = 14;
-    optional bool pack_keys = 15;
-    optional bool checksum = 16;
-    optional bool page_checksum = 17;
-    optional bool delay_key_write = 18;
-*/
+  if (options.has_data_file_name())
+    cout << " DATA_FILE_NAME = '" << options.data_file_name() << "'" << endl;
+
+  if (options.has_index_file_name())
+    cout << " INDEX_FILE_NAME = '" << options.index_file_name() << "'" << endl;
+
+  if (options.has_max_rows())
+    cout << " MAX_ROWS = " << options.max_rows() << endl;
+
+  if (options.has_min_rows())
+    cout << " MIN_ROWS = " << options.min_rows() << endl;
+
+  if (options.has_auto_increment_value())
+    cout << " AUTO_INCREMENT = " << options.auto_increment_value() << endl;
+
+  if (options.has_avg_row_length())
+    cout << " AVG_ROW_LENGTH = " << options.avg_row_length() << endl;
+
+  if (options.has_key_block_size())
+    cout << " KEY_BLOCK_SIZE = "  << options.key_block_size() << endl;
+
+  if (options.has_block_size())
+    cout << " BLOCK_SIZE = " << options.block_size() << endl;
+
+  if (options.has_comment())
+    cout << " COMMENT = '" << options.comment() << "'" << endl;
+
+  if (options.has_pack_keys())
+    cout << " PACK_KEYS = " << options.pack_keys() << endl;
+  if (options.has_pack_record())
+    cout << " PACK_RECORD = " << options.pack_record() << endl;
+  if (options.has_checksum())
+    cout << " CHECKSUM = " << options.checksum() << endl;
+  if (options.has_page_checksum())
+    cout << " PAGE_CHECKSUM = " << options.page_checksum() << endl;
+  if (options.has_delay_key_write())
+    cout << " DELAY_KEY_WRITE = " << options.delay_key_write() << endl;
 }
 
 

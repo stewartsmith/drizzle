@@ -189,6 +189,10 @@ static bool show_plugins(Session *session, plugin_ref plugin, void *arg)
     table->field[7]->store(PLUGIN_LICENSE_BSD_STRING,
                            strlen(PLUGIN_LICENSE_BSD_STRING), cs);
     break;
+  case PLUGIN_LICENSE_LGPL:
+    table->field[7]->store(PLUGIN_LICENSE_LGPL_STRING,
+                           strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
+    break;
   default:
     table->field[7]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
                            strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
@@ -1004,7 +1008,7 @@ public:
   static void operator delete(void *, size_t)
   { TRASH(ptr, size); }
 
-  ulong thread_id;
+  my_thread_id thread_id;
   time_t start_time;
   uint32_t   command;
   const char *user,*host,*db,*proc_info,*state_info;

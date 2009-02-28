@@ -24,7 +24,7 @@
 #include <drizzled/sql_base.h>
 
 bool mysql_union(Session *session, LEX *, select_result *result,
-                 Select_Lex_Unit *unit, ulong setup_tables_done_option)
+                 Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
 {
   bool res;
   if (!(res= unit->prepare(session, result, SELECT_NO_UNLOCK |
@@ -186,7 +186,7 @@ Select_Lex_Unit::init_prepare_fake_select_lex(Session *session_arg)
 
 
 bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
-                                 uint32_t additional_options)
+                              uint64_t additional_options)
 {
   Select_Lex *lex_select_save= session_arg->lex->current_select;
   Select_Lex *sl, *first_sl= first_select();

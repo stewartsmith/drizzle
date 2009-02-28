@@ -267,7 +267,7 @@ static bool bitmap_covers(const table_map x, const table_map y)
 */
 
 bool handle_select(Session *session, LEX *lex, select_result *result,
-                   ulong setup_tables_done_option)
+                   uint64_t setup_tables_done_option)
 {
   bool res;
   register Select_Lex *select_lex = &lex->select_lex;
@@ -13867,7 +13867,8 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
   cache->length=length+blobs*sizeof(char*);
   cache->blobs=blobs;
   *blob_ptr= NULL;					/* End sequentel */
-  size= cmax(session->variables.join_buff_size, (uint32_t)cache->length);
+  size= max((size_t)session->variables.join_buff_size,
+            (size_t)cache->length);
   if (!(cache->buff=(unsigned char*) malloc(size)))
     return 1;				/* Don't use cache */ /* purecov: inspected */
   cache->end=cache->buff+size;
