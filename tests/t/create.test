@@ -217,8 +217,11 @@ drop table t1;
 #
 
 create table t1 select 1,2,3;
+--error 1364
 create table if not exists t1 select 1,2;
+--error 1136
 create table if not exists t1 select 1,2,3,4;
+--error 1364
 create table if not exists t1 select 1;
 select * from t1;
 drop table t1;
@@ -469,8 +472,7 @@ drop table t1, t2, t3;
 # an improper fix is present.
 #
 create table t1 (a int);
-## TODO: Should this statement fail?
-#--error 1093
+--error 1093
 create table t1 select * from t1;
 ## TODO: Huh? --error ER_WRONG_OBJECT
 #create table t2 union = (t1) select * from t1;
