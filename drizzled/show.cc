@@ -1237,37 +1237,9 @@ class show_var_if
   show_var_if() { }
   inline bool operator()(SHOW_VAR *curr)
   {
-    if (curr->type == SHOW_UNDEF)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
+    return (curr->type == SHOW_UNDEF);
   }
 };
-
-/*
-  deletes all the SHOW_UNDEF elements from the array and calls
-  delete_dynamic() if it's completely empty.
-*/
-static void shrink_var_array(DYNAMIC_ARRAY *array)
-{
-  uint32_t a,b;
-  SHOW_VAR *all= dynamic_element(array, 0, SHOW_VAR *);
-
-  for (a= b= 0; b < array->elements; b++)
-    if (all[b].type != SHOW_UNDEF)
-      all[a++]= all[b];
-  if (a)
-  {
-    memset(all+a, 0, sizeof(SHOW_VAR)); // writing NULL-element to the end
-    array->elements= a;
-  }
-  else // array is completely empty - delete it
-    delete_dynamic(array);
-}
 
 /*
   Adds an array of SHOW_VAR entries to the output of SHOW STATUS
@@ -1386,8 +1358,7 @@ void remove_status_vars(SHOW_VAR *list)
       if (res == 0)
         all[c].type= SHOW_UNDEF;
     }
-    //shrink_var_array(&all_status_vars);
-    // use remove_if here...will need a functor also for removal
+    /* removes all the SHOW_UNDEF elements from the vector */
     all_status_vars.erase(remove_if(all_status_vars.begin(),
                             all_status_vars.end(),show_var_if()),
                             all_status_vars.end());
@@ -1407,8 +1378,7 @@ void remove_status_vars(SHOW_VAR *list)
         break;
       }
     }
-    //shrink_var_array(&all_status_vars);
-    // use remove_if here...
+    /* removes all the SHOW_UNDEF elements from the vector */
     all_status_vars.erase(remove_if(all_status_vars.begin(),
                             all_status_vars.end(),show_var_if()),
                             all_status_vars.end());
