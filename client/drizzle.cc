@@ -389,7 +389,6 @@ static COMMANDS commands[] = {
   { "CROSS", 0, 0, 0, ""},
   { "CUBE", 0, 0, 0, ""},
   { "CURRENT_DATE", 0, 0, 0, ""},
-  { "CURRENT_TIME", 0, 0, 0, ""},
   { "CURRENT_TIMESTAMP", 0, 0, 0, ""},
   { "CURRENT_USER", 0, 0, 0, ""},
   { "CURSOR", 0, 0, 0, ""},
@@ -530,7 +529,6 @@ static COMMANDS commands[] = {
   { "LINESTRING", 0, 0, 0, ""},
   { "LOAD", 0, 0, 0, ""},
   { "LOCAL", 0, 0, 0, ""},
-  { "LOCALTIME", 0, 0, 0, ""},
   { "LOCALTIMESTAMP", 0, 0, 0, ""},
   { "LOCK", 0, 0, 0, ""},
   { "LOCKS", 0, 0, 0, ""},
@@ -728,7 +726,6 @@ static COMMANDS commands[] = {
   { "TERMINATED", 0, 0, 0, ""},
   { "TEXT", 0, 0, 0, ""},
   { "THEN", 0, 0, 0, ""},
-  { "TIME", 0, 0, 0, ""},
   { "TIMESTAMP", 0, 0, 0, ""},
   { "TIMESTAMPADD", 0, 0, 0, ""},
   { "TIMESTAMPDIFF", 0, 0, 0, ""},
@@ -762,7 +759,6 @@ static COMMANDS commands[] = {
   { "USE_FRM", 0, 0, 0, ""},
   { "USING", 0, 0, 0, ""},
   { "UTC_DATE", 0, 0, 0, ""},
-  { "UTC_TIME", 0, 0, 0, ""},
   { "UTC_TIMESTAMP", 0, 0, 0, ""},
   { "VALUE", 0, 0, 0, ""},
   { "VALUES", 0, 0, 0, ""},
@@ -789,7 +785,6 @@ static COMMANDS commands[] = {
   { "ABS", 0, 0, 0, ""},
   { "ACOS", 0, 0, 0, ""},
   { "ADDDATE", 0, 0, 0, ""},
-  { "ADDTIME", 0, 0, 0, ""},
   { "AES_ENCRYPT", 0, 0, 0, ""},
   { "AES_DECRYPT", 0, 0, 0, ""},
   { "AREA", 0, 0, 0, ""},
@@ -827,7 +822,6 @@ static COMMANDS commands[] = {
   { "CRC32", 0, 0, 0, ""},
   { "CROSSES", 0, 0, 0, ""},
   { "CURDATE", 0, 0, 0, ""},
-  { "CURTIME", 0, 0, 0, ""},
   { "DATE_ADD", 0, 0, 0, ""},
   { "DATEDIFF", 0, 0, 0, ""},
   { "DATE_FORMAT", 0, 0, 0, ""},
@@ -897,7 +891,6 @@ static COMMANDS commands[] = {
   { "LTRIM", 0, 0, 0, ""},
   { "MAKE_SET", 0, 0, 0, ""},
   { "MAKEDATE", 0, 0, 0, ""},
-  { "MAKETIME", 0, 0, 0, ""},
   { "MASTER_POS_WAIT", 0, 0, 0, ""},
   { "MAX", 0, 0, 0, ""},
   { "MBRCONTAINS", 0, 0, 0, ""},
@@ -954,7 +947,6 @@ static COMMANDS commands[] = {
   { "ROW_COUNT", 0, 0, 0, ""},
   { "RPAD", 0, 0, 0, ""},
   { "RTRIM", 0, 0, 0, ""},
-  { "SEC_TO_TIME", 0, 0, 0, ""},
   { "SESSION_USER", 0, 0, 0, ""},
   { "SUBDATE", 0, 0, 0, ""},
   { "SIGN", 0, 0, 0, ""},
@@ -982,8 +974,6 @@ static COMMANDS commands[] = {
   { "SYSTEM_USER", 0, 0, 0, ""},
   { "TAN", 0, 0, 0, ""},
   { "TIME_FORMAT", 0, 0, 0, ""},
-  { "TIME_TO_SEC", 0, 0, 0, ""},
-  { "TIMEDIFF", 0, 0, 0, ""},
   { "TO_DAYS", 0, 0, 0, ""},
   { "TOUCHES", 0, 0, 0, ""},
   { "TRIM", 0, 0, 0, ""},
@@ -2806,7 +2796,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_LONG:        return "LONG";
     case DRIZZLE_TYPE_LONGLONG:    return "LONGLONG";
     case DRIZZLE_TYPE_NULL:        return "NULL";
-    case DRIZZLE_TYPE_TIME:        return "TIME";
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case DRIZZLE_TYPE_TINY:        return "TINY";
     case DRIZZLE_TYPE_VIRTUAL:     return "VIRTUAL";

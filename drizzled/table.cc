@@ -307,9 +307,6 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
   case drizzle::Table::Field::BIGINT:
     field_type= DRIZZLE_TYPE_LONGLONG;
     break;
-  case drizzle::Table::Field::TIME:
-    field_type= DRIZZLE_TYPE_TIME;
-    break;
   case drizzle::Table::Field::DATETIME:
     field_type= DRIZZLE_TYPE_DATETIME;
     break;
@@ -370,7 +367,6 @@ Item * default_value_item(enum_field_types field_type,
     return new Item_null();
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
-  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
     if(default_value.compare("NOW()")==0)

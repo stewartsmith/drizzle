@@ -81,15 +81,6 @@ SELECT DATE_FORMAT("2002-03-06 10:11:12", CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.
 drop table t1,t2;
 
 #
-# Multiple SELECT DATE_FORMAT gave incorrect results (Bug #4036)
-#
-
-CREATE TABLE t1 (f1 time default NULL, f2 time default NULL);
-INSERT INTO t1 (f1, f2) VALUES ('09:00', '12:00');
-SELECT DATE_FORMAT(f1, "%l.%i %p") , DATE_FORMAT(f2, "%l.%i %p") FROM t1;
-DROP TABLE t1;
-
-#
 # Bug 4937: different date -> string conversion when using SELECT ... UNION
 # and INSERT ... SELECT ... UNION
 #
@@ -134,20 +125,6 @@ insert into t1 values (9912101,9912101,9912101);
 insert into t1 values (11111,11111,11111);
 select * from t1;
 drop table t1;
-
-#
-# Bug #30942: select str_to_date from derived table returns varying results
-#
-CREATE TABLE t1 (
-  a INT
-);
-
-INSERT INTO t1 VALUES (1);
-INSERT INTO t1 VALUES (NULL);
-
-SELECT str_to_date( '', a ) FROM t1;
-DROP TABLE t1;
-
 
 #
 # Bug #31221: Optimizer incorrectly identifies impossible WHERE clause

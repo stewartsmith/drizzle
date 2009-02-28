@@ -393,7 +393,7 @@ drop table t1, t2;
 # Bug #31075: crash in get_func_mm_tree
 #
 
-create table t1 (a time, key(a));
+create table t1 (a datetime, key(a));
 insert into t1 values (),(),(),(),(),(),(),(),(),();
 select a from t1 where a not in (a,a,a) group by a;
 drop table t1;

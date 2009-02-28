@@ -216,46 +216,6 @@ int64_t Item_datetime_typecast::val_int()
 }
 
 
-bool Item_time_typecast::get_time(DRIZZLE_TIME *ltime)
-{
-  bool res= get_arg0_time(ltime);
-  /*
-    For DRIZZLE_TIMESTAMP_TIME value we can have non-zero day part,
-    which we should not lose.
-  */
-  if (ltime->time_type == DRIZZLE_TIMESTAMP_DATETIME)
-    ltime->year= ltime->month= ltime->day= 0;
-  ltime->time_type= DRIZZLE_TIMESTAMP_TIME;
-  return res;
-}
-
-
-int64_t Item_time_typecast::val_int()
-{
-  DRIZZLE_TIME ltime;
-  if (get_time(&ltime))
-  {
-    null_value= 1;
-    return 0;
-  }
-  return ltime.hour * 10000L + ltime.minute * 100 + ltime.second;
-}
-
-String *Item_time_typecast::val_str(String *str)
-{
-  assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-
-  if (!get_arg0_time(&ltime) &&
-      !make_datetime(ltime.second_part ? TIME_MICROSECOND : TIME_ONLY,
-		     &ltime, str))
-    return str;
-
-  null_value=1;
-  return 0;
-}
-
-
 bool Item_date_typecast::get_date(DRIZZLE_TIME *ltime, uint32_t )
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);

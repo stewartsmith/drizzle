@@ -415,8 +415,8 @@ Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is
 def	test	t1	t1	id	id	1	11	1	Y	32768	0	63
 def	test	t1	t1	name_id	name_id	1	11	1	Y	32768	0	63
 def	test	t2	t2	id	id	1	11	1	Y	32768	0	63
-def	test	t3	t3	en	en	9	1020	11	Y	0	0	45
-def	test	t3	t3	cz	cz	9	1020	11	Y	0	0	45
+def	test	t3	t3	en	en	8	1020	11	Y	0	0	45
+def	test	t3	t3	cz	cz	8	1020	11	Y	0	0	45
 id	name_id	id	en	cz
 1	1	1	en string 1	cz string 1
 2	3	2	en string 2	cz string 2

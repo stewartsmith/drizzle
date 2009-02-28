@@ -65,7 +65,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/real.h \
 		field/str.h \
 		field/timestamp.h \
-		field/timetype.h \
 		field/varstring.h \
 		field_iterator.h \
 		file_exchange.h \
@@ -163,7 +162,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/weight_string.h \
 		function/time/add_time.h \
 		function/time/curdate.h \
-		function/time/curtime.h \
 		function/time/date.h \
 		function/time/date_add_interval.h \
 		function/time/date_format.h \
@@ -179,9 +177,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/last_day.h \
 		function/time/make_datetime.h \
 		function/time/make_datetime_with_warn.h \
-		function/time/make_time_with_warn.h \
 		function/time/makedate.h \
-		function/time/maketime.h \
 		function/time/microsecond.h \
 		function/time/minute.h \
 		function/time/month.h \
@@ -189,13 +185,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/period_add.h \
 		function/time/period_diff.h \
 		function/time/quarter.h \
-		function/time/sec_to_time.h \
 		function/time/second.h \
-		function/time/str_timefunc.h \
-		function/time/str_to_date.h \
 		function/time/sysdate_local.h \
-		function/time/time_to_sec.h \
-		function/time/timediff.h \
 		function/time/timestamp_diff.h \
 		function/time/to_days.h \
 		function/time/typecast.h \
@@ -409,7 +400,6 @@ drizzled_SOURCES = \
 		field/real.cc \
 		field/str.cc \
 		field/timestamp.cc \
-		field/timetype.cc \
 		field/varstring.cc \
 		field.cc \
 		field_conv.cc \
@@ -511,7 +501,6 @@ drizzled_SOURCES = \
 		function/str/weight_string.cc \
 		function/time/add_time.cc \
 		function/time/curdate.cc \
-		function/time/curtime.cc \
 		function/time/date.cc \
 		function/time/date_add_interval.cc \
 		function/time/date_format.cc \
@@ -528,8 +517,6 @@ drizzled_SOURCES = \
 		function/time/makedate.cc \
 		function/time/make_datetime_with_warn.cc \
 		function/time/make_datetime.cc \
-		function/time/maketime.cc \
-		function/time/make_time_with_warn.cc \
 		function/time/microsecond.cc \
 		function/time/minute.cc \
 		function/time/month.cc \
@@ -537,13 +524,9 @@ drizzled_SOURCES = \
 		function/time/quarter.cc \
 		function/time/period_add.cc \
 		function/time/period_diff.cc \
-		function/time/sec_to_time.cc \
 		function/time/second.cc \
-		function/time/str_to_date.cc \
 		function/time/sysdate_local.cc \
-		function/time/timediff.cc \
 		function/time/timestamp_diff.cc \
-		function/time/time_to_sec.cc \
 		function/time/to_days.cc \
 		function/time/typecast.cc \
 		function/time/unix_timestamp.cc \

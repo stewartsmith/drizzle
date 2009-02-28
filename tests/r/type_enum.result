@@ -1670,8 +1670,8 @@ insert into t1 values ('Y');
 alter table t1 add c enum ('Y','N') COLLATE utf8_bin;
 select * from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	test	t1	t1	a	a	12	4	1	Y	384	0	45
-def	test	t1	t1	c	c	12	4	0	Y	384	0	45
+def	test	t1	t1	a	a	11	4	1	Y	384	0	45
+def	test	t1	t1	c	c	11	4	0	Y	384	0	45
 a	c
 Y	NULL
 drop table t1;
