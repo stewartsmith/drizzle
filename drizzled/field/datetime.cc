@@ -154,47 +154,39 @@ int Field_datetime::store(int64_t from, bool)
   return 0;
 }
 
-int Field_datetime::store_time(DRIZZLE_TIME *ltime,
-                               enum enum_drizzle_timestamp_type time_type)
+int Field_datetime::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
 {
-  int64_t tmp;
-  int error= 0;
-  /*
-    We don't perform range checking here since values stored in TIME
-    structure always fit into DATETIME range.
-  */
-  if (time_type == DRIZZLE_TIMESTAMP_DATE ||
-      time_type == DRIZZLE_TIMESTAMP_DATETIME)
+  drizzled::DateTime temporal;
+
+  temporal.set_years(ltime->year);
+  temporal.set_months(ltime->month);
+  temporal.set_days(ltime->day);
+  temporal.set_hours(ltime->hour);
+  temporal.set_minutes(ltime->minute);
+  temporal.set_seconds(ltime->second);
+
+  if (! temporal.is_valid())
   {
-    tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*INT64_C(1000000)+
-	 (ltime->hour*10000L+ltime->minute*100+ltime->second));
-    if (check_date(ltime, tmp != 0,
-                   (TIME_FUZZY_DATE |
-                    (current_session->variables.sql_mode &
-                     (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), &error))
-    {
-      char buff[MAX_DATE_STRING_REP_LENGTH];
-      String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-      make_datetime(ltime, &str);
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
-                           str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATETIME,1);
-    }
+    char tmp_string[MAX_DATE_STRING_REP_LENGTH];
+    size_t tmp_string_len;
+
+    temporal.to_string(tmp_string, &tmp_string_len);
+    my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp_string);
+    return 1;
   }
-  else
-  {
-    tmp=0;
-    error= 1;
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-  }
+
+  int64_t int_value;
+  temporal.to_int64_t(&int_value);
+
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
   {
-    int8store(ptr,tmp);
+    int8store(ptr, int_value);
   }
   else
 #endif
-    int64_tstore(ptr,tmp);
-  return error;
+    int64_tstore(ptr, int_value);
+  return 0;
 }
 
 double Field_datetime::val_real(void)

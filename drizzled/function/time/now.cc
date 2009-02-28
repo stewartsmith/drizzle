@@ -35,6 +35,10 @@ void Item_func_now::fix_length_and_dec()
 {
   decimals= DATETIME_DEC;
   collation.set(&my_charset_bin);
+  
+  memset(&ltime, 0, sizeof(DRIZZLE_TIME));
+
+  ltime.time_type= DRIZZLE_TIMESTAMP_DATETIME;
 
   store_now_in_TIME(&ltime);
   value= (int64_t) TIME_to_uint64_t_datetime(&ltime);

@@ -6,6 +6,6 @@ SELECT CONCAT(Jahr,'-',Monat,'-',Tag) AS Date,
 UNIX_TIMESTAMP(CONCAT(Jahr,'-',Monat,'-',Tag)) AS Unix
 FROM t1;
 Date	Unix
-1998-9-16	905893200
-1998-9-16	905893200
+1998-9-16	905904000
+1998-9-16	905904000
 drop table t1;

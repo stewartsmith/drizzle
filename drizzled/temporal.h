@@ -72,6 +72,8 @@
 
 #include "drizzled/calendar.h"
 
+#include <ostream>
+
 /* Outside forward declarations */
 class my_decimal;
 
@@ -234,19 +236,6 @@ public:
   bool operator>=(const DateTime &rhs);
   bool operator<(const DateTime &rhs);
   bool operator<=(const DateTime &rhs);
-
-  /**
-   * Comparison operator overloads to compare a Date against
-   * a Timestamp value.
-   *
-   * @param Timestamp to compare against.
-   */
-  bool operator==(const Timestamp &rhs);
-  bool operator!=(const Timestamp &rhs);
-  bool operator>(const Timestamp &rhs);
-  bool operator>=(const Timestamp &rhs);
-  bool operator<(const Timestamp &rhs);
-  bool operator<=(const Timestamp &rhs);
 
   /**
    * Operator overload for adding/subtracting another Date
@@ -669,6 +658,19 @@ class Timestamp: public DateTime
 public:
   Timestamp() :DateTime() {}
 
+  /**
+   * Comparison operator overloads to compare this against
+   * another Timestamp value.
+   *
+   * @param Timestamp to compare against.
+   */
+  bool operator==(const Timestamp &rhs);
+  bool operator!=(const Timestamp &rhs);
+  bool operator>(const Timestamp &rhs);
+  bool operator>=(const Timestamp &rhs);
+  bool operator<(const Timestamp &rhs);
+  bool operator<=(const Timestamp &rhs);
+
   bool is_valid_timestamp() const {return is_valid();}
   /** Returns whether the temporal value is valid timestamp. */
   virtual bool is_valid() const;
@@ -681,6 +683,11 @@ public:
    */
   void to_time_t(time_t *to) const;
 };
+
+/**
+ * Operator overload to an output stream for a Timestamp.
+ */
+std::ostream& operator<<(std::ostream& os, const Timestamp& subject);
 
 /**
  * Class representing temporal components in the UNIX epoch

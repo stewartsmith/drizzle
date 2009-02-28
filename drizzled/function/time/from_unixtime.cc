@@ -20,8 +20,12 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/time/from_unixtime.h>
-#include <drizzled/tztime.h>
 #include <drizzled/session.h>
+
+#include "drizzled/temporal.h"
+
+#include <sstream>
+#include <string>
 
 void Item_func_from_unixtime::fix_length_and_dec()
 {
@@ -64,8 +68,7 @@ int64_t Item_func_from_unixtime::val_int()
   return (int64_t) TIME_to_uint64_t_datetime(&time_tmp);
 }
 
-bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime,
-                                       uint32_t )
+bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime, uint32_t)
 {
   uint64_t tmp= (uint64_t)(args[0]->val_int());
   /*
@@ -75,9 +78,26 @@ bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime,
   if ((null_value= (args[0]->null_value || tmp > TIMESTAMP_MAX_VALUE)))
     return 1;
 
-  session->variables.time_zone->gmt_sec_to_TIME(ltime, (time_t)tmp);
+  drizzled::Timestamp temporal;
+  if (! temporal.from_time_t((time_t) tmp))
+  {
+    null_value= true;
+    std::stringstream ss;
+    std::string tmp_string;
+    ss << tmp; ss >> tmp_string;
+    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(0), tmp_string.c_str());
+    return 0;
+  }
+  
+  memset(ltime, 0, sizeof(*ltime));
+
+  ltime->year= temporal.years();
+  ltime->month= temporal.months();
+  ltime->day= temporal.days();
+  ltime->hour= temporal.hours();
+  ltime->minute= temporal.minutes();
+  ltime->second= temporal.seconds();
+  ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
 
   return 0;
 }
-
-

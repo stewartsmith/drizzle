@@ -725,15 +725,15 @@ eval CREATE TABLE t1 (
   privacy int NOT NULL default '0',
   last_mod_date timestamp NOT NULL,
   last_mod_id int NOT NULL default '0',
-  last_app_date timestamp NOT NULL,
+  last_app_date timestamp NULL,
   last_app_id int default '-1',
   version int NOT NULL default '0',
   assigned_scps int default '0',
   status int default '0'
 ) ENGINE=$engine_type;
-INSERT INTO t1 VALUES (4077711111,'SeanWheeler',90,2,20020111112846,500,00000000000000,-1,2,3,1);
+INSERT INTO t1 VALUES (4077711111,'SeanWheeler',90,2,20020111112846,500,NULL,-1,2,3,1);
 INSERT INTO t1 VALUES (9197722223,'berry',90,3,20020111112809,500,20020102114532,501,4,10,0);
-INSERT INTO t1 VALUES (650,'San Francisco',0,0,20011227111336,342,00000000000000,-1,1,24,1);
+INSERT INTO t1 VALUES (650,'San Francisco',0,0,20011227111336,342,NULL,-1,1,24,1);
 INSERT INTO t1 VALUES (302467,'Sue\'s Subshop',90,3,20020109113241,500,20020102115111,501,7,24,0);
 INSERT INTO t1 VALUES (6014911113,'SudzCarwash',520,1,20020102115234,500,20020102115259,501,33,32768,0);
 INSERT INTO t1 VALUES (333,'tubs',99,2,20020109113440,501,20020109113440,500,3,10,0);
@@ -744,15 +744,15 @@ eval CREATE TABLE t2 (
   privacy int NOT NULL default '0',
   last_mod_date timestamp NOT NULL,
   last_mod_id int NOT NULL default '0',
-  last_app_date timestamp NOT NULL,
+  last_app_date timestamp NULL,
   last_app_id int default '-1',
   version int NOT NULL default '0',
   assigned_scps int default '0',
   status int default '0'
 ) ENGINE=$engine_type;
-INSERT INTO t2 VALUES (4077711111,'SeanWheeler',0,2,20020111112853,500,00000000000000,-1,2,3,1);
+INSERT INTO t2 VALUES (4077711111,'SeanWheeler',0,2,20020111112853,500,NULL,-1,2,3,1);
 INSERT INTO t2 VALUES (9197722223,'berry',90,3,20020111112818,500,20020102114532,501,4,10,0);
-INSERT INTO t2 VALUES (650,'San Francisco',90,0,20020109113158,342,00000000000000,-1,1,24,1);
+INSERT INTO t2 VALUES (650,'San Francisco',90,0,20020109113158,342,NULL,-1,1,24,1);
 INSERT INTO t2 VALUES (333,'tubs',99,2,20020109113453,501,20020109113453,500,3,10,0);
 select * from t1;
 select * from t2;
@@ -1085,7 +1085,7 @@ eval CREATE TABLE t2 (col1 int,stamp TIMESTAMP,INDEX stamp_idx
 (stamp))ENGINE=$engine_type;
 insert into t1 values (1),(2),(3);
 # Note that timestamp 3 is wrong
---error 1292
+--error 1685 # Bad timestamp
 insert into t2 values (1, 20020204130000),(2, 20020204130000),(4,20020204310000 ),(5,20020204230000);
 SELECT col1 FROM t1 UNION SELECT col1 FROM t2 WHERE stamp <
 '20020204120000' GROUP BY col1;
