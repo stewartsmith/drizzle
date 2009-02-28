@@ -1371,7 +1371,7 @@ void remove_status_vars(SHOW_VAR *list)
         all[c].type= SHOW_UNDEF;
     }
     /* removes all the SHOW_UNDEF elements from the vector */
-    all_status_vars.erase(remove_if(all_status_vars.begin(),
+    all_status_vars.erase(std::remove_if(all_status_vars.begin(),
                             all_status_vars.end(),show_var_remove_if()),
                             all_status_vars.end());
     pthread_mutex_unlock(&LOCK_status);
@@ -1391,7 +1391,7 @@ void remove_status_vars(SHOW_VAR *list)
       }
     }
     /* removes all the SHOW_UNDEF elements from the vector */
-    all_status_vars.erase(remove_if(all_status_vars.begin(),
+    all_status_vars.erase(std::remove_if(all_status_vars.begin(),
                             all_status_vars.end(),show_var_remove_if()),
                             all_status_vars.end());
   }
