@@ -246,8 +246,11 @@ create table t1 select x'4132';
 drop table t1;
 create table t1 select 1,2,3;
 create table if not exists t1 select 1,2;
+ERROR HY000: Field '1' doesn't have a default value
 create table if not exists t1 select 1,2,3,4;
+ERROR 21S01: Column count doesn't match value count at row 1
 create table if not exists t1 select 1;
+ERROR HY000: Field '1' doesn't have a default value
 select * from t1;
 1	2	3
 1	2	3
@@ -503,6 +506,7 @@ NULL	1
 drop table t1, t2, t3;
 create table t1 (a int);
 create table t1 select * from t1;
+ERROR HY000: You can't specify target table 't1' for update in FROM clause
 flush tables with read lock;
 unlock tables;
 drop table t1;
@@ -683,8 +687,11 @@ create table t1 (primary key (a)) (select 1 as a) union all (select 1 as a);
 ERROR 23000: Duplicate entry '1' for key 'PRIMARY'
 create table t1 (i int);
 create table if not exists t1 select 1 as i;
+Warnings:
+Note	1050	Table 't1' already exists
 select * from t1;
 i
+1
 drop table t1;
 create table t1 select coalesce('a' collate utf8_swedish_ci,'b' collate utf8_bin);
 ERROR HY000: Illegal mix of collations (utf8_swedish_ci,EXPLICIT) and (utf8_bin,EXPLICIT) for operation 'coalesce'
