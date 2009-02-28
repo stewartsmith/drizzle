@@ -21,7 +21,6 @@
 #include <drizzled/current_session.h>
 #include CSTDINT_H
 #include <drizzled/error.h>
-#include <drizzled/function/time/make_datetime.h>
 #include <drizzled/function/time/typecast.h>
 
 bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const
@@ -192,10 +191,25 @@ String *Item_datetime_typecast::val_str(String *str)
   assert(fixed == 1);
   DRIZZLE_TIME ltime;
 
-  if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
-      !make_datetime(ltime.second_part ? DATE_TIME_MICROSECOND : DATE_TIME,
-		     &ltime, str))
+  if (! get_arg0_date(&ltime, TIME_FUZZY_DATE))
+  {
+    if (ltime.second_part)
+    {
+      uint32_t length= sprintf(str->c_ptr(), "%04u-%02u-%02u %02u:%02u:%02u.%06u",
+                            ltime.year,
+                            ltime.month,
+                            ltime.day,
+                            ltime.hour,
+                            ltime.minute,
+                            ltime.second,
+                            (uint32_t) ltime.second_part);
+      str->length(length);
+      str->set_charset(&my_charset_bin);
+    }
+    else
+      make_datetime(&ltime, str);
     return str;
+  }
 
   null_value=1;
   return 0;
@@ -240,7 +254,7 @@ String *Item_date_typecast::val_str(String *str)
   if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
       !str->alloc(MAX_DATE_STRING_REP_LENGTH))
   {
-    make_date((DATE_TIME_FORMAT *) 0, &ltime, str);
+    make_date(&ltime, str);
     return str;
   }
 

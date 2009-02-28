@@ -817,12 +817,6 @@ let $values1 = 1196440219,default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
---echo # GET_FORMAT()
-let $cols = a datetime, b virtual varchar(32) as (date_format(a,get_format(DATE,'EUR')));
-let $values1 = '2008-08-31',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
 --echo # HOUR()
 let $cols = a datetime, b virtual int as (hour(a));
 let $values1 = '2008-08-08 10:05:03',default;
@@ -892,12 +886,6 @@ let $rows = 1;
 
 --echo # SUBDATE()
 let $cols = a datetime, b virtual datetime as (subdate(a,interval 1 month));
-let $values1 = '2008-08-31',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # SUBTIME()
-let $cols = a datetime, b virtual datetime as (subtime(a,'02:00:00'));
 let $values1 = '2008-08-31',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc

@@ -45,20 +45,10 @@ select makedate(9999,365);
 select makedate(9999,366);
 select makedate(100,1);
 
-#Time functions
-
-select subtime("1997-12-31 23:59:59.000001", "1 1:1:1.000002");
-select subtime("1997-12-31 23:59:59.999999", "1998-01-01 01:01:01.999999");
-select subtime("01:00:00.999999", "02:00:00.999998");
-select subtime("02:01:01.999999", "01:01:01.999999");
-
 # Extraction functions
 
 # PS doesn't support fractional seconds
 --disable_ps_protocol
-select timestamp("2001-12-01", "01:01:01.999999");
-select timestamp("2001-13-01", "01:01:01.000001");
-select timestamp("2001-12-01", "25:01:01");
 select timestamp("2001-12-01 01:01:01.000100");
 select timestamp("2001-12-01");
 select day("1997-12-31 23:59:59.000001");
@@ -69,7 +59,6 @@ select microsecond("1997-12-31 23:59:59.000001");
 
 create table t1 
 select makedate(1997,1) as f1,
-   timestamp(cast("2001-12-01" as date), "01:01:01") as f7,
    date("1997-12-31 23:59:59.000001") as f8;
 describe t1;
 # PS doesn't support fractional seconds

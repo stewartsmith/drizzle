@@ -160,7 +160,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/user.h \
 		function/str/uuid.h \
 		function/str/weight_string.h \
-		function/time/add_time.h \
 		function/time/curdate.h \
 		function/time/date.h \
 		function/time/date_add_interval.h \
@@ -171,12 +170,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/extract.h \
 		function/time/from_days.h \
 		function/time/from_unixtime.h \
-		function/time/get_format.h \
 		function/time/get_interval_value.h \
 		function/time/hour.h \
 		function/time/last_day.h \
-		function/time/make_datetime.h \
-		function/time/make_datetime_with_warn.h \
 		function/time/makedate.h \
 		function/time/microsecond.h \
 		function/time/minute.h \
@@ -499,7 +495,6 @@ drizzled_SOURCES = \
 		function/str/user.cc \
 		function/str/uuid.cc \
 		function/str/weight_string.cc \
-		function/time/add_time.cc \
 		function/time/curdate.cc \
 		function/time/date.cc \
 		function/time/date_add_interval.cc \
@@ -510,13 +505,10 @@ drizzled_SOURCES = \
 		function/time/dayofyear.cc \
 		function/time/from_days.cc \
 		function/time/from_unixtime.cc \
-		function/time/get_format.cc \
 		function/time/get_interval_value.cc \
 		function/time/hour.cc \
 		function/time/last_day.cc \
 		function/time/makedate.cc \
-		function/time/make_datetime_with_warn.cc \
-		function/time/make_datetime.cc \
 		function/time/microsecond.cc \
 		function/time/minute.cc \
 		function/time/month.cc \

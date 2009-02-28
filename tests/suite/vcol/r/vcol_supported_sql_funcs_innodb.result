@@ -1995,21 +1995,6 @@ a	b
 1196440219	2007-11-30 19:30:19
 drop table t1;
 set sql_warnings = 0;
-# GET_FORMAT()
-set sql_warnings = 1;
-create table t1 (a datetime, b virtual varchar(32) as (date_format(a,get_format(DATE,'EUR'))));
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `a` datetime DEFAULT NULL,
-  `b` VIRTUAL varchar(32) AS (date_format(a,get_format(DATE,'EUR')))
-) ENGINE=InnoDB
-insert into t1 values ('2008-08-31',default);
-select * from t1;
-a	b
-2008-08-31 00:00:00	31.08.2008
-drop table t1;
-set sql_warnings = 0;
 # HOUR()
 set sql_warnings = 1;
 create table t1 (a datetime, b virtual int as (hour(a)));
@@ -2191,21 +2176,6 @@ insert into t1 values ('2008-08-31',default);
 select * from t1;
 a	b
 2008-08-31 00:00:00	2008-07-31 00:00:00
-drop table t1;
-set sql_warnings = 0;
-# SUBTIME()
-set sql_warnings = 1;
-create table t1 (a datetime, b virtual datetime as (subtime(a,'02:00:00')));
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `a` datetime DEFAULT NULL,
-  `b` VIRTUAL datetime AS (subtime(a,'02:00:00'))
-) ENGINE=InnoDB
-insert into t1 values ('2008-08-31',default);
-select * from t1;
-a	b
-2008-08-31 00:00:00	2008-08-30 22:00:00
 drop table t1;
 set sql_warnings = 0;
 # TIME_FORMAT()

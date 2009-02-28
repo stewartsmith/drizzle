@@ -55,12 +55,10 @@
 #include <drizzled/function/str/user.h>
 #include <drizzled/function/str/weight_string.h>
 
-#include <drizzled/function/time/add_time.h>
 #include <drizzled/function/time/curdate.h>
 #include <drizzled/function/time/date_add_interval.h>
 #include <drizzled/function/time/dayofmonth.h>
 #include <drizzled/function/time/extract.h>
-#include <drizzled/function/time/get_format.h>
 #include <drizzled/function/time/hour.h>
 #include <drizzled/function/time/microsecond.h>
 #include <drizzled/function/time/minute.h>
@@ -587,7 +585,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  FROM
 %token  FULL                          /* SQL-2003-R */
 %token  GE
-%token  GET_FORMAT                    /* MYSQL-FUNC */
 %token  GLOBAL_SYM                    /* SQL-2003-R */
 %token  GROUP_SYM                     /* SQL-2003-R */
 %token  GROUP_CONCAT_SYM
@@ -998,7 +995,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         select_derived derived_table_list
         select_derived_union
 
-%type <date_time_type> date_time_type;
 %type <interval> interval
 
 %type <interval_time_st> interval_time_st
@@ -3195,8 +3191,6 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_second($3); }
         | TIMESTAMP '(' expr ')'
           { $$= new (YYSession->mem_root) Item_datetime_typecast($3); }
-        | TIMESTAMP '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_add_time($3, $5, 1, 0); }
         | TRIM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_trim($3); }
         | TRIM '(' LEADING expr FROM expr ')'
@@ -3229,7 +3223,6 @@ function_call_keyword:
   MAINTAINER:
   The only reasons a function should be added here are:
   - for compatibility reasons with another SQL syntax (CURDATE),
-  - for typing reasons (GET_FORMAT)
   Any other 'Syntaxic sugar' enhancements should be *STRONGLY*
   discouraged.
 */
@@ -3251,8 +3244,6 @@ function_call_nonkeyword:
           { $$= new (YYSession->mem_root) Item_date_add_interval($3,$6,$7,1); }
         | EXTRACT_SYM '(' interval FROM expr ')'
           { $$=new (YYSession->mem_root) Item_extract( $3, $5); }
-        | GET_FORMAT '(' date_time_type  ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_get_format($3, $5); }
         | NOW_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_now_local();
@@ -4170,12 +4161,6 @@ interval_time_st:
         | SECOND_SYM      { $$=INTERVAL_SECOND; }
         | MICROSECOND_SYM { $$=INTERVAL_MICROSECOND; }
         | YEAR_SYM        { $$=INTERVAL_YEAR; }
-        ;
-
-date_time_type:
-          DATE_SYM  {$$=DRIZZLE_TIMESTAMP_DATE;}
-        | DATETIME  {$$=DRIZZLE_TIMESTAMP_DATETIME;}
-        | TIMESTAMP {$$=DRIZZLE_TIMESTAMP_DATETIME;}
         ;
 
 table_alias:
@@ -5871,7 +5856,6 @@ keyword_sp:
         | FIRST_SYM                {}
         | FIXED_SYM                {}
         | FRAC_SECOND_SYM          {}
-        | GET_FORMAT               {}
         | GLOBAL_SYM               {}
         | HASH_SYM                 {}
         | HOSTS_SYM                {}

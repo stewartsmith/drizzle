@@ -42,7 +42,6 @@
 #include <drizzled/function/str/trim.h>
 #include <drizzled/function/str/uuid.h>
 
-#include <drizzled/function/time/add_time.h>
 #include <drizzled/function/time/date_format.h>
 #include <drizzled/function/time/dayname.h>
 #include <drizzled/function/time/dayofmonth.h>
@@ -300,22 +299,6 @@ protected:
   Create_func_acos() {}
   virtual ~Create_func_acos() {}
 };
-
-
-class Create_func_addtime : public Create_func_arg2
-{
-public:
-  using Create_func_arg2::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_addtime s_singleton;
-
-protected:
-  Create_func_addtime() {}
-  virtual ~Create_func_addtime() {}
-};
-
 
 class Create_func_asin : public Create_func_arg1
 {
@@ -1409,21 +1392,6 @@ protected:
 };
 
 
-class Create_func_subtime : public Create_func_arg2
-{
-public:
-  using Create_func_arg2::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_subtime s_singleton;
-
-protected:
-  Create_func_subtime() {}
-  virtual ~Create_func_subtime() {}
-};
-
-
 class Create_func_tan : public Create_func_arg1
 {
 public:
@@ -1760,16 +1728,6 @@ Create_func_acos::create(Session *session, Item *arg1)
 {
   return new (session->mem_root) Item_func_acos(arg1);
 }
-
-
-Create_func_addtime Create_func_addtime::s_singleton;
-
-Item*
-Create_func_addtime::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_add_time(arg1, arg2, 0, 0);
-}
-
 
 Create_func_asin Create_func_asin::s_singleton;
 
@@ -2784,16 +2742,6 @@ Create_func_substr_index::create(Session *session, Item *arg1, Item *arg2, Item 
   return new (session->mem_root) Item_func_substr_index(arg1, arg2, arg3);
 }
 
-
-Create_func_subtime Create_func_subtime::s_singleton;
-
-Item*
-Create_func_subtime::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_add_time(arg1, arg2, 0, 1);
-}
-
-
 Create_func_tan Create_func_tan::s_singleton;
 
 Item*
@@ -2922,7 +2870,6 @@ static Native_func_registry func_array[] =
 {
   { { C_STRING_WITH_LEN("ABS") }, BUILDER(Create_func_abs)},
   { { C_STRING_WITH_LEN("ACOS") }, BUILDER(Create_func_acos)},
-  { { C_STRING_WITH_LEN("ADDTIME") }, BUILDER(Create_func_addtime)},
   { { C_STRING_WITH_LEN("ASIN") }, BUILDER(Create_func_asin)},
   { { C_STRING_WITH_LEN("ATAN") }, BUILDER(Create_func_atan)},
   { { C_STRING_WITH_LEN("ATAN2") }, BUILDER(Create_func_atan)},
@@ -3002,7 +2949,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("SQRT") }, BUILDER(Create_func_sqrt)},
   { { C_STRING_WITH_LEN("STRCMP") }, BUILDER(Create_func_strcmp)},
   { { C_STRING_WITH_LEN("SUBSTRING_INDEX") }, BUILDER(Create_func_substr_index)},
-  { { C_STRING_WITH_LEN("SUBTIME") }, BUILDER(Create_func_subtime)},
   { { C_STRING_WITH_LEN("TAN") }, BUILDER(Create_func_tan)},
   { { C_STRING_WITH_LEN("TIME_FORMAT") }, BUILDER(Create_func_time_format)},
   { { C_STRING_WITH_LEN("TO_DAYS") }, BUILDER(Create_func_to_days)},
