@@ -1275,8 +1275,6 @@ class show_var_remove_if
     As a special optimization, if add_status_vars() is called before
     init_status_vars(), it assumes "startup mode" - neither concurrent access
     to the array nor SHOW STATUS are possible (thus it skips locks and qsort)
-
-    The last entry of the all_status_vars[] should always be {0,0,SHOW_UNDEF}
 */
 int add_status_vars(SHOW_VAR *list)
 {
@@ -1287,7 +1285,7 @@ int add_status_vars(SHOW_VAR *list)
    all_status_vars.insert(all_status_vars.begin(), list++);
   if (status_vars_inited)
     sort(all_status_vars.begin(), all_status_vars.end(),
-           show_var_cmp_functor());
+         show_var_cmp_functor());
   if (status_vars_inited)
     pthread_mutex_unlock(&LOCK_status);
   return res;
@@ -1305,7 +1303,7 @@ void init_status_vars()
 {
   status_vars_inited= 1;
   sort(all_status_vars.begin(), all_status_vars.end(),
-         show_var_cmp_functor());
+       show_var_cmp_functor());
 }
 
 void reset_status_vars()
@@ -1326,7 +1324,7 @@ void reset_status_vars()
   DESCRIPTION
     This function is not strictly required if all add_to_status/
     remove_status_vars are properly paired, but it's a safety measure that
-    deletes everything from the all_status_vars[] even if some
+    deletes everything from the all_status_vars vector even if some
     remove_status_vars were forgotten
 */
 void free_status_vars()
