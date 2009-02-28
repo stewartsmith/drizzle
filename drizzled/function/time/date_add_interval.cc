@@ -91,7 +91,6 @@ bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
   return 0;
 }
 
-
 String *Item_date_add_interval::val_str(String *str)
 {
   assert(fixed == 1);
@@ -104,7 +103,9 @@ String *Item_date_add_interval::val_str(String *str)
     make_date(&ltime, str);
   else if (ltime.second_part)
   {
-    uint32_t length= sprintf(str->c_ptr(), "%04u-%02u-%02u %02u:%02u:%02u.%06u",
+    /* Ensure we've got enough room for our timestamp string. */
+    str->length(MAX_DATETIME_FULL_WIDTH);
+    size_t length= sprintf(str->c_ptr(), "%04u-%02u-%02u %02u:%02u:%02u.%06u",
                           ltime.year,
                           ltime.month,
                           ltime.day,
@@ -120,7 +121,6 @@ String *Item_date_add_interval::val_str(String *str)
 
   return str;
 }
-
 
 int64_t Item_date_add_interval::val_int()
 {
