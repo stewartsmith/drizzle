@@ -1235,7 +1235,7 @@ class show_var_cmp_functor
 {
   public:
   show_var_cmp_functor() { }
-  inline bool operator()(SHOW_VAR *var1, SHOW_VAR *var2)
+  inline bool operator()(const SHOW_VAR *var1, const SHOW_VAR *var2)
   {
     int val;
     if ((val = strcmp(var1->name, var2->name)) < 0)
@@ -1253,7 +1253,7 @@ class show_var_remove_if
 {
   public:
   show_var_remove_if() { }
-  inline bool operator()(SHOW_VAR *curr)
+  inline bool operator()(const SHOW_VAR *curr)
   {
     return (curr->type == SHOW_UNDEF);
   }
