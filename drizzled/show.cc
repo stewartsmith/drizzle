@@ -1294,13 +1294,24 @@ int add_status_vars(SHOW_VAR *list)
   if (status_vars_inited)
     pthread_mutex_lock(&LOCK_status);
   while (list->name)
-    all_status_vars.push_back(list++);
-  all_status_vars.push_back(list); // appending NULL-element
+  {
+    if (!all_status_vars.push_back(list++))
+    {
+      res= 1;
+      goto err;
+    }
+  }
+  if (!all_status_vars.push_back(list)) // appending NULL-element
+  {
+    res= 1;
+    goto err;
+  }
   //all_status_vars.elements--; // but next insert_dynamic should overwite it
   /* not sure about this^^ statement */
   if (status_vars_inited)
     sort(all_status_vars.begin(), all_status_vars.end(),
            show_var_cmp);
+err:
   if (status_vars_inited)
     pthread_mutex_unlock(&LOCK_status);
   return res;
