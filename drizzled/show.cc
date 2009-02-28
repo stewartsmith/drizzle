@@ -1285,9 +1285,7 @@ int add_status_vars(SHOW_VAR *list)
     pthread_mutex_lock(&LOCK_status);
   while (list->name)
    all_status_vars.insert(all_status_vars.begin(), list++);
-  //all_status_vars.insert(all_status_vars.begin(), list); // appending NULL-element
-  //all_status_vars.elements--; // but next insert_dynamic should overwite it
-  /* not sure about this^^ statement */
+  all_status_vars.insert(all_status_vars.begin(), list); // appending NULL-element
   if (status_vars_inited)
     sort(all_status_vars.begin(), all_status_vars.end(),
            show_var_cmp_func());
