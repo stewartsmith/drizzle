@@ -29,6 +29,10 @@
 #include <drizzled/table.h>
 #include <drizzled/table_list.h>
 
+#include <queue>
+
+using namespace std;
+
 /* functions defined in this file */
 
 static char **make_char_array(char **old_pos, register uint32_t fields,
@@ -1087,11 +1091,11 @@ void reuse_freed_buff(QUEUE *queue, BUFFPEK *reuse, uint32_t key_length)
 
 class buffpek_compare_if
 {
-  qsort_cmp2 key_compare;
+  qsort2_cmp key_compare;
   void *key_compare_arg;
   public:
-  buffpek_compare_if(qsort_cmp2 in_key_compare, void *in_compare_arg)
-    : key_compare(in_compare_arg), key_compare_arg(in_compare_arg) { }
+  buffpek_compare_if(qsort2_cmp in_key_compare, void *in_compare_arg)
+    : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
   inline bool operator()(BUFFPEK *i, BUFFPEK *j)
   {
     return key_compare(key_compare_arg,
@@ -1210,7 +1214,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   else
     cmp= 0;                                        // Not unique
 
-  while (queue.elements > 1)
+  while (queue.size() > 1)
   {
     if (*killed)
     {
@@ -1254,7 +1258,6 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
                                           rec_length)))
         {
           queue.pop();
-          reuse_freed_buff(&queue, buffpek, rec_length);
           break;                        /* One buffer have been removed */
         }
         else if (error == -1)
