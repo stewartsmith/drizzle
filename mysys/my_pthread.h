@@ -87,8 +87,6 @@ extern void my_pthread_attr_setprio(pthread_attr_t *attr, int priority);
 #endif
 #endif
 
-#define HAVE_PTHREAD_KILL
-
 #if !defined(HAVE_PTHREAD_YIELD_ONE_ARG) && !defined(HAVE_PTHREAD_YIELD_ZERO_ARG)
 /* no pthread_yield() available */
 #ifdef HAVE_SCHED_YIELD

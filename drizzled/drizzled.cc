@@ -81,12 +81,6 @@
 
 #define MAX_MEM_TABLE_SIZE SIZE_MAX
 
-/* We have HAVE_purify below as this speeds up the shutdown of MySQL */
-
-#if defined(HAVE_DEC_3_2_THREADS) || defined(SIGNALS_DONT_BREAK_READ) || defined(HAVE_purify) && defined(__linux__)
-#define HAVE_CLOSE_SERVER_SOCK 1
-#endif
-
 extern "C" {					// Because of SCO 3.2V4.2
 #include <errno.h>
 #include <sys/stat.h>
@@ -474,7 +468,6 @@ static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
 static void clean_up(bool print_message);
 
 static void usage(void);
-static void close_server_sock();
 static void clean_up_mutexes(void);
 static void drizzled_exit(int exit_code) __attribute__((noreturn));
 extern "C" bool safe_read_error_impl(NET *net);
@@ -485,6 +478,19 @@ extern "C" bool safe_read_error_impl(NET *net);
 
 void close_connections(void)
 {
+  int x;
+
+  /* Abort listening to new connections */
+  for (x= 0; x < pollfd_count; x++)
+  {
+    if (fds[x].fd != -1)
+    {
+      (void) shutdown(fds[x].fd, SHUT_RDWR);
+      (void) close(fds[x].fd);
+      fds[x].fd= -1;
+    }
+  }
+
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -497,30 +503,13 @@ void close_connections(void)
     set_timespec(abstime, 2);
     for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
     {
-      error=pthread_cond_timedwait(&COND_thread_count,&LOCK_thread_count,
-				   &abstime);
+      error=pthread_cond_timedwait(&COND_thread_count,&LOCK_thread_count, &abstime);
       if (error != EINTR)
-	break;
+        break;
     }
-    close_server_sock();
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
-
-  /* Abort listening to new connections */
-  {
-    int x;
-
-    for (x= 0; x < pollfd_count; x++)
-    {
-      if (fds[x].fd != -1)
-      {
-        (void) shutdown(fds[x].fd, SHUT_RDWR);
-        (void) close(fds[x].fd);
-        fds[x].fd= -1;
-      }
-    }
-  }
 
   /*
     First signal all threads that it's time to die
@@ -587,26 +576,6 @@ void close_connections(void)
     (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
-}
-
-
-static void close_server_sock()
-{
-#ifdef HAVE_CLOSE_SERVER_SOCK
-  {
-    int x;
-
-    for (x= 0; x < pollfd_count; x++)
-    {
-      if (fds[x].fd != -1)
-      {
-        (void) shutdown(fds[x].fd, SHUT_RDWR);
-        (void) close(fds[x].fd);
-        fds[x].fd= -1;
-      }
-    }
-  }
-#endif
 }
 
 

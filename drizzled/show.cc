@@ -191,6 +191,10 @@ static bool show_plugins(Session *session, plugin_ref plugin, void *arg)
     table->field[7]->store(PLUGIN_LICENSE_BSD_STRING,
                            strlen(PLUGIN_LICENSE_BSD_STRING), cs);
     break;
+  case PLUGIN_LICENSE_LGPL:
+    table->field[7]->store(PLUGIN_LICENSE_LGPL_STRING,
+                           strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
+    break;
   default:
     table->field[7]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
                            strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);

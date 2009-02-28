@@ -129,8 +129,8 @@ pthread_handler_t signal_hand(void *)
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 
   /*
-    signal to start_signal_handler that we are ready
-    This works by waiting for start_signal_handler to free mutex,
+    signal to init that we are ready
+    This works by waiting for init to free mutex,
     after which we signal it that we are ready.
     At this pointer there is no other threads running, so there
     should not be any other pthread_cond_signal() calls.
@@ -190,7 +190,7 @@ pthread_handler_t signal_hand(void *)
 }
 
 
-static void start_signal_handler(void)
+static int init(void *)
 {
   int error;
   pthread_attr_t thr_attr;
@@ -227,11 +227,7 @@ static void start_signal_handler(void)
   pthread_mutex_unlock(&LOCK_thread_count);
 
   (void) pthread_attr_destroy(&thr_attr);
-  return;;
-}
-static int init(void *)
-{
-  start_signal_handler();
+
   return 0;
 }
 
@@ -239,7 +235,7 @@ static int init(void *)
   This is mainly needed when running with purify, but it's still nice to
   know that all child threads have died when drizzled exits.
 */
-static void wait_for_signal_thread_to_end()
+static int deinit(void *)
 {
   uint32_t i;
   /*
@@ -252,13 +248,6 @@ static void wait_for_signal_thread_to_end()
       break;
     usleep(100);				// Give it time to die
   }
-}
-
-
-
-static int deinit(void *)
-{
-  wait_for_signal_thread_to_end();
 
   return 0;
 }

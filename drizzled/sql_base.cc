@@ -6193,11 +6193,7 @@ void kill_drizzle(void)
   close_server_sock();				// Force accept to wake up
 #endif
 
-#if defined(HAVE_PTHREAD_KILL)
   pthread_kill(signal_thread, SIGTERM);
-#elif !defined(SIGNALS_DONT_BREAK_READ)
-  kill(current_pid, SIGTERM);
-#endif
   shutdown_in_progress=1;			// Safety if kill didn't work
 #ifdef SIGNALS_DONT_BREAK_READ
   if (!kill_in_progress)
