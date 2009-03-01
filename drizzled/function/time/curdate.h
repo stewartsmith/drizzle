@@ -26,6 +26,7 @@
 /* Abstract CURDATE function. See also Item_func_curtime. */
 class Item_func_curdate :public Item_date
 {
+protected:
   DRIZZLE_TIME ltime;
   drizzled::Date cached_temporal;
 public:

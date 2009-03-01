@@ -25,6 +25,9 @@
 #include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+
+#include "drizzled/temporal.h"
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -74,7 +77,6 @@ using namespace CMATH_NAMESPACE;
   course is non-standard.) In most cases user won't notice any change, only
   exception is different behavior of old/new timestamps during ALTER TABLE.
  */
-
 Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  uint32_t ,
                                  unsigned char *null_ptr_arg, unsigned char null_bit_arg,
@@ -97,7 +99,6 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
   }
 }
 
-
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
@@ -110,7 +111,6 @@ Field_timestamp::Field_timestamp(bool maybe_null_arg,
     if (unireg_check != TIMESTAMP_DN_FIELD)
       flags|= ON_UPDATE_NOW_FLAG;
 }
-
 
 /**
   Get auto-set type for TIMESTAMP field.
@@ -214,117 +214,75 @@ double Field_timestamp::val_real(void)
 int64_t Field_timestamp::val_int(void)
 {
   uint32_t temp;
-  DRIZZLE_TIME time_tmp;
-  Session  *session= table ? table->in_use : current_session;
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
-    temp=uint4korr(ptr);
+    temp= uint4korr(ptr);
   else
 #endif
-    longget(temp,ptr);
+    longget(temp, ptr);
 
-  if (temp == 0L)				// No time
-    return(0);					/* purecov: inspected */
+  drizzled::Timestamp temporal;
+  (void) temporal.from_time_t((time_t) temp);
 
-  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (time_t)temp);
-
-  return time_tmp.year * INT64_C(10000000000) +
-         time_tmp.month * INT64_C(100000000) +
-         time_tmp.day * 1000000 + time_tmp.hour * 10000 +
-         time_tmp.minute * 100 + time_tmp.second;
+  /* We must convert into a "timestamp-formatted integer" ... */
+  int64_t result;
+  temporal.to_int64_t(&result);
+  return result;
 }
 
-String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
+String *Field_timestamp::val_str(String *val_buffer, String *)
 {
-  uint32_t temp, temp2;
-  DRIZZLE_TIME time_tmp;
-  Session *session= table ? table->in_use : current_session;
+  uint32_t temp;
   char *to;
 
-  val_buffer->alloc(field_length+1);
-  to= (char*) val_buffer->ptr();
-  val_buffer->length(field_length);
+  val_buffer->alloc(field_length + 1);
+  to= (char *) val_buffer->ptr();
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
-    temp=uint4korr(ptr);
+    temp= uint4korr(ptr);
   else
 #endif
-    longget(temp,ptr);
+    longget(temp, ptr);
 
-  if (temp == 0L)
-  {				      /* Zero time is "000000" */
-    val_ptr->set(STRING_WITH_LEN("0000-00-00 00:00:00"), &my_charset_bin);
-    return val_ptr;
-  }
-  val_buffer->set_charset(&my_charset_bin);	// Safety
+  val_buffer->set_charset(&my_charset_bin);	/* Safety */
 
-  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(time_t)temp);
+  drizzled::Timestamp temporal;
+  (void) temporal.from_time_t((time_t) temp);
+  size_t to_len;
 
-  temp= time_tmp.year % 100;
-  if (temp < YY_PART_YEAR - 1)
-  {
-    *to++= '2';
-    *to++= '0';
-  }
-  else
-  {
-    *to++= '1';
-    *to++= '9';
-  }
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= '-';
-  temp=time_tmp.month;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= '-';
-  temp=time_tmp.day;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= ' ';
-  temp=time_tmp.hour;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= ':';
-  temp=time_tmp.minute;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= ':';
-  temp=time_tmp.second;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to= 0;
+  temporal.to_string(to, &to_len);
+  val_buffer->length((uint32_t) to_len);
   return val_buffer;
 }
 
-bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
+bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t)
 {
-  long temp;
-  Session *session= table ? table->in_use : current_session;
+  uint32_t temp;
+
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
-    temp=uint4korr(ptr);
+    temp= uint4korr(ptr);
   else
 #endif
-    longget(temp,ptr);
-  if (temp == 0L)
-  {				      /* Zero time is "000000" */
-    if (fuzzydate & TIME_NO_ZERO_DATE)
-      return 1;
-    memset(ltime, 0, sizeof(*ltime));
-  }
-  else
-  {
-    session->variables.time_zone->gmt_sec_to_TIME(ltime, (time_t)temp);
-  }
+    longget(temp, ptr);
+  
+  memset(ltime, 0, sizeof(*ltime));
+
+  drizzled::Timestamp temporal;
+  (void) temporal.from_time_t((time_t) temp);
+
+  /* @TODO Goodbye the below code when DRIZZLE_TIME is finally gone.. */
+
+  ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
+  ltime->year= temporal.years();
+  ltime->month= temporal.months();
+  ltime->day= temporal.days();
+  ltime->hour= temporal.hours();
+  ltime->minute= temporal.minutes();
+  ltime->second= temporal.seconds();
+
   return 0;
 }
 
@@ -372,12 +330,10 @@ void Field_timestamp::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-
 void Field_timestamp::sql_type(String &res) const
 {
   res.set_ascii(STRING_WITH_LEN("timestamp"));
 }
-
 
 void Field_timestamp::set_time()
 {
@@ -386,7 +342,6 @@ void Field_timestamp::set_time()
   set_notnull();
   store_timestamp(tmp);
 }
-
 
 void Field_timestamp::set_default()
 {
@@ -410,7 +365,6 @@ long Field_timestamp::get_timestamp(bool *null_value)
   return tmp;
 }
 
-
 void Field_timestamp::store_timestamp(time_t timestamp)
 {
 #ifdef WORDS_BIGENDIAN
@@ -422,4 +376,3 @@ void Field_timestamp::store_timestamp(time_t timestamp)
 #endif
     longstore(ptr,(uint32_t) timestamp);
 }
-

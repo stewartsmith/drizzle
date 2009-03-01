@@ -2236,7 +2236,7 @@ t1	CREATE TABLE `t1` (
 insert into t1 values ('2003-02-01','2003-05-01',default);
 select * from t1;
 a	b	c
-2003-02-01 00:00:00	2003-05-01 00:00:00	2
+2003-02-01 00:00:00	2003-05-01 00:00:00	3
 drop table t1;
 set sql_warnings = 0;
 # TO_DAYS()
