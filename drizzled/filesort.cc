@@ -1094,7 +1094,7 @@ class buffpek_compare_if
   qsort2_cmp key_compare;
   void *key_compare_arg;
   public:
-  buffpek_compare_if(qsort2_cmp in_key_compare, void *in_compare_arg, bool in_unique)
+  buffpek_compare_if(qsort2_cmp in_key_compare, void *in_compare_arg)
     : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
   inline bool operator()(BUFFPEK *i, BUFFPEK *j)
   {
