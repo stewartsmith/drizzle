@@ -1094,12 +1094,20 @@ class buffpek_compare_if
   qsort2_cmp key_compare;
   void *key_compare_arg;
   public:
-  buffpek_compare_if(qsort2_cmp in_key_compare, void *in_compare_arg)
+  buffpek_compare_if(qsort2_cmp in_key_compare, void *in_compare_arg, bool in_unique)
     : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
   inline bool operator()(BUFFPEK *i, BUFFPEK *j)
   {
-    return key_compare(key_compare_arg,
-                    i->key, j->key);
+    int val;
+    if ((val= key_compare(key_compare_arg,
+                     &i->key, &j->key)) < 0)
+    {
+      return false;
+    }
+    else
+    {
+      return true;
+    }
   }
 };
 
@@ -1139,6 +1147,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   void *first_cmp_arg;
   volatile Session::killed_state *killed= &current_session->killed;
   Session::killed_state not_killable;
+  bool is_unique;
 
   status_var_increment(current_session->status_var.filesort_merge_passes);
   if (param->not_killable)
@@ -1164,14 +1173,16 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   {
     cmp= param->compare;
     first_cmp_arg= (void *) &param->cmp_context;
+    is_unique= true;
   }
   else
   {
     cmp= get_ptr_compare(sort_length);
     first_cmp_arg= (void*) &sort_length;
+    is_unique= false;
   }
   priority_queue<BUFFPEK *, vector<BUFFPEK *>, buffpek_compare_if > 
-    queue(buffpek_compare_if(cmp, first_cmp_arg));
+    queue(buffpek_compare_if(cmp, first_cmp_arg, is_unique));
   for (buffpek= Fb ; buffpek <= Tb ; buffpek++)
   {
     buffpek->base= strpos;
