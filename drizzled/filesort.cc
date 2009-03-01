@@ -1147,7 +1147,6 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   void *first_cmp_arg;
   volatile Session::killed_state *killed= &current_session->killed;
   Session::killed_state not_killable;
-  bool is_unique;
 
   status_var_increment(current_session->status_var.filesort_merge_passes);
   if (param->not_killable)
@@ -1173,16 +1172,14 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   {
     cmp= param->compare;
     first_cmp_arg= (void *) &param->cmp_context;
-    is_unique= true;
   }
   else
   {
     cmp= get_ptr_compare(sort_length);
     first_cmp_arg= (void*) &sort_length;
-    is_unique= false;
   }
   priority_queue<BUFFPEK *, vector<BUFFPEK *>, buffpek_compare_if > 
-    queue(buffpek_compare_if(cmp, first_cmp_arg, is_unique));
+    queue(buffpek_compare_if(cmp, first_cmp_arg));
   for (buffpek= Fb ; buffpek <= Tb ; buffpek++)
   {
     buffpek->base= strpos;
