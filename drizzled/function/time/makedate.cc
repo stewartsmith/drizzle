@@ -54,7 +54,7 @@ String *Item_func_makedate::val_str(String *str)
     get_date_from_daynr(days,&l_time.year,&l_time.month,&l_time.day);
     if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
       goto err;
-    make_date((DATE_TIME_FORMAT *) 0, &l_time, str);
+    make_date(&l_time, str);
     return str;
   }
 

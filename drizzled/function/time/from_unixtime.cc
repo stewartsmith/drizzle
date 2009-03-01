@@ -20,7 +20,6 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/time/from_unixtime.h>
-#include <drizzled/function/time/make_datetime.h>
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
 
@@ -48,7 +47,7 @@ String *Item_func_from_unixtime::val_str(String *str)
     return 0;
   }
 
-  make_datetime((DATE_TIME_FORMAT *) 0, &time_tmp, str);
+  make_datetime(&time_tmp, str);
 
   return str;
 }

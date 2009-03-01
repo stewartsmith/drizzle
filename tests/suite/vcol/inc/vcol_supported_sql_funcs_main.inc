@@ -739,12 +739,6 @@ let $values1 = '2008-08-31',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
---echo # ADDTIME()
-let $cols = a datetime, b virtual datetime as (addtime(a,'02:00:00'));
-let $values1 = '2008-08-31',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
 --echo # DATE_ADD()
 let $cols = a datetime, b virtual datetime as (date_add(a,interval 1 month));
 let $values1 = '2008-08-31',default;
@@ -823,15 +817,9 @@ let $values1 = 1196440219,default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
---echo # GET_FORMAT()
-let $cols = a datetime, b virtual varchar(32) as (date_format(a,get_format(DATE,'EUR')));
-let $values1 = '2008-08-31',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
 --echo # HOUR()
-let $cols = a time, b virtual int as (hour(a));
-let $values1 = '10:05:03',default;
+let $cols = a datetime, b virtual int as (hour(a));
+let $values1 = '2008-08-08 10:05:03',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
@@ -844,12 +832,6 @@ let $rows = 1;
 --echo # MAKEDATE()
 let $cols = a int, b virtual datetime as (makedate(a,1));
 let $values1 = 2001,default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # MAKETIME()
-let $cols = a int, b virtual time as (maketime(a,1,3));
-let $values1 = 12,default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
@@ -896,21 +878,9 @@ let $values1 = '2008-08-31',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
---echo # SEC_TO_TIME()
-let $cols = a int, b virtual time as (sec_to_time(a));
-let $values1 = 2378,default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
 --echo # SECOND()
 let $cols = a datetime, b virtual int as (second(a));
 let $values1 = '2009-02-10 10:05:03',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # STR_TO_DATE()
-let $cols = a varchar(64), b virtual datetime as (str_to_date(a,'%m/%d/%Y'));
-let $values1 = '04/30/2004',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
@@ -920,33 +890,9 @@ let $values1 = '2008-08-31',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
---echo # SUBTIME()
-let $cols = a datetime, b virtual datetime as (subtime(a,'02:00:00'));
-let $values1 = '2008-08-31',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
 --echo # TIME_FORMAT()
 let $cols = a datetime, b virtual varchar(32) as (time_format(a,'%r'));
 let $values1 = '2008-08-31 02:03:04',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # TIME_TO_SEC()
-let $cols = a time, b virtual int as (time_to_sec(a));
-let $values1 = '22:23:00',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # TIME()
-let $cols = a datetime, b virtual time as (time(a));
-let $values1 = '2008-08-31 02:03:04',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # TIMEDIFF()
-let $cols = a datetime, b datetime, c virtual int as (timediff(a,b));
-let $values1 = '2008-12-31 23:59:59.000001','2008-12-30 01:01:01.000002',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 

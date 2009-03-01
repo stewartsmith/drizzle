@@ -41,7 +41,6 @@
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/item/create.h>
-#include <drizzled/function/time/get_format.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
 #include <drizzled/plugin_scheduling.h>
@@ -361,8 +360,6 @@ uint32_t reg_ext_length;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
-const char *opt_date_time_formats[3];
-
 uint32_t drizzle_data_home_len;
 char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
@@ -668,9 +665,6 @@ void clean_up(bool print_message)
   multi_keycache_free();
   free_status_vars();
   my_free_open_file_info();
-  free((char*) global_system_variables.date_format);
-  free((char*) global_system_variables.time_format);
-  free((char*) global_system_variables.datetime_format);
   if (defaults_argv)
     free_defaults(defaults_argv);
   free(sys_init_connect.value);
@@ -1360,47 +1354,6 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 static const char *load_default_groups[]= {
 DRIZZLE_CONFIG_NAME,"server", DRIZZLE_BASE_VERSION, 0, 0};
 
-
-/**
-  Initialize one of the global date/time format variables.
-
-  @param format_type		What kind of format should be supported
-  @param var_ptr		Pointer to variable that should be updated
-
-  @note
-    The default value is taken from either opt_date_time_formats[] or
-    the ISO format (ANSI SQL)
-
-  @retval
-    0 ok
-  @retval
-    1 error
-*/
-
-static bool init_global_datetime_format(enum enum_drizzle_timestamp_type format_type,
-                                        DATE_TIME_FORMAT **var_ptr)
-{
-  /* Get command line option */
-  const char *str= opt_date_time_formats[format_type];
-
-  if (!str)					// No specified format
-  {
-    str= get_date_time_format_str(&known_date_time_formats[ISO_FORMAT],
-				  format_type);
-    /*
-      Set the "command line" option to point to the generated string so
-      that we can set global formats back to default
-    */
-    opt_date_time_formats[format_type]= str;
-  }
-  if (!(*var_ptr= date_time_format_make(format_type, str, strlen(str))))
-  {
-    fprintf(stderr, _("Wrong date/time format specifier: %s\n"), str);
-    return 1;
-  }
-  return 0;
-}
-
 SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
   {"assign_to_keycache",   (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ASSIGN_TO_KEYCACHE]), SHOW_LONG_STATUS},
@@ -1501,7 +1454,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
       errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
                       glob_hostname);
-    strncpy(pidfile_name, STRING_WITH_LEN("mysql"));
+    strncpy(pidfile_name, STRING_WITH_LEN("drizzle"));
   }
   else
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
@@ -2164,7 +2117,6 @@ enum options_drizzled
   OPT_SORT_BUFFER, OPT_TABLE_OPEN_CACHE, OPT_TABLE_DEF_CACHE,
   OPT_TMP_TABLE_SIZE, OPT_THREAD_STACK,
   OPT_WAIT_TIMEOUT,
-  OPT_DEFAULT_WEEK_FORMAT,
   OPT_RANGE_ALLOC_BLOCK_SIZE,
   OPT_QUERY_ALLOC_BLOCK_SIZE, OPT_QUERY_PREALLOC_SIZE,
   OPT_TRANS_ALLOC_BLOCK_SIZE, OPT_TRANS_PREALLOC_SIZE,
@@ -2174,9 +2126,6 @@ enum options_drizzled
   OPT_CHARACTER_SET_FILESYSTEM,
   OPT_LC_TIME_NAMES,
   OPT_INIT_CONNECT,
-  OPT_DATE_FORMAT,
-  OPT_TIME_FORMAT,
-  OPT_DATETIME_FORMAT,
   OPT_DEFAULT_TIME_ZONE,
   OPT_SYSDATE_IS_NOW,
   OPT_OPTIMIZER_SEARCH_DEPTH,
@@ -2439,16 +2388,6 @@ struct my_option my_long_options[] =
        "packet before responding with 'Bad handshake'."),
     (char**) &connect_timeout, (char**) &connect_timeout,
     0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
-  { "date_format", OPT_DATE_FORMAT,
-    N_("The DATE format (For future)."),
-    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
-    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  { "datetime_format", OPT_DATETIME_FORMAT,
-    N_("The DATETIME/TIMESTAMP format (for future)."),
-    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
-    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
@@ -2698,11 +2637,6 @@ struct my_option my_long_options[] =
    (char**) &my_thread_stack_size, 0, GET_ULONG,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
    UINT32_C(1024*128), SIZE_MAX, 0, 1024, 0},
-  { "time_format", OPT_TIME_FORMAT,
-    N_("The TIME format (for future)."),
-    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
-    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
@@ -2947,8 +2881,6 @@ static void drizzle_init_variables(void)
   national_charset_info= &my_charset_utf8_general_ci;
   table_alias_charset= &my_charset_bin;
   character_set_filesystem= &my_charset_bin;
-
-  opt_date_time_formats[0]= opt_date_time_formats[1]= opt_date_time_formats[2]= 0;
 
   /* Things with default values that are not zero */
   delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_ON;
@@ -3281,16 +3213,7 @@ static void get_options(int *argc,char **argv)
   */
   my_default_record_cache_size=global_system_variables.read_buff_size;
   myisam_max_temp_length= INT32_MAX;
-
-  if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
-				  &global_system_variables.date_format) ||
-      init_global_datetime_format(DRIZZLE_TIMESTAMP_TIME,
-				  &global_system_variables.time_format) ||
-      init_global_datetime_format(DRIZZLE_TIMESTAMP_DATETIME,
-				  &global_system_variables.datetime_format))
-    exit(1);
 }
-
 
 /*
   Create version name for running drizzled version

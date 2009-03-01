@@ -183,9 +183,6 @@ extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 extern struct rand_struct sql_rand;
 
-extern const char *opt_date_time_formats[];
-extern KNOWN_DATE_TIME_FORMAT known_date_time_formats[];
-
 extern Table *unused_tables;
 extern const char* any_db;
 extern struct my_option my_long_options[];
@@ -245,19 +242,9 @@ bool calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign,
 
 extern LEX_STRING interval_type_to_name[];
 
-extern DATE_TIME_FORMAT *date_time_format_make(enum enum_drizzle_timestamp_type format_type,
-					       const char *format_str,
-					       uint32_t format_length);
-extern DATE_TIME_FORMAT *date_time_format_copy(Session *session,
-					       DATE_TIME_FORMAT *format);
-const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
-				                             enum enum_drizzle_timestamp_type type);
-void make_datetime(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
-                   String *str);
-void make_date(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
-               String *str);
-void make_time(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
-               String *str);
+void make_datetime(const DRIZZLE_TIME *l_time, String *str);
+void make_date(const DRIZZLE_TIME *l_time, String *str);
+void make_time(const DRIZZLE_TIME *l_time, String *str);
 int my_time_compare(DRIZZLE_TIME *a, DRIZZLE_TIME *b);
 uint64_t get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
                              Item *warn_item, bool *is_null);

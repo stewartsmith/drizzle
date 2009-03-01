@@ -15,24 +15,11 @@ create table t1 (a virtual datetime as (current_date));
 ERROR HY000: Non-deterministic expression for virtual column 'a'.
 create table t1 (a virtual datetime as (current_date()));
 ERROR HY000: Non-deterministic expression for virtual column 'a'.
-# CURRENT_TIME(), CURRENT_TIME
-create table t1 (a virtual datetime as (current_time));
-ERROR HY000: Non-deterministic expression for virtual column 'a'.
-create table t1 (a virtual datetime as (current_time()));
-ERROR HY000: Non-deterministic expression for virtual column 'a'.
 # CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP
 create table t1 (a virtual datetime as (current_timestamp()));
 ERROR HY000: Non-deterministic expression for virtual column 'a'.
 create table t1 (a virtual datetime as (current_timestamp));
 ERROR HY000: Non-deterministic expression for virtual column 'a'.
-# CURTIME()
-create table t1 (a virtual datetime as (curtime()));
-ERROR HY000: Non-deterministic expression for virtual column 'a'.
-# LOCALTIME(), LOCALTIME
-create table t1 (a datetime, b virtual varchar(10) as (localtime()));
-ERROR HY000: Non-deterministic expression for virtual column 'b'.
-create table t1 (a datetime, b virtual varchar(10) as (localtime));
-ERROR HY000: Non-deterministic expression for virtual column 'b'.
 # LOCALTIMESTAMP, LOCALTIMESTAMP()(v4.0.6)
 create table t1 (a datetime, b virtual varchar(10) as (localtimestamp()));
 ERROR HY000: Non-deterministic expression for virtual column 'b'.
@@ -49,9 +36,6 @@ create table t1 (a datetime, b virtual datetime as (unix_timestamp()));
 ERROR HY000: Non-deterministic expression for virtual column 'b'.
 # UTC_DATE()
 create table t1 (a datetime, b virtual datetime as (utc_date()));
-ERROR HY000: Non-deterministic expression for virtual column 'b'.
-# UTC_TIME()
-create table t1 (a datetime, b virtual datetime as (utc_time()));
 ERROR HY000: Non-deterministic expression for virtual column 'b'.
 # UTC_TIMESTAMP()
 create table t1 (a datetime, b virtual datetime as (utc_timestamp()));

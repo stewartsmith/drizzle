@@ -243,39 +243,6 @@ select * from t1;
 drop table t1;
 
 #
-# Bug #5902: STR_TO_DATE() didn't give errors in traditional mode
-#
-
-create table t1 (col1 datetime);
---error 1292
-insert into t1 values(STR_TO_DATE('31.10.2004 15.30 abc','%d.%m.%Y %H.%i'));
---error 1411
-insert into t1 values(STR_TO_DATE('32.10.2004 15.30','%d.%m.%Y %H.%i'));
---error 1411
-insert into t1 values(STR_TO_DATE('2004.12.12 22:22:33 AM','%Y.%m.%d %r'));
---error 1411
-insert into t1 values(STR_TO_DATE('2004.12.12 abc','%Y.%m.%d %T'));
---error ER_TRUNCATED_WRONG_VALUE
-insert into t1 values(STR_TO_DATE('31.10.2004 15.30 abc','%d.%m.%Y %H.%i'));
---error ER_WRONG_VALUE_FOR_TYPE
-insert into t1 values(STR_TO_DATE('32.10.2004 15.30','%d.%m.%Y %H.%i'));
---error ER_WRONG_VALUE_FOR_TYPE
-insert into t1 values(STR_TO_DATE('2004.12.12 22:22:33 AM','%Y.%m.%d %r'));
---error ER_WRONG_VALUE_FOR_TYPE
-insert into t1 values(STR_TO_DATE('2004.12.12 abc','%Y.%m.%d %T'));
-
-# Some correct values, just to test the functions
-insert into t1 values(STR_TO_DATE('31.10.2004 15.30','%d.%m.%Y %H.%i'));
-insert into t1 values(STR_TO_DATE('2004.12.12 11:22:33 AM','%Y.%m.%d %r'));
-insert into t1 values(STR_TO_DATE('2004.12.12 10:22:59','%Y.%m.%d %T'));
-
-select * from t1;
-
-select count(*) from t1 where STR_TO_DATE('2004.12.12 10:22:61','%Y.%m.%d %T') IS NULL;
-
-drop table t1;
-
-#
 # Check insert with wrong CAST() (Bug #5912)
 #
 
