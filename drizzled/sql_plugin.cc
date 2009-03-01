@@ -31,6 +31,7 @@
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
 #include <drizzled/item/null.h>
+#include <drizzled/Plugin_registry.h>
 
 #include <string>
 #include <vector>
@@ -131,7 +132,7 @@ static bool initialized= 0;
 
 static DYNAMIC_ARRAY plugin_dl_array;
 static DYNAMIC_ARRAY plugin_array;
-static map<string, st_plugin_int *> plugin_map[DRIZZLE_MAX_PLUGIN_TYPE_NUM];
+
 static bool reap_needed= false;
 static int plugin_array_version=0;
 
@@ -470,39 +471,18 @@ static void plugin_dl_del(const LEX_STRING *dl)
 }
 
 
-static struct st_plugin_int *plugin_find_internal(const LEX_STRING *name, int type)
-{
-  uint32_t i;
-  if (! initialized)
-    return(0);
-  string find_str(name->str,name->length);
-  transform(find_str.begin(), find_str.end(), find_str.begin(), ::tolower);
-
-  map<string, st_plugin_int *>::iterator map_iter;
-  if (type == DRIZZLE_ANY_PLUGIN)
-  {
-    for (i= 0; i < DRIZZLE_MAX_PLUGIN_TYPE_NUM; i++)
-    {
-      map_iter= plugin_map[i].find(find_str);
-      if (map_iter != plugin_map[i].end())
-        return (*map_iter).second;
-    }
-  }
-  else
-  {
-    map_iter= plugin_map[type].find(find_str);
-    if (map_iter != plugin_map[type].end())
-      return (*map_iter).second;
-  }
-  return(0);
-}
-
 
 static SHOW_COMP_OPTION plugin_status(const LEX_STRING *name, int type)
 {
+  Plugin_registry registry= Plugin_registry::get_plugin_registry();
+
   SHOW_COMP_OPTION rc= SHOW_OPTION_NO;
   struct st_plugin_int *plugin;
-  if ((plugin= plugin_find_internal(name, type)))
+
+  if (! initialized)
+    return(rc);
+
+  if ((plugin= registry.find(name, type)))
   {
     rc= SHOW_OPTION_DISABLED;
     if (plugin->state == PLUGIN_IS_READY)
@@ -563,10 +543,15 @@ plugin_ref plugin_lock(Session *session, plugin_ref *ptr)
 
 plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name, int type)
 {
+  Plugin_registry registry= Plugin_registry::get_plugin_registry();
+
   LEX *lex= session ? session->lex : 0;
   plugin_ref rc= NULL;
   st_plugin_int *plugin;
-  if ((plugin= plugin_find_internal(name, type)))
+  if (! initialized)
+    return(0);
+
+  if ((plugin= registry.find(name, type)))
     rc= my_intern_plugin_lock_ci(lex, plugin_int_to_ref(plugin));
   return(rc);
 }
@@ -603,9 +588,14 @@ static bool plugin_add(MEM_ROOT *tmp_root,
                        const LEX_STRING *name, const LEX_STRING *dl,
                        int *argc, char **argv, int report)
 {
+  Plugin_registry registry= Plugin_registry::get_plugin_registry();
+
   struct st_plugin_int tmp;
   struct st_mysql_plugin *plugin;
-  if (plugin_find_internal(name, DRIZZLE_ANY_PLUGIN))
+  if (! initialized)
+    return(0);
+
+  if (registry.find(name, DRIZZLE_ANY_PLUGIN))
   {
     if (report & REPORT_TO_USER)
       my_error(ER_UDF_EXISTS, MYF(0), name->str);
@@ -639,11 +629,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
           plugin_array_version++;
-          string add_str(plugin->name);
-          transform(add_str.begin(), add_str.end(),
-                    add_str.begin(), ::tolower);
-
-          plugin_map[plugin->type][add_str]= tmp_plugin_ptr;
+          registry.add(plugin, tmp_plugin_ptr);
           init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
           return(false);
         }
@@ -981,6 +967,8 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
                              struct st_plugin_int **ptr)
 {
 
+  Plugin_registry registry= Plugin_registry::get_plugin_registry();
+
   tmp->state= PLUGIN_IS_UNINITIALIZED;
   tmp->ref_count= 0;
   tmp->plugin_dl= 0;
@@ -993,11 +981,7 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
         (struct st_plugin_int *) memdup_root(&plugin_mem_root, (unsigned char*)tmp,
                                              sizeof(struct st_plugin_int));
 
-  string add_str(plugin->name);
-  transform(add_str.begin(), add_str.end(),
-            add_str.begin(), ::tolower);
-
-  plugin_map[plugin->type][add_str]= *ptr;
+  registry.add(plugin, *ptr);
 
   return(0);
 }
@@ -1234,16 +1218,8 @@ bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
   }
   else
   {
-    plugins.reserve(plugin_map[type].size());
-    map<string, st_plugin_int *>::iterator map_iter;
-
-    for (map_iter= plugin_map[type].begin();
-         map_iter != plugin_map[type].end();
-         map_iter++)
-    {
-      plugin= (*map_iter).second;
-      plugins.push_back(!(plugin->state & state_mask) ? plugin : NULL);
-    }
+    Plugin_registry registry= Plugin_registry::get_plugin_registry();
+    registry.get_mask_list(type, plugins, state_mask);
   }
 
   vector<st_plugin_int *>::iterator plugin_iter;
