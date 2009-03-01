@@ -1089,12 +1089,12 @@ void reuse_freed_buff(QUEUE *queue, BUFFPEK *reuse, uint32_t key_length)
   assert(0);
 }
 
-class buffpek_compare_if
+class compare_functor
 {
   qsort2_cmp key_compare;
   void *key_compare_arg;
   public:
-  buffpek_compare_if(qsort2_cmp in_key_compare, void *in_compare_arg)
+  compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg)
     : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
   inline bool operator()(BUFFPEK *i, BUFFPEK *j)
   {
@@ -1178,8 +1178,8 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
     cmp= get_ptr_compare(sort_length);
     first_cmp_arg= (void*) &sort_length;
   }
-  priority_queue<BUFFPEK *, vector<BUFFPEK *>, buffpek_compare_if > 
-    queue(buffpek_compare_if(cmp, first_cmp_arg));
+  priority_queue<BUFFPEK *, vector<BUFFPEK *>, compare_functor > 
+    queue(compare_functor(cmp, first_cmp_arg));
   for (buffpek= Fb ; buffpek <= Tb ; buffpek++)
   {
     buffpek->base= strpos;
