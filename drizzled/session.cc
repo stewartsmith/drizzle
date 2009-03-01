@@ -639,12 +639,6 @@ void Session::init(void)
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
   plugin_sessionvar_init(this);
-  variables.time_format= date_time_format_copy((Session*) 0,
-					       variables.time_format);
-  variables.date_format= date_time_format_copy((Session*) 0,
-					       variables.date_format);
-  variables.datetime_format= date_time_format_copy((Session*) 0,
-						   variables.datetime_format);
   /*
     variables= global_system_variables above has reset
     variables.pseudo_thread_id to 0. We need to correct it here to
@@ -718,9 +712,6 @@ void Session::cleanup(void)
   mysql_ha_cleanup(this);
   hash_free(&user_vars);
   close_temporary_tables();
-  free((char*) variables.time_format);
-  free((char*) variables.date_format);
-  free((char*) variables.datetime_format);
 
   if (global_read_lock)
     unlock_global_read_lock(this);

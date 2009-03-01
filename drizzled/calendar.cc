@@ -479,3 +479,43 @@ uint32_t iso_week_number_from_gregorian_date(uint32_t year
 
   return week_number;
 }
+
+/**
+ * Takes a number in the form [YY]YYMM and converts it into
+ * a number of months.
+ *
+ * @param Period in the form [YY]YYMM
+ */
+uint32_t year_month_to_months(uint32_t year_month)
+{
+  if (year_month == 0)
+    return 0L;
+
+  uint32_t years= year_month / 100;
+  if (years < CALENDAR_YY_PART_YEAR)
+    years+= 2000;
+  else if (years < 100)
+    years+= 1900;
+
+  uint32_t months= year_month % 100;
+  return (years * 12) + (months - 1);
+}
+
+/**
+ * Takes a number of months and converts it to
+ * a period in the form YYYYMM.
+ *
+ * @param Number of months
+ */
+uint32_t months_to_year_month(uint32_t months)
+{
+  if (months == 0L)
+    return 0L;
+
+  uint32_t years= (months / 12);
+
+  if (years < 100)
+    years+= (years < CALENDAR_YY_PART_YEAR) ? 2000 : 1900;
+
+  return (years * 100) + (months % 12) + 1;
+}

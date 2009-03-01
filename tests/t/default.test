@@ -111,19 +111,18 @@ drop table bug20691;
 
 create table bug20691 (
   b enum('small', 'medium', 'large', 'enormous', 'ellisonego') not null,
-  c time not null,
   d date not null,
   e int not null,
   g blob not null,
   h datetime not null,
   i decimal not null,
   x int);
-insert into bug20691 values (3, 5, '0007-01-01', 11, 17, '0019-01-01 00:00:00', 23, 1);
+insert into bug20691 values (3, '0007-01-01', 11, 17, '0019-01-01 00:00:00', 23, 1);
 --error 1364
 insert into bug20691 (x) values (2);
-insert into bug20691 values (3, 5, '0007-01-01', 11, 17, '0019-01-01 00:00:00', 23, 3);
+insert into bug20691 values (3, '0007-01-01', 11, 17, '0019-01-01 00:00:00', 23, 3);
 --error 1364
-insert into bug20691 values (DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, 4);
+insert into bug20691 values (DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, 4);
 select * from bug20691 order by x asc;
 drop table bug20691;
 

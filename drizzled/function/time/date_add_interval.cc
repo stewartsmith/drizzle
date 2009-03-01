@@ -21,7 +21,6 @@
 #include CSTDINT_H
 #include <drizzled/function/time/date_add_interval.h>
 #include <drizzled/function/time/get_interval_value.h>
-#include <drizzled/function/time/make_datetime.h>
 
 /*
    'interval_names' reflects the order of the enumeration interval_type.
@@ -92,30 +91,36 @@ bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
   return 0;
 }
 
-
 String *Item_date_add_interval::val_str(String *str)
 {
   assert(fixed == 1);
   DRIZZLE_TIME ltime;
-  enum date_time_format_types format;
 
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
 
   if (ltime.time_type == DRIZZLE_TIMESTAMP_DATE)
-    format= DATE_ONLY;
+    make_date(&ltime, str);
   else if (ltime.second_part)
-    format= DATE_TIME_MICROSECOND;
+  {
+    /* Ensure we've got enough room for our timestamp string. */
+    str->length(MAX_DATETIME_FULL_WIDTH);
+    size_t length= sprintf(str->c_ptr(), "%04u-%02u-%02u %02u:%02u:%02u.%06u",
+                          ltime.year,
+                          ltime.month,
+                          ltime.day,
+                          ltime.hour,
+                          ltime.minute,
+                          ltime.second,
+                          (uint32_t) ltime.second_part);
+    str->length(length);
+    str->set_charset(&my_charset_bin);
+  }
   else
-    format= DATE_TIME;
+    make_datetime(&ltime, str);
 
-  if (!make_datetime(format, &ltime, str))
-    return str;
-
-  null_value=1;
-  return 0;
+  return str;
 }
-
 
 int64_t Item_date_add_interval::val_int()
 {

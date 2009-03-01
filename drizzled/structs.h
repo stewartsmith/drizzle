@@ -31,14 +31,6 @@ class Table;
 class Field;
 typedef struct st_io_cache IO_CACHE;
 
-typedef struct st_date_time_format {
-  unsigned char positions[8];
-  char  time_separator;			/* Separator between hour and minute */
-  uint32_t flag;				/* For future */
-  LEX_STRING format;
-} DATE_TIME_FORMAT;
-
-
 typedef struct st_keyfile_info {	/* used with ha_info() */
   unsigned char ref[MAX_REFLENGTH];		/* Pointer to current row */
   unsigned char dupp_ref[MAX_REFLENGTH];	/* Pointer to dupp row */
@@ -149,15 +141,6 @@ typedef struct {
   uint64_t minute,second,second_part;
   bool neg;
 } INTERVAL;
-
-
-typedef struct st_known_date_time_format {
-  const char *format_name;
-  const char *date_format;
-  const char *datetime_format;
-  const char *time_format;
-} KNOWN_DATE_TIME_FORMAT;
-
 
 extern const char *show_comp_option_name[];
 

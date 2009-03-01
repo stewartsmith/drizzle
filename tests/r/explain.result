@@ -79,15 +79,15 @@ End of 5.0 tests.
 explain select 1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def					id	5	3	1	N	32897	0	63
-def					select_type	9	76	6	N	1	31	45
-def					table	9	256	0	Y	0	31	45
-def					type	9	40	0	Y	0	31	45
-def					possible_keys	9	16384	0	Y	0	31	45
-def					key	9	256	0	Y	0	31	45
-def					key_len	9	1280	0	Y	0	31	45
-def					ref	9	4096	0	Y	0	31	45
+def					select_type	8	76	6	N	1	31	45
+def					table	8	256	0	Y	0	31	45
+def					type	8	40	0	Y	0	31	45
+def					possible_keys	8	16384	0	Y	0	31	45
+def					key	8	256	0	Y	0	31	45
+def					key_len	8	1280	0	Y	0	31	45
+def					ref	8	4096	0	Y	0	31	45
 def					rows	5	10	0	Y	32896	0	63
-def					Extra	9	1020	14	N	1	31	45
+def					Extra	8	1020	14	N	1	31	45
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 End of 5.2 tests.

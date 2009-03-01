@@ -10,7 +10,6 @@
 # binaries built with Visual C++ 2005
 select cast("A" as binary) = "a", cast(BINARY "a" as CHAR) = "A";
 select cast("2001-1-1" as DATE), cast("2001-1-1" as DATETIME);
-select cast("1:2:3" as TIME);
 select CONVERT("2004-01-22 21:45:33",DATE);
 select 10+'10';
 select 10.0+'10';
@@ -72,7 +71,6 @@ select
 
 select cast("2001-1-1" as date) = "2001-01-01";
 select cast("2001-1-1" as datetime) = "2001-01-01 00:00:00";
-select cast("1:2:3" as TIME) = "1:02:03";
 select cast(NULL as DATE);
 select cast(NULL as BINARY);
 
@@ -93,9 +91,7 @@ DROP TABLE t1;
 # time/date parts (correspondingly).
 #
 select date_add(cast('2004-12-30 12:00:00' as date), interval 0 hour);
-select timediff(cast('2004-12-30 12:00:00' as time), '12:00:00');
 # Still we should not throw away "days" part of time value
-select timediff(cast('1 12:00:00' as time), '12:00:00');
 
 #
 # Bug #23938: cast(NULL as DATE)
@@ -112,12 +108,6 @@ set @v1=1e18;
 select cast(@v1 as decimal(22, 2));
 select cast(-1e18 as decimal(22,2));
 
-create table t1(s1 time);
-insert into t1 values ('11:11:11');
-select cast(s1 as decimal(7,2)) from t1;
-drop table t1;
-
-#
 # Test for bug #11283: field conversion from varchar, and text types to decimal
 #
 

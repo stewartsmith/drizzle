@@ -7,11 +7,11 @@ drop table if exists t1;
 --enable_warnings
 
 # Set timezone to GMT-3, to make it possible to use "interval 3 hour"
-create table t1 (Zeit time, Tag int not null, Monat int not null,
+create table t1 (Tag int not null, Monat int not null,
 Jahr int not null, index(Tag), index(Monat), index(Jahr) );
-insert into t1 values ("09:26:00",16,9,1998),("09:26:00",16,9,1998);
-SELECT CONCAT(Jahr,'-',Monat,'-',Tag,' ',Zeit) AS Date,
-   UNIX_TIMESTAMP(CONCAT(Jahr,'-',Monat,'-',Tag,' ',Zeit)) AS Unix
+insert into t1 values (16,9,1998),(16,9,1998);
+SELECT CONCAT(Jahr,'-',Monat,'-',Tag) AS Date,
+   UNIX_TIMESTAMP(CONCAT(Jahr,'-',Monat,'-',Tag)) AS Unix
 FROM t1;
 drop table t1;
 

@@ -857,7 +857,6 @@ int prepare_create_field(Create_field *sql_field,
       return(1);
     break;
   case DRIZZLE_TYPE_DATE:  // Rest of string types
-  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_NULL:
     sql_field->pack_flag=f_settype((uint32_t) sql_field->sql_type);

@@ -697,16 +697,15 @@ drop table t1, t2;
 
 create table t1(
   cip INT NOT NULL,
-  time TIME NOT NULL,
   score INT NOT NULL DEFAULT 0,
   bob TINYBLOB
 );
 
-insert into t1 (cip, time) VALUES (1, '00:01'), (2, '00:02'), (3,'00:03');
-insert into t1 (cip, bob, time) VALUES (4, 'a', '00:04'), (5, 'b', '00:05'), 
-                                       (6, 'c', '00:06');
+insert into t1 (cip) VALUES (1), (2), (3);
+insert into t1 (cip, bob) VALUES (4, 'a' ), (5, 'b'), 
+                                       (6, 'c');
 select * from t1 where bob is null and cip=1;
-create index bug on t1 (bob(22), cip, time);
+create index bug on t1 (bob(22), cip);
 select * from t1 where bob is null and cip=1;
 drop table t1;
 

@@ -86,14 +86,6 @@ ERROR HY000: Received an invalid datetime value '2003-0303 12:13:14'.
 select * from t1;
 t
 drop table t1;
-CREATE TABLE t1 (a timestamp, b date, c time, d datetime);
-insert into t1 (b,c,d) values(now(),curtime(),now());
-Warnings:
-Note	1265	Data truncated for column 'b' at row 1
-select date_format(a,"%Y-%m-%d")=b,right(a+0,6)=c+0,a=d+0 from t1;
-date_format(a,"%Y-%m-%d")=b	right(a+0,6)=c+0	a=d+0
-1	1	1
-drop table t1;
 CREATE TABLE t1 (a datetime not null);
 insert into t1 values ("2009-02-11 00:00:00");
 select * from t1 where a is null;
@@ -185,9 +177,6 @@ CAST(CAST('2006-08-10 10:11:12' AS DATETIME) AS DECIMAL(20,6))
 SELECT CAST(CAST('2006-08-10 10:11:12' AS DATETIME) + INTERVAL 14 MICROSECOND AS DECIMAL(20,6));
 CAST(CAST('2006-08-10 10:11:12' AS DATETIME) + INTERVAL 14 MICROSECOND AS DECIMAL(20,6))
 20060810101112.000014
-SELECT CAST(CAST('10:11:12.098700' AS TIME) AS DECIMAL(20,6));
-CAST(CAST('10:11:12.098700' AS TIME) AS DECIMAL(20,6))
-101112.098700
 create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '1962-03-03');
 show create table t1;
 Table	Create Table
@@ -210,8 +199,6 @@ da	dt
 drop table t1;
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
 ERROR HY000: Received an invalid datetime value '1962-03-32 23:33:34'.
-create table t1 (t time default '916:00:00 a');
-ERROR 42000: Invalid default value for 't'
 create table t1 (f1 date, f2 datetime, f3 timestamp);
 insert into t1 values('2001-01-01','2001-01-01 01:01:01','2001-01-01 01:01:01');
 insert into t1 values('2001-02-05','2001-02-05 00:00:00','2001-02-05 01:01:01');
@@ -410,15 +397,6 @@ Field	Type	Null	Key	Default	Extra
 f4	date	YES		NULL	
 drop tables t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13;
 ###################################################################
-create table t1 (f1 time);
-insert into t1 set f1 = '45:44:44';
-insert into t1 set f1 = '15:44:44';
-select * from t1 where (convert(f1,datetime)) != 1;
-f1
-15:44:44
-Warnings:
-Warning	1292	Incorrect datetime value: '0000-00-00 45:44:44'
-drop table t1;
 create table t1 (a int);
 insert into t1 values (), (), ();
 select sum(a) from t1 group by convert(a, datetime);
@@ -504,5 +482,3 @@ da	dt
 drop table t1;
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
 ERROR HY000: Received an invalid datetime value '1962-03-32 23:33:34'.
-create table t1 (t time default '916:00:00 a');
-ERROR 42000: Invalid default value for 't'

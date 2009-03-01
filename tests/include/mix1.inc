@@ -182,7 +182,6 @@ DROP TABLE t1;
 CREATE TABLE t1 (
   a1 decimal(10,0) DEFAULT NULL,
   a2 blob,
-  a3 time DEFAULT NULL,
   a4 blob,
   a5 char(175) DEFAULT NULL,
   a6 timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
