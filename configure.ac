@@ -263,7 +263,7 @@ then
   DEBUG_CFLAGS="-xO0"
   DEBUG_CXXFLAGS="-xO0" 
 
-  OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend -xprefetch=explicit"
+  OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
   OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS} -Xa -xstrconst"
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
 fi
