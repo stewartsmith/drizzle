@@ -10,13 +10,6 @@ select period_add("9602",-12),period_diff(199505,"9404") ;
 
 select now()-now(),weekday(curdate())-weekday(now()),unix_timestamp()-unix_timestamp(now());
 select from_unixtime(unix_timestamp("1994-03-02 10:11:12")),from_unixtime(unix_timestamp("1994-03-02 10:11:12"),"%Y-%m-%d %h:%i:%s"),from_unixtime(unix_timestamp("1994-03-02 10:11:12"))+0;
-select sec_to_time(9001),sec_to_time(9001)+0,time_to_sec("15:12:22"),
-  sec_to_time(time_to_sec("0:30:47")/6.21);
-select sec_to_time(time_to_sec('-838:59:59'));
-select now()-curdate()*1000000-curtime();
-select strcmp(current_timestamp(),concat(current_date()," ",current_time()));
-select strcmp(localtime(),concat(current_date()," ",current_time()));
-select strcmp(localtimestamp(),concat(current_date()," ",current_time()));
 select date_format("1997-01-02 03:04:05", "%M %W %D %Y %y %m %d %h %i %s %w");
 select date_format("1997-01-02", concat("%M %W %D ","%Y %y %m %d %h %i %s %w"));
 select dayofmonth("1997-01-02"),dayofmonth(19970323);
@@ -129,11 +122,6 @@ SELECT EXTRACT(QUARTER FROM '2004-09-15') AS quarter;
 SELECT EXTRACT(QUARTER FROM '2004-10-15') AS quarter;
 SELECT EXTRACT(QUARTER FROM '2004-11-15') AS quarter;
 SELECT EXTRACT(QUARTER FROM '2004-12-15') AS quarter;
-#
-# MySQL Bugs: #12356: DATE_SUB or DATE_ADD incorrectly returns null
-#
-SELECT DATE_SUB(str_to_date('9999-12-31 00:01:00','%Y-%m-%d %H:%i:%s'), INTERVAL 1 MINUTE);
-SELECT DATE_ADD(str_to_date('9999-12-30 23:59:00','%Y-%m-%d %H:%i:%s'), INTERVAL 1 MINUTE);
 
 #
 # Test big intervals (Bug #3498)
@@ -283,8 +271,8 @@ select unix_timestamp('2038-01-19 07:14:07');
 # Test types from + INTERVAL
 #
 
-CREATE TABLE t1 (datetime datetime, timestamp timestamp, date date, time time);
-INSERT INTO t1 values ("2001-01-02 03:04:05", "2002-01-02 03:04:05", "2003-01-02", "06:07:08");
+CREATE TABLE t1 (datetime datetime, timestamp timestamp, date date);
+INSERT INTO t1 values ("2001-01-02 03:04:05", "2002-01-02 03:04:05", "2003-01-02");
 SELECT * from t1;
 select date_add("1997-12-31",INTERVAL 1 SECOND);
 select date_add("1997-12-31",INTERVAL "1 1" YEAR_MONTH);
@@ -365,8 +353,6 @@ SELECT TIMESTAMPDIFF(year,'2006-01-10 14:30:28','2008-01-10 14:30:28');
 SELECT TIMESTAMPDIFF(year,'2006-01-10 14:30:28','2008-01-10 14:30:29');
 
 # end of bug
-
-select date_add(time,INTERVAL 1 SECOND) from t1;
 drop table t1;
 
 # test for last_day
@@ -396,13 +382,10 @@ select last_day("1997-12-1")+0.0;
 # TZ variable set to GMT-3
 
 select strcmp(date_sub(localtimestamp(), interval 3 hour), utc_timestamp())=0;
-select strcmp(date_format(date_sub(localtimestamp(), interval 3 hour),"%T"), utc_time())=0;
 select strcmp(date_format(date_sub(localtimestamp(), interval 3 hour),"%Y-%m-%d"), utc_date())=0;
-select strcmp(date_format(utc_timestamp(),"%T"), utc_time())=0;
 select strcmp(date_format(utc_timestamp(),"%Y-%m-%d"), utc_date())=0;
-select strcmp(concat(utc_date(),' ',utc_time()),utc_timestamp())=0;
 
-explain extended select period_add("9602",-12),period_diff(199505,"9404"),from_days(to_days("960101")),dayofmonth("1997-01-02"), month("1997-01-02"), monthname("1972-03-04"),dayofyear("0000-00-00"),HOUR("1997-03-03 23:03:22"),MINUTE("23:03:22"),SECOND(230322),QUARTER(980303),weekday(curdate())-weekday(now()),dayname("1962-03-03"),unix_timestamp(),sec_to_time(time_to_sec("0:30:47")/6.21),curtime(),utc_time(),curdate(),utc_date(),utc_timestamp(),date_format("1997-01-02 03:04:05", "%M %W %D %Y %y %m %d %h %i %s %w"),from_unixtime(unix_timestamp("1994-03-02 10:11:12")),"1997-12-31 23:59:59" + INTERVAL 1 SECOND,"1998-01-01 00:00:00" - INTERVAL 1 SECOND,INTERVAL 1 DAY + "1997-12-31", extract(YEAR FROM "1999-01-02 10:11:12"),date_add("1997-12-31 23:59:59",INTERVAL 1 SECOND);
+explain extended select period_add("9602",-12),period_diff(199505,"9404"),from_days(to_days("960101")),dayofmonth("1997-01-02"), month("1997-01-02"), monthname("1972-03-04"),dayofyear("0000-00-00"),HOUR("1997-03-03 23:03:22"),MINUTE("23:03:22"),SECOND(230322),QUARTER(980303),weekday(curdate())-weekday(now()),dayname("1962-03-03"),unix_timestamp(),curdate(),utc_date(),utc_timestamp(),date_format("1997-01-02 03:04:05", "%M %W %D %Y %y %m %d %h %i %s %w"),from_unixtime(unix_timestamp("1994-03-02 10:11:12")),"1997-12-31 23:59:59" + INTERVAL 1 SECOND,"1998-01-01 00:00:00" - INTERVAL 1 SECOND,INTERVAL 1 DAY + "1997-12-31", extract(YEAR FROM "1999-01-02 10:11:12"),date_add("1997-12-31 23:59:59",INTERVAL 1 SECOND);
 
 SET @TMP='2007-08-01 12:22:49';
 CREATE TABLE t1 (d DATETIME);
@@ -424,25 +407,15 @@ select last_day('2005-00-01');
 select last_day('2005-01-00');
 
 #
-# Bug #18501: monthname and NULLs
-#
-
---error 1686 # Once again no bad dates allowed!
-select monthname(str_to_date(null, '%m')), monthname(str_to_date(null, '%m')),
-       monthname(str_to_date(1, '%m')), monthname(str_to_date(0, '%m'));
-
-#
 # Bug#16377 result of DATE/TIME functions were compared as strings which
 #           can lead to a wrong result.
 # Now wrong dates should be compared only with CAST()
-create table t1(f1 date, f2 time, f3 datetime);
-insert into t1 values ("2006-01-01", "12:01:01", "2006-01-01 12:01:01");
-insert into t1 values ("2006-01-02", "12:01:02", "2006-01-02 12:01:02");
+create table t1(f1 date, f3 datetime);
+insert into t1 values ("2006-01-01", "2006-01-01 12:01:01");
+insert into t1 values ("2006-01-02", "2006-01-02 12:01:02");
 select f1 from t1 where f1 between CAST("2006-1-1" as date) and CAST(20060101 as date);
 select f1 from t1 where f1 between cast("2006-1-1" as date) and cast("2006.1.1" as date);
 select f1 from t1 where date(f1) between cast("2006-1-1" as date) and cast("2006.1.1" as date);
-select f2 from t1 where f2 between cast("12:1:2" as time) and cast("12:2:2" as time);
-select f2 from t1 where time(f2) between cast("12:1:2" as time) and cast("12:2:2" as time);
 select f3 from t1 where f3 between cast("2006-1-1 12:1:1" as datetime) and cast("2006-1-1 12:1:2" as datetime);
 select f3 from t1 where timestamp(f3) between cast("2006-1-1 12:1:1" as datetime) and cast("2006-1-1 12:1:2" as datetime);
 select f1 from t1 where cast("2006-1-1" as date) between f1 and f3;
@@ -452,52 +425,9 @@ select f1 from t1 where makedate(2006,1) between date(f1) and date(f3);
 select f1 from t1 where makedate(2006,2) between date(f1) and date(f3);
 drop table t1;
 
-#
-# Bug #16546
-# 
-
-create table t1 select now() - now(), curtime() - curtime(), 
-                       sec_to_time(1) + 0, from_unixtime(1) + 0;
-show create table t1;
-drop table t1;
-
-#
-# Bug #11655: Wrong time is returning from nested selects - maximum time exists
-#
-# check if SEC_TO_TIME() handles out-of-range values correctly
-SELECT SEC_TO_TIME(3300000);
-SELECT SEC_TO_TIME(3300000)+0;
-SELECT SEC_TO_TIME(3600 * 4294967296);
-
-# check if TIME_TO_SEC() handles out-of-range values correctly
-SELECT TIME_TO_SEC('916:40:00');
-
-# check if ADDTIME() handles out-of-range values correctly
-SELECT ADDTIME('500:00:00', '416:40:00');
-SELECT ADDTIME('916:40:00', '416:40:00');
-
-# check if SUBTIME() handles out-of-range values correctly
-SELECT SUBTIME('916:40:00', '416:40:00');
-SELECT SUBTIME('-916:40:00', '416:40:00');
-
-# check if MAKETIME() handles out-of-range values correctly
-SELECT MAKETIME(916,0,0);
-SELECT MAKETIME(4294967296, 0, 0);
-SELECT MAKETIME(-4294967296, 0, 0);
-SELECT MAKETIME(0, 4294967296, 0);
-SELECT MAKETIME(0, 0, 4294967296);
-
 # check if EXTRACT() handles out-of-range values correctly
 --error 1686 # Bad datetime
 SELECT EXTRACT(HOUR FROM '100000:02:03');
-
-# check if we get proper warnings if both input string truncation
-# and out-of-range value occur
-CREATE TABLE t1(f1 TIME);
---error 1292
-INSERT INTO t1 VALUES('916:00:00 a');
-SELECT * FROM t1;
-DROP TABLE t1;
 
 #
 # 21913: DATE_FORMAT() Crashes mysql server if I use it through
@@ -512,34 +442,6 @@ INSERT INTO testBug8868 VALUES ('2006-09-04', 'abcd');
 SELECT DATE_FORMAT(field1,'%b-%e %l:%i%p') as fmtddate, field2 FROM testBug8868;
 
 DROP TABLE testBug8868;
-
-#
-# Bug #31160: MAKETIME() crashes server when returning NULL in ORDER BY using 
-# filesort
-#
-CREATE TABLE t1 (
-  a TIMESTAMP
-);
-INSERT INTO t1 VALUES (now()), (now());
-SELECT 1 FROM t1 ORDER BY MAKETIME(1, 1, a);
-DROP TABLE t1;
-#
-# Bug #19844 time_format in Union truncates values
-#
-
-(select time_format(timediff(now(), DATE_SUB(now(),INTERVAL 5 DAY)),'%H') As H)
-union
-(select time_format(timediff(now(), DATE_SUB(now(),INTERVAL 5 DAY)),'%H') As H);
-(select time_format(timediff(now(), DATE_SUB(now(),INTERVAL 5 DAY)),'%k') As H)
-union
-(select time_format(timediff(now(), DATE_SUB(now(),INTERVAL 5 DAY)),'%k') As H);
-(select time_format(timediff(now(), DATE_SUB(now(),INTERVAL 5 HOUR)),'%H') As H)
-union
-(select time_format(timediff(now(), DATE_SUB(now(),INTERVAL 5 HOUR)),'%H') As H);
-
-(select time_format(timediff(now(), DATE_SUB(now(),INTERVAL 5 HOUR)),'%k') As H)
-union
-(select time_format(timediff(now(), DATE_SUB(now(),INTERVAL 5 HOUR)),'%k') As H);
 
 #
 # Bug #23653: crash if last_day('0000-00-00')
@@ -606,12 +508,6 @@ SELECT * FROM t1, t2
 DROP TABLE t1,t2;
 
 #
-# Bug #22229: bug in DATE_ADD()
-#
-
-select str_to_date('10:00 PM', '%h:%i %p') + INTERVAL 10 MINUTE;
-
-#
 # Bug #21103: DATE column not compared as DATE
 #
 
@@ -623,25 +519,6 @@ select * from t1 where field = '2006-11-06';
 select * from t1 where CAST(field as DATETIME) < '2006-11-06 04:08:36.0';
 select * from t1 where CAST(field as DATE) < '2006-11-06 04:08:36.0';
 drop table t1;
-
-#
-# Bug #25643: SEC_TO_TIME function problem
-#
-CREATE TABLE t1 (a int, t1 time, t2 time, d date, PRIMARY KEY  (a));
-INSERT INTO t1 VALUES (1, '10:00:00', NULL, NULL), 
-       (2, '11:00:00', '11:15:00', '1972-02-06');
-SELECT t1, t2, SEC_TO_TIME( TIME_TO_SEC( t2 ) - TIME_TO_SEC( t1 ) ), QUARTER(d) 
-  FROM t1;
-SELECT t1, t2, SEC_TO_TIME( TIME_TO_SEC( t2 ) - TIME_TO_SEC( t1 ) ), QUARTER(d)
-  FROM t1 ORDER BY a DESC;
-DROP TABLE t1;
-
-#
-# Bug #20293: group by cuts off value from time_format
-#
-# Check if using GROUP BY with TIME_FORMAT() produces correct results
-
-SELECT TIME_FORMAT(SEC_TO_TIME(a),"%H:%i:%s") FROM (SELECT 3020399 AS a UNION SELECT 3020398 ) x GROUP BY 1;
 
 #
 # Bug#32180: DATE_ADD treats datetime numeric argument as DATE

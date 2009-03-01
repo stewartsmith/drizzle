@@ -115,36 +115,6 @@ public:
   }
 };
 
-class Item_time_typecast :public Item_typecast_maybe_null
-{
-public:
-  using Item_func::tmp_table_field;
-
-  Item_time_typecast(Item *a) :Item_typecast_maybe_null(a) {}
-  const char *func_name() const { return "cast_as_time"; }
-  String *val_str(String *str);
-  bool get_time(DRIZZLE_TIME *ltime);
-  const char *cast_type() const { return "time"; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_TIME; }
-  Field *tmp_table_field(Table *table)
-  {
-    return tmp_table_field_from_field_type(table, 0);
-  }
-  bool result_as_int64_t() { return true; }
-  int64_t val_int();
-  double val_real() { return val_real_from_decimal(); }
-  my_decimal *val_decimal(my_decimal *decimal_value)
-  {
-    assert(fixed == 1);
-    return  val_decimal_from_time(decimal_value);
-  }
-  int save_in_field(Field *field,
-                    bool )
-  {
-    return save_time_in_field(field);
-  }
-};
-
 class Item_datetime_typecast :public Item_typecast_maybe_null
 {
 public:

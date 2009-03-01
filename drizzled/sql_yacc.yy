@@ -55,13 +55,10 @@
 #include <drizzled/function/str/user.h>
 #include <drizzled/function/str/weight_string.h>
 
-#include <drizzled/function/time/add_time.h>
 #include <drizzled/function/time/curdate.h>
-#include <drizzled/function/time/curtime.h>
 #include <drizzled/function/time/date_add_interval.h>
 #include <drizzled/function/time/dayofmonth.h>
 #include <drizzled/function/time/extract.h>
-#include <drizzled/function/time/get_format.h>
 #include <drizzled/function/time/hour.h>
 #include <drizzled/function/time/microsecond.h>
 #include <drizzled/function/time/minute.h>
@@ -413,10 +410,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %pure_parser                                    /* We have threads */
 /*
-  Currently there are 92 shift/reduce conflicts.
+  Currently there are 90 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 92
+%expect 90
 
 /*
    Comments for TOKENS.
@@ -515,7 +512,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CURDATE                       /* MYSQL-FUNC */
 %token  CURRENT_USER                  /* SQL-2003-R */
 %token  CURSOR_SYM                    /* SQL-2003-R */
-%token  CURTIME                       /* MYSQL-FUNC */
 %token  DATABASE
 %token  DATABASES
 %token  DATAFILE_SYM
@@ -589,7 +585,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  FROM
 %token  FULL                          /* SQL-2003-R */
 %token  GE
-%token  GET_FORMAT                    /* MYSQL-FUNC */
 %token  GLOBAL_SYM                    /* SQL-2003-R */
 %token  GROUP_SYM                     /* SQL-2003-R */
 %token  GROUP_CONCAT_SYM
@@ -841,7 +836,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TIMESTAMP                     /* SQL-2003-R */
 %token  TIMESTAMP_ADD
 %token  TIMESTAMP_DIFF
-%token  TIME_SYM                      /* SQL-2003-R */
 %token  TO_SYM                        /* SQL-2003-R */
 %token  TRAILING                      /* SQL-2003-R */
 %token  TRANSACTION_SYM
@@ -869,7 +863,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  USING                         /* SQL-2003-R */
 %token  UTC_DATE_SYM
 %token  UTC_TIMESTAMP_SYM
-%token  UTC_TIME_SYM
 %token  VALUES                        /* SQL-2003-R */
 %token  VALUE_SYM                     /* SQL-2003-R */
 %token  VARBINARY
@@ -1002,7 +995,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         select_derived derived_table_list
         select_derived_union
 
-%type <date_time_type> date_time_type;
 %type <interval> interval
 
 %type <interval_time_st> interval_time_st
@@ -1740,14 +1732,8 @@ type:
           }
         | DATE_SYM
           { $$=DRIZZLE_TYPE_DATE; }
-        | TIME_SYM
-          { $$=DRIZZLE_TYPE_TIME; }
         | TIMESTAMP
-          {
-            /* Unlike other types TIMESTAMP fields are NOT NULL by default */
-            Lex->type|= NOT_NULL_FLAG;
-            $$=DRIZZLE_TYPE_TIMESTAMP;
-          }
+          { $$=DRIZZLE_TYPE_TIMESTAMP; }
         | DATETIME
           { $$=DRIZZLE_TYPE_DATETIME; }
         | BLOB_SYM
@@ -3203,12 +3189,8 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_right($3,$5); }
         | SECOND_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_second($3); }
-        | TIME_SYM '(' expr ')'
-          { $$= new (YYSession->mem_root) Item_time_typecast($3); }
         | TIMESTAMP '(' expr ')'
           { $$= new (YYSession->mem_root) Item_datetime_typecast($3); }
-        | TIMESTAMP '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_add_time($3, $5, 1, 0); }
         | TRIM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_trim($3); }
         | TRIM '(' LEADING expr FROM expr ')'
@@ -3241,7 +3223,6 @@ function_call_keyword:
   MAINTAINER:
   The only reasons a function should be added here are:
   - for compatibility reasons with another SQL syntax (CURDATE),
-  - for typing reasons (GET_FORMAT)
   Any other 'Syntaxic sugar' enhancements should be *STRONGLY*
   discouraged.
 */
@@ -3257,22 +3238,12 @@ function_call_nonkeyword:
           {
             $$= new (YYSession->mem_root) Item_func_curdate_local();
           }
-        | CURTIME optional_braces
-          {
-            $$= new (YYSession->mem_root) Item_func_curtime_local();
-          }
-        | CURTIME '(' expr ')'
-          {
-            $$= new (YYSession->mem_root) Item_func_curtime_local($3);
-          }
         | DATE_ADD_INTERVAL '(' expr ',' INTERVAL_SYM expr interval ')' %prec INTERVAL_SYM
           { $$= new (YYSession->mem_root) Item_date_add_interval($3,$6,$7,0); }
         | DATE_SUB_INTERVAL '(' expr ',' INTERVAL_SYM expr interval ')' %prec INTERVAL_SYM
           { $$= new (YYSession->mem_root) Item_date_add_interval($3,$6,$7,1); }
         | EXTRACT_SYM '(' interval FROM expr ')'
           { $$=new (YYSession->mem_root) Item_extract( $3, $5); }
-        | GET_FORMAT '(' date_time_type  ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_get_format($3, $5); }
         | NOW_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_now_local();
@@ -3319,10 +3290,6 @@ function_call_nonkeyword:
         | UTC_DATE_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_utc();
-          }
-        | UTC_TIME_SYM optional_braces
-          {
-            $$= new (YYSession->mem_root) Item_func_curtime_utc();
           }
         | UTC_TIMESTAMP_SYM optional_braces
           {
@@ -3610,8 +3577,6 @@ cast_type:
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
         | DATE_SYM
           { $$=ITEM_CAST_DATE; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
-        | TIME_SYM
-          { $$=ITEM_CAST_TIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DATETIME
           { $$=ITEM_CAST_DATETIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DECIMAL_SYM float_options
@@ -4196,13 +4161,6 @@ interval_time_st:
         | SECOND_SYM      { $$=INTERVAL_SECOND; }
         | MICROSECOND_SYM { $$=INTERVAL_MICROSECOND; }
         | YEAR_SYM        { $$=INTERVAL_YEAR; }
-        ;
-
-date_time_type:
-          DATE_SYM  {$$=DRIZZLE_TIMESTAMP_DATE;}
-        | TIME_SYM  {$$=DRIZZLE_TIMESTAMP_TIME;}
-        | DATETIME  {$$=DRIZZLE_TIMESTAMP_DATETIME;}
-        | TIMESTAMP {$$=DRIZZLE_TIMESTAMP_DATETIME;}
         ;
 
 table_alias:
@@ -5517,7 +5475,6 @@ literal:
             $$= item_str;
           }
         | DATE_SYM text_literal { $$ = $2; }
-        | TIME_SYM text_literal { $$ = $2; }
         | TIMESTAMP text_literal { $$ = $2; }
         ;
 
@@ -5899,7 +5856,6 @@ keyword_sp:
         | FIRST_SYM                {}
         | FIXED_SYM                {}
         | FRAC_SECOND_SYM          {}
-        | GET_FORMAT               {}
         | GLOBAL_SYM               {}
         | HASH_SYM                 {}
         | HOSTS_SYM                {}
@@ -6013,7 +5969,6 @@ keyword_sp:
         | TIMESTAMP                {}
         | TIMESTAMP_ADD            {}
         | TIMESTAMP_DIFF           {}
-        | TIME_SYM                 {}
         | TYPES_SYM                {}
         | TYPE_SYM                 {}
         | UNCOMMITTED_SYM          {}

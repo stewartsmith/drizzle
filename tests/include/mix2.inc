@@ -420,17 +420,16 @@ eval CREATE TABLE t1 (
   quota bigint,
   weight double,
   access_date date,
-  access_time time,
   approved datetime,
   dummy_primary_key int NOT NULL auto_increment,
   PRIMARY KEY (dummy_primary_key)
 ) ENGINE=$engine_type;
-INSERT INTO t1 VALUES ('user_0','somepassword','N',0,0,0,'2000-09-07','23:06:59','2000-09-07 23:06:59',1);
-INSERT INTO t1 VALUES ('user_1','somepassword','Y',1,1,1,'2000-09-07','23:06:59','2000-09-07 23:06:59',2);
-INSERT INTO t1 VALUES ('user_2','somepassword','N',2,2,1.4142135623731,'2000-09-07','23:06:59','2000-09-07 23:06:59',3);
-INSERT INTO t1 VALUES ('user_3','somepassword','Y',3,3,1.7320508075689,'2000-09-07','23:06:59','2000-09-07 23:06:59',4);
-INSERT INTO t1 VALUES ('user_4','somepassword','N',4,4,2,'2000-09-07','23:06:59','2000-09-07 23:06:59',5);
-select  user_name, password , subscribed, user_id, quota, weight, access_date, access_time, approved, dummy_primary_key from t1 order by user_name;
+INSERT INTO t1 VALUES ('user_0','somepassword','N',0,0,0,'2000-09-07','2000-09-07 23:06:59',1);
+INSERT INTO t1 VALUES ('user_1','somepassword','Y',1,1,1,'2000-09-07','2000-09-07 23:06:59',2);
+INSERT INTO t1 VALUES ('user_2','somepassword','N',2,2,1.4142135623731,'2000-09-07','2000-09-07 23:06:59',3);
+INSERT INTO t1 VALUES ('user_3','somepassword','Y',3,3,1.7320508075689,'2000-09-07','2000-09-07 23:06:59',4);
+INSERT INTO t1 VALUES ('user_4','somepassword','N',4,4,2,'2000-09-07','2000-09-07 23:06:59',5);
+select  user_name, password , subscribed, user_id, quota, weight, access_date, approved, dummy_primary_key from t1 order by user_name;
 drop table t1;
 
 #

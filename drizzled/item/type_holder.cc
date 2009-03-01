@@ -195,7 +195,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   switch (item->field_type())
   {
   case DRIZZLE_TYPE_TIMESTAMP:
-  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_VARCHAR:

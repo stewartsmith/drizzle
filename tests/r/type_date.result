@@ -73,12 +73,6 @@ SELECT DATE_FORMAT("2002-03-06 10:11:12", CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.
 DATE_FORMAT("2002-03-06 10:11:12", CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.GMT))	DATE_FORMAT("2002-03-06 10:11:12",  CONCAT('%a, %d %M %Y %H:%i:%s ' ,  t2.GMT))
 Wed, 06 March 2002 10:11:12 GMT-0800	Wed, 06 March 2002 10:11:12 GMT-0800
 drop table t1,t2;
-CREATE TABLE t1 (f1 time default NULL, f2 time default NULL);
-INSERT INTO t1 (f1, f2) VALUES ('09:00', '12:00');
-SELECT DATE_FORMAT(f1, "%l.%i %p") , DATE_FORMAT(f2, "%l.%i %p") FROM t1;
-DATE_FORMAT(f1, "%l.%i %p")	DATE_FORMAT(f2, "%l.%i %p")
-9.00 AM	12.00 PM
-DROP TABLE t1;
 CREATE TABLE t1 (f1 DATE);
 CREATE TABLE t2 (f2 VARCHAR(8));
 CREATE TABLE t3 (f2 CHAR(8));
@@ -127,16 +121,6 @@ select * from t1;
 d	dt	ts
 2001-11-11	2001-11-11 00:00:00	2001-11-11 00:00:00
 drop table t1;
-CREATE TABLE t1 (
-a INT
-);
-INSERT INTO t1 VALUES (1);
-INSERT INTO t1 VALUES (NULL);
-SELECT str_to_date( '', a ) FROM t1;
-str_to_date( '', a )
-0000-00-00 00:00:00
-NULL
-DROP TABLE t1;
 CREATE TABLE t1 (a DATE, b int, PRIMARY KEY (a,b));
 INSERT INTO t1 VALUES (DATE(NOW()), 1);
 SELECT COUNT(*) FROM t1 WHERE a = NOW();
