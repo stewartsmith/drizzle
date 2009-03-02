@@ -3,7 +3,8 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
-AC_INIT([drizzle],[7.0.0],[http://bugs.launchpad.net/drizzle])
+m4_include(m4/bzr_version.m4)
+
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
