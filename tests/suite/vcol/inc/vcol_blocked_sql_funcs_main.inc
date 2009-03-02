@@ -35,27 +35,11 @@ create table t1 (a virtual datetime as (current_date));
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
 create table t1 (a virtual datetime as (current_date()));
 
---echo # CURRENT_TIME(), CURRENT_TIME
--- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
-create table t1 (a virtual datetime as (current_time));
--- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
-create table t1 (a virtual datetime as (current_time()));
-
 --echo # CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
 create table t1 (a virtual datetime as (current_timestamp()));
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
 create table t1 (a virtual datetime as (current_timestamp));
-
---echo # CURTIME()
--- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
-create table t1 (a virtual datetime as (curtime()));
-
---echo # LOCALTIME(), LOCALTIME
--- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
-create table t1 (a datetime, b virtual varchar(10) as (localtime())); 
--- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
-create table t1 (a datetime, b virtual varchar(10) as (localtime)); 
 
 --echo # LOCALTIMESTAMP, LOCALTIMESTAMP()(v4.0.6)
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
@@ -78,10 +62,6 @@ create table t1 (a datetime, b virtual datetime as (unix_timestamp()));
 --echo # UTC_DATE()
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
 create table t1 (a datetime, b virtual datetime as (utc_date()));
-
---echo # UTC_TIME()
--- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
-create table t1 (a datetime, b virtual datetime as (utc_time()));
 
 --echo # UTC_TIMESTAMP()
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED

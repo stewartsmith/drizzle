@@ -201,10 +201,6 @@ struct system_variables
 
   Time_zone *time_zone;
 
-  /* DATE, DATETIME and DRIZZLE_TIME formats */
-  DATE_TIME_FORMAT *date_format;
-  DATE_TIME_FORMAT *datetime_format;
-  DATE_TIME_FORMAT *time_format;
   bool sysdate_is_now;
 
 };

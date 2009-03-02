@@ -51,6 +51,8 @@
 #define UNIX_EPOCH_MAX_YEARS 2038
 #define UNIX_EPOCH_MIN_YEARS 1970
 
+#define CALENDAR_YY_PART_YEAR 70
+
 /**
  * The following constants define the system of calculating the number
  * of days in various periods of time in the Gregorian calendar.
@@ -314,6 +316,22 @@ uint32_t iso_week_number_from_gregorian_date(uint32_t year
                                            , uint32_t month
                                            , uint32_t day
                                            , uint32_t *year_out);
+/**
+ * Takes a number in the form [YY]YYMM and converts it into
+ * a number of months.
+ *
+ * @param Period in the form [YY]YYMM
+ */
+uint32_t year_month_to_months(uint32_t year_month);
+
+/**
+ * Takes a number of months and converts it to
+ * a period in the form YYYYMM.
+ *
+ * @param Number of months
+ */
+uint32_t months_to_year_month(uint32_t months);
+
 #ifdef __cplusplus
 }
 #endif

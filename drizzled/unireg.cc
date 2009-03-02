@@ -438,9 +438,6 @@ static void fill_table_proto(drizzle::Table *table_proto,
     case DRIZZLE_TYPE_LONGLONG:
       attribute->set_type(drizzle::Table::Field::BIGINT);
       break;
-    case DRIZZLE_TYPE_TIME:
-      attribute->set_type(drizzle::Table::Field::TIME);
-      break;
     case DRIZZLE_TYPE_DATETIME:
       attribute->set_type(drizzle::Table::Field::DATETIME);
       break;

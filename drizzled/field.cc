@@ -42,7 +42,6 @@
 #include <drizzled/field/long.h>
 #include <drizzled/field/int64_t.h>
 #include <drizzled/field/num.h>
-#include <drizzled/field/timetype.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
@@ -75,8 +74,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_LONGLONG,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATE
@@ -106,8 +103,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_LONGLONG,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATE
@@ -137,8 +132,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_DOUBLE,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATE
@@ -168,8 +161,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_TIMESTAMP,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_LONGLONG,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_TIME,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATE
@@ -199,8 +190,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_TIMESTAMP,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATE
@@ -230,8 +219,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_LONGLONG,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATE
@@ -243,37 +230,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     //DRIZZLE_TYPE_NEWDECIMAL
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_BLOB
-    DRIZZLE_TYPE_BLOB,
-  },
-  /* DRIZZLE_TYPE_TIME -> */
-  {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_DOUBLE
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NULL
-    DRIZZLE_TYPE_TIME,
-    //DRIZZLE_TYPE_TIMESTAMP
-    DRIZZLE_TYPE_DATETIME,
-    //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_TIME,
-    //DRIZZLE_TYPE_DATETIME
-    DRIZZLE_TYPE_DATETIME,
-    //DRIZZLE_TYPE_DATE
-    DRIZZLE_TYPE_DATE,
-    //DRIZZLE_TYPE_VARCHAR
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_VIRTUAL
-    DRIZZLE_TYPE_VIRTUAL,
-    //DRIZZLE_TYPE_NEWDECIMAL
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
@@ -292,8 +248,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATE
@@ -323,8 +277,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATE
@@ -353,8 +305,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     //DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_TIME
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
@@ -385,8 +335,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VIRTUAL,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VIRTUAL,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VIRTUAL,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VIRTUAL,
     //DRIZZLE_TYPE_DATE
@@ -416,8 +364,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_NEWDECIMAL,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATE
@@ -447,8 +393,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATE
@@ -477,8 +421,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     //DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_BLOB,
     //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_BLOB,
-    //DRIZZLE_TYPE_TIME
     DRIZZLE_TYPE_BLOB,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_BLOB,
@@ -530,8 +472,6 @@ static Item_result field_types_result_type [DRIZZLE_TYPE_MAX+1]=
   STRING_RESULT,
   //DRIZZLE_TYPE_LONGLONG
   INT_RESULT,
-  //DRIZZLE_TYPE_TIME
-  STRING_RESULT,
   //DRIZZLE_TYPE_DATETIME
   STRING_RESULT,
   //DRIZZLE_TYPE_DATE
@@ -540,8 +480,10 @@ static Item_result field_types_result_type [DRIZZLE_TYPE_MAX+1]=
   STRING_RESULT,
   //DRIZZLE_TYPE_VIRTUAL
   STRING_RESULT,
-  //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
-  DECIMAL_RESULT,           STRING_RESULT,
+  //DRIZZLE_TYPE_NEWDECIMAL   
+  DECIMAL_RESULT,           
+  //DRIZZLE_TYPE_ENUM
+  STRING_RESULT,
   //DRIZZLE_TYPE_BLOB
   STRING_RESULT,
 };
@@ -1531,6 +1473,7 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
     case Item::PARAM_ITEM:
          my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
          return true;
+         break;
     default:
       // Continue with the field creation
       break;
@@ -1687,9 +1630,6 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
   case DRIZZLE_TYPE_DATE:
     length= 10;
     break;
-  case DRIZZLE_TYPE_TIME:
-    length= 10;
-    break;
   case DRIZZLE_TYPE_DATETIME:
     length= MAX_DATETIME_WIDTH;
     break;
@@ -1752,8 +1692,7 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   switch (type) {
   case DRIZZLE_TYPE_VARCHAR:     return (length + (length < 256 ? 1: 2));
   case DRIZZLE_TYPE_TINY	: return 1;
-  case DRIZZLE_TYPE_DATE:
-  case DRIZZLE_TYPE_TIME:   return 3;
+  case DRIZZLE_TYPE_DATE: return 3;
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_LONG	: return 4;
   case DRIZZLE_TYPE_DOUBLE: return sizeof(double);
@@ -1763,7 +1702,7 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   case DRIZZLE_TYPE_BLOB:		return 4+portable_sizeof_char_ptr;
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_NEWDECIMAL:
-    abort();                          // This shouldn't happen
+    abort(); return 0;                          // This shouldn't happen
   default:
     return 0;
   }
@@ -1793,7 +1732,6 @@ Field *make_field(TABLE_SHARE *share, MEM_ROOT *root,
 		  TYPELIB *interval,
 		  const char *field_name)
 {
-
   if(!root)
     root= current_mem_root();
 
@@ -1809,7 +1747,6 @@ Field *make_field(TABLE_SHARE *share, MEM_ROOT *root,
 
   switch (field_type) {
   case DRIZZLE_TYPE_DATE:
-  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
     field_charset= &my_charset_bin;
@@ -1882,9 +1819,6 @@ Field *make_field(TABLE_SHARE *share, MEM_ROOT *root,
   case DRIZZLE_TYPE_DATE:
     return new (root) Field_date(ptr,null_pos,null_bit,
 			     unireg_check, field_name, field_charset);
-  case DRIZZLE_TYPE_TIME:
-    return new (root) Field_time(ptr,null_pos,null_bit,
-			  unireg_check, field_name, field_charset);
   case DRIZZLE_TYPE_DATETIME:
     return new (root) Field_datetime(ptr,null_pos,null_bit,
 			      unireg_check, field_name, field_charset);

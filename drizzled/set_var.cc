@@ -324,18 +324,6 @@ static sys_var_session_bool
 sys_engine_condition_pushdown(&vars, "engine_condition_pushdown",
 			      &SV::engine_condition_pushdown);
 
-/* Time/date/datetime formats */
-
-static sys_var_session_date_time_format sys_time_format(&vars, "time_format",
-					     &SV::time_format,
-					     DRIZZLE_TIMESTAMP_TIME);
-static sys_var_session_date_time_format sys_date_format(&vars, "date_format",
-					     &SV::date_format,
-					     DRIZZLE_TIMESTAMP_DATE);
-static sys_var_session_date_time_format sys_datetime_format(&vars, "datetime_format",
-						 &SV::datetime_format,
-						 DRIZZLE_TIMESTAMP_DATETIME);
-
 /* Variables that are bits in Session */
 
 sys_var_session_bit sys_autocommit(&vars, "autocommit", 0,
@@ -1367,110 +1355,6 @@ unsigned char *sys_var_session_bit::value_ptr(Session *session, enum_var_type,
   session->sys_var_tmp.bool_value= ((session->options & bit_flag) ?
 				   !reverse : reverse);
   return (unsigned char*) &session->sys_var_tmp.bool_value;
-}
-
-
-/** Update a date_time format variable based on given value. */
-
-void sys_var_session_date_time_format::update2(Session *session, enum_var_type type,
-					   DATE_TIME_FORMAT *new_value)
-{
-  DATE_TIME_FORMAT *old;
-
-  if (type == OPT_GLOBAL)
-  {
-    pthread_mutex_lock(&LOCK_global_system_variables);
-    old= (global_system_variables.*offset);
-    (global_system_variables.*offset)= new_value;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-  }
-  else
-  {
-    old= (session->variables.*offset);
-    (session->variables.*offset)= new_value;
-  }
-  free((char*) old);
-  return;
-}
-
-
-bool sys_var_session_date_time_format::update(Session *session, set_var *var)
-{
-  DATE_TIME_FORMAT *new_value;
-  /* We must make a copy of the last value to get it into normal memory */
-  new_value= date_time_format_copy((Session*) 0,
-				   var->save_result.date_time_format);
-  if (!new_value)
-    return 1;					// Out of memory
-  update2(session, var->type, new_value);		// Can't fail
-  return 0;
-}
-
-
-bool sys_var_session_date_time_format::check(Session *session, set_var *var)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  String str(buff,sizeof(buff), system_charset_info), *res;
-  DATE_TIME_FORMAT *format;
-
-  if (!(res=var->value->val_str(&str)))
-    res= &my_empty_string;
-
-  if (!(format= date_time_format_make(date_time_type,
-				      res->ptr(), res->length())))
-  {
-    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, res->c_ptr());
-    return 1;
-  }
-
-  /*
-    We must copy result to thread space to not get a memory leak if
-    update is aborted
-  */
-  var->save_result.date_time_format= date_time_format_copy(session, format);
-  free((char*) format);
-  return var->save_result.date_time_format == 0;
-}
-
-
-void sys_var_session_date_time_format::set_default(Session *session, enum_var_type type)
-{
-  DATE_TIME_FORMAT *res= 0;
-
-  if (type == OPT_GLOBAL)
-  {
-    const char *format;
-    if ((format= opt_date_time_formats[date_time_type]))
-      res= date_time_format_make(date_time_type, format, strlen(format));
-  }
-  else
-  {
-    /* Make copy with malloc */
-    res= date_time_format_copy((Session *) 0, global_system_variables.*offset);
-  }
-
-  if (res)					// Should always be true
-    update2(session, type, res);
-}
-
-
-unsigned char *sys_var_session_date_time_format::value_ptr(Session *session,
-                                                           enum_var_type type,
-                                                           const LEX_STRING *)
-{
-  if (type == OPT_GLOBAL)
-  {
-    char *res;
-    /*
-      We do a copy here just to be sure things will work even if someone
-      is modifying the original string while the copy is accessed
-      (Can't happen now in SQL SHOW, but this is a good safety for the future)
-    */
-    res= session->strmake((global_system_variables.*offset)->format.str,
-		      (global_system_variables.*offset)->format.length);
-    return (unsigned char*) res;
-  }
-  return (unsigned char*) (session->variables.*offset)->format.str;
 }
 
 

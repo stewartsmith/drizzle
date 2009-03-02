@@ -941,19 +941,6 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
     get_value_func= &get_datetime_value;
     return 0;
   }
-  else if (type == STRING_RESULT && (*a)->field_type() == DRIZZLE_TYPE_TIME &&
-           (*b)->field_type() == DRIZZLE_TYPE_TIME)
-  {
-    /* Compare TIME values as integers. */
-    session= current_session;
-    owner= owner_arg;
-    a_cache= 0;
-    b_cache= 0;
-    is_nulls_eq= test(owner && owner->functype() == Item_func::EQUAL_FUNC);
-    func= &Arg_comparator::compare_datetime;
-    get_value_func= &get_time_value;
-    return 0;
-  }
 
   return set_compare_func(owner_arg, type);
 }
@@ -2053,7 +2040,6 @@ void Item_func_between::fix_length_and_dec()
   max_length= 1;
   int i;
   bool datetime_found= false;
-  int time_items_found= 0;
   compare_as_dates= true;
   Session *session= current_session;
 
@@ -2083,9 +2069,6 @@ void Item_func_between::fix_length_and_dec()
         datetime_found= true;
         continue;
       }
-      if (args[i]->field_type() == DRIZZLE_TYPE_TIME &&
-          args[i]->result_as_int64_t())
-        time_items_found++;
     }
   }
   if (!datetime_found)
@@ -2095,11 +2078,6 @@ void Item_func_between::fix_length_and_dec()
   {
     ge_cmp.set_datetime_cmp_func(args, args + 1);
     le_cmp.set_datetime_cmp_func(args, args + 2);
-  }
-  else if (time_items_found == 3)
-  {
-    /* Compare TIME items as integers. */
-    cmp_type= INT_RESULT;
   }
   else if (args[0]->real_item()->type() == FIELD_ITEM &&
            session->lex->sql_command != SQLCOM_SHOW_CREATE)

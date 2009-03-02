@@ -123,10 +123,10 @@ create table t2 select x from t1 where 1=2;
 describe t1;
 describe t2;
 drop table t2;
-create table t2 select now() as a , curtime() as b, curdate() as c , 1+1 as d , 1.0 + 1 as e , 33333333333333333 + 3 as f;
+create table t2 select now() as a , curdate() as c , 1+1 as d , 1.0 + 1 as e , 33333333333333333 + 3 as f;
 describe t2;
 drop table t2;
-create table t2 select CAST("2001-12-29" AS DATE) as d, CAST("20:45:11" AS TIME) as t, CAST("2001-12-29  20:45:11" AS DATETIME) as dt;
+create table t2 select CAST("2001-12-29" AS DATE) as d, CAST("2001-12-29  20:45:11" AS DATETIME) as dt;
 describe t2;
 drop table t1,t2;
 
@@ -217,8 +217,11 @@ drop table t1;
 #
 
 create table t1 select 1,2,3;
+--error 1364
 create table if not exists t1 select 1,2;
+--error 1136
 create table if not exists t1 select 1,2,3,4;
+--error 1364
 create table if not exists t1 select 1;
 select * from t1;
 drop table t1;
@@ -338,10 +341,10 @@ drop table t1;
 # Test types of data for create select with functions
 #
 
-create table t1(a int,b int,c int,d date,e char,f datetime,g time,h blob);
+create table t1(a int,b int,c int,d date,e char,f datetime,h blob);
 insert into t1(a)values(1);
-insert into t1(a,b,c,d,e,f,g,h)
-values(2,-2,2,'1825-12-14','a','2003-01-01 03:02:01','4:3:2','binary data');
+insert into t1(a,b,c,d,e,f,h)
+values(2,-2,2,'1825-12-14','a','2003-01-01 03:02:01','binary data');
 select * from t1;
 select a, 
     ifnull(b,-7) as b, 
@@ -349,9 +352,7 @@ select a,
     ifnull(d,cast('2000-01-01' as date)) as d, 
     ifnull(e,cast('b' as char)) as e,
     ifnull(f,cast('2000-01-01' as datetime)) as f, 
-    ifnull(g,cast('5:4:3' as time)) as g,
-    ifnull(h,cast('yet another binary data' as binary)) as h,
-    addtime(cast('1:0:0' as time),cast('1:0:0' as time)) as dd 
+    ifnull(h,cast('yet another binary data' as binary)) as h
 from t1;
 
 create table t2
@@ -362,9 +363,7 @@ select
     ifnull(d,cast('2000-01-01'              as date))     as d,
     ifnull(e,cast('b'                       as char))     as e,
     ifnull(f,cast('2000-01-01'              as datetime)) as f,
-    ifnull(g,cast('5:4:3'                   as time))     as g,
-    ifnull(h,cast('yet another binary data' as binary))   as h,
-    addtime(cast('1:0:0' as time),cast('1:0:0' as time))  as dd
+    ifnull(h,cast('yet another binary data' as binary))   as h
 from t1;
 explain t2;
 select * from t2;
@@ -469,8 +468,7 @@ drop table t1, t2, t3;
 # an improper fix is present.
 #
 create table t1 (a int);
-## TODO: Should this statement fail?
-#--error 1093
+--error 1093
 create table t1 select * from t1;
 ## TODO: Huh? --error ER_WRONG_OBJECT
 #create table t2 union = (t1) select * from t1;

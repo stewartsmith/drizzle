@@ -74,15 +74,6 @@ select * from t1;
 drop table t1;
 
 #
-# Test insert of now() and curtime()
-#
-
-CREATE TABLE t1 (a timestamp, b date, c time, d datetime);
-insert into t1 (b,c,d) values(now(),curtime(),now());
-select date_format(a,"%Y-%m-%d")=b,right(a+0,6)=c+0,a=d+0 from t1;
-drop table t1;
-
-#
 # Test of datetime and not null
 #
 
@@ -185,7 +176,6 @@ DROP TABLE t1;
 SELECT CAST(CAST('2006-08-10' AS DATE) AS DECIMAL(20,6));
 SELECT CAST(CAST('2006-08-10 10:11:12' AS DATETIME) AS DECIMAL(20,6));
 SELECT CAST(CAST('2006-08-10 10:11:12' AS DATETIME) + INTERVAL 14 MICROSECOND AS DECIMAL(20,6));
-SELECT CAST(CAST('10:11:12.098700' AS TIME) AS DECIMAL(20,6));
 
 
 #
@@ -205,8 +195,6 @@ select * from t1;
 drop table t1;
 --error 1686 # Bad datetime
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
---error ER_INVALID_DEFAULT
-create table t1 (t time default '916:00:00 a');
 
 
 #
@@ -327,15 +315,6 @@ create table t13 as select ifnull(cast('01-01-01' as datetime),
 desc t13;
 drop tables t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13;
 --echo ###################################################################
-#
-# Bug #31253: crash comparing datetime to double
-# Should return 1st row only. Crashes if NULL propagation fails.
-#
-create table t1 (f1 time);
-insert into t1 set f1 = '45:44:44';
-insert into t1 set f1 = '15:44:44';
-select * from t1 where (convert(f1,datetime)) != 1;
-drop table t1;
 
 #
 # Bug #31249: problem with convert(..., datetime)
@@ -400,5 +379,3 @@ select * from t1;
 drop table t1;
 --error 1686 # Bad date
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
---error 1067
-create table t1 (t time default '916:00:00 a');
