@@ -1096,7 +1096,7 @@ class compare_functor
   public:
   compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg)
     : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
-  inline bool operator()(BUFFPEK *i, BUFFPEK *j)
+  inline bool operator()(const BUFFPEK *i, const BUFFPEK *j)
   {
     int val;
     if ((val= key_compare(key_compare_arg,
