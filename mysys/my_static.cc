@@ -73,7 +73,7 @@ void_ptr_int_func my_abort_hook= (void_ptr_int_func)exit;
 error_handler_func error_handler_hook= NULL;
 
 	/* How to disable options */
-bool my_disable_async_io=0;
+bool my_disable_async_io= true;
 bool my_disable_flush_key_blocks=0;
 bool my_disable_symlinks=0;
 bool mysys_uses_curses=0;

@@ -1160,7 +1160,7 @@ void trans_register_ha(Session *session, bool all, handlerton *ht);
 void table_case_convert(char * name, uint32_t length);
 const char *table_case_name(HA_CREATE_INFO *info, const char *name);
 
-extern char reg_ext[FN_EXTLEN];
+extern const char *reg_ext;
 extern uint32_t reg_ext_length;
 extern ulong specialflag;
 extern uint32_t lower_case_table_names;

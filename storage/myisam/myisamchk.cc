@@ -561,7 +561,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     if (argument != disabled_my_option)
     {
       check_param.testflag|= T_REP;
-      my_disable_async_io= 1;		/* More safety */
+      my_disable_async_io= true;		/* More safety */
     }
     break;
   case 'n':
