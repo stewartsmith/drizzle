@@ -20,9 +20,9 @@
 	/* Test if a string is "comparable" to a wild-card string */
 	/* returns 0 if the strings are "comparable" */
 
-char wild_many='*';
-char wild_one='?';
-char wild_prefix=0; /* QQ this can potentially cause a SIGSEGV */
+char wild_many='%';
+char wild_one='_';
+char wild_prefix= '\\';
 
 int wild_compare(register const char *str, register const char *wildstr,
                  bool str_is_pattern)

@@ -167,7 +167,6 @@ typedef void (*void_ptr_int_func)(int);
 extern void_ptr_func my_sigtstp_cleanup,
 					/* Executed before jump to shell */
 	    my_sigtstp_restart;
-extern void_ptr_int_func my_abort_hook;
 					/* Executed when comming from shell */
 extern int my_umask,		/* Default creation mask  */
 	   my_umask_dir,
