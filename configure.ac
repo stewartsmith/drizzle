@@ -119,7 +119,7 @@ AC_ARG_WITH([system-type],
     [SYSTEM_TYPE="$host_vendor-$host_os"])
 AC_ARG_WITH([machine-type],
     [AS_HELP_STRING([--with-machine-type],
-       [Set the machine type, like "powerpc"])],
+       [Set the machine type, like "sparc"])],
     [MACHINE_TYPE="$withval"],
     [MACHINE_TYPE="$host_cpu"])
 AC_SUBST(SYSTEM_TYPE)
@@ -257,15 +257,28 @@ then
   if test "$target_cpu" = "sparc"
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
+    IS_64="-m64"
+  else
+    isainfo_k=`isainfo -k`
+    if test "$isainfo_k" = "amd64"
+    then
+      IS_64="-m64 -L/usr/lib/amd64 -L/usr/local/lib/amd64"
+    fi
   fi
-  AM_CXXFLAGS="${AM_CXXFLAGS} -xlang=c99 -g -compat=5 -library=stlport4 -template=no%extdef ${MEMALIGN_FLAGS}"
-  AM_CFLAGS="${AM_CFLAGS} -g ${MEMALIGN_FLAGS}"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -xc99=all -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS}"
+  AM_CFLAGS="${AM_CFLAGS} -g -mt -xlang=c99 ${IS_64} ${MEMALIGN_FLAGS}"
   DEBUG_CFLAGS="-xO0"
   DEBUG_CXXFLAGS="-xO0" 
 
   OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
   OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS} -Xa -xstrconst"
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
+
+  dnl We need these next two so that configure lib tests make sure we've got
+  dnl libs for the appropriate bit-width - but they need to double up in AM_*
+  dnl so that they don't get overridden by make-time cflags.
+  CFLAGS="${CFLAGS} ${IS_64}"
+  CXXFLAGS="${CXXFLAGS} ${IS_64}"
 fi
 
 # We use libtool
@@ -1353,10 +1366,8 @@ then
     W_FAIL="-errwarn=%all"
   fi
 
-  CC_WARNINGS="-v -xc99=all -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR"
-  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder,reftotemp,inllargeuse -compat=5"
-  #CC_WARNINGS="-v -xc99=all -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR"
-  #CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder -compat=5"
+  CC_WARNINGS="-v -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR ${W_FAIL}"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder,reftotemp,inllargeuse -compat=5 ${W_FAIL}" 
   PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse"
   NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
   if test "$ac_exceptions" = "no"
