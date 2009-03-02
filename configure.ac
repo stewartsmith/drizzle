@@ -234,8 +234,8 @@ if test "$GCC" = "yes"
 then
   case "$host_cpu" in
     *ppc* | *powerpc*)
-      AM_CFLAGS="$AM_CFLAGS -mno-fused-madd"
-      AM_CXXFLAGS="$AM_CXXFLAGS -mno-fused-madd"
+      CFLAGS="$CFLAGS -mno-fused-madd"
+      CXXFLAGS="$CXXFLAGS -mno-fused-madd"
     ;;
   esac
 fi
@@ -243,8 +243,8 @@ fi
 # First check for gcc and g++
 if test "$GCC" = "yes"
 then
-  AM_CFLAGS="${AM_CPPFLAGS} -ggdb3 -std=gnu99"
-  AM_CXXFLAGS="${AM_CXXFLAGS} -ggdb3 -std=gnu++98"
+  CFLAGS="${CFLAGS} -ggdb3 -std=gnu99"
+  CXXFLAGS="${CXXFLAGS} -ggdb3 -std=gnu++98"
 
   DEBUG_CFLAGS="-O0"
   DEBUG_CXXFLAGS="-O0"
@@ -262,23 +262,21 @@ then
     isainfo_k=`isainfo -k`
     if test "$isainfo_k" = "amd64"
     then
-      IS_64="-m64 -L/usr/lib/amd64 -L/usr/local/lib/amd64"
+      IS_64="-m64"
+      LDFLAGS="${LDFLAGS} -L/usr/lib/amd64 -L/usr/local/lib/amd64"
     fi
   fi
-  AM_CXXFLAGS="${AM_CXXFLAGS} -xc99=all -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS}"
-  AM_CFLAGS="${AM_CFLAGS} -g -mt -xlang=c99 ${IS_64} ${MEMALIGN_FLAGS}"
+  CXXFLAGS="${CXXFLAGS} -xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS}"
+  CFLAGS="${CFLAGS} -g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS}"
   DEBUG_CFLAGS="-xO0"
   DEBUG_CXXFLAGS="-xO0" 
 
-  OPTIMIZE_FLAGS="-xO4 -xlibmil -xdepend"
+  dnl TODO: -xO4 causes a Sun Studio failure in innodb... let's check back
+  dnl       in on this one.
+  OPTIMIZE_FLAGS="-xO3 -xlibmil -xdepend"
   OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS} -Xa -xstrconst"
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
 
-  dnl We need these next two so that configure lib tests make sure we've got
-  dnl libs for the appropriate bit-width - but they need to double up in AM_*
-  dnl so that they don't get overridden by make-time cflags.
-  CFLAGS="${CFLAGS} ${IS_64}"
-  CXXFLAGS="${CXXFLAGS} ${IS_64}"
 fi
 
 # We use libtool
@@ -309,12 +307,12 @@ AC_ARG_WITH([debug],
 if test "$with_debug" = "yes"
 then
   # Debuging. No optimization.
-  AM_CFLAGS="${DEBUG_CFLAGS} -DDEBUG ${AM_CFLAGS}"
-  AM_CXXFLAGS="${DEBUG_CXXFLAGS} -DDEBUG ${AM_CXXFLAGS}"
+  CFLAGS="${DEBUG_CFLAGS} -DDEBUG ${CFLAGS}"
+  CXXFLAGS="${DEBUG_CXXFLAGS} -DDEBUG ${CXXFLAGS}"
 else
   # Optimized version. No debug
-  AM_CFLAGS="${OPTIMIZE_CFLAGS} ${AM_CFLAGS}"
-  AM_CXXFLAGS="$OPTIMIZE_CXXFLAGS ${AM_CXXFLAGS}"
+  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS}"
+  CXXFLAGS="${OPTIMIZE_CXXFLAGS} ${CXXFLAGS}"
 fi
 
 
@@ -408,7 +406,7 @@ AS_IF([test x$ac_cv_libevent = xno],
 
 ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
 LIBS="$PTHREAD_LIBS $LIBS"
-AM_CFLAGS="${AM_CFLAGS} $PTHREAD_CFLAGS"
+CFLAGS="${CFLAGS} ${PTHREAD_CFLAGS}"
 CC="$PTHREAD_CC"
 
 #--------------------------------------------------------------------
@@ -1349,16 +1347,16 @@ void testme() {  };],[
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-rtti"
-  AM_CPPFLAGS="${AM_CPPFLAGS} -fpch-deps"
+  CXXFLAGS="${CXXFLAGS} -fno-rtti"
+  CPPFLAGS="${CPPFLAGS} -fpch-deps"
   PROTOSKIP_WARNINGS="${NO_SHADOW}"
 fi
 if test "$SUNCC" = "yes"
 then
   if test "$ac_datarace" = "yes"
   then
-    AM_CFLAGS="${AM_CFLAGS} -xinstrument=datarace"
-    AM_CXXFLAGS="${AM_CXXFLAGS} -xinstrument=datarace"
+    CFLAGS="${CFLAGS} -xinstrument=datarace"
+    CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
   fi
 
   if test "$ac_warn_fail" = "yes"
@@ -1367,8 +1365,8 @@ then
   fi
 
   CC_WARNINGS="-v -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR ${W_FAIL}"
-  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder,reftotemp,inllargeuse -compat=5 ${W_FAIL}" 
-  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1 ${W_FAIL}" 
+  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse,truncwarn1"
   NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
   if test "$ac_exceptions" = "no"
   then
@@ -1376,9 +1374,6 @@ then
     W_EXCEPTIONS="-features=except"
   fi
 fi
-AM_CXXFLAGS="${CXX_WARNINGS} ${NO_EXCEPTIONS}  ${AM_CXXFLAGS}"
-AM_CFLAGS="${CC_WARNINGS} ${AM_CFLAGS}"
-
 AC_SUBST(NO_EXCEPTIONS)
 AC_SUBST(W_EXCEPTIONS)
 AC_SUBST(NO_SHADOW)
@@ -1387,32 +1382,24 @@ AC_SUBST(NO_REDUNDANT_DECLS)
 AC_SUBST(PROTOSKIP_WARNINGS)
 AC_SUBST(NO_UNREACHED)
 
-GLOBAL_CPPFLAGS='-I$(top_srcdir) -I$(top_builddir)'
+CPPFLAGS='${CPPFLAGS} -I$(top_srcdir) -I$(top_builddir)'
 if test "$ac_cv_func_timegm" = "no" -o "$gl_cv_func_gnu_getopt" = "no"
 then
-  GLOBAL_CPPFLAGS="${GLOBAL_CPPFLAGS} -I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib"
+  CPPFLAGS="${CPPFLAGS} -I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib"
 fi
-AC_SUBST([GLOBAL_CPPFLAGS])
-AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
-AC_SUBST([GLOBAL_CXXFLAGS],[${AM_CXXFLAGS}])
+
+AM_CPPFLAGS="${CPPFLAGS}"
+AM_CFLAGS="${CC_WARNINGS} ${CFLAGS}"
+AM_CXXFLAGS="${CXX_WARNINGS} ${NO_EXCEPTIONS} ${CXXFLAGS}"
+
+AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CXXFLAGS])
 
-
-# Some usefull subst
-AC_SUBST(CC)
-AC_SUBST(GXX)
-
-# Set configuration options for make_binary_distribution
-case $SYSTEM_TYPE in
-  *netware*)
-    MAKE_BINARY_DISTRIBUTION_OPTIONS="$MAKE_BINARY_DISTRIBUTION_OPTIONS --no-strip"
-    ;;
-  *)
-    : # no change for other platforms yet
-    ;;
-esac
-AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
+dnl We've collected the flags in AM_*FLAGS now, so blank these.
+CFLAGS=""
+CXXFLAGS=""
+CPPFLAGS=""
 
 AC_SUBST(pkgplugindir,"\$(pkglibdir)/plugin")
 
