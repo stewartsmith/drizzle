@@ -14,12 +14,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-
 noinst_HEADERS= names.h
 EXTRA_LTLIBRARIES = liblogging_syslog.la
 pkgplugin_LTLIBRARIES =	@plugin_logging_syslog_shared_target@
 liblogging_syslog_la_LDFLAGS = -module -avoid-version -rpath $(pkgplugindir)
-liblogging_syslog_la_CPPFLAGS = $(GLOBAL_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
+liblogging_syslog_la_CPPFLAGS = $(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 liblogging_syslog_la_SOURCES = logging_syslog.cc
 
 EXTRA_LIBRARIES = liblogging_syslog.a
