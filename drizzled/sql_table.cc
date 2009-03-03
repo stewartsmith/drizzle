@@ -124,8 +124,8 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
                     system_charset_info,  to, to_length, &errors);
     if (errors) // Old 5.0 name
     {
-      strcpy(to, MYSQL50_TABLE_NAME_PREFIX);
-      strncat(to, from, to_length-MYSQL50_TABLE_NAME_PREFIX_LENGTH-1);
+      to[0]='\0';
+      strncat(to, from, to_length-1);
       res= strlen(to);
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid (old?) table or database name '%s'"), from);
     }
@@ -151,11 +151,6 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 {
   uint32_t errors, length;
 
-  if (from[0] == '#' && !strncmp(from, MYSQL50_TABLE_NAME_PREFIX,
-                                 MYSQL50_TABLE_NAME_PREFIX_LENGTH))
-    return((uint32_t) (strncpy(to, from+MYSQL50_TABLE_NAME_PREFIX_LENGTH,
-                           to_length-1) -
-                           (from + MYSQL50_TABLE_NAME_PREFIX_LENGTH)));
   length= strconvert(system_charset_info, from,
                      &my_charset_filename, to, to_length, &errors);
   if (check_if_legal_tablename(to) &&

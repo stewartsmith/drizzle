@@ -665,7 +665,6 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
       TableList *table_list=(TableList*)
                               session->calloc(sizeof(*table_list) +
                                           db_len + 1 +
-                                          MYSQL50_TABLE_NAME_PREFIX_LENGTH +
                                           strlen(file->name) + 1);
 
       if (!table_list)
@@ -673,7 +672,6 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
       table_list->db= (char*) (table_list+1);
       table_list->table_name= strcpy(table_list->db, db) + db_len + 1;
       filename_to_tablename(file->name, table_list->table_name,
-                            MYSQL50_TABLE_NAME_PREFIX_LENGTH +
                             strlen(file->name) + 1);
       table_list->alias= table_list->table_name;	// If lower_case_table_names=2
       table_list->internal_tmp_table= is_prefix(file->name, TMP_FILE_PREFIX);
