@@ -14,11 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-AM_CPPFLAGS=		-I$(top_srcdir) -I$(top_builddir) \
-			-I$(top_srcdir)/include -I$(top_builddir)/include \
-			-I$(top_srcdir)/regex \
-			-I$(top_srcdir)/storage/innobase/include \
-			-I$(top_srcdir)/sql
+AM_CPPFLAGS+=		-I$(top_srcdir)/storage/innobase/include
 
 if BUILD_DRIZZLE
 EXTRA_DEFS="-DBUILD_DRIZZLE"

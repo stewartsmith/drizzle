@@ -27,9 +27,8 @@ select 1 # The rest of the row will be ignored
 --error ER_PARSE_ERROR
 select 1/*!2*/;
 
---error ER_PARSE_ERROR
 select 1/*!000002*/;
 
-select 1/*!999992*/;
+select 1/*!2038129999 2*/;
 
-select 1 + /*!00000 2 */ + 3 /*!99999 noise*/ + 4;
+select 1 + /*!00000 2 */ + 3 /*!2038129999 noise*/ + 4;

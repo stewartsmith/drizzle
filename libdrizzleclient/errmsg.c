@@ -19,6 +19,7 @@
 
 /* Error messages for MySQL clients */
 
+#include "config.h"
 #include <drizzled/gettext.h>
 #include "errmsg.h"
 

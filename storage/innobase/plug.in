@@ -19,24 +19,24 @@ DRIZZLE_PLUGIN_ACTIONS(innobase,  [
   AC_C_BIGENDIAN
   case "$target_os" in
          lin*)
-           AM_CFLAGS="$AM_CFLAGS -DUNIV_LINUX";;
+           CFLAGS="$CFLAGS -DUNIV_LINUX";;
          hpux10*)
-           AM_CFLAGS="$AM_CFLAGS -DUNIV_MUST_NOT_INLINE -DUNIV_HPUX -DUNIV_HPUX10";;
+           CFLAGS="$CFLAGS -DUNIV_MUST_NOT_INLINE -DUNIV_HPUX -DUNIV_HPUX10";;
          hp*)
-           AM_CFLAGS="$AM_CFLAGS -DUNIV_MUST_NOT_INLINE -DUNIV_HPUX";;
+           CFLAGS="$CFLAGS -DUNIV_MUST_NOT_INLINE -DUNIV_HPUX";;
          aix*)
-           AM_CFLAGS="$AM_CFLAGS -DUNIV_AIX";;
+           CFLAGS="$CFLAGS -DUNIV_AIX";;
          irix*)
-           AM_CFLAGS="$AM_CFLAGS -DUNIV_MUST_NOT_INLINE";;
+           CFLAGS="$CFLAGS -DUNIV_MUST_NOT_INLINE";;
          osf*)
-           AM_CFLAGS="$AM_CFLAGS -DUNIV_MUST_NOT_INLINE";;
+           CFLAGS="$CFLAGS -DUNIV_MUST_NOT_INLINE";;
 	 *solaris*|*SunOS*)
-           AM_CFLAGS="$AM_CFLAGS -DUNIV_SOLARIS";;
+           CFLAGS="$CFLAGS -DUNIV_SOLARIS";;
          sysv5uw7*)
            # Problem when linking on SCO
-           AM_CFLAGS="$AM_CFLAGS -DUNIV_MUST_NOT_INLINE";;
+           CFLAGS="$CFLAGS -DUNIV_MUST_NOT_INLINE";;
          openbsd*)
-           AM_CFLAGS="$AM_CFLAGS -DUNIV_MUST_NOT_INLINE";;
+           CFLAGS="$CFLAGS -DUNIV_MUST_NOT_INLINE";;
   esac
 
   AM_CONDITIONAL(BUILD_DRIZZLE,[test "x$ac_build_drizzle" = "xyes"])
