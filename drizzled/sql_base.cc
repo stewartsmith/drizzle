@@ -61,7 +61,7 @@ static bool table_def_inited= 0;
 static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
-static void free_cache_entry(void *entry);
+extern "C" void free_cache_entry(void *entry);
 static void close_old_data_files(Session *session, Table *table, bool morph_locks,
                                  bool send_refresh);
 
@@ -77,7 +77,8 @@ extern "C" unsigned char *table_cache_key(const unsigned char *record, size_t *l
 
 bool table_cache_init(void)
 {
-  return hash_init(&open_cache, &my_charset_bin, table_cache_size+16,
+  return hash_init(&open_cache, &my_charset_bin,
+                   (size_t) table_cache_size+16,
 		   0, 0, table_cache_key,
 		   free_cache_entry, 0);
 }
@@ -179,7 +180,7 @@ bool table_def_init(void)
   oldest_unused_share= &end_of_unused_share;
   end_of_unused_share.prev= &oldest_unused_share;
 
-  return hash_init(&table_def_cache, &my_charset_bin, table_def_size,
+  return hash_init(&table_def_cache, &my_charset_bin, (size_t)table_def_size,
 		   0, 0, table_def_key,
 		   (hash_free_key) table_def_free_entry, 0);
 }
@@ -604,7 +605,7 @@ void intern_close_table(Table *table)
     We need to have a lock on LOCK_open when calling this
 */
 
-static void free_cache_entry(void *entry)
+void free_cache_entry(void *entry)
 {
   Table *table= static_cast<Table *>(entry);
   intern_close_table(table);
@@ -1884,9 +1885,8 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     for (table= session->temporary_tables; table ; table=table->next)
     {
       if (table->s->table_cache_key.length == key_length +
-          TMP_TABLE_KEY_EXTRA &&
-	  !memcmp(table->s->table_cache_key.str, key,
-		  key_length + TMP_TABLE_KEY_EXTRA))
+          TMP_TABLE_KEY_EXTRA && !memcmp(table->s->table_cache_key.str, key,
+          key_length + TMP_TABLE_KEY_EXTRA))
       {
         /*
           We're trying to use the same temporary table twice in a query.
@@ -1894,13 +1894,13 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
           is always represented by only one Table object in Session, and
           it can not be cloned. Emit an error for an unsupported behaviour.
         */
-	if (table->query_id)
-	{
-	  my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
-	  return(0);
-	}
-	table->query_id= session->query_id;
-	session->thread_specific_used= true;
+        if (table->query_id)
+        {
+          my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
+          return(0);
+        }
+        table->query_id= session->query_id;
+        session->thread_specific_used= true;
         goto reset;
       }
     }
@@ -1920,14 +1920,14 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     TODO: move this block into a separate function.
   */
   if (session->locked_tables)
-  {						// Using table locks
+  { // Using table locks
     Table *best_table= 0;
     int best_distance= INT_MIN;
     bool check_if_used= false;
     for (table=session->open_tables; table ; table=table->next)
     {
       if (table->s->table_cache_key.length == key_length &&
-	  !memcmp(table->s->table_cache_key.str, key, key_length))
+          !memcmp(table->s->table_cache_key.str, key, key_length))
       {
         if (check_if_used && table->query_id &&
             table->query_id != session->query_id)
@@ -2092,7 +2092,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
       /* Avoid self-deadlocks by detecting self-dependencies. */
       if (table->open_placeholder && table->in_use == session)
       {
-	pthread_mutex_unlock(&LOCK_open);
+        pthread_mutex_unlock(&LOCK_open);
         my_error(ER_UPDATE_TABLE_USED, MYF(0), table->s->table_name.str);
         return(0);
       }
@@ -2133,14 +2133,14 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
       }
       else
       {
-	pthread_mutex_unlock(&LOCK_open);
+        pthread_mutex_unlock(&LOCK_open);
       }
       /*
         There is a refresh in progress for this table.
         Signal the caller that it has to try again.
       */
       if (refresh)
-	*refresh=1;
+        *refresh=1;
       return(0);
     }
   }
@@ -2148,12 +2148,12 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   {
     /* Unlink the table from "unused_tables" list. */
     if (table == unused_tables)
-    {						// First unused
-      unused_tables=unused_tables->next;	// Remove from link
+    {  // First unused
+      unused_tables=unused_tables->next; // Remove from link
       if (table == unused_tables)
-	unused_tables=0;
+        unused_tables=0;
     }
-    table->prev->next=table->next;		/* Remove from unused list */
+    table->prev->next=table->next; /* Remove from unused list */
     table->next->prev=table->prev;
     table->in_use= session;
   }
@@ -2169,12 +2169,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     {
       if(ha_table_exists_in_engine(session, table_list->db,
                                    table_list->table_name)
-         == HA_ERR_TABLE_EXIST)
-      {
-        pthread_mutex_unlock(&LOCK_open);
-        return(NULL);
-      }
-      else
+         != HA_ERR_TABLE_EXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -2219,10 +2214,10 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   pthread_mutex_unlock(&LOCK_open);
   if (refresh)
   {
-    table->next=session->open_tables;		/* Link into simple list */
+    table->next=session->open_tables; /* Link into simple list */
     session->open_tables=table;
   }
-  table->reginfo.lock_type=TL_READ;		/* Assume read */
+  table->reginfo.lock_type=TL_READ; /* Assume read */
 
  reset:
   assert(table->s->ref_count > 0 || table->s->tmp_table != NO_TMP_TABLE);
@@ -2271,7 +2266,7 @@ Table *find_locked_table(Session *session, const char *db,const char *table_name
   for (Table *table=session->open_tables; table ; table=table->next)
   {
     if (table->s->table_cache_key.length == key_length &&
-	!memcmp(table->s->table_cache_key.str, key, key_length))
+        !memcmp(table->s->table_cache_key.str, key, key_length))
       return table;
   }
   return(0);
@@ -6188,11 +6183,7 @@ void kill_drizzle(void)
   close_server_sock();				// Force accept to wake up
 #endif
 
-#if defined(HAVE_PTHREAD_KILL)
   pthread_kill(signal_thread, SIGTERM);
-#elif !defined(SIGNALS_DONT_BREAK_READ)
-  kill(current_pid, SIGTERM);
-#endif
   shutdown_in_progress=1;			// Safety if kill didn't work
 #ifdef SIGNALS_DONT_BREAK_READ
   if (!kill_in_progress)

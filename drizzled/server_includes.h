@@ -123,7 +123,7 @@ extern uint64_t slow_launch_time;
 extern uint64_t table_cache_size;
 extern uint64_t table_def_size;
 extern uint64_t max_connect_errors;
-extern uint64_t connect_timeout;
+extern uint32_t connect_timeout;
 extern uint32_t back_log;
 extern pid_t current_pid;
 extern uint64_t expire_logs_days;
@@ -164,14 +164,12 @@ extern TableList general_log, slow_log;
 extern FILE *stderror_file;
 extern pthread_mutex_t LOCK_drizzleclient_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
-       LOCK_timezone,
        LOCK_global_read_lock,
-       LOCK_global_system_variables, LOCK_user_conn,
-       LOCK_bytes_sent, LOCK_bytes_received, LOCK_connection_count;
-extern pthread_mutex_t LOCK_server_started;
+       LOCK_global_system_variables;
+
 extern pthread_rwlock_t LOCK_sys_init_connect;
 extern pthread_rwlock_t LOCK_system_variables_hash;
-extern pthread_cond_t COND_refresh, COND_thread_count, COND_manager;
+extern pthread_cond_t COND_refresh, COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
 extern I_List<Session> threads;
@@ -183,9 +181,6 @@ extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 extern struct rand_struct sql_rand;
 
-extern const char *opt_date_time_formats[];
-extern KNOWN_DATE_TIME_FORMAT known_date_time_formats[];
-
 extern Table *unused_tables;
 extern const char* any_db;
 extern struct my_option my_long_options[];
@@ -194,9 +189,6 @@ extern TYPELIB thread_handling_typelib;
 extern uint8_t uc_update_queries[SQLCOM_END+1];
 extern std::bitset<5> sql_command_flags[];
 extern TYPELIB log_output_typelib;
-
-/* optional things, have_* variables */
-extern SHOW_COMP_OPTION have_community_features;
 
 extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
@@ -245,19 +237,9 @@ bool calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign,
 
 extern LEX_STRING interval_type_to_name[];
 
-extern DATE_TIME_FORMAT *date_time_format_make(enum enum_drizzle_timestamp_type format_type,
-					       const char *format_str,
-					       uint32_t format_length);
-extern DATE_TIME_FORMAT *date_time_format_copy(Session *session,
-					       DATE_TIME_FORMAT *format);
-const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
-				                             enum enum_drizzle_timestamp_type type);
-void make_datetime(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
-                   String *str);
-void make_date(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
-               String *str);
-void make_time(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
-               String *str);
+void make_datetime(const DRIZZLE_TIME *l_time, String *str);
+void make_date(const DRIZZLE_TIME *l_time, String *str);
+void make_time(const DRIZZLE_TIME *l_time, String *str);
 int my_time_compare(DRIZZLE_TIME *a, DRIZZLE_TIME *b);
 uint64_t get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
                              Item *warn_item, bool *is_null);
@@ -286,7 +268,7 @@ void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
 TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
 ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
-ulong make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
+off_t make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
 		     const char *newname);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);

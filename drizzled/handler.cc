@@ -1338,6 +1338,7 @@ static const char *check_lowercase_names(handler *file, const char *path,
 struct Ha_delete_table_error_handler: public Internal_error_handler
 {
 public:
+  Ha_delete_table_error_handler() : Internal_error_handler() {}
   virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,

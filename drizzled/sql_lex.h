@@ -413,7 +413,8 @@ public:
   void exclude_tree();
 
   /* UNION methods */
-  bool prepare(Session *session, select_result *result, uint32_t additional_options);
+  bool prepare(Session *session, select_result *result,
+               uint64_t additional_options);
   bool exec();
   bool cleanup();
   inline void unclean() { cleaned= 0; }

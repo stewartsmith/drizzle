@@ -794,34 +794,6 @@ public:
   SHOW_TYPE show_type() { return SHOW_LONG; }
 };
 
-
-class sys_var_session_date_time_format :public sys_var_session
-{
-  DATE_TIME_FORMAT *SV::*offset;
-  enum enum_drizzle_timestamp_type date_time_type;
-public:
-  sys_var_session_date_time_format(sys_var_chain *chain, const char *name_arg,
-			       DATE_TIME_FORMAT *SV::*offset_arg,
-			       enum enum_drizzle_timestamp_type date_time_type_arg)
-    :sys_var_session(name_arg), offset(offset_arg),
-    date_time_type(date_time_type_arg)
-  { chain_sys_var(chain); }
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool check_update_type(Item_result type)
-  {
-    return type != STRING_RESULT;		/* Only accept strings */
-  }
-  bool check_default(enum_var_type)
-  { return 0; }
-  bool check(Session *session, set_var *var);
-  bool update(Session *session, set_var *var);
-  void update2(Session *session, enum_var_type type, DATE_TIME_FORMAT *new_value);
-  unsigned char *value_ptr(Session *session, enum_var_type type,
-                           const LEX_STRING *base);
-  void set_default(Session *session, enum_var_type type);
-};
-
-
 /* Variable that you can only read from */
 
 class sys_var_readonly: public sys_var
@@ -1008,7 +980,6 @@ public:
     uint64_t uint64_t_value;
     size_t size_t_value;
     plugin_ref plugin;
-    DATE_TIME_FORMAT *date_time_format;
     Time_zone *time_zone;
     MY_LOCALE *locale_value;
   } save_result;

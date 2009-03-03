@@ -26,7 +26,7 @@
   Create a formated date/time value in a string.
 */
 
-static bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
+static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 		    enum enum_drizzle_timestamp_type type, String *str)
 {
   char intbuff[15];
@@ -42,7 +42,7 @@ static bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
   if (l_time->neg)
     str->append('-');
 
-  end= (ptr= format->format.str) + format->format.length;
+  end= (ptr= format->c_ptr()) + format->length();
   for (; ptr != end ; ptr++)
   {
     if (*ptr != '%' || ptr+1 == end)
@@ -416,13 +416,9 @@ String *Item_func_date_format::val_str(String *str)
   if (str->alloc(size))
     goto null_date;
 
-  DATE_TIME_FORMAT date_time_format;
-  date_time_format.format.str=    (char*) format->ptr();
-  date_time_format.format.length= format->length();
-
   /* Create the result string */
   str->set_charset(collation.collation);
-  if (!make_date_time(&date_time_format, &l_time,
+  if (!make_date_time(format, &l_time,
                       is_time_format ? DRIZZLE_TIMESTAMP_TIME :
                                        DRIZZLE_TIMESTAMP_DATE,
                       str))

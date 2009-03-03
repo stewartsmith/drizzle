@@ -487,7 +487,7 @@ Session::Session()
    m_lip(NULL),
    scheduler(0)
 {
-  ulong tmp;
+  uint64_t tmp;
 
   /*
     Pass nominal parameters to init_alloc_root only to ensure that
@@ -554,7 +554,8 @@ Session::Session()
   const Query_id& local_query_id= Query_id::get_query_id();
   tablespace_op= false;
   tmp= sql_rnd();
-  drizzleclient_drizzleclient_randominit(&rand, tmp + (ulong) &rand, tmp + local_query_id.value());
+  drizzleclient_randominit(&rand, tmp + (uint64_t) &rand,
+                           tmp + (uint64_t)local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
@@ -638,12 +639,6 @@ void Session::init(void)
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
   plugin_sessionvar_init(this);
-  variables.time_format= date_time_format_copy((Session*) 0,
-					       variables.time_format);
-  variables.date_format= date_time_format_copy((Session*) 0,
-					       variables.date_format);
-  variables.datetime_format= date_time_format_copy((Session*) 0,
-						   variables.datetime_format);
   /*
     variables= global_system_variables above has reset
     variables.pseudo_thread_id to 0. We need to correct it here to
@@ -717,9 +712,6 @@ void Session::cleanup(void)
   mysql_ha_cleanup(this);
   hash_free(&user_vars);
   close_temporary_tables();
-  free((char*) variables.time_format);
-  free((char*) variables.date_format);
-  free((char*) variables.datetime_format);
 
   if (global_read_lock)
     unlock_global_read_lock(this);

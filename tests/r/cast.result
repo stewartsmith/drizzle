@@ -4,9 +4,6 @@ cast("A" as binary) = "a"	cast(BINARY "a" as CHAR) = "A"
 select cast("2001-1-1" as DATE), cast("2001-1-1" as DATETIME);
 cast("2001-1-1" as DATE)	cast("2001-1-1" as DATETIME)
 2001-01-01	2001-01-01 00:00:00
-select cast("1:2:3" as TIME);
-cast("1:2:3" as TIME)
-01:02:03
 select CONVERT("2004-01-22 21:45:33",DATE);
 CONVERT("2004-01-22 21:45:33",DATE)
 2004-01-22
@@ -92,9 +89,6 @@ cast("2001-1-1" as date) = "2001-01-01"
 select cast("2001-1-1" as datetime) = "2001-01-01 00:00:00";
 cast("2001-1-1" as datetime) = "2001-01-01 00:00:00"
 1
-select cast("1:2:3" as TIME) = "1:02:03";
-cast("1:2:3" as TIME) = "1:02:03"
-0
 select cast(NULL as DATE);
 cast(NULL as DATE)
 NULL
@@ -125,12 +119,6 @@ DROP TABLE t1;
 select date_add(cast('2004-12-30 12:00:00' as date), interval 0 hour);
 date_add(cast('2004-12-30 12:00:00' as date), interval 0 hour)
 2004-12-30 00:00:00
-select timediff(cast('2004-12-30 12:00:00' as time), '12:00:00');
-timediff(cast('2004-12-30 12:00:00' as time), '12:00:00')
-00:00:00
-select timediff(cast('1 12:00:00' as time), '12:00:00');
-timediff(cast('1 12:00:00' as time), '12:00:00')
-24:00:00
 select isnull(date(NULL)), isnull(cast(NULL as DATE));
 isnull(date(NULL))	isnull(cast(NULL as DATE))
 1	1
@@ -147,14 +135,6 @@ cast(@v1 as decimal(22, 2))
 select cast(-1e18 as decimal(22,2));
 cast(-1e18 as decimal(22,2))
 -1000000000000000000.00
-create table t1(s1 time);
-insert into t1 values ('11:11:11');
-select cast(s1 as decimal(7,2)) from t1;
-cast(s1 as decimal(7,2))
-99999.99
-Warnings:
-Error	1264	Out of range value for column 'cast(s1 as decimal(7,2))' at row 1
-drop table t1;
 CREATE TABLE t1 (v varchar(10), tt tinytext, t text,
 mt mediumtext, lt longtext);
 INSERT INTO t1 VALUES ('1.01', '2.02', '3.03', '4.04', '5.05');

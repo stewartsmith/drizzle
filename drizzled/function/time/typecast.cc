@@ -21,7 +21,6 @@
 #include <drizzled/current_session.h>
 #include CSTDINT_H
 #include <drizzled/error.h>
-#include <drizzled/function/time/make_datetime.h>
 #include <drizzled/function/time/typecast.h>
 
 bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const
@@ -192,10 +191,25 @@ String *Item_datetime_typecast::val_str(String *str)
   assert(fixed == 1);
   DRIZZLE_TIME ltime;
 
-  if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
-      !make_datetime(ltime.second_part ? DATE_TIME_MICROSECOND : DATE_TIME,
-		     &ltime, str))
+  if (! get_arg0_date(&ltime, TIME_FUZZY_DATE))
+  {
+    if (ltime.second_part)
+    {
+      uint32_t length= sprintf(str->c_ptr(), "%04u-%02u-%02u %02u:%02u:%02u.%06u",
+                            ltime.year,
+                            ltime.month,
+                            ltime.day,
+                            ltime.hour,
+                            ltime.minute,
+                            ltime.second,
+                            (uint32_t) ltime.second_part);
+      str->length(length);
+      str->set_charset(&my_charset_bin);
+    }
+    else
+      make_datetime(&ltime, str);
     return str;
+  }
 
   null_value=1;
   return 0;
@@ -213,46 +227,6 @@ int64_t Item_datetime_typecast::val_int()
   }
 
   return TIME_to_uint64_t_datetime(&ltime);
-}
-
-
-bool Item_time_typecast::get_time(DRIZZLE_TIME *ltime)
-{
-  bool res= get_arg0_time(ltime);
-  /*
-    For DRIZZLE_TIMESTAMP_TIME value we can have non-zero day part,
-    which we should not lose.
-  */
-  if (ltime->time_type == DRIZZLE_TIMESTAMP_DATETIME)
-    ltime->year= ltime->month= ltime->day= 0;
-  ltime->time_type= DRIZZLE_TIMESTAMP_TIME;
-  return res;
-}
-
-
-int64_t Item_time_typecast::val_int()
-{
-  DRIZZLE_TIME ltime;
-  if (get_time(&ltime))
-  {
-    null_value= 1;
-    return 0;
-  }
-  return ltime.hour * 10000L + ltime.minute * 100 + ltime.second;
-}
-
-String *Item_time_typecast::val_str(String *str)
-{
-  assert(fixed == 1);
-  DRIZZLE_TIME ltime;
-
-  if (!get_arg0_time(&ltime) &&
-      !make_datetime(ltime.second_part ? TIME_MICROSECOND : TIME_ONLY,
-		     &ltime, str))
-    return str;
-
-  null_value=1;
-  return 0;
 }
 
 
@@ -280,7 +254,7 @@ String *Item_date_typecast::val_str(String *str)
   if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
       !str->alloc(MAX_DATE_STRING_REP_LENGTH))
   {
-    make_date((DATE_TIME_FORMAT *) 0, &ltime, str);
+    make_date(&ltime, str);
     return str;
   }
 

@@ -50,7 +50,6 @@ int drizzle_read_table_proto(const char* path, drizzle::Table* table)
   return 0;
 }
 
-
 static int fill_table_proto(drizzle::Table *table_proto,
 			    const char *table_name,
 			    List<Create_field> &create_fields,
@@ -108,9 +107,6 @@ static int fill_table_proto(drizzle::Table *table_proto,
       break;
     case DRIZZLE_TYPE_LONGLONG:
       attribute->set_type(drizzle::Table::Field::BIGINT);
-      break;
-    case DRIZZLE_TYPE_TIME:
-      attribute->set_type(drizzle::Table::Field::TIME);
       break;
     case DRIZZLE_TYPE_DATETIME:
       attribute->set_type(drizzle::Table::Field::DATETIME);
@@ -175,7 +171,7 @@ static int fill_table_proto(drizzle::Table *table_proto,
 
       break;
     default:
-      abort();
+      assert(0); /* Tell us, since this shouldn't happend */
     }
 
     if(field_arg->vcol_info)
@@ -228,7 +224,7 @@ static int fill_table_proto(drizzle::Table *table_proto,
       attribute->set_format(drizzle::Table::Field::DynamicFormat);
       break;
     default:
-      abort();
+      assert(0); /* Tell us, since this shouldn't happend */
     }
 
     if (field_arg->comment.length)

@@ -465,6 +465,7 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 
 AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
 AS_IF([test "x$ac_cv_libpcre" = "xno"],[
+  ac_cv_libpcre=
   AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
     AS_IF([test "x$ac_cv_libpcre" = "xno"],
           [AC_MSG_ERROR([libpcre is required for Drizzle])]
@@ -1176,12 +1177,6 @@ AC_ARG_ENABLE([cast-warnings],
     [ac_warn_cast="$enableval"],
     [ac_warn_cast="no"])
 
-AC_ARG_ENABLE([overloaded-virtual],
-    [AS_HELP_STRING([--enable-overloaded-virtual],
-       [Enable warnings about overloaded virtuals @<:@default=off@:>@])],
-    [ac_warn_virtual="$enableval"],
-    [ac_warn_virtual="no"])
-
 AC_ARG_ENABLE([effective-style],
     [AS_HELP_STRING([--enable-effective-style],
        [Enable warnings violating Effective C++ Style Guidelines @<:@default=off@:>@])],
@@ -1194,11 +1189,11 @@ AC_ARG_ENABLE([shadow],
     [ac_warn_shadow="$enableval"],
     [ac_warn_shadow="yes"])
 
-AC_ARG_ENABLE([go-crazy],
-    [AS_HELP_STRING([--enable-go-crazy],
-       [Enables extra little warnings that might be too much @<:@default=off@:>@])],
-    [ac_warn_go_crazy="$enableval"],
-    [ac_warn_go_crazy="no"])
+AC_ARG_ENABLE([conversion],
+    [AS_HELP_STRING([--enable-conversion],
+       [Enables conversion warnings @<:@default=off@:>@])],
+    [ac_warn_conversion="$enableval"],
+    [ac_warn_conversion="no"])
 
 AC_ARG_ENABLE([datarace],
     [AS_HELP_STRING([--enable-datarace],
@@ -1287,7 +1282,7 @@ template <> void C<int>::foo();
     fi
     
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
-    GXX_PEDANTIC="-pedantic -Wundef ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
+    GXX_PEDANTIC="-pedantic -Wundef -Woverloaded-virtual  -Wnon-virtual-dtor -Wctor-dtor-privacy ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
 
     AC_CACHE_CHECK([whether __attribute__ visibility "hidden" is supported],
       [ac_cv_can_use_hidden_],
@@ -1314,14 +1309,10 @@ void testme() {  };],[
   then
     W_UNREACHABLE="-Wunreachable-code"
   fi
+
   if test "$ac_warn_cast" = "yes"
   then
     W_CAST="-Wold-style-cast"
-  fi
-
-  if test "$ac_warn_virtual" = "yes"
-  then
-    W_VIRTUAL="-Woverloaded-virtual"
   fi
 
   if test "$ac_warn_effc" = "yes"
@@ -1329,13 +1320,13 @@ void testme() {  };],[
     W_EFFC="-Weffc++"
   fi
 
-  if test "$ac_warn_gocrazy" = "yes"
+  if test "$ac_warn_conversion" = "yes"
   then
-    W_CRAZY="-Wconversion -Winvalid-pch"
+    W_CONVERSION="-Wconversion"
   fi
 
-  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CRAZY}"
-  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CRAZY} ${W_VIRTUAL}"
+  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CONVERSION}"
+  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CONVERSION}"
 
   if test "$ac_exceptions" = "no"
   then
@@ -1356,11 +1347,17 @@ then
     AM_CFLAGS="${AM_CFLAGS} -xinstrument=datarace"
     AM_CXXFLAGS="${AM_CXXFLAGS} -xinstrument=datarace"
   fi
-  #CC_WARNINGS="-v -xc99=all -errtags=yes -errwarn=%all -erroff=E_ATTRIBUTE_NOT_VAR"
-  #CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -errwarn=%all -erroff=attrskipunsup,doubunder -compat=5"
+
+  if test "$ac_warn_fail" = "yes"
+  then
+    W_FAIL="-errwarn=%all"
+  fi
+
   CC_WARNINGS="-v -xc99=all -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR"
-  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder -compat=5"
-  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder,reftotemp,inllargeuse -compat=5"
+  #CC_WARNINGS="-v -xc99=all -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR"
+  #CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder -compat=5"
+  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse"
   NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
   if test "$ac_exceptions" = "no"
   then

@@ -60,12 +60,14 @@ enum plugin_license_type {
   PLUGIN_LICENSE_PROPRIETARY,
   PLUGIN_LICENSE_GPL,
   PLUGIN_LICENSE_BSD,
-  PLUGIN_LICENSE_MAX=PLUGIN_LICENSE_BSD
+  PLUGIN_LICENSE_LGPL,
+  PLUGIN_LICENSE_MAX=PLUGIN_LICENSE_LGPL
 };
 
 const char * const PLUGIN_LICENSE_PROPRIETARY_STRING="PROPRIETARY";
 const char * const PLUGIN_LICENSE_GPL_STRING="GPL";
 const char * const PLUGIN_LICENSE_BSD_STRING="BSD";
+const char * const PLUGIN_LICENSE_LGPL_STRING="LGPL";
 
 /*
   Macros for beginning and ending plugin declarations. Between

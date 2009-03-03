@@ -20,7 +20,6 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include <drizzled/tmp_table.h>
 #include <drizzled/sj_tmp_table.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/data_home.h>
@@ -308,9 +307,6 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
   case drizzle::Table::Field::BIGINT:
     field_type= DRIZZLE_TYPE_LONGLONG;
     break;
-  case drizzle::Table::Field::TIME:
-    field_type= DRIZZLE_TYPE_TIME;
-    break;
   case drizzle::Table::Field::DATETIME:
     field_type= DRIZZLE_TYPE_DATETIME;
     break;
@@ -333,7 +329,8 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
     field_type= DRIZZLE_TYPE_VIRTUAL;
     break;
   default:
-    abort();
+    field_type= DRIZZLE_TYPE_TINY; /* Set value to kill GCC warning */
+    assert(1);
   }
 
   return field_type;
@@ -367,10 +364,9 @@ Item * default_value_item(enum_field_types field_type,
     default_item= new Item_float(default_value.c_str(), default_value.length());
     break;
   case DRIZZLE_TYPE_NULL:
-    abort();
+    return new Item_null();
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
-  case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
     if(default_value.compare("NOW()")==0)
@@ -956,7 +952,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       column_format= COLUMN_FORMAT_TYPE_DYNAMIC;
       break;
     default:
-      abort();
+      assert(1);
     }
 
     Field::utype unireg_type= Field::NONE;
@@ -981,7 +977,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 	unireg_type= Field::TIMESTAMP_DN_FIELD;
       }
       else
-	abort(); // Invalid update value.
+	assert(1); // Invalid update value.
     }
     else if (pfield.has_options()
 	     && pfield.options().has_update_value()
@@ -2182,7 +2178,7 @@ int read_string(File file, unsigned char**to, size_t length)
 
 	/* Add a new form to a form file */
 
-ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
+off_t make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 		     const char *newname)
 {
   uint32_t i,bufflength,maxlength,n_length,length,names;

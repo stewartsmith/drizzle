@@ -175,7 +175,7 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime,
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
-      make_datetime((DATE_TIME_FORMAT *) 0, ltime, &str);
+      make_datetime(ltime, &str);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATETIME,1);
     }

@@ -42,7 +42,6 @@
 #include <drizzled/function/str/trim.h>
 #include <drizzled/function/str/uuid.h>
 
-#include <drizzled/function/time/add_time.h>
 #include <drizzled/function/time/date_format.h>
 #include <drizzled/function/time/dayname.h>
 #include <drizzled/function/time/dayofmonth.h>
@@ -51,14 +50,9 @@
 #include <drizzled/function/time/from_days.h>
 #include <drizzled/function/time/last_day.h>
 #include <drizzled/function/time/makedate.h>
-#include <drizzled/function/time/maketime.h>
 #include <drizzled/function/time/month.h>
 #include <drizzled/function/time/period_add.h>
 #include <drizzled/function/time/period_diff.h>
-#include <drizzled/function/time/sec_to_time.h>
-#include <drizzled/function/time/str_to_date.h>
-#include <drizzled/function/time/time_to_sec.h>
-#include <drizzled/function/time/timediff.h>
 #include <drizzled/function/time/to_days.h>
 #include <drizzled/function/time/typecast.h>
 #include <drizzled/function/time/unix_timestamp.h>
@@ -280,6 +274,8 @@ protected:
 class Create_func_abs : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_abs s_singleton;
@@ -293,6 +289,8 @@ protected:
 class Create_func_acos : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_acos s_singleton;
@@ -302,23 +300,11 @@ protected:
   virtual ~Create_func_acos() {}
 };
 
-
-class Create_func_addtime : public Create_func_arg2
-{
-public:
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_addtime s_singleton;
-
-protected:
-  Create_func_addtime() {}
-  virtual ~Create_func_addtime() {}
-};
-
-
 class Create_func_asin : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_asin s_singleton;
@@ -345,6 +331,8 @@ protected:
 class Create_func_benchmark : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_benchmark s_singleton;
@@ -358,6 +346,8 @@ protected:
 class Create_func_bin : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_bin s_singleton;
@@ -371,6 +361,8 @@ protected:
 class Create_func_bit_count : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_bit_count s_singleton;
@@ -384,6 +376,8 @@ protected:
 class Create_func_bit_length : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_bit_length s_singleton;
@@ -397,6 +391,8 @@ protected:
 class Create_func_ceiling : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_ceiling s_singleton;
@@ -410,6 +406,8 @@ protected:
 class Create_func_char_length : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_char_length s_singleton;
@@ -423,6 +421,8 @@ protected:
 class Create_func_coercibility : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_coercibility s_singleton;
@@ -462,6 +462,8 @@ protected:
 class Create_func_connection_id : public Create_func_arg0
 {
 public:
+  using Create_func_arg0::create;
+
   virtual Item *create(Session *session);
 
   static Create_func_connection_id s_singleton;
@@ -475,6 +477,8 @@ protected:
 class Create_func_conv : public Create_func_arg3
 {
 public:
+  using Create_func_arg3::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_conv s_singleton;
@@ -488,6 +492,8 @@ protected:
 class Create_func_cos : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_cos s_singleton;
@@ -501,6 +507,8 @@ protected:
 class Create_func_cot : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_cot s_singleton;
@@ -513,6 +521,8 @@ protected:
 class Create_func_date_format : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_date_format s_singleton;
@@ -526,6 +536,8 @@ protected:
 class Create_func_datediff : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_datediff s_singleton;
@@ -539,6 +551,8 @@ protected:
 class Create_func_dayname : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_dayname s_singleton;
@@ -552,6 +566,8 @@ protected:
 class Create_func_dayofmonth : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_dayofmonth s_singleton;
@@ -565,6 +581,8 @@ protected:
 class Create_func_dayofweek : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_dayofweek s_singleton;
@@ -578,6 +596,8 @@ protected:
 class Create_func_dayofyear : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_dayofyear s_singleton;
@@ -591,6 +611,8 @@ protected:
 class Create_func_decode : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_decode s_singleton;
@@ -604,6 +626,8 @@ protected:
 class Create_func_degrees : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_degrees s_singleton;
@@ -630,6 +654,8 @@ protected:
 class Create_func_exp : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_exp s_singleton;
@@ -669,6 +695,8 @@ protected:
 class Create_func_find_in_set : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_find_in_set s_singleton;
@@ -682,6 +710,8 @@ protected:
 class Create_func_floor : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_floor s_singleton;
@@ -695,6 +725,8 @@ protected:
 class Create_func_format : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_format s_singleton;
@@ -708,6 +740,8 @@ protected:
 class Create_func_found_rows : public Create_func_arg0
 {
 public:
+  using Create_func_arg0::create;
+
   virtual Item *create(Session *session);
 
   static Create_func_found_rows s_singleton;
@@ -721,6 +755,8 @@ protected:
 class Create_func_from_days : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_from_days s_singleton;
@@ -760,6 +796,8 @@ protected:
 class Create_func_hex : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_hex s_singleton;
@@ -773,6 +811,8 @@ protected:
 class Create_func_ifnull : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_ifnull s_singleton;
@@ -786,6 +826,8 @@ protected:
 class Create_func_instr : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_instr s_singleton;
@@ -799,6 +841,8 @@ protected:
 class Create_func_isnull : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_isnull s_singleton;
@@ -812,6 +856,8 @@ protected:
 class Create_func_last_day : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_last_day s_singleton;
@@ -838,6 +884,8 @@ protected:
 class Create_func_lcase : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_lcase s_singleton;
@@ -864,6 +912,8 @@ protected:
 class Create_func_length : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_length s_singleton;
@@ -877,6 +927,8 @@ protected:
 class Create_func_ln : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_ln s_singleton;
@@ -890,6 +942,8 @@ protected:
 class Create_func_load_file : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_load_file s_singleton;
@@ -929,6 +983,8 @@ protected:
 class Create_func_log10 : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_log10 s_singleton;
@@ -942,6 +998,8 @@ protected:
 class Create_func_log2 : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_log2 s_singleton;
@@ -955,6 +1013,8 @@ protected:
 class Create_func_lpad : public Create_func_arg3
 {
 public:
+  using Create_func_arg3::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_lpad s_singleton;
@@ -968,6 +1028,8 @@ protected:
 class Create_func_ltrim : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_ltrim s_singleton;
@@ -981,6 +1043,8 @@ protected:
 class Create_func_makedate : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_makedate s_singleton;
@@ -989,20 +1053,6 @@ protected:
   Create_func_makedate() {}
   virtual ~Create_func_makedate() {}
 };
-
-
-class Create_func_maketime : public Create_func_arg3
-{
-public:
-  virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
-
-  static Create_func_maketime s_singleton;
-
-protected:
-  Create_func_maketime() {}
-  virtual ~Create_func_maketime() {}
-};
-
 
 class Create_func_make_set : public Create_native_func
 {
@@ -1020,6 +1070,8 @@ protected:
 class Create_func_monthname : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_monthname s_singleton;
@@ -1033,6 +1085,8 @@ protected:
 class Create_func_name_const : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_name_const s_singleton;
@@ -1046,6 +1100,8 @@ protected:
 class Create_func_nullif : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_nullif s_singleton;
@@ -1059,6 +1115,8 @@ protected:
 class Create_func_oct : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_oct s_singleton;
@@ -1072,6 +1130,8 @@ protected:
 class Create_func_ord : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_ord s_singleton;
@@ -1085,6 +1145,8 @@ protected:
 class Create_func_period_add : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_period_add s_singleton;
@@ -1098,6 +1160,8 @@ protected:
 class Create_func_period_diff : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_period_diff s_singleton;
@@ -1111,6 +1175,8 @@ protected:
 class Create_func_pi : public Create_func_arg0
 {
 public:
+  using Create_func_arg0::create;
+
   virtual Item *create(Session *session);
 
   static Create_func_pi s_singleton;
@@ -1124,6 +1190,8 @@ protected:
 class Create_func_pow : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_pow s_singleton;
@@ -1137,6 +1205,8 @@ protected:
 class Create_func_quote : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_quote s_singleton;
@@ -1150,6 +1220,8 @@ protected:
 class Create_func_radians : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_radians s_singleton;
@@ -1189,6 +1261,8 @@ protected:
 class Create_func_row_count : public Create_func_arg0
 {
 public:
+  using Create_func_arg0::create;
+
   virtual Item *create(Session *session);
 
   static Create_func_row_count s_singleton;
@@ -1202,6 +1276,8 @@ protected:
 class Create_func_rpad : public Create_func_arg3
 {
 public:
+  using Create_func_arg3::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_rpad s_singleton;
@@ -1215,6 +1291,8 @@ protected:
 class Create_func_rtrim : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_rtrim s_singleton;
@@ -1224,23 +1302,11 @@ protected:
   virtual ~Create_func_rtrim() {}
 };
 
-
-class Create_func_sec_to_time : public Create_func_arg1
-{
-public:
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_sec_to_time s_singleton;
-
-protected:
-  Create_func_sec_to_time() {}
-  virtual ~Create_func_sec_to_time() {}
-};
-
-
 class Create_func_sign : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_sign s_singleton;
@@ -1254,6 +1320,8 @@ protected:
 class Create_func_sin : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_sin s_singleton;
@@ -1267,6 +1335,8 @@ protected:
 class Create_func_space : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_space s_singleton;
@@ -1280,6 +1350,8 @@ protected:
 class Create_func_sqrt : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_sqrt s_singleton;
@@ -1290,22 +1362,11 @@ protected:
 };
 
 
-class Create_func_str_to_date : public Create_func_arg2
-{
-public:
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_str_to_date s_singleton;
-
-protected:
-  Create_func_str_to_date() {}
-  virtual ~Create_func_str_to_date() {}
-};
-
-
 class Create_func_strcmp : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_strcmp s_singleton;
@@ -1319,6 +1380,8 @@ protected:
 class Create_func_substr_index : public Create_func_arg3
 {
 public:
+  using Create_func_arg3::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_substr_index s_singleton;
@@ -1329,22 +1392,11 @@ protected:
 };
 
 
-class Create_func_subtime : public Create_func_arg2
-{
-public:
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_subtime s_singleton;
-
-protected:
-  Create_func_subtime() {}
-  virtual ~Create_func_subtime() {}
-};
-
-
 class Create_func_tan : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_tan s_singleton;
@@ -1358,6 +1410,8 @@ protected:
 class Create_func_time_format : public Create_func_arg2
 {
 public:
+  using Create_func_arg2::create;
+
   virtual Item *create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_time_format s_singleton;
@@ -1371,6 +1425,8 @@ protected:
 class Create_func_time_to_sec : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_time_to_sec s_singleton;
@@ -1381,22 +1437,11 @@ protected:
 };
 
 
-class Create_func_timediff : public Create_func_arg2
-{
-public:
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_timediff s_singleton;
-
-protected:
-  Create_func_timediff() {}
-  virtual ~Create_func_timediff() {}
-};
-
-
 class Create_func_to_days : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_to_days s_singleton;
@@ -1410,6 +1455,8 @@ protected:
 class Create_func_ucase : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_ucase s_singleton;
@@ -1423,6 +1470,8 @@ protected:
 class Create_func_unhex : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_unhex s_singleton;
@@ -1449,6 +1498,8 @@ protected:
 class Create_func_uuid : public Create_func_arg0
 {
 public:
+  using Create_func_arg0::create;
+
   virtual Item *create(Session *session);
 
   static Create_func_uuid s_singleton;
@@ -1462,6 +1513,8 @@ protected:
 class Create_func_version : public Create_func_arg0
 {
 public:
+  using Create_func_arg0::create;
+
   virtual Item *create(Session *session);
 
   static Create_func_version s_singleton;
@@ -1475,6 +1528,8 @@ protected:
 class Create_func_weekday : public Create_func_arg1
 {
 public:
+  using Create_func_arg1::create;
+
   virtual Item *create(Session *session, Item *arg1);
 
   static Create_func_weekday s_singleton;
@@ -1673,16 +1728,6 @@ Create_func_acos::create(Session *session, Item *arg1)
 {
   return new (session->mem_root) Item_func_acos(arg1);
 }
-
-
-Create_func_addtime Create_func_addtime::s_singleton;
-
-Item*
-Create_func_addtime::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_add_time(arg1, arg2, 0, 0);
-}
-
 
 Create_func_asin Create_func_asin::s_singleton;
 
@@ -2410,15 +2455,6 @@ Create_func_makedate::create(Session *session, Item *arg1, Item *arg2)
 }
 
 
-Create_func_maketime Create_func_maketime::s_singleton;
-
-Item*
-Create_func_maketime::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
-{
-  return new (session->mem_root) Item_func_maketime(arg1, arg2, arg3);
-}
-
-
 Create_func_make_set Create_func_make_set::s_singleton;
 
 Item*
@@ -2634,15 +2670,6 @@ Create_func_rtrim::create(Session *session, Item *arg1)
 }
 
 
-Create_func_sec_to_time Create_func_sec_to_time::s_singleton;
-
-Item*
-Create_func_sec_to_time::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_sec_to_time(arg1);
-}
-
-
 Create_func_sign Create_func_sign::s_singleton;
 
 Item*
@@ -2698,15 +2725,6 @@ Create_func_sqrt::create(Session *session, Item *arg1)
 }
 
 
-Create_func_str_to_date Create_func_str_to_date::s_singleton;
-
-Item*
-Create_func_str_to_date::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_str_to_date(arg1, arg2);
-}
-
-
 Create_func_strcmp Create_func_strcmp::s_singleton;
 
 Item*
@@ -2724,16 +2742,6 @@ Create_func_substr_index::create(Session *session, Item *arg1, Item *arg2, Item 
   return new (session->mem_root) Item_func_substr_index(arg1, arg2, arg3);
 }
 
-
-Create_func_subtime Create_func_subtime::s_singleton;
-
-Item*
-Create_func_subtime::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_add_time(arg1, arg2, 0, 1);
-}
-
-
 Create_func_tan Create_func_tan::s_singleton;
 
 Item*
@@ -2750,25 +2758,6 @@ Create_func_time_format::create(Session *session, Item *arg1, Item *arg2)
 {
   return new (session->mem_root) Item_func_date_format(arg1, arg2, 1);
 }
-
-
-Create_func_time_to_sec Create_func_time_to_sec::s_singleton;
-
-Item*
-Create_func_time_to_sec::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_time_to_sec(arg1);
-}
-
-
-Create_func_timediff Create_func_timediff::s_singleton;
-
-Item*
-Create_func_timediff::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_timediff(arg1, arg2);
-}
-
 
 Create_func_to_days Create_func_to_days::s_singleton;
 
@@ -2881,7 +2870,6 @@ static Native_func_registry func_array[] =
 {
   { { C_STRING_WITH_LEN("ABS") }, BUILDER(Create_func_abs)},
   { { C_STRING_WITH_LEN("ACOS") }, BUILDER(Create_func_acos)},
-  { { C_STRING_WITH_LEN("ADDTIME") }, BUILDER(Create_func_addtime)},
   { { C_STRING_WITH_LEN("ASIN") }, BUILDER(Create_func_asin)},
   { { C_STRING_WITH_LEN("ATAN") }, BUILDER(Create_func_atan)},
   { { C_STRING_WITH_LEN("ATAN2") }, BUILDER(Create_func_atan)},
@@ -2937,7 +2925,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("LPAD") }, BUILDER(Create_func_lpad)},
   { { C_STRING_WITH_LEN("LTRIM") }, BUILDER(Create_func_ltrim)},
   { { C_STRING_WITH_LEN("MAKEDATE") }, BUILDER(Create_func_makedate)},
-  { { C_STRING_WITH_LEN("MAKETIME") }, BUILDER(Create_func_maketime)},
   { { C_STRING_WITH_LEN("MAKE_SET") }, BUILDER(Create_func_make_set)},
   { { C_STRING_WITH_LEN("MONTHNAME") }, BUILDER(Create_func_monthname)},
   { { C_STRING_WITH_LEN("NULLIF") }, BUILDER(Create_func_nullif)},
@@ -2956,19 +2943,14 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("ROW_COUNT") }, BUILDER(Create_func_row_count)},
   { { C_STRING_WITH_LEN("RPAD") }, BUILDER(Create_func_rpad)},
   { { C_STRING_WITH_LEN("RTRIM") }, BUILDER(Create_func_rtrim)},
-  { { C_STRING_WITH_LEN("SEC_TO_TIME") }, BUILDER(Create_func_sec_to_time)},
   { { C_STRING_WITH_LEN("SIGN") }, BUILDER(Create_func_sign)},
   { { C_STRING_WITH_LEN("SIN") }, BUILDER(Create_func_sin)},
   { { C_STRING_WITH_LEN("SPACE") }, BUILDER(Create_func_space)},
   { { C_STRING_WITH_LEN("SQRT") }, BUILDER(Create_func_sqrt)},
   { { C_STRING_WITH_LEN("STRCMP") }, BUILDER(Create_func_strcmp)},
-  { { C_STRING_WITH_LEN("STR_TO_DATE") }, BUILDER(Create_func_str_to_date)},
   { { C_STRING_WITH_LEN("SUBSTRING_INDEX") }, BUILDER(Create_func_substr_index)},
-  { { C_STRING_WITH_LEN("SUBTIME") }, BUILDER(Create_func_subtime)},
   { { C_STRING_WITH_LEN("TAN") }, BUILDER(Create_func_tan)},
-  { { C_STRING_WITH_LEN("TIMEDIFF") }, BUILDER(Create_func_timediff)},
   { { C_STRING_WITH_LEN("TIME_FORMAT") }, BUILDER(Create_func_time_format)},
-  { { C_STRING_WITH_LEN("TIME_TO_SEC") }, BUILDER(Create_func_time_to_sec)},
   { { C_STRING_WITH_LEN("TO_DAYS") }, BUILDER(Create_func_to_days)},
   { { C_STRING_WITH_LEN("UCASE") }, BUILDER(Create_func_ucase)},
   { { C_STRING_WITH_LEN("UNHEX") }, BUILDER(Create_func_unhex)},
@@ -3057,9 +3039,6 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
     break;
   case ITEM_CAST_DATE:
     res= new (session->mem_root) Item_date_typecast(a);
-    break;
-  case ITEM_CAST_TIME:
-    res= new (session->mem_root) Item_time_typecast(a);
     break;
   case ITEM_CAST_DATETIME:
     res= new (session->mem_root) Item_datetime_typecast(a);

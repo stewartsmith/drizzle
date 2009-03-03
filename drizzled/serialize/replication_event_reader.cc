@@ -172,12 +172,12 @@ int main(int argc, char* argv[])
     buffer= temp_buffer;
 
     /* Read the record */
-    if (read(file, buffer, (off_t)length) != (off_t)length)
+    if (read(file, buffer, (size_t)length) != (ssize_t)length)
     {
       cerr << "Could not read entire record." << endl;
       exit(1);
     }
-    list.ParseFromArray(buffer, length);
+    list.ParseFromArray(buffer, (int)length);
 
     /* Print the record */
     printRecord(&list);
