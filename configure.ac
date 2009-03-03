@@ -38,18 +38,9 @@ AC_SUBST(SHARED_LIB_VERSION)
 
 
 dnl Checks for programs.
-AC_PROG_CC
 AC_PROG_CXX
 
 gl_USE_SYSTEM_EXTENSIONS
-AC_CXX_HEADER_STDCXX_98
-if test "$ac_cv_cxx_stdcxx_98" = "no"
-then
-  AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
-fi
-AC_PROG_CPP
-AM_PROG_CC_C_O
-
 if test "$GCC" = "yes"
 then
   AC_CACHE_CHECK([if GCC is recent enough], [drizzle_cv_gcc_recent],
@@ -65,6 +56,14 @@ then
     AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.0.2])
   fi
 fi
+AC_CXX_HEADER_STDCXX_98
+if test "$ac_cv_cxx_stdcxx_98" = "no"
+then
+  AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
+fi
+AC_PROG_CPP
+AM_PROG_CC_C_O
+
 
 gl_INIT
 
