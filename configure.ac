@@ -265,7 +265,7 @@ then
     if test "$isainfo_k" = "amd64"
     then
       IS_64="-m64"
-      LDFLAGS="${LDFLAGS} -L/usr/lib/amd64 -L/usr/local/lib/amd64"
+      LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k}"
     fi
   fi
   CXXFLAGS="${CXXFLAGS} -xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS}"
