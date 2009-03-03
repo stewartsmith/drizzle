@@ -18,7 +18,7 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/Plugin_registry_impl.h"
+#include "drizzled/plugin_registry_impl.h"
 
 #include "drizzled/plugin.h"
 

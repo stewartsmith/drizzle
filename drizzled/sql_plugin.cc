@@ -31,7 +31,7 @@
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
 #include <drizzled/item/null.h>
-#include <drizzled/Plugin_registry.h>
+#include <drizzled/plugin_registry.h>
 
 #include <string>
 #include <vector>
