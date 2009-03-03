@@ -260,8 +260,7 @@ then
       LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k}"
     fi
   fi
-  CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include "
-  LDFLAGS="${LDFLAGS} -L/opt/csw/lib"
+  CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
 
   CXXFLAGS="${CXXFLAGS} -xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS}"
   CFLAGS="${CFLAGS} -g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS}"
