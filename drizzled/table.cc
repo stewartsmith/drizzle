@@ -365,7 +365,6 @@ Item * default_value_item(enum_field_types field_type,
     break;
   case DRIZZLE_TYPE_NULL:
     return new Item_null();
-    break;
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
