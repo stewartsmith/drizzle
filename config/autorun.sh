@@ -46,6 +46,8 @@ if test -d ".bzr" ; then
 
   if ! diff m4/bzr_version.m4.new m4/bzr_version.m4 >/dev/null 2>&1 ; then
     mv m4/bzr_version.m4.new m4/bzr_version.m4
+  else
+    rm m4/bzr_version.m4.new
   fi
 else
   touch ChangeLog
