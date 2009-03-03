@@ -347,16 +347,18 @@ const double log_10[] = {
 time_t server_start_time;
 time_t flush_status_time;
 
+/* FRM Junk */
+const char *reg_ext= ".frm";
+uint32_t reg_ext_length= 4;
+
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 char drizzle_real_data_home[FN_REFLEN],
      language[FN_REFLEN], 
-     reg_ext[FN_EXTLEN],
      *opt_init_file, 
      *opt_tc_log_file;
 char drizzle_unpacked_real_data_home[FN_REFLEN];
-uint32_t reg_ext_length;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -587,24 +589,6 @@ extern "C" void print_signal_warning(int sig)
 }
 
 
-void unireg_init()
-{
-  abort_loop=0;
-
-  my_disable_async_io=1;		/* aioread is only in shared library */
-  wild_many='%'; wild_one='_'; wild_prefix='\\'; /* Change to sql syntax */
-
-  current_pid=(ulong) getpid();		/* Save for later ref */
-  init_time();				/* Init time-functions (read zone) */
-  my_abort_hook=unireg_abort;		/* Abort with close of databases */
-
-  strcpy(reg_ext,".frm");
-  reg_ext_length= 4;
-
-  return;
-}
-
-
 /**
   cleanup all memory and end program nicely.
 
@@ -641,7 +625,7 @@ extern "C" void unireg_abort(int exit_code)
 }
 
 
-void clean_up(bool print_message)
+static void clean_up(bool print_message)
 {
   if (cleanup_done++)
     return; /* purecov: inspected */
@@ -1474,7 +1458,9 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* connections and databases needs lots of files */
   (void) my_set_max_open_files(0xFFFFFFFF);
 
-  unireg_init(); /* Set up extern variabels */
+  current_pid=(ulong) getpid();		/* Save for later ref */
+  init_time();				/* Init time-functions (read zone) */
+
   if (init_errmessage())	/* Read error messages from file */
     return 1;
   if (item_create_init())
@@ -1852,7 +1838,7 @@ int main(int argc, char **argv)
 
   if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
   {
-    abort_loop=1;
+    abort_loop= true;
     select_thread_in_use=0;
     (void) pthread_kill(signal_thread, SIGTERM);
 
@@ -2862,7 +2848,7 @@ static void drizzle_init_variables(void)
   slave_open_temp_tables= 0;
   opt_endinfo= using_udf_functions= 0;
   opt_using_transactions= false;
-  abort_loop= select_thread_in_use= 0;
+  abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
@@ -3324,7 +3310,7 @@ static void fix_paths(void)
 
 
 static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
-                                   const char *option)
+                                      const char *option)
 {
   uint32_t res;
 
