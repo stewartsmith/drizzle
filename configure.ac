@@ -8,6 +8,7 @@ m4_include(m4/bzr_version.m4)
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 # Setting CFLAGS here prevents AC_CANONICAL_TARGET from injecting them
 SAVE_CFLAGS=${CFLAGS}
@@ -1488,3 +1489,6 @@ echo "   * C++ cmath location:        $ac_cv_cxx_cmath"
 echo "   * C++ cmath namespace:       $ac_cv_cxx_cmath_namespace"
 echo ""
 echo "---"
+
+dnl libtoolize scans configure.ac  and needs to see some text
+m4_define([LIBTOOLIZE_AC_INIT], [])
