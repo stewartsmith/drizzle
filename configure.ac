@@ -52,14 +52,18 @@ AM_PROG_CC_C_O
 
 if test "$GCC" = "yes"
 then
-   AC_COMPILE_IFELSE(
-     [AC_LANG_PROGRAM([
+  AC_CACHE_CHECK([if GCC is recent enough], [drizzle_cv_gcc_recent],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #if !defined(__GNUC__) || (__GNUC__ < 4)
 # error GCC is Too Old!
 #endif
-     ])],
-     [],
-     [AC_MSG_ERROR([Your version of GCC is too old. GCC v4 is the earliest supported GCC])])
+      ]])],
+      [drizzle_cv_gcc_recent=yes],
+      [drizzle_cv_gcc_recent=no])])
+  if test "$drizzle_cv_gcc_recent" = "no"
+  then
+    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.0.2])
+  fi
 fi
 
 gl_INIT
@@ -350,13 +354,24 @@ AC_LIB_PREFIX
 AC_LANG_PUSH([C++])
 AC_LIB_HAVE_LINKFLAGS(protobuf,,
 [#include <google/protobuf/descriptor.h>
-#if GOOGLE_PROTOBUF_VERSION < 2000002
-# error Your version of Protobuf is too old
-#endif
 ],
 [google::protobuf::FileDescriptor* file;])
 AS_IF([test x$ac_cv_libprotobuf = xno],
       AC_MSG_ERROR([protobuf is required for Drizzle]))
+
+AC_CACHE_CHECK([if protobuf is recent enough], [drizzle_cv_protobuf_recent],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <google/protobuf/descriptor.h>
+#if GOOGLE_PROTOBUF_VERSION < 2000002
+# error Your version of Protobuf is too old
+#endif
+    ]])],
+    [drizzle_cv_protobuf_recent=yes],
+    [drizzle_cv_protobuf_recent=no])])
+if test "$drizzle_cv_protobuf_recent" = "no"
+then
+  AC_MSG_ERROR([Your version of Google Protocol Buffers is too old. Drizzle requires at least version 2.0.2])
+fi
 
 AC_PATH_PROG([PROTOC],[protoc],[no],[$LIBPROTOBUF_PREFIX/bin:$PATH])
 if test "x$PROTOC" = "xno"
