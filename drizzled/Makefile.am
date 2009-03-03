@@ -654,7 +654,7 @@ if BUILD_DTRACE
 drizzled_SOURCES += probes.d
 endif
 
-libserialutil_la_SOURCES = db.cc unireg.cc
+libserialutil_la_SOURCES = db.cc table_proto_write.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
 libhandler_la_SOURCES = handler.cc handlerton.cc
