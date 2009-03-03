@@ -24,6 +24,9 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/lookup_symbol.h>
 
+#include <ctype.h>
+
+using namespace std;
 
 
 static int lex_one_token(void *arg, void *yysession);
@@ -1115,31 +1118,28 @@ int lex_one_token(void *arg, void *yysession)
 
         /*
           The special comment format is very strict:
-          '/' '*' '!', followed by exactly
-          1 digit (major), 2 digits (minor), then 2 digits (dot).
-          32302 -> 3.23.02
-          50032 -> 5.0.32
-          50114 -> 5.1.14
+          '/' '*' '!', followed by digits ended by a non-digit.
+          There must be at least 5 digits for it to count
         */
-        char version_str[6];
-        version_str[0]= lip->yyPeekn(0);
-        version_str[1]= lip->yyPeekn(1);
-        version_str[2]= lip->yyPeekn(2);
-        version_str[3]= lip->yyPeekn(3);
-        version_str[4]= lip->yyPeekn(4);
-        version_str[5]= 0;
-        if (  my_isdigit(cs, version_str[0])
-           && my_isdigit(cs, version_str[1])
-           && my_isdigit(cs, version_str[2])
-           && my_isdigit(cs, version_str[3])
-           && my_isdigit(cs, version_str[4])
-           )
+        const int MAX_VERSION_SIZE= 16;
+        char version_str[MAX_VERSION_SIZE];
+
+        int pos= 0;
+        do
         {
-          ulong version;
-          version=strtol(version_str, NULL, 10);
+          version_str[pos]= lip->yyPeekn(pos);
+          pos++;
+        } while ((pos < MAX_VERSION_SIZE-1) && isdigit(version_str[pos-1]));
+        version_str[pos]= 0;
+
+        /* To keep some semblance of compatibility, we impose a 5 digit floor */
+        if (pos > 4)
+        {
+          uint64_t version;
+          version=strtoll(version_str, NULL, 10);
 
           /* Accept 'M' 'm' 'm' 'd' 'd' */
-          lip->yySkipn(5);
+          lip->yySkipn(pos-1);
 
           if (version <= DRIZZLE_VERSION_ID)
           {
