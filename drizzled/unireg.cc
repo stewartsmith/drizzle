@@ -13,16 +13,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-
-/*
-  Functions to create a unireg form-file from a FIELD and a fieldname-fieldinfo
-  struct.
-  In the following functions FIELD * is an ordinary field-structure with
-  the following exeptions:
-    sc_length,typepos,row,kol,dtype,regnr and field need not to be set.
-    str is a (long) to record position where 0 is the first position.
-*/
-
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 #include <drizzled/virtual_column_info.h>
@@ -672,7 +662,7 @@ static int create_table_proto_file(const char *file_name,
 }
 
 /*
-  Create a frm (table definition) file and the tables
+  Create a table definition proto file and the tables
 
   SYNOPSIS
     rea_create_table()
