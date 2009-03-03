@@ -50,6 +50,18 @@ fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
 
+if test "$GCC" = "yes"
+then
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM([
+#if !defined(__GNUC__) || (__GNUC__ < 4)
+# error GCC is Too Old!
+#endif
+     ])],
+     [],
+     [AC_MSG_ERROR([Your version of GCC is too old. GCC v4 is the earliest supported GCC])])
+fi
+
 gl_INIT
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
