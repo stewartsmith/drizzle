@@ -82,15 +82,6 @@ AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warnin
 # The port should be constant for a LONG time
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-# We need to hack in some of the non-standard locations that solaris sticks
-# stuff in. This makes me very sad.
-case "$host_os" in
-  solaris*)
-    CPPFLAGS="${CPPFLAGS} -I/opt/csw/include -I/opt/local/include"
-    LDFLAGS="${LDFLAGS} -L/opt/csw/lib -L/opt/csw/lib"
-    ;;
-esac
-
 m4_include(m4/dtrace.m4)
 
 m4_include(m4/character_sets.m4)
@@ -256,18 +247,26 @@ then
 fi
 if test "$SUNCC" = "yes"
 then
+  isainfo_k=`isainfo -k`
   if test "$target_cpu" = "sparc"
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
     IS_64="-m64"
+    LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k}"
   else
-    isainfo_k=`isainfo -k`
     if test "$isainfo_k" = "amd64"
     then
       IS_64="-m64"
       LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k}"
     fi
   fi
+  case "$host_os" in
+    solaris*)
+      CPPFLAGS="${CPPFLAGS} -I/opt/csw/include"
+      LDFLAGS="${LDFLAGS} -L/opt/csw/lib"
+      ;;
+  esac
+
   CXXFLAGS="${CXXFLAGS} -xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS}"
   CFLAGS="${CFLAGS} -g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS}"
   DEBUG_CFLAGS="-xO0"
