@@ -56,12 +56,8 @@
 #include <string.h>
 #include <mystrings/utf8.h>
 
-
-#undef net_buffer_length
-#undef max_allowed_packet
-
-uint32_t     net_buffer_length= 8192;
-uint32_t    max_allowed_packet= 1024L*1024L*1024L;
+uint32_t net_buffer_length= 8192;
+uint32_t max_allowed_packet= 1024L*1024L*1024L;
 
 unsigned int drizzle_port=0;
 
