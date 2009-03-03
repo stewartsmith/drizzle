@@ -364,7 +364,7 @@ Item * default_value_item(enum_field_types field_type,
     default_item= new Item_float(default_value.c_str(), default_value.length());
     break;
   case DRIZZLE_TYPE_NULL:
-    return new Item_null();
+    assert(false);
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
