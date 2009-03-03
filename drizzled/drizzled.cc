@@ -800,7 +800,7 @@ err:
 #endif
 
 /* Sun Studio 5.10 doesn't like this line.  5.9 requires it */
-#if __SUNPRO_CC <= 0x590
+#if defined(__SUNPRO_CC) && (__SUNPRO_CC <= 0x590)
   return NULL;
 #endif
 
