@@ -271,6 +271,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin_logging.h \
 		plugin_parser.h \
 		plugin_qcache.h \
+		plugin_registry.h \
+		plugin_registry_impl.h \
 		plugin_replicator.h \
 		plugin_scheduling.h \
 		probes.h \
@@ -574,6 +576,8 @@ drizzled_SOURCES = \
 		opt_range.cc \
 		opt_sum.cc \
 		parser.cc \
+		plugin_registry.cc \
+		plugin_registry_impl.cc \
 		protocol.cc \
 		qcache.cc \
 		query_id.cc \

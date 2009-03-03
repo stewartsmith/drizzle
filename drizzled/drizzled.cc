@@ -468,7 +468,6 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-static void drizzled_exit(int exit_code) __attribute__((noreturn));
 extern "C" bool safe_read_error_impl(NET *net);
 
 /****************************************************************************
@@ -620,12 +619,6 @@ extern "C" void unireg_abort(int exit_code)
   else if (opt_help)
     usage();
   clean_up(!opt_help && (exit_code)); /* purecov: inspected */
-  drizzled_exit(exit_code);
-}
-
-
-static void drizzled_exit(int exit_code)
-{
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
   exit(exit_code); /* purecov: inspected */
@@ -759,8 +752,6 @@ static struct passwd *check_user(const char *user)
       errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
                       "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
-
-    return NULL;
   }
   /* purecov: begin tested */
   if (!strcmp(user,"root"))
@@ -792,7 +783,11 @@ err:
   }
 #endif
 
+/* Sun Studio 5.10 doesn't like this line.  5.9 requires it */
+#if defined(__SUNPRO_CC) && (__SUNPRO_CC <= 0x590)
   return NULL;
+#endif
+
 }
 
 static void set_user(const char *user, struct passwd *user_info_arg)
@@ -1696,10 +1691,10 @@ static int init_server_components()
     }
     if (!ha_storage_engine_is_enabled(hton))
     {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
-                      default_storage_engine_str);
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
+                    default_storage_engine_str);
       unireg_abort(1);
-      assert(global_system_variables.table_plugin);
+      //assert(global_system_variables.table_plugin);
     }
     else
     {
@@ -1880,7 +1875,9 @@ int main(int argc, char **argv)
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   clean_up(1);
-  drizzled_exit(0);
+  clean_up_mutexes();
+  my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
+  return 0;
 }
 
 

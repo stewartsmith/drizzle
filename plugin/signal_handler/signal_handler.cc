@@ -96,6 +96,7 @@ static void create_pid_file()
 
 /** This threads handles all signals and alarms. */
 /* ARGSUSED */
+extern "C"
 pthread_handler_t signal_hand(void *)
 {
   sigset_t set;

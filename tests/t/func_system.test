@@ -4,13 +4,10 @@
 
 select database();
 select database() = "test";
-select database() = "test";
 
 select user() like "%@%";
-select user() like "%@%";
 
-select version()>="3.23.29";
-select version()>="3.23.29";
+select version() > "2009.01.756";
 explain extended select database(), user();
 
 create table t1 (version char(60)) select database(), user(), version() as 'version';

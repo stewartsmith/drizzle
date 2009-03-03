@@ -13,12 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
 EXTRA_LTLIBRARIES =	libcrc32udf.la
 pkgplugin_LTLIBRARIES =	@plugin_crc32_shared_target@
 libcrc32udf_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir)
 libcrc32udf_la_LIBADD =		$(LIBZ)
-libcrc32udf_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
+libcrc32udf_la_CPPFLAGS=	$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 libcrc32udf_la_SOURCES =	crc32udf.cc
 
 
