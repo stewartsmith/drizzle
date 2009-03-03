@@ -1,0 +1,8 @@
+dnl We do this here, rather than in configure.ac, so that if it doesn't change
+dnl nothing has to be rebuilt or anything
+BZR_REVNO=@BZR_REVNO@
+BZR_REVID=@BZR_REVID@
+BZR_BRANCH=@BZR_BRANCH@
+RELEASE_DATE=@RELEASE_DATE@
+RELEASE_VERSION=@RELEASE_VERSION@
+AC_INIT([drizzle],[@RELEASE_VERSION@],[http://bugs.launchpad.net/drizzle])
