@@ -799,6 +799,8 @@ err:
   }
 #endif
 
+  return NULL;
+
 }
 
 static void set_user(const char *user, struct passwd *user_info_arg)

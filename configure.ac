@@ -260,12 +260,8 @@ then
       LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k}"
     fi
   fi
-  case "$host_os" in
-    solaris*)
-      CPPFLAGS="${CPPFLAGS} -I/opt/csw/include"
-      LDFLAGS="${LDFLAGS} -L/opt/csw/lib"
-      ;;
-  esac
+  CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include "
+  LDFLAGS="${LDFLAGS} -L/opt/csw/lib"
 
   CXXFLAGS="${CXXFLAGS} -xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS}"
   CFLAGS="${CFLAGS} -g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS}"
@@ -1383,11 +1379,11 @@ AC_SUBST(NO_REDUNDANT_DECLS)
 AC_SUBST(PROTOSKIP_WARNINGS)
 AC_SUBST(NO_UNREACHED)
 
-CPPFLAGS='${CPPFLAGS} -I$(top_srcdir) -I$(top_builddir)'
 if test "$ac_cv_func_timegm" = "no" -o "$gl_cv_func_gnu_getopt" = "no"
 then
-  CPPFLAGS="${CPPFLAGS} -I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib"
+  CPPFLAGS="-I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib ${CPPFLAGS}"
 fi
+CPPFLAGS="-I\$(top_srcdir) -I\$(top_builddir) ${CPPFLAGS}"
 
 AM_CPPFLAGS="${CPPFLAGS}"
 AM_CFLAGS="${CC_WARNINGS} ${CFLAGS}"
