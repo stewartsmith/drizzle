@@ -3594,14 +3594,10 @@ bool rm_temporary_table(handlerton *base, char *path)
 {
   bool error=0;
   handler *file;
-  char *ext;
 
-  delete_table_proto_file(path);
-
-  strcpy(ext= strchr(path, '\0'), reg_ext);
-  if (my_delete(path,MYF(0)))
+  if(delete_table_proto_file(path))
     error=1; /* purecov: inspected */
-  *ext= 0;				// remove extension
+
   file= get_new_handler((TABLE_SHARE*) 0, current_session->mem_root, base);
   if (file && file->ha_delete_table(path))
   {
@@ -5958,7 +5954,7 @@ bool drizzle_rm_tmp_tables(void)
         uint32_t filePath_len= snprintf(filePath, sizeof(filePath),
                                         "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
                                         file->name);
-        if (!memcmp(reg_ext, ext, ext_len))
+        if (!memcmp(".dfe", ext, ext_len))
         {
           handler *handler_file= 0;
           /* We should cut file extention before deleting of table */

@@ -92,7 +92,7 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
 char *fn_rext(char *name)
 {
   char *res= strrchr(name, '.');
-  if (res && !strcmp(res, reg_ext))
+  if (res && !strcmp(res, ".dfe"))
     return res;
   return name + strlen(name);
 }
@@ -410,6 +410,7 @@ Item * default_value_item(enum_field_types field_type,
 int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *share)
 {
   int error= 0;
+  handler *handler_file= NULL;
 
   {
     LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
@@ -1108,8 +1109,16 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
     if(default_value)
     {
+      enum_check_fields old_count_cuted_fields= session->count_cuted_fields;
+      session->count_cuted_fields= CHECK_FIELD_WARN;
       int res= default_value->save_in_field(f, 1);
-      (void)res; // TODO error handle;
+      session->count_cuted_fields= old_count_cuted_fields;
+      if (res != 0 && res != 3)
+      {
+        my_error(ER_INVALID_DEFAULT, MYF(0), f->field_name);
+        error= 1;
+	goto err;
+      }
     }
     else if(f->real_type() == DRIZZLE_TYPE_ENUM &&
 	    (f->flags & NOT_NULL_FLAG))
@@ -1181,8 +1190,6 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
 
   free(field_offsets);
   free(field_pack_length);
-
-  handler *handler_file;
 
   if(!(handler_file= get_new_handler(share, session->mem_root,
 				     share->db_type())))
@@ -1380,7 +1387,8 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   bitmap_init(&share->all_set, bitmaps, share->fields, false);
   bitmap_set_all(&share->all_set);
 
-  delete handler_file;
+  if(handler_file)
+    delete handler_file;
   return (0);
 
 err:
@@ -1388,7 +1396,8 @@ err:
   share->open_errno= my_errno;
   share->errarg= 0;
   hash_free(&share->name_hash);
-  delete handler_file;
+  if(handler_file)
+    delete handler_file;
   open_table_error(share, error, share->open_errno, 0);
   return error;
 }
@@ -1422,16 +1431,13 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
 {
   int error;
   bool error_given;
-  string	path("");
+  string proto_path("");
 
   error= 1;
   error_given= 0;
 
-  path.reserve(FN_REFLEN);
-  path.append(share->normalized_path.str);
-  string proto_path= path;
-
-  path.append(reg_ext);
+  proto_path.reserve(FN_REFLEN);
+  proto_path.append(share->normalized_path.str);
 
   proto_path.append(".dfe");
 
@@ -1454,7 +1460,7 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
     goto err_not_open;
   }
 
-  parse_table_proto(session, table, share);
+  error= parse_table_proto(session, table, share);
 
   share->table_category= get_table_category(& share->db, & share->table_name);
 
@@ -2257,7 +2263,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
       my_error(ER_NO_SUCH_TABLE, MYF(0), share->db.str, share->table_name.str);
     else
     {
-      sprintf(buff,"%s%s",share->normalized_path.str,reg_ext);
+      sprintf(buff,"%s",share->normalized_path.str);
       my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
                errortype, buff, db_errno);
     }
@@ -2298,7 +2304,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     break;
   }
   case 6:
-    sprintf(buff,"%s%s",share->normalized_path.str,reg_ext);
+    sprintf(buff,"%s",share->normalized_path.str);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
                     "of Drizzle and cannot be read"),
@@ -2308,7 +2314,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     break;
   default:				/* Better wrong error than none */
   case 4:
-    sprintf(buff,"%s%s",share->normalized_path.str,reg_ext);
+    sprintf(buff,"%s",share->normalized_path.str);
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
@@ -2464,122 +2470,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
   res->append('\'');
 }
 
-
-	/* Create a .frm file */
-
-File create_frm(Session *session, const char *name, const char *db,
-                const char *table, uint32_t reclength, unsigned char *fileinfo,
-  		HA_CREATE_INFO *create_info, uint32_t keys, KEY *key_info)
-{
-  register File file;
-  ulong length;
-  unsigned char fill[IO_SIZE];
-  int create_flags= O_RDWR | O_TRUNC;
-  ulong key_comment_total_bytes= 0;
-  uint32_t i;
-
-  if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
-    create_flags|= O_EXCL;
-
-  /* Fix this when we have new .frm files;  Current limit is 4G rows (QQ) */
-  if (create_info->max_rows > UINT32_MAX)
-    create_info->max_rows= UINT32_MAX;
-  if (create_info->min_rows > UINT32_MAX)
-    create_info->min_rows= UINT32_MAX;
-
-  if ((file= my_create(name, CREATE_MODE, create_flags, MYF(0))) >= 0)
-  {
-    uint32_t key_length, tmp_key_length;
-    uint32_t tmp;
-    memset(fileinfo, 0, 64);
-    /* header */
-    fileinfo[0]=(unsigned char) 254;
-    fileinfo[1]= 1;
-    fileinfo[2]= FRM_VER+3+ test(create_info->varchar);
-
-    fileinfo[3]= (unsigned char) ha_legacy_type(
-          ha_checktype(session,ha_legacy_type(create_info->db_type),0,0));
-    fileinfo[4]=1;
-    int2store(fileinfo+6,IO_SIZE);		/* Next block starts here */
-    for (i= 0; i < keys; i++)
-    {
-      assert(test(key_info[i].flags & HA_USES_COMMENT) ==
-                 (key_info[i].comment.length > 0));
-      if (key_info[i].flags & HA_USES_COMMENT)
-        key_comment_total_bytes += 2 + key_info[i].comment.length;
-    }
-    /*
-      Keep in sync with pack_keys() in unireg.cc
-      For each key:
-      8 bytes for the key header
-      9 bytes for each key-part (MAX_REF_PARTS)
-      NAME_LEN bytes for the name
-      1 byte for the NAMES_SEP_CHAR (before the name)
-      For all keys:
-      6 bytes for the header
-      1 byte for the NAMES_SEP_CHAR (after the last name)
-      9 extra bytes (padding for safety? alignment?)
-      comments
-    */
-    key_length= (keys * (8 + MAX_REF_PARTS * 9 + NAME_LEN + 1) + 16 +
-                 key_comment_total_bytes);
-    length= next_io_size((ulong) (IO_SIZE+key_length+reclength+
-                                  create_info->extra_size));
-    int4store(fileinfo+10,length);
-    tmp_key_length= (key_length < 0xffff) ? key_length : 0xffff;
-    int2store(fileinfo+14,tmp_key_length);
-    int2store(fileinfo+16,reclength);
-    int4store(fileinfo+18,create_info->max_rows);
-    int4store(fileinfo+22,create_info->min_rows);
-    /* fileinfo[26] is set in mysql_create_frm() */
-    fileinfo[27]=2;				// Use long pack-fields
-    /* fileinfo[28 & 29] is set to key_info_length in mysql_create_frm() */
-    create_info->table_options|=HA_OPTION_LONG_BLOB_PTR; // Use portable blob pointers
-    int2store(fileinfo+30,create_info->table_options);
-    fileinfo[32]=0;				// No filename anymore
-    fileinfo[33]=5;                             // Mark for 5.0 frm file
-    int4store(fileinfo+34,create_info->avg_row_length);
-    fileinfo[38]= (create_info->default_table_charset ?
-		   create_info->default_table_charset->number : 0);
-    fileinfo[39]= (unsigned char) create_info->page_checksum;
-    fileinfo[40]= (unsigned char) create_info->row_type;
-    /* Next few bytes were for RAID support */
-    fileinfo[41]= 0;
-    fileinfo[42]= 0;
-    int4store(fileinfo+43,create_info->block_size);
-
-    fileinfo[44]= 0;
-    fileinfo[45]= 0;
-    fileinfo[46]= 0;
-    int4store(fileinfo+47, key_length);
-    tmp= DRIZZLE_VERSION_ID;          // Store to avoid warning from int4store
-    int4store(fileinfo+51, tmp);
-    int4store(fileinfo+55, create_info->extra_size);
-    /*
-      59-60 is reserved for extra_rec_buf_length (always 0),
-      61 for default_part_db_type
-    */
-    int2store(fileinfo+62, create_info->key_block_size);
-    memset(fill, 0, IO_SIZE);
-    for (; length > IO_SIZE ; length-= IO_SIZE)
-    {
-      if (my_write(file,fill, IO_SIZE, MYF(MY_WME | MY_NABP)))
-      {
-	my_close(file,MYF(0));
-	my_delete(name,MYF(0));
-	return(-1);
-      }
-    }
-  }
-  else
-  {
-    if (my_errno == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0),db);
-    else
-      my_error(ER_CANT_CREATE_TABLE,MYF(0),table,my_errno);
-  }
-  return (file);
-} /* create_frm */
 
 /*
   Set up column usage bitmaps for a temporary table

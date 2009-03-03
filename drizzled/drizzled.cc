@@ -361,11 +361,10 @@ char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 char drizzle_real_data_home[FN_REFLEN],
      language[FN_REFLEN], 
-     reg_ext[FN_EXTLEN],
      *opt_init_file, 
      *opt_tc_log_file;
 char drizzle_unpacked_real_data_home[FN_REFLEN];
-uint32_t reg_ext_length;
+
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -689,9 +688,6 @@ void unireg_init()
   current_pid=(ulong) getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
   my_abort_hook=unireg_abort;		/* Abort with close of databases */
-
-  strcpy(reg_ext,".frm");
-  reg_ext_length= 4;
 
   return;
 }
