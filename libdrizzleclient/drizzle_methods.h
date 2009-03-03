@@ -57,9 +57,11 @@ typedef struct st_drizzle_methods
   int32_t (*read_change_user_result)(DRIZZLE *drizzle);
 } DRIZZLE_METHODS;
 
-#define simple_command(drizzle, command, arg, length, skip_check) \
-  (*(drizzle)->methods->advanced_command)(drizzle, command, 0,          \
-                                          0, arg, length, skip_check)
+static inline int32_t simple_command(DRIZZLE *drizzle, enum enum_server_command command, const unsigned char *arg, uint32_t length, bool skip_check)
+{
+  return (*(drizzle)->methods->advanced_command)(drizzle, command, 0,
+						 0, arg, length, skip_check);
+}
 
 #ifdef  __cplusplus
 }
