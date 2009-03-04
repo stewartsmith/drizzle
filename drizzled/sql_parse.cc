@@ -366,7 +366,9 @@ bool do_command(Session *session)
 
     if(net->last_errno== CR_NET_PACKET_TOO_LARGE)
       my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
-    assert(session->is_error());
+    /* Assert is invalid for dirty connection shutdown
+     *     assert(session->is_error());
+     */
     drizzleclient_net_end_statement(session);
 
     if (net->error != 3)
