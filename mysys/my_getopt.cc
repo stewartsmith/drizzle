@@ -616,18 +616,20 @@ static int setval(const struct my_option *opts, char **value, char *argument,
       *((int32_t*) result_pos)= (int) getopt_ll(argument, opts, &err);
       break;
     case GET_UINT:
+    case GET_UINT32:
       *((uint32_t*) result_pos)= (uint32_t) getopt_ull(argument, opts, &err);
+      break;
+    case GET_ULONG_IS_FAIL:
+      *((ulong*) result_pos)= (ulong) getopt_ull(argument, opts, &err);
       break;
     case GET_LONG:
       *((long*) result_pos)= (long) getopt_ll(argument, opts, &err);
-      break;
-    case GET_ULONG:
-      *((long*) result_pos)= (long) getopt_ull(argument, opts, &err);
       break;
     case GET_LL:
       *((int64_t*) result_pos)= getopt_ll(argument, opts, &err);
       break;
     case GET_ULL:
+    case GET_UINT64:
       *((uint64_t*) result_pos)= getopt_ull(argument, opts, &err);
       break;
     case GET_SIZE:
@@ -897,7 +899,8 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
       adjusted= true;
     }
     break;
-  case GET_ULONG:
+  case GET_UINT32:
+  case GET_ULONG_IS_FAIL:
     if (num > (uint64_t) UINT32_MAX)
     {
       num= ((uint64_t) UINT32_MAX);
@@ -996,8 +999,11 @@ static void init_one_value(const struct my_option *option, char** variable,
   case GET_LONG:
     *((long*) variable)= (long) value;
     break;
-  case GET_ULONG:
+  case GET_UINT32:
     *((uint32_t*) variable)= (uint32_t) value;
+    break;
+  case GET_ULONG_IS_FAIL:
+    *((ulong*) variable)= (ulong) value;
     break;
   case GET_LL:
     *((int64_t*) variable)= (int64_t) value;
@@ -1006,6 +1012,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     *((size_t*) variable)= (size_t) value;
   case GET_ULL:
   case GET_SET:
+  case GET_UINT64:
     *((uint64_t*) variable)=  (uint64_t) value;
     break;
   case GET_DOUBLE:
@@ -1253,8 +1260,11 @@ void my_print_variables(const struct my_option *options)
       case GET_LONG:
 	printf("%ld\n", *((long*) value));
 	break;
-      case GET_ULONG:
+      case GET_UINT32:
 	printf("%u\n", *((uint32_t*) value));
+	break;
+      case GET_ULONG_IS_FAIL:
+	printf("%lu\n", *((ulong*) value));
 	break;
       case GET_SIZE:
 	cout << value;
@@ -1263,6 +1273,7 @@ void my_print_variables(const struct my_option *options)
 	printf("%s\n", llstr(*((int64_t*) value), buff));
 	break;
       case GET_ULL:
+      case GET_UINT64:
 	int64_t2str(*((uint64_t*) value), buff, 10);
 	printf("%s\n", buff);
 	break;
