@@ -1235,17 +1235,10 @@ class show_var_cmp_functor
 {
   public:
   show_var_cmp_functor() { }
-  inline bool operator()(const SHOW_VAR *var1, const SHOW_VAR *var2)
+  inline bool operator()(const SHOW_VAR *var1, const SHOW_VAR *var2) const
   {
-    int val;
-    if ((val = strcmp(var1->name, var2->name)) < 0)
-    {
-      return true;
-    }
-    else 
-    {
-      return false;
-    }
+    int val= strcmp(var1->name, var2->name);
+    return (val < 0);
   }
 };
 
@@ -1253,7 +1246,7 @@ class show_var_remove_if
 {
   public:
   show_var_remove_if() { }
-  inline bool operator()(const SHOW_VAR *curr)
+  inline bool operator()(const SHOW_VAR *curr) const
   {
     return (curr->type == SHOW_UNDEF);
   }
@@ -1282,7 +1275,7 @@ int add_status_vars(SHOW_VAR *list)
   if (status_vars_inited)
     pthread_mutex_lock(&LOCK_status);
   while (list->name)
-   all_status_vars.insert(all_status_vars.begin(), list++);
+    all_status_vars.insert(all_status_vars.begin(), list++);
   if (status_vars_inited)
     sort(all_status_vars.begin(), all_status_vars.end(),
          show_var_cmp_functor());
