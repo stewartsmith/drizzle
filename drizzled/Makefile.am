@@ -355,7 +355,7 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
-		 $(LIBDL_LIBS) $(LIBEVENT) $(LIBPROTOBUF) $(LIBPCRE) \
+		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 

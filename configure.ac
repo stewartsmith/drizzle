@@ -401,25 +401,6 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
   uuid_generate(uout);
 ])
 
-#--------------------------------------------------------------------
-# Check for libevent
-#--------------------------------------------------------------------
-
-AC_LIB_HAVE_LINKFLAGS(event,,
-[
-#include <sys/types.h>
-#include <sys/time.h>
-#include <stdlib.h>
-#include <event.h>
-],[
-  struct bufferevent bev;
-  bufferevent_settimeout(&bev, 1, 1);
-  event_init();
-  event_loop(EVLOOP_ONCE);
-]) 
-AS_IF([test x$ac_cv_libevent = xno],
-      AC_MSG_ERROR([A recent libevent is required for Drizzle. Check http://www.monkey.org/~provos/libevent ]))
-
 
 
 #--------------------------------------------------------------------
