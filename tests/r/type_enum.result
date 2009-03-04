@@ -1707,7 +1707,17 @@ t1	CREATE TABLE `t1` (
 drop table t1;
 create table t1(exhausting_charset enum('ABCDEFGHIJKLMNOPQRSTUVWXYZ','	
  !"','#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~','xx\','yy\€','zz‚ƒ„…†‡‰‹‘’“”•–—™› ΅Ά£¤¥¦§¨©ª«¬­®―°±²³΄µ¶·ΈΉΊ»Ό½ΎΏΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡÒΣΤΥΦΧΨΩΪΫάέήίΰαβγδεζηθικλμνξοπρςστυφχψωϊϋόύώÿ'));
-ERROR 42000: Field separator argument '%-.32s' with length '%d' is not what is expected; check the manual
+insert into t1 (exhausting_charset) values ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
+('	
+ !"'),
+('#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~'),
+('xx\'),
+('yy\€'),
+('zz‚ƒ„…†‡‰‹‘’“”•–—™› ΅Ά£¤¥¦§¨©ª«¬­®―°±²³΄µ¶·ΈΉΊ»Ό½ΎΏΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡÒΣΤΥΦΧΨΩΪΫάέήίΰαβγδεζηθικλμνξοπρςστυφχψωϊϋόύώÿ');
+select count(*) from t1;
+count(*)
+6
+drop table t1;
 CREATE TABLE t1 (
 id INT AUTO_INCREMENT PRIMARY KEY,
 c1 ENUM('a', '', 'b')
