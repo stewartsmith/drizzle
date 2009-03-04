@@ -115,7 +115,6 @@ extern const double log_10[309];
 extern uint64_t log_10_int[20];
 extern uint64_t keybuff_size;
 extern uint64_t session_startup_options;
-extern ulong thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t slow_launch_threads;
@@ -144,8 +143,7 @@ extern bool opt_log;
 extern ulong log_output_options;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
-extern uint32_t volatile thread_count, thread_running, global_read_lock;
-extern uint32_t connection_count;
+extern uint32_t volatile thread_running, global_read_lock;
 extern bool opt_sql_bin_update;
 extern bool opt_safe_user_create;
 extern bool opt_no_mix_types;
@@ -167,7 +165,7 @@ extern pthread_mutex_t LOCK_drizzleclient_create_db,LOCK_open, LOCK_lock_db,
        LOCK_timezone,
        LOCK_global_read_lock,
        LOCK_global_system_variables, LOCK_user_conn,
-       LOCK_bytes_sent, LOCK_bytes_received, LOCK_connection_count;
+       LOCK_bytes_sent, LOCK_bytes_received;
 extern pthread_mutex_t LOCK_server_started;
 extern pthread_rwlock_t LOCK_sys_init_connect;
 extern pthread_rwlock_t LOCK_system_variables_hash;

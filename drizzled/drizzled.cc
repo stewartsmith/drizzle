@@ -44,6 +44,9 @@
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
 #include <drizzled/plugin_scheduling.h>
+
+#include <drizzled/atomics.h>
+
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 
 #if TIME_WITH_SYS_TIME
@@ -129,7 +132,6 @@ typedef fp_except fp_except_t;
 #include <sys/fpu.h>
 #endif
 
-
 inline void setup_fpu()
 {
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
@@ -171,7 +173,9 @@ extern "C" int gethostname(char *name, int namelen);
 
 extern "C" void handle_segfault(int sig);
 
+using namespace tbb;
 using namespace std;
+
 
 /* Constants */
 
@@ -291,7 +295,8 @@ uint32_t drizzled_port_timeout;
 uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
-uint32_t volatile thread_count, thread_running;
+uint32_t volatile thread_running;
+atomic<uint32_t> thread_count;
 uint64_t session_startup_options;
 uint32_t back_log;
 uint32_t connect_timeout;
@@ -305,7 +310,7 @@ uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
-ulong thread_id=1L;
+atomic<my_thread_id> thread_id;
 pid_t current_pid;
 uint64_t slow_launch_threads= 0;
 uint64_t expire_logs_days= 0;
@@ -444,10 +449,9 @@ static uint32_t thr_kill_signal;
 extern scheduling_st thread_scheduler;
 
 /**
-  Number of currently active user connections. The variable is protected by
-  LOCK_thread_count.
-*/
-uint32_t connection_count= 0;
+ * Number of currently active user connections.
+ */
+atomic<uint32_t> connection_count;
 
 /* Function declarations */
 
@@ -1000,11 +1004,10 @@ void unlink_session(Session *session)
 {
   session->cleanup();
 
-  (void) pthread_mutex_lock(&LOCK_thread_count);
   connection_count--;
   thread_count--;
   delete session;
-  pthread_mutex_unlock(&LOCK_thread_count);
+
   return;
 }
 
@@ -1080,8 +1083,8 @@ extern "C" void handle_segfault(int sig)
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
   fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
   fprintf(stderr, "max_threads=%u\n", thread_scheduler.max_threads);
-  fprintf(stderr, "thread_count=%u\n", thread_count);
-  fprintf(stderr, "connection_count=%u\n", connection_count);
+  fprintf(stderr, "thread_count=%u\n", uint32_t(thread_count));
+  fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
                     "sort_buffer_size)*max_threads = %"PRIu64" K\n"
@@ -1896,10 +1899,8 @@ int main(int argc, char **argv)
 
 static void create_new_thread(Session *session)
 {
-  pthread_mutex_lock(&LOCK_thread_count);
 
-  ++connection_count;
-
+  connection_count++;
   if (connection_count > max_used_connections)
     max_used_connections= connection_count;
 
@@ -1908,13 +1909,14 @@ static void create_new_thread(Session *session)
     the embedded library.
     TODO: refactor this to avoid code duplication there
   */
-  session->thread_id= session->variables.pseudo_thread_id= thread_id++;
+  session->thread_id= session->variables.pseudo_thread_id= ++thread_id;
 
   thread_count++;
 
   /* 
     If we error on creation we drop the connection and delete the session.
   */
+  pthread_mutex_lock(&LOCK_thread_count);
   if (thread_scheduler.add_connection(session))
   {
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
@@ -1926,11 +1928,9 @@ static void create_new_thread(Session *session)
     /* Can't use my_error() since store_globals has not been called. */
     snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
     net_send_error(session, ER_CANT_CREATE_THREAD, error_message_buff);
-    (void) pthread_mutex_lock(&LOCK_thread_count);
-    --connection_count;
-    session->close_connection(0, 0);
+    connection_count--;
+    session->close_connection(0, true);
     delete session;
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
 }
 
@@ -2925,6 +2925,9 @@ static void drizzle_init_variables(void)
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
     tmpenv = PREFIX;
   (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
+
+  connection_count= 0;
+  thread_id= 1;
 }
 
 
