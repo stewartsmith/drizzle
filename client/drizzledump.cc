@@ -655,8 +655,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     }
     break;
   case 'r':
-    if (!(md_result_file= my_fopen(argument, O_WRONLY,
-                                    MYF(MY_WME))))
+    if (!(md_result_file= fopen(argument, "w")))
       exit(1);
     break;
   case 'N':
@@ -976,8 +975,8 @@ static FILE* open_sql_file_for_table(const char* table)
   FILE* res;
   char filename[FN_REFLEN], tmp_path[FN_REFLEN];
   convert_dirname(tmp_path,path,NULL);
-  res= my_fopen(fn_format(filename, table, tmp_path, ".sql", 4),
-                O_WRONLY, MYF(MY_WME));
+  res= fopen(fn_format(filename, table, tmp_path, ".sql", 4), "w");
+
   return res;
 }
 
@@ -985,7 +984,7 @@ static FILE* open_sql_file_for_table(const char* table)
 static void free_resources(void)
 {
   if (md_result_file && md_result_file != stdout)
-    my_fclose(md_result_file, MYF(0));
+    fclose(md_result_file);
   free(opt_password);
   if (hash_inited(&ignore_table))
     hash_free(&ignore_table);
@@ -1461,7 +1460,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
     if (drizzleclient_query_with_error_report(drizzle, &result, query_buff))
     {
       if (path)
-        my_fclose(sql_file, MYF(MY_WME));
+        fclose(sql_file);
       return false;
     }
 
@@ -1621,7 +1620,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
         fprintf(stderr, _("%s: Can't get keys for table %s (%s)\n"),
                 my_progname, result_table, drizzleclient_error(drizzle));
         if (path)
-          my_fclose(sql_file, MYF(MY_WME));
+          fclose(sql_file);
         return false;
       }
 
@@ -1739,7 +1738,7 @@ continue_xml:
   {
     fputs("\n", sql_file);
     write_footer(sql_file);
-    my_fclose(sql_file, MYF(MY_WME));
+    fclose(sql_file);
   }
   return true;
 } /* get_table_structure */
