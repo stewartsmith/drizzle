@@ -4338,7 +4338,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
   SEL_ARG *tree= 0;
   MEM_ROOT *alloc= param->mem_root;
   unsigned char *str;
-  int err;
+  int err= 0;
 
   /*
     We need to restore the runtime mem_root of the thread in this
