@@ -191,55 +191,6 @@ bool String::needs_conversion(uint32_t arg_length,
 }
 
 
-/*
-  Copy a multi-byte character sets with adding leading zeros.
-
-  SYNOPSIS
-
-  copy_aligned()
-  str			String to copy
-  arg_length		Length of string. This should NOT be dividable with
-			cs->mbminlen.
-  offset		arg_length % cs->mb_minlength
-  cs			Character set for 'str'
-
-  NOTES
-    For real multi-byte, ascii incompatible charactser sets,
-    like UCS-2, add leading zeros if we have an incomplete character.
-    Thus,
-      SELECT _ucs2 0xAA
-    will automatically be converted into
-      SELECT _ucs2 0x00AA
-
-  RETURN
-    0  ok
-    1  error
-*/
-
-bool String::copy_aligned(const char *str,uint32_t arg_length, uint32_t offset,
-                          const CHARSET_INFO * const cs)
-{
-  /* How many bytes are in incomplete character */
-  offset= cs->mbmaxlen - offset; /* How many zeros we should prepend */
-  assert(offset && offset != cs->mbmaxlen);
-
-  uint32_t aligned_length= arg_length + offset;
-  if (alloc(aligned_length))
-    return true;
-
-  /*
-    Note, this is only safe for big-endian UCS-2.
-    If we add little-endian UCS-2 sometimes, this code
-    will be more complicated. But it's OK for now.
-  */
-  memset(Ptr, 0, offset);
-  memcpy(Ptr + offset, str, arg_length);
-  Ptr[aligned_length]=0;
-  /* str_length is always >= 0 as arg_length is != 0 */
-  str_length= aligned_length;
-  str_charset= cs;
-  return false;
-}
 
 
 bool String::set_or_copy_aligned(const char *str,uint32_t arg_length,
@@ -248,12 +199,10 @@ bool String::set_or_copy_aligned(const char *str,uint32_t arg_length,
   /* How many bytes are in incomplete character */
   uint32_t offset= (arg_length % cs->mbminlen);
 
-  if (!offset) /* All characters are complete, just copy */
-  {
-    set(str, arg_length, cs);
-    return false;
-  }
-  return copy_aligned(str, arg_length, offset, cs);
+  assert(!offset); /* All characters are complete, just copy */
+
+  set(str, arg_length, cs);
+  return false;
 }
 
 	/* Copy with charset conversion */
@@ -271,7 +220,8 @@ bool String::copy(const char *str, uint32_t arg_length,
   if ((from_cs == &my_charset_bin) && offset)
   {
     *errors= 0;
-    return copy_aligned(str, arg_length, offset, to_cs);
+    assert((from_cs == &my_charset_bin) && offset);
+    return false; //copy_aligned(str, arg_length, offset, to_cs);
   }
   uint32_t new_length= to_cs->mbmaxlen*arg_length;
   if (alloc(new_length))
@@ -311,23 +261,6 @@ bool String::set_ascii(const char *str, uint32_t arg_length)
   }
   uint32_t dummy_errors;
   return copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
-}
-
-
-/* This is used by mysql.cc */
-
-bool String::fill(uint32_t max_length,char fill_char)
-{
-  if (str_length > max_length)
-    Ptr[str_length=max_length]=0;
-  else
-  {
-    if (realloc(max_length))
-      return true;
-    memset(Ptr+str_length, fill_char, max_length-str_length);
-    str_length=max_length;
-  }
-  return false;
 }
 
 bool String::append(const String &s)
