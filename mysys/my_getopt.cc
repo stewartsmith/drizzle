@@ -915,7 +915,8 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
     }
     break;
   default:
-    assert((optp->var_type & GET_TYPE_MASK) == GET_ULL);
+    assert(((optp->var_type & GET_TYPE_MASK) == GET_ULL)
+	   || ((optp->var_type & GET_TYPE_MASK) == GET_UINT64));
     break;
   }
 
