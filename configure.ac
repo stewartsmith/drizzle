@@ -766,9 +766,6 @@ LIBDL_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(LIBDL_LIBS)
 
-AC_CHECK_FUNCS(strtok_r)
-
-
 
 AC_ARG_WITH([fast-mutexes],
     [AS_HELP_STRING([--with-fast-mutexes],
