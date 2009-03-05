@@ -1010,6 +1010,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     break;
   case GET_SIZE:
     *((size_t*) variable)= (size_t) value;
+    break;
   case GET_ULL:
   case GET_SET:
   case GET_UINT64:

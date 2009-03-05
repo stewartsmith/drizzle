@@ -251,15 +251,24 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
           keyinfo->get_key_length= hp_rb_key_length;
       }
     }
-    if (!(share= (HP_SHARE*) malloc(sizeof(HP_SHARE)+
-				    keys*sizeof(HP_KEYDEF)+
-                                    columns*sizeof(HP_COLUMNDEF)+
-				    key_segs*sizeof(HA_KEYSEG))))
+    share= NULL;
+    if (!(share= (HP_SHARE*) malloc(sizeof(HP_SHARE))))
       goto err;
-    memset(share, 0, sizeof(HP_SHARE)+
-                     keys*sizeof(HP_KEYDEF)+
-                     columns*sizeof(HP_COLUMNDEF)+
-                     key_segs*sizeof(HA_KEYSEG));
+
+    memset(share, 0, sizeof(HP_SHARE));
+
+    if (!(share->keydef= (HP_KEYDEF*) malloc(keys*sizeof(HP_KEYDEF))))
+      goto err;
+
+    memset(share->keydef, 0, keys*sizeof(HP_KEYDEF));
+
+    if (!(share->keydef->seg= (HA_KEYSEG*) malloc(key_segs*sizeof(HA_KEYSEG))))
+      goto err;
+    if (!(share->column_defs= (HP_COLUMNDEF*)
+	  malloc(columns*sizeof(HP_COLUMNDEF))))
+      goto err;
+
+    memset(share->column_defs, 0, columns*sizeof(HP_COLUMNDEF));
 
     /*
        Max_records is used for estimating block sizes and for enforcement.
@@ -271,12 +280,11 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     max_records = ((max_records && max_records < max_rows_for_stated_memory) ?
                       max_records : max_rows_for_stated_memory);
 
-    share->column_defs= (HP_COLUMNDEF*) (share + 1);
     memcpy(share->column_defs, columndef, (size_t) (sizeof(columndef[0]) * columns));
 
-    share->keydef= (HP_KEYDEF*) (share->column_defs + columns);
     share->key_stat_version= 1;
-    keyseg= (HA_KEYSEG*) (share->keydef + keys);
+    keyseg= share->keydef->seg;
+
     init_block(&share->recordspace.block, chunk_length, min_records, max_records);
     /* Fix keys */
     memcpy(share->keydef, keydef, (size_t) (sizeof(keydef[0]) * keys));
@@ -344,7 +352,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     /* Must be allocated separately for rename to work */
     if (!(share->name= strdup(name)))
     {
-      free((unsigned char*) share);
       goto err;
     }
     thr_lock_init(&share->lock);
@@ -364,6 +371,14 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
   return(0);
 
 err:
+  if(share && share->keydef && share->keydef->seg)
+    free(share->keydef->seg);
+  if(share && share->keydef)
+    free(share->keydef);
+  if(share && share->column_defs)
+    free(share->column_defs);
+  if(share)
+    free(share);
   if (!create_info->internal_table)
     pthread_mutex_unlock(&THR_LOCK_heap);
   return(1);
@@ -451,6 +466,9 @@ void hp_free(HP_SHARE *share)
   hp_clear(share);			/* Remove blocks from memory */
   thr_lock_delete(&share->lock);
   pthread_mutex_destroy(&share->intern_lock);
+  free(share->keydef->seg);
+  free(share->keydef);
+  free(share->column_defs);
   free((unsigned char*) share->name);
   free((unsigned char*) share);
   return;
