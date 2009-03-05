@@ -650,7 +650,7 @@ static void clean_up(bool print_message)
     free(opt_secure_file_priv);
   bitmap_free(&temp_pool);
 
-  (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
+  (void) unlink(pidfile_name);	// This may not always exist
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
@@ -1840,7 +1840,7 @@ int main(int argc, char **argv)
     select_thread_in_use=0;
     (void) pthread_kill(signal_thread, SIGTERM);
 
-    (void) my_delete(pidfile_name,MYF(MY_WME));	// Not needed anymore
+    (void) unlink(pidfile_name);	// Not needed anymore
 
     exit(1);
   }
