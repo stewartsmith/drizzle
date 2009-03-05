@@ -1406,6 +1406,8 @@ static bool deletetable_handlerton(Session *,
     dtargs->file= file;
     return true;
   }
+  else
+    delete file;
 
   return false;
 }
