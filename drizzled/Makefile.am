@@ -243,7 +243,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/type_holder.h \
 		item/uint.h \
 		key.h \
-		key_map.h \
 		key_part_spec.h \
 		korr.h \
 		lex_column.h \
@@ -564,7 +563,6 @@ drizzled_SOURCES = \
 		item/uint.cc \
 		item.cc \
 		key.cc \
-                key_map.cc \
 		lock.cc \
 		log.cc \
 		logging.cc \

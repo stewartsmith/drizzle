@@ -267,8 +267,6 @@ public:
   static bool needs_conversion(uint32_t arg_length,
   			       const CHARSET_INFO * const cs_from, const CHARSET_INFO * const cs_to,
 			       uint32_t *offset);
-  bool copy_aligned(const char *s, uint32_t arg_length, uint32_t offset,
-		    const CHARSET_INFO * const cs);
   bool set_or_copy_aligned(const char *s, uint32_t arg_length, const CHARSET_INFO * const cs);
   bool copy(const char*s,uint32_t arg_length, const CHARSET_INFO * const csfrom,
 	    const CHARSET_INFO * const csto, uint32_t *errors);
@@ -297,7 +295,6 @@ public:
     }
     return 0;
   }
-  bool fill(uint32_t max_length,char fill);
   friend int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
   friend int stringcmp(const String *a,const String *b);
   friend String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);

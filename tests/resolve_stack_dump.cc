@@ -153,14 +153,14 @@ static void open_files(void)
   fp_out = stdout;
   fp_dump = stdin;
 
-  if (dump_fname && !(fp_dump = my_fopen(dump_fname, O_RDONLY, MYF(MY_WME))))
+  if (dump_fname && !(fp_dump= fopen(dump_fname, "r")))
       die("Could not open %s", dump_fname);
   /* if name not given, assume stdin*/
 
   if (!sym_fname)
     die("Please run nm --numeric-sort on drizzled binary that produced stack \
 trace dump and specify the path to it with -s or --symbols-file");
-  if (!(fp_sym = my_fopen(sym_fname, O_RDONLY, MYF(MY_WME))))
+  if (!(fp_sym= fopen(sym_fname, "r")))
     die("Could not open %s", sym_fname);
 
 }

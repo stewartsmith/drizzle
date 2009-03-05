@@ -161,8 +161,6 @@ static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    &delay_key_write_typelib,
 					    fix_delay_key_write);
 
-static sys_var_long_ptr	sys_expire_logs_days(&vars, "expire_logs_days",
-                                             &expire_logs_days);
 static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
 sys_var_str             sys_init_connect(&vars, "init_connect", 0,
                                          sys_update_init_connect,
@@ -227,8 +225,6 @@ static sys_var_session_uint32_t	sys_net_retry_count(&vars, "net_retry_count",
                                                     &SV::net_retry_count,
                                                     0, fix_net_retry_count);
 static sys_var_session_bool	sys_new_mode(&vars, "new", &SV::new_mode);
-static sys_var_bool_ptr_readonly sys_old_mode(&vars, "old",
-                                              &global_system_variables.old_mode);
 /* these two cannot be static */
 sys_var_session_bool sys_old_alter_table(&vars, "old_alter_table",
                                          &SV::old_alter_table);

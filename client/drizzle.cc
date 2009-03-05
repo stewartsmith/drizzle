@@ -2748,7 +2748,7 @@ static void init_tee(const char *file_name)
   FILE* new_outfile;
   if (opt_outfile)
     end_tee();
-  if (!(new_outfile= my_fopen(file_name, O_APPEND | O_WRONLY, MYF(MY_WME))))
+  if (!(new_outfile= fopen(file_name, "a")))
   {
     tee_fprintf(stdout, "Error logging to file '%s'\n", file_name);
     return;
@@ -2757,13 +2757,14 @@ static void init_tee(const char *file_name)
   strncpy(outfile, file_name, FN_REFLEN-1);
   tee_fprintf(stdout, "Logging to file '%s'\n", file_name);
   opt_outfile= 1;
+
   return;
 }
 
 
 static void end_tee()
 {
-  my_fclose(OUTFILE, MYF(0));
+  fclose(OUTFILE);
   OUTFILE= 0;
   opt_outfile= 0;
   return;
@@ -3459,7 +3460,7 @@ static int com_source(string *, const char *line)
   end[0]=0;
   unpack_filename(source_name,source_name);
   /* open file name */
-  if (!(sql_file = my_fopen(source_name, O_RDONLY,MYF(0))))
+  if (!(sql_file = fopen(source_name, "r")))
   {
     char buff[FN_REFLEN+60];
     sprintf(buff,"Failed to open file '%s', error: %d", source_name,errno);
@@ -3468,7 +3469,7 @@ static int com_source(string *, const char *line)
 
   if (!(line_buff=batch_readline_init(opt_max_allowed_packet+512,sql_file)))
   {
-    my_fclose(sql_file,MYF(0));
+    fclose(sql_file);
     return put_info("Can't initialize batch_readline", INFO_ERROR, 0 ,0);
   }
 
@@ -3486,7 +3487,7 @@ static int com_source(string *, const char *line)
   error= read_and_execute(false);
   // Continue as before
   status=old_status;
-  my_fclose(sql_file,MYF(0));
+  fclose(sql_file);
   batch_readline_end(line_buff);
   return error;
 }

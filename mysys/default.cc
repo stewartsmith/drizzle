@@ -624,7 +624,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       return 0;
     }
   }
-  if (!(fp= my_fopen(name, O_RDONLY, MYF(0))))
+  if (!(fp= fopen(name, "r")))
     return 1;					/* Ignore wrong files */
 
   memset(buff,0,sizeof(buff));
@@ -823,11 +823,12 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
         goto err;
     }
   }
-  my_fclose(fp,MYF(0));
+  fclose(fp);
   return(0);
 
  err:
-  my_fclose(fp,MYF(0));
+  fclose(fp);
+
   return -1;					/* Fatal error */
 }
 
