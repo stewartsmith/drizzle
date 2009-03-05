@@ -164,14 +164,12 @@ extern TableList general_log, slow_log;
 extern FILE *stderror_file;
 extern pthread_mutex_t LOCK_drizzleclient_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
-       LOCK_timezone,
        LOCK_global_read_lock,
-       LOCK_global_system_variables, LOCK_user_conn,
-       LOCK_bytes_sent, LOCK_bytes_received, LOCK_connection_count;
-extern pthread_mutex_t LOCK_server_started;
+       LOCK_global_system_variables;
+
 extern pthread_rwlock_t LOCK_sys_init_connect;
 extern pthread_rwlock_t LOCK_system_variables_hash;
-extern pthread_cond_t COND_refresh, COND_thread_count, COND_manager;
+extern pthread_cond_t COND_refresh, COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
 extern I_List<Session> threads;
@@ -191,9 +189,6 @@ extern TYPELIB thread_handling_typelib;
 extern uint8_t uc_update_queries[SQLCOM_END+1];
 extern std::bitset<5> sql_command_flags[];
 extern TYPELIB log_output_typelib;
-
-/* optional things, have_* variables */
-extern SHOW_COMP_OPTION have_community_features;
 
 extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
@@ -276,9 +271,6 @@ off_t make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
 		     const char *newname);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
-int create_frm(Session *session, const char *name, const char *db, const char *table,
-               uint32_t reclength, unsigned char *fileinfo,
-	       HA_CREATE_INFO *create_info, uint32_t keys, KEY *key_info);
 int rename_table_proto_file(const char *from, const char* to);
 int delete_table_proto_file(const char *file_name);
 int rename_file_ext(const char * from,const char * to,const char * ext);
@@ -292,9 +284,6 @@ char *fn_rext(char *name);
 /* Conversion functions */
 uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
                           const char *table, const char *ext, uint32_t flags);
-
-#define MYSQL50_TABLE_NAME_PREFIX         "#mysql50#"
-#define MYSQL50_TABLE_NAME_PREFIX_LENGTH  sizeof(MYSQL50_TABLE_NAME_PREFIX)
 
 /* Flags for conversion functions. */
 #define FN_FROM_IS_TMP  (1 << 0)

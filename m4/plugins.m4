@@ -342,7 +342,7 @@ AC_DEFUN([_DRIZZLE_EMIT_CHECK_PLUGIN],[
 
 AC_DEFUN([__DRIZZLE_EMIT_CHECK_PLUGIN],[
  m4_ifdef([$5],[
-  AH_TEMPLATE($5, [Include ]$4[ into mysqld])
+  AH_TEMPLATE($5, [Include ]$4[ into drizzled])
  ])
  AC_MSG_CHECKING([whether to use ]$3)
  mysql_use_plugin_dir=""
@@ -364,7 +364,7 @@ AC_DEFUN([__DRIZZLE_EMIT_CHECK_PLUGIN],[
   ],[
    case "$with_mysqld_ldflags " in
      *"-all-static "*)
-       # No need to build shared plugins when mysqld is linked with
+       # No need to build shared plugins when drizzled is linked with
        # -all-static as it won't be able to load them.
        if test "X[$mysql_plugin_]$2" != Xyes -a \
                "X[$with_plugin_]$2" != Xyes; then
@@ -402,7 +402,7 @@ AC_DEFUN([__DRIZZLE_EMIT_CHECK_PLUGIN],[
       m4_ifdef([$7],[
        ifelse(m4_bregexp($7, [^lib[^.]+\.a$]), -2, [
 dnl change above "-2" to "0" to enable this section
-dnl Although this is "pretty", it breaks libmysqld build
+dnl Although this is "pretty", it breaks libdrizzled build
         m4_ifdef([$6],[
          mysql_use_plugin_dir="$6"
          mysql_plugin_libs="$mysql_plugin_libs -L[\$(top_builddir)]/$6"
@@ -742,7 +742,7 @@ AC_DEFUN([_DRIZZLE_CHECK_PLUGIN_ARGS],[
 AC_DEFUN([__DRIZZLE_CHECK_PLUGIN_ARGS],[
  AC_ARG_WITH([plugins],
 AS_HELP_STRING([--with-plugins=PLUGIN[[[[[,PLUGIN..]]]]]],
-               [Plugins to include in mysqld. (default is: $1) Must be a
+               [Plugins to include in drizzled. (default is: $1) Must be a
                 configuration name or a comma separated list of plugins.])
 AS_HELP_STRING([],
                [Available configurations are:] dnl
@@ -753,10 +753,10 @@ AS_HELP_STRING([],
 m4_bpatsubst(__mysql_plugin_list__, :, [ ])[.])
 AS_HELP_STRING([--without-plugin-PLUGIN],
                [Disable the named plugin from being built. Otherwise, for
-                plugins which are not selected for inclusion in mysqld will be
+                plugins which are not selected for inclusion in drizzled will be
                 built dynamically (if supported)])
 AS_HELP_STRING([--with-plugin-PLUGIN],
-               [Forces the named plugin to be linked into mysqld statically.]),
+               [Forces the named plugin to be linked into drizzled statically.]),
  [mysql_plugins="`echo $withval | tr ',.:;*[]' '       '`"],
  [mysql_plugins=['$1']])
 
