@@ -350,19 +350,6 @@ bool String::append(const char *s,uint32_t arg_length, const CHARSET_INFO * cons
 }
 
 
-bool String::append(IO_CACHE* file, uint32_t arg_length)
-{
-  if (realloc(str_length+arg_length))
-    return true;
-  if (my_b_read(file, (unsigned char*) Ptr + str_length, arg_length))
-  {
-    shrink(str_length);
-    return true;
-  }
-  str_length+=arg_length;
-  return false;
-}
-
 bool String::append_with_prefill(const char *s,uint32_t arg_length,
 		 uint32_t full_length, char fill_char)
 {
@@ -491,49 +478,6 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
 }
 
 
-// added by Holyfoot for "geometry" needs
-int String::reserve(uint32_t space_needed, uint32_t grow_by)
-{
-  if (Alloced_length < str_length + space_needed)
-  {
-    if (realloc(Alloced_length + cmax(space_needed, grow_by) - 1))
-      return true;
-  }
-  return false;
-}
-
-void String::qs_append(const char *str, uint32_t len)
-{
-  memcpy(Ptr + str_length, str, len + 1);
-  str_length += len;
-}
-
-void String::qs_append(double d)
-{
-  char *buff = Ptr + str_length;
-  str_length+= my_gcvt(d, MY_GCVT_ARG_DOUBLE, FLOATING_POINT_BUFFER - 1, buff, NULL);
-}
-
-void String::qs_append(double *d)
-{
-  double ld;
-  float8get(ld, (char*) d);
-  qs_append(ld);
-}
-
-void String::qs_append(int i)
-{
-  char *buff= Ptr + str_length;
-  char *end= int10_to_str(i, buff, -10);
-  str_length+= (int) (end-buff);
-}
-
-void String::qs_append(uint32_t i)
-{
-  char *buff= Ptr + str_length;
-  char *end= int10_to_str(i, buff, 10);
-  str_length+= (int) (end-buff);
-}
 
 /*
   Compare strings according to collation, without end space.

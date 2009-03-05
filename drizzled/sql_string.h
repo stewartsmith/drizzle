@@ -274,7 +274,6 @@ public:
   bool append(const char *s);
   bool append(const char *s,uint32_t arg_length);
   bool append(const char *s,uint32_t arg_length, const CHARSET_INFO * const cs);
-  bool append(IO_CACHE* file, uint32_t arg_length);
   bool append_with_prefill(const char *s, uint32_t arg_length,
 			   uint32_t full_length, char fill_char);
   int strstr(const String &search,uint32_t offset=0); // Returns offset to substring or -1
@@ -341,17 +340,6 @@ public:
   {
     int4store(Ptr + position,value);
   }
-
-  void qs_append(const char *str, uint32_t len);
-  void qs_append(double d);
-  void qs_append(double *d);
-  inline void qs_append(const char c)
-  {
-     Ptr[str_length]= c;
-     str_length++;
-  }
-  void qs_append(int i);
-  void qs_append(uint32_t i);
 
   /* Inline (general) functions used by the protocol functions */
 
