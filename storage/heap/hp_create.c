@@ -257,12 +257,12 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 
     memset(share, 0, sizeof(HP_SHARE));
 
-    if (!(share->keydef= (HP_KEYDEF*) malloc(keys*sizeof(HP_KEYDEF))))
+    if (keys && !(share->keydef= (HP_KEYDEF*) malloc(keys*sizeof(HP_KEYDEF))))
       goto err;
 
     memset(share->keydef, 0, keys*sizeof(HP_KEYDEF));
 
-    if (!(share->keydef->seg= (HA_KEYSEG*) malloc(key_segs*sizeof(HA_KEYSEG))))
+    if (keys && !(share->keydef->seg= (HA_KEYSEG*) malloc(key_segs*sizeof(HA_KEYSEG))))
       goto err;
     if (!(share->column_defs= (HP_COLUMNDEF*)
 	  malloc(columns*sizeof(HP_COLUMNDEF))))
@@ -283,7 +283,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     memcpy(share->column_defs, columndef, (size_t) (sizeof(columndef[0]) * columns));
 
     share->key_stat_version= 1;
-    keyseg= share->keydef->seg;
+    keyseg= keys ? share->keydef->seg : NULL;
 
     init_block(&share->recordspace.block, chunk_length, min_records, max_records);
     /* Fix keys */
@@ -466,8 +466,10 @@ void hp_free(HP_SHARE *share)
   hp_clear(share);			/* Remove blocks from memory */
   thr_lock_delete(&share->lock);
   pthread_mutex_destroy(&share->intern_lock);
-  free(share->keydef->seg);
-  free(share->keydef);
+  if(share->keys)
+    free(share->keydef->seg);
+  if(share->keys)
+    free(share->keydef);
   free(share->column_defs);
   free((unsigned char*) share->name);
   free((unsigned char*) share);
