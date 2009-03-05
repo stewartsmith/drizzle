@@ -308,7 +308,6 @@ uint64_t max_connect_errors;
 ulong thread_id=1L;
 pid_t current_pid;
 uint64_t slow_launch_threads= 0;
-uint64_t expire_logs_days= 0;
 
 const double log_10[] = {
   1e000, 1e001, 1e002, 1e003, 1e004, 1e005, 1e006, 1e007, 1e008, 1e009,

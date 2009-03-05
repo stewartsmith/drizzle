@@ -161,8 +161,6 @@ static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    &delay_key_write_typelib,
 					    fix_delay_key_write);
 
-static sys_var_long_ptr	sys_expire_logs_days(&vars, "expire_logs_days",
-                                             &expire_logs_days);
 static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
 sys_var_str             sys_init_connect(&vars, "init_connect", 0,
                                          sys_update_init_connect,
