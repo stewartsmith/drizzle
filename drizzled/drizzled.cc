@@ -2517,11 +2517,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.net_write_timeout,
    (char**) &max_system_variables.net_write_timeout, 0, GET_ULONG,
    REQUIRED_ARG, NET_WRITE_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  { "old", OPT_OLD_MODE,
-    N_("Use compatible behavior."),
-    (char**) &global_system_variables.old_mode,
-    (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG,
-    0, 0, 0, 0, 0, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "

@@ -2608,10 +2608,7 @@ key_cache_name:
 cache_keys_spec:
           {
             Lex->select_lex.alloc_index_hints(YYSession);
-            Select->set_index_hint_type(INDEX_HINT_USE, 
-                                        global_system_variables.old_mode ? 
-                                        INDEX_HINT_MASK_JOIN : 
-                                        INDEX_HINT_MASK_ALL);
+            Select->set_index_hint_type(INDEX_HINT_USE, INDEX_HINT_MASK_ALL);
           }
           cache_key_list_or_empty
         ;
@@ -4041,8 +4038,7 @@ opt_outer:
 index_hint_clause:
           /* empty */
           {
-            $$= global_system_variables.old_mode ? 
-                  INDEX_HINT_MASK_JOIN : INDEX_HINT_MASK_ALL; 
+            $$= INDEX_HINT_MASK_ALL; 
           }
         | FOR_SYM JOIN_SYM      { $$= INDEX_HINT_MASK_JOIN;  }
         | FOR_SYM ORDER_SYM BY  { $$= INDEX_HINT_MASK_ORDER; }
