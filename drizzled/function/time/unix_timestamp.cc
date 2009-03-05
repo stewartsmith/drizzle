@@ -23,10 +23,11 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/session.h>
 
+#include "drizzled/temporal.h"
+
 int64_t Item_func_unix_timestamp::val_int()
 {
   DRIZZLE_TIME ltime;
-  bool not_used;
 
   assert(fixed == 1);
   if (arg_count == 0)
@@ -49,6 +50,29 @@ int64_t Item_func_unix_timestamp::val_int()
     return 0;
   }
 
-  return (int64_t) TIME_to_timestamp(current_session, &ltime, &not_used);
-}
+  drizzled::Timestamp temporal;
 
+  temporal.set_years(ltime.year);
+  temporal.set_months(ltime.month);
+  temporal.set_days(ltime.day);
+  temporal.set_hours(ltime.hour);
+  temporal.set_minutes(ltime.minute);
+  temporal.set_seconds(ltime.second);
+  temporal.set_epoch_seconds();
+
+  if (! temporal.is_valid())
+  {
+    null_value= true;
+    char buff[MAX_DATETIME_WIDTH];
+    size_t buff_len;
+    temporal.to_string(buff, &buff_len);
+    buff[buff_len]= '\0';
+    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(0), buff);
+    return 0;
+  }
+
+  time_t tmp;
+  temporal.to_time_t(&tmp);
+
+  return (int64_t) tmp;
+}

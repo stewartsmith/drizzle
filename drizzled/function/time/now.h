@@ -22,6 +22,8 @@
 
 #include <drizzled/function/time/date.h>
 
+#include "drizzled/temporal.h"
+
 /* Abstract CURRENT_TIMESTAMP function. See also Item_func_curtime */
 
 class Item_func_now :public Item_date_func
@@ -31,6 +33,7 @@ protected:
   char buff[20*2+32];   // +32 to make my_snprintf_{8bit|ucs2} happy
   uint32_t buff_length;
   DRIZZLE_TIME ltime;
+  drizzled::DateTime cached_temporal;
 public:
   Item_func_now() :Item_date_func() {}
   Item_func_now(Item *a) :Item_date_func(a) {}
@@ -39,6 +42,16 @@ public:
   int save_in_field(Field *to, bool no_conversions);
   String *val_str(String *str);
   void fix_length_and_dec();
+  /**
+   * For NOW() and sisters, there is no argument, and we 
+   * return a cached Date value that we create during fix_length_and_dec.
+   *
+   * Always returns true, since a DateTime can always be constructed
+   * from a time_t
+   *
+   * @param Reference to a drizzled::DateTime to populate
+   */
+  bool get_temporal(drizzled::DateTime &temporal);
   bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
   bool check_vcol_func_processor(unsigned char *)

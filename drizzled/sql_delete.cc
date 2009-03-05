@@ -822,15 +822,11 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
   }
 
   path_length= build_table_filename(path, sizeof(path), table_list->db,
-                                    table_list->table_name, reg_ext, 0);
+                                    table_list->table_name, "", 0);
 
   if (!dont_send_ok)
     goto trunc_by_del;
 
-  // Remove the .frm extension AIX 5.2 64-bit compiler bug (BUG#16155): this
-  // crashes, replacement works.  *(path + path_length - reg_ext_length)=
-  // '\0';
-  path[path_length - reg_ext_length] = 0;
   pthread_mutex_lock(&LOCK_open);
   error= ha_create_table(session, path, table_list->db, table_list->table_name,
                          &create_info, 1);

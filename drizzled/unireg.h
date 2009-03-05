@@ -26,6 +26,8 @@
 #include <drizzled/structs.h>				/* All structs we need */
 #include <drizzled/serialize/table.pb.h>
 int drizzle_read_table_proto(const char* path, drizzle::Table* table);
+int table_proto_exists(const char *path);
+int copy_table_proto_file(const char *from, const char* to);
 
 #if defined(__cplusplus)
 extern "C" {

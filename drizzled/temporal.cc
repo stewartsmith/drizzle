@@ -45,6 +45,8 @@
 #endif
 #include "drizzled/temporal_format.h"
 
+#include <ostream>
+#include <iomanip>
 #include <vector>
 #include <string.h>
 
@@ -989,11 +991,11 @@ Date& Date::operator-=(const TemporalIntervalDayOrLess &rhs)
 }
 #endif /* NOTYETIMPLEMENTED */
 /*
- * Comparison operators between two Timestamps
+ * Comparison operators between a Date and a Timestamp
  */
 bool Date::operator==(const Timestamp& rhs)
 {
-  return (_epoch_seconds == rhs._epoch_seconds);
+  return (_years == rhs._years && _months == rhs._months && _days == rhs._days);
 }
 bool Date::operator!=(const Timestamp& rhs)
 {
@@ -1001,11 +1003,21 @@ bool Date::operator!=(const Timestamp& rhs)
 }
 bool Date::operator<(const Timestamp& rhs)
 {
-  return (_epoch_seconds < rhs._epoch_seconds);
+  if (_years < rhs._years)
+    return true;
+  if (_years > rhs._years)
+    return false;
+  /* In same year */
+  if (_months < rhs._months)
+    return true;
+  if (_months > rhs._months)
+    return false;
+  /* Same month */
+  return _days < rhs._days;
 }
 bool Date::operator<=(const Timestamp& rhs)
 {
-  return (_epoch_seconds <= rhs._epoch_seconds);
+  return (*this < rhs || *this == rhs);
 }
 bool Date::operator>(const Timestamp& rhs)
 {
@@ -1014,6 +1026,140 @@ bool Date::operator>(const Timestamp& rhs)
 bool Date::operator>=(const Timestamp& rhs)
 {
   return ! (*this <= rhs);
+}
+/*
+ * Comparison operators between a Timestamp and a Date
+ */
+bool Timestamp::operator==(const Date& rhs)
+{
+  return (_years == rhs._years && _months == rhs._months && _days == rhs._days);
+}
+bool Timestamp::operator!=(const Date& rhs)
+{
+  return ! (*this == rhs);
+}
+bool Timestamp::operator<(const Date& rhs)
+{
+  if (_years < rhs._years)
+    return true;
+  if (_years > rhs._years)
+    return false;
+  /* In same year */
+  if (_months < rhs._months)
+    return true;
+  if (_months > rhs._months)
+    return false;
+  /* Same month */
+  return _days < rhs._days;
+}
+bool Timestamp::operator<=(const Date& rhs)
+{
+  return (*this < rhs || *this == rhs);
+}
+bool Timestamp::operator>(const Date& rhs)
+{
+  return ! (*this < rhs);
+}
+bool Timestamp::operator>=(const Date& rhs)
+{
+  return ! (*this <= rhs);
+}
+/*
+ * Comparison operators between a Timestamp and a DateTime
+ */
+bool Timestamp::operator==(const DateTime& rhs)
+{
+  return (_years == rhs._years && _months == rhs._months && _days == rhs._days
+          && _hours == rhs._hours && _minutes == rhs._minutes && _seconds == rhs._seconds);
+}
+bool Timestamp::operator!=(const DateTime& rhs)
+{
+  return ! (*this == rhs);
+}
+bool Timestamp::operator<(const DateTime& rhs)
+{
+  if (_years < rhs._years)
+    return true;
+  if (_years > rhs._years)
+    return false;
+  /* In same year */
+  if (_months < rhs._months)
+    return true;
+  if (_months > rhs._months)
+    return false;
+  /* Same month */
+  if (_days < rhs._days)
+    return true;
+  if (_days > rhs._days)
+     return false;
+  /* Same day */
+  if (_hours < rhs._hours)
+    return true;
+  if (_hours > rhs._hours)
+    return false;
+  /* Same hour */
+  if (_minutes < rhs._minutes)
+    return true;
+  if (_minutes > rhs._minutes)
+    return false;
+  /* Same minute */
+  return _seconds < rhs._seconds;
+}
+bool Timestamp::operator<=(const DateTime& rhs)
+{
+  return (*this < rhs || *this == rhs);
+}
+bool Timestamp::operator>(const DateTime& rhs)
+{
+  return ! (*this < rhs);
+}
+bool Timestamp::operator>=(const DateTime& rhs)
+{
+  return ! (*this <= rhs);
+}
+/*
+ * Comparison operators between two Timestamps
+ */
+bool Timestamp::operator==(const Timestamp& rhs)
+{
+  return (_epoch_seconds == rhs._epoch_seconds);
+}
+bool Timestamp::operator!=(const Timestamp& rhs)
+{
+  return ! (*this == rhs);
+}
+bool Timestamp::operator<(const Timestamp& rhs)
+{
+  return (_epoch_seconds < rhs._epoch_seconds);
+}
+bool Timestamp::operator<=(const Timestamp& rhs)
+{
+  return (_epoch_seconds <= rhs._epoch_seconds);
+}
+bool Timestamp::operator>(const Timestamp& rhs)
+{
+  return ! (*this < rhs);
+}
+bool Timestamp::operator>=(const Timestamp& rhs)
+{
+  return ! (*this <= rhs);
+}
+
+/**
+ * Push the contents of the timestamp into the output stream
+ * as a formatted Timestamp value.
+ *
+ * @TODO This unfortunately fails in a weird way...even with std::noskipws, 
+ * the output stream only reads up to the space in the string... :(
+ */
+std::ostream& operator<<(std::ostream& os, const Timestamp& subject)
+{
+  return os << subject.years() << '-' 
+            << std::setw(2) << std::setfill('0') << subject.months() << '-'
+            << std::setw(2) << std::setfill('0') << subject.days() << ' '
+            << std::setw(2) << std::setfill('0') << subject.hours() << ':'
+            << std::setw(2) << std::setfill('0') << subject.minutes() << ':'
+            << std::setw(2) << std::setfill('0') << subject.seconds();
 }
 
 bool Time::from_string(const char *from, size_t from_len)
@@ -1428,18 +1574,19 @@ bool DateTime::is_valid() const
 
 bool Timestamp::is_valid() const
 {
-  return in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds);
+  return DateTime::is_valid() 
+      && in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds);
 }
 
 bool MicroTimestamp::is_valid() const
 {
-  return in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds)
+  return Timestamp::is_valid()
       && (_useconds <= UINT32_C(999999));
 }
 
 bool NanoTimestamp::is_valid() const
 {
-  return in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds)
+  return Timestamp::is_valid()
       && (_useconds <= UINT32_C(999999))
       && (_nseconds <= UINT32_C(999999999));
 }

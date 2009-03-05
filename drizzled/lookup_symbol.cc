@@ -25,8 +25,8 @@
 #include "drizzled/lookup_symbol.h"
 
 #include "drizzled/lex_symbol.h"
-#include "function_hash.h"
-#include "symbol_hash.h"
+#include "drizzled/function_hash.h"
+#include "drizzled/symbol_hash.h"
 
 const SYMBOL *lookup_symbol(const char *s, unsigned int len, bool function)
 {
