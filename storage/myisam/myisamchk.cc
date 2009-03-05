@@ -154,9 +154,6 @@ static struct my_option my_long_options[] =
   {"analyze", 'a',
    "Analyze distribution of keys. Will make some joins in MySQL faster. You can check the calculated distribution.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"block-search", 'b',
-   "No help available.",
-   0, 0, 0, GET_ULONG, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"backup", 'B',
    "Make a backup of the .MYD file as 'filename-time.BAK'.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -273,7 +270,7 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   { "key_buffer_size", OPT_KEY_BUFFER_SIZE, "",
     (char**) &check_param.use_buffers, (char**) &check_param.use_buffers, 0,
-    GET_ULONG, REQUIRED_ARG, (long) USE_BUFFER_INIT, (long) MALLOC_OVERHEAD,
+    GET_UINT64, REQUIRED_ARG, (long) USE_BUFFER_INIT, (long) MALLOC_OVERHEAD,
     INT32_MAX, (long) MALLOC_OVERHEAD, (long) IO_SIZE, 0},
   { "key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,  "",
     (char**) &opt_key_cache_block_size,
@@ -286,22 +283,22 @@ static struct my_option my_long_options[] =
     MI_MAX_KEY_BLOCK_LENGTH, 0, MI_MIN_KEY_BLOCK_LENGTH, 0},
   { "read_buffer_size", OPT_READ_BUFFER_SIZE, "",
     (char**) &check_param.read_buffer_length,
-    (char**) &check_param.read_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
+    (char**) &check_param.read_buffer_length, 0, GET_SIZE, REQUIRED_ARG,
     (long) READ_BUFFER_INIT, (long) MALLOC_OVERHEAD,
     SIZE_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "write_buffer_size", OPT_WRITE_BUFFER_SIZE, "",
     (char**) &check_param.write_buffer_length,
-    (char**) &check_param.write_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
+    (char**) &check_param.write_buffer_length, 0, GET_SIZE, REQUIRED_ARG,
     (long) READ_BUFFER_INIT, (long) MALLOC_OVERHEAD,
     SIZE_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "sort_buffer_size", OPT_SORT_BUFFER_SIZE, "",
     (char**) &check_param.sort_buffer_length,
-    (char**) &check_param.sort_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
+    (char**) &check_param.sort_buffer_length, 0, GET_SIZE, REQUIRED_ARG,
     (long) SORT_BUFFER_INIT, (long) (MIN_SORT_BUFFER + MALLOC_OVERHEAD),
     SIZE_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "sort_key_blocks", OPT_SORT_KEY_BLOCKS, "",
     (char**) &check_param.sort_key_blocks,
-    (char**) &check_param.sort_key_blocks, 0, GET_ULONG, REQUIRED_ARG,
+    (char**) &check_param.sort_key_blocks, 0, GET_SIZE, REQUIRED_ARG,
     BUFFERS_WHEN_SORTING, 4L, 100L, 0L, 1L, 0},
   { "decode_bits", OPT_DECODE_BITS, "", (char**) &decode_bits,
     (char**) &decode_bits, 0, GET_UINT, REQUIRED_ARG, 9L, 4L, 17L, 0L, 1L, 0},
@@ -427,9 +424,7 @@ static void usage(void)
   -R, --sort-records=#\n\
 		      Sort records according to an index.  This makes your\n\
 		      data much more localized and may speed up things\n\
-		      (It may be VERY slow to do a sort the first time!).\n\
-  -b,  --block-search=#\n\
-                       Find a record, a block at given offset belongs to.");
+		      (It may be VERY slow to do a sort the first time!).\n");
 
   print_defaults("drizzle", load_default_groups);
   my_print_variables(my_long_options);
@@ -561,7 +556,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     if (argument != disabled_my_option)
     {
       check_param.testflag|= T_REP;
-      my_disable_async_io= 1;		/* More safety */
+      my_disable_async_io= true;		/* More safety */
     }
     break;
   case 'n':

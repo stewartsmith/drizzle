@@ -26,6 +26,8 @@
 #include <drizzled/structs.h>				/* All structs we need */
 #include <drizzled/serialize/table.pb.h>
 int drizzle_read_table_proto(const char* path, drizzle::Table* table);
+int table_proto_exists(const char *path);
+int copy_table_proto_file(const char *from, const char* to);
 
 #if defined(__cplusplus)
 extern "C" {
@@ -155,7 +157,6 @@ extern "C" {
 #define COLUMN_FORMAT_MASK 7
 #define COLUMN_FORMAT_SHIFT 3
 
-void unireg_init();
 void unireg_end(void) __attribute__((noreturn));
 void unireg_abort(int exit_code) __attribute__((noreturn));
 

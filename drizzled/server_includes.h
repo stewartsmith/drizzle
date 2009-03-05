@@ -272,9 +272,6 @@ off_t make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
 		     const char *newname);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
-int create_frm(Session *session, const char *name, const char *db, const char *table,
-               uint32_t reclength, unsigned char *fileinfo,
-	       HA_CREATE_INFO *create_info, uint32_t keys, KEY *key_info);
 int rename_table_proto_file(const char *from, const char* to);
 int delete_table_proto_file(const char *file_name);
 int rename_file_ext(const char * from,const char * to,const char * ext);
@@ -288,9 +285,6 @@ char *fn_rext(char *name);
 /* Conversion functions */
 uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
                           const char *table, const char *ext, uint32_t flags);
-
-#define MYSQL50_TABLE_NAME_PREFIX         "#mysql50#"
-#define MYSQL50_TABLE_NAME_PREFIX_LENGTH  sizeof(MYSQL50_TABLE_NAME_PREFIX)
 
 /* Flags for conversion functions. */
 #define FN_FROM_IS_TMP  (1 << 0)

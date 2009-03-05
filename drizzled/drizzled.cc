@@ -347,16 +347,18 @@ const double log_10[] = {
 time_t server_start_time;
 time_t flush_status_time;
 
+/* FRM Junk */
+const char *reg_ext= ".frm";
+uint32_t reg_ext_length= 4;
+
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 char drizzle_real_data_home[FN_REFLEN],
      language[FN_REFLEN], 
-     reg_ext[FN_EXTLEN],
      *opt_init_file, 
      *opt_tc_log_file;
 char drizzle_unpacked_real_data_home[FN_REFLEN];
-uint32_t reg_ext_length;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -466,7 +468,6 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-static void drizzled_exit(int exit_code) __attribute__((noreturn));
 extern "C" bool safe_read_error_impl(NET *net);
 
 /****************************************************************************
@@ -587,25 +588,6 @@ extern "C" void print_signal_warning(int sig)
     alarm(2);					/* reschedule alarm */
 }
 
-
-void unireg_init()
-{
-  abort_loop=0;
-
-  my_disable_async_io=1;		/* aioread is only in shared library */
-  wild_many='%'; wild_one='_'; wild_prefix='\\'; /* Change to sql syntax */
-
-  current_pid=(ulong) getpid();		/* Save for later ref */
-  init_time();				/* Init time-functions (read zone) */
-  my_abort_hook=unireg_abort;		/* Abort with close of databases */
-
-  strcpy(reg_ext,".frm");
-  reg_ext_length= 4;
-
-  return;
-}
-
-
 /**
   cleanup all memory and end program nicely.
 
@@ -636,19 +618,13 @@ extern "C" void unireg_abort(int exit_code)
   else if (opt_help)
     usage();
   clean_up(!opt_help && (exit_code)); /* purecov: inspected */
-  drizzled_exit(exit_code);
-}
-
-
-static void drizzled_exit(int exit_code)
-{
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
   exit(exit_code); /* purecov: inspected */
 }
 
 
-void clean_up(bool print_message)
+static void clean_up(bool print_message)
 {
   if (cleanup_done++)
     return; /* purecov: inspected */
@@ -775,8 +751,6 @@ static struct passwd *check_user(const char *user)
       errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Please read \"Security\" section of "
                       "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
-
-    return NULL;
   }
   /* purecov: begin tested */
   if (!strcmp(user,"root"))
@@ -808,7 +782,11 @@ err:
   }
 #endif
 
+/* Sun Studio 5.10 doesn't like this line.  5.9 requires it */
+#if defined(__SUNPRO_CC) && (__SUNPRO_CC <= 0x590)
   return NULL;
+#endif
+
 }
 
 static void set_user(const char *user, struct passwd *user_info_arg)
@@ -1479,7 +1457,9 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* connections and databases needs lots of files */
   (void) my_set_max_open_files(0xFFFFFFFF);
 
-  unireg_init(); /* Set up extern variabels */
+  current_pid=(ulong) getpid();		/* Save for later ref */
+  init_time();				/* Init time-functions (read zone) */
+
   if (init_errmessage())	/* Read error messages from file */
     return 1;
   if (item_create_init())
@@ -1710,10 +1690,10 @@ static int init_server_components()
     }
     if (!ha_storage_engine_is_enabled(hton))
     {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
-                      default_storage_engine_str);
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
+                    default_storage_engine_str);
       unireg_abort(1);
-      assert(global_system_variables.table_plugin);
+      //assert(global_system_variables.table_plugin);
     }
     else
     {
@@ -1857,7 +1837,7 @@ int main(int argc, char **argv)
 
   if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
   {
-    abort_loop=1;
+    abort_loop= true;
     select_thread_in_use=0;
     (void) pthread_kill(signal_thread, SIGTERM);
 
@@ -1894,7 +1874,9 @@ int main(int argc, char **argv)
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   clean_up(1);
-  drizzled_exit(0);
+  clean_up_mutexes();
+  my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
+  return 0;
 }
 
 
@@ -2271,7 +2253,7 @@ struct my_option my_long_options[] =
   {"log-warnings", 'W',
    N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
-   (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG, 1, 0, 0,
+   (char**) &max_system_variables.log_warnings, 0, GET_BOOL, OPT_ARG, 1, 0, 0,
    0, 0, 0},
   {"memlock", OPT_MEMLOCK,
    N_("Lock drizzled in memory."),
@@ -2318,7 +2300,7 @@ struct my_option my_long_options[] =
   {"server-id",	OPT_SERVER_ID,
    N_("Uniquely identifies the server instance in the community of "
       "replication partners."),
-   (char**) &server_id, (char**) &server_id, 0, GET_ULONG, REQUIRED_ARG, 0, 0, 0,
+   (char**) &server_id, (char**) &server_id, 0, GET_UINT32, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
   {"skip-new", OPT_SKIP_NEW,
    N_("Don't use new, possible wrong routines."),
@@ -2387,7 +2369,7 @@ struct my_option my_long_options[] =
     N_("The number of seconds the drizzled server is waiting for a connect "
        "packet before responding with 'Bad handshake'."),
     (char**) &connect_timeout, (char**) &connect_timeout,
-    0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
+    0, GET_UINT32, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
@@ -2397,18 +2379,18 @@ struct my_option my_long_options[] =
   { "group_concat_max_len", OPT_GROUP_CONCAT_MAX_LEN,
     N_("The maximum length of the result of function  group_concat."),
     (char**) &global_system_variables.group_concat_max_len,
-    (char**) &max_system_variables.group_concat_max_len, 0, GET_ULONG,
+    (char**) &max_system_variables.group_concat_max_len, 0, GET_UINT64,
     REQUIRED_ARG, 1024, 4, ULONG_MAX, 0, 1, 0},
   { "interactive_timeout", OPT_INTERACTIVE_TIMEOUT,
     N_("The number of seconds the server waits for activity on an interactive "
        "connection before closing it."),
    (char**) &global_system_variables.net_interactive_timeout,
    (char**) &max_system_variables.net_interactive_timeout, 0,
-   GET_ULONG, REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
+   GET_UINT32, REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   { "join_buffer_size", OPT_JOIN_BUFF_SIZE,
     N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,
-   (char**) &max_system_variables.join_buff_size, 0, GET_ULONG,
+   (char**) &max_system_variables.join_buff_size, 0, GET_UINT64,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
   {"keep_files_on_create", OPT_KEEP_FILES_ON_CREATE,
@@ -2432,35 +2414,35 @@ struct my_option my_long_options[] =
       "total number of blocks in key cache"),
    (char**) &dflt_key_cache_var.param_age_threshold,
    (char**) 0,
-   0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG,
+   0, (GET_UINT32 | GET_ASK_ADDR), REQUIRED_ARG,
    300, 100, ULONG_MAX, 0, 100, 0},
   {"key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,
    N_("The default size of key cache blocks"),
    (char**) &dflt_key_cache_var.param_block_size,
    (char**) 0,
-   0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG,
+   0, (GET_UINT32 | GET_ASK_ADDR), REQUIRED_ARG,
    KEY_CACHE_BLOCK_SIZE, 512, 1024 * 16, 0, 512, 0},
   {"key_cache_division_limit", OPT_KEY_CACHE_DIVISION_LIMIT,
    N_("The minimum percentage of warm blocks in key cache"),
    (char**) &dflt_key_cache_var.param_division_limit,
    (char**) 0,
-   0, (GET_ULONG | GET_ASK_ADDR) , REQUIRED_ARG, 100,
+   0, (GET_UINT32 | GET_ASK_ADDR) , REQUIRED_ARG, 100,
    1, 100, 0, 1, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
-   (char**) &max_system_variables.max_allowed_packet, 0, GET_ULONG,
+   (char**) &max_system_variables.max_allowed_packet, 0, GET_UINT32,
    REQUIRED_ARG, 1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"max_connect_errors", OPT_MAX_CONNECT_ERRORS,
    N_("If there is more than this number of interrupted connections from a "
       "host this host will be blocked from further connections."),
-   (char**) &max_connect_errors, (char**) &max_connect_errors, 0, GET_ULONG,
+   (char**) &max_connect_errors, (char**) &max_connect_errors, 0, GET_UINT64,
    REQUIRED_ARG, MAX_CONNECT_ERRORS, 1, ULONG_MAX, 0, 1, 0},
   {"max_error_count", OPT_MAX_ERROR_COUNT,
    N_("Max number of errors/warnings to store for a statement."),
    (char**) &global_system_variables.max_error_count,
    (char**) &max_system_variables.max_error_count,
-   0, GET_ULONG, REQUIRED_ARG, DEFAULT_ERROR_COUNT, 0, 65535, 0, 1, 0},
+   0, GET_UINT64, REQUIRED_ARG, DEFAULT_ERROR_COUNT, 0, 65535, 0, 1, 0},
   {"max_heap_table_size", OPT_MAX_HEP_TABLE_SIZE,
    N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
@@ -2481,7 +2463,7 @@ struct my_option my_long_options[] =
   { "max_seeks_for_key", OPT_MAX_SEEKS_FOR_KEY,
     N_("Limit assumed max number of seeks when looking up rows based on a key"),
     (char**) &global_system_variables.max_seeks_for_key,
-    (char**) &max_system_variables.max_seeks_for_key, 0, GET_ULONG,
+    (char**) &max_system_variables.max_seeks_for_key, 0, GET_UINT64,
     REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0 },
   {"max_sort_length", OPT_MAX_SORT_LENGTH,
    N_("The number of bytes to use when sorting BLOB or TEXT values "
@@ -2493,7 +2475,7 @@ struct my_option my_long_options[] =
   {"max_tmp_tables", OPT_MAX_TMP_TABLES,
    N_("Maximum number of temporary tables a client can keep open at a time."),
    (char**) &global_system_variables.max_tmp_tables,
-   (char**) &max_system_variables.max_tmp_tables, 0, GET_ULONG,
+   (char**) &max_system_variables.max_tmp_tables, 0, GET_UINT64,
    REQUIRED_ARG, 32, 1, ULONG_MAX, 0, 1, 0},
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
@@ -2515,25 +2497,25 @@ struct my_option my_long_options[] =
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
    N_("Buffer length for TCP/IP and socket communication."),
    (char**) &global_system_variables.net_buffer_length,
-   (char**) &max_system_variables.net_buffer_length, 0, GET_ULONG,
+   (char**) &max_system_variables.net_buffer_length, 0, GET_UINT32,
    REQUIRED_ARG, 16384, 1024, 1024*1024L, 0, 1024, 0},
   {"net_read_timeout", OPT_NET_READ_TIMEOUT,
    N_("Number of seconds to wait for more data from a connection before "
       "aborting the read."),
    (char**) &global_system_variables.net_read_timeout,
-   (char**) &max_system_variables.net_read_timeout, 0, GET_ULONG,
+   (char**) &max_system_variables.net_read_timeout, 0, GET_UINT32,
    REQUIRED_ARG, NET_READ_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"net_retry_count", OPT_NET_RETRY_COUNT,
    N_("If a read on a communication port is interrupted, retry this many "
       "times before giving up."),
    (char**) &global_system_variables.net_retry_count,
    (char**) &max_system_variables.net_retry_count,0,
-   GET_ULONG, REQUIRED_ARG, MYSQLD_NET_RETRY_COUNT, 1, ULONG_MAX, 0, 1, 0},
+   GET_UINT32, REQUIRED_ARG, MYSQLD_NET_RETRY_COUNT, 1, ULONG_MAX, 0, 1, 0},
   {"net_write_timeout", OPT_NET_WRITE_TIMEOUT,
    N_("Number of seconds to wait for a block to be written to a connection "
       "before aborting the write."),
    (char**) &global_system_variables.net_write_timeout,
-   (char**) &max_system_variables.net_write_timeout, 0, GET_ULONG,
+   (char**) &max_system_variables.net_write_timeout, 0, GET_UINT32,
    REQUIRED_ARG, NET_WRITE_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   { "old", OPT_OLD_MODE,
     N_("Use compatible behavior."),
@@ -2589,7 +2571,7 @@ struct my_option my_long_options[] =
   {"range_alloc_block_size", OPT_RANGE_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
-   (char**) &max_system_variables.range_alloc_block_size, 0, GET_ULONG,
+   (char**) &max_system_variables.range_alloc_block_size, 0, GET_SIZE,
    REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, SIZE_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
@@ -2615,7 +2597,7 @@ struct my_option my_long_options[] =
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
-   (char**) &max_system_variables.sortbuff_size, 0, GET_ULONG, REQUIRED_ARG,
+   (char**) &max_system_variables.sortbuff_size, 0, GET_SIZE, REQUIRED_ARG,
    MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
@@ -2624,7 +2606,7 @@ struct my_option my_long_options[] =
    0, GET_ULL, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
-   (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_ULONG,
+   (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_UINT64,
    REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, 1, 512*1024L, 0, 1, 0},
   {"table_lock_wait_timeout", OPT_TABLE_LOCK_WAIT_TIMEOUT,
    N_("Timeout in seconds to wait for a table level lock before returning an "
@@ -2634,7 +2616,7 @@ struct my_option my_long_options[] =
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,
-   (char**) &my_thread_stack_size, 0, GET_ULONG,
+   (char**) &my_thread_stack_size, 0, GET_SIZE,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
    UINT32_C(1024*128), SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
@@ -2865,7 +2847,7 @@ static void drizzle_init_variables(void)
   slave_open_temp_tables= 0;
   opt_endinfo= using_udf_functions= 0;
   opt_using_transactions= false;
-  abort_loop= select_thread_in_use= 0;
+  abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
@@ -3327,7 +3309,7 @@ static void fix_paths(void)
 
 
 static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
-                                   const char *option)
+                                      const char *option)
 {
   uint32_t res;
 

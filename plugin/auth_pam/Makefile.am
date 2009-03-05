@@ -17,6 +17,6 @@ if BUILD_AUTH_PAM
 EXTRA_LTLIBRARIES =	libauth_pam.la
 pkgplugin_LTLIBRARIES =	@plugin_auth_pam_shared_target@
 libauth_pam_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir) -lpam 
-libauth_pam_la_CPPFLAGS=	$(GLOBAL_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
+libauth_pam_la_CPPFLAGS=	$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 libauth_pam_la_SOURCES =	auth_pam.cc
 endif

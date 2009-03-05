@@ -13,12 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
 EXTRA_LTLIBRARIES =	libcompressudf.la
 pkgplugin_LTLIBRARIES =	@plugin_compress_shared_target@
 libcompressudf_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir)\
-				${Z_LIBS}
-libcompressudf_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
+				${LIBZ}
+libcompressudf_la_CPPFLAGS=	$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 libcompressudf_la_SOURCES =	compressudf.cc
 
 

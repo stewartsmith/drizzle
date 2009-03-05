@@ -105,9 +105,9 @@ typedef struct st_key_cache
   */
 
   uint64_t param_buff_size;    /* size the memory allocated for the cache  */
-  ulong param_block_size;       /* size of the blocks in the key cache      */
-  ulong param_division_limit;   /* min. percentage of warm blocks           */
-  ulong param_age_threshold;    /* determines when hot block is downgraded  */
+  uint32_t param_block_size;   /* size of the blocks in the key cache      */
+  uint32_t param_division_limit; /* min. percentage of warm blocks           */
+  uint32_t param_age_threshold;    /* determines when hot block is downgraded  */
 
   /* Statistics variables. These are reset in reset_key_cache_counters(). */
   ulong global_blocks_changed;	/* number of currently dirty blocks         */
