@@ -479,14 +479,14 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 
 AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
 AS_IF([test "x$ac_cv_libpcre" = "xno"],[
-  ac_cv_libpcre=
+  unset ac_cv_libpcre
   AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
-    AS_IF([test "x$ac_cv_libpcre" = "xno"],
-          [AC_MSG_ERROR([libpcre is required for Drizzle])]
-          [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
-  ],[
-    AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
-  ])
+  AS_IF([test "x$ac_cv_libpcre" = "xno"],
+        [AC_MSG_ERROR([libpcre is required for Drizzle])]
+        [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
+],[
+  AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
+])
 
 
 dnl Find paths to some shell programs
