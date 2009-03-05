@@ -243,7 +243,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/type_holder.h \
 		item/uint.h \
 		key.h \
-		key_map.h \
 		key_part_spec.h \
 		korr.h \
 		lex_column.h \
@@ -355,7 +354,7 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
-		 $(LIBDL_LIBS) $(LIBEVENT) $(LIBPROTOBUF) $(LIBPCRE) \
+		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
@@ -564,7 +563,6 @@ drizzled_SOURCES = \
 		item/uint.cc \
 		item.cc \
 		key.cc \
-                key_map.cc \
 		lock.cc \
 		log.cc \
 		logging.cc \
@@ -631,7 +629,7 @@ if BUILD_DTRACE
 drizzled_SOURCES += probes.d
 endif
 
-libserialutil_la_SOURCES = db.cc unireg.cc
+libserialutil_la_SOURCES = db.cc table_proto_write.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
 libhandler_la_SOURCES = handler.cc handlerton.cc

@@ -2219,7 +2219,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     OPTION_SET_LIMITS(GET_LONG, options, (sysvar_long_t*) opt);
     break;
   case PLUGIN_VAR_LONG | PLUGIN_VAR_UNSIGNED:
-    OPTION_SET_LIMITS(GET_ULONG, options, (sysvar_ulong_t*) opt);
+    OPTION_SET_LIMITS(GET_ULONG_IS_FAIL, options, (sysvar_ulong_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG:
     OPTION_SET_LIMITS(GET_LL, options, (sysvar_int64_t_t*) opt);
@@ -2261,7 +2261,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     OPTION_SET_LIMITS(GET_LONG, options, (sessionvar_long_t*) opt);
     break;
   case PLUGIN_VAR_LONG | PLUGIN_VAR_UNSIGNED | PLUGIN_VAR_SessionLOCAL:
-    OPTION_SET_LIMITS(GET_ULONG, options, (sessionvar_ulong_t*) opt);
+    OPTION_SET_LIMITS(GET_ULONG_IS_FAIL, options, (sessionvar_ulong_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_SessionLOCAL:
     OPTION_SET_LIMITS(GET_LL, options, (sessionvar_int64_t_t*) opt);

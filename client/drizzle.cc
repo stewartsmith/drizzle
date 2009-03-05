@@ -1417,26 +1417,26 @@ static struct my_option my_long_options[] =
   {"connect_timeout", OPT_CONNECT_TIMEOUT,
    N_("Number of seconds before connection timeout."),
    (char**) &opt_connect_timeout,
-   (char**) &opt_connect_timeout, 0, GET_ULONG, REQUIRED_ARG, 0, 0, 3600*12, 0,
+   (char**) &opt_connect_timeout, 0, GET_UINT32, REQUIRED_ARG, 0, 0, 3600*12, 0,
    0, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packet length to send to, or receive from server"),
    (char**) &opt_max_allowed_packet, (char**) &opt_max_allowed_packet, 0,
-   GET_ULONG, REQUIRED_ARG, 16 *1024L*1024L, 4096,
+   GET_UINT32, REQUIRED_ARG, 16 *1024L*1024L, 4096,
    (int64_t) 2*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
    N_("Buffer for TCP/IP and socket communication"),
-   (char**) &opt_net_buffer_length, (char**) &opt_net_buffer_length, 0, GET_ULONG,
+   (char**) &opt_net_buffer_length, (char**) &opt_net_buffer_length, 0, GET_UINT32,
    REQUIRED_ARG, 16384, 1024, 512*1024*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"select_limit", OPT_SELECT_LIMIT,
    N_("Automatic limit for SELECT when using --safe-updates"),
    (char**) &select_limit,
-   (char**) &select_limit, 0, GET_ULONG, REQUIRED_ARG, 1000L, 1, ULONG_MAX,
+   (char**) &select_limit, 0, GET_UINT32, REQUIRED_ARG, 1000L, 1, ULONG_MAX,
    0, 1, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
    N_("Automatic limit for rows in a join when using --safe-updates"),
    (char**) &max_join_size,
-   (char**) &max_join_size, 0, GET_ULONG, REQUIRED_ARG, 1000000L, 1, ULONG_MAX,
+   (char**) &max_join_size, 0, GET_UINT32, REQUIRED_ARG, 1000000L, 1, ULONG_MAX,
    0, 1, 0},
   {"secure-auth", OPT_SECURE_AUTH, N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"), (char**) &opt_secure_auth,
    (char**) &opt_secure_auth, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -1444,7 +1444,7 @@ static struct my_option my_long_options[] =
    (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
   {"show-progress-size", OPT_SHOW_PROGRESS_SIZE, N_("Number of lines before each import progress report."),
-   (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_ULONG, REQUIRED_ARG,
+   (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_UINT32, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
@@ -2748,7 +2748,7 @@ static void init_tee(const char *file_name)
   FILE* new_outfile;
   if (opt_outfile)
     end_tee();
-  if (!(new_outfile= my_fopen(file_name, O_APPEND | O_WRONLY, MYF(MY_WME))))
+  if (!(new_outfile= fopen(file_name, "a")))
   {
     tee_fprintf(stdout, "Error logging to file '%s'\n", file_name);
     return;
@@ -2757,13 +2757,14 @@ static void init_tee(const char *file_name)
   strncpy(outfile, file_name, FN_REFLEN-1);
   tee_fprintf(stdout, "Logging to file '%s'\n", file_name);
   opt_outfile= 1;
+
   return;
 }
 
 
 static void end_tee()
 {
-  my_fclose(OUTFILE, MYF(0));
+  fclose(OUTFILE);
   OUTFILE= 0;
   opt_outfile= 0;
   return;
@@ -3459,7 +3460,7 @@ static int com_source(string *, const char *line)
   end[0]=0;
   unpack_filename(source_name,source_name);
   /* open file name */
-  if (!(sql_file = my_fopen(source_name, O_RDONLY,MYF(0))))
+  if (!(sql_file = fopen(source_name, "r")))
   {
     char buff[FN_REFLEN+60];
     sprintf(buff,"Failed to open file '%s', error: %d", source_name,errno);
@@ -3468,7 +3469,7 @@ static int com_source(string *, const char *line)
 
   if (!(line_buff=batch_readline_init(opt_max_allowed_packet+512,sql_file)))
   {
-    my_fclose(sql_file,MYF(0));
+    fclose(sql_file);
     return put_info("Can't initialize batch_readline", INFO_ERROR, 0 ,0);
   }
 
@@ -3486,7 +3487,7 @@ static int com_source(string *, const char *line)
   error= read_and_execute(false);
   // Continue as before
   status=old_status;
-  my_fclose(sql_file,MYF(0));
+  fclose(sql_file);
   batch_readline_end(line_buff);
   return error;
 }

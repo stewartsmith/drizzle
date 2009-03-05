@@ -267,8 +267,6 @@ public:
   static bool needs_conversion(uint32_t arg_length,
   			       const CHARSET_INFO * const cs_from, const CHARSET_INFO * const cs_to,
 			       uint32_t *offset);
-  bool copy_aligned(const char *s, uint32_t arg_length, uint32_t offset,
-		    const CHARSET_INFO * const cs);
   bool set_or_copy_aligned(const char *s, uint32_t arg_length, const CHARSET_INFO * const cs);
   bool copy(const char*s,uint32_t arg_length, const CHARSET_INFO * const csfrom,
 	    const CHARSET_INFO * const csto, uint32_t *errors);
@@ -276,7 +274,6 @@ public:
   bool append(const char *s);
   bool append(const char *s,uint32_t arg_length);
   bool append(const char *s,uint32_t arg_length, const CHARSET_INFO * const cs);
-  bool append(IO_CACHE* file, uint32_t arg_length);
   bool append_with_prefill(const char *s, uint32_t arg_length,
 			   uint32_t full_length, char fill_char);
   int strstr(const String &search,uint32_t offset=0); // Returns offset to substring or -1
@@ -297,7 +294,6 @@ public:
     }
     return 0;
   }
-  bool fill(uint32_t max_length,char fill);
   friend int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
   friend int stringcmp(const String *a,const String *b);
   friend String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
@@ -344,17 +340,6 @@ public:
   {
     int4store(Ptr + position,value);
   }
-
-  void qs_append(const char *str, uint32_t len);
-  void qs_append(double d);
-  void qs_append(double *d);
-  inline void qs_append(const char c)
-  {
-     Ptr[str_length]= c;
-     str_length++;
-  }
-  void qs_append(int i);
-  void qs_append(uint32_t i);
 
   /* Inline (general) functions used by the protocol functions */
 

@@ -38,10 +38,24 @@ AC_SUBST(SHARED_LIB_VERSION)
 
 
 dnl Checks for programs.
-AC_PROG_CC
 AC_PROG_CXX
 
 gl_USE_SYSTEM_EXTENSIONS
+if test "$GCC" = "yes"
+then
+  AC_CACHE_CHECK([if GCC is recent enough], [drizzle_cv_gcc_recent],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#if !defined(__GNUC__) || (__GNUC__ < 4)
+# error GCC is Too Old!
+#endif
+      ]])],
+      [drizzle_cv_gcc_recent=yes],
+      [drizzle_cv_gcc_recent=no])])
+  if test "$drizzle_cv_gcc_recent" = "no"
+  then
+    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.0.2])
+  fi
+fi
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
@@ -49,6 +63,7 @@ then
 fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
+
 
 gl_INIT
 
@@ -338,13 +353,24 @@ AC_LIB_PREFIX
 AC_LANG_PUSH([C++])
 AC_LIB_HAVE_LINKFLAGS(protobuf,,
 [#include <google/protobuf/descriptor.h>
-#if GOOGLE_PROTOBUF_VERSION < 2000002
-# error Your version of Protobuf is too old
-#endif
 ],
 [google::protobuf::FileDescriptor* file;])
 AS_IF([test x$ac_cv_libprotobuf = xno],
       AC_MSG_ERROR([protobuf is required for Drizzle]))
+
+AC_CACHE_CHECK([if protobuf is recent enough], [drizzle_cv_protobuf_recent],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <google/protobuf/descriptor.h>
+#if GOOGLE_PROTOBUF_VERSION < 2000002
+# error Your version of Protobuf is too old
+#endif
+    ]])],
+    [drizzle_cv_protobuf_recent=yes],
+    [drizzle_cv_protobuf_recent=no])])
+if test "$drizzle_cv_protobuf_recent" = "no"
+then
+  AC_MSG_ERROR([Your version of Google Protocol Buffers is too old. Drizzle requires at least version 2.0.2])
+fi
 
 AC_PATH_PROG([PROTOC],[protoc],[no],[$LIBPROTOBUF_PREFIX/bin:$PATH])
 if test "x$PROTOC" = "xno"
@@ -374,25 +400,6 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
   uuid_t uout;
   uuid_generate(uout);
 ])
-
-#--------------------------------------------------------------------
-# Check for libevent
-#--------------------------------------------------------------------
-
-AC_LIB_HAVE_LINKFLAGS(event,,
-[
-#include <sys/types.h>
-#include <sys/time.h>
-#include <stdlib.h>
-#include <event.h>
-],[
-  struct bufferevent bev;
-  bufferevent_settimeout(&bev, 1, 1);
-  event_init();
-  event_loop(EVLOOP_ONCE);
-]) 
-AS_IF([test x$ac_cv_libevent = xno],
-      AC_MSG_ERROR([A recent libevent is required for Drizzle. Check http://www.monkey.org/~provos/libevent ]))
 
 
 
@@ -472,14 +479,14 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 
 AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
 AS_IF([test "x$ac_cv_libpcre" = "xno"],[
-  ac_cv_libpcre=
+  unset ac_cv_libpcre
   AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
-    AS_IF([test "x$ac_cv_libpcre" = "xno"],
-          [AC_MSG_ERROR([libpcre is required for Drizzle])]
-          [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
-  ],[
-    AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
-  ])
+  AS_IF([test "x$ac_cv_libpcre" = "xno"],
+        [AC_MSG_ERROR([libpcre is required for Drizzle])]
+        [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
+],[
+  AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
+])
 
 
 dnl Find paths to some shell programs
@@ -758,9 +765,6 @@ fi
 LIBDL_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(LIBDL_LIBS)
-
-AC_CHECK_FUNCS(strtok_r)
-
 
 
 AC_ARG_WITH([fast-mutexes],

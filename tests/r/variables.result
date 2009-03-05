@@ -628,9 +628,6 @@ sql_notes	ON
 show variables like 'sql_warnings';
 Variable_name	Value
 sql_warnings	ON
-select @@system_time_zone;
-@@system_time_zone
-#
 select @@version, @@version_comment, @@version_compile_machine,
 @@version_compile_os;
 @@version	@@version_comment	@@version_compile_machine	@@version_compile_os

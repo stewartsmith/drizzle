@@ -1406,6 +1406,8 @@ static bool deletetable_handlerton(Session *,
     dtargs->file= file;
     return true;
   }
+  else
+    delete file;
 
   return false;
 }
@@ -3034,8 +3036,8 @@ int ha_table_exists_in_engine(Session* session,
 
     char path[FN_REFLEN];
     build_table_filename(path, sizeof(path),
-                         db, name, ".dfe", 0);
-    if (!access(path, F_OK))
+                         db, name, "", 0);
+    if (table_proto_exists(path)==EEXIST)
       args.err= HA_ERR_TABLE_EXIST;
     else
       args.err= HA_ERR_NO_SUCH_TABLE;
@@ -3043,6 +3045,8 @@ int ha_table_exists_in_engine(Session* session,
     if(args.err==HA_ERR_TABLE_EXIST)
     {
       drizzle::Table table;
+      build_table_filename(path, sizeof(path),
+                           db, name, ".dfe", 0);
       if(drizzle_read_table_proto(path, &table)==0)
       {
         LEX_STRING engine_name= { (char*)table.engine().name().c_str(),

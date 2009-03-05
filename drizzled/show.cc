@@ -305,8 +305,8 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
     }
     else
     {
-        // Return only .frm files which aren't temp files.
-      if (my_strcasecmp(system_charset_info, ext=fn_rext(file->name),reg_ext) ||
+      // Return only .frm files which aren't temp files.
+      if (my_strcasecmp(system_charset_info, ext=fn_rext(file->name),".dfe") ||
           is_prefix(file->name, TMP_FILE_PREFIX))
         continue;
       *ext=0;
@@ -2258,7 +2258,7 @@ static int fill_schema_table_names(Session *session, Table *table,
   {
     char path[FN_REFLEN];
     (void) build_table_filename(path, sizeof(path), db_name->str,
-                                table_name->str, reg_ext, 0);
+                                table_name->str, "", 0);
 
       table->field[3]->store(STRING_WITH_LEN("BASE Table"),
                              system_charset_info);
