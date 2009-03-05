@@ -217,12 +217,12 @@ public:
    *
    * @param Date to compare against.
    */
-  bool operator==(const Date &rhs);
-  bool operator!=(const Date &rhs);
-  bool operator>(const Date &rhs);
-  bool operator>=(const Date &rhs);
-  bool operator<(const Date &rhs);
-  bool operator<=(const Date &rhs);
+  virtual bool operator==(const Date &rhs);
+  virtual bool operator!=(const Date &rhs);
+  virtual bool operator>(const Date &rhs);
+  virtual bool operator>=(const Date &rhs);
+  virtual bool operator<(const Date &rhs);
+  virtual bool operator<=(const Date &rhs);
 
   /**
    * Comparison operator overloads to compare a Date against
@@ -230,12 +230,25 @@ public:
    *
    * @param DateTime to compare against.
    */
-  bool operator==(const DateTime &rhs);
-  bool operator!=(const DateTime &rhs);
-  bool operator>(const DateTime &rhs);
-  bool operator>=(const DateTime &rhs);
-  bool operator<(const DateTime &rhs);
-  bool operator<=(const DateTime &rhs);
+  virtual bool operator==(const DateTime &rhs);
+  virtual bool operator!=(const DateTime &rhs);
+  virtual bool operator>(const DateTime &rhs);
+  virtual bool operator>=(const DateTime &rhs);
+  virtual bool operator<(const DateTime &rhs);
+  virtual bool operator<=(const DateTime &rhs);
+
+  /**
+   * Comparison operator overloads to compare this against
+   * a Timestamp value.
+   *
+   * @param Timestamp to compare against.
+   */
+  virtual bool operator==(const Timestamp &rhs);
+  virtual bool operator!=(const Timestamp &rhs);
+  virtual bool operator>(const Timestamp &rhs);
+  virtual bool operator>=(const Timestamp &rhs);
+  virtual bool operator<(const Timestamp &rhs);
+  virtual bool operator<=(const Timestamp &rhs);
 
   /**
    * Operator overload for adding/subtracting another Date
@@ -438,6 +451,7 @@ public:
   virtual void to_decimal(my_decimal *to) const;
 
   friend class TemporalInterval;
+  friend class Timestamp;
 };
 
 /* Forward declare needed for friendship */
@@ -648,6 +662,8 @@ public:
    * @param Pointer to the my_decimal to fill
    */
   void to_decimal(my_decimal *to) const;
+
+  friend class Timestamp;
 };
 
 /**
@@ -657,6 +673,32 @@ class Timestamp: public DateTime
 {
 public:
   Timestamp() :DateTime() {}
+
+  /**
+   * Comparison operator overloads to compare this against
+   * a Date value.
+   *
+   * @param Timestamp to compare against.
+   */
+  bool operator==(const Date &rhs);
+  bool operator!=(const Date &rhs);
+  bool operator>(const Date &rhs);
+  bool operator>=(const Date &rhs);
+  bool operator<(const Date &rhs);
+  bool operator<=(const Date &rhs);
+
+  /**
+   * Comparison operator overloads to compare this against
+   * a DateTime value.
+   *
+   * @param DateTime to compare against.
+   */
+  bool operator==(const DateTime &rhs);
+  bool operator!=(const DateTime &rhs);
+  bool operator>(const DateTime &rhs);
+  bool operator>=(const DateTime &rhs);
+  bool operator<(const DateTime &rhs);
+  bool operator<=(const DateTime &rhs);
 
   /**
    * Comparison operator overloads to compare this against

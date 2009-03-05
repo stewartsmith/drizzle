@@ -991,6 +991,133 @@ Date& Date::operator-=(const TemporalIntervalDayOrLess &rhs)
 }
 #endif /* NOTYETIMPLEMENTED */
 /*
+ * Comparison operators between a Date and a Timestamp
+ */
+bool Date::operator==(const Timestamp& rhs)
+{
+  return (_years == rhs._years && _months == rhs._months && _days == rhs._days);
+}
+bool Date::operator!=(const Timestamp& rhs)
+{
+  return ! (*this == rhs);
+}
+bool Date::operator<(const Timestamp& rhs)
+{
+  if (_years < rhs._years)
+    return true;
+  if (_years > rhs._years)
+    return false;
+  /* In same year */
+  if (_months < rhs._months)
+    return true;
+  if (_months > rhs._months)
+    return false;
+  /* Same month */
+  return _days < rhs._days;
+}
+bool Date::operator<=(const Timestamp& rhs)
+{
+  return (*this < rhs || *this == rhs);
+}
+bool Date::operator>(const Timestamp& rhs)
+{
+  return ! (*this < rhs);
+}
+bool Date::operator>=(const Timestamp& rhs)
+{
+  return ! (*this <= rhs);
+}
+/*
+ * Comparison operators between a Timestamp and a Date
+ */
+bool Timestamp::operator==(const Date& rhs)
+{
+  return (_years == rhs._years && _months == rhs._months && _days == rhs._days);
+}
+bool Timestamp::operator!=(const Date& rhs)
+{
+  return ! (*this == rhs);
+}
+bool Timestamp::operator<(const Date& rhs)
+{
+  if (_years < rhs._years)
+    return true;
+  if (_years > rhs._years)
+    return false;
+  /* In same year */
+  if (_months < rhs._months)
+    return true;
+  if (_months > rhs._months)
+    return false;
+  /* Same month */
+  return _days < rhs._days;
+}
+bool Timestamp::operator<=(const Date& rhs)
+{
+  return (*this < rhs || *this == rhs);
+}
+bool Timestamp::operator>(const Date& rhs)
+{
+  return ! (*this < rhs);
+}
+bool Timestamp::operator>=(const Date& rhs)
+{
+  return ! (*this <= rhs);
+}
+/*
+ * Comparison operators between a Timestamp and a DateTime
+ */
+bool Timestamp::operator==(const DateTime& rhs)
+{
+  return (_years == rhs._years && _months == rhs._months && _days == rhs._days
+          && _hours == rhs._hours && _minutes == rhs._minutes && _seconds == rhs._seconds);
+}
+bool Timestamp::operator!=(const DateTime& rhs)
+{
+  return ! (*this == rhs);
+}
+bool Timestamp::operator<(const DateTime& rhs)
+{
+  if (_years < rhs._years)
+    return true;
+  if (_years > rhs._years)
+    return false;
+  /* In same year */
+  if (_months < rhs._months)
+    return true;
+  if (_months > rhs._months)
+    return false;
+  /* Same month */
+  if (_days < rhs._days)
+    return true;
+  if (_days > rhs._days)
+     return false;
+  /* Same day */
+  if (_hours < rhs._hours)
+    return true;
+  if (_hours > rhs._hours)
+    return false;
+  /* Same hour */
+  if (_minutes < rhs._minutes)
+    return true;
+  if (_minutes > rhs._minutes)
+    return false;
+  /* Same minute */
+  return _seconds < rhs._seconds;
+}
+bool Timestamp::operator<=(const DateTime& rhs)
+{
+  return (*this < rhs || *this == rhs);
+}
+bool Timestamp::operator>(const DateTime& rhs)
+{
+  return ! (*this < rhs);
+}
+bool Timestamp::operator>=(const DateTime& rhs)
+{
+  return ! (*this <= rhs);
+}
+/*
  * Comparison operators between two Timestamps
  */
 bool Timestamp::operator==(const Timestamp& rhs)
