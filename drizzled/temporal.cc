@@ -45,6 +45,8 @@
 #endif
 #include "drizzled/temporal_format.h"
 
+#include <ostream>
+#include <iomanip>
 #include <vector>
 #include <string.h>
 
@@ -991,29 +993,46 @@ Date& Date::operator-=(const TemporalIntervalDayOrLess &rhs)
 /*
  * Comparison operators between two Timestamps
  */
-bool Date::operator==(const Timestamp& rhs)
+bool Timestamp::operator==(const Timestamp& rhs)
 {
   return (_epoch_seconds == rhs._epoch_seconds);
 }
-bool Date::operator!=(const Timestamp& rhs)
+bool Timestamp::operator!=(const Timestamp& rhs)
 {
   return ! (*this == rhs);
 }
-bool Date::operator<(const Timestamp& rhs)
+bool Timestamp::operator<(const Timestamp& rhs)
 {
   return (_epoch_seconds < rhs._epoch_seconds);
 }
-bool Date::operator<=(const Timestamp& rhs)
+bool Timestamp::operator<=(const Timestamp& rhs)
 {
   return (_epoch_seconds <= rhs._epoch_seconds);
 }
-bool Date::operator>(const Timestamp& rhs)
+bool Timestamp::operator>(const Timestamp& rhs)
 {
   return ! (*this < rhs);
 }
-bool Date::operator>=(const Timestamp& rhs)
+bool Timestamp::operator>=(const Timestamp& rhs)
 {
   return ! (*this <= rhs);
+}
+
+/**
+ * Push the contents of the timestamp into the output stream
+ * as a formatted Timestamp value.
+ *
+ * @TODO This unfortunately fails in a weird way...even with std::noskipws, 
+ * the output stream only reads up to the space in the string... :(
+ */
+std::ostream& operator<<(std::ostream& os, const Timestamp& subject)
+{
+  return os << subject.years() << '-' 
+            << std::setw(2) << std::setfill('0') << subject.months() << '-'
+            << std::setw(2) << std::setfill('0') << subject.days() << ' '
+            << std::setw(2) << std::setfill('0') << subject.hours() << ':'
+            << std::setw(2) << std::setfill('0') << subject.minutes() << ':'
+            << std::setw(2) << std::setfill('0') << subject.seconds();
 }
 
 bool Time::from_string(const char *from, size_t from_len)
@@ -1428,18 +1447,19 @@ bool DateTime::is_valid() const
 
 bool Timestamp::is_valid() const
 {
-  return in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds);
+  return DateTime::is_valid() 
+      && in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds);
 }
 
 bool MicroTimestamp::is_valid() const
 {
-  return in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds)
+  return Timestamp::is_valid()
       && (_useconds <= UINT32_C(999999));
 }
 
 bool NanoTimestamp::is_valid() const
 {
-  return in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds)
+  return Timestamp::is_valid()
       && (_useconds <= UINT32_C(999999))
       && (_nseconds <= UINT32_C(999999999));
 }

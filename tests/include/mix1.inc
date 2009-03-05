@@ -184,7 +184,7 @@ CREATE TABLE t1 (
   a2 blob,
   a4 blob,
   a5 char(175) DEFAULT NULL,
-  a6 timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  a6 timestamp NOT NULL DEFAULT NOW(),
   a7 blob,
   INDEX idx (a6,a7(239),a5)
 ) ENGINE=InnoDB;

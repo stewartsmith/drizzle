@@ -482,13 +482,6 @@ show variables like 'sql_warnings';
 #select * from information_schema.session_variables where variable_name like 'sql_warnings';
 
 #
-# Bug #12792: @@system_time_zone is not SELECTable.
-#
-# Don't actually output, since it depends on the system
---replace_column 1 #
-select @@system_time_zone;
-
-#
 # Bug #15684: system variables cannot be SELECTed (e.g. @@version_comment)
 #
 # Don't actually output, since it depends on the system
