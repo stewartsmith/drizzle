@@ -924,7 +924,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <num>
         type int_type real_type order_dir field_def
-        if_exists opt_local opt_table_options table_options
+        if_exists opt_table_options table_options
         table_option opt_if_not_exists
         opt_temporary all_or_any opt_distinct
         union_option
@@ -5166,15 +5166,15 @@ load:
 
             lex->fname_start= lip->get_ptr();
           }
-          load_data_lock opt_local INFILE TEXT_STRING_filesystem
+          load_data_lock INFILE TEXT_STRING_filesystem
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_LOAD;
             lex->lock_option= $4;
-            lex->local_file=  $5;
+            lex->local_file=  0;
             lex->duplicates= DUP_ERROR;
             lex->ignore= 0;
-            if (!(lex->exchange= new file_exchange($7.str, 0, $2)))
+            if (!(lex->exchange= new file_exchange($6.str, 0, $2)))
               DRIZZLE_YYABORT;
           }
           opt_duplicate INTO
@@ -5187,7 +5187,7 @@ load:
           TABLE_SYM table_ident
           {
             LEX *lex=Lex;
-            if (!Select->add_table_to_list(YYSession, $13, NULL, TL_OPTION_UPDATING,
+            if (!Select->add_table_to_list(YYSession, $12, NULL, TL_OPTION_UPDATING,
                                            lex->lock_option))
               DRIZZLE_YYABORT;
             lex->field_list.empty();
@@ -5201,11 +5201,6 @@ load:
 
 data_file:
         DATA_SYM  { $$= FILETYPE_CSV; };
-
-opt_local:
-          /* empty */ { $$=0;}
-        | LOCAL_SYM { $$=1;}
-        ;
 
 load_data_lock:
           /* empty */ { $$= TL_WRITE_DEFAULT; }
