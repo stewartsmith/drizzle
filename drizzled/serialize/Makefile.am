@@ -39,23 +39,25 @@ check_PROGRAMS = length
 
 noinst_LTLIBRARIES = libserialize.la
 
-libserialize_la_SOURCES = \
+nodist_libserialize_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
 		replication_event.pb.cc \
 		schema.pb.cc \
 		table.pb.cc
 
-noinst_HEADERS= \
-		binary_log.h \
+nodist_noinst_HEADERS= \
 		binary_log.pb.h \
-		binlog_encoding.h \
-		ioutil.h \
 		master_list.pb.h \
 		replication_event.pb.h \
 		schema.pb.h \
-		serialize.h \
 		table.pb.h
+
+noinst_HEADERS= \
+		binary_log.h \
+		binlog_encoding.h \
+		ioutil.h \
+		serialize.h
 
 
 binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
