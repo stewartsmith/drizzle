@@ -1457,7 +1457,7 @@ done
 
 AC_CONFIG_COMMANDS([timestamp-h], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
-AC_CONFIG_COMMANDS([po/POTFILES.in],[
+AC_CONFIG_COMMANDS_PRE([
 if test "x$EGREP" != "x"
 then
   echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
@@ -1475,6 +1475,8 @@ then
   else
     rm po/POTFILES.in.in
   fi
+else
+  touch po/POTFILES.in
 fi
 ])
 
