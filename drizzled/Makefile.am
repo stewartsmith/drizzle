@@ -30,6 +30,10 @@ drizzledincludedir = ${includedir}/drizzled
 nobase_dist_drizzledinclude_HEADERS = \
 		alter_column.h \
 		alter_drop.h \
+		atomic/gcc_traits.h \
+		atomic/pthread_traits.h \
+		atomic/sun_studio.h \
+		atomics.h \
 		authentication.h \
 		base.h \
 		cached_item.h \
@@ -354,7 +358,7 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
-		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) \
+		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
