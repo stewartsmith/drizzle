@@ -315,11 +315,11 @@ static struct my_option my_long_options[] =
    GET_UINT, OPT_ARG, 0, 0, DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL, 0, 0, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET, "",
     (char**) &opt_max_allowed_packet, (char**) &opt_max_allowed_packet, 0,
-    GET_ULONG, REQUIRED_ARG, 24*1024*1024, 4096,
+    GET_UINT32, REQUIRED_ARG, 24*1024*1024, 4096,
    (int64_t) 2L*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH, "",
     (char**) &opt_net_buffer_length, (char**) &opt_net_buffer_length, 0,
-    GET_ULONG, REQUIRED_ARG, 1024*1024L-1025, 4096, 16*1024L*1024L,
+    GET_UINT32, REQUIRED_ARG, 1024*1024L-1025, 4096, 16*1024L*1024L,
    MALLOC_OVERHEAD-1024, 1024, 0},
   {"no-autocommit", OPT_AUTOCOMMIT,
    "Wrap tables with autocommit/commit statements.",
@@ -391,7 +391,7 @@ static struct my_option my_long_options[] =
   {"tables", OPT_TABLES, "Overrides option --databases (-B).",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"show-progress-size", OPT_SHOW_PROGRESS_SIZE, N_("Number of rows before each output progress report (requires --verbose)."),
-   (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_ULONG, REQUIRED_ARG,
+   (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_UINT32, REQUIRED_ARG,
    10000, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.",
@@ -655,8 +655,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     }
     break;
   case 'r':
-    if (!(md_result_file= my_fopen(argument, O_WRONLY,
-                                    MYF(MY_WME))))
+    if (!(md_result_file= fopen(argument, "w")))
       exit(1);
     break;
   case 'N':
@@ -976,8 +975,8 @@ static FILE* open_sql_file_for_table(const char* table)
   FILE* res;
   char filename[FN_REFLEN], tmp_path[FN_REFLEN];
   convert_dirname(tmp_path,path,NULL);
-  res= my_fopen(fn_format(filename, table, tmp_path, ".sql", 4),
-                O_WRONLY, MYF(MY_WME));
+  res= fopen(fn_format(filename, table, tmp_path, ".sql", 4), "w");
+
   return res;
 }
 
@@ -985,7 +984,7 @@ static FILE* open_sql_file_for_table(const char* table)
 static void free_resources(void)
 {
   if (md_result_file && md_result_file != stdout)
-    my_fclose(md_result_file, MYF(0));
+    fclose(md_result_file);
   free(opt_password);
   if (hash_inited(&ignore_table))
     hash_free(&ignore_table);
@@ -1461,7 +1460,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
     if (drizzleclient_query_with_error_report(drizzle, &result, query_buff))
     {
       if (path)
-        my_fclose(sql_file, MYF(MY_WME));
+        fclose(sql_file);
       return false;
     }
 
@@ -1621,7 +1620,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
         fprintf(stderr, _("%s: Can't get keys for table %s (%s)\n"),
                 my_progname, result_table, drizzleclient_error(drizzle));
         if (path)
-          my_fclose(sql_file, MYF(MY_WME));
+          fclose(sql_file);
         return false;
       }
 
@@ -1739,7 +1738,7 @@ continue_xml:
   {
     fputs("\n", sql_file);
     write_footer(sql_file);
-    my_fclose(sql_file, MYF(MY_WME));
+    fclose(sql_file);
   }
   return true;
 } /* get_table_structure */

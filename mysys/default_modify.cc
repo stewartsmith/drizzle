@@ -72,7 +72,7 @@ int modify_defaults_file(const char *file_location, const char *option,
   uint32_t new_opt_len;
   int reserve_occupied= 0;
 
-  if (!(cnf_file= my_fopen(file_location, O_RDWR, MYF(0))))
+  if (!(cnf_file= fopen(file_location, "r+")))
     return(2);
 
   if (fstat(fileno(cnf_file), &file_stat))
@@ -214,7 +214,7 @@ int modify_defaults_file(const char *file_location, const char *option,
         fwrite(file_buffer, 1, (size_t) (dst_ptr - file_buffer), cnf_file))
       goto err;
   }
-  if (my_fclose(cnf_file, MYF(MY_WME)))
+  if (fclose(cnf_file))
     return(1);
 
   free(file_buffer);
@@ -223,8 +223,9 @@ int modify_defaults_file(const char *file_location, const char *option,
 err:
   free(file_buffer);
 malloc_err:
-  my_fclose(cnf_file, MYF(0));
-  return(1); /* out of resources */
+  fclose(cnf_file);
+
+  return 1; /* out of resources */
 }
 
 

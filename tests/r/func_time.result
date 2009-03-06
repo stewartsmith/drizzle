@@ -382,25 +382,25 @@ start	ctime1	ctime2
 drop table t1,t2,t3;
 select @a:=FROM_UNIXTIME(1);
 @a:=FROM_UNIXTIME(1)
-1970-01-01 03:00:01
+1970-01-01 00:00:01
 select unix_timestamp(@a);
 unix_timestamp(@a)
 1
-select unix_timestamp('1969-12-01 19:00:01');
-unix_timestamp('1969-12-01 19:00:01')
-0
+select unix_timestamp('1970-01-01 00:00:01');
+unix_timestamp('1970-01-01 00:00:01')
+1
 select from_unixtime(-1);
 from_unixtime(-1)
 NULL
 select from_unixtime(2147483647);
 from_unixtime(2147483647)
-2038-01-19 06:14:07
+2038-01-19 03:14:07
 select from_unixtime(2147483648);
 from_unixtime(2147483648)
 NULL
 select from_unixtime(0);
 from_unixtime(0)
-1970-01-01 03:00:00
+1970-01-01 00:00:00
 select unix_timestamp(from_unixtime(2147483647));
 unix_timestamp(from_unixtime(2147483647))
 2147483647
@@ -408,32 +408,23 @@ select unix_timestamp(from_unixtime(2147483648));
 unix_timestamp(from_unixtime(2147483648))
 NULL
 select unix_timestamp('2039-01-20 01:00:00');
-unix_timestamp('2039-01-20 01:00:00')
-0
+ERROR HY000: Received an invalid value '2039-01-20 01:00:00' for a UNIX timestamp.
 select unix_timestamp('1968-01-20 01:00:00');
-unix_timestamp('1968-01-20 01:00:00')
-0
+ERROR HY000: Received an invalid value '1968-01-20 01:00:00' for a UNIX timestamp.
 select unix_timestamp('2038-02-10 01:00:00');
-unix_timestamp('2038-02-10 01:00:00')
-0
+ERROR HY000: Received an invalid value '2038-02-10 01:00:00' for a UNIX timestamp.
 select unix_timestamp('1969-11-20 01:00:00');
-unix_timestamp('1969-11-20 01:00:00')
-0
+ERROR HY000: Received an invalid value '1969-11-20 01:00:00' for a UNIX timestamp.
 select unix_timestamp('2038-01-20 01:00:00');
-unix_timestamp('2038-01-20 01:00:00')
-0
+ERROR HY000: Received an invalid value '2038-01-20 01:00:00' for a UNIX timestamp.
 select unix_timestamp('1969-12-30 01:00:00');
-unix_timestamp('1969-12-30 01:00:00')
-0
+ERROR HY000: Received an invalid value '1969-12-30 01:00:00' for a UNIX timestamp.
 select unix_timestamp('2038-01-17 12:00:00');
 unix_timestamp('2038-01-17 12:00:00')
-2147331600
-select unix_timestamp('1970-01-01 03:00:01');
-unix_timestamp('1970-01-01 03:00:01')
-1
-select unix_timestamp('2038-01-19 07:14:07');
-unix_timestamp('2038-01-19 07:14:07')
-0
+2147342400
+select unix_timestamp('2038-01-19 03:14:07');
+unix_timestamp('2038-01-19 03:14:07')
+2147483647
 CREATE TABLE t1 (datetime datetime, timestamp timestamp, date date);
 INSERT INTO t1 values ("2001-01-02 03:04:05", "2002-01-02 03:04:05", "2003-01-02");
 SELECT * from t1;
@@ -666,11 +657,11 @@ last_day("1997-12-1")+0
 select last_day("1997-12-1")+0.0;
 last_day("1997-12-1")+0.0
 19971231.0
-select strcmp(date_sub(localtimestamp(), interval 3 hour), utc_timestamp())=0;
-strcmp(date_sub(localtimestamp(), interval 3 hour), utc_timestamp())=0
+select strcmp(date_sub(localtimestamp(), interval 0 hour), utc_timestamp())=0;
+strcmp(date_sub(localtimestamp(), interval 0 hour), utc_timestamp())=0
 1
-select strcmp(date_format(date_sub(localtimestamp(), interval 3 hour),"%Y-%m-%d"), utc_date())=0;
-strcmp(date_format(date_sub(localtimestamp(), interval 3 hour),"%Y-%m-%d"), utc_date())=0
+select strcmp(date_format(date_sub(localtimestamp(), interval 0 hour),"%Y-%m-%d"), utc_date())=0;
+strcmp(date_format(date_sub(localtimestamp(), interval 0 hour),"%Y-%m-%d"), utc_date())=0
 1
 select strcmp(date_format(utc_timestamp(),"%Y-%m-%d"), utc_date())=0;
 strcmp(date_format(utc_timestamp(),"%Y-%m-%d"), utc_date())=0

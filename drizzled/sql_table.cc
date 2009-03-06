@@ -124,8 +124,8 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
                     system_charset_info,  to, to_length, &errors);
     if (errors) // Old 5.0 name
     {
-      strcpy(to, MYSQL50_TABLE_NAME_PREFIX);
-      strncat(to, from, to_length-MYSQL50_TABLE_NAME_PREFIX_LENGTH-1);
+      to[0]='\0';
+      strncat(to, from, to_length-1);
       res= strlen(to);
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid (old?) table or database name '%s'"), from);
     }
@@ -151,11 +151,6 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 {
   uint32_t errors, length;
 
-  if (from[0] == '#' && !strncmp(from, MYSQL50_TABLE_NAME_PREFIX,
-                                 MYSQL50_TABLE_NAME_PREFIX_LENGTH))
-    return((uint32_t) (strncpy(to, from+MYSQL50_TABLE_NAME_PREFIX_LENGTH,
-                           to_length-1) -
-                           (from + MYSQL50_TABLE_NAME_PREFIX_LENGTH)));
   length= strconvert(system_charset_info, from,
                      &my_charset_filename, to, to_length, &errors);
   if (check_if_legal_tablename(to) &&
@@ -268,7 +263,7 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 
   path_str << drizzle_tmpdir;
   post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
-  post_tmpdir_str << session->thread_id << session->tmp_table++ << reg_ext;
+  post_tmpdir_str << session->thread_id << session->tmp_table++;
   tmp= post_tmpdir_str.str();
 
   if (lower_case_table_names)
@@ -510,13 +505,12 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       }
       alias= (lower_case_table_names == 2) ? table->alias : table->table_name;
       /* remove .frm file and engine files */
-      path_length= build_table_filename(path, sizeof(path), db, alias, reg_ext,
+      path_length= build_table_filename(path, sizeof(path), db, alias, "",
                                         table->internal_tmp_table ?
                                         FN_IS_TMP : 0);
     }
     if (drop_temporary ||
-        ((table_type == NULL && (access(path, F_OK))))
-        )
+        ((table_type == NULL && (table_proto_exists(path)!=EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -528,9 +522,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
     else
     {
-      char *end;
-      // Remove extension for delete
-      *(end= path + path_length - reg_ext_length)= '\0';
       error= ha_delete_table(session, path, db, table->table_name,
                              !dont_log_query);
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) &&
@@ -548,13 +539,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       {
         int new_error;
 
-        /* for some weird-ass reason, we ignore the return code here
-           and things work. */
-        delete_table_proto_file(path);
-
-        /* Delete the table definition file */
-        strcpy(end,reg_ext);
-        if (!(new_error=my_delete(path,MYF(MY_WME))))
+        if (!(new_error= delete_table_proto_file(path)))
         {
           some_tables_deleted=1;
           new_error= 0;
@@ -662,14 +647,9 @@ bool quick_rm_table(handlerton *,const char *db,
   char path[FN_REFLEN];
   bool error= 0;
 
-  uint32_t path_length= build_table_filename(path, sizeof(path),
-                                         db, table_name, reg_ext, flags);
-  if (my_delete(path,MYF(0)))
-    error= 1; /* purecov: inspected */
+  build_table_filename(path, sizeof(path), db, table_name, "", flags);
 
-  path[path_length - reg_ext_length]= '\0'; // Remove reg_ext
-
-  error|= delete_table_proto_file(path);
+  error= delete_table_proto_file(path);
 
   return(ha_delete_table(current_session, path, db, table_name, 0) ||
               error);
@@ -1785,7 +1765,7 @@ bool mysql_create_table_no_lock(Session *session,
       return(true);
     }
 #endif
-    path_length= build_table_filename(path, sizeof(path), db, alias, reg_ext,
+    path_length= build_table_filename(path, sizeof(path), db, alias, "",
                                       internal_tmp_table ? FN_IS_TMP : 0);
   }
 
@@ -1810,7 +1790,7 @@ bool mysql_create_table_no_lock(Session *session,
     pthread_mutex_lock(&LOCK_open);
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (!access(path,F_OK))
+    if (table_proto_exists(path)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
         goto warn;
@@ -1891,7 +1871,6 @@ bool mysql_create_table_no_lock(Session *session,
   }
   create_info->table_options=db_options;
 
-  path[path_length - reg_ext_length]= '\0'; // Remove .frm extension
   if (rea_create_table(session, path, db, table_name,
                        create_info, alter_info->create_list,
                        key_count, key_info_buffer, file, false))
@@ -2123,19 +2102,10 @@ mysql_rename_table(handlerton *base, const char *old_db,
   }
   if (!file || !(error=file->ha_rename_table(from_base, to_base)))
   {
-    if (!(flags & NO_FRM_RENAME) && rename_file_ext(from,to,reg_ext))
-    {
-      error=my_errno;
-      /* Restore old file name */
-      if (file)
-        file->ha_rename_table(to_base, from_base);
-    }
-
     if(!(flags & NO_FRM_RENAME)
        && rename_table_proto_file(from_base, to_base))
     {
-      error= errno;
-      rename_file_ext(to, from, reg_ext);
+      error= my_errno;
       if (file)
         file->ha_rename_table(to_base, from_base);
     }
@@ -2941,7 +2911,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   if (open_tables(session, &src_table, &not_used, 0))
     return(true);
 
-  sprintf(src_path,"%s%s",src_table->table->s->path.str, reg_ext);
+  strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
 
   /*
     Check that destination tables does not exist. Note that its name
@@ -2961,8 +2931,8 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     if (!name_lock)
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
-                                          db, table_name, reg_ext, 0);
-    if (!access(dst_path, F_OK))
+                                          db, table_name, "", 0);
+    if (table_proto_exists(dst_path)==EEXIST)
       goto table_exists;
   }
 
@@ -2990,18 +2960,9 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   }
   else
   {
-    int frmcopyr= my_copy(src_path, dst_path, MYF(MY_DONT_OVERWRITE_FILE));
+    int dfecopyr= copy_table_proto_file(src_path, dst_path);
 
-    string dfesrc(src_path);
-    string dfedst(dst_path);
-
-    dfesrc.replace(dfesrc.find(".frm"), 4, ".dfe" );
-    dfedst.replace(dfedst.find(".frm"), 4, ".dfe" );
-
-    int dfecopyr= my_copy(dfesrc.c_str(), dfedst.c_str(),
-			  MYF(MY_DONT_OVERWRITE_FILE));
-
-    if(frmcopyr || dfecopyr) // FIXME: should handle only one fail.
+    if(dfecopyr)
     {
       if (my_errno == ENOENT)
 	my_error(ER_BAD_DB_ERROR,MYF(0),db);
@@ -3017,7 +2978,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     creation, instead create the table directly (for both normal
     and temporary tables).
   */
-  dst_path[dst_path_length - reg_ext_length]= '\0';  // Remove .frm
+
   if (session->variables.keep_files_on_create)
     create_info->options|= HA_CREATE_KEEP_FILES;
   err= ha_create_table(session, dst_path, db, table_name, create_info, 1);
@@ -4419,7 +4380,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     return(mysql_discard_or_import_tablespace(session,table_list,
                                               alter_info->tablespace_op));
   ostringstream oss;
-  oss << drizzle_data_home << "/" << db << "/" << table_name << reg_ext;
+  oss << drizzle_data_home << "/" << db << "/" << table_name;
 
   (void) unpack_filename(new_name_buff, oss.str().c_str());
   /*
@@ -4484,8 +4445,8 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
         }
 
         build_table_filename(new_name_buff, sizeof(new_name_buff),
-                             new_db, new_name_buff, reg_ext, 0);
-        if (!access(new_name_buff, F_OK))
+                             new_db, new_name_buff, "", 0);
+        if (table_proto_exists(new_name_buff)==EEXIST)
 	{
 	  /* Table will be closed in do_command() */
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -4597,7 +4558,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (!access(new_name_buff,F_OK))
+      if (table_proto_exists(new_name)==EEXIST)
       {
 	my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
 	error= -1;

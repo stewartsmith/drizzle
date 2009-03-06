@@ -16,6 +16,7 @@
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 #include <libdrizzleclient/libdrizzle.h>
+#include <libdrizzleclient/errmsg.h>
 #include <mysys/hash.h>
 #include <drizzled/logging.h>
 #include <drizzled/db.h>
@@ -363,10 +364,11 @@ bool do_command(Session *session)
   {
     /* Check if we can continue without closing the connection */
 
-    /* The error must be set. */
-    /* This assert is killing me - and tracking down why the error isn't
-     * set here is a waste since the protocol lib is being replaced. */ 
-    //assert(session->is_error());
+    if(net->last_errno== CR_NET_PACKET_TOO_LARGE)
+      my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
+    /* Assert is invalid for dirty connection shutdown
+     *     assert(session->is_error());
+     */
     drizzleclient_net_end_statement(session);
 
     if (net->error != 3)

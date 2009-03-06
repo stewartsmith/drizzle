@@ -88,7 +88,6 @@ libmysys_la_SOURCES= \
 		my_error.cc \
 		my_file.cc \
 		my_filename.cc \
-		my_fopen.cc \
 		my_getopt.cc \
 		my_getsystime.cc \
 		my_init.cc \

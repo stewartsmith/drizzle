@@ -341,8 +341,6 @@ extern int check_if_legal_tablename(const char *path);
 extern void TERMINATE(FILE *file, uint32_t flag);
 #endif
 extern void init_glob_errs(void);
-extern FILE *my_fopen(const char *FileName,int Flags,myf MyFlags);
-extern int my_fclose(FILE *fd,myf MyFlags);
 extern int my_sync(File fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
 extern int my_sync_dir_by_file(const char *file_name, myf my_flags);

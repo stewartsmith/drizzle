@@ -75,21 +75,25 @@ static void *kill_server(void *sig_ptr)
 */
 static void create_pid_file()
 {
-  File file;
-  if ((file = my_create(pidfile_name,0664,
-			O_WRONLY | O_TRUNC, MYF(MY_WME))) >= 0)
+  int file;
+  char buff[1024];
+
+  assert(pidfile_name[0]);
+  if ((file = open(pidfile_name, O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
   {
-    char buff[21], *end;
-    end= int10_to_str((long) getpid(), buff, 10);
-    *end++= '\n';
-    if (!my_write(file, (unsigned char*) buff, (uint32_t) (end-buff), MYF(MY_WME | MY_NABP)))
+    int length;
+
+    length= snprintf(buff, 1024, "%ld\n", (long) getpid()); 
+
+    if ((write(file, buff, length)) == length)
     {
-      (void) my_close(file, MYF(0));
-      return;
+      if (close(file) != -1)
+        return;
     }
-    (void) my_close(file, MYF(0));
+    (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
   }
-  sql_perror("Can't start server: can't create PID file");
+  snprintf(buff, 1024, "Can't start server: can't create PID file (%s)", pidfile_name);
+  sql_perror(buff);
   exit(1);
 }
 

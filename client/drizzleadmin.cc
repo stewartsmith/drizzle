@@ -95,10 +95,10 @@ static struct my_option my_long_options[] =
   {"wait", 'w', N_("Wait and retry if connection is down."), 0, 0, 0, GET_UINT,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"connect_timeout", OPT_CONNECT_TIMEOUT, "", (char**) &opt_connect_timeout,
-   (char**) &opt_connect_timeout, 0, GET_ULONG, REQUIRED_ARG, 3600*12, 0,
+   (char**) &opt_connect_timeout, 0, GET_UINT32, REQUIRED_ARG, 3600*12, 0,
    3600*12, 0, 1, 0},
   {"shutdown_timeout", OPT_SHUTDOWN_TIMEOUT, "", (char**) &opt_shutdown_timeout,
-   (char**) &opt_shutdown_timeout, 0, GET_ULONG, REQUIRED_ARG,
+   (char**) &opt_shutdown_timeout, 0, GET_UINT32, REQUIRED_ARG,
    SHUTDOWN_DEF_TIMEOUT, 0, 3600*12, 0, 1, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };

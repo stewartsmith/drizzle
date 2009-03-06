@@ -176,6 +176,7 @@ static int check_connection(Session *session)
   {
     /* buff[] needs to big enough to hold the server_version variable */
     char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
+
     server_capabilites= CLIENT_BASIC_FLAGS;
 
     if (opt_using_transactions)
@@ -205,7 +206,9 @@ static int check_connection(Session *session)
       part at the end of packet.
     */
     end= strncpy(end, session->scramble, SCRAMBLE_LENGTH_323);
-    end+= SCRAMBLE_LENGTH_323 + 1;
+    end+= SCRAMBLE_LENGTH_323;
+
+    *end++= 0; /* an empty byte for some reason */
 
     int2store(end, server_capabilites);
     /* write server characteristics: up to 16 bytes allowed */
@@ -216,7 +219,9 @@ static int check_connection(Session *session)
     /* write scramble tail */
     size_t scramble_len= SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323;
     end= strncpy(end, session->scramble + SCRAMBLE_LENGTH_323, scramble_len);
-    end+= scramble_len + 1;
+    end+= scramble_len;
+
+    *end++= 0; /* an empty byte for some reason */
 
     /* At this point we write connection message and read reply */
     if (drizzleclient_net_write_command(net, (unsigned char) protocol_version, (unsigned char*) "", 0,

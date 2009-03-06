@@ -177,10 +177,6 @@ typedef int  File;    /* File descriptor */
 #error "please add -DSTACK_DIRECTION=1 or -1 to your CPPFLAGS"
 #endif
 
-#if !defined(HAVE_STRTOK_R)
-#define strtok_r(A,B,C) strtok((A),(B))
-#endif
-
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #else
