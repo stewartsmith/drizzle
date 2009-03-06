@@ -318,8 +318,8 @@ AC_ARG_WITH([debug],
 if test "$with_debug" = "yes"
 then
   # Debuging. No optimization.
-  CFLAGS="${DEBUG_CFLAGS} -DDEBUG ${CFLAGS}"
-  CXXFLAGS="${DEBUG_CXXFLAGS} -DDEBUG ${CXXFLAGS}"
+  CFLAGS="${DEBUG_CFLAGS} ${CFLAGS}"
+  CXXFLAGS="${DEBUG_CXXFLAGS} ${CXXFLAGS}"
 else
   # Optimized version. No debug
   CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS}"
