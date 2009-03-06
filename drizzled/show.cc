@@ -45,6 +45,8 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -1222,33 +1224,33 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
   Status functions
 *****************************************************************************/
 
-static DYNAMIC_ARRAY all_status_vars;
+static vector<SHOW_VAR *> all_status_vars;
 static bool status_vars_inited= 0;
 int show_var_cmp(const void *var1, const void *var2)
 {
   return strcmp(((SHOW_VAR*)var1)->name, ((SHOW_VAR*)var2)->name);
 }
 
-/*
-  deletes all the SHOW_UNDEF elements from the array and calls
-  delete_dynamic() if it's completely empty.
-*/
-static void shrink_var_array(DYNAMIC_ARRAY *array)
+class show_var_cmp_functor
 {
-  uint32_t a,b;
-  SHOW_VAR *all= dynamic_element(array, 0, SHOW_VAR *);
-
-  for (a= b= 0; b < array->elements; b++)
-    if (all[b].type != SHOW_UNDEF)
-      all[a++]= all[b];
-  if (a)
+  public:
+  show_var_cmp_functor() { }
+  inline bool operator()(const SHOW_VAR *var1, const SHOW_VAR *var2) const
   {
-    memset(all+a, 0, sizeof(SHOW_VAR)); // writing NULL-element to the end
-    array->elements= a;
+    int val= strcmp(var1->name, var2->name);
+    return (val < 0);
   }
-  else // array is completely empty - delete it
-    delete_dynamic(array);
-}
+};
+
+class show_var_remove_if
+{
+  public:
+  show_var_remove_if() { }
+  inline bool operator()(const SHOW_VAR *curr) const
+  {
+    return (curr->type == SHOW_UNDEF);
+  }
+};
 
 /*
   Adds an array of SHOW_VAR entries to the output of SHOW STATUS
@@ -1266,27 +1268,17 @@ static void shrink_var_array(DYNAMIC_ARRAY *array)
     As a special optimization, if add_status_vars() is called before
     init_status_vars(), it assumes "startup mode" - neither concurrent access
     to the array nor SHOW STATUS are possible (thus it skips locks and qsort)
-
-    The last entry of the all_status_vars[] should always be {0,0,SHOW_UNDEF}
 */
 int add_status_vars(SHOW_VAR *list)
 {
   int res= 0;
   if (status_vars_inited)
     pthread_mutex_lock(&LOCK_status);
-  if (!all_status_vars.buffer && // array is not allocated yet - do it now
-      my_init_dynamic_array(&all_status_vars, sizeof(SHOW_VAR), 200, 20))
-  {
-    res= 1;
-    goto err;
-  }
   while (list->name)
-    res|= insert_dynamic(&all_status_vars, (unsigned char*)list++);
-  res|= insert_dynamic(&all_status_vars, (unsigned char*)list); // appending NULL-element
-  all_status_vars.elements--; // but next insert_dynamic should overwite it
+    all_status_vars.insert(all_status_vars.begin(), list++);
   if (status_vars_inited)
-    sort_dynamic(&all_status_vars, show_var_cmp);
-err:
+    sort(all_status_vars.begin(), all_status_vars.end(),
+         show_var_cmp_functor());
   if (status_vars_inited)
     pthread_mutex_unlock(&LOCK_status);
   return res;
@@ -1302,19 +1294,20 @@ err:
 */
 void init_status_vars()
 {
-  status_vars_inited=1;
-  sort_dynamic(&all_status_vars, show_var_cmp);
+  status_vars_inited= 1;
+  sort(all_status_vars.begin(), all_status_vars.end(),
+       show_var_cmp_functor());
 }
 
 void reset_status_vars()
 {
-  SHOW_VAR *ptr= (SHOW_VAR*) all_status_vars.buffer;
-  SHOW_VAR *last= ptr + all_status_vars.elements;
-  for (; ptr < last; ptr++)
+  vector<SHOW_VAR *>::iterator p= all_status_vars.begin();
+  while (p != all_status_vars.end())
   {
     /* Note that SHOW_LONG_NOFLUSH variables are not reset */
-    if (ptr->type == SHOW_LONG)
-      *(ulong*) ptr->value= 0;
+    if ((*p)->type == SHOW_LONG)
+      (*p)->value= 0;
+    ++p;
   }
 }
 
@@ -1324,12 +1317,12 @@ void reset_status_vars()
   DESCRIPTION
     This function is not strictly required if all add_to_status/
     remove_status_vars are properly paired, but it's a safety measure that
-    deletes everything from the all_status_vars[] even if some
+    deletes everything from the all_status_vars vector even if some
     remove_status_vars were forgotten
 */
 void free_status_vars()
 {
-  delete_dynamic(&all_status_vars);
+  all_status_vars.clear();
 }
 
 /*
@@ -1351,13 +1344,13 @@ void remove_status_vars(SHOW_VAR *list)
   if (status_vars_inited)
   {
     pthread_mutex_lock(&LOCK_status);
-    SHOW_VAR *all= dynamic_element(&all_status_vars, 0, SHOW_VAR *);
-    int a= 0, b= all_status_vars.elements, c= (a+b)/2;
+    SHOW_VAR *all= all_status_vars.front();
+    int a= 0, b= all_status_vars.size(), c= (a+b)/2;
 
     for (; list->name; list++)
     {
       int res= 0;
-      for (a= 0, b= all_status_vars.elements; b-a > 1; c= (a+b)/2)
+      for (a= 0, b= all_status_vars.size(); b-a > 1; c= (a+b)/2)
       {
         res= show_var_cmp(list, all+c);
         if (res < 0)
@@ -1370,16 +1363,19 @@ void remove_status_vars(SHOW_VAR *list)
       if (res == 0)
         all[c].type= SHOW_UNDEF;
     }
-    shrink_var_array(&all_status_vars);
+    /* removes all the SHOW_UNDEF elements from the vector */
+    all_status_vars.erase(std::remove_if(all_status_vars.begin(),
+                            all_status_vars.end(),show_var_remove_if()),
+                            all_status_vars.end());
     pthread_mutex_unlock(&LOCK_status);
   }
   else
   {
-    SHOW_VAR *all= dynamic_element(&all_status_vars, 0, SHOW_VAR *);
+    SHOW_VAR *all= all_status_vars.front();
     uint32_t i;
     for (; list->name; list++)
     {
-      for (i= 0; i < all_status_vars.elements; i++)
+      for (i= 0; i < all_status_vars.size(); i++)
       {
         if (show_var_cmp(list, all+i))
           continue;
@@ -1387,7 +1383,10 @@ void remove_status_vars(SHOW_VAR *list)
         break;
       }
     }
-    shrink_var_array(&all_status_vars);
+    /* removes all the SHOW_UNDEF elements from the vector */
+    all_status_vars.erase(std::remove_if(all_status_vars.begin(),
+                            all_status_vars.end(),show_var_remove_if()),
+                            all_status_vars.end());
   }
 }
 
@@ -3569,7 +3568,7 @@ int fill_status(Session *session, TableList *tables, COND *)
   if (option_type == OPT_GLOBAL)
     calc_sum_of_all_status(&tmp);
   res= show_status_array(session, wild,
-                         (SHOW_VAR *)all_status_vars.buffer,
+                         (SHOW_VAR *) all_status_vars.front(),
                          option_type, tmp1, "", tables->table,
                          upper_case_names);
   pthread_mutex_unlock(&LOCK_status);
