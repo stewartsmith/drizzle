@@ -1100,14 +1100,7 @@ class compare_functor
   {
     int val= key_compare(key_compare_arg,
                       &i->key, &j->key);
-    if (val < 0)
-    {
-      return false;
-    }
-    else
-    {
-      return true;
-    }
+    return (val >= 0);
   }
 };
 
