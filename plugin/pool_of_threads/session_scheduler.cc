@@ -50,14 +50,13 @@ session_scheduler::session_scheduler(Session *parent_session)
 bool session_scheduler::thread_attach()
 {
   assert(!thread_attached);
-  Session* session= sess;
-  if (libevent_should_close_connection(session) ||
-      setup_connection_thread_globals(session))
+  if (libevent_should_close_connection(sess) ||
+      setup_connection_thread_globals(sess))
   {
     return true;
   }
   my_errno= 0;
-  session->mysys_var->abort= 0;
+  sess->mysys_var->abort= 0;
   thread_attached= true;
 
   return false;
@@ -72,8 +71,7 @@ void session_scheduler::thread_detach()
 {
   if (thread_attached)
   {
-    Session* session= sess;
-    session->mysys_var= NULL;
+    sess->mysys_var= NULL;
     thread_attached= false;
   }
 }
