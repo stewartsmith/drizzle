@@ -1648,19 +1648,8 @@ end_with_restore_list:
   case SQLCOM_LOAD:
   {
     assert(first_table == all_tables && first_table != 0);
-    if (lex->local_file)
-    {
-      if (!(session->client_capabilities & CLIENT_LOCAL_FILES) ||
-          !opt_local_infile)
-      {
-	my_message(ER_NOT_ALLOWED_COMMAND, ER(ER_NOT_ALLOWED_COMMAND), MYF(0));
-	goto error;
-      }
-    }
-
     res= mysql_load(session, lex->exchange, first_table, lex->field_list,
-                    lex->update_list, lex->value_list, lex->duplicates,
-                    lex->ignore, (bool) lex->local_file);
+                    lex->update_list, lex->value_list, lex->duplicates, lex->ignore);
     break;
   }
 

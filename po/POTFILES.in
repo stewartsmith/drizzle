@@ -34,7 +34,6 @@ gnulib/getopt.c
 libdrizzleclient/client.c
 libdrizzleclient/drizzle.c
 libdrizzleclient/errmsg.c
-libdrizzleclient/local_infile.c
 mysys/errors.cc
 mysys/my_error.cc
 mysys/my_getopt.cc

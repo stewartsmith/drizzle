@@ -59,10 +59,16 @@ fi
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
-  AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
+  AC_MSG_ERROR([No working C++ Compiler has been found. Drizzle requires a C++ compiler that can handle C++98])
 fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
+
+if test "$am_cv_prog_cc_stdc" = "no"
+then
+  AC_MSG_ERROR([Drizzle requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
+fi
+
 
 
 gl_INIT
@@ -174,7 +180,7 @@ AC_PROG_AWK
 
 AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
-      AC_MSG_ERROR("Drizzle requires gperf to build. Please install it."))
+      AC_MSG_ERROR("Drizzle requires gperf to build."))
 
 AC_PATH_PROG(LCOV, lcov)
 AC_PATH_PROG(GENHTML, genhtml)
@@ -318,8 +324,8 @@ AC_ARG_WITH([debug],
 if test "$with_debug" = "yes"
 then
   # Debuging. No optimization.
-  CFLAGS="${DEBUG_CFLAGS} -DDEBUG ${CFLAGS}"
-  CXXFLAGS="${DEBUG_CXXFLAGS} -DDEBUG ${CXXFLAGS}"
+  CFLAGS="${DEBUG_CFLAGS} ${CFLAGS}"
+  CXXFLAGS="${DEBUG_CXXFLAGS} ${CXXFLAGS}"
 else
   # Optimized version. No debug
   CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS}"
@@ -356,7 +362,7 @@ AC_LIB_HAVE_LINKFLAGS(protobuf,,
 ],
 [google::protobuf::FileDescriptor* file;])
 AS_IF([test x$ac_cv_libprotobuf = xno],
-      AC_MSG_ERROR([protobuf is required for Drizzle]))
+      AC_MSG_ERROR([protobuf is required for Drizzle. On Debian this can be found in libprotobuf-dev. On RedHat this can be found in protobuf-devel.]))
 
 AC_CACHE_CHECK([if protobuf is recent enough], [drizzle_cv_protobuf_recent],
   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -375,7 +381,7 @@ fi
 AC_PATH_PROG([PROTOC],[protoc],[no],[$LIBPROTOBUF_PREFIX/bin:$PATH])
 if test "x$PROTOC" = "xno"
 then
-  AC_MSG_ERROR([Couldn't find protoc. Try installing Google Protocol Buffer.])
+  AC_MSG_ERROR([Couldn't find the protoc compiler. On Debian this can be found in protobuf-compiler. On RedHat this can be found in protobuf-compiler.])
 fi
 
 AC_LANG_POP()
@@ -390,7 +396,7 @@ dnl not be a lib is weird.
 AC_CHECK_HEADERS(uuid/uuid.h)
 if test "x$ac_cv_header_uuid_uuid_h" = "xno"
 then
-  AC_MSG_ERROR([Couldn't find uuid/uuid.h. Try installing libuuid development packages])
+  AC_MSG_ERROR([Couldn't find uuid/uuid.h. On Debian this can be found in uuid-dev. On Redhat this can be found in e2fsprogs-devel.])
 fi
 AC_LIB_HAVE_LINKFLAGS(uuid,,
 [
@@ -456,7 +462,7 @@ AC_LIB_HAVE_LINKFLAGS(z,,
   crc32(0, Z_NULL, 0);
 ])
 AS_IF([test x$ac_cv_libz = xno],
-      AC_MSG_ERROR([libz is required for Drizzle]))
+      AC_MSG_ERROR([libz is required for Drizzle. On Debian this can be found in zlib1g-dev. On RedHat this can be found in zlib-devel.]))
 
 #--------------------------------------------------------------------
 # Check for TBB
@@ -485,7 +491,7 @@ save_LIBS="${LIBS}"
 LIBS=""
 VL_LIB_READLINE
 AS_IF([test "x$vl_cv_lib_readline" = "xno"],
-      AC_MSG_ERROR([libreadline is required for Drizzle]))
+      AC_MSG_ERROR([libreadline is required for Drizzle. On Debian this can be found in libreadline5-dev. On RedHat this can be found in readline-devel.]))
 READLINE_LIBS="${LIBS}"
 LIBS="${save_LIBS}"
 AC_SUBST(READLINE_LIBS)
@@ -501,7 +507,7 @@ AS_IF([test "x$ac_cv_libpcre" = "xno"],[
   unset ac_cv_libpcre
   AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
   AS_IF([test "x$ac_cv_libpcre" = "xno"],
-        [AC_MSG_ERROR([libpcre is required for Drizzle])]
+        [AC_MSG_ERROR([libpcre is required for Drizzle. On Debian this can be found in libpcre3-dev. On RedHat this can be found in pcre-devel.])]
         [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
 ],[
   AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
@@ -623,12 +629,6 @@ AC_MSG_RESULT("$CHECK_PID")
 
 # Check if we need noexec stack for assembler
 AC_CHECK_NOEXECSTACK
-
-if test "$am_cv_prog_cc_stdc" = "no"
-then
-  AC_MSG_ERROR([Drizzle requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
-fi
-
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -1457,7 +1457,7 @@ done
 
 AC_CONFIG_COMMANDS([timestamp-h], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
-AC_CONFIG_COMMANDS([po/POTFILES.in],[
+AC_CONFIG_COMMANDS_PRE([
 if test "x$EGREP" != "x"
 then
   echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
@@ -1475,6 +1475,8 @@ then
   else
     rm po/POTFILES.in.in
   fi
+else
+  touch po/POTFILES.in
 fi
 ])
 

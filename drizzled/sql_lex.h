@@ -1358,7 +1358,7 @@ public:
     query (0 if no derived tables, otherwise DERIVED_SUBQUERY).
   */
   uint8_t derived_tables;
-  bool drop_if_exists, drop_temporary, local_file, one_shot_set;
+  bool drop_if_exists, drop_temporary, one_shot_set;
   bool autocommit;
   bool verbose;
 

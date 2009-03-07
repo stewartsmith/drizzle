@@ -46,7 +46,6 @@ libdrizzleclient_la_SOURCES = client.c \
 			get_password.c \
 			libdrizzle.c \
 			libdrizzle_priv.c \
-			local_infile.c \
 			net_serv.c \
 			pack.c \
 			password.c \
@@ -56,8 +55,7 @@ libdrizzleclient_la_SOURCES = client.c \
 libdrizzleclient_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@
 libdrizzleclient_la_LIBADD = $(LIBZ)
 
-noinst_HEADERS =	libdrizzle_priv.h \
-			local_infile.h
+noinst_HEADERS =	libdrizzle_priv.h
 
 EXTRA_DIST =		libdrizzleclient.ver
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
