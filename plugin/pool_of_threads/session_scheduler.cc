@@ -40,7 +40,7 @@ session_scheduler::session_scheduler(Session *parent_session)
   event_set(&io_event, drizzleclient_net_get_sd(&(parent_session->net)), EV_READ,
             libevent_io_callback, (void*)parent_session);
 
-  sess= parent_session;
+  session= parent_session;
 }
 
 /*
@@ -50,13 +50,13 @@ session_scheduler::session_scheduler(Session *parent_session)
 bool session_scheduler::thread_attach()
 {
   assert(!thread_attached);
-  if (libevent_should_close_connection(sess) ||
-      setup_connection_thread_globals(sess))
+  if (libevent_should_close_connection(session) ||
+      setup_connection_thread_globals(session))
   {
     return true;
   }
   my_errno= 0;
-  sess->mysys_var->abort= 0;
+  session->mysys_var->abort= 0;
   thread_attached= true;
 
   return false;
@@ -71,7 +71,7 @@ void session_scheduler::thread_detach()
 {
   if (thread_attached)
   {
-    sess->mysys_var= NULL;
+    session->mysys_var= NULL;
     thread_attached= false;
   }
 }

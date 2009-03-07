@@ -22,7 +22,7 @@ class session_scheduler
 public:
   bool logged_in;
   struct event io_event;
-  Session *sess;
+  Session *session;
   bool thread_attached;  /* Indicates if Session is attached to the OS thread */
 
   session_scheduler(Session *);

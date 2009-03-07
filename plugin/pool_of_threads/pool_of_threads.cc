@@ -177,8 +177,8 @@ void libevent_io_callback(int, short, void *ctx)
   Session *session= (Session*)ctx;
   session_scheduler *scheduler= (session_scheduler *)session->scheduler;
   assert(scheduler);
-  sessions_waiting_for_io.remove(scheduler->sess);
-  sessions_need_processing.push_front(scheduler->sess);
+  sessions_waiting_for_io.remove(scheduler->session);
+  sessions_need_processing.push_front(scheduler->session);
 }
 
 /*
@@ -223,7 +223,7 @@ void libevent_kill_session_callback(int Fd, short, void*)
         Delete from libevent and add to the processing queue.
       */
       event_del(&scheduler->io_event);
-      sessions_need_processing.push_front(scheduler->sess);
+      sessions_need_processing.push_front(scheduler->session);
     }
     ++it;
   }
@@ -272,7 +272,7 @@ void libevent_add_session_callback(int Fd, short, void *)
         Add session to sessions_need_processing list. If it needs closing we'll close
         it outside of event_loop().
       */
-      sessions_need_processing.push_front(scheduler->sess);
+      sessions_need_processing.push_front(scheduler->session);
     }
     else
     {
@@ -284,7 +284,7 @@ void libevent_add_session_callback(int Fd, short, void *)
       }
       else
       {
-        sessions_waiting_for_io.push_front(scheduler->sess);
+        sessions_waiting_for_io.push_front(scheduler->session);
       }
     }
     pthread_mutex_lock(&LOCK_session_add);
@@ -529,7 +529,7 @@ void libevent_session_add(Session* session)
 
   pthread_mutex_lock(&LOCK_session_add);
   /* queue for libevent */
-  sessions_need_adding.push_front(scheduler->sess);
+  sessions_need_adding.push_front(scheduler->session);
   /* notify libevent */
   assert(write(session_add_pipe[1], &c, sizeof(c))==sizeof(c));
   pthread_mutex_unlock(&LOCK_session_add);
