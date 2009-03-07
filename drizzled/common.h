@@ -217,7 +217,6 @@ enum enum_server_command
 #define CLIENT_NO_SCHEMA	16	/* Don't allow database.table.column */
 #define CLIENT_COMPRESS		32	/* Can use compression protocol */
 #define CLIENT_ODBC		64	/* Odbc client */
-#define CLIENT_LOCAL_FILES	128	/* Can use LOAD DATA LOCAL */
 #define CLIENT_IGNORE_SPACE	256	/* Ignore spaces before '(' */
 #define UNUSED_CLIENT_PROTOCOL_41	512	/* New 4.1 protocol */
 #define CLIENT_INTERACTIVE	1024	/* This is an interactive client */
@@ -240,7 +239,6 @@ enum enum_server_command
                            CLIENT_NO_SCHEMA | \
                            CLIENT_COMPRESS | \
                            CLIENT_ODBC | \
-                           CLIENT_LOCAL_FILES | \
                            CLIENT_IGNORE_SPACE | \
                            CLIENT_INTERACTIVE | \
                            CLIENT_SSL | \

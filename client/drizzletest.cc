@@ -3821,7 +3821,7 @@ static void do_connect(struct st_command *command)
     die("Failed on drizzleclient_create()");
   if (opt_compress || con_compress)
     drizzleclient_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NULL);
-  drizzleclient_options(&con_slot->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
+  
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -5555,7 +5555,6 @@ int main(int argc, char **argv)
     die("Failed in drizzleclient_create()");
   if (opt_compress)
     drizzleclient_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NULL);
-  drizzleclient_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");
