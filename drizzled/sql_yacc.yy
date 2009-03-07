@@ -5171,7 +5171,6 @@ load:
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_LOAD;
             lex->lock_option= $4;
-            lex->local_file=  0;
             lex->duplicates= DUP_ERROR;
             lex->ignore= 0;
             if (!(lex->exchange= new file_exchange($6.str, 0, $2)))
