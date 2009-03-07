@@ -23,7 +23,9 @@
 #include <drizzled/session.h>
 #include "session_scheduler.h"
 #include <string>
+#include <list>
 #include <event.h>
+
 using namespace std;
 
 static uint32_t created_threads, killed_threads;
@@ -35,7 +37,7 @@ static struct event session_add_event;
 static struct event session_kill_event;
 
 static pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
-static LIST *sessions_need_adding= NULL;    /* list of sessions to add to libevent queue */
+static list<Session *> sessions_need_adding; /* list of sessions to add to libevent queue */
 
 static int session_add_pipe[2]; /* pipe to signal add a connection to libevent*/
 static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent */
@@ -45,8 +47,8 @@ static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent
   event_del) and sessions_need_processing and sessions_waiting_for_io.
 */
 static pthread_mutex_t LOCK_event_loop;
-static LIST *sessions_need_processing; /* list of sessions that needs some processing */
-static LIST *sessions_waiting_for_io; /* list of sessions with added events */
+static list<Session *> sessions_need_processing; /* list of sessions that needs some processing */
+static list<Session *> sessions_waiting_for_io; /* list of sessions with added events */
 
 static bool libevent_needs_immediate_processing(Session *session);
 static void libevent_connection_close(Session *session);
@@ -175,9 +177,23 @@ void libevent_io_callback(int, short, void *ctx)
   Session *session= (Session*)ctx;
   session_scheduler *scheduler= (session_scheduler *)session->scheduler;
   assert(scheduler);
-  sessions_waiting_for_io= list_delete(sessions_waiting_for_io, &scheduler->list);
-  sessions_need_processing= list_add(sessions_need_processing, &scheduler->list);
+  sessions_waiting_for_io.remove(scheduler->session);
+  sessions_need_processing.push_front(scheduler->session);
 }
+
+/*
+  Function object which is used to determine whether to remove
+  a session from the sessions_waiting_for_io list.
+*/
+class remove_session_if
+{
+  public:
+  remove_session_if() { }
+  inline bool operator()(const Session *session) const
+  {
+    return (session->killed == Session::KILL_CONNECTION);
+  }
+};
 
 /*
   This is called when we have a thread we want to be killed.
@@ -195,11 +211,10 @@ void libevent_kill_session_callback(int Fd, short, void*)
   while (read(Fd, &c, sizeof(c)) == sizeof(c))
   {}
 
-  LIST* list= sessions_waiting_for_io;
-  while (list)
+  list<Session *>::iterator it= sessions_waiting_for_io.begin();
+  while (it != sessions_waiting_for_io.end())
   {
-    Session *session= (Session*)list->data;
-    list= list_rest(list);
+    Session *session= *it;
     if (session->killed == Session::KILL_CONNECTION)
     {
       session_scheduler *scheduler= (session_scheduler *)session->scheduler;
@@ -208,12 +223,18 @@ void libevent_kill_session_callback(int Fd, short, void*)
         Delete from libevent and add to the processing queue.
       */
       event_del(&scheduler->io_event);
-      sessions_waiting_for_io= list_delete(sessions_waiting_for_io,
-					   &scheduler->list);
-      sessions_need_processing= list_add(sessions_need_processing,
-					 &scheduler->list);
+      sessions_need_processing.push_front(scheduler->session);
     }
+    ++it;
   }
+
+  /* 
+    safely remove elements from the sessions_waiting_for_io list
+  */
+  sessions_waiting_for_io.erase(std::remove_if(sessions_waiting_for_io.begin(),
+                                               sessions_waiting_for_io.end(),
+                                               remove_session_if()),
+                                sessions_waiting_for_io.end());
 }
 
 
@@ -236,11 +257,11 @@ void libevent_add_session_callback(int Fd, short, void *)
   {}
 
   pthread_mutex_lock(&LOCK_session_add);
-  while (sessions_need_adding)
+  while (!sessions_need_adding.empty())
   {
     /* pop the first session off the list */
-    Session* session= (Session*)sessions_need_adding->data;
-    sessions_need_adding= list_delete(sessions_need_adding, sessions_need_adding);
+    Session* session= sessions_need_adding.front();
+    sessions_need_adding.pop_front();
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
     assert(scheduler);
 
@@ -252,8 +273,7 @@ void libevent_add_session_callback(int Fd, short, void *)
         Add session to sessions_need_processing list. If it needs closing we'll close
         it outside of event_loop().
       */
-      sessions_need_processing= list_add(sessions_need_processing,
-					 &scheduler->list);
+      sessions_need_processing.push_front(scheduler->session);
     }
     else
     {
@@ -265,8 +285,7 @@ void libevent_add_session_callback(int Fd, short, void *)
       }
       else
       {
-        sessions_waiting_for_io= list_add(sessions_waiting_for_io,
-					  &scheduler->list);
+        sessions_waiting_for_io.push_front(scheduler->session);
       }
     }
     pthread_mutex_lock(&LOCK_session_add);
@@ -394,7 +413,7 @@ pthread_handler_t libevent_thread_proc(void *)
     (void) pthread_mutex_lock(&LOCK_event_loop);
 
     /* get session(s) to process */
-    while (!sessions_need_processing)
+    while (sessions_need_processing.empty())
     {
       if (kill_pool_threads)
       {
@@ -406,9 +425,8 @@ pthread_handler_t libevent_thread_proc(void *)
     }
 
     /* pop the first session off the list */
-    session= (Session*)sessions_need_processing->data;
-    sessions_need_processing= list_delete(sessions_need_processing,
-                                      sessions_need_processing);
+    session= sessions_need_processing.front();
+    sessions_need_processing.pop_front();
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
 
     (void) pthread_mutex_unlock(&LOCK_event_loop);
@@ -512,7 +530,7 @@ void libevent_session_add(Session* session)
 
   pthread_mutex_lock(&LOCK_session_add);
   /* queue for libevent */
-  sessions_need_adding= list_add(sessions_need_adding, &scheduler->list);
+  sessions_need_adding.push_front(scheduler->session);
   /* notify libevent */
   assert(write(session_add_pipe[1], &c, sizeof(c))==sizeof(c));
   pthread_mutex_unlock(&LOCK_session_add);

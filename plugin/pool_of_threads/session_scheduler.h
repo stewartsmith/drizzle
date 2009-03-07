@@ -13,7 +13,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <mysys/my_list.h>
 #include <event.h>
 
 class Session;
@@ -23,7 +22,7 @@ class session_scheduler
 public:
   bool logged_in;
   struct event io_event;
-  LIST list;
+  Session *session;
   bool thread_attached;  /* Indicates if Session is attached to the OS thread */
 
   session_scheduler(Session *);
