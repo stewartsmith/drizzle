@@ -191,7 +191,7 @@ class remove_session_if
   remove_session_if() { }
   inline bool operator()(const Session *session) const
   {
-    return (session->killed == SESSION::KILL_CONNECTION);
+    return (session->killed == Session::KILL_CONNECTION);
   }
 };
 
