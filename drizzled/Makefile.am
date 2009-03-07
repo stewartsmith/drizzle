@@ -571,7 +571,6 @@ drizzled_SOURCES = \
 		log.cc \
 		logging.cc \
 		lookup_symbol.cc \
-		mf_iocache.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \

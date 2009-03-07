@@ -47,7 +47,7 @@ public:
 
   READ_INFO(File file,uint32_t tot_length, const CHARSET_INFO * const cs,
 	    String &field_term,String &line_start,String &line_term,
-	    String &enclosed,int escape,bool get_it_from_net, bool is_fifo);
+	    String &enclosed,int escape, bool is_fifo);
   ~READ_INFO();
   int read_field();
   int read_fixed_length(void);
@@ -101,7 +101,6 @@ static int read_sep_field(Session *session, COPY_INFO &info, TableList *table_li
       handle_duplicates - indicates whenever we should emit error or
                           replace row if we will meet duplicates.
       ignore -          - indicates whenever we should ignore duplicates
-      read_file_from_client - is this LOAD DATA LOCAL ?
 
   RETURN VALUES
     true - error / false - success
@@ -110,8 +109,7 @@ static int read_sep_field(Session *session, COPY_INFO &info, TableList *table_li
 int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
-                enum enum_duplicates handle_duplicates, bool ignore,
-                bool read_file_from_client)
+                enum enum_duplicates handle_duplicates, bool ignore)
 {
   char name[FN_REFLEN];
   File file;
@@ -243,16 +241,6 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     return(true);
   }
 
-  /* We can't give an error in the middle when using LOCAL files */
-  if (read_file_from_client && handle_duplicates == DUP_ERROR)
-    ignore= 1;
-
-  if (read_file_from_client)
-  {
-    assert(0);
-    file = -1;
-  }
-  else
   {
 #ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
     ex->file_name+=dirname_length(ex->file_name);
@@ -312,7 +300,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   READ_INFO read_info(file,tot_length,
                       ex->cs ? ex->cs : session->variables.collation_database,
 		      *field_term,*ex->line_start, *ex->line_term, *enclosed,
-		      info.escape_char, read_file_from_client, is_fifo);
+		      info.escape_char, is_fifo);
   if (read_info.error)
   {
     if	(file >= 0)
@@ -385,10 +373,6 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   killed_status= (error == 0)? Session::NOT_KILLED : session->killed;
   if (error)
   {
-    if (read_file_from_client)
-      while (!read_info.next_line())
-	;
-
     error= -1;				// Error on read
     goto err;
   }
@@ -741,8 +725,7 @@ READ_INFO::unescape(char chr)
 
 READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * const cs,
 		     String &field_term, String &line_start, String &line_term,
-		     String &enclosed_par, int escape, bool get_it_from_net,
-		     bool is_fifo)
+		     String &enclosed_par, int escape, bool is_fifo)
   :file(file_par),escape_char(escape)
 {
   read_charset= cs;
@@ -786,8 +769,8 @@ READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * co
   else
   {
     end_of_buff=buffer+buff_length;
-    if (init_io_cache(&cache,(get_it_from_net) ? -1 : file, 0,
-		      (get_it_from_net) ? READ_NET :
+    if (init_io_cache(&cache,(false) ? -1 : file, 0,
+		      (false) ? READ_NET :
 		      (is_fifo ? READ_FIFO : READ_CACHE),0L,1,
 		      MYF(MY_WME)))
     {
@@ -802,9 +785,6 @@ READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * co
 	manual assignment
       */
       need_end_io_cache = 1;
-
-      if (get_it_from_net)
-	cache.read_function = _my_b_net_read;
     }
   }
 }
