@@ -522,7 +522,9 @@ bool Item_func::agg_arg_charsets(DTCollation &c, Item **items, uint32_t nitems,
 
 double Item_func::fix_result(double value)
 {
-  if (isfinite(value))
+  static double fix_infinity= numeric_limits<double>::infinity();
+
+  if (value != fix_infinity && value != -fix_infinity)
     return value;
   null_value=1;
   return 0.0;

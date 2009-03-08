@@ -39,10 +39,6 @@
 int isnan (double a);
 #  endif /* defined(NEED_ISNAN) */
 
-#  if defined(NEED_ISFINITE)
-int isfinite(double a);
-#  endif /* defined(NEED_ISFINITE) */
-
 # endif /* defined(__cplusplus) */
 #endif /* defined(__SUNPRO_C) || defined(__SUNPRO_CC) */
 

@@ -27,6 +27,7 @@
 
 #include <limits>
 
+using namespace std;
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif

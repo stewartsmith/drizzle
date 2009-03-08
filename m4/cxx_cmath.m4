@@ -18,7 +18,7 @@ AC_DEFUN([AC_CXX_CMATH],
      for namespace in __gnu_cxx "" std stdext std::tr1; do
        if test -z "$ac_cv_cxx_cmath"; then
          AC_TRY_COMPILE([#include <$location>],
-                        [$namespace::isfinite(1)],
+                        [$namespace::isnan(1)],
                         [ac_cv_cxx_cmath="<$location>";
                          ac_cv_cxx_cmath_namespace="$namespace";])
        fi
@@ -32,8 +32,8 @@ AC_DEFUN([AC_CXX_CMATH],
       AC_MSG_RESULT()
       AC_MSG_WARN([Could not find a cmath header.])
       
-      _AH_NEED_FUNCS([isnan isfinite])
-      for ac_func in isnan isfinite ; do
+      _AH_NEED_FUNCS([isnan])
+      for ac_func in isnan; do
         AC_TRY_COMPILE([#include <math.h>],
                        [double x=1.0; $ac_func(x)],
                        [],[AC_DEFINE_UNQUOTED(AS_TR_CPP([NEED_$ac_func]))])
