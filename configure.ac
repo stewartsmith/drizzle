@@ -1363,9 +1363,6 @@ void testme() {  };],[
     W_EXCEPTIONS="-fexceptions"
   fi
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
-  # Disable exceptions as they seams to create problems with gcc and threads.
-  # drizzled doesn't use run-time-type-checking, so we disable it.
-  CXXFLAGS="${CXXFLAGS} -fno-rtti"
   CPPFLAGS="${CPPFLAGS} -fpch-deps"
 fi
 if test "$SUNCC" = "yes"
