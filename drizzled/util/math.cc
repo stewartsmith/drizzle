@@ -36,14 +36,6 @@ int isnan (double a)
 }
 #endif /* defined(NEED_ISNAN) */
 
-#if defined(NEED_ISINF)
-int isinf(double a)
-{
-  fpclass_t fc= fpclass(a);
-  return ((fc==FP_NINF)||(fc==FP_PINF)) ? 0 : 1;
-}
-#endif /* !defined(NEED_ISINF) */
-
 #if defined(NEED_ISFINITE)
 int isfinite(double a)
 {

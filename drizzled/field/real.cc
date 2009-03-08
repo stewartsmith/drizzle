@@ -25,6 +25,8 @@
 #include CMATH_H
 #include <drizzled/util/math.h>
 
+#include <limits>
+
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif
@@ -98,7 +100,7 @@ int Field_real::truncate(double *nr, double max_value)
     max_value-= 1.0 / log_10[dec];
 
     /* Check for infinity so we don't get NaN in calculations */
-    if (!(isinf(res)))
+    if (res != numeric_limits<double>::infinity())
     {
       double tmp= rint((res - floor(res)) * log_10[dec]) / log_10[dec];
       res= floor(res) + tmp;

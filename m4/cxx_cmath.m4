@@ -32,8 +32,8 @@ AC_DEFUN([AC_CXX_CMATH],
       AC_MSG_RESULT()
       AC_MSG_WARN([Could not find a cmath header.])
       
-      _AH_NEED_FUNCS([isinf isnan isfinite])
-      for ac_func in isinf isnan isfinite ; do
+      _AH_NEED_FUNCS([isnan isfinite])
+      for ac_func in isnan isfinite ; do
         AC_TRY_COMPILE([#include <math.h>],
                        [double x=1.0; $ac_func(x)],
                        [],[AC_DEFINE_UNQUOTED(AS_TR_CPP([NEED_$ac_func]))])
