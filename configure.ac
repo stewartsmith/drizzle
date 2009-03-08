@@ -43,9 +43,17 @@ AC_PROG_CXX
 gl_USE_SYSTEM_EXTENSIONS
 if test "$GCC" = "yes"
 then
+  # If you're on a Mac, and you didn't ask for a specific compiler
+  # You're gonna get 4.2.
+  if test "$host_vendor" = "apple" -a "x${ac_cv_env_CC_set}" = "x"
+  then
+    CPP="/usr/bin/gcc-4.2 -E"
+    CC=/usr/bin/gcc-4.2
+    CXX=/usr/bin/g++-4.2
+  fi
   AC_CACHE_CHECK([if GCC is recent enough], [drizzle_cv_gcc_recent],
     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#if !defined(__GNUC__) || (__GNUC__ < 4)
+#if !defined(__GNUC__) || (__GNUC__ < 4) || ((__GNUC__ >= 4) && (__GNUC_MINOR__ < 2))
 # error GCC is Too Old!
 #endif
       ]])],
@@ -53,7 +61,7 @@ then
       [drizzle_cv_gcc_recent=no])])
   if test "$drizzle_cv_gcc_recent" = "no"
   then
-    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.0.2])
+    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2. If you are on OSX, you may need to specify ./configure CC=gcc-4.2 CXX=g++4.2])
   fi
 fi
 AC_CXX_HEADER_STDCXX_98
