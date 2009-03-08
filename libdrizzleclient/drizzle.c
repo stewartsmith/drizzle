@@ -28,7 +28,6 @@
 #include "drizzle.h"
 #include "net_serv.h"
 #include "drizzle_data.h"
-#include "local_infile.h"
 
 #include <drizzled/gettext.h>
 
@@ -669,7 +668,7 @@ bool drizzleclient_cli_read_query_result(DRIZZLE *drizzle)
   if ((length = drizzleclient_cli_safe_read(drizzle)) == packet_error)
     return(1);
   drizzleclient_free_old_query(drizzle);    /* Free old result */
-get_info:
+
   pos=(unsigned char*) drizzle->net.read_pos;
   if ((field_count= drizzleclient_net_field_length(&pos)) == 0)
   {
@@ -681,22 +680,13 @@ get_info:
 
     if (pos < drizzle->net.read_pos+length && drizzleclient_net_field_length(&pos))
       drizzle->info=(char*) pos;
-    return(0);
+    return 0;
   }
   if (field_count == NULL_LENGTH)    /* LOAD DATA LOCAL INFILE */
   {
-    int error;
+    drizzleclient_set_error(drizzle, CR_MALFORMED_PACKET, drizzleclient_sqlstate_get_unknown());
 
-    if (!(drizzle->options.client_flag & CLIENT_LOCAL_FILES))
-    {
-      drizzleclient_set_error(drizzle, CR_MALFORMED_PACKET, drizzleclient_sqlstate_get_unknown());
-      return(1);
-    }
-
-    error= drizzleclient_handle_local_infile(drizzle,(char*) pos);
-    if ((length= drizzleclient_cli_safe_read(drizzle)) == packet_error || error)
-      return(1);
-    goto get_info;        /* Get info packet */
+    return 1;
   }
   if (!(drizzle->server_status & SERVER_STATUS_AUTOCOMMIT))
     drizzle->server_status|= SERVER_STATUS_IN_TRANS;

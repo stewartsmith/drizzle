@@ -171,7 +171,7 @@ static bool ignore_errors= false, quick= false,
   connected= false, opt_raw_data= false, unbuffered= false,
   output_tables= false, opt_rehash= true, skip_updates= false,
   safe_updates= false, one_database= false,
-  opt_compress= false, using_opt_local_infile= false,
+  opt_compress= false,
   vertical= false, line_numbers= true, column_names= true,
   opt_nopager= true, opt_outfile= false, named_cmds= false,
   tty_password= false, opt_nobeep= false, opt_reconnect= true,
@@ -1504,9 +1504,6 @@ get_one_option(int optid, const struct my_option *, char *argument)
     }
     delimiter_length= (uint32_t)strlen(delimiter);
     delimiter_str= delimiter;
-    break;
-  case OPT_LOCAL_INFILE:
-    using_opt_local_infile= 1;
     break;
   case OPT_TEE:
     if (argument == disabled_my_option)
@@ -3694,8 +3691,6 @@ sql_connect(char *host,char *database,char *user,char *password,
     drizzleclient_options(&drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   if (opt_secure_auth)
     drizzleclient_options(&drizzle, DRIZZLE_SECURE_AUTH, (char *) &opt_secure_auth);
-  if (using_opt_local_infile)
-    drizzleclient_options(&drizzle,DRIZZLE_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
   if (safe_updates)
   {
     char init_command[100];

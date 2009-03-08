@@ -405,9 +405,6 @@ static DRIZZLE *db_connect(char *host, char *database,
     return 0;
   if (opt_compress)
     drizzleclient_options(drizzle,DRIZZLE_OPT_COMPRESS,NULL);
-  if (opt_local_file)
-    drizzleclient_options(drizzle,DRIZZLE_OPT_LOCAL_INFILE,
-      (char*) &opt_local_file);
   if (opt_protocol)
     drizzleclient_options(drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (!(drizzleclient_connect(drizzle,host,user,passwd,

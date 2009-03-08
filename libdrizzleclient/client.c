@@ -42,7 +42,6 @@
 #include "net_serv.h"
 #include "pack.h"
 #include "errmsg.h"
-#include "local_infile.h"
 #include "drizzle_methods.h"
 
 #include <stdarg.h>
@@ -503,12 +502,6 @@ drizzleclient_options(DRIZZLE *drizzle,enum drizzle_option option, const void *a
   case DRIZZLE_OPT_COMPRESS:
     drizzle->options.compress= 1;      /* Remember for connect */
     drizzle->options.client_flag|= CLIENT_COMPRESS;
-    break;
-  case DRIZZLE_OPT_LOCAL_INFILE:      /* Allow LOAD DATA LOCAL ?*/
-    if (!arg || (*(uint32_t*) arg) ? 1 : 0)
-      drizzle->options.client_flag|= CLIENT_LOCAL_FILES;
-    else
-      drizzle->options.client_flag&= ~CLIENT_LOCAL_FILES;
     break;
   case DRIZZLE_READ_DEFAULT_FILE:
     if (drizzle->options.my_cnf_file != NULL)
