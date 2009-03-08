@@ -17,3 +17,4 @@
 noinst_LTLIBRARIES= libsignal_handler.la
 libsignal_handler_la_SOURCES=	signal_handler.cc
 libsignal_handler_la_LIBADD=
+libsignal_handler_la_CXXFLAGS=	${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}

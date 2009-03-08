@@ -19,6 +19,7 @@ LDADD= libserialize.la \
 	${LIBINTL} \
 	${top_builddir}/gnulib/libgnu.la
 
+AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
 TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
 TESTS = check_length.sh
 
