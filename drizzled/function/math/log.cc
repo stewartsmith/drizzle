@@ -18,13 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/function/math/log.h>
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 /**
   Extended but so slower LOG function.

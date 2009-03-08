@@ -18,13 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/function/math/sqrt.h>
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 double Item_func_sqrt::val_real()
 {

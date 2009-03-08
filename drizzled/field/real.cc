@@ -22,15 +22,10 @@
 #include <drizzled/field/real.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
-#include CMATH_H
-#include <drizzled/util/math.h>
 
 #include <limits>
 
 using namespace std;
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 /*
   Floating-point numbers
@@ -82,7 +77,7 @@ int Field_real::truncate(double *nr, double max_value)
   int error= 1;
   double res= *nr;
 
-  if (isnan(res))
+  if (res == numeric_limits<double>::quiet_NaN())
   {
     res= 0;
     set_null();

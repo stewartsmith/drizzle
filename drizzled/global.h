@@ -36,6 +36,7 @@
 # include <cstdlib>
 # include <cstddef>
 # include <cassert>
+# include <cmath>
 # include <cerrno>
 # include <sstream>
 #else

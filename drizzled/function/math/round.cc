@@ -18,14 +18,10 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/function/math/round.h>
-#include CMATH_H
-#include <drizzled/util/math.h>
 
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
+#include <limits>
+
 using namespace std;
 
 void Item_func_round::fix_length_and_dec()

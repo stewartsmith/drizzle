@@ -336,7 +336,6 @@ fi
 AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
-AC_CXX_CMATH
 
 DRIZZLE_PROG_AR
 
@@ -1499,8 +1498,6 @@ echo "   * Scheduling Plugins:        $scheduling_plugins"
 echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
 echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
 echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
-echo "   * C++ cmath location:        $ac_cv_cxx_cmath"
-echo "   * C++ cmath namespace:       $ac_cv_cxx_cmath_namespace"
 echo ""
 echo "---"
 

@@ -20,16 +20,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/function/math/real.h>
 
-#include CSTDINT_H
-#include <cassert>
-#if defined(HAVE_IEEEFP_H)
-# include <ieeefp.h>
-#endif
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 String *Item_real_func::val_str(String *str)
 {

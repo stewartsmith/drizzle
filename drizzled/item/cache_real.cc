@@ -18,9 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/item/cache_real.h>
-#include CMATH_H
 
 void Item_cache_real::store(Item *item)
 {
