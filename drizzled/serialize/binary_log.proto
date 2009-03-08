@@ -30,7 +30,7 @@ message Query {
   // Assignments to variables that are part of the query
   message Variable {
     required string name = 1;
-    required string value = 2;
+    required string val = 2;
     // Character set?
   }
 

@@ -10,7 +10,7 @@ message Event {
   }
 
   message Value {
-    repeated string value = 1;
+    repeated string val = 1;
   }
 
   required Type type = 1;

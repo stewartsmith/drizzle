@@ -1367,7 +1367,6 @@ void testme() {  };],[
   # drizzled doesn't use run-time-type-checking, so we disable it.
   CXXFLAGS="${CXXFLAGS} -fno-rtti"
   CPPFLAGS="${CPPFLAGS} -fpch-deps"
-  PROTOSKIP_WARNINGS="${NO_SHADOW}"
 fi
 if test "$SUNCC" = "yes"
 then
@@ -1384,7 +1383,6 @@ then
 
   CC_WARNINGS="-v -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR ${W_FAIL}"
   CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn ${W_FAIL}" 
-  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse,truncwarn1,signextwarn"
   NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
   if test "$ac_exceptions" = "no"
   then
@@ -1397,7 +1395,6 @@ AC_SUBST(W_EXCEPTIONS)
 AC_SUBST(NO_SHADOW)
 AC_SUBST(W_SHADOW)
 AC_SUBST(NO_REDUNDANT_DECLS)
-AC_SUBST(PROTOSKIP_WARNINGS)
 AC_SUBST(NO_UNREACHED)
 
 if test "$ac_cv_func_timegm" = "no" -o "$gl_cv_func_gnu_getopt" = "no"
