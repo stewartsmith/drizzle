@@ -1363,7 +1363,6 @@ void testme() {  };],[
     W_EXCEPTIONS="-fexceptions"
   fi
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
-  CPPFLAGS="${CPPFLAGS} -fpch-deps"
   PROTOSKIP_WARNINGS=""
 fi
 if test "$SUNCC" = "yes"
