@@ -96,8 +96,6 @@ typedef struct st_thr_lock {
 } THR_LOCK;
 
 
-extern LIST *thr_lock_thread_list;
-
 bool init_thr_lock(void);		/* Must be called once/thread */
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)
 void thr_lock_info_init(THR_LOCK_INFO *info);
