@@ -26,11 +26,6 @@
 #include <drizzled/session.h>
 #include <drizzled/protocol.h>
 
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 /****************************************************************************
   double precision floating point numbers

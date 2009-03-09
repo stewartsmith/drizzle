@@ -32,11 +32,6 @@
 #include "drizzled/function/bit.h"
 #include "drizzled/check_stack_overrun.h"
 
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 static Eq_creator eq_creator;
 static Ne_creator ne_creator;

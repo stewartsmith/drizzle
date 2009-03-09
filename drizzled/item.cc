@@ -19,8 +19,6 @@
 
 
 #include <drizzled/server_includes.h>
-#include CMATH_H
-
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/show.h>
@@ -51,10 +49,7 @@
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
 
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
+#include <math.h>
 
 const String my_null_string("NULL", 4, default_charset_info);
 

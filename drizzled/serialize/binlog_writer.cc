@@ -62,7 +62,7 @@ write_query(CodedOutputStream* out,
   {
     BinaryLog::Query::Variable *var= message->add_variable();
     var->set_name(ii->first);
-    var->set_value(ii->second);
+    var->set_val(ii->second);
   }
 
   BinaryLog::Event event(BinaryLog::Event::QUERY, message);

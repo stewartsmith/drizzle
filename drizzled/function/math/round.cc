@@ -18,14 +18,10 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/function/math/round.h>
-#include CMATH_H
-#include <drizzled/util/math.h>
 
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
+#include <limits>
+
 using namespace std;
 
 void Item_func_round::fix_length_and_dec()
@@ -124,7 +120,7 @@ double my_double_round(double value, int64_t dec, bool dec_unsigned,
     See http://bugs.mysql.com/bug.php?id=42965
 
     This forces the compiler to store/load the value as 64bit and avoids
-    an optimisation that *could* have the isinf() be done on the 80bit
+    an optimisation that *could* have the infinite check be done on the 80bit
     representation.
    */
   if(sizeof(double) < sizeof(double_t))
@@ -133,9 +129,10 @@ double my_double_round(double value, int64_t dec, bool dec_unsigned,
     value_times_tmp= t;
   }
 
-  if (dec_negative && isinf(tmp))
+  double infinity= numeric_limits<double>::infinity();
+  if (dec_negative && (tmp == infinity))
     tmp2= 0;
-  else if (!dec_negative && isinf(value_times_tmp))
+  else if (!dec_negative && (value_times_tmp == infinity))
     tmp2= value;
   else if (truncate)
   {

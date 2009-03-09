@@ -87,12 +87,6 @@
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
 
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
-
 using namespace std;
 
 #ifdef HAVE_SMEM
