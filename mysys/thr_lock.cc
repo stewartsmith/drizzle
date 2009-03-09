@@ -98,7 +98,7 @@ uint64_t table_lock_wait_timeout;
 enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
 
-list<THR_LOCK *> thr_lock_thread_list;          /* List of threads in use */
+static list<THR_LOCK *> thr_lock_thread_list;          /* List of threads in use */
 
 uint64_t max_write_lock_count= ~(uint64_t) 0L;
 
