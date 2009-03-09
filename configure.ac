@@ -241,8 +241,8 @@ if test "$GCC" = "yes"
 then
   case "$host_cpu" in
     *ppc* | *powerpc*)
-      CFLAGS="$CFLAGS -mno-fused-madd"
-      CXXFLAGS="$CXXFLAGS -mno-fused-madd"
+      CFLAGS="-mno-fused-madd ${CFLAGS}"
+      CXXFLAGS="-mno-fused-madd ${CXXFLAGS}"
     ;;
   esac
 fi
@@ -273,13 +273,13 @@ then
     if test "$isainfo_k" = "amd64"
     then
       IS_64="-m64"
-      LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k}"
+      LDFLAGS="-L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k} ${LDFLAGS}"
     fi
   fi
-  CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
+  CPPFLAGS="-I/usr/local/include ${CPPFLAGS}"
 
-  CXXFLAGS="${CXXFLAGS} -xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS}"
-  CFLAGS="${CFLAGS} -g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS}"
+  CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
+  CFLAGS="-g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS} ${CFLAGS}"
   DEBUG_CFLAGS="-xO0"
   DEBUG_CXXFLAGS="-xO0" 
 
@@ -1283,11 +1283,11 @@ then
 
   if test "$ac_warn_pedantic" = "yes"
   then
-    save_CXXFLAGS="${CXXFLAGS}"
-    CXXFLAGS="${CXXFLAGS} ${W_FAIL} -Wredundant-decls"
     AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
       [ac_cv_safe_to_use_Wredundant_decls_],
       [AC_LANG_PUSH(C++)
+       save_CXXFLAGS="${CXXFLAGS}"
+       CXXFLAGS="${CXXFLAGS} ${W_FAIL} -Wredundant-decls"
        AC_COMPILE_IFELSE(
          [AC_LANG_PROGRAM([
 template <typename E> struct C { void foo(); };
@@ -1296,6 +1296,7 @@ template <> void C<int>::foo();
             AC_INCLUDES_DEFAULT])],
           [ac_cv_safe_to_use_Wredundant_decls_=yes],
           [ac_cv_safe_to_use_Wredundant_decls_=no])
+        CXXFLAGS="${save_CXXFLAGS}"
         AC_LANG_POP()])
     if test $ac_cv_safe_to_use_Wredundant_decls_ = yes
     then
@@ -1324,8 +1325,6 @@ void testme() {  };],[
       AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
                 [Define to 1 if you have support for __attribute__((visibility("hidden")))])
     fi
-
-    CXXFLAGS="${save_CXXFLAGS}"
   fi
 
   if test "$ac_warn_unreachable" = "yes"
@@ -1348,7 +1347,7 @@ void testme() {  };],[
     W_CONVERSION="-Wconversion"
   fi
 
-  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CONVERSION}"
+  CC_WARNINGS="${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CONVERSION}"
   CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CONVERSION}"
 
   if test "$ac_exceptions" = "no"
@@ -1363,8 +1362,8 @@ if test "$SUNCC" = "yes"
 then
   if test "$ac_datarace" = "yes"
   then
-    CFLAGS="${CFLAGS} -xinstrument=datarace"
-    CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
+    CFLAGS="-xinstrument=datarace ${CFLAGS}"
+    CXXFLAGS="-xinstrument=datarace ${CXXFLAGS}"
   fi
 
   if test "$ac_warn_fail" = "yes"
