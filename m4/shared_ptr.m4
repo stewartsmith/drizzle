@@ -18,7 +18,7 @@ AC_DEFUN([AC_CXX_SHARED_PTR],[
   AC_CHECK_HEADERS(memory tr1/memory boost/shared_ptr.hpp)
   AC_CACHE_CHECK([the location of shared_ptr header file],
     [ac_cv_shared_ptr_h],[
-      for namespace in std tr1 boost
+      for namespace in std tr1 std::tr1 boost
       do
         AC_COMPILE_IFELSE(
           [AC_LANG_PROGRAM([[

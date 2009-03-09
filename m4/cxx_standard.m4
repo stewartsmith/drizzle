@@ -3,6 +3,7 @@ AC_DEFUN([AC_CXX_CHECK_STANDARD],[
     [ac_cv_cxx_standard],[
     AC_LANG_PUSH(C++)
     save_CXXFLAGS="${CXXFLAGS}"
+    CXXFLAGS="-std=gnu++0x ${CXXFLAGS}"
     AC_COMPILE_IFELSE(
       [AC_LANG_PROGRAM(
         [[
