@@ -7,12 +7,15 @@ AC_DEFUN([AC_CXX_CHECK_STANDARD],[
       [AC_LANG_PROGRAM(
         [[
 #include <string>
+
+using namespace std;
         ]],[[
-std::string foo("test string");
+string foo("test string");
         ]])],
         [ac_cv_cxx_standard="gnu++0x"],
         [ac_cv_cxx_standard="gnu++98"])
     CXXFLAGS="${save_CXXFLAGS}"
     AC_LANG_POP()
   ])
+  CXXFLAGS="-std=${ac_cv_cxx_standard} ${CXXFLAGS}"
 ])

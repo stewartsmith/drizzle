@@ -64,6 +64,7 @@ then
     AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2. If you are on OSX, you may need to specify ./configure CC=gcc-4.2 CXX=g++4.2])
   fi
 fi
+AC_CXX_CHECK_STANDARD
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
@@ -251,8 +252,7 @@ fi
 if test "$GCC" = "yes"
 then
   CFLAGS="-ggdb3 -std=gnu99 ${CFLAGS}"
-  AC_CXX_CHECK_STANDARD()
-  CXXFLAGS="-ggdb3 -std=${ac_cv_cxx_standard} ${CXXFLAGS}"
+  CXXFLAGS="-ggdb3 ${CXXFLAGS}"
   
 
   DEBUG_CFLAGS="-O0"
@@ -331,6 +331,7 @@ fi
 AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
+AC_CXX_SHARED_PTR
 
 DRIZZLE_PROG_AR
 
@@ -1492,6 +1493,7 @@ echo "   * Scheduling Plugins:        $scheduling_plugins"
 echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
 echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
 echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
+echo "   * C++ shared_ptr namespace:  $ac_cv_shared_ptr_namespace"
 echo ""
 echo "---"
 
