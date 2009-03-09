@@ -22,7 +22,6 @@ dist_mysysinclude_HEADERS= \
 		iocache.h \
 		my_alloc.h \
 		my_getopt.h \
-		my_list.h \
 		my_pthread.h \
 		my_sys.h \
 		typelib.h
@@ -58,7 +57,6 @@ libmysys_la_SOURCES= \
 		default_modify.cc \
 		errors.cc \
 		hash.cc \
-		list.cc \
 		mf_arr_appstr.cc \
 		mf_cache.cc \
 		mf_dirname.cc \
