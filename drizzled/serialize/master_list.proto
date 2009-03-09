@@ -1,4 +1,5 @@
 package drizzle;
+option optimize_for = SPEED;
 
 message MasterList {
   message Record {

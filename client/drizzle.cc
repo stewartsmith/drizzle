@@ -35,7 +35,6 @@
 
 #include "client_priv.h"
 #include <string>
-#include CMATH_H
 #include <algorithm>
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
@@ -116,17 +115,6 @@ typedef Function rl_compentry_func_t;
 
 #include <drizzled/gettext.h>
 
-#if defined(CMATH_NAMESPACE)
-  using namespace CMATH_NAMESPACE;
-#endif
-
-const char *VER= "14.14";
-
-/* Don't try to make a nice table if the data is too big */
-#define MAX_COLUMN_LENGTH       (uint32_t)1024
-
-/* Buffer to hold 'version' and 'version_comment' */
-#define MAX_SERVER_VERSION_LENGTH     128
 
 void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
 void sql_element_free(void *ptr);
@@ -137,15 +125,16 @@ void sql_element_free(void *ptr);
 #define vidattr(A) {}      // Can't get this to work
 #endif
 
-#ifdef FN_NO_CASE_SENCE
-#define cmp_database(cs,A,B) my_strcasecmp((cs), (A), (B))
-#else
-#define cmp_database(cs,A,B) strcmp((A),(B))
-#endif
-
 #include "completion_hash.h"
 
 using namespace std;
+
+const string VER("14.14");
+/* Don't try to make a nice table if the data is too big */
+const uint32_t MAX_COLUMN_LENGTH= 1024;
+
+/* Buffer to hold 'version' and 'version_comment' */
+const int MAX_SERVER_VERSION_LENGTH= 128;
 
 #define PROMPT_CHAR '\\'
 #define DEFAULT_DELIMITER ";"
@@ -1455,7 +1444,7 @@ static void usage(int version)
   const char* readline= "readline";
 
   printf(_("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"),
-         my_progname, VER, drizzleclient_get_client_info(),
+         my_progname, VER.c_str(), drizzleclient_get_client_info(),
          SYSTEM_TYPE, MACHINE_TYPE,
          readline, rl_library_version);
 
@@ -3542,7 +3531,7 @@ com_use(string *, const char *line)
   */
   get_current_db();
 
-  if (!current_db || cmp_database(charset_info, current_db,tmp))
+  if (!current_db || strcmp(current_db,tmp))
   {
     if (one_database)
     {

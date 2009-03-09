@@ -32,7 +32,6 @@
 #include "drizzled/probes.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/cost_vect.h"
-#include CMATH_H
 #include "drizzled/session.h"
 #include "drizzled/sql_base.h"
 #include "drizzled/replicator.h"
@@ -43,10 +42,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/serialize/table.pb.h"
 
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
-
+using namespace std;
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 

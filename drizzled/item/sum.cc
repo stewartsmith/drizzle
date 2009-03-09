@@ -35,12 +35,6 @@
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
-
 extern my_decimal decimal_zero;
 
 /**

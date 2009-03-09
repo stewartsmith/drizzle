@@ -17,11 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-using namespace std;
 #include <drizzled/server_includes.h>
-
-#include CSTDINT_H
-#include <cassert>
 
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>
@@ -31,17 +27,12 @@ using namespace std;
 #include <drizzled/field/long.h>
 #include <drizzled/field/double.h>
 #include <drizzled/field/decimal.h>
-#include CMATH_H
-#include <drizzled/util/math.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/check_stack_overrun.h>
+#include <limits>
 
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
-
-
+using namespace std;
 
 void Item_func::set_arguments(List<Item> &list)
 {
@@ -522,7 +513,9 @@ bool Item_func::agg_arg_charsets(DTCollation &c, Item **items, uint32_t nitems,
 
 double Item_func::fix_result(double value)
 {
-  if (isfinite(value))
+  static double fix_infinity= numeric_limits<double>::infinity();
+
+  if (value != fix_infinity && value != -fix_infinity)
     return value;
   null_value=1;
   return 0.0;

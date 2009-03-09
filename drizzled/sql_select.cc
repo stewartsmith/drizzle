@@ -48,11 +48,6 @@
 #include <drizzled/item/outer_ref.h>
 
 #include <string>
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 using namespace std;
 

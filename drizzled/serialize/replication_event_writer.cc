@@ -53,11 +53,11 @@ void write_insert(::drizzle::Event *record, const char *trx)
 
   /* Add values (first row) */
   value= record->add_values();
-  value->add_value("1");
+  value->add_val("1");
 
   /* Add values (second row) */
   value= record->add_values();
-  value->add_value("2");
+  value->add_val("2");
 }
 
 void write_delete(::drizzle::Event *record, const char *trx)
@@ -78,8 +78,8 @@ void write_delete(::drizzle::Event *record, const char *trx)
 
   /* Add values for IN() */
   value= record->add_values();
-  value->add_value("1");
-  value->add_value("2");
+  value->add_val("1");
+  value->add_val("2");
 }
 
 void write_update(::drizzle::Event *record, const char *trx)
@@ -101,13 +101,13 @@ void write_update(::drizzle::Event *record, const char *trx)
 
   /* Add values (first row) */
   value= record->add_values();
-  value->add_value("1"); // The first value is always the primary key comparison value
-  value->add_value("5");
+  value->add_val("1"); // The first value is always the primary key comparison value
+  value->add_val("5");
 
   /* Add values (second row) */
   value= record->add_values();
-  value->add_value("2");
-  value->add_value("6");
+  value->add_val("2");
+  value->add_val("6");
 }
 
 void write_to_disk(int file, ::drizzle::EventList *list)

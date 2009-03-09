@@ -18,14 +18,8 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/item/func.h>
 #include <drizzled/function/math/exp.h>
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 
 double Item_func_exp::val_real()

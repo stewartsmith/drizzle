@@ -502,7 +502,6 @@ Session::Session()
   killed= NOT_KILLED;
   col_access=0;
   thread_specific_used= false;
-  hash_clear(&handler_tables_hash);
   tmp_table=0;
   used_tables=0;
   cuted_fields= sent_row_count= row_count= 0L;
@@ -709,7 +708,6 @@ void Session::cleanup(void)
     lock=locked_tables; locked_tables=0;
     close_thread_tables(this);
   }
-  mysql_ha_cleanup(this);
   hash_free(&user_vars);
   close_temporary_tables();
 

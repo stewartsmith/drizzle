@@ -34,7 +34,6 @@
 #include <drizzled/sql_sort.h>
 #include <drizzled/session.h>
 #include <queue>
-#include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

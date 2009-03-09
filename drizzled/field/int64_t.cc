@@ -25,11 +25,6 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 /****************************************************************************
  Field type int64_t int (8 bytes)

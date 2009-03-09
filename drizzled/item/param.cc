@@ -18,13 +18,11 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/session.h>
 #include <drizzled/item/uint.h>
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/param.h>
-#include CMATH_H
 #include <drizzled/sql_string.h>
 #include <mystrings/utf8.h>
 

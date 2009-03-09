@@ -18,12 +18,10 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/error.h>
 #include <drizzled/item/num.h>
 #include <drizzled/item/string.h>
 #include <drizzled/item/float.h>
-#include CMATH_H
 
 static uint32_t nr_of_decimals(const char *str, const char *end)
 {
