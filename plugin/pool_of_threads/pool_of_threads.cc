@@ -232,7 +232,8 @@ void libevent_kill_session_callback(int Fd, short, void*)
     safely remove elements from the sessions_waiting_for_io list
   */
   sessions_waiting_for_io.erase(std::remove_if(sessions_waiting_for_io.begin(),
-                                  sessions_waiting_for_io.end(), remove_session_if()),
+                                               sessions_waiting_for_io.end(),
+                                               remove_session_if()),
                                 sessions_waiting_for_io.end());
 }
 

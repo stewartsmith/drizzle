@@ -371,7 +371,6 @@ noinst_HEADERS = \
 		global.h \
 		server_includes.h \
 		util/convert.h \
-		util/math.h \
 		util/test.h
 
 drizzled_SOURCES = \
@@ -597,7 +596,6 @@ drizzled_SOURCES = \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \
-		sql_handler.cc \
 		sql_insert.cc \
 		sql_lex.cc \
 		sql_list.cc \
@@ -624,7 +622,6 @@ drizzled_SOURCES = \
 		time.cc \
 		tztime.cc \
 		uniques.cc \
-		util/math.cc \
 		virtual_column_info.cc \
 		xid.cc
 

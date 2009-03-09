@@ -114,18 +114,17 @@
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
 #include <string>
-#include CMATH_H
 
 using namespace std;
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 /*
   Convert double value to #rows. Currently this does floor(), and we
   might consider using round() instead.
 */
-#define double2rows(x) ((ha_rows)(x))
+static inline ha_rows double2rows(double x)
+{
+    return static_cast<ha_rows>(x);
+}
 
 static int sel_cmp(Field *f,unsigned char *a,unsigned char *b,uint8_t a_flag,uint8_t b_flag);
 

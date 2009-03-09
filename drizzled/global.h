@@ -30,10 +30,6 @@
 
 #if defined(__cplusplus)
 
-# if defined(__GNUC) && defined(__EXCEPTIONS)
-#  error "Please add -fno-exceptions to CXXFLAGS and reconfigure/recompile"
-# endif
-
 # include CSTDINT_H
 # include CINTTYPES_H
 # include <cstdio>
@@ -48,7 +44,6 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <stddef.h>
-# include <math.h>
 # include <errno.h>        /* Recommended by debian */
 /*
   A lot of our programs uses asserts, so better to always include it
@@ -57,6 +52,8 @@
 # include <stdbool.h>
 
 #endif // __cplusplus
+
+#include <math.h>
 
 #ifndef EOVERFLOW
 #define EOVERFLOW 84

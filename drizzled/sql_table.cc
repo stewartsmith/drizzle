@@ -412,8 +412,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       built_query.append("DROP Table ");
   }
 
-  mysql_ha_rm_tables(session, tables, false);
-
   pthread_mutex_lock(&LOCK_open);
 
   /*
@@ -2392,8 +2390,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);
 
-  mysql_ha_rm_tables(session, tables, false);
-
   for (table= tables; table; table= table->next_local)
   {
     char table_name[NAME_LEN*2+2];
@@ -4371,8 +4367,6 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   if (!new_db || !my_strcasecmp(table_alias_charset, new_db, db))
     new_db= db;
   build_table_filename(path, sizeof(path), db, table_name, "", 0);
-
-  mysql_ha_rm_tables(session, table_list, false);
 
   /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
   if (alter_info->tablespace_op != NO_TABLESPACE_OP)

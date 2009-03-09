@@ -533,7 +533,6 @@ public:
   ulong client_capabilities;		/* What the client supports */
   ulong max_client_packet_length;
 
-  HASH		handler_tables_hash;
   /*
     One thread can hold up to one named user-level lock. This variable
     points to a lock object if the lock is present. See item_func.cc and

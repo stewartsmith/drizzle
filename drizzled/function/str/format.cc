@@ -18,13 +18,12 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
-#include CMATH_H
 #include <drizzled/function/str/format.h>
 
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
+#include CSTDINT_H
+#include <limits>
+
+using namespace std;
 
 /**
   Change a number to format '3,333,333,333.000'.
@@ -97,7 +96,7 @@ String *Item_func_format::val_str(String *str)
     nr= my_double_round(nr, (int64_t) dec, false, false);
     /* Here default_charset() is right as this is not an automatic conversion */
     str->set_real(nr, dec, default_charset());
-    if (isnan(nr))
+    if (nr == numeric_limits<double>::quiet_NaN())
       return str;
     str_length=str->length();
     if (nr < 0)
