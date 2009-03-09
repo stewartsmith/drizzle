@@ -22,17 +22,14 @@ AC_DEFUN([AC_CXX_SHARED_PTR],[
       do
         AC_COMPILE_IFELSE(
           [AC_LANG_PROGRAM([[
-#if defined(HAVE_MEMORY) || defined(HAVE_TR1_MEMORY)
-# if defined(HAVE_MEMORY)
-#  include <memory>
-# endif
-# if defined(HAVE_TR1_MEMORY)
-#  include <tr1/memory>
-# endif
-#else
-# if defined(HAVE_BOOST_SHARED_PTR_HPP)
-#  include <boost/shared_ptr.hpp>
-# endif
+#if defined(HAVE_MEMORY)
+# include <memory>
+#endif
+#if defined(HAVE_TR1_MEMORY)
+# include <tr1/memory>
+#endif
+#if defined(HAVE_BOOST_SHARED_PTR_HPP)
+# include <boost/shared_ptr.hpp>
 #endif
 #include <string>
 

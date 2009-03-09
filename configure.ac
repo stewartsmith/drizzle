@@ -64,7 +64,6 @@ then
     AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2. If you are on OSX, you may need to specify ./configure CC=gcc-4.2 CXX=g++4.2])
   fi
 fi
-AC_CXX_CHECK_STANDARD
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
@@ -233,26 +232,23 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
-
-# The following is required for portable results of floating point calculations
-# on PowerPC. The same must also be done for IA-64, but this options is missing
-# in the IA-64 gcc backend.
-
+# Build optimized or debug version ?
+# First check for gcc and g++
 if test "$GCC" = "yes"
 then
+  dnl The following is required for portable results of floating point 
+  dnl calculations on PowerPC. The same must also be done for IA-64, but 
+  dnl this options is missing in the IA-64 gcc backend.
   case "$host_cpu" in
     *ppc* | *powerpc*)
       CFLAGS="-mno-fused-madd ${CFLAGS}"
       CXXFLAGS="-mno-fused-madd ${CXXFLAGS}"
     ;;
   esac
-fi
-# Build optimized or debug version ?
-# First check for gcc and g++
-if test "$GCC" = "yes"
-then
+
   CFLAGS="-ggdb3 -std=gnu99 ${CFLAGS}"
   CXXFLAGS="-ggdb3 ${CXXFLAGS}"
+  AC_CXX_CHECK_STANDARD
   
 
   DEBUG_CFLAGS="-O0"
@@ -276,7 +272,7 @@ then
       LDFLAGS="-L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k} ${LDFLAGS}"
     fi
   fi
-  CPPFLAGS="-I/usr/local/include ${CPPFLAGS}"
+  CPPFLAGS="-I/usr/local/include -I/opt/csw/include ${CPPFLAGS}"
 
   CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
   CFLAGS="-g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS} ${CFLAGS}"
