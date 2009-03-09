@@ -265,8 +265,10 @@ fi
 # First check for gcc and g++
 if test "$GCC" = "yes"
 then
-  CFLAGS="${CFLAGS} -ggdb3 -std=gnu99"
-  CXXFLAGS="${CXXFLAGS} -ggdb3 -std=gnu++98"
+  CFLAGS="-ggdb3 -std=gnu99 ${CFLAGS}"
+  AC_CXX_CHECK_STANDARD()
+  CXXFLAGS="-ggdb3 -std=${ac_cv_cxx_standard} ${CXXFLAGS}"
+  
 
   DEBUG_CFLAGS="-O0"
   DEBUG_CXXFLAGS="-O0"
