@@ -201,31 +201,16 @@ then
   AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
 fi
 
-dnl  Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
-
-dnl  System Interfaces and Headers, Issue 5
-
-dnl  saying we should define _XOPEN_SOURCE=500 to get POSIX.1c prototypes,
-dnl  but apparently other systems (namely FreeBSD) don't agree.
-
-dnl  On a newer Solaris 10, the above file recognizes also _XOPEN_SOURCE=600.
-dnl  Furthermore, it tests that if a program requires older standard
-dnl  (_XOPEN_SOURCE<600 or _POSIX_C_SOURCE<200112L) it cannot be
-dnl  run on a new compiler (that defines _STDC_C99) and issues an #error.
-dnl  It's also an #error if a program requires new standard (_XOPEN_SOURCE=600
-dnl  or _POSIX_C_SOURCE=200112L) and a compiler does not define _STDC_C99.
-
-dnl  To add more to this mess, Sun Studio C compiler defines _STDC_C99 while
-dnl  C++ compiler does not!
-
-dnl TODO: Can _ISOC99_SOURCE be defined on all platforms and remove the 
-dnl       Need for all of this? 
+dnl C99 is illegal in C++... but these turn on extensions to the standard
+dnl On Solars. This whole block is sort of silly atm, since we don't do 
+dnl GCC on Solaris.
 if test "$GCC" = "yes"
 then
   case "$target_os" in
     *solaris*)
     AC_DEFINE([_XOPEN_SOURCE],[600],[Turn on XOpen 6.0 Features])
     AC_DEFINE([__C99FEATURES__],[1],[Turn on C99 Features for C++])
+    AC_DEFINE([__XPG6],[1],[Turn on C99/XOpen Group 6 Extensions])
     ;;
   esac
 fi
