@@ -42,6 +42,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/serialize/table.pb.h"
 
+using namespace std;
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
