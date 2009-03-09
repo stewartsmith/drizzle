@@ -20,6 +20,8 @@
 #include <cstdio>
 #include <cmath>
 
+using namespace std;
+
 #ifndef MAIN
 
 static char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
