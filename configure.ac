@@ -116,16 +116,6 @@ m4_include(m4/dtrace.m4)
 m4_include(m4/character_sets.m4)
 AC_SUBST(AVAILABLE_LANGUAGES)
 
-m4_include(m4/gettext.m4)
-AM_GNU_GETTEXT(external, need-formatstring-macros)
-if test "x$MSGMERGE" = "x" -o "x$MSGMERGE" = "x:"
-then
-  AM_PATH_PROG_WITH_TEST(GMSGMERGE, gmsgmerge,
-    [$ac_dir/$ac_word --update -q /dev/null /dev/null >&]AS_MESSAGE_LOG_FD[ 2>&1], :)
-  MSGMERGE="${GMSGMERGE}"
-fi
-AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
-
 
 # Set this for plugins to use
 ac_build_drizzle="yes"
@@ -259,20 +249,21 @@ then
 fi
 if test "$SUNCC" = "yes"
 then
+  dnl we put CPPFLAGS and LDFLAGS first here, because if the user has specified
+  dnl command line CPPFLAGS or LDFLAGS, their -I or -L should come _first_
   isainfo_k=`isainfo -k`
   if test "$target_cpu" = "sparc"
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
     IS_64="-m64"
-    LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k}"
   else
     if test "$isainfo_k" = "amd64"
     then
       IS_64="-m64"
-      LDFLAGS="-L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k} ${LDFLAGS}"
     fi
   fi
-  CPPFLAGS="-I/usr/local/include -I/opt/csw/include ${CPPFLAGS}"
+  LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_k} -L/usr/local/lib -L/opt/csw/lib/${isainfo_k} -L/opt/csw/lib -L/usr/lib/${isainfo_k}"
+  CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
 
   CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
   CFLAGS="-g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS} ${CFLAGS}"
@@ -286,6 +277,17 @@ then
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
 
 fi
+
+m4_include(m4/gettext.m4)
+AM_GNU_GETTEXT(external, need-formatstring-macros)
+if test "x$MSGMERGE" = "x" -o "x$MSGMERGE" = "x:"
+then
+  AM_PATH_PROG_WITH_TEST(GMSGMERGE, gmsgmerge,
+    [$ac_dir/$ac_word --update -q /dev/null /dev/null >&]AS_MESSAGE_LOG_FD[ 2>&1], :)
+  MSGMERGE="${GMSGMERGE}"
+fi
+AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
+
 
 # We use libtool
 AC_PROG_LIBTOOL

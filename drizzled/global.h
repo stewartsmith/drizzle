@@ -38,6 +38,15 @@
 # include <cassert>
 # include <cerrno>
 # include <sstream>
+# if defined(HAVE_MEMORY)
+#  include <memory>
+# endif
+# if defined(HAVE_TR1_MEMORY)
+#  include <tr1/memory>
+# endif
+# if defined(HAVE_BOOST_SHARED_PTR_HPP)
+#  include <boost/shared_ptr.hpp>
+# endif
 #else
 # include <stdint.h>
 # include <inttypes.h>
@@ -78,6 +87,13 @@ extern "C"
 time_t timegm (struct tm *__tm);
 #endif /* HAVE_DECL_TIMEGM */
 
+
+#if defined(__cplusplus)
+# if !defined(SHARED_PTR_NAMESPACE)
+#  error SHARED_PTR_NAMESPACE not defined, configure error!
+# endif
+using SHARED_PTR_NAMESPACE::shared_ptr;
+#endif /* defined(SHARED_PTR_NAMESPACE)
 
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
