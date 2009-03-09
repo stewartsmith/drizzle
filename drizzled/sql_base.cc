@@ -750,7 +750,6 @@ bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
     session->set_proc_info("Flushing tables");
 
     close_old_data_files(session,session->open_tables,1,1);
-    mysql_ha_flush(session);
 
     bool found=1;
     /* Wait until all threads has closed all the tables we had locked */
@@ -2037,16 +2036,6 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   }
 
   /*
-    In order for the back off and re-start process to work properly,
-    handler tables having old versions (due to FLUSH TABLES or pending
-    name-lock) MUST be closed. This is specially important if a name-lock
-    is pending for any table of the handler_tables list, otherwise a
-    deadlock may occur.
-  */
-  if (session->handler_tables)
-    mysql_ha_flush(session);
-
-  /*
     Actually try to find the table in the open_cache.
     The cache may contain several "Table" instances for the same
     physical table. The instances that are currently "in use" by
@@ -2670,7 +2659,6 @@ bool wait_for_tables(Session *session)
   {
     session->some_tables_deleted=0;
     close_old_data_files(session,session->open_tables,0,dropping_tables != 0);
-    mysql_ha_flush(session);
     if (!table_is_used(session->open_tables,1))
       break;
     (void) pthread_cond_wait(&COND_refresh,&LOCK_open);

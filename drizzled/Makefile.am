@@ -596,7 +596,6 @@ drizzled_SOURCES = \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \
-		sql_handler.cc \
 		sql_insert.cc \
 		sql_lex.cc \
 		sql_list.cc \
