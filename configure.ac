@@ -1202,10 +1202,10 @@ AC_ARG_ENABLE([longlong-warnings],
     [ac_warn_longlong="no"])
 
 AC_ARG_ENABLE([strict-aliasing],
-    [AS_HELP_STRING([--enable-strict-aliasing],
-       [Enable warnings about stict-aliasing @<:@default=off@:>@])],
+    [AS_HELP_STRING([--disable-strict-aliasing],
+       [Enable warnings about stict-aliasing @<:@default=on@:>@])],
     [ac_warn_strict_aliasing="$enableval"],
-    [ac_warn_strict_aliasing="no"])
+    [ac_warn_strict_aliasing="yes"])
 
 AC_ARG_ENABLE([cast-warnings],
     [AS_HELP_STRING([--enable-cast-warnings],
@@ -1370,7 +1370,7 @@ void testme() {  };],[
     W_EXCEPTIONS="-fexceptions"
   fi
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
-  PROTOSKIP_WARNINGS=""
+  PROTOSKIP_WARNINGS="-Wno-effc++"
 fi
 if test "$SUNCC" = "yes"
 then
