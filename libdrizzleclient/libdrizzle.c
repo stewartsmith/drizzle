@@ -361,15 +361,6 @@ drizzleclient_refresh(DRIZZLE *drizzle, uint32_t options)
 }
 
 
-int
-drizzleclient_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option)
-{
-  unsigned char buff[2];
-  int2store(buff, (uint32_t) option);
-  return(simple_command(drizzle, COM_SET_OPTION, buff, sizeof(buff), 0));
-}
-
-
 const char *drizzleclient_cli_read_statistics(DRIZZLE *drizzle)
 {
   drizzle->net.read_pos[drizzle->packet_length]=0;  /* End of stat string */

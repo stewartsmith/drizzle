@@ -153,7 +153,7 @@ enum enum_server_command
   COM_PROCESS_INFO, COM_CONNECT, COM_PING,
   COM_TIME, COM_CHANGE_USER,
   COM_CONNECT_OUT,
-  COM_SET_OPTION, COM_DAEMON,
+  COM_DAEMON,
   /* don't forget to update const char *command_name[] in sql_parse.cc */
 
   /* Must be last */
@@ -340,14 +340,6 @@ enum enum_cursor_type
   CURSOR_TYPE_READ_ONLY= 1,
   CURSOR_TYPE_FOR_UPDATE= 2,
   CURSOR_TYPE_SCROLLABLE= 4
-};
-
-
-/* options for mysql_set_option */
-enum enum_drizzle_set_option
-{
-  DRIZZLE_OPTION_MULTI_STATEMENTS_ON,
-  DRIZZLE_OPTION_MULTI_STATEMENTS_OFF
 };
 
 #define net_new_transaction(net) ((net)->pkt_nr=0)

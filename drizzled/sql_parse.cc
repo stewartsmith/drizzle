@@ -66,7 +66,6 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Time") },
   { C_STRING_WITH_LEN("Change user") },
   { C_STRING_WITH_LEN("Connect Out") },
-  { C_STRING_WITH_LEN("Set option") },
   { C_STRING_WITH_LEN("Daemon") },
   { C_STRING_WITH_LEN("Error") }  // Last command number
 };
@@ -702,26 +701,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     status_var_increment(session->status_var.com_stat[SQLCOM_SHOW_PROCESSLIST]);
     mysqld_list_processes(session, NULL, 0);
     break;
-  case COM_SET_OPTION:
-  {
-    status_var_increment(session->status_var.com_stat[SQLCOM_SET_OPTION]);
-    uint32_t opt_command= uint2korr(packet);
-
-    switch (opt_command) {
-    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_ON:
-      session->client_capabilities|= CLIENT_MULTI_STATEMENTS;
-      session->my_eof();
-      break;
-    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_OFF:
-      session->client_capabilities&= ~CLIENT_MULTI_STATEMENTS;
-      session->my_eof();
-      break;
-    default:
-      my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
-      break;
-    }
-    break;
-  }
   case COM_SLEEP:
   case COM_CONNECT:				// Impossible here
   case COM_TIME:				// Impossible from client

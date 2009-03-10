@@ -131,9 +131,6 @@ drizzleclient_set_local_infile_default(DRIZZLE *drizzle);
 int32_t    drizzleclient_shutdown(DRIZZLE *drizzle);
 int32_t    drizzle_dump_debug_info(DRIZZLE *drizzle);
 int32_t    drizzleclient_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
-int32_t    drizzleclient_kill(DRIZZLE *drizzle, uint32_t pid);
-int32_t    drizzleclient_set_server_option(DRIZZLE *drizzle,
-                                     enum enum_drizzle_set_option option);
 int32_t    drizzleclient_ping(DRIZZLE *drizzle);
 const char *  drizzle_stat(DRIZZLE *drizzle);
 const char *  drizzleclient_get_server_info(const DRIZZLE *drizzle);
