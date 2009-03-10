@@ -1408,7 +1408,7 @@ sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
       case STRING_RESULT:
 	sortorder->length=sortorder->item->max_length;
         set_if_smaller(sortorder->length,
-                       (size_t) session->variables.max_sort_length);
+                       session->variables.max_sort_length);
 	if (use_strnxfrm((cs=sortorder->item->collation.collation)))
 	{
           sortorder->length= cs->coll->strnxfrmlen(cs, sortorder->length);
