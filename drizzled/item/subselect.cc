@@ -2022,8 +2022,7 @@ int subselect_single_select_engine::prepare()
 		    (order_st*) select_lex->order_list.first,
 		    (order_st*) select_lex->group_list.first,
 		    select_lex->having,
-		    (order_st*) 0, select_lex,
-		    select_lex->master_unit()))
+		    select_lex, select_lex->master_unit()))
     return 1;
   session->lex->current_select= save_select;
   return 0;

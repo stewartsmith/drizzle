@@ -290,7 +290,6 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 		      (order_st*) select_lex->order_list.first,
 		      (order_st*) select_lex->group_list.first,
 		      select_lex->having,
-		      NULL,
 		      select_lex->options | session->options |
                       setup_tables_done_option,
 		      result, unit, select_lex);
@@ -465,7 +464,7 @@ JOIN::prepare(Item ***rref_pointer_array,
 	      uint32_t wild_num, COND *conds_init, uint32_t og_num,
 	      order_st *order_init, order_st *group_init,
 	      Item *having_init,
-	      order_st *proc_param_init, Select_Lex *select_lex_arg,
+	      Select_Lex *select_lex_arg,
 	      Select_Lex_Unit *unit_arg)
 {
   // to prevent double initialization on EXPLAIN
@@ -476,7 +475,6 @@ JOIN::prepare(Item ***rref_pointer_array,
   order= order_init;
   group_list= group_init;
   having= having_init;
-  proc_param= proc_param_init;
   tables_list= tables_init;
   select_lex= select_lex_arg;
   select_lex->join= this;
@@ -2603,7 +2601,6 @@ JOIN::destroy()
   @param order                linked list of order_st BY agruments
   @param group                linked list of GROUP BY arguments
   @param having               top level item of HAVING expression
-  @param proc_param           list of PROCEDUREs
   @param select_options       select options (BIG_RESULT, etc)
   @param result               an instance of result set handling class.
                               This object is responsible for send result
@@ -2627,7 +2624,7 @@ bool
 mysql_select(Session *session, Item ***rref_pointer_array,
 	     TableList *tables, uint32_t wild_num, List<Item> &fields,
 	     COND *conds, uint32_t og_num,  order_st *order, order_st *group,
-	     Item *having, order_st *proc_param, uint64_t select_options,
+	     Item *having, uint64_t select_options,
 	     select_result *result, Select_Lex_Unit *unit,
 	     Select_Lex *select_lex)
 {
@@ -2657,8 +2654,7 @@ mysql_select(Session *session, Item ***rref_pointer_array,
       else
       {
         if ((err= join->prepare(rref_pointer_array, tables, wild_num,
-                               conds, og_num, order, group, having, proc_param,
-                               select_lex, unit)))
+                               conds, og_num, order, group, having, select_lex, unit)))
 	{
 	  goto err;
 	}
@@ -2674,7 +2670,7 @@ mysql_select(Session *session, Item ***rref_pointer_array,
     session->set_proc_info("init");
     session->used_tables=0;                         // Updated by setup_fields
     if ((err= join->prepare(rref_pointer_array, tables, wild_num,
-                           conds, og_num, order, group, having, proc_param,
+                           conds, og_num, order, group, having,
                            select_lex, unit)) == true)
     {
       goto err;
@@ -16250,7 +16246,6 @@ bool mysql_explain_union(Session *session, Select_Lex_Unit *unit, select_result 
 			(order_st*) first->order_list.first,
 			(order_st*) first->group_list.first,
 			first->having,
-			(order_st*) NULL,
 			first->options | session->options | SELECT_DESCRIBE,
 			result, unit, first);
   }
