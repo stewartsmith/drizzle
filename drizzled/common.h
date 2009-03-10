@@ -150,7 +150,7 @@ enum enum_server_command
 {
   COM_SLEEP, COM_QUIT, COM_INIT_DB, COM_QUERY, COM_FIELD_LIST,
   COM_CREATE_DB, COM_DROP_DB, COM_REFRESH, COM_SHUTDOWN,
-  COM_PROCESS_INFO, COM_CONNECT, COM_PING,
+  COM_CONNECT, COM_PING,
   COM_TIME, COM_CHANGE_USER,
   COM_CONNECT_OUT,
   COM_DAEMON,
@@ -333,14 +333,6 @@ enum enum_field_types { DRIZZLE_TYPE_TINY,
                         DRIZZLE_TYPE_MAX=DRIZZLE_TYPE_BLOB
 };
 
-
-enum enum_cursor_type
-{
-  CURSOR_TYPE_NO_CURSOR= 0,
-  CURSOR_TYPE_READ_ONLY= 1,
-  CURSOR_TYPE_FOR_UPDATE= 2,
-  CURSOR_TYPE_SCROLLABLE= 4
-};
 
 #define net_new_transaction(net) ((net)->pkt_nr=0)
 

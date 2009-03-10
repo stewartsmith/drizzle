@@ -321,30 +321,6 @@ drizzleclient_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
   return(result);
 }
 
-/* List all running processes (threads) in server */
-
-DRIZZLE_RES *
-drizzleclient_list_processes(DRIZZLE *drizzle)
-{
-  DRIZZLE_DATA *fields;
-  uint32_t field_count;
-  unsigned char *pos;
-
-  if (simple_command(drizzle,COM_PROCESS_INFO,0,0,0))
-    return(0);
-  drizzleclient_free_old_query(drizzle);
-  pos=(unsigned char*) drizzle->net.read_pos;
-  field_count=(uint32_t) drizzleclient_net_field_length(&pos);
-  if (!(fields = (*drizzle->methods->read_rows)(drizzle,(DRIZZLE_FIELD*) 0, 7)))
-    return(NULL);
-  if (!(drizzle->fields=drizzleclient_unpack_fields(fields, field_count, 0)))
-    return(0);
-  drizzle->status=DRIZZLE_STATUS_GET_RESULT;
-  drizzle->field_count=field_count;
-  return(drizzleclient_store_result(drizzle));
-}
-
-
 int
 drizzleclient_shutdown(DRIZZLE *drizzle)
 {

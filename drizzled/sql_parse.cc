@@ -60,7 +60,6 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Drop DB") },
   { C_STRING_WITH_LEN("Refresh") },
   { C_STRING_WITH_LEN("Shutdown") },
-  { C_STRING_WITH_LEN("Processlist") },
   { C_STRING_WITH_LEN("Connect") },
   { C_STRING_WITH_LEN("Ping") },
   { C_STRING_WITH_LEN("Time") },
@@ -696,10 +695,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   case COM_PING:
     status_var_increment(session->status_var.com_other);
     session->my_ok();				// Tell client we are alive
-    break;
-  case COM_PROCESS_INFO:
-    status_var_increment(session->status_var.com_stat[SQLCOM_SHOW_PROCESSLIST]);
-    mysqld_list_processes(session, NULL, 0);
     break;
   case COM_SLEEP:
   case COM_CONNECT:				// Impossible here
