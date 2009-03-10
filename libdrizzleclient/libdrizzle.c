@@ -207,43 +207,6 @@ DRIZZLE_FIELD *drizzleclient_cli_list_fields(DRIZZLE *drizzle)
   return drizzleclient_unpack_fields(query, drizzle->field_count, 1);
 }
 
-
-/**************************************************************************
-  List all fields in a table
-  If wild is given then only the fields matching wild is returned
-  Instead of this use query:
-  show fields in 'table' like "wild"
-**************************************************************************/
-
-DRIZZLE_RES *
-drizzleclient_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
-{
-  DRIZZLE_RES   *result;
-  DRIZZLE_FIELD *fields;
-  char buff[257], *end;
-
-  end= strncpy(buff, table, 128) + 128;
-  end= strncpy(end+1, wild ? wild : "", 128) + 128;
-
-  drizzleclient_free_old_query(drizzle);
-  if (simple_command(drizzle, COM_FIELD_LIST, (unsigned char*) buff,
-                     (uint32_t) (end-buff), 1) ||
-      !(fields= (*drizzle->methods->list_fields)(drizzle)))
-    return(NULL);
-
-  if (!(result = (DRIZZLE_RES *) malloc(sizeof(DRIZZLE_RES))))
-    return(NULL);
-
-  memset(result, 0, sizeof(DRIZZLE_RES));
-
-  result->methods= drizzle->methods;
-  drizzle->fields=0;
-  result->field_count = drizzle->field_count;
-  result->fields= fields;
-  result->eof=1;
-  return(result);
-}
-
 int
 drizzleclient_shutdown(DRIZZLE *drizzle)
 {

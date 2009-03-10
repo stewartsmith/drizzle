@@ -141,9 +141,7 @@ uint32_t  drizzleclient_get_proto_info(const DRIZZLE *drizzle);
 DRIZZLE_RES *  drizzleclient_list_tables(DRIZZLE *drizzle,const char *wild);
 DRIZZLE_RES *  drizzleclient_list_processes(DRIZZLE *drizzle);
 int32_t    drizzleclient_options(DRIZZLE *drizzle, enum drizzle_option option,
-                           const void *arg);
-DRIZZLE_RES *     drizzleclient_list_fields(DRIZZLE *drizzle, const char *table,
-                                      const char *wild);
+                                 const void *arg);
 bool         drizzleclient_read_query_result(DRIZZLE *drizzle);
 
 bool drizzleclient_commit(DRIZZLE *drizzle);

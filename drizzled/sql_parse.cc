@@ -55,7 +55,6 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Quit") },
   { C_STRING_WITH_LEN("Init DB") },
   { C_STRING_WITH_LEN("Query") },
-  { C_STRING_WITH_LEN("Field List") },
   { C_STRING_WITH_LEN("Create DB") },
   { C_STRING_WITH_LEN("Drop DB") },
   { C_STRING_WITH_LEN("Refresh") },
@@ -517,61 +516,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
       mysql_parse(session, beginning_of_next_stmt, length, &end_of_stmt);
     }
-    break;
-  }
-  case COM_FIELD_LIST:				// This isn't actually needed
-  {
-    char *fields, *packet_end= packet + packet_length, *arg_end;
-    /* Locked closure of all tables */
-    TableList table_list;
-    LEX_STRING conv_name;
-
-    /* used as fields initializator */
-    lex_start(session);
-
-    status_var_increment(session->status_var.com_stat[SQLCOM_SHOW_FIELDS]);
-    memset(&table_list, 0, sizeof(table_list));
-    if (session->copy_db_to(&table_list.db, &table_list.db_length))
-      break;
-    /*
-      We have name + wildcard in packet, separated by endzero
-    */
-    arg_end= strchr(packet, '\0');
-    session->convert_string(&conv_name, system_charset_info,
-			packet, (uint32_t) (arg_end - packet), session->charset());
-    table_list.alias= table_list.table_name= conv_name.str;
-    packet= arg_end + 1;
-
-    if (!my_strcasecmp(system_charset_info, table_list.db,
-                       INFORMATION_SCHEMA_NAME.c_str()))
-    {
-      ST_SCHEMA_TABLE *schema_table= find_schema_table(session, table_list.alias);
-      if (schema_table)
-        table_list.schema_table= schema_table;
-    }
-
-    session->query_length= (uint32_t) (packet_end - packet); // Don't count end \0
-    if (!(session->query=fields= (char*) session->memdup(packet,session->query_length+1)))
-      break;
-    if (lower_case_table_names)
-      my_casedn_str(files_charset_info, table_list.table_name);
-
-    /* init structures for VIEW processing */
-    table_list.select_lex= &(session->lex->select_lex);
-
-    lex_start(session);
-    session->reset_for_next_command();
-
-    session->lex->
-      select_lex.table_list.link_in_list((unsigned char*) &table_list,
-                                         (unsigned char**) &table_list.next_local);
-    session->lex->add_to_query_tables(&table_list);
-
-    /* switch on VIEW optimisation: do not fill temporary tables */
-    session->lex->sql_command= SQLCOM_SHOW_FIELDS;
-    mysqld_list_fields(session,&table_list,fields);
-    session->lex->unit.cleanup();
-    session->cleanup_after_query();
     break;
   }
   case COM_QUIT:
