@@ -166,7 +166,6 @@ DRIZZLE_DATA * drizzleclient_cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *drizz
                              unsigned int fields);
 int drizzleclient_cli_unbuffered_fetch(DRIZZLE *drizzle, char **row);
 const char * drizzleclient_cli_read_statistics(DRIZZLE *drizzle);
-int drizzleclient_cli_read_change_user_result(DRIZZLE *drizzle);
 
 typedef bool (*safe_read_error_hook_func)(NET *net);
 extern safe_read_error_hook_func safe_read_error_hook;

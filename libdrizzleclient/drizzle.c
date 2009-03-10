@@ -70,7 +70,6 @@ static DRIZZLE_METHODS client_methods=
   drizzleclient_cli_unbuffered_fetch,                        /* unbuffered_fetch */
   drizzleclient_cli_read_statistics,                         /* read_statistics */
   drizzleclient_cli_read_query_result,                       /* next_result */
-  drizzleclient_cli_read_change_user_result,                 /* read_change_user_result */
 };
 
 

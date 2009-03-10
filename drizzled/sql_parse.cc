@@ -63,7 +63,6 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Connect") },
   { C_STRING_WITH_LEN("Ping") },
   { C_STRING_WITH_LEN("Time") },
-  { C_STRING_WITH_LEN("Change user") },
   { C_STRING_WITH_LEN("Connect Out") },
   { C_STRING_WITH_LEN("Error") }  // Last command number
 };
@@ -473,106 +472,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     if (!mysql_change_db(session, &tmp, false))
     {
       session->my_ok();
-    }
-    break;
-  }
-  case COM_CHANGE_USER:
-  {
-    status_var_increment(session->status_var.com_other);
-    char *user= (char*) packet, *packet_end= packet + packet_length;
-    /* Safe because there is always a trailing \0 at the end of the packet */
-    char *passwd= strchr(user, '\0')+1;
-
-
-    session->clear_error();                         // if errors from rollback
-
-    /*
-      Old clients send null-terminated string ('\0' for empty string) for
-      password.  New clients send the size (1 byte) + string (not null
-      terminated, so also '\0' for empty string).
-
-      Cast *passwd to an unsigned char, so that it doesn't extend the sign
-      for *passwd > 127 and become 2**32-127 after casting to uint32_t.
-    */
-    char db_buff[NAME_LEN+1];                 // buffer to store db in utf8
-    char *db= passwd;
-    char *save_db;
-    /*
-      If there is no password supplied, the packet must contain '\0',
-      in any type of handshake (4.1 or pre-4.1).
-     */
-    if (passwd >= packet_end)
-    {
-      my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
-      break;
-    }
-    uint32_t passwd_len= (session->client_capabilities & CLIENT_SECURE_CONNECTION ?
-                      (unsigned char)(*passwd++) : strlen(passwd));
-    uint32_t dummy_errors, save_db_length, db_length;
-    int res;
-    USER_CONN *save_user_connect;
-    string old_username;
-
-    db+= passwd_len + 1;
-    /*
-      Database name is always NUL-terminated, so in case of empty database
-      the packet must contain at least the trailing '\0'.
-    */
-    if (db >= packet_end)
-    {
-      my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
-      break;
-    }
-    db_length= strlen(db);
-
-    char *ptr= db + db_length + 1;
-    uint32_t cs_number= 0;
-
-    if (ptr < packet_end)
-    {
-      if (ptr + 2 > packet_end)
-      {
-        my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
-        break;
-      }
-
-      cs_number= uint2korr(ptr);
-    }
-
-    /* Convert database name to utf8 */
-    db_buff[copy_and_convert(db_buff, sizeof(db_buff)-1,
-                             system_charset_info, db, db_length,
-                             session->charset(), &dummy_errors)]= 0;
-    db= db_buff;
-
-    /* Save user and privileges */
-    save_db_length= session->db_length;
-    save_db= session->db;
-    save_user_connect= session->user_connect;
-
-    old_username= session->security_ctx.user;
-    session->security_ctx.user.assign(user);
-
-    /* Clear variables that are allocated */
-    session->user_connect= 0;
-    res= check_user(session, passwd, passwd_len, db);
-
-    if (res)
-    {
-      session->security_ctx.user= old_username;
-      session->user_connect= save_user_connect;
-      session->db= save_db;
-      session->db_length= save_db_length;
-    }
-    else
-    {
-      if (save_db)
-        free(save_db);
-
-      if (cs_number)
-      {
-        session->update_charset();
-      }
     }
     break;
   }
