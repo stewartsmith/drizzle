@@ -62,7 +62,6 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Shutdown") },
   { C_STRING_WITH_LEN("Processlist") },
   { C_STRING_WITH_LEN("Connect") },
-  { C_STRING_WITH_LEN("Kill") },
   { C_STRING_WITH_LEN("Ping") },
   { C_STRING_WITH_LEN("Time") },
   { C_STRING_WITH_LEN("Change user") },
@@ -703,13 +702,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     status_var_increment(session->status_var.com_stat[SQLCOM_SHOW_PROCESSLIST]);
     mysqld_list_processes(session, NULL, 0);
     break;
-  case COM_PROCESS_KILL:
-  {
-    status_var_increment(session->status_var.com_stat[SQLCOM_KILL]);
-    ulong id=(ulong) uint4korr(packet);
-    sql_kill(session,id,false);
-    break;
-  }
   case COM_SET_OPTION:
   {
     status_var_increment(session->status_var.com_stat[SQLCOM_SET_OPTION]);

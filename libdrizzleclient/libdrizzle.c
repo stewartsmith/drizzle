@@ -361,15 +361,6 @@ drizzleclient_refresh(DRIZZLE *drizzle, uint32_t options)
 }
 
 
-int32_t
-drizzleclient_kill(DRIZZLE *drizzle, uint32_t pid)
-{
-  unsigned char buff[4];
-  int4store(buff,pid);
-  return(simple_command(drizzle,COM_PROCESS_KILL,buff,sizeof(buff),0));
-}
-
-
 int
 drizzleclient_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option)
 {
