@@ -682,11 +682,11 @@ static bool get_unsigned(Session *, set_var *var)
 static bool get_size_t(Session *, set_var *var)
 {
   if (var->value->unsigned_flag)
-    var->save_result.uint64_t_value= (size_t) var->value->val_int();
+    var->save_result.size_t_value= (size_t) var->value->val_int();
   else
   {
     ssize_t v= (ssize_t)var->value->val_int();
-    var->save_result.uint64_t_value= (size_t) ((v < 0) ? 0 : v);
+    var->save_result.size_t_value= (size_t) ((v < 0) ? 0 : v);
   }
   return 0;
 }
