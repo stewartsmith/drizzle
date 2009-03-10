@@ -200,7 +200,7 @@ static sys_var_session_uint64_t	sys_max_seeks_for_key(&vars, "max_seeks_for_key"
                                                       &SV::max_seeks_for_key);
 static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
                                                                &SV::max_length_for_sort_data);
-static sys_var_session_uint64_t	sys_max_sort_length(&vars, "max_sort_length",
+static sys_var_session_size_t	sys_max_sort_length(&vars, "max_sort_length",
                                                     &SV::max_sort_length);
 static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
                                                    &SV::max_tmp_tables);
