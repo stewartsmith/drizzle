@@ -153,7 +153,6 @@ enum enum_server_command
   COM_CONNECT, COM_PING,
   COM_TIME, COM_CHANGE_USER,
   COM_CONNECT_OUT,
-  COM_DAEMON,
   /* don't forget to update const char *command_name[] in sql_parse.cc */
 
   /* Must be last */

@@ -65,7 +65,6 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Time") },
   { C_STRING_WITH_LEN("Change user") },
   { C_STRING_WITH_LEN("Connect Out") },
-  { C_STRING_WITH_LEN("Daemon") },
   { C_STRING_WITH_LEN("Error") }  // Last command number
 };
 
@@ -3144,8 +3143,6 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
   I_List_iterator<Session> it(threads);
   while ((tmp=it++))
   {
-    if (tmp->command == COM_DAEMON)
-      continue;
     if (tmp->thread_id == id)
     {
       pthread_mutex_lock(&tmp->LOCK_delete);	// Lock from delete
