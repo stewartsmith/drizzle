@@ -2468,7 +2468,7 @@ static int dump_all_tables_in_db(char *database)
   }
   if (flush_logs)
   {
-    if (drizzleclient_refresh(drizzle, REFRESH_LOG))
+    if (drizzleclient_real_query(drizzle, "FLUSH LOGS", strlen("FLUSH LOGS")))
       DB_error(drizzle, _("when doing refresh"));
            /* We shall continue here, if --force was given */
   }
@@ -2597,7 +2597,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   }
   if (flush_logs)
   {
-    if (drizzleclient_refresh(drizzle, REFRESH_LOG))
+    if (drizzleclient_real_query(drizzle, "FLUSH LOGS", strlen("FLUSH LOGS")))
     {
       if (!ignore_errors)
         free_root(&root, MYF(0));
@@ -3156,14 +3156,14 @@ int main(int argc, char **argv)
       goto err;
   if (opt_delete_master_logs)
   {
-    if (drizzleclient_refresh(drizzle, REFRESH_LOG) ||
+    if (drizzleclient_real_query(drizzle, "FLUSH LOGS", strlen("FLUSH LOGS")) ||
         get_bin_log_name(drizzle, bin_log_name, sizeof(bin_log_name)))
       goto err;
     flush_logs= 0;
   }
   if (opt_lock_all_tables || opt_master_data)
   {
-    if (flush_logs && drizzleclient_refresh(drizzle, REFRESH_LOG))
+    if (drizzleclient_real_query(drizzle, "FLUSH LOGS", strlen("FLUSH LOGS")))
       goto err;
     flush_logs= 0; /* not anymore; that would not be sensible */
   }

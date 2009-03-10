@@ -214,15 +214,6 @@ drizzleclient_shutdown(DRIZZLE *drizzle)
 }
 
 
-int
-drizzleclient_refresh(DRIZZLE *drizzle, uint32_t options)
-{
-  unsigned char bits[1];
-  bits[0]= (unsigned char) options;
-  return(simple_command(drizzle, COM_REFRESH, bits, 1, 0));
-}
-
-
 const char *drizzleclient_cli_read_statistics(DRIZZLE *drizzle)
 {
   drizzle->net.read_pos[drizzle->packet_length]=0;  /* End of stat string */

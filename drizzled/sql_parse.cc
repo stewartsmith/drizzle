@@ -55,13 +55,9 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Quit") },
   { C_STRING_WITH_LEN("Init DB") },
   { C_STRING_WITH_LEN("Query") },
-  { C_STRING_WITH_LEN("Create DB") },
-  { C_STRING_WITH_LEN("Drop DB") },
-  { C_STRING_WITH_LEN("Refresh") },
   { C_STRING_WITH_LEN("Shutdown") },
   { C_STRING_WITH_LEN("Connect") },
   { C_STRING_WITH_LEN("Ping") },
-  { C_STRING_WITH_LEN("Connect Out") },
   { C_STRING_WITH_LEN("Error") }  // Last command number
 };
 

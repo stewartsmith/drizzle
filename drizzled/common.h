@@ -148,12 +148,14 @@
 
 enum enum_server_command
 {
-  COM_SLEEP, COM_QUIT, COM_INIT_DB, COM_QUERY,
-  COM_CREATE_DB, COM_DROP_DB, COM_REFRESH, COM_SHUTDOWN,
-  COM_CONNECT, COM_PING,
-  COM_CONNECT_OUT,
+  COM_SLEEP,
+  COM_QUIT,
+  COM_INIT_DB,
+  COM_QUERY,
+  COM_SHUTDOWN,
+  COM_CONNECT,
+  COM_PING,
   /* don't forget to update const char *command_name[] in sql_parse.cc */
-
   /* Must be last */
   COM_END
 };
@@ -198,10 +200,8 @@ enum enum_server_command
 #define FIELD_STORAGE_FLAGS 22          /* Storage type: bit 22, 23 and 24 */
 #define COLUMN_FORMAT_FLAGS 25          /* Column format: bit 25, 26 and 27 */
 
-#define REFRESH_GRANT		1	/* Refresh grant tables */
 #define REFRESH_LOG		2	/* Start on new log file */
 #define REFRESH_TABLES		4	/* close all tables */
-#define REFRESH_HOSTS		8	/* Flush host cache */
 #define REFRESH_STATUS		16	/* Flush status variables */
 
 /* The following can't be set with mysql_refresh() */
