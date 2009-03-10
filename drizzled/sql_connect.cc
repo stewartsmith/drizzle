@@ -439,11 +439,6 @@ void prepare_new_connection_state(Session* session)
   if (session->client_capabilities & CLIENT_COMPRESS)
     session->net.compress=1;				// Use compression
 
-  /*
-    Much of this is duplicated in create_embedded_session() for the
-    embedded server library.
-    TODO: refactor this to avoid code duplication there
-  */
   session->version= refresh_version;
   session->set_proc_info(0);
   session->command= COM_SLEEP;

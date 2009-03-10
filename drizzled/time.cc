@@ -264,7 +264,8 @@ void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds)
 
 void make_time(const DRIZZLE_TIME *l_time, String *str)
 {
-  uint32_t length= (uint32_t) my_time_to_str(l_time, (char*) str->c_ptr());
+  str->alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= (uint32_t) my_time_to_str(l_time, str->c_ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -272,7 +273,8 @@ void make_time(const DRIZZLE_TIME *l_time, String *str)
 
 void make_date(const DRIZZLE_TIME *l_time, String *str)
 {
-  uint32_t length= (uint32_t) my_date_to_str(l_time, (char*) str->c_ptr());
+  str->alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= (uint32_t) my_date_to_str(l_time, str->c_ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -280,7 +282,8 @@ void make_date(const DRIZZLE_TIME *l_time, String *str)
 
 void make_datetime(const DRIZZLE_TIME *l_time, String *str)
 {
-  uint32_t length= (uint32_t) my_datetime_to_str(l_time, (char*) str->c_ptr());
+  str->alloc(MAX_DATE_STRING_REP_LENGTH);
+  uint32_t length= (uint32_t) my_datetime_to_str(l_time, str->c_ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }

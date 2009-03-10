@@ -399,7 +399,7 @@ N_("Got error %d during FLUSH_LOGS"),
 /* ER_ERROR_DURING_CHECKPOINT   */
 N_("Got error %d during CHECKPOINT"),
 /* ER_NEW_ABORTING_CONNECTION 08S01  */
-N_("Aborted connection %ld to db: '%-.192s' user: '%-.48s' host: '%-.64s' (%-.64s)"),
+N_("Aborted connection %"PRIi64" to db: '%-.192s' user: '%-.48s' host: '%-.64s' (%-.64s)"),
 /* ER_DUMP_NOT_IMPLEMENTED   */
 N_("The storage engine for the table does not support binary table dump"),
 /* ER_FLUSH_MASTER_BINLOG_CLOSED   */
