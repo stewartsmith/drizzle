@@ -931,19 +931,6 @@ mysql_execute_command(Session *session)
       goto end_with_restore_list;
 #endif
     /*
-      If we are using SET CHARSET without DEFAULT, add an implicit
-      DEFAULT to not confuse old users. (This may change).
-    */
-    if ((create_info.used_fields &
-	 (HA_CREATE_USED_DEFAULT_CHARSET | HA_CREATE_USED_CHARSET)) ==
-	HA_CREATE_USED_CHARSET)
-    {
-      create_info.used_fields&= ~HA_CREATE_USED_CHARSET;
-      create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
-      create_info.default_table_charset= create_info.table_charset;
-      create_info.table_charset= 0;
-    }
-    /*
       The create-select command will open and read-lock the select table
       and then create, open and write-lock the new table. If a global
       read lock steps in, we get a deadlock. The write lock waits for
@@ -2046,11 +2033,6 @@ void mysql_init_multi_delete(LEX *lex)
 }
 
 
-/*
-  When you modify mysql_parse(), you may need to mofify
-  mysql_test_parse_for_slave() in this same file.
-*/
-
 /**
   Parse a query.
 
@@ -2126,34 +2108,6 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
   }
 
   return;
-}
-
-
-/*
-  Usable by the replication SQL thread only: just parse a query to know if it
-  can be ignored because of replicate-*-table rules.
-
-  @retval
-    0	cannot be ignored
-  @retval
-    1	can be ignored
-*/
-
-bool mysql_test_parse_for_slave(Session *session, char *inBuf, uint32_t length)
-{
-  LEX *lex= session->lex;
-  bool error= 0;
-
-  Lex_input_stream lip(session, inBuf, length);
-  lex_start(session);
-  session->reset_for_next_command();
-
-  if (!parse_sql(session, &lip) &&
-      all_tables_not_ok(session,(TableList*) lex->select_lex.table_list.first))
-    error= 1;                  /* Ignore question */
-  session->end_statement();
-  session->cleanup_after_query();
-  return(error);
 }
 
 
@@ -2260,23 +2214,6 @@ void store_position_for_column(const char *name)
 {
   current_session->lex->last_field->after=const_cast<char*> (name);
 }
-
-bool
-add_proc_to_list(Session* session, Item *item)
-{
-  order_st *order;
-  Item	**item_ptr;
-
-  if (!(order = (order_st *) session->alloc(sizeof(order_st)+sizeof(Item*))))
-    return 1;
-  item_ptr = (Item**) (order+1);
-  *item_ptr= item;
-  order->item=item_ptr;
-  order->free_me=0;
-  session->lex->proc_list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return 0;
-}
-
 
 /**
   save order by and tables in own lists.
