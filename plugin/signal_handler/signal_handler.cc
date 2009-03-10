@@ -182,9 +182,7 @@ pthread_handler_t signal_hand(void *)
       if (!abort_loop)
       {
         bool not_used;
-        reload_cache((Session*) 0,
-                     (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST |
-                      REFRESH_HOSTS),
+        reload_cache((Session*) 0, (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST ),
                      (TableList*) 0, &not_used); // Flush logs
       }
       break;

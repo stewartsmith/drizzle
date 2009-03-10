@@ -66,10 +66,6 @@ bool logging_syslog_func_post (Session *session)
 {
   assert(session != NULL);
 
-  // skip returning field list, too verbose */
-  if (session->command == COM_FIELD_LIST)
-    return false;
-
   // return if not enabled or query was too fast or resultset was too small
   if (sysvar_logging_syslog_enable == false)
     return false;

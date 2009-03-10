@@ -131,9 +131,6 @@ drizzleclient_set_local_infile_default(DRIZZLE *drizzle);
 int32_t    drizzleclient_shutdown(DRIZZLE *drizzle);
 int32_t    drizzle_dump_debug_info(DRIZZLE *drizzle);
 int32_t    drizzleclient_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
-int32_t    drizzleclient_kill(DRIZZLE *drizzle, uint32_t pid);
-int32_t    drizzleclient_set_server_option(DRIZZLE *drizzle,
-                                     enum enum_drizzle_set_option option);
 int32_t    drizzleclient_ping(DRIZZLE *drizzle);
 const char *  drizzle_stat(DRIZZLE *drizzle);
 const char *  drizzleclient_get_server_info(const DRIZZLE *drizzle);
@@ -144,9 +141,7 @@ uint32_t  drizzleclient_get_proto_info(const DRIZZLE *drizzle);
 DRIZZLE_RES *  drizzleclient_list_tables(DRIZZLE *drizzle,const char *wild);
 DRIZZLE_RES *  drizzleclient_list_processes(DRIZZLE *drizzle);
 int32_t    drizzleclient_options(DRIZZLE *drizzle, enum drizzle_option option,
-                           const void *arg);
-DRIZZLE_RES *     drizzleclient_list_fields(DRIZZLE *drizzle, const char *table,
-                                      const char *wild);
+                                 const void *arg);
 bool         drizzleclient_read_query_result(DRIZZLE *drizzle);
 
 bool drizzleclient_commit(DRIZZLE *drizzle);
@@ -169,7 +164,6 @@ DRIZZLE_DATA * drizzleclient_cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *drizz
                              unsigned int fields);
 int drizzleclient_cli_unbuffered_fetch(DRIZZLE *drizzle, char **row);
 const char * drizzleclient_cli_read_statistics(DRIZZLE *drizzle);
-int drizzleclient_cli_read_change_user_result(DRIZZLE *drizzle);
 
 typedef bool (*safe_read_error_hook_func)(NET *net);
 extern safe_read_error_hook_func safe_read_error_hook;
