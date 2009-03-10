@@ -148,14 +148,14 @@
 
 enum enum_server_command
 {
-  COM_SLEEP, COM_QUIT, COM_INIT_DB, COM_QUERY, COM_FIELD_LIST,
-  COM_CREATE_DB, COM_DROP_DB, COM_REFRESH, COM_SHUTDOWN,
-  COM_PROCESS_INFO, COM_CONNECT, COM_PROCESS_KILL, COM_PING,
-  COM_TIME, COM_CHANGE_USER,
-  COM_CONNECT_OUT,
-  COM_SET_OPTION, COM_DAEMON,
+  COM_SLEEP,
+  COM_QUIT,
+  COM_INIT_DB,
+  COM_QUERY,
+  COM_SHUTDOWN,
+  COM_CONNECT,
+  COM_PING,
   /* don't forget to update const char *command_name[] in sql_parse.cc */
-
   /* Must be last */
   COM_END
 };
@@ -200,10 +200,8 @@ enum enum_server_command
 #define FIELD_STORAGE_FLAGS 22          /* Storage type: bit 22, 23 and 24 */
 #define COLUMN_FORMAT_FLAGS 25          /* Column format: bit 25, 26 and 27 */
 
-#define REFRESH_GRANT		1	/* Refresh grant tables */
 #define REFRESH_LOG		2	/* Start on new log file */
 #define REFRESH_TABLES		4	/* close all tables */
-#define REFRESH_HOSTS		8	/* Flush host cache */
 #define REFRESH_STATUS		16	/* Flush status variables */
 
 /* The following can't be set with mysql_refresh() */
@@ -333,22 +331,6 @@ enum enum_field_types { DRIZZLE_TYPE_TINY,
                         DRIZZLE_TYPE_MAX=DRIZZLE_TYPE_BLOB
 };
 
-
-enum enum_cursor_type
-{
-  CURSOR_TYPE_NO_CURSOR= 0,
-  CURSOR_TYPE_READ_ONLY= 1,
-  CURSOR_TYPE_FOR_UPDATE= 2,
-  CURSOR_TYPE_SCROLLABLE= 4
-};
-
-
-/* options for mysql_set_option */
-enum enum_drizzle_set_option
-{
-  DRIZZLE_OPTION_MULTI_STATEMENTS_ON,
-  DRIZZLE_OPTION_MULTI_STATEMENTS_OFF
-};
 
 #define net_new_transaction(net) ((net)->pkt_nr=0)
 

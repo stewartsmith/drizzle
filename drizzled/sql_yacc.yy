@@ -5092,8 +5092,6 @@ flush_option:
           opt_table_list {}
         | TABLES WITH READ_SYM LOCK_SYM
           { Lex->type|= REFRESH_TABLES | REFRESH_READ_LOCK; }
-        | HOSTS_SYM
-          { Lex->type|= REFRESH_HOSTS; }
         | LOGS_SYM
           { Lex->type|= REFRESH_LOG; }
         | STATUS_SYM

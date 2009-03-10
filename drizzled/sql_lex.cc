@@ -278,7 +278,6 @@ void lex_start(Session *session)
   lex->sql_command= SQLCOM_END;
   lex->duplicates= DUP_ERROR;
   lex->ignore= 0;
-  lex->proc_list.first= 0;
   lex->escape_used= false;
   lex->query_tables= 0;
   lex->reset_query_tables_list(false);
