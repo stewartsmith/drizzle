@@ -151,7 +151,6 @@ enum enum_server_command
   COM_SLEEP, COM_QUIT, COM_INIT_DB, COM_QUERY, COM_FIELD_LIST,
   COM_CREATE_DB, COM_DROP_DB, COM_REFRESH, COM_SHUTDOWN,
   COM_CONNECT, COM_PING,
-  COM_TIME,
   COM_CONNECT_OUT,
   /* don't forget to update const char *command_name[] in sql_parse.cc */
 

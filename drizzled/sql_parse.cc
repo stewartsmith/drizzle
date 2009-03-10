@@ -62,7 +62,6 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Shutdown") },
   { C_STRING_WITH_LEN("Connect") },
   { C_STRING_WITH_LEN("Ping") },
-  { C_STRING_WITH_LEN("Time") },
   { C_STRING_WITH_LEN("Connect Out") },
   { C_STRING_WITH_LEN("Error") }  // Last command number
 };
@@ -596,7 +595,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   case COM_SLEEP:
   case COM_CONNECT:				// Impossible here
-  case COM_TIME:				// Impossible from client
   case COM_END:
   default:
     my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
