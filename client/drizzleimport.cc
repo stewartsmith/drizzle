@@ -49,7 +49,7 @@ static char *add_load_option(char *ptr,const char *object,
 
 static bool verbose= false, lock_tables= false, ignore_errors= false,
             opt_delete= false, opt_replace= false, silent= false,
-            ignore= false, opt_compress= false, opt_low_priority= false,
+            ignore_unique= false, opt_compress= false, opt_low_priority= false,
             tty_password= false;
 static bool debug_info_flag= false, debug_check_flag= false;
 static uint32_t opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
@@ -106,7 +106,7 @@ static struct my_option my_long_options[] =
   {"host", 'h', "Connect to host.", (char**) &current_host,
    (char**) &current_host, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"ignore", 'i', "If duplicate unique key was found, keep old row.",
-   (char**) &ignore, (char**) &ignore, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &ignore_unique, (char**) &ignore_unique, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"ignore-lines", OPT_IGN_LINES, "Ignore first n lines of data infile.",
    (char**) &opt_ignore_lines, (char**) &opt_ignore_lines, 0, GET_LL,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -265,9 +265,9 @@ static int get_options(int *argc, char ***argv)
     fprintf(stderr, "You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n");
     return(1);
   }
-  if (opt_replace && ignore)
+  if (opt_replace && ignore_unique)
   {
-    fprintf(stderr, "You can't use --ignore (-i) and --replace (-r) at the same time.\n");
+    fprintf(stderr, "You can't use --ignore_unique (-i) and --replace (-r) at the same time.\n");
     return(1);
   }
   if (strcmp(default_charset, charset_info->csname) &&
@@ -328,7 +328,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
   end= strchr(sql_statement, '\0');
   if (opt_replace)
     end= strcpy(end, " REPLACE")+8;
-  if (ignore)
+  if (ignore_unique)
     end= strcpy(end, " IGNORE")+7;
 
   end+= sprintf(end, " INTO TABLE %s", tablename);
