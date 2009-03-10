@@ -28,11 +28,6 @@
 #include <sstream>
 #include <string>
 
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 /****************************************************************************
 ** Drizzle date type stored in 3 bytes

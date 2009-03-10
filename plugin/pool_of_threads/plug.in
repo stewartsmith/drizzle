@@ -1,3 +1,24 @@
 DRIZZLE_PLUGIN(pool_of_threads,  [Pool of Threads Scheduler])
 DRIZZLE_PLUGIN_STATIC(pool_of_threads,   [libpool_of_threads.la])
 DRIZZLE_PLUGIN_MANDATORY(pool_of_threads)  dnl Default
+DRIZZLE_PLUGIN_ACTIONS(pool_of_threads, [
+#--------------------------------------------------------------------
+# Check for libevent
+#--------------------------------------------------------------------
+
+  AC_LIB_HAVE_LINKFLAGS(event,,
+  [
+  #include <sys/types.h>
+  #include <sys/time.h>
+  #include <stdlib.h>
+  #include <event.h>
+  ],[
+    struct bufferevent bev;
+    bufferevent_settimeout(&bev, 1, 1);
+    event_init();
+    event_loop(EVLOOP_ONCE);
+  ]) 
+  AS_IF([test x$ac_cv_libevent = xno],
+      AC_MSG_ERROR([A recent libevent is required for Drizzle. Check http://www.monkey.org/~provos/libevent ]))
+  DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} ${LIBEVENT}"
+])

@@ -821,7 +821,7 @@ static void close_files(void)
   {
     if (cur_file->file && cur_file->file != stdin)
     {
-      my_fclose(cur_file->file, MYF(0));
+      fclose(cur_file->file);
     }
     free((unsigned char*) cur_file->file_name);
     cur_file->file_name= 0;
@@ -2063,7 +2063,7 @@ static int open_file(const char *name)
   if (cur_file == file_stack_end)
     die("Source directives are nesting too deep");
   cur_file++;
-  if (!(cur_file->file = my_fopen(buff, O_RDONLY, MYF(0))))
+  if (!(cur_file->file= fopen(buff, "r")))
   {
     cur_file--;
     die("Could not open '%s' for reading", buff);
@@ -3821,7 +3821,7 @@ static void do_connect(struct st_command *command)
     die("Failed on drizzleclient_create()");
   if (opt_compress || con_compress)
     drizzleclient_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NULL);
-  drizzleclient_options(&con_slot->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
+  
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -4058,7 +4058,7 @@ static int read_line(char *buf, int size)
   found_eof:
       if (cur_file->file != stdin)
       {
-        my_fclose(cur_file->file, MYF(0));
+        fclose(cur_file->file);
         cur_file->file= 0;
       }
       free((unsigned char*) cur_file->file_name);
@@ -4567,7 +4567,7 @@ static void read_embedded_server_arguments(const char *name)
     embedded_server_arg_count=1;
     embedded_server_args[0]= (char*) "";    /* Progname */
   }
-  if (!(file=my_fopen(buff, O_RDONLY, MYF(MY_WME))))
+  if (!(file= fopen(buff, "r")))
     die("Failed to open file '%s'", buff);
 
   while (embedded_server_arg_count < MAX_EMBEDDED_SERVER_ARGS &&
@@ -4577,13 +4577,13 @@ static void read_embedded_server_arguments(const char *name)
     if (!(embedded_server_args[embedded_server_arg_count]=
           (char*) strdup(str)))
     {
-      my_fclose(file,MYF(0));
+      fclose(file);
       die("Out of memory");
 
     }
     embedded_server_arg_count++;
   }
-  my_fclose(file,MYF(0));
+  fclose(file);
   if (str)
     die("Too many arguments in option file: %s",name);
 
@@ -4611,8 +4611,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
     assert(cur_file == file_stack && cur_file->file == 0);
-    if (!(cur_file->file=
-          my_fopen(buff, O_RDONLY, MYF(0))))
+    if (!(cur_file->file= fopen(buff, "r")))
       die("Could not open '%s' for reading: errno = %d", buff, errno);
     if (!(cur_file->file_name= strdup(buff)))
       die("Out of memory");
@@ -5556,7 +5555,6 @@ int main(int argc, char **argv)
     die("Failed in drizzleclient_create()");
   if (opt_compress)
     drizzleclient_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NULL);
-  drizzleclient_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");

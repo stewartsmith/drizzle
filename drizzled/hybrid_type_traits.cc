@@ -21,12 +21,6 @@
 #include <drizzled/hybrid_type_traits.h>
 #include <drizzled/hybrid_type.h>
 
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
-
 static const Hybrid_type_traits real_traits_instance;
 
 Item_result Hybrid_type_traits::type() const

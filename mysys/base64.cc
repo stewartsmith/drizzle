@@ -17,12 +17,10 @@
 #include <mystrings/m_string.h>  /* strchr() */
 #include <mystrings/m_ctype.h>  /* my_isspace() */
 #include <mysys/base64.h>
-#include <stdio.h>
-#include CMATH_H
+#include <cstdio>
+#include <cmath>
 
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
+using namespace std;
 
 #ifndef MAIN
 

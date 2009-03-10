@@ -48,8 +48,6 @@ bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
     return(1);
   }
 
-  mysql_ha_rm_tables(session, table_list, false);
-
   if (wait_if_global_read_lock(session,0,1))
     return(1);
 

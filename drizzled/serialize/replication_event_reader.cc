@@ -56,12 +56,12 @@ void printRecord(const ::drizzle::EventList *list)
             cout << ", ";
 
           cout << "(";
-          for (y= 0; y < values.value_size() ; y++)
+          for (y= 0; y < values.val_size() ; y++)
           {
             if (y != 0)
               cout << ", ";
 
-            cout << "\"" << values.value(y) << "\"";
+            cout << "\"" << values.val(y) << "\"";
           }
           cout << ")";
         }
@@ -76,12 +76,12 @@ void printRecord(const ::drizzle::EventList *list)
 
         cout << "DELETE FROM " << event.table() << " WHERE " << event.primary_key() << " IN (";
 
-        for (x= 0; x < values.value_size() ; x++)
+        for (x= 0; x < values.val_size() ; x++)
         {
           if (x != 0)
             cout << ", ";
 
-          cout << "\"" << values.value(x) << "\"";
+          cout << "\"" << values.val(x) << "\"";
         }
 
         cout << ")" << endl;
@@ -98,15 +98,15 @@ void printRecord(const ::drizzle::EventList *list)
 
           cout << "UPDATE "  << event.table() << " SET ";
 
-          for (x= 1; x < values.value_size() ; x++)
+          for (x= 1; x < values.val_size() ; x++)
           {
             if (x != 1)
               cout << ", ";
 
-            cout << event.field_names(x - 1) << " = \"" << values.value(x) << "\"";
+            cout << event.field_names(x - 1) << " = \"" << values.val(x) << "\"";
           }
 
-          cout << " WHERE " << event.primary_key() << " = " << values.value(0) << endl;
+          cout << " WHERE " << event.primary_key() << " = " << values.val(0) << endl;
         }
 
         break;

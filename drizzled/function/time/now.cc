@@ -20,8 +20,9 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/time/now.h>
-#include <drizzled/tztime.h>
 #include <drizzled/session.h>
+
+#include "drizzled/temporal.h"
 
 String *Item_func_now::val_str(String *)
 {
@@ -35,6 +36,10 @@ void Item_func_now::fix_length_and_dec()
 {
   decimals= DATETIME_DEC;
   collation.set(&my_charset_bin);
+  
+  memset(&ltime, 0, sizeof(DRIZZLE_TIME));
+
+  ltime.time_type= DRIZZLE_TIMESTAMP_DATETIME;
 
   store_now_in_TIME(&ltime);
   value= (int64_t) TIME_to_uint64_t_datetime(&ltime);
@@ -50,8 +55,16 @@ void Item_func_now::fix_length_and_dec()
 void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   Session *session= current_session;
-  session->variables.time_zone->gmt_sec_to_TIME(now_time,
-                                                (time_t)session->query_start());
+  time_t tmp= session->query_start();
+
+  (void) cached_temporal.from_time_t(tmp);
+
+  now_time->year= cached_temporal.years();
+  now_time->month= cached_temporal.months();
+  now_time->day= cached_temporal.days();
+  now_time->hour= cached_temporal.hours();
+  now_time->minute= cached_temporal.minutes();
+  now_time->second= cached_temporal.seconds();
 }
 
 
@@ -61,12 +74,23 @@ void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 */
 void Item_func_now_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
-  my_tz_UTC->gmt_sec_to_TIME(now_time,
-                             (time_t)(current_session->query_start()));
-  /*
-    We are not flagging this query as using time zone, since it uses fixed
-    UTC-SYSTEM time-zone.
-  */
+  Session *session= current_session;
+  time_t tmp= session->query_start();
+
+  (void) cached_temporal.from_time_t(tmp);
+
+  now_time->year= cached_temporal.years();
+  now_time->month= cached_temporal.months();
+  now_time->day= cached_temporal.days();
+  now_time->hour= cached_temporal.hours();
+  now_time->minute= cached_temporal.minutes();
+  now_time->second= cached_temporal.seconds();
+}
+
+bool Item_func_now::get_temporal(drizzled::DateTime &to)
+{
+  to= cached_temporal;
+  return true;
 }
 
 bool Item_func_now::get_date(DRIZZLE_TIME *res,

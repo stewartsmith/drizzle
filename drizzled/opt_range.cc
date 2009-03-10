@@ -111,19 +111,20 @@
 #include <drizzled/field/num.h>
 #include <drizzled/check_stack_overrun.h>
 
+#include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
+
 #include <string>
-#include CMATH_H
 
 using namespace std;
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 /*
   Convert double value to #rows. Currently this does floor(), and we
   might consider using round() instead.
 */
-#define double2rows(x) ((ha_rows)(x))
+static inline ha_rows double2rows(double x)
+{
+    return static_cast<ha_rows>(x);
+}
 
 static int sel_cmp(Field *f,unsigned char *a,unsigned char *b,uint8_t a_flag,uint8_t b_flag);
 
@@ -4336,8 +4337,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
   SEL_ARG *tree= 0;
   MEM_ROOT *alloc= param->mem_root;
   unsigned char *str;
-  ulong orig_sql_mode;
-  int err;
+  int err= 0;
 
   /*
     We need to restore the runtime mem_root of the thread in this
@@ -4486,13 +4486,111 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
       value->result_type() != STRING_RESULT &&
       field->cmp_type() != value->result_type())
     goto end;
-  /* For comparison purposes allow invalid dates like 2000-01-32 */
-  orig_sql_mode= field->table->in_use->variables.sql_mode;
-  if (value->real_item()->type() == Item::STRING_ITEM &&
-      (field->type() == DRIZZLE_TYPE_DATE ||
-       field->type() == DRIZZLE_TYPE_DATETIME))
-    field->table->in_use->variables.sql_mode|= MODE_INVALID_DATES;
-  err= value->save_in_field_no_warnings(field, 1);
+
+  /*
+   * Some notes from Jay...
+   *
+   * OK, so previously, and in MySQL, what the optimizer does here is
+   * override the sql_mode variable to ignore out-of-range or bad date-
+   * time values.  It does this because the optimizer is populating the
+   * field variable with the incoming value from the comparison field, 
+   * and the value may exceed the bounds of a proper column type.
+   *
+   * For instance, assume the following:
+   *
+   * CREATE TABLE t1 (ts TIMESTAMP); 
+   * INSERT INTO t1 ('2009-03-04 00:00:00');
+   * CREATE TABLE t2 (dt1 DATETIME, dt2 DATETIME); 
+   * INSERT INT t2 ('2003-12-31 00:00:00','2999-12-31 00:00:00');
+   *
+   * If we issue this query:
+   *
+   * SELECT * FROM t1, t2 WHERE t1.ts BETWEEN t2.dt1 AND t2.dt2;
+   *
+   * We will come into bounds issues.  Field_timestamp::store() will be
+   * called with a datetime value of "2999-12-31 00:00:00" and will throw
+   * an error for out-of-bounds.  MySQL solves this via a hack with sql_mode
+   * but Drizzle always throws errors on bad data storage in a Field class.
+   *
+   * Therefore, to get around the problem of the Field class being used for
+   * "storage" here without actually storing anything...we must check to see 
+   * if the value being stored in a Field_timestamp here is out of range.  If
+   * it is, then we must convert to the highest Timestamp value (or lowest,
+   * depending on whether the datetime is before or after the epoch.
+   */
+  if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
+  {
+    /* 
+     * The left-side of the range comparison is a timestamp field.  Therefore, 
+     * we must check to see if the value in the right-hand side is outside the
+     * range of the UNIX epoch, and cut to the epoch bounds if it is.
+     */
+    /* Datetime and date columns are Item::FIELD_ITEM ... and have a result type of STRING_RESULT */
+    if (value->real_item()->type() == Item::FIELD_ITEM
+        && value->result_type() == STRING_RESULT)
+    {
+      char buff[MAX_DATETIME_FULL_WIDTH];
+      String tmp(buff, sizeof(buff), &my_charset_bin);
+      String *res= value->val_str(&tmp);
+
+      if (!res)
+        goto end;
+      else
+      {
+        /* 
+         * Create a datetime from the string and compare to fixed timestamp
+         * instances representing the epoch boundaries.
+         */
+        drizzled::DateTime value_datetime;
+
+        if (! value_datetime.from_string(res->c_ptr(), (size_t) res->length()))
+          goto end;
+
+        drizzled::Timestamp max_timestamp;
+        drizzled::Timestamp min_timestamp;
+
+        (void) max_timestamp.from_time_t((time_t) INT32_MAX);
+        (void) min_timestamp.from_time_t((time_t) 0);
+
+        /* We rely on Temporal class operator overloads to do our comparisons. */
+        if (value_datetime < min_timestamp)
+        {
+          /* 
+           * Datetime in right-hand side column is before UNIX epoch, so adjust to
+           * lower bound.
+           */
+          char new_value_buff[MAX_DATETIME_FULL_WIDTH];
+          size_t new_value_length;
+          String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
+
+          min_timestamp.to_string(new_value_string.c_ptr(), &new_value_length);
+          new_value_string.length(new_value_length);
+          err= value->save_str_value_in_field(field, &new_value_string);
+        }
+        else if (value_datetime > max_timestamp)
+        {
+          /*
+           * Datetime in right hand side column is after UNIX epoch, so adjust
+           * to the higher bound of the epoch.
+           */
+          char new_value_buff[MAX_DATETIME_FULL_WIDTH];
+          size_t new_value_length;
+          String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
+
+          max_timestamp.to_string(new_value_string.c_ptr(), &new_value_length);
+          new_value_string.length(new_value_length);
+          err= value->save_str_value_in_field(field, &new_value_string);
+        }
+        else
+          err= value->save_in_field(field, 1);
+      }
+    }
+    else /* Not a datetime -> timestamp comparison */
+      err= value->save_in_field(field, 1);
+  }
+  else /* Not a timestamp comparison */
+    err= value->save_in_field(field, 1);
+
   if (err > 0)
   {
     if (field->cmp_type() != value->result_type())
@@ -4558,12 +4656,10 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
   }
   else if (err < 0)
   {
-    field->table->in_use->variables.sql_mode= orig_sql_mode;
     /* This happens when we try to insert a NULL field in a not null column */
     tree= &null_element;                        // cmp with NULL is never true
     goto end;
   }
-  field->table->in_use->variables.sql_mode= orig_sql_mode;
   str= (unsigned char*) alloc_root(alloc, key_part->store_length+1);
   if (!str)
     goto end;

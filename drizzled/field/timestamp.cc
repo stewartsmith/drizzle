@@ -25,11 +25,9 @@
 #include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include CMATH_H
 
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
+#include "drizzled/temporal.h"
+
 
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to
@@ -74,7 +72,6 @@ using namespace CMATH_NAMESPACE;
   course is non-standard.) In most cases user won't notice any change, only
   exception is different behavior of old/new timestamps during ALTER TABLE.
  */
-
 Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  uint32_t ,
                                  unsigned char *null_ptr_arg, unsigned char null_bit_arg,
@@ -97,7 +94,6 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
   }
 }
 
-
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
@@ -110,7 +106,6 @@ Field_timestamp::Field_timestamp(bool maybe_null_arg,
     if (unireg_check != TIMESTAMP_DN_FIELD)
       flags|= ON_UPDATE_NOW_FLAG;
 }
-
 
 /**
   Get auto-set type for TIMESTAMP field.
@@ -146,108 +141,64 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
   }
 }
 
-
 int Field_timestamp::store(const char *from,
                            uint32_t len,
                            const CHARSET_INFO * const )
 {
-  DRIZZLE_TIME l_time;
-  time_t tmp= 0;
-  int error;
-  bool have_smth_to_conv;
-  bool in_dst_time_gap;
-  Session *session= table ? table->in_use : current_session;
+  drizzled::Timestamp temporal;
 
-  /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
-  have_smth_to_conv= (str_to_datetime(from, len, &l_time, 1, &error) >
-                      DRIZZLE_TIMESTAMP_ERROR);
-
-  if (error || !have_smth_to_conv)
+  if (! temporal.from_string(from, (size_t) len))
   {
-    error= 1;
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
-                         from, len, DRIZZLE_TIMESTAMP_DATETIME, 1);
+    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
+    return 1;
   }
 
-  /* Only convert a correct date (not a zero date) */
-  if (have_smth_to_conv && l_time.month)
-  {
-    if (!(tmp= TIME_to_timestamp(session, &l_time, &in_dst_time_gap)))
-    {
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                           ER_WARN_DATA_OUT_OF_RANGE,
-                           from, len, DRIZZLE_TIMESTAMP_DATETIME, !error);
-      error= 1;
-    }
-    else if (in_dst_time_gap)
-    {
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                           ER_WARN_INVALID_TIMESTAMP,
-                           from, len, DRIZZLE_TIMESTAMP_DATETIME, !error);
-      error= 1;
-    }
-  }
+  time_t tmp;
+  temporal.to_time_t(&tmp);
+
   store_timestamp(tmp);
-  return error;
+  return 0;
 }
 
-
-int Field_timestamp::store(double nr)
+int Field_timestamp::store(double from)
 {
-  int error= 0;
-  if (nr < 0 || nr > 99991231235959.0)
+  if (from < 0 || from > 99991231235959.0)
   {
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_OUT_OF_RANGE,
-                         nr, DRIZZLE_TIMESTAMP_DATETIME);
-    nr= 0;					// Avoid overflow on buff
-    error= 1;
+    /* Convert the double to a string using stringstream */
+    std::stringstream ss;
+    std::string tmp;
+    ss.precision(18); /* 18 places should be fine for error display of double input. */
+    ss << from; ss >> tmp;
+
+    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    return 2;
   }
-  error|= Field_timestamp::store((int64_t) rint(nr), false);
-  return error;
+  return Field_timestamp::store((int64_t) rint(from), false);
 }
 
-
-int Field_timestamp::store(int64_t nr,
-                           bool )
+int Field_timestamp::store(int64_t from, bool)
 {
-  DRIZZLE_TIME l_time;
-  time_t timestamp= 0;
-  int error;
-  bool in_dst_time_gap;
-  Session *session= table ? table->in_use : current_session;
-
-  /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
-  int64_t tmp= number_to_datetime(nr, &l_time, (session->variables.sql_mode &
-                                                 MODE_NO_ZERO_DATE), &error);
-  if (tmp == INT64_C(-1))
+  /* 
+   * Try to create a DateTime from the supplied integer.  Throw an error
+   * if unable to create a valid DateTime.  
+   */
+  drizzled::Timestamp temporal;
+  if (! temporal.from_int64_t(from))
   {
-    error= 2;
+    /* Convert the integer to a string using stringstream */
+    std::stringstream ss;
+    std::string tmp;
+    ss << from; ss >> tmp;
+
+    my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    return 2;
   }
 
-  if (!error && tmp)
-  {
-    if (!(timestamp= TIME_to_timestamp(session, &l_time, &in_dst_time_gap)))
-    {
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                           ER_WARN_DATA_OUT_OF_RANGE,
-                           nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
-      error= 1;
-    }
-    if (in_dst_time_gap)
-    {
-      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                           ER_WARN_INVALID_TIMESTAMP,
-                           nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
-      error= 1;
-    }
-  } else if (error)
-    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_TRUNCATED,
-                         nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
+  time_t tmp;
+  temporal.to_time_t(&tmp);
 
-  store_timestamp(timestamp);
-  return error;
+  store_timestamp(tmp);
+  return 0;
 }
 
 double Field_timestamp::val_real(void)
@@ -258,119 +209,75 @@ double Field_timestamp::val_real(void)
 int64_t Field_timestamp::val_int(void)
 {
   uint32_t temp;
-  DRIZZLE_TIME time_tmp;
-  Session  *session= table ? table->in_use : current_session;
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
-    temp=uint4korr(ptr);
+    temp= uint4korr(ptr);
   else
 #endif
-    longget(temp,ptr);
+    longget(temp, ptr);
 
-  if (temp == 0L)				// No time
-    return(0);					/* purecov: inspected */
+  drizzled::Timestamp temporal;
+  (void) temporal.from_time_t((time_t) temp);
 
-  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (time_t)temp);
-
-  return time_tmp.year * INT64_C(10000000000) +
-         time_tmp.month * INT64_C(100000000) +
-         time_tmp.day * 1000000 + time_tmp.hour * 10000 +
-         time_tmp.minute * 100 + time_tmp.second;
+  /* We must convert into a "timestamp-formatted integer" ... */
+  int64_t result;
+  temporal.to_int64_t(&result);
+  return result;
 }
 
-
-String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
+String *Field_timestamp::val_str(String *val_buffer, String *)
 {
-  uint32_t temp, temp2;
-  DRIZZLE_TIME time_tmp;
-  Session *session= table ? table->in_use : current_session;
+  uint32_t temp;
   char *to;
 
-  val_buffer->alloc(field_length+1);
-  to= (char*) val_buffer->ptr();
-  val_buffer->length(field_length);
+  val_buffer->alloc(field_length + 1);
+  to= (char *) val_buffer->ptr();
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
-    temp=uint4korr(ptr);
+    temp= uint4korr(ptr);
   else
 #endif
-    longget(temp,ptr);
+    longget(temp, ptr);
 
-  if (temp == 0L)
-  {				      /* Zero time is "000000" */
-    val_ptr->set(STRING_WITH_LEN("0000-00-00 00:00:00"), &my_charset_bin);
-    return val_ptr;
-  }
-  val_buffer->set_charset(&my_charset_bin);	// Safety
+  val_buffer->set_charset(&my_charset_bin);	/* Safety */
 
-  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(time_t)temp);
+  drizzled::Timestamp temporal;
+  (void) temporal.from_time_t((time_t) temp);
+  size_t to_len;
 
-  temp= time_tmp.year % 100;
-  if (temp < YY_PART_YEAR - 1)
-  {
-    *to++= '2';
-    *to++= '0';
-  }
-  else
-  {
-    *to++= '1';
-    *to++= '9';
-  }
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= '-';
-  temp=time_tmp.month;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= '-';
-  temp=time_tmp.day;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= ' ';
-  temp=time_tmp.hour;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= ':';
-  temp=time_tmp.minute;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to++= ':';
-  temp=time_tmp.second;
-  temp2=temp/10; temp=temp-temp2*10;
-  *to++= (char) ('0'+(char) (temp2));
-  *to++= (char) ('0'+(char) (temp));
-  *to= 0;
+  temporal.to_string(to, &to_len);
+  val_buffer->length((uint32_t) to_len);
   return val_buffer;
 }
 
-
-bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
+bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t)
 {
-  long temp;
-  Session *session= table ? table->in_use : current_session;
+  uint32_t temp;
+
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
-    temp=uint4korr(ptr);
+    temp= uint4korr(ptr);
   else
 #endif
-    longget(temp,ptr);
-  if (temp == 0L)
-  {				      /* Zero time is "000000" */
-    if (fuzzydate & TIME_NO_ZERO_DATE)
-      return 1;
-    memset(ltime, 0, sizeof(*ltime));
-  }
-  else
-  {
-    session->variables.time_zone->gmt_sec_to_TIME(ltime, (time_t)temp);
-  }
+    longget(temp, ptr);
+  
+  memset(ltime, 0, sizeof(*ltime));
+
+  drizzled::Timestamp temporal;
+  (void) temporal.from_time_t((time_t) temp);
+
+  /* @TODO Goodbye the below code when DRIZZLE_TIME is finally gone.. */
+
+  ltime->time_type= DRIZZLE_TIMESTAMP_DATETIME;
+  ltime->year= temporal.years();
+  ltime->month= temporal.months();
+  ltime->day= temporal.days();
+  ltime->hour= temporal.hours();
+  ltime->minute= temporal.minutes();
+  ltime->second= temporal.seconds();
+
   return 0;
 }
 
@@ -418,12 +325,10 @@ void Field_timestamp::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-
 void Field_timestamp::sql_type(String &res) const
 {
   res.set_ascii(STRING_WITH_LEN("timestamp"));
 }
-
 
 void Field_timestamp::set_time()
 {
@@ -432,7 +337,6 @@ void Field_timestamp::set_time()
   set_notnull();
   store_timestamp(tmp);
 }
-
 
 void Field_timestamp::set_default()
 {
@@ -456,7 +360,6 @@ long Field_timestamp::get_timestamp(bool *null_value)
   return tmp;
 }
 
-
 void Field_timestamp::store_timestamp(time_t timestamp)
 {
 #ifdef WORDS_BIGENDIAN
@@ -468,4 +371,3 @@ void Field_timestamp::store_timestamp(time_t timestamp)
 #endif
     longstore(ptr,(uint32_t) timestamp);
 }
-

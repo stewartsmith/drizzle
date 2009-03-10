@@ -38,17 +38,46 @@ AC_SUBST(SHARED_LIB_VERSION)
 
 
 dnl Checks for programs.
-AC_PROG_CC
 AC_PROG_CXX
 
 gl_USE_SYSTEM_EXTENSIONS
+if test "$GCC" = "yes"
+then
+  # If you're on a Mac, and you didn't ask for a specific compiler
+  # You're gonna get 4.2.
+  if test "$host_vendor" = "apple" -a "x${ac_cv_env_CC_set}" = "x"
+  then
+    CPP="/usr/bin/gcc-4.2 -E"
+    CC=/usr/bin/gcc-4.2
+    CXX=/usr/bin/g++-4.2
+  fi
+  AC_CACHE_CHECK([if GCC is recent enough], [drizzle_cv_gcc_recent],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#if !defined(__GNUC__) || (__GNUC__ < 4) || ((__GNUC__ >= 4) && (__GNUC_MINOR__ < 2))
+# error GCC is Too Old!
+#endif
+      ]])],
+      [drizzle_cv_gcc_recent=yes],
+      [drizzle_cv_gcc_recent=no])])
+  if test "$drizzle_cv_gcc_recent" = "no"
+  then
+    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2. If you are on OSX, you may need to specify ./configure CC=gcc-4.2 CXX=g++4.2])
+  fi
+fi
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
-  AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
+  AC_MSG_ERROR([No working C++ Compiler has been found. Drizzle requires a C++ compiler that can handle C++98])
 fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
+
+if test "$am_cv_prog_cc_stdc" = "no"
+then
+  AC_MSG_ERROR([Drizzle requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
+fi
+
+
 
 gl_INIT
 
@@ -159,7 +188,7 @@ AC_PROG_AWK
 
 AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
-      AC_MSG_ERROR("Drizzle requires gperf to build. Please install it."))
+      AC_MSG_ERROR("Drizzle requires gperf to build."))
 
 AC_PATH_PROG(LCOV, lcov)
 AC_PATH_PROG(GENHTML, genhtml)
@@ -303,8 +332,8 @@ AC_ARG_WITH([debug],
 if test "$with_debug" = "yes"
 then
   # Debuging. No optimization.
-  CFLAGS="${DEBUG_CFLAGS} -DDEBUG ${CFLAGS}"
-  CXXFLAGS="${DEBUG_CXXFLAGS} -DDEBUG ${CXXFLAGS}"
+  CFLAGS="${DEBUG_CFLAGS} ${CFLAGS}"
+  CXXFLAGS="${DEBUG_CXXFLAGS} ${CXXFLAGS}"
 else
   # Optimized version. No debug
   CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS}"
@@ -315,7 +344,6 @@ fi
 AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
-AC_CXX_CMATH
 
 DRIZZLE_PROG_AR
 
@@ -338,18 +366,29 @@ AC_LIB_PREFIX
 AC_LANG_PUSH([C++])
 AC_LIB_HAVE_LINKFLAGS(protobuf,,
 [#include <google/protobuf/descriptor.h>
-#if GOOGLE_PROTOBUF_VERSION < 2000002
-# error Your version of Protobuf is too old
-#endif
 ],
 [google::protobuf::FileDescriptor* file;])
 AS_IF([test x$ac_cv_libprotobuf = xno],
-      AC_MSG_ERROR([protobuf is required for Drizzle]))
+      AC_MSG_ERROR([protobuf is required for Drizzle. On Debian this can be found in libprotobuf-dev. On RedHat this can be found in protobuf-devel.]))
+
+AC_CACHE_CHECK([if protobuf is recent enough], [drizzle_cv_protobuf_recent],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <google/protobuf/descriptor.h>
+#if GOOGLE_PROTOBUF_VERSION < 2000002
+# error Your version of Protobuf is too old
+#endif
+    ]])],
+    [drizzle_cv_protobuf_recent=yes],
+    [drizzle_cv_protobuf_recent=no])])
+if test "$drizzle_cv_protobuf_recent" = "no"
+then
+  AC_MSG_ERROR([Your version of Google Protocol Buffers is too old. Drizzle requires at least version 2.0.2])
+fi
 
 AC_PATH_PROG([PROTOC],[protoc],[no],[$LIBPROTOBUF_PREFIX/bin:$PATH])
 if test "x$PROTOC" = "xno"
 then
-  AC_MSG_ERROR([Couldn't find protoc. Try installing Google Protocol Buffer.])
+  AC_MSG_ERROR([Couldn't find the protoc compiler. On Debian this can be found in protobuf-compiler. On RedHat this can be found in protobuf-compiler.])
 fi
 
 AC_LANG_POP()
@@ -364,7 +403,7 @@ dnl not be a lib is weird.
 AC_CHECK_HEADERS(uuid/uuid.h)
 if test "x$ac_cv_header_uuid_uuid_h" = "xno"
 then
-  AC_MSG_ERROR([Couldn't find uuid/uuid.h. Try installing libuuid development packages])
+  AC_MSG_ERROR([Couldn't find uuid/uuid.h. On Debian this can be found in uuid-dev. On Redhat this can be found in e2fsprogs-devel.])
 fi
 AC_LIB_HAVE_LINKFLAGS(uuid,,
 [
@@ -374,25 +413,6 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
   uuid_t uout;
   uuid_generate(uout);
 ])
-
-#--------------------------------------------------------------------
-# Check for libevent
-#--------------------------------------------------------------------
-
-AC_LIB_HAVE_LINKFLAGS(event,,
-[
-#include <sys/types.h>
-#include <sys/time.h>
-#include <stdlib.h>
-#include <event.h>
-],[
-  struct bufferevent bev;
-  bufferevent_settimeout(&bev, 1, 1);
-  event_init();
-  event_loop(EVLOOP_ONCE);
-]) 
-AS_IF([test x$ac_cv_libevent = xno],
-      AC_MSG_ERROR([A recent libevent is required for Drizzle. Check http://www.monkey.org/~provos/libevent ]))
 
 
 
@@ -449,7 +469,26 @@ AC_LIB_HAVE_LINKFLAGS(z,,
   crc32(0, Z_NULL, 0);
 ])
 AS_IF([test x$ac_cv_libz = xno],
-      AC_MSG_ERROR([libz is required for Drizzle]))
+      AC_MSG_ERROR([libz is required for Drizzle. On Debian this can be found in zlib1g-dev. On RedHat this can be found in zlib-devel.]))
+
+#--------------------------------------------------------------------
+# Check for TBB
+#--------------------------------------------------------------------
+
+AC_LANG_PUSH(C++)
+AC_LIB_HAVE_LINKFLAGS(tbb,,
+[#include <tbb/atomic.h>
+ #include <stdint.h>
+],
+[
+  tbb::atomic<uint64_t> x;
+  tbb::atomic<uint8_t> y;
+  x=0;
+  y=0;
+  x++;
+  y++;
+])
+AC_LANG_POP()
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
@@ -459,7 +498,7 @@ save_LIBS="${LIBS}"
 LIBS=""
 VL_LIB_READLINE
 AS_IF([test "x$vl_cv_lib_readline" = "xno"],
-      AC_MSG_ERROR([libreadline is required for Drizzle]))
+      AC_MSG_ERROR([libreadline is required for Drizzle. On Debian this can be found in libreadline5-dev. On RedHat this can be found in readline-devel.]))
 READLINE_LIBS="${LIBS}"
 LIBS="${save_LIBS}"
 AC_SUBST(READLINE_LIBS)
@@ -472,14 +511,14 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 
 AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
 AS_IF([test "x$ac_cv_libpcre" = "xno"],[
-  ac_cv_libpcre=
+  unset ac_cv_libpcre
   AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
-    AS_IF([test "x$ac_cv_libpcre" = "xno"],
-          [AC_MSG_ERROR([libpcre is required for Drizzle])]
-          [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
-  ],[
-    AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
-  ])
+  AS_IF([test "x$ac_cv_libpcre" = "xno"],
+        [AC_MSG_ERROR([libpcre is required for Drizzle. On Debian this can be found in libpcre3-dev. On RedHat this can be found in pcre-devel.])]
+        [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
+],[
+  AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
+])
 
 
 dnl Find paths to some shell programs
@@ -597,12 +636,6 @@ AC_MSG_RESULT("$CHECK_PID")
 
 # Check if we need noexec stack for assembler
 AC_CHECK_NOEXECSTACK
-
-if test "$am_cv_prog_cc_stdc" = "no"
-then
-  AC_MSG_ERROR([Drizzle requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
-fi
-
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -759,9 +792,6 @@ LIBDL_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(LIBDL_LIBS)
 
-AC_CHECK_FUNCS(strtok_r)
-
-
 
 AC_ARG_WITH([fast-mutexes],
     [AS_HELP_STRING([--with-fast-mutexes],
@@ -791,8 +821,7 @@ case "$with_atomic_ops" in
                   [Assume single-CPU mode, no concurrency]) ;;
   "rwlocks") AC_DEFINE([MY_ATOMIC_MODE_RWLOCKS], [1],
                   [Use pthread rwlocks for atomic ops]) ;;
-  "smp") ;;
-  "")
+  "smp") 
     AC_CACHE_CHECK(
       [whether the compiler provides atomic builtins],
       [ac_cv_gcc_atomic_builtins],
@@ -1173,10 +1202,10 @@ AC_ARG_ENABLE([longlong-warnings],
     [ac_warn_longlong="no"])
 
 AC_ARG_ENABLE([strict-aliasing],
-    [AS_HELP_STRING([--enable-strict-aliasing],
-       [Enable warnings about stict-aliasing @<:@default=off@:>@])],
+    [AS_HELP_STRING([--disable-strict-aliasing],
+       [Enable warnings about stict-aliasing @<:@default=on@:>@])],
     [ac_warn_strict_aliasing="$enableval"],
-    [ac_warn_strict_aliasing="no"])
+    [ac_warn_strict_aliasing="yes"])
 
 AC_ARG_ENABLE([cast-warnings],
     [AS_HELP_STRING([--enable-cast-warnings],
@@ -1341,11 +1370,7 @@ void testme() {  };],[
     W_EXCEPTIONS="-fexceptions"
   fi
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
-  # Disable exceptions as they seams to create problems with gcc and threads.
-  # drizzled doesn't use run-time-type-checking, so we disable it.
-  CXXFLAGS="${CXXFLAGS} -fno-rtti"
-  CPPFLAGS="${CPPFLAGS} -fpch-deps"
-  PROTOSKIP_WARNINGS="${NO_SHADOW}"
+  PROTOSKIP_WARNINGS="-Wno-effc++"
 fi
 if test "$SUNCC" = "yes"
 then
@@ -1386,7 +1411,7 @@ CPPFLAGS="-I\$(top_srcdir) -I\$(top_builddir) ${CPPFLAGS}"
 
 AM_CPPFLAGS="${CPPFLAGS}"
 AM_CFLAGS="${CC_WARNINGS} ${CFLAGS}"
-AM_CXXFLAGS="${CXX_WARNINGS} ${NO_EXCEPTIONS} ${CXXFLAGS}"
+AM_CXXFLAGS="${CXX_WARNINGS} ${W_EXCEPTIONS} ${CXXFLAGS}"
 
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_CFLAGS])
@@ -1435,7 +1460,7 @@ done
 
 AC_CONFIG_COMMANDS([timestamp-h], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
-AC_CONFIG_COMMANDS([po/POTFILES.in],[
+AC_CONFIG_COMMANDS_PRE([
 if test "x$EGREP" != "x"
 then
   echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
@@ -1453,6 +1478,8 @@ then
   else
     rm po/POTFILES.in.in
   fi
+else
+  touch po/POTFILES.in
 fi
 ])
 
@@ -1479,8 +1506,6 @@ echo "   * Scheduling Plugins:        $scheduling_plugins"
 echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
 echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
 echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
-echo "   * C++ cmath location:        $ac_cv_cxx_cmath"
-echo "   * C++ cmath namespace:       $ac_cv_cxx_cmath_namespace"
 echo ""
 echo "---"
 

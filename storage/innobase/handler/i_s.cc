@@ -17,6 +17,8 @@ Created July 18, 2007 Vasil Dimov
 #include "i_s.h"
 #include <mysql/plugin.h>
 
+#include "drizzled/temporal.h"
+
 extern "C" {
 #include "trx0i_s.h"
 #include "trx0trx.h" /* for TRX_QUE_STATE_STR_MAX_LEN */
@@ -129,21 +131,14 @@ field_store_time_t(
 	Field*	field,	/* in/out: target field for storage */
 	time_t	time)	/* in: value to store */
 {
-	MYSQL_TIME	my_time;
-	struct tm	tm_time;
+  drizzled::Timestamp timestamp;
+  (void) timestamp.from_time_t(time);
+  char tmp_string[MAX_DATETIME_WIDTH];
+  size_t tmp_string_length;
 
-#if 0
-	/* use this if you are sure that `variables' and `time_zone'
-	are always initialized */
-	thd->variables.time_zone->gmt_sec_to_TIME(
-		&my_time, (time_t) time);
-#else
-	localtime_r(&time, &tm_time);
-	localtime_to_TIME(&my_time, &tm_time);
-	my_time.time_type = MYSQL_TIMESTAMP_DATETIME;
-#endif
+  timestamp.to_string(tmp_string, &tmp_string_length);
 
-	return(field->store_time(&my_time, MYSQL_TIMESTAMP_DATETIME));
+	return(field->store(tmp_string, tmp_string_length, &my_charset_bin));
 }
 
 /***********************************************************************

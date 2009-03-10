@@ -18,16 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-
-#include CSTDINT_H
-#include <cassert>
-
 #include <drizzled/function/numhybrid.h>
-#include CMATH_H
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
 
 void Item_func_numhybrid::fix_num_length_and_dec()
 {}

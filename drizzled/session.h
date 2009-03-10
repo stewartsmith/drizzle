@@ -533,7 +533,6 @@ public:
   ulong client_capabilities;		/* What the client supports */
   ulong max_client_packet_length;
 
-  HASH		handler_tables_hash;
   /*
     One thread can hold up to one named user-level lock. This variable
     points to a lock object if the lock is present. See item_func.cc and
@@ -1261,4 +1260,4 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
 
-#endif /* DRIZZLED_SQL_CLASS_H */
+#endif /* DRIZZLED_SESSION_H */

@@ -30,6 +30,10 @@ drizzledincludedir = ${includedir}/drizzled
 nobase_dist_drizzledinclude_HEADERS = \
 		alter_column.h \
 		alter_drop.h \
+		atomic/gcc_traits.h \
+		atomic/pthread_traits.h \
+		atomic/sun_studio.h \
+		atomics.h \
 		authentication.h \
 		base.h \
 		cached_item.h \
@@ -243,7 +247,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/type_holder.h \
 		item/uint.h \
 		key.h \
-		key_map.h \
 		key_part_spec.h \
 		korr.h \
 		lex_column.h \
@@ -355,7 +358,7 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
-		 $(LIBDL_LIBS) $(LIBEVENT) $(LIBPROTOBUF) $(LIBPCRE) \
+		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
 
@@ -368,7 +371,6 @@ noinst_HEADERS = \
 		global.h \
 		server_includes.h \
 		util/convert.h \
-		util/math.h \
 		util/test.h
 
 drizzled_SOURCES = \
@@ -564,12 +566,10 @@ drizzled_SOURCES = \
 		item/uint.cc \
 		item.cc \
 		key.cc \
-                key_map.cc \
 		lock.cc \
 		log.cc \
 		logging.cc \
 		lookup_symbol.cc \
-		mf_iocache.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
@@ -596,7 +596,6 @@ drizzled_SOURCES = \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \
-		sql_handler.cc \
 		sql_insert.cc \
 		sql_lex.cc \
 		sql_list.cc \
@@ -623,7 +622,6 @@ drizzled_SOURCES = \
 		time.cc \
 		tztime.cc \
 		uniques.cc \
-		util/math.cc \
 		virtual_column_info.cc \
 		xid.cc
 

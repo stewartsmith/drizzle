@@ -35,7 +35,6 @@
 
 #include "client_priv.h"
 #include <string>
-#include CMATH_H
 #include <algorithm>
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
@@ -116,17 +115,6 @@ typedef Function rl_compentry_func_t;
 
 #include <drizzled/gettext.h>
 
-#if defined(CMATH_NAMESPACE)
-  using namespace CMATH_NAMESPACE;
-#endif
-
-const char *VER= "14.14";
-
-/* Don't try to make a nice table if the data is too big */
-#define MAX_COLUMN_LENGTH       (uint32_t)1024
-
-/* Buffer to hold 'version' and 'version_comment' */
-#define MAX_SERVER_VERSION_LENGTH     128
 
 void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
 void sql_element_free(void *ptr);
@@ -137,15 +125,16 @@ void sql_element_free(void *ptr);
 #define vidattr(A) {}      // Can't get this to work
 #endif
 
-#ifdef FN_NO_CASE_SENCE
-#define cmp_database(cs,A,B) my_strcasecmp((cs), (A), (B))
-#else
-#define cmp_database(cs,A,B) strcmp((A),(B))
-#endif
-
 #include "completion_hash.h"
 
 using namespace std;
+
+const string VER("14.14");
+/* Don't try to make a nice table if the data is too big */
+const uint32_t MAX_COLUMN_LENGTH= 1024;
+
+/* Buffer to hold 'version' and 'version_comment' */
+const int MAX_SERVER_VERSION_LENGTH= 128;
 
 #define PROMPT_CHAR '\\'
 #define DEFAULT_DELIMITER ";"
@@ -171,7 +160,7 @@ static bool ignore_errors= false, quick= false,
   connected= false, opt_raw_data= false, unbuffered= false,
   output_tables= false, opt_rehash= true, skip_updates= false,
   safe_updates= false, one_database= false,
-  opt_compress= false, using_opt_local_infile= false,
+  opt_compress= false,
   vertical= false, line_numbers= true, column_names= true,
   opt_nopager= true, opt_outfile= false, named_cmds= false,
   tty_password= false, opt_nobeep= false, opt_reconnect= true,
@@ -1455,7 +1444,7 @@ static void usage(int version)
   const char* readline= "readline";
 
   printf(_("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"),
-         my_progname, VER, drizzleclient_get_client_info(),
+         my_progname, VER.c_str(), drizzleclient_get_client_info(),
          SYSTEM_TYPE, MACHINE_TYPE,
          readline, rl_library_version);
 
@@ -1504,9 +1493,6 @@ get_one_option(int optid, const struct my_option *, char *argument)
     }
     delimiter_length= (uint32_t)strlen(delimiter);
     delimiter_str= delimiter;
-    break;
-  case OPT_LOCAL_INFILE:
-    using_opt_local_infile= 1;
     break;
   case OPT_TEE:
     if (argument == disabled_my_option)
@@ -2748,7 +2734,7 @@ static void init_tee(const char *file_name)
   FILE* new_outfile;
   if (opt_outfile)
     end_tee();
-  if (!(new_outfile= my_fopen(file_name, O_APPEND | O_WRONLY, MYF(MY_WME))))
+  if (!(new_outfile= fopen(file_name, "a")))
   {
     tee_fprintf(stdout, "Error logging to file '%s'\n", file_name);
     return;
@@ -2757,13 +2743,14 @@ static void init_tee(const char *file_name)
   strncpy(outfile, file_name, FN_REFLEN-1);
   tee_fprintf(stdout, "Logging to file '%s'\n", file_name);
   opt_outfile= 1;
+
   return;
 }
 
 
 static void end_tee()
 {
-  my_fclose(OUTFILE, MYF(0));
+  fclose(OUTFILE);
   OUTFILE= 0;
   opt_outfile= 0;
   return;
@@ -3459,7 +3446,7 @@ static int com_source(string *, const char *line)
   end[0]=0;
   unpack_filename(source_name,source_name);
   /* open file name */
-  if (!(sql_file = my_fopen(source_name, O_RDONLY,MYF(0))))
+  if (!(sql_file = fopen(source_name, "r")))
   {
     char buff[FN_REFLEN+60];
     sprintf(buff,"Failed to open file '%s', error: %d", source_name,errno);
@@ -3468,7 +3455,7 @@ static int com_source(string *, const char *line)
 
   if (!(line_buff=batch_readline_init(opt_max_allowed_packet+512,sql_file)))
   {
-    my_fclose(sql_file,MYF(0));
+    fclose(sql_file);
     return put_info("Can't initialize batch_readline", INFO_ERROR, 0 ,0);
   }
 
@@ -3486,7 +3473,7 @@ static int com_source(string *, const char *line)
   error= read_and_execute(false);
   // Continue as before
   status=old_status;
-  my_fclose(sql_file,MYF(0));
+  fclose(sql_file);
   batch_readline_end(line_buff);
   return error;
 }
@@ -3544,7 +3531,7 @@ com_use(string *, const char *line)
   */
   get_current_db();
 
-  if (!current_db || cmp_database(charset_info, current_db,tmp))
+  if (!current_db || strcmp(current_db,tmp))
   {
     if (one_database)
     {
@@ -3693,8 +3680,6 @@ sql_connect(char *host,char *database,char *user,char *password,
     drizzleclient_options(&drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   if (opt_secure_auth)
     drizzleclient_options(&drizzle, DRIZZLE_SECURE_AUTH, (char *) &opt_secure_auth);
-  if (using_opt_local_infile)
-    drizzleclient_options(&drizzle,DRIZZLE_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
   if (safe_updates)
   {
     char init_command[100];

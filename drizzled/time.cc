@@ -212,42 +212,6 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
   return ts_type;
 }
 
-
-/*
-  Convert a datetime from broken-down DRIZZLE_TIME representation to corresponding
-  TIMESTAMP value.
-
-  SYNOPSIS
-    TIME_to_timestamp()
-      session             - current thread
-      t               - datetime in broken-down representation,
-      in_dst_time_gap - pointer to bool which is set to true if t represents
-                        value which doesn't exists (falls into the spring
-                        time-gap) or to false otherwise.
-
-  RETURN
-     Number seconds in UTC since start of Unix Epoch corresponding to t.
-     0 - t contains datetime value which is out of TIMESTAMP range.
-
-*/
-time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t,
-                            bool *in_dst_time_gap)
-{
-  time_t timestamp;
-
-  *in_dst_time_gap= 0;
-
-  timestamp= session->variables.time_zone->TIME_to_gmt_sec(t, in_dst_time_gap);
-  if (timestamp)
-  {
-    return timestamp;
-  }
-
-  /* If we are here we have range error. */
-  return(0);
-}
-
-
 /*
   Convert a time string to a DRIZZLE_TIME struct and produce a warning
   if string was cut during conversion.

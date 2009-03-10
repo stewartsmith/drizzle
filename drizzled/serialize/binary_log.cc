@@ -117,7 +117,7 @@ BinaryLog::Event::print(std::ostream& out) const
          ii != event->variable().end() ;
          ++ii)
     {
-      out << "set @" << ii->name() << " = '" << ii->value() << "'\n";
+      out << "set @" << ii->name() << " = '" << ii->val() << "'\n";
     }
     out << event->query() << std::endl;
     break;

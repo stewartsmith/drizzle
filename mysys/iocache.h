@@ -190,7 +190,6 @@ extern void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
                                 IO_CACHE *write_cache, uint32_t num_threads);
 extern void remove_io_thread(IO_CACHE *info);
 extern int _my_b_seq_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
-extern int _my_b_net_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern int _my_b_get(IO_CACHE *info);
 extern int _my_b_async_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern int _my_b_write(IO_CACHE *info,const unsigned char *Buffer,
