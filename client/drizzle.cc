@@ -2388,31 +2388,41 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
   i=0;
   while ((table_row=drizzleclient_fetch_row(tables)))
   {
-    if ((fields=drizzleclient_list_fields(&drizzle,(const char*) table_row[0],NULL)))
+    string query;
+
+    query.append("show fields in '");
+    query.append(table_row[0]);
+    query.append("'");
+    
+    if ((drizzleclient_real_query(&drizzle, query.c_str(), query.length()) == 0))
     {
-      num_fields=drizzleclient_num_fields(fields);
-      if (!(field_names[i] = (char **) alloc_root(&hash_mem_root,
-                                                  sizeof(char *) *
-                                                  (num_fields*2+1))))
+      fields= drizzleclient_store_result(&drizzle);
+      if (fields) 
       {
+        num_fields=drizzleclient_num_fields(fields);
+        if (!(field_names[i] = (char **) alloc_root(&hash_mem_root,
+                                                    sizeof(char *) *
+                                                    (num_fields*2+1))))
+        {
+          drizzleclient_free_result(fields);
+          break;
+        }
+        field_names[i][num_fields*2]= '\0';
+        j= 0;
+        while ((sql_field=drizzleclient_fetch_field(fields)))
+        {
+          sprintf(buf,"%.64s.%.64s",table_row[0],sql_field->name);
+          field_names[i][j] = strdup_root(&hash_mem_root,buf);
+          add_word(&ht,field_names[i][j]);
+          field_names[i][num_fields+j] = strdup_root(&hash_mem_root,
+                                                     sql_field->name);
+          if (!completion_hash_exists(&ht,field_names[i][num_fields+j],
+                                      (uint32_t) strlen(field_names[i][num_fields+j])))
+            add_word(&ht,field_names[i][num_fields+j]);
+          j++;
+        }
         drizzleclient_free_result(fields);
-        break;
       }
-      field_names[i][num_fields*2]= '\0';
-      j=0;
-      while ((sql_field=drizzleclient_fetch_field(fields)))
-      {
-        sprintf(buf,"%.64s.%.64s",table_row[0],sql_field->name);
-        field_names[i][j] = strdup_root(&hash_mem_root,buf);
-        add_word(&ht,field_names[i][j]);
-        field_names[i][num_fields+j] = strdup_root(&hash_mem_root,
-                                                   sql_field->name);
-        if (!completion_hash_exists(&ht,field_names[i][num_fields+j],
-                                    (uint32_t) strlen(field_names[i][num_fields+j])))
-          add_word(&ht,field_names[i][num_fields+j]);
-        j++;
-      }
-      drizzleclient_free_result(fields);
     }
     else
       field_names[i]= 0;

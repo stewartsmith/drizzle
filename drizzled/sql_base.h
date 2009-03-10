@@ -62,7 +62,6 @@ bool push_new_name_resolution_context(Session *session,
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,
                       Select_Lex *lex);
-bool add_proc_to_list(Session *session, Item *item);
 void unlink_open_table(Session *session, Table *find, bool unlock);
 void drop_open_table(Session *session, Table *table, const char *db_name,
                      const char *table_name);

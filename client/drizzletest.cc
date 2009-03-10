@@ -2845,41 +2845,10 @@ static void do_send_quit(struct st_command *command)
 
 */
 
-static void do_change_user(struct st_command *command)
+static void do_change_user(struct st_command *)
 {
-  DRIZZLE *drizzle= &cur_con->drizzle;
-  /* static keyword to make the NetWare compiler happy. */
-  string ds_user, ds_passwd, ds_db;
-  const struct command_arg change_user_args[] = {
-    { "user", ARG_STRING, false, &ds_user, "User to connect as" },
-    { "password", ARG_STRING, false, &ds_passwd, "Password used when connecting" },
-    { "database", ARG_STRING, false, &ds_db, "Database to select after connect" },
-  };
-
-
-
-  check_command_args(command, command->first_argument,
-                     change_user_args,
-                     sizeof(change_user_args)/sizeof(struct command_arg),
-                     ',');
-
-  if (!ds_user.length())
-    ds_user.append(drizzle->user);
-
-  if (!ds_passwd.length())
-    ds_passwd.append(drizzle->passwd);
-
-  if (!ds_db.length())
-    ds_db.append(drizzle->db);
-
-  if (drizzleclient_change_user(drizzle, ds_user.c_str(),
-                          ds_passwd.c_str(), ds_db.c_str()))
-    die("change user failed: %s", drizzleclient_error(drizzle));
-
-
-  return;
+  assert(0);
 }
-
 
 /*
   SYNOPSIS

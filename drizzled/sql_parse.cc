@@ -55,20 +55,9 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Quit") },
   { C_STRING_WITH_LEN("Init DB") },
   { C_STRING_WITH_LEN("Query") },
-  { C_STRING_WITH_LEN("Field List") },
-  { C_STRING_WITH_LEN("Create DB") },
-  { C_STRING_WITH_LEN("Drop DB") },
-  { C_STRING_WITH_LEN("Refresh") },
   { C_STRING_WITH_LEN("Shutdown") },
-  { C_STRING_WITH_LEN("Processlist") },
   { C_STRING_WITH_LEN("Connect") },
-  { C_STRING_WITH_LEN("Kill") },
   { C_STRING_WITH_LEN("Ping") },
-  { C_STRING_WITH_LEN("Time") },
-  { C_STRING_WITH_LEN("Change user") },
-  { C_STRING_WITH_LEN("Connect Out") },
-  { C_STRING_WITH_LEN("Set option") },
-  { C_STRING_WITH_LEN("Daemon") },
   { C_STRING_WITH_LEN("Error") }  // Last command number
 };
 
@@ -480,106 +469,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     }
     break;
   }
-  case COM_CHANGE_USER:
-  {
-    status_var_increment(session->status_var.com_other);
-    char *user= (char*) packet, *packet_end= packet + packet_length;
-    /* Safe because there is always a trailing \0 at the end of the packet */
-    char *passwd= strchr(user, '\0')+1;
-
-
-    session->clear_error();                         // if errors from rollback
-
-    /*
-      Old clients send null-terminated string ('\0' for empty string) for
-      password.  New clients send the size (1 byte) + string (not null
-      terminated, so also '\0' for empty string).
-
-      Cast *passwd to an unsigned char, so that it doesn't extend the sign
-      for *passwd > 127 and become 2**32-127 after casting to uint32_t.
-    */
-    char db_buff[NAME_LEN+1];                 // buffer to store db in utf8
-    char *db= passwd;
-    char *save_db;
-    /*
-      If there is no password supplied, the packet must contain '\0',
-      in any type of handshake (4.1 or pre-4.1).
-     */
-    if (passwd >= packet_end)
-    {
-      my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
-      break;
-    }
-    uint32_t passwd_len= (session->client_capabilities & CLIENT_SECURE_CONNECTION ?
-                      (unsigned char)(*passwd++) : strlen(passwd));
-    uint32_t dummy_errors, save_db_length, db_length;
-    int res;
-    USER_CONN *save_user_connect;
-    string old_username;
-
-    db+= passwd_len + 1;
-    /*
-      Database name is always NUL-terminated, so in case of empty database
-      the packet must contain at least the trailing '\0'.
-    */
-    if (db >= packet_end)
-    {
-      my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
-      break;
-    }
-    db_length= strlen(db);
-
-    char *ptr= db + db_length + 1;
-    uint32_t cs_number= 0;
-
-    if (ptr < packet_end)
-    {
-      if (ptr + 2 > packet_end)
-      {
-        my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
-        break;
-      }
-
-      cs_number= uint2korr(ptr);
-    }
-
-    /* Convert database name to utf8 */
-    db_buff[copy_and_convert(db_buff, sizeof(db_buff)-1,
-                             system_charset_info, db, db_length,
-                             session->charset(), &dummy_errors)]= 0;
-    db= db_buff;
-
-    /* Save user and privileges */
-    save_db_length= session->db_length;
-    save_db= session->db;
-    save_user_connect= session->user_connect;
-
-    old_username= session->security_ctx.user;
-    session->security_ctx.user.assign(user);
-
-    /* Clear variables that are allocated */
-    session->user_connect= 0;
-    res= check_user(session, passwd, passwd_len, db);
-
-    if (res)
-    {
-      session->security_ctx.user= old_username;
-      session->user_connect= save_user_connect;
-      session->db= save_db;
-      session->db_length= save_db_length;
-    }
-    else
-    {
-      if (save_db)
-        free(save_db);
-
-      if (cs_number)
-      {
-        session->update_charset();
-      }
-    }
-    break;
-  }
   case COM_QUERY:
   {
     if (alloc_query(session, packet, packet_length))
@@ -625,61 +514,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     }
     break;
   }
-  case COM_FIELD_LIST:				// This isn't actually needed
-  {
-    char *fields, *packet_end= packet + packet_length, *arg_end;
-    /* Locked closure of all tables */
-    TableList table_list;
-    LEX_STRING conv_name;
-
-    /* used as fields initializator */
-    lex_start(session);
-
-    status_var_increment(session->status_var.com_stat[SQLCOM_SHOW_FIELDS]);
-    memset(&table_list, 0, sizeof(table_list));
-    if (session->copy_db_to(&table_list.db, &table_list.db_length))
-      break;
-    /*
-      We have name + wildcard in packet, separated by endzero
-    */
-    arg_end= strchr(packet, '\0');
-    session->convert_string(&conv_name, system_charset_info,
-			packet, (uint32_t) (arg_end - packet), session->charset());
-    table_list.alias= table_list.table_name= conv_name.str;
-    packet= arg_end + 1;
-
-    if (!my_strcasecmp(system_charset_info, table_list.db,
-                       INFORMATION_SCHEMA_NAME.c_str()))
-    {
-      ST_SCHEMA_TABLE *schema_table= find_schema_table(session, table_list.alias);
-      if (schema_table)
-        table_list.schema_table= schema_table;
-    }
-
-    session->query_length= (uint32_t) (packet_end - packet); // Don't count end \0
-    if (!(session->query=fields= (char*) session->memdup(packet,session->query_length+1)))
-      break;
-    if (lower_case_table_names)
-      my_casedn_str(files_charset_info, table_list.table_name);
-
-    /* init structures for VIEW processing */
-    table_list.select_lex= &(session->lex->select_lex);
-
-    lex_start(session);
-    session->reset_for_next_command();
-
-    session->lex->
-      select_lex.table_list.link_in_list((unsigned char*) &table_list,
-                                         (unsigned char**) &table_list.next_local);
-    session->lex->add_to_query_tables(&table_list);
-
-    /* switch on VIEW optimisation: do not fill temporary tables */
-    session->lex->sql_command= SQLCOM_SHOW_FIELDS;
-    mysqld_list_fields(session,&table_list,fields);
-    session->lex->unit.cleanup();
-    session->cleanup_after_query();
-    break;
-  }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
     net->error=0;				// Don't give 'abort' message
@@ -699,40 +533,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     status_var_increment(session->status_var.com_other);
     session->my_ok();				// Tell client we are alive
     break;
-  case COM_PROCESS_INFO:
-    status_var_increment(session->status_var.com_stat[SQLCOM_SHOW_PROCESSLIST]);
-    mysqld_list_processes(session, NULL, 0);
-    break;
-  case COM_PROCESS_KILL:
-  {
-    status_var_increment(session->status_var.com_stat[SQLCOM_KILL]);
-    ulong id=(ulong) uint4korr(packet);
-    sql_kill(session,id,false);
-    break;
-  }
-  case COM_SET_OPTION:
-  {
-    status_var_increment(session->status_var.com_stat[SQLCOM_SET_OPTION]);
-    uint32_t opt_command= uint2korr(packet);
-
-    switch (opt_command) {
-    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_ON:
-      session->client_capabilities|= CLIENT_MULTI_STATEMENTS;
-      session->my_eof();
-      break;
-    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_OFF:
-      session->client_capabilities&= ~CLIENT_MULTI_STATEMENTS;
-      session->my_eof();
-      break;
-    default:
-      my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
-      break;
-    }
-    break;
-  }
   case COM_SLEEP:
   case COM_CONNECT:				// Impossible here
-  case COM_TIME:				// Impossible from client
   case COM_END:
   default:
     my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
@@ -1128,19 +930,6 @@ mysql_execute_command(Session *session)
 			   create_table->table_name))
       goto end_with_restore_list;
 #endif
-    /*
-      If we are using SET CHARSET without DEFAULT, add an implicit
-      DEFAULT to not confuse old users. (This may change).
-    */
-    if ((create_info.used_fields &
-	 (HA_CREATE_USED_DEFAULT_CHARSET | HA_CREATE_USED_CHARSET)) ==
-	HA_CREATE_USED_CHARSET)
-    {
-      create_info.used_fields&= ~HA_CREATE_USED_CHARSET;
-      create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
-      create_info.default_table_charset= create_info.table_charset;
-      create_info.table_charset= 0;
-    }
     /*
       The create-select command will open and read-lock the select table
       and then create, open and write-lock the new table. If a global
@@ -2244,11 +2033,6 @@ void mysql_init_multi_delete(LEX *lex)
 }
 
 
-/*
-  When you modify mysql_parse(), you may need to mofify
-  mysql_test_parse_for_slave() in this same file.
-*/
-
 /**
   Parse a query.
 
@@ -2324,34 +2108,6 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
   }
 
   return;
-}
-
-
-/*
-  Usable by the replication SQL thread only: just parse a query to know if it
-  can be ignored because of replicate-*-table rules.
-
-  @retval
-    0	cannot be ignored
-  @retval
-    1	can be ignored
-*/
-
-bool mysql_test_parse_for_slave(Session *session, char *inBuf, uint32_t length)
-{
-  LEX *lex= session->lex;
-  bool error= 0;
-
-  Lex_input_stream lip(session, inBuf, length);
-  lex_start(session);
-  session->reset_for_next_command();
-
-  if (!parse_sql(session, &lip) &&
-      all_tables_not_ok(session,(TableList*) lex->select_lex.table_list.first))
-    error= 1;                  /* Ignore question */
-  session->end_statement();
-  session->cleanup_after_query();
-  return(error);
 }
 
 
@@ -2458,23 +2214,6 @@ void store_position_for_column(const char *name)
 {
   current_session->lex->last_field->after=const_cast<char*> (name);
 }
-
-bool
-add_proc_to_list(Session* session, Item *item)
-{
-  order_st *order;
-  Item	**item_ptr;
-
-  if (!(order = (order_st *) session->alloc(sizeof(order_st)+sizeof(Item*))))
-    return 1;
-  item_ptr = (Item**) (order+1);
-  *item_ptr= item;
-  order->item=item_ptr;
-  order->free_me=0;
-  session->lex->proc_list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return 0;
-}
-
 
 /**
   save order by and tables in own lists.
@@ -3178,8 +2917,6 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
   I_List_iterator<Session> it(threads);
   while ((tmp=it++))
   {
-    if (tmp->command == COM_DAEMON)
-      continue;
     if (tmp->thread_id == id)
     {
       pthread_mutex_lock(&tmp->LOCK_delete);	// Lock from delete
