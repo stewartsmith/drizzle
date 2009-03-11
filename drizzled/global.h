@@ -92,7 +92,9 @@ time_t timegm (struct tm *__tm);
 # if !defined(SHARED_PTR_NAMESPACE)
 #  error SHARED_PTR_NAMESPACE not defined, configure error!
 # endif
+# if defined(SHARED_PTR_NAMESPACE)
 using SHARED_PTR_NAMESPACE::shared_ptr;
+# endif
 #endif /* defined(SHARED_PTR_NAMESPACE) */
 
 /*

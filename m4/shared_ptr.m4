@@ -46,7 +46,8 @@ shared_ptr<string> test_ptr(new string("test string"));
   ])
   if test "$ac_cv_shared_ptr_namespace" = no
   then
-    AC_MSG_ERROR([a usable shared_ptr implementation is required. If you are on Solaris, please install boost, either via pkg install boost, or pkg-get -i boost. If you are elsewhere, please file a bug])
+    AC_MSG_WARN([a usable shared_ptr implementation was not found. Let someone know what your platform is.])
+    dnl AC_MSG_WARN([a usable shared_ptr implementation is required. If you are on Solaris, please install boost, either via pkg install boost, or pkg-get -i boost. If you are elsewhere, please file a bug])
   fi
   AC_DEFINE_UNQUOTED([SHARED_PTR_NAMESPACE],
                      ${ac_cv_shared_ptr_namespace},
