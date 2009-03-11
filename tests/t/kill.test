@@ -53,12 +53,14 @@ connection conn1;
 
 -- disable_result_log
 -- disable_query_log
+begin;
 let $1 = 4096;
 while ($1)
 {
   eval insert into t1 values ($1);
   dec $1;
 }
+commit;
 -- enable_query_log
 -- enable_result_log
 

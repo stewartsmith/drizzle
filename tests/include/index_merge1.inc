@@ -37,12 +37,14 @@ insert into t0 values (1),(2),(3),(4),(5),(6),(7),(8);
 
 let $1=7;
 set @d=8;
+begin;
 while ($1)
 {
   eval insert into t0 select key1+@d from t0;
   eval set @d=@d*2;
   dec $1;
 }
+commit;
 --enable_query_log
 
 alter table t0 add key2 int not null, add index i2(key2);
@@ -356,6 +358,7 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES ('foo','bar', 'ZZ'),('fuz','baz', 'ZZ');
 
 --disable_query_log
+begin;
 let $1=9;
 while ($1)
 {
@@ -369,7 +372,7 @@ while ($1)
   eval INSERT INTO t1 SELECT * from t1 WHERE cola <> 'foo';
   dec $1;
 }
-
+commit;
 --enable_query_log
 
 OPTIMIZE TABLE t1;

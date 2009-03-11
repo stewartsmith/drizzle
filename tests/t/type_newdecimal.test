@@ -1024,6 +1024,7 @@ CREATE TABLE t1 (
 SHOW CREATE TABLE t1;
 
 let $max_power= 32;
+begin;
 while ($max_power)
 {
    eval INSERT INTO t1 SET my_float = 1.175494345e-$max_power,
@@ -1031,6 +1032,7 @@ while ($max_power)
                            my_varchar = '1.175494345e-$max_power';
    dec $max_power;
 }
+commit;
 SELECT my_float, my_double, my_varchar FROM t1;
 
 # The following statement produces results with garbage past
