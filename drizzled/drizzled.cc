@@ -938,7 +938,7 @@ static void network_init(void)
     */
     for (waited= 0, retry= 1; ; retry++, waited+= this_wait)
     {
-      if (((ret= bind(ip_sock, next->ai_addr, next->ai_addrlen)) >= 0 ) ||
+      if (((ret= ::bind(ip_sock, next->ai_addr, next->ai_addrlen)) >= 0 ) ||
           (errno != EADDRINUSE) ||
           (waited >= drizzled_port_timeout))
         break;
