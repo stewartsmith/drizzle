@@ -290,7 +290,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 		      (order_st*) select_lex->order_list.first,
 		      (order_st*) select_lex->group_list.first,
 		      select_lex->having,
-		      (order_st*) lex->proc_list.first,
+		      NULL,
 		      select_lex->options | session->options |
                       setup_tables_done_option,
 		      result, unit, select_lex);
@@ -16250,7 +16250,7 @@ bool mysql_explain_union(Session *session, Select_Lex_Unit *unit, select_result 
 			(order_st*) first->order_list.first,
 			(order_st*) first->group_list.first,
 			first->having,
-			(order_st*) session->lex->proc_list.first,
+			(order_st*) NULL,
 			first->options | session->options | SELECT_DESCRIBE,
 			result, unit, first);
   }
