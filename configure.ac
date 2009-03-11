@@ -53,7 +53,7 @@ then
   fi
   AC_CACHE_CHECK([if GCC is recent enough], [drizzle_cv_gcc_recent],
     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#if !defined(__GNUC__) || (__GNUC__ < 4) || ((__GNUC__ >= 4) && (__GNUC_MINOR__ < 2))
+#if !defined(__GNUC__) || (__GNUC__ < 4) || ((__GNUC__ >= 4) && (__GNUC_MINOR__ < 1))
 # error GCC is Too Old!
 #endif
       ]])],
@@ -61,7 +61,7 @@ then
       [drizzle_cv_gcc_recent=no])])
   if test "$drizzle_cv_gcc_recent" = "no"
   then
-    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2. If you are on OSX, you may need to specify ./configure CC=gcc-4.2 CXX=g++4.2])
+    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.1. If you are on OSX, you may need to specify ./configure CC=gcc-4.2 CXX=g++4.2])
   fi
 fi
 AC_CXX_HEADER_STDCXX_98
@@ -115,16 +115,6 @@ m4_include(m4/dtrace.m4)
 
 m4_include(m4/character_sets.m4)
 AC_SUBST(AVAILABLE_LANGUAGES)
-
-m4_include(m4/gettext.m4)
-AM_GNU_GETTEXT(external, need-formatstring-macros)
-if test "x$MSGMERGE" = "x" -o "x$MSGMERGE" = "x:"
-then
-  AM_PATH_PROG_WITH_TEST(GMSGMERGE, gmsgmerge,
-    [$ac_dir/$ac_word --update -q /dev/null /dev/null >&]AS_MESSAGE_LOG_FD[ 2>&1], :)
-  MSGMERGE="${GMSGMERGE}"
-fi
-AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
 
 # Set this for plugins to use
@@ -201,31 +191,16 @@ then
   AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
 fi
 
-dnl  Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
-
-dnl  System Interfaces and Headers, Issue 5
-
-dnl  saying we should define _XOPEN_SOURCE=500 to get POSIX.1c prototypes,
-dnl  but apparently other systems (namely FreeBSD) don't agree.
-
-dnl  On a newer Solaris 10, the above file recognizes also _XOPEN_SOURCE=600.
-dnl  Furthermore, it tests that if a program requires older standard
-dnl  (_XOPEN_SOURCE<600 or _POSIX_C_SOURCE<200112L) it cannot be
-dnl  run on a new compiler (that defines _STDC_C99) and issues an #error.
-dnl  It's also an #error if a program requires new standard (_XOPEN_SOURCE=600
-dnl  or _POSIX_C_SOURCE=200112L) and a compiler does not define _STDC_C99.
-
-dnl  To add more to this mess, Sun Studio C compiler defines _STDC_C99 while
-dnl  C++ compiler does not!
-
-dnl TODO: Can _ISOC99_SOURCE be defined on all platforms and remove the 
-dnl       Need for all of this? 
+dnl C99 is illegal in C++... but these turn on extensions to the standard
+dnl On Solars. This whole block is sort of silly atm, since we don't do 
+dnl GCC on Solaris.
 if test "$GCC" = "yes"
 then
   case "$target_os" in
     *solaris*)
     AC_DEFINE([_XOPEN_SOURCE],[600],[Turn on XOpen 6.0 Features])
     AC_DEFINE([__C99FEATURES__],[1],[Turn on C99 Features for C++])
+    AC_DEFINE([__XPG6],[1],[Turn on C99/XOpen Group 6 Extensions])
     ;;
   esac
 fi
@@ -247,26 +222,24 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
-
-# The following is required for portable results of floating point calculations
-# on PowerPC. The same must also be done for IA-64, but this options is missing
-# in the IA-64 gcc backend.
-
-if test "$GCC" = "yes"
-then
-  case "$host_cpu" in
-    *ppc* | *powerpc*)
-      CFLAGS="$CFLAGS -mno-fused-madd"
-      CXXFLAGS="$CXXFLAGS -mno-fused-madd"
-    ;;
-  esac
-fi
 # Build optimized or debug version ?
 # First check for gcc and g++
 if test "$GCC" = "yes"
 then
-  CFLAGS="${CFLAGS} -ggdb3 -std=gnu99"
-  CXXFLAGS="${CXXFLAGS} -ggdb3 -std=gnu++98"
+  dnl The following is required for portable results of floating point 
+  dnl calculations on PowerPC. The same must also be done for IA-64, but 
+  dnl this options is missing in the IA-64 gcc backend.
+  case "$host_cpu" in
+    *ppc* | *powerpc*)
+      CFLAGS="-mno-fused-madd ${CFLAGS}"
+      CXXFLAGS="-mno-fused-madd ${CXXFLAGS}"
+    ;;
+  esac
+
+  CFLAGS="-ggdb3 -std=gnu99 ${CFLAGS}"
+  CXXFLAGS="-ggdb3 ${CXXFLAGS}"
+  AC_CXX_CHECK_STANDARD
+  
 
   DEBUG_CFLAGS="-O0"
   DEBUG_CXXFLAGS="-O0"
@@ -276,23 +249,24 @@ then
 fi
 if test "$SUNCC" = "yes"
 then
+  dnl we put CPPFLAGS and LDFLAGS first here, because if the user has specified
+  dnl command line CPPFLAGS or LDFLAGS, their -I or -L should come _first_
   isainfo_k=`isainfo -k`
   if test "$target_cpu" = "sparc"
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
     IS_64="-m64"
-    LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k}"
   else
     if test "$isainfo_k" = "amd64"
     then
       IS_64="-m64"
-      LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_k} -L/usr/local/lib/${isainfo_k}"
     fi
   fi
-  CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
+  LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_k} -L/usr/local/lib -L/opt/csw/lib/${isainfo_k} -L/opt/csw/lib -L/usr/lib/${isainfo_k}"
+  CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
 
-  CXXFLAGS="${CXXFLAGS} -xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS}"
-  CFLAGS="${CFLAGS} -g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS}"
+  CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
+  CFLAGS="-g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS} ${CFLAGS}"
   DEBUG_CFLAGS="-xO0"
   DEBUG_CXXFLAGS="-xO0" 
 
@@ -303,6 +277,17 @@ then
   OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
 
 fi
+
+m4_include(m4/gettext.m4)
+AM_GNU_GETTEXT(external, need-formatstring-macros)
+if test "x$MSGMERGE" = "x" -o "x$MSGMERGE" = "x:"
+then
+  AM_PATH_PROG_WITH_TEST(GMSGMERGE, gmsgmerge,
+    [$ac_dir/$ac_word --update -q /dev/null /dev/null >&]AS_MESSAGE_LOG_FD[ 2>&1], :)
+  MSGMERGE="${GMSGMERGE}"
+fi
+AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
+
 
 # We use libtool
 AC_PROG_LIBTOOL
@@ -344,6 +329,7 @@ fi
 AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
+AC_CXX_SHARED_PTR
 
 DRIZZLE_PROG_AR
 
@@ -1296,11 +1282,11 @@ then
 
   if test "$ac_warn_pedantic" = "yes"
   then
-    save_CXXFLAGS="${CXXFLAGS}"
-    CXXFLAGS="${CXXFLAGS} ${W_FAIL} -Wredundant-decls"
     AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
       [ac_cv_safe_to_use_Wredundant_decls_],
       [AC_LANG_PUSH(C++)
+       save_CXXFLAGS="${CXXFLAGS}"
+       CXXFLAGS="${CXXFLAGS} ${W_FAIL} -Wredundant-decls"
        AC_COMPILE_IFELSE(
          [AC_LANG_PROGRAM([
 template <typename E> struct C { void foo(); };
@@ -1309,6 +1295,7 @@ template <> void C<int>::foo();
             AC_INCLUDES_DEFAULT])],
           [ac_cv_safe_to_use_Wredundant_decls_=yes],
           [ac_cv_safe_to_use_Wredundant_decls_=no])
+        CXXFLAGS="${save_CXXFLAGS}"
         AC_LANG_POP()])
     if test $ac_cv_safe_to_use_Wredundant_decls_ = yes
     then
@@ -1337,8 +1324,6 @@ void testme() {  };],[
       AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
                 [Define to 1 if you have support for __attribute__((visibility("hidden")))])
     fi
-
-    CXXFLAGS="${save_CXXFLAGS}"
   fi
 
   if test "$ac_warn_unreachable" = "yes"
@@ -1361,7 +1346,7 @@ void testme() {  };],[
     W_CONVERSION="-Wconversion"
   fi
 
-  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CONVERSION}"
+  CC_WARNINGS="${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CONVERSION}"
   CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CONVERSION}"
 
   if test "$ac_exceptions" = "no"
@@ -1376,8 +1361,8 @@ if test "$SUNCC" = "yes"
 then
   if test "$ac_datarace" = "yes"
   then
-    CFLAGS="${CFLAGS} -xinstrument=datarace"
-    CXXFLAGS="${CXXFLAGS} -xinstrument=datarace"
+    CFLAGS="-xinstrument=datarace ${CFLAGS}"
+    CXXFLAGS="-xinstrument=datarace ${CXXFLAGS}"
   fi
 
   if test "$ac_warn_fail" = "yes"
@@ -1506,6 +1491,7 @@ echo "   * Scheduling Plugins:        $scheduling_plugins"
 echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
 echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
 echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
+echo "   * C++ shared_ptr namespace:  $ac_cv_shared_ptr_namespace"
 echo ""
 echo "---"
 
