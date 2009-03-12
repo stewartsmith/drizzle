@@ -257,7 +257,7 @@ bool volatile abort_loop;
 bool volatile shutdown_in_progress;
 bool opt_local_infile;
 uint32_t max_used_connections;
-const char *opt_scheduler= "pool_of_threads";
+const char *opt_scheduler= "multi_thread";
 
 size_t my_thread_stack_size= 65536;
 
