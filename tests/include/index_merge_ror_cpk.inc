@@ -57,12 +57,14 @@ create table t1
 
 --disable_query_log
 set autocommit=0;
+begin;
 let $1=10000;
 while ($1)
 {
   eval insert into t1 values ($1 div 10,$1 mod 100,   $1/100,$1/100,   $1/100,$1/100,$1/100,$1/100,$1/100, $1 mod 100, $1/1000,'filler-data-$1','filler2');
   dec $1;
 }
+commit;
 set autocommit=1;
 --enable_query_log
 

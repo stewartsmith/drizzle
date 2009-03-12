@@ -944,6 +944,7 @@ t1	CREATE TABLE `t1` (
   `my_varchar` varchar(50) DEFAULT NULL,
   `my_decimal` decimal(65,30) DEFAULT NULL
 ) ENGINE=X
+begin;
 INSERT INTO t1 SET my_float = 1.175494345e-32,
 my_double = 1.175494345e-32,
 my_varchar = '1.175494345e-32';
@@ -1040,6 +1041,7 @@ my_varchar = '1.175494345e-2';
 INSERT INTO t1 SET my_float = 1.175494345e-1,
 my_double = 1.175494345e-1,
 my_varchar = '1.175494345e-1';
+commit;
 SELECT my_float, my_double, my_varchar FROM t1;
 my_float	my_double	my_varchar
 1.175494345e-32	1.175494345e-32	1.175494345e-32

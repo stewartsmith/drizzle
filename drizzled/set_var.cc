@@ -109,7 +109,8 @@ static void fix_session_mem_root(Session *session, enum_var_type type);
 static void fix_trans_mem_root(Session *session, enum_var_type type);
 static void fix_server_id(Session *session, enum_var_type type);
 static uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
-static bool get_unsigned(Session *session, set_var *var);
+static bool get_unsigned32(Session *session, set_var *var);
+static bool get_unsigned64(Session *session, set_var *var);
 bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
                           const char *name, int64_t val);
 static KEY_CACHE *create_key_cache(const char *name, uint32_t length);
@@ -183,7 +184,7 @@ static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
                                          &opt_local_infile);
 static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
                                                        &SV::max_allowed_packet);
-static sys_var_long_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
+static sys_var_uint64_t_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
                                                &max_connect_errors);
 static sys_var_session_uint64_t	sys_max_error_count(&vars, "max_error_count",
                                                   &SV::max_error_count);
@@ -204,7 +205,7 @@ static sys_var_session_size_t	sys_max_sort_length(&vars, "max_sort_length",
                                                     &SV::max_sort_length);
 static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
                                                    &SV::max_tmp_tables);
-static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
+static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
                                                  &max_write_lock_count);
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
@@ -274,7 +275,7 @@ static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
 static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
                                            fix_server_id);
 
-static sys_var_long_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
+static sys_var_uint64_t_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
                                              &slow_launch_time);
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
                                                 &SV::sortbuff_size);
@@ -291,11 +292,11 @@ static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine"
 				       &SV::table_plugin);
 static sys_var_const_str	sys_system_time_zone(&vars, "system_time_zone",
                                              system_time_zone);
-static sys_var_long_ptr	sys_table_def_size(&vars, "table_definition_cache",
+static sys_var_uint64_t_ptr	sys_table_def_size(&vars, "table_definition_cache",
                                            &table_def_size);
-static sys_var_long_ptr	sys_table_cache_size(&vars, "table_open_cache",
+static sys_var_uint64_t_ptr	sys_table_cache_size(&vars, "table_open_cache",
 					     &table_cache_size);
-static sys_var_long_ptr	sys_table_lock_wait_timeout(&vars, "table_lock_wait_timeout",
+static sys_var_uint64_t_ptr	sys_table_lock_wait_timeout(&vars, "table_lock_wait_timeout",
                                                     &table_lock_wait_timeout);
 static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
                                              &SV::tx_isolation,
@@ -639,7 +640,7 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
     else
       llstr(val, buf);
 
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), name, buf);
   }
@@ -667,14 +668,26 @@ static size_t fix_size_t(Session *session, size_t num,
   return out;
 }
 
-static bool get_unsigned(Session *, set_var *var)
+static bool get_unsigned32(Session *, set_var *var)
 {
   if (var->value->unsigned_flag)
-    var->save_result.uint64_t_value= (uint64_t) var->value->val_int();
+    var->save_result.uint32_t_value= (uint32_t) var->value->val_int();
   else
   {
     int64_t v= var->value->val_int();
-    var->save_result.uint64_t_value= (uint64_t) ((v < 0) ? 0 : v);
+    var->save_result.uint32_t_value= (uint32_t) ((v < 0) ? 0 : v);
+  }
+  return 0;
+}
+
+static bool get_unsigned64(Session *, set_var *var)
+{
+  if (var->value->unsigned_flag)
+      var->save_result.uint64_t_value=(uint64_t) var->value->val_int();
+  else
+  {
+    int64_t v= var->value->val_int();
+      var->save_result.uint64_t_value= (uint64_t) ((v < 0) ? 0 : v);
   }
   return 0;
 }
@@ -691,49 +704,10 @@ static bool get_size_t(Session *, set_var *var)
   return 0;
 }
 
-
-sys_var_long_ptr::
-sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr_arg,
-                 sys_after_update_func after_update_arg)
-  :sys_var_long_ptr_global(chain, name_arg, value_ptr_arg,
-                           &LOCK_global_system_variables, after_update_arg)
-{}
-
-
-bool sys_var_long_ptr_global::check(Session *session, set_var *var)
+bool sys_var_uint32_t_ptr::check(Session *, set_var *var)
 {
-  return get_unsigned(session, var);
-}
-
-bool sys_var_long_ptr_global::update(Session *session, set_var *var)
-{
-  uint64_t tmp= var->save_result.uint64_t_value;
-  pthread_mutex_lock(guard);
-  if (option_limits)
-    *value= (uint64_t) fix_unsigned(session, tmp, option_limits);
-  else
-  {
-    if (tmp > UINT32_MAX)
-    {
-      tmp= UINT32_MAX;
-      throw_bounds_warning(session, true, true, name,
-                           (int64_t) var->save_result.uint64_t_value);
-    }
-    *value= (uint64_t) tmp;
-  }
-
-  pthread_mutex_unlock(guard);
+  var->save_result.uint32_t_value= var->value->val_int();
   return 0;
-}
-
-
-void sys_var_long_ptr_global::set_default(Session *, enum_var_type)
-{
-  bool not_used;
-  pthread_mutex_lock(guard);
-  *value= (uint64_t) getopt_ull_limit_value((uint64_t) option_limits->def_value,
-                                         option_limits, &not_used);
-  pthread_mutex_unlock(guard);
 }
 
 bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
@@ -741,7 +715,11 @@ bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
   uint32_t tmp= var->save_result.uint32_t_value;
   pthread_mutex_lock(&LOCK_global_system_variables);
   if (option_limits)
-    *value= (uint32_t) fix_unsigned(session, tmp, option_limits);
+  {
+    uint32_t newvalue= (uint32_t) fix_unsigned(session, tmp, option_limits);
+    if(newvalue==tmp)
+      *value= newvalue;
+  }
   else
     *value= (uint32_t) tmp;
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -764,7 +742,11 @@ bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
   uint64_t tmp= var->save_result.uint64_t_value;
   pthread_mutex_lock(&LOCK_global_system_variables);
   if (option_limits)
-    *value= (uint64_t) fix_unsigned(session, tmp, option_limits);
+  {
+    uint64_t newvalue= (uint64_t) fix_unsigned(session, tmp, option_limits);
+    if(newvalue==tmp)
+      *value= newvalue;
+  }
   else
     *value= (uint64_t) tmp;
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -841,13 +823,13 @@ unsigned char *sys_var_enum_const::value_ptr(Session *, enum_var_type,
 */
 bool sys_var_session_uint32_t::check(Session *session, set_var *var)
 {
-  return (get_unsigned(session, var) ||
+  return (get_unsigned32(session, var) ||
           (check_func && (*check_func)(session, var)));
 }
 
 bool sys_var_session_uint32_t::update(Session *session, set_var *var)
 {
-  uint64_t tmp= var->save_result.uint64_t_value;
+  uint64_t tmp= (uint64_t) var->save_result.uint32_t_value;
 
   /* Don't use bigger value than given with --maximum-variable-name=.. */
   if ((uint32_t) tmp > max_system_variables.*offset)
@@ -949,7 +931,7 @@ unsigned char *sys_var_session_ha_rows::value_ptr(Session *session,
 
 bool sys_var_session_uint64_t::check(Session *session, set_var *var)
 {
-  return (get_unsigned(session, var) ||
+  return (get_unsigned64(session, var) ||
 	  (check_func && (*check_func)(session, var)));
 }
 
