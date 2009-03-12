@@ -152,7 +152,10 @@ typedef struct st_status
 
 
 static map<string, string>::iterator completion_iter;
+static map<string, string>::iterator completion_end;
 static map<string, string> completion_map;
+static string completion_string;
+
 static char **defaults_argv;
 
 enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
@@ -2226,28 +2229,25 @@ inline string lower_string(const string &from_string)
             to_string.begin(), ::tolower);
   return to_string;
 }
+inline string lower_string(const char * from_string)
+{
+  string to_string= from_string;
+  return lower_string(to_string);
+}
 
+template <class T>
 class CompletionMatch :
   public unary_function<const string&, bool>
 {
   string match_text; 
+  T match_func;
 public:
-  CompletionMatch(string text) : match_text(text)
-  {
-    transform(match_text.begin(), match_text.end(),
-              match_text.begin(), ::tolower);
-  }
+  CompletionMatch(string text) : match_text(text) {}
   inline bool operator() (const pair<string,string> &match_against) const
   {
     string sub_match=
       lower_string(match_against.first.substr(0,match_text.size()));
-    return (sub_match == match_text);
-/*(cout << "Matching " << match_text << " against " << match_against.first <<end;
-    if (match_text.compare(0, match_text.size(),
-                           match_against.first, 0,
-                           match_text.size()) == 0)
-      return true;
-    return false; */
+    return match_func(sub_match,match_text);
   }
 };
 
@@ -2259,22 +2259,21 @@ char *new_command_generator(const char *text, int state)
 
   if (!state)
   {
-cout << "trying to find: " << text << endl;
-    string match_text(text);
-    if (match_text.size() == 0)
+    completion_string= lower_string(text);
+    if (completion_string.size() == 0)
     {
-/*cout << "doing the big one " << endl;
-      for(completion_iter= completion_map.begin();
-          completion_iter!= completion_map.end();
-          completion_iter++)
-cout << "SET CONTAINS: " << (*completion_iter).second << endl; */
       completion_iter= completion_map.begin();
+      completion_end= completion_map.end();
     }
     else
+    {
       completion_iter= find_if(completion_map.begin(), completion_map.end(),
-                               CompletionMatch(match_text));
+                               CompletionMatch<equal_to<string> >(completion_string));
+      completion_end= find_if(completion_iter, completion_map.end(),
+                              CompletionMatch<not_equal_to<string> >(completion_string));
+    }
   }
-  if (completion_iter == completion_map.end())
+  if (completion_iter == completion_end || (size_t)state > completion_map.size())
     return NULL;
   char *result= (char *)malloc((*completion_iter).second.size()+1);
   strcpy(result, (*completion_iter).second.c_str());
@@ -2360,11 +2359,11 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
   {
     string query;
 
-    query.append("show fields in '");
+    query.append("show fields in `");
     query.append(table_row[0]);
-    query.append("'");
+    query.append("`");
     
-    if ((drizzleclient_real_query(&drizzle, query.c_str(), query.length()) == 0))
+    if (drizzleclient_query(&drizzle, query.c_str()) == 0)
     {
       fields= drizzleclient_store_result(&drizzle);
       if (fields) 
