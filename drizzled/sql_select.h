@@ -491,7 +491,7 @@ public:
   List<Item> &fields_list; ///< hold field list passed to mysql_select
   int error;
 
-  order_st *order, *group_list, *proc_param; //hold parameters of mysql_select
+  order_st *order, *group_list; //hold parameters of mysql_select
   COND *conds;                            // ---"---
   Item *conds_history;                    // store WHERE for explain
   TableList *tables_list;           ///<hold 'tables' parameter of mysql_select
@@ -594,8 +594,7 @@ public:
 
   int prepare(Item ***rref_pointer_array, TableList *tables, uint32_t wind_num,
 	      COND *conds, uint32_t og_num, order_st *order, order_st *group,
-	      Item *having, order_st *proc_param, Select_Lex *select,
-	      Select_Lex_Unit *unit);
+	      Item *having, Select_Lex *select, Select_Lex_Unit *unit);
   int optimize();
   int reinit();
   void exec();
