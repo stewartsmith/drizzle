@@ -133,7 +133,7 @@ message Table {
       required int32 count_elements = 1;
       optional uint32 collation_id = 2;
       optional string collation = 3;
-      repeated string field_value = 4;
+      repeated bytes field_value = 4;
     }
 
     message VirtualFieldOptions {
