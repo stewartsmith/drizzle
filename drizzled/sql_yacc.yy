@@ -826,7 +826,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ULONGLONG_NUM
 %token  UNCOMMITTED_SYM               /* SQL-2003-N */
 %token  UNDEFINED_SYM
-%token  UNDERSCORE_CHARSET
 %token  UNDOFILE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
 %token  UNION_SYM                     /* SQL-2003-R */
@@ -995,7 +994,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <charset>
         collation_name
         collation_name_or_default
-        UNDERSCORE_CHARSET
 
 %type <variable> internal_variable_name
 
@@ -5304,14 +5302,6 @@ text_literal:
             tmp= $1;
             $$= new Item_string(tmp.str, tmp.length, cs_con, DERIVATION_COERCIBLE, repertoire);
           }
-        | UNDERSCORE_CHARSET TEXT_STRING
-          {
-            Item_string *str= new Item_string($2.str, $2.length, $1);
-            str->set_repertoire_from_value();
-            str->set_cs_specified(true);
-
-            $$= str;
-          }
         | text_literal TEXT_STRING_literal
           {
             Item_string* item= (Item_string*) $1;
@@ -5382,59 +5372,6 @@ literal:
         | TRUE_SYM { $$= new Item_int((char*) "TRUE",1,1); }
         | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
-        | UNDERSCORE_CHARSET HEX_NUM
-          {
-            Item *tmp= new Item_hex_string($2.str, $2.length);
-            /*
-              it is OK only emulate fix_fieds, because we need only
-              value of constant
-            */
-            String *str= tmp ?
-              tmp->quick_fix_field(), tmp->val_str((String*) 0) :
-              (String*) 0;
-
-            Item_string *item_str=
-              new Item_string(NULL, /* name will be set in select_item */
-                              str ? str->ptr() : "",
-                              str ? str->length() : 0,
-                              $1);
-            if (!item_str ||
-                !item_str->check_well_formed_result(&item_str->str_value, true))
-            {
-              DRIZZLE_YYABORT;
-            }
-
-            item_str->set_repertoire_from_value();
-            item_str->set_cs_specified(true);
-
-            $$= item_str;
-          }
-        | UNDERSCORE_CHARSET BIN_NUM
-          {
-            Item *tmp= new Item_bin_string($2.str, $2.length);
-            /*
-              it is OK only emulate fix_fieds, because we need only
-              value of constant
-            */
-            String *str= tmp ?
-              tmp->quick_fix_field(), tmp->val_str((String*) 0) :
-              (String*) 0;
-
-            Item_string *item_str=
-              new Item_string(NULL, /* name will be set in select_item */
-                              str ? str->ptr() : "",
-                              str ? str->length() : 0,
-                              $1);
-            if (!item_str ||
-                !item_str->check_well_formed_result(&item_str->str_value, true))
-            {
-              DRIZZLE_YYABORT;
-            }
-
-            item_str->set_cs_specified(true);
-
-            $$= item_str;
-          }
         | DATE_SYM text_literal { $$ = $2; }
         | TIMESTAMP text_literal { $$ = $2; }
         ;
