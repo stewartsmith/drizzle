@@ -75,8 +75,15 @@ static int init(void *p)
   /* Parameter for threads created for connections */
   (void) pthread_attr_init(&multi_thread_attrib);
   (void) pthread_attr_setdetachstate(&multi_thread_attrib,
-                                     PTHREAD_CREATE_DETACHED);
+				     PTHREAD_CREATE_DETACHED);
   pthread_attr_setscope(&multi_thread_attrib, PTHREAD_SCOPE_SYSTEM);
+  {
+    struct sched_param tmp_sched_param;
+
+    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+    tmp_sched_param.sched_priority= WAIT_PRIOR;
+    (void)pthread_attr_setschedparam(&multi_thread_attrib, &tmp_sched_param);
+  }
 
   return 0;
 }
