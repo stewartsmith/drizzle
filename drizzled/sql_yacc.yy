@@ -5301,14 +5301,8 @@ text_literal:
             uint32_t repertoire= session->lex->text_string_is_7bit &&
                              my_charset_is_ascii_based(cs_cli) ?
                              MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
-            if (session->charset_is_collation_connection ||
-                (repertoire == MY_REPERTOIRE_ASCII &&
-                 my_charset_is_ascii_based(cs_con)))
-              tmp= $1;
-            else
-              session->convert_string(&tmp, cs_con, $1.str, $1.length, cs_cli);
-            $$= new Item_string(tmp.str, tmp.length, cs_con,
-                                DERIVATION_COERCIBLE, repertoire);
+            tmp= $1;
+            $$= new Item_string(tmp.str, tmp.length, cs_con, DERIVATION_COERCIBLE, repertoire);
           }
         | UNDERSCORE_CHARSET TEXT_STRING
           {
@@ -5637,65 +5631,39 @@ IDENT_sys:
           IDENT { $$= $1; }
         | IDENT_QUOTED
           {
-            Session *session= YYSession;
-
-            if (session->charset_is_system_charset)
+            const CHARSET_INFO * const cs= system_charset_info;
+            int dummy_error;
+            uint32_t wlen= cs->cset->well_formed_len(cs, $1.str,
+                                                 $1.str+$1.length,
+                                                 $1.length, &dummy_error);
+            if (wlen < $1.length)
             {
-              const CHARSET_INFO * const cs= system_charset_info;
-              int dummy_error;
-              uint32_t wlen= cs->cset->well_formed_len(cs, $1.str,
-                                                   $1.str+$1.length,
-                                                   $1.length, &dummy_error);
-              if (wlen < $1.length)
-              {
-                my_error(ER_INVALID_CHARACTER_STRING, MYF(0),
-                         cs->csname, $1.str + wlen);
-                DRIZZLE_YYABORT;
-              }
-              $$= $1;
+              my_error(ER_INVALID_CHARACTER_STRING, MYF(0),
+                       cs->csname, $1.str + wlen);
+              DRIZZLE_YYABORT;
             }
-            else
-              session->convert_string(&$$, system_charset_info,
-                                  $1.str, $1.length, session->charset());
+            $$= $1;
           }
         ;
 
 TEXT_STRING_sys:
           TEXT_STRING
           {
-            Session *session= YYSession;
-
-            if (session->charset_is_system_charset)
-              $$= $1;
-            else
-              session->convert_string(&$$, system_charset_info,
-                                  $1.str, $1.length, session->charset());
+            $$= $1;
           }
         ;
 
 TEXT_STRING_literal:
           TEXT_STRING
           {
-            Session *session= YYSession;
-
-            if (session->charset_is_collation_connection)
-              $$= $1;
-            else
-              session->convert_string(&$$, session->variables.getCollation(),
-                                  $1.str, $1.length, session->charset());
+            $$= $1;
           }
         ;
 
 TEXT_STRING_filesystem:
           TEXT_STRING
           {
-            Session *session= YYSession;
-
-            if (session->charset_is_character_set_filesystem)
-              $$= $1;
-            else
-              session->convert_string(&$$, session->variables.character_set_filesystem,
-                                  $1.str, $1.length, session->charset());
+            $$= $1;
           }
         ;
 
