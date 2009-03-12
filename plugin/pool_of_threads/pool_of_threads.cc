@@ -31,6 +31,8 @@ using namespace std;
 static volatile uint32_t created_threads= 0;
 static volatile bool kill_pool_threads= false;
 
+static pthread_attr_t thread_attrib;
+
 static int deinit(void *);
 
 static struct event session_add_event;
@@ -135,8 +137,7 @@ static bool libevent_init(void)
   {
     pthread_t thread;
     int error;
-    if ((error= pthread_create(&thread, &connection_attrib,
-                               libevent_thread_proc, 0)))
+    if ((error= pthread_create(&thread, &thread_attrib, libevent_thread_proc, 0)))
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
                       error);
@@ -582,6 +583,19 @@ static int init(void *p)
   func->post_kill_notification= post_kill_notification;
   func->add_connection= add_connection;
   func->count= count_of_threads;
+
+  /* Parameter for threads created for connections */
+  (void) pthread_attr_init(&thread_attrib);
+  (void) pthread_attr_setdetachstate(&thread_attrib,
+				     PTHREAD_CREATE_DETACHED);
+  pthread_attr_setscope(&thread_attrib, PTHREAD_SCOPE_SYSTEM);
+  {
+    struct sched_param tmp_sched_param;
+
+    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+    tmp_sched_param.sched_priority= WAIT_PRIOR;
+    (void)pthread_attr_setschedparam(&thread_attrib, &tmp_sched_param);
+  }
 
   return (int)libevent_init();
 }
