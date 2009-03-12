@@ -171,13 +171,13 @@ static sys_var_session_uint32_t	sys_interactive_timeout(&vars, "interactive_time
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &SV::join_buff_size);
 static sys_var_key_buffer_size	sys_key_buffer_size(&vars, "key_buffer_size");
-static sys_var_key_cache_long  sys_key_cache_block_size(&vars, "key_cache_block_size",
+static sys_var_key_cache_uint32_t  sys_key_cache_block_size(&vars, "key_cache_block_size",
                                                         offsetof(KEY_CACHE,
                                                                  param_block_size));
-static sys_var_key_cache_long	sys_key_cache_division_limit(&vars, "key_cache_division_limit",
+static sys_var_key_cache_uint32_t	sys_key_cache_division_limit(&vars, "key_cache_division_limit",
                                                            offsetof(KEY_CACHE,
                                                                     param_division_limit));
-static sys_var_key_cache_long  sys_key_cache_age_threshold(&vars, "key_cache_age_threshold",
+static sys_var_key_cache_uint32_t  sys_key_cache_age_threshold(&vars, "key_cache_age_threshold",
                                                            offsetof(KEY_CACHE,
                                                                     param_age_threshold));
 static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
@@ -1529,7 +1529,7 @@ end:
   This should be changed so that we wait until the previous
   assignment is done and then do the new assign
 */
-bool sys_var_key_cache_long::update(Session *session, set_var *var)
+bool sys_var_key_cache_uint32_t::update(Session *session, set_var *var)
 {
   uint64_t tmp= (uint64_t) var->value->val_int();
   LEX_STRING *base_name= &var->base;
@@ -1556,8 +1556,8 @@ bool sys_var_key_cache_long::update(Session *session, set_var *var)
   if (key_cache->in_init)
     goto end;
 
-  *((uint64_t*) (((char*) key_cache) + offset))=
-    (uint64_t) fix_unsigned(session, tmp, option_limits);
+  *((uint32_t*) (((char*) key_cache) + offset))=
+    (uint32_t) fix_unsigned(session, tmp, option_limits);
 
   /*
     Don't create a new key cache if it didn't exist

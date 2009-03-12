@@ -697,7 +697,7 @@ static void Bfree(Bigint *v, Stack_alloc *alloc)
 static char *dtoa_alloc(int i, Stack_alloc *alloc)
 {
   char *rv;
-  int aligned_size= (i + sizeof(ULong) - 1) / sizeof(ULong) * sizeof(ULong);
+  int aligned_size= (i + sizeof(double) - 1) / sizeof(double) * sizeof(double);
   if (alloc->free + aligned_size <= alloc->end)
   {
     rv= alloc->free;

@@ -161,7 +161,7 @@ public:
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
-  SHOW_TYPE show_type() { return SHOW_LONG; }
+  SHOW_TYPE show_type() { return SHOW_INT; }
   unsigned char *value_ptr(Session *, enum_var_type, const LEX_STRING *)
   { return (unsigned char*) value; }
 };
@@ -413,7 +413,7 @@ public:
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
-  SHOW_TYPE show_type() { return SHOW_LONG; }
+  SHOW_TYPE show_type() { return SHOW_INT; }
   unsigned char *value_ptr(Session *session, enum_var_type type,
                            const LEX_STRING *base);
 };
@@ -748,14 +748,14 @@ public:
 };
 
 
-class sys_var_key_cache_long :public sys_var_key_cache_param
+class sys_var_key_cache_uint32_t :public sys_var_key_cache_param
 {
 public:
-  sys_var_key_cache_long(sys_var_chain *chain, const char *name_arg, size_t offset_arg)
+  sys_var_key_cache_uint32_t(sys_var_chain *chain, const char *name_arg, size_t offset_arg)
     :sys_var_key_cache_param(chain, name_arg, offset_arg)
   {}
   bool update(Session *session, set_var *var);
-  SHOW_TYPE show_type() { return SHOW_LONG; }
+  SHOW_TYPE show_type() { return SHOW_INT; }
 };
 
 /* Variable that you can only read from */
