@@ -826,7 +826,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ULONGLONG_NUM
 %token  UNCOMMITTED_SYM               /* SQL-2003-N */
 %token  UNDEFINED_SYM
-%token  UNDERSCORE_CHARSET
 %token  UNDOFILE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
 %token  UNION_SYM                     /* SQL-2003-R */
@@ -995,7 +994,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <charset>
         collation_name
         collation_name_or_default
-        UNDERSCORE_CHARSET
 
 %type <variable> internal_variable_name
 
@@ -5301,22 +5299,8 @@ text_literal:
             uint32_t repertoire= session->lex->text_string_is_7bit &&
                              my_charset_is_ascii_based(cs_cli) ?
                              MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
-            if (session->charset_is_collation_connection ||
-                (repertoire == MY_REPERTOIRE_ASCII &&
-                 my_charset_is_ascii_based(cs_con)))
-              tmp= $1;
-            else
-              session->convert_string(&tmp, cs_con, $1.str, $1.length, cs_cli);
-            $$= new Item_string(tmp.str, tmp.length, cs_con,
-                                DERIVATION_COERCIBLE, repertoire);
-          }
-        | UNDERSCORE_CHARSET TEXT_STRING
-          {
-            Item_string *str= new Item_string($2.str, $2.length, $1);
-            str->set_repertoire_from_value();
-            str->set_cs_specified(true);
-
-            $$= str;
+            tmp= $1;
+            $$= new Item_string(tmp.str, tmp.length, cs_con, DERIVATION_COERCIBLE, repertoire);
           }
         | text_literal TEXT_STRING_literal
           {
@@ -5388,59 +5372,6 @@ literal:
         | TRUE_SYM { $$= new Item_int((char*) "TRUE",1,1); }
         | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
-        | UNDERSCORE_CHARSET HEX_NUM
-          {
-            Item *tmp= new Item_hex_string($2.str, $2.length);
-            /*
-              it is OK only emulate fix_fieds, because we need only
-              value of constant
-            */
-            String *str= tmp ?
-              tmp->quick_fix_field(), tmp->val_str((String*) 0) :
-              (String*) 0;
-
-            Item_string *item_str=
-              new Item_string(NULL, /* name will be set in select_item */
-                              str ? str->ptr() : "",
-                              str ? str->length() : 0,
-                              $1);
-            if (!item_str ||
-                !item_str->check_well_formed_result(&item_str->str_value, true))
-            {
-              DRIZZLE_YYABORT;
-            }
-
-            item_str->set_repertoire_from_value();
-            item_str->set_cs_specified(true);
-
-            $$= item_str;
-          }
-        | UNDERSCORE_CHARSET BIN_NUM
-          {
-            Item *tmp= new Item_bin_string($2.str, $2.length);
-            /*
-              it is OK only emulate fix_fieds, because we need only
-              value of constant
-            */
-            String *str= tmp ?
-              tmp->quick_fix_field(), tmp->val_str((String*) 0) :
-              (String*) 0;
-
-            Item_string *item_str=
-              new Item_string(NULL, /* name will be set in select_item */
-                              str ? str->ptr() : "",
-                              str ? str->length() : 0,
-                              $1);
-            if (!item_str ||
-                !item_str->check_well_formed_result(&item_str->str_value, true))
-            {
-              DRIZZLE_YYABORT;
-            }
-
-            item_str->set_cs_specified(true);
-
-            $$= item_str;
-          }
         | DATE_SYM text_literal { $$ = $2; }
         | TIMESTAMP text_literal { $$ = $2; }
         ;
@@ -5637,65 +5568,39 @@ IDENT_sys:
           IDENT { $$= $1; }
         | IDENT_QUOTED
           {
-            Session *session= YYSession;
-
-            if (session->charset_is_system_charset)
+            const CHARSET_INFO * const cs= system_charset_info;
+            int dummy_error;
+            uint32_t wlen= cs->cset->well_formed_len(cs, $1.str,
+                                                 $1.str+$1.length,
+                                                 $1.length, &dummy_error);
+            if (wlen < $1.length)
             {
-              const CHARSET_INFO * const cs= system_charset_info;
-              int dummy_error;
-              uint32_t wlen= cs->cset->well_formed_len(cs, $1.str,
-                                                   $1.str+$1.length,
-                                                   $1.length, &dummy_error);
-              if (wlen < $1.length)
-              {
-                my_error(ER_INVALID_CHARACTER_STRING, MYF(0),
-                         cs->csname, $1.str + wlen);
-                DRIZZLE_YYABORT;
-              }
-              $$= $1;
+              my_error(ER_INVALID_CHARACTER_STRING, MYF(0),
+                       cs->csname, $1.str + wlen);
+              DRIZZLE_YYABORT;
             }
-            else
-              session->convert_string(&$$, system_charset_info,
-                                  $1.str, $1.length, session->charset());
+            $$= $1;
           }
         ;
 
 TEXT_STRING_sys:
           TEXT_STRING
           {
-            Session *session= YYSession;
-
-            if (session->charset_is_system_charset)
-              $$= $1;
-            else
-              session->convert_string(&$$, system_charset_info,
-                                  $1.str, $1.length, session->charset());
+            $$= $1;
           }
         ;
 
 TEXT_STRING_literal:
           TEXT_STRING
           {
-            Session *session= YYSession;
-
-            if (session->charset_is_collation_connection)
-              $$= $1;
-            else
-              session->convert_string(&$$, session->variables.getCollation(),
-                                  $1.str, $1.length, session->charset());
+            $$= $1;
           }
         ;
 
 TEXT_STRING_filesystem:
           TEXT_STRING
           {
-            Session *session= YYSession;
-
-            if (session->charset_is_character_set_filesystem)
-              $$= $1;
-            else
-              session->convert_string(&$$, session->variables.character_set_filesystem,
-                                  $1.str, $1.length, session->charset());
+            $$= $1;
           }
         ;
 

@@ -248,7 +248,6 @@ static uint8_t pollfd_count= 0;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_log_queries_not_using_indexes= false;
 bool opt_skip_show_db= false;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
@@ -256,15 +255,9 @@ bool locked_in_memory;
 bool opt_using_transactions;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
-bool opt_reckless_slave = 0;
-bool opt_enable_named_pipe= 0;
 bool opt_local_infile;
-bool opt_safe_user_create = 0;
-bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
-bool opt_log_slave_updates= 0;
 uint32_t max_used_connections;
-const char *opt_scheduler= "pool_of_threads";
+const char *opt_scheduler= "multi_thread";
 
 size_t my_thread_stack_size= 65536;
 
@@ -411,7 +404,6 @@ pthread_rwlock_t	LOCK_sys_init_connect;
 pthread_rwlock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
 pthread_t signal_thread;
-pthread_attr_t connection_attrib;
 pthread_cond_t  COND_server_started;
 
 /* replication parameters, if master_host is not NULL, we are a slave */
@@ -1563,19 +1555,6 @@ static int init_thread_environment()
   (void) pthread_cond_init(&COND_refresh,NULL);
   (void) pthread_cond_init(&COND_global_read_lock,NULL);
 
-  /* Parameter for threads created for connections */
-  (void) pthread_attr_init(&connection_attrib);
-  (void) pthread_attr_setdetachstate(&connection_attrib,
-				     PTHREAD_CREATE_DETACHED);
-  pthread_attr_setscope(&connection_attrib, PTHREAD_SCOPE_SYSTEM);
-  {
-    struct sched_param tmp_sched_param;
-
-    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-    tmp_sched_param.sched_priority= WAIT_PRIOR;
-    (void)pthread_attr_setschedparam(&connection_attrib, &tmp_sched_param);
-  }
-
   if (pthread_key_create(&THR_Session,NULL) ||
       pthread_key_create(&THR_Mem_root,NULL))
   {
@@ -1768,6 +1747,7 @@ int main(int argc, char **argv)
 
   init_signals();
 
+#ifdef TODO_MOVE_OUT_TO_SCHEDULER_API
   pthread_attr_setstacksize(&connection_attrib, my_thread_stack_size);
 
 #ifdef HAVE_PTHREAD_ATTR_GETSTACKSIZE
@@ -1788,6 +1768,7 @@ int main(int argc, char **argv)
       my_thread_stack_size= stack_size;
     }
   }
+#endif
 #endif
 
   select_thread=pthread_self();
@@ -2820,7 +2801,6 @@ static void usage(void)
 static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
-  opt_skip_slave_start= opt_reckless_slave = 0;
   drizzle_home[0]= pidfile_name[0]= 0;
   opt_bin_log= 0;
   opt_skip_show_db=0;
