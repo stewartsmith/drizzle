@@ -239,7 +239,7 @@ NET_RETRY_COUNT	10
 NET_WRITE_TIMEOUT	500
 set net_buffer_length=1;
 Warnings:
-Warning	1292	Truncated incorrect net_buffer_length value: '1'
+Error	1292	Truncated incorrect net_buffer_length value: '1'
 show variables like 'net_buffer_length';
 Variable_name	Value
 net_buffer_length	1024
@@ -248,7 +248,7 @@ VARIABLE_NAME	VARIABLE_VALUE
 NET_BUFFER_LENGTH	1024
 set net_buffer_length=2000000000;
 Warnings:
-Warning	1292	Truncated incorrect net_buffer_length value: '2000000000'
+Error	1292	Truncated incorrect net_buffer_length value: '2000000000'
 show variables like 'net_buffer_length';
 Variable_name	Value
 net_buffer_length	1048576
@@ -353,37 +353,37 @@ ON
 set interactive_timeout=100;
 set join_buffer_size=100;
 Warnings:
-Warning	1292	Truncated incorrect join_buffer_size value: '100'
+Error	1292	Truncated incorrect join_buffer_size value: '100'
 set last_insert_id=1;
 set global local_infile=1;
 set max_allowed_packet=100;
 Warnings:
-Warning	1292	Truncated incorrect max_allowed_packet value: '100'
+Error	1292	Truncated incorrect max_allowed_packet value: '100'
 set global max_connect_errors=100;
 set max_heap_table_size=100;
 Warnings:
-Warning	1292	Truncated incorrect max_heap_table_size value: '100'
+Error	1292	Truncated incorrect max_heap_table_size value: '100'
 set max_join_size=100;
 set max_sort_length=100;
 set max_tmp_tables=100;
 set global max_write_lock_count=100;
 set global myisam_sort_buffer_size=100;
 Warnings:
-Warning	1292	Truncated incorrect sort_buffer_size value: '100'
+Error	1292	Truncated incorrect sort_buffer_size value: '100'
 set net_buffer_length=100;
 Warnings:
-Warning	1292	Truncated incorrect net_buffer_length value: '100'
+Error	1292	Truncated incorrect net_buffer_length value: '100'
 set net_read_timeout=100;
 set net_write_timeout=100;
 set read_buffer_size=100;
 Warnings:
-Warning	1292	Truncated incorrect read_buffer_size value: '100'
+Error	1292	Truncated incorrect read_buffer_size value: '100'
 set read_rnd_buffer_size=100;
 set global server_id=100;
 set global slow_launch_time=100;
 set sort_buffer_size=100;
 Warnings:
-Warning	1292	Truncated incorrect sort_buffer_size value: '100'
+Error	1292	Truncated incorrect sort_buffer_size value: '100'
 set sql_big_selects=1;
 set sql_buffer_result=1;
 set sql_safe_updates=1;
@@ -395,7 +395,7 @@ set storage_engine=myisam;
 set timestamp=1, timestamp=default;
 set tmp_table_size=100;
 Warnings:
-Warning	1292	Truncated incorrect tmp_table_size value: '100'
+Error	1292	Truncated incorrect tmp_table_size value: '100'
 set tx_isolation="READ-COMMITTED";
 set wait_timeout=100;
 create table t1 (a int not null auto_increment, primary key(a));
@@ -475,10 +475,10 @@ t1	CREATE TABLE `t1` (
 drop table t1;
 SET GLOBAL table_open_cache=-1;
 Warnings:
-Warning	1292	Truncated incorrect table_open_cache value: '0'
+Error	1292	Truncated incorrect table_open_cache value: '18446744073709551615'
 SHOW VARIABLES LIKE 'table_open_cache';
 Variable_name	Value
-table_open_cache	1
+table_open_cache	100
 SET GLOBAL table_open_cache=DEFAULT;
 *** Various tests with LC_TIME_NAMES
 *** LC_TIME_NAMES: testing case insensitivity

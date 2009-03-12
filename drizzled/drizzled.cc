@@ -291,7 +291,7 @@ uint32_t drizzled_port_timeout;
 uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
-uint32_t volatile thread_count, thread_running;
+uint32_t volatile thread_running;
 uint64_t session_startup_options;
 uint32_t back_log;
 uint32_t connect_timeout;
@@ -537,7 +537,7 @@ void close_connections(void)
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
   /* TODO This is a crappy way to handle this. Fix for proper shutdown. */
-  if (thread_count)
+  if (thread_scheduler.count())
     sleep(2);					// Give threads time to die
 
   /*
@@ -567,7 +567,7 @@ void close_connections(void)
   }
   /* All threads has now been aborted */
   (void) pthread_mutex_lock(&LOCK_thread_count);
-  while (thread_count)
+  while (thread_scheduler.count())
   {
     (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   }
@@ -999,7 +999,6 @@ void unlink_session(Session *session)
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   connection_count--;
-  thread_count--;
   delete session;
   pthread_mutex_unlock(&LOCK_thread_count);
   return;
@@ -1077,7 +1076,7 @@ extern "C" void handle_segfault(int sig)
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
   fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
   fprintf(stderr, "max_threads=%u\n", thread_scheduler.max_threads);
-  fprintf(stderr, "thread_count=%u\n", thread_count);
+  fprintf(stderr, "thread_count=%u\n", thread_scheduler.count());
   fprintf(stderr, "connection_count=%u\n", connection_count);
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
@@ -1906,8 +1905,6 @@ static void create_new_thread(Session *session)
     TODO: refactor this to avoid code duplication there
   */
   session->thread_id= session->variables.pseudo_thread_id= thread_id++;
-
-  thread_count++;
 
   /* 
     If we error on creation we drop the connection and delete the session.
@@ -2836,7 +2833,7 @@ static void drizzle_init_variables(void)
   defaults_argv= 0;
   server_id_supplied= 0;
   test_flags= select_errors= dropping_tables= ha_open_options=0;
-  thread_count= thread_running= wake_thread=0;
+  thread_running= wake_thread=0;
   slave_open_temp_tables= 0;
   opt_endinfo= using_udf_functions= 0;
   opt_using_transactions= false;

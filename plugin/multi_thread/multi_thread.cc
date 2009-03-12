@@ -26,12 +26,14 @@ using namespace std;
 
 pthread_attr_t multi_thread_attrib;
 static uint32_t max_threads;
+static volatile uint32_t thread_count;
 
 static bool add_connection(Session *session)
 {
   int error;
 
   safe_mutex_assert_owner(&LOCK_thread_count);
+  thread_count++;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   if ((error= pthread_create(&session->real_id, &multi_thread_attrib, handle_one_connection, (void*) session)))
@@ -48,10 +50,17 @@ static bool add_connection(Session *session)
 static bool end_thread(Session *session, bool)
 {
   unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+  thread_count--;
   pthread_mutex_unlock(&LOCK_thread_count);
 
   pthread_exit(0);
+
   return true; // We should never reach this point
+}
+
+static uint32_t count_of_threads(void)
+{
+  return thread_count;
 }
 
 static int init(void *p)
@@ -61,6 +70,7 @@ static int init(void *p)
   func->max_threads= max_threads; /* This will create an upper limit on max connections */
   func->add_connection= add_connection;
   func->end_thread= end_thread;
+  func->count= count_of_threads;
 
   /* Parameter for threads created for connections */
   (void) pthread_attr_init(&multi_thread_attrib);
@@ -73,6 +83,13 @@ static int init(void *p)
 
 static int deinit(void *)
 {
+  (void) pthread_mutex_lock(&LOCK_thread_count);
+  while (thread_count)
+  {
+    pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
+  }
+  (void) pthread_mutex_unlock(&LOCK_thread_count);
+
   pthread_attr_destroy(&multi_thread_attrib);
 
   return 0;
