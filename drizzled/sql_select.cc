@@ -108,8 +108,8 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
 static bool only_eq_ref_tables(JOIN *join, order_st *order, table_map tables);
 static void update_depend_map(JOIN *join);
 static void update_depend_map(JOIN *join, order_st *order);
-static order_st *remove_const(JOIN *join,order_st *first_order,COND *cond,
-			   bool change_list, bool *simple_order);
+static order_st *remove_constants(JOIN *join,order_st *first_order,COND *cond,
+			          bool change_list, bool *simple_order);
 static int return_zero_rows(JOIN *join, select_result *res,TableList *tables,
                             List<Item> &fields, bool send_row,
                             uint64_t select_options, const char *info,
@@ -290,7 +290,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 		      (order_st*) select_lex->order_list.first,
 		      (order_st*) select_lex->group_list.first,
 		      select_lex->having,
-		      (order_st*) lex->proc_list.first,
+		      NULL,
 		      select_lex->options | session->options |
                       setup_tables_done_option,
 		      result, unit, select_lex);
@@ -1465,7 +1465,7 @@ JOIN::optimize()
   /* Optimize distinct away if possible */
   {
     order_st *org_order= order;
-    order=remove_const(this, order,conds,1, &simple_order);
+    order=remove_constants(this, order,conds,1, &simple_order);
     if (session->is_error())
     {
       error= 1;
@@ -1602,9 +1602,9 @@ JOIN::optimize()
   simple_group= 0;
   {
     order_st *old_group_list;
-    group_list= remove_const(this, (old_group_list= group_list), conds,
-                             rollup.state == ROLLUP::STATE_NONE,
-			     &simple_group);
+    group_list= remove_constants(this, (old_group_list= group_list), conds,
+                                 rollup.state == ROLLUP::STATE_NONE,
+                                 &simple_group);
     if (session->is_error())
     {
       error= 1;
@@ -8273,8 +8273,8 @@ static void update_depend_map(JOIN *join, order_st *order)
 */
 
 static order_st *
-remove_const(JOIN *join,order_st *first_order, COND *cond,
-             bool change_list, bool *simple_order)
+remove_constants(JOIN *join,order_st *first_order, COND *cond,
+                 bool change_list, bool *simple_order)
 {
   if (join->tables == join->const_tables)
     return change_list ? 0 : first_order;		// No need to sort
@@ -16250,7 +16250,7 @@ bool mysql_explain_union(Session *session, Select_Lex_Unit *unit, select_result 
 			(order_st*) first->order_list.first,
 			(order_st*) first->group_list.first,
 			first->having,
-			(order_st*) session->lex->proc_list.first,
+			(order_st*) NULL,
 			first->options | session->options | SELECT_DESCRIBE,
 			result, unit, first);
   }

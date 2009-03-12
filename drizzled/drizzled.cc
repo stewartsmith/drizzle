@@ -298,7 +298,6 @@ uint32_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
-ulong what_to_log;
 uint64_t slow_launch_time;
 uint64_t slave_open_temp_tables;
 uint32_t refresh_version;  /* Increments on each reload */
@@ -939,7 +938,7 @@ static void network_init(void)
     */
     for (waited= 0, retry= 1; ; retry++, waited+= this_wait)
     {
-      if (((ret= bind(ip_sock, next->ai_addr, next->ai_addrlen)) >= 0 ) ||
+      if (((ret= ::bind(ip_sock, next->ai_addr, next->ai_addrlen)) >= 0 ) ||
           (errno != EADDRINUSE) ||
           (waited >= drizzled_port_timeout))
         break;
@@ -2865,7 +2864,6 @@ static void drizzle_init_variables(void)
   language_ptr= language;
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
-  what_to_log= ~ (1L << (uint32_t) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
   strcpy(server_version, VERSION);

@@ -199,10 +199,6 @@ bool logging_query_func_post (Session *session)
   if (session->examined_row_count < sysvar_logging_query_threshold_big_examined)
     return false;
 
-  // logging this is far too verbose
-  if (session->command == COM_FIELD_LIST)
-    return false;
-
   /* TODO, looks like connect_utime isnt being set in the session
      object.  We could store the time this plugin was loaded, but that
      would just be a dumb workaround. */

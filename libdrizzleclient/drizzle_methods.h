@@ -54,7 +54,6 @@ typedef struct st_drizzle_methods
   int32_t (*unbuffered_fetch)(DRIZZLE *drizzle, char **row);
   const char *(*read_statistics)(DRIZZLE *drizzle);
   bool (*next_result)(DRIZZLE *drizzle);
-  int32_t (*read_change_user_result)(DRIZZLE *drizzle);
 } DRIZZLE_METHODS;
 
 static inline int32_t simple_command(DRIZZLE *drizzle, enum enum_server_command command, const unsigned char *arg, uint32_t length, bool skip_check)
