@@ -248,7 +248,6 @@ static uint8_t pollfd_count= 0;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_log_queries_not_using_indexes= false;
 bool opt_skip_show_db= false;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
@@ -256,13 +255,7 @@ bool locked_in_memory;
 bool opt_using_transactions;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
-bool opt_reckless_slave = 0;
-bool opt_enable_named_pipe= 0;
 bool opt_local_infile;
-bool opt_safe_user_create = 0;
-bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
-bool opt_log_slave_updates= 0;
 uint32_t max_used_connections;
 const char *opt_scheduler= "pool_of_threads";
 
@@ -2820,7 +2813,6 @@ static void usage(void)
 static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
-  opt_skip_slave_start= opt_reckless_slave = 0;
   drizzle_home[0]= pidfile_name[0]= 0;
   opt_bin_log= 0;
   opt_skip_show_db=0;
