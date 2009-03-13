@@ -1200,7 +1200,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 bool mysql_select(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
                   COND *conds, uint32_t og_num, order_st *order, order_st *group,
-                  Item *having, order_st *proc_param, uint64_t select_type,
+                  Item *having, uint64_t select_type,
                   select_result *result, Select_Lex_Unit *unit,
                   Select_Lex *select_lex);
 void free_underlaid_joins(Session *session, Select_Lex *select);

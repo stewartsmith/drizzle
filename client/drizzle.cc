@@ -125,7 +125,9 @@ void sql_element_free(void *ptr);
 #define vidattr(A) {}      // Can't get this to work
 #endif
 
-#include "completion_hash.h"
+#include <iostream>
+#include <functional>
+#include <map>
 
 using namespace std;
 
@@ -149,7 +151,11 @@ typedef struct st_status
 } STATUS;
 
 
-static HashTable ht;
+static map<string, string>::iterator completion_iter;
+static map<string, string>::iterator completion_end;
+static map<string, string> completion_map;
+static string completion_string;
+
 static char **defaults_argv;
 
 enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
@@ -198,7 +204,6 @@ static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
 static char default_pager[FN_REFLEN];
 static char pager[FN_REFLEN], outfile[FN_REFLEN];
 static FILE *PAGER, *OUTFILE;
-static MEM_ROOT hash_mem_root;
 static uint32_t prompt_counter;
 static char delimiter[16]= DEFAULT_DELIMITER;
 static uint32_t delimiter_length= 1;
@@ -1097,8 +1102,6 @@ int main(int argc,char *argv[])
     my_end(0);
     exit(1);
   }
-  completion_hash_init(&ht, 128);
-  init_alloc_root(&hash_mem_root, 16384, 0);
   memset(&drizzle, 0, sizeof(drizzle));
   if (sql_connect(current_host,current_db,current_user,opt_password,
                   opt_silent))
@@ -1196,8 +1199,6 @@ void drizzle_end(int sig)
       my_rename(histfile_tmp, histfile, MYF(MY_WME));
   }
   batch_readline_end(status.line_buff);
-  completion_hash_free(&ht);
-  free_root(&hash_mem_root,MYF(0));
 
   if (sig >= 0)
     put_info(sig ? _("Aborted") : _("Bye"), INFO_RESULT,0,0);
@@ -2226,85 +2227,64 @@ char **mysql_completion (const char *text, int, int)
     return (char**) 0;
 }
 
-extern "C"
-char *new_command_generator(const char *text,int state)
+inline string lower_string(const string &from_string)
 {
-  static int textlen;
-  char *ptr;
-  static Bucket *b;
-  static entry *e;
-  static uint32_t i;
-
-  if (!state)
-    textlen=(uint32_t) strlen(text);
-
-  if (textlen>0)
-  {            /* lookup in the hash */
-    if (!state)
-    {
-      uint32_t len;
-
-      b = find_all_matches(&ht,text,(uint32_t) strlen(text),&len);
-      if (!b)
-        return NULL;
-      e = b->pData;
-    }
-
-    if (e)
-    {
-      ptr= strdup(e->str);
-      e = e->pNext;
-      return ptr;
-    }
-  }
-  else
-  { /* traverse the entire hash, ugly but works */
-
-    if (!state)
-    {
-      /* find the first used bucket */
-      for (i=0 ; i < ht.nTableSize ; i++)
-      {
-        if (ht.arBuckets[i])
-        {
-          b = ht.arBuckets[i];
-          e = b->pData;
-          break;
-        }
-      }
-    }
-    ptr= NULL;
-    while (e && !ptr)
-    {          /* find valid entry in bucket */
-      if ((uint32_t) strlen(e->str) == b->nKeyLength)
-        ptr = strdup(e->str);
-      /* find the next used entry */
-      e = e->pNext;
-      if (!e)
-      { /* find the next used bucket */
-        b = b->pNext;
-        if (!b)
-        {
-          for (i++ ; i<ht.nTableSize; i++)
-          {
-            if (ht.arBuckets[i])
-            {
-              b = ht.arBuckets[i];
-              e = b->pData;
-              break;
-            }
-          }
-        }
-        else
-          e = b->pData;
-      }
-    }
-    if (ptr)
-      return ptr;
-  }
-  return NULL;
+  string to_string= from_string;
+  transform(to_string.begin(), to_string.end(),
+            to_string.begin(), ::tolower);
+  return to_string;
+}
+inline string lower_string(const char * from_string)
+{
+  string to_string= from_string;
+  return lower_string(to_string);
 }
 
+template <class T>
+class CompletionMatch :
+  public unary_function<const string&, bool>
+{
+  string match_text; 
+  T match_func;
+public:
+  CompletionMatch(string text) : match_text(text) {}
+  inline bool operator() (const pair<string,string> &match_against) const
+  {
+    string sub_match=
+      lower_string(match_against.first.substr(0,match_text.size()));
+    return match_func(sub_match,match_text);
+  }
+};
+
+
+
+extern "C"
+char *new_command_generator(const char *text, int state)
+{
+
+  if (!state)
+  {
+    completion_string= lower_string(text);
+    if (completion_string.size() == 0)
+    {
+      completion_iter= completion_map.begin();
+      completion_end= completion_map.end();
+    }
+    else
+    {
+      completion_iter= find_if(completion_map.begin(), completion_map.end(),
+                               CompletionMatch<equal_to<string> >(completion_string));
+      completion_end= find_if(completion_iter, completion_map.end(),
+                              CompletionMatch<not_equal_to<string> >(completion_string));
+    }
+  }
+  if (completion_iter == completion_end || (size_t)state > completion_map.size())
+    return NULL;
+  char *result= (char *)malloc((*completion_iter).second.size()+1);
+  strcpy(result, (*completion_iter).second.c_str());
+  completion_iter++;
+  return result;
+}
 
 /* Build up the completion hash */
 
@@ -2313,27 +2293,22 @@ static void build_completion_hash(bool rehash, bool write_info)
   COMMANDS *cmd=commands;
   drizzle_return_t ret;
   drizzle_result_st databases,tables,fields;
-  static char ***field_names= 0;
   drizzle_row_t database_row,table_row;
   drizzle_column_st *sql_field;
-  char buf[DRIZZLE_MAX_TABLE_SIZE+DRIZZLE_MAX_COLUMN_NAME_SIZE+2]; // table name plus field name plus 2
-  int i,j,num_fields;
-
+  string tmp_str, tmp_str_lower;
 
   if (status.batch || quick || !current_db)
     return;      // We don't need completion in batches
   if (!rehash)
     return;
 
-  /* Free old used memory */
-  if (field_names)
-    field_names=0;
-  completion_hash_clean(&ht);
-  free_root(&hash_mem_root,MYF(0));
+  completion_map.clear();
 
   /* hash this file's known subset of SQL commands */
   while (cmd->name) {
-    add_word(&ht,(char*) cmd->name);
+    tmp_str= cmd->name;
+    tmp_str_lower= lower_string(tmp_str);
+    completion_map[tmp_str_lower]= tmp_str;
     cmd++;
   }
 
@@ -2349,9 +2324,9 @@ static void build_completion_hash(bool rehash, bool write_info)
     {
       while ((database_row=drizzle_row_next(&databases)))
       {
-        char *str=strdup_root(&hash_mem_root, (char*) database_row[0]);
-        if (str)
-          add_word(&ht,(char*) str);
+        tmp_str= (char *)database_row[0];
+        tmp_str_lower= lower_string(tmp_str);
+        completion_map[tmp_str_lower]= tmp_str;
       }
       drizzle_result_free(&databases);
     }
@@ -2372,10 +2347,9 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
       }
       while ((table_row=drizzle_row_next(&tables)))
       {
-        char *str=strdup_root(&hash_mem_root, (char*) table_row[0]);
-        if (str &&
-            !completion_hash_exists(&ht,(char*) str, (uint32_t) strlen(str)))
-          add_word(&ht,str);
+        tmp_str= (char *)table_row[0];
+        tmp_str_lower= lower_string(tmp_str);
+        completion_map[tmp_str_lower]= tmp_str;
       }
     }
   }
@@ -2387,13 +2361,7 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
     return;
 
   drizzle_row_seek(&tables, 0);
-  if (!(field_names= (char ***) alloc_root(&hash_mem_root,sizeof(char **) *
-                                           (uint32_t) (drizzle_result_row_count(&tables)+1))))
-  {
-    drizzle_result_free(&tables);
-    return;
-  }
-  i=0;
+
   while ((table_row=drizzle_row_next(&tables)))
   {
     string query;
@@ -2407,39 +2375,24 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
     {
       if (drizzle_result_buffer(&fields) == DRIZZLE_RETURN_OK)
       {
-        num_fields=drizzle_result_column_count(&fields);
-        if (!(field_names[i] = (char **) alloc_root(&hash_mem_root,
-                                                    sizeof(char *) *
-                                                    (num_fields*2+1))))
-        {
-          drizzle_result_free(&fields);
-          break;
-        }
-        field_names[i][num_fields*2]= '\0';
-        j= 0;
         while ((sql_field=drizzle_column_next(&fields)))
         {
-          sprintf(buf,"%.64s.%.64s",table_row[0],drizzle_column_name(sql_field));
-          field_names[i][j] = strdup_root(&hash_mem_root,buf);
-          add_word(&ht,field_names[i][j]);
-          field_names[i][num_fields+j] = strdup_root(&hash_mem_root,
-                                                     drizzle_column_name(sql_field));
-          if (!completion_hash_exists(&ht,field_names[i][num_fields+j],
-                                      (uint32_t) strlen(field_names[i][num_fields+j])))
-            add_word(&ht,field_names[i][num_fields+j]);
-          j++;
+          tmp_str=(char *)table_row[0];
+          tmp_str.append(".");
+          tmp_str.append(drizzle_column_name(sql_field));
+          tmp_str_lower= lower_string(tmp_str);
+          completion_map[tmp_str_lower]= tmp_str;
+
+          tmp_str=drizzle_column_name(sql_field);
+          tmp_str_lower= lower_string(tmp_str);
+          completion_map[tmp_str_lower]= tmp_str;
         }
         drizzle_result_free(&fields);
       }
     }
-    else
-      field_names[i]= 0;
-
-    i++;
   }
   drizzle_result_free(&tables);
-  field_names[i]=0;        // End pointer
-  return;
+  completion_iter= completion_map.begin();
 }
 
 /* for gnu readline */

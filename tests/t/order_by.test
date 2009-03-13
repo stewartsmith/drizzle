@@ -377,11 +377,13 @@ DROP TABLE t1;
 create table t1(id int not null auto_increment primary key, t char(12));
 disable_query_log;
 let $1 = 1000;
+begin;
 while ($1)
  {
   eval insert into t1(t) values ('$1'); 
   dec $1;
  }
+commit;
 enable_query_log;
 select id,t from t1 force index (primary) order by id;
 drop table t1;

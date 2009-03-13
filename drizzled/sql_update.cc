@@ -963,7 +963,6 @@ bool mysql_multi_update(Session *session,
                       table_list, select_lex->with_wild,
                       total_list,
                       conds, 0, (order_st *) NULL, (order_st *)NULL, (Item *) NULL,
-                      (order_st *)NULL,
                       options | SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK |
                       OPTION_SETUP_TABLES_DONE,
                       result, unit, select_lex);

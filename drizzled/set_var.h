@@ -145,43 +145,6 @@ public:
 };
 
 
-/*
-  A global-only uint64_t variable that requires its access to be
-  protected with a mutex.
-*/
-
-class sys_var_long_ptr_global: public sys_var_global
-{
-  uint64_t *value;
-public:
-  sys_var_long_ptr_global(sys_var_chain *chain, const char *name_arg,
-                          uint64_t *value_ptr_arg,
-                          pthread_mutex_t *guard_arg,
-                          sys_after_update_func after_update_arg= NULL)
-    :sys_var_global(name_arg, after_update_arg, guard_arg),
-    value(value_ptr_arg)
-  { chain_sys_var(chain); }
-  bool check(Session *session, set_var *var);
-  bool update(Session *session, set_var *var);
-  void set_default(Session *session, enum_var_type type);
-  SHOW_TYPE show_type() { return SHOW_LONG; }
-  unsigned char *value_ptr(Session *, enum_var_type, const LEX_STRING *)
-  { return (unsigned char*) value; }
-};
-
-
-/*
-  A global uint64_t variable that is protected by LOCK_global_system_variables
-*/
-
-class sys_var_long_ptr :public sys_var_long_ptr_global
-{
-public:
-  sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr,
-                   sys_after_update_func after_update_arg= NULL);
-};
-
-
 class sys_var_uint32_t_ptr :public sys_var
 {
   uint32_t *value;
@@ -195,9 +158,10 @@ public:
                        sys_after_update_func func)
     :sys_var(name_arg,func), value(value_ptr_arg)
   { chain_sys_var(chain); }
+  bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
-  SHOW_TYPE show_type() { return SHOW_LONG; }
+  SHOW_TYPE show_type() { return SHOW_INT; }
   unsigned char *value_ptr(Session *, enum_var_type, const LEX_STRING *)
   { return (unsigned char*) value; }
 };
@@ -449,7 +413,7 @@ public:
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
-  SHOW_TYPE show_type() { return SHOW_LONG; }
+  SHOW_TYPE show_type() { return SHOW_INT; }
   unsigned char *value_ptr(Session *session, enum_var_type type,
                            const LEX_STRING *base);
 };
@@ -784,14 +748,14 @@ public:
 };
 
 
-class sys_var_key_cache_long :public sys_var_key_cache_param
+class sys_var_key_cache_uint32_t :public sys_var_key_cache_param
 {
 public:
-  sys_var_key_cache_long(sys_var_chain *chain, const char *name_arg, size_t offset_arg)
+  sys_var_key_cache_uint32_t(sys_var_chain *chain, const char *name_arg, size_t offset_arg)
     :sys_var_key_cache_param(chain, name_arg, offset_arg)
   {}
   bool update(Session *session, set_var *var);
-  SHOW_TYPE show_type() { return SHOW_LONG; }
+  SHOW_TYPE show_type() { return SHOW_INT; }
 };
 
 /* Variable that you can only read from */
