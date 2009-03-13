@@ -15,10 +15,9 @@
 
 # This file is public domain and comes with NO WARRANTY of any kind
 
-LDADD=			$(top_builddir)/libdrizzleclient/libdrizzleclient.la \
-			$(top_builddir)/mysys/libmysys.la \
+LDADD=			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LIBINTL) $(LIBZ) 
+			$(LIBDRIZZLE) $(LIBINTL) $(LIBZ)
 
 
 noinst_HEADERS =	completion_hash.h \
@@ -36,20 +35,21 @@ bin_PROGRAMS =			drizzle \
 				drizzletest \
 				drizzleslap
 
-drizzle_SOURCES=		drizzle.cc readline.cc completion_hash.cc
+drizzle_SOURCES=		drizzle.cc readline.cc completion_hash.cc \
+				get_password.c
 drizzle_LDADD=			${LDADD} ${READLINE_LIBS}
 drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${W_EXCEPTIONS} 
 
-drizzleadmin_SOURCES=		drizzleadmin.cc
+drizzleadmin_SOURCES=		drizzleadmin.cc get_password.c
 
-drizzlecheck_SOURCES =		drizzlecheck.cc
+drizzlecheck_SOURCES =		drizzlecheck.cc get_password.c
 
-drizzledump_SOURCES=            drizzledump.cc 
+drizzledump_SOURCES=            drizzledump.cc  get_password.c
 
-drizzleimport_SOURCES=		drizzleimport.cc
+drizzleimport_SOURCES=		drizzleimport.cc get_password.c
 
-drizzleslap_SOURCES=            drizzleslap.cc
+drizzleslap_SOURCES=            drizzleslap.cc get_password.c
 
-drizzletest_SOURCES=		drizzletest.cc 
+drizzletest_SOURCES=		drizzletest.cc  get_password.c
 drizzletest_LDADD=		${LDADD} ${LIBPCRE}
 

@@ -16,13 +16,12 @@
 /* Common defines for all clients */
 
 #include <drizzled/global.h>
+#include <libdrizzle/drizzle_client.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <libdrizzleclient/libdrizzle.h>
-#include <libdrizzleclient/errmsg.h>
-#include <libdrizzleclient/password.h>
-#include <libdrizzleclient/get_password.h>
 #include <mysys/my_getopt.h>
+
+#include "get_password.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -34,7 +33,6 @@
 #  include <time.h>
 # endif
 #endif
-
 
 enum options_client
 {
