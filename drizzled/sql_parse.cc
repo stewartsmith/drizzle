@@ -430,12 +430,15 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 {
   NET *net= &session->net;
   bool error= 0;
+  int error_code;
   Query_id &query_id= Query_id::get_query_id();
 
   session->command=command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
-  pthread_mutex_lock(&LOCK_thread_count);
+  if ((error_code= pthread_mutex_lock(&LOCK_thread_count)))
+    assert(error_code == 0); /* Always will assert */
+
   session->query_id= query_id.value();
 
   switch( command ) {
