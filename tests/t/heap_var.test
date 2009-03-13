@@ -52,7 +52,7 @@ select * from t1;
 let $1=10001;
 
 disable_query_log;
-
+begin;
 while ($1) 
 {
 
@@ -61,6 +61,7 @@ while ($1)
   dec $1;
 
 }
+commit;
 enable_query_log;
 
 select count(*) from t1;

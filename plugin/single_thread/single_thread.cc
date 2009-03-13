@@ -58,6 +58,13 @@ static bool end_thread(Session *session, bool)
   return true;                                     // Abort handle_one_connection
 }
 
+
+static uint32_t count_of_threads(void)
+{
+  return 0;
+}
+
+
 static int init(void *p)
 {
   scheduling_st* func= (scheduling_st *)p;
@@ -66,6 +73,7 @@ static int init(void *p)
   func->add_connection= add_connection;
   func->init_new_connection_thread= init_new_connection_thread;
   func->end_thread= end_thread;
+  func->count= count_of_threads;
 
   return 0;
 }

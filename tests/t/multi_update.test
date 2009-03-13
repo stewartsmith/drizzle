@@ -14,6 +14,7 @@ create table t2(id2 int not null, t char(12));
 create table t3(id3 int not null, t char(12), index(id3));
 disable_query_log;
 let $1 = 100;
+begin;
 while ($1)
  {
   let $2 = 5;
@@ -31,6 +32,7 @@ while ($1)
    }
   dec $1;
  }
+commit;
 enable_query_log;
 
 select count(*) from t1 where id1 > 95;
@@ -69,6 +71,7 @@ create table t1(id1 int not null  primary key, t varchar(100)) pack_keys = 1;
 create table t2(id2 int not null, t varchar(100), index(id2)) pack_keys = 1;
 disable_query_log;
 let $1 = 1000;
+begin;
 while ($1)
  {
   let $2 = 5;
@@ -80,6 +83,7 @@ while ($1)
    }
   dec $1;
  }
+commit;
 enable_query_log;
 delete t1  from t1,t2 where t1.id1 = t2.id2 and t1.id1 > 500;
 drop table t1,t2;
@@ -324,13 +328,14 @@ create table t1 ( a int not null, b int not null) ;
 insert into t1 values (1,1),(2,2),(3,3),(4,4);
 let $1=19;
 set @d=4;
+begin;
 while ($1)
 {
   eval insert into t1 select a+@d,b+@d from t1;
   eval set @d=@d*2;
   dec $1;
 }
-
+commit;
 --enable_query_log
 alter table t1 add index i1(a);
 delete from t1 where a > 2000000;

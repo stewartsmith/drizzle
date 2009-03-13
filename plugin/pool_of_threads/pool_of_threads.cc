@@ -28,8 +28,10 @@
 
 using namespace std;
 
-static uint32_t created_threads, killed_threads;
-static bool kill_pool_threads;
+static volatile uint32_t created_threads= 0;
+static volatile bool kill_pool_threads= false;
+
+static pthread_attr_t thread_attrib;
 
 static int deinit(void *);
 
@@ -95,13 +97,9 @@ static bool init_pipe(int pipe_fds[])
 
 static bool libevent_init(void)
 {
-  uint32_t i;
+  uint32_t x;
 
   event_init();
-
-  created_threads= 0;
-  killed_threads= 0;
-  kill_pool_threads= false;
 
   pthread_mutex_init(&LOCK_event_loop, NULL);
   pthread_mutex_init(&LOCK_session_add, NULL);
@@ -133,15 +131,13 @@ static bool libevent_init(void)
 
  }
   /* Set up the thread pool */
-  created_threads= killed_threads= 0;
   pthread_mutex_lock(&LOCK_thread_count);
 
-  for (i= 0; i < size; i++)
+  for (x= 0; x < size; x++)
   {
     pthread_t thread;
     int error;
-    if ((error= pthread_create(&thread, &connection_attrib,
-                               libevent_thread_proc, 0)))
+    if ((error= pthread_create(&thread, &thread_attrib, libevent_thread_proc, 0)))
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
                       error);
@@ -470,16 +466,20 @@ pthread_handler_t libevent_thread_proc(void *)
         break;
       }
     } while (libevent_needs_immediate_processing(session));
+
+    if (kill_pool_threads) /* the flag that we should die has been set */
+      goto thread_exit;
   }
 
 thread_exit:
   (void) pthread_mutex_lock(&LOCK_thread_count);
-  killed_threads++;
+  created_threads--;
   pthread_cond_broadcast(&COND_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   my_thread_end();
   pthread_exit(0);
-  return(0);                               /* purify: deadcode */
+
+  return NULL;                               /* purify: deadcode */
 }
 
 
@@ -546,7 +546,7 @@ static int deinit(void *)
   (void) pthread_mutex_lock(&LOCK_thread_count);
 
   kill_pool_threads= true;
-  while (killed_threads != created_threads)
+  while (created_threads)
   {
     /* wake up the event loop */
     char c= 0;
@@ -569,6 +569,11 @@ static int deinit(void *)
   return 0;
 }
 
+static uint32_t count_of_threads(void)
+{
+  return created_threads;
+}
+
 static int init(void *p)
 {
   scheduling_st* func= (scheduling_st *)p;
@@ -577,6 +582,20 @@ static int init(void *p)
   func->max_threads= size;
   func->post_kill_notification= post_kill_notification;
   func->add_connection= add_connection;
+  func->count= count_of_threads;
+
+  /* Parameter for threads created for connections */
+  (void) pthread_attr_init(&thread_attrib);
+  (void) pthread_attr_setdetachstate(&thread_attrib,
+				     PTHREAD_CREATE_DETACHED);
+  pthread_attr_setscope(&thread_attrib, PTHREAD_SCOPE_SYSTEM);
+  {
+    struct sched_param tmp_sched_param;
+
+    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+    tmp_sched_param.sched_priority= WAIT_PRIOR;
+    (void)pthread_attr_setschedparam(&thread_attrib, &tmp_sched_param);
+  }
 
   return (int)libevent_init();
 }

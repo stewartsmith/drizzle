@@ -6165,23 +6165,6 @@ bool is_equal(const LEX_STRING *a, const LEX_STRING *b)
 
 void kill_drizzle(void)
 {
-
-#if defined(SIGNALS_DONT_BREAK_READ)
-  abort_loop=1;					// Break connection loops
-  close_server_sock();				// Force accept to wake up
-#endif
-
   pthread_kill(signal_thread, SIGTERM);
-  shutdown_in_progress=1;			// Safety if kill didn't work
-#ifdef SIGNALS_DONT_BREAK_READ
-  if (!kill_in_progress)
-  {
-    pthread_t tmp;
-    abort_loop=1;
-    if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
-			   (void*) 0))
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create thread to kill server"));
-  }
-#endif
-  return;;
+  shutdown_in_progress= 1;			// Safety if kill didn't work
 }

@@ -275,8 +275,6 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                (order_st*) 0 : (order_st *)sl->order_list.first,
                                (order_st*) sl->group_list.first,
                                sl->having,
-                               (is_union_select ? (order_st*) 0 :
-                                (order_st*) NULL),
                                sl, this);
     /* There are no * in the statement anymore (for PS) */
     sl->with_wild= 0;
@@ -540,7 +538,7 @@ bool Select_Lex_Unit::exec()
                               0, item_list, NULL,
                               global_parameters->order_list.elements,
                               (order_st*)global_parameters->order_list.first,
-                              (order_st*) NULL, NULL, (order_st*) NULL,
+                              (order_st*) NULL, NULL,
                               fake_select_lex->options | SELECT_NO_UNLOCK,
                               result, this, fake_select_lex);
       }
@@ -563,7 +561,7 @@ bool Select_Lex_Unit::exec()
                                 0, item_list, NULL,
                                 global_parameters->order_list.elements,
                                 (order_st*)global_parameters->order_list.first,
-                                (order_st*) NULL, NULL, (order_st*) NULL,
+                                (order_st*) NULL, NULL,
                                 fake_select_lex->options | SELECT_NO_UNLOCK,
                                 result, this, fake_select_lex);
         }
