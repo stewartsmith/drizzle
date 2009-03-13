@@ -307,7 +307,6 @@ static bool add_connection(Session *session)
 
   session->scheduler= (void *)scheduler;
 
-  threads.append(session);
   libevent_session_add(session);
 
   pthread_mutex_unlock(&LOCK_thread_count);
