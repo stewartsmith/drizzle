@@ -85,8 +85,6 @@ row_vers_impl_x_locked_off_kernel(
 
 	mtr_start(&mtr);
 
-	prev_trx_id.high= 0;
-	prev_trx_id.low= 0;
 	/* Search for the clustered index record: this is a time-consuming
 	operation: therefore we release the kernel mutex; also, the release
 	is required by the latching order convention. The latch on the

@@ -183,7 +183,7 @@ btr_search_validate(void);
 
 /* Flag: has the search system been enabled?
 Protected by btr_search_latch and btr_search_enabled_mutex. */
-extern char btr_search_enabled;
+extern bool btr_search_enabled;
 
 /* The search info struct in an index */
 

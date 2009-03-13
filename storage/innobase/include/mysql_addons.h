@@ -30,3 +30,12 @@ here. In a perfect world this file exists but is empty.
 
 Created November 07, 2007 Vasil Dimov
 *******************************************************/
+
+/**
+ *
+  Return the thread id of a user thread
+
+  @param session  user thread connection handle
+  @return  thread id
+*/
+unsigned long session_get_thread_id(const void *session);

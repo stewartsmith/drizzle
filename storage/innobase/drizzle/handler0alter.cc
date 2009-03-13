@@ -643,7 +643,7 @@ ha_innobase::add_index(
 
 	/* Create a background transaction for the operations on
 	the data dictionary tables. */
-	trx = innobase_trx_allocate(user_thd);
+	trx = innobase_trx_allocate(user_session);
 	trx_start_if_not_started(trx);
 
 	innodb_table = indexed_table
@@ -1128,7 +1128,7 @@ ha_innobase::final_drop_index(
 
 	/* Create a background transaction for the operations on
 	the data dictionary tables. */
-	trx = innobase_trx_allocate(user_thd);
+	trx = innobase_trx_allocate(user_session);
 	trx_start_if_not_started(trx);
 
 	/* Flag this transaction as a dictionary operation, so that

@@ -980,8 +980,6 @@ innobase_mysql_tmpfile(void)
 			     | FILE_ATTRIBUTE_TEMPORARY
 			     | FILE_FLAG_SEQUENTIAL_SCAN;
 
-	DBUG_ENTER("innobase_mysql_tmpfile");
-
 	tmpdir = my_tmpdir(&mysql_tmpdir_list);
 
 	/* The tmpdir parameter can not be NULL for GetTempFileName. */
@@ -993,7 +991,7 @@ innobase_mysql_tmpfile(void)
 		if (ret > sizeof(path_buf) || (ret == 0)) {
 
 			_dosmaperr(GetLastError());	/* map error */
-			DBUG_RETURN(-1);
+			return(-1);
 		}
 
 		tmpdir = path_buf;
@@ -1003,10 +1001,8 @@ innobase_mysql_tmpfile(void)
 	if (!GetTempFileName(tmpdir, "ib", 0, filename)) {
 
 		_dosmaperr(GetLastError());	/* map error */
-		DBUG_RETURN(-1);
+		return(-1);
 	}
-
-	DBUG_PRINT("info", ("filename: %s", filename));
 
 	/* Open/Create the file. */
 	osfh = CreateFile(filename, fileaccess, fileshare, NULL,
@@ -1015,7 +1011,7 @@ innobase_mysql_tmpfile(void)
 
 		/* open/create file failed! */
 		_dosmaperr(GetLastError());	/* map error */
-		DBUG_RETURN(-1);
+		return(-1);
 	}
 
 	do {
@@ -1031,7 +1027,7 @@ innobase_mysql_tmpfile(void)
 						CloseHandle fails */
 	}
 
-	DBUG_RETURN(fd);
+	return(fd);
 }
 #else
 /*************************************************************************
@@ -1214,20 +1210,18 @@ static
 void
 innobase_trx_init(
 /*==============*/
-	THD*	thd,	/* in: user thread handle */
+	Session*	session,	/* in: user thread handle */
 	trx_t*	trx)	/* in/out: InnoDB transaction handle */
 {
-	DBUG_ENTER("innobase_trx_init");
-	DBUG_ASSERT(EQ_CURRENT_THD(thd));
-	DBUG_ASSERT(thd == trx->mysql_thd);
+	assert(session == trx->mysql_thd);
 
-	trx->check_foreigns = !thd_test_options(
-		thd, OPTION_NO_FOREIGN_KEY_CHECKS);
+	trx->check_foreigns = !session_test_options(
+		session, OPTION_NO_FOREIGN_KEY_CHECKS);
 
-	trx->check_unique_secondary = !thd_test_options(
-		thd, OPTION_RELAXED_UNIQUE_CHECKS);
+	trx->check_unique_secondary = !session_test_options(
+		session, OPTION_RELAXED_UNIQUE_CHECKS);
 
-	DBUG_VOID_RETURN;
+	return;
 }
 
 /*************************************************************************
@@ -1237,22 +1231,21 @@ trx_t*
 innobase_trx_allocate(
 /*==================*/
 			/* out: InnoDB transaction handle */
-	THD*	thd)	/* in: user thread handle */
+	Session*	session)	/* in: user thread handle */
 {
 	trx_t*	trx;
 
-	DBUG_ENTER("innobase_trx_allocate");
-	DBUG_ASSERT(thd != NULL);
-	DBUG_ASSERT(EQ_CURRENT_THD(thd));
+	assert(session != NULL);
+	assert(EQ_CURRENT_SESSION(session));
 
 	trx = trx_allocate_for_mysql();
 
-	trx->mysql_thd = thd;
-	trx->mysql_query_str = thd_query(thd);
+	trx->mysql_thd = session;
+	trx->mysql_query_str = session_query(session);
 
-	innobase_trx_init(thd, trx);
+	innobase_trx_init(session, trx);
 
-	DBUG_RETURN(trx);
+	return(trx);
 }
 
 /*************************************************************************
@@ -5389,14 +5382,14 @@ create_table_def(
 				/* in data0type.h we assume that the
 				number fits in one byte in prtype */
 				push_warning_printf(
-					(THD*) trx->mysql_thd,
-					MYSQL_ERROR::WARN_LEVEL_ERROR,
+					(Session*) trx->mysql_thd,
+					DRIZZLE_ERROR::WARN_LEVEL_ERROR,
 					ER_CANT_CREATE_TABLE,
 					"In InnoDB, charset-collation codes"
 					" must be below 256."
 					" Unsupported code %lu.",
 					(ulong) charset_no);
-				DBUG_RETURN(ER_CANT_CREATE_TABLE);
+				return(ER_CANT_CREATE_TABLE);
 			}
 		}
 
@@ -5814,7 +5807,7 @@ ha_innobase::create(
 		if ((name[1] == ':')
 		    || (name[0] == '\\' && name[1] == '\\')) {
 			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot create table %s\n", name);
-			DBUG_RETURN(HA_ERR_GENERIC);
+			return(HA_ERR_GENERIC);
 		}
 	}
 #endif
@@ -6232,7 +6225,7 @@ ha_innobase::delete_table(
 
 	trx_search_latch_release_if_reserved(parent_trx);
 
-	trx = innobase_trx_allocate(thd);
+	trx = innobase_trx_allocate(session);
 
 	if (lower_case_table_names) {
 		srv_lower_case_table_names = TRUE;
@@ -7529,29 +7522,7 @@ ha_innobase::external_lock(
 	trx_t*		trx;
 
 
-	update_thd(thd);
-
-	/* Statement based binlogging does not work in isolation level
-	READ UNCOMMITTED and READ COMMITTED since the necessary
-	locks cannot be taken. In this case, we print an
-	informative error message and return with an error. */
-	if (lock_type == F_WRLCK)
-	{
-		const unsigned long binlog_format= thd_binlog_format(session);
-		const unsigned long tx_isolation = thd_tx_isolation(ha_session());
-		if (tx_isolation <= ISO_READ_COMMITTED &&
-		    binlog_format == BINLOG_FORMAT_STMT)
-		{
-			char buf[256];
-			my_snprintf(buf, sizeof(buf),
-				    "Transaction level '%s' in"
-				    " InnoDB is not safe for binlog mode '%s'",
-				    tx_isolation_names[tx_isolation],
-				    binlog_format_names[binlog_format]);
-			my_error(ER_BINLOG_LOGGING_IMPOSSIBLE, MYF(0), buf);
-			DBUG_RETURN(HA_ERR_LOGGING_IMPOSSIBLE);
-		}
-	}
+	update_session(session);
 
 	trx = prebuilt->trx;
 
@@ -7957,16 +7928,16 @@ innodb_mutex_show_status(
 
 	while (lock != NULL) {
 		if (lock->count_os_wait) {
-			buf1len= my_snprintf(buf1, sizeof(buf1), "%s:%lu",
-                                    lock->cfile_name, (ulong) lock->cline);
-			buf2len= my_snprintf(buf2, sizeof(buf2),
+			buf1len= snprintf(buf1, sizeof(buf1), "%s:%lu",
+                                    lock->cfile_name, (unsigned long) lock->cline);
+			buf2len= snprintf(buf2, sizeof(buf2),
                                     "os_waits=%lu", lock->count_os_wait);
 
-			if (stat_print(thd, innobase_hton_name,
+			if (stat_print(session, innobase_hton_name,
 				       hton_name_len, buf1, buf1len,
 				       buf2, buf2len)) {
 				mutex_exit(&rw_lock_list_mutex);
-				DBUG_RETURN(1);
+				return(1);
 			}
 		}
 		lock = UT_LIST_GET_NEXT(list, lock);
@@ -8429,7 +8400,7 @@ ha_innobase::get_auto_increment(
 		prebuilt->autoinc_last_value = next_value;
 
 		if (prebuilt->autoinc_last_value < *first_value) {
-			*first_value = (~(ulonglong) 0);
+			*first_value = (~(unsigned long long) 0);
 		} else {
 			/* Update the table autoinc variable */
 			dict_table_autoinc_update_if_greater(
@@ -9461,12 +9432,12 @@ static DRIZZLE_SYSVAR_STR(version, innodb_version_str,
   PLUGIN_VAR_NOCMDOPT | PLUGIN_VAR_READONLY,
   "InnoDB version", NULL, NULL, INNODB_VERSION_STR);
 
-static MYSQL_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
+static DRIZZLE_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
   "Use OS memory allocator instead of InnoDB's internal memory allocator",
   NULL, NULL, TRUE);
 
-static MYSQL_SYSVAR_STR(change_buffering, innobase_change_buffering,
+static DRIZZLE_SYSVAR_STR(change_buffering, innobase_change_buffering,
   PLUGIN_VAR_RQCMDARG,
   "Buffer changes to reduce random access: "
   "OFF, ON, inserting, deleting, changing, or purging.",

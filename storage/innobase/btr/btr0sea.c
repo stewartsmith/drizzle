@@ -44,7 +44,7 @@ Created 2/17/1996 Heikki Tuuri
 
 /* Flag: has the search system been enabled?
 Protected by btr_search_latch and btr_search_enabled_mutex. */
-UNIV_INTERN char		btr_search_enabled	= TRUE;
+UNIV_INTERN bool		btr_search_enabled	= TRUE;
 
 static mutex_t			btr_search_enabled_mutex;
 

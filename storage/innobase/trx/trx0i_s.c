@@ -51,6 +51,7 @@ Created July 17, 2007 Vasil Dimov
 #include "ut0mem.h"
 #include "ut0ut.h"
 
+
 #define TABLE_CACHE_INITIAL_ROWSNUM	1024
 
 /* Table cache's rows are stored in a set of chunks. When a new row is

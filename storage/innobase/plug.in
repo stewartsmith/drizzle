@@ -16,7 +16,6 @@
 
 DRIZZLE_STORAGE_ENGINE(innobase,  innodb, [InnoDB Storage Engine],
         [Transactional Tables using InnoDB], [max,max-no-ndb])
-DRIZZLE_PLUGIN_DIRECTOR(innobase [storage/innobase])
 DRIZZLE_PLUGIN_STATIC(innobase,   [libinnobase.la])
 DRIZZLE_PLUGIN_DYNAMIC(innobase,   [ha_innodb.la])
 DRIZZLE_PLUGIN_MANDATORY(innobase)  dnl Default

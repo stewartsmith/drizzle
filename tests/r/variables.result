@@ -257,6 +257,7 @@ VARIABLE_NAME	VARIABLE_VALUE
 NET_BUFFER_LENGTH	1048576
 show variables like '%alloc%';
 Variable_name	Value
+innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
 range_alloc_block_size	
@@ -264,6 +265,7 @@ transaction_alloc_block_size	8192
 transaction_prealloc_size	4096
 select * from information_schema.session_variables where variable_name like '%alloc%' order by 1;
 VARIABLE_NAME	VARIABLE_VALUE
+INNODB_USE_SYS_MALLOC	ON
 QUERY_ALLOC_BLOCK_SIZE	8192
 QUERY_PREALLOC_SIZE	8192
 RANGE_ALLOC_BLOCK_SIZE	
@@ -279,6 +281,7 @@ select @@query_alloc_block_size;
 17408
 show variables like '%alloc%';
 Variable_name	Value
+innodb_use_sys_malloc	ON
 query_alloc_block_size	17408
 query_prealloc_size	18432
 range_alloc_block_size	
@@ -286,6 +289,7 @@ transaction_alloc_block_size	19456
 transaction_prealloc_size	20480
 select * from information_schema.session_variables where variable_name like '%alloc%' order by 1;
 VARIABLE_NAME	VARIABLE_VALUE
+INNODB_USE_SYS_MALLOC	ON
 QUERY_ALLOC_BLOCK_SIZE	17408
 QUERY_PREALLOC_SIZE	18432
 RANGE_ALLOC_BLOCK_SIZE	
@@ -296,6 +300,7 @@ set @@query_alloc_block_size=default, @@query_prealloc_size=default;
 set transaction_alloc_block_size=default, @@transaction_prealloc_size=default;
 show variables like '%alloc%';
 Variable_name	Value
+innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
 range_alloc_block_size	
@@ -303,6 +308,7 @@ transaction_alloc_block_size	8192
 transaction_prealloc_size	4096
 select * from information_schema.session_variables where variable_name like '%alloc%' order by 1;
 VARIABLE_NAME	VARIABLE_VALUE
+INNODB_USE_SYS_MALLOC	ON
 QUERY_ALLOC_BLOCK_SIZE	8192
 QUERY_PREALLOC_SIZE	8192
 RANGE_ALLOC_BLOCK_SIZE	
