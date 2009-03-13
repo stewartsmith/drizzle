@@ -23,19 +23,19 @@
 /**
   @defgroup Semantic_Analysis Semantic Analysis
 */
-
-#include <drizzled/sql_udf.h>
-#include <drizzled/name_resolution_context.h>
-#include <drizzled/item/subselect.h>
-#include <drizzled/item/param.h>
-#include <drizzled/item/outer_ref.h>
-#include <drizzled/table_list.h>
-#include <drizzled/function/math/real.h>
-#include <drizzled/alter_drop.h>
-#include <drizzled/alter_column.h>
-#include <drizzled/key.h>
-#include <drizzled/foreign_key.h>
-#include <drizzled/item/param.h>
+#include "drizzled/sql_udf.h"
+#include "drizzled/name_resolution_context.h"
+#include "drizzled/item/subselect.h"
+#include "drizzled/item/param.h"
+#include "drizzled/item/outer_ref.h"
+#include "drizzled/table_list.h"
+#include "drizzled/function/math/real.h"
+#include "drizzled/alter_drop.h"
+#include "drizzled/alter_column.h"
+#include "drizzled/key.h"
+#include "drizzled/foreign_key.h"
+#include "drizzled/item/param.h"
+#include "drizzled/index_hint.h"
 
 class select_result_interceptor;
 class virtual_column_info;
@@ -103,49 +103,6 @@ enum olap_type
 enum tablespace_op_type
 {
   NO_TABLESPACE_OP, DISCARD_TABLESPACE, IMPORT_TABLESPACE
-};
-
-/*
-  String names used to print a statement with index hints.
-  Keep in sync with index_hint_type.
-*/
-extern const char * index_hint_type_name[];
-typedef unsigned char index_clause_map;
-
-/*
-  Bits in index_clause_map : one for each possible FOR clause in
-  USE/FORCE/IGNORE INDEX index hint specification
-*/
-#define INDEX_HINT_MASK_JOIN  (1)
-#define INDEX_HINT_MASK_GROUP (1 << 1)
-#define INDEX_HINT_MASK_ORDER (1 << 2)
-
-#define INDEX_HINT_MASK_ALL (INDEX_HINT_MASK_JOIN | INDEX_HINT_MASK_GROUP | \
-                             INDEX_HINT_MASK_ORDER)
-
-/* Single element of an USE/FORCE/IGNORE INDEX list specified as a SQL hint  */
-class Index_hint : public Sql_alloc
-{
-public:
-  /* The type of the hint : USE/FORCE/IGNORE */
-  enum index_hint_type type;
-  /* Where the hit applies to. A bitmask of INDEX_HINT_MASK_<place> values */
-  index_clause_map clause;
-  /*
-    The index name. Empty (str=NULL) name represents an empty list
-    USE INDEX () clause
-  */
-  LEX_STRING key_name;
-
-  Index_hint (enum index_hint_type type_arg, index_clause_map clause_arg,
-              char *str, uint32_t length) :
-    type(type_arg), clause(clause_arg)
-  {
-    key_name.str= str;
-    key_name.length= length;
-  }
-
-  void print(Session *session, String *str);
 };
 
 /*

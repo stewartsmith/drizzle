@@ -23,29 +23,30 @@
   @defgroup Query_Optimizer  Query Optimizer
   @{
 */
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_select.h>
-#include <drizzled/sj_tmp_table.h>
-#include <drizzled/table_map_iterator.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/sql_select.h"
+#include "drizzled/sj_tmp_table.h"
+#include "drizzled/table_map_iterator.h"
 
-#include <mysys/my_bit.h>
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
-#include <drizzled/util/test.h>
-#include <drizzled/name_resolution_context_state.h>
-#include <drizzled/nested_join.h>
-#include <drizzled/probes.h>
-#include <drizzled/show.h>
-#include <drizzled/item/cache.h>
-#include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/copy_string.h>
-#include <drizzled/item/uint.h>
-#include <drizzled/cached_item.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/field/blob.h>
-#include <drizzled/check_stack_overrun.h>
-#include <drizzled/lock.h>
-#include <drizzled/item/outer_ref.h>
+#include "mysys/my_bit.h"
+#include "drizzled/error.h"
+#include "drizzled/gettext.h"
+#include "drizzled/util/test.h"
+#include "drizzled/name_resolution_context_state.h"
+#include "drizzled/nested_join.h"
+#include "drizzled/probes.h"
+#include "drizzled/show.h"
+#include "drizzled/item/cache.h"
+#include "drizzled/item/cmpfunc.h"
+#include "drizzled/item/copy_string.h"
+#include "drizzled/item/uint.h"
+#include "drizzled/cached_item.h"
+#include "drizzled/sql_base.h"
+#include "drizzled/field/blob.h"
+#include "drizzled/check_stack_overrun.h"
+#include "drizzled/lock.h"
+#include "drizzled/item/outer_ref.h"
+#include "drizzled/index_hint.h"
 
 #include <string>
 
@@ -16326,47 +16327,11 @@ static void print_join(Session *session, String *str,
   print_table_array(session, str, table, table + tables->elements);
 }
 
-
-/**
-  @brief Print an index hint
-
-  @details Prints out the USE|FORCE|IGNORE index hint.
-
-  @param      session         the current thread
-  @param[out] str         appends the index hint here
-  @param      hint        what the hint is (as string : "USE INDEX"|
-                          "FORCE INDEX"|"IGNORE INDEX")
-  @param      hint_length the length of the string in 'hint'
-  @param      indexes     a list of index names for the hint
-*/
-
-void
-Index_hint::print(Session *session, String *str)
-{
-  switch (type)
-  {
-    case INDEX_HINT_IGNORE: str->append(STRING_WITH_LEN("IGNORE INDEX")); break;
-    case INDEX_HINT_USE:    str->append(STRING_WITH_LEN("USE INDEX")); break;
-    case INDEX_HINT_FORCE:  str->append(STRING_WITH_LEN("FORCE INDEX")); break;
-  }
-  str->append (STRING_WITH_LEN(" ("));
-  if (key_name.length)
-  {
-    if (session && is_primary_key_name(key_name.str))
-      str->append(is_primary_key_name(key_name.str));
-    else
-      str->append_identifier(key_name.str, key_name.length);
-  }
-  str->append(')');
-}
-
-
 /**
   Print table as it should be in join list.
 
   @param str   string where table should be printed
 */
-
 void TableList::print(Session *session, String *str, enum_query_type query_type)
 {
   if (nested_join)

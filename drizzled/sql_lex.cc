@@ -17,17 +17,17 @@
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
 #define DRIZZLE_LEX 1
-#include <drizzled/server_includes.h>
-#include <drizzled/item/num.h>
-#include <drizzled/error.h>
-#include <drizzled/session.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/lookup_symbol.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/item/num.h"
+#include "drizzled/error.h"
+#include "drizzled/session.h"
+#include "drizzled/sql_base.h"
+#include "drizzled/lookup_symbol.h"
+#include "drizzled/index_hint.h"
 
 #include <ctype.h>
 
 using namespace std;
-
 
 static int lex_one_token(void *arg, void *yysession);
 
@@ -43,21 +43,6 @@ sys_var *trg_new_row_fake_var= (sys_var*) 0x01;
   LEX_STRING constant for null-string to be used in parser and other places.
 */
 const LEX_STRING null_lex_str= {NULL, 0};
-
-
-/*
-  Names of the index hints (for error messages). Keep in sync with
-  index_hint_type
-*/
-
-const char * index_hint_type_name[] =
-{
-  "IGNORE INDEX",
-  "USE INDEX",
-  "FORCE INDEX"
-};
-
-
 
 void
 st_parsing_options::reset()
