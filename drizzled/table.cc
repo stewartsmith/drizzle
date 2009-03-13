@@ -338,8 +338,8 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
 
 Item * default_value_item(enum_field_types field_type,
 			  const CHARSET_INFO *charset,
-			  bool default_null, string default_value,
-			  string default_bin_value)
+			  bool default_null, const string *default_value,
+			  const string *default_bin_value)
 {
   Item *default_item= NULL;
   int error= 0;
@@ -354,47 +354,48 @@ Item * default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_TINY:
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
-    default_item= new Item_int(default_value.c_str(),
-			       (int64_t) my_strtoll10(default_value.c_str(),
+    default_item= new Item_int(default_value->c_str(),
+			       (int64_t) my_strtoll10(default_value->c_str(),
 						      NULL,
 						      &error),
-			       default_value.length());
+			       default_value->length());
     break;
   case DRIZZLE_TYPE_DOUBLE:
-    default_item= new Item_float(default_value.c_str(), default_value.length());
+    default_item= new Item_float(default_value->c_str(),
+				 default_value->length());
     break;
   case DRIZZLE_TYPE_NULL:
     assert(false);
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
-    if(default_value.compare("NOW()")==0)
+    if(default_value->compare("NOW()")==0)
       break;
   case DRIZZLE_TYPE_ENUM:
-    default_item= new Item_string(default_value.c_str(),
-				  default_value.length(),
+    default_item= new Item_string(default_value->c_str(),
+				  default_value->length(),
 				  system_charset_info);
     break;
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_BLOB: /* Blob is here due to TINYTEXT. Feel the hate. */
     if(charset==&my_charset_bin)
     {
-      default_item= new Item_string(default_bin_value.c_str(),
-				    default_bin_value.length(),
+      default_item= new Item_string(default_bin_value->c_str(),
+				    default_bin_value->length(),
 				    &my_charset_bin);
     }
     else
     {
-      default_item= new Item_string(default_value.c_str(),
-				    default_value.length(),
+      default_item= new Item_string(default_value->c_str(),
+				    default_value->length(),
 				    system_charset_info);
     }
     break;
   case DRIZZLE_TYPE_VIRTUAL:
     break;
   case DRIZZLE_TYPE_NEWDECIMAL:
-    default_item= new Item_decimal(default_value.c_str(),
-				   default_value.length(),
+    default_item= new Item_decimal(default_value->c_str(),
+				   default_value->length(),
 				   system_charset_info);
     break;
   }
@@ -1063,8 +1064,8 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
       default_value= default_value_item(field_type,
 					charset,
 					pfield.options().default_null(),
-					pfield.options().default_value(),
-					pfield.options().default_bin_value());
+					&pfield.options().default_value(),
+					&pfield.options().default_bin_value());
     }
 
     uint32_t pack_flag= pfield.pack_flag(); /* TODO: MUST DIE */

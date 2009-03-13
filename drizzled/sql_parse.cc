@@ -1385,10 +1385,7 @@ end_with_restore_list:
 			select_lex->item_list,
 			select_lex->where,
 			0, (order_st *)NULL, (order_st *)NULL, (Item *)NULL,
-			(order_st *)NULL,
-			select_lex->options | session->options |
-			SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK |
-                        OPTION_SETUP_TABLES_DONE,
+			select_lex->options | session->options | SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK | OPTION_SETUP_TABLES_DONE,
 			del_result, unit, select_lex);
       res|= session->is_error();
       if (res)

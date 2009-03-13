@@ -38,6 +38,7 @@ drop table t1,t2,t3;
 create table t1 (v varchar(10), c char(10), t text, key(v), key(c), key(t(10)));
 show create table t1;
 disable_query_log;
+begin;
 let $1=10;
 while ($1)
 {
@@ -51,6 +52,7 @@ while ($1)
   }
   dec $1;
 }
+commit;
 enable_query_log;
 select count(*) from t1;
 insert into t1 values(concat('a',char(1)),concat('a',char(1)),concat('a',char(1)));
