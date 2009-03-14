@@ -1048,10 +1048,12 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   if (!session->killed)
   {
-    I_List_iterator<Session> it(session_list);
+    vector<Session *>::iterator it= session_list.begin();
     Session *tmp;
-    while ((tmp=it++))
+    while (it != session_list.end())
     {
+      tmp= *it;
+      it++;
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
       if ((tmp->drizzleclient_vio_ok() || tmp->system_thread) && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
@@ -1141,11 +1143,14 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
 
   if (!session->killed)
   {
-    I_List_iterator<Session> it(session_list);
+    vector<Session *>::iterator it= session_list.begin();
     Session* tmp;
 
-    while ((tmp= it++))
+    while (it != session_list.end())
     {
+      tmp= *it;
+      it++;
+
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
       const char *val;
@@ -1564,15 +1569,19 @@ void calc_sum_of_all_status(STATUS_VAR *to)
   /* Ensure that thread id not killed during loop */
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<Session> it(session_list);
+  vector<Session *>::iterator it= session_list.begin();
   Session *tmp;
 
   /* Get global values as base */
   *to= global_status_var;
 
   /* Add to this status from existing threads */
-  while ((tmp= it++))
+  while (it != session_list.end())
+  {
+    tmp= *it;
+    it++;
     add_to_status(to, &tmp->status_var);
+  }
 
   pthread_mutex_unlock(&LOCK_thread_count);
   return;

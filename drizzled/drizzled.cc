@@ -372,7 +372,7 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-I_List<Session> session_list;
+vector<Session *> session_list;
 I_List<NAMED_LIST> key_caches;
 
 struct system_variables global_system_variables;
@@ -508,9 +508,10 @@ void close_connections(void)
   Session *tmp;
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<Session> it(session_list);
-  while ((tmp=it++))
+  vector<Session *>::iterator it= session_list.begin();
+  for (; it != session_list.end(); it++)
   {
+    tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
     thread_scheduler.post_kill_notification(tmp);
     if (tmp->mysys_var)
@@ -538,10 +539,14 @@ void close_connections(void)
     client on a blocking read call are aborted.
   */
 
-  for (;;)
+  /** @todo - this is stupid. All of this should be done in ~Session,
+   *  and this loop should be 
+   *  while (session_list.size()) { session_list.pop_back() }
+   */
+  (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
+  while (session_list.size() != 0)
   {
-    (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (!(tmp= session_list.get()))
+    if (!(tmp= session_list.back()))
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
@@ -555,6 +560,7 @@ void close_connections(void)
                            tmp->security_ctx.user.c_str() : ""));
       tmp->close_connection(0,0);
     }
+    session_list.pop_back();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
   /* All threads has now been aborted */
@@ -1890,7 +1896,7 @@ static void create_new_thread(Session *session)
   /* 
     If we error on creation we drop the connection and delete the session.
   */
-  session_list.append(session);
+  session_list.push_back(session);
   if (thread_scheduler.add_connection(session))
   {
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
@@ -2847,7 +2853,7 @@ static void drizzle_init_variables(void)
   strcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
-  session_list.empty();
+  session_list.clear();
   key_caches.empty();
   if (!(dflt_key_cache= get_or_create_key_cache(default_key_cache_base.str,
                                                 default_key_cache_base.length)))

@@ -2911,17 +2911,19 @@ bool reload_cache(Session *session, ulong options, TableList *tables, bool *writ
 static unsigned int
 kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
-  Session *tmp;
+  Session *tmp= NULL;
   uint32_t error=ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-  I_List_iterator<Session> it(session_list);
-  while ((tmp=it++))
+  vector<Session *>::iterator it= session_list.begin();
+  while (it != session_list.end())
   {
+    tmp= *it;
     if (tmp->thread_id == id)
     {
       pthread_mutex_lock(&tmp->LOCK_delete);	// Lock from delete
       break;
     }
+    it++;
   }
   pthread_mutex_unlock(&LOCK_thread_count);
   if (tmp)
