@@ -1057,38 +1057,6 @@ uint32_t read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
 } /* read_to_buffer */
 
 
-/**
-  Put all room used by freed buffer to use in adjacent buffer.
-
-  Note, that we can't simply distribute memory evenly between all buffers,
-  because new areas must not overlap with old ones.
-
-  @param[in] queue      list of non-empty buffers, without freed buffer
-  @param[in] reuse      empty buffer
-  @param[in] key_length key length
-*/
-
-void reuse_freed_buff(QUEUE *queue, BUFFPEK *reuse, uint32_t key_length)
-{
-  unsigned char *reuse_end= reuse->base + reuse->max_keys * key_length;
-  for (uint32_t i= 0; i < queue->elements; ++i)
-  {
-    BUFFPEK *bp= (BUFFPEK *) queue_element(queue, i);
-    if (bp->base + bp->max_keys * key_length == reuse->base)
-    {
-      bp->max_keys+= reuse->max_keys;
-      return;
-    }
-    else if (bp->base == reuse_end)
-    {
-      bp->base= reuse->base;
-      bp->max_keys+= reuse->max_keys;
-      return;
-    }
-  }
-  assert(0);
-}
-
 class compare_functor
 {
   qsort2_cmp key_compare;
