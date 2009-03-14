@@ -372,7 +372,7 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-I_List<Session> threads;
+I_List<Session> session_list;
 I_List<NAMED_LIST> key_caches;
 
 struct system_variables global_system_variables;
@@ -508,7 +508,7 @@ void close_connections(void)
   Session *tmp;
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<Session> it(threads);
+  I_List_iterator<Session> it(session_list);
   while ((tmp=it++))
   {
     tmp->killed= Session::KILL_CONNECTION;
@@ -541,7 +541,7 @@ void close_connections(void)
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (!(tmp=threads.get()))
+    if (!(tmp= session_list.get()))
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
@@ -1890,6 +1890,7 @@ static void create_new_thread(Session *session)
   /* 
     If we error on creation we drop the connection and delete the session.
   */
+  session_list.append(session);
   if (thread_scheduler.add_connection(session))
   {
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
@@ -2846,7 +2847,7 @@ static void drizzle_init_variables(void)
   strcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
-  threads.empty();
+  session_list.empty();
   key_caches.empty();
   if (!(dflt_key_cache= get_or_create_key_cache(default_key_cache_base.str,
                                                 default_key_cache_base.length)))
