@@ -23,29 +23,30 @@
   @defgroup Query_Optimizer  Query Optimizer
   @{
 */
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_select.h>
-#include <drizzled/sj_tmp_table.h>
-#include <drizzled/table_map_iterator.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/sql_select.h"
+#include "drizzled/sj_tmp_table.h"
+#include "drizzled/table_map_iterator.h"
 
-#include <mysys/my_bit.h>
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
-#include <drizzled/util/test.h>
-#include <drizzled/name_resolution_context_state.h>
-#include <drizzled/nested_join.h>
-#include <drizzled/probes.h>
-#include <drizzled/show.h>
-#include <drizzled/item/cache.h>
-#include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/copy_string.h>
-#include <drizzled/item/uint.h>
-#include <drizzled/cached_item.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/field/blob.h>
-#include <drizzled/check_stack_overrun.h>
-#include <drizzled/lock.h>
-#include <drizzled/item/outer_ref.h>
+#include "mysys/my_bit.h"
+#include "drizzled/error.h"
+#include "drizzled/gettext.h"
+#include "drizzled/util/test.h"
+#include "drizzled/name_resolution_context_state.h"
+#include "drizzled/nested_join.h"
+#include "drizzled/probes.h"
+#include "drizzled/show.h"
+#include "drizzled/item/cache.h"
+#include "drizzled/item/cmpfunc.h"
+#include "drizzled/item/copy_string.h"
+#include "drizzled/item/uint.h"
+#include "drizzled/cached_item.h"
+#include "drizzled/sql_base.h"
+#include "drizzled/field/blob.h"
+#include "drizzled/check_stack_overrun.h"
+#include "drizzled/lock.h"
+#include "drizzled/item/outer_ref.h"
+#include "drizzled/index_hint.h"
 
 #include <string>
 
@@ -3645,7 +3646,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
               keyuse->val->is_null() && keyuse->null_rejecting)
           {
             s->type= JT_CONST;
-            mark_as_null_row(table);
+            table->mark_as_null_row();
             found_const_table_map|= table->map;
 	    join->const_table_map|= table->map;
 	    set_position(join,const_count++,s,(KEYUSE*) 0);
@@ -3827,7 +3828,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 	  s->info= "Impossible ON condition";
 	  found_const_table_map|= s->table->map;
 	  s->type= JT_CONST;
-	  mark_as_null_row(s->table);		// All fields are NULL
+	  s->table->mark_as_null_row();		// All fields are NULL
 	}
       }
       if (records != HA_POS_ERROR)
@@ -8347,7 +8348,7 @@ return_zero_rows(JOIN *join, select_result *result,TableList *tables,
   if (send_row)
   {
     for (TableList *table= tables; table; table= table->next_leaf)
-      mark_as_null_row(table->table);		// All fields are NULL
+      table->table->mark_as_null_row();		// All fields are NULL
     if (having && having->val_int() == 0)
       send_row=0;
   }
@@ -8379,7 +8380,7 @@ static void clear_tables(JOIN *join)
     are not re-calculated.
   */
   for (uint32_t i=join->const_tables ; i < join->tables ; i++)
-    mark_as_null_row(join->table[i]);		// All fields are NULL
+    join->table[i]->mark_as_null_row();		// All fields are NULL
 }
 
 /*****************************************************************************
@@ -11187,7 +11188,7 @@ evaluate_null_complemented_join_record(JOIN *join, JOIN_TAB *join_tab)
     join_tab->not_null_compl= 0;
     /* The outer row is complemented by nulls for each inner tables */
     restore_record(join_tab->table,s->default_values);  // Make empty record
-    mark_as_null_row(join_tab->table);       // For group by without error
+    join_tab->table->mark_as_null_row();       // For group by without error
     select_cond= join_tab->select_cond;
     /* Check all attached conditions for inner table rows. */
     if (select_cond && !select_cond->val_int())
@@ -11372,7 +11373,7 @@ join_read_const_table(JOIN_TAB *tab, POSITION *pos)
   if (*tab->on_expr_ref && !table->null_row)
   {
     if ((table->null_row= test((*tab->on_expr_ref)->val_int() == 0)))
-      mark_as_null_row(table);
+      table->mark_as_null_row();
   }
   if (!table->null_row)
     table->maybe_null=0;
@@ -11413,7 +11414,7 @@ join_read_system(JOIN_TAB *tab)
     {
       if (error != HA_ERR_END_OF_FILE)
 	return table->report_error(error);
-      mark_as_null_row(tab->table);
+      tab->table->mark_as_null_row();
       empty_record(table);			// Make empty record
       return -1;
     }
@@ -11460,7 +11461,7 @@ join_read_const(JOIN_TAB *tab)
     if (error)
     {
       table->status= STATUS_NOT_FOUND;
-      mark_as_null_row(tab->table);
+      tab->table->mark_as_null_row();
       empty_record(table);
       if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
 	return table->report_error(error);
@@ -16326,47 +16327,11 @@ static void print_join(Session *session, String *str,
   print_table_array(session, str, table, table + tables->elements);
 }
 
-
-/**
-  @brief Print an index hint
-
-  @details Prints out the USE|FORCE|IGNORE index hint.
-
-  @param      session         the current thread
-  @param[out] str         appends the index hint here
-  @param      hint        what the hint is (as string : "USE INDEX"|
-                          "FORCE INDEX"|"IGNORE INDEX")
-  @param      hint_length the length of the string in 'hint'
-  @param      indexes     a list of index names for the hint
-*/
-
-void
-Index_hint::print(Session *session, String *str)
-{
-  switch (type)
-  {
-    case INDEX_HINT_IGNORE: str->append(STRING_WITH_LEN("IGNORE INDEX")); break;
-    case INDEX_HINT_USE:    str->append(STRING_WITH_LEN("USE INDEX")); break;
-    case INDEX_HINT_FORCE:  str->append(STRING_WITH_LEN("FORCE INDEX")); break;
-  }
-  str->append (STRING_WITH_LEN(" ("));
-  if (key_name.length)
-  {
-    if (session && is_primary_key_name(key_name.str))
-      str->append(is_primary_key_name(key_name.str));
-    else
-      str->append_identifier(key_name.str, key_name.length);
-  }
-  str->append(')');
-}
-
-
 /**
   Print table as it should be in join list.
 
   @param str   string where table should be printed
 */
-
 void TableList::print(Session *session, String *str, enum_query_type query_type)
 {
   if (nested_join)

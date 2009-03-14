@@ -207,6 +207,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits.h \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
+		index_hint.h \
 		internal_error_handler.h \
 		item.h \
 		item/basic_constant.h \
@@ -532,6 +533,7 @@ drizzled_SOURCES = \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
+		index_hint.cc \
 		item/bin_string.cc \
 		item/cache.cc \
 		item/cache_decimal.cc \
