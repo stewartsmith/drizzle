@@ -1044,15 +1044,6 @@ enum enum_table_category
   TABLE_CATEGORY_INFORMATION
 };
 
-/* Information for one open table */
-enum index_hint_type
-{
-  INDEX_HINT_IGNORE,
-  INDEX_HINT_USE,
-  INDEX_HINT_FORCE
-};
-
-
 enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
 enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
                             DELAY_KEY_WRITE_ALL };
