@@ -5318,7 +5318,7 @@ bool setup_tables(Session *session, Name_resolution_context *context,
       first_select_table= 0;
       tablenr= 0;
     }
-    setup_table_map(table, table_list, tablenr);
+    table->setup_table_map(table_list, tablenr);
     if (table_list->process_index_hints(table))
       return(1);
   }

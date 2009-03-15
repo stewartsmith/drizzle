@@ -34,7 +34,6 @@ static bool add_connection(Session *session)
 
   safe_mutex_assert_owner(&LOCK_thread_count);
   thread_count++;
-  threads.append(session);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   if ((error= pthread_create(&session->real_id, &multi_thread_attrib, handle_one_connection, (void*) session)))
