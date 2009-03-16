@@ -573,7 +573,7 @@ insert into t2 values ('bbb');
 create table t3 (a ENUM('Yes', 'No') NOT NULL);
 create table t4 (a ENUM('aaa', 'bbb') NOT NULL);
 insert into t3 values (1);
---error 1265
+--error 1691 # Bad enum
 insert into t4 values (3);
 select "1" as a union select a from t1;
 select a as a from t1 union select "1";

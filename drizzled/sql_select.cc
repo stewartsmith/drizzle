@@ -2031,8 +2031,7 @@ JOIN::save_join_tab()
   @todo
     When can we have here session->net.report_error not zero?
 */
-void
-JOIN::exec()
+void JOIN::exec()
 {
   List<Item> *columns_list= &fields_list;
   int      tmp_error;
@@ -2044,12 +2043,10 @@ JOIN::exec()
   {                                           
     /* Only test of functions */
     if (select_options & SELECT_DESCRIBE)
-      select_describe(this, false, false, false,
-		      (zero_result_cause?zero_result_cause:"No tables used"));
+      select_describe(this, false, false, false, (zero_result_cause?zero_result_cause:"No tables used"));
     else
     {
-      result->send_fields(*columns_list,
-                          Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF);
+      result->send_fields(*columns_list, Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF);
       /*
         We have to test for 'conds' here as the WHERE may not be constant
         even if we don't have any tables for prepared statements or if
@@ -2097,8 +2094,7 @@ JOIN::exec()
     return;
   }
 
-  if ((this->select_lex->options & OPTION_SCHEMA_TABLE) &&
-      get_schema_tables_result(this, PROCESSED_BY_JOIN_EXEC))
+  if ((this->select_lex->options & OPTION_SCHEMA_TABLE) && get_schema_tables_result(this, PROCESSED_BY_JOIN_EXEC))
     return;
 
   if (select_options & SELECT_DESCRIBE)
@@ -2110,28 +2106,20 @@ JOIN::exec()
     */
     if (!order && !no_order && (!skip_sort_order || !need_tmp))
     {
-      /*
-	Reset 'order' to 'group_list' and reinit variables describing
-	'order'
-      */
+      /* Reset 'order' to 'group_list' and reinit variables describing 'order' */
       order= group_list;
       simple_order= simple_group;
       skip_sort_order= 0;
     }
-    if (order &&
-        (order != group_list || !(select_options & SELECT_BIG_RESULT)) &&
-	(const_tables == tables ||
- 	 ((simple_order || skip_sort_order) &&
-	  test_if_skip_sort_order(&join_tab[const_tables], order,
-				  select_limit, 0,
-                                  &join_tab[const_tables].table->
-                                    keys_in_use_for_query))))
-      order=0;
+    if (order && (order != group_list || !(select_options & SELECT_BIG_RESULT)))
+    {
+      if (const_tables == tables 
+        || ((simple_order || skip_sort_order) 
+          && test_if_skip_sort_order(&join_tab[const_tables], order, select_limit, 0, &join_tab[const_tables].table->keys_in_use_for_query)))
+      order= 0;
+    }
     having= tmp_having;
-    select_describe(this, need_tmp,
-		    order != 0 && !skip_sort_order,
-		    select_distinct,
-                    !tables ? "No tables used" : NULL);
+    select_describe(this, need_tmp, order != 0 && !skip_sort_order,  select_distinct, !tables ? "No tables used" : NULL);
     return;
   }
 
@@ -2163,8 +2151,7 @@ JOIN::exec()
 
     /* Copy data to the temporary table */
     session->set_proc_info("Copying to tmp table");
-    if (!curr_join->sort_and_group &&
-        curr_join->const_tables != curr_join->tables)
+    if (! curr_join->sort_and_group && curr_join->const_tables != curr_join->tables)
       curr_join->join_tab[curr_join->const_tables].sorted= 0;
     if ((tmp_error= do_select(curr_join, (List<Item> *) 0, curr_tmp_table)))
     {
@@ -2183,17 +2170,17 @@ JOIN::exec()
       items1= items0 + all_fields.elements;
       if (sort_and_group || curr_tmp_table->group)
       {
-	if (change_to_use_tmp_fields(session, items1,
-				     tmp_fields_list1, tmp_all_fields1,
-				     fields_list.elements, all_fields))
-	  return;
+        if (change_to_use_tmp_fields(session, items1,
+                  tmp_fields_list1, tmp_all_fields1,
+                  fields_list.elements, all_fields))
+          return;
       }
       else
       {
-	if (change_refs_to_tmp_fields(session, items1,
-				      tmp_fields_list1, tmp_all_fields1,
-				      fields_list.elements, all_fields))
-	  return;
+        if (change_refs_to_tmp_fields(session, items1,
+                    tmp_fields_list1, tmp_all_fields1,
+                    fields_list.elements, all_fields))
+          return;
       }
       curr_join->tmp_all_fields1= tmp_all_fields1;
       curr_join->tmp_fields_list1= tmp_fields_list1;
@@ -2205,23 +2192,21 @@ JOIN::exec()
 
     if (sort_and_group || curr_tmp_table->group)
     {
-      curr_join->tmp_table_param.field_count+=
-	curr_join->tmp_table_param.sum_func_count+
-	curr_join->tmp_table_param.func_count;
-      curr_join->tmp_table_param.sum_func_count=
-	curr_join->tmp_table_param.func_count= 0;
+      curr_join->tmp_table_param.field_count+= curr_join->tmp_table_param.sum_func_count
+                                             + curr_join->tmp_table_param.func_count;
+      curr_join->tmp_table_param.sum_func_count= 0;
+      curr_join->tmp_table_param.func_count= 0;
     }
     else
     {
-      curr_join->tmp_table_param.field_count+=
-	curr_join->tmp_table_param.func_count;
+      curr_join->tmp_table_param.field_count+= curr_join->tmp_table_param.func_count;
       curr_join->tmp_table_param.func_count= 0;
     }
 
     if (curr_tmp_table->group)
     {						// Already grouped
       if (!curr_join->order && !curr_join->no_order && !skip_sort_order)
-	curr_join->order= curr_join->group_list;  /* order by group */
+        curr_join->order= curr_join->group_list;  /* order by group */
       curr_join->group_list= 0;
     }
 
@@ -2233,26 +2218,25 @@ JOIN::exec()
       like SEC_TO_TIME(SUM(...)).
     */
 
-    if ((curr_join->group_list && (!test_if_subpart(curr_join->group_list, curr_join->order) || curr_join->select_distinct)) || (curr_join->select_distinct && curr_join->tmp_table_param.using_indirect_summary_function))
+    if ((curr_join->group_list && (!test_if_subpart(curr_join->group_list, curr_join->order) || curr_join->select_distinct)) 
+        || (curr_join->select_distinct && curr_join->tmp_table_param.using_indirect_summary_function))
     {					/* Must copy to another table */
       /* Free first data from old join */
       curr_join->join_free();
       if (make_simple_join(curr_join, curr_tmp_table))
-	return;
+      	return;
       calc_group_buffer(curr_join, group_list);
       count_field_types(select_lex, &curr_join->tmp_table_param,
 			curr_join->tmp_all_fields1,
 			curr_join->select_distinct && !curr_join->group_list);
-      curr_join->tmp_table_param.hidden_field_count=
-	(curr_join->tmp_all_fields1.elements-
-	 curr_join->tmp_fields_list1.elements);
-
+      curr_join->tmp_table_param.hidden_field_count= curr_join->tmp_all_fields1.elements
+                                                   - curr_join->tmp_fields_list1.elements;
 
       if (exec_tmp_table2)
-	curr_tmp_table= exec_tmp_table2;
+        curr_tmp_table= exec_tmp_table2;
       else
       {
-	/* group data to new table */
+        /* group data to new table */
 
         /*
           If the access method is loose index scan then all MIN/MAX
@@ -2262,32 +2246,32 @@ JOIN::exec()
         if (curr_join->join_tab->is_using_loose_index_scan())
           curr_join->tmp_table_param.precomputed_group_by= true;
 
-	if (!(curr_tmp_table=
-	      exec_tmp_table2= create_tmp_table(session,
-						&curr_join->tmp_table_param,
-						*curr_all_fields,
-						(order_st*) 0,
-						curr_join->select_distinct &&
-						!curr_join->group_list,
-						1, curr_join->select_options,
-						HA_POS_ERROR,
-						(char *) "")))
-	  return;
-	curr_join->exec_tmp_table2= exec_tmp_table2;
+        if (!(curr_tmp_table=
+              exec_tmp_table2= create_tmp_table(session,
+                                                &curr_join->tmp_table_param,
+                                                *curr_all_fields,
+                                                (order_st*) 0,
+                                                curr_join->select_distinct &&
+                                                !curr_join->group_list,
+                                                1, curr_join->select_options,
+                                                HA_POS_ERROR,
+                                                (char *) "")))
+          return;
+        curr_join->exec_tmp_table2= exec_tmp_table2;
       }
       if (curr_join->group_list)
       {
-	session->set_proc_info("Creating sort index");
-	if (curr_join->join_tab == join_tab && save_join_tab())
-	{
-	  return;
-	}
-	if (create_sort_index(session, curr_join, curr_join->group_list,
-			      HA_POS_ERROR, HA_POS_ERROR, false) ||
-	    make_group_fields(this, curr_join))
-	{
-	  return;
-	}
+        session->set_proc_info("Creating sort index");
+        if (curr_join->join_tab == join_tab && save_join_tab())
+        {
+          return;
+        }
+        if (create_sort_index(session, curr_join, curr_join->group_list,
+                  HA_POS_ERROR, HA_POS_ERROR, false) ||
+            make_group_fields(this, curr_join))
+        {
+          return;
+        }
         sortorder= curr_join->sortorder;
       }
 
@@ -2295,30 +2279,30 @@ JOIN::exec()
       tmp_error= -1;
       if (curr_join != this)
       {
-	if (sum_funcs2)
-	{
-	  curr_join->sum_funcs= sum_funcs2;
-	  curr_join->sum_funcs_end= sum_funcs_end2;
-	}
-	else
-	{
-	  curr_join->alloc_func_list();
-	  sum_funcs2= curr_join->sum_funcs;
-	  sum_funcs_end2= curr_join->sum_funcs_end;
-	}
+        if (sum_funcs2)
+        {
+          curr_join->sum_funcs= sum_funcs2;
+          curr_join->sum_funcs_end= sum_funcs_end2;
+        }
+        else
+        {
+          curr_join->alloc_func_list();
+          sum_funcs2= curr_join->sum_funcs;
+          sum_funcs_end2= curr_join->sum_funcs_end;
+        }
       }
-      if (curr_join->make_sum_func_list(*curr_all_fields, *curr_fields_list,
-					1, true))
+      if (curr_join->make_sum_func_list(*curr_all_fields, *curr_fields_list, 1, true))
         return;
       curr_join->group_list= 0;
-      if (!curr_join->sort_and_group &&
-          curr_join->const_tables != curr_join->tables)
+
+      if (!curr_join->sort_and_group && (curr_join->const_tables != curr_join->tables))
         curr_join->join_tab[curr_join->const_tables].sorted= 0;
-      if (setup_sum_funcs(curr_join->session, curr_join->sum_funcs) ||
-	  (tmp_error= do_select(curr_join, (List<Item> *) 0, curr_tmp_table)))
+      
+      if (setup_sum_funcs(curr_join->session, curr_join->sum_funcs) 
+        || (tmp_error= do_select(curr_join, (List<Item> *) 0, curr_tmp_table)))
       {
-	error= tmp_error;
-	return;
+        error= tmp_error;
+        return;
       }
       end_read_record(&curr_join->join_tab->read_record);
       curr_join->const_tables= curr_join->tables; // Mark free for cleanup()
@@ -2327,19 +2311,18 @@ JOIN::exec()
       // No sum funcs anymore
       if (!items2)
       {
-	items2= items1 + all_fields.elements;
-	if (change_to_use_tmp_fields(session, items2,
-				     tmp_fields_list2, tmp_all_fields2,
-				     fields_list.elements, tmp_all_fields1))
-	  return;
-	curr_join->tmp_fields_list2= tmp_fields_list2;
-	curr_join->tmp_all_fields2= tmp_all_fields2;
+        items2= items1 + all_fields.elements;
+        if (change_to_use_tmp_fields(session, items2,
+                  tmp_fields_list2, tmp_all_fields2,
+                  fields_list.elements, tmp_all_fields1))
+          return;
+        curr_join->tmp_fields_list2= tmp_fields_list2;
+        curr_join->tmp_all_fields2= tmp_all_fields2;
       }
       curr_fields_list= &curr_join->tmp_fields_list2;
       curr_all_fields= &curr_join->tmp_all_fields2;
       curr_join->set_items_ref_array(items2);
-      curr_join->tmp_table_param.field_count+=
-	curr_join->tmp_table_param.sum_func_count;
+      curr_join->tmp_table_param.field_count+= curr_join->tmp_table_param.sum_func_count;
       curr_join->tmp_table_param.sum_func_count= 0;
     }
     if (curr_tmp_table->distinct)
@@ -2350,10 +2333,12 @@ JOIN::exec()
     {
       session->set_proc_info("Removing duplicates");
       if (curr_join->tmp_having)
-	curr_join->tmp_having->update_used_tables();
+        curr_join->tmp_having->update_used_tables();
+
       if (remove_duplicates(curr_join, curr_tmp_table,
 			    *curr_fields_list, curr_join->tmp_having))
-	return;
+      	return;
+      
       curr_join->tmp_having=0;
       curr_join->select_distinct=0;
     }
@@ -2361,29 +2346,26 @@ JOIN::exec()
     if (make_simple_join(curr_join, curr_tmp_table))
       return;
     calc_group_buffer(curr_join, curr_join->group_list);
-    count_field_types(select_lex, &curr_join->tmp_table_param,
-                      *curr_all_fields, 0);
+    count_field_types(select_lex, &curr_join->tmp_table_param, *curr_all_fields, 0);
 
   }
 
   if (curr_join->group || curr_join->tmp_table_param.sum_func_count)
   {
     if (make_group_fields(this, curr_join))
-    {
       return;
-    }
-    if (!items3)
+
+    if (! items3)
     {
-      if (!items0)
-	init_items_ref_array();
+      if (! items0)
+        init_items_ref_array();
       items3= ref_pointer_array + (all_fields.elements*4);
       setup_copy_fields(session, &curr_join->tmp_table_param,
 			items3, tmp_fields_list3, tmp_all_fields3,
 			curr_fields_list->elements, *curr_all_fields);
       tmp_table_param.save_copy_funcs= curr_join->tmp_table_param.copy_funcs;
       tmp_table_param.save_copy_field= curr_join->tmp_table_param.copy_field;
-      tmp_table_param.save_copy_field_end=
-	curr_join->tmp_table_param.copy_field_end;
+      tmp_table_param.save_copy_field_end= curr_join->tmp_table_param.copy_field_end;
       curr_join->tmp_all_fields3= tmp_all_fields3;
       curr_join->tmp_fields_list3= tmp_fields_list3;
     }
@@ -2391,8 +2373,7 @@ JOIN::exec()
     {
       curr_join->tmp_table_param.copy_funcs= tmp_table_param.save_copy_funcs;
       curr_join->tmp_table_param.copy_field= tmp_table_param.save_copy_field;
-      curr_join->tmp_table_param.copy_field_end=
-	tmp_table_param.save_copy_field_end;
+      curr_join->tmp_table_param.copy_field_end= tmp_table_param.save_copy_field_end;
     }
     curr_fields_list= &tmp_fields_list3;
     curr_all_fields= &tmp_all_fields3;
@@ -2408,8 +2389,7 @@ JOIN::exec()
   {
     session->set_proc_info("Sorting result");
     /* If we have already done the group, add HAVING to sorted table */
-    if (curr_join->tmp_having && ! curr_join->group_list &&
-	! curr_join->sort_and_group)
+    if (curr_join->tmp_having && ! curr_join->group_list &&	! curr_join->sort_and_group)
     {
       // Some tables may have been const
       curr_join->tmp_having->update_used_tables();
@@ -2417,73 +2397,69 @@ JOIN::exec()
       table_map used_tables= (curr_join->const_table_map |
 			      curr_table->table->map);
 
-      Item* sort_table_cond= make_cond_for_table(curr_join->tmp_having,
-						 used_tables,
-						 used_tables, 0);
+      Item* sort_table_cond= make_cond_for_table(curr_join->tmp_having, used_tables, used_tables, 0);
       if (sort_table_cond)
       {
-	if (!curr_table->select)
-	  if (!(curr_table->select= new SQL_SELECT))
-	    return;
-	if (!curr_table->select->cond)
-	  curr_table->select->cond= sort_table_cond;
-	else					// This should never happen
-	{
-	  if (!(curr_table->select->cond=
-		new Item_cond_and(curr_table->select->cond,
-				  sort_table_cond)))
-	    return;
-	  /*
-	    Item_cond_and do not need fix_fields for execution, its parameters
-	    are fixed or do not need fix_fields, too
-	  */
-	  curr_table->select->cond->quick_fix_field();
-	}
-	curr_table->select_cond= curr_table->select->cond;
-	curr_table->select_cond->top_level_item();
-	curr_join->tmp_having= make_cond_for_table(curr_join->tmp_having,
-						   ~ (table_map) 0,
-						   ~used_tables, 0);
+        if (!curr_table->select)
+          if (!(curr_table->select= new SQL_SELECT))
+            return;
+        if (!curr_table->select->cond)
+          curr_table->select->cond= sort_table_cond;
+        else					// This should never happen
+        {
+          if (!(curr_table->select->cond=
+          new Item_cond_and(curr_table->select->cond,
+                sort_table_cond)))
+            return;
+          /*
+            Item_cond_and do not need fix_fields for execution, its parameters
+            are fixed or do not need fix_fields, too
+          */
+          curr_table->select->cond->quick_fix_field();
+        }
+        curr_table->select_cond= curr_table->select->cond;
+        curr_table->select_cond->top_level_item();
+        curr_join->tmp_having= make_cond_for_table(curr_join->tmp_having,
+                    ~ (table_map) 0,
+                    ~used_tables, 0);
       }
     }
     {
       if (group)
-	curr_join->select_limit= HA_POS_ERROR;
+        curr_join->select_limit= HA_POS_ERROR;
       else
       {
-	/*
-	  We can abort sorting after session->select_limit rows if we there is no
-	  WHERE clause for any tables after the sorted one.
-	*/
-	JOIN_TAB *curr_table= &curr_join->join_tab[curr_join->const_tables+1];
-	JOIN_TAB *end_table= &curr_join->join_tab[curr_join->tables];
-	for (; curr_table < end_table ; curr_table++)
-	{
-	  /*
-	    table->keyuse is set in the case there was an original WHERE clause
-	    on the table that was optimized away.
-	  */
-	  if (curr_table->select_cond ||
-	      (curr_table->keyuse && !curr_table->first_inner))
-	  {
-	    /* We have to sort all rows */
-	    curr_join->select_limit= HA_POS_ERROR;
-	    break;
-	  }
-	}
+        /*
+          We can abort sorting after session->select_limit rows if we there is no
+          WHERE clause for any tables after the sorted one.
+        */
+        JOIN_TAB *curr_table= &curr_join->join_tab[curr_join->const_tables+1];
+        JOIN_TAB *end_table= &curr_join->join_tab[curr_join->tables];
+        for (; curr_table < end_table ; curr_table++)
+        {
+          /*
+            table->keyuse is set in the case there was an original WHERE clause
+            on the table that was optimized away.
+          */
+          if (curr_table->select_cond ||
+              (curr_table->keyuse && !curr_table->first_inner))
+          {
+            /* We have to sort all rows */
+            curr_join->select_limit= HA_POS_ERROR;
+            break;
+          }
+        }
       }
       if (curr_join->join_tab == join_tab && save_join_tab())
-      {
-	return;
-      }
+        return;
       /*
-	Here we sort rows for order_st BY/GROUP BY clause, if the optimiser
-	chose FILESORT to be faster than INDEX SCAN or there is no
-	suitable index present.
-	Note, that create_sort_index calls test_if_skip_sort_order and may
-	finally replace sorting with index scan if there is a LIMIT clause in
-	the query. XXX: it's never shown in EXPLAIN!
-	OPTION_FOUND_ROWS supersedes LIMIT and is taken into account.
+        Here we sort rows for order_st BY/GROUP BY clause, if the optimiser
+        chose FILESORT to be faster than INDEX SCAN or there is no
+        suitable index present.
+        Note, that create_sort_index calls test_if_skip_sort_order and may
+        finally replace sorting with index scan if there is a LIMIT clause in
+        the query. XXX: it's never shown in EXPLAIN!
+        OPTION_FOUND_ROWS supersedes LIMIT and is taken into account.
       */
       if (create_sort_index(session, curr_join,
 			    curr_join->group_list ?
@@ -2492,7 +2468,8 @@ JOIN::exec()
 			    (select_options & OPTION_FOUND_ROWS ?
 			     HA_POS_ERROR : unit->select_limit_cnt),
                             curr_join->group_list ? true : false))
-	return;
+        return;
+
       sortorder= curr_join->sortorder;
       if (curr_join->const_tables != curr_join->tables &&
           !curr_join->join_tab[curr_join->const_tables].table->sort.io_cache)
@@ -2515,13 +2492,11 @@ JOIN::exec()
   curr_join->having= curr_join->tmp_having;
   curr_join->fields= curr_fields_list;
 
-  {
-    session->set_proc_info("Sending data");
-    result->send_fields(*curr_fields_list,
-                        Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF);
-    error= do_select(curr_join, curr_fields_list, NULL);
-    session->limit_found_rows= curr_join->send_records;
-  }
+  session->set_proc_info("Sending data");
+  result->send_fields(*curr_fields_list,
+                      Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF);
+  error= do_select(curr_join, curr_fields_list, NULL);
+  session->limit_found_rows= curr_join->send_records;
 
   /* Accumulate the counts from all join iterations of all join parts. */
   session->examined_row_count+= curr_join->examined_rows;
@@ -2531,14 +2506,11 @@ JOIN::exec()
     for a derived table which is always materialized.
     Otherwise we would not be able to print the query  correctly.
   */
-  if (items0 &&
-      (session->lex->describe & DESCRIBE_EXTENDED) &&
-      select_lex->linkage == DERIVED_TABLE_TYPE)
+  if (items0 && (session->lex->describe & DESCRIBE_EXTENDED) && select_lex->linkage == DERIVED_TABLE_TYPE)
     set_items_ref_array(items0);
 
   return;
 }
-
 
 /**
   Clean up join.
@@ -2546,9 +2518,7 @@ JOIN::exec()
   @return
     Return error that hold JOIN.
 */
-
-int
-JOIN::destroy()
+int JOIN::destroy()
 {
   select_lex->join= 0;
 
@@ -2558,7 +2528,7 @@ JOIN::destroy()
     {
       JOIN_TAB *tab, *end;
       for (tab= join_tab, end= tab+tables ; tab != end ; tab++)
-	tab->cleanup();
+        tab->cleanup();
     }
     tmp_join->tmp_join= 0;
     tmp_table_param.copy_field=0;
@@ -2575,8 +2545,6 @@ JOIN::destroy()
   delete_dynamic(&keyuse);
   return(error);
 }
-
-
 
 /**
   An entry point to single-unit select (a select without UNION).
@@ -3163,7 +3131,6 @@ bool JOIN::flatten_subqueries()
   return(false);
 }
 
-
 /**
   Setup for execution all subqueries of a query, for which the optimizer
   chose hash semi-join.
@@ -3186,7 +3153,6 @@ bool JOIN::flatten_subqueries()
   @retval false     success.
   @retval true      error occurred.
 */
-
 bool JOIN::setup_subquery_materialization()
 {
   for (Select_Lex_Unit *un= select_lex->first_inner_unit(); un;
@@ -3813,28 +3779,28 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
       select->quick=0;
       if (records == 0 && s->table->reginfo.impossible_range)
       {
-	/*
-	  Impossible WHERE or ON expression
-	  In case of ON, we mark that the we match one empty NULL row.
-	  In case of WHERE, don't set found_const_table_map to get the
-	  caller to abort with a zero row result.
-	*/
-	join->const_table_map|= s->table->map;
-	set_position(join,const_count++,s,(KEYUSE*) 0);
-	s->type= JT_CONST;
-	if (*s->on_expr_ref)
-	{
-	  /* Generate empty row */
-	  s->info= "Impossible ON condition";
-	  found_const_table_map|= s->table->map;
-	  s->type= JT_CONST;
-	  s->table->mark_as_null_row();		// All fields are NULL
-	}
+        /*
+          Impossible WHERE or ON expression
+          In case of ON, we mark that the we match one empty NULL row.
+          In case of WHERE, don't set found_const_table_map to get the
+          caller to abort with a zero row result.
+        */
+        join->const_table_map|= s->table->map;
+        set_position(join,const_count++,s,(KEYUSE*) 0);
+        s->type= JT_CONST;
+        if (*s->on_expr_ref)
+        {
+          /* Generate empty row */
+          s->info= "Impossible ON condition";
+          found_const_table_map|= s->table->map;
+          s->type= JT_CONST;
+          mark_as_null_row(s->table);		// All fields are NULL
+        }
       }
       if (records != HA_POS_ERROR)
       {
-	s->found_records=records;
-	s->read_time= (ha_rows) (s->quick ? s->quick->read_time : 0.0);
+        s->found_records=records;
+        s->read_time= (ha_rows) (s->quick ? s->quick->read_time : 0.0);
       }
       delete select;
     }

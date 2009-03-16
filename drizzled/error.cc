@@ -1412,6 +1412,8 @@ N_("Received an invalid negative argument '%s' for function '%s'."),
 N_("Received an out-of-range argument '%s' for function '%s'."),
 /* ER_INVALID_TIME_VALUE */
 N_("Received an invalid time value '%s'."),
+/* ER_INVALID_ENUM_VALUE */
+N_("Received an invalid enum value '%s'.")
 };
 
 const char * error_message(unsigned int code)
