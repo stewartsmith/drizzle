@@ -3794,7 +3794,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
           s->info= "Impossible ON condition";
           found_const_table_map|= s->table->map;
           s->type= JT_CONST;
-          mark_as_null_row(s->table);		// All fields are NULL
+          s->table->mark_as_null_row();		// All fields are NULL
         }
       }
       if (records != HA_POS_ERROR)
