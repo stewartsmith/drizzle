@@ -24,6 +24,9 @@
 #include <signal.h>
 #include <mysys/my_pthread.h>				/* because of signal()	*/
 #include <sys/stat.h>
+#include <vector>
+#include <algorithm>
+#include <string>
 
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
@@ -66,8 +69,8 @@ static const char *command_names[]= {
   NULL
 };
 
-static TYPELIB command_typelib=
-{ array_elements(command_names)-1,"commands", command_names, NULL };
+static vector<const char *> 
+  command_vector(command_names, command_names + sizeof(command_names) / sizeof(char));
 
 static struct my_option my_long_options[] =
 {
@@ -106,12 +109,75 @@ static struct my_option my_long_options[] =
 
 static const char *load_default_groups[]= { "drizzleadmin","client",0 };
 
+inline string lower_string(const string &from_string)
+{
+  string to_string= from_string;
+  transform(to_string.begin(), to_string.end(),
+            to_string.begin(), ::tolower);
+  return to_string;
+}
+
+inline string lower_string(const char * from_string)
+{
+  string to_string= from_string;
+  return lower_string(to_string);
+}
+
+/*
+ * Function object to be used to compare a string
+ * against the vector of command strings. This function
+ * object is used in the get_command_type() method.
+ */
+template <class T>
+class CommandMatch :
+  public unary_function<const string&, bool>
+{
+  string match_text;
+  T match_func;
+  CommandMatch(string text) : match_text(text) { }
+  inline bool operator()(const string match_against) const
+  {
+    return match_func(match_against, match_text);
+  }
+};
+
+/*
+ * Searches for the given command and determines
+ * its type.
+ *
+ * Returns the type of the command corresponding
+ * to the commands enum defined at the top of
+ * drizzleadmin.cc
+ * If the command is not supported, return ADMIN_ERROR.
+ *
+ * @param command name to search for
+ */
+static int get_command_type(const char *name)
+{
+  int type;
+  string comp_string= lower_string(name);
+  vector<const char *>::iterator it= 
+    find_if(command_vector.begin(),
+            command_vector.end(),
+            CommandMatch< equal_to<string> >(comp_string));
+  if (it != command_vector.end())
+  {
+    /* add 1 due to the way the commands ENUM is defined */
+    type= distance(command_vector.begin(), it) + 1;
+  }
+  else 
+  {
+    type= ADMIN_ERROR;
+  }
+  return type;
+}
+
 bool
 get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
-  int error = 0;
+  int error= 0;
 
   switch(optid) {
   case 'p':
@@ -138,7 +204,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
   case 'P':
     if (argument)
     {
-      char *start=argument;
+      char *start= argument;
       if (opt_password)
         free(opt_password);
 
@@ -174,7 +240,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
     if (argument)
     {
       if ((option_wait=atoi(argument)) <= 0)
-        option_wait=1;
+        option_wait= 1;
     }
     else
       option_wait= ~(uint32_t)0;
@@ -202,7 +268,7 @@ int main(int argc,char *argv[])
   MY_INIT(argv[0]);
   drizzleclient_create(&drizzle);
   load_defaults("drizzle",load_default_groups,&argc,&argv);
-  save_argv = argv;				/* Save for free_defaults */
+  save_argv= argv;				/* Save for free_defaults */
   if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
   {
     free_defaults(save_argv);
@@ -215,7 +281,7 @@ int main(int argc,char *argv[])
     exit(1);
   }
 
-  commands = argv;
+  commands= argv;
   if (tty_password)
     opt_password = drizzleclient_get_tty_password(NULL);
 
@@ -224,7 +290,7 @@ int main(int argc,char *argv[])
 
   if (opt_connect_timeout)
   {
-    uint32_t tmp=opt_connect_timeout;
+    uint32_t tmp= opt_connect_timeout;
     drizzleclient_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT, (char*) &tmp);
   }
 
@@ -238,7 +304,8 @@ int main(int argc,char *argv[])
       /* Return 0 if all commands are PING */
       for (; argc > 0; argv++, argc--)
       {
-        if (find_type(argv[0], &command_typelib, 2) != ADMIN_PING)
+        int type= get_command_type(argv[0]);
+        if (type != ADMIN_PING)
         {
           error= 1;
           break;
@@ -248,7 +315,7 @@ int main(int argc,char *argv[])
   }
   else
   {
-    error=execute_commands(&drizzle,argc,commands);
+    error= execute_commands(&drizzle,argc,commands);
     drizzleclient_close(&drizzle);
   }
   free(opt_password);
@@ -260,12 +327,12 @@ int main(int argc,char *argv[])
 
 void endprog(int)
 {
-  interrupted=1;
+  interrupted= 1;
 }
 
 static bool sql_connect(DRIZZLE *drizzle, uint32_t wait)
 {
-  bool info=0;
+  bool info= 0;
 
   for (;;)
   {
@@ -313,7 +380,7 @@ static bool sql_connect(DRIZZLE *drizzle, uint32_t wait)
     {
       if (!info)
       {
-        info=1;
+        info= 1;
         fputs(_("Waiting for Drizzle server to answer"),stderr);
         (void) fflush(stderr);
       }
@@ -343,7 +410,8 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
   */
   for (; argc > 0 ; argv++,argc--)
   {
-    switch (find_type(argv[0],&command_typelib,2)) {
+    int type= get_command_type(argv[0]);
+    switch (type) {
     case ADMIN_SHUTDOWN:
     {
       if (opt_verbose)
@@ -360,11 +428,11 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       if (opt_verbose)
         printf(_("done\n"));
 
-      argc=1;             /* Force SHUTDOWN to be the last command */
+      argc= 1;             /* Force SHUTDOWN to be the last command */
       break;
     }
     case ADMIN_PING:
-      drizzle->reconnect=0;	/* We want to know of reconnects */
+      drizzle->reconnect= 0;	/* We want to know of reconnects */
       if (!drizzleclient_ping(drizzle))
       {
         if (option_silent < 2)
@@ -374,7 +442,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       {
         if (drizzleclient_errno(drizzle) == CR_SERVER_GONE_ERROR)
         {
-          drizzle->reconnect=1;
+          drizzle->reconnect= 1;
           if (!drizzleclient_ping(drizzle))
             puts(_("connection was down, but drizzled is now alive"));
         }
@@ -385,7 +453,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
           return -1;
         }
       }
-      drizzle->reconnect=1;	/* Automatic reconnect is default */
+      drizzle->reconnect= 1;	/* Automatic reconnect is default */
       break;
 
     default:
