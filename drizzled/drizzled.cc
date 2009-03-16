@@ -508,9 +508,12 @@ void close_connections(void)
   Session *tmp;
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
+  size_t session_count= 0;
+
   I_List_iterator<Session> it(session_list);
   while ((tmp=it++))
   {
+    session_count++;
     tmp->killed= Session::KILL_CONNECTION;
     thread_scheduler.post_kill_notification(tmp);
     if (tmp->mysys_var)
@@ -528,9 +531,17 @@ void close_connections(void)
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
+  (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list 
   /* TODO This is a crappy way to handle this. Fix for proper shutdown. */
-  if (thread_scheduler.count())
+  if (!session_list.is_empty())
+  {
+    (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
     sleep(2);					// Give threads time to die
+  }
+  else
+  {
+    (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
+  }
 
   /*
     Force remaining threads to die by closing the connection to the client
@@ -559,7 +570,7 @@ void close_connections(void)
   }
   /* All threads has now been aborted */
   (void) pthread_mutex_lock(&LOCK_thread_count);
-  while (thread_scheduler.count())
+  while (!session_list.is_empty())
   {
     (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   }
