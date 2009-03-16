@@ -4442,7 +4442,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
                              new_db, new_name_buff, "", 0);
         if (table_proto_exists(new_name_buff)==EEXIST)
 	{
-	  /* Table will be closed in do_command() */
+	  /* Table will be closed by Session::executeCommand() */
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
 	  goto err;
 	}

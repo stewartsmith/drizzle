@@ -548,7 +548,7 @@ public:
   struct st_my_thread_var *mysys_var;
   /*
     Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
-    first byte of the packet in do_command()
+    first byte of the packet in executeStatement()
   */
   enum enum_server_command command;
   uint32_t     server_id;
@@ -903,6 +903,22 @@ public:
    * Initializes the Session to handle queries.
    */
   void prepareForQueries();
+
+  /**
+   * Executes a single statement received from the 
+   * client connection.
+   *
+   * Returns true if the statement was successful, or false 
+   * otherwise.
+   *
+   * @note
+   *
+   * For profiling to work, it must never be called recursively.
+   *
+   * In MySQL, this used to be the do_command() C function whic
+   * accepted a single parameter of the THD pointer.
+   */
+  bool executeStatement();
 
   /**
    * Authenticates users, with error reporting.

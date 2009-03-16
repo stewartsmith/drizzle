@@ -39,6 +39,7 @@
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
 #include <drizzled/plugin_scheduling.h>
+#include <libdrizzleclient/errmsg.h>
 
 extern scheduling_st thread_scheduler;
 /*
@@ -1173,6 +1174,92 @@ bool Session::check_user(const char *passwd, uint32_t passwd_len, const char *in
   return true;
 }
 
+bool Session::executeStatement()
+{
+  bool return_value;
+  char *l_packet= 0;
+  uint32_t packet_length;
+
+  enum enum_server_command l_command;
+
+  /*
+    indicator of uninitialized lex => normal flow of errors handling
+    (see my_message_sql)
+  */
+  lex->current_select= 0;
+
+  /*
+    This thread will do a blocking read from the client which
+    will be interrupted when the next command is received from
+    the client, the connection is closed or "net_wait_timeout"
+    number of seconds has passed
+  */
+  drizzleclient_net_set_read_timeout(&net, variables.net_wait_timeout);
+
+  /*
+    XXX: this code is here only to clear possible errors of init_connect.
+    Consider moving to init_connect() instead.
+  */
+  clear_error();				// Clear error message
+  main_da.reset_diagnostics_area();
+
+  net_new_transaction(&net);
+
+  packet_length= drizzleclient_net_read(&net);
+  if (packet_length == packet_error)
+  {
+    /* Check if we can continue without closing the connection */
+
+    if(net.last_errno== CR_NET_PACKET_TOO_LARGE)
+      my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
+    /* Assert is invalid for dirty connection shutdown
+     *     assert(session->is_error());
+     */
+    drizzleclient_net_end_statement(this);
+
+    if (net.error != 3)
+    {
+      return_value= false;                       // We have to close it.
+      goto out;
+    }
+
+    net.error= 0;
+    return_value= true;
+    goto out;
+  }
+
+  l_packet= (char*) net.read_pos;
+  /*
+    'packet_length' contains length of data, as it was stored in packet
+    header. In case of malformed header, drizzleclient_net_read returns zero.
+    If packet_length is not zero, drizzleclient_net_read ensures that the returned
+    number of bytes was actually read from network.
+    There is also an extra safety measure in drizzleclient_net_read:
+    it sets packet[packet_length]= 0, but only for non-zero packets.
+  */
+  if (packet_length == 0)                       /* safety */
+  {
+    /* Initialize with COM_SLEEP packet */
+    l_packet[0]= (unsigned char) COM_SLEEP;
+    packet_length= 1;
+  }
+  /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
+  l_packet[packet_length]= '\0';                  /* safety */
+
+  l_command= (enum enum_server_command) (unsigned char) l_packet[0];
+
+  if (command >= COM_END)
+    command= COM_END;                           // Wrong command
+
+  /* Restore read timeout value */
+  drizzleclient_net_set_read_timeout(&net, variables.net_read_timeout);
+
+  assert(packet_length);
+  return_value= ! dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
+
+out:
+  return return_value;
+}
 /*
   Cleanup after query.
 

@@ -90,8 +90,6 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex);
 
 void init_update_queries(void);
 
-bool do_command(Session *session);
-
 bool dispatch_command(enum enum_server_command command, Session *session,
                       char* packet, uint32_t packet_length);
 

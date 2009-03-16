@@ -97,9 +97,10 @@ pthread_handler_t handle_one_connection(void *arg)
     while (!net->error && net->vio != 0 &&
            !(session->killed == Session::KILL_CONNECTION))
     {
-      if (do_command(session))
-	break;
+      if (! session->executeStatement())
+	      break;
     }
+
 end_thread:
     session->disconnect(0, true);
     if (thread_scheduler.end_thread(session, 1))

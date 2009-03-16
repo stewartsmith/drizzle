@@ -458,7 +458,7 @@ pthread_handler_t libevent_thread_proc(void *)
     do
     {
       /* Process a query */
-      if (do_command(session))
+      if (! session->executeStatement())
       {
         libevent_connection_close(session);
         break;
