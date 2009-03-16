@@ -375,7 +375,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
   case COM_QUERY:
   {
-    if (alloc_query(session, packet, packet_length))
+    if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
     char *packet_end= session->query + session->query_length;
     const char* end_of_stmt= NULL;
@@ -588,52 +588,6 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   table_list->schema_select_lex= schema_select_lex;
   table_list->schema_table_reformed= 1;
   return(0);
-}
-
-
-/**
-  Read query from packet and store in session->query.
-  Used in COM_QUERY and COM_STMT_PREPARE.
-
-    Sets the following Session variables:
-  - query
-  - query_length
-
-  @retval
-    false ok
-  @retval
-    true  error;  In this case session->fatal_error is set
-*/
-
-bool alloc_query(Session *session, const char *packet, uint32_t packet_length)
-{
-  /* Remove garbage at start and end of query */
-  while (packet_length > 0 && my_isspace(session->charset(), packet[0]))
-  {
-    packet++;
-    packet_length--;
-  }
-  const char *pos= packet + packet_length;     // Point at end null
-  while (packet_length > 0 &&
-	 (pos[-1] == ';' || my_isspace(session->charset() ,pos[-1])))
-  {
-    pos--;
-    packet_length--;
-  }
-  /* We must allocate some extra memory for query cache */
-  session->query_length= 0;                        // Extra safety: Avoid races
-  if (!(session->query= (char*) session->memdup_w_gap((unsigned char*) (packet),
-					      packet_length,
-					      session->db_length+ 1)))
-    return true;
-  session->query[packet_length]=0;
-  session->query_length= packet_length;
-
-  /* Reclaim some memory */
-  session->packet.shrink(session->variables.net_buffer_length);
-  session->convert_buffer.shrink(session->variables.net_buffer_length);
-
-  return false;
 }
 
 /**

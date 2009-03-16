@@ -921,6 +921,24 @@ public:
   bool executeStatement();
 
   /**
+   * Reads a query from packet and stores it.
+   *
+   * Returns true if query is read and allocated successfully, 
+   * false otherwise.  On a return of false, Session::fatal_error
+   * is set.
+   *
+   * @note Used in COM_QUERY and COM_STMT_PREPARE.
+   *
+   * Sets the following Session variables:
+   *  - query
+   *  - query_length
+   *
+   * @param The packet pointer to read from
+   * @param The length of the query to read
+   */
+  bool readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
+
+  /**
    * Authenticates users, with error reporting.
    *
    * Returns true on success, or false on failure.

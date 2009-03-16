@@ -78,8 +78,6 @@ bool mysql_test_parse_for_slave(Session *session, char *inBuf,
 
 bool is_update_query(enum enum_sql_command command);
 
-bool alloc_query(Session *session, const char *packet, uint32_t packet_length);
-
 void mysql_reset_session_for_next_command(Session *session);
 
 void create_select_for_variable(const char *var_name);
