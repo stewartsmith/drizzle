@@ -1293,6 +1293,111 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
   return true;
 }
 
+bool Session::endTransaction(enum enum_mysql_completiontype completion)
+{
+  bool do_release= 0;
+  bool result= true;
+
+  if (transaction.xid_state.xa_state != XA_NOTR)
+  {
+    my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
+    return false;
+  }
+  switch (completion) 
+  {
+    case COMMIT:
+      /*
+       * We don't use endActiveTransaction() here to ensure that this works
+       * even if there is a problem with the OPTION_AUTO_COMMIT flag
+       * (Which of course should never happen...)
+       */
+      server_status&= ~SERVER_STATUS_IN_TRANS;
+      if (ha_commit(this))
+        result= false;
+      options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+      transaction.all.modified_non_trans_table= false;
+      break;
+    case COMMIT_RELEASE:
+      do_release= 1; /* fall through */
+    case COMMIT_AND_CHAIN:
+      result= endActiveTransaction();
+      if (result == true && completion == COMMIT_AND_CHAIN)
+        result= startTransaction();
+      break;
+    case ROLLBACK_RELEASE:
+      do_release= 1; /* fall through */
+    case ROLLBACK:
+    case ROLLBACK_AND_CHAIN:
+    {
+      server_status&= ~SERVER_STATUS_IN_TRANS;
+      if (ha_rollback(this))
+        result= false;
+      options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+      transaction.all.modified_non_trans_table= false;
+      if (result == true && (completion == ROLLBACK_AND_CHAIN))
+        result= startTransaction();
+      break;
+    }
+    default:
+      my_error(ER_UNKNOWN_COM_ERROR, MYF(0));
+      return false;
+  }
+
+  if (result == false)
+    my_error(killed_errno(), MYF(0));
+  else if ((result == true) && do_release)
+    killed= Session::KILL_CONNECTION;
+
+  return result;
+}
+
+
+bool Session::endActiveTransaction()
+{
+  bool result= true;
+
+  if (transaction.xid_state.xa_state != XA_NOTR)
+  {
+    my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
+    return false;
+  }
+  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN | OPTION_TABLE_LOCK))
+  {
+    /* Safety if one did "drop table" on locked tables */
+    if (! locked_tables)
+      options&= ~OPTION_TABLE_LOCK;
+    server_status&= ~SERVER_STATUS_IN_TRANS;
+    if (ha_commit(this))
+      result= false;
+  }
+  options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+  transaction.all.modified_non_trans_table= false;
+  return result;
+}
+
+bool Session::startTransaction()
+{
+  bool result= true;
+
+  if (locked_tables)
+  {
+    lock= locked_tables;
+    locked_tables= 0;			// Will be automatically closed
+    close_thread_tables(this);			// Free tables
+  }
+  if (! endActiveTransaction())
+    result= false;
+  else
+  {
+    options|= OPTION_BEGIN;
+    server_status|= SERVER_STATUS_IN_TRANS;
+    if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+      if (ha_start_consistent_snapshot(this))
+        result= false;
+  }
+  return result;
+}
+
 /*
   Cleanup after query.
 

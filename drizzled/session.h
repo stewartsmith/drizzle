@@ -939,6 +939,18 @@ public:
   bool readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
 
   /**
+   * Ends the current transaction and (maybe) begins the next.
+   *
+   * Returns true if the transaction completed successfully, 
+   * otherwise false.
+   *
+   * @param Completion type
+   */
+  bool endTransaction(enum enum_mysql_completiontype completion);
+  bool endActiveTransaction();
+  bool startTransaction();
+
+  /**
    * Authenticates users, with error reporting.
    *
    * Returns true on success, or false on failure.

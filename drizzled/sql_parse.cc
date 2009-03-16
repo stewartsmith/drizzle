@@ -75,55 +75,6 @@ static void unlock_locked_tables(Session *session)
   }
 }
 
-
-bool end_active_trans(Session *session)
-{
-  int error= 0;
-
-  if (session->transaction.xid_state.xa_state != XA_NOTR)
-  {
-    my_error(ER_XAER_RMFAIL, MYF(0),
-             xa_state_names[session->transaction.xid_state.xa_state]);
-    return(1);
-  }
-  if (session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN |
-		      OPTION_TABLE_LOCK))
-  {
-    /* Safety if one did "drop table" on locked tables */
-    if (!session->locked_tables)
-      session->options&= ~OPTION_TABLE_LOCK;
-    session->server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (ha_commit(session))
-      error=1;
-  }
-  session->options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
-  session->transaction.all.modified_non_trans_table= false;
-  return(error);
-}
-
-
-bool begin_trans(Session *session)
-{
-  int error= 0;
-  if (session->locked_tables)
-  {
-    session->lock=session->locked_tables;
-    session->locked_tables=0;			// Will be automatically closed
-    close_thread_tables(session);			// Free tables
-  }
-  if (end_active_trans(session))
-    error= -1;
-  else
-  {
-    LEX *lex= session->lex;
-    session->options|= OPTION_BEGIN;
-    session->server_status|= SERVER_STATUS_IN_TRANS;
-    if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
-      error= ha_start_consistent_snapshot(session);
-  }
-  return error;
-}
-
 /**
   Mark all commands that somehow changes a table.
 
@@ -136,7 +87,6 @@ bool begin_trans(Session *session)
      2  - query that returns meaningful ROW_COUNT() -
           a number of modified rows
 */
-
 bitset<CF_BIT_SIZE> sql_command_flags[SQLCOM_END+1];
 
 void init_update_queries(void)
@@ -227,75 +177,6 @@ void execute_init_command(Session *session, sys_var_str *init_command_var,
   session->client_capabilities= save_client_capabilities;
   session->net.vio= save_vio;
 }
-
-/**
-  Ends the current transaction and (maybe) begin the next.
-
-  @param session            Current thread
-  @param completion     Completion type
-
-  @retval
-    0   OK
-*/
-
-int end_trans(Session *session, enum enum_mysql_completiontype completion)
-{
-  bool do_release= 0;
-  int res= 0;
-
-  if (session->transaction.xid_state.xa_state != XA_NOTR)
-  {
-    my_error(ER_XAER_RMFAIL, MYF(0),
-             xa_state_names[session->transaction.xid_state.xa_state]);
-    return(1);
-  }
-  switch (completion) {
-  case COMMIT:
-    /*
-     We don't use end_active_trans() here to ensure that this works
-     even if there is a problem with the OPTION_AUTO_COMMIT flag
-     (Which of course should never happen...)
-    */
-    session->server_status&= ~SERVER_STATUS_IN_TRANS;
-    res= ha_commit(session);
-    session->options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
-    session->transaction.all.modified_non_trans_table= false;
-    break;
-  case COMMIT_RELEASE:
-    do_release= 1; /* fall through */
-  case COMMIT_AND_CHAIN:
-    res= end_active_trans(session);
-    if (!res && completion == COMMIT_AND_CHAIN)
-      res= begin_trans(session);
-    break;
-  case ROLLBACK_RELEASE:
-    do_release= 1; /* fall through */
-  case ROLLBACK:
-  case ROLLBACK_AND_CHAIN:
-  {
-    session->server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (ha_rollback(session))
-      res= -1;
-    session->options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
-    session->transaction.all.modified_non_trans_table= false;
-    if (!res && (completion == ROLLBACK_AND_CHAIN))
-      res= begin_trans(session);
-    break;
-  }
-  default:
-    res= -1;
-    my_error(ER_UNKNOWN_COM_ERROR, MYF(0));
-    return(-1);
-  }
-
-  if (res < 0)
-    my_error(session->killed_errno(), MYF(0));
-  else if ((res == 0) && do_release)
-    session->killed= Session::KILL_CONNECTION;
-
-  return(res);
-}
-
 
 /**
   Perform one connection-level (COM_XXXX) command.
@@ -733,10 +614,10 @@ mysql_execute_command(Session *session)
     /* If CREATE TABLE of non-temporary table, do implicit commit */
     if (!(lex->create_info.options & HA_LEX_CREATE_TMP_TABLE))
     {
-      if (end_active_trans(session))
+      if (! session->endActiveTransaction())
       {
-	res= -1;
-	break;
+        res= -1;
+        break;
       }
     }
     assert(first_table == all_tables && first_table != 0);
@@ -898,7 +779,7 @@ end_with_restore_list:
       goto error;
 
     assert(first_table == all_tables && first_table != 0);
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
       goto error;
 
     memset(&create_info, 0, sizeof(create_info));
@@ -947,7 +828,7 @@ end_with_restore_list:
                      "INDEX DIRECTORY option ignored");
       create_info.data_file_name= create_info.index_file_name= NULL;
       /* ALTER TABLE ends previous transaction */
-      if (end_active_trans(session))
+      if (! session->endActiveTransaction())
 	goto error;
 
       if (!session->locked_tables &&
@@ -981,10 +862,10 @@ end_with_restore_list:
       new_list= table->next_local[0];
     }
 
-    if (end_active_trans(session) || drizzle_rename_tables(session, first_table, 0))
-      {
-        goto error;
-      }
+    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table, 0))
+    {
+      goto error;
+    }
     break;
   }
   case SQLCOM_SHOW_CREATE:
@@ -1157,7 +1038,7 @@ end_with_restore_list:
     break;
   }
   case SQLCOM_TRUNCATE:
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
     {
       res= -1;
       break;
@@ -1251,7 +1132,7 @@ end_with_restore_list:
     assert(first_table == all_tables && first_table != 0);
     if (!lex->drop_temporary)
     {
-      if (end_active_trans(session))
+      if (! session->endActiveTransaction())
         goto error;
     }
     else
@@ -1293,7 +1174,7 @@ end_with_restore_list:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (lex->autocommit && end_active_trans(session))
+    if (lex->autocommit && ! session->endActiveTransaction())
       goto error;
 
     if (open_and_lock_tables(session, all_tables))
@@ -1327,7 +1208,7 @@ end_with_restore_list:
     unlock_locked_tables(session);
     if (session->options & OPTION_TABLE_LOCK)
     {
-      end_active_trans(session);
+      (void) session->endActiveTransaction();
       session->options&= ~(OPTION_TABLE_LOCK);
     }
     if (session->global_read_lock)
@@ -1372,7 +1253,7 @@ end_with_restore_list:
       goto error;
     unlock_locked_tables(session);
     /* we must end the trasaction first, regardless of anything */
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
       goto error;
     session->in_lock_tables=1;
     session->options|= OPTION_TABLE_LOCK;
@@ -1392,7 +1273,7 @@ end_with_restore_list:
         that it can't lock a table in its list
       */
       ha_autocommit_or_rollback(session, 1);
-      end_active_trans(session);
+      (void) session->endActiveTransaction();
       session->options&= ~(OPTION_TABLE_LOCK);
     }
     session->in_lock_tables=0;
@@ -1405,7 +1286,7 @@ end_with_restore_list:
       prepared statement- safe.
     */
     HA_CREATE_INFO create_info(lex->create_info);
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
     {
       res= -1;
       break;
@@ -1423,7 +1304,7 @@ end_with_restore_list:
   }
   case SQLCOM_DROP_DB:
   {
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
     {
       res= -1;
       break;
@@ -1516,19 +1397,17 @@ end_with_restore_list:
     /*
       Breakpoints for backup testing.
     */
-    if (begin_trans(session))
+    if (! session->startTransaction())
       goto error;
     session->my_ok();
     break;
   case SQLCOM_COMMIT:
-    if (end_trans(session, lex->tx_release ? COMMIT_RELEASE :
-                              lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
+    if (! session->endTransaction(lex->tx_release ? COMMIT_RELEASE : lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
       goto error;
     session->my_ok();
     break;
   case SQLCOM_ROLLBACK:
-    if (end_trans(session, lex->tx_release ? ROLLBACK_RELEASE :
-                              lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
+    if (! session->endTransaction(lex->tx_release ? ROLLBACK_RELEASE : lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
       goto error;
     session->my_ok();
     break;

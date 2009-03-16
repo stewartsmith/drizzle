@@ -38,10 +38,6 @@ class Table_ident;
 
 typedef class Select_Lex Select_Lex;
 
-bool begin_trans(Session *session);
-bool end_active_trans(Session *session);
-int end_trans(Session *session, enum enum_mysql_completiontype completion);
-
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
 bool multi_update_precheck(Session *session, TableList *tables);
 bool multi_delete_precheck(Session *session, TableList *tables);
