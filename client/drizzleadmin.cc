@@ -134,6 +134,7 @@ class CommandMatch :
 {
   string match_text;
   T match_func;
+  public:
   CommandMatch(string text) : match_text(text) { }
   inline bool operator()(const string match_against) const
   {
