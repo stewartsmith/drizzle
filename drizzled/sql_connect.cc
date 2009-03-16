@@ -32,22 +32,6 @@
 extern scheduling_st thread_scheduler;
 
 /*
-  Check for maximum allowable user connections, if the mysqld server is
-  started with corresponding variable that is greater then 0.
-*/
-extern "C" unsigned char *get_key_conn(user_conn *buff, size_t *length,
-                               bool )
-{
-  *length= buff->len;
-  return (unsigned char*) buff->user;
-}
-
-extern "C" void free_user(struct user_conn *uc)
-{
-  free((char*) uc);
-}
-
-/*
   Initialize connection threads
 */
 bool init_new_connection_handler_thread()
