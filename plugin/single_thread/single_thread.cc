@@ -53,7 +53,7 @@ bool add_connection(Session *session)
 
 static bool end_thread(Session *session, bool)
 {
-  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+  unlink_session(session, true);   /* locks LOCK_thread_count and deletes session */
 
   return true;                                     // Abort handle_one_connection
 }

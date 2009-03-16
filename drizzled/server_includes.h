@@ -75,7 +75,7 @@ void refresh_status(Session *session);
 bool drizzle_rm_tmp_tables(void);
 void handle_connection_in_main_thread(Session *session);
 void create_thread_to_handle_connection(Session *session);
-void unlink_session(Session *session);
+void unlink_session(Session *session, bool unlock);
 bool one_thread_per_connection_end(Session *session, bool put_in_cache);
 void flush_thread_cache();
 

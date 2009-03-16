@@ -991,14 +991,15 @@ extern "C" void end_thread_signal(int )
     LOCK_thread_count is locked and left locked
 */
 
-void unlink_session(Session *session)
+void unlink_session(Session *session, bool unlock)
 {
   session->cleanup();
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   connection_count--;
   delete session;
-  pthread_mutex_unlock(&LOCK_thread_count);
+  if (unlock)
+    pthread_mutex_unlock(&LOCK_thread_count);
   return;
 }
 
