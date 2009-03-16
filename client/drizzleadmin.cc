@@ -65,8 +65,7 @@ enum commands {
 
 static const char *command_names[]= {
   "shutdown",
-  "ping",
-  NULL
+  "ping"
 };
 
 static vector<const char *> 
