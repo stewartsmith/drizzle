@@ -391,11 +391,11 @@ sys_lc_time_names(&vars, "lc_time_names", sys_var::SESSION_VARIABLE_IN_BINLOG);
 */
 static sys_var_readonly sys_error_count(&vars, "error_count",
                                         OPT_SESSION,
-                                        SHOW_LONG,
+                                        SHOW_INT,
                                         get_error_count);
 static sys_var_readonly sys_warning_count(&vars, "warning_count",
                                           OPT_SESSION,
-                                          SHOW_LONG,
+                                          SHOW_INT,
                                           get_warning_count);
 
 sys_var_session_uint64_t sys_group_concat_max_len(&vars, "group_concat_max_len",
@@ -1875,18 +1875,18 @@ static int check_pseudo_thread_id(Session *, set_var *var)
 
 static unsigned char *get_warning_count(Session *session)
 {
-  session->sys_var_tmp.long_value=
+  session->sys_var_tmp.uint32_t_value=
     (session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE] +
      session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR] +
      session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN]);
-  return (unsigned char*) &session->sys_var_tmp.long_value;
+  return (unsigned char*) &session->sys_var_tmp.uint32_t_value;
 }
 
 static unsigned char *get_error_count(Session *session)
 {
-  session->sys_var_tmp.long_value=
+  session->sys_var_tmp.uint32_t_value=
     session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
-  return (unsigned char*) &session->sys_var_tmp.long_value;
+  return (unsigned char*) &session->sys_var_tmp.uint32_t_value;
 }
 
 
