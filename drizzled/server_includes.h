@@ -115,7 +115,7 @@ extern const double log_10[309];
 extern uint64_t log_10_int[20];
 extern uint64_t keybuff_size;
 extern uint64_t session_startup_options;
-extern ulong thread_id;
+extern uint32_t thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t slow_launch_threads;
