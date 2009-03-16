@@ -361,7 +361,7 @@ static void libevent_connection_close(Session *session)
   delete scheduler;
   session->scheduler= NULL;
 
-  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+  unlink_session(session, true);   /* locks LOCK_thread_count and deletes session */
 
   return;
 }

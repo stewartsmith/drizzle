@@ -49,10 +49,10 @@ static bool add_connection(Session *session)
 
 static bool end_thread(Session *session, bool)
 {
-  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+  unlink_session(session, false);   /* locks LOCK_thread_count and deletes session */
   thread_count--;
   pthread_mutex_unlock(&LOCK_thread_count);
-
+  my_thread_end();
   pthread_exit(0);
 
   return true; // We should never reach this point
