@@ -35,8 +35,14 @@
 #include <drizzled/query_arena.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
+#include <drizzled/authentication.h>
+#include <drizzled/db.h>
+
+#include <netdb.h>
 #include <string>
 #include <bitset>
+
+#define MIN_HANDSHAKE_SIZE      6
 
 class Lex_input_stream;
 class user_var_entry;
@@ -882,6 +888,36 @@ public:
   void cleanup_after_query();
   bool store_globals();
   void awake(Session::killed_state state_to_set);
+
+  /**
+   * Authenticates users, with error reporting.
+   *
+   * Returns true on success, or false on failure.
+   */
+  bool authenticate();
+
+  /**
+   * Performs handshake with client and authorizes user.
+   *
+   * Returns true is the connection is valid and the 
+   * user is authorized, otherwise false.
+   */
+  bool check_connection(void);
+
+  /**
+   * Check if user exists and the password supplied is correct.
+   *
+   * Returns true on success, and false on failure.
+   *
+   * @note Host, user and passwd may point to communication buffer.
+   * Current implementation does not depend on that, but future changes
+   * should be done with this in mind; 
+   *
+   * @param  Scrambled password received from client
+   * @param  Length of scrambled password
+   * @param  Database name to connect to, may be NULL
+   */
+  bool check_user(const char *passwd, uint32_t passwd_len, const char *db);
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before

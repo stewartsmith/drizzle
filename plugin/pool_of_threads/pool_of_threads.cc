@@ -440,7 +440,7 @@ pthread_handler_t libevent_thread_proc(void *)
     /* is the connection logged in yet? */
     if (!scheduler->logged_in)
     {
-      if (login_connection(session))
+      if (! session->authenticate())
       {
         /* Failed to log in */
         libevent_connection_close(session);

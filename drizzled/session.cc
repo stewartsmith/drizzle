@@ -883,6 +883,249 @@ bool Session::store_globals()
   return 0;
 }
 
+bool Session::authenticate()
+{
+  /* Use "connect_timeout" value during connection phase */
+  drizzleclient_net_set_read_timeout(&net, connect_timeout);
+  drizzleclient_net_set_write_timeout(&net, connect_timeout);
+
+  lex_start(this);
+
+  bool connection_is_valid= check_connection();
+  drizzleclient_net_end_statement(this);
+
+  if (! connection_is_valid)
+  {	
+    /* We got wrong permissions from check_connection() */
+    statistic_increment(aborted_connects, &LOCK_status);
+    return false;
+  }
+
+  /* Connect completed, set read/write timeouts back to default */
+  drizzleclient_net_set_read_timeout(&net, variables.net_read_timeout);
+  drizzleclient_net_set_write_timeout(&net, variables.net_write_timeout);
+  return true;
+}
+
+bool Session::check_connection()
+{
+  uint32_t pkt_len= 0;
+  char *end;
+
+  // TCP/IP connection
+  {
+    char ip[NI_MAXHOST];
+
+    if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
+    {
+      my_error(ER_BAD_HOST_ERROR, MYF(0), security_ctx.ip.c_str());
+      return false;
+    }
+
+    security_ctx.ip.assign(ip);
+  }
+  drizzleclient_net_keepalive(&net, true);
+
+  uint32_t server_capabilites;
+  {
+    /* buff[] needs to big enough to hold the server_version variable */
+    char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
+
+    server_capabilites= CLIENT_BASIC_FLAGS;
+
+    if (opt_using_transactions)
+      server_capabilites|= CLIENT_TRANSACTIONS;
+#ifdef HAVE_COMPRESS
+    server_capabilites|= CLIENT_COMPRESS;
+#endif /* HAVE_COMPRESS */
+
+    end= buff + strlen(server_version);
+    if ((end - buff) >= SERVER_VERSION_LENGTH)
+      end= buff + (SERVER_VERSION_LENGTH - 1);
+    memcpy(buff, server_version, end - buff);
+    *end= 0;
+    end++;
+
+    int4store((unsigned char*) end, thread_id);
+    end+= 4;
+    /*
+      So as check_connection is the only entry point to authorization
+      procedure, scramble is set here. This gives us new scramble for
+      each handshake.
+    */
+    drizzleclient_create_random_string(scramble, SCRAMBLE_LENGTH, &rand);
+    /*
+      Old clients does not understand long scrambles, but can ignore packet
+      tail: that's why first part of the scramble is placed here, and second
+      part at the end of packet.
+    */
+    end= strncpy(end, scramble, SCRAMBLE_LENGTH_323);
+    end+= SCRAMBLE_LENGTH_323;
+
+    *end++= 0; /* an empty byte for some reason */
+
+    int2store(end, server_capabilites);
+    /* write server characteristics: up to 16 bytes allowed */
+    end[2]=(char) default_charset_info->number;
+    int2store(end+3, server_status);
+    memset(end+5, 0, 13);
+    end+= 18;
+    /* write scramble tail */
+    size_t scramble_len= SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323;
+    end= strncpy(end, scramble + SCRAMBLE_LENGTH_323, scramble_len);
+    end+= scramble_len;
+
+    *end++= 0; /* an empty byte for some reason */
+
+    /* At this point we write connection message and read reply */
+    if (drizzleclient_net_write_command(&net
+          , (unsigned char) protocol_version
+          , (unsigned char*) ""
+          , 0
+          , (unsigned char*) buff
+          , (size_t) (end-buff)) 
+        ||	(pkt_len= drizzleclient_net_read(&net)) == packet_error 
+        || pkt_len < MIN_HANDSHAKE_SIZE)
+    {
+      my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
+      return false;
+    }
+  }
+  if (packet.alloc(variables.net_buffer_length))
+    return false; /* The error is set by alloc(). */
+
+  client_capabilities= uint2korr(net.read_pos);
+
+
+  client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
+  max_client_packet_length= uint4korr(net.read_pos + 4);
+  update_charset();
+  end= (char*) net.read_pos + 32;
+
+  /*
+    Disable those bits which are not supported by the server.
+    This is a precautionary measure, if the client lies. See Bug#27944.
+  */
+  client_capabilities&= server_capabilites;
+
+  if (end >= (char*) net.read_pos + pkt_len + 2)
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
+    return false;
+  }
+
+  if (client_capabilities & CLIENT_INTERACTIVE)
+    variables.net_wait_timeout= variables.net_interactive_timeout;
+  if ((client_capabilities & CLIENT_TRANSACTIONS) && opt_using_transactions)
+    net.return_status= &server_status;
+
+  char *user= end;
+  char *passwd= strchr(user, '\0')+1;
+  uint32_t user_len= passwd - user - 1;
+  char *l_db= passwd;
+  char db_buff[NAME_LEN + 1];           // buffer to store db in utf8
+  char user_buff[USERNAME_LENGTH + 1];	// buffer to store user in utf8
+  uint32_t dummy_errors;
+
+  /*
+    Old clients send null-terminated string as password; new clients send
+    the size (1 byte) + string (not null-terminated). Hence in case of empty
+    password both send '\0'.
+
+    This strlen() can't be easily deleted without changing protocol.
+
+    Cast *passwd to an unsigned char, so that it doesn't extend the sign for
+    *passwd > 127 and become 2**32-127+ after casting to uint.
+  */
+  uint32_t passwd_len= client_capabilities & CLIENT_SECURE_CONNECTION ?
+    (unsigned char)(*passwd++) : strlen(passwd);
+  l_db= client_capabilities & CLIENT_CONNECT_WITH_DB ? l_db + passwd_len + 1 : 0;
+
+  /* strlen() can't be easily deleted without changing protocol */
+  uint32_t db_len= l_db ? strlen(l_db) : 0;
+
+  if (passwd + passwd_len + db_len > (char *) net.read_pos + pkt_len)
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
+    return false;
+  }
+
+  /* Since 4.1 all database names are stored in utf8 */
+  if (l_db)
+  {
+    db_buff[copy_and_convert(db_buff, sizeof(db_buff)-1,
+                             system_charset_info,
+                             l_db, db_len,
+                             charset(), &dummy_errors)]= 0;
+    l_db= db_buff;
+  }
+
+  user_buff[user_len= copy_and_convert(user_buff, sizeof(user_buff)-1,
+                                       system_charset_info, user, user_len,
+                                       charset(), &dummy_errors)]= '\0';
+  user= user_buff;
+
+  /* If username starts and ends in "'", chop them off */
+  if (user_len > 1 && user[0] == '\'' && user[user_len - 1] == '\'')
+  {
+    user[user_len-1]= 0;
+    user++;
+    user_len-= 2;
+  }
+
+  security_ctx.user.assign(user);
+
+  return check_user(passwd, passwd_len, l_db);
+}
+
+bool Session::check_user(const char *passwd, uint32_t passwd_len, const char *in_db)
+{
+  LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
+  bool is_authenticated;
+
+  /*
+    Clear session->db as it points to something, that will be freed when
+    connection is closed. We don't want to accidentally free a wrong
+    pointer if connect failed. Also in case of 'CHANGE USER' failure,
+    current database will be switched to 'no database selected'.
+  */
+  reset_db(NULL, 0);
+
+  if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
+    return false;
+  }
+
+  is_authenticated= authenticate_user(this, passwd);
+
+  if (is_authenticated != true)
+  {
+    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
+             security_ctx.user.c_str(),
+             security_ctx.ip.c_str(),
+             passwd_len ? ER(ER_YES) : ER(ER_NO));
+
+    return false;
+  }
+
+  security_ctx.skip_grants();
+
+  /* Change database if necessary */
+  if (in_db && in_db[0])
+  {
+    if (mysql_change_db(this, &db_str, false))
+    {
+      /* mysql_change_db() has pushed the error message. */
+      return false;
+    }
+  }
+  my_ok();
+  password= test(passwd_len);          // remember for error messages
+
+  /* Ready to handle queries */
+  return true;
+}
 
 /*
   Cleanup after query.
@@ -899,7 +1142,6 @@ bool Session::store_globals()
     different master threads may overwrite data of each other on
     slave.
 */
-
 void Session::cleanup_after_query()
 {
   /*
