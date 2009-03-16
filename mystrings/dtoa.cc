@@ -88,7 +88,8 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
 {
   int decpt, sign, len, i;
   char *res, *src, *end, *dst= to;
-  char buf[DTOA_BUFF_SIZE];
+  double alignedbuf[(DTOA_BUFF_SIZE+1)/sizeof(double)];
+  char *buf= (char*)alignedbuf;
   assert(precision >= 0 && precision < NOT_FIXED_DEC && to != NULL);
 
   res= dtoa(x, 5, precision, &decpt, &sign, &end, buf, sizeof(buf));
@@ -212,7 +213,8 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
 {
   int decpt, sign, len, exp_len;
   char *res, *src, *end, *dst= to, *dend= dst + width;
-  char buf[DTOA_BUFF_SIZE];
+  double alignedbuf[(DTOA_BUFF_SIZE+1)/sizeof(double)];
+  char *buf= (char*)alignedbuf;
   bool have_space, force_e_format;
   assert(width > 0 && to != NULL);
 
@@ -458,7 +460,8 @@ end:
 
 double my_strtod(const char *str, char **end, int *error)
 {
-  char buf[DTOA_BUFF_SIZE];
+  double alignedbuf[(DTOA_BUFF_SIZE+1)/sizeof(double)];
+  char *buf= (char*)alignedbuf;
   double res;
   assert(str != NULL && end != NULL && *end != NULL && error != NULL);
 
@@ -646,7 +649,7 @@ static Bigint *Balloc(int k, Stack_alloc *alloc)
     int x, len;
 
     x= 1 << k;
-    len= sizeof(Bigint) + x * sizeof(ULong);
+    len= ALIGN_SIZE(sizeof(Bigint) + x * sizeof(ULong));
 
     if (alloc->free + len <= alloc->end)
     {
