@@ -29,9 +29,6 @@
 extern "C"
 pthread_handler_t handle_one_connection(void *arg);
 bool init_new_connection_handler_thread();
-void time_out_user_resource_limits(Session *session, USER_CONN *uc);
-void decrease_user_connections(USER_CONN *uc);
-void session_init_client_charset(Session *session, uint32_t cs_number);
 bool setup_connection_thread_globals(Session *session);
 void prepare_new_connection_state(Session* session);
 void end_connection(Session *session);
