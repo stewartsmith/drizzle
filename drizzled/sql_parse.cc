@@ -125,14 +125,6 @@ bool begin_trans(Session *session)
 }
 
 /**
-  Returns true if all tables should be ignored.
-*/
-inline bool all_tables_not_ok(Session *, TableList *)
-{
-  return false;
-}
-
-/**
   Mark all commands that somehow changes a table.
 
   This is used to check number of updates / hour.
