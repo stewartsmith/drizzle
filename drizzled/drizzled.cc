@@ -529,10 +529,6 @@ void close_connections(void)
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
-  /* TODO This is a crappy way to handle this. Fix for proper shutdown. */
-  if (thread_scheduler.count())
-    sleep(2);					// Give threads time to die
-
   /*
     Force remaining threads to die by closing the connection to the client
     This will ensure that threads that are waiting for a command from the
@@ -563,13 +559,6 @@ void close_connections(void)
     session_list.pop_back();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
-  /* All threads has now been aborted */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  while (thread_scheduler.count())
-  {
-    (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-  }
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
 }
 
 
