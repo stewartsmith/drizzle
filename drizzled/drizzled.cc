@@ -553,7 +553,7 @@ void close_connections(void)
                           tmp->thread_id,
                           (tmp->security_ctx.user.c_str() ?
                            tmp->security_ctx.user.c_str() : ""));
-      tmp->close_connection(0,0);
+      tmp->disconnect(0, false);
     }
     (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
@@ -1904,7 +1904,7 @@ static void create_new_thread(Session *session)
     net_send_error(session, ER_CANT_CREATE_THREAD, error_message_buff);
     (void) pthread_mutex_lock(&LOCK_thread_count);
     --connection_count;
-    session->close_connection(0, 0);
+    session->disconnect(0, false);
     delete session;
     (void) pthread_mutex_unlock(&LOCK_thread_count);
   }

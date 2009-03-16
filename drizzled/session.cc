@@ -855,7 +855,6 @@ void Session::awake(Session::killed_state state_to_set)
   Remember the location of thread info, the structure needed for
   sql_alloc() and the structure for the net buffer
 */
-
 bool Session::store_globals()
 {
   /*
@@ -881,6 +880,53 @@ bool Session::store_globals()
   */
   thr_lock_info_init(&lock_info);
   return 0;
+}
+
+void Session::prepareForQueries()
+{
+  if (variables.max_join_size == HA_POS_ERROR)
+    options |= OPTION_BIG_SELECTS;
+  if (client_capabilities & CLIENT_COMPRESS)
+    net.compress= true;
+
+  version= refresh_version;
+  set_proc_info(0);
+  command= COM_SLEEP;
+  set_time();
+  init_for_queries();
+
+  /* In the past this would only run of the user did not have SUPER_ACL */
+  if (sys_init_connect.value_length)
+  {
+    execute_init_command(this, &sys_init_connect, &LOCK_sys_init_connect);
+    if (is_error())
+    {
+      Security_context *sctx= &security_ctx;
+      killed= Session::KILL_CONNECTION;
+      errmsg_printf(ERRMSG_LVL_WARN
+                  , ER(ER_NEW_ABORTING_CONNECTION)
+                  , thread_id
+                  , (db ? db : "unconnected")
+                  , sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated"
+                  , sctx->ip.c_str(), "init_connect command failed");
+      errmsg_printf(ERRMSG_LVL_WARN, "%s", main_da.message());
+    }
+    set_proc_info(0);
+    set_time();
+    init_for_queries();
+  }
+}
+
+bool Session::initGlobals()
+{
+  if (store_globals())
+  {
+    disconnect(ER_OUT_OF_RESOURCES, true);
+    statistic_increment(aborted_connects, &LOCK_status);
+    thread_scheduler.end_thread(this, 0);
+    return false;
+  }
+  return true;
 }
 
 bool Session::authenticate()
@@ -2125,7 +2171,7 @@ void session_increment_bytes_sent(ulong length)
 {
   Session *session=current_session;
   if (likely(session != 0))
-  { /* current_session==0 when close_connection() calls net_send_error() */
+  { /* current_session==0 when disconnect() calls net_send_error() */
     session->status_var.bytes_sent+= length;
   }
 }
@@ -2484,18 +2530,31 @@ namespace {
   };
 }
 
-/**
-  Close a connection.
-
-  @param session		Thread handle
-  @param errcode	Error code to print to console
-  @param should_lock 1 if we have have to lock LOCK_thread_count
-
-  @note
-    For the connection that is doing shutdown, this is called twice
-*/
-void Session::close_connection(uint32_t errcode, bool should_lock)
+void Session::disconnect(uint32_t errcode, bool should_lock)
 {
+  /* Allow any plugins to cleanup their session variables */
+  plugin_sessionvar_cleanup(this);
+
+  /* If necessary, log any aborted or unauthorized connections */
+  if (killed || (net.error && net.vio != 0))
+    statistic_increment(aborted_threads, &LOCK_status);
+
+  if (net.error && net.vio != 0)
+  {
+    if (! killed && variables.log_warnings > 1)
+    {
+      Security_context *sctx= &security_ctx;
+
+      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
+                  , thread_id
+                  , (db ? db : "unconnected")
+                  , sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated"
+                  , sctx->ip.c_str()
+                  , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));
+    }
+  }
+
+  /* Close out our connection to the client */
   st_vio *vio;
   if (should_lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -2509,8 +2568,6 @@ void Session::close_connection(uint32_t errcode, bool should_lock)
   if (should_lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
 }
-
-
 
 /**
  Reset Session part responsible for command processing state.

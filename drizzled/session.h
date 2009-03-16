@@ -888,6 +888,21 @@ public:
   void cleanup_after_query();
   bool store_globals();
   void awake(Session::killed_state state_to_set);
+  /**
+   * Pulls thread-specific variables into Session state.
+   *
+   * Returns true most times, or false if there was a problem
+   * allocating resources for thread-specific storage.
+   *
+   * @TODO Kill this.  It's not necessary once my_thr_init() is bye bye.
+   *
+   */
+  bool initGlobals();
+
+  /**
+   * Initializes the Session to handle queries.
+   */
+  void prepareForQueries();
 
   /**
    * Authenticates users, with error reporting.
@@ -1143,9 +1158,15 @@ public:
   void reset_for_next_command();
 
   /**
-    Close the current connection.
-  */
-  void close_connection(uint32_t errcode, bool lock);
+   * Disconnects the session from a client connection and
+   * updates any status variables necessary.
+   *
+   * @param errcode	Error code to print to console
+   * @param should_lock 1 if we have have to lock LOCK_thread_count
+   *
+   * @note  For the connection that is doing shutdown, this is called twice
+   */
+  void disconnect(uint32_t errcode, bool lock);
   void close_temporary_tables();
 
 private:

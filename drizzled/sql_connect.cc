@@ -22,19 +22,14 @@
   Functions to autenticate and handle reqests for a connection
 */
 #include <drizzled/server_includes.h>
-#include <netdb.h>
 
-#include <drizzled/authentication.h>
-#include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/plugin_scheduling.h>
 #include <drizzled/session.h>
-#include <drizzled/data_home.h>
 #include <drizzled/connect.h>
 
 extern scheduling_st thread_scheduler;
-
 
 /*
   Check for maximum allowable user connections, if the mysqld server is
@@ -63,99 +58,6 @@ bool init_new_connection_handler_thread()
 }
 
 /*
-  Setup thread to be used with the current thread
-
-  SYNOPSIS
-    bool setup_connection_thread_globals()
-    session    Thread/connection handler
-
-  RETURN
-    0   ok
-    1   Error (out of memory)
-        In this case we will close the connection and increment status
-*/
-bool setup_connection_thread_globals(Session *session)
-{
-  if (session->store_globals())
-  {
-    session->close_connection(ER_OUT_OF_RESOURCES, true);
-    statistic_increment(aborted_connects,&LOCK_status);
-    thread_scheduler.end_thread(session, 0);
-    return 1;                                   // Error
-  }
-  return 0;
-}
-
-/*
-  Close an established connection
-
-  NOTES
-    This mainly updates status variables
-*/
-void end_connection(Session *session)
-{
-  NET *net= &session->net;
-  plugin_sessionvar_cleanup(session);
-
-  if (session->killed || (net->error && net->vio != 0))
-  {
-    statistic_increment(aborted_threads,&LOCK_status);
-  }
-
-  if (net->error && net->vio != 0)
-  {
-    if (!session->killed && session->variables.log_warnings > 1)
-    {
-      Security_context *sctx= &session->security_ctx;
-
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION),
-                        session->thread_id,(session->db ? session->db : "unconnected"),
-                        sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated",
-                        sctx->ip.c_str(),
-                        (session->main_da.is_error() ? session->main_da.message() :
-                         ER(ER_UNKNOWN_ERROR)));
-    }
-  }
-}
-
-/*
-  Initialize Session to handle queries
-*/
-void prepare_new_connection_state(Session* session)
-{
-  Security_context *sctx= &session->security_ctx;
-
-  if (session->variables.max_join_size == HA_POS_ERROR)
-    session->options |= OPTION_BIG_SELECTS;
-  if (session->client_capabilities & CLIENT_COMPRESS)
-    session->net.compress=1;				// Use compression
-
-  session->version= refresh_version;
-  session->set_proc_info(0);
-  session->command= COM_SLEEP;
-  session->set_time();
-  session->init_for_queries();
-
-  /* In the past this would only run of the user did not have SUPER_ACL */
-  if (sys_init_connect.value_length)
-  {
-    execute_init_command(session, &sys_init_connect, &LOCK_sys_init_connect);
-    if (session->is_error())
-    {
-      session->killed= Session::KILL_CONNECTION;
-      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION),
-                        session->thread_id,(session->db ? session->db : "unconnected"),
-                        sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated",
-                        sctx->ip.c_str(), "init_connect command failed");
-      errmsg_printf(ERRMSG_LVL_WARN, "%s", session->main_da.message());
-    }
-    session->set_proc_info(0);
-    session->set_time();
-    session->init_for_queries();
-  }
-}
-
-/*
   Thread handler for a connection
 
   SYNOPSIS
@@ -179,7 +81,7 @@ pthread_handler_t handle_one_connection(void *arg)
 
   if (thread_scheduler.init_new_connection_thread())
   {
-    session->close_connection(ER_OUT_OF_RESOURCES, true);
+    session->disconnect(ER_OUT_OF_RESOURCES, true);
     statistic_increment(aborted_connects,&LOCK_status);
     thread_scheduler.end_thread(session,0);
     return 0;
@@ -196,7 +98,7 @@ pthread_handler_t handle_one_connection(void *arg)
     stack overruns.
   */
   session->thread_stack= (char*) &session;
-  if (setup_connection_thread_globals(session))
+  if (! session->initGlobals())
     return 0;
 
   for (;;)
@@ -206,7 +108,7 @@ pthread_handler_t handle_one_connection(void *arg)
     if (! session->authenticate())
       goto end_thread;
 
-    prepare_new_connection_state(session);
+    session->prepareForQueries();
 
     while (!net->error && net->vio != 0 &&
            !(session->killed == Session::KILL_CONNECTION))
@@ -214,10 +116,8 @@ pthread_handler_t handle_one_connection(void *arg)
       if (do_command(session))
 	break;
     }
-    end_connection(session);
-
 end_thread:
-    session->close_connection(0, true);
+    session->disconnect(0, true);
     if (thread_scheduler.end_thread(session, 1))
       return 0;                                 // Probably no-threads
 
