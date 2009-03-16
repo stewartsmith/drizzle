@@ -56,7 +56,6 @@
 #include <string>
 #include <sstream>
 #include <bitset>
-#include <vector>
 
 
 extern const CHARSET_INFO *system_charset_info, *files_charset_info ;
@@ -173,7 +172,7 @@ extern pthread_rwlock_t LOCK_system_variables_hash;
 extern pthread_cond_t COND_refresh, COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
-extern std::vector<Session *> session_list;
+extern I_List<Session> session_list;
 extern MY_BITMAP temp_pool;
 extern String my_empty_string;
 extern const String my_null_string;
