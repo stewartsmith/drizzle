@@ -29,6 +29,7 @@
 using namespace std;
 
 static volatile uint32_t created_threads= 0;
+static volatile uint32_t active_sessions= 0;
 static volatile bool kill_pool_threads= false;
 
 static pthread_attr_t thread_attrib;
@@ -309,6 +310,7 @@ static bool add_connection(Session *session)
 
   libevent_session_add(session);
 
+  active_sessions++;
   pthread_mutex_unlock(&LOCK_thread_count);
 
   return false;
@@ -361,7 +363,9 @@ static void libevent_connection_close(Session *session)
   delete scheduler;
   session->scheduler= NULL;
 
-  unlink_session(session, true);   /* locks LOCK_thread_count and deletes session */
+  unlink_session(session, false);   /* locks LOCK_thread_count and deletes session */
+  active_sessions--;
+  pthread_mutex_unlock(&LOCK_thread_count);
 
   return;
 }
@@ -568,9 +572,9 @@ static int deinit(void *)
   return 0;
 }
 
-static uint32_t count_of_threads(void)
+static uint32_t count_of_sessions(void)
 {
-  return created_threads;
+  return active_sessions;
 }
 
 static int init(void *p)
@@ -581,7 +585,7 @@ static int init(void *p)
   func->max_threads= size;
   func->post_kill_notification= post_kill_notification;
   func->add_connection= add_connection;
-  func->count= count_of_threads;
+  func->count= count_of_sessions;
 
   /* Parameter for threads created for connections */
   (void) pthread_attr_init(&thread_attrib);
