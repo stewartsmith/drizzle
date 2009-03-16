@@ -72,11 +72,7 @@ static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 /* mysqld.cc */
 void refresh_status(Session *session);
 bool drizzle_rm_tmp_tables(void);
-void handle_connection_in_main_thread(Session *session);
-void create_thread_to_handle_connection(Session *session);
 void unlink_session(Session *session);
-bool one_thread_per_connection_end(Session *session, bool put_in_cache);
-void flush_thread_cache();
 
 /* item_func.cc */
 extern bool check_reserved_words(LEX_STRING *name);
