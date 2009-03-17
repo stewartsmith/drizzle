@@ -51,7 +51,7 @@ bool session_scheduler::thread_attach()
 {
   assert(!thread_attached);
   if (libevent_should_close_connection(session) ||
-      setup_connection_thread_globals(session))
+      ! session->initGlobals())
   {
     return true;
   }

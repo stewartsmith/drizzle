@@ -35,8 +35,15 @@
 #include <drizzled/query_arena.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
+#include <drizzled/authentication.h>
+#include <drizzled/db.h>
+#include <drizzled/xid.h>
+
+#include <netdb.h>
 #include <string>
 #include <bitset>
+
+#define MIN_HANDSHAKE_SIZE      6
 
 class Lex_input_stream;
 class user_var_entry;
@@ -379,24 +386,8 @@ struct st_savepoint {
   Ha_trx_info         *ha_list;
 };
 
-enum xa_states {XA_NOTR=0, XA_ACTIVE, XA_IDLE, XA_PREPARED};
-extern const char *xa_state_names[];
-
-typedef struct st_xid_state {
-  /* For now, this is only used to catch duplicated external xids */
-  XID  xid;                           // transaction identifier
-  enum xa_states xa_state;            // used by external XA only
-  bool in_session;
-} XID_STATE;
-
 extern pthread_mutex_t LOCK_xid_cache;
 extern HASH xid_cache;
-bool xid_cache_init(void);
-void xid_cache_free(void);
-XID_STATE *xid_cache_search(XID *xid);
-bool xid_cache_insert(XID *xid, enum xa_states xa_state);
-bool xid_cache_insert(XID_STATE *xid_state);
-void xid_cache_delete(XID_STATE *xid_state);
 
 #include <drizzled/security_context.h>
 
@@ -419,15 +410,12 @@ enum enum_thread_type
   NON_SYSTEM_THREAD
 };
 
-
-
 #include <drizzled/internal_error_handler.h> 
 #include <drizzled/diagnostics_area.h> 
 
 /**
   Storage engine specific thread local data.
 */
-
 struct Ha_data
 {
   /**
@@ -450,15 +438,7 @@ struct Ha_data
   Ha_data() :ha_ptr(NULL) {}
 };
 
-
-/**
-  @class Session
-  For each client connection we create a separate thread with Session serving as
-  a thread/connection descriptor
-*/
-
-class Session :public Statement,
-           public Open_tables_state
+class Session :public Statement, public Open_tables_state
 {
 public:
   /*
@@ -542,7 +522,7 @@ public:
   struct st_my_thread_var *mysys_var;
   /*
     Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
-    first byte of the packet in do_command()
+    first byte of the packet in executeStatement()
   */
   enum enum_server_command command;
   uint32_t     server_id;
@@ -743,7 +723,6 @@ public:
     with more than one subquery, it is not clear what does the field mean.
   */
   table_map  used_tables;
-  USER_CONN *user_connect;
   const CHARSET_INFO *db_charset;
   /*
     FIXME: this, and some other variables like 'count_cuted_fields'
@@ -883,6 +862,97 @@ public:
   void cleanup_after_query();
   bool store_globals();
   void awake(Session::killed_state state_to_set);
+  /**
+   * Pulls thread-specific variables into Session state.
+   *
+   * Returns true most times, or false if there was a problem
+   * allocating resources for thread-specific storage.
+   *
+   * @TODO Kill this.  It's not necessary once my_thr_init() is bye bye.
+   *
+   */
+  bool initGlobals();
+
+  /**
+   * Initializes the Session to handle queries.
+   */
+  void prepareForQueries();
+
+  /**
+   * Executes a single statement received from the 
+   * client connection.
+   *
+   * Returns true if the statement was successful, or false 
+   * otherwise.
+   *
+   * @note
+   *
+   * For profiling to work, it must never be called recursively.
+   *
+   * In MySQL, this used to be the do_command() C function whic
+   * accepted a single parameter of the THD pointer.
+   */
+  bool executeStatement();
+
+  /**
+   * Reads a query from packet and stores it.
+   *
+   * Returns true if query is read and allocated successfully, 
+   * false otherwise.  On a return of false, Session::fatal_error
+   * is set.
+   *
+   * @note Used in COM_QUERY and COM_STMT_PREPARE.
+   *
+   * Sets the following Session variables:
+   *  - query
+   *  - query_length
+   *
+   * @param The packet pointer to read from
+   * @param The length of the query to read
+   */
+  bool readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
+
+  /**
+   * Ends the current transaction and (maybe) begins the next.
+   *
+   * Returns true if the transaction completed successfully, 
+   * otherwise false.
+   *
+   * @param Completion type
+   */
+  bool endTransaction(enum enum_mysql_completiontype completion);
+  bool endActiveTransaction();
+  bool startTransaction();
+
+  /**
+   * Authenticates users, with error reporting.
+   *
+   * Returns true on success, or false on failure.
+   */
+  bool authenticate();
+
+  /**
+   * Performs handshake with client and authorizes user.
+   *
+   * Returns true is the connection is valid and the 
+   * user is authorized, otherwise false.
+   */
+  bool check_connection(void);
+
+  /**
+   * Check if user exists and the password supplied is correct.
+   *
+   * Returns true on success, and false on failure.
+   *
+   * @note Host, user and passwd may point to communication buffer.
+   * Current implementation does not depend on that, but future changes
+   * should be done with this in mind; 
+   *
+   * @param  Scrambled password received from client
+   * @param  Length of scrambled password
+   * @param  Database name to connect to, may be NULL
+   */
+  bool check_user(const char *passwd, uint32_t passwd_len, const char *db);
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
@@ -1108,9 +1178,15 @@ public:
   void reset_for_next_command();
 
   /**
-    Close the current connection.
-  */
-  void close_connection(uint32_t errcode, bool lock);
+   * Disconnects the session from a client connection and
+   * updates any status variables necessary.
+   *
+   * @param errcode	Error code to print to console
+   * @param should_lock 1 if we have have to lock LOCK_thread_count
+   *
+   * @note  For the connection that is doing shutdown, this is called twice
+   */
+  void disconnect(uint32_t errcode, bool lock);
   void close_temporary_tables();
 
 private:
