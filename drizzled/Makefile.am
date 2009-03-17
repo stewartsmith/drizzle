@@ -382,6 +382,7 @@ drizzled_SOURCES = \
 		comp_creator.cc \
 		configvar.cc \
 		current_session.cc \
+		diagnostics_area.cc \
 		drizzled.cc \
 		dtcollation.cc \
 		errmsg.cc \
