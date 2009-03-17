@@ -37,6 +37,7 @@
 #include <drizzled/select_result_interceptor.h>
 #include <drizzled/authentication.h>
 #include <drizzled/db.h>
+#include <drizzled/xid.h>
 
 #include <netdb.h>
 #include <string>
@@ -385,24 +386,8 @@ struct st_savepoint {
   Ha_trx_info         *ha_list;
 };
 
-enum xa_states {XA_NOTR=0, XA_ACTIVE, XA_IDLE, XA_PREPARED};
-extern const char *xa_state_names[];
-
-typedef struct st_xid_state {
-  /* For now, this is only used to catch duplicated external xids */
-  XID  xid;                           // transaction identifier
-  enum xa_states xa_state;            // used by external XA only
-  bool in_session;
-} XID_STATE;
-
 extern pthread_mutex_t LOCK_xid_cache;
 extern HASH xid_cache;
-bool xid_cache_init(void);
-void xid_cache_free(void);
-XID_STATE *xid_cache_search(XID *xid);
-bool xid_cache_insert(XID *xid, enum xa_states xa_state);
-bool xid_cache_insert(XID_STATE *xid_state);
-void xid_cache_delete(XID_STATE *xid_state);
 
 #include <drizzled/security_context.h>
 
