@@ -2488,7 +2488,6 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state)
   return res;
 }
 
-
 bool xid_cache_insert(XID_STATE *xid_state)
 {
   pthread_mutex_lock(&LOCK_xid_cache);
@@ -2499,125 +2498,11 @@ bool xid_cache_insert(XID_STATE *xid_state)
   return res;
 }
 
-
 void xid_cache_delete(XID_STATE *xid_state)
 {
   pthread_mutex_lock(&LOCK_xid_cache);
   hash_delete(&xid_cache, (unsigned char *)xid_state);
   pthread_mutex_unlock(&LOCK_xid_cache);
-}
-
-namespace {
-  /**
-     Class to handle temporary allocation of memory for row data.
-
-     The responsibilities of the class is to provide memory for
-     packing one or two rows of packed data (depending on what
-     constructor is called).
-
-     In order to make the allocation more efficient for "simple" rows,
-     i.e., rows that do not contain any blobs, a pointer to the
-     allocated memory is of memory is stored in the table structure
-     for simple rows.  If memory for a table containing a blob field
-     is requested, only memory for that is allocated, and subsequently
-     released when the object is destroyed.
-
-   */
-  class Row_data_memory {
-  public:
-    /**
-      Build an object to keep track of a block-local piece of memory
-      for storing a row of data.
-
-      @param table
-      Table where the pre-allocated memory is stored.
-
-      @param length
-      Length of data that is needed, if the record contain blobs.
-     */
-    Row_data_memory(Table *table, size_t const len1)
-      : m_memory(0)
-    {
-      m_alloc_checked= false;
-      allocate_memory(table, len1);
-      m_ptr[0]= has_memory() ? m_memory : 0;
-      m_ptr[1]= 0;
-    }
-
-    Row_data_memory(Table *table, size_t const len1, size_t const len2)
-      : m_memory(0)
-    {
-      m_alloc_checked= false;
-      allocate_memory(table, len1 + len2);
-      m_ptr[0]= has_memory() ? m_memory        : 0;
-      m_ptr[1]= has_memory() ? m_memory + len1 : 0;
-    }
-
-    ~Row_data_memory()
-    {
-      if (m_memory != 0 && m_release_memory_on_destruction)
-        free((unsigned char*) m_memory);
-    }
-
-    /**
-       Is there memory allocated?
-
-       @retval true There is memory allocated
-       @retval false Memory allocation failed
-     */
-    bool has_memory() const {
-      m_alloc_checked= true;
-      return m_memory != 0;
-    }
-
-    unsigned char *slot(uint32_t s)
-    {
-      assert(s < sizeof(m_ptr)/sizeof(*m_ptr));
-      assert(m_ptr[s] != 0);
-      assert(m_alloc_checked == true);
-      return m_ptr[s];
-    }
-
-  private:
-    void allocate_memory(Table *const table, size_t const total_length)
-    {
-      if (table->s->blob_fields == 0)
-      {
-        /*
-          The maximum length of a packed record is less than this
-          length. We use this value instead of the supplied length
-          when allocating memory for records, since we don't know how
-          the memory will be used in future allocations.
-
-          Since table->s->reclength is for unpacked records, we have
-          to add two bytes for each field, which can potentially be
-          added to hold the length of a packed field.
-        */
-        size_t const maxlen= table->s->reclength + 2 * table->s->fields;
-
-        /*
-          Allocate memory for two records if memory hasn't been
-          allocated. We allocate memory for two records so that it can
-          be used when processing update rows as well.
-        */
-        if (table->write_row_record == 0)
-          table->write_row_record=
-            (unsigned char *) alloc_root(&table->mem_root, 2 * maxlen);
-        m_memory= table->write_row_record;
-        m_release_memory_on_destruction= false;
-      }
-      else
-      {
-        m_memory= (unsigned char *) malloc(total_length);
-        m_release_memory_on_destruction= true;
-      }
-    }
-
-    mutable bool m_alloc_checked;
-    bool m_release_memory_on_destruction;
-    unsigned char *m_memory;
-    unsigned char *m_ptr[2];
-  };
 }
 
 void Session::disconnect(uint32_t errcode, bool should_lock)
