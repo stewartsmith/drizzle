@@ -410,15 +410,12 @@ enum enum_thread_type
   NON_SYSTEM_THREAD
 };
 
-
-
 #include <drizzled/internal_error_handler.h> 
 #include <drizzled/diagnostics_area.h> 
 
 /**
   Storage engine specific thread local data.
 */
-
 struct Ha_data
 {
   /**
@@ -441,15 +438,7 @@ struct Ha_data
   Ha_data() :ha_ptr(NULL) {}
 };
 
-
-/**
-  @class Session
-  For each client connection we create a separate thread with Session serving as
-  a thread/connection descriptor
-*/
-
-class Session :public Statement,
-           public Open_tables_state
+class Session :public Statement, public Open_tables_state
 {
 public:
   /*
@@ -734,7 +723,6 @@ public:
     with more than one subquery, it is not clear what does the field mean.
   */
   table_map  used_tables;
-  USER_CONN *user_connect;
   const CHARSET_INFO *db_charset;
   /*
     FIXME: this, and some other variables like 'count_cuted_fields'
