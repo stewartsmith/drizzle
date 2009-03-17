@@ -11,5 +11,5 @@ create table t1 select repeat('a',4000) a;
 delete from t1;
 
 insert into t1 values ('a'), ('a '), ('a\t');
-select collation(a),hex(a) from t1 order by a;
+select collation(a),hex(a) from t1 order by hex(a);
 drop table t1;

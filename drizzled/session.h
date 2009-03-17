@@ -731,8 +731,8 @@ public:
     statement/cursor settle here.
   */
   List	     <DRIZZLE_ERROR> warn_list;
-  uint	     warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
-  uint	     total_warn_count;
+  uint32_t   warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
+  uint32_t   total_warn_count;
   Diagnostics_area main_da;
 
   /*
@@ -829,6 +829,7 @@ public:
   union
   {
     bool   bool_value;
+    uint32_t  uint32_t_value;
     long      long_value;
     ulong     ulong_value;
     uint64_t uint64_t_value;

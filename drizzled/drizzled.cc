@@ -297,7 +297,7 @@ uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
-ulong thread_id=1L;
+uint32_t thread_id=1L;
 pid_t current_pid;
 uint64_t slow_launch_threads= 0;
 
@@ -528,10 +528,6 @@ void close_connections(void)
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
-  /* TODO This is a crappy way to handle this. Fix for proper shutdown. */
-  if (thread_scheduler.count())
-    sleep(2);					// Give threads time to die
-
   /*
     Force remaining threads to die by closing the connection to the client
     This will ensure that threads that are waiting for a command from the
@@ -559,7 +555,7 @@ void close_connections(void)
   }
   /* All threads has now been aborted */
   (void) pthread_mutex_lock(&LOCK_thread_count);
-  while (thread_scheduler.count())
+  while (!session_list.is_empty())
   {
     (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   }
@@ -989,10 +985,11 @@ void unlink_session(Session *session)
 {
   session->cleanup();
 
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+  pthread_mutex_lock(&LOCK_thread_count);
   connection_count--;
-  delete session;
   pthread_mutex_unlock(&LOCK_thread_count);
+  delete session;
+
   return;
 }
 
@@ -2684,11 +2681,11 @@ SHOW_VAR status_vars[]= {
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
   {"Compression",              (char*) &show_net_compression_cont, SHOW_FUNC},
-  {"Connections",              (char*) &thread_id,              SHOW_LONG_NOFLUSH},
+  {"Connections",              (char*) &thread_id,          SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
-  {"Created_tmp_files",	       (char*) &my_tmp_file_created,	SHOW_INT},
+  {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
   {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
-  {"Flush_commands",           (char*) &refresh_version,        SHOW_LONG_NOFLUSH},
+  {"Flush_commands",           (char*) &refresh_version,    SHOW_INT_NOFLUSH},
   {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
   {"Handler_delete",           (char*) offsetof(STATUS_VAR, ha_delete_count), SHOW_LONG_STATUS},
   {"Handler_prepare",          (char*) offsetof(STATUS_VAR, ha_prepare_count),  SHOW_LONG_STATUS},
@@ -2712,11 +2709,11 @@ SHOW_VAR status_vars[]= {
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(STATUS_VAR, last_query_cost), SHOW_DOUBLE_STATUS},
   {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
-  {"Open_files",               (char*) &my_file_opened,         SHOW_LONG_NOFLUSH},
-  {"Open_streams",             (char*) &my_stream_opened,       SHOW_LONG_NOFLUSH},
+  {"Open_files",               (char*) &my_file_opened,    SHOW_INT_NOFLUSH},
+  {"Open_streams",             (char*) &my_stream_opened,  SHOW_INT_NOFLUSH},
   {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
   {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
-  {"Opened_files",             (char*) &my_file_total_opened, SHOW_LONG_NOFLUSH},
+  {"Opened_files",             (char*) &my_file_total_opened, SHOW_INT_NOFLUSH},
   {"Opened_tables",            (char*) offsetof(STATUS_VAR, opened_tables), SHOW_LONG_STATUS},
   {"Opened_table_definitions", (char*) offsetof(STATUS_VAR, opened_shares), SHOW_LONG_STATUS},
   {"Questions",                (char*) offsetof(STATUS_VAR, questions), SHOW_LONG_STATUS},
@@ -2734,7 +2731,7 @@ SHOW_VAR status_vars[]= {
   {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
   {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
   {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
-  {"Threads_created",	       (char*) &thread_created,		SHOW_LONG_NOFLUSH},
+  {"Threads_created",	       (char*) &thread_created,	      SHOW_INT_NOFLUSH},
   {"Threads_running",          (char*) &thread_running,         SHOW_INT},
   {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
   {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
