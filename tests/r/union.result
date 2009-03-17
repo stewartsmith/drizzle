@@ -979,7 +979,7 @@ create table t3 (a ENUM('Yes', 'No') NOT NULL);
 create table t4 (a ENUM('aaa', 'bbb') NOT NULL);
 insert into t3 values (1);
 insert into t4 values (3);
-ERROR 01000: Data truncated for column 'a' at row 1
+ERROR HY000: Received an invalid enum value '3'.
 select "1" as a union select a from t1;
 a
 1

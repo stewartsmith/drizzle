@@ -1638,7 +1638,7 @@ t1	CREATE TABLE `t1` (
 drop table t1;
 create table t1 (a enum ('0','1'));
 insert into t1 set a='foobar';
-ERROR 01000: Data truncated for column 'a' at row 1
+ERROR HY000: Received an invalid enum value 'foobar'.
 select * from t1;
 a
 update t1 set a = replace(a,'x','y');
@@ -1723,34 +1723,34 @@ id INT AUTO_INCREMENT PRIMARY KEY,
 c1 ENUM('a', '', 'b')
 );
 INSERT INTO t1 (c1) VALUES (0), ('a'), (''), ('b');
-ERROR 01000: Data truncated for column 'c1' at row 1
+ERROR HY000: Received an invalid enum value '0'.
 INSERT INTO t1 (c1) VALUES (0), ('a'), (''), ('b');
-ERROR 01000: Data truncated for column 'c1' at row 1
+ERROR HY000: Received an invalid enum value '0'.
 INSERT INTO t1 (c1) VALUES ('a'), ('b');
 SELECT id, c1 + 0, c1 FROM t1;
 id	c1 + 0	c1
 1	1	a
 2	3	b
 ALTER TABLE t1 CHANGE c1 c1 ENUM('a', '') NOT NULL;
-ERROR 01000: Data truncated for column 'c1' at row 2
+ERROR HY000: Received an invalid enum value 'b'.
 ALTER TABLE t1 CHANGE c1 c1 ENUM('a', 'b') NOT NULL;
 SELECT id, c1 + 0, c1 FROM t1;
 id	c1 + 0	c1
 1	1	a
-2	2	b
+2	1	a
 DROP TABLE t1;
 End of 4.1 tests
 create table t1(f1 enum('a','b'), index(f1));
 insert into t1 values(''),(''),('a'),('b');
-ERROR 01000: Data truncated for column 'f1' at row 1
+ERROR HY000: Received an invalid enum value ''.
 select * from t1 where f1='';
-f1
+ERROR HY000: Received an invalid enum value ''.
 drop table t1;
 CREATE TABLE t1 (c1 ENUM('a', '', 'b'));
 INSERT INTO t1 (c1) VALUES ('b');
 INSERT INTO t1 (c1) VALUES ('');
 INSERT INTO t1 (c1) VALUES (0);
-ERROR 01000: Data truncated for column 'c1' at row 1
+ERROR HY000: Received an invalid enum value '0'.
 INSERT INTO t1 (c1) VALUES ('a');
 SELECT c1 + 0, COUNT(c1) FROM t1 GROUP BY c1;
 c1 + 0	COUNT(c1)
@@ -1766,7 +1766,7 @@ c1 + 0
 DROP TABLE t1,t2;
 CREATE TABLE t1(a enum('a','b','c','d'));
 INSERT INTO t1 VALUES (4),(1),(0),(3);
-ERROR 01000: Data truncated for column 'a' at row 3
+ERROR HY000: Received an invalid enum value '0'.
 INSERT INTO t1 VALUES (4),(1),(2),(3);
 SELECT a FROM t1;
 a
@@ -1781,9 +1781,8 @@ SELECT a FROM t1 WHERE a=0;
 a
 ALTER TABLE t1 ADD PRIMARY KEY (a);
 EXPLAIN SELECT a FROM t1 WHERE a=0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE noticed after reading const tables
+ERROR HY000: Received an invalid enum value '0'.
 SELECT a FROM t1 WHERE a=0;
-a
+ERROR HY000: Received an invalid enum value '0'.
 DROP TABLE t1;
 End of 5.1 tests
