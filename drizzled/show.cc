@@ -1471,7 +1471,6 @@ static bool show_status_array(Session *session, const char *wild,
           value= ((char *) status_var + (ulong) value);
           /* fall through */
         case SHOW_LONG:
-        case SHOW_LONG_NOFLUSH: // the difference lies in refresh_status()
           end= int10_to_str(*(long*) value, buff, 10);
           break;
         case SHOW_LONGLONG_STATUS:
@@ -1500,6 +1499,7 @@ static bool show_status_array(Session *session, const char *wild,
           end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
           break;
         case SHOW_INT:
+        case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
           end= int10_to_str((long) *(uint32_t*) value, buff, 10);
           break;
         case SHOW_HAVE:
