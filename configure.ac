@@ -1229,14 +1229,26 @@ AC_ARG_ENABLE([exceptions],
     [ac_exceptions="$enableval"],
     [ac_exceptions="yes"])
 
+AC_ARG_ENABLE([cast-align-warnings],
+    [AS_HELP_STRING([--enable-cast-align-warnings],
+       [Toggle cast alignment warnings @<:@default=off@:>@])],
+    [ac_warn_cast_align="$enableval"],
+    [ac_warn_cast_align="no"])
+
 if test "$GCC" = "yes"
 then
+  if test "$ac_warn_cast_align" = "yes"
+  then
+    W_CAST_ALIGN="-Wcast-align"
+  else
+    W_CAST_ALIGN="-Wno-cast-align"
+  fi
 
   if test "$ac_warn_fail" = "yes"
   then
     W_FAIL="-Werror"
   fi
-  BASE_WARNINGS="-Wall -Wextra ${W_FAIL}"
+  BASE_WARNINGS="-Wall -Wextra ${W_FAIL} ${W_CAST_ALIGN}"
 
   if test "$ac_warn_longlong" = "yes"
   then
