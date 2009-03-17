@@ -189,10 +189,9 @@ pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
 
 ha_innodb_la_SOURCES=
 ha_innodb_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)
-ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${DYNAMIC_PLUGIN} ${NO_SHADOW}
-ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${DYNAMIC_PLUGIN} ${NO_SHADOW}
-ha_innodb_la_LIBADD=	@plugin_innobase_shared_target@ \
-			libinnobase.la
+ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${INNODB_DYNAMIC_CFLAGS} ${NO_SHADOW}
+ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${INNODB_DYNAMIC_CFLAGS} ${NO_SHADOW}
+ha_innodb_la_LIBADD=	libinnobase.la
 
 EXTRA_DIST=		CMakeLists.txt plug.in \
 			pars/make_bison.sh pars/make_flex.sh \
