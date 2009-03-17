@@ -2707,16 +2707,6 @@ void Session::reset_for_next_command()
   return;
 }
 
-
-/**
-  return true if the table was created explicitly.
-*/
-inline bool is_user_table(Table * table)
-{
-  const char *name= table->s->table_name.str;
-  return strncmp(name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH);
-}
-
 /*
   Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
   creates one DROP TEMPORARY Table binlog event for each pseudo-thread
