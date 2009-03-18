@@ -1949,7 +1949,7 @@ void handle_connections_sockets()
 
     for (uint32_t retry=0; retry < MAX_ACCEPT_RETRY; retry++)
     {
-      SOCKET_SIZE_TYPE length= sizeof(struct sockaddr_storage);
+      socklen_t length= sizeof(struct sockaddr_storage);
       new_sock= accept(sock, (struct sockaddr *)(&cAddr),
                        &length);
       if (new_sock != -1 || (errno != EINTR && errno != EAGAIN))
@@ -1967,7 +1967,7 @@ void handle_connections_sockets()
     }
 
     {
-      SOCKET_SIZE_TYPE dummyLen;
+      socklen_t dummyLen;
       struct sockaddr_storage dummy;
       dummyLen = sizeof(dummy);
       if (  getsockname(new_sock,(struct sockaddr *)&dummy,

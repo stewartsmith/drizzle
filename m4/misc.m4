@@ -1,46 +1,5 @@
 # Local macros for automake & autoconf
 
-#---START: Used in for client configure
-AC_DEFUN([DRIZZLE_TYPE_ACCEPT],
-[ac_save_CXXFLAGS="$CXXFLAGS"
-AC_CACHE_CHECK([base type of last arg to accept], mysql_cv_btype_last_arg_accept,
-AC_LANG_PUSH(C++)
-if test "$GXX" = "yes"
-then
-  # Add -Werror, remove -fbranch-probabilities (Bug #268)
-  CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-Wcheck//'`
-fi
-mysql_cv_btype_last_arg_accept=none
-[AC_TRY_COMPILE([#if defined(inline)
-#undef inline
-#endif
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-],
-[int a = accept(1, (struct sockaddr *) 0, (socklen_t *) 0); return (a != 0);],
-mysql_cv_btype_last_arg_accept=socklen_t)]
-if test "$mysql_cv_btype_last_arg_accept" = "none"; then
-[AC_TRY_COMPILE([#if defined(inline)
-#undef inline
-#endif
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-],
-[int a = accept(1, (struct sockaddr *) 0, (size_t *) 0); return (a != 0);],
-mysql_cv_btype_last_arg_accept=size_t)]
-fi
-if test "$mysql_cv_btype_last_arg_accept" = "none"; then
-mysql_cv_btype_last_arg_accept=int
-fi)
-AC_LANG_POP(C++)
-AC_DEFINE_UNQUOTED([SOCKET_SIZE_TYPE], [$mysql_cv_btype_last_arg_accept],
-                   [The base type of the last arg to accept])
-CXXFLAGS="$ac_save_CXXFLAGS"
-])
-#---END:
-
 
 #---START: Figure out whether to use 'struct rlimit' or 'struct rlimit64'
 AC_DEFUN([DRIZZLE_TYPE_STRUCT_RLIMIT],
