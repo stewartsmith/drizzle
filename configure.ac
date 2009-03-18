@@ -251,18 +251,17 @@ if test "$SUNCC" = "yes"
 then
   dnl we put CPPFLAGS and LDFLAGS first here, because if the user has specified
   dnl command line CPPFLAGS or LDFLAGS, their -I or -L should come _first_
-  isainfo_k=`isainfo -k`
   if test "$target_cpu" = "sparc"
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
-    IS_64="-m64"
-  else
-    if test "$isainfo_k" = "amd64"
-    then
-      IS_64="-m64"
-    fi
   fi
-  LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_k} -L/usr/local/lib -L/opt/csw/lib/${isainfo_k} -L/opt/csw/lib -L/usr/lib/${isainfo_k}"
+
+  isainfo_b=`isainfo -b`
+  if test "$isainfo_b" = "64"
+  then
+    IS_64="-m64"
+  fi
+  LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib -L/usr/lib/${isainfo_b}"
   CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
 
   CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
