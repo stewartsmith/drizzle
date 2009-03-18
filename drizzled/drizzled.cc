@@ -63,10 +63,6 @@
 #include <sys/prctl.h>
 #endif
 
-#ifndef DEFAULT_SKIP_THREAD_PRIORITY
-#define DEFAULT_SKIP_THREAD_PRIORITY 0
-#endif
-
 #include <libdrizzleclient/errmsg.h>
 #include <locale.h>
 
@@ -382,7 +378,7 @@ struct system_status_var global_status_var;
 MY_BITMAP temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
-const CHARSET_INFO *national_charset_info, *table_alias_charset;
+const CHARSET_INFO *table_alias_charset;
 const CHARSET_INFO *character_set_filesystem;
 
 MY_LOCALE *my_default_lc_time_names;
@@ -2028,7 +2024,6 @@ enum options_drizzled
   OPT_SOCKET,
   OPT_BIN_LOG,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
-  OPT_SKIP_PRIOR,
   OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
@@ -2238,11 +2233,6 @@ struct my_option my_long_options[] =
       "DEFAULT, BACKUP, FORCE or QUICK."),
    (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"new", 'n',
-   N_("Use very new possible 'unsafe' functions."),
-   (char**) &global_system_variables.new_mode,
-   (char**) &max_system_variables.new_mode,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"old-alter-table", OPT_OLD_ALTER_TABLE,
    N_("Use old, non-optimized alter table."),
    (char**) &global_system_variables.old_alter_table,
@@ -2283,10 +2273,6 @@ struct my_option my_long_options[] =
    N_("Don't print a stack trace on failure."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"skip-thread-priority", OPT_SKIP_PRIOR,
-   N_("Don't give threads different priorities."),
-   0, 0, 0, GET_NO_ARG, NO_ARG,
-   DEFAULT_SKIP_THREAD_PRIORITY, 0, 0, 0, 0, 0},
   {"symbolic-links", 's',
    N_("Enable symbolic link support."),
    (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
@@ -2828,7 +2814,6 @@ static void drizzle_init_variables(void)
   /* Character sets */
   system_charset_info= &my_charset_utf8_general_ci;
   files_charset_info= &my_charset_utf8_general_ci;
-  national_charset_info= &my_charset_utf8_general_ci;
   table_alias_charset= &my_charset_bin;
   character_set_filesystem= &my_charset_bin;
 
