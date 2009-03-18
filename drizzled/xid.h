@@ -80,9 +80,25 @@ struct st_drizzle_xid {
 };
 typedef struct st_drizzle_xid DRIZZLE_XID;
 
+enum xa_states {XA_NOTR=0, XA_ACTIVE, XA_IDLE, XA_PREPARED};
+extern const char *xa_state_names[];
 
 /* for recover() handlerton call */
 #define MIN_XID_LIST_SIZE  128
 #define MAX_XID_LIST_SIZE  (1024*128)
+
+typedef struct st_xid_state {
+  /* For now, this is only used to catch duplicated external xids */
+  XID  xid;                           // transaction identifier
+  enum xa_states xa_state;            // used by external XA only
+  bool in_session;
+} XID_STATE;
+
+bool xid_cache_init(void);
+void xid_cache_free(void);
+XID_STATE *xid_cache_search(XID *xid);
+bool xid_cache_insert(XID *xid, enum xa_states xa_state);
+bool xid_cache_insert(XID_STATE *xid_state);
+void xid_cache_delete(XID_STATE *xid_state);
 
 #endif /* DRIZZLED_XID_H */

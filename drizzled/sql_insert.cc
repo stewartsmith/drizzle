@@ -1732,7 +1732,7 @@ bool select_create::send_eof()
     if (!table->s->tmp_table)
     {
       ha_autocommit_or_rollback(session, 0);
-      end_active_trans(session);
+      (void) session->endActiveTransaction();
     }
 
     table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);

@@ -400,7 +400,7 @@ class buffpek_compare_functor
   public:
   buffpek_compare_functor(qsort_cmp2 in_key_compare, void *in_compare_arg)
     : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
-  inline bool operator()(BUFFPEK *i, BUFFPEK *j)
+  inline bool operator()(const BUFFPEK *i, const BUFFPEK *j)
   {
     return key_compare(key_compare_arg,
                     i->key, j->key);

@@ -53,6 +53,7 @@ static bool end_thread(Session *session, bool)
   thread_count--;
   pthread_mutex_unlock(&LOCK_thread_count);
 
+  my_thread_end();
   pthread_exit(0);
 
   return true; // We should never reach this point
