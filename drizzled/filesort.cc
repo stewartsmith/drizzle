@@ -683,7 +683,7 @@ static void make_sortkey(register SORTPARAM *param,
 {
   register Field *field;
   register SORT_FIELD *sort_field;
-  uint32_t length;
+  size_t length;
 
   for (sort_field=param->local_sortorder ;
        sort_field != param->end ;
