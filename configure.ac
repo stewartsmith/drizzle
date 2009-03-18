@@ -811,9 +811,8 @@ case "$with_atomic_ops" in
     AC_CACHE_CHECK(
       [whether the compiler provides atomic builtins],
       [ac_cv_gcc_atomic_builtins],
-      [AC_TRY_COMPILE([],
-        [int main()
-        {
+      [AC_RUN_IFELSE(
+        [AC_LANG_PROGRAM([],[[
           int foo= -10; int bar= 10;
           if (!__sync_fetch_and_add(&foo, bar) || foo)
             return -1;
@@ -824,7 +823,7 @@ case "$with_atomic_ops" in
           if (bar)
             return -1;
           return 0;
-        }],
+        ]])],
        [ac_cv_gcc_atomic_builtins=yes],
        [ac_cv_gcc_atomic_builtins=no])])
 
@@ -991,8 +990,11 @@ AC_CACHE_CHECK([args to pthread_getspecific], [mysql_cv_getspecific_args],
 #ifndef _POSIX_PTHREAD_SEMANTICS 
 #define _POSIX_PTHREAD_SEMANTICS 
 #endif
-#include <pthread.h> ]], [[ void *pthread_getspecific(pthread_key_t key);
-pthread_getspecific((pthread_key_t) NULL); ]])],
+#include <pthread.h>
+   ]], [[
+void *pthread_getspecific(pthread_key_t key);
+pthread_getspecific((pthread_key_t) NULL);
+   ]])],
     [mysql_cv_getspecific_args=POSIX],
     [mysql_cv_getspecific_args=other])])
   if test "$mysql_cv_getspecific_args" = "other"
