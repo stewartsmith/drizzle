@@ -1389,7 +1389,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
     return 1;
   drizzle_init_variables();
 
-#ifdef HAVE_TZNAME
   {
     struct tm tm_tmp;
     localtime_r(&server_start_time,&tm_tmp);
@@ -1397,7 +1396,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
             sizeof(system_time_zone)-1);
 
  }
-#endif
   /*
     We set SYSTEM time zone as reasonable default and
     also for failure of my_tz_init() and bootstrap mode.

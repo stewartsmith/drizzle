@@ -1,43 +1,6 @@
 # Local macros for automake & autoconf
 
 
-
-AC_DEFUN([DRIZZLE_TIMESPEC_TS],
-[AC_CACHE_CHECK([if struct timespec has a ts_sec member], mysql_cv_timespec_ts,
-[AC_TRY_COMPILE([#include <pthread.h>
-#ifdef __cplusplus
-extern "C"
-#endif
-],
-[struct timespec abstime;
-
-abstime.ts_sec = time(NULL)+1;
-abstime.ts_nsec = 0;
-], mysql_cv_timespec_ts=yes, mysql_cv_timespec_ts=no)])
-if test "$mysql_cv_timespec_ts" = "yes"
-then
-  AC_DEFINE([HAVE_TIMESPEC_TS_SEC], [1],
-            [Timespec has a ts_sec instead of tv_sev])
-fi
-])
-
-AC_DEFUN([DRIZZLE_TZNAME],
-[AC_CACHE_CHECK([if we have tzname variable], mysql_cv_tzname,
-[AC_TRY_COMPILE([#include <time.h>
-#ifdef __cplusplus
-extern "C"
-#endif
-],
-[ tzset();
-  return tzname[0] != 0;
-], mysql_cv_tzname=yes, mysql_cv_tzname=no)])
-if test "$mysql_cv_tzname" = "yes"
-then
-  AC_DEFINE([HAVE_TZNAME], [1], [Have the tzname variable])
-fi
-])
-
-
 AC_DEFUN([DRIZZLE_PTHREAD_YIELD],[
 # Some OSes like Mac OS X have that as a replacement for pthread_yield()
 AC_CHECK_FUNCS(pthread_yield_np, AC_DEFINE([HAVE_PTHREAD_YIELD_NP],[],[Define if you have pthread_yield_np]))

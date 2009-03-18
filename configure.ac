@@ -878,10 +878,7 @@ AC_C_BIGENDIAN
 DRIZZLE_STACK_DIRECTION
 # We want to skip alloca on irix unconditionally. It may work on some version..
 DRIZZLE_FUNC_ALLOCA
-# Do struct timespec have members tv_sec or ts_sec
-DRIZZLE_TIMESPEC_TS
-# Do we have the tzname variable
-DRIZZLE_TZNAME
+
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([uint, ulong])
 
