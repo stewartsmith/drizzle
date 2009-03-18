@@ -13106,7 +13106,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
           if (group)
           {
             rec_per_key= keyinfo->rec_per_key[used_key_parts-1];
-            set_if_bigger(rec_per_key, 1);
+            set_if_bigger(rec_per_key, 1.0);
             /*
               With a grouping query each group containing on average
               rec_per_key records produces only one row that will
@@ -13146,7 +13146,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
                                      (double) table_records /
                                       table->quick_condition_rows);
           rec_per_key= keyinfo->rec_per_key[keyinfo->key_parts-1];
-          set_if_bigger(rec_per_key, 1);
+          set_if_bigger(rec_per_key, 1.0);
           /*
             Here we take into account the fact that rows are
             accessed in sequences rec_per_key records in each.

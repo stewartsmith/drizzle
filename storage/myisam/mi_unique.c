@@ -152,7 +152,7 @@ int mi_unique_comp(MI_UNIQUEDEF *def, const unsigned char *a, const unsigned cha
   for (keyseg=def->seg ; keyseg < def->end ; keyseg++)
   {
     enum ha_base_keytype type=(enum ha_base_keytype) keyseg->type;
-    uint32_t a_length, b_length;
+    uint16_t a_length, b_length;
     a_length= b_length= keyseg->length;
 
     /* If part is NULL it's regarded as different */

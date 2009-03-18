@@ -367,7 +367,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       my_errno=HA_WRONG_CREATE_OPTION;
       goto err;
     }
-    set_if_bigger(max_key_block_length,keydef->block_length);
+    set_if_bigger(max_key_block_length,(uint32_t)keydef->block_length);
     keydef->keylength= (uint16_t) key_length;
     keydef->minlength= (uint16_t) (length-min_key_length_skip);
     keydef->maxlength= (uint16_t) length;

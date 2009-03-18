@@ -1072,7 +1072,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
         calculate_interval_lengths(cs, interval, &field_length, &dummy);
         sql_field->length= field_length;
       }
-      set_if_smaller(sql_field->length, MAX_FIELD_WIDTH-1);
+      set_if_smaller(sql_field->length, (uint32_t)MAX_FIELD_WIDTH-1);
     }
 
     sql_field->create_length_to_internal_length();

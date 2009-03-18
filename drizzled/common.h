@@ -296,7 +296,7 @@ enum enum_server_command
 #define MAX_INT_WIDTH           10      /* Max width for a LONG w.o. sign */
 #define MAX_BIGINT_WIDTH        20      /* Max width for a LONGLONG */
 #define MAX_CHAR_WIDTH		255	/* Max length for a CHAR colum */
-#define MAX_BLOB_WIDTH		16777216	/* Default width for blob */
+#define MAX_BLOB_WIDTH		(uint32_t)16777216	/* Default width for blob */
 
 #define DRIZZLE_PROTOCOL_NO_MORE_DATA 0xFE
 

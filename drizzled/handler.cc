@@ -1913,7 +1913,7 @@ int handler::update_auto_increment()
         {
           nb_desired_values= AUTO_INC_DEFAULT_NB_ROWS *
             (1 << nb_already_reserved_intervals);
-          set_if_smaller(nb_desired_values, AUTO_INC_DEFAULT_NB_MAX);
+          set_if_smaller(nb_desired_values, (uint64_t)AUTO_INC_DEFAULT_NB_MAX);
         }
         else
           nb_desired_values= AUTO_INC_DEFAULT_NB_MAX;
