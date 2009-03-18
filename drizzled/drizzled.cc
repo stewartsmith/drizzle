@@ -542,16 +542,8 @@ void close_connections(void)
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
-    if (tmp->drizzleclient_vio_ok())
-    {
-      if (global_system_variables.log_warnings)
-            errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
-                          tmp->thread_id,
-                          (tmp->security_ctx.user.c_str() ?
-                           tmp->security_ctx.user.c_str() : ""));
-      tmp->disconnect(0, false);
-    }
     (void) pthread_mutex_unlock(&LOCK_thread_count);
+    unlink_session(tmp);
   }
   /* All threads has now been aborted */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -987,6 +979,7 @@ void unlink_session(Session *session)
 
   pthread_mutex_lock(&LOCK_thread_count);
   connection_count--;
+  pthread_mutex_lock(&session->LOCK_delete);
   pthread_mutex_unlock(&LOCK_thread_count);
   delete session;
 
