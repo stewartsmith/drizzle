@@ -1,34 +1,6 @@
 # Local macros for automake & autoconf
 
 
-#---START: Figure out whether to use 'struct rlimit' or 'struct rlimit64'
-AC_DEFUN([DRIZZLE_TYPE_STRUCT_RLIMIT],
-[ac_save_CXXFLAGS="$CXXFLAGS"
-AC_CACHE_CHECK([struct type to use with setrlimit], mysql_cv_btype_struct_rlimit,
-AC_LANG_PUSH(C++)
-if test "$GXX" = "yes"
-then
-  # Add -Werror, remove -fbranch-probabilities (Bug #268)
-  CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-Wcheck//'`
-fi
-mysql_cv_btype_struct_rlimit=none
-[AC_TRY_COMPILE([#if defined(inline)
-#undef inline
-#endif
-#include <stdlib.h>
-#include <sys/resource.h>
-],
-[struct rlimit64 rl; setrlimit(RLIMIT_CORE, &rl);],
-mysql_cv_btype_struct_rlimit="struct rlimit64")]
-if test "$mysql_cv_btype_struct_rlimit" = "none"; then
-mysql_cv_btype_struct_rlimit="struct rlimit"
-fi)
-AC_LANG_POP(C++)
-AC_DEFINE_UNQUOTED([STRUCT_RLIMIT], [$mysql_cv_btype_struct_rlimit],
-                   [The struct rlimit type to use with setrlimit])
-CXXFLAGS="$ac_save_CXXFLAGS"
-])
-#---END:
 
 AC_DEFUN([DRIZZLE_TIMESPEC_TS],
 [AC_CACHE_CHECK([if struct timespec has a ts_sec member], mysql_cv_timespec_ts,

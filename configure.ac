@@ -873,12 +873,7 @@ DRIZZLE_CHECK_TIME_T
 
 # This always gives a warning. Ignore it unless you are cross compiling
 AC_C_BIGENDIAN
-#---START: Used in for client configure
-# Check base type of last arg to accept
-DRIZZLE_TYPE_ACCEPT
-#---END:
-# Figure out what type of struct rlimit to use with setrlimit
-DRIZZLE_TYPE_STRUCT_RLIMIT
+
 # Find where the stack goes
 DRIZZLE_STACK_DIRECTION
 # We want to skip alloca on irix unconditionally. It may work on some version..
