@@ -1895,11 +1895,7 @@ static void create_new_thread(Session *session)
     /* Can't use my_error() since store_globals has not been called. */
     snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
     net_send_error(session, ER_CANT_CREATE_THREAD, error_message_buff);
-    (void) pthread_mutex_lock(&LOCK_thread_count);
-    --connection_count;
-    session->disconnect(0, false);
-    delete session;
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
+    unlink_session(session);
   }
 }
 
