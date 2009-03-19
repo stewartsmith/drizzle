@@ -20,6 +20,7 @@
 
 #include <drizzled/configmake.h>
 #include <drizzled/server_includes.h>
+#include <drizzled/atomics.h>
 
 #include <netdb.h>
 #include <sys/poll.h>
@@ -433,7 +434,7 @@ extern scheduling_st thread_scheduler;
   Number of currently active user connections. The variable is protected by
   LOCK_thread_count.
 */
-uint32_t connection_count= 0;
+tbb::atomic<uint32_t> connection_count;
 
 /* Function declarations */
 
@@ -979,12 +980,13 @@ extern "C" void end_thread_signal(int )
 
 void unlink_session(Session *session)
 {
+  connection_count--;
+
   session->cleanup();
 
-  pthread_mutex_lock(&LOCK_thread_count);
-  connection_count--;
-  pthread_mutex_unlock(&LOCK_thread_count);
+  (void) pthread_mutex_lock(&LOCK_thread_count);
   delete session;
+  (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   return;
 }
@@ -1062,7 +1064,7 @@ extern "C" void handle_segfault(int sig)
   fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
   fprintf(stderr, "max_threads=%u\n", thread_scheduler.max_threads);
   fprintf(stderr, "thread_count=%u\n", thread_scheduler.count());
-  fprintf(stderr, "connection_count=%u\n", connection_count);
+  fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
                     "sort_buffer_size)*max_threads = %"PRIu64" K\n"
@@ -2861,6 +2863,8 @@ static void drizzle_init_variables(void)
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
     tmpenv = PREFIX;
   (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
+  
+  connection_count= 0;
 }
 
 
