@@ -3244,19 +3244,9 @@ function_call_nonkeyword:
         | SUBSTRING '(' expr FROM expr ')'
           { $$= new (YYSession->mem_root) Item_func_substr($3,$5); }
         | SYSDATE optional_braces
-          {
-            if (global_system_variables.sysdate_is_now == 0)
-              $$= new (YYSession->mem_root) Item_func_sysdate_local();
-            else
-              $$= new (YYSession->mem_root) Item_func_now_local();
-          }
+          { $$= new (YYSession->mem_root) Item_func_sysdate_local(); }
         | SYSDATE '(' expr ')'
-          {
-            if (global_system_variables.sysdate_is_now == 0)
-              $$= new (YYSession->mem_root) Item_func_sysdate_local($3);
-            else
-              $$= new (YYSession->mem_root) Item_func_now_local($3);
-          }
+          { $$= new (YYSession->mem_root) Item_func_sysdate_local($3); }
         | TIMESTAMP_ADD '(' interval_time_stamp ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($7,$5,$3,0); }
         | TIMESTAMP_DIFF '(' interval_time_stamp ',' expr ',' expr ')'

@@ -1,4 +1,0 @@
-set timestamp=1;
-SELECT NOW()-SYSDATE() as zero;
-zero
-0.000000

@@ -206,9 +206,6 @@ struct system_variables
   MY_LOCALE *lc_time_names;
 
   Time_zone *time_zone;
-
-  bool sysdate_is_now;
-
 };
 
 extern struct system_variables global_system_variables;

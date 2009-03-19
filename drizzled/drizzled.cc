@@ -2282,11 +2282,6 @@ struct my_option my_long_options[] =
      option if compiled with valgrind support.
    */
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
-  {"sysdate-is-now", OPT_SYSDATE_IS_NOW,
-   N_("Non-default option to alias SYSDATE() to NOW() to make it "
-      "safe-replicable."),
-   (char**) &global_system_variables.sysdate_is_now,
-   0, 0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"temp-pool", OPT_TEMP_POOL,
    N_("Using this option will cause most temporary files created to use a "
       "small set of names, rather than a unique name for each new file."),
