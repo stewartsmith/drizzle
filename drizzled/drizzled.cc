@@ -2341,12 +2341,6 @@ struct my_option my_long_options[] =
     (char**) &global_system_variables.group_concat_max_len,
     (char**) &max_system_variables.group_concat_max_len, 0, GET_UINT64,
     REQUIRED_ARG, 1024, 4, ULONG_MAX, 0, 1, 0},
-  { "interactive_timeout", OPT_INTERACTIVE_TIMEOUT,
-    N_("The number of seconds the server waits for activity on an interactive "
-       "connection before closing it."),
-   (char**) &global_system_variables.net_interactive_timeout,
-   (char**) &max_system_variables.net_interactive_timeout, 0,
-   GET_UINT32, REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   { "join_buffer_size", OPT_JOIN_BUFF_SIZE,
     N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,

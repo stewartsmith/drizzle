@@ -166,8 +166,6 @@ static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
 sys_var_str             sys_init_connect(&vars, "init_connect", 0,
                                          sys_update_init_connect,
                                          sys_default_init_connect,0);
-static sys_var_session_uint32_t	sys_interactive_timeout(&vars, "interactive_timeout",
-                                                        &SV::net_interactive_timeout);
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &SV::join_buff_size);
 static sys_var_key_buffer_size	sys_key_buffer_size(&vars, "key_buffer_size");
