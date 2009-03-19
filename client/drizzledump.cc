@@ -96,7 +96,8 @@ static bool  verbose= false, opt_no_create_info= false, opt_no_data= false,
 static bool debug_info_flag= false, debug_check_flag= false;
 static uint32_t opt_max_allowed_packet, opt_net_buffer_length, show_progress_size= 0;
 static uint64_t total_rows= 0;
-static DRIZZLE drizzleclient_connection, *drizzle= 0;
+static drizzle_st drizzle;
+static drizzle_con_st dcon;
 static string insert_pat;
 static char  *opt_password= NULL, *current_user= NULL,
              *current_host= NULL, *path= NULL, *fields_terminated= NULL,
@@ -415,10 +416,11 @@ static void maybe_exit(int error);
 static void die(int error, const char* reason, ...);
 static void maybe_die(int error, const char* reason, ...);
 static void write_header(FILE *sql_file, char *db_name);
-static void print_value(FILE *file, DRIZZLE_RES  *result, DRIZZLE_ROW row,
-                        const char *prefix,const char *name,
+static void print_value(FILE *file, drizzle_result_st *result,
+                        drizzle_row_t row, const char *prefix, const char *name,
                         int string_value);
-static const char* fetch_named_row(DRIZZLE_RES *result, DRIZZLE_ROW row, const char* name);
+static const char* fetch_named_row(drizzle_result_st *result, drizzle_row_t row,
+                                   const char* name);
 static int dump_selected_tables(char *db, char **table_names, int tables);
 static int dump_all_tables_in_db(char *db);
 static int init_dumping_tables(char *);
@@ -469,7 +471,7 @@ static void check_io(FILE *file)
 static void print_version(void)
 {
   printf(_("%s  Ver %s Distrib %s, for %s (%s)\n"),my_progname,DUMP_VERSION,
-         drizzleclient_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
+         drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
 } /* print_version */
 
 
@@ -522,15 +524,14 @@ static void write_header(FILE *sql_file, char *db_name)
     {
       fprintf(sql_file,
               "-- DRIZZLE dump %s  Distrib %s, for %s (%s)\n--\n",
-              DUMP_VERSION, drizzleclient_get_client_info(),
-              SYSTEM_TYPE, MACHINE_TYPE);
+              DUMP_VERSION, drizzle_version(), SYSTEM_TYPE, MACHINE_TYPE);
       fprintf(sql_file, "-- Host: %s    Database: %s\n",
               current_host ? current_host : "localhost", db_name ? db_name :
               "");
       fputs("-- ------------------------------------------------------\n",
             sql_file);
       fprintf(sql_file, "-- Server version\t%s\n",
-              drizzleclient_get_server_info(&drizzleclient_connection));
+              drizzle_con_server_version(&dcon));
     }
     if (opt_set_charset)
       fprintf(sql_file,
