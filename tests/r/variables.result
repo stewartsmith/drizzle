@@ -356,7 +356,6 @@ set global delay_key_write=1;
 select @@delay_key_write;
 @@delay_key_write
 ON
-set interactive_timeout=100;
 set join_buffer_size=100;
 Warnings:
 Error	1292	Truncated incorrect join_buffer_size value: '100'

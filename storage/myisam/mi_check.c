@@ -4082,7 +4082,8 @@ void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
       for some weird keys (e.g. FULLTEXT) tmp can be <1 here.
       let's ensure it is not
     */
-    set_if_bigger(tmp,1ULL);
+    if (tmp < 1)
+      tmp= 1;
     if (tmp >= (uint64_t) ~(ulong) 0)
       tmp=(uint64_t) ~(ulong) 0;
 

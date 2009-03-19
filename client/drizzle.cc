@@ -183,7 +183,7 @@ static uint32_t opt_max_allowed_packet, opt_net_buffer_length,
 static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
 static uint32_t my_end_arg;
 static char * opt_drizzle_unix_port= NULL;
-static int connect_flag= CLIENT_INTERACTIVE;
+static int connect_flag= 0;
 static char *current_host, *current_db, *current_user= NULL,
   *opt_password= NULL, *delimiter_str= NULL, *current_prompt= NULL;
 static char *histfile;
