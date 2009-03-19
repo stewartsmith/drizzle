@@ -542,16 +542,8 @@ void close_connections(void)
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
-    if (tmp->drizzleclient_vio_ok())
-    {
-      if (global_system_variables.log_warnings)
-            errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
-                          tmp->thread_id,
-                          (tmp->security_ctx.user.c_str() ?
-                           tmp->security_ctx.user.c_str() : ""));
-      tmp->disconnect(0, false);
-    }
     (void) pthread_mutex_unlock(&LOCK_thread_count);
+    unlink_session(tmp);
   }
   /* All threads has now been aborted */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -987,6 +979,7 @@ void unlink_session(Session *session)
 
   pthread_mutex_lock(&LOCK_thread_count);
   connection_count--;
+  pthread_mutex_lock(&session->LOCK_delete);
   pthread_mutex_unlock(&LOCK_thread_count);
   delete session;
 
@@ -1209,7 +1202,7 @@ static void init_signals(void)
   if (test_flags & TEST_CORE_ON_SIGNAL)
   {
     /* Change limits so that we will get a core file */
-    STRUCT_RLIMIT rl;
+    struct rlimit rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
         errmsg_printf(ERRMSG_LVL_WARN, _("setrlimit could not change the size of core files "
@@ -1396,7 +1389,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
     return 1;
   drizzle_init_variables();
 
-#ifdef HAVE_TZNAME
   {
     struct tm tm_tmp;
     localtime_r(&server_start_time,&tm_tmp);
@@ -1404,7 +1396,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
             sizeof(system_time_zone)-1);
 
  }
-#endif
   /*
     We set SYSTEM time zone as reasonable default and
     also for failure of my_tz_init() and bootstrap mode.
@@ -1956,7 +1947,7 @@ void handle_connections_sockets()
 
     for (uint32_t retry=0; retry < MAX_ACCEPT_RETRY; retry++)
     {
-      SOCKET_SIZE_TYPE length= sizeof(struct sockaddr_storage);
+      socklen_t length= sizeof(struct sockaddr_storage);
       new_sock= accept(sock, (struct sockaddr *)(&cAddr),
                        &length);
       if (new_sock != -1 || (errno != EINTR && errno != EAGAIN))
@@ -1974,7 +1965,7 @@ void handle_connections_sockets()
     }
 
     {
-      SOCKET_SIZE_TYPE dummyLen;
+      socklen_t dummyLen;
       struct sockaddr_storage dummy;
       dummyLen = sizeof(dummy);
       if (  getsockname(new_sock,(struct sockaddr *)&dummy,
