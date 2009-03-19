@@ -21,10 +21,7 @@
 #ifndef DRIZZLED_TABLE_IDENT_H
 #define DRIZZLED_TABLE_IDENT_H
 
-
-
 /* Structure for db & table in sql_yacc */
-
 class Table_ident :public Sql_alloc
 {
 public:

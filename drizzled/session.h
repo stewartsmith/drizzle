@@ -50,7 +50,6 @@ class user_var_entry;
 class Copy_field;
 class Table_ident;
 
-
 extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
