@@ -458,7 +458,7 @@ public:
   uint32_t table_join_options;
   uint32_t in_sum_expr;
   uint32_t select_number; /* number of select (used for EXPLAIN) */
-  int nest_level;     /* nesting level of select */
+  int8_t nest_level;     /* nesting level of select */
   Item_sum *inner_sum_func_list; /* list of sum func in nested selects */
   uint32_t with_wild; /* item list contain '*' */
   bool  braces;   	/* SELECT ... UNION (SELECT ... ) <- this braces */
