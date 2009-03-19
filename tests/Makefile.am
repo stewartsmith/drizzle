@@ -77,28 +77,8 @@ test-run:
 
 
 .PHONY: test \
-    test-force \
-    test-full \
-    test-force-full \
-    test-force-mem \
-    test-pl \
-    test-force-pl \
-    test-full-pl \
-    test-force-full-pl \
-    test-force-pl-mem \
-    test-ps test-nr \
-    test-pr test-ns \
-    test-binlog-statement \
-    test-ext-funcs \
-    test-ext-rpl \
-    test-ext-jp \
-    test-ext-stress \
-    test-ext \
-    test-embedded \
-    test-fast \
-    test-fast-cursor \
-    test-fast-view \
-    test-full-qa
+	test-drizzle \
+	test-big
 
 # Target 'test' will run the regression test suite using the built server.
 #
@@ -115,6 +95,9 @@ test: test-drizzle
 
 test-drizzle:
 	  $(TEST_RUN) --fast --force --suite=main,vcol
+
+test-big:
+	  $(TEST_RUN) --fast --force --big-test --suite=big
 
 distclean-local:
 	rm -rf var

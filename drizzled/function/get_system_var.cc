@@ -80,7 +80,7 @@ Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
     }
   }
 
-  set_if_smaller(component_name->length, MAX_SYS_VAR_LENGTH);
+  set_if_smaller(component_name->length, (size_t)MAX_SYS_VAR_LENGTH);
 
   return new Item_func_get_system_var(var, var_type, component_name,
                                       NULL, 0);

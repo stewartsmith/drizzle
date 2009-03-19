@@ -587,10 +587,17 @@ void Session::cleanup(void)
 Session::~Session()
 {
   Session_CHECK_SENTRY(this);
-  /* Ensure that no one is using Session */
-  pthread_mutex_lock(&LOCK_delete);
-  pthread_mutex_unlock(&LOCK_delete);
   add_to_status(&global_status_var, &status_var);
+
+  if (drizzleclient_vio_ok())
+  {
+    if (global_system_variables.log_warnings)
+        errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
+                      thread_id,
+                      (security_ctx.user.c_str() ?
+                       security_ctx.user.c_str() : ""));
+    disconnect(0, false);
+  }
 
   /* Close connection */
   if (net.vio)
@@ -612,12 +619,14 @@ Session::~Session()
   free_root(&warn_root,MYF(0));
   free_root(&transaction.mem_root,MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
-  pthread_mutex_destroy(&LOCK_delete);
   dbug_sentry= Session_SENTRY_GONE;
 
   free_root(&main_mem_root, MYF(0));
   pthread_setspecific(THR_Session,  0);
-  return;
+
+  /* Ensure that no one is using Session */
+  pthread_mutex_unlock(&LOCK_delete);
+  pthread_mutex_destroy(&LOCK_delete);
 }
 
 
@@ -926,8 +935,6 @@ bool Session::check_connection()
     return false;
   }
 
-  if (client_capabilities & CLIENT_INTERACTIVE)
-    variables.net_wait_timeout= variables.net_interactive_timeout;
   if ((client_capabilities & CLIENT_TRANSACTIONS) && opt_using_transactions)
     net.return_status= &server_status;
 

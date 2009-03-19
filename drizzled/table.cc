@@ -4239,7 +4239,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                                      session->variables.max_heap_table_size) :
                                  session->variables.tmp_table_size) /
 			         share->reclength);
-  set_if_bigger(share->max_rows,1);		// For dummy start options
+  set_if_bigger(share->max_rows,(ha_rows)1);	// For dummy start options
   /*
     Push the LIMIT clause to the temporary table creation, so that we
     materialize only up to 'rows_limit' records instead of all result records.

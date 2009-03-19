@@ -140,7 +140,6 @@ struct system_variables
   uint64_t min_examined_row_limit;
   uint32_t myisam_stats_method;
   uint32_t net_buffer_length;
-  uint32_t net_interactive_timeout;
   uint32_t net_read_timeout;
   uint32_t net_retry_count;
   uint32_t net_wait_timeout;
@@ -207,9 +206,6 @@ struct system_variables
   MY_LOCALE *lc_time_names;
 
   Time_zone *time_zone;
-
-  bool sysdate_is_now;
-
 };
 
 extern struct system_variables global_system_variables;
