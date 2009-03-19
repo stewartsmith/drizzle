@@ -63,10 +63,6 @@
 #include <sys/prctl.h>
 #endif
 
-#ifndef DEFAULT_SKIP_THREAD_PRIORITY
-#define DEFAULT_SKIP_THREAD_PRIORITY 0
-#endif
-
 #include <libdrizzleclient/errmsg.h>
 #include <locale.h>
 
@@ -382,7 +378,7 @@ struct system_status_var global_status_var;
 MY_BITMAP temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
-const CHARSET_INFO *national_charset_info, *table_alias_charset;
+const CHARSET_INFO *table_alias_charset;
 const CHARSET_INFO *character_set_filesystem;
 
 MY_LOCALE *my_default_lc_time_names;
@@ -2019,7 +2015,6 @@ enum options_drizzled
   OPT_SOCKET,
   OPT_BIN_LOG,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
-  OPT_SKIP_PRIOR,
   OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
@@ -2229,11 +2224,6 @@ struct my_option my_long_options[] =
       "DEFAULT, BACKUP, FORCE or QUICK."),
    (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"new", 'n',
-   N_("Use very new possible 'unsafe' functions."),
-   (char**) &global_system_variables.new_mode,
-   (char**) &max_system_variables.new_mode,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"old-alter-table", OPT_OLD_ALTER_TABLE,
    N_("Use old, non-optimized alter table."),
    (char**) &global_system_variables.old_alter_table,
@@ -2274,10 +2264,6 @@ struct my_option my_long_options[] =
    N_("Don't print a stack trace on failure."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"skip-thread-priority", OPT_SKIP_PRIOR,
-   N_("Don't give threads different priorities."),
-   0, 0, 0, GET_NO_ARG, NO_ARG,
-   DEFAULT_SKIP_THREAD_PRIORITY, 0, 0, 0, 0, 0},
   {"symbolic-links", 's',
    N_("Enable symbolic link support."),
    (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
@@ -2287,11 +2273,6 @@ struct my_option my_long_options[] =
      option if compiled with valgrind support.
    */
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
-  {"sysdate-is-now", OPT_SYSDATE_IS_NOW,
-   N_("Non-default option to alias SYSDATE() to NOW() to make it "
-      "safe-replicable."),
-   (char**) &global_system_variables.sysdate_is_now,
-   0, 0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"temp-pool", OPT_TEMP_POOL,
    N_("Using this option will cause most temporary files created to use a "
       "small set of names, rather than a unique name for each new file."),
@@ -2346,12 +2327,6 @@ struct my_option my_long_options[] =
     (char**) &global_system_variables.group_concat_max_len,
     (char**) &max_system_variables.group_concat_max_len, 0, GET_UINT64,
     REQUIRED_ARG, 1024, 4, ULONG_MAX, 0, 1, 0},
-  { "interactive_timeout", OPT_INTERACTIVE_TIMEOUT,
-    N_("The number of seconds the server waits for activity on an interactive "
-       "connection before closing it."),
-   (char**) &global_system_variables.net_interactive_timeout,
-   (char**) &max_system_variables.net_interactive_timeout, 0,
-   GET_UINT32, REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   { "join_buffer_size", OPT_JOIN_BUFF_SIZE,
     N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,
@@ -2819,7 +2794,6 @@ static void drizzle_init_variables(void)
   /* Character sets */
   system_charset_info= &my_charset_utf8_general_ci;
   files_charset_info= &my_charset_utf8_general_ci;
-  national_charset_info= &my_charset_utf8_general_ci;
   table_alias_charset= &my_charset_bin;
   character_set_filesystem= &my_charset_bin;
 

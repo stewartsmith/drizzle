@@ -217,7 +217,6 @@ enum enum_server_command
 #define CLIENT_ODBC		64	/* Odbc client */
 #define CLIENT_IGNORE_SPACE	256	/* Ignore spaces before '(' */
 #define UNUSED_CLIENT_PROTOCOL_41	512	/* New 4.1 protocol */
-#define CLIENT_INTERACTIVE	1024	/* This is an interactive client */
 #define CLIENT_SSL              2048	/* Switch to SSL after handshake */
 #define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
 #define CLIENT_TRANSACTIONS	8192	/* Client knows about transactions */
@@ -238,7 +237,6 @@ enum enum_server_command
                            CLIENT_COMPRESS | \
                            CLIENT_ODBC | \
                            CLIENT_IGNORE_SPACE | \
-                           CLIENT_INTERACTIVE | \
                            CLIENT_SSL | \
                            CLIENT_IGNORE_SIGPIPE | \
                            CLIENT_TRANSACTIONS | \

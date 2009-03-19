@@ -935,8 +935,6 @@ bool Session::check_connection()
     return false;
   }
 
-  if (client_capabilities & CLIENT_INTERACTIVE)
-    variables.net_wait_timeout= variables.net_interactive_timeout;
   if ((client_capabilities & CLIENT_TRANSACTIONS) && opt_using_transactions)
     net.return_status= &server_status;
 
