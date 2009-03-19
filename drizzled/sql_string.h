@@ -24,7 +24,7 @@
 
 
 #ifndef NOT_FIXED_DEC
-#define NOT_FIXED_DEC			31
+#define NOT_FIXED_DEC			(uint8_t)31
 #endif
 
 #include <drizzled/common.h>

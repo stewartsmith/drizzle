@@ -1356,7 +1356,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
     char hexbuf[7];
     enum DRIZZLE_ERROR::enum_warning_level level;
     uint32_t diff= str->length() - wlen;
-    set_if_smaller(diff, 3);
+    set_if_smaller(diff, 3U);
     drizzleclient_drizzleclient_octet2hex(hexbuf, str->ptr() + wlen, diff);
     if (send_error)
     {

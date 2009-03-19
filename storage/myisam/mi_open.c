@@ -263,7 +263,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	disk_pos=mi_keydef_read(disk_pos, &share->keyinfo[i]);
         disk_pos_assert(disk_pos + share->keyinfo[i].keysegs * HA_KEYSEG_SIZE,
  			end_pos);
-	set_if_smaller(share->blocksize,share->keyinfo[i].block_length);
+	set_if_smaller(share->blocksize,(uint)share->keyinfo[i].block_length);
 	share->keyinfo[i].seg=pos;
 	for (j=0 ; j < share->keyinfo[i].keysegs; j++,pos++)
 	{
