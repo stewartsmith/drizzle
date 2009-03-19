@@ -141,7 +141,6 @@ extern ulong log_output_options;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
 extern uint32_t volatile thread_running, global_read_lock;
-extern uint32_t connection_count;
 extern bool opt_sql_bin_update;
 extern bool opt_safe_user_create;
 extern bool opt_no_mix_types;

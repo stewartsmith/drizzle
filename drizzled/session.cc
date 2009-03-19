@@ -624,8 +624,6 @@ Session::~Session()
   free_root(&main_mem_root, MYF(0));
   pthread_setspecific(THR_Session,  0);
 
-  /* Ensure that no one is using Session */
-  pthread_mutex_unlock(&LOCK_delete);
   pthread_mutex_destroy(&LOCK_delete);
 }
 
