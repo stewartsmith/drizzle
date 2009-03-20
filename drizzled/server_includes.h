@@ -133,7 +133,6 @@ extern uint32_t protocol_version, drizzled_port, dropping_tables;
 extern uint32_t delay_key_write_options;
 extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;
-extern bool opt_using_transactions;
 extern bool using_update_log, server_id_supplied;
 extern bool opt_update_log, opt_bin_log;
 extern bool opt_log;

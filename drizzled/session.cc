@@ -855,8 +855,6 @@ bool Session::check_connection()
 
     server_capabilites= CLIENT_BASIC_FLAGS;
 
-    if (opt_using_transactions)
-      server_capabilites|= CLIENT_TRANSACTIONS;
 #ifdef HAVE_COMPRESS
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
@@ -936,8 +934,7 @@ bool Session::check_connection()
     return false;
   }
 
-  if ((client_capabilities & CLIENT_TRANSACTIONS) && opt_using_transactions)
-    net.return_status= &server_status;
+  net.return_status= &server_status;
 
   char *user= end;
   char *passwd= strchr(user, '\0')+1;

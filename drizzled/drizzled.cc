@@ -248,7 +248,6 @@ bool opt_bin_log;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
-bool opt_using_transactions;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
 bool opt_local_infile;
@@ -2758,7 +2757,6 @@ static void drizzle_init_variables(void)
   test_flags= select_errors= dropping_tables= ha_open_options=0;
   wake_thread=0;
   opt_endinfo= using_udf_functions= 0;
-  opt_using_transactions= false;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;

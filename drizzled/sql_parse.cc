@@ -1460,7 +1460,7 @@ end_with_restore_list:
     break;
   }
   case SQLCOM_SAVEPOINT:
-    if (!(session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) || !opt_using_transactions)
+    if (!(session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
       session->my_ok();
     else
     {

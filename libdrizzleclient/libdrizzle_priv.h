@@ -25,9 +25,7 @@
 
 #include <sys/socket.h>
 
-#define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG |  \
-                             CLIENT_TRANSACTIONS |                      \
-                             CLIENT_SECURE_CONNECTION)
+#define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG | CLIENT_SECURE_CONNECTION)
 
 #if !defined(__GNUC__) || (__GNUC__ == 2 && __GNUC_MINOR__ < 96)
 #define __builtin_expect(x, expected_value) (x)

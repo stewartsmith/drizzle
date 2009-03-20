@@ -165,7 +165,6 @@ int ha_init()
     binary log (which is considered a transaction-capable storage engine in
     counting total_ha)
   */
-  opt_using_transactions= total_ha>(uint32_t)opt_bin_log;
   savepoint_alloc_size+= sizeof(SAVEPOINT);
   return(error);
 }
