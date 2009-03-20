@@ -531,6 +531,19 @@ public:
   bool scans_inited;
 };
 
+class compare_functor
+{
+  QUICK_ROR_UNION_SELECT *self;
+  public:
+  compare_functor(QUICK_ROR_UNION_SELECT *in_arg)
+    : self(in_arg) { }
+  inline bool operator()(const QUICK_SELECT_I *i, const QUICK_SELECT_I *j) const
+  {
+    return self->head->file->cmp_ref(i->last_rowid,
+                                     j->last_rowid);
+  }
+};
+
 
 /*
   Rowid-Ordered Retrieval index union select.
