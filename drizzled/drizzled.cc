@@ -544,9 +544,6 @@ void close_connections(void)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
     unlink_session(tmp);
   }
-  /* All threads has now been aborted */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-
   assert(session_list.is_empty());
 }
 
