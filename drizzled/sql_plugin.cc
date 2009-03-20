@@ -1192,9 +1192,13 @@ void plugin_shutdown(void)
   return;
 }
 
-
-bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
-                       int type, uint32_t state_mask, void *arg)
+/**
+ *
+ * state_mask: defaults to PLUGIN_IS_READY
+ */
+bool plugin_foreach(Session *session, plugin_foreach_func *func,
+                    int type, void *arg,
+                    uint32_t state_mask)
 {
   uint32_t idx;
   struct st_plugin_int *plugin;
@@ -1206,7 +1210,7 @@ bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
 
   state_mask= ~state_mask; // do it only once
 
-  
+
   if (type == DRIZZLE_ANY_PLUGIN)
   {
     plugins.reserve(plugin_array.elements);
