@@ -150,6 +150,7 @@ class Logging_syslog: public Logging_handler
 static int logging_syslog_plugin_init(void *p)
 {
   Logging_syslog **handler= static_cast<Logging_syslog **>(p);
+  *handler= NULL;
 
   syslog_facility= -1;
   for (int ndx= 0; facilitynames[ndx].c_name; ndx++)

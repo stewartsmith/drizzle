@@ -257,6 +257,7 @@ class Logging_query: public Logging_handler
 static int logging_query_plugin_init(void *p)
 {
   Logging_handler **handler= static_cast<Logging_handler **>(p);
+  *handler= NULL;
 
   if (sysvar_logging_query_filename == NULL)
   {
