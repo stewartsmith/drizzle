@@ -78,9 +78,6 @@ NULL
 select table_type from information_schema.tables
 where table_schema="mysql" and table_name="user";
 table_type
-show global status like "Threads_running";
-Variable_name	Value
-Threads_running	#
 select table_schema,table_name, column_name from
 information_schema.columns 
 where data_type = 'longtext';

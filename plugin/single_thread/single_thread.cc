@@ -39,8 +39,6 @@ static bool init_new_connection_thread(void) {return 0;}
 
 bool add_connection(Session *session)
 {
-  safe_mutex_assert_owner(&LOCK_thread_count);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
   handle_one_connection((void*) session);
 
   return false;

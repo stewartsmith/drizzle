@@ -46,7 +46,6 @@ const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
 
-
 /*****************************************************************************
 ** Instansiate templates
 *****************************************************************************/
@@ -63,11 +62,9 @@ template class List<Alter_column>;
 template class List_iterator<Alter_column>;
 #endif
 
-
 /****************************************************************************
 ** User variables
 ****************************************************************************/
-
 extern "C" unsigned char *get_var_key(user_var_entry *entry, size_t *length,
                               bool )
 {
@@ -89,160 +86,6 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
          field_name.length == other.field_name.length &&
          !strcmp(field_name.str, other.field_name.str);
 }
-
-/**
-  Construct an (almost) deep copy of this key. Only those
-  elements that are known to never change are not copied.
-  If out of memory, a partial copy is returned and an error is set
-  in Session.
-*/
-
-Key::Key(const Key &rhs, MEM_ROOT *mem_root)
-  :type(rhs.type),
-  key_create_info(rhs.key_create_info),
-  columns(rhs.columns, mem_root),
-  name(rhs.name),
-  generated(rhs.generated)
-{
-  list_copy_and_replace_each_value(columns, mem_root);
-}
-
-/**
-  Construct an (almost) deep copy of this foreign key. Only those
-  elements that are known to never change are not copied.
-  If out of memory, a partial copy is returned and an error is set
-  in Session.
-*/
-
-Foreign_key::Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root)
-  :Key(rhs),
-  ref_table(rhs.ref_table),
-  ref_columns(rhs.ref_columns),
-  delete_opt(rhs.delete_opt),
-  update_opt(rhs.update_opt),
-  match_opt(rhs.match_opt)
-{
-  list_copy_and_replace_each_value(ref_columns, mem_root);
-}
-
-/*
-  Test if a foreign key (= generated key) is a prefix of the given key
-  (ignoring key name, key type and order of columns)
-
-  NOTES:
-    This is only used to test if an index for a FOREIGN KEY exists
-
-  IMPLEMENTATION
-    We only compare field names
-
-  RETURN
-    0	Generated key is a prefix of other key
-    1	Not equal
-*/
-
-bool foreign_key_prefix(Key *a, Key *b)
-{
-  /* Ensure that 'a' is the generated key */
-  if (a->generated)
-  {
-    if (b->generated && a->columns.elements > b->columns.elements)
-      std::swap(a, b);                       // Put shorter key in 'a'
-  }
-  else
-  {
-    if (!b->generated)
-      return true;                              // No foreign key
-    std::swap(a, b);                       // Put generated key in 'a'
-  }
-
-  /* Test if 'a' is a prefix of 'b' */
-  if (a->columns.elements > b->columns.elements)
-    return true;                                // Can't be prefix
-
-  List_iterator<Key_part_spec> col_it1(a->columns);
-  List_iterator<Key_part_spec> col_it2(b->columns);
-  const Key_part_spec *col1, *col2;
-
-#ifdef ENABLE_WHEN_INNODB_CAN_HANDLE_SWAPED_FOREIGN_KEY_COLUMNS
-  while ((col1= col_it1++))
-  {
-    bool found= 0;
-    col_it2.rewind();
-    while ((col2= col_it2++))
-    {
-      if (*col1 == *col2)
-      {
-        found= true;
-	break;
-      }
-    }
-    if (!found)
-      return true;                              // Error
-  }
-  return false;                                 // Is prefix
-#else
-  while ((col1= col_it1++))
-  {
-    col2= col_it2++;
-    if (!(*col1 == *col2))
-      return true;
-  }
-  return false;                                 // Is prefix
-#endif
-}
-
-
-/*
-  Check if the foreign key options are compatible with columns
-  on which the FK is created.
-
-  RETURN
-    0   Key valid
-    1   Key invalid
-*/
-bool Foreign_key::validate(List<Create_field> &table_fields)
-{
-  Create_field  *sql_field;
-  Key_part_spec *column;
-  List_iterator<Key_part_spec> cols(columns);
-  List_iterator<Create_field> it(table_fields);
-  while ((column= cols++))
-  {
-    it.rewind();
-    while ((sql_field= it++) &&
-           my_strcasecmp(system_charset_info,
-                         column->field_name.str,
-                         sql_field->field_name)) {}
-    if (!sql_field)
-    {
-      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
-      return true;
-    }
-    if (type == Key::FOREIGN_KEY && sql_field->vcol_info)
-    {
-      if (delete_opt == FK_OPTION_SET_NULL)
-      {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
-                 "ON DELETE SET NULL");
-        return true;
-      }
-      if (update_opt == FK_OPTION_SET_NULL)
-      {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
-                 "ON UPDATE SET NULL");
-        return true;
-      }
-      if (update_opt == FK_OPTION_CASCADE)
-      {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
-                 "ON UPDATE CASCADE");
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 
 /****************************************************************************
 ** Thread specific functions
@@ -855,8 +698,6 @@ bool Session::check_connection()
 
     server_capabilites= CLIENT_BASIC_FLAGS;
 
-    if (opt_using_transactions)
-      server_capabilites|= CLIENT_TRANSACTIONS;
 #ifdef HAVE_COMPRESS
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
@@ -936,8 +777,7 @@ bool Session::check_connection()
     return false;
   }
 
-  if ((client_capabilities & CLIENT_TRANSACTIONS) && opt_using_transactions)
-    net.return_status= &server_status;
+  net.return_status= &server_status;
 
   char *user= end;
   char *passwd= strchr(user, '\0')+1;
@@ -1540,68 +1380,6 @@ int Session::send_explain_fields(select_result *result)
   return (result->send_fields(field_list,
                               Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF));
 }
-
-
-struct Item_change_record: public ilink
-{
-  Item **place;
-  Item *old_value;
-  /* Placement new was hidden by `new' in ilink (TODO: check): */
-  static void *operator new(size_t ,
-                            void *mem)
-    { return mem; }
-  static void operator delete(void *,
-                              size_t )
-    {}
-  static void operator delete(void *,
-                              void *)
-    { /* never called */ }
-};
-
-
-/*
-  Register an item tree tree transformation, performed by the query
-  optimizer. We need a pointer to runtime_memroot because it may be !=
-  session->mem_root (this may no longer be a true statement)
-*/
-
-void Session::nocheck_register_item_tree_change(Item **place, Item *old_value,
-                                            MEM_ROOT *runtime_memroot)
-{
-  Item_change_record *change;
-  /*
-    Now we use one node per change, which adds some memory overhead,
-    but still is rather fast as we use alloc_root for allocations.
-    A list of item tree changes of an average query should be short.
-  */
-  void *change_mem= alloc_root(runtime_memroot, sizeof(*change));
-  if (change_mem == 0)
-  {
-    /*
-      OOM, session->fatal_error() is called by the error handler of the
-      memroot. Just return.
-    */
-    return;
-  }
-  change= new (change_mem) Item_change_record;
-  change->place= place;
-  change->old_value= old_value;
-  change_list.append(change);
-}
-
-
-void Session::rollback_item_tree_changes()
-{
-  I_List_iterator<Item_change_record> it(change_list);
-  Item_change_record *change;
-
-  while ((change= it++))
-    *change->place= change->old_value;
-  /* We can forget about changes memory: it's allocated in runtime memroot */
-  change_list.empty();
-  return;
-}
-
 
 /************************************************************************
   Handling writing to file
