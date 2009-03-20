@@ -83,6 +83,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
+		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
 		function/found_rows.h \
