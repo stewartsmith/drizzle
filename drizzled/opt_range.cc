@@ -1485,6 +1485,18 @@ QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param,
   session_param->mem_root= &alloc;
 }
 
+class compare_functor
+{
+  QUICK_ROR_UNION_SELECT *self;
+  public:
+  compare_functor(QUICK_ROR_UNION_SELECT *in_arg)
+    : self(in_arg) { }
+  inline bool operator()(const QUICK_SELECT_I *i, const QUICK_SELECT_I *j) const
+  {
+    return self->head->file->cmp_ref(i->last_rowid,
+                                     j->last_rowid);
+  }
+};
 
 /*
   Do post-constructor initialization.
@@ -1498,14 +1510,6 @@ QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param,
 
 int QUICK_ROR_UNION_SELECT::init()
 {
-  if (init_queue(&queue, quick_selects.elements, 0,
-                 false, quick_ror_union_select_queue_cmp,
-                 (void*) this))
-  {
-    memset(&queue, 0, sizeof(QUEUE));
-    return 0;
-  }
-
   if (!(cur_rowid= (unsigned char*) alloc_root(&alloc, 2*head->file->ref_length)))
     return 0;
   prev_rowid= cur_rowid + head->file->ref_length;
@@ -1557,7 +1561,8 @@ int QUICK_ROR_UNION_SELECT::reset()
     }
     scans_inited= true;
   }
-  queue_remove_all(&queue);
+  while (!queue.empty())
+    queue.pop();
   /*
     Initialize scans for merged quick selects and put all merged quick
     selects into the queue.
@@ -1574,7 +1579,7 @@ int QUICK_ROR_UNION_SELECT::reset()
       return(error);
     }
     quick->save_last_pos();
-    queue_insert(&queue, (unsigned char*)quick);
+    queue.insert(quick);
   }
 
   if (head->file->ha_rnd_init(1))
@@ -1594,7 +1599,8 @@ QUICK_ROR_UNION_SELECT::push_quick_back(QUICK_SELECT_I *quick_sel_range)
 
 QUICK_ROR_UNION_SELECT::~QUICK_ROR_UNION_SELECT()
 {
-  delete_queue(&queue);
+  while (!queue.empty())
+    queue.pop();
   quick_selects.delete_elements();
   if (head->file->inited != handler::NONE)
     head->file->ha_rnd_end();
@@ -7059,11 +7065,11 @@ int QUICK_ROR_UNION_SELECT::get_next()
   {
     do
     {
-      if (!queue.elements)
+      if (queue.empty())
         return(HA_ERR_END_OF_FILE);
       /* Ok, we have a queue with >= 1 scans */
 
-      quick= (QUICK_SELECT_I*)queue_top(&queue);
+      quick= queue.top();
       memcpy(cur_rowid, quick->last_rowid, rowid_length);
 
       /* put into queue rowid from the same stream as top element */
@@ -7071,12 +7077,13 @@ int QUICK_ROR_UNION_SELECT::get_next()
       {
         if (error != HA_ERR_END_OF_FILE)
           return(error);
-        queue_remove(&queue, 0);
+        queue.pop();
       }
       else
       {
         quick->save_last_pos();
-        queue_replaced(&queue);
+        queue.pop();
+        queue.push(quick);
       }
 
       if (!have_prev_rowid)

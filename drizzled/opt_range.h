@@ -564,7 +564,9 @@ public:
 
   List<QUICK_SELECT_I> quick_selects; /* Merged quick selects */
 
-  QUEUE queue;    /* Priority queue for merge operation */
+  //QUEUE queue;    /* Priority queue for merge operation */
+  std::priority_queue 
+    queue(compare_functor(self));
   MEM_ROOT alloc; /* Memory pool for this and merged quick selects data. */
 
   Session *session;             /* current thread */
