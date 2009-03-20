@@ -249,7 +249,6 @@ bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-bool opt_local_infile;
 uint32_t max_used_connections;
 const char *opt_scheduler= "multi_thread";
 
@@ -1993,7 +1992,6 @@ enum options_drizzled
   OPT_ISAM_LOG=256,
   OPT_SOCKET,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
-  OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
   OPT_DELAY_KEY_WRITE_ALL,
@@ -2010,16 +2008,14 @@ enum options_drizzled
   OPT_LOCAL_INFILE,
   OPT_BACK_LOG,
   OPT_CONNECT_TIMEOUT,
-  OPT_FLUSH_TIME,
-  OPT_INTERACTIVE_TIMEOUT, OPT_JOIN_BUFF_SIZE,
+  OPT_JOIN_BUFF_SIZE,
   OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
-  OPT_LONG_QUERY_TIME,
-  OPT_LOWER_CASE_TABLE_NAMES, OPT_MAX_ALLOWED_PACKET,
+  OPT_MAX_ALLOWED_PACKET,
   OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
   OPT_MAX_JOIN_SIZE,
-  OPT_MAX_RELAY_LOG_SIZE, OPT_MAX_SORT_LENGTH,
+  OPT_MAX_SORT_LENGTH,
   OPT_MAX_SEEKS_FOR_KEY, OPT_MAX_TMP_TABLES, OPT_MAX_USER_CONNECTIONS,
   OPT_MAX_LENGTH_FOR_SORT_DATA,
   OPT_MAX_WRITE_LOCK_COUNT, OPT_BULK_INSERT_BUFFER_SIZE,
@@ -2047,11 +2043,9 @@ enum options_drizzled
   OPT_LC_TIME_NAMES,
   OPT_INIT_CONNECT,
   OPT_DEFAULT_TIME_ZONE,
-  OPT_SYSDATE_IS_NOW,
   OPT_OPTIMIZER_SEARCH_DEPTH,
   OPT_SCHEDULER,
   OPT_OPTIMIZER_PRUNE_LEVEL,
-  OPT_UPDATABLE_VIEWS_WITH_LIMIT,
   OPT_AUTO_INCREMENT, OPT_AUTO_INCREMENT_OFFSET,
   OPT_ENABLE_LARGE_PAGES,
   OPT_TIMED_MUTEXES,
@@ -2061,8 +2055,7 @@ enum options_drizzled
   OPT_PORT_OPEN_TIMEOUT,
   OPT_KEEP_FILES_ON_CREATE,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT,
-  OPT_OLD_MODE
+  OPT_MIN_EXAMINED_ROW_LIMIT
 };
 
 
@@ -2149,9 +2142,6 @@ struct my_option my_long_options[] =
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),
    0, 0, 0, GET_LONG, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"flush", OPT_FLUSH,
-   N_("Flush tables to disk between SQL commands."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   /* We must always support the next option to make scripts like mysqltest
      easier to do */
   {"gdb", OPT_DEBUGGING,
@@ -2175,11 +2165,6 @@ struct my_option my_long_options[] =
    (char**) &lc_time_names_name,
    (char**) &lc_time_names_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"local-infile", OPT_LOCAL_INFILE,
-   N_("Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."),
-   (char**) &opt_local_infile,
-   (char**) &opt_local_infile, 0, GET_BOOL, OPT_ARG,
-   1, 0, 0, 0, 0, 0},
   {"log", 'l',
    N_("Log connections and queries to file."),
    (char**) &opt_logname,
@@ -2222,9 +2207,6 @@ struct my_option my_long_options[] =
       "(Default: no wait)"),
    (char**) &drizzled_port_timeout,
    (char**) &drizzled_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"safe-mode", OPT_SAFE,
-   N_("Skip some optimize stages (for testing)."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
    N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
       "within specified directory"),

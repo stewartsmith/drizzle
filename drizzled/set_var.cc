@@ -178,8 +178,6 @@ static sys_var_key_cache_uint32_t	sys_key_cache_division_limit(&vars, "key_cache
 static sys_var_key_cache_uint32_t  sys_key_cache_age_threshold(&vars, "key_cache_age_threshold",
                                                            offsetof(KEY_CACHE,
                                                                     param_age_threshold));
-static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
-                                         &opt_local_infile);
 static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
                                                        &SV::max_allowed_packet);
 static sys_var_uint64_t_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
