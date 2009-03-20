@@ -1383,68 +1383,6 @@ int Session::send_explain_fields(select_result *result)
                               Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF));
 }
 
-
-struct Item_change_record: public ilink
-{
-  Item **place;
-  Item *old_value;
-  /* Placement new was hidden by `new' in ilink (TODO: check): */
-  static void *operator new(size_t ,
-                            void *mem)
-    { return mem; }
-  static void operator delete(void *,
-                              size_t )
-    {}
-  static void operator delete(void *,
-                              void *)
-    { /* never called */ }
-};
-
-
-/*
-  Register an item tree tree transformation, performed by the query
-  optimizer. We need a pointer to runtime_memroot because it may be !=
-  session->mem_root (this may no longer be a true statement)
-*/
-
-void Session::nocheck_register_item_tree_change(Item **place, Item *old_value,
-                                            MEM_ROOT *runtime_memroot)
-{
-  Item_change_record *change;
-  /*
-    Now we use one node per change, which adds some memory overhead,
-    but still is rather fast as we use alloc_root for allocations.
-    A list of item tree changes of an average query should be short.
-  */
-  void *change_mem= alloc_root(runtime_memroot, sizeof(*change));
-  if (change_mem == 0)
-  {
-    /*
-      OOM, session->fatal_error() is called by the error handler of the
-      memroot. Just return.
-    */
-    return;
-  }
-  change= new (change_mem) Item_change_record;
-  change->place= place;
-  change->old_value= old_value;
-  change_list.append(change);
-}
-
-
-void Session::rollback_item_tree_changes()
-{
-  I_List_iterator<Item_change_record> it(change_list);
-  Item_change_record *change;
-
-  while ((change= it++))
-    *change->place= change->old_value;
-  /* We can forget about changes memory: it's allocated in runtime memroot */
-  change_list.empty();
-  return;
-}
-
-
 /************************************************************************
   Handling writing to file
 ************************************************************************/

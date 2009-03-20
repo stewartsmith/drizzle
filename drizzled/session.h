@@ -385,18 +385,6 @@ extern pthread_mutex_t LOCK_xid_cache;
 extern HASH xid_cache;
 
 #include <drizzled/security_context.h>
-
-/**
-  A registry for item tree transformations performed during
-  query optimization. We register only those changes which require
-  a rollback to re-execute a prepared statement or stored procedure
-  yet another time.
-*/
-
-struct Item_change_record;
-typedef I_List<Item_change_record> Item_change_list;
-
-
 #include <drizzled/open_tables_state.h>
 
 /* Flags for the Session::system_thread variable */
@@ -578,14 +566,6 @@ public:
   } transaction;
   Field      *dup_field;
   sigset_t signals;
-  /*
-    This is to track items changed during execution of a prepared
-    statement/stored procedure. It's created by
-    register_item_tree_change() in memory root of Session, and freed in
-    rollback_item_tree_changes(). For conventional execution it's always
-    empty.
-  */
-  Item_change_list change_list;
 
   /* Tells if LAST_INSERT_ID(#) was called for the current statement */
   bool arg_of_last_insert_id_function;
