@@ -408,6 +408,7 @@ drizzled_SOURCES = \
 		field_conv.cc \
 		field_iterator.cc \
 		filesort.cc \
+		foreign_key.cc \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \

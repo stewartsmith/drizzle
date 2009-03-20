@@ -39,7 +39,7 @@ int errmsg_initializer(st_plugin_int *plugin)
       fprintf(stderr,
               _("errmsg plugin '%s' init() failed."),
               plugin->name.str);
-      goto err;
+      return 1;
     }
   }
 
@@ -49,9 +49,6 @@ int errmsg_initializer(st_plugin_int *plugin)
 
   return 0;
 
-err:
-  delete p;
-  return 1;
 }
 
 int errmsg_finalizer(st_plugin_int *plugin)
