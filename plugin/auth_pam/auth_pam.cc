@@ -79,41 +79,49 @@ int auth_pam_talker(int num_msg,
   return PAM_SUCCESS;
 }
 
-static bool authenticate(Session *session, const char *password)
+class Auth_pam : public Authentication
 {
-  int retval;
-  auth_pam_userinfo userinfo= { NULL, NULL };
-  struct pam_conv conv_info= { &auth_pam_talker, (void*)&userinfo };
-  pam_handle_t *pamh= NULL;
+public:
+  virtual bool authenticate(Session *session, const char *password)
+  {
+    int retval;
+    auth_pam_userinfo userinfo= { NULL, NULL };
+    struct pam_conv conv_info= { &auth_pam_talker, (void*)&userinfo };
+    pam_handle_t *pamh= NULL;
 
-  userinfo.name= session->security_ctx.user.c_str();
-  userinfo.password= password;
+    userinfo.name= session->security_ctx.user.c_str();
+    userinfo.password= password;
 
-  retval= pam_start("check_user", userinfo.name, &conv_info, &pamh);
+    retval= pam_start("check_user", userinfo.name, &conv_info, &pamh);
 
-  if (retval == PAM_SUCCESS)
-    retval= pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
+    if (retval == PAM_SUCCESS)
+      retval= pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
 
-  if (retval == PAM_SUCCESS)
-    retval= pam_acct_mgmt(pamh, PAM_DISALLOW_NULL_AUTHTOK);
+    if (retval == PAM_SUCCESS)
+      retval= pam_acct_mgmt(pamh, PAM_DISALLOW_NULL_AUTHTOK);
 
-  pam_end(pamh, retval);
+    pam_end(pamh, retval);
 
-  return (retval == PAM_SUCCESS) ? true: false;
-}
+    return (retval == PAM_SUCCESS) ? true: false;
+  }
+};
+
 
 static int initialize(void *p)
 {
-  authentication_st *auth= (authentication_st *)p;
+  Authentication **auth= static_cast<Authentication **>(p);
 
-  auth->authenticate= authenticate;
+  *auth= new Auth_pam();
 
   return 0;
 }
 
 static int finalize(void *p)
 {
-  (void)p;
+  Auth_pam *auth= static_cast<Auth_pam *>(p);
+
+  if (auth)
+    delete auth;
 
   return 0;
 }
