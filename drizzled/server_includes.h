@@ -72,11 +72,7 @@ static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 /* mysqld.cc */
 void refresh_status(Session *session);
 bool drizzle_rm_tmp_tables(void);
-void handle_connection_in_main_thread(Session *session);
-void create_thread_to_handle_connection(Session *session);
 void unlink_session(Session *session);
-bool one_thread_per_connection_end(Session *session, bool put_in_cache);
-void flush_thread_cache();
 
 /* item_func.cc */
 extern bool check_reserved_words(LEX_STRING *name);
@@ -115,7 +111,7 @@ extern const double log_10[309];
 extern uint64_t log_10_int[20];
 extern uint64_t keybuff_size;
 extern uint64_t session_startup_options;
-extern ulong thread_id;
+extern uint32_t thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t slow_launch_threads;
@@ -145,7 +141,6 @@ extern ulong log_output_options;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
 extern uint32_t volatile thread_running, global_read_lock;
-extern uint32_t connection_count;
 extern bool opt_sql_bin_update;
 extern bool opt_safe_user_create;
 extern bool opt_no_mix_types;

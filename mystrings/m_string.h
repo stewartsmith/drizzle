@@ -100,7 +100,7 @@ size_t my_fcvt(double x, int precision, char *to, bool *error);
 size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
                bool *error);
 
-#define NOT_FIXED_DEC 31
+#define NOT_FIXED_DEC (uint8_t)31
 
 /*
   The longest string my_fcvt can return is 311 + "precision" bytes.

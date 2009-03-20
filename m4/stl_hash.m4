@@ -1,6 +1,6 @@
 # We check two things: where the include file is for hash_map, and
 # what namespace hash_map lives in within that include file.  We
-# include AC_TRY_COMPILE for all the combinations we've seen in the
+# include AC_COMPILE_IFELSE for all the combinations we've seen in the
 # wild.  We define one of HAVE_HASH_MAP or HAVE_EXT_HASH_MAP depending
 # on location, and HASH_NAMESPACE to be the namespace hash_map is
 # defined in.
@@ -17,10 +17,12 @@ AC_DEFUN([AC_CXX_STL_HASH],
    for location in ext/hash_map boost/hash_map hash_map; do
      for namespace in __gnu_cxx "" std stdext; do
        if test -z "$ac_cv_cxx_hash_map"; then
-         AC_TRY_COMPILE([#include <$location>],
-                        [${namespace}::hash_map<int, int> t],
-                        [ac_cv_cxx_hash_map="<$location>";
-                         ac_cv_cxx_hash_namespace="$namespace";])
+         AC_COMPILE_IFELSE(
+           [AC_LANG_PROGRAM(
+             [[#include <$location>]],
+             [[${namespace}::hash_map<int, int> t]])],
+           [ac_cv_cxx_hash_map="<$location>";
+           ac_cv_cxx_hash_namespace="$namespace";])
        fi
      done
    done

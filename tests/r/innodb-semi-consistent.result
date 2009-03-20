@@ -9,7 +9,6 @@ a
 set session transaction isolation level read committed;
 set autocommit=0;
 update t1 set a=10 where a=5;
-ERROR HY000: Lock wait timeout exceeded; try restarting transaction
 commit;
 update t1 set a=10 where a=5;
 select * from t1 where a=2 for update;
@@ -21,13 +20,12 @@ update t1 set a=11 where a=6;
 update t1 set a=12 where a=2;
 ERROR HY000: Lock wait timeout exceeded; try restarting transaction
 update t1 set a=13 where a=1;
-ERROR HY000: Lock wait timeout exceeded; try restarting transaction
 commit;
 update t1 set a=14 where a=1;
 commit;
 select * from t1;
 a
-14
+13
 2
 3
 4

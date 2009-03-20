@@ -18,8 +18,9 @@
  */
 
 #include <drizzled/global.h>
-#include <stdint.h>
 #include <string.h>
+
+#include <mysys/hash.h>
 #include <drizzled/xid.h>
 
 XID::XID()
@@ -105,4 +106,87 @@ unsigned char *XID::key()
 uint32_t XID::key_length()
 {
   return sizeof(gtrid_length)+sizeof(bqual_length)+gtrid_length+bqual_length;
+}
+
+/***************************************************************************
+  Handling of XA id cacheing
+***************************************************************************/
+pthread_mutex_t LOCK_xid_cache;
+HASH xid_cache;
+
+extern "C" unsigned char *xid_get_hash_key(const unsigned char *, size_t *, bool);
+extern "C" void xid_free_hash(void *);
+
+unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length,
+                        bool )
+{
+  *length=((XID_STATE*)ptr)->xid.key_length();
+  return ((XID_STATE*)ptr)->xid.key();
+}
+
+void xid_free_hash(void *ptr)
+{
+  if (!((XID_STATE*)ptr)->in_session)
+    free((unsigned char*)ptr);
+}
+
+bool xid_cache_init()
+{
+  pthread_mutex_init(&LOCK_xid_cache, MY_MUTEX_INIT_FAST);
+  return hash_init(&xid_cache, &my_charset_bin, 100, 0, 0,
+                   xid_get_hash_key, xid_free_hash, 0) != 0;
+}
+
+void xid_cache_free()
+{
+  if (hash_inited(&xid_cache))
+  {
+    hash_free(&xid_cache);
+    pthread_mutex_destroy(&LOCK_xid_cache);
+  }
+}
+
+XID_STATE *xid_cache_search(XID *xid)
+{
+  pthread_mutex_lock(&LOCK_xid_cache);
+  XID_STATE *res=(XID_STATE *)hash_search(&xid_cache, xid->key(), xid->key_length());
+  pthread_mutex_unlock(&LOCK_xid_cache);
+  return res;
+}
+
+bool xid_cache_insert(XID *xid, enum xa_states xa_state)
+{
+  XID_STATE *xs;
+  bool res;
+  pthread_mutex_lock(&LOCK_xid_cache);
+  if (hash_search(&xid_cache, xid->key(), xid->key_length()))
+    res=0;
+  else if (!(xs=(XID_STATE *)malloc(sizeof(*xs))))
+    res=1;
+  else
+  {
+    xs->xa_state=xa_state;
+    xs->xid.set(xid);
+    xs->in_session=0;
+    res=my_hash_insert(&xid_cache, (unsigned char*)xs);
+  }
+  pthread_mutex_unlock(&LOCK_xid_cache);
+  return res;
+}
+
+bool xid_cache_insert(XID_STATE *xid_state)
+{
+  pthread_mutex_lock(&LOCK_xid_cache);
+  assert(hash_search(&xid_cache, xid_state->xid.key(),
+                          xid_state->xid.key_length())==0);
+  bool res=my_hash_insert(&xid_cache, (unsigned char*)xid_state);
+  pthread_mutex_unlock(&LOCK_xid_cache);
+  return res;
+}
+
+void xid_cache_delete(XID_STATE *xid_state)
+{
+  pthread_mutex_lock(&LOCK_xid_cache);
+  hash_delete(&xid_cache, (unsigned char *)xid_state);
+  pthread_mutex_unlock(&LOCK_xid_cache);
 }

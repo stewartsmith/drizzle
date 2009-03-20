@@ -353,8 +353,7 @@ static void libevent_connection_close(Session *session)
 
   if (drizzleclient_net_get_sd(&(session->net)) >= 0)                  // not already closed
   {
-    end_connection(session);
-    session->close_connection(0, 1);
+    session->disconnect(0, true);
   }
   scheduler->thread_detach();
   
@@ -440,7 +439,7 @@ pthread_handler_t libevent_thread_proc(void *)
     /* is the connection logged in yet? */
     if (!scheduler->logged_in)
     {
-      if (login_connection(session))
+      if (! session->authenticate())
       {
         /* Failed to log in */
         libevent_connection_close(session);
@@ -450,7 +449,7 @@ pthread_handler_t libevent_thread_proc(void *)
       {
         /* login successful */
         scheduler->logged_in= true;
-        prepare_new_connection_state(session);
+        session->prepareForQueries();
         if (!libevent_needs_immediate_processing(session))
           continue; /* New connection is now waiting for data in libevent*/
       }
@@ -459,7 +458,7 @@ pthread_handler_t libevent_thread_proc(void *)
     do
     {
       /* Process a query */
-      if (do_command(session))
+      if (! session->executeStatement())
       {
         libevent_connection_close(session);
         break;

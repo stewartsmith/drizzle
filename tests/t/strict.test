@@ -169,15 +169,17 @@ DROP TABLE t1;
 
 CREATE TABLE t1 (col1 enum('red','blue','green'));
 INSERT INTO t1 VALUES ('red'),('blue'),('green');
---error 1265
+--error 1691 # Bad enum
 INSERT INTO t1 (col1) VALUES ('yellow');
---error 1265
+--error 1691 # Bad enum
 INSERT INTO t1 (col1) VALUES ('redd');
---error 1265
+--error 1691 # Bad enum
 INSERT INTO t1 VALUES ('');
---error 1265
+--error 1691 # Bad enum
 UPDATE t1 SET col1 ='yellow' WHERE col1 ='green';
+--error 1691 # Bad enum
 INSERT IGNORE INTO t1 VALUES ('yellow');
+--error 1691 # Bad enum
 UPDATE IGNORE t1 SET col1 ='yellow' WHERE col1 ='blue';
 SELECT * FROM t1;
 DROP TABLE t1;

@@ -150,36 +150,6 @@ typedef struct	st_lex_user {
   LEX_STRING user, host, password;
 } LEX_USER;
 
-/*
-  This structure is used for counting resources consumed and for checking
-  them against specified user limits.
-*/
-typedef struct  user_conn {
-  /*
-     Pointer to user+host key (pair separated by '\0') defining the entity
-     for which resources are counted (By default it is user account thus
-     priv_user/priv_host pair is used. If --old-style-user-limits option
-     is enabled, resources are counted for each user+host separately).
-  */
-  char *user;
-  /* Pointer to host part of the key. */
-  char *host;
-  /**
-     The moment of time when per hour counters were reset last time
-     (i.e. start of "hour" for conn_per_hour, updates, questions counters).
-  */
-  uint64_t reset_utime;
-  /* Total length of the key. */
-  uint32_t len;
-  /* Current amount of concurrent connections for this account. */
-  uint32_t connections;
-  /*
-     Current number of connections per hour, number of updating statements
-     per hour and total number of statements per hour for this account.
-  */
-  uint32_t conn_per_hour, updates, questions;
-} USER_CONN;
-
 	/* Bits in form->update */
 #define REG_MAKE_DUPP		1	/* Make a copy of record when read */
 #define REG_NEW_RECORD		2	/* Write a new record if not found */

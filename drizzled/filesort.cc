@@ -29,6 +29,10 @@
 #include <drizzled/table.h>
 #include <drizzled/table_list.h>
 
+#include <queue>
+
+using namespace std;
+
 /* functions defined in this file */
 
 static char **make_char_array(char **old_pos, register uint32_t fields,
@@ -683,7 +687,7 @@ static void make_sortkey(register SORTPARAM *param,
 {
   register Field *field;
   register SORT_FIELD *sort_field;
-  register uint32_t length;
+  size_t length;
 
   for (sort_field=param->local_sortorder ;
        sort_field != param->end ;
@@ -1053,37 +1057,20 @@ uint32_t read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
 } /* read_to_buffer */
 
 
-/**
-  Put all room used by freed buffer to use in adjacent buffer.
-
-  Note, that we can't simply distribute memory evenly between all buffers,
-  because new areas must not overlap with old ones.
-
-  @param[in] queue      list of non-empty buffers, without freed buffer
-  @param[in] reuse      empty buffer
-  @param[in] key_length key length
-*/
-
-void reuse_freed_buff(QUEUE *queue, BUFFPEK *reuse, uint32_t key_length)
+class compare_functor
 {
-  unsigned char *reuse_end= reuse->base + reuse->max_keys * key_length;
-  for (uint32_t i= 0; i < queue->elements; ++i)
+  qsort2_cmp key_compare;
+  void *key_compare_arg;
+  public:
+  compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg)
+    : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
+  inline bool operator()(const BUFFPEK *i, const BUFFPEK *j) const
   {
-    BUFFPEK *bp= (BUFFPEK *) queue_element(queue, i);
-    if (bp->base + bp->max_keys * key_length == reuse->base)
-    {
-      bp->max_keys+= reuse->max_keys;
-      return;
-    }
-    else if (bp->base == reuse_end)
-    {
-      bp->base= reuse->base;
-      bp->max_keys+= reuse->max_keys;
-      return;
-    }
+    int val= key_compare(key_compare_arg,
+                      &i->key, &j->key);
+    return (val >= 0);
   }
-  assert(0);
-}
+};
 
 
 /**
@@ -1117,7 +1104,6 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   my_off_t to_start_filepos;
   unsigned char *strpos;
   BUFFPEK *buffpek;
-  QUEUE queue;
   qsort2_cmp cmp;
   void *first_cmp_arg;
   volatile Session::killed_state *killed= &current_session->killed;
@@ -1153,9 +1139,8 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
     cmp= get_ptr_compare(sort_length);
     first_cmp_arg= (void*) &sort_length;
   }
-  if (init_queue(&queue, (uint32_t) (Tb-Fb)+1, offsetof(BUFFPEK,key), 0,
-                 (queue_compare) cmp, first_cmp_arg))
-    return(1);                                /* purecov: inspected */
+  priority_queue<BUFFPEK *, vector<BUFFPEK *>, compare_functor > 
+    queue(compare_functor(cmp, first_cmp_arg));
   for (buffpek= Fb ; buffpek <= Tb ; buffpek++)
   {
     buffpek->base= strpos;
@@ -1165,7 +1150,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
     if (error == -1)
       goto err;					/* purecov: inspected */
     buffpek->max_keys= buffpek->mem_count;	// If less data in buffers than expected
-    queue_insert(&queue, (unsigned char*) buffpek);
+    queue.push(buffpek);
   }
 
   if (param->unique_buff)
@@ -1178,7 +1163,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
        This is safe as we know that there is always more than one element
        in each block to merge (This is guaranteed by the Unique:: algorithm
     */
-    buffpek= (BUFFPEK*) queue_top(&queue);
+    buffpek= queue.top();
     memcpy(param->unique_buff, buffpek->key, rec_length);
     if (my_b_write(to_file, (unsigned char*) buffpek->key, rec_length))
     {
@@ -1191,12 +1176,14 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
       error= 0;                                       /* purecov: inspected */
       goto end;                                       /* purecov: inspected */
     }
-    queue_replaced(&queue);                        // Top element has been used
+    /* Top element has been used */
+    queue.pop();
+    queue.push(buffpek);
   }
   else
     cmp= 0;                                        // Not unique
 
-  while (queue.elements > 1)
+  while (queue.size() > 1)
   {
     if (*killed)
     {
@@ -1204,7 +1191,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
     }
     for (;;)
     {
-      buffpek= (BUFFPEK*) queue_top(&queue);
+      buffpek= queue.top();
       if (cmp)                                        // Remove duplicates
       {
         if (!(*cmp)(first_cmp_arg, &(param->unique_buff),
@@ -1239,17 +1226,18 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
         if (!(error= (int) read_to_buffer(from_file,buffpek,
                                           rec_length)))
         {
-          queue_remove(&queue,0);
-          reuse_freed_buff(&queue, buffpek, rec_length);
+          queue.pop();
           break;                        /* One buffer have been removed */
         }
         else if (error == -1)
           goto err;                        /* purecov: inspected */
       }
-      queue_replaced(&queue);              /* Top element has been replaced */
+      /* Top element has been replaced */
+      queue.pop();
+      queue.push(buffpek);
     }
   }
-  buffpek= (BUFFPEK*) queue_top(&queue);
+  buffpek= queue.top();
   buffpek->base= sort_buffer;
   buffpek->max_keys= param->keys;
 
@@ -1304,7 +1292,6 @@ end:
   lastbuff->count= cmin(org_max_rows-max_rows, param->max_rows);
   lastbuff->file_pos= to_start_filepos;
 err:
-  delete_queue(&queue);
   return(error);
 } /* merge_buffers */
 
