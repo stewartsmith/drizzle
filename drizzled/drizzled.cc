@@ -611,7 +611,6 @@ static void clean_up(bool print_message)
   table_def_free();
   set_var_free();
   free_charsets();
-  udf_free();
   plugin_shutdown();
   ha_end();
   xid_cache_free();

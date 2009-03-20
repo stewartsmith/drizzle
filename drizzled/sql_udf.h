@@ -29,7 +29,6 @@
 
 enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
 
-void udf_init(void),udf_free(void);
 Function_builder *find_udf(const char *name, uint32_t len=0);
 void free_udf(Function_builder *udf);
 int mysql_create_function(Session *session,Function_builder *udf);

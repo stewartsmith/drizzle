@@ -16,7 +16,6 @@
 /* This implements 'user defined functions' */
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
-#include <mysys/hash.h>
 #include <drizzled/sql_udf.h>
 
 #include <map>
@@ -25,20 +24,8 @@
 using namespace std;
 
 static bool udf_startup= false; /* We do not lock because startup is single threaded */
-static MEM_ROOT mem;
 static map<string, Function_builder *> udf_map;
 
-
-void udf_init()
-{
-  init_sql_alloc(&mem, UDF_ALLOC_BLOCK_SIZE, 0);
-}
-
-/* called by mysqld.cc clean_up() */
-void udf_free()
-{
-  free_root(&mem, MYF(0));
-}
 
 /* This is only called if using_udf_functions != 0 */
 Function_builder *find_udf(const char *name, uint32_t length)
@@ -84,19 +71,16 @@ int initialize_udf(st_plugin_int *plugin)
 {
   Function_builder *f;
 
-  if (udf_startup == false)
-  {
-    udf_init();
-    udf_startup= true;
-  }
+  udf_startup= true;
 
   if (plugin->plugin->init)
   {
     int r;
     if ((r= plugin->plugin->init((void *)&f)))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, "Plugin '%s' init function returned error %d.",
-		    plugin->name.str, r);
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error %d."),
+                    plugin->name.str, r);
       return r;
     }
   }
