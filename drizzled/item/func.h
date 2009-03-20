@@ -20,15 +20,6 @@
 #ifndef DRIZZLED_SERVER_ITEM_FUNC_H
 #define DRIZZLED_SERVER_ITEM_FUNC_H
 
-/* Function items used by mysql */
-
-
-#ifdef HAVE_IEEEFP_H
-extern "C"				/* Bug in BSDI include file */
-{
-#include <ieeefp.h>
-}
-#endif
 
 /* If you fix the parser to no longer create functions these can be moved to create.cc */
 #include <drizzled/function/ascii.h>

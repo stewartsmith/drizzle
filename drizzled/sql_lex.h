@@ -487,7 +487,7 @@ public:
   /* index in the select list of the expression currently being fixed */
   int cur_pos_in_select_list;
 
-  List<udf_func>     udf_list;                  /* udf function calls stack */
+  List<Function_builder>     udf_list;                  /* udf function calls stack */
   /*
     This is a copy of the original JOIN USING list that comes from
     the parser. The parser :
@@ -1251,7 +1251,7 @@ public:
   SQL_LIST	      auxiliary_table_list, save_list;
   Create_field	      *last_field;
   Item_sum *in_sum_func;
-  udf_func udf;
+  Function_builder *udf;
   HA_CHECK_OPT   check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
   KEY_CREATE_INFO key_create_info;

@@ -22,22 +22,16 @@
 
 /* This file defines structures needed by udf functions */
 
-#include <stdint.h>
 #include <drizzled/function/func.h>
+#include <drizzled/function/create.h>
+
+#include <stdint.h>
 
 enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
 
-typedef Item_func* (*create_func_item)(MEM_ROOT*);
-
-struct udf_func
-{
-  LEX_STRING name;
-  create_func_item create_func;
-};
-
 void udf_init(void),udf_free(void);
-udf_func *find_udf(const char *name, uint32_t len=0);
-void free_udf(udf_func *udf);
-int mysql_create_function(Session *session,udf_func *udf);
+Function_builder *find_udf(const char *name, uint32_t len=0);
+void free_udf(Function_builder *udf);
+int mysql_create_function(Session *session,Function_builder *udf);
 
 #endif /* DRIZZLED_SQL_UDF_H */

@@ -353,7 +353,7 @@ bool setup_select_in_parentheses(LEX *lex)
   String *string;
   Key_part_spec *key_part;
   TableList *table_list;
-  udf_func *udf;
+  Function_builder *udf;
   LEX_USER *lex_user;
   struct sys_var_with_base variable;
   enum enum_var_type var_type;
@@ -3330,7 +3330,7 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            udf_func *udf= 0;
+            Function_builder *udf= 0;
 	    udf= find_udf($1.str, $1.length);
 
             /* Temporary placing the result of find_udf in $3 */
@@ -3359,7 +3359,7 @@ function_call_generic:
             else
             {
               /* Retrieving the result of find_udf */
-              udf_func *udf= $<udf>3;
+              Function_builder *udf= $<udf>3;
               if (udf)
               {
                 item= Create_udf_func::s_singleton.create(session, udf, $4);

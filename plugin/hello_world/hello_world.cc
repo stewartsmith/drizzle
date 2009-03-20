@@ -22,6 +22,10 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
+#include <string>
+
+using namespace std;
+
 class Item_func_hello_world : public Item_str_func
 {
 public:
@@ -36,19 +40,12 @@ public:
   }
 };
 
-Item_func* create_hello_world_udf_item(MEM_ROOT* m)
-{
-  return  new (m) Item_func_hello_world();
-}
-
-static struct udf_func hello_world_udf = {
-  { C_STRING_WITH_LEN("hello_world") },
-  create_hello_world_udf_item
-};
+Create_function<Item_func_hello_world>
+  hello_world_udf(string("hello_world"));
 
 static int hello_world_plugin_init(void *p)
 {
-  udf_func **f = (udf_func**) p;
+  Function_builder **f = (Function_builder**) p;
 
   *f= &hello_world_udf;
 
@@ -57,7 +54,7 @@ static int hello_world_plugin_init(void *p)
 
 static int hello_world_plugin_deinit(void *p)
 {
-  udf_func *udff = (udf_func *) p;
+  Function_builder *udff = (Function_builder *) p;
   (void)udff;
   return 0;
 }
