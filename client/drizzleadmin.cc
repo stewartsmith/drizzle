@@ -109,18 +109,12 @@ static struct my_option my_long_options[] =
 
 static const char *load_default_groups[]= { "drizzleadmin","client",0 };
 
-inline string lower_string(const string &from_string)
+inline string lower_string(const char * from_string)
 {
   string to_string= from_string;
   transform(to_string.begin(), to_string.end(),
             to_string.begin(), ::tolower);
   return to_string;
-}
-
-inline string lower_string(const char * from_string)
-{
-  string to_string= from_string;
-  return lower_string(to_string);
 }
 
 /*
@@ -154,7 +148,7 @@ class CommandMatch :
  */
 static int get_command_type(const char *name)
 {
-  int type;
+  int type= ADMIN_ERROR;
   string comp_string= lower_string(name);
   vector<const char *>::iterator it= 
     find_if(command_vector.begin(),
@@ -164,10 +158,6 @@ static int get_command_type(const char *name)
   {
     /* add 1 due to the way the commands ENUM is defined */
     type= distance(command_vector.begin(), it) + 1;
-  }
-  else 
-  {
-    type= ADMIN_ERROR;
   }
   return type;
 }
