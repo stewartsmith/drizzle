@@ -525,12 +525,14 @@ void close_connections(void)
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
+  if (connection_count)
+    sleep(2);                                   // Give threads time to die
+
   /*
     Force remaining threads to die by closing the connection to the client
     This will ensure that threads that are waiting for a command from the
     client on a blocking read call are aborted.
   */
-
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
@@ -977,6 +979,7 @@ void unlink_session(Session *session)
   session->cleanup();
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
+  pthread_mutex_lock(&session->LOCK_delete);
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
