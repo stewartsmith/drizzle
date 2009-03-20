@@ -25,7 +25,7 @@ static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_recor
                         uint32_t max_records);
 
 #define FIXED_REC_OVERHEAD (sizeof(unsigned char))
-#define VARIABLE_REC_OVERHEAD (sizeof(unsigned char**) + sizeof(unsigned char))
+#define VARIABLE_REC_OVERHEAD (sizeof(unsigned char**) + ALIGN_SIZE(sizeof(unsigned char)))
 
 /* Minimum size that a chunk can take, 12 bytes on 32bit, 24 bytes on 64bit */
 #define VARIABLE_MIN_CHUNK_SIZE \
