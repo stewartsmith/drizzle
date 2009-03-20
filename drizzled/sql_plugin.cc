@@ -1649,21 +1649,21 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 
   switch (flags & PLUGIN_VAR_TYPEMASK) {
   case PLUGIN_VAR_BOOL:
-    size= sizeof(bool);
+    size= ALIGN_SIZE(sizeof(bool));
     break;
   case PLUGIN_VAR_INT:
-    size= sizeof(int);
+    size= ALIGN_SIZE(sizeof(int));
     break;
   case PLUGIN_VAR_LONG:
   case PLUGIN_VAR_ENUM:
-    size= sizeof(long);
+    size= ALIGN_SIZE(sizeof(long));
     break;
   case PLUGIN_VAR_LONGLONG:
   case PLUGIN_VAR_SET:
-    size= sizeof(uint64_t);
+    size= ALIGN_SIZE(sizeof(uint64_t));
     break;
   case PLUGIN_VAR_STR:
-    size= sizeof(char*);
+    size= ALIGN_SIZE(sizeof(char*));
     break;
   default:
     assert(0);
