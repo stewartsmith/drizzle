@@ -37,20 +37,25 @@ if test -d ".bzr" ; then
   if test "x${BZR_BRANCH}" != "xdrizzle" ; then
     RELEASE_VERSION="${RELEASE_VERSION}-${BZR_BRANCH}"
   fi
-  sed -e "s/@BZR_REVNO@/${BZR_REVNO}/" \
-      -e "s/@BZR_REVID@/${BZR_REVID}/" \
-      -e "s/@BZR_BRANCH@/${BZR_BRANCH}/" \
-      -e "s/@RELEASE_DATE@/${RELEASE_DATE}/" \
-      -e "s/@RELEASE_VERSION@/${RELEASE_VERSION}/" \
-    m4/bzr_version.m4.in > m4/bzr_version.m4.new
-
-  if ! diff m4/bzr_version.m4.new m4/bzr_version.m4 >/dev/null 2>&1 ; then
-    mv m4/bzr_version.m4.new m4/bzr_version.m4
-  else
-    rm m4/bzr_version.m4.new
-  fi
 else
+  BZR_REVNO="0"
+  BZR_REVID="unknown"
+  BZR_BRANCH="bzr-export"
+  RELEASE_DATE=`date +%Y.%m`
+  RELEASE_VERSION="${RELEASE_DATE}.${BZR_REVNO}"
   touch ChangeLog
+fi
+sed -e "s/@BZR_REVNO@/${BZR_REVNO}/" \
+    -e "s/@BZR_REVID@/${BZR_REVID}/" \
+    -e "s/@BZR_BRANCH@/${BZR_BRANCH}/" \
+    -e "s/@RELEASE_DATE@/${RELEASE_DATE}/" \
+    -e "s/@RELEASE_VERSION@/${RELEASE_VERSION}/" \
+  m4/bzr_version.m4.in > m4/bzr_version.m4.new
+
+if ! diff m4/bzr_version.m4.new m4/bzr_version.m4 >/dev/null 2>&1 ; then
+  mv m4/bzr_version.m4.new m4/bzr_version.m4
+else
+  rm m4/bzr_version.m4.new
 fi
 
 if test x$LIBTOOLIZE = x; then
