@@ -26,6 +26,7 @@
 #include <drizzled/field.h>
 #include <mysys/queues.h>
 #include <drizzled/item/sum.h>
+#include <queue>
 
 class JOIN;
 typedef class Item COND;
