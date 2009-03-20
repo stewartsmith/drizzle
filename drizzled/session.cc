@@ -236,7 +236,7 @@ Session::Session()
   net.vio= 0;
   client_capabilities= 0;                       // minimalistic client
   system_thread= NON_SYSTEM_THREAD;
-  cleanup_done= abort_on_warning= no_warnings_for_error= 0;
+  cleanup_done= abort_on_warning= no_warnings_for_error= false;
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
@@ -399,7 +399,7 @@ void Session::init_for_queries()
 
 void Session::cleanup(void)
 {
-  assert(cleanup_done == 0);
+  assert(cleanup_done == false);
 
   killed= KILL_CONNECTION;
 #ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
@@ -423,7 +423,7 @@ void Session::cleanup(void)
   if (global_read_lock)
     unlock_global_read_lock(this);
 
-  cleanup_done=1;
+  cleanup_done= true;
   return;
 }
 
@@ -448,7 +448,7 @@ Session::~Session()
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
   }
-  if (!cleanup_done)
+  if (cleanup_done == false)
     cleanup();
 
   ha_close_connection(this);
@@ -466,6 +466,7 @@ Session::~Session()
 
   free_root(&main_mem_root, MYF(0));
   pthread_setspecific(THR_Session,  0);
+
 
   /* Ensure that no one is using Session */
   pthread_mutex_unlock(&LOCK_delete);

@@ -54,7 +54,6 @@ bool add_connection(Session *session)
 static bool end_thread(Session *session, bool)
 {
   unlink_session(session);   /* locks LOCK_thread_count and deletes session */
-  pthread_mutex_unlock(&LOCK_thread_count);
 
   return true;                                     // Abort handle_one_connection
 }
