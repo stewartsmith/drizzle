@@ -1991,7 +1991,6 @@ void handle_connections_sockets()
 enum options_drizzled
 {
   OPT_ISAM_LOG=256,
-  OPT_SKIP_NEW,
   OPT_SOCKET,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_FLUSH,                   OPT_SAFE,
@@ -2236,9 +2235,6 @@ struct my_option my_long_options[] =
       "replication partners."),
    (char**) &server_id, (char**) &server_id, 0, GET_UINT32, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
-  {"skip-new", OPT_SKIP_NEW,
-   N_("Don't use new, possible wrong routines."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-stack-trace", OPT_SKIP_STACK_TRACE,
    N_("Don't print a stack trace on failure."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
