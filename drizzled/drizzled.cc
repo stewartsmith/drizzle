@@ -1855,8 +1855,6 @@ int main(int argc, char **argv)
 
 static void create_new_thread(Session *session)
 {
-  pthread_mutex_lock(&LOCK_thread_count);
-
   ++connection_count;
 
   if (connection_count > max_used_connections)
@@ -1872,7 +1870,9 @@ static void create_new_thread(Session *session)
   /* 
     If we error on creation we drop the connection and delete the session.
   */
+  pthread_mutex_lock(&LOCK_thread_count);
   session_list.append(session);
+  pthread_mutex_unlock(&LOCK_thread_count);
   if (thread_scheduler.add_connection(session))
   {
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
