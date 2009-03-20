@@ -976,6 +976,7 @@ void unlink_session(Session *session)
 
   session->cleanup();
 
+  (void) pthread_mutex_lock(&LOCK_thread_count);
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
