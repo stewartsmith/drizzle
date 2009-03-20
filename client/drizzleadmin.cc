@@ -33,6 +33,7 @@
 
 #define ADMIN_VERSION "8.42"
 #define SHUTDOWN_DEF_TIMEOUT 3600		/* Wait for shutdown */
+#define NUM_COMMAND_NAMES 2
 
 char *host= NULL, *user= NULL, *opt_password= NULL;
 static bool interrupted= false, opt_verbose= false,tty_password= false;
@@ -69,7 +70,7 @@ static const char *command_names[]= {
 };
 
 static vector<const char *> 
-  command_vector(command_names, command_names + sizeof(command_names) / sizeof(char));
+  command_vector(command_names, command_names + NUM_COMMAND_NAMES);
 
 static struct my_option my_long_options[] =
 {
@@ -146,8 +147,7 @@ class CommandMatch :
  * its type.
  *
  * Returns the type of the command corresponding
- * to the commands enum defined at the top of
- * drizzleadmin.cc
+ * to the commands enum defined in drizzleadmin.cc
  * If the command is not supported, return ADMIN_ERROR.
  *
  * @param command name to search for
