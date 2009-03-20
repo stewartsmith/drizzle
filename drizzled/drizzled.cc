@@ -229,7 +229,7 @@ static bool volatile select_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
 static uint32_t wake_thread;
-static uint32_t killed_threads, thread_created;
+static uint32_t killed_threads;
 static char *drizzled_user, *drizzled_chroot;
 static char *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
@@ -245,7 +245,6 @@ static uint8_t pollfd_count= 0;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_skip_show_db= false;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
@@ -281,7 +280,6 @@ uint32_t drizzled_port_timeout;
 uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
-uint32_t volatile thread_running;
 uint64_t session_startup_options;
 uint32_t back_log;
 uint32_t connect_timeout;
@@ -289,7 +287,6 @@ uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
 uint64_t slow_launch_time;
-uint64_t slave_open_temp_tables;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
@@ -420,7 +417,6 @@ int cleanup_done;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
 static char **defaults_argv;
-static char *opt_bin_logname;
 
 struct rand_struct sql_rand; ///< used by sql_class.cc:Session::Session()
 
@@ -616,8 +612,6 @@ static void clean_up(bool print_message)
     free_defaults(defaults_argv);
   free(sys_init_connect.value);
   free(drizzle_tmpdir);
-  if (opt_bin_logname)
-    free(opt_bin_logname);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
   bitmap_free(&temp_pool);
@@ -1807,12 +1801,6 @@ int main(int argc, char **argv)
   }
 
   init_status_vars();
-  /*
-    init_slave() must be called after the thread keys are created.
-    Some parts of the code (e.g. SHOW STATUS LIKE 'slave_running' and other
-    places) assume that active_mi != 0, so let's fail if it's 0 (out of
-    memory); a message has already been printed.
-  */
 
   errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)),my_progname,server_version,
                         "", drizzled_port, COMPILATION_COMMENT);
@@ -2691,8 +2679,6 @@ SHOW_VAR status_vars[]= {
   {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
   {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
   {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
-  {"Threads_created",	       (char*) &thread_created,	      SHOW_INT_NOFLUSH},
-  {"Threads_running",          (char*) &thread_running,         SHOW_INT},
   {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
   {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
   {NULL, NULL, SHOW_LONGLONG}
@@ -2761,7 +2747,6 @@ static void drizzle_init_variables(void)
   /* Things reset to zero */
   drizzle_home[0]= pidfile_name[0]= 0;
   opt_bin_log= 0;
-  opt_skip_show_db=0;
   opt_logname= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
@@ -2771,8 +2756,7 @@ static void drizzle_init_variables(void)
   defaults_argv= 0;
   server_id_supplied= 0;
   test_flags= select_errors= dropping_tables= ha_open_options=0;
-  thread_running= wake_thread=0;
-  slave_open_temp_tables= 0;
+  wake_thread=0;
   opt_endinfo= using_udf_functions= 0;
   opt_using_transactions= false;
   abort_loop= select_thread_in_use= false;
@@ -2780,7 +2764,7 @@ static void drizzle_init_variables(void)
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
   slow_launch_threads= 0;
-  drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;
+  drizzled_user= drizzled_chroot= opt_init_file= 0;
   my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();

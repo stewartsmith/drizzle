@@ -225,7 +225,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     query_id.next();
   }
 
-  thread_running++;
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
   pthread_mutex_unlock(&LOCK_thread_count);
 
@@ -352,7 +351,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->command=COM_SLEEP;
   session->query=0;
   session->query_length=0;
-  thread_running--;
   pthread_mutex_unlock(&LOCK_thread_count);
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
