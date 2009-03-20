@@ -531,18 +531,6 @@ public:
   bool scans_inited;
 };
 
-class compare_functor
-{
-  QUICK_ROR_UNION_SELECT *self;
-  public:
-  compare_functor(QUICK_ROR_UNION_SELECT *in_arg)
-    : self(in_arg) { }
-  inline bool operator()(const QUICK_SELECT_I *i, const QUICK_SELECT_I *j) const
-  {
-    return self->head->file->cmp_ref(i->last_rowid,
-                                     j->last_rowid);
-  }
-};
 
 
 /*
@@ -590,6 +578,19 @@ public:
   uint32_t rowid_length;    /* table rowid length */
 private:
   bool scans_inited;
+};
+
+class compare_functor
+{
+  QUICK_ROR_UNION_SELECT *self;
+  public:
+  compare_functor(QUICK_ROR_UNION_SELECT *in_arg)
+    : self(in_arg) { }
+  inline bool operator()(const QUICK_SELECT_I *i, const QUICK_SELECT_I *j) const
+  {
+    return self->head->file->cmp_ref(i->last_rowid,
+                                     j->last_rowid);
+  }
 };
 
 extern "C"
