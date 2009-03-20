@@ -994,10 +994,10 @@ int ha_recover(HASH *commit_list)
   /* commit_list and tc_heuristic_recover cannot be set both */
   assert(info.commit_list==0 || tc_heuristic_recover==0);
   /* if either is set, total_ha_2pc must be set too */
-  assert(info.dry_run || total_ha_2pc>(uint32_t)opt_bin_log);
+  assert(info.dry_run);
 
-  if (total_ha_2pc <= (uint32_t)opt_bin_log)
-    return(0);
+  if (total_ha_2pc <= 1)
+    return 0;
 
   if (info.commit_list)
     errmsg_printf(ERRMSG_LVL_INFO, _("Starting crash recovery..."));
@@ -1010,7 +1010,7 @@ int ha_recover(HASH *commit_list)
     rollback all pending transactions, without risking inconsistent data
   */
 
-  assert(total_ha_2pc == (uint32_t) opt_bin_log+1); // only InnoDB and binlog
+  assert(total_ha_2pc == 2); // only InnoDB and binlog
   tc_heuristic_recover= TC_HEURISTIC_RECOVER_ROLLBACK; // forcing ROLLBACK
   info.dry_run=false;
 #endif

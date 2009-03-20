@@ -244,7 +244,6 @@ static uint8_t pollfd_count= 0;
 
 /* Global variables */
 
-bool opt_bin_log;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
@@ -1994,7 +1993,6 @@ enum options_drizzled
   OPT_ISAM_LOG=256,
   OPT_SKIP_NEW,
   OPT_SOCKET,
-  OPT_BIN_LOG,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          
@@ -2745,7 +2743,6 @@ static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
   drizzle_home[0]= pidfile_name[0]= 0;
-  opt_bin_log= 0;
   opt_logname= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
@@ -2886,9 +2883,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
   case 'T':
     test_flags= argument ? (uint32_t) atoi(argument) : 0;
     opt_endinfo=1;
-    break;
-  case (int) OPT_BIN_LOG:
-    opt_bin_log= test(argument != disabled_my_option);
     break;
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
@@ -3125,8 +3119,6 @@ static void set_server_version(void)
   char *end= server_version;
   end+= sprintf(server_version, "%s%s", VERSION, 
                 DRIZZLE_SERVER_SUFFIX_STR);
-  if (opt_bin_log)
-    strcpy(end, "-log"); // This may slow down system
 }
 
 

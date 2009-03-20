@@ -424,7 +424,6 @@ static SHOW_VAR fixed_vars[]= {
 #ifdef HAVE_MLOCKALL
   {"locked_in_memory",	      (char*) &locked_in_memory,	    SHOW_MY_BOOL},
 #endif
-  {"log_bin",                 (char*) &opt_bin_log,                 SHOW_BOOL},
   {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
