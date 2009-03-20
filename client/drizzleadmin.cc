@@ -151,9 +151,9 @@ static int get_command_type(const char *name)
   int type= ADMIN_ERROR;
   string comp_string= lower_string(name);
   vector<const char *>::iterator it= 
-    find_if(command_vector.begin(),
-            command_vector.end(),
-            CommandMatch< equal_to<string> >(comp_string));
+    std::find_if(command_vector.begin(),
+                 command_vector.end(),
+                 CommandMatch< equal_to<string> >(comp_string));
   if (it != command_vector.end())
   {
     /* add 1 due to the way the commands ENUM is defined */
