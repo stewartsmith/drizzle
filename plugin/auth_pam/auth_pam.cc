@@ -118,8 +118,10 @@ static int initialize(void *p)
 
 static int finalize(void *p)
 {
-  if (p)
-    free(p);
+  Auth_pam *auth= static_cast<Auth_pam *>(p);
+
+  if (auth)
+    delete auth;
 
   return 0;
 }
