@@ -1828,7 +1828,6 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
     session->set_proc_info("freeing items");
     session->end_statement();
     session->cleanup_after_query();
-    assert(session->change_list.is_empty());
   }
 
   return;

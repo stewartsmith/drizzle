@@ -26,34 +26,66 @@
 #include <drizzled/sql_list.h>
 
 class Item;
+class Table_ident;
+
 typedef struct st_mem_root MEM_ROOT;
 
 class Foreign_key: public Key {
 public:
-  enum fk_match_opt { FK_MATCH_UNDEF, FK_MATCH_FULL,
-                      FK_MATCH_PARTIAL, FK_MATCH_SIMPLE};
-  enum fk_option { FK_OPTION_UNDEF, FK_OPTION_RESTRICT, FK_OPTION_CASCADE,
-                   FK_OPTION_SET_NULL, FK_OPTION_NO_ACTION, FK_OPTION_DEFAULT};
+  enum fk_match_opt 
+  {
+    FK_MATCH_UNDEF
+  , FK_MATCH_FULL
+  , FK_MATCH_PARTIAL
+  , FK_MATCH_SIMPLE
+  };
+  enum fk_option 
+  {
+    FK_OPTION_UNDEF
+  , FK_OPTION_RESTRICT
+  , FK_OPTION_CASCADE
+  , FK_OPTION_SET_NULL
+  , FK_OPTION_NO_ACTION
+  , FK_OPTION_DEFAULT
+  };
 
   Table_ident *ref_table;
   List<Key_part_spec> ref_columns;
   uint32_t delete_opt, update_opt, match_opt;
-Foreign_key(const LEX_STRING &name_arg, List<Key_part_spec> &cols,
-            Table_ident *table,   List<Key_part_spec> &ref_cols,
-            uint32_t delete_opt_arg, uint32_t update_opt_arg,
-            uint32_t match_opt_arg)
-  :Key(FOREIGN_KEY, name_arg, &default_key_create_info, 0, cols),
-    ref_table(table), ref_columns(ref_cols),
-    delete_opt(delete_opt_arg), update_opt(update_opt_arg),
-    match_opt(match_opt_arg)
-    {}
+  Foreign_key(const LEX_STRING &name_arg
+            , List<Key_part_spec> &cols
+            , Table_ident *table
+            , List<Key_part_spec> &ref_cols
+            , uint32_t delete_opt_arg
+            , uint32_t update_opt_arg
+            , uint32_t match_opt_arg)
+  :Key(FOREIGN_KEY
+     , name_arg
+     , &default_key_create_info
+     , 0
+     , cols)
+   , ref_table(table)
+   , ref_columns(ref_cols)
+   , delete_opt(delete_opt_arg)
+   , update_opt(update_opt_arg)
+   , match_opt(match_opt_arg)
+  {}
+  /**
+   * Constructs an (almost) deep copy of this foreign key. Only those
+   * elements that are known to never change are not copied.
+   * If out of memory, a partial copy is returned and an error is set
+   * in Session.
+   */
   Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root);
   /**
-     Used to make a clone of this object for ALTER/CREATE TABLE
-     @sa comment for Key_part_spec::clone
-  */
+   * Used to make a clone of this object for ALTER/CREATE TABLE
+   * 
+   * @see comment for Key_part_spec::clone
+   */
   virtual Key *clone(MEM_ROOT *mem_root) const
-  { return new (mem_root) Foreign_key(*this, mem_root); }
+  {
+    return new (mem_root) Foreign_key(*this, mem_root);
+  }
   /* Used to validate foreign key options */
   bool validate(List<Create_field> &table_fields);
 };
