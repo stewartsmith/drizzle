@@ -580,7 +580,7 @@ static char *check_struct_option(char *cur_arg, char *key_name)
   if ((ptr != NULL) && (end != NULL) && (end - ptr > 1))
   {
     uint32_t len= (uint32_t) (ptr - cur_arg);
-    set_if_smaller(len, FN_REFLEN-1);
+    set_if_smaller(len, (uint32_t)FN_REFLEN-1);
     strncpy(key_name, cur_arg, len);
     return ++ptr;
   }

@@ -392,7 +392,7 @@ my_strnxfrm_8bit_bin(const CHARSET_INFO * const cs,
                      const unsigned char *src, size_t srclen, uint32_t flags)
 {
   set_if_smaller(srclen, dstlen);
-  set_if_smaller(srclen, nweights);
+  set_if_smaller(srclen, (size_t) nweights);
   if (dst != src)
     memcpy(dst, src, srclen);
   return my_strxfrm_pad_desc_and_reverse(cs, dst, dst + srclen, dst + dstlen,

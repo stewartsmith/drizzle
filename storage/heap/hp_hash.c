@@ -320,7 +320,7 @@ uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char 
       {
         char_length= my_charpos(cs, pos, pos + char_length,
                                 char_length / cs->mbmaxlen);
-        set_if_smaller(char_length, seg->length); /* QQ: ok to remove? */
+        set_if_smaller(char_length, (uint32_t)seg->length); /* QQ: ok to remove? */
       }
       cs->coll->hash_sort(cs, pos, char_length, &nr, &nr2);
     }
@@ -514,9 +514,9 @@ int hp_rec_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec1, const unsigned 
       {
         uint32_t char_length= seg->length / cs->mbmaxlen;
         char_length1= my_charpos(cs, pos1, pos1 + seg->length, char_length);
-        set_if_smaller(char_length1, seg->length);
+        set_if_smaller(char_length1, (uint32_t)seg->length);
         char_length2= my_charpos(cs, pos2, pos2 + seg->length, char_length);
-        set_if_smaller(char_length2, seg->length);
+        set_if_smaller(char_length2, (uint32_t)seg->length);
       }
       else
       {
@@ -606,9 +606,9 @@ int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char 
       {
         uint32_t char_length= seg->length / cs->mbmaxlen;
         char_length_key= my_charpos(cs, key, key + seg->length, char_length);
-        set_if_smaller(char_length_key, seg->length);
+        set_if_smaller(char_length_key, (uint32_t)seg->length);
         char_length_rec= my_charpos(cs, pos, pos + seg->length, char_length);
-        set_if_smaller(char_length_rec, seg->length);
+        set_if_smaller(char_length_rec, (uint32_t)seg->length);
       }
       else
       {
@@ -674,7 +674,7 @@ void hp_make_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *rec
     {
       char_length= my_charpos(cs, pos, pos + seg->length,
                               char_length / cs->mbmaxlen);
-      set_if_smaller(char_length, seg->length); /* QQ: ok to remove? */
+      set_if_smaller(char_length, (uint32_t)seg->length); /* QQ: ok to remove? */
     }
     if (seg->type == HA_KEYTYPE_VARTEXT1)
       char_length+= seg->bit_start;             /* Copy also length */
@@ -768,7 +768,7 @@ uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
       char_length= my_charpos(seg->charset,
                               rec + seg->start, rec + seg->start + char_length,
                               char_length / seg->charset->mbmaxlen);
-      set_if_smaller(char_length, seg->length); /* QQ: ok to remove? */
+      set_if_smaller(char_length, (uint32_t)seg->length); /* QQ: ok to remove? */
       if (char_length < seg->length)
         seg->charset->cset->fill(seg->charset, (char*) key + char_length,
                                  seg->length - char_length, ' ');
@@ -829,7 +829,7 @@ uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned ch
     {
       char_length= my_charpos(seg->charset, old, old+char_length,
                               char_length / seg->charset->mbmaxlen);
-      set_if_smaller(char_length, seg->length); /* QQ: ok to remove? */
+      set_if_smaller(char_length, (uint32_t)seg->length); /* QQ: ok to remove? */
       if (char_length < seg->length)
         seg->charset->cset->fill(seg->charset, (char*) key + char_length,
                                  seg->length - char_length, ' ');

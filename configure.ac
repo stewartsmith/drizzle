@@ -251,18 +251,17 @@ if test "$SUNCC" = "yes"
 then
   dnl we put CPPFLAGS and LDFLAGS first here, because if the user has specified
   dnl command line CPPFLAGS or LDFLAGS, their -I or -L should come _first_
-  isainfo_k=`isainfo -k`
   if test "$target_cpu" = "sparc"
   then
     MEMALIGN_FLAGS="-xmemalign=8s"
-    IS_64="-m64"
-  else
-    if test "$isainfo_k" = "amd64"
-    then
-      IS_64="-m64"
-    fi
   fi
-  LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_k} -L/usr/local/lib -L/opt/csw/lib/${isainfo_k} -L/opt/csw/lib -L/usr/lib/${isainfo_k}"
+
+  isainfo_b=`isainfo -b`
+  if test "$isainfo_b" = "64"
+  then
+    IS_64="-m64"
+  fi
+  LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib -L/usr/lib/${isainfo_b}"
   CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
 
   CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
@@ -416,10 +415,10 @@ CC="$PTHREAD_CC"
 #--------------------------------------------------------------------
 
 AC_ARG_ENABLE([tcmalloc],
-    [AS_HELP_STRING([--enable-tcmalloc],
-       [Enable linking with tcmalloc @<:@default=off@:>@])],
+    [AS_HELP_STRING([--disable-tcmalloc],
+       [Enable linking with tcmalloc @<:@default=on@:>@])],
     [ac_enable_tcmalloc="$enableval"],
-    [ac_enable_tcmalloc="no"])
+    [ac_enable_tcmalloc="yes"])
 
 if test "x$ac_enable_tcmalloc" != "xno"
 then
@@ -811,9 +810,8 @@ case "$with_atomic_ops" in
     AC_CACHE_CHECK(
       [whether the compiler provides atomic builtins],
       [ac_cv_gcc_atomic_builtins],
-      [AC_TRY_COMPILE([],
-        [int main()
-        {
+      [AC_RUN_IFELSE(
+        [AC_LANG_PROGRAM([],[[
           int foo= -10; int bar= 10;
           if (!__sync_fetch_and_add(&foo, bar) || foo)
             return -1;
@@ -824,7 +822,7 @@ case "$with_atomic_ops" in
           if (bar)
             return -1;
           return 0;
-        }],
+        ]])],
        [ac_cv_gcc_atomic_builtins=yes],
        [ac_cv_gcc_atomic_builtins=no])])
 
@@ -874,20 +872,12 @@ DRIZZLE_CHECK_TIME_T
 
 # This always gives a warning. Ignore it unless you are cross compiling
 AC_C_BIGENDIAN
-#---START: Used in for client configure
-# Check base type of last arg to accept
-DRIZZLE_TYPE_ACCEPT
-#---END:
-# Figure out what type of struct rlimit to use with setrlimit
-DRIZZLE_TYPE_STRUCT_RLIMIT
+
 # Find where the stack goes
 DRIZZLE_STACK_DIRECTION
 # We want to skip alloca on irix unconditionally. It may work on some version..
 DRIZZLE_FUNC_ALLOCA
-# Do struct timespec have members tv_sec or ts_sec
-DRIZZLE_TIMESPEC_TS
-# Do we have the tzname variable
-DRIZZLE_TZNAME
+
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([uint, ulong])
 
@@ -991,8 +981,11 @@ AC_CACHE_CHECK([args to pthread_getspecific], [mysql_cv_getspecific_args],
 #ifndef _POSIX_PTHREAD_SEMANTICS 
 #define _POSIX_PTHREAD_SEMANTICS 
 #endif
-#include <pthread.h> ]], [[ void *pthread_getspecific(pthread_key_t key);
-pthread_getspecific((pthread_key_t) NULL); ]])],
+#include <pthread.h>
+   ]], [[
+void *pthread_getspecific(pthread_key_t key);
+pthread_getspecific((pthread_key_t) NULL);
+   ]])],
     [mysql_cv_getspecific_args=POSIX],
     [mysql_cv_getspecific_args=other])])
   if test "$mysql_cv_getspecific_args" = "other"
@@ -1188,10 +1181,10 @@ AC_ARG_ENABLE([longlong-warnings],
     [ac_warn_longlong="no"])
 
 AC_ARG_ENABLE([strict-aliasing],
-    [AS_HELP_STRING([--disable-strict-aliasing],
-       [Enable warnings about stict-aliasing @<:@default=on@:>@])],
+    [AS_HELP_STRING([--enable-strict-aliasing],
+       [Enable warnings about stict-aliasing @<:@default=off@:>@])],
     [ac_warn_strict_aliasing="$enableval"],
-    [ac_warn_strict_aliasing="yes"])
+    [ac_warn_strict_aliasing="no"])
 
 AC_ARG_ENABLE([cast-warnings],
     [AS_HELP_STRING([--enable-cast-warnings],
@@ -1229,14 +1222,26 @@ AC_ARG_ENABLE([exceptions],
     [ac_exceptions="$enableval"],
     [ac_exceptions="yes"])
 
+AC_ARG_ENABLE([cast-align-warnings],
+    [AS_HELP_STRING([--enable-cast-align-warnings],
+       [Toggle cast alignment warnings @<:@default=off@:>@])],
+    [ac_warn_cast_align="$enableval"],
+    [ac_warn_cast_align="no"])
+
 if test "$GCC" = "yes"
 then
+  if test "$ac_warn_cast_align" = "yes"
+  then
+    W_CAST_ALIGN="-Wcast-align"
+  else
+    W_CAST_ALIGN="-Wno-cast-align"
+  fi
 
   if test "$ac_warn_fail" = "yes"
   then
     W_FAIL="-Werror"
   fi
-  BASE_WARNINGS="-Wall -Wextra ${W_FAIL}"
+  BASE_WARNINGS="-Wall -Wextra ${W_FAIL} ${W_CAST_ALIGN}"
 
   if test "$ac_warn_longlong" = "yes"
   then
@@ -1355,7 +1360,7 @@ void testme() {  };],[
     W_EXCEPTIONS="-fexceptions"
   fi
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
-  PROTOSKIP_WARNINGS="-Wno-effc++"
+  PROTOSKIP_WARNINGS="-Wno-effc++ -Wshadow"
 fi
 if test "$SUNCC" = "yes"
 then

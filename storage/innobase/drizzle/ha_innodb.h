@@ -1,17 +1,20 @@
-/* Copyright (C) 2000-2005 MySQL AB && Innobase Oy
+/*****************************************************************************
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
+Copyright (c) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
-   GNU General Public License for more details.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; version 2 of the License.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	 USA */
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place, Suite 330, Boston, MA 02111-1307 USA
+
+*****************************************************************************/
 
 /*
   This file is based on ha_berkeley.h of MySQL distribution
@@ -33,8 +36,9 @@
 typedef struct st_innobase_share {
   THR_LOCK lock;
   pthread_mutex_t mutex;
-  char *table_name;
-  uint table_name_length,use_count;
+  const char* table_name;
+  uint use_count;
+  void* table_name_hash;
 } INNOBASE_SHARE;
 
 
@@ -285,9 +289,17 @@ extern "C"
 int
 convert_error_code_to_mysql(
 /*========================*/
-				/* out: MySQL error code */
-	int		error,	/* in: InnoDB error code */
-	ulint		flags,	/* in: InnoDB table flags, or 0 */
+					/* out: MySQL error code */
+	int		error,		/* in: InnoDB error code */
+	ulint		flags,		/* in: InnoDB table flags, or 0 */
 	Session	        *session);	/* in: user thread handle or NULL */
 
+/*************************************************************************
+Allocates an InnoDB transaction for a MySQL handler object. */
+extern "C"
+trx_t*
+innobase_trx_allocate(
+/*==================*/
+					/* out: InnoDB transaction handle */
+	Session		*session);	/* in: user thread handle */
 #endif /* INNODB_HANDLER_HA_INNODB_H */

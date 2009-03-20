@@ -488,7 +488,7 @@ void ha_close_connection(Session* session)
   do not "register" in session->transaction lists, and thus do not
   modify the transaction state. Besides, each DDL in
   MySQL is prefixed with an implicit normal transaction commit
-  (a call to end_active_trans()), and thus leaves nothing
+  (a call to Session::endActiveTransaction()), and thus leaves nothing
   to modify.
   However, as it has been pointed out with CREATE TABLE .. SELECT,
   some DDL statements can start a *new* transaction.
@@ -1913,7 +1913,7 @@ int handler::update_auto_increment()
         {
           nb_desired_values= AUTO_INC_DEFAULT_NB_ROWS *
             (1 << nb_already_reserved_intervals);
-          set_if_smaller(nb_desired_values, AUTO_INC_DEFAULT_NB_MAX);
+          set_if_smaller(nb_desired_values, (uint64_t)AUTO_INC_DEFAULT_NB_MAX);
         }
         else
           nb_desired_values= AUTO_INC_DEFAULT_NB_MAX;
@@ -2768,7 +2768,9 @@ int ha_enable_transaction(Session *session, bool on)
       So, let's commit an open transaction (if any) now.
     */
     if (!(error= ha_commit_trans(session, 0)))
-      error= end_trans(session, COMMIT);
+      if (! session->endTransaction(COMMIT))
+        error= 1;
+
   }
   return(error);
 }

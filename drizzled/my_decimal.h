@@ -172,7 +172,7 @@ inline uint32_t my_decimal_length_to_precision(uint32_t length, uint32_t scale,
 inline uint32_t my_decimal_precision_to_length(uint32_t precision, uint8_t scale,
                                              bool unsigned_flag)
 {
-  set_if_smaller(precision, DECIMAL_MAX_PRECISION);
+  set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
   return (uint32_t)(precision + (scale>0 ? 1:0) + (unsigned_flag ? 0:1));
 }
 

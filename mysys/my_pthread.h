@@ -101,23 +101,6 @@ extern void my_pthread_attr_setprio(pthread_attr_t *attr, int priority);
   for calculating an absolute time at which
   pthread_cond_timedwait should timeout
 */
-#ifdef HAVE_TIMESPEC_TS_SEC
-#ifndef set_timespec
-#define set_timespec(ABSTIME,SEC) \
-{ \
-  (ABSTIME).ts_sec=time(0) + (time_t) (SEC); \
-  (ABSTIME).ts_nsec=0; \
-}
-#endif /* !set_timespec */
-#ifndef set_timespec_nsec
-#define set_timespec_nsec(ABSTIME,NSEC) \
-{ \
-  uint64_t now= my_getsystime() + (NSEC/100); \
-  (ABSTIME).ts_sec=  (now / 10000000UL); \
-  (ABSTIME).ts_nsec= (now % 10000000UL * 100 + ((NSEC) % 100)); \
-}
-#endif /* !set_timespec_nsec */
-#else
 #ifndef set_timespec
 #define set_timespec(ABSTIME,SEC) \
 {\
@@ -135,7 +118,6 @@ extern void my_pthread_attr_setprio(pthread_attr_t *attr, int priority);
   (ABSTIME).tv_nsec= (long) (now % 10000000UL * 100 + ((NSEC) % 100)); \
 }
 #endif /* !set_timespec_nsec */
-#endif /* HAVE_TIMESPEC_TS_SEC */
 
 	/* safe_mutex adds checking to mutex for easier debugging */
 

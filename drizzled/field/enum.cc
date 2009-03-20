@@ -19,11 +19,14 @@
  */
 
 
-#include <drizzled/server_includes.h>
-#include <drizzled/field/enum.h>
-#include <drizzled/error.h>
-#include <drizzled/table.h>
-#include <drizzled/session.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/field/enum.h"
+#include "drizzled/error.h"
+#include "drizzled/table.h"
+#include "drizzled/session.h"
+
+#include <sstream>
+#include <string>
 
 /****************************************************************************
 ** enum type.
@@ -33,12 +36,13 @@
 
 enum ha_base_keytype Field_enum::key_type() const
 {
-  switch (packlength) {
-  default: return HA_KEYTYPE_BINARY;
-  case 2: assert(1);
-  case 3: assert(1);
-  case 4: return HA_KEYTYPE_ULONG_INT;
-  case 8: return HA_KEYTYPE_ULONGLONG;
+  switch (packlength) 
+  {
+    default: return HA_KEYTYPE_BINARY;
+    case 2: assert(1);
+    case 3: assert(1);
+    case 4: return HA_KEYTYPE_ULONG_INT;
+    case 8: return HA_KEYTYPE_ULONGLONG;
   }
 }
 
@@ -79,84 +83,76 @@ void Field_enum::store_type(uint64_t value)
   }
 }
 
-
 /**
-  @note
-    Storing a empty string in a enum field gives a warning
-    (if there isn't a empty value in the enum)
-*/
-
-int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * const cs)
+ * Given a supplied string, looks up the string in the internal typelib
+ * and stores the found key.  Upon not finding an entry in the typelib, 
+ * we always throw an error.
+ */
+int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * const)
 {
-  int err= 0;
-  uint32_t not_used;
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  String tmpstr(buff,sizeof(buff), &my_charset_bin);
-
-  /* Convert character set if necessary */
-  if (String::needs_conversion(length, cs, field_charset, &not_used))
-  {
-    uint32_t dummy_errors;
-    tmpstr.copy(from, length, cs, field_charset, &dummy_errors);
-    from= tmpstr.ptr();
-    length=  tmpstr.length();
-  }
+  uint32_t tmp;
 
   /* Remove end space */
   length= field_charset->cset->lengthsp(field_charset, from, length);
-  uint32_t tmp=find_type2(typelib, from, length, field_charset);
-  if (!tmp)
+  tmp= find_type2(typelib, from, length, field_charset);
+  if (! tmp)
   {
-    if (length < 6) // Can't be more than 99999 enums
+    if (length < 6) /* Can't be more than 99999 enums */
     {
       /* This is for reading numbers with LOAD DATA INFILE */
-      char *end;
-      tmp=(uint32_t) my_strntoul(cs,from,length,10,&end,&err);
-      if (err || end != from+length || tmp > typelib->count)
+      /* Convert the string to an integer using stringstream */
+      std::stringstream ss;
+      ss << from;
+      ss >> tmp;
+
+      if (tmp == 0 || tmp > typelib->count)
       {
-	tmp=0;
-	set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+        my_error(ER_INVALID_ENUM_VALUE, MYF(ME_FATALERROR), from);
+        return 1;
       }
-      if (!table->in_use->count_cuted_fields)
-        err= 0;
     }
     else
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-  }
-  store_type((uint64_t) tmp);
-  return err;
-}
-
-
-int Field_enum::store(double nr)
-{
-  return Field_enum::store((int64_t) nr, false);
-}
-
-
-int Field_enum::store(int64_t nr,
-                      bool )
-{
-  int error= 0;
-  if ((uint64_t) nr > typelib->count || nr == 0)
-  {
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-    if (nr != 0 || table->in_use->count_cuted_fields)
     {
-      nr= 0;
-      error= 1;
+      my_error(ER_INVALID_ENUM_VALUE, MYF(ME_FATALERROR), from);
+      return 1;
     }
   }
-  store_type((uint64_t) (uint32_t) nr);
-  return error;
+  store_type((uint64_t) tmp);
+  return 0;
 }
 
+int Field_enum::store(double from)
+{
+  return Field_enum::store((int64_t) from, false);
+}
+
+/**
+ * @note MySQL allows 0 values, saying that 0 is "the index of the
+ * blank string error", whatever that means.  Uhm, Drizzle doesn't
+ * allow this.  To store an ENUM column value using an integer, you
+ * must specify the 1-based index of the enum column definition's 
+ * key.
+ */
+int Field_enum::store(int64_t from, bool)
+{
+  if (from <= 0 || (uint64_t) from > typelib->count)
+  {
+    /* Convert the integer to a string using stringstream */
+    std::stringstream ss;
+    std::string tmp;
+    ss << from; ss >> tmp;
+
+    my_error(ER_INVALID_ENUM_VALUE, MYF(ME_FATALERROR), tmp.c_str());
+    return 1;
+  }
+  store_type((uint64_t) (uint32_t) from);
+  return 0;
+}
 
 double Field_enum::val_real(void)
 {
   return (double) Field_enum::val_int();
 }
-
 
 int64_t Field_enum::val_int(void)
 {
@@ -202,7 +198,6 @@ int64_t Field_enum::val_int(void)
   return 0;					// impossible
 }
 
-
 /**
    Save the field metadata for enum fields.
 
@@ -221,9 +216,7 @@ int Field_enum::do_save_field_metadata(unsigned char *metadata_ptr)
   return 2;
 }
 
-
-String *Field_enum::val_str(String *,
-			    String *val_ptr)
+String *Field_enum::val_str(String *, String *val_ptr)
 {
   uint32_t tmp=(uint32_t) Field_enum::val_int();
   if (!tmp || tmp > typelib->count)
@@ -257,7 +250,6 @@ void Field_enum::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-
 void Field_enum::sql_type(String &res) const
 {
   char buffer[255];
@@ -280,7 +272,6 @@ void Field_enum::sql_type(String &res) const
   }
   res.append(')');
 }
-
 
 Field *Field_enum::new_field(MEM_ROOT *root, Table *new_table,
                              bool keep_type)

@@ -272,7 +272,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
                                       session->variables.max_heap_table_size) :
                                  session->variables.tmp_table_size) /
                                 share->reclength);
-  set_if_bigger(share->max_rows,1);    // For dummy start options
+  set_if_bigger(share->max_rows,(ha_rows)1);    // For dummy start options
 
 
   //// keyinfo= param->keyinfo;

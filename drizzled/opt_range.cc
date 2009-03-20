@@ -6594,8 +6594,8 @@ get_quick_keys(PARAM *param,QUICK_RANGE_SELECT *quick,KEY_PART *key,
 			       flag)))
     return 1;			// out of memory
 
-  set_if_bigger(quick->max_used_key_length, range->min_length);
-  set_if_bigger(quick->max_used_key_length, range->max_length);
+  set_if_bigger(quick->max_used_key_length, (uint32_t)range->min_length);
+  set_if_bigger(quick->max_used_key_length, (uint32_t)range->max_length);
   set_if_bigger(quick->used_key_parts, (uint32_t) key_tree->part+1);
   if (insert_dynamic(&quick->ranges, (unsigned char*) &range))
     return 1;
@@ -8736,7 +8736,7 @@ void cost_group_min_max(Table* table, KEY *index_info, uint32_t used_key_parts,
     quick_prefix_selectivity= (double) quick_prefix_records /
                               (double) table_records;
     num_groups= (uint32_t) rint(num_groups * quick_prefix_selectivity);
-    set_if_bigger(num_groups, 1);
+    set_if_bigger(num_groups, 1U);
   }
 
   if (used_key_parts > group_key_parts)

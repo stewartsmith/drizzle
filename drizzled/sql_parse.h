@@ -38,10 +38,6 @@ class Table_ident;
 
 typedef class Select_Lex Select_Lex;
 
-bool begin_trans(Session *session);
-bool end_active_trans(Session *session);
-int end_trans(Session *session, enum enum_mysql_completiontype completion);
-
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
 bool multi_update_precheck(Session *session, TableList *tables);
 bool multi_delete_precheck(Session *session, TableList *tables);
@@ -78,8 +74,6 @@ bool mysql_test_parse_for_slave(Session *session, char *inBuf,
 
 bool is_update_query(enum enum_sql_command command);
 
-bool alloc_query(Session *session, const char *packet, uint32_t packet_length);
-
 void mysql_reset_session_for_next_command(Session *session);
 
 void create_select_for_variable(const char *var_name);
@@ -89,8 +83,6 @@ void mysql_init_multi_delete(LEX *lex);
 bool multi_delete_set_locks_and_link_aux_tables(LEX *lex);
 
 void init_update_queries(void);
-
-bool do_command(Session *session);
 
 bool dispatch_command(enum enum_server_command command, Session *session,
                       char* packet, uint32_t packet_length);

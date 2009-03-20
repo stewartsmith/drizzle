@@ -239,25 +239,22 @@ DROP TABLE t1;
 CREATE TABLE t1 (col1 enum('red','blue','green'));
 INSERT INTO t1 VALUES ('red'),('blue'),('green');
 INSERT INTO t1 (col1) VALUES ('yellow');
-ERROR 01000: Data truncated for column 'col1' at row 1
+ERROR HY000: Received an invalid enum value 'yellow'.
 INSERT INTO t1 (col1) VALUES ('redd');
-ERROR 01000: Data truncated for column 'col1' at row 1
+ERROR HY000: Received an invalid enum value 'redd'.
 INSERT INTO t1 VALUES ('');
-ERROR 01000: Data truncated for column 'col1' at row 1
+ERROR HY000: Received an invalid enum value ''.
 UPDATE t1 SET col1 ='yellow' WHERE col1 ='green';
-ERROR 01000: Data truncated for column 'col1' at row 3
+ERROR HY000: Received an invalid enum value 'yellow'.
 INSERT IGNORE INTO t1 VALUES ('yellow');
-Warnings:
-Warning	1265	Data truncated for column 'col1' at row 1
+ERROR HY000: Received an invalid enum value 'yellow'.
 UPDATE IGNORE t1 SET col1 ='yellow' WHERE col1 ='blue';
-Warnings:
-Warning	1265	Data truncated for column 'col1' at row 2
+ERROR HY000: Received an invalid enum value 'yellow'.
 SELECT * FROM t1;
 col1
 red
-
+blue
 green
-
 DROP TABLE t1;
 CREATE TABLE t1 (col1 INT NOT NULL, col2 CHAR(5) NOT NULL, col3 DATE NOT NULL);
 INSERT INTO t1 VALUES (100, 'hello', '2004-08-20');

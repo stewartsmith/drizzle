@@ -58,7 +58,8 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 
   if (!share)
   {
-    uint32_t chunk_dataspace_length, chunk_length, is_variable_size;
+    size_t chunk_dataspace_length;
+    uint32_t chunk_length, is_variable_size;
     uint32_t fixed_data_length, fixed_column_count;
     HP_KEYDEF *keyinfo;
 
