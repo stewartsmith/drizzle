@@ -20,6 +20,7 @@
 
 #include "myisamdef.h"
 #include <stddef.h>
+#include <queue>
 
 /* static variables */
 
@@ -32,6 +33,8 @@
 #define MIN_SORT_MEMORY (4096-MALLOC_OVERHEAD)
 #define MYF_RW  MYF(MY_NABP | MY_WME | MY_WAIT_IF_FULL)
 #define DISK_BUFFER_SIZE (IO_SIZE*16)
+
+using namespace std;
 
 
 /*
@@ -874,7 +877,7 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
   my_off_t to_start_filepos= 0;
   unsigned char *strpos;
   BUFFPEK *buffpek,**refpek;
-  QUEUE queue;
+  priority_queue<BUFFPEK *, vector<BUFFPEK *>, info->keycmp> queue;
   volatile int *killed= killed_ptr(info->sort_info->param);
 
   count=error=0;
@@ -885,13 +888,6 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
   strpos=(unsigned char*) sort_keys;
   sort_length=info->key_length;
 
-
-  if (init_queue(&queue,(uint32_t) (Tb-Fb)+1,(uint32_t) offsetof(BUFFPEK,key),
-                 false,
-                 (queue_compare) info->key_cmp,
-                 (void*) info))
-    return(1); /* purecov: inspected */
-
   for (buffpek= Fb ; buffpek <= Tb ; buffpek++)
   {
     count+= buffpek->count;
@@ -901,10 +897,10 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
                                                       sort_length));
     if (error == -1)
       goto err; /* purecov: inspected */
-    queue_insert(&queue,(unsigned char*) buffpek);
+    queue.push(buffpek);
   }
 
-  while (queue.elements > 1)
+  while (queue.size() > 1)
   {
     for (;;)
     {
@@ -912,7 +908,7 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
       {
         error=1; goto err;
       }
-      buffpek=(BUFFPEK*) queue_top(&queue);
+      buffpek= queue.top();
       if (to_file)
       {
         if (info->write_key(info,to_file,(unsigned char*) buffpek->key,
@@ -936,7 +932,7 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
           unsigned char *base=buffpek->base;
           uint32_t max_keys=buffpek->max_keys;
 
-          queue_remove(&queue,0);
+          queue.pop();
 
           /* Put room used by buffer to use in other buffer */
           for (refpek= (BUFFPEK**) &queue_top(&queue);
@@ -961,10 +957,12 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
       }
       else if (error == -1)
         goto err;               /* purecov: inspected */
-      queue_replaced(&queue);   /* Top element has been replaced */
+      /* Top element has been replaced */
+      queue.pop();
+      queue.push(buffpek);
     }
   }
-  buffpek=(BUFFPEK*) queue_top(&queue);
+  buffpek= queue.top();
   buffpek->base=(unsigned char *) sort_keys;
   buffpek->max_keys=keys;
   do
@@ -999,7 +997,6 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
   if (to_file)
     lastbuff->file_pos=to_start_filepos;
 err:
-  delete_queue(&queue);
   return(error);
 } /* merge_buffers */
 
