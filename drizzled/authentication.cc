@@ -28,11 +28,11 @@ static bool are_plugins_loaded= false;
 static bool authenticate_by(Session *session, plugin_ref plugin, void* p_data)
 {
   const char *password= (const char *)p_data;
-  authentication_st *auth= plugin_data(plugin, authentication_st *);
+  Authentication *auth= plugin_data(plugin, Authentication *);
 
   (void)p_data;
 
-  if (auth && auth->authenticate)
+  if (auth)
   {
     if (auth->authenticate(session, password))
       return true;
@@ -47,32 +47,31 @@ bool authenticate_user(Session *session, const char *password)
   if (are_plugins_loaded != true)
     return true;
 
-  return plugin_foreach(session, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
+  return plugin_foreach(session, authenticate_by,
+                        DRIZZLE_AUTH_PLUGIN, (void *)password);
 }
 
 
 int authentication_initializer(st_plugin_int *plugin)
 {
-  authentication_st *authen;
+  Authentication *authen;
 
-  authen= new authentication_st;
-
-  if (authen == NULL)
-    return 1;
-
-  memset(authen, 0, sizeof(authentication_st));
 
   if (plugin->plugin->init)
   {
-    if (plugin->plugin->init(authen))
+    if (plugin->plugin->init(&authen))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' init function returned error."),
-                      plugin->name.str);
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error."),
+                    plugin->name.str);
       goto err;
     }
   }
 
-  plugin->data= (void *)authen;
+  if (authen == NULL)
+    return 1;
+
+  plugin->data= static_cast<void *>(authen);
   are_plugins_loaded= true;
 
   plugin->state= PLUGIN_IS_READY;
@@ -85,13 +84,11 @@ err:
 
 int authentication_finalizer(st_plugin_int *plugin)
 {
-  authentication_st *authen= (authentication_st *)plugin->data;
+  Authentication *authen= static_cast<Authentication *>(plugin->data);
 
   assert(authen);
   if (authen && plugin->plugin->deinit)
     plugin->plugin->deinit(authen);
-
-  delete authen;
 
   return(0);
 }

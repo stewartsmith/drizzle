@@ -17,6 +17,10 @@
 #include <drizzled/sql_udf.h>
 #include <drizzled/function/math/int.h>
 
+#include <string>
+
+using namespace std;
+
 class Item_func_uncompressed_length : public Item_int_func
 {
   String value;
@@ -49,19 +53,12 @@ int64_t Item_func_uncompressed_length::val_int()
   return uint4korr(res->ptr()) & 0x3FFFFFFF;
 }
 
-Item_func* create_uncompressed_lengthudf_item(MEM_ROOT* m)
-{
-  return  new (m) Item_func_uncompressed_length();
-}
-
-static struct udf_func uncompressed_lengthudf = {
-  { C_STRING_WITH_LEN("uncompressed_length") },
-  create_uncompressed_lengthudf_item
-};
+Create_function<Item_func_uncompressed_length>
+  uncompressed_lengthudf(string("uncompressed_length"));
 
 static int uncompressed_lengthudf_plugin_init(void *p)
 {
-  udf_func **f = (udf_func**) p;
+  Function_builder **f = (Function_builder**) p;
 
   *f= &uncompressed_lengthudf;
 
@@ -70,7 +67,7 @@ static int uncompressed_lengthudf_plugin_init(void *p)
 
 static int uncompressed_lengthudf_plugin_deinit(void *p)
 {
-  udf_func *udff = (udf_func *) p;
+  Function_builder *udff = (Function_builder *) p;
   (void)udff;
   return 0;
 }

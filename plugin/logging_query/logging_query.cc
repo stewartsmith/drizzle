@@ -168,92 +168,96 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
 /* we could just not have a pre entrypoint at all,
    and have logging_pre == NULL
    but we have this here for the sake of being an example */
-bool logging_query_func_pre (Session *)
+class Logging_query: public Logging_handler
 {
-  return false;
-}
-
-bool logging_query_func_post (Session *session)
-{
-  char msgbuf[MAX_MSG_LEN];
-  int msgbuf_len= 0;
-  int wrv;
-
-  assert(session != NULL);
-
-  if (fd < 0)
+  virtual bool pre (Session *)
+  {
     return false;
+  }
 
-  /* Yes, we know that checking sysvar_logging_query_enable,
-     sysvar_logging_query_threshold_big_resultset, and
-     sysvar_logging_query_threshold_big_examined is not threadsafe,
-     because some other thread might change these sysvars.  But we
-     don't care.  We might start logging a little late as it spreads
-     to other threads.  Big deal. */
+  virtual bool post (Session *session)
+  {
+    char msgbuf[MAX_MSG_LEN];
+    int msgbuf_len= 0;
+    int wrv;
 
-  // return if not enabled or query was too fast or resultset was too small
-  if (sysvar_logging_query_enable == false)
+    assert(session != NULL);
+
+    if (fd < 0)
+      return false;
+
+    /* Yes, we know that checking sysvar_logging_query_enable,
+       sysvar_logging_query_threshold_big_resultset, and
+       sysvar_logging_query_threshold_big_examined is not threadsafe,
+       because some other thread might change these sysvars.  But we
+       don't care.  We might start logging a little late as it spreads
+       to other threads.  Big deal. */
+
+    // return if not enabled or query was too fast or resultset was too small
+    if (sysvar_logging_query_enable == false)
+      return false;
+    if (session->sent_row_count < sysvar_logging_query_threshold_big_resultset)
+      return false;
+    if (session->examined_row_count < sysvar_logging_query_threshold_big_examined)
+      return false;
+
+    /* TODO, looks like connect_utime isnt being set in the session
+       object.  We could store the time this plugin was loaded, but that
+       would just be a dumb workaround. */
+    /* TODO, the session object should have a "utime command completed"
+       inside itself, so be more accurate, and so this doesnt have to
+       keep calling current_utime, which can be slow */
+  
+    uint64_t t_mark= get_microtime();
+  
+    if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow))
+      return false;
+  
+    // buffer to quotify the query
+    unsigned char qs[255];
+  
+    // to avoid trying to printf %s something that is potentially NULL
+    const char *dbs= (session->db) ? session->db : "";
+    int dbl= 0;
+    if (dbs != NULL)
+      dbl= session->db_length;
+  
+    msgbuf_len=
+      snprintf(msgbuf, MAX_MSG_LEN,
+               "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
+               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"\n",
+               t_mark,
+               session->thread_id,
+               session->query_id,
+               // dont need to quote the db name, always CSV safe
+               dbl, dbs,
+               // do need to quote the query
+               quotify((unsigned char *)session->query,
+                       session->query_length, qs, sizeof(qs)),
+               // command_name is defined in drizzled/sql_parse.cc
+               // dont need to quote the command name, always CSV safe
+               (int)command_name[session->command].length,
+               command_name[session->command].str,
+               // counters are at end, to make it easier to add more
+               (t_mark - session->connect_utime),
+               (t_mark - session->start_utime),
+               (t_mark - session->utime_after_lock),
+               session->sent_row_count,
+               session->examined_row_count);
+  
+  
+    // a single write has a kernel thread lock, thus no need mutex guard this
+    wrv= write(fd, msgbuf, msgbuf_len);
+    assert(wrv == msgbuf_len);
+  
     return false;
-  if (session->sent_row_count < sysvar_logging_query_threshold_big_resultset)
-    return false;
-  if (session->examined_row_count < sysvar_logging_query_threshold_big_examined)
-    return false;
-
-  /* TODO, looks like connect_utime isnt being set in the session
-     object.  We could store the time this plugin was loaded, but that
-     would just be a dumb workaround. */
-  /* TODO, the session object should have a "utime command completed"
-     inside itself, so be more accurate, and so this doesnt have to
-     keep calling current_utime, which can be slow */
-
-  uint64_t t_mark= get_microtime();
-
-  if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow))
-    return false;
-
-  // buffer to quotify the query
-  unsigned char qs[255];
-
-  // to avoid trying to printf %s something that is potentially NULL
-  const char *dbs= (session->db) ? session->db : "";
-  int dbl= 0;
-  if (dbs != NULL)
-    dbl= session->db_length;
-
-  msgbuf_len=
-    snprintf(msgbuf, MAX_MSG_LEN,
-             "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
-             "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"\n",
-             t_mark,
-             session->thread_id,
-             session->query_id,
-             // dont need to quote the db name, always CSV safe
-             dbl, dbs,
-             // do need to quote the query
-             quotify((unsigned char *)session->query,
-                     session->query_length, qs, sizeof(qs)),
-             // command_name is defined in drizzled/sql_parse.cc
-             // dont need to quote the command name, always CSV safe
-             (int)command_name[session->command].length,
-             command_name[session->command].str,
-             // counters are at end, to make it easier to add more
-             (t_mark - session->connect_utime),
-             (t_mark - session->start_utime),
-             (t_mark - session->utime_after_lock),
-             session->sent_row_count,
-             session->examined_row_count);
-
-
-  // a single write has a kernel thread lock, thus no need mutex guard this
-  wrv= write(fd, msgbuf, msgbuf_len);
-  assert(wrv == msgbuf_len);
-
-  return false;
-}
+  }
+};
 
 static int logging_query_plugin_init(void *p)
 {
-  logging_t *l= static_cast<logging_t *>(p);
+  Logging_handler **handler= static_cast<Logging_handler **>(p);
+  *handler= NULL;
 
   if (sysvar_logging_query_filename == NULL)
   {
@@ -282,15 +286,14 @@ static int logging_query_plugin_init(void *p)
     return 0;
   }
 
-  l->logging_pre= logging_query_func_pre;
-  l->logging_post= logging_query_func_post;
+  *handler= new Logging_query();
 
   return 0;
 }
 
 static int logging_query_plugin_deinit(void *p)
 {
-  logging_st *l= (logging_st *) p;
+  Logging_query *handler= static_cast<Logging_query *>(p);
 
   if (fd >= 0)
   {
@@ -298,8 +301,7 @@ static int logging_query_plugin_deinit(void *p)
     fd= -1;
   }
 
-  l->logging_pre= NULL;
-  l->logging_post= NULL;
+  delete handler;
 
   return 0;
 }
