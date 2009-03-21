@@ -863,10 +863,10 @@ static int  write_merge_key(MI_SORT_PARAM *info,
 
 class compare_functor
 {
-  qsort2_cmp key_compare;
+  queue_compare key_compare;
   void *key_compare_arg;
   public:
-  compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg)
+  compare_functor(queue_compare in_key_compare, void *in_compare_arg)
     : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
   inline bool operator()(const BUFFPEK *i, const BUFFPEK *j) const
   {
