@@ -23,17 +23,44 @@
 #include <drizzled/session.h>
 #include <drizzled/connect.h>
 #include <string>
+
 using namespace std;
 
-pthread_attr_t multi_thread_attrib;
 static uint32_t max_threads;
-static tbb::atomic<uint32_t> thread_count;
 
 class Multi_thread_scheduler: public Scheduler
 {
+  tbb::atomic<uint32_t> thread_count;
+  pthread_attr_t multi_thread_attrib;
 
 public:
-  Multi_thread_scheduler(uint32_t threads): Scheduler(threads) { my_init(); }
+  Multi_thread_scheduler(uint32_t threads): Scheduler(threads)
+  {
+    /* Parameter for threads created for connections */
+    (void) pthread_attr_init(&multi_thread_attrib);
+    (void) pthread_attr_setdetachstate(&multi_thread_attrib,
+                                       PTHREAD_CREATE_DETACHED);
+    pthread_attr_setscope(&multi_thread_attrib, PTHREAD_SCOPE_SYSTEM);
+    {
+      struct sched_param tmp_sched_param;
+  
+      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+      tmp_sched_param.sched_priority= WAIT_PRIOR;
+      (void)pthread_attr_setschedparam(&multi_thread_attrib, &tmp_sched_param);
+    }
+  }
+
+  ~Multi_thread_scheduler()
+  {
+    (void) pthread_mutex_lock(&LOCK_thread_count);
+    while (thread_count)
+    {
+      pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
+    }
+    (void) pthread_mutex_unlock(&LOCK_thread_count);
+    
+    pthread_attr_destroy(&multi_thread_attrib);
+  }
 
   virtual bool add_connection(Session *session)
   {
@@ -73,18 +100,6 @@ static int init(void *p)
 {
   Multi_thread_scheduler** sched= static_cast<Multi_thread_scheduler **>(p);
 
-  /* Parameter for threads created for connections */
-  (void) pthread_attr_init(&multi_thread_attrib);
-  (void) pthread_attr_setdetachstate(&multi_thread_attrib,
-                                     PTHREAD_CREATE_DETACHED);
-  pthread_attr_setscope(&multi_thread_attrib, PTHREAD_SCOPE_SYSTEM);
-  {
-    struct sched_param tmp_sched_param;
-
-    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-    tmp_sched_param.sched_priority= WAIT_PRIOR;
-    (void)pthread_attr_setschedparam(&multi_thread_attrib, &tmp_sched_param);
-  }
   *sched= new Multi_thread_scheduler(max_threads);
 
   return 0;
@@ -92,17 +107,9 @@ static int init(void *p)
 
 static int deinit(void *p)
 {
-  (void) pthread_mutex_lock(&LOCK_thread_count);
 
   Multi_thread_scheduler *sched= static_cast<Multi_thread_scheduler *>(p);
   delete sched;
-  while (thread_count)
-  {
-    pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
-  }
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-  
-  pthread_attr_destroy(&multi_thread_attrib);
 
   return 0;
 }
