@@ -24,7 +24,6 @@
 #define DRIZZLED_OPT_RANGE_H
 
 #include <drizzled/field.h>
-#include <mysys/queues.h>
 #include <drizzled/item/sum.h>
 #include <queue>
 

@@ -50,7 +50,9 @@ libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_keycache.c mi_preload.c \
 			my_handler.c \
 			my_handler_errors.c \
-			sort.c 
+			sort.c \
+			list.c \
+			queues.c
 libmyisamha_la_SOURCES = ha_myisam.cc
 libmyisamnone_la_SOURCES = mi_reportnone.c
 libmyisam_la_SOURCES = 
