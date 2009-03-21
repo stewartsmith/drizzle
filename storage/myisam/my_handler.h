@@ -20,6 +20,7 @@
 
 #include <mystrings/m_ctype.h>
 #include <storage/myisam/myisampack.h>
+#include <storage/myisam/my_list.h>
 #ifdef	__cplusplus
 extern "C" {
 #endif
