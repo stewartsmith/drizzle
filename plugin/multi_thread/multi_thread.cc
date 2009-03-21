@@ -36,6 +36,7 @@ class Multi_thread_scheduler: public Scheduler
 public:
   Multi_thread_scheduler(uint32_t threads): Scheduler(threads)
   {
+    thread_count= 0;
     /* Parameter for threads created for connections */
     (void) pthread_attr_init(&multi_thread_attrib);
     (void) pthread_attr_setdetachstate(&multi_thread_attrib,
