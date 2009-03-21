@@ -861,6 +861,21 @@ static int  write_merge_key(MI_SORT_PARAM *info,
   return my_b_write(to_file, key, (size_t) sort_length*count);
 }
 
+class compare_functor
+{
+  qsort2_cmp key_compare;
+  void *key_compare_arg;
+  public:
+  compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg)
+    : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
+  inline bool operator()(const BUFFPEK *i, const BUFFPEK *j) const
+  {
+    int val= key_compare(key_compare_arg,
+                      &i->key, &j->key);
+    return (val >= 0);
+  }
+};
+
 /*
   Merge buffers to one buffer
   If to_file == 0 then use info->key_write
@@ -877,7 +892,8 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
   my_off_t to_start_filepos= 0;
   unsigned char *strpos;
   BUFFPEK *buffpek,**refpek;
-  priority_queue<BUFFPEK *, vector<BUFFPEK *>, info->keycmp> queue;
+  priority_queue<BUFFPEK *, vector<BUFFPEK *>, compare_functor > 
+    queue(compare_functor(info->key_cmp, info));
   volatile int *killed= killed_ptr(info->sort_info->param);
 
   count=error=0;
