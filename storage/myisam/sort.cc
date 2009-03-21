@@ -891,7 +891,7 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
   ha_rows count;
   my_off_t to_start_filepos= 0;
   unsigned char *strpos;
-  BUFFPEK *buffpek,**refpek;
+  BUFFPEK *buffpek;
   priority_queue<BUFFPEK *, vector<BUFFPEK *>, compare_functor > 
     queue(compare_functor(info->key_cmp, info));
   volatile int *killed= killed_ptr(info->sort_info->param);
@@ -945,9 +945,6 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
       {
         if (!(error=(int) info->read_to_buffer(from_file,buffpek,sort_length)))
         {
-          unsigned char *base=buffpek->base;
-          uint32_t max_keys=buffpek->max_keys;
-
           queue.pop();
           break;                /* One buffer have been removed */
         }
