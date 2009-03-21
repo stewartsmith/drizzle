@@ -893,7 +893,7 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
   unsigned char *strpos;
   BUFFPEK *buffpek;
   priority_queue<BUFFPEK *, vector<BUFFPEK *>, compare_functor > 
-    queue(compare_functor(static_cast<(int *)(void *, const char *, const char *)>(info->key_cmp), static_cast<void *>(info)));
+    queue(compare_functor(static_cast<qsort2_cmp>(info->key_cmp), static_cast<void *>(info)));
   volatile int *killed= killed_ptr(info->sort_info->param);
 
   count=error=0;
