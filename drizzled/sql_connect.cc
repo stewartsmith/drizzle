@@ -62,15 +62,12 @@ pthread_handler_t handle_one_connection(void *arg)
   uint32_t launch_time= (uint32_t) ((session->thr_create_utime= my_micro_time()) -
                               session->connect_utime);
 
-  Scheduler *thread_scheduler= get_thread_scheduler();
-  if (thread_scheduler == NULL)
-    return 0;
-
-  if (thread_scheduler->init_new_connection_thread())
+  Scheduler &thread_scheduler= get_thread_scheduler();
+  if (thread_scheduler.init_new_connection_thread())
   {
     session->disconnect(ER_OUT_OF_RESOURCES, true);
     statistic_increment(aborted_connects,&LOCK_status);
-    thread_scheduler->end_thread(session,0);
+    thread_scheduler.end_thread(session,0);
     return 0;
   }
   if (launch_time >= slow_launch_time*1000000L)
@@ -106,7 +103,7 @@ pthread_handler_t handle_one_connection(void *arg)
 
 end_thread:
     session->disconnect(0, true);
-    if (thread_scheduler->end_thread(session, 1))
+    if (thread_scheduler.end_thread(session, 1))
       return 0;                                 // Probably no-threads
 
     /*

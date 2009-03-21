@@ -528,12 +528,12 @@ void Session::awake(Session::killed_state state_to_set)
 {
   Session_CHECK_SENTRY(this);
   safe_mutex_assert_owner(&LOCK_delete);
-  Scheduler *thread_scheduler= get_thread_scheduler();
+  Scheduler &thread_scheduler= get_thread_scheduler();
 
   killed= state_to_set;
   if (state_to_set != Session::KILL_QUERY)
   {
-    thread_scheduler->post_kill_notification(this);
+    thread_scheduler.post_kill_notification(this);
   }
   if (mysys_var)
   {
@@ -643,8 +643,8 @@ bool Session::initGlobals()
   {
     disconnect(ER_OUT_OF_RESOURCES, true);
     statistic_increment(aborted_connects, &LOCK_status);
-    Scheduler *thread_scheduler= get_thread_scheduler();
-    thread_scheduler->end_thread(this, 0);
+    Scheduler &thread_scheduler= get_thread_scheduler();
+    thread_scheduler.end_thread(this, 0);
     return false;
   }
   return true;

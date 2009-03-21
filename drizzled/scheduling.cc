@@ -30,9 +30,10 @@ static bool scheduler_inited= false; /* We must insist that only one of these pl
 
 extern char *opt_scheduler;
 
-Scheduler *get_thread_scheduler()
+Scheduler &get_thread_scheduler()
 {
-  return thread_scheduler;
+  assert(thread_scheduler != NULL);
+  return *thread_scheduler;
 }
 
 int scheduling_initializer(st_plugin_int *plugin)
