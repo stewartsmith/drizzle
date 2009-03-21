@@ -23,13 +23,17 @@
 #include <drizzled/plugin_scheduling.h>
 #include <drizzled/connect.h>
 
-scheduling_st thread_scheduler;
+Scheduler *thread_scheduler= NULL;
+
 static bool scheduler_inited= false; /* We must insist that only one of these plugins get loaded at a time */
 
-static void post_kill_dummy(Session *) { return; }
-static bool end_thread_dummy(Session *, bool) { return false; }
 
 extern char *opt_scheduler;
+
+Scheduler *get_thread_scheduler()
+{
+  return thread_scheduler;
+}
 
 int scheduling_initializer(st_plugin_int *plugin)
 {
@@ -42,45 +46,26 @@ int scheduling_initializer(st_plugin_int *plugin)
     exit(1);
   }
 
-  memset(&thread_scheduler, 0, sizeof(scheduling_st));
-
   assert(plugin->plugin->init); /* Find poorly designed plugins */
-  if (plugin->plugin->init)
+
+  if (plugin->plugin->init((void *)&thread_scheduler))
   {
-
-    thread_scheduler.post_kill_notification= post_kill_dummy;
-    thread_scheduler.end_thread= end_thread_dummy;
-    thread_scheduler.init_new_connection_thread= init_new_connection_handler_thread;
-
-    if (plugin->plugin->init((void *)&thread_scheduler))
-    {
-      /* 
-        TRANSLATORS> The leading word "scheduling" is the name
-        of the plugin api, and so should not be translated. 
-      */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' init() failed"),
-		      plugin->name.str);
-      goto err;
-    }
+    /* 
+      TRANSLATORS> The leading word "scheduling" is the name
+      of the plugin api, and so should not be translated. 
+    */
+    errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' init() failed"),
+	                plugin->name.str);
+      return 1;
   }
-
-  /* We are going to assert() on any plugin that is not well written. */
-  assert(thread_scheduler.max_threads);
-  assert(thread_scheduler.init_new_connection_thread);
-  assert(thread_scheduler.add_connection);
-  assert(thread_scheduler.post_kill_notification);
-  assert(thread_scheduler.end_thread);
 
   scheduler_inited= true;
   /* We populate so we can find which plugin was initialized later on */
-  plugin->data= (void *)&thread_scheduler;
+  plugin->data= (void *)thread_scheduler;
   plugin->state= PLUGIN_IS_READY;
 
   return 0;
 
-err:
-
-  return 1;
 }
 
 int scheduling_finalizer(st_plugin_int *plugin)
@@ -88,11 +73,12 @@ int scheduling_finalizer(st_plugin_int *plugin)
   /* We know which one we initialized since its data pointer is filled */
   if (plugin->plugin->deinit && plugin->data)
   {
-    if (plugin->plugin->deinit((void *)&thread_scheduler))
+    if (plugin->plugin->deinit((void *)thread_scheduler))
     {
       /* TRANSLATORS: The leading word "scheduling" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' deinit() failed"),
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("scheduling plugin '%s' deinit() failed"),
                     plugin->name.str);
     }
   }

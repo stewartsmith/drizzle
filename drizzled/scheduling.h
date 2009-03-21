@@ -24,5 +24,6 @@
 
 int scheduling_initializer (st_plugin_int *plugin);
 int scheduling_finalizer (st_plugin_int *plugin);
+Scheduler* get_thread_scheduler();
 
 #endif /* DRIZZLED_SCHEDULING_H */
