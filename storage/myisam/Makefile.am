@@ -79,6 +79,7 @@ libmyisamutil_la_SOURCES= \
 			my_handler.cc \
 			my_handler_errors.cc \
 			my_pread.cc \
+			queues.cc \
 			sort.cc 
 
 libmyisamha_la_SOURCES = ha_myisam.cc

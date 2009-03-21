@@ -20,7 +20,6 @@
 
 #include "myisamdef.h"
 #include <stddef.h>
-#include <mysys/queues.h>
 
 /* static variables */
 

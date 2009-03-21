@@ -17,7 +17,6 @@
 
 #include "myisamdef.h"
 #include <mysys/my_tree.h>
-#include <mysys/queues.h>
 #include <mysys/my_bit.h>
 
 #include <drizzled/util/test.h>
