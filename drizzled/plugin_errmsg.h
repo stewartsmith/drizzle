@@ -25,9 +25,14 @@
 
 #include <stdarg.h>
 
-typedef struct errmsg_st
+class Error_message_handler
 {
-  bool (*errmsg_func)(Session *session, int priority, const char *format, va_list ap);
-} errmsg_t;
+public:
+  Error_message_handler() {}
+  virtual ~Error_message_handler() {}
+
+  virtual bool errmsg(Session *session, int priority,
+                      const char *format, va_list ap)=0;
+};
 
 #endif /* DRIZZLED_PLUGIN_ERRMSG_H */

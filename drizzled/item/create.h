@@ -23,8 +23,7 @@
 #define DRIZZLE_SERVER_ITEM_CREATE_H
 
 #include <drizzled/item/func.h>
-
-struct udf_func;
+#include <drizzled/function/create.h>
 
 /**
   Public function builder interface.
@@ -141,7 +140,7 @@ public:
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call
   */
-  Item *create(Session *session, udf_func *fct, List<Item> *item_list);
+  Item *create(Session *session, Function_builder *fct, List<Item> *item_list);
 
   /** Singleton. */
   static Create_udf_func s_singleton;

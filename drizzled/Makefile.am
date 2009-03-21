@@ -83,6 +83,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
+		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
 		function/found_rows.h \
@@ -407,6 +408,7 @@ drizzled_SOURCES = \
 		field_conv.cc \
 		field_iterator.cc \
 		filesort.cc \
+		foreign_key.cc \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \

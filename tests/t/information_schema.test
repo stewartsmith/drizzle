@@ -88,13 +88,6 @@ select table_type from information_schema.tables
 where table_schema="mysql" and table_name="user";
 
 #
-# Bug #7981:SHOW GLOBAL STATUS crashes server
-#
-# We don't actually care about the value, just that it doesn't crash.
---replace_column 2 #
-show global status like "Threads_running";
-
-#
 # Bug #7215  information_schema: columns are longtext instead of varchar
 # Bug #7217  information_schema: columns are varbinary() instead of timestamp
 #

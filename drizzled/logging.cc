@@ -23,38 +23,30 @@
 
 int logging_initializer(st_plugin_int *plugin)
 {
-  logging_t *p;
-
-  p= new logging_t;
-  if (p == NULL) return 1;
-  memset(p, 0, sizeof(logging_t));
-
-  plugin->data= (void *)p;
+  Logging_handler *p;
 
   if (plugin->plugin->init)
   {
-    if (plugin->plugin->init((void *)p))
+    if (plugin->plugin->init(&p))
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
       errmsg_printf(ERRMSG_LVL_ERROR, "logging plugin '%s' init() failed",
-                      plugin->name.str);
-      goto err;
+                    plugin->name.str);
+      return 1;
     }
   }
 
+  plugin->data= (void *)p;
   plugin->state= PLUGIN_IS_READY;
 
   return 0;
-
-err:
-  delete p;
-  return 1;
 }
+
 
 int logging_finalizer(st_plugin_int *plugin)
 {
-  logging_t *p = (logging_t *) plugin->data;
+  Logging_handler *p = static_cast<Logging_handler *>(plugin->data);
 
   if (plugin->plugin->deinit)
   {
@@ -67,25 +59,24 @@ int logging_finalizer(st_plugin_int *plugin)
     }
   }
 
-  if (p) delete p;
-
   return 0;
 }
 
 /* This gets called by plugin_foreach once for each loaded logging plugin */
 static bool logging_pre_iterate (Session *session, plugin_ref plugin, void *)
 {
-  logging_t *l= plugin_data(plugin, logging_t *);
+  Logging_handler *handler= plugin_data(plugin, Logging_handler *);
 
   /* call this loaded logging plugin's logging_pre function pointer */
-  if (l && l->logging_pre)
+  if (handler)
   {
-    if (l->logging_pre(session))
+    if (handler->pre(session))
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("logging plugin '%s' logging_pre() failed"),
-		      (char *)plugin_name(plugin));
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("logging plugin '%s' pre() failed"),
+                    (char *)plugin_name(plugin));
       return true;
     }
   }
@@ -98,26 +89,25 @@ bool logging_pre_do (Session *session)
 {
   bool foreach_rv;
 
-  foreach_rv= plugin_foreach(session,
-			     logging_pre_iterate,
-			     DRIZZLE_LOGGER_PLUGIN,
-			     NULL);
+  foreach_rv= plugin_foreach(session, logging_pre_iterate, DRIZZLE_LOGGER_PLUGIN, NULL);
+
   return foreach_rv;
 }
 
 /* This gets called by plugin_foreach once for each loaded logging plugin */
 static bool logging_post_iterate (Session *session, plugin_ref plugin, void *)
 {
-  logging_t *l= plugin_data(plugin, logging_t *);
+  Logging_handler *handler= plugin_data(plugin, Logging_handler *);
 
-  if (l && l->logging_post)
+  if (handler)
   {
-    if (l->logging_post(session))
+    if (handler->post(session))
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("logging plugin '%s' logging_post() failed"),
-		      (char *)plugin_name(plugin));
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("logging plugin '%s' post() failed"),
+		                (char *)plugin_name(plugin));
       return true;
     }
   }
@@ -130,9 +120,7 @@ bool logging_post_do (Session *session)
 {
   bool foreach_rv;
 
-  foreach_rv= plugin_foreach(session,
-			     logging_post_iterate,
-			     DRIZZLE_LOGGER_PLUGIN,
-			     NULL);
+  foreach_rv= plugin_foreach(session, logging_post_iterate, DRIZZLE_LOGGER_PLUGIN, NULL);
+
   return foreach_rv;
 }
