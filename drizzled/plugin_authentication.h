@@ -27,9 +27,14 @@
 #ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
 #define DRIZZLED_PLUGIN_AUTHENTICATION_H
 
-typedef struct authentication_st
+class Authentication
 {
-  bool (*authenticate)(Session *session, const char *password);
-} authentication_st;
+public:
+  Authentication() {}
+  virtual ~Authentication() {}
+
+  virtual bool authenticate(Session *, const char *)= 0;
+
+};
 
 #endif /* DRIZZLED_PLUGIN_AUTHENTICATION_H */

@@ -73,19 +73,11 @@ String *Item_func_md5::val_str(String *str)
 }
 
 
-Item_func* create_md5udf_item(MEM_ROOT* m)
-{
-  return  new (m) Item_func_md5();
-}
-
-struct udf_func md5udf = {
-  { C_STRING_WITH_LEN("md5") },
-  create_md5udf_item
-};
+Create_function<Item_func_md5> md5udf(string("md5"));
 
 static int md5udf_plugin_init(void *p)
 {
-  udf_func **f = (udf_func**) p;
+  Function_builder **f = (Function_builder**) p;
 
   *f= &md5udf;
 
@@ -94,7 +86,7 @@ static int md5udf_plugin_init(void *p)
 
 static int md5udf_plugin_deinit(void *p)
 {
-  udf_func *udff = (udf_func *) p;
+  Function_builder *udff = (Function_builder *) p;
   (void)udff;
   return 0;
 }

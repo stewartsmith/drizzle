@@ -1574,14 +1574,15 @@ Create_udf_func Create_udf_func::s_singleton;
 Item*
 Create_udf_func::create(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  udf_func *udf= find_udf(name.str, name.length);
+  Function_builder *udf= find_udf(name.str, name.length);
   assert(udf);
   return create(session, udf, item_list);
 }
 
 
 Item*
-Create_udf_func::create(Session *session, udf_func *udf, List<Item> *item_list)
+Create_udf_func::create(Session *session, Function_builder *udf,
+                        List<Item> *item_list)
 {
   Item_func *func= NULL;
   int arg_count= 0;
@@ -1589,7 +1590,7 @@ Create_udf_func::create(Session *session, udf_func *udf, List<Item> *item_list)
   if (item_list != NULL)
     arg_count= item_list->elements;
 
-  func= udf->create_func(session->mem_root);
+  func= (*udf)(session->mem_root);
 
   func->set_arguments(*item_list);
 

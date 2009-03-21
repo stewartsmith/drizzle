@@ -22,6 +22,10 @@
 #include <drizzled/item/func.h>
 #include <zlib.h>
 
+#include <string>
+
+using namespace std;
+
 class Item_func_crc32 :public Item_int_func
 {
   String value;
@@ -45,19 +49,11 @@ int64_t Item_func_crc32::val_int()
   return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
 }
 
-Item_func* create_crc32udf_item(MEM_ROOT* m)
-{
-  return  new (m) Item_func_crc32();
-}
-
-static struct udf_func crc32udf = {
-  { C_STRING_WITH_LEN("crc32") },
-  create_crc32udf_item
-};
+Create_function<Item_func_crc32> crc32udf(string("crc32"));
 
 static int crc32udf_plugin_init(void *p)
 {
-  udf_func **f = (udf_func**) p;
+  Function_builder **f = (Function_builder**) p;
 
   *f= &crc32udf;
 
@@ -66,7 +62,7 @@ static int crc32udf_plugin_init(void *p)
 
 static int crc32udf_plugin_deinit(void *p)
 {
-  udf_func *udff = (udf_func *) p;
+  Function_builder *udff = (Function_builder *) p;
   (void)udff;
   return 0;
 }

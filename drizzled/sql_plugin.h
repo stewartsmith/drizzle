@@ -111,7 +111,7 @@ struct st_plugin_int
 typedef struct st_plugin_int **plugin_ref;
 #define plugin_decl(pi) ((pi)[0]->plugin)
 #define plugin_dlib(pi) ((pi)[0]->plugin_dl)
-#define plugin_data(pi,cast) ((cast)((pi)[0]->data))
+#define plugin_data(pi,cast) (static_cast<cast>((pi)[0]->data))
 #define plugin_name(pi) (&((pi)[0]->name))
 #define plugin_state(pi) ((pi)[0]->state)
 #define plugin_equals(p1,p2) ((p1) && (p2) && (p1)[0] == (p2)[0])
@@ -135,7 +135,8 @@ extern plugin_ref plugin_lock(Session *session, plugin_ref *ptr);
 extern plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name,
                                       int type);
 extern void plugin_unlock(Session *session, plugin_ref plugin);
-extern void plugin_unlock_list(Session *session, plugin_ref *list, uint32_t count);
+extern void plugin_unlock_list(Session *session, plugin_ref *list,
+                               uint32_t count);
 extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
 extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
@@ -146,7 +147,8 @@ extern void plugin_sessionvar_cleanup(Session *session);
 typedef bool (plugin_foreach_func)(Session *session,
                                    plugin_ref plugin,
                                    void *arg);
-#define plugin_foreach(A,B,C,D) plugin_foreach_with_mask(A,B,C,PLUGIN_IS_READY,D)
-extern bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
-                                     int type, uint32_t state_mask, void *arg);
+bool plugin_foreach(Session *session, plugin_foreach_func *func,
+                    int type, void *arg,
+                    uint32_t state_mask= PLUGIN_IS_READY);
+
 #endif /* DRIZZLE_SERVER_PLUGIN_H */

@@ -210,8 +210,8 @@ int fill_plugins(Session *session, TableList *tables, COND *)
 {
   Table *table= tables->table;
 
-  if (plugin_foreach_with_mask(session, show_plugins, DRIZZLE_ANY_PLUGIN,
-                               ~PLUGIN_IS_FREED, table))
+  if (plugin_foreach(session, show_plugins, DRIZZLE_ANY_PLUGIN,
+                     table, ~PLUGIN_IS_FREED))
     return(1);
 
   return(0);
