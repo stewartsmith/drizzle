@@ -532,6 +532,13 @@ public:
 };
 
 
+/*
+ * This function object is defined in drizzled/opt_range.cc
+ * We need this here for the priority_queue definition in the
+ * QUICK_ROR_UNION_SELECT class.
+ */
+class compare_functor;
+
 
 /*
   Rowid-Ordered Retrieval index union select.
@@ -566,9 +573,9 @@ public:
 
   List<QUICK_SELECT_I> quick_selects; /* Merged quick selects */
 
-  //QUEUE queue;    /* Priority queue for merge operation */
-  std::priority_queue<QUICK_SELECT_I *>
-    queue(compare_functor(self));
+  /* Priority queue for merge operation */
+  std::priority_queue<QUICK_SELECT_I *, std::vector<QUICK_SELECT_I *>, compare_functor >
+    *queue;
   MEM_ROOT alloc; /* Memory pool for this and merged quick selects data. */
 
   Session *session;             /* current thread */
@@ -579,23 +586,6 @@ public:
 private:
   bool scans_inited;
 };
-
-class compare_functor
-{
-  QUICK_ROR_UNION_SELECT *self;
-  public:
-  compare_functor(QUICK_ROR_UNION_SELECT *in_arg)
-    : self(in_arg) { }
-  inline bool operator()(const QUICK_SELECT_I *i, const QUICK_SELECT_I *j) const
-  {
-    return self->head->file->cmp_ref(i->last_rowid,
-                                     j->last_rowid);
-  }
-};
-
-extern "C"
-int quick_ror_union_select_queue_cmp(void *arg, unsigned char *val1,
-                                     unsigned char *val2);
 
 /*
   Index scan for GROUP-BY queries with MIN/MAX aggregate functions.
