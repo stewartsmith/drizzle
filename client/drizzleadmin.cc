@@ -64,12 +64,12 @@ enum commands {
   ADMIN_PING
 };
 
-static const char *command_names[]= {
+static string command_names[]= {
   "shutdown",
   "ping"
 };
 
-static vector<const char *> 
+static vector<string> 
   command_vector(command_names, command_names + NUM_COMMAND_NAMES);
 
 static struct my_option my_long_options[] =
@@ -118,25 +118,6 @@ inline string lower_string(const char * from_string)
 }
 
 /*
- * Function object to be used to compare a string
- * against the vector of command strings. This function
- * object is used in the get_command_type() method.
- */
-template <class T>
-class CommandMatch :
-  public unary_function<const string&, bool>
-{
-  string match_text;
-  T match_func;
-  public:
-  CommandMatch(string text) : match_text(text) { }
-  inline bool operator()(const string match_against) const
-  {
-    return match_func(match_against, match_text);
-  }
-};
-
-/*
  * Searches for the given command and determines
  * its type.
  *
@@ -150,10 +131,9 @@ static int get_command_type(const char *name)
 {
   int type= ADMIN_ERROR;
   string comp_string= lower_string(name);
-  vector<const char *>::iterator it= 
-    std::find_if(command_vector.begin(),
-                 command_vector.end(),
-                 CommandMatch< equal_to<string> >(comp_string));
+  vector<string>::iterator it= 
+    std::find(command_vector.begin(), command_vector.end(),
+           comp_string);
   if (it != command_vector.end())
   {
     /* add 1 due to the way the commands ENUM is defined */
