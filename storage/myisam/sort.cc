@@ -949,25 +949,6 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
           uint32_t max_keys=buffpek->max_keys;
 
           queue.pop();
-
-          /* Put room used by buffer to use in other buffer */
-          for (refpek= (BUFFPEK**) &queue_top(&queue);
-               refpek <= (BUFFPEK**) &queue_end(&queue);
-               refpek++)
-          {
-            buffpek= *refpek;
-            if (buffpek->base+buffpek->max_keys*sort_length == base)
-            {
-              buffpek->max_keys+=max_keys;
-              break;
-            }
-            else if (base+max_keys*sort_length == buffpek->base)
-            {
-              buffpek->base=base;
-              buffpek->max_keys+=max_keys;
-              break;
-            }
-          }
           break;                /* One buffer have been removed */
         }
       }
