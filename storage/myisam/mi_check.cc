@@ -1982,7 +1982,7 @@ int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
   ulong buff_length;
 
   buff_length=(ulong) cmin(param->write_buffer_length,length);
-  if (!(buff=malloc(buff_length)))
+  if (!(buff=(char *)malloc(buff_length)))
   {
     buff=tmp_buff; buff_length=IO_SIZE;
   }
@@ -3332,7 +3332,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
           if(tmpptr)
           {
 	    sort_info->buff_length=reclength;
-            sort_info->buff= tmpptr;
+            sort_info->buff= (unsigned char *)tmpptr;
           }
           else
           {

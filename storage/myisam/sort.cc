@@ -550,7 +550,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
         length=param->sort_buffer_length;
         while (length >= MIN_SORT_MEMORY)
         {
-          if ((mergebuf= malloc(length)))
+          if ((mergebuf= (unsigned char *)malloc(length)))
               break;
           length=length*3/4;
         }

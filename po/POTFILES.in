@@ -47,4 +47,4 @@ plugin/replicator/replicator.cc
 plugin/signal_handler/signal_handler.cc
 plugin/single_thread/single_thread.cc
 storage/myisam/ha_myisam.cc
-storage/myisam/my_handler_errors.c
+storage/myisam/my_handler_errors.cc
