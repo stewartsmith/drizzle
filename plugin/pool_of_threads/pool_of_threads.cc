@@ -591,14 +591,21 @@ void libevent_session_add(Session* session)
 
 static int init(void *p)
 {
-printf("We're in pool_of_threads init mothafucka!\n");
-  Pool_of_threads_scheduler **sched=
-    static_cast<Pool_of_threads_scheduler **>(p);
-
   assert(size != 0);
-  *sched= new Pool_of_threads_scheduler(size);
 
-  return (int)(*sched)->libevent_init();
+  void **plugin= static_cast<void **>(p);
+
+  Pool_of_threads_scheduler *sched=
+    new Pool_of_threads_scheduler(size);
+  if (sched->libevent_init())
+  {
+    delete sched;
+    return 1;
+  }
+
+  *plugin= static_cast<void *>(sched);
+
+  return 0;
 }
 
 /**
