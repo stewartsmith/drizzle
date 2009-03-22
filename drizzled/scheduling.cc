@@ -20,7 +20,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/gettext.h>
-#include <drizzled/plugin_scheduling.h>
 #include <drizzled/connect.h>
 
 Scheduler *thread_scheduler= NULL;

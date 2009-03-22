@@ -17,7 +17,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
-#include <drizzled/plugin_replicator.h>
+#include <drizzled/plugin/replicator.h>
 #include <drizzled/serialize/serialize.h>
 
 #include <iostream>

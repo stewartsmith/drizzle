@@ -17,7 +17,7 @@
 #include <drizzled/atomics.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include <drizzled/plugin_scheduling.h>
+#include <drizzled/plugin/scheduler.h>
 #include <drizzled/connect.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
