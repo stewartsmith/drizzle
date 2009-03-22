@@ -23,7 +23,6 @@
 
 /* Classes in mysql */
 
-#include <drizzled/global.h>
 #include <drizzled/protocol.h>
 #include <libdrizzleclient/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
