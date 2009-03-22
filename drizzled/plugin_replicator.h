@@ -23,24 +23,103 @@
 #ifndef DRIZZLED_PLUGIN_REPLICATOR_H
 #define DRIZZLED_PLUGIN_REPLICATOR_H
 
-typedef struct replicator_st
-{
-  bool enabled;
-  /* todo, define this api */
-  /* this is the API that a replicator plugin must implement.
-     it should implement each of these function pointers.
-     if a function returns bool true, that means it failed.
-     if a function pointer is NULL, that's ok.
-  */
+/**
+ * @file
+ *
+ * Defines the API for Replication
+ */
 
-  bool (*session_init)(Session *session);
-  bool (*row_insert)(Session *session, Table *table);
-  bool (*row_update)(Session *session, Table *table,
-                     const unsigned char *before,
-                     const unsigned char *after);
-  bool (*row_delete)(Session *session, Table *table);
-  bool (*end_transaction)(Session *session, bool autocommit, bool commit);
-  bool (*statement)(Session *session, const char *query, size_t query_length);
-} replicator_t;
+/**
+ * Base class for replication implementations.
+ *
+ *    if a method returns bool true, that means it failed.
+ */
+class Replicator
+{
+private:
+  bool enabled;
+protected:
+  virtual bool session_init_hook(Session *) { return false; }
+  virtual bool row_insert_hook(Session *, Table *) { return false; }
+  virtual bool row_update_hook(Session *, Table *,
+                               const unsigned char *,
+                               const unsigned char *) { return false; }
+  virtual bool row_delete_hook(Session *, Table *) { return false; }
+  virtual bool end_transaction_hook(Session *, bool, bool) { return false; }
+  virtual bool statement_hook(Session *, const char *, size_t) { return false; }
+public:
+
+  Replicator() : enabled(true) {}
+
+  virtual ~Replicator() {}
+  /**
+   * Initialize session for replication
+   */
+  bool session_init(Session *session)
+  {
+    return session_init_hook(session);
+  }
+
+  /**
+   * Row insert
+   *
+   * @param current Session
+   * @param Table inserted
+   */
+  bool row_insert(Session *session, Table *table)
+  {
+    return row_insert_hook(session, table);
+  }
+
+  /**
+   * Row update
+   *
+   * @param current Session
+   * @param Table updated
+   * @param before values
+   * @param after values
+   */
+  bool row_update(Session *session, Table *table,
+                          const unsigned char *before,
+                          const unsigned char *after)
+  {
+    return row_update_hook(session, table, before, after);
+  }
+
+  /**
+   * Row Delete
+   *
+   * @param current session
+   * @param Table deleted from
+   */
+  bool row_delete(Session *session, Table *table)
+  {
+    return row_delete_hook(session, table);
+  }
+
+  /**
+   * End Transaction
+   *
+   * @param current Session
+   * @param is autocommit on?
+   * @param did the transaction commit?
+   */
+  bool end_transaction(Session *session, bool autocommit, bool commit)
+  {
+    return end_transaction_hook(session, autocommit, commit);
+  }
+
+  /**
+   * Raw statement
+   *
+   * @param current Session
+   * @param query string
+   * @param length of query string in bytes
+   */
+  bool statement(Session *session, const char *query, size_t query_length)
+  {
+    return statement_hook(session, query, query_length);
+  }
+};
 
 #endif /* DRIZZLED_PLUGIN_REPLICATOR_H */
