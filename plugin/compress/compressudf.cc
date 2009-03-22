@@ -21,6 +21,9 @@
 #include <drizzled/sql_error.h>
 #include <drizzled/current_session.h>
 #include <zlib.h>
+#include <string>
+
+using namespace std;
 
 class Item_func_compress: public Item_str_func
 {
@@ -97,19 +100,11 @@ String *Item_func_compress::val_str(String *str)
 }
 
 
-Item_func* create_compressudf_item(MEM_ROOT* m)
-{
-  return  new (m) Item_func_compress();
-}
-
-static struct udf_func compressudf = {
-  { C_STRING_WITH_LEN("compress") },
-  create_compressudf_item
-};
+Create_function<Item_func_compress> compressudf(string("compress"));
 
 static int compressudf_plugin_init(void *p)
 {
-  udf_func **f = (udf_func**) p;
+  Function_builder **f = (Function_builder**) p;
 
   *f= &compressudf;
 
@@ -118,7 +113,7 @@ static int compressudf_plugin_init(void *p)
 
 static int compressudf_plugin_deinit(void *p)
 {
-  udf_func *udff = (udf_func *) p;
+  Function_builder *udff = (Function_builder *) p;
   (void)udff;
   return 0;
 }

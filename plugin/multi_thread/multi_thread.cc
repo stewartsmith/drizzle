@@ -14,6 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/atomics.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin_scheduling.h>
@@ -26,15 +27,13 @@ using namespace std;
 
 pthread_attr_t multi_thread_attrib;
 static uint32_t max_threads;
-static volatile uint32_t thread_count;
+static tbb::atomic<uint32_t> thread_count;
 
 static bool add_connection(Session *session)
 {
   int error;
 
-  safe_mutex_assert_owner(&LOCK_thread_count);
   thread_count++;
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   if ((error= pthread_create(&session->real_id, &multi_thread_attrib, handle_one_connection, (void*) session)))
     return true;
@@ -51,7 +50,6 @@ static bool end_thread(Session *session, bool)
 {
   unlink_session(session);   /* locks LOCK_thread_count and deletes session */
   thread_count--;
-  pthread_mutex_unlock(&LOCK_thread_count);
 
   my_thread_end();
   pthread_exit(0);

@@ -309,8 +309,6 @@ static bool add_connection(Session *session)
 
   libevent_session_add(session);
 
-  pthread_mutex_unlock(&LOCK_thread_count);
-
   return false;
 }
 
