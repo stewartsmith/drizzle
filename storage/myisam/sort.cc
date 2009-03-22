@@ -861,6 +861,10 @@ static int  write_merge_key(MI_SORT_PARAM *info,
   return my_b_write(to_file, key, (size_t) sort_length*count);
 }
 
+/*
+ * Function object to be used as the comparison function
+ * for the priority queue in the merge_buffers method.
+ */
 class compare_functor
 {
   qsort2_cmp key_compare;
@@ -892,9 +896,8 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
   my_off_t to_start_filepos= 0;
   unsigned char *strpos;
   BUFFPEK *buffpek;
-  qsort2_cmp func= (qsort2_cmp) info->key_cmp;
   priority_queue<BUFFPEK *, vector<BUFFPEK *>, compare_functor > 
-    queue(compare_functor(func, static_cast<void *>(info)));
+    queue(compare_functor((qsort2_cmp) info->key_cmp, static_cast<void *>(info)));
   volatile int *killed= killed_ptr(info->sort_info->param);
 
   count=error=0;
