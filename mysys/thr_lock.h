@@ -22,7 +22,6 @@ extern "C" {
 #endif
 
 #include <mysys/my_pthread.h>
-#include <mysys/my_list.h>
 #include <mysys/definitions.h>
 
 struct st_thr_lock;
@@ -81,7 +80,6 @@ struct st_lock_list {
 };
 
 typedef struct st_thr_lock {
-  LIST list;
   pthread_mutex_t mutex;
   struct st_lock_list read_wait;
   struct st_lock_list read;
@@ -97,8 +95,6 @@ typedef struct st_thr_lock {
   bool (*check_status)(void *);
 } THR_LOCK;
 
-
-extern LIST *thr_lock_thread_list;
 
 bool init_thr_lock(void);		/* Must be called once/thread */
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)

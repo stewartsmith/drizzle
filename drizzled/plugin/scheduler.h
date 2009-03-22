@@ -23,14 +23,33 @@
 #ifndef DRIZZLED_PLUGIN_SCHEDULING_H
 #define DRIZZLED_PLUGIN_SCHEDULING_H
 
-typedef struct scheduling_st
+class Scheduler
 {
+private:
   uint32_t max_threads;
-  uint32_t (*count)(void);
-  bool (*init_new_connection_thread)(void);
-  bool (*add_connection)(Session *session);
-  void (*post_kill_notification)(Session *session);
-  bool (*end_thread)(Session *session, bool cache_thread);
-} scheduling_st;
+public:
+
+  Scheduler(uint32_t threads) : max_threads(threads) {}
+
+  virtual ~Scheduler() {}
+
+  uint32_t get_max_threads()
+  {
+    return max_threads;
+  }
+
+  virtual uint32_t count(void)= 0;
+  virtual bool add_connection(Session *session)= 0;
+
+  virtual bool end_thread(Session *, bool) {return false;}
+  virtual bool init_new_connection_thread(void)
+  {
+    if (my_thread_init())
+      return true;
+    return false;
+  }
+
+  virtual void post_kill_notification(Session *) {}
+};
 
 #endif /* DRIZZLED_PLUGIN_SCHEDULING_H */

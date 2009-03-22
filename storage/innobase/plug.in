@@ -45,7 +45,7 @@ DRIZZLE_PLUGIN_ACTIONS(innobase,  [
 	 *solaris*|*SunOS*)
            CFLAGS="$CFLAGS -DUNIV_SOLARIS";;
   esac
-  INNODB_DYNAMIC_CFLAGS="-DMYSQL_DYNAMIC_PLUGIN"
+  INNODB_DYNAMIC_CFLAGS="-DDRIZZLE_DYNAMIC_PLUGIN"
   case "$target_cpu" in
 	x86_64)
 		# The AMD64 ABI forbids absolute addresses in shared libraries

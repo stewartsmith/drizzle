@@ -25,11 +25,10 @@
 
 #include <drizzled/error.h>
 #include <drizzled/sql_parse.h>
-#include <drizzled/plugin_scheduling.h>
+#include <drizzled/scheduling.h>
 #include <drizzled/session.h>
 #include <drizzled/connect.h>
 
-extern scheduling_st thread_scheduler;
 
 /*
   Initialize connection threads
@@ -59,10 +58,11 @@ bool init_new_connection_handler_thread()
 */
 pthread_handler_t handle_one_connection(void *arg)
 {
-  Session *session= (Session*) arg;
+  Session *session= static_cast<Session*>(arg);
   uint32_t launch_time= (uint32_t) ((session->thr_create_utime= my_micro_time()) -
                               session->connect_utime);
 
+  Scheduler &thread_scheduler= get_thread_scheduler();
   if (thread_scheduler.init_new_connection_thread())
   {
     session->disconnect(ER_OUT_OF_RESOURCES, true);

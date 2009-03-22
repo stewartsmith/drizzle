@@ -21,7 +21,6 @@
 #ifndef DRIZZLED_QUERY_ARENA_H
 #define DRIZZLED_QUERY_ARENA_H
 
-#include <drizzled/global.h>
 #include <mysys/my_alloc.h>
 
 class Item;

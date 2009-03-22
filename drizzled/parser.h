@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_PARSER_H
 #define DRIZZLED_PARSER_H
 
-#include <drizzled/plugin_parser.h>
+#include <drizzled/plugin/parser.h>
 
 int parser_initializer (st_plugin_int *plugin);
 int parser_finalizer (st_plugin_int *plugin);

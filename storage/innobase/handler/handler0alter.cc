@@ -1,11 +1,31 @@
+/*****************************************************************************
+
+Copyright (c) 2005, 2009, Innobase Oy. All Rights Reserved.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place, Suite 330, Boston, MA 02111-1307 USA
+
+*****************************************************************************/
+
 /******************************************************
 Smart ALTER TABLE
-
-(c) 2005-2008 Innobase Oy
 *******************************************************/
 
-#include <mysql_priv.h>
-#include <mysqld_error.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/error.h>
+#include <mystrings/m_ctype.h>
+#include <drizzled/field.h>
+#include <drizzled/table.h>
+#include <drizzled/field/varstring.h>
 
 extern "C" {
 #include "log0log.h"
@@ -28,12 +48,12 @@ void
 innobase_col_to_mysql(
 /*==================*/
 	const dict_col_t*	col,	/* in: InnoDB column */
-	const uchar*		data,	/* in: InnoDB column data */
+	const unsigned char*		data,	/* in: InnoDB column data */
 	ulint			len,	/* in: length of data, in bytes */
 	Field*			field)	/* in/out: MySQL field */
 {
-	uchar*	ptr;
-	uchar*	dest	= field->ptr;
+	unsigned char*	ptr;
+	unsigned char*	dest	= field->ptr;
 	ulint	flen	= field->pack_length();
 
 	switch (col->mtype) {
@@ -58,7 +78,7 @@ innobase_col_to_mysql(
 	case DATA_BINARY:
 		field->reset();
 
-		if (field->type() == MYSQL_TYPE_VARCHAR) {
+		if (field->type() == DRIZZLE_TYPE_VARCHAR) {
 			/* This is a >= 5.0.3 type true VARCHAR. Store the
 			length of the data to the first byte or the first
 			two bytes of dest. */
@@ -112,7 +132,7 @@ extern "C" UNIV_INTERN
 void
 innobase_rec_to_mysql(
 /*==================*/
-	TABLE*			table,		/* in/out: MySQL table */
+	Table*			table,		/* in/out: MySQL table */
 	const rec_t*		rec,		/* in: record */
 	const dict_index_t*	index,		/* in: index */
 	const ulint*		offsets)	/* in: rec_get_offsets(
@@ -127,7 +147,7 @@ innobase_rec_to_mysql(
 		Field*		field	= table->field[i];
 		ulint		ipos;
 		ulint		ilen;
-		const uchar*	ifield;
+		const unsigned char*	ifield;
 
 		field->reset();
 
@@ -162,7 +182,7 @@ extern "C" UNIV_INTERN
 void
 innobase_rec_reset(
 /*===============*/
-	TABLE*			table)		/* in/out: MySQL table */
+	Table*			table)		/* in/out: MySQL table */
 {
 	uint	n_fields	= table->s->fields;
 	uint	i;
@@ -259,7 +279,7 @@ innobase_check_index_keys(
 			case DATA_FLOAT:
 			case DATA_DOUBLE:
 			case DATA_DECIMAL:
-				if (field->type() == MYSQL_TYPE_VARCHAR) {
+				if (field->type() == DRIZZLE_TYPE_VARCHAR) {
 					if (key_part1.length
 					    >= field->pack_length()
 					    - ((Field_varstring*) field)
@@ -321,8 +341,6 @@ innobase_create_index_field_def(
 	ibool		is_unsigned;
 	ulint		col_type;
 
-	DBUG_ENTER("innobase_create_index_field_def");
-
 	ut_ad(key_part);
 	ut_ad(index_field);
 
@@ -333,8 +351,8 @@ innobase_create_index_field_def(
 
 	if (DATA_BLOB == col_type
 	    || (key_part->length < field->pack_length()
-		&& field->type() != MYSQL_TYPE_VARCHAR)
-	    || (field->type() == MYSQL_TYPE_VARCHAR
+		&& field->type() != DRIZZLE_TYPE_VARCHAR)
+	    || (field->type() == DRIZZLE_TYPE_VARCHAR
 		&& key_part->length < field->pack_length()
 			- ((Field_varstring*)field)->length_bytes)) {
 
@@ -345,7 +363,7 @@ innobase_create_index_field_def(
 
 	index_field->field_name = mem_heap_strdup(heap, field->field_name);
 
-	DBUG_VOID_RETURN;
+	return;
 }
 
 /***********************************************************************
@@ -368,8 +386,6 @@ innobase_create_index_def(
 	ulint	len;
 	ulint	n_fields = key->key_parts;
 	char*	index_name;
-
-	DBUG_ENTER("innobase_create_index_def");
 
 	index->fields = (merge_index_field_t*) mem_heap_alloc(
 		heap, n_fields * sizeof *index->fields);
@@ -399,7 +415,7 @@ innobase_create_index_def(
 						&index->fields[i]);
 	}
 
-	DBUG_VOID_RETURN;
+	return;
 }
 
 /***********************************************************************
@@ -411,14 +427,13 @@ innobase_copy_index_field_def(
 	const dict_field_t*	field,		/* in: definition to copy */
 	merge_index_field_t*	index_field)	/* out: copied definition */
 {
-	DBUG_ENTER("innobase_copy_index_field_def");
-	DBUG_ASSERT(field != NULL);
-	DBUG_ASSERT(index_field != NULL);
+	assert(field != NULL);
+	assert(index_field != NULL);
 
 	index_field->field_name = field->name;
 	index_field->prefix_len = field->prefix_len;
 
-	DBUG_VOID_RETURN;
+	return;
 }
 
 /***********************************************************************
@@ -433,8 +448,6 @@ innobase_copy_index_def(
 {
 	ulint	n_fields;
 	ulint	i;
-
-	DBUG_ENTER("innobase_copy_index_def");
 
 	/* Note that we take only those fields that user defined to be
 	in the index.  In the internal representation more colums were
@@ -456,7 +469,7 @@ innobase_copy_index_def(
 					      &new_index->fields[i]);
 	}
 
-	DBUG_VOID_RETURN;
+	return;
 }
 
 /***********************************************************************
@@ -492,8 +505,6 @@ innobase_create_key_def(
 	merge_index_def_t*	indexdef;
 	merge_index_def_t*	indexdefs;
 	bool			new_primary;
-
-	DBUG_ENTER("innobase_create_key_def");
 
 	indexdef = indexdefs = (merge_index_def_t*)
 		mem_heap_alloc(heap, sizeof *indexdef
@@ -563,7 +574,7 @@ innobase_create_key_def(
 
 	n_keys = indexdef - indexdefs;
 
-	DBUG_RETURN(indexdefs);
+	return(indexdefs);
 }
 
 /***********************************************************************
@@ -598,7 +609,7 @@ int
 ha_innobase::add_index(
 /*===================*/
 				/* out: 0 or error number */
-	TABLE*	table,		/* in: Table where indexes are created */
+	Table*	i_table,	/* in: Table where indexes are created */
 	KEY*	key_info,	/* in: Indexes to be created */
 	uint	num_of_keys)	/* in: Number of indexes to be created */
 {
@@ -614,16 +625,15 @@ ha_innobase::add_index(
 	ulint		new_primary;
 	ulint		error;
 
-	DBUG_ENTER("ha_innobase::add_index");
-	ut_a(table);
+	ut_a(i_table);
 	ut_a(key_info);
 	ut_a(num_of_keys);
 
 	if (srv_created_new_raw || srv_force_recovery) {
-		DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_thd();
+	update_session();
 
 	heap = mem_heap_create(1024);
 
@@ -633,11 +643,8 @@ ha_innobase::add_index(
 
 	/* Create a background transaction for the operations on
 	the data dictionary tables. */
-	trx = trx_allocate_for_mysql();
+	trx = innobase_trx_allocate(user_session);
 	trx_start_if_not_started(trx);
-
-	trx->mysql_thd = user_thd;
-	trx->mysql_query_str = thd_query(user_thd);
 
 	innodb_table = indexed_table
 		= dict_table_get(prebuilt->table->name, FALSE);
@@ -652,7 +659,7 @@ err_exit:
 		trx_general_rollback_for_mysql(trx, FALSE, NULL);
 		trx_free_for_mysql(trx);
 		trx_commit_for_mysql(prebuilt->trx);
-		DBUG_RETURN(error);
+		return(error);
 	}
 
 	/* Create table containing all indexes to be built in this
@@ -719,7 +726,7 @@ err_exit:
 			default:
 				error = convert_error_code_to_mysql(
 					trx->error_state, innodb_table->flags,
-					user_thd);
+					user_session);
 			}
 
 			row_mysql_unlock_data_dictionary(trx);
@@ -777,7 +784,7 @@ err_exit:
 	based on this information using temporary files and merge sort. */
 	error = row_merge_build_indexes(prebuilt->trx,
 					innodb_table, indexed_table,
-					index, num_of_idx, table);
+					index, num_of_idx, i_table);
 
 error_handling:
 #ifdef UNIV_DEBUG
@@ -877,7 +884,7 @@ error:
 convert_error:
 		error = convert_error_code_to_mysql(error,
 						    innodb_table->flags,
-						    user_thd);
+						    user_session);
 	}
 
 	mem_heap_free(heap);
@@ -895,7 +902,7 @@ convert_error:
 	/* There might be work for utility threads.*/
 	srv_active_wake_master_thread();
 
-	DBUG_RETURN(error);
+	return(error);
 }
 
 /***********************************************************************
@@ -905,7 +912,7 @@ int
 ha_innobase::prepare_drop_index(
 /*============================*/
 				/* out: 0 or error number */
-	TABLE*	table,		/* in: Table where indexes are dropped */
+	Table*	i_table,	/* in: Table where indexes are dropped */
 	uint*	key_num,	/* in: Key nums to be dropped */
 	uint	num_of_keys)	/* in: Number of keys to be dropped */
 {
@@ -913,15 +920,14 @@ ha_innobase::prepare_drop_index(
 	int		err = 0;
 	uint 		n_key;
 
-	DBUG_ENTER("ha_innobase::prepare_drop_index");
-	ut_ad(table);
+	ut_ad(i_table);
 	ut_ad(key_num);
 	ut_ad(num_of_keys);
 	if (srv_created_new_raw || srv_force_recovery) {
-		DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_thd();
+	update_session();
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 	trx = prebuilt->trx;
@@ -945,7 +951,7 @@ ha_innobase::prepare_drop_index(
 		const KEY*	key;
 		dict_index_t*	index;
 
-		key = table->key_info + key_num[n_key];
+		key = i_table->key_info + key_num[n_key];
 		index = dict_table_get_index_on_name_and_min_id(
 			prebuilt->table, key->name);
 
@@ -987,7 +993,7 @@ ha_innobase::prepare_drop_index(
 	is later deleted. */
 
 	if (trx->check_foreigns
-	    && thd_sql_command(user_thd) != SQLCOM_CREATE_INDEX) {
+	    && session_sql_command(user_session) != SQLCOM_CREATE_INDEX) {
 		dict_index_t*	index;
 
 		for (index = dict_table_get_first_index(prebuilt->table);
@@ -1035,7 +1041,7 @@ index_needed:
 				}
 			}
 		}
-	} else if (thd_sql_command(user_thd) == SQLCOM_CREATE_INDEX) {
+	} else if (session_sql_command(user_session) == SQLCOM_CREATE_INDEX) {
 		/* This is a drop of a foreign key constraint index that
 		was created by MySQL when the constraint was added.  MySQL
 		does this when the user creates an index explicitly which
@@ -1096,7 +1102,7 @@ func_exit:
 
 	row_mysql_unlock_data_dictionary(trx);
 
-	DBUG_RETURN(err);
+	return(err);
 }
 
 /***********************************************************************
@@ -1106,30 +1112,24 @@ int
 ha_innobase::final_drop_index(
 /*==========================*/
 				/* out: 0 or error number */
-	TABLE*	table)		/* in: Table where indexes are dropped */
+	Table*		)	/* in: Table where indexes are dropped */
 {
 	dict_index_t*	index;		/* Index to be dropped */
 	trx_t*		trx;		/* Transaction */
 	int		err;
 
-	DBUG_ENTER("ha_innobase::final_drop_index");
-	ut_ad(table);
-
 	if (srv_created_new_raw || srv_force_recovery) {
-		DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_thd();
+	update_session();
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 
 	/* Create a background transaction for the operations on
 	the data dictionary tables. */
-	trx = trx_allocate_for_mysql();
+	trx = innobase_trx_allocate(user_session);
 	trx_start_if_not_started(trx);
-
-	trx->mysql_thd = user_thd;
-	trx->mysql_query_str = thd_query(user_thd);
 
 	/* Flag this transaction as a dictionary operation, so that
 	the data dictionary will be locked in crash recovery. */
@@ -1139,7 +1139,7 @@ ha_innobase::final_drop_index(
 	transaction depends on an index that is being dropped. */
 	err = convert_error_code_to_mysql(
 		row_merge_lock_table(prebuilt->trx, prebuilt->table, LOCK_X),
-		prebuilt->table->flags, user_thd);
+		prebuilt->table->flags, user_session);
 
 	row_mysql_lock_data_dictionary(trx);
 
@@ -1200,5 +1200,5 @@ func_exit:
 
 	srv_active_wake_master_thread();
 
-	DBUG_RETURN(err);
+	return(err);
 }

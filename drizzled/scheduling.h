@@ -20,9 +20,10 @@
 #ifndef DRIZZLED_SCHEDULING_H
 #define DRIZZLED_SCHEDULING_H
 
-#include <drizzled/plugin_scheduling.h>
+#include <drizzled/plugin/scheduler.h>
 
 int scheduling_initializer (st_plugin_int *plugin);
 int scheduling_finalizer (st_plugin_int *plugin);
+Scheduler& get_thread_scheduler();
 
 #endif /* DRIZZLED_SCHEDULING_H */
