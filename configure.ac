@@ -1360,7 +1360,7 @@ void testme() {  };],[
     W_EXCEPTIONS="-fexceptions"
   fi
   NO_REDUNDANT_DECLS="-Wno-redundant-decls"
-  PROTOSKIP_WARNINGS="-Wno-effc++ -Wshadow"
+  PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow"
 fi
 if test "$SUNCC" = "yes"
 then
