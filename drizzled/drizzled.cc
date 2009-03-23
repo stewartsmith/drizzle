@@ -44,7 +44,7 @@
 #include <drizzled/item/create.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
-#include <drizzled/plugin_scheduling.h>
+#include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 
 #if TIME_WITH_SYS_TIME
@@ -421,8 +421,6 @@ struct passwd *user_info;
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
 
-extern scheduling_st thread_scheduler;
-
 /**
   Number of currently active user connections. The variable is protected by
   LOCK_thread_count.
@@ -496,6 +494,8 @@ void close_connections(void)
   */
 
   Session *tmp;
+  Scheduler &thread_scheduler= get_thread_scheduler();
+
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
   I_List_iterator<Session> it(session_list);
@@ -939,9 +939,10 @@ extern "C" void end_thread_signal(int )
   if (session)
   {
     statistic_increment(killed_threads, &LOCK_status);
-    (void)thread_scheduler.end_thread(session, 0);		/* purecov: inspected */
+    Scheduler &thread_scheduler= get_thread_scheduler();
+    (void)thread_scheduler.end_thread(session, 0);
   }
-  return;;				/* purecov: deadcode */
+  return;				/* purecov: deadcode */
 }
 
 
@@ -1023,7 +1024,8 @@ extern "C" void handle_segfault(int sig)
   }
 
   localtime_r(&curr_time, &tm);
-
+  Scheduler &thread_scheduler= get_thread_scheduler();
+  
   fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got "
           SIGNAL_FMT " ;\n"
           "This could be because you hit a bug. It is also possible that "
@@ -1041,7 +1043,7 @@ extern "C" void handle_segfault(int sig)
           (uint32_t) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
   fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
-  fprintf(stderr, "max_threads=%u\n", thread_scheduler.max_threads);
+  fprintf(stderr, "max_threads=%u\n", thread_scheduler.get_max_threads());
   fprintf(stderr, "thread_count=%u\n", thread_scheduler.count());
   fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
@@ -1053,7 +1055,7 @@ extern "C" void handle_segfault(int sig)
           (uint64_t)(((uint32_t) dflt_key_cache->key_cache_mem_size +
                      (global_system_variables.read_buff_size +
                       global_system_variables.sortbuff_size) *
-                     thread_scheduler.max_threads) / 1024));
+                     thread_scheduler.get_max_threads()) / 1024));
 
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
@@ -1839,6 +1841,8 @@ int main(int argc, char **argv)
 
 static void create_new_thread(Session *session)
 {
+  Scheduler &thread_scheduler= get_thread_scheduler();
+
   ++connection_count;
 
   if (connection_count > max_used_connections)

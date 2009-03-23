@@ -31,10 +31,9 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
-#include <drizzled/plugin_scheduling.h>
+#include <drizzled/scheduling.h>
 #include <libdrizzleclient/errmsg.h>
 
-extern scheduling_st thread_scheduler;
 /*
   The following is used to initialise Table_ident with a internal
   table name
@@ -529,6 +528,7 @@ void Session::awake(Session::killed_state state_to_set)
 {
   Session_CHECK_SENTRY(this);
   safe_mutex_assert_owner(&LOCK_delete);
+  Scheduler &thread_scheduler= get_thread_scheduler();
 
   killed= state_to_set;
   if (state_to_set != Session::KILL_QUERY)
@@ -586,6 +586,7 @@ bool Session::store_globals()
       pthread_setspecific(THR_Mem_root, &mem_root))
     return 1;
   mysys_var=my_thread_var;
+
   /*
     Let mysqld define the thread id (not mysys)
     This allows us to move Session to different threads if needed.
@@ -642,6 +643,7 @@ bool Session::initGlobals()
   {
     disconnect(ER_OUT_OF_RESOURCES, true);
     statistic_increment(aborted_connects, &LOCK_status);
+    Scheduler &thread_scheduler= get_thread_scheduler();
     thread_scheduler.end_thread(this, 0);
     return false;
   }

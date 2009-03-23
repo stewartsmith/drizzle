@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_PLUGIN_H
 #define DRIZZLED_PLUGIN_H
 
-#include <drizzled/global.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/xid.h>
 

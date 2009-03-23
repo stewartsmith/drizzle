@@ -17,86 +17,100 @@
 #include <drizzled/atomics.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include <drizzled/plugin_scheduling.h>
+#include <drizzled/plugin/scheduler.h>
 #include <drizzled/connect.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
 #include <drizzled/connect.h>
 #include <string>
+
 using namespace std;
 
-pthread_attr_t multi_thread_attrib;
 static uint32_t max_threads;
-static tbb::atomic<uint32_t> thread_count;
 
-static bool add_connection(Session *session)
+class Multi_thread_scheduler: public Scheduler
 {
-  int error;
+  tbb::atomic<uint32_t> thread_count;
+  pthread_attr_t multi_thread_attrib;
 
-  thread_count++;
+public:
+  Multi_thread_scheduler(uint32_t threads): Scheduler(threads)
+  {
+    thread_count= 0;
+    /* Parameter for threads created for connections */
+    (void) pthread_attr_init(&multi_thread_attrib);
+    (void) pthread_attr_setdetachstate(&multi_thread_attrib,
+                                       PTHREAD_CREATE_DETACHED);
+    pthread_attr_setscope(&multi_thread_attrib, PTHREAD_SCOPE_SYSTEM);
+    {
+      struct sched_param tmp_sched_param;
+  
+      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+      tmp_sched_param.sched_priority= WAIT_PRIOR;
+      (void)pthread_attr_setschedparam(&multi_thread_attrib, &tmp_sched_param);
+    }
+  }
 
-  if ((error= pthread_create(&session->real_id, &multi_thread_attrib, handle_one_connection, (void*) session)))
-    return true;
+  ~Multi_thread_scheduler()
+  {
+    (void) pthread_mutex_lock(&LOCK_thread_count);
+    while (thread_count)
+    {
+      pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
+    }
+    (void) pthread_mutex_unlock(&LOCK_thread_count);
+    
+    pthread_attr_destroy(&multi_thread_attrib);
+  }
 
-  return false;
-}
-
-
-/*
-  End connection, in case when we are using 'no-threads'
-*/
-
-static bool end_thread(Session *session, bool)
-{
-  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
-  thread_count--;
-
-  my_thread_end();
-  pthread_exit(0);
-
-  return true; // We should never reach this point
-}
-
-static uint32_t count_of_threads(void)
-{
-  return thread_count;
-}
+  virtual bool add_connection(Session *session)
+  {
+    int error;
+  
+    thread_count++;
+  
+    if ((error= pthread_create(&session->real_id, &multi_thread_attrib, handle_one_connection, static_cast<void*>(session))))
+      return true;
+  
+    return false;
+  }
+  
+  
+  /*
+    End connection, in case when we are using 'no-threads'
+  */
+  
+  virtual bool end_thread(Session *session, bool)
+  {
+    unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+    thread_count--;
+  
+    my_thread_end();
+    pthread_exit(0);
+  
+    return true; // We should never reach this point
+  }
+  
+  virtual uint32_t count(void)
+  {
+    return thread_count;
+  }
+};
 
 static int init(void *p)
 {
-  scheduling_st* func= (scheduling_st *)p;
+  Multi_thread_scheduler** sched= static_cast<Multi_thread_scheduler **>(p);
 
-  func->max_threads= max_threads; /* This will create an upper limit on max connections */
-  func->add_connection= add_connection;
-  func->end_thread= end_thread;
-  func->count= count_of_threads;
-
-  /* Parameter for threads created for connections */
-  (void) pthread_attr_init(&multi_thread_attrib);
-  (void) pthread_attr_setdetachstate(&multi_thread_attrib,
-				     PTHREAD_CREATE_DETACHED);
-  pthread_attr_setscope(&multi_thread_attrib, PTHREAD_SCOPE_SYSTEM);
-  {
-    struct sched_param tmp_sched_param;
-
-    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-    tmp_sched_param.sched_priority= WAIT_PRIOR;
-    (void)pthread_attr_setschedparam(&multi_thread_attrib, &tmp_sched_param);
-  }
+  *sched= new Multi_thread_scheduler(max_threads);
 
   return 0;
 }
 
-static int deinit(void *)
+static int deinit(void *p)
 {
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  while (thread_count)
-  {
-    pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
-  }
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
 
-  pthread_attr_destroy(&multi_thread_attrib);
+  Multi_thread_scheduler *sched= static_cast<Multi_thread_scheduler *>(p);
+  delete sched;
 
   return 0;
 }
@@ -117,7 +131,7 @@ drizzle_declare_plugin(multi_thread)
   "multi_thread",
   "0.1",
   "Brian Aker",
-  "One Thread Perl Session Scheduler",
+  "One Thread Per Session Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */

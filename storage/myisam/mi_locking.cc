@@ -23,7 +23,6 @@
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
 #include <mysys/my_tree.h>
-#include <mysys/queues.h>
 #include <drizzled/util/test.h>
 
 	/* lock table by F_UNLCK, F_RDLCK or F_WRLCK */
