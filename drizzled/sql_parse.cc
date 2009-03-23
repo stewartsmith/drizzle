@@ -342,13 +342,14 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   log_slow_statement(session);
 
+  /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
-  pthread_mutex_lock(&LOCK_thread_count); // For process list
-  session->set_proc_info(0);
   session->command=COM_SLEEP;
+  session->process_list_info[0]= 0;
   session->query=0;
   session->query_length=0;
-  pthread_mutex_unlock(&LOCK_thread_count);
+
+  session->set_proc_info(NULL);
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
   return(error);
