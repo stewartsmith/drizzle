@@ -2,7 +2,7 @@
  -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 
- *  Definitions required for Error Message plugin
+ *  Definitions required for Configuration Variables plugin
 
  *  Copyright (C) 2008 Mark Atwood
  *
@@ -20,14 +20,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_ERRMSG_H
-#define DRIZZLED_PLUGIN_ERRMSG_H
+#ifndef DRIZZLED_PLUGIN_SCHEDULING_H
+#define DRIZZLED_PLUGIN_SCHEDULING_H
 
-#include <stdarg.h>
-
-typedef struct errmsg_st
+class Scheduler
 {
-  bool (*errmsg_func)(Session *session, int priority, const char *format, va_list ap);
-} errmsg_t;
+private:
+  uint32_t max_threads;
+public:
 
-#endif /* DRIZZLED_PLUGIN_ERRMSG_H */
+  Scheduler(uint32_t threads) : max_threads(threads) {}
+
+  virtual ~Scheduler() {}
+
+  uint32_t get_max_threads()
+  {
+    return max_threads;
+  }
+
+  virtual uint32_t count(void)= 0;
+  virtual bool add_connection(Session *session)= 0;
+
+  virtual bool end_thread(Session *, bool) {return false;}
+  virtual bool init_new_connection_thread(void)
+  {
+    if (my_thread_init())
+      return true;
+    return false;
+  }
+
+  virtual void post_kill_notification(Session *) {}
+};
+
+#endif /* DRIZZLED_PLUGIN_SCHEDULING_H */

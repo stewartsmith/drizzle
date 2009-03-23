@@ -17,7 +17,7 @@
   Code for handling dubble-linked lists in C
 */
 
-#include "mysys_priv.h"
+#include <mysys/mysys_priv.h>
 #include "my_list.h"
 
 #include <stdlib.h>

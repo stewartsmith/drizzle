@@ -83,6 +83,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
+		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
 		function/found_rows.h \
@@ -269,16 +270,16 @@ nobase_dist_drizzledinclude_HEADERS = \
 		order.h \
 		parser.h \
 		plugin.h \
-		plugin_authentication.h \
-		plugin_configvar.h \
-		plugin_errmsg.h \
-		plugin_logging.h \
-		plugin_parser.h \
-		plugin_qcache.h \
 		plugin_registry.h \
 		plugin_registry_impl.h \
-		plugin_replicator.h \
-		plugin_scheduling.h \
+		plugin/authentication.h \
+		plugin/configvar.h \
+		plugin/error_message_handler.h \
+		plugin/logging_handler.h \
+		plugin/parser.h \
+		plugin/qcache.h \
+		plugin/replicator.h \
+		plugin/scheduler.h \
 		probes.h \
 		protocol.h \
 		qcache.h \

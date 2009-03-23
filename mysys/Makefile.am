@@ -22,7 +22,6 @@ dist_mysysinclude_HEADERS= \
 		iocache.h \
 		my_alloc.h \
 		my_getopt.h \
-		my_list.h \
 		my_pthread.h \
 		my_sys.h \
 		typelib.h
@@ -40,7 +39,6 @@ noinst_HEADERS=	\
 		my_tree.h \
 		mysys_err.h \
 		mysys_priv.h \
-		queues.h \
 		sha1.h \
 		thr_lock.h
 
@@ -58,7 +56,6 @@ libmysys_la_SOURCES= \
 		default_modify.cc \
 		errors.cc \
 		hash.cc \
-		list.cc \
 		mf_arr_appstr.cc \
 		mf_cache.cc \
 		mf_dirname.cc \
@@ -104,7 +101,6 @@ libmysys_la_SOURCES= \
 		my_time.cc \
 		my_write.cc \
 		ptr_cmp.cc \
-		queues.cc \
 		sha1.cc \
 		thr_lock.cc \
 		tree.cc \

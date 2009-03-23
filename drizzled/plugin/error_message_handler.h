@@ -1,10 +1,10 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/*
+ -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 
- *  Definitions required for Authentication plugin
+ *  Definitions required for Error Message plugin
 
- *
- *  Copyright (C) 2008 Brian Aker
+ *  Copyright (C) 2008 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,16 +20,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
-  Definitions required for Authentication plugin
-*/
+#ifndef DRIZZLED_PLUGIN_ERRMSG_H
+#define DRIZZLED_PLUGIN_ERRMSG_H
 
-#ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
-#define DRIZZLED_PLUGIN_AUTHENTICATION_H
+#include <stdarg.h>
 
-typedef struct authentication_st
+class Error_message_handler
 {
-  bool (*authenticate)(Session *session, const char *password);
-} authentication_st;
+public:
+  Error_message_handler() {}
+  virtual ~Error_message_handler() {}
 
-#endif /* DRIZZLED_PLUGIN_AUTHENTICATION_H */
+  virtual bool errmsg(Session *session, int priority,
+                      const char *format, va_list ap)=0;
+};
+
+#endif /* DRIZZLED_PLUGIN_ERRMSG_H */

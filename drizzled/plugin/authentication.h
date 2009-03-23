@@ -1,10 +1,10 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 
- *  Definitions required for Configuration Variables plugin
+ *  Definitions required for Authentication plugin
 
- *  Copyright (C) 2008 Mark Atwood
+ *
+ *  Copyright (C) 2008 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,17 +20,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_SCHEDULING_H
-#define DRIZZLED_PLUGIN_SCHEDULING_H
+/*
+  Definitions required for Authentication plugin
+*/
 
-typedef struct scheduling_st
+#ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
+#define DRIZZLED_PLUGIN_AUTHENTICATION_H
+
+class Authentication
 {
-  uint32_t max_threads;
-  uint32_t (*count)(void);
-  bool (*init_new_connection_thread)(void);
-  bool (*add_connection)(Session *session);
-  void (*post_kill_notification)(Session *session);
-  bool (*end_thread)(Session *session, bool cache_thread);
-} scheduling_st;
+public:
+  Authentication() {}
+  virtual ~Authentication() {}
 
-#endif /* DRIZZLED_PLUGIN_SCHEDULING_H */
+  virtual bool authenticate(Session *, const char *)= 0;
+
+};
+
+#endif /* DRIZZLED_PLUGIN_AUTHENTICATION_H */

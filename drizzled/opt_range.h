@@ -24,8 +24,8 @@
 #define DRIZZLED_OPT_RANGE_H
 
 #include <drizzled/field.h>
-#include <mysys/queues.h>
 #include <drizzled/item/sum.h>
+#include <queue>
 
 class JOIN;
 typedef class Item COND;
@@ -532,6 +532,14 @@ public:
 
 
 /*
+ * This function object is defined in drizzled/opt_range.cc
+ * We need this here for the priority_queue definition in the
+ * QUICK_ROR_UNION_SELECT class.
+ */
+class compare_functor;
+
+
+/*
   Rowid-Ordered Retrieval index union select.
   This quick select produces union of row sequences returned by several
   quick select it "merges".
@@ -564,7 +572,9 @@ public:
 
   List<QUICK_SELECT_I> quick_selects; /* Merged quick selects */
 
-  QUEUE queue;    /* Priority queue for merge operation */
+  /* Priority queue for merge operation */
+  std::priority_queue<QUICK_SELECT_I *, std::vector<QUICK_SELECT_I *>, compare_functor >
+    *queue;
   MEM_ROOT alloc; /* Memory pool for this and merged quick selects data. */
 
   Session *session;             /* current thread */
@@ -575,10 +585,6 @@ public:
 private:
   bool scans_inited;
 };
-
-extern "C"
-int quick_ror_union_select_queue_cmp(void *arg, unsigned char *val1,
-                                     unsigned char *val2);
 
 /*
   Index scan for GROUP-BY queries with MIN/MAX aggregate functions.

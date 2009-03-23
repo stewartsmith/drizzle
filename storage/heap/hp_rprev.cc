@@ -34,16 +34,20 @@ int heap_rprev(HP_INFO *info, unsigned char *record)
     heap_rb_param custom_arg;
 
     if (info->last_pos)
-      pos = tree_search_next(&keyinfo->rb_tree, &info->last_pos,
-                             offsetof(TREE_ELEMENT, right),
-                             offsetof(TREE_ELEMENT, left));
+      pos = (unsigned char *)tree_search_next(&keyinfo->rb_tree,
+                                              &info->last_pos,
+                                              offsetof(TREE_ELEMENT, right),
+                                              offsetof(TREE_ELEMENT, left));
     else
     {
       custom_arg.keyseg = keyinfo->seg;
       custom_arg.key_length = keyinfo->length;
       custom_arg.search_flag = SEARCH_SAME;
-      pos = tree_search_key(&keyinfo->rb_tree, info->lastkey, info->parents,
-                           &info->last_pos, info->last_find_flag, &custom_arg);
+      pos = (unsigned char *)tree_search_key(&keyinfo->rb_tree,
+                                             info->lastkey, info->parents,
+                                             &info->last_pos,
+                                             info->last_find_flag,
+                                             &custom_arg);
     }
     if (pos)
     {
