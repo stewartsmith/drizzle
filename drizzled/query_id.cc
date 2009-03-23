@@ -22,28 +22,23 @@
 #include <drizzled/query_id.h>
 #include <mysys/my_pthread.h>
 
-Query_id::Query_id() : the_query_id(1)
+Query_id::Query_id()
 {
-  /* pthread_mutex_init always returns 0 */
-  (void)pthread_mutex_init(&LOCK_query_id, MY_MUTEX_INIT_FAST);
+  the_query_id= 1;
 }
 
 Query_id::~Query_id()
 {
-  pthread_mutex_destroy(&LOCK_query_id);
 }
 
-query_id_t Query_id::value() const
+uint64_t Query_id::value() const
 {
   return the_query_id;
 }
 
-query_id_t Query_id::next()
+uint64_t Query_id::next()
 {
-  pthread_mutex_lock(&LOCK_query_id);
-  query_id_t ret= the_query_id++;
-  pthread_mutex_unlock(&LOCK_query_id);
+  uint64_t ret= the_query_id++;
 
   return ret;
 }
-
