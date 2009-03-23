@@ -76,4 +76,4 @@ drop schema drizzleslap;
 #
 
 # Concurrency
---exec $DRIZZLE_SLAP --silent --concurrency=128 --iterations=20 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --commit=100
+--exec $DRIZZLE_SLAP --silent --concurrency=32 --iterations=20 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --commit=100
