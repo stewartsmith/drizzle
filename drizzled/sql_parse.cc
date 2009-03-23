@@ -275,10 +275,12 @@ bool dispatch_command(enum enum_server_command command, Session *session,
       statistic_increment(session->status_var.questions, &LOCK_status);
       session->query_id= query_id.next();
       session->set_time(); /* Reset the query start time. */
-      pthread_mutex_lock(&LOCK_thread_count);
+
       session->query_length= length;
       session->query= beginning_of_next_stmt;
-      pthread_mutex_unlock(&LOCK_thread_count);
+
+      strncpy(session->process_list_info, session->query, (length > PROCESS_LIST_WIDTH) ? PROCESS_LIST_WIDTH - 1  : length);
+
       /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
       mysql_parse(session, beginning_of_next_stmt, length, &end_of_stmt);
