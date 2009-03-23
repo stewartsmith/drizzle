@@ -21,6 +21,7 @@
 #define DRIZZLED_GLOBAL_QUERY_ID_H
 
 #include <pthread.h>
+#include <drizzled/atomics.h>
 
 class Query_id
 {
@@ -38,8 +39,7 @@ public:
   query_id_t next();
 
 private:
-  pthread_mutex_t LOCK_query_id;
-  query_id_t the_query_id;
+  tbb::atomic<uint64_t> the_query_id;
 
   Query_id();
   Query_id(Query_id const&);
