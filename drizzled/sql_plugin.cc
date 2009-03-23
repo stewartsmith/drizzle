@@ -231,8 +231,6 @@ static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-#define my_intern_plugin_lock(A,B) intern_plugin_lock(A,B)
-#define my_intern_plugin_lock_ci(A,B) intern_plugin_lock(A,B)
 static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref plugin);
 static void intern_plugin_unlock(LEX *lex, plugin_ref plugin);
 static void reap_plugins(void);
@@ -536,7 +534,7 @@ plugin_ref plugin_lock(Session *session, plugin_ref *ptr)
 {
   LEX *lex= session ? session->lex : 0;
   plugin_ref rc;
-  rc= my_intern_plugin_lock_ci(lex, *ptr);
+  rc= intern_plugin_lock(lex, *ptr);
   return(rc);
 }
 
@@ -552,7 +550,7 @@ plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name, int typ
     return(0);
 
   if ((plugin= registry.find(name, type)))
-    rc= my_intern_plugin_lock_ci(lex, plugin_int_to_ref(plugin));
+    rc= intern_plugin_lock(lex, plugin_int_to_ref(plugin));
   return(rc);
 }
 
@@ -913,7 +911,7 @@ int plugin_init(int *argc, char **argv, int flags)
       {
         assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
-          my_intern_plugin_lock(NULL, plugin_int_to_ref(plugin_ptr));
+          intern_plugin_lock(NULL, plugin_int_to_ref(plugin_ptr));
         assert(plugin_ptr->ref_count == 1);
       }
     }
@@ -1569,7 +1567,7 @@ sys_var *find_sys_var(Session *session, const char *str, uint32_t length)
   {
     pthread_rwlock_unlock(&LOCK_system_variables_hash);
     LEX *lex= session ? session->lex : 0;
-    if (!(plugin= my_intern_plugin_lock(lex, plugin_int_to_ref(pi->plugin))))
+    if (!(plugin= intern_plugin_lock(lex, plugin_int_to_ref(pi->plugin))))
       var= NULL; /* failed to lock it, it must be uninstalling */
     else
     if (!(plugin_state(plugin) & PLUGIN_IS_READY))
@@ -1883,7 +1881,7 @@ void plugin_sessionvar_init(Session *session)
   session->variables.dynamic_variables_ptr= 0;
 
   session->variables.table_plugin=
-        my_intern_plugin_lock(NULL, global_system_variables.table_plugin);
+    intern_plugin_lock(NULL, global_system_variables.table_plugin);
   intern_plugin_unlock(NULL, old_table_plugin);
   return;
 }
