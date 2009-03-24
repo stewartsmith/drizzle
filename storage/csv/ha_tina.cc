@@ -75,10 +75,6 @@ extern "C" bool tina_check_status(void* param);
 /* Stuff for shares */
 pthread_mutex_t tina_mutex;
 static HASH tina_open_tables;
-static handler *tina_create_handler(StorageEngine *engine,
-                                    TABLE_SHARE *table,
-                                    MEM_ROOT *mem_root);
-
 
 /*****************************************************************************
  ** TINA tables
@@ -102,23 +98,37 @@ static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
   return (unsigned char*) share->table_name;
 }
 
+class Tina : public StorageEngine
+{
+  virtual handler *create(StorageEngine *engine,
+                          TABLE_SHARE *table,
+                          MEM_ROOT *mem_root)
+  {
+    return new (mem_root) ha_tina(engine, table);
+  }
+};
+
 static int tina_init_func(void *p)
 {
-  StorageEngine *tina_engine;
+  StorageEngine **engine= static_cast<StorageEngine **>(p);
 
-  tina_engine= (StorageEngine *)p;
+  Tina *tina_engine= new Tina();
+
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
                    (hash_get_key) tina_get_key,0,0);
   tina_engine->state= SHOW_OPTION_YES;
-  tina_engine->create= tina_create_handler;
   tina_engine->flags= (HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES |
                      HTON_NO_PARTITION);
+  *engine= tina_engine;
   return 0;
 }
 
-static int tina_done_func(void *)
+static int tina_done_func(void *p)
 {
+  Tina *tina_engine= static_cast<Tina *>(p);
+  delete tina_engine;
+
   hash_free(&tina_open_tables);
   pthread_mutex_destroy(&tina_mutex);
 
@@ -415,13 +425,6 @@ off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
   return 0;
 }
 
-
-static handler *tina_create_handler(StorageEngine *engine,
-                                    TABLE_SHARE *table,
-                                    MEM_ROOT *mem_root)
-{
-  return new (mem_root) ha_tina(engine, table);
-}
 
 
 ha_tina::ha_tina(StorageEngine *engine, TABLE_SHARE *table_arg)
