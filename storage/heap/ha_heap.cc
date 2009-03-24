@@ -25,37 +25,40 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
 
-
 pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
 
-static handler *heap_create_handler(StorageEngine *engine,
-                                    TABLE_SHARE *table,
-                                    MEM_ROOT *mem_root);
 
-int heap_deinit(void *)
+class HeapEngine : public StorageEngine
 {
+  virtual handler *create(StorageEngine *engine,
+                          TABLE_SHARE *table,
+                          MEM_ROOT *mem_root)
+  {
+    return new (mem_root) ha_heap(engine, table);
+  }
+};
+
+int heap_init(void *p)
+{
+  StorageEngine **engine= static_cast<StorageEngine **>(p);
+  *engine= new HeapEngine();
+
+  (*engine)->state=      SHOW_OPTION_YES;
+  (*engine)->flags=      HTON_CAN_RECREATE;
+
+  return 0;
+}
+
+int heap_deinit(void *p)
+{
+  HeapEngine *engine= static_cast<HeapEngine *>(p);
+  delete engine;
+
   pthread_mutex_init(&THR_LOCK_heap,MY_MUTEX_INIT_FAST);
 
   return hp_panic(HA_PANIC_CLOSE);
 }
 
-
-int heap_init(void *p)
-{
-  heap_engine= (StorageEngine *)p;
-  heap_engine->state=      SHOW_OPTION_YES;
-  heap_engine->create=     heap_create_handler;
-  heap_engine->flags=      HTON_CAN_RECREATE;
-
-  return 0;
-}
-
-static handler *heap_create_handler(StorageEngine *engine,
-                                    TABLE_SHARE *table,
-                                    MEM_ROOT *mem_root)
-{
-  return new (mem_root) ha_heap(engine, table);
-}
 
 
 /*****************************************************************************
