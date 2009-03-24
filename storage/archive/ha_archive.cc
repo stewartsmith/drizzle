@@ -103,10 +103,6 @@ static unsigned int global_version;
 #define ARN ".ARN"               // Files used during an optimize call
 
 
-/* Static declarations for handerton */
-static handler *archive_create_handler(StorageEngine *engine,
-                                       TABLE_SHARE *table,
-                                       MEM_ROOT *mem_root);
 
 static bool archive_use_aio= false;
 
@@ -120,12 +116,15 @@ static bool archive_use_aio= false;
 */
 #define ARCHIVE_ROW_HEADER_SIZE 4
 
-static handler *archive_create_handler(StorageEngine *engine,
-                                       TABLE_SHARE *table,
-                                       MEM_ROOT *mem_root)
+class ArchiveEngine : public StorageEngine
 {
-  return new (mem_root) ha_archive(engine, table);
-}
+  virtual handler *create(StorageEngine *engine,
+                          TABLE_SHARE *table,
+                          MEM_ROOT *mem_root)
+  {
+    return new (mem_root) ha_archive(engine, table);
+  }
+};
 
 /*
   Used for hash table that tracks open tables.
@@ -151,18 +150,19 @@ static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length, bool
 
 int archive_db_init(void *p)
 {
-  StorageEngine *archive_engine;
+  StorageEngine **engine= static_cast<StorageEngine **>(p);
 
-  archive_engine= (StorageEngine *)p;
+  ArchiveEngine *archive_engine= new ArchiveEngine();
   archive_engine->state= SHOW_OPTION_YES;
-  archive_engine->create= archive_create_handler;
   archive_engine->flags= HTON_NO_FLAGS;
+
+  *engine= archive_engine;
 
   /* When the engine starts up set the first version */
   global_version= 1;
 
   if (pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST))
-    goto error;
+    return true;
   if (hash_init(&archive_open_tables, system_charset_info, 32, 0, 0,
                 (hash_get_key) archive_get_key, 0, 0))
   {
@@ -172,7 +172,6 @@ int archive_db_init(void *p)
   {
     return(false);
   }
-error:
   return(true);
 }
 
@@ -187,8 +186,11 @@ error:
     false       OK
 */
 
-int archive_db_done(void *)
+int archive_db_done(void *p)
 {
+  ArchiveEngine *archive_engine= static_cast<ArchiveEngine *>(p);
+  delete archive_engine;
+
   hash_free(&archive_open_tables);
   pthread_mutex_destroy(&archive_mutex);
 
