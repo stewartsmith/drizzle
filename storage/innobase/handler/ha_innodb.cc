@@ -119,9 +119,10 @@ undefined.  Map it to NULL. */
 # define EQ_CURRENT_SESSION(session) ((session) == current_session)
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
+
+StorageEngine* innodb_hton_ptr= NULL;
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 /* These must be weak global variables in the dynamic plugin. */
-struct StorageEngine* innodb_hton_ptr;
 #ifdef __WIN__
 struct st_mysql_plugin*	builtin_innobase_plugin_ptr;
 #else
@@ -135,9 +136,6 @@ bool
 innodb_plugin_init(void);
 /*====================*/
 		/* out: TRUE if the dynamic InnoDB plugin should start */
-#else /* DRIZZLE_DYNAMIC_PLUGIN */
-/* This must be a global variable in the statically linked InnoDB. */
-struct StorageEngine* innodb_hton_ptr = NULL;
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
@@ -211,17 +209,135 @@ static const char* innobase_change_buffering_values[IBUF_USE_COUNT] = {
 
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
-static int innobase_close_connection(StorageEngine *engine, Session* session);
-static int innobase_commit(StorageEngine *engine, Session* session, bool all);
-static int innobase_rollback(StorageEngine *engine, Session* session, bool all);
-static int innobase_rollback_to_savepoint(StorageEngine *engine, Session* session, 
-           void *savepoint);
-static int innobase_savepoint(StorageEngine *engine, Session* session, void *savepoint);
-static int innobase_release_savepoint(StorageEngine *engine, Session* session, 
-           void *savepoint);
-static handler *innobase_create_handler(StorageEngine *engine,
-                                        TABLE_SHARE *table,
-                                        MEM_ROOT *mem_root);
+
+class InnobaseEngine : public StorageEngine
+{
+  virtual int close(StorageEngine *engine, Session* session);
+  virtual int commit(StorageEngine *engine, Session* session, bool all);
+  virtual int rollback(StorageEngine *engine, Session* session, bool all);
+  virtual int rollback_to_savepoint(StorageEngine *engine, Session* session, 
+                                    void *savepoint);
+  virtual int savepoint_set(StorageEngine *engine, Session* session,
+                        void *savepoint);
+  virtual int savepoint_release(StorageEngine *engine, Session* session, 
+                                void *savepoint);
+  virtual handler *create(StorageEngine *engine,
+                          TABLE_SHARE *table,
+                          MEM_ROOT *mem_root)
+  {
+    return new (mem_root) ha_innobase(engine, table);
+  }
+
+  /***********************************************************************
+  This function is used to prepare X/Open XA distributed transaction   */
+  virtual
+  int
+  xa_prepare(
+  /*================*/
+  			/* out: 0 or error number */
+  	StorageEngine* engine,
+  	Session*	session,	/* in: handle to the MySQL thread of the user
+  			whose XA transaction should be prepared */
+  	bool	all);	/* in: TRUE - commit transaction
+  			FALSE - the current SQL statement ended */
+  /***********************************************************************
+  This function is used to recover X/Open XA distributed transactions   */
+  virtual
+  int
+  xa_recover(
+  /*================*/
+  				/* out: number of prepared transactions
+  				stored in xid_list */
+  	StorageEngine* engine,
+  	XID*	xid_list,	/* in/out: prepared transactions */
+  	uint	len);		/* in: number of slots in xid_list */
+  /***********************************************************************
+  This function is used to commit one X/Open XA distributed transaction
+  which is in the prepared state */
+  virtual
+  int
+  commit_by_xid(
+  /*===================*/
+  			/* out: 0 or error number */
+  	StorageEngine* engine,
+  	XID*	xid);	/* in: X/Open XA transaction identification */
+  /***********************************************************************
+  This function is used to rollback one X/Open XA distributed transaction
+  which is in the prepared state */
+  virtual
+  int
+  rollback_by_xid(
+  /*=====================*/
+  			/* out: 0 or error number */
+  	StorageEngine* engine,
+  	XID	*xid);	/* in: X/Open XA transaction identification */
+  /*********************************************************************
+  Removes all tables in the named database inside InnoDB. */
+  virtual
+  void
+  drop_database(
+  /*===================*/
+  			/* out: error number */
+  	StorageEngine* engine, /* in: StorageEngine of Innodb */
+  	char*	path);	/* in: database path; inside InnoDB the name
+  			of the last directory in the path is used as
+  			the database name: for example, in 'mysql/data/test'
+  			the database name is 'test' */
+
+  /*********************************************************************
+  Creates an InnoDB transaction struct for the session if it does not yet have one.
+  Starts a new InnoDB transaction if a transaction is not yet started. And
+  assigns a new snapshot for a consistent read if the transaction does not yet
+  have one. */
+  virtual
+  int
+  start_consistent_snapshot(
+  /*====================================*/
+  			/* out: 0 */
+  	StorageEngine* engine, /* in: Innodb StorageEngine */ 
+  	Session*	session);	/* in: MySQL thread handle of the user for whom
+  			the transaction should be committed */
+  /********************************************************************
+  Flushes InnoDB logs to disk and makes a checkpoint. Really, a commit flushes
+  the logs, and the name of this function should be innobase_checkpoint. */
+  virtual
+  bool
+  flush_logs(
+  /*================*/
+  				/* out: TRUE if error */
+  	StorageEngine*	engine);	/* in: InnoDB StorageEngine */
+  
+  /****************************************************************************
+  Implements the SHOW INNODB STATUS command. Sends the output of the InnoDB
+  Monitor to the client. */
+  virtual
+  bool
+  show_status(
+  /*===============*/
+  	StorageEngine*	engine,	/* in: the innodb StorageEngine */
+  	Session*	session,	/* in: the MySQL query thread of the caller */
+  	stat_print_fn *stat_print,
+	enum ha_stat_type stat_type);
+
+  virtual
+  int
+  release_temporary_latches(
+  /*===============================*/
+				/* out: 0 */
+        StorageEngine *engine,	/* in: StorageEngine */
+	Session*		session);	/* in: MySQL thread */
+
+  virtual int savepoint_rollback(StorageEngine *, Session *, void *);
+  
+  virtual
+  int
+  close_connection(
+/*======================*/
+			/* out: 0 or error number */
+        StorageEngine*	engine,	/* in:  innobase StorageEngine */
+	Session*	session);	/* in: handle to the MySQL thread of the user
+			whose resources should be free'd */
+};
 
 /****************************************************************
 Validate the file format name and return its corresponding id. */
@@ -274,111 +390,12 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
   NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
 
-static handler *innobase_create_handler(StorageEngine *engine,
-                                        TABLE_SHARE *table, 
-                                        MEM_ROOT *mem_root)
-{
-  return new (mem_root) ha_innobase(engine, table);
-}
-
-/***********************************************************************
-This function is used to prepare X/Open XA distributed transaction   */
-static
-int
-innobase_xa_prepare(
-/*================*/
-			/* out: 0 or error number */
-	StorageEngine* engine,
-	Session*	session,	/* in: handle to the MySQL thread of the user
-			whose XA transaction should be prepared */
-	bool	all);	/* in: TRUE - commit transaction
-			FALSE - the current SQL statement ended */
-/***********************************************************************
-This function is used to recover X/Open XA distributed transactions   */
-static
-int
-innobase_xa_recover(
-/*================*/
-				/* out: number of prepared transactions
-				stored in xid_list */
-	StorageEngine* engine,
-	XID*	xid_list,	/* in/out: prepared transactions */
-	uint	len);		/* in: number of slots in xid_list */
-/***********************************************************************
-This function is used to commit one X/Open XA distributed transaction
-which is in the prepared state */
-static
-int
-innobase_commit_by_xid(
-/*===================*/
-			/* out: 0 or error number */
-	StorageEngine* engine,
-	XID*	xid);	/* in: X/Open XA transaction identification */
-/***********************************************************************
-This function is used to rollback one X/Open XA distributed transaction
-which is in the prepared state */
-static
-int
-innobase_rollback_by_xid(
-/*=====================*/
-			/* out: 0 or error number */
-	StorageEngine* engine,
-	XID	*xid);	/* in: X/Open XA transaction identification */
-/*********************************************************************
-Removes all tables in the named database inside InnoDB. */
-static
-void
-innobase_drop_database(
-/*===================*/
-			/* out: error number */
-	StorageEngine* engine, /* in: StorageEngine of Innodb */
-	char*	path);	/* in: database path; inside InnoDB the name
-			of the last directory in the path is used as
-			the database name: for example, in 'mysql/data/test'
-			the database name is 'test' */
 /***********************************************************************
 Closes an InnoDB database. */
 static
 int
 innobase_deinit(void *p);
 
-/*********************************************************************
-Creates an InnoDB transaction struct for the session if it does not yet have one.
-Starts a new InnoDB transaction if a transaction is not yet started. And
-assigns a new snapshot for a consistent read if the transaction does not yet
-have one. */
-static
-int
-innobase_start_trx_and_assign_read_view(
-/*====================================*/
-			/* out: 0 */
-	StorageEngine* engine, /* in: Innodb StorageEngine */ 
-	Session*	session);	/* in: MySQL thread handle of the user for whom
-			the transaction should be committed */
-/********************************************************************
-Flushes InnoDB logs to disk and makes a checkpoint. Really, a commit flushes
-the logs, and the name of this function should be innobase_checkpoint. */
-static
-bool
-innobase_flush_logs(
-/*================*/
-				/* out: TRUE if error */
-	StorageEngine*	engine);	/* in: InnoDB StorageEngine */
-
-/****************************************************************************
-Implements the SHOW INNODB STATUS command. Sends the output of the InnoDB
-Monitor to the client. */
-static
-bool
-innodb_show_status(
-/*===============*/
-	StorageEngine*	engine,	/* in: the innodb StorageEngine */
-	Session*	session,	/* in: the MySQL query thread of the caller */
-	stat_print_fn *stat_print);
-static
-bool innobase_show_status(StorageEngine *engine, Session* session, 
-                          stat_print_fn* stat_print,
-                          enum ha_stat_type stat_type);
 
 /*********************************************************************
 Commits a transaction in an InnoDB database. */
@@ -637,9 +654,8 @@ session_to_trx(
 Call this function when mysqld passes control to the client. That is to
 avoid deadlocks on the adaptive hash S-latch possibly held by session. For more
 documentation, see handler.cc. */
-static
 int
-innobase_release_temporary_latches(
+InnobaseEngine::release_temporary_latches(
 /*===============================*/
 				/* out: 0 */
         StorageEngine *engine,	/* in: StorageEngine */
@@ -1825,17 +1841,13 @@ innobase_init(
 	char		*default_path;
 	uint		format_id;
 
-        StorageEngine *innobase_engine= (StorageEngine *)p;
+	StorageEngine **engine= static_cast<StorageEngine **>(p);
+	InnobaseEngine *innobase_engine= new InnobaseEngine();
 
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 	if (!innodb_plugin_init()) {
 		errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB plugin init failed.");
 		return -1;
-	}
-
-	if (innodb_hton_ptr) {
-		/* Patch the statically linked StorageEngine and variables */
-		innobase_engine = innodb_hton_ptr;
 	}
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
@@ -1843,23 +1855,7 @@ innobase_init(
 
         innobase_engine->state = SHOW_OPTION_YES;
         innobase_engine->savepoint_offset=sizeof(trx_named_savept_t);
-        innobase_engine->close_connection=innobase_close_connection;
-        innobase_engine->savepoint_set=innobase_savepoint;
-        innobase_engine->savepoint_rollback=innobase_rollback_to_savepoint;
-        innobase_engine->savepoint_release=innobase_release_savepoint;
-        innobase_engine->commit=innobase_commit;
-        innobase_engine->rollback=innobase_rollback;
-        innobase_engine->prepare=innobase_xa_prepare;
-        innobase_engine->recover=innobase_xa_recover;
-        innobase_engine->commit_by_xid=innobase_commit_by_xid;
-        innobase_engine->rollback_by_xid=innobase_rollback_by_xid;
-        innobase_engine->create=innobase_create_handler;
-        innobase_engine->drop_database=innobase_drop_database;
-        innobase_engine->start_consistent_snapshot=innobase_start_trx_and_assign_read_view;
-        innobase_engine->flush_logs=innobase_flush_logs;
-        innobase_engine->show_status=innobase_show_status;
         innobase_engine->flags=HTON_NO_FLAGS;
-        innobase_engine->release_temporary_latches=innobase_release_temporary_latches;
 
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
 
@@ -2101,12 +2097,8 @@ mem_free_and_error:
 	pthread_mutex_init(&commit_cond_m, MY_MUTEX_INIT_FAST);
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
-	if (innobase_engine != p) {
-		innobase_engine = reinterpret_cast<StorageEngine*>(p);
-		*innobase_engine = *innodb_hton_ptr;
-	}
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
+
+	*engine= innobase_engine;
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -2120,11 +2112,13 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(void *)
+innobase_deinit(void *p)
 /*==============*/
 				/* out: TRUE if error */
 {
 	int	err= 0;
+	InnobaseEngine *innobase_engine= static_cast<InnobaseEngine *>(p);
+ 	delete innobase_engine;
 
 	if (innodb_inited) {
 
@@ -2151,9 +2145,8 @@ innobase_deinit(void *)
 /********************************************************************
 Flushes InnoDB logs to disk and makes a checkpoint. Really, a commit flushes
 the logs, and the name of this function should be innobase_checkpoint. */
-static
 bool
-innobase_flush_logs(StorageEngine *engine)
+InnobaseEngine::flush_logs(StorageEngine *engine)
 /*=====================*/
 				/* out: TRUE if error */
 {
@@ -2187,9 +2180,8 @@ Creates an InnoDB transaction struct for the session if it does not yet have one
 Starts a new InnoDB transaction if a transaction is not yet started. And
 assigns a new snapshot for a consistent read if the transaction does not yet
 have one. */
-static
 int
-innobase_start_trx_and_assign_read_view(
+InnobaseEngine::start_consistent_snapshot(
 /*====================================*/
 			/* out: 0 */
         StorageEngine *engine, /* in: Innodb StorageEngine */ 
@@ -2231,9 +2223,8 @@ innobase_start_trx_and_assign_read_view(
 /*********************************************************************
 Commits a transaction in an InnoDB database or marks an SQL statement
 ended. */
-static
 int
-innobase_commit(
+InnobaseEngine::commit(
 /*============*/
 			/* out: 0 */
         StorageEngine *engine, /* in: Innodb StorageEngine */ 
@@ -2260,9 +2251,9 @@ innobase_commit(
 	1. ::external_lock(),
 	2. ::start_stmt(),
 	3. innobase_query_caching_of_table_permitted(),
-	4. innobase_savepoint(),
+	4. InnobaseEngine::savepoint_set(),
 	5. ::init_table_handle_for_HANDLER(),
-	6. innobase_start_trx_and_assign_read_view(),
+	6. InnobaseEngine::start_consistent_snapshot(),
 	7. ::transactional_table_lock()
 
 	and it is only set to 0 in a commit or a rollback. If it is 0 we know
@@ -2355,9 +2346,8 @@ retry:
 
 /*********************************************************************
 Rolls back a transaction or the latest SQL statement. */
-static
 int
-innobase_rollback(
+InnobaseEngine::rollback(
 /*==============*/
 			/* out: 0 or error number */
         StorageEngine *engine, /* in: Innodb StorageEngine */ 
@@ -2427,9 +2417,8 @@ innobase_rollback_trx(
 
 /*********************************************************************
 Rolls back a transaction to a savepoint. */
-static
 int
-innobase_rollback_to_savepoint(
+InnobaseEngine::savepoint_rollback(
 /*===========================*/
 				/* out: 0 if success, HA_ERR_NO_SAVEPOINT if
 				no savepoint with the given name */
@@ -2441,7 +2430,7 @@ innobase_rollback_to_savepoint(
 	ib_int64_t	mysql_binlog_cache_pos;
 	int		error = 0;
 	trx_t*		trx;
-	char		name[64];
+	char		sp_name[64];
 
 	assert(engine == innodb_hton_ptr);
 
@@ -2455,18 +2444,17 @@ innobase_rollback_to_savepoint(
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 
-	int64_t2str((ulint)savepoint, name, 36);
+	int64_t2str((ulint)savepoint, sp_name, 36);
 
-	error = (int) trx_rollback_to_savepoint_for_mysql(trx, name,
+	error = (int) trx_rollback_to_savepoint_for_mysql(trx, sp_name,
 						&mysql_binlog_cache_pos);
 	return(convert_error_code_to_mysql(error, 0, NULL));
 }
 
 /*********************************************************************
 Release transaction savepoint name. */
-static
 int
-innobase_release_savepoint(
+InnobaseEngine::savepoint_release(
 /*=======================*/
 				/* out: 0 if success, HA_ERR_NO_SAVEPOINT if
 				no savepoint with the given name */
@@ -2477,7 +2465,7 @@ innobase_release_savepoint(
 {
 	int		error = 0;
 	trx_t*		trx;
-	char		name[64];
+	char		sp_name[64];
 
 	assert(engine == innodb_hton_ptr);
 
@@ -2485,18 +2473,17 @@ innobase_release_savepoint(
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 
-	int64_t2str((ulint)savepoint, name, 36);
+	int64_t2str((ulint)savepoint, sp_name, 36);
 
-	error = (int) trx_release_savepoint_for_mysql(trx, name);
+	error = (int) trx_release_savepoint_for_mysql(trx, sp_name);
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
 }
 
 /*********************************************************************
 Sets a transaction savepoint. */
-static
 int
-innobase_savepoint(
+InnobaseEngine::savepoint_set(
 /*===============*/
 				/* out: always 0, that is, always succeeds */
 	StorageEngine*	engine,   /* in: handle to the Innodb StorageEngine */
@@ -2526,19 +2513,18 @@ innobase_savepoint(
 	assert(trx->active_trans);
 
 	/* TODO: use provided savepoint data area to store savepoint data */
-	char name[64];
-	int64_t2str((ulint)savepoint,name,36);
+	char sp_name[64];
+	int64_t2str((ulint)savepoint,sp_name,36);
 
-	error = (int) trx_savepoint_for_mysql(trx, name, (ib_int64_t)0);
+	error = (int) trx_savepoint_for_mysql(trx, sp_name, (ib_int64_t)0);
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
 }
 
 /*********************************************************************
 Frees a possible InnoDB trx object associated with the current Session. */
-static
 int
-innobase_close_connection(
+InnobaseEngine::close_connection(
 /*======================*/
 			/* out: 0 or error number */
         StorageEngine*	engine,	/* in:  innobase StorageEngine */
@@ -2835,7 +2821,7 @@ ha_innobase::open(
 	holding btr_search_latch. This breaks the latching order as
 	we acquire dict_sys->mutex below and leads to a deadlock. */
 	if (session != NULL) {
-		innobase_release_temporary_latches(ht, session);
+		ht->release_temporary_latches(ht, session);
 	}
 
 	normalize_table_name(norm_name, name);
@@ -3051,7 +3037,7 @@ ha_innobase::close(void)
 
 	session = ha_session();
 	if (session != NULL) {
-		innobase_release_temporary_latches(ht, session);
+		ht->release_temporary_latches(ht, session);
 	}
 
 	row_prebuilt_free(prebuilt, FALSE);
@@ -4063,7 +4049,7 @@ no_commit:
 			no need to re-acquire locks on it. */
 
 			/* Altering to InnoDB format */
-			innobase_commit(ht, user_session, 1);
+			ht->commit(ht, user_session, 1);
 			/* Note that this transaction is still active. */
 			prebuilt->trx->active_trans = 1;
 			/* We will need an IX lock on the destination table. */
@@ -4079,7 +4065,7 @@ no_commit:
 
 			/* Commit the transaction.  This will release the table
 			locks, so they have to be acquired again. */
-			innobase_commit(ht, user_session, 1);
+			ht->commit(ht, user_session, 1);
 			/* Note that this transaction is still active. */
 			prebuilt->trx->active_trans = 1;
 			/* Re-acquire the table lock on the source table. */
@@ -6266,9 +6252,8 @@ ha_innobase::delete_table(
 
 /*********************************************************************
 Removes all tables in the named database inside InnoDB. */
-static
 void
-innobase_drop_database(
+InnobaseEngine::drop_database(
 /*===================*/
 			/* out: error number */
         StorageEngine *engine, /* in: StorageEngine of Innodb */
@@ -7629,7 +7614,7 @@ ha_innobase::external_lock(
 
 		if (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
 			if (trx->active_trans != 0) {
-				innobase_commit(ht, session, TRUE);
+				ht->commit(ht, session, TRUE);
 			}
 		} else {
 			if (trx->isolation_level <= TRX_ISO_READ_COMMITTED
@@ -7963,10 +7948,9 @@ innodb_mutex_show_status(
 	return(FALSE);
 }
 
-static
-bool innobase_show_status(StorageEngine *engine, Session* session, 
-                          stat_print_fn* stat_print,
-                          enum ha_stat_type stat_type)
+bool InnobaseEngine::show_status(StorageEngine *engine, Session* session, 
+                                 stat_print_fn* stat_print,
+                                 enum ha_stat_type stat_type)
 {
 	assert(engine == innodb_hton_ptr);
 
@@ -8655,9 +8639,8 @@ innobase_get_at_most_n_mbchars(
 
 /***********************************************************************
 This function is used to prepare X/Open XA distributed transaction   */
-static
 int
-innobase_xa_prepare(
+InnobaseEngine::xa_prepare(
 /*================*/
 			/* out: 0 or error number */
         StorageEngine	*engine,
@@ -8755,9 +8738,8 @@ innobase_xa_prepare(
 
 /***********************************************************************
 This function is used to recover X/Open XA distributed transactions   */
-static
 int
-innobase_xa_recover(
+InnobaseEngine::xa_recover(
 /*================*/
 				/* out: number of prepared transactions
 				stored in xid_list */
@@ -8778,9 +8760,8 @@ innobase_xa_recover(
 /***********************************************************************
 This function is used to commit one X/Open XA distributed transaction
 which is in the prepared state */
-static
 int
-innobase_commit_by_xid(
+InnobaseEngine::commit_by_xid(
 /*===================*/
 			/* out: 0 or error number */
         StorageEngine *engine,
@@ -8804,9 +8785,8 @@ innobase_commit_by_xid(
 /***********************************************************************
 This function is used to rollback one X/Open XA distributed transaction
 which is in the prepared state */
-static
 int
-innobase_rollback_by_xid(
+InnobaseEngine::rollback_by_xid(
 /*=====================*/
 			/* out: 0 or error number */
         StorageEngine *engine,
