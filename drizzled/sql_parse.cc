@@ -75,63 +75,6 @@ static void unlock_locked_tables(Session *session)
   }
 }
 
-
-bool end_active_trans(Session *session)
-{
-  int error= 0;
-
-  if (session->transaction.xid_state.xa_state != XA_NOTR)
-  {
-    my_error(ER_XAER_RMFAIL, MYF(0),
-             xa_state_names[session->transaction.xid_state.xa_state]);
-    return(1);
-  }
-  if (session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN |
-		      OPTION_TABLE_LOCK))
-  {
-    /* Safety if one did "drop table" on locked tables */
-    if (!session->locked_tables)
-      session->options&= ~OPTION_TABLE_LOCK;
-    session->server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (ha_commit(session))
-      error=1;
-  }
-  session->options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
-  session->transaction.all.modified_non_trans_table= false;
-  return(error);
-}
-
-
-bool begin_trans(Session *session)
-{
-  int error= 0;
-  if (session->locked_tables)
-  {
-    session->lock=session->locked_tables;
-    session->locked_tables=0;			// Will be automatically closed
-    close_thread_tables(session);			// Free tables
-  }
-  if (end_active_trans(session))
-    error= -1;
-  else
-  {
-    LEX *lex= session->lex;
-    session->options|= OPTION_BEGIN;
-    session->server_status|= SERVER_STATUS_IN_TRANS;
-    if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
-      error= ha_start_consistent_snapshot(session);
-  }
-  return error;
-}
-
-/**
-  Returns true if all tables should be ignored.
-*/
-inline bool all_tables_not_ok(Session *, TableList *)
-{
-  return false;
-}
-
 /**
   Mark all commands that somehow changes a table.
 
@@ -144,7 +87,6 @@ inline bool all_tables_not_ok(Session *, TableList *)
      2  - query that returns meaningful ROW_COUNT() -
           a number of modified rows
 */
-
 bitset<CF_BIT_SIZE> sql_command_flags[SQLCOM_END+1];
 
 void init_update_queries(void)
@@ -237,174 +179,6 @@ void execute_init_command(Session *session, sys_var_str *init_command_var,
 }
 
 /**
-  Ends the current transaction and (maybe) begin the next.
-
-  @param session            Current thread
-  @param completion     Completion type
-
-  @retval
-    0   OK
-*/
-
-int end_trans(Session *session, enum enum_mysql_completiontype completion)
-{
-  bool do_release= 0;
-  int res= 0;
-
-  if (session->transaction.xid_state.xa_state != XA_NOTR)
-  {
-    my_error(ER_XAER_RMFAIL, MYF(0),
-             xa_state_names[session->transaction.xid_state.xa_state]);
-    return(1);
-  }
-  switch (completion) {
-  case COMMIT:
-    /*
-     We don't use end_active_trans() here to ensure that this works
-     even if there is a problem with the OPTION_AUTO_COMMIT flag
-     (Which of course should never happen...)
-    */
-    session->server_status&= ~SERVER_STATUS_IN_TRANS;
-    res= ha_commit(session);
-    session->options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
-    session->transaction.all.modified_non_trans_table= false;
-    break;
-  case COMMIT_RELEASE:
-    do_release= 1; /* fall through */
-  case COMMIT_AND_CHAIN:
-    res= end_active_trans(session);
-    if (!res && completion == COMMIT_AND_CHAIN)
-      res= begin_trans(session);
-    break;
-  case ROLLBACK_RELEASE:
-    do_release= 1; /* fall through */
-  case ROLLBACK:
-  case ROLLBACK_AND_CHAIN:
-  {
-    session->server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (ha_rollback(session))
-      res= -1;
-    session->options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
-    session->transaction.all.modified_non_trans_table= false;
-    if (!res && (completion == ROLLBACK_AND_CHAIN))
-      res= begin_trans(session);
-    break;
-  }
-  default:
-    res= -1;
-    my_error(ER_UNKNOWN_COM_ERROR, MYF(0));
-    return(-1);
-  }
-
-  if (res < 0)
-    my_error(session->killed_errno(), MYF(0));
-  else if ((res == 0) && do_release)
-    session->killed= Session::KILL_CONNECTION;
-
-  return(res);
-}
-
-
-/**
-  Read one command from connection and execute it (query or simple command).
-  This function is called in loop from thread function.
-
-  For profiling to work, it must never be called recursively.
-
-  @retval
-    0  success
-  @retval
-    1  request of thread shutdown (see dispatch_command() description)
-*/
-
-bool do_command(Session *session)
-{
-  bool return_value;
-  char *packet= 0;
-  ulong packet_length;
-  NET *net= &session->net;
-  enum enum_server_command command;
-
-  /*
-    indicator of uninitialized lex => normal flow of errors handling
-    (see my_message_sql)
-  */
-  session->lex->current_select= 0;
-
-  /*
-    This thread will do a blocking read from the client which
-    will be interrupted when the next command is received from
-    the client, the connection is closed or "net_wait_timeout"
-    number of seconds has passed
-  */
-  drizzleclient_net_set_read_timeout(net, session->variables.net_wait_timeout);
-
-  /*
-    XXX: this code is here only to clear possible errors of init_connect.
-    Consider moving to init_connect() instead.
-  */
-  session->clear_error();				// Clear error message
-  session->main_da.reset_diagnostics_area();
-
-  net_new_transaction(net);
-
-  packet_length= drizzleclient_net_read(net);
-  if (packet_length == packet_error)
-  {
-    /* Check if we can continue without closing the connection */
-
-    if(net->last_errno== CR_NET_PACKET_TOO_LARGE)
-      my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
-    /* Assert is invalid for dirty connection shutdown
-     *     assert(session->is_error());
-     */
-    drizzleclient_net_end_statement(session);
-
-    if (net->error != 3)
-    {
-      return_value= true;                       // We have to close it.
-      goto out;
-    }
-
-    net->error= 0;
-    return_value= false;
-    goto out;
-  }
-
-  packet= (char*) net->read_pos;
-  /*
-    'packet_length' contains length of data, as it was stored in packet
-    header. In case of malformed header, drizzleclient_net_read returns zero.
-    If packet_length is not zero, drizzleclient_net_read ensures that the returned
-    number of bytes was actually read from network.
-    There is also an extra safety measure in drizzleclient_net_read:
-    it sets packet[packet_length]= 0, but only for non-zero packets.
-  */
-  if (packet_length == 0)                       /* safety */
-  {
-    /* Initialize with COM_SLEEP packet */
-    packet[0]= (unsigned char) COM_SLEEP;
-    packet_length= 1;
-  }
-  /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
-  packet[packet_length]= '\0';                  /* safety */
-
-  command= (enum enum_server_command) (unsigned char) packet[0];
-
-  if (command >= COM_END)
-    command= COM_END;                           // Wrong command
-
-  /* Restore read timeout value */
-  drizzleclient_net_set_read_timeout(net, session->variables.net_read_timeout);
-
-  assert(packet_length);
-  return_value= dispatch_command(command, session, packet+1, (uint32_t) (packet_length-1));
-
-out:
-  return(return_value);
-}
-
-/**
   Perform one connection-level (COM_XXXX) command.
 
   @param command         type of command to perform
@@ -435,7 +209,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->command=command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
-  pthread_mutex_lock(&LOCK_thread_count);
   session->query_id= query_id.value();
 
   switch( command ) {
@@ -448,9 +221,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     query_id.next();
   }
 
-  thread_running++;
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
-  pthread_mutex_unlock(&LOCK_thread_count);
 
   logging_pre_do(session);
 
@@ -471,7 +242,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
   case COM_QUERY:
   {
-    if (alloc_query(session, packet, packet_length))
+    if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
     char *packet_end= session->query + session->query_length;
     const char* end_of_stmt= NULL;
@@ -504,10 +275,12 @@ bool dispatch_command(enum enum_server_command command, Session *session,
       statistic_increment(session->status_var.questions, &LOCK_status);
       session->query_id= query_id.next();
       session->set_time(); /* Reset the query start time. */
-      pthread_mutex_lock(&LOCK_thread_count);
+
       session->query_length= length;
       session->query= beginning_of_next_stmt;
-      pthread_mutex_unlock(&LOCK_thread_count);
+
+      strncpy(session->process_list_info, session->query, (length > PROCESS_LIST_WIDTH) ? PROCESS_LIST_WIDTH - 1  : length);
+
       /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
       mysql_parse(session, beginning_of_next_stmt, length, &end_of_stmt);
@@ -569,14 +342,14 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   log_slow_statement(session);
 
+  /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
-  pthread_mutex_lock(&LOCK_thread_count); // For process list
-  session->set_proc_info(0);
   session->command=COM_SLEEP;
+  session->process_list_info[0]= 0;
   session->query=0;
   session->query_length=0;
-  thread_running--;
-  pthread_mutex_unlock(&LOCK_thread_count);
+
+  session->set_proc_info(NULL);
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
   return(error);
@@ -684,52 +457,6 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   table_list->schema_select_lex= schema_select_lex;
   table_list->schema_table_reformed= 1;
   return(0);
-}
-
-
-/**
-  Read query from packet and store in session->query.
-  Used in COM_QUERY and COM_STMT_PREPARE.
-
-    Sets the following Session variables:
-  - query
-  - query_length
-
-  @retval
-    false ok
-  @retval
-    true  error;  In this case session->fatal_error is set
-*/
-
-bool alloc_query(Session *session, const char *packet, uint32_t packet_length)
-{
-  /* Remove garbage at start and end of query */
-  while (packet_length > 0 && my_isspace(session->charset(), packet[0]))
-  {
-    packet++;
-    packet_length--;
-  }
-  const char *pos= packet + packet_length;     // Point at end null
-  while (packet_length > 0 &&
-	 (pos[-1] == ';' || my_isspace(session->charset() ,pos[-1])))
-  {
-    pos--;
-    packet_length--;
-  }
-  /* We must allocate some extra memory for query cache */
-  session->query_length= 0;                        // Extra safety: Avoid races
-  if (!(session->query= (char*) session->memdup_w_gap((unsigned char*) (packet),
-					      packet_length,
-					      session->db_length+ 1)))
-    return true;
-  session->query[packet_length]=0;
-  session->query_length= packet_length;
-
-  /* Reclaim some memory */
-  session->packet.shrink(session->variables.net_buffer_length);
-  session->convert_buffer.shrink(session->variables.net_buffer_length);
-
-  return false;
 }
 
 /**
@@ -883,10 +610,10 @@ mysql_execute_command(Session *session)
     /* If CREATE TABLE of non-temporary table, do implicit commit */
     if (!(lex->create_info.options & HA_LEX_CREATE_TMP_TABLE))
     {
-      if (end_active_trans(session))
+      if (! session->endActiveTransaction())
       {
-	res= -1;
-	break;
+        res= -1;
+        break;
       }
     }
     assert(first_table == all_tables && first_table != 0);
@@ -1048,7 +775,7 @@ end_with_restore_list:
       goto error;
 
     assert(first_table == all_tables && first_table != 0);
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
       goto error;
 
     memset(&create_info, 0, sizeof(create_info));
@@ -1097,7 +824,7 @@ end_with_restore_list:
                      "INDEX DIRECTORY option ignored");
       create_info.data_file_name= create_info.index_file_name= NULL;
       /* ALTER TABLE ends previous transaction */
-      if (end_active_trans(session))
+      if (! session->endActiveTransaction())
 	goto error;
 
       if (!session->locked_tables &&
@@ -1131,10 +858,10 @@ end_with_restore_list:
       new_list= table->next_local[0];
     }
 
-    if (end_active_trans(session) || drizzle_rename_tables(session, first_table, 0))
-      {
-        goto error;
-      }
+    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table, 0))
+    {
+      goto error;
+    }
     break;
   }
   case SQLCOM_SHOW_CREATE:
@@ -1307,7 +1034,7 @@ end_with_restore_list:
     break;
   }
   case SQLCOM_TRUNCATE:
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
     {
       res= -1;
       break;
@@ -1401,7 +1128,7 @@ end_with_restore_list:
     assert(first_table == all_tables && first_table != 0);
     if (!lex->drop_temporary)
     {
-      if (end_active_trans(session))
+      if (! session->endActiveTransaction())
         goto error;
     }
     else
@@ -1443,7 +1170,7 @@ end_with_restore_list:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (lex->autocommit && end_active_trans(session))
+    if (lex->autocommit && ! session->endActiveTransaction())
       goto error;
 
     if (open_and_lock_tables(session, all_tables))
@@ -1477,7 +1204,7 @@ end_with_restore_list:
     unlock_locked_tables(session);
     if (session->options & OPTION_TABLE_LOCK)
     {
-      end_active_trans(session);
+      (void) session->endActiveTransaction();
       session->options&= ~(OPTION_TABLE_LOCK);
     }
     if (session->global_read_lock)
@@ -1522,7 +1249,7 @@ end_with_restore_list:
       goto error;
     unlock_locked_tables(session);
     /* we must end the trasaction first, regardless of anything */
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
       goto error;
     session->in_lock_tables=1;
     session->options|= OPTION_TABLE_LOCK;
@@ -1542,7 +1269,7 @@ end_with_restore_list:
         that it can't lock a table in its list
       */
       ha_autocommit_or_rollback(session, 1);
-      end_active_trans(session);
+      (void) session->endActiveTransaction();
       session->options&= ~(OPTION_TABLE_LOCK);
     }
     session->in_lock_tables=0;
@@ -1555,7 +1282,7 @@ end_with_restore_list:
       prepared statement- safe.
     */
     HA_CREATE_INFO create_info(lex->create_info);
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
     {
       res= -1;
       break;
@@ -1573,7 +1300,7 @@ end_with_restore_list:
   }
   case SQLCOM_DROP_DB:
   {
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
     {
       res= -1;
       break;
@@ -1666,19 +1393,17 @@ end_with_restore_list:
     /*
       Breakpoints for backup testing.
     */
-    if (begin_trans(session))
+    if (! session->startTransaction())
       goto error;
     session->my_ok();
     break;
   case SQLCOM_COMMIT:
-    if (end_trans(session, lex->tx_release ? COMMIT_RELEASE :
-                              lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
+    if (! session->endTransaction(lex->tx_release ? COMMIT_RELEASE : lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
       goto error;
     session->my_ok();
     break;
   case SQLCOM_ROLLBACK:
-    if (end_trans(session, lex->tx_release ? ROLLBACK_RELEASE :
-                              lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
+    if (! session->endTransaction(lex->tx_release ? ROLLBACK_RELEASE : lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
       goto error;
     session->my_ok();
     break;
@@ -1733,7 +1458,7 @@ end_with_restore_list:
     break;
   }
   case SQLCOM_SAVEPOINT:
-    if (!(session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) || !opt_using_transactions)
+    if (!(session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
       session->my_ok();
     else
     {
@@ -2101,7 +1826,6 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
     session->set_proc_info("freeing items");
     session->end_statement();
     session->cleanup_after_query();
-    assert(session->change_list.is_empty());
   }
 
   return;
@@ -2911,7 +2635,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
   Session *tmp;
   uint32_t error=ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-  I_List_iterator<Session> it(threads);
+  I_List_iterator<Session> it(session_list);
   while ((tmp=it++))
   {
     if (tmp->thread_id == id)

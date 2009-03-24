@@ -185,7 +185,7 @@ static uint32_t opt_max_input_line, opt_drizzle_port= 0;
 static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
 static uint32_t my_end_arg;
 static char * opt_drizzle_unix_port= NULL;
-static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_INTERACTIVE;
+static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *current_host, *current_db, *current_user= NULL,
   *opt_password= NULL, *delimiter_str= NULL, *current_prompt= NULL;
 static char *histfile;

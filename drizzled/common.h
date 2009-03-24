@@ -217,10 +217,8 @@ enum enum_server_command
 #define CLIENT_ODBC		64	/* Odbc client */
 #define CLIENT_IGNORE_SPACE	256	/* Ignore spaces before '(' */
 #define UNUSED_CLIENT_PROTOCOL_41	512	/* New 4.1 protocol */
-#define CLIENT_INTERACTIVE	1024	/* This is an interactive client */
 #define CLIENT_SSL              2048	/* Switch to SSL after handshake */
 #define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
-#define CLIENT_TRANSACTIONS	8192	/* Client knows about transactions */
 #define CLIENT_RESERVED         16384   /* Old flag for 4.1 protocol  */
 #define CLIENT_SECURE_CONNECTION 32768  /* New 4.1 authentication */
 #define CLIENT_MULTI_STATEMENTS (1UL << 16) /* Enable/disable multi-stmt support */
@@ -238,10 +236,8 @@ enum enum_server_command
                            CLIENT_COMPRESS | \
                            CLIENT_ODBC | \
                            CLIENT_IGNORE_SPACE | \
-                           CLIENT_INTERACTIVE | \
                            CLIENT_SSL | \
                            CLIENT_IGNORE_SIGPIPE | \
-                           CLIENT_TRANSACTIONS | \
                            CLIENT_RESERVED | \
                            CLIENT_SECURE_CONNECTION | \
                            CLIENT_MULTI_STATEMENTS | \
@@ -296,7 +292,7 @@ enum enum_server_command
 #define MAX_INT_WIDTH           10      /* Max width for a LONG w.o. sign */
 #define MAX_BIGINT_WIDTH        20      /* Max width for a LONGLONG */
 #define MAX_CHAR_WIDTH		255	/* Max length for a CHAR colum */
-#define MAX_BLOB_WIDTH		16777216	/* Default width for blob */
+#define MAX_BLOB_WIDTH		(uint32_t)16777216	/* Default width for blob */
 
 #define DRIZZLE_PROTOCOL_NO_MORE_DATA 0xFE
 

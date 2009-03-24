@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_QCACHE_H
 #define DRIZZLED_QCACHE_H
 
-#include <drizzled/plugin_qcache.h>
+#include <drizzled/plugin/qcache.h>
 
 int qcache_initializer (st_plugin_int *plugin);
 int qcache_finalizer (st_plugin_int *plugin);

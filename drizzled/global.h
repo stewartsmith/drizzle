@@ -93,7 +93,8 @@ time_t timegm (struct tm *__tm);
 #  error SHARED_PTR_NAMESPACE not defined, configure error!
 # endif
 # if defined(SHARED_PTR_NAMESPACE)
-using SHARED_PTR_NAMESPACE::shared_ptr;
+//We aren't using this yet - don't actually put in code yet.
+//using SHARED_PTR_NAMESPACE::shared_ptr;
 # endif
 #endif /* defined(SHARED_PTR_NAMESPACE) */
 
@@ -134,9 +135,39 @@ using SHARED_PTR_NAMESPACE::shared_ptr;
 extern char _dig_vec_upper[];
 extern char _dig_vec_lower[];
 
-#define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
+#ifdef __cplusplus
+template <class T> void set_if_bigger(T &a, const T &b)
+{
+  if (a < b)
+    a=b;
+}
 
+template <class T> void set_if_smaller(T &a, const T &b)
+{
+  if (a > b)
+    a=b;
+}
+#else
+#ifdef __GNUC__
+#define set_if_bigger(a,b) do {                 \
+  const typeof(a) _a = (a);                     \
+  const typeof(b) _b = (b);                     \
+  (void) (&_a == &_b);                          \
+  if ((a) < (b)) (a)=(b);                       \
+  } while(0)
+#define set_if_smaller(a,b) do {                \
+  const typeof(a) _a = (a);                     \
+  const typeof(b) _b = (b);                     \
+  (void) (&_a == &_b);                          \
+  if ((a) > (b)) (a)=(b);                       \
+  } while(0)
+
+#else
+#define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
 #define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
+#endif
+#endif
+
 #define array_elements(A) ((size_t) (sizeof(A)/sizeof(A[0])))
 
 /* Some types that is different between systems */

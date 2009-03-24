@@ -210,8 +210,8 @@ int fill_plugins(Session *session, TableList *tables, COND *)
 {
   Table *table= tables->table;
 
-  if (plugin_foreach_with_mask(session, show_plugins, DRIZZLE_ANY_PLUGIN,
-                               ~PLUGIN_IS_FREED, table))
+  if (plugin_foreach(session, show_plugins, DRIZZLE_ANY_PLUGIN,
+                     table, ~PLUGIN_IS_FREED))
     return(1);
 
   return(0);
@@ -1021,26 +1021,24 @@ public:
 template class I_List<thread_info>;
 #endif
 
-void mysqld_list_processes(Session *session,const char *user, bool verbose)
+void mysqld_list_processes(Session *session,const char *user, bool)
 {
   Item *field;
   List<Item> field_list;
   I_List<thread_info> thread_infos;
-  ulong max_query_length= (verbose ? session->variables.max_allowed_packet :
-			   PROCESS_LIST_WIDTH);
   Protocol *protocol= session->protocol;
 
   field_list.push_back(new Item_int("Id", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_empty_string("User",16));
   field_list.push_back(new Item_empty_string("Host",LIST_PROCESS_HOST_LEN));
   field_list.push_back(field=new Item_empty_string("db",NAME_CHAR_LEN));
-  field->maybe_null=1;
+  field->maybe_null= true;
   field_list.push_back(new Item_empty_string("Command",16));
   field_list.push_back(new Item_return_int("Time",7, DRIZZLE_TYPE_LONG));
   field_list.push_back(field=new Item_empty_string("State",30));
-  field->maybe_null=1;
-  field_list.push_back(field=new Item_empty_string("Info",max_query_length));
-  field->maybe_null=1;
+  field->maybe_null= true;
+  field_list.push_back(field=new Item_empty_string("Info", PROCESS_LIST_WIDTH));
+  field->maybe_null= true;
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return;
@@ -1048,7 +1046,7 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   if (!session->killed)
   {
-    I_List_iterator<Session> it(threads);
+    I_List_iterator<Session> it(session_list);
     Session *tmp;
     while ((tmp=it++))
     {
@@ -1085,13 +1083,12 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
         session_info->query=0;
         if (tmp->query)
         {
-	  /*
+          /*
             query_length is always set to 0 when we set query = NULL; see
 	          the comment in session.h why this prevents crashes in possible
             races with query_length
           */
-          uint32_t length= cmin((uint32_t)max_query_length, tmp->query_length);
-          session_info->query=(char*) session->strmake(tmp->query,length);
+          session_info->query=(char*) session->strdup(tmp->process_list_info);
         }
         thread_infos.append(session_info);
       }
@@ -1141,7 +1138,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
 
   if (!session->killed)
   {
-    I_List_iterator<Session> it(threads);
+    I_List_iterator<Session> it(session_list);
     Session* tmp;
 
     while ((tmp= it++))
@@ -1471,7 +1468,6 @@ static bool show_status_array(Session *session, const char *wild,
           value= ((char *) status_var + (ulong) value);
           /* fall through */
         case SHOW_LONG:
-        case SHOW_LONG_NOFLUSH: // the difference lies in refresh_status()
           end= int10_to_str(*(long*) value, buff, 10);
           break;
         case SHOW_LONGLONG_STATUS:
@@ -1500,6 +1496,7 @@ static bool show_status_array(Session *session, const char *wild,
           end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
           break;
         case SHOW_INT:
+        case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
           end= int10_to_str((long) *(uint32_t*) value, buff, 10);
           break;
         case SHOW_HAVE:
@@ -1564,7 +1561,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
   /* Ensure that thread id not killed during loop */
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<Session> it(threads);
+  I_List_iterator<Session> it(session_list);
   Session *tmp;
 
   /* Get global values as base */

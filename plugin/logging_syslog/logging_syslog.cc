@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin_logging.h>
+#include <drizzled/plugin/logging_handler.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
@@ -62,90 +62,95 @@ static uint64_t get_microtime()
 #endif
 }
 
-bool logging_syslog_func_post (Session *session)
+class Logging_syslog: public Logging_handler
 {
-  assert(session != NULL);
 
-  // return if not enabled or query was too fast or resultset was too small
-  if (sysvar_logging_syslog_enable == false)
-    return false;
-  if (session->sent_row_count < sysvar_logging_syslog_threshold_big_resultset)
-    return false;
-  if (session->examined_row_count < sysvar_logging_syslog_threshold_big_examined)
-    return false;
-
-  /* TODO, looks like connect_utime isnt being set in the session
-     object.  We could store the time this plugin was loaded, but that
-     would just be a dumb workaround. */
-  /* TODO, the session object should have a "utime command completed"
-     inside itself, so be more accurate, and so this doesnt have to
-     keep calling current_utime, which can be slow */
-
-  uint64_t t_mark= get_microtime();
-
-  if ((t_mark - session->start_utime) < sysvar_logging_syslog_threshold_slow)
-    return false;
-
-  /* to avoid trying to printf %s something that is potentially NULL */
-
-  const char *dbs= (session->db) ? session->db : "";
-  int dbl= 0;
-  if (dbs)
-    dbl= session->db_length;
-
-  const char *qys= (session->query) ? session->query : "";
-  int qyl= 0;
-  if (qys)
-    qyl= session->query_length;
+  virtual bool post (Session *session)
+  {
+    assert(session != NULL);
   
-  syslog(syslog_priority,
-         "thread_id=%ld query_id=%ld"
-         " db=\"%.*s\""
-         " query=\"%.*s\""
-         " command=\"%.*s\""
-         " t_connect=%lld t_start=%lld t_lock=%lld"
-         " rows_sent=%ld rows_examined=%ld\n",
-         (unsigned long) session->thread_id,
-         (unsigned long) session->query_id,
-         dbl, dbs,
-         qyl, qys,
-         (int) command_name[session->command].length,
-         command_name[session->command].str,
-         (unsigned long long) (t_mark - session->connect_utime),
-         (unsigned long long) (t_mark - session->start_utime),
-         (unsigned long long) (t_mark - session->utime_after_lock),
-         (unsigned long) session->sent_row_count,
-         (unsigned long) session->examined_row_count);
-
+    // return if not enabled or query was too fast or resultset was too small
+    if (sysvar_logging_syslog_enable == false)
+      return false;
+    if (session->sent_row_count < sysvar_logging_syslog_threshold_big_resultset)
+      return false;
+    if (session->examined_row_count < sysvar_logging_syslog_threshold_big_examined)
+      return false;
+  
+    /* TODO, looks like connect_utime isnt being set in the session
+       object.  We could store the time this plugin was loaded, but that
+       would just be a dumb workaround. */
+    /* TODO, the session object should have a "utime command completed"
+       inside itself, so be more accurate, and so this doesnt have to
+       keep calling current_utime, which can be slow */
+  
+    uint64_t t_mark= get_microtime();
+  
+    if ((t_mark - session->start_utime) < sysvar_logging_syslog_threshold_slow)
+      return false;
+  
+    /* to avoid trying to printf %s something that is potentially NULL */
+  
+    const char *dbs= (session->db) ? session->db : "";
+    int dbl= 0;
+    if (dbs)
+      dbl= session->db_length;
+  
+    const char *qys= (session->query) ? session->query : "";
+    int qyl= 0;
+    if (qys)
+      qyl= session->query_length;
+    
+    syslog(syslog_priority,
+           "thread_id=%ld query_id=%ld"
+           " db=\"%.*s\""
+           " query=\"%.*s\""
+           " command=\"%.*s\""
+           " t_connect=%lld t_start=%lld t_lock=%lld"
+           " rows_sent=%ld rows_examined=%ld\n",
+           (unsigned long) session->thread_id,
+           (unsigned long) session->query_id,
+           dbl, dbs,
+           qyl, qys,
+           (int) command_name[session->command].length,
+           command_name[session->command].str,
+           (unsigned long long) (t_mark - session->connect_utime),
+           (unsigned long long) (t_mark - session->start_utime),
+           (unsigned long long) (t_mark - session->utime_after_lock),
+           (unsigned long) session->sent_row_count,
+           (unsigned long) session->examined_row_count);
+  
 #if 0
-  syslog(syslog_priority,
-         "thread_id=%ld query_id=%ld"
-         " db=\"%.*s\""
-         " query=\".*%s\""
-         " command=%.*s"
-         " t_connect=%lld t_start=%lld t_lock=%lld"
-         " rows_sent=%ld rows_examined=%ld\n",
-         (unsigned long) session->thread_id,
-         (unsigned long) session->query_id,
-         session->db_length, session->db,
-         // dont need to quote the query, because syslog does it itself
-         session->query_length, session->query,
-         (int) command_name[session->command].length,
-         command_name[session->command].str,
-         (unsigned long long) (t_mark - session->connect_utime),
-         (unsigned long long) (t_mark - session->start_utime),
-         (unsigned long long) (t_mark - session->utime_after_lock),
-         (unsigned long) session->sent_row_count,
-         (unsigned long) session->examined_row_count);
-
+    syslog(syslog_priority,
+           "thread_id=%ld query_id=%ld"
+           " db=\"%.*s\""
+           " query=\".*%s\""
+           " command=%.*s"
+           " t_connect=%lld t_start=%lld t_lock=%lld"
+           " rows_sent=%ld rows_examined=%ld\n",
+           (unsigned long) session->thread_id,
+           (unsigned long) session->query_id,
+           session->db_length, session->db,
+           // dont need to quote the query, because syslog does it itself
+           session->query_length, session->query,
+           (int) command_name[session->command].length,
+           command_name[session->command].str,
+           (unsigned long long) (t_mark - session->connect_utime),
+           (unsigned long long) (t_mark - session->start_utime),
+           (unsigned long long) (t_mark - session->utime_after_lock),
+           (unsigned long) session->sent_row_count,
+           (unsigned long) session->examined_row_count);
+  
 #endif
-
-  return false;
-}
+  
+    return false;
+  }
+};
 
 static int logging_syslog_plugin_init(void *p)
 {
-  logging_t *l= (logging_t *) p;
+  Logging_syslog **handler= static_cast<Logging_syslog **>(p);
+  *handler= NULL;
 
   syslog_facility= -1;
   for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
@@ -184,18 +189,16 @@ static int logging_syslog_plugin_init(void *p)
   openlog(sysvar_logging_syslog_ident,
           LOG_PID, syslog_facility);
 
-  l->logging_pre= NULL;
-  l->logging_post= logging_syslog_func_post;
+  *handler= new Logging_syslog();
 
   return 0;
 }
 
 static int logging_syslog_plugin_deinit(void *p)
 {
-  logging_st *l= (logging_st *) p;
+  Logging_syslog *handler= static_cast<Logging_syslog *>(p);
 
-  l->logging_pre= NULL;
-  l->logging_post= NULL;
+  delete handler;
 
   return 0;
 }

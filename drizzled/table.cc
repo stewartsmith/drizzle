@@ -4239,7 +4239,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                                      session->variables.max_heap_table_size) :
                                  session->variables.tmp_table_size) /
 			         share->reclength);
-  set_if_bigger(share->max_rows,1);		// For dummy start options
+  set_if_bigger(share->max_rows,(ha_rows)1);	// For dummy start options
   /*
     Push the LIMIT clause to the temporary table creation, so that we
     materialize only up to 'rows_limit' records instead of all result records.
@@ -5004,24 +5004,24 @@ int update_virtual_fields_marked_for_write(Table *table,
 }
 
 
-void setup_table_map(Table *table, TableList *table_list, uint32_t tablenr)
+void Table::setup_table_map(TableList *table_list, uint32_t table_number)
 {
-  table->used_fields= 0;
-  table->const_table= 0;
-  table->null_row= 0;
-  table->status= STATUS_NO_RECORD;
-  table->maybe_null= table_list->outer_join;
+  used_fields= 0;
+  const_table= 0;
+  null_row= 0;
+  status= STATUS_NO_RECORD;
+  maybe_null= table_list->outer_join;
   TableList *embedding= table_list->embedding;
-  while (!table->maybe_null && embedding)
+  while (!maybe_null && embedding)
   {
-    table->maybe_null= embedding->outer_join;
+    maybe_null= embedding->outer_join;
     embedding= embedding->embedding;
   }
-  table->tablenr= tablenr;
-  table->map= (table_map) 1 << tablenr;
-  table->force_index= table_list->force_index;
-  table->covering_keys= table->s->keys_for_keyread;
-  table->merge_keys.clear_all();
+  tablenr= table_number;
+  map= (table_map) 1 << table_number;
+  force_index= table_list->force_index;
+  covering_keys= s->keys_for_keyread;
+  merge_keys.clear_all();
 }
 
 

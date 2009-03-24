@@ -1,7 +1,23 @@
+/*****************************************************************************
+
+Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place, Suite 330, Boston, MA 02111-1307 USA
+
+*****************************************************************************/
+
 /******************************************************
 The database buffer replacement algorithm
-
-(c) 1995 Innobase Oy
 
 Created 11/5/1995 Heikki Tuuri
 *******************************************************/
@@ -26,6 +42,7 @@ Created 11/5/1995 Heikki Tuuri
 #include "buf0flu.h"
 #include "buf0rea.h"
 #include "btr0sea.h"
+#include "ibuf0ibuf.h"
 #include "os0file.h"
 #include "page0zip.h"
 #include "log0recv.h"
@@ -250,7 +267,7 @@ scan_again:
 			if (num_entries < BUF_LRU_DROP_SEARCH_HASH_SIZE) {
 				goto next_page;
 			}
-			/* Array full. We release the buf_pool->mutex to
+			/* Array full. We release the buf_pool_mutex to
 			obey the latching order. */
 			buf_pool_mutex_exit();
 
@@ -299,7 +316,6 @@ buf_LRU_invalidate_tablespace(
 	ulint	id)	/* in: space id */
 {
 	buf_page_t*	bpage;
-	ulint		page_no;
 	ibool		all_freed;
 
 	/* Before we attempt to drop pages one by one we first
@@ -350,18 +366,21 @@ scan_again:
 #endif
 			if (buf_page_get_state(bpage) == BUF_BLOCK_FILE_PAGE
 			    && ((buf_block_t*) bpage)->is_hashed) {
-				page_no = buf_page_get_page_no(bpage);
+				ulint	page_no;
+				ulint	zip_size;
 
 				buf_pool_mutex_exit();
+
+				zip_size = buf_page_get_zip_size(bpage);
+				page_no = buf_page_get_page_no(bpage);
+
 				mutex_exit(block_mutex);
 
 				/* Note that the following call will acquire
 				an S-latch on the page */
 
 				btr_search_drop_page_hash_when_freed(
-					id,
-					buf_page_get_zip_size(bpage),
-					page_no);
+					id, zip_size, page_no);
 				goto scan_again;
 			}
 
@@ -376,6 +395,12 @@ scan_again:
 				buf_LRU_block_free_hashed_page((buf_block_t*)
 							       bpage);
 			} else {
+				/* The block_mutex should have been
+				released by buf_LRU_block_remove_hashed_page()
+				when it returns BUF_BLOCK_ZIP_FREE. */
+				ut_ad(block_mutex == &buf_pool_zip_mutex);
+				ut_ad(!mutex_own(block_mutex));
+
 				/* The compressed block descriptor
 				(bpage) has been deallocated and
 				block_mutex released.  Also,
@@ -1287,9 +1312,15 @@ buf_LRU_make_block_old(
 
 /**********************************************************************
 Try to free a block.  If bpage is a descriptor of a compressed-only
-page, the descriptor object will be freed as well.  If this function
-returns BUF_LRU_FREED, it will not temporarily release
-buf_pool_mutex. */
+page, the descriptor object will be freed as well.
+
+NOTE: If this function returns BUF_LRU_FREED, it will not temporarily
+release buf_pool_mutex.  Furthermore, the page frame will no longer be
+accessible via bpage.
+
+The caller must hold buf_pool_mutex and buf_page_get_mutex(bpage) and
+release these two mutexes after the call.  No other
+buf_page_get_mutex() may be held when calling this function. */
 UNIV_INTERN
 enum buf_lru_free_block_status
 buf_LRU_free_block(
@@ -1320,6 +1351,10 @@ buf_LRU_free_block(
 		/* Do not free buffer-fixed or I/O-fixed blocks. */
 		return(BUF_LRU_NOT_FREED);
 	}
+
+#ifdef UNIV_IBUF_COUNT_DEBUG
+	ut_a(ibuf_count_get(bpage->space, bpage->offset) == 0);
+#endif /* UNIV_IBUF_COUNT_DEBUG */
 
 	if (zip || !bpage->zip.data) {
 		/* This would completely free the block. */
@@ -1530,6 +1565,10 @@ alloc:
 
 		buf_LRU_block_free_hashed_page((buf_block_t*) bpage);
 	} else {
+		/* The block_mutex should have been released by
+		buf_LRU_block_remove_hashed_page() when it returns
+		BUF_BLOCK_ZIP_FREE. */
+		ut_ad(block_mutex == &buf_pool_zip_mutex);
 		mutex_enter(block_mutex);
 	}
 
@@ -1546,9 +1585,9 @@ buf_LRU_block_free_non_file_page(
 {
 	void*	data;
 
+	ut_ad(block);
 	ut_ad(buf_pool_mutex_own());
 	ut_ad(mutex_own(&block->mutex));
-	ut_ad(block);
 
 	switch (buf_block_get_state(block)) {
 	case BUF_BLOCK_MEMORY:
@@ -1558,7 +1597,9 @@ buf_LRU_block_free_non_file_page(
 		ut_error;
 	}
 
-	ut_ad(block->n_pointers == 0);
+#if defined UNIV_AHI_DEBUG || defined UNIV_DEBUG
+	ut_a(block->n_pointers == 0);
+#endif /* UNIV_AHI_DEBUG || UNIV_DEBUG */
 	ut_ad(!block->page.in_free_list);
 	ut_ad(!block->page.in_flush_list);
 	ut_ad(!block->page.in_LRU_list);
@@ -1766,7 +1807,9 @@ buf_LRU_block_remove_hashed_page(
 			bpage->zip.data = NULL;
 
 			mutex_exit(&((buf_block_t*) bpage)->mutex);
+			buf_pool_mutex_exit_forbid();
 			buf_buddy_free(data, page_zip_get_size(&bpage->zip));
+			buf_pool_mutex_exit_allow();
 			mutex_enter(&((buf_block_t*) bpage)->mutex);
 			page_zip_set_size(&bpage->zip, 0);
 		}

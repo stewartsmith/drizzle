@@ -165,7 +165,6 @@ int ha_init()
     binary log (which is considered a transaction-capable storage engine in
     counting total_ha)
   */
-  opt_using_transactions= total_ha>(uint32_t)opt_bin_log;
   savepoint_alloc_size+= sizeof(SAVEPOINT);
   return(error);
 }
@@ -488,7 +487,7 @@ void ha_close_connection(Session* session)
   do not "register" in session->transaction lists, and thus do not
   modify the transaction state. Besides, each DDL in
   MySQL is prefixed with an implicit normal transaction commit
-  (a call to end_active_trans()), and thus leaves nothing
+  (a call to Session::endActiveTransaction()), and thus leaves nothing
   to modify.
   However, as it has been pointed out with CREATE TABLE .. SELECT,
   some DDL statements can start a *new* transaction.
@@ -995,10 +994,10 @@ int ha_recover(HASH *commit_list)
   /* commit_list and tc_heuristic_recover cannot be set both */
   assert(info.commit_list==0 || tc_heuristic_recover==0);
   /* if either is set, total_ha_2pc must be set too */
-  assert(info.dry_run || total_ha_2pc>(uint32_t)opt_bin_log);
+  assert(info.dry_run);
 
-  if (total_ha_2pc <= (uint32_t)opt_bin_log)
-    return(0);
+  if (total_ha_2pc <= 1)
+    return 0;
 
   if (info.commit_list)
     errmsg_printf(ERRMSG_LVL_INFO, _("Starting crash recovery..."));
@@ -1011,7 +1010,7 @@ int ha_recover(HASH *commit_list)
     rollback all pending transactions, without risking inconsistent data
   */
 
-  assert(total_ha_2pc == (uint32_t) opt_bin_log+1); // only InnoDB and binlog
+  assert(total_ha_2pc == 2); // only InnoDB and binlog
   tc_heuristic_recover= TC_HEURISTIC_RECOVER_ROLLBACK; // forcing ROLLBACK
   info.dry_run=false;
 #endif
@@ -1913,7 +1912,7 @@ int handler::update_auto_increment()
         {
           nb_desired_values= AUTO_INC_DEFAULT_NB_ROWS *
             (1 << nb_already_reserved_intervals);
-          set_if_smaller(nb_desired_values, AUTO_INC_DEFAULT_NB_MAX);
+          set_if_smaller(nb_desired_values, (uint64_t)AUTO_INC_DEFAULT_NB_MAX);
         }
         else
           nb_desired_values= AUTO_INC_DEFAULT_NB_MAX;
@@ -2768,7 +2767,9 @@ int ha_enable_transaction(Session *session, bool on)
       So, let's commit an open transaction (if any) now.
     */
     if (!(error= ha_commit_trans(session, 0)))
-      error= end_trans(session, COMMIT);
+      if (! session->endTransaction(COMMIT))
+        error= 1;
+
   }
   return(error);
 }

@@ -15,16 +15,7 @@
 
 
 AM_CPPFLAGS+=		-I$(top_srcdir)/storage/innobase/include
-
-if BUILD_DRIZZLE
-EXTRA_DEFS="-DBUILD_DRIZZLE"
-DYNAMIC_PLUGIN="-DDRIZZLE_DYNAMIC_PLUGIN"
-else
-DYNAMIC_PLUGIN="-DMYSQL_DYNAMIC_PLUGIN"
-endif
-
-
-DEFS=			@DEFS@ ${EXTRA_DEFS}
+DEFS+=			-DBUILD_DRIZZLE
 
 
 noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
@@ -128,10 +119,10 @@ noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
 			include/ut0vec.ic include/ut0list.h		\
 			include/ut0list.ic include/ut0wqueue.h		\
 			include/ha_prototypes.h				\
-			drizzle/ha_innodb.h				\
+			handler/ha_innodb.h				\
 			include/handler0alter.h				\
-			drizzle/handler0vars.h				\
-			drizzle/i_s.h
+			handler/handler0vars.h				\
+			handler/i_s.h
 
 noinst_LTLIBRARIES=	libinnobase.la libpars.la
 libinnobase_la_CFLAGS=	${AM_CFLAGS} ${NO_SHADOW}
@@ -171,10 +162,10 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			usr/usr0sess.c ut/ut0byte.c ut/ut0dbg.c		\
 			ut/ut0list.c ut/ut0mem.c ut/ut0rnd.c		\
 			ut/ut0ut.c ut/ut0vec.c ut/ut0wqueue.c		\
-			drizzle/ha_innodb.cc				\
-			drizzle/handler0alter.cc			\
-			drizzle/i_s.cc					\
-			drizzle/mysql_addons.cc
+			handler/ha_innodb.cc				\
+			handler/handler0alter.cc			\
+			handler/i_s.cc					\
+			handler/mysql_addons.cc
 
 # lexyy.c has lots of redundant decls, but it's generated anyway 
 libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_UNREACHED} \
@@ -189,10 +180,9 @@ pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
 
 ha_innodb_la_SOURCES=
 ha_innodb_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)
-ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${DYNAMIC_PLUGIN} ${NO_SHADOW}
-ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${DYNAMIC_PLUGIN} ${NO_SHADOW}
-ha_innodb_la_LIBADD=	@plugin_innobase_shared_target@ \
-			libinnobase.la
+ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${INNODB_DYNAMIC_CFLAGS} ${NO_SHADOW}
+ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${INNODB_DYNAMIC_CFLAGS} ${NO_SHADOW}
+ha_innodb_la_LIBADD=	libinnobase.la
 
 EXTRA_DIST=		CMakeLists.txt plug.in \
 			pars/make_bison.sh pars/make_flex.sh \

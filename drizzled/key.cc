@@ -16,9 +16,10 @@
 
 /* Functions to handle keys and fields in forms */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/table.h>
-#include <drizzled/field/blob.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/table.h"
+#include "drizzled/key.h"
+#include "drizzled/field/blob.h"
 
 #include <string>
 
@@ -573,4 +574,14 @@ next_loop:
     key_part++;
   } while (!result && ++i < key_parts);
   return(result);
+}
+
+Key::Key(const Key &rhs, MEM_ROOT *mem_root)
+  :type(rhs.type),
+  key_create_info(rhs.key_create_info),
+  columns(rhs.columns, mem_root),
+  name(rhs.name),
+  generated(rhs.generated)
+{
+  list_copy_and_replace_each_value(columns, mem_root);
 }

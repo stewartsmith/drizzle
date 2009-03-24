@@ -17,13 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-/*****************************************************************************
-**
-** This file implements classes defined in session.h
-** Especially the classes to handle a result from a select
-**
-*****************************************************************************/
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <sys/stat.h>
@@ -38,9 +31,9 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
-#include <drizzled/plugin_scheduling.h>
+#include <drizzled/scheduling.h>
+#include <libdrizzleclient/errmsg.h>
 
-extern scheduling_st thread_scheduler;
 /*
   The following is used to initialise Table_ident with a internal
   table name
@@ -51,7 +44,6 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
-
 
 /*****************************************************************************
 ** Instansiate templates
@@ -69,11 +61,9 @@ template class List<Alter_column>;
 template class List_iterator<Alter_column>;
 #endif
 
-
 /****************************************************************************
 ** User variables
 ****************************************************************************/
-
 extern "C" unsigned char *get_var_key(user_var_entry *entry, size_t *length,
                               bool )
 {
@@ -95,160 +85,6 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
          field_name.length == other.field_name.length &&
          !strcmp(field_name.str, other.field_name.str);
 }
-
-/**
-  Construct an (almost) deep copy of this key. Only those
-  elements that are known to never change are not copied.
-  If out of memory, a partial copy is returned and an error is set
-  in Session.
-*/
-
-Key::Key(const Key &rhs, MEM_ROOT *mem_root)
-  :type(rhs.type),
-  key_create_info(rhs.key_create_info),
-  columns(rhs.columns, mem_root),
-  name(rhs.name),
-  generated(rhs.generated)
-{
-  list_copy_and_replace_each_value(columns, mem_root);
-}
-
-/**
-  Construct an (almost) deep copy of this foreign key. Only those
-  elements that are known to never change are not copied.
-  If out of memory, a partial copy is returned and an error is set
-  in Session.
-*/
-
-Foreign_key::Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root)
-  :Key(rhs),
-  ref_table(rhs.ref_table),
-  ref_columns(rhs.ref_columns),
-  delete_opt(rhs.delete_opt),
-  update_opt(rhs.update_opt),
-  match_opt(rhs.match_opt)
-{
-  list_copy_and_replace_each_value(ref_columns, mem_root);
-}
-
-/*
-  Test if a foreign key (= generated key) is a prefix of the given key
-  (ignoring key name, key type and order of columns)
-
-  NOTES:
-    This is only used to test if an index for a FOREIGN KEY exists
-
-  IMPLEMENTATION
-    We only compare field names
-
-  RETURN
-    0	Generated key is a prefix of other key
-    1	Not equal
-*/
-
-bool foreign_key_prefix(Key *a, Key *b)
-{
-  /* Ensure that 'a' is the generated key */
-  if (a->generated)
-  {
-    if (b->generated && a->columns.elements > b->columns.elements)
-      std::swap(a, b);                       // Put shorter key in 'a'
-  }
-  else
-  {
-    if (!b->generated)
-      return true;                              // No foreign key
-    std::swap(a, b);                       // Put generated key in 'a'
-  }
-
-  /* Test if 'a' is a prefix of 'b' */
-  if (a->columns.elements > b->columns.elements)
-    return true;                                // Can't be prefix
-
-  List_iterator<Key_part_spec> col_it1(a->columns);
-  List_iterator<Key_part_spec> col_it2(b->columns);
-  const Key_part_spec *col1, *col2;
-
-#ifdef ENABLE_WHEN_INNODB_CAN_HANDLE_SWAPED_FOREIGN_KEY_COLUMNS
-  while ((col1= col_it1++))
-  {
-    bool found= 0;
-    col_it2.rewind();
-    while ((col2= col_it2++))
-    {
-      if (*col1 == *col2)
-      {
-        found= true;
-	break;
-      }
-    }
-    if (!found)
-      return true;                              // Error
-  }
-  return false;                                 // Is prefix
-#else
-  while ((col1= col_it1++))
-  {
-    col2= col_it2++;
-    if (!(*col1 == *col2))
-      return true;
-  }
-  return false;                                 // Is prefix
-#endif
-}
-
-
-/*
-  Check if the foreign key options are compatible with columns
-  on which the FK is created.
-
-  RETURN
-    0   Key valid
-    1   Key invalid
-*/
-bool Foreign_key::validate(List<Create_field> &table_fields)
-{
-  Create_field  *sql_field;
-  Key_part_spec *column;
-  List_iterator<Key_part_spec> cols(columns);
-  List_iterator<Create_field> it(table_fields);
-  while ((column= cols++))
-  {
-    it.rewind();
-    while ((sql_field= it++) &&
-           my_strcasecmp(system_charset_info,
-                         column->field_name.str,
-                         sql_field->field_name)) {}
-    if (!sql_field)
-    {
-      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
-      return true;
-    }
-    if (type == Key::FOREIGN_KEY && sql_field->vcol_info)
-    {
-      if (delete_opt == FK_OPTION_SET_NULL)
-      {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
-                 "ON DELETE SET NULL");
-        return true;
-      }
-      if (update_opt == FK_OPTION_SET_NULL)
-      {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
-                 "ON UPDATE SET NULL");
-        return true;
-      }
-      if (update_opt == FK_OPTION_CASCADE)
-      {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
-                 "ON UPDATE CASCADE");
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 
 /****************************************************************************
 ** Thread specific functions
@@ -342,133 +178,6 @@ void session_inc_row_count(Session *session)
   session->row_count++;
 }
 
-/**
-  Clear this diagnostics area.
-
-  Normally called at the end of a statement.
-*/
-
-void
-Diagnostics_area::reset_diagnostics_area()
-{
-  can_overwrite_status= false;
-  /** Don't take chances in production */
-  m_message[0]= '\0';
-  m_sql_errno= 0;
-  m_server_status= 0;
-  m_affected_rows= 0;
-  m_last_insert_id= 0;
-  m_total_warn_count= 0;
-  is_sent= false;
-  /** Tiny reset in debug mode to see garbage right away */
-  m_status= DA_EMPTY;
-}
-
-
-/**
-  Set OK status -- ends commands that do not return a
-  result set, e.g. INSERT/UPDATE/DELETE.
-*/
-
-void
-Diagnostics_area::set_ok_status(Session *session, ha_rows affected_rows_arg,
-                                uint64_t last_insert_id_arg,
-                                const char *message_arg)
-{
-  assert(! is_set());
-  /*
-    In production, refuse to overwrite an error or a custom response
-    with an OK packet.
-  */
-  if (is_error() || is_disabled())
-    return;
-  /** Only allowed to report success if has not yet reported an error */
-
-  m_server_status= session->server_status;
-  m_total_warn_count= session->total_warn_count;
-  m_affected_rows= affected_rows_arg;
-  m_last_insert_id= last_insert_id_arg;
-  if (message_arg)
-    strncpy(m_message, message_arg, sizeof(m_message) - 1);
-  else
-    m_message[0]= '\0';
-  m_status= DA_OK;
-}
-
-
-/**
-  Set EOF status.
-*/
-
-void
-Diagnostics_area::set_eof_status(Session *session)
-{
-  /** Only allowed to report eof if has not yet reported an error */
-
-  assert(! is_set());
-  /*
-    In production, refuse to overwrite an error or a custom response
-    with an EOF packet.
-  */
-  if (is_error() || is_disabled())
-    return;
-
-  m_server_status= session->server_status;
-  /*
-    If inside a stored procedure, do not return the total
-    number of warnings, since they are not available to the client
-    anyway.
-  */
-  m_total_warn_count= session->total_warn_count;
-
-  m_status= DA_EOF;
-}
-
-/**
-  Set ERROR status.
-*/
-
-void
-Diagnostics_area::set_error_status(Session *,
-                                   uint32_t sql_errno_arg,
-                                   const char *message_arg)
-{
-  /*
-    Only allowed to report error if has not yet reported a success
-    The only exception is when we flush the message to the client,
-    an error can happen during the flush.
-  */
-  assert(! is_set() || can_overwrite_status);
-  /*
-    In production, refuse to overwrite a custom response with an
-    ERROR packet.
-  */
-  if (is_disabled())
-    return;
-
-  m_sql_errno= sql_errno_arg;
-  strncpy(m_message, message_arg, sizeof(m_message) - 1);
-
-  m_status= DA_ERROR;
-}
-
-
-/**
-  Mark the diagnostics area as 'DISABLED'.
-
-  This is used in rare cases when the COM_ command at hand sends a response
-  in a custom format. One example is the query cache, another is
-  COM_STMT_PREPARE.
-*/
-
-void
-Diagnostics_area::disable_status()
-{
-  assert(! is_set());
-  m_status= DA_DISABLED;
-}
-
-
 Session::Session()
    :Statement(&main_lex, &main_mem_root,
               /* statement id */ 0),
@@ -488,6 +197,8 @@ Session::Session()
    scheduler(0)
 {
   uint64_t tmp;
+
+  memset(process_list_info, 0, PROCESS_LIST_WIDTH);
 
   /*
     Pass nominal parameters to init_alloc_root only to ensure that
@@ -526,7 +237,7 @@ Session::Session()
   net.vio= 0;
   client_capabilities= 0;                       // minimalistic client
   system_thread= NON_SYSTEM_THREAD;
-  cleanup_done= abort_on_warning= no_warnings_for_error= 0;
+  cleanup_done= abort_on_warning= no_warnings_for_error= false;
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
@@ -541,7 +252,6 @@ Session::Session()
   init();
   /* Initialize sub structures */
   init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
-  user_connect=(USER_CONN *)0;
   hash_init(&user_vars, system_charset_info, USER_VARS_HASH_SIZE, 0, 0,
 	    (hash_get_key) get_var_key,
 	    (hash_free_key) free_user_var, 0);
@@ -690,7 +400,7 @@ void Session::init_for_queries()
 
 void Session::cleanup(void)
 {
-  assert(cleanup_done == 0);
+  assert(cleanup_done == false);
 
   killed= KILL_CONNECTION;
 #ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
@@ -714,17 +424,24 @@ void Session::cleanup(void)
   if (global_read_lock)
     unlock_global_read_lock(this);
 
-  cleanup_done=1;
+  cleanup_done= true;
   return;
 }
 
 Session::~Session()
 {
   Session_CHECK_SENTRY(this);
-  /* Ensure that no one is using Session */
-  pthread_mutex_lock(&LOCK_delete);
-  pthread_mutex_unlock(&LOCK_delete);
   add_to_status(&global_status_var, &status_var);
+
+  if (drizzleclient_vio_ok())
+  {
+    if (global_system_variables.log_warnings)
+        errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
+                      thread_id,
+                      (security_ctx.user.c_str() ?
+                       security_ctx.user.c_str() : ""));
+    disconnect(0, false);
+  }
 
   /* Close connection */
   if (net.vio)
@@ -732,7 +449,7 @@ Session::~Session()
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
   }
-  if (!cleanup_done)
+  if (cleanup_done == false)
     cleanup();
 
   ha_close_connection(this);
@@ -746,12 +463,15 @@ Session::~Session()
   free_root(&warn_root,MYF(0));
   free_root(&transaction.mem_root,MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
-  pthread_mutex_destroy(&LOCK_delete);
   dbug_sentry= Session_SENTRY_GONE;
 
   free_root(&main_mem_root, MYF(0));
   pthread_setspecific(THR_Session,  0);
-  return;
+
+
+  /* Ensure that no one is using Session */
+  pthread_mutex_unlock(&LOCK_delete);
+  pthread_mutex_destroy(&LOCK_delete);
 }
 
 
@@ -810,6 +530,7 @@ void Session::awake(Session::killed_state state_to_set)
 {
   Session_CHECK_SENTRY(this);
   safe_mutex_assert_owner(&LOCK_delete);
+  Scheduler &thread_scheduler= get_thread_scheduler();
 
   killed= state_to_set;
   if (state_to_set != Session::KILL_QUERY)
@@ -855,7 +576,6 @@ void Session::awake(Session::killed_state state_to_set)
   Remember the location of thread info, the structure needed for
   sql_alloc() and the structure for the net buffer
 */
-
 bool Session::store_globals()
 {
   /*
@@ -868,6 +588,7 @@ bool Session::store_globals()
       pthread_setspecific(THR_Mem_root, &mem_root))
     return 1;
   mysys_var=my_thread_var;
+
   /*
     Let mysqld define the thread id (not mysys)
     This allows us to move Session to different threads if needed.
@@ -883,6 +604,515 @@ bool Session::store_globals()
   return 0;
 }
 
+void Session::prepareForQueries()
+{
+  if (variables.max_join_size == HA_POS_ERROR)
+    options |= OPTION_BIG_SELECTS;
+  if (client_capabilities & CLIENT_COMPRESS)
+    net.compress= true;
+
+  version= refresh_version;
+  set_proc_info(NULL);
+  command= COM_SLEEP;
+  set_time();
+  init_for_queries();
+
+  /* In the past this would only run of the user did not have SUPER_ACL */
+  if (sys_init_connect.value_length)
+  {
+    execute_init_command(this, &sys_init_connect, &LOCK_sys_init_connect);
+    if (is_error())
+    {
+      Security_context *sctx= &security_ctx;
+      killed= Session::KILL_CONNECTION;
+      errmsg_printf(ERRMSG_LVL_WARN
+                  , ER(ER_NEW_ABORTING_CONNECTION)
+                  , thread_id
+                  , (db ? db : "unconnected")
+                  , sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated"
+                  , sctx->ip.c_str(), "init_connect command failed");
+      errmsg_printf(ERRMSG_LVL_WARN, "%s", main_da.message());
+    }
+    set_proc_info(NULL);
+    set_time();
+    init_for_queries();
+  }
+}
+
+bool Session::initGlobals()
+{
+  if (store_globals())
+  {
+    disconnect(ER_OUT_OF_RESOURCES, true);
+    statistic_increment(aborted_connects, &LOCK_status);
+    Scheduler &thread_scheduler= get_thread_scheduler();
+    thread_scheduler.end_thread(this, 0);
+    return false;
+  }
+  return true;
+}
+
+bool Session::authenticate()
+{
+  /* Use "connect_timeout" value during connection phase */
+  drizzleclient_net_set_read_timeout(&net, connect_timeout);
+  drizzleclient_net_set_write_timeout(&net, connect_timeout);
+
+  lex_start(this);
+
+  bool connection_is_valid= check_connection();
+  drizzleclient_net_end_statement(this);
+
+  if (! connection_is_valid)
+  {	
+    /* We got wrong permissions from check_connection() */
+    statistic_increment(aborted_connects, &LOCK_status);
+    return false;
+  }
+
+  /* Connect completed, set read/write timeouts back to default */
+  drizzleclient_net_set_read_timeout(&net, variables.net_read_timeout);
+  drizzleclient_net_set_write_timeout(&net, variables.net_write_timeout);
+  return true;
+}
+
+bool Session::check_connection()
+{
+  uint32_t pkt_len= 0;
+  char *end;
+
+  // TCP/IP connection
+  {
+    char ip[NI_MAXHOST];
+
+    if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
+    {
+      my_error(ER_BAD_HOST_ERROR, MYF(0), security_ctx.ip.c_str());
+      return false;
+    }
+
+    security_ctx.ip.assign(ip);
+  }
+  drizzleclient_net_keepalive(&net, true);
+
+  uint32_t server_capabilites;
+  {
+    /* buff[] needs to big enough to hold the server_version variable */
+    char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
+
+    server_capabilites= CLIENT_BASIC_FLAGS;
+
+#ifdef HAVE_COMPRESS
+    server_capabilites|= CLIENT_COMPRESS;
+#endif /* HAVE_COMPRESS */
+
+    end= buff + strlen(server_version);
+    if ((end - buff) >= SERVER_VERSION_LENGTH)
+      end= buff + (SERVER_VERSION_LENGTH - 1);
+    memcpy(buff, server_version, end - buff);
+    *end= 0;
+    end++;
+
+    int4store((unsigned char*) end, thread_id);
+    end+= 4;
+    /*
+      So as check_connection is the only entry point to authorization
+      procedure, scramble is set here. This gives us new scramble for
+      each handshake.
+    */
+    drizzleclient_create_random_string(scramble, SCRAMBLE_LENGTH, &rand);
+    /*
+      Old clients does not understand long scrambles, but can ignore packet
+      tail: that's why first part of the scramble is placed here, and second
+      part at the end of packet.
+    */
+    end= strncpy(end, scramble, SCRAMBLE_LENGTH_323);
+    end+= SCRAMBLE_LENGTH_323;
+
+    *end++= 0; /* an empty byte for some reason */
+
+    int2store(end, server_capabilites);
+    /* write server characteristics: up to 16 bytes allowed */
+    end[2]=(char) default_charset_info->number;
+    int2store(end+3, server_status);
+    memset(end+5, 0, 13);
+    end+= 18;
+    /* write scramble tail */
+    size_t scramble_len= SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323;
+    end= strncpy(end, scramble + SCRAMBLE_LENGTH_323, scramble_len);
+    end+= scramble_len;
+
+    *end++= 0; /* an empty byte for some reason */
+
+    /* At this point we write connection message and read reply */
+    if (drizzleclient_net_write_command(&net
+          , (unsigned char) protocol_version
+          , (unsigned char*) ""
+          , 0
+          , (unsigned char*) buff
+          , (size_t) (end-buff)) 
+        ||	(pkt_len= drizzleclient_net_read(&net)) == packet_error 
+        || pkt_len < MIN_HANDSHAKE_SIZE)
+    {
+      my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
+      return false;
+    }
+  }
+  if (packet.alloc(variables.net_buffer_length))
+    return false; /* The error is set by alloc(). */
+
+  client_capabilities= uint2korr(net.read_pos);
+
+
+  client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
+  max_client_packet_length= uint4korr(net.read_pos + 4);
+  update_charset();
+  end= (char*) net.read_pos + 32;
+
+  /*
+    Disable those bits which are not supported by the server.
+    This is a precautionary measure, if the client lies. See Bug#27944.
+  */
+  client_capabilities&= server_capabilites;
+
+  if (end >= (char*) net.read_pos + pkt_len + 2)
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
+    return false;
+  }
+
+  net.return_status= &server_status;
+
+  char *user= end;
+  char *passwd= strchr(user, '\0')+1;
+  uint32_t user_len= passwd - user - 1;
+  char *l_db= passwd;
+  char db_buff[NAME_LEN + 1];           // buffer to store db in utf8
+  char user_buff[USERNAME_LENGTH + 1];	// buffer to store user in utf8
+  uint32_t dummy_errors;
+
+  /*
+    Old clients send null-terminated string as password; new clients send
+    the size (1 byte) + string (not null-terminated). Hence in case of empty
+    password both send '\0'.
+
+    This strlen() can't be easily deleted without changing protocol.
+
+    Cast *passwd to an unsigned char, so that it doesn't extend the sign for
+    *passwd > 127 and become 2**32-127+ after casting to uint.
+  */
+  uint32_t passwd_len= client_capabilities & CLIENT_SECURE_CONNECTION ?
+    (unsigned char)(*passwd++) : strlen(passwd);
+  l_db= client_capabilities & CLIENT_CONNECT_WITH_DB ? l_db + passwd_len + 1 : 0;
+
+  /* strlen() can't be easily deleted without changing protocol */
+  uint32_t db_len= l_db ? strlen(l_db) : 0;
+
+  if (passwd + passwd_len + db_len > (char *) net.read_pos + pkt_len)
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
+    return false;
+  }
+
+  /* Since 4.1 all database names are stored in utf8 */
+  if (l_db)
+  {
+    db_buff[copy_and_convert(db_buff, sizeof(db_buff)-1,
+                             system_charset_info,
+                             l_db, db_len,
+                             charset(), &dummy_errors)]= 0;
+    l_db= db_buff;
+  }
+
+  user_buff[user_len= copy_and_convert(user_buff, sizeof(user_buff)-1,
+                                       system_charset_info, user, user_len,
+                                       charset(), &dummy_errors)]= '\0';
+  user= user_buff;
+
+  /* If username starts and ends in "'", chop them off */
+  if (user_len > 1 && user[0] == '\'' && user[user_len - 1] == '\'')
+  {
+    user[user_len-1]= 0;
+    user++;
+    user_len-= 2;
+  }
+
+  security_ctx.user.assign(user);
+
+  return check_user(passwd, passwd_len, l_db);
+}
+
+bool Session::check_user(const char *passwd, uint32_t passwd_len, const char *in_db)
+{
+  LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
+  bool is_authenticated;
+
+  /*
+    Clear session->db as it points to something, that will be freed when
+    connection is closed. We don't want to accidentally free a wrong
+    pointer if connect failed. Also in case of 'CHANGE USER' failure,
+    current database will be switched to 'no database selected'.
+  */
+  reset_db(NULL, 0);
+
+  if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
+    return false;
+  }
+
+  is_authenticated= authenticate_user(this, passwd);
+
+  if (is_authenticated != true)
+  {
+    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
+             security_ctx.user.c_str(),
+             security_ctx.ip.c_str(),
+             passwd_len ? ER(ER_YES) : ER(ER_NO));
+
+    return false;
+  }
+
+  security_ctx.skip_grants();
+
+  /* Change database if necessary */
+  if (in_db && in_db[0])
+  {
+    if (mysql_change_db(this, &db_str, false))
+    {
+      /* mysql_change_db() has pushed the error message. */
+      return false;
+    }
+  }
+  my_ok();
+  password= test(passwd_len);          // remember for error messages
+
+  /* Ready to handle queries */
+  return true;
+}
+
+bool Session::executeStatement()
+{
+  bool return_value;
+  char *l_packet= 0;
+  uint32_t packet_length;
+
+  enum enum_server_command l_command;
+
+  /*
+    indicator of uninitialized lex => normal flow of errors handling
+    (see my_message_sql)
+  */
+  lex->current_select= 0;
+
+  /*
+    This thread will do a blocking read from the client which
+    will be interrupted when the next command is received from
+    the client, the connection is closed or "net_wait_timeout"
+    number of seconds has passed
+  */
+  drizzleclient_net_set_read_timeout(&net, variables.net_wait_timeout);
+
+  /*
+    XXX: this code is here only to clear possible errors of init_connect.
+    Consider moving to init_connect() instead.
+  */
+  clear_error();				// Clear error message
+  main_da.reset_diagnostics_area();
+
+  net_new_transaction(&net);
+
+  packet_length= drizzleclient_net_read(&net);
+  if (packet_length == packet_error)
+  {
+    /* Check if we can continue without closing the connection */
+
+    if(net.last_errno== CR_NET_PACKET_TOO_LARGE)
+      my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
+    /* Assert is invalid for dirty connection shutdown
+     *     assert(session->is_error());
+     */
+    drizzleclient_net_end_statement(this);
+
+    if (net.error != 3)
+    {
+      return_value= false;                       // We have to close it.
+      goto out;
+    }
+
+    net.error= 0;
+    return_value= true;
+    goto out;
+  }
+
+  l_packet= (char*) net.read_pos;
+  /*
+    'packet_length' contains length of data, as it was stored in packet
+    header. In case of malformed header, drizzleclient_net_read returns zero.
+    If packet_length is not zero, drizzleclient_net_read ensures that the returned
+    number of bytes was actually read from network.
+    There is also an extra safety measure in drizzleclient_net_read:
+    it sets packet[packet_length]= 0, but only for non-zero packets.
+  */
+  if (packet_length == 0)                       /* safety */
+  {
+    /* Initialize with COM_SLEEP packet */
+    l_packet[0]= (unsigned char) COM_SLEEP;
+    packet_length= 1;
+  }
+  /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
+  l_packet[packet_length]= '\0';                  /* safety */
+
+  l_command= (enum enum_server_command) (unsigned char) l_packet[0];
+
+  if (command >= COM_END)
+    command= COM_END;                           // Wrong command
+
+  /* Restore read timeout value */
+  drizzleclient_net_set_read_timeout(&net, variables.net_read_timeout);
+
+  assert(packet_length);
+  return_value= ! dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
+
+out:
+  return return_value;
+}
+
+bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
+{
+  /* Remove garbage at start and end of query */
+  while (in_packet_length > 0 && my_isspace(charset(), in_packet[0]))
+  {
+    in_packet++;
+    in_packet_length--;
+  }
+  const char *pos= in_packet + in_packet_length; /* Point at end null */
+  while (in_packet_length > 0 &&
+	 (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
+  {
+    pos--;
+    in_packet_length--;
+  }
+
+  /* We must allocate some extra memory for the cached query string */
+  query_length= 0; /* Extra safety: Avoid races */
+  query= (char*) memdup_w_gap((unsigned char*) in_packet, in_packet_length, db_length + 1);
+  if (! query)
+    return false;
+
+  query[in_packet_length]=0;
+  query_length= in_packet_length;
+
+  /* Reclaim some memory */
+  packet.shrink(variables.net_buffer_length);
+  convert_buffer.shrink(variables.net_buffer_length);
+
+  return true;
+}
+
+bool Session::endTransaction(enum enum_mysql_completiontype completion)
+{
+  bool do_release= 0;
+  bool result= true;
+
+  if (transaction.xid_state.xa_state != XA_NOTR)
+  {
+    my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
+    return false;
+  }
+  switch (completion) 
+  {
+    case COMMIT:
+      /*
+       * We don't use endActiveTransaction() here to ensure that this works
+       * even if there is a problem with the OPTION_AUTO_COMMIT flag
+       * (Which of course should never happen...)
+       */
+      server_status&= ~SERVER_STATUS_IN_TRANS;
+      if (ha_commit(this))
+        result= false;
+      options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+      transaction.all.modified_non_trans_table= false;
+      break;
+    case COMMIT_RELEASE:
+      do_release= 1; /* fall through */
+    case COMMIT_AND_CHAIN:
+      result= endActiveTransaction();
+      if (result == true && completion == COMMIT_AND_CHAIN)
+        result= startTransaction();
+      break;
+    case ROLLBACK_RELEASE:
+      do_release= 1; /* fall through */
+    case ROLLBACK:
+    case ROLLBACK_AND_CHAIN:
+    {
+      server_status&= ~SERVER_STATUS_IN_TRANS;
+      if (ha_rollback(this))
+        result= false;
+      options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+      transaction.all.modified_non_trans_table= false;
+      if (result == true && (completion == ROLLBACK_AND_CHAIN))
+        result= startTransaction();
+      break;
+    }
+    default:
+      my_error(ER_UNKNOWN_COM_ERROR, MYF(0));
+      return false;
+  }
+
+  if (result == false)
+    my_error(killed_errno(), MYF(0));
+  else if ((result == true) && do_release)
+    killed= Session::KILL_CONNECTION;
+
+  return result;
+}
+
+bool Session::endActiveTransaction()
+{
+  bool result= true;
+
+  if (transaction.xid_state.xa_state != XA_NOTR)
+  {
+    my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
+    return false;
+  }
+  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN | OPTION_TABLE_LOCK))
+  {
+    /* Safety if one did "drop table" on locked tables */
+    if (! locked_tables)
+      options&= ~OPTION_TABLE_LOCK;
+    server_status&= ~SERVER_STATUS_IN_TRANS;
+    if (ha_commit(this))
+      result= false;
+  }
+  options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+  transaction.all.modified_non_trans_table= false;
+  return result;
+}
+
+bool Session::startTransaction()
+{
+  bool result= true;
+
+  if (locked_tables)
+  {
+    lock= locked_tables;
+    locked_tables= 0;			// Will be automatically closed
+    close_thread_tables(this);			// Free tables
+  }
+  if (! endActiveTransaction())
+    result= false;
+  else
+  {
+    options|= OPTION_BEGIN;
+    server_status|= SERVER_STATUS_IN_TRANS;
+    if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+      if (ha_start_consistent_snapshot(this))
+        result= false;
+  }
+  return result;
+}
 
 /*
   Cleanup after query.
@@ -899,7 +1129,6 @@ bool Session::store_globals()
     different master threads may overwrite data of each other on
     slave.
 */
-
 void Session::cleanup_after_query()
 {
   /*
@@ -1155,68 +1384,6 @@ int Session::send_explain_fields(select_result *result)
   return (result->send_fields(field_list,
                               Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF));
 }
-
-
-struct Item_change_record: public ilink
-{
-  Item **place;
-  Item *old_value;
-  /* Placement new was hidden by `new' in ilink (TODO: check): */
-  static void *operator new(size_t ,
-                            void *mem)
-    { return mem; }
-  static void operator delete(void *,
-                              size_t )
-    {}
-  static void operator delete(void *,
-                              void *)
-    { /* never called */ }
-};
-
-
-/*
-  Register an item tree tree transformation, performed by the query
-  optimizer. We need a pointer to runtime_memroot because it may be !=
-  session->mem_root (this may no longer be a true statement)
-*/
-
-void Session::nocheck_register_item_tree_change(Item **place, Item *old_value,
-                                            MEM_ROOT *runtime_memroot)
-{
-  Item_change_record *change;
-  /*
-    Now we use one node per change, which adds some memory overhead,
-    but still is rather fast as we use alloc_root for allocations.
-    A list of item tree changes of an average query should be short.
-  */
-  void *change_mem= alloc_root(runtime_memroot, sizeof(*change));
-  if (change_mem == 0)
-  {
-    /*
-      OOM, session->fatal_error() is called by the error handler of the
-      memroot. Just return.
-    */
-    return;
-  }
-  change= new (change_mem) Item_change_record;
-  change->place= place;
-  change->old_value= old_value;
-  change_list.append(change);
-}
-
-
-void Session::rollback_item_tree_changes()
-{
-  I_List_iterator<Item_change_record> it(change_list);
-  Item_change_record *change;
-
-  while ((change= it++))
-    *change->place= change->old_value;
-  /* We can forget about changes memory: it's allocated in runtime memroot */
-  change_list.empty();
-  return;
-}
-
 
 /************************************************************************
   Handling writing to file
@@ -1883,7 +2050,7 @@ void session_increment_bytes_sent(ulong length)
 {
   Session *session=current_session;
   if (likely(session != 0))
-  { /* current_session==0 when close_connection() calls net_send_error() */
+  { /* current_session==0 when disconnect() calls net_send_error() */
     session->status_var.bytes_sent+= length;
   }
 }
@@ -2042,218 +2209,32 @@ void mark_transaction_to_rollback(Session *session, bool all)
     session->transaction_rollback_request= all;
   }
 }
-/***************************************************************************
-  Handling of XA id cacheing
-***************************************************************************/
 
-pthread_mutex_t LOCK_xid_cache;
-HASH xid_cache;
-
-extern "C" unsigned char *xid_get_hash_key(const unsigned char *, size_t *, bool);
-extern "C" void xid_free_hash(void *);
-
-unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length,
-                        bool )
+void Session::disconnect(uint32_t errcode, bool should_lock)
 {
-  *length=((XID_STATE*)ptr)->xid.key_length();
-  return ((XID_STATE*)ptr)->xid.key();
-}
+  /* Allow any plugins to cleanup their session variables */
+  plugin_sessionvar_cleanup(this);
 
-void xid_free_hash(void *ptr)
-{
-  if (!((XID_STATE*)ptr)->in_session)
-    free((unsigned char*)ptr);
-}
+  /* If necessary, log any aborted or unauthorized connections */
+  if (killed || (net.error && net.vio != 0))
+    statistic_increment(aborted_threads, &LOCK_status);
 
-bool xid_cache_init()
-{
-  pthread_mutex_init(&LOCK_xid_cache, MY_MUTEX_INIT_FAST);
-  return hash_init(&xid_cache, &my_charset_bin, 100, 0, 0,
-                   xid_get_hash_key, xid_free_hash, 0) != 0;
-}
-
-void xid_cache_free()
-{
-  if (hash_inited(&xid_cache))
+  if (net.error && net.vio != 0)
   {
-    hash_free(&xid_cache);
-    pthread_mutex_destroy(&LOCK_xid_cache);
+    if (! killed && variables.log_warnings > 1)
+    {
+      Security_context *sctx= &security_ctx;
+
+      errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
+                  , thread_id
+                  , (db ? db : "unconnected")
+                  , sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated"
+                  , sctx->ip.c_str()
+                  , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));
+    }
   }
-}
 
-XID_STATE *xid_cache_search(XID *xid)
-{
-  pthread_mutex_lock(&LOCK_xid_cache);
-  XID_STATE *res=(XID_STATE *)hash_search(&xid_cache, xid->key(), xid->key_length());
-  pthread_mutex_unlock(&LOCK_xid_cache);
-  return res;
-}
-
-
-bool xid_cache_insert(XID *xid, enum xa_states xa_state)
-{
-  XID_STATE *xs;
-  bool res;
-  pthread_mutex_lock(&LOCK_xid_cache);
-  if (hash_search(&xid_cache, xid->key(), xid->key_length()))
-    res=0;
-  else if (!(xs=(XID_STATE *)malloc(sizeof(*xs))))
-    res=1;
-  else
-  {
-    xs->xa_state=xa_state;
-    xs->xid.set(xid);
-    xs->in_session=0;
-    res=my_hash_insert(&xid_cache, (unsigned char*)xs);
-  }
-  pthread_mutex_unlock(&LOCK_xid_cache);
-  return res;
-}
-
-
-bool xid_cache_insert(XID_STATE *xid_state)
-{
-  pthread_mutex_lock(&LOCK_xid_cache);
-  assert(hash_search(&xid_cache, xid_state->xid.key(),
-                          xid_state->xid.key_length())==0);
-  bool res=my_hash_insert(&xid_cache, (unsigned char*)xid_state);
-  pthread_mutex_unlock(&LOCK_xid_cache);
-  return res;
-}
-
-
-void xid_cache_delete(XID_STATE *xid_state)
-{
-  pthread_mutex_lock(&LOCK_xid_cache);
-  hash_delete(&xid_cache, (unsigned char *)xid_state);
-  pthread_mutex_unlock(&LOCK_xid_cache);
-}
-
-namespace {
-  /**
-     Class to handle temporary allocation of memory for row data.
-
-     The responsibilities of the class is to provide memory for
-     packing one or two rows of packed data (depending on what
-     constructor is called).
-
-     In order to make the allocation more efficient for "simple" rows,
-     i.e., rows that do not contain any blobs, a pointer to the
-     allocated memory is of memory is stored in the table structure
-     for simple rows.  If memory for a table containing a blob field
-     is requested, only memory for that is allocated, and subsequently
-     released when the object is destroyed.
-
-   */
-  class Row_data_memory {
-  public:
-    /**
-      Build an object to keep track of a block-local piece of memory
-      for storing a row of data.
-
-      @param table
-      Table where the pre-allocated memory is stored.
-
-      @param length
-      Length of data that is needed, if the record contain blobs.
-     */
-    Row_data_memory(Table *table, size_t const len1)
-      : m_memory(0)
-    {
-      m_alloc_checked= false;
-      allocate_memory(table, len1);
-      m_ptr[0]= has_memory() ? m_memory : 0;
-      m_ptr[1]= 0;
-    }
-
-    Row_data_memory(Table *table, size_t const len1, size_t const len2)
-      : m_memory(0)
-    {
-      m_alloc_checked= false;
-      allocate_memory(table, len1 + len2);
-      m_ptr[0]= has_memory() ? m_memory        : 0;
-      m_ptr[1]= has_memory() ? m_memory + len1 : 0;
-    }
-
-    ~Row_data_memory()
-    {
-      if (m_memory != 0 && m_release_memory_on_destruction)
-        free((unsigned char*) m_memory);
-    }
-
-    /**
-       Is there memory allocated?
-
-       @retval true There is memory allocated
-       @retval false Memory allocation failed
-     */
-    bool has_memory() const {
-      m_alloc_checked= true;
-      return m_memory != 0;
-    }
-
-    unsigned char *slot(uint32_t s)
-    {
-      assert(s < sizeof(m_ptr)/sizeof(*m_ptr));
-      assert(m_ptr[s] != 0);
-      assert(m_alloc_checked == true);
-      return m_ptr[s];
-    }
-
-  private:
-    void allocate_memory(Table *const table, size_t const total_length)
-    {
-      if (table->s->blob_fields == 0)
-      {
-        /*
-          The maximum length of a packed record is less than this
-          length. We use this value instead of the supplied length
-          when allocating memory for records, since we don't know how
-          the memory will be used in future allocations.
-
-          Since table->s->reclength is for unpacked records, we have
-          to add two bytes for each field, which can potentially be
-          added to hold the length of a packed field.
-        */
-        size_t const maxlen= table->s->reclength + 2 * table->s->fields;
-
-        /*
-          Allocate memory for two records if memory hasn't been
-          allocated. We allocate memory for two records so that it can
-          be used when processing update rows as well.
-        */
-        if (table->write_row_record == 0)
-          table->write_row_record=
-            (unsigned char *) alloc_root(&table->mem_root, 2 * maxlen);
-        m_memory= table->write_row_record;
-        m_release_memory_on_destruction= false;
-      }
-      else
-      {
-        m_memory= (unsigned char *) malloc(total_length);
-        m_release_memory_on_destruction= true;
-      }
-    }
-
-    mutable bool m_alloc_checked;
-    bool m_release_memory_on_destruction;
-    unsigned char *m_memory;
-    unsigned char *m_ptr[2];
-  };
-}
-
-/**
-  Close a connection.
-
-  @param session		Thread handle
-  @param errcode	Error code to print to console
-  @param should_lock 1 if we have have to lock LOCK_thread_count
-
-  @note
-    For the connection that is doing shutdown, this is called twice
-*/
-void Session::close_connection(uint32_t errcode, bool should_lock)
-{
+  /* Close out our connection to the client */
   st_vio *vio;
   if (should_lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -2267,8 +2248,6 @@ void Session::close_connection(uint32_t errcode, bool should_lock)
   if (should_lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
 }
-
-
 
 /**
  Reset Session part responsible for command processing state.
@@ -2316,16 +2295,6 @@ void Session::reset_for_next_command()
   sent_row_count= examined_row_count= 0;
 
   return;
-}
-
-
-/**
-  return true if the table was created explicitly.
-*/
-inline bool is_user_table(Table * table)
-{
-  const char *name= table->s->table_name.str;
-  return strncmp(name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH);
 }
 
 /*

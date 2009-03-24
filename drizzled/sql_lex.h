@@ -23,19 +23,19 @@
 /**
   @defgroup Semantic_Analysis Semantic Analysis
 */
-
-#include <drizzled/sql_udf.h>
-#include <drizzled/name_resolution_context.h>
-#include <drizzled/item/subselect.h>
-#include <drizzled/item/param.h>
-#include <drizzled/item/outer_ref.h>
-#include <drizzled/table_list.h>
-#include <drizzled/function/math/real.h>
-#include <drizzled/alter_drop.h>
-#include <drizzled/alter_column.h>
-#include <drizzled/key.h>
-#include <drizzled/foreign_key.h>
-#include <drizzled/item/param.h>
+#include "drizzled/sql_udf.h"
+#include "drizzled/name_resolution_context.h"
+#include "drizzled/item/subselect.h"
+#include "drizzled/item/param.h"
+#include "drizzled/item/outer_ref.h"
+#include "drizzled/table_list.h"
+#include "drizzled/function/math/real.h"
+#include "drizzled/alter_drop.h"
+#include "drizzled/alter_column.h"
+#include "drizzled/key.h"
+#include "drizzled/foreign_key.h"
+#include "drizzled/item/param.h"
+#include "drizzled/index_hint.h"
 
 class select_result_interceptor;
 class virtual_column_info;
@@ -103,49 +103,6 @@ enum olap_type
 enum tablespace_op_type
 {
   NO_TABLESPACE_OP, DISCARD_TABLESPACE, IMPORT_TABLESPACE
-};
-
-/*
-  String names used to print a statement with index hints.
-  Keep in sync with index_hint_type.
-*/
-extern const char * index_hint_type_name[];
-typedef unsigned char index_clause_map;
-
-/*
-  Bits in index_clause_map : one for each possible FOR clause in
-  USE/FORCE/IGNORE INDEX index hint specification
-*/
-#define INDEX_HINT_MASK_JOIN  (1)
-#define INDEX_HINT_MASK_GROUP (1 << 1)
-#define INDEX_HINT_MASK_ORDER (1 << 2)
-
-#define INDEX_HINT_MASK_ALL (INDEX_HINT_MASK_JOIN | INDEX_HINT_MASK_GROUP | \
-                             INDEX_HINT_MASK_ORDER)
-
-/* Single element of an USE/FORCE/IGNORE INDEX list specified as a SQL hint  */
-class Index_hint : public Sql_alloc
-{
-public:
-  /* The type of the hint : USE/FORCE/IGNORE */
-  enum index_hint_type type;
-  /* Where the hit applies to. A bitmask of INDEX_HINT_MASK_<place> values */
-  index_clause_map clause;
-  /*
-    The index name. Empty (str=NULL) name represents an empty list
-    USE INDEX () clause
-  */
-  LEX_STRING key_name;
-
-  Index_hint (enum index_hint_type type_arg, index_clause_map clause_arg,
-              char *str, uint32_t length) :
-    type(type_arg), clause(clause_arg)
-  {
-    key_name.str= str;
-    key_name.length= length;
-  }
-
-  void print(Session *session, String *str);
 };
 
 /*
@@ -501,7 +458,7 @@ public:
   uint32_t table_join_options;
   uint32_t in_sum_expr;
   uint32_t select_number; /* number of select (used for EXPLAIN) */
-  int nest_level;     /* nesting level of select */
+  int8_t nest_level;     /* nesting level of select */
   Item_sum *inner_sum_func_list; /* list of sum func in nested selects */
   uint32_t with_wild; /* item list contain '*' */
   bool  braces;   	/* SELECT ... UNION (SELECT ... ) <- this braces */
@@ -530,7 +487,7 @@ public:
   /* index in the select list of the expression currently being fixed */
   int cur_pos_in_select_list;
 
-  List<udf_func>     udf_list;                  /* udf function calls stack */
+  List<Function_builder>     udf_list;                  /* udf function calls stack */
   /*
     This is a copy of the original JOIN USING list that comes from
     the parser. The parser :
@@ -1294,7 +1251,7 @@ public:
   SQL_LIST	      auxiliary_table_list, save_list;
   Create_field	      *last_field;
   Item_sum *in_sum_func;
-  udf_func udf;
+  Function_builder *udf;
   HA_CHECK_OPT   check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
   KEY_CREATE_INFO key_create_info;

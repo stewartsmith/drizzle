@@ -1192,9 +1192,13 @@ void plugin_shutdown(void)
   return;
 }
 
-
-bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
-                       int type, uint32_t state_mask, void *arg)
+/**
+ *
+ * state_mask: defaults to PLUGIN_IS_READY
+ */
+bool plugin_foreach(Session *session, plugin_foreach_func *func,
+                    int type, void *arg,
+                    uint32_t state_mask)
 {
   uint32_t idx;
   struct st_plugin_int *plugin;
@@ -1206,7 +1210,7 @@ bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
 
   state_mask= ~state_mask; // do it only once
 
-  
+
   if (type == DRIZZLE_ANY_PLUGIN)
   {
     plugins.reserve(plugin_array.elements);
@@ -1645,21 +1649,21 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 
   switch (flags & PLUGIN_VAR_TYPEMASK) {
   case PLUGIN_VAR_BOOL:
-    size= sizeof(bool);
+    size= ALIGN_SIZE(sizeof(bool));
     break;
   case PLUGIN_VAR_INT:
-    size= sizeof(int);
+    size= ALIGN_SIZE(sizeof(int));
     break;
   case PLUGIN_VAR_LONG:
   case PLUGIN_VAR_ENUM:
-    size= sizeof(long);
+    size= ALIGN_SIZE(sizeof(long));
     break;
   case PLUGIN_VAR_LONGLONG:
   case PLUGIN_VAR_SET:
-    size= sizeof(uint64_t);
+    size= ALIGN_SIZE(sizeof(uint64_t));
     break;
   case PLUGIN_VAR_STR:
-    size= sizeof(char*);
+    size= ALIGN_SIZE(sizeof(char*));
     break;
   default:
     assert(0);

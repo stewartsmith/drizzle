@@ -18,6 +18,7 @@
   It's embedded in the Session class.
 */
 
+#include <drizzled/global.h>
 #include <drizzled/session.h>
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
@@ -51,7 +52,7 @@ bool session_scheduler::thread_attach()
 {
   assert(!thread_attached);
   if (libevent_should_close_connection(session) ||
-      setup_connection_thread_globals(session))
+      ! session->initGlobals())
   {
     return true;
   }

@@ -1072,7 +1072,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
         calculate_interval_lengths(cs, interval, &field_length, &dummy);
         sql_field->length= field_length;
       }
-      set_if_smaller(sql_field->length, MAX_FIELD_WIDTH-1);
+      set_if_smaller(sql_field->length, (uint32_t)MAX_FIELD_WIDTH-1);
     }
 
     sql_field->create_length_to_internal_length();
@@ -2374,7 +2374,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   int result_code= 0;
   const CHARSET_INFO * const cs= system_charset_info;
 
-  if (end_active_trans(session))
+  if (! session->endActiveTransaction())
     return(1);
   field_list.push_back(item = new Item_empty_string("Table",
                                                     NAME_CHAR_LEN * 2,
@@ -2430,7 +2430,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       switch ((*prepare_func)(session, table, check_opt)) {
       case  1:           // error, message written to net
         ha_autocommit_or_rollback(session, 1);
-        end_trans(session, ROLLBACK);
+        session->endTransaction(ROLLBACK);
         close_thread_tables(session);
         continue;
       case -1:           // error, message could be written to net
@@ -2471,7 +2471,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
                        table_name);
       protocol->store(buff, length, system_charset_info);
       ha_autocommit_or_rollback(session, 0);
-      end_trans(session, COMMIT);
+      session->endTransaction(COMMIT);
       close_thread_tables(session);
       lex->reset_query_tables_list(false);
       table->table=0;				// For query cache
@@ -2710,7 +2710,7 @@ send_result_message:
       }
     }
     ha_autocommit_or_rollback(session, 0);
-    end_trans(session, COMMIT);
+    session->endTransaction(COMMIT);
     close_thread_tables(session);
     table->table=0;				// For query cache
     if (protocol->write())
@@ -2722,7 +2722,7 @@ send_result_message:
 
 err:
   ha_autocommit_or_rollback(session, 1);
-  end_trans(session, ROLLBACK);
+  session->endTransaction(ROLLBACK);
   close_thread_tables(session);			// Shouldn't be needed
   if (table)
     table->table=0;
@@ -3141,7 +3141,7 @@ mysql_discard_or_import_tablespace(Session *session,
 
   /* The ALTER Table is always in its own transaction */
   error = ha_autocommit_or_rollback(session, 0);
-  if (end_active_trans(session))
+  if (! session->endActiveTransaction())
     error=1;
   if (error)
     goto err;
@@ -4442,7 +4442,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
                              new_db, new_name_buff, "", 0);
         if (table_proto_exists(new_name_buff)==EEXIST)
 	{
-	  /* Table will be closed in do_command() */
+	  /* Table will be closed by Session::executeCommand() */
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
 	  goto err;
 	}
@@ -4811,7 +4811,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     alter_table_manage_keys(table, table->file->indexes_are_disabled(),
                             alter_info->keys_onoff);
     error= ha_autocommit_or_rollback(session, 0);
-    if (end_active_trans(session))
+    if (! session->endActiveTransaction())
       error= 1;
   }
   /* We must not ignore bad input! */;
@@ -5251,7 +5251,7 @@ copy_data_between_tables(Table *from,Table *to,
   */
   if (ha_autocommit_or_rollback(session, 0))
     error=1;
-  if (end_active_trans(session))
+  if (! session->endActiveTransaction())
     error=1;
 
  err:

@@ -353,7 +353,7 @@ bool setup_select_in_parentheses(LEX *lex)
   String *string;
   Key_part_spec *key_part;
   TableList *table_list;
-  udf_func *udf;
+  Function_builder *udf;
   LEX_USER *lex_user;
   struct sys_var_with_base variable;
   enum enum_var_type var_type;
@@ -3244,19 +3244,9 @@ function_call_nonkeyword:
         | SUBSTRING '(' expr FROM expr ')'
           { $$= new (YYSession->mem_root) Item_func_substr($3,$5); }
         | SYSDATE optional_braces
-          {
-            if (global_system_variables.sysdate_is_now == 0)
-              $$= new (YYSession->mem_root) Item_func_sysdate_local();
-            else
-              $$= new (YYSession->mem_root) Item_func_now_local();
-          }
+          { $$= new (YYSession->mem_root) Item_func_sysdate_local(); }
         | SYSDATE '(' expr ')'
-          {
-            if (global_system_variables.sysdate_is_now == 0)
-              $$= new (YYSession->mem_root) Item_func_sysdate_local($3);
-            else
-              $$= new (YYSession->mem_root) Item_func_now_local($3);
-          }
+          { $$= new (YYSession->mem_root) Item_func_sysdate_local($3); }
         | TIMESTAMP_ADD '(' interval_time_stamp ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($7,$5,$3,0); }
         | TIMESTAMP_DIFF '(' interval_time_stamp ',' expr ',' expr ')'
@@ -3330,7 +3320,7 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            udf_func *udf= 0;
+            Function_builder *udf= 0;
 	    udf= find_udf($1.str, $1.length);
 
             /* Temporary placing the result of find_udf in $3 */
@@ -3359,7 +3349,7 @@ function_call_generic:
             else
             {
               /* Retrieving the result of find_udf */
-              udf_func *udf= $<udf>3;
+              Function_builder *udf= $<udf>3;
               if (udf)
               {
                 item= Create_udf_func::s_singleton.create(session, udf, $4);

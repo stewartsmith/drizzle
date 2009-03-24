@@ -891,8 +891,10 @@ bool Item_field::fix_fields(Session *session, Item **reference)
     if (session->lex->in_sum_func &&
         session->lex->in_sum_func->nest_level ==
         session->lex->current_select->nest_level)
+    {
       set_if_bigger(session->lex->in_sum_func->max_arg_level,
                     session->lex->current_select->nest_level);
+    }
   }
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {

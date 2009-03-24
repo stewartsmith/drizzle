@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin_errmsg.h>
+#include <drizzled/plugin/error_message_handler.h>
 #include <drizzled/gettext.h>
 
 #include <stdio.h>  /* for vsnprintf */
@@ -28,39 +28,42 @@
 /* todo, make this dynamic as needed */
 #define MAX_MSG_LEN 8192
 
-bool errmsg_stderr_func (Session *,
-			 int ,
-			 const char *format, va_list ap)
+class Error_message_stderr : public Error_message_handler
 {
-  char msgbuf[MAX_MSG_LEN];
-  int prv, wrv;
+public:
+  virtual bool errmsg(Session *, int , const char *format, va_list ap)
+  {
+    char msgbuf[MAX_MSG_LEN];
+    int prv, wrv;
 
-  prv= vsnprintf(msgbuf, MAX_MSG_LEN, format, ap);
-  if (prv < 0) return true;
+    prv= vsnprintf(msgbuf, MAX_MSG_LEN, format, ap);
+    if (prv < 0) return true;
 
-  /* a single write has a OS level thread lock
-     so there is no need to have mutexes guarding this write,
-  */
-  wrv= write(2, msgbuf, prv);
-  if ((wrv < 0) || (wrv != prv)) return true;
+    /* a single write has a OS level thread lock
+       so there is no need to have mutexes guarding this write,
+    */
+    wrv= write(2, msgbuf, prv);
+    if ((wrv < 0) || (wrv != prv)) return true;
 
-  return false;
-}
+    return false;
+  }
+};
 
 static int errmsg_stderr_plugin_init(void *p)
 {
-  errmsg_t *l= (errmsg_t *) p;
+  Error_message_handler **handler= static_cast<Error_message_handler **>(p);
 
-  l->errmsg_func= errmsg_stderr_func;
+  *handler= new Error_message_stderr();
 
   return 0;
 }
 
 static int errmsg_stderr_plugin_deinit(void *p)
 {
-  errmsg_t *l= (errmsg_t *) p;
+  Error_message_stderr **handler= static_cast<Error_message_stderr **>(p);
 
-  l->errmsg_func= NULL;
+  if (handler)
+    delete handler;
 
   return 0;
 }

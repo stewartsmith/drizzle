@@ -499,10 +499,10 @@ SUBSTR('☃☄킱',-2)
 create table t1 select repeat('a',4000) a;
 delete from t1;
 insert into t1 values ('a'), ('a '), ('a\t');
-select collation(a),hex(a) from t1 order by a;
+select collation(a),hex(a) from t1 order by hex(a);
 collation(a)	hex(a)
-utf8_general_ci	6109
 utf8_general_ci	61
+utf8_general_ci	6109
 utf8_general_ci	6120
 drop table t1;
 create table t1 ROW_FORMAT=DYNAMIC select repeat('a',50) as c1 ;
@@ -561,10 +561,10 @@ drop table t1;
 create table t1 select repeat('a',4000) a;
 delete from t1;
 insert into t1 values ('a'), ('a '), ('a\t');
-select collation(a),hex(a) from t1 order by a;
+select collation(a),hex(a) from t1 order by hex(a);
 collation(a)	hex(a)
-utf8_general_ci	6109
 utf8_general_ci	61
+utf8_general_ci	6109
 utf8_general_ci	6120
 drop table t1;
 create table t1 ROW_FORMAT=DYNAMIC select repeat('a',50) as c1 ;

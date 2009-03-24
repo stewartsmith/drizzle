@@ -437,22 +437,8 @@ void Item::rename(char *new_name)
 /**
   Traverse item tree possibly transforming it (replacing items).
 
-  This function is designed to ease transformation of Item trees.
-  Re-execution note: every such transformation is registered for
-  rollback by Session::change_item_tree() and is rolled back at the end
-  of execution by Session::rollback_item_tree_changes().
-
-  Therefore:
-  - this function can not be used at prepared statement prepare
-  (in particular, in fix_fields!), as only permanent
-  transformation of Item trees are allowed at prepare.
-  - the transformer function shall allocate new Items in execution
-  memory root (session->mem_root) and not anywhere else: allocated
-  items will be gone in the end of execution.
-
   If you don't need to transform an item tree, but only traverse
   it, please use Item::walk() instead.
-
 
   @param transformer    functor that performs transformation of a subtree
   @param arg            opaque argument passed to the functor
@@ -1356,7 +1342,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
     char hexbuf[7];
     enum DRIZZLE_ERROR::enum_warning_level level;
     uint32_t diff= str->length() - wlen;
-    set_if_smaller(diff, 3);
+    set_if_smaller(diff, 3U);
     drizzleclient_drizzleclient_octet2hex(hexbuf, str->ptr() + wlen, diff);
     if (send_error)
     {

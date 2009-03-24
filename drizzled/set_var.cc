@@ -166,8 +166,6 @@ static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
 sys_var_str             sys_init_connect(&vars, "init_connect", 0,
                                          sys_update_init_connect,
                                          sys_default_init_connect,0);
-static sys_var_session_uint32_t	sys_interactive_timeout(&vars, "interactive_timeout",
-                                                        &SV::net_interactive_timeout);
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &SV::join_buff_size);
 static sys_var_key_buffer_size	sys_key_buffer_size(&vars, "key_buffer_size");
@@ -180,8 +178,6 @@ static sys_var_key_cache_uint32_t	sys_key_cache_division_limit(&vars, "key_cache
 static sys_var_key_cache_uint32_t  sys_key_cache_age_threshold(&vars, "key_cache_age_threshold",
                                                            offsetof(KEY_CACHE,
                                                                     param_age_threshold));
-static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
-                                         &opt_local_infile);
 static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
                                                        &SV::max_allowed_packet);
 static sys_var_uint64_t_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
@@ -225,7 +221,6 @@ static sys_var_session_uint32_t	sys_net_write_timeout(&vars, "net_write_timeout"
 static sys_var_session_uint32_t	sys_net_retry_count(&vars, "net_retry_count",
                                                     &SV::net_retry_count,
                                                     0, fix_net_retry_count);
-static sys_var_session_bool	sys_new_mode(&vars, "new", &SV::new_mode);
 /* these two cannot be static */
 sys_var_session_bool sys_old_alter_table(&vars, "old_alter_table",
                                          &SV::old_alter_table);
@@ -391,11 +386,11 @@ sys_lc_time_names(&vars, "lc_time_names", sys_var::SESSION_VARIABLE_IN_BINLOG);
 */
 static sys_var_readonly sys_error_count(&vars, "error_count",
                                         OPT_SESSION,
-                                        SHOW_LONG,
+                                        SHOW_INT,
                                         get_error_count);
 static sys_var_readonly sys_warning_count(&vars, "warning_count",
                                           OPT_SESSION,
-                                          SHOW_LONG,
+                                          SHOW_INT,
                                           get_warning_count);
 
 sys_var_session_uint64_t sys_group_concat_max_len(&vars, "group_concat_max_len",
@@ -427,7 +422,6 @@ static SHOW_VAR fixed_vars[]= {
 #ifdef HAVE_MLOCKALL
   {"locked_in_memory",	      (char*) &locked_in_memory,	    SHOW_MY_BOOL},
 #endif
-  {"log_bin",                 (char*) &opt_bin_log,                 SHOW_BOOL},
   {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
@@ -1875,18 +1869,18 @@ static int check_pseudo_thread_id(Session *, set_var *var)
 
 static unsigned char *get_warning_count(Session *session)
 {
-  session->sys_var_tmp.long_value=
+  session->sys_var_tmp.uint32_t_value=
     (session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE] +
      session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR] +
      session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN]);
-  return (unsigned char*) &session->sys_var_tmp.long_value;
+  return (unsigned char*) &session->sys_var_tmp.uint32_t_value;
 }
 
 static unsigned char *get_error_count(Session *session)
 {
-  session->sys_var_tmp.long_value=
+  session->sys_var_tmp.uint32_t_value=
     session->warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
-  return (unsigned char*) &session->sys_var_tmp.long_value;
+  return (unsigned char*) &session->sys_var_tmp.uint32_t_value;
 }
 
 

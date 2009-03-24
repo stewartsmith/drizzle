@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_CONFIGVAR_H
 #define DRIZZLED_CONFIGVAR_H
 
-#include <drizzled/plugin_configvar.h>
+#include <drizzled/plugin/configvar.h>
 
 int configvar_initializer (st_plugin_int *plugin);
 int configvar_finalizer (st_plugin_int *plugin);

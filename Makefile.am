@@ -103,7 +103,11 @@ test: test-drizzle
 
 test-drizzle:
 	cd tests ; \
-	$(MAKE) $(AM_MAKEFLAGS) test 
+	$(MAKE) $(AM_MAKEFLAGS) test-drizzle
+
+test-big:
+	cd tests ; \
+	$(MAKE) $(AM_MAKEFLAGS) test-big
 
 doxygen:
 	doxygen Doxyfile

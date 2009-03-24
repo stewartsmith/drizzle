@@ -16,7 +16,6 @@
 /* This implements 'user defined functions' */
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
-#include <mysys/hash.h>
 #include <drizzled/sql_udf.h>
 
 #include <map>
@@ -25,33 +24,17 @@
 using namespace std;
 
 static bool udf_startup= false; /* We do not lock because startup is single threaded */
-static MEM_ROOT mem;
-static map<string, udf_func *> udf_map;
+static map<string, Function_builder *> udf_map;
 
-extern "C" unsigned char* get_hash_key(const unsigned char *buff, size_t *length,
-                               bool )
-{
-  udf_func *udf= (udf_func*) buff;
-  *length= (uint32_t) udf->name.length;
-  return (unsigned char*) udf->name.str;
-}
-
-
-void udf_init()
-{
-  init_sql_alloc(&mem, UDF_ALLOC_BLOCK_SIZE, 0);
-}
-
-/* called by mysqld.cc clean_up() */
-void udf_free()
-{
-  free_root(&mem, MYF(0));
-}
 
 /* This is only called if using_udf_functions != 0 */
-udf_func *find_udf(const char *name, uint32_t length)
+Function_builder *find_udf(const char *name, uint32_t length)
 {
-  udf_func *udf= NULL;
+
+  /**
+   * @todo: check without transform, then check with transform if needed
+   */
+  Function_builder *udf= NULL;
 
   if (udf_startup == false)
     return NULL;
@@ -60,7 +43,7 @@ udf_func *find_udf(const char *name, uint32_t length)
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
 
-  map<string, udf_func *>::iterator find_iter;
+  map<string, Function_builder *>::iterator find_iter;
   find_iter=  udf_map.find(find_str);
   if (find_iter != udf_map.end())
     udf= (*find_iter).second;
@@ -68,9 +51,12 @@ udf_func *find_udf(const char *name, uint32_t length)
   return (udf);
 }
 
-static bool add_udf(udf_func *udf)
+static bool add_udf(Function_builder *udf)
 {
-  string add_str(udf->name.str, udf->name.length);
+  /**
+   * @todo: add all lower and all upper version
+   */
+  string add_str= udf->get_name();
   transform(add_str.begin(), add_str.end(),
             add_str.begin(), ::tolower);
 
@@ -83,21 +69,18 @@ static bool add_udf(udf_func *udf)
 
 int initialize_udf(st_plugin_int *plugin)
 {
-  udf_func *f;
+  Function_builder *f;
 
-  if (udf_startup == false)
-  {
-    udf_init();
-    udf_startup= true;
-  }
+  udf_startup= true;
 
   if (plugin->plugin->init)
   {
     int r;
     if ((r= plugin->plugin->init((void *)&f)))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, "Plugin '%s' init function returned error %d.",
-		    plugin->name.str, r);
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error %d."),
+                    plugin->name.str, r);
       return r;
     }
   }
@@ -115,7 +98,7 @@ int initialize_udf(st_plugin_int *plugin)
 
 int finalize_udf(st_plugin_int *plugin)
 {
-  udf_func *udff = (udf_func *)plugin->data;
+  Function_builder *udff = (Function_builder *)plugin->data;
 
   /* TODO: Issue warning on failure */
   if (udff && plugin->plugin->deinit)

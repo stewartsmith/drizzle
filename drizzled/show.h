@@ -27,9 +27,6 @@
 #ifndef DRIZZLE_SERVER_SHOW_H
 #define DRIZZLE_SERVER_SHOW_H
 
-#include <drizzled/global.h>
-#include <stdint.h>
-
 #include <drizzled/sql_list.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/sql_parse.h>

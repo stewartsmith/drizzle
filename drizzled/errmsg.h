@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_ERRMSG_H
 #define DRIZZLED_ERRMSG_H
 
-#include <drizzled/plugin_errmsg.h>
+#include <drizzled/plugin/error_message_handler.h>
 
 // need stdarg for va_list
 #include <stdarg.h>

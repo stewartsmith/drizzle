@@ -83,6 +83,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
+		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
 		function/found_rows.h \
@@ -207,6 +208,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits.h \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
+		index_hint.h \
 		internal_error_handler.h \
 		item.h \
 		item/basic_constant.h \
@@ -268,16 +270,16 @@ nobase_dist_drizzledinclude_HEADERS = \
 		order.h \
 		parser.h \
 		plugin.h \
-		plugin_authentication.h \
-		plugin_configvar.h \
-		plugin_errmsg.h \
-		plugin_logging.h \
-		plugin_parser.h \
-		plugin_qcache.h \
 		plugin_registry.h \
 		plugin_registry_impl.h \
-		plugin_replicator.h \
-		plugin_scheduling.h \
+		plugin/authentication.h \
+		plugin/configvar.h \
+		plugin/error_message_handler.h \
+		plugin/logging_handler.h \
+		plugin/parser.h \
+		plugin/qcache.h \
+		plugin/replicator.h \
+		plugin/scheduler.h \
 		probes.h \
 		protocol.h \
 		qcache.h \
@@ -381,6 +383,7 @@ drizzled_SOURCES = \
 		comp_creator.cc \
 		configvar.cc \
 		current_session.cc \
+		diagnostics_area.cc \
 		drizzled.cc \
 		dtcollation.cc \
 		errmsg.cc \
@@ -405,6 +408,7 @@ drizzled_SOURCES = \
 		field_conv.cc \
 		field_iterator.cc \
 		filesort.cc \
+		foreign_key.cc \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
@@ -532,6 +536,7 @@ drizzled_SOURCES = \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
+		index_hint.cc \
 		item/bin_string.cc \
 		item/cache.cc \
 		item/cache_decimal.cc \

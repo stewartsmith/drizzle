@@ -19,6 +19,9 @@
 #include <drizzled/function/str/strfunc.h>
 
 #include <zlib.h>
+#include <string>
+
+using namespace std;
 
 class Item_func_uncompress: public Item_str_func
 {
@@ -74,7 +77,7 @@ String *Item_func_uncompress::val_str(String *str)
   }
 
   code= ((err == Z_BUF_ERROR) ? ER_ZLIB_Z_BUF_ERROR :
-	 ((err == Z_MEM_ERROR) ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_DATA_ERROR));
+         ((err == Z_MEM_ERROR) ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_DATA_ERROR));
   push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
 
 err:
@@ -82,20 +85,12 @@ err:
   return 0;
 }
 
+Create_function<Item_func_uncompress> uncompressudf(string("uncompress"));
 
-Item_func* create_uncompressudf_item(MEM_ROOT* m)
-{
-  return  new (m) Item_func_uncompress();
-}
-
-static struct udf_func uncompressudf = {
-  { C_STRING_WITH_LEN("uncompress") },
-  create_uncompressudf_item
-};
 
 static int uncompressudf_plugin_init(void *p)
 {
-  udf_func **f = (udf_func**) p;
+  Function_builder **f = (Function_builder**) p;
 
   *f= &uncompressudf;
 
@@ -104,7 +99,7 @@ static int uncompressudf_plugin_init(void *p)
 
 static int uncompressudf_plugin_deinit(void *p)
 {
-  udf_func *udff = (udf_func *) p;
+  Function_builder *udff = (Function_builder *) p;
   (void)udff;
   return 0;
 }

@@ -25,17 +25,11 @@ static bool errmsg_has= false;
 
 int errmsg_initializer(st_plugin_int *plugin)
 {
-  errmsg_t *p;
-
-  p= new errmsg_t;
-  if (p == NULL) return 1;
-  memset(p, 0, sizeof(errmsg_t));
-
-  plugin->data= (void *)p;
+  Error_message_handler *p;
 
   if (plugin->plugin->init)
   {
-    if (plugin->plugin->init((void *)p))
+    if (plugin->plugin->init(&p))
     {
       /* we're doing the errmsg plugin api,
         so we can't trust the errmsg api to emit our error messages
@@ -45,27 +39,25 @@ int errmsg_initializer(st_plugin_int *plugin)
       fprintf(stderr,
               _("errmsg plugin '%s' init() failed."),
               plugin->name.str);
-      goto err;
+      return 1;
     }
   }
 
+  plugin->data= (void *)p;
   errmsg_has= true;
   plugin->state= PLUGIN_IS_READY;
 
   return 0;
 
-err:
-  delete p;
-  return 1;
 }
 
 int errmsg_finalizer(st_plugin_int *plugin)
 {
-  errmsg_t *p = (errmsg_t *) plugin->data;
+  Error_message_handler *p= static_cast<Error_message_handler *>(plugin->data);
 
   if (plugin->plugin->deinit)
   {
-    if (plugin->plugin->deinit((void *)p))
+    if (plugin->plugin->deinit(p))
     {
       /* we're doing the errmsg plugin api,
 	 so we can't trust the errmsg api to emit our error messages
@@ -73,12 +65,10 @@ int errmsg_finalizer(st_plugin_int *plugin)
       /* TRANSLATORS: The leading word "errmsg" is the name
          of the plugin api, and so should not be translated. */
       fprintf(stderr,
-	      _("errmsg plugin '%s' deinit() failed."),
-	      plugin->name.str);
+              _("errmsg plugin '%s' deinit() failed."),
+              plugin->name.str);
     }
   }
-
-  if (p) delete p;
 
   return 0;
 }
@@ -101,12 +91,12 @@ typedef struct errmsg_parms_st
 /* This gets called by plugin_foreach once for each loaded errmsg plugin */
 static bool errmsg_iterate (Session *session, plugin_ref plugin, void *p)
 {
-  errmsg_t *l= plugin_data(plugin, errmsg_t *);
+  Error_message_handler *handler= plugin_data(plugin, Error_message_handler *);
   errmsg_parms_t *parms= (errmsg_parms_t *) p;
 
-  if (l && l->errmsg_func)
+  if (handler)
   {
-    if (l->errmsg_func(session, parms->priority, parms->format, parms->ap))
+    if (handler->errmsg(session, parms->priority, parms->format, parms->ap))
     {
       /* we're doing the errmsg plugin api,
 	 so we can't trust the errmsg api to emit our error messages
@@ -114,15 +104,16 @@ static bool errmsg_iterate (Session *session, plugin_ref plugin, void *p)
       /* TRANSLATORS: The leading word "errmsg" is the name
          of the plugin api, and so should not be translated. */
       fprintf(stderr,
-	      _("errmsg plugin '%s' errmsg_func() failed"),
-	      (char *)plugin_name(plugin));
+              _("errmsg plugin '%s' errmsg() failed"),
+              (char *)plugin_name(plugin));
       return true;
     }
   }
   return false;
 }
 
-bool errmsg_vprintf (Session *session, int priority, char const *format, va_list ap)
+bool errmsg_vprintf (Session *session, int priority,
+                     char const *format, va_list ap)
 {
   bool foreach_rv;
   errmsg_parms_t parms;

@@ -20,6 +20,7 @@
 
 #include <drizzled/configmake.h>
 #include <drizzled/server_includes.h>
+#include <drizzled/atomics.h>
 
 #include <netdb.h>
 #include <sys/poll.h>
@@ -43,7 +44,7 @@
 #include <drizzled/item/create.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
-#include <drizzled/plugin_scheduling.h>
+#include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 
 #if TIME_WITH_SYS_TIME
@@ -61,10 +62,6 @@
 
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>
-#endif
-
-#ifndef DEFAULT_SKIP_THREAD_PRIORITY
-#define DEFAULT_SKIP_THREAD_PRIORITY 0
 #endif
 
 #include <libdrizzleclient/errmsg.h>
@@ -232,7 +229,7 @@ static bool volatile select_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
 static uint32_t wake_thread;
-static uint32_t killed_threads, thread_created;
+static uint32_t killed_threads;
 static char *drizzled_user, *drizzled_chroot;
 static char *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
@@ -247,15 +244,11 @@ static uint8_t pollfd_count= 0;
 
 /* Global variables */
 
-bool opt_bin_log;
-bool opt_skip_show_db= false;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
-bool opt_using_transactions;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-bool opt_local_infile;
 uint32_t max_used_connections;
 const char *opt_scheduler= "multi_thread";
 
@@ -284,7 +277,6 @@ uint32_t drizzled_port_timeout;
 uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
-uint32_t volatile thread_running;
 uint64_t session_startup_options;
 uint32_t back_log;
 uint32_t connect_timeout;
@@ -292,12 +284,11 @@ uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
 uint64_t slow_launch_time;
-uint64_t slave_open_temp_tables;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
-ulong thread_id=1L;
+uint32_t thread_id=1L;
 pid_t current_pid;
 uint64_t slow_launch_threads= 0;
 
@@ -372,7 +363,7 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-I_List<Session> threads;
+I_List<Session> session_list;
 I_List<NAMED_LIST> key_caches;
 
 struct system_variables global_system_variables;
@@ -382,7 +373,7 @@ struct system_status_var global_status_var;
 MY_BITMAP temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
-const CHARSET_INFO *national_charset_info, *table_alias_charset;
+const CHARSET_INFO *table_alias_charset;
 const CHARSET_INFO *character_set_filesystem;
 
 MY_LOCALE *my_default_lc_time_names;
@@ -423,7 +414,6 @@ int cleanup_done;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
 static char **defaults_argv;
-static char *opt_bin_logname;
 
 struct rand_struct sql_rand; ///< used by sql_class.cc:Session::Session()
 
@@ -431,13 +421,11 @@ struct passwd *user_info;
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
 
-extern scheduling_st thread_scheduler;
-
 /**
   Number of currently active user connections. The variable is protected by
   LOCK_thread_count.
 */
-uint32_t connection_count= 0;
+tbb::atomic<uint32_t> connection_count;
 
 /* Function declarations */
 
@@ -506,9 +494,11 @@ void close_connections(void)
   */
 
   Session *tmp;
+  Scheduler &thread_scheduler= get_thread_scheduler();
+
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<Session> it(threads);
+  I_List_iterator<Session> it(session_list);
   while ((tmp=it++))
   {
     tmp->killed= Session::KILL_CONNECTION;
@@ -528,42 +518,26 @@ void close_connections(void)
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
 
-  /* TODO This is a crappy way to handle this. Fix for proper shutdown. */
-  if (thread_scheduler.count())
-    sleep(2);					// Give threads time to die
+  if (connection_count)
+    sleep(2);                                   // Give threads time to die
 
   /*
     Force remaining threads to die by closing the connection to the client
     This will ensure that threads that are waiting for a command from the
     client on a blocking read call are aborted.
   */
-
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (!(tmp=threads.get()))
+    if (!(tmp= session_list.get()))
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
-    if (tmp->drizzleclient_vio_ok())
-    {
-      if (global_system_variables.log_warnings)
-            errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
-                          tmp->thread_id,
-                          (tmp->security_ctx.user.c_str() ?
-                           tmp->security_ctx.user.c_str() : ""));
-      tmp->close_connection(0,0);
-    }
     (void) pthread_mutex_unlock(&LOCK_thread_count);
+    unlink_session(tmp);
   }
-  /* All threads has now been aborted */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  while (thread_scheduler.count())
-  {
-    (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-  }
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  assert(session_list.is_empty());
 }
 
 
@@ -623,7 +597,6 @@ static void clean_up(bool print_message)
   table_def_free();
   set_var_free();
   free_charsets();
-  udf_free();
   plugin_shutdown();
   ha_end();
   xid_cache_free();
@@ -635,8 +608,6 @@ static void clean_up(bool print_message)
     free_defaults(defaults_argv);
   free(sys_init_connect.value);
   free(drizzle_tmpdir);
-  if (opt_bin_logname)
-    free(opt_bin_logname);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
   bitmap_free(&temp_pool);
@@ -968,9 +939,10 @@ extern "C" void end_thread_signal(int )
   if (session)
   {
     statistic_increment(killed_threads, &LOCK_status);
-    (void)thread_scheduler.end_thread(session, 0);		/* purecov: inspected */
+    Scheduler &thread_scheduler= get_thread_scheduler();
+    (void)thread_scheduler.end_thread(session, 0);
   }
-  return;;				/* purecov: deadcode */
+  return;				/* purecov: deadcode */
 }
 
 
@@ -987,12 +959,15 @@ extern "C" void end_thread_signal(int )
 
 void unlink_session(Session *session)
 {
+  connection_count--;
+
   session->cleanup();
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
-  connection_count--;
+  pthread_mutex_lock(&session->LOCK_delete);
   delete session;
-  pthread_mutex_unlock(&LOCK_thread_count);
+  (void) pthread_mutex_unlock(&LOCK_thread_count);
+
   return;
 }
 
@@ -1049,7 +1024,8 @@ extern "C" void handle_segfault(int sig)
   }
 
   localtime_r(&curr_time, &tm);
-
+  Scheduler &thread_scheduler= get_thread_scheduler();
+  
   fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got "
           SIGNAL_FMT " ;\n"
           "This could be because you hit a bug. It is also possible that "
@@ -1067,9 +1043,9 @@ extern "C" void handle_segfault(int sig)
           (uint32_t) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
   fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
-  fprintf(stderr, "max_threads=%u\n", thread_scheduler.max_threads);
+  fprintf(stderr, "max_threads=%u\n", thread_scheduler.get_max_threads());
   fprintf(stderr, "thread_count=%u\n", thread_scheduler.count());
-  fprintf(stderr, "connection_count=%u\n", connection_count);
+  fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
                     "sort_buffer_size)*max_threads = %"PRIu64" K\n"
@@ -1079,7 +1055,7 @@ extern "C" void handle_segfault(int sig)
           (uint64_t)(((uint32_t) dflt_key_cache->key_cache_mem_size +
                      (global_system_variables.read_buff_size +
                       global_system_variables.sortbuff_size) *
-                     thread_scheduler.max_threads) / 1024));
+                     thread_scheduler.get_max_threads()) / 1024));
 
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
@@ -1212,7 +1188,7 @@ static void init_signals(void)
   if (test_flags & TEST_CORE_ON_SIGNAL)
   {
     /* Change limits so that we will get a core file */
-    STRUCT_RLIMIT rl;
+    struct rlimit rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
         errmsg_printf(ERRMSG_LVL_WARN, _("setrlimit could not change the size of core files "
@@ -1399,7 +1375,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
     return 1;
   drizzle_init_variables();
 
-#ifdef HAVE_TZNAME
   {
     struct tm tm_tmp;
     localtime_r(&server_start_time,&tm_tmp);
@@ -1407,7 +1382,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
             sizeof(system_time_zone)-1);
 
  }
-#endif
   /*
     We set SYSTEM time zone as reasonable default and
     also for failure of my_tz_init() and bootstrap mode.
@@ -1825,12 +1799,6 @@ int main(int argc, char **argv)
   }
 
   init_status_vars();
-  /*
-    init_slave() must be called after the thread keys are created.
-    Some parts of the code (e.g. SHOW STATUS LIKE 'slave_running' and other
-    places) assume that active_mi != 0, so let's fail if it's 0 (out of
-    memory); a message has already been printed.
-  */
 
   errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)),my_progname,server_version,
                         "", drizzled_port, COMPILATION_COMMENT);
@@ -1873,7 +1841,7 @@ int main(int argc, char **argv)
 
 static void create_new_thread(Session *session)
 {
-  pthread_mutex_lock(&LOCK_thread_count);
+  Scheduler &thread_scheduler= get_thread_scheduler();
 
   ++connection_count;
 
@@ -1890,6 +1858,9 @@ static void create_new_thread(Session *session)
   /* 
     If we error on creation we drop the connection and delete the session.
   */
+  pthread_mutex_lock(&LOCK_thread_count);
+  session_list.append(session);
+  pthread_mutex_unlock(&LOCK_thread_count);
   if (thread_scheduler.add_connection(session))
   {
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
@@ -1901,11 +1872,7 @@ static void create_new_thread(Session *session)
     /* Can't use my_error() since store_globals has not been called. */
     snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
     net_send_error(session, ER_CANT_CREATE_THREAD, error_message_buff);
-    (void) pthread_mutex_lock(&LOCK_thread_count);
-    --connection_count;
-    session->close_connection(0, 0);
-    delete session;
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
+    unlink_session(session);
   }
 }
 
@@ -1958,7 +1925,7 @@ void handle_connections_sockets()
 
     for (uint32_t retry=0; retry < MAX_ACCEPT_RETRY; retry++)
     {
-      SOCKET_SIZE_TYPE length= sizeof(struct sockaddr_storage);
+      socklen_t length= sizeof(struct sockaddr_storage);
       new_sock= accept(sock, (struct sockaddr *)(&cAddr),
                        &length);
       if (new_sock != -1 || (errno != EINTR && errno != EAGAIN))
@@ -1976,7 +1943,7 @@ void handle_connections_sockets()
     }
 
     {
-      SOCKET_SIZE_TYPE dummyLen;
+      socklen_t dummyLen;
       struct sockaddr_storage dummy;
       dummyLen = sizeof(dummy);
       if (  getsockname(new_sock,(struct sockaddr *)&dummy,
@@ -2026,12 +1993,8 @@ void handle_connections_sockets()
 enum options_drizzled
 {
   OPT_ISAM_LOG=256,
-  OPT_SKIP_NEW,
   OPT_SOCKET,
-  OPT_BIN_LOG,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
-  OPT_SKIP_PRIOR,
-  OPT_FLUSH,                   OPT_SAFE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
   OPT_DELAY_KEY_WRITE_ALL,
@@ -2048,16 +2011,14 @@ enum options_drizzled
   OPT_LOCAL_INFILE,
   OPT_BACK_LOG,
   OPT_CONNECT_TIMEOUT,
-  OPT_FLUSH_TIME,
-  OPT_INTERACTIVE_TIMEOUT, OPT_JOIN_BUFF_SIZE,
+  OPT_JOIN_BUFF_SIZE,
   OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
-  OPT_LONG_QUERY_TIME,
-  OPT_LOWER_CASE_TABLE_NAMES, OPT_MAX_ALLOWED_PACKET,
+  OPT_MAX_ALLOWED_PACKET,
   OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
   OPT_MAX_JOIN_SIZE,
-  OPT_MAX_RELAY_LOG_SIZE, OPT_MAX_SORT_LENGTH,
+  OPT_MAX_SORT_LENGTH,
   OPT_MAX_SEEKS_FOR_KEY, OPT_MAX_TMP_TABLES, OPT_MAX_USER_CONNECTIONS,
   OPT_MAX_LENGTH_FOR_SORT_DATA,
   OPT_MAX_WRITE_LOCK_COUNT, OPT_BULK_INSERT_BUFFER_SIZE,
@@ -2085,11 +2046,9 @@ enum options_drizzled
   OPT_LC_TIME_NAMES,
   OPT_INIT_CONNECT,
   OPT_DEFAULT_TIME_ZONE,
-  OPT_SYSDATE_IS_NOW,
   OPT_OPTIMIZER_SEARCH_DEPTH,
   OPT_SCHEDULER,
   OPT_OPTIMIZER_PRUNE_LEVEL,
-  OPT_UPDATABLE_VIEWS_WITH_LIMIT,
   OPT_AUTO_INCREMENT, OPT_AUTO_INCREMENT_OFFSET,
   OPT_ENABLE_LARGE_PAGES,
   OPT_TIMED_MUTEXES,
@@ -2099,8 +2058,7 @@ enum options_drizzled
   OPT_PORT_OPEN_TIMEOUT,
   OPT_KEEP_FILES_ON_CREATE,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT,
-  OPT_OLD_MODE
+  OPT_MIN_EXAMINED_ROW_LIMIT
 };
 
 
@@ -2187,9 +2145,6 @@ struct my_option my_long_options[] =
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),
    0, 0, 0, GET_LONG, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"flush", OPT_FLUSH,
-   N_("Flush tables to disk between SQL commands."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   /* We must always support the next option to make scripts like mysqltest
      easier to do */
   {"gdb", OPT_DEBUGGING,
@@ -2213,11 +2168,6 @@ struct my_option my_long_options[] =
    (char**) &lc_time_names_name,
    (char**) &lc_time_names_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"local-infile", OPT_LOCAL_INFILE,
-   N_("Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."),
-   (char**) &opt_local_infile,
-   (char**) &opt_local_infile, 0, GET_BOOL, OPT_ARG,
-   1, 0, 0, 0, 0, 0},
   {"log", 'l',
    N_("Log connections and queries to file."),
    (char**) &opt_logname,
@@ -2240,11 +2190,6 @@ struct my_option my_long_options[] =
       "DEFAULT, BACKUP, FORCE or QUICK."),
    (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"new", 'n',
-   N_("Use very new possible 'unsafe' functions."),
-   (char**) &global_system_variables.new_mode,
-   (char**) &max_system_variables.new_mode,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"old-alter-table", OPT_OLD_ALTER_TABLE,
    N_("Use old, non-optimized alter table."),
    (char**) &global_system_variables.old_alter_table,
@@ -2265,9 +2210,6 @@ struct my_option my_long_options[] =
       "(Default: no wait)"),
    (char**) &drizzled_port_timeout,
    (char**) &drizzled_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"safe-mode", OPT_SAFE,
-   N_("Skip some optimize stages (for testing)."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
    N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
       "within specified directory"),
@@ -2278,17 +2220,10 @@ struct my_option my_long_options[] =
       "replication partners."),
    (char**) &server_id, (char**) &server_id, 0, GET_UINT32, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
-  {"skip-new", OPT_SKIP_NEW,
-   N_("Don't use new, possible wrong routines."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-stack-trace", OPT_SKIP_STACK_TRACE,
    N_("Don't print a stack trace on failure."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"skip-thread-priority", OPT_SKIP_PRIOR,
-   N_("Don't give threads different priorities."),
-   0, 0, 0, GET_NO_ARG, NO_ARG,
-   DEFAULT_SKIP_THREAD_PRIORITY, 0, 0, 0, 0, 0},
   {"symbolic-links", 's',
    N_("Enable symbolic link support."),
    (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
@@ -2298,11 +2233,6 @@ struct my_option my_long_options[] =
      option if compiled with valgrind support.
    */
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
-  {"sysdate-is-now", OPT_SYSDATE_IS_NOW,
-   N_("Non-default option to alias SYSDATE() to NOW() to make it "
-      "safe-replicable."),
-   (char**) &global_system_variables.sysdate_is_now,
-   0, 0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"temp-pool", OPT_TEMP_POOL,
    N_("Using this option will cause most temporary files created to use a "
       "small set of names, rather than a unique name for each new file."),
@@ -2357,12 +2287,6 @@ struct my_option my_long_options[] =
     (char**) &global_system_variables.group_concat_max_len,
     (char**) &max_system_variables.group_concat_max_len, 0, GET_UINT64,
     REQUIRED_ARG, 1024, 4, ULONG_MAX, 0, 1, 0},
-  { "interactive_timeout", OPT_INTERACTIVE_TIMEOUT,
-    N_("The number of seconds the server waits for activity on an interactive "
-       "connection before closing it."),
-   (char**) &global_system_variables.net_interactive_timeout,
-   (char**) &max_system_variables.net_interactive_timeout, 0,
-   GET_UINT32, REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   { "join_buffer_size", OPT_JOIN_BUFF_SIZE,
     N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,
@@ -2446,7 +2370,7 @@ struct my_option my_long_options[] =
       "(only the first max_sort_length bytes of each value are used; the "
       "rest are ignored)."),
    (char**) &global_system_variables.max_sort_length,
-   (char**) &max_system_variables.max_sort_length, 0, GET_UINT,
+   (char**) &max_system_variables.max_sort_length, 0, GET_SIZE,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_tmp_tables", OPT_MAX_TMP_TABLES,
    N_("Maximum number of temporary tables a client can keep open at a time."),
@@ -2683,11 +2607,11 @@ SHOW_VAR status_vars[]= {
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
   {"Compression",              (char*) &show_net_compression_cont, SHOW_FUNC},
-  {"Connections",              (char*) &thread_id,              SHOW_LONG_NOFLUSH},
+  {"Connections",              (char*) &thread_id,          SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
-  {"Created_tmp_files",	       (char*) &my_tmp_file_created,	SHOW_INT},
+  {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
   {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
-  {"Flush_commands",           (char*) &refresh_version,        SHOW_LONG_NOFLUSH},
+  {"Flush_commands",           (char*) &refresh_version,    SHOW_INT_NOFLUSH},
   {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
   {"Handler_delete",           (char*) offsetof(STATUS_VAR, ha_delete_count), SHOW_LONG_STATUS},
   {"Handler_prepare",          (char*) offsetof(STATUS_VAR, ha_prepare_count),  SHOW_LONG_STATUS},
@@ -2711,11 +2635,11 @@ SHOW_VAR status_vars[]= {
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(STATUS_VAR, last_query_cost), SHOW_DOUBLE_STATUS},
   {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
-  {"Open_files",               (char*) &my_file_opened,         SHOW_LONG_NOFLUSH},
-  {"Open_streams",             (char*) &my_stream_opened,       SHOW_LONG_NOFLUSH},
+  {"Open_files",               (char*) &my_file_opened,    SHOW_INT_NOFLUSH},
+  {"Open_streams",             (char*) &my_stream_opened,  SHOW_INT_NOFLUSH},
   {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
   {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
-  {"Opened_files",             (char*) &my_file_total_opened, SHOW_LONG_NOFLUSH},
+  {"Opened_files",             (char*) &my_file_total_opened, SHOW_INT_NOFLUSH},
   {"Opened_tables",            (char*) offsetof(STATUS_VAR, opened_tables), SHOW_LONG_STATUS},
   {"Opened_table_definitions", (char*) offsetof(STATUS_VAR, opened_shares), SHOW_LONG_STATUS},
   {"Questions",                (char*) offsetof(STATUS_VAR, questions), SHOW_LONG_STATUS},
@@ -2733,8 +2657,6 @@ SHOW_VAR status_vars[]= {
   {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
   {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
   {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
-  {"Threads_created",	       (char*) &thread_created,		SHOW_LONG_NOFLUSH},
-  {"Threads_running",          (char*) &thread_running,         SHOW_INT},
   {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
   {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
   {NULL, NULL, SHOW_LONGLONG}
@@ -2802,8 +2724,6 @@ static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
   drizzle_home[0]= pidfile_name[0]= 0;
-  opt_bin_log= 0;
-  opt_skip_show_db=0;
   opt_logname= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
@@ -2813,16 +2733,14 @@ static void drizzle_init_variables(void)
   defaults_argv= 0;
   server_id_supplied= 0;
   test_flags= select_errors= dropping_tables= ha_open_options=0;
-  thread_running= wake_thread=0;
-  slave_open_temp_tables= 0;
+  wake_thread=0;
   opt_endinfo= using_udf_functions= 0;
-  opt_using_transactions= false;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
   slow_launch_threads= 0;
-  drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;
+  drizzled_user= drizzled_chroot= opt_init_file= 0;
   my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();
@@ -2830,7 +2748,6 @@ static void drizzle_init_variables(void)
   /* Character sets */
   system_charset_info= &my_charset_utf8_general_ci;
   files_charset_info= &my_charset_utf8_general_ci;
-  national_charset_info= &my_charset_utf8_general_ci;
   table_alias_charset= &my_charset_bin;
   character_set_filesystem= &my_charset_bin;
 
@@ -2846,7 +2763,7 @@ static void drizzle_init_variables(void)
   strcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
-  threads.empty();
+  session_list.empty();
   key_caches.empty();
   if (!(dflt_key_cache= get_or_create_key_cache(default_key_cache_base.str,
                                                 default_key_cache_base.length)))
@@ -2893,6 +2810,8 @@ static void drizzle_init_variables(void)
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
     tmpenv = PREFIX;
   (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
+  
+  connection_count= 0;
 }
 
 
@@ -2945,9 +2864,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
   case 'T':
     test_flags= argument ? (uint32_t) atoi(argument) : 0;
     opt_endinfo=1;
-    break;
-  case (int) OPT_BIN_LOG:
-    opt_bin_log= test(argument != disabled_my_option);
     break;
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
@@ -3184,8 +3100,6 @@ static void set_server_version(void)
   char *end= server_version;
   end+= sprintf(server_version, "%s%s", VERSION, 
                 DRIZZLE_SERVER_SUFFIX_STR);
-  if (opt_bin_log)
-    strcpy(end, "-log"); // This may slow down system
 }
 
 
