@@ -54,12 +54,15 @@ TYPELIB myisam_stats_method_typelib= {
 ** MyISAM tables
 *****************************************************************************/
 
-static handler *myisam_create_handler(StorageEngine *engine,
-                                      TABLE_SHARE *table,
-                                      MEM_ROOT *mem_root)
+class MyisamEngine : public StorageEngine
 {
-  return new (mem_root) ha_myisam(engine, table);
-}
+  virtual handler *create(StorageEngine *engine,
+                          TABLE_SHARE *table,
+                          MEM_ROOT *mem_root)
+  {
+    return new (mem_root) ha_myisam(engine, table);
+  }
+};
 
 // collect errors printed by mi_check routines
 
@@ -1794,8 +1797,12 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *create_info,
   return COMPATIBLE_DATA_YES;
 }
 
-int myisam_deinit(void *)
+int myisam_deinit(void *p)
 {
+
+  MyisamEngine *engine= static_cast<MyisamEngine *>(p);
+  delete engine;
+
   pthread_mutex_destroy(&THR_LOCK_myisam);
 
   return mi_panic(HA_PANIC_CLOSE);
@@ -1803,10 +1810,12 @@ int myisam_deinit(void *)
 
 static int myisam_init(void *p)
 {
-  myisam_engine= (StorageEngine *)p;
-  myisam_engine->state= SHOW_OPTION_YES;
-  myisam_engine->create= myisam_create_handler;
-  myisam_engine->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
+  StorageEngine **engine= static_cast<StorageEngine **>(p);
+  
+  *engine= new MyisamEngine();
+  (*engine)->state= SHOW_OPTION_YES;
+  (*engine)->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
+
   return 0;
 }
 
