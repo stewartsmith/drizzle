@@ -61,6 +61,7 @@ using namespace std;
 
 /* Size of buffer for dump's select query */
 #define QUERY_LENGTH 1536
+#define DRIZZLE_MAX_LINE_LENGTH 8192
 
 /* ignore table flags */
 #define IGNORE_NONE 0x00 /* no ignore */
@@ -94,7 +95,7 @@ static bool  verbose= false, opt_no_create_info= false, opt_no_data= false,
                 opt_include_master_host_port= false,
                 opt_alltspcs= false;
 static bool debug_info_flag= false, debug_check_flag= false;
-static uint32_t opt_max_allowed_packet, opt_net_buffer_length, show_progress_size= 0;
+static uint32_t show_progress_size= 0;
 static uint64_t total_rows= 0;
 static drizzle_st drizzle;
 static drizzle_con_st dcon;
@@ -314,14 +315,6 @@ static struct my_option my_long_options[] =
    "Option automatically turns --lock-tables off.",
    (char**) &opt_master_data, (char**) &opt_master_data, 0,
    GET_UINT, OPT_ARG, 0, 0, DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL, 0, 0, 0},
-  {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET, "",
-    (char**) &opt_max_allowed_packet, (char**) &opt_max_allowed_packet, 0,
-    GET_UINT32, REQUIRED_ARG, 24*1024*1024, 4096,
-   (int64_t) 2L*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
-  {"net_buffer_length", OPT_NET_BUFFER_LENGTH, "",
-    (char**) &opt_net_buffer_length, (char**) &opt_net_buffer_length, 0,
-    GET_UINT32, REQUIRED_ARG, 1024*1024L-1025, 4096, 16*1024L*1024L,
-   MALLOC_OVERHEAD-1024, 1024, 0},
   {"no-autocommit", OPT_AUTOCOMMIT,
    "Wrap tables with autocommit/commit statements.",
    (char**) &opt_autocommit, (char**) &opt_autocommit, 0, GET_BOOL, NO_ARG,
@@ -771,10 +764,6 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
 static int get_options(int *argc, char ***argv)
 {
   int ho_error;
-  const DRIZZLE_PARAMETERS *drizzle_params= drizzleclient_get_parameters();
-
-  opt_max_allowed_packet= *drizzle_params->p_max_allowed_packet;
-  opt_net_buffer_length= *drizzle_params->p_net_buffer_length;
 
   md_result_file= stdout;
   load_defaults("drizzle",load_default_groups,argc,argv);
@@ -788,8 +777,6 @@ static int get_options(int *argc, char ***argv)
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
     return(ho_error);
 
-  *drizzle_params->p_max_allowed_packet= opt_max_allowed_packet;
-  *drizzle_params->p_net_buffer_length= opt_net_buffer_length;
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
@@ -850,7 +837,7 @@ static int get_options(int *argc, char ***argv)
     return EX_USAGE;
   }
   if (tty_password)
-    opt_password=drizzleclient_get_tty_password(NULL);
+    opt_password=client_get_tty_password(NULL);
   return(0);
 } /* get_options */
 
@@ -858,11 +845,10 @@ static int get_options(int *argc, char ***argv)
 /*
 ** DB_error -- prints DRIZZLE error message and exits the program.
 */
-static void DB_error(DRIZZLE *drizzle_arg, const char *when)
+static void DB_error(drizzle_con_st *con, const char *when)
 {
 
-  maybe_die(EX_DRIZZLEERR, _("Got error: %d: %s %s"),
-          drizzleclient_errno(drizzle_arg), drizzleclient_error(drizzle_arg), when);
+  maybe_die(EX_DRIZZLEERR, _("Got error: %s %s"), drizzle_con_error(con), when);
   return;
 }
 
@@ -947,14 +933,18 @@ static void maybe_die(int error_num, const char* fmt_reason, ...)
     1               error
 */
 
-static int drizzleclient_query_with_error_report(DRIZZLE *drizzle_con, DRIZZLE_RES **res,
-                                         const char *query)
+static int drizzleclient_query_with_error_report(drizzle_con_st *con,
+                                                 drizzle_result_st *result,
+                                                 const char *query)
 {
-  if (drizzleclient_query(drizzle_con, query) ||
-      (res && !((*res)= drizzleclient_store_result(drizzle_con))))
+  drizzle_return_t ret;
+
+  if (drizzle_query_str(con, result, query, &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK ||
+      drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
   {
     maybe_die(EX_DRIZZLEERR, _("Couldn't execute '%s': %s (%d)"),
-            query, drizzleclient_error(drizzle_con), drizzleclient_errno(drizzle_con));
+            query, drizzle_con_error(con), ret);
     return 1;
   }
   return 0;
@@ -1001,8 +991,8 @@ static void maybe_exit(int error)
     first_error= error;
   if (ignore_errors)
     return;
-  if (drizzle)
-    drizzleclient_close(drizzle);
+  drizzle_con_free(&dcon);
+  drizzle_free(&drizzle);
   free_resources();
   exit(error);
 }
@@ -1015,14 +1005,13 @@ static void maybe_exit(int error)
 static int connect_to_db(char *host, char *user,char *passwd)
 {
   verbose_msg(_("-- Connecting to %s...\n"), host ? host : "localhost");
-  drizzleclient_create(&drizzleclient_connection);
-  if (opt_compress)
-    drizzleclient_options(&drizzleclient_connection,DRIZZLE_OPT_COMPRESS,NULL);
-  if (!(drizzle= drizzleclient_connect(&drizzleclient_connection,host,user,passwd,
-                                  NULL,opt_drizzle_port, NULL,
-                                  0)))
+  drizzle_create(&drizzle);
+  drizzle_con_create(&drizzle, &dcon);
+  drizzle_con_set_tcp(&dcon, host, opt_drizzle_port);
+  drizzle_con_set_auth(&dcon, user, passwd);
+  if (drizzle_con_connect(&dcon) != DRIZZLE_RETURN_OK)
   {
-    DB_error(&drizzleclient_connection, "when trying to connect");
+    DB_error(&dcon, "when trying to connect");
     return(1);
   }
 
@@ -1036,7 +1025,8 @@ static int connect_to_db(char *host, char *user,char *passwd)
 static void dbDisconnect(char *host)
 {
   verbose_msg(_("-- Disconnecting from %s...\n"), host ? host : "localhost");
-  drizzleclient_close(drizzle);
+  drizzle_con_free(&dcon);
+  drizzle_free(&drizzle);
 } /* dbDisconnect */
 
 
@@ -1047,7 +1037,7 @@ static void unescape(FILE *file,char *pos,uint32_t length)
   if (!(tmp=(char*) malloc(length*2+1)))
     die(EX_DRIZZLEERR, _("Couldn't allocate memory"));
 
-  drizzleclient_escape_string(tmp, pos, length);
+  drizzle_escape_string(tmp, pos, length);
   fputc('\'', file);
   fputs(tmp, file);
   fputc('\'', file);
@@ -1304,21 +1294,22 @@ static void print_xml_null_tag(FILE * xml_file, const char* sbeg,
 */
 
 static void print_xml_row(FILE *xml_file, const char *row_name,
-                          DRIZZLE_RES *tableRes, DRIZZLE_ROW *row)
+                          drizzle_result_st *tableRes, drizzle_row_t *row)
 {
   uint32_t i;
-  DRIZZLE_FIELD *field;
-  uint32_t *lengths= drizzleclient_fetch_lengths(tableRes);
+  drizzle_column_st *column;
+  size_t *lengths= drizzle_row_field_sizes(tableRes);
 
   fprintf(xml_file, "\t\t<%s", row_name);
   check_io(xml_file);
-  drizzleclient_field_seek(tableRes, 0);
-  for (i= 0; (field= drizzleclient_fetch_field(tableRes)); i++)
+  drizzle_column_seek(tableRes, 0);
+  for (i= 0; (column= drizzle_column_next(tableRes)); i++)
   {
     if ((*row)[i])
     {
       fputc(' ', xml_file);
-      print_quoted_xml(xml_file, field->name, field->name_length);
+      print_quoted_xml(xml_file, drizzle_column_name(column),
+                       strlen(drizzle_column_name(column)));
       fputs("=\"", xml_file);
       print_quoted_xml(xml_file, (*row)[i], lengths[i]);
       fputc('"', xml_file);
@@ -1374,11 +1365,13 @@ static bool get_table_structure(char *table, char *db, char *table_type,
   bool    init=0, delayed, write_data, complete_insert;
   char       *result_table, *opt_quoted_table;
   const char *insert_option;
-  char	     name_buff[NAME_LEN+3],table_buff[NAME_LEN*2+3];
-  char       table_buff2[NAME_LEN*2+3], query_buff[QUERY_LENGTH];
+  char	     name_buff[DRIZZLE_MAX_COLUMN_NAME_SIZE+3];
+  char       table_buff[DRIZZLE_MAX_COLUMN_NAME_SIZE*2+3];
+  char       table_buff2[DRIZZLE_MAX_TABLE_SIZE*2+3];
+  char       query_buff[QUERY_LENGTH];
   FILE       *sql_file= md_result_file;
-  DRIZZLE_RES  *result;
-  DRIZZLE_ROW  row;
+  drizzle_result_st result;
+  drizzle_row_t  row;
 
   *ignore_flag= check_if_ignore_table(table, table_type);
 
@@ -1418,11 +1411,11 @@ static bool get_table_structure(char *table, char *db, char *table_type,
     {
       /* Make an sql-file, if path was given iow. option -T was given */
       char buff[20+FN_REFLEN];
-      const DRIZZLE_FIELD *field;
+      const drizzle_column_st *column;
 
       snprintf(buff, sizeof(buff), "show create table %s", result_table);
 
-      if (drizzleclient_query_with_error_report(drizzle, &result, buff))
+      if (drizzleclient_query_with_error_report(&dcon, &result, buff))
         return false;
 
       if (path)
@@ -1447,18 +1440,18 @@ static bool get_table_structure(char *table, char *db, char *table_type,
         check_io(sql_file);
       }
 
-      field= drizzleclient_fetch_field_direct(result, 0);
+      column= drizzle_column_index(&result, 0);
 
-      row= drizzleclient_fetch_row(result);
+      row= drizzle_row_next(&result);
 
       fprintf(sql_file, "%s;\n", row[1]);
 
       check_io(sql_file);
-      drizzleclient_free_result(result);
+      drizzle_result_free(&result);
     }
     snprintf(query_buff, sizeof(query_buff), "show fields from %s",
              result_table);
-    if (drizzleclient_query_with_error_report(drizzle, &result, query_buff))
+    if (drizzleclient_query_with_error_report(&dcon, &result, query_buff))
     {
       if (path)
         fclose(sql_file);
@@ -1492,7 +1485,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
       }
     }
 
-    while ((row= drizzleclient_fetch_row(result)))
+    while ((row= drizzle_row_next(&result)))
     {
       if (complete_insert)
       {
@@ -1504,17 +1497,17 @@ static bool get_table_structure(char *table, char *db, char *table_type,
         insert_pat.append(quote_name(row[SHOW_FIELDNAME], name_buff, 0));
       }
     }
-    *num_fields= drizzleclient_num_rows(result);
-    drizzleclient_free_result(result);
+    *num_fields= drizzle_result_column_count(&result);
+    drizzle_result_free(&result);
   }
   else
   {
     verbose_msg(_("%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"),
-                my_progname, drizzleclient_error(drizzle));
+                my_progname, drizzle_con_error(&dcon));
 
     snprintf(query_buff, sizeof(query_buff), "show fields from %s",
              result_table);
-    if (drizzleclient_query_with_error_report(drizzle, &result, query_buff))
+    if (drizzleclient_query_with_error_report(&dcon, &result, query_buff))
       return false;
 
     /* Make an sql-file, if path was given iow. option -T was given */
@@ -1523,7 +1516,10 @@ static bool get_table_structure(char *table, char *db, char *table_type,
       if (path)
       {
         if (!(sql_file= open_sql_file_for_table(table)))
+        {
+          drizzle_result_free(&result);
           return false;
+        }
         write_header(sql_file, db);
       }
       if (!opt_xml && opt_comments)
@@ -1558,9 +1554,9 @@ static bool get_table_structure(char *table, char *db, char *table_type,
       }
     }
 
-    while ((row= drizzleclient_fetch_row(result)))
+    while ((row= drizzle_row_next(&result)))
     {
-      uint32_t *lengths= drizzleclient_fetch_lengths(result);
+      size_t *lengths= drizzle_row_field_sizes(&result);
       if (init)
       {
         if (!opt_xml && !opt_no_create_info)
@@ -1578,7 +1574,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
       {
         if (opt_xml)
         {
-          print_xml_row(sql_file, "field", result, &row);
+          print_xml_row(sql_file, "field", &result, &row);
           continue;
         }
 
@@ -1602,15 +1598,15 @@ static bool get_table_structure(char *table, char *db, char *table_type,
         check_io(sql_file);
       }
     }
-    *num_fields= drizzleclient_num_rows(result);
-    drizzleclient_free_result(result);
+    *num_fields= drizzle_result_row_count(&result);
+    drizzle_result_free(&result);
     if (!opt_no_create_info)
     {
       /* Make an sql-file, if path was given iow. option -T was given */
       char buff[20+FN_REFLEN];
       uint32_t keynr,primary_key;
       snprintf(buff, sizeof(buff), "show keys from %s", result_table);
-      if (drizzleclient_query_with_error_report(drizzle, &result, buff))
+      if (drizzleclient_query_with_error_report(dcon, &result, buff))
       {
         if (drizzleclient_errno(drizzle) == ER_WRONG_OBJECT)
         {
@@ -1691,7 +1687,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
         snprintf(buff, sizeof(buff), "show table status like %s",
                  quote_for_like(table, show_name_buff));
 
-        if (drizzleclient_query_with_error_report(drizzle, &result, buff))
+        if (drizzleclient_query_with_error_report(dcon, &result, buff))
         {
           if (drizzleclient_errno(drizzle) != ER_PARSE_ERROR)
           {                                     /* If old DRIZZLE version */
@@ -1833,9 +1829,9 @@ static void dump_table(char *table, char *db)
   int error= 0;
   uint32_t rownr, row_break, total_length, init_length;
   uint64_t num_fields= 0;
-  DRIZZLE_RES     *res;
+  drizzle_result_st     *res;
   DRIZZLE_FIELD   *field;
-  DRIZZLE_ROW     row;
+  drizzle_row_t     row;
 
 
   /*
@@ -1972,7 +1968,8 @@ static void dump_table(char *table, char *db)
       fputs("\n", md_result_file);
       check_io(md_result_file);
     }
-    if (drizzleclient_query_with_error_report(drizzle, 0, query_string.c_str()))
+    if (drizzleclient_query_with_error_report(dcon, &result,
+                                              query_string.c_str()))
     {
       DB_error(drizzle, _("when retrieving data from server"));
       goto err;
@@ -2009,7 +2006,7 @@ static void dump_table(char *table, char *db)
       check_io(md_result_file);
     }
 
-    total_length= opt_net_buffer_length;                /* Force row break */
+    total_length= DRIZZLE_MAX_LINE_LENGTH;                /* Force row break */
     row_break=0;
     rownr=0;
     init_length=(uint32_t) insert_pat.length()+4;
@@ -2202,7 +2199,7 @@ static void dump_table(char *table, char *db)
         uint32_t row_length;
         extended_row.append(")");
         row_length= 2 + extended_row.length();
-        if (total_length + row_length < opt_net_buffer_length)
+        if (total_length + row_length < DRIZZLE_MAX_LINE_LENGTH)
         {
           total_length+= row_length;
           fputc(',',md_result_file);            /* Always row break */
@@ -2277,8 +2274,8 @@ err:
 
 static char *getTableName(int reset)
 {
-  static DRIZZLE_RES *res= NULL;
-  DRIZZLE_ROW    row;
+  static drizzle_result_st *res= NULL;
+  drizzle_row_t    row;
 
   if (!res)
   {
@@ -2301,11 +2298,11 @@ static char *getTableName(int reset)
 
 static int dump_all_databases()
 {
-  DRIZZLE_ROW row;
-  DRIZZLE_RES *tableres;
+  drizzle_row_t row;
+  drizzle_result_st *tableres;
   int result=0;
 
-  if (drizzleclient_query_with_error_report(drizzle, &tableres, "SHOW DATABASES"))
+  if (drizzleclient_query_with_error_report(dcon, &tableres, "SHOW DATABASES"))
     return 1;
   while ((row= drizzleclient_fetch_row(tableres)))
   {
@@ -2351,8 +2348,8 @@ int init_dumping_tables(char *qdatabase)
   if (!opt_create_db)
   {
     char qbuf[256];
-    DRIZZLE_ROW row;
-    DRIZZLE_RES *dbinfo;
+    drizzle_row_t row;
+    drizzle_result_st *dbinfo;
 
     snprintf(qbuf, sizeof(qbuf),
              "SHOW CREATE DATABASE IF NOT EXISTS %s",
@@ -2489,7 +2486,7 @@ static int dump_all_tables_in_db(char *database)
     check_io(md_result_file);
   }
   if (lock_tables)
-    drizzleclient_query_with_error_report(drizzle, 0, "UNLOCK TABLES");
+    drizzleclient_query_with_error_report(dcon, &result, "UNLOCK TABLES");
 
   return(0);
 } /* dump_all_tables_in_db */
@@ -2509,8 +2506,8 @@ static int dump_all_tables_in_db(char *database)
 static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
 {
   char *name= 0;
-  DRIZZLE_RES  *table_res;
-  DRIZZLE_ROW  row;
+  drizzle_result_st  *table_res;
+  drizzle_row_t  row;
   char query[50 + 2*NAME_LEN];
   char show_name_buff[FN_REFLEN];
 
@@ -2520,7 +2517,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
   snprintf(query, sizeof(query), "SHOW TABLES LIKE %s",
            quote_for_like(old_table_name, show_name_buff));
 
-  if (drizzleclient_query_with_error_report(drizzle, 0, query))
+  if (drizzleclient_query_with_error_report(dcon, &result, query))
     return NULL;
 
   if ((table_res= drizzleclient_store_result(drizzle)))
@@ -2622,15 +2619,15 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     check_io(md_result_file);
   }
   if (lock_tables)
-    drizzleclient_query_with_error_report(drizzle, 0, "UNLOCK TABLES");
+    drizzleclient_query_with_error_report(dcon, &result, "UNLOCK TABLES");
   return(0);
 } /* dump_selected_tables */
 
 
-static int do_show_master_status(DRIZZLE *drizzle_con)
+static int do_show_master_status(drizzle_con_st *drizzle_con)
 {
-  DRIZZLE_ROW row;
-  DRIZZLE_RES *master;
+  drizzle_row_t row;
+  drizzle_result_st master;
   const char *comment_prefix=
     (opt_master_data == DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL) ? "-- " : "";
   if (drizzleclient_query_with_error_report(drizzle_con, &master, "SHOW MASTER STATUS"))
@@ -2668,13 +2665,13 @@ static int do_show_master_status(DRIZZLE *drizzle_con)
 
 static int do_stop_slave_sql(DRIZZLE *drizzle_con)
 {
-  DRIZZLE_RES *slave;
+  drizzle_result_st *slave;
   /* We need to check if the slave sql is running in the first place */
   if (drizzleclient_query_with_error_report(drizzle_con, &slave, "SHOW SLAVE STATUS"))
     return(1);
   else
   {
-    DRIZZLE_ROW row= drizzleclient_fetch_row(slave);
+    drizzle_row_t row= drizzleclient_fetch_row(slave);
     if (row && row[11])
     {
       /* if SLAVE SQL is not running, we don't stop it */
@@ -2715,7 +2712,7 @@ static int add_slave_statements(void)
 
 static int do_show_slave_status(DRIZZLE *drizzle_con)
 {
-  DRIZZLE_RES *slave;
+  drizzle_result_st *slave;
   const char *comment_prefix=
     (opt_slave_data == DRIZZLE_OPT_SLAVE_DATA_COMMENTED_SQL) ? "-- " : "";
   if (drizzleclient_query_with_error_report(drizzle_con, &slave, "SHOW SLAVE STATUS"))
@@ -2729,7 +2726,7 @@ static int do_show_slave_status(DRIZZLE *drizzle_con)
   }
   else
   {
-    DRIZZLE_ROW row= drizzleclient_fetch_row(slave);
+    drizzle_row_t row= drizzleclient_fetch_row(slave);
     if (row && row[9] && row[21])
     {
       /* SHOW MASTER STATUS reports file and position */
@@ -2759,13 +2756,13 @@ static int do_show_slave_status(DRIZZLE *drizzle_con)
 
 static int do_start_slave_sql(DRIZZLE *drizzle_con)
 {
-  DRIZZLE_RES *slave;
+  drizzle_result_st *slave;
   /* We need to check if the slave sql is stopped in the first place */
   if (drizzleclient_query_with_error_report(drizzle_con, &slave, "SHOW SLAVE STATUS"))
     return(1);
   else
   {
-    DRIZZLE_ROW row= drizzleclient_fetch_row(slave);
+    drizzle_row_t row= drizzleclient_fetch_row(slave);
     if (row && row[11])
     {
       /* if SLAVE SQL is not running, we don't start it */
@@ -2815,8 +2812,8 @@ static int do_unlock_tables(DRIZZLE *drizzle_con)
 static int get_bin_log_name(DRIZZLE *drizzle_con,
                             char* buff_log_name, uint32_t buff_len)
 {
-  DRIZZLE_RES *res;
-  DRIZZLE_ROW row;
+  drizzle_result_st *res;
+  drizzle_row_t row;
 
   if (drizzleclient_query(drizzle_con, "SHOW MASTER STATUS") ||
       !(res= drizzleclient_store_result(drizzle)))
@@ -2901,7 +2898,7 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint32_t length,
 
 
 /* Print a value with a prefix on file */
-static void print_value(FILE *file, DRIZZLE_RES  *result, DRIZZLE_ROW row,
+static void print_value(FILE *file, drizzle_result_st  *result, drizzle_row_t row,
                         const char *prefix, const char *name,
                         int string_value)
 {
@@ -2933,7 +2930,7 @@ static void print_value(FILE *file, DRIZZLE_RES  *result, DRIZZLE_ROW row,
  * Returns const char* of the data in that row or NULL if not found
  */
 
-static const char* fetch_named_row(DRIZZLE_RES *result, DRIZZLE_ROW row, const char *name)
+static const char* fetch_named_row(drizzle_result_st *result, drizzle_row_t row, const char *name)
 {
   DRIZZLE_FIELD   *field;
   drizzleclient_field_seek(result, 0);
@@ -2982,8 +2979,8 @@ char check_if_ignore_table(const char *table_name, char *table_type)
   char result= IGNORE_NONE;
   char buff[FN_REFLEN+80], show_name_buff[FN_REFLEN];
   const char *number_of_rows= NULL;
-  DRIZZLE_RES *res= NULL;
-  DRIZZLE_ROW row;
+  drizzle_result_st *res= NULL;
+  drizzle_row_t row;
 
   /* Check memory for quote_for_like() */
   assert(2*sizeof(table_name) < sizeof(show_name_buff));
@@ -3055,8 +3052,8 @@ char check_if_ignore_table(const char *table_name, char *table_type)
 
 static char *primary_key_fields(const char *table_name)
 {
-  DRIZZLE_RES  *res= NULL;
-  DRIZZLE_ROW  row;
+  drizzle_result_st  *res= NULL;
+  drizzle_row_t  row;
   /* SHOW KEYS FROM + table name * 2 (escaped) + 2 quotes + \0 */
   char show_keys_buff[15 + NAME_LEN * 2 + 3];
   uint32_t result_length= 0;
