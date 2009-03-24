@@ -21,7 +21,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/base.h>
 #include <drizzled/handler.h>
-#include <drizzled/handlerton.h>
+#include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>

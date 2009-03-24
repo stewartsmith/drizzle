@@ -30,7 +30,7 @@
 #include <mysys/hash.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>
-#include <drizzled/handlerton.h>
+#include <drizzled/plugin/storage_engine.h>
 #include <drizzled/handler_structs.h>
 #include <drizzled/ha_statistics.h>
 

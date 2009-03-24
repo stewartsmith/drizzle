@@ -19,7 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/ha_trx_info.h>
-#include <drizzled/handlerton.h>
+#include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 
 
