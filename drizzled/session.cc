@@ -198,6 +198,8 @@ Session::Session()
 {
   uint64_t tmp;
 
+  memset(process_list_info, 0, PROCESS_LIST_WIDTH);
+
   /*
     Pass nominal parameters to init_alloc_root only to ensure that
     the destructor works OK in case of an error. The main_mem_root
@@ -610,7 +612,7 @@ void Session::prepareForQueries()
     net.compress= true;
 
   version= refresh_version;
-  set_proc_info(0);
+  set_proc_info(NULL);
   command= COM_SLEEP;
   set_time();
   init_for_queries();
@@ -631,7 +633,7 @@ void Session::prepareForQueries()
                   , sctx->ip.c_str(), "init_connect command failed");
       errmsg_printf(ERRMSG_LVL_WARN, "%s", main_da.message());
     }
-    set_proc_info(0);
+    set_proc_info(NULL);
     set_time();
     init_for_queries();
   }
