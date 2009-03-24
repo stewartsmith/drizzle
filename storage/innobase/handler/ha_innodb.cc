@@ -49,6 +49,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <drizzled/field/blob.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/timestamp.h>
+#include <drizzled/plugin/storage_engine.h>
 
 /* Include necessary InnoDB headers */
 extern "C" {
@@ -212,27 +213,32 @@ static void free_share(INNOBASE_SHARE *share);
 
 class InnobaseEngine : public StorageEngine
 {
-  virtual int close(StorageEngine *engine, Session* session);
-  virtual int commit(StorageEngine *engine, Session* session, bool all);
-  virtual int rollback(StorageEngine *engine, Session* session, bool all);
-  virtual int rollback_to_savepoint(StorageEngine *engine, Session* session, 
-                                    void *savepoint);
+public:
+  InnobaseEngine() : StorageEngine() {}
+
+  virtual
+  int
+  close_connection(
+/*======================*/
+			/* out: 0 or error number */
+        StorageEngine*	engine,	/* in:  innobase StorageEngine */
+	Session*	session);	/* in: handle to the MySQL thread of the user
+			whose resources should be free'd */
+
   virtual int savepoint_set(StorageEngine *engine, Session* session,
                         void *savepoint);
+  virtual int savepoint_rollback(StorageEngine *engine, Session* session, 
+                                    void *savepoint);
   virtual int savepoint_release(StorageEngine *engine, Session* session, 
                                 void *savepoint);
-  virtual handler *create(StorageEngine *engine,
-                          TABLE_SHARE *table,
-                          MEM_ROOT *mem_root)
-  {
-    return new (mem_root) ha_innobase(engine, table);
-  }
+  virtual int commit(StorageEngine *engine, Session* session, bool all);
+  virtual int rollback(StorageEngine *engine, Session* session, bool all);
 
   /***********************************************************************
   This function is used to prepare X/Open XA distributed transaction   */
   virtual
   int
-  xa_prepare(
+  prepare(
   /*================*/
   			/* out: 0 or error number */
   	StorageEngine* engine,
@@ -244,7 +250,7 @@ class InnobaseEngine : public StorageEngine
   This function is used to recover X/Open XA distributed transactions   */
   virtual
   int
-  xa_recover(
+  recover(
   /*================*/
   				/* out: number of prepared transactions
   				stored in xid_list */
@@ -271,6 +277,14 @@ class InnobaseEngine : public StorageEngine
   			/* out: 0 or error number */
   	StorageEngine* engine,
   	XID	*xid);	/* in: X/Open XA transaction identification */
+
+  virtual handler *create(StorageEngine *engine,
+                          TABLE_SHARE *table,
+                          MEM_ROOT *mem_root)
+  {
+    return new (mem_root) ha_innobase(engine, table);
+  }
+
   /*********************************************************************
   Removes all tables in the named database inside InnoDB. */
   virtual
@@ -327,16 +341,6 @@ class InnobaseEngine : public StorageEngine
         StorageEngine *engine,	/* in: StorageEngine */
 	Session*		session);	/* in: MySQL thread */
 
-  virtual int savepoint_rollback(StorageEngine *, Session *, void *);
-  
-  virtual
-  int
-  close_connection(
-/*======================*/
-			/* out: 0 or error number */
-        StorageEngine*	engine,	/* in:  innobase StorageEngine */
-	Session*	session);	/* in: handle to the MySQL thread of the user
-			whose resources should be free'd */
 };
 
 /****************************************************************
@@ -8640,7 +8644,7 @@ innobase_get_at_most_n_mbchars(
 /***********************************************************************
 This function is used to prepare X/Open XA distributed transaction   */
 int
-InnobaseEngine::xa_prepare(
+InnobaseEngine::prepare(
 /*================*/
 			/* out: 0 or error number */
         StorageEngine	*engine,
@@ -8739,7 +8743,7 @@ InnobaseEngine::xa_prepare(
 /***********************************************************************
 This function is used to recover X/Open XA distributed transactions   */
 int
-InnobaseEngine::xa_recover(
+InnobaseEngine::recover(
 /*================*/
 				/* out: number of prepared transactions
 				stored in xid_list */
