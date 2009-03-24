@@ -75,7 +75,7 @@ extern "C" bool tina_check_status(void* param);
 /* Stuff for shares */
 pthread_mutex_t tina_mutex;
 static HASH tina_open_tables;
-static handler *tina_create_handler(StorageEngine *hton,
+static handler *tina_create_handler(StorageEngine *engine,
                                     TABLE_SHARE *table,
                                     MEM_ROOT *mem_root);
 
@@ -416,16 +416,16 @@ off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 }
 
 
-static handler *tina_create_handler(StorageEngine *hton,
+static handler *tina_create_handler(StorageEngine *engine,
                                     TABLE_SHARE *table,
                                     MEM_ROOT *mem_root)
 {
-  return new (mem_root) ha_tina(hton, table);
+  return new (mem_root) ha_tina(engine, table);
 }
 
 
-ha_tina::ha_tina(StorageEngine *hton, TABLE_SHARE *table_arg)
-  :handler(hton, table_arg),
+ha_tina::ha_tina(StorageEngine *engine, TABLE_SHARE *table_arg)
+  :handler(engine, table_arg),
   /*
     These definitions are found in handler.h
     They are not probably completely right.

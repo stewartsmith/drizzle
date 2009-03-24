@@ -188,9 +188,9 @@ static bool dropdb_handlerton(Session *,
                               plugin_ref plugin,
                               void *path)
 {
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
-  if (hton->state == SHOW_OPTION_YES && hton->drop_database)
-    hton->drop_database(hton, (char *)path);
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
+  if (engine->state == SHOW_OPTION_YES && engine->drop_database)
+    engine->drop_database(engine, (char *)path);
   return false;
 }
 
@@ -204,14 +204,14 @@ void ha_drop_database(char* path)
 static bool closecon_handlerton(Session *session, plugin_ref plugin,
                                 void *)
 {
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   /*
     there's no need to rollback here as all transactions must
     be rolled back already
   */
-  if (hton->state == SHOW_OPTION_YES && hton->close_connection &&
-      session_get_ha_data(session, hton))
-    hton->close_connection(hton, session);
+  if (engine->state == SHOW_OPTION_YES && engine->close_connection &&
+      session_get_ha_data(session, engine))
+    engine->close_connection(engine, session);
   return false;
 }
 
@@ -877,10 +877,10 @@ static bool xacommit_handlerton(Session *,
                                 plugin_ref plugin,
                                 void *arg)
 {
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
-  if (hton->state == SHOW_OPTION_YES && hton->recover)
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
+  if (engine->state == SHOW_OPTION_YES && engine->recover)
   {
-    hton->commit_by_xid(hton, ((struct xahton_st *)arg)->xid);
+    engine->commit_by_xid(engine, ((struct xahton_st *)arg)->xid);
     ((struct xahton_st *)arg)->result= 0;
   }
   return false;
@@ -890,10 +890,10 @@ static bool xarollback_handlerton(Session *,
                                   plugin_ref plugin,
                                   void *arg)
 {
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
-  if (hton->state == SHOW_OPTION_YES && hton->recover)
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
+  if (engine->state == SHOW_OPTION_YES && engine->recover)
   {
-    hton->rollback_by_xid(hton, ((struct xahton_st *)arg)->xid);
+    engine->rollback_by_xid(engine, ((struct xahton_st *)arg)->xid);
     ((struct xahton_st *)arg)->result= 0;
   }
   return false;
@@ -940,16 +940,16 @@ static bool xarecover_handlerton(Session *,
                                  plugin_ref plugin,
                                  void *arg)
 {
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   struct xarecover_st *info= (struct xarecover_st *) arg;
   int got;
 
-  if (hton->state == SHOW_OPTION_YES && hton->recover)
+  if (engine->state == SHOW_OPTION_YES && engine->recover)
   {
-    while ((got= hton->recover(hton, info->list, info->len)) > 0 )
+    while ((got= engine->recover(engine, info->list, info->len)) > 0 )
     {
       errmsg_printf(ERRMSG_LVL_INFO, _("Found %d prepared transaction(s) in %s"),
-                            got, ha_resolve_storage_engine_name(hton));
+                            got, ha_resolve_storage_engine_name(engine));
       for (int i=0; i < got; i ++)
       {
         my_xid x=info->list[i].get_my_xid();
@@ -969,11 +969,11 @@ static bool xarecover_handlerton(Session *,
             hash_search(info->commit_list, (unsigned char *)&x, sizeof(x)) != 0 :
             tc_heuristic_recover == TC_HEURISTIC_RECOVER_COMMIT)
         {
-          hton->commit_by_xid(hton, info->list+i);
+          engine->commit_by_xid(engine, info->list+i);
         }
         else
         {
-          hton->rollback_by_xid(hton, info->list+i);
+          engine->rollback_by_xid(engine, info->list+i);
         }
       }
       if (got < info->len)
@@ -1120,10 +1120,10 @@ bool mysql_xa_recover(Session *session)
 static bool release_temporary_latches(Session *session, plugin_ref plugin,
                                       void *)
 {
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
 
-  if (hton->state == SHOW_OPTION_YES && hton->release_temporary_latches)
-    hton->release_temporary_latches(hton, session);
+  if (engine->state == SHOW_OPTION_YES && engine->release_temporary_latches)
+    engine->release_temporary_latches(engine, session);
 
   return false;
 }
@@ -1248,11 +1248,11 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 
 static bool snapshot_handlerton(Session *session, plugin_ref plugin, void *arg)
 {
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
-  if (hton->state == SHOW_OPTION_YES &&
-      hton->start_consistent_snapshot)
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
+  if (engine->state == SHOW_OPTION_YES &&
+      engine->start_consistent_snapshot)
   {
-    hton->start_consistent_snapshot(hton, session);
+    engine->start_consistent_snapshot(engine, session);
     *((bool *)arg)= false;
   }
   return false;
@@ -1280,9 +1280,9 @@ static bool flush_handlerton(Session *,
                              plugin_ref plugin,
                              void *)
 {
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
-  if (hton->state == SHOW_OPTION_YES && hton->flush_logs &&
-      hton->flush_logs(hton))
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
+  if (engine->state == SHOW_OPTION_YES && engine->flush_logs &&
+      engine->flush_logs(engine))
     return true;
   return false;
 }
@@ -2995,24 +2995,24 @@ struct st_table_exists_in_engine_args
   const char *db;
   const char *name;
   int err;
-  StorageEngine* hton;
+  StorageEngine* engine;
 };
 
 static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugin,
                                               void *arg)
 {
   st_table_exists_in_engine_args *vargs= (st_table_exists_in_engine_args *)arg;
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
 
   int err= HA_ERR_NO_SUCH_TABLE;
 
-  if (hton->state == SHOW_OPTION_YES && hton->table_exists_in_engine)
-    err = hton->table_exists_in_engine(hton, session, vargs->db, vargs->name);
+  if (engine->state == SHOW_OPTION_YES && engine->table_exists_in_engine)
+    err = engine->table_exists_in_engine(engine, session, vargs->db, vargs->name);
 
   vargs->err = err;
   if (vargs->err == HA_ERR_TABLE_EXIST)
   {
-    vargs->hton= hton;
+    vargs->engine= engine;
     return true;
   }
 
@@ -3021,7 +3021,7 @@ static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugi
 
 int ha_table_exists_in_engine(Session* session,
                               const char* db, const char* name,
-                              StorageEngine **hton)
+                              StorageEngine **engine)
 {
   st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE, NULL};
   plugin_foreach(session, table_exists_in_engine_handlerton,
@@ -3050,13 +3050,13 @@ int ha_table_exists_in_engine(Session* session,
                                  strlen(table.engine().name().c_str()) };
         plugin_ref plugin= ha_resolve_by_name(session, &engine_name);
         if(plugin)
-          args.hton= plugin_data(plugin,StorageEngine *);
+          args.engine= plugin_data(plugin,StorageEngine *);
       }
     }
   }
 
-  if(hton)
-    *hton= args.hton;
+  if(engine)
+    *engine= args.engine;
 
   return(args.err);
 }
@@ -4089,10 +4089,10 @@ static bool exts_handlerton(Session *,
                             void *arg)
 {
   List<char> *found_exts= (List<char> *) arg;
-  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   handler *file;
-  if (hton->state == SHOW_OPTION_YES && hton->create &&
-      (file= hton->create(hton, (TABLE_SHARE*) 0, current_session->mem_root)))
+  if (engine->state == SHOW_OPTION_YES && engine->create &&
+      (file= engine->create(engine, (TABLE_SHARE*) 0, current_session->mem_root)))
   {
     List_iterator_fast<char> it(*found_exts);
     const char **ext, *old_ext;

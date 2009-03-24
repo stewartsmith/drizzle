@@ -1124,7 +1124,7 @@ bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type 
 
 int ha_find_files(Session *session,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
-int ha_table_exists_in_engine(Session* session, const char* db, const char* name, StorageEngine **hton= NULL);
+int ha_table_exists_in_engine(Session* session, const char* db, const char* name, StorageEngine **engine= NULL);
 
 /* key cache */
 extern "C" int ha_init_key_cache(const char *name, KEY_CACHE *key_cache);

@@ -44,12 +44,12 @@
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
 
 static int binlog_init(void *p);
-static int binlog_close_connection(StorageEngine *hton, Session *session);
-static int binlog_savepoint_set(StorageEngine *hton, Session *session, void *sv);
-static int binlog_savepoint_rollback(StorageEngine *hton, Session *session, void *sv);
-static int binlog_commit(StorageEngine *hton, Session *session, bool all);
-static int binlog_rollback(StorageEngine *hton, Session *session, bool all);
-static int binlog_prepare(StorageEngine *hton, Session *session, bool all);
+static int binlog_close_connection(StorageEngine *engine, Session *session);
+static int binlog_savepoint_set(StorageEngine *engine, Session *session, void *sv);
+static int binlog_savepoint_rollback(StorageEngine *engine, Session *session, void *sv);
+static int binlog_commit(StorageEngine *engine, Session *session, bool all);
+static int binlog_rollback(StorageEngine *engine, Session *session, bool all);
+static int binlog_prepare(StorageEngine *engine, Session *session, bool all);
 
 
 StorageEngine *binlog_engine;
@@ -127,7 +127,7 @@ static int binlog_prepare(StorageEngine *, Session *session, bool)
   It has the responsibility to flush the transaction cache to the
   binlog file on commits.
 
-  @param hton  The binlog StorageEngine.
+  @param engine  The binlog StorageEngine.
   @param session   The client thread that executes the transaction.
   @param all   This is @c true if this is a real transaction commit, and
                @false otherwise.
@@ -211,7 +211,7 @@ static int binlog_commit(StorageEngine *, Session *session, bool all)
   binlog file. However, if the transaction does not involve
   non-transactional tables, nothing needs to be logged.
 
-  @param hton  The binlog StorageEngine.
+  @param engine  The binlog StorageEngine.
   @param session   The client thread that executes the transaction.
   @param all   This is @c true if this is a real transaction rollback, and
                @false otherwise.

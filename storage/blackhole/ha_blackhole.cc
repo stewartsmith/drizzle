@@ -19,11 +19,11 @@
 
 /* Static declarations for StorageEngine */
 
-static handler *blackhole_create_handler(StorageEngine *hton,
+static handler *blackhole_create_handler(StorageEngine *engine,
                                          TABLE_SHARE *table,
                                          MEM_ROOT *mem_root)
 {
-  return new (mem_root) ha_blackhole(hton, table);
+  return new (mem_root) ha_blackhole(engine, table);
 }
 
 
@@ -39,9 +39,9 @@ static void free_share(st_blackhole_share *share);
 ** BLACKHOLE tables
 *****************************************************************************/
 
-ha_blackhole::ha_blackhole(StorageEngine *hton,
+ha_blackhole::ha_blackhole(StorageEngine *engine,
                            TABLE_SHARE *table_arg)
-  :handler(hton, table_arg)
+  :handler(engine, table_arg)
 {}
 
 

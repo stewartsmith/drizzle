@@ -119,18 +119,18 @@ struct StorageEngine
      this storage area - set it to something, so that MySQL would know
      this storage engine was accessed in this connection
    */
-   int  (*close_connection)(StorageEngine *hton, Session *session);
+   int  (*close_connection)(StorageEngine *engine, Session *session);
    /*
      sv points to an uninitialized storage area of requested size
      (see savepoint_offset description)
    */
-   int  (*savepoint_set)(StorageEngine *hton, Session *session, void *sv);
+   int  (*savepoint_set)(StorageEngine *engine, Session *session, void *sv);
    /*
      sv points to a storage area, that was earlier passed
      to the savepoint_set call
    */
-   int  (*savepoint_rollback)(StorageEngine *hton, Session *session, void *sv);
-   int  (*savepoint_release)(StorageEngine *hton, Session *session, void *sv);
+   int  (*savepoint_rollback)(StorageEngine *engine, Session *session, void *sv);
+   int  (*savepoint_release)(StorageEngine *engine, Session *session, void *sv);
    /*
      'all' is true if it's a real commit, that makes persistent changes
      'all' is false if it's not in fact a commit but an end of the
@@ -138,24 +138,24 @@ struct StorageEngine
      NOTE 'all' is also false in auto-commit mode where 'end of statement'
      and 'real commit' mean the same event.
    */
-   int  (*commit)(StorageEngine *hton, Session *session, bool all);
-   int  (*rollback)(StorageEngine *hton, Session *session, bool all);
-   int  (*prepare)(StorageEngine *hton, Session *session, bool all);
-   int  (*recover)(StorageEngine *hton, XID *xid_list, uint32_t len);
-   int  (*commit_by_xid)(StorageEngine *hton, XID *xid);
-   int  (*rollback_by_xid)(StorageEngine *hton, XID *xid);
-   handler *(*create)(StorageEngine *hton, TABLE_SHARE *table, MEM_ROOT *mem_root);
-   void (*drop_database)(StorageEngine *hton, char* path);
-   int (*start_consistent_snapshot)(StorageEngine *hton, Session *session);
-   bool (*flush_logs)(StorageEngine *hton);
-   bool (*show_status)(StorageEngine *hton, Session *session, stat_print_fn *print, enum ha_stat_type stat);
-   int (*fill_files_table)(StorageEngine *hton, Session *session,
+   int  (*commit)(StorageEngine *engine, Session *session, bool all);
+   int  (*rollback)(StorageEngine *engine, Session *session, bool all);
+   int  (*prepare)(StorageEngine *engine, Session *session, bool all);
+   int  (*recover)(StorageEngine *engine, XID *xid_list, uint32_t len);
+   int  (*commit_by_xid)(StorageEngine *engine, XID *xid);
+   int  (*rollback_by_xid)(StorageEngine *engine, XID *xid);
+   handler *(*create)(StorageEngine *engine, TABLE_SHARE *table, MEM_ROOT *mem_root);
+   void (*drop_database)(StorageEngine *engine, char* path);
+   int (*start_consistent_snapshot)(StorageEngine *engine, Session *session);
+   bool (*flush_logs)(StorageEngine *engine);
+   bool (*show_status)(StorageEngine *engine, Session *session, stat_print_fn *print, enum ha_stat_type stat);
+   int (*fill_files_table)(StorageEngine *engine, Session *session,
                            TableList *tables,
                            class Item *cond);
    std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
-   int (*release_temporary_latches)(StorageEngine *hton, Session *session);
+   int (*release_temporary_latches)(StorageEngine *engine, Session *session);
 
-   int (*table_exists_in_engine)(StorageEngine *hton, Session* session, const char *db,
+   int (*table_exists_in_engine)(StorageEngine *engine, Session* session, const char *db,
                                  const char *name);
    uint32_t license; /* Flag for Engine License */
    void *data; /* Location for engines to keep personal structures */
@@ -165,7 +165,7 @@ struct StorageEngine
 /* lookups */
 StorageEngine *ha_default_handlerton(Session *session);
 plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name);
-plugin_ref ha_lock_engine(Session *session, StorageEngine *hton);
+plugin_ref ha_lock_engine(Session *session, StorageEngine *engine);
 StorageEngine *ha_resolve_by_legacy_type(Session *session,
                                       enum legacy_db_type db_type);
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
@@ -177,6 +177,6 @@ enum legacy_db_type ha_legacy_type(const StorageEngine *db_type);
 const char *ha_resolve_storage_engine_name(const StorageEngine *db_type);
 bool ha_check_storage_engine_flag(const StorageEngine *db_type, const hton_flag_bits flag);
 bool ha_storage_engine_is_enabled(const StorageEngine *db_type);
-LEX_STRING *ha_storage_engine_name(const StorageEngine *hton);
+LEX_STRING *ha_storage_engine_name(const StorageEngine *engine);
 
 #endif /* DRIZZLED_HANDLERTON_H */

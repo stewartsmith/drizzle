@@ -2342,12 +2342,12 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
   if (var->value->result_type() == STRING_RESULT)
   {
     LEX_STRING engine_name;
-    StorageEngine *hton;
+    StorageEngine *engine;
     if (!(res=var->value->val_str(&str)) ||
         !(engine_name.str= (char *)res->ptr()) ||
         !(engine_name.length= res->length()) ||
 	!(var->save_result.plugin= ha_resolve_by_name(session, &engine_name)) ||
-        !(hton= plugin_data(var->save_result.plugin, StorageEngine *)))
+        !(engine= plugin_data(var->save_result.plugin, StorageEngine *)))
     {
       value= res ? res->c_ptr() : "NULL";
       goto err;
@@ -2367,13 +2367,13 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
                                                          const LEX_STRING *)
 {
   unsigned char* result;
-  StorageEngine *hton;
+  StorageEngine *engine;
   LEX_STRING *engine_name;
   plugin_ref plugin= session->variables.*offset;
   if (type == OPT_GLOBAL)
     plugin= my_plugin_lock(session, &(global_system_variables.*offset));
-  hton= plugin_data(plugin, StorageEngine*);
-  engine_name= ha_storage_engine_name(hton);
+  engine= plugin_data(plugin, StorageEngine*);
+  engine_name= ha_storage_engine_name(engine);
   result= (unsigned char *) session->strmake(engine_name->str, engine_name->length);
   if (type == OPT_GLOBAL)
     plugin_unlock(session, plugin);

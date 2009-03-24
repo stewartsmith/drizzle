@@ -1626,11 +1626,11 @@ static int init_server_components()
     LEX_STRING name= { default_storage_engine_str,
                        strlen(default_storage_engine_str) };
     plugin_ref plugin;
-    StorageEngine *hton;
+    StorageEngine *engine;
 
     if ((plugin= ha_resolve_by_name(0, &name)))
     {
-      hton= plugin_data(plugin,StorageEngine *);
+      engine= plugin_data(plugin,StorageEngine *);
     }
     else
     {
@@ -1638,7 +1638,7 @@ static int init_server_components()
                       default_storage_engine_str);
       unireg_abort(1);
     }
-    if (!ha_storage_engine_is_enabled(hton))
+    if (!ha_storage_engine_is_enabled(engine))
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
                     default_storage_engine_str);

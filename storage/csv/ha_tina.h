@@ -91,7 +91,7 @@ private:
   int init_data_file();
 
 public:
-  ha_tina(StorageEngine *hton, TABLE_SHARE *table_arg);
+  ha_tina(StorageEngine *engine, TABLE_SHARE *table_arg);
   ~ha_tina()
   {
     if (chain_alloced)

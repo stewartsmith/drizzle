@@ -169,9 +169,9 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
     new_alias= new_table_name;
   }
 
-  StorageEngine *hton= NULL;
+  StorageEngine *engine= NULL;
 
-  if(ha_table_exists_in_engine(session, ren_table->db, old_alias, &hton)
+  if(ha_table_exists_in_engine(session, ren_table->db, old_alias, &engine)
      != HA_ERR_TABLE_EXIST)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
@@ -185,7 +185,7 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
     return(1);			// This can't be skipped
   }
 
-  rc= mysql_rename_table(hton,
+  rc= mysql_rename_table(engine,
                          ren_table->db, old_alias,
                          new_db, new_alias, 0);
   if (rc && !skip_error)

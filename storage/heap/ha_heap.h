@@ -38,7 +38,7 @@ class ha_heap: public handler
   uint32_t    key_stat_version;
   bool internal_table;
 public:
-  ha_heap(StorageEngine *hton, TABLE_SHARE *table);
+  ha_heap(StorageEngine *engine, TABLE_SHARE *table);
   ~ha_heap() {}
   handler *clone(MEM_ROOT *mem_root);
   const char *table_type() const

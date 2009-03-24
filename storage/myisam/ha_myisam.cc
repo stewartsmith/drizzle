@@ -54,11 +54,11 @@ TYPELIB myisam_stats_method_typelib= {
 ** MyISAM tables
 *****************************************************************************/
 
-static handler *myisam_create_handler(StorageEngine *hton,
+static handler *myisam_create_handler(StorageEngine *engine,
                                       TABLE_SHARE *table,
                                       MEM_ROOT *mem_root)
 {
-  return new (mem_root) ha_myisam(hton, table);
+  return new (mem_root) ha_myisam(engine, table);
 }
 
 // collect errors printed by mi_check routines
@@ -470,8 +470,8 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 }
 
-ha_myisam::ha_myisam(StorageEngine *hton, TABLE_SHARE *table_arg)
-  :handler(hton, table_arg), file(0),
+ha_myisam::ha_myisam(StorageEngine *engine, TABLE_SHARE *table_arg)
+  :handler(engine, table_arg), file(0),
   int_table_flags(HA_NULL_IN_KEY |
                   HA_BINLOG_ROW_CAPABLE |
                   HA_BINLOG_STMT_CAPABLE |
