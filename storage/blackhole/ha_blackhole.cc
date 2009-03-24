@@ -17,15 +17,15 @@
 #include <drizzled/table.h>
 #include "ha_blackhole.h"
 
-/* Static declarations for StorageEngine */
-
-static handler *blackhole_create_handler(StorageEngine *engine,
-                                         TABLE_SHARE *table,
-                                         MEM_ROOT *mem_root)
+class BlackholeEngine : public StorageEngine
 {
-  return new (mem_root) ha_blackhole(engine, table);
-}
-
+  virtual handler *create(StorageEngine *engine,
+                          TABLE_SHARE *table,
+                          MEM_ROOT *mem_root)
+  {
+    return new (mem_root) ha_blackhole(engine, table);
+  }
+};
 
 /* Static declarations for shared structures */
 
@@ -269,11 +269,14 @@ static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *lengt
 
 static int blackhole_init(void *p)
 {
-  StorageEngine *blackhole_engine;
-  blackhole_engine= (StorageEngine *)p;
+  StorageEngine **engine= static_cast<StorageEngine **>(p);
+
+  BlackholeEngine *blackhole_engine= new BlackholeEngine();
+
   blackhole_engine->state= SHOW_OPTION_YES;
-  blackhole_engine->create= blackhole_create_handler;
   blackhole_engine->flags= HTON_CAN_RECREATE;
+
+  *engine= blackhole_engine; 
 
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
   (void) hash_init(&blackhole_open_tables, system_charset_info,32,0,0,
@@ -283,8 +286,11 @@ static int blackhole_init(void *p)
   return 0;
 }
 
-static int blackhole_fini(void *)
+static int blackhole_fini(void *p)
 {
+  BlackholeEngine *blackhole_engine= static_cast<BlackholeEngine *>(p);
+  delete blackhole_engine;
+
   hash_free(&blackhole_open_tables);
   pthread_mutex_destroy(&blackhole_mutex);
 
