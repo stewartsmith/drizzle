@@ -386,12 +386,6 @@ extern HASH xid_cache;
 #include <drizzled/security_context.h>
 #include <drizzled/open_tables_state.h>
 
-/* Flags for the Session::system_thread variable */
-enum enum_thread_type
-{
-  NON_SYSTEM_THREAD
-};
-
 #include <drizzled/internal_error_handler.h> 
 #include <drizzled/diagnostics_area.h> 
 
@@ -736,7 +730,6 @@ public:
   my_thread_id  thread_id;
   uint	     tmp_table, global_read_lock;
   uint	     server_status,open_options;
-  enum enum_thread_type system_thread;
   uint32_t       select_number;             //number of select (used for EXPLAIN)
   /* variables.transaction_isolation is reset to this after each commit */
   enum_tx_isolation session_tx_isolation;

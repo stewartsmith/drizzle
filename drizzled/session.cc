@@ -236,7 +236,6 @@ Session::Session()
   dbug_sentry=Session_SENTRY_MAGIC;
   net.vio= 0;
   client_capabilities= 0;                       // minimalistic client
-  system_thread= NON_SYSTEM_THREAD;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
@@ -540,8 +539,6 @@ void Session::awake(Session::killed_state state_to_set)
   if (mysys_var)
   {
     pthread_mutex_lock(&mysys_var->mutex);
-    if (!system_thread)		// Don't abort locks
-      mysys_var->abort=1;
     /*
       This broadcast could be up in the air if the victim thread
       exits the cond in the time between read and broadcast, but that is
