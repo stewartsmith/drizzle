@@ -169,7 +169,7 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
     new_alias= new_table_name;
   }
 
-  handlerton *hton= NULL;
+  StorageEngine *hton= NULL;
 
   if(ha_table_exists_in_engine(session, ren_table->db, old_alias, &hton)
      != HA_ERR_TABLE_EXIST)

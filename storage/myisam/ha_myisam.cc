@@ -54,7 +54,7 @@ TYPELIB myisam_stats_method_typelib= {
 ** MyISAM tables
 *****************************************************************************/
 
-static handler *myisam_create_handler(handlerton *hton,
+static handler *myisam_create_handler(StorageEngine *hton,
                                       TABLE_SHARE *table,
                                       MEM_ROOT *mem_root)
 {
@@ -470,7 +470,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 }
 
-ha_myisam::ha_myisam(handlerton *hton, TABLE_SHARE *table_arg)
+ha_myisam::ha_myisam(StorageEngine *hton, TABLE_SHARE *table_arg)
   :handler(hton, table_arg), file(0),
   int_table_flags(HA_NULL_IN_KEY |
                   HA_BINLOG_ROW_CAPABLE |
@@ -1803,7 +1803,7 @@ int myisam_deinit(void *)
 
 static int myisam_init(void *p)
 {
-  myisam_hton= (handlerton *)p;
+  myisam_hton= (StorageEngine *)p;
   myisam_hton->state= SHOW_OPTION_YES;
   myisam_hton->create= myisam_create_handler;
   myisam_hton->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;

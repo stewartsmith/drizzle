@@ -188,7 +188,7 @@ static bool dropdb_handlerton(Session *,
                               plugin_ref plugin,
                               void *path)
 {
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
   if (hton->state == SHOW_OPTION_YES && hton->drop_database)
     hton->drop_database(hton, (char *)path);
   return false;
@@ -204,7 +204,7 @@ void ha_drop_database(char* path)
 static bool closecon_handlerton(Session *session, plugin_ref plugin,
                                 void *)
 {
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
   /*
     there's no need to rollback here as all transactions must
     be rolled back already
@@ -405,7 +405,7 @@ void ha_close_connection(Session* session)
   in each engine independently. The two-phase commit protocol
   is used only if:
   - all participating engines support two-phase commit (provide
-    handlerton::prepare PSEA API call) and
+    StorageEngine::prepare PSEA API call) and
   - transactions in at least two engines modify data (i.e. are
   not read-only).
 
@@ -469,10 +469,10 @@ void ha_close_connection(Session* session)
 
   At the end of a statement, server call
   ha_autocommit_or_rollback() is invoked. This call in turn
-  invokes handlerton::prepare() for every involved engine.
-  Prepare is followed by a call to handlerton::commit_one_phase()
-  If a one-phase commit will suffice, handlerton::prepare() is not
-  invoked and the server only calls handlerton::commit_one_phase().
+  invokes StorageEngine::prepare() for every involved engine.
+  Prepare is followed by a call to StorageEngine::commit_one_phase()
+  If a one-phase commit will suffice, StorageEngine::prepare() is not
+  invoked and the server only calls StorageEngine::commit_one_phase().
   At statement commit, the statement-related read-write engine
   flag is propagated to the corresponding flag in the normal
   transaction.  When the commit is complete, the list of registered
@@ -531,7 +531,7 @@ void ha_close_connection(Session* session)
     times per transaction.
 
 */
-void trans_register_ha(Session *session, bool all, handlerton *ht_arg)
+void trans_register_ha(Session *session, bool all, StorageEngine *ht_arg)
 {
   Session_TRANS *trans;
   Ha_trx_info *ha_info;
@@ -574,7 +574,7 @@ int ha_prepare(Session *session)
     for (; ha_info; ha_info= ha_info->next())
     {
       int err;
-      handlerton *ht= ha_info->ht();
+      StorageEngine *ht= ha_info->ht();
       status_var_increment(session->status_var.ha_prepare_count);
       if (ht->prepare)
       {
@@ -704,7 +704,7 @@ int ha_commit_trans(Session *session, bool all)
       for (; ha_info && !error; ha_info= ha_info->next())
       {
         int err;
-        handlerton *ht= ha_info->ht();
+        StorageEngine *ht= ha_info->ht();
         /*
           Do not call two-phase commit if this particular
           transaction is read-only. This allows for simpler
@@ -753,7 +753,7 @@ int ha_commit_one_phase(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      handlerton *ht= ha_info->ht();
+      StorageEngine *ht= ha_info->ht();
       if ((err= ht->commit(ht, session, all)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
@@ -796,7 +796,7 @@ int ha_rollback_trans(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      handlerton *ht= ha_info->ht();
+      StorageEngine *ht= ha_info->ht();
       if ((err= ht->rollback(ht, session, all)))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -877,7 +877,7 @@ static bool xacommit_handlerton(Session *,
                                 plugin_ref plugin,
                                 void *arg)
 {
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
   if (hton->state == SHOW_OPTION_YES && hton->recover)
   {
     hton->commit_by_xid(hton, ((struct xahton_st *)arg)->xid);
@@ -890,7 +890,7 @@ static bool xarollback_handlerton(Session *,
                                   plugin_ref plugin,
                                   void *arg)
 {
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
   if (hton->state == SHOW_OPTION_YES && hton->recover)
   {
     hton->rollback_by_xid(hton, ((struct xahton_st *)arg)->xid);
@@ -940,7 +940,7 @@ static bool xarecover_handlerton(Session *,
                                  plugin_ref plugin,
                                  void *arg)
 {
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
   struct xarecover_st *info= (struct xarecover_st *) arg;
   int got;
 
@@ -1120,7 +1120,7 @@ bool mysql_xa_recover(Session *session)
 static bool release_temporary_latches(Session *session, plugin_ref plugin,
                                       void *)
 {
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
 
   if (hton->state == SHOW_OPTION_YES && hton->release_temporary_latches)
     hton->release_temporary_latches(hton, session);
@@ -1151,7 +1151,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
   for (ha_info= sv->ha_list; ha_info; ha_info= ha_info->next())
   {
     int err;
-    handlerton *ht= ha_info->ht();
+    StorageEngine *ht= ha_info->ht();
     assert(ht);
     assert(ht->savepoint_set != 0);
     if ((err= ht->savepoint_rollback(ht, session,
@@ -1171,7 +1171,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
        ha_info= ha_info_next)
   {
     int err;
-    handlerton *ht= ha_info->ht();
+    StorageEngine *ht= ha_info->ht();
     if ((err= ht->rollback(ht, session, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -1199,7 +1199,7 @@ int ha_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    handlerton *ht= ha_info->ht();
+    StorageEngine *ht= ha_info->ht();
     assert(ht);
     if (! ht->savepoint_set)
     {
@@ -1230,7 +1230,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    handlerton *ht= ha_info->ht();
+    StorageEngine *ht= ha_info->ht();
     /* Savepoint life time is enclosed into transaction life time. */
     assert(ht);
     if (!ht->savepoint_release)
@@ -1248,7 +1248,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 
 static bool snapshot_handlerton(Session *session, plugin_ref plugin, void *arg)
 {
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
   if (hton->state == SHOW_OPTION_YES &&
       hton->start_consistent_snapshot)
   {
@@ -1280,7 +1280,7 @@ static bool flush_handlerton(Session *,
                              plugin_ref plugin,
                              void *)
 {
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
   if (hton->state == SHOW_OPTION_YES && hton->flush_logs &&
       hton->flush_logs(hton))
     return true;
@@ -1288,7 +1288,7 @@ static bool flush_handlerton(Session *,
 }
 
 
-bool ha_flush_logs(handlerton *db_type)
+bool ha_flush_logs(StorageEngine *db_type)
 {
   if (db_type == NULL)
   {
@@ -1377,7 +1377,7 @@ static bool deletetable_handlerton(Session *,
   if(dtargs->error!=ENOENT) /* already deleted table */
     return false;
 
-  handlerton *table_type= plugin_data(plugin, handlerton *);
+  StorageEngine *table_type= plugin_data(plugin, StorageEngine *);
 
   if(!table_type)
     return false;
@@ -2995,14 +2995,14 @@ struct st_table_exists_in_engine_args
   const char *db;
   const char *name;
   int err;
-  handlerton* hton;
+  StorageEngine* hton;
 };
 
 static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugin,
                                               void *arg)
 {
   st_table_exists_in_engine_args *vargs= (st_table_exists_in_engine_args *)arg;
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
 
   int err= HA_ERR_NO_SUCH_TABLE;
 
@@ -3021,7 +3021,7 @@ static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugi
 
 int ha_table_exists_in_engine(Session* session,
                               const char* db, const char* name,
-                              handlerton **hton)
+                              StorageEngine **hton)
 {
   st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE, NULL};
   plugin_foreach(session, table_exists_in_engine_handlerton,
@@ -3050,7 +3050,7 @@ int ha_table_exists_in_engine(Session* session,
                                  strlen(table.engine().name().c_str()) };
         plugin_ref plugin= ha_resolve_by_name(session, &engine_name);
         if(plugin)
-          args.hton= plugin_data(plugin,handlerton *);
+          args.hton= plugin_data(plugin,StorageEngine *);
       }
     }
   }
@@ -4089,7 +4089,7 @@ static bool exts_handlerton(Session *,
                             void *arg)
 {
   List<char> *found_exts= (List<char> *) arg;
-  handlerton *hton= plugin_data(plugin, handlerton *);
+  StorageEngine *hton= plugin_data(plugin, StorageEngine *);
   handler *file;
   if (hton->state == SHOW_OPTION_YES && hton->create &&
       (file= hton->create(hton, (TABLE_SHARE*) 0, current_session->mem_root)))
@@ -4157,7 +4157,7 @@ static bool stat_print(Session *session, const char *type, uint32_t type_len,
   return false;
 }
 
-bool ha_show_status(Session *session, handlerton *db_type, enum ha_stat_type stat)
+bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type stat)
 {
   List<Item> field_list;
   Protocol *protocol= session->protocol;

@@ -180,8 +180,8 @@ extern uint8_t uc_update_queries[SQLCOM_END+1];
 extern std::bitset<5> sql_command_flags[];
 extern TYPELIB log_output_typelib;
 
-extern handlerton *myisam_hton;
-extern handlerton *heap_hton;
+extern StorageEngine *myisam_hton;
+extern StorageEngine *heap_hton;
 
 extern SHOW_COMP_OPTION have_symlink;
 

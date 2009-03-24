@@ -80,7 +80,7 @@ class ha_archive: public handler
   void destroy_record_buffer(archive_record_buffer *r);
 
 public:
-  ha_archive(handlerton *hton, TABLE_SHARE *table_arg);
+  ha_archive(StorageEngine *hton, TABLE_SHARE *table_arg);
   ~ha_archive()
   {
   }

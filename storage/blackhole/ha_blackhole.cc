@@ -17,9 +17,9 @@
 #include <drizzled/table.h>
 #include "ha_blackhole.h"
 
-/* Static declarations for handlerton */
+/* Static declarations for StorageEngine */
 
-static handler *blackhole_create_handler(handlerton *hton,
+static handler *blackhole_create_handler(StorageEngine *hton,
                                          TABLE_SHARE *table,
                                          MEM_ROOT *mem_root)
 {
@@ -39,7 +39,7 @@ static void free_share(st_blackhole_share *share);
 ** BLACKHOLE tables
 *****************************************************************************/
 
-ha_blackhole::ha_blackhole(handlerton *hton,
+ha_blackhole::ha_blackhole(StorageEngine *hton,
                            TABLE_SHARE *table_arg)
   :handler(hton, table_arg)
 {}
@@ -269,8 +269,8 @@ static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *lengt
 
 static int blackhole_init(void *p)
 {
-  handlerton *blackhole_hton;
-  blackhole_hton= (handlerton *)p;
+  StorageEngine *blackhole_hton;
+  blackhole_hton= (StorageEngine *)p;
   blackhole_hton->state= SHOW_OPTION_YES;
   blackhole_hton->create= blackhole_create_handler;
   blackhole_hton->flags= HTON_CAN_RECREATE;

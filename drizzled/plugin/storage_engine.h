@@ -38,7 +38,7 @@ typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_l
                              const char *status, uint32_t status_len);
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 
-/* Possible flags of a handlerton (there can be 32 of them) */
+/* Possible flags of a StorageEngine (there can be 32 of them) */
 enum hton_flag_bits {
   HTON_BIT_CLOSE_CURSORS_AT_COMMIT,
   HTON_BIT_ALTER_NOT_SUPPORTED,       // Engine does not support alter
@@ -64,17 +64,17 @@ static const std::bitset<HTON_BIT_SIZE> HTON_SUPPORT_LOG_TABLES(1 << HTON_BIT_SU
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_PARTITION(1 << HTON_BIT_NO_PARTITION);
 
 /*
-  handlerton is a singleton structure - one instance per storage engine -
+  StorageEngine is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
   "global" level (unlike handler class that works on a per-table basis)
 
-  usually handlerton instance is defined statically in ha_xxx.cc as
+  usually StorageEngine instance is defined statically in ha_xxx.cc as
 
-  static handlerton { ... } xxx_hton;
+  static StorageEngine { ... } xxx_hton;
 
   savepoint_*, prepare, recover, and *_by_xid pointers can be 0.
 */
-struct handlerton
+struct StorageEngine
 {
   /*
     Name used for storage engine.
@@ -112,25 +112,25 @@ struct handlerton
    */
    uint32_t savepoint_offset;
    /*
-     handlerton methods:
+     StorageEngine methods:
 
      close_connection is only called if
      session->ha_data[xxx_hton.slot] is non-zero, so even if you don't need
      this storage area - set it to something, so that MySQL would know
      this storage engine was accessed in this connection
    */
-   int  (*close_connection)(handlerton *hton, Session *session);
+   int  (*close_connection)(StorageEngine *hton, Session *session);
    /*
      sv points to an uninitialized storage area of requested size
      (see savepoint_offset description)
    */
-   int  (*savepoint_set)(handlerton *hton, Session *session, void *sv);
+   int  (*savepoint_set)(StorageEngine *hton, Session *session, void *sv);
    /*
      sv points to a storage area, that was earlier passed
      to the savepoint_set call
    */
-   int  (*savepoint_rollback)(handlerton *hton, Session *session, void *sv);
-   int  (*savepoint_release)(handlerton *hton, Session *session, void *sv);
+   int  (*savepoint_rollback)(StorageEngine *hton, Session *session, void *sv);
+   int  (*savepoint_release)(StorageEngine *hton, Session *session, void *sv);
    /*
      'all' is true if it's a real commit, that makes persistent changes
      'all' is false if it's not in fact a commit but an end of the
@@ -138,24 +138,24 @@ struct handlerton
      NOTE 'all' is also false in auto-commit mode where 'end of statement'
      and 'real commit' mean the same event.
    */
-   int  (*commit)(handlerton *hton, Session *session, bool all);
-   int  (*rollback)(handlerton *hton, Session *session, bool all);
-   int  (*prepare)(handlerton *hton, Session *session, bool all);
-   int  (*recover)(handlerton *hton, XID *xid_list, uint32_t len);
-   int  (*commit_by_xid)(handlerton *hton, XID *xid);
-   int  (*rollback_by_xid)(handlerton *hton, XID *xid);
-   handler *(*create)(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root);
-   void (*drop_database)(handlerton *hton, char* path);
-   int (*start_consistent_snapshot)(handlerton *hton, Session *session);
-   bool (*flush_logs)(handlerton *hton);
-   bool (*show_status)(handlerton *hton, Session *session, stat_print_fn *print, enum ha_stat_type stat);
-   int (*fill_files_table)(handlerton *hton, Session *session,
+   int  (*commit)(StorageEngine *hton, Session *session, bool all);
+   int  (*rollback)(StorageEngine *hton, Session *session, bool all);
+   int  (*prepare)(StorageEngine *hton, Session *session, bool all);
+   int  (*recover)(StorageEngine *hton, XID *xid_list, uint32_t len);
+   int  (*commit_by_xid)(StorageEngine *hton, XID *xid);
+   int  (*rollback_by_xid)(StorageEngine *hton, XID *xid);
+   handler *(*create)(StorageEngine *hton, TABLE_SHARE *table, MEM_ROOT *mem_root);
+   void (*drop_database)(StorageEngine *hton, char* path);
+   int (*start_consistent_snapshot)(StorageEngine *hton, Session *session);
+   bool (*flush_logs)(StorageEngine *hton);
+   bool (*show_status)(StorageEngine *hton, Session *session, stat_print_fn *print, enum ha_stat_type stat);
+   int (*fill_files_table)(StorageEngine *hton, Session *session,
                            TableList *tables,
                            class Item *cond);
    std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
-   int (*release_temporary_latches)(handlerton *hton, Session *session);
+   int (*release_temporary_latches)(StorageEngine *hton, Session *session);
 
-   int (*table_exists_in_engine)(handlerton *hton, Session* session, const char *db,
+   int (*table_exists_in_engine)(StorageEngine *hton, Session* session, const char *db,
                                  const char *name);
    uint32_t license; /* Flag for Engine License */
    void *data; /* Location for engines to keep personal structures */
@@ -163,20 +163,20 @@ struct handlerton
 
 
 /* lookups */
-handlerton *ha_default_handlerton(Session *session);
+StorageEngine *ha_default_handlerton(Session *session);
 plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name);
-plugin_ref ha_lock_engine(Session *session, handlerton *hton);
-handlerton *ha_resolve_by_legacy_type(Session *session,
+plugin_ref ha_lock_engine(Session *session, StorageEngine *hton);
+StorageEngine *ha_resolve_by_legacy_type(Session *session,
                                       enum legacy_db_type db_type);
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
-                         handlerton *db_type);
-handlerton *ha_checktype(Session *session, enum legacy_db_type database_type,
+                         StorageEngine *db_type);
+StorageEngine *ha_checktype(Session *session, enum legacy_db_type database_type,
                          bool no_substitute, bool report_error);
 
-enum legacy_db_type ha_legacy_type(const handlerton *db_type);
-const char *ha_resolve_storage_engine_name(const handlerton *db_type);
-bool ha_check_storage_engine_flag(const handlerton *db_type, const hton_flag_bits flag);
-bool ha_storage_engine_is_enabled(const handlerton *db_type);
-LEX_STRING *ha_storage_engine_name(const handlerton *hton);
+enum legacy_db_type ha_legacy_type(const StorageEngine *db_type);
+const char *ha_resolve_storage_engine_name(const StorageEngine *db_type);
+bool ha_check_storage_engine_flag(const StorageEngine *db_type, const hton_flag_bits flag);
+bool ha_storage_engine_is_enabled(const StorageEngine *db_type);
+LEX_STRING *ha_storage_engine_name(const StorageEngine *hton);
 
 #endif /* DRIZZLED_HANDLERTON_H */

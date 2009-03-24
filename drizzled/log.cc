@@ -44,15 +44,15 @@
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
 
 static int binlog_init(void *p);
-static int binlog_close_connection(handlerton *hton, Session *session);
-static int binlog_savepoint_set(handlerton *hton, Session *session, void *sv);
-static int binlog_savepoint_rollback(handlerton *hton, Session *session, void *sv);
-static int binlog_commit(handlerton *hton, Session *session, bool all);
-static int binlog_rollback(handlerton *hton, Session *session, bool all);
-static int binlog_prepare(handlerton *hton, Session *session, bool all);
+static int binlog_close_connection(StorageEngine *hton, Session *session);
+static int binlog_savepoint_set(StorageEngine *hton, Session *session, void *sv);
+static int binlog_savepoint_rollback(StorageEngine *hton, Session *session, void *sv);
+static int binlog_commit(StorageEngine *hton, Session *session, bool all);
+static int binlog_rollback(StorageEngine *hton, Session *session, bool all);
+static int binlog_prepare(StorageEngine *hton, Session *session, bool all);
 
 
-handlerton *binlog_hton;
+StorageEngine *binlog_hton;
 
 
  /*
@@ -87,7 +87,7 @@ binlog_trans_log_savepos(Session *, my_off_t *pos)
 
 int binlog_init(void *p)
 {
-  binlog_hton= (handlerton *)p;
+  binlog_hton= (StorageEngine *)p;
   binlog_hton->state= SHOW_OPTION_YES;
   binlog_hton->savepoint_offset= sizeof(my_off_t);
   binlog_hton->close_connection= binlog_close_connection;
@@ -101,13 +101,13 @@ int binlog_init(void *p)
   return 0;
 }
 
-static int binlog_close_connection(handlerton *, Session *)
+static int binlog_close_connection(StorageEngine *, Session *)
 {
 
   return 0;
 }
 
-static int binlog_prepare(handlerton *, Session *session, bool)
+static int binlog_prepare(StorageEngine *, Session *session, bool)
 {
   /*
     do nothing.
@@ -127,14 +127,14 @@ static int binlog_prepare(handlerton *, Session *session, bool)
   It has the responsibility to flush the transaction cache to the
   binlog file on commits.
 
-  @param hton  The binlog handlerton.
+  @param hton  The binlog StorageEngine.
   @param session   The client thread that executes the transaction.
   @param all   This is @c true if this is a real transaction commit, and
                @false otherwise.
 
-  @see handlerton::commit
+  @see StorageEngine::commit
 */
-static int binlog_commit(handlerton *, Session *session, bool all)
+static int binlog_commit(StorageEngine *, Session *session, bool all)
 {
   /*
     Decision table for committing a transaction. The top part, the
@@ -211,14 +211,14 @@ static int binlog_commit(handlerton *, Session *session, bool all)
   binlog file. However, if the transaction does not involve
   non-transactional tables, nothing needs to be logged.
 
-  @param hton  The binlog handlerton.
+  @param hton  The binlog StorageEngine.
   @param session   The client thread that executes the transaction.
   @param all   This is @c true if this is a real transaction rollback, and
                @false otherwise.
 
-  @see handlerton::rollback
+  @see StorageEngine::rollback
 */
-static int binlog_rollback(handlerton *, Session *session, bool all)
+static int binlog_rollback(StorageEngine *, Session *session, bool all)
 {
   int error=0;
 
@@ -252,7 +252,7 @@ static int binlog_rollback(handlerton *, Session *session, bool all)
   that case there is no need to have it in the binlog).
 */
 
-static int binlog_savepoint_set(handlerton *, Session *session, void *sv)
+static int binlog_savepoint_set(StorageEngine *, Session *session, void *sv)
 {
   bool error;
   binlog_trans_log_savepos(session, (my_off_t*) sv);
@@ -263,7 +263,7 @@ static int binlog_savepoint_set(handlerton *, Session *session, void *sv)
   return(error);
 }
 
-static int binlog_savepoint_rollback(handlerton *, Session *session, void *)
+static int binlog_savepoint_rollback(StorageEngine *, Session *session, void *)
 {
   bool error;
 

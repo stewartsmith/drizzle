@@ -86,10 +86,10 @@ public:
                                            (no generated-only virtual fields) */
 
   plugin_ref db_plugin;			/* storage engine plugin */
-  inline handlerton *db_type() const	/* table_type for handler */
+  inline StorageEngine *db_type() const	/* table_type for handler */
   {
     // assert(db_plugin);
-    return db_plugin ? plugin_data(db_plugin, handlerton*) : NULL;
+    return db_plugin ? plugin_data(db_plugin, StorageEngine*) : NULL;
   }
   enum row_type row_type;		/* How rows are stored */
   enum tmp_table_type tmp_table;

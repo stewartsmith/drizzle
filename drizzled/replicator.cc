@@ -91,7 +91,7 @@ static bool replicator_session_iterate(Session *session, plugin_ref plugin, void
 /*
   This call is called once at the begining of each transaction.
 */
-extern handlerton *binlog_hton;
+extern StorageEngine *binlog_hton;
 bool replicator_session_init(Session *session)
 {
   bool foreach_rv;

@@ -204,7 +204,7 @@ public:
   TableList *embedding;             /* nested join containing the table */
   List<TableList> *join_list;/* join list the table belongs to   */
   bool		cacheable_table;	/* stop PS caching */
-  handlerton	*db_type;		/* table_type for handler */
+  StorageEngine	*db_type;		/* table_type for handler */
   char		timestamp_buffer[20];	/* buffer for timestamp (19+1) */
   /*
     This TableList object corresponds to the table to be created

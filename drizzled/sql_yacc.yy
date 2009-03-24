@@ -359,7 +359,7 @@ bool setup_select_in_parentheses(LEX *lex)
   enum enum_var_type var_type;
   Key::Keytype key_type;
   enum ha_key_alg key_alg;
-  handlerton *db_type;
+  StorageEngine *db_type;
   enum row_type row_type;
   enum column_format_type column_format_type;
   enum ha_rkey_function ha_rkey_mode;
@@ -1458,7 +1458,7 @@ storage_engines:
             plugin_ref plugin= ha_resolve_by_name(YYSession, &$1);
 
             if (plugin)
-              $$= plugin_data(plugin, handlerton*);
+              $$= plugin_data(plugin, StorageEngine*);
             else
             {
               my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);
@@ -1472,7 +1472,7 @@ known_storage_engines:
           {
             plugin_ref plugin;
             if ((plugin= ha_resolve_by_name(YYSession, &$1)))
-              $$= plugin_data(plugin, handlerton*);
+              $$= plugin_data(plugin, StorageEngine*);
             else
             {
               my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);

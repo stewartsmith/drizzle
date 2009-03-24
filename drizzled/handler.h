@@ -165,7 +165,7 @@ protected:
 
   ha_rows estimation_rows_to_insert;
 public:
-  handlerton *ht;                 /* storage engine of this handler */
+  StorageEngine *ht;                 /* storage engine of this handler */
   unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
@@ -230,7 +230,7 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  handler(handlerton *ht_arg, TABLE_SHARE *share_arg)
+  handler(StorageEngine *ht_arg, TABLE_SHARE *share_arg)
     :table_share(share_arg), table(0),
     estimation_rows_to_insert(0), ht(ht_arg),
     ref(0), in_range_check_pushed_down(false),
@@ -1110,7 +1110,7 @@ int ha_finalize_handlerton(st_plugin_int *plugin);
 
 TYPELIB *ha_known_exts(void);
 void ha_close_connection(Session* session);
-bool ha_flush_logs(handlerton *db_type);
+bool ha_flush_logs(StorageEngine *db_type);
 void ha_drop_database(char* path);
 int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
@@ -1120,11 +1120,11 @@ int ha_delete_table(Session *session, const char *path,
                     const char *db, const char *alias, bool generate_warning);
 
 /* statistics and info */
-bool ha_show_status(Session *session, handlerton *db_type, enum ha_stat_type stat);
+bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type stat);
 
 int ha_find_files(Session *session,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
-int ha_table_exists_in_engine(Session* session, const char* db, const char* name, handlerton **hton= NULL);
+int ha_table_exists_in_engine(Session* session, const char* db, const char* name, StorageEngine **hton= NULL);
 
 /* key cache */
 extern "C" int ha_init_key_cache(const char *name, KEY_CACHE *key_cache);
@@ -1136,7 +1136,7 @@ int ha_end_key_cache(KEY_CACHE *key_cache);
 /* report to InnoDB that control passes to the client */
 int ha_release_temporary_latches(Session *session);
 
-/* transactions: interface to handlerton functions */
+/* transactions: interface to StorageEngine functions */
 int ha_start_consistent_snapshot(Session *session);
 int ha_commit_or_rollback_by_xid(XID *xid, bool commit);
 int ha_commit_one_phase(Session *session, bool all);
@@ -1144,7 +1144,7 @@ int ha_rollback_trans(Session *session, bool all);
 int ha_prepare(Session *session);
 int ha_recover(HASH *commit_list);
 
-/* transactions: these functions never call handlerton functions directly */
+/* transactions: these functions never call StorageEngine functions directly */
 int ha_commit_trans(Session *session, bool all);
 int ha_autocommit_or_rollback(Session *session, int error);
 int ha_enable_transaction(Session *session, bool on);
@@ -1155,7 +1155,7 @@ int ha_savepoint(Session *session, SAVEPOINT *sv);
 int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 
 /* these are called by storage engines */
-void trans_register_ha(Session *session, bool all, handlerton *ht);
+void trans_register_ha(Session *session, bool all, StorageEngine *ht);
 
 void table_case_convert(char * name, uint32_t length);
 const char *table_case_name(HA_CREATE_INFO *info, const char *name);
@@ -1240,7 +1240,7 @@ bool mysql_recreate_table(Session *session, TableList *table_list);
 bool mysql_create_like_table(Session *session, TableList *table,
                              TableList *src_table,
                              HA_CREATE_INFO *create_info);
-bool mysql_rename_table(handlerton *base, const char *old_db,
+bool mysql_rename_table(StorageEngine *base, const char *old_db,
                         const char * old_name, const char *new_db,
                         const char * new_name, uint32_t flags);
 bool mysql_prepare_update(Session *session, TableList *table_list,

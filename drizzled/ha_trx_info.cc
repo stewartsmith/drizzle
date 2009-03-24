@@ -23,7 +23,7 @@
 #include <drizzled/session.h>
 
 
-void Ha_trx_info::register_ha(Session_TRANS *trans, handlerton *ht_arg)
+void Ha_trx_info::register_ha(Session_TRANS *trans, StorageEngine *ht_arg)
 {
   assert(m_flags == 0);
   assert(m_ht == NULL);
@@ -86,7 +86,7 @@ Ha_trx_info *Ha_trx_info::next() const
 }
 
 
-handlerton *Ha_trx_info::ht() const
+StorageEngine *Ha_trx_info::ht() const
 {
   assert(is_started());
   return m_ht;

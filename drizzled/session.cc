@@ -149,7 +149,7 @@ const char *get_session_proc_info(Session *session)
 }
 
 extern "C"
-void **session_ha_data(const Session *session, const struct handlerton *hton)
+void **session_ha_data(const Session *session, const struct StorageEngine *hton)
 {
   return (void **) &session->ha_data[hton->slot].ha_ptr;
 }

@@ -75,7 +75,7 @@ extern "C" bool tina_check_status(void* param);
 /* Stuff for shares */
 pthread_mutex_t tina_mutex;
 static HASH tina_open_tables;
-static handler *tina_create_handler(handlerton *hton,
+static handler *tina_create_handler(StorageEngine *hton,
                                     TABLE_SHARE *table,
                                     MEM_ROOT *mem_root);
 
@@ -104,9 +104,9 @@ static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
 
 static int tina_init_func(void *p)
 {
-  handlerton *tina_hton;
+  StorageEngine *tina_hton;
 
-  tina_hton= (handlerton *)p;
+  tina_hton= (StorageEngine *)p;
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
                    (hash_get_key) tina_get_key,0,0);
@@ -416,7 +416,7 @@ off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 }
 
 
-static handler *tina_create_handler(handlerton *hton,
+static handler *tina_create_handler(StorageEngine *hton,
                                     TABLE_SHARE *table,
                                     MEM_ROOT *mem_root)
 {
@@ -424,7 +424,7 @@ static handler *tina_create_handler(handlerton *hton,
 }
 
 
-ha_tina::ha_tina(handlerton *hton, TABLE_SHARE *table_arg)
+ha_tina::ha_tina(StorageEngine *hton, TABLE_SHARE *table_arg)
   :handler(hton, table_arg),
   /*
     These definitions are found in handler.h

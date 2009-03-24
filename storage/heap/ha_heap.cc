@@ -28,7 +28,7 @@
 
 pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
 
-static handler *heap_create_handler(handlerton *hton,
+static handler *heap_create_handler(StorageEngine *hton,
                                     TABLE_SHARE *table,
                                     MEM_ROOT *mem_root);
 
@@ -42,7 +42,7 @@ int heap_deinit(void *)
 
 int heap_init(void *p)
 {
-  heap_hton= (handlerton *)p;
+  heap_hton= (StorageEngine *)p;
   heap_hton->state=      SHOW_OPTION_YES;
   heap_hton->create=     heap_create_handler;
   heap_hton->flags=      HTON_CAN_RECREATE;
@@ -50,7 +50,7 @@ int heap_init(void *p)
   return 0;
 }
 
-static handler *heap_create_handler(handlerton *hton,
+static handler *heap_create_handler(StorageEngine *hton,
                                     TABLE_SHARE *table,
                                     MEM_ROOT *mem_root)
 {
@@ -62,7 +62,7 @@ static handler *heap_create_handler(handlerton *hton,
 ** HEAP tables
 *****************************************************************************/
 
-ha_heap::ha_heap(handlerton *hton, TABLE_SHARE *table_arg)
+ha_heap::ha_heap(StorageEngine *hton, TABLE_SHARE *table_arg)
   :handler(hton, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}

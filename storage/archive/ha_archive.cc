@@ -104,7 +104,7 @@ static unsigned int global_version;
 
 
 /* Static declarations for handerton */
-static handler *archive_create_handler(handlerton *hton,
+static handler *archive_create_handler(StorageEngine *hton,
                                        TABLE_SHARE *table,
                                        MEM_ROOT *mem_root);
 
@@ -120,7 +120,7 @@ static bool archive_use_aio= false;
 */
 #define ARCHIVE_ROW_HEADER_SIZE 4
 
-static handler *archive_create_handler(handlerton *hton,
+static handler *archive_create_handler(StorageEngine *hton,
                                        TABLE_SHARE *table,
                                        MEM_ROOT *mem_root)
 {
@@ -151,9 +151,9 @@ static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length, bool
 
 int archive_db_init(void *p)
 {
-  handlerton *archive_hton;
+  StorageEngine *archive_hton;
 
-  archive_hton= (handlerton *)p;
+  archive_hton= (StorageEngine *)p;
   archive_hton->state= SHOW_OPTION_YES;
   archive_hton->create= archive_create_handler;
   archive_hton->flags= HTON_NO_FLAGS;
@@ -196,7 +196,7 @@ int archive_db_done(void *)
 }
 
 
-ha_archive::ha_archive(handlerton *hton, TABLE_SHARE *table_arg)
+ha_archive::ha_archive(StorageEngine *hton, TABLE_SHARE *table_arg)
   :handler(hton, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
