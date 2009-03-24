@@ -39,7 +39,7 @@ typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_l
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 
 /* Possible flags of a StorageEngine (there can be 32 of them) */
-enum hton_flag_bits {
+enum engine_flag_bits {
   HTON_BIT_CLOSE_CURSORS_AT_COMMIT,
   HTON_BIT_ALTER_NOT_SUPPORTED,       // Engine does not support alter
   HTON_BIT_CAN_RECREATE,              // Delete all is used for truncate
@@ -74,10 +74,22 @@ static const std::bitset<HTON_BIT_SIZE> HTON_NO_PARTITION(1 << HTON_BIT_NO_PARTI
 
   savepoint_*, prepare, recover, and *_by_xid pointers can be 0.
 */
-struct StorageEngine
+class StorageEngine
 {
+  bool _2pc;
+public:
+  StorageEngine(): _2pc(false) {}
+  StorageEngine(bool support_2pc): _2pc(support_2pc) {}
+  virtual ~StorageEngine() {}
+
+  bool has_2pc()
+  {
+    return _2pc;
+  }
+
   /*
     Name used for storage engine.
+    @todo change to std::string
   */
   const char *name;
 
@@ -101,6 +113,7 @@ struct StorageEngine
    slot number is initialized by MySQL after xxx_init() is called.
    */
    uint32_t slot;
+   std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
    /*
      to store per-savepoint data storage engine is provided with an area
      of a requested size (0 is ok here).
@@ -111,6 +124,9 @@ struct StorageEngine
      see binlog_engine and binlog_savepoint_set/rollback for an example.
    */
    uint32_t savepoint_offset;
+   uint32_t license; /* Flag for Engine License */
+   void *data; /* Location for engines to keep personal structures */
+
    /*
      StorageEngine methods:
 
@@ -119,18 +135,33 @@ struct StorageEngine
      this storage area - set it to something, so that MySQL would know
      this storage engine was accessed in this connection
    */
-   int  (*close_connection)(StorageEngine *engine, Session *session);
+   virtual int close_connection(StorageEngine *, Session  *)
+   {
+     return 0;
+   }
    /*
-     sv points to an uninitialized storage area of requested size
+     The void * points to an uninitialized storage area of requested size
      (see savepoint_offset description)
    */
-   int  (*savepoint_set)(StorageEngine *engine, Session *session, void *sv);
+   virtual int savepoint_set(StorageEngine *, Session *, void *)
+   {
+     return 0;
+   }
+
    /*
-     sv points to a storage area, that was earlier passed
+     The void * points to a storage area, that was earlier passed
      to the savepoint_set call
    */
-   int  (*savepoint_rollback)(StorageEngine *engine, Session *session, void *sv);
-   int  (*savepoint_release)(StorageEngine *engine, Session *session, void *sv);
+   virtual int savepoint_rollback(StorageEngine *, Session *, void *)
+   {
+     return 0;
+   }
+
+   virtual int savepoint_release(StorageEngine *, Session *, void *)
+   {
+     return 0;
+   }
+
    /*
      'all' is true if it's a real commit, that makes persistent changes
      'all' is false if it's not in fact a commit but an end of the
@@ -138,27 +169,45 @@ struct StorageEngine
      NOTE 'all' is also false in auto-commit mode where 'end of statement'
      and 'real commit' mean the same event.
    */
-   int  (*commit)(StorageEngine *engine, Session *session, bool all);
-   int  (*rollback)(StorageEngine *engine, Session *session, bool all);
-   int  (*prepare)(StorageEngine *engine, Session *session, bool all);
-   int  (*recover)(StorageEngine *engine, XID *xid_list, uint32_t len);
-   int  (*commit_by_xid)(StorageEngine *engine, XID *xid);
-   int  (*rollback_by_xid)(StorageEngine *engine, XID *xid);
-   handler *(*create)(StorageEngine *engine, TABLE_SHARE *table, MEM_ROOT *mem_root);
-   void (*drop_database)(StorageEngine *engine, char* path);
-   int (*start_consistent_snapshot)(StorageEngine *engine, Session *session);
-   bool (*flush_logs)(StorageEngine *engine);
-   bool (*show_status)(StorageEngine *engine, Session *session, stat_print_fn *print, enum ha_stat_type stat);
-   int (*fill_files_table)(StorageEngine *engine, Session *session,
-                           TableList *tables,
-                           class Item *cond);
-   std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
-   int (*release_temporary_latches)(StorageEngine *engine, Session *session);
+   virtual int  commit(StorageEngine *, Session *, bool)
+   {
+     return 0;
+   }
 
-   int (*table_exists_in_engine)(StorageEngine *engine, Session* session, const char *db,
-                                 const char *name);
-   uint32_t license; /* Flag for Engine License */
-   void *data; /* Location for engines to keep personal structures */
+   virtual int  rollback(StorageEngine *, Session *, bool)
+   {
+     return 0;
+   }
+
+   virtual int  prepare(StorageEngine *, Session *, bool) { return 0; }
+   virtual int  recover(StorageEngine *, XID *, uint32_t) { return 0; }
+   virtual int  commit_by_xid(StorageEngine *, XID *) { return 0; }
+   virtual int  rollback_by_xid(StorageEngine *, XID *) { return 0; }
+   virtual handler *create(StorageEngine *, TABLE_SHARE *, MEM_ROOT *)= 0;
+   /* args: path */
+   virtual void drop_database(StorageEngine *, char*) { }
+   virtual int start_consistent_snapshot(StorageEngine *,
+                                         Session *) { return 0; }
+   virtual bool flush_logs(StorageEngine *) { return false; }
+   virtual bool show_status(StorageEngine *, Session *,
+                            stat_print_fn *, enum ha_stat_type)
+   {
+     return false;
+   }
+
+   /* args: current_session, tables, cond */
+   virtual int fill_files_table(StorageEngine *, Session *,
+                                TableList *,
+                                Item *) { return 0; }
+   virtual int release_temporary_latches(StorageEngine *, 
+                                         Session *) { return false; }
+
+   /* args: current_session, db, name */
+   virtual int table_exists_in_engine(StorageEngine *, Session*,
+                                      const char *, const char *)
+   {
+     return false;
+   }
 };
 
 
@@ -175,7 +224,7 @@ StorageEngine *ha_checktype(Session *session, enum legacy_db_type database_type,
 
 enum legacy_db_type ha_legacy_type(const StorageEngine *db_type);
 const char *ha_resolve_storage_engine_name(const StorageEngine *db_type);
-bool ha_check_storage_engine_flag(const StorageEngine *db_type, const hton_flag_bits flag);
+bool ha_check_storage_engine_flag(const StorageEngine *db_type, const engine_flag_bits flag);
 bool ha_storage_engine_is_enabled(const StorageEngine *db_type);
 LEX_STRING *ha_storage_engine_name(const StorageEngine *engine);
 

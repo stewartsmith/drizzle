@@ -1105,8 +1105,8 @@ extern uint32_t total_ha, total_ha_2pc;
 int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
-int ha_initialize_handlerton(st_plugin_int *plugin);
-int ha_finalize_handlerton(st_plugin_int *plugin);
+int storage_engine_initializer(st_plugin_int *plugin);
+int storage_engine_finalizer(st_plugin_int *plugin);
 
 TYPELIB *ha_known_exts(void);
 void ha_close_connection(Session* session);

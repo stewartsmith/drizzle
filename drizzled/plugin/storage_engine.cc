@@ -183,7 +183,7 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
 {
   handler *file;
 
-  if (db_type && db_type->state == SHOW_OPTION_YES && db_type->create)
+  if (db_type && db_type->state == SHOW_OPTION_YES)
   {
     if ((file= db_type->create(db_type, share, alloc)))
       file->init();
@@ -198,9 +198,9 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
 }
 
 
-int ha_finalize_handlerton(st_plugin_int *plugin)
+int storage_engine_finalizer(st_plugin_int *plugin)
 {
-  StorageEngine *engine= (StorageEngine *)plugin->data;
+  StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
 
   switch (engine->state)
   {
@@ -216,28 +216,23 @@ int ha_finalize_handlerton(st_plugin_int *plugin)
   if (engine && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(engine);
 
-  free((unsigned char*)engine);
-
   return(0);
 }
 
 
-int ha_initialize_handlerton(st_plugin_int *plugin)
+int storage_engine_initializer(st_plugin_int *plugin)
 {
   StorageEngine *engine;
 
-  engine= (StorageEngine *)malloc(sizeof(StorageEngine));
-  memset(engine, 0, sizeof(StorageEngine));
 
-  /* Historical Requirement */
-  plugin->data= engine; // shortcut for the future
   if (plugin->plugin->init)
   {
-    if (plugin->plugin->init(engine))
+    if (plugin->plugin->init(&engine))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' init function returned error."),
-                      plugin->name.str);
-      goto err;
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error."),
+                    plugin->name.str);
+      return 1;
     }
   }
 
@@ -280,7 +275,7 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
       savepoint_alloc_size+= tmp;
       engine->slot= total_ha++;
       hton2plugin[engine->slot]=plugin;
-      if (engine->prepare)
+      if (engine->has_2pc())
         total_ha_2pc++;
       break;
     }
@@ -301,11 +296,10 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
   if (strcmp(plugin->plugin->name, "MyISAM") == 0)
     myisam_engine= engine;
 
+  plugin->data= engine;
   plugin->state= PLUGIN_IS_READY;
 
   return(0);
-err:
-  return(1);
 }
 
 enum legacy_db_type ha_legacy_type(const StorageEngine *db_type)
@@ -318,14 +312,14 @@ const char *ha_resolve_storage_engine_name(const StorageEngine *db_type)
   return db_type == NULL ? "UNKNOWN" : hton2plugin[db_type->slot]->name.str;
 }
 
-bool ha_check_storage_engine_flag(const StorageEngine *db_type, const hton_flag_bits flag)
+bool ha_check_storage_engine_flag(const StorageEngine *db_type, const engine_flag_bits flag)
 {
   return db_type == NULL ? false : db_type->flags.test(static_cast<size_t>(flag));
 }
 
 bool ha_storage_engine_is_enabled(const StorageEngine *db_type)
 {
-  return (db_type && db_type->create) ?
+  return (db_type) ?
          (db_type->state == SHOW_OPTION_YES) : false;
 }
 

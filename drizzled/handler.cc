@@ -189,7 +189,7 @@ static bool dropdb_handlerton(Session *,
                               void *path)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES && engine->drop_database)
+  if (engine->state == SHOW_OPTION_YES)
     engine->drop_database(engine, (char *)path);
   return false;
 }
@@ -209,7 +209,7 @@ static bool closecon_handlerton(Session *session, plugin_ref plugin,
     there's no need to rollback here as all transactions must
     be rolled back already
   */
-  if (engine->state == SHOW_OPTION_YES && engine->close_connection &&
+  if (engine->state == SHOW_OPTION_YES && 
       session_get_ha_data(session, engine))
     engine->close_connection(engine, session);
   return false;
@@ -531,7 +531,7 @@ void ha_close_connection(Session* session)
     times per transaction.
 
 */
-void trans_register_ha(Session *session, bool all, StorageEngine *ht_arg)
+void trans_register_ha(Session *session, bool all, StorageEngine *engine)
 {
   Session_TRANS *trans;
   Ha_trx_info *ha_info;
@@ -544,14 +544,14 @@ void trans_register_ha(Session *session, bool all, StorageEngine *ht_arg)
   else
     trans= &session->transaction.stmt;
 
-  ha_info= session->ha_data[ht_arg->slot].ha_info + static_cast<unsigned>(all);
+  ha_info= session->ha_data[engine->slot].ha_info + static_cast<unsigned>(all);
 
   if (ha_info->is_started())
     return; /* already registered, return */
 
-  ha_info->register_ha(trans, ht_arg);
+  ha_info->register_ha(trans, engine);
 
-  trans->no_2pc|=(ht_arg->prepare==0);
+  trans->no_2pc|= not engine->has_2pc();
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->query_id);
 
@@ -574,23 +574,20 @@ int ha_prepare(Session *session)
     for (; ha_info; ha_info= ha_info->next())
     {
       int err;
-      StorageEngine *ht= ha_info->ht();
+      StorageEngine *engine= ha_info->ht();
       status_var_increment(session->status_var.ha_prepare_count);
-      if (ht->prepare)
+      if ((err= engine->prepare(engine, session, all)))
       {
-        if ((err= ht->prepare(ht, session, all)))
-        {
-          my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
-          ha_rollback_trans(session, all);
-          error=1;
-          break;
-        }
+        my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
+        ha_rollback_trans(session, all);
+        error=1;
+        break;
       }
       else
       {
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            ha_resolve_storage_engine_name(ht));
+                            ha_resolve_storage_engine_name(engine));
       }
     }
   }
@@ -704,7 +701,7 @@ int ha_commit_trans(Session *session, bool all)
       for (; ha_info && !error; ha_info= ha_info->next())
       {
         int err;
-        StorageEngine *ht= ha_info->ht();
+        StorageEngine *engine= ha_info->ht();
         /*
           Do not call two-phase commit if this particular
           transaction is read-only. This allows for simpler
@@ -716,7 +713,7 @@ int ha_commit_trans(Session *session, bool all)
           Sic: we know that prepare() is not NULL since otherwise
           trans->no_2pc would have been set.
         */
-        if ((err= ht->prepare(ht, session, all)))
+        if ((err= engine->prepare(engine, session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -753,8 +750,8 @@ int ha_commit_one_phase(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      StorageEngine *ht= ha_info->ht();
-      if ((err= ht->commit(ht, session, all)))
+      StorageEngine *engine= ha_info->ht();
+      if ((err= engine->commit(engine, session, all)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
         error=1;
@@ -796,8 +793,8 @@ int ha_rollback_trans(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      StorageEngine *ht= ha_info->ht();
-      if ((err= ht->rollback(ht, session, all)))
+      StorageEngine *engine= ha_info->ht();
+      if ((err= engine->rollback(engine, session, all)))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
         error=1;
@@ -878,7 +875,7 @@ static bool xacommit_handlerton(Session *,
                                 void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES && engine->recover)
+  if (engine->state == SHOW_OPTION_YES)
   {
     engine->commit_by_xid(engine, ((struct xahton_st *)arg)->xid);
     ((struct xahton_st *)arg)->result= 0;
@@ -891,7 +888,7 @@ static bool xarollback_handlerton(Session *,
                                   void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES && engine->recover)
+  if (engine->state == SHOW_OPTION_YES)
   {
     engine->rollback_by_xid(engine, ((struct xahton_st *)arg)->xid);
     ((struct xahton_st *)arg)->result= 0;
@@ -944,7 +941,7 @@ static bool xarecover_handlerton(Session *,
   struct xarecover_st *info= (struct xarecover_st *) arg;
   int got;
 
-  if (engine->state == SHOW_OPTION_YES && engine->recover)
+  if (engine->state == SHOW_OPTION_YES)
   {
     while ((got= engine->recover(engine, info->list, info->len)) > 0 )
     {
@@ -1122,7 +1119,7 @@ static bool release_temporary_latches(Session *session, plugin_ref plugin,
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
 
-  if (engine->state == SHOW_OPTION_YES && engine->release_temporary_latches)
+  if (engine->state == SHOW_OPTION_YES)
     engine->release_temporary_latches(engine, session);
 
   return false;
@@ -1151,17 +1148,16 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
   for (ha_info= sv->ha_list; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *ht= ha_info->ht();
-    assert(ht);
-    assert(ht->savepoint_set != 0);
-    if ((err= ht->savepoint_rollback(ht, session,
-                                     (unsigned char *)(sv+1)+ht->savepoint_offset)))
+    StorageEngine *engine= ha_info->ht();
+    assert(engine);
+    if ((err= engine->savepoint_rollback(engine, session,
+                                     (unsigned char *)(sv+1)+engine->savepoint_offset)))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
     }
     status_var_increment(session->status_var.ha_savepoint_rollback_count);
-    trans->no_2pc|= ht->prepare == 0;
+    trans->no_2pc|= not engine->has_2pc();
   }
   /*
     rolling back the transaction in all storage engines that were not part of
@@ -1171,8 +1167,8 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
        ha_info= ha_info_next)
   {
     int err;
-    StorageEngine *ht= ha_info->ht();
-    if ((err= ht->rollback(ht, session, !(0))))
+    StorageEngine *engine= ha_info->ht();
+    if ((err= engine->rollback(engine, session, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
@@ -1199,15 +1195,15 @@ int ha_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *ht= ha_info->ht();
-    assert(ht);
-    if (! ht->savepoint_set)
+    StorageEngine *engine= ha_info->ht();
+    assert(engine);
+/*    if (! engine->savepoint_set)
     {
       my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "SAVEPOINT");
       error=1;
       break;
-    }
-    if ((err= ht->savepoint_set(ht, session, (unsigned char *)(sv+1)+ht->savepoint_offset)))
+    } */
+    if ((err= engine->savepoint_set(engine, session, (unsigned char *)(sv+1)+engine->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;
@@ -1230,13 +1226,11 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *ht= ha_info->ht();
+    StorageEngine *engine= ha_info->ht();
     /* Savepoint life time is enclosed into transaction life time. */
-    assert(ht);
-    if (!ht->savepoint_release)
-      continue;
-    if ((err= ht->savepoint_release(ht, session,
-                                    (unsigned char *)(sv+1) + ht->savepoint_offset)))
+    assert(engine);
+    if ((err= engine->savepoint_release(engine, session,
+                                    (unsigned char *)(sv+1) + engine->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;
@@ -1249,8 +1243,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 static bool snapshot_handlerton(Session *session, plugin_ref plugin, void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES &&
-      engine->start_consistent_snapshot)
+  if (engine->state == SHOW_OPTION_YES)
   {
     engine->start_consistent_snapshot(engine, session);
     *((bool *)arg)= false;
@@ -1281,16 +1274,16 @@ static bool flush_handlerton(Session *,
                              void *)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES && engine->flush_logs &&
+  if (engine->state == SHOW_OPTION_YES &&
       engine->flush_logs(engine))
     return true;
   return false;
 }
 
 
-bool ha_flush_logs(StorageEngine *db_type)
+bool ha_flush_logs(StorageEngine *engine)
 {
-  if (db_type == NULL)
+  if (engine == NULL)
   {
     if (plugin_foreach(NULL, flush_handlerton,
                           DRIZZLE_STORAGE_ENGINE_PLUGIN, 0))
@@ -1298,8 +1291,8 @@ bool ha_flush_logs(StorageEngine *db_type)
   }
   else
   {
-    if (db_type->state != SHOW_OPTION_YES ||
-        (db_type->flush_logs && db_type->flush_logs(db_type)))
+    if (engine->state != SHOW_OPTION_YES ||
+        (engine->flush_logs(engine)))
       return true;
   }
   return false;
@@ -1382,7 +1375,7 @@ static bool deletetable_handlerton(Session *,
   if(!table_type)
     return false;
 
-  if(!(table_type->state == SHOW_OPTION_YES && table_type->create))
+  if(!(table_type->state == SHOW_OPTION_YES))
     return false;
 
   if ((file= table_type->create(table_type, NULL, session->mem_root)))
@@ -3006,7 +2999,7 @@ static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugi
 
   int err= HA_ERR_NO_SUCH_TABLE;
 
-  if (engine->state == SHOW_OPTION_YES && engine->table_exists_in_engine)
+  if (engine->state == SHOW_OPTION_YES)
     err = engine->table_exists_in_engine(engine, session, vargs->db, vargs->name);
 
   vargs->err = err;
@@ -4091,7 +4084,7 @@ static bool exts_handlerton(Session *,
   List<char> *found_exts= (List<char> *) arg;
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   handler *file;
-  if (engine->state == SHOW_OPTION_YES && engine->create &&
+  if (engine->state == SHOW_OPTION_YES &&
       (file= engine->create(engine, (TABLE_SHARE*) 0, current_session->mem_root)))
   {
     List_iterator_fast<char> it(*found_exts);
@@ -4157,7 +4150,7 @@ static bool stat_print(Session *session, const char *type, uint32_t type_len,
   return false;
 }
 
-bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type stat)
+bool ha_show_status(Session *session, StorageEngine *engine, enum ha_stat_type stat)
 {
   List<Item> field_list;
   Protocol *protocol= session->protocol;
@@ -4171,8 +4164,7 @@ bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type 
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return true;
 
-  result= db_type->show_status &&
-    db_type->show_status(db_type, session, stat_print, stat) ? 1 : 0;
+  result= engine->show_status(engine, session, stat_print, stat) ? 1 : 0;
 
   if (!result)
     session->my_eof();
