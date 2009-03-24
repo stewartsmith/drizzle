@@ -42,10 +42,10 @@ int heap_deinit(void *)
 
 int heap_init(void *p)
 {
-  heap_hton= (StorageEngine *)p;
-  heap_hton->state=      SHOW_OPTION_YES;
-  heap_hton->create=     heap_create_handler;
-  heap_hton->flags=      HTON_CAN_RECREATE;
+  heap_engine= (StorageEngine *)p;
+  heap_engine->state=      SHOW_OPTION_YES;
+  heap_engine->create=     heap_create_handler;
+  heap_engine->flags=      HTON_CAN_RECREATE;
 
   return 0;
 }

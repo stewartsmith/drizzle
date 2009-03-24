@@ -296,10 +296,10 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
     remove partition and myisammrg.
   */
   if (strcmp(plugin->plugin->name, "MEMORY") == 0)
-    heap_hton= hton;
+    heap_engine= hton;
 
   if (strcmp(plugin->plugin->name, "MyISAM") == 0)
-    myisam_hton= hton;
+    myisam_engine= hton;
 
   plugin->state= PLUGIN_IS_READY;
 

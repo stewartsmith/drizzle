@@ -257,8 +257,8 @@ size_t my_thread_stack_size= 65536;
 /*
   Legacy global StorageEngine. These will be removed (please do not add more).
 */
-StorageEngine *heap_hton;
-StorageEngine *myisam_hton;
+StorageEngine *heap_engine;
+StorageEngine *myisam_engine;
 
 bool use_temp_pool;
 char* opt_secure_file_priv= 0;

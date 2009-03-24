@@ -104,15 +104,15 @@ static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
 
 static int tina_init_func(void *p)
 {
-  StorageEngine *tina_hton;
+  StorageEngine *tina_engine;
 
-  tina_hton= (StorageEngine *)p;
+  tina_engine= (StorageEngine *)p;
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
                    (hash_get_key) tina_get_key,0,0);
-  tina_hton->state= SHOW_OPTION_YES;
-  tina_hton->create= tina_create_handler;
-  tina_hton->flags= (HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES |
+  tina_engine->state= SHOW_OPTION_YES;
+  tina_engine->create= tina_create_handler;
+  tina_engine->flags= (HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES |
                      HTON_NO_PARTITION);
   return 0;
 }

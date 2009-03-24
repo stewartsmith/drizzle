@@ -5445,7 +5445,7 @@ static bool check_engine(Session *session, const char *table_name,
       *new_engine= 0;
       return true;
     }
-    *new_engine= myisam_hton;
+    *new_engine= myisam_engine;
   }
   return false;
 }

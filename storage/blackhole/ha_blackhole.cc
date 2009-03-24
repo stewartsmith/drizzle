@@ -269,11 +269,11 @@ static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *lengt
 
 static int blackhole_init(void *p)
 {
-  StorageEngine *blackhole_hton;
-  blackhole_hton= (StorageEngine *)p;
-  blackhole_hton->state= SHOW_OPTION_YES;
-  blackhole_hton->create= blackhole_create_handler;
-  blackhole_hton->flags= HTON_CAN_RECREATE;
+  StorageEngine *blackhole_engine;
+  blackhole_engine= (StorageEngine *)p;
+  blackhole_engine->state= SHOW_OPTION_YES;
+  blackhole_engine->create= blackhole_create_handler;
+  blackhole_engine->flags= HTON_CAN_RECREATE;
 
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
   (void) hash_init(&blackhole_open_tables, system_charset_info,32,0,0,

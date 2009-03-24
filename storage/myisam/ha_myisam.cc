@@ -1803,10 +1803,10 @@ int myisam_deinit(void *)
 
 static int myisam_init(void *p)
 {
-  myisam_hton= (StorageEngine *)p;
-  myisam_hton->state= SHOW_OPTION_YES;
-  myisam_hton->create= myisam_create_handler;
-  myisam_hton->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
+  myisam_engine= (StorageEngine *)p;
+  myisam_engine->state= SHOW_OPTION_YES;
+  myisam_engine->create= myisam_create_handler;
+  myisam_engine->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
   return 0;
 }
 

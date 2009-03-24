@@ -2387,7 +2387,7 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
   if (type == OPT_GLOBAL)
   {
     value= &(global_system_variables.*offset);
-    new_value= ha_lock_engine(NULL, myisam_hton);
+    new_value= ha_lock_engine(NULL, myisam_engine);
   }
   else
   {

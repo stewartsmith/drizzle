@@ -70,7 +70,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_NO_PARTITION(1 << HTON_BIT_NO_PARTI
 
   usually StorageEngine instance is defined statically in ha_xxx.cc as
 
-  static StorageEngine { ... } xxx_hton;
+  static StorageEngine { ... } xxx_engine;
 
   savepoint_*, prepare, recover, and *_by_xid pointers can be 0.
 */
@@ -96,7 +96,7 @@ struct StorageEngine
     in the session, for storing per-connection information.
     It is accessed as
 
-      session->ha_data[xxx_hton.slot]
+      session->ha_data[xxx_engine.slot]
 
    slot number is initialized by MySQL after xxx_init() is called.
    */
@@ -108,14 +108,14 @@ struct StorageEngine
      the needed memory to store per-savepoint information.
      After xxx_init it is changed to be an offset to savepoint storage
      area and need not be used by storage engine.
-     see binlog_hton and binlog_savepoint_set/rollback for an example.
+     see binlog_engine and binlog_savepoint_set/rollback for an example.
    */
    uint32_t savepoint_offset;
    /*
      StorageEngine methods:
 
      close_connection is only called if
-     session->ha_data[xxx_hton.slot] is non-zero, so even if you don't need
+     session->ha_data[xxx_engine.slot] is non-zero, so even if you don't need
      this storage area - set it to something, so that MySQL would know
      this storage engine was accessed in this connection
    */

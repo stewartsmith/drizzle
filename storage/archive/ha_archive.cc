@@ -151,12 +151,12 @@ static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length, bool
 
 int archive_db_init(void *p)
 {
-  StorageEngine *archive_hton;
+  StorageEngine *archive_engine;
 
-  archive_hton= (StorageEngine *)p;
-  archive_hton->state= SHOW_OPTION_YES;
-  archive_hton->create= archive_create_handler;
-  archive_hton->flags= HTON_NO_FLAGS;
+  archive_engine= (StorageEngine *)p;
+  archive_engine->state= SHOW_OPTION_YES;
+  archive_engine->create= archive_create_handler;
+  archive_engine->flags= HTON_NO_FLAGS;
 
   /* When the engine starts up set the first version */
   global_version= 1;

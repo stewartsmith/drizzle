@@ -1825,7 +1825,7 @@ innobase_init(
 	char		*default_path;
 	uint		format_id;
 
-        StorageEngine *innobase_hton= (StorageEngine *)p;
+        StorageEngine *innobase_engine= (StorageEngine *)p;
 
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 	if (!innodb_plugin_init()) {
@@ -1835,31 +1835,31 @@ innobase_init(
 
 	if (innodb_hton_ptr) {
 		/* Patch the statically linked StorageEngine and variables */
-		innobase_hton = innodb_hton_ptr;
+		innobase_engine = innodb_hton_ptr;
 	}
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
-        innodb_hton_ptr = innobase_hton;
+        innodb_hton_ptr = innobase_engine;
 
-        innobase_hton->state = SHOW_OPTION_YES;
-        innobase_hton->savepoint_offset=sizeof(trx_named_savept_t);
-        innobase_hton->close_connection=innobase_close_connection;
-        innobase_hton->savepoint_set=innobase_savepoint;
-        innobase_hton->savepoint_rollback=innobase_rollback_to_savepoint;
-        innobase_hton->savepoint_release=innobase_release_savepoint;
-        innobase_hton->commit=innobase_commit;
-        innobase_hton->rollback=innobase_rollback;
-        innobase_hton->prepare=innobase_xa_prepare;
-        innobase_hton->recover=innobase_xa_recover;
-        innobase_hton->commit_by_xid=innobase_commit_by_xid;
-        innobase_hton->rollback_by_xid=innobase_rollback_by_xid;
-        innobase_hton->create=innobase_create_handler;
-        innobase_hton->drop_database=innobase_drop_database;
-        innobase_hton->start_consistent_snapshot=innobase_start_trx_and_assign_read_view;
-        innobase_hton->flush_logs=innobase_flush_logs;
-        innobase_hton->show_status=innobase_show_status;
-        innobase_hton->flags=HTON_NO_FLAGS;
-        innobase_hton->release_temporary_latches=innobase_release_temporary_latches;
+        innobase_engine->state = SHOW_OPTION_YES;
+        innobase_engine->savepoint_offset=sizeof(trx_named_savept_t);
+        innobase_engine->close_connection=innobase_close_connection;
+        innobase_engine->savepoint_set=innobase_savepoint;
+        innobase_engine->savepoint_rollback=innobase_rollback_to_savepoint;
+        innobase_engine->savepoint_release=innobase_release_savepoint;
+        innobase_engine->commit=innobase_commit;
+        innobase_engine->rollback=innobase_rollback;
+        innobase_engine->prepare=innobase_xa_prepare;
+        innobase_engine->recover=innobase_xa_recover;
+        innobase_engine->commit_by_xid=innobase_commit_by_xid;
+        innobase_engine->rollback_by_xid=innobase_rollback_by_xid;
+        innobase_engine->create=innobase_create_handler;
+        innobase_engine->drop_database=innobase_drop_database;
+        innobase_engine->start_consistent_snapshot=innobase_start_trx_and_assign_read_view;
+        innobase_engine->flush_logs=innobase_flush_logs;
+        innobase_engine->show_status=innobase_show_status;
+        innobase_engine->flags=HTON_NO_FLAGS;
+        innobase_engine->release_temporary_latches=innobase_release_temporary_latches;
 
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
 
@@ -2102,9 +2102,9 @@ mem_free_and_error:
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
-	if (innobase_hton != p) {
-		innobase_hton = reinterpret_cast<StorageEngine*>(p);
-		*innobase_hton = *innodb_hton_ptr;
+	if (innobase_engine != p) {
+		innobase_engine = reinterpret_cast<StorageEngine*>(p);
+		*innobase_engine = *innodb_hton_ptr;
 	}
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
 

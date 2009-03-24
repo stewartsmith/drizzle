@@ -13458,7 +13458,7 @@ remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *having)
 
   free_io_cache(entry);				// Safety
   entry->file->info(HA_STATUS_VARIABLE);
-  if (entry->s->db_type() == heap_hton ||
+  if (entry->s->db_type() == heap_engine ||
       (!entry->s->blob_fields &&
        ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->file->stats.records <
 	session->variables.sortbuff_size)))

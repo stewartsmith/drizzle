@@ -52,7 +52,7 @@ static int binlog_rollback(StorageEngine *hton, Session *session, bool all);
 static int binlog_prepare(StorageEngine *hton, Session *session, bool all);
 
 
-StorageEngine *binlog_hton;
+StorageEngine *binlog_engine;
 
 
  /*
@@ -87,16 +87,16 @@ binlog_trans_log_savepos(Session *, my_off_t *pos)
 
 int binlog_init(void *p)
 {
-  binlog_hton= (StorageEngine *)p;
-  binlog_hton->state= SHOW_OPTION_YES;
-  binlog_hton->savepoint_offset= sizeof(my_off_t);
-  binlog_hton->close_connection= binlog_close_connection;
-  binlog_hton->savepoint_set= binlog_savepoint_set;
-  binlog_hton->savepoint_rollback= binlog_savepoint_rollback;
-  binlog_hton->commit= binlog_commit;
-  binlog_hton->rollback= binlog_rollback;
-  binlog_hton->prepare= binlog_prepare;
-  binlog_hton->flags= HTON_NOT_USER_SELECTABLE | HTON_HIDDEN;
+  binlog_engine= (StorageEngine *)p;
+  binlog_engine->state= SHOW_OPTION_YES;
+  binlog_engine->savepoint_offset= sizeof(my_off_t);
+  binlog_engine->close_connection= binlog_close_connection;
+  binlog_engine->savepoint_set= binlog_savepoint_set;
+  binlog_engine->savepoint_rollback= binlog_savepoint_rollback;
+  binlog_engine->commit= binlog_commit;
+  binlog_engine->rollback= binlog_rollback;
+  binlog_engine->prepare= binlog_prepare;
+  binlog_engine->flags= HTON_NOT_USER_SELECTABLE | HTON_HIDDEN;
 
   return 0;
 }
