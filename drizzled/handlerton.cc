@@ -67,7 +67,7 @@ static plugin_ref ha_default_plugin(Session *session)
 {
   if (session->variables.table_plugin)
     return session->variables.table_plugin;
-  return my_plugin_lock(session, &global_system_variables.table_plugin);
+  return global_system_variables.table_plugin;
 }
 
 
@@ -142,14 +142,15 @@ redo:
 }
 
 
-plugin_ref ha_lock_engine(Session *session, handlerton *hton)
+plugin_ref ha_lock_engine(Session *, handlerton *hton)
 {
   if (hton)
   {
     st_plugin_int **plugin= hton2plugin + hton->slot;
 
-    return my_plugin_lock(session, &plugin);
+    return plugin;
   }
+
   return NULL;
 }
 

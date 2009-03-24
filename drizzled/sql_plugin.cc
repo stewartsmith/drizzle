@@ -510,6 +510,9 @@ static plugin_ref intern_plugin_lock(LEX *, plugin_ref rc)
 {
   st_plugin_int *pi= plugin_ref_to_int(rc);
 
+  assert(pi);
+  assert(rc);
+
   if (pi->state & (PLUGIN_IS_READY | PLUGIN_IS_UNINITIALIZED))
   {
     plugin_ref plugin;
@@ -727,34 +730,14 @@ static void reap_plugins(void)
   }
 }
 
-static void intern_plugin_unlock(LEX *, plugin_ref plugin)
+static void intern_plugin_unlock(LEX *, plugin_ref)
 {
-  st_plugin_int *pi;
-
-  if (!plugin)
-    return;
-
-  pi= plugin_ref_to_int(plugin);
-
-  free((void *) plugin);
- 
-  //assert(pi->ref_count);
-  if (pi->ref_count > 0)
-    pi->ref_count--;
-
-  if (pi->state == PLUGIN_IS_DELETED && !pi->ref_count)
-    reap_needed= true;
-
   return;
 }
 
 
-void plugin_unlock(Session *session, plugin_ref plugin)
+void plugin_unlock(Session *, plugin_ref)
 {
-  LEX *lex= session ? session->lex : 0;
-  if (!plugin)
-    return;
-  intern_plugin_unlock(lex, plugin);
   return;
 }
 
