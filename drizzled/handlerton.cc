@@ -116,11 +116,6 @@ redo:
     handlerton *hton= plugin_data(plugin, handlerton *);
     if (!(hton->flags.test(HTON_BIT_NOT_USER_SELECTABLE)))
       return plugin;
-
-    /*
-      unlocking plugin immediately after locking is relatively low cost.
-    */
-    plugin_unlock(session, plugin);
   }
 
   /*

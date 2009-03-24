@@ -277,7 +277,6 @@ void free_table_share(TABLE_SHARE *share)
   }
   hash_free(&share->name_hash);
 
-  plugin_unlock(NULL, share->db_plugin);
   share->db_plugin= NULL;
 
   /* We must copy mem_root from share because share is allocated through it */
@@ -4737,8 +4736,6 @@ void Table::free_tmp_table(Session *session)
   if (temp_pool_slot != MY_BIT_NONE)
     bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
 
-  plugin_unlock(0, s->db_plugin);
-
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
 
@@ -4824,7 +4821,6 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->close();                  // This deletes the table !
   delete table->file;
   table->file=0;
-  plugin_unlock(0, table->s->db_plugin);
   share.db_plugin= my_plugin_lock(0, &share.db_plugin);
   new_table.s= table->s;                       // Keep old share
   *table= new_table;

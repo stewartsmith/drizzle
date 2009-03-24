@@ -2375,8 +2375,6 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
   hton= plugin_data(plugin, handlerton*);
   engine_name= ha_storage_engine_name(hton);
   result= (unsigned char *) session->strmake(engine_name->str, engine_name->length);
-  if (type == OPT_GLOBAL)
-    plugin_unlock(session, plugin);
   return result;
 }
 
@@ -2397,7 +2395,6 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
   assert(new_value);
   old_value= *value;
   *value= new_value;
-  plugin_unlock(NULL, old_value);
 }
 
 
@@ -2410,7 +2407,6 @@ bool sys_var_session_storage_engine::update(Session *session, set_var *var)
   if (old_value != var->save_result.plugin)
   {
     *value= my_plugin_lock(NULL, &var->save_result.plugin);
-    plugin_unlock(NULL, old_value);
   }
   return 0;
 }

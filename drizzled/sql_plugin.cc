@@ -232,7 +232,6 @@ static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
 static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref plugin);
-static void intern_plugin_unlock(LEX *lex, plugin_ref plugin);
 static void reap_plugins(void);
 
 
@@ -709,7 +708,6 @@ static void plugin_del(struct st_plugin_int *plugin)
   mysql_del_sys_var_chain(plugin->system_vars);
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
   free_root(&plugin->mem_root, MYF(0));
-  return;
 }
 
 static void reap_plugins(void)
@@ -729,28 +727,6 @@ static void reap_plugins(void)
     plugin_del(plugin);
   }
 }
-
-static void intern_plugin_unlock(LEX *, plugin_ref)
-{
-  return;
-}
-
-
-void plugin_unlock(Session *, plugin_ref)
-{
-  return;
-}
-
-
-void plugin_unlock_list(Session *session, plugin_ref *list, uint32_t count)
-{
-  LEX *lex= session ? session->lex : 0;
-  assert(list);
-  while (count--)
-    intern_plugin_unlock(lex, *list++);
-  return;
-}
-
 
 static int plugin_initialize(struct st_plugin_int *plugin)
 {
@@ -1169,8 +1145,6 @@ void plugin_shutdown(void)
   free_root(&plugin_mem_root, MYF(0));
 
   global_variables_dynamic_size= 0;
-
-  return;
 }
 
 /**
@@ -1555,9 +1529,7 @@ sys_var *find_sys_var(Session *session, const char *str, uint32_t length)
     else
     if (!(plugin_state(plugin) & PLUGIN_IS_READY))
     {
-      /* initialization not completed */
       var= NULL;
-      intern_plugin_unlock(lex, plugin);
     }
   }
   else
@@ -1850,8 +1822,6 @@ static unsigned long *mysql_sys_var_ptr_enum(Session* a_session, int offset)
 
 void plugin_sessionvar_init(Session *session)
 {
-  plugin_ref old_table_plugin= session->variables.table_plugin;
-
   session->variables.table_plugin= NULL;
   cleanup_variables(session, &session->variables);
 
@@ -1865,8 +1835,6 @@ void plugin_sessionvar_init(Session *session)
 
   session->variables.table_plugin=
     intern_plugin_lock(NULL, global_system_variables.table_plugin);
-  intern_plugin_unlock(NULL, old_table_plugin);
-  return;
 }
 
 
@@ -1875,7 +1843,6 @@ void plugin_sessionvar_init(Session *session)
 */
 static void unlock_variables(Session *, struct system_variables *vars)
 {
-  intern_plugin_unlock(NULL, vars->table_plugin);
   vars->table_plugin= NULL;
 }
 

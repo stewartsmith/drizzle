@@ -134,9 +134,6 @@ extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern plugin_ref plugin_lock(Session *session, plugin_ref *ptr);
 extern plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name,
                                       int type);
-extern void plugin_unlock(Session *session, plugin_ref plugin);
-extern void plugin_unlock_list(Session *session, plugin_ref *list,
-                               uint32_t count);
 extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
 extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
