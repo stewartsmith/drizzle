@@ -1047,10 +1047,6 @@ public:
   {
     *place= new_value;
   }
-  void nocheck_register_item_tree_change(Item **place, Item *old_value,
-                                         MEM_ROOT *runtime_memroot);
-  void rollback_item_tree_changes();
-
   /*
     Cleanup statement parse state (parse tree, lex) and execution
     state after execution of a non-prepared SQL statement.
