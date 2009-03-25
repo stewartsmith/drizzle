@@ -85,16 +85,6 @@ class StorageEngine
 
 public:
 
-  StorageEngine(const std::string &name_arg, bool support_2pc= false)
-    : name(name_arg), _2pc(support_2pc)  {}
-  virtual ~StorageEngine() {}
-
-  bool has_2pc()
-  {
-    return _2pc;
-  }
-
-
   /*
     Historical marker for if the engine is available of not
   */
@@ -122,6 +112,17 @@ public:
    */
    uint32_t savepoint_offset;
    uint32_t license; /* Flag for Engine License */
+
+  StorageEngine(const std::string &name_arg, bool support_2pc= false)
+    : name(name_arg), _2pc(support_2pc), savepoint_offset(0)  {}
+  virtual ~StorageEngine() {}
+
+  bool has_2pc()
+  {
+    return _2pc;
+  }
+
+
 
    bool is_enabled() const
    {
