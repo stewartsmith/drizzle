@@ -25,11 +25,19 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
 
+#include <string>
+
+using namespace std;
+
+static const string engine_name("MEMORY");
+
 pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
 
 
 class HeapEngine : public StorageEngine
 {
+public:
+  HeapEngine(string name_arg) : StorageEngine(name_arg) {}
   virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
@@ -40,7 +48,7 @@ class HeapEngine : public StorageEngine
 int heap_init(void *p)
 {
   StorageEngine **engine= static_cast<StorageEngine **>(p);
-  *engine= new HeapEngine();
+  *engine= new HeapEngine(engine_name);
 
   (*engine)->state=      SHOW_OPTION_YES;
   (*engine)->flags=      HTON_CAN_RECREATE;

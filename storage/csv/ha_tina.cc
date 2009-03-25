@@ -49,6 +49,12 @@ TODO:
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+#include <string>
+
+using namespace std;
+
+static const string engine_name("CSV");
+
 /*
   unsigned char + unsigned char + uint64_t + uint64_t + uint64_t + uint64_t + unsigned char
 */
@@ -100,6 +106,8 @@ static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
 
 class Tina : public StorageEngine
 {
+public:
+  Tina(const string& name_arg) : StorageEngine(name_arg) {}
   virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
@@ -111,7 +119,7 @@ static int tina_init_func(void *p)
 {
   StorageEngine **engine= static_cast<StorageEngine **>(p);
 
-  Tina *tina_engine= new Tina();
+  Tina *tina_engine= new Tina(engine_name);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,

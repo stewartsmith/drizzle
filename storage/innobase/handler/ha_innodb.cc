@@ -88,6 +88,11 @@ extern "C" {
 #include "i_s.h"
 #include "handler0vars.h"
 
+#include <string>
+
+using namespace std;
+
+
 #ifndef DRIZZLE_SERVER
 /* This is needed because of Bug #3596.  Let us hope that pthread_mutex_t
 is defined the same in both builds: the MySQL server and the InnoDB plugin. */
@@ -214,7 +219,7 @@ static void free_share(INNOBASE_SHARE *share);
 class InnobaseEngine : public StorageEngine
 {
 public:
-  InnobaseEngine() : StorageEngine() {}
+  InnobaseEngine(string name_arg) : StorageEngine(name_arg) {}
 
   virtual
   int
@@ -363,6 +368,7 @@ innobase_file_format_check_validate(
 	const char*	format_check);		/* in: parameter value */
 
 static const char innobase_engine_name[]= "InnoDB";
+
 
 static DRIZZLE_SessionVAR_BOOL(support_xa, PLUGIN_VAR_OPCMDARG,
   "Enable InnoDB support for the XA two-phase commit",
@@ -1834,7 +1840,7 @@ innobase_init(
 	uint		format_id;
 
 	StorageEngine **engine= static_cast<StorageEngine **>(p);
-	InnobaseEngine *innobase_engine= new InnobaseEngine();
+	InnobaseEngine *innobase_engine= new InnobaseEngine(string(innobase_engine_name));
 
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 	if (!innodb_plugin_init()) {

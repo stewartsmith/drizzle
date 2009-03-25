@@ -40,6 +40,12 @@
 #include <drizzled/session.h>
 #include <drizzled/handler.h>
 
+#include <string>
+
+using namespace std;
+
+static const string engine_name("binlog");
+
 StorageEngine *binlog_engine= NULL;
 
 /*
@@ -69,7 +75,7 @@ binlog_trans_log_savepos(Session *, my_off_t *pos)
 class BinlogEngine : public StorageEngine
 {
 public:
-  BinlogEngine() : StorageEngine() {}
+  BinlogEngine(string name_arg) : StorageEngine(name_arg) {}
  
   virtual int close_connection(Session *)
   {
@@ -262,7 +268,7 @@ int binlog_init(void *p)
 
   if (binlog_engine == NULL)
   {
-    binlog_engine= new BinlogEngine();
+    binlog_engine= new BinlogEngine(engine_name);
     binlog_engine->state= SHOW_OPTION_YES;
     binlog_engine->savepoint_offset= sizeof(my_off_t);
     binlog_engine->flags= HTON_NOT_USER_SELECTABLE | HTON_HIDDEN;

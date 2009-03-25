@@ -29,6 +29,12 @@
 #include <drizzled/table.h>
 #include <drizzled/field/timestamp.h>
 
+#include <string>
+
+using namespace std;
+
+static const string engine_name("MyISAM");
+
 ulong myisam_recover_options= HA_RECOVER_NONE;
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
@@ -56,6 +62,9 @@ TYPELIB myisam_stats_method_typelib= {
 
 class MyisamEngine : public StorageEngine
 {
+public:
+  MyisamEngine(string name_arg) : StorageEngine(name_arg) {}
+
   virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
@@ -1811,7 +1820,7 @@ static int myisam_init(void *p)
 {
   StorageEngine **engine= static_cast<StorageEngine **>(p);
   
-  *engine= new MyisamEngine();
+  *engine= new MyisamEngine(engine_name);
   (*engine)->state= SHOW_OPTION_YES;
   (*engine)->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
 

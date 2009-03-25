@@ -21,9 +21,15 @@
 #include <storage/myisam/myisam.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <stdio.h>
 
 #include <storage/archive/ha_archive.h>
+
+#include <stdio.h>
+#include <string>
+
+using namespace std;
+
+static const string engine_name("ARCHIVE");
 
 /*
   First, if you want to understand storage engines you should look at
@@ -118,6 +124,8 @@ static bool archive_use_aio= false;
 
 class ArchiveEngine : public StorageEngine
 {
+public:
+  ArchiveEngine(const string &name_arg) : StorageEngine(name_arg) {}
   virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
@@ -151,7 +159,7 @@ int archive_db_init(void *p)
 {
   StorageEngine **engine= static_cast<StorageEngine **>(p);
 
-  ArchiveEngine *archive_engine= new ArchiveEngine();
+  ArchiveEngine *archive_engine= new ArchiveEngine(engine_name);
   archive_engine->state= SHOW_OPTION_YES;
   archive_engine->flags= HTON_NO_FLAGS;
 
