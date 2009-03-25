@@ -1651,7 +1651,6 @@ static int init_server_components()
         Need to unlock as global_system_variables.table_plugin
         was acquired during plugin_init()
       */
-      plugin_unlock(0, global_system_variables.table_plugin);
       global_system_variables.table_plugin= plugin;
     }
   }
