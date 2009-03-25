@@ -127,7 +127,6 @@ public:
    */
    uint32_t savepoint_offset;
    uint32_t license; /* Flag for Engine License */
-   void *data; /* Location for engines to keep personal structures */
 
    std::string get_name() { return name; }
 
