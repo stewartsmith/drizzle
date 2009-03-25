@@ -5422,10 +5422,12 @@ static bool check_engine(Session *session, const char *table_name,
 {
   StorageEngine **new_engine= &create_info->db_type;
   StorageEngine *req_engine= *new_engine;
-  bool no_substitution= 1;
-  if (!(*new_engine= ha_checktype(session, ha_legacy_type(req_engine),
-                                  no_substitution, 1)))
+  if (!req_engine->is_enabled())
+  {
+    const char *engine_name= ha_resolve_storage_engine_name(req_engine);
+    my_error(ER_FEATURE_DISABLED,MYF(0),engine_name,engine_name);
     return true;
+  }
 
   if (req_engine && req_engine != *new_engine)
   {

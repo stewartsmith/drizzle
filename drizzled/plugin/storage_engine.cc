@@ -25,17 +25,14 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <map>
+#include <string>
 
 #include CSTDINT_H
 
-/*
-  While we have legacy_db_type, we have this array to
-  check for dups and to find StorageEngine from legacy_db_type.
-  Remove when legacy_db_type is finally gone
-*/
-st_plugin_int *engine2plugin[MAX_HA];
+using namespace std;
 
-static StorageEngine *installed_engines[128];
+st_plugin_int *engine2plugin[MAX_HA];
 
 static const LEX_STRING sys_table_aliases[]=
 {
@@ -49,24 +46,6 @@ int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
 {
   return HA_ERR_NO_SUCH_TABLE;
 }
-
-StorageEngine *ha_resolve_by_legacy_type(Session *session,
-                                      enum legacy_db_type db_type)
-{
-  plugin_ref plugin;
-  switch (db_type) {
-  case DB_TYPE_DEFAULT:
-    return ha_default_storage_engine(session);
-  default:
-    if (db_type > DB_TYPE_UNKNOWN && db_type < DB_TYPE_DEFAULT &&
-        (plugin= ha_lock_engine(session, installed_engines[db_type])))
-      return plugin_data(plugin, StorageEngine*);
-    /* fall through */
-  case DB_TYPE_UNKNOWN:
-    return NULL;
-  }
-}
-
 
 static plugin_ref ha_default_plugin(Session *session)
 {
@@ -159,30 +138,6 @@ plugin_ref ha_lock_engine(Session *session, StorageEngine *engine)
 }
 
 
-/**
-  Use other database handler if databasehandler is not compiled in.
-*/
-StorageEngine *ha_checktype(Session *session, enum legacy_db_type database_type,
-                          bool no_substitute, bool report_error)
-{
-  StorageEngine *engine= ha_resolve_by_legacy_type(session, database_type);
-  if (ha_storage_engine_is_enabled(engine))
-    return engine;
-
-  if (no_substitute)
-  {
-    if (report_error)
-    {
-      const char *engine_name= ha_resolve_storage_engine_name(engine);
-      my_error(ER_FEATURE_DISABLED,MYF(0),engine_name,engine_name);
-    }
-    return NULL;
-  }
-
-  return ha_default_storage_engine(session);
-} /* ha_checktype */
-
-
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
                          StorageEngine *engine)
 {
@@ -206,17 +161,6 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
 int storage_engine_finalizer(st_plugin_int *plugin)
 {
   StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
-
-  switch (engine->state)
-  {
-  case SHOW_OPTION_NO:
-  case SHOW_OPTION_DISABLED:
-    break;
-  case SHOW_OPTION_YES:
-    if (installed_engines[engine->db_type] == engine)
-      installed_engines[engine->db_type]= NULL;
-    break;
-  };
 
   if (engine && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(engine);
@@ -251,28 +195,6 @@ int storage_engine_initializer(st_plugin_int *plugin)
   case SHOW_OPTION_YES:
     {
       uint32_t tmp;
-      /* now check the db_type for conflict */
-      if (engine->db_type <= DB_TYPE_UNKNOWN ||
-          engine->db_type >= DB_TYPE_DEFAULT ||
-          installed_engines[engine->db_type])
-      {
-        int idx= (int) DB_TYPE_FIRST_DYNAMIC;
-
-        while (idx < (int) DB_TYPE_DEFAULT && installed_engines[idx])
-          idx++;
-
-        if (idx == (int) DB_TYPE_DEFAULT)
-        {
-          errmsg_printf(ERRMSG_LVL_WARN, _("Too many storage engines!"));
-          return(1);
-        }
-        if (engine->db_type != DB_TYPE_UNKNOWN)
-          errmsg_printf(ERRMSG_LVL_WARN,
-                        _("Storage engine '%s' has conflicting typecode. Assigning value %d."),
-                        plugin->plugin->name, idx);
-        engine->db_type= (enum legacy_db_type) idx;
-      }
-      installed_engines[engine->db_type]= engine;
       tmp= engine->savepoint_offset;
       engine->savepoint_offset= savepoint_alloc_size;
       savepoint_alloc_size+= tmp;
@@ -305,11 +227,6 @@ int storage_engine_initializer(st_plugin_int *plugin)
   return(0);
 }
 
-enum legacy_db_type ha_legacy_type(const StorageEngine *db_type)
-{
-  return (db_type == NULL) ? DB_TYPE_UNKNOWN : db_type->db_type;
-}
-
 const char *ha_resolve_storage_engine_name(const StorageEngine *db_type)
 {
   return db_type == NULL ? "UNKNOWN" : engine2plugin[db_type->slot]->name.str;
@@ -320,11 +237,6 @@ bool ha_check_storage_engine_flag(const StorageEngine *db_type, const engine_fla
   return db_type == NULL ? false : db_type->flags.test(static_cast<size_t>(flag));
 }
 
-bool ha_storage_engine_is_enabled(const StorageEngine *db_type)
-{
-  return (db_type) ?
-         (db_type->state == SHOW_OPTION_YES) : false;
-}
 
 LEX_STRING *ha_storage_engine_name(const StorageEngine *engine)
 {

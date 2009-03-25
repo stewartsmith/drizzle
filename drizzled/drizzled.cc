@@ -1638,7 +1638,7 @@ static int init_server_components()
                       default_storage_engine_str);
       unireg_abort(1);
     }
-    if (!ha_storage_engine_is_enabled(engine))
+    if (!engine->is_enabled())
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
                     default_storage_engine_str);

@@ -86,7 +86,7 @@ class StorageEngine
 public:
 
   StorageEngine(const std::string &name_arg, bool support_2pc= false)
-    : name(name_arg), _2pc(support_2pc), db_type(DB_TYPE_UNKNOWN)  {}
+    : name(name_arg), _2pc(support_2pc)  {}
   virtual ~StorageEngine() {}
 
   bool has_2pc()
@@ -100,11 +100,6 @@ public:
   */
   SHOW_COMP_OPTION state;
 
-  /*
-    Historical number used for frm file to determine the correct storage engine.
-    This is going away and new engines will just use "name" for this.
-  */
-  enum legacy_db_type db_type;
   /*
     each storage engine has it's own memory area (actually a pointer)
     in the session, for storing per-connection information.
@@ -127,6 +122,11 @@ public:
    */
    uint32_t savepoint_offset;
    uint32_t license; /* Flag for Engine License */
+
+   bool is_enabled() const
+   {
+     return (state == SHOW_OPTION_YES);
+   }
 
    std::string get_name() { return name; }
 
@@ -210,17 +210,10 @@ public:
 StorageEngine *ha_default_storage_engine(Session *session);
 plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name);
 plugin_ref ha_lock_engine(Session *session, StorageEngine *engine);
-StorageEngine *ha_resolve_by_legacy_type(Session *session,
-                                      enum legacy_db_type db_type);
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
                          StorageEngine *db_type);
-StorageEngine *ha_checktype(Session *session, enum legacy_db_type database_type,
-                         bool no_substitute, bool report_error);
-
-enum legacy_db_type ha_legacy_type(const StorageEngine *db_type);
 const char *ha_resolve_storage_engine_name(const StorageEngine *db_type);
 bool ha_check_storage_engine_flag(const StorageEngine *db_type, const engine_flag_bits flag);
-bool ha_storage_engine_is_enabled(const StorageEngine *db_type);
 LEX_STRING *ha_storage_engine_name(const StorageEngine *engine);
 
 #endif /* DRIZZLED_HANDLERTON_H */
