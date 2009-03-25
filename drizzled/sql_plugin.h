@@ -127,10 +127,6 @@ extern int plugin_init(int *argc, char **argv, int init_flags);
 extern void plugin_shutdown(void);
 extern void my_print_help_inc_plugins(struct my_option *options, uint32_t size);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
-#define my_plugin_lock_by_name(A,B,C) plugin_lock_by_name(A,B,C)
-#define my_plugin_lock_by_name_ci(A,B,C) plugin_lock_by_name(A,B,C)
-#define my_plugin_lock(A,B) plugin_lock(A,B)
-#define my_plugin_lock_ci(A,B) plugin_lock(A,B)
 extern plugin_ref plugin_lock(Session *session, plugin_ref *ptr);
 extern plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name,
                                       int type);

@@ -111,7 +111,7 @@ redo:
                            (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
     return ha_default_plugin(session);
 
-  if ((plugin= my_plugin_lock_by_name(session, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
+  if ((plugin= plugin_lock_by_name(session, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
     handlerton *hton= plugin_data(plugin, handlerton *);
     if (!(hton->flags.test(HTON_BIT_NOT_USER_SELECTABLE)))

@@ -2371,7 +2371,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
   LEX_STRING *engine_name;
   plugin_ref plugin= session->variables.*offset;
   if (type == OPT_GLOBAL)
-    plugin= my_plugin_lock(session, &(global_system_variables.*offset));
+    plugin= plugin_lock(session, &(global_system_variables.*offset));
   hton= plugin_data(plugin, handlerton*);
   engine_name= ha_storage_engine_name(hton);
   result= (unsigned char *) session->strmake(engine_name->str, engine_name->length);
@@ -2390,7 +2390,7 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
   else
   {
     value= &(session->variables.*offset);
-    new_value= my_plugin_lock(NULL, &(global_system_variables.*offset));
+    new_value= plugin_lock(NULL, &(global_system_variables.*offset));
   }
   assert(new_value);
   old_value= *value;
@@ -2406,7 +2406,7 @@ bool sys_var_session_storage_engine::update(Session *session, set_var *var)
   old_value= *value;
   if (old_value != var->save_result.plugin)
   {
-    *value= my_plugin_lock(NULL, &var->save_result.plugin);
+    *value= plugin_lock(NULL, &var->save_result.plugin);
   }
   return 0;
 }
