@@ -46,9 +46,9 @@ using namespace std;
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
-/* number of entries in handlertons[] */
+/* number of entries in storage_engines[] */
 uint32_t total_ha= 0;
-/* number of storage engines (from handlertons[]) that support 2pc */
+/* number of storage engines (from storage_engines[]) that support 2pc */
 uint32_t total_ha_2pc= 0;
 /* size of savepoint storage area (see ha_init) */
 uint32_t savepoint_alloc_size= 0;
@@ -184,9 +184,9 @@ int ha_end()
   return(error);
 }
 
-static bool dropdb_handlerton(Session *,
-                              plugin_ref plugin,
-                              void *path)
+static bool dropdb_storage_engine(Session *,
+                                  plugin_ref plugin,
+                                  void *path)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES)
@@ -197,11 +197,11 @@ static bool dropdb_handlerton(Session *,
 
 void ha_drop_database(char* path)
 {
-  plugin_foreach(NULL, dropdb_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, path);
+  plugin_foreach(NULL, dropdb_storage_engine, DRIZZLE_STORAGE_ENGINE_PLUGIN, path);
 }
 
 
-static bool closecon_handlerton(Session *session, plugin_ref plugin,
+static bool closecon_storage_engine(Session *session, plugin_ref plugin,
                                 void *)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
@@ -222,7 +222,7 @@ static bool closecon_handlerton(Session *session, plugin_ref plugin,
 */
 void ha_close_connection(Session* session)
 {
-  plugin_foreach(session, closecon_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, 0);
+  plugin_foreach(session, closecon_storage_engine, DRIZZLE_STORAGE_ENGINE_PLUGIN, 0);
 }
 
 /* ========================================================================
@@ -870,9 +870,9 @@ struct xaengine_st {
   int result;
 };
 
-static bool xacommit_handlerton(Session *,
-                                plugin_ref plugin,
-                                void *arg)
+static bool xacommit_storage_engine(Session *,
+                                    plugin_ref plugin,
+                                    void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES)
@@ -883,7 +883,7 @@ static bool xacommit_handlerton(Session *,
   return false;
 }
 
-static bool xarollback_handlerton(Session *,
+static bool xarollback_storage_engine(Session *,
                                   plugin_ref plugin,
                                   void *arg)
 {
@@ -903,7 +903,7 @@ int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
   xaop.xid= xid;
   xaop.result= 1;
 
-  plugin_foreach(NULL, commit ? xacommit_handlerton : xarollback_handlerton,
+  plugin_foreach(NULL, commit ? xacommit_storage_engine : xarollback_storage_engine,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &xaop);
 
   return xaop.result;
@@ -933,9 +933,9 @@ struct xarecover_st
   bool dry_run;
 };
 
-static bool xarecover_handlerton(Session *,
-                                 plugin_ref plugin,
-                                 void *arg)
+static bool xarecover_storage_engine(Session *,
+                                     plugin_ref plugin,
+                                     void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   struct xarecover_st *info= (struct xarecover_st *) arg;
@@ -1024,7 +1024,7 @@ int ha_recover(HASH *commit_list)
     return(1);
   }
 
-  plugin_foreach(NULL, xarecover_handlerton,
+  plugin_foreach(NULL, xarecover_storage_engine,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &info);
 
   free((unsigned char*)info.list);
@@ -1240,7 +1240,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 }
 
 
-static bool snapshot_handlerton(Session *session, plugin_ref plugin, void *arg)
+static bool snapshot_storage_engine(Session *session, plugin_ref plugin, void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES)
@@ -1255,7 +1255,7 @@ int ha_start_consistent_snapshot(Session *session)
 {
   bool warn= true;
 
-  plugin_foreach(session, snapshot_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, &warn);
+  plugin_foreach(session, snapshot_storage_engine, DRIZZLE_STORAGE_ENGINE_PLUGIN, &warn);
 
   /*
     Same idea as when one wants to CREATE TABLE in one engine which does not
@@ -1269,7 +1269,7 @@ int ha_start_consistent_snapshot(Session *session)
 }
 
 
-static bool flush_handlerton(Session *,
+static bool flush_storage_engine(Session *,
                              plugin_ref plugin,
                              void *)
 {
@@ -1285,7 +1285,7 @@ bool ha_flush_logs(StorageEngine *engine)
 {
   if (engine == NULL)
   {
-    if (plugin_foreach(NULL, flush_handlerton,
+    if (plugin_foreach(NULL, flush_storage_engine,
                           DRIZZLE_STORAGE_ENGINE_PLUGIN, 0))
       return true;
   }
@@ -1348,18 +1348,18 @@ handle_error(uint32_t ,
 }
 
 
-struct handlerton_delete_table_args {
+struct storage_engine_delete_table_args {
   Session *session;
   const char *path;
   handler *file;
   int error;
 };
 
-static bool deletetable_handlerton(Session *,
-                                   plugin_ref plugin,
-                                   void *args)
+static bool deletetable_storage_engine(Session *,
+                                       plugin_ref plugin,
+                                       void *args)
 {
-  struct handlerton_delete_table_args *dtargs= (struct handlerton_delete_table_args *) args;
+  struct storage_engine_delete_table_args *dtargs= (struct storage_engine_delete_table_args *) args;
 
   Session *session= dtargs->session;
   const char *path= dtargs->path;
@@ -1410,13 +1410,13 @@ int ha_delete_table(Session *session, const char *path,
   TABLE_SHARE dummy_share;
   Table dummy_table;
 
-  struct handlerton_delete_table_args dtargs;
+  struct storage_engine_delete_table_args dtargs;
   dtargs.error= ENOENT;
   dtargs.session= session;
   dtargs.path= path;
   dtargs.file= NULL;
 
-  plugin_foreach(NULL, deletetable_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN,
+  plugin_foreach(NULL, deletetable_storage_engine, DRIZZLE_STORAGE_ENGINE_PLUGIN,
                  &dtargs);
 
   memset(&dummy_table, 0, sizeof(dummy_table));
@@ -2986,7 +2986,7 @@ struct st_find_files_args
   @retval
     \#                  Error code
 */
-struct st_table_exists_in_engine_args
+struct st_table_exists_in_storage_engine_args
 {
   const char *db;
   const char *name;
@@ -2994,10 +2994,10 @@ struct st_table_exists_in_engine_args
   StorageEngine* engine;
 };
 
-static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugin,
+static bool table_exists_in_storage_engine(Session *session, plugin_ref plugin,
                                               void *arg)
 {
-  st_table_exists_in_engine_args *vargs= (st_table_exists_in_engine_args *)arg;
+  st_table_exists_in_storage_engine_args *vargs= (st_table_exists_in_storage_engine_args *)arg;
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
 
   int err= HA_ERR_NO_SUCH_TABLE;
@@ -3019,8 +3019,8 @@ int ha_table_exists_in_engine(Session* session,
                               const char* db, const char* name,
                               StorageEngine **engine)
 {
-  st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE, NULL};
-  plugin_foreach(session, table_exists_in_engine_handlerton,
+  st_table_exists_in_storage_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE, NULL};
+  plugin_foreach(session, table_exists_in_storage_engine,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &args);
 
   if(args.err==HA_ERR_NO_SUCH_TABLE)

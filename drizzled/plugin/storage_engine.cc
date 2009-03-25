@@ -56,7 +56,7 @@ StorageEngine *ha_resolve_by_legacy_type(Session *session,
   plugin_ref plugin;
   switch (db_type) {
   case DB_TYPE_DEFAULT:
-    return ha_default_handlerton(session);
+    return ha_default_storage_engine(session);
   default:
     if (db_type > DB_TYPE_UNKNOWN && db_type < DB_TYPE_DEFAULT &&
         (plugin= ha_lock_engine(session, installed_engines[db_type])))
@@ -79,13 +79,13 @@ static plugin_ref ha_default_plugin(Session *session)
 /**
   Return the default storage engine StorageEngine for thread
 
-  @param ha_default_handlerton(session)
+  @param ha_default_storage_engine(session)
   @param session         current thread
 
   @return
     pointer to StorageEngine
 */
-StorageEngine *ha_default_handlerton(Session *session)
+StorageEngine *ha_default_storage_engine(Session *session)
 {
   plugin_ref plugin= ha_default_plugin(session);
   assert(plugin);
@@ -179,7 +179,7 @@ StorageEngine *ha_checktype(Session *session, enum legacy_db_type database_type,
     return NULL;
   }
 
-  return ha_default_handlerton(session);
+  return ha_default_storage_engine(session);
 } /* ha_checktype */
 
 
@@ -199,7 +199,7 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
     Here the call to current_session() is ok as we call this function a lot of
     times but we enter this branch very seldom.
   */
-  return(get_new_handler(share, alloc, ha_default_handlerton(current_session)));
+  return(get_new_handler(share, alloc, ha_default_storage_engine(current_session)));
 }
 
 

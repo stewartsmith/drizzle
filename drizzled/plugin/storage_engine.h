@@ -204,7 +204,7 @@ public:
 
 
 /* lookups */
-StorageEngine *ha_default_handlerton(Session *session);
+StorageEngine *ha_default_storage_engine(Session *session);
 plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name);
 plugin_ref ha_lock_engine(Session *session, StorageEngine *engine);
 StorageEngine *ha_resolve_by_legacy_type(Session *session,

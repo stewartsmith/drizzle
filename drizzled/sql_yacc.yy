@@ -1144,7 +1144,7 @@ create:
             lex->change=NULL;
             memset(&lex->create_info, 0, sizeof(lex->create_info));
             lex->create_info.options=$2 | $4;
-            lex->create_info.db_type= ha_default_handlerton(session);
+            lex->create_info.db_type= ha_default_storage_engine(session);
             lex->create_info.default_table_charset= NULL;
             lex->name.str= 0;
             lex->name.length= 0;
@@ -1155,7 +1155,7 @@ create:
             lex->current_select= &lex->select_lex; 
             if (!lex->create_info.db_type)
             {
-              lex->create_info.db_type= ha_default_handlerton(YYSession);
+              lex->create_info.db_type= ha_default_storage_engine(YYSession);
               push_warning_printf(YYSession, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_USING_OTHER_HANDLER,
                                   ER(ER_WARN_USING_OTHER_HANDLER),
