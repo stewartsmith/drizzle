@@ -1052,14 +1052,12 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     {
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if ((tmp->drizzleclient_vio_ok() || tmp->system_thread) && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->drizzleclient_vio_ok() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
         thread_info *session_info= new thread_info;
 
         session_info->thread_id=tmp->thread_id;
-        session_info->user= session->strdup(tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() :
-                                    (tmp->system_thread ?
-                                     "system user" : "unauthenticated user"));
+        session_info->user= session->strdup(tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user");
         session_info->host= session->strdup(tmp_sctx->ip.c_str());
         if ((session_info->db=tmp->db))             // Safe test
           session_info->db=session->strdup(session_info->db);
@@ -1147,15 +1145,14 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       struct st_my_thread_var *mysys_var;
       const char *val;
 
-      if ((!tmp->drizzleclient_vio_ok() && !tmp->system_thread))
+      if (! tmp->drizzleclient_vio_ok())
         continue;
 
       restore_record(table, s->default_values);
       /* ID */
       table->field[0]->store((int64_t) tmp->thread_id, true);
       /* USER */
-      val= tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() :
-            (tmp->system_thread ? "system user" : "unauthenticated user");
+      val= tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user";
       table->field[1]->store(val, strlen(val), cs);
       /* HOST */
       table->field[2]->store(tmp_sctx->ip.c_str(), strlen(tmp_sctx->ip.c_str()), cs);
