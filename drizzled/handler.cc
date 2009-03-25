@@ -865,7 +865,7 @@ int ha_autocommit_or_rollback(Session *session, int error)
 }
 
 
-struct xahton_st {
+struct xaengine_st {
   XID *xid;
   int result;
 };
@@ -877,8 +877,8 @@ static bool xacommit_handlerton(Session *,
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES)
   {
-    engine->commit_by_xid(engine, ((struct xahton_st *)arg)->xid);
-    ((struct xahton_st *)arg)->result= 0;
+    engine->commit_by_xid(engine, ((struct xaengine_st *)arg)->xid);
+    ((struct xaengine_st *)arg)->result= 0;
   }
   return false;
 }
@@ -890,8 +890,8 @@ static bool xarollback_handlerton(Session *,
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES)
   {
-    engine->rollback_by_xid(engine, ((struct xahton_st *)arg)->xid);
-    ((struct xahton_st *)arg)->result= 0;
+    engine->rollback_by_xid(engine, ((struct xaengine_st *)arg)->xid);
+    ((struct xaengine_st *)arg)->result= 0;
   }
   return false;
 }
@@ -899,7 +899,7 @@ static bool xarollback_handlerton(Session *,
 
 int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
 {
-  struct xahton_st xaop;
+  struct xaengine_st xaop;
   xaop.xid= xid;
   xaop.result= 1;
 

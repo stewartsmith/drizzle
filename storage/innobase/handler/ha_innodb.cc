@@ -121,7 +121,7 @@ undefined.  Map it to NULL. */
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
 
-StorageEngine* innodb_hton_ptr= NULL;
+StorageEngine* innodb_engine_ptr= NULL;
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 /* These must be weak global variables in the dynamic plugin. */
 #ifdef __WIN__
@@ -373,7 +373,7 @@ innobase_file_format_check_validate(
 						config value */
 	const char*	format_check);		/* in: parameter value */
 
-static const char innobase_hton_name[]= "InnoDB";
+static const char innobase_engine_name[]= "InnoDB";
 
 static DRIZZLE_SessionVAR_BOOL(support_xa, PLUGIN_VAR_OPCMDARG,
   "Enable InnoDB support for the XA two-phase commit",
@@ -651,7 +651,7 @@ session_to_trx(
 			/* out: reference to transaction pointer */
 	Session*	session)	/* in: MySQL thread */
 {
-	return(*(trx_t**) session_ha_data(session, innodb_hton_ptr));
+	return(*(trx_t**) session_ha_data(session, innodb_engine_ptr));
 }
 
 /************************************************************************
@@ -667,7 +667,7 @@ InnobaseEngine::release_temporary_latches(
 {
 	trx_t*	trx;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	if (!innodb_inited) {
 
@@ -1373,7 +1373,7 @@ innobase_register_stmt(
         StorageEngine*	engine,	/* in: Innobase engine */
 	Session*	session)	/* in: MySQL session (connection) object */
 {
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 	/* Register the statement */
 	trans_register_ha(session, FALSE, engine);
 }
@@ -1556,7 +1556,7 @@ innobase_query_caching_of_table_permitted(
 
 	if (trx->active_trans == 0) {
 
-		innobase_register_trx_and_stmt(innodb_hton_ptr, session);
+		innobase_register_trx_and_stmt(innodb_engine_ptr, session);
 		trx->active_trans = 1;
 	}
 
@@ -1855,7 +1855,7 @@ innobase_init(
 	}
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
-        innodb_hton_ptr = innobase_engine;
+        innodb_engine_ptr = innobase_engine;
 
         innobase_engine->state = SHOW_OPTION_YES;
         innobase_engine->savepoint_offset=sizeof(trx_named_savept_t);
@@ -2156,7 +2156,7 @@ InnobaseEngine::flush_logs(StorageEngine *engine)
 {
 	bool	result = 0;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	log_buffer_flush_to_disk();
 
@@ -2194,7 +2194,7 @@ InnobaseEngine::start_consistent_snapshot(
 {
 	trx_t*	trx;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	/* Create a new trx struct for session, if it does not yet have one */
 
@@ -2239,7 +2239,7 @@ InnobaseEngine::commit(
 {
 	trx_t*		trx;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	trx = check_trx_exists(session);
 
@@ -2363,7 +2363,7 @@ InnobaseEngine::rollback(
 	int	error = 0;
 	trx_t*	trx;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	trx = check_trx_exists(session);
 
@@ -2436,7 +2436,7 @@ InnobaseEngine::savepoint_rollback(
 	trx_t*		trx;
 	char		sp_name[64];
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	trx = check_trx_exists(session);
 
@@ -2471,7 +2471,7 @@ InnobaseEngine::savepoint_release(
 	trx_t*		trx;
 	char		sp_name[64];
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	trx = check_trx_exists(session);
 
@@ -2497,7 +2497,7 @@ InnobaseEngine::savepoint_set(
 	int	error = 0;
 	trx_t*	trx;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	/*
 	  In the autocommit mode there is no sense to set a savepoint
@@ -2537,7 +2537,7 @@ InnobaseEngine::close_connection(
 {
 	trx_t*	trx;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 	trx = session_to_trx(session);
 
 	ut_a(trx);
@@ -2640,7 +2640,7 @@ ha_innobase::table_type() const
 /*===========================*/
 				/* out: table type */
 {
-	return(innobase_hton_name);
+	return(innobase_engine_name);
 }
 
 UNIV_INTERN
@@ -6276,7 +6276,7 @@ InnobaseEngine::drop_database(
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	/* In the Windows plugin, session = current_session is always NULL */
 	if (session) {
@@ -7757,7 +7757,7 @@ innodb_show_status(
 	ulint			trx_list_start = ULINT_UNDEFINED;
 	ulint			trx_list_end = ULINT_UNDEFINED;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	trx = check_trx_exists(session);
 
@@ -7819,7 +7819,7 @@ innodb_show_status(
 
 	bool result = FALSE;
 
-	if (stat_print(session, innobase_hton_name, strlen(innobase_hton_name),
+	if (stat_print(session, innobase_engine_name, strlen(innobase_engine_name),
 			STRING_WITH_LEN(""), str, flen)) {
 		result= TRUE;
 	}
@@ -7850,8 +7850,8 @@ innodb_mutex_show_status(
 	ulint	  rw_lock_count_os_yield= 0;
 	uint64_t rw_lock_wait_time= 0;
 #endif /* UNIV_DEBUG */
-	uint	  hton_name_len= strlen(innobase_hton_name), buf1len, buf2len;
-	assert(engine == innodb_hton_ptr);
+	uint	  engine_name_len= strlen(innobase_engine_name), buf1len, buf2len;
+	assert(engine == innodb_engine_ptr);
 
 	mutex_enter(&mutex_list_mutex);
 
@@ -7876,8 +7876,8 @@ innodb_mutex_show_status(
 					mutex->count_os_yield,
 					(ulong) (mutex->lspent_time/1000));
 
-				if (stat_print(session, innobase_hton_name,
-						hton_name_len, buf1, buf1len,
+				if (stat_print(session, innobase_engine_name,
+						engine_name_len, buf1, buf1len,
 						buf2, buf2len)) {
 					mutex_exit(&mutex_list_mutex);
 					return(1);
@@ -7898,8 +7898,8 @@ innodb_mutex_show_status(
 		buf2len= snprintf(buf2, sizeof(buf2), "os_waits=%lu",
 				  mutex->count_os_wait);
 
-		if (stat_print(session, innobase_hton_name,
-			       hton_name_len, buf1, buf1len,
+		if (stat_print(session, innobase_engine_name,
+			       engine_name_len, buf1, buf1len,
 			       buf2, buf2len)) {
 			mutex_exit(&mutex_list_mutex);
 			return(1);
@@ -7922,8 +7922,8 @@ innodb_mutex_show_status(
 			buf2len= snprintf(buf2, sizeof(buf2),
                                     "os_waits=%lu", lock->count_os_wait);
 
-			if (stat_print(session, innobase_hton_name,
-				       hton_name_len, buf1, buf1len,
+			if (stat_print(session, innobase_engine_name,
+				       engine_name_len, buf1, buf1len,
 				       buf2, buf2len)) {
 				mutex_exit(&rw_lock_list_mutex);
 				return(1);
@@ -7943,7 +7943,7 @@ innodb_mutex_show_status(
 		rw_lock_count_os_wait, rw_lock_count_os_yield,
 		(ulong) (rw_lock_wait_time/1000));
 
-	if (stat_print(session, innobase_hton_name, hton_name_len,
+	if (stat_print(session, innobase_engine_name, engine_name_len,
 			STRING_WITH_LEN("rw_lock_mutexes"), buf2, buf2len)) {
 		return(1);
 	}
@@ -7956,7 +7956,7 @@ bool InnobaseEngine::show_status(StorageEngine *engine, Session* session,
                                  stat_print_fn* stat_print,
                                  enum ha_stat_type stat_type)
 {
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	switch (stat_type) {
 	case HA_ENGINE_STATUS:
@@ -8656,7 +8656,7 @@ InnobaseEngine::prepare(
 	int error = 0;
 	trx_t* trx = check_trx_exists(session);
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	if (all || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
 	{
@@ -8751,7 +8751,7 @@ InnobaseEngine::recover(
 	XID*	xid_list,	/* in/out: prepared transactions */
 	uint	len)		/* in: number of slots in xid_list */
 {
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	if (len == 0 || xid_list == NULL) {
 
@@ -8773,7 +8773,7 @@ InnobaseEngine::commit_by_xid(
 {
 	trx_t*	trx;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	trx = trx_get_trx_by_xid(xid);
 
@@ -8798,7 +8798,7 @@ InnobaseEngine::rollback_by_xid(
 {
 	trx_t*	trx;
 
-	assert(engine == innodb_hton_ptr);
+	assert(engine == innodb_engine_ptr);
 
 	trx = trx_get_trx_by_xid(xid);
 
@@ -9644,7 +9644,7 @@ innodb_plugin_init(void)
 drizzle_declare_plugin(innobase)
 {
   DRIZZLE_STORAGE_ENGINE_PLUGIN,
-  innobase_hton_name,
+  innobase_engine_name,
   "1.0.1",
   "Innobase Oy",
   "Supports transactions, row-level locking, and foreign keys",

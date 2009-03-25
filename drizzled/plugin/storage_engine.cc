@@ -33,9 +33,9 @@
   check for dups and to find StorageEngine from legacy_db_type.
   Remove when legacy_db_type is finally gone
 */
-st_plugin_int *hton2plugin[MAX_HA];
+st_plugin_int *engine2plugin[MAX_HA];
 
-static StorageEngine *installed_htons[128];
+static StorageEngine *installed_engines[128];
 
 static const LEX_STRING sys_table_aliases[]=
 {
@@ -60,7 +60,7 @@ StorageEngine *ha_resolve_by_legacy_type(Session *session,
     return ha_default_handlerton(session);
   default:
     if (db_type > DB_TYPE_UNKNOWN && db_type < DB_TYPE_DEFAULT &&
-        (plugin= ha_lock_engine(session, installed_htons[db_type])))
+        (plugin= ha_lock_engine(session, installed_engines[db_type])))
       return plugin_data(plugin, StorageEngine*);
     /* fall through */
   case DB_TYPE_UNKNOWN:
@@ -152,7 +152,7 @@ plugin_ref ha_lock_engine(Session *session, StorageEngine *engine)
 {
   if (engine)
   {
-    st_plugin_int **plugin= hton2plugin + engine->slot;
+    st_plugin_int **plugin= engine2plugin + engine->slot;
 
     return my_plugin_lock(session, &plugin);
   }
@@ -214,8 +214,8 @@ int storage_engine_finalizer(st_plugin_int *plugin)
   case SHOW_OPTION_DISABLED:
     break;
   case SHOW_OPTION_YES:
-    if (installed_htons[engine->db_type] == engine)
-      installed_htons[engine->db_type]= NULL;
+    if (installed_engines[engine->db_type] == engine)
+      installed_engines[engine->db_type]= NULL;
     break;
   };
 
@@ -257,11 +257,11 @@ int storage_engine_initializer(st_plugin_int *plugin)
       /* now check the db_type for conflict */
       if (engine->db_type <= DB_TYPE_UNKNOWN ||
           engine->db_type >= DB_TYPE_DEFAULT ||
-          installed_htons[engine->db_type])
+          installed_engines[engine->db_type])
       {
         int idx= (int) DB_TYPE_FIRST_DYNAMIC;
 
-        while (idx < (int) DB_TYPE_DEFAULT && installed_htons[idx])
+        while (idx < (int) DB_TYPE_DEFAULT && installed_engines[idx])
           idx++;
 
         if (idx == (int) DB_TYPE_DEFAULT)
@@ -275,12 +275,12 @@ int storage_engine_initializer(st_plugin_int *plugin)
                         plugin->plugin->name, idx);
         engine->db_type= (enum legacy_db_type) idx;
       }
-      installed_htons[engine->db_type]= engine;
+      installed_engines[engine->db_type]= engine;
       tmp= engine->savepoint_offset;
       engine->savepoint_offset= savepoint_alloc_size;
       savepoint_alloc_size+= tmp;
       engine->slot= total_ha++;
-      hton2plugin[engine->slot]=plugin;
+      engine2plugin[engine->slot]=plugin;
       if (engine->has_2pc())
         total_ha_2pc++;
       break;
@@ -315,7 +315,7 @@ enum legacy_db_type ha_legacy_type(const StorageEngine *db_type)
 
 const char *ha_resolve_storage_engine_name(const StorageEngine *db_type)
 {
-  return db_type == NULL ? "UNKNOWN" : hton2plugin[db_type->slot]->name.str;
+  return db_type == NULL ? "UNKNOWN" : engine2plugin[db_type->slot]->name.str;
 }
 
 bool ha_check_storage_engine_flag(const StorageEngine *db_type, const engine_flag_bits flag)
@@ -331,5 +331,5 @@ bool ha_storage_engine_is_enabled(const StorageEngine *db_type)
 
 LEX_STRING *ha_storage_engine_name(const StorageEngine *engine)
 {
-  return &hton2plugin[engine->slot]->name;
+  return &engine2plugin[engine->slot]->name;
 }
