@@ -899,29 +899,6 @@ public:
    */
   bool authenticate();
 
-  /**
-   * Performs handshake with client and authorizes user.
-   *
-   * Returns true is the connection is valid and the 
-   * user is authorized, otherwise false.
-   */
-  bool check_connection(void);
-
-  /**
-   * Check if user exists and the password supplied is correct.
-   *
-   * Returns true on success, and false on failure.
-   *
-   * @note Host, user and passwd may point to communication buffer.
-   * Current implementation does not depend on that, but future changes
-   * should be done with this in mind; 
-   *
-   * @param  Scrambled password received from client
-   * @param  Length of scrambled password
-   * @param  Database name to connect to, may be NULL
-   */
-  bool check_user(const char *passwd, uint32_t passwd_len, const char *db);
-
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
     enter_cond(); this mutex is then released by exit_cond().
@@ -974,7 +951,8 @@ public:
   {
     return limit_found_rows;
   }
-  inline bool active_transaction()
+  /** Returns whether the session is currently inside a transaction */
+  inline bool inTransaction()
   {
     return server_status & SERVER_STATUS_IN_TRANS;
   }
@@ -1154,6 +1132,28 @@ public:
   void close_temporary_tables();
 
 private:
+  /**
+   * Performs handshake with client and authorizes user.
+   *
+   * Returns true is the connection is valid and the 
+   * user is authorized, otherwise false.
+   */
+  bool _checkConnection(void);
+
+  /**
+   * Check if user exists and the password supplied is correct.
+   *
+   * Returns true on success, and false on failure.
+   *
+   * @note Host, user and passwd may point to communication buffer.
+   * Current implementation does not depend on that, but future changes
+   * should be done with this in mind; 
+   *
+   * @param  Scrambled password received from client
+   * @param  Length of scrambled password
+   * @param  Database name to connect to, may be NULL
+   */
+  bool _checkUser(const char *passwd, uint32_t passwd_len, const char *db);
   const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */

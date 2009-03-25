@@ -657,12 +657,12 @@ bool Session::authenticate()
 
   lex_start(this);
 
-  bool connection_is_valid= check_connection();
+  bool connection_is_valid= _checkConnection();
   drizzleclient_net_end_statement(this);
 
   if (! connection_is_valid)
   {	
-    /* We got wrong permissions from check_connection() */
+    /* We got wrong permissions from _checkConnection() */
     statistic_increment(aborted_connects, &LOCK_status);
     return false;
   }
@@ -673,7 +673,7 @@ bool Session::authenticate()
   return true;
 }
 
-bool Session::check_connection()
+bool Session::_checkConnection()
 {
   uint32_t pkt_len= 0;
   char *end;
@@ -713,7 +713,7 @@ bool Session::check_connection()
     int4store((unsigned char*) end, thread_id);
     end+= 4;
     /*
-      So as check_connection is the only entry point to authorization
+      So as _checkConnection is the only entry point to authorization
       procedure, scramble is set here. This gives us new scramble for
       each handshake.
     */
@@ -836,10 +836,10 @@ bool Session::check_connection()
 
   security_ctx.user.assign(user);
 
-  return check_user(passwd, passwd_len, l_db);
+  return _checkUser(passwd, passwd_len, l_db);
 }
 
-bool Session::check_user(const char *passwd, uint32_t passwd_len, const char *in_db)
+bool Session::_checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
   LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
   bool is_authenticated;
