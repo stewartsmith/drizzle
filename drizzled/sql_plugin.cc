@@ -306,8 +306,7 @@ static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
     tmp= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);
-    if (tmp->ref_count &&
-        ! my_strnncoll(files_charset_info,
+    if (! my_strnncoll(files_charset_info,
                        (const unsigned char *)dl->str, dl->length,
                        (const unsigned char *)tmp->dl.str, tmp->dl.length))
       return(tmp);
@@ -323,7 +322,6 @@ static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
     tmp= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);
-    if (! tmp->ref_count)
     {
       memcpy(tmp, plugin_dl, sizeof(struct st_plugin_dl));
       return(tmp);
@@ -373,7 +371,6 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
   /* If this dll is already loaded just increase ref_count. */
   if ((tmp= plugin_dl_find(dl)))
   {
-    tmp->ref_count++;
     return(tmp);
   }
   memset(&plugin_dl, 0, sizeof(plugin_dl));
@@ -381,7 +378,6 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
   dlpath.append(opt_plugin_dir);
   dlpath.append("/");
   dlpath.append(dl->str);
-  plugin_dl.ref_count= 1;
   /* Open new dll handle */
   if (!(plugin_dl.handle= dlopen(dlpath.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
   {
@@ -450,13 +446,11 @@ static void plugin_dl_del(const LEX_STRING *dl)
   {
     struct st_plugin_dl *tmp= *dynamic_element(&plugin_dl_array, i,
                                                struct st_plugin_dl **);
-    if (tmp->ref_count &&
-        ! my_strnncoll(files_charset_info,
+    if (! my_strnncoll(files_charset_info,
                        (const unsigned char *)dl->str, dl->length,
                        (const unsigned char *)tmp->dl.str, tmp->dl.length))
     {
       /* Do not remove this element, unless no other plugin uses this dll. */
-      if (! --tmp->ref_count)
       {
         free_plugin_mem(tmp);
         memset(tmp, 0, sizeof(struct st_plugin_dl));
