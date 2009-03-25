@@ -85,6 +85,7 @@ drop table t1;
 # Bug #6552 CHAR column w/o length is legal, BINARY w/o length is not
 #
 create table t1 (a char);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 --error 1064

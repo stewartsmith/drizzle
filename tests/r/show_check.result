@@ -187,13 +187,13 @@ show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 alter table t1 rename t2;
 show create table t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
   `a` int NOT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 drop table t2;
 create table t1 (
 name char(20) default 'O''Brien' comment 'O''Brien as default',
@@ -208,7 +208,7 @@ t1	CREATE TABLE `t1` (
   `c` int NOT NULL COMMENT 'int column',
   `c-b` int DEFAULT NULL COMMENT 'name with a minus',
   `space 2` int DEFAULT NULL COMMENT 'name with a space'
-) ENGINE=InnoDB COMMENT='it''s a table'
+) ENGINE=DEFAULT COMMENT='it''s a table'
 show full columns from t1;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 name	varchar(20)	utf8_general_ci	YES		O'Brien			O'Brien as default
@@ -222,7 +222,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
   UNIQUE KEY `aa` (`a`)
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 drop table t1;
 create table t1 (a int not null, primary key (a));
 show create table t1;
@@ -230,7 +230,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 drop table t1;
 flush tables;
 show open tables;
@@ -349,28 +349,28 @@ SHOW CREATE TABLE ```ab``cd```;
 Table	Create Table
 `ab`cd`	CREATE TABLE ```ab``cd``` (
   `i` int DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 DROP TABLE ```ab``cd```;
 CREATE TABLE ```ab````cd``` (i INT);
 SHOW CREATE TABLE ```ab````cd```;
 Table	Create Table
 `ab``cd`	CREATE TABLE ```ab````cd``` (
   `i` int DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 DROP TABLE ```ab````cd```;
 CREATE TABLE ```a` (i INT);
 SHOW CREATE TABLE ```a`;
 Table	Create Table
 `a	CREATE TABLE ```a` (
   `i` int DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 DROP TABLE ```a`;
 CREATE TABLE `a.1` (i INT);
 SHOW CREATE TABLE `a.1`;
 Table	Create Table
 a.1	CREATE TABLE `a.1` (
   `i` int DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 DROP TABLE `a.1`;
 select @@max_heap_table_size;
 @@max_heap_table_size
@@ -551,7 +551,7 @@ t1	CREATE TABLE `t1` (
   `c2` int NOT NULL,
   PRIMARY KEY (`c1`) USING HASH,
   KEY `c2` (`c2`) USING BTREE
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 DROP TABLE t1;
 
 # Bug#12183: SHOW OPEN TABLES behavior doesn't match grammar.

@@ -272,6 +272,7 @@ insert into t1 values ('xxx','yyy');
 select collation(a) from t1;
 select collation(group_concat(a)) from t1;
 create table t2 select group_concat(a) as a from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 select collation(group_concat(a,b)) from t1;
 drop table t1;

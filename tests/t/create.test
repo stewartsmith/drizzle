@@ -43,6 +43,7 @@ create table t1 (ordid int not null auto_increment, ord  varchar(50) not null, p
 -- error 1049
 create table not_existing_database.test (a int);
 create table `a/a` (a int);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table `a/a`;
 create table t1 like `a/a`;
 drop table `a/a`;
@@ -167,6 +168,7 @@ DROP TABLE IF EXISTS t2;
 #
 
 create table t1 (a int not null, b int, primary key(a), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b), key (b));
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 select if(1,'1','0'), month("2002-08-02");
@@ -287,6 +289,7 @@ insert into t1 values(10,'mysql'),(20,'monty- the creator');
 create table t2(id int not null);
 insert into t2 values(10),(20);
 create table t3 like t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t3;
 select * from t3;
 # Disable PS becasue of @@warning_count
@@ -295,17 +298,21 @@ create table if not exists t3 like t1;
 select @@warning_count;
 --enable_ps_protocol
 create temporary table t3 like t2;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t3;
 select * from t3;
 drop table t3;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t3;
 select * from t3;
 drop table t2, t3;
 create database mysqltest;
 create table mysqltest.t3 like t1;
 create temporary table t3 like mysqltest.t3;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t3;
 create table t2 like t3;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 select * from t2;
 create table t3 like t1;
@@ -371,6 +378,7 @@ drop table t1, t2;
 
 create table t1 (a int, b int, d int, e bigint, f float(3,2), g double(4,3), h decimal(5,4), j date, k timestamp, l datetime, m enum('a','b'), o char(10));
 create table t2 select ifnull(a,a), ifnull(b,b), ifnull(d,d), ifnull(e,e), ifnull(f,f), ifnull(g,g), ifnull(h,h), ifnull(j,j), ifnull(k,k), ifnull(l,l), ifnull(m,m), ifnull(o,o) from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 drop table t1,t2;
 
@@ -427,8 +435,10 @@ use test;
 #create table t1 (a int, index `PRIMARY` (a));
 #
 #create table t1 (`primary` int, index(`primary`));
+#--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 #show create table t1;
 #create table t2 (`PRIMARY` int, index(`PRIMARY`));
+#--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 #show create table t2;
 #
 #create table t3 (a int);
@@ -439,9 +449,11 @@ use test;
 #
 #create table t4 (`primary` int);
 #alter table t4 add index(`primary`);
+#--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 #show create table t4;
 #create table t5 (`PRIMARY` int);
 #alter table t5 add index(`PRIMARY`);
+#--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 #show create table t5;
 #
 #drop table t1, t2, t3, t4, t5;
@@ -534,6 +546,7 @@ create table t1 (
   primary key (a)
 ) select 'test' as a ;
 #--warning 1364
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 
@@ -551,6 +564,7 @@ create table t1 (
   a varchar(12) collate utf8_bin not null, 
   b int not null, primary key (a)
 ) select a, 1 as b from t2 ;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 
@@ -564,6 +578,7 @@ create table t1 (
   a varchar(12) collate utf8_bin not null, 
   b int null, primary key (a)
 ) select a, 1 as c from t2 ;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 
@@ -571,6 +586,7 @@ create table t1 (
   a varchar(12) collate utf8_bin not null,
   b int not null, primary key (a)
 ) select 'a' as a , 1 as b from t2 ;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 
@@ -578,6 +594,7 @@ create table t1 (
   a varchar(12) collate utf8_bin,
   b int not null, primary key (a)
 ) select 'a' as a , 1 as b from t2 ;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1, t2;
 
@@ -620,6 +637,7 @@ drop table t2;
 
 create table t2 ( a int default 3, b int default 3)
   select a1,a2 from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 
 drop table t1, t2;
@@ -908,8 +926,10 @@ create table t1 (
 );
 
 # Check that the table is not corrupted
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 flush tables;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 
 # Repeat test using ALTER to add indexes
@@ -1055,8 +1075,10 @@ alter table t1
  add key a064_long_123456789_123456789_123456789_123456789_123456789_1234 (
   c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16);
 
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 flush tables;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 
 # Test the server limits; if any of these pass, all above tests need
@@ -1086,6 +1108,7 @@ alter table t1 add key i1 (
 alter table t1 add key 
  a001_long_123456789_123456789_123456789_123456789_123456789_12345 (c1);
 
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 
 drop table t1;
@@ -1238,6 +1261,7 @@ table_schema='test';
 select INDEX_NAME from information_schema.statistics where
 table_schema='test';
 
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
@@ -1281,6 +1305,7 @@ CREATE TABLE t1(
 
 --echo
 
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 SHOW CREATE TABLE t1;
 
 --echo
@@ -1289,6 +1314,7 @@ CREATE TABLE t2 AS SELECT * FROM t1;
 
 --echo
 
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 SHOW CREATE TABLE t2;
 
 --echo

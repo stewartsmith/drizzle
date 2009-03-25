@@ -80,9 +80,11 @@ drop table if exists table_28127_b;
 --enable_warnings
 
 create table table_28127_a(0b02 int);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table table_28127_a;
 
 create table table_28127_b(0b2 int);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table table_28127_b;
 
 drop table table_28127_a;
