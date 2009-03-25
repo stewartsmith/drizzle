@@ -44,6 +44,12 @@ static const LEX_STRING sys_table_aliases[]=
   {NULL, 0}
 };
 
+/* args: current_session, db, name */
+int StorageEngine::table_exists_in_engine(StorageEngine *, Session*,
+                                          const char *, const char *)
+{
+  return HA_ERR_NO_SUCH_TABLE;
+}
 
 StorageEngine *ha_resolve_by_legacy_type(Session *session,
                                       enum legacy_db_type db_type)

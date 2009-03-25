@@ -204,10 +204,7 @@ public:
 
    /* args: current_session, db, name */
    virtual int table_exists_in_engine(StorageEngine *, Session*,
-                                      const char *, const char *)
-   {
-     return false;
-   }
+                                      const char *, const char *);
 };
 
 
