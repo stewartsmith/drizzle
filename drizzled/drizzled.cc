@@ -255,10 +255,10 @@ const char *opt_scheduler= "multi_thread";
 size_t my_thread_stack_size= 65536;
 
 /*
-  Legacy global handlerton. These will be removed (please do not add more).
+  Legacy global StorageEngine. These will be removed (please do not add more).
 */
-handlerton *heap_hton;
-handlerton *myisam_hton;
+StorageEngine *heap_engine;
+StorageEngine *myisam_engine;
 
 bool use_temp_pool;
 char* opt_secure_file_priv= 0;
@@ -1626,11 +1626,11 @@ static int init_server_components()
     LEX_STRING name= { default_storage_engine_str,
                        strlen(default_storage_engine_str) };
     plugin_ref plugin;
-    handlerton *hton;
+    StorageEngine *engine;
 
     if ((plugin= ha_resolve_by_name(0, &name)))
     {
-      hton= plugin_data(plugin,handlerton *);
+      engine= plugin_data(plugin,StorageEngine *);
     }
     else
     {
@@ -1638,7 +1638,7 @@ static int init_server_components()
                       default_storage_engine_str);
       unireg_abort(1);
     }
-    if (!ha_storage_engine_is_enabled(hton))
+    if (!ha_storage_engine_is_enabled(engine))
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
                     default_storage_engine_str);

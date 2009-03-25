@@ -83,7 +83,7 @@ typedef struct st_drizzle_xid DRIZZLE_XID;
 enum xa_states {XA_NOTR=0, XA_ACTIVE, XA_IDLE, XA_PREPARED};
 extern const char *xa_state_names[];
 
-/* for recover() handlerton call */
+/* for recover() StorageEngine call */
 #define MIN_XID_LIST_SIZE  128
 #define MAX_XID_LIST_SIZE  (1024*128)
 

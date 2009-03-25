@@ -21,7 +21,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/base.h>
 #include <drizzled/handler.h>
-#include <drizzled/handlerton.h>
+#include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -30,12 +30,12 @@
 
 /*
   While we have legacy_db_type, we have this array to
-  check for dups and to find handlerton from legacy_db_type.
+  check for dups and to find StorageEngine from legacy_db_type.
   Remove when legacy_db_type is finally gone
 */
-st_plugin_int *hton2plugin[MAX_HA];
+st_plugin_int *engine2plugin[MAX_HA];
 
-static handlerton *installed_htons[128];
+static StorageEngine *installed_engines[128];
 
 static const LEX_STRING sys_table_aliases[]=
 {
@@ -44,18 +44,23 @@ static const LEX_STRING sys_table_aliases[]=
   {NULL, 0}
 };
 
+/* args: current_session, db, name */
+int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
+{
+  return HA_ERR_NO_SUCH_TABLE;
+}
 
-handlerton *ha_resolve_by_legacy_type(Session *session,
+StorageEngine *ha_resolve_by_legacy_type(Session *session,
                                       enum legacy_db_type db_type)
 {
   plugin_ref plugin;
   switch (db_type) {
   case DB_TYPE_DEFAULT:
-    return ha_default_handlerton(session);
+    return ha_default_storage_engine(session);
   default:
     if (db_type > DB_TYPE_UNKNOWN && db_type < DB_TYPE_DEFAULT &&
-        (plugin= ha_lock_engine(session, installed_htons[db_type])))
-      return plugin_data(plugin, handlerton*);
+        (plugin= ha_lock_engine(session, installed_engines[db_type])))
+      return plugin_data(plugin, StorageEngine*);
     /* fall through */
   case DB_TYPE_UNKNOWN:
     return NULL;
@@ -72,26 +77,26 @@ static plugin_ref ha_default_plugin(Session *session)
 
 
 /**
-  Return the default storage engine handlerton for thread
+  Return the default storage engine StorageEngine for thread
 
-  @param ha_default_handlerton(session)
+  @param ha_default_storage_engine(session)
   @param session         current thread
 
   @return
-    pointer to handlerton
+    pointer to StorageEngine
 */
-handlerton *ha_default_handlerton(Session *session)
+StorageEngine *ha_default_storage_engine(Session *session)
 {
   plugin_ref plugin= ha_default_plugin(session);
   assert(plugin);
-  handlerton *hton= plugin_data(plugin, handlerton*);
-  assert(hton);
-  return hton;
+  StorageEngine *engine= plugin_data(plugin, StorageEngine*);
+  assert(engine);
+  return engine;
 }
 
 
 /**
-  Return the storage engine handlerton for the supplied name
+  Return the storage engine StorageEngine for the supplied name
 
   @param session         current thread
   @param name        name of storage engine
@@ -113,8 +118,8 @@ redo:
 
   if ((plugin= my_plugin_lock_by_name(session, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
-    handlerton *hton= plugin_data(plugin, handlerton *);
-    if (!(hton->flags.test(HTON_BIT_NOT_USER_SELECTABLE)))
+    StorageEngine *engine= plugin_data(plugin, StorageEngine *);
+    if (!(engine->flags.test(HTON_BIT_NOT_USER_SELECTABLE)))
       return plugin;
 
     /*
@@ -142,11 +147,11 @@ redo:
 }
 
 
-plugin_ref ha_lock_engine(Session *session, handlerton *hton)
+plugin_ref ha_lock_engine(Session *session, StorageEngine *engine)
 {
-  if (hton)
+  if (engine)
   {
-    st_plugin_int **plugin= hton2plugin + hton->slot;
+    st_plugin_int **plugin= engine2plugin + engine->slot;
 
     return my_plugin_lock(session, &plugin);
   }
@@ -157,35 +162,35 @@ plugin_ref ha_lock_engine(Session *session, handlerton *hton)
 /**
   Use other database handler if databasehandler is not compiled in.
 */
-handlerton *ha_checktype(Session *session, enum legacy_db_type database_type,
+StorageEngine *ha_checktype(Session *session, enum legacy_db_type database_type,
                           bool no_substitute, bool report_error)
 {
-  handlerton *hton= ha_resolve_by_legacy_type(session, database_type);
-  if (ha_storage_engine_is_enabled(hton))
-    return hton;
+  StorageEngine *engine= ha_resolve_by_legacy_type(session, database_type);
+  if (ha_storage_engine_is_enabled(engine))
+    return engine;
 
   if (no_substitute)
   {
     if (report_error)
     {
-      const char *engine_name= ha_resolve_storage_engine_name(hton);
+      const char *engine_name= ha_resolve_storage_engine_name(engine);
       my_error(ER_FEATURE_DISABLED,MYF(0),engine_name,engine_name);
     }
     return NULL;
   }
 
-  return ha_default_handlerton(session);
+  return ha_default_storage_engine(session);
 } /* ha_checktype */
 
 
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
-                         handlerton *db_type)
+                         StorageEngine *engine)
 {
   handler *file;
 
-  if (db_type && db_type->state == SHOW_OPTION_YES && db_type->create)
+  if (engine && engine->state == SHOW_OPTION_YES)
   {
-    if ((file= db_type->create(db_type, share, alloc)))
+    if ((file= engine->create(share, alloc)))
       file->init();
     return(file);
   }
@@ -194,73 +199,68 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
     Here the call to current_session() is ok as we call this function a lot of
     times but we enter this branch very seldom.
   */
-  return(get_new_handler(share, alloc, ha_default_handlerton(current_session)));
+  return(get_new_handler(share, alloc, ha_default_storage_engine(current_session)));
 }
 
 
-int ha_finalize_handlerton(st_plugin_int *plugin)
+int storage_engine_finalizer(st_plugin_int *plugin)
 {
-  handlerton *hton= (handlerton *)plugin->data;
+  StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
 
-  switch (hton->state)
+  switch (engine->state)
   {
   case SHOW_OPTION_NO:
   case SHOW_OPTION_DISABLED:
     break;
   case SHOW_OPTION_YES:
-    if (installed_htons[hton->db_type] == hton)
-      installed_htons[hton->db_type]= NULL;
+    if (installed_engines[engine->db_type] == engine)
+      installed_engines[engine->db_type]= NULL;
     break;
   };
 
-  if (hton && plugin->plugin->deinit)
-    (void)plugin->plugin->deinit(hton);
-
-  free((unsigned char*)hton);
+  if (engine && plugin->plugin->deinit)
+    (void)plugin->plugin->deinit(engine);
 
   return(0);
 }
 
 
-int ha_initialize_handlerton(st_plugin_int *plugin)
+int storage_engine_initializer(st_plugin_int *plugin)
 {
-  handlerton *hton;
+  StorageEngine *engine;
 
-  hton= (handlerton *)malloc(sizeof(handlerton));
-  memset(hton, 0, sizeof(handlerton));
 
-  /* Historical Requirement */
-  plugin->data= hton; // shortcut for the future
   if (plugin->plugin->init)
   {
-    if (plugin->plugin->init(hton))
+    if (plugin->plugin->init(&engine))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' init function returned error."),
-                      plugin->name.str);
-      goto err;
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error."),
+                    plugin->name.str);
+      return 1;
     }
   }
 
-  hton->name= plugin->name.str;
+  engine->name= plugin->name.str;
 
   /*
-    the switch below and hton->state should be removed when
+    the switch below and engine->state should be removed when
     command-line options for plugins will be implemented
   */
-  switch (hton->state) {
+  switch (engine->state) {
   case SHOW_OPTION_NO:
     break;
   case SHOW_OPTION_YES:
     {
       uint32_t tmp;
       /* now check the db_type for conflict */
-      if (hton->db_type <= DB_TYPE_UNKNOWN ||
-          hton->db_type >= DB_TYPE_DEFAULT ||
-          installed_htons[hton->db_type])
+      if (engine->db_type <= DB_TYPE_UNKNOWN ||
+          engine->db_type >= DB_TYPE_DEFAULT ||
+          installed_engines[engine->db_type])
       {
         int idx= (int) DB_TYPE_FIRST_DYNAMIC;
 
-        while (idx < (int) DB_TYPE_DEFAULT && installed_htons[idx])
+        while (idx < (int) DB_TYPE_DEFAULT && installed_engines[idx])
           idx++;
 
         if (idx == (int) DB_TYPE_DEFAULT)
@@ -268,68 +268,67 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
           errmsg_printf(ERRMSG_LVL_WARN, _("Too many storage engines!"));
           return(1);
         }
-        if (hton->db_type != DB_TYPE_UNKNOWN)
+        if (engine->db_type != DB_TYPE_UNKNOWN)
           errmsg_printf(ERRMSG_LVL_WARN,
                         _("Storage engine '%s' has conflicting typecode. Assigning value %d."),
                         plugin->plugin->name, idx);
-        hton->db_type= (enum legacy_db_type) idx;
+        engine->db_type= (enum legacy_db_type) idx;
       }
-      installed_htons[hton->db_type]= hton;
-      tmp= hton->savepoint_offset;
-      hton->savepoint_offset= savepoint_alloc_size;
+      installed_engines[engine->db_type]= engine;
+      tmp= engine->savepoint_offset;
+      engine->savepoint_offset= savepoint_alloc_size;
       savepoint_alloc_size+= tmp;
-      hton->slot= total_ha++;
-      hton2plugin[hton->slot]=plugin;
-      if (hton->prepare)
+      engine->slot= total_ha++;
+      engine2plugin[engine->slot]=plugin;
+      if (engine->has_2pc())
         total_ha_2pc++;
       break;
     }
     /* fall through */
   default:
-    hton->state= SHOW_OPTION_DISABLED;
+    engine->state= SHOW_OPTION_DISABLED;
     break;
   }
 
   /*
-    This is entirely for legacy. We will create a new "disk based" hton and a
-    "memory" hton which will be configurable longterm. We should be able to
+    This is entirely for legacy. We will create a new "disk based" engine and a
+    "memory" engine which will be configurable longterm. We should be able to
     remove partition and myisammrg.
   */
   if (strcmp(plugin->plugin->name, "MEMORY") == 0)
-    heap_hton= hton;
+    heap_engine= engine;
 
   if (strcmp(plugin->plugin->name, "MyISAM") == 0)
-    myisam_hton= hton;
+    myisam_engine= engine;
 
+  plugin->data= engine;
   plugin->state= PLUGIN_IS_READY;
 
   return(0);
-err:
-  return(1);
 }
 
-enum legacy_db_type ha_legacy_type(const handlerton *db_type)
+enum legacy_db_type ha_legacy_type(const StorageEngine *db_type)
 {
   return (db_type == NULL) ? DB_TYPE_UNKNOWN : db_type->db_type;
 }
 
-const char *ha_resolve_storage_engine_name(const handlerton *db_type)
+const char *ha_resolve_storage_engine_name(const StorageEngine *db_type)
 {
-  return db_type == NULL ? "UNKNOWN" : hton2plugin[db_type->slot]->name.str;
+  return db_type == NULL ? "UNKNOWN" : engine2plugin[db_type->slot]->name.str;
 }
 
-bool ha_check_storage_engine_flag(const handlerton *db_type, const hton_flag_bits flag)
+bool ha_check_storage_engine_flag(const StorageEngine *db_type, const engine_flag_bits flag)
 {
   return db_type == NULL ? false : db_type->flags.test(static_cast<size_t>(flag));
 }
 
-bool ha_storage_engine_is_enabled(const handlerton *db_type)
+bool ha_storage_engine_is_enabled(const StorageEngine *db_type)
 {
-  return (db_type && db_type->create) ?
+  return (db_type) ?
          (db_type->state == SHOW_OPTION_YES) : false;
 }
 
-LEX_STRING *ha_storage_engine_name(const handlerton *hton)
+LEX_STRING *ha_storage_engine_name(const StorageEngine *engine)
 {
-  return &hton2plugin[hton->slot]->name;
+  return &engine2plugin[engine->slot]->name;
 }

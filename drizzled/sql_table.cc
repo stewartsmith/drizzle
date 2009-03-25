@@ -440,7 +440,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   for (table= tables; table; table= table->next_local)
   {
     char *db=table->db;
-    handlerton *table_type;
+    StorageEngine *table_type;
 
     error= drop_temporary_table(session, table);
 
@@ -629,7 +629,7 @@ err_with_placeholders:
 
   SYNOPSIS
     quick_rm_table()
-      base                      The handlerton handle.
+      base                      The StorageEngine handle.
       db                        The database name.
       table_name                The table name.
       flags                     flags for build_table_filename().
@@ -639,7 +639,7 @@ err_with_placeholders:
     != 0        Error
 */
 
-bool quick_rm_table(handlerton *,const char *db,
+bool quick_rm_table(StorageEngine *,const char *db,
                     const char *table_name, uint32_t flags)
 {
   char path[FN_REFLEN];
@@ -2042,7 +2042,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 
   SYNOPSIS
     mysql_rename_table()
-      base                      The handlerton handle.
+      base                      The StorageEngine handle.
       old_db                    The old database name.
       old_name                  The old table name.
       new_db                    The new database name.
@@ -2059,7 +2059,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 */
 
 bool
-mysql_rename_table(handlerton *base, const char *old_db,
+mysql_rename_table(StorageEngine *base, const char *old_db,
                    const char *old_name, const char *new_db,
                    const char *new_name, uint32_t flags)
 {
@@ -3626,7 +3626,7 @@ int create_temporary_table(Session *session,
 {
   int error;
   char index_file[FN_REFLEN], data_file[FN_REFLEN];
-  handlerton *old_db_type, *new_db_type;
+  StorageEngine *old_db_type, *new_db_type;
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
   /*
@@ -4345,7 +4345,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   char new_alias_buff[FN_REFLEN], *table_name, *db, *new_alias, *alias;
   char path[FN_REFLEN];
   ha_rows copied= 0,deleted= 0;
-  handlerton *old_db_type, *new_db_type, *save_old_db_type;
+  StorageEngine *old_db_type, *new_db_type, *save_old_db_type;
 
   new_name_buff[0]= '\0';
 
@@ -5420,8 +5420,8 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 static bool check_engine(Session *session, const char *table_name,
                          HA_CREATE_INFO *create_info)
 {
-  handlerton **new_engine= &create_info->db_type;
-  handlerton *req_engine= *new_engine;
+  StorageEngine **new_engine= &create_info->db_type;
+  StorageEngine *req_engine= *new_engine;
   bool no_substitution= 1;
   if (!(*new_engine= ha_checktype(session, ha_legacy_type(req_engine),
                                   no_substitution, 1)))
@@ -5445,7 +5445,7 @@ static bool check_engine(Session *session, const char *table_name,
       *new_engine= 0;
       return true;
     }
-    *new_engine= myisam_hton;
+    *new_engine= myisam_engine;
   }
   return false;
 }

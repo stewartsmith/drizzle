@@ -103,10 +103,6 @@ static unsigned int global_version;
 #define ARN ".ARN"               // Files used during an optimize call
 
 
-/* Static declarations for handerton */
-static handler *archive_create_handler(handlerton *hton,
-                                       TABLE_SHARE *table,
-                                       MEM_ROOT *mem_root);
 
 static bool archive_use_aio= false;
 
@@ -120,12 +116,14 @@ static bool archive_use_aio= false;
 */
 #define ARCHIVE_ROW_HEADER_SIZE 4
 
-static handler *archive_create_handler(handlerton *hton,
-                                       TABLE_SHARE *table,
-                                       MEM_ROOT *mem_root)
+class ArchiveEngine : public StorageEngine
 {
-  return new (mem_root) ha_archive(hton, table);
-}
+  virtual handler *create(TABLE_SHARE *table,
+                          MEM_ROOT *mem_root)
+  {
+    return new (mem_root) ha_archive(this, table);
+  }
+};
 
 /*
   Used for hash table that tracks open tables.
@@ -151,18 +149,19 @@ static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length, bool
 
 int archive_db_init(void *p)
 {
-  handlerton *archive_hton;
+  StorageEngine **engine= static_cast<StorageEngine **>(p);
 
-  archive_hton= (handlerton *)p;
-  archive_hton->state= SHOW_OPTION_YES;
-  archive_hton->create= archive_create_handler;
-  archive_hton->flags= HTON_NO_FLAGS;
+  ArchiveEngine *archive_engine= new ArchiveEngine();
+  archive_engine->state= SHOW_OPTION_YES;
+  archive_engine->flags= HTON_NO_FLAGS;
+
+  *engine= archive_engine;
 
   /* When the engine starts up set the first version */
   global_version= 1;
 
   if (pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST))
-    goto error;
+    return true;
   if (hash_init(&archive_open_tables, system_charset_info, 32, 0, 0,
                 (hash_get_key) archive_get_key, 0, 0))
   {
@@ -172,7 +171,6 @@ int archive_db_init(void *p)
   {
     return(false);
   }
-error:
   return(true);
 }
 
@@ -187,8 +185,11 @@ error:
     false       OK
 */
 
-int archive_db_done(void *)
+int archive_db_done(void *p)
 {
+  ArchiveEngine *archive_engine= static_cast<ArchiveEngine *>(p);
+  delete archive_engine;
+
   hash_free(&archive_open_tables);
   pthread_mutex_destroy(&archive_mutex);
 
@@ -196,8 +197,8 @@ int archive_db_done(void *)
 }
 
 
-ha_archive::ha_archive(handlerton *hton, TABLE_SHARE *table_arg)
-  :handler(hton, table_arg), delayed_insert(0), bulk_insert(0)
+ha_archive::ha_archive(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+  :handler(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
   buffer.set((char *)byte_buffer, IO_SIZE, system_charset_info);

@@ -1496,8 +1496,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   tmp_table.s->db_create_options=0;
   tmp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
   tmp_table.s->db_low_byte_first=
-        test(create_info->db_type == myisam_hton ||
-             create_info->db_type == heap_hton);
+        test(create_info->db_type == myisam_engine ||
+             create_info->db_type == heap_engine);
   tmp_table.null_row= false;
   tmp_table.maybe_null= false;
 
