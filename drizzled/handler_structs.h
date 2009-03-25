@@ -39,7 +39,7 @@ struct Session_TRANS
 {
   Session_TRANS() {};
 
-  /* true is not all entries in the ht[] support 2pc */
+  /* true is not all entries in the engines[] support 2pc */
   bool        no_2pc;
   /* storage engines that registered in this transaction */
   Ha_trx_info *ha_list;

@@ -165,8 +165,8 @@ protected:
 
   ha_rows estimation_rows_to_insert;
 public:
-  StorageEngine *ht;                 /* storage engine of this handler */
-  unsigned char *ref;				/* Pointer to current row */
+  StorageEngine *engine;      /* storage engine of this handler */
+  unsigned char *ref;		  		/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
   ha_statistics stats;
@@ -230,9 +230,9 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  handler(StorageEngine *ht_arg, TABLE_SHARE *share_arg)
+  handler(StorageEngine *engine_arg, TABLE_SHARE *share_arg)
     :table_share(share_arg), table(0),
-    estimation_rows_to_insert(0), ht(ht_arg),
+    estimation_rows_to_insert(0), engine(engine_arg),
     ref(0), in_range_check_pushed_down(false),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(my_off_t)),
@@ -1155,7 +1155,7 @@ int ha_savepoint(Session *session, SAVEPOINT *sv);
 int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 
 /* these are called by storage engines */
-void trans_register_ha(Session *session, bool all, StorageEngine *ht);
+void trans_register_ha(Session *session, bool all, StorageEngine *engine);
 
 void table_case_convert(char * name, uint32_t length);
 const char *table_case_name(HA_CREATE_INFO *info, const char *name);

@@ -1299,8 +1299,8 @@ check_trx_exists(
 /*************************************************************************
 Construct ha_innobase handler. */
 UNIV_INTERN
-ha_innobase::ha_innobase(StorageEngine *engine, TABLE_SHARE *table_arg)
-  :handler(engine, table_arg),
+ha_innobase::ha_innobase(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+  :handler(engine_arg, table_arg),
   int_table_flags(HA_REC_NOT_IN_SEQ |
 		  HA_NULL_IN_KEY |
 		  HA_CAN_INDEX_BLOBS |
@@ -1803,7 +1803,7 @@ ha_innobase::init_table_handle_for_HANDLER(void)
 
 	if (prebuilt->trx->active_trans == 0) {
 
-		innobase_register_trx_and_stmt(ht, user_session);
+		innobase_register_trx_and_stmt(engine, user_session);
 
 		prebuilt->trx->active_trans = 1;
 	}
@@ -2825,7 +2825,7 @@ ha_innobase::open(
 	holding btr_search_latch. This breaks the latching order as
 	we acquire dict_sys->mutex below and leads to a deadlock. */
 	if (session != NULL) {
-		ht->release_temporary_latches(ht, session);
+		engine->release_temporary_latches(engine, session);
 	}
 
 	normalize_table_name(norm_name, name);
@@ -3041,7 +3041,7 @@ ha_innobase::close(void)
 
 	session = ha_session();
 	if (session != NULL) {
-		ht->release_temporary_latches(ht, session);
+		engine->release_temporary_latches(engine, session);
 	}
 
 	row_prebuilt_free(prebuilt, FALSE);
@@ -4053,7 +4053,7 @@ no_commit:
 			no need to re-acquire locks on it. */
 
 			/* Altering to InnoDB format */
-			ht->commit(ht, user_session, 1);
+			engine->commit(engine, user_session, 1);
 			/* Note that this transaction is still active. */
 			prebuilt->trx->active_trans = 1;
 			/* We will need an IX lock on the destination table. */
@@ -4069,7 +4069,7 @@ no_commit:
 
 			/* Commit the transaction.  This will release the table
 			locks, so they have to be acquired again. */
-			ht->commit(ht, user_session, 1);
+			engine->commit(engine, user_session, 1);
 			/* Note that this transaction is still active. */
 			prebuilt->trx->active_trans = 1;
 			/* Re-acquire the table lock on the source table. */
@@ -7465,10 +7465,10 @@ ha_innobase::start_stmt(
 	/* Set the MySQL flag to mark that there is an active transaction */
 	if (trx->active_trans == 0) {
 
-		innobase_register_trx_and_stmt(ht, session);
+		innobase_register_trx_and_stmt(engine, session);
 		trx->active_trans = 1;
 	} else {
-		innobase_register_stmt(ht, session);
+		innobase_register_stmt(engine, session);
 	}
 
 	return(0);
@@ -7537,10 +7537,10 @@ ha_innobase::external_lock(
 		transaction */
 		if (trx->active_trans == 0) {
 
-			innobase_register_trx_and_stmt(ht, session);
+			innobase_register_trx_and_stmt(engine, session);
 			trx->active_trans = 1;
 		} else if (trx->n_mysql_tables_in_use == 0) {
-			innobase_register_stmt(ht, session);
+			innobase_register_stmt(engine, session);
 		}
 
 		if (trx->isolation_level == TRX_ISO_SERIALIZABLE
@@ -7618,7 +7618,7 @@ ha_innobase::external_lock(
 
 		if (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
 			if (trx->active_trans != 0) {
-				ht->commit(ht, session, TRUE);
+				engine->commit(engine, session, TRUE);
 			}
 		} else {
 			if (trx->isolation_level <= TRX_ISO_READ_COMMITTED
@@ -7698,7 +7698,7 @@ ha_innobase::transactional_table_lock(
 	/* Set the MySQL flag to mark that there is an active transaction */
 	if (trx->active_trans == 0) {
 
-		innobase_register_trx_and_stmt(ht, session);
+		innobase_register_trx_and_stmt(engine, session);
 		trx->active_trans = 1;
 	}
 

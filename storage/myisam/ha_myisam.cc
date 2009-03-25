@@ -473,8 +473,8 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 }
 
-ha_myisam::ha_myisam(StorageEngine *engine, TABLE_SHARE *table_arg)
-  :handler(engine, table_arg), file(0),
+ha_myisam::ha_myisam(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+  :handler(engine_arg, table_arg), file(0),
   int_table_flags(HA_NULL_IN_KEY |
                   HA_BINLOG_ROW_CAPABLE |
                   HA_BINLOG_STMT_CAPABLE |

@@ -65,8 +65,8 @@ int heap_deinit(void *p)
 ** HEAP tables
 *****************************************************************************/
 
-ha_heap::ha_heap(StorageEngine *engine, TABLE_SHARE *table_arg)
-  :handler(engine, table_arg), file(0), records_changed(0), key_stat_version(0),
+ha_heap::ha_heap(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+  :handler(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
 

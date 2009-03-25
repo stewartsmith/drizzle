@@ -427,8 +427,8 @@ off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 
 
 
-ha_tina::ha_tina(StorageEngine *engine, TABLE_SHARE *table_arg)
-  :handler(engine, table_arg),
+ha_tina::ha_tina(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+  :handler(engine_arg, table_arg),
   /*
     These definitions are found in handler.h
     They are not probably completely right.

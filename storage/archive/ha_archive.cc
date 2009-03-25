@@ -198,8 +198,8 @@ int archive_db_done(void *p)
 }
 
 
-ha_archive::ha_archive(StorageEngine *engine, TABLE_SHARE *table_arg)
-  :handler(engine, table_arg), delayed_insert(0), bulk_insert(0)
+ha_archive::ha_archive(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+  :handler(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
   buffer.set((char *)byte_buffer, IO_SIZE, system_charset_info);

@@ -574,7 +574,7 @@ int ha_prepare(Session *session)
     for (; ha_info; ha_info= ha_info->next())
     {
       int err;
-      StorageEngine *engine= ha_info->ht();
+      StorageEngine *engine= ha_info->engine();
       status_var_increment(session->status_var.ha_prepare_count);
       if ((err= engine->prepare(engine, session, all)))
       {
@@ -624,7 +624,7 @@ ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
 
     if (! all)
     {
-      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->ht()->slot].ha_info[1];
+      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->slot].ha_info[1];
       assert(ha_info != ha_info_all);
       /*
         Merge read-only/read-write information about statement
@@ -701,7 +701,7 @@ int ha_commit_trans(Session *session, bool all)
       for (; ha_info && !error; ha_info= ha_info->next())
       {
         int err;
-        StorageEngine *engine= ha_info->ht();
+        StorageEngine *engine= ha_info->engine();
         /*
           Do not call two-phase commit if this particular
           transaction is read-only. This allows for simpler
@@ -750,7 +750,7 @@ int ha_commit_one_phase(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      StorageEngine *engine= ha_info->ht();
+      StorageEngine *engine= ha_info->engine();
       if ((err= engine->commit(engine, session, all)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
@@ -793,7 +793,7 @@ int ha_rollback_trans(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      StorageEngine *engine= ha_info->ht();
+      StorageEngine *engine= ha_info->engine();
       if ((err= engine->rollback(engine, session, all)))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -1148,7 +1148,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
   for (ha_info= sv->ha_list; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *engine= ha_info->ht();
+    StorageEngine *engine= ha_info->engine();
     assert(engine);
     if ((err= engine->savepoint_rollback(engine, session,
                                      (unsigned char *)(sv+1)+engine->savepoint_offset)))
@@ -1167,7 +1167,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
        ha_info= ha_info_next)
   {
     int err;
-    StorageEngine *engine= ha_info->ht();
+    StorageEngine *engine= ha_info->engine();
     if ((err= engine->rollback(engine, session, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -1195,7 +1195,7 @@ int ha_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *engine= ha_info->ht();
+    StorageEngine *engine= ha_info->engine();
     assert(engine);
 /*    if (! engine->savepoint_set)
     {
@@ -1226,7 +1226,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *engine= ha_info->ht();
+    StorageEngine *engine= ha_info->engine();
     /* Savepoint life time is enclosed into transaction life time. */
     assert(engine);
     if ((err= engine->savepoint_release(engine, session,
@@ -1568,7 +1568,7 @@ void handler::ha_statistic_increment(ulong SSV::*offset) const
 
 void **handler::ha_data(Session *session) const
 {
-  return session_ha_data(session, ht);
+  return session_ha_data(session, engine);
 }
 
 Session *handler::ha_session(void) const
@@ -2287,14 +2287,17 @@ void handler::print_error(int error, myf errflag)
       temporary= get_error_message(error, &str);
       if (!str.is_empty())
       {
-	const char* engine= table_type();
-	if (temporary)
-	  my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(), engine);
-	else
-	  my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine);
+	      const char* engine_name= table_type();
+	      if (temporary)
+	        my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
+                   engine_name);
+	      else
+	        my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
       }
       else
-	my_error(ER_GET_ERRNO,errflag,error);
+      {
+	      my_error(ER_GET_ERRNO,errflag,error);
+      }
       return;
     }
   }
@@ -2471,7 +2474,7 @@ inline
 void
 handler::mark_trx_read_write()
 {
-  Ha_trx_info *ha_info= &ha_session()->ha_data[ht->slot].ha_info[0];
+  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->slot].ha_info[0];
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the

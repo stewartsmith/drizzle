@@ -39,9 +39,9 @@ static void free_share(st_blackhole_share *share);
 ** BLACKHOLE tables
 *****************************************************************************/
 
-ha_blackhole::ha_blackhole(StorageEngine *engine,
+ha_blackhole::ha_blackhole(StorageEngine *engine_arg,
                            TABLE_SHARE *table_arg)
-  :handler(engine, table_arg)
+  :handler(engine_arg, table_arg)
 {}
 
 
