@@ -128,7 +128,7 @@ static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
    sub-structure (plugin->info).
 */
 
-static bool initialized= 0;
+static bool initialized= false;
 
 static DYNAMIC_ARRAY plugin_dl_array;
 static DYNAMIC_ARRAY plugin_array;
@@ -553,17 +553,7 @@ plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name, int typ
 
 static st_plugin_int *plugin_insert_or_reuse(struct st_plugin_int *plugin)
 {
-  uint32_t i;
   struct st_plugin_int *tmp;
-  for (i= 0; i < plugin_array.elements; i++)
-  {
-    tmp= *dynamic_element(&plugin_array, i, struct st_plugin_int **);
-    if (tmp->state == PLUGIN_IS_FREED)
-    {
-      memcpy(tmp, plugin, sizeof(struct st_plugin_int));
-      return(tmp);
-    }
-  }
   if (insert_dynamic(&plugin_array, (unsigned char*)&plugin))
     return(0);
   tmp= *dynamic_element(&plugin_array, plugin_array.elements - 1,
@@ -645,26 +635,11 @@ err:
 }
 
 
-static void plugin_deinitialize(struct st_plugin_int *plugin, bool ref_check)
+static void plugin_deinitialize(struct st_plugin_int *plugin)
 {
   if (plugin->plugin->status_vars)
   {
-#ifdef FIX_LATER
-    /*
-      We have a problem right now where we can not prepend without
-      breaking backwards compatibility. We will fix this shortly so
-      that engines have "use names" and we wil use those for
-      CREATE TABLE, and use the plugin name then for adding automatic
-      variable names.
-    */
-    SHOW_VAR array[2]= {
-      {plugin->plugin->name, (char*)plugin->plugin->status_vars, SHOW_ARRAY},
-      {0, 0, SHOW_UNDEF}
-    };
-    remove_status_vars(array);
-#else
     remove_status_vars(plugin->plugin->status_vars);
-#endif /* FIX_LATER */
   }
 
   if (plugin_type_deinitialize[plugin->plugin->type])
@@ -679,14 +654,6 @@ static void plugin_deinitialize(struct st_plugin_int *plugin, bool ref_check)
     plugin->plugin->deinit(plugin);
 
   plugin->state= PLUGIN_IS_UNINITIALIZED;
-
-  /*
-    We do the check here because NDB has a worker Session which doesn't
-    exit until NDB is shut down.
-  */
-  if (ref_check && plugin->ref_count)
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has ref_count=%d after deinitialization."),
-                    plugin->name.str, plugin->ref_count);
 }
 
 
@@ -710,14 +677,13 @@ static void reap_plugins(void)
   uint32_t idx;
   struct st_plugin_int *plugin;
 
-  reap_needed= false;
   count= plugin_array.elements;
 
   for (idx= 0; idx < count; idx++)
   {
     plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
     plugin->state= PLUGIN_IS_DYING;
-    plugin_deinitialize(plugin, true);
+    plugin_deinitialize(plugin);
     plugin_del(plugin);
   }
 }
@@ -894,7 +860,7 @@ int plugin_init(int *argc, char **argv, int flags)
       if (plugin_initialize(plugin_ptr))
       {
         plugin_ptr->state= PLUGIN_IS_DYING;
-        plugin_deinitialize(plugin_ptr, true);
+        plugin_deinitialize(plugin_ptr);
         plugin_del(plugin_ptr);
       }
     }
@@ -1021,9 +987,8 @@ error:
 
 void plugin_shutdown(void)
 {
-  uint32_t idx, free_slots= 0;
+  uint32_t idx;
   size_t count= plugin_array.elements;
-  struct st_plugin_int *plugin;
   vector<st_plugin_int *> plugins;
   vector<st_plugin_dl *> dl;
 
@@ -1031,95 +996,14 @@ void plugin_shutdown(void)
   {
     reap_needed= true;
 
-    /*
-      We want to shut down plugins in a reasonable order, this will
-      become important when we have plugins which depend upon each other.
-      Circular references cannot be reaped so they are forced afterwards.
-      TODO: Have an additional step here to notify all active plugins that
-      shutdown is requested to allow plugins to deinitialize in parallel.
-    */
-    while (reap_needed && (count= plugin_array.elements))
-    {
-      reap_plugins();
-      for (idx= free_slots= 0; idx < count; idx++)
-      {
-        plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-        switch (plugin->state) {
-        case PLUGIN_IS_READY:
-          plugin->state= PLUGIN_IS_DELETED;
-          reap_needed= true;
-          break;
-        case PLUGIN_IS_FREED:
-        case PLUGIN_IS_UNINITIALIZED:
-          free_slots++;
-          break;
-        }
-      }
-      if (!reap_needed)
-      {
-        /*
-          release any plugin references held.
-        */
-        unlock_variables(NULL, &global_system_variables);
-        unlock_variables(NULL, &max_system_variables);
-      }
-    }
-
-    if (count > free_slots)
-      errmsg_printf(ERRMSG_LVL_WARN, _("Forcing shutdown of %"PRIu64" plugins"),
-                        (uint64_t)count - free_slots);
-
-    plugins.reserve(count);
-
-    /*
-      If we have any plugins which did not die cleanly, we force shutdown
-    */
-    for (idx= 0; idx < count; idx++)
-    {
-      plugins.push_back(*dynamic_element(&plugin_array, idx,
-                                         struct st_plugin_int **));
-      /* change the state to ensure no reaping races */
-      if (plugins[idx]->state == PLUGIN_IS_DELETED)
-        plugins[idx]->state= PLUGIN_IS_DYING;
-    }
-
-    /*
-      We loop through all plugins and call deinit() if they have one.
-    */
-    for (idx= 0; idx < count; idx++)
-      if (!(plugins[idx]->state & (PLUGIN_IS_UNINITIALIZED | PLUGIN_IS_FREED)))
-      {
-        errmsg_printf(ERRMSG_LVL_INFO, _("Plugin '%s' will be forced to shutdown"),
-                              plugins[idx]->name.str);
-        /*
-          We are forcing deinit on plugins so we don't want to do a ref_count
-          check until we have processed all the plugins.
-        */
-        plugin_deinitialize(plugins[idx], false);
-      }
-
-    /*
-      We defer checking ref_counts until after all plugins are deinitialized
-      as some may have worker threads holding on to plugin references.
-    */
-    for (idx= 0; idx < count; idx++)
-    {
-      if (plugins[idx]->ref_count)
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has ref_count=%d after shutdown."),
-                        plugins[idx]->name.str, plugins[idx]->ref_count);
-      if (plugins[idx]->state & PLUGIN_IS_UNINITIALIZED)
-        plugin_del(plugins[idx]);
-    }
-
-    /*
-      Now we can deallocate all memory.
-    */
+    reap_plugins();
+    unlock_variables(NULL, &global_system_variables);
+    unlock_variables(NULL, &max_system_variables);
 
     cleanup_variables(NULL, &global_system_variables);
     cleanup_variables(NULL, &max_system_variables);
 
     initialized= 0;
-
   }
 
   /* Dispose of the memory */
