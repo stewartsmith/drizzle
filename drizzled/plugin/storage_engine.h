@@ -86,7 +86,7 @@ class StorageEngine
 public:
 
   StorageEngine(const std::string &name_arg, bool support_2pc= false)
-    : name(name_arg), _2pc(support_2pc)  {}
+    : name(name_arg), _2pc(support_2pc), db_type(DB_TYPE_UNKNOWN)  {}
   virtual ~StorageEngine() {}
 
   bool has_2pc()
