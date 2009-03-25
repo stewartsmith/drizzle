@@ -1021,26 +1021,24 @@ public:
 template class I_List<thread_info>;
 #endif
 
-void mysqld_list_processes(Session *session,const char *user, bool verbose)
+void mysqld_list_processes(Session *session,const char *user, bool)
 {
   Item *field;
   List<Item> field_list;
   I_List<thread_info> thread_infos;
-  ulong max_query_length= (verbose ? session->variables.max_allowed_packet :
-			   PROCESS_LIST_WIDTH);
   Protocol *protocol= session->protocol;
 
   field_list.push_back(new Item_int("Id", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_empty_string("User",16));
   field_list.push_back(new Item_empty_string("Host",LIST_PROCESS_HOST_LEN));
   field_list.push_back(field=new Item_empty_string("db",NAME_CHAR_LEN));
-  field->maybe_null=1;
+  field->maybe_null= true;
   field_list.push_back(new Item_empty_string("Command",16));
   field_list.push_back(new Item_return_int("Time",7, DRIZZLE_TYPE_LONG));
   field_list.push_back(field=new Item_empty_string("State",30));
-  field->maybe_null=1;
-  field_list.push_back(field=new Item_empty_string("Info",max_query_length));
-  field->maybe_null=1;
+  field->maybe_null= true;
+  field_list.push_back(field=new Item_empty_string("Info", PROCESS_LIST_WIDTH));
+  field->maybe_null= true;
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return;
@@ -1085,13 +1083,12 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
         session_info->query=0;
         if (tmp->query)
         {
-	  /*
+          /*
             query_length is always set to 0 when we set query = NULL; see
 	          the comment in session.h why this prevents crashes in possible
             races with query_length
           */
-          uint32_t length= cmin((uint32_t)max_query_length, tmp->query_length);
-          session_info->query=(char*) session->strmake(tmp->query,length);
+          session_info->query=(char*) session->strdup(tmp->process_list_info);
         }
         thread_infos.append(session_info);
       }
