@@ -1502,7 +1502,7 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
   unsigned char *rec_buff,*old_record;
   int error;
 
-  if (!(old_record=malloc(info->s->base.reclength)))
+  if (!(old_record=(unsigned char *)malloc(info->s->base.reclength)))
     return(1);
 
   /* Don't let the compare destroy blobs that may be in use */

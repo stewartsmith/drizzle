@@ -23,7 +23,6 @@
 
 /* Classes in mysql */
 
-#include <drizzled/global.h>
 #include <drizzled/protocol.h>
 #include <libdrizzleclient/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
@@ -448,6 +447,7 @@ public:
   THR_LOCK_OWNER *lock_id;              // If not main_lock_id, points to
                                         // the lock_id of a cursor.
   pthread_mutex_t LOCK_delete;		// Locked before session is deleted
+  char process_list_info[PROCESS_LIST_WIDTH];
   /*
     A pointer to the stack frame of handle_one_connection(),
     which is called first in the thread for handling a client

@@ -75,6 +75,7 @@ multiple read locks.
 #include "thr_lock.h"
 #include <mystrings/m_string.h>
 #include <errno.h>
+#include <list>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -89,13 +90,16 @@ multiple read locks.
 
 #include <drizzled/util/test.h>
 
+using namespace std;
+
 bool thr_lock_inited=0;
 uint32_t locks_immediate = 0L, locks_waited = 0L;
 uint64_t table_lock_wait_timeout;
 enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
 
-LIST *thr_lock_thread_list;			/* List of threads in use */
+static list<THR_LOCK *> thr_lock_thread_list;          /* List of threads in use */
+
 uint64_t max_write_lock_count= ~(uint64_t) 0L;
 
 static inline pthread_cond_t *get_cond(void)
@@ -132,8 +136,7 @@ void thr_lock_init(THR_LOCK *lock)
   lock->write.last= &lock->write.data;
 
   pthread_mutex_lock(&THR_LOCK_lock);		/* Add to locks in use */
-  lock->list.data=(void*) lock;
-  thr_lock_thread_list=list_add(thr_lock_thread_list,&lock->list);
+  thr_lock_thread_list.push_front(lock);
   pthread_mutex_unlock(&THR_LOCK_lock);
   return;
 }
@@ -143,7 +146,7 @@ void thr_lock_delete(THR_LOCK *lock)
 {
   pthread_mutex_destroy(&lock->mutex);
   pthread_mutex_lock(&THR_LOCK_lock);
-  thr_lock_thread_list=list_delete(thr_lock_thread_list,&lock->list);
+  thr_lock_thread_list.remove(lock);
   pthread_mutex_unlock(&THR_LOCK_lock);
   return;
 }

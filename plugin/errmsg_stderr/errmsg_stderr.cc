@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin_errmsg.h>
+#include <drizzled/plugin/error_message_handler.h>
 #include <drizzled/gettext.h>
 
 #include <stdio.h>  /* for vsnprintf */

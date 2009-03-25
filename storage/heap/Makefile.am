@@ -19,15 +19,33 @@ LDADD =			libheap.la \
 
 noinst_LTLIBRARIES  =	libheap.la
 noinst_HEADERS =	heapdef.h ha_heap.h heap.h
-libheap_la_SOURCES =	hp_open.c hp_extra.c hp_close.c hp_panic.c hp_info.c \
-			hp_rrnd.c hp_scan.c hp_update.c hp_write.c hp_delete.c \
-			hp_rsame.c hp_create.c hp_rename.c hp_rfirst.c \
-			hp_rnext.c hp_rlast.c hp_rprev.c hp_clear.c \
-			hp_dspace.c hp_record.c \
-			hp_rkey.c hp_block.c \
-			hp_rectest.c \
+libheap_la_SOURCES= \
 			ha_heap.cc \
-			hp_hash.c hp_static.c
+			hp_block.cc \
+			hp_clear.cc \
+			hp_close.cc \
+			hp_create.cc \
+			hp_delete.cc \
+			hp_dspace.cc \
+			hp_extra.cc \
+			hp_hash.cc \
+			hp_info.cc \
+			hp_open.cc \
+			hp_panic.cc \
+			hp_record.cc \
+			hp_rectest.cc \
+			hp_rename.cc \
+			hp_rfirst.cc \
+			hp_rkey.cc \
+			hp_rlast.cc \
+			hp_rnext.cc \
+			hp_rprev.cc \
+			hp_rrnd.cc \
+			hp_rsame.cc \
+			hp_scan.cc \
+			hp_static.cc \
+			hp_update.cc \
+			hp_write.cc
 
 
 EXTRA_DIST =		plug.in

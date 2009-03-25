@@ -74,3 +74,6 @@ drop schema drizzleslap;
 # Now we will test to make sure we can destory the data if it happens to be
 # in our way.
 #
+
+# Concurrency
+--exec $DRIZZLE_SLAP --silent --concurrency=32 --iterations=20 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --commit=100

@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-noinst_LTLIBRARIES= libreplicator.la
-libreplicator_la_SOURCES=	replicator.cc
-libreplicator_la_LIBADD= $(top_builddir)/drizzled/serialize/libserialize.la
-libreplicator_la_CXXFLAGS=	${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
+noinst_LTLIBRARIES= libprotobuf_replicator.la
+libprotobuf_replicator_la_SOURCES= protobuf_replicator.cc
+libprotobuf_replicator_la_LIBADD= $(top_builddir)/drizzled/serialize/libserialize.la
+libprotobuf_replicator_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}

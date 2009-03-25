@@ -40,9 +40,10 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
         or heap_rfirst(). As last key position (info->last_pos) is available,
         we only need to climb the tree using tree_search_next().
       */
-      pos = tree_search_next(&keyinfo->rb_tree, &info->last_pos,
-                             offsetof(TREE_ELEMENT, left),
-                             offsetof(TREE_ELEMENT, right));
+      pos = (unsigned char *)tree_search_next(&keyinfo->rb_tree,
+                                              &info->last_pos,
+                                              offsetof(TREE_ELEMENT, left),
+                                              offsetof(TREE_ELEMENT, right));
     }
     else if (!info->lastkey_len)
     {
@@ -57,8 +58,9 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
         zero. tree_search_edge() is a kind of optimisation here as it should be
         faster than tree_search_key().
       */
-      pos= tree_search_edge(&keyinfo->rb_tree, info->parents,
-                            &info->last_pos, offsetof(TREE_ELEMENT, left));
+      pos= (unsigned char *)tree_search_edge(&keyinfo->rb_tree, info->parents,
+                                             &info->last_pos,
+                                             offsetof(TREE_ELEMENT, left));
     }
     else
     {
@@ -71,8 +73,11 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
       custom_arg.keyseg = keyinfo->seg;
       custom_arg.key_length = info->lastkey_len;
       custom_arg.search_flag = SEARCH_SAME | SEARCH_FIND;
-      pos = tree_search_key(&keyinfo->rb_tree, info->lastkey, info->parents,
-                           &info->last_pos, info->last_find_flag, &custom_arg);
+      pos = (unsigned char *)tree_search_key(&keyinfo->rb_tree,
+                                             info->lastkey, info->parents,
+                                             &info->last_pos,
+                                             info->last_find_flag,
+                                             &custom_arg);
     }
     if (pos)
     {

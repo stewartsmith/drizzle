@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_LOGGING_H
 #define DRIZZLED_LOGGING_H
 
-#include <drizzled/plugin_logging.h>
+#include <drizzled/plugin/logging_handler.h>
 
 int logging_initializer(st_plugin_int *plugin);
 int logging_finalizer(st_plugin_int *plugin);

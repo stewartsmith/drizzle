@@ -26,33 +26,63 @@ noinst_LTLIBRARIES =	libmyisam.la libmyisamutil.la \
 			libmyisamha.la libmyisamnone.la
 bin_PROGRAMS =		myisamchk
 
-noinst_HEADERS =	myisamdef.h \
+noinst_HEADERS =	\
 			ha_myisam.h \
 			keycache.h \
 			my_handler.h \
+			my_list.h \
 			myisam.h \
+			myisamdef.h \
 			myisampack.h
 
-libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
-			mi_rnext.c mi_rnext_same.c \
-			mi_search.c mi_page.c mi_key.c mi_locking.c \
-			mi_rrnd.c mi_scan.c mi_cache.c \
-			mi_statrec.c mi_dynrec.c \
-			mi_update.c mi_write.c mi_unique.c \
-			mi_delete.c \
-			my_pread.c \
-			mf_keycache.c mf_keycaches.c \
-			mi_rprev.c mi_rfirst.c mi_rlast.c mi_rsame.c \
-			mi_rsamepos.c mi_panic.c mi_close.c mi_create.c\
-			mi_range.c mi_checksum.c \
-			mi_changed.c mi_static.c mi_delete_all.c \
-			mi_delete_table.c mi_rename.c  mi_check.c \
-			mi_keycache.c mi_preload.c \
-			my_handler.c \
-			my_handler_errors.c \
-			sort.c 
+libmyisamutil_la_SOURCES= \
+			list.cc \
+			mf_keycache.cc \
+			mf_keycaches.cc \
+			mi_cache.cc \
+			mi_changed.cc \
+			mi_check.cc \
+			mi_checksum.cc \
+			mi_close.cc \
+			mi_create.cc\
+			mi_delete.cc \
+			mi_delete_all.cc \
+			mi_delete_table.cc \
+			mi_dynrec.cc \
+			mi_extra.cc \
+			mi_info.cc \
+			mi_key.cc \
+			mi_keycache.cc \
+			mi_locking.cc \
+			mi_open.cc \
+			mi_page.cc \
+			mi_panic.cc \
+			mi_preload.cc \
+			mi_range.cc \
+			mi_rename.cc \
+			mi_rfirst.cc \
+			mi_rkey.cc \
+			mi_rlast.cc \
+			mi_rnext.cc \
+			mi_rnext_same.cc \
+			mi_rprev.cc \
+			mi_rrnd.cc \
+			mi_rsame.cc \
+			mi_rsamepos.cc \
+			mi_scan.cc \
+			mi_search.cc \
+			mi_static.cc \
+			mi_statrec.cc \
+			mi_unique.cc \
+			mi_update.cc \
+			mi_write.cc \
+			my_handler.cc \
+			my_handler_errors.cc \
+			my_pread.cc \
+			sort.cc 
+
 libmyisamha_la_SOURCES = ha_myisam.cc
-libmyisamnone_la_SOURCES = mi_reportnone.c
+libmyisamnone_la_SOURCES = mi_reportnone.cc
 libmyisam_la_SOURCES = 
 libmyisam_la_LIBADD = libmyisamha.la libmyisamutil.la
 myisamchk_SOURCES = myisamchk.cc 
