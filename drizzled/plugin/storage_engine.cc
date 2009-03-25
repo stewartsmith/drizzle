@@ -241,7 +241,7 @@ int storage_engine_initializer(st_plugin_int *plugin)
     }
   }
 
-  engine->name= plugin->name.str;
+  engine->set_name(plugin->name.str, plugin->name.length);
 
   /*
     the switch below and engine->state should be removed when

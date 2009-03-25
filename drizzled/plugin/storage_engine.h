@@ -20,11 +20,12 @@
 #ifndef DRIZZLED_HANDLERTON_H
 #define DRIZZLED_HANDLERTON_H
 
-#include <stdint.h>
-#include <bitset>
 
 #include <drizzled/definitions.h>
 #include <drizzled/sql_plugin.h>
+
+#include <bitset>
+#include <string>
 
 class TableList;
 class Session;
@@ -77,8 +78,14 @@ static const std::bitset<HTON_BIT_SIZE> HTON_NO_PARTITION(1 << HTON_BIT_NO_PARTI
 class StorageEngine
 {
   bool _2pc;
+  /*
+    Name used for storage engine.
+    @todo change to std::string
+  */
+  std::string name;
 public:
-  StorageEngine(): _2pc(false) {}
+
+  StorageEngine(): _2pc(false), name("UNKNOWN") {}
   StorageEngine(bool support_2pc): _2pc(support_2pc) {}
   virtual ~StorageEngine() {}
 
@@ -87,11 +94,6 @@ public:
     return _2pc;
   }
 
-  /*
-    Name used for storage engine.
-    @todo change to std::string
-  */
-  const char *name;
 
   /*
     Historical marker for if the engine is available of not
@@ -126,6 +128,12 @@ public:
    uint32_t savepoint_offset;
    uint32_t license; /* Flag for Engine License */
    void *data; /* Location for engines to keep personal structures */
+
+   /**
+    * @todo: this should really be done in the constructor
+    */
+   void set_name(const char *s, size_t n) { name.assign(s,n); }
+   std::string get_name() { return name; }
 
    /*
      StorageEngine methods:
