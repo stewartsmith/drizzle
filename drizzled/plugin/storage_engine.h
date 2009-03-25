@@ -135,7 +135,7 @@ public:
      this storage area - set it to something, so that MySQL would know
      this storage engine was accessed in this connection
    */
-   virtual int close_connection(StorageEngine *, Session  *)
+   virtual int close_connection(Session  *)
    {
      return 0;
    }
@@ -143,7 +143,7 @@ public:
      The void * points to an uninitialized storage area of requested size
      (see savepoint_offset description)
    */
-   virtual int savepoint_set(StorageEngine *, Session *, void *)
+   virtual int savepoint_set(Session *, void *)
    {
      return 0;
    }
@@ -152,12 +152,12 @@ public:
      The void * points to a storage area, that was earlier passed
      to the savepoint_set call
    */
-   virtual int savepoint_rollback(StorageEngine *, Session *, void *)
+   virtual int savepoint_rollback(Session *, void *)
    {
      return 0;
    }
 
-   virtual int savepoint_release(StorageEngine *, Session *, void *)
+   virtual int savepoint_release(Session *, void *)
    {
      return 0;
    }
@@ -169,42 +169,37 @@ public:
      NOTE 'all' is also false in auto-commit mode where 'end of statement'
      and 'real commit' mean the same event.
    */
-   virtual int  commit(StorageEngine *, Session *, bool)
+   virtual int  commit(Session *, bool)
    {
      return 0;
    }
 
-   virtual int  rollback(StorageEngine *, Session *, bool)
+   virtual int  rollback(Session *, bool)
    {
      return 0;
    }
 
-   virtual int  prepare(StorageEngine *, Session *, bool) { return 0; }
-   virtual int  recover(StorageEngine *, XID *, uint32_t) { return 0; }
-   virtual int  commit_by_xid(StorageEngine *, XID *) { return 0; }
-   virtual int  rollback_by_xid(StorageEngine *, XID *) { return 0; }
-   virtual handler *create(StorageEngine *, TABLE_SHARE *, MEM_ROOT *)= 0;
+   virtual int  prepare(Session *, bool) { return 0; }
+   virtual int  recover(XID *, uint32_t) { return 0; }
+   virtual int  commit_by_xid(XID *) { return 0; }
+   virtual int  rollback_by_xid(XID *) { return 0; }
+   virtual handler *create(TABLE_SHARE *, MEM_ROOT *)= 0;
    /* args: path */
-   virtual void drop_database(StorageEngine *, char*) { }
-   virtual int start_consistent_snapshot(StorageEngine *,
-                                         Session *) { return 0; }
-   virtual bool flush_logs(StorageEngine *) { return false; }
-   virtual bool show_status(StorageEngine *, Session *,
-                            stat_print_fn *, enum ha_stat_type)
+   virtual void drop_database(char*) { }
+   virtual int start_consistent_snapshot(Session *) { return 0; }
+   virtual bool flush_logs() { return false; }
+   virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
    {
      return false;
    }
 
    /* args: current_session, tables, cond */
-   virtual int fill_files_table(StorageEngine *, Session *,
-                                TableList *,
+   virtual int fill_files_table(Session *, TableList *,
                                 Item *) { return 0; }
-   virtual int release_temporary_latches(StorageEngine *, 
-                                         Session *) { return false; }
+   virtual int release_temporary_latches(Session *) { return false; }
 
    /* args: current_session, db, name */
-   virtual int table_exists_in_engine(StorageEngine *, Session*,
-                                      const char *, const char *);
+   virtual int table_exists_in_engine(Session*, const char *, const char *);
 };
 
 

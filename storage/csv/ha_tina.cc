@@ -100,11 +100,10 @@ static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
 
 class Tina : public StorageEngine
 {
-  virtual handler *create(StorageEngine *engine,
-                          TABLE_SHARE *table,
+  virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_tina(engine, table);
+    return new (mem_root) ha_tina(this, table);
   }
 };
 

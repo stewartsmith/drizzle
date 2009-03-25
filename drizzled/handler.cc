@@ -190,7 +190,7 @@ static bool dropdb_handlerton(Session *,
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES)
-    engine->drop_database(engine, (char *)path);
+    engine->drop_database((char *)path);
   return false;
 }
 
@@ -211,7 +211,7 @@ static bool closecon_handlerton(Session *session, plugin_ref plugin,
   */
   if (engine->state == SHOW_OPTION_YES && 
       session_get_ha_data(session, engine))
-    engine->close_connection(engine, session);
+    engine->close_connection(session);
   return false;
 }
 
@@ -576,7 +576,7 @@ int ha_prepare(Session *session)
       int err;
       StorageEngine *engine= ha_info->engine();
       status_var_increment(session->status_var.ha_prepare_count);
-      if ((err= engine->prepare(engine, session, all)))
+      if ((err= engine->prepare(session, all)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
         ha_rollback_trans(session, all);
@@ -713,7 +713,7 @@ int ha_commit_trans(Session *session, bool all)
           Sic: we know that prepare() is not NULL since otherwise
           trans->no_2pc would have been set.
         */
-        if ((err= engine->prepare(engine, session, all)))
+        if ((err= engine->prepare(session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -751,7 +751,7 @@ int ha_commit_one_phase(Session *session, bool all)
     {
       int err;
       StorageEngine *engine= ha_info->engine();
-      if ((err= engine->commit(engine, session, all)))
+      if ((err= engine->commit(session, all)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
         error=1;
@@ -794,7 +794,7 @@ int ha_rollback_trans(Session *session, bool all)
     {
       int err;
       StorageEngine *engine= ha_info->engine();
-      if ((err= engine->rollback(engine, session, all)))
+      if ((err= engine->rollback(session, all)))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
         error=1;
@@ -877,7 +877,7 @@ static bool xacommit_handlerton(Session *,
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES)
   {
-    engine->commit_by_xid(engine, ((struct xaengine_st *)arg)->xid);
+    engine->commit_by_xid(((struct xaengine_st *)arg)->xid);
     ((struct xaengine_st *)arg)->result= 0;
   }
   return false;
@@ -890,7 +890,7 @@ static bool xarollback_handlerton(Session *,
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES)
   {
-    engine->rollback_by_xid(engine, ((struct xaengine_st *)arg)->xid);
+    engine->rollback_by_xid(((struct xaengine_st *)arg)->xid);
     ((struct xaengine_st *)arg)->result= 0;
   }
   return false;
@@ -943,7 +943,7 @@ static bool xarecover_handlerton(Session *,
 
   if (engine->state == SHOW_OPTION_YES)
   {
-    while ((got= engine->recover(engine, info->list, info->len)) > 0 )
+    while ((got= engine->recover(info->list, info->len)) > 0 )
     {
       errmsg_printf(ERRMSG_LVL_INFO, _("Found %d prepared transaction(s) in %s"),
                             got, ha_resolve_storage_engine_name(engine));
@@ -966,11 +966,11 @@ static bool xarecover_handlerton(Session *,
             hash_search(info->commit_list, (unsigned char *)&x, sizeof(x)) != 0 :
             tc_heuristic_recover == TC_HEURISTIC_RECOVER_COMMIT)
         {
-          engine->commit_by_xid(engine, info->list+i);
+          engine->commit_by_xid(info->list+i);
         }
         else
         {
-          engine->rollback_by_xid(engine, info->list+i);
+          engine->rollback_by_xid(info->list+i);
         }
       }
       if (got < info->len)
@@ -1120,7 +1120,7 @@ static bool release_temporary_latches(Session *session, plugin_ref plugin,
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
 
   if (engine->state == SHOW_OPTION_YES)
-    engine->release_temporary_latches(engine, session);
+    engine->release_temporary_latches(session);
 
   return false;
 }
@@ -1150,7 +1150,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
     int err;
     StorageEngine *engine= ha_info->engine();
     assert(engine);
-    if ((err= engine->savepoint_rollback(engine, session,
+    if ((err= engine->savepoint_rollback(session,
                                      (unsigned char *)(sv+1)+engine->savepoint_offset)))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -1168,7 +1168,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
   {
     int err;
     StorageEngine *engine= ha_info->engine();
-    if ((err= engine->rollback(engine, session, !(0))))
+    if ((err= engine->rollback(session, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
@@ -1203,7 +1203,7 @@ int ha_savepoint(Session *session, SAVEPOINT *sv)
       error=1;
       break;
     } */
-    if ((err= engine->savepoint_set(engine, session, (unsigned char *)(sv+1)+engine->savepoint_offset)))
+    if ((err= engine->savepoint_set(session, (unsigned char *)(sv+1)+engine->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;
@@ -1229,7 +1229,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
     StorageEngine *engine= ha_info->engine();
     /* Savepoint life time is enclosed into transaction life time. */
     assert(engine);
-    if ((err= engine->savepoint_release(engine, session,
+    if ((err= engine->savepoint_release(session,
                                     (unsigned char *)(sv+1) + engine->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
@@ -1245,7 +1245,7 @@ static bool snapshot_handlerton(Session *session, plugin_ref plugin, void *arg)
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES)
   {
-    engine->start_consistent_snapshot(engine, session);
+    engine->start_consistent_snapshot(session);
     *((bool *)arg)= false;
   }
   return false;
@@ -1275,7 +1275,7 @@ static bool flush_handlerton(Session *,
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->state == SHOW_OPTION_YES &&
-      engine->flush_logs(engine))
+      engine->flush_logs())
     return true;
   return false;
 }
@@ -1292,7 +1292,7 @@ bool ha_flush_logs(StorageEngine *engine)
   else
   {
     if (engine->state != SHOW_OPTION_YES ||
-        (engine->flush_logs(engine)))
+        (engine->flush_logs()))
       return true;
   }
   return false;
@@ -1370,15 +1370,15 @@ static bool deletetable_handlerton(Session *,
   if(dtargs->error!=ENOENT) /* already deleted table */
     return false;
 
-  StorageEngine *table_type= plugin_data(plugin, StorageEngine *);
+  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
 
-  if(!table_type)
+  if(!engine)
     return false;
 
-  if(!(table_type->state == SHOW_OPTION_YES))
+  if(!(engine->state == SHOW_OPTION_YES))
     return false;
 
-  if ((file= table_type->create(table_type, NULL, session->mem_root)))
+  if ((file= engine->create(NULL, session->mem_root)))
     file->init();
   else
     return false;
@@ -3003,7 +3003,7 @@ static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugi
   int err= HA_ERR_NO_SUCH_TABLE;
 
   if (engine->state == SHOW_OPTION_YES)
-    err = engine->table_exists_in_engine(engine, session, vargs->db, vargs->name);
+    err = engine->table_exists_in_engine(session, vargs->db, vargs->name);
 
   vargs->err = err;
   if (vargs->err == HA_ERR_TABLE_EXIST)
@@ -4088,7 +4088,7 @@ static bool exts_handlerton(Session *,
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   handler *file;
   if (engine->state == SHOW_OPTION_YES &&
-      (file= engine->create(engine, (TABLE_SHARE*) 0, current_session->mem_root)))
+      (file= engine->create((TABLE_SHARE*) 0, current_session->mem_root)))
   {
     List_iterator_fast<char> it(*found_exts);
     const char **ext, *old_ext;
@@ -4167,7 +4167,7 @@ bool ha_show_status(Session *session, StorageEngine *engine, enum ha_stat_type s
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return true;
 
-  result= engine->show_status(engine, session, stat_print, stat) ? 1 : 0;
+  result= engine->show_status(session, stat_print, stat) ? 1 : 0;
 
   if (!result)
     session->my_eof();

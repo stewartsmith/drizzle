@@ -118,11 +118,10 @@ static bool archive_use_aio= false;
 
 class ArchiveEngine : public StorageEngine
 {
-  virtual handler *create(StorageEngine *engine,
-                          TABLE_SHARE *table,
+  virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_archive(engine, table);
+    return new (mem_root) ha_archive(this, table);
   }
 };
 

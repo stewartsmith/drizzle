@@ -19,11 +19,10 @@
 
 class BlackholeEngine : public StorageEngine
 {
-  virtual handler *create(StorageEngine *engine,
-                          TABLE_SHARE *table,
+  virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_blackhole(engine, table);
+    return new (mem_root) ha_blackhole(this, table);
   }
 };
 

@@ -71,13 +71,13 @@ class BinlogEngine : public StorageEngine
 public:
   BinlogEngine() : StorageEngine() {}
  
-  virtual int close_connection(StorageEngine *, Session *)
+  virtual int close_connection(Session *)
   {
   
     return 0;
   }
   
-  virtual int prepare(StorageEngine *, Session *session, bool)
+  virtual int prepare(Session *session, bool)
   {
     /*
       do nothing.
@@ -104,7 +104,7 @@ public:
   
     @see StorageEngine::commit
   */
-  virtual int commit(StorageEngine *, Session *session, bool all)
+  virtual int commit(Session *session, bool all)
   {
     /*
       Decision table for committing a transaction. The top part, the
@@ -188,7 +188,7 @@ public:
   
     @see StorageEngine::rollback
   */
-  virtual int rollback(StorageEngine *, Session *session, bool all)
+  virtual int rollback(Session *session, bool all)
   {
     int error=0;
   
@@ -222,7 +222,7 @@ public:
     that case there is no need to have it in the binlog).
   */
   
-  virtual int savepoint_set(StorageEngine *, Session *session, void *sv)
+  virtual int savepoint_set(Session *session, void *sv)
   {
     bool error;
     binlog_trans_log_savepos(session, (my_off_t*) sv);
@@ -233,7 +233,7 @@ public:
     return(error);
   }
   
-  virtual int savepoint_rollback(StorageEngine *, Session *session, void *)
+  virtual int savepoint_rollback(Session *session, void *)
   {
     bool error;
   
@@ -242,7 +242,7 @@ public:
     return error;
   }
 
-  virtual handler* create(StorageEngine*, TABLE_SHARE*, MEM_ROOT*)
+  virtual handler* create(TABLE_SHARE*, MEM_ROOT*)
   {
     return NULL;
   }

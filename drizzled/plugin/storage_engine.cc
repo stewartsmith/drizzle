@@ -45,8 +45,7 @@ static const LEX_STRING sys_table_aliases[]=
 };
 
 /* args: current_session, db, name */
-int StorageEngine::table_exists_in_engine(StorageEngine *, Session*,
-                                          const char *, const char *)
+int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
 {
   return HA_ERR_NO_SUCH_TABLE;
 }
@@ -185,13 +184,13 @@ StorageEngine *ha_checktype(Session *session, enum legacy_db_type database_type,
 
 
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
-                         StorageEngine *db_type)
+                         StorageEngine *engine)
 {
   handler *file;
 
-  if (db_type && db_type->state == SHOW_OPTION_YES)
+  if (engine && engine->state == SHOW_OPTION_YES)
   {
-    if ((file= db_type->create(db_type, share, alloc)))
+    if ((file= engine->create(share, alloc)))
       file->init();
     return(file);
   }
