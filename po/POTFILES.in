@@ -14,10 +14,10 @@ drizzled/errmsg.cc
 drizzled/error.cc
 drizzled/gettext.h
 drizzled/handler.cc
-drizzled/handlerton.cc
 drizzled/log.cc
 drizzled/logging.cc
 drizzled/parser.cc
+drizzled/plugin/storage_engine.cc
 drizzled/qcache.cc
 drizzled/replicator.cc
 drizzled/scheduling.cc

@@ -80,7 +80,6 @@ DRIZZLE_PLUGIN_ACTIONS(innobase,  [
       AC_MSG_RESULT(no)
     ]
     )
-  AM_CONDITIONAL(BUILD_DRIZZLE,[test "x$ac_build_drizzle" = "xyes"])
   ])
 
 # vim: set ft=config:

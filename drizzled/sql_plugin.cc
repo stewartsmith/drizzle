@@ -89,7 +89,7 @@ extern int finalize_udf(st_plugin_int *plugin);
 plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 {
   0,  /* Daemon */
-  ha_initialize_handlerton,  /* Storage Engine */
+  storage_engine_initializer,  /* Storage Engine */
   initialize_schema_table,  /* Information Schema */
   initialize_udf,  /* UDF */
   0,  /* UDA */
@@ -107,7 +107,7 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 {
   0,  /* Daemon */
-  ha_finalize_handlerton,  /* Storage Engine */
+  storage_engine_finalizer,  /* Storage Engine */
   finalize_schema_table,  /* Information Schema */
   finalize_udf,  /* UDF */
   0,  /* UDA */

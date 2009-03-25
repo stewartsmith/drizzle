@@ -91,14 +91,14 @@ static bool replicator_session_iterate(Session *session, plugin_ref plugin, void
 /*
   This call is called once at the begining of each transaction.
 */
-extern handlerton *binlog_hton;
+extern StorageEngine *binlog_engine;
 bool replicator_session_init(Session *session)
 {
   bool foreach_rv;
 
   if (session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
-    trans_register_ha(session, true, binlog_hton);
-  trans_register_ha(session, false, binlog_hton);
+    trans_register_ha(session, true, binlog_engine);
+  trans_register_ha(session, false, binlog_engine);
 
   if (session->getReplicationData())
     return false;

@@ -29,6 +29,12 @@
 #include <drizzled/table.h>
 #include <drizzled/field/timestamp.h>
 
+#include <string>
+
+using namespace std;
+
+static const string engine_name("MyISAM");
+
 ulong myisam_recover_options= HA_RECOVER_NONE;
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
@@ -54,12 +60,17 @@ TYPELIB myisam_stats_method_typelib= {
 ** MyISAM tables
 *****************************************************************************/
 
-static handler *myisam_create_handler(handlerton *hton,
-                                      TABLE_SHARE *table,
-                                      MEM_ROOT *mem_root)
+class MyisamEngine : public StorageEngine
 {
-  return new (mem_root) ha_myisam(hton, table);
-}
+public:
+  MyisamEngine(string name_arg) : StorageEngine(name_arg) {}
+
+  virtual handler *create(TABLE_SHARE *table,
+                          MEM_ROOT *mem_root)
+  {
+    return new (mem_root) ha_myisam(this, table);
+  }
+};
 
 // collect errors printed by mi_check routines
 
@@ -470,8 +481,8 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 }
 
-ha_myisam::ha_myisam(handlerton *hton, TABLE_SHARE *table_arg)
-  :handler(hton, table_arg), file(0),
+ha_myisam::ha_myisam(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+  :handler(engine_arg, table_arg), file(0),
   int_table_flags(HA_NULL_IN_KEY |
                   HA_BINLOG_ROW_CAPABLE |
                   HA_BINLOG_STMT_CAPABLE |
@@ -1794,8 +1805,12 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *create_info,
   return COMPATIBLE_DATA_YES;
 }
 
-int myisam_deinit(void *)
+int myisam_deinit(void *p)
 {
+
+  MyisamEngine *engine= static_cast<MyisamEngine *>(p);
+  delete engine;
+
   pthread_mutex_destroy(&THR_LOCK_myisam);
 
   return mi_panic(HA_PANIC_CLOSE);
@@ -1803,10 +1818,12 @@ int myisam_deinit(void *)
 
 static int myisam_init(void *p)
 {
-  myisam_hton= (handlerton *)p;
-  myisam_hton->state= SHOW_OPTION_YES;
-  myisam_hton->create= myisam_create_handler;
-  myisam_hton->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
+  StorageEngine **engine= static_cast<StorageEngine **>(p);
+  
+  *engine= new MyisamEngine(engine_name);
+  (*engine)->state= SHOW_OPTION_YES;
+  (*engine)->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
+
   return 0;
 }
 

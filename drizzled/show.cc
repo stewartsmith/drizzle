@@ -2725,7 +2725,7 @@ static int get_schema_tables_record(Session *session, TableList *tables,
     Table *show_table= tables->table;
     TABLE_SHARE *share= show_table->s;
     handler *file= show_table->file;
-    handlerton *tmp_db_type= share->db_type();
+    StorageEngine *tmp_db_type= share->db_type();
     if (share->tmp_table == SYSTEM_TMP_TABLE)
       table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
     else if (share->tmp_table)
