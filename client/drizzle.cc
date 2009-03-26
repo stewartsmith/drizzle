@@ -3898,7 +3898,7 @@ Max number of examined row combination in a join is set to: %lu\n\n",
 }
 
 static const char *
-server_version_string(drizzle_con_st *con)
+server_version_string(drizzle_con_st *local_con)
 {
   static string buf("");
   static bool server_version_string_reserved= false;
@@ -3914,11 +3914,11 @@ server_version_string(drizzle_con_st *con)
     drizzle_result_st result;
     drizzle_return_t ret;
 
-    buf.append(drizzle_con_server_version(con));
+    buf.append(drizzle_con_server_version(local_con));
 
     /* "limit 1" is protection against SQL_SELECT_LIMIT=0 */
-    (void)drizzle_query_str(con, &result, "select @@version_comment limit 1",
-                            &ret);
+    (void)drizzle_query_str(local_con, &result,
+                            "select @@version_comment limit 1", &ret);
     if (ret == DRIZZLE_RETURN_OK &&
         drizzle_result_buffer(&result) == DRIZZLE_RETURN_OK)
     {
@@ -4010,7 +4010,7 @@ put_info(const char *str,INFO_TYPE info_type, uint32_t error, const char *sqlsta
 
 
 static int
-put_error(drizzle_con_st *con, drizzle_result_st *res)
+put_error(drizzle_con_st *local_con, drizzle_result_st *res)
 {
   const char *error;
 
@@ -4018,13 +4018,14 @@ put_error(drizzle_con_st *con, drizzle_result_st *res)
   {
     error= drizzle_result_error(res);
     if (!strcmp(error, ""))
-      error= drizzle_con_error(con);
+      error= drizzle_con_error(local_con);
   }
   else
-    error= drizzle_con_error(con);
+    error= drizzle_con_error(local_con);
 
-  return put_info(error, INFO_ERROR, res == NULL ? drizzle_con_errno(con) :
-                                     drizzle_result_error_code(res),
+  return put_info(error, INFO_ERROR,
+                  res == NULL ? drizzle_con_errno(local_con) :
+                                drizzle_result_error_code(res),
                   res == NULL ? NULL : drizzle_result_sqlstate(res));
 }
 

@@ -396,14 +396,14 @@ static int process_all_databases()
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      my_printf_error(0, "Error: Couldn't execute 'SHOW DATABASES': %s",
-          MYF(0), drizzle_result_error(&result));
+      fprintf(stderr, "Error: Couldn't execute 'SHOW DATABASES': %s",
+              drizzle_result_error(&result));
       drizzle_result_free(&result);
     }
     else
     {
-      my_printf_error(0, "Error: Couldn't execute 'SHOW DATABASES': %s",
-          MYF(0), drizzle_con_error(&dcon));
+      fprintf(stderr, "Error: Couldn't execute 'SHOW DATABASES': %s",
+              drizzle_con_error(&dcon));
     }
 
     return 1;
@@ -667,8 +667,8 @@ static int use_db(char *database)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      my_printf_error(0,"Got error: %s when selecting the database", MYF(0),
-                      drizzle_result_error(&result));
+      fprintf(stderr,"Got error: %s when selecting the database",
+              drizzle_result_error(&result));
       safe_exit(EX_MYSQLERR);
       drizzle_result_free(&result);
     }
@@ -741,8 +741,8 @@ static int handle_request_for_tables(const char *tables, uint32_t length)
     sprintf(message, "when executing '%s TABLE ... %s'", op, options);
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      my_printf_error(0,"Got error: %s %s", MYF(0),
-                      drizzle_result_error(&result), message);
+      fprintf(stderr,"Got error: %s %s",
+              drizzle_result_error(&result), message);
       safe_exit(EX_MYSQLERR);
       drizzle_result_free(&result);
     }
@@ -760,13 +760,12 @@ static int handle_request_for_tables(const char *tables, uint32_t length)
 static void print_result(drizzle_result_st *result)
 {
   drizzle_row_t row;
-  drizzle_return_t ret;
   char prev[DRIZZLE_MAX_COLUMN_NAME_SIZE*2+2];
   uint32_t i;
   bool found_error=0;
 
   prev[0] = '\0';
-  for (i = 0; (row = drizzle_row_buffer(result, &ret)); i++)
+  for (i = 0; (row = drizzle_row_next(result)); i++)
   {
     int changed = strcmp(prev, (char *)row[0]);
     bool status = !strcmp((char *)row[2], "status");
@@ -783,10 +782,7 @@ static void print_result(drizzle_result_st *result)
         tables4repair.push_back(string(prev));
       found_error=0;
       if (opt_silent)
-      {
-        drizzle_row_free(result, row);
         continue;
-      }
     }
     if (status && changed)
       printf("%-50s %s", row[0], row[3]);
@@ -800,7 +796,6 @@ static void print_result(drizzle_result_st *result)
       printf("%-9s: %s", (char *)row[2], (char *)row[3]);
     strcpy(prev, (char *)row[0]);
     putchar('\n');
-    drizzle_row_free(result, row);
   }
   /* add the last table to be repaired to the list */
   if (found_error && opt_auto_repair && what_to_do != DO_REPAIR)
@@ -832,14 +827,13 @@ static void dbDisconnect(char *host)
 {
   if (verbose)
     fprintf(stderr, "# Disconnecting from %s...\n", host ? host : "localhost");
-  drizzle_con_free(&dcon);
+  drizzle_free(&drizzle);
 } /* dbDisconnect */
 
 
 static void DBerror(drizzle_con_st *con, const char *when)
 {
-  my_printf_error(0,"Got error: %s %s", MYF(0),
-                  drizzle_con_error(con), when);
+  fprintf(stderr,"Got error: %s %s", drizzle_con_error(con), when);
   safe_exit(EX_MYSQLERR);
   return;
 } /* DBerror */
@@ -851,7 +845,6 @@ static void safe_exit(int error)
     first_error= error;
   if (ignore_errors)
     return;
-  drizzle_con_free(&dcon);
   drizzle_free(&drizzle);
   exit(error);
 }

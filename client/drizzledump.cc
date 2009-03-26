@@ -943,29 +943,30 @@ static void maybe_die(int error_num, const char* fmt_reason, ...)
 
 static int drizzleclient_query_with_error_report(drizzle_con_st *con,
                                                  drizzle_result_st *result,
-                                                 const char *query, bool quick)
+                                                 const char *query_str,
+                                                 bool no_buffer)
 {
   drizzle_return_t ret;
 
-  if (drizzle_query_str(con, result, query, &ret) == NULL ||
+  if (drizzle_query_str(con, result, query_str, &ret) == NULL ||
       ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
       maybe_die(EX_DRIZZLEERR, _("Couldn't execute '%s': %s (%d)"),
-                query, drizzle_result_error(result),
+                query_str, drizzle_result_error(result),
                 drizzle_result_error_code(result));
       drizzle_result_free(result);
     }
     else
     {
       maybe_die(EX_DRIZZLEERR, _("Couldn't execute '%s': %s (%d)"),
-                query, drizzle_con_error(con), ret);
+                query_str, drizzle_con_error(con), ret);
     }
     return 1;
   }
 
-  if (quick)
+  if (no_buffer)
     ret= drizzle_column_buffer(result);
   else
     ret= drizzle_result_buffer(result);
@@ -973,7 +974,7 @@ static int drizzleclient_query_with_error_report(drizzle_con_st *con,
   {
     drizzle_result_free(result);
     maybe_die(EX_DRIZZLEERR, _("Couldn't execute '%s': %s (%d)"),
-              query, drizzle_con_error(con), ret);
+              query_str, drizzle_con_error(con), ret);
     return 1;
   }
 
