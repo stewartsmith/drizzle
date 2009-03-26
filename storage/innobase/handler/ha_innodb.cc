@@ -1851,7 +1851,6 @@ innobase_init(
 
         innodb_engine_ptr = innobase_engine;
 
-        innobase_engine->state = SHOW_OPTION_YES;
         innobase_engine->savepoint_offset=sizeof(trx_named_savept_t);
         innobase_engine->flags=HTON_NO_FLAGS;
 

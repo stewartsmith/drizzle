@@ -82,13 +82,9 @@ class StorageEngine
   */
   const std::string name;
   bool two_phase_commit;
+  bool enabled;
 
 public:
-
-  /*
-    Historical marker for if the engine is available of not
-  */
-  SHOW_COMP_OPTION state;
 
   /*
     each storage engine has it's own memory area (actually a pointer)
@@ -114,7 +110,8 @@ public:
   uint32_t license; /* Flag for Engine License */
 
   StorageEngine(const std::string &name_arg, bool support_2pc= false)
-    : name(name_arg), two_phase_commit(support_2pc), savepoint_offset(0)  {}
+    : name(name_arg), two_phase_commit(support_2pc), enabled(true),
+      savepoint_offset(0)  {}
   virtual ~StorageEngine() {}
 
   bool has_2pc()
@@ -125,8 +122,11 @@ public:
 
   bool is_enabled() const
   {
-    return (state == SHOW_OPTION_YES);
+    return enabled;
   }
+
+  void enable() { enabled= true; }
+  void disable() { enabled= false; }
 
   std::string get_name() { return name; }
 

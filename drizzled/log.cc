@@ -269,7 +269,6 @@ int binlog_init(void *p)
   if (binlog_engine == NULL)
   {
     binlog_engine= new BinlogEngine(engine_name);
-    binlog_engine->state= SHOW_OPTION_YES;
     binlog_engine->savepoint_offset= sizeof(my_off_t);
     binlog_engine->flags= HTON_NOT_USER_SELECTABLE | HTON_HIDDEN;
   }

@@ -139,7 +139,7 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
 {
   handler *file;
 
-  if (engine && engine->state == SHOW_OPTION_YES)
+  if (engine && engine->is_enabled())
   {
     if ((file= engine->create(share, alloc)))
       file->init();
@@ -182,29 +182,21 @@ int storage_engine_initializer(st_plugin_int *plugin)
   }
 
   /*
-    the switch below and engine->state should be removed when
+   * @todo: is this comment still valid?
+    the if below and engine->state should be removed when
     command-line options for plugins will be implemented
   */
-  switch (engine->state) {
-  case SHOW_OPTION_NO:
-    break;
-  case SHOW_OPTION_YES:
-    {
-      uint32_t tmp;
-      tmp= engine->savepoint_offset;
-      engine->savepoint_offset= savepoint_alloc_size;
-      savepoint_alloc_size+= tmp;
-      engine->slot= total_ha++;
-      engine2plugin[engine->slot]=plugin;
-      if (engine->has_2pc())
-        total_ha_2pc++;
-      break;
-    }
-    /* fall through */
-  default:
-    engine->state= SHOW_OPTION_DISABLED;
-    break;
-  }
+  if (engine->is_enabled())
+  {
+    uint32_t tmp;
+    tmp= engine->savepoint_offset;
+    engine->savepoint_offset= savepoint_alloc_size;
+    savepoint_alloc_size+= tmp;
+    engine->slot= total_ha++;
+    engine2plugin[engine->slot]=plugin;
+    if (engine->has_2pc())
+      total_ha_2pc++;
+  } 
 
   /*
     This is entirely for legacy. We will create a new "disk based" engine and a

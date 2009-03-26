@@ -189,7 +189,7 @@ static bool dropdb_storage_engine(Session *,
                                   void *path)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES)
+  if (engine->is_enabled())
     engine->drop_database((char *)path);
   return false;
 }
@@ -209,7 +209,7 @@ static bool closecon_storage_engine(Session *session, plugin_ref plugin,
     there's no need to rollback here as all transactions must
     be rolled back already
   */
-  if (engine->state == SHOW_OPTION_YES && 
+  if (engine->is_enabled() && 
       session_get_ha_data(session, engine))
     engine->close_connection(session);
   return false;
@@ -875,7 +875,7 @@ static bool xacommit_storage_engine(Session *,
                                     void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES)
+  if (engine->is_enabled())
   {
     engine->commit_by_xid(((struct xaengine_st *)arg)->xid);
     ((struct xaengine_st *)arg)->result= 0;
@@ -888,7 +888,7 @@ static bool xarollback_storage_engine(Session *,
                                   void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES)
+  if (engine->is_enabled())
   {
     engine->rollback_by_xid(((struct xaengine_st *)arg)->xid);
     ((struct xaengine_st *)arg)->result= 0;
@@ -941,7 +941,7 @@ static bool xarecover_storage_engine(Session *,
   struct xarecover_st *info= (struct xarecover_st *) arg;
   int got;
 
-  if (engine->state == SHOW_OPTION_YES)
+  if (engine->is_enabled())
   {
     while ((got= engine->recover(info->list, info->len)) > 0 )
     {
@@ -1119,7 +1119,7 @@ static bool release_temporary_latches(Session *session, plugin_ref plugin,
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
 
-  if (engine->state == SHOW_OPTION_YES)
+  if (engine->is_enabled())
     engine->release_temporary_latches(session);
 
   return false;
@@ -1243,7 +1243,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 static bool snapshot_storage_engine(Session *session, plugin_ref plugin, void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES)
+  if (engine->is_enabled())
   {
     engine->start_consistent_snapshot(session);
     *((bool *)arg)= false;
@@ -1274,7 +1274,7 @@ static bool flush_storage_engine(Session *,
                              void *)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->state == SHOW_OPTION_YES &&
+  if (engine->is_enabled() &&
       engine->flush_logs())
     return true;
   return false;
@@ -1291,7 +1291,7 @@ bool ha_flush_logs(StorageEngine *engine)
   }
   else
   {
-    if (engine->state != SHOW_OPTION_YES ||
+    if ((!engine->is_enabled()) ||
         (engine->flush_logs()))
       return true;
   }
@@ -1372,10 +1372,10 @@ static bool deletetable_storage_engine(Session *,
 
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
 
-  if(!engine)
+  if (!engine)
     return false;
 
-  if(!(engine->state == SHOW_OPTION_YES))
+  if (!engine->is_enabled())
     return false;
 
   if ((file= engine->create(NULL, session->mem_root)))
@@ -3002,7 +3002,7 @@ static bool table_exists_in_storage_engine(Session *session, plugin_ref plugin,
 
   int err= HA_ERR_NO_SUCH_TABLE;
 
-  if (engine->state == SHOW_OPTION_YES)
+  if (engine->is_enabled())
     err = engine->table_exists_in_engine(session, vargs->db, vargs->name);
 
   vargs->err = err;
@@ -4087,7 +4087,7 @@ static bool exts_handlerton(Session *,
   List<char> *found_exts= (List<char> *) arg;
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   handler *file;
-  if (engine->state == SHOW_OPTION_YES &&
+  if (engine->is_enabled() &&
       (file= engine->create((TABLE_SHARE*) 0, current_session->mem_root)))
   {
     List_iterator_fast<char> it(*found_exts);

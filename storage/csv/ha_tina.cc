@@ -124,7 +124,6 @@ static int tina_init_func(void *p)
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
                    (hash_get_key) tina_get_key,0,0);
-  tina_engine->state= SHOW_OPTION_YES;
   tina_engine->flags= (HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES |
                      HTON_NO_PARTITION);
   *engine= tina_engine;

@@ -50,7 +50,6 @@ int heap_init(void *p)
   StorageEngine **engine= static_cast<StorageEngine **>(p);
   *engine= new HeapEngine(engine_name);
 
-  (*engine)->state=      SHOW_OPTION_YES;
   (*engine)->flags=      HTON_CAN_RECREATE;
 
   return 0;

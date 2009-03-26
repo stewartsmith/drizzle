@@ -280,7 +280,6 @@ static int blackhole_init(void *p)
 
   BlackholeEngine *blackhole_engine= new BlackholeEngine(engine_name);
 
-  blackhole_engine->state= SHOW_OPTION_YES;
   blackhole_engine->flags= HTON_CAN_RECREATE;
 
   *engine= blackhole_engine; 
