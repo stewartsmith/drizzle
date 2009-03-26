@@ -219,7 +219,8 @@ static void free_share(INNOBASE_SHARE *share);
 class InnobaseEngine : public StorageEngine
 {
 public:
-  InnobaseEngine(string name_arg) : StorageEngine(name_arg) {}
+  InnobaseEngine(string name_arg)
+   : StorageEngine(name_arg, HTON_NO_FLAGS, sizeof(trx_named_savept_t)) {}
 
   virtual
   int
@@ -229,12 +230,12 @@ public:
 	Session*	session);	/* in: handle to the MySQL thread of the user
 			whose resources should be free'd */
 
-  virtual int savepoint_set(Session* session,
-                        void *savepoint);
-  virtual int savepoint_rollback(Session* session, 
-                                    void *savepoint);
-  virtual int savepoint_release(Session* session, 
-                                void *savepoint);
+  virtual int savepoint_set_hook(Session* session,
+                                 void *savepoint);
+  virtual int savepoint_rollback_hook(Session* session, 
+                                      void *savepoint);
+  virtual int savepoint_release_hook(Session* session, 
+                                     void *savepoint);
   virtual int commit(Session* session, bool all);
   virtual int rollback(Session* session, bool all);
 
@@ -1851,8 +1852,6 @@ innobase_init(
 
         innodb_engine_ptr = innobase_engine;
 
-        innobase_engine->savepoint_offset=sizeof(trx_named_savept_t);
-
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
 
 #ifdef UNIV_DEBUG
@@ -2411,7 +2410,7 @@ innobase_rollback_trx(
 /*********************************************************************
 Rolls back a transaction to a savepoint. */
 int
-InnobaseEngine::savepoint_rollback(
+InnobaseEngine::savepoint_rollback_hook(
 /*===========================*/
 				/* out: 0 if success, HA_ERR_NO_SAVEPOINT if
 				no savepoint with the given name */
@@ -2446,7 +2445,7 @@ InnobaseEngine::savepoint_rollback(
 /*********************************************************************
 Release transaction savepoint name. */
 int
-InnobaseEngine::savepoint_release(
+InnobaseEngine::savepoint_release_hook(
 /*=======================*/
 				/* out: 0 if success, HA_ERR_NO_SAVEPOINT if
 				no savepoint with the given name */
@@ -2474,7 +2473,7 @@ InnobaseEngine::savepoint_release(
 /*********************************************************************
 Sets a transaction savepoint. */
 int
-InnobaseEngine::savepoint_set(
+InnobaseEngine::savepoint_set_hook(
 /*===============*/
 				/* out: always 0, that is, always succeeds */
 	Session*	session,		/* in: handle to the MySQL thread */

@@ -1151,7 +1151,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
     StorageEngine *engine= ha_info->engine();
     assert(engine);
     if ((err= engine->savepoint_rollback(session,
-                                     (unsigned char *)(sv+1)+engine->savepoint_offset)))
+                                         (void *)(sv+1))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
@@ -1203,7 +1203,7 @@ int ha_savepoint(Session *session, SAVEPOINT *sv)
       error=1;
       break;
     } */
-    if ((err= engine->savepoint_set(session, (unsigned char *)(sv+1)+engine->savepoint_offset)))
+    if ((err= engine->savepoint_set(session, (void *)(sv+1))))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;
@@ -1230,7 +1230,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
     /* Savepoint life time is enclosed into transaction life time. */
     assert(engine);
     if ((err= engine->savepoint_release(session,
-                                    (unsigned char *)(sv+1) + engine->savepoint_offset)))
+                                        (void *)(sv+1))))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;

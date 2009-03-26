@@ -41,6 +41,32 @@ static const LEX_STRING sys_table_aliases[]=
   {NULL, 0}
 };
 
+StorageEngine::StorageEngine(const std::string &name_arg,
+                             const std::bitset<HTON_BIT_SIZE> &flags_arg,
+                             size_t savepoint_offset_arg,
+                             bool support_2pc)
+    : name(name_arg), two_phase_commit(support_2pc), enabled(true),
+      flags(flags_arg),
+      savepoint_offset(savepoint_alloc_size),
+      orig_savepoint_offset(savepoint_offset_arg),
+      slot(0)
+{
+  if (enabled)
+  {
+    savepoint_alloc_size+= orig_savepoint_offset;
+    slot= total_ha++;
+    if (two_phase_commit)
+        total_ha_2pc++;
+  } 
+}
+
+
+StorageEngine::~StorageEngine()
+{
+  savepoint_alloc_size-= orig_savepoint_offset;
+}
+
+
 /* args: current_session, db, name */
 int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
 {
@@ -181,22 +207,8 @@ int storage_engine_initializer(st_plugin_int *plugin)
     }
   }
 
-  /*
-   * @todo: is this comment still valid?
-    the if below and engine->state should be removed when
-    command-line options for plugins will be implemented
-  */
   if (engine->is_enabled())
-  {
-    uint32_t tmp;
-    tmp= engine->savepoint_offset;
-    engine->savepoint_offset= savepoint_alloc_size;
-    savepoint_alloc_size+= tmp;
-    engine->slot= total_ha++;
     engine2plugin[engine->slot]=plugin;
-    if (engine->has_2pc())
-      total_ha_2pc++;
-  } 
 
   /*
     This is entirely for legacy. We will create a new "disk based" engine and a

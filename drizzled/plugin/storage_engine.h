@@ -84,6 +84,29 @@ class StorageEngine
   const bool two_phase_commit;
   bool enabled;
   const std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
+  /*
+    to store per-savepoint data storage engine is provided with an area
+    of a requested size (0 is ok here).
+    savepoint_offset must be initialized statically to the size of
+    the needed memory to store per-savepoint information.
+    After xxx_init it is changed to be an offset to savepoint storage
+    area and need not be used by storage engine.
+    see binlog_engine and binlog_savepoint_set/rollback for an example.
+  */
+  size_t savepoint_offset;
+  size_t orig_savepoint_offset;
+
+protected:
+
+  /**
+   * Implementing classes should override these to provide savepoint
+   * functionality.
+   */
+  virtual int savepoint_set_hook(Session *, void *) { return 0; }
+
+  virtual int savepoint_rollback_hook(Session *, void *) { return 0; }
+
+  virtual int savepoint_release_hook(Session *, void *) { return 0; }
 
 public:
 
@@ -98,28 +121,12 @@ public:
   */
   uint32_t slot;
 
-  /*
-    to store per-savepoint data storage engine is provided with an area
-    of a requested size (0 is ok here).
-    savepoint_offset must be initialized statically to the size of
-    the needed memory to store per-savepoint information.
-    After xxx_init it is changed to be an offset to savepoint storage
-    area and need not be used by storage engine.
-    see binlog_engine and binlog_savepoint_set/rollback for an example.
-  */
-  uint32_t savepoint_offset;
+  StorageEngine(const std::string &name_arg,
+                const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
+                size_t savepoint_offset_arg= 0,		                
+                bool support_2pc= false);
 
-  StorageEngine(const std::string &name_arg, bool support_2pc= false)
-    : name(name_arg), two_phase_commit(support_2pc), enabled(true),
-      flags(HTON_NO_FLAGS), slot(0), savepoint_offset(0)  {}
-
- StorageEngine(const std::string &name_arg,
-               const std::bitset<HTON_BIT_SIZE> &flags_arg,
-               bool support_2pc= false)
-    : name(name_arg), two_phase_commit(support_2pc), enabled(true),
-      flags(flags_arg), slot(0), savepoint_offset(0)  {}
-
-  virtual ~StorageEngine() {}
+  virtual ~StorageEngine();
 
   bool has_2pc()
   {
@@ -160,29 +167,6 @@ public:
     return 0;
   }
   /*
-    The void * points to an uninitialized storage area of requested size
-    (see savepoint_offset description)
-  */
-  virtual int savepoint_set(Session *, void *)
-  {
-    return 0;
-  }
-
-  /*
-    The void * points to a storage area, that was earlier passed
-    to the savepoint_set call
-  */
-  virtual int savepoint_rollback(Session *, void *)
-  {
-    return 0;
-  }
-
-  virtual int savepoint_release(Session *, void *)
-  {
-    return 0;
-  }
-
-  /*
     'all' is true if it's a real commit, that makes persistent changes
     'all' is false if it's not in fact a commit but an end of the
     statement that is part of the transaction.
@@ -197,6 +181,31 @@ public:
   virtual int  rollback(Session *, bool)
   {
     return 0;
+  }
+
+  /*
+    The void * points to an uninitialized storage area of requested size
+    (see savepoint_offset description)
+  */
+  int savepoint_set(Session *session, void *sp)
+  {
+    return savepoint_set_hook(session, (unsigned char *)sp+savepoint_offset);
+  }
+
+  /*
+    The void * points to a storage area, that was earlier passed
+    to the savepoint_set call
+  */
+  int savepoint_rollback(Session *session, void *sp)
+  {
+     return savepoint_rollback_hook(session,
+                                    (unsigned char *)sp+savepoint_offset);
+  }
+
+  int savepoint_release(Session *session, void *sp)
+  {
+    return savepoint_release_hook(session,
+                                  (unsigned char *)sp+savepoint_offset);
   }
 
   virtual int  prepare(Session *, bool) { return 0; }
@@ -221,7 +230,6 @@ public:
   /* args: current_session, db, name */
   virtual int table_exists_in_engine(Session*, const char *, const char *);
 };
-
 
 /* lookups */
 StorageEngine *ha_default_storage_engine(Session *session);
