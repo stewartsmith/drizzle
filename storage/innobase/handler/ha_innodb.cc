@@ -9307,7 +9307,7 @@ static DRIZZLE_SYSVAR_LONG(additional_mem_pool_size, innobase_additional_mem_poo
   "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.",
   NULL, NULL, 1*1024*1024L, 512*1024L, LONG_MAX, 1024);
 
-static DRIZZLE_SYSVAR_ULONG(autoextend_increment, srv_auto_extend_increment,
+static DRIZZLE_SYSVAR_UINT(autoextend_increment, srv_auto_extend_increment,
   PLUGIN_VAR_RQCMDARG,
   "Data file autoextend increment in megabytes",
   NULL, NULL, 8L, 1L, 1000L, 0);
