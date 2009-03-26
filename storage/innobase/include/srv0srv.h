@@ -97,7 +97,7 @@ extern ulint*	srv_data_file_is_raw_partition;
 
 extern ibool	srv_auto_extend_last_data_file;
 extern ulint	srv_last_file_size_max;
-extern ulong	srv_auto_extend_increment;
+extern unsigned int srv_auto_extend_increment;
 
 extern ibool	srv_created_new_raw;
 
