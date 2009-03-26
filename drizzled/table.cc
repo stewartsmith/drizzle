@@ -277,7 +277,6 @@ void free_table_share(TABLE_SHARE *share)
   }
   hash_free(&share->name_hash);
 
-  plugin_unlock(NULL, share->db_plugin);
   share->db_plugin= NULL;
 
   /* We must copy mem_root from share because share is allocated through it */
@@ -4074,7 +4073,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) ==
       OPTION_BIG_TABLES || (select_options & TMP_TABLE_FORCE_MYISAM))
   {
-    share->db_plugin= ha_lock_engine(0, myisam_hton);
+    share->db_plugin= ha_lock_engine(0, myisam_engine);
     table->file= get_new_handler(share, &table->mem_root,
                                  share->db_type());
     if (group &&
@@ -4084,7 +4083,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
   else
   {
-    share->db_plugin= ha_lock_engine(0, heap_hton);
+    share->db_plugin= ha_lock_engine(0, heap_engine);
     table->file= get_new_handler(share, &table->mem_root,
                                  share->db_type());
   }
@@ -4234,7 +4233,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
     share->max_rows= ~(ha_rows) 0;
   else
-    share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
+    share->max_rows= (ha_rows) (((share->db_type() == heap_engine) ?
                                  cmin(session->variables.tmp_table_size,
                                      session->variables.max_heap_table_size) :
                                  session->variables.tmp_table_size) /
@@ -4408,7 +4407,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (session->is_fatal_error)				// If end of memory
     goto err;					 /* purecov: inspected */
   share->db_record_offset= 1;
-  if (share->db_type() == myisam_hton)
+  if (share->db_type() == myisam_engine)
   {
     if (table->create_myisam_tmp_table(param->keyinfo, param->start_recinfo,
 				       &param->recinfo, select_options))
@@ -4737,8 +4736,6 @@ void Table::free_tmp_table(Session *session)
   if (temp_pool_slot != MY_BIT_NONE)
     bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
 
-  plugin_unlock(0, s->db_plugin);
-
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
 
@@ -4760,7 +4757,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   const char *save_proc_info;
   int write_err;
 
-  if (table->s->db_type() != heap_hton ||
+  if (table->s->db_type() != heap_engine ||
       error != HA_ERR_RECORD_FILE_FULL)
   {
     table->file->print_error(error,MYF(0));
@@ -4773,7 +4770,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   new_table= *table;
   share= *table->s;
   new_table.s= &share;
-  new_table.s->db_plugin= ha_lock_engine(session, myisam_hton);
+  new_table.s->db_plugin= ha_lock_engine(session, myisam_engine);
   if (!(new_table.file= get_new_handler(&share, &new_table.mem_root,
                                         new_table.s->db_type())))
     return(1);				// End of memory
@@ -4824,8 +4821,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->close();                  // This deletes the table !
   delete table->file;
   table->file=0;
-  plugin_unlock(0, table->s->db_plugin);
-  share.db_plugin= my_plugin_lock(0, &share.db_plugin);
+  share.db_plugin= plugin_lock(0, &share.db_plugin);
   new_table.s= table->s;                       // Keep old share
   *table= new_table;
   *table->s= share;

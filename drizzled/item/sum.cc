@@ -2612,7 +2612,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   table->file->extra(HA_EXTRA_NO_ROWS);		// Don't update rows
   table->no_rows=1;
 
-  if (table->s->db_type() == heap_hton)
+  if (table->s->db_type() == heap_engine)
   {
     /*
       No blobs, otherwise it would have been MyISAM: set up a compare
