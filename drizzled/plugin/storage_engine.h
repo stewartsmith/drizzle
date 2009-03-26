@@ -81,7 +81,7 @@ class StorageEngine
     Name used for storage engine.
   */
   const std::string name;
-  bool _2pc;
+  bool two_phase_commit;
 
 public:
 
@@ -114,12 +114,12 @@ public:
    uint32_t license; /* Flag for Engine License */
 
   StorageEngine(const std::string &name_arg, bool support_2pc= false)
-    : name(name_arg), _2pc(support_2pc), savepoint_offset(0)  {}
+    : name(name_arg), two_phase_commit(support_2pc), savepoint_offset(0)  {}
   virtual ~StorageEngine() {}
 
   bool has_2pc()
   {
-    return _2pc;
+    return two_phase_commit;
   }
 
 
