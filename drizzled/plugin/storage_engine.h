@@ -81,9 +81,9 @@ class StorageEngine
     Name used for storage engine.
   */
   const std::string name;
-  bool two_phase_commit;
+  const bool two_phase_commit;
   bool enabled;
-  std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
+  const std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
 
 public:
 
@@ -108,7 +108,6 @@ public:
     see binlog_engine and binlog_savepoint_set/rollback for an example.
   */
   uint32_t savepoint_offset;
-  uint32_t license; /* Flag for Engine License */
 
   StorageEngine(const std::string &name_arg, bool support_2pc= false)
     : name(name_arg), two_phase_commit(support_2pc), enabled(true),
