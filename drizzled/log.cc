@@ -75,7 +75,8 @@ binlog_trans_log_savepos(Session *, my_off_t *pos)
 class BinlogEngine : public StorageEngine
 {
 public:
-  BinlogEngine(string name_arg) : StorageEngine(name_arg) {}
+  BinlogEngine(const string &name_arg)
+    : StorageEngine(name_arg, HTON_NOT_USER_SELECTABLE | HTON_HIDDEN) {}
  
   virtual int close_connection(Session *)
   {
@@ -270,7 +271,6 @@ int binlog_init(void *p)
   {
     binlog_engine= new BinlogEngine(engine_name);
     binlog_engine->savepoint_offset= sizeof(my_off_t);
-    binlog_engine->flags= HTON_NOT_USER_SELECTABLE | HTON_HIDDEN;
   }
 
   *engine= binlog_engine;

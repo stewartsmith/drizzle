@@ -160,7 +160,6 @@ int archive_db_init(void *p)
   StorageEngine **engine= static_cast<StorageEngine **>(p);
 
   ArchiveEngine *archive_engine= new ArchiveEngine(engine_name);
-  archive_engine->flags= HTON_NO_FLAGS;
 
   *engine= archive_engine;
 

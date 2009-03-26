@@ -83,6 +83,7 @@ class StorageEngine
   const std::string name;
   bool two_phase_commit;
   bool enabled;
+  std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
 
 public:
 
@@ -96,7 +97,7 @@ public:
    slot number is initialized by MySQL after xxx_init() is called.
   */
   uint32_t slot;
-  std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
+
   /*
     to store per-savepoint data storage engine is provided with an area
     of a requested size (0 is ok here).
@@ -111,7 +112,14 @@ public:
 
   StorageEngine(const std::string &name_arg, bool support_2pc= false)
     : name(name_arg), two_phase_commit(support_2pc), enabled(true),
-      savepoint_offset(0)  {}
+      flags(HTON_NO_FLAGS), slot(0), savepoint_offset(0)  {}
+
+ StorageEngine(const std::string &name_arg,
+               const std::bitset<HTON_BIT_SIZE> &flags_arg,
+               bool support_2pc= false)
+    : name(name_arg), two_phase_commit(support_2pc), enabled(true),
+      flags(flags_arg), slot(0), savepoint_offset(0)  {}
+
   virtual ~StorageEngine() {}
 
   bool has_2pc()
@@ -123,6 +131,16 @@ public:
   bool is_enabled() const
   {
     return enabled;
+  }
+
+  bool is_user_selectable() const
+  {
+    return not flags.test(HTON_BIT_NOT_USER_SELECTABLE);
+  }
+
+  bool check_flag(const engine_flag_bits flag) const
+  {
+    return flags.test(flag);
   }
 
   void enable() { enabled= true; }
@@ -213,7 +231,6 @@ plugin_ref ha_lock_engine(Session *session, StorageEngine *engine);
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
                          StorageEngine *db_type);
 const char *ha_resolve_storage_engine_name(const StorageEngine *db_type);
-bool ha_check_storage_engine_flag(const StorageEngine *db_type, const engine_flag_bits flag);
 LEX_STRING *ha_storage_engine_name(const StorageEngine *engine);
 
 #endif /* DRIZZLED_HANDLERTON_H */

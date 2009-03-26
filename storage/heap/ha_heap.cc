@@ -37,7 +37,7 @@ pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
 class HeapEngine : public StorageEngine
 {
 public:
-  HeapEngine(string name_arg) : StorageEngine(name_arg) {}
+  HeapEngine(string name_arg) : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
   virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
@@ -49,9 +49,6 @@ int heap_init(void *p)
 {
   StorageEngine **engine= static_cast<StorageEngine **>(p);
   *engine= new HeapEngine(engine_name);
-
-  (*engine)->flags=      HTON_CAN_RECREATE;
-
   return 0;
 }
 
