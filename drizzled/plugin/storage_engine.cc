@@ -218,9 +218,9 @@ int storage_engine_initializer(st_plugin_int *plugin)
     myisam_engine= engine;
 
   plugin->data= engine;
-  plugin->state= PLUGIN_IS_READY;
+  plugin->isInited= true;
 
-  return(0);
+  return 0;
 }
 
 const char *ha_resolve_storage_engine_name(const StorageEngine *db_type)

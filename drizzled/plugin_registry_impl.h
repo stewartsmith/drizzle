@@ -35,8 +35,5 @@ public:
 
   void add(st_mysql_plugin *handle, st_plugin_int *plugin);
 
-  void get_mask_list(uint32_t type,
-                     std::vector<st_plugin_int *> &plugins,
-                     uint32_t state_mask);
-
+  void get_list(uint32_t type, std::vector<st_plugin_int *> &plugins, bool active);
 };

@@ -137,20 +137,10 @@ static bool show_plugins(Session *session, plugin_ref plugin, void *arg)
   else
     table->field[1]->set_null();
 
-  switch (plugin_state(plugin)) {
-  /* case PLUGIN_IS_FREED: does not happen */
-  case PLUGIN_IS_DELETED:
-    table->field[2]->store(STRING_WITH_LEN("DELETED"), cs);
-    break;
-  case PLUGIN_IS_UNINITIALIZED:
-    table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
-    break;
-  case PLUGIN_IS_READY:
+  if (plugin[0]->isInited)
     table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
-    break;
-  default:
-    assert(0);
-  }
+  else
+    table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
 
   table->field[3]->store(plugin_type_names[plug->type].str,
                          plugin_type_names[plug->type].length,
@@ -210,8 +200,7 @@ int fill_plugins(Session *session, TableList *tables, COND *)
 {
   Table *table= tables->table;
 
-  if (plugin_foreach(session, show_plugins, DRIZZLE_ANY_PLUGIN,
-                     table, ~PLUGIN_IS_FREED))
+  if (plugin_foreach(session, show_plugins, DRIZZLE_ANY_PLUGIN, table, ~2))
     return(1);
 
   return(0);
@@ -4525,8 +4514,6 @@ int initialize_schema_table(st_plugin_int *plugin)
     /* Make sure the plugin name is not set inside the init() function. */
     schema_table->table_name= plugin->name.str;
   }
-
-  plugin->state= PLUGIN_IS_READY;
 
   return 0;
 err:
