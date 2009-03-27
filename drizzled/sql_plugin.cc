@@ -1012,7 +1012,10 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
     for (idx= 0; idx < plugin_array.elements; idx++)
     {
       plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-      plugins.push_back(!(plugin->isInited && all) ? plugin : NULL);
+      if (all)
+        plugins.push_back(plugin);
+      else if (plugin->isInited)
+        plugins.push_back(plugin);
     }
   }
   else
