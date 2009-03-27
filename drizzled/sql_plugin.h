@@ -66,19 +66,6 @@ typedef struct st_mysql_show_var SHOW_VAR;
 
 #define DRIZZLE_ANY_PLUGIN         -1
 
-/*
-  different values of st_plugin_int::state
-  though they look like a bitmap, plugin may only
-  be in one of those eigenstates, not in a superposition of them :)
-  It's a bitmap, because it makes it easier to test
-  "whether the state is one of those..."
-*/
-#define PLUGIN_IS_FREED         1
-#define PLUGIN_IS_DELETED       2
-#define PLUGIN_IS_UNINITIALIZED 4
-#define PLUGIN_IS_READY         8
-#define PLUGIN_IS_DYING         16
-
 /* A handle for the dynamic library containing a plugin or plugins. */
 
 struct st_plugin_dl
@@ -95,7 +82,7 @@ struct st_plugin_int
   LEX_STRING name;
   struct st_mysql_plugin *plugin;
   struct st_plugin_dl *plugin_dl;
-  uint32_t state;
+  uint32_t isInited;
   uint32_t ref_count;               /* number of threads using the plugin */
   void *data;                   /* plugin type specific, e.g. StorageEngine */
   MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
@@ -112,7 +99,6 @@ typedef struct st_plugin_int **plugin_ref;
 #define plugin_dlib(pi) ((pi)[0]->plugin_dl)
 #define plugin_data(pi,cast) (static_cast<cast>((pi)[0]->data))
 #define plugin_name(pi) (&((pi)[0]->name))
-#define plugin_state(pi) ((pi)[0]->state)
 #define plugin_equals(p1,p2) ((p1) && (p2) && (p1)[0] == (p2)[0])
 
 typedef int (*plugin_type_init)(struct st_plugin_int *);
@@ -136,11 +122,8 @@ extern bool plugin_register_builtin(struct st_mysql_plugin *plugin);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 
-typedef bool (plugin_foreach_func)(Session *session,
-                                   plugin_ref plugin,
-                                   void *arg);
+typedef bool (plugin_foreach_func)(Session *session, plugin_ref plugin, void *arg);
 bool plugin_foreach(Session *session, plugin_foreach_func *func,
-                    int type, void *arg,
-                    uint32_t state_mask= PLUGIN_IS_READY);
+                    int type, void *arg, bool all= false);
 
 #endif /* DRIZZLE_SERVER_PLUGIN_H */

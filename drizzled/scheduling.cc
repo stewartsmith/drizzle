@@ -62,7 +62,6 @@ int scheduling_initializer(st_plugin_int *plugin)
   scheduler_inited= true;
   /* We populate so we can find which plugin was initialized later on */
   plugin->data= (void *)thread_scheduler;
-  plugin->state= PLUGIN_IS_READY;
 
   return 0;
 
