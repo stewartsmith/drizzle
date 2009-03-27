@@ -7,6 +7,9 @@ SELECT * FROM t1 FOR UPDATE;
 -- if ($con1_extra_sql_present) {
 	-- eval $con1_extra_sql
 -- }
+-- if ($con1_extra_sql2_present) {
+	-- eval $con1_extra_sql2
+-- }
 
 -- connection con2
 SET autocommit=0;

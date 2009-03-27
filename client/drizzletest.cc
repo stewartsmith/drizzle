@@ -4939,8 +4939,11 @@ static void append_result(string *ds, drizzle_result_st *res)
     lengths = drizzle_row_field_sizes(res);
     drizzle_column_seek(res, 0);
     for (i = 0; i < num_fields; i++)
+    {
+      column= drizzle_column_next(res);
       append_field(ds, i, column,
                    (const char*)row[i], lengths[i], !row[i]);
+    }
     if (!display_result_vertically)
       ds->append("\n");
 

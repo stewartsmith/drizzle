@@ -4024,9 +4024,10 @@ put_error(drizzle_con_st *local_con, drizzle_result_st *res)
     error= drizzle_con_error(local_con);
 
   return put_info(error, INFO_ERROR,
-                  res == NULL ? drizzle_con_errno(local_con) :
+                  res == NULL ? drizzle_con_error_code(local_con) :
                                 drizzle_result_error_code(res),
-                  res == NULL ? NULL : drizzle_result_sqlstate(res));
+                  res == NULL ? drizzle_con_sqlstate(local_con) :
+                                drizzle_result_sqlstate(res));
 }
 
 
