@@ -4223,7 +4223,7 @@ static const char * construct_prompt()
 
         if (strcmp(drizzle_con_uds(&con), ""))
         {
-          char *pos=strrchr(drizzle_con_uds(&con),'/');
+          const char *pos=strrchr(drizzle_con_uds(&con),'/');
           processed_prompt->append(pos ? pos+1 : drizzle_con_uds(&con));
         }
         else
