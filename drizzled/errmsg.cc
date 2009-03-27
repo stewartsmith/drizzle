@@ -45,7 +45,6 @@ int errmsg_initializer(st_plugin_int *plugin)
 
   plugin->data= (void *)p;
   errmsg_has= true;
-  plugin->state= PLUGIN_IS_READY;
 
   return 0;
 

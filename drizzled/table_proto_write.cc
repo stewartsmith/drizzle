@@ -68,7 +68,7 @@ static int fill_table_proto(drizzle::Table *table_proto,
     return(1);
   }
 
-  engine->set_name(create_info->db_type->name);
+  engine->set_name(create_info->db_type->get_name());
 
   table_proto->set_name(table_name);
   table_proto->set_type(drizzle::Table::STANDARD);

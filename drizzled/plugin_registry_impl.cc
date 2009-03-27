@@ -63,9 +63,9 @@ void Plugin_registry_impl::add(st_mysql_plugin *handle, st_plugin_int *plugin)
 }
 
 
-void Plugin_registry_impl::get_mask_list(uint32_t type,
-                                         vector<st_plugin_int *> &plugins,
-                                         uint32_t state_mask)
+void Plugin_registry_impl::get_list(uint32_t type,
+                                    vector<st_plugin_int *> &plugins,
+                                    bool active)
 {
   st_plugin_int *plugin= NULL;
   plugins.reserve(plugin_map[type].size());
@@ -76,6 +76,9 @@ void Plugin_registry_impl::get_mask_list(uint32_t type,
        map_iter++)
   {
     plugin= (*map_iter).second;
-    plugins.push_back(!(plugin->state & state_mask) ? plugin : NULL);
+    if (active)
+      plugins.push_back(plugin);
+    else if (plugin->isInited)
+      plugins.push_back(plugin);
   }
 }
