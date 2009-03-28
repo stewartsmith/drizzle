@@ -2965,7 +2965,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   */
   if (tmp_table->s->keys == 0)
   {
-    assert(tmp_table->s->db_type() == myisam_hton);
+    assert(tmp_table->s->db_type() == myisam_engine);
     assert(
       tmp_table->s->uniques ||
       tmp_table->key_info->key_length >= tmp_table->file->max_key_length() ||

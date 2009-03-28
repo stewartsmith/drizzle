@@ -49,9 +49,12 @@ void Plugin_registry::add(st_mysql_plugin *handle, st_plugin_int *plugin)
   pImpl->add(handle, plugin);
 }
 
-void Plugin_registry::get_mask_list(uint32_t type,
-                                    vector<st_plugin_int *> &plugins,
-                                    uint32_t state_mask)
+void Plugin_registry::get_list(uint32_t type, vector<st_plugin_int *> &plugins)
 {
-  pImpl->get_mask_list(type, plugins, state_mask);
+  pImpl->get_list(type, plugins, false);
+}
+
+void Plugin_registry::get_list(uint32_t type, vector<st_plugin_int *> &plugins, bool all)
+{
+  pImpl->get_list(type, plugins, all);
 }

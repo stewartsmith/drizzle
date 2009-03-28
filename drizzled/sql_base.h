@@ -161,7 +161,7 @@ int decide_logging_format(Session *session);
 Table *open_temporary_table(Session *session, const char *path, const char *db,
                             const char *table_name, bool link_in_list,
                             open_table_mode open_mode);
-bool rm_temporary_table(handlerton *base, char *path);
+bool rm_temporary_table(StorageEngine *base, char *path);
 void free_io_cache(Table *entry);
 void intern_close_table(Table *entry);
 bool close_thread_table(Session *session, Table **table_ptr);

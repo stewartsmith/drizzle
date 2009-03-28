@@ -795,7 +795,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
   /* If it is a temporary table, close and regenerate it */
   if (!dont_send_ok && (table= find_temporary_table(session, table_list)))
   {
-    handlerton *table_type= table->s->db_type();
+    StorageEngine *table_type= table->s->db_type();
     TABLE_SHARE *share= table->s;
 
     if (!ha_check_storage_engine_flag(table_type, HTON_BIT_CAN_RECREATE))

@@ -203,7 +203,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		ha_trx_info.h \
 		handler.h \
 		handler_structs.h \
-		handlerton.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
 		hybrid_type_traits_decimal.h \
@@ -280,6 +279,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/qcache.h \
 		plugin/replicator.h \
 		plugin/scheduler.h \
+		plugin/storage_engine.h \
 		probes.h \
 		protocol.h \
 		qcache.h \
@@ -637,7 +637,7 @@ endif
 libserialutil_la_SOURCES = db.cc table_proto_write.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
-libhandler_la_SOURCES = handler.cc handlerton.cc
+libhandler_la_SOURCES = handler.cc plugin/storage_engine.cc
 
 AM_YFLAGS = -p DRIZZLE -d --verbose
 
@@ -645,7 +645,7 @@ AM_YFLAGS = -p DRIZZLE -d --verbose
 if BUILD_GCC_PCH
 PCHHEADERS = \
 		definitions.h.gch \
-		handlerton.h.gch  \
+		plugin/storage_engine.h.gch  \
 		sql_base.h.gch \
 		sql_parse.h.gch \
 		sql_plugin.h.gch \

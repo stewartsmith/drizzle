@@ -137,20 +137,10 @@ static bool show_plugins(Session *session, plugin_ref plugin, void *arg)
   else
     table->field[1]->set_null();
 
-  switch (plugin_state(plugin)) {
-  /* case PLUGIN_IS_FREED: does not happen */
-  case PLUGIN_IS_DELETED:
-    table->field[2]->store(STRING_WITH_LEN("DELETED"), cs);
-    break;
-  case PLUGIN_IS_UNINITIALIZED:
-    table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
-    break;
-  case PLUGIN_IS_READY:
+  if (plugin[0]->isInited)
     table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
-    break;
-  default:
-    assert(0);
-  }
+  else
+    table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
 
   table->field[3]->store(plugin_type_names[plug->type].str,
                          plugin_type_names[plug->type].length,
@@ -210,8 +200,7 @@ int fill_plugins(Session *session, TableList *tables, COND *)
 {
   Table *table= tables->table;
 
-  if (plugin_foreach(session, show_plugins, DRIZZLE_ANY_PLUGIN,
-                     table, ~PLUGIN_IS_FREED))
+  if (plugin_foreach(session, show_plugins, DRIZZLE_ANY_PLUGIN, table, ~2))
     return(1);
 
   return(0);
@@ -1052,14 +1041,12 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     {
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if ((tmp->drizzleclient_vio_ok() || tmp->system_thread) && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->drizzleclient_vio_ok() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
         thread_info *session_info= new thread_info;
 
         session_info->thread_id=tmp->thread_id;
-        session_info->user= session->strdup(tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() :
-                                    (tmp->system_thread ?
-                                     "system user" : "unauthenticated user"));
+        session_info->user= session->strdup(tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user");
         session_info->host= session->strdup(tmp_sctx->ip.c_str());
         if ((session_info->db=tmp->db))             // Safe test
           session_info->db=session->strdup(session_info->db);
@@ -1147,15 +1134,14 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       struct st_my_thread_var *mysys_var;
       const char *val;
 
-      if ((!tmp->drizzleclient_vio_ok() && !tmp->system_thread))
+      if (! tmp->drizzleclient_vio_ok())
         continue;
 
       restore_record(table, s->default_values);
       /* ID */
       table->field[0]->store((int64_t) tmp->thread_id, true);
       /* USER */
-      val= tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() :
-            (tmp->system_thread ? "system user" : "unauthenticated user");
+      val= tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user";
       table->field[1]->store(val, strlen(val), cs);
       /* HOST */
       table->field[2]->store(tmp_sctx->ip.c_str(), strlen(tmp_sctx->ip.c_str()), cs);
@@ -2725,7 +2711,7 @@ static int get_schema_tables_record(Session *session, TableList *tables,
     Table *show_table= tables->table;
     TABLE_SHARE *share= show_table->s;
     handler *file= show_table->file;
-    handlerton *tmp_db_type= share->db_type();
+    StorageEngine *tmp_db_type= share->db_type();
     if (share->tmp_table == SYSTEM_TMP_TABLE)
       table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
     else if (share->tmp_table)
@@ -4528,8 +4514,6 @@ int initialize_schema_table(st_plugin_int *plugin)
     /* Make sure the plugin name is not set inside the init() function. */
     schema_table->table_name= plugin->name.str;
   }
-
-  plugin->state= PLUGIN_IS_READY;
 
   return 0;
 err:
