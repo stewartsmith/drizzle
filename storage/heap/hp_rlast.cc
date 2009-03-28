@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2002, 2004 MySQL AB
+/* Copyright (C) 2000-2002 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,36 +17,28 @@
 
 #include <string.h>
 
-/* Read first record with the current key */
+	/* Read first record with the current key */
 
-int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
+
+int heap_rlast(HP_INFO *info, unsigned char *record, int inx)
 {
-  HP_SHARE *share = info->s;
-  HP_KEYDEF *keyinfo = share->keydef + inx;
+  HP_SHARE *share=    info->s;
+  HP_KEYDEF *keyinfo= share->keydef + inx;
 
   info->lastinx= inx;
   if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
   {
     unsigned char *pos;
 
-    if ((pos = tree_search_edge(&keyinfo->rb_tree, info->parents,
-                                &info->last_pos, offsetof(TREE_ELEMENT, left))))
+    if ((pos = (unsigned char *)tree_search_edge(&keyinfo->rb_tree,
+                                                 info->parents,
+                                                 &info->last_pos,
+                                                 offsetof(TREE_ELEMENT, right))))
     {
       memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos),
 	     sizeof(unsigned char*));
       info->current_ptr = pos;
       hp_extract_record(share, record, pos);
-      /*
-        If we're performing index_first on a table that was taken from
-        table cache, info->lastkey_len is initialized to previous query.
-        Thus we set info->lastkey_len to proper value for subsequent
-        heap_rnext() calls.
-        This is needed for DELETE queries only, otherwise this variable is
-        not used.
-        Note that the same workaround may be needed for heap_rlast(), but
-        for now heap_rlast() is never used for DELETE queries.
-      */
-      info->lastkey_len= 0;
       info->update = HA_STATE_AKTIV;
     }
     else
@@ -58,15 +50,9 @@ int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
   }
   else
   {
-    if (!(info->s->records))
-    {
-      my_errno=HA_ERR_END_OF_FILE;
-      return(my_errno);
-    }
-    assert(0); /* TODO fix it */
-    info->current_record=0;
+    info->current_ptr=0;
     info->current_hash_ptr=0;
-    info->update=HA_STATE_PREV_FOUND;
-    return(heap_rnext(info,record));
+    info->update=HA_STATE_NEXT_FOUND;
+    return(heap_rprev(info,record));
   }
 }

@@ -90,8 +90,6 @@ int initialize_udf(st_plugin_int *plugin)
   if (!add_udf(f))
     return 1;
 
-  plugin->state= PLUGIN_IS_READY;
-
   return 0;
 
 }

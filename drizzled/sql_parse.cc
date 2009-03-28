@@ -204,15 +204,11 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 {
   NET *net= &session->net;
   bool error= 0;
-  int error_code;
   Query_id &query_id= Query_id::get_query_id();
 
   session->command=command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
-  if ((error_code= pthread_mutex_lock(&LOCK_thread_count)))
-    assert(error_code == 0); /* Always will assert */
-
   session->query_id= query_id.value();
 
   switch( command ) {
@@ -226,7 +222,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
 
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
-  pthread_mutex_unlock(&LOCK_thread_count);
 
   logging_pre_do(session);
 
@@ -280,10 +275,12 @@ bool dispatch_command(enum enum_server_command command, Session *session,
       statistic_increment(session->status_var.questions, &LOCK_status);
       session->query_id= query_id.next();
       session->set_time(); /* Reset the query start time. */
-      pthread_mutex_lock(&LOCK_thread_count);
+
       session->query_length= length;
       session->query= beginning_of_next_stmt;
-      pthread_mutex_unlock(&LOCK_thread_count);
+
+      strncpy(session->process_list_info, session->query, (length > PROCESS_LIST_WIDTH) ? PROCESS_LIST_WIDTH - 1  : length);
+
       /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
       mysql_parse(session, beginning_of_next_stmt, length, &end_of_stmt);
@@ -345,13 +342,14 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   log_slow_statement(session);
 
+  /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
-  pthread_mutex_lock(&LOCK_thread_count); // For process list
-  session->set_proc_info(0);
   session->command=COM_SLEEP;
+  session->process_list_info[0]= 0;
   session->query=0;
   session->query_length=0;
-  pthread_mutex_unlock(&LOCK_thread_count);
+
+  session->set_proc_info(NULL);
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
   return(error);
@@ -1046,10 +1044,9 @@ end_with_restore_list:
       Don't allow this within a transaction because we want to use
       re-generate table
     */
-    if (session->locked_tables || session->active_transaction())
+    if (session->locked_tables || session->inTransaction())
     {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-                 ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
+      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
       goto error;
     }
 
@@ -1312,10 +1309,9 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
       break;
     }
-    if (session->locked_tables || session->active_transaction())
+    if (session->locked_tables || session->inTransaction())
     {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-                 ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
+      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
       goto error;
     }
     res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists, 0);
@@ -1330,10 +1326,9 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
       break;
     }
-    if (session->locked_tables || session->active_transaction())
+    if (session->locked_tables || session->inTransaction())
     {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-                 ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
+      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
       goto error;
     }
     res= mysql_alter_db(session, db->str, &create_info);

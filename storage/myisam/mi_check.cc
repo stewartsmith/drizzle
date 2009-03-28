@@ -67,16 +67,19 @@ static ha_checksum calc_checksum(ha_rows count);
 static int writekeys(MI_SORT_PARAM *sort_param);
 static int sort_one_index(MI_CHECK *param, MI_INFO *info,MI_KEYDEF *keyinfo,
 			  my_off_t pagepos, File new_file);
-static int sort_key_read(MI_SORT_PARAM *sort_param,void *key);
-static int sort_get_next_record(MI_SORT_PARAM *sort_param);
-static int sort_key_cmp(MI_SORT_PARAM *sort_param, const void *a,const void *b);
-static int sort_key_write(MI_SORT_PARAM *sort_param, const void *a);
-static my_off_t get_record_for_key(MI_INFO *info,MI_KEYDEF *keyinfo,
-				unsigned char *key);
-static int sort_insert_key(MI_SORT_PARAM  *sort_param,
-                           register SORT_KEY_BLOCKS *key_block,
-			   unsigned char *key, my_off_t prev_block);
-static int sort_delete_record(MI_SORT_PARAM *sort_param);
+extern "C"
+{
+  int sort_key_read(MI_SORT_PARAM *sort_param,void *key);
+  int sort_get_next_record(MI_SORT_PARAM *sort_param);
+  int sort_key_cmp(MI_SORT_PARAM *sort_param, const void *a,const void *b);
+  int sort_key_write(MI_SORT_PARAM *sort_param, const void *a);
+  my_off_t get_record_for_key(MI_INFO *info,MI_KEYDEF *keyinfo,
+                              unsigned char *key);
+  int sort_insert_key(MI_SORT_PARAM  *sort_param,
+                      register SORT_KEY_BLOCKS *key_block,
+                      unsigned char *key, my_off_t prev_block);
+  int sort_delete_record(MI_SORT_PARAM *sort_param);
+}
 /*static int flush_pending_blocks(MI_CHECK *param);*/
 static SORT_KEY_BLOCKS	*alloc_key_blocks(MI_CHECK *param, uint32_t blocks,
 					  uint32_t buffer_length);
@@ -1982,7 +1985,7 @@ int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
   ulong buff_length;
 
   buff_length=(ulong) cmin(param->write_buffer_length,length);
-  if (!(buff=malloc(buff_length)))
+  if (!(buff=(char *)malloc(buff_length)))
   {
     buff=tmp_buff; buff_length=IO_SIZE;
   }
@@ -2867,7 +2870,7 @@ err:
 
 	/* Read next record and return next key */
 
-static int sort_key_read(MI_SORT_PARAM *sort_param, void *key)
+int sort_key_read(MI_SORT_PARAM *sort_param, void *key)
 {
   int error;
   SORT_INFO *sort_info=sort_param->sort_info;
@@ -2925,7 +2928,7 @@ static int sort_key_read(MI_SORT_PARAM *sort_param, void *key)
     > 0         error
 */
 
-static int sort_get_next_record(MI_SORT_PARAM *sort_param)
+int sort_get_next_record(MI_SORT_PARAM *sort_param)
 {
   int searching;
   int parallel_flag;
@@ -3332,7 +3335,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
           if(tmpptr)
           {
 	    sort_info->buff_length=reclength;
-            sort_info->buff= tmpptr;
+            sort_info->buff= (unsigned char *)tmpptr;
           }
           else
           {
@@ -3392,8 +3395,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
 
 	/* Compare two keys from _create_index_by_sort */
 
-static int sort_key_cmp(MI_SORT_PARAM *sort_param, const void *a,
-			const void *b)
+int sort_key_cmp(MI_SORT_PARAM *sort_param, const void *a, const void *b)
 {
   uint32_t not_used[2];
   return (ha_key_cmp(sort_param->seg, *((unsigned char* const *) a), *((unsigned char* const *) b),
@@ -3401,7 +3403,7 @@ static int sort_key_cmp(MI_SORT_PARAM *sort_param, const void *a,
 } /* sort_key_cmp */
 
 
-static int sort_key_write(MI_SORT_PARAM *sort_param, const void *a)
+int sort_key_write(MI_SORT_PARAM *sort_param, const void *a)
 {
   uint32_t diff_pos[2];
   char llbuff[22],llbuff2[22];
@@ -3458,18 +3460,17 @@ static int sort_key_write(MI_SORT_PARAM *sort_param, const void *a)
 
 	/* get pointer to record from a key */
 
-static my_off_t get_record_for_key(MI_INFO *info, MI_KEYDEF *keyinfo,
-				   unsigned char *key)
-{
+my_off_t get_record_for_key(MI_INFO *info, MI_KEYDEF *keyinfo,
+                            unsigned char *key) {
   return _mi_dpos(info,0,key+_mi_keylength(keyinfo,key));
 } /* get_record_for_key */
 
 
 	/* Insert a key in sort-key-blocks */
 
-static int sort_insert_key(MI_SORT_PARAM *sort_param,
-			   register SORT_KEY_BLOCKS *key_block, unsigned char *key,
-			   my_off_t prev_block)
+int sort_insert_key(MI_SORT_PARAM *sort_param,
+                    register SORT_KEY_BLOCKS *key_block, unsigned char *key,
+                    my_off_t prev_block)
 {
   uint32_t a_length,t_length,nod_flag;
   my_off_t filepos,key_file_length;
@@ -3549,7 +3550,7 @@ static int sort_insert_key(MI_SORT_PARAM *sort_param,
 
 	/* Delete record when we found a duplicated key */
 
-static int sort_delete_record(MI_SORT_PARAM *sort_param)
+int sort_delete_record(MI_SORT_PARAM *sort_param)
 {
   uint32_t i;
   int old_file,error;

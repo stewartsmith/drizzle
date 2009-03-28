@@ -38,7 +38,6 @@ int logging_initializer(st_plugin_int *plugin)
   }
 
   plugin->data= (void *)p;
-  plugin->state= PLUGIN_IS_READY;
 
   return 0;
 }

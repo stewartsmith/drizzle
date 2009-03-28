@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_REPLICATOR_H
 #define DRIZZLED_REPLICATOR_H
 
-#include <drizzled/plugin_replicator.h>
+#include <drizzled/plugin/replicator.h>
 
 int replicator_initializer (st_plugin_int *plugin);
 int replicator_finalizer (st_plugin_int *plugin);

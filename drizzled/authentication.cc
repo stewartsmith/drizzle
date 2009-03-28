@@ -47,8 +47,7 @@ bool authenticate_user(Session *session, const char *password)
   if (are_plugins_loaded != true)
     return true;
 
-  return plugin_foreach(session, authenticate_by,
-                        DRIZZLE_AUTH_PLUGIN, (void *)password);
+  return plugin_foreach(session, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
 }
 
 
@@ -73,8 +72,6 @@ int authentication_initializer(st_plugin_int *plugin)
 
   plugin->data= static_cast<void *>(authen);
   are_plugins_loaded= true;
-
-  plugin->state= PLUGIN_IS_READY;
 
   return(0);
 err:

@@ -186,14 +186,14 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   uint32_t reclength= field->pack_length();
   if (using_unique_constraint)
   {
-    share->db_plugin= ha_lock_engine(0, myisam_hton);
+    share->db_plugin= ha_lock_engine(0, myisam_engine);
     table->file= get_new_handler(share, &table->mem_root,
                                  share->db_type());
     assert(uniq_tuple_length_arg <= table->file->max_key_length());
   }
   else
   {
-    share->db_plugin= ha_lock_engine(0, heap_hton);
+    share->db_plugin= ha_lock_engine(0, heap_engine);
     table->file= get_new_handler(share, &table->mem_root,
                                  share->db_type());
   }
@@ -267,7 +267,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)    // No limit
     share->max_rows= ~(ha_rows) 0;
   else
-    share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
+    share->max_rows= (ha_rows) (((share->db_type() == heap_engine) ?
                                  cmin(session->variables.tmp_table_size,
                                       session->variables.max_heap_table_size) :
                                  session->variables.tmp_table_size) /
@@ -311,7 +311,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   if (session->is_fatal_error)        // If end of memory
     goto err;
   share->db_record_offset= 1;
-  if (share->db_type() == myisam_hton)
+  if (share->db_type() == myisam_engine)
   {
     recinfo++;
     if (table->create_myisam_tmp_table(keyinfo, start_recinfo, &recinfo, 0))

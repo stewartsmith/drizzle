@@ -24,37 +24,29 @@
 
 int replicator_initializer(st_plugin_int *plugin)
 {
-  replicator_t *p;
-
-  p= new replicator_t;
-  if (p == NULL) return 1;
-  memset(p, 0, sizeof(replicator_t));
-
-  plugin->data= (void *)p;
+  Replicator *p= NULL;
 
   if (plugin->plugin->init)
   {
-    if (plugin->plugin->init((void *)p))
+    if (plugin->plugin->init((void *)&p))
     {
       /* TRANSLATORS: The leading word "replicator" is the name
         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' init() failed"),
-                      plugin->name.str);
-      goto err;
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("replicator plugin '%s' init() failed"),
+                    plugin->name.str);
+      return 1;
     }
   }
-  plugin->state= PLUGIN_IS_READY;
+
+  plugin->data= (void *)p;
 
   return 0;
-
- err:
-  delete p;
-  return 1;
 }
 
 int replicator_finalizer(st_plugin_int *plugin)
 {
-  replicator_t *p= (replicator_t *) plugin->data;
+  Replicator *p= static_cast<Replicator *>(plugin->data);
 
   if (plugin->plugin->deinit)
     {
@@ -62,12 +54,11 @@ int replicator_finalizer(st_plugin_int *plugin)
         {
           /* TRANSLATORS: The leading word "replicator" is the name
              of the plugin api, and so should not be translated. */
-          errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' deinit() failed"),
-                          plugin->name.str);
+          errmsg_printf(ERRMSG_LVL_ERROR,
+                        _("replicator plugin '%s' deinit() failed"),
+                        plugin->name.str);
         }
     }
-
-  if (p) delete p;
 
   return 0;
 }
@@ -75,19 +66,20 @@ int replicator_finalizer(st_plugin_int *plugin)
 /* This gets called by plugin_foreach once for each loaded replicator plugin */
 static bool replicator_session_iterate(Session *session, plugin_ref plugin, void *)
 {
-  replicator_t *repl= plugin_data(plugin, replicator_t *);
+  Replicator *repl= plugin_data(plugin, Replicator *);
   bool error;
 
-  /* call this loaded replicator plugin's replicator_func1 function pointer */
-  if (repl && repl->session_init)
+  /* call this loaded replicator plugin's session_init method */
+  if (repl)
   {
     error= repl->session_init(session);
     if (error)
     {
       /* TRANSLATORS: The leading word "replicator" is the name
         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' session_init() failed"),
-                      (char *)plugin_name(plugin));
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("replicator plugin '%s' session_init() failed"),
+                    (char *)plugin_name(plugin));
       return true;
     }
   }
@@ -98,14 +90,14 @@ static bool replicator_session_iterate(Session *session, plugin_ref plugin, void
 /*
   This call is called once at the begining of each transaction.
 */
-extern handlerton *binlog_hton;
+extern StorageEngine *binlog_engine;
 bool replicator_session_init(Session *session)
 {
   bool foreach_rv;
 
   if (session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
-    trans_register_ha(session, true, binlog_hton);
-  trans_register_ha(session, false, binlog_hton);
+    trans_register_ha(session, true, binlog_engine);
+  trans_register_ha(session, false, binlog_engine);
 
   if (session->getReplicationData())
     return false;
@@ -145,47 +137,51 @@ typedef struct replicator_row_parms_st
 /* This gets called by plugin_foreach once for each loaded replicator plugin */
 static bool replicator_do_row_iterate (Session *session, plugin_ref plugin, void *p)
 {
-  replicator_t *repl= plugin_data(plugin, replicator_t *);
-  replicator_row_parms_st *params= (replicator_row_parms_st *) p;
+  Replicator *repl= plugin_data(plugin, Replicator *);
+  replicator_row_parms_st *params= static_cast<replicator_row_parms_st *>(p);
 
   switch (params->type) {
   case repl_insert:
-    if (repl && repl->row_insert)
+    if (repl)
     {
       if (repl->row_insert(session, params->table))
       {
         /* TRANSLATORS: The leading word "replicator" is the name
           of the plugin api, and so should not be translated. */
-        errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' row_insert() failed"),
-                        (char *)plugin_name(plugin));
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("replicator plugin '%s' row_insert() failed"),
+                     (char *)plugin_name(plugin));
 
         return true;
       }
     }
     break;
   case repl_update:
-    if (repl && repl->row_update)
+    if (repl)
     {
-      if (repl->row_update(session, params->table, params->before, params->after))
+      if (repl->row_update(session, params->table,
+                           params->before, params->after))
       {
         /* TRANSLATORS: The leading word "replicator" is the name
           of the plugin api, and so should not be translated. */
-        errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' row_update() failed"),
-                        (char *)plugin_name(plugin));
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("replicator plugin '%s' row_update() failed"),
+                      (char *)plugin_name(plugin));
 
         return true;
       }
     }
     break;
   case repl_delete:
-    if (repl && repl->row_delete)
+    if (repl)
     {
       if (repl->row_delete(session, params->table))
       {
         /* TRANSLATORS: The leading word "replicator" is the name
           of the plugin api, and so should not be translated. */
-        errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' row_delete() failed"),
-                        (char *)plugin_name(plugin));
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("replicator plugin '%s' row_delete() failed"),
+                      (char *)plugin_name(plugin));
 
         return true;
       }
@@ -195,9 +191,10 @@ static bool replicator_do_row_iterate (Session *session, plugin_ref plugin, void
   return false;
 }
 
-/* This is the replicator_do2 entry point.
+/* This is the replicator_do_row entry point.
    This gets called by the rest of the Drizzle server code */
-static bool replicator_do_row (Session *session, replicator_row_parms_st *params)
+static bool replicator_do_row (Session *session,
+                               replicator_row_parms_st *params)
 {
   bool foreach_rv;
 
@@ -259,18 +256,19 @@ typedef struct replicator_row_end_st
 /* We call this to end a statement (on each registered plugin) */
 static bool replicator_end_transaction_iterate (Session *session, plugin_ref plugin, void *p)
 {
-  replicator_t *repl= plugin_data(plugin, replicator_t *);
-  replicator_row_end_st *params= (replicator_row_end_st *)p;
+  Replicator *repl= plugin_data(plugin, Replicator *);
+  replicator_row_end_st *params= static_cast<replicator_row_end_st *>(p);
 
   /* call this loaded replicator plugin's replicator_func1 function pointer */
-  if (repl && repl->end_transaction)
+  if (repl)
   {
     if (repl->end_transaction(session, params->autocommit, params->commit))
     {
       /* TRANSLATORS: The leading word "replicator" is the name
         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' end_transaction() failed"),
-                      (char *)plugin_name(plugin));
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("replicator plugin '%s' end_transaction() failed"),
+                    (char *)plugin_name(plugin));
       return true;
     }
   }
@@ -316,18 +314,19 @@ typedef struct replicator_statement_st
 /* We call this to end a statement (on each registered plugin) */
 static bool replicator_statement_iterate(Session *session, plugin_ref plugin, void *p)
 {
-  replicator_t *repl= plugin_data(plugin, replicator_t *);
+  Replicator *repl= plugin_data(plugin, Replicator *);
   replicator_statement_st *params= (replicator_statement_st *)p;
 
   /* call this loaded replicator plugin's replicator_func1 function pointer */
-  if (repl && repl->statement)
+  if (repl)
   {
     if (repl->statement(session, params->query, params->query_length))
     {
       /* TRANSLATORS: The leading word "replicator" is the name
         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, _("replicator plugin '%s' statement() failed"),
-                      (char *)plugin_name(plugin));
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("replicator plugin '%s' statement() failed"),
+                    (char *)plugin_name(plugin));
       return true;
     }
   }

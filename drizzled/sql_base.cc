@@ -1387,7 +1387,7 @@ void close_temporary_table(Session *session, Table *table,
 
 void close_temporary(Table *table, bool free_share, bool delete_table)
 {
-  handlerton *table_type= table->s->db_type();
+  StorageEngine *table_type= table->s->db_type();
 
   free_io_cache(table);
   table->closefrm(false);
@@ -1534,7 +1534,7 @@ void drop_open_table(Session *session, Table *table, const char *db_name,
     close_temporary_table(session, table, 1, 1);
   else
   {
-    handlerton *table_type= table->s->db_type();
+    StorageEngine *table_type= table->s->db_type();
     pthread_mutex_lock(&LOCK_open);
     /*
       unlink_open_table() also tells threads waiting for refresh or close
@@ -3573,7 +3573,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 }
 
 
-bool rm_temporary_table(handlerton *base, char *path)
+bool rm_temporary_table(StorageEngine *base, char *path)
 {
   bool error=0;
   handler *file;

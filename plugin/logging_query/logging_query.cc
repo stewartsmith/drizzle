@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin_logging.h>
+#include <drizzled/plugin/logging_handler.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 

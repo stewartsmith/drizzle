@@ -19,17 +19,17 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/ha_trx_info.h>
-#include <drizzled/handlerton.h>
+#include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 
 
-void Ha_trx_info::register_ha(Session_TRANS *trans, handlerton *ht_arg)
+void Ha_trx_info::register_ha(Session_TRANS *trans, StorageEngine *engine_arg)
 {
   assert(m_flags == 0);
-  assert(m_ht == NULL);
+  assert(m_engine == NULL);
   assert(m_next == NULL);
 
-  m_ht= ht_arg;
+  m_engine= engine_arg;
   m_flags= (int) TRX_READ_ONLY; /* Assume read-only at start. */
 
   m_next= trans->ha_list;
@@ -41,7 +41,7 @@ void Ha_trx_info::register_ha(Session_TRANS *trans, handlerton *ht_arg)
 void Ha_trx_info::reset()
 {
   m_next= NULL;
-  m_ht= NULL;
+  m_engine= NULL;
   m_flags= 0;
 }
 
@@ -61,7 +61,7 @@ bool Ha_trx_info::is_trx_read_write() const
 
 bool Ha_trx_info::is_started() const
 {
-  return m_ht != NULL;
+  return m_engine != NULL;
 }
 
 
@@ -86,8 +86,8 @@ Ha_trx_info *Ha_trx_info::next() const
 }
 
 
-handlerton *Ha_trx_info::ht() const
+StorageEngine *Ha_trx_info::engine() const
 {
   assert(is_started());
-  return m_ht;
+  return m_engine;
 }

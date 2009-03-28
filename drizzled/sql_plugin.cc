@@ -89,7 +89,7 @@ extern int finalize_udf(st_plugin_int *plugin);
 plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 {
   0,  /* Daemon */
-  ha_initialize_handlerton,  /* Storage Engine */
+  storage_engine_initializer,  /* Storage Engine */
   initialize_schema_table,  /* Information Schema */
   initialize_udf,  /* UDF */
   0,  /* UDA */
@@ -107,7 +107,7 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 {
   0,  /* Daemon */
-  ha_finalize_handlerton,  /* Storage Engine */
+  storage_engine_finalizer,  /* Storage Engine */
   finalize_schema_table,  /* Information Schema */
   finalize_udf,  /* UDF */
   0,  /* UDA */
@@ -128,7 +128,7 @@ static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
    sub-structure (plugin->info).
 */
 
-static bool initialized= 0;
+static bool initialized= false;
 
 static DYNAMIC_ARRAY plugin_dl_array;
 static DYNAMIC_ARRAY plugin_array;
@@ -231,10 +231,7 @@ static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-#define my_intern_plugin_lock(A,B) intern_plugin_lock(A,B)
-#define my_intern_plugin_lock_ci(A,B) intern_plugin_lock(A,B)
 static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref plugin);
-static void intern_plugin_unlock(LEX *lex, plugin_ref plugin);
 static void reap_plugins(void);
 
 
@@ -309,8 +306,7 @@ static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
     tmp= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);
-    if (tmp->ref_count &&
-        ! my_strnncoll(files_charset_info,
+    if (! my_strnncoll(files_charset_info,
                        (const unsigned char *)dl->str, dl->length,
                        (const unsigned char *)tmp->dl.str, tmp->dl.length))
       return(tmp);
@@ -326,7 +322,6 @@ static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
     tmp= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);
-    if (! tmp->ref_count)
     {
       memcpy(tmp, plugin_dl, sizeof(struct st_plugin_dl));
       return(tmp);
@@ -376,7 +371,6 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
   /* If this dll is already loaded just increase ref_count. */
   if ((tmp= plugin_dl_find(dl)))
   {
-    tmp->ref_count++;
     return(tmp);
   }
   memset(&plugin_dl, 0, sizeof(plugin_dl));
@@ -384,7 +378,6 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
   dlpath.append(opt_plugin_dir);
   dlpath.append("/");
   dlpath.append(dl->str);
-  plugin_dl.ref_count= 1;
   /* Open new dll handle */
   if (!(plugin_dl.handle= dlopen(dlpath.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
   {
@@ -453,13 +446,11 @@ static void plugin_dl_del(const LEX_STRING *dl)
   {
     struct st_plugin_dl *tmp= *dynamic_element(&plugin_dl_array, i,
                                                struct st_plugin_dl **);
-    if (tmp->ref_count &&
-        ! my_strnncoll(files_charset_info,
+    if (! my_strnncoll(files_charset_info,
                        (const unsigned char *)dl->str, dl->length,
                        (const unsigned char *)tmp->dl.str, tmp->dl.length))
     {
       /* Do not remove this element, unless no other plugin uses this dll. */
-      if (! --tmp->ref_count)
       {
         free_plugin_mem(tmp);
         memset(tmp, 0, sizeof(struct st_plugin_dl));
@@ -485,7 +476,7 @@ static SHOW_COMP_OPTION plugin_status(const LEX_STRING *name, int type)
   if ((plugin= registry.find(name, type)))
   {
     rc= SHOW_OPTION_DISABLED;
-    if (plugin->state == PLUGIN_IS_READY)
+    if (plugin->isInited)
       rc= SHOW_OPTION_YES;
   }
   return(rc);
@@ -511,24 +502,23 @@ SHOW_COMP_OPTION sys_var_have_plugin::get_option()
 static plugin_ref intern_plugin_lock(LEX *, plugin_ref rc)
 {
   st_plugin_int *pi= plugin_ref_to_int(rc);
+  plugin_ref plugin;
 
-  if (pi->state & (PLUGIN_IS_READY | PLUGIN_IS_UNINITIALIZED))
-  {
-    plugin_ref plugin;
-    /*
-      For debugging, we do an additional malloc which allows the
-      memory manager and/or valgrind to track locked references and
-      double unlocks to aid resolving reference counting.problems.
-    */
-    if (!(plugin= (plugin_ref) malloc(sizeof(pi))))
-      return(NULL);
+  assert(pi);
+  assert(rc);
 
-    *plugin= pi;
-    pi->ref_count++;
+  /*
+    For debugging, we do an additional malloc which allows the
+    memory manager and/or valgrind to track locked references and
+    double unlocks to aid resolving reference counting.problems.
+  */
+  if (!(plugin= (plugin_ref) malloc(sizeof(pi))))
+    return(NULL);
 
-    return(plugin);
-  }
-  return(NULL);
+  *plugin= pi;
+  pi->ref_count++;
+
+  return(plugin);
 }
 
 
@@ -536,7 +526,7 @@ plugin_ref plugin_lock(Session *session, plugin_ref *ptr)
 {
   LEX *lex= session ? session->lex : 0;
   plugin_ref rc;
-  rc= my_intern_plugin_lock_ci(lex, *ptr);
+  rc= intern_plugin_lock(lex, *ptr);
   return(rc);
 }
 
@@ -552,24 +542,14 @@ plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name, int typ
     return(0);
 
   if ((plugin= registry.find(name, type)))
-    rc= my_intern_plugin_lock_ci(lex, plugin_int_to_ref(plugin));
+    rc= intern_plugin_lock(lex, plugin_int_to_ref(plugin));
   return(rc);
 }
 
 
 static st_plugin_int *plugin_insert_or_reuse(struct st_plugin_int *plugin)
 {
-  uint32_t i;
   struct st_plugin_int *tmp;
-  for (i= 0; i < plugin_array.elements; i++)
-  {
-    tmp= *dynamic_element(&plugin_array, i, struct st_plugin_int **);
-    if (tmp->state == PLUGIN_IS_FREED)
-    {
-      memcpy(tmp, plugin, sizeof(struct st_plugin_int));
-      return(tmp);
-    }
-  }
   if (insert_dynamic(&plugin_array, (unsigned char*)&plugin))
     return(0);
   tmp= *dynamic_element(&plugin_array, plugin_array.elements - 1,
@@ -623,7 +603,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       tmp.name.str= (char *)plugin->name;
       tmp.name.length= name_len;
       tmp.ref_count= 0;
-      tmp.state= PLUGIN_IS_UNINITIALIZED;
+      tmp.isInited= false;
       if (!test_plugin_options(tmp_root, &tmp, argc, argv))
       {
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
@@ -651,64 +631,37 @@ err:
 }
 
 
-static void plugin_deinitialize(struct st_plugin_int *plugin, bool ref_check)
-{
-  if (plugin->plugin->status_vars)
-  {
-#ifdef FIX_LATER
-    /*
-      We have a problem right now where we can not prepend without
-      breaking backwards compatibility. We will fix this shortly so
-      that engines have "use names" and we wil use those for
-      CREATE TABLE, and use the plugin name then for adding automatic
-      variable names.
-    */
-    SHOW_VAR array[2]= {
-      {plugin->plugin->name, (char*)plugin->plugin->status_vars, SHOW_ARRAY},
-      {0, 0, SHOW_UNDEF}
-    };
-    remove_status_vars(array);
-#else
-    remove_status_vars(plugin->plugin->status_vars);
-#endif /* FIX_LATER */
-  }
-
-  if (plugin_type_deinitialize[plugin->plugin->type])
-  {
-    if ((*plugin_type_deinitialize[plugin->plugin->type])(plugin))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' of type %s failed deinitialization"),
-                      plugin->name.str, plugin_type_names[plugin->plugin->type].str);
-    }
-  }
-  else if (plugin->plugin->deinit)
-    plugin->plugin->deinit(plugin);
-
-  plugin->state= PLUGIN_IS_UNINITIALIZED;
-
-  /*
-    We do the check here because NDB has a worker Session which doesn't
-    exit until NDB is shut down.
-  */
-  if (ref_check && plugin->ref_count)
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has ref_count=%d after deinitialization."),
-                    plugin->name.str, plugin->ref_count);
-}
-
-
 static void plugin_del(struct st_plugin_int *plugin)
 {
+  if (plugin->isInited)
+  {
+    if (plugin->plugin->status_vars)
+    {
+      remove_status_vars(plugin->plugin->status_vars);
+    }
+
+    if (plugin_type_deinitialize[plugin->plugin->type])
+    {
+      if ((*plugin_type_deinitialize[plugin->plugin->type])(plugin))
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' of type %s failed deinitialization"),
+                      plugin->name.str, plugin_type_names[plugin->plugin->type].str);
+      }
+    }
+    else if (plugin->plugin->deinit)
+      plugin->plugin->deinit(plugin);
+  }
+
   /* Free allocated strings before deleting the plugin. */
   plugin_vars_free_values(plugin->system_vars);
   if (plugin->plugin_dl)
     plugin_dl_del(&plugin->plugin_dl->dl);
-  plugin->state= PLUGIN_IS_FREED;
+  plugin->isInited= false;
   plugin_array_version++;
   pthread_rwlock_wrlock(&LOCK_system_variables_hash);
   mysql_del_sys_var_chain(plugin->system_vars);
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
   free_root(&plugin->mem_root, MYF(0));
-  return;
 }
 
 static void reap_plugins(void)
@@ -717,63 +670,18 @@ static void reap_plugins(void)
   uint32_t idx;
   struct st_plugin_int *plugin;
 
-  reap_needed= false;
   count= plugin_array.elements;
 
   for (idx= 0; idx < count; idx++)
   {
     plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-    plugin->state= PLUGIN_IS_DYING;
-    plugin_deinitialize(plugin, true);
     plugin_del(plugin);
   }
 }
 
-static void intern_plugin_unlock(LEX *, plugin_ref plugin)
+static bool plugin_initialize(struct st_plugin_int *plugin)
 {
-  st_plugin_int *pi;
-
-  if (!plugin)
-    return;
-
-  pi= plugin_ref_to_int(plugin);
-
-  free((void *) plugin);
- 
-  //assert(pi->ref_count);
-  if (pi->ref_count > 0)
-    pi->ref_count--;
-
-  if (pi->state == PLUGIN_IS_DELETED && !pi->ref_count)
-    reap_needed= true;
-
-  return;
-}
-
-
-void plugin_unlock(Session *session, plugin_ref plugin)
-{
-  LEX *lex= session ? session->lex : 0;
-  if (!plugin)
-    return;
-  intern_plugin_unlock(lex, plugin);
-  return;
-}
-
-
-void plugin_unlock_list(Session *session, plugin_ref *list, uint32_t count)
-{
-  LEX *lex= session ? session->lex : 0;
-  assert(list);
-  while (count--)
-    intern_plugin_unlock(lex, *list++);
-  return;
-}
-
-
-static int plugin_initialize(struct st_plugin_int *plugin)
-{
-  plugin->state= PLUGIN_IS_UNINITIALIZED;
+  assert(plugin->isInited == false);
 
   if (plugin_type_initialize[plugin->plugin->type])
   {
@@ -792,28 +700,12 @@ static int plugin_initialize(struct st_plugin_int *plugin)
                       plugin->name.str);
       goto err;
     }
-    plugin->state= PLUGIN_IS_READY;
   }
+  plugin->isInited= true;
 
   if (plugin->plugin->status_vars)
   {
-#ifdef FIX_LATER
-    /*
-      We have a problem right now where we can not prepend without
-      breaking backwards compatibility. We will fix this shortly so
-      that engines have "use names" and we wil use those for
-      CREATE TABLE, and use the plugin name then for adding automatic
-      variable names.
-    */
-    SHOW_VAR array[2]= {
-      {plugin->plugin->name, (char*)plugin->plugin->status_vars, SHOW_ARRAY},
-      {0, 0, SHOW_UNDEF}
-    };
-    if (add_status_vars(array)) // add_status_vars makes a copy
-      goto err;
-#else
     add_status_vars(plugin->plugin->status_vars); // add_status_vars makes a copy
-#endif /* FIX_LATER */
   }
 
   /*
@@ -832,9 +724,9 @@ static int plugin_initialize(struct st_plugin_int *plugin)
     }
   }
 
-  return(0);
+  return false;
 err:
-  return(1);
+  return true;
 }
 
 
@@ -913,7 +805,7 @@ int plugin_init(int *argc, char **argv, int flags)
       {
         assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
-          my_intern_plugin_lock(NULL, plugin_int_to_ref(plugin_ptr));
+          intern_plugin_lock(NULL, plugin_int_to_ref(plugin_ptr));
         assert(plugin_ptr->ref_count == 1);
       }
     }
@@ -938,14 +830,10 @@ int plugin_init(int *argc, char **argv, int flags)
   for (idx= 0; idx < plugin_array.elements; idx++)
   {
     plugin_ptr= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-    if (plugin_ptr->state == PLUGIN_IS_UNINITIALIZED)
+    if (plugin_ptr->isInited == false)
     {
       if (plugin_initialize(plugin_ptr))
-      {
-        plugin_ptr->state= PLUGIN_IS_DYING;
-        plugin_deinitialize(plugin_ptr, true);
         plugin_del(plugin_ptr);
-      }
     }
   }
 
@@ -969,7 +857,7 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
 
   Plugin_registry registry= Plugin_registry::get_plugin_registry();
 
-  tmp->state= PLUGIN_IS_UNINITIALIZED;
+  tmp->isInited= false;
   tmp->ref_count= 0;
   tmp->plugin_dl= 0;
 
@@ -1070,9 +958,8 @@ error:
 
 void plugin_shutdown(void)
 {
-  uint32_t idx, free_slots= 0;
+  uint32_t idx;
   size_t count= plugin_array.elements;
-  struct st_plugin_int *plugin;
   vector<st_plugin_int *> plugins;
   vector<st_plugin_dl *> dl;
 
@@ -1080,95 +967,14 @@ void plugin_shutdown(void)
   {
     reap_needed= true;
 
-    /*
-      We want to shut down plugins in a reasonable order, this will
-      become important when we have plugins which depend upon each other.
-      Circular references cannot be reaped so they are forced afterwards.
-      TODO: Have an additional step here to notify all active plugins that
-      shutdown is requested to allow plugins to deinitialize in parallel.
-    */
-    while (reap_needed && (count= plugin_array.elements))
-    {
-      reap_plugins();
-      for (idx= free_slots= 0; idx < count; idx++)
-      {
-        plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-        switch (plugin->state) {
-        case PLUGIN_IS_READY:
-          plugin->state= PLUGIN_IS_DELETED;
-          reap_needed= true;
-          break;
-        case PLUGIN_IS_FREED:
-        case PLUGIN_IS_UNINITIALIZED:
-          free_slots++;
-          break;
-        }
-      }
-      if (!reap_needed)
-      {
-        /*
-          release any plugin references held.
-        */
-        unlock_variables(NULL, &global_system_variables);
-        unlock_variables(NULL, &max_system_variables);
-      }
-    }
-
-    if (count > free_slots)
-      errmsg_printf(ERRMSG_LVL_WARN, _("Forcing shutdown of %"PRIu64" plugins"),
-                        (uint64_t)count - free_slots);
-
-    plugins.reserve(count);
-
-    /*
-      If we have any plugins which did not die cleanly, we force shutdown
-    */
-    for (idx= 0; idx < count; idx++)
-    {
-      plugins.push_back(*dynamic_element(&plugin_array, idx,
-                                         struct st_plugin_int **));
-      /* change the state to ensure no reaping races */
-      if (plugins[idx]->state == PLUGIN_IS_DELETED)
-        plugins[idx]->state= PLUGIN_IS_DYING;
-    }
-
-    /*
-      We loop through all plugins and call deinit() if they have one.
-    */
-    for (idx= 0; idx < count; idx++)
-      if (!(plugins[idx]->state & (PLUGIN_IS_UNINITIALIZED | PLUGIN_IS_FREED)))
-      {
-        errmsg_printf(ERRMSG_LVL_INFO, _("Plugin '%s' will be forced to shutdown"),
-                              plugins[idx]->name.str);
-        /*
-          We are forcing deinit on plugins so we don't want to do a ref_count
-          check until we have processed all the plugins.
-        */
-        plugin_deinitialize(plugins[idx], false);
-      }
-
-    /*
-      We defer checking ref_counts until after all plugins are deinitialized
-      as some may have worker threads holding on to plugin references.
-    */
-    for (idx= 0; idx < count; idx++)
-    {
-      if (plugins[idx]->ref_count)
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has ref_count=%d after shutdown."),
-                        plugins[idx]->name.str, plugins[idx]->ref_count);
-      if (plugins[idx]->state & PLUGIN_IS_UNINITIALIZED)
-        plugin_del(plugins[idx]);
-    }
-
-    /*
-      Now we can deallocate all memory.
-    */
+    reap_plugins();
+    unlock_variables(NULL, &global_system_variables);
+    unlock_variables(NULL, &max_system_variables);
 
     cleanup_variables(NULL, &global_system_variables);
     cleanup_variables(NULL, &max_system_variables);
 
     initialized= 0;
-
   }
 
   /* Dispose of the memory */
@@ -1188,17 +994,13 @@ void plugin_shutdown(void)
   free_root(&plugin_mem_root, MYF(0));
 
   global_variables_dynamic_size= 0;
-
-  return;
 }
 
 /**
  *
- * state_mask: defaults to PLUGIN_IS_READY
+ * all: List all plugins
  */
-bool plugin_foreach(Session *session, plugin_foreach_func *func,
-                    int type, void *arg,
-                    uint32_t state_mask)
+bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void *arg, bool all)
 {
   uint32_t idx;
   struct st_plugin_int *plugin;
@@ -1208,22 +1010,19 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func,
   if (!initialized)
     return(false);
 
-  state_mask= ~state_mask; // do it only once
-
-
   if (type == DRIZZLE_ANY_PLUGIN)
   {
     plugins.reserve(plugin_array.elements);
     for (idx= 0; idx < plugin_array.elements; idx++)
     {
       plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-      plugins.push_back(!(plugin->state & state_mask) ? plugin : NULL);
+      plugins.push_back(!(plugin->isInited && all) ? plugin : NULL);
     }
   }
   else
   {
     Plugin_registry registry= Plugin_registry::get_plugin_registry();
-    registry.get_mask_list(type, plugins, state_mask);
+    registry.get_list(type, plugins, all);
   }
 
   vector<st_plugin_int *>::iterator plugin_iter;
@@ -1237,7 +1036,7 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func,
       for (reset_iter= plugin_iter;
            reset_iter != plugins.end();
            reset_iter++)
-        if (*reset_iter && (*reset_iter)->state & state_mask)
+        if (*reset_iter && (*reset_iter)->isInited && all)
           *reset_iter=0;
     }
     plugin= *plugin_iter;
@@ -1569,14 +1368,11 @@ sys_var *find_sys_var(Session *session, const char *str, uint32_t length)
   {
     pthread_rwlock_unlock(&LOCK_system_variables_hash);
     LEX *lex= session ? session->lex : 0;
-    if (!(plugin= my_intern_plugin_lock(lex, plugin_int_to_ref(pi->plugin))))
+    if (!(plugin= intern_plugin_lock(lex, plugin_int_to_ref(pi->plugin))))
       var= NULL; /* failed to lock it, it must be uninstalling */
-    else
-    if (!(plugin_state(plugin) & PLUGIN_IS_READY))
+    else if (plugin[0]->isInited == false)
     {
-      /* initialization not completed */
       var= NULL;
-      intern_plugin_unlock(lex, plugin);
     }
   }
   else
@@ -1869,8 +1665,6 @@ static unsigned long *mysql_sys_var_ptr_enum(Session* a_session, int offset)
 
 void plugin_sessionvar_init(Session *session)
 {
-  plugin_ref old_table_plugin= session->variables.table_plugin;
-
   session->variables.table_plugin= NULL;
   cleanup_variables(session, &session->variables);
 
@@ -1883,9 +1677,7 @@ void plugin_sessionvar_init(Session *session)
   session->variables.dynamic_variables_ptr= 0;
 
   session->variables.table_plugin=
-        my_intern_plugin_lock(NULL, global_system_variables.table_plugin);
-  intern_plugin_unlock(NULL, old_table_plugin);
-  return;
+    intern_plugin_lock(NULL, global_system_variables.table_plugin);
 }
 
 
@@ -1894,7 +1686,6 @@ void plugin_sessionvar_init(Session *session)
 */
 static void unlock_variables(Session *, struct system_variables *vars)
 {
-  intern_plugin_unlock(NULL, vars->table_plugin);
   vars->table_plugin= NULL;
 }
 

@@ -23,7 +23,6 @@
 
 /* Classes in mysql */
 
-#include <drizzled/global.h>
 #include <drizzled/protocol.h>
 #include <libdrizzleclient/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
@@ -387,12 +386,6 @@ extern HASH xid_cache;
 #include <drizzled/security_context.h>
 #include <drizzled/open_tables_state.h>
 
-/* Flags for the Session::system_thread variable */
-enum enum_thread_type
-{
-  NON_SYSTEM_THREAD
-};
-
 #include <drizzled/internal_error_handler.h> 
 #include <drizzled/diagnostics_area.h> 
 
@@ -448,6 +441,7 @@ public:
   THR_LOCK_OWNER *lock_id;              // If not main_lock_id, points to
                                         // the lock_id of a cursor.
   pthread_mutex_t LOCK_delete;		// Locked before session is deleted
+  char process_list_info[PROCESS_LIST_WIDTH];
   /*
     A pointer to the stack frame of handle_one_connection(),
     which is called first in the thread for handling a client
@@ -736,7 +730,6 @@ public:
   my_thread_id  thread_id;
   uint	     tmp_table, global_read_lock;
   uint	     server_status,open_options;
-  enum enum_thread_type system_thread;
   uint32_t       select_number;             //number of select (used for EXPLAIN)
   /* variables.transaction_isolation is reset to this after each commit */
   enum_tx_isolation session_tx_isolation;
@@ -906,29 +899,6 @@ public:
    */
   bool authenticate();
 
-  /**
-   * Performs handshake with client and authorizes user.
-   *
-   * Returns true is the connection is valid and the 
-   * user is authorized, otherwise false.
-   */
-  bool check_connection(void);
-
-  /**
-   * Check if user exists and the password supplied is correct.
-   *
-   * Returns true on success, and false on failure.
-   *
-   * @note Host, user and passwd may point to communication buffer.
-   * Current implementation does not depend on that, but future changes
-   * should be done with this in mind; 
-   *
-   * @param  Scrambled password received from client
-   * @param  Length of scrambled password
-   * @param  Database name to connect to, may be NULL
-   */
-  bool check_user(const char *passwd, uint32_t passwd_len, const char *db);
-
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
     enter_cond(); this mutex is then released by exit_cond().
@@ -981,7 +951,8 @@ public:
   {
     return limit_found_rows;
   }
-  inline bool active_transaction()
+  /** Returns whether the session is currently inside a transaction */
+  inline bool inTransaction()
   {
     return server_status & SERVER_STATUS_IN_TRANS;
   }
@@ -1054,10 +1025,6 @@ public:
   {
     *place= new_value;
   }
-  void nocheck_register_item_tree_change(Item **place, Item *old_value,
-                                         MEM_ROOT *runtime_memroot);
-  void rollback_item_tree_changes();
-
   /*
     Cleanup statement parse state (parse tree, lex) and execution
     state after execution of a non-prepared SQL statement.
@@ -1165,6 +1132,28 @@ public:
   void close_temporary_tables();
 
 private:
+  /**
+   * Performs handshake with client and authorizes user.
+   *
+   * Returns true is the connection is valid and the 
+   * user is authorized, otherwise false.
+   */
+  bool _checkConnection(void);
+
+  /**
+   * Check if user exists and the password supplied is correct.
+   *
+   * Returns true on success, and false on failure.
+   *
+   * @note Host, user and passwd may point to communication buffer.
+   * Current implementation does not depend on that, but future changes
+   * should be done with this in mind; 
+   *
+   * @param  Scrambled password received from client
+   * @param  Length of scrambled password
+   * @param  Database name to connect to, may be NULL
+   */
+  bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
   const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */

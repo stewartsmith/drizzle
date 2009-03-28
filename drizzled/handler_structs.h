@@ -29,7 +29,7 @@
 #include <drizzled/lex_string.h>
 
 class Ha_trx_info;
-struct handlerton;
+struct StorageEngine;
 struct st_key;
 typedef struct st_key KEY;
 struct st_key_cache;
@@ -39,7 +39,7 @@ struct Session_TRANS
 {
   Session_TRANS() {};
 
-  /* true is not all entries in the ht[] support 2pc */
+  /* true is not all entries in the engines[] support 2pc */
   bool        no_2pc;
   /* storage engines that registered in this transaction */
   Ha_trx_info *ha_list;
@@ -103,7 +103,7 @@ typedef struct st_ha_create_information
   uint32_t used_fields;
   uint32_t key_block_size;
   uint32_t block_size;
-  handlerton *db_type;
+  StorageEngine *db_type;
   enum row_type row_type;
   uint32_t null_bits;                       /* NULL bits at start of record */
   uint32_t options;                         /* OR of HA_CREATE_ options */

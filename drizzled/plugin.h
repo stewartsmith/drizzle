@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_PLUGIN_H
 #define DRIZZLED_PLUGIN_H
 
-#include <drizzled/global.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/xid.h>
 
@@ -386,7 +385,7 @@ struct st_mysql_plugin
   void *reserved1;   /* reserved for dependency checking             */
 };
 
-struct handlerton;
+struct StorageEngine;
 
 
 class Plugin
@@ -447,7 +446,7 @@ void set_session_proc_info(Session *session, const char *info);
 const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
-void **session_ha_data(const Session *session, const struct handlerton *hton);
+void **session_ha_data(const Session *session, const struct StorageEngine *engine);
 int session_tx_isolation(const Session *session);
 /* Increments the row counter, see Session::row_count */
 void session_inc_row_count(Session *session);
@@ -558,9 +557,9 @@ void mysql_query_cache_invalidate4(Session *session,
 */
 inline
 void *
-session_get_ha_data(const Session *session, const struct handlerton *hton)
+session_get_ha_data(const Session *session, const struct StorageEngine *engine)
 {
-  return *session_ha_data(session, hton);
+  return *session_ha_data(session, engine);
 }
 
 /**
@@ -568,10 +567,10 @@ session_get_ha_data(const Session *session, const struct handlerton *hton)
 */
 inline
 void
-session_set_ha_data(const Session *session, const struct handlerton *hton,
+session_set_ha_data(const Session *session, const struct StorageEngine *engine,
                 const void *ha_data)
 {
-  *session_ha_data(session, hton)= (void*) ha_data;
+  *session_ha_data(session, engine)= (void*) ha_data;
 }
 #endif
 

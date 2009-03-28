@@ -31,7 +31,6 @@ static TableList *reverse_table_list(TableList *table_list);
   Every second entry in the table_list is the original name and every
   second entry is the new name.
 */
-
 bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
 {
   bool error= 1;
@@ -41,10 +40,9 @@ bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
     Avoid problems with a rename on a table that we have locked or
     if the user is trying to to do this in a transcation context
   */
-  if (session->locked_tables || session->active_transaction())
+  if (session->locked_tables || session->inTransaction())
   {
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
+    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
     return(1);
   }
 
@@ -169,9 +167,9 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
     new_alias= new_table_name;
   }
 
-  handlerton *hton= NULL;
+  StorageEngine *engine= NULL;
 
-  if(ha_table_exists_in_engine(session, ren_table->db, old_alias, &hton)
+  if(ha_table_exists_in_engine(session, ren_table->db, old_alias, &engine)
      != HA_ERR_TABLE_EXIST)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
@@ -185,7 +183,7 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
     return(1);			// This can't be skipped
   }
 
-  rc= mysql_rename_table(hton,
+  rc= mysql_rename_table(engine,
                          ren_table->db, old_alias,
                          new_db, new_alias, 0);
   if (rc && !skip_error)

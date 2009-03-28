@@ -68,9 +68,10 @@ typedef struct st_safe_hash_with_default
   This function is called by the hash object on delete
 */
 
-static void safe_hash_entry_free(SAFE_HASH_ENTRY *entry)
+extern "C"
+void safe_hash_entry_free(void *entry)
 {
-  free((unsigned char*) entry);
+  free(entry);
   return;
 }
 
@@ -109,7 +110,7 @@ static bool safe_hash_init(SAFE_HASH *hash, uint32_t elements,
 {
   if (hash_init(&hash->hash, &my_charset_bin, elements,
 		0, 0, (hash_get_key) safe_hash_entry_get,
-		(void (*)(void*)) safe_hash_entry_free, 0))
+		safe_hash_entry_free, 0))
   {
     hash->default_value= 0;
     return(1);

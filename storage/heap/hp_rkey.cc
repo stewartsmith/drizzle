@@ -47,8 +47,10 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
       info->last_find_flag= HA_READ_KEY_OR_PREV;
     else
       info->last_find_flag= find_flag;
-    if (!(pos= tree_search_key(&keyinfo->rb_tree, info->lastkey, info->parents,
-			       &info->last_pos, find_flag, &custom_arg)))
+    if (!(pos= (unsigned char *)tree_search_key(&keyinfo->rb_tree,
+                                                info->lastkey, info->parents,
+			                        &info->last_pos,
+                                                find_flag, &custom_arg)))
     {
       info->update= 0;
       return(my_errno= HA_ERR_KEY_NOT_FOUND);

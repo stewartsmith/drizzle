@@ -320,7 +320,7 @@ int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
 	     ((size_t) blocks * keycache->key_cache_block_size) > use_mem)
         blocks--;
       /* Allocate memory for cache page buffers */
-      if ((keycache->block_mem= malloc((size_t) blocks * keycache->key_cache_block_size)))
+      if ((keycache->block_mem= (unsigned char *)malloc((size_t) blocks * keycache->key_cache_block_size)))
       {
         /*
 	  Allocate memory for blocks, hash_links and hash entries;
