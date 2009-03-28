@@ -30,11 +30,13 @@ noinst_HEADERS =	\
 			ha_myisam.h \
 			keycache.h \
 			my_handler.h \
+			my_list.h \
 			myisam.h \
 			myisamdef.h \
 			myisampack.h
 
 libmyisamutil_la_SOURCES= \
+			list.cc \
 			mf_keycache.cc \
 			mf_keycaches.cc \
 			mi_cache.cc \
