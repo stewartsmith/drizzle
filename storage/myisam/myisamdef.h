@@ -25,6 +25,7 @@
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/common.h>
+#include <drizzled/session.h>
 
 #include <string.h>
 #include <list>
@@ -172,7 +173,7 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   MI_COLUMNDEF *rec;			/* Pointer to field information */
   MI_PACK    pack;			/* Data about packed records */
   MI_BLOB    *blobs;			/* Pointer to blobs */
-  std::list<MI_INFO *> in_use;          /* Threads using this table          */
+  std::list<Session *> in_use;          /* List of threads using this table */
   char  *unique_file_name;		/* realpath() of index file */
   char  *data_file_name,		/* Resolved path names from symlinks */
         *index_file_name;
@@ -246,6 +247,7 @@ struct st_myisam_info {
   MI_BIT_BUFF  bit_buff;
   /* accumulate indexfile changes between write's */
   TREE	        *bulk_insert;
+  Session *in_use;
   char *filename;			/* parameter to open filename       */
   unsigned char *buff,				/* Temp area for key                */
 	*lastkey,*lastkey2;		/* Last used search key             */
