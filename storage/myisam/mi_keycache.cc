@@ -19,6 +19,8 @@
 
 #include "myisamdef.h"
 
+using namespace std;
+
 /*
   Assign pages of the index file for a table to a key cache
 
