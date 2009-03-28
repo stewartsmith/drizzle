@@ -17,6 +17,8 @@
 
 #include "heapdef.h"
 
+using namespace std;
+
 	/* Close a database open by hp_open() */
 	/* Data is normally not deallocated */
 
@@ -34,8 +36,7 @@ int hp_close(register HP_INFO *info)
 {
   int error=0;
   info->s->changed=0;
-  if (info->open_list.data)
-    heap_open_list=list_delete(heap_open_list,&info->open_list);
+  heap_open_list.remove(info);
   if (!--info->s->open_count && info->s->delete_on_close)
     hp_free(info->s);				/* Table was deleted */
   free((unsigned char*) info);

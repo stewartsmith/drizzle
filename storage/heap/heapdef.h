@@ -25,6 +25,7 @@
 #include <mysys/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
 #include <mysys/my_tree.h>
+#include <list>
 
 /*
   When allocating keys /rows in the internal block structure, do it
@@ -47,7 +48,8 @@ extern "C" {
 
 	/* Some extern variables */
 
-extern LIST *heap_open_list,*heap_share_list;
+extern std::list<HP_SHARE *> heap_share_list;
+extern std::list<HP_INFO *> heap_open_list;
 
 #define test_active(info) \
 if (!(info->update & HA_STATE_AKTIV))\

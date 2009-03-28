@@ -19,6 +19,8 @@
 
 #include <string.h>
 
+using namespace std;
+
 /*
   Open heap table based on HP_SHARE structure
 
@@ -58,8 +60,7 @@ HP_INFO *heap_open_from_share_and_register(HP_SHARE *share, int mode)
   pthread_mutex_lock(&THR_LOCK_heap);
   if ((info= heap_open_from_share(share, mode)))
   {
-    info->open_list.data= (void*) info;
-    heap_open_list= list_add(heap_open_list,&info->open_list);
+    heap_open_list.push_front(info);
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
   return(info);
@@ -88,8 +89,7 @@ HP_INFO *heap_open(const char *name, int mode)
   }
   if ((info= heap_open_from_share(share, mode)))
   {
-    info->open_list.data= (void*) info;
-    heap_open_list= list_add(heap_open_list,&info->open_list);
+    heap_open_list.push_front(info);
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
   return(info);
@@ -100,16 +100,14 @@ HP_INFO *heap_open(const char *name, int mode)
 
 HP_SHARE *hp_find_named_heap(const char *name)
 {
-  LIST *pos;
-  HP_SHARE *info;
-
-  for (pos= heap_share_list; pos; pos= pos->next)
+  list<HP_SHARE *>::iterator it= heap_share_list.begin();
+  while (it != heap_share_list.end())
   {
-    info= (HP_SHARE*) pos->data;
-    if (!strcmp(name, info->name))
+    if (!strcmp(name, (*it)->name))
     {
-      return(info);
+      return (*it);
     }
+    ++it;
   }
   return((HP_SHARE *) 0);
 }

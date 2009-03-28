@@ -175,7 +175,6 @@ typedef struct st_heap_share
   THR_LOCK lock;
   pthread_mutex_t intern_lock;		/* Locking for use with _locking */
   bool delete_on_close;
-  LIST open_list;
   uint32_t auto_key;
   uint32_t auto_key_type;			/* real type of the auto key segment */
   uint64_t auto_increment;
@@ -200,7 +199,6 @@ typedef struct st_heap_info
   uint32_t lastkey_len;
   bool implicit_emptied;
   THR_LOCK_DATA lock;
-  LIST open_list;
 } HP_INFO;
 
 
