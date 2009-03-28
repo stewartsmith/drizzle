@@ -22,7 +22,7 @@
 
 #include "myisamdef.h"
 
-int mi_close(register MI_INFO *info)
+int mi_close(MI_INFO *info)
 {
   int error=0,flag;
   MYISAM_SHARE *share=info->s;
@@ -53,7 +53,7 @@ int mi_close(register MI_INFO *info)
     info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   }
   flag= !--share->reopen;
-  myisam_open_list=list_delete(myisam_open_list,&info->open_list);
+  myisam_open_list.remove(info);
   pthread_mutex_unlock(&share->intern_lock);
 
   void * rec_buff_ptr= mi_get_rec_buff_ptr(info, info->rec_buff);

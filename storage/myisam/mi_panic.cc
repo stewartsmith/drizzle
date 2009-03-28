@@ -15,6 +15,8 @@
 
 #include "myisamdef.h"
 
+using namespace std;
+
 	/* if flag == HA_PANIC_CLOSE then all misam files are closed */
 	/* if flag == HA_PANIC_WRITE then all misam files are unlocked and
 	   all changed data in single user misam is written to file */
@@ -26,14 +28,13 @@
 int mi_panic(enum ha_panic_function flag)
 {
   int error=0;
-  LIST *list_element,*next_open;
   MI_INFO *info;
 
   pthread_mutex_lock(&THR_LOCK_myisam);
-  for (list_element=myisam_open_list ; list_element ; list_element=next_open)
+  list<MI_INFO *>::iterator it= myisam_open_list.begin();
+  while (it != myisam_open_list.end())
   {
-    next_open=list_element->next;		/* Save if close */
-    info=(MI_INFO*) list_element->data;
+    info= *it;
     switch (flag) {
     case HA_PANIC_CLOSE:
       pthread_mutex_unlock(&THR_LOCK_myisam);	/* Not exactly right... */
@@ -99,6 +100,7 @@ int mi_panic(enum ha_panic_function flag)
       }
       break;
     }
+    ++it;
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
   if (!error)
