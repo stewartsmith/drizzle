@@ -114,7 +114,7 @@ extern uint32_t hp_rb_key_length(HP_KEYDEF *keydef, const unsigned char *key);
 extern uint32_t hp_rb_null_key_length(HP_KEYDEF *keydef, const unsigned char *key);
 extern uint32_t hp_rb_var_key_length(HP_KEYDEF *keydef, const unsigned char *key);
 extern bool hp_if_null_in_key(HP_KEYDEF *keyinfo, const unsigned char *record);
-extern int hp_close(register HP_INFO *info);
+extern int hp_close(HP_INFO *info);
 extern void hp_clear(HP_SHARE *info);
 extern void hp_clear_keys(HP_SHARE *info);
 extern uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *old,

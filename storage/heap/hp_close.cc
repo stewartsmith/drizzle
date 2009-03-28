@@ -32,7 +32,7 @@ int heap_close(HP_INFO *info)
 }
 
 
-int hp_close(register HP_INFO *info)
+int hp_close(HP_INFO *info)
 {
   int error=0;
   info->s->changed=0;
