@@ -462,7 +462,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
                         const char *sfile, uint32_t sline)
 {
   Session *cur_session;
-  LIST *element;
   pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_session= (Session*) file->in_use.data))
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
@@ -472,7 +471,8 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from unknown thread, %s:%d"), sfile, sline);
   if (message)
     errmsg_printf(ERRMSG_LVL_ERROR, "%s", message);
-  for (element= file->s->in_use; element; element= list_rest(element))
+  list<MI_INFO *>::iterator it= file->s->in_use.begin();
+  while (it != file->s->in_use.end())
   {
     errmsg_printf(ERRMSG_LVL_ERROR, "%s", _("Unknown thread accessing table"));
   }

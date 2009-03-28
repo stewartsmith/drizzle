@@ -22,6 +22,8 @@
 
 #include <string.h>
 
+using namespace std;
+
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 
 #define disk_pos_assert(pos, end_pos) \
@@ -39,14 +41,14 @@ if (pos > end_pos)             \
 
 MI_INFO *test_if_reopen(char *filename)
 {
-  LIST *pos;
-
-  for (pos=myisam_open_list ; pos ; pos=pos->next)
+  list<MI_INFO *>::iterator it= myisam_open_list.begin();
+  while (it != myisam_open_list.end())
   {
-    MI_INFO *info=(MI_INFO*) pos->data;
-    MYISAM_SHARE *share=info->s;
+    MI_INFO *info= *it;
+    MYISAM_SHARE *share= info->s;
     if (!strcmp(share->unique_file_name,filename) && share->last_version)
       return info;
+    ++it;
   }
   return 0;
 }
@@ -503,8 +505,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 
   *m_info=info;
   thr_lock_data_init(&share->lock,&m_info->lock,(void*) m_info);
-  m_info->open_list.data=(void*) m_info;
-  myisam_open_list=list_add(myisam_open_list,&m_info->open_list);
+  myisam_open_list.push_front(m_info);
 
   pthread_mutex_unlock(&THR_LOCK_myisam);
   return(m_info);
