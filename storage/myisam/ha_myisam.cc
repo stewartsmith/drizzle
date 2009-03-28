@@ -463,7 +463,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 {
   Session *cur_session;
   pthread_mutex_lock(&file->s->intern_lock);
-  if ((cur_session= (Session*) file->in_use.data))
+  if ((cur_session= (Session*) file->in_use.front()))
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
                     cur_session->thread_id,
                     sfile, sline);
