@@ -82,8 +82,7 @@ struct st_plugin_int
   LEX_STRING name;
   struct st_mysql_plugin *plugin;
   struct st_plugin_dl *plugin_dl;
-  uint32_t isInited;
-  uint32_t ref_count;               /* number of threads using the plugin */
+  bool isInited;
   void *data;                   /* plugin type specific, e.g. StorageEngine */
   MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
   sys_var *system_vars;         /* server variables for this plugin */
