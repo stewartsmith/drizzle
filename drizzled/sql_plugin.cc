@@ -516,7 +516,6 @@ static plugin_ref intern_plugin_lock(LEX *, plugin_ref rc)
     return(NULL);
 
   *plugin= pi;
-  pi->ref_count++;
 
   return(plugin);
 }
@@ -602,7 +601,6 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       tmp.plugin= plugin;
       tmp.name.str= (char *)plugin->name;
       tmp.name.length= name_len;
-      tmp.ref_count= 0;
       tmp.isInited= false;
       if (!test_plugin_options(tmp_root, &tmp, argc, argv))
       {
@@ -806,7 +804,6 @@ int plugin_init(int *argc, char **argv, int flags)
         assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
           intern_plugin_lock(NULL, plugin_int_to_ref(plugin_ptr));
-        assert(plugin_ptr->ref_count == 1);
       }
     }
   }
@@ -858,7 +855,6 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
   Plugin_registry registry= Plugin_registry::get_plugin_registry();
 
   tmp->isInited= false;
-  tmp->ref_count= 0;
   tmp->plugin_dl= 0;
 
   if (insert_dynamic(&plugin_array, (unsigned char*)&tmp))
@@ -1016,7 +1012,10 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
     for (idx= 0; idx < plugin_array.elements; idx++)
     {
       plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-      plugins.push_back(!(plugin->isInited && all) ? plugin : NULL);
+      if (all)
+        plugins.push_back(plugin);
+      else if (plugin->isInited)
+        plugins.push_back(plugin);
     }
   }
   else
