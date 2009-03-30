@@ -155,6 +155,7 @@ __TBB_DECL_ATOMIC(short)
 __TBB_DECL_ATOMIC(char)
 __TBB_DECL_ATOMIC(signed char)
 __TBB_DECL_ATOMIC(unsigned char)
+__TBB_DECL_ATOMIC(bool)
 
 /* 32-bit platforms don't have a GCC atomic operation for 64-bit types,
  * so we'll use pthread locks to handler 64-bit types on that platforms
