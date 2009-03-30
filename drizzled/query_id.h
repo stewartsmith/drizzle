@@ -39,7 +39,7 @@ public:
   query_id_t next();
 
 private:
-  tbb::atomic<uint64_t> the_query_id;
+  drizzled::atomic<uint64_t> the_query_id;
 
   Query_id();
   Query_id(Query_id const&);

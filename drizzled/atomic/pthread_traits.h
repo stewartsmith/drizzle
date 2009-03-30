@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_ATOMIC_PTHREAD_TRAITS_H
 #define DRIZZLED_ATOMIC_PTHREAD_TRAITS_H
 
-namespace tbb {
+namespace drizzled {
 
 namespace internal {
 
@@ -133,7 +133,7 @@ public:
 
 
 } /* namespace internal */
-} /* namespace tbb */
+} /* namespace drizzled */
 
 
 #endif /* DRIZZLED_ATOMIC_PTHREAD_TRAITS_H */

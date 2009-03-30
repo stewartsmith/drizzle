@@ -261,8 +261,12 @@ then
   then
     IS_64="-m64"
   fi
-  LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib -L/usr/lib/${isainfo_b}"
-  CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
+  if test "x$use_additional" != "xyes"
+  then
+    LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib"
+    CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
+  fi
+  LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_b}"
 
   CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
   CFLAGS="-g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS} ${CFLAGS}"
@@ -862,6 +866,10 @@ if test "$ac_cv_sizeof_off_t" -eq 0
 then
   AC_MSG_ERROR("Drizzle needs a off_t type.")
 fi
+AC_CHECK_SIZEOF(size_t)
+AC_DEFINE_UNQUOTED([SIZEOF_SIZE_T],[$ac_cv_sizeof_size_t],[Size of size_t as computed by sizeof()])
+AC_CHECK_SIZEOF(long long)
+AC_DEFINE_UNQUOTED(SIZEOF_LONG_LONG,[$ac_cv_sizeof_long_long],[Size of long long as computed by sizeof()])
 
 dnl
 dnl check if time_t is unsigned

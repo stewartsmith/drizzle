@@ -30,7 +30,7 @@ static uint32_t max_threads;
 
 class Multi_thread_scheduler: public Scheduler
 {
-  tbb::atomic<uint32_t> thread_count;
+  drizzled::atomic<uint32_t> thread_count;
   pthread_attr_t multi_thread_attrib;
 
 public:

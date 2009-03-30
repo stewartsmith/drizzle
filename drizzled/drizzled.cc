@@ -425,7 +425,7 @@ static uint32_t thr_kill_signal;
   Number of currently active user connections. The variable is protected by
   LOCK_thread_count.
 */
-tbb::atomic<uint32_t> connection_count;
+drizzled::atomic<uint32_t> connection_count;
 
 /* Function declarations */
 
