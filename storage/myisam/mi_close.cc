@@ -94,6 +94,7 @@ int mi_close(MI_INFO *info)
 	pthread_rwlock_destroy(&share->key_root_lock[i]);
       }
     }
+    delete info->s->in_use;
     free((unsigned char*) info->s);
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
