@@ -23,6 +23,13 @@
 
 #if defined(HAVE_LIBTBB)
 # include <tbb/atomic.h>
+/* We're actually using the TBB interface directly, but we don't want to tie
+ * the code to a specific implementation. So suck the tbb:: stuff into the
+ * drizzled namespace
+ */
+namespace drizzled {
+  using namspace tbb;
+};
 #else
 
 # if defined(__SUNPRO_CC)
@@ -35,11 +42,13 @@
 #  define ATOMIC_TRAITS internal::pthread_traits
 # endif
 
-# include <pthread.h>
-# include <drizzled/atomic/pthread_traits.h>
+# if (SIZEOF_SIZE_T >= SIZEOF_LONG_LONG) || (!defined(HAVE_GCC_ATOMIC_BUILTINS) || !defined(__SUNPRO_CC))
+#  include <pthread.h>
+#  include <drizzled/atomic/pthread_traits.h>
+# endif
 
 
-namespace tbb {
+namespace drizzled {
 
 namespace internal {
 
@@ -138,7 +147,7 @@ template<typename T>
 struct atomic {
 };
 
-#define __TBB_DECL_ATOMIC(T)                                            \
+#define __DRIZZLE_DECL_ATOMIC(T)                                        \
   template<> struct atomic<T>                                           \
   : internal::atomic_impl<T,T,ATOMIC_TRAITS<T,T> > {                    \
     atomic<T>() : internal::atomic_impl<T,T,ATOMIC_TRAITS<T,T> >() {}   \
@@ -146,32 +155,33 @@ struct atomic {
   };
 
 
-__TBB_DECL_ATOMIC(long)
-__TBB_DECL_ATOMIC(unsigned long)
-__TBB_DECL_ATOMIC(unsigned int)
-__TBB_DECL_ATOMIC(int)
-__TBB_DECL_ATOMIC(unsigned short)
-__TBB_DECL_ATOMIC(short)
-__TBB_DECL_ATOMIC(char)
-__TBB_DECL_ATOMIC(signed char)
-__TBB_DECL_ATOMIC(unsigned char)
-__TBB_DECL_ATOMIC(bool)
+__DRIZZLE_DECL_ATOMIC(long)
+__DRIZZLE_DECL_ATOMIC(unsigned long)
+__DRIZZLE_DECL_ATOMIC(unsigned int)
+__DRIZZLE_DECL_ATOMIC(int)
+__DRIZZLE_DECL_ATOMIC(unsigned short)
+__DRIZZLE_DECL_ATOMIC(short)
+__DRIZZLE_DECL_ATOMIC(char)
+__DRIZZLE_DECL_ATOMIC(signed char)
+__DRIZZLE_DECL_ATOMIC(unsigned char)
+__DRIZZLE_DECL_ATOMIC(bool)
 
 /* 32-bit platforms don't have a GCC atomic operation for 64-bit types,
  * so we'll use pthread locks to handler 64-bit types on that platforms
  */
 #  if SIZEOF_SIZE_T >= SIZEOF_LONG_LONG
-__TBB_DECL_ATOMIC(long long)
-__TBB_DECL_ATOMIC(unsigned long long)
+__DRIZZLE_DECL_ATOMIC(long long)
+__DRIZZLE_DECL_ATOMIC(unsigned long long)
 #  else
-#   define __TBB_DECL_ATOMIC64(T)                                            \
+#   define __DRIZZLE_DECL_ATOMIC64(T)                                   \
   template<> struct atomic<T>                                           \
-  : internal::atomic_impl<T,T,internal::pthread_traits<T,T> > {                    \
-    atomic<T>() : internal::atomic_impl<T,T,internal::pthread_traits<T,T> >() {}   \
+  : internal::atomic_impl<T,T,internal::pthread_traits<T,T> > {         \
+    atomic<T>()                                                         \
+      : internal::atomic_impl<T,T,internal::pthread_traits<T,T> >() {}  \
     T operator=( T rhs ) { return store_with_release(rhs); }            \
   };
-__TBB_DECL_ATOMIC64(long long)
-__TBB_DECL_ATOMIC64(unsigned long long)
+__DRIZZLE_DECL_ATOMIC64(long long)
+__DRIZZLE_DECL_ATOMIC64(unsigned long long)
 #  endif
 
 }
