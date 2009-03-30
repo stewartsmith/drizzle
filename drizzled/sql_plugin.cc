@@ -231,7 +231,7 @@ static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref plugin);
+static plugin_ref intern_plugin_lock(plugin_ref plugin);
 static void reap_plugins(void);
 
 
@@ -499,7 +499,7 @@ SHOW_COMP_OPTION sys_var_have_plugin::get_option()
 }
 
 
-static plugin_ref intern_plugin_lock(LEX *, plugin_ref rc)
+static plugin_ref intern_plugin_lock(plugin_ref rc)
 {
   st_plugin_int *pi= plugin_ref_to_int(rc);
   plugin_ref plugin;
@@ -521,27 +521,25 @@ static plugin_ref intern_plugin_lock(LEX *, plugin_ref rc)
 }
 
 
-plugin_ref plugin_lock(Session *session, plugin_ref *ptr)
+plugin_ref plugin_lock(plugin_ref *ptr)
 {
-  LEX *lex= session ? session->lex : 0;
   plugin_ref rc;
-  rc= intern_plugin_lock(lex, *ptr);
+  rc= intern_plugin_lock(*ptr);
   return(rc);
 }
 
 
-plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name, int type)
+plugin_ref plugin_lock_by_name(const LEX_STRING *name, int type)
 {
   Plugin_registry registry= Plugin_registry::get_plugin_registry();
 
-  LEX *lex= session ? session->lex : 0;
   plugin_ref rc= NULL;
   st_plugin_int *plugin;
   if (! initialized)
     return(0);
 
   if ((plugin= registry.find(name, type)))
-    rc= intern_plugin_lock(lex, plugin_int_to_ref(plugin));
+    rc= intern_plugin_lock(plugin_int_to_ref(plugin));
   return(rc);
 }
 
@@ -803,7 +801,7 @@ int plugin_init(int *argc, char **argv, int flags)
       {
         assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
-          intern_plugin_lock(NULL, plugin_int_to_ref(plugin_ptr));
+          intern_plugin_lock(plugin_int_to_ref(plugin_ptr));
       }
     }
   }
@@ -1355,7 +1353,7 @@ static void update_func_str(Session *, struct st_mysql_sys_var *var,
 ****************************************************************************/
 
 
-sys_var *find_sys_var(Session *session, const char *str, uint32_t length)
+sys_var *find_sys_var(Session *, const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
@@ -1366,8 +1364,7 @@ sys_var *find_sys_var(Session *session, const char *str, uint32_t length)
       (pi= var->cast_pluginvar()))
   {
     pthread_rwlock_unlock(&LOCK_system_variables_hash);
-    LEX *lex= session ? session->lex : 0;
-    if (!(plugin= intern_plugin_lock(lex, plugin_int_to_ref(pi->plugin))))
+    if (!(plugin= intern_plugin_lock(plugin_int_to_ref(pi->plugin))))
       var= NULL; /* failed to lock it, it must be uninstalling */
     else if (plugin[0]->isInited == false)
     {
@@ -1676,7 +1673,7 @@ void plugin_sessionvar_init(Session *session)
   session->variables.dynamic_variables_ptr= 0;
 
   session->variables.table_plugin=
-    intern_plugin_lock(NULL, global_system_variables.table_plugin);
+    intern_plugin_lock(global_system_variables.table_plugin);
 }
 
 

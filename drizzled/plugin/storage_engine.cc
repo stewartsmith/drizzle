@@ -95,7 +95,7 @@ redo:
                            (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
     return ha_default_plugin(session);
 
-  if ((plugin= plugin_lock_by_name(session, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
+  if ((plugin= plugin_lock_by_name(name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
     StorageEngine *engine= plugin_data(plugin, StorageEngine *);
     if (!(engine->flags.test(HTON_BIT_NOT_USER_SELECTABLE)))
@@ -125,7 +125,7 @@ plugin_ref ha_lock_engine(Session *, StorageEngine *engine)
 {
   if (engine)
   {
-    st_plugin_int **plugin= engine2plugin + engine->slot;
+    st_plugin_int **plugin= &(engine2plugin[engine->slot]);
 
     return plugin;
   }
@@ -195,7 +195,7 @@ int storage_engine_initializer(st_plugin_int *plugin)
       engine->savepoint_offset= savepoint_alloc_size;
       savepoint_alloc_size+= tmp;
       engine->slot= total_ha++;
-      engine2plugin[engine->slot]=plugin;
+      engine2plugin[engine->slot]= plugin;
       if (engine->has_2pc())
         total_ha_2pc++;
       break;
