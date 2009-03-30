@@ -28,8 +28,8 @@
  * drizzled namespace
  */
 namespace drizzled {
-  using namspace tbb;
-};
+  using namespace tbb;
+}
 #else
 
 # if defined(__SUNPRO_CC)
