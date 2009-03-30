@@ -30,12 +30,6 @@ fi
 
 gl_EARLY
 
-# See the libtool docs for information on how to do shared lib versions.
-SHARED_LIB_MAJOR_VERSION=1
-SHARED_LIB_VERSION=$SHARED_LIB_MAJOR_VERSION:0:0
-AC_SUBST(SHARED_LIB_MAJOR_VERSION)
-AC_SUBST(SHARED_LIB_VERSION)
-
 
 dnl Checks for programs.
 AC_PROG_CXX
@@ -335,16 +329,6 @@ AC_CXX_CINTTYPES
 AC_CXX_SHARED_PTR
 
 DRIZZLE_PROG_AR
-
-# libdrizzle versioning when linked with GNU ld.
-if test "x$EGREP" != "x"
-then
-  if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|${EGREP} -q GNU
-  then
-    LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzleclient/libdrizzleclient.ver"
-  fi
-fi
-AC_SUBST(LD_VERSION_SCRIPT)
 
 AC_LIB_PREFIX
 
