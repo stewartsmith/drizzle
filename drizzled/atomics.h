@@ -32,10 +32,11 @@
 #  include <drizzled/atomic/gcc_traits.h>
 #  define ATOMIC_TRAITS internal::gcc_traits
 # else  /* use pthread impl */
-#  include <pthread.h>
-#  include <drizzled/atomic/pthread_traits.h>
 #  define ATOMIC_TRAITS internal::pthread_traits
 # endif
+
+# include <pthread.h>
+# include <drizzled/atomic/pthread_traits.h>
 
 
 namespace tbb {
@@ -144,8 +145,7 @@ struct atomic {
     T operator=( T rhs ) { return store_with_release(rhs); }            \
   };
 
-__TBB_DECL_ATOMIC(long long)
-__TBB_DECL_ATOMIC(unsigned long long)
+
 __TBB_DECL_ATOMIC(long)
 __TBB_DECL_ATOMIC(unsigned long)
 __TBB_DECL_ATOMIC(unsigned int)
@@ -156,7 +156,24 @@ __TBB_DECL_ATOMIC(char)
 __TBB_DECL_ATOMIC(signed char)
 __TBB_DECL_ATOMIC(unsigned char)
 
+/* 32-bit platforms don't have a GCC atomic operation for 64-bit types,
+ * so we'll use pthread locks to handler 64-bit types on that platforms
+ */
+#  if SIZEOF_SIZE_T >= SIZEOF_LONG_LONG
+__TBB_DECL_ATOMIC(long long)
+__TBB_DECL_ATOMIC(unsigned long long)
+#  else
+#   define __TBB_DECL_ATOMIC64(T)                                            \
+  template<> struct atomic<T>                                           \
+  : internal::atomic_impl<T,T,internal::pthread_traits<T,T> > {                    \
+    atomic<T>() : internal::atomic_impl<T,T,internal::pthread_traits<T,T> >() {}   \
+    T operator=( T rhs ) { return store_with_release(rhs); }            \
+  };
+__TBB_DECL_ATOMIC64(long long)
+__TBB_DECL_ATOMIC64(unsigned long long)
+#  endif
+
 }
-#endif /* defined(HAVE_LIBTBB) */
+# endif /* defined(HAVE_LIBTBB) */
 
 #endif /* DRIZZLED_ATOMIC_H */
