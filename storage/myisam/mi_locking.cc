@@ -42,6 +42,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 
   if (lock_type == F_EXTRA_LCK)                 /* Used by TMP tables */
   {
+    pthread_mutex_unlock(&share->intern_lock);
     ++share->w_locks;
     ++share->tot_locks;
     info->lock_type= lock_type;
