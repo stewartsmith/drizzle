@@ -35,12 +35,11 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   uint32_t count;
   MYISAM_SHARE *share=info->s;
   uint32_t flag;
+
+  pthread_mutex_lock(&share->intern_lock);
   if (!info->s->in_use)
     info->s->in_use= new list<Session *>;
 
-  if (share->options & HA_OPTION_READ_ONLY_DATA ||
-      info->lock_type == lock_type)
-    return(0);
   if (lock_type == F_EXTRA_LCK)                 /* Used by TMP tables */
   {
     ++share->w_locks;
@@ -51,7 +50,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   }
 
   flag=error=0;
-  pthread_mutex_lock(&share->intern_lock);
   if (share->kfile >= 0)		/* May only be false on windows */
   {
     switch (lock_type) {
