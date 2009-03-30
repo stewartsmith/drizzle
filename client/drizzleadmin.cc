@@ -47,8 +47,8 @@ static void print_version(void);
 extern "C" void endprog(int signal_number);
 extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                char *argument);
-static int execute_commands(DRIZZLE *drizzle,int argc, char **argv);
-static bool sql_connect(DRIZZLE *drizzle, uint32_t wait);
+static int execute_commands(drizzle_con_st *con,int argc, char **argv);
+static bool sql_connect(drizzle_con_st *con, uint32_t wait);
 
 /*
   The order of commands must be the same as command_names,
@@ -196,11 +196,13 @@ get_one_option(int optid, const struct my_option *, char *argument)
 int main(int argc,char *argv[])
 {
   int error= 0, ho_error;
-  DRIZZLE drizzle;
+  drizzle_st drizzle;
+  drizzle_con_st con;
   char **commands, **save_argv;
 
   MY_INIT(argv[0]);
-  drizzleclient_create(&drizzle);
+  drizzle_create(&drizzle);
+  drizzle_con_create(&drizzle, &con);
   load_defaults("drizzle",load_default_groups,&argc,&argv);
   save_argv = argv;				/* Save for free_defaults */
   if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
@@ -217,40 +219,37 @@ int main(int argc,char *argv[])
 
   commands = argv;
   if (tty_password)
-    opt_password = drizzleclient_get_tty_password(NULL);
+    opt_password = client_get_tty_password(NULL);
 
   signal(SIGINT,endprog);			/* Here if abort */
   signal(SIGTERM,endprog);		/* Here if abort */
 
+/* XXX
   if (opt_connect_timeout)
   {
     uint32_t tmp=opt_connect_timeout;
     drizzleclient_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT, (char*) &tmp);
   }
+*/
 
-  if (sql_connect(&drizzle, option_wait))
+  if (sql_connect(&con, option_wait))
   {
-    unsigned int err= drizzleclient_errno(&drizzle);
-    if (err >= CR_MIN_ERROR && err <= CR_MAX_ERROR)
-      error= 1;
-    else
+    /* Return 0 if all commands are PING */
+    for (; argc > 0; argv++, argc--)
     {
-      /* Return 0 if all commands are PING */
-      for (; argc > 0; argv++, argc--)
+      if (find_type(argv[0], &command_typelib, 2) != ADMIN_PING)
       {
-        if (find_type(argv[0], &command_typelib, 2) != ADMIN_PING)
-        {
-          error= 1;
-          break;
-        }
+        error= 1;
+        break;
       }
     }
   }
   else
   {
-    error=execute_commands(&drizzle,argc,commands);
-    drizzleclient_close(&drizzle);
+    error=execute_commands(&con,argc,commands);
   }
+  drizzle_con_free(&con);
+  drizzle_free(&drizzle);
   free(opt_password);
   free(user);
   free_defaults(save_argv);
@@ -263,15 +262,19 @@ void endprog(int)
   interrupted=1;
 }
 
-static bool sql_connect(DRIZZLE *drizzle, uint32_t wait)
+static bool sql_connect(drizzle_con_st *con, uint32_t wait)
 {
   bool info=0;
+  drizzle_return_t ret;
+
+  drizzle_con_set_tcp(con, host, tcp_port);
+  drizzle_con_set_auth(con, user, opt_password);
 
   for (;;)
   {
-    if (drizzleclient_connect(drizzle,host,user,opt_password,NULL,tcp_port,NULL,0))
+    ret= drizzle_con_connect(con);
+    if (ret == DRIZZLE_RETURN_OK)
     {
-      drizzle->reconnect= 1;
       if (info)
       {
         fputs("\n",stderr);
@@ -285,29 +288,29 @@ static bool sql_connect(DRIZZLE *drizzle, uint32_t wait)
       if (!option_silent)
       {
         if (!host)
-          host= (char*) LOCAL_HOST;
+          host= (char *)DRIZZLE_DEFAULT_TCP_HOST;
 
         fprintf(stderr,_("connect to server at '%s' failed\nerror: '%s'"),
-                host, drizzleclient_error(drizzle));
+                host, drizzle_con_error(con));
 
-        if (drizzleclient_errno(drizzle) == CR_CONN_HOST_ERROR ||
-          drizzleclient_errno(drizzle) == CR_UNKNOWN_HOST)
+        if (ret == DRIZZLE_RETURN_GETADDRINFO ||
+            ret == DRIZZLE_RETURN_COULD_NOT_CONNECT)
         {
           fprintf(stderr,_("Check that drizzled is running on %s"),host);
           fprintf(stderr,_(" and that the port is %d.\n"),
-          tcp_port ? tcp_port: drizzleclient_get_default_port());
+          tcp_port ? tcp_port: DRIZZLE_DEFAULT_TCP_PORT);
           fprintf(stderr,_("You can check this by doing 'telnet %s %d'\n"),
-                  host, tcp_port ? tcp_port: drizzleclient_get_default_port());
+                  host, tcp_port ? tcp_port: DRIZZLE_DEFAULT_TCP_PORT);
         }
       }
       return 1;
     }
     if (wait != UINT32_MAX)
       wait--;				/* One less retry */
-    if ((drizzleclient_errno(drizzle) != CR_CONN_HOST_ERROR) &&
-        (drizzleclient_errno(drizzle) != CR_CONNECTION_ERROR))
+    if (ret != DRIZZLE_RETURN_GETADDRINFO &&
+        ret != DRIZZLE_RETURN_COULD_NOT_CONNECT)
     {
-      fprintf(stderr,_("Got error: %s\n"), drizzleclient_error(drizzle));
+      fprintf(stderr,_("Got error: %s\n"), drizzle_con_error(con));
     }
     else if (!option_silent)
     {
@@ -333,8 +336,10 @@ static bool sql_connect(DRIZZLE *drizzle, uint32_t wait)
 	 -1 on retryable error
 	 1 on fatal error
 */
-static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
+static int execute_commands(drizzle_con_st *con,int argc, char **argv)
 {
+  drizzle_result_st result;
+  drizzle_return_t ret;
 
   /*
     DRIZZLE documentation relies on the fact that drizzleadmin will
@@ -349,14 +354,25 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       if (opt_verbose)
         printf(_("shutting down drizzled...\n"));
 
-      if (drizzleclient_shutdown(drizzle))
+      if (drizzle_shutdown(con, &result, DRIZZLE_SHUTDOWN_DEFAULT,
+                           &ret) == NULL ||
+          ret != DRIZZLE_RETURN_OK)
       {
-        fprintf(stderr, _("shutdown failed; error: '%s'"),
-                drizzleclient_error(drizzle));
+        if (ret == DRIZZLE_RETURN_ERROR_CODE)
+        {
+          fprintf(stderr, _("shutdown failed; error: '%s'"),
+                  drizzle_result_error(&result));
+          drizzle_result_free(&result);
+        }
+        else
+        {
+          fprintf(stderr, _("shutdown failed; error: '%s'"),
+                  drizzle_con_error(con));
+        }
         return -1;
       }
-      drizzleclient_close(drizzle);	/* Close connection to avoid error messages */
 
+      drizzle_result_free(&result);
       if (opt_verbose)
         printf(_("done\n"));
 
@@ -364,28 +380,38 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       break;
     }
     case ADMIN_PING:
-      drizzle->reconnect=0;	/* We want to know of reconnects */
-      if (!drizzleclient_ping(drizzle))
+      if (drizzle_ping(con, &result, &ret) != NULL && ret == DRIZZLE_RETURN_OK)
       {
         if (option_silent < 2)
           puts(_("drizzled is alive"));
       }
       else
       {
-        if (drizzleclient_errno(drizzle) == CR_SERVER_GONE_ERROR)
+        if (ret == DRIZZLE_RETURN_SERVER_GONE)
         {
-          drizzle->reconnect=1;
-          if (!drizzleclient_ping(drizzle))
+          if (drizzle_ping(con, &result, &ret) != NULL &&
+              ret == DRIZZLE_RETURN_OK)
+          {
             puts(_("connection was down, but drizzled is now alive"));
+          }
         }
         else
-	      {
-          fprintf(stderr,_("drizzled doesn't answer to ping, error: '%s'"),
-                  drizzleclient_error(drizzle));
+	{
+          if (ret == DRIZZLE_RETURN_ERROR_CODE)
+          {
+            fprintf(stderr, _("shutdown failed; error: '%s'"),
+                    drizzle_result_error(&result));
+            drizzle_result_free(&result);
+          }
+          else
+          {
+            fprintf(stderr,_("drizzled doesn't answer to ping, error: '%s'"),
+                    drizzle_con_error(con));
+          }
           return -1;
         }
       }
-      drizzle->reconnect=1;	/* Automatic reconnect is default */
+      drizzle_result_free(&result);
       break;
 
     default:
@@ -399,7 +425,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
 static void print_version(void)
 {
   printf(_("%s  Ver %s Distrib %s, for %s on %s\n"),my_progname,ADMIN_VERSION,
-	 drizzleclient_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
+	 drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 static void usage(void)

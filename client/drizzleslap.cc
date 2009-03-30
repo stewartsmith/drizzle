@@ -140,9 +140,6 @@ static bool opt_compress= false, tty_password= false,
   auto_generate_sql= false;
 const char *opt_auto_generate_sql_type= "mixed";
 
-static unsigned long connect_flags= CLIENT_MULTI_RESULTS |
-  CLIENT_MULTI_STATEMENTS;
-
 static int verbose, delimiter_length;
 static uint32_t commit_rate;
 static uint32_t detach_rate;
@@ -275,15 +272,15 @@ void generate_stats(conclusions *con, option_string *eng, stats *sptr);
 uint32_t parse_comma(const char *string, uint32_t **range);
 uint32_t parse_delimiter(const char *script, statement **stmt, char delm);
 uint32_t parse_option(const char *origin, option_string **stmt, char delm);
-static int drop_schema(DRIZZLE *drizzle, const char *db);
+static int drop_schema(drizzle_con_st *con, const char *db);
 uint32_t get_random_string(char *buf, size_t size);
 static statement *build_table_string(void);
 static statement *build_insert_string(void);
 static statement *build_update_string(void);
 static statement * build_select_string(bool key);
-static int generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt);
+static int generate_primary_key_list(drizzle_con_st *con, option_string *engine_stmt);
 static int drop_primary_key_list(void);
-static int create_schema(DRIZZLE *drizzle, const char *db, statement *stmt,
+static int create_schema(drizzle_con_st *con, const char *db, statement *stmt,
                          option_string *engine_stmt, stats *sptr);
 static int run_scheduler(stats *sptr, statement **stmts, uint32_t concur,
                          uint64_t limit);
@@ -291,11 +288,11 @@ extern "C" pthread_handler_t run_task(void *p);
 extern "C" pthread_handler_t timer_thread(void *p);
 void statement_cleanup(statement *stmt);
 void option_cleanup(option_string *stmt);
-void concurrency_loop(DRIZZLE *drizzle, uint32_t current, option_string *eptr);
-static int run_statements(DRIZZLE *drizzle, statement *stmt);
-void slap_connect(DRIZZLE *drizzle, bool connect_to_schema);
-void slap_close(DRIZZLE *drizzle);
-static int run_query(DRIZZLE *drizzle, const char *query, int len);
+void concurrency_loop(drizzle_con_st *con, uint32_t current, option_string *eptr);
+static int run_statements(drizzle_con_st *con, statement *stmt);
+void slap_connect(drizzle_con_st *con, bool connect_to_schema);
+void slap_close(drizzle_con_st *con);
+static int run_query(drizzle_con_st *con, drizzle_result_st *result, const char *query, int len);
 void standard_deviation (conclusions *con, stats *sptr);
 
 static const char ALPHANUMERICS[]=
@@ -317,7 +314,7 @@ static long int timedif(struct timeval a, struct timeval b)
 
 int main(int argc, char **argv)
 {
-  DRIZZLE drizzle;
+  drizzle_con_st con;
   option_string *eptr;
   unsigned int x;
 
@@ -353,7 +350,7 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  slap_connect(&drizzle, false);
+  slap_connect(&con, false);
 
   pthread_mutex_init(&counter_mutex, NULL);
   pthread_cond_init(&count_threshhold, NULL);
@@ -377,19 +374,19 @@ burnin:
     if (*concurrency)
     {
       for (current= concurrency; current && *current; current++)
-        concurrency_loop(&drizzle, *current, eptr);
+        concurrency_loop(&con, *current, eptr);
     }
     else
     {
       uint32_t infinite= 1;
       do {
-        concurrency_loop(&drizzle, infinite, eptr);
+        concurrency_loop(&con, infinite, eptr);
       }
       while (infinite++);
     }
 
     if (!opt_preserve)
-      drop_schema(&drizzle, create_schema_string);
+      drop_schema(&con, create_schema_string);
 
   } while (eptr ? (eptr= eptr->next) : 0);
 
@@ -403,7 +400,7 @@ burnin:
   pthread_mutex_destroy(&timer_alarm_mutex);
   pthread_cond_destroy(&timer_alarm_threshold);
 
-  slap_close(&drizzle);
+  slap_close(&con);
 
   /* now free all the strings we created */
   if (opt_password)
@@ -430,7 +427,7 @@ burnin:
   return 0;
 }
 
-void concurrency_loop(DRIZZLE *drizzle, uint32_t current, option_string *eptr)
+void concurrency_loop(drizzle_con_st *con, uint32_t current, option_string *eptr)
 {
   unsigned int x;
   stats *head_sptr;
@@ -463,11 +460,11 @@ void concurrency_loop(DRIZZLE *drizzle, uint32_t current, option_string *eptr)
       data in the table.
     */
     if (opt_preserve == false)
-      drop_schema(drizzle, create_schema_string);
+      drop_schema(con, create_schema_string);
 
     /* First we create */
     if (create_statements)
-      create_schema(drizzle, create_schema_string, create_statements, eptr, sptr);
+      create_schema(con, create_schema_string, create_statements, eptr, sptr);
 
     /*
       If we generated GUID we need to build a list of them from creation that
@@ -476,10 +473,10 @@ void concurrency_loop(DRIZZLE *drizzle, uint32_t current, option_string *eptr)
     if (verbose >= 2)
       printf("Generating primary key list\n");
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
-      generate_primary_key_list(drizzle, eptr);
+      generate_primary_key_list(con, eptr);
 
     if (commit_rate)
-      run_query(drizzle, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
+      run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
     if (pre_system)
       assert(system(pre_system)!=-1);
@@ -489,12 +486,12 @@ void concurrency_loop(DRIZZLE *drizzle, uint32_t current, option_string *eptr)
       correct/adjust any item that they want.
     */
     if (pre_statements)
-      run_statements(drizzle, pre_statements);
+      run_statements(con, pre_statements);
 
     run_scheduler(sptr, query_statements, current, client_limit);
 
     if (post_statements)
-      run_statements(drizzle, post_statements);
+      run_statements(con, post_statements);
 
     if (post_system)
       assert(system(post_system)!=-1);
@@ -711,7 +708,7 @@ static struct my_option my_long_options[] =
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname, SLAP_VERSION,
-         drizzleclient_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
+         drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 
@@ -1742,13 +1739,17 @@ get_options(int *argc,char ***argv)
     parse_option(default_engine, &engine_options, ',');
 
   if (tty_password)
-    opt_password= drizzleclient_get_tty_password(NULL);
+    opt_password= client_get_tty_password(NULL);
   return(0);
 }
 
 
-static int run_query(DRIZZLE *drizzle, const char *query, int len)
+static int run_query(drizzle_con_st *con, drizzle_result_st *result,
+                     const char *query, int len)
 {
+  drizzle_return_t ret;
+  drizzle_result_st result_buffer;
+
   if (opt_only_print)
   {
     printf("%.*s;\n", len, query);
@@ -1757,15 +1758,27 @@ static int run_query(DRIZZLE *drizzle, const char *query, int len)
 
   if (verbose >= 3)
     printf("%.*s;\n", len, query);
-  return drizzleclient_real_query(drizzle, query, len);
+
+  if (result == NULL)
+    result= &result_buffer;
+
+  result= drizzle_query(con, result, query, len, &ret);
+
+  if (ret == DRIZZLE_RETURN_OK)
+    ret= drizzle_result_buffer(result);
+
+  if (result == &result_buffer)
+    drizzle_result_free(result);
+    
+  return ret;
 }
 
 
 static int
-generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
+generate_primary_key_list(drizzle_con_st *con, option_string *engine_stmt)
 {
-  DRIZZLE_RES *result;
-  DRIZZLE_ROW row;
+  drizzle_result_st result;
+  drizzle_row_t row;
   uint64_t counter;
 
 
@@ -1796,15 +1809,14 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
   }
   else
   {
-    if (run_query(drizzle, "SELECT id from t1", strlen("SELECT id from t1")))
+    if (run_query(con, &result, "SELECT id from t1", strlen("SELECT id from t1")))
     {
       fprintf(stderr,"%s: Cannot select GUID primary keys. (%s)\n", my_progname,
-              drizzleclient_error(drizzle));
+              drizzle_con_error(con));
       exit(1);
     }
 
-    result= drizzleclient_store_result(drizzle);
-    uint64_t num_rows_ret= drizzleclient_num_rows(result);
+    uint64_t num_rows_ret= drizzle_result_row_count(&result);
     if (num_rows_ret > SIZE_MAX)
     {
       fprintf(stderr, "More primary keys than than architecture supports\n");
@@ -1826,9 +1838,9 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
         exit(1);
       }
       memset(primary_keys, 0, (size_t)(sizeof(char *) * primary_keys_number_of));
-      row= drizzleclient_fetch_row(result);
+      row= drizzle_row_next(&result);
       for (counter= 0; counter < primary_keys_number_of;
-           counter++, row= drizzleclient_fetch_row(result))
+           counter++, row= drizzle_row_next(&result))
       {
         primary_keys[counter]= strdup(row[0]);
         if (primary_keys[counter] == NULL)
@@ -1839,7 +1851,7 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
       }
     }
 
-    drizzleclient_free_result(result);
+    drizzle_result_free(&result);
   }
 
   return(0);
@@ -1862,7 +1874,7 @@ drop_primary_key_list(void)
 }
 
 static int
-create_schema(DRIZZLE *drizzle, const char *db, statement *stmt,
+create_schema(drizzle_con_st *con, const char *db, statement *stmt,
               option_string *engine_stmt, stats *sptr)
 {
   char query[HUGE_STRING_LENGTH];
@@ -1880,10 +1892,10 @@ create_schema(DRIZZLE *drizzle, const char *db, statement *stmt,
   if (verbose >= 2)
     printf("Loading Pre-data\n");
 
-  if (run_query(drizzle, query, len))
+  if (run_query(con, NULL, query, len))
   {
     fprintf(stderr,"%s: Cannot create schema %s : %s\n", my_progname, db,
-            drizzleclient_error(drizzle));
+            drizzle_con_error(con));
     exit(1);
   }
   else
@@ -1897,15 +1909,21 @@ create_schema(DRIZZLE *drizzle, const char *db, statement *stmt,
   }
   else
   {
+    drizzle_result_st result;
+    drizzle_return_t ret;
+
     if (verbose >= 3)
       printf("%s;\n", query);
 
-    if (drizzleclient_select_db(drizzle,  db))
+    if (drizzle_select_db(con,  &result, db, &ret) == NULL ||
+        ret != DRIZZLE_RETURN_OK)
     {
       fprintf(stderr,"%s: Cannot select schema '%s': %s\n",my_progname, db,
-              drizzleclient_error(drizzle));
+              ret == DRIZZLE_RETURN_ERROR_CODE ?
+              drizzle_result_error(&result) : drizzle_con_error(con));
       exit(1);
     }
+    drizzle_result_free(&result);
     sptr->create_count++;
   }
 
@@ -1913,10 +1931,10 @@ create_schema(DRIZZLE *drizzle, const char *db, statement *stmt,
   {
     len= snprintf(query, HUGE_STRING_LENGTH, "set storage_engine=`%s`",
                   engine_stmt->string);
-    if (run_query(drizzle, query, len))
+    if (run_query(con, NULL, query, len))
     {
       fprintf(stderr,"%s: Cannot set default engine: %s\n", my_progname,
-              drizzleclient_error(drizzle));
+              drizzle_con_error(con));
       exit(1);
     }
     sptr->create_count++;
@@ -1937,10 +1955,10 @@ limit_not_met:
 
       snprintf(buffer, HUGE_STRING_LENGTH, "%s %s", ptr->string,
                engine_stmt->option);
-      if (run_query(drizzle, buffer, strlen(buffer)))
+      if (run_query(con, NULL, buffer, strlen(buffer)))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint32_t)ptr->length, ptr->string, drizzleclient_error(drizzle));
+                my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
@@ -1948,10 +1966,10 @@ limit_not_met:
     }
     else
     {
-      if (run_query(drizzle, ptr->string, ptr->length))
+      if (run_query(con, NULL, ptr->string, ptr->length))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint32_t)ptr->length, ptr->string, drizzleclient_error(drizzle));
+                my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
@@ -1974,17 +1992,17 @@ limit_not_met:
 }
 
 static int
-drop_schema(DRIZZLE *drizzle, const char *db)
+drop_schema(drizzle_con_st *con, const char *db)
 {
   char query[HUGE_STRING_LENGTH];
   int len;
 
   len= snprintf(query, HUGE_STRING_LENGTH, "DROP SCHEMA IF EXISTS `%s`", db);
 
-  if (run_query(drizzle, query, len))
+  if (run_query(con, NULL, query, len))
   {
     fprintf(stderr,"%s: Cannot drop database '%s' ERROR : %s\n",
-            my_progname, db, drizzleclient_error(drizzle));
+            my_progname, db, drizzle_con_error(con));
     exit(1);
   }
 
@@ -1994,27 +2012,17 @@ drop_schema(DRIZZLE *drizzle, const char *db)
 }
 
 static int
-run_statements(DRIZZLE *drizzle, statement *stmt)
+run_statements(drizzle_con_st *con, statement *stmt)
 {
   statement *ptr;
-  DRIZZLE_RES *result;
-
 
   for (ptr= stmt; ptr && ptr->length; ptr= ptr->next)
   {
-    if (run_query(drizzle, ptr->string, ptr->length))
+    if (run_query(con, NULL, ptr->string, ptr->length))
     {
       fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-              my_progname, (uint32_t)ptr->length, ptr->string, drizzleclient_error(drizzle));
+              my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
       exit(1);
-    }
-    if (!opt_only_print)
-    {
-      if (drizzleclient_field_count(drizzle))
-      {
-        result= drizzleclient_store_result(drizzle);
-        drizzleclient_free_result(result);
-      }
     }
   }
 
@@ -2172,11 +2180,11 @@ pthread_handler_t run_task(void *p)
   uint64_t counter= 0, queries;
   uint64_t detach_counter;
   unsigned int commit_counter;
-  DRIZZLE drizzle;
-  DRIZZLE_RES *result;
-  DRIZZLE_ROW row;
+  drizzle_con_st con;
+  drizzle_result_st result;
+  drizzle_row_t row;
   statement *ptr;
-  thread_context *con= (thread_context *)p;
+  thread_context *ctx= (thread_context *)p;
 
   pthread_mutex_lock(&sleeper_mutex);
   while (master_wakeup)
@@ -2185,7 +2193,7 @@ pthread_handler_t run_task(void *p)
   }
   pthread_mutex_unlock(&sleeper_mutex);
 
-  slap_connect(&drizzle, true);
+  slap_connect(&con, true);
 
   if (verbose >= 3)
     printf("connected!\n");
@@ -2193,17 +2201,17 @@ pthread_handler_t run_task(void *p)
 
   commit_counter= 0;
   if (commit_rate)
-    run_query(&drizzle, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
+    run_query(&con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
 limit_not_met:
-  for (ptr= con->stmt, detach_counter= 0;
+  for (ptr= ctx->stmt, detach_counter= 0;
        ptr && ptr->length;
        ptr= ptr->next, detach_counter++)
   {
     if (!opt_only_print && detach_rate && !(detach_counter % detach_rate))
     {
-      slap_close(&drizzle);
-      slap_connect(&drizzle, true);
+      slap_close(&con);
+      slap_connect(&con, true);
     }
 
     /*
@@ -2235,43 +2243,36 @@ limit_not_met:
         length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
                          (int)ptr->length, ptr->string, key);
 
-        if (run_query(&drizzle, buffer, length))
+        if (run_query(&con, &result, buffer, length))
         {
           fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                  my_progname, (uint32_t)length, buffer, drizzleclient_error(&drizzle));
+                  my_progname, (uint32_t)length, buffer, drizzle_con_error(&con));
           exit(1);
         }
       }
     }
     else
     {
-      if (run_query(&drizzle, ptr->string, ptr->length))
+      if (run_query(&con, &result, ptr->string, ptr->length))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint32_t)ptr->length, ptr->string, drizzleclient_error(&drizzle));
+                my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(&con));
         exit(1);
       }
     }
 
     if (!opt_only_print)
     {
-      do
-      {
-        if (drizzleclient_field_count(&drizzle))
-        {
-          result= drizzleclient_store_result(&drizzle);
-          while ((row = drizzleclient_fetch_row(result)))
-            counter++;
-          drizzleclient_free_result(result);
-        }
-      } while(drizzleclient_next_result(&drizzle) == 0);
+      while ((row = drizzle_row_next(&result)))
+        counter++;
+      drizzle_result_free(&result);
     }
     queries++;
 
     if (commit_rate && (++commit_counter == commit_rate))
     {
       commit_counter= 0;
-      run_query(&drizzle, "COMMIT", strlen("COMMIT"));
+      run_query(&con, NULL, "COMMIT", strlen("COMMIT"));
     }
 
     /* If the timer is set, and the alarm is not active then end */
@@ -2279,29 +2280,29 @@ limit_not_met:
       goto end;
 
     /* If limit has been reached, and we are not in a timer_alarm just end */
-    if (con->limit && queries == con->limit && timer_alarm == false)
+    if (ctx->limit && queries == ctx->limit && timer_alarm == false)
       goto end;
   }
 
   if (opt_timer_length && timer_alarm == true)
     goto limit_not_met;
 
-  if (con->limit && queries < con->limit)
+  if (ctx->limit && queries < ctx->limit)
     goto limit_not_met;
 
 
 end:
   if (commit_rate)
-    run_query(&drizzle, "COMMIT", strlen("COMMIT"));
+    run_query(&con, NULL, "COMMIT", strlen("COMMIT"));
 
-  slap_close(&drizzle);
+  slap_close(&con);
 
   pthread_mutex_lock(&counter_mutex);
   thread_counter--;
   pthread_cond_signal(&count_threshhold);
   pthread_mutex_unlock(&counter_mutex);
 
-  free(con);
+  free(ctx);
 
   return(0);
 }
@@ -2663,20 +2664,22 @@ statement_cleanup(statement *stmt)
 }
 
 void
-slap_close(DRIZZLE *drizzle)
+slap_close(drizzle_con_st *con)
 {
   if (opt_only_print)
     return;
 
-  drizzleclient_close(drizzle);
+  drizzle_free(drizzle_con_drizzle(con));
 }
 
 void
-slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
+slap_connect(drizzle_con_st *con, bool connect_to_schema)
 {
   /* Connect to server */
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
   int x, connect_error= 1;
+  drizzle_return_t ret;
+  drizzle_st *drizzle;
 
   if (opt_only_print)
     return;
@@ -2684,20 +2687,19 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
   if (opt_delayed_start)
     usleep(random()%opt_delayed_start);
 
-  drizzleclient_create(drizzle);
-
-  if (opt_compress)
-    drizzleclient_options(drizzle,DRIZZLE_OPT_COMPRESS,NULL);
+  if ((drizzle= drizzle_create(NULL)) == NULL ||
+      drizzle_con_add_tcp(drizzle, con, host, opt_drizzle_port, user,
+                          opt_password,
+                          connect_to_schema ? create_schema_string : NULL,
+                          DRIZZLE_CON_NONE) == NULL)
+  {
+    fprintf(stderr,"%s: Error creating drizzle object\n", my_progname);
+    exit(1);
+  }
 
   for (x= 0; x < 10; x++)
   {
-
-
-    if (drizzleclient_connect(drizzle, host, user, opt_password,
-                        connect_to_schema ? create_schema_string : NULL,
-                        opt_drizzle_port,
-                        opt_drizzle_unix_port,
-                        connect_flags))
+    if ((ret= drizzle_con_connect(con)) == DRIZZLE_RETURN_OK)
     {
       /* Connect suceeded */
       connect_error= 0;
@@ -2707,8 +2709,8 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
   }
   if (connect_error)
   {
-    fprintf(stderr,"%s: Error when connecting to server: %d %s\n",
-            my_progname, drizzleclient_errno(drizzle), drizzleclient_error(drizzle));
+    fprintf(stderr,"%s: Error when connecting to server: %d %s\n", my_progname,
+            ret, drizzle_con_error(con));
     exit(1);
   }
 
