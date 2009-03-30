@@ -16,13 +16,12 @@
 /* Common defines for all clients */
 
 #include <drizzled/global.h>
+#include <libdrizzle/drizzle_client.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <libdrizzleclient/libdrizzle.h>
-#include <libdrizzleclient/errmsg.h>
-#include <libdrizzleclient/password.h>
-#include <libdrizzleclient/get_password.h>
 #include <mysys/my_getopt.h>
+
+#include "get_password.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -35,7 +34,6 @@
 # endif
 #endif
 
-
 enum options_client
 {
   OPT_CHARSETS_DIR=256, OPT_DEFAULT_CHARSET,
@@ -45,7 +43,7 @@ enum options_client
   OPT_FTB, OPT_LTB, OPT_ENC, OPT_O_ENC, OPT_ESC, OPT_TABLES,
   OPT_MASTER_DATA, OPT_AUTOCOMMIT, OPT_AUTO_REHASH,
   OPT_LINE_NUMBERS, OPT_COLUMN_NAMES, OPT_CONNECT_TIMEOUT,
-  OPT_MAX_ALLOWED_PACKET, OPT_NET_BUFFER_LENGTH,
+  OPT_MAX_INPUT_LINE,
   OPT_SELECT_LIMIT, OPT_MAX_JOIN_SIZE, OPT_SSL_SSL,
   OPT_SSL_KEY, OPT_SSL_CERT, OPT_SSL_CA, OPT_SSL_CAPATH,
   OPT_SSL_CIPHER, OPT_SHUTDOWN_TIMEOUT, OPT_LOCAL_INFILE,

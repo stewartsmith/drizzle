@@ -192,9 +192,10 @@ HASH var_hash;
 
 struct st_connection
 {
-  DRIZZLE drizzle;
+  drizzle_st *drizzle;
+  drizzle_con_st con;
   /* Used when creating views and sp, to avoid implicit commit */
-  DRIZZLE *util_drizzle;
+  drizzle_con_st *util_con;
   char *name;
 };
 struct st_connection connections[128];
@@ -351,7 +352,7 @@ struct st_match_err
   union
   {
     uint32_t errnum;
-    char sqlstate[SQLSTATE_LENGTH+1];  /* \0 terminated string */
+    char sqlstate[DRIZZLE_MAX_SQLSTATE_SIZE+1];  /* \0 terminated string */
   } code;
 };
 
@@ -443,8 +444,6 @@ void handle_error(struct st_command*,
                   const char *err_sqlstate, string *ds);
 void handle_no_error(struct st_command*);
 
-
-#define do_send_query(cn,q,q_len,flags) drizzleclient_send_query(&cn->drizzle, q, q_len)
 
 void do_eval(string *query_eval, const char *query,
              const char *query_end, bool pass_through_escape_chars)
@@ -559,45 +558,60 @@ void append_os_quoted(string *str, const char *append, ...)
 
 */
 
-static void show_query(DRIZZLE *drizzle, const char* query)
+static void show_query(drizzle_con_st *con, const char* query)
 {
-  DRIZZLE_RES* res;
+  drizzle_result_st res;
+  drizzle_return_t ret;
 
-
-  if (!drizzle)
+  if (!con)
     return;
 
-  if (drizzleclient_query(drizzle, query))
+  if (drizzle_query_str(con, &res, query, &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
   {
-    log_msg("Error running query '%s': %d %s",
-            query, drizzleclient_errno(drizzle), drizzleclient_error(drizzle));
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      log_msg("Error running query '%s': %d %s",
+              query, drizzle_result_error_code(&res),
+              drizzle_result_error(&res));
+      drizzle_result_free(&res);
+    }
+    else
+    {
+      log_msg("Error running query '%s': %d %s",
+              query, ret, drizzle_con_error(con));
+    }
     return;
   }
 
-  if ((res= drizzleclient_store_result(drizzle)) == NULL)
+  if (drizzle_result_column_count(&res) == 0 ||
+      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
   {
     /* No result set returned */
+    drizzle_result_free(&res);
     return;
   }
 
   {
-    DRIZZLE_ROW row;
+    drizzle_row_t row;
     unsigned int i;
     unsigned int row_num= 0;
-    unsigned int num_fields= drizzleclient_num_fields(res);
-    const DRIZZLE_FIELD *fields= drizzleclient_fetch_fields(res);
+    unsigned int num_fields= drizzle_result_column_count(&res);
+    drizzle_column_st *column;
 
     fprintf(stderr, "=== %s ===\n", query);
-    while ((row= drizzleclient_fetch_row(res)))
+    while ((row= drizzle_row_next(&res)))
     {
-      uint32_t *lengths= drizzleclient_fetch_lengths(res);
+      size_t *lengths= drizzle_row_field_sizes(&res);
       row_num++;
 
       fprintf(stderr, "---- %d. ----\n", row_num);
+      drizzle_column_seek(&res, 0);
       for(i= 0; i < num_fields; i++)
       {
+        column= drizzle_column_next(&res);
         fprintf(stderr, "%s\t%.*s\n",
-                fields[i].name,
+                drizzle_column_name(column),
                 (int)lengths[i], row[i] ? row[i] : "NULL");
       }
     }
@@ -605,7 +619,7 @@ static void show_query(DRIZZLE *drizzle, const char* query)
       fprintf(stderr, "=");
     fprintf(stderr, "\n\n");
   }
-  drizzleclient_free_result(res);
+  drizzle_result_free(&res);
 
   return;
 }
@@ -624,45 +638,58 @@ static void show_query(DRIZZLE *drizzle, const char* query)
 
 */
 
-static void show_warnings_before_error(DRIZZLE *drizzle)
+static void show_warnings_before_error(drizzle_con_st *con)
 {
-  DRIZZLE_RES* res;
+  drizzle_result_st res;
+  drizzle_return_t ret;
   const char* query= "SHOW WARNINGS";
 
-
-  if (!drizzle)
+  if (!con)
     return;
 
-  if (drizzleclient_query(drizzle, query))
+  if (drizzle_query_str(con, &res, query, &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
   {
-    log_msg("Error running query '%s': %d %s",
-            query, drizzleclient_errno(drizzle), drizzleclient_error(drizzle));
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      log_msg("Error running query '%s': %d %s",
+              query, drizzle_result_error_code(&res),
+              drizzle_result_error(&res));
+      drizzle_result_free(&res);
+    }
+    else
+    {
+      log_msg("Error running query '%s': %d %s",
+              query, ret, drizzle_con_error(con));
+    }
     return;
   }
 
-  if ((res= drizzleclient_store_result(drizzle)) == NULL)
+  if (drizzle_result_column_count(&res) == 0 ||
+      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
   {
     /* No result set returned */
+    drizzle_result_free(&res);
     return;
   }
 
-  if (drizzleclient_num_rows(res) <= 1)
+  if (drizzle_result_row_count(&res) <= 1)
   {
     /* Don't display the last row, it's "last error" */
   }
   else
   {
-    DRIZZLE_ROW row;
+    drizzle_row_t row;
     unsigned int row_num= 0;
-    unsigned int num_fields= drizzleclient_num_fields(res);
+    unsigned int num_fields= drizzle_result_column_count(&res);
 
     fprintf(stderr, "\nWarnings from just before the error:\n");
-    while ((row= drizzleclient_fetch_row(res)))
+    while ((row= drizzle_row_next(&res)))
     {
       uint32_t i;
-      uint32_t *lengths= drizzleclient_fetch_lengths(res);
+      size_t *lengths= drizzle_row_field_sizes(&res);
 
-      if (++row_num >= drizzleclient_num_rows(res))
+      if (++row_num >= drizzle_result_row_count(&res))
       {
         /* Don't display the last row, it's "last error" */
         break;
@@ -676,7 +703,7 @@ static void show_warnings_before_error(DRIZZLE *drizzle)
       fprintf(stderr, "\n");
     }
   }
-  drizzleclient_free_result(res);
+  drizzle_result_free(&res);
 
   return;
 }
@@ -802,12 +829,13 @@ static void handle_command_error(struct st_command *command, uint32_t error)
 
 static void close_connections(void)
 {
-
   for (--next_con; next_con >= connections; --next_con)
   {
-    drizzleclient_close(&next_con->drizzle);
-    if (next_con->util_drizzle)
-      drizzleclient_close(next_con->util_drizzle);
+    if (next_con->drizzle != NULL)
+    {
+      drizzle_free(next_con->drizzle);
+      next_con->drizzle= NULL;
+    }
     free(next_con->name);
   }
   return;
@@ -954,7 +982,7 @@ void die(const char *fmt, ...)
     been produced prior to the error
   */
   if (cur_con)
-    show_warnings_before_error(&cur_con->drizzle);
+    show_warnings_before_error(&cur_con->con);
 
   cleanup_and_exit(1);
 }
@@ -1770,9 +1798,9 @@ static void var_set_errno(int sql_errno)
   of the currently connected server
 */
 
-static void var_set_drizzleclient_get_server_version(DRIZZLE *drizzle)
+static void var_set_drizzleclient_get_server_version(drizzle_con_st *con)
 {
-  var_set_int("$drizzleclient_get_server_version", drizzleclient_get_server_version(drizzle));
+  var_set_int("$drizzle_con_server_version", drizzle_con_server_version_number(con));
 }
 
 
@@ -1803,9 +1831,10 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 {
   const char *end = (char*)((query_end && *query_end) ?
                             *query_end : query + strlen(query));
-  DRIZZLE_RES *res;
-  DRIZZLE_ROW row;
-  DRIZZLE *drizzle= &cur_con->drizzle;
+  drizzle_result_st res;
+  drizzle_return_t ret;
+  drizzle_row_t row;
+  drizzle_con_st *con= &cur_con->con;
   string ds_query;
 
 
@@ -1818,13 +1847,27 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
   /* Eval the query, thus replacing all environment variables */
   do_eval(&ds_query, query, end, false);
 
-  if (drizzleclient_real_query(drizzle, ds_query.c_str(), ds_query.length()))
-    die("Error running query '%s': %d %s", ds_query.c_str(),
-        drizzleclient_errno(drizzle), drizzleclient_error(drizzle));
-  if (!(res= drizzleclient_store_result(drizzle)))
+  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(),
+                    &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      die("Error running query '%s': %d %s", ds_query.c_str(),
+          drizzle_result_error_code(&res), drizzle_result_error(&res));
+      drizzle_result_free(&res);
+    }
+    else
+    {
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
+          drizzle_con_error(con));
+    }
+  }
+  if (drizzle_result_column_count(&res) == 0 ||
+      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
     die("Query '%s' didn't return a result set", ds_query.c_str());
 
-  if ((row= drizzleclient_fetch_row(res)) && row[0])
+  if ((row= drizzle_row_next(&res)) && row[0])
   {
     /*
       Concatenate all fields in the first row with tab in between
@@ -1832,10 +1875,10 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
     */
     string result;
     uint32_t i;
-    uint32_t *lengths;
+    size_t *lengths;
 
-    lengths= drizzleclient_fetch_lengths(res);
-    for (i= 0; i < drizzleclient_num_fields(res); i++)
+    lengths= drizzle_row_field_sizes(&res);
+    for (i= 0; i < drizzle_result_column_count(&res); i++)
     {
       if (row[i])
       {
@@ -1850,7 +1893,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
   else
     eval_expr(var, "", 0);
 
-  drizzleclient_free_result(res);
+  drizzle_result_free(&res);
   return;
 }
 
@@ -1881,8 +1924,9 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
 {
   long row_no;
   int col_no= -1;
-  DRIZZLE_RES* res;
-  DRIZZLE *drizzle= &cur_con->drizzle;
+  drizzle_result_st res;
+  drizzle_return_t ret;
+  drizzle_con_st *con= &cur_con->con;
 
   string ds_query;
   string ds_col;
@@ -1913,22 +1957,37 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
   ds_query.append(unstripped_query);
 
   /* Run the query */
-  if (drizzleclient_real_query(drizzle, ds_query.c_str(), ds_query.length()))
-    die("Error running query '%s': %d %s", ds_query.c_str(),
-        drizzleclient_errno(drizzle), drizzleclient_error(drizzle));
-  if (!(res= drizzleclient_store_result(drizzle)))
+  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(),
+                    &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      die("Error running query '%s': %d %s", ds_query.c_str(),
+          drizzle_result_error_code(&res), drizzle_result_error(&res));
+      drizzle_result_free(&res);
+    }
+    else
+    {
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
+          drizzle_con_error(con));
+    }
+  }
+  if (drizzle_result_column_count(&res) == 0 ||
+      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
     die("Query '%s' didn't return a result set", ds_query.c_str());
 
   {
     /* Find column number from the given column name */
     uint32_t i;
-    uint32_t num_fields= drizzleclient_num_fields(res);
-    const DRIZZLE_FIELD *fields= drizzleclient_fetch_fields(res);
+    uint32_t num_fields= drizzle_result_column_count(&res);
+    drizzle_column_st *column;
 
     for (i= 0; i < num_fields; i++)
     {
-      if (strcmp(fields[i].name, ds_col.c_str()) == 0 &&
-          strlen(fields[i].name) == ds_col.length())
+      column= drizzle_column_next(&res);
+      if (strcmp(drizzle_column_name(column), ds_col.c_str()) == 0 &&
+          strlen(drizzle_column_name(column)) == ds_col.length())
       {
         col_no= i;
         break;
@@ -1936,7 +1995,7 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     }
     if (col_no == -1)
     {
-      drizzleclient_free_result(res);
+      drizzle_result_free(&res);
       die("Could not find column '%s' in the result of '%s'",
           ds_col.c_str(), ds_query.c_str());
     }
@@ -1944,11 +2003,11 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
 
   {
     /* Get the value */
-    DRIZZLE_ROW row;
+    drizzle_row_t row;
     long rows= 0;
     const char* value= "No such row";
 
-    while ((row= drizzleclient_fetch_row(res)))
+    while ((row= drizzle_row_next(&res)))
     {
       if (++rows == row_no)
       {
@@ -1964,7 +2023,7 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     }
     eval_expr(var, value, 0);
   }
-  drizzleclient_free_result(res);
+  drizzle_result_free(&res);
 
   return;
 }
@@ -2809,6 +2868,8 @@ static void do_send_quit(struct st_command *command)
 {
   char *p= command->first_argument, *name;
   struct st_connection *con;
+  drizzle_result_st result;
+  drizzle_return_t ret;
 
   if (!*p)
     die("Missing connection name in send_quit");
@@ -2823,7 +2884,8 @@ static void do_send_quit(struct st_command *command)
   if (!(con= find_connection_by_name(name)))
     die("connection '%s' not found in connection pool", name);
 
-  simple_command(&con->drizzle,COM_QUIT,0,0,1);
+  if (drizzle_quit(&con->con,&result, &ret))
+    drizzle_result_free(&result);
 
   return;
 }
@@ -2968,24 +3030,44 @@ static void
 do_wait_for_slave_to_stop(struct st_command *)
 {
   static int SLAVE_POLL_INTERVAL= 300000;
-  DRIZZLE *drizzle= &cur_con->drizzle;
+  drizzle_con_st *con= &cur_con->con;
   for (;;)
   {
-    DRIZZLE_RES *res= NULL;
-    DRIZZLE_ROW row;
+    drizzle_result_st res;
+    drizzle_return_t ret;
+    drizzle_row_t row;
     int done;
 
-    if (drizzleclient_query(drizzle,"show status like 'Slave_running'") ||
-        !(res=drizzleclient_store_result(drizzle)))
-      die("Query failed while probing slave for stop: %s",
-          drizzleclient_error(drizzle));
-    if (!(row=drizzleclient_fetch_row(res)) || !row[1])
+    if (drizzle_query_str(con,&res,"show status like 'Slave_running'",
+                          &ret) == NULL || ret != DRIZZLE_RETURN_OK)
     {
-      drizzleclient_free_result(res);
+      if (ret == DRIZZLE_RETURN_ERROR_CODE)
+      {
+        die("Query failed while probing slave for stop: %s",
+            drizzle_result_error(&res));
+        drizzle_result_free(&res);
+      }
+      else
+      {
+        die("Query failed while probing slave for stop: %s",
+            drizzle_con_error(con));
+      }
+    }
+
+    if (drizzle_result_column_count(&res) == 0 ||
+        drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+    {
+      die("Query failed while probing slave for stop: %s",
+          drizzle_con_error(con));
+    }
+
+    if (!(row=drizzle_row_next(&res)) || !row[1])
+    {
+      drizzle_result_free(&res);
       die("Strange result from query while probing slave for stop");
     }
     done = !strcmp(row[1],"OFF");
-    drizzleclient_free_result(res);
+    drizzle_result_free(&res);
     if (done)
       break;
     usleep(SLAVE_POLL_INTERVAL);
@@ -2996,9 +3078,10 @@ do_wait_for_slave_to_stop(struct st_command *)
 
 static void do_sync_with_master2(long offset)
 {
-  DRIZZLE_RES *res;
-  DRIZZLE_ROW row;
-  DRIZZLE *drizzle= &cur_con->drizzle;
+  drizzle_result_st res;
+  drizzle_return_t ret;
+  drizzle_row_t row;
+  drizzle_con_st *con= &cur_con->con;
   char query_buf[FN_REFLEN+128];
   int tries= 0;
 
@@ -3010,15 +3093,26 @@ static void do_sync_with_master2(long offset)
 
 wait_for_position:
 
-  if (drizzleclient_query(drizzle, query_buf))
-    die("failed in '%s': %d: %s", query_buf, drizzleclient_errno(drizzle),
-        drizzleclient_error(drizzle));
-
-  if (!(res= drizzleclient_store_result(drizzle)))
-    die("drizzleclient_store_result() returned NULL for '%s'", query_buf);
-  if (!(row= drizzleclient_fetch_row(res)))
+  if (drizzle_query_str(con, &res, query_buf, &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
   {
-    drizzleclient_free_result(res);
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      die("failed in '%s': %d: %s", query_buf, drizzle_result_error_code(&res),
+           drizzle_result_error(&res));
+      drizzle_result_free(&res);
+    }
+    else
+      die("failed in '%s': %d: %s", query_buf, ret, drizzle_con_error(con));
+  }
+
+  if (drizzle_result_column_count(&res) == 0 ||
+      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+    die("drizzle_result_buffer() returned NULL for '%s'", query_buf);
+
+  if (!(row= drizzle_row_next(&res)))
+  {
+    drizzle_result_free(&res);
     die("empty result in %s", query_buf);
   }
   if (!row[0])
@@ -3027,17 +3121,17 @@ wait_for_position:
       It may be that the slave SQL thread has not started yet, though START
       SLAVE has been issued ?
     */
-    drizzleclient_free_result(res);
+    drizzle_result_free(&res);
     if (tries++ == 30)
     {
-      show_query(drizzle, "SHOW MASTER STATUS");
-      show_query(drizzle, "SHOW SLAVE STATUS");
+      show_query(con, "SHOW MASTER STATUS");
+      show_query(con, "SHOW SLAVE STATUS");
       die("could not sync with master ('%s' returned NULL)", query_buf);
     }
     sleep(1); /* So at most we will wait 30 seconds and make 31 tries */
     goto wait_for_position;
   }
-  drizzleclient_free_result(res);
+  drizzle_result_free(&res);
   return;
 }
 
@@ -3067,23 +3161,34 @@ static void do_sync_with_master(struct st_command *command)
 */
 static int do_save_master_pos(void)
 {
-  DRIZZLE_RES *res;
-  DRIZZLE_ROW row;
-  DRIZZLE *drizzle= &cur_con->drizzle;
+  drizzle_result_st res;
+  drizzle_return_t ret;
+  drizzle_row_t row;
+  drizzle_con_st *con= &cur_con->con;
   const char *query;
 
 
-  if (drizzleclient_query(drizzle, query= "show master status"))
-    die("failed in 'show master status': %d %s",
-        drizzleclient_errno(drizzle), drizzleclient_error(drizzle));
+  if (drizzle_query_str(con, &res, query= "show master status", &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      die("failed in '%s': %d: %s", query, drizzle_result_error_code(&res),
+           drizzle_result_error(&res));
+      drizzle_result_free(&res);
+    }
+    else
+      die("failed in '%s': %d: %s", query, ret, drizzle_con_error(con));
+  }
 
-  if (!(res = drizzleclient_store_result(drizzle)))
+  if (drizzle_result_column_count(&res) == 0 ||
+      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
     die("drizzleclient_store_result() retuned NULL for '%s'", query);
-  if (!(row = drizzleclient_fetch_row(res)))
+  if (!(row = drizzle_row_next(&res)))
     die("empty result in show master status");
   strncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
   master_pos.pos = strtoul(row[1], (char**) 0, 10);
-  drizzleclient_free_result(res);
+  drizzle_result_free(&res);
   return(0);
 }
 
@@ -3286,12 +3391,12 @@ static void do_get_errcodes(struct st_command *command)
 
       /*
         SQLSTATE string
-        - Must be SQLSTATE_LENGTH long
+        - Must be DRIZZLE_MAX_SQLSTATE_SIZE long
         - May contain only digits[0-9] and _uppercase_ letters
       */
       p++; /* Step past the S */
-      if ((end - p) != SQLSTATE_LENGTH)
-        die("The sqlstate must be exactly %d chars long", SQLSTATE_LENGTH);
+      if ((end - p) != DRIZZLE_MAX_SQLSTATE_SIZE)
+        die("The sqlstate must be exactly %d chars long", DRIZZLE_MAX_SQLSTATE_SIZE);
 
       /* Check sqlstate string validity */
       while (*p && p < end)
@@ -3446,13 +3551,15 @@ static char *get_string(char **to_ptr, char **from_ptr,
 }
 
 
-static void set_reconnect(DRIZZLE *drizzle, int val)
+static void set_reconnect(drizzle_con_st *con, int val)
 {
+  (void) con;
+  (void) val;
+/* XXX
   bool reconnect= val;
 
   drizzleclient_options(drizzle, DRIZZLE_OPT_RECONNECT, (char *)&reconnect);
-
-  return;
+*/
 }
 
 
@@ -3462,7 +3569,7 @@ static int select_connection_name(const char *name)
     die("connection '%s' not found in connection pool", name);
 
   /* Update $drizzleclient_get_server_version to that of current connection */
-  var_set_drizzleclient_get_server_version(&cur_con->drizzle);
+  var_set_drizzleclient_get_server_version(&cur_con->con);
 
   return(0);
 }
@@ -3504,20 +3611,11 @@ static void do_close_connection(struct st_command *command)
   if (!(con= find_connection_by_name(name)))
     die("connection '%s' not found in connection pool", name);
 
-  if (command->type == Q_DIRTY_CLOSE)
+  if (con->drizzle != NULL)
   {
-    if (con->drizzle.net.vio)
-    {
-      drizzleclient_net_close(&(con->drizzle.net));
-    }
+    drizzle_free(con->drizzle);
+    con->drizzle= NULL;
   }
-
-  drizzleclient_close(&con->drizzle);
-
-  if (con->util_drizzle)
-    drizzleclient_close(con->util_drizzle);
-  con->util_drizzle= 0;
-
   free(con->name);
 
   /*
@@ -3556,16 +3654,18 @@ static void do_close_connection(struct st_command *command)
 
 */
 
-static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
-                         const char *user, const char *pass, const char *db,
-                         int port)
+static void safe_connect(drizzle_con_st *con, const char *name,
+                         const char *host, const char *user, const char *pass,
+                         const char *db, int port)
 {
   int failed_attempts= 0;
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
+  drizzle_return_t ret;
 
-
-  while(!drizzleclient_connect(drizzle, host, user, pass, db, port, NULL,
-                         CLIENT_MULTI_STATEMENTS | CLIENT_REMEMBER_OPTIONS))
+  drizzle_con_set_tcp(con, host, port);
+  drizzle_con_set_auth(con, user, pass);
+  drizzle_con_set_db(con, db);
+  while((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
   {
     /*
       Connect failed
@@ -3575,23 +3675,22 @@ static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
       on protocol/connection type
     */
 
-    if ((drizzleclient_errno(drizzle) == CR_CONN_HOST_ERROR ||
-         drizzleclient_errno(drizzle) == CR_CONNECTION_ERROR) &&
+    if ((ret == DRIZZLE_RETURN_GETADDRINFO ||
+         ret == DRIZZLE_RETURN_COULD_NOT_CONNECT) &&
         failed_attempts < opt_max_connect_retries)
     {
       verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts,
-                  opt_max_connect_retries, drizzleclient_errno(drizzle),
-                  drizzleclient_error(drizzle));
+                  opt_max_connect_retries, ret, drizzle_con_error(con));
       usleep(connection_retry_sleep);
     }
     else
     {
       if (failed_attempts > 0)
         die("Could not open connection '%s' after %d attempts: %d %s", name,
-            failed_attempts, drizzleclient_errno(drizzle), drizzleclient_error(drizzle));
+            failed_attempts, ret, drizzle_con_error(con));
       else
-        die("Could not open connection '%s': %d %s", name,
-            drizzleclient_errno(drizzle), drizzleclient_error(drizzle));
+        die("Could not open connection '%s': %d %s", name, ret,
+            drizzle_con_error(con));
     }
     failed_attempts++;
   }
@@ -3623,10 +3722,11 @@ static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
 */
 
 static int connect_n_handle_errors(struct st_command *command,
-                                   DRIZZLE *con, const char* host,
+                                   drizzle_con_st *con, const char* host,
                                    const char* user, const char* pass,
                                    const char* db, int port, const char* sock)
 {
+  drizzle_return_t ret;
 
   /* Only log if an error is expected */
   if (!command->abort_on_error &&
@@ -3653,12 +3753,23 @@ static int connect_n_handle_errors(struct st_command *command,
     ds_res.append(delimiter);
     ds_res.append("\n");
   }
-  if (!drizzleclient_connect(con, host, user, pass, db, port, 0,
-                       CLIENT_MULTI_STATEMENTS))
+  drizzle_con_set_tcp(con, host, port);
+  drizzle_con_set_auth(con, user, pass);
+  drizzle_con_set_db(con, db);
+  if ((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
   {
-    var_set_errno(drizzleclient_errno(con));
-    handle_error(command, drizzleclient_errno(con), drizzleclient_error(con),
-                 drizzleclient_sqlstate(con), &ds_res);
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      var_set_errno(drizzle_con_error_code(con));
+      handle_error(command, drizzle_con_error_code(con), drizzle_con_error(con),
+                   drizzle_con_sqlstate(con), &ds_res);
+    }
+    else
+    {
+      var_set_errno(ret);
+      handle_error(command, ret, drizzle_con_error(con), "", &ds_res);
+    }
+
     return 0; /* Not connected */
   }
 
@@ -3786,11 +3897,10 @@ static void do_connect(struct st_command *command)
           (int) (sizeof(connections)/sizeof(struct st_connection)));
   }
 
-  if (!drizzleclient_create(&con_slot->drizzle))
-    die("Failed on drizzleclient_create()");
-  if (opt_compress || con_compress)
-    drizzleclient_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NULL);
-  
+  if ((con_slot->drizzle= drizzle_create(NULL)) == NULL)
+    die("Failed on drizzle_create()");
+  if (!drizzle_con_create(con_slot->drizzle, &con_slot->con))
+    die("Failed on drizzle_con_create()");
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -3800,7 +3910,7 @@ static void do_connect(struct st_command *command)
   if (ds_database.length() && !strcmp(ds_database.c_str(),"*NO-ONE*"))
     ds_database.clear();
 
-  if (connect_n_handle_errors(command, &con_slot->drizzle,
+  if (connect_n_handle_errors(command, &con_slot->con,
                               ds_host.c_str(),ds_user.c_str(),
                               ds_password.c_str(), ds_database.c_str(),
                               con_port, ds_sock.c_str()))
@@ -3814,7 +3924,7 @@ static void do_connect(struct st_command *command)
   }
 
   /* Update $drizzleclient_get_server_version to that of current connection */
-  var_set_drizzleclient_get_server_version(&cur_con->drizzle);
+  var_set_drizzleclient_get_server_version(&cur_con->con);
 
   return;
 }
@@ -4499,7 +4609,7 @@ static struct my_option my_long_options[] =
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,MTEST_VERSION,
-         drizzleclient_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
+         drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 static void usage(void)
@@ -4685,7 +4795,7 @@ static int parse_args(int argc, char **argv)
   if (argc == 1)
     opt_db= *argv;
   if (tty_password)
-    opt_pass= drizzleclient_get_tty_password(NULL);          /* purify tested */
+    opt_pass= client_get_tty_password(NULL);          /* purify tested */
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
@@ -4781,7 +4891,7 @@ void dump_warning_messages(void)
   Append the result for one field to the dynamic string ds
 */
 
-static void append_field(string *ds, uint32_t col_idx, const DRIZZLE_FIELD* field,
+static void append_field(string *ds, uint32_t col_idx, drizzle_column_st *column,
                          const char* val, uint64_t len, bool is_null)
 {
   if (col_idx < max_replace_column && replace_column[col_idx])
@@ -4803,7 +4913,7 @@ static void append_field(string *ds, uint32_t col_idx, const DRIZZLE_FIELD* fiel
   }
   else
   {
-    ds->append(field->name);
+    ds->append(drizzle_column_name(column));
     ds->append("\t");
     replace_append_mem(ds, val, (int)len);
     ds->append("\n");
@@ -4816,20 +4926,24 @@ static void append_field(string *ds, uint32_t col_idx, const DRIZZLE_FIELD* fiel
   Values may be converted with 'replace_column'
 */
 
-static void append_result(string *ds, DRIZZLE_RES *res)
+static void append_result(string *ds, drizzle_result_st *res)
 {
-  DRIZZLE_ROW row;
-  uint32_t num_fields= drizzleclient_num_fields(res);
-  const DRIZZLE_FIELD *fields= drizzleclient_fetch_fields(res);
-  uint32_t *lengths;
+  drizzle_row_t row;
+  uint32_t num_fields= drizzle_result_column_count(res);
+  drizzle_column_st *column;
+  size_t *lengths;
 
-  while ((row = drizzleclient_fetch_row(res)))
+  while ((row = drizzle_row_next(res)))
   {
     uint32_t i;
-    lengths = drizzleclient_fetch_lengths(res);
+    lengths = drizzle_row_field_sizes(res);
+    drizzle_column_seek(res, 0);
     for (i = 0; i < num_fields; i++)
-      append_field(ds, i, &fields[i],
+    {
+      column= drizzle_column_next(res);
+      append_field(ds, i, column,
                    (const char*)row[i], lengths[i], !row[i]);
+    }
     if (!display_result_vertically)
       ds->append("\n");
 
@@ -4841,49 +4955,46 @@ static void append_result(string *ds, DRIZZLE_RES *res)
   Append metadata for fields to output
 */
 
-static void append_metadata(string *ds,
-                            const DRIZZLE_FIELD *field,
-                            uint32_t num_fields)
+static void append_metadata(string *ds, drizzle_result_st *res)
 {
-  const DRIZZLE_FIELD *field_end;
+  drizzle_column_st *column;
   ds->append("Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
              "Column_alias\tType\tLength\tMax length\tIs_null\t"
              "Flags\tDecimals\tCharsetnr\n");
 
-  for (field_end= field+num_fields ;
-       field < field_end ;
-       field++)
+  drizzle_column_seek(res, 0);
+  while ((column= drizzle_column_next(res)))
   {
-    ds->append(field->catalog,
-               field->catalog_length);
+    ds->append(drizzle_column_catalog(column),
+               strlen(drizzle_column_catalog(column)));
     ds->append("\t", 1);
-    ds->append(field->db, field->db_length);
+    ds->append(drizzle_column_db(column), strlen(drizzle_column_db(column)));
     ds->append("\t", 1);
-    ds->append(field->org_table,
-               field->org_table_length);
+    ds->append(drizzle_column_orig_table(column),
+               strlen(drizzle_column_orig_table(column)));
     ds->append("\t", 1);
-    ds->append(field->table,
-               field->table_length);
+    ds->append(drizzle_column_table(column),
+               strlen(drizzle_column_table(column)));
     ds->append("\t", 1);
-    ds->append(field->org_name,
-               field->org_name_length);
+    ds->append(drizzle_column_orig_name(column),
+               strlen(drizzle_column_orig_name(column)));
     ds->append("\t", 1);
-    ds->append(field->name, field->name_length);
+    ds->append(drizzle_column_name(column),
+               strlen(drizzle_column_name(column)));
     ds->append("\t", 1);
-    replace_append_uint(ds, field->type);
+    replace_append_uint(ds, drizzle_column_type_drizzle(column));
     ds->append("\t", 1);
-    replace_append_uint(ds, field->length);
+    replace_append_uint(ds, drizzle_column_size(column));
     ds->append("\t", 1);
-    replace_append_uint(ds, field->max_length);
+    replace_append_uint(ds, drizzle_column_max_size(column));
     ds->append("\t", 1);
-    ds->append((char*) ((field->flags & NOT_NULL_FLAG) ?
-                        "N" : "Y"), 1);
+    ds->append((char*) ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL) ? "N" : "Y"), 1);
     ds->append("\t", 1);
-    replace_append_uint(ds, field->flags);
+    replace_append_uint(ds, drizzle_column_flags(column));
     ds->append("\t", 1);
-    replace_append_uint(ds, field->decimals);
+    replace_append_uint(ds, drizzle_column_decimals(column));
     ds->append("\t", 1);
-    replace_append_uint(ds, field->charsetnr);
+    replace_append_uint(ds, drizzle_column_charset(column));
     ds->append("\n", 1);
   }
 }
@@ -4899,7 +5010,7 @@ static void append_info(string *ds, uint64_t affected_rows,
   char buf[40], buff2[21];
   sprintf(buf,"affected rows: %s\n", llstr(affected_rows, buff2));
   ds->append(buf);
-  if (info)
+  if (info && strcmp(info, ""))
   {
     ds->append("info: ");
     ds->append(info);
@@ -4912,16 +5023,17 @@ static void append_info(string *ds, uint64_t affected_rows,
   Display the table headings with the names tab separated
 */
 
-static void append_table_headings(string *ds,
-                                  const DRIZZLE_FIELD *field,
-                                  uint32_t num_fields)
+static void append_table_headings(string *ds, drizzle_result_st *res)
 {
-  uint32_t col_idx;
-  for (col_idx= 0; col_idx < num_fields; col_idx++)
+  uint32_t col_idx= 0;
+  drizzle_column_st *column;
+  drizzle_column_seek(res, 0);
+  while ((column= drizzle_column_next(res)))
   {
     if (col_idx)
       ds->append("\t", 1);
-    replace_append(ds, field[col_idx].name);
+    replace_append(ds, drizzle_column_name(column));
+    col_idx++;
   }
   ds->append("\n", 1);
 }
@@ -4933,30 +5045,32 @@ static void append_table_headings(string *ds,
   Number of warnings appended to ds
 */
 
-static int append_warnings(string *ds, DRIZZLE *drizzle)
+static int append_warnings(string *ds, drizzle_con_st *con,
+                           drizzle_result_st *res)
 {
   uint32_t count;
-  DRIZZLE_RES *warn_res;
+  drizzle_result_st warn_res;
+  drizzle_return_t ret;
 
 
-  if (!(count= drizzleclient_warning_count(drizzle)))
+  if (!(count= drizzle_result_warning_count(res)))
     return(0);
 
-  /*
-    If one day we will support execution of multi-statements
-    through PS API we should not issue SHOW WARNINGS until
-    we have not read all results...
-  */
-  assert(!drizzleclient_more_results(drizzle));
+  if (drizzle_query_str(con, &warn_res, "SHOW WARNINGS", &ret) == NULL ||
+      ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+      die("Error running query \"SHOW WARNINGS\": %s", drizzle_result_error(&warn_res));
+    else
+      die("Error running query \"SHOW WARNINGS\": %s", drizzle_con_error(con));
+  }
 
-  if (drizzleclient_real_query(drizzle, "SHOW WARNINGS", 13))
-    die("Error running query \"SHOW WARNINGS\": %s", drizzleclient_error(drizzle));
+  if (drizzle_result_column_count(&warn_res) == 0 ||
+      drizzle_result_buffer(&warn_res) != DRIZZLE_RETURN_OK)
+    die("Warning count is %u but didn't get any warnings", count);
 
-  if (!(warn_res= drizzleclient_store_result(drizzle)))
-    die("Warning count is %u but didn't get any warnings",
-        count);
-
-  append_result(ds, warn_res);
+  append_result(ds, &warn_res);
+  drizzle_result_free(&warn_res);
 
   return(count);
 }
@@ -4980,46 +5094,76 @@ static void run_query_normal(struct st_connection *cn,
                              int flags, char *query, int query_len,
                              string *ds, string *ds_warnings)
 {
-  DRIZZLE_RES *res= 0;
-  DRIZZLE *drizzle= &cn->drizzle;
-  int err= 0, counter= 0;
+  drizzle_result_st res;
+  drizzle_return_t ret;
+  drizzle_con_st *con= &cn->con;
+  int err= 0;
+
+  drizzle_con_add_options(con, DRIZZLE_CON_NO_RESULT_READ);
 
   if (flags & QUERY_SEND_FLAG)
   {
     /*
      * Send the query
      */
-    if (do_send_query(cn, query, query_len, flags))
+
+    (void) drizzle_query(con, &res, query, query_len, &ret);
+    if (ret != DRIZZLE_RETURN_OK)
     {
-      handle_error(command, drizzleclient_errno(drizzle), drizzleclient_error(drizzle),
-                   drizzleclient_sqlstate(drizzle), ds);
+      if (ret == DRIZZLE_RETURN_ERROR_CODE)
+      {
+        err= drizzle_result_error_code(&res);
+        handle_error(command, err, drizzle_result_error(&res),
+                     drizzle_result_sqlstate(&res), ds);
+        drizzle_result_free(&res);
+      }
+      else
+      {
+        handle_error(command, ret, drizzle_con_error(con), "", ds);
+        err= ret;
+      }
       goto end;
     }
   }
   if (!(flags & QUERY_REAP_FLAG))
     return;
 
-  do
   {
     /*
-      When  on first result set, call drizzleclient_read_query_result to retrieve
-      answer to the query sent earlier
-    */
-    if ((counter==0) && drizzleclient_read_query_result(drizzle))
+     * Read the result packet
+     */
+    if (drizzle_result_read(con, &res, &ret) == NULL ||
+        ret != DRIZZLE_RETURN_OK)
     {
-      handle_error(command, drizzleclient_errno(drizzle), drizzleclient_error(drizzle),
-                   drizzleclient_sqlstate(drizzle), ds);
+      if (ret == DRIZZLE_RETURN_ERROR_CODE)
+      {
+        handle_error(command, drizzle_result_error_code(&res),
+                     drizzle_result_error(&res), drizzle_result_sqlstate(&res),
+                     ds);
+      }
+      else
+        handle_error(command, ret, drizzle_con_error(con), "", ds);
+      drizzle_result_free(&res);
+      err= ret;
       goto end;
-
     }
 
     /*
       Store the result of the query if it will return any fields
     */
-    if (drizzleclient_field_count(drizzle) && ((res= drizzleclient_store_result(drizzle)) == 0))
+    if (drizzle_result_column_count(&res) &&
+        (ret= drizzle_result_buffer(&res)) != DRIZZLE_RETURN_OK)
     {
-      handle_error(command, drizzleclient_errno(drizzle), drizzleclient_error(drizzle),
-                   drizzleclient_sqlstate(drizzle), ds);
+      if (ret == DRIZZLE_RETURN_ERROR_CODE)
+      {
+        handle_error(command, drizzle_result_error_code(&res),
+                     drizzle_result_error(&res), drizzle_result_sqlstate(&res),
+                     ds);
+      }
+      else
+        handle_error(command, ret, drizzle_con_error(con), "", ds);
+      drizzle_result_free(&res);
+      err= ret;
       goto end;
     }
 
@@ -5027,18 +5171,15 @@ static void run_query_normal(struct st_connection *cn,
     {
       uint64_t affected_rows= 0;    /* Ok to be undef if 'disable_info' is set */
 
-      if (res)
+      if (drizzle_result_column_count(&res))
       {
-        const DRIZZLE_FIELD *fields= drizzleclient_fetch_fields(res);
-        uint32_t num_fields= drizzleclient_num_fields(res);
-
         if (display_metadata)
-          append_metadata(ds, fields, num_fields);
+          append_metadata(ds, &res);
 
         if (!display_result_vertically)
-          append_table_headings(ds, fields, num_fields);
+          append_table_headings(ds, &res);
 
-        append_result(ds, res);
+        append_result(ds, &res);
       }
 
       /*
@@ -5046,16 +5187,17 @@ static void run_query_normal(struct st_connection *cn,
         query to find the warnings
       */
       if (!disable_info)
-        affected_rows= drizzleclient_affected_rows(drizzle);
+        affected_rows= drizzle_result_affected_rows(&res);
 
       /*
         Add all warnings to the result. We can't do this if we are in
         the middle of processing results from multi-statement, because
         this will break protocol.
       */
-      if (!disable_warnings && !drizzleclient_more_results(drizzle))
+      if (!disable_warnings)
       {
-        if (append_warnings(ds_warnings, drizzle) || ds_warnings->length())
+        drizzle_con_remove_options(con, DRIZZLE_CON_NO_RESULT_READ);
+        if (append_warnings(ds_warnings, con, &res) || ds_warnings->length())
         {
           ds->append("Warnings:\n", 10);
           ds->append(ds_warnings->c_str(), ds_warnings->length());
@@ -5063,24 +5205,11 @@ static void run_query_normal(struct st_connection *cn,
       }
 
       if (!disable_info)
-        append_info(ds, affected_rows, drizzleclient_info(drizzle));
+        append_info(ds, affected_rows, drizzle_result_info(&res));
     }
 
-    if (res)
-    {
-      drizzleclient_free_result(res);
-      res= 0;
-    }
-    counter++;
-  } while (!(err= drizzleclient_next_result(drizzle)));
-  if (err > 0)
-  {
-    /* We got an error from drizzleclient_next_result, maybe expected */
-    handle_error(command, drizzleclient_errno(drizzle), drizzleclient_error(drizzle),
-                 drizzleclient_sqlstate(drizzle), ds);
-    goto end;
+    drizzle_result_free(&res);
   }
-  assert(err == -1); /* Successful and there are no more results */
 
   /* If we come here the query is both executed and read successfully */
   handle_no_error(command);
@@ -5092,7 +5221,8 @@ end:
     to the server into the drizzletest builtin variable $drizzleclient_errno. This
     variable then can be used from the test case itself.
   */
-  var_set_errno(drizzleclient_errno(drizzle));
+  drizzle_con_remove_options(con, DRIZZLE_CON_NO_RESULT_READ);
+  var_set_errno(err);
   return;
 }
 
@@ -5127,8 +5257,7 @@ void handle_error(struct st_command *command,
       returned a valid reponse. Don't allow 2013 or 2006 to trigger an
       abort_not_supported_test
     */
-    if (err_errno == CR_SERVER_LOST ||
-        err_errno == CR_SERVER_GONE_ERROR)
+    if (err_errno == DRIZZLE_RETURN_SERVER_GONE)
       die("require query '%s' failed: %d: %s", command->query,
           err_errno, err_error);
 
@@ -5146,7 +5275,7 @@ void handle_error(struct st_command *command,
          (command->expected_errors.err[i].code.errnum == err_errno)) ||
         ((command->expected_errors.err[i].type == ERR_SQLSTATE) &&
          (strncmp(command->expected_errors.err[i].code.sqlstate,
-                  err_sqlstate, SQLSTATE_LENGTH) == 0)))
+                  err_sqlstate, DRIZZLE_MAX_SQLSTATE_SIZE) == 0)))
     {
       if (!disable_result_log)
       {
@@ -5495,7 +5624,7 @@ int main(int argc, char **argv)
                 1024, 0, 0, get_var_key, var_free, MYF(0)))
     die("Variable hash initialization failed");
 
-  var_set_string("$DRIZZLE_SERVER_VERSION", drizzleclient_get_client_info());
+  var_set_string("$DRIZZLE_SERVER_VERSION", drizzle_version());
 
   memset(&master_pos, 0, sizeof(master_pos));
 
@@ -5520,15 +5649,15 @@ int main(int argc, char **argv)
     cur_file->lineno= 1;
   }
   cur_con= connections;
-  if (!( drizzleclient_create(&cur_con->drizzle)))
-    die("Failed in drizzleclient_create()");
-  if (opt_compress)
-    drizzleclient_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NULL);
+  if ((cur_con->drizzle= drizzle_create(NULL)) == NULL)
+    die("Failed in drizzle_create()");
+  if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
+    die("Failed in drizzle_con_create()");
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");
 
-  safe_connect(&cur_con->drizzle, cur_con->name, opt_host, opt_user, opt_pass,
+  safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
 
   /* Use all time until exit if no explicit 'start_timer' */
@@ -5542,7 +5671,7 @@ int main(int argc, char **argv)
   var_set_errno(-1);
 
   /* Update $drizzleclient_get_server_version to that of current connection */
-  var_set_drizzleclient_get_server_version(&cur_con->drizzle);
+  var_set_drizzleclient_get_server_version(&cur_con->con);
 
   if (opt_include)
   {
@@ -5730,7 +5859,13 @@ int main(int argc, char **argv)
         command->last_argument= command->end;
         break;
       case Q_PING:
-        (void) drizzleclient_ping(&cur_con->drizzle);
+        {
+          drizzle_result_st result;
+          drizzle_return_t ret;
+          (void) drizzle_ping(&cur_con->con, &result, &ret);
+          if (ret == DRIZZLE_RETURN_OK || ret == DRIZZLE_RETURN_ERROR_CODE)
+            drizzle_result_free(&result);
+        }
         break;
       case Q_EXEC:
         do_exec(command);
@@ -5748,10 +5883,10 @@ int main(int argc, char **argv)
         do_set_charset(command);
         break;
       case Q_DISABLE_RECONNECT:
-        set_reconnect(&cur_con->drizzle, 0);
+        set_reconnect(&cur_con->con, 0);
         break;
       case Q_ENABLE_RECONNECT:
-        set_reconnect(&cur_con->drizzle, 1);
+        set_reconnect(&cur_con->con, 1);
         break;
       case Q_DISABLE_PARSING:
         if (parsing_disabled == 0)
@@ -6020,7 +6155,7 @@ void replace_strings_append(struct st_replace *rep, string* ds,
                             const char *from, int len);
 void free_pointer_array(POINTER_ARRAY *pa);
 
-struct st_replace *glob_replace;
+struct st_replace *glob_replace= NULL;
 
 /*
   Get arguments for replace. The syntax is:

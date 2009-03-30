@@ -173,6 +173,7 @@ tests/mtr
 tests/test-run
 gnulib/unistd.h
 gnulib/time.h
+gnulib/getopt.h
 *stamp-h
 authentication.gcno
 cached_item.gcno
