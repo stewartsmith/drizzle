@@ -20,7 +20,7 @@
 
 #include "myisamdef.h"
 
-LIST	*myisam_open_list=0;
+std::list<MI_INFO *> myisam_open_list;
 unsigned char	 myisam_file_magic[]=
 { (unsigned char) 254, (unsigned char) 254,'\007', '\001', };
 unsigned char	 myisam_pack_file_magic[]=

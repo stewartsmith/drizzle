@@ -359,8 +359,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST);
     if (!create_info->internal_table)
     {
-      share->open_list.data= (void*) share;
-      heap_share_list= list_add(heap_share_list,&share->open_list);
+      heap_share_list.push_front(share);
     }
     else
       share->delete_on_close= 1;
@@ -462,8 +461,7 @@ void heap_drop_table(HP_INFO *info)
 
 void hp_free(HP_SHARE *share)
 {
-  if (share->open_list.data)                    /* If not internal table */
-    heap_share_list= list_delete(heap_share_list, &share->open_list);
+  heap_share_list.remove(share);        /* If not internal table */
   hp_clear(share);			/* Remove blocks from memory */
   thr_lock_delete(&share->lock);
   pthread_mutex_destroy(&share->intern_lock);

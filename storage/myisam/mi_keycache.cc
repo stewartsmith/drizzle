@@ -19,6 +19,8 @@
 
 #include "myisamdef.h"
 
+using namespace std;
+
 /*
   Assign pages of the index file for a table to a key cache
 
@@ -134,18 +136,18 @@ int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map,
 void mi_change_key_cache(KEY_CACHE *old_key_cache,
 			 KEY_CACHE *new_key_cache)
 {
-  LIST *pos;
-
   /*
     Lock list to ensure that no one can close the table while we manipulate it
   */
   pthread_mutex_lock(&THR_LOCK_myisam);
-  for (pos=myisam_open_list ; pos ; pos=pos->next)
+  list<MI_INFO *>::iterator it= myisam_open_list.begin();
+  while (it != myisam_open_list.end())
   {
-    MI_INFO *info= (MI_INFO*) pos->data;
+    MI_INFO *info= *it;
     MYISAM_SHARE *share= info->s;
     if (share->key_cache == old_key_cache)
       mi_assign_to_key_cache(info, UINT64_MAX, new_key_cache);
+    ++it;
   }
 
   /*
