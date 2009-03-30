@@ -462,9 +462,8 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
                         const char *sfile, uint32_t sline)
 {
   Session *cur_session;
-  LIST *element;
   pthread_mutex_lock(&file->s->intern_lock);
-  if ((cur_session= (Session*) file->in_use.data))
+  if ((cur_session= file->in_use))
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
                     cur_session->thread_id,
                     sfile, sline);
@@ -472,9 +471,11 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from unknown thread, %s:%d"), sfile, sline);
   if (message)
     errmsg_printf(ERRMSG_LVL_ERROR, "%s", message);
-  for (element= file->s->in_use; element; element= list_rest(element))
+  list<Session *>::iterator it= file->s->in_use->begin();
+  while (it != file->s->in_use->end())
   {
     errmsg_printf(ERRMSG_LVL_ERROR, "%s", _("Unknown thread accessing table"));
+    ++it;
   }
   pthread_mutex_unlock(&file->s->intern_lock);
 }
@@ -1614,7 +1615,7 @@ int ha_myisam::delete_table(const char *name)
 
 int ha_myisam::external_lock(Session *session, int lock_type)
 {
-  file->in_use.data= session;
+  file->in_use= session;
   return mi_lock_database(file, !table->s->tmp_table ?
 			  lock_type : ((lock_type == F_UNLCK) ?
 				       F_UNLCK : F_EXTRA_LCK));

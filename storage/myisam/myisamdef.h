@@ -162,6 +162,8 @@ typedef struct st_mi_isam_pack {
 
 #define MAX_NONMAPPED_INSERTS 1000
 
+class Session;
+
 typedef struct st_mi_isam_share {	/* Shared between opens */
   MI_STATE_INFO state;
   MI_BASE_INFO base;
@@ -172,7 +174,7 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   MI_COLUMNDEF *rec;			/* Pointer to field information */
   MI_PACK    pack;			/* Data about packed records */
   MI_BLOB    *blobs;			/* Pointer to blobs */
-  LIST *in_use;                         /* List of threads using this table */
+  std::list<Session *> *in_use;         /* List of threads using this table */
   char  *unique_file_name;		/* realpath() of index file */
   char  *data_file_name,		/* Resolved path names from symlinks */
         *index_file_name;
@@ -246,7 +248,7 @@ struct st_myisam_info {
   MI_BIT_BUFF  bit_buff;
   /* accumulate indexfile changes between write's */
   TREE	        *bulk_insert;
-  LIST in_use;                          /* Thread using this table          */
+  Session *in_use;                      /* Thread using this table          */
   char *filename;			/* parameter to open filename       */
   unsigned char *buff,				/* Temp area for key                */
 	*lastkey,*lastkey2;		/* Last used search key             */
