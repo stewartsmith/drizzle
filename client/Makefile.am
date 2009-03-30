@@ -34,7 +34,7 @@ bin_PROGRAMS =			drizzle \
 				drizzletest \
 				drizzleslap
 
-drizzle_SOURCES=		drizzle.cc readline.cc get_password.c
+drizzle_SOURCES=		drizzle.cc readline.cc get_password.cc
 drizzle_LDADD=			${LDADD} ${READLINE_LIBS}
 drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${W_EXCEPTIONS} 
 
