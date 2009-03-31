@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin_logging.h>
+#include <drizzled/plugin/logging_handler.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
@@ -174,10 +174,6 @@ class LoggingGearman : public Logging_handler
     assert(session != NULL);
   
     if (sysvar_logging_gearman_enable == false)
-      return false;
-  
-    // logging this is far too verbose
-    if (session->command == COM_FIELD_LIST)
       return false;
   
     /* TODO, looks like connect_utime isnt being set in the session
