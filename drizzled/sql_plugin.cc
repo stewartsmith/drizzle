@@ -134,7 +134,6 @@ static DYNAMIC_ARRAY plugin_dl_array;
 static DYNAMIC_ARRAY plugin_array;
 
 static bool reap_needed= false;
-static int plugin_array_version=0;
 
 /*
   write-lock on LOCK_system_variables_hash is required before modifying
@@ -604,7 +603,6 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       {
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
-          plugin_array_version++;
           registry.add(plugin, tmp_plugin_ptr);
           init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
           return(false);
@@ -653,7 +651,6 @@ static void plugin_del(struct st_plugin_int *plugin)
   if (plugin->plugin_dl)
     plugin_dl_del(&plugin->plugin_dl->dl);
   plugin->isInited= false;
-  plugin_array_version++;
   pthread_rwlock_wrlock(&LOCK_system_variables_hash);
   mysql_del_sys_var_chain(plugin->system_vars);
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
@@ -999,7 +996,6 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
   uint32_t idx;
   struct st_plugin_int *plugin;
   vector<st_plugin_int *> plugins;
-  int version=plugin_array_version;
 
   if (!initialized)
     return(false);
@@ -1027,15 +1023,6 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
        plugin_iter != plugins.end();
        plugin_iter++)
   {
-    if (unlikely(version != plugin_array_version))
-    {
-      vector<st_plugin_int *>::iterator reset_iter;
-      for (reset_iter= plugin_iter;
-           reset_iter != plugins.end();
-           reset_iter++)
-        if (*reset_iter && (*reset_iter)->isInited && all)
-          *reset_iter=0;
-    }
     plugin= *plugin_iter;
     /* It will stop iterating on first engine error when "func" returns true */
     if (plugin && func(session, plugin_int_to_ref(plugin), arg))
