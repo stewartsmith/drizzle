@@ -94,10 +94,12 @@ test: test-drizzle
 # maintenance and verification
 
 test-drizzle:
-	  $(TEST_RUN) --fast --force --suite=main,vcol
+	@chmod -R ugo+r ${top_builddir}/tests/var
+	@chmod -R ugo+r ${top_srcdir}/tests/var
+	$(TEST_RUN) --fast --force --suite=main,vcol
 
 test-big:
-	  $(TEST_RUN) --fast --force --big-test --suite=big
+	$(TEST_RUN) --fast --force --big-test --suite=big
 
 distclean-local:
 	rm -rf var
