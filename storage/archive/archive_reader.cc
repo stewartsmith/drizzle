@@ -230,7 +230,7 @@ end:
   return 0;
 }
 
-static bool
+extern "C" bool
 get_one_option(int optid, const struct my_option *opt, char *argument)
 {
   (void)opt;

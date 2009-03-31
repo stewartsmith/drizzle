@@ -31,9 +31,9 @@ drizzled/sql_udf.cc
 drizzled/table.cc
 drizzled/tztime.cc
 gnulib/getopt.c
-libdrizzleclient/client.c
-libdrizzleclient/drizzle.c
-libdrizzleclient/errmsg.c
+libdrizzleclient/client.cc
+libdrizzleclient/drizzle.cc
+libdrizzleclient/errmsg.cc
 mysys/errors.cc
 mysys/my_error.cc
 mysys/my_getopt.cc

@@ -46,8 +46,10 @@ pthread_cond_t timer_alarm_threshold;
 pthread_mutex_t row_lock;
 
 /* Prototypes */
-void *run_concurrent_task(void *p);
-void *timer_thread(void *p);
+extern "C" {
+  void *run_concurrent_task(void *p);
+  void *timer_thread(void *p);
+}
 void scheduler(az_method use_aio);
 void create_data_file(azio_stream *write_handler, uint64_t rows);
 unsigned int write_row(azio_stream *s);

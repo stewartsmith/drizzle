@@ -29,6 +29,9 @@
 
 #define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG | CLIENT_SECURE_CONNECTION)
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 const char * drizzleclient_sqlstate_get_unknown(void);
 const char * drizzleclient_sqlstate_get_not_error(void);
@@ -53,5 +56,9 @@ DRIZZLE_RES *drizzleclient_cli_use_result(DRIZZLE *drizzle);
 void drizzleclient_cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column,
                        uint32_t field_count);
 void drizzleclient_cli_flush_use_result(DRIZZLE *drizzle);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif
