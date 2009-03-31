@@ -28,10 +28,6 @@
 #include <stdint.h>
 #include <drizzled/korr.h>
 
-#if !defined(__cplusplus)
-# include <stdbool.h>
-#endif
-
 /*
    This is included in the server and in the client.
    Options for select set by the yacc parser (stored in lex->options).

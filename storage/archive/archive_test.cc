@@ -52,7 +52,7 @@ long int timedif(struct timeval a, struct timeval b);
 
 int main(int argc, char *argv[])
 {
-  az_method method;
+  unsigned int method;
   unsigned int x;
 
   if (argc > 2)
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 
     printf("Testing %d\n", (int)method);
     gettimeofday(&start_time, NULL);
-    small_test(method);
+    small_test((az_method)method);
     gettimeofday(&end_time, NULL);
     timing= timedif(end_time, start_time);
     printf("\tTime took %ld.%03ld seconds\n\n", timing / 1000, timing % 1000);
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
       printf("Testing %"PRIu64" bytes with (%d)\n", row_lengths[x], (int)method);
       gettimeofday(&start_time, NULL);
-      size_test(row_lengths[x], row_numbers[x], method);
+      size_test(row_lengths[x], row_numbers[x], (az_method)method);
       gettimeofday(&end_time, NULL);
       timing= timedif(end_time, start_time);
       printf("\tTime took %ld.%03ld seconds\n\n", timing / 1000, timing % 1000);

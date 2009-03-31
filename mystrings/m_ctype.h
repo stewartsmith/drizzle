@@ -23,9 +23,6 @@
 
 #include <stdint.h>
 #include <sys/types.h>
-#if !defined(__cplusplus)
-# include <stdbool.h>
-#endif
 
 #ifdef	__cplusplus
 extern "C" {

@@ -27,9 +27,6 @@
 #include "net_serv.h"
 
 #include <stdint.h>
-#if !defined(__cplusplus)
-# include <stdbool.h>
-#endif
 
 #ifdef  __cplusplus
 extern "C" {

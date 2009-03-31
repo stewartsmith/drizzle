@@ -24,9 +24,6 @@
 #include "drizzle_field.h"
 
 #include <stdint.h>
-#if !defined(__cplusplus)
-# include <stdbool.h>
-#endif
 
 typedef struct st_drizzle_data {
   DRIZZLE_ROWS *data;

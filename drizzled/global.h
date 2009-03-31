@@ -58,7 +58,6 @@
   A lot of our programs uses asserts, so better to always include it
 */
 # include <assert.h>
-# include <stdbool.h>
 
 #endif // __cplusplus
 

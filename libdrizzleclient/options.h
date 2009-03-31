@@ -20,10 +20,6 @@
 #ifndef LIBDRIZZLECLIENT_DRIZZLE_OPTIONS_H
 #define LIBDRIZZLECLIENT_DRIZZLE_OPTIONS_H
 
-#if !defined(__cplusplus)
-# include <stdbool.h>
-#endif
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
