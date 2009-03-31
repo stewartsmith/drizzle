@@ -391,12 +391,6 @@ innodb_trx_init(
 	(*schema)->fields_info = innodb_trx_fields_info;
 	(*schema)->fill_table = trx_i_s_common_fill_table;
 
-	(*schema)->create_table= NULL;
-	(*schema)->old_format= NULL;
-	(*schema)->idx_field1= -1;
-	(*schema)->idx_field2= -1;
-
-
 
 	return(0);
 }
@@ -667,13 +661,6 @@ innodb_locks_init(
 	(*schema)->fields_info = innodb_locks_fields_info;
 	(*schema)->fill_table = trx_i_s_common_fill_table;
 
-	(*schema)->create_table= NULL;
-	(*schema)->old_format= NULL;
-	(*schema)->idx_field1= -1;
-	(*schema)->idx_field2= -1;
-
-
-
 	return(0);
 }
 
@@ -850,13 +837,6 @@ innodb_lock_waits_init(
 
 	(*schema)->fields_info = innodb_lock_waits_fields_info;
 	(*schema)->fill_table = trx_i_s_common_fill_table;
-
-	(*schema)->create_table= NULL;
-	(*schema)->old_format= NULL;
-	(*schema)->idx_field1= -1;
-	(*schema)->idx_field2= -1;
-
-
 
 	return(0);
 }
@@ -1157,12 +1137,6 @@ i_s_cmp_init(
 	(*schema)->fields_info = i_s_cmp_fields_info;
 	(*schema)->fill_table = i_s_cmp_fill;
 
-	(*schema)->create_table= NULL;
-	(*schema)->old_format= NULL;
-	(*schema)->idx_field1= -1;
-	(*schema)->idx_field2= -1;
-
-
 	return(0);
 }
 
@@ -1183,13 +1157,6 @@ i_s_cmp_reset_init(
 
 	(*schema)->fields_info = i_s_cmp_fields_info;
 	(*schema)->fill_table = i_s_cmp_reset_fill;
-
-	(*schema)->create_table= NULL;
-	(*schema)->old_format= NULL;
-	(*schema)->idx_field1= -1;
-	(*schema)->idx_field2= -1;
-
-
 
 	return(0);
 }
@@ -1426,13 +1393,6 @@ i_s_cmpmem_init(
 	(*schema)->fields_info = i_s_cmpmem_fields_info;
 	(*schema)->fill_table = i_s_cmpmem_fill;
 
-	(*schema)->create_table= NULL;
-	(*schema)->old_format= NULL;
-	(*schema)->idx_field1= -1;
-	(*schema)->idx_field2= -1;
-
-
-
 	return(0);
 }
 
@@ -1453,13 +1413,6 @@ i_s_cmpmem_reset_init(
 
 	(*schema)->fields_info = i_s_cmpmem_fields_info;
 	(*schema)->fill_table = i_s_cmpmem_reset_fill;
-
-	(*schema)->create_table= NULL;
-	(*schema)->old_format= NULL;
-	(*schema)->idx_field1= -1;
-	(*schema)->idx_field2= -1;
-
-
 
 	return(0);
 }

@@ -4500,9 +4500,7 @@ template class List<char>;
 int initialize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table;
-
   /* Historical Requirement */
-  plugin->data= schema_table; // shortcut for the future
   if (plugin->plugin->init)
   {
     if (plugin->plugin->init(&schema_table))
@@ -4513,16 +4511,21 @@ int initialize_schema_table(st_plugin_int *plugin)
       return 1;
     }
 
-    schema_table->create_table= create_schema_table;
-    schema_table->old_format= make_old_format;
-    schema_table->idx_field1= -1,
-    schema_table->idx_field2= -1;
+    if (schema_table->create_table == NULL)
+      schema_table->create_table= create_schema_table;
+    if (schema_table->old_format == NULL)
+      schema_table->old_format= make_old_format;
+    if (schema_table->idx_field1 == 0)
+      schema_table->idx_field1= -1;
+    if (schema_table->idx_field2)
+      schema_table->idx_field2= -1;
 
     /*- Make sure the plugin name is not set inside the init() function. */
-    schema_table->table_name, plugin->name.str;
+    schema_table->table_name= plugin->name.str;
   }
 
   plugin->state= PLUGIN_IS_READY;
+  plugin->data= schema_table; // shortcut for the future
 
   return 0;
 }
