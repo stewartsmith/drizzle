@@ -38,16 +38,16 @@ drizzle_SOURCES=		drizzle.cc readline.cc get_password.cc
 drizzle_LDADD=			${LDADD} ${READLINE_LIBS}
 drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${W_EXCEPTIONS} 
 
-drizzleadmin_SOURCES=		drizzleadmin.cc get_password.c
+drizzleadmin_SOURCES=		drizzleadmin.cc get_password.cc
 
-drizzlecheck_SOURCES =		drizzlecheck.cc get_password.c
+drizzlecheck_SOURCES =		drizzlecheck.cc get_password.cc
 
-drizzledump_SOURCES=            drizzledump.cc  get_password.c
+drizzledump_SOURCES=            drizzledump.cc  get_password.cc
 
-drizzleimport_SOURCES=		drizzleimport.cc get_password.c
+drizzleimport_SOURCES=		drizzleimport.cc get_password.cc
 
-drizzleslap_SOURCES=            drizzleslap.cc get_password.c
+drizzleslap_SOURCES=            drizzleslap.cc get_password.cc
 
-drizzletest_SOURCES=		drizzletest.cc  get_password.c
+drizzletest_SOURCES=		drizzletest.cc  get_password.cc
 drizzletest_LDADD=		${LDADD} ${LIBPCRE}
 
