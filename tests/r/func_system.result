@@ -22,7 +22,7 @@ t1	CREATE TABLE `t1` (
   `database()` varchar(34) DEFAULT NULL,
   `user()` varchar(77) DEFAULT NULL,
   `version` varchar(60) DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 drop table t1;
 select TRUE,FALSE,NULL;
 TRUE	FALSE	NULL

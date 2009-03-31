@@ -21,7 +21,9 @@ CREATE TABLE t2 (a varchar(255), b blob, c blob);
 CREATE TABLE t4 (c varchar(16383) not null);
 show columns from t2;
 create table t3 (a int, b int);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create TABLE t3;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create TABLE t4;
 drop table t1,t2,t3,t4;
 
@@ -132,6 +134,7 @@ drop table t1;
 -- error 1071
 create table t1 (a text, unique (a(2100))); # should give an error
 create table t1 (a text, key (a(2100)));    # key is auto-truncated
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 
@@ -373,6 +376,7 @@ drop table t1;
 create table t1 (a int, b int, c tinyblob, d int, e int);
 alter table t1 add primary key (a,b,c(255),d);
 alter table t1 add key (a,b,d,e);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 
@@ -396,6 +400,7 @@ drop table t1;
 # Bug #19489: Inconsistent support for DEFAULT in TEXT columns
 #
 create table t1 (a text default '');
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 insert into t1 values (default);
 select * from t1;

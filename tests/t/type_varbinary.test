@@ -9,6 +9,7 @@ drop table t1;
 
 # check that trailing 0x00 and 0x20 do matter on comparison
 create table t1 (s1 varbinary(20), s2 varbinary(20));
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 insert into t1 values (0x41,0x4100),(0x41,0x4120),(0x4100,0x4120);
 select hex(s1), hex(s2) from t1;

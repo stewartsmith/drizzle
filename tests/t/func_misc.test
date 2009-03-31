@@ -41,6 +41,7 @@ drop table t1;
 --disable_warnings
 create table t1 as select uuid(), length(uuid());
 --enable_warnings
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 

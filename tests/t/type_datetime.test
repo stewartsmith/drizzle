@@ -183,6 +183,7 @@ SELECT CAST(CAST('2006-08-10 10:11:12' AS DATETIME) + INTERVAL 14 MICROSECOND AS
 #
 
 create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '1962-03-03');
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
@@ -367,6 +368,7 @@ drop table t1,t2;
 #
 
 create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '1962-03-03');
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');

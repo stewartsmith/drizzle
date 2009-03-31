@@ -72,9 +72,11 @@ select hex(weight_string('ab' level 1 DESC REVERSE));
 # the result data type is BLOB.
 #
 create table t1 select weight_string('test') as w;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 select weight_string(repeat('t',66000)) as w;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 

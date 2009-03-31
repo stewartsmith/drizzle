@@ -147,7 +147,7 @@ t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT '2003-01-01 00:00:00',
   `t2` datetime DEFAULT NULL,
   `t3` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
 t1	timestamp	YES		2003-01-01 00:00:00	
@@ -171,7 +171,7 @@ t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `t2` datetime DEFAULT NULL,
   `t3` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
 t1	timestamp	YES		CURRENT_TIMESTAMP	
@@ -197,7 +197,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT '2003-01-01 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
   `t2` datetime DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
 t1	timestamp	YES		2003-01-01 00:00:00	on update CURRENT_TIMESTAMP
@@ -222,7 +222,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `t2` datetime DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
 t1	timestamp	YES		CURRENT_TIMESTAMP	on update CURRENT_TIMESTAMP
@@ -248,7 +248,7 @@ t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT NULL,
   `t2` datetime DEFAULT NULL,
   `t3` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
 t1	timestamp	YES		NULL	
@@ -274,7 +274,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `t2` datetime DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
 t1	timestamp	YES		CURRENT_TIMESTAMP	on update CURRENT_TIMESTAMP
@@ -329,7 +329,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` timestamp NULL DEFAULT NULL,
   `b` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 insert into t1 values (NULL, NULL);
 SET TIMESTAMP=1000000017;
 insert into t1 values ();
@@ -344,7 +344,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `b` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 insert into t1 values (NULL, NULL);
 SET TIMESTAMP=1000000018;
 insert into t1 values ();
@@ -359,7 +359,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` timestamp NULL DEFAULT NULL,
   `b` timestamp NULL DEFAULT '2003-01-01 00:00:00'
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 insert into t1 values (NULL, NULL);
 insert into t1 values (DEFAULT, DEFAULT);
 select * from t1;
