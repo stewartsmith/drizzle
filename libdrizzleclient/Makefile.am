@@ -38,18 +38,18 @@ noinst_HEADERS =\
 
 noinst_LTLIBRARIES= libdrizzleclient.la
 libdrizzleclient_la_SOURCES= \
-		client.c \
-		drizzle.c \
-		drizzle_data.c \
-		errmsg.c \
-		get_password.c \
-		libdrizzle.c \
-		libdrizzle_priv.c \
-		net_serv.c \
-		pack.c \
-		password.c \
-		vio.c \
-		viosocket.c
+		client.cc \
+		drizzle.cc \
+		drizzle_data.cc \
+		errmsg.cc \
+		get_password.cc \
+		libdrizzle.cc \
+		libdrizzle_priv.cc \
+		net_serv.cc \
+		pack.cc \
+		password.cc \
+		vio.cc \
+		viosocket.cc
 
 libdrizzleclient_la_LIBADD = $(LIBZ)
 

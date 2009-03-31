@@ -20,6 +20,8 @@
 #ifndef LIBDRIZZLECLIENT_LIBDRIZZLE_PRIV_H
 #define LIBDRIZZLECLIENT_LIBDRIZZLE_PRIV_H
 
+#include <drizzled/global.h>
+
 #include "drizzle.h"
 #include <drizzled/korr.h>
 
@@ -27,17 +29,6 @@
 
 #define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG | CLIENT_SECURE_CONNECTION)
 
-#if !defined(__GNUC__) || (__GNUC__ == 2 && __GNUC_MINOR__ < 96)
-#define __builtin_expect(x, expected_value) (x)
-#endif
-
-#define likely(x)	__builtin_expect((x),1)
-#define unlikely(x)	__builtin_expect((x),0)
-
-#ifndef __cplusplus
-#define max(a, b)       ((a) > (b) ? (a) : (b))
-#define min(a, b)       ((a) < (b) ? (a) : (b))
-#endif
 
 const char * drizzleclient_sqlstate_get_unknown(void);
 const char * drizzleclient_sqlstate_get_not_error(void);

@@ -33,6 +33,8 @@
 #include <sys/poll.h>
 #include <zlib.h>
 
+using namespace std;
+
 /*
   The following handles the differences when this is linked between the
   client and the server.
@@ -619,7 +621,7 @@ my_real_read(NET *net, size_t *complen)
   unsigned char *pos;
   size_t length;
   uint32_t i,retry_count=0;
-  uint32_t len=packet_error;
+  size_t len=packet_error;
   uint32_t remain= (net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE :
                     NET_HEADER_SIZE);
 

@@ -454,7 +454,7 @@ drizzleclient_connect(DRIZZLE *drizzle,const char *host, const char *user,
 
     if (db_len >= NAME_LEN)
       db_len= NAME_LEN - 1;
-    end= memcpy(end, db, db_len);
+    end= (char *)memcpy(end, db, db_len);
     end[db_len]= 0;
     end+= (db_len + 1);
 
