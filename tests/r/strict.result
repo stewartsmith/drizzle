@@ -159,7 +159,7 @@ INSERT INTO t1 (col1) VALUES ('1a');
 ERROR HY000: Incorrect decimal value: '1a' for column 'col1' at row 1
 INSERT IGNORE INTO t1 (col1) VALUES ('2a');
 Warnings:
-Note	1265	Data truncated for column 'col1' at row 1
+Warning	1265	Data truncated for column 'col1' at row 1
 INSERT IGNORE INTO t1 values (1/0);
 Warnings:
 Error	1365	Division by 0
@@ -191,7 +191,7 @@ NULL
 -10.55
 11.00
 10.00
-2.00
+99.99
 NULL
 99.99
 -99.99
