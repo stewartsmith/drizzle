@@ -53,9 +53,13 @@ then
       ]])],
       [drizzle_cv_gcc_recent=yes],
       [drizzle_cv_gcc_recent=no])])
+  if test "$drizzle_cv_gcc_recent" = "no" -a "$host_vendor" = "apple"
+  then
+    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2 on OSX. You may need to install a more recent version of XCode])
+  fi
   if test "$drizzle_cv_gcc_recent" = "no"
   then
-    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.1. If you are on OSX, you may need to specify ./configure CC=gcc-4.2 CXX=g++4.2])
+    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.1])
   fi
 fi
 AC_CXX_HEADER_STDCXX_98
