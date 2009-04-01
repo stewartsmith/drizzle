@@ -152,7 +152,7 @@ public:
   void enable() { enabled= true; }
   void disable() { enabled= false; }
 
-  std::string get_name() { return name; }
+  std::string get_name() const { return name; }
 
   /*
     StorageEngine methods:
