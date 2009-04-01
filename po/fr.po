@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-03-05 12:59-0800\n"
+"POT-Creation-Date: 2009-04-01 11:03-0700\n"
 "PO-Revision-Date: 2008-12-24 09:33+0000\n"
 "Last-Translator: Damien Seguy <damien.seguy@gmail.com>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -18,112 +18,112 @@ msgstr ""
 "X-Launchpad-Export-Date: 2009-03-05 20:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
-#: client/drizzle.cc:276
+#: client/drizzle.cc:274
 msgid "Synonym for `help'."
 msgstr "Synonyme pour 'help'."
 
-#: client/drizzle.cc:277
+#: client/drizzle.cc:275
 msgid "Clear command."
 msgstr "Efface la commande."
 
-#: client/drizzle.cc:279
+#: client/drizzle.cc:277
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr "Reconnexion au serveur. Les arguments optionnels sont db et host."
 
-#: client/drizzle.cc:281
+#: client/drizzle.cc:279
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
 "Configure le délimiteur de commande. Note : prend tout le reste de la ligne "
 "comme nouveau délimiteur."
 
-#: client/drizzle.cc:283
+#: client/drizzle.cc:281
 msgid "Send command to drizzle server, display result vertically."
 msgstr ""
 "Envoie la commande au serveur drizzle, affiche les résultats verticalement."
 
-#: client/drizzle.cc:284
+#: client/drizzle.cc:282
 msgid "Exit drizzle. Same as quit."
 msgstr "Quitte drizzle. La même chose que quit."
 
-#: client/drizzle.cc:285
+#: client/drizzle.cc:283
 msgid "Send command to drizzle server."
 msgstr "Envoyer la commande au serveur drizzle."
 
-#: client/drizzle.cc:286
+#: client/drizzle.cc:284
 msgid "Display this help."
 msgstr "Affiche cette aide."
 
-#: client/drizzle.cc:287
+#: client/drizzle.cc:285
 msgid "Disable pager, print to stdout."
 msgstr "Désactive le pager, imprime vers la sortie standard (stdout)"
 
-#: client/drizzle.cc:288
+#: client/drizzle.cc:286
 msgid "Don't write into outfile."
 msgstr "Ne pas écrire dans le fichier de sortie"
 
-#: client/drizzle.cc:290
+#: client/drizzle.cc:288
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
 "Configure l'afficheur à [to_pager]. Affiche le résultat des requêtes à "
 "l'aide de PAGER."
 
-#: client/drizzle.cc:291
+#: client/drizzle.cc:289
 msgid "Print current command."
 msgstr "Affiche la commande actuelle."
 
-#: client/drizzle.cc:292
+#: client/drizzle.cc:290
 msgid "Change your drizzle prompt."
 msgstr "Changer votre invite drizzle."
 
-#: client/drizzle.cc:293
+#: client/drizzle.cc:291
 msgid "Quit drizzle."
 msgstr "Quitte drizzle"
 
-#: client/drizzle.cc:294
+#: client/drizzle.cc:292
 msgid "Rebuild completion hash."
 msgstr "Reconstruit la table de completion."
 
-#: client/drizzle.cc:296
+#: client/drizzle.cc:294
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
 "Exécute un fichier script SQL. Demande un nom de fichier comme argument"
 
-#: client/drizzle.cc:297
+#: client/drizzle.cc:295
 msgid "Get status information from the server."
 msgstr "Obtenir le statuts du serveur."
 
-#: client/drizzle.cc:299
+#: client/drizzle.cc:297
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
 "Définit le fichier de sortie [to_outfile]. Accole  tout dans le fichier de "
 "sortie donné."
 
-#: client/drizzle.cc:301
+#: client/drizzle.cc:299
 msgid "Use another database. Takes database name as argument."
 msgstr ""
 "Utilise une autre base de données. Demande le nom de la base de données "
 "comme argument."
 
-#: client/drizzle.cc:303 client/drizzle.cc:1443
+#: client/drizzle.cc:301 client/drizzle.cc:1440
 msgid "Show warnings after every statement."
 msgstr "Afficher les avertissements après chaque commande."
 
-#: client/drizzle.cc:305
+#: client/drizzle.cc:303
 msgid "Don't show warnings after every statement."
 msgstr "Ne pas afficher les avertissements après chaque commande."
 
-#: client/drizzle.cc:1045 client/drizzle.cc:1052
+#: client/drizzle.cc:1043 client/drizzle.cc:1050
 #, c-format
 msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 
-#: client/drizzle.cc:1135
+#: client/drizzle.cc:1131
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr ""
 "Bienvenue sur le client Drizzle. Les commandes se terminent avec ; or \\g"
 
-#: client/drizzle.cc:1145
+#: client/drizzle.cc:1141
 #, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
@@ -132,48 +132,48 @@ msgstr ""
 "Votre id de connexions Drizzle est %u\n"
 "Version du serveur: %s\n"
 
-#: client/drizzle.cc:1173
+#: client/drizzle.cc:1169
 #, c-format
 msgid "Reading history-file %s\n"
 msgstr "Lit le fichier d'historique %s\n"
 
-#: client/drizzle.cc:1177
+#: client/drizzle.cc:1173
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
 msgstr "Ne peux allouer de la mémoire pour le fichier historique temporaire!\n"
 
-#: client/drizzle.cc:1184
+#: client/drizzle.cc:1180
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
 "Tapez 'help;' or '\\h' pour afficher l'aide. Tapez '\\c' pour vider le "
 "tampon.\n"
 
-#: client/drizzle.cc:1202
+#: client/drizzle.cc:1199
 #, c-format
 msgid "Writing history-file %s\n"
 msgstr "Ecris le fichier historique %s\n"
 
-#: client/drizzle.cc:1211
+#: client/drizzle.cc:1206
 msgid "Aborted"
 msgstr "Abandonné"
 
-#: client/drizzle.cc:1211
+#: client/drizzle.cc:1206
 msgid "Bye"
 msgstr "Au revoir"
 
-#: client/drizzle.cc:1260
+#: client/drizzle.cc:1261
 msgid "Query aborted by Ctrl+C\n"
 msgstr "Requête annulée par Ctrl-C\n"
 
-#: client/drizzle.cc:1283 client/drizzleadmin.cc:74 drizzled/drizzled.cc:2134
+#: client/drizzle.cc:1284 client/drizzleadmin.cc:77 drizzled/drizzled.cc:2068
 msgid "Display this help and exit."
 msgstr "Afficher cette aide et sortir."
 
-#: client/drizzle.cc:1285
+#: client/drizzle.cc:1286
 msgid "Synonym for -?"
 msgstr "Synonyme pour -?"
 
-#: client/drizzle.cc:1288
+#: client/drizzle.cc:1289
 msgid ""
 "Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
 "and field completion, but startup and reconnecting may take a longer time. "
@@ -185,18 +185,19 @@ msgstr ""
 "prendre plus de temps. Désactivez ce mode avec l'option --disable-auto-"
 "reshash."
 
-#: client/drizzle.cc:1292
+#: client/drizzle.cc:1293
+#, fuzzy
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of DRIZZLE and disables rehashing on "
-"reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
 "Pas de rafraîchissement automatique. Il faut utiliser la commande 'rehash' "
 "pour obtenir la completion des noms de tables et de colonnes. Cela permet à "
 "DRIZZLE de démarrer plus vite, et évite le hashage à la reconnexion. "
 "Attention : cette option est obsolète; utilisez plutôt --disable-auto-rehash."
 
-#: client/drizzle.cc:1295
+#: client/drizzle.cc:1296
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
@@ -204,18 +205,18 @@ msgstr ""
 "Passer automatiquement en affichage vertical si le résultat est plus grand "
 "que la largeur du terminal."
 
-#: client/drizzle.cc:1298
+#: client/drizzle.cc:1299
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
 "Ne pas utiliser de fichier d'historique. Désactive l'interactivité. (Active "
 "--silent)"
 
-#: client/drizzle.cc:1299
+#: client/drizzle.cc:1300
 msgid "Display column type information."
 msgstr "Affiche le type de la colonne."
 
-#: client/drizzle.cc:1302
+#: client/drizzle.cc:1303
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
@@ -223,44 +224,44 @@ msgstr ""
 "Conserve les commentaire. Envoie les commentaires au serveur. Le défaut est "
 "--skip-comments (supprime les commentaires), active avec --comments"
 
-#: client/drizzle.cc:1305
+#: client/drizzle.cc:1306
 msgid "Use compression in server/client protocol."
 msgstr "Utilise la compression dans le protocole serveur/client."
 
-#: client/drizzle.cc:1308
+#: client/drizzle.cc:1309
 msgid "Check memory and open file usage at exit ."
 msgstr "Vérifie le niveau de mémoire et de fichiers ouverts à l'extinction."
 
-#: client/drizzle.cc:1311
+#: client/drizzle.cc:1312
 msgid "Print some debug info at exit."
 msgstr "Affiche des informations de debogage à la sortie."
 
-#: client/drizzle.cc:1313
+#: client/drizzle.cc:1314
 msgid "Database to use."
 msgstr "Base de donnée à utiliser"
 
-#: client/drizzle.cc:1316
+#: client/drizzle.cc:1317
 msgid "(not used)"
 msgstr "(non utilisé)"
 
-#: client/drizzle.cc:1318
+#: client/drizzle.cc:1319
 msgid "Delimiter to be used."
 msgstr "Le délimiteur à utiliser"
 
-#: client/drizzle.cc:1320
+#: client/drizzle.cc:1321
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
 "Exécute la commande et sort. (Désactive --force et le fichier d'historique)"
 
-#: client/drizzle.cc:1322
+#: client/drizzle.cc:1323
 msgid "Print the output of a query (rows) vertically."
 msgstr "Affiche le résultat d'une requête (lignes) verticalement"
 
-#: client/drizzle.cc:1325
+#: client/drizzle.cc:1326
 msgid "Continue even if we get an sql error."
 msgstr "Continuer même si on obtient une erreur sql."
 
-#: client/drizzle.cc:1329
+#: client/drizzle.cc:1330
 msgid ""
 "Enable named commands. Named commands mean this program's internal commands; "
 "see drizzle> help . When enabled, the named commands can be used from any "
@@ -273,7 +274,7 @@ msgstr ""
 "la première ligne, avant une entrée. Désactive avec --disable-named-"
 "commands. Cette option est désactivée par défaut."
 
-#: client/drizzle.cc:1333
+#: client/drizzle.cc:1334
 msgid ""
 "Named commands are disabled. Use \\* form only, or use named commands only "
 "in the beginning of a line ending with a semicolon (;) Since version 10.9 "
@@ -288,27 +289,27 @@ msgstr ""
 "commandes en format long fonctionnent toujours. Attention : cette option est "
 "obsolète; utilisez de préférence --disable-named-commands."
 
-#: client/drizzle.cc:1335
+#: client/drizzle.cc:1336
 msgid "Ignore space after function names."
 msgstr "Ignore les espaces après les noms de fonction."
 
-#: client/drizzle.cc:1337
+#: client/drizzle.cc:1338
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
 msgstr "Active/désactive LOAD DATA LOCAL INFILE."
 
-#: client/drizzle.cc:1340
+#: client/drizzle.cc:1341
 msgid "Turn off beep on error."
 msgstr "Désactive le bip sur une erreur."
 
-#: client/drizzle.cc:1342 client/drizzleadmin.cc:76
+#: client/drizzle.cc:1343 client/drizzleadmin.cc:79
 msgid "Connect to host."
 msgstr "Connexion à l'hôte."
 
-#: client/drizzle.cc:1344
+#: client/drizzle.cc:1345
 msgid "Write line numbers for errors."
 msgstr "Affiche les numéros de ligne pour les erreurs."
 
-#: client/drizzle.cc:1347
+#: client/drizzle.cc:1348
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
@@ -316,15 +317,15 @@ msgstr ""
 "N'écrit pas les numéros de ligne pour les erreurs. ATTENTION: -L est "
 "obsolète, utilisez la version longue de cette option à la place."
 
-#: client/drizzle.cc:1349
+#: client/drizzle.cc:1350
 msgid "Flush buffer after each query."
 msgstr "Vide le tampon après chaque requête."
 
-#: client/drizzle.cc:1351
+#: client/drizzle.cc:1352
 msgid "Write column names in results."
 msgstr "Affiche le nom des colonnes dans les résultats."
 
-#: client/drizzle.cc:1355
+#: client/drizzle.cc:1356
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
@@ -332,7 +333,7 @@ msgstr ""
 "N'affiche pas les noms de colonnes dans les résultats. ATTENTION: -N est "
 "obsolète, utilisez la utilisez la version longue de cette option à la place."
 
-#: client/drizzle.cc:1358
+#: client/drizzle.cc:1359
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
@@ -340,11 +341,11 @@ msgstr ""
 "Change la valeur d'une variable. Notez que cette option est obsolète; vous "
 "pouvez définir une variable directement avec --variable-name=value"
 
-#: client/drizzle.cc:1360
+#: client/drizzle.cc:1361
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "Ignore SIGINT (CTRL-C)"
 
-#: client/drizzle.cc:1364
+#: client/drizzle.cc:1365
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
@@ -353,7 +354,7 @@ msgstr ""
 "particulièrement utile pour éviter la mise à jour d'autres bases de donnée "
 "dans le log de mise à jour."
 
-#: client/drizzle.cc:1367
+#: client/drizzle.cc:1368
 msgid ""
 "Pager to use to display results. If you don't supply an option the default "
 "pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
@@ -368,7 +369,7 @@ msgstr ""
 "option ne fonctionne pas en mode batch. Désactivez le pager avec l'option --"
 "disable-page. Cette option est désactivée par défaut."
 
-#: client/drizzle.cc:1370
+#: client/drizzle.cc:1371
 msgid ""
 "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
 "option deprecated; use --disable-pager instead."
@@ -377,7 +378,7 @@ msgstr ""
 "interactive (\\h). Attention : cette option est obsolète; utilisez de "
 "préférence --disable-pager."
 
-#: client/drizzle.cc:1373 client/drizzleadmin.cc:79
+#: client/drizzle.cc:1374 client/drizzleadmin.cc:82
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
@@ -385,7 +386,7 @@ msgstr ""
 "Le mot de passe à utiliser lors de la connexion au serveur. Si le mot de "
 "passe n'est pas donné il est demandé par le terminal."
 
-#: client/drizzle.cc:1375
+#: client/drizzle.cc:1376
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
@@ -393,15 +394,15 @@ msgstr ""
 "Numéro de port à utiliser pour la connexion, ou bien 0 pour utiliser par "
 "défaut, et dans cet ordre, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 
-#: client/drizzle.cc:1376
+#: client/drizzle.cc:1377
 msgid "built-in default"
 msgstr "par défaut, natif."
 
-#: client/drizzle.cc:1378
+#: client/drizzle.cc:1379
 msgid "Set the drizzle prompt to this value."
 msgstr "Définir l'invite drizzle à cette valeur."
 
-#: client/drizzle.cc:1382
+#: client/drizzle.cc:1383
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
@@ -410,11 +411,11 @@ msgstr ""
 "le serveur si l'affichage est suspendu. N'utilise pas le fichier "
 "d'historique."
 
-#: client/drizzle.cc:1384
+#: client/drizzle.cc:1385
 msgid "Write fields without conversion. Used with --batch."
 msgstr "Ecris les champs sans conversion. Utilisé avec --batch."
 
-#: client/drizzle.cc:1387
+#: client/drizzle.cc:1388
 msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
@@ -422,22 +423,22 @@ msgstr ""
 "Se reconnecte si la connexion est perdue. Désactivé avec --disable-"
 "reconnect. Cette option est activée par défaut."
 
-#: client/drizzle.cc:1389
+#: client/drizzle.cc:1390
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
 "Est plus silencieux. Affiche les résultats avec une tabulation comme "
 "séparateur, chaque résultat sur une nouvelle ligne."
 
-#: client/drizzle.cc:1391
+#: client/drizzle.cc:1392
 msgid "Socket file to use for connection."
 msgstr "Le fichier socket à utiliser pour la connexion."
 
-#: client/drizzle.cc:1394
+#: client/drizzle.cc:1395
 msgid "Output in table format."
 msgstr "Sortie en format table."
 
-#: client/drizzle.cc:1397
+#: client/drizzle.cc:1398
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
@@ -447,7 +448,7 @@ msgstr ""
 "interactive (\\h). Ne fonctionne pas en mode batch. Désactivez ce mode avec "
 "l'option --disable-tee; Cette option est inactive pas défaut."
 
-#: client/drizzle.cc:1399
+#: client/drizzle.cc:1400
 msgid ""
 "Disable outfile. See interactive help (\\h) also. WARNING: option "
 "deprecated; use --disable-tee instead"
@@ -455,71 +456,67 @@ msgstr ""
 "Désactive le fichier d'export. Reportez-vous aussi à l'aide interactive. "
 "Attention : cette option est obsolète; utilisez de préférence --disable-tee."
 
-#: client/drizzle.cc:1402 client/drizzleadmin.cc:88
+#: client/drizzle.cc:1403 client/drizzleadmin.cc:91
 msgid "User for login if not current user."
 msgstr ""
 "Nom d'utilisateur pour l'identification, si ce n'est pas l'utilisateur "
 "courant."
 
-#: client/drizzle.cc:1405
+#: client/drizzle.cc:1406
 msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr "Accepte seulement les UPDATE and les DELETE qui utilisent des clés."
 
-#: client/drizzle.cc:1408
+#: client/drizzle.cc:1409
 msgid "Synonym for option --safe-updates, -U."
 msgstr "Synonyme pour l'option --safe-updates, -U"
 
-#: client/drizzle.cc:1411
+#: client/drizzle.cc:1412
 msgid "Write more. (-v -v -v gives the table output format)."
 msgstr "Affiche plus d'infos. (-v -v -v donne le format de sortie de la table)"
 
-#: client/drizzle.cc:1413 client/drizzleadmin.cc:93 drizzled/drizzled.cc:2352
+#: client/drizzle.cc:1414 client/drizzleadmin.cc:96 drizzled/drizzled.cc:2258
 msgid "Output version information and exit."
 msgstr "Donne l'information de la version et quitte."
 
-#: client/drizzle.cc:1415 client/drizzleadmin.cc:95
+#: client/drizzle.cc:1416 client/drizzleadmin.cc:98
 msgid "Wait and retry if connection is down."
 msgstr "Attendre et réessayer si la connexion n'est pas active."
 
-#: client/drizzle.cc:1418
+#: client/drizzle.cc:1419
 msgid "Number of seconds before connection timeout."
 msgstr "Temps en secondes avant le délai de dépassement de la connexion."
 
-#: client/drizzle.cc:1423
-msgid "Max packet length to send to, or receive from server"
-msgstr "Longeur maximum des paquets à envoyer ou à recevoir du serveur"
+#: client/drizzle.cc:1424
+msgid "Max length of input line"
+msgstr ""
 
-#: client/drizzle.cc:1428
-msgid "Buffer for TCP/IP and socket communication"
-msgstr "Tampon pour les communications TCP/IP et socket"
-
-#: client/drizzle.cc:1432
+#: client/drizzle.cc:1429
 msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr "Limite automatique pour SELECT lorque --safe-update est utilisé."
 
-#: client/drizzle.cc:1437
+#: client/drizzle.cc:1434
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 "Limite automatique pour les lignes dans une jointure lorsqu'on utilise --"
 "safe-updates"
 
-#: client/drizzle.cc:1441
+#: client/drizzle.cc:1438
 msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Refuse la connexion du client au serveur s'il utilise un vieux (pre-4.1.1) "
 "protocole"
 
-#: client/drizzle.cc:1446
+#: client/drizzle.cc:1443
 #, fuzzy
 msgid "Number of lines before each import progress report."
 msgstr "Temps en secondes avant le délai de dépassement de la connexion."
 
-#: client/drizzle.cc:1457
+#: client/drizzle.cc:1454
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s Ver %s Distrib %s, pour %s (%s) en utilisant %s %s\n"
 
-#: client/drizzle.cc:1464
+#: client/drizzle.cc:1461
 #, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
@@ -530,53 +527,53 @@ msgstr ""
 "Ce logiciel est livré SANS ABSOLUMENT AUCUNE GARANTIE. C'est un logiciel\n"
 "libre, et vous pouvez le modifier et le redistribuer sous licence PGL\n"
 
-#: client/drizzle.cc:1469
+#: client/drizzle.cc:1466
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
 msgstr "Utilisations: %s [OPTIONS][base_de_donnée]\n"
 
-#: client/drizzle.cc:1500
+#: client/drizzle.cc:1497
 msgid "DELIMITER cannot contain a backslash character"
 msgstr "DELIMITER ne peut contenir le caractère backslash"
 
-#: client/drizzle.cc:1521
+#: client/drizzle.cc:1515
 #, c-format
 msgid "WARNING: option deprecated; use --disable-tee instead.\n"
 msgstr "ATTENTION: option obsolète; utilisez --disable-tee à la place.\n"
 
-#: client/drizzle.cc:1544
+#: client/drizzle.cc:1538
 #, c-format
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
 msgstr "ATTENTION: option obsolète; utilisez --disable-pager à la place.\n"
 
-#: client/drizzle.cc:1548
+#: client/drizzle.cc:1542
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
 "ATTENTION: l'option --server-arg n'est pas supportée dans cette "
 "configuration.\n"
 
-#: client/drizzle.cc:1575
+#: client/drizzle.cc:1569
 msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
 "please use --password instead."
 msgstr ""
 
-#: client/drizzle.cc:1583
+#: client/drizzle.cc:1577
 msgid "Value supplied for port is not valid."
 msgstr ""
 
-#: client/drizzle.cc:1736
+#: client/drizzle.cc:1723
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
 msgstr ""
 
-#: client/drizzle.cc:1952
+#: client/drizzle.cc:1939
 #, c-format
 msgid "Unknown command '\\%c'."
 msgstr "Commande inconnue '%c'."
 
-#: client/drizzle.cc:2376
+#: client/drizzle.cc:2348
 msgid ""
 "Reading table information for completion of table and column names\n"
 "    You can turn off this feature to get a quicker startup with -A\n"
@@ -588,55 +585,55 @@ msgstr ""
 "rapide avec -A\n"
 "\n"
 
-#: client/drizzle.cc:2473
+#: client/drizzle.cc:2438
 msgid "No connection. Trying to reconnect..."
 msgstr "Pas de connexion. Tentative de reconnexion..."
 
-#: client/drizzle.cc:2479
+#: client/drizzle.cc:2444
 msgid "Can't connect to the server\n"
 msgstr "Connexion au serveur impossible\n"
 
-#: client/drizzle.cc:2537
+#: client/drizzle.cc:2523
 msgid "List of all Drizzle commands:"
 msgstr "Liste toutes les commandes Drizzle"
 
-#: client/drizzle.cc:2539
+#: client/drizzle.cc:2525
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
 "Notez que toute commande texte doit être en premier sur la ligne et se "
 "terminer par ';'"
 
-#: client/drizzle.cc:2592
+#: client/drizzle.cc:2580
 msgid "No query specified\n"
 msgstr "Pas de requête spécifiée\n"
 
-#: client/drizzle.cc:2607
+#: client/drizzle.cc:2595
 msgid "Ignoring query to other database"
 msgstr "Ignore les requêtes faites à une autre base de données"
 
-#: client/drizzle.cc:2656
+#: client/drizzle.cc:2645
 msgid "Empty set"
 msgstr "Résultat vide"
 
-#: client/drizzle.cc:2669
+#: client/drizzle.cc:2658
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] "%ld ligne dans le résultat"
 msgstr[1] "%ld lignes dans les résultat"
 
-#: client/drizzle.cc:2678
+#: client/drizzle.cc:2667
 msgid "Query OK"
 msgstr "Requête OK"
 
-#: client/drizzle.cc:2680
+#: client/drizzle.cc:2669
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Requête OK, %ld ligne affectée"
 msgstr[1] "Requête OK, %ld lignes affectées"
 
-#: client/drizzleadmin.cc:81 drizzled/drizzled.cc:2281
+#: client/drizzleadmin.cc:84 drizzled/drizzled.cc:2202
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
@@ -645,36 +642,36 @@ msgstr ""
 "défaut, et dans cet ordre, drizzle.cnf, $DRIZZLE_TCP_PORT,  natif de "
 "compilation ("
 
-#: client/drizzleadmin.cc:85
+#: client/drizzleadmin.cc:88
 msgid "Silently exit if one can't connect to server."
 msgstr "Termine sans erreur si la connexion au serveur est impossible."
 
-#: client/drizzleadmin.cc:91
+#: client/drizzleadmin.cc:94
 msgid "Write more information."
 msgstr "Affiche plus d'information."
 
-#: client/drizzleadmin.cc:122 client/drizzlecheck.cc:265
-#: client/drizzledump.cc:611 client/drizzleimport.cc:196
-#: client/drizzleslap.cc:751 client/drizzletest.cc:4639
+#: client/drizzleadmin.cc:158 client/drizzlecheck.cc:262
+#: client/drizzledump.cc:605 client/drizzleimport.cc:195
+#: client/drizzleslap.cc:742 client/drizzletest.cc:4718
 #, c-format
 msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
 "please use --password instead.\n"
 msgstr ""
 
-#: client/drizzleadmin.cc:130 client/drizzlecheck.cc:273
-#: client/drizzledump.cc:619 client/drizzleimport.cc:204
-#: client/drizzleslap.cc:759 client/drizzletest.cc:4647
+#: client/drizzleadmin.cc:166 client/drizzlecheck.cc:270
+#: client/drizzledump.cc:613 client/drizzleimport.cc:203
+#: client/drizzleslap.cc:750 client/drizzletest.cc:4726
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr ""
 
-#: client/drizzleadmin.cc:148 client/drizzledump.cc:636
+#: client/drizzleadmin.cc:184 client/drizzledump.cc:630
 #, fuzzy, c-format
 msgid "Memory allocation error while copying password. Aborting.\n"
 msgstr "Erreur d'allocation de mémoire dans session_scheduler::init\n"
 
-#: client/drizzleadmin.cc:290
+#: client/drizzleadmin.cc:330
 #, c-format
 msgid ""
 "connect to server at '%s' failed\n"
@@ -683,73 +680,74 @@ msgstr ""
 "la connexion au serveur '%s' a échoué\n"
 "erreur: '%s'"
 
-#: client/drizzleadmin.cc:296
+#: client/drizzleadmin.cc:336
 #, c-format
 msgid "Check that drizzled is running on %s"
 msgstr "Vérifie que drizzled s'execute sur %s"
 
-#: client/drizzleadmin.cc:297
+#: client/drizzleadmin.cc:337
 #, c-format
 msgid " and that the port is %d.\n"
 msgstr " et le port est %d.\n"
 
-#: client/drizzleadmin.cc:299
+#: client/drizzleadmin.cc:339
 #, c-format
 msgid "You can check this by doing 'telnet %s %d'\n"
 msgstr "Vous pouvez vérifier cela en tapant 'telnet %s %d'\n"
 
-#: client/drizzleadmin.cc:310
+#: client/drizzleadmin.cc:350
 #, c-format
 msgid "Got error: %s\n"
 msgstr "Erreur survenue: %s\n"
 
-#: client/drizzleadmin.cc:317
+#: client/drizzleadmin.cc:357
 msgid "Waiting for Drizzle server to answer"
 msgstr "En attente de réponse du serveur Drizzle"
 
-#: client/drizzleadmin.cc:350
+#: client/drizzleadmin.cc:393
 #, c-format
 msgid "shutting down drizzled...\n"
 msgstr "Fermeture de drizzled...\n"
 
-#: client/drizzleadmin.cc:354
+#: client/drizzleadmin.cc:401 client/drizzleadmin.cc:407
+#: client/drizzleadmin.cc:440
 #, c-format
 msgid "shutdown failed; error: '%s'"
 msgstr "La fermeture à échoué: erreur: '%s'"
 
-#: client/drizzleadmin.cc:361
+#: client/drizzleadmin.cc:415
 #, c-format
 msgid "done\n"
 msgstr "Terminé\n"
 
-#: client/drizzleadmin.cc:371
+#: client/drizzleadmin.cc:424
 msgid "drizzled is alive"
 msgstr "drizzled est actif"
 
-#: client/drizzleadmin.cc:379
+#: client/drizzleadmin.cc:433
 msgid "connection was down, but drizzled is now alive"
 msgstr "Le connexion était interrompue, mais drizzled est désormais actif"
 
-#: client/drizzleadmin.cc:383
+#: client/drizzleadmin.cc:446
 #, c-format
 msgid "drizzled doesn't answer to ping, error: '%s'"
 msgstr "drizzled ne répond pas au ping, erreur: '%s'"
 
-#: client/drizzleadmin.cc:392
+#: client/drizzleadmin.cc:456
 #, c-format
 msgid "Unknown command: '%-.60s'"
 msgstr "Commande inconnue: '%-.60s'"
 
-#: client/drizzleadmin.cc:401
+#: client/drizzleadmin.cc:465
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s on %s\n"
 msgstr "%s Ver %s Distrib %s, pour %s le %s\n"
 
-#: client/drizzleadmin.cc:408
+#: client/drizzleadmin.cc:472
 msgid "Copyright (C) 2000-2008 MySQL AB"
 msgstr "Copyright (C) 2000-2008 MySQL AB"
 
-#: client/drizzleadmin.cc:409 client/drizzledump.cc:489
+#: client/drizzleadmin.cc:473 client/drizzledump.cc:484
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
@@ -758,16 +756,16 @@ msgstr ""
 "libre,\n"
 "et vous êtes libres de le modifier et de le redistribuer sous licence GPL\n"
 
-#: client/drizzleadmin.cc:410
+#: client/drizzleadmin.cc:474
 msgid "Administration program for the drizzled daemon."
 msgstr "Programme d'administration pour le serveur drizzled"
 
-#: client/drizzleadmin.cc:411
+#: client/drizzleadmin.cc:475
 #, c-format
 msgid "Usage: %s [OPTIONS] command command....\n"
 msgstr "Utilisations: %s [OPTIONS] commande commande....\n"
 
-#: client/drizzleadmin.cc:413
+#: client/drizzleadmin.cc:477
 msgid ""
 "  ping         Check if server is down\n"
 "  shutdown     Take server down\n"
@@ -775,173 +773,169 @@ msgstr ""
 "  ping Vérifie si le serveur est down\n"
 "  shutdown Éteint le serveur\n"
 
-#: client/drizzledump.cc:393
+#: client/drizzledump.cc:387
 msgid "Number of rows before each output progress report (requires --verbose)."
 msgstr ""
 
-#: client/drizzledump.cc:466
+#: client/drizzledump.cc:461
 #, fuzzy, c-format
 msgid "Got errno %d on write"
 msgstr "Erreur %d du moteur de stockage"
 
-#: client/drizzledump.cc:471
+#: client/drizzledump.cc:466
 #, fuzzy, c-format
 msgid "%s  Ver %s Distrib %s, for %s (%s)\n"
 msgstr "%s Ver %s Distrib %s, pour %s le %s\n"
 
-#: client/drizzledump.cc:478
+#: client/drizzledump.cc:473
 #, fuzzy, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
 msgstr "Utilisations: %s [OPTIONS][base_de_donnée]\n"
 
-#: client/drizzledump.cc:479
+#: client/drizzledump.cc:474
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 msgstr ""
 
-#: client/drizzledump.cc:481
+#: client/drizzledump.cc:476
 #, fuzzy, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr "Utilisations: %s [OPTIONS][base_de_donnée]\n"
 
-#: client/drizzledump.cc:488
+#: client/drizzledump.cc:483
 msgid "By Igor Romanenko, Monty, Jani & Sinisa"
 msgstr ""
 
-#: client/drizzledump.cc:490
+#: client/drizzledump.cc:485
 msgid "Dumping definition and data DRIZZLE database or table"
 msgstr ""
 
-#: client/drizzledump.cc:501
+#: client/drizzledump.cc:496
 #, c-format
 msgid "For more options, use %s --help\n"
 msgstr ""
 
-#: client/drizzledump.cc:675
+#: client/drizzledump.cc:669
 #, c-format
 msgid "Input filename too long: %s"
 msgstr ""
 
-#: client/drizzledump.cc:718
+#: client/drizzledump.cc:712
 #, c-format
 msgid "Illegal use of option --ignore-table=<database>.<table>\n"
 msgstr ""
 
-#: client/drizzledump.cc:743
+#: client/drizzledump.cc:737
 #, c-format
 msgid "Invalid mode to --compatible: %s\n"
 msgstr ""
 
-#: client/drizzledump.cc:803
+#: client/drizzledump.cc:791
 #, c-format
 msgid "%s: You must use option --tab with --fields-...\n"
 msgstr ""
 
-#: client/drizzledump.cc:820
+#: client/drizzledump.cc:808
 #, c-format
 msgid ""
 "%s: You can't use --single-transaction and --lock-all-tables at the same "
 "time.\n"
 msgstr ""
 
-#: client/drizzledump.cc:833
+#: client/drizzledump.cc:821
 #, c-format
 msgid ""
 "%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same "
 "time.\n"
 msgstr ""
 
-#: client/drizzledump.cc:839
+#: client/drizzledump.cc:827
 #, c-format
 msgid "%s: --databases or --all-databases can't be used with --tab.\n"
 msgstr ""
 
-#: client/drizzledump.cc:863
+#: client/drizzledump.cc:853 client/drizzledump.cc:858
 #, fuzzy, c-format
-msgid "Got error: %d: %s %s"
+msgid "Got error: %s %s"
 msgstr "Erreur survenue: %s\n"
 
-#: client/drizzledump.cc:955
+#: client/drizzledump.cc:956 client/drizzledump.cc:963
+#: client/drizzledump.cc:976
 #, c-format
 msgid "Couldn't execute '%s': %s (%d)"
 msgstr ""
 
-#: client/drizzledump.cc:1016
+#: client/drizzledump.cc:1040
 #, fuzzy, c-format
 msgid "-- Connecting to %s...\n"
 msgstr "Connexion à l'hôte."
 
-#: client/drizzledump.cc:1037
+#: client/drizzledump.cc:1061
 #, c-format
 msgid "-- Disconnecting from %s...\n"
 msgstr ""
 
-#: client/drizzledump.cc:1047
+#: client/drizzledump.cc:1072
 #, fuzzy
 msgid "Couldn't allocate memory"
 msgstr "Ne peux allouer de la mémoire pour le fichier historique temporaire!\n"
 
-#: client/drizzledump.cc:1388
+#: client/drizzledump.cc:1416
 #, c-format
 msgid ""
 "-- Warning: Unable to use delayed inserts for table '%s' because it's of "
 "type %s\n"
 msgstr ""
 
-#: client/drizzledump.cc:1402
+#: client/drizzledump.cc:1430
 #, c-format
 msgid "-- Retrieving table structure for table %s...\n"
 msgstr ""
 
-#: client/drizzledump.cc:1511
+#: client/drizzledump.cc:1544
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
 msgstr ""
 
-#: client/drizzledump.cc:1620
-#, c-format
-msgid "%s: Can't get keys for table %s (%s)\n"
-msgstr ""
+#: client/drizzledump.cc:1651
+#, fuzzy, c-format
+msgid "%s: Can't get keys for table %s\n"
+msgstr "Impossible de trouver le pilote de sauvegarde pour la table %-.64s"
 
-#: client/drizzledump.cc:1697 client/drizzledump.cc:2995
-#, c-format
-msgid "-- Warning: Couldn't get status information for table %s (%s)\n"
-msgstr ""
+#: client/drizzledump.cc:1729 client/drizzledump.cc:3083
+#, fuzzy, c-format
+msgid "Error: Couldn't read status information for table %s\n"
+msgstr "Obtenir le statuts du serveur."
 
-#: client/drizzledump.cc:1704 client/drizzledump.cc:3003
-#, c-format
-msgid "Error: Couldn't read status information for table %s (%s)\n"
-msgstr ""
-
-#: client/drizzledump.cc:1846
+#: client/drizzledump.cc:1872
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
 msgstr ""
 
-#: client/drizzledump.cc:1853
+#: client/drizzledump.cc:1879
 #, c-format
 msgid "-- Skipping dump data for table '%s', --no-data was used\n"
 msgstr ""
 
-#: client/drizzledump.cc:1864
+#: client/drizzledump.cc:1890
 #, c-format
 msgid "-- Warning: Skipping data for table '%s' because it's of type %s\n"
 msgstr ""
 
-#: client/drizzledump.cc:1871
+#: client/drizzledump.cc:1897
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
 msgstr ""
 
-#: client/drizzledump.cc:1879
+#: client/drizzledump.cc:1905
 msgid "-- Sending SELECT query...\n"
 msgstr ""
 
-#: client/drizzledump.cc:1931
+#: client/drizzledump.cc:1959 client/drizzledump.cc:2444
 msgid "when executing 'SELECT INTO OUTFILE'"
 msgstr ""
 
-#: client/drizzledump.cc:1939
+#: client/drizzledump.cc:1969
 #, c-format
 msgid ""
 "\n"
@@ -950,88 +944,79 @@ msgid ""
 "--\n"
 msgstr ""
 
-#: client/drizzledump.cc:1976 client/drizzledump.cc:1985
-#, fuzzy
-msgid "when retrieving data from server"
-msgstr "Erreur lors de la lecture de données dans le flux de sauvegarde"
-
-#: client/drizzledump.cc:1989
+#: client/drizzledump.cc:2010
 msgid "-- Retrieving rows...\n"
 msgstr ""
 
-#: client/drizzledump.cc:1992
+#: client/drizzledump.cc:2013
 #, c-format
 msgid "%s: Error in field count for table: %s !  Aborting.\n"
 msgstr ""
 
-#: client/drizzledump.cc:2031
+#: client/drizzledump.cc:2062
+#, c-format
+msgid "%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"
+msgstr ""
+
+#: client/drizzledump.cc:2079
 #, c-format
 msgid "-- %<PRIu32> of ~%<PRIu64> rows dumped for table %s\n"
 msgstr ""
 
-#: client/drizzledump.cc:2053
+#: client/drizzledump.cc:2101
 #, c-format
 msgid "Not enough fields from table %s! Aborting.\n"
 msgstr ""
 
-#: client/drizzledump.cc:2239
-#, fuzzy, c-format
-msgid "%s: Error %d: %s when dumping table %s at row: %d\n"
-msgstr "Erreur %d à la lecture de la table '%s'"
-
-#: client/drizzledump.cc:2397
-#, fuzzy
-msgid "when selecting the database"
-msgstr "Chemin à la racine de la base de donnée."
-
-#: client/drizzledump.cc:2465
+#: client/drizzledump.cc:2521
 msgid "when using LOCK TABLES"
 msgstr ""
 
-#: client/drizzledump.cc:2472 client/drizzledump.cc:2604
+#: client/drizzledump.cc:2534 client/drizzledump.cc:2677
 msgid "when doing refresh"
 msgstr ""
 
-#: client/drizzledump.cc:2558
+#: client/drizzledump.cc:2627
 msgid "alloc_root failure."
 msgstr ""
 
-#: client/drizzledump.cc:2579
+#: client/drizzledump.cc:2648
 #, fuzzy, c-format
 msgid "Couldn't find table: \"%s\""
 msgstr "La table %s.%s n'a pas pû être réparée"
 
-#: client/drizzledump.cc:2594
+#: client/drizzledump.cc:2664
 msgid "when doing LOCK TABLES"
 msgstr ""
 
-#: client/drizzledump.cc:2657
+#: client/drizzledump.cc:2735
 #, fuzzy
 msgid "Error: Binlogging on server not active"
 msgstr "Erreur lors de l'établissement de la connexion"
 
-#: client/drizzledump.cc:2725
+#: client/drizzledump.cc:2804
 msgid "Error: Slave not set up"
 msgstr ""
 
-#: client/drizzledump.cc:2784
+#: client/drizzledump.cc:2863
 #, fuzzy
 msgid "Error: Unable to start slave"
 msgstr "Erreur durant la connexion à l'esclave:"
 
-#: client/drizzledump.cc:3071
+#: client/drizzledump.cc:3154 client/drizzledump.cc:3161
+#: client/drizzledump.cc:3171
 #, c-format
 msgid ""
 "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
 msgstr ""
 
-#: client/drizzledump.cc:3102
+#: client/drizzledump.cc:3201
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
-#: drizzled/authentication.cc:69 drizzled/handlerton.cc:238
-#: drizzled/show.cc:4527 drizzled/sql_plugin.cc:791
+#: drizzled/authentication.cc:64 drizzled/plugin/storage_engine.cc:204
+#: drizzled/show.cc:4495 drizzled/sql_plugin.cc:697
 #, c-format
 msgid "Plugin '%s' init function returned error."
 msgstr "La fonction d'initialisation du greffon '%s' a retourné une erreur."
@@ -1045,21 +1030,21 @@ msgstr "L'init() configvar du plugin '%s' a échoué"
 
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
-#: drizzled/configvar.cc:65
+#: drizzled/configvar.cc:64
 #, c-format
 msgid "configvar plugin '%s' deinit() failed"
 msgstr "Le deinit() configvar du plugin '%s' a échoué"
 
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
-#: drizzled/configvar.cc:101
+#: drizzled/configvar.cc:100
 #, c-format
 msgid "configvar plugin '%s' configvar_func1() failed"
 msgstr "Le configvar_func1() configvar du plugin '%s' a échoué"
 
 #. TRANSLATORS: The leading word "configvar" is the name
 #. of the plugin api, and so should not be translated.
-#: drizzled/configvar.cc:155
+#: drizzled/configvar.cc:154
 #, c-format
 msgid "configvar plugin '%s' configvar_func2() failed"
 msgstr "La fonction configvar_func2() du plugin '%s'  configvar a échoué"
@@ -1069,20 +1054,20 @@ msgstr "La fonction configvar_func2() du plugin '%s'  configvar a échoué"
 msgid "Error while loading database options: '%s':"
 msgstr "Erreur lors du chargement des options de la base de données: '%s':"
 
-#: drizzled/drizzled.cc:582
+#: drizzled/drizzled.cc:547
 #, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr "Reçu un signal %d du thread %<PRIu64>"
 
-#: drizzled/drizzled.cc:616
+#: drizzled/drizzled.cc:581
 msgid "Aborting\n"
 msgstr "Annulation\n"
 
-#: drizzled/drizzled.cc:742
+#: drizzled/drizzled.cc:704
 msgid "One can only use the --user switch if running as root\n"
 msgstr "On ne peut utiliser l'option --user que si on est root\n"
 
-#: drizzled/drizzled.cc:750
+#: drizzled/drizzled.cc:712
 msgid ""
 "Fatal error: Please read \"Security\" section of the manual to find out how "
 "to run drizzled as root!\n"
@@ -1090,7 +1075,7 @@ msgstr ""
 "Erreur fatale : relisez la section \"Sécurité\" du manuel pour savoir "
 "comment exécuter drizzled en tant que root!\n"
 
-#: drizzled/drizzled.cc:772
+#: drizzled/drizzled.cc:734
 #, c-format
 msgid ""
 "Fatal error: Can't change to run as user '%s' ;  Please check that the user "
@@ -1099,36 +1084,36 @@ msgstr ""
 "Erreur fatale : impossible d'exécuter mysqld en tant qu'utilisateur '%s'. "
 "Vérifiez que cet utilisateur existe\n"
 
-#: drizzled/drizzled.cc:946
+#: drizzled/drizzled.cc:908
 #, c-format
 msgid "Retrying bind on TCP/IP port %u"
 msgstr "Nouvelle tentative de connexion TCP/IP sur le port %u"
 
-#: drizzled/drizzled.cc:952
+#: drizzled/drizzled.cc:914
 msgid "Can't start server: Bind on TCP/IP port"
 msgstr "Impossible de lancer le serveur : connexion sur le port TCP/IP"
 
-#: drizzled/drizzled.cc:953
+#: drizzled/drizzled.cc:915
 #, c-format
 msgid "Do you already have another drizzled server running on port: %d ?"
 msgstr ""
 "Auriez-vous un autre serveur Drizzle qui fonctionne déjà sur le port %d?"
 
-#: drizzled/drizzled.cc:959
+#: drizzled/drizzled.cc:921
 msgid "Can't start server: listen() on TCP/IP port"
 msgstr "Impossible de démarrer le serveur : listen() sur le port TCP/IP"
 
-#: drizzled/drizzled.cc:960
+#: drizzled/drizzled.cc:922
 #, c-format
 msgid "listen() on TCP/IP failed with error %d"
 msgstr "listen() sur TCP/IP a échoué avec l'erreur %d"
 
-#: drizzled/drizzled.cc:1048
+#: drizzled/drizzled.cc:1013
 #, c-format
 msgid "Fatal "
 msgstr "Fatal "
 
-#: drizzled/drizzled.cc:1072
+#: drizzled/drizzled.cc:1038
 #, c-format
 msgid ""
 "We will try our best to scrape up some info that will hopefully help "
@@ -1145,7 +1130,7 @@ msgstr ""
 "et cela ne sera pas facile.\n"
 "\n"
 
-#: drizzled/drizzled.cc:1083
+#: drizzled/drizzled.cc:1049
 #, c-format
 msgid ""
 "It is possible that drizzled could use up to \n"
@@ -1163,7 +1148,7 @@ msgstr ""
 "variables de cette équation.\n"
 "\n"
 
-#: drizzled/drizzled.cc:1100
+#: drizzled/drizzled.cc:1066
 #, c-format
 msgid ""
 "Attempting backtrace. You can use the following information to find out\n"
@@ -1176,7 +1161,7 @@ msgstr ""
 "gros\n"
 "problème est survenu...\n"
 
-#: drizzled/drizzled.cc:1128
+#: drizzled/drizzled.cc:1094
 #, c-format
 msgid ""
 "Trying to get some variables.\n"
@@ -1186,7 +1171,7 @@ msgstr ""
 "Certains pointeurs peuvent être invalides, et causer l'arrêt de cette "
 "procédure...\n"
 
-#: drizzled/drizzled.cc:1140
+#: drizzled/drizzled.cc:1106
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -1209,7 +1194,7 @@ msgstr ""
 "nsswitch.conf ou bien\n"
 "utiliser un serveur drizzled qui n'est pas compilé statiquement.\n"
 
-#: drizzled/drizzled.cc:1155
+#: drizzled/drizzled.cc:1121
 #, c-format
 msgid ""
 "\n"
@@ -1230,7 +1215,7 @@ msgstr ""
 "la \n"
 "documentation de votre distribution pour en savoir plus.\n"
 
-#: drizzled/drizzled.cc:1168
+#: drizzled/drizzled.cc:1134
 #, c-format
 msgid ""
 "\n"
@@ -1252,12 +1237,12 @@ msgstr ""
 "en \n"
 "savoir plus sur les bogues de 'mlockall'.\n"
 
-#: drizzled/drizzled.cc:1183
+#: drizzled/drizzled.cc:1149
 #, c-format
 msgid "Writing a core file\n"
 msgstr "Ecrit le fichier core\n"
 
-#: drizzled/drizzled.cc:1228
+#: drizzled/drizzled.cc:1194
 msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
 "be able to generate a core file on signals"
@@ -1265,69 +1250,69 @@ msgstr ""
 "setrlimit n'a pas pu changer la taille des fichiers core à 'infini'; il se "
 "peut que nous ne puissions pas produire les fichiers core demandés"
 
-#: drizzled/drizzled.cc:1432
+#: drizzled/drizzled.cc:1396
 #, c-format
 msgid "gethostname failed, using '%s' as hostname"
 msgstr "gethostname a échoué, on utilise '%s' comme nom d'hôte"
 
-#: drizzled/drizzled.cc:1529
+#: drizzled/drizzled.cc:1493
 #, c-format
 msgid "Unknown locale: '%s'"
 msgstr "Locale inconnue : '%s'"
 
-#: drizzled/drizzled.cc:1584
+#: drizzled/drizzled.cc:1535
 msgid "Can't create thread-keys"
 msgstr "Impossible de créer un thread de clés"
 
-#: drizzled/drizzled.cc:1610
+#: drizzled/drizzled.cc:1561
 msgid "Out of memory"
 msgstr "Mémoire insuffisante"
 
-#: drizzled/drizzled.cc:1625
+#: drizzled/drizzled.cc:1576
 msgid "Failed to initialize plugins."
 msgstr "Échec à l'initialisation des plugins."
 
-#: drizzled/drizzled.cc:1656
+#: drizzled/drizzled.cc:1607
 #, c-format
 msgid ""
 "%s: Too many arguments (first extra is '%s').\n"
 "Use --verbose --help to get a list of available options\n"
 msgstr "%s : trop d'arguments fournis (l'excédent commence à '%s');\n"
 
-#: drizzled/drizzled.cc:1666
+#: drizzled/drizzled.cc:1617
 msgid "Can't init databases"
 msgstr "Initialisation des base de données impossible."
 
-#: drizzled/drizzled.cc:1686
+#: drizzled/drizzled.cc:1637
 #, c-format
 msgid "Unknown/unsupported table type: %s"
 msgstr "Type de table: %s inconnu/non supporté"
 
-#: drizzled/drizzled.cc:1692
+#: drizzled/drizzled.cc:1643
 #, c-format
 msgid "Default storage engine (%s) is not available"
 msgstr "Le moteur de stockage par défaut (%s) indisponible"
 
-#: drizzled/drizzled.cc:1724
+#: drizzled/drizzled.cc:1674
 #, c-format
 msgid "Failed to lock memory. Errno: %d\n"
 msgstr "Impossible de verrouiller la mémoire. Errno : %d\n"
 
-#: drizzled/drizzled.cc:1785
+#: drizzled/drizzled.cc:1736
 #, fuzzy, c-format
 msgid "Asked for %<PRIu64> thread stack, but got %<PRIu64>"
 msgstr "La demande de %u threads dans la pile a obtenu %<PRIu64>"
 
-#: drizzled/drizzled.cc:1955
+#: drizzled/drizzled.cc:1898
 #, c-format
 msgid "drizzled: Got error %d from select"
 msgstr "drizzled: erreur %d pendant select"
 
-#: drizzled/drizzled.cc:2138
+#: drizzled/drizzled.cc:2072
 msgid "Auto-increment columns are incremented by this"
 msgstr "Les colonnes auto-increment sont augmentées de cette valeur"
 
-#: drizzled/drizzled.cc:2143
+#: drizzled/drizzled.cc:2077
 msgid ""
 "Offset added to Auto-increment columns. Used when auto-increment-increment !"
 "= 1"
@@ -1335,7 +1320,7 @@ msgstr ""
 "Décalage ajouté aux colonnes auto_increment. Utilisé lorsque auto-increment-"
 "increment est différent de 1"
 
-#: drizzled/drizzled.cc:2149
+#: drizzled/drizzled.cc:2083
 msgid ""
 "Path to installation directory. All paths are usually resolved relative to "
 "this."
@@ -1343,110 +1328,102 @@ msgstr ""
 "Chemin du répertoire d'installation. Tous les les chemins relatifs se "
 "résolvent a partir de ce point."
 
-#: drizzled/drizzled.cc:2153
+#: drizzled/drizzled.cc:2087
 msgid "IP address to bind to."
 msgstr "Adresse IP à laquelle se connecter."
 
-#: drizzled/drizzled.cc:2157
+#: drizzled/drizzled.cc:2091
 msgid "Set the filesystem character set."
 msgstr "Définit l'encodage de caractère du système de fichier."
 
-#: drizzled/drizzled.cc:2162
+#: drizzled/drizzled.cc:2096
 msgid "Set the default character set."
 msgstr "Définit le jeu de caractères par défaut."
 
-#: drizzled/drizzled.cc:2166
+#: drizzled/drizzled.cc:2100
 msgid "Chroot drizzled daemon during startup."
 msgstr "Le démon drizzled a été chrooté durant le démarrage."
 
-#: drizzled/drizzled.cc:2170
+#: drizzled/drizzled.cc:2104
 msgid "Set the default collation."
 msgstr "Spécifie la collation par défaut."
 
-#: drizzled/drizzled.cc:2174
+#: drizzled/drizzled.cc:2108
 msgid "Default completion type."
 msgstr "Type de complétion par défaut."
 
-#: drizzled/drizzled.cc:2179
+#: drizzled/drizzled.cc:2113
 msgid "Write core on errors."
 msgstr "Écrit le core en cas d'erreur."
 
-#: drizzled/drizzled.cc:2183
+#: drizzled/drizzled.cc:2117
 msgid "Path to the database root."
 msgstr "Chemin à la racine de la base de donnée."
 
-#: drizzled/drizzled.cc:2187
+#: drizzled/drizzled.cc:2121
 msgid "Set the default storage engine (table type) for tables."
 msgstr "Spécifie le moteur de stockage par défaut (type de table)."
 
-#: drizzled/drizzled.cc:2191
+#: drizzled/drizzled.cc:2125
 msgid "Set the default time zone."
 msgstr "Définit le fuseau horraire par défaut."
 
-#: drizzled/drizzled.cc:2195
+#: drizzled/drizzled.cc:2129
 msgid "Type of DELAY_KEY_WRITE."
 msgstr "Type de DELAY_KEY_WRITE."
 
-#: drizzled/drizzled.cc:2199
+#: drizzled/drizzled.cc:2133
 msgid "Print a symbolic stack trace on failure."
 msgstr "Affiche une trace de la pile en cas d'echec."
 
-#: drizzled/drizzled.cc:2205
+#: drizzled/drizzled.cc:2139
 msgid "Push supported query conditions to the storage engine."
 msgstr ""
 "Envoie les clauses de requêtes au moteur de stockage, quand elles sont "
 "supportées."
 
-#: drizzled/drizzled.cc:2211
+#: drizzled/drizzled.cc:2145
 msgid "Used for debugging;  Use at your own risk!"
 msgstr "Utilisé pour le debuggage; A utiliser à vos risques et périls!"
 
-#: drizzled/drizzled.cc:2214
-msgid "Flush tables to disk between SQL commands."
-msgstr "Écrit les tables sur le disque entre deux requêtes SQL."
-
-#: drizzled/drizzled.cc:2219
+#: drizzled/drizzled.cc:2150
 msgid "Set up signals usable for debugging"
 msgstr "Configure les signaux pour le débogage."
 
-#: drizzled/drizzled.cc:2223
+#: drizzled/drizzled.cc:2154
 msgid "Command(s) that are executed for each new connection"
 msgstr "Commande(s) utilisée(s) à chaque nouvelle connexion"
 
-#: drizzled/drizzled.cc:2227
+#: drizzled/drizzled.cc:2158
 msgid "Read SQL commands from this file at startup."
 msgstr "Lis les commandes SQL depuis ce fichier à chaque démarrage."
 
-#: drizzled/drizzled.cc:2231
+#: drizzled/drizzled.cc:2162
 msgid "(IGNORED)"
 msgstr "(IGNORÉ)"
 
-#: drizzled/drizzled.cc:2235
+#: drizzled/drizzled.cc:2166
 msgid "Set the language used for the month names and the days of the week."
 msgstr ""
 "Définit la langue utilisée pour le nom des mois et des jours de la semaine."
 
-#: drizzled/drizzled.cc:2240
-msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
-msgstr "Active/désactive LOAD DATA LOCAL INFILE (prends 1 ou 0 comme valeurs)."
-
-#: drizzled/drizzled.cc:2245
+#: drizzled/drizzled.cc:2171
 msgid "Log connections and queries to file."
 msgstr "Enregistre les connexions et les requêtes dans un fichier."
 
-#: drizzled/drizzled.cc:2249
+#: drizzled/drizzled.cc:2175
 msgid "Log all MyISAM changes to file."
 msgstr "Log toutes les modifications MyISAM dans un fichier."
 
-#: drizzled/drizzled.cc:2253
+#: drizzled/drizzled.cc:2179
 msgid "Log some not critical warnings to the log file."
 msgstr "Enregistre certaines alertes non critiques dans le fichier de log."
 
-#: drizzled/drizzled.cc:2258
+#: drizzled/drizzled.cc:2184
 msgid "Lock drizzled in memory."
 msgstr "Verrouillage de drizzled en mémoire."
 
-#: drizzled/drizzled.cc:2262
+#: drizzled/drizzled.cc:2188
 msgid ""
 "Syntax: myisam-recover[=option[,option...]], where option can be DEFAULT, "
 "BACKUP, FORCE or QUICK."
@@ -1454,21 +1431,15 @@ msgstr ""
 "Syntaxe : myisam-recover[=option[,option...]], où les options peuvent être "
 "DEFAULT, BACKUP, FORCE ou QUICK."
 
-#: drizzled/drizzled.cc:2267
-msgid "Use very new possible 'unsafe' functions."
-msgstr ""
-"Utilise toutes les nouvelles fonctions, même potentiellement peu "
-"'sécuritaires'."
-
-#: drizzled/drizzled.cc:2272
+#: drizzled/drizzled.cc:2193
 msgid "Use old, non-optimized alter table."
 msgstr "Utilise l'ancienne commande ALTER TABLE, qui n'est pas optimisée."
 
-#: drizzled/drizzled.cc:2277
+#: drizzled/drizzled.cc:2198
 msgid "Pid file used by safe_mysqld."
 msgstr "Le fichier de pid utilisé par safe_mysqld."
 
-#: drizzled/drizzled.cc:2287
+#: drizzled/drizzled.cc:2208
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
@@ -1476,11 +1447,7 @@ msgstr ""
 "Durée maximale d'attente de libération d'un port (en secondes). Par défaut, "
 "aucune attente."
 
-#: drizzled/drizzled.cc:2292
-msgid "Skip some optimize stages (for testing)."
-msgstr "Ignore certaines étapes d'optimisation (aux fins de tests)"
-
-#: drizzled/drizzled.cc:2295
+#: drizzled/drizzled.cc:2213
 msgid ""
 "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
 "specified directory"
@@ -1488,37 +1455,22 @@ msgstr ""
 "Limite les commandes LOAD DATA, SELECT ... OUTFILE et LOAD_FILE() aux "
 "fichiers qui sont dans le dossier indiqué"
 
-#: drizzled/drizzled.cc:2300
+#: drizzled/drizzled.cc:2218
 msgid ""
 "Uniquely identifies the server instance in the community of replication "
 "partners."
 msgstr ""
 "Identifie le serveur de manière unique, dans la communauté de réplication."
 
-#: drizzled/drizzled.cc:2305
-msgid "Don't use new, possible wrong routines."
-msgstr "N'utilise pas de fonctions nouvelles et potentiellement erronnées."
-
-#: drizzled/drizzled.cc:2308
+#: drizzled/drizzled.cc:2223
 msgid "Don't print a stack trace on failure."
 msgstr "N'affiche pas la pile en cas de problème."
 
-#: drizzled/drizzled.cc:2312
-msgid "Don't give threads different priorities."
-msgstr "Ne donne pas de priorité différentes aux threads."
-
-#: drizzled/drizzled.cc:2316
+#: drizzled/drizzled.cc:2227
 msgid "Enable symbolic link support."
 msgstr "Active le support des liens symboliques."
 
-#: drizzled/drizzled.cc:2325
-msgid ""
-"Non-default option to alias SYSDATE() to NOW() to make it safe-replicable."
-msgstr ""
-"Option qui fait de SYSDATE() un alias de NOW() afin de le rendre compatible "
-"avec la réplication."
-
-#: drizzled/drizzled.cc:2330
+#: drizzled/drizzled.cc:2236
 msgid ""
 "Using this option will cause most temporary files created to use a small set "
 "of names, rather than a unique name for each new file."
@@ -1526,26 +1478,26 @@ msgstr ""
 "Cette option fait que les fichiers temporaires seront créés avec des noms "
 "issus d'un petit jeu de noms, plutôt qu'avec un nom unique à chaque fois."
 
-#: drizzled/drizzled.cc:2335
+#: drizzled/drizzled.cc:2241
 msgid ""
 "Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
 msgstr ""
 "Indique s'il faut chronométrer les mutex (Seuls les mutex InnoDB sont "
 "supportés)."
 
-#: drizzled/drizzled.cc:2340
+#: drizzled/drizzled.cc:2246
 msgid "Path for temporary files."
 msgstr ""
 
-#: drizzled/drizzled.cc:2344
+#: drizzled/drizzled.cc:2250
 msgid "Default transaction isolation level."
 msgstr "Niveau d'isolation des transactions par défaut."
 
-#: drizzled/drizzled.cc:2348
+#: drizzled/drizzled.cc:2254
 msgid "Run drizzled daemon as user."
 msgstr "Exécution du démon drizzled comme utilisateur."
 
-#: drizzled/drizzled.cc:2356
+#: drizzled/drizzled.cc:2262
 msgid ""
 "The number of outstanding connection requests Drizzle can have. This comes "
 "into play when the main Drizzle thread gets very many connection requests in "
@@ -1555,7 +1507,7 @@ msgstr ""
 "Cela entre en jeu quand le thread Drizzle principal reçoit de nombreuses "
 "tentatives de connexions dans un temps très court."
 
-#: drizzled/drizzled.cc:2362
+#: drizzled/drizzled.cc:2268
 #, fuzzy
 msgid ""
 "Size of tree cache used in bulk insert optimization. Note that this is a "
@@ -1564,7 +1516,7 @@ msgstr ""
 "La taille du fichier de cache utilisé lors des insertions de masse. Notez "
 "que cette limite est assurée par thread!"
 
-#: drizzled/drizzled.cc:2368
+#: drizzled/drizzled.cc:2274
 msgid ""
 "The number of seconds the drizzled server is waiting for a connect packet "
 "before responding with 'Bad handshake'."
@@ -1572,36 +1524,28 @@ msgstr ""
 "Le nombre de secondes d'attente avant que le serveur drizzled ne considère "
 "un paquet de connexion comme perdu et réponde 'Bad handshake'."
 
-#: drizzled/drizzled.cc:2373
+#: drizzled/drizzled.cc:2279
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
 msgstr ""
 "La précision du résultat de l'opérateur '/' va être augmentée de cette "
 "valeur."
 
-#: drizzled/drizzled.cc:2379
+#: drizzled/drizzled.cc:2285
 msgid "The maximum length of the result of function  group_concat."
 msgstr "La taille maximale du résultat de la fonction GROUP_CONCAT()."
 
-#: drizzled/drizzled.cc:2384
-msgid ""
-"The number of seconds the server waits for activity on an interactive "
-"connection before closing it."
-msgstr ""
-"Le nombre de secondes que le serveur attend de l'activité sur une connexion "
-"interactive avant de la fermer."
-
-#: drizzled/drizzled.cc:2390
+#: drizzled/drizzled.cc:2290
 msgid "The size of the buffer that is used for full joins."
 msgstr ""
 "La taille du buffer qui est utilisée pour réaliser des jointures complètes."
 
-#: drizzled/drizzled.cc:2396
+#: drizzled/drizzled.cc:2296
 msgid "Don't overwrite stale .MYD and .MYI even if no directory is specified."
 msgstr ""
 "N'écrase pas les fichiers .MYD et .MYI, même si aucun dossier n'est spécifié."
 
-#: drizzled/drizzled.cc:2401
+#: drizzled/drizzled.cc:2301
 msgid ""
 "The size of the buffer used for index blocks for MyISAM tables. Increase "
 "this to get better index handling (for all reads and multiple writes) to as "
@@ -1611,7 +1555,7 @@ msgstr ""
 "Augmentez cette valeur pour améliorer la gestion des index (pour les "
 "lectures et les écritures), autant que vous pouvez vous le permettre."
 
-#: drizzled/drizzled.cc:2410
+#: drizzled/drizzled.cc:2310
 msgid ""
 "This characterizes the number of hits a hot block has to be untouched until "
 "it is considered aged enough to be downgraded to a warm block. This "
@@ -1623,19 +1567,19 @@ msgstr ""
 "bloc tiède. Cette option spécifie le ratio qui représente le nombre de hits "
 "par rapport au nombre de bloc dans le cache de clé."
 
-#: drizzled/drizzled.cc:2419
+#: drizzled/drizzled.cc:2319
 msgid "The default size of key cache blocks"
 msgstr "La taille par défaut pour les blocs de cache de clé."
 
-#: drizzled/drizzled.cc:2425
+#: drizzled/drizzled.cc:2325
 msgid "The minimum percentage of warm blocks in key cache"
 msgstr "La fraction minimale de blocks chauds dans le cache de clé."
 
-#: drizzled/drizzled.cc:2431
+#: drizzled/drizzled.cc:2331
 msgid "Max packetlength to send/receive from to server."
 msgstr "Max packetlength"
 
-#: drizzled/drizzled.cc:2436
+#: drizzled/drizzled.cc:2336
 msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
@@ -1643,17 +1587,17 @@ msgstr ""
 "Si le nombre de connexions abandonnées en provenance du même hôte dépasse "
 "cette limite, il sera bloqué pour ses futures tentatives."
 
-#: drizzled/drizzled.cc:2441
+#: drizzled/drizzled.cc:2341
 msgid "Max number of errors/warnings to store for a statement."
 msgstr "Nombre maximal d'erreur et d'alertes notées par commande."
 
-#: drizzled/drizzled.cc:2446
+#: drizzled/drizzled.cc:2346
 msgid "Don't allow creation of heap tables bigger than this."
 msgstr ""
 "Ne pas autoriser la création de table en mémoire, plus grande que cette "
 "taille."
 
-#: drizzled/drizzled.cc:2452
+#: drizzled/drizzled.cc:2352
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
 "an error."
@@ -1661,17 +1605,17 @@ msgstr ""
 "Les jointures qui risquent de lire plus de max_join_size retournent une "
 "erreur."
 
-#: drizzled/drizzled.cc:2458
+#: drizzled/drizzled.cc:2358
 msgid "Max number of bytes in sorted records."
 msgstr "Nombre maximal d'octets dans les lignes triées."
 
-#: drizzled/drizzled.cc:2463
+#: drizzled/drizzled.cc:2363
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
 "Limite le nombre de lecture maximal sur le disque lorsqu'il faut rechercher "
 "des lignes à l'aide d'un index"
 
-#: drizzled/drizzled.cc:2468
+#: drizzled/drizzled.cc:2368
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
@@ -1680,25 +1624,25 @@ msgstr ""
 "les max_sort_length octets de chaque ligne sont utilisés. Le reste est "
 "ignoré)."
 
-#: drizzled/drizzled.cc:2475
+#: drizzled/drizzled.cc:2375
 msgid "Maximum number of temporary tables a client can keep open at a time."
 msgstr ""
 "Le nombre maximal de tables temporaires qu'un utilisateur peut créer "
 "simultanément."
 
-#: drizzled/drizzled.cc:2480
+#: drizzled/drizzled.cc:2380
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
 "Après ce nombre de verrou d'écritures, autorise quelques verrous de lectures."
 
-#: drizzled/drizzled.cc:2484
+#: drizzled/drizzled.cc:2384
 msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
 msgstr ""
 "Ne log pas les requêtes qui examine moins de min_examined_row_limit lignes."
 
-#: drizzled/drizzled.cc:2490
+#: drizzled/drizzled.cc:2390
 msgid ""
 "Specifies how MyISAM index statistics collection code should threat NULLs. "
 "Possible values of name are 'nulls_unequal' (default behavior), "
@@ -1709,11 +1653,11 @@ msgstr ""
 "'nulls_equal' (comportement MySQL 4.0), et 'nulls_ignore' (ignore les "
 "valeurs NULL)."
 
-#: drizzled/drizzled.cc:2497
+#: drizzled/drizzled.cc:2397
 msgid "Buffer length for TCP/IP and socket communication."
 msgstr "Taille du buffer pour les communications TCP/IP et les sockets"
 
-#: drizzled/drizzled.cc:2502
+#: drizzled/drizzled.cc:2402
 msgid ""
 "Number of seconds to wait for more data from a connection before aborting "
 "the read."
@@ -1721,7 +1665,7 @@ msgstr ""
 "Nombre de seconde d'attente pour plus d'information avant d'abandonner la "
 "lecture."
 
-#: drizzled/drizzled.cc:2508
+#: drizzled/drizzled.cc:2408
 msgid ""
 "If a read on a communication port is interrupted, retry this many times "
 "before giving up."
@@ -1729,7 +1673,7 @@ msgstr ""
 "Si une lecture sur un port de communication est interrompue, retente la "
 "lecture plusieurs fois avant d'abandonner."
 
-#: drizzled/drizzled.cc:2514
+#: drizzled/drizzled.cc:2414
 msgid ""
 "Number of seconds to wait for a block to be written to a connection before "
 "aborting the write."
@@ -1737,7 +1681,7 @@ msgstr ""
 "Nombre de secondes d'attente de l'écriture d'un bloc avant d'abandonner la "
 "connexion."
 
-#: drizzled/drizzled.cc:2520
+#: drizzled/drizzled.cc:2420
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
 "promising partial plans from the optimizer search space. Meaning: false - do "
@@ -1749,7 +1693,7 @@ msgstr ""
 "En bref : false, n'applique aucune heuristique et analyse tout l'arbre des "
 "possibles; true, écarte les plans en fonction du nombre de lignes lues."
 
-#: drizzled/drizzled.cc:2528
+#: drizzled/drizzled.cc:2428
 msgid ""
 "Maximum depth of search performed by the query optimizer. Values larger than "
 "the number of relations in a query result in better query plans, but take "
@@ -1768,11 +1712,11 @@ msgstr ""
 "Si vous le mettez à MAX_TABLES+2, l'optimiseur choisira la méthode originale "
 "find_best (utilisée pour les tests et les comparaisons)."
 
-#: drizzled/drizzled.cc:2540
+#: drizzled/drizzled.cc:2440
 msgid "Directory for plugins."
 msgstr "Répertoire des greffons."
 
-#: drizzled/drizzled.cc:2544
+#: drizzled/drizzled.cc:2444
 msgid ""
 "Optional colon (or semicolon) separated list of plugins to load,where each "
 "plugin is identified by the name of the shared library. [for example: --"
@@ -1782,26 +1726,26 @@ msgstr ""
 "où chaque plugin est identifié par le nom de sa bibliothèque partagée [Par "
 "exemple : plugin_load=libmd5udf.so:libauth_pam.so]"
 
-#: drizzled/drizzled.cc:2550
+#: drizzled/drizzled.cc:2450
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr "La taille du buffer allouée pour le pré-chargement des index."
 
-#: drizzled/drizzled.cc:2555
+#: drizzled/drizzled.cc:2455
 msgid "Allocation block size for query parsing and execution"
 msgstr ""
 "Taille de bloc d'allocation pour l'analyse et l'exécution des requêtes."
 
-#: drizzled/drizzled.cc:2560
+#: drizzled/drizzled.cc:2460
 msgid "Persistent buffer for query parsing and execution"
 msgstr "Tampon persistant pour l'analyse et l'execution des requête"
 
-#: drizzled/drizzled.cc:2566
+#: drizzled/drizzled.cc:2466
 msgid "Allocation block size for storing ranges during optimization"
 msgstr ""
 "Taille de bloc d'allocation pour le stockage des intervalles durant "
 "l'optimisation."
 
-#: drizzled/drizzled.cc:2572
+#: drizzled/drizzled.cc:2472
 msgid ""
 "Each thread that does a sequential scan allocates a buffer of this size for "
 "each table it scans. If you do many sequential scans, you may want to "
@@ -1811,7 +1755,7 @@ msgstr ""
 "taille pour chaque table qu'il analyse. Si vous faîtes de nombreux scans "
 "séquentiels, vous pourriez augmenter cette valeur."
 
-#: drizzled/drizzled.cc:2580
+#: drizzled/drizzled.cc:2480
 msgid ""
 "When reading rows in sorted order after a sort, the rows are read through "
 "this buffer to avoid a disk seeks. If not set, then it's set to the value of "
@@ -1821,24 +1765,24 @@ msgstr ""
 "ce buffer pour éviter des accès au disque. Si ce buffer n'est pas spécifié, "
 "il prend alors la valeur de record_buffer."
 
-#: drizzled/drizzled.cc:2588
+#: drizzled/drizzled.cc:2488
 msgid "Select scheduler to be used (by default pool-of-threads)."
 msgstr ""
 
-#: drizzled/drizzled.cc:2592
+#: drizzled/drizzled.cc:2492
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
 msgstr ""
 "Chaque thread qui nécessaire des tris peut allouer un buffer de cette taille."
 
-#: drizzled/drizzled.cc:2598
+#: drizzled/drizzled.cc:2498
 msgid "The number of cached table definitions."
 msgstr "Le nombre de définitions de tables dans le cache."
 
-#: drizzled/drizzled.cc:2602
+#: drizzled/drizzled.cc:2502
 msgid "The number of cached open tables."
 msgstr "Le nombre de tables ouvertes dans le cache."
 
-#: drizzled/drizzled.cc:2606
+#: drizzled/drizzled.cc:2506
 msgid ""
 "Timeout in seconds to wait for a table level lock before returning an error. "
 "Used only if the connection has active cursors."
@@ -1846,11 +1790,11 @@ msgstr ""
 "Le temps d'attente maximal d'un verrou sur une table avant de retourner une "
 "erreur. Utilisé uniquement si une connexion dispose de curseur actifs."
 
-#: drizzled/drizzled.cc:2611
+#: drizzled/drizzled.cc:2511
 msgid "The stack size for each thread."
 msgstr "La taille de la pile de chaque thread."
 
-#: drizzled/drizzled.cc:2617
+#: drizzled/drizzled.cc:2517
 #, fuzzy
 msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
@@ -1859,18 +1803,18 @@ msgstr ""
 "Si une table temporaire en mémoire excède cette taille, MySQL va "
 "automatiquement la convertir en une table MyISAM sur le disque."
 
-#: drizzled/drizzled.cc:2623
+#: drizzled/drizzled.cc:2523
 msgid "Allocation block size for transactions to be stored in binary log"
 msgstr ""
 "Taille de bloc d'allocation pour les transactions qui doivent être stockées "
 "dans le log binaire"
 
-#: drizzled/drizzled.cc:2628
+#: drizzled/drizzled.cc:2528
 msgid "Persistent buffer for transactions to be stored in binary log"
 msgstr ""
 "Buffer persistant pour les transactions qui sont stockées dans le log binaire"
 
-#: drizzled/drizzled.cc:2633
+#: drizzled/drizzled.cc:2533
 msgid ""
 "The number of seconds the server waits for activity on a connection before "
 "closing it."
@@ -1878,7 +1822,7 @@ msgstr ""
 "Le nombre de secondes que le serveur attend de l'activité sur une connexion "
 "avant de la fermer."
 
-#: drizzled/drizzled.cc:2784
+#: drizzled/drizzled.cc:2682
 #, fuzzy
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
@@ -1894,12 +1838,12 @@ msgstr ""
 "\n"
 "Démarre le serveur de base de données Drizzle\n"
 
-#: drizzled/drizzled.cc:2791
+#: drizzled/drizzled.cc:2689
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
 msgstr "Utilisation : %s [OPTIONS]\n"
 
-#: drizzled/drizzled.cc:2802
+#: drizzled/drizzled.cc:2700
 msgid ""
 "\n"
 "To see what values a running Drizzle server is using, type\n"
@@ -1909,7 +1853,7 @@ msgstr ""
 "Pour voir les valeurs qui sont utilisées par un serveur Drizzle, tapez\n"
 "'drizzleadmin variables' instead of 'drizzle --help'."
 
-#: drizzled/drizzled.cc:2952
+#: drizzled/drizzled.cc:2845
 #, c-format
 msgid ""
 "Ignoring user change to '%s' because the user was set to '%s' earlier on the "
@@ -1918,45 +1862,45 @@ msgstr ""
 "Le changement de valeur en '%s' a été ignoré, car l'utilisateur a déjà "
 "changé la valeur en '%s' plus tôt, en ligne de commande\n"
 
-#: drizzled/drizzled.cc:2996
+#: drizzled/drizzled.cc:2886
 msgid "Can't start server: cannot resolve hostname!"
 msgstr ""
 "Impossible de démarrer le serveur : impossible de résoudre le nom de domaine!"
 
-#: drizzled/drizzled.cc:3002
+#: drizzled/drizzled.cc:2892
 msgid "Can't start server: bind-address refers to multiple interfaces!"
 msgstr ""
 "Impossible de démarrer le serveur : bind-address pointe sur plusieurs "
 "interfaces!"
 
-#: drizzled/drizzled.cc:3316
+#: drizzled/drizzled.cc:3204
 #, c-format
 msgid "No option given to %s\n"
 msgstr "Aucune option fournie à %s\n"
 
-#: drizzled/drizzled.cc:3318
+#: drizzled/drizzled.cc:3206
 #, c-format
 msgid "Wrong option to %s. Option(s) given: %s\n"
 msgstr "Mauvaise option pour %s. Option(s) donnée : %s\n"
 
-#: drizzled/drizzled.cc:3320
+#: drizzled/drizzled.cc:3208
 #, c-format
 msgid "Alternatives are: '%s'"
 msgstr "Les valeurs possibles sont : '%s'"
 
-#: drizzled/errmsg.cc:46
+#: drizzled/errmsg.cc:40
 #, c-format
 msgid "errmsg plugin '%s' init() failed."
 msgstr "La fonction init() du plugin errmsg '%s' a échoué."
 
-#: drizzled/errmsg.cc:76
+#: drizzled/errmsg.cc:67
 #, c-format
 msgid "errmsg plugin '%s' deinit() failed."
 msgstr "La fonction deinit() du plugin errmsg '%s' a échoué."
 
-#: drizzled/errmsg.cc:117
-#, c-format
-msgid "errmsg plugin '%s' errmsg_func() failed"
+#: drizzled/errmsg.cc:106
+#, fuzzy, c-format
+msgid "errmsg plugin '%s' errmsg() failed"
 msgstr "La fonction errmsg_func() du plugin errmsg '%s' a échoué"
 
 #: drizzled/error.cc:34
@@ -2846,24 +2790,24 @@ msgstr "Réception d'une erreur de fnctl()"
 msgid "Got packets out of order"
 msgstr "Réception de paquets dans le mauvais ordre"
 
-#: drizzled/error.cc:348 libdrizzleclient/errmsg.c:98
+#: drizzled/error.cc:348 libdrizzleclient/errmsg.cc:98
 msgid "Couldn't uncompress communication packet"
 msgstr "Impossible de décompresser le paquet de communication"
 
-#: drizzled/error.cc:350 libdrizzleclient/errmsg.c:100
+#: drizzled/error.cc:350 libdrizzleclient/errmsg.cc:100
 msgid "Got an error reading communication packets"
 msgstr "Réception d'une erreur lors de la lecture des paquets de communication"
 
-#: drizzled/error.cc:352 libdrizzleclient/errmsg.c:102
+#: drizzled/error.cc:352 libdrizzleclient/errmsg.cc:102
 msgid "Got timeout reading communication packets"
 msgstr ""
 "Délais de réception expiré lors de la lecture des paquets de communication"
 
-#: drizzled/error.cc:354 libdrizzleclient/errmsg.c:104
+#: drizzled/error.cc:354 libdrizzleclient/errmsg.cc:104
 msgid "Got an error writing communication packets"
 msgstr "Réception d'une erreur lors de l'écriture des paquets de communication"
 
-#: drizzled/error.cc:356 libdrizzleclient/errmsg.c:106
+#: drizzled/error.cc:356 libdrizzleclient/errmsg.cc:106
 msgid "Got timeout writing communication packets"
 msgstr ""
 "Délais de réception expiré lors de l'écriture des paquets de communication"
@@ -2991,9 +2935,9 @@ msgid "Got error %d during CHECKPOINT"
 msgstr "Réception d'une erreur %d durant le CHECKPOINT"
 
 #: drizzled/error.cc:402
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"Aborted connection %ld to db: '%-.192s' user: '%-.48s' host: "
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
 "'%-.64s' (%-.64s)"
 msgstr ""
 "Abandon de la connexion %ld vers la base '%-.192s' utilisateur : '%-.48s' "
@@ -5861,21 +5805,26 @@ msgstr ""
 msgid "Received an invalid time value '%s'."
 msgstr ""
 
-#: drizzled/handler.cc:956
+#: drizzled/error.cc:1416
+#, c-format
+msgid "Received an invalid enum value '%s'."
+msgstr ""
+
+#: drizzled/handler.cc:948
 #, c-format
 msgid "Found %d prepared transaction(s) in %s"
 msgstr "Trouvé %d transactions préparées dans %s"
 
-#: drizzled/handler.cc:1008
+#: drizzled/handler.cc:1000
 msgid "Starting crash recovery..."
 msgstr "Lancement de la restauration après crash..."
 
-#: drizzled/handler.cc:1040
+#: drizzled/handler.cc:1032
 #, c-format
 msgid "Found %d prepared XA transactions"
 msgstr "Trouvé %d transactions XA préparées"
 
-#: drizzled/handler.cc:1045
+#: drizzled/handler.cc:1037
 #, c-format
 msgid ""
 "Found %d prepared transactions! It means that drizzled was not shut down "
@@ -5890,40 +5839,25 @@ msgstr ""
 "l'option --tc-heuristic-recover pour valider ou annuler les transactions qui "
 "restent."
 
-#: drizzled/handler.cc:1055
+#: drizzled/handler.cc:1047
 msgid "Crash recovery finished."
 msgstr "Restauration après crash terminée."
 
-#: drizzled/handlerton.cc:268
-msgid "Too many storage engines!"
-msgstr "Trop de moteurs de stockage de table!"
-
-#: drizzled/handlerton.cc:273
-#, c-format
-msgid "Storage engine '%s' has conflicting typecode. Assigning value %d."
-msgstr ""
-"Le moteur de stockage '%s'  a un code en conflit. La valeur %d lui a été "
-"assignée."
-
 #. TRANSLATORS: The leading word "logging" is the name
 #. of the plugin api, and so should not be translated.
-#: drizzled/logging.cc:65
+#: drizzled/logging.cc:56
 #, c-format
 msgid "logging plugin '%s' deinit() failed"
 msgstr "La fonction deinit() du plugin '%s' de logging a échoué"
 
-#. TRANSLATORS: The leading word "logging" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/logging.cc:87
-#, c-format
-msgid "logging plugin '%s' logging_pre() failed"
-msgstr "La fonction logging_pre() du plugin '%s' de logging a échoué"
+#: drizzled/logging.cc:77
+#, fuzzy, c-format
+msgid "logging plugin '%s' pre() failed"
+msgstr "La fonction deinit() du plugin '%s' de logging a échoué"
 
-#. TRANSLATORS: The leading word "logging" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/logging.cc:119
-#, c-format
-msgid "logging plugin '%s' logging_post() failed"
+#: drizzled/logging.cc:108
+#, fuzzy, c-format
+msgid "logging plugin '%s' post() failed"
 msgstr "La fonction logging_post() du plugin de logging '%s' a échoué"
 
 #. TRANSLATORS: The leading word "parser" is the name
@@ -5935,21 +5869,21 @@ msgstr "La fonction init() du plugin de parser '%s' a échoué"
 
 #. TRANSLATORS: The leading word "parser" is the name
 #. of the plugin api, and so should not be translated.
-#: drizzled/parser.cc:67
+#: drizzled/parser.cc:66
 #, c-format
 msgid "parser plugin '%s' deinit() failed"
 msgstr "La fonction deinit() du plugin de parser '%s' a échoué"
 
 #. TRANSLATORS: The leading word "parser" is the name
 #. of the plugin api, and so should not be translated.
-#: drizzled/parser.cc:104
+#: drizzled/parser.cc:103
 #, c-format
 msgid "parser plugin '%s' parser_func1() failed"
 msgstr "La fonction init() du plugin de parser_func1 '%s' a échoué"
 
 #. TRANSLATORS: The leading word "parser" is the name
 #. of the plugin api, and so should not be translated.
-#: drizzled/parser.cc:158
+#: drizzled/parser.cc:157
 #, c-format
 msgid "parser plugin '%s' parser_func2() failed"
 msgstr "La fonction init() du plugin de parser_func2 '%s' a échoué"
@@ -5959,115 +5893,97 @@ msgstr "La fonction init() du plugin de parser_func2 '%s' a échoué"
 msgid "qcache plugin '%s' init() failed"
 msgstr "La fonction init() du plugin de qcache '%s' a échoué"
 
-#: drizzled/qcache.cc:60
+#: drizzled/qcache.cc:59
 #, c-format
 msgid "qcache plugin '%s' deinit() failed"
 msgstr "La fonction deinit() du plugin de qcache '%s' a échoué"
 
-#: drizzled/qcache.cc:105
+#: drizzled/qcache.cc:104
 #, fuzzy, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
 msgstr "La fonction deinit() du plugin de qcache '%s' a échoué"
 
-#: drizzled/qcache.cc:122
+#: drizzled/qcache.cc:121
 #, fuzzy, c-format
 msgid "qcache plugin '%s' set() failed"
 msgstr "La fonction deinit() du plugin de qcache '%s' a échoué"
 
-#: drizzled/qcache.cc:141
+#: drizzled/qcache.cc:140
 #, fuzzy, c-format
 msgid "qcache plugin '%s' invalidate_table() failed"
 msgstr "La fonction init() du plugin de qcache '%s' a échoué"
 
-#: drizzled/qcache.cc:160
+#: drizzled/qcache.cc:159
 #, fuzzy, c-format
 msgid "qcache plugin '%s' invalidate_db() failed"
 msgstr "La fonction init() du plugin de qcache '%s' a échoué"
 
-#: drizzled/qcache.cc:178
+#: drizzled/qcache.cc:177
 #, fuzzy, c-format
 msgid "qcache plugin '%s' flush() failed"
 msgstr "La fonction do1() du plugin de qcache '%s' a échoué"
 
-#. TRANSLATORS: The leading word "replicator" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/replicator.cc:41
+#: drizzled/replicator.cc:36
 #, fuzzy, c-format
 msgid "replicator plugin '%s' init() failed"
 msgstr "La fonction init() du plugin de parser '%s' a échoué"
 
-#. TRANSLATORS: The leading word "replicator" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/replicator.cc:65
+#: drizzled/replicator.cc:58
 #, fuzzy, c-format
 msgid "replicator plugin '%s' deinit() failed"
 msgstr "La fonction deinit() du plugin de parser '%s' a échoué"
 
-#. TRANSLATORS: The leading word "replicator" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/replicator.cc:89
+#: drizzled/replicator.cc:81
 #, fuzzy, c-format
 msgid "replicator plugin '%s' session_init() failed"
 msgstr "La fonction deinit() du plugin de parser '%s' a échoué"
 
-#. TRANSLATORS: The leading word "replicator" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/replicator.cc:159
+#: drizzled/replicator.cc:152
 #, fuzzy, c-format
 msgid "replicator plugin '%s' row_insert() failed"
 msgstr "La fonction init() du plugin de parser '%s' a échoué"
 
-#. TRANSLATORS: The leading word "replicator" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/replicator.cc:173
+#: drizzled/replicator.cc:168
 #, fuzzy, c-format
 msgid "replicator plugin '%s' row_update() failed"
 msgstr "La fonction deinit() du plugin de parser '%s' a échoué"
 
-#. TRANSLATORS: The leading word "replicator" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/replicator.cc:187
+#: drizzled/replicator.cc:183
 #, fuzzy, c-format
 msgid "replicator plugin '%s' row_delete() failed"
 msgstr "La fonction deinit() du plugin de parser '%s' a échoué"
 
-#. TRANSLATORS: The leading word "replicator" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/replicator.cc:272
+#: drizzled/replicator.cc:270
 #, fuzzy, c-format
 msgid "replicator plugin '%s' end_transaction() failed"
 msgstr "La fonction deinit() du plugin de parser '%s' a échoué"
 
-#. TRANSLATORS: The leading word "replicator" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/replicator.cc:329
+#: drizzled/replicator.cc:328
 #, fuzzy, c-format
 msgid "replicator plugin '%s' statement() failed"
 msgstr "La fonction deinit() du plugin de parser '%s' a échoué"
 
-#: drizzled/scheduling.cc:61
+#: drizzled/scheduling.cc:57
 #, c-format
 msgid "scheduling plugin '%s' init() failed"
 msgstr "La fonction init() du plugin de scheduling '%s' a échoué"
 
-#. TRANSLATORS: The leading word "scheduling" is the name
-#. of the plugin api, and so should not be translated.
-#: drizzled/scheduling.cc:95
+#: drizzled/scheduling.cc:80
 #, c-format
 msgid "scheduling plugin '%s' deinit() failed"
 msgstr "La fonction deinit() du plugin de scheduling '%s' a échoué"
 
-#: drizzled/sql_base.cc:2306
+#: drizzled/sql_base.cc:2295
 #, c-format
 msgid "Table %s had a open data handler in reopen_table"
 msgstr "La table %s a un gestionnaire de données ouvert dans reopen_table"
 
-#: drizzled/sql_base.cc:2955
+#: drizzled/sql_base.cc:2943
 #, c-format
 msgid "Couldn't repair table: %s.%s"
 msgstr "La table %s.%s n'a pas pû être réparée"
 
-#: drizzled/sql_base.cc:2997
+#: drizzled/sql_base.cc:2985
 #, fuzzy, c-format
 msgid ""
 "When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
@@ -6076,65 +5992,41 @@ msgstr ""
 "Lors de l'ouverture de la table HEAP, il a été impossible d'allouer la "
 "mémoire nécessaire pour écrire 'DELETE FROM `%s`.`%s`' dans le log binaire"
 
-#: drizzled/sql_base.cc:3600
+#: drizzled/sql_base.cc:3588
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "La table temporaire '%s' n'a pas pu être supprimée, erreur: %d"
 
-#: drizzled/sql_base.cc:6195
-msgid "Can't create thread to kill server"
-msgstr "Impossible de créer un thread pour terminer le serveur"
-
-#: drizzled/sql_plugin.cc:680
+#: drizzled/sql_plugin.cc:645
 #, c-format
 msgid "Plugin '%s' of type %s failed deinitialization"
 msgstr "Le plugin '%s' de type %s a échoué à la désinitialisation"
 
-#: drizzled/sql_plugin.cc:694
-#, c-format
-msgid "Plugin '%s' has ref_count=%d after deinitialization."
-msgstr "Le plugin '%s' a un ref_count=%d après désinitialisation"
-
-#: drizzled/sql_plugin.cc:782
+#: drizzled/sql_plugin.cc:688
 #, c-format
 msgid "Plugin '%s' registration as a %s failed."
 msgstr "L'enregistrement du plugin '%s' comme %s a échoué."
 
-#: drizzled/sql_plugin.cc:1005
+#: drizzled/sql_plugin.cc:889
 msgid "plugin-load parameter too long"
 msgstr "Paramètre de chargement du plugin trop long"
 
-#: drizzled/sql_plugin.cc:1065
+#: drizzled/sql_plugin.cc:949
 #, c-format
 msgid "Couldn't load plugin named '%s' with soname '%s'."
 msgstr "Impossible de charger le plugin appelé '%s' avec le soname '%s'."
 
-#: drizzled/sql_plugin.cc:1118
-#, fuzzy, c-format
-msgid "Forcing shutdown of %<PRIu64> plugins"
-msgstr "Impose l'extinction de %d plugins"
-
-#: drizzled/sql_plugin.cc:1141
-#, c-format
-msgid "Plugin '%s' will be forced to shutdown"
-msgstr "Le plugin '%s' va être éteint de force"
-
-#: drizzled/sql_plugin.cc:1157
-#, c-format
-msgid "Plugin '%s' has ref_count=%d after shutdown."
-msgstr "Le plugin '%s' a un ref_count=%d après extinction."
-
-#: drizzled/sql_plugin.cc:1545
+#: drizzled/sql_plugin.cc:1347
 #, fuzzy
 msgid "Out of memory."
 msgstr "Mémoire insuffisante"
 
-#: drizzled/sql_plugin.cc:2394 drizzled/sql_plugin.cc:2457
+#: drizzled/sql_plugin.cc:2188 drizzled/sql_plugin.cc:2251
 #, c-format
 msgid "Unknown variable type code 0x%x in plugin '%s'."
 msgstr "Code de type de variables inconnu 0x%x dans le plugin '%s'."
 
-#: drizzled/sql_plugin.cc:2437
+#: drizzled/sql_plugin.cc:2231
 #, c-format
 msgid ""
 "Server variable %s of plugin %s was forced to be read-only: string variable "
@@ -6143,33 +6035,33 @@ msgstr ""
 "La variable server %s du plugin %s a été mis en mode lecture-seule : c'est "
 "une variable chaîne, sans update_func ni option PLUGIN_VAR_MEMALLOC"
 
-#: drizzled/sql_plugin.cc:2468
+#: drizzled/sql_plugin.cc:2262
 #, c-format
 msgid "Missing variable name in plugin '%s'."
 msgstr "Nom de variable manquant dans le greffon '%s'."
 
-#: drizzled/sql_plugin.cc:2485
+#: drizzled/sql_plugin.cc:2279
 #, c-format
 msgid "Thread local variable '%s' not allocated in plugin '%s'."
 msgstr ""
 "La variable locale de thread '%s' n'a pas été allouée dans le plug-in '%s'."
 
-#: drizzled/sql_plugin.cc:2603
+#: drizzled/sql_plugin.cc:2397
 #, c-format
 msgid "Out of memory for plugin '%s'."
 msgstr "Dépassement de mémoire pour le greffon '%s'."
 
-#: drizzled/sql_plugin.cc:2610
+#: drizzled/sql_plugin.cc:2404
 #, c-format
 msgid "Bad options for plugin '%s'."
 msgstr "Mauvaises options pour le greffon '%s'."
 
-#: drizzled/sql_plugin.cc:2619
+#: drizzled/sql_plugin.cc:2413
 #, c-format
 msgid "Parsing options for plugin '%s' failed."
 msgstr "L'analyse des options du plugin '%s' a échoué"
 
-#: drizzled/sql_plugin.cc:2662
+#: drizzled/sql_plugin.cc:2456
 #, c-format
 msgid "Plugin '%s' has conflicting system variables"
 msgstr "Le plugin '%s' a des variables système en conflit"
@@ -6179,17 +6071,17 @@ msgstr "Le plugin '%s' a des variables système en conflit"
 msgid "Invalid (old?) table or database name '%s'"
 msgstr "Nom de table ou base de données '%s' invalide (ancien?)"
 
-#: drizzled/sql_table.cc:2691
+#: drizzled/sql_table.cc:2687
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr "Erreur interne %d inconnue durant l'opération"
 
-#: drizzled/sql_table.cc:4961
+#: drizzled/sql_table.cc:4955
 #, c-format
 msgid "Could not open table %s.%s after rename\n"
 msgstr "Ne peut ouvrir la table %s.%s après rename\n"
 
-#: drizzled/sql_table.cc:5141
+#: drizzled/sql_table.cc:5135
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
@@ -6197,6 +6089,11 @@ msgid ""
 msgstr ""
 "order_st BY ignoré, car il y a un index utilisateur en cluster défini pour "
 "la table '%-.192s'"
+
+#: drizzled/sql_udf.cc:82
+#, fuzzy, c-format
+msgid "Plugin '%s' init function returned error %d."
+msgstr "La fonction d'initialisation du greffon '%s' a retourné une erreur."
 
 #: drizzled/table.cc:482
 #, c-format
@@ -6269,7 +6166,7 @@ msgstr ""
 "Définition incorrecte de la table %s.%s: la colonne '%s' à la position %d "
 "devrait être de type '%s', mais la colonne n'est pas trouvée"
 
-#: drizzled/table.cc:4951
+#: drizzled/table.cc:4948
 #, c-format
 msgid "Got error %d when reading table '%s'"
 msgstr "Erreur %d à la lecture de la table '%s'"
@@ -6336,174 +6233,174 @@ msgstr ""
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr ""
 
-#: libdrizzleclient/errmsg.c:28
+#: libdrizzleclient/errmsg.cc:28
 msgid "Unknown Drizzle error"
 msgstr "Erreur Drizzle inconnue"
 
-#: libdrizzleclient/errmsg.c:29
+#: libdrizzleclient/errmsg.cc:29
 #, c-format
 msgid "Can't create UNIX socket (%d)"
 msgstr "Ne peux créer la socket UNIX  (%d)"
 
-#: libdrizzleclient/errmsg.c:30
+#: libdrizzleclient/errmsg.cc:30
 #, c-format
 msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
 msgstr ""
 "Impossible de se connecter au serveur Drizzle local via la socket "
 "'%-.100s' (%d)"
 
-#: libdrizzleclient/errmsg.c:31
-#, c-format
-msgid "Can't connect to Drizzle server on '%-.100s' (%d)"
+#: libdrizzleclient/errmsg.cc:31
+#, fuzzy, c-format
+msgid "Can't connect to Drizzle server on '%-.100s:%lu' (%d)"
 msgstr "Connexion impossible au serveur Drizzle sur '%-.100s' (%d)"
 
-#: libdrizzleclient/errmsg.c:32
+#: libdrizzleclient/errmsg.cc:32
 #, c-format
 msgid "Can't create TCP/IP socket (%d)"
 msgstr "Impossible de créer la socket TCP/IP (%d)"
 
-#: libdrizzleclient/errmsg.c:33
+#: libdrizzleclient/errmsg.cc:33
 #, c-format
 msgid "Unknown Drizzle server host '%-.100s' (%d)"
 msgstr "Serveur Drizzle inconnu '%-.100s' (%d)"
 
-#: libdrizzleclient/errmsg.c:34
+#: libdrizzleclient/errmsg.cc:34
 msgid "Drizzle server has gone away"
 msgstr "Le serveur Drizzle a rompu la communication"
 
-#: libdrizzleclient/errmsg.c:35
+#: libdrizzleclient/errmsg.cc:35
 #, c-format
 msgid "Protocol mismatch; server version = %d, client version = %d"
 msgstr ""
 "Incohérence des versions de protocole : version serveur = %d, version client "
 "= %d"
 
-#: libdrizzleclient/errmsg.c:36
+#: libdrizzleclient/errmsg.cc:36
 msgid "Drizzle client ran out of memory"
 msgstr "Le client Drizzle est à court de mémoire"
 
-#: libdrizzleclient/errmsg.c:37
+#: libdrizzleclient/errmsg.cc:37
 msgid "Wrong host info"
 msgstr "Erreur dans les informations d'hôte"
 
-#: libdrizzleclient/errmsg.c:38
+#: libdrizzleclient/errmsg.cc:38
 msgid "Localhost via UNIX socket"
 msgstr "Localhost, via les sockets UNIX"
 
-#: libdrizzleclient/errmsg.c:39
+#: libdrizzleclient/errmsg.cc:39
 #, c-format
 msgid "%-.100s via TCP/IP"
 msgstr "%-.100s via TCP/IP"
 
-#: libdrizzleclient/errmsg.c:40
+#: libdrizzleclient/errmsg.cc:40
 msgid "Error in server handshake"
 msgstr "Erreur lors de l'établissement de la connexion"
 
-#: libdrizzleclient/errmsg.c:41
+#: libdrizzleclient/errmsg.cc:41
 msgid "Lost connection to Drizzle server during query"
 msgstr "Perte de connexion avec serveur Drizle pendant une requête"
 
-#: libdrizzleclient/errmsg.c:42
+#: libdrizzleclient/errmsg.cc:42
 msgid "Commands out of sync; you can't run this command now"
 msgstr ""
 "Les commandes sont désynchronisées : vous ne pouvez pas exécuter cette "
 "commande maintenant."
 
-#: libdrizzleclient/errmsg.c:43
+#: libdrizzleclient/errmsg.cc:43
 #, c-format
 msgid "Named pipe: %-.32s"
 msgstr "Named pipe: %-.32s"
 
-#: libdrizzleclient/errmsg.c:44
+#: libdrizzleclient/errmsg.cc:44
 #, c-format
 msgid "Can't wait for named pipe to host: %-.64s  pipe: %-.32s (%lu)"
 msgstr ""
 "Impossible d'attendre le named pipe pour l'hôte : %-.64s pipe: %-.32s (%lu)"
 
-#: libdrizzleclient/errmsg.c:45
+#: libdrizzleclient/errmsg.cc:45
 #, c-format
 msgid "Can't open named pipe to host: %-.64s  pipe: %-.32s (%lu)"
 msgstr ""
 "Impossible d'ouvrir le named pipe vers l'hôte  %-.64s pipe: %-.32s (%lu)"
 
-#: libdrizzleclient/errmsg.c:46
+#: libdrizzleclient/errmsg.cc:46
 #, c-format
 msgid "Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)"
 msgstr ""
 "Impossible de changer l'état du named pipe pour l'hôte : %-.64s pipe: %-.32s "
 "(%lu)"
 
-#: libdrizzleclient/errmsg.c:47
+#: libdrizzleclient/errmsg.cc:47
 #, c-format
 msgid "Can't initialize character set %-.32s (path: %-.100s)"
 msgstr "Impossible d'initialiser le jeu de caractères %-.32s (path: %-.100s)"
 
-#: libdrizzleclient/errmsg.c:48
+#: libdrizzleclient/errmsg.cc:48
 msgid "Got packet bigger than 'max_allowed_packet' bytes"
 msgstr "Reçu paquet plus grand que 'max_allowed_packet' octets"
 
-#: libdrizzleclient/errmsg.c:49
+#: libdrizzleclient/errmsg.cc:49
 msgid "Embedded server"
 msgstr "Serveur embarqué"
 
-#: libdrizzleclient/errmsg.c:50
+#: libdrizzleclient/errmsg.cc:50
 msgid "Error on SHOW SLAVE STATUS:"
 msgstr "Erreur durant SHOW SLAVE STATUS"
 
-#: libdrizzleclient/errmsg.c:51
+#: libdrizzleclient/errmsg.cc:51
 msgid "Error on SHOW SLAVE HOSTS:"
 msgstr "Erreur durant le SHOW SLAVE HOSTS :"
 
-#: libdrizzleclient/errmsg.c:52
+#: libdrizzleclient/errmsg.cc:52
 msgid "Error connecting to slave:"
 msgstr "Erreur durant la connexion à l'esclave:"
 
-#: libdrizzleclient/errmsg.c:53
+#: libdrizzleclient/errmsg.cc:53
 msgid "Error connecting to master:"
 msgstr "Erreur de connexion au maître :"
 
-#: libdrizzleclient/errmsg.c:54
+#: libdrizzleclient/errmsg.cc:54
 msgid "SSL connection error"
 msgstr "Erreur de connexion SSL"
 
-#: libdrizzleclient/errmsg.c:55
+#: libdrizzleclient/errmsg.cc:55
 msgid "Malformed packet"
 msgstr "Paquet malformé"
 
-#: libdrizzleclient/errmsg.c:56 libdrizzleclient/errmsg.c:67
-#: libdrizzleclient/errmsg.c:68 libdrizzleclient/errmsg.c:69
-#: libdrizzleclient/errmsg.c:70 libdrizzleclient/errmsg.c:71
-#: libdrizzleclient/errmsg.c:72 libdrizzleclient/errmsg.c:73
-#: libdrizzleclient/errmsg.c:74 libdrizzleclient/errmsg.c:75
+#: libdrizzleclient/errmsg.cc:56 libdrizzleclient/errmsg.cc:67
+#: libdrizzleclient/errmsg.cc:68 libdrizzleclient/errmsg.cc:69
+#: libdrizzleclient/errmsg.cc:70 libdrizzleclient/errmsg.cc:71
+#: libdrizzleclient/errmsg.cc:72 libdrizzleclient/errmsg.cc:73
+#: libdrizzleclient/errmsg.cc:74 libdrizzleclient/errmsg.cc:75
 msgid "(unused error message)"
 msgstr "(message d'erreur non utilisé)"
 
-#: libdrizzleclient/errmsg.c:57
+#: libdrizzleclient/errmsg.cc:57
 msgid "Invalid use of null pointer"
 msgstr "Utilisation illégale d'un pointeur null"
 
-#: libdrizzleclient/errmsg.c:58
+#: libdrizzleclient/errmsg.cc:58
 msgid "Statement not prepared"
 msgstr "La commande n'est pas préparée"
 
-#: libdrizzleclient/errmsg.c:59
+#: libdrizzleclient/errmsg.cc:59
 msgid "No data supplied for parameters in prepared statement"
 msgstr ""
 "Aucune donnée n'a été fournie pour les paramètres de la commande préparée"
 
-#: libdrizzleclient/errmsg.c:60
+#: libdrizzleclient/errmsg.cc:60
 msgid "Data truncated"
 msgstr "Les données ont été tronquées"
 
-#: libdrizzleclient/errmsg.c:61
+#: libdrizzleclient/errmsg.cc:61
 msgid "No parameters exist in the statement"
 msgstr "Aucun paramètre n'existe dans cette commande"
 
-#: libdrizzleclient/errmsg.c:62
+#: libdrizzleclient/errmsg.cc:62
 msgid "Invalid parameter number"
 msgstr "Nombre de paramétres invalide"
 
-#: libdrizzleclient/errmsg.c:63
+#: libdrizzleclient/errmsg.cc:63
 #, c-format
 msgid ""
 "Can't send long data for non-string/non-binary data types (parameter: %d)"
@@ -6511,25 +6408,25 @@ msgstr ""
 "Impossible d'envoyer des données aussi longues pour les types non-binaires "
 "ou non-chaînes (paramètre : %d)"
 
-#: libdrizzleclient/errmsg.c:65
+#: libdrizzleclient/errmsg.cc:65
 #, c-format
 msgid "Using unsupported buffer type: %d  (parameter: %d)"
 msgstr "Utilisation d'un type de buffer non supporté : %d (paramètre: %d)"
 
-#: libdrizzleclient/errmsg.c:66
+#: libdrizzleclient/errmsg.cc:66
 #, c-format
 msgid "Shared memory: %-.100s"
 msgstr "Mémoire partagée : %-.100s"
 
-#: libdrizzleclient/errmsg.c:76
+#: libdrizzleclient/errmsg.cc:76
 msgid "Wrong or unknown protocol"
 msgstr "Protocole inconnu ou erroné"
 
-#: libdrizzleclient/errmsg.c:77
+#: libdrizzleclient/errmsg.cc:77
 msgid "Invalid connection handle"
 msgstr "Pointeur de connexion invalide"
 
-#: libdrizzleclient/errmsg.c:78
+#: libdrizzleclient/errmsg.cc:78
 msgid ""
 "Connection using old (pre-4.1.1) authentication protocol refused (client "
 "option 'secure_auth' enabled)"
@@ -6537,19 +6434,19 @@ msgstr ""
 "La connexion utilise un vieux (pre-4.1.1) protocole d'identification, qui a "
 "été refusé par le client (option 'secure_auth' active)"
 
-#: libdrizzleclient/errmsg.c:80
+#: libdrizzleclient/errmsg.cc:80
 msgid "Row retrieval was canceled by drizzle_stmt_close() call"
 msgstr "La lecture des lignes a été annulée par drizzle_stmt_close()"
 
-#: libdrizzleclient/errmsg.c:81
+#: libdrizzleclient/errmsg.cc:81
 msgid "Attempt to read column without prior row fetch"
 msgstr "Tentative de lecture d'une colonne sans lecture de ligne préalable"
 
-#: libdrizzleclient/errmsg.c:82
+#: libdrizzleclient/errmsg.cc:82
 msgid "Prepared statement contains no metadata"
 msgstr "La commande préparée ne contenait aucune méta-donnée"
 
-#: libdrizzleclient/errmsg.c:83
+#: libdrizzleclient/errmsg.cc:83
 msgid ""
 "Attempt to read a row while there is no result set associated with the "
 "statement"
@@ -6557,11 +6454,11 @@ msgstr ""
 "Tentative de lecture d'une ligne alors qu'il n'y a aucun résultat associé à "
 "cette commande"
 
-#: libdrizzleclient/errmsg.c:85
+#: libdrizzleclient/errmsg.cc:85
 msgid "This feature is not implemented yet"
 msgstr "Cette fonctionnalité n'est pas encore implémentée"
 
-#: libdrizzleclient/errmsg.c:86
+#: libdrizzleclient/errmsg.cc:86
 #, c-format
 msgid ""
 "Lost connection to Drizzle server while waiting for initial communication "
@@ -6570,7 +6467,7 @@ msgstr ""
 "Perte de connexion au serveur Drizzle lors de l'initialisation de la "
 "communication, erreur système: %d"
 
-#: libdrizzleclient/errmsg.c:88
+#: libdrizzleclient/errmsg.cc:88
 #, c-format
 msgid ""
 "Lost connection to Drizzle server while reading initial communication "
@@ -6579,7 +6476,7 @@ msgstr ""
 "Perte de connexion au serveur Drizzle à la lecture du paquet initial de la "
 "communication, erreur système: %d"
 
-#: libdrizzleclient/errmsg.c:90
+#: libdrizzleclient/errmsg.cc:90
 #, c-format
 msgid ""
 "Lost connection to Drizzle server while sending authentication information, "
@@ -6588,7 +6485,7 @@ msgstr ""
 "La connexion au serveur drizzle a été perdue durant l'identification "
 "(envoi), erreur système : %d"
 
-#: libdrizzleclient/errmsg.c:92
+#: libdrizzleclient/errmsg.cc:92
 #, c-format
 msgid ""
 "Lost connection to Drizzle server while reading authorization information, "
@@ -6597,7 +6494,7 @@ msgstr ""
 "La connexion au serveur drizzle a été perdue durant l'identification "
 "(lecture), erreur système : %d"
 
-#: libdrizzleclient/errmsg.c:94
+#: libdrizzleclient/errmsg.cc:94
 #, c-format
 msgid ""
 "Lost connection to Drizzle server while setting initial database, system "
@@ -6606,27 +6503,22 @@ msgstr ""
 "La connexion au serveur drizzle a été perdue durant la création initiale de "
 "la base, erreur système : %d"
 
-#: libdrizzleclient/errmsg.c:96
+#: libdrizzleclient/errmsg.cc:96
 #, fuzzy, c-format
 msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
 "La commande a été terminée indirectement à cause d'un appel à la fonction %s"
 "()"
 
-#: libdrizzleclient/local_infile.c:190 mysys/errors.cc:52
-#, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "Fichier '%s' non trouvé (Errcode: %d)"
-
-#: libdrizzleclient/local_infile.c:221 mysys/errors.cc:26
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Erreur de lecture sur le fichier '%s' (Errcode: %d)"
-
 #: mysys/errors.cc:25
 #, c-format
 msgid "Can't create/write to file '%s' (Errcode: %d)"
 msgstr "Ne peux créer/écrire le fichier '%s' (Errcode: %d)"
+
+#: mysys/errors.cc:26
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr "Erreur de lecture sur le fichier '%s' (Errcode: %d)"
 
 #: mysys/errors.cc:27
 #, c-format
@@ -6765,6 +6657,11 @@ msgstr ""
 "La collation '%s' n'est pas compilée, et n'est pas spécifiée dans le fichier "
 "%s."
 
+#: mysys/errors.cc:52
+#, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr "Fichier '%s' non trouvé (Errcode: %d)"
+
 #: mysys/errors.cc:53
 #, c-format
 msgid "File '%s' (fileno: %d) was not closed"
@@ -6848,140 +6745,164 @@ msgstr "faux"
 msgid "(Disabled)\n"
 msgstr "(Desactivé)\n"
 
-#: plugin/errmsg_stderr/errmsg_stderr.cc:74
+#: plugin/errmsg_stderr/errmsg_stderr.cc:77
 msgid "Error Messages to stderr"
 msgstr "Messages d'erreurs vers stderr"
+
+#: plugin/logging_gearman/logging_gearman.cc:262
+#, c-format
+msgid "fail gearman_client_create(): %s"
+msgstr ""
+
+#: plugin/logging_gearman/logging_gearman.cc:272
+#, c-format
+msgid "fail gearman_client_add_server(): %s"
+msgstr ""
+
+#: plugin/logging_gearman/logging_gearman.cc:297
+#, fuzzy
+msgid "Enable logging to a gearman server"
+msgstr "Active les logs"
+
+#: plugin/logging_gearman/logging_gearman.cc:306
+msgid "Hostname for logging to a Gearman server"
+msgstr ""
+
+#: plugin/logging_gearman/logging_gearman.cc:323
+#, fuzzy
+msgid "Log queries to a Gearman server"
+msgstr "Enregistre les requêtes dans un fichier"
 
 #: plugin/logging_query/logging_query.cc:275
 #, c-format
 msgid "fail open() fn=%s er=%s\n"
 msgstr "Echec : open() fn=%s er=%s\n"
 
-#: plugin/logging_query/logging_query.cc:315
+#: plugin/logging_query/logging_query.cc:313
 #, fuzzy
 msgid "Enable logging to CSV file"
 msgstr "Active les logs"
 
-#: plugin/logging_query/logging_query.cc:324
+#: plugin/logging_query/logging_query.cc:322
 msgid "File to log to"
 msgstr "Fichiers de log vers"
 
-#: plugin/logging_query/logging_query.cc:333
-#: plugin/logging_syslog/logging_syslog.cc:247
+#: plugin/logging_query/logging_query.cc:331
+#: plugin/logging_syslog/logging_syslog.cc:246
 msgid "Threshold for logging slow queries, in microseconds"
 msgstr "Seuil de requêtes lentes, en microsecondes"
 
-#: plugin/logging_query/logging_query.cc:345
-#: plugin/logging_syslog/logging_syslog.cc:259
+#: plugin/logging_query/logging_query.cc:343
+#: plugin/logging_syslog/logging_syslog.cc:258
 msgid "Threshold for logging big queries, for rows returned"
 msgstr "Seuil de grosses requêtes, en nombre de lignes retournées"
 
-#: plugin/logging_query/logging_query.cc:357
-#: plugin/logging_syslog/logging_syslog.cc:271
+#: plugin/logging_query/logging_query.cc:355
+#: plugin/logging_syslog/logging_syslog.cc:270
 msgid "Threshold for logging big queries, for rows examined"
 msgstr "Seuil de grosses requêtes, en nombre de lignes examinées"
 
-#: plugin/logging_query/logging_query.cc:380
+#: plugin/logging_query/logging_query.cc:378
 #, fuzzy
 msgid "Log queries to a CSV file"
 msgstr "Enregistre les requêtes dans un fichier"
 
-#: plugin/logging_syslog/logging_syslog.cc:166
+#: plugin/logging_syslog/logging_syslog.cc:167
 #, c-format
 msgid "syslog facility \"%s\" not known, using \"local0\""
 msgstr ""
 
-#: plugin/logging_syslog/logging_syslog.cc:183
+#: plugin/logging_syslog/logging_syslog.cc:184
 #, c-format
 msgid "syslog priority \"%s\" not known, using \"info\""
 msgstr ""
 
-#: plugin/logging_syslog/logging_syslog.cc:211
+#: plugin/logging_syslog/logging_syslog.cc:210
 msgid "Enable logging"
 msgstr "Active les logs"
 
-#: plugin/logging_syslog/logging_syslog.cc:220
+#: plugin/logging_syslog/logging_syslog.cc:219
 msgid "Syslog Ident"
 msgstr ""
 
-#: plugin/logging_syslog/logging_syslog.cc:229
+#: plugin/logging_syslog/logging_syslog.cc:228
 msgid "Syslog Facility"
 msgstr ""
 
-#: plugin/logging_syslog/logging_syslog.cc:238
+#: plugin/logging_syslog/logging_syslog.cc:237
 msgid "Syslog Priority"
 msgstr ""
 
-#: plugin/logging_syslog/logging_syslog.cc:296
+#: plugin/logging_syslog/logging_syslog.cc:295
 msgid "Log to syslog"
 msgstr ""
 
-#: plugin/multi_thread/multi_thread.cc:83
+#: plugin/multi_thread/multi_thread.cc:120
 msgid "Maximum number of user threads available."
 msgstr ""
 
-#: plugin/pool_of_threads/pool_of_threads.cc:110
+#: plugin/pool_of_threads/pool_of_threads.cc:205
+msgid "event_add error in libevent_add_session_callback\n"
+msgstr "erreur event_add dans libevent_add_session_callback\n"
+
+#: plugin/pool_of_threads/pool_of_threads.cc:347
 msgid "init_pipe(session_add_pipe) error in libevent_init\n"
 msgstr "Erreur init_pipe(session_add_pipe) dans libevent_init\n"
 
-#: plugin/pool_of_threads/pool_of_threads.cc:116
+#: plugin/pool_of_threads/pool_of_threads.cc:354
 msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
 msgstr "erreur init_pipe(session_kill_pipe) dans libevent_init\n"
 
-#: plugin/pool_of_threads/pool_of_threads.cc:128
+#: plugin/pool_of_threads/pool_of_threads.cc:366
 msgid "session_add_event event_add error in libevent_init\n"
 msgstr "erreur session_add_event event_add dans libevent_init\n"
 
-#: plugin/pool_of_threads/pool_of_threads.cc:144
+#: plugin/pool_of_threads/pool_of_threads.cc:380
 #, c-format
 msgid "Can't create completion port thread (error %d)"
 msgstr "Impossible de créer le thread de port de complétion (erreur %d)"
 
-#: plugin/pool_of_threads/pool_of_threads.cc:263
-msgid "event_add error in libevent_add_session_callback\n"
-msgstr "erreur event_add dans libevent_add_session_callback\n"
-
-#: plugin/pool_of_threads/pool_of_threads.cc:377
+#: plugin/pool_of_threads/pool_of_threads.cc:443
 msgid "libevent_thread_proc: my_thread_init() failed\n"
 msgstr "libevent_thread_proc: my_thread_init() a échoué\n"
 
-#: plugin/pool_of_threads/pool_of_threads.cc:572
+#: plugin/pool_of_threads/pool_of_threads.cc:629
 msgid "Size of Pool."
 msgstr ""
 
-#: plugin/replicator/replicator.cc:249
+#: plugin/protobuf_replicator/protobuf_replicator.cc:259
 msgid "Enable Replicator"
 msgstr ""
 
-#: plugin/replicator/replicator.cc:258
+#: plugin/protobuf_replicator/protobuf_replicator.cc:268
 #, fuzzy
 msgid "Directory to place replication logs."
 msgstr "Répertoire des greffons."
 
-#: plugin/signal_handler/signal_handler.cc:223
+#: plugin/signal_handler/signal_handler.cc:225
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr "Impossible de créer un thread d'interruption (erreur %d, errno : %d)"
 
-#: storage/myisam/ha_myisam.cc:457
+#: storage/myisam/ha_myisam.cc:468
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
 msgstr "Réception d'une erreur du thread_id=%<PRIu64>, %s:%d"
 
-#: storage/myisam/ha_myisam.cc:461
+#: storage/myisam/ha_myisam.cc:472
 #, c-format
 msgid "Got an error from unknown thread, %s:%d"
 msgstr "Réception d'une erreur d'un thread inconnu, %s:%d"
 
-#: storage/myisam/ha_myisam.cc:466
+#: storage/myisam/ha_myisam.cc:478
 msgid "Unknown thread accessing table"
 msgstr "Un thread inconnu accède à la table"
 
-#: storage/myisam/ha_myisam.cc:1872
+#: storage/myisam/ha_myisam.cc:1889
 msgid "Block size to be used for MyISAM index pages."
 msgstr "Taille de bloc à utiliser pour les pages d'index."
 
-#: storage/myisam/ha_myisam.cc:1878
+#: storage/myisam/ha_myisam.cc:1895
 msgid ""
 "Number of threads to use when repairing MyISAM tables. The value of 1 "
 "disables parallel repair."
@@ -6989,7 +6910,7 @@ msgstr ""
 "Nombre de thread à utiliser lors de la réparation de tables MyISAM. La "
 "valeur de 1 désactive les réparations parallèles."
 
-#: storage/myisam/ha_myisam.cc:1884
+#: storage/myisam/ha_myisam.cc:1901
 msgid ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
@@ -6997,7 +6918,7 @@ msgstr ""
 "N'utilise pas la méthode de tri rapide d'index si le fichier temporaire "
 "risque d'être plus grand que cette taille."
 
-#: storage/myisam/ha_myisam.cc:1889
+#: storage/myisam/ha_myisam.cc:1906
 msgid ""
 "The buffer that is allocated when sorting the index when doing a REPAIR or "
 "when creating indexes with CREATE INDEX or ALTER TABLE."
@@ -7005,23 +6926,23 @@ msgstr ""
 "Le buffer alloué pour trier les index avec les commandes REPAIR, CREATE "
 "INDEX ou ALTER TABLE."
 
-#: storage/myisam/ha_myisam.cc:1895
+#: storage/myisam/ha_myisam.cc:1912
 msgid "Default pointer size to be used for MyISAM tables."
 msgstr "Taille par défaut du pointeur à utiliser pour les tables MyISAM."
 
-#: storage/myisam/my_handler_errors.c:34
+#: storage/myisam/my_handler_errors.cc:34
 msgid "Didn't find key on read or update"
 msgstr "N'a pas trouvé de clé en lecture(read) ou en mise à jour(update)"
 
-#: storage/myisam/my_handler_errors.c:36
+#: storage/myisam/my_handler_errors.cc:36
 msgid "Duplicate key on write or update"
 msgstr "Clé en double lors de l'écriture ou de la modification"
 
-#: storage/myisam/my_handler_errors.c:38
+#: storage/myisam/my_handler_errors.cc:38
 msgid "Internal (unspecified) error in handler"
 msgstr "Erreur interne (non précisée) dans le gestionnaire"
 
-#: storage/myisam/my_handler_errors.c:40
+#: storage/myisam/my_handler_errors.cc:40
 msgid ""
 "Someone has changed the row since it was read (while the table was locked to "
 "prevent it)"
@@ -7029,245 +6950,324 @@ msgstr ""
 "Quelqu'un a modifié la ligne depuis sa lecture (alors que le verrou de table "
 "devait l'empêcher)"
 
-#: storage/myisam/my_handler_errors.c:43
+#: storage/myisam/my_handler_errors.cc:43
 msgid "Wrong index given to function"
 msgstr "Index erroné passé à la fonction"
 
-#: storage/myisam/my_handler_errors.c:45
+#: storage/myisam/my_handler_errors.cc:45
 msgid "Undefined handler error 125"
 msgstr "Erreur indéfinie de gestionnaire 125"
 
-#: storage/myisam/my_handler_errors.c:47
+#: storage/myisam/my_handler_errors.cc:47
 msgid "Index file is crashed"
 msgstr "Le fichier d'index a crashé"
 
-#: storage/myisam/my_handler_errors.c:49
+#: storage/myisam/my_handler_errors.cc:49
 msgid "Record file is crashed"
 msgstr "Le fichier d'enregistrement a craché"
 
-#: storage/myisam/my_handler_errors.c:51
+#: storage/myisam/my_handler_errors.cc:51
 msgid "Out of memory in engine"
 msgstr "Mémoire insuffisante dans le moteur"
 
-#: storage/myisam/my_handler_errors.c:53
+#: storage/myisam/my_handler_errors.cc:53
 msgid "Undefined handler error 129"
 msgstr "Erreur indéfinie de gestionnaire 129"
 
-#: storage/myisam/my_handler_errors.c:55
+#: storage/myisam/my_handler_errors.cc:55
 msgid "Incorrect file format"
 msgstr "Format de fichier incorrect"
 
-#: storage/myisam/my_handler_errors.c:57
+#: storage/myisam/my_handler_errors.cc:57
 msgid "Command not supported by database"
 msgstr "Commande non supportée par la base de données"
 
-#: storage/myisam/my_handler_errors.c:59
+#: storage/myisam/my_handler_errors.cc:59
 msgid "Old database file"
 msgstr "Fichier de base de données ancien"
 
-#: storage/myisam/my_handler_errors.c:61
+#: storage/myisam/my_handler_errors.cc:61
 msgid "No record read before update"
 msgstr "Aucune ligne lue avant la modification"
 
-#: storage/myisam/my_handler_errors.c:63
+#: storage/myisam/my_handler_errors.cc:63
 msgid "Record was already deleted (or record file crashed)"
 msgstr "La ligne a déjà été effacée (ou le fichier de données est corrompu)"
 
-#: storage/myisam/my_handler_errors.c:65
+#: storage/myisam/my_handler_errors.cc:65
 msgid "No more room in record file"
 msgstr "Plus de place disponible dans le fichier des enregistrements"
 
-#: storage/myisam/my_handler_errors.c:67
+#: storage/myisam/my_handler_errors.cc:67
 msgid "No more room in index file"
 msgstr "Plus de place disponible dans le fichier d'indexes"
 
-#: storage/myisam/my_handler_errors.c:69
+#: storage/myisam/my_handler_errors.cc:69
 msgid "No more records (read after end of file)"
 msgstr "Il n'y a plus de lignes (on a atteint la fin du fichier)"
 
-#: storage/myisam/my_handler_errors.c:71
+#: storage/myisam/my_handler_errors.cc:71
 msgid "Unsupported extension used for table"
 msgstr "Extension non-supportée utilisée pour la table"
 
-#: storage/myisam/my_handler_errors.c:73
+#: storage/myisam/my_handler_errors.cc:73
 msgid "Too big row"
 msgstr "La ligne est trop grosse"
 
-#: storage/myisam/my_handler_errors.c:75
+#: storage/myisam/my_handler_errors.cc:75
 msgid "Wrong create options"
 msgstr "Fausse option de creation"
 
-#: storage/myisam/my_handler_errors.c:77
+#: storage/myisam/my_handler_errors.cc:77
 msgid "Duplicate unique key or constraint on write or update"
 msgstr ""
 "Doublon pour une clé unique ou une contrainte durant une écriture ou une "
 "modification"
 
-#: storage/myisam/my_handler_errors.c:79
+#: storage/myisam/my_handler_errors.cc:79
 msgid "Unknown character set used in table"
 msgstr "Jeu de caractère inconnu utilisé dans la table"
 
-#: storage/myisam/my_handler_errors.c:81
+#: storage/myisam/my_handler_errors.cc:81
 msgid "Conflicting table definitions in sub-tables of MERGE table"
 msgstr "Conflit de définition de tables dans les sous-tables de la table MERGE"
 
-#: storage/myisam/my_handler_errors.c:83
+#: storage/myisam/my_handler_errors.cc:83
 msgid "Table is crashed and last repair failed"
 msgstr "La table a crashé et la dernière réparation a échoué"
 
-#: storage/myisam/my_handler_errors.c:85
+#: storage/myisam/my_handler_errors.cc:85
 msgid "Table was marked as crashed and should be repaired"
 msgstr "La table est marquée comme crashée et devrait être réparée."
 
-#: storage/myisam/my_handler_errors.c:87
+#: storage/myisam/my_handler_errors.cc:87
 msgid "Lock timed out; Retry transaction"
 msgstr "Verrou hors délai. Nouvel essai de la transaction"
 
-#: storage/myisam/my_handler_errors.c:89
+#: storage/myisam/my_handler_errors.cc:89
 msgid "Lock table is full;  Restart program with a larger locktable"
 msgstr ""
 "La table des verrous est pleine; Redémarrer le programme avec une table des "
 "verrous plus grande"
 
-#: storage/myisam/my_handler_errors.c:91
+#: storage/myisam/my_handler_errors.cc:91
 msgid "Updates are not allowed under a read only transactions"
 msgstr ""
 "Les mise à jour (update) ne sont pas autorisée sur des transactions en "
 "lecture seule."
 
-#: storage/myisam/my_handler_errors.c:93
+#: storage/myisam/my_handler_errors.cc:93
 msgid "Lock deadlock; Retry transaction"
 msgstr "Blocage de verrous. Réessayez la transaction un peu plus tard"
 
-#: storage/myisam/my_handler_errors.c:95
+#: storage/myisam/my_handler_errors.cc:95
 msgid "Foreign key constraint is incorrectly formed"
 msgstr "Contrainte de clé étrangère incorrectement formée"
 
-#: storage/myisam/my_handler_errors.c:97
+#: storage/myisam/my_handler_errors.cc:97
 msgid "Cannot add a child row"
 msgstr "Impossible d'ajouter une ligne fille"
 
-#: storage/myisam/my_handler_errors.c:99
+#: storage/myisam/my_handler_errors.cc:99
 msgid "Cannot delete a parent row"
 msgstr "Impossible d'effacer la ligne mère"
 
-#: storage/myisam/my_handler_errors.c:101
+#: storage/myisam/my_handler_errors.cc:101
 msgid "No savepoint with that name"
 msgstr "Pas de point de sauvegarde avec ce nom"
 
-#: storage/myisam/my_handler_errors.c:103
+#: storage/myisam/my_handler_errors.cc:103
 msgid "Non unique key block size"
 msgstr "Taille de bloc de clé non-unique"
 
-#: storage/myisam/my_handler_errors.c:105
+#: storage/myisam/my_handler_errors.cc:105
 msgid "The table does not exist in engine"
 msgstr "La table n'existe pas dans le moteur"
 
-#: storage/myisam/my_handler_errors.c:107
+#: storage/myisam/my_handler_errors.cc:107
 msgid "The table already existed in storage engine"
 msgstr "La table existe déjà dans le moteur de stockage"
 
-#: storage/myisam/my_handler_errors.c:109
+#: storage/myisam/my_handler_errors.cc:109
 msgid "Could not connect to storage engine"
 msgstr "Connexion au moteur de stockage impossible"
 
-#: storage/myisam/my_handler_errors.c:111
+#: storage/myisam/my_handler_errors.cc:111
 msgid "Unexpected null pointer found when using spatial index"
 msgstr "Pointeur null inattendu dans l'index spatial"
 
-#: storage/myisam/my_handler_errors.c:113
+#: storage/myisam/my_handler_errors.cc:113
 msgid "The table changed in storage engine"
 msgstr "La table a été modifiée dans le moteur de stockage"
 
-#: storage/myisam/my_handler_errors.c:115
+#: storage/myisam/my_handler_errors.cc:115
 msgid "There's no partition in table for the given value"
 msgstr "Il n'y a pas de partition dans cette table pour la valeur donnée"
 
-#: storage/myisam/my_handler_errors.c:117
+#: storage/myisam/my_handler_errors.cc:117
 msgid "Row-based binlogging of row failed"
 msgstr ""
 "L'écriture dans le log binaire de réplication de lignes n'a pu être écrit."
 
-#: storage/myisam/my_handler_errors.c:119
+#: storage/myisam/my_handler_errors.cc:119
 msgid "Index needed in foreign key constraint"
 msgstr "Index requis dans la contrainte de la clé étrangère"
 
-#: storage/myisam/my_handler_errors.c:121
+#: storage/myisam/my_handler_errors.cc:121
 msgid "Upholding foreign key constraints would lead to a duplicate key error"
 msgstr ""
 "Satisfaire les contraintes de clé étrangère va mener à une erreur de clé en "
 "double"
 
-#: storage/myisam/my_handler_errors.c:123
+#: storage/myisam/my_handler_errors.cc:123
 msgid "Table needs to be upgraded before it can be used"
 msgstr "La table doit être mise à jour avant qu'elle ne soit utilisée"
 
-#: storage/myisam/my_handler_errors.c:125
+#: storage/myisam/my_handler_errors.cc:125
 msgid "Table is read only"
 msgstr "La table est en lecture seule"
 
-#: storage/myisam/my_handler_errors.c:127
+#: storage/myisam/my_handler_errors.cc:127
 msgid "Failed to get next auto increment value"
 msgstr "Échec à l'obtention de la valeur du prochain auto increment"
 
-#: storage/myisam/my_handler_errors.c:129
+#: storage/myisam/my_handler_errors.cc:129
 msgid "Failed to set row auto increment value"
 msgstr "Impossible d'attribuer la valeur d'auto_increment"
 
-#: storage/myisam/my_handler_errors.c:131
+#: storage/myisam/my_handler_errors.cc:131
 msgid "Unknown (generic) error from engine"
 msgstr "Erreur (générique) inconnue du moteur"
 
-#: storage/myisam/my_handler_errors.c:133
+#: storage/myisam/my_handler_errors.cc:133
 msgid "Record is the same"
 msgstr "L'enregistrement est le même"
 
-#: storage/myisam/my_handler_errors.c:135
+#: storage/myisam/my_handler_errors.cc:135
 msgid "It is not possible to log this statement"
 msgstr "Il n'est pas possible de logger cette commande"
 
-#: storage/myisam/my_handler_errors.c:137
+#: storage/myisam/my_handler_errors.cc:137
 msgid "Tablespace exists"
 msgstr "Cet espace de tables existe déjà"
 
-#: storage/myisam/my_handler_errors.c:139
+#: storage/myisam/my_handler_errors.cc:139
 msgid "The event was corrupt, leading to illegal data being read"
 msgstr "L'événement est corrompu, les données lues seront corrompues"
 
-#: storage/myisam/my_handler_errors.c:141
+#: storage/myisam/my_handler_errors.cc:141
 msgid "The table is of a new format not supported by this version"
 msgstr "La table est dans format non supporté par cette version"
 
-#: storage/myisam/my_handler_errors.c:143
+#: storage/myisam/my_handler_errors.cc:143
 #, fuzzy
 msgid "The event could not be processed no other handler error happened"
 msgstr ""
 "Cet événement ne peut pas être traité, mais aucune erreur n'est survenue."
 
-#: storage/myisam/my_handler_errors.c:145
+#: storage/myisam/my_handler_errors.cc:145
 #, fuzzy
 msgid "Got a fatal error during initialzation of handler"
 msgstr "Réception d'une erreur fatal à l'initialisation du gestionnaire"
 
-#: storage/myisam/my_handler_errors.c:147
+#: storage/myisam/my_handler_errors.cc:147
 msgid "File to short; Expected more data in file"
 msgstr "Le fichier est trop courts : plus de données étaient attendues"
 
-#: storage/myisam/my_handler_errors.c:149
+#: storage/myisam/my_handler_errors.cc:149
 msgid "Read page with wrong checksum"
 msgstr "Lecture d'une page avec une somme de contrôle erronée"
 
-#: storage/myisam/my_handler_errors.c:151
+#: storage/myisam/my_handler_errors.cc:151
 msgid "Lock or active transaction"
 msgstr "Verrou ou transaction en cours"
 
-#: storage/myisam/my_handler_errors.c:153
+#: storage/myisam/my_handler_errors.cc:153
 msgid "No such table space"
 msgstr "Cet espace de tables n'existe pas"
 
-#: storage/myisam/my_handler_errors.c:155
+#: storage/myisam/my_handler_errors.cc:155
 msgid "Tablespace not empty"
 msgstr "L'espace de tables n'est pas vide"
+
+#~ msgid "Max packet length to send to, or receive from server"
+#~ msgstr "Longeur maximum des paquets à envoyer ou à recevoir du serveur"
+
+#~ msgid "Buffer for TCP/IP and socket communication"
+#~ msgstr "Tampon pour les communications TCP/IP et socket"
+
+#, fuzzy
+#~ msgid "when retrieving data from server"
+#~ msgstr "Erreur lors de la lecture de données dans le flux de sauvegarde"
+
+#, fuzzy
+#~ msgid "%s: Error %d: %s when dumping table %s at row: %d\n"
+#~ msgstr "Erreur %d à la lecture de la table '%s'"
+
+#, fuzzy
+#~ msgid "when selecting the database"
+#~ msgstr "Chemin à la racine de la base de donnée."
+
+#~ msgid "Flush tables to disk between SQL commands."
+#~ msgstr "Écrit les tables sur le disque entre deux requêtes SQL."
+
+#~ msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
+#~ msgstr ""
+#~ "Active/désactive LOAD DATA LOCAL INFILE (prends 1 ou 0 comme valeurs)."
+
+#~ msgid "Use very new possible 'unsafe' functions."
+#~ msgstr ""
+#~ "Utilise toutes les nouvelles fonctions, même potentiellement peu "
+#~ "'sécuritaires'."
+
+#~ msgid "Skip some optimize stages (for testing)."
+#~ msgstr "Ignore certaines étapes d'optimisation (aux fins de tests)"
+
+#~ msgid "Don't use new, possible wrong routines."
+#~ msgstr "N'utilise pas de fonctions nouvelles et potentiellement erronnées."
+
+#~ msgid "Don't give threads different priorities."
+#~ msgstr "Ne donne pas de priorité différentes aux threads."
+
+#~ msgid ""
+#~ "Non-default option to alias SYSDATE() to NOW() to make it safe-replicable."
+#~ msgstr ""
+#~ "Option qui fait de SYSDATE() un alias de NOW() afin de le rendre "
+#~ "compatible avec la réplication."
+
+#~ msgid ""
+#~ "The number of seconds the server waits for activity on an interactive "
+#~ "connection before closing it."
+#~ msgstr ""
+#~ "Le nombre de secondes que le serveur attend de l'activité sur une "
+#~ "connexion interactive avant de la fermer."
+
+#~ msgid "Too many storage engines!"
+#~ msgstr "Trop de moteurs de stockage de table!"
+
+#~ msgid "Storage engine '%s' has conflicting typecode. Assigning value %d."
+#~ msgstr ""
+#~ "Le moteur de stockage '%s'  a un code en conflit. La valeur %d lui a été "
+#~ "assignée."
+
+#~ msgid "logging plugin '%s' logging_pre() failed"
+#~ msgstr "La fonction logging_pre() du plugin '%s' de logging a échoué"
+
+#~ msgid "Can't create thread to kill server"
+#~ msgstr "Impossible de créer un thread pour terminer le serveur"
+
+#~ msgid "Plugin '%s' has ref_count=%d after deinitialization."
+#~ msgstr "Le plugin '%s' a un ref_count=%d après désinitialisation"
+
+#, fuzzy
+#~ msgid "Forcing shutdown of %<PRIu64> plugins"
+#~ msgstr "Impose l'extinction de %d plugins"
+
+#~ msgid "Plugin '%s' will be forced to shutdown"
+#~ msgstr "Le plugin '%s' va être éteint de force"
+
+#~ msgid "Plugin '%s' has ref_count=%d after shutdown."
+#~ msgstr "Le plugin '%s' a un ref_count=%d après extinction."
 
 #~ msgid "Directory where character sets are."
 #~ msgstr "Répértoire ou se situent les jeux de caractères."
