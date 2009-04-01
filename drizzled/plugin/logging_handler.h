@@ -33,8 +33,8 @@ public:
    * Make these no-op rather than pure-virtual so that it's easy for a plugin
    * to only 
    */
-  virtual inline bool pre(Session *) {return false;}
-  virtual inline bool post(Session *) {return false;}
+  virtual bool pre(Session *) {return false;}
+  virtual bool post(Session *) {return false;}
 };
 
 #endif /* DRIZZLED_PLUGIN_LOGGING_H */

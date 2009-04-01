@@ -165,8 +165,9 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
 
 class LoggingGearman : public Logging_handler
 {
-
-  virtual bool post (Session *session)
+public:
+  LoggingGearman() : Logging_handler() {}
+  virtual bool post(Session *session)
   {
     char msgbuf[MAX_MSG_LEN];
     int msgbuf_len= 0;
@@ -234,7 +235,8 @@ class LoggingGearman : public Logging_handler
 
 static int logging_gearman_plugin_init(void *p)
 {
-  Logging_handler **l= static_cast<Logging_handler **>(p);
+  Logging_handler **handler= static_cast<Logging_handler **>(p);
+  *handler= NULL;
 
   gearman_return_t ret;
 
@@ -272,7 +274,7 @@ static int logging_gearman_plugin_init(void *p)
     return 0;
   }
 
-  *l= new LoggingGearman();
+  *handler= new LoggingGearman();
 
   return 0;
 }
