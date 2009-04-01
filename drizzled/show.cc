@@ -4510,7 +4510,6 @@ int initialize_schema_table(st_plugin_int *plugin)
     schema_table->table_name= plugin->name.str;
   }
 
-  plugin->state= PLUGIN_IS_READY;
   plugin->data= schema_table;
 
   return 0;
