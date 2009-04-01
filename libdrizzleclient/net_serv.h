@@ -27,9 +27,6 @@
 #include "vio.h"
 
 #include <stdint.h>
-#if !defined(__cplusplus)
-# include <stdbool.h>
-#endif
 
 #define LIBDRIZZLE_ERRMSG_SIZE 512
 #define LIBDRIZZLE_SQLSTATE_LENGTH 5

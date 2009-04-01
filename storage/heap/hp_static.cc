@@ -19,5 +19,10 @@
 */
 
 #include "heapdef.h"
+#include <list>
 
-LIST *heap_open_list=0,*heap_share_list=0;
+using namespace std;
+
+list<HP_INFO *> heap_open_list;
+list<HP_SHARE *> heap_share_list;
+

@@ -18,46 +18,38 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
+noinst_HEADERS =\
+		get_password.h \
+		drizzle.h \
+		drizzle_data.h \
+		drizzle_field.h \
+		drizzle_methods.h \
+		drizzle_parameters.h \
+		drizzle_res.h \
+		drizzle_rows.h \
+		libdrizzle.h \
+		libdrizzle_priv.h \
+		errmsg.h \
+		net_serv.h \
+		options.h \
+		pack.h \
+		password.h \
+		vio.h
 
+noinst_LTLIBRARIES= libdrizzleclient.la
+libdrizzleclient_la_SOURCES= \
+		client.cc \
+		drizzle.cc \
+		drizzle_data.cc \
+		errmsg.cc \
+		get_password.cc \
+		libdrizzle.cc \
+		libdrizzle_priv.cc \
+		net_serv.cc \
+		pack.cc \
+		password.cc \
+		vio.cc \
+		viosocket.cc
 
-libdrizzleclientincludedir = ${includedir}/libdrizzleclient
-dist_libdrizzleclientinclude_HEADERS =	\
-					get_password.h \
-					drizzle.h \
-					drizzle_data.h \
-					drizzle_field.h \
-					drizzle_methods.h \
-					drizzle_parameters.h \
-					drizzle_res.h \
-					drizzle_rows.h \
-					libdrizzle.h \
-					errmsg.h \
-					net_serv.h \
-					options.h \
-					pack.h \
-					password.h \
-					vio.h
-
-lib_LTLIBRARIES = libdrizzleclient.la
-libdrizzleclient_la_SOURCES = client.c \
-			drizzle.c \
-			drizzle_data.c \
-			errmsg.c \
-			get_password.c \
-			libdrizzle.c \
-			libdrizzle_priv.c \
-			net_serv.c \
-			pack.c \
-			password.c \
-			vio.c \
-			viosocket.c
-
-libdrizzleclient_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@
 libdrizzleclient_la_LIBADD = $(LIBZ)
-
-noinst_HEADERS =	libdrizzle_priv.h
-
-EXTRA_DIST =		libdrizzleclient.ver
-CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
-			$(target) $(BUILT_SOURCES)
 

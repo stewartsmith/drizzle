@@ -32,28 +32,28 @@ libarchive_a_CXXFLAGS =	$(AM_CXXFLAGS)
 libarchive_a_CFLAGS =	$(AM_CFLAGS) 
 libarchive_a_SOURCES =	ha_archive.cc azio.cc
 
-archive_performance_SOURCES =	archive_performance.c azio.cc
+archive_performance_SOURCES =	archive_performance.cc azio.cc
 archive_performance_CFLAGS =	$(AM_CFLAGS) 
 archive_performance_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
 			$(LDADD)
 archive_performance_LDFLAGS =
 
-archive_test_SOURCES =	archive_test.c azio.cc
+archive_test_SOURCES =	archive_test.cc azio.cc
 archive_test_CFLAGS =	$(AM_CFLAGS) 
 archive_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
 			$(LDADD)
 archive_test_LDFLAGS =
 
-archive_reader_SOURCES = archive_reader.c azio.cc
+archive_reader_SOURCES = archive_reader.cc azio.cc
 archive_reader_CFLAGS =	$(AM_CFLAGS) 
 archive_reader_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
 			$(LDADD)
 archive_reader_LDFLAGS =
 
-concurrency_test_SOURCES = concurrency_test.c azio.cc
+concurrency_test_SOURCES = concurrency_test.cc azio.cc
 concurrency_test_CFLAGS =	$(AM_CFLAGS) 
 concurrency_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \

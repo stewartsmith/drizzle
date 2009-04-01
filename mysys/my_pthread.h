@@ -22,10 +22,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#if !defined(__cplusplus)
-# include <stdbool.h>
-#endif
-
 #ifndef ETIME
 #define ETIME ETIMEDOUT				/* For FreeBSD */
 #endif

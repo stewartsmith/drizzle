@@ -148,6 +148,7 @@ select @@global.version;
 
 set @first_var= NULL;
 create table t1 select @first_var;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 
@@ -155,20 +156,24 @@ drop table t1;
 --error 1064
 set @first_var= cast(NULL as integer);
 #create table t1 select @first_var;
+#--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 #show create table t1;
 #drop table t1;
 
 set @first_var= NULL;
 create table t1 select @first_var;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 set @first_var= concat(NULL);
 create table t1 select @first_var;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 set @first_var=1;
 set @first_var= cast(NULL as CHAR);
 create table t1 select @first_var;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 

@@ -46,8 +46,10 @@ pthread_cond_t timer_alarm_threshold;
 pthread_mutex_t row_lock;
 
 /* Prototypes */
-void *run_concurrent_task(void *p);
-void *timer_thread(void *p);
+extern "C" {
+  void *run_concurrent_task(void *p);
+  void *timer_thread(void *p);
+}
 void scheduler(az_method use_aio);
 void create_data_file(azio_stream *write_handler, uint64_t rows);
 unsigned int write_row(azio_stream *s);
@@ -78,7 +80,7 @@ static void get_random_string(char *buffer, size_t size)
 int main(int argc, char *argv[])
 {
 
-  az_method method;
+  unsigned int method;
   my_init();
 
   MY_INIT(argv[0]);
@@ -97,7 +99,7 @@ int main(int argc, char *argv[])
   pthread_mutex_init(&row_lock, NULL);
 
   for (method= AZ_METHOD_BLOCK; method < AZ_METHOD_MAX; method++)
-    scheduler(method);
+    scheduler((az_method)method);
 
   (void)pthread_mutex_destroy(&counter_mutex);
   (void)pthread_cond_destroy(&count_threshhold);

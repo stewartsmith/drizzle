@@ -26,7 +26,8 @@ static const string engine_name("BLACKHOLE");
 class BlackholeEngine : public StorageEngine
 {
 public:
-  BlackholeEngine(const string &name_arg) : StorageEngine(name_arg) {}
+  BlackholeEngine(const string &name_arg)
+   : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
   virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
@@ -279,9 +280,6 @@ static int blackhole_init(void *p)
   StorageEngine **engine= static_cast<StorageEngine **>(p);
 
   BlackholeEngine *blackhole_engine= new BlackholeEngine(engine_name);
-
-  blackhole_engine->state= SHOW_OPTION_YES;
-  blackhole_engine->flags= HTON_CAN_RECREATE;
 
   *engine= blackhole_engine; 
 

@@ -80,6 +80,7 @@
 
 #include <drizzled/gettext.h>
 
+using namespace std;
 
 #if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
 struct passwd *getpwuid(uid_t);
@@ -506,12 +507,12 @@ drizzleclient_options(DRIZZLE *drizzle,enum drizzle_option option, const void *a
   case DRIZZLE_READ_DEFAULT_FILE:
     if (drizzle->options.my_cnf_file != NULL)
       free(drizzle->options.my_cnf_file);
-    drizzle->options.my_cnf_file=strdup(arg);
+    drizzle->options.my_cnf_file=strdup((char *)arg);
     break;
   case DRIZZLE_READ_DEFAULT_GROUP:
     if (drizzle->options.my_cnf_group != NULL)
       free(drizzle->options.my_cnf_group);
-    drizzle->options.my_cnf_group=strdup(arg);
+    drizzle->options.my_cnf_group=strdup((char *)arg);
     break;
   case DRIZZLE_OPT_PROTOCOL:
     break;
@@ -520,7 +521,7 @@ drizzleclient_options(DRIZZLE *drizzle,enum drizzle_option option, const void *a
     drizzle->options.methods_to_use= option;
     break;
   case DRIZZLE_SET_CLIENT_IP:
-    drizzle->options.client_ip= strdup(arg);
+    drizzle->options.client_ip= strdup((char *)arg);
     break;
   case DRIZZLE_SECURE_AUTH:
     drizzle->options.secure_auth= *(const bool *) arg;

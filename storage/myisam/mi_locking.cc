@@ -25,6 +25,8 @@
 #include <mysys/my_tree.h>
 #include <drizzled/util/test.h>
 
+using namespace std;
+
 	/* lock table by F_UNLCK, F_RDLCK or F_WRLCK */
 
 int mi_lock_database(MI_INFO *info, int lock_type)
@@ -34,20 +36,21 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   MYISAM_SHARE *share=info->s;
   uint32_t flag;
 
-  if (share->options & HA_OPTION_READ_ONLY_DATA ||
-      info->lock_type == lock_type)
-    return(0);
+  pthread_mutex_lock(&share->intern_lock);
+  if (!info->s->in_use)
+    info->s->in_use= new list<Session *>;
+
   if (lock_type == F_EXTRA_LCK)                 /* Used by TMP tables */
   {
+    pthread_mutex_unlock(&share->intern_lock);
     ++share->w_locks;
     ++share->tot_locks;
     info->lock_type= lock_type;
-    info->s->in_use= list_add(info->s->in_use, &info->in_use);
+    info->s->in_use->push_front(info->in_use);
     return(0);
   }
 
   flag=error=0;
-  pthread_mutex_lock(&share->intern_lock);
   if (share->kfile >= 0)		/* May only be false on windows */
   {
     switch (lock_type) {
@@ -125,7 +128,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       }
       info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
       info->lock_type= F_UNLCK;
-      info->s->in_use= list_delete(info->s->in_use, &info->in_use);
+      info->s->in_use->remove(info->in_use);
       break;
     case F_RDLCK:
       if (info->lock_type == F_WRLCK)
@@ -164,7 +167,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       share->r_locks++;
       share->tot_locks++;
       info->lock_type=lock_type;
-      info->s->in_use= list_add(info->s->in_use, &info->in_use);
+      info->s->in_use->push_front(info->in_use);
       break;
     case F_WRLCK:
       if (info->lock_type == F_RDLCK)
@@ -199,7 +202,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       info->lock_type=lock_type;
       share->w_locks++;
       share->tot_locks++;
-      info->s->in_use= list_add(info->s->in_use, &info->in_use);
+      info->s->in_use->push_front(info->in_use);
       break;
     default:
       break;				/* Impossible */

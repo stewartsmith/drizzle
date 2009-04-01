@@ -36,6 +36,10 @@ Created 1/20/1994 Heikki Tuuri
 # include <sun_prefetch.h>
 #endif
 
+#ifndef __cplusplus
+# include <stdbool.h>
+#endif
+
 #define INNODB_VERSION_MAJOR	1
 #define INNODB_VERSION_MINOR	0
 #define INNODB_VERSION_BUGFIX	3

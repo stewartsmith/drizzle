@@ -332,14 +332,17 @@ drop table t1, t2;
 #
 create table t1 SELECT "a" as a UNION select "aa" as a;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT 12 as a UNION select "aa" as a;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT 12 as a UNION select 12.2 as a;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 
@@ -348,70 +351,87 @@ insert into t2 values (NULL, 1, 3, 4, 1.5, 2.5, '1972-10-22', '1972-10-22 11:50:
 
 create table t1 SELECT it2 from t2 UNION select it1 from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT it2 from t2 UNION select i from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT i from t2 UNION select f from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT f from t2 UNION select d from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT ib from t2 UNION select f from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT ib from t2 UNION select d from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT f from t2 UNION select da from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT da from t2 UNION select dt from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT dt from t2 UNION select trim(sc) from t2;
 select trim(dt) from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT dt from t2 UNION select sv from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT sc from t2 UNION select sv from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT dt from t2 UNION select b from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT sv from t2 UNION select b from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT i from t2 UNION select d from t2 UNION select b from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT sv from t2 UNION select tx from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 SELECT b from t2 UNION select tx from t2;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1,t2;
 create table t1 select 1 union select -1;
 select * from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 -- error 1054
@@ -419,6 +439,7 @@ create table t1 select _latin1"test" union select _latin1"testt" ;
 -- error 1054
 create table t1 select _utf8"test" union select _utf8"testt" ;
 create table t1 select "test" union select "testt" ;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 
@@ -591,6 +612,7 @@ create table t1 as
 (select 'test') union
 (select 'TEST') union
 (select 'TeST');
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 select count(*) from t1;
 drop table t1;
@@ -599,6 +621,7 @@ create table t1 as
 (select 'test' collate utf8_bin) union
 (select 'TEST') union
 (select 'TeST');
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 select count(*) from t1;
 drop table t1;
@@ -607,6 +630,7 @@ create table t1 as
 (select 'test') union
 (select 'TEST' collate utf8_bin) union
 (select 'TeST');
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 select count(*) from t1;
 drop table t1;
@@ -615,6 +639,7 @@ create table t1 as
 (select 'test') union
 (select 'TEST') union
 (select 'TeST' collate utf8_bin);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 select count(*) from t1;
 drop table t1;
@@ -643,12 +668,14 @@ create table t1 as
 create table t1 as
 (select a from t2) union
 (select b collate utf8_swedish_ci from t2);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 create table t1 as
 (select a from t2) union
 (select b from t2) union
 (select 'c' collate utf8_spanish_ci from t2);
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 drop table t2;
@@ -728,6 +755,7 @@ drop table t1;
 #  b ENUM("one", "two") character set utf8,
 #  c ENUM("one", "two")
 #);
+#--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 #show create table t1;
 #insert into t1 values ('ä', 'one', 'one'), ('ö', 'two', 'one'), ('ü', NULL, NULL);
 #create table t2 select NULL union select a from t1;
@@ -743,7 +771,7 @@ drop table t1;
 #drop table t2;
 #create table t2 select a from t1 union select b from t1;
 #show columns from t2;
-#drop table t2, t1;
+#drop table t2, t1;`
 
 # 
 # Bug #14216: UNION + DECIMAL wrong values in result
@@ -769,9 +797,11 @@ drop table t1;
 
 create table t1 (a varchar(5));
 create table t2 select * from t1 union select 'abcdefghijkl';
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 select row_format from information_schema.TABLES where table_schema="test" and table_name="t2";
 alter table t2 ROW_FORMAT=fixed;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 drop table t1,t2;
 
@@ -784,6 +814,7 @@ CREATE TABLE t2 (b varchar(20));
 INSERT INTO t1 VALUES ('a'),('b');
 SELECT left(a,100000000) FROM t1 UNION  SELECT b FROM t2;
 create table t3 SELECT left(a,100000000) FROM t1 UNION  SELECT b FROM t2;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t3;
 drop tables t1,t2,t3;
 
@@ -798,6 +829,7 @@ CREATE TABLE t2 (b varchar(20));
 INSERT INTO t1 VALUES ('a'),('b');
 SELECT left(a,100000000) FROM t1 UNION  SELECT b FROM t2;
 create table t3 SELECT left(a,100000000) FROM t1 UNION  SELECT b FROM t2;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t3;
 drop tables t1,t2,t3;
 
@@ -812,21 +844,25 @@ CREATE TABLE t1 (a mediumtext);
 CREATE TABLE t2 (b varchar(20));
 INSERT INTO t1 VALUES ('a');
 CREATE TABLE t3 SELECT REPEAT(a,20000000) AS a FROM t1 UNION SELECT b FROM t2;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 SHOW CREATE TABLE t3;
 DROP TABLES t1,t3;
 CREATE TABLE t1 (a tinytext);
 INSERT INTO t1 VALUES ('a');
 CREATE TABLE t3 SELECT REPEAT(a,2) AS a FROM t1 UNION SELECT b FROM t2;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 SHOW CREATE TABLE t3;
 DROP TABLES t1,t3;
 CREATE TABLE t1 (a mediumtext);
 INSERT INTO t1 VALUES ('a');
 CREATE TABLE t3 SELECT REPEAT(a,2) AS a FROM t1 UNION SELECT b FROM t2;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 SHOW CREATE TABLE t3;
 DROP TABLES t1,t3;
 CREATE TABLE t1 (a tinyblob);
 INSERT INTO t1 VALUES ('a');
 CREATE TABLE t3 SELECT REPEAT(a,2) AS a FROM t1 UNION SELECT b FROM t2;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 SHOW CREATE TABLE t3;
 DROP TABLES t1,t2,t3;
 SET max_allowed_packet:= @tmp_max;
@@ -848,6 +884,7 @@ drop table t1;
 #
 create table t1(f1 char(1), f2 char(5), f3 blob, f4 blob, f5 timestamp, f6 varchar(1) collate utf8_general_ci, f7 text);
 create table t2 as select *, f6 as f8 from t1 union select *, f7 from t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 drop table t1, t2;
 

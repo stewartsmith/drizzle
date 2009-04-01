@@ -26,10 +26,6 @@
 
 /* Simple vio interface in C;  The functions are implemented in violite.c */
 
-#ifdef	__cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 enum enum_vio_type
 {
   VIO_CLOSED, VIO_TYPE_TCPIP, VIO_TYPE_SOCKET, VIO_TYPE_NAMEDPIPE,
@@ -77,10 +73,6 @@ void drizzleclient_vio_end(void);
 
 void drizzleclient_vio_ignore_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout);
 void drizzleclient_vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout);
-
-#ifdef	__cplusplus
-}
-#endif
 
 #if !defined(DONT_MAP_VIO)
 #define drizzleclient_vio_delete(vio) 			(vio)->viodelete(vio)

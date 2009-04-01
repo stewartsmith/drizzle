@@ -11,6 +11,7 @@ select version() > "2009.01.756";
 explain extended select database(), user();
 
 create table t1 (version char(60)) select database(), user(), version() as 'version';
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 

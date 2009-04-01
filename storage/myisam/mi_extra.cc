@@ -20,6 +20,8 @@
 
 #include <string.h>
 
+using namespace std;
+
 static void mi_extra_keyflag(MI_INFO *info, enum ha_extra_function function);
 
 
@@ -272,18 +274,17 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (share->kfile >= 0 && my_close(share->kfile,MYF(0)))
       error=my_errno;
     {
-      LIST *list_element ;
-      for (list_element=myisam_open_list ;
-	   list_element ;
-	   list_element=list_element->next)
+      list<MI_INFO *>::iterator it= myisam_open_list.begin();
+      while (it != myisam_open_list.end())
       {
-	MI_INFO *tmpinfo=(MI_INFO*) list_element->data;
+	MI_INFO *tmpinfo= *it;
 	if (tmpinfo->s == info->s)
 	{
 	  if (tmpinfo->dfile >= 0 && my_close(tmpinfo->dfile,MYF(0)))
 	    error = my_errno;
 	  tmpinfo->dfile= -1;
 	}
+        ++it;
       }
     }
     share->kfile= -1;				/* Files aren't open anymore */

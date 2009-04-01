@@ -4487,39 +4487,32 @@ int initialize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table;
 
-  if ((schema_table= new ST_SCHEMA_TABLE) == NULL)
-    return(1);
-  memset(schema_table, 0, sizeof(ST_SCHEMA_TABLE));
-
-  /* Historical Requirement */
-  plugin->data= schema_table; // shortcut for the future
   if (plugin->plugin->init)
   {
-    schema_table->create_table= create_schema_table;
-    schema_table->old_format= make_old_format;
-    schema_table->idx_field1= -1,
-    schema_table->idx_field2= -1;
-
-    /* Make the name available to the init() function. */
-    schema_table->table_name= plugin->name.str;
-
-    if (plugin->plugin->init(schema_table))
+    if (plugin->plugin->init(&schema_table))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Plugin '%s' init function returned error."),
                     plugin->name.str);
-      goto err;
+      return 1;
     }
 
-    /* Make sure the plugin name is not set inside the init() function. */
+    if (schema_table->create_table == NULL)
+      schema_table->create_table= create_schema_table;
+    if (schema_table->old_format == NULL)
+      schema_table->old_format= make_old_format;
+    if (schema_table->idx_field1 == 0)
+      schema_table->idx_field1= -1;
+    if (schema_table->idx_field2)
+      schema_table->idx_field2= -1;
+
+    /*- Make sure the plugin name is not set inside the init() function. */
     schema_table->table_name= plugin->name.str;
   }
 
-  return 0;
-err:
-  delete schema_table;
+  plugin->data= schema_table;
 
-  return 1;
+  return 0;
 }
 
 int finalize_schema_table(st_plugin_int *plugin)
@@ -4527,7 +4520,7 @@ int finalize_schema_table(st_plugin_int *plugin)
   ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;
 
   if (schema_table && plugin->plugin->deinit)
-    delete schema_table;
+    plugin->plugin->deinit(schema_table);
 
   return(0);
 }

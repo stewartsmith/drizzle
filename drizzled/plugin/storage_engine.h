@@ -81,14 +81,34 @@ class StorageEngine
     Name used for storage engine.
   */
   const std::string name;
-  bool _2pc;
+  const bool two_phase_commit;
+  bool enabled;
+  const std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
+  /*
+    to store per-savepoint data storage engine is provided with an area
+    of a requested size (0 is ok here).
+    savepoint_offset must be initialized statically to the size of
+    the needed memory to store per-savepoint information.
+    After xxx_init it is changed to be an offset to savepoint storage
+    area and need not be used by storage engine.
+    see binlog_engine and binlog_savepoint_set/rollback for an example.
+  */
+  size_t savepoint_offset;
+  size_t orig_savepoint_offset;
+
+protected:
+
+  /**
+   * Implementing classes should override these to provide savepoint
+   * functionality.
+   */
+  virtual int savepoint_set_hook(Session *, void *) { return 0; }
+
+  virtual int savepoint_rollback_hook(Session *, void *) { return 0; }
+
+  virtual int savepoint_release_hook(Session *, void *) { return 0; }
 
 public:
-
-  /*
-    Historical marker for if the engine is available of not
-  */
-  SHOW_COMP_OPTION state;
 
   /*
     each storage engine has it's own memory area (actually a pointer)
@@ -98,114 +118,118 @@ public:
       session->ha_data[xxx_engine.slot]
 
    slot number is initialized by MySQL after xxx_init() is called.
-   */
-   uint32_t slot;
-   std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
-   /*
-     to store per-savepoint data storage engine is provided with an area
-     of a requested size (0 is ok here).
-     savepoint_offset must be initialized statically to the size of
-     the needed memory to store per-savepoint information.
-     After xxx_init it is changed to be an offset to savepoint storage
-     area and need not be used by storage engine.
-     see binlog_engine and binlog_savepoint_set/rollback for an example.
-   */
-   uint32_t savepoint_offset;
-   uint32_t license; /* Flag for Engine License */
+  */
+  uint32_t slot;
 
-  StorageEngine(const std::string &name_arg, bool support_2pc= false)
-    : name(name_arg), _2pc(support_2pc), savepoint_offset(0)  {}
-  virtual ~StorageEngine() {}
+  StorageEngine(const std::string &name_arg,
+                const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
+                size_t savepoint_offset_arg= 0,		                
+                bool support_2pc= false);
+
+  virtual ~StorageEngine();
 
   bool has_2pc()
   {
-    return _2pc;
+    return two_phase_commit;
   }
 
 
+  bool is_enabled() const
+  {
+    return enabled;
+  }
 
-   bool is_enabled() const
-   {
-     return (state == SHOW_OPTION_YES);
-   }
+  bool is_user_selectable() const
+  {
+    return not flags.test(HTON_BIT_NOT_USER_SELECTABLE);
+  }
 
-   std::string get_name() { return name; }
+  bool check_flag(const engine_flag_bits flag) const
+  {
+    return flags.test(flag);
+  }
 
-   /*
-     StorageEngine methods:
+  void enable() { enabled= true; }
+  void disable() { enabled= false; }
 
-     close_connection is only called if
-     session->ha_data[xxx_engine.slot] is non-zero, so even if you don't need
-     this storage area - set it to something, so that MySQL would know
-     this storage engine was accessed in this connection
-   */
-   virtual int close_connection(Session  *)
-   {
-     return 0;
-   }
-   /*
-     The void * points to an uninitialized storage area of requested size
-     (see savepoint_offset description)
-   */
-   virtual int savepoint_set(Session *, void *)
-   {
-     return 0;
-   }
+  std::string get_name() { return name; }
 
-   /*
-     The void * points to a storage area, that was earlier passed
-     to the savepoint_set call
-   */
-   virtual int savepoint_rollback(Session *, void *)
-   {
-     return 0;
-   }
+  /*
+    StorageEngine methods:
 
-   virtual int savepoint_release(Session *, void *)
-   {
-     return 0;
-   }
+    close_connection is only called if
+    session->ha_data[xxx_engine.slot] is non-zero, so even if you don't need
+    this storage area - set it to something, so that MySQL would know
+    this storage engine was accessed in this connection
+  */
+  virtual int close_connection(Session  *)
+  {
+    return 0;
+  }
+  /*
+    'all' is true if it's a real commit, that makes persistent changes
+    'all' is false if it's not in fact a commit but an end of the
+    statement that is part of the transaction.
+    NOTE 'all' is also false in auto-commit mode where 'end of statement'
+    and 'real commit' mean the same event.
+  */
+  virtual int  commit(Session *, bool)
+  {
+    return 0;
+  }
 
-   /*
-     'all' is true if it's a real commit, that makes persistent changes
-     'all' is false if it's not in fact a commit but an end of the
-     statement that is part of the transaction.
-     NOTE 'all' is also false in auto-commit mode where 'end of statement'
-     and 'real commit' mean the same event.
-   */
-   virtual int  commit(Session *, bool)
-   {
-     return 0;
-   }
+  virtual int  rollback(Session *, bool)
+  {
+    return 0;
+  }
 
-   virtual int  rollback(Session *, bool)
-   {
-     return 0;
-   }
+  /*
+    The void * points to an uninitialized storage area of requested size
+    (see savepoint_offset description)
+  */
+  int savepoint_set(Session *session, void *sp)
+  {
+    return savepoint_set_hook(session, (unsigned char *)sp+savepoint_offset);
+  }
 
-   virtual int  prepare(Session *, bool) { return 0; }
-   virtual int  recover(XID *, uint32_t) { return 0; }
-   virtual int  commit_by_xid(XID *) { return 0; }
-   virtual int  rollback_by_xid(XID *) { return 0; }
-   virtual handler *create(TABLE_SHARE *, MEM_ROOT *)= 0;
-   /* args: path */
-   virtual void drop_database(char*) { }
-   virtual int start_consistent_snapshot(Session *) { return 0; }
-   virtual bool flush_logs() { return false; }
-   virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
-   {
-     return false;
-   }
+  /*
+    The void * points to a storage area, that was earlier passed
+    to the savepoint_set call
+  */
+  int savepoint_rollback(Session *session, void *sp)
+  {
+     return savepoint_rollback_hook(session,
+                                    (unsigned char *)sp+savepoint_offset);
+  }
 
-   /* args: current_session, tables, cond */
-   virtual int fill_files_table(Session *, TableList *,
-                                Item *) { return 0; }
-   virtual int release_temporary_latches(Session *) { return false; }
+  int savepoint_release(Session *session, void *sp)
+  {
+    return savepoint_release_hook(session,
+                                  (unsigned char *)sp+savepoint_offset);
+  }
 
-   /* args: current_session, db, name */
-   virtual int table_exists_in_engine(Session*, const char *, const char *);
+  virtual int  prepare(Session *, bool) { return 0; }
+  virtual int  recover(XID *, uint32_t) { return 0; }
+  virtual int  commit_by_xid(XID *) { return 0; }
+  virtual int  rollback_by_xid(XID *) { return 0; }
+  virtual handler *create(TABLE_SHARE *, MEM_ROOT *)= 0;
+  /* args: path */
+  virtual void drop_database(char*) { }
+  virtual int start_consistent_snapshot(Session *) { return 0; }
+  virtual bool flush_logs() { return false; }
+  virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
+  {
+    return false;
+  }
+
+  /* args: current_session, tables, cond */
+  virtual int fill_files_table(Session *, TableList *,
+                               Item *) { return 0; }
+  virtual int release_temporary_latches(Session *) { return false; }
+
+  /* args: current_session, db, name */
+  virtual int table_exists_in_engine(Session*, const char *, const char *);
 };
-
 
 /* lookups */
 StorageEngine *ha_default_storage_engine(Session *session);
@@ -214,7 +238,6 @@ plugin_ref ha_lock_engine(Session *session, StorageEngine *engine);
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
                          StorageEngine *db_type);
 const char *ha_resolve_storage_engine_name(const StorageEngine *db_type);
-bool ha_check_storage_engine_flag(const StorageEngine *db_type, const engine_flag_bits flag);
 LEX_STRING *ha_storage_engine_name(const StorageEngine *engine);
 
 #endif /* DRIZZLED_HANDLERTON_H */

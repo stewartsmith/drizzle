@@ -294,8 +294,10 @@ drizzleclient_connect(DRIZZLE *drizzle,const char *host, const char *user,
 
   if (!net->vio)
   {
-    drizzleclient_set_extended_error(drizzle, CR_CONN_HOST_ERROR, drizzleclient_sqlstate_get_unknown(),
-                               ER(CR_CONN_HOST_ERROR), host, errno);
+    drizzleclient_set_extended_error(drizzle, CR_CONN_HOST_ERROR,
+                                     drizzleclient_sqlstate_get_unknown(),
+                                     ER(CR_CONN_HOST_ERROR),
+                                     host, port, errno);
     goto error;
   }
 
@@ -454,7 +456,7 @@ drizzleclient_connect(DRIZZLE *drizzle,const char *host, const char *user,
 
     if (db_len >= NAME_LEN)
       db_len= NAME_LEN - 1;
-    end= memcpy(end, db, db_len);
+    end= (char *)memcpy(end, db, db_len);
     end[db_len]= 0;
     end+= (db_len + 1);
 

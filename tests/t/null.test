@@ -205,6 +205,7 @@ create table t1 select
   lpad('str', 10, null) as c37,
   rpad(null, 10, 'str') as c38;
   
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
 

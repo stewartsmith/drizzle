@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
       printf("Performing read() test\n");
 
     if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY,
-                    method)))
+                      (az_method)method)))
     {
       printf("Could not open test file\n");
       return 0;

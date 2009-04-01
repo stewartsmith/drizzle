@@ -41,6 +41,32 @@ static const LEX_STRING sys_table_aliases[]=
   {NULL, 0}
 };
 
+StorageEngine::StorageEngine(const std::string &name_arg,
+                             const std::bitset<HTON_BIT_SIZE> &flags_arg,
+                             size_t savepoint_offset_arg,
+                             bool support_2pc)
+    : name(name_arg), two_phase_commit(support_2pc), enabled(true),
+      flags(flags_arg),
+      savepoint_offset(savepoint_alloc_size),
+      orig_savepoint_offset(savepoint_offset_arg),
+      slot(0)
+{
+  if (enabled)
+  {
+    savepoint_alloc_size+= orig_savepoint_offset;
+    slot= total_ha++;
+    if (two_phase_commit)
+        total_ha_2pc++;
+  } 
+}
+
+
+StorageEngine::~StorageEngine()
+{
+  savepoint_alloc_size-= orig_savepoint_offset;
+}
+
+
 /* args: current_session, db, name */
 int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
 {
@@ -98,7 +124,7 @@ redo:
   if ((plugin= plugin_lock_by_name(session, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
     StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-    if (!(engine->flags.test(HTON_BIT_NOT_USER_SELECTABLE)))
+    if (engine->is_user_selectable())
       return plugin;
   }
 
@@ -139,7 +165,7 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
 {
   handler *file;
 
-  if (engine && engine->state == SHOW_OPTION_YES)
+  if (engine && engine->is_enabled())
   {
     if ((file= engine->create(share, alloc)))
       file->init();
@@ -181,30 +207,8 @@ int storage_engine_initializer(st_plugin_int *plugin)
     }
   }
 
-  /*
-    the switch below and engine->state should be removed when
-    command-line options for plugins will be implemented
-  */
-  switch (engine->state) {
-  case SHOW_OPTION_NO:
-    break;
-  case SHOW_OPTION_YES:
-    {
-      uint32_t tmp;
-      tmp= engine->savepoint_offset;
-      engine->savepoint_offset= savepoint_alloc_size;
-      savepoint_alloc_size+= tmp;
-      engine->slot= total_ha++;
-      engine2plugin[engine->slot]=plugin;
-      if (engine->has_2pc())
-        total_ha_2pc++;
-      break;
-    }
-    /* fall through */
-  default:
-    engine->state= SHOW_OPTION_DISABLED;
-    break;
-  }
+  if (engine->is_enabled())
+    engine2plugin[engine->slot]=plugin;
 
   /*
     This is entirely for legacy. We will create a new "disk based" engine and a
@@ -227,12 +231,6 @@ const char *ha_resolve_storage_engine_name(const StorageEngine *db_type)
 {
   return db_type == NULL ? "UNKNOWN" : engine2plugin[db_type->slot]->name.str;
 }
-
-bool ha_check_storage_engine_flag(const StorageEngine *db_type, const engine_flag_bits flag)
-{
-  return db_type == NULL ? false : db_type->flags.test(static_cast<size_t>(flag));
-}
-
 
 LEX_STRING *ha_storage_engine_name(const StorageEngine *engine)
 {

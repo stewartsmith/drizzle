@@ -16,8 +16,6 @@
 /*
   The beginnings of locale(7) support.
   Sponsored for subset of LC_TIME support,  WorkLog entry 2928, -- Josh Chamas
-
-  !! This file is built from my_locale.pl !!
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_locale.h>

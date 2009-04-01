@@ -15,18 +15,18 @@
 
 #include "heapdef.h"
 
+using namespace std;
+
 	/* if flag == HA_PANIC_CLOSE then all files are removed for more
 	   memory */
 
 int hp_panic(enum ha_panic_function flag)
 {
-  LIST *element,*next_open;
-
   pthread_mutex_lock(&THR_LOCK_heap);
-  for (element=heap_open_list ; element ; element=next_open)
+  list<HP_INFO *>::iterator info_it= heap_open_list.begin();
+  while (info_it != heap_open_list.end())
   {
-    HP_INFO *info=(HP_INFO*) element->data;
-    next_open=element->next;	/* Save if close */
+    HP_INFO *info= *info_it;
     switch (flag) {
     case HA_PANIC_CLOSE:
       hp_close(info);
@@ -34,11 +34,12 @@ int hp_panic(enum ha_panic_function flag)
     default:
       break;
     }
+    ++info_it;
   }
-  for (element=heap_share_list ; element ; element=next_open)
+  list<HP_SHARE *>::iterator share_it= heap_share_list.begin();
+  while (share_it != heap_share_list.end())
   {
-    HP_SHARE *share=(HP_SHARE*) element->data;
-    next_open=element->next;	/* Save if close */
+    HP_SHARE *share= *share_it;
     switch (flag) {
     case HA_PANIC_CLOSE:
     {
@@ -49,6 +50,7 @@ int hp_panic(enum ha_panic_function flag)
     default:
       break;
     }
+    ++share_it;
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
   return(0);

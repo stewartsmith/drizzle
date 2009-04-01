@@ -21,6 +21,7 @@ while ($1)
   connection con2;
     CREATE TABLE t2 LIKE t1;
     replace_result x1 xx x2 xx;
+    --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
     SHOW CREATE TABLE t2;
     DROP TABLE t2;
   connection con1;
@@ -29,6 +30,7 @@ while ($1)
   connection con2;
     CREATE TABLE t2 LIKE t1;
     replace_result x1 xx x2 xx;
+    --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
     SHOW CREATE TABLE t2;
     DROP TABLE t2;
   connection con1;
