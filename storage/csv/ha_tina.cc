@@ -107,7 +107,9 @@ static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
 class Tina : public StorageEngine
 {
 public:
-  Tina(const string& name_arg) : StorageEngine(name_arg) {}
+  Tina(const string& name_arg)
+   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES |
+                             HTON_NO_PARTITION) {}
   virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
   {
@@ -124,9 +126,6 @@ static int tina_init_func(void *p)
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
                    (hash_get_key) tina_get_key,0,0);
-  tina_engine->state= SHOW_OPTION_YES;
-  tina_engine->flags= (HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES |
-                     HTON_NO_PARTITION);
   *engine= tina_engine;
   return 0;
 }

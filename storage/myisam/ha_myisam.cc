@@ -63,7 +63,8 @@ TYPELIB myisam_stats_method_typelib= {
 class MyisamEngine : public StorageEngine
 {
 public:
-  MyisamEngine(string name_arg) : StorageEngine(name_arg) {}
+  MyisamEngine(string name_arg)
+   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES) {}
 
   virtual handler *create(TABLE_SHARE *table,
                           MEM_ROOT *mem_root)
@@ -1822,8 +1823,6 @@ static int myisam_init(void *p)
   StorageEngine **engine= static_cast<StorageEngine **>(p);
   
   *engine= new MyisamEngine(engine_name);
-  (*engine)->state= SHOW_OPTION_YES;
-  (*engine)->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
 
   return 0;
 }

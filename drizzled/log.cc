@@ -75,7 +75,10 @@ binlog_trans_log_savepos(Session *, my_off_t *pos)
 class BinlogEngine : public StorageEngine
 {
 public:
-  BinlogEngine(string name_arg) : StorageEngine(name_arg) {}
+  BinlogEngine(const string &name_arg)
+    : StorageEngine(name_arg,
+                    HTON_NOT_USER_SELECTABLE | HTON_HIDDEN,
+                    sizeof(my_off_t)) {}
  
   virtual int close_connection(Session *)
   {
@@ -228,7 +231,7 @@ public:
     that case there is no need to have it in the binlog).
   */
   
-  virtual int savepoint_set(Session *session, void *sv)
+  virtual int savepoint_set_hook(Session *session, void *sv)
   {
     bool error;
     binlog_trans_log_savepos(session, (my_off_t*) sv);
@@ -239,7 +242,7 @@ public:
     return(error);
   }
   
-  virtual int savepoint_rollback(Session *session, void *)
+  virtual int savepoint_rollback_hook(Session *session, void *)
   {
     bool error;
   
@@ -269,9 +272,6 @@ int binlog_init(void *p)
   if (binlog_engine == NULL)
   {
     binlog_engine= new BinlogEngine(engine_name);
-    binlog_engine->state= SHOW_OPTION_YES;
-    binlog_engine->savepoint_offset= sizeof(my_off_t);
-    binlog_engine->flags= HTON_NOT_USER_SELECTABLE | HTON_HIDDEN;
   }
 
   *engine= binlog_engine;
