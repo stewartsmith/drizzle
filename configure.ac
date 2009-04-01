@@ -55,7 +55,7 @@ then
       [drizzle_cv_gcc_recent=no])])
   if test "$drizzle_cv_gcc_recent" = "no" -a "$host_vendor" = "apple"
   then
-    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2 on OSX. You may need to install a more recent version of XCode])
+    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2 on OSX. You may need to install a version of XCode >= 3.1.2])
   fi
   if test "$drizzle_cv_gcc_recent" = "no"
   then
