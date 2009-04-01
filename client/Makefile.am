@@ -20,7 +20,8 @@ LDADD=			$(top_builddir)/mysys/libmysys.la \
 			$(LIBDRIZZLE) $(LIBINTL) $(LIBZ)
 
 
-noinst_HEADERS =	my_readline.h \
+noinst_HEADERS =	get_password.h \
+			my_readline.h \
 			client_priv.h \
 			errname.h
 
