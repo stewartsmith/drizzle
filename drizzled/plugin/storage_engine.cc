@@ -25,12 +25,14 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <map>
+#include <vector>
 #include <string>
 
 #include CSTDINT_H
 
 using namespace std;
+
+vector<StorageEngine *> all_engines;
 
 st_plugin_int *engine2plugin[MAX_HA];
 
@@ -57,7 +59,7 @@ StorageEngine::StorageEngine(const std::string &name_arg,
     slot= total_ha++;
     if (two_phase_commit)
         total_ha_2pc++;
-  } 
+  }
 }
 
 
@@ -184,6 +186,8 @@ int storage_engine_finalizer(st_plugin_int *plugin)
 {
   StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
 
+  all_engines.remove(engine);
+
   if (engine && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(engine);
 
@@ -223,16 +227,13 @@ int storage_engine_initializer(st_plugin_int *plugin)
 
   plugin->data= engine;
   plugin->isInited= true;
+  all_engines.push_back(engine);
 
   return 0;
 }
 
-const char *ha_resolve_storage_engine_name(const StorageEngine *db_type)
+const char *ha_resolve_storage_engine_name(const StorageEngine *engine)
 {
-  return db_type == NULL ? "UNKNOWN" : engine2plugin[db_type->slot]->name.str;
+  return engine == NULL ? "UNKNOWN" : engine->get_name()->c_str();
 }
 
-LEX_STRING *ha_storage_engine_name(const StorageEngine *engine)
-{
-  return &engine2plugin[engine->slot]->name;
-}
