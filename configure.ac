@@ -1447,7 +1447,7 @@ done
 AC_CONFIG_COMMANDS([timestamp-h], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
 AC_CONFIG_COMMANDS_PRE([
-if test "x$EGREP" != "x"
+if test "x$EGREP" != "x" -a -d po
 then
   echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
   # The grep -v 'drizzle-' is to exclude any distcheck leftovers
