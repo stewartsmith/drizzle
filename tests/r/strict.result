@@ -121,14 +121,8 @@ NULL
 9223372036854775807
 DROP TABLE t1;
 CREATE TABLE t1 (col1 NUMERIC(4,2));
-INSERT INTO t1 VALUES (10.55),(10.5555),(0),(-10.55),(-10.5555),(11),(1e+01);
-Warnings:
-Note	1265	Data truncated for column 'col1' at row 2
-Note	1265	Data truncated for column 'col1' at row 5
-INSERT INTO t1 VALUES ('10.55'),('10.5555'),('-10.55'),('-10.5555'),('11'),('1e+01');
-Warnings:
-Note	1265	Data truncated for column 'col1' at row 2
-Note	1265	Data truncated for column 'col1' at row 4
+INSERT INTO t1 VALUES (10.55),(10.55),(0),(-10.55),(-10.55),(11),(1e+01);
+INSERT INTO t1 VALUES ('10.55'),('10.55'),('-10.55'),('-10.55'),('11'),('1e+01');
 INSERT INTO t1 VALUES (101.55);
 ERROR 22003: Out of range value for column 'col1' at row 1
 INSERT INTO t1 VALUES (101);
@@ -185,16 +179,16 @@ UPDATE IGNORE t1 SET col1=1/NULL where col1=0;
 SELECT * FROM t1;
 col1
 10.55
-10.56
+10.55
 NULL
 -10.55
--10.56
+-10.55
 11.00
 10.00
 10.55
-10.56
+10.55
 -10.55
--10.56
+-10.55
 11.00
 10.00
 2.00

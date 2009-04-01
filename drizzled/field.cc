@@ -763,9 +763,10 @@ bool Field::type_can_have_key_part(enum enum_field_types type)
   @param op_result  decimal library return code (E_DEC_* see include/decimal.h)
 
   @retval
-    1  there was overflow
+    E_DEC_OVERFLOW   there was overflow
+    E_DEC_TRUNCATED  there was truncation
   @retval
-    0  no error or some other errors except overflow
+    0  no error or there was some other error except overflow or truncation
 */
 
 int Field::warn_if_overflow(int op_result)
@@ -773,12 +774,12 @@ int Field::warn_if_overflow(int op_result)
   if (op_result == E_DEC_OVERFLOW)
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-    return 1;
+    return E_DEC_OVERFLOW;
   }
   if (op_result == E_DEC_TRUNCATED)
   {
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
-    /* We return 0 here as this is not a critical issue */
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    return E_DEC_TRUNCATED;
   }
   return 0;
 }

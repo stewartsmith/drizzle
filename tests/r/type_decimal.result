@@ -214,8 +214,7 @@ ERROR 22003: Out of range value for column 'a' at row 1
 insert into t1 values (1e+100),(1e-100),(-1e+100);
 ERROR 22003: Out of range value for column 'a' at row 1
 insert into t1 values (123.4e0),(123.4e+2),(123.4e-2),(123e1),(123e+0);
-Warnings:
-Note	1265	Data truncated for column 'a' at row 3
+ERROR 01000: Data truncated for column 'a' at row 3
 insert into t1 values (MID("987",1,2)),("987 "),("987.6e+2 ");
 select * from t1;
 a
@@ -231,11 +230,6 @@ a
 1.00
 1.00
 -1.00
-123.40
-12340.00
-1.23
-1230.00
-123.00
 98.00
 987.00
 98760.00
@@ -300,17 +294,6 @@ insert into t1 values ('1'),('+1'),('-1'),('0000000001'),('+0000000001'),('-0000
 ERROR 22003: Out of range value for column 'a' at row 25
 select * from t1;
 a
-drop table t1;
-create table t1(a decimal(10,5), b decimal(10,1));
-insert into t1 values(123.12345, 123.12345);
-Warnings:
-Note	1265	Data truncated for column 'b' at row 1
-update t1 set b=a;
-Warnings:
-Note	1265	Data truncated for column 'b' at row 1
-select * from t1;
-a	b
-123.12345	123.1
 drop table t1;
 End of 4.1 tests
 CREATE TABLE t1
@@ -509,8 +492,7 @@ c
 123456.000000000000000000000000000000
 delete from t1;
 INSERT INTO t1 VALUES (1234567890, 20), (999.99, 5);
-Warnings:
-Note	1265	Data truncated for column 'a' at row 2
+ERROR 01000: Data truncated for column 'a' at row 2
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -519,8 +501,6 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB
 select round(a,b) as c from t1 order by c;
 c
-1000
-1234567890
 DROP TABLE t1, t2, t3, t4;
 CREATE TABLE t1( a DECIMAL(4, 3), b INT );
 INSERT INTO t1 VALUES ( 1, 5 ), ( 2, 4 ), ( 3, 3 ), ( 4, 2 ), ( 5, 1 );

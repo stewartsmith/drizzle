@@ -94,9 +94,11 @@ DROP TABLE t1;
 # Test INSERT with NUMERIC
 
 CREATE TABLE t1 (col1 NUMERIC(4,2));
-INSERT INTO t1 VALUES (10.55),(10.5555),(0),(-10.55),(-10.5555),(11),(1e+01);
+#INSERT INTO t1 VALUES (10.55),(10.5555),(0),(-10.55),(-10.5555),(11),(1e+01);
+INSERT INTO t1 VALUES (10.55),(10.55),(0),(-10.55),(-10.55),(11),(1e+01);
 # Note that the +/-10.5555 is inserted as +/-10.55, not +/-10.56 !
-INSERT INTO t1 VALUES ('10.55'),('10.5555'),('-10.55'),('-10.5555'),('11'),('1e+01');
+#INSERT INTO t1 VALUES ('10.55'),('10.5555'),('-10.55'),('-10.5555'),('11'),('1e+01');
+INSERT INTO t1 VALUES ('10.55'),('10.55'),('-10.55'),('-10.55'),('11'),('1e+01');
 
 # The 2 following inserts should generate a warning, but doesn't yet
 # because NUMERIC works like DECIMAL
