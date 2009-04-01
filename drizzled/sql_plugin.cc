@@ -230,7 +230,7 @@ static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-static plugin_ref intern_plugin_lock(plugin_ref plugin);
+static plugin_ref intern_plugin_lock(st_plugin_int *rc);
 static void reap_plugins(void);
 
 
@@ -498,12 +498,10 @@ SHOW_COMP_OPTION sys_var_have_plugin::get_option()
 }
 
 
-static plugin_ref intern_plugin_lock(plugin_ref rc)
+static plugin_ref intern_plugin_lock(st_plugin_int *rc)
 {
-  st_plugin_int *pi= plugin_ref_to_int(rc);
   plugin_ref plugin;
 
-  assert(pi);
   assert(rc);
 
   /*
@@ -511,10 +509,10 @@ static plugin_ref intern_plugin_lock(plugin_ref rc)
     memory manager and/or valgrind to track locked references and
     double unlocks to aid resolving reference counting.problems.
   */
-  if (!(plugin= (plugin_ref) malloc(sizeof(pi))))
+  if (!(plugin= (plugin_ref) malloc(sizeof(plugin_ref))))
     return(NULL);
 
-  *plugin= pi;
+  *plugin= rc;
 
   return(plugin);
 }
@@ -523,7 +521,8 @@ static plugin_ref intern_plugin_lock(plugin_ref rc)
 plugin_ref plugin_lock(plugin_ref *ptr)
 {
   plugin_ref rc;
-  rc= intern_plugin_lock(*ptr);
+  rc= intern_plugin_lock(*ptr[0]);
+
   return(rc);
 }
 
@@ -538,7 +537,7 @@ plugin_ref plugin_lock_by_name(const LEX_STRING *name, int type)
     return(0);
 
   if ((plugin= registry.find(name, type)))
-    rc= intern_plugin_lock(plugin_int_to_ref(plugin));
+    rc= intern_plugin_lock(plugin);
   return(rc);
 }
 
@@ -798,7 +797,7 @@ int plugin_init(int *argc, char **argv, int flags)
       {
         assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
-          intern_plugin_lock(plugin_int_to_ref(plugin_ptr));
+          intern_plugin_lock(plugin_ptr);
       }
     }
   }
@@ -1351,7 +1350,7 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
       (pi= var->cast_pluginvar()))
   {
     pthread_rwlock_unlock(&LOCK_system_variables_hash);
-    if (!(plugin= intern_plugin_lock(plugin_int_to_ref(pi->plugin))))
+    if (!(plugin= intern_plugin_lock(pi->plugin)))
       var= NULL; /* failed to lock it, it must be uninstalling */
     else if (plugin[0]->isInited == false)
     {
@@ -1660,7 +1659,7 @@ void plugin_sessionvar_init(Session *session)
   session->variables.dynamic_variables_ptr= 0;
 
   session->variables.table_plugin=
-    intern_plugin_lock(global_system_variables.table_plugin);
+    intern_plugin_lock(global_system_variables.table_plugin[0]);
 }
 
 
