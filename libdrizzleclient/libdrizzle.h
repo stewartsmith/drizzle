@@ -40,7 +40,6 @@
 #include "options.h"
 
 #include "drizzle.h"
-#include "drizzle_parameters.h"
 #include "drizzle_methods.h"
 
 #include <stdint.h>
