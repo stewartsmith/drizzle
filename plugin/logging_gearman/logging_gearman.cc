@@ -166,7 +166,8 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
 class LoggingGearman : public Logging_handler
 {
 public:
-  LoggingGearman() : Logging_handler() {}
+  LoggingGearman() : Logging_handler("LoggingGearman") {}
+
   virtual bool post(Session *session)
   {
     char msgbuf[MAX_MSG_LEN];
