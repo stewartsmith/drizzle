@@ -825,12 +825,16 @@ select 1 / 0;
 CREATE TABLE Sow6_2f (col1 NUMERIC(4,2));
 #-- should return OK
 INSERT INTO Sow6_2f VALUES (10.55);
-#-- should return E_DEC_TRUNCATION
+# This INSERT statement will give an error since truncation of a
+# decimal number in Drizzle is an error. See bug#337038 for further
+# details.
 --error 1265
 INSERT INTO Sow6_2f VALUES (10.5555);
 #-- should return OK
 INSERT INTO Sow6_2f VALUES (-10.55);
-#-- should return E_DEC_TRUNCATION
+# This INSERT statement will give an error since truncation of a
+# decimal number in Drizzle is an error. See bug#337038 for further
+# details.
 --error 1265
 INSERT INTO Sow6_2f VALUES (-10.5555);
 #-- should return OK
@@ -1033,6 +1037,9 @@ SELECT CAST(my_varchar AS DECIMAL(65,30)), my_varchar FROM t1;
 # fails randomly depending on compiler options
 
 #--disable_warnings
+# This UPDATE statement will give an error since truncation of a
+# decimal number in Drizzle is an error. See bug#337038 for further
+# details.
 --error 1265
 UPDATE t1 SET my_decimal = my_float;
 
@@ -1042,10 +1049,16 @@ UPDATE t1 SET my_decimal = my_float;
 --replace_result 0.000000000011754943372854770000 0.000000000011754943372854760000
 SELECT my_decimal, my_float   FROM t1;
 
+# This UPDATE statement will give an error since truncation of a
+# decimal number in Drizzle is an error. See bug#337038 for further
+# details.
 --error 1265
 UPDATE t1 SET my_decimal = my_double;
 SELECT my_decimal, my_double  FROM t1;
 --enable_warnings
+# This UPDATE statement will give an error since truncation of a
+# decimal number in Drizzle is an error. See bug#337038 for further
+# details.
 --error 1265
 UPDATE t1 SET my_decimal = my_varchar;
 SELECT my_decimal, my_varchar FROM t1;
@@ -1184,6 +1197,9 @@ DROP TABLE t1;
 #DESC t1;
 #SELECT f1 FROM t1;
 #DROP TABLE t1;
+# This CREATE statement will give an error since truncation of a
+# decimal number in Drizzle is an error. See bug#337038 for further
+# details.
 --error 1265
 CREATE TABLE t1 SELECT 0.123456789012345678901234567890123456 AS f1;
 

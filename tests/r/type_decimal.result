@@ -119,19 +119,40 @@ id	datatype_id	minvalue	maxvalue	valuename	forecolor	backcolor
 143	16	-4.9000000000	-0.1000000000		NULL	15774720
 drop table t1;
 create table t1 (a decimal(10,2));
-insert into t1 values ("0.0"),("-0.0"),("+0.0"),("01.0"),("+01.0"),("-01.0");
-insert into t1 values ("-.1"),("+.1"),(".1");
-insert into t1 values ("00000000000001"),("+0000000000001"),("-0000000000001");
+insert into t1 values ("0.0");
+insert into t1 values ("-0.0");
+insert into t1 values ("+0.0");
+insert into t1 values ("01.0");
+insert into t1 values ("+01.0");
+insert into t1 values ("-01.0");
+insert into t1 values ("-.1");
+insert into t1 values ("+.1");
+insert into t1 values (".1");
+insert into t1 values ("00000000000001");
+insert into t1 values ("+0000000000001");
+insert into t1 values ("-0000000000001");
 insert into t1 values ("+111111111.11"),("111111111.11"),("-11111111.11");
 ERROR 22003: Out of range value for column 'a' at row 1
 insert into t1 values ("-111111111.11"),("+1111111111.11"),("1111111111.11");
 ERROR 22003: Out of range value for column 'a' at row 1
-insert into t1 values ("1e+1000"),("1e-1000"),("-1e+1000");
+insert into t1 values ("1e+1000");
 ERROR HY000: Incorrect decimal value: '1e+1000' for column 'a' at row 1
-insert into t1 values ("1e+4294967296"),("1e-4294967296");
+insert into t1 values ("1e-1000");
+ERROR HY000: Incorrect decimal value: '1e-1000' for column 'a' at row 1
+insert into t1 values ("-1e+1000");
+ERROR HY000: Incorrect decimal value: '-1e+1000' for column 'a' at row 1
+insert into t1 values ("1e+4294967296");
 ERROR HY000: Incorrect decimal value: '1e+4294967296' for column 'a' at row 1
-insert into t1 values ("1e+18446744073709551615"),("1e+18446744073709551616"),("1e-9223372036854775807"),("1e-9223372036854775809");
+insert into t1 values ("1e-4294967296");
+ERROR HY000: Incorrect decimal value: '1e-4294967296' for column 'a' at row 1
+insert into t1 values ("1e+18446744073709551615");
 ERROR HY000: Incorrect decimal value: '1e+18446744073709551615' for column 'a' at row 1
+insert into t1 values ("1e+18446744073709551616");
+ERROR HY000: Incorrect decimal value: '1e+18446744073709551616' for column 'a' at row 1
+insert into t1 values ("1e-9223372036854775807");
+ERROR HY000: Incorrect decimal value: '1e-9223372036854775807' for column 'a' at row 1
+insert into t1 values ("1e-9223372036854775809");
+ERROR HY000: Incorrect decimal value: '1e-9223372036854775809' for column 'a' at row 1
 insert into t1 values ("123.4e"),("123.4e+2"),("123.4e-2"),("123e1"),("123e+0");
 ERROR HY000: Incorrect decimal value: '123.4e' for column 'a' at row 1
 select * from t1;
@@ -213,9 +234,15 @@ insert into t1 values (-111111111.11),(+1111111111.11),(1111111111.11);
 ERROR 22003: Out of range value for column 'a' at row 1
 insert into t1 values (1e+100),(1e-100),(-1e+100);
 ERROR 22003: Out of range value for column 'a' at row 1
-insert into t1 values (123.4e0),(123.4e+2),(123.4e-2),(123e1),(123e+0);
-ERROR 01000: Data truncated for column 'a' at row 3
-insert into t1 values (MID("987",1,2)),("987 "),("987.6e+2 ");
+insert into t1 values (123.4e0);
+insert into t1 values (123.4e+2);
+insert into t1 values (123.4e-2);
+ERROR 01000: Data truncated for column 'a' at row 1
+insert into t1 values (123e1);
+insert into t1 values (123e+0);
+insert into t1 values (MID("987",1,2));
+insert into t1 values ("987 ");
+insert into t1 values ("987.6e+2 ");
 select * from t1;
 a
 0.00
@@ -230,6 +257,10 @@ a
 1.00
 1.00
 -1.00
+123.40
+12340.00
+1230.00
+123.00
 98.00
 987.00
 98760.00
@@ -491,8 +522,9 @@ c
 123456.000000000000000000000000000000
 123456.000000000000000000000000000000
 delete from t1;
-INSERT INTO t1 VALUES (1234567890, 20), (999.99, 5);
-ERROR 01000: Data truncated for column 'a' at row 2
+INSERT INTO t1 VALUES (1234567890, 20);
+INSERT INTO t1 VALUES (999.99, 5);
+ERROR 01000: Data truncated for column 'a' at row 1
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -501,6 +533,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB
 select round(a,b) as c from t1 order by c;
 c
+1234567890
 DROP TABLE t1, t2, t3, t4;
 CREATE TABLE t1( a DECIMAL(4, 3), b INT );
 INSERT INTO t1 VALUES ( 1, 5 ), ( 2, 4 ), ( 3, 3 ), ( 4, 2 ), ( 5, 1 );
