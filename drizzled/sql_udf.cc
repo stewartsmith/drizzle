@@ -67,6 +67,11 @@ static bool add_udf(Function_builder *udf)
   return true;
 }
 
+static bool remove_udf(Function_builder *udf)
+{
+  return udf_map.erase(udf->get_name());
+}
+
 int initialize_udf(st_plugin_int *plugin)
 {
   Function_builder *f;
@@ -90,20 +95,31 @@ int initialize_udf(st_plugin_int *plugin)
   if (!add_udf(f))
     return 1;
 
+  plugin->data= f;
   return 0;
 
 }
 
 int finalize_udf(st_plugin_int *plugin)
 {
-  Function_builder *udff = (Function_builder *)plugin->data;
+  Function_builder *udf = static_cast<Function_builder *>(plugin->data);
 
-  /* TODO: Issue warning on failure */
-  if (udff && plugin->plugin->deinit)
-    (void)plugin->plugin->deinit(udff);
+  if (udf != NULL)
+  {
+    remove_udf(udf);
+  
+    if (plugin->plugin->deinit)
+    {
+      if (plugin->plugin->deinit((void *)udf))
+      {
+        /* TRANSLATORS: The leading word "udf" is the name
+           of the plugin api, and so should not be translated. */
+        errmsg_printf(ERRMSG_LVL_ERROR, _("udf plugin '%s' deinit() failed"),
+  		      plugin->name.str);
+      }
+    }
 
-  if (udff)
-    free(udff);
+  }
 
   return 0;
 }

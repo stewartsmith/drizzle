@@ -90,7 +90,7 @@ Create_function<Item_func_uncompress> uncompressudf(string("uncompress"));
 
 static int uncompressudf_plugin_init(void *p)
 {
-  Function_builder **f = (Function_builder**) p;
+  Function_builder **f = static_cast<Function_builder**>(p);
 
   *f= &uncompressudf;
 
@@ -99,7 +99,7 @@ static int uncompressudf_plugin_init(void *p)
 
 static int uncompressudf_plugin_deinit(void *p)
 {
-  Function_builder *udff = (Function_builder *) p;
+  Function_builder *udff = static_cast<Function_builder *>(p);
   (void)udff;
   return 0;
 }
