@@ -23,23 +23,40 @@
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
 
+#include <vector>
+
+using namespace std;
+
+static vector<Authentication *> all_authentication;
+
 static bool are_plugins_loaded= false;
 
-static bool authenticate_by(Session *session, plugin_ref plugin, void* p_data)
+static void add_authentication(Authentication *auth)
 {
-  const char *password= (const char *)p_data;
-  Authentication *auth= plugin_data(plugin, Authentication *);
-
-  (void)p_data;
-
-  if (auth)
-  {
-    if (auth->authenticate(session, password))
-      return true;
-  }
-
-  return false;
+  all_authentication.push_back(auth);
 }
+
+static void remove_authentication(Authentication *auth)
+{
+  all_authentication.erase(find(all_authentication.begin(),
+                                all_authentication.end(),
+                                auth));
+}
+
+class AuthenticateBy : public unary_function<Authentication *, bool>
+{
+  Session *session;
+  const char *password;
+public:
+  AuthenticateBy(Session *session_arg, const char *password_arg) :
+    unary_function<Authentication *, bool>(),
+    session(session_arg), password(password_arg) {}
+
+  inline result_type operator()(argument_type auth)
+  {
+    return auth->authenticate(session, password);
+  }
+};
 
 bool authenticate_user(Session *session, const char *password)
 {
@@ -47,14 +64,21 @@ bool authenticate_user(Session *session, const char *password)
   if (are_plugins_loaded != true)
     return true;
 
-  return plugin_foreach(session, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
+  /* Use find_if instead of foreach so that we can collect return codes */
+  vector<Authentication *>::iterator iter=
+    find_if(all_authentication.begin(), all_authentication.end(),
+            AuthenticateBy(session, password));
+  /* If iter is == end() here, that means that all of the plugins returned
+   * false, which in this case means they all succeeded. Since we want to 
+   * return false on success, we return the value of the two being != 
+   */
+  return iter != all_authentication.end();
 }
 
 
 int authentication_initializer(st_plugin_int *plugin)
 {
-  Authentication *authen;
-
+  Authentication *authen= NULL;
 
   if (plugin->plugin->init)
   {
@@ -63,27 +87,27 @@ int authentication_initializer(st_plugin_int *plugin)
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Plugin '%s' init function returned error."),
                     plugin->name.str);
-      goto err;
+      return 1;
     }
   }
 
   if (authen == NULL)
     return 1;
 
-  plugin->data= static_cast<void *>(authen);
+  add_authentication(authen);
+  plugin->data= authen;
   are_plugins_loaded= true;
 
-  return(0);
-err:
-  delete authen;
-  return(1);
+  return 0;
 }
 
 int authentication_finalizer(st_plugin_int *plugin)
 {
   Authentication *authen= static_cast<Authentication *>(plugin->data);
-
   assert(authen);
+
+  remove_authentication(authen);
+
   if (authen && plugin->plugin->deinit)
     plugin->plugin->deinit(authen);
 
