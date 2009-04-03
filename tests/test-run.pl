@@ -1749,6 +1749,7 @@ sub setup_vardir() {
   {
     unlink($name);
   }
+  system("chmod -R ugo+r $opt_vardir");
 }
 
 

@@ -55,7 +55,7 @@ then
       [drizzle_cv_gcc_recent=no])])
   if test "$drizzle_cv_gcc_recent" = "no" -a "$host_vendor" = "apple"
   then
-    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2 on OSX. You may need to install a more recent version of XCode])
+    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2 on OSX. You may need to install a version of XCode >= 3.1.2])
   fi
   if test "$drizzle_cv_gcc_recent" = "no"
   then
@@ -1447,7 +1447,7 @@ done
 AC_CONFIG_COMMANDS([timestamp-h], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
 AC_CONFIG_COMMANDS_PRE([
-if test "x$EGREP" != "x"
+if test "x$EGREP" != "x" -a -d po
 then
   echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
   # The grep -v 'drizzle-' is to exclude any distcheck leftovers

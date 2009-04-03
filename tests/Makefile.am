@@ -94,8 +94,6 @@ test: test-drizzle
 # maintenance and verification
 
 test-drizzle:
-	@chmod -R ugo+r ${top_builddir}/tests/var
-	@chmod -R ugo+r ${top_srcdir}/tests/var
 	$(TEST_RUN) --fast --force --suite=main,vcol
 
 test-big:
