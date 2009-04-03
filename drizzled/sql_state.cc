@@ -31,7 +31,7 @@ using namespace std;
 
 typedef struct st_map_errno_to_sqlstate
 {
-  uint32_t drizzleclient_errno;
+  uint32_t drizzle_errno;
   const char *odbc_state;
   const char *jdbc_state;
 } errno_sqlstate_map;
@@ -249,19 +249,19 @@ errno_sqlstate_map sqlstate_map[]=
 bool compare_errno_map(errno_sqlstate_map a,
                        errno_sqlstate_map b)
 {
-  return (a.drizzleclient_errno < b.drizzleclient_errno);
+  return (a.drizzle_errno < b.drizzle_errno);
 }
 
-const char *drizzleclient_errno_to_sqlstate(uint32_t drizzleclient_errno)
+const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno)
 {
 
-  errno_sqlstate_map drizzle_err_state= {drizzleclient_errno, NULL, NULL};
+  errno_sqlstate_map drizzle_err_state= {drizzle_errno, NULL, NULL};
   errno_sqlstate_map* result=
     lower_bound(&sqlstate_map[0],
                 &sqlstate_map[sizeof(sqlstate_map)/sizeof(*sqlstate_map)],
                 drizzle_err_state, compare_errno_map);
 
-  if ((*result).drizzleclient_errno == drizzleclient_errno)
+  if ((*result).drizzle_errno == drizzle_errno)
     return (*result).odbc_state;
   /* General error */
   return "HY000";

@@ -28,7 +28,6 @@
 #include <signal.h>
 
 #include <mysys/my_bit.h>
-#include <libdrizzleclient/libdrizzle.h>
 #include <mysys/hash.h>
 #include <drizzled/stacktrace.h>
 #include <mysys/mysys_err.h>
@@ -64,7 +63,6 @@
 #include <sys/prctl.h>
 #endif
 
-#include <libdrizzleclient/errmsg.h>
 #include <locale.h>
 
 #define mysqld_charset &my_charset_utf8_general_ci
@@ -1966,7 +1964,8 @@ void handle_connections_sockets()
       close(new_sock);
       continue;
     }
-    if (drizzleclient_net_init_sock(&session->net, new_sock, sock == 0))
+
+    if (session->protocol->init_file_descriptor(new_sock))
     {
       delete session;
       continue;

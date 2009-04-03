@@ -274,8 +274,8 @@ void net_send_error_packet(Session *session, uint32_t sql_errno, const char *err
 
   /* The first # is to make the protocol backward compatible */
   buff[2]= '#';
-  pos= (unsigned char*) strcpy((char*) buff+3, drizzleclient_errno_to_sqlstate(sql_errno));
-  pos+= strlen(drizzleclient_errno_to_sqlstate(sql_errno));
+  pos= (unsigned char*) strcpy((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
+  pos+= strlen(drizzle_errno_to_sqlstate(sql_errno));
 
   char *tmp= strncpy((char*)pos, err, DRIZZLE_ERRMSG_SIZE-1);
   tmp+= strlen((char*)pos);
@@ -644,6 +644,13 @@ void Protocol::free()
 
   All data are sent as 'packed-string-length' followed by 'string-data'
 ****************************************************************************/
+
+bool Protocol_text::init_file_descriptor(int fd)
+{
+  if (drizzleclient_net_init_sock(&session->net, fd, 0))
+    return true;
+  return false;
+}
 
 void Protocol_text::prepare_for_resend()
 {

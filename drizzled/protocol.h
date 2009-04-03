@@ -75,6 +75,8 @@ public:
     return 0;
   }
   virtual bool flush();
+
+  virtual bool init_file_descriptor(int fd)=0;
   virtual void prepare_for_resend()=0;
 
   virtual bool store_null()=0;
@@ -112,6 +114,7 @@ class Protocol_text :public Protocol
 public:
   Protocol_text() {}
   Protocol_text(Session *session_arg) :Protocol(session_arg) {}
+  virtual bool init_file_descriptor(int fd);
   virtual void prepare_for_resend();
   virtual bool store(I_List<i_string> *str_list)
   {

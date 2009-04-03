@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 
+#define NULL_LENGTH UINT32_MAX
+
 #ifdef __cplusplus
 extern "C" {
 #endif
