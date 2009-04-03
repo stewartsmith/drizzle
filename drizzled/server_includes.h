@@ -152,7 +152,7 @@ extern char *opt_logname;
 
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
-extern pthread_mutex_t LOCK_drizzleclient_create_db,LOCK_open, LOCK_lock_db,
+extern pthread_mutex_t LOCK_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
        LOCK_global_read_lock,
        LOCK_global_system_variables;
