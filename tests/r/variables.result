@@ -483,6 +483,9 @@ Error	1292	Truncated incorrect table_open_cache value: '18446744073709551615'
 SHOW VARIABLES LIKE 'table_open_cache';
 Variable_name	Value
 table_open_cache	100
+SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
+VARIABLE_NAME	VARIABLE_VALUE
+TABLE_OPEN_CACHE	100
 SET GLOBAL table_open_cache=DEFAULT;
 *** Various tests with LC_TIME_NAMES
 *** LC_TIME_NAMES: testing case insensitivity

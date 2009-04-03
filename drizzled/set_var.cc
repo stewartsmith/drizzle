@@ -1068,11 +1068,15 @@ bool sys_var::check_enum(Session *,
 
   if (var->value->result_type() == STRING_RESULT)
   {
-    if (!(res=var->value->val_str(&str)))
+    if (!(res=var->value->val_str(&str)) ||
+        (var->save_result.uint32_t_value= find_type(enum_names, res->ptr(),
+                                                    res->length(),1)) == 0)
     {
       value= res ? res->c_ptr() : "NULL";
       goto err;
     }
+
+    var->save_result.uint32_t_value--;
   }
   else
   {

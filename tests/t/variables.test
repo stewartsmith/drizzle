@@ -322,8 +322,7 @@ drop table t1;
 
 SET GLOBAL table_open_cache=-1;
 SHOW VARIABLES LIKE 'table_open_cache';
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
+SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
 SET GLOBAL table_open_cache=DEFAULT;
 
 #
