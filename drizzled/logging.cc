@@ -24,7 +24,7 @@
 
 using namespace std;
 
-vector<Logging_handler *> all_loggers;
+static vector<Logging_handler *> all_loggers;
 
 static void add_logger(Logging_handler *handler)
 {
@@ -115,7 +115,7 @@ public:
     unary_function<Logging_handler *, bool>(),
     session(session_arg) {}
 
-  /* This gets called by plugin_foreach once for each loaded logging plugin */
+  /* This gets called once for each loaded logging plugin */
   inline result_type operator()(argument_type handler)
   {
     if (handler->post(session))
@@ -136,7 +136,7 @@ public:
    This gets called by the rest of the Drizzle server code */
 bool logging_pre_do (Session *session)
 {
-  /* Usr find_if instead of foreach so that we can collect return codes */
+  /* Use find_if instead of foreach so that we can collect return codes */
   vector<Logging_handler *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
             LoggingPreIterate(session)); 
@@ -151,7 +151,7 @@ bool logging_pre_do (Session *session)
    This gets called by the rest of the Drizzle server code */
 bool logging_post_do (Session *session)
 {
-  /* Usr find_if instead of foreach so that we can collect return codes */
+  /* Use find_if instead of foreach so that we can collect return codes */
   vector<Logging_handler *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
             LoggingPreIterate(session)); 
