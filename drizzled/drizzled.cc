@@ -2535,7 +2535,7 @@ static int show_net_compression(Session *session,
                                 char *)
 {
   var->type= SHOW_MY_BOOL;
-  var->value= (char *)&session->net.compress;
+  var->value= (char *)session->protocol->have_compression();
   return 0;
 }
 

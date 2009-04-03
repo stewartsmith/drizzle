@@ -25,9 +25,10 @@
 
 class Field;
 class String;
-class i_string;
 class Session;
+class i_string;
 class my_decimal;
+typedef struct st_vio Vio;
 typedef struct st_drizzle_field DRIZZLE_FIELD;
 typedef struct st_drizzle_rows DRIZZLE_ROWS;
 typedef struct st_drizzle_time DRIZZLE_TIME;
@@ -40,6 +41,7 @@ protected:
   String *convert;
   uint32_t field_pos;
   uint32_t field_count;
+  Vio* save_vio;
   bool net_store_data(const unsigned char *from, size_t length);
   bool net_store_data(const unsigned char *from, size_t length,
                       const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs);
@@ -50,6 +52,17 @@ public:
   Protocol(Session *session_arg) { init(session_arg); }
   virtual ~Protocol() {}
   void init(Session* session_arg);
+
+  bool io_ok();
+  void end_statement(void);
+  void set_read_timeout(uint32_t timeout);
+  void set_write_timeout(uint32_t timeout);
+  void set_retry_count(uint32_t count);
+  void set_error(char error);
+  bool have_error(void);
+  bool have_compression(void);
+  void disable_results(void);
+  void enable_results(void);
 
   enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
   virtual bool send_fields(List<Item> *list, uint32_t flags);
@@ -156,7 +169,6 @@ public:
 
 void send_warning(Session *session, uint32_t sql_errno, const char *err=0);
 void net_send_error(Session *session, uint32_t sql_errno=0, const char *err=0);
-void drizzleclient_net_end_statement(Session *session);
 unsigned char *net_store_data(unsigned char *to,const unsigned char *from, size_t length);
 unsigned char *net_store_data(unsigned char *to,int32_t from);
 unsigned char *net_store_data(unsigned char *to,int64_t from);

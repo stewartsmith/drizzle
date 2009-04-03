@@ -26,11 +26,82 @@
 #include <drizzled/protocol.h>
 #include <drizzled/session.h>
 
+/*
+  Function called by drizzleclient_net_init() to set some check variables
+*/
+
+extern "C" {
+  void drizzleclient_net_local_init(NET *net)
+  {
+    net->max_packet= (uint32_t) global_system_variables.net_buffer_length;
+
+    drizzleclient_net_set_read_timeout(net,
+                            (uint32_t)global_system_variables.net_read_timeout);
+    drizzleclient_net_set_write_timeout(net,
+                           (uint32_t)global_system_variables.net_write_timeout);
+
+    net->retry_count=  (uint32_t) global_system_variables.net_retry_count;
+    net->max_packet_size= cmax(global_system_variables.net_buffer_length,
+                               global_system_variables.max_allowed_packet);
+  }
+}
+
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
 static void net_send_error_packet(Session *session, uint32_t sql_errno, const char *err);
 static void write_eof_packet(Session *session, NET *net,
                              uint32_t server_status, uint32_t total_warn_count);
+
+bool Protocol::io_ok()
+{
+  return session->net.vio != 0;
+}
+
+void Protocol::set_read_timeout(uint32_t timeout)
+{
+  drizzleclient_net_set_read_timeout(&session->net, timeout);
+}
+
+void Protocol::set_write_timeout(uint32_t timeout)
+{
+  drizzleclient_net_set_write_timeout(&session->net, timeout);
+}
+
+void Protocol::set_retry_count(uint32_t count)
+{
+  session->net.retry_count=count;
+}
+
+void Protocol::set_error(char error)
+{
+  session->net.error= error;
+}
+
+bool Protocol::have_error(void)
+{
+  return session->net.error || session->net.vio == 0;
+}
+
+bool Protocol::have_compression(void)
+{
+  return session->net.compress;
+}
+
+/*
+ * To disable results we set session->net.vio to 0.
+ */
+
+void Protocol::disable_results(void)
+{
+  save_vio= session->net.vio;
+  session->net.vio= 0;
+}
+
+void Protocol::enable_results(void)
+{
+  session->net.vio= save_vio;
+}
+
 
 bool Protocol::net_store_data(const unsigned char *from, size_t length)
 {
@@ -362,7 +433,7 @@ static unsigned char *drizzleclient_net_store_length_fast(unsigned char *packet,
           Diagnostics_area::is_sent is set for debugging purposes only.
 */
 
-void drizzleclient_net_end_statement(Session *session)
+void Protocol::end_statement()
 {
   assert(! session->main_da.is_sent);
 

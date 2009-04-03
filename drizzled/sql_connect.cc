@@ -87,14 +87,12 @@ pthread_handler_t handle_one_connection(void *arg)
 
   for (;;)
   {
-    NET *net= &session->net;
-
     if (! session->authenticate())
       goto end_thread;
 
     session->prepareForQueries();
 
-    while (!net->error && net->vio != 0 &&
+    while (!session->protocol->have_error() &&
            !(session->killed == Session::KILL_CONNECTION))
     {
       if (! session->executeStatement())

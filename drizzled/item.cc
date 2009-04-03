@@ -49,6 +49,8 @@
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
 
+#include <libdrizzle/drizzle_client.h>
+
 #include <math.h>
 
 const String my_null_string("NULL", 4, default_charset_info);
@@ -1343,7 +1345,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
     enum DRIZZLE_ERROR::enum_warning_level level;
     uint32_t diff= str->length() - wlen;
     set_if_smaller(diff, 3U);
-    drizzleclient_drizzleclient_octet2hex(hexbuf, str->ptr() + wlen, diff);
+    (void) drizzle_hex_string(hexbuf, str->ptr() + wlen, diff);
     if (send_error)
     {
       my_error(ER_INVALID_CHARACTER_STRING, MYF(0),

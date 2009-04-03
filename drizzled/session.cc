@@ -432,7 +432,7 @@ Session::~Session()
   Session_CHECK_SENTRY(this);
   add_to_status(&global_status_var, &status_var);
 
-  if (drizzleclient_vio_ok())
+  if (protocol->io_ok())
   {
     if (global_system_variables.log_warnings)
         errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
@@ -658,7 +658,7 @@ bool Session::authenticate()
   lex_start(this);
 
   bool connection_is_valid= _checkConnection();
-  drizzleclient_net_end_statement(this);
+  protocol->end_statement();
 
   if (! connection_is_valid)
   {	
@@ -929,7 +929,7 @@ bool Session::executeStatement()
     /* Assert is invalid for dirty connection shutdown
      *     assert(session->is_error());
      */
-    drizzleclient_net_end_statement(this);
+    protocol->end_statement();
 
     if (net.error != 3)
     {

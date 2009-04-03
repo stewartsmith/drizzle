@@ -24,7 +24,6 @@
 */
 
 #include "drizzled/server_includes.h"
-#include "libdrizzleclient/libdrizzle.h"
 #include "mysys/hash.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
