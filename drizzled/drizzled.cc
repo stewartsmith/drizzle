@@ -415,8 +415,6 @@ static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
 static char **defaults_argv;
 
-struct rand_struct sql_rand; ///< used by sql_class.cc:Session::Session()
-
 struct passwd *user_info;
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
@@ -446,7 +444,6 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-extern "C" bool safe_read_error_impl(NET *net);
 
 /****************************************************************************
 ** Code to end drizzled
@@ -1548,9 +1545,6 @@ static int init_server_components()
   if (table_cache_init() | table_def_init())
     unireg_abort(1);
 
-  drizzleclient_randominit(&sql_rand,
-                           (uint64_t) server_start_time,
-                           (uint64_t) server_start_time/2);
   setup_fpu();
   init_thr_lock();
 
@@ -1777,8 +1771,6 @@ int main(int argc, char **argv)
     unireg_abort(1);
 
   network_init();
-
-  safe_read_error_hook= safe_read_error_impl; 
 
   /*
     init signals & alarm
@@ -3278,15 +3270,6 @@ skip: ;
 
   return(found);
 } /* find_bit_type */
-
-
-bool safe_read_error_impl(NET *net)
-{
-  if (net->vio)
-    return drizzleclient_vio_was_interrupted(net->vio);
-  return false;
-}
-
 
 /*****************************************************************************
   Instantiate templates

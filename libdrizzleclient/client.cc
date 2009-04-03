@@ -92,7 +92,17 @@ char* getlogin(void);
   Read a packet from server. Give error message if socket was down
   or packet is an error message
 *****************************************************************************/
-safe_read_error_hook_func safe_read_error_hook= NULL;
+
+/* I'm not sure if this is even used anymore, but now that libdrizzleclient is
+   server only, this is safe to set here. */
+bool safe_read_error_impl(NET *net)
+{
+  if (net->vio)
+    return drizzleclient_vio_was_interrupted(net->vio);
+  return false;
+}
+
+safe_read_error_hook_func safe_read_error_hook= safe_read_error_impl;
 
 uint32_t drizzleclient_cli_safe_read(DRIZZLE *drizzle)
 {
