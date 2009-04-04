@@ -22,6 +22,7 @@
 
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
+#include <libdrizzleclient/password.h>     // rand_struct
 
 class Field;
 class String;
@@ -64,6 +65,13 @@ public:
   void disable_results(void);
   void enable_results(void);
 
+  virtual bool init_file_descriptor(int fd)=0;
+  virtual void init_random(uint64_t seed1 __attribute__ ((unused)),
+                           uint64_t seed2 __attribute__ ((unused))) {};
+  virtual bool authenticate(void)=0;
+  virtual bool read_command(char **packet, uint32_t *packet_length)=0;
+  virtual void close(void) {};
+
   enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
   virtual bool send_fields(List<Item> *list, uint32_t flags);
 
@@ -89,7 +97,6 @@ public:
   }
   virtual bool flush();
 
-  virtual bool init_file_descriptor(int fd)=0;
   virtual void prepare_for_resend()=0;
 
   virtual bool store_null()=0;
@@ -124,10 +131,26 @@ public:
 
 class Protocol_text :public Protocol
 {
+private:
+  struct rand_struct _rand;
+  char _scramble[SCRAMBLE_LENGTH+1];
+
+  /**
+   * Performs handshake with client and authorizes user.
+   *
+   * Returns true is the connection is valid and the
+   * user is authorized, otherwise false.
+   */  
+  bool _check_connection(void);
+
 public:
-  Protocol_text() {}
+  Protocol_text() { _scramble[0]= 0; }
   Protocol_text(Session *session_arg) :Protocol(session_arg) {}
   virtual bool init_file_descriptor(int fd);
+  virtual void init_random(uint64_t seed1, uint64_t seed2);
+  virtual bool authenticate(void);
+  virtual bool read_command(char **packet, uint32_t *packet_length);
+  virtual void close(void);
   virtual void prepare_for_resend();
   virtual bool store(I_List<i_string> *str_list)
   {
@@ -172,5 +195,7 @@ void net_send_error(Session *session, uint32_t sql_errno=0, const char *err=0);
 unsigned char *net_store_data(unsigned char *to,const unsigned char *from, size_t length);
 unsigned char *net_store_data(unsigned char *to,int32_t from);
 unsigned char *net_store_data(unsigned char *to,int64_t from);
+
+#define net_new_transaction(net) ((net)->pkt_nr=0)
 
 #endif /* DRIZZLED_PROTOCOL_H */

@@ -24,7 +24,6 @@
 /* Classes in mysql */
 
 #include <drizzled/protocol.h>
-#include <libdrizzleclient/password.h>     // rand_struct
 #include <libdrizzleclient/net_serv.h>     // NET
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
@@ -433,7 +432,6 @@ public:
   HASH    user_vars;			// hash for user variables
   String  packet;			// dynamic buffer for network I/O
   String  convert_buffer;               // buffer for charset conversions
-  struct  rand_struct rand;		// used for authentication
   struct  system_variables variables;	// Changeable local variables
   struct  system_status_var status_var; // Per thread statistic vars
   struct  system_status_var *initial_status_var; /* used by show status */
@@ -745,9 +743,6 @@ public:
     KILLED_NO_VALUE      /* means neither of the states */
   };
   killed_state volatile killed;
-
-  /* scramble - random string sent to client on handshake */
-  char	     scramble[SCRAMBLE_LENGTH+1];
 
   bool	     some_tables_deleted;
   bool       last_cuted_field;
@@ -1131,15 +1126,6 @@ public:
   void disconnect(uint32_t errcode, bool lock);
   void close_temporary_tables();
 
-private:
-  /**
-   * Performs handshake with client and authorizes user.
-   *
-   * Returns true is the connection is valid and the 
-   * user is authorized, otherwise false.
-   */
-  bool _checkConnection(void);
-
   /**
    * Check if user exists and the password supplied is correct.
    *
@@ -1154,6 +1140,8 @@ private:
    * @param  Database name to connect to, may be NULL
    */
   bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
+
+private:
   const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */

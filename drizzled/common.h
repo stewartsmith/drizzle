@@ -324,9 +324,6 @@ enum enum_field_types { DRIZZLE_TYPE_TINY,
 };
 
 
-#define net_new_transaction(net) ((net)->pkt_nr=0)
-
-
   /* The following is for user defined functions */
 
 enum Item_result {STRING_RESULT=0, REAL_RESULT, INT_RESULT, ROW_RESULT,

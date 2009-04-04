@@ -32,7 +32,6 @@
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
 #include <drizzled/scheduling.h>
-#include <libdrizzleclient/errmsg.h>
 
 /*
   The following is used to initialise Table_ident with a internal
@@ -246,7 +245,6 @@ Session::Session()
   where= Session::DEFAULT_WHERE;
   server_id = ::server_id;
   command=COM_CONNECT;
-  *scramble= '\0';
 
   init();
   /* Initialize sub structures */
@@ -262,8 +260,8 @@ Session::Session()
   const Query_id& local_query_id= Query_id::get_query_id();
   tablespace_op= false;
   tmp= sql_rnd();
-  drizzleclient_randominit(&rand, tmp + (uint64_t) &rand,
-                           tmp + (uint64_t)local_query_id.value());
+  protocol->init_random(tmp + (uint64_t) &protocol,
+                        tmp + (uint64_t)local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
@@ -443,11 +441,8 @@ Session::~Session()
   }
 
   /* Close connection */
-  if (net.vio)
-  {
-    drizzleclient_net_close(&net);
-    drizzleclient_net_end(&net);
-  }
+  protocol->close();
+
   if (cleanup_done == false)
     cleanup();
 
@@ -651,192 +646,12 @@ bool Session::initGlobals()
 
 bool Session::authenticate()
 {
-  /* Use "connect_timeout" value during connection phase */
-  drizzleclient_net_set_read_timeout(&net, connect_timeout);
-  drizzleclient_net_set_write_timeout(&net, connect_timeout);
-
   lex_start(this);
+  if (protocol->authenticate())
+    return true;
 
-  bool connection_is_valid= _checkConnection();
-  protocol->end_statement();
-
-  if (! connection_is_valid)
-  {	
-    /* We got wrong permissions from _checkConnection() */
-    statistic_increment(aborted_connects, &LOCK_status);
-    return false;
-  }
-
-  /* Connect completed, set read/write timeouts back to default */
-  drizzleclient_net_set_read_timeout(&net, variables.net_read_timeout);
-  drizzleclient_net_set_write_timeout(&net, variables.net_write_timeout);
-  return true;
-}
-
-bool Session::_checkConnection()
-{
-  uint32_t pkt_len= 0;
-  char *end;
-
-  // TCP/IP connection
-  {
-    char ip[NI_MAXHOST];
-
-    if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
-    {
-      my_error(ER_BAD_HOST_ERROR, MYF(0), security_ctx.ip.c_str());
-      return false;
-    }
-
-    security_ctx.ip.assign(ip);
-  }
-  drizzleclient_net_keepalive(&net, true);
-
-  uint32_t server_capabilites;
-  {
-    /* buff[] needs to big enough to hold the server_version variable */
-    char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
-
-    server_capabilites= CLIENT_BASIC_FLAGS;
-
-#ifdef HAVE_COMPRESS
-    server_capabilites|= CLIENT_COMPRESS;
-#endif /* HAVE_COMPRESS */
-
-    end= buff + strlen(server_version);
-    if ((end - buff) >= SERVER_VERSION_LENGTH)
-      end= buff + (SERVER_VERSION_LENGTH - 1);
-    memcpy(buff, server_version, end - buff);
-    *end= 0;
-    end++;
-
-    int4store((unsigned char*) end, thread_id);
-    end+= 4;
-    /*
-      So as _checkConnection is the only entry point to authorization
-      procedure, scramble is set here. This gives us new scramble for
-      each handshake.
-    */
-    drizzleclient_create_random_string(scramble, SCRAMBLE_LENGTH, &rand);
-    /*
-      Old clients does not understand long scrambles, but can ignore packet
-      tail: that's why first part of the scramble is placed here, and second
-      part at the end of packet.
-    */
-    end= strncpy(end, scramble, SCRAMBLE_LENGTH_323);
-    end+= SCRAMBLE_LENGTH_323;
-
-    *end++= 0; /* an empty byte for some reason */
-
-    int2store(end, server_capabilites);
-    /* write server characteristics: up to 16 bytes allowed */
-    end[2]=(char) default_charset_info->number;
-    int2store(end+3, server_status);
-    memset(end+5, 0, 13);
-    end+= 18;
-    /* write scramble tail */
-    size_t scramble_len= SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323;
-    end= strncpy(end, scramble + SCRAMBLE_LENGTH_323, scramble_len);
-    end+= scramble_len;
-
-    *end++= 0; /* an empty byte for some reason */
-
-    /* At this point we write connection message and read reply */
-    if (drizzleclient_net_write_command(&net
-          , (unsigned char) protocol_version
-          , (unsigned char*) ""
-          , 0
-          , (unsigned char*) buff
-          , (size_t) (end-buff)) 
-        ||	(pkt_len= drizzleclient_net_read(&net)) == packet_error 
-        || pkt_len < MIN_HANDSHAKE_SIZE)
-    {
-      my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
-      return false;
-    }
-  }
-  if (packet.alloc(variables.net_buffer_length))
-    return false; /* The error is set by alloc(). */
-
-  client_capabilities= uint2korr(net.read_pos);
-
-
-  client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
-  max_client_packet_length= uint4korr(net.read_pos + 4);
-  update_charset();
-  end= (char*) net.read_pos + 32;
-
-  /*
-    Disable those bits which are not supported by the server.
-    This is a precautionary measure, if the client lies. See Bug#27944.
-  */
-  client_capabilities&= server_capabilites;
-
-  if (end >= (char*) net.read_pos + pkt_len + 2)
-  {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
-    return false;
-  }
-
-  net.return_status= &server_status;
-
-  char *user= end;
-  char *passwd= strchr(user, '\0')+1;
-  uint32_t user_len= passwd - user - 1;
-  char *l_db= passwd;
-  char db_buff[NAME_LEN + 1];           // buffer to store db in utf8
-  char user_buff[USERNAME_LENGTH + 1];	// buffer to store user in utf8
-  uint32_t dummy_errors;
-
-  /*
-    Old clients send null-terminated string as password; new clients send
-    the size (1 byte) + string (not null-terminated). Hence in case of empty
-    password both send '\0'.
-
-    This strlen() can't be easily deleted without changing protocol.
-
-    Cast *passwd to an unsigned char, so that it doesn't extend the sign for
-    *passwd > 127 and become 2**32-127+ after casting to uint.
-  */
-  uint32_t passwd_len= client_capabilities & CLIENT_SECURE_CONNECTION ?
-    (unsigned char)(*passwd++) : strlen(passwd);
-  l_db= client_capabilities & CLIENT_CONNECT_WITH_DB ? l_db + passwd_len + 1 : 0;
-
-  /* strlen() can't be easily deleted without changing protocol */
-  uint32_t db_len= l_db ? strlen(l_db) : 0;
-
-  if (passwd + passwd_len + db_len > (char *) net.read_pos + pkt_len)
-  {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
-    return false;
-  }
-
-  /* Since 4.1 all database names are stored in utf8 */
-  if (l_db)
-  {
-    db_buff[copy_and_convert(db_buff, sizeof(db_buff)-1,
-                             system_charset_info,
-                             l_db, db_len,
-                             charset(), &dummy_errors)]= 0;
-    l_db= db_buff;
-  }
-
-  user_buff[user_len= copy_and_convert(user_buff, sizeof(user_buff)-1,
-                                       system_charset_info, user, user_len,
-                                       charset(), &dummy_errors)]= '\0';
-  user= user_buff;
-
-  /* If username starts and ends in "'", chop them off */
-  if (user_len > 1 && user[0] == '\'' && user[user_len - 1] == '\'')
-  {
-    user[user_len-1]= 0;
-    user++;
-    user_len-= 2;
-  }
-
-  security_ctx.user.assign(user);
-
-  return checkUser(passwd, passwd_len, l_db);
+  statistic_increment(aborted_connects, &LOCK_status);
+  return false;
 }
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
@@ -890,7 +705,6 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
 
 bool Session::executeStatement()
 {
-  bool return_value;
   char *l_packet= 0;
   uint32_t packet_length;
 
@@ -902,77 +716,19 @@ bool Session::executeStatement()
   */
   lex->current_select= 0;
 
-  /*
-    This thread will do a blocking read from the client which
-    will be interrupted when the next command is received from
-    the client, the connection is closed or "net_wait_timeout"
-    number of seconds has passed
-  */
-  drizzleclient_net_set_read_timeout(&net, variables.net_wait_timeout);
+  if (protocol->read_command(&l_packet, &packet_length) == false)
+    return false;
 
-  /*
-    XXX: this code is here only to clear possible errors of init_connect.
-    Consider moving to init_connect() instead.
-  */
-  clear_error();				// Clear error message
-  main_da.reset_diagnostics_area();
-
-  net_new_transaction(&net);
-
-  packet_length= drizzleclient_net_read(&net);
-  if (packet_length == packet_error)
-  {
-    /* Check if we can continue without closing the connection */
-
-    if(net.last_errno== CR_NET_PACKET_TOO_LARGE)
-      my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
-    /* Assert is invalid for dirty connection shutdown
-     *     assert(session->is_error());
-     */
-    protocol->end_statement();
-
-    if (net.error != 3)
-    {
-      return_value= false;                       // We have to close it.
-      goto out;
-    }
-
-    net.error= 0;
-    return_value= true;
-    goto out;
-  }
-
-  l_packet= (char*) net.read_pos;
-  /*
-    'packet_length' contains length of data, as it was stored in packet
-    header. In case of malformed header, drizzleclient_net_read returns zero.
-    If packet_length is not zero, drizzleclient_net_read ensures that the returned
-    number of bytes was actually read from network.
-    There is also an extra safety measure in drizzleclient_net_read:
-    it sets packet[packet_length]= 0, but only for non-zero packets.
-  */
-  if (packet_length == 0)                       /* safety */
-  {
-    /* Initialize with COM_SLEEP packet */
-    l_packet[0]= (unsigned char) COM_SLEEP;
-    packet_length= 1;
-  }
-  /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
-  l_packet[packet_length]= '\0';                  /* safety */
+  if (packet_length == 0)
+    return true;
 
   l_command= (enum enum_server_command) (unsigned char) l_packet[0];
 
   if (command >= COM_END)
     command= COM_END;                           // Wrong command
 
-  /* Restore read timeout value */
-  drizzleclient_net_set_read_timeout(&net, variables.net_read_timeout);
-
   assert(packet_length);
-  return_value= ! dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
-
-out:
-  return return_value;
+  return ! dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
 }
 
 bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
@@ -2232,15 +1988,14 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   }
 
   /* Close out our connection to the client */
-  st_vio *vio;
   if (should_lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
   killed= Session::KILL_CONNECTION;
-  if ((vio= net.vio) != 0)
+  if (protocol->io_ok())
   {
     if (errcode)
       net_send_error(this, errcode, ER(errcode)); /* purecov: inspected */
-    drizzleclient_net_close(&net);		/* vio is freed in delete session */
+    protocol->close();
   }
   if (should_lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
