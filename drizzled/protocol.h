@@ -62,10 +62,12 @@ public:
   void set_error(char error);
   bool have_error(void);
   bool have_compression(void);
+  bool have_more_data(void);
   void disable_results(void);
   void enable_results(void);
 
   virtual bool init_file_descriptor(int fd)=0;
+  virtual int file_descriptor(void)=0;
   virtual void init_random(uint64_t seed1 __attribute__ ((unused)),
                            uint64_t seed2 __attribute__ ((unused))) {};
   virtual bool authenticate(void)=0;
@@ -147,6 +149,7 @@ public:
   Protocol_text() { _scramble[0]= 0; }
   Protocol_text(Session *session_arg) :Protocol(session_arg) {}
   virtual bool init_file_descriptor(int fd);
+  virtual int file_descriptor(void);
   virtual void init_random(uint64_t seed1, uint64_t seed2);
   virtual bool authenticate(void);
   virtual bool read_command(char **packet, uint32_t *packet_length);

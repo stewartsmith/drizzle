@@ -84,6 +84,11 @@ bool Protocol::have_error(void)
   return session->net.error || session->net.vio == 0;
 }
 
+bool Protocol::have_more_data(void)
+{
+  return drizzleclient_net_more_data(&session->net);
+}
+
 bool Protocol::have_compression(void)
 {
   return session->net.compress;
@@ -728,6 +733,11 @@ bool Protocol_text::init_file_descriptor(int fd)
   if (drizzleclient_net_init_sock(&session->net, fd, 0))
     return true;
   return false;
+}
+
+int Protocol_text::file_descriptor(void)
+{
+  return drizzleclient_net_get_sd(&session->net);
 }
 
 bool Protocol_text::authenticate()

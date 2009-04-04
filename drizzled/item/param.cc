@@ -25,6 +25,7 @@
 #include <drizzled/item/param.h>
 #include <drizzled/sql_string.h>
 #include <mystrings/utf8.h>
+#include <libdrizzle/drizzle_client.h>
 
 Item *Item_param::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
@@ -527,7 +528,7 @@ static char *str_to_hex(char *to, const char *from, uint32_t len)
   {
     *to++= '0';
     *to++= 'x';
-    to= drizzleclient_drizzleclient_octet2hex(to, from, len);
+    to+= (size_t) drizzle_hex_string(to, from, len);
   }
   else
     to= strcpy(to, "\"\"")+2;
@@ -542,8 +543,8 @@ static char *str_to_hex(char *to, const char *from, uint32_t len)
   Returns the length of the to string
 */
 
-uint32_t
-drizzleclient_escape_string(char *to,const char *from, uint32_t length)
+static uint32_t
+_escape_string(char *to,const char *from, uint32_t length)
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + 2*length;
@@ -634,7 +635,7 @@ append_query_string(const CHARSET_INFO * const csinfo,
   else
   {
     *ptr++= '\'';
-    ptr+= drizzleclient_escape_string(ptr, from->ptr(), from->length());
+    ptr+= _escape_string(ptr, from->ptr(), from->length());
     *ptr++='\'';
   }
   to->length(orig_len + ptr - beg);

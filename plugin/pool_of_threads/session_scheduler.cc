@@ -38,7 +38,7 @@ session_scheduler::session_scheduler(Session *parent_session)
 {
   memset(&io_event, 0, sizeof(struct event));
 
-  event_set(&io_event, drizzleclient_net_get_sd(&(parent_session->net)), EV_READ,
+  event_set(&io_event, parent_session->protocol->file_descriptor(), EV_READ,
             libevent_io_callback, (void*)parent_session);
 
   session= parent_session;

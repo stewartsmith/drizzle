@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/str/hex.h>
-#include <libdrizzleclient/password.h>
+#include <libdrizzle/drizzle_client.h>
 
 String *Item_func_hex::val_str(String *str)
 {
@@ -62,7 +62,7 @@ String *Item_func_hex::val_str(String *str)
   null_value=0;
   tmp_value.length(res->length()*2);
 
-  drizzleclient_drizzleclient_octet2hex((char*) tmp_value.ptr(), res->ptr(), res->length());
+  drizzle_hex_string((char*) tmp_value.ptr(), res->ptr(), res->length());
   return &tmp_value;
 }
 
