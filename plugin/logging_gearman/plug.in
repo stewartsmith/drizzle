@@ -1,7 +1,6 @@
 DRIZZLE_PLUGIN(logging_gearman,[Gearman Logging Plugin],
         [Logging Plugin that logs to Gearman.])
 DRIZZLE_PLUGIN_DYNAMIC(logging_gearman, [liblogging_gearman.la])
-DRIZZLE_PLUGIN_STATIC(logging_gearman, [liblogging_gearman.a])
 DRIZZLE_PLUGIN_ACTIONS(logging_gearman, [
 AC_LIB_HAVE_LINKFLAGS(gearman,,
   [#include <libgearman/gearman.h>],

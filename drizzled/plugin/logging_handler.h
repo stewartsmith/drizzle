@@ -23,12 +23,17 @@
 #ifndef DRIZZLED_PLUGIN_LOGGING_H
 #define DRIZZLED_PLUGIN_LOGGING_H
 
+#include <string>
+
 class Logging_handler
 {
+  std::string name;
 public:
-  Logging_handler() {}
+  Logging_handler(std::string name_arg): name(name_arg)  {}
+  Logging_handler(const char *name_arg): name(name_arg)  {}
   virtual ~Logging_handler() {}
 
+  std::string getName() { return name; }
   /**
    * Make these no-op rather than pure-virtual so that it's easy for a plugin
    * to only 

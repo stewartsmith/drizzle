@@ -20,8 +20,24 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/gettext.h>
+#include <vector>
+
+using namespace std;
+
+static vector<Error_message_handler *> all_errmsg_handler;
 
 static bool errmsg_has= false;
+
+static void add_errmsg_handler(Error_message_handler *handler)
+{
+  all_errmsg_handler.push_back(handler);
+}
+
+static void remove_errmsg_handler(Error_message_handler *handler)
+{
+  all_errmsg_handler.erase(find(all_errmsg_handler.begin(),
+                                all_errmsg_handler.end(), handler));
+}
 
 int errmsg_initializer(st_plugin_int *plugin)
 {
@@ -43,7 +59,8 @@ int errmsg_initializer(st_plugin_int *plugin)
     }
   }
 
-  plugin->data= (void *)p;
+  add_errmsg_handler(p);
+  plugin->data= p;
   errmsg_has= true;
 
   return 0;
@@ -54,6 +71,7 @@ int errmsg_finalizer(st_plugin_int *plugin)
 {
   Error_message_handler *p= static_cast<Error_message_handler *>(plugin->data);
 
+  remove_errmsg_handler(p);
   if (plugin->plugin->deinit)
   {
     if (plugin->plugin->deinit(p))
@@ -72,50 +90,45 @@ int errmsg_finalizer(st_plugin_int *plugin)
   return 0;
 }
 
-/* The plugin_foreach() iterator requires that we
-   convert all the parameters of a plugin api entry point
-   into just one single void ptr, plus the session.
-   So we will take all the additional paramters of errmsg_vprintf,
-   and marshall them into a struct of this type, and
-   then just pass in a pointer to it.
-*/
-typedef struct errmsg_parms_st
+
+class ErrorMessagePrint : public unary_function<Error_message_handler *, bool>
 {
+  Session *session;
   int priority;
   const char *format;
   va_list ap;
-} errmsg_parms_t;
+public:
+  ErrorMessagePrint(Session *session_arg, int priority_arg,
+                    const char *format_arg, va_list ap_arg) :
+    unary_function<Error_message_handler *, bool>(), session(session_arg),
+    priority(priority_arg), format(format_arg)
+    {
+      va_copy(ap, ap_arg);
+    }
 
+  ~ErrorMessagePrint()  { va_end(ap); }
 
-/* This gets called by plugin_foreach once for each loaded errmsg plugin */
-static bool errmsg_iterate (Session *session, plugin_ref plugin, void *p)
-{
-  Error_message_handler *handler= plugin_data(plugin, Error_message_handler *);
-  errmsg_parms_t *parms= (errmsg_parms_t *) p;
-
-  if (handler)
+  inline result_type operator()(argument_type handler)
   {
-    if (handler->errmsg(session, parms->priority, parms->format, parms->ap))
+    if (handler->errmsg(session, priority, format, ap))
     {
       /* we're doing the errmsg plugin api,
-	 so we can't trust the errmsg api to emit our error messages
-	 so we will emit error messages to stderr */
+         so we can't trust the errmsg api to emit our error messages
+         so we will emit error messages to stderr */
       /* TRANSLATORS: The leading word "errmsg" is the name
          of the plugin api, and so should not be translated. */
       fprintf(stderr,
               _("errmsg plugin '%s' errmsg() failed"),
-              (char *)plugin_name(plugin));
+              handler->getName().c_str());
       return true;
     }
+    return false;
   }
-  return false;
-}
+};
 
 bool errmsg_vprintf (Session *session, int priority,
                      char const *format, va_list ap)
 {
-  bool foreach_rv;
-  errmsg_parms_t parms;
 
   /* check to see if any errmsg plugin has been loaded
      if not, just fall back to emitting the message to stderr */
@@ -129,16 +142,15 @@ bool errmsg_vprintf (Session *session, int priority,
     return false;
   }
 
-  /* marshall the parameters so they will fit into the foreach */
-  parms.priority= priority;
-  parms.format= format;
-  va_copy(parms.ap, ap);
-
-  /* call errmsg_iterate
-     once for each loaded errmsg plugin */
-  foreach_rv= plugin_foreach(session, errmsg_iterate,
-                             DRIZZLE_ERRMSG_PLUGIN, (void *) &parms);
-  return foreach_rv;
+  /* Use find_if instead of foreach so that we can collect return codes */
+  vector<Error_message_handler *>::iterator iter=
+    find_if(all_errmsg_handler.begin(), all_errmsg_handler.end(),
+            ErrorMessagePrint(session, priority, format, ap)); 
+  /* If iter is == end() here, that means that all of the plugins returned
+   * false, which in this case means they all succeeded. Since we want to 
+   * return false on success, we return the value of the two being != 
+   */
+  return iter != all_errmsg_handler.end();
 }
 
 

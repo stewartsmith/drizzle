@@ -31,6 +31,7 @@
 class Error_message_stderr : public Error_message_handler
 {
 public:
+  Error_message_stderr() : Error_message_handler("Error_message_stderr") {}
   virtual bool errmsg(Session *, int , const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];

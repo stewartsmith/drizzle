@@ -267,15 +267,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		open_tables_state.h \
 		opt_range.h \
 		order.h \
-		parser.h \
 		plugin.h \
 		plugin_registry.h \
 		plugin_registry_impl.h \
 		plugin/authentication.h \
-		plugin/configvar.h \
 		plugin/error_message_handler.h \
 		plugin/logging_handler.h \
-		plugin/parser.h \
 		plugin/qcache.h \
 		plugin/replicator.h \
 		plugin/scheduler.h \
@@ -368,7 +365,6 @@ drizzled_LDFLAGS =
 
 
 noinst_HEADERS = \
-		configvar.h \
 		gettext.h \
 		global.h \
 		server_includes.h \
@@ -381,7 +377,6 @@ drizzled_SOURCES = \
 		calendar.cc \
 		check_stack_overrun.cc \
 		comp_creator.cc \
-		configvar.cc \
 		current_session.cc \
 		diagnostics_area.cc \
 		drizzled.cc \
@@ -580,7 +575,6 @@ drizzled_SOURCES = \
 		natural_join_column.cc \
 		opt_range.cc \
 		opt_sum.cc \
-		parser.cc \
 		plugin_registry.cc \
 		plugin_registry_impl.cc \
 		protocol.cc \

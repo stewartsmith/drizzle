@@ -53,17 +53,10 @@ Create_function<Item_func_crc32> crc32udf(string("crc32"));
 
 static int crc32udf_plugin_init(void *p)
 {
-  Function_builder **f = (Function_builder**) p;
+  Function_builder **f = static_cast<Function_builder**>(p);
 
   *f= &crc32udf;
 
-  return 0;
-}
-
-static int crc32udf_plugin_deinit(void *p)
-{
-  Function_builder *udff = (Function_builder *) p;
-  (void)udff;
   return 0;
 }
 
@@ -76,7 +69,7 @@ drizzle_declare_plugin(crc32)
   "UDF for computing CRC32",
   PLUGIN_LICENSE_GPL,
   crc32udf_plugin_init, /* Plugin Init */
-  crc32udf_plugin_deinit, /* Plugin Deinit */
+  NULL,   /* Plugin Deinit */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */

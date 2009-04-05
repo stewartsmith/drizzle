@@ -20,8 +20,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_QCACHE_H
-#define DRIZZLED_PLUGIN_QCACHE_H
+#ifndef DRIZZLED_PLUGIN_QUERY_CACHE_H
+#define DRIZZLED_PLUGIN_QUERY_CACHE_H
 
 /* 
   This is the API that a qcache plugin must implement.
@@ -32,16 +32,25 @@
     false = success
     true  = failure
 */
-typedef struct qcache_st
+class QueryCache
 {
+  std::string name;
+public:
+  QueryCache(std::string name_arg): name(name_arg) {}
+  QueryCache(const char *name_arg): name(name_arg) {}
+
+  std::string getName() { return name; }
+
+  virtual ~QueryCache() {}
   /* Lookup the cache and transmit the data back to the client */
-  bool (*qcache_try_fetch_and_send)(Session *session, bool transactional);
+  virtual bool try_fetch_and_send(Session *session,
+                                  bool is_transactional)= 0;
 
-  bool (*qcache_set)(Session *session, bool transactional);
-  bool (*qcache_invalidate_table)(Session *session, bool transactional);
-  bool (*qcache_invalidate_db)(Session *session, const char *db_name,
-                               bool transactional);
-  bool (*qcache_flush)(Session *session);
-} qcache_t;
+  virtual bool set(Session *session, bool is_transactional)= 0;
+  virtual bool invalidate_table(Session *session, bool is_transactional)= 0;
+  virtual bool invalidate_db(Session *session, const char *db_name,
+                             bool transactional)= 0;
+  virtual bool flush(Session *session)= 0;
+};
 
-#endif /* DRIZZLED_PLUGIN_QCACHE_H */
+#endif /* DRIZZLED_PLUGIN_QUERY_CACHE_H */
