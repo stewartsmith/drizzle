@@ -24,8 +24,8 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/param.h>
 #include <drizzled/sql_string.h>
+#include <drizzled/util/convert.h>
 #include <mystrings/utf8.h>
-#include <libdrizzle/drizzle_client.h>
 
 Item *Item_param::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
@@ -528,7 +528,7 @@ static char *str_to_hex(char *to, const char *from, uint32_t len)
   {
     *to++= '0';
     *to++= 'x';
-    to+= (size_t) drizzle_hex_string(to, from, len);
+    to+= (size_t) drizzled_string_to_hex(to, from, len);
   }
   else
     to= strcpy(to, "\"\"")+2;

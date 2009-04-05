@@ -74,8 +74,7 @@ public:
 
   virtual bool init_file_descriptor(int fd)=0;
   virtual int file_descriptor(void)=0;
-  virtual void init_random(uint64_t seed1 __attribute__ ((unused)),
-                           uint64_t seed2 __attribute__ ((unused))) {};
+  virtual void init_random(uint64_t, uint64_t) {};
   virtual bool authenticate(void)=0;
   virtual bool read_command(char **packet, uint32_t *packet_length)=0;
   virtual void send_error(uint32_t sql_errno, const char *err)=0;

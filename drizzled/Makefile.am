@@ -626,6 +626,7 @@ drizzled_SOURCES = \
 		time.cc \
 		tztime.cc \
 		uniques.cc \
+		util/convert.cc \
 		virtual_column_info.cc \
 		xid.cc
 
