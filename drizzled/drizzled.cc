@@ -1860,7 +1860,7 @@ static void create_new_thread(Session *session)
 
     /* Can't use my_error() since store_globals has not been called. */
     snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
-    net_send_error(session, ER_CANT_CREATE_THREAD, error_message_buff);
+    session->protocol->send_error(ER_CANT_CREATE_THREAD, error_message_buff);
     unlink_session(session);
   }
 }
@@ -2535,7 +2535,7 @@ static int show_net_compression(Session *session,
                                 char *)
 {
   var->type= SHOW_MY_BOOL;
-  var->value= (char *)session->protocol->have_compression();
+  var->value= (char *)&session->compression;
   return 0;
 }
 

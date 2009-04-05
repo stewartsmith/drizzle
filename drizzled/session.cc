@@ -233,11 +233,11 @@ Session::Session()
   replication_data= 0;
   mysys_var=0;
   dbug_sentry=Session_SENTRY_MAGIC;
-  net.vio= 0;
   client_capabilities= 0;                       // minimalistic client
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
+  compression= 0;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
   /* Variables with default values */
@@ -601,7 +601,10 @@ void Session::prepareForQueries()
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
   if (client_capabilities & CLIENT_COMPRESS)
-    net.compress= true;
+  {
+    compression= 1;
+    protocol->enable_compression();
+  }
 
   version= refresh_version;
   set_proc_info(NULL);
@@ -1969,10 +1972,10 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   plugin_sessionvar_cleanup(this);
 
   /* If necessary, log any aborted or unauthorized connections */
-  if (killed || (net.error && net.vio != 0))
+  if (killed || protocol->was_aborted())
     statistic_increment(aborted_threads, &LOCK_status);
 
-  if (net.error && net.vio != 0)
+  if (protocol->was_aborted())
   {
     if (! killed && variables.log_warnings > 1)
     {
@@ -1994,7 +1997,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   if (protocol->io_ok())
   {
     if (errcode)
-      net_send_error(this, errcode, ER(errcode)); /* purecov: inspected */
+      protocol->send_error(errcode, ER(errcode)); /* purecov: inspected */
     protocol->close();
   }
   if (should_lock)

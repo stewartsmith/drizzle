@@ -22,7 +22,8 @@
 
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
-#include <libdrizzleclient/password.h>     // rand_struct
+#include <libdrizzleclient/net_serv.h>
+#include <libdrizzleclient/password.h>
 
 class Field;
 class String;
@@ -37,7 +38,8 @@ typedef struct st_drizzle_time DRIZZLE_TIME;
 class Protocol
 {
 protected:
-  Session	 *session;
+  Session *session;
+  NET net;
   String *packet;
   String *convert;
   uint32_t field_pos;
@@ -61,8 +63,12 @@ public:
   void set_retry_count(uint32_t count);
   void set_error(char error);
   bool have_error(void);
+  bool was_aborted(void);
   bool have_compression(void);
+  void enable_compression(void);
   bool have_more_data(void);
+  bool is_reading(void);
+  bool is_writing(void);
   void disable_results(void);
   void enable_results(void);
 
@@ -72,6 +78,8 @@ public:
                            uint64_t seed2 __attribute__ ((unused))) {};
   virtual bool authenticate(void)=0;
   virtual bool read_command(char **packet, uint32_t *packet_length)=0;
+  virtual void send_error(uint32_t sql_errno, const char *err)=0;
+  virtual void send_error_packet(uint32_t sql_errno, const char *err)=0;
   virtual void close(void) {};
 
   enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
@@ -153,6 +161,8 @@ public:
   virtual void init_random(uint64_t seed1, uint64_t seed2);
   virtual bool authenticate(void);
   virtual bool read_command(char **packet, uint32_t *packet_length);
+  virtual void send_error(uint32_t sql_errno, const char *err);
+  virtual void send_error_packet(uint32_t sql_errno, const char *err);
   virtual void close(void);
   virtual void prepare_for_resend();
   virtual bool store(I_List<i_string> *str_list)
@@ -192,13 +202,5 @@ public:
   virtual bool store(Field *field);
   virtual enum enum_protocol_type type() { return PROTOCOL_TEXT; };
 };
-
-void send_warning(Session *session, uint32_t sql_errno, const char *err=0);
-void net_send_error(Session *session, uint32_t sql_errno=0, const char *err=0);
-unsigned char *net_store_data(unsigned char *to,const unsigned char *from, size_t length);
-unsigned char *net_store_data(unsigned char *to,int32_t from);
-unsigned char *net_store_data(unsigned char *to,int64_t from);
-
-#define net_new_transaction(net) ((net)->pkt_nr=0)
 
 #endif /* DRIZZLED_PROTOCOL_H */

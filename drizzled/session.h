@@ -24,7 +24,6 @@
 /* Classes in mysql */
 
 #include <drizzled/protocol.h>
-#include <libdrizzleclient/net_serv.h>     // NET
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_tree.h>
@@ -425,10 +424,10 @@ public:
   */
   static const char * const DEFAULT_WHERE;
 
-  NET	  net;				// client connection descriptor
   MEM_ROOT warn_root;			// For warnings and errors
   Protocol *protocol;			// Current protocol
   Protocol_text   protocol_text;	// Normal protocol
+  char    compression;
   HASH    user_vars;			// hash for user variables
   String  packet;			// dynamic buffer for network I/O
   String  convert_buffer;               // buffer for charset conversions
