@@ -15,8 +15,6 @@
 
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
-#include <libdrizzleclient/libdrizzle.h>
-#include <libdrizzleclient/errmsg.h>
 #include <mysys/hash.h>
 #include <drizzled/logging.h>
 #include <drizzled/db.h>
@@ -152,7 +150,6 @@ bool is_update_query(enum enum_sql_command command)
 void execute_init_command(Session *session, sys_var_str *init_command_var,
 			  pthread_rwlock_t *var_mutex)
 {
-  Vio* save_vio;
   ulong save_client_capabilities;
 
   session->set_proc_info("Execution of init_command");
@@ -166,16 +163,14 @@ void execute_init_command(Session *session, sys_var_str *init_command_var,
   session->client_capabilities|= CLIENT_MULTI_STATEMENTS;
   /*
     We don't need return result of execution to client side.
-    To forbid this we should set session->net.vio to 0.
   */
-  save_vio= session->net.vio;
-  session->net.vio= 0;
+  session->protocol->disable_results();
   dispatch_command(COM_QUERY, session,
                    init_command_var->value,
                    init_command_var->value_length);
   pthread_rwlock_unlock(var_mutex);
   session->client_capabilities= save_client_capabilities;
-  session->net.vio= save_vio;
+  session->protocol->enable_results();
 }
 
 /**
@@ -202,7 +197,6 @@ void execute_init_command(Session *session, sys_var_str *init_command_var,
 bool dispatch_command(enum enum_server_command command, Session *session,
                       char* packet, uint32_t packet_length)
 {
-  NET *net= &session->net;
   bool error= 0;
   Query_id &query_id= Query_id::get_query_id();
 
@@ -253,7 +247,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     {
       char *beginning_of_next_stmt= (char*) end_of_stmt;
 
-      drizzleclient_net_end_statement(session);
+      session->protocol->end_statement();
       /*
         Multiple queries exits, execute them individually
       */
@@ -289,7 +283,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    net->error=0;				// Don't give 'abort' message
+    session->protocol->set_error(0);
     session->main_da.disable_status();              // Don't send anything back
     error=true;					// End server
     break;
@@ -334,7 +328,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     session->mysys_var->abort= 0;
   }
 
-  drizzleclient_net_end_statement(session);
+  session->protocol->end_statement();
 
   session->set_proc_info("closing tables");
   /* Free tables */

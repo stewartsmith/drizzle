@@ -1041,7 +1041,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     {
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if (tmp->drizzleclient_vio_ok() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->protocol->io_ok() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
         thread_info *session_info= new thread_info;
 
@@ -1054,11 +1054,11 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         if ((mysys_var= tmp->mysys_var))
           pthread_mutex_lock(&mysys_var->mutex);
         session_info->proc_info= (char*) (tmp->killed == Session::KILL_CONNECTION? "Killed" : 0);
-        session_info->state_info= (char*) (tmp->net.reading_or_writing ?
-                                       (tmp->net.reading_or_writing == 2 ?
-                                        "Writing to net" :
-                                        session_info->command == COM_SLEEP ? NULL :
-                                        "Reading from net") :
+        session_info->state_info= (char*) (tmp->protocol->is_writing() ?
+                                           "Writing to net" :
+                                           tmp->protocol->is_reading() ?
+                                           (session_info->command == COM_SLEEP ?
+                                            NULL : "Reading from net") :
                                        tmp->get_proc_info() ? tmp->get_proc_info() :
                                        tmp->mysys_var &&
                                        tmp->mysys_var->current_cond ?
@@ -1134,7 +1134,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       struct st_my_thread_var *mysys_var;
       const char *val;
 
-      if (! tmp->drizzleclient_vio_ok())
+      if (! tmp->protocol->io_ok())
         continue;
 
       restore_record(table, s->default_values);
@@ -1164,11 +1164,11 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       table->field[5]->store((uint32_t)(tmp->start_time ?
                                       now - tmp->start_time : 0), true);
       /* STATE */
-      val= (char*) (tmp->net.reading_or_writing ?
-                    (tmp->net.reading_or_writing == 2 ?
-                     "Writing to net" :
-                     tmp->command == COM_SLEEP ? NULL :
-                     "Reading from net") :
+      val= (char*) (tmp->protocol->is_writing() ?
+                    "Writing to net" :
+                    tmp->protocol->is_reading() ?
+                    (tmp->command == COM_SLEEP ?
+                     NULL : "Reading from net") :
                     tmp->get_proc_info() ? tmp->get_proc_info() :
                     tmp->mysys_var &&
                     tmp->mysys_var->current_cond ?

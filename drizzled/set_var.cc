@@ -557,26 +557,26 @@ static int check_completion_type(Session *, set_var *var)
 
 
 /*
-  If we are changing the thread variable, we have to copy it to NET too
+  If we are changing the thread variable, we have to copy it to Protocol too
 */
 
 static void fix_net_read_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    drizzleclient_net_set_read_timeout(&session->net, session->variables.net_read_timeout);
+    session->protocol->set_read_timeout(session->variables.net_read_timeout);
 }
 
 
 static void fix_net_write_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    drizzleclient_net_set_write_timeout(&session->net, session->variables.net_write_timeout);
+    session->protocol->set_write_timeout(session->variables.net_write_timeout);
 }
 
 static void fix_net_retry_count(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    session->net.retry_count=session->variables.net_retry_count;
+    session->protocol->set_retry_count(session->variables.net_retry_count);
 }
 
 

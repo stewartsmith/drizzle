@@ -22,12 +22,15 @@
 
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
+#include <libdrizzleclient/net_serv.h>
+#include <libdrizzleclient/password.h>
 
 class Field;
 class String;
-class i_string;
 class Session;
+class i_string;
 class my_decimal;
+typedef struct st_vio Vio;
 typedef struct st_drizzle_field DRIZZLE_FIELD;
 typedef struct st_drizzle_rows DRIZZLE_ROWS;
 typedef struct st_drizzle_time DRIZZLE_TIME;
@@ -35,11 +38,13 @@ typedef struct st_drizzle_time DRIZZLE_TIME;
 class Protocol
 {
 protected:
-  Session	 *session;
+  Session *session;
+  NET net;
   String *packet;
   String *convert;
   uint32_t field_pos;
   uint32_t field_count;
+  Vio* save_vio;
   bool net_store_data(const unsigned char *from, size_t length);
   bool net_store_data(const unsigned char *from, size_t length,
                       const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs);
@@ -50,6 +55,31 @@ public:
   Protocol(Session *session_arg) { init(session_arg); }
   virtual ~Protocol() {}
   void init(Session* session_arg);
+
+  bool io_ok();
+  void end_statement(void);
+  void set_read_timeout(uint32_t timeout);
+  void set_write_timeout(uint32_t timeout);
+  void set_retry_count(uint32_t count);
+  void set_error(char error);
+  bool have_error(void);
+  bool was_aborted(void);
+  bool have_compression(void);
+  void enable_compression(void);
+  bool have_more_data(void);
+  bool is_reading(void);
+  bool is_writing(void);
+  void disable_results(void);
+  void enable_results(void);
+
+  virtual bool init_file_descriptor(int fd)=0;
+  virtual int file_descriptor(void)=0;
+  virtual void init_random(uint64_t, uint64_t) {};
+  virtual bool authenticate(void)=0;
+  virtual bool read_command(char **packet, uint32_t *packet_length)=0;
+  virtual void send_error(uint32_t sql_errno, const char *err)=0;
+  virtual void send_error_packet(uint32_t sql_errno, const char *err)=0;
+  virtual void close(void) {};
 
   enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
   virtual bool send_fields(List<Item> *list, uint32_t flags);
@@ -75,6 +105,7 @@ public:
     return 0;
   }
   virtual bool flush();
+
   virtual void prepare_for_resend()=0;
 
   virtual bool store_null()=0;
@@ -109,9 +140,29 @@ public:
 
 class Protocol_text :public Protocol
 {
+private:
+  struct rand_struct _rand;
+  char _scramble[SCRAMBLE_LENGTH+1];
+
+  /**
+   * Performs handshake with client and authorizes user.
+   *
+   * Returns true is the connection is valid and the
+   * user is authorized, otherwise false.
+   */  
+  bool _check_connection(void);
+
 public:
-  Protocol_text() {}
+  Protocol_text() { _scramble[0]= 0; }
   Protocol_text(Session *session_arg) :Protocol(session_arg) {}
+  virtual bool init_file_descriptor(int fd);
+  virtual int file_descriptor(void);
+  virtual void init_random(uint64_t seed1, uint64_t seed2);
+  virtual bool authenticate(void);
+  virtual bool read_command(char **packet, uint32_t *packet_length);
+  virtual void send_error(uint32_t sql_errno, const char *err);
+  virtual void send_error_packet(uint32_t sql_errno, const char *err);
+  virtual void close(void);
   virtual void prepare_for_resend();
   virtual bool store(I_List<i_string> *str_list)
   {
@@ -150,12 +201,5 @@ public:
   virtual bool store(Field *field);
   virtual enum enum_protocol_type type() { return PROTOCOL_TEXT; };
 };
-
-void send_warning(Session *session, uint32_t sql_errno, const char *err=0);
-void net_send_error(Session *session, uint32_t sql_errno=0, const char *err=0);
-void drizzleclient_net_end_statement(Session *session);
-unsigned char *net_store_data(unsigned char *to,const unsigned char *from, size_t length);
-unsigned char *net_store_data(unsigned char *to,int32_t from);
-unsigned char *net_store_data(unsigned char *to,int64_t from);
 
 #endif /* DRIZZLED_PROTOCOL_H */

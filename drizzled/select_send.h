@@ -114,7 +114,7 @@ public:
       protocol->remove_last_row();
       return true;
     }
-    if (session->drizzleclient_vio_ok())
+    if (protocol->io_ok())
       return(protocol->write());
     return false;
   }

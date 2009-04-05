@@ -20,7 +20,6 @@
 #ifndef DRIZZLE_SERVER_SQL_ALLOC_H
 #define DRIZZLE_SERVER_SQL_ALLOC_H
 
-#include <libdrizzleclient/net_serv.h>
 #include <mysys/my_alloc.h>
 #include <mystrings/m_ctype.h>
 
@@ -39,7 +38,6 @@ char *sql_strmake_with_convert(const char *str, size_t arg_length,
                                const CHARSET_INFO * const to_cs,
                                size_t *result_length);
 void sql_kill(Session *session, ulong id, bool only_kill_query);
-bool net_request_file(NET* net, const char* fname);
 char* query_table_status(Session *session,const char *db,const char *table_name);
 
 /* mysql standard class memory allocator */

@@ -28,7 +28,6 @@
 #include <signal.h>
 
 #include <mysys/my_bit.h>
-#include <libdrizzleclient/libdrizzle.h>
 #include <mysys/hash.h>
 #include <drizzled/stacktrace.h>
 #include <mysys/mysys_err.h>
@@ -64,7 +63,6 @@
 #include <sys/prctl.h>
 #endif
 
-#include <libdrizzleclient/errmsg.h>
 #include <locale.h>
 
 #define mysqld_charset &my_charset_utf8_general_ci
@@ -415,8 +413,6 @@ static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
 static char **defaults_argv;
 
-struct rand_struct sql_rand; ///< used by sql_class.cc:Session::Session()
-
 struct passwd *user_info;
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
@@ -446,7 +442,6 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-extern "C" bool safe_read_error_impl(NET *net);
 
 /****************************************************************************
 ** Code to end drizzled
@@ -1548,9 +1543,6 @@ static int init_server_components()
   if (table_cache_init() | table_def_init())
     unireg_abort(1);
 
-  drizzleclient_randominit(&sql_rand,
-                           (uint64_t) server_start_time,
-                           (uint64_t) server_start_time/2);
   setup_fpu();
   init_thr_lock();
 
@@ -1778,8 +1770,6 @@ int main(int argc, char **argv)
 
   network_init();
 
-  safe_read_error_hook= safe_read_error_impl; 
-
   /*
     init signals & alarm
     After this we can't quit by a simple unireg_abort
@@ -1870,7 +1860,7 @@ static void create_new_thread(Session *session)
 
     /* Can't use my_error() since store_globals has not been called. */
     snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
-    net_send_error(session, ER_CANT_CREATE_THREAD, error_message_buff);
+    session->protocol->send_error(ER_CANT_CREATE_THREAD, error_message_buff);
     unlink_session(session);
   }
 }
@@ -1974,7 +1964,8 @@ void handle_connections_sockets()
       close(new_sock);
       continue;
     }
-    if (drizzleclient_net_init_sock(&session->net, new_sock, sock == 0))
+
+    if (session->protocol->init_file_descriptor(new_sock))
     {
       delete session;
       continue;
@@ -2544,7 +2535,7 @@ static int show_net_compression(Session *session,
                                 char *)
 {
   var->type= SHOW_MY_BOOL;
-  var->value= (char *)&session->net.compress;
+  var->value= (char *)&session->compression;
   return 0;
 }
 
@@ -3278,15 +3269,6 @@ skip: ;
 
   return(found);
 } /* find_bit_type */
-
-
-bool safe_read_error_impl(NET *net)
-{
-  if (net->vio)
-    return drizzleclient_vio_was_interrupted(net->vio);
-  return false;
-}
-
 
 /*****************************************************************************
   Instantiate templates

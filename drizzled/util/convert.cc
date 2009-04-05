@@ -1,11 +1,12 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; version 2 of the License.
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,23 +18,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDRIZZLECLIENT_PACK_H
-#define LIBDRIZZLECLIENT_PACK_H
+#include <drizzled/util/convert.h>
 
-#include <stdint.h>
+uint64_t drizzled_string_to_hex(char *to, const char *from, uint64_t from_size)
+{
+  static const char hex_map[]= "0123456789ABCDEF";
+  const char *from_end;
 
-#define NULL_LENGTH UINT32_MAX
+  for (from_end= from + from_size; from != from_end; from++)
+  {
+    *to++= hex_map[((unsigned char) *from) >> 4];
+    *to++= hex_map[((unsigned char) *from) & 0xF];
+  }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+  *to= 0;
 
-  uint32_t drizzleclient_net_field_length(unsigned char **packet);
-  uint64_t drizzleclient_drizzleclient_net_field_length_ll(unsigned char **packet);
-  unsigned char *drizzleclient_net_store_length(unsigned char *pkg, uint64_t length);
-
-#ifdef __cplusplus
+  return from_size * 2;
 }
-#endif
-
-#endif /* LIBDRIZZLECLIENT_PACK_H */

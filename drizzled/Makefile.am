@@ -354,7 +354,7 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzleclient/libdrizzleclient.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(LIBZ) $(LIBINTL) ${LIBC_P}
+	$(LIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
@@ -596,7 +596,6 @@ drizzled_SOURCES = \
 		sj_tmp_table.cc \
 		sql_base.cc \
 		sql_builtin.cc \
-		sql_client.cc \
 		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \
@@ -627,6 +626,7 @@ drizzled_SOURCES = \
 		time.cc \
 		tztime.cc \
 		uniques.cc \
+		util/convert.cc \
 		virtual_column_info.cc \
 		xid.cc
 

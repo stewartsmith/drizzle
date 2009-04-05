@@ -25,7 +25,6 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <libdrizzleclient/libdrizzle.h>
 #include <drizzled/replicator.h>
 #include <mysys/hash.h>
 

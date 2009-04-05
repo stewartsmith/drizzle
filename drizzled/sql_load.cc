@@ -37,7 +37,6 @@ class READ_INFO {
   bool	found_end_of_line,start_of_line,eof;
   bool  need_end_io_cache;
   IO_CACHE cache;
-  NET *io_net;
 
 public:
   bool error,line_cuted,found_null,enclosed;
