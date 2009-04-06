@@ -1020,6 +1020,14 @@ extern "C" void handle_sigint(int sig);
 static void window_resize(int sig);
 #endif
 
+/**
+  Shutdown the server that we are currently connected to.
+
+  @retval
+    true success
+  @retval
+    false failure
+*/
 static bool server_shutdown(void)
 {
   drizzle_result_st result;
@@ -1030,7 +1038,7 @@ static bool server_shutdown(void)
     printf("shutting down drizzled");
     if (opt_drizzle_port > 0)
       printf(" on port %d", opt_drizzle_port);
-    printf("...\n");
+    printf("... ");
   }
 
   if (drizzle_shutdown(&con, &result, DRIZZLE_SHUTDOWN_DEFAULT,
@@ -1058,6 +1066,14 @@ static bool server_shutdown(void)
   return true;
 }
 
+/**
+  Ping the server that we are currently connected to.
+
+  @retval
+    true success
+  @retval
+    false failure
+*/
 static bool server_ping(void)
 {
   drizzle_result_st result;
@@ -1087,6 +1103,20 @@ static bool server_ping(void)
   return true;
 }
 
+/**
+  Execute command(s) specified by the user.
+
+  @param error  error status of command execution.
+                If an error had occurred, this variable will be set
+                to 1 whereas on success, it shall be set to 0. This
+                value will be supplied to the exit() function used
+                by the caller.
+
+  @retval
+    false no commands were executed
+  @retval
+    true  at least one command was executed
+*/
 static bool execute_commands(int *error)
 {
   bool executed= false;
@@ -1094,14 +1124,14 @@ static bool execute_commands(int *error)
 
   if (opt_ping)
   {
-    if(server_ping() == false)
+    if (server_ping() == false)
       *error= 1;
     executed= true;
   }
 
   if (opt_shutdown)
   {
-    if(server_shutdown() == false)
+    if (server_shutdown() == false)
       *error= 1;
     executed= true;
   }
@@ -1196,7 +1226,7 @@ int main(int argc,char *argv[])
   }
 
   int command_error;
-  if(execute_commands(&command_error) != false)
+  if (execute_commands(&command_error) != false)
   {
     /* we've executed a command so exit before we go into readline mode */
     free_defaults(defaults_argv);
@@ -1204,13 +1234,17 @@ int main(int argc,char *argv[])
     exit(command_error);
   }
 
-  if (status.batch && !status.line_buff &&
-      !(status.line_buff=batch_readline_init(opt_max_input_line+512,stdin)))
+  if (status.batch && !status.line_buff)
   {
-    free_defaults(defaults_argv);
-    my_end(0);
-    exit(1);
+    status.line_buff =batch_readline_init(opt_max_input_line+512, stdin);
+    if (status.line_buff == NULL)
+    {
+      free_defaults(defaults_argv);
+      my_end(0);
+      exit(1);
+    }
   }
+
   if (!status.batch)
     ignore_errors=1;        // Don't abort monitor
 
