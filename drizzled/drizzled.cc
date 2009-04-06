@@ -1511,8 +1511,8 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
 static int init_thread_environment()
 {
-  (void) pthread_mutex_init(&LOCK_create_db,MY_MUTEX_INIT_SLOW);
-  (void) pthread_mutex_init(&LOCK_lock_db,MY_MUTEX_INIT_SLOW);
+  (void) pthread_mutex_init(&LOCK_create_db, NULL);
+  (void) pthread_mutex_init(&LOCK_lock_db, NULL);
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);

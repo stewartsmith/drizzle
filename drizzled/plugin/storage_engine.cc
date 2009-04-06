@@ -121,7 +121,7 @@ redo:
                            (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
     return ha_default_plugin(session);
 
-  if ((plugin= plugin_lock_by_name(session, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
+  if ((plugin= plugin_lock_by_name(name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
     StorageEngine *engine= plugin_data(plugin, StorageEngine *);
     if (engine->is_user_selectable())
@@ -151,7 +151,7 @@ plugin_ref ha_lock_engine(Session *, StorageEngine *engine)
 {
   if (engine)
   {
-    st_plugin_int **plugin= engine2plugin + engine->slot;
+    st_plugin_int **plugin= &(engine2plugin[engine->slot]);
 
     return plugin;
   }
@@ -208,7 +208,7 @@ int storage_engine_initializer(st_plugin_int *plugin)
   }
 
   if (engine->is_enabled())
-    engine2plugin[engine->slot]=plugin;
+    engine2plugin[engine->slot]= plugin;
 
   /*
     This is entirely for legacy. We will create a new "disk based" engine and a

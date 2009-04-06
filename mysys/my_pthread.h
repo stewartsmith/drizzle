@@ -151,8 +151,7 @@ void safe_mutex_end(void);
 #endif
 
 /* Define mutex types, see my_thr_init.c */
-#define MY_MUTEX_INIT_SLOW   NULL
-#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
+#ifdef THREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
 extern pthread_mutexattr_t my_fast_mutexattr;
 #define MY_MUTEX_INIT_FAST &my_fast_mutexattr
 #else
