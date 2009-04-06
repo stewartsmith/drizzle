@@ -24,6 +24,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <stdint.h>
 
 template <class T>
 std::string to_string(T t)
@@ -39,6 +40,12 @@ std::string& to_string(std::string &str, T t)
   std::ostringstream o(str);
   o << t;
   return str;
+}
+
+extern "C"
+{
+  uint64_t drizzled_string_to_hex(char *to, const char *from,
+                                  uint64_t from_size);
 }
 
 #endif

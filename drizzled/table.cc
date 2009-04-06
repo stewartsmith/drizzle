@@ -4821,7 +4821,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->close();                  // This deletes the table !
   delete table->file;
   table->file=0;
-  share.db_plugin= plugin_lock(0, &share.db_plugin);
+  share.db_plugin= plugin_lock(&share.db_plugin);
   new_table.s= table->s;                       // Keep old share
   *table= new_table;
   *table->s= share;

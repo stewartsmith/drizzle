@@ -25,9 +25,14 @@
 
 class Item_func_rand :public Item_real_func
 {
-  struct rand_struct *rand;
+  uint64_t seed1;
+  uint64_t seed2;
+  uint64_t max_value;
+  double max_value_dbl;
+  void _seed_random_int(uint64_t new_seed1, uint64_t new_seed2);
+
 public:
-  Item_func_rand(Item *a) :Item_real_func(a), rand(0) {}
+  Item_func_rand(Item *a) :Item_real_func(a) {}
   Item_func_rand()        :Item_real_func() {}
   double val_real();
   const char *func_name() const { return "rand"; }

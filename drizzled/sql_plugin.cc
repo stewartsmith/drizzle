@@ -126,7 +126,6 @@ static DYNAMIC_ARRAY plugin_dl_array;
 static DYNAMIC_ARRAY plugin_array;
 
 static bool reap_needed= false;
-static int plugin_array_version=0;
 
 /*
   write-lock on LOCK_system_variables_hash is required before modifying
@@ -223,7 +222,7 @@ static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref plugin);
+static plugin_ref intern_plugin_lock(st_plugin_int *rc);
 static void reap_plugins(void);
 
 
@@ -491,12 +490,10 @@ SHOW_COMP_OPTION sys_var_have_plugin::get_option()
 }
 
 
-static plugin_ref intern_plugin_lock(LEX *, plugin_ref rc)
+static plugin_ref intern_plugin_lock(st_plugin_int *rc)
 {
-  st_plugin_int *pi= plugin_ref_to_int(rc);
   plugin_ref plugin;
 
-  assert(pi);
   assert(rc);
 
   /*
@@ -504,36 +501,35 @@ static plugin_ref intern_plugin_lock(LEX *, plugin_ref rc)
     memory manager and/or valgrind to track locked references and
     double unlocks to aid resolving reference counting.problems.
   */
-  if (!(plugin= (plugin_ref) malloc(sizeof(pi))))
+  if (!(plugin= (plugin_ref) malloc(sizeof(plugin_ref))))
+  {
+    assert(1);
     return(NULL);
+  }
 
-  *plugin= pi;
+  *plugin= rc;
 
   return(plugin);
 }
 
 
-plugin_ref plugin_lock(Session *session, plugin_ref *ptr)
+plugin_ref plugin_lock(plugin_ref *ptr)
 {
-  LEX *lex= session ? session->lex : 0;
-  plugin_ref rc;
-  rc= intern_plugin_lock(lex, *ptr);
-  return(rc);
+  return ptr[0];
 }
 
 
-plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name, int type)
+plugin_ref plugin_lock_by_name(const LEX_STRING *name, int type)
 {
   Plugin_registry registry= Plugin_registry::get_plugin_registry();
 
-  LEX *lex= session ? session->lex : 0;
   plugin_ref rc= NULL;
   st_plugin_int *plugin;
   if (! initialized)
     return(0);
 
   if ((plugin= registry.find(name, type)))
-    rc= intern_plugin_lock(lex, plugin_int_to_ref(plugin));
+    rc= intern_plugin_lock(plugin);
   return(rc);
 }
 
@@ -598,7 +594,6 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       {
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
-          plugin_array_version++;
           registry.add(plugin, tmp_plugin_ptr);
           init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
           return(false);
@@ -647,7 +642,6 @@ static void plugin_del(struct st_plugin_int *plugin)
   if (plugin->plugin_dl)
     plugin_dl_del(&plugin->plugin_dl->dl);
   plugin->isInited= false;
-  plugin_array_version++;
   pthread_rwlock_wrlock(&LOCK_system_variables_hash);
   mysql_del_sys_var_chain(plugin->system_vars);
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
@@ -794,8 +788,7 @@ int plugin_init(int *argc, char **argv, int flags)
       if (my_strcasecmp(&my_charset_utf8_general_ci, plugin->name, "MyISAM") == 0)
       {
         assert(!global_system_variables.table_plugin);
-        global_system_variables.table_plugin=
-          intern_plugin_lock(NULL, plugin_int_to_ref(plugin_ptr));
+        global_system_variables.table_plugin= &plugin_ptr;
       }
     }
   }
@@ -993,7 +986,6 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
   uint32_t idx;
   struct st_plugin_int *plugin;
   vector<st_plugin_int *> plugins;
-  int version=plugin_array_version;
 
   if (!initialized)
     return(false);
@@ -1021,15 +1013,6 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
        plugin_iter != plugins.end();
        plugin_iter++)
   {
-    if (unlikely(version != plugin_array_version))
-    {
-      vector<st_plugin_int *>::iterator reset_iter;
-      for (reset_iter= plugin_iter;
-           reset_iter != plugins.end();
-           reset_iter++)
-        if (*reset_iter && (*reset_iter)->isInited && all)
-          *reset_iter=0;
-    }
     plugin= *plugin_iter;
     /* It will stop iterating on first engine error when "func" returns true */
     if (plugin && func(session, plugin_int_to_ref(plugin), arg))
@@ -1347,7 +1330,7 @@ static void update_func_str(Session *, struct st_mysql_sys_var *var,
 ****************************************************************************/
 
 
-sys_var *find_sys_var(Session *session, const char *str, uint32_t length)
+sys_var *find_sys_var(Session *, const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
@@ -1358,8 +1341,7 @@ sys_var *find_sys_var(Session *session, const char *str, uint32_t length)
       (pi= var->cast_pluginvar()))
   {
     pthread_rwlock_unlock(&LOCK_system_variables_hash);
-    LEX *lex= session ? session->lex : 0;
-    if (!(plugin= intern_plugin_lock(lex, plugin_int_to_ref(pi->plugin))))
+    if (!(plugin= intern_plugin_lock(pi->plugin)))
       var= NULL; /* failed to lock it, it must be uninstalling */
     else if (plugin[0]->isInited == false)
     {
@@ -1667,8 +1649,7 @@ void plugin_sessionvar_init(Session *session)
   session->variables.dynamic_variables_size= 0;
   session->variables.dynamic_variables_ptr= 0;
 
-  session->variables.table_plugin=
-    intern_plugin_lock(NULL, global_system_variables.table_plugin);
+  session->variables.table_plugin= global_system_variables.table_plugin;
 }
 
 

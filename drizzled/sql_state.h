@@ -20,6 +20,6 @@
 #ifndef _drizzled_sql_state_h
 #define _drizzled_sql_state_h
 
-const char *drizzleclient_errno_to_sqlstate(uint32_t drizzleclient_errno);
+const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno);
 
 #endif

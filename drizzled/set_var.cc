@@ -557,26 +557,26 @@ static int check_completion_type(Session *, set_var *var)
 
 
 /*
-  If we are changing the thread variable, we have to copy it to NET too
+  If we are changing the thread variable, we have to copy it to Protocol too
 */
 
 static void fix_net_read_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    drizzleclient_net_set_read_timeout(&session->net, session->variables.net_read_timeout);
+    session->protocol->set_read_timeout(session->variables.net_read_timeout);
 }
 
 
 static void fix_net_write_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    drizzleclient_net_set_write_timeout(&session->net, session->variables.net_write_timeout);
+    session->protocol->set_write_timeout(session->variables.net_write_timeout);
 }
 
 static void fix_net_retry_count(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    session->net.retry_count=session->variables.net_retry_count;
+    session->protocol->set_retry_count(session->variables.net_retry_count);
 }
 
 
@@ -2375,7 +2375,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
   string engine_name;
   plugin_ref plugin= session->variables.*offset;
   if (type == OPT_GLOBAL)
-    plugin= plugin_lock(session, &(global_system_variables.*offset));
+    plugin= plugin_lock(&(global_system_variables.*offset));
   engine= plugin_data(plugin, StorageEngine*);
   engine_name= engine->get_name();
   result= (unsigned char *) session->strmake(engine_name.c_str(),
@@ -2395,7 +2395,7 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
   else
   {
     value= &(session->variables.*offset);
-    new_value= plugin_lock(NULL, &(global_system_variables.*offset));
+    new_value= plugin_lock(&(global_system_variables.*offset));
   }
   assert(new_value);
   old_value= *value;
@@ -2411,7 +2411,7 @@ bool sys_var_session_storage_engine::update(Session *session, set_var *var)
   old_value= *value;
   if (old_value != var->save_result.plugin)
   {
-    *value= plugin_lock(NULL, &var->save_result.plugin);
+    *value= plugin_lock(&var->save_result.plugin);
   }
   return 0;
 }
