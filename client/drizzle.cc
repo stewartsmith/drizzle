@@ -169,7 +169,7 @@ static bool ignore_errors= false, quick= false,
   connected= false, opt_raw_data= false, unbuffered= false,
   output_tables= false, opt_rehash= true, skip_updates= false,
   safe_updates= false, one_database= false,
-  opt_compress= false,
+  opt_compress= false, opt_shutdown= false, opt_ping= false,
   vertical= false, line_numbers= true, column_names= true,
   opt_nopager= true, opt_outfile= false, named_cmds= false,
   tty_password= false, opt_nobeep= false, opt_reconnect= true,
@@ -1020,6 +1020,94 @@ extern "C" void handle_sigint(int sig);
 static void window_resize(int sig);
 #endif
 
+static bool server_shutdown(void)
+{
+  drizzle_result_st result;
+  drizzle_return_t ret;
+
+  if (verbose)
+  {
+    printf("shutting down drizzled");
+    if (opt_drizzle_port > 0)
+      printf(" on port %d", opt_drizzle_port);
+    printf("...\n");
+  }
+
+  if (drizzle_shutdown(&con, &result, DRIZZLE_SHUTDOWN_DEFAULT,
+                       &ret) == NULL || ret != DRIZZLE_RETURN_OK)
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      fprintf(stderr, "shutdown failed; error: '%s'",
+              drizzle_result_error(&result));
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      fprintf(stderr, "shutdown failed; error: '%s'",
+              drizzle_con_error(&con));
+    }
+    return false;
+  }
+
+  drizzle_result_free(&result);
+
+  if (verbose)
+    printf("done\n");
+
+  return true;
+}
+
+static bool server_ping(void)
+{
+  drizzle_result_st result;
+  drizzle_return_t ret;
+
+  if (drizzle_ping(&con, &result, &ret) != NULL && ret == DRIZZLE_RETURN_OK)
+  {
+    if (opt_silent < 2)
+      printf("drizzled is alive\n");
+  }
+  else
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      fprintf(stderr, "ping failed; error: '%s'",
+              drizzle_result_error(&result));
+      drizzle_result_free(&result);
+    }
+    else
+    {
+      fprintf(stderr, "drizzled won't answer to ping, error: '%s'",
+              drizzle_con_error(&con));
+    }
+    return false;
+  }
+  drizzle_result_free(&result);
+  return true;
+}
+
+static bool execute_commands(int *error)
+{
+  bool executed= false;
+  *error= 0;
+
+  if (opt_ping)
+  {
+    if(server_ping() == false)
+      *error= 1;
+    executed= true;
+  }
+
+  if (opt_shutdown)
+  {
+    if(server_shutdown() == false)
+      *error= 1;
+    executed= true;
+  }
+  return executed;
+}
+
 int main(int argc,char *argv[])
 {
   char buff[80];
@@ -1097,13 +1185,7 @@ int main(int argc,char *argv[])
     my_end(0);
     exit(1);
   }
-  if (status.batch && !status.line_buff &&
-      !(status.line_buff=batch_readline_init(opt_max_input_line+512,stdin)))
-  {
-    free_defaults(defaults_argv);
-    my_end(0);
-    exit(1);
-  }
+
   memset(&drizzle, 0, sizeof(drizzle));
   if (sql_connect(current_host,current_db,current_user,opt_password,
                   opt_silent))
@@ -1111,6 +1193,23 @@ int main(int argc,char *argv[])
     quick= 1;          // Avoid history
     status.exit_status= 1;
     drizzle_end(-1);
+  }
+
+  int command_error;
+  if(execute_commands(&command_error) != false)
+  {
+    /* we've executed a command so exit before we go into readline mode */
+    free_defaults(defaults_argv);
+    my_end(0);
+    exit(command_error);
+  }
+
+  if (status.batch && !status.line_buff &&
+      !(status.line_buff=batch_readline_init(opt_max_input_line+512,stdin)))
+  {
+    free_defaults(defaults_argv);
+    my_end(0);
+    exit(1);
   }
   if (!status.batch)
     ignore_errors=1;        // Don't abort monitor
@@ -1387,6 +1486,8 @@ static struct my_option my_long_options[] =
    0, 0, 0},
   {"reconnect", OPT_RECONNECT, N_("Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default."),
    (char**) &opt_reconnect, (char**) &opt_reconnect, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
+  {"shutdown", OPT_SHUTDOWN, N_("Shutdown the server."),
+   (char**) &opt_shutdown, (char**) &opt_shutdown, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', N_("Be more silent. Print results with a tab as separator, each row on new line."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"socket", 'S', N_("Socket file to use for connection."),
@@ -1443,6 +1544,8 @@ static struct my_option my_long_options[] =
   {"show-progress-size", OPT_SHOW_PROGRESS_SIZE, N_("Number of lines before each import progress report."),
    (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_UINT32, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
+  {"ping", OPT_PING, N_("Ping the server to check if it's alive."),
+   (char**) &opt_ping, (char**) &opt_ping, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
