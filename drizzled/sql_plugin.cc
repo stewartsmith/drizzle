@@ -510,7 +510,10 @@ static plugin_ref intern_plugin_lock(st_plugin_int *rc)
     double unlocks to aid resolving reference counting.problems.
   */
   if (!(plugin= (plugin_ref) malloc(sizeof(plugin_ref))))
+  {
+    assert(1);
     return(NULL);
+  }
 
   *plugin= rc;
 
@@ -796,8 +799,7 @@ int plugin_init(int *argc, char **argv, int flags)
       if (my_strcasecmp(&my_charset_utf8_general_ci, plugin->name, "MyISAM") == 0)
       {
         assert(!global_system_variables.table_plugin);
-        global_system_variables.table_plugin=
-          intern_plugin_lock(plugin_ptr);
+        global_system_variables.table_plugin= &plugin_ptr;
       }
     }
   }
@@ -1658,8 +1660,7 @@ void plugin_sessionvar_init(Session *session)
   session->variables.dynamic_variables_size= 0;
   session->variables.dynamic_variables_ptr= 0;
 
-  session->variables.table_plugin=
-    intern_plugin_lock(global_system_variables.table_plugin[0]);
+  session->variables.table_plugin= global_system_variables.table_plugin;
 }
 
 
