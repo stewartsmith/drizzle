@@ -61,6 +61,9 @@ int qcache_initializer(st_plugin_int *plugin)
 
 int qcache_finalizer(st_plugin_int *plugin)
 {
+  QueryCache *handler= static_cast<QueryCache *>(plugin->data);
+  remove_query_cache(handler);
+
   if (plugin->plugin->deinit)
   {
     if (plugin->plugin->deinit(plugin->data))
