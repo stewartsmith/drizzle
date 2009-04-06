@@ -523,10 +523,7 @@ static plugin_ref intern_plugin_lock(st_plugin_int *rc)
 
 plugin_ref plugin_lock(plugin_ref *ptr)
 {
-  plugin_ref rc;
-  rc= intern_plugin_lock(*ptr[0]);
-
-  return(rc);
+  return ptr[0];
 }
 
 
