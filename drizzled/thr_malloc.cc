@@ -30,7 +30,7 @@ extern "C" {
 void init_sql_alloc(MEM_ROOT *mem_root, size_t block_size, size_t pre_alloc)
 {
   init_alloc_root(mem_root, block_size, pre_alloc);
-  mem_root->error_handler=sql_alloc_error_handler;
+  mem_root->error_handler= sql_alloc_error_handler;
 }
 
 
@@ -79,11 +79,6 @@ void* sql_memdup(const void *ptr, size_t len)
     memcpy(pos,ptr,len);
   return pos;
 }
-
-void sql_element_free(void *)
-{} /* purecov: deadcode */
-
-
 
 char *sql_strmake_with_convert(const char *str, size_t arg_length,
                                const CHARSET_INFO * const from_cs,
