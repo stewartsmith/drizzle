@@ -130,6 +130,8 @@ our $opt_suites_default= "main"; # Default suites to run
 our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
+our $opt_repeat_test= 1;
+
 our $exe_master_mysqld;
 our $exe_drizzle;
 our $exe_drizzleadmin;
@@ -562,6 +564,7 @@ sub command_line_setup () {
              'testcase-timeout=i'       => \$opt_testcase_timeout,
              'suite-timeout=i'          => \$opt_suite_timeout,
              'warnings|log-warnings'    => \$opt_warnings,
+	     'repeat-test=i'            => \$opt_repeat_test,
 
              # Options which are no longer used
              (map { $_ => \&warn_about_removed_option } @removed_options),
@@ -1881,14 +1884,17 @@ sub run_tests () {
 
   foreach my $tinfo ( @$tests )
   {
-    if (run_testcase_check_skip_test($tinfo))
+    foreach(1..$opt_repeat_test)
     {
-      next;
-    }
+      if (run_testcase_check_skip_test($tinfo))
+	{
+	  next;
+	}
 
-    mtr_timer_start($glob_timers,"testcase", 60 * $opt_testcase_timeout);
-    run_testcase($tinfo);
-    mtr_timer_stop($glob_timers,"testcase");
+      mtr_timer_start($glob_timers,"testcase", 60 * $opt_testcase_timeout);
+      run_testcase($tinfo);
+      mtr_timer_stop($glob_timers,"testcase");
+    }
   }
 
   mtr_print_line();
@@ -3489,6 +3495,7 @@ Options to control what test suites or cases to run
   combination="ARG1 .. ARG2" Specify a set of "mysqld" arguments for one
                         combination.
   skip-combination      Skip any combination options and combinations files
+  repeat-test=n         How many times to repeat each test (default: 1)
 
 Options that specify ports
 
