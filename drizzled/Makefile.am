@@ -352,8 +352,7 @@ noinst_LTLIBRARIES = \
 		libhandler.la \
 		libserialutil.la
 
-LDADD = $(top_builddir)/libdrizzleclient/libdrizzleclient.la \
-	$(top_builddir)/mysys/libmysys.la \
+LDADD = $(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
 	$(LIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 

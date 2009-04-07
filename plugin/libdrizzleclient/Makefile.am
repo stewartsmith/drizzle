@@ -29,6 +29,7 @@ noinst_HEADERS =\
 		drizzle_rows.h \
 		libdrizzle.h \
 		libdrizzle_priv.h \
+		libdrizzleclient.h \
 		errmsg.h \
 		net_serv.h \
 		options.h \
@@ -44,6 +45,7 @@ libdrizzleclient_la_SOURCES= \
 		errmsg.cc \
 		get_password.cc \
 		libdrizzle.cc \
+		libdrizzleclient.cc \
 		libdrizzle_priv.cc \
 		net_serv.cc \
 		pack.cc \

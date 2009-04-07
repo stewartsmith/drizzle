@@ -18,6 +18,7 @@ drizzled/log.cc
 drizzled/logging.cc
 drizzled/parser.cc
 drizzled/plugin/storage_engine.cc
+drizzled/protocol.cc
 drizzled/qcache.cc
 drizzled/replicator.cc
 drizzled/scheduling.cc
@@ -31,13 +32,13 @@ drizzled/sql_udf.cc
 drizzled/table.cc
 drizzled/tztime.cc
 gnulib/getopt.c
-libdrizzleclient/client.cc
-libdrizzleclient/drizzle.cc
-libdrizzleclient/errmsg.cc
 mysys/errors.cc
 mysys/my_error.cc
 mysys/my_getopt.cc
 plugin/errmsg_stderr/errmsg_stderr.cc
+plugin/libdrizzleclient/client.cc
+plugin/libdrizzleclient/drizzle.cc
+plugin/libdrizzleclient/errmsg.cc
 plugin/logging_gearman/logging_gearman.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_syslog/logging_syslog.cc
