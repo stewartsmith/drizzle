@@ -110,11 +110,8 @@ public:
     }
     session->sent_row_count++;
     if (session->is_error())
-    {
-      protocol->remove_last_row();
       return true;
-    }
-    if (protocol->io_ok())
+    if (protocol->isConnected())
       return(protocol->write());
     return false;
   }

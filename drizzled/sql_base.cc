@@ -5911,7 +5911,7 @@ bool drizzle_rm_tmp_tables(void)
 
   assert(drizzle_tmpdir);
 
-  if (!(session= new Session))
+  if (!(session= new Session(new Protocol_libdrizzleclient)))
     return true;
   session->thread_stack= (char*) &session;
   session->store_globals();

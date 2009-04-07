@@ -252,9 +252,10 @@ select 1;
 --error 1238
 select @@session.key_buffer_size;
 
---error 1229
-set init_connect = NULL;
-set global init_connect = NULL;
+# init_connect was removed
+#--error 1229
+#set init_connect = NULL;
+#set global init_connect = NULL;
 
 # Bug#3754 SET GLOBAL myisam_max_sort_file_size doesn't work as
 # expected: check that there is no overflow when 64-bit

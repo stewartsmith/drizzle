@@ -2644,7 +2644,7 @@ send_result_message:
         if (session->is_error())
         {
           const char *err_msg= session->main_da.message();
-          if (!session->protocol->io_ok())
+          if (!session->protocol->isConnected())
           {
             errmsg_printf(ERRMSG_LVL_ERROR, "%s", err_msg);
           }

@@ -1041,7 +1041,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     {
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if (tmp->protocol->io_ok() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->protocol->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
         thread_info *session_info= new thread_info;
 
@@ -1134,7 +1134,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       struct st_my_thread_var *mysys_var;
       const char *val;
 
-      if (! tmp->protocol->io_ok())
+      if (! tmp->protocol->isConnected())
         continue;
 
       restore_record(table, s->default_values);

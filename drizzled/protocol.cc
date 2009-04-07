@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 /**
   @file
@@ -19,6 +23,7 @@
   Low level functions for storing data to be send to the MySQL client.
   The actual communction is handled by the net_xxx functions in net_serv.cc
 */
+
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_state.h>
@@ -53,83 +58,67 @@ static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 static void write_eof_packet(Session *session, NET *net,
                              uint32_t server_status, uint32_t total_warn_count);
 
-bool Protocol::io_ok()
+bool Protocol_libdrizzleclient::isConnected()
 {
   return net.vio != 0;
 }
 
-void Protocol::set_read_timeout(uint32_t timeout)
+void Protocol_libdrizzleclient::set_read_timeout(uint32_t timeout)
 {
   drizzleclient_net_set_read_timeout(&net, timeout);
 }
 
-void Protocol::set_write_timeout(uint32_t timeout)
+void Protocol_libdrizzleclient::set_write_timeout(uint32_t timeout)
 {
   drizzleclient_net_set_write_timeout(&net, timeout);
 }
 
-void Protocol::set_retry_count(uint32_t count)
+void Protocol_libdrizzleclient::set_retry_count(uint32_t count)
 {
   net.retry_count=count;
 }
 
-void Protocol::set_error(char error)
+void Protocol_libdrizzleclient::set_error(char error)
 {
   net.error= error;
 }
 
-bool Protocol::have_error(void)
+bool Protocol_libdrizzleclient::have_error(void)
 {
   return net.error || net.vio == 0;
 }
 
-bool Protocol::was_aborted(void)
+bool Protocol_libdrizzleclient::was_aborted(void)
 {
   return net.error && net.vio != 0;
 }
 
-bool Protocol::have_more_data(void)
+bool Protocol_libdrizzleclient::have_more_data(void)
 {
   return drizzleclient_net_more_data(&net);
 }
 
-bool Protocol::have_compression(void)
+bool Protocol_libdrizzleclient::have_compression(void)
 {
   return net.compress;
 }
 
-void Protocol::enable_compression(void)
+void Protocol_libdrizzleclient::enable_compression(void)
 {
   net.compress= true;
 }
 
-bool Protocol::is_reading(void)
+bool Protocol_libdrizzleclient::is_reading(void)
 {
   return net.reading_or_writing == 1;
 }
 
-bool Protocol::is_writing(void)
+bool Protocol_libdrizzleclient::is_writing(void)
 {
   return net.reading_or_writing == 2;
 }
 
-/*
- * To disable results we set net.vio to 0.
- */
-
-void Protocol::disable_results(void)
-{
-  save_vio= net.vio;
-  net.vio= 0;
-}
-
-void Protocol::enable_results(void)
-{
-  net.vio= save_vio;
-}
-
-
-bool Protocol::net_store_data(const unsigned char *from, size_t length)
+bool Protocol_libdrizzleclient::netStoreData(const unsigned char *from, size_t length)
 {
   size_t packet_length= packet->length();
   /*
@@ -149,7 +138,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length)
 
 
 /*
-  net_store_data() - extended version with character set conversion.
+  netStoreData() - extended version with character set conversion.
 
   It is optimized for short strings whose length after
   conversion is garanteed to be less than 251, which accupies
@@ -160,7 +149,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length)
   because column, table, database names fit into this limit.
 */
 
-bool Protocol::net_store_data(const unsigned char *from, size_t length,
+bool Protocol_libdrizzleclient::netStoreData(const unsigned char *from, size_t length,
                               const CHARSET_INFO * const from_cs,
 							  const CHARSET_INFO * const to_cs)
 {
@@ -182,7 +171,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
     */
     return (convert->copy((const char*) from, length, from_cs,
                           to_cs, &dummy_errors) ||
-            net_store_data((const unsigned char*) convert->ptr(), convert->length()));
+            netStoreData((const unsigned char*) convert->ptr(), convert->length()));
   }
 
   size_t packet_length= packet->length();
@@ -224,9 +213,9 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
   @param message	   Message to send to the client (Used by mysql_status)
 */
 
-static void
-net_send_ok(Session *session, NET *net,
-            uint32_t server_status, uint32_t total_warn_count,
+#if 0
+void Protocol_libdrizzleclient::sendOK(uint32_t server_status,
+                                       uint32_t total_warn_count,
             ha_rows affected_rows, uint64_t id, const char *message)
 {
   unsigned char buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
@@ -239,7 +228,6 @@ net_send_ok(Session *session, NET *net,
   buff[0]=0;					// No fields
   pos=drizzleclient_net_store_length(buff+1,affected_rows);
   pos=drizzleclient_net_store_length(pos, id);
-
   int2store(pos, server_status);
   pos+=2;
 
@@ -259,6 +247,55 @@ net_send_ok(Session *session, NET *net,
   }
   drizzleclient_net_write(net, buff, (size_t) (pos-buff));
   drizzleclient_net_flush(net);
+
+  session->main_da.can_overwrite_status= false;
+}
+#endif
+void Protocol_libdrizzleclient::sendOK()
+{
+  unsigned char buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
+  const char *message= NULL;
+  uint32_t tmp;
+
+  if (!net.vio)	// hack for re-parsing queries
+  {
+    return;
+  }
+
+  buff[0]=0;					// No fields
+  if (session->main_da.status() == Diagnostics_area::DA_OK)
+  {
+    pos=drizzleclient_net_store_length(buff+1,session->main_da.affected_rows());
+    pos=drizzleclient_net_store_length(pos, session->main_da.last_insert_id());
+    int2store(pos, session->main_da.server_status());
+    pos+=2;
+    tmp= cmin(session->main_da.total_warn_count(), (uint32_t)65535);
+    message= session->main_da.message();
+  }
+  else
+  {
+    pos=drizzleclient_net_store_length(buff+1,0);
+    pos=drizzleclient_net_store_length(pos, 0);
+    int2store(pos, session->server_status);
+    pos+=2;
+    tmp= cmin(session->total_warn_count, (uint32_t)65535);
+  }
+
+  /* We can only return up to 65535 warnings in two bytes */
+  int2store(pos, tmp);
+  pos+= 2;
+
+  session->main_da.can_overwrite_status= true;
+
+  if (message && message[0])
+  {
+    size_t length= strlen(message);
+    pos=drizzleclient_net_store_length(pos,length);
+    memcpy(pos,(unsigned char*) message,length);
+    pos+=length;
+  }
+  drizzleclient_net_write(&net, buff, (size_t) (pos-buff));
+  drizzleclient_net_flush(&net);
 
   session->main_da.can_overwrite_status= false;
 }
@@ -282,15 +319,28 @@ net_send_ok(Session *session, NET *net,
                     like in send_fields().
 */
 
-static void
-net_send_eof(Session *session, NET *net, uint32_t server_status, uint32_t total_warn_count)
+#if 0
+void Protocol_libdrizzleclient::sendEOF(uint32_t server_status, uint32_t total_warn_count)
 {
   /* Set to true if no active vio, to work well in case of --init-file */
-  if (net->vio != 0)
+  if (net.vio != 0)
   {
     session->main_da.can_overwrite_status= true;
     write_eof_packet(session, net, server_status, total_warn_count);
     drizzleclient_net_flush(net);
+    session->main_da.can_overwrite_status= false;
+  }
+}
+#endif
+void Protocol_libdrizzleclient::sendEOF()
+{
+  /* Set to true if no active vio, to work well in case of --init-file */
+  if (net.vio != 0)
+  {
+    session->main_da.can_overwrite_status= true;
+    write_eof_packet(session, &net, session->main_da.server_status(),
+                     session->main_da.total_warn_count());
+    drizzleclient_net_flush(&net);
     session->main_da.can_overwrite_status= false;
   }
 }
@@ -324,7 +374,7 @@ static void write_eof_packet(Session *session, NET *net,
   drizzleclient_net_write(net, buff, 5);
 }
 
-void Protocol_text::send_error_packet(uint32_t sql_errno, const char *err)
+void Protocol_libdrizzleclient::sendErrorPacket(uint32_t sql_errno, const char *err)
 {
   uint32_t length;
   /*
@@ -367,7 +417,7 @@ void Protocol_text::send_error_packet(uint32_t sql_errno, const char *err)
   critical that every error that can be intercepted is issued in one
   place only, my_message_sql.
 */
-void Protocol_text::send_error(uint32_t sql_errno, const char *err)
+void Protocol_libdrizzleclient::sendError(uint32_t sql_errno, const char *err)
 {
   assert(sql_errno);
   assert(err && err[0]);
@@ -381,117 +431,29 @@ void Protocol_text::send_error(uint32_t sql_errno, const char *err)
   /* Abort multi-result sets */
   session->server_status&= ~SERVER_MORE_RESULTS_EXISTS;
 
-  send_error_packet(sql_errno, err);
+  sendErrorPacket(sql_errno, err);
 
   session->main_da.can_overwrite_status= false;
 }
-
-
-/**
-  Send the status of the current statement execution over network.
-
-  @param  session   in fact, carries two parameters, NET for the transport and
-                Diagnostics_area as the source of status information.
-
-  In MySQL, there are two types of SQL statements: those that return
-  a result set and those that return status information only.
-
-  If a statement returns a result set, it consists of 3 parts:
-  - result set meta-data
-  - variable number of result set rows (can be 0)
-  - followed and terminated by EOF or ERROR packet
-
-  Once the  client has seen the meta-data information, it always
-  expects an EOF or ERROR to terminate the result set. If ERROR is
-  received, the result set rows are normally discarded (this is up
-  to the client implementation, libmysql at least does discard them).
-  EOF, on the contrary, means "successfully evaluated the entire
-  result set". Since we don't know how many rows belong to a result
-  set until it's evaluated, EOF/ERROR is the indicator of the end
-  of the row stream. Note, that we can not buffer result set rows
-  on the server -- there may be an arbitrary number of rows. But
-  we do buffer the last packet (EOF/ERROR) in the Diagnostics_area and
-  delay sending it till the very end of execution (here), to be able to
-  change EOF to an ERROR if commit failed or some other error occurred
-  during the last cleanup steps taken after execution.
-
-  A statement that does not return a result set doesn't send result
-  set meta-data either. Instead it returns one of:
-  - OK packet
-  - ERROR packet.
-  Similarly to the EOF/ERROR of the previous statement type, OK/ERROR
-  packet is "buffered" in the diagnostics area and sent to the client
-  in the end of statement.
-
-  @pre  The diagnostics area is assigned or disabled. It can not be empty
-        -- we assume that every SQL statement or COM_* command
-        generates OK, ERROR, or EOF status.
-
-  @post The status information is encoded to protocol format and sent to the
-        client.
-
-  @return We conventionally return void, since the only type of error
-          that can happen here is a NET (transport) error, and that one
-          will become visible when we attempt to read from the NET the
-          next command.
-          Diagnostics_area::is_sent is set for debugging purposes only.
-*/
-
-void Protocol::end_statement()
-{
-  assert(! session->main_da.is_sent);
-
-  /* Can not be true, but do not take chances in production. */
-  if (session->main_da.is_sent)
-    return;
-
-  switch (session->main_da.status()) {
-  case Diagnostics_area::DA_ERROR:
-    /* The query failed, send error to log and abort bootstrap. */
-    send_error(session->main_da.sql_errno(),
-               session->main_da.message());
-    break;
-  case Diagnostics_area::DA_EOF:
-    net_send_eof(session, &net,
-                 session->main_da.server_status(),
-                 session->main_da.total_warn_count());
-    break;
-  case Diagnostics_area::DA_OK:
-    net_send_ok(session, &net,
-                session->main_da.server_status(),
-                session->main_da.total_warn_count(),
-                session->main_da.affected_rows(),
-                session->main_da.last_insert_id(),
-                session->main_da.message());
-    break;
-  case Diagnostics_area::DA_DISABLED:
-    break;
-  case Diagnostics_area::DA_EMPTY:
-  default:
-    //TODO: Something is being masked here by commenting this out
-    //  assert(0);
-    net_send_ok(session, &net, session->server_status, session->total_warn_count,
-                0, 0, NULL);
-    break;
-  }
-  session->main_da.is_sent= true;
-}
-
 
 /*****************************************************************************
   Default Protocol functions
 *****************************************************************************/
 
-void Protocol::init(Session *session_arg)
+Protocol_libdrizzleclient::Protocol_libdrizzleclient()
 {
-  session=session_arg;
-  packet= &session->packet;
-  convert= &session->convert_buffer;
+  scramble[0]= 0;
   net.vio= 0;
 }
 
+void Protocol_libdrizzleclient::setSession(Session *session_arg)
+{
+  session= session_arg;
+  packet= &session->packet;
+  convert= &session->convert_buffer;
+}
 
-bool Protocol::flush()
+bool Protocol_libdrizzleclient::flush()
 {
   return drizzleclient_net_flush(&net);
 }
@@ -515,7 +477,7 @@ bool Protocol::flush()
     1	Error  (Note that in this case the error is not sent to the
     client)
 */
-bool Protocol::send_fields(List<Item> *list, uint32_t flags)
+bool Protocol_libdrizzleclient::send_fields(List<Item> *list, uint32_t flags)
 {
   List_iterator_fast<Item> it(*list);
   Item *item;
@@ -613,7 +575,7 @@ err:
 }
 
 
-bool Protocol::write()
+bool Protocol_libdrizzleclient::write()
 {
   return(drizzleclient_net_write(&net, (unsigned char*) packet->ptr(),
                            packet->length()));
@@ -634,7 +596,7 @@ bool Protocol::write()
     1		error
 */
 
-bool Protocol::store(const char *from, const CHARSET_INFO * const cs)
+bool Protocol_libdrizzleclient::store(const char *from, const CHARSET_INFO * const cs)
 {
   if (!from)
     return store_null();
@@ -647,7 +609,7 @@ bool Protocol::store(const char *from, const CHARSET_INFO * const cs)
   Send a set of strings as one long string with ',' in between.
 */
 
-bool Protocol::store(I_List<i_string>* str_list)
+bool Protocol_libdrizzleclient::store(I_List<i_string>* str_list)
 {
   char buf[256];
   String tmp(buf, sizeof(buf), &my_charset_bin);
@@ -667,12 +629,12 @@ bool Protocol::store(I_List<i_string>* str_list)
 }
 
 
-bool Protocol::store(String *str)
+bool Protocol_libdrizzleclient::store(String *str)
 {
   return store((char*) str->ptr(), str->length(), str->charset());
 }
 
-void Protocol::free()
+void Protocol_libdrizzleclient::free()
 {
   packet->free();
 }
@@ -686,24 +648,24 @@ void Protocol::free()
   All data are sent as 'packed-string-length' followed by 'string-data'
 ****************************************************************************/
 
-void Protocol_text::init_random(uint64_t seed1, uint64_t seed2)
+void Protocol_libdrizzleclient::init_random(uint64_t seed1, uint64_t seed2)
 {
-  drizzleclient_randominit(&_rand, seed1, seed2);
+  drizzleclient_randominit(&rand, seed1, seed2);
 }
 
-bool Protocol_text::init_file_descriptor(int fd)
+bool Protocol_libdrizzleclient::init_file_descriptor(int fd)
 {
   if (drizzleclient_net_init_sock(&net, fd, 0))
     return true;
   return false;
 }
 
-int Protocol_text::file_descriptor(void)
+int Protocol_libdrizzleclient::file_descriptor(void)
 {
   return drizzleclient_net_get_sd(&net);
 }
 
-bool Protocol_text::authenticate()
+bool Protocol_libdrizzleclient::authenticate()
 {
   bool connection_is_valid;
 
@@ -711,11 +673,15 @@ bool Protocol_text::authenticate()
   drizzleclient_net_set_read_timeout(&net, connect_timeout);
   drizzleclient_net_set_write_timeout(&net, connect_timeout);
 
-  connection_is_valid= _check_connection();
-  end_statement();
+  connection_is_valid= checkConnection();
 
-  if (!connection_is_valid)
+  if (connection_is_valid)
+    sendOK();
+  else
+  {
+    sendError(session->main_da.sql_errno(), session->main_da.message());
     return false;
+  }
 
   /* Connect completed, set read/write timeouts back to default */
   drizzleclient_net_set_read_timeout(&net,
@@ -725,7 +691,7 @@ bool Protocol_text::authenticate()
   return true;
 }
 
-bool Protocol_text::read_command(char **l_packet, uint32_t *packet_length)
+bool Protocol_libdrizzleclient::read_command(char **l_packet, uint32_t *packet_length)
 {
   /*
     This thread will do a blocking read from the client which
@@ -736,13 +702,6 @@ bool Protocol_text::read_command(char **l_packet, uint32_t *packet_length)
   drizzleclient_net_set_read_timeout(&net,
                                      session->variables.net_wait_timeout);
 
-  /*
-    XXX: this code is here only to clear possible errors of init_connect.
-    Consider moving to init_connect() instead.
-  */
-  session->clear_error();                    // Clear error message
-  session->main_da.reset_diagnostics_area();
-
   net.pkt_nr=0;
 
   *packet_length= drizzleclient_net_read(&net);
@@ -752,10 +711,10 @@ bool Protocol_text::read_command(char **l_packet, uint32_t *packet_length)
 
     if(net.last_errno== CR_NET_PACKET_TOO_LARGE)
       my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
-    /* Assert is invalid for dirty connection shutdown
-     *     assert(session->is_error());
-     */
-    end_statement();
+    if (session->main_da.status() == Diagnostics_area::DA_ERROR)
+      sendError(session->main_da.sql_errno(), session->main_da.message());
+    else
+      session->protocol->sendOK();
 
     if (net.error != 3)
       return false;                       // We have to close it.
@@ -792,7 +751,7 @@ bool Protocol_text::read_command(char **l_packet, uint32_t *packet_length)
   return true;
 }
 
-void Protocol_text::close(void)
+void Protocol_libdrizzleclient::close(void)
 {
   if (net.vio)
   { 
@@ -801,12 +760,12 @@ void Protocol_text::close(void)
   }
 }
 
-void Protocol_text::prepare_for_resend()
+void Protocol_libdrizzleclient::prepare_for_resend()
 {
   packet->length(0);
 }
 
-bool Protocol_text::store_null()
+bool Protocol_libdrizzleclient::store_null()
 {
   char buff[1];
   buff[0]= (char)251;
@@ -819,7 +778,7 @@ bool Protocol_text::store_null()
   and store in network buffer.
 */
 
-bool Protocol::store_string_aux(const char *from, size_t length,
+bool Protocol_libdrizzleclient::storeStringAux(const char *from, size_t length,
                                 const CHARSET_INFO * const fromcs,
 								const CHARSET_INFO * const tocs)
 {
@@ -829,89 +788,89 @@ bool Protocol::store_string_aux(const char *from, size_t length,
       tocs != &my_charset_bin)
   {
     /* Store with conversion */
-    return net_store_data((unsigned char*) from, length, fromcs, tocs);
+    return netStoreData((unsigned char*) from, length, fromcs, tocs);
   }
   /* Store without conversion */
-  return net_store_data((unsigned char*) from, length);
+  return netStoreData((unsigned char*) from, length);
 }
 
 
-bool Protocol_text::store(const char *from, size_t length,
+bool Protocol_libdrizzleclient::store(const char *from, size_t length,
                           const CHARSET_INFO * const fromcs,
 						  const CHARSET_INFO * const tocs)
 {
-  return store_string_aux(from, length, fromcs, tocs);
+  return storeStringAux(from, length, fromcs, tocs);
 }
 
 
-bool Protocol_text::store(const char *from, size_t length,
+bool Protocol_libdrizzleclient::store(const char *from, size_t length,
                           const CHARSET_INFO * const fromcs)
 {
   const CHARSET_INFO * const tocs= default_charset_info;
-  return store_string_aux(from, length, fromcs, tocs);
+  return storeStringAux(from, length, fromcs, tocs);
 }
 
 
-bool Protocol_text::store_tiny(int64_t from)
+bool Protocol_libdrizzleclient::store_tiny(int64_t from)
 {
   char buff[20];
-  return net_store_data((unsigned char*) buff,
+  return netStoreData((unsigned char*) buff,
 			(size_t) (int10_to_str((int) from, buff, -10) - buff));
 }
 
 
-bool Protocol_text::store_short(int64_t from)
+bool Protocol_libdrizzleclient::store_short(int64_t from)
 {
   char buff[20];
-  return net_store_data((unsigned char*) buff,
+  return netStoreData((unsigned char*) buff,
 			(size_t) (int10_to_str((int) from, buff, -10) -
                                   buff));
 }
 
 
-bool Protocol_text::store_long(int64_t from)
+bool Protocol_libdrizzleclient::store_long(int64_t from)
 {
   char buff[20];
-  return net_store_data((unsigned char*) buff,
+  return netStoreData((unsigned char*) buff,
 			(size_t) (int10_to_str((long int)from, buff,
                                                (from <0)?-10:10)-buff));
 }
 
 
-bool Protocol_text::store_int64_t(int64_t from, bool unsigned_flag)
+bool Protocol_libdrizzleclient::store_int64_t(int64_t from, bool unsigned_flag)
 {
   char buff[22];
-  return net_store_data((unsigned char*) buff,
+  return netStoreData((unsigned char*) buff,
 			(size_t) (int64_t10_to_str(from,buff,
                                                     unsigned_flag ? 10 : -10)-
                                   buff));
 }
 
 
-bool Protocol_text::store_decimal(const my_decimal *d)
+bool Protocol_libdrizzleclient::store_decimal(const my_decimal *d)
 {
   char buff[DECIMAL_MAX_STR_LENGTH];
   String str(buff, sizeof(buff), &my_charset_bin);
   (void) my_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
-  return net_store_data((unsigned char*) str.ptr(), str.length());
+  return netStoreData((unsigned char*) str.ptr(), str.length());
 }
 
 
-bool Protocol_text::store(float from, uint32_t decimals, String *buffer)
+bool Protocol_libdrizzleclient::store(float from, uint32_t decimals, String *buffer)
 {
   buffer->set_real((double) from, decimals, session->charset());
-  return net_store_data((unsigned char*) buffer->ptr(), buffer->length());
+  return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
 }
 
 
-bool Protocol_text::store(double from, uint32_t decimals, String *buffer)
+bool Protocol_libdrizzleclient::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, session->charset());
-  return net_store_data((unsigned char*) buffer->ptr(), buffer->length());
+  return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
 }
 
 
-bool Protocol_text::store(Field *field)
+bool Protocol_libdrizzleclient::store(Field *field)
 {
   if (field->is_null())
     return store_null();
@@ -921,7 +880,7 @@ bool Protocol_text::store(Field *field)
 
   field->val_str(&str);
 
-  return store_string_aux(str.ptr(), str.length(), str.charset(), tocs);
+  return storeStringAux(str.ptr(), str.length(), str.charset(), tocs);
 }
 
 
@@ -931,7 +890,7 @@ bool Protocol_text::store(Field *field)
     we support 0-6 decimals for time.
 */
 
-bool Protocol_text::store(DRIZZLE_TIME *tm)
+bool Protocol_libdrizzleclient::store(DRIZZLE_TIME *tm)
 {
   char buff[40];
   uint32_t length;
@@ -945,15 +904,15 @@ bool Protocol_text::store(DRIZZLE_TIME *tm)
   if (tm->second_part)
     length+= sprintf(buff+length, ".%06d",
                                      (int)tm->second_part);
-  return net_store_data((unsigned char*) buff, length);
+  return netStoreData((unsigned char*) buff, length);
 }
 
 
-bool Protocol_text::store_date(DRIZZLE_TIME *tm)
+bool Protocol_libdrizzleclient::store_date(DRIZZLE_TIME *tm)
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   size_t length= my_date_to_str(tm, buff);
-  return net_store_data((unsigned char*) buff, length);
+  return netStoreData((unsigned char*) buff, length);
 }
 
 
@@ -963,7 +922,7 @@ bool Protocol_text::store_date(DRIZZLE_TIME *tm)
     we support 0-6 decimals for time.
 */
 
-bool Protocol_text::store_time(DRIZZLE_TIME *tm)
+bool Protocol_libdrizzleclient::store_time(DRIZZLE_TIME *tm)
 {
   char buff[40];
   uint32_t length;
@@ -975,10 +934,10 @@ bool Protocol_text::store_time(DRIZZLE_TIME *tm)
 			   (int) tm->second);
   if (tm->second_part)
     length+= sprintf(buff+length, ".%06d", (int)tm->second_part);
-  return net_store_data((unsigned char*) buff, length);
+  return netStoreData((unsigned char*) buff, length);
 }
 
-bool Protocol_text::_check_connection(void)
+bool Protocol_libdrizzleclient::checkConnection(void)
 {
   uint32_t pkt_len= 0;
   char *end;
@@ -1022,13 +981,13 @@ bool Protocol_text::_check_connection(void)
       procedure, scramble is set here. This gives us new scramble for
       each handshake.
     */
-    drizzleclient_create_random_string(_scramble, SCRAMBLE_LENGTH, &_rand);
+    drizzleclient_create_random_string(scramble, SCRAMBLE_LENGTH, &rand);
     /*
       Old clients does not understand long scrambles, but can ignore packet
       tail: that's why first part of the scramble is placed here, and second
       part at the end of packet.
     */
-    end= strncpy(end, _scramble, SCRAMBLE_LENGTH_323);
+    end= strncpy(end, scramble, SCRAMBLE_LENGTH_323);
     end+= SCRAMBLE_LENGTH_323;
 
     *end++= 0; /* an empty byte for some reason */
@@ -1041,7 +1000,7 @@ bool Protocol_text::_check_connection(void)
     end+= 18;
     /* write scramble tail */
     size_t scramble_len= SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323;
-    end= strncpy(end, _scramble + SCRAMBLE_LENGTH_323, scramble_len);
+    end= strncpy(end, scramble + SCRAMBLE_LENGTH_323, scramble_len);
     end+= scramble_len;
 
     *end++= 0; /* an empty byte for some reason */

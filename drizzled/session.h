@@ -426,7 +426,6 @@ public:
 
   MEM_ROOT warn_root;			// For warnings and errors
   Protocol *protocol;			// Current protocol
-  Protocol_text   protocol_text;	// Normal protocol
   char    compression;
   HASH    user_vars;			// hash for user variables
   String  packet;			// dynamic buffer for network I/O
@@ -807,7 +806,7 @@ public:
   */
   Lex_input_stream *m_lip;
 
-  Session();
+  Session(Protocol *protocol_arg);
   ~Session();
 
   void init(void);
