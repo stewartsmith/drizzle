@@ -183,17 +183,8 @@ public:
                       uint32_t max_length, bool low_byte_first);
   unsigned char *pack_key(unsigned char *to, const unsigned char *from,
                   uint32_t max_length, bool low_byte_first);
-  unsigned char *pack_key_from_key_image(unsigned char* to, const unsigned char *from,
-                                 uint32_t max_length, bool low_byte_first);
   virtual const unsigned char *unpack(unsigned char *to, const unsigned char *from,
                               uint32_t param_data, bool low_byte_first);
-  const unsigned char *unpack_key(unsigned char* to, const unsigned char *from,
-                          uint32_t max_length, bool low_byte_first);
-  int pack_cmp(const unsigned char *a, const unsigned char *b, uint32_t key_length,
-               bool insert_or_update);
-  int pack_cmp(const unsigned char *b, uint32_t key_length,bool insert_or_update);
-  uint32_t packed_col_length(const unsigned char *col_ptr, uint32_t length);
-  uint32_t max_packed_col_length(uint32_t max_length);
   void free() { value.free(); }
   inline void clear_temporary() { memset(&value, 0, sizeof(value)); }
   friend int field_conv(Field *to,Field *from);

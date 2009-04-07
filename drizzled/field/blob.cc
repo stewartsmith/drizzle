@@ -611,51 +611,6 @@ const unsigned char *Field_blob::unpack(unsigned char *,
   return(from + master_packlength + length);
 }
 
-/* Keys for blobs are like keys on varchars */
-
-int Field_blob::pack_cmp(const unsigned char *a, const unsigned char *b, uint32_t key_length_arg,
-                         bool insert_or_update)
-{
-  uint32_t a_length, b_length;
-  if (key_length_arg > 255)
-  {
-    a_length=uint2korr(a); a+=2;
-    b_length=uint2korr(b); b+=2;
-  }
-  else
-  {
-    a_length= (uint32_t) *a++;
-    b_length= (uint32_t) *b++;
-  }
-  return field_charset->coll->strnncollsp(field_charset,
-                                          a, a_length,
-                                          b, b_length,
-                                          insert_or_update);
-}
-
-
-int Field_blob::pack_cmp(const unsigned char *b, uint32_t key_length_arg,
-                         bool insert_or_update)
-{
-  unsigned char *a;
-  uint32_t a_length, b_length;
-  memcpy(&a,ptr+packlength,sizeof(char*));
-  if (!a)
-    return key_length_arg > 0 ? -1 : 0;
-
-  a_length= get_length(ptr);
-  if (key_length_arg > 255)
-  {
-    b_length= uint2korr(b); b+=2;
-  }
-  else
-    b_length= (uint32_t) *b++;
-  return field_charset->coll->strnncollsp(field_charset,
-                                          a, a_length,
-                                          b, b_length,
-                                          insert_or_update);
-}
-
 /** Create a packed key that will be used for storage from a MySQL row. */
 
 unsigned char *
@@ -679,82 +634,6 @@ Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint32_t max_
   memcpy(to, from, length);
   ptr=save;					// Restore org row pointer
   return to+length;
-}
-
-
-/**
-  Unpack a blob key into a record buffer.
-
-  A blob key has a maximum size of 64K-1.
-  In its packed form, the length field is one or two bytes long,
-  depending on 'max_length'.
-  Depending on the maximum length of a blob, its length field is
-  put into 1 to 4 bytes. This is a property of the blob object,
-  described by 'packlength'.
-  Blobs are internally stored apart from the record buffer, which
-  contains a pointer to the blob buffer.
-
-
-  @param to                          Pointer into the record buffer.
-  @param from                        Pointer to the packed key.
-  @param max_length                  Key length limit from key description.
-
-  @return
-    Pointer into 'from' past the last byte copied from packed key.
-*/
-
-const unsigned char *
-Field_blob::unpack_key(unsigned char *to, const unsigned char *from, uint32_t max_length,
-                       bool )
-{
-  /* get length of the blob key */
-  uint32_t length= *from++;
-  if (max_length > 255)
-    length+= *from++ << 8;
-
-  /* put the length into the record buffer */
-  put_length(to, length);
-
-  /* put the address of the blob buffer or NULL */
-  if (length)
-    memcpy(to + packlength, &from, sizeof(from));
-  else
-    memset(to + packlength, 0, sizeof(from));
-
-  /* point to first byte of next field in 'from' */
-  return from + length;
-}
-
-
-/** Create a packed key that will be used for storage from a MySQL key. */
-
-unsigned char *
-Field_blob::pack_key_from_key_image(unsigned char *to, const unsigned char *from, uint32_t max_length,
-                                    bool )
-{
-  uint32_t length=uint2korr(from);
-  if (length > max_length)
-    length=max_length;
-  *to++= (char) (length & 255);
-  if (max_length > 255)
-    *to++= (char) (length >> 8);
-  if (length)
-    memcpy(to, from+HA_KEY_BLOB_LENGTH, length);
-  return to+length;
-}
-
-
-uint32_t Field_blob::packed_col_length(const unsigned char *data_ptr, uint32_t length)
-{
-  if (length > 255)
-    return uint2korr(data_ptr)+2;
-  return (uint32_t) *data_ptr + 1;
-}
-
-
-uint32_t Field_blob::max_packed_col_length(uint32_t max_length)
-{
-  return (max_length > 255 ? 2 : 1)+max_length;
 }
 
 
