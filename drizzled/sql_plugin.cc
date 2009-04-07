@@ -454,42 +454,6 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 
 
-static SHOW_COMP_OPTION plugin_status(const LEX_STRING *name, int type)
-{
-  Plugin_registry registry= Plugin_registry::get_plugin_registry();
-
-  SHOW_COMP_OPTION rc= SHOW_OPTION_NO;
-  struct st_plugin_int *plugin;
-
-  if (! initialized)
-    return(rc);
-
-  if ((plugin= registry.find(name, type)))
-  {
-    rc= SHOW_OPTION_DISABLED;
-    if (plugin->isInited)
-      rc= SHOW_OPTION_YES;
-  }
-  return(rc);
-}
-
-
-bool plugin_is_ready(const LEX_STRING *name, int type)
-{
-  bool rc= false;
-  if (plugin_status(name, type) == SHOW_OPTION_YES)
-    rc= true;
-  return rc;
-}
-
-
-SHOW_COMP_OPTION sys_var_have_plugin::get_option()
-{
-  LEX_STRING plugin_name= { (char *) plugin_name_str, plugin_name_len };
-  return plugin_status(&plugin_name, plugin_type);
-}
-
-
 static plugin_ref intern_plugin_lock(st_plugin_int *rc)
 {
   plugin_ref plugin;

@@ -178,13 +178,13 @@ String *Item_func_substr_index::val_str(String *str)
     {					// start counting from the beginning
       for (offset=0; ; offset+= delimiter_length)
       {
-	if ((int) (offset= res->strstr(*delimiter, offset)) < 0)
-	  return res;			// Didn't find, return org string
-	if (!--count)
-	{
-	  tmp_value.set(*res,0,offset);
-	  break;
-	}
+        if ((int) (offset= res->strstr(*delimiter, offset)) < 0)
+          return res;			// Didn't find, return org string
+        if (!--count)
+        {
+          tmp_value.set(*res,0,offset);
+          break;
+        }
       }
     }
     else
@@ -199,18 +199,18 @@ String *Item_func_substr_index::val_str(String *str)
           address space less than where the found substring is located
           in res
         */
-	if ((int) (offset= res->strrstr(*delimiter, offset)) < 0)
-	  return res;			// Didn't find, return org string
+        if ((int) (offset= res->strrstr(*delimiter, offset)) < 0)
+          return res;			// Didn't find, return org string
         /*
           At this point, we've searched for the substring
           the number of times as supplied by the index value
         */
-	if (!++count)
-	{
-	  offset+= delimiter_length;
-	  tmp_value.set(*res,offset,res->length()- offset);
-	  break;
-	}
+        if (!++count)
+        {
+          offset+= delimiter_length;
+          tmp_value.set(*res,offset,res->length()- offset);
+          break;
+        }
       }
     }
   }
