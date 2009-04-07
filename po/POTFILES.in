@@ -1,6 +1,5 @@
 # This file is auto-generated from configure. Do not edit directly
 client/drizzle.cc
-client/drizzleadmin.cc
 client/drizzlecheck.cc
 client/drizzledump.cc
 client/drizzleimport.cc

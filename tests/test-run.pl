@@ -132,7 +132,6 @@ our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
 our $exe_master_mysqld;
 our $exe_drizzle;
-our $exe_drizzleadmin;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
 our $exe_drizzled;
@@ -1212,7 +1211,6 @@ sub executable_setup () {
   $exe_drizzlecheck= mtr_exe_exists("$path_client_bindir/drizzlecheck");
   $exe_drizzledump= mtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= mtr_exe_exists("$path_client_bindir/drizzleimport");
-  $exe_drizzleadmin= mtr_exe_exists("$path_client_bindir/drizzleadmin");
   $exe_drizzle=          mtr_exe_exists("$path_client_bindir/drizzle");
 
   if (!$opt_extern)
@@ -1508,9 +1506,9 @@ sub environment_setup () {
   $ENV{'DRIZZLE_MY_PRINT_DEFAULTS'}= mtr_native_path($exe_my_print_defaults);
 
   # ----------------------------------------------------
-  # Setup env so childs can execute mysqladmin
+  # Setup env so childs can shutdown the server
   # ----------------------------------------------------
-  $ENV{'MYSQLADMIN'}= mtr_native_path($exe_drizzleadmin);
+  $ENV{'DRIZZLED_SHUTDOWN'}= mtr_native_path($exe_drizzle);
 
   # ----------------------------------------------------
   # Setup env so childs can execute perror  
@@ -2660,7 +2658,7 @@ sub stop_all_servers () {
   {
     if ( $mysqld->{'pid'} )
     {
-      $pid= mtr_mysqladmin_start($mysqld, "shutdown", 70);
+      $pid= mtr_server_shutdown($mysqld);
       $admin_pids{$pid}= 1;
 
       push(@kill_pids,{
@@ -2818,20 +2816,20 @@ sub run_testcase_stop_servers($$$) {
     {
       if ( $mysqld->{'pid'} )
       {
-	$pid= mtr_mysqladmin_start($mysqld, "shutdown", 20);
+        $pid= mtr_server_shutdown($mysqld);
 
-	$admin_pids{$pid}= 1;
+        $admin_pids{$pid}= 1;
 
-	push(@kill_pids,{
-			 pid      => $mysqld->{'pid'},
-			 real_pid => $mysqld->{'real_pid'},
-			 pidfile  => $mysqld->{'path_pid'},
-			 sockfile => $mysqld->{'path_sock'},
-			 port     => $mysqld->{'port'},
-			 errfile   => $mysqld->{'path_myerr'},
-			});
+        push(@kill_pids,{
+              pid      => $mysqld->{'pid'},
+              real_pid => $mysqld->{'real_pid'},
+              pidfile  => $mysqld->{'path_pid'},
+              sockfile => $mysqld->{'path_sock'},
+              port     => $mysqld->{'port'},
+              errfile   => $mysqld->{'path_myerr'},
+        });
 
-	$mysqld->{'pid'}= 0; # Assume we are done with it
+        $mysqld->{'pid'}= 0; # Assume we are done with it
       }
     }
   }
@@ -2846,21 +2844,20 @@ sub run_testcase_stop_servers($$$) {
     {
       if ( $mysqld->{'pid'} )
       {
-	$pid= mtr_mysqladmin_start($mysqld, "shutdown", 20);
+        $pid= mtr_server_shutdown($mysqld);
 
-	$admin_pids{$pid}= 1;
+        $admin_pids{$pid}= 1;
 
-	push(@kill_pids,{
-			 pid      => $mysqld->{'pid'},
-			 real_pid => $mysqld->{'real_pid'},
-			 pidfile  => $mysqld->{'path_pid'},
-			 sockfile => $mysqld->{'path_sock'},
-			 port     => $mysqld->{'port'},
-			 errfile   => $mysqld->{'path_myerr'},
-			});
+        push(@kill_pids,{
+              pid      => $mysqld->{'pid'},
+              real_pid => $mysqld->{'real_pid'},
+              pidfile  => $mysqld->{'path_pid'},
+              sockfile => $mysqld->{'path_sock'},
+              port     => $mysqld->{'port'},
+              errfile  => $mysqld->{'path_myerr'},
+        });
 
-
-	$mysqld->{'pid'}= 0; # Assume we are done with it
+        $mysqld->{'pid'}= 0; # Assume we are done with it
       }
     }
   }
