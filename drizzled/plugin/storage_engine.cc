@@ -43,7 +43,7 @@ static const LEX_STRING sys_table_aliases[]=
   {NULL, 0}
 };
 
-StorageEngine::StorageEngine(const std::string &name_arg,
+StorageEngine::StorageEngine(const std::string name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg,
                              size_t savepoint_offset_arg,
                              bool support_2pc)
@@ -186,7 +186,7 @@ int storage_engine_finalizer(st_plugin_int *plugin)
 {
   StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
 
-  all_engines.erase(engine->get_name());
+  all_engines.erase(engine->getName());
 
   if (engine && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(engine);
@@ -227,13 +227,13 @@ int storage_engine_initializer(st_plugin_int *plugin)
 
   plugin->data= engine;
   plugin->isInited= true;
-  all_engines[engine->get_name()]= engine;
+  all_engines[engine->getName()]= engine;
 
   return 0;
 }
 
-const char *ha_resolve_storage_engine_name(const StorageEngine *engine)
+const string ha_resolve_storage_engine_name(const StorageEngine *engine)
 {
-  return engine == NULL ? "UNKNOWN" : engine->get_name().c_str();
+  return engine == NULL ? string("UNKNOWN") : engine->getName();
 }
 

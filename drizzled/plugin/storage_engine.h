@@ -121,7 +121,7 @@ public:
   */
   uint32_t slot;
 
-  StorageEngine(const std::string &name_arg,
+  StorageEngine(const std::string name_arg,
                 const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
                 size_t savepoint_offset_arg= 0,
                 bool support_2pc= false);
@@ -152,7 +152,7 @@ public:
   void enable() { enabled= true; }
   void disable() { enabled= false; }
 
-  std::string get_name() const { return name; }
+  std::string getName() const { return name; }
 
   /*
     StorageEngine methods:
@@ -237,6 +237,6 @@ plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name);
 plugin_ref ha_lock_engine(Session *session, StorageEngine *engine);
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
                          StorageEngine *db_type);
-const char *ha_resolve_storage_engine_name(const StorageEngine *db_type);
+const std::string ha_resolve_storage_engine_name(const StorageEngine *db_type);
 
 #endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

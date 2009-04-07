@@ -2377,7 +2377,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
   if (type == OPT_GLOBAL)
     plugin= plugin_lock(&(global_system_variables.*offset));
   engine= plugin_data(plugin, StorageEngine*);
-  engine_name= engine->get_name();
+  engine_name= engine->getName();
   result= (unsigned char *) session->strmake(engine_name.c_str(),
                                              engine_name.size());
   return result;
