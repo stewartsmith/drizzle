@@ -586,7 +586,7 @@ int ha_prepare(Session *session)
       {
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            ha_resolve_storage_engine_name(engine));
+                            engine->getName().c_str());
       }
     }
   }
@@ -944,8 +944,9 @@ static bool xarecover_storage_engine(Session *,
   {
     while ((got= engine->recover(info->list, info->len)) > 0 )
     {
-      errmsg_printf(ERRMSG_LVL_INFO, _("Found %d prepared transaction(s) in %s"),
-                            got, ha_resolve_storage_engine_name(engine));
+      errmsg_printf(ERRMSG_LVL_INFO,
+                    _("Found %d prepared transaction(s) in %s"),
+                    got, engine->getName().c_str());
       for (int i=0; i < got; i ++)
       {
         my_xid x=info->list[i].get_my_xid();

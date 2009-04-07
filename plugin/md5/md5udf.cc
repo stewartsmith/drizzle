@@ -77,17 +77,10 @@ Create_function<Item_func_md5> md5udf(string("md5"));
 
 static int md5udf_plugin_init(void *p)
 {
-  Function_builder **f = (Function_builder**) p;
+  Function_builder **f = static_cast<Function_builder**>(p);
 
   *f= &md5udf;
 
-  return 0;
-}
-
-static int md5udf_plugin_deinit(void *p)
-{
-  Function_builder *udff = (Function_builder *) p;
-  (void)udff;
   return 0;
 }
 
@@ -100,7 +93,7 @@ drizzle_declare_plugin(md5)
   "UDF for computing md5sum",
   PLUGIN_LICENSE_GPL,
   md5udf_plugin_init, /* Plugin Init */
-  md5udf_plugin_deinit, /* Plugin Deinit */
+  NULL,   /* Plugin Deinit */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */

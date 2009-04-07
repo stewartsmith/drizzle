@@ -45,7 +45,7 @@ Create_function<Item_func_hello_world>
 
 static int hello_world_plugin_init(void *p)
 {
-  Function_builder **f = (Function_builder**) p;
+  Function_builder **f = static_cast<Function_builder**>(p);
 
   *f= &hello_world_udf;
 
@@ -54,7 +54,7 @@ static int hello_world_plugin_init(void *p)
 
 static int hello_world_plugin_deinit(void *p)
 {
-  Function_builder *udff = (Function_builder *) p;
+  Function_builder *udff = static_cast<Function_builder *>(p);
   (void)udff;
   return 0;
 }

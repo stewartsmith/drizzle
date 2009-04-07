@@ -2725,8 +2725,8 @@ static int get_schema_tables_record(Session *session, TableList *tables,
         continue;
       table->field[i]->set_notnull();
     }
-    tmp_buff= (char *) ha_resolve_storage_engine_name(tmp_db_type);
-    table->field[4]->store(tmp_buff, strlen(tmp_buff), cs);
+    string engine_name= ha_resolve_storage_engine_name(tmp_db_type);
+    table->field[4]->store(engine_name.c_str(), engine_name.size(), cs);
     table->field[5]->store((int64_t) 0, true);
 
     ptr=option_buff;

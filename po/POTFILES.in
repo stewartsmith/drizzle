@@ -1,13 +1,11 @@
 # This file is auto-generated from configure. Do not edit directly
 client/drizzle.cc
-client/drizzleadmin.cc
 client/drizzlecheck.cc
 client/drizzledump.cc
 client/drizzleimport.cc
 client/drizzleslap.cc
 client/drizzletest.cc
 drizzled/authentication.cc
-drizzled/configvar.cc
 drizzled/db.cc
 drizzled/drizzled.cc
 drizzled/errmsg.cc
@@ -16,7 +14,6 @@ drizzled/gettext.h
 drizzled/handler.cc
 drizzled/log.cc
 drizzled/logging.cc
-drizzled/parser.cc
 drizzled/plugin/storage_engine.cc
 drizzled/qcache.cc
 drizzled/replicator.cc

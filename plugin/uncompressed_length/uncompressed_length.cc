@@ -58,7 +58,7 @@ Create_function<Item_func_uncompressed_length>
 
 static int uncompressed_lengthudf_plugin_init(void *p)
 {
-  Function_builder **f = (Function_builder**) p;
+  Function_builder **f = static_cast<Function_builder**>(p);
 
   *f= &uncompressed_lengthudf;
 
@@ -67,7 +67,7 @@ static int uncompressed_lengthudf_plugin_init(void *p)
 
 static int uncompressed_lengthudf_plugin_deinit(void *p)
 {
-  Function_builder *udff = (Function_builder *) p;
+  Function_builder *udff = static_cast<Function_builder *>(p);
   (void)udff;
   return 0;
 }

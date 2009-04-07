@@ -1159,7 +1159,7 @@ create:
               push_warning_printf(YYSession, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_USING_OTHER_HANDLER,
                                   ER(ER_WARN_USING_OTHER_HANDLER),
-                                  ha_resolve_storage_engine_name(lex->create_info.db_type),
+                                  ha_resolve_storage_engine_name(lex->create_info.db_type).c_str(),
                                   $5->table.str);
             }
           }

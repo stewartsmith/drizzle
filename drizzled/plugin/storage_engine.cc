@@ -32,6 +32,8 @@
 
 using namespace std;
 
+map<string, StorageEngine *> all_engines;
+
 st_plugin_int *engine2plugin[MAX_HA];
 
 static const LEX_STRING sys_table_aliases[]=
@@ -41,7 +43,7 @@ static const LEX_STRING sys_table_aliases[]=
   {NULL, 0}
 };
 
-StorageEngine::StorageEngine(const std::string &name_arg,
+StorageEngine::StorageEngine(const std::string name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg,
                              size_t savepoint_offset_arg,
                              bool support_2pc)
@@ -57,7 +59,7 @@ StorageEngine::StorageEngine(const std::string &name_arg,
     slot= total_ha++;
     if (two_phase_commit)
         total_ha_2pc++;
-  } 
+  }
 }
 
 
@@ -184,6 +186,8 @@ int storage_engine_finalizer(st_plugin_int *plugin)
 {
   StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
 
+  all_engines.erase(engine->getName());
+
   if (engine && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(engine);
 
@@ -223,16 +227,13 @@ int storage_engine_initializer(st_plugin_int *plugin)
 
   plugin->data= engine;
   plugin->isInited= true;
+  all_engines[engine->getName()]= engine;
 
   return 0;
 }
 
-const char *ha_resolve_storage_engine_name(const StorageEngine *db_type)
+const string ha_resolve_storage_engine_name(const StorageEngine *engine)
 {
-  return db_type == NULL ? "UNKNOWN" : engine2plugin[db_type->slot]->name.str;
+  return engine == NULL ? string("UNKNOWN") : engine->getName();
 }
 
-LEX_STRING *ha_storage_engine_name(const StorageEngine *engine)
-{
-  return &engine2plugin[engine->slot]->name;
-}

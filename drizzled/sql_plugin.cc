@@ -20,9 +20,7 @@
 #include <drizzled/authentication.h>
 #include <drizzled/logging.h>
 #include <drizzled/errmsg.h>
-#include <drizzled/configvar.h>
 #include <drizzled/qcache.h>
-#include <drizzled/parser.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/replicator.h>
@@ -68,9 +66,7 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("LOGGER") },
   { C_STRING_WITH_LEN("ERRMSG") },
   { C_STRING_WITH_LEN("AUTH") },
-  { C_STRING_WITH_LEN("CONFIGVAR") },
   { C_STRING_WITH_LEN("QCACHE") },
-  { C_STRING_WITH_LEN("PARSER") },
   { C_STRING_WITH_LEN("SCHEDULING") },
   { C_STRING_WITH_LEN("REPLICATOR") }
 };
@@ -97,9 +93,7 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   logging_initializer,  /* Logger */
   errmsg_initializer,  /* Error Messages */
   authentication_initializer,  /* Auth */
-  configvar_initializer,
   qcache_initializer,
-  parser_initializer,
   scheduling_initializer,
   replicator_initializer
 };
@@ -115,9 +109,7 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   logging_finalizer,  /* Logger */
   errmsg_finalizer,  /* Logger */
   authentication_finalizer,  /* Auth */
-  configvar_finalizer,
   qcache_finalizer,
-  parser_finalizer,
   scheduling_finalizer,
   replicator_finalizer
 };

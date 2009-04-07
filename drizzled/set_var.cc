@@ -2372,13 +2372,14 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 {
   unsigned char* result;
   StorageEngine *engine;
-  LEX_STRING *engine_name;
+  string engine_name;
   plugin_ref plugin= session->variables.*offset;
   if (type == OPT_GLOBAL)
     plugin= plugin_lock(&(global_system_variables.*offset));
   engine= plugin_data(plugin, StorageEngine*);
-  engine_name= ha_storage_engine_name(engine);
-  result= (unsigned char *) session->strmake(engine_name->str, engine_name->length);
+  engine_name= engine->getName();
+  result= (unsigned char *) session->strmake(engine_name.c_str(),
+                                             engine_name.size());
   return result;
 }
 

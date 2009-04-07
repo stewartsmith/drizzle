@@ -104,17 +104,10 @@ Create_function<Item_func_compress> compressudf(string("compress"));
 
 static int compressudf_plugin_init(void *p)
 {
-  Function_builder **f = (Function_builder**) p;
+  Function_builder **f = static_cast<Function_builder**>(p);
 
   *f= &compressudf;
 
-  return 0;
-}
-
-static int compressudf_plugin_deinit(void *p)
-{
-  Function_builder *udff = (Function_builder *) p;
-  (void)udff;
   return 0;
 }
 
@@ -127,7 +120,7 @@ drizzle_declare_plugin(compress)
   "UDF for compress()",
   PLUGIN_LICENSE_GPL,
   compressudf_plugin_init, /* Plugin Init */
-  compressudf_plugin_deinit, /* Plugin Deinit */
+  NULL, /* Plugin Deinit */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
