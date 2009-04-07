@@ -71,42 +71,32 @@ public:
   virtual void sendOK()= 0;
   virtual void sendEOF()= 0;
   virtual void sendError(uint32_t sql_errno, const char *err)=0;
-  virtual void sendErrorPacket(uint32_t sql_errno, const char *err)=0;
   virtual void close(void) {};
-
-  enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
-  virtual bool send_fields(List<Item> *list, uint32_t flags)= 0;
-
-  virtual bool store(I_List<i_string> *str_list)= 0;
-  virtual bool store(const char *from, const CHARSET_INFO * const cs)= 0;
-  String *storage_packet() { return packet; }
-  virtual void free()= 0;
-  virtual bool write()= 0;
-  virtual bool store(int from)
-  { return store_long((int64_t) from); }
-  virtual  bool store(uint32_t from)
-  { return store_long((int64_t) from); }
-  virtual bool store(int64_t from)
-  { return store_int64_t((int64_t) from, 0); }
-  virtual bool store(uint64_t from)
-  { return store_int64_t((int64_t) from, 1); }
-  virtual bool store(String *str)= 0;
-
   virtual bool prepare_for_send(List<Item> *item_list)
   {
     field_count= item_list->elements;
     return 0;
   }
   virtual bool flush()= 0;
-
   virtual void prepare_for_resend()=0;
+  virtual void free()= 0;
+  virtual bool write()= 0;
+  String *storage_packet() { return packet; }
 
-  virtual bool store_null()=0;
-  virtual bool store_tiny(int64_t from)=0;
-  virtual bool store_short(int64_t from)=0;
-  virtual bool store_long(int64_t from)=0;
-  virtual bool store_int64_t(int64_t from, bool unsigned_flag)=0;
+  enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
+  virtual bool send_fields(List<Item> *list, uint32_t flags)= 0;
+
+  virtual bool store(void)= 0;
+  virtual bool store(int32_t from)= 0;
+  virtual bool store(uint32_t from)= 0;
+  virtual bool store(int64_t from)= 0;
+  virtual bool store(uint64_t from)= 0;
+  virtual bool store(String *str)= 0;
+  virtual bool store(DRIZZLE_TIME *time)=0;
+
   virtual bool store_decimal(const my_decimal * dec_value)=0;
+  virtual bool store(I_List<i_string> *str_list)= 0;
+  virtual bool store(const char *from, const CHARSET_INFO * const cs)= 0;
   virtual bool store(const char *from, size_t length,
                      const CHARSET_INFO * const cs)=0;
   virtual bool store(const char *from, size_t length,
@@ -114,9 +104,6 @@ public:
                      const CHARSET_INFO * const tocs)=0;
   virtual bool store(float from, uint32_t decimals, String *buffer)=0;
   virtual bool store(double from, uint32_t decimals, String *buffer)=0;
-  virtual bool store(DRIZZLE_TIME *time)=0;
-  virtual bool store_date(DRIZZLE_TIME *time)=0;
-  virtual bool store_time(DRIZZLE_TIME *time)=0;
   virtual bool store(Field *field)=0;
 };
 

@@ -5335,7 +5335,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     if (!t)
     {
       /* Table didn't exist */
-      protocol->store_null();
+      protocol->store();
       session->clear_error();
     }
     else
@@ -5345,7 +5345,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 	protocol->store((uint64_t)t->file->checksum());
       else if (!(t->file->ha_table_flags() & HA_HAS_CHECKSUM) &&
 	       (check_opt->flags & T_QUICK))
-	protocol->store_null();
+	protocol->store();
       else
       {
 	/* calculating table's checksum */
@@ -5355,7 +5355,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
         t->use_all_columns();
 
 	if (t->file->ha_rnd_init(1))
-	  protocol->store_null();
+	  protocol->store();
 	else
 	{
 	  for (;;)

@@ -25,16 +25,6 @@
 #include "net_serv.h"
 #include "password.h"
 
-#if 0
-class Field;
-class i_string;
-class my_decimal;
-typedef struct st_vio Vio;
-typedef struct st_drizzle_field DRIZZLE_FIELD;
-typedef struct st_drizzle_rows DRIZZLE_ROWS;
-typedef struct st_drizzle_time DRIZZLE_TIME;
-#endif
-
 class ProtocolOldLibdrizzle: public Protocol
 {
 private:
@@ -85,36 +75,27 @@ public:
   virtual void sendOK();
   virtual void sendEOF();
   virtual void sendError(uint32_t sql_errno, const char *err);
-  virtual void sendErrorPacket(uint32_t sql_errno, const char *err);
   virtual void close(void);
   virtual void prepare_for_resend();
   virtual void free();
   virtual bool write();
   virtual bool flush();
   virtual bool send_fields(List<Item> *list, uint32_t flags);
-  virtual bool store(I_List<i_string> *str_list);
-  virtual bool store(const char *from, const CHARSET_INFO * const cs);
-  virtual bool store_null();
-  virtual bool store_tiny(int64_t from);
-  virtual bool store_short(int64_t from);
-  virtual bool store_long(int64_t from);
-  virtual bool store_int64_t(int64_t from, bool unsigned_flag);
-  virtual bool store_decimal(const my_decimal *);
-  virtual bool store(int from)
-  { return store_long((int64_t) from); }
-  virtual  bool store(uint32_t from)
-  { return store_long((int64_t) from); }
-  virtual bool store(int64_t from)
-  { return store_int64_t((int64_t) from, 0); }
-  virtual bool store(uint64_t from)
-  { return store_int64_t((int64_t) from, 1); }
+
+  virtual bool store(void);
+  virtual bool store(int32_t from);
+  virtual bool store(uint32_t from);
+  virtual bool store(int64_t from);
+  virtual bool store(uint64_t from);
   virtual bool store(String *str);
+  virtual bool store(DRIZZLE_TIME *time);
+
+  virtual bool store_decimal(const my_decimal *);
+  virtual bool store(I_List<i_string> *str_list);
   virtual bool store(const char *from, size_t length, const CHARSET_INFO * const cs);
+  virtual bool store(const char *from, const CHARSET_INFO * const cs);
   virtual bool store(const char *from, size_t length,
                      const CHARSET_INFO * const fromcs,  const CHARSET_INFO * const tocs);
-  virtual bool store(DRIZZLE_TIME *time);
-  virtual bool store_date(DRIZZLE_TIME *time);
-  virtual bool store_time(DRIZZLE_TIME *time);
   virtual bool store(float nr, uint32_t decimals, String *buffer);
   virtual bool store(double from, uint32_t decimals, String *buffer);
   virtual bool store(Field *field);

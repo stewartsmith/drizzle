@@ -274,28 +274,14 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     /* The query failed, send error to log and abort bootstrap. */
     session->protocol->sendError(session->main_da.sql_errno(),
                                  session->main_da.message());
-#if 0
-    session->protocol->sendError();
-#endif
     break;
 
   case Diagnostics_area::DA_EOF:
     session->protocol->sendEOF();
-#if 0
-    session->protocol->sendEOF(session->main_da.server_status(),
-                               session->main_da.total_warn_count());
-#endif
     break;
 
   case Diagnostics_area::DA_OK:
     session->protocol->sendOK();
-#if 0
-    session->protocol->sendOK(session->main_da.server_status(),
-                              session->main_da.total_warn_count(),
-                              session->main_da.affected_rows(),
-                              session->main_da.last_insert_id(),
-                              session->main_da.message());
-#endif
     break;
 
   case Diagnostics_area::DA_DISABLED:
@@ -303,13 +289,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   case Diagnostics_area::DA_EMPTY:
   default:
-    //TODO: Something is being masked here by commenting this out
-    //  assert(0);
     session->protocol->sendOK();
-#if 0
-    session->protocol->sendOK(session->server_status, session->total_warn_count,
-                              0, 0, NULL);
-#endif
     break;
   }
 

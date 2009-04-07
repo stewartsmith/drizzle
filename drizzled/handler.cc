@@ -1077,9 +1077,9 @@ bool mysql_xa_recover(Session *session)
     if (xs->xa_state==XA_PREPARED)
     {
       protocol->prepare_for_resend();
-      protocol->store_int64_t((int64_t)xs->xid.formatID, false);
-      protocol->store_int64_t((int64_t)xs->xid.gtrid_length, false);
-      protocol->store_int64_t((int64_t)xs->xid.bqual_length, false);
+      protocol->store((int64_t)xs->xid.formatID);
+      protocol->store((int64_t)xs->xid.gtrid_length);
+      protocol->store((int64_t)xs->xid.bqual_length);
       protocol->store(xs->xid.data, xs->xid.gtrid_length+xs->xid.bqual_length,
                       &my_charset_bin);
       if (protocol->write())

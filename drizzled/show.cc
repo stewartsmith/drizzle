@@ -1099,7 +1099,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     if (session_info->start_time)
       protocol->store((uint32_t) (now - session_info->start_time));
     else
-      protocol->store_null();
+      protocol->store();
     protocol->store(session_info->state_info, system_charset_info);
     protocol->store(session_info->query, system_charset_info);
     if (protocol->write())
