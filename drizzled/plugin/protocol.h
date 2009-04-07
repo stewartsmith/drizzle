@@ -62,7 +62,6 @@ public:
   virtual bool have_more_data(void)= 0;
   virtual bool is_reading(void)= 0;
   virtual bool is_writing(void)= 0;
-
   virtual bool init_file_descriptor(int fd)=0;
   virtual int file_descriptor(void)=0;
   virtual void init_random(uint64_t, uint64_t) {};
@@ -86,25 +85,22 @@ public:
   enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
   virtual bool send_fields(List<Item> *list, uint32_t flags)= 0;
 
+  virtual bool store(Field *from)= 0;
   virtual bool store(void)= 0;
   virtual bool store(int32_t from)= 0;
   virtual bool store(uint32_t from)= 0;
   virtual bool store(int64_t from)= 0;
   virtual bool store(uint64_t from)= 0;
-  virtual bool store(String *str)= 0;
-  virtual bool store(DRIZZLE_TIME *time)=0;
-
-  virtual bool store_decimal(const my_decimal * dec_value)=0;
-  virtual bool store(I_List<i_string> *str_list)= 0;
-  virtual bool store(const char *from, const CHARSET_INFO * const cs)= 0;
+  virtual bool store(double from, uint32_t decimals, String *buffer)= 0;
+  virtual bool store(const DRIZZLE_TIME *from)= 0;
+  virtual bool store(const char *from, const CHARSET_INFO * const cs)
+  {
+    if (from == NULL)
+      store();
+    return store(from, strlen(from), cs);
+  }
   virtual bool store(const char *from, size_t length,
-                     const CHARSET_INFO * const cs)=0;
-  virtual bool store(const char *from, size_t length,
-                     const CHARSET_INFO * const fromcs,
-                     const CHARSET_INFO * const tocs)=0;
-  virtual bool store(float from, uint32_t decimals, String *buffer)=0;
-  virtual bool store(double from, uint32_t decimals, String *buffer)=0;
-  virtual bool store(Field *field)=0;
+                     const CHARSET_INFO * const cs)= 0;
 };
 
 class ProtocolFactory

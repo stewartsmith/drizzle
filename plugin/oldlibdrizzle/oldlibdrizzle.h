@@ -82,23 +82,17 @@ public:
   virtual bool flush();
   virtual bool send_fields(List<Item> *list, uint32_t flags);
 
+  using Protocol::store;
+  virtual bool store(Field *from);
   virtual bool store(void);
   virtual bool store(int32_t from);
   virtual bool store(uint32_t from);
   virtual bool store(int64_t from);
   virtual bool store(uint64_t from);
-  virtual bool store(String *str);
-  virtual bool store(DRIZZLE_TIME *time);
-
-  virtual bool store_decimal(const my_decimal *);
-  virtual bool store(I_List<i_string> *str_list);
-  virtual bool store(const char *from, size_t length, const CHARSET_INFO * const cs);
-  virtual bool store(const char *from, const CHARSET_INFO * const cs);
-  virtual bool store(const char *from, size_t length,
-                     const CHARSET_INFO * const fromcs,  const CHARSET_INFO * const tocs);
-  virtual bool store(float nr, uint32_t decimals, String *buffer);
   virtual bool store(double from, uint32_t decimals, String *buffer);
-  virtual bool store(Field *field);
+  virtual bool store(const DRIZZLE_TIME *from);
+  virtual bool store(const char *from, size_t length,
+                     const CHARSET_INFO * const cs);
 };
 
 class ProtocolFactoryOldLibdrizzle: public ProtocolFactory

@@ -198,44 +198,6 @@ bool ProtocolOldLibdrizzle::netStoreData(const unsigned char *from, size_t lengt
   @param message       Message to send to the client (Used by mysql_status)
 */
 
-#if 0
-void ProtocolOldLibdrizzle::sendOK(uint32_t server_status,
-                                       uint32_t total_warn_count,
-            ha_rows affected_rows, uint64_t id, const char *message)
-{
-  unsigned char buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
-
-  if (!net->vio)    // hack for re-parsing queries
-  {
-    return;
-  }
-
-  buff[0]=0;                    // No fields
-  pos=drizzleclient_net_store_length(buff+1,affected_rows);
-  pos=drizzleclient_net_store_length(pos, id);
-  int2store(pos, server_status);
-  pos+=2;
-
-  /* We can only return up to 65535 warnings in two bytes */
-  uint32_t tmp= cmin(total_warn_count, (uint32_t)65535);
-  int2store(pos, tmp);
-  pos+= 2;
-
-  session->main_da.can_overwrite_status= true;
-
-  if (message && message[0])
-  {
-    size_t length= strlen(message);
-    pos=drizzleclient_net_store_length(pos,length);
-    memcpy(pos,(unsigned char*) message,length);
-    pos+=length;
-  }
-  drizzleclient_net_write(net, buff, (size_t) (pos-buff));
-  drizzleclient_net_flush(net);
-
-  session->main_da.can_overwrite_status= false;
-}
-#endif
 void ProtocolOldLibdrizzle::sendOK()
 {
   unsigned char buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
@@ -298,25 +260,8 @@ void ProtocolOldLibdrizzle::sendOK()
   Note that the warning count will not be sent if 'no_flush' is set as
   we don't want to report the warning count until all data is sent to the
   client.
-
-  @param session        Thread handler
-  @param no_flush    Set to 1 if there will be more data to the client,
-                    like in send_fields().
 */
 
-#if 0
-void ProtocolOldLibdrizzle::sendEOF(uint32_t server_status, uint32_t total_warn_count)
-{
-  /* Set to true if no active vio, to work well in case of --init-file */
-  if (net.vio != 0)
-  {
-    session->main_da.can_overwrite_status= true;
-    write_eof_packet(session, net, server_status, total_warn_count);
-    drizzleclient_net_flush(net);
-    session->main_da.can_overwrite_status= false;
-  }
-}
-#endif
 void ProtocolOldLibdrizzle::sendEOF()
 {
   /* Set to true if no active vio, to work well in case of --init-file */
@@ -459,7 +404,6 @@ bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
   String *local_packet= storage_packet();
-  const CHARSET_INFO * const session_charset= default_charset_info;
 
   if (flags & SEND_NUM_ROWS)
   {                // Packet with number of elements
@@ -477,24 +421,19 @@ bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
     prepare_for_resend();
 
 
-    if (store(STRING_WITH_LEN("def"), cs, session_charset) ||
-        store(field.db_name, (uint32_t) strlen(field.db_name),
-                   cs, session_charset) ||
-        store(field.table_name, (uint32_t) strlen(field.table_name),
-                   cs, session_charset) ||
-        store(field.org_table_name, (uint32_t) strlen(field.org_table_name),
-                   cs, session_charset) ||
-        store(field.col_name, (uint32_t) strlen(field.col_name),
-                   cs, session_charset) ||
-        store(field.org_col_name, (uint32_t) strlen(field.org_col_name),
-                   cs, session_charset) ||
+    if (store(STRING_WITH_LEN("def"), cs) ||
+        store(field.db_name, cs) ||
+        store(field.table_name, cs) ||
+        store(field.org_table_name, cs) ||
+        store(field.col_name, cs) ||
+        store(field.org_col_name, cs) ||
         local_packet->realloc(local_packet->length()+12))
       goto err;
 
     /* Store fixed length fields */
     pos= (char*) local_packet->ptr()+local_packet->length();
     *pos++= 12;                // Length of packed fields
-    if (item->collation.collation == &my_charset_bin || session_charset == NULL)
+    if (item->collation.collation == &my_charset_bin)
     {
       /* No conversion */
       int2store(pos, field.charsetnr);
@@ -504,7 +443,7 @@ bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
     {
       /* With conversion */
       uint32_t max_char_len;
-      int2store(pos, session_charset->number);
+      int2store(pos, cs->number);
       /*
         For TEXT/BLOB columns, field_length describes the maximum data
         length in bytes. There is no limit to the number of characters
@@ -516,7 +455,7 @@ bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
         of characters here is limited by the column definition.
       */
       max_char_len= field.length / item->collation.collation->mbmaxlen;
-      int4store(pos+2, max_char_len * session_charset->mbmaxlen);
+      int4store(pos+2, max_char_len * cs->mbmaxlen);
     }
     pos[6]= field.type;
     int2store(pos+7,field.flags);
@@ -554,59 +493,6 @@ bool ProtocolOldLibdrizzle::write()
 {
   return(drizzleclient_net_write(&net, (unsigned char*) packet->ptr(),
                            packet->length()));
-}
-
-
-/**
-  Send \\0 end terminated string.
-
-  @param from    NULL or \\0 terminated string
-
-  @note
-    In most cases one should use store(from, length) instead of this function
-
-  @retval
-    0        ok
-  @retval
-    1        error
-*/
-
-bool ProtocolOldLibdrizzle::store(const char *from, const CHARSET_INFO * const cs)
-{
-  if (!from)
-    return store();
-  uint32_t length= strlen(from);
-  return store(from, length, cs);
-}
-
-
-/**
-  Send a set of strings as one long string with ',' in between.
-*/
-
-bool ProtocolOldLibdrizzle::store(I_List<i_string>* str_list)
-{
-  char buf[256];
-  String tmp(buf, sizeof(buf), &my_charset_bin);
-  uint32_t len;
-  I_List_iterator<i_string> it(*str_list);
-  i_string* s;
-
-  tmp.length(0);
-  while ((s=it++))
-  {
-    tmp.append(s->ptr);
-    tmp.append(',');
-  }
-  if ((len= tmp.length()))
-    len--;                    // Remove last ','
-  return store((char*) tmp.ptr(), len,  tmp.charset());
-}
-
-
-bool ProtocolOldLibdrizzle::store(String *str)
-{
-  return store((char*) str->ptr(), str->length(), str->charset());
 }
 
 void ProtocolOldLibdrizzle::free()
@@ -774,14 +660,6 @@ bool ProtocolOldLibdrizzle::storeStringAux(const char *from, size_t length,
 
 
 bool ProtocolOldLibdrizzle::store(const char *from, size_t length,
-                          const CHARSET_INFO * const fromcs,
-                          const CHARSET_INFO * const tocs)
-{
-  return storeStringAux(from, length, fromcs, tocs);
-}
-
-
-bool ProtocolOldLibdrizzle::store(const char *from, size_t length,
                           const CHARSET_INFO * const fromcs)
 {
   const CHARSET_INFO * const tocs= default_charset_info;
@@ -818,22 +696,6 @@ bool ProtocolOldLibdrizzle::store(uint64_t from)
 }
 
 
-bool ProtocolOldLibdrizzle::store_decimal(const my_decimal *d)
-{
-  char buff[DECIMAL_MAX_STR_LENGTH];
-  String str(buff, sizeof(buff), &my_charset_bin);
-  (void) my_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
-  return netStoreData((unsigned char*) str.ptr(), str.length());
-}
-
-
-bool ProtocolOldLibdrizzle::store(float from, uint32_t decimals, String *buffer)
-{
-  buffer->set_real((double) from, decimals, session->charset());
-  return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
-}
-
-
 bool ProtocolOldLibdrizzle::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, session->charset());
@@ -841,15 +703,15 @@ bool ProtocolOldLibdrizzle::store(double from, uint32_t decimals, String *buffer
 }
 
 
-bool ProtocolOldLibdrizzle::store(Field *field)
+bool ProtocolOldLibdrizzle::store(Field *from)
 {
-  if (field->is_null())
+  if (from->is_null())
     return store();
   char buff[MAX_FIELD_WIDTH];
   String str(buff,sizeof(buff), &my_charset_bin);
   const CHARSET_INFO * const tocs= default_charset_info;
 
-  field->val_str(&str);
+  from->val_str(&str);
 
   return storeStringAux(str.ptr(), str.length(), str.charset(), tocs);
 }
@@ -861,7 +723,7 @@ bool ProtocolOldLibdrizzle::store(Field *field)
     we support 0-6 decimals for time.
 */
 
-bool ProtocolOldLibdrizzle::store(DRIZZLE_TIME *tm)
+bool ProtocolOldLibdrizzle::store(const DRIZZLE_TIME *tm)
 {
   char buff[40];
   uint32_t length;

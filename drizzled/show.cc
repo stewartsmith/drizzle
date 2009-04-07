@@ -1053,7 +1053,12 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         session_info->command=(int) tmp->command;
         if ((mysys_var= tmp->mysys_var))
           pthread_mutex_lock(&mysys_var->mutex);
-        session_info->proc_info= (char*) (tmp->killed == Session::KILL_CONNECTION? "Killed" : 0);
+
+        if (tmp->killed == Session::KILL_CONNECTION)
+          session_info->proc_info= (char*) "Killed";
+        else
+          session_info->proc_info= command_name[session_info->command].str;
+
         session_info->state_info= (char*) (tmp->protocol->is_writing() ?
                                            "Writing to net" :
                                            tmp->protocol->is_reading() ?
@@ -1092,16 +1097,16 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     protocol->store(session_info->user, system_charset_info);
     protocol->store(session_info->host, system_charset_info);
     protocol->store(session_info->db, system_charset_info);
-    if (session_info->proc_info)
-      protocol->store(session_info->proc_info, system_charset_info);
-    else
-      protocol->store(command_name[session_info->command].str, system_charset_info);
+    protocol->store(session_info->proc_info, system_charset_info);
+
     if (session_info->start_time)
       protocol->store((uint32_t) (now - session_info->start_time));
     else
       protocol->store();
+
     protocol->store(session_info->state_info, system_charset_info);
     protocol->store(session_info->query, system_charset_info);
+
     if (protocol->write())
       break; /* purecov: inspected */
   }
