@@ -208,28 +208,11 @@ bool String::set_or_copy_aligned(const char *str,uint32_t arg_length,
 	/* Copy with charset conversion */
 
 bool String::copy(const char *str, uint32_t arg_length,
-		          const CHARSET_INFO * const from_cs,
+		          const CHARSET_INFO * const,
 				  const CHARSET_INFO * const to_cs, uint32_t *errors)
 {
-  uint32_t offset;
-  if (!needs_conversion(arg_length, from_cs, to_cs, &offset))
-  {
-    *errors= 0;
-    return copy(str, arg_length, to_cs);
-  }
-  if ((from_cs == &my_charset_bin) && offset)
-  {
-    *errors= 0;
-    assert((from_cs == &my_charset_bin) && offset);
-    return false; //copy_aligned(str, arg_length, offset, to_cs);
-  }
-  uint32_t new_length= to_cs->mbmaxlen*arg_length;
-  if (alloc(new_length))
-    return true;
-  str_length=copy_and_convert((char*) Ptr, new_length, to_cs,
-                              str, arg_length, from_cs, errors);
-  str_charset=to_cs;
-  return false;
+  *errors= 0;
+  return copy(str, arg_length, to_cs);
 }
 
 
@@ -326,26 +309,13 @@ bool String::append(const char *s)
   with character set recoding
 */
 
-bool String::append(const char *s,uint32_t arg_length, const CHARSET_INFO * const cs)
+bool String::append(const char *s,uint32_t arg_length, const CHARSET_INFO * const)
 {
-  uint32_t dummy_offset;
+  if (realloc(str_length + arg_length))
+    return true;
+  memcpy(Ptr + str_length, s, arg_length);
+  str_length+= arg_length;
 
-  if (needs_conversion(arg_length, cs, str_charset, &dummy_offset))
-  {
-    uint32_t add_length= arg_length / cs->mbminlen * str_charset->mbmaxlen;
-    uint32_t dummy_errors;
-    if (realloc(str_length + add_length))
-      return true;
-    str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
-				  s, arg_length, cs, &dummy_errors);
-  }
-  else
-  {
-    if (realloc(str_length + arg_length))
-      return true;
-    memcpy(Ptr + str_length, s, arg_length);
-    str_length+= arg_length;
-  }
   return false;
 }
 

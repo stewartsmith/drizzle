@@ -136,44 +136,6 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
 }
 
 
-void key_copy(basic_string<unsigned char> &to_key,
-              unsigned char *from_record, KEY *key_info,
-              unsigned int key_length)
-{
-  uint32_t length;
-  KEY_PART_INFO *key_part;
-
-  if (key_length == 0)
-    key_length= key_info->key_length;
-  for (key_part= key_info->key_part; (int) key_length > 0; key_part++)
-  {
-    if (key_part->null_bit)
-    {
-      to_key.push_back(test(from_record[key_part->null_offset] &
-		       key_part->null_bit) ? '1' : '0');
-      key_length--;
-    }
-    if (key_part->key_part_flag & HA_BLOB_PART ||
-        key_part->key_part_flag & HA_VAR_LENGTH_PART)
-    {
-      key_length-= HA_KEY_BLOB_LENGTH;
-      length= cmin((uint16_t)key_length, key_part->length);
-      key_part->field->get_key_image(to_key, length, Field::itRAW);
-      to_key.append(HA_KEY_BLOB_LENGTH, '0');
-    }
-    else
-    {
-      length= cmin((uint16_t)key_length, key_part->length);
-      Field *field= key_part->field;
-      uint32_t bytes= field->get_key_image(to_key, length, Field::itRAW);
-      if (bytes < length)
-        to_key.append(length-bytes, ' ');
-    }
-    key_length-= length;
-  }
-}
-
-
 /**
   Zero the null components of key tuple.
 */

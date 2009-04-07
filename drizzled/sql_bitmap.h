@@ -76,7 +76,6 @@ public:
   bool is_clear_all() const { return bitmap_is_clear_all(&map); }
   bool is_set_all() const { return bitmap_is_set_all(&map); }
   bool is_subset(const Bitmap& map2) const { return bitmap_is_subset(&map, &map2.map); }
-  bool is_overlapping(const Bitmap& map2) const { return bitmap_is_overlapping(&map, &map2.map); }
   bool operator==(const Bitmap& map2) const { return bitmap_cmp(&map, &map2.map); }
   bool operator!=(const Bitmap& map2) const { return !bitmap_cmp(&map, &map2.map); }
   Bitmap operator&=(uint32_t n)
