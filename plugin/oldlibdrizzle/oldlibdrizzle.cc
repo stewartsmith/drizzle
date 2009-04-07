@@ -32,7 +32,7 @@
 #include <drizzled/data_home.h>
 #include "pack.h"
 #include "errmsg.h"
-#include "libdrizzleclient.h"
+#include "oldlibdrizzle.h"
 
 /*
   Function called by drizzleclient_net_init() to set some check variables
@@ -59,67 +59,67 @@ static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 static void write_eof_packet(Session *session, NET *net,
                              uint32_t server_status, uint32_t total_warn_count);
 
-bool Protocol_libdrizzleclient::isConnected()
+bool ProtocolOldLibdrizzle::isConnected()
 {
   return net.vio != 0;
 }
 
-void Protocol_libdrizzleclient::set_read_timeout(uint32_t timeout)
+void ProtocolOldLibdrizzle::set_read_timeout(uint32_t timeout)
 {
   drizzleclient_net_set_read_timeout(&net, timeout);
 }
 
-void Protocol_libdrizzleclient::set_write_timeout(uint32_t timeout)
+void ProtocolOldLibdrizzle::set_write_timeout(uint32_t timeout)
 {
   drizzleclient_net_set_write_timeout(&net, timeout);
 }
 
-void Protocol_libdrizzleclient::set_retry_count(uint32_t count)
+void ProtocolOldLibdrizzle::set_retry_count(uint32_t count)
 {
   net.retry_count=count;
 }
 
-void Protocol_libdrizzleclient::set_error(char error)
+void ProtocolOldLibdrizzle::set_error(char error)
 {
   net.error= error;
 }
 
-bool Protocol_libdrizzleclient::have_error(void)
+bool ProtocolOldLibdrizzle::have_error(void)
 {
   return net.error || net.vio == 0;
 }
 
-bool Protocol_libdrizzleclient::was_aborted(void)
+bool ProtocolOldLibdrizzle::was_aborted(void)
 {
   return net.error && net.vio != 0;
 }
 
-bool Protocol_libdrizzleclient::have_more_data(void)
+bool ProtocolOldLibdrizzle::have_more_data(void)
 {
   return drizzleclient_net_more_data(&net);
 }
 
-bool Protocol_libdrizzleclient::have_compression(void)
+bool ProtocolOldLibdrizzle::have_compression(void)
 {
   return net.compress;
 }
 
-void Protocol_libdrizzleclient::enable_compression(void)
+void ProtocolOldLibdrizzle::enable_compression(void)
 {
   net.compress= true;
 }
 
-bool Protocol_libdrizzleclient::is_reading(void)
+bool ProtocolOldLibdrizzle::is_reading(void)
 {
   return net.reading_or_writing == 1;
 }
 
-bool Protocol_libdrizzleclient::is_writing(void)
+bool ProtocolOldLibdrizzle::is_writing(void)
 {
   return net.reading_or_writing == 2;
 }
 
-bool Protocol_libdrizzleclient::netStoreData(const unsigned char *from, size_t length)
+bool ProtocolOldLibdrizzle::netStoreData(const unsigned char *from, size_t length)
 {
   size_t packet_length= packet->length();
   /*
@@ -150,7 +150,7 @@ bool Protocol_libdrizzleclient::netStoreData(const unsigned char *from, size_t l
   because column, table, database names fit into this limit.
 */
 
-bool Protocol_libdrizzleclient::netStoreData(const unsigned char *from, size_t length,
+bool ProtocolOldLibdrizzle::netStoreData(const unsigned char *from, size_t length,
                               const CHARSET_INFO * const from_cs,
 							  const CHARSET_INFO * const to_cs)
 {
@@ -215,7 +215,7 @@ bool Protocol_libdrizzleclient::netStoreData(const unsigned char *from, size_t l
 */
 
 #if 0
-void Protocol_libdrizzleclient::sendOK(uint32_t server_status,
+void ProtocolOldLibdrizzle::sendOK(uint32_t server_status,
                                        uint32_t total_warn_count,
             ha_rows affected_rows, uint64_t id, const char *message)
 {
@@ -252,7 +252,7 @@ void Protocol_libdrizzleclient::sendOK(uint32_t server_status,
   session->main_da.can_overwrite_status= false;
 }
 #endif
-void Protocol_libdrizzleclient::sendOK()
+void ProtocolOldLibdrizzle::sendOK()
 {
   unsigned char buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
   const char *message= NULL;
@@ -321,7 +321,7 @@ void Protocol_libdrizzleclient::sendOK()
 */
 
 #if 0
-void Protocol_libdrizzleclient::sendEOF(uint32_t server_status, uint32_t total_warn_count)
+void ProtocolOldLibdrizzle::sendEOF(uint32_t server_status, uint32_t total_warn_count)
 {
   /* Set to true if no active vio, to work well in case of --init-file */
   if (net.vio != 0)
@@ -333,7 +333,7 @@ void Protocol_libdrizzleclient::sendEOF(uint32_t server_status, uint32_t total_w
   }
 }
 #endif
-void Protocol_libdrizzleclient::sendEOF()
+void ProtocolOldLibdrizzle::sendEOF()
 {
   /* Set to true if no active vio, to work well in case of --init-file */
   if (net.vio != 0)
@@ -375,7 +375,7 @@ static void write_eof_packet(Session *session, NET *net,
   drizzleclient_net_write(net, buff, 5);
 }
 
-void Protocol_libdrizzleclient::sendErrorPacket(uint32_t sql_errno, const char *err)
+void ProtocolOldLibdrizzle::sendErrorPacket(uint32_t sql_errno, const char *err)
 {
   uint32_t length;
   /*
@@ -418,7 +418,7 @@ void Protocol_libdrizzleclient::sendErrorPacket(uint32_t sql_errno, const char *
   critical that every error that can be intercepted is issued in one
   place only, my_message_sql.
 */
-void Protocol_libdrizzleclient::sendError(uint32_t sql_errno, const char *err)
+void ProtocolOldLibdrizzle::sendError(uint32_t sql_errno, const char *err)
 {
   assert(sql_errno);
   assert(err && err[0]);
@@ -441,20 +441,20 @@ void Protocol_libdrizzleclient::sendError(uint32_t sql_errno, const char *err)
   Default Protocol functions
 *****************************************************************************/
 
-Protocol_libdrizzleclient::Protocol_libdrizzleclient()
+ProtocolOldLibdrizzle::ProtocolOldLibdrizzle()
 {
   scramble[0]= 0;
   net.vio= 0;
 }
 
-void Protocol_libdrizzleclient::setSession(Session *session_arg)
+void ProtocolOldLibdrizzle::setSession(Session *session_arg)
 {
   session= session_arg;
   packet= &session->packet;
   convert= &session->convert_buffer;
 }
 
-bool Protocol_libdrizzleclient::flush()
+bool ProtocolOldLibdrizzle::flush()
 {
   return drizzleclient_net_flush(&net);
 }
@@ -478,7 +478,7 @@ bool Protocol_libdrizzleclient::flush()
     1	Error  (Note that in this case the error is not sent to the
     client)
 */
-bool Protocol_libdrizzleclient::send_fields(List<Item> *list, uint32_t flags)
+bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
 {
   List_iterator_fast<Item> it(*list);
   Item *item;
@@ -576,7 +576,7 @@ err:
 }
 
 
-bool Protocol_libdrizzleclient::write()
+bool ProtocolOldLibdrizzle::write()
 {
   return(drizzleclient_net_write(&net, (unsigned char*) packet->ptr(),
                            packet->length()));
@@ -597,7 +597,7 @@ bool Protocol_libdrizzleclient::write()
     1		error
 */
 
-bool Protocol_libdrizzleclient::store(const char *from, const CHARSET_INFO * const cs)
+bool ProtocolOldLibdrizzle::store(const char *from, const CHARSET_INFO * const cs)
 {
   if (!from)
     return store_null();
@@ -610,7 +610,7 @@ bool Protocol_libdrizzleclient::store(const char *from, const CHARSET_INFO * con
   Send a set of strings as one long string with ',' in between.
 */
 
-bool Protocol_libdrizzleclient::store(I_List<i_string>* str_list)
+bool ProtocolOldLibdrizzle::store(I_List<i_string>* str_list)
 {
   char buf[256];
   String tmp(buf, sizeof(buf), &my_charset_bin);
@@ -630,12 +630,12 @@ bool Protocol_libdrizzleclient::store(I_List<i_string>* str_list)
 }
 
 
-bool Protocol_libdrizzleclient::store(String *str)
+bool ProtocolOldLibdrizzle::store(String *str)
 {
   return store((char*) str->ptr(), str->length(), str->charset());
 }
 
-void Protocol_libdrizzleclient::free()
+void ProtocolOldLibdrizzle::free()
 {
   packet->free();
 }
@@ -649,24 +649,24 @@ void Protocol_libdrizzleclient::free()
   All data are sent as 'packed-string-length' followed by 'string-data'
 ****************************************************************************/
 
-void Protocol_libdrizzleclient::init_random(uint64_t seed1, uint64_t seed2)
+void ProtocolOldLibdrizzle::init_random(uint64_t seed1, uint64_t seed2)
 {
   drizzleclient_randominit(&rand, seed1, seed2);
 }
 
-bool Protocol_libdrizzleclient::init_file_descriptor(int fd)
+bool ProtocolOldLibdrizzle::init_file_descriptor(int fd)
 {
   if (drizzleclient_net_init_sock(&net, fd, 0))
     return true;
   return false;
 }
 
-int Protocol_libdrizzleclient::file_descriptor(void)
+int ProtocolOldLibdrizzle::file_descriptor(void)
 {
   return drizzleclient_net_get_sd(&net);
 }
 
-bool Protocol_libdrizzleclient::authenticate()
+bool ProtocolOldLibdrizzle::authenticate()
 {
   bool connection_is_valid;
 
@@ -692,7 +692,7 @@ bool Protocol_libdrizzleclient::authenticate()
   return true;
 }
 
-bool Protocol_libdrizzleclient::read_command(char **l_packet, uint32_t *packet_length)
+bool ProtocolOldLibdrizzle::read_command(char **l_packet, uint32_t *packet_length)
 {
   /*
     This thread will do a blocking read from the client which
@@ -755,7 +755,7 @@ bool Protocol_libdrizzleclient::read_command(char **l_packet, uint32_t *packet_l
   return true;
 }
 
-void Protocol_libdrizzleclient::close(void)
+void ProtocolOldLibdrizzle::close(void)
 {
   if (net.vio)
   { 
@@ -764,12 +764,12 @@ void Protocol_libdrizzleclient::close(void)
   }
 }
 
-void Protocol_libdrizzleclient::prepare_for_resend()
+void ProtocolOldLibdrizzle::prepare_for_resend()
 {
   packet->length(0);
 }
 
-bool Protocol_libdrizzleclient::store_null()
+bool ProtocolOldLibdrizzle::store_null()
 {
   char buff[1];
   buff[0]= (char)251;
@@ -782,7 +782,7 @@ bool Protocol_libdrizzleclient::store_null()
   and store in network buffer.
 */
 
-bool Protocol_libdrizzleclient::storeStringAux(const char *from, size_t length,
+bool ProtocolOldLibdrizzle::storeStringAux(const char *from, size_t length,
                                 const CHARSET_INFO * const fromcs,
 								const CHARSET_INFO * const tocs)
 {
@@ -799,7 +799,7 @@ bool Protocol_libdrizzleclient::storeStringAux(const char *from, size_t length,
 }
 
 
-bool Protocol_libdrizzleclient::store(const char *from, size_t length,
+bool ProtocolOldLibdrizzle::store(const char *from, size_t length,
                           const CHARSET_INFO * const fromcs,
 						  const CHARSET_INFO * const tocs)
 {
@@ -807,7 +807,7 @@ bool Protocol_libdrizzleclient::store(const char *from, size_t length,
 }
 
 
-bool Protocol_libdrizzleclient::store(const char *from, size_t length,
+bool ProtocolOldLibdrizzle::store(const char *from, size_t length,
                           const CHARSET_INFO * const fromcs)
 {
   const CHARSET_INFO * const tocs= default_charset_info;
@@ -815,7 +815,7 @@ bool Protocol_libdrizzleclient::store(const char *from, size_t length,
 }
 
 
-bool Protocol_libdrizzleclient::store_tiny(int64_t from)
+bool ProtocolOldLibdrizzle::store_tiny(int64_t from)
 {
   char buff[20];
   return netStoreData((unsigned char*) buff,
@@ -823,7 +823,7 @@ bool Protocol_libdrizzleclient::store_tiny(int64_t from)
 }
 
 
-bool Protocol_libdrizzleclient::store_short(int64_t from)
+bool ProtocolOldLibdrizzle::store_short(int64_t from)
 {
   char buff[20];
   return netStoreData((unsigned char*) buff,
@@ -832,7 +832,7 @@ bool Protocol_libdrizzleclient::store_short(int64_t from)
 }
 
 
-bool Protocol_libdrizzleclient::store_long(int64_t from)
+bool ProtocolOldLibdrizzle::store_long(int64_t from)
 {
   char buff[20];
   return netStoreData((unsigned char*) buff,
@@ -841,7 +841,7 @@ bool Protocol_libdrizzleclient::store_long(int64_t from)
 }
 
 
-bool Protocol_libdrizzleclient::store_int64_t(int64_t from, bool unsigned_flag)
+bool ProtocolOldLibdrizzle::store_int64_t(int64_t from, bool unsigned_flag)
 {
   char buff[22];
   return netStoreData((unsigned char*) buff,
@@ -851,7 +851,7 @@ bool Protocol_libdrizzleclient::store_int64_t(int64_t from, bool unsigned_flag)
 }
 
 
-bool Protocol_libdrizzleclient::store_decimal(const my_decimal *d)
+bool ProtocolOldLibdrizzle::store_decimal(const my_decimal *d)
 {
   char buff[DECIMAL_MAX_STR_LENGTH];
   String str(buff, sizeof(buff), &my_charset_bin);
@@ -860,21 +860,21 @@ bool Protocol_libdrizzleclient::store_decimal(const my_decimal *d)
 }
 
 
-bool Protocol_libdrizzleclient::store(float from, uint32_t decimals, String *buffer)
+bool ProtocolOldLibdrizzle::store(float from, uint32_t decimals, String *buffer)
 {
   buffer->set_real((double) from, decimals, session->charset());
   return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
 }
 
 
-bool Protocol_libdrizzleclient::store(double from, uint32_t decimals, String *buffer)
+bool ProtocolOldLibdrizzle::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, session->charset());
   return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
 }
 
 
-bool Protocol_libdrizzleclient::store(Field *field)
+bool ProtocolOldLibdrizzle::store(Field *field)
 {
   if (field->is_null())
     return store_null();
@@ -894,7 +894,7 @@ bool Protocol_libdrizzleclient::store(Field *field)
     we support 0-6 decimals for time.
 */
 
-bool Protocol_libdrizzleclient::store(DRIZZLE_TIME *tm)
+bool ProtocolOldLibdrizzle::store(DRIZZLE_TIME *tm)
 {
   char buff[40];
   uint32_t length;
@@ -912,7 +912,7 @@ bool Protocol_libdrizzleclient::store(DRIZZLE_TIME *tm)
 }
 
 
-bool Protocol_libdrizzleclient::store_date(DRIZZLE_TIME *tm)
+bool ProtocolOldLibdrizzle::store_date(DRIZZLE_TIME *tm)
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   size_t length= my_date_to_str(tm, buff);
@@ -926,7 +926,7 @@ bool Protocol_libdrizzleclient::store_date(DRIZZLE_TIME *tm)
     we support 0-6 decimals for time.
 */
 
-bool Protocol_libdrizzleclient::store_time(DRIZZLE_TIME *tm)
+bool ProtocolOldLibdrizzle::store_time(DRIZZLE_TIME *tm)
 {
   char buff[40];
   uint32_t length;
@@ -941,7 +941,7 @@ bool Protocol_libdrizzleclient::store_time(DRIZZLE_TIME *tm)
   return netStoreData((unsigned char*) buff, length);
 }
 
-bool Protocol_libdrizzleclient::checkConnection(void)
+bool ProtocolOldLibdrizzle::checkConnection(void)
 {
   uint32_t pkt_len= 0;
   char *end;
@@ -1107,34 +1107,32 @@ bool Protocol_libdrizzleclient::checkConnection(void)
   return session->checkUser(passwd, passwd_len, l_db);
 }
 
-Protocol *libdrizzleclient_protocol_factory(void)
-{
-  return new Protocol_libdrizzleclient;
-}
-
-typedef Protocol *(protocol_factory_t)(void);
-
 static int init(void *p)
 {
-  protocol_factory_t **protocol_factory= (protocol_factory_t **) p;
-
-  *protocol_factory= libdrizzleclient_protocol_factory;
-
+  ProtocolFactory **factory= (ProtocolFactory **)p;
+  *factory= new ProtocolFactoryOldLibdrizzle;
   return 0;
 }
 
-drizzle_declare_plugin(libdrizzleclient)
+static int deinit(void *p)
+{
+  ProtocolFactoryOldLibdrizzle *factory= (ProtocolFactoryOldLibdrizzle *)p;
+  delete factory;
+  return 0;
+}
+
+drizzle_declare_plugin(oldlibdrizzle)
 {
   DRIZZLE_PROTOCOL_PLUGIN,
-  "libdrizzleclient",
+  "oldlibdrizzle",
   "0.1",
   "Eric Day",
-  "Old libdrizzleclient protocol",
+  "Old libdrizzle Protocol",
   PLUGIN_LICENSE_GPL,
-  init, /* Plugin Init */
-  NULL, /* Plugin Deinit */
-  NULL, /* status variables */
-  NULL, /* system variables */
-  NULL  /* config options */
+  init,   /* Plugin Init */
+  deinit, /* Plugin Deinit */
+  NULL,   /* status variables */
+  NULL,   /* system variables */
+  NULL    /* config options */
 }
 drizzle_declare_plugin_end;

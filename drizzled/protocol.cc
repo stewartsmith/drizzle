@@ -20,21 +20,15 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/protocol.h>
 #include <drizzled/gettext.h>
-#include <drizzled/connect.h>
-
-typedef Protocol *(protocol_factory_t)(void);
-
-protocol_factory_t *protocol_factory;
-
-static bool protocol_inited= false; /* We must insist that only one of these plugins get loaded at a time */
-
 
 extern char *opt_protocol;
+
+ProtocolFactory *protocol_factory= NULL;
 
 Protocol *get_protocol()
 {
   assert(protocol_factory != NULL);
-  return (protocol_factory)();
+  return (*protocol_factory)();
 }
 
 int protocol_initializer(st_plugin_int *plugin)
@@ -42,7 +36,7 @@ int protocol_initializer(st_plugin_int *plugin)
   if (memcmp(plugin->plugin->name, opt_protocol, strlen(opt_protocol)))
     return 0;
 
-  if (protocol_inited)
+  if (protocol_factory != NULL)
   {
     fprintf(stderr, "You cannot load more then one protocol plugin\n");
     exit(1);
@@ -61,18 +55,17 @@ int protocol_initializer(st_plugin_int *plugin)
       return 1;
   }
 
-  protocol_inited= true;
+  plugin->data= protocol_factory;
 
   return 0;
-
 }
 
 int protocol_finalizer(st_plugin_int *plugin)
 {
   /* We know which one we initialized since its data pointer is filled */
-  if (plugin->plugin->deinit && protocol_inited)
+  if (plugin->plugin->deinit && plugin->data)
   {
-    if (plugin->plugin->deinit(NULL))
+    if (plugin->plugin->deinit((void *)plugin->data))
     {
       /* TRANSLATORS: The leading word "protocol" is the name
          of the plugin api, and so should not be translated. */

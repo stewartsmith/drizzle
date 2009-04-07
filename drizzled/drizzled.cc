@@ -249,7 +249,7 @@ bool volatile abort_loop;
 bool volatile shutdown_in_progress;
 uint32_t max_used_connections;
 const char *opt_scheduler= "multi_thread";
-const char *opt_protocol= "libdrizzleclient";
+const char *opt_protocol= "oldlibdrizzle";
 
 size_t my_thread_stack_size= 65536;
 
@@ -2432,7 +2432,7 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.preload_buff_size, 0, GET_ULL,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
   {"protocol", OPT_SCHEDULER,
-   N_("Select protocol to be used (by default libdrizzleclient)."),
+   N_("Select protocol to be used (by default oldlibdrizzle)."),
    (char**) &opt_protocol, (char**) &opt_protocol, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"query_alloc_block_size", OPT_QUERY_ALLOC_BLOCK_SIZE,

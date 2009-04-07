@@ -26,17 +26,6 @@
 class Session;
 class String;
 
-#if 0
-
-class Field;
-class String;
-class i_string;
-class my_decimal;
-typedef struct st_drizzle_field DRIZZLE_FIELD;
-typedef struct st_drizzle_rows DRIZZLE_ROWS;
-typedef struct st_drizzle_time DRIZZLE_TIME;
-#endif
-
 class Protocol
 {
 protected:
@@ -129,6 +118,14 @@ public:
   virtual bool store_date(DRIZZLE_TIME *time)=0;
   virtual bool store_time(DRIZZLE_TIME *time)=0;
   virtual bool store(Field *field)=0;
+};
+
+class ProtocolFactory
+{
+public:
+  ProtocolFactory() {}
+  virtual ~ProtocolFactory() {}
+  virtual Protocol *operator()(void)= 0;
 };
 
 #endif /* DRIZZLED_PLUGIN_PROTOCOL_H */

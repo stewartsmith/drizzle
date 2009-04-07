@@ -17,25 +17,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_LIBDRIZZLECLIENT_PROTOCOL_H
-#define DRIZZLED_LIBDRIZZLECLIENT_PROTOCOL_H
+#ifndef DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H
+#define DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H
 
 #include <drizzled/plugin/protocol.h>
-#include <drizzled/sql_list.h>
-#include <drizzled/item.h>
+
 #include "net_serv.h"
 #include "password.h"
 
+#if 0
 class Field;
-class String;
 class i_string;
 class my_decimal;
 typedef struct st_vio Vio;
 typedef struct st_drizzle_field DRIZZLE_FIELD;
 typedef struct st_drizzle_rows DRIZZLE_ROWS;
 typedef struct st_drizzle_time DRIZZLE_TIME;
+#endif
 
-class Protocol_libdrizzleclient :public Protocol
+class ProtocolOldLibdrizzle: public Protocol
 {
 private:
   NET net;
@@ -62,10 +62,8 @@ private:
   bool checkConnection(void);
 
 public:
-  Protocol_libdrizzleclient();
-
+  ProtocolOldLibdrizzle();
   virtual void setSession(Session *session_arg);
-
   virtual bool isConnected();
 
   virtual void set_read_timeout(uint32_t timeout);
@@ -122,4 +120,13 @@ public:
   virtual bool store(Field *field);
 };
 
-#endif /* DRIZZLED_LIBDRIZZLECLIENT_PROTOCOL_H */
+class ProtocolFactoryOldLibdrizzle: public ProtocolFactory
+{
+public:
+  Protocol *operator()(void)
+  {
+    return new ProtocolOldLibdrizzle;
+  }
+};
+
+#endif /* DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H */
