@@ -3670,8 +3670,8 @@ build_template(
 				goto include_field;
 			}
 
-                        if (bitmap_is_set(table->read_set, sql_idx) ||
-                            bitmap_is_set(table->write_set, sql_idx)) {
+                        if (table->read_set->test(sql_idx) ||
+                            table->write_set->test(sql_idx)) {
 				/* This field is needed in the query */
 
 				goto include_field;
