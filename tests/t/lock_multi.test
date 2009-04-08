@@ -2,35 +2,9 @@
 drop table if exists t1,t2;
 --enable_warnings
 
-# Test to see if select will get the lock ahead of low priority update
-
 connect (locker,localhost,root,,);
 connect (reader,localhost,root,,);
 connect (writer,localhost,root,,);
-
-connection locker;
-create table t1(n int);
-insert into t1 values (1);
-lock tables t1 write;
-connection writer;
-send update low_priority t1 set n = 4;
-connection reader;
-let $wait_condition=
-  select count(*) = 1 from information_schema.processlist
-  where state = "Table lock" and info = "update low_priority t1 set n = 4";
---source include/wait_condition.inc
-send select n from t1;
-connection locker;
-let $wait_condition=
-  select count(*) = 1 from information_schema.processlist
-  where state = "Table lock" and info = "select n from t1";
---source include/wait_condition.inc
-unlock tables;
-connection writer;
-reap;
-connection reader;
-reap;
-drop table t1;
 
 connection locker;
 create table t1(n int);
