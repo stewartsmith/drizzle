@@ -62,7 +62,7 @@ int initialize_udf(st_plugin_int *plugin)
   else
     return 1;
 
-  if (!add_udf(f))
+  if (add_udf(f))
     return 1;
 
   plugin->data= f;

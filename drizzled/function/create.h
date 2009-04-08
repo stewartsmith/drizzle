@@ -36,6 +36,7 @@ class Function_builder
   std::vector<std::string> aliases;
 public:
   Function_builder(std::string in_name) : name(in_name) {}
+  Function_builder(const char *in_name) : name(in_name) {}
   virtual result_type operator()(argument_type session) const= 0;
   virtual ~Function_builder() {}
 
@@ -61,6 +62,7 @@ class Create_function : public Function_builder
 public:
   typedef T Function_class;
   Create_function(std::string in_name): Function_builder(in_name) {}
+  Create_function(const char *in_name): Function_builder(in_name) {}
   virtual result_type operator()(argument_type root) const
   {
     return new (root) Function_class();

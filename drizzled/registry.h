@@ -50,8 +50,8 @@ class Registry
     /* Transform to lower, then add */ 
     transform(name.begin(), name.end(),
               name.begin(), ::tolower);
-    if (addItemEntry(name, item))
-      return true;
+    /* Ignore failures here - the original name could be all lower */
+    addItemEntry(name, item);
 
     return false;
   }
