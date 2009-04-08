@@ -72,6 +72,7 @@ class Registry
 
 public:
 
+  typedef typename std::set<T>::const_iterator const_iterator;
   typedef typename std::set<T>::iterator iterator;
 
   T find(const char *name, size_t length)
@@ -146,12 +147,12 @@ public:
     }
   }
 
-  iterator& begin()
+  iterator begin()
   {
     return item_set.begin();
   }
 
-  iterator& end()
+  iterator end()
   {
     return item_set.end();
   }

@@ -183,22 +183,6 @@ int ha_end()
   return(error);
 }
 
-static bool dropdb_storage_engine(Session *,
-                                  st_plugin_int *plugin,
-                                  void *path)
-{
-  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->is_enabled())
-    engine->drop_database((char *)path);
-  return false;
-}
-
-
-void ha_drop_database(char* path)
-{
-  plugin_foreach(NULL, dropdb_storage_engine, DRIZZLE_STORAGE_ENGINE_PLUGIN, path);
-}
-
 
 static bool closecon_storage_engine(Session *session, st_plugin_int *plugin,
                                 void *)

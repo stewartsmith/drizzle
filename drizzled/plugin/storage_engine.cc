@@ -144,6 +144,13 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
 }
 
 
+void ha_drop_database(char* path)
+{
+  for_each(all_engines.begin(), all_engines.end(),
+           bind2nd(mem_fun(&StorageEngine::drop_database),path));
+}
+
+
 int storage_engine_finalizer(st_plugin_int *plugin)
 {
   StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
