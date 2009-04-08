@@ -270,8 +270,6 @@ static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
 static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
                                            fix_server_id);
 
-static sys_var_uint64_t_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
-                                             &slow_launch_time);
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
                                                 &SV::sortbuff_size);
 /*
