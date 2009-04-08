@@ -982,33 +982,6 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 }
 
 
-static bool snapshot_storage_engine(Session *session, st_plugin_int *plugin, void *arg)
-{
-  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->is_enabled())
-  {
-    engine->start_consistent_snapshot(session);
-    *((bool *)arg)= false;
-  }
-  return false;
-}
-
-int ha_start_consistent_snapshot(Session *session)
-{
-  bool warn= true;
-
-  plugin_foreach(session, snapshot_storage_engine, DRIZZLE_STORAGE_ENGINE_PLUGIN, &warn);
-
-  /*
-    Same idea as when one wants to CREATE TABLE in one engine which does not
-    exist:
-  */
-  if (warn)
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
-                 "This Drizzle server does not support any "
-                 "consistent-read capable storage engine");
-  return 0;
-}
 
 
 

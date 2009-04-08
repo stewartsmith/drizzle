@@ -392,6 +392,13 @@ int ha_recover(HASH *commit_list)
   return(0);
 }
 
+int ha_start_consistent_snapshot(Session *session)
+{
+  for_each(all_engines.begin(), all_engines.end(),
+           bind2nd(mem_fun(&StorageEngine::start_consistent_snapshot),session));
+  return 0;
+}
+
 int storage_engine_finalizer(st_plugin_int *plugin)
 {
   StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
