@@ -19,7 +19,6 @@
 
 
 noinst_HEADERS =\
-		get_password.h \
 		drizzle.h \
 		drizzle_data.h \
 		drizzle_field.h \
@@ -43,7 +42,6 @@ liboldlibdrizzle_la_SOURCES= \
 		drizzle.cc \
 		drizzle_data.cc \
 		errmsg.cc \
-		get_password.cc \
 		libdrizzle.cc \
 		oldlibdrizzle.cc \
 		libdrizzle_priv.cc \

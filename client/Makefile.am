@@ -17,10 +17,11 @@
 
 LDADD=			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LIBDRIZZLE) $(LIBINTL) $(LIBZ)
+			$(LIBDRIZZLE) $(LIBINTL) $(LIBZ) libgetpassword.la
 
 
-noinst_HEADERS =	my_readline.h \
+noinst_HEADERS =	get_password.h \
+			my_readline.h \
 			client_priv.h \
 			errname.h
 
@@ -34,20 +35,22 @@ bin_PROGRAMS =			drizzle \
 				drizzletest \
 				drizzleslap
 
-drizzle_SOURCES=		drizzle.cc readline.cc get_password.cc
+noinst_LTLIBRARIES=		libgetpassword.la
+libgetpassword_la_SOURCES=	get_password.cc
+
+drizzle_SOURCES=		drizzle.cc readline.cc
 drizzle_LDADD=			${LDADD} ${READLINE_LIBS}
-drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${W_EXCEPTIONS} 
 
-drizzleadmin_SOURCES=		drizzleadmin.cc get_password.cc
+drizzleadmin_SOURCES=		drizzleadmin.cc
 
-drizzlecheck_SOURCES =		drizzlecheck.cc get_password.cc
+drizzlecheck_SOURCES =		drizzlecheck.cc
 
-drizzledump_SOURCES=            drizzledump.cc  get_password.cc
+drizzledump_SOURCES=            drizzledump.cc
 
-drizzleimport_SOURCES=		drizzleimport.cc get_password.cc
+drizzleimport_SOURCES=		drizzleimport.cc
 
-drizzleslap_SOURCES=            drizzleslap.cc get_password.cc
+drizzleslap_SOURCES=            drizzleslap.cc
 
-drizzletest_SOURCES=		drizzletest.cc  get_password.cc
+drizzletest_SOURCES=		drizzletest.cc
 drizzletest_LDADD=		${LDADD} ${LIBPCRE}
 

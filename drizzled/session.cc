@@ -343,7 +343,6 @@ void session_get_xid(const Session *session, DRIZZLE_XID *xid)
 
 void Session::init(void)
 {
-  pthread_mutex_lock(&LOCK_global_system_variables);
   plugin_sessionvar_init(this);
   /*
     variables= global_system_variables above has reset
@@ -351,7 +350,6 @@ void Session::init(void)
     avoid temporary tables replication failure.
   */
   variables.pseudo_thread_id= thread_id;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
   server_status= SERVER_STATUS_AUTOCOMMIT;
   options= session_startup_options;
 
