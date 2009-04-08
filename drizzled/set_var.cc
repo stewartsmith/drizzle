@@ -510,20 +510,20 @@ static int check_completion_type(Session *, set_var *var)
 static void fix_net_read_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    session->protocol->set_read_timeout(session->variables.net_read_timeout);
+    session->protocol->setReadTimeout(session->variables.net_read_timeout);
 }
 
 
 static void fix_net_write_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    session->protocol->set_write_timeout(session->variables.net_write_timeout);
+    session->protocol->setWriteTimeout(session->variables.net_write_timeout);
 }
 
 static void fix_net_retry_count(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    session->protocol->set_retry_count(session->variables.net_retry_count);
+    session->protocol->setRetryCount(session->variables.net_retry_count);
 }
 
 

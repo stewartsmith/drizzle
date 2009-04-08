@@ -32,6 +32,7 @@ private:
   Vio* save_vio;
   struct rand_struct rand;
   char scramble[SCRAMBLE_LENGTH+1];
+  String *packet;
   String *convert;
   uint32_t field_pos;
   uint32_t field_count;
@@ -39,9 +40,9 @@ private:
   bool netStoreData(const unsigned char *from, size_t length,
                     const CHARSET_INFO * const fromcs,
                     const CHARSET_INFO * const tocs);
-  bool storeStringAux(const char *from, size_t length,
-                      const CHARSET_INFO * const fromcs,
-                      const CHARSET_INFO * const tocs);
+  bool storeString(const char *from, size_t length,
+                   const CHARSET_INFO * const fromcs,
+                   const CHARSET_INFO * const tocs);
 
   /**
    * Performs handshake with client and authorizes user.
@@ -55,32 +56,30 @@ public:
   ProtocolOldLibdrizzle();
   virtual void setSession(Session *session_arg);
   virtual bool isConnected();
-
-  virtual void set_read_timeout(uint32_t timeout);
-  virtual void set_write_timeout(uint32_t timeout);
-  virtual void set_retry_count(uint32_t count);
-  virtual void set_error(char error);
-  virtual bool have_error(void);
-  virtual bool was_aborted(void);
-  virtual bool have_compression(void); 
-  virtual void enable_compression(void);
-  virtual bool have_more_data(void);
-  virtual bool is_reading(void);
-  virtual bool is_writing(void);
-  virtual bool init_file_descriptor(int fd);
-  virtual int file_descriptor(void);
-  virtual void init_random(uint64_t seed1, uint64_t seed2);
+  virtual void setReadTimeout(uint32_t timeout);
+  virtual void setWriteTimeout(uint32_t timeout);
+  virtual void setRetryCount(uint32_t count);
+  virtual void setError(char error);
+  virtual bool haveError(void);
+  virtual bool wasAborted(void);
+  virtual void enableCompression(void);
+  virtual bool haveMoreData(void);
+  virtual bool isReading(void);
+  virtual bool isWriting(void);
+  virtual bool setFileDescriptor(int fd);
+  virtual int fileDescriptor(void);
+  virtual void setRandom(uint64_t seed1, uint64_t seed2);
   virtual bool authenticate(void);
-  virtual bool read_command(char **packet, uint32_t *packet_length);
+  virtual bool readCommand(char **packet, uint32_t *packet_length);
   virtual void sendOK();
   virtual void sendEOF();
   virtual void sendError(uint32_t sql_errno, const char *err);
   virtual void close(void);
-  virtual void prepare_for_resend();
+  virtual void prepareForResend();
   virtual void free();
   virtual bool write();
-  virtual bool flush();
-  virtual bool send_fields(List<Item> *list, uint32_t flags);
+
+  virtual bool sendFields(List<Item> *list, uint32_t flags);
 
   using Protocol::store;
   virtual bool store(Field *from);

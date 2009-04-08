@@ -1962,7 +1962,7 @@ void handle_connections_sockets()
       continue;
     }
 
-    if (protocol->init_file_descriptor(new_sock))
+    if (protocol->setFileDescriptor(new_sock))
     {
       delete session;
       continue;

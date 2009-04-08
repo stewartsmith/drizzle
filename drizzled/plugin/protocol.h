@@ -30,8 +30,6 @@ class Protocol
 {
 protected:
   Session *session;
-  String *packet;
-  uint32_t field_count;
 
 public:
   Protocol() {}
@@ -48,42 +46,31 @@ public:
   }
 
   virtual bool isConnected()= 0;
-
-  /* Still need to convert below here. */
-
-  virtual void set_read_timeout(uint32_t timeout)= 0;
-  virtual void set_write_timeout(uint32_t timeout)= 0;
-  virtual void set_retry_count(uint32_t count)= 0;
-  virtual void set_error(char error)= 0;
-  virtual bool have_error(void)= 0;
-  virtual bool was_aborted(void)= 0;
-  virtual bool have_compression(void)= 0;
-  virtual void enable_compression(void)= 0;
-  virtual bool have_more_data(void)= 0;
-  virtual bool is_reading(void)= 0;
-  virtual bool is_writing(void)= 0;
-  virtual bool init_file_descriptor(int fd)=0;
-  virtual int file_descriptor(void)=0;
-  virtual void init_random(uint64_t, uint64_t) {};
+  virtual void setReadTimeout(uint32_t timeout)= 0;
+  virtual void setWriteTimeout(uint32_t timeout)= 0;
+  virtual void setRetryCount(uint32_t count)= 0;
+  virtual void setError(char error)= 0;
+  virtual bool haveError(void)= 0;
+  virtual bool wasAborted(void)= 0;
+  virtual void enableCompression(void)= 0;
+  virtual bool haveMoreData(void)= 0;
+  virtual bool isReading(void)= 0;
+  virtual bool isWriting(void)= 0;
+  virtual bool setFileDescriptor(int fd)=0;
+  virtual int fileDescriptor(void)=0;
+  virtual void setRandom(uint64_t, uint64_t) {};
   virtual bool authenticate(void)=0;
-  virtual bool read_command(char **packet, uint32_t *packet_length)=0;
+  virtual bool readCommand(char **packet, uint32_t *packet_length)=0;
   virtual void sendOK()= 0;
   virtual void sendEOF()= 0;
   virtual void sendError(uint32_t sql_errno, const char *err)=0;
   virtual void close(void) {};
-  virtual bool prepare_for_send(List<Item> *item_list)
-  {
-    field_count= item_list->elements;
-    return 0;
-  }
-  virtual bool flush()= 0;
-  virtual void prepare_for_resend()=0;
+  virtual void prepareForResend()= 0;
   virtual void free()= 0;
   virtual bool write()= 0;
-  String *storage_packet() { return packet; }
 
   enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
-  virtual bool send_fields(List<Item> *list, uint32_t flags)= 0;
+  virtual bool sendFields(List<Item> *list, uint32_t flags)= 0;
 
   virtual bool store(Field *from)= 0;
   virtual bool store(void)= 0;

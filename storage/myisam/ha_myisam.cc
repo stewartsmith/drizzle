@@ -109,7 +109,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     Also we likely need to lock mutex here (in both cases with protocol and
     push_warning).
   */
-  protocol->prepare_for_resend();
+  protocol->prepareForResend();
   protocol->store(name, length, system_charset_info);
   protocol->store(param->op_name, system_charset_info);
   protocol->store(msg_type, system_charset_info);

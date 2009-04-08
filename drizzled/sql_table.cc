@@ -2193,7 +2193,7 @@ static int send_check_errmsg(Session *session, TableList* table,
 
 {
   Protocol *protocol= session->protocol;
-  protocol->prepare_for_resend();
+  protocol->prepareForResend();
   protocol->store(table->alias, system_charset_info);
   protocol->store((char*) operator_name, system_charset_info);
   protocol->store(STRING_WITH_LEN("error"), system_charset_info);
@@ -2386,8 +2386,8 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (protocol->send_fields(&field_list,
-                            Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list,
+                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);
 
   for (table= tables; table; table= table->next_local)
@@ -2463,7 +2463,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       /* purecov: begin inspected */
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
-      protocol->prepare_for_resend();
+      protocol->prepareForResend();
       protocol->store(table_name, system_charset_info);
       protocol->store(operator_name, system_charset_info);
       protocol->store(STRING_WITH_LEN("error"), system_charset_info);
@@ -2501,7 +2501,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     if (table->table->s->crashed && operator_func == &handler::ha_check)
     {
       /* purecov: begin inspected */
-      protocol->prepare_for_resend();
+      protocol->prepareForResend();
       protocol->store(table_name, system_charset_info);
       protocol->store(operator_name, system_charset_info);
       protocol->store(STRING_WITH_LEN("warning"), system_charset_info);
@@ -2544,7 +2544,7 @@ send_result:
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
-        protocol->prepare_for_resend();
+        protocol->prepareForResend();
         protocol->store(table_name, system_charset_info);
         protocol->store((char*) operator_name, system_charset_info);
         protocol->store(warning_level_names[err->level].str,
@@ -2556,7 +2556,7 @@ send_result:
       }
       drizzle_reset_errors(session, true);
     }
-    protocol->prepare_for_resend();
+    protocol->prepareForResend();
     protocol->store(table_name, system_charset_info);
     protocol->store(operator_name, system_charset_info);
 
@@ -2655,7 +2655,7 @@ send_result_message:
             protocol->store(err_msg, system_charset_info);
             (void)protocol->write();
             /* Start off another row for HA_ADMIN_FAILED */
-            protocol->prepare_for_resend();
+            protocol->prepareForResend();
             protocol->store(table_name, system_charset_info);
             protocol->store(operator_name, system_charset_info);
           }
@@ -5314,8 +5314,8 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   field_list.push_back(item= new Item_int("Checksum", (int64_t) 1,
                                           MY_INT64_NUM_DECIMAL_DIGITS));
   item->maybe_null= 1;
-  if (protocol->send_fields(&field_list,
-                            Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list,
+                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);
 
   /* Open one table after the other to keep lock time as short as possible. */
@@ -5329,7 +5329,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     t= table->table= open_n_lock_single_table(session, table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
-    protocol->prepare_for_resend();
+    protocol->prepareForResend();
     protocol->store(table_name, system_charset_info);
 
     if (!t)

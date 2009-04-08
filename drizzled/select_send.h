@@ -53,7 +53,7 @@ public:
   bool send_fields(List<Item> &list, uint32_t flags)
   {
     bool res;
-    if (!(res= session->protocol->send_fields(&list, flags)))
+    if (!(res= session->protocol->sendFields(&list, flags)))
       is_result_set_started= 1;
     return res;
   }
@@ -97,7 +97,7 @@ public:
     char buff[MAX_FIELD_WIDTH];
     String buffer(buff, sizeof(buff), &my_charset_bin);
 
-    protocol->prepare_for_resend();
+    protocol->prepareForResend();
     Item *item;
     while ((item=li++))
     {

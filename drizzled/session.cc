@@ -260,8 +260,8 @@ Session::Session(Protocol *protocol_arg)
   const Query_id& local_query_id= Query_id::get_query_id();
   tablespace_op= false;
   tmp= sql_rnd();
-  protocol->init_random(tmp + (uint64_t) &protocol,
-                        tmp + (uint64_t)local_query_id.value());
+  protocol->setRandom(tmp + (uint64_t) &protocol,
+                      tmp + (uint64_t)local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
@@ -604,7 +604,7 @@ void Session::prepareForQueries()
   if (client_capabilities & CLIENT_COMPRESS)
   {
     compression= 1;
-    protocol->enable_compression();
+    protocol->enableCompression();
   }
 
   version= refresh_version;
@@ -699,7 +699,7 @@ bool Session::executeStatement()
   */
   lex->current_select= 0;
 
-  if (protocol->read_command(&l_packet, &packet_length) == false)
+  if (protocol->readCommand(&l_packet, &packet_length) == false)
     return false;
 
   if (packet_length == 0)
@@ -1952,10 +1952,10 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   plugin_sessionvar_cleanup(this);
 
   /* If necessary, log any aborted or unauthorized connections */
-  if (killed || protocol->was_aborted())
+  if (killed || protocol->wasAborted())
     statistic_increment(aborted_threads, &LOCK_status);
 
-  if (protocol->was_aborted())
+  if (protocol->wasAborted())
   {
     if (! killed && variables.log_warnings > 1)
     {

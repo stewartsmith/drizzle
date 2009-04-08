@@ -203,8 +203,8 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
   field_list.push_back(new Item_return_int("Code",4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Message",DRIZZLE_ERRMSG_SIZE));
 
-  if (session->protocol->send_fields(&field_list,
-                                 Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (session->protocol->sendFields(&field_list,
+                                  Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);
 
   DRIZZLE_ERROR *err;
@@ -225,7 +225,7 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
       continue;
     if (idx > unit->select_limit_cnt)
       break;
-    protocol->prepare_for_resend();
+    protocol->prepareForResend();
     protocol->store(warning_level_names[err->level].str,
 		    warning_level_names[err->level].length, system_charset_info);
     protocol->store((uint32_t) err->code);

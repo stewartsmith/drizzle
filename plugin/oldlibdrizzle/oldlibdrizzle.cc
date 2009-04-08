@@ -48,57 +48,52 @@ bool ProtocolOldLibdrizzle::isConnected()
   return net.vio != 0;
 }
 
-void ProtocolOldLibdrizzle::set_read_timeout(uint32_t timeout)
+void ProtocolOldLibdrizzle::setReadTimeout(uint32_t timeout)
 {
   drizzleclient_net_set_read_timeout(&net, timeout);
 }
 
-void ProtocolOldLibdrizzle::set_write_timeout(uint32_t timeout)
+void ProtocolOldLibdrizzle::setWriteTimeout(uint32_t timeout)
 {
   drizzleclient_net_set_write_timeout(&net, timeout);
 }
 
-void ProtocolOldLibdrizzle::set_retry_count(uint32_t count)
+void ProtocolOldLibdrizzle::setRetryCount(uint32_t count)
 {
   net.retry_count=count;
 }
 
-void ProtocolOldLibdrizzle::set_error(char error)
+void ProtocolOldLibdrizzle::setError(char error)
 {
   net.error= error;
 }
 
-bool ProtocolOldLibdrizzle::have_error(void)
+bool ProtocolOldLibdrizzle::haveError(void)
 {
   return net.error || net.vio == 0;
 }
 
-bool ProtocolOldLibdrizzle::was_aborted(void)
+bool ProtocolOldLibdrizzle::wasAborted(void)
 {
   return net.error && net.vio != 0;
 }
 
-bool ProtocolOldLibdrizzle::have_more_data(void)
+bool ProtocolOldLibdrizzle::haveMoreData(void)
 {
   return drizzleclient_net_more_data(&net);
 }
 
-bool ProtocolOldLibdrizzle::have_compression(void)
-{
-  return net.compress;
-}
-
-void ProtocolOldLibdrizzle::enable_compression(void)
+void ProtocolOldLibdrizzle::enableCompression(void)
 {
   net.compress= true;
 }
 
-bool ProtocolOldLibdrizzle::is_reading(void)
+bool ProtocolOldLibdrizzle::isReading(void)
 {
   return net.reading_or_writing == 1;
 }
 
-bool ProtocolOldLibdrizzle::is_writing(void)
+bool ProtocolOldLibdrizzle::isWriting(void)
 {
   return net.reading_or_writing == 2;
 }
@@ -118,8 +113,6 @@ bool ProtocolOldLibdrizzle::netStoreData(const unsigned char *from, size_t lengt
   packet->length((size_t) (to+length-(unsigned char*) packet->ptr()));
   return 0;
 }
-
-
 
 
 /*
@@ -356,9 +349,6 @@ void ProtocolOldLibdrizzle::sendError(uint32_t sql_errno, const char *err)
   session->main_da.can_overwrite_status= false;
 }
 
-/*****************************************************************************
-  Default Protocol functions
-*****************************************************************************/
 
 ProtocolOldLibdrizzle::ProtocolOldLibdrizzle()
 {
@@ -371,11 +361,6 @@ void ProtocolOldLibdrizzle::setSession(Session *session_arg)
   session= session_arg;
   packet= &session->packet;
   convert= &session->convert_buffer;
-}
-
-bool ProtocolOldLibdrizzle::flush()
-{
-  return drizzleclient_net_flush(&net);
 }
 
 
@@ -397,13 +382,12 @@ bool ProtocolOldLibdrizzle::flush()
     1    Error  (Note that in this case the error is not sent to the
     client)
 */
-bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
+bool ProtocolOldLibdrizzle::sendFields(List<Item> *list, uint32_t flags)
 {
   List_iterator_fast<Item> it(*list);
   Item *item;
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
-  String *local_packet= storage_packet();
 
   if (flags & SEND_NUM_ROWS)
   {                // Packet with number of elements
@@ -418,8 +402,7 @@ bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
     Send_field field;
     item->make_field(&field);
 
-    prepare_for_resend();
-
+    prepareForResend();
 
     if (store(STRING_WITH_LEN("def"), cs) ||
         store(field.db_name, cs) ||
@@ -427,11 +410,11 @@ bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
         store(field.org_table_name, cs) ||
         store(field.col_name, cs) ||
         store(field.org_col_name, cs) ||
-        local_packet->realloc(local_packet->length()+12))
+        packet->realloc(packet->length()+12))
       goto err;
 
     /* Store fixed length fields */
-    pos= (char*) local_packet->ptr()+local_packet->length();
+    pos= (char*) packet->ptr()+packet->length();
     *pos++= 12;                // Length of packed fields
     if (item->collation.collation == &my_charset_bin)
     {
@@ -464,7 +447,7 @@ bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
     pos[11]= 0;                // For the future
     pos+= 12;
 
-    local_packet->length((uint32_t) (pos - local_packet->ptr()));
+    packet->length((uint32_t) (pos - packet->ptr()));
     if (flags & SEND_DEFAULTS)
       item->send(this, &tmp);            // Send default value
     if (write())
@@ -480,12 +463,14 @@ bool ProtocolOldLibdrizzle::send_fields(List<Item> *list, uint32_t flags)
     */
     write_eof_packet(session, &net, session->server_status, session->total_warn_count);
   }
-  return(prepare_for_send(list));
+
+  field_count= list->elements;
+  return 0;
 
 err:
   my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES),
              MYF(0));    /* purecov: inspected */
-  return(1);                /* purecov: inspected */
+  return 1;                /* purecov: inspected */
 }
 
 
@@ -501,27 +486,19 @@ void ProtocolOldLibdrizzle::free()
 }
 
 
-/****************************************************************************
-  Functions to handle the simple (default) protocol where everything is
-  This protocol is the one that is used by default between the MySQL server
-  and client when you are not using prepared statements.
-
-  All data are sent as 'packed-string-length' followed by 'string-data'
-****************************************************************************/
-
-void ProtocolOldLibdrizzle::init_random(uint64_t seed1, uint64_t seed2)
+void ProtocolOldLibdrizzle::setRandom(uint64_t seed1, uint64_t seed2)
 {
   drizzleclient_randominit(&rand, seed1, seed2);
 }
 
-bool ProtocolOldLibdrizzle::init_file_descriptor(int fd)
+bool ProtocolOldLibdrizzle::setFileDescriptor(int fd)
 {
   if (drizzleclient_net_init_sock(&net, fd, 0))
     return true;
   return false;
 }
 
-int ProtocolOldLibdrizzle::file_descriptor(void)
+int ProtocolOldLibdrizzle::fileDescriptor(void)
 {
   return drizzleclient_net_get_sd(&net);
 }
@@ -552,7 +529,7 @@ bool ProtocolOldLibdrizzle::authenticate()
   return true;
 }
 
-bool ProtocolOldLibdrizzle::read_command(char **l_packet, uint32_t *packet_length)
+bool ProtocolOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length)
 {
   /*
     This thread will do a blocking read from the client which
@@ -624,7 +601,7 @@ void ProtocolOldLibdrizzle::close(void)
   }
 }
 
-void ProtocolOldLibdrizzle::prepare_for_resend()
+void ProtocolOldLibdrizzle::prepareForResend()
 {
   packet->length(0);
 }
@@ -642,9 +619,9 @@ bool ProtocolOldLibdrizzle::store(void)
   and store in network buffer.
 */
 
-bool ProtocolOldLibdrizzle::storeStringAux(const char *from, size_t length,
-                                const CHARSET_INFO * const fromcs,
-                                const CHARSET_INFO * const tocs)
+bool ProtocolOldLibdrizzle::storeString(const char *from, size_t length,
+                                        const CHARSET_INFO * const fromcs,
+                                        const CHARSET_INFO * const tocs)
 {
   /* 'tocs' is set 0 when client issues SET character_set_results=NULL */
   if (tocs && !my_charset_same(fromcs, tocs) &&
@@ -663,7 +640,7 @@ bool ProtocolOldLibdrizzle::store(const char *from, size_t length,
                           const CHARSET_INFO * const fromcs)
 {
   const CHARSET_INFO * const tocs= default_charset_info;
-  return storeStringAux(from, length, fromcs, tocs);
+  return storeString(from, length, fromcs, tocs);
 }
 
 
@@ -713,7 +690,7 @@ bool ProtocolOldLibdrizzle::store(Field *from)
 
   from->val_str(&str);
 
-  return storeStringAux(str.ptr(), str.length(), str.charset(), tocs);
+  return storeString(str.ptr(), str.length(), str.charset(), tocs);
 }
 
 

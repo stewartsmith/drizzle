@@ -220,7 +220,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    session->protocol->set_error(0);
+    session->protocol->setError(0);
     session->main_da.disable_status();              // Don't send anything back
     error=true;					// End server
     break;
