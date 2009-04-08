@@ -33,6 +33,7 @@
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/double.h>
 #include <string>
+#include <bitset>
 
 #include <drizzled/unireg.h>
 #include <drizzled/serialize/table.pb.h>
@@ -1965,16 +1966,6 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
   }
 
   /* Allocate bitmaps */
-
-  bitmap_size= share->column_bitmap_size;
-  if (!(bitmaps= (unsigned char*) alloc_root(&outparam->mem_root, bitmap_size*3)))
-    goto err;
-  bitmap_init(&outparam->def_read_set,
-              (my_bitmap_map*) bitmaps, share->fields, false);
-  bitmap_init(&outparam->def_write_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size), share->fields, false);
-  bitmap_init(&outparam->tmp_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields, false);
   outparam->default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
@@ -2474,17 +2465,14 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
     a tmp_set bitmap to be used by things like filesort.
 */
 
-void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
+void Table::setup_tmp_table_column_bitmaps()
 {
   uint32_t field_count= s->fields;
-
-  bitmap_init(&this->def_read_set, (my_bitmap_map*) bitmaps, field_count, false);
-  bitmap_init(&this->tmp_set, (my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count, false);
 
   /* write_set and all_set are copies of read_set */
   def_write_set= def_read_set;
   s->all_set= def_read_set;
-  bitmap_set_all(&this->s->all_set);
+  this->s->all_set.set();
   default_column_bitmaps();
 }
 
@@ -3116,11 +3104,10 @@ TableList *TableList::last_leaf_for_name_resolution()
 void Table::clear_column_bitmaps()
 {
   /*
-    Reset column read/write usage. It's identical to:
-    bitmap_clear_all(&table->def_read_set);
-    bitmap_clear_all(&table->def_write_set);
+    Reset column read/write usage.
   */
-  memset(def_read_set.bitmap, 0, s->column_bitmap_size*2);
+  def_read_set.reset();
+  def_write_set.reset(); /* TODO: is this needed here? */
   column_bitmaps_set(&def_read_set, &def_write_set);
 }
 
@@ -3160,10 +3147,10 @@ void Table::prepare_for_position()
 
 void Table::mark_columns_used_by_index(uint32_t index)
 {
-  MY_BITMAP *bitmap= &tmp_set;
+  bitset<MAX_FIELDS> *bitmap= &tmp_set;
 
   (void) file->extra(HA_EXTRA_KEYREAD);
-  bitmap_clear_all(bitmap);
+  bitmap->reset()
   mark_columns_used_by_index_no_reset(index, bitmap);
   column_bitmaps_set(bitmap, bitmap);
   return;
@@ -3197,14 +3184,14 @@ void Table::restore_column_maps_after_mark_index()
 */
 
 void Table::mark_columns_used_by_index_no_reset(uint32_t index,
-                                                   MY_BITMAP *bitmap)
+                                                bitset<MAX_FIELDS> *bitmap)
 {
   KEY_PART_INFO *key_part= key_info[index].key_part;
   KEY_PART_INFO *key_part_end= (key_part +
                                 key_info[index].key_parts);
   for (;key_part != key_part_end; key_part++)
   {
-    bitmap_set_bit(bitmap, key_part->fieldnr-1);
+    bitmap.set(key_part->fieldnr-1);
     if (key_part->field->vcol_info &&
         key_part->field->vcol_info->expr_item)
       key_part->field->vcol_info->
@@ -3229,8 +3216,8 @@ void Table::mark_auto_increment_column()
     We must set bit in read set as update_auto_increment() is using the
     store() to check overflow of auto_increment values
   */
-  bitmap_set_bit(read_set, found_next_number_field->field_index);
-  bitmap_set_bit(write_set, found_next_number_field->field_index);
+  read_set->set(found_next_number_field->field_index);
+  write_set->set(found_next_number_field->field_index);
   if (s->next_number_keypart)
     mark_columns_used_by_index_no_reset(s->next_number_index, read_set);
   file->column_bitmaps_signal();
@@ -3263,7 +3250,7 @@ void Table::mark_columns_needed_for_delete()
     for (reg_field= field ; *reg_field ; reg_field++)
     {
       if ((*reg_field)->flags & PART_KEY_FLAG)
-        bitmap_set_bit(read_set, (*reg_field)->field_index);
+        read_set->set((*reg_field)->field_index);
     }
     file->column_bitmaps_signal();
   }
@@ -3314,7 +3301,7 @@ void Table::mark_columns_needed_for_update()
     {
       /* Merge keys is all keys that had a column refered to in the query */
       if (merge_keys.is_overlapping((*reg_field)->part_of_key))
-        bitmap_set_bit(read_set, (*reg_field)->field_index);
+        read_set->set((*reg_field)->field_index);
     }
     file->column_bitmaps_signal();
   }
@@ -3379,8 +3366,8 @@ void Table::mark_virtual_columns(void)
     assert(tmp_vfield->vcol_info && tmp_vfield->vcol_info->expr_item);
     tmp_vfield->vcol_info->expr_item->walk(&Item::register_field_in_read_map,
                                            1, (unsigned char *) 0);
-    bitmap_set_bit(read_set, tmp_vfield->field_index);
-    bitmap_set_bit(write_set, tmp_vfield->field_index);
+    read_set->set(tmp_vfield->field_index);
+    write_set->set(tmp_vfield->field_index);
     bitmap_updated= true;
   }
   if (bitmap_updated)
@@ -4849,16 +4836,16 @@ bool create_myisam_from_heap(Session *session, Table *table,
   return(1);
 }
 
-my_bitmap_map *Table::use_all_columns(MY_BITMAP *bitmap)
+bitset<MAX_FIELDS> *Table::use_all_columns(bitset<MAX_FIELDS> *bitmap)
 {
-  my_bitmap_map *old= bitmap->bitmap;
-  bitmap->bitmap= s->all_set.bitmap;
+  bitset<MAX_FIELDS> *old= bitmap;
+  bitmap= s->all_set;
   return old;
 }
 
-void Table::restore_column_map(my_bitmap_map *old)
+void Table::restore_column_map(bitset<MAX_FIELDS> *old)
 {
-  read_set->bitmap= old;
+  read_set= old;
 }
 
 uint32_t Table::find_shortest_key(const key_map *usable_keys)

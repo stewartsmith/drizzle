@@ -30,6 +30,7 @@
 #include <drizzled/table_list.h>
 
 #include <queue>
+#include <bitset>
 
 using namespace std;
 
@@ -453,7 +454,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   Session *session= current_session;
   volatile Session::killed_state *killed= &session->killed;
   handler *file;
-  MY_BITMAP *save_read_set, *save_write_set;
+  bitset<MAX_FIELDS> *save_read_set, *save_write_set;
 
   idx=indexpos=0;
   error=quick_select=0;
@@ -489,7 +490,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   save_read_set=  sort_form->read_set;
   save_write_set= sort_form->write_set;
   /* Set up temporary column read map for columns used by sort */
-  bitmap_clear_all(&sort_form->tmp_set);
+  sort_form->tmp_set.reset();
   /* Temporary set for register_used_fields and register_field_in_read_map */
   sort_form->read_set= &sort_form->tmp_set;
   register_used_fields(param);
@@ -922,7 +923,7 @@ static void register_used_fields(SORTPARAM *param)
 {
   register SORT_FIELD *sort_field;
   Table *table=param->sort_form;
-  MY_BITMAP *bitmap= table->read_set;
+  bitset<MAX_FIELDS> *bitmap= table->read_set;
 
   for (sort_field= param->local_sortorder ;
        sort_field != param->end ;
@@ -932,7 +933,7 @@ static void register_used_fields(SORTPARAM *param)
     if ((field= sort_field->field))
     {
       if (field->table == table)
-      bitmap_set_bit(bitmap, field->field_index);
+        bitmap->set(field->field_index);
     }
     else
     {						// Item
@@ -946,7 +947,7 @@ static void register_used_fields(SORTPARAM *param)
     SORT_ADDON_FIELD *addonf= param->addon_field;
     Field *field;
     for ( ; (field= addonf->field) ; addonf++)
-      bitmap_set_bit(bitmap, field->field_index);
+      bitmap->set(field->field_index);
   }
   else
   {
@@ -1456,7 +1457,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
   uint32_t length= 0;
   uint32_t fields= 0;
   uint32_t null_fields= 0;
-  MY_BITMAP *read_set= (*ptabfield)->table->read_set;
+  bitset<MAX_FIELDS> *read_set= (*ptabfield)->table->read_set;
 
   /*
     If there is a reference to a field in the query add it
@@ -1471,7 +1472,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
 
   for (pfield= ptabfield; (field= *pfield) ; pfield++)
   {
-    if (!bitmap_is_set(read_set, field->field_index))
+    if (!read_set->test(field->field_index))
       continue;
     if (field->flags & BLOB_FLAG)
       return 0;
@@ -1494,7 +1495,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
   null_fields= 0;
   for (pfield= ptabfield; (field= *pfield) ; pfield++)
   {
-    if (!bitmap_is_set(read_set, field->field_index))
+    if (!read_set->test(field->field_index))
       continue;
     addonf->field= field;
     addonf->offset= length;

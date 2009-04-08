@@ -6671,12 +6671,12 @@ static bool null_part_in_key(KEY_PART *key_part, const unsigned char *key, uint3
 }
 
 
-bool QUICK_SELECT_I::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_SELECT_I::is_keys_used(const bitset<MAX_FIELDS> *fields)
 {
   return is_key_used(head, index, fields);
 }
 
-bool QUICK_INDEX_MERGE_SELECT::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_INDEX_MERGE_SELECT::is_keys_used(const bitset<MAX_FIELDS> *fields)
 {
   QUICK_RANGE_SELECT *quick;
   List_iterator_fast<QUICK_RANGE_SELECT> it(quick_selects);
@@ -6688,7 +6688,7 @@ bool QUICK_INDEX_MERGE_SELECT::is_keys_used(const MY_BITMAP *fields)
   return 0;
 }
 
-bool QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_ROR_INTERSECT_SELECT::is_keys_used(const bitset<MAX_FIELDS> *fields)
 {
   QUICK_RANGE_SELECT *quick;
   List_iterator_fast<QUICK_RANGE_SELECT> it(quick_selects);
@@ -6700,7 +6700,7 @@ bool QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MY_BITMAP *fields)
   return 0;
 }
 
-bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_ROR_UNION_SELECT::is_keys_used(const bitset<MAX_FIELDS> *fields)
 {
   QUICK_SELECT_I *quick;
   List_iterator_fast<QUICK_SELECT_I> it(quick_selects);

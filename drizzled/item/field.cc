@@ -29,6 +29,10 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/outer_ref.h>
 
+#include <bitset>
+
+using namespace std;
+
 
 /**
   Store the pointer to this item field into a list if not already there.
@@ -120,9 +124,9 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
 
 bool Item_field::register_field_in_bitmap(unsigned char *arg)
 {
-  MY_BITMAP *bitmap= (MY_BITMAP *) arg;
+  bitset<MAX_FIELDS> *bitmap= (bitset<MAX_FIELDS> *) arg;
   assert(bitmap);
-  bitmap_set_bit(bitmap, field->field_index);
+  bitmap->set(field->field_index);
   return false;
 }
 

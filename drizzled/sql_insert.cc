@@ -33,6 +33,10 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/lock.h>
 
+#include <bitset>
+
+using namespace std;
+
 
 /*
   Check if insert fields are correct.
@@ -721,7 +725,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
-  MY_BITMAP *save_read_set, *save_write_set;
+  bitset<MAX_FIELDS> *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->file->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 
@@ -965,11 +969,11 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
                                            TableList *)
 {
   int err= 0;
-  MY_BITMAP *write_set= entry->write_set;
+  bitset<MAX_FIELDS> *write_set= entry->write_set;
 
   for (Field **field=entry->field ; *field ; field++)
   {
-    if (!bitmap_is_set(write_set, (*field)->field_index))
+    if (!write_set->test((*field)->field_index))
     {
       /*
        * If the field doesn't have any default value

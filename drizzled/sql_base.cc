@@ -46,6 +46,10 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 
+#include <bitset>
+
+using namespace std;
+
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -3612,7 +3616,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 {
   if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    MY_BITMAP *current_bitmap, *other_bitmap;
+    bitset<MAX_FIELDS> *current_bitmap, *other_bitmap;
 
     /*
       We always want to register the used keys, as the column bitmap may have
@@ -3633,7 +3637,8 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       other_bitmap=   table->read_set;
     }
 
-    if (bitmap_fast_test_and_set(current_bitmap, field->field_index))
+    /* TODO: does this do test and set appropriately? */
+    if (current_bitmap->test(field->field_index) && current_bitmap->set(field->field_index))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;

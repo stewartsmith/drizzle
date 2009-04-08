@@ -49,6 +49,7 @@
 #include "drizzled/index_hint.h"
 
 #include <string>
+#include <bitset>
 
 using namespace std;
 
@@ -6228,12 +6229,12 @@ static void calc_used_field_length(Session *, JOIN_TAB *join_tab)
 {
   uint32_t null_fields,blobs,fields,rec_length;
   Field **f_ptr,*field;
-  MY_BITMAP *read_set= join_tab->table->read_set;;
+  bitset<MAX_FIELDS> *read_set= join_tab->table->read_set;
 
   null_fields= blobs= fields= rec_length=0;
   for (f_ptr=join_tab->table->field ; (field= *f_ptr) ; f_ptr++)
   {
-    if (bitmap_is_set(read_set, field->field_index))
+    if (read_set->test(field->field_index))
     {
       uint32_t flags=field->flags;
       fields++;
@@ -6254,9 +6255,9 @@ static void calc_used_field_length(Session *, JOIN_TAB *join_tab)
 			     (join_tab->table->getRecordLength()- rec_length));
     rec_length+=(uint32_t) cmax((uint32_t)4,blob_length);
   }
-  join_tab->used_fields=fields;
-  join_tab->used_fieldlength=rec_length;
-  join_tab->used_blobs=blobs;
+  join_tab->used_fields= fields;
+  join_tab->used_fieldlength= rec_length;
+  join_tab->used_blobs= blobs;
 }
 
 
@@ -13761,13 +13762,13 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
   {
     uint32_t null_fields=0, used_fields;
     Field **f_ptr,*field;
-    MY_BITMAP *read_set= tables[i].table->read_set;
+    bitset<MAX_FIELDS> *read_set= tables[i].table->read_set;
     for (f_ptr=tables[i].table->field,used_fields=tables[i].used_fields ;
 	 used_fields ;
 	 f_ptr++)
     {
       field= *f_ptr;
-      if (bitmap_is_set(read_set, field->field_index))
+      if (read_set->test(field->field_index))
       {
 	used_fields--;
 	length+=field->fill_cache_field(copy);
@@ -13829,7 +13830,7 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
             (size_t)cache->length);
   if (!(cache->buff=(unsigned char*) malloc(size)))
     return 1;				/* Don't use cache */ /* purecov: inspected */
-  cache->end=cache->buff+size;
+  cache->end= cache->buff+size;
   reset_cache_write(cache);
   return 0;
 }
