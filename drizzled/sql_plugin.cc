@@ -41,9 +41,6 @@
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2
 
-#define plugin_ref_to_int(A) (A ? A[0] : NULL)
-#define plugin_int_to_ref(A) &(A)
-
 using namespace std;
 
 extern struct st_mysql_plugin *mysqld_builtins[];
@@ -945,7 +942,7 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
   {
     plugin= *plugin_iter;
     /* It will stop iterating on first engine error when "func" returns true */
-    if (plugin && func(session, plugin_int_to_ref(plugin), arg))
+    if (plugin && func(session, plugin, arg))
         goto err;
   }
 

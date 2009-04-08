@@ -89,12 +89,11 @@ struct st_plugin_int
 };
 
 
-typedef struct st_plugin_int **plugin_ref;
-#define plugin_decl(pi) ((pi)[0]->plugin)
-#define plugin_dlib(pi) ((pi)[0]->plugin_dl)
-#define plugin_data(pi,cast) (static_cast<cast>((pi)[0]->data))
-#define plugin_name(pi) (&((pi)[0]->name))
-#define plugin_equals(p1,p2) ((p1) && (p2) && (p1)[0] == (p2)[0])
+#define plugin_decl(pi) ((pi)->plugin)
+#define plugin_dlib(pi) ((pi)->plugin_dl)
+#define plugin_data(pi,cast) (static_cast<cast>((pi)->data))
+#define plugin_name(pi) (&((pi)->name))
+#define plugin_equals(p1,p2) ((p1) && (p2) && (p1) == (p2))
 
 typedef int (*plugin_type_init)(struct st_plugin_int *);
 
@@ -115,7 +114,7 @@ extern bool plugin_register_builtin(struct st_mysql_plugin *plugin);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 
-typedef bool (plugin_foreach_func)(Session *session, plugin_ref plugin, void *arg);
+typedef bool (plugin_foreach_func)(Session *session, st_plugin_int *plugin, void *arg);
 bool plugin_foreach(Session *session, plugin_foreach_func *func,
                     int type, void *arg, bool all= false);
 
