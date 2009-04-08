@@ -825,50 +825,6 @@ int ha_autocommit_or_rollback(Session *session, int error)
 }
 
 
-struct xaengine_st {
-  XID *xid;
-  int result;
-};
-
-static bool xacommit_storage_engine(Session *,
-                                    st_plugin_int *plugin,
-                                    void *arg)
-{
-  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->is_enabled())
-  {
-    engine->commit_by_xid(((struct xaengine_st *)arg)->xid);
-    ((struct xaengine_st *)arg)->result= 0;
-  }
-  return false;
-}
-
-static bool xarollback_storage_engine(Session *,
-                                      st_plugin_int *plugin,
-                                  void *arg)
-{
-  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->is_enabled())
-  {
-    engine->rollback_by_xid(((struct xaengine_st *)arg)->xid);
-    ((struct xaengine_st *)arg)->result= 0;
-  }
-  return false;
-}
-
-
-int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
-{
-  struct xaengine_st xaop;
-  xaop.xid= xid;
-  xaop.result= 1;
-
-  plugin_foreach(NULL, commit ? xacommit_storage_engine : xarollback_storage_engine,
-                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &xaop);
-
-  return xaop.result;
-}
-
 /**
   recover() step of xa.
 

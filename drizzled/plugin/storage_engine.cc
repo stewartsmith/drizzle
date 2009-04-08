@@ -177,6 +177,22 @@ void ha_drop_database(char* path)
            bind2nd(mem_fun(&StorageEngine::drop_database),path));
 }
 
+int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
+{
+  vector<int> results;
+  
+  if (commit)
+    transform(all_engines.begin(), all_engines.end(), results.begin(),
+              bind2nd(mem_fun(&StorageEngine::commit_by_xid),xid));
+  else
+    transform(all_engines.begin(), all_engines.end(), results.begin(),
+              bind2nd(mem_fun(&StorageEngine::rollback_by_xid),xid));
+
+  if (find_if(results.begin(), results.end(), bind2nd(equal_to<int>(),0))
+         == results.end())
+    return 1;
+  return 0;
+}
 
 int storage_engine_finalizer(st_plugin_int *plugin)
 {
