@@ -1,0 +1,27 @@
+#
+# SELECT IN () with NULL in IN changes query plan
+#
+# http://bugs.mysql.com/bug.php?id=44139
+# 
+
+drop table if exists foo;
+
+create table foo (
+	a int not null auto_increment,
+	b int,
+	primary key( a )
+);
+
+begin;
+insert into foo( b ) values (1),(1),(1),(1),(1);
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+commit;
+
+explain select * from foo where a in (160000, 160001, 160002);
+explain select * from foo where a in (null, 160000, 160001, 160002);
+

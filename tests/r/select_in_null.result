@@ -1,0 +1,23 @@
+drop table if exists foo;
+Warnings:
+Note	1051	Unknown table 'foo'
+create table foo (
+a int not null auto_increment,
+b int,
+primary key( a )
+);
+begin;
+insert into foo( b ) values (1),(1),(1),(1),(1);
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+insert into foo( b ) select b from foo;
+commit;
+explain select * from foo where a in (160000, 160001, 160002);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	foo	range	PRIMARY	PRIMARY	4	NULL	3	Using where
+explain select * from foo where a in (null, 160000, 160001, 160002);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	foo	ALL	PRIMARY	PRIMARY	4	NULL	3	Using where
