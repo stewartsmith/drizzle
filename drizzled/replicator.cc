@@ -64,7 +64,7 @@ int replicator_finalizer(st_plugin_int *plugin)
 }
 
 /* This gets called by plugin_foreach once for each loaded replicator plugin */
-static bool replicator_session_iterate(Session *session, plugin_ref plugin, void *)
+static bool replicator_session_iterate(Session *session, st_plugin_int *plugin, void *)
 {
   Replicator *repl= plugin_data(plugin, Replicator *);
   bool error;
@@ -135,7 +135,7 @@ typedef struct replicator_row_parms_st
 
 
 /* This gets called by plugin_foreach once for each loaded replicator plugin */
-static bool replicator_do_row_iterate (Session *session, plugin_ref plugin, void *p)
+static bool replicator_do_row_iterate (Session *session, st_plugin_int *plugin, void *p)
 {
   Replicator *repl= plugin_data(plugin, Replicator *);
   replicator_row_parms_st *params= static_cast<replicator_row_parms_st *>(p);
@@ -254,7 +254,7 @@ typedef struct replicator_row_end_st
 } replicator_row_end_st;
 
 /* We call this to end a statement (on each registered plugin) */
-static bool replicator_end_transaction_iterate (Session *session, plugin_ref plugin, void *p)
+static bool replicator_end_transaction_iterate (Session *session, st_plugin_int *plugin, void *p)
 {
   Replicator *repl= plugin_data(plugin, Replicator *);
   replicator_row_end_st *params= static_cast<replicator_row_end_st *>(p);
@@ -312,7 +312,7 @@ typedef struct replicator_statement_st
 } replicator_statement_st;
 
 /* We call this to end a statement (on each registered plugin) */
-static bool replicator_statement_iterate(Session *session, plugin_ref plugin, void *p)
+static bool replicator_statement_iterate(Session *session, st_plugin_int *plugin, void *p)
 {
   Replicator *repl= plugin_data(plugin, Replicator *);
   replicator_statement_st *params= (replicator_statement_st *)p;

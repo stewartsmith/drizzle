@@ -117,7 +117,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
 ** List all table types supported
 ***************************************************************************/
 
-static bool show_plugins(Session *session, plugin_ref plugin, void *arg)
+static bool show_plugins(Session *session, st_plugin_int *plugin, void *arg)
 {
   Table *table= (Table*) arg;
   struct st_mysql_plugin *plug= plugin_decl(plugin);
@@ -137,7 +137,7 @@ static bool show_plugins(Session *session, plugin_ref plugin, void *arg)
   else
     table->field[1]->set_null();
 
-  if (plugin[0]->isInited)
+  if (plugin->isInited)
     table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
   else
     table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
@@ -1991,7 +1991,7 @@ struct st_add_schema_table
 };
 
 
-static bool add_schema_table(Session *session, plugin_ref plugin,
+static bool add_schema_table(Session *session, st_plugin_int *plugin,
                                 void* p_data)
 {
   LEX_STRING *file_name= 0;
@@ -3655,7 +3655,7 @@ struct schema_table_ref
     0	table not found
     1   found the schema table
 */
-static bool find_schema_table_in_plugin(Session *, plugin_ref plugin,
+static bool find_schema_table_in_plugin(Session *, st_plugin_int *plugin,
                                         void* p_table)
 {
   schema_table_ref *p_schema_table= (schema_table_ref *)p_table;

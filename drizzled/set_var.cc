@@ -2351,7 +2351,7 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
         !(engine_name.str= (char *)res->ptr()) ||
         !(engine_name.length= res->length()) ||
 	!(var->save_result.plugin= ha_resolve_by_name(session, &engine_name)) ||
-        !(engine= plugin_data(var->save_result.plugin, StorageEngine *)))
+        !(engine= static_cast<StorageEngine *>(var->save_result.plugin->data)))
     {
       value= res ? res->c_ptr() : "NULL";
       goto err;
@@ -2373,10 +2373,10 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
   unsigned char* result;
   StorageEngine *engine;
   string engine_name;
-  plugin_ref plugin= session->variables.*offset;
+  st_plugin_int *plugin= session->variables.*offset;
   if (type == OPT_GLOBAL)
-    plugin= plugin_lock(&(global_system_variables.*offset));
-  engine= plugin_data(plugin, StorageEngine*);
+    plugin= global_system_variables.*offset;
+  engine= static_cast<StorageEngine*>(plugin->data);
   engine_name= engine->getName();
   result= (unsigned char *) session->strmake(engine_name.c_str(),
                                              engine_name.size());
@@ -2386,7 +2386,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 
 void sys_var_session_storage_engine::set_default(Session *session, enum_var_type type)
 {
-  plugin_ref old_value, new_value, *value;
+  st_plugin_int *old_value, *new_value, **value;
   if (type == OPT_GLOBAL)
   {
     value= &(global_system_variables.*offset);
@@ -2395,7 +2395,7 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
   else
   {
     value= &(session->variables.*offset);
-    new_value= plugin_lock(&(global_system_variables.*offset));
+    new_value= global_system_variables.*offset;
   }
   assert(new_value);
   old_value= *value;
@@ -2405,13 +2405,13 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
 
 bool sys_var_session_storage_engine::update(Session *session, set_var *var)
 {
-  plugin_ref *value= &(global_system_variables.*offset), old_value;
+  st_plugin_int **value= &(global_system_variables.*offset), *old_value;
    if (var->type != OPT_GLOBAL)
      value= &(session->variables.*offset);
   old_value= *value;
   if (old_value != var->save_result.plugin)
   {
-    *value= plugin_lock(&var->save_result.plugin);
+    *value= var->save_result.plugin;
   }
   return 0;
 }
