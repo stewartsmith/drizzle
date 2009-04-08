@@ -143,6 +143,33 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
   return(get_new_handler(share, alloc, ha_default_storage_engine(current_session)));
 }
 
+class StorageEngineCloseConnection
+  : public unary_function<StorageEngine *, void>
+{
+  Session *session;
+public:
+  StorageEngineCloseConnection(Session *session_arg) : session(session_arg) {}
+  /*
+    there's no need to rollback here as all transactions must
+    be rolled back already
+  */
+  inline result_type operator() (argument_type engine)
+  {
+    if (engine->is_enabled() && 
+      session_get_ha_data(session, engine))
+    engine->close_connection(session);
+  }
+};
+
+/**
+  @note
+    don't bother to rollback here, it's done already
+*/
+void ha_close_connection(Session* session)
+{
+  for_each(all_engines.begin(), all_engines.end(),
+           StorageEngineCloseConnection(session));
+}
 
 void ha_drop_database(char* path)
 {

@@ -184,29 +184,6 @@ int ha_end()
 }
 
 
-static bool closecon_storage_engine(Session *session, st_plugin_int *plugin,
-                                void *)
-{
-  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  /*
-    there's no need to rollback here as all transactions must
-    be rolled back already
-  */
-  if (engine->is_enabled() && 
-      session_get_ha_data(session, engine))
-    engine->close_connection(session);
-  return false;
-}
-
-
-/**
-  @note
-    don't bother to rollback here, it's done already
-*/
-void ha_close_connection(Session* session)
-{
-  plugin_foreach(session, closecon_storage_engine, DRIZZLE_STORAGE_ENGINE_PLUGIN, 0);
-}
 
 /* ========================================================================
  ======================= TRANSACTIONS ===================================*/
