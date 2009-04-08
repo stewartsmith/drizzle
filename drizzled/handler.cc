@@ -1013,43 +1013,6 @@ bool mysql_xa_recover(Session *session)
   return(0);
 }
 
-/**
-  @details
-  This function should be called when MySQL sends rows of a SELECT result set
-  or the EOF mark to the client. It releases a possible adaptive hash index
-  S-latch held by session in InnoDB and also releases a possible InnoDB query
-  FIFO ticket to enter InnoDB. To save CPU time, InnoDB allows a session to
-  keep them over several calls of the InnoDB handler interface when a join
-  is executed. But when we let the control to pass to the client they have
-  to be released because if the application program uses mysql_use_result(),
-  it may deadlock on the S-latch if the application on another connection
-  performs another SQL query. In MySQL-4.1 this is even more important because
-  there a connection can have several SELECT queries open at the same time.
-
-  @param session           the thread handle of the current connection
-
-  @return
-    always 0
-*/
-static bool release_temporary_latches(Session *session, st_plugin_int *plugin,
-                                      void *)
-{
-  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-
-  if (engine->is_enabled())
-    engine->release_temporary_latches(session);
-
-  return false;
-}
-
-
-int ha_release_temporary_latches(Session *session)
-{
-  plugin_foreach(session, release_temporary_latches, DRIZZLE_STORAGE_ENGINE_PLUGIN,
-                 NULL);
-
-  return 0;
-}
 
 int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
 {
@@ -1186,34 +1149,6 @@ int ha_start_consistent_snapshot(Session *session)
 }
 
 
-static bool flush_storage_engine(Session *,
-                             st_plugin_int *plugin,
-                             void *)
-{
-  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  if (engine->is_enabled() &&
-      engine->flush_logs())
-    return true;
-  return false;
-}
-
-
-bool ha_flush_logs(StorageEngine *engine)
-{
-  if (engine == NULL)
-  {
-    if (plugin_foreach(NULL, flush_storage_engine,
-                          DRIZZLE_STORAGE_ENGINE_PLUGIN, 0))
-      return true;
-  }
-  else
-  {
-    if ((!engine->is_enabled()) ||
-        (engine->flush_logs()))
-      return true;
-  }
-  return false;
-}
 
 static const char *check_lowercase_names(handler *file, const char *path,
                                          char *tmp_path)

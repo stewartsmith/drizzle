@@ -194,6 +194,51 @@ int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
   return 0;
 }
 
+
+/**
+  @details
+  This function should be called when MySQL sends rows of a SELECT result set
+  or the EOF mark to the client. It releases a possible adaptive hash index
+  S-latch held by session in InnoDB and also releases a possible InnoDB query
+  FIFO ticket to enter InnoDB. To save CPU time, InnoDB allows a session to
+  keep them over several calls of the InnoDB handler interface when a join
+  is executed. But when we let the control to pass to the client they have
+  to be released because if the application program uses mysql_use_result(),
+  it may deadlock on the S-latch if the application on another connection
+  performs another SQL query. In MySQL-4.1 this is even more important because
+  there a connection can have several SELECT queries open at the same time.
+
+  @param session           the thread handle of the current connection
+
+  @return
+    always 0
+*/
+int ha_release_temporary_latches(Session *session)
+{
+  for_each(all_engines.begin(), all_engines.end(),
+           bind2nd(mem_fun(&StorageEngine::release_temporary_latches),session));
+  return 0;
+}
+
+
+bool ha_flush_logs(StorageEngine *engine)
+{
+  if (engine == NULL)
+  {
+    if (find_if(all_engines.begin(), all_engines.end(),
+            mem_fun(&StorageEngine::flush_logs))
+          != all_engines.begin())
+      return true;
+  }
+  else
+  {
+    if ((!engine->is_enabled()) ||
+        (engine->flush_logs()))
+      return true;
+  }
+  return false;
+}
+
 int storage_engine_finalizer(st_plugin_int *plugin)
 {
   StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
