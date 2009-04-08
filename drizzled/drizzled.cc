@@ -1611,6 +1611,16 @@ static int init_server_components()
   }
 
   /*
+    This is entirely for legacy. We will create a new "disk based" engine and a
+    "memory" engine which will be configurable longterm. We should be able to
+    remove partition and myisammrg.
+  */
+  const LEX_STRING myisam_engine_name= { C_STRING_WITH_LEN("MyISAM") };
+  const LEX_STRING heap_engine_name= { C_STRING_WITH_LEN("MEMORY") };
+  myisam_engine= ha_resolve_by_name(NULL, &myisam_engine_name);
+  heap_engine= ha_resolve_by_name(NULL, &heap_engine_name);
+
+  /*
     Check that the default storage engine is actually available.
   */
   if (default_storage_engine_str)

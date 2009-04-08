@@ -41,6 +41,16 @@ static const LEX_STRING sys_table_aliases[]=
   {NULL, 0}
 };
 
+static void add_storage_engine(StorageEngine *engine)
+{
+  all_engines[engine->getName()]= engine;
+}
+
+static void remove_storage_engine(StorageEngine *engine)
+{
+  all_engines.erase(engine->getName());
+}
+
 StorageEngine::StorageEngine(const std::string name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg,
                              size_t savepoint_offset_arg,
@@ -163,7 +173,7 @@ int storage_engine_finalizer(st_plugin_int *plugin)
 {
   StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
 
-  all_engines.erase(engine->getName());
+  remove_storage_engine(engine);
 
   if (engine && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(engine);
@@ -174,8 +184,7 @@ int storage_engine_finalizer(st_plugin_int *plugin)
 
 int storage_engine_initializer(st_plugin_int *plugin)
 {
-  StorageEngine *engine;
-
+  StorageEngine *engine= NULL;
 
   if (plugin->plugin->init)
   {
@@ -188,20 +197,11 @@ int storage_engine_initializer(st_plugin_int *plugin)
     }
   }
 
-  /*
-    This is entirely for legacy. We will create a new "disk based" engine and a
-    "memory" engine which will be configurable longterm. We should be able to
-    remove partition and myisammrg.
-  */
-  if (strcmp(plugin->plugin->name, "MEMORY") == 0)
-    heap_engine= engine;
-
-  if (strcmp(plugin->plugin->name, "MyISAM") == 0)
-    myisam_engine= engine;
+  if (engine != NULL)
+    add_storage_engine(engine);
 
   plugin->data= engine;
   plugin->isInited= true;
-  all_engines[engine->getName()]= engine;
 
   return 0;
 }
