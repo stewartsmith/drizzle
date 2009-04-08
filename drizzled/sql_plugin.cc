@@ -488,12 +488,15 @@ plugin_ref plugin_lock_by_name(const LEX_STRING *name, int type)
   Plugin_registry registry= Plugin_registry::get_plugin_registry();
 
   plugin_ref rc= NULL;
-  st_plugin_int *plugin;
+  st_plugin_int *plugin= NULL;
   if (! initialized)
     return(0);
 
   if ((plugin= registry.find(name, type)))
-    rc= intern_plugin_lock(plugin);
+  {
+    rc= (plugin_ref)malloc(sizeof(plugin_ref));
+    *rc= plugin;
+  }
   return(rc);
 }
 
