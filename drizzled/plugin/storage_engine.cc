@@ -34,8 +34,6 @@ using namespace std;
 
 map<string, StorageEngine *> all_engines;
 
-st_plugin_int *engine2plugin[MAX_HA];
-
 static const LEX_STRING sys_table_aliases[]=
 {
   { C_STRING_WITH_LEN("INNOBASE") },  { C_STRING_WITH_LEN("INNODB") },
@@ -75,13 +73,6 @@ int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
   return HA_ERR_NO_SUCH_TABLE;
 }
 
-static st_plugin_int *ha_default_plugin(Session *session)
-{
-  if (session->variables.table_plugin)
-    return session->variables.table_plugin;
-  return global_system_variables.table_plugin;
-}
-
 
 /**
   Return the default storage engine StorageEngine for thread
@@ -94,11 +85,9 @@ static st_plugin_int *ha_default_plugin(Session *session)
 */
 StorageEngine *ha_default_storage_engine(Session *session)
 {
-  st_plugin_int *plugin= ha_default_plugin(session);
-  assert(plugin);
-  StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
-  assert(engine);
-  return engine;
+  if (session->variables.storage_engine)
+    return session->variables.storage_engine;
+  return global_system_variables.storage_engine;
 }
 
 
@@ -111,7 +100,7 @@ StorageEngine *ha_default_storage_engine(Session *session)
   @return
     pointer to storage engine plugin handle
 */
-st_plugin_int *ha_resolve_by_name(Session *session, const LEX_STRING *name)
+StorageEngine *ha_resolve_by_name(Session *session, const LEX_STRING *name)
 {
   const LEX_STRING *table_alias;
   st_plugin_int *plugin;
@@ -121,13 +110,14 @@ redo:
   if (session && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
                            (const unsigned char *)name->str, name->length,
                            (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
-    return ha_default_plugin(session);
+    return ha_default_storage_engine(session);
 
   if ((plugin= plugin_lock_by_name(name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
+    
     StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
     if (engine->is_user_selectable())
-      return plugin;
+      return engine;
   }
 
   /*
@@ -143,19 +133,6 @@ redo:
       name= table_alias + 1;
       goto redo;
     }
-  }
-
-  return NULL;
-}
-
-
-st_plugin_int *ha_lock_engine(Session *, StorageEngine *engine)
-{
-  if (engine)
-  {
-    st_plugin_int *plugin= engine2plugin[engine->slot];
-
-    return plugin;
   }
 
   return NULL;
@@ -210,9 +187,6 @@ int storage_engine_initializer(st_plugin_int *plugin)
       return 1;
     }
   }
-
-  if (engine->is_enabled())
-    engine2plugin[engine->slot]= plugin;
 
   /*
     This is entirely for legacy. We will create a new "disk based" engine and a

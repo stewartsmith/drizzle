@@ -233,8 +233,7 @@ public:
 
 /* lookups */
 StorageEngine *ha_default_storage_engine(Session *session);
-st_plugin_int *ha_resolve_by_name(Session *session, const LEX_STRING *name);
-st_plugin_int *ha_lock_engine(Session *session, StorageEngine *engine);
+StorageEngine *ha_resolve_by_name(Session *session, const LEX_STRING *name);
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
                          StorageEngine *db_type);
 const std::string ha_resolve_storage_engine_name(const StorageEngine *db_type);

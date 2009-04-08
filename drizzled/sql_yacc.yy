@@ -1455,10 +1455,10 @@ default_collation:
 storage_engines:
           ident_or_text
           {
-            st_plugin_int *plugin= ha_resolve_by_name(YYSession, &$1);
+            StorageEngine *engine= ha_resolve_by_name(YYSession, &$1);
 
-            if (plugin)
-              $$= static_cast<StorageEngine *>(plugin->data);
+            if (engine)
+              $$= engine;
             else
             {
               my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);
@@ -1470,9 +1470,9 @@ storage_engines:
 known_storage_engines:
           ident_or_text
           {
-            st_plugin_int *plugin;
-            if ((plugin= ha_resolve_by_name(YYSession, &$1)))
-              $$= static_cast<StorageEngine *>(plugin->data);
+            StorageEngine *engine;
+            if ((engine= ha_resolve_by_name(YYSession, &$1)))
+              $$= engine;
             else
             {
               my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);

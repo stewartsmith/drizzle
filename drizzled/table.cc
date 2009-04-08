@@ -277,7 +277,7 @@ void free_table_share(TABLE_SHARE *share)
   }
   hash_free(&share->name_hash);
 
-  share->db_plugin= NULL;
+  share->storage_engine= NULL;
 
   /* We must copy mem_root from share because share is allocated through it */
   memcpy(&mem_root, &share->mem_root, sizeof(mem_root));
@@ -410,7 +410,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   {
     LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
 			      strlen(table.engine().name().c_str()) };
-    share->db_plugin= ha_resolve_by_name(session, &engine_name);
+    share->storage_engine= ha_resolve_by_name(session, &engine_name);
   }
 
   share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
@@ -4073,7 +4073,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) ==
       OPTION_BIG_TABLES || (select_options & TMP_TABLE_FORCE_MYISAM))
   {
-    share->db_plugin= ha_lock_engine(0, myisam_engine);
+    share->storage_engine= myisam_engine;
     table->file= get_new_handler(share, &table->mem_root,
                                  share->db_type());
     if (group &&
@@ -4083,7 +4083,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
   else
   {
-    share->db_plugin= ha_lock_engine(0, heap_engine);
+    share->storage_engine= heap_engine;
     table->file= get_new_handler(share, &table->mem_root,
                                  share->db_type());
   }
@@ -4770,7 +4770,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   new_table= *table;
   share= *table->s;
   new_table.s= &share;
-  new_table.s->db_plugin= ha_lock_engine(session, myisam_engine);
+  new_table.s->storage_engine= myisam_engine;
   if (!(new_table.file= get_new_handler(&share, &new_table.mem_root,
                                         new_table.s->db_type())))
     return(1);				// End of memory

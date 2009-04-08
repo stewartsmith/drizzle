@@ -284,7 +284,7 @@ static sys_var_session_optimizer_switch   sys_optimizer_switch(&vars, "optimizer
                                                                &SV::optimizer_switch);
 
 static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine",
-				       &SV::table_plugin);
+				       &SV::storage_engine);
 static sys_var_const_str	sys_system_time_zone(&vars, "system_time_zone",
                                              system_time_zone);
 static sys_var_uint64_t_ptr	sys_table_def_size(&vars, "table_definition_cache",
@@ -2342,7 +2342,7 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
   const char *value;
   String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
 
-  var->save_result.plugin= NULL;
+  var->save_result.storage_engine= NULL;
   if (var->value->result_type() == STRING_RESULT)
   {
     LEX_STRING engine_name;
@@ -2350,8 +2350,9 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
     if (!(res=var->value->val_str(&str)) ||
         !(engine_name.str= (char *)res->ptr()) ||
         !(engine_name.length= res->length()) ||
-	!(var->save_result.plugin= ha_resolve_by_name(session, &engine_name)) ||
-        !(engine= static_cast<StorageEngine *>(var->save_result.plugin->data)))
+	      !(var->save_result.storage_engine=
+            ha_resolve_by_name(session, &engine_name)) ||
+        !(engine= var->save_result.storage_engine))
     {
       value= res ? res->c_ptr() : "NULL";
       goto err;
@@ -2371,12 +2372,10 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
                                                          const LEX_STRING *)
 {
   unsigned char* result;
-  StorageEngine *engine;
   string engine_name;
-  st_plugin_int *plugin= session->variables.*offset;
+  StorageEngine *engine= session->variables.*offset;
   if (type == OPT_GLOBAL)
-    plugin= global_system_variables.*offset;
-  engine= static_cast<StorageEngine*>(plugin->data);
+    engine= global_system_variables.*offset;
   engine_name= engine->getName();
   result= (unsigned char *) session->strmake(engine_name.c_str(),
                                              engine_name.size());
@@ -2386,11 +2385,11 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 
 void sys_var_session_storage_engine::set_default(Session *session, enum_var_type type)
 {
-  st_plugin_int *old_value, *new_value, **value;
+  StorageEngine *old_value, *new_value, **value;
   if (type == OPT_GLOBAL)
   {
     value= &(global_system_variables.*offset);
-    new_value= ha_lock_engine(NULL, myisam_engine);
+    new_value= myisam_engine;
   }
   else
   {
@@ -2405,13 +2404,13 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
 
 bool sys_var_session_storage_engine::update(Session *session, set_var *var)
 {
-  st_plugin_int **value= &(global_system_variables.*offset), *old_value;
+  StorageEngine **value= &(global_system_variables.*offset), *old_value;
    if (var->type != OPT_GLOBAL)
      value= &(session->variables.*offset);
   old_value= *value;
-  if (old_value != var->save_result.plugin)
+  if (old_value != var->save_result.storage_engine)
   {
-    *value= var->save_result.plugin;
+    *value= var->save_result.storage_engine;
   }
   return 0;
 }

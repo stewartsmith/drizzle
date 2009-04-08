@@ -186,14 +186,14 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   uint32_t reclength= field->pack_length();
   if (using_unique_constraint)
   {
-    share->db_plugin= ha_lock_engine(0, myisam_engine);
+    share->storage_engine= myisam_engine;
     table->file= get_new_handler(share, &table->mem_root,
                                  share->db_type());
     assert(uniq_tuple_length_arg <= table->file->max_key_length());
   }
   else
   {
-    share->db_plugin= ha_lock_engine(0, heap_engine);
+    share->storage_engine= heap_engine;
     table->file= get_new_handler(share, &table->mem_root,
                                  share->db_type());
   }

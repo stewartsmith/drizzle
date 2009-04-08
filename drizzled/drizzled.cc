@@ -1617,17 +1617,12 @@ static int init_server_components()
   {
     LEX_STRING name= { default_storage_engine_str,
                        strlen(default_storage_engine_str) };
-    st_plugin_int *plugin;
     StorageEngine *engine;
 
-    if ((plugin= ha_resolve_by_name(0, &name)))
+    if (!(engine= ha_resolve_by_name(0, &name)))
     {
-      engine= static_cast<StorageEngine *>(plugin->data);
-    }
-    else
-    {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
-                      default_storage_engine_str);
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
+                    default_storage_engine_str);
       unireg_abort(1);
     }
     if (!engine->is_enabled())
@@ -1635,15 +1630,15 @@ static int init_server_components()
       errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
                     default_storage_engine_str);
       unireg_abort(1);
-      //assert(global_system_variables.table_plugin);
+      //assert(global_system_variables.storage_engine);
     }
     else
     {
       /*
-        Need to unlock as global_system_variables.table_plugin
+        Need to unlock as global_system_variables.storage_engine
         was acquired during plugin_init()
       */
-      global_system_variables.table_plugin= plugin;
+      global_system_variables.storage_engine= engine;
     }
   }
 
@@ -2776,7 +2771,7 @@ static void drizzle_init_variables(void)
   lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */
   default_storage_engine_str= (char*) "innodb";
-  global_system_variables.table_plugin= NULL;
+  global_system_variables.storage_engine= NULL;
   global_system_variables.tx_isolation= ISO_REPEATABLE_READ;
   global_system_variables.select_limit= (uint64_t) HA_POS_ERROR;
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
