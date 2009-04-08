@@ -26,6 +26,7 @@
 
 #include <bitset>
 #include <string>
+#include <vector>
 
 class TableList;
 class Session;
@@ -95,6 +96,7 @@ class StorageEngine
   */
   size_t savepoint_offset;
   size_t orig_savepoint_offset;
+  std::vector<std::string> aliases;
 
 protected:
 
@@ -127,6 +129,16 @@ public:
                 bool support_2pc= false);
 
   virtual ~StorageEngine();
+
+  const std::vector<std::string>& getAliases()
+  {
+    return aliases;
+  }
+
+  void addAlias(std::string alias)
+  {
+    aliases.push_back(alias);
+  }
 
   bool has_2pc()
   {

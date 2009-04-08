@@ -25,30 +25,24 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <map>
+#include <drizzled/registry.h>
+
 #include <string>
 
 #include CSTDINT_H
 
 using namespace std;
 
-map<string, StorageEngine *> all_engines;
-
-static const LEX_STRING sys_table_aliases[]=
-{
-  { C_STRING_WITH_LEN("INNOBASE") },  { C_STRING_WITH_LEN("INNODB") },
-  { C_STRING_WITH_LEN("HEAP") },      { C_STRING_WITH_LEN("MEMORY") },
-  {NULL, 0}
-};
+drizzled::Registry<StorageEngine *> all_engines;
 
 static void add_storage_engine(StorageEngine *engine)
 {
-  all_engines[engine->getName()]= engine;
+  all_engines.add(engine);
 }
 
 static void remove_storage_engine(StorageEngine *engine)
 {
-  all_engines.erase(engine->getName());
+  all_engines.remove(engine);
 }
 
 StorageEngine::StorageEngine(const std::string name_arg,
@@ -112,38 +106,19 @@ StorageEngine *ha_default_storage_engine(Session *session)
 */
 StorageEngine *ha_resolve_by_name(Session *session, const LEX_STRING *name)
 {
-  const LEX_STRING *table_alias;
-  st_plugin_int *plugin;
 
-redo:
-  /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
-  if (session && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
-                           (const unsigned char *)name->str, name->length,
-                           (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
+  string find_str(name->str, name->length);
+  transform(find_str.begin(), find_str.end(),
+            find_str.begin(), ::tolower);
+  string default_str("default");
+  if (find_str == default_str)
     return ha_default_storage_engine(session);
-
-  if ((plugin= plugin_lock_by_name(name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
-  {
     
-    StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
-    if (engine->is_user_selectable())
-      return engine;
-  }
 
-  /*
-    We check for the historical aliases.
-  */
-  for (table_alias= sys_table_aliases; table_alias->str; table_alias+= 2)
-  {
-    if (!my_strnncoll(&my_charset_utf8_general_ci,
-                      (const unsigned char *)name->str, name->length,
-                      (const unsigned char *)table_alias->str,
-                      table_alias->length))
-    {
-      name= table_alias + 1;
-      goto redo;
-    }
-  }
+  StorageEngine *engine= all_engines.find(find_str);
+
+  if (engine && engine->is_user_selectable())
+    return engine;
 
   return NULL;
 }
