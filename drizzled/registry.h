@@ -21,6 +21,7 @@
 #define DRIZZLED_REGISTRY_H
 
 #include <map>
+#include <set>
 #include <string>
 
 namespace drizzled {
@@ -29,6 +30,7 @@ template<class T>
 class Registry
 {
   std::map<std::string, T> item_map;
+  std::set<T> item_set;
 
   bool addItemEntry(std::string name, T item)
   {
@@ -69,6 +71,9 @@ class Registry
   }
 
 public:
+
+  typedef typename std::set<T>::iterator iterator;
+
   T find(const char *name, size_t length)
   {
     std::string find_str(name, length);
@@ -99,11 +104,14 @@ public:
   {
     bool failed= false;
 
+    if (item_set.insert(item).second == false)
+      return true;
+
     if (addItem(item->getName(), item))
       failed= true;
 
     const std::vector<std::string>& aliases= item->getAliases();
-    if (aliases.size() > 0)
+    if (!(failed) && (aliases.size() > 0))
     {
       typename std::vector<std::string>::const_iterator iter= aliases.begin();
       while (iter != aliases.end())
@@ -136,6 +144,16 @@ public:
         ++iter;
       }
     }
+  }
+
+  iterator& begin()
+  {
+    return item_set.begin();
+  }
+
+  iterator& end()
+  {
+    return item_set.end();
   }
 
 };
