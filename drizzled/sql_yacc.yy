@@ -4585,7 +4585,7 @@ insert_lock_option:
           {
             $$= TL_WRITE_CONCURRENT_INSERT;
           }
-        | LOW_PRIORITY  { $$= TL_WRITE_DEFAULT; }
+        | LOW_PRIORITY  { $$= TL_WRITE_LOW_PRIORITY; }
         | DELAYED_SYM   { $$= TL_WRITE_DEFAULT; }
         | HIGH_PRIORITY { $$= TL_WRITE; }
         ;

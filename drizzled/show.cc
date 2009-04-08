@@ -1037,7 +1037,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   {
     I_List_iterator<Session> it(session_list);
     Session *tmp;
-    while ((tmp=it++))
+    while ((tmp= it++))
     {
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
@@ -1067,14 +1067,15 @@ void mysqld_list_processes(Session *session,const char *user, bool)
           pthread_mutex_unlock(&mysys_var->mutex);
 
         session_info->start_time= tmp->start_time;
-        session_info->query=0;
-        if (tmp->query)
+        session_info->query= NULL;
+        if (tmp->process_list_info[0])
         {
           /*
             query_length is always set to 0 when we set query = NULL; see
 	          the comment in session.h why this prevents crashes in possible
             races with query_length
           */
+          assert(tmp->process_list_info[PROCESS_LIST_WIDTH - 1] == 0);
           session_info->query=(char*) session->strdup(tmp->process_list_info);
         }
         thread_infos.append(session_info);
