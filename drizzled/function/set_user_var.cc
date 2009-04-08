@@ -94,7 +94,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
   {
     Table *table= (Table *) arg;
     if (result_field->table == table || !table)
-      bitmap_set_bit(result_field->table->read_set, result_field->field_index);
+      result_field->table->read_set->set(result_field->field_index);
     if (result_field->vcol_info && result_field->vcol_info->expr_item)
       return result_field->vcol_info->
                expr_item->walk(&Item::register_field_in_read_map, 1, arg);
@@ -113,7 +113,7 @@ bool Item_func_set_user_var::register_field_in_bitmap(unsigned char *arg)
   assert(bitmap);
   if (result_field)
   {
-    bitmap->set(field->field_index);
+    bitmap->set(result_field->field_index);
   }
   return 0;
 }

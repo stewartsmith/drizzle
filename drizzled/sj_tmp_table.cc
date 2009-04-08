@@ -215,7 +215,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     table->record[1]= table->record[0]+alloc_length;
     share->default_values= table->record[1]+alloc_length;
   }
-  table->setup_tmp_table_column_bitmaps(bitmaps);
+  table->setup_tmp_table_column_bitmaps();
 
   recinfo= start_recinfo;
   null_flags=(unsigned char*) table->record[0];

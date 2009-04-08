@@ -324,7 +324,7 @@ public:
   MEM_ROOT alloc;
 
   QUICK_RANGE_SELECT(Session *session, Table *table,uint32_t index_arg,bool no_alloc,
-                     MEM_ROOT *parent_alloc, bool *create_err);
+                     MEM_ROOT *parent_alloc);
   ~QUICK_RANGE_SELECT();
 
   int init();

@@ -1380,8 +1380,7 @@ int parse_table_proto(Session *session, drizzle::Table &table, TABLE_SHARE *shar
   if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
                                              share->column_bitmap_size)))
     goto err;
-  bitmap_init(&share->all_set, bitmaps, share->fields, false);
-  bitmap_set_all(&share->all_set);
+  share->all_set.set();
 
   if(handler_file)
     delete handler_file;
@@ -1776,9 +1775,9 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
                           Table *outparam, open_table_mode open_mode)
 {
   int error;
-  uint32_t records, i, bitmap_size;
+  uint32_t records, i;
   bool error_reported= false;
-  unsigned char *record, *bitmaps;
+  unsigned char *record;
   Field **field_ptr, **vfield_ptr;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */
@@ -2467,8 +2466,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
 
 void Table::setup_tmp_table_column_bitmaps()
 {
-  uint32_t field_count= s->fields;
-
   /* write_set and all_set are copies of read_set */
   def_write_set= def_read_set;
   s->all_set= def_read_set;
@@ -3150,7 +3147,7 @@ void Table::mark_columns_used_by_index(uint32_t index)
   bitset<MAX_FIELDS> *bitmap= &tmp_set;
 
   (void) file->extra(HA_EXTRA_KEYREAD);
-  bitmap->reset()
+  bitmap->reset();
   mark_columns_used_by_index_no_reset(index, bitmap);
   column_bitmaps_set(bitmap, bitmap);
   return;
@@ -3191,7 +3188,7 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index,
                                 key_info[index].key_parts);
   for (;key_part != key_part_end; key_part++)
   {
-    bitmap.set(key_part->fieldnr-1);
+    bitmap->set(key_part->fieldnr-1);
     if (key_part->field->vcol_info &&
         key_part->field->vcol_info->expr_item)
       key_part->field->vcol_info->
@@ -4113,7 +4110,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   copy_func[0]=0;				// End marker
   param->func_count= copy_func - param->items_to_copy;
 
-  table->setup_tmp_table_column_bitmaps(bitmaps);
+  table->setup_tmp_table_column_bitmaps();
 
   recinfo=param->start_recinfo;
   null_flags=(unsigned char*) table->record[0];
@@ -4466,7 +4463,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
   share->blob_field= blob_field;
   share->fields= field_count;
   share->blob_ptr_size= portable_sizeof_char_ptr;
-  table->setup_tmp_table_column_bitmaps(bitmaps);
+  table->setup_tmp_table_column_bitmaps();
 
   /* Create all fields and calculate the total length of record */
   List_iterator_fast<Create_field> it(field_list);
@@ -4839,7 +4836,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
 bitset<MAX_FIELDS> *Table::use_all_columns(bitset<MAX_FIELDS> *bitmap)
 {
   bitset<MAX_FIELDS> *old= bitmap;
-  bitmap= s->all_set;
+  bitmap= &s->all_set;
   return old;
 }
 
@@ -4901,7 +4898,7 @@ bool Table::compare_record()
   /* Compare updated fields */
   for (Field **ptr= field ; *ptr ; ptr++)
   {
-    if (bitmap_is_set(write_set, (*ptr)->field_index) &&
+    if (write_set->test((*ptr)->field_index) &&
 	(*ptr)->cmp_binary_offset(s->rec_buff_length))
       return true;
   }
@@ -4974,7 +4971,7 @@ int update_virtual_fields_marked_for_write(Table *table,
       Only update those fields that are marked in the write_set bitmap
       and not _already_ physically stored in the database.
     */
-    if (bitmap_is_set(table->write_set, vfield->field_index) &&
+    if (table->write_set->test(vfield->field_index) &&
         (not (ignore_stored && vfield->is_stored))
        )
     {

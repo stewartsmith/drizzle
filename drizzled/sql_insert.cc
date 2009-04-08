@@ -79,7 +79,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
       No fields are provided so all fields must be provided in the values.
       Thus we set all bits in the write set.
     */
-    bitmap_set_all(table->write_set);
+    table->write_set->set();
   }
   else
   {						// Part field list
@@ -120,14 +120,12 @@ static int check_insert_fields(Session *session, TableList *table_list,
     }
     if (table->timestamp_field)	// Don't automaticly set timestamp if used
     {
-      if (bitmap_is_set(table->write_set,
-                        table->timestamp_field->field_index))
+      if (table->write_set->test(table->timestamp_field->field_index))
         clear_timestamp_auto_bits(table->timestamp_field_type,
                                   TIMESTAMP_AUTO_SET_ON_INSERT);
       else
       {
-        bitmap_set_bit(table->write_set,
-                       table->timestamp_field->field_index);
+        table->write_set->set(table->timestamp_field->field_index);
       }
     }
     /* Mark all virtual columns for write*/
@@ -171,8 +169,8 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= bitmap_test_and_clear(table->write_set,
-                                          table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->test(table->timestamp_field->field_index);
+    table->write_set->reset(table->timestamp_field->field_index);
   }
 
   /* Check the fields we are going to modify */
@@ -182,13 +180,11 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
   if (table->timestamp_field)
   {
     /* Don't set timestamp column if this is modified. */
-    if (bitmap_is_set(table->write_set,
-                      table->timestamp_field->field_index))
+    if (table->write_set->test(table->timestamp_field->field_index))
       clear_timestamp_auto_bits(table->timestamp_field_type,
                                 TIMESTAMP_AUTO_SET_ON_UPDATE);
     if (timestamp_mark)
-      bitmap_set_bit(table->write_set,
-                     table->timestamp_field->field_index);
+      table->write_set->set(table->timestamp_field->field_index);
   }
   return 0;
 }
@@ -695,6 +691,18 @@ static int last_uniq_key(Table *table,uint32_t keynr)
 
 
 /*
+ * This helper function returns true if map1 is a subset of
+ * map2; otherwise it returns false.
+ */
+static bool is_bitmap_subset(bitset<MAX_FIELDS> *map1, bitset<MAX_FIELDS> *map2)
+{
+  bitset<MAX_FIELDS> tmp1= *map2;
+  tmp1.flip();
+  bitset<MAX_FIELDS> tmp2= *map1 & tmp1;
+  return (!tmp2.any());
+}
+
+/*
   Write a record to table with optional deleting of conflicting records,
   invoke proper triggers if needed.
 
@@ -832,7 +840,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             table->next_number_field->val_int());
         info->touched++;
         if ((table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
-             !bitmap_is_subset(table->write_set, table->read_set)) ||
+             !is_bitmap_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
           if ((error=table->file->ha_update_row(table->record[1],
@@ -1671,7 +1679,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
-    bitmap_set_bit(table->write_set, (*f)->field_index);
+    table->write_set->set((*f)->field_index);
 
   /* Don't set timestamp if used */
   table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;

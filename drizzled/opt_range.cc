@@ -1090,12 +1090,9 @@ QUICK_SELECT_I::QUICK_SELECT_I()
 {}
 
 QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t key_nr,
-                                       bool no_alloc, MEM_ROOT *parent_alloc,
-                                       bool *create_error)
+                                       bool no_alloc, MEM_ROOT *parent_alloc)
   :free_file(0),cur_range(NULL),last_range(0),dont_free(0)
 {
-  my_bitmap_map *bitmap;
-
   in_ror_merged_scan= 0;
   sorted= 0;
   index= key_nr;
@@ -1120,14 +1117,6 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
   save_read_set= head->read_set;
   save_write_set= head->write_set;
 
-  /* Allocate a bitmap for used columns (Q: why not on MEM_ROOT?) */
-  if (!(bitmap= (my_bitmap_map*) malloc(head->s->column_bitmap_size)))
-  {
-    column_bitmap.bitmap= 0;
-    *create_error= 1;
-  }
-  else
-    bitmap_init(&column_bitmap, bitmap, head->s->fields, false);
   return;
 }
 
@@ -1169,7 +1158,6 @@ QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
     }
     delete_dynamic(&ranges); /* ranges are allocated in alloc */
     free_root(&alloc,MYF(0));
-    free((char*) column_bitmap.bitmap);
   }
   head->column_bitmaps_set(save_read_set, save_write_set);
   if (mrr_buf_desc)
@@ -1355,7 +1343,6 @@ end:
   }
   head->prepare_for_position();
   head->file= org_file;
-  bitmap_copy(&column_bitmap, head->read_set);
   head->column_bitmaps_set(&column_bitmap, &column_bitmap);
 
   return 0;
@@ -2104,9 +2091,6 @@ static int fill_used_fields_bitmap(PARAM *param)
                                   param->fields_bitmap_size)) ||
       bitmap_init(&param->needed_fields, tmp, table->s->fields, false))
     return 1;
-
-  bitmap_copy(&param->needed_fields, table->read_set);
-  bitmap_union(&param->needed_fields, table->write_set);
 
   pk= param->table->s->primary_key;
   if (pk != MAX_KEY && param->table->file->primary_key_is_clustered())
@@ -6482,7 +6466,7 @@ get_quick_select(PARAM *param,uint32_t idx,SEL_ARG *key_tree, uint32_t mrr_flags
 
   quick=new QUICK_RANGE_SELECT(param->session, param->table,
                                param->real_keynr[idx],
-                               test(parent_alloc), NULL, &create_err);
+                               test(parent_alloc), NULL);
 
   if (quick)
   {
@@ -6746,7 +6730,7 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
 
   old_root= session->mem_root;
   /* The following call may change session->mem_root */
-  quick= new QUICK_RANGE_SELECT(session, table, ref->key, 0, 0, &create_err);
+  quick= new QUICK_RANGE_SELECT(session, table, ref->key, 0, 0);
   /* save mem_root set by QUICK_RANGE_SELECT constructor */
   alloc= session->mem_root;
   /*
@@ -8101,7 +8085,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
           If the field is used in the current query ensure that it's
           part of 'cur_index'
         */
-        if (bitmap_is_set(table->read_set, cur_field->field_index) &&
+        if (table->read_set->test(cur_field->field_index) &&
             !cur_field->part_of_key_not_clustered.is_set(cur_index))
           goto next_index;                  // Field was not part of key
       }
@@ -8273,7 +8257,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
                 (min_max_arg_part && (min_max_arg_part < last_part));
       for (; cur_part != last_part; cur_part++)
       {
-        if (bitmap_is_set(table->read_set, cur_part->field->field_index))
+        if (table->read_set->test(cur_part->field->field_index))
           goto next_index;
       }
     }

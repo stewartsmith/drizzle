@@ -110,7 +110,7 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
 {
   Table *table= (Table *) arg;
   if (field->table == table || !table)
-    bitmap_set_bit(field->table->read_set, field->field_index);
+    field->table->read_set->set(field->field_index);
   if (field->vcol_info && field->vcol_info->expr_item)
     return field->vcol_info->expr_item->walk(&Item::register_field_in_read_map,
                                              1, arg);
@@ -903,7 +903,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
     Table *table= field->table;
-    MY_BITMAP *current_bitmap, *other_bitmap;
+    bitset<MAX_FIELDS> *current_bitmap, *other_bitmap;
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
       current_bitmap= table->read_set;
@@ -914,9 +914,11 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    if (!bitmap_fast_test_and_set(current_bitmap, field->field_index))
+    /* TODO: is this equivalent to bitmap test and set? don't think so... */
+    if (!current_bitmap->test(field->field_index))
     {
-      if (!bitmap_is_set(other_bitmap, field->field_index))
+      current_bitmap->set(field->field_index);
+      if (!other_bitmap->test(field->field_index))
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
@@ -925,6 +927,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
         /* purecov: end */
       }
     }
+    current_bitmap->set(field->field_index);
   }
   fixed= 1;
 mark_non_agg_field:

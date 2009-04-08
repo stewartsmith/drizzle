@@ -605,7 +605,7 @@ const unsigned char *Field_blob::unpack(unsigned char *,
   uint32_t const master_packlength=
     param_data > 0 ? param_data & 0xFF : packlength;
   uint32_t const length= get_length(from, master_packlength, low_byte_first);
-  bitmap_set_bit(table->write_set, field_index);
+  table->write_set->set(field_index);
   store(reinterpret_cast<const char*>(from) + master_packlength,
         length, field_charset);
   return(from + master_packlength + length);
@@ -677,11 +677,11 @@ uint32_t Field_blob::max_display_length()
 
 bool Field_blob::in_read_set()
 {
-  return bitmap_is_set(table->read_set, field_index);
+  return (table->read_set->test(field_index));
 }
 
 
 bool Field_blob::in_write_set()
 {
-  return bitmap_is_set(table->write_set, field_index);
+  return (table->write_set->test(field_index));
 }

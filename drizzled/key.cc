@@ -22,6 +22,7 @@
 #include "drizzled/field/blob.h"
 
 #include <string>
+#include <bitset>
 
 using namespace std;
 
@@ -389,12 +390,13 @@ void key_unpack(String *to,Table *table,uint32_t idx)
     FALSE  Otherwise
 */
 
-bool is_key_used(Table *table, uint32_t idx, const bitmap<MAX_FIELDS> *fields)
+bool is_key_used(Table *table, uint32_t idx, const bitset<MAX_FIELDS> *fields)
 {
   table->tmp_set.reset();
   table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);
-  /* TODO: change this to use std::bitset */
-  if (bitmap_is_overlapping(&table->tmp_set, fields))
+  /* Check if 2 bitsets are overlapping */
+  bitset<MAX_FIELDS> tmp= *fields & table->tmp_set;
+  if (tmp.any())
     return 1;
 
   /*
