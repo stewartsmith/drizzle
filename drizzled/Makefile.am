@@ -352,7 +352,7 @@ noinst_LTLIBRARIES = \
 LDADD = $(top_builddir)/libdrizzleclient/libdrizzleclient.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(LIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
+	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
