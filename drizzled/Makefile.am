@@ -282,6 +282,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		qcache.h \
 		query_arena.h \
 		query_id.h \
+		registry.h \
 		rename.h \
 		replicator.h \
 		scheduling.h \

@@ -17,59 +17,29 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
 #include <drizzled/sql_udf.h>
+#include <drizzled/registry.h>
 
-#include <map>
 #include <string>
 
 using namespace std;
 
 static bool udf_startup= false; /* We do not lock because startup is single threaded */
-static map<string, Function_builder *> udf_map;
-
+static drizzled::Registry<Function_builder *> udf_registry;
 
 /* This is only called if using_udf_functions != 0 */
 Function_builder *find_udf(const char *name, uint32_t length)
 {
-
-  /**
-   * @todo: check without transform, then check with transform if needed
-   */
-  Function_builder *udf= NULL;
-
-  if (udf_startup == false)
-    return NULL;
-
-  string find_str(name, length);
-  transform(find_str.begin(), find_str.end(),
-            find_str.begin(), ::tolower);
-
-  map<string, Function_builder *>::iterator find_iter;
-  find_iter=  udf_map.find(find_str);
-  if (find_iter != udf_map.end())
-    udf= (*find_iter).second;
-
-  return (udf);
+  return udf_registry.find(name, length);
 }
 
 static bool add_udf(Function_builder *udf)
 {
-  /**
-   * @todo: add all lower and all upper version
-   */
-  string add_str= udf->get_name();
-  transform(add_str.begin(), add_str.end(),
-            add_str.begin(), ::tolower);
-
-  udf_map[add_str]= udf;
-
-  using_udf_functions= 1;
-
-  return true;
+  return udf_registry.add(udf);
 }
 
-static bool remove_udf(Function_builder *udf)
+static void remove_udf(Function_builder *udf)
 {
-  return udf_map.erase(udf->get_name());
+  udf_registry.remove(udf);
 }
 
 int initialize_udf(st_plugin_int *plugin)

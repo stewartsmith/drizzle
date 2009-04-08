@@ -26,20 +26,32 @@
 #include <drizzled/item/bin_string.h>
 
 #include <string>
+#include <vector>
 #include <functional>
 
 class Function_builder
   : public std::unary_function<MEM_ROOT*, Item_func *>
 {
   std::string name;
+  std::vector<std::string> aliases;
 public:
   Function_builder(std::string in_name) : name(in_name) {}
   virtual result_type operator()(argument_type session) const= 0;
   virtual ~Function_builder() {}
 
-  std::string get_name() const
+  std::string getName() const
   {
-      return name;
+    return name;
+  }
+
+  const std::vector<std::string>& getAliases() const
+  {
+    return aliases;
+  }
+
+  void addAlias(std::string alias)
+  {
+    aliases.push_back(alias);
   }
 };
 
