@@ -1617,12 +1617,12 @@ static int init_server_components()
   {
     LEX_STRING name= { default_storage_engine_str,
                        strlen(default_storage_engine_str) };
-    plugin_ref plugin;
+    st_plugin_int *plugin;
     StorageEngine *engine;
 
     if ((plugin= ha_resolve_by_name(0, &name)))
     {
-      engine= plugin_data(plugin,StorageEngine *);
+      engine= static_cast<StorageEngine *>(plugin->data);
     }
     else
     {

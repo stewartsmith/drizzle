@@ -3044,9 +3044,9 @@ int ha_table_exists_in_engine(Session* session,
       {
         LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
                                  strlen(table.engine().name().c_str()) };
-        plugin_ref plugin= ha_resolve_by_name(session, &engine_name);
+        st_plugin_int *plugin= ha_resolve_by_name(session, &engine_name);
         if(plugin)
-          args.engine= plugin_data(plugin,StorageEngine *);
+          args.engine= static_cast<StorageEngine *>(plugin->data);
       }
     }
   }

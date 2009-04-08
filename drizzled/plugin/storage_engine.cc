@@ -75,7 +75,7 @@ int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
   return HA_ERR_NO_SUCH_TABLE;
 }
 
-static plugin_ref ha_default_plugin(Session *session)
+static st_plugin_int *ha_default_plugin(Session *session)
 {
   if (session->variables.table_plugin)
     return session->variables.table_plugin;
@@ -94,9 +94,9 @@ static plugin_ref ha_default_plugin(Session *session)
 */
 StorageEngine *ha_default_storage_engine(Session *session)
 {
-  plugin_ref plugin= ha_default_plugin(session);
+  st_plugin_int *plugin= ha_default_plugin(session);
   assert(plugin);
-  StorageEngine *engine= plugin_data(plugin, StorageEngine*);
+  StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
   assert(engine);
   return engine;
 }
@@ -111,10 +111,10 @@ StorageEngine *ha_default_storage_engine(Session *session)
   @return
     pointer to storage engine plugin handle
 */
-plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name)
+st_plugin_int *ha_resolve_by_name(Session *session, const LEX_STRING *name)
 {
   const LEX_STRING *table_alias;
-  plugin_ref plugin;
+  st_plugin_int *plugin;
 
 redo:
   /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
@@ -125,7 +125,7 @@ redo:
 
   if ((plugin= plugin_lock_by_name(name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
-    StorageEngine *engine= plugin_data(plugin, StorageEngine *);
+    StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
     if (engine->is_user_selectable())
       return plugin;
   }
@@ -149,11 +149,11 @@ redo:
 }
 
 
-plugin_ref ha_lock_engine(Session *, StorageEngine *engine)
+st_plugin_int *ha_lock_engine(Session *, StorageEngine *engine)
 {
   if (engine)
   {
-    st_plugin_int **plugin= &(engine2plugin[engine->slot]);
+    st_plugin_int *plugin= engine2plugin[engine->slot];
 
     return plugin;
   }
