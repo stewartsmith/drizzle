@@ -147,12 +147,12 @@ public:
     }
   }
 
-  iterator begin()
+  const_iterator begin()
   {
     return item_set.begin();
   }
 
-  iterator end()
+  const_iterator end()
   {
     return item_set.end();
   }
