@@ -64,7 +64,8 @@ public:
   virtual void sendOK()= 0;
   virtual void sendEOF()= 0;
   virtual void sendError(uint32_t sql_errno, const char *err)=0;
-  virtual void close(void) {};
+  virtual void close()= 0;
+  virtual void forceClose()= 0;
   virtual void prepareForResend()= 0;
   virtual void free()= 0;
   virtual bool write()= 0;

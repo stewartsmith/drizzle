@@ -728,6 +728,18 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
   return 1;
 }
 
+/*
+ *
+ */
+static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
+{
+  bool ret= false;
+  if (bitmap->test(pos))
+    ret= true;
+  bitmap->set(pos);
+  return ret;
+}
+
 
 /**
   Resolve the name of a column reference.
@@ -914,10 +926,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    /* TODO: is this equivalent to bitmap test and set? don't think so... */
-    if (!current_bitmap->test(field->field_index))
+    if (!test_and_set_bit(current_bitmap, field->field_index))
     {
-      current_bitmap->set(field->field_index);
       if (!other_bitmap->test(field->field_index))
       {
         /* First usage of column */
@@ -927,7 +937,6 @@ bool Item_field::fix_fields(Session *session, Item **reference)
         /* purecov: end */
       }
     }
-    current_bitmap->set(field->field_index);
   }
   fixed= 1;
 mark_non_agg_field:

@@ -65,6 +65,21 @@ static const char *ha_choice_values[] = {"", "0", "1"};
 static void store_key_options(Session *session, String *packet, Table *table,
                               KEY *key_info);
 
+static vector<ST_SCHEMA_TABLE *> all_schema_tables;
+
+static void add_infoschema_table(ST_SCHEMA_TABLE *table)
+{
+  all_schema_tables.push_back(table);
+}
+
+static void remove_infoschema_table(ST_SCHEMA_TABLE *table)
+{
+  all_schema_tables.erase(remove_if(all_schema_tables.begin(),
+                                    all_schema_tables.end(),
+                                    bind2nd(equal_to<ST_SCHEMA_TABLE *>(),
+                                            table)),
+                          all_schema_tables.end());
+}
 
 
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char *wildstr)
@@ -1997,37 +2012,42 @@ struct st_add_schema_table
 };
 
 
-static bool add_schema_table(Session *session, st_plugin_int *plugin,
-                                void* p_data)
+class AddSchemaTable : public unary_function<ST_SCHEMA_TABLE *, bool>
 {
-  LEX_STRING *file_name= 0;
-  st_add_schema_table *data= (st_add_schema_table *)p_data;
-  List<LEX_STRING> *file_list= data->files;
-  const char *wild= data->wild;
-  ST_SCHEMA_TABLE *schema_table= plugin_data(plugin, ST_SCHEMA_TABLE *);
-
-  if (schema_table->hidden)
-      return(0);
-  if (wild)
+  Session *session;
+  st_add_schema_table *data;
+public:
+  AddSchemaTable(Session *session_arg, st_add_schema_table *data_arg)
+    : session(session_arg), data(data_arg) {}
+  result_type operator() (argument_type schema_table)
   {
-    if (lower_case_table_names)
+    LEX_STRING *file_name= 0;
+    List<LEX_STRING> *file_list= data->files;
+    const char *wild= data->wild;
+  
+    if (schema_table->hidden)
+        return(0);
+    if (wild)
     {
-      if (wild_case_compare(files_charset_info,
-                            schema_table->table_name,
-                            wild))
+      if (lower_case_table_names)
+      {
+        if (wild_case_compare(files_charset_info,
+                              schema_table->table_name,
+                              wild))
+          return(0);
+      }
+      else if (wild_compare(schema_table->table_name, wild, 0))
         return(0);
     }
-    else if (wild_compare(schema_table->table_name, wild, 0))
+  
+    if ((file_name= session->make_lex_string(file_name, schema_table->table_name,
+                                         strlen(schema_table->table_name),
+                                         true)) &&
+        !file_list->push_back(file_name))
       return(0);
+    return(1);
   }
-
-  if ((file_name= session->make_lex_string(file_name, schema_table->table_name,
-                                       strlen(schema_table->table_name),
-                                       true)) &&
-      !file_list->push_back(file_name))
-    return(0);
-  return(1);
-}
+};
 
 
 int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wild)
@@ -2062,11 +2082,12 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
 
   add_data.files= files;
   add_data.wild= wild;
-  if (plugin_foreach(session, add_schema_table,
-                     DRIZZLE_INFORMATION_SCHEMA_PLUGIN, &add_data))
-    return(1);
-
-  return(0);
+  vector<ST_SCHEMA_TABLE *>::iterator iter=
+    find_if(all_schema_tables.begin(), all_schema_tables.end(),
+           AddSchemaTable(session, &add_data));
+  if (iter != all_schema_tables.end())
+    return 1;
+  return 0 ;
 }
 
 
@@ -3635,42 +3656,19 @@ get_referential_constraints_record(Session *session, TableList *tables,
 }
 
 
-struct schema_table_ref
+class FindSchemaTableByName : public unary_function<ST_SCHEMA_TABLE *, bool>
 {
   const char *table_name;
-  ST_SCHEMA_TABLE *schema_table;
-};
-
-
-/*
-  Find schema_tables elment by name
-
-  SYNOPSIS
-    find_schema_table_in_plugin()
-    session                 thread handler
-    plugin              plugin
-    table_name          table name
-
-  RETURN
-    0	table not found
-    1   found the schema table
-*/
-static bool find_schema_table_in_plugin(Session *, st_plugin_int *plugin,
-                                        void* p_table)
-{
-  schema_table_ref *p_schema_table= (schema_table_ref *)p_table;
-  const char* table_name= p_schema_table->table_name;
-  ST_SCHEMA_TABLE *schema_table= plugin_data(plugin, ST_SCHEMA_TABLE *);
-
-  if (!my_strcasecmp(system_charset_info,
-                     schema_table->table_name,
-                     table_name)) {
-    p_schema_table->schema_table= schema_table;
-    return(1);
+public:
+  FindSchemaTableByName(const char *table_name_arg)
+    : table_name(table_name_arg) {}
+  result_type operator() (argument_type schema_table)
+  {
+    return !my_strcasecmp(system_charset_info,
+                          schema_table->table_name,
+                          table_name);
   }
-
-  return(0);
-}
+};
 
 
 /*
@@ -3686,9 +3684,8 @@ static bool find_schema_table_in_plugin(Session *, st_plugin_int *plugin,
     #   pointer to 'schema_tables' element
 */
 
-ST_SCHEMA_TABLE *find_schema_table(Session *session, const char* table_name)
+ST_SCHEMA_TABLE *find_schema_table(Session *, const char* table_name)
 {
-  schema_table_ref schema_table_a;
   ST_SCHEMA_TABLE *schema_table= schema_tables;
 
   for (; schema_table->table_name; schema_table++)
@@ -3699,11 +3696,11 @@ ST_SCHEMA_TABLE *find_schema_table(Session *session, const char* table_name)
       return(schema_table);
   }
 
-  schema_table_a.table_name= table_name;
-  if (plugin_foreach(session, find_schema_table_in_plugin,
-                     DRIZZLE_INFORMATION_SCHEMA_PLUGIN, &schema_table_a))
-    return(schema_table_a.schema_table);
-
+  vector<ST_SCHEMA_TABLE *>::iterator iter= 
+    find_if(all_schema_tables.begin(), all_schema_tables.end(),
+            FindSchemaTableByName(table_name));
+  if (iter != all_schema_tables.end())
+    return *iter;
   return(NULL);
 }
 
@@ -4507,6 +4504,7 @@ int initialize_schema_table(st_plugin_int *plugin)
     schema_table->table_name= plugin->name.str;
   }
 
+  add_infoschema_table(schema_table);
   plugin->data= schema_table;
 
   return 0;
@@ -4516,6 +4514,7 @@ int finalize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;
 
+  remove_infoschema_table(schema_table);
   if (schema_table && plugin->plugin->deinit)
     plugin->plugin->deinit(schema_table);
 

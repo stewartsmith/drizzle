@@ -185,7 +185,7 @@ struct system_variables
 
   bool old_alter_table;
 
-  st_plugin_int *table_plugin;
+  StorageEngine *storage_engine;
 
   /* Only charset part of these variables is sensible */
   const CHARSET_INFO  *character_set_filesystem;

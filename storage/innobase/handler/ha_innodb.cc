@@ -220,7 +220,10 @@ class InnobaseEngine : public StorageEngine
 {
 public:
   InnobaseEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_NO_FLAGS, sizeof(trx_named_savept_t)) {}
+   : StorageEngine(name_arg, HTON_NO_FLAGS, sizeof(trx_named_savept_t))
+  {
+    addAlias("INNOBASE");
+  }
 
   virtual
   int

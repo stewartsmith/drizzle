@@ -3596,6 +3596,19 @@ bool rm_temporary_table(StorageEngine *base, char *path)
   return(error);
 }
 
+/*
+ * Helper function which tests whether a bit is set in the 
+ * bitset or not. It also sets the bit after this test is
+ * performed.
+ */
+static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
+{
+  bool ret= false;
+  if (bitmap->test(pos))
+    ret= true;
+  bitmap->set(pos);
+  return ret;
+}
 
 /*****************************************************************************
 * The following find_field_in_XXX procedures implement the core of the
@@ -3637,14 +3650,12 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       other_bitmap=   table->read_set;
     }
 
-    if (current_bitmap->test(field->field_index))
+    if (test_and_set_bit(current_bitmap, field->field_index))
     {
-      current_bitmap->set(field->field_index);
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;
       return;
     }
-    current_bitmap->set(field->field_index);
     if (table->get_fields_in_item_tree)
       field->flags|= GET_FIXED_FIELDS_FLAG;
     table->used_fields++;

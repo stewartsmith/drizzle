@@ -3379,6 +3379,24 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const PARAM *param, SEL_TREE *tree,
   return(trp);
 }
 
+/*
+ * Helper method to find the position of the first bit in the
+ * given bitset that is set to 1.
+ * If no bit is set in the given bitset, return MY_BIT_NONE.
+ */
+static uint32_t get_first_bit_on_pos(bitset<MAX_FIELDS> &bitmap)
+{
+  uint32_t first_bit_on= MY_BIT_NONE;
+  for (int idx= 0; idx < MAX_FIELDS; idx++)
+  {
+    if (bitmap.test(idx))
+    {
+      first_bit_on= idx;
+      break;
+    }
+  } 
+  return first_bit_on;
+}
 
 /*
   Get best covering ROR-intersection.
@@ -3457,16 +3475,7 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
       (*scan)->covered_fields &= covered_fields->flip();
       covered_fields->flip();
       (*scan)->used_fields_covered= (*scan)->covered_fields.count();
-      uint32_t first_bit_on= MY_BIT_NONE;
-      for (int idx= 0; idx < MAX_FIELDS; idx++)
-      {
-        if ((*scan)->covered_fields.test(idx))
-        {
-          first_bit_on= idx;
-          break;
-        }
-      }
-      (*scan)->first_uncovered_field= first_bit_on;
+      (*scan)->first_uncovered_field= get_first_bit_on_pos((*scan)->covered_fields);
     }
 
     my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark, sizeof(ROR_SCAN_INFO*),
