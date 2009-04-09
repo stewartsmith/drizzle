@@ -24,12 +24,17 @@
 #define DRIZZLED_PLUGIN_ERRMSG_H
 
 #include <stdarg.h>
+#include <string>
 
 class Error_message_handler
 {
+  std::string name;
 public:
-  Error_message_handler() {}
+  Error_message_handler(std::string name_arg): name(name_arg) {}
+  Error_message_handler(const char *name_arg): name(name_arg) {}
   virtual ~Error_message_handler() {}
+
+  std::string getName() { return name; }
 
   virtual bool errmsg(Session *session, int priority,
                       const char *format, va_list ap)=0;

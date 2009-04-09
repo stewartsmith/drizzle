@@ -604,10 +604,10 @@ public:
 class sys_var_session_storage_engine :public sys_var_session
 {
 protected:
-  plugin_ref SV::*offset;
+  st_plugin_int *SV::*offset;
 public:
   sys_var_session_storage_engine(sys_var_chain *chain, const char *name_arg,
-                             plugin_ref SV::*offset_arg)
+                                 st_plugin_int *SV::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var);
@@ -943,7 +943,7 @@ public:
     uint32_t uint32_t_value;
     uint64_t uint64_t_value;
     size_t size_t_value;
-    plugin_ref plugin;
+    st_plugin_int *plugin;
     Time_zone *time_zone;
     MY_LOCALE *locale_value;
   } save_result;

@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -100,8 +101,10 @@ static const string engine_name("ARCHIVE");
 */
 
 /* Variables for archive share methods */
-pthread_mutex_t archive_mutex;
-static HASH archive_open_tables;
+pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
+
+std::map<char *, st_archive_share *> archive_open_tables;
+
 static unsigned int global_version;
 
 /* The file extension */
@@ -133,15 +136,6 @@ public:
   }
 };
 
-/*
-  Used for hash table that tracks open tables.
-*/
-static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length, bool)
-{
-  *length=share->table_name_length;
-  return (unsigned char*) share->table_name;
-}
-
 
 /*
   Initialize the archive handler.
@@ -166,18 +160,7 @@ int archive_db_init(void *p)
   /* When the engine starts up set the first version */
   global_version= 1;
 
-  if (pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST))
-    return true;
-  if (hash_init(&archive_open_tables, system_charset_info, 32, 0, 0,
-                (hash_get_key) archive_get_key, 0, 0))
-  {
-    pthread_mutex_destroy(&archive_mutex);
-  }
-  else
-  {
-    return(false);
-  }
-  return(true);
+  return false;
 }
 
 /*
@@ -196,7 +179,6 @@ int archive_db_done(void *p)
   ArchiveEngine *archive_engine= static_cast<ArchiveEngine *>(p);
   delete archive_engine;
 
-  hash_free(&archive_open_tables);
   pthread_mutex_destroy(&archive_mutex);
 
   return 0;
@@ -239,13 +221,19 @@ int ha_archive::read_data_header(azio_stream *file_to_read)
 ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
 {
   uint32_t length;
+  map<char *, st_archive_share *> ::iterator find_iter;
 
   pthread_mutex_lock(&archive_mutex);
   length=(uint) strlen(table_name);
 
-  if (!(share=(ARCHIVE_SHARE*) hash_search(&archive_open_tables,
-                                           (unsigned char*) table_name,
-                                           length)))
+  find_iter= archive_open_tables.find((char *)table_name);
+
+  if (find_iter != archive_open_tables.end())
+    share= (*find_iter).second;
+  else
+    share= NULL;
+
+  if (!share)
   {
     char *tmp_name;
     azio_stream archive_tmp;
@@ -298,7 +286,7 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
     }
     azclose(&archive_tmp);
 
-    my_hash_insert(&archive_open_tables, (unsigned char*) share);
+    archive_open_tables[share->table_name]= share; 
     thr_lock_init(&share->lock);
   }
   share->use_count++;
@@ -321,7 +309,7 @@ int ha_archive::free_share()
   pthread_mutex_lock(&archive_mutex);
   if (!--share->use_count)
   {
-    hash_delete(&archive_open_tables, (unsigned char*) share);
+    archive_open_tables.erase(share->table_name);
     thr_lock_delete(&share->lock);
     pthread_mutex_destroy(&share->mutex);
     /*

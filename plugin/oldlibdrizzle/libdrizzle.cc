@@ -56,21 +56,9 @@
 #include <string.h>
 #include <mystrings/utf8.h>
 
-uint32_t net_buffer_length= 8192;
-uint32_t max_allowed_packet= 1024L*1024L*1024L;
-
 unsigned int drizzle_port=0;
 
 #include <errno.h>
-
-
-static DRIZZLE_PARAMETERS drizzle_internal_parameters=
-{&max_allowed_packet, &net_buffer_length, 0};
-
-const DRIZZLE_PARAMETERS * drizzleclient_get_parameters(void)
-{
-  return &drizzle_internal_parameters;
-}
 
 unsigned int drizzleclient_get_default_port(void)
 {

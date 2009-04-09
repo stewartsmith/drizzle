@@ -5424,8 +5424,10 @@ static bool check_engine(Session *session, const char *table_name,
   StorageEngine *req_engine= *new_engine;
   if (!req_engine->is_enabled())
   {
-    const char *engine_name= ha_resolve_storage_engine_name(req_engine);
-    my_error(ER_FEATURE_DISABLED,MYF(0),engine_name,engine_name);
+    string engine_name= req_engine->getName();
+    my_error(ER_FEATURE_DISABLED,MYF(0),
+             engine_name.c_str(), engine_name.c_str());
+             
     return true;
   }
 
@@ -5434,7 +5436,7 @@ static bool check_engine(Session *session, const char *table_name,
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                        ER_WARN_USING_OTHER_HANDLER,
                        ER(ER_WARN_USING_OTHER_HANDLER),
-                       ha_resolve_storage_engine_name(*new_engine),
+                       ha_resolve_storage_engine_name(*new_engine).c_str(),
                        table_name);
   }
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE &&
@@ -5443,7 +5445,8 @@ static bool check_engine(Session *session, const char *table_name,
     if (create_info->used_fields & HA_CREATE_USED_ENGINE)
     {
       my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-               ha_resolve_storage_engine_name(*new_engine), "TEMPORARY");
+               ha_resolve_storage_engine_name(*new_engine).c_str(),
+               "TEMPORARY");
       *new_engine= 0;
       return true;
     }

@@ -170,6 +170,9 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
    but we have this here for the sake of being an example */
 class Logging_query: public Logging_handler
 {
+public:
+  Logging_query() : Logging_handler("Logging_query") {}
+
   virtual bool pre (Session *)
   {
     return false;

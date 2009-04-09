@@ -1159,7 +1159,7 @@ create:
               push_warning_printf(YYSession, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_USING_OTHER_HANDLER,
                                   ER(ER_WARN_USING_OTHER_HANDLER),
-                                  ha_resolve_storage_engine_name(lex->create_info.db_type),
+                                  ha_resolve_storage_engine_name(lex->create_info.db_type).c_str(),
                                   $5->table.str);
             }
           }
@@ -1455,10 +1455,10 @@ default_collation:
 storage_engines:
           ident_or_text
           {
-            plugin_ref plugin= ha_resolve_by_name(YYSession, &$1);
+            st_plugin_int *plugin= ha_resolve_by_name(YYSession, &$1);
 
             if (plugin)
-              $$= plugin_data(plugin, StorageEngine*);
+              $$= static_cast<StorageEngine *>(plugin->data);
             else
             {
               my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);
@@ -1470,9 +1470,9 @@ storage_engines:
 known_storage_engines:
           ident_or_text
           {
-            plugin_ref plugin;
+            st_plugin_int *plugin;
             if ((plugin= ha_resolve_by_name(YYSession, &$1)))
-              $$= plugin_data(plugin, StorageEngine*);
+              $$= static_cast<StorageEngine *>(plugin->data);
             else
             {
               my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);
@@ -4585,7 +4585,7 @@ insert_lock_option:
           {
             $$= TL_WRITE_CONCURRENT_INSERT;
           }
-        | LOW_PRIORITY  { $$= TL_WRITE_DEFAULT; }
+        | LOW_PRIORITY  { $$= TL_WRITE_LOW_PRIORITY; }
         | DELAYED_SYM   { $$= TL_WRITE_DEFAULT; }
         | HIGH_PRIORITY { $$= TL_WRITE; }
         ;

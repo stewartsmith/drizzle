@@ -18,7 +18,6 @@ set @my_net_buffer_length         =@@global.net_buffer_length;
 set @my_net_write_timeout         =@@global.net_write_timeout;
 set @my_net_read_timeout          =@@global.net_read_timeout;
 set @my_server_id                 =@@global.server_id;
-set @my_slow_launch_time          =@@global.slow_launch_time;
 set @my_storage_engine            =@@global.storage_engine;
 
 # case insensitivity tests (new in 5.0)
@@ -209,7 +208,6 @@ set net_write_timeout=100;
 set read_buffer_size=100;
 set read_rnd_buffer_size=100;
 set global server_id=100;
-set global slow_launch_time=100;
 set sort_buffer_size=100;
 set sql_big_selects=1;
 set sql_buffer_result=1;
@@ -579,7 +577,6 @@ set global net_buffer_length         =@my_net_buffer_length;
 set global net_write_timeout         =@my_net_write_timeout;
 set global net_read_timeout          =@my_net_read_timeout;
 set global server_id                 =@my_server_id;
-set global slow_launch_time          =@my_slow_launch_time;
 set global storage_engine            =@my_storage_engine;
 --error 1193
 set global thread_cache_size         =@my_thread_cache_size;

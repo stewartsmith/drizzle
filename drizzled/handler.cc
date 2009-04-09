@@ -184,7 +184,7 @@ int ha_end()
 }
 
 static bool dropdb_storage_engine(Session *,
-                                  plugin_ref plugin,
+                                  st_plugin_int *plugin,
                                   void *path)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
@@ -200,7 +200,7 @@ void ha_drop_database(char* path)
 }
 
 
-static bool closecon_storage_engine(Session *session, plugin_ref plugin,
+static bool closecon_storage_engine(Session *session, st_plugin_int *plugin,
                                 void *)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
@@ -586,7 +586,7 @@ int ha_prepare(Session *session)
       {
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            ha_resolve_storage_engine_name(engine));
+                            engine->getName().c_str());
       }
     }
   }
@@ -870,7 +870,7 @@ struct xaengine_st {
 };
 
 static bool xacommit_storage_engine(Session *,
-                                    plugin_ref plugin,
+                                    st_plugin_int *plugin,
                                     void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
@@ -883,7 +883,7 @@ static bool xacommit_storage_engine(Session *,
 }
 
 static bool xarollback_storage_engine(Session *,
-                                  plugin_ref plugin,
+                                      st_plugin_int *plugin,
                                   void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
@@ -933,7 +933,7 @@ struct xarecover_st
 };
 
 static bool xarecover_storage_engine(Session *,
-                                     plugin_ref plugin,
+                                     st_plugin_int *plugin,
                                      void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
@@ -944,8 +944,9 @@ static bool xarecover_storage_engine(Session *,
   {
     while ((got= engine->recover(info->list, info->len)) > 0 )
     {
-      errmsg_printf(ERRMSG_LVL_INFO, _("Found %d prepared transaction(s) in %s"),
-                            got, ha_resolve_storage_engine_name(engine));
+      errmsg_printf(ERRMSG_LVL_INFO,
+                    _("Found %d prepared transaction(s) in %s"),
+                    got, engine->getName().c_str());
       for (int i=0; i < got; i ++)
       {
         my_xid x=info->list[i].get_my_xid();
@@ -1113,7 +1114,7 @@ bool mysql_xa_recover(Session *session)
   @return
     always 0
 */
-static bool release_temporary_latches(Session *session, plugin_ref plugin,
+static bool release_temporary_latches(Session *session, st_plugin_int *plugin,
                                       void *)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
@@ -1239,7 +1240,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 }
 
 
-static bool snapshot_storage_engine(Session *session, plugin_ref plugin, void *arg)
+static bool snapshot_storage_engine(Session *session, st_plugin_int *plugin, void *arg)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
   if (engine->is_enabled())
@@ -1269,7 +1270,7 @@ int ha_start_consistent_snapshot(Session *session)
 
 
 static bool flush_storage_engine(Session *,
-                             plugin_ref plugin,
+                             st_plugin_int *plugin,
                              void *)
 {
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
@@ -1355,7 +1356,7 @@ struct storage_engine_delete_table_args {
 };
 
 static bool deletetable_storage_engine(Session *,
-                                       plugin_ref plugin,
+                                       st_plugin_int *plugin,
                                        void *args)
 {
   struct storage_engine_delete_table_args *dtargs= (struct storage_engine_delete_table_args *) args;
@@ -2993,8 +2994,9 @@ struct st_table_exists_in_storage_engine_args
   StorageEngine* engine;
 };
 
-static bool table_exists_in_storage_engine(Session *session, plugin_ref plugin,
-                                              void *arg)
+static bool table_exists_in_storage_engine(Session *session,
+                                           st_plugin_int *plugin,
+                                           void *arg)
 {
   st_table_exists_in_storage_engine_args *vargs= (st_table_exists_in_storage_engine_args *)arg;
   StorageEngine *engine= plugin_data(plugin, StorageEngine *);
@@ -3043,9 +3045,9 @@ int ha_table_exists_in_engine(Session* session,
       {
         LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
                                  strlen(table.engine().name().c_str()) };
-        plugin_ref plugin= ha_resolve_by_name(session, &engine_name);
+        st_plugin_int *plugin= ha_resolve_by_name(session, &engine_name);
         if(plugin)
-          args.engine= plugin_data(plugin,StorageEngine *);
+          args.engine= static_cast<StorageEngine *>(plugin->data);
       }
     }
   }
@@ -4080,7 +4082,7 @@ int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
     pointer		pointer to TYPELIB structure
 */
 static bool exts_handlerton(Session *,
-                            plugin_ref plugin,
+                            st_plugin_int *plugin,
                             void *arg)
 {
   List<char> *found_exts= (List<char> *) arg;

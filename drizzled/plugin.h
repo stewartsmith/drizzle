@@ -43,9 +43,7 @@ enum drizzle_plugin_type {
   DRIZZLE_LOGGER_PLUGIN,                /* Query Logging */
   DRIZZLE_ERRMSG_PLUGIN,                /* Error Messages */
   DRIZZLE_AUTH_PLUGIN,                  /* Authorization */
-  DRIZZLE_CONFIGVAR_PLUGIN,             /* Configuration Variables */
   DRIZZLE_QCACHE_PLUGIN,                /* Query Cache */
-  DRIZZLE_PARSER_PLUGIN,                /* Language Parser */
   DRIZZLE_SCHEDULING_PLUGIN,            /* Thread and Session Scheduling */
   DRIZZLE_REPLICATOR_PLUGIN,            /* Database Replication */
   DRIZZLE_PROTOCOL_PLUGIN,              /* Protocol Handlers */

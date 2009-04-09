@@ -28,7 +28,6 @@ noinst_HEADERS =	get_password.h \
 CLEANFILES =		$(BUILT_SOURCES)
 
 bin_PROGRAMS =			drizzle \
-				drizzleadmin \
 				drizzlecheck \
 				drizzledump \
 				drizzleimport \
@@ -40,8 +39,6 @@ libgetpassword_la_SOURCES=	get_password.cc
 
 drizzle_SOURCES=		drizzle.cc readline.cc
 drizzle_LDADD=			${LDADD} ${READLINE_LIBS}
-
-drizzleadmin_SOURCES=		drizzleadmin.cc
 
 drizzlecheck_SOURCES =		drizzlecheck.cc
 

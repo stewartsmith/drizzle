@@ -117,7 +117,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
 ** List all table types supported
 ***************************************************************************/
 
-static bool show_plugins(Session *session, plugin_ref plugin, void *arg)
+static bool show_plugins(Session *session, st_plugin_int *plugin, void *arg)
 {
   Table *table= (Table*) arg;
   struct st_mysql_plugin *plug= plugin_decl(plugin);
@@ -137,7 +137,7 @@ static bool show_plugins(Session *session, plugin_ref plugin, void *arg)
   else
     table->field[1]->set_null();
 
-  if (plugin[0]->isInited)
+  if (plugin->isInited)
     table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
   else
     table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
@@ -1037,7 +1037,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   {
     I_List_iterator<Session> it(session_list);
     Session *tmp;
-    while ((tmp=it++))
+    while ((tmp= it++))
     {
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
@@ -1072,14 +1072,15 @@ void mysqld_list_processes(Session *session,const char *user, bool)
           pthread_mutex_unlock(&mysys_var->mutex);
 
         session_info->start_time= tmp->start_time;
-        session_info->query=0;
-        if (tmp->query)
+        session_info->query= NULL;
+        if (tmp->process_list_info[0])
         {
           /*
             query_length is always set to 0 when we set query = NULL; see
 	          the comment in session.h why this prevents crashes in possible
             races with query_length
           */
+          assert(tmp->process_list_info[PROCESS_LIST_WIDTH - 1] == 0);
           session_info->query=(char*) session->strdup(tmp->process_list_info);
         }
         thread_infos.append(session_info);
@@ -1996,7 +1997,7 @@ struct st_add_schema_table
 };
 
 
-static bool add_schema_table(Session *session, plugin_ref plugin,
+static bool add_schema_table(Session *session, st_plugin_int *plugin,
                                 void* p_data)
 {
   LEX_STRING *file_name= 0;
@@ -2730,8 +2731,8 @@ static int get_schema_tables_record(Session *session, TableList *tables,
         continue;
       table->field[i]->set_notnull();
     }
-    tmp_buff= (char *) ha_resolve_storage_engine_name(tmp_db_type);
-    table->field[4]->store(tmp_buff, strlen(tmp_buff), cs);
+    string engine_name= ha_resolve_storage_engine_name(tmp_db_type);
+    table->field[4]->store(engine_name.c_str(), engine_name.size(), cs);
     table->field[5]->store((int64_t) 0, true);
 
     ptr=option_buff;
@@ -3660,7 +3661,7 @@ struct schema_table_ref
     0	table not found
     1   found the schema table
 */
-static bool find_schema_table_in_plugin(Session *, plugin_ref plugin,
+static bool find_schema_table_in_plugin(Session *, st_plugin_int *plugin,
                                         void* p_table)
 {
   schema_table_ref *p_schema_table= (schema_table_ref *)p_table;

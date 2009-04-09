@@ -64,6 +64,9 @@ static uint64_t get_microtime()
 
 class Logging_syslog: public Logging_handler
 {
+public:
+
+  Logging_syslog() : Logging_handler("Logging_syslog") {}
 
   virtual bool post (Session *session)
   {

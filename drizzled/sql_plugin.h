@@ -89,16 +89,11 @@ struct st_plugin_int
 };
 
 
-/*
-  See intern_plugin_lock() for the explanation for the
-  conditionally defined plugin_ref type
-*/
-typedef struct st_plugin_int **plugin_ref;
-#define plugin_decl(pi) ((pi)[0]->plugin)
-#define plugin_dlib(pi) ((pi)[0]->plugin_dl)
-#define plugin_data(pi,cast) (static_cast<cast>((pi)[0]->data))
-#define plugin_name(pi) (&((pi)[0]->name))
-#define plugin_equals(p1,p2) ((p1) && (p2) && (p1)[0] == (p2)[0])
+#define plugin_decl(pi) ((pi)->plugin)
+#define plugin_dlib(pi) ((pi)->plugin_dl)
+#define plugin_data(pi,cast) (static_cast<cast>((pi)->data))
+#define plugin_name(pi) (&((pi)->name))
+#define plugin_equals(p1,p2) ((p1) && (p2) && (p1) == (p2))
 
 typedef int (*plugin_type_init)(struct st_plugin_int *);
 
@@ -111,9 +106,7 @@ extern int plugin_init(int *argc, char **argv, int init_flags);
 extern void plugin_shutdown(void);
 extern void my_print_help_inc_plugins(struct my_option *options, uint32_t size);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
-extern plugin_ref plugin_lock(plugin_ref *ptr);
-extern plugin_ref plugin_lock_by_name(const LEX_STRING *name,
-                                      int type);
+extern st_plugin_int *plugin_lock_by_name(const LEX_STRING *name, int type);
 extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
 extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
@@ -121,7 +114,7 @@ extern bool plugin_register_builtin(struct st_mysql_plugin *plugin);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 
-typedef bool (plugin_foreach_func)(Session *session, plugin_ref plugin, void *arg);
+typedef bool (plugin_foreach_func)(Session *session, st_plugin_int *plugin, void *arg);
 bool plugin_foreach(Session *session, plugin_foreach_func *func,
                     int type, void *arg, bool all= false);
 

@@ -20,9 +20,7 @@
 #include <drizzled/authentication.h>
 #include <drizzled/logging.h>
 #include <drizzled/errmsg.h>
-#include <drizzled/configvar.h>
 #include <drizzled/qcache.h>
-#include <drizzled/parser.h>
 #include <drizzled/protocol.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
@@ -43,9 +41,6 @@
 
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2
-
-#define plugin_ref_to_int(A) (A ? A[0] : NULL)
-#define plugin_int_to_ref(A) &(A)
 
 using namespace std;
 
@@ -69,9 +64,7 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("LOGGER") },
   { C_STRING_WITH_LEN("ERRMSG") },
   { C_STRING_WITH_LEN("AUTH") },
-  { C_STRING_WITH_LEN("CONFIGVAR") },
   { C_STRING_WITH_LEN("QCACHE") },
-  { C_STRING_WITH_LEN("PARSER") },
   { C_STRING_WITH_LEN("SCHEDULING") },
   { C_STRING_WITH_LEN("REPLICATOR") },
   { C_STRING_WITH_LEN("PROTOCOL") }
@@ -99,9 +92,7 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   logging_initializer,  /* Logger */
   errmsg_initializer,  /* Error Messages */
   authentication_initializer,  /* Auth */
-  configvar_initializer,
   qcache_initializer,
-  parser_initializer,
   scheduling_initializer,
   replicator_initializer,
   protocol_initializer
@@ -118,9 +109,7 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   logging_finalizer,  /* Logger */
   errmsg_finalizer,  /* Logger */
   authentication_finalizer,  /* Auth */
-  configvar_finalizer,
   qcache_finalizer,
-  parser_finalizer,
   scheduling_finalizer,
   replicator_finalizer,
   protocol_finalizer
@@ -234,7 +223,6 @@ static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-static plugin_ref intern_plugin_lock(st_plugin_int *rc);
 static void reap_plugins(void);
 
 
@@ -466,47 +454,14 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 
 
-static plugin_ref intern_plugin_lock(st_plugin_int *rc)
-{
-  plugin_ref plugin;
-
-  assert(rc);
-
-  /*
-    For debugging, we do an additional malloc which allows the
-    memory manager and/or valgrind to track locked references and
-    double unlocks to aid resolving reference counting.problems.
-  */
-  if (!(plugin= (plugin_ref) malloc(sizeof(plugin_ref))))
-  {
-    assert(1);
-    return(NULL);
-  }
-
-  *plugin= rc;
-
-  return(plugin);
-}
-
-
-plugin_ref plugin_lock(plugin_ref *ptr)
-{
-  return ptr[0];
-}
-
-
-plugin_ref plugin_lock_by_name(const LEX_STRING *name, int type)
+st_plugin_int *plugin_lock_by_name(const LEX_STRING *name, int type)
 {
   Plugin_registry registry= Plugin_registry::get_plugin_registry();
 
-  plugin_ref rc= NULL;
-  st_plugin_int *plugin;
   if (! initialized)
     return(0);
 
-  if ((plugin= registry.find(name, type)))
-    rc= intern_plugin_lock(plugin);
-  return(rc);
+  return registry.find(name, type);
 }
 
 
@@ -764,7 +719,7 @@ int plugin_init(int *argc, char **argv, int flags)
       if (my_strcasecmp(&my_charset_utf8_general_ci, plugin->name, "MyISAM") == 0)
       {
         assert(!global_system_variables.table_plugin);
-        global_system_variables.table_plugin= &plugin_ptr;
+        global_system_variables.table_plugin= plugin_ptr;
       }
     }
   }
@@ -991,7 +946,7 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
   {
     plugin= *plugin_iter;
     /* It will stop iterating on first engine error when "func" returns true */
-    if (plugin && func(session, plugin_int_to_ref(plugin), arg))
+    if (plugin && func(session, plugin, arg))
         goto err;
   }
 
@@ -1310,16 +1265,16 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
-  plugin_ref plugin;
+  st_plugin_int *plugin;
 
   pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   if ((var= intern_find_sys_var(str, length, false)) &&
       (pi= var->cast_pluginvar()))
   {
     pthread_rwlock_unlock(&LOCK_system_variables_hash);
-    if (!(plugin= intern_plugin_lock(pi->plugin)))
+    if (!(plugin= pi->plugin))
       var= NULL; /* failed to lock it, it must be uninstalling */
-    else if (plugin[0]->isInited == false)
+    else if (plugin->isInited == false)
     {
       var= NULL;
     }

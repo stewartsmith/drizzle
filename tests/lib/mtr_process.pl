@@ -31,7 +31,6 @@ sub mtr_kill_leftovers ();
 sub mtr_wait_blocking ($);
 sub mtr_record_dead_children ();
 sub mtr_ndbmgm_start($$);
-sub mtr_mysqladmin_start($$$);
 sub mtr_exit ($);
 sub sleep_until_file_created ($$$);
 sub mtr_kill_processes ($);
@@ -360,9 +359,9 @@ sub mtr_kill_leftovers () {
               "socket: '$srv->{path_sock}'; ".
               "port: $srv->{port})");
 
-    my $pid= mtr_mysqladmin_start($srv, "shutdown", 20);
+    my $pid= mtr_server_shutdown($srv);
 
-    # Save the pid of the mysqladmin process
+    # Save the pid of the drizzle client process
     $admin_pids{$pid}= 1;
 
     push(@kill_pids,{
@@ -673,38 +672,32 @@ sub mtr_wait_blocking($) {
   }
 }
 
-# Start "mysqladmin <command>" for a specific mysqld
-sub mtr_mysqladmin_start($$$) {
+sub mtr_server_shutdown($) {
   my $srv= shift;
-  my $command= shift;
-  my $adm_shutdown_tmo= shift;
-
   my $args;
-  mtr_init_args(\$args);
 
-  mtr_add_arg($args, "--no-defaults");
+  mtr_init_args(\$args);
+  mtr_add_arg($args, "--shutdown");
   mtr_add_arg($args, "--user=%s", $::opt_user);
   mtr_add_arg($args, "--password=");
   mtr_add_arg($args, "--silent");
+
   if ( -e $srv->{'path_sock'} )
   {
     mtr_add_arg($args, "--socket=%s", $srv->{'path_sock'});
   }
+
   if ( $srv->{'port'} )
   {
     mtr_add_arg($args, "--port=%s", $srv->{'port'});
   }
+
   mtr_add_arg($args, "--connect_timeout=5");
 
-  # Shutdown time must be high as slave may be in reconnect
-  mtr_add_arg($args, "--shutdown_timeout=$adm_shutdown_tmo");
-  mtr_add_arg($args, "$command");
-  my $pid= mtr_spawn($::exe_drizzleadmin, $args,
-		     "", "", "", "",
-		     { append_log_file => 1 });
-  mtr_verbose("mtr_mysqladmin_start, pid: $pid");
+  my $pid= mtr_spawn($::exe_drizzle, $args,
+                     "", "", "", "", { append_log_file => 1 });
+  mtr_verbose("mtr_server_shutdown, pid: $pid");
   return $pid;
-
 }
 
 # Start "ndb_mgm shutdown" for a specific cluster, it will

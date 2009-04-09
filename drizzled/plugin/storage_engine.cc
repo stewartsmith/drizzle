@@ -32,6 +32,8 @@
 
 using namespace std;
 
+map<string, StorageEngine *> all_engines;
+
 st_plugin_int *engine2plugin[MAX_HA];
 
 static const LEX_STRING sys_table_aliases[]=
@@ -41,7 +43,7 @@ static const LEX_STRING sys_table_aliases[]=
   {NULL, 0}
 };
 
-StorageEngine::StorageEngine(const std::string &name_arg,
+StorageEngine::StorageEngine(const std::string name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg,
                              size_t savepoint_offset_arg,
                              bool support_2pc)
@@ -57,7 +59,7 @@ StorageEngine::StorageEngine(const std::string &name_arg,
     slot= total_ha++;
     if (two_phase_commit)
         total_ha_2pc++;
-  } 
+  }
 }
 
 
@@ -73,7 +75,7 @@ int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
   return HA_ERR_NO_SUCH_TABLE;
 }
 
-static plugin_ref ha_default_plugin(Session *session)
+static st_plugin_int *ha_default_plugin(Session *session)
 {
   if (session->variables.table_plugin)
     return session->variables.table_plugin;
@@ -92,9 +94,9 @@ static plugin_ref ha_default_plugin(Session *session)
 */
 StorageEngine *ha_default_storage_engine(Session *session)
 {
-  plugin_ref plugin= ha_default_plugin(session);
+  st_plugin_int *plugin= ha_default_plugin(session);
   assert(plugin);
-  StorageEngine *engine= plugin_data(plugin, StorageEngine*);
+  StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
   assert(engine);
   return engine;
 }
@@ -109,10 +111,10 @@ StorageEngine *ha_default_storage_engine(Session *session)
   @return
     pointer to storage engine plugin handle
 */
-plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name)
+st_plugin_int *ha_resolve_by_name(Session *session, const LEX_STRING *name)
 {
   const LEX_STRING *table_alias;
-  plugin_ref plugin;
+  st_plugin_int *plugin;
 
 redo:
   /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
@@ -123,7 +125,7 @@ redo:
 
   if ((plugin= plugin_lock_by_name(name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
-    StorageEngine *engine= plugin_data(plugin, StorageEngine *);
+    StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
     if (engine->is_user_selectable())
       return plugin;
   }
@@ -147,11 +149,11 @@ redo:
 }
 
 
-plugin_ref ha_lock_engine(Session *, StorageEngine *engine)
+st_plugin_int *ha_lock_engine(Session *, StorageEngine *engine)
 {
   if (engine)
   {
-    st_plugin_int **plugin= &(engine2plugin[engine->slot]);
+    st_plugin_int *plugin= engine2plugin[engine->slot];
 
     return plugin;
   }
@@ -183,6 +185,8 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
 int storage_engine_finalizer(st_plugin_int *plugin)
 {
   StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
+
+  all_engines.erase(engine->getName());
 
   if (engine && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(engine);
@@ -223,16 +227,13 @@ int storage_engine_initializer(st_plugin_int *plugin)
 
   plugin->data= engine;
   plugin->isInited= true;
+  all_engines[engine->getName()]= engine;
 
   return 0;
 }
 
-const char *ha_resolve_storage_engine_name(const StorageEngine *db_type)
+const string ha_resolve_storage_engine_name(const StorageEngine *engine)
 {
-  return db_type == NULL ? "UNKNOWN" : engine2plugin[db_type->slot]->name.str;
+  return engine == NULL ? string("UNKNOWN") : engine->getName();
 }
 
-LEX_STRING *ha_storage_engine_name(const StorageEngine *engine)
-{
-  return &engine2plugin[engine->slot]->name;
-}

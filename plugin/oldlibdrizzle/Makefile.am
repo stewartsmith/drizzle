@@ -23,7 +23,6 @@ noinst_HEADERS =\
 		drizzle_data.h \
 		drizzle_field.h \
 		drizzle_methods.h \
-		drizzle_parameters.h \
 		drizzle_res.h \
 		drizzle_rows.h \
 		libdrizzle.h \

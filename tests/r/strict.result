@@ -1,6 +1,12 @@
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1 (col1 INT);
-INSERT INTO t1 VALUES(-2147483648),(0),(2147483647),('-2147483648'),('2147483647'),(-2147483648.0),(2147483647.0);
+INSERT INTO t1 VALUES(-2147483648);
+INSERT INTO t1 VALUES (0);
+INSERT INTO t1 VALUES (2147483647);
+INSERT INTO t1 VALUES ('-2147483648');
+INSERT INTO t1 VALUES ('2147483647');
+INSERT INTO t1 VALUES (-2147483648.0);
+INSERT INTO t1 VALUES (2147483647.0);
 INSERT INTO t1 (col1) VALUES(-2147483649);
 ERROR 22003: Out of range value for column 'col1' at row 1
 INSERT INTO t1 (col1) VALUES(2147643648);
@@ -31,18 +37,24 @@ Warning	1265	Data truncated for column 'col1' at row 1
 INSERT IGNORE INTO t1 values (1/0);
 Warnings:
 Error	1365	Division by 0
-INSERT IGNORE INTO t1 values (-2147483649),(2147643648);
+INSERT IGNORE INTO t1 values (-2147483649);
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
-Warning	1264	Out of range value for column 'col1' at row 2
-INSERT IGNORE INTO t1 values ('-2147483649'),('2147643648');
+INSERT IGNORE INTO t1 values (2147643648);
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
-Warning	1264	Out of range value for column 'col1' at row 2
-INSERT IGNORE INTO t1 values (-2147483649.0),(2147643648.0);
+INSERT IGNORE INTO t1 values ('-2147483649');
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
-Warning	1264	Out of range value for column 'col1' at row 2
+INSERT IGNORE INTO t1 values ('2147643648');
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+INSERT IGNORE INTO t1 values (-2147483649.0);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+INSERT IGNORE INTO t1 values (2147643648.0);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
 SELECT * FROM t1;
 col1
 -2147483648
@@ -62,9 +74,13 @@ NULL
 2147483647
 DROP TABLE t1;
 CREATE TABLE t1 (col1 BIGINT);
-INSERT INTO t1 VALUES(-9223372036854775808),(0),(9223372036854775807);
-INSERT INTO t1 VALUES('-9223372036854775808'),('9223372036854775807');
-INSERT INTO t1 VALUES(-9223372036854774000.0),(9223372036854775700.0);
+INSERT INTO t1 VALUES (-9223372036854775808);
+INSERT INTO t1 VALUES (0);
+INSERT INTO t1 VALUES (9223372036854775807);
+INSERT INTO t1 VALUES ('-9223372036854775808');
+INSERT INTO t1 VALUES ('9223372036854775807');
+INSERT INTO t1 VALUES (-9223372036854774000.0);
+INSERT INTO t1 VALUES (9223372036854775700.0);
 INSERT INTO t1 (col1) VALUES(-9223372036854775809);
 ERROR 22003: Out of range value for column 'col1' at row 1
 INSERT INTO t1 (col1) VALUES('-9223372036854775809');
@@ -91,17 +107,22 @@ Warning	1265	Data truncated for column 'col1' at row 1
 INSERT IGNORE INTO t1 values (1/0);
 Warnings:
 Error	1365	Division by 0
-INSERT IGNORE INTO t1 VALUES(-9223372036854775809),(9223372036854775808);
+INSERT IGNORE INTO t1 VALUES (-9223372036854775809);
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
-INSERT IGNORE INTO t1 VALUES('-9223372036854775809'),('9223372036854775808');
+INSERT IGNORE INTO t1 VALUES (9223372036854775808);
+INSERT IGNORE INTO t1 VALUES ('-9223372036854775809');
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
-Warning	1264	Out of range value for column 'col1' at row 2
-INSERT IGNORE INTO t1 VALUES(-9223372036854785809.0),(9223372036854785808.0);
+INSERT IGNORE INTO t1 VALUES ('9223372036854775808');
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
-Warning	1264	Out of range value for column 'col1' at row 2
+INSERT IGNORE INTO t1 VALUES (-9223372036854785809.0);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+INSERT IGNORE INTO t1 VALUES (9223372036854785808.0);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
 SELECT * FROM t1;
 col1
 -9223372036854775808
@@ -121,14 +142,23 @@ NULL
 9223372036854775807
 DROP TABLE t1;
 CREATE TABLE t1 (col1 NUMERIC(4,2));
-INSERT INTO t1 VALUES (10.55),(10.5555),(0),(-10.55),(-10.5555),(11),(1e+01);
-Warnings:
-Note	1265	Data truncated for column 'col1' at row 2
-Note	1265	Data truncated for column 'col1' at row 5
-INSERT INTO t1 VALUES ('10.55'),('10.5555'),('-10.55'),('-10.5555'),('11'),('1e+01');
-Warnings:
-Note	1265	Data truncated for column 'col1' at row 2
-Note	1265	Data truncated for column 'col1' at row 4
+INSERT INTO t1 VALUES (10.55);
+INSERT INTO t1 VALUES (10.5555);
+ERROR 01000: Data truncated for column 'col1' at row 1
+INSERT INTO t1 VALUES (0);
+INSERT INTO t1 VALUES (-10.55);
+INSERT INTO t1 VALUES (-10.5555);
+ERROR 01000: Data truncated for column 'col1' at row 1
+INSERT INTO t1 VALUES (11);
+INSERT INTO t1 VALUES (1e+01);
+INSERT INTO t1 VALUES ('10.55');
+INSERT INTO t1 VALUES ('10.5555');
+ERROR 01000: Data truncated for column 'col1' at row 1
+INSERT INTO t1 VALUES ('-10.55');
+INSERT INTO t1 VALUES ('-10.5555');
+ERROR 01000: Data truncated for column 'col1' at row 1
+INSERT INTO t1 VALUES ('11');
+INSERT INTO t1 VALUES ('1e+01');
 INSERT INTO t1 VALUES (101.55);
 ERROR 22003: Out of range value for column 'col1' at row 1
 INSERT INTO t1 VALUES (101);
@@ -152,7 +182,7 @@ ERROR 22003: Out of range value for column 'col1' at row 1
 INSERT INTO t1 VALUES ('-100E');
 ERROR HY000: Incorrect decimal value: '-100E' for column 'col1' at row 1
 UPDATE t1 SET col1 =col1 * 50000 WHERE col1 =11;
-ERROR 22003: Out of range value for column 'col1' at row 6
+ERROR 22003: Out of range value for column 'col1' at row 4
 UPDATE t1 SET col1 =col1 / 0 WHERE col1 > 0;
 ERROR 22012: Division by 0
 UPDATE t1 SET col1= MOD(col1,0) WHERE col1 > 0;
@@ -165,29 +195,33 @@ INSERT INTO t1 (col1) VALUES ('1a');
 ERROR HY000: Incorrect decimal value: '1a' for column 'col1' at row 1
 INSERT IGNORE INTO t1 (col1) VALUES ('2a');
 Warnings:
-Note	1265	Data truncated for column 'col1' at row 1
+Warning	1265	Data truncated for column 'col1' at row 1
 INSERT IGNORE INTO t1 values (1/0);
 Warnings:
 Error	1365	Division by 0
-INSERT IGNORE INTO t1 VALUES(1000),(-1000);
+INSERT IGNORE INTO t1 VALUES (1000);
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
-Warning	1264	Out of range value for column 'col1' at row 2
-INSERT IGNORE INTO t1 VALUES('1000'),('-1000');
+INSERT IGNORE INTO t1 VALUES (-1000);
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
-Warning	1264	Out of range value for column 'col1' at row 2
-INSERT IGNORE INTO t1 VALUES(1000.0),(-1000.0);
+INSERT IGNORE INTO t1 VALUES ('1000');
 Warnings:
 Warning	1264	Out of range value for column 'col1' at row 1
-Warning	1264	Out of range value for column 'col1' at row 2
+INSERT IGNORE INTO t1 VALUES ('-1000');
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+INSERT IGNORE INTO t1 VALUES (1000.0);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
+INSERT IGNORE INTO t1 VALUES (-1000.0);
+Warnings:
+Warning	1264	Out of range value for column 'col1' at row 1
 UPDATE IGNORE t1 SET col1=1/NULL where col1=0;
 SELECT * FROM t1;
 col1
 -10.55
 -10.55
--10.56
--10.56
 -99.99
 -99.99
 -99.99
@@ -195,11 +229,9 @@ col1
 10.00
 10.55
 10.55
-10.56
-10.56
 11.00
 11.00
-2.00
+99.99
 99.99
 99.99
 99.99
@@ -207,9 +239,11 @@ NULL
 NULL
 DROP TABLE t1;
 CREATE TABLE t1 (col1 CHAR(5), col2 VARCHAR(6));
-INSERT INTO t1 VALUES ('hello', 'hello'),('he', 'he'),('hello   ', 'hello ');
+INSERT INTO t1 VALUES ('hello', 'hello');
+INSERT INTO t1 VALUES ('he', 'he');
+INSERT INTO t1 VALUES ('hello   ', 'hello ');
 Warnings:
-Note	1265	Data truncated for column 'col1' at row 3
+Note	1265	Data truncated for column 'col1' at row 1
 INSERT INTO t1 (col1) VALUES ('hellobob');
 ERROR 22001: Data too long for column 'col1' at row 1
 INSERT INTO t1 (col2) VALUES ('hellobob');
@@ -237,7 +271,9 @@ hello	hello
 hello	hellob
 DROP TABLE t1;
 CREATE TABLE t1 (col1 enum('red','blue','green'));
-INSERT INTO t1 VALUES ('red'),('blue'),('green');
+INSERT INTO t1 VALUES ('red');
+INSERT INTO t1 VALUES ('blue');
+INSERT INTO t1 VALUES ('green');
 INSERT INTO t1 (col1) VALUES ('yellow');
 ERROR HY000: Received an invalid enum value 'yellow'.
 INSERT INTO t1 (col1) VALUES ('redd');
