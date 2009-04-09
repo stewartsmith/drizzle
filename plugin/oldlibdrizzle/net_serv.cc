@@ -477,12 +477,6 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
   uint32_t retry_count= 0;
 
   /* Backup of the original SO_RCVTIMEO timeout */
-#ifdef WE_DONT_NEED_THIS_IN_DRIZZLED
-#ifndef __sun
-  struct timespec backtime;
-  int error;
-#endif
-#endif
 
   if (net->error == 2)
     return(-1);                /* socket can't be used */
@@ -536,33 +530,6 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
     packet= b;
   }
 
-#ifdef WE_DONT_NEED_THIS_IN_DRIZZLED
-#ifndef __sun
-  /* Check for error, currently assert */
-  if (net->write_timeout)
-  {
-    struct timespec waittime;
-    socklen_t time_len;
-
-    waittime.tv_sec= net->write_timeout;
-    waittime.tv_nsec= 0;
-
-    memset(&backtime, 0, sizeof(struct timespec));
-    time_len= sizeof(struct timespec);
-    error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, &time_len);
-    if (error != 0)
-    {
-      perror("getsockopt");
-      assert(error == 0);
-    }
-    error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &waittime, (socklen_t)sizeof(struct timespec));
-    assert(error == 0);
-  }
-#endif
-#endif
-
   pos= packet;
   end=pos+len;
   /* Loop until we have read everything */
@@ -614,14 +581,6 @@ end:
     free((char*) packet);
   net->reading_or_writing=0;
 
-#ifdef WE_DONT_NEED_THIS_IN_DRIZZLED
-#ifndef __sun
-  if (net->write_timeout)
-    error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, (socklen_t)sizeof(struct timespec));
-#endif
-#endif
-
   return(((int) (pos != end)));
 }
 
@@ -645,48 +604,12 @@ my_real_read(NET *net, size_t *complen)
   uint32_t remain= (net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE :
                     NET_HEADER_SIZE);
 
-#ifdef WE_DONT_NEED_THIS_IN_DRIZZLED
-#ifndef __sun
-  /* Backup of the original SO_RCVTIMEO timeout */
-  struct timespec backtime;
-  int error= 0;
-#endif
-#endif
-
   *complen = 0;
 
   net->reading_or_writing= 1;
   /* Read timeout is set in drizzleclient_net_set_read_timeout */
 
   pos = net->buff + net->where_b;        /* net->packet -4 */
-
-
-#ifdef WE_DONT_NEED_THIS_IN_DRIZZLED
-#ifndef __sun
-  /* Check for error, currently assert */
-  if (net->read_timeout)
-  {
-    struct timespec waittime;
-    socklen_t time_len;
-
-    waittime.tv_sec= net->read_timeout;
-    waittime.tv_nsec= 0;
-
-    memset(&backtime, 0, sizeof(struct timespec));
-    time_len= sizeof(struct timespec);
-    error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, &time_len);
-    if (error != 0)
-    {
-      perror("getsockopt");
-      assert(error == 0);
-    }
-    error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &waittime, (socklen_t)sizeof(struct timespec));
-    assert(error == 0);
-  }
-#endif
-#endif
 
   for (i= 0; i < 2 ; i++)
   {
@@ -756,16 +679,6 @@ my_real_read(NET *net, size_t *complen)
   }
 
 end:
-#ifdef WE_DONT_NEED_THIS_IN_DRIZZLED
-#ifndef __sun
-  if  (net->vio->sd >= 0 && net->read_timeout)
-  {
-    error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, (socklen_t)sizeof(struct timespec));
-    assert(error == 0);
-  }
-#endif
-#endif
   net->reading_or_writing= 0;
 
   return(len);
