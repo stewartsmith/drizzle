@@ -712,9 +712,7 @@ public:
   bool quick;				// Don't calulate possible keys
 
   uint32_t fields_bitmap_size;
-  //MY_BITMAP needed_fields;    /* bitmask of fields needed by the query */
-  //MY_BITMAP tmp_covered_fields;
-  bitset<MAX_FIELDS> needed_fields;
+  bitset<MAX_FIELDS> needed_fields; /* bitmask of fields needed by the query */
   bitset<MAX_FIELDS> tmp_covered_fields;
 
   key_map *needed_reg;        /* ptr to SQL_SELECT::needed_reg */
@@ -1359,6 +1357,7 @@ end:
   }
   head->prepare_for_position();
   head->file= org_file;
+  column_bitmap= *(head->read_set);
   head->column_bitmaps_set(&column_bitmap, &column_bitmap);
 
   return 0;
@@ -2102,7 +2101,7 @@ static int fill_used_fields_bitmap(PARAM *param)
   uint32_t pk;
   param->fields_bitmap_size= table->s->column_bitmap_size;
 
-  param->needed_fields |= *(table->read_set);
+  param->needed_fields = *(table->read_set);
   param->needed_fields |= *(table->write_set);
 
   pk= param->table->s->primary_key;
