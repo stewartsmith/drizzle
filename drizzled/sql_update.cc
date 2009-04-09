@@ -66,9 +66,9 @@ static bool check_fields(Session *session, List<Item> &items)
 }
 
 /*
- *  * This helper function returns true if map1 is a subset of
- *   * map2; otherwise it returns false.
- *    */
+ * This helper function returns true if map1 is a subset of
+ * map2; otherwise it returns false.
+ */
 static bool is_bitmap_subset(bitset<MAX_FIELDS> *map1, bitset<MAX_FIELDS> *map2)
 {
   bitset<MAX_FIELDS> tmp1= *map2;
