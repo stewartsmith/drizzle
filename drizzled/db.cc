@@ -651,7 +651,6 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
         presumably this was to avoid deleting other user data... except if that
         data happened to be in files ending in .BAK, .opt or .TMD. *fun*
        */
-      find_type(extension, ha_known_exts(),1+2);
       continue;
     }
     /* just for safety we use files_charset_info */

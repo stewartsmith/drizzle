@@ -63,9 +63,6 @@ const char *tx_isolation_names[] =
 TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
                                tx_isolation_names, NULL};
 
-static TYPELIB known_extensions= {0,"known_exts", NULL, NULL};
-uint32_t known_extensions_id= 0;
-
 
 /**
   Register handler error messages for use with my_error().
@@ -3449,75 +3446,6 @@ int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
     error1= index_end();
   }
   return error ?  error : error1;
-}
-
-
-/**
-  Returns a list of all known extensions.
-
-    No mutexes, worst case race is a minor surplus memory allocation
-    We have to recreate the extension map if mysqld is restarted (for example
-    within libmysqld)
-
-  @retval
-    pointer		pointer to TYPELIB structure
-*/
-static bool exts_handlerton(Session *,
-                            st_plugin_int *plugin,
-                            void *arg)
-{
-  List<char> *found_exts= (List<char> *) arg;
-  StorageEngine *engine= plugin_data(plugin, StorageEngine *);
-  handler *file;
-  if (engine->is_enabled() &&
-      (file= engine->create((TABLE_SHARE*) 0, current_session->mem_root)))
-  {
-    List_iterator_fast<char> it(*found_exts);
-    const char **ext, *old_ext;
-
-    for (ext= file->bas_ext(); *ext; ext++)
-    {
-      while ((old_ext= it++))
-      {
-        if (!strcmp(old_ext, *ext))
-	  break;
-      }
-      if (!old_ext)
-        found_exts->push_back((char *) *ext);
-
-      it.rewind();
-    }
-    delete file;
-  }
-  return false;
-}
-
-TYPELIB *ha_known_exts(void)
-{
-  if (!known_extensions.type_names || mysys_usage_id != known_extensions_id)
-  {
-    List<char> found_exts;
-    const char **ext, *old_ext;
-
-    known_extensions_id= mysys_usage_id;
-
-    plugin_foreach(NULL, exts_handlerton,
-                   DRIZZLE_STORAGE_ENGINE_PLUGIN, &found_exts);
-
-    ext= (const char **) malloc(sizeof(char *)*
-                                (found_exts.elements+1));
-                              
-
-    assert(ext != 0);
-    known_extensions.count= found_exts.elements;
-    known_extensions.type_names= ext;
-
-    List_iterator_fast<char> it(found_exts);
-    while ((old_ext= it++))
-      *ext++= old_ext;
-    *ext= 0;
-  }
-  return &known_extensions;
 }
 
 

@@ -1108,7 +1108,6 @@ int ha_end(void);
 int storage_engine_initializer(st_plugin_int *plugin);
 int storage_engine_finalizer(st_plugin_int *plugin);
 
-TYPELIB *ha_known_exts(void);
 void ha_close_connection(Session* session);
 bool ha_flush_logs(StorageEngine *db_type);
 void ha_drop_database(char* path);
