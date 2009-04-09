@@ -109,7 +109,7 @@ int Item_null::save_safe_in_field(Field *field)
 bool Item_null::send(Protocol *protocol,
                      String *)
 {
-  return protocol->store_null();
+  return protocol->store();
 }
 
 

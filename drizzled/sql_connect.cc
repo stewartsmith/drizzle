@@ -88,7 +88,7 @@ pthread_handler_t handle_one_connection(void *arg)
 
     session->prepareForQueries();
 
-    while (!session->protocol->have_error() &&
+    while (!session->protocol->haveError() &&
            !(session->killed == Session::KILL_CONNECTION))
     {
       if (! session->executeStatement())

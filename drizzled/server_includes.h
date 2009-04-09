@@ -105,7 +105,7 @@ extern const char * const TRG_EXT;
 extern const char * const TRN_EXT;
 extern char language[FN_REFLEN];
 extern char glob_hostname[FN_REFLEN], drizzle_home[FN_REFLEN];
-extern char pidfile_name[FN_REFLEN], system_time_zone[30], *opt_init_file;
+extern char pidfile_name[FN_REFLEN], system_time_zone[30];
 extern char *opt_tc_log_file;
 extern const double log_10[309];
 extern uint64_t log_10_int[20];
@@ -156,7 +156,6 @@ extern pthread_mutex_t LOCK_create_db,LOCK_open, LOCK_lock_db,
        LOCK_global_read_lock,
        LOCK_global_system_variables;
 
-extern pthread_rwlock_t LOCK_sys_init_connect;
 extern pthread_rwlock_t LOCK_system_variables_hash;
 extern pthread_cond_t COND_refresh, COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
