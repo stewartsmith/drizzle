@@ -65,6 +65,21 @@ static const char *ha_choice_values[] = {"", "0", "1"};
 static void store_key_options(Session *session, String *packet, Table *table,
                               KEY *key_info);
 
+static vector<ST_SCHEMA_TABLE *> all_schema_tables;
+
+static void add_schema_table(ST_SCHEMA_TABLE *table)
+{
+  all_schema_tables.push_back(table);
+}
+
+static void remove_schema_table(ST_SCHEMA_TABLE *table)
+{
+  all_schema_tables.erase(remove_if(all_schema_tables.begin(),
+                                    all_schema_tables.end(),
+                                    bind2nd(equal_to<ST_SCHEMA_TABLE *>(),
+                                            table)),
+                          all_schema_tables.end());
+}
 
 
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char *wildstr)
@@ -4511,6 +4526,7 @@ int initialize_schema_table(st_plugin_int *plugin)
     schema_table->table_name= plugin->name.str;
   }
 
+  add_schema_table(schema_table);
   plugin->data= schema_table;
 
   return 0;
@@ -4520,6 +4536,7 @@ int finalize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;
 
+  remove_schema_table(schema_table);
   if (schema_table && plugin->plugin->deinit)
     plugin->plugin->deinit(schema_table);
 
