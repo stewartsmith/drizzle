@@ -67,12 +67,12 @@ static void store_key_options(Session *session, String *packet, Table *table,
 
 static vector<ST_SCHEMA_TABLE *> all_schema_tables;
 
-static void add_schema_table(ST_SCHEMA_TABLE *table)
+static void add_infoschema_table(ST_SCHEMA_TABLE *table)
 {
   all_schema_tables.push_back(table);
 }
 
-static void remove_schema_table(ST_SCHEMA_TABLE *table)
+static void remove_infoschema_table(ST_SCHEMA_TABLE *table)
 {
   all_schema_tables.erase(remove_if(all_schema_tables.begin(),
                                     all_schema_tables.end(),
@@ -2007,37 +2007,42 @@ struct st_add_schema_table
 };
 
 
-static bool add_schema_table(Session *session, st_plugin_int *plugin,
-                                void* p_data)
+class AddSchemaTable : public unary_function<ST_SCHEMA_TABLE *, bool>
 {
-  LEX_STRING *file_name= 0;
-  st_add_schema_table *data= (st_add_schema_table *)p_data;
-  List<LEX_STRING> *file_list= data->files;
-  const char *wild= data->wild;
-  ST_SCHEMA_TABLE *schema_table= plugin_data(plugin, ST_SCHEMA_TABLE *);
-
-  if (schema_table->hidden)
-      return(0);
-  if (wild)
+  Session *session;
+  st_add_schema_table *data;
+public:
+  AddSchemaTable(Session *session_arg, st_add_schema_table *data_arg)
+    : session(session_arg), data(data_arg) {}
+  result_type operator() (argument_type schema_table)
   {
-    if (lower_case_table_names)
+    LEX_STRING *file_name= 0;
+    List<LEX_STRING> *file_list= data->files;
+    const char *wild= data->wild;
+  
+    if (schema_table->hidden)
+        return(0);
+    if (wild)
     {
-      if (wild_case_compare(files_charset_info,
-                            schema_table->table_name,
-                            wild))
+      if (lower_case_table_names)
+      {
+        if (wild_case_compare(files_charset_info,
+                              schema_table->table_name,
+                              wild))
+          return(0);
+      }
+      else if (wild_compare(schema_table->table_name, wild, 0))
         return(0);
     }
-    else if (wild_compare(schema_table->table_name, wild, 0))
+  
+    if ((file_name= session->make_lex_string(file_name, schema_table->table_name,
+                                         strlen(schema_table->table_name),
+                                         true)) &&
+        !file_list->push_back(file_name))
       return(0);
+    return(1);
   }
-
-  if ((file_name= session->make_lex_string(file_name, schema_table->table_name,
-                                       strlen(schema_table->table_name),
-                                       true)) &&
-      !file_list->push_back(file_name))
-    return(0);
-  return(1);
-}
+};
 
 
 int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wild)
@@ -2072,11 +2077,12 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
 
   add_data.files= files;
   add_data.wild= wild;
-  if (plugin_foreach(session, add_schema_table,
-                     DRIZZLE_INFORMATION_SCHEMA_PLUGIN, &add_data))
-    return(1);
-
-  return(0);
+  vector<ST_SCHEMA_TABLE *>::iterator iter=
+    find_if(all_schema_tables.begin(), all_schema_tables.end(),
+           AddSchemaTable(session, &add_data));
+  if (iter != all_schema_tables.end())
+    return 1;
+  return 0 ;
 }
 
 
@@ -4526,7 +4532,7 @@ int initialize_schema_table(st_plugin_int *plugin)
     schema_table->table_name= plugin->name.str;
   }
 
-  add_schema_table(schema_table);
+  add_infoschema_table(schema_table);
   plugin->data= schema_table;
 
   return 0;
@@ -4536,7 +4542,7 @@ int finalize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;
 
-  remove_schema_table(schema_table);
+  remove_infoschema_table(schema_table);
   if (schema_table && plugin->plugin->deinit)
     plugin->plugin->deinit(schema_table);
 
