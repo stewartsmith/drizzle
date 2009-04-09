@@ -26,7 +26,7 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/registry.h>
-
+#include <drizzled/unireg.h>
 #include <string>
 
 #include CSTDINT_H
@@ -397,6 +397,79 @@ int ha_start_consistent_snapshot(Session *session)
   for_each(all_engines.begin(), all_engines.end(),
            bind2nd(mem_fun(&StorageEngine::start_consistent_snapshot),session));
   return 0;
+}
+
+/**
+  Ask handler if the table exists in engine.
+  @retval
+    HA_ERR_NO_SUCH_TABLE     Table does not exist
+  @retval
+    HA_ERR_TABLE_EXIST       Table exists
+  @retval
+    \#                  Error code
+*/
+
+class TableExistsInStorageEngine: public unary_function<StorageEngine *,bool>
+{
+  Session *session;
+  const char *db;
+  const char *name;
+public:
+  TableExistsInStorageEngine(Session *session_arg,
+                             const char *db_arg, const char *name_arg)
+    :session(session_arg), db(db_arg), name(name_arg) {}
+  result_type operator() (argument_type engine)
+  {
+    int ret= engine->table_exists_in_engine(session, db, name);
+    return ret == HA_ERR_TABLE_EXIST;
+  } 
+};
+
+/**
+  Call this function in order to give the handler the possiblity
+  to ask engine if there are any new tables that should be written to disk
+  or any dropped tables that need to be removed from disk
+*/
+int ha_table_exists_in_engine(Session* session,
+                              const char* db, const char* name,
+                              StorageEngine **engine_arg)
+{
+  StorageEngine *engine= NULL;
+
+  drizzled::Registry<StorageEngine *>::iterator iter=
+    find_if(all_engines.begin(), all_engines.end(),
+            TableExistsInStorageEngine(session, db, name));
+  if (iter != all_engines.end()) 
+  {
+    engine= *iter;
+  }
+  else
+  {
+    /* Default way of knowing if a table exists. (checking .frm exists) */
+
+    char path[FN_REFLEN];
+    build_table_filename(path, sizeof(path),
+                         db, name, "", 0);
+    if (table_proto_exists(path)==EEXIST)
+    {
+      drizzle::Table table;
+      build_table_filename(path, sizeof(path),
+                           db, name, ".dfe", 0);
+      if(drizzle_read_table_proto(path, &table)==0)
+      {
+        LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
+                                 strlen(table.engine().name().c_str()) };
+        engine= ha_resolve_by_name(session, &engine_name);
+      }
+    }
+  }
+
+  if(engine_arg)
+    *engine_arg= engine;
+
+  if (engine == NULL)
+    return HA_ERR_NO_SUCH_TABLE;
+  return HA_ERR_TABLE_EXIST;
 }
 
 int storage_engine_finalizer(st_plugin_int *plugin)
