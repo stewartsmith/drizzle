@@ -3657,42 +3657,19 @@ get_referential_constraints_record(Session *session, TableList *tables,
 }
 
 
-struct schema_table_ref
+class FindSchemaTableByName : public unary_function<ST_SCHEMA_TABLE *, bool>
 {
   const char *table_name;
-  ST_SCHEMA_TABLE *schema_table;
-};
-
-
-/*
-  Find schema_tables elment by name
-
-  SYNOPSIS
-    find_schema_table_in_plugin()
-    session                 thread handler
-    plugin              plugin
-    table_name          table name
-
-  RETURN
-    0	table not found
-    1   found the schema table
-*/
-static bool find_schema_table_in_plugin(Session *, st_plugin_int *plugin,
-                                        void* p_table)
-{
-  schema_table_ref *p_schema_table= (schema_table_ref *)p_table;
-  const char* table_name= p_schema_table->table_name;
-  ST_SCHEMA_TABLE *schema_table= plugin_data(plugin, ST_SCHEMA_TABLE *);
-
-  if (!my_strcasecmp(system_charset_info,
-                     schema_table->table_name,
-                     table_name)) {
-    p_schema_table->schema_table= schema_table;
-    return(1);
+public:
+  FindSchemaTableByName(const char *table_name_arg)
+    : table_name(table_name_arg) {}
+  result_type operator() (argument_type schema_table)
+  {
+    return !my_strcasecmp(system_charset_info,
+                          schema_table->table_name,
+                          table_name);
   }
-
-  return(0);
-}
+};
 
 
 /*
@@ -3708,9 +3685,8 @@ static bool find_schema_table_in_plugin(Session *, st_plugin_int *plugin,
     #   pointer to 'schema_tables' element
 */
 
-ST_SCHEMA_TABLE *find_schema_table(Session *session, const char* table_name)
+ST_SCHEMA_TABLE *find_schema_table(Session *, const char* table_name)
 {
-  schema_table_ref schema_table_a;
   ST_SCHEMA_TABLE *schema_table= schema_tables;
 
   for (; schema_table->table_name; schema_table++)
@@ -3721,11 +3697,11 @@ ST_SCHEMA_TABLE *find_schema_table(Session *session, const char* table_name)
       return(schema_table);
   }
 
-  schema_table_a.table_name= table_name;
-  if (plugin_foreach(session, find_schema_table_in_plugin,
-                     DRIZZLE_INFORMATION_SCHEMA_PLUGIN, &schema_table_a))
-    return(schema_table_a.schema_table);
-
+  vector<ST_SCHEMA_TABLE *>::iterator iter= 
+    find_if(all_schema_tables.begin(), all_schema_tables.end(),
+            FindSchemaTableByName(table_name));
+  if (iter != all_schema_tables.end())
+    return *iter;
   return(NULL);
 }
 
