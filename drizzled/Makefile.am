@@ -269,7 +269,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		order.h \
 		plugin.h \
 		plugin_registry.h \
-		plugin_registry_impl.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
 		plugin/logging_handler.h \
@@ -577,7 +576,6 @@ drizzled_SOURCES = \
 		opt_range.cc \
 		opt_sum.cc \
 		plugin_registry.cc \
-		plugin_registry_impl.cc \
 		protocol.cc \
 		qcache.cc \
 		query_id.cc \

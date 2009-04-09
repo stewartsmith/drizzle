@@ -17,21 +17,30 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <vector>
+#ifndef DRIZZLED_PLUGIN_REGISTRY_H
+#define DRIZZLED_PLUGIN_REGISTRY_H
 
-class Plugin_registry_impl;
+#include <string>
+#include <vector>
+#include <map>
 
 class Plugin_registry
 {
 private:
-  Plugin_registry_impl *pImpl;
+  std::map<std::string, st_plugin_int *>
+    plugin_map[DRIZZLE_MAX_PLUGIN_TYPE_NUM];
+
+  Plugin_registry(const Plugin_registry&);
 public:
-  Plugin_registry();
-  static Plugin_registry& get_plugin_registry();
+  Plugin_registry() {}
+
   st_plugin_int *find(const LEX_STRING *name, int type);
 
   void add(st_mysql_plugin *handle, st_plugin_int *plugin);
-  void get_list(uint32_t type, std::vector<st_plugin_int *> &plugins);
-  void get_list(uint32_t type, std::vector<st_plugin_int *> &plugins, bool all);
+
+  void get_list(uint32_t type, std::vector<st_plugin_int *> &plugins, bool active);
+  static Plugin_registry& get_plugin_registry();
+
 };
 
+#endif /* DRIZZLED_PLUGIN_REGISTRY_H */

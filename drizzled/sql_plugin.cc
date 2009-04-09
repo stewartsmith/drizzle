@@ -456,7 +456,7 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 st_plugin_int *plugin_lock_by_name(const LEX_STRING *name, int type)
 {
-  Plugin_registry registry= Plugin_registry::get_plugin_registry();
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
 
   if (! initialized)
     return(0);
@@ -486,7 +486,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
                        const LEX_STRING *name, const LEX_STRING *dl,
                        int *argc, char **argv, int report)
 {
-  Plugin_registry registry= Plugin_registry::get_plugin_registry();
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
 
   struct st_plugin_int tmp;
   struct st_mysql_plugin *plugin;
@@ -768,7 +768,7 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
                              struct st_plugin_int **ptr)
 {
 
-  Plugin_registry registry= Plugin_registry::get_plugin_registry();
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
 
   tmp->isInited= false;
   tmp->plugin_dl= 0;
@@ -935,7 +935,7 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
   }
   else
   {
-    Plugin_registry registry= Plugin_registry::get_plugin_registry();
+    Plugin_registry &registry= Plugin_registry::get_plugin_registry();
     registry.get_list(type, plugins, all);
   }
 
