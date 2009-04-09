@@ -1598,7 +1598,7 @@ bool Item::send(Protocol *protocol, String *buffer)
     int64_t nr;
     nr= val_int();
     if (!null_value)
-      result= protocol->store_long(nr);
+      result= protocol->store((int32_t)nr);
     break;
   }
   case DRIZZLE_TYPE_LONGLONG:
@@ -1606,7 +1606,12 @@ bool Item::send(Protocol *protocol, String *buffer)
     int64_t nr;
     nr= val_int();
     if (!null_value)
-      result= protocol->store_int64_t(nr, unsigned_flag);
+    {
+      if (unsigned_flag)
+        result= protocol->store((uint64_t)nr);
+      else
+        result= protocol->store((int64_t)nr);
+    }
     break;
   }
   case DRIZZLE_TYPE_DOUBLE:
@@ -1622,17 +1627,12 @@ bool Item::send(Protocol *protocol, String *buffer)
     DRIZZLE_TIME tm;
     get_date(&tm, TIME_FUZZY_DATE);
     if (!null_value)
-    {
-      if (f_type == DRIZZLE_TYPE_DATE)
-	return protocol->store_date(&tm);
-      else
-	result= protocol->store(&tm);
-    }
+      result= protocol->store(&tm);
     break;
   }
   }
   if (null_value)
-    result= protocol->store_null();
+    result= protocol->store();
   return result;
 }
 

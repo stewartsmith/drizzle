@@ -1036,8 +1036,6 @@ int sql_set_variables(Session *session, List<set_var_base> *var_list);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
 void fix_delay_key_write(Session *session, enum_var_type type);
 void fix_slave_exec_mode(enum_var_type type);
-extern sys_var_str sys_init_connect;
-extern sys_var_str sys_init_slave;
 extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);

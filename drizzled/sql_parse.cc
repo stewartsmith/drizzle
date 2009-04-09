@@ -147,32 +147,6 @@ bool is_update_query(enum enum_sql_command command)
   return (sql_command_flags[command].test(CF_BIT_CHANGES_DATA));
 }
 
-void execute_init_command(Session *session, sys_var_str *init_command_var,
-			  pthread_rwlock_t *var_mutex)
-{
-  ulong save_client_capabilities;
-
-  session->set_proc_info("Execution of init_command");
-  /*
-    We need to lock init_command_var because
-    during execution of init_command_var query
-    values of init_command_var can't be changed
-  */
-  pthread_rwlock_rdlock(var_mutex);
-  save_client_capabilities= session->client_capabilities;
-  session->client_capabilities|= CLIENT_MULTI_STATEMENTS;
-  /*
-    We don't need return result of execution to client side.
-  */
-  session->protocol->disable_results();
-  dispatch_command(COM_QUERY, session,
-                   init_command_var->value,
-                   init_command_var->value_length);
-  pthread_rwlock_unlock(var_mutex);
-  session->client_capabilities= save_client_capabilities;
-  session->protocol->enable_results();
-}
-
 /**
   Perform one connection-level (COM_XXXX) command.
 
@@ -238,52 +212,15 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
-    char *packet_end= session->query + session->query_length;
     const char* end_of_stmt= NULL;
 
     mysql_parse(session, session->query, session->query_length, &end_of_stmt);
 
-    while (!session->killed && (end_of_stmt != NULL) && ! session->is_error())
-    {
-      char *beginning_of_next_stmt= (char*) end_of_stmt;
-
-      session->protocol->end_statement();
-      /*
-        Multiple queries exits, execute them individually
-      */
-      close_thread_tables(session);
-      ulong length= (ulong)(packet_end - beginning_of_next_stmt);
-
-      log_slow_statement(session);
-
-      /* Remove garbage at start of query */
-      while (length > 0 && my_isspace(session->charset(), *beginning_of_next_stmt))
-      {
-        beginning_of_next_stmt++;
-        length--;
-      }
-
-      /*
-        Count each statement from the client.
-      */
-      statistic_increment(session->status_var.questions, &LOCK_status);
-      session->query_id= query_id.next();
-      session->set_time(); /* Reset the query start time. */
-
-      session->query_length= length;
-      session->query= beginning_of_next_stmt;
-
-      strncpy(session->process_list_info, session->query, (length > PROCESS_LIST_WIDTH) ? PROCESS_LIST_WIDTH - 1  : length);
-
-      /* TODO: set session->lex->sql_command to SQLCOM_END here */
-
-      mysql_parse(session, beginning_of_next_stmt, length, &end_of_stmt);
-    }
     break;
   }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    session->protocol->set_error(0);
+    session->protocol->setError(0);
     session->main_da.disable_status();              // Don't send anything back
     error=true;					// End server
     break;
@@ -328,7 +265,35 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     session->mysys_var->abort= 0;
   }
 
-  session->protocol->end_statement();
+  /* Can not be true, but do not take chances in production. */
+  assert(! session->main_da.is_sent);
+
+  switch (session->main_da.status())
+  {
+  case Diagnostics_area::DA_ERROR:
+    /* The query failed, send error to log and abort bootstrap. */
+    session->protocol->sendError(session->main_da.sql_errno(),
+                                 session->main_da.message());
+    break;
+
+  case Diagnostics_area::DA_EOF:
+    session->protocol->sendEOF();
+    break;
+
+  case Diagnostics_area::DA_OK:
+    session->protocol->sendOK();
+    break;
+
+  case Diagnostics_area::DA_DISABLED:
+    break;
+
+  case Diagnostics_area::DA_EMPTY:
+  default:
+    session->protocol->sendOK();
+    break;
+  }
+
+  session->main_da.is_sent= true;
 
   session->set_proc_info("closing tables");
   /* Free tables */

@@ -92,8 +92,6 @@ TYPELIB delay_key_write_typelib=
   delay_key_write_type_names, NULL
 };
 
-static bool sys_update_init_connect(Session*, set_var*);
-static void sys_default_init_connect(Session*, enum_var_type type);
 static bool set_option_bit(Session *session, set_var *var);
 static bool set_option_autocommit(Session *session, set_var *var);
 static int  check_pseudo_thread_id(Session *session, set_var *var);
@@ -163,9 +161,6 @@ static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    fix_delay_key_write);
 
 static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
-sys_var_str             sys_init_connect(&vars, "init_connect", 0,
-                                         sys_update_init_connect,
-                                         sys_default_init_connect,0);
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &SV::join_buff_size);
 static sys_var_key_buffer_size	sys_key_buffer_size(&vars, "key_buffer_size");
@@ -270,8 +265,6 @@ static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
 static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
                                            fix_server_id);
 
-static sys_var_uint64_t_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
-                                             &slow_launch_time);
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
                                                 &SV::sortbuff_size);
 /*
@@ -417,7 +410,6 @@ static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symli
 #define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(SHOW_VAR))
 static SHOW_VAR fixed_vars[]= {
   {"back_log",                (char*) &back_log,                    SHOW_INT},
-  {"init_file",               (char*) &opt_init_file,               SHOW_CHAR_PTR},
   {"language",                language,                             SHOW_CHAR},
 #ifdef HAVE_MLOCKALL
   {"locked_in_memory",	      (char*) &locked_in_memory,	    SHOW_MY_BOOL},
@@ -451,53 +443,6 @@ bool sys_var_str::check(Session *session, set_var *var)
 /*
   Functions to check and update variables
 */
-
-
-/*
-  Update variables 'init_connect, init_slave'.
-
-  In case of 'DEFAULT' value
-  (for example: 'set GLOBAL init_connect=DEFAULT')
-  'var' parameter is NULL pointer.
-*/
-
-bool update_sys_var_str(sys_var_str *var_str, pthread_rwlock_t *var_mutex,
-                        set_var *var)
-{
-  char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
-  uint32_t new_length= (var ? var->value->str_value.length() : 0);
-  if (!old_value)
-    old_value= (char*) "";
-  res= (char *)malloc(new_length + 1);
-  if (res == NULL)
-    return 1;
-  memcpy(res, old_value, new_length);
-  res[new_length]= 0; 
-
-  /*
-    Replace the old value in such a way that the any thread using
-    the value will work.
-  */
-  pthread_rwlock_wrlock(var_mutex);
-  old_value= var_str->value;
-  var_str->value= res;
-  var_str->value_length= new_length;
-  pthread_rwlock_unlock(var_mutex);
-  free(old_value);
-  return 0;
-}
-
-
-static bool sys_update_init_connect(Session *, set_var *var)
-{
-  return update_sys_var_str(&sys_init_connect, &LOCK_sys_init_connect, var);
-}
-
-
-static void sys_default_init_connect(Session *, enum_var_type)
-{
-  update_sys_var_str(&sys_init_connect, &LOCK_sys_init_connect, 0);
-}
 
 
 /**
@@ -563,20 +508,20 @@ static int check_completion_type(Session *, set_var *var)
 static void fix_net_read_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    session->protocol->set_read_timeout(session->variables.net_read_timeout);
+    session->protocol->setReadTimeout(session->variables.net_read_timeout);
 }
 
 
 static void fix_net_write_timeout(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    session->protocol->set_write_timeout(session->variables.net_write_timeout);
+    session->protocol->setWriteTimeout(session->variables.net_write_timeout);
 }
 
 static void fix_net_retry_count(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
-    session->protocol->set_retry_count(session->variables.net_retry_count);
+    session->protocol->setRetryCount(session->variables.net_retry_count);
 }
 
 

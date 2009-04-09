@@ -21,6 +21,7 @@
 #include <drizzled/logging.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/qcache.h>
+#include <drizzled/protocol.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/replicator.h>
@@ -65,7 +66,8 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("AUTH") },
   { C_STRING_WITH_LEN("QCACHE") },
   { C_STRING_WITH_LEN("SCHEDULING") },
-  { C_STRING_WITH_LEN("REPLICATOR") }
+  { C_STRING_WITH_LEN("REPLICATOR") },
+  { C_STRING_WITH_LEN("PROTOCOL") }
 };
 
 extern int initialize_schema_table(st_plugin_int *plugin);
@@ -92,7 +94,8 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   authentication_initializer,  /* Auth */
   qcache_initializer,
   scheduling_initializer,
-  replicator_initializer
+  replicator_initializer,
+  protocol_initializer
 };
 
 plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
@@ -108,7 +111,8 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   authentication_finalizer,  /* Auth */
   qcache_finalizer,
   scheduling_finalizer,
-  replicator_finalizer
+  replicator_finalizer,
+  protocol_finalizer
 };
 
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";

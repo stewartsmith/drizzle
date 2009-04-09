@@ -16,7 +16,6 @@
 # MA 02111-1307, USA
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libdrizzleclient.pc
 
 # Default same as 'pkgdatadir', but we can override it
 pkgsuppdir =		$(datadir)/@PACKAGE@

@@ -374,12 +374,12 @@ bool drizzled_show_create(Session *session, TableList *table_list)
                                                cmax(buffer.length(),(uint32_t)1024)));
   }
 
-  if (protocol->send_fields(&field_list,
-                            Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list,
+                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
   {
     return(true);
   }
-  protocol->prepare_for_resend();
+  protocol->prepareForResend();
   {
     if (table_list->schema_table)
       protocol->store(table_list->schema_table->table_name,
@@ -418,11 +418,11 @@ bool mysqld_show_create_db(Session *session, char *dbname,
   field_list.push_back(new Item_empty_string("Database",NAME_CHAR_LEN));
   field_list.push_back(new Item_empty_string("Create Database",1024));
 
-  if (protocol->send_fields(&field_list,
-                            Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list,
+                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);
 
-  protocol->prepare_for_resend();
+  protocol->prepareForResend();
   protocol->store(dbname, strlen(dbname), system_charset_info);
   protocol->store(buffer.ptr(), buffer.length(), buffer.charset());
 
@@ -461,7 +461,7 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
   }
   restore_record(table, s->default_values);              // Get empty record
   table->use_all_columns();
-  if (session->protocol->send_fields(&field_list, Protocol::SEND_DEFAULTS))
+  if (session->protocol->sendFields(&field_list, Protocol::SEND_DEFAULTS))
     return;
   session->my_eof();
   return;
@@ -1043,8 +1043,8 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   field->maybe_null= true;
   field_list.push_back(field=new Item_empty_string("Info", PROCESS_LIST_WIDTH));
   field->maybe_null= true;
-  if (protocol->send_fields(&field_list,
-                            Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list,
+                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return;
 
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
@@ -1056,7 +1056,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     {
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if (tmp->protocol->io_ok() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->protocol->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
         thread_info *session_info= new thread_info;
 
@@ -1068,10 +1068,15 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         session_info->command=(int) tmp->command;
         if ((mysys_var= tmp->mysys_var))
           pthread_mutex_lock(&mysys_var->mutex);
-        session_info->proc_info= (char*) (tmp->killed == Session::KILL_CONNECTION? "Killed" : 0);
-        session_info->state_info= (char*) (tmp->protocol->is_writing() ?
+
+        if (tmp->killed == Session::KILL_CONNECTION)
+          session_info->proc_info= (char*) "Killed";
+        else
+          session_info->proc_info= command_name[session_info->command].str;
+
+        session_info->state_info= (char*) (tmp->protocol->isWriting() ?
                                            "Writing to net" :
-                                           tmp->protocol->is_reading() ?
+                                           tmp->protocol->isReading() ?
                                            (session_info->command == COM_SLEEP ?
                                             NULL : "Reading from net") :
                                        tmp->get_proc_info() ? tmp->get_proc_info() :
@@ -1103,21 +1108,21 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   time_t now= time(NULL);
   while ((session_info=thread_infos.get()))
   {
-    protocol->prepare_for_resend();
+    protocol->prepareForResend();
     protocol->store((uint64_t) session_info->thread_id);
     protocol->store(session_info->user, system_charset_info);
     protocol->store(session_info->host, system_charset_info);
     protocol->store(session_info->db, system_charset_info);
-    if (session_info->proc_info)
-      protocol->store(session_info->proc_info, system_charset_info);
-    else
-      protocol->store(command_name[session_info->command].str, system_charset_info);
+    protocol->store(session_info->proc_info, system_charset_info);
+
     if (session_info->start_time)
       protocol->store((uint32_t) (now - session_info->start_time));
     else
-      protocol->store_null();
+      protocol->store();
+
     protocol->store(session_info->state_info, system_charset_info);
     protocol->store(session_info->query, system_charset_info);
+
     if (protocol->write())
       break; /* purecov: inspected */
   }
@@ -1150,7 +1155,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       struct st_my_thread_var *mysys_var;
       const char *val;
 
-      if (! tmp->protocol->io_ok())
+      if (! tmp->protocol->isConnected())
         continue;
 
       restore_record(table, s->default_values);
@@ -1180,9 +1185,9 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       table->field[5]->store((uint32_t)(tmp->start_time ?
                                       now - tmp->start_time : 0), true);
       /* STATE */
-      val= (char*) (tmp->protocol->is_writing() ?
+      val= (char*) (tmp->protocol->isWriting() ?
                     "Writing to net" :
-                    tmp->protocol->is_reading() ?
+                    tmp->protocol->isReading() ?
                     (tmp->command == COM_SLEEP ?
                      NULL : "Reading from net") :
                     tmp->get_proc_info() ? tmp->get_proc_info() :

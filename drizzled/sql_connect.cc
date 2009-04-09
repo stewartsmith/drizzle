@@ -59,8 +59,6 @@ bool init_new_connection_handler_thread()
 pthread_handler_t handle_one_connection(void *arg)
 {
   Session *session= static_cast<Session*>(arg);
-  uint32_t launch_time= (uint32_t) ((session->thr_create_utime= my_micro_time()) -
-                              session->connect_utime);
 
   Scheduler &thread_scheduler= get_thread_scheduler();
   if (thread_scheduler.init_new_connection_thread())
@@ -70,8 +68,6 @@ pthread_handler_t handle_one_connection(void *arg)
     thread_scheduler.end_thread(session,0);
     return 0;
   }
-  if (launch_time >= slow_launch_time*1000000L)
-    statistic_increment(slow_launch_threads,&LOCK_status);
 
   /*
     handle_one_connection() is normally the only way a thread would
@@ -92,7 +88,7 @@ pthread_handler_t handle_one_connection(void *arg)
 
     session->prepareForQueries();
 
-    while (!session->protocol->have_error() &&
+    while (!session->protocol->haveError() &&
            !(session->killed == Session::KILL_CONNECTION))
     {
       if (! session->executeStatement())

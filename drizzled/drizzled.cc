@@ -229,7 +229,7 @@ static bool opt_debugging= 0;
 static uint32_t wake_thread;
 static uint32_t killed_threads;
 static char *drizzled_user, *drizzled_chroot;
-static char *language_ptr, *opt_init_connect;
+static char *language_ptr;
 static char *default_character_set_name;
 static char *character_set_filesystem_name;
 static char *lc_time_names_name;
@@ -249,6 +249,7 @@ bool volatile abort_loop;
 bool volatile shutdown_in_progress;
 uint32_t max_used_connections;
 const char *opt_scheduler= "multi_thread";
+const char *opt_protocol= "oldlibdrizzle";
 
 size_t my_thread_stack_size= 65536;
 
@@ -281,14 +282,12 @@ uint32_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
-uint64_t slow_launch_time;
 uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
 uint32_t thread_id=1L;
 pid_t current_pid;
-uint64_t slow_launch_threads= 0;
 
 const double log_10[] = {
   1e000, 1e001, 1e002, 1e003, 1e004, 1e005, 1e006, 1e007, 1e008, 1e009,
@@ -336,7 +335,6 @@ char *default_tz_name;
 char glob_hostname[FN_REFLEN];
 char drizzle_real_data_home[FN_REFLEN],
      language[FN_REFLEN], 
-     *opt_init_file, 
      *opt_tc_log_file;
 char drizzle_unpacked_real_data_home[FN_REFLEN];
 const key_map key_map_empty(0);
@@ -389,7 +387,6 @@ pthread_mutex_t LOCK_create_db,
                 LOCK_global_read_lock,
                 LOCK_global_system_variables;
 
-pthread_rwlock_t	LOCK_sys_init_connect;
 pthread_rwlock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
 pthread_t signal_thread;
@@ -601,7 +598,6 @@ static void clean_up(bool print_message)
   my_free_open_file_info();
   if (defaults_argv)
     free_defaults(defaults_argv);
-  free(sys_init_connect.value);
   free(drizzle_tmpdir);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
@@ -637,7 +633,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
-  (void) pthread_rwlock_destroy(&LOCK_sys_init_connect);
   (void) pthread_mutex_destroy(&LOCK_global_system_variables);
   (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
   (void) pthread_mutex_destroy(&LOCK_global_read_lock);
@@ -1490,14 +1485,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
 
-  sys_init_connect.value_length= 0;
-  if ((sys_init_connect.value= opt_init_connect))
-    sys_init_connect.value_length= strlen(opt_init_connect);
-  else
-    sys_init_connect.value=strdup("");
-  if (sys_init_connect.value == NULL)
-    return 1;
-
   if (use_temp_pool && bitmap_init(&temp_pool,0,1024,1))
     return 1;
 
@@ -1519,7 +1506,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
-  (void) pthread_rwlock_init(&LOCK_sys_init_connect, NULL);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
   (void) pthread_cond_init(&COND_global_read_lock,NULL);
@@ -1865,7 +1851,7 @@ static void create_new_thread(Session *session)
 
     /* Can't use my_error() since store_globals has not been called. */
     snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
-    session->protocol->send_error(ER_CANT_CREATE_THREAD, error_message_buff);
+    session->protocol->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
     unlink_session(session);
   }
 }
@@ -1880,6 +1866,7 @@ void handle_connections_sockets()
   uint32_t error_count=0;
   Session *session;
   struct sockaddr_storage cAddr;
+  Protocol *protocol;
 
   while (!abort_loop)
   {
@@ -1963,14 +1950,22 @@ void handle_connections_sockets()
     ** Don't allow too many connections
     */
 
-    if (!(session= new Session))
+    if (!(protocol= get_protocol()))
     {
       (void) shutdown(new_sock, SHUT_RDWR);
       close(new_sock);
       continue;
     }
 
-    if (session->protocol->init_file_descriptor(new_sock))
+    if (!(session= new Session(protocol)))
+    {
+      delete protocol;
+      (void) shutdown(new_sock, SHUT_RDWR);
+      close(new_sock);
+      continue;
+    }
+
+    if (protocol->setFileDescriptor(new_sock))
     {
       delete session;
       continue;
@@ -2146,14 +2141,6 @@ struct my_option my_long_options[] =
    N_("Set up signals usable for debugging"),
    (char**) &opt_debugging, (char**) &opt_debugging,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"init-connect", OPT_INIT_CONNECT,
-   N_("Command(s) that are executed for each new connection"),
-   (char**) &opt_init_connect, (char**) &opt_init_connect, 0, GET_STR_ALLOC,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"init-file", OPT_INIT_FILE,
-   N_("Read SQL commands from this file at startup."),
-   (char**) &opt_init_file, (char**) &opt_init_file, 0, GET_STR, REQUIRED_ARG,
-   0, 0, 0, 0, 0, 0},
   {"language", 'L',
    N_("(IGNORED)"),
    (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
@@ -2447,6 +2434,10 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.preload_buff_size,
    (char**) &max_system_variables.preload_buff_size, 0, GET_ULL,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
+  {"protocol", OPT_SCHEDULER,
+   N_("Select protocol to be used (by default oldlibdrizzle)."),
+   (char**) &opt_protocol, (char**) &opt_protocol, 0,
+   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"query_alloc_block_size", OPT_QUERY_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for query parsing and execution"),
    (char**) &global_system_variables.query_alloc_block_size,
@@ -2643,7 +2634,6 @@ SHOW_VAR status_vars[]= {
   {"Select_range",             (char*) offsetof(STATUS_VAR, select_range_count), SHOW_LONG_STATUS},
   {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
   {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
-  {"Slow_launch_threads",      (char*) &slow_launch_threads,    SHOW_LONGLONG},
   {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
   {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
   {"Sort_range",	       (char*) offsetof(STATUS_VAR, filesort_range_count), SHOW_LONG_STATUS},
@@ -2734,8 +2724,7 @@ static void drizzle_init_variables(void)
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
-  slow_launch_threads= 0;
-  drizzled_user= drizzled_chroot= opt_init_file= 0;
+  drizzled_user= drizzled_chroot= 0;
   my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();

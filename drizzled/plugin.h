@@ -46,7 +46,8 @@ enum drizzle_plugin_type {
   DRIZZLE_QCACHE_PLUGIN,                /* Query Cache */
   DRIZZLE_SCHEDULING_PLUGIN,            /* Thread and Session Scheduling */
   DRIZZLE_REPLICATOR_PLUGIN,            /* Database Replication */
-  DRIZZLE_PLUGIN_MAX=DRIZZLE_REPLICATOR_PLUGIN
+  DRIZZLE_PROTOCOL_PLUGIN,              /* Protocol Handlers */
+  DRIZZLE_PLUGIN_MAX=DRIZZLE_PROTOCOL_PLUGIN
 };
 
 /* The number of plugin types */
