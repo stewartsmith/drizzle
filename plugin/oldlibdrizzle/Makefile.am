@@ -27,6 +27,7 @@ noinst_HEADERS =\
 		drizzle_rows.h \
 		libdrizzle.h \
 		libdrizzle_priv.h \
+		oldlibdrizzle.h \
 		errmsg.h \
 		net_serv.h \
 		options.h \
@@ -34,13 +35,14 @@ noinst_HEADERS =\
 		password.h \
 		vio.h
 
-noinst_LTLIBRARIES= libdrizzleclient.la
-libdrizzleclient_la_SOURCES= \
+noinst_LTLIBRARIES= liboldlibdrizzle.la
+liboldlibdrizzle_la_SOURCES= \
 		client.cc \
 		drizzle.cc \
 		drizzle_data.cc \
 		errmsg.cc \
 		libdrizzle.cc \
+		oldlibdrizzle.cc \
 		libdrizzle_priv.cc \
 		net_serv.cc \
 		pack.cc \
@@ -48,5 +50,5 @@ libdrizzleclient_la_SOURCES= \
 		vio.cc \
 		viosocket.cc
 
-libdrizzleclient_la_LIBADD = $(LIBZ)
+liboldlibdrizzle_la_LIBADD = $(LIBZ)
 

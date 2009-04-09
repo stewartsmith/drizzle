@@ -1419,14 +1419,14 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  gnulib/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
  po/Makefile.in dnl
- libdrizzleclient/Makefile client/Makefile dnl
+ client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/serialize/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  plugin/Makefile dnl
- drizzled/drizzled_safe support-files/libdrizzleclient.pc dnl
+ drizzled/drizzled_safe dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 
 scheduling_plugins_available="

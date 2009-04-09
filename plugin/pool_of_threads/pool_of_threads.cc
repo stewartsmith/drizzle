@@ -404,7 +404,7 @@ static void libevent_connection_close(Session *session)
   assert(scheduler);
   session->killed= Session::KILL_CONNECTION;          // Avoid error messages
 
-  if (session->protocol->file_descriptor() >= 0)      // not already closed
+  if (session->protocol->fileDescriptor() >= 0)      // not already closed
   {
     session->disconnect(0, true);
   }
@@ -425,7 +425,7 @@ static void libevent_connection_close(Session *session)
 
 bool libevent_should_close_connection(Session* session)
 {
-  return session->protocol->have_error() ||
+  return session->protocol->haveError() ||
          session->killed == Session::KILL_CONNECTION;
 }
 
@@ -554,7 +554,7 @@ static bool libevent_needs_immediate_processing(Session *session)
     Note: we cannot add for event processing because the whole request might
     already be buffered and we wouldn't receive an event.
   */
-  if (session->protocol->have_more_data())
+  if (session->protocol->haveMoreData())
     return true;
 
   scheduler->thread_detach();

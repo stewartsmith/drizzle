@@ -177,7 +177,7 @@ void session_inc_row_count(Session *session)
   session->row_count++;
 }
 
-Session::Session()
+Session::Session(Protocol *protocol_arg)
    :Statement(&main_lex, &main_mem_root,
               /* statement id */ 0),
    Open_tables_state(refresh_version),
@@ -254,14 +254,14 @@ Session::Session()
 	    (hash_free_key) free_user_var, 0);
 
   /* Protocol */
-  protocol= &protocol_text;			// Default protocol
-  protocol_text.init(this);
+  protocol= protocol_arg;
+  protocol->setSession(this);
 
   const Query_id& local_query_id= Query_id::get_query_id();
   tablespace_op= false;
   tmp= sql_rnd();
-  protocol->init_random(tmp + (uint64_t) &protocol,
-                        tmp + (uint64_t)local_query_id.value());
+  protocol->setRandom(tmp + (uint64_t) &protocol,
+                      tmp + (uint64_t)local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
@@ -428,7 +428,7 @@ Session::~Session()
   Session_CHECK_SENTRY(this);
   add_to_status(&global_status_var, &status_var);
 
-  if (protocol->io_ok())
+  if (protocol->isConnected())
   {
     if (global_system_variables.log_warnings)
         errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
@@ -440,6 +440,7 @@ Session::~Session()
 
   /* Close connection */
   protocol->close();
+  delete protocol;
 
   if (cleanup_done == false)
     cleanup();
@@ -601,7 +602,7 @@ void Session::prepareForQueries()
   if (client_capabilities & CLIENT_COMPRESS)
   {
     compression= 1;
-    protocol->enable_compression();
+    protocol->enableCompression();
   }
 
   version= refresh_version;
@@ -609,27 +610,6 @@ void Session::prepareForQueries()
   command= COM_SLEEP;
   set_time();
   init_for_queries();
-
-  /* In the past this would only run of the user did not have SUPER_ACL */
-  if (sys_init_connect.value_length)
-  {
-    execute_init_command(this, &sys_init_connect, &LOCK_sys_init_connect);
-    if (is_error())
-    {
-      Security_context *sctx= &security_ctx;
-      killed= Session::KILL_CONNECTION;
-      errmsg_printf(ERRMSG_LVL_WARN
-                  , ER(ER_NEW_ABORTING_CONNECTION)
-                  , thread_id
-                  , (db ? db : "unconnected")
-                  , sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated"
-                  , sctx->ip.c_str(), "init_connect command failed");
-      errmsg_printf(ERRMSG_LVL_WARN, "%s", main_da.message());
-    }
-    set_proc_info(NULL);
-    set_time();
-    init_for_queries();
-  }
 }
 
 bool Session::initGlobals()
@@ -717,7 +697,7 @@ bool Session::executeStatement()
   */
   lex->current_select= 0;
 
-  if (protocol->read_command(&l_packet, &packet_length) == false)
+  if (protocol->readCommand(&l_packet, &packet_length) == false)
     return false;
 
   if (packet_length == 0)
@@ -1970,10 +1950,10 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   plugin_sessionvar_cleanup(this);
 
   /* If necessary, log any aborted or unauthorized connections */
-  if (killed || protocol->was_aborted())
+  if (killed || protocol->wasAborted())
     statistic_increment(aborted_threads, &LOCK_status);
 
-  if (protocol->was_aborted())
+  if (protocol->wasAborted())
   {
     if (! killed && variables.log_warnings > 1)
     {
@@ -1992,10 +1972,13 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   if (should_lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
   killed= Session::KILL_CONNECTION;
-  if (protocol->io_ok())
+  if (protocol->isConnected())
   {
     if (errcode)
-      protocol->send_error(errcode, ER(errcode)); /* purecov: inspected */
+    {
+      /*my_error(errcode, ER(errcode));*/
+      protocol->sendError(errcode, ER(errcode)); /* purecov: inspected */
+    }
     protocol->close();
   }
   if (should_lock)

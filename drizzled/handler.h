@@ -1303,8 +1303,6 @@ bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);
 Table *drop_locked_tables(Session *session,const char *db, const char *table_name);
 void abort_locked_tables(Session *session,const char *db, const char *table_name);
-void execute_init_command(Session *session, sys_var_str *init_command_var,
-                          pthread_rwlock_t *var_mutex);
 extern Field *not_found_field;
 extern Field *view_ref_found;
 
