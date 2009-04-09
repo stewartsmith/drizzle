@@ -601,6 +601,12 @@ void ProtocolOldLibdrizzle::close(void)
   }
 }
 
+void ProtocolOldLibdrizzle::forceClose(void)
+{
+  if (net.vio)
+    drizzleclient_vio_close(net.vio);
+}
+
 void ProtocolOldLibdrizzle::prepareForResend()
 {
   packet->length(0);
