@@ -718,14 +718,14 @@ int plugin_init(int *argc, char **argv, int flags)
       */
       if (my_strcasecmp(&my_charset_utf8_general_ci, plugin->name, "MyISAM") == 0)
       {
-        assert(!global_system_variables.table_plugin);
-        global_system_variables.table_plugin= plugin_ptr;
+        assert(!global_system_variables.storage_engine);
+        global_system_variables.storage_engine= static_cast<StorageEngine *>(plugin_ptr->data);
       }
     }
   }
 
   /* should now be set to MyISAM storage engine */
-  assert(global_system_variables.table_plugin);
+  assert(global_system_variables.storage_engine);
 
   /* Register all dynamic plugins */
   if (!(flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
@@ -1569,18 +1569,18 @@ static unsigned long *mysql_sys_var_ptr_enum(Session* a_session, int offset)
 
 void plugin_sessionvar_init(Session *session)
 {
-  session->variables.table_plugin= NULL;
+  session->variables.storage_engine= NULL;
   cleanup_variables(session, &session->variables);
 
   session->variables= global_system_variables;
-  session->variables.table_plugin= NULL;
+  session->variables.storage_engine= NULL;
 
   /* we are going to allocate these lazily */
   session->variables.dynamic_variables_version= 0;
   session->variables.dynamic_variables_size= 0;
   session->variables.dynamic_variables_ptr= 0;
 
-  session->variables.table_plugin= global_system_variables.table_plugin;
+  session->variables.storage_engine= global_system_variables.storage_engine;
 }
 
 
@@ -1589,7 +1589,7 @@ void plugin_sessionvar_init(Session *session)
 */
 static void unlock_variables(Session *, struct system_variables *vars)
 {
-  vars->table_plugin= NULL;
+  vars->storage_engine= NULL;
 }
 
 
@@ -1629,7 +1629,7 @@ static void cleanup_variables(Session *session, struct system_variables *vars)
   }
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
 
-  assert(vars->table_plugin == NULL);
+  assert(vars->storage_engine == NULL);
 
   free(vars->dynamic_variables_ptr);
   vars->dynamic_variables_ptr= NULL;

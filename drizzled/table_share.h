@@ -85,11 +85,11 @@ public:
   uint32_t   stored_rec_length;         /* Stored record length
                                            (no generated-only virtual fields) */
 
-  st_plugin_int *db_plugin;			/* storage engine plugin */
+  StorageEngine *storage_engine;			/* storage engine plugin */
   inline StorageEngine *db_type() const	/* table_type for handler */
   {
-    // assert(db_plugin);
-    return db_plugin ? static_cast<StorageEngine *>(db_plugin->data): NULL;
+    // assert(storage_engine);
+    return storage_engine;
   }
   enum row_type row_type;		/* How rows are stored */
   enum tmp_table_type tmp_table;

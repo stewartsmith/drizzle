@@ -283,6 +283,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		qcache.h \
 		query_arena.h \
 		query_id.h \
+		registry.h \
 		rename.h \
 		replicator.h \
 		scheduling.h \
@@ -351,7 +352,7 @@ noinst_LTLIBRARIES = \
 
 LDADD = $(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(LIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
+	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
