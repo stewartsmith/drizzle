@@ -27,6 +27,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/registry.h>
 #include <drizzled/unireg.h>
+#include <drizzled/data_home.h>
 #include <string>
 
 #include CSTDINT_H
@@ -471,6 +472,215 @@ int ha_table_exists_in_engine(Session* session,
     return HA_ERR_NO_SUCH_TABLE;
   return HA_ERR_TABLE_EXIST;
 }
+
+
+static const char *check_lowercase_names(handler *file, const char *path,
+                                         char *tmp_path)
+{
+  if (lower_case_table_names != 2 || (file->ha_table_flags() & HA_FILE_BASED))
+    return path;
+
+  /* Ensure that table handler get path in lower case */
+  if (tmp_path != path)
+    strcpy(tmp_path, path);
+
+  /*
+    we only should turn into lowercase database/table part
+    so start the process after homedirectory
+  */
+  my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
+  return tmp_path;
+}
+
+/**
+  An interceptor to hijack the text of the error message without
+  setting an error in the thread. We need the text to present it
+  in the form of a warning to the user.
+*/
+
+class Ha_delete_table_error_handler: public Internal_error_handler
+{
+public:
+  Ha_delete_table_error_handler() : Internal_error_handler() {}
+  virtual bool handle_error(uint32_t sql_errno,
+                            const char *message,
+                            DRIZZLE_ERROR::enum_warning_level level,
+                            Session *session);
+  char buff[DRIZZLE_ERRMSG_SIZE];
+};
+
+
+bool
+Ha_delete_table_error_handler::
+handle_error(uint32_t ,
+             const char *message,
+             DRIZZLE_ERROR::enum_warning_level ,
+             Session *)
+{
+  /* Grab the error message */
+  strncpy(buff, message, sizeof(buff)-1);
+  return true;
+}
+
+
+class DeleteTableStorageEngine
+  : public unary_function<StorageEngine *, void>
+{
+  Session *session;
+  const char *path;
+  handler **file;
+  int *dt_error;
+public:
+  DeleteTableStorageEngine(Session *session_arg, const char *path_arg,
+                           handler **file_arg, int *error_arg)
+    : session(session_arg), path(path_arg), file(file_arg), dt_error(error_arg) {}
+
+  result_type operator() (argument_type engine)
+  {
+
+    handler *tmp_file;
+    char tmp_path[FN_REFLEN];
+
+    if(*dt_error!=ENOENT) /* already deleted table */
+      return;
+
+    if (!engine)
+      return;
+
+    if (!engine->is_enabled())
+      return;
+
+    if ((tmp_file= engine->create(NULL, session->mem_root)))
+      tmp_file->init();
+    else
+      return;
+
+    path= check_lowercase_names(tmp_file, path, tmp_path);
+    int tmp_error= tmp_file->ha_delete_table(path);
+
+    if(tmp_error!=ENOENT)
+    {
+      *dt_error= tmp_error;
+      if(*file)
+        delete *file;
+      *file= tmp_file;
+      return;
+    }
+    else
+      delete tmp_file;
+    
+    return;
+  }
+};
+
+/**
+  This should return ENOENT if the file doesn't exists.
+  The .frm file will be deleted only if we return 0 or ENOENT
+*/
+int ha_delete_table(Session *session, const char *path,
+                    const char *db, const char *alias, bool generate_warning)
+{
+  TABLE_SHARE dummy_share;
+  Table dummy_table;
+  memset(&dummy_table, 0, sizeof(dummy_table));
+  memset(&dummy_share, 0, sizeof(dummy_share));
+
+  dummy_table.s= &dummy_share;
+
+  int error= ENOENT;
+  handler *file= NULL;
+
+  for_each(all_engines.begin(), all_engines.end(),
+           DeleteTableStorageEngine(session, path, &file, &error));
+
+  if (error && generate_warning)
+  {
+    /*
+      Because file->print_error() use my_error() to generate the error message
+      we use an internal error handler to intercept it and store the text
+      in a temporary buffer. Later the message will be presented to user
+      as a warning.
+    */
+    Ha_delete_table_error_handler ha_delete_table_error_handler;
+
+    /* Fill up strucutures that print_error may need */
+    dummy_share.path.str= (char*) path;
+    dummy_share.path.length= strlen(path);
+    dummy_share.db.str= (char*) db;
+    dummy_share.db.length= strlen(db);
+    dummy_share.table_name.str= (char*) alias;
+    dummy_share.table_name.length= strlen(alias);
+    dummy_table.alias= alias;
+
+
+    if(file != NULL)
+    {
+      file->change_table_ptr(&dummy_table, &dummy_share);
+
+      session->push_internal_handler(&ha_delete_table_error_handler);
+      file->print_error(error, 0);
+
+      session->pop_internal_handler();
+    }
+    else
+      error= -1; /* General form of fail. maybe bad FRM */
+
+    /*
+      XXX: should we convert *all* errors to warnings here?
+      What if the error is fatal?
+    */
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
+                 ha_delete_table_error_handler.buff);
+  }
+
+  if(file)
+    delete file;
+
+  return error;
+}
+
+/**
+  Initiates table-file and calls appropriate database-creator.
+
+  @retval
+   0  ok
+  @retval
+   1  error
+*/
+int ha_create_table(Session *session, const char *path,
+                    const char *db, const char *table_name,
+                    HA_CREATE_INFO *create_info,
+                    bool update_create_info)
+{
+  int error= 1;
+  Table table;
+  char name_buff[FN_REFLEN];
+  const char *name;
+  TABLE_SHARE share;
+
+  init_tmp_table_share(session, &share, db, 0, table_name, path);
+  if (open_table_def(session, &share, 0) ||
+      open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0, &table,
+                            OTM_CREATE))
+    goto err;
+
+  if (update_create_info)
+    table.updateCreateInfo(create_info);
+
+  name= check_lowercase_names(table.file, share.path.str, name_buff);
+
+  error= table.file->ha_create(name, &table, create_info);
+  table.closefrm(false);
+  if (error)
+  {
+    sprintf(name_buff,"%s.%s",db,table_name);
+    my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
+  }
+err:
+  free_table_share(&share);
+  return(error != 0);
+}
+
 
 int storage_engine_finalizer(st_plugin_int *plugin)
 {
