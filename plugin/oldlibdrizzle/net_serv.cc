@@ -747,10 +747,12 @@ my_real_read(NET *net, size_t *complen)
 
 end:
 #ifndef __sun
-  if  (net->read_timeout)
+  if  (net->vio->sd >= 0 && net->read_timeout)
+  {
     error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
                       &backtime, (socklen_t)sizeof(struct timespec));
-  assert(error == 0);
+    assert(error == 0);
+  }
 #endif
   net->reading_or_writing= 0;
 
