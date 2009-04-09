@@ -537,8 +537,12 @@ bool ProtocolOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length
     the client, the connection is closed or "net_wait_timeout"
     number of seconds has passed
   */
+#ifdef NEVER
+  /* We can do this much more efficiently with poll timeouts or watcher thread,
+     disabling for now, which means net_wait_timeout == read_timeout. */
   drizzleclient_net_set_read_timeout(&net,
                                      session->variables.net_wait_timeout);
+#endif
 
   session->clear_error();
   session->main_da.reset_diagnostics_area();
@@ -585,9 +589,12 @@ bool ProtocolOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length
   /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
   (*l_packet)[*packet_length]= '\0';                  /* safety */
 
+#ifdef NEVER
+  /* See comment above. */
   /* Restore read timeout value */
   drizzleclient_net_set_read_timeout(&net,
                                      session->variables.net_read_timeout);
+#endif
 
   return true;
 }
