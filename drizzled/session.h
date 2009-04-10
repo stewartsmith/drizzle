@@ -968,7 +968,13 @@ public:
     start_utime= utime_after_lock= my_micro_time();
   }
   void set_time_after_lock()  { utime_after_lock= my_micro_time(); }
-  uint64_t current_utime()  { return my_micro_time(); }
+  /**
+   * Returns the current micro-timestamp
+   */
+  inline uint64_t getCurrentTimestamp()  
+  { 
+    return my_micro_time(); 
+  }
   inline uint64_t found_rows(void)
   {
     return limit_found_rows;

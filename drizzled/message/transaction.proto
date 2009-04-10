@@ -1,0 +1,88 @@
+import "table.proto";
+
+package drizzled.message;
+option optimize_for = SPEED;
+
+/*
+  Context for a transaction.
+*/
+message TransactionContext
+{
+  required int32 server_id = 1;
+  required int64 transaction_id = 2;
+}
+
+/*
+  Insert one record into a single table.
+*/
+message InsertRecord
+{
+  repeated Table.Field insert_field = 3;
+  repeated string insert_value = 4;
+}
+
+/*
+  Update one record in a single table.
+*/
+message UpdateRecord
+{
+  repeated Table.Field update_field = 3;
+  repeated string before_value = 4;
+  repeated string after_value = 5;
+  repeated Table.Field where_field = 6;
+  repeated string where_value = 7;
+}
+
+/*
+  Deletes one record in a single table
+*/
+message DeleteRecord
+{
+  repeated Table.Field where_field = 3;
+  repeated string where_value = 4;
+}
+
+/*
+  A component of a transaction -- a single instruction or command
+*/
+message Command
+{
+  enum Type 
+  {
+    START_TRANSACTION = 0;        /* A START TRANSACTION statement */
+    COMMIT = 1;                   /* A COMMIT statement */
+    ROLLBACK = 2;                 /* A ROLLBACK statement */
+    INSERT = 3;                   /* An insert of a single record */
+    DELETE = 4;                   /* A delete of a single record */
+    UPDATE = 5;                   /* An update of a single record */
+    RAW_SQL = 6;                  /* A raw SQL statement */
+  }
+  required Type type = 1;
+  required uint64 timestamp = 2;  /* A nanosecond precision timestamp */
+  /* 
+    Transaction Context is duplicated here so that ChangeRecords may
+    be sent over the wire separately from the rest of the records in
+    a transaction.
+  */
+  required TransactionContext transaction_context = 3;
+  optional string schema = 4;     /* The schema affected */
+  optional string table = 5;      /* The table affected */
+
+  optional string sql = 6;  /* May contain the actual SQL supplied for the original statement */
+
+  /* 
+    The below implement the actual change.  Each ChangeRecord will 
+    have zero or one of the below sub-messages defined. 
+  */
+  optional InsertRecord      insert_record = 7;
+  optional DeleteRecord      delete_record = 8;
+  optional UpdateRecord      update_record = 9;
+}
+
+message Transaction
+{
+  required TransactionContext transaction_context = 1;
+  required uint64 start_timestamp = 2;
+  required uint64 end_timestamp = 3;
+  repeated Command command = 4;
+}
