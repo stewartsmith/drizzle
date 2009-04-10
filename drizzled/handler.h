@@ -1105,7 +1105,6 @@ extern uint32_t total_ha, total_ha_2pc;
 int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
-int storage_engine_initializer(st_plugin_int *plugin);
 int storage_engine_finalizer(st_plugin_int *plugin);
 void add_storage_engine(StorageEngine *engine);
 

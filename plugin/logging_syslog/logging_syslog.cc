@@ -150,11 +150,10 @@ public:
   }
 };
 
-static int logging_syslog_plugin_init(void *p)
-{
-  Logging_syslog **handler= static_cast<Logging_syslog **>(p);
-  *handler= NULL;
+static Logging_syslog *handler= NULL;
 
+static int logging_syslog_plugin_init(Plugin_registry &registry)
+{
   syslog_facility= -1;
   for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
   {
@@ -192,14 +191,14 @@ static int logging_syslog_plugin_init(void *p)
   openlog(sysvar_logging_syslog_ident,
           LOG_PID, syslog_facility);
 
-  *handler= new Logging_syslog();
+  handler= new Logging_syslog();
+  registry.registerPlugin(handler);
 
   return 0;
 }
 
-static int logging_syslog_plugin_deinit(void *p)
+static int logging_syslog_plugin_deinit(void *)
 {
-  Logging_syslog *handler= static_cast<Logging_syslog *>(p);
 
   delete handler;
 

@@ -33,42 +33,13 @@ static bool errmsg_has= false;
 void add_errmsg_handler(Error_message_handler *handler)
 {
   all_errmsg_handler.push_back(handler);
+  errmsg_has= true;
 }
 
 void remove_errmsg_handler(Error_message_handler *handler)
 {
   all_errmsg_handler.erase(find(all_errmsg_handler.begin(),
                                 all_errmsg_handler.end(), handler));
-}
-
-int errmsg_initializer(st_plugin_int *plugin)
-{
-  Error_message_handler *p;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&p))
-    {
-      /* we're doing the errmsg plugin api,
-        so we can't trust the errmsg api to emit our error messages
-        so we will emit error messages to stderr */
-      /* TRANSLATORS: The leading word "errmsg" is the name
-        of the plugin api, and so should not be translated. */
-      fprintf(stderr,
-              _("errmsg plugin '%s' init() failed."),
-              plugin->name.str);
-      return 1;
-    }
-  }
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  if (p != NULL)
-    registry.registerPlugin(p);
-  plugin->data= p;
-  errmsg_has= true;
-
-  return 0;
-
 }
 
 int errmsg_finalizer(st_plugin_int *plugin)

@@ -38,29 +38,6 @@ void remove_query_cache(QueryCache *handler)
                         handler));
 }
 
-int qcache_initializer(st_plugin_int *plugin)
-{
-  QueryCache *p= NULL;
-
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&p))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' init() failed"),
-                    plugin->name.str);
-      return 1;
-    }
-  }
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  if (p != NULL)
-    registry.registerPlugin(p);
-  plugin->data= p;
-
-  return 0;
-
-}
 
 int qcache_finalizer(st_plugin_int *plugin)
 {

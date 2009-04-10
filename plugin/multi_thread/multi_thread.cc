@@ -109,22 +109,19 @@ public:
     return scheduler;
   }
 };
+static MultiThreadFactory *factory= NULL;
 
-static int init(void *p)
+static int init(Plugin_registry &registry)
 {
-  SchedulerFactory** sched= static_cast<SchedulerFactory **>(p);
-
-  *sched= new MultiThreadFactory();
-
+  factory= new MultiThreadFactory();
+  registry.registerPlugin(factory);
   return 0;
 }
 
-static int deinit(void *p)
+static int deinit(void *)
 {
-
-  MultiThreadFactory *factory= static_cast<MultiThreadFactory *>(p);
-  delete factory;
-
+  if (factory)
+    delete factory;
   return 0;
 }
 

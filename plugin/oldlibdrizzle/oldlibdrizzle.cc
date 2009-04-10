@@ -925,17 +925,19 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
   return session->checkUser(passwd, passwd_len, l_db);
 }
 
-static int init(void *p)
+static ProtocolFactoryOldLibdrizzle *factory= NULL;
+
+static int init(Plugin_registry &registry)
 {
-  ProtocolFactory **factory= static_cast<ProtocolFactory **>(p);
-  *factory= new ProtocolFactoryOldLibdrizzle;
+  factory= new ProtocolFactoryOldLibdrizzle;
+  registry.registerPlugin(factory); 
   return 0;
 }
 
-static int deinit(void *p)
+static int deinit(void *)
 {
-  ProtocolFactoryOldLibdrizzle *factory= static_cast<ProtocolFactoryOldLibdrizzle *>(p);
-  delete factory;
+  if (factory)
+    delete factory;
   return 0;
 }
 

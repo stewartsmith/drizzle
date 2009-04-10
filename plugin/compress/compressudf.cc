@@ -102,12 +102,9 @@ String *Item_func_compress::val_str(String *str)
 
 Create_function<Item_func_compress> compressudf(string("compress"));
 
-static int compressudf_plugin_init(void *p)
+static int compressudf_plugin_init(Plugin_registry &registry)
 {
-  Function_builder **f = static_cast<Function_builder**>(p);
-
-  *f= &compressudf;
-
+  registry.registerPlugin(&compressudf);
   return 0;
 }
 

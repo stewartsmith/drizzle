@@ -49,19 +49,20 @@ public:
   }
 };
 
-int heap_init(void *p)
+static HeapEngine *engine= NULL;
+int heap_init(Plugin_registry &registry)
 {
-  StorageEngine **engine= static_cast<StorageEngine **>(p);
-  *engine= new HeapEngine(engine_name);
+  engine= new HeapEngine(engine_name);
+  registry.registerPlugin(engine);
+  pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
   return 0;
 }
 
-int heap_deinit(void *p)
+int heap_deinit(void *)
 {
-  HeapEngine *engine= static_cast<HeapEngine *>(p);
   delete engine;
 
-  pthread_mutex_init(&THR_LOCK_heap,MY_MUTEX_INIT_FAST);
+  pthread_mutex_destroy(&THR_LOCK_heap);
 
   return hp_panic(HA_PANIC_CLOSE);
 }

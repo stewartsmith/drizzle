@@ -67,6 +67,14 @@ do {									\
 
 #define STRUCT_FLD(name, value)	value
 
+static ST_SCHEMA_TABLE *innodb_trx_schema_table= NULL;
+static ST_SCHEMA_TABLE *innodb_locks_schema_table= NULL;
+static ST_SCHEMA_TABLE *innodb_lock_waits_schema_table= NULL;
+static ST_SCHEMA_TABLE *innodb_cmp_schema_table= NULL;
+static ST_SCHEMA_TABLE *innodb_cmp_reset_schema_table= NULL;
+static ST_SCHEMA_TABLE *innodb_cmpmem_schema_table= NULL;
+static ST_SCHEMA_TABLE *innodb_cmpmem_reset_schema_table= NULL;
+
 static const ST_FIELD_INFO END_OF_ST_FIELD_INFO =
 	{STRUCT_FLD(field_name,		NULL),
 	 STRUCT_FLD(field_length,	0),
@@ -129,7 +137,7 @@ int
 i_s_common_deinit(
 /*==============*/
 			/* out: 0 on success */
-	void*	p);	/* in/out: table schema object */
+	void*	);	/* in/out: table schema object */
 
 /***********************************************************************
 Auxiliary function to store time_t value in DRIZZLE_TYPE_DATETIME
@@ -380,17 +388,17 @@ int
 innodb_trx_init(
 /*============*/
 			/* out: 0 on success */
-	void*	p)	/* in/out: table schema object */
+	Plugin_registry &registry)	/* in/out: table schema object */
 {
-	ST_SCHEMA_TABLE** schema = static_cast<ST_SCHEMA_TABLE**>(p);
-
-	if ((*schema= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_trx_schema_table= new ST_SCHEMA_TABLE) == NULL)
 		return(1);
-	memset(*schema, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_trx_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
 
-	(*schema)->fields_info = innodb_trx_fields_info;
-	(*schema)->fill_table = trx_i_s_common_fill_table;
+	innodb_trx_schema_table->fields_info = innodb_trx_fields_info;
+	innodb_trx_schema_table->fill_table = trx_i_s_common_fill_table;
+	innodb_trx_schema_table->table_name= "INNODB_TRX";
 
+	registry.registerPlugin(innodb_trx_schema_table);
 
 	return(0);
 }
@@ -650,17 +658,17 @@ int
 innodb_locks_init(
 /*==============*/
 			/* out: 0 on success */
-	void*	p)	/* in/out: table schema object */
+	Plugin_registry &registry)	/* in/out: table schema object */
 {
-	ST_SCHEMA_TABLE** schema = static_cast<ST_SCHEMA_TABLE**>(p);
 
-	if ((*schema= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_locks_schema_table= new ST_SCHEMA_TABLE) == NULL)
 		return(1);
-	memset(*schema, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_locks_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
 
-	(*schema)->fields_info = innodb_locks_fields_info;
-	(*schema)->fill_table = trx_i_s_common_fill_table;
-
+	innodb_locks_schema_table->fields_info = innodb_locks_fields_info;
+	innodb_locks_schema_table->fill_table = trx_i_s_common_fill_table;
+	innodb_locks_schema_table->table_name= "INNODB_LOCKS";
+	registry.registerPlugin(innodb_locks_schema_table);
 	return(0);
 }
 
@@ -827,16 +835,18 @@ int
 innodb_lock_waits_init(
 /*===================*/
 			/* out: 0 on success */
-	void*	p)	/* in/out: table schema object */
+	Plugin_registry &registry)	/* in/out: table schema object */
 {
-	ST_SCHEMA_TABLE** schema = static_cast<ST_SCHEMA_TABLE**>(p);
 
-	if ((*schema= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_lock_waits_schema_table= new ST_SCHEMA_TABLE) == NULL)
 		return(1);
-	memset(*schema, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_lock_waits_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
 
-	(*schema)->fields_info = innodb_lock_waits_fields_info;
-	(*schema)->fill_table = trx_i_s_common_fill_table;
+	innodb_lock_waits_schema_table->fields_info = innodb_lock_waits_fields_info;
+	innodb_lock_waits_schema_table->fill_table = trx_i_s_common_fill_table;
+	innodb_lock_waits_schema_table->table_name= "INNODB_LOCK_WAITS";
+
+	registry.registerPlugin(innodb_lock_waits_schema_table);	
 
 	return(0);
 }
@@ -1118,6 +1128,7 @@ i_s_cmp_reset_fill(
 	return(i_s_cmp_fill_low(session, tables, cond, TRUE));
 }
 
+
 /***********************************************************************
 Bind the dynamic table information_schema.innodb_cmp. */
 static
@@ -1125,18 +1136,19 @@ int
 i_s_cmp_init(
 /*=========*/
 			/* out: 0 on success */
-	void*	p)	/* in/out: table schema object */
+	Plugin_registry &registry)	/* in/out: table schema object */
 {
-	ST_SCHEMA_TABLE** schema = static_cast<ST_SCHEMA_TABLE**>(p);
 
-	if ((*schema= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_cmp_schema_table= new ST_SCHEMA_TABLE) == NULL)
 		return(1);
-	memset(*schema, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_cmp_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
 
 
-	(*schema)->fields_info = i_s_cmp_fields_info;
-	(*schema)->fill_table = i_s_cmp_fill;
+	innodb_cmp_schema_table->fields_info = i_s_cmp_fields_info;
+	innodb_cmp_schema_table->fill_table = i_s_cmp_fill;
+	innodb_cmp_schema_table->table_name= "INNODB_CMP";
 
+	registry.registerPlugin(innodb_cmp_schema_table);
 	return(0);
 }
 
@@ -1147,17 +1159,18 @@ int
 i_s_cmp_reset_init(
 /*===============*/
 			/* out: 0 on success */
-	void*	p)	/* in/out: table schema object */
+	Plugin_registry &registry)	/* in/out: table schema object */
 {
-	ST_SCHEMA_TABLE** schema = static_cast<ST_SCHEMA_TABLE**>(p);
 
-	if ((*schema= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_cmp_reset_schema_table= new ST_SCHEMA_TABLE) == NULL)
 		return(1);
-	memset(*schema, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_cmp_reset_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
 
-	(*schema)->fields_info = i_s_cmp_fields_info;
-	(*schema)->fill_table = i_s_cmp_reset_fill;
+	innodb_cmp_reset_schema_table->fields_info = i_s_cmp_fields_info;
+	innodb_cmp_reset_schema_table->fill_table = i_s_cmp_reset_fill;
+	innodb_cmp_reset_schema_table->table_name= "INNODB_CMP_RESET";
 
+	registry.registerPlugin(innodb_cmp_reset_schema_table);
 	return(0);
 }
 
@@ -1382,17 +1395,18 @@ int
 i_s_cmpmem_init(
 /*============*/
 			/* out: 0 on success */
-	void*	p)	/* in/out: table schema object */
+	Plugin_registry &registry)	/* in/out: table schema object */
 {
-	ST_SCHEMA_TABLE** schema = static_cast<ST_SCHEMA_TABLE**>(p);
 
-	if ((*schema= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_cmpmem_schema_table= new ST_SCHEMA_TABLE) == NULL)
 		return(1);
-	memset(*schema, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_cmpmem_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
 
-	(*schema)->fields_info = i_s_cmpmem_fields_info;
-	(*schema)->fill_table = i_s_cmpmem_fill;
+	innodb_cmpmem_schema_table->fields_info = i_s_cmpmem_fields_info;
+	innodb_cmpmem_schema_table->fill_table = i_s_cmpmem_fill;
+	innodb_cmpmem_schema_table->table_name= "INNODB_CMPMEM";
 
+	registry.registerPlugin(innodb_cmpmem_schema_table);
 	return(0);
 }
 
@@ -1403,17 +1417,17 @@ int
 i_s_cmpmem_reset_init(
 /*==================*/
 			/* out: 0 on success */
-	void*	p)	/* in/out: table schema object */
+	Plugin_registry &registry)	/* in/out: table schema object */
 {
-	ST_SCHEMA_TABLE** schema = static_cast<ST_SCHEMA_TABLE**>(p);
-
-	if ((*schema= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_cmpmem_reset_schema_table= new ST_SCHEMA_TABLE) == NULL)
 		return(1);
-	memset(*schema, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_cmpmem_reset_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
 
-	(*schema)->fields_info = i_s_cmpmem_fields_info;
-	(*schema)->fill_table = i_s_cmpmem_reset_fill;
+	innodb_cmpmem_reset_schema_table->fields_info = i_s_cmpmem_fields_info;
+	innodb_cmpmem_reset_schema_table->fill_table = i_s_cmpmem_reset_fill;
+	innodb_cmpmem_reset_schema_table->table_name= "INNODB_CMPMEM_RESET";
 
+	registry.registerPlugin(innodb_cmpmem_reset_schema_table);
 	return(0);
 }
 
@@ -1515,10 +1529,14 @@ int
 i_s_common_deinit(
 /*==============*/
 			/* out: 0 on success */
-	void*	p)	/* in/out: table schema object */
+	void*	)	/* in/out: table schema object */
 {
-	ST_SCHEMA_TABLE *schema= static_cast<ST_SCHEMA_TABLE *>(p);
-	delete schema;
-
+	delete innodb_trx_schema_table;
+	delete innodb_locks_schema_table;
+	delete innodb_lock_waits_schema_table;
+	delete innodb_cmp_schema_table;
+	delete innodb_cmp_reset_schema_table;
+	delete innodb_cmpmem_schema_table;
+	delete innodb_cmpmem_reset_schema_table;
 	return(0);
 }

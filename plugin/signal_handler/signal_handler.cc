@@ -193,7 +193,7 @@ pthread_handler_t signal_hand(void *)
 }
 
 
-static int init(void *)
+static int init(Plugin_registry&)
 {
   int error;
   pthread_attr_t thr_attr;

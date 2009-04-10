@@ -1807,26 +1807,27 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *create_info,
   return COMPATIBLE_DATA_YES;
 }
 
-int myisam_deinit(void *p)
+static MyisamEngine *engine= NULL;
+
+static int myisam_init(Plugin_registry &registry)
+{
+  engine= new MyisamEngine(engine_name);
+  registry.registerPlugin(engine);
+
+  pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
+
+  return 0;
+}
+
+int myisam_deinit(void *)
 {
 
-  MyisamEngine *engine= static_cast<MyisamEngine *>(p);
   delete engine;
 
   pthread_mutex_destroy(&THR_LOCK_myisam);
 
   return mi_panic(HA_PANIC_CLOSE);
 }
-
-static int myisam_init(void *p)
-{
-  StorageEngine **engine= static_cast<StorageEngine **>(p);
-  
-  *engine= new MyisamEngine(engine_name);
-
-  return 0;
-}
-
 
 
 /****************************************************************************

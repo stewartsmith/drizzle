@@ -25,7 +25,6 @@
 // need stdarg for va_list
 #include <stdarg.h>
 
-int errmsg_initializer(st_plugin_int *plugin);
 int errmsg_finalizer(st_plugin_int *plugin);
 void add_errmsg_handler(Error_message_handler *handler);
 

@@ -117,22 +117,22 @@ public:
   }
 };
 
-static int tina_init_func(void *p)
-{
-  StorageEngine **engine= static_cast<StorageEngine **>(p);
+static Tina *tina_engine= NULL;
 
-  Tina *tina_engine= new Tina(engine_name);
+static int tina_init_func(Plugin_registry &registry)
+{
+
+  tina_engine= new Tina(engine_name);
+  registry.registerPlugin(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
                    (hash_get_key) tina_get_key,0,0);
-  *engine= tina_engine;
   return 0;
 }
 
-static int tina_done_func(void *p)
+static int tina_done_func(void *)
 {
-  Tina *tina_engine= static_cast<Tina *>(p);
   delete tina_engine;
 
   hash_free(&tina_open_tables);

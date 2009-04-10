@@ -70,35 +70,12 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("PROTOCOL") }
 };
 
-extern int initialize_schema_table(st_plugin_int *plugin);
 extern int finalize_schema_table(st_plugin_int *plugin);
 
-extern int initialize_udf(st_plugin_int *plugin);
 extern int finalize_udf(st_plugin_int *plugin);
 
-/*
-  The number of elements in both plugin_type_initialize and
-  plugin_type_deinitialize should equal to the number of plugins
-  defined.
-*/
-plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
-{
-  0,  /* Daemon */
-  storage_engine_initializer,  /* Storage Engine */
-  initialize_schema_table,  /* Information Schema */
-  initialize_udf,  /* UDF */
-  0,  /* UDA */
-  0,  /* Audit */
-  logging_initializer,  /* Logger */
-  errmsg_initializer,  /* Error Messages */
-  authentication_initializer,  /* Auth */
-  qcache_initializer,
-  scheduling_initializer,
-  replicator_initializer,
-  protocol_initializer
-};
 
-plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
+plugin_type_deinit plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 {
   0,  /* Daemon */
   storage_engine_finalizer,  /* Storage Engine */
@@ -598,21 +575,14 @@ static bool plugin_initialize(struct st_plugin_int *plugin)
 {
   assert(plugin->isInited == false);
 
-  if (plugin_type_initialize[plugin->plugin->type])
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  if (plugin->plugin->init)
   {
-    if ((*plugin_type_initialize[plugin->plugin->type])(plugin))
+    if (plugin->plugin->init(registry))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' registration as a %s failed."),
-                      plugin->name.str, plugin_type_names[plugin->plugin->type].str);
-      goto err;
-    }
-  }
-  else if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(plugin))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' init function returned error."),
-                      plugin->name.str);
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error."),
+                    plugin->name.str);
       goto err;
     }
   }
@@ -712,20 +682,9 @@ int plugin_init(int *argc, char **argv, int flags)
       if (plugin_initialize(plugin_ptr))
         goto err_unlock;
 
-      /*
-        initialize the global default storage engine so that it may
-        not be null in any child thread.
-      */
-      if (my_strcasecmp(&my_charset_utf8_general_ci, plugin->name, "MyISAM") == 0)
-      {
-        assert(!global_system_variables.storage_engine);
-        global_system_variables.storage_engine= static_cast<StorageEngine *>(plugin_ptr->data);
-      }
     }
   }
 
-  /* should now be set to MyISAM storage engine */
-  assert(global_system_variables.storage_engine);
 
   /* Register all dynamic plugins */
   if (!(flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))

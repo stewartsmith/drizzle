@@ -22,7 +22,6 @@
 
 #include <drizzled/plugin/qcache.h>
 
-int qcache_initializer (st_plugin_int *plugin);
 int qcache_finalizer (st_plugin_int *plugin);
 void add_query_cache(QueryCache *handler);
 

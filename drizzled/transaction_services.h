@@ -22,8 +22,6 @@
 
 #include <vector>
 
-int replicator_initializer (st_plugin_int *plugin);
-int replicator_finalizer (st_plugin_int *plugin);
 
 /* some forward declarations needed */
 class Session;
@@ -43,6 +41,7 @@ namespace drizzled
 }
 
 void add_replicator(drizzled::plugin::Replicator *repl);
+int replicator_finalizer (st_plugin_int *plugin);
 
 /**
  * This is a class which manages transforming internal 

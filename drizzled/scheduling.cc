@@ -59,35 +59,6 @@ Scheduler &get_thread_scheduler()
   return *sched;
 }
 
-int scheduling_initializer(st_plugin_int *plugin)
-{
-
-  SchedulerFactory *factory= NULL;
-
-  assert(plugin->plugin->init); /* Find poorly designed plugins */
-
-  if (plugin->plugin->init((void *)&factory))
-  {
-    /* 
-      TRANSLATORS> The leading word "scheduling" is the name
-      of the plugin api, and so should not be translated. 
-    */
-    errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' init() failed"),
-	                plugin->name.str);
-      return 1;
-  }
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  if (factory != NULL)
-    registry.registerPlugin(factory);
-  
-  /* We populate so we can find which plugin was initialized later on */
-  plugin->data= (void *)factory;
-
-  return 0;
-
-}
-
 int scheduling_finalizer(st_plugin_int *plugin)
 {
   /* We know which one we initialized since its data pointer is filled */

@@ -77,32 +77,6 @@ bool authenticate_user(Session *session, const char *password)
 }
 
 
-int authentication_initializer(st_plugin_int *plugin)
-{
-  Authentication *authen= NULL;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&authen))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error."),
-                    plugin->name.str);
-      return 1;
-    }
-  }
-
-  if (authen == NULL)
-    return 1;
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  registry.registerPlugin(authen);
-  plugin->data= authen;
-  are_plugins_loaded= true;
-
-  return 0;
-}
-
 int authentication_finalizer(st_plugin_int *plugin)
 {
   Authentication *authen= static_cast<Authentication *>(plugin->data);

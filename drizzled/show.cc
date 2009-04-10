@@ -4499,31 +4499,6 @@ template class List_iterator_fast<char>;
 template class List<char>;
 #endif
 
-int initialize_schema_table(st_plugin_int *plugin)
-{
-  ST_SCHEMA_TABLE *schema_table;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&schema_table))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error."),
-                    plugin->name.str);
-      return 1;
-    }
-
-    /*- Make sure the plugin name is not set inside the init() function. */
-    schema_table->table_name= plugin->name.str;
-  }
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  registry.registerPlugin(schema_table);
-  plugin->data= schema_table;
-
-  return 0;
-}
-
 int finalize_schema_table(st_plugin_int *plugin)
 {
   ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;

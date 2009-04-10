@@ -107,18 +107,17 @@ public:
 };
 
 
-static int initialize(void *p)
+static Authentication *auth= NULL;
+
+static int initialize(Plugin_registry &registry)
 {
-  Authentication **auth= static_cast<Authentication **>(p);
-
-  *auth= new Auth_pam();
-
+  auth= new Auth_pam();
+  registry.registerPlugin(auth);
   return 0;
 }
 
-static int finalize(void *p)
+static int finalize(void *)
 {
-  Auth_pam *auth= static_cast<Auth_pam *>(p);
 
   if (auth)
     delete auth;

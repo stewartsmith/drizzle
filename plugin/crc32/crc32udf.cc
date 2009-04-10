@@ -51,11 +51,9 @@ int64_t Item_func_crc32::val_int()
 
 Create_function<Item_func_crc32> crc32udf(string("crc32"));
 
-static int crc32udf_plugin_init(void *p)
+static int crc32udf_plugin_init(Plugin_registry &registry)
 {
-  Function_builder **f = static_cast<Function_builder**>(p);
-
-  *f= &crc32udf;
+  registry.registerPlugin(&crc32udf);
 
   return 0;
 }

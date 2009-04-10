@@ -50,18 +50,17 @@ public:
   }
 };
 
-static int errmsg_stderr_plugin_init(void *p)
+static Error_message_stderr *handler= NULL;
+static int errmsg_stderr_plugin_init(Plugin_registry &registry)
 {
-  Error_message_handler **handler= static_cast<Error_message_handler **>(p);
-
-  *handler= new Error_message_stderr();
+  handler= new Error_message_stderr();
+  registry.registerPlugin(handler);
 
   return 0;
 }
 
-static int errmsg_stderr_plugin_deinit(void *p)
+static int errmsg_stderr_plugin_deinit(void *)
 {
-  Error_message_stderr **handler= static_cast<Error_message_stderr **>(p);
 
   if (handler)
     delete handler;

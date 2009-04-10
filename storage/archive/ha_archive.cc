@@ -136,6 +136,7 @@ public:
   }
 };
 
+static ArchiveEngine *archive_engine= NULL;
 
 /*
   Initialize the archive handler.
@@ -149,13 +150,12 @@ public:
     true        Error
 */
 
-int archive_db_init(void *p)
+int archive_db_init(Plugin_registry &registry)
 {
-  StorageEngine **engine= static_cast<StorageEngine **>(p);
 
-  ArchiveEngine *archive_engine= new ArchiveEngine(engine_name);
-
-  *engine= archive_engine;
+  pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
+  archive_engine= new ArchiveEngine(engine_name);
+  registry.registerPlugin(archive_engine);
 
   /* When the engine starts up set the first version */
   global_version= 1;
@@ -174,9 +174,8 @@ int archive_db_init(void *p)
     false       OK
 */
 
-int archive_db_done(void *p)
+int archive_db_done(void *)
 {
-  ArchiveEngine *archive_engine= static_cast<ArchiveEngine *>(p);
   delete archive_engine;
 
   pthread_mutex_destroy(&archive_mutex);

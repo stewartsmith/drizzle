@@ -38,30 +38,6 @@ void remove_logger(Logging_handler *handler)
   all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
 }
 
-int logging_initializer(st_plugin_int *plugin)
-{
-  Logging_handler *p= NULL;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&p))
-    {
-      /* TRANSLATORS: The leading word "logging" is the name
-         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, "logging plugin '%s' init() failed",
-                    plugin->name.str);
-      return 1;
-    }
-  }
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  if (p != NULL)
-    registry.registerPlugin(p);
-  plugin->data= p;
-
-  return 0;
-}
-
 
 int logging_finalizer(st_plugin_int *plugin)
 {

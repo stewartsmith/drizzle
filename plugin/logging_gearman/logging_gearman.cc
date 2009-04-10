@@ -234,11 +234,10 @@ public:
   }
 };
 
-static int logging_gearman_plugin_init(void *p)
-{
-  Logging_handler **handler= static_cast<Logging_handler **>(p);
-  *handler= NULL;
+static Logging_handler *handler= NULL;
 
+static int logging_gearman_plugin_init(Plugin_registry &registry)
+{
   gearman_return_t ret;
 
   /* TODO
@@ -275,18 +274,18 @@ static int logging_gearman_plugin_init(void *p)
     return 0;
   }
 
-  *handler= new LoggingGearman();
+  handler= new LoggingGearman();
+  registry.registerPlugin(handler);
 
   return 0;
 }
 
-static int logging_gearman_plugin_deinit(void *p)
+static int logging_gearman_plugin_deinit(void *)
 {
-  LoggingGearman *l= static_cast<LoggingGearman *>(p);
 
   gearman_client_free(&gearman_client);
 
-  delete(l);
+  delete(handler);
 
   return 0;
 }

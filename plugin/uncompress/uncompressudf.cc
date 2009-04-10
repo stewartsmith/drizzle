@@ -85,24 +85,14 @@ err:
   return 0;
 }
 
-Create_function<Item_func_uncompress> uncompressudf(string("uncompress"));
+Create_function<Item_func_uncompress> uncompressudf("uncompress");
 
-
-static int uncompressudf_plugin_init(void *p)
+static int uncompressudf_plugin_init(Plugin_registry &registry)
 {
-  Function_builder **f = static_cast<Function_builder**>(p);
-
-  *f= &uncompressudf;
-
+  registry.registerPlugin(&uncompressudf);
   return 0;
 }
 
-static int uncompressudf_plugin_deinit(void *p)
-{
-  Function_builder *udff = static_cast<Function_builder *>(p);
-  (void)udff;
-  return 0;
-}
 
 drizzle_declare_plugin(uncompress)
 {
@@ -113,7 +103,7 @@ drizzle_declare_plugin(uncompress)
   "UDF for compress()",
   PLUGIN_LICENSE_GPL,
   uncompressudf_plugin_init, /* Plugin Init */
-  uncompressudf_plugin_deinit, /* Plugin Deinit */
+  NULL,   /* Plugin Deinit */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */

@@ -67,6 +67,7 @@ typedef struct st_mysql_show_var SHOW_VAR;
 #define DRIZZLE_ANY_PLUGIN         -1
 
 /* A handle for the dynamic library containing a plugin or plugins. */
+struct st_mysql_plugin;
 
 struct st_plugin_dl
 {
@@ -95,7 +96,29 @@ struct st_plugin_int
 #define plugin_name(pi) (&((pi)->name))
 #define plugin_equals(p1,p2) ((p1) && (p2) && (p1) == (p2))
 
-typedef int (*plugin_type_init)(struct st_plugin_int *);
+#include <drizzled/plugin_registry.h>
+
+typedef int (*plugin_type_init)(Plugin_registry &);
+typedef int (*plugin_type_deinit)(st_plugin_int *);
+
+/*
+  Plugin description structure.
+*/
+
+struct st_mysql_plugin
+{
+  uint32_t type;             /* plugin type (a DRIZZLE_XXX_PLUGIN value)   */
+  const char *name;          /* plugin name (for SHOW PLUGINS)               */
+  const char *version;       /* plugin version (for SHOW PLUGINS)            */
+  const char *author;        /* plugin author (for SHOW PLUGINS)             */
+  const char *descr;         /* general descriptive text (for SHOW PLUGINS ) */
+  int license;               /* plugin license (PLUGIN_LICENSE_XXX)      */
+  plugin_type_init init;     /* function to invoke when plugin is loaded */
+  int (*deinit)(void *); /* function to invoke when plugin is unloaded */
+  struct st_mysql_show_var *status_vars;
+  struct st_mysql_sys_var **system_vars;
+  void *reserved1;   /* reserved for dependency checking             */
+};
 
 extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;

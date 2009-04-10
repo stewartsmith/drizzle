@@ -75,12 +75,9 @@ String *Item_func_md5::val_str(String *str)
 
 Create_function<Item_func_md5> md5udf(string("md5"));
 
-static int md5udf_plugin_init(void *p)
+static int md5udf_plugin_init(Plugin_registry &registry)
 {
-  Function_builder **f = static_cast<Function_builder**>(p);
-
-  *f= &md5udf;
-
+  registry.registerPlugin(&md5udf);
   return 0;
 }
 

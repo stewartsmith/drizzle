@@ -44,32 +44,6 @@ static void remove_udf(Function_builder *udf)
   udf_registry.remove(udf);
 }
 
-int initialize_udf(st_plugin_int *plugin)
-{
-  Function_builder *f;
-
-
-  if (plugin->plugin->init)
-  {
-    int r;
-    if ((r= plugin->plugin->init((void *)&f)))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error %d."),
-                    plugin->name.str, r);
-      return r;
-    }
-  }
-  else
-    return 1;
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  registry.registerPlugin(f);
-
-  plugin->data= f;
-  return 0;
-
-}
 
 int finalize_udf(st_plugin_int *plugin)
 {

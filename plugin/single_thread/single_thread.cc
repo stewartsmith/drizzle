@@ -83,18 +83,19 @@ public:
   }
 };
 
-static int init(void *p)
-{
-  SchedulerFactory **factory= static_cast<SchedulerFactory **>(p);
-  *factory= new SingleThreadFactory();
+SingleThreadFactory *factory= NULL;
 
+static int init(Plugin_registry &registry)
+{
+  factory= new SingleThreadFactory();
+  registry.registerPlugin(factory);
   return 0;
 }
 
-static int deinit(void *p)
+static int deinit(void *)
 {
-  SingleThreadFactory *factory= static_cast<SingleThreadFactory *>(p);
-  delete factory;
+  if (factory)
+    delete factory;
   return 0;
 }
 

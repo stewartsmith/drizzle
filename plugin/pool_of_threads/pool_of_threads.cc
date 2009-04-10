@@ -609,17 +609,14 @@ void libevent_session_add(Session* session)
 }
 
 
+static PoolOfThreadsFactory *factory= NULL;
 
-static int init(void *p)
+static int init(Plugin_registry &registry)
 {
   assert(size != 0);
 
-  SchedulerFactory **plugin= static_cast<SchedulerFactory **>(p);
-
-  PoolOfThreadsFactory *factory=
-    new PoolOfThreadsFactory();
-
-  *plugin= factory;
+  factory= new PoolOfThreadsFactory();
+  registry.registerPlugin(factory);
 
   return 0;
 }
@@ -628,10 +625,10 @@ static int init(void *p)
   Wait until all pool threads have been deleted for clean shutdown
 */
 
-static int deinit(void *p)
+static int deinit(void *)
 {
-  PoolOfThreadsFactory *factory= static_cast<PoolOfThreadsFactory *>(p);
-  delete factory;
+  if (factory)
+    delete factory;
 
   return 0;
 }

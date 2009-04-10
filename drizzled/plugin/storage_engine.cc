@@ -683,43 +683,17 @@ err:
 }
 
 
-int storage_engine_finalizer(st_plugin_int *plugin)
+int storage_engine_finalizer(st_plugin_int *)
 {
-  StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
 
-  remove_storage_engine(engine);
+  //remove_storage_engine(engine);
 
-  if (engine && plugin->plugin->deinit)
-    (void)plugin->plugin->deinit(engine);
-
+/*  if (engine && plugin->plugin->deinit)
+    (void)plugin->plugin->deinit(NULL);
+*/
   return(0);
 }
 
-
-int storage_engine_initializer(st_plugin_int *plugin)
-{
-  StorageEngine *engine= NULL;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&engine))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error."),
-                    plugin->name.str);
-      return 1;
-    }
-  }
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  if (engine != NULL)
-    registry.registerPlugin(engine);
-
-  plugin->data= engine;
-  plugin->isInited= true;
-
-  return 0;
-}
 
 const string ha_resolve_storage_engine_name(const StorageEngine *engine)
 {

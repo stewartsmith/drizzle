@@ -54,23 +54,14 @@ int64_t Item_func_uncompressed_length::val_int()
 }
 
 Create_function<Item_func_uncompressed_length>
-  uncompressed_lengthudf(string("uncompressed_length"));
+  uncompressed_lengthudf("uncompressed_length");
 
-static int uncompressed_lengthudf_plugin_init(void *p)
+static int uncompressed_lengthudf_plugin_init(Plugin_registry &registry)
 {
-  Function_builder **f = static_cast<Function_builder**>(p);
-
-  *f= &uncompressed_lengthudf;
-
+  registry.registerPlugin(&uncompressed_lengthudf);
   return 0;
 }
 
-static int uncompressed_lengthudf_plugin_deinit(void *p)
-{
-  Function_builder *udff = static_cast<Function_builder *>(p);
-  (void)udff;
-  return 0;
-}
 
 drizzle_declare_plugin(uncompressed_length)
 {
@@ -81,7 +72,7 @@ drizzle_declare_plugin(uncompressed_length)
   "UDF for compress()",
   PLUGIN_LICENSE_GPL,
   uncompressed_lengthudf_plugin_init, /* Plugin Init */
-  uncompressed_lengthudf_plugin_deinit, /* Plugin Deinit */
+  NULL,   /* Plugin Deinit */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */

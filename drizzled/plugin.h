@@ -365,25 +365,6 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
   (*(DRIZZLE_SYSVAR_NAME(name).resolve(session, DRIZZLE_SYSVAR_NAME(name).offset)))
 
 
-/*
-  Plugin description structure.
-*/
-
-struct st_mysql_plugin
-{
-  uint32_t type;        /* the plugin type (a DRIZZLE_XXX_PLUGIN value)   */
-  const char *name;     /* plugin name (for SHOW PLUGINS)               */
-  const char *version;  /* plugin version (for SHOW PLUGINS)            */
-  const char *author;   /* plugin author (for SHOW PLUGINS)             */
-  const char *descr;    /* general descriptive text (for SHOW PLUGINS ) */
-  int license;          /* the plugin license (PLUGIN_LICENSE_XXX)      */
-  int (*init)(void *);  /* the function to invoke when plugin is loaded */
-  int (*deinit)(void *);/* the function to invoke when plugin is unloaded */
-  struct st_mysql_show_var *status_vars;
-  struct st_mysql_sys_var **system_vars;
-  void *reserved1;   /* reserved for dependency checking             */
-};
-
 struct StorageEngine;
 
 

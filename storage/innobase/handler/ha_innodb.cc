@@ -1835,7 +1835,7 @@ int
 innobase_init(
 /*==========*/
 			/* out: 0 on success, error code on failure */
-	void	*p)	/* in: InnoDB StorageEngine */
+	Plugin_registry &registry)	/* in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/* Set if using current lib */
 	int		err;
@@ -1843,8 +1843,7 @@ innobase_init(
 	char		*default_path;
 	uint		format_id;
 
-	StorageEngine **engine= static_cast<StorageEngine **>(p);
-	InnobaseEngine *innobase_engine= new InnobaseEngine(string(innobase_engine_name));
+	innodb_engine_ptr= new InnobaseEngine(innobase_engine_name);
 
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 	if (!innodb_plugin_init()) {
@@ -1852,8 +1851,6 @@ innobase_init(
 		return -1;
 	}
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
-
-        innodb_engine_ptr = innobase_engine;
 
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
 
@@ -2096,7 +2093,7 @@ mem_free_and_error:
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
 
-	*engine= innobase_engine;
+	registry.registerPlugin(innodb_engine_ptr);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -2110,13 +2107,12 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(void *p)
+innobase_deinit(void *)
 /*==============*/
 				/* out: TRUE if error */
 {
 	int	err= 0;
-	InnobaseEngine *innobase_engine= static_cast<InnobaseEngine *>(p);
- 	delete innobase_engine;
+ 	delete innodb_engine_ptr;
 
 	if (innodb_inited) {
 

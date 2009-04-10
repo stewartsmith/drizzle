@@ -22,7 +22,6 @@
 
 #include <drizzled/plugin/logging_handler.h>
 
-int logging_initializer(st_plugin_int *plugin);
 int logging_finalizer(st_plugin_int *plugin);
 
 /* there are no parameters other than the session because logging can

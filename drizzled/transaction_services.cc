@@ -60,44 +60,6 @@ void add_replicator(drizzled::plugin::Replicator *repl)
   transaction_services.attachReplicator(repl);
 }
 
-/**
- * @TODO
- *
- * We're going to start simple at first, meaning that the 
- * below are the global vectors of replicators and appliers. The
- * end goal is to have the TransactionServices have a register method
- * which allows modules to register Replicator or Applier *factories*, 
- * which will allow TransactionServices to attach and detach a replicator/applier
- * to a Session, instead of the current global vector.
- */
-int replicator_initializer(st_plugin_int *plugin)
-{
-  drizzled::plugin::Replicator *repl= NULL;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&repl))
-    {
-      /* TRANSLATORS: The leading word "replicator" is the name
-        of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("replicator plugin '%s' init() failed"),
-                    plugin->name.str);
-      return 1;
-    }
-  }
-
-  if (repl == NULL)
-    return 1;
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  registry.registerPlugin(repl);
-
-  plugin->data= repl;
-
-  return 0;
-}
-
 int replicator_finalizer(st_plugin_int *plugin)
 {
   drizzled::plugin::Replicator *repl= static_cast<drizzled::plugin::Replicator *>(plugin->data);

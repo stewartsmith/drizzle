@@ -48,32 +48,6 @@ bool add_protocol_factory(ProtocolFactory *factory)
   return false;
 }
 
-int protocol_initializer(st_plugin_int *plugin)
-{
-
-  ProtocolFactory *factory= NULL;
-
-  assert(plugin->plugin->init); /* Find poorly designed plugins */
-
-  if (plugin->plugin->init((void *)&factory))
-  {
-    /* 
-      TRANSLATORS> The leading word "protocol" is the name
-      of the plugin api, and so should not be translated. 
-    */
-    errmsg_printf(ERRMSG_LVL_ERROR, _("protocol plugin '%s' init() failed"),
-	                plugin->name.str);
-      return 1;
-  }
-
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
-  if (factory != NULL)
-    registry.registerPlugin(factory);
-  
-  plugin->data= factory;
-
-  return 0;
-}
 
 int protocol_finalizer(st_plugin_int *plugin)
 {
