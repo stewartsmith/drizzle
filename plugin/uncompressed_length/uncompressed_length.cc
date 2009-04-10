@@ -65,7 +65,6 @@ static int uncompressed_lengthudf_plugin_init(PluginRegistry &registry)
 
 drizzle_declare_plugin(uncompressed_length)
 {
-  DRIZZLE_UDF_PLUGIN,
   "uncompressed_length",
   "1.0",
   "Stewart Smith",

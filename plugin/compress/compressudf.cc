@@ -110,7 +110,6 @@ static int compressudf_plugin_init(PluginRegistry &registry)
 
 drizzle_declare_plugin(compress)
 {
-  DRIZZLE_UDF_PLUGIN,
   "compress",
   "1.0",
   "Stewart Smith",

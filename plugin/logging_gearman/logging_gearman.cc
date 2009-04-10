@@ -317,7 +317,6 @@ static struct st_mysql_sys_var* logging_gearman_system_variables[]= {
 
 drizzle_declare_plugin(logging_gearman)
 {
-  DRIZZLE_LOGGER_PLUGIN,
     "logging_gearman",
     "0.1",
     "Mark Atwood <mark@fallenpegasus.com>",

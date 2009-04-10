@@ -130,7 +130,6 @@ static int finalize(PluginRegistry &registry)
 
 drizzle_declare_plugin(auth_pam)
 {
-  DRIZZLE_AUTH_PLUGIN,
   "pam",
   "0.1",
   "Brian Aker",

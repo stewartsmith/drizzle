@@ -96,7 +96,6 @@ static int uncompressudf_plugin_init(PluginRegistry &registry)
 
 drizzle_declare_plugin(uncompress)
 {
-  DRIZZLE_UDF_PLUGIN,
   "uncompress",
   "1.0",
   "Stewart Smith",

@@ -946,7 +946,6 @@ static int deinit(PluginRegistry &registry)
 
 drizzle_declare_plugin(oldlibdrizzle)
 {
-  DRIZZLE_PROTOCOL_PLUGIN,
   "oldlibdrizzle",
   "0.1",
   "Eric Day",

@@ -30,28 +30,6 @@ class Item;
   Plugin API. Common for all plugin types.
 */
 
-/*
-  The allowable types of plugins
-*/
-enum drizzle_plugin_type {
-  DRIZZLE_DAEMON_PLUGIN,                /* Daemon / Raw */
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,        /* Storage Engine */
-  DRIZZLE_INFORMATION_SCHEMA_PLUGIN,    /* Information Schema */
-  DRIZZLE_UDF_PLUGIN,                   /* User-Defined Function */
-  DRIZZLE_UDA_PLUGIN,                   /* User-Defined Aggregate Function */
-  DRIZZLE_AUDIT_PLUGIN,                 /* Audit */
-  DRIZZLE_LOGGER_PLUGIN,                /* Query Logging */
-  DRIZZLE_ERRMSG_PLUGIN,                /* Error Messages */
-  DRIZZLE_AUTH_PLUGIN,                  /* Authorization */
-  DRIZZLE_QCACHE_PLUGIN,                /* Query Cache */
-  DRIZZLE_SCHEDULING_PLUGIN,            /* Thread and Session Scheduling */
-  DRIZZLE_REPLICATOR_PLUGIN,            /* Database Replication */
-  DRIZZLE_PROTOCOL_PLUGIN,              /* Protocol Handlers */
-  DRIZZLE_PLUGIN_MAX=DRIZZLE_PROTOCOL_PLUGIN
-};
-
-/* The number of plugin types */
-const uint32_t DRIZZLE_MAX_PLUGIN_TYPE_NUM=DRIZZLE_PLUGIN_MAX+1;
 
 /* We use the following strings to define licenses for plugins */
 enum plugin_license_type {
@@ -86,7 +64,7 @@ struct st_mysql_plugin _mysql_plugin_declarations_[]= {
 __DRIZZLE_DECLARE_PLUGIN(NAME, \
                  builtin_ ## NAME ## _plugin)
 
-#define drizzle_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0,0}}
+#define drizzle_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0}}
 
 /*
   declarations for SHOW STATUS support in plugins

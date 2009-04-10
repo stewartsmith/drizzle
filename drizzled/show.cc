@@ -170,55 +170,51 @@ static bool show_plugins(Session *session, st_plugin_int *plugin, void *arg)
   else
     table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
 
-  table->field[3]->store(plugin_type_names[plug->type].str,
-                         plugin_type_names[plug->type].length,
-                         cs);
-
   if (plugin_dl)
   {
-    table->field[4]->store(plugin_dl->dl.str, plugin_dl->dl.length, cs);
-    table->field[4]->set_notnull();
+    table->field[3]->store(plugin_dl->dl.str, plugin_dl->dl.length, cs);
+    table->field[3]->set_notnull();
   }
   else
   {
-    table->field[4]->set_null();
+    table->field[3]->set_null();
   }
 
   if (plug->author)
   {
-    table->field[5]->store(plug->author, strlen(plug->author), cs);
+    table->field[4]->store(plug->author, strlen(plug->author), cs);
+    table->field[4]->set_notnull();
+  }
+  else
+    table->field[4]->set_null();
+
+  if (plug->descr)
+  {
+    table->field[5]->store(plug->descr, strlen(plug->descr), cs);
     table->field[5]->set_notnull();
   }
   else
     table->field[5]->set_null();
 
-  if (plug->descr)
-  {
-    table->field[6]->store(plug->descr, strlen(plug->descr), cs);
-    table->field[6]->set_notnull();
-  }
-  else
-    table->field[6]->set_null();
-
   switch (plug->license) {
   case PLUGIN_LICENSE_GPL:
-    table->field[7]->store(PLUGIN_LICENSE_GPL_STRING,
+    table->field[6]->store(PLUGIN_LICENSE_GPL_STRING,
                            strlen(PLUGIN_LICENSE_GPL_STRING), cs);
     break;
   case PLUGIN_LICENSE_BSD:
-    table->field[7]->store(PLUGIN_LICENSE_BSD_STRING,
+    table->field[6]->store(PLUGIN_LICENSE_BSD_STRING,
                            strlen(PLUGIN_LICENSE_BSD_STRING), cs);
     break;
   case PLUGIN_LICENSE_LGPL:
-    table->field[7]->store(PLUGIN_LICENSE_LGPL_STRING,
+    table->field[6]->store(PLUGIN_LICENSE_LGPL_STRING,
                            strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
     break;
   default:
-    table->field[7]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
+    table->field[6]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
                            strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
     break;
   }
-  table->field[7]->set_notnull();
+  table->field[6]->set_notnull();
 
   return schema_table_store_record(session, table);
 }
@@ -4404,7 +4400,6 @@ ST_FIELD_INFO plugin_fields_info[]=
    SKIP_OPEN_TABLE},
   {"PLUGIN_VERSION", 20, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE},
   {"PLUGIN_STATUS", 10, DRIZZLE_TYPE_VARCHAR, 0, 0, "Status", SKIP_OPEN_TABLE},
-  {"PLUGIN_TYPE", 80, DRIZZLE_TYPE_VARCHAR, 0, 0, "Type", SKIP_OPEN_TABLE},
   {"PLUGIN_LIBRARY", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "Library",
    SKIP_OPEN_TABLE},
   {"PLUGIN_AUTHOR", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE},

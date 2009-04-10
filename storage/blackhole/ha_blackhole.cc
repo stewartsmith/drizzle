@@ -304,7 +304,6 @@ static int blackhole_fini(PluginRegistry &registry)
 
 drizzle_declare_plugin(blackhole)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "BLACKHOLE",
   "1.0",
   "MySQL AB",

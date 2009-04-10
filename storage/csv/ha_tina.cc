@@ -1538,7 +1538,6 @@ bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
 
 drizzle_declare_plugin(csv)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "CSV",
   "1.0",
   "Brian Aker, MySQL AB",

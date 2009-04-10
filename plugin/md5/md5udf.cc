@@ -83,7 +83,6 @@ static int md5udf_plugin_init(PluginRegistry &registry)
 
 drizzle_declare_plugin(md5)
 {
-  DRIZZLE_UDF_PLUGIN,
   "md5",
   "1.0",
   "Stewart Smith",

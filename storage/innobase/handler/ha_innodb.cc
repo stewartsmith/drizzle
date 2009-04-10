@@ -9513,9 +9513,6 @@ innodb_plugin_init(void)
 /*====================*/
 		/* out: TRUE if the dynamic InnoDB plugin should start */
 {
-# if !DRIZZLE_STORAGE_ENGINE_PLUGIN
-#  error "DRIZZLE_STORAGE_ENGINE_PLUGIN must be nonzero."
-# endif
 
 	/* Copy the system variables. */
 
@@ -9531,14 +9528,6 @@ innodb_plugin_init(void)
 
 	builtin = builtin_innobase_plugin_ptr;
 #else
-	switch (builtin_innobase_plugin) {
-	case 0:
-		return(true);
-	case DRIZZLE_STORAGE_ENGINE_PLUGIN:
-		break;
-	default:
-		return(false);
-	}
 
 	builtin = (struct st_mysql_plugin*) &builtin_innobase_plugin;
 #endif
@@ -9622,7 +9611,6 @@ innodb_plugin_init(void)
 
 drizzle_declare_plugin(innobase)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   innobase_engine_name,
   "1.0.1",
   "Innobase Oy",

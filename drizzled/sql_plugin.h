@@ -104,7 +104,6 @@ typedef int (*plugin_type_init)(PluginRegistry &);
 
 struct st_mysql_plugin
 {
-  uint32_t type;             /* plugin type (a DRIZZLE_XXX_PLUGIN value)     */
   const char *name;          /* plugin name (for SHOW PLUGINS)               */
   const char *version;       /* plugin version (for SHOW PLUGINS)            */
   const char *author;        /* plugin author (for SHOW PLUGINS)             */
@@ -120,7 +119,6 @@ struct st_mysql_plugin
 extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];
-extern const LEX_STRING plugin_type_names[];
 
 extern int plugin_init(int *argc, char **argv, int init_flags);
 extern void plugin_shutdown(void);

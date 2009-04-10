@@ -49,27 +49,6 @@ extern struct st_mysql_plugin *mysqld_builtins[];
 char *opt_plugin_load= NULL;
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
-/*
-  When you ad a new plugin type, add both a string and make sure that the
-  init and deinit array are correctly updated.
-*/
-const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
-{
-  { C_STRING_WITH_LEN("DAEMON") },
-  { C_STRING_WITH_LEN("STORAGE ENGINE") },
-  { C_STRING_WITH_LEN("INFORMATION SCHEMA") },
-  { C_STRING_WITH_LEN("UDF") },
-  { C_STRING_WITH_LEN("UDA") },
-  { C_STRING_WITH_LEN("AUDIT") },
-  { C_STRING_WITH_LEN("LOGGER") },
-  { C_STRING_WITH_LEN("ERRMSG") },
-  { C_STRING_WITH_LEN("AUTH") },
-  { C_STRING_WITH_LEN("QCACHE") },
-  { C_STRING_WITH_LEN("SCHEDULING") },
-  { C_STRING_WITH_LEN("REPLICATOR") },
-  { C_STRING_WITH_LEN("PROTOCOL") }
-};
-
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
 
 /* Note that 'int version' must be the first field of every plugin
@@ -453,8 +432,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   for (plugin= tmp.plugin_dl->plugins; plugin->name; plugin++)
   {
     uint32_t name_len= strlen(plugin->name);
-    if (plugin->type < DRIZZLE_MAX_PLUGIN_TYPE_NUM &&
-        ! my_strnncoll(system_charset_info,
+    if (! my_strnncoll(system_charset_info,
                        (const unsigned char *)name->str, name->length,
                        (const unsigned char *)plugin->name,
                        name_len))

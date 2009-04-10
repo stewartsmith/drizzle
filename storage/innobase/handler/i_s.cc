@@ -405,10 +405,6 @@ innodb_trx_init(
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_trx =
 {
-	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
-	/* int */
-	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
-
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_TRX"),
@@ -674,10 +670,6 @@ innodb_locks_init(
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_locks =
 {
-	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
-	/* int */
-	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
-
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_LOCKS"),
@@ -853,10 +845,6 @@ innodb_lock_waits_init(
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_lock_waits =
 {
-	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
-	/* int */
-	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
-
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_LOCK_WAITS"),
@@ -1176,10 +1164,6 @@ i_s_cmp_reset_init(
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp =
 {
-	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
-	/* int */
-	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
-
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_CMP"),
@@ -1221,10 +1205,6 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp =
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp_reset =
 {
-	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
-	/* int */
-	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
-
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_CMP_RESET"),
@@ -1433,10 +1413,6 @@ i_s_cmpmem_reset_init(
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem =
 {
-	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
-	/* int */
-	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
-
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_CMPMEM"),
@@ -1478,10 +1454,6 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem =
 
 UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem_reset =
 {
-	/* the plugin type (a DRIZZLE_XXX_PLUGIN value) */
-	/* int */
-	STRUCT_FLD(type, DRIZZLE_INFORMATION_SCHEMA_PLUGIN),
-
 	/* plugin name */
 	/* const char* */
 	STRUCT_FLD(name, "INNODB_CMPMEM_RESET"),

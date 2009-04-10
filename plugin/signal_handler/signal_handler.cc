@@ -261,7 +261,6 @@ static struct st_mysql_sys_var* system_variables[]= {
 
 drizzle_declare_plugin(signal_handler)
 {
-  DRIZZLE_DAEMON_PLUGIN,
   "signal_handler",
   "0.1",
   "Brian Aker",

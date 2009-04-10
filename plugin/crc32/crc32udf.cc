@@ -60,7 +60,6 @@ static int crc32udf_plugin_init(PluginRegistry &registry)
 
 drizzle_declare_plugin(crc32)
 {
-  DRIZZLE_UDF_PLUGIN,
   "crc32",
   "1.0",
   "Stewart Smith",

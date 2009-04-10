@@ -375,7 +375,6 @@ static struct st_mysql_sys_var* logging_query_system_variables[]= {
 
 drizzle_declare_plugin(logging_query)
 {
-  DRIZZLE_LOGGER_PLUGIN,
   "logging_query",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",

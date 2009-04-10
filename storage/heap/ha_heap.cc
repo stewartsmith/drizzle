@@ -851,7 +851,6 @@ bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info_in,
 
 drizzle_declare_plugin(heap)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MEMORY",
   "1.0",
   "MySQL AB",

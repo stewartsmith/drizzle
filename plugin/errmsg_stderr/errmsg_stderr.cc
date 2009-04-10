@@ -72,7 +72,6 @@ static int errmsg_stderr_plugin_deinit(PluginRegistry &registry)
 
 drizzle_declare_plugin(errmsg_stderr)
 {
-  DRIZZLE_ERRMSG_PLUGIN,
   "errmsg_stderr",
   "0.1",
   "Mark Atwood <mark@fallenpegasus.com>",

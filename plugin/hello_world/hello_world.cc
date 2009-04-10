@@ -58,7 +58,6 @@ static int hello_world_plugin_deinit(PluginRegistry &)
 
 drizzle_declare_plugin(hello_world)
 {
-  DRIZZLE_UDF_PLUGIN,
   "hello_world",
   "1.0",
   "Mark Atwood",

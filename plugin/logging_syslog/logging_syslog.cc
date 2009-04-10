@@ -290,7 +290,6 @@ static struct st_mysql_sys_var* logging_syslog_system_variables[]= {
 
 drizzle_declare_plugin(logging_syslog)
 {
-  DRIZZLE_LOGGER_PLUGIN,
   "logging_syslog",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",

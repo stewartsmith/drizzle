@@ -140,7 +140,6 @@ static struct st_mysql_sys_var* system_variables[]= {
 
 drizzle_declare_plugin(multi_thread)
 {
-  DRIZZLE_SCHEDULING_PLUGIN,
   "multi_thread",
   "0.1",
   "Brian Aker",

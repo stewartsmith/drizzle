@@ -14,15 +14,15 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include <drizzled/server_includes.h>
-#include <drizzled/field.h>
-#include <drizzled/field/blob.h>
-#include <drizzled/field/timestamp.h>
-#include <storage/myisam/myisam.h>
-#include <drizzled/table.h>
-#include <drizzled/session.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/field.h"
+#include "drizzled/field/blob.h"
+#include "drizzled/field/timestamp.h"
+#include "storage/myisam/myisam.h"
+#include "drizzled/table.h"
+#include "drizzled/session.h"
 
-#include <storage/archive/ha_archive.h>
+#include "storage/archive/ha_archive.h"
 
 #include <stdio.h>
 #include <string>
@@ -1420,7 +1420,6 @@ static struct st_mysql_sys_var* archive_system_variables[]= {
 
 drizzle_declare_plugin(archive)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "ARCHIVE",
   "3.5",
   "Brian Aker, MySQL AB",
