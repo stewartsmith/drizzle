@@ -49,10 +49,16 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
+#include "drizzled/plugin_registry.h"
 
 #include <vector>
 
 drizzled::TransactionServices transaction_services;
+
+void add_replicator(drizzled::plugin::Replicator *repl)
+{
+  transaction_services.attachReplicator(repl);
+}
 
 /**
  * @TODO
@@ -84,7 +90,9 @@ int replicator_initializer(st_plugin_int *plugin)
   if (repl == NULL)
     return 1;
 
-  transaction_services.attachReplicator(repl);
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  registry.registerPlugin(repl);
+
   plugin->data= repl;
 
   return 0;

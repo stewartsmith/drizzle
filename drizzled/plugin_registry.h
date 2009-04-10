@@ -35,6 +35,13 @@ class Authentication;
 class QueryCache;
 class SchedulerFactory;
 class ProtocolFactory;
+namespace drizzled
+{
+namespace plugin
+{
+class Replicator;
+}
+}
 
 class Plugin_registry
 {
@@ -63,6 +70,7 @@ public:
   void registerPlugin(QueryCache *qcache);
   void registerPlugin(SchedulerFactory *scheduler);
   void registerPlugin(ProtocolFactory *protocol);
+  void registerPlugin(drizzled::plugin::Replicator *repl);
 
 };
 

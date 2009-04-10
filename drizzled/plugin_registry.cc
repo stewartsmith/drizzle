@@ -30,6 +30,7 @@
 #include "drizzled/logging.h"
 #include "drizzled/sql_udf.h"
 #include "drizzled/protocol.h"
+#include "drizzled/transaction_services.h"
 
 #include <string>
 #include <vector>
@@ -141,4 +142,9 @@ void Plugin_registry::registerPlugin(SchedulerFactory *factory)
 void Plugin_registry::registerPlugin(ProtocolFactory *factory)
 {
   add_protocol_factory(factory);
+}
+
+void Plugin_registry::registerPlugin(drizzled::plugin::Replicator *repl)
+{
+  add_replicator(repl);
 }

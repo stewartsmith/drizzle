@@ -42,6 +42,8 @@ namespace drizzled
   }
 }
 
+void add_replicator(drizzled::plugin::Replicator *repl);
+
 /**
  * This is a class which manages transforming internal 
  * transactional events into GPB messages and sending those
