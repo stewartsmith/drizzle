@@ -560,10 +560,8 @@ static void fix_trans_mem_root(Session *session, enum_var_type type)
 }
 
 
-static void fix_server_id(Session *session, enum_var_type)
+static void fix_server_id(Session *, enum_var_type)
 {
-  server_id_supplied = 1;
-  session->server_id= server_id;
 }
 
 

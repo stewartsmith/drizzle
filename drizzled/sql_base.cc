@@ -136,7 +136,7 @@ uint32_t create_table_def_key(Session *session, char *key, TableList *table_list
 
   if (tmp_table)
   {
-    int4store(key + key_length, session->server_id);
+    int4store(key + key_length, session->getServerId());
     int4store(key + key_length + 4, session->variables.pseudo_thread_id);
     key_length+= TMP_TABLE_KEY_EXTRA;
   }
