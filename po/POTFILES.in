@@ -12,12 +12,10 @@ drizzled/errmsg.cc
 drizzled/error.cc
 drizzled/gettext.h
 drizzled/handler.cc
-drizzled/log.cc
 drizzled/logging.cc
 drizzled/plugin/storage_engine.cc
 drizzled/protocol.cc
 drizzled/qcache.cc
-drizzled/replicator.cc
 drizzled/scheduling.cc
 drizzled/set_var.cc
 drizzled/show.cc
@@ -27,6 +25,7 @@ drizzled/sql_select.cc
 drizzled/sql_table.cc
 drizzled/sql_udf.cc
 drizzled/table.cc
+drizzled/transaction_services.cc
 drizzled/tztime.cc
 gnulib/getopt.c
 mysys/errors.cc
@@ -42,7 +41,6 @@ plugin/oldlibdrizzle/drizzle.cc
 plugin/oldlibdrizzle/errmsg.cc
 plugin/pool_of_threads/pool_of_threads.cc
 plugin/pool_of_threads/session_scheduler.cc
-plugin/protobuf_replicator/protobuf_replicator.cc
 plugin/signal_handler/signal_handler.cc
 plugin/single_thread/single_thread.cc
 storage/myisam/ha_myisam.cc

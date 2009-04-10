@@ -42,10 +42,11 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/replicator.h>
+#include <drizzled/transaction_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 
+extern drizzled::TransactionServices transaction_services;
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -2977,7 +2978,7 @@ retry:
         end= query;
         end+= sprintf(query, "DELETE FROM `%s`.`%s`", share->db.str,
                       share->table_name.str);
-        (void)replicator_statement(session, query, (size_t)(end - query));
+        transaction_services.rawStatement(session, query, (size_t)(end - query)); 
         free(query);
       }
       else

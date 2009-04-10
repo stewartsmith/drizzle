@@ -141,6 +141,9 @@ void TransactionServices::startTransaction(Session *in_session)
 {
   using namespace drizzled::message;
   
+  if (replicators.size() == 0 || appliers.size() == 0)
+    return;
+  
   Command command;
   command.set_type(Command::START_TRANSACTION);
   command.set_timestamp(in_session->getCurrentTimestamp());
@@ -153,6 +156,9 @@ void TransactionServices::startTransaction(Session *in_session)
 void TransactionServices::commitTransaction(Session *in_session)
 {
   using namespace drizzled::message;
+  
+  if (replicators.size() == 0 || appliers.size() == 0)
+    return;
   
   Command command;
   command.set_type(Command::COMMIT);
@@ -167,6 +173,9 @@ void TransactionServices::rollbackTransaction(Session *in_session)
 {
   using namespace drizzled::message;
   
+  if (replicators.size() == 0 || appliers.size() == 0)
+    return;
+  
   Command command;
   command.set_type(Command::ROLLBACK);
   command.set_timestamp(in_session->getCurrentTimestamp());
@@ -180,6 +189,9 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
 {
   using namespace drizzled::message;
   
+  if (replicators.size() == 0 || appliers.size() == 0)
+    return;
+
   Command command;
   command.set_type(Command::INSERT);
   command.set_timestamp(in_session->getCurrentTimestamp());
@@ -214,6 +226,9 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
     change_record->add_insert_value(std::string(string_value->c_ptr()));
     string_value->free(); /* I wish there was a clear() method... */
   }
+
+  if (string_value)
+    delete string_value; /* Is this needed with memroot allocation? */
   
   push(&command);
 }
@@ -221,6 +236,9 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
 void TransactionServices::updateRecord(Session *in_session, Table *in_table, const unsigned char *, const unsigned char *)
 {
   using namespace drizzled::message;
+  
+  if (replicators.size() == 0 || appliers.size() == 0)
+    return;
   
   Command command;
   command.set_type(Command::UPDATE);
@@ -247,6 +265,9 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
 {
   using namespace drizzled::message;
   
+  if (replicators.size() == 0 || appliers.size() == 0)
+    return;
+  
   Command command;
   command.set_type(Command::DELETE);
   command.set_timestamp(in_session->getCurrentTimestamp());
@@ -271,6 +292,9 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
 void TransactionServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
 {
   using namespace drizzled::message;
+  
+  if (replicators.size() == 0 || appliers.size() == 0)
+    return;
   
   Command command;
   command.set_type(Command::RAW_SQL);

@@ -33,7 +33,9 @@ using namespace std;
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/replicator.h>
+#include <drizzled/transaction_services.h>
+
+extern drizzled::TransactionServices transaction_services;
 
 #define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
@@ -105,15 +107,6 @@ void lock_db_delete(const char *name, uint32_t length)
   if ((opt= (my_dblock_t *)hash_search(&lock_db_cache,
                                        (const unsigned char*) name, length)))
     hash_delete(&lock_db_cache, (unsigned char*) opt);
-}
-
-/*
-  Helper function to write a query to binlog used by mysql_rm_db()
-*/
-
-static inline void write_to_binlog(Session *session, char *query, uint32_t query_length, char *, uint32_t)
-{
-  (void)replicator_statement(session, query, query_length);
 }
 
 /*
@@ -380,7 +373,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       query_length= session->query_length;
     }
 
-    (void)replicator_statement(session, query, query_length);
+    transaction_services.rawStatement(session, query, query_length);
     session->my_ok(result);
   }
 
@@ -438,7 +431,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
     session->variables.collation_database= session->db_charset;
   }
 
-  (void)replicator_statement(session, session->query, session->query_length);
+  transaction_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
   session->my_ok(result);
 
   pthread_mutex_unlock(&LOCK_create_db);
@@ -548,7 +541,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
       query= session->query;
       query_length= session->query_length;
     }
-    (void)replicator_statement(session, session->query, session->query_length);
+    transaction_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
@@ -575,7 +568,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
-        write_to_binlog(session, query, query_pos -1 - query, db, db_len);
+        transaction_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
         query_pos= query_data_start;
       }
 
@@ -588,7 +581,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
     if (query_pos != query_data_start)
     {
       /* These DDL methods and logging protected with LOCK_create_db */
-      write_to_binlog(session, query, query_pos -1 - query, db, db_len);
+      transaction_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
     }
   }
 
