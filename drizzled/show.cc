@@ -228,7 +228,7 @@ int fill_plugins(Session *session, TableList *tables, COND *)
 {
   Table *table= tables->table;
 
-  if (plugin_foreach(session, show_plugins, DRIZZLE_ANY_PLUGIN, table, ~2))
+  if (plugin_foreach(session, show_plugins, table, ~2))
     return(1);
 
   return(0);

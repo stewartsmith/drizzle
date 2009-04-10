@@ -171,7 +171,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
 static int test_plugin_options(MEM_ROOT *, struct st_plugin_int *,
                                int *, char **);
-static bool register_builtin(struct st_mysql_plugin *, struct st_plugin_int *,
+static bool register_builtin(struct st_plugin_int *,
                              struct st_plugin_int **);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
@@ -437,7 +437,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   if (! initialized)
     return(0);
 
-  if (registry.find(name, DRIZZLE_ANY_PLUGIN))
+  if (registry.find(name))
   {
     if (report & REPORT_TO_USER)
       my_error(ER_UDF_EXISTS, MYF(0), name->str);
@@ -469,7 +469,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       {
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
-          registry.add(plugin, tmp_plugin_ptr);
+          registry.add(tmp_plugin_ptr);
           init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
           return(false);
         }
@@ -636,7 +636,7 @@ int plugin_init(int *argc, char **argv, int flags)
       if (test_plugin_options(&tmp_root, &tmp, argc, argv))
         continue;
 
-      if (register_builtin(plugin, &tmp, &plugin_ptr))
+      if (register_builtin(&tmp, &plugin_ptr))
         goto err_unlock;
 
       if (plugin_initialize(plugin_ptr))
@@ -682,8 +682,7 @@ err:
 }
 
 
-static bool register_builtin(struct st_mysql_plugin *plugin,
-                             struct st_plugin_int *tmp,
+static bool register_builtin(struct st_plugin_int *tmp,
                              struct st_plugin_int **ptr)
 {
 
@@ -700,7 +699,7 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
         (struct st_plugin_int *) memdup_root(&plugin_mem_root, (unsigned char*)tmp,
                                              sizeof(struct st_plugin_int));
 
-  registry.add(plugin, *ptr);
+  registry.add(*ptr);
 
   return(0);
 }
@@ -831,32 +830,15 @@ void plugin_shutdown(void)
  *
  * all: List all plugins
  */
-bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void *arg, bool all)
+bool plugin_foreach(Session *session, plugin_foreach_func *func, void *arg, bool all)
 {
-  uint32_t idx;
   struct st_plugin_int *plugin;
-  vector<st_plugin_int *> plugins;
 
   if (!initialized)
     return(false);
-
-  if (type == DRIZZLE_ANY_PLUGIN)
-  {
-    plugins.reserve(plugin_array.elements);
-    for (idx= 0; idx < plugin_array.elements; idx++)
-    {
-      plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-      if (all)
-        plugins.push_back(plugin);
-      else if (plugin->isInited)
-        plugins.push_back(plugin);
-    }
-  }
-  else
-  {
-    PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-    registry.get_list(type, plugins, all);
-  }
+ 
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
+  vector<st_plugin_int *> plugins= registry.get_list(all);
 
   vector<st_plugin_int *>::iterator plugin_iter;
   for (plugin_iter= plugins.begin();

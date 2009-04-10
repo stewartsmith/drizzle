@@ -64,8 +64,6 @@ class Session;
 typedef enum enum_mysql_show_type SHOW_TYPE;
 typedef struct st_mysql_show_var SHOW_VAR;
 
-#define DRIZZLE_ANY_PLUGIN         -1
-
 /* A handle for the dynamic library containing a plugin or plugins. */
 struct st_mysql_plugin;
 
@@ -137,6 +135,6 @@ extern void plugin_sessionvar_cleanup(Session *session);
 
 typedef bool (plugin_foreach_func)(Session *session, st_plugin_int *plugin, void *arg);
 bool plugin_foreach(Session *session, plugin_foreach_func *func,
-                    int type, void *arg, bool all= false);
+                    void *arg, bool all= false);
 
 #endif /* DRIZZLE_SERVER_PLUGIN_H */

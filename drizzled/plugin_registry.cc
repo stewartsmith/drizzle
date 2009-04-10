@@ -44,51 +44,38 @@ PluginRegistry& PluginRegistry::getPluginRegistry()
   return the_registry;
 }
 
-st_plugin_int *PluginRegistry::find(const LEX_STRING *name, int type)
+st_plugin_int *PluginRegistry::find(const LEX_STRING *name)
 {
-  uint32_t i;
   string find_str(name->str,name->length);
   transform(find_str.begin(), find_str.end(), find_str.begin(), ::tolower);
 
   map<string, st_plugin_int *>::iterator map_iter;
-  if (type == DRIZZLE_ANY_PLUGIN)
-  {
-    for (i= 0; i < DRIZZLE_MAX_PLUGIN_TYPE_NUM; i++)
-    {
-      map_iter= plugin_map[i].find(find_str);
-      if (map_iter != plugin_map[i].end())
-        return (*map_iter).second;
-    }
-  }
-  else
-  {
-    map_iter= plugin_map[type].find(find_str);
-    if (map_iter != plugin_map[type].end())
-      return (*map_iter).second;
-  }
+  map_iter= plugin_map.find(find_str);
+  if (map_iter != plugin_map.end())
+    return (*map_iter).second;
   return(0);
 }
 
-void PluginRegistry::add(st_mysql_plugin *handle, st_plugin_int *plugin)
+void PluginRegistry::add(st_plugin_int *plugin)
 {
   string add_str(plugin->name.str);
   transform(add_str.begin(), add_str.end(),
             add_str.begin(), ::tolower);
 
-  plugin_map[handle->type][add_str]= plugin;
+  plugin_map[add_str]= plugin;
 }
 
 
-void PluginRegistry::get_list(uint32_t type,
-                                    vector<st_plugin_int *> &plugins,
-                                    bool active)
+vector<st_plugin_int *> PluginRegistry::get_list(bool active)
 {
   st_plugin_int *plugin= NULL;
-  plugins.reserve(plugin_map[type].size());
-  map<string, st_plugin_int *>::iterator map_iter;
 
-  for (map_iter= plugin_map[type].begin();
-       map_iter != plugin_map[type].end();
+  vector <st_plugin_int *> plugins;
+  plugins.reserve(plugin_map.size());
+
+  map<string, st_plugin_int *>::iterator map_iter;
+  for (map_iter= plugin_map.begin();
+       map_iter != plugin_map.end();
        map_iter++)
   {
     plugin= (*map_iter).second;
@@ -97,6 +84,8 @@ void PluginRegistry::get_list(uint32_t type,
     else if (plugin->isInited)
       plugins.push_back(plugin);
   }
+
+  return plugins;
 }
 
 void PluginRegistry::add(StorageEngine *engine)

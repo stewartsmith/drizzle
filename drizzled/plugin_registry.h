@@ -47,18 +47,18 @@ class PluginRegistry
 {
 private:
   std::map<std::string, st_plugin_int *>
-    plugin_map[DRIZZLE_MAX_PLUGIN_TYPE_NUM];
+    plugin_map;
 
   PluginRegistry(const PluginRegistry&);
 public:
   PluginRegistry() {}
 
 
-  st_plugin_int *find(const LEX_STRING *name, int type);
+  st_plugin_int *find(const LEX_STRING *name);
 
-  void add(st_mysql_plugin *handle, st_plugin_int *plugin);
+  void add(st_plugin_int *plugin);
 
-  void get_list(uint32_t type, std::vector<st_plugin_int *> &plugins, bool active);
+  std::vector<st_plugin_int *> get_list(bool active);
   static PluginRegistry& getPluginRegistry();
 
   void add(StorageEngine *engine);
