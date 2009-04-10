@@ -39,29 +39,6 @@ void remove_logger(Logging_handler *handler)
 }
 
 
-int logging_finalizer(st_plugin_int *plugin)
-{
-  Logging_handler *p = static_cast<Logging_handler *>(plugin->data);
-
-  if (p != NULL)
-  {
-    remove_logger(p);
-
-    if (plugin->plugin->deinit)
-    {
-      if (plugin->plugin->deinit((void *)p))
-      {
-        /* TRANSLATORS: The leading word "logging" is the name
-           of the plugin api, and so should not be translated. */
-        errmsg_printf(ERRMSG_LVL_ERROR, _("logging plugin '%s' deinit() failed"),
-  		      plugin->name.str);
-      }
-    }
-  }
-
-  return 0;
-}
-
 class LoggingPreIterate : public unary_function<Logging_handler *, bool>
 {
   Session *session;

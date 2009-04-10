@@ -70,28 +70,6 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("PROTOCOL") }
 };
 
-extern int finalize_schema_table(st_plugin_int *plugin);
-
-extern int finalize_udf(st_plugin_int *plugin);
-
-
-plugin_type_deinit plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
-{
-  0,  /* Daemon */
-  storage_engine_finalizer,  /* Storage Engine */
-  finalize_schema_table,  /* Information Schema */
-  finalize_udf,  /* UDF */
-  0,  /* UDA */
-  0,  /* Audit */
-  logging_finalizer,  /* Logger */
-  errmsg_finalizer,  /* Logger */
-  authentication_finalizer,  /* Auth */
-  qcache_finalizer,
-  scheduling_finalizer,
-  replicator_finalizer,
-  protocol_finalizer
-};
-
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
 
 /* Note that 'int version' must be the first field of every plugin
@@ -433,7 +411,7 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 st_plugin_int *plugin_lock_by_name(const LEX_STRING *name, int type)
 {
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
   if (! initialized)
     return(0);
@@ -463,7 +441,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
                        const LEX_STRING *name, const LEX_STRING *dl,
                        int *argc, char **argv, int report)
 {
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
   struct st_plugin_int tmp;
   struct st_mysql_plugin *plugin;
@@ -526,6 +504,7 @@ err:
 
 static void plugin_del(struct st_plugin_int *plugin)
 {
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
   if (plugin->isInited)
   {
     if (plugin->plugin->status_vars)
@@ -533,16 +512,8 @@ static void plugin_del(struct st_plugin_int *plugin)
       remove_status_vars(plugin->plugin->status_vars);
     }
 
-    if (plugin_type_deinitialize[plugin->plugin->type])
-    {
-      if ((*plugin_type_deinitialize[plugin->plugin->type])(plugin))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' of type %s failed deinitialization"),
-                      plugin->name.str, plugin_type_names[plugin->plugin->type].str);
-      }
-    }
-    else if (plugin->plugin->deinit)
-      plugin->plugin->deinit(plugin);
+    if (plugin->plugin->deinit)
+      plugin->plugin->deinit(registry);
   }
 
   /* Free allocated strings before deleting the plugin. */
@@ -575,7 +546,7 @@ static bool plugin_initialize(struct st_plugin_int *plugin)
 {
   assert(plugin->isInited == false);
 
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
   if (plugin->plugin->init)
   {
     if (plugin->plugin->init(registry))
@@ -727,7 +698,7 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
                              struct st_plugin_int **ptr)
 {
 
-  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
   tmp->isInited= false;
   tmp->plugin_dl= 0;
@@ -894,7 +865,7 @@ bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void 
   }
   else
   {
-    Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+    PluginRegistry &registry= PluginRegistry::getPluginRegistry();
     registry.get_list(type, plugins, all);
   }
 

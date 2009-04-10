@@ -56,9 +56,9 @@ int64_t Item_func_uncompressed_length::val_int()
 Create_function<Item_func_uncompressed_length>
   uncompressed_lengthudf("uncompressed_length");
 
-static int uncompressed_lengthudf_plugin_init(Plugin_registry &registry)
+static int uncompressed_lengthudf_plugin_init(PluginRegistry &registry)
 {
-  registry.registerPlugin(&uncompressed_lengthudf);
+  registry.add(&uncompressed_lengthudf);
   return 0;
 }
 

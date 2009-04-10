@@ -259,7 +259,7 @@ public:
 
 static Logging_query *handler= NULL;
 
-static int logging_query_plugin_init(Plugin_registry &registry)
+static int logging_query_plugin_init(PluginRegistry &registry)
 {
 
   if (sysvar_logging_query_filename == NULL)
@@ -290,12 +290,12 @@ static int logging_query_plugin_init(Plugin_registry &registry)
   }
 
   handler= new Logging_query();
-  registry.registerPlugin(handler);
+  registry.add(handler);
 
   return 0;
 }
 
-static int logging_query_plugin_deinit(void *)
+static int logging_query_plugin_deinit(PluginRegistry &registry)
 {
 
   if (fd >= 0)
@@ -304,6 +304,7 @@ static int logging_query_plugin_deinit(void *)
     fd= -1;
   }
 
+  registry.remove(handler);
   delete handler;
 
   return 0;

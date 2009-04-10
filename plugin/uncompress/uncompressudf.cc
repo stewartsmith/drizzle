@@ -87,9 +87,9 @@ err:
 
 Create_function<Item_func_uncompress> uncompressudf("uncompress");
 
-static int uncompressudf_plugin_init(Plugin_registry &registry)
+static int uncompressudf_plugin_init(PluginRegistry &registry)
 {
-  registry.registerPlugin(&uncompressudf);
+  registry.add(&uncompressudf);
   return 0;
 }
 

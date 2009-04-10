@@ -41,7 +41,7 @@ namespace drizzled
 }
 
 void add_replicator(drizzled::plugin::Replicator *repl);
-int replicator_finalizer (st_plugin_int *plugin);
+void remove_replicator(drizzled::plugin::Replicator *repl);
 
 /**
  * This is a class which manages transforming internal 

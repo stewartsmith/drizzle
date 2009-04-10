@@ -119,11 +119,11 @@ public:
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(Plugin_registry &registry)
+static int tina_init_func(PluginRegistry &registry)
 {
 
   tina_engine= new Tina(engine_name);
-  registry.registerPlugin(tina_engine);
+  registry.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
@@ -131,8 +131,9 @@ static int tina_init_func(Plugin_registry &registry)
   return 0;
 }
 
-static int tina_done_func(void *)
+static int tina_done_func(PluginRegistry &registry)
 {
+  registry.remove(tina_engine);
   delete tina_engine;
 
   hash_free(&tina_open_tables);

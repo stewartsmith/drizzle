@@ -397,7 +397,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(void *p);
+innobase_deinit(PluginRegistry &registry);
 
 
 /*********************************************************************
@@ -1835,7 +1835,7 @@ int
 innobase_init(
 /*==========*/
 			/* out: 0 on success, error code on failure */
-	Plugin_registry &registry)	/* in: Drizzle Plugin Registry */
+	PluginRegistry &registry)	/* in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/* Set if using current lib */
 	int		err;
@@ -2093,7 +2093,7 @@ mem_free_and_error:
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
 
-	registry.registerPlugin(innodb_engine_ptr);
+	registry.add(innodb_engine_ptr);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -2107,11 +2107,12 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(void *)
+innobase_deinit(PluginRegistry &registry)
 /*==============*/
 				/* out: TRUE if error */
 {
 	int	err= 0;
+	registry.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
 	if (innodb_inited) {

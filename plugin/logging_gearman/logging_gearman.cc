@@ -236,7 +236,7 @@ public:
 
 static Logging_handler *handler= NULL;
 
-static int logging_gearman_plugin_init(Plugin_registry &registry)
+static int logging_gearman_plugin_init(PluginRegistry &registry)
 {
   gearman_return_t ret;
 
@@ -275,16 +275,17 @@ static int logging_gearman_plugin_init(Plugin_registry &registry)
   }
 
   handler= new LoggingGearman();
-  registry.registerPlugin(handler);
+  registry.add(handler);
 
   return 0;
 }
 
-static int logging_gearman_plugin_deinit(void *)
+static int logging_gearman_plugin_deinit(PluginRegistry &registry)
 {
 
   gearman_client_free(&gearman_client);
 
+  registry.remove(handler);
   delete(handler);
 
   return 0;

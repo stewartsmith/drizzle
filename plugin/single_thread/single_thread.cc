@@ -85,17 +85,20 @@ public:
 
 SingleThreadFactory *factory= NULL;
 
-static int init(Plugin_registry &registry)
+static int init(PluginRegistry &registry)
 {
   factory= new SingleThreadFactory();
-  registry.registerPlugin(factory);
+  registry.add(factory);
   return 0;
 }
 
-static int deinit(void *)
+static int deinit(PluginRegistry &registry)
 {
   if (factory)
+  {
+    registry.remove(factory);
     delete factory;
+  }
   return 0;
 }
 

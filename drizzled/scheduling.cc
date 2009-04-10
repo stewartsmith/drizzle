@@ -47,6 +47,13 @@ bool add_scheduler_factory(SchedulerFactory *factory)
   return false;
 }
 
+bool remove_scheduler_factory(SchedulerFactory *)
+{
+  scheduler_factory= NULL;
+  scheduler_inited= false;
+  return false;
+}
+
 Scheduler &get_thread_scheduler()
 {
   assert(scheduler_factory != NULL);
@@ -59,20 +66,3 @@ Scheduler &get_thread_scheduler()
   return *sched;
 }
 
-int scheduling_finalizer(st_plugin_int *plugin)
-{
-  /* We know which one we initialized since its data pointer is filled */
-  if (plugin->plugin->deinit && plugin->data)
-  {
-    if (plugin->plugin->deinit((void *)plugin->data))
-    {
-      /* TRANSLATORS: The leading word "scheduling" is the name
-         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("scheduling plugin '%s' deinit() failed"),
-                    plugin->name.str);
-    }
-  }
-
-  return 0;
-}

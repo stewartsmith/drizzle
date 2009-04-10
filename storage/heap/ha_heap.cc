@@ -50,16 +50,17 @@ public:
 };
 
 static HeapEngine *engine= NULL;
-int heap_init(Plugin_registry &registry)
+int heap_init(PluginRegistry &registry)
 {
   engine= new HeapEngine(engine_name);
-  registry.registerPlugin(engine);
+  registry.add(engine);
   pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
   return 0;
 }
 
-int heap_deinit(void *)
+int heap_deinit(PluginRegistry &registry)
 {
+  registry.remove(engine);
   delete engine;
 
   pthread_mutex_destroy(&THR_LOCK_heap);

@@ -39,33 +39,9 @@ void add_udf(Function_builder *udf)
   udf_registry.add(udf);
 }
 
-static void remove_udf(Function_builder *udf)
+void remove_udf(Function_builder *udf)
 {
   udf_registry.remove(udf);
 }
 
-
-int finalize_udf(st_plugin_int *plugin)
-{
-  Function_builder *udf = static_cast<Function_builder *>(plugin->data);
-
-  if (udf != NULL)
-  {
-    remove_udf(udf);
-  
-    if (plugin->plugin->deinit)
-    {
-      if (plugin->plugin->deinit((void *)udf))
-      {
-        /* TRANSLATORS: The leading word "udf" is the name
-           of the plugin api, and so should not be translated. */
-        errmsg_printf(ERRMSG_LVL_ERROR, _("udf plugin '%s' deinit() failed"),
-  		      plugin->name.str);
-      }
-    }
-
-  }
-
-  return 0;
-}
 

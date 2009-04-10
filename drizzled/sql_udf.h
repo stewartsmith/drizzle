@@ -33,5 +33,6 @@ Function_builder *find_udf(const char *name, uint32_t len=0);
 void free_udf(Function_builder *udf);
 int mysql_create_function(Session *session,Function_builder *udf);
 void add_udf(Function_builder *udf);
+void remove_udf(Function_builder *udf);
 
 #endif /* DRIZZLED_SQL_UDF_H */

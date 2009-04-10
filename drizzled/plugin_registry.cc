@@ -38,13 +38,13 @@
 
 using namespace std;
 
-static Plugin_registry the_registry;
-Plugin_registry& Plugin_registry::get_plugin_registry()
+static PluginRegistry the_registry;
+PluginRegistry& PluginRegistry::getPluginRegistry()
 {
   return the_registry;
 }
 
-st_plugin_int *Plugin_registry::find(const LEX_STRING *name, int type)
+st_plugin_int *PluginRegistry::find(const LEX_STRING *name, int type)
 {
   uint32_t i;
   string find_str(name->str,name->length);
@@ -69,7 +69,7 @@ st_plugin_int *Plugin_registry::find(const LEX_STRING *name, int type)
   return(0);
 }
 
-void Plugin_registry::add(st_mysql_plugin *handle, st_plugin_int *plugin)
+void PluginRegistry::add(st_mysql_plugin *handle, st_plugin_int *plugin)
 {
   string add_str(plugin->name.str);
   transform(add_str.begin(), add_str.end(),
@@ -79,7 +79,7 @@ void Plugin_registry::add(st_mysql_plugin *handle, st_plugin_int *plugin)
 }
 
 
-void Plugin_registry::get_list(uint32_t type,
+void PluginRegistry::get_list(uint32_t type,
                                     vector<st_plugin_int *> &plugins,
                                     bool active)
 {
@@ -99,52 +99,102 @@ void Plugin_registry::get_list(uint32_t type,
   }
 }
 
-void Plugin_registry::registerPlugin(StorageEngine *engine)
+void PluginRegistry::add(StorageEngine *engine)
 {
   add_storage_engine(engine);
 }
 
-void Plugin_registry::registerPlugin(ST_SCHEMA_TABLE *schema_table)
+void PluginRegistry::add(ST_SCHEMA_TABLE *schema_table)
 {
   add_infoschema_table(schema_table);
 }
 
-void Plugin_registry::registerPlugin(Function_builder *udf)
+void PluginRegistry::add(Function_builder *udf)
 {
   add_udf(udf);
 }
 
-void Plugin_registry::registerPlugin(Logging_handler *handler)
+void PluginRegistry::add(Logging_handler *handler)
 {
   add_logger(handler);
 }
 
-void Plugin_registry::registerPlugin(Error_message_handler *handler)
+void PluginRegistry::add(Error_message_handler *handler)
 {
   add_errmsg_handler(handler);
 }
 
-void Plugin_registry::registerPlugin(Authentication *auth)
+void PluginRegistry::add(Authentication *auth)
 {
   add_authentication(auth);
 }
 
-void Plugin_registry::registerPlugin(QueryCache *qcache)
+void PluginRegistry::add(QueryCache *qcache)
 {
   add_query_cache(qcache);
 }
 
-void Plugin_registry::registerPlugin(SchedulerFactory *factory)
+void PluginRegistry::add(SchedulerFactory *factory)
 {
   add_scheduler_factory(factory);
 }
 
-void Plugin_registry::registerPlugin(ProtocolFactory *factory)
+void PluginRegistry::add(ProtocolFactory *factory)
 {
   add_protocol_factory(factory);
 }
 
-void Plugin_registry::registerPlugin(drizzled::plugin::Replicator *repl)
+void PluginRegistry::add(drizzled::plugin::Replicator *repl)
 {
   add_replicator(repl);
+}
+
+void PluginRegistry::remove(StorageEngine *engine)
+{
+  remove_storage_engine(engine);
+}
+
+void PluginRegistry::remove(ST_SCHEMA_TABLE *schema_table)
+{
+  remove_infoschema_table(schema_table);
+}
+
+void PluginRegistry::remove(Function_builder *udf)
+{
+  remove_udf(udf);
+}
+
+void PluginRegistry::remove(Logging_handler *handler)
+{
+  remove_logger(handler);
+}
+
+void PluginRegistry::remove(Error_message_handler *handler)
+{
+  remove_errmsg_handler(handler);
+}
+
+void PluginRegistry::remove(Authentication *auth)
+{
+  remove_authentication(auth);
+}
+
+void PluginRegistry::remove(QueryCache *qcache)
+{
+  remove_query_cache(qcache);
+}
+
+void PluginRegistry::remove(SchedulerFactory *factory)
+{
+  remove_scheduler_factory(factory);
+}
+
+void PluginRegistry::remove(ProtocolFactory *factory)
+{
+  remove_protocol_factory(factory);
+}
+
+void PluginRegistry::remove(drizzled::plugin::Replicator *repl)
+{
+  remove_replicator(repl);
 }

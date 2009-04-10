@@ -1809,19 +1809,19 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *create_info,
 
 static MyisamEngine *engine= NULL;
 
-static int myisam_init(Plugin_registry &registry)
+static int myisam_init(PluginRegistry &registry)
 {
   engine= new MyisamEngine(engine_name);
-  registry.registerPlugin(engine);
+  registry.add(engine);
 
   pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
 
   return 0;
 }
 
-int myisam_deinit(void *)
+int myisam_deinit(PluginRegistry &registry)
 {
-
+  registry.remove(engine);
   delete engine;
 
   pthread_mutex_destroy(&THR_LOCK_myisam);

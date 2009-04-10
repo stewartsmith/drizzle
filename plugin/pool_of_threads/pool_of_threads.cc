@@ -30,7 +30,7 @@ using namespace std;
 static volatile bool kill_pool_threads= false;
 
 static volatile uint32_t created_threads= 0;
-static int deinit(void *);
+static int deinit(PluginRegistry &registry);
 
 static struct event session_add_event;
 static struct event session_kill_event;
@@ -363,7 +363,6 @@ public:
    if (event_add(&session_add_event, NULL) || event_add(&session_kill_event, NULL))
    {
      errmsg_printf(ERRMSG_LVL_ERROR, _("session_add_event event_add error in libevent_init\n"));
-     deinit(NULL);
      return true;
   
    }
@@ -379,7 +378,6 @@ public:
         errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
                         error);
         pthread_mutex_unlock(&LOCK_thread_count);
-        deinit(NULL);                      // Cleanup
         return true;
       }
     }
@@ -611,12 +609,12 @@ void libevent_session_add(Session* session)
 
 static PoolOfThreadsFactory *factory= NULL;
 
-static int init(Plugin_registry &registry)
+static int init(PluginRegistry &registry)
 {
   assert(size != 0);
 
   factory= new PoolOfThreadsFactory();
-  registry.registerPlugin(factory);
+  registry.add(factory);
 
   return 0;
 }
@@ -625,11 +623,13 @@ static int init(Plugin_registry &registry)
   Wait until all pool threads have been deleted for clean shutdown
 */
 
-static int deinit(void *)
+static int deinit(PluginRegistry &registry)
 {
   if (factory)
+  {
+    registry.remove(factory);
     delete factory;
-
+  }
   return 0;
 }
 

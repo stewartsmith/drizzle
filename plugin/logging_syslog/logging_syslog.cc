@@ -152,7 +152,7 @@ public:
 
 static Logging_syslog *handler= NULL;
 
-static int logging_syslog_plugin_init(Plugin_registry &registry)
+static int logging_syslog_plugin_init(PluginRegistry &registry)
 {
   syslog_facility= -1;
   for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
@@ -192,14 +192,14 @@ static int logging_syslog_plugin_init(Plugin_registry &registry)
           LOG_PID, syslog_facility);
 
   handler= new Logging_syslog();
-  registry.registerPlugin(handler);
+  registry.add(handler);
 
   return 0;
 }
 
-static int logging_syslog_plugin_deinit(void *)
+static int logging_syslog_plugin_deinit(PluginRegistry &registry)
 {
-
+  registry.remove(handler);
   delete handler;
 
   return 0;

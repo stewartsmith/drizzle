@@ -193,7 +193,7 @@ pthread_handler_t signal_hand(void *)
 }
 
 
-static int init(Plugin_registry&)
+static int init(PluginRegistry&)
 {
   int error;
   pthread_attr_t thr_attr;
@@ -238,7 +238,7 @@ static int init(Plugin_registry&)
   This is mainly needed when running with purify, but it's still nice to
   know that all child threads have died when drizzled exits.
 */
-static int deinit(void *)
+static int deinit(PluginRegistry&)
 {
   uint32_t i;
   /*

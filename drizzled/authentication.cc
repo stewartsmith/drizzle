@@ -76,16 +76,3 @@ bool authenticate_user(Session *session, const char *password)
   return iter != all_authentication.end();
 }
 
-
-int authentication_finalizer(st_plugin_int *plugin)
-{
-  Authentication *authen= static_cast<Authentication *>(plugin->data);
-  assert(authen);
-
-  remove_authentication(authen);
-
-  if (authen && plugin->plugin->deinit)
-    plugin->plugin->deinit(authen);
-
-  return(0);
-}

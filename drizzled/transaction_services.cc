@@ -60,19 +60,11 @@ void add_replicator(drizzled::plugin::Replicator *repl)
   transaction_services.attachReplicator(repl);
 }
 
-int replicator_finalizer(st_plugin_int *plugin)
+void remove_replicator(drizzled::plugin::Replicator *repl)
 {
-  drizzled::plugin::Replicator *repl= static_cast<drizzled::plugin::Replicator *>(plugin->data);
-  
-  assert(repl);
-
   transaction_services.detachReplicator(repl);
-
-  if (plugin->plugin->deinit)
-    (void) plugin->plugin->deinit(repl);
-
-  return 0;
 }
+
 
 namespace drizzled
 {

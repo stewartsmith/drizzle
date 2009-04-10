@@ -85,7 +85,7 @@ void add_infoschema_table(ST_SCHEMA_TABLE *schema_table)
   all_schema_tables.push_back(schema_table);
 }
 
-static void remove_infoschema_table(ST_SCHEMA_TABLE *table)
+void remove_infoschema_table(ST_SCHEMA_TABLE *table)
 {
   all_schema_tables.erase(remove_if(all_schema_tables.begin(),
                                     all_schema_tables.end(),
@@ -4493,19 +4493,3 @@ ST_SCHEMA_TABLE schema_tables[]=
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List_iterator_fast<char>;
-template class List<char>;
-#endif
-
-int finalize_schema_table(st_plugin_int *plugin)
-{
-  ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;
-
-  remove_infoschema_table(schema_table);
-  if (schema_table && plugin->plugin->deinit)
-    plugin->plugin->deinit(schema_table);
-
-  return(0);
-}

@@ -25,8 +25,8 @@
 // need stdarg for va_list
 #include <stdarg.h>
 
-int errmsg_finalizer(st_plugin_int *plugin);
 void add_errmsg_handler(Error_message_handler *handler);
+void remove_errmsg_handler(Error_message_handler *handler);
 
 bool errmsg_vprintf (Session *session, int priority, char const *format, va_list ap);
 

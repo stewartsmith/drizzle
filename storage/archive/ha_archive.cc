@@ -150,12 +150,12 @@ static ArchiveEngine *archive_engine= NULL;
     true        Error
 */
 
-int archive_db_init(Plugin_registry &registry)
+int archive_db_init(PluginRegistry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
   archive_engine= new ArchiveEngine(engine_name);
-  registry.registerPlugin(archive_engine);
+  registry.add(archive_engine);
 
   /* When the engine starts up set the first version */
   global_version= 1;
@@ -174,8 +174,9 @@ int archive_db_init(Plugin_registry &registry)
     false       OK
 */
 
-int archive_db_done(void *)
+int archive_db_done(PluginRegistry &registry)
 {
+  registry.remove(archive_engine);
   delete archive_engine;
 
   pthread_mutex_destroy(&archive_mutex);

@@ -43,15 +43,15 @@ class Replicator;
 }
 }
 
-class Plugin_registry
+class PluginRegistry
 {
 private:
   std::map<std::string, st_plugin_int *>
     plugin_map[DRIZZLE_MAX_PLUGIN_TYPE_NUM];
 
-  Plugin_registry(const Plugin_registry&);
+  PluginRegistry(const PluginRegistry&);
 public:
-  Plugin_registry() {}
+  PluginRegistry() {}
 
 
   st_plugin_int *find(const LEX_STRING *name, int type);
@@ -59,18 +59,29 @@ public:
   void add(st_mysql_plugin *handle, st_plugin_int *plugin);
 
   void get_list(uint32_t type, std::vector<st_plugin_int *> &plugins, bool active);
-  static Plugin_registry& get_plugin_registry();
+  static PluginRegistry& getPluginRegistry();
 
-  void registerPlugin(StorageEngine *engine);
-  void registerPlugin(ST_SCHEMA_TABLE *schema_table);
-  void registerPlugin(Function_builder *udf);
-  void registerPlugin(Logging_handler *handler);
-  void registerPlugin(Error_message_handler *handler);
-  void registerPlugin(Authentication *auth);
-  void registerPlugin(QueryCache *qcache);
-  void registerPlugin(SchedulerFactory *scheduler);
-  void registerPlugin(ProtocolFactory *protocol);
-  void registerPlugin(drizzled::plugin::Replicator *repl);
+  void add(StorageEngine *engine);
+  void add(ST_SCHEMA_TABLE *schema_table);
+  void add(Function_builder *udf);
+  void add(Logging_handler *handler);
+  void add(Error_message_handler *handler);
+  void add(Authentication *auth);
+  void add(QueryCache *qcache);
+  void add(SchedulerFactory *scheduler);
+  void add(ProtocolFactory *protocol);
+  void add(drizzled::plugin::Replicator *repl);
+
+  void remove(StorageEngine *engine);
+  void remove(ST_SCHEMA_TABLE *schema_table);
+  void remove(Function_builder *udf);
+  void remove(Logging_handler *handler);
+  void remove(Error_message_handler *handler);
+  void remove(Authentication *auth);
+  void remove(QueryCache *qcache);
+  void remove(SchedulerFactory *scheduler);
+  void remove(ProtocolFactory *protocol);
+  void remove(drizzled::plugin::Replicator *repl);
 
 };
 

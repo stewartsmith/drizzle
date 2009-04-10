@@ -683,18 +683,6 @@ err:
 }
 
 
-int storage_engine_finalizer(st_plugin_int *)
-{
-
-  //remove_storage_engine(engine);
-
-/*  if (engine && plugin->plugin->deinit)
-    (void)plugin->plugin->deinit(NULL);
-*/
-  return(0);
-}
-
-
 const string ha_resolve_storage_engine_name(const StorageEngine *engine)
 {
   return engine == NULL ? string("UNKNOWN") : engine->getName();

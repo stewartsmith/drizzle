@@ -25,7 +25,7 @@
 #include <drizzled/plugin/authentication.h>
 
 bool authenticate_user(Session *session, const char *password);
-int authentication_finalizer(st_plugin_int *plugin);
 void add_authentication(Authentication *auth);
+void remove_authentication(Authentication *auth);
 
 #endif /* DRIZZLED_AUTHENTICATION_H */

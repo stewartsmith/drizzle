@@ -43,14 +43,14 @@ public:
 Create_function<Item_func_hello_world>
   hello_world_udf(string("hello_world"));
 
-static int hello_world_plugin_init(Plugin_registry &registry)
+static int hello_world_plugin_init(PluginRegistry &registry)
 {
-  registry.registerPlugin(&hello_world_udf);
+  registry.add(&hello_world_udf);
 
   return 0;
 }
 
-static int hello_world_plugin_deinit(void *)
+static int hello_world_plugin_deinit(PluginRegistry &)
 {
   return 0;
 }

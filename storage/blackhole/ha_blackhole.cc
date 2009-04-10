@@ -277,11 +277,11 @@ static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *lengt
 
 static StorageEngine *blackhole_engine= NULL;
 
-static int blackhole_init(Plugin_registry &registry)
+static int blackhole_init(PluginRegistry &registry)
 {
 
   blackhole_engine= new BlackholeEngine(engine_name);
-  registry.registerPlugin(blackhole_engine);
+  registry.add(blackhole_engine);
   
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
   (void) hash_init(&blackhole_open_tables, system_charset_info,32,0,0,
@@ -291,8 +291,9 @@ static int blackhole_init(Plugin_registry &registry)
   return 0;
 }
 
-static int blackhole_fini(void *)
+static int blackhole_fini(PluginRegistry &registry)
 {
+  registry.remove(blackhole_engine);
   delete blackhole_engine;
 
   hash_free(&blackhole_open_tables);

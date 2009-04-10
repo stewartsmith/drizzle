@@ -39,22 +39,6 @@ void remove_query_cache(QueryCache *handler)
 }
 
 
-int qcache_finalizer(st_plugin_int *plugin)
-{
-  QueryCache *handler= static_cast<QueryCache *>(plugin->data);
-  remove_query_cache(handler);
-
-  if (plugin->plugin->deinit)
-  {
-    if (plugin->plugin->deinit(plugin->data))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' deinit() failed"),
-                    plugin->name.str);
-    }
-  }
-  return 0;
-}
-
 
 /* Namespaces are here to prevent global symbol clashes with these classes */
 

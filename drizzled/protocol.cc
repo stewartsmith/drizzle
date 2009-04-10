@@ -48,21 +48,8 @@ bool add_protocol_factory(ProtocolFactory *factory)
   return false;
 }
 
-
-int protocol_finalizer(st_plugin_int *plugin)
+bool remove_protocol_factory(ProtocolFactory *)
 {
-  /* We know which one we initialized since its data pointer is filled */
-  if (plugin->plugin->deinit && plugin->data)
-  {
-    if (plugin->plugin->deinit((void *)plugin->data))
-    {
-      /* TRANSLATORS: The leading word "protocol" is the name
-         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("protocol plugin '%s' deinit() failed"),
-                    plugin->name.str);
-    }
-  }
-
-  return 0;
+  protocol_factory= NULL;
+  return false;
 }

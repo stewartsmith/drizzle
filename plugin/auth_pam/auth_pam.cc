@@ -109,18 +109,21 @@ public:
 
 static Authentication *auth= NULL;
 
-static int initialize(Plugin_registry &registry)
+static int initialize(PluginRegistry &registry)
 {
   auth= new Auth_pam();
-  registry.registerPlugin(auth);
+  registry.add(auth);
   return 0;
 }
 
-static int finalize(void *)
+static int finalize(PluginRegistry &registry)
 {
 
   if (auth)
+  {
+    registry.remove(auth);
     delete auth;
+  }
 
   return 0;
 }

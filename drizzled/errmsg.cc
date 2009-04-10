@@ -42,29 +42,6 @@ void remove_errmsg_handler(Error_message_handler *handler)
                                 all_errmsg_handler.end(), handler));
 }
 
-int errmsg_finalizer(st_plugin_int *plugin)
-{
-  Error_message_handler *p= static_cast<Error_message_handler *>(plugin->data);
-
-  remove_errmsg_handler(p);
-  if (plugin->plugin->deinit)
-  {
-    if (plugin->plugin->deinit(p))
-    {
-      /* we're doing the errmsg plugin api,
-	 so we can't trust the errmsg api to emit our error messages
-	 so we will emit error messages to stderr */
-      /* TRANSLATORS: The leading word "errmsg" is the name
-         of the plugin api, and so should not be translated. */
-      fprintf(stderr,
-              _("errmsg plugin '%s' deinit() failed."),
-              plugin->name.str);
-    }
-  }
-
-  return 0;
-}
-
 
 class ErrorMessagePrint : public unary_function<Error_message_handler *, bool>
 {
