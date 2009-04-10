@@ -8,19 +8,19 @@
 
 #include <iostream>
 #include <string>
-#include <drizzled/serialize/table.pb.h>
+#include <drizzled/message/table.pb.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 using namespace std;
-using namespace drizzle;
+using namespace drizzled::message;
 using namespace google::protobuf::io;
 
 /*
   Written from Google proto example
 */
 
-void print_field(const ::drizzle::Table::Field &field)
+void print_field(const ::drizzled::message::Table::Field &field)
 {
   cout << "\t`" << field.name() << "`";
 
@@ -143,7 +143,7 @@ void print_field(const ::drizzle::Table::Field &field)
     cout << " COMMENT `" << field.comment() << "` ";
 }
 
-void print_engine(const ::drizzle::Table::StorageEngine &engine)
+void print_engine(const ::drizzled::message::Table::StorageEngine &engine)
 {
   int32_t x;
 
@@ -156,7 +156,7 @@ void print_engine(const ::drizzle::Table::StorageEngine &engine)
   }
 }
 
-void print_index(const ::drizzle::Table::Index &index)
+void print_index(const ::drizzled::message::Table::Index &index)
 {
 
   if (index.is_primary())
@@ -182,12 +182,12 @@ void print_index(const ::drizzle::Table::Index &index)
   cout << "\t";
 }
 
-void print_table_stats(const ::drizzle::Table::TableStats&) 
+void print_table_stats(const ::drizzled::message::Table::TableStats&) 
 {
 
 }
 
-void print_table_options(const ::drizzle::Table::TableOptions &options)
+void print_table_options(const ::drizzled::message::Table::TableOptions &options)
 {
   if (options.has_comment())
     cout << " COMMENT = '" << options.comment() << "' " << endl;
@@ -247,7 +247,7 @@ void print_table_options(const ::drizzle::Table::TableOptions &options)
 }
 
 
-void print_table(const ::drizzle::Table &table)
+void print_table(const ::drizzled::message::Table &table)
 {
   int32_t x;
 

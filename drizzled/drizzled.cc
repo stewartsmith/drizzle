@@ -390,7 +390,7 @@ pthread_mutex_t LOCK_create_db,
 pthread_rwlock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
 pthread_t signal_thread;
-pthread_cond_t  COND_server_started;
+pthread_cond_t  COND_server_end;
 
 /* replication parameters, if master_host is not NULL, we are a slave */
 uint32_t report_port= DRIZZLE_PORT;
@@ -527,9 +527,8 @@ void close_connections(void)
       break;
     }
     (void) pthread_mutex_unlock(&LOCK_thread_count);
-    unlink_session(tmp);
+    tmp->protocol->forceClose();
   }
-  assert(session_list.is_empty());
 }
 
 
@@ -616,7 +615,7 @@ static void clean_up(bool print_message)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   ready_to_exit=1;
   /* do the broadcast inside the lock to ensure that my_end() is not called */
-  (void) pthread_cond_broadcast(&COND_thread_count);
+  (void) pthread_cond_broadcast(&COND_server_end);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   /*
@@ -637,6 +636,7 @@ static void clean_up_mutexes()
   (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
   (void) pthread_mutex_destroy(&LOCK_global_read_lock);
   (void) pthread_cond_destroy(&COND_thread_count);
+  (void) pthread_cond_destroy(&COND_server_end);
   (void) pthread_cond_destroy(&COND_refresh);
   (void) pthread_cond_destroy(&COND_global_read_lock);
 }
@@ -1507,6 +1507,7 @@ static int init_thread_environment()
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_thread_count,NULL);
+  (void) pthread_cond_init(&COND_server_end,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
   (void) pthread_cond_init(&COND_global_read_lock,NULL);
 
@@ -1796,7 +1797,7 @@ int main(int argc, char **argv)
   /* Wait until cleanup is done */
   (void) pthread_mutex_lock(&LOCK_thread_count);
   while (!ready_to_exit)
-    pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
+    pthread_cond_wait(&COND_server_end,&LOCK_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   clean_up(1);

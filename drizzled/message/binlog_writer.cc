@@ -1,7 +1,7 @@
 #include <drizzled/global.h>
 
-#include <drizzled/serialize/binlog_encoding.h>
-#include <drizzled/serialize/binary_log.h>
+#include <drizzled/message/binlog_encoding.h>
+#include <drizzled/message/binary_log.h>
 
 #include "ioutil.h"
 

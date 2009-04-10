@@ -1136,6 +1136,7 @@ DRIZZLE_CONFIGURE_PLUGINS([none])
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
+mysql_plugin_defs=`echo $mysql_plugin_defs | sed 's/, *$//'`
 AC_SUBST(mysql_plugin_defs)
 AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
 
@@ -1421,7 +1422,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  po/Makefile.in dnl
  client/Makefile dnl
  drizzled/Makefile dnl
- drizzled/serialize/Makefile dnl
+ drizzled/message/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl

@@ -269,6 +269,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		order.h \
 		plugin.h \
 		plugin_registry.h \
+		plugin/applier.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
 		plugin/logging_handler.h \
@@ -284,7 +285,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		query_id.h \
 		registry.h \
 		rename.h \
-		replicator.h \
+		transaction_services.h \
 		scheduling.h \
 		security_context.h \
 		select_create.h \
@@ -354,7 +355,7 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
-		 $(top_builddir)/drizzled/serialize/libserialize.la \
+		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
@@ -567,7 +568,6 @@ drizzled_SOURCES = \
 		item.cc \
 		key.cc \
 		lock.cc \
-		log.cc \
 		logging.cc \
 		lookup_symbol.cc \
 		my_decimal.cc \
@@ -581,8 +581,8 @@ drizzled_SOURCES = \
 		query_id.cc \
 		records.cc \
 		rename.cc \
-		replicator.cc \
-                scheduling.cc \
+		transaction_services.cc \
+    scheduling.cc \
 		session.cc \
 		set_var.cc \
 		show.cc \

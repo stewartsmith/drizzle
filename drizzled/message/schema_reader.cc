@@ -1,14 +1,14 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <drizzled/serialize/schema.pb.h>
+#include <drizzled/message/schema.pb.h>
 using namespace std;
 
 /*
   Written from Google proto example
 */
 
-void printSchema(const drizzle::Schema *schema)
+void printSchema(const drizzled::message::Schema *schema)
 {
   cout << "CREATE SCHEMA `" << schema->name() << "` ";
   if (schema->has_collation())
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  drizzle::Schema schema;
+  drizzled::message::Schema schema;
 
   {
     // Read the existing address book.

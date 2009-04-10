@@ -454,7 +454,7 @@ int ha_table_exists_in_engine(Session* session,
                          db, name, "", 0);
     if (table_proto_exists(path)==EEXIST)
     {
-      drizzle::Table table;
+      drizzled::message::Table table;
       build_table_filename(path, sizeof(path),
                            db, name, ".dfe", 0);
       if(drizzle_read_table_proto(path, &table)==0)

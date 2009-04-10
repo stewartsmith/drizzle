@@ -1,16 +1,16 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <drizzled/serialize/table.pb.h>
+#include <drizzled/message/table.pb.h>
 
 using namespace std;
-using namespace drizzle;
+using namespace drizzled::message;
 
 /*
   Written from Google proto example
 */
 
-void fill_engine(::drizzle::Table::StorageEngine *engine)
+void fill_engine(::drizzled::message::Table::StorageEngine *engine)
 {
   int16_t x;
 
@@ -37,7 +37,7 @@ void fill_engine(::drizzle::Table::StorageEngine *engine)
   }
 }
 
-void new_index_to_table(::drizzle::Table *table,
+void new_index_to_table(::drizzled::message::Table *table,
                         const string name,
                         uint16_t num_index_parts,
                         uint32_t field_indexes[],
@@ -70,7 +70,7 @@ void new_index_to_table(::drizzle::Table *table,
   }
 }
 
-void fill_table(::drizzle::Table *table, const char *name)
+void fill_table(::drizzled::message::Table *table, const char *name)
 {
   uint16_t x;
 

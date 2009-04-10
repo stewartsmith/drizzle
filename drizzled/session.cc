@@ -243,7 +243,6 @@ Session::Session(Protocol *protocol_arg)
   /* Variables with default values */
   proc_info="login";
   where= Session::DEFAULT_WHERE;
-  server_id = ::server_id;
   command=COM_CONNECT;
 
   init();

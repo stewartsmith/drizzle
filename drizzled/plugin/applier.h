@@ -21,16 +21,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_REPLICATOR_H
-#define DRIZZLED_PLUGIN_REPLICATOR_H
+#ifndef DRIZZLED_PLUGIN_APPLIER_H
+#define DRIZZLED_PLUGIN_APPLIER_H
 
 /**
- * @file Defines the API for a Replicator.  
+ * @file Defines the API for an Applier
  *
- * All a replicator does is replicate/reproduce
- * events, optionally transforming them before sending them off to an applier.
- *
- * An applier is responsible for applying events, not a replicator...
+ * An Applier applies an event it has received from a Replicator (via 
+ * a replicator's replicate() call, or it has read using a Reader's read()
+ * call.
  */
 
 /* some forward declarations needed */
@@ -40,7 +39,6 @@ namespace drizzled
   {
     class Command;
   }
-  class Applier;
 }
 
 namespace drizzled
@@ -49,31 +47,31 @@ namespace plugin
 {
 
 /**
- * Class which replicates Command messages
+ * Base class for appliers of Command messages
  */
-class Replicator
+class Applier
 {
 public:
-  Replicator() {}
-  virtual ~Replicator() {}
+  Applier() {}
+  virtual ~Applier() {}
   /**
-   * Replicate a Command message to an Applier.
+   * Apply something to a target.
    *
    * @note
    *
    * It is important to note that memory allocation for the 
    * supplied pointer is not guaranteed after the completion 
    * of this function -- meaning the caller can dispose of the
-   * supplied message.  Therefore, replicators and appliers 
+   * supplied message.  Therefore, appliers which are
    * implementing an asynchronous replication system must copy
    * the supplied message to their own controlled memory storage
    * area.
    *
    * @param Command message to be replicated
    */
-  virtual void replicate(Applier *in_applier, drizzled::message::Command *to_replicate)= 0;
+  virtual void apply(drizzled::message::Command *to_apply)= 0;
   /** 
-   * A replicator plugin should override this with its
+   * An applier plugin should override this with its
    * internal method for determining if it is active or not.
    */
   virtual bool isActive() {return false;}
@@ -82,4 +80,4 @@ public:
 } /* end namespace drizzled::plugin */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_REPLICATOR_H */
+#endif /* DRIZZLED_PLUGIN_APPLIER_H */

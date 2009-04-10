@@ -13,42 +13,41 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-LDADD= libserialize.la \
+LDADD= libdrizzledmessage.la \
 	${LIBPROTOBUF} \
 	${LIBUUID} \
 	${LIBINTL} \
 	${top_builddir}/gnulib/libgnu.la
 
 AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
-TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
+TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/message sh
 TESTS = check_length.sh
 
-noinst_PROGRAMS = \
-	       table_reader \
-	       table_writer \
-	       replication_event_reader \
-	       replication_event_writer \
-               master_list_reader \
-               master_list_writer \
-               binlog_reader \
-               binlog_writer \
-	       schema_reader
+noinst_PROGRAMS = table_reader \
+									table_writer \
+									transaction_reader \
+									transaction_writer \
+									master_list_reader \
+									master_list_writer \
+									binlog_reader \
+									binlog_writer \
+									schema_reader
 
 check_PROGRAMS = length
 
-noinst_LTLIBRARIES = libserialize.la
+noinst_LTLIBRARIES = libdrizzledmessage.la
 
-nodist_libserialize_la_SOURCES = \
+nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
-		replication_event.pb.cc \
+		transaction.pb.cc \
 		schema.pb.cc \
 		table.pb.cc
 
 nodist_noinst_HEADERS= \
 		binary_log.pb.h \
 		master_list.pb.h \
-		replication_event.pb.h \
+		transaction.pb.h \
 		schema.pb.h \
 		table.pb.h
 
@@ -56,7 +55,7 @@ noinst_HEADERS= \
 		binary_log.h \
 		binlog_encoding.h \
 		ioutil.h \
-		serialize.h
+		all.h
 
 
 binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
@@ -73,18 +72,24 @@ master_list_writer_SOURCES =  master_list_writer.cc
 
 master_list_reader_SOURCES =  master_list_reader.cc
 
-replication_event_writer_SOURCES =  replication_event_writer.cc
+transaction_writer_SOURCES =  transaction_writer.cc
 
-replication_event_reader_SOURCES =  replication_event_reader.cc
+transaction_reader_SOURCES =  transaction_reader.cc
 
 length_SOURCES = length.cc
 
-EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto replication_event.proto check_length.sh
+EXTRA_DIST = schema.proto \
+						 table.proto \
+						 binary_log.proto \
+						 master_list.proto \
+						 transaction.proto \
+						 check_length.sh
+
 BUILT_SOURCES = schema.pb.h \
-		table.pb.h \
-		binary_log.pb.h \
-		replication_event.pb.h \
-		master_list.pb.h
+								table.pb.h \
+								binary_log.pb.h \
+								transaction.pb.h \
+								master_list.pb.h
 
 CLEANFILES =  binary_log.pb.h \
               binary_log.pb.cc \
@@ -92,15 +97,15 @@ CLEANFILES =  binary_log.pb.h \
               schema.pb.cc \
               table.pb.h \
               table.pb.cc \
-	      replication_event.pb.h \
-              replication_event.pb.cc \
+	      			transaction.pb.h \
+              transaction.pb.cc \
               master_list.pb.h \
               master_list.pb.cc
 
 SUFFIXES = .proto .pb.cc .pb.h
 .proto.pb.cc:
-	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
-		--cpp_out=${top_builddir}/drizzled/serialize $<
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/message \
+		--cpp_out=${top_builddir}/drizzled/message $<
 .proto.pb.h:
-	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
-		--cpp_out=${top_builddir}/drizzled/serialize $<
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/message \
+		--cpp_out=${top_builddir}/drizzled/message $<

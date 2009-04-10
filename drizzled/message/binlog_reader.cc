@@ -1,6 +1,6 @@
 #include <drizzled/global.h>
 
-#include <drizzled/serialize/binary_log.h>
+#include <drizzled/message/binary_log.h>
 
 #include <iostream>
 #include <fstream>

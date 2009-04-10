@@ -31,10 +31,11 @@
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
-#include <drizzled/replicator.h>
+#include <drizzled/transaction_services.h>
+
 
 using namespace std;
-
+extern drizzled::TransactionServices transaction_services;
 extern HASH lock_db_cache;
 
 int creating_table= 0;        // How many mysql_create_table are running
@@ -298,7 +299,7 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 void write_bin_log(Session *session, bool,
                    char const *query, size_t query_length)
 {
-  (void)replicator_statement(session, query, query_length);
+  transaction_services.rawStatement(session, query, query_length);
 }
 
 
