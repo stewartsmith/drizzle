@@ -27,6 +27,7 @@
 
 int errmsg_initializer(st_plugin_int *plugin);
 int errmsg_finalizer(st_plugin_int *plugin);
+void add_errmsg_handler(Error_message_handler *handler);
 
 bool errmsg_vprintf (Session *session, int priority, char const *format, va_list ap);
 

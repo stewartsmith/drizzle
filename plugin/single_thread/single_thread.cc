@@ -28,7 +28,8 @@ using namespace std;
 class Single_thread_scheduler : public Scheduler
 {
 public:
-  Single_thread_scheduler(uint32_t threads): Scheduler(threads) {}
+  Single_thread_scheduler()
+    : Scheduler(1) {}
 
   virtual bool init_new_connection_thread(void) {return 0;}
   
@@ -69,18 +70,32 @@ public:
   
 };
 
+
+class SingleThreadFactory : public SchedulerFactory
+{
+public:
+  SingleThreadFactory() : SchedulerFactory("single_thread") {}
+  ~SingleThreadFactory() { if (scheduler != NULL) delete scheduler; }
+  Scheduler *operator() ()
+  {
+    if (scheduler == NULL)
+      scheduler= new Single_thread_scheduler();
+    return scheduler;
+  }
+};
+
 static int init(void *p)
 {
-  Scheduler **sched= static_cast<Scheduler **>(p);
-  *sched= new Single_thread_scheduler(1);
+  SchedulerFactory **factory= static_cast<SchedulerFactory **>(p);
+  *factory= new SingleThreadFactory();
 
   return 0;
 }
 
 static int deinit(void *p)
 {
-  Scheduler *sched= static_cast<Scheduler *>(p);
-  delete sched;
+  SingleThreadFactory *factory= static_cast<SingleThreadFactory *>(p);
+  delete factory;
   return 0;
 }
 

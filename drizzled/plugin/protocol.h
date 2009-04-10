@@ -92,10 +92,13 @@ public:
 
 class ProtocolFactory
 {
+  std::string name;
 public:
-  ProtocolFactory() {}
+  ProtocolFactory(std::string name_arg): name(name_arg) {}
+  ProtocolFactory(const char *name_arg): name(name_arg) {}
   virtual ~ProtocolFactory() {}
   virtual Protocol *operator()(void)= 0;
+  std::string getName() {return name;}
 };
 
 #endif /* DRIZZLED_PLUGIN_PROTOCOL_H */

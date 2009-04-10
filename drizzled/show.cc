@@ -41,6 +41,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
+#include "drizzled/plugin_registry.h"
 
 #include <string>
 #include <iostream>
@@ -67,9 +68,21 @@ static void store_key_options(Session *session, String *packet, Table *table,
 
 static vector<ST_SCHEMA_TABLE *> all_schema_tables;
 
-static void add_infoschema_table(ST_SCHEMA_TABLE *table)
+Table *create_schema_table(Session *session, TableList *table_list);
+int make_old_format(Session *session, ST_SCHEMA_TABLE *schema_table);
+
+void add_infoschema_table(ST_SCHEMA_TABLE *schema_table)
 {
-  all_schema_tables.push_back(table);
+  if (schema_table->create_table == NULL)
+    schema_table->create_table= create_schema_table;
+  if (schema_table->old_format == NULL)
+    schema_table->old_format= make_old_format;
+  if (schema_table->idx_field1 == 0)
+    schema_table->idx_field1= -1;
+  if (schema_table->idx_field2)
+   schema_table->idx_field2= -1;
+
+  all_schema_tables.push_back(schema_table);
 }
 
 static void remove_infoschema_table(ST_SCHEMA_TABLE *table)
@@ -4500,20 +4513,12 @@ int initialize_schema_table(st_plugin_int *plugin)
       return 1;
     }
 
-    if (schema_table->create_table == NULL)
-      schema_table->create_table= create_schema_table;
-    if (schema_table->old_format == NULL)
-      schema_table->old_format= make_old_format;
-    if (schema_table->idx_field1 == 0)
-      schema_table->idx_field1= -1;
-    if (schema_table->idx_field2)
-      schema_table->idx_field2= -1;
-
     /*- Make sure the plugin name is not set inside the init() function. */
     schema_table->table_name= plugin->name.str;
   }
 
-  add_infoschema_table(schema_table);
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  registry.registerPlugin(schema_table);
   plugin->data= schema_table;
 
   return 0;

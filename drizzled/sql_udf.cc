@@ -18,6 +18,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/sql_udf.h>
 #include <drizzled/registry.h>
+#include "drizzled/plugin_registry.h"
 
 #include <string>
 
@@ -32,9 +33,10 @@ Function_builder *find_udf(const char *name, uint32_t length)
   return udf_registry.find(name, length);
 }
 
-static bool add_udf(Function_builder *udf)
+void add_udf(Function_builder *udf)
 {
-  return udf_registry.add(udf);
+  udf_startup= true;
+  udf_registry.add(udf);
 }
 
 static void remove_udf(Function_builder *udf)
@@ -46,7 +48,6 @@ int initialize_udf(st_plugin_int *plugin)
 {
   Function_builder *f;
 
-  udf_startup= true;
 
   if (plugin->plugin->init)
   {
@@ -62,8 +63,8 @@ int initialize_udf(st_plugin_int *plugin)
   else
     return 1;
 
-  if (add_udf(f))
-    return 1;
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  registry.registerPlugin(f);
 
   plugin->data= f;
   return 0;

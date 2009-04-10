@@ -20,18 +20,20 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/logging.h>
 #include <drizzled/gettext.h>
+#include "drizzled/plugin_registry.h"
+
 #include <vector>
 
 using namespace std;
 
 static vector<Logging_handler *> all_loggers;
 
-static void add_logger(Logging_handler *handler)
+void add_logger(Logging_handler *handler)
 {
   all_loggers.push_back(handler);
 }
 
-static void remove_logger(Logging_handler *handler)
+void remove_logger(Logging_handler *handler)
 {
   all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
 }
@@ -52,8 +54,9 @@ int logging_initializer(st_plugin_int *plugin)
     }
   }
 
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
   if (p != NULL)
-    add_logger(p);
+    registry.registerPlugin(p);
   plugin->data= p;
 
   return 0;

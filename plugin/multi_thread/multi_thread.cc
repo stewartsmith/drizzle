@@ -97,11 +97,24 @@ public:
   }
 };
 
+class MultiThreadFactory : public SchedulerFactory
+{
+public:
+  MultiThreadFactory() : SchedulerFactory("multi_thread") {}
+  ~MultiThreadFactory() { if (scheduler != NULL) delete scheduler; }
+  Scheduler *operator() ()
+  {
+    if (scheduler == NULL)
+      scheduler= new Multi_thread_scheduler(max_threads);
+    return scheduler;
+  }
+};
+
 static int init(void *p)
 {
-  Multi_thread_scheduler** sched= static_cast<Multi_thread_scheduler **>(p);
+  SchedulerFactory** sched= static_cast<SchedulerFactory **>(p);
 
-  *sched= new Multi_thread_scheduler(max_threads);
+  *sched= new MultiThreadFactory();
 
   return 0;
 }
@@ -109,8 +122,8 @@ static int init(void *p)
 static int deinit(void *p)
 {
 
-  Multi_thread_scheduler *sched= static_cast<Multi_thread_scheduler *>(p);
-  delete sched;
+  MultiThreadFactory *factory= static_cast<MultiThreadFactory *>(p);
+  delete factory;
 
   return 0;
 }

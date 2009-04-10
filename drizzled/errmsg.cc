@@ -20,6 +20,8 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/gettext.h>
+#include "drizzled/plugin_registry.h"
+
 #include <vector>
 
 using namespace std;
@@ -28,12 +30,12 @@ static vector<Error_message_handler *> all_errmsg_handler;
 
 static bool errmsg_has= false;
 
-static void add_errmsg_handler(Error_message_handler *handler)
+void add_errmsg_handler(Error_message_handler *handler)
 {
   all_errmsg_handler.push_back(handler);
 }
 
-static void remove_errmsg_handler(Error_message_handler *handler)
+void remove_errmsg_handler(Error_message_handler *handler)
 {
   all_errmsg_handler.erase(find(all_errmsg_handler.begin(),
                                 all_errmsg_handler.end(), handler));
@@ -59,7 +61,9 @@ int errmsg_initializer(st_plugin_int *plugin)
     }
   }
 
-  add_errmsg_handler(p);
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  if (p != NULL)
+    registry.registerPlugin(p);
   plugin->data= p;
   errmsg_has= true;
 

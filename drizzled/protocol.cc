@@ -19,7 +19,9 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/protocol.h>
+#include "drizzled/plugin_registry.h"
 #include <drizzled/gettext.h>
+
 
 extern char *opt_protocol;
 
@@ -31,20 +33,29 @@ Protocol *get_protocol()
   return (*protocol_factory)();
 }
 
-int protocol_initializer(st_plugin_int *plugin)
+bool add_protocol_factory(ProtocolFactory *factory)
 {
-  if (memcmp(plugin->plugin->name, opt_protocol, strlen(opt_protocol)))
-    return 0;
+  if (factory->getName() != opt_protocol)
+    return true;
 
   if (protocol_factory != NULL)
   {
     fprintf(stderr, "You cannot load more then one protocol plugin\n");
     exit(1);
   }
+  protocol_factory= factory;
+
+  return false;
+}
+
+int protocol_initializer(st_plugin_int *plugin)
+{
+
+  ProtocolFactory *factory= NULL;
 
   assert(plugin->plugin->init); /* Find poorly designed plugins */
 
-  if (plugin->plugin->init((void *)&protocol_factory))
+  if (plugin->plugin->init((void *)&factory))
   {
     /* 
       TRANSLATORS> The leading word "protocol" is the name
@@ -55,7 +66,11 @@ int protocol_initializer(st_plugin_int *plugin)
       return 1;
   }
 
-  plugin->data= protocol_factory;
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  if (factory != NULL)
+    registry.registerPlugin(factory);
+  
+  plugin->data= factory;
 
   return 0;
 }

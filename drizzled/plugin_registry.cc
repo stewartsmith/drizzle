@@ -21,6 +21,15 @@
 #include "drizzled/plugin_registry.h"
 
 #include "drizzled/plugin.h"
+#include "drizzled/show.h"
+#include "drizzled/handler.h"
+#include "drizzled/errmsg.h"
+#include "drizzled/authentication.h"
+#include "drizzled/qcache.h"
+#include "drizzled/scheduling.h"
+#include "drizzled/logging.h"
+#include "drizzled/sql_udf.h"
+#include "drizzled/protocol.h"
 
 #include <string>
 #include <vector>
@@ -87,4 +96,49 @@ void Plugin_registry::get_list(uint32_t type,
     else if (plugin->isInited)
       plugins.push_back(plugin);
   }
+}
+
+void Plugin_registry::registerPlugin(StorageEngine *engine)
+{
+  add_storage_engine(engine);
+}
+
+void Plugin_registry::registerPlugin(ST_SCHEMA_TABLE *schema_table)
+{
+  add_infoschema_table(schema_table);
+}
+
+void Plugin_registry::registerPlugin(Function_builder *udf)
+{
+  add_udf(udf);
+}
+
+void Plugin_registry::registerPlugin(Logging_handler *handler)
+{
+  add_logger(handler);
+}
+
+void Plugin_registry::registerPlugin(Error_message_handler *handler)
+{
+  add_errmsg_handler(handler);
+}
+
+void Plugin_registry::registerPlugin(Authentication *auth)
+{
+  add_authentication(auth);
+}
+
+void Plugin_registry::registerPlugin(QueryCache *qcache)
+{
+  add_query_cache(qcache);
+}
+
+void Plugin_registry::registerPlugin(SchedulerFactory *factory)
+{
+  add_scheduler_factory(factory);
+}
+
+void Plugin_registry::registerPlugin(ProtocolFactory *factory)
+{
+  add_protocol_factory(factory);
 }

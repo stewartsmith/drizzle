@@ -90,5 +90,6 @@ void remove_status_vars(SHOW_VAR *list);
 void init_status_vars();
 void free_status_vars();
 void reset_status_vars();
+void add_infoschema_table(ST_SCHEMA_TABLE *schema_table);
 
 #endif /* DRIZZLE_SERVER_SHOW_H */

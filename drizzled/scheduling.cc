@@ -21,34 +21,52 @@
 #include <drizzled/scheduling.h>
 #include <drizzled/gettext.h>
 #include <drizzled/connect.h>
+#include "drizzled/plugin_registry.h"
 
-Scheduler *thread_scheduler= NULL;
+
+SchedulerFactory *scheduler_factory= NULL;
 
 static bool scheduler_inited= false; /* We must insist that only one of these plugins get loaded at a time */
 
 
 extern char *opt_scheduler;
 
-Scheduler &get_thread_scheduler()
+bool add_scheduler_factory(SchedulerFactory *factory)
 {
-  assert(thread_scheduler != NULL);
-  return *thread_scheduler;
-}
-
-int scheduling_initializer(st_plugin_int *plugin)
-{
-  if (memcmp(plugin->plugin->name, opt_scheduler, strlen(opt_scheduler)))
-    return 0;
+  if (factory->getName() != opt_scheduler)
+    return true;
 
   if (scheduler_inited)
   {
     fprintf(stderr, "You cannot load more then one scheduler plugin\n");
+    return(1);
+  }
+  scheduler_factory= factory;
+
+  scheduler_inited= true;
+  return false;
+}
+
+Scheduler &get_thread_scheduler()
+{
+  assert(scheduler_factory != NULL);
+  Scheduler *sched= (*scheduler_factory)();
+  if (sched == NULL)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Scheduler initialization failed."));
     exit(1);
   }
+  return *sched;
+}
+
+int scheduling_initializer(st_plugin_int *plugin)
+{
+
+  SchedulerFactory *factory= NULL;
 
   assert(plugin->plugin->init); /* Find poorly designed plugins */
 
-  if (plugin->plugin->init((void *)&thread_scheduler))
+  if (plugin->plugin->init((void *)&factory))
   {
     /* 
       TRANSLATORS> The leading word "scheduling" is the name
@@ -59,9 +77,12 @@ int scheduling_initializer(st_plugin_int *plugin)
       return 1;
   }
 
-  scheduler_inited= true;
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
+  if (factory != NULL)
+    registry.registerPlugin(factory);
+  
   /* We populate so we can find which plugin was initialized later on */
-  plugin->data= (void *)thread_scheduler;
+  plugin->data= (void *)factory;
 
   return 0;
 
@@ -72,7 +93,7 @@ int scheduling_finalizer(st_plugin_int *plugin)
   /* We know which one we initialized since its data pointer is filled */
   if (plugin->plugin->deinit && plugin->data)
   {
-    if (plugin->plugin->deinit((void *)thread_scheduler))
+    if (plugin->plugin->deinit((void *)plugin->data))
     {
       /* TRANSLATORS: The leading word "scheduling" is the name
          of the plugin api, and so should not be translated. */

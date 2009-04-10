@@ -28,6 +28,7 @@
 #include <drizzled/registry.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
+#include <drizzled/plugin_registry.h>
 #include <string>
 
 #include CSTDINT_H
@@ -36,12 +37,12 @@ using namespace std;
 
 drizzled::Registry<StorageEngine *> all_engines;
 
-static void add_storage_engine(StorageEngine *engine)
+void add_storage_engine(StorageEngine *engine)
 {
   all_engines.add(engine);
 }
 
-static void remove_storage_engine(StorageEngine *engine)
+void remove_storage_engine(StorageEngine *engine)
 {
   all_engines.remove(engine);
 }
@@ -710,8 +711,9 @@ int storage_engine_initializer(st_plugin_int *plugin)
     }
   }
 
+  Plugin_registry &registry= Plugin_registry::get_plugin_registry();
   if (engine != NULL)
-    add_storage_engine(engine);
+    registry.registerPlugin(engine);
 
   plugin->data= engine;
   plugin->isInited= true;

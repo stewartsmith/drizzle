@@ -27,5 +27,6 @@
 bool authenticate_user(Session *session, const char *password);
 int authentication_initializer(st_plugin_int *plugin);
 int authentication_finalizer(st_plugin_int *plugin);
+void add_authentication(Authentication *auth);
 
 #endif /* DRIZZLED_AUTHENTICATION_H */

@@ -25,5 +25,6 @@
 int protocol_initializer (st_plugin_int *plugin);
 int protocol_finalizer (st_plugin_int *plugin);
 Protocol *get_protocol();
+bool add_protocol_factory(ProtocolFactory *factory);
 
 #endif /* DRIZZLED_PROTOCOL_H */

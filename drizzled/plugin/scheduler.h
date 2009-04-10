@@ -29,7 +29,8 @@ private:
   uint32_t max_threads;
 public:
 
-  Scheduler(uint32_t threads) : max_threads(threads) {}
+  Scheduler(uint32_t threads)
+    : max_threads(threads) {}
 
   virtual ~Scheduler() {}
 
@@ -50,6 +51,19 @@ public:
   }
 
   virtual void post_kill_notification(Session *) {}
+};
+
+class SchedulerFactory
+{
+  std::string name;
+protected:
+  Scheduler *scheduler;
+public:
+  SchedulerFactory(std::string name_arg): name(name_arg), scheduler(NULL) {}
+  SchedulerFactory(const char *name_arg): name(name_arg), scheduler(NULL) {}
+  virtual ~SchedulerFactory() {}
+  virtual Scheduler *operator()(void)= 0;
+  std::string getName() {return name;}
 };
 
 #endif /* DRIZZLED_PLUGIN_SCHEDULING_H */

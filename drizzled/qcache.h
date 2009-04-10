@@ -24,6 +24,7 @@
 
 int qcache_initializer (st_plugin_int *plugin);
 int qcache_finalizer (st_plugin_int *plugin);
+void add_query_cache(QueryCache *handler);
 
 /* These are the functions called by the rest of the Drizzle server */
 bool qcache_try_fetch_and_send(Session *session, bool transactional);

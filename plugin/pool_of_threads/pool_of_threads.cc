@@ -394,6 +394,28 @@ public:
   }
 }; 
 
+
+class PoolOfThreadsFactory : public SchedulerFactory
+{
+public:
+  PoolOfThreadsFactory() : SchedulerFactory("pool_of_threads") {}
+  ~PoolOfThreadsFactory() { if (scheduler != NULL) delete scheduler; }
+  Scheduler *operator() ()
+  {
+    if (scheduler == NULL)
+    {
+      Pool_of_threads_scheduler *pot= new Pool_of_threads_scheduler(size);
+      if (pot->libevent_init())
+      {
+        delete pot;
+        return NULL;
+      }
+      scheduler= pot;
+    }
+    return scheduler;
+  }
+};
+
 /*
   Close and delete a connection.
 */
@@ -593,17 +615,12 @@ static int init(void *p)
 {
   assert(size != 0);
 
-  void **plugin= static_cast<void **>(p);
+  SchedulerFactory **plugin= static_cast<SchedulerFactory **>(p);
 
-  Pool_of_threads_scheduler *sched=
-    new Pool_of_threads_scheduler(size);
-  if (sched->libevent_init())
-  {
-    delete sched;
-    return 1;
-  }
+  PoolOfThreadsFactory *factory=
+    new PoolOfThreadsFactory();
 
-  *plugin= static_cast<void *>(sched);
+  *plugin= factory;
 
   return 0;
 }
@@ -614,8 +631,8 @@ static int init(void *p)
 
 static int deinit(void *p)
 {
-  Scheduler *sched= static_cast<Scheduler *>(p);
-  delete sched;
+  PoolOfThreadsFactory *factory= static_cast<PoolOfThreadsFactory *>(p);
+  delete factory;
 
   return 0;
 }

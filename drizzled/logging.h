@@ -31,5 +31,6 @@ int logging_finalizer(st_plugin_int *plugin);
 
 bool logging_pre_do (Session *session);
 bool logging_post_do (Session *session);
+void add_logger(Logging_handler *handler);
 
 #endif /* DRIZZLED_LOGGING_H */

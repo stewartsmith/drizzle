@@ -20,9 +20,21 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
+#include <drizzled/plugin/storage_engine.h>
+
 #include <string>
 #include <vector>
 #include <map>
+
+class StorageEngine;
+struct ST_SCHEMA_TABLE;
+class Function_builder;
+class Logging_handler;
+class Error_message_handler;
+class Authentication;
+class QueryCache;
+class SchedulerFactory;
+class ProtocolFactory;
 
 class Plugin_registry
 {
@@ -34,12 +46,23 @@ private:
 public:
   Plugin_registry() {}
 
+
   st_plugin_int *find(const LEX_STRING *name, int type);
 
   void add(st_mysql_plugin *handle, st_plugin_int *plugin);
 
   void get_list(uint32_t type, std::vector<st_plugin_int *> &plugins, bool active);
   static Plugin_registry& get_plugin_registry();
+
+  void registerPlugin(StorageEngine *engine);
+  void registerPlugin(ST_SCHEMA_TABLE *schema_table);
+  void registerPlugin(Function_builder *udf);
+  void registerPlugin(Logging_handler *handler);
+  void registerPlugin(Error_message_handler *handler);
+  void registerPlugin(Authentication *auth);
+  void registerPlugin(QueryCache *qcache);
+  void registerPlugin(SchedulerFactory *scheduler);
+  void registerPlugin(ProtocolFactory *protocol);
 
 };
 
