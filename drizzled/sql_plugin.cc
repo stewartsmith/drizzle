@@ -409,17 +409,6 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 
 
-st_plugin_int *plugin_lock_by_name(const LEX_STRING *name, int type)
-{
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-
-  if (! initialized)
-    return(0);
-
-  return registry.find(name, type);
-}
-
-
 static st_plugin_int *plugin_insert_or_reuse(struct st_plugin_int *plugin)
 {
   struct st_plugin_int *tmp;

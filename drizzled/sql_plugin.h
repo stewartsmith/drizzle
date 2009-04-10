@@ -128,7 +128,6 @@ extern int plugin_init(int *argc, char **argv, int init_flags);
 extern void plugin_shutdown(void);
 extern void my_print_help_inc_plugins(struct my_option *options, uint32_t size);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
-extern st_plugin_int *plugin_lock_by_name(const LEX_STRING *name, int type);
 extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
 extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
