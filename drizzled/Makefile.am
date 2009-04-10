@@ -355,7 +355,7 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
-		 $(top_builddir)/drizzled/serialize/libserialize.la \
+		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \

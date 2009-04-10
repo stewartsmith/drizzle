@@ -17,7 +17,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/scheduler.h>
-#include <drizzled/serialize/serialize.h>
 #include <drizzled/connect.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>

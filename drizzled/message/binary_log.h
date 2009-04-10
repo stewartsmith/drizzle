@@ -3,7 +3,7 @@
 #ifndef BINARY_LOG_H_INCLUDED
 #define BINARY_LOG_H_INCLUDED
 
-#include <drizzled/serialize/binary_log.pb.h>
+#include <drizzled/message/binary_log.pb.h>
 #include "binlog_encoding.h"
 
 #include <google/protobuf/io/zero_copy_stream.h>

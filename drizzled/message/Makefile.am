@@ -13,14 +13,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-LDADD= libserialize.la \
+LDADD= libdrizzledmessage.la \
 	${LIBPROTOBUF} \
 	${LIBUUID} \
 	${LIBINTL} \
 	${top_builddir}/gnulib/libgnu.la
 
 AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
-TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/serialize sh
+TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/message sh
 TESTS = check_length.sh
 
 noinst_PROGRAMS = \
@@ -36,9 +36,9 @@ noinst_PROGRAMS = \
 
 check_PROGRAMS = length
 
-noinst_LTLIBRARIES = libserialize.la
+noinst_LTLIBRARIES = libdrizzledmessage.la
 
-nodist_libserialize_la_SOURCES = \
+nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
 		replication_event.pb.cc \
@@ -56,7 +56,7 @@ noinst_HEADERS= \
 		binary_log.h \
 		binlog_encoding.h \
 		ioutil.h \
-		serialize.h
+		all.h
 
 
 binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
@@ -99,8 +99,8 @@ CLEANFILES =  binary_log.pb.h \
 
 SUFFIXES = .proto .pb.cc .pb.h
 .proto.pb.cc:
-	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
-		--cpp_out=${top_builddir}/drizzled/serialize $<
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/message \
+		--cpp_out=${top_builddir}/drizzled/message $<
 .proto.pb.h:
-	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/serialize \
-		--cpp_out=${top_builddir}/drizzled/serialize $<
+	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/message \
+		--cpp_out=${top_builddir}/drizzled/message $<

@@ -39,7 +39,7 @@
 #include "drizzled/item/empty_string.h"
 #include "drizzled/unireg.h" // for mysql_frm_type
 #include "drizzled/field/timestamp.h"
-#include "drizzled/serialize/table.pb.h"
+#include "drizzled/message/table.pb.h"
 
 using namespace std;
 

@@ -6,16 +6,16 @@
 #include <fstream>
 #include <string>
 #include <unistd.h>
-#include <drizzled/serialize/replication_event.pb.h>
+#include <drizzled/message/replication_event.pb.h>
 
 using namespace std;
-using namespace drizzle;
+using namespace drizzled::message;
 
 /*
   Example reader application for master.info data.
 */
 
-void printRecord(const ::drizzle::EventList *list)
+void printRecord(const ::drizzled::message::EventList *list)
 {
   int32_t e_size;
 

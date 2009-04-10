@@ -20,7 +20,7 @@
 #include CINTTYPES_H
 #include <string>
 #include <fstream>
-#include <drizzled/serialize/serialize.h>
+#include <drizzled/message/schema.pb.h>
 using namespace std;
 #include <drizzled/server_includes.h>
 #include <mysys/mysys_err.h>
@@ -177,7 +177,7 @@ static int write_schema_file(Session *session,
 			     const char *path, const char *name,
 			     HA_CREATE_INFO *create)
 {
-  drizzle::Schema db;
+  drizzled::message::Schema db;
   char schema_file_tmp[FN_REFLEN];
   string schema_file(path);
 
@@ -220,7 +220,7 @@ static int write_schema_file(Session *session,
 
 int load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
 {
-  drizzle::Schema db;
+  drizzled::message::Schema db;
   string buffer;
 
   memset(create, 0, sizeof(*create));

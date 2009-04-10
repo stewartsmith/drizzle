@@ -18,7 +18,7 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/replicator.h>
-#include <drizzled/serialize/serialize.h>
+#include <drizzled/message/all.h>
 
 #include <iostream>
 #include <fstream>
@@ -29,7 +29,7 @@ using namespace std;
 static bool isEnabled;
 static char *log_directory= NULL;
 
-static bool write_to_disk(int file, drizzle::EventList *list)
+static bool write_to_disk(int file, drizzled::message::EventList *list)
 {
   string buffer;
   size_t length;
@@ -86,15 +86,15 @@ public:
 
   virtual bool statement_hook(Session *session, const char *query, size_t)
   {
-    using namespace drizzle;
+    using namespace drizzled::message;
   
-    drizzle::EventList list;
+    drizzled::message::EventList list;
   
     if (isEnabled == false)
       return false;
     cerr << "Got into statement" <<endl;
   
-    drizzle::Event *record= list.add_event();
+    drizzled::message::Event *record= list.add_event();
     record->set_type(Event::DDL);
     record->set_autocommit(true);
     record->set_server_id("localhost");
@@ -108,15 +108,15 @@ public:
   
   virtual bool session_init_hook(Session *session)
   {
-    using namespace drizzle;
+    using namespace drizzled::message;
   
     if (isEnabled == false)
       return false;
   
-    drizzle::EventList *list= new drizzle::EventList;
+    drizzled::message::EventList *list= new drizzled::message::EventList;
     session->setReplicationData(list);
   
-    drizzle::Event *record= list->add_event();
+    drizzled::message::Event *record= list->add_event();
   
     record->set_type(Event::DDL);
     record->set_autocommit(true);
@@ -131,13 +131,13 @@ public:
   
   virtual bool row_insert_hook(Session *session, Table *)
   {
-    using namespace drizzle;
+    using namespace drizzled::message;
   
     if (isEnabled == false)
       return false;
   
-    drizzle::EventList *list= (drizzle::EventList *)session->getReplicationData();
-    drizzle::Event *record= list->add_event();
+    drizzled::message::EventList *list= (drizzled::message::EventList *)session->getReplicationData();
+    drizzled::message::Event *record= list->add_event();
   
     record->set_type(Event::INSERT);
     record->set_autocommit(true);
@@ -154,13 +154,13 @@ public:
                                const unsigned char *, 
                                const unsigned char *)
   {
-    using namespace drizzle;
+    using namespace drizzled::message;
   
     if (isEnabled == false)
       return false;
   
-    drizzle::EventList *list= (drizzle::EventList *)session->getReplicationData();
-    drizzle::Event *record= list->add_event();
+    drizzled::message::EventList *list= (drizzled::message::EventList *)session->getReplicationData();
+    drizzled::message::Event *record= list->add_event();
   
     record->set_type(Event::UPDATE);
     record->set_autocommit(true);
@@ -175,13 +175,13 @@ public:
   
   virtual bool row_delete_hook(Session *session, Table *)
   {
-    using namespace drizzle;
+    using namespace drizzled::message;
   
     if (isEnabled == false)
       return false;
   
-    drizzle::EventList *list= (drizzle::EventList *)session->getReplicationData();
-    drizzle::Event *record= list->add_event();
+    drizzled::message::EventList *list= (drizzled::message::EventList *)session->getReplicationData();
+    drizzled::message::Event *record= list->add_event();
   
     record->set_type(Event::DELETE);
     record->set_autocommit(true);
@@ -198,15 +198,15 @@ public:
                                     bool autocommit, bool commit)
   {
     bool error;
-    using namespace drizzle;
+    using namespace drizzled::message;
   
     if (isEnabled == false)
       return false;
   
     cerr << "Got into end" <<endl;
   
-    drizzle::EventList *list= (drizzle::EventList *)session->getReplicationData();
-    drizzle::Event *record= list->add_event();
+    drizzled::message::EventList *list= (drizzled::message::EventList *)session->getReplicationData();
+    drizzled::message::Event *record= list->add_event();
   
     record->set_type(Event::DELETE);
     record->set_autocommit(true);

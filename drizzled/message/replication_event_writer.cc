@@ -7,10 +7,10 @@
 #include <string>
 #include <uuid/uuid.h>
 
-#include <drizzled/serialize/replication_event.pb.h>
+#include <drizzled/message/replication_event.pb.h>
 
 using namespace std;
-using namespace drizzle;
+using namespace drizzled::message;
 
 static uint64_t query_id= 0;
 char transaction_id[37];
@@ -19,7 +19,7 @@ char transaction_id[37];
   Example script for reader a Drizzle master replication list.
 */
 
-void write_ddl(::drizzle::Event *record, const char *sql)
+void write_ddl(::drizzled::message::Event *record, const char *sql)
 {
   uuid_t uu;
 
@@ -35,7 +35,7 @@ void write_ddl(::drizzle::Event *record, const char *sql)
   record->set_sql(sql);
 }
 
-void write_insert(::drizzle::Event *record, const char *trx)
+void write_insert(::drizzled::message::Event *record, const char *trx)
 {
   Event::Value *value;
 
@@ -60,7 +60,7 @@ void write_insert(::drizzle::Event *record, const char *trx)
   value->add_val("2");
 }
 
-void write_delete(::drizzle::Event *record, const char *trx)
+void write_delete(::drizzled::message::Event *record, const char *trx)
 {
   Event::Value *value;
 
@@ -82,7 +82,7 @@ void write_delete(::drizzle::Event *record, const char *trx)
   value->add_val("2");
 }
 
-void write_update(::drizzle::Event *record, const char *trx)
+void write_update(::drizzled::message::Event *record, const char *trx)
 {
   Event::Value *value;
 
@@ -110,7 +110,7 @@ void write_update(::drizzle::Event *record, const char *trx)
   value->add_val("6");
 }
 
-void write_to_disk(int file, ::drizzle::EventList *list)
+void write_to_disk(int file, ::drizzled::message::EventList *list)
 {
   std::string buffer;
   size_t length;

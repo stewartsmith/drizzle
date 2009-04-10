@@ -16,5 +16,5 @@
 
 noinst_LTLIBRARIES= libprotobuf_replicator.la
 libprotobuf_replicator_la_SOURCES= protobuf_replicator.cc
-libprotobuf_replicator_la_LIBADD= $(top_builddir)/drizzled/serialize/libserialize.la
+libprotobuf_replicator_la_LIBADD= $(top_builddir)/drizzled/message/libdrizzledmessage.la
 libprotobuf_replicator_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
