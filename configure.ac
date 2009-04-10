@@ -1136,6 +1136,7 @@ DRIZZLE_CONFIGURE_PLUGINS([none])
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
+mysql_plugin_defs=`echo $mysql_plugin_defs | sed 's/, *$//'`
 AC_SUBST(mysql_plugin_defs)
 AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
 

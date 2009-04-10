@@ -270,6 +270,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin.h \
 		plugin_registry.h \
 		plugin_registry_impl.h \
+		plugin/applier.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
 		plugin/logging_handler.h \
@@ -285,7 +286,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		query_id.h \
 		registry.h \
 		rename.h \
-		replicator.h \
+		transaction_services.h \
 		scheduling.h \
 		security_context.h \
 		select_create.h \
@@ -568,7 +569,6 @@ drizzled_SOURCES = \
 		item.cc \
 		key.cc \
 		lock.cc \
-		log.cc \
 		logging.cc \
 		lookup_symbol.cc \
 		my_decimal.cc \
@@ -583,8 +583,8 @@ drizzled_SOURCES = \
 		query_id.cc \
 		records.cc \
 		rename.cc \
-		replicator.cc \
-                scheduling.cc \
+		transaction_services.cc \
+    scheduling.cc \
 		session.cc \
 		set_var.cc \
 		show.cc \

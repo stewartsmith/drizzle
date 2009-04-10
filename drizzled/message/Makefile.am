@@ -23,16 +23,15 @@ AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
 TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/message sh
 TESTS = check_length.sh
 
-noinst_PROGRAMS = \
-	       table_reader \
-	       table_writer \
-	       replication_event_reader \
-	       replication_event_writer \
-               master_list_reader \
-               master_list_writer \
-               binlog_reader \
-               binlog_writer \
-	       schema_reader
+noinst_PROGRAMS = table_reader \
+									table_writer \
+									transaction_reader \
+									transaction_writer \
+									master_list_reader \
+									master_list_writer \
+									binlog_reader \
+									binlog_writer \
+									schema_reader
 
 check_PROGRAMS = length
 
@@ -41,14 +40,14 @@ noinst_LTLIBRARIES = libdrizzledmessage.la
 nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
-		replication_event.pb.cc \
+		transaction.pb.cc \
 		schema.pb.cc \
 		table.pb.cc
 
 nodist_noinst_HEADERS= \
 		binary_log.pb.h \
 		master_list.pb.h \
-		replication_event.pb.h \
+		transaction.pb.h \
 		schema.pb.h \
 		table.pb.h
 
@@ -73,18 +72,24 @@ master_list_writer_SOURCES =  master_list_writer.cc
 
 master_list_reader_SOURCES =  master_list_reader.cc
 
-replication_event_writer_SOURCES =  replication_event_writer.cc
+transaction_writer_SOURCES =  transaction_writer.cc
 
-replication_event_reader_SOURCES =  replication_event_reader.cc
+transaction_reader_SOURCES =  transaction_reader.cc
 
 length_SOURCES = length.cc
 
-EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto replication_event.proto check_length.sh
+EXTRA_DIST = schema.proto \
+						 table.proto \
+						 binary_log.proto \
+						 master_list.proto \
+						 transaction.proto \
+						 check_length.sh
+
 BUILT_SOURCES = schema.pb.h \
-		table.pb.h \
-		binary_log.pb.h \
-		replication_event.pb.h \
-		master_list.pb.h
+								table.pb.h \
+								binary_log.pb.h \
+								transaction.pb.h \
+								master_list.pb.h
 
 CLEANFILES =  binary_log.pb.h \
               binary_log.pb.cc \
@@ -92,8 +97,8 @@ CLEANFILES =  binary_log.pb.h \
               schema.pb.cc \
               table.pb.h \
               table.pb.cc \
-	      replication_event.pb.h \
-              replication_event.pb.cc \
+	      			transaction.pb.h \
+              transaction.pb.cc \
               master_list.pb.h \
               master_list.pb.cc
 
