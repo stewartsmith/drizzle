@@ -804,37 +804,6 @@ void plugin_shutdown(void)
   global_variables_dynamic_size= 0;
 }
 
-/**
- *
- * all: List all plugins
- */
-bool plugin_foreach(Session *session, plugin_foreach_func *func, void *arg, bool all)
-{
-  struct st_plugin_int *plugin;
-
-  if (!initialized)
-    return(false);
- 
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-  vector<st_plugin_int *> plugins= registry.get_list(all);
-
-  vector<st_plugin_int *>::iterator plugin_iter;
-  for (plugin_iter= plugins.begin();
-       plugin_iter != plugins.end();
-       plugin_iter++)
-  {
-    plugin= *plugin_iter;
-    /* It will stop iterating on first engine error when "func" returns true */
-    if (plugin && func(session, plugin, arg))
-        goto err;
-  }
-
-  return false;
-err:
-  return true;
-}
-
-
 /****************************************************************************
   Internal type declarations for variables support
 ****************************************************************************/

@@ -131,8 +131,4 @@ extern bool plugin_register_builtin(struct st_mysql_plugin *plugin);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 
-typedef bool (plugin_foreach_func)(Session *session, st_plugin_int *plugin, void *arg);
-bool plugin_foreach(Session *session, plugin_foreach_func *func,
-                    void *arg, bool all= false);
-
 #endif /* DRIZZLE_SERVER_PLUGIN_H */
