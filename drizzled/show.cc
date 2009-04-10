@@ -145,88 +145,99 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
 ** List all table types supported
 ***************************************************************************/
 
-static bool show_plugins(Session *session, st_plugin_int *plugin, void *arg)
+class ShowPlugins : public unary_function<st_plugin_int *, bool>
 {
-  Table *table= (Table*) arg;
-  struct st_mysql_plugin *plug= plugin_decl(plugin);
-  struct st_plugin_dl *plugin_dl= plugin_dlib(plugin);
-  const CHARSET_INFO * const cs= system_charset_info;
+  Session *session;
+  Table *table;
+public:
+  ShowPlugins(Session *session_arg, Table *table_arg)
+    : session(session_arg), table(table_arg) {}
 
-  restore_record(table, s->default_values);
-
-  table->field[0]->store(plugin_name(plugin)->str,
-                         plugin_name(plugin)->length, cs);
-
-  if (plug->version)
+  result_type operator() (argument_type plugin)
   {
-    table->field[1]->store(plug->version, strlen(plug->version), cs);
-    table->field[1]->set_notnull();
+    struct st_mysql_plugin *plug= plugin_decl(plugin);
+    struct st_plugin_dl *plugin_dl= plugin_dlib(plugin);
+    const CHARSET_INFO * const cs= system_charset_info;
+  
+    restore_record(table, s->default_values);
+  
+    table->field[0]->store(plugin_name(plugin)->str,
+                           plugin_name(plugin)->length, cs);
+  
+    if (plug->version)
+    {
+      table->field[1]->store(plug->version, strlen(plug->version), cs);
+      table->field[1]->set_notnull();
+    }
+    else
+      table->field[1]->set_null();
+  
+    if (plugin->isInited)
+      table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
+    else
+      table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
+  
+    if (plugin_dl)
+    {
+      table->field[3]->store(plugin_dl->dl.str, plugin_dl->dl.length, cs);
+      table->field[3]->set_notnull();
+    }
+    else
+    {
+      table->field[3]->set_null();
+    }
+  
+    if (plug->author)
+    {
+      table->field[4]->store(plug->author, strlen(plug->author), cs);
+      table->field[4]->set_notnull();
+    }
+    else
+      table->field[4]->set_null();
+  
+    if (plug->descr)
+    {
+      table->field[5]->store(plug->descr, strlen(plug->descr), cs);
+      table->field[5]->set_notnull();
+    }
+    else
+      table->field[5]->set_null();
+  
+    switch (plug->license) {
+    case PLUGIN_LICENSE_GPL:
+      table->field[6]->store(PLUGIN_LICENSE_GPL_STRING,
+                             strlen(PLUGIN_LICENSE_GPL_STRING), cs);
+      break;
+    case PLUGIN_LICENSE_BSD:
+      table->field[6]->store(PLUGIN_LICENSE_BSD_STRING,
+                             strlen(PLUGIN_LICENSE_BSD_STRING), cs);
+      break;
+    case PLUGIN_LICENSE_LGPL:
+      table->field[6]->store(PLUGIN_LICENSE_LGPL_STRING,
+                             strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
+      break;
+    default:
+      table->field[6]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
+                             strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
+      break;
+    }
+    table->field[6]->set_notnull();
+  
+    return schema_table_store_record(session, table);
   }
-  else
-    table->field[1]->set_null();
-
-  if (plugin->isInited)
-    table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
-  else
-    table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
-
-  if (plugin_dl)
-  {
-    table->field[3]->store(plugin_dl->dl.str, plugin_dl->dl.length, cs);
-    table->field[3]->set_notnull();
-  }
-  else
-  {
-    table->field[3]->set_null();
-  }
-
-  if (plug->author)
-  {
-    table->field[4]->store(plug->author, strlen(plug->author), cs);
-    table->field[4]->set_notnull();
-  }
-  else
-    table->field[4]->set_null();
-
-  if (plug->descr)
-  {
-    table->field[5]->store(plug->descr, strlen(plug->descr), cs);
-    table->field[5]->set_notnull();
-  }
-  else
-    table->field[5]->set_null();
-
-  switch (plug->license) {
-  case PLUGIN_LICENSE_GPL:
-    table->field[6]->store(PLUGIN_LICENSE_GPL_STRING,
-                           strlen(PLUGIN_LICENSE_GPL_STRING), cs);
-    break;
-  case PLUGIN_LICENSE_BSD:
-    table->field[6]->store(PLUGIN_LICENSE_BSD_STRING,
-                           strlen(PLUGIN_LICENSE_BSD_STRING), cs);
-    break;
-  case PLUGIN_LICENSE_LGPL:
-    table->field[6]->store(PLUGIN_LICENSE_LGPL_STRING,
-                           strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
-    break;
-  default:
-    table->field[6]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
-                           strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
-    break;
-  }
-  table->field[6]->set_notnull();
-
-  return schema_table_store_record(session, table);
-}
+};
 
 
 int fill_plugins(Session *session, TableList *tables, COND *)
 {
   Table *table= tables->table;
 
-  if (plugin_foreach(session, show_plugins, table, ~2))
-    return(1);
-
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
+  vector<st_plugin_int *> plugins= registry.get_list(true);
+  vector<st_plugin_int *>::iterator iter=
+    find_if(plugins.begin(), plugins.end(), ShowPlugins(session, table));
+  if (iter != plugins.end())
+    return 1;
   return(0);
 }
 
