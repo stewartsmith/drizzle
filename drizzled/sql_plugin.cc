@@ -24,7 +24,7 @@
 #include <drizzled/protocol.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
-#include <drizzled/replicator.h>
+#include <drizzled/transaction_services.h>
 #include <drizzled/show.h>
 #include <drizzled/handler.h>
 #include <drizzled/set_var.h>
