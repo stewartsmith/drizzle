@@ -3171,29 +3171,29 @@ void setup_ha_alter_flags(Alter_info *alter_info, HA_ALTER_FLAGS *alter_flags)
   uint32_t flags= alter_info->flags;
 
   if (ALTER_ADD_COLUMN & flags)
-    *alter_flags|= HA_ADD_COLUMN;
+    alter_flags->set(HA_ADD_COLUMN);
   if (ALTER_DROP_COLUMN & flags)
-    *alter_flags|= HA_DROP_COLUMN;
+    alter_flags->set(HA_DROP_COLUMN);
   if (ALTER_RENAME & flags)
-    *alter_flags|= HA_RENAME_TABLE;
+    alter_flags->set(HA_RENAME_TABLE);
   if (ALTER_CHANGE_COLUMN & flags)
-    *alter_flags|= HA_CHANGE_COLUMN;
+    alter_flags->set(HA_CHANGE_COLUMN);
   if (ALTER_COLUMN_DEFAULT & flags)
-    *alter_flags|= HA_COLUMN_DEFAULT_VALUE;
+    alter_flags->set(HA_COLUMN_DEFAULT_VALUE);
   if (ALTER_COLUMN_STORAGE & flags)
-    *alter_flags|= HA_COLUMN_STORAGE;
+    alter_flags->set(HA_COLUMN_STORAGE);
   if (ALTER_COLUMN_FORMAT & flags)
-    *alter_flags|= HA_COLUMN_FORMAT;
+    alter_flags->set(HA_COLUMN_FORMAT);
   if (ALTER_COLUMN_ORDER & flags)
-    *alter_flags|= HA_ALTER_COLUMN_ORDER;
+    alter_flags->set(HA_ALTER_COLUMN_ORDER);
   if (ALTER_STORAGE & flags)
-    *alter_flags|= HA_ALTER_STORAGE;
+    alter_flags->set(HA_ALTER_STORAGE);
   if (ALTER_ROW_FORMAT & flags)
-    *alter_flags|= HA_ALTER_ROW_FORMAT;
+    alter_flags->set(HA_ALTER_ROW_FORMAT);
   if (ALTER_RECREATE & flags)
-    *alter_flags|= HA_RECREATE;
+    alter_flags->set(HA_RECREATE);
   if (ALTER_FOREIGN_KEY & flags)
-    *alter_flags|= HA_ALTER_FOREIGN_KEY;
+    alter_flags->set(HA_ALTER_FOREIGN_KEY);
 }
 
 
@@ -3332,21 +3332,21 @@ compare_tables(Session *session,
       Check what has changed and set alter_flags
     */
     if (table->s->fields < alter_info->create_list.elements)
-      *alter_flags|= HA_ADD_COLUMN;
+      alter_flags->set(HA_ADD_COLUMN);
     else if (table->s->fields > alter_info->create_list.elements)
-      *alter_flags|= HA_DROP_COLUMN;
+      alter_flags->set(HA_DROP_COLUMN);
     if (create_info->db_type != table->s->db_type() ||
         create_info->used_fields & HA_CREATE_USED_ENGINE)
-      *alter_flags|= HA_ALTER_STORAGE_ENGINE;
+      alter_flags->set(HA_ALTER_STORAGE_ENGINE);
     if (create_info->used_fields & HA_CREATE_USED_CHARSET)
-      *alter_flags|= HA_CHANGE_CHARACTER_SET;
+      alter_flags->set(HA_CHANGE_CHARACTER_SET);
     if (create_info->used_fields & HA_CREATE_USED_DEFAULT_CHARSET)
-      *alter_flags|= HA_SET_DEFAULT_CHARACTER_SET;
+      alter_flags->set(HA_SET_DEFAULT_CHARACTER_SET);
     if (alter_info->flags & ALTER_RECREATE)
-      *alter_flags|= HA_RECREATE;
+      alter_flags->set(HA_RECREATE);
     /* TODO check for ADD/DROP FOREIGN KEY */
     if (alter_info->flags & ALTER_FOREIGN_KEY)
-      *alter_flags|=  HA_ALTER_FOREIGN_KEY;
+      alter_flags->set(HA_ALTER_FOREIGN_KEY);
   }
   /*
     Go through fields and check if the original ones are compatible
@@ -3371,7 +3371,7 @@ compare_tables(Session *session,
     {
       /* Evaluate changes bitmap and send to check_if_incompatible_data() */
       if (!(table_changes_local= field->is_equal(new_field)))
-        *alter_flags|= HA_ALTER_COLUMN_TYPE;
+        alter_flags->set(HA_ALTER_COLUMN_TYPE);
 
       /*
         Check if the altered column is a stored virtual field.
@@ -3379,7 +3379,7 @@ compare_tables(Session *session,
         the expression functions are not equal.
       */
       if (field->is_stored && field->vcol_info)
-        *alter_flags|= HA_ALTER_STORED_VCOL;
+        alter_flags->set(HA_ALTER_STORED_VCOL);
 
       /* Check if field was renamed */
       field->flags&= ~FIELD_IS_RENAMED;
@@ -3388,19 +3388,19 @@ compare_tables(Session *session,
                         new_field->field_name))
       {
         field->flags|= FIELD_IS_RENAMED;
-        *alter_flags|= HA_ALTER_COLUMN_NAME;
+        alter_flags->set(HA_ALTER_COLUMN_NAME);
       }
 
       *table_changes&= table_changes_local;
       if (table_changes_local == IS_EQUAL_PACK_LENGTH)
-        *alter_flags|= HA_ALTER_COLUMN_TYPE;
+        alter_flags->set(HA_ALTER_COLUMN_TYPE);
 
       /* Check that NULL behavior is same for old and new fields */
       if ((new_field->flags & NOT_NULL_FLAG) !=
           (uint32_t) (field->flags & NOT_NULL_FLAG))
       {
         *table_changes= IS_EQUAL_NO;
-        *alter_flags|= HA_ALTER_COLUMN_NULLABLE;
+        alter_flags->set(HA_ALTER_COLUMN_NULLABLE);
       }
     }
 
@@ -3447,12 +3447,12 @@ compare_tables(Session *session,
       {
         /* Unique key. Check for "PRIMARY". */
         if (is_primary_key(table_key))
-          *alter_flags|= HA_DROP_PK_INDEX;
+          alter_flags->set(HA_DROP_PK_INDEX);
         else
-          *alter_flags|= HA_DROP_UNIQUE_INDEX;
+          alter_flags->set(HA_DROP_UNIQUE_INDEX);
       }
       else
-        *alter_flags|= HA_DROP_INDEX;
+        alter_flags->set(HA_DROP_INDEX);
       *table_changes= IS_EQUAL_NO;
       continue;
     }
@@ -3467,12 +3467,12 @@ compare_tables(Session *session,
       {
         // Unique key. Check for "PRIMARY".
         if (is_primary_key(table_key))
-          *alter_flags|= HA_ALTER_PK_INDEX;
+          alter_flags->set(HA_ALTER_PK_INDEX);
         else
-          *alter_flags|= HA_ALTER_UNIQUE_INDEX;
+          alter_flags->set(HA_ALTER_UNIQUE_INDEX);
       }
       else
-        *alter_flags|= HA_ALTER_INDEX;
+        alter_flags->set(HA_ALTER_INDEX);
       goto index_changed;
     }
 
@@ -3496,12 +3496,12 @@ compare_tables(Session *session,
         {
           /* Unique key. Check for "PRIMARY" */
           if (is_primary_key(table_key))
-            *alter_flags|= HA_ALTER_PK_INDEX;
+            alter_flags->set(HA_ALTER_PK_INDEX);
           else
-            *alter_flags|= HA_ALTER_UNIQUE_INDEX;
+            alter_flags->set(HA_ALTER_UNIQUE_INDEX);
         }
         else
-          *alter_flags|= HA_ALTER_INDEX;
+          alter_flags->set(HA_ALTER_INDEX);
         goto index_changed;
       }
     }
@@ -3558,12 +3558,12 @@ compare_tables(Session *session,
       {
         /* Unique key. Check for "PRIMARY" */
         if (is_primary_key(new_key))
-          *alter_flags|= HA_ADD_PK_INDEX;
+          alter_flags->set(HA_ADD_PK_INDEX);
         else
-        *alter_flags|= HA_ADD_UNIQUE_INDEX;
+        alter_flags->set(HA_ADD_UNIQUE_INDEX);
       }
       else
-        *alter_flags|= HA_ADD_INDEX;
+        alter_flags->set(HA_ADD_INDEX);
       *table_changes= IS_EQUAL_NO;
     }
   }
@@ -4657,7 +4657,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
       can do the change on-line
     */
     if (new_name == table_name && new_db == db &&
-        ha_alter_flags.is_set())
+        ha_alter_flags.any())
     {
       Alter_info tmp_alter_info(*alter_info, session->mem_root);
 
