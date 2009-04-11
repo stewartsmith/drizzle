@@ -130,7 +130,7 @@ StorageEngine* innodb_engine_ptr= NULL;
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 /* These must be weak global variables in the dynamic plugin. */
 #ifdef __WIN__
-struct st_mysql_plugin*	builtin_innobase_plugin_ptr;
+struct drizzled_plugin_manifest*	builtin_innobase_plugin_ptr;
 #else
 int builtin_innobase_plugin;
 #endif /* __WIN__ */
@@ -9516,7 +9516,7 @@ innodb_plugin_init(void)
 
 	/* Copy the system variables. */
 
-	struct st_mysql_plugin*		builtin;
+	struct drizzled_plugin_manifest*		builtin;
 	struct st_mysql_sys_var**	sta; /* static parameters */
 	struct st_mysql_sys_var**	dyn; /* dynamic parameters */
 
@@ -9529,7 +9529,7 @@ innodb_plugin_init(void)
 	builtin = builtin_innobase_plugin_ptr;
 #else
 
-	builtin = (struct st_mysql_plugin*) &builtin_innobase_plugin;
+	builtin = (struct drizzled_plugin_manifest*) &builtin_innobase_plugin;
 #endif
 
 	for (sta = builtin->system_vars; *sta != NULL; sta++) {

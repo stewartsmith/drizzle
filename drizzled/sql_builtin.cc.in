@@ -16,13 +16,13 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin.h>
 
-typedef struct st_mysql_plugin builtin_plugin[];
+typedef struct drizzled_plugin_manifest builtin_plugin[];
 
 extern builtin_plugin 
-  @mysql_plugin_defs@;
+  @drizzled_plugin_defs@;
 
-struct st_mysql_plugin *mysqld_builtins[]=
+struct drizzled_plugin_manifest *mysqld_builtins[]=
 {
-  @mysql_plugin_defs@,(struct st_mysql_plugin *)0
+  @drizzled_plugin_defs@,(struct drizzled_plugin_manifest *)0
 };
 

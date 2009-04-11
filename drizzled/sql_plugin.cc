@@ -44,7 +44,7 @@
 
 using namespace std;
 
-extern struct st_mysql_plugin *mysqld_builtins[];
+extern struct drizzled_plugin_manifest *mysqld_builtins[];
 
 char *opt_plugin_load= NULL;
 char *opt_plugin_dir_ptr;
@@ -332,7 +332,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
     return(0);
   }
 
-  plugin_dl.plugins= (struct st_mysql_plugin *)sym;
+  plugin_dl.plugins= (struct drizzled_plugin_manifest *)sym;
 
   /* Duplicate and convert dll name */
   plugin_dl.dl.length= dl->length * files_charset_info->mbmaxlen + 1;
@@ -412,7 +412,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
   struct st_plugin_int tmp;
-  struct st_mysql_plugin *plugin;
+  struct drizzled_plugin_manifest *plugin;
   if (! initialized)
     return(0);
 
@@ -574,8 +574,8 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 int plugin_init(int *argc, char **argv, int flags)
 {
   uint32_t idx;
-  struct st_mysql_plugin **builtins;
-  struct st_mysql_plugin *plugin;
+  struct drizzled_plugin_manifest **builtins;
+  struct drizzled_plugin_manifest *plugin;
   struct st_plugin_int tmp, *plugin_ptr;
   MEM_ROOT tmp_root;
 
@@ -692,7 +692,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
   char buffer[FN_REFLEN];
   LEX_STRING name= {buffer, 0}, dl= {NULL, 0}, *str= &name;
   struct st_plugin_dl *plugin_dl;
-  struct st_mysql_plugin *plugin;
+  struct drizzled_plugin_manifest *plugin;
   char *p= buffer;
   while (list)
   {

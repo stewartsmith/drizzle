@@ -155,7 +155,7 @@ public:
 
   result_type operator() (argument_type plugin)
   {
-    struct st_mysql_plugin *plug= plugin_decl(plugin);
+    struct drizzled_plugin_manifest *plug= plugin_decl(plugin);
     const CHARSET_INFO * const cs= system_charset_info;
   
     restore_record(table, s->default_values);

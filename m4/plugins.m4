@@ -439,7 +439,7 @@ dnl Although this is "pretty", it breaks libdrizzled build
         ])
        ])
       ])
-      mysql_plugin_defs="[builtin_]$2[_plugin], $mysql_plugin_defs"
+      drizzled_plugin_defs="[builtin_]$2[_plugin], $drizzled_plugin_defs"
       [with_plugin_]$2=yes
       AC_MSG_RESULT([yes])
       m4_ifdef([$11],[

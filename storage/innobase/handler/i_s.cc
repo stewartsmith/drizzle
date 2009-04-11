@@ -403,7 +403,7 @@ innodb_trx_init(
 	return(0);
 }
 
-UNIV_INTERN struct st_mysql_plugin	i_s_innodb_trx =
+UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_trx =
 {
 	/* plugin name */
 	/* const char* */
@@ -668,7 +668,7 @@ innodb_locks_init(
 	return(0);
 }
 
-UNIV_INTERN struct st_mysql_plugin	i_s_innodb_locks =
+UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_locks =
 {
 	/* plugin name */
 	/* const char* */
@@ -843,7 +843,7 @@ innodb_lock_waits_init(
 	return(0);
 }
 
-UNIV_INTERN struct st_mysql_plugin	i_s_innodb_lock_waits =
+UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_lock_waits =
 {
 	/* plugin name */
 	/* const char* */
@@ -1162,7 +1162,7 @@ i_s_cmp_reset_init(
 	return(0);
 }
 
-UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp =
+UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_cmp =
 {
 	/* plugin name */
 	/* const char* */
@@ -1203,7 +1203,7 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp =
 	STRUCT_FLD(__reserved1, NULL)
 };
 
-UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmp_reset =
+UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_cmp_reset =
 {
 	/* plugin name */
 	/* const char* */
@@ -1411,7 +1411,7 @@ i_s_cmpmem_reset_init(
 	return(0);
 }
 
-UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem =
+UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_cmpmem =
 {
 	/* plugin name */
 	/* const char* */
@@ -1452,7 +1452,7 @@ UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem =
 	STRUCT_FLD(__reserved1, NULL)
 };
 
-UNIV_INTERN struct st_mysql_plugin	i_s_innodb_cmpmem_reset =
+UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_cmpmem_reset =
 {
 	/* plugin name */
 	/* const char* */

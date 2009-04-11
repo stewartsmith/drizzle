@@ -48,16 +48,16 @@ const char * const PLUGIN_LICENSE_LGPL_STRING="LGPL";
 /*
   Macros for beginning and ending plugin declarations. Between
   drizzle_declare_plugin and drizzle_declare_plugin_end there should
-  be a st_mysql_plugin struct for each plugin to be declared.
+  be a drizzled_plugin_manifest struct for each plugin to be declared.
 */
 
 
 #ifndef DRIZZLE_DYNAMIC_PLUGIN
 #define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-struct st_mysql_plugin DECLS[]= {
+struct drizzled_plugin_manifest DECLS[]= {
 #else
 #define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-struct st_mysql_plugin _mysql_plugin_declarations_[]= {
+struct drizzled_plugin_manifest _mysql_plugin_declarations_[]= {
 #endif
 
 #define drizzle_declare_plugin(NAME) \

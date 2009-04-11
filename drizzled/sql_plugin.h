@@ -65,13 +65,13 @@ typedef enum enum_mysql_show_type SHOW_TYPE;
 typedef struct st_mysql_show_var SHOW_VAR;
 
 /* A handle for the dynamic library containing a plugin or plugins. */
-struct st_mysql_plugin;
+struct drizzled_plugin_manifest;
 
 struct st_plugin_dl
 {
   LEX_STRING dl;
   void *handle;
-  struct st_mysql_plugin *plugins;
+  struct drizzled_plugin_manifest *plugins;
 };
 
 /* A handle of a plugin */
@@ -79,7 +79,7 @@ struct st_plugin_dl
 struct st_plugin_int
 {
   LEX_STRING name;
-  struct st_mysql_plugin *plugin;
+  struct drizzled_plugin_manifest *plugin;
   struct st_plugin_dl *plugin_dl;
   bool isInited;
   void *data;                   /* plugin type specific, e.g. StorageEngine */
@@ -101,7 +101,7 @@ typedef int (*plugin_type_init)(PluginRegistry &);
   Plugin description structure.
 */
 
-struct st_mysql_plugin
+struct drizzled_plugin_manifest
 {
   const char *name;          /* plugin name (for SHOW PLUGINS)               */
   const char *version;       /* plugin version (for SHOW PLUGINS)            */
@@ -126,7 +126,7 @@ extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
 extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
-extern bool plugin_register_builtin(struct st_mysql_plugin *plugin);
+extern bool plugin_register_builtin(struct drizzled_plugin_manifest *plugin);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 
