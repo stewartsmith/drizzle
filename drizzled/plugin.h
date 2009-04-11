@@ -67,13 +67,25 @@ __DRIZZLE_DECLARE_PLUGIN(NAME, \
 #define drizzle_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0}}
 
 /*
+  the following flags are valid for plugin_init()
+*/
+#define PLUGIN_INIT_SKIP_DYNAMIC_LOADING 1
+#define PLUGIN_INIT_SKIP_PLUGIN_TABLE    2
+#define PLUGIN_INIT_SKIP_INITIALIZATION  4
+
+#define INITIAL_LEX_PLUGIN_LIST_SIZE    16
+
+/*
   declarations for SHOW STATUS support in plugins
 */
 enum enum_mysql_show_type
 {
   SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
   SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
-  SHOW_ARRAY, SHOW_FUNC, SHOW_DOUBLE, SHOW_SIZE
+  SHOW_ARRAY, SHOW_FUNC, SHOW_KEY_CACHE_LONG, SHOW_KEY_CACHE_LONGLONG,
+  SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS, SHOW_HAVE, 
+  SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH,
+  SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
 };
 
 struct st_mysql_show_var {
@@ -81,6 +93,9 @@ struct st_mysql_show_var {
   char *value;
   enum enum_mysql_show_type type;
 };
+
+typedef enum enum_mysql_show_type SHOW_TYPE;
+typedef struct st_mysql_show_var SHOW_VAR;
 
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024

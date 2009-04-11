@@ -20,12 +20,12 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
-#include <drizzled/plugin/storage_engine.h>
 
 #include <string>
 #include <vector>
 #include <map>
 
+struct st_plugin_int;
 class StorageEngine;
 struct ST_SCHEMA_TABLE;
 class Function_builder;

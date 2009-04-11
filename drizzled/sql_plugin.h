@@ -38,31 +38,12 @@
 
 #include <drizzled/lex_string.h>
 #include <mysys/my_alloc.h>
+#include <drizzled/plugin_registry.h>
+#include <drizzled/plugin.h>
 
 class sys_var;
 class Session;
 
-/*
-  the following flags are valid for plugin_init()
-*/
-#define PLUGIN_INIT_SKIP_DYNAMIC_LOADING 1
-#define PLUGIN_INIT_SKIP_PLUGIN_TABLE    2
-#define PLUGIN_INIT_SKIP_INITIALIZATION  4
-
-#define INITIAL_LEX_PLUGIN_LIST_SIZE    16
-
-/*
-  the following #define adds server-only members to enum_mysql_show_type,
-  that is defined in plugin.h
-*/
-#define SHOW_FUNC    SHOW_FUNC, SHOW_KEY_CACHE_LONG, SHOW_KEY_CACHE_LONGLONG, \
-                     SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS, SHOW_HAVE,   \
-                     SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH, \
-                     SHOW_LONGLONG_STATUS
-#include <drizzled/plugin.h>
-#undef SHOW_FUNC
-typedef enum enum_mysql_show_type SHOW_TYPE;
-typedef struct st_mysql_show_var SHOW_VAR;
 
 /* A handle for the dynamic library containing a plugin or plugins. */
 struct drizzled_plugin_manifest;
@@ -92,7 +73,6 @@ struct st_plugin_int
 #define plugin_name(pi) (&((pi)->name))
 #define plugin_equals(p1,p2) ((p1) && (p2) && (p1) == (p2))
 
-#include <drizzled/plugin_registry.h>
 
 typedef int (*plugin_type_init)(PluginRegistry &);
 
