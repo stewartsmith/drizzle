@@ -65,20 +65,6 @@ static bool check_fields(Session *session, List<Item> &items)
   return false;
 }
 
-/*
- * This helper function returns true if map1 is a subset of
- * map2; otherwise it returns false.
- */
-static bool is_bitmap_subset(bitset<MAX_FIELDS> *map1, bitset<MAX_FIELDS> *map2)
-{
-  bitset<MAX_FIELDS> tmp1= *map2;
-  tmp1.flip();
-  bitset<MAX_FIELDS> tmp2= *map1 & tmp1;
-  return (!tmp2.any());
-}
-
-
-
 /**
   Re-read record if more columns are needed for error message.
 
@@ -497,7 +483,7 @@ int mysql_update(Session *session, TableList *table_list,
   */
   can_compare_record= (!(table->file->ha_table_flags() &
                          HA_PARTIAL_COLUMN_READ) ||
-                       is_bitmap_subset(table->write_set, table->read_set));
+                       isBitmapSubset(table->write_set, table->read_set));
 
   while (!(error=info.read_record(&info)) && !session->killed)
   {
@@ -1336,8 +1322,8 @@ bool multi_update::send_data(List<Item> &)
       bool can_compare_record;
       can_compare_record= (!(table->file->ha_table_flags() &
                              HA_PARTIAL_COLUMN_READ) ||
-                           is_bitmap_subset(table->write_set,
-                                            table->read_set));
+                           isBitmapSubset(table->write_set,
+                                          table->write_set));
       table->status|= STATUS_UPDATED;
       store_record(table,record[1]);
       if (fill_record(session, *fields_for_table[offset],
@@ -1536,8 +1522,8 @@ int multi_update::do_updates()
 
     can_compare_record= (!(table->file->ha_table_flags() &
                            HA_PARTIAL_COLUMN_READ) ||
-                         is_bitmap_subset(table->write_set,
-                                          table->read_set));
+                         isBitmapSubset(table->write_set,
+                                        table->read_set));
 
     for (;;)
     {

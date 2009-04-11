@@ -691,18 +691,6 @@ static int last_uniq_key(Table *table,uint32_t keynr)
 
 
 /*
- * This helper function returns true if map1 is a subset of
- * map2; otherwise it returns false.
- */
-static bool is_bitmap_subset(bitset<MAX_FIELDS> *map1, bitset<MAX_FIELDS> *map2)
-{
-  bitset<MAX_FIELDS> tmp1= *map2;
-  tmp1.flip();
-  bitset<MAX_FIELDS> tmp2= *map1 & tmp1;
-  return (!tmp2.any());
-}
-
-/*
   Write a record to table with optional deleting of conflicting records,
   invoke proper triggers if needed.
 
@@ -840,7 +828,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             table->next_number_field->val_int());
         info->touched++;
         if ((table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
-             !is_bitmap_subset(table->write_set, table->read_set)) ||
+             !isBitmapSubset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
           if ((error=table->file->ha_update_row(table->record[1],

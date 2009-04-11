@@ -3751,7 +3751,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint32_t  copy_func_count= param->func_count;
   uint32_t  hidden_null_count, hidden_null_pack_length, hidden_field_count;
   uint32_t  blob_count,group_null_items, string_count;
-  uint32_t  temp_pool_slot=MY_BIT_NONE;
+  uint32_t  temp_pool_slot= MY_BIT_NONE;
   uint32_t fieldnr= 0;
   ulong reclength, string_total_length;
   bool  using_unique_constraint= 0;
@@ -3773,7 +3773,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   status_var_increment(session->status_var.created_tmp_tables);
 
   if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
-    temp_pool_slot = bitmap_lock_set_next(&temp_pool);
+    temp_pool_slot = temp_pool.setNextBit();
 
   if (temp_pool_slot != MY_BIT_NONE) // we got a slot
     sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
@@ -3849,14 +3849,14 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         NULL))
   {
     if (temp_pool_slot != MY_BIT_NONE)
-      bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
+      temp_pool.resetBit(temp_pool_slot);
     return(NULL);				/* purecov: inspected */
   }
   /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
   {
     if (temp_pool_slot != MY_BIT_NONE)
-      bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
+      temp_pool.resetBit(temp_pool_slot);
     free_root(&own_root, MYF(0));               /* purecov: inspected */
     return(NULL);				/* purecov: inspected */
   }
@@ -3878,7 +3878,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
   table->map=1;
-  table->temp_pool_slot = temp_pool_slot;
+  table->temp_pool_slot= temp_pool_slot;
   table->copy_blobs= 1;
   table->in_use= session;
   table->quick_keys.init();
@@ -4408,7 +4408,7 @@ err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
   if (temp_pool_slot != MY_BIT_NONE)
-    bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
+    temp_pool.resetBit(temp_pool_slot);
   return(NULL);				/* purecov: inspected */
 }
 
@@ -4718,7 +4718,7 @@ void Table::free_tmp_table(Session *session)
   free_io_cache(this);
 
   if (temp_pool_slot != MY_BIT_NONE)
-    bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
+    temp_pool.resetBit(temp_pool_slot);
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);

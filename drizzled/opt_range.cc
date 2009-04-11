@@ -127,19 +127,6 @@ static inline ha_rows double2rows(double x)
     return static_cast<ha_rows>(x);
 }
 
-/*
- * This helper function returns true if map1 is a subset of
- * map2; otherwise it returns false.
- */
-static bool is_bitmap_subset(const bitset<MAX_FIELDS> *map1, const bitset<MAX_FIELDS> *map2)
-{
-  bitset<MAX_FIELDS> tmp1= *map2;
-  tmp1.flip();
-  bitset<MAX_FIELDS> tmp2= *map1 & tmp1;
-  return (!tmp2.any());
-}
-
-
 static int sel_cmp(Field *f,unsigned char *a,unsigned char *b,uint8_t a_flag,uint8_t b_flag);
 
 static unsigned char is_null_string[2]= {1,0};
@@ -3143,8 +3130,8 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
     info->index_records += info->param->table->quick_rows[ror_scan->keynr];
     info->index_scan_costs += ror_scan->index_read_cost;
     info->covered_fields |= ror_scan->covered_fields;
-    if (!info->is_covering && is_bitmap_subset(&info->param->needed_fields,
-                                               &info->covered_fields))
+    if (!info->is_covering && isBitmapSubset(&info->param->needed_fields,
+                                             &info->covered_fields))
     {
       info->is_covering= true;
     }
@@ -3380,25 +3367,6 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const PARAM *param, SEL_TREE *tree,
 }
 
 /*
- * Helper method to find the position of the first bit in the
- * given bitset that is set to 1.
- * If no bit is set in the given bitset, return MY_BIT_NONE.
- */
-static uint32_t get_first_bit_on_pos(bitset<MAX_FIELDS> &bitmap)
-{
-  uint32_t first_bit_on= MY_BIT_NONE;
-  for (int idx= 0; idx < MAX_FIELDS; idx++)
-  {
-    if (bitmap.test(idx))
-    {
-      first_bit_on= idx;
-      break;
-    }
-  } 
-  return first_bit_on;
-}
-
-/*
   Get best covering ROR-intersection.
   SYNOPSIS
     get_best_covering_ror_intersect()
@@ -3475,7 +3443,7 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
       (*scan)->covered_fields &= covered_fields->flip();
       covered_fields->flip();
       (*scan)->used_fields_covered= (*scan)->covered_fields.count();
-      (*scan)->first_uncovered_field= get_first_bit_on_pos((*scan)->covered_fields);
+      (*scan)->first_uncovered_field= getFirstBitPos((*scan)->covered_fields);
     }
 
     my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark, sizeof(ROR_SCAN_INFO*),
@@ -3492,7 +3460,7 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
       return NULL;
     /* F=F-covered by first(I) */
     *covered_fields |= (*ror_scan_mark)->covered_fields;
-    all_covered= is_bitmap_subset(&param->needed_fields, covered_fields);
+    all_covered= isBitmapSubset(&param->needed_fields, covered_fields);
   } while ((++ror_scan_mark < ror_scans_end) && !all_covered);
 
   if (!all_covered || (ror_scan_mark - tree->ror_scans) == 1)
