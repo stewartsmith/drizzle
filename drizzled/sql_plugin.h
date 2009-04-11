@@ -82,7 +82,6 @@ struct st_plugin_int
   struct drizzled_plugin_manifest *plugin;
   struct st_plugin_dl *plugin_dl;
   bool isInited;
-  void *data;                   /* plugin type specific, e.g. StorageEngine */
   MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
   sys_var *system_vars;         /* server variables for this plugin */
 };
