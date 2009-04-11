@@ -33,6 +33,7 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/table_list.h>
 #include <drizzled/table_share.h>
+
 #include <bitset>
 
 class Item;
@@ -157,7 +158,6 @@ public:
   order_st *group;
   const char	*alias;            	  /* alias or table name */
   unsigned char		*null_flags;
-  my_bitmap_map	*bitmap_init_value;
   std::bitset<MAX_FIELDS> def_read_set, def_write_set, tmp_set; /* containers */
   std::bitset<MAX_FIELDS> *read_set, *write_set;                /* Active column sets */
   /*

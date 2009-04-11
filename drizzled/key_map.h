@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_KEY_MAP_H
 #define DRIZZLED_KEY_MAP_H
 
+#include <drizzled/definitions.h>
+
 #include <bitset>
 
 /* Used for finding keys */
@@ -31,6 +33,9 @@ typedef std::bitset<((MAX_INDEXES+7)/8*8)> key_map;
 
 bool is_subset(const key_map& map, const key_map& map2);
 bool is_prefix(const key_map& map, const uint32_t n);
+void set_prefix( key_map &map, const uint32_t n);
 bool is_overlapping(const key_map& map, const key_map& map2);
+void bitset_subtract(key_map &map, key_map &map2);
+char *print_key_map(char *buf);
 
 #endif

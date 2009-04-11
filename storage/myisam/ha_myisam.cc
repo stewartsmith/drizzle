@@ -581,7 +581,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   if (file->s->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
     int_table_flags|=HA_HAS_CHECKSUM;
 
-  keys_with_parts.clear_all();
+  keys_with_parts.reset();
   for (i= 0; i < table->s->keys; i++)
   {
     table->key_info[i].block_size= file->s->keyinfo[i].block_length;
@@ -590,9 +590,9 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     KEY_PART_INFO *kp_end= kp + table->key_info[i].key_parts;
     for (; kp != kp_end; kp++)
     {
-      if (!kp->field->part_of_key.is_set(i))
+      if (!kp->field->part_of_key.test(i))
       {
-        keys_with_parts.set_bit(i);
+        keys_with_parts.set(i);
         break;
       }
     }
@@ -1002,14 +1002,14 @@ int ha_myisam::assign_to_keycache(Session* session, HA_CHECK_OPT *check_opt)
   uint64_t map;
   TableList *table_list= table->pos_in_table_list;
 
-  table->keys_in_use_for_query.clear_all();
+  table->keys_in_use_for_query.reset();
 
   if (table_list->process_index_hints(table))
     return(HA_ADMIN_FAILED);
   map= ~(uint64_t) 0;
-  if (!table->keys_in_use_for_query.is_clear_all())
+  if (table->keys_in_use_for_query.any())
     /* use all keys if there's no list specified by the user through hints */
-    map= table->keys_in_use_for_query.to_uint64_t();
+    map= table->keys_in_use_for_query.to_ulong();
 
   if ((error= mi_assign_to_key_cache(file, map, new_key_cache)))
   {
@@ -1366,7 +1366,7 @@ uint32_t ha_myisam::index_flags(uint32_t inx, uint32_t, bool) const
   return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
           0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
           HA_READ_ORDER | HA_KEYREAD_ONLY |
-          (keys_with_parts.is_set(inx)?0:HA_DO_INDEX_COND_PUSHDOWN));
+          (keys_with_parts.test(inx)?0:HA_DO_INDEX_COND_PUSHDOWN));
 }
 
 
@@ -1543,9 +1543,9 @@ int ha_myisam::info(uint32_t flag)
     /* Update share */
     if (share->tmp_table == NO_TMP_TABLE)
       pthread_mutex_lock(&share->mutex);
-    share->keys_in_use.set_prefix(share->keys);
-    share->keys_in_use.intersect_extended(misam_info.key_map);
-    share->keys_for_keyread.intersect(share->keys_in_use);
+    set_prefix(share->keys_in_use, share->keys);
+    share->keys_in_use&= (misam_info.key_map);
+    share->keys_for_keyread&= (share->keys_in_use);
     share->db_record_offset= misam_info.record_offset;
     if (share->key_parts)
       memcpy(table->key_info[0].rec_per_key,

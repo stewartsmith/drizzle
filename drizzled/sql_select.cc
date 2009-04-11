@@ -799,7 +799,7 @@ void JOIN::remove_subq_pushed_predicates(Item **where)
 static void save_index_subquery_explain_info(JOIN_TAB *join_tab, Item* where)
 {
   join_tab->packed_info= TAB_INFO_HAVE_VALUE;
-  if (join_tab->table->covering_keys.is_set(join_tab->ref.key))
+  if (join_tab->table->covering_keys.test(join_tab->ref.key))
     join_tab->packed_info |= TAB_INFO_USING_INDEX;
   if (where)
     join_tab->packed_info |= TAB_INFO_USING_WHERE;
@@ -3445,10 +3445,6 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
   {
     TableList *embedding= tables->embedding;
     stat_vector[i]=s;
-    s->keys.init();
-    s->const_keys.init();
-    s->checked_keys.init();
-    s->needed_reg.init();
     table_vector[i]=s->table=table=tables->table;
     table->pos_in_table_list= tables;
     error= table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
@@ -3457,14 +3453,14 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
         table->file->print_error(error, MYF(0));
         return(1);
     }
-    table->quick_keys.clear_all();
+    table->quick_keys.reset();
     table->reginfo.join_tab=s;
     table->reginfo.not_exists_optimize=0;
     memset(table->const_key_parts, 0,
            sizeof(key_part_map)*table->s->keys);
     all_table_map|= table->map;
-    s->join=join;
-    s->info=0;					// For describe
+    s->join= join;
+    s->info= 0;					// For describe
 
     s->dependent= tables->dep_tables;
     s->key_dependent= 0;
@@ -3654,25 +3650,25 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 	{
 	  start_keyuse=keyuse;
 	  key=keyuse->key;
-	  s->keys.set_bit(key);               // QQ: remove this ?
+	  s->keys.set(key);               // QQ: remove this ?
 
 	  refs=0;
-          const_ref.clear_all();
-	  eq_part.clear_all();
+          const_ref.reset();
+	  eq_part.reset();
 	  do
 	  {
 	    if (keyuse->val->type() != Item::NULL_ITEM && !keyuse->optimize)
 	    {
 	      if (!((~found_const_table_map) & keyuse->used_tables))
-		const_ref.set_bit(keyuse->keypart);
+		const_ref.set(keyuse->keypart);
 	      else
 		refs|=keyuse->used_tables;
-	      eq_part.set_bit(keyuse->keypart);
+	      eq_part.set(keyuse->keypart);
 	    }
 	    keyuse++;
 	  } while (keyuse->table == table && keyuse->key == key);
 
-	  if (eq_part.is_prefix(table->key_info[key].key_parts) &&
+	  if (is_prefix(eq_part, (table->key_info[key].key_parts)) &&
               !table->pos_in_table_list->embedding)
 	  {
             if ((table->key_info[key].flags & (HA_NOSAME))
@@ -3702,7 +3698,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 	        found_ref|= refs;      // Table is const if all refs are const
 	    }
             else if (const_ref == eq_part)
-              s->const_keys.set_bit(key);
+              s->const_keys.set(key);
           }
 	}
       }
@@ -3720,12 +3716,12 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
       Field *field= sargables->field;
       JOIN_TAB *join_tab= field->table->reginfo.join_tab;
       key_map possible_keys= field->key_start;
-      possible_keys.intersect(field->table->keys_in_use_for_query);
+      possible_keys&= (field->table->keys_in_use_for_query);
       bool is_const= 1;
       for (uint32_t j=0; j < sargables->num_values; j++)
         is_const&= sargables->arg_value[j]->const_item();
       if (is_const)
-        join_tab[0].const_keys.merge(possible_keys);
+        join_tab[0].const_keys|= (possible_keys);
     }
   }
 
@@ -3762,7 +3758,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
     */
     add_group_and_distinct_keys(join, s);
 
-    if (!s->const_keys.is_clear_all() &&
+    if (s->const_keys.any() &&
         !s->table->pos_in_table_list->embedding)
     {
       ha_rows records;
@@ -4043,10 +4039,10 @@ add_key_field(KEY_FIELD **key_fields,uint32_t and_level, Item_func *cond,
     }
     else
     {
-      JOIN_TAB *stat=field->table->reginfo.join_tab;
-      key_map possible_keys=field->key_start;
-      possible_keys.intersect(field->table->keys_in_use_for_query);
-      stat[0].keys.merge(possible_keys);             // Add possible keys
+      JOIN_TAB *stat= field->table->reginfo.join_tab;
+      key_map possible_keys= field->key_start;
+      possible_keys&= (field->table->keys_in_use_for_query);
+      stat[0].keys|= (possible_keys);             // Add possible keys
 
       /*
 	Save the following cases:
@@ -4068,7 +4064,7 @@ add_key_field(KEY_FIELD **key_fields,uint32_t and_level, Item_func *cond,
           break;
       }
       if (is_const)
-        stat[0].const_keys.merge(possible_keys);
+        stat[0].const_keys|= (possible_keys);
       else if (!eq_func)
       {
         /*
@@ -4431,7 +4427,7 @@ add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
   {
     for (uint32_t key= 0 ; key < form->sizeKeys() ; key++)
     {
-      if (!(form->keys_in_use_for_query.is_set(key)))
+      if (!(form->keys_in_use_for_query.test(key)))
 	continue;
 
       uint32_t key_parts= (uint32_t) form->key_info[key].key_parts;
@@ -4706,12 +4702,12 @@ update_ref_and_keys(Session *session, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
       /* Save ptr to first use */
       if (!use->table->reginfo.join_tab->keyuse)
 	use->table->reginfo.join_tab->keyuse=save_pos;
-      use->table->reginfo.join_tab->checked_keys.set_bit(use->key);
+      use->table->reginfo.join_tab->checked_keys.set(use->key);
       save_pos++;
     }
-    i=(uint32_t) (save_pos-(KEYUSE*) keyuse->buffer);
+    i= (uint32_t) (save_pos-(KEYUSE*) keyuse->buffer);
     set_dynamic(keyuse,(unsigned char*) &key_end,i);
-    keyuse->elements=i;
+    keyuse->elements= i;
   }
   return false;
 }
@@ -4808,14 +4804,14 @@ add_group_and_distinct_keys(JOIN *join, JOIN_TAB *join_tab)
 
   /* Intersect the keys of all group fields. */
   cur_item= indexed_fields_it++;
-  possible_keys.merge(cur_item->field->part_of_key);
+  possible_keys|= (cur_item->field->part_of_key);
   while ((cur_item= indexed_fields_it++))
   {
-    possible_keys.intersect(cur_item->field->part_of_key);
+    possible_keys&= (cur_item->field->part_of_key);
   }
 
-  if (!possible_keys.is_clear_all())
-    join_tab->const_keys.merge(possible_keys);
+  if (possible_keys.any())
+    join_tab->const_keys|= (possible_keys);
 }
 
 
@@ -5055,7 +5051,7 @@ best_access_path(JOIN      *join,
              ...
         */
         if (try_sj_inside_out &&
-            table->covering_keys.is_set(key) &&
+            table->covering_keys.test(key) &&
             (handled_sj_equalities | bound_sj_equalities) ==     // (1)
             PREV_BITS(uint64_t, s->emb_sj_nest->sj_in_exprs)) // (1)
         {
@@ -5127,7 +5123,7 @@ best_access_path(JOIN      *join,
                 quick_cond is equivalent to ref_const_cond (if it was an
                 empty interval we wouldn't have got here).
               */
-              if (table->quick_keys.is_set(key))
+              if (table->quick_keys.test(key))
                 records= (double) table->quick_rows[key];
               else
               {
@@ -5157,7 +5153,7 @@ best_access_path(JOIN      *join,
                 can make an adjustment is a special case of the criteria used
                 in ReuseRangeEstimateForRef-3.
               */
-              if (table->quick_keys.is_set(key) &&
+              if (table->quick_keys.test(key) &&
                   const_part & (1 << table->quick_key_parts[key]) &&
                   table->quick_n_ranges[key] == 1 &&
                   records > (double) table->quick_rows[key])
@@ -5168,7 +5164,7 @@ best_access_path(JOIN      *join,
             /* Limit the number of matched rows */
             tmp= records;
             set_if_smaller(tmp, (double) session->variables.max_seeks_for_key);
-            if (table->covering_keys.is_set(key))
+            if (table->covering_keys.test(key))
             {
               /* we can use only index tree */
               tmp= record_count * table->file->index_only_read_time(key, tmp);
@@ -5228,7 +5224,7 @@ best_access_path(JOIN      *join,
 
               (C3) "range optimizer used (have ref_or_null?2:1) intervals"
             */
-            if (table->quick_keys.is_set(key) && !found_ref &&          //(C1)
+            if (table->quick_keys.test(key) && !found_ref &&          //(C1)
                 table->quick_key_parts[key] == max_key_part &&          //(C2)
                 table->quick_n_ranges[key] == 1+((ref_or_null_part)?1:0)) //(C3)
             {
@@ -5255,7 +5251,7 @@ best_access_path(JOIN      *join,
                   cheaper in some cases ?
                   TODO: figure this out and adjust the plan choice if needed.
                 */
-                if (!found_ref && table->quick_keys.is_set(key) &&    // (1)
+                if (!found_ref && table->quick_keys.test(key) &&    // (1)
                     table->quick_key_parts[key] > max_key_part &&     // (2)
                     records < (double)table->quick_rows[key])         // (3)
                   records= (double)table->quick_rows[key];
@@ -5320,7 +5316,7 @@ best_access_path(JOIN      *join,
                 optimizer is the same as in ReuseRangeEstimateForRef-3,
                 applied to first table->quick_key_parts[key] key parts.
               */
-              if (table->quick_keys.is_set(key) &&
+              if (table->quick_keys.test(key) &&
                   table->quick_key_parts[key] <= max_key_part &&
                   const_part & (1 << table->quick_key_parts[key]) &&
                   table->quick_n_ranges[key] == 1 + ((ref_or_null_part &
@@ -5333,7 +5329,7 @@ best_access_path(JOIN      *join,
 
             /* Limit the number of matched rows */
             set_if_smaller(tmp, (double) session->variables.max_seeks_for_key);
-            if (table->covering_keys.is_set(key))
+            if (table->covering_keys.test(key))
             {
               /* we can use only index tree */
               tmp= record_count * table->file->index_only_read_time(key, tmp);
@@ -5399,7 +5395,7 @@ best_access_path(JOIN      *join,
       !(s->quick && best_key && s->quick->index == best_key->key &&      // (2)
         best_max_key_part >= s->table->quick_key_parts[best_key->key]) &&// (2)
       !((s->table->file->ha_table_flags() & HA_TABLE_SCAN_ON_INDEX) &&   // (3)
-        ! s->table->covering_keys.is_clear_all() && best_key && !s->quick) &&// (3)
+         s->table->covering_keys.any() && best_key && !s->quick) &&// (3)
       !(s->table->force_index && best_key && !s->quick))                 // (4)
   {                                             // Check full join
     ha_rows rnd_records= s->found_records;
@@ -6405,7 +6401,7 @@ get_best_combination(JOIN *join)
 
     if (j->type == JT_SYSTEM)
       continue;
-    if (j->keys.is_clear_all() || !(keyuse= join->best_positions[tablenr].key))
+    if (!j->keys.any() || !(keyuse= join->best_positions[tablenr].key))
     {
       j->type=JT_ALL;
       if (tablenr != join->const_tables)
@@ -6660,8 +6656,7 @@ make_simple_join(JOIN *join,Table *tmp_table)
   join_tab->select_cond=0;
   join_tab->quick=0;
   join_tab->type= JT_ALL;			/* Map through all records */
-  join_tab->keys.init();
-  join_tab->keys.set_all();                     /* test everything in quick */
+  join_tab->keys.set();                     /* test everything in quick */
   join_tab->info=0;
   join_tab->on_expr_ref=0;
   join_tab->last_inner= 0;
@@ -7082,12 +7077,12 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	{
 	  /* Use quick key read if it's a constant and it's not used
 	     with key reading */
-	  if (tab->needed_reg.is_clear_all() && tab->type != JT_EQ_REF
+	  if (!tab->needed_reg.any() && tab->type != JT_EQ_REF
 	      && (tab->type != JT_REF || (uint32_t) tab->ref.key == tab->quick->index))
 	  {
 	    sel->quick=tab->quick;		// Use value from get_quick_...
-	    sel->quick_keys.clear_all();
-	    sel->needed_reg.clear_all();
+	    sel->quick_keys.reset();
+	    sel->needed_reg.reset();
 	  }
 	  else
 	  {
@@ -7098,13 +7093,13 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	uint32_t ref_key=(uint32_t) sel->head->reginfo.join_tab->ref.key+1;
 	if (i == join->const_tables && ref_key)
 	{
-	  if (!tab->const_keys.is_clear_all() &&
+	  if (tab->const_keys.any() &&
               tab->table->reginfo.impossible_range)
 	    return(1);
 	}
 	else if (tab->type == JT_ALL && ! use_quick_range)
 	{
-	  if (!tab->const_keys.is_clear_all() &&
+	  if (tab->const_keys.any() &&
 	      tab->table->reginfo.impossible_range)
 	    return(1);				// Impossible range
 	  /*
@@ -7114,8 +7109,8 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    the index if we are using limit and this is the first table
 	  */
 
-	  if ((cond && (!tab->keys.is_subset(tab->const_keys) && i > 0)) ||
-	      (!tab->const_keys.is_clear_all() && (i == join->const_tables) && (join->unit->select_limit_cnt < join->best_positions[i].records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
+	  if ((cond && (!is_subset(tab->keys, tab->const_keys) && i > 0)) ||
+	      (tab->const_keys.any() && (i == join->const_tables) && (join->unit->select_limit_cnt < join->best_positions[i].records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
 	  {
 	    /* Join with outer join condition */
 	    COND *orig_cond=sel->cond;
@@ -7164,15 +7159,15 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	  else
 	  {
 	    sel->needed_reg=tab->needed_reg;
-	    sel->quick_keys.clear_all();
+	    sel->quick_keys.reset();
 	  }
-	  if (!sel->quick_keys.is_subset(tab->checked_keys) ||
-              !sel->needed_reg.is_subset(tab->checked_keys))
+	  if (!is_subset(sel->quick_keys, (tab->checked_keys)) ||
+              !is_subset(sel->needed_reg, (tab->checked_keys)))
 	  {
 	    tab->keys=sel->quick_keys;
-            tab->keys.merge(sel->needed_reg);
-	    tab->use_quick= (!sel->needed_reg.is_clear_all() &&
-			     (select->quick_keys.is_clear_all() ||
+            tab->keys|= (sel->needed_reg);
+	    tab->use_quick= (sel->needed_reg.any() &&
+			     (!select->quick_keys.any() ||
 			      (select->quick &&
 			       (select->quick->records >= 100L)))) ?
 	      2 : 1;
@@ -7359,7 +7354,7 @@ bool uses_index_fields_only(Item *item, Table *tbl, uint32_t keyno,
       Item_field *item_field= (Item_field*)item;
       if (item_field->field->table != tbl)
         return true;
-      return item_field->field->part_of_key.is_set(keyno);
+      return item_field->field->part_of_key.test(keyno);
     }
   case Item::REF_ITEM:
     return uses_index_fields_only(item->real_item(), tbl, keyno,
@@ -7682,7 +7677,7 @@ make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
       table->status=STATUS_NO_RECORD;
       tab->read_first_record= join_read_const;
       tab->read_record.read_record= join_no_more_records;
-      if (table->covering_keys.is_set(tab->ref.key) &&
+      if (table->covering_keys.test(tab->ref.key) &&
           !table->no_keyread)
       {
         table->key_read=1;
@@ -7700,7 +7695,7 @@ make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
       tab->quick=0;
       tab->read_first_record= join_read_key;
       tab->read_record.read_record= join_no_more_records;
-      if (table->covering_keys.is_set(tab->ref.key) &&
+      if (table->covering_keys.test(tab->ref.key) &&
 	  !table->no_keyread)
       {
 	table->key_read=1;
@@ -7719,7 +7714,7 @@ make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
       }
       delete tab->quick;
       tab->quick=0;
-      if (table->covering_keys.is_set(tab->ref.key) &&
+      if (table->covering_keys.test(tab->ref.key) &&
 	  !table->no_keyread)
       {
 	table->key_read=1;
@@ -7801,12 +7796,12 @@ make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
 	{
 	  if (tab->select && tab->select->quick &&
               tab->select->quick->index != MAX_KEY && //not index_merge
-	      table->covering_keys.is_set(tab->select->quick->index))
+	      table->covering_keys.test(tab->select->quick->index))
 	  {
 	    table->key_read=1;
 	    table->file->extra(HA_EXTRA_KEYREAD);
 	  }
-	  else if (!table->covering_keys.is_clear_all() &&
+	  else if (table->covering_keys.any() &&
 		   !(tab->select && tab->select->quick))
 	  {					// Only read index tree
             if (!tab->insideout_match_tab)
@@ -9411,20 +9406,20 @@ static void update_const_equal_items(COND *cond, JOIN_TAB *tab)
         Field *field= item_field->field;
         JOIN_TAB *stat= field->table->reginfo.join_tab;
         key_map possible_keys= field->key_start;
-        possible_keys.intersect(field->table->keys_in_use_for_query);
-        stat[0].const_keys.merge(possible_keys);
+        possible_keys&= (field->table->keys_in_use_for_query);
+        stat[0].const_keys|= (possible_keys);
 
         /*
           For each field in the multiple equality (for which we know that it
           is a constant) we have to find its corresponding key part, and set
           that key part in const_key_parts.
         */
-        if (!possible_keys.is_clear_all())
+        if (possible_keys.any())
         {
           Table *field_tab= field->table;
           KEYUSE *use;
           for (use= stat->keyuse; use && use->table == field_tab; use++)
-            if (possible_keys.is_set(use->key) &&
+            if (possible_keys.test(use->key) &&
                 field_tab->key_info[use->key].key_part[use->keypart].field ==
                 field)
               field_tab->const_key_parts[use->key]|= use->keypart_map;
@@ -11313,7 +11308,7 @@ join_read_const_table(JOIN_TAB *tab, POSITION *pos)
   }
   else
   {
-    if (!table->key_read && table->covering_keys.is_set(tab->ref.key) &&
+    if (!table->key_read && table->covering_keys.test(tab->ref.key) &&
 	!table->no_keyread &&
         (int) table->reginfo.lock_type <= (int) TL_READ_HIGH_PRIORITY)
     {
@@ -11700,7 +11695,7 @@ join_read_first(JOIN_TAB *tab)
 {
   int error;
   Table *table=tab->table;
-  if (!table->key_read && table->covering_keys.is_set(tab->index) &&
+  if (!table->key_read && table->covering_keys.test(tab->index) &&
       !table->no_keyread)
   {
     table->key_read=1;
@@ -11781,7 +11776,7 @@ join_read_last(JOIN_TAB *tab)
 {
   Table *table=tab->table;
   int error;
-  if (!table->key_read && table->covering_keys.is_set(tab->index) &&
+  if (!table->key_read && table->covering_keys.test(tab->index) &&
       !table->no_keyread)
   {
     table->key_read=1;
@@ -12688,7 +12683,7 @@ test_if_subkey(order_st *order, Table *table, uint32_t ref, uint32_t ref_key_par
 
   for (nr= 0 ; nr < table->s->keys ; nr++)
   {
-    if (usable_keys->is_set(nr) &&
+    if (usable_keys->test(nr) &&
 	table->key_info[nr].key_length < min_length &&
 	table->key_info[nr].key_parts >= ref_key_parts &&
 	is_subkey(table->key_info[nr].key_part, ref_key_part,
@@ -12882,11 +12877,11 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
     Item *item= (*tmp_order->item)->real_item();
     if (item->type() != Item::FIELD_ITEM)
     {
-      usable_keys.clear_all();
+      usable_keys.reset();
       return(0);
     }
-    usable_keys.intersect(((Item_field*) item)->field->part_of_sortkey);
-    if (usable_keys.is_clear_all())
+    usable_keys&= (((Item_field*) item)->field->part_of_sortkey);
+    if (!usable_keys.any())
       return(0);					// No usable keys
   }
 
@@ -12922,7 +12917,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
     /*
       We come here when there is a REF key.
     */
-    if (!usable_keys.is_set(ref_key))
+    if (!usable_keys.test(ref_key))
     {
       /*
 	We come here when ref_key is not among usable_keys
@@ -12932,8 +12927,8 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
 	If using index only read, only consider other possible index only
 	keys
       */
-      if (table->covering_keys.is_set(ref_key))
-	usable_keys.intersect(table->covering_keys);
+      if (table->covering_keys.test(ref_key))
+	usable_keys&= (table->covering_keys);
       if (tab->pre_idx_push_select_cond)
         tab->select_cond= tab->select->cond= tab->pre_idx_push_select_cond;
       if ((new_ref_key= test_if_subkey(order, table, ref_key, ref_key_parts,
@@ -12969,8 +12964,8 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
             parameres are set correctly by the range optimizer.
            */
           key_map new_ref_key_map;
-          new_ref_key_map.clear_all();  // Force the creation of quick select
-          new_ref_key_map.set_bit(new_ref_key); // only for new_ref_key.
+          new_ref_key_map.reset();  // Force the creation of quick select
+          new_ref_key_map.set(new_ref_key); // only for new_ref_key.
 
           if (select->test_quick_select(tab->join->session, new_ref_key_map, 0,
                                         (tab->join->select_options &
@@ -12985,7 +12980,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
       }
     }
     /* Check if we get the rows in requested sorted order by using the key */
-    if (usable_keys.is_set(ref_key) &&
+    if (usable_keys.test(ref_key) &&
         (order_direction= test_if_order_by_key(order,table,ref_key,
 					       &used_key_parts)))
       goto check_reverse_order;
@@ -13025,7 +13020,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
       if (tab->type == JT_ALL && tab->join->tables > tab->join->const_tables + 1)
         return(0);
       keys= *table->file->keys_to_use_for_scanning();
-      keys.merge(table->covering_keys);
+      keys|= (table->covering_keys);
 
       /*
 	We are adding here also the index specified in FORCE INDEX clause,
@@ -13033,9 +13028,9 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
         This is to allow users to use index in order_st BY.
       */
       if (table->force_index)
-	keys.merge(group ? table->keys_in_use_for_group_by :
-                           table->keys_in_use_for_order_by);
-      keys.intersect(usable_keys);
+	keys|= (group ? table->keys_in_use_for_group_by :
+                        table->keys_in_use_for_order_by);
+      keys&= usable_keys;
     }
     else
       keys= usable_keys;
@@ -13047,10 +13042,10 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
     for (nr=0; nr < table->s->keys ; nr++)
     {
       int direction;
-      if (keys.is_set(nr) &&
+      if (keys.test(nr) &&
           (direction= test_if_order_by_key(order, table, nr, &used_key_parts)))
       {
-        bool is_covering= table->covering_keys.is_set(nr) || (nr == table->s->primary_key && table->file->primary_key_is_clustered());
+        bool is_covering= table->covering_keys.test(nr) || (nr == table->s->primary_key && table->file->primary_key_is_clustered());
 
         /*
           Don't use an index scan with order_st BY without limit.
@@ -13133,7 +13128,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
             ha_rows quick_records= table_records;
             if (is_best_covering && !is_covering)
               continue;
-            if (table->quick_keys.is_set(nr))
+            if (table->quick_keys.test(nr))
               quick_records= table->quick_rows[nr];
             if (best_key < 0 ||
                 (select_limit <= cmin(quick_records,best_records) ?
@@ -13153,11 +13148,11 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
     if (best_key >= 0)
     {
       bool quick_created= false;
-      if (table->quick_keys.is_set(best_key) && best_key != ref_key)
+      if (table->quick_keys.test(best_key) && best_key != ref_key)
       {
         key_map test_map;
-        test_map.clear_all();       // Force the creation of quick select
-        test_map.set_bit(best_key); // only best_key.
+        test_map.reset();       // Force the creation of quick select
+        test_map.set(best_key); // only best_key.
         quick_created=
           select->test_quick_select(join->session, test_map, 0,
                                     join->select_options & OPTION_FOUND_ROWS ?
@@ -13178,7 +13173,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
             delete select->quick;
             select->quick= 0;
           }
-          if (table->covering_keys.is_set(best_key))
+          if (table->covering_keys.test(best_key))
           {
             table->key_read=1;
             table->file->extra(HA_EXTRA_KEYREAD);
@@ -15848,12 +15843,12 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 					  strlen(join_type_str[tab->type]),
 					  cs));
       /* Build "possible_keys" value and add it to item_list */
-      if (!tab->keys.is_clear_all())
+      if (tab->keys.any())
       {
         uint32_t j;
         for (j=0 ; j < table->s->keys ; j++)
         {
-          if (tab->keys.is_set(j))
+          if (tab->keys.test(j))
           {
             if (tmp1.length())
               tmp1.append(',');
@@ -15977,7 +15972,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       /* Build "Extra" field and add it to item_list. */
       bool key_read=table->key_read;
       if ((tab->type == JT_NEXT || tab->type == JT_CONST) &&
-          table->covering_keys.is_set(tab->index))
+          table->covering_keys.test(tab->index))
 	key_read=1;
       if (quick_type == QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT &&
           !((QUICK_ROR_INTERSECT_SELECT*)tab->select->quick)->need_to_fetch_row)
@@ -16030,7 +16025,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
             char buf[MAX_KEY / 4 + 1];
             extra.append(STRING_WITH_LEN("; Range checked for each "
                                          "record (index map: 0x"));
-            extra.append(tab->keys.print(buf));
+            extra.append(print_key_map(buf));
             extra.append(')');
 	  }
 	  else if (tab->select->cond)

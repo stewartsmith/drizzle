@@ -3657,7 +3657,7 @@ build_template(
 			register const ibool	index_contains_field =
 				dict_index_contains_col_or_prefix(index, innodb_idx);
                         register const ibool    index_covers_field = 
-                                field->part_of_key.is_set(file->active_index);
+                                field->part_of_key.test(file->active_index);
 
 
 			if (!index_contains_field && prebuilt->read_just_key) {
