@@ -643,7 +643,7 @@ static bool get_size_t(Session *, set_var *var)
 
 bool sys_var_uint32_t_ptr::check(Session *, set_var *var)
 {
-  var->save_result.uint32_t_value= var->value->val_int();
+  var->save_result.uint32_t_value= (uint32_t)var->value->val_int();
   return 0;
 }
 

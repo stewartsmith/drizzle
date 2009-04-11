@@ -276,7 +276,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
        Calculate the very maximum number of rows (if everything was one chunk) and
        then take either that value or configured max_records (pick smallest one)
     */
-    max_rows_for_stated_memory= (ha_rows) (create_info->max_table_size /
+    max_rows_for_stated_memory= (uint32_t)(create_info->max_table_size /
       (keys_memory_size + chunk_length));
     max_records = ((max_records && max_records < max_rows_for_stated_memory) ?
                       max_records : max_rows_for_stated_memory);
