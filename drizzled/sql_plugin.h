@@ -89,7 +89,6 @@ struct st_plugin_int
 
 
 #define plugin_decl(pi) ((pi)->plugin)
-#define plugin_dlib(pi) ((pi)->plugin_dl)
 #define plugin_data(pi,cast) (static_cast<cast>((pi)->data))
 #define plugin_name(pi) (&((pi)->name))
 #define plugin_equals(p1,p2) ((p1) && (p2) && (p1) == (p2))
