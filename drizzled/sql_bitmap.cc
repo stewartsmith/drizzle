@@ -35,20 +35,11 @@
 
 using namespace std;
 
-void ThreadSafeBitset::resetBit(uint32_t pos)
-{
-  pthread_mutex_lock(&mutex);
-  bitmap.reset(pos);
-  pthread_mutex_unlock(&mutex);
-}
-
-uint32_t ThreadSafeBitset::setNextBit()
+uint32_t setNextBit(bitset<MAX_FIELDS> &bitmap)
 {
   uint32_t bit_found;
-  pthread_mutex_lock(&mutex);
   if ((bit_found= getFirstBitPos(bitmap)) != MY_BIT_NONE)
     bitmap.set(bit_found);
-  pthread_mutex_unlock(&mutex);
   return bit_found;
 }
 
