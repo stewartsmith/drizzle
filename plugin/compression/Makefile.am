@@ -14,6 +14,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 EXTRA_LTLIBRARIES=		libcompressionudf.la
+noinst_HEADERS=			compress.h uncompress.h uncompressed_length.h
 pkgplugin_LTLIBRARIES=		@plugin_compression_shared_target@
 libcompressionudf_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)\
 				${LTLIBZ}
