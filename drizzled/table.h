@@ -33,6 +33,7 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/table_list.h>
 #include <drizzled/table_share.h>
+#include <bitset>
 
 class Item;
 class Item_subselect;
@@ -94,7 +95,7 @@ public:
 
   /* For TMP tables, should be pulled out as a class */
   void updateCreateInfo(HA_CREATE_INFO *create_info);
-  void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
+  void setup_tmp_table_column_bitmaps();
   bool create_myisam_tmp_table(KEY *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
                                MI_COLUMNDEF **recinfo,
@@ -157,8 +158,8 @@ public:
   const char	*alias;            	  /* alias or table name */
   unsigned char		*null_flags;
   my_bitmap_map	*bitmap_init_value;
-  MY_BITMAP     def_read_set, def_write_set, tmp_set; /* containers */
-  MY_BITMAP     *read_set, *write_set;          /* Active column sets */
+  std::bitset<MAX_FIELDS> def_read_set, def_write_set, tmp_set; /* containers */
+  std::bitset<MAX_FIELDS> *read_set, *write_set;                /* Active column sets */
   /*
    The ID of the query that opened and is using this table. Has different
    meanings depending on the table type.
@@ -285,7 +286,7 @@ public:
   void reset_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
-  void mark_columns_used_by_index_no_reset(uint32_t index, MY_BITMAP *map);
+  void mark_columns_used_by_index_no_reset(uint32_t index, std::bitset<MAX_FIELDS> *map);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
   void mark_auto_increment_column(void);
@@ -293,24 +294,24 @@ public:
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
   void mark_virtual_columns(void);
-  inline void column_bitmaps_set(MY_BITMAP *read_set_arg,
-                                 MY_BITMAP *write_set_arg)
+  inline void column_bitmaps_set(std::bitset<MAX_FIELDS> *read_set_arg,
+                                 std::bitset<MAX_FIELDS> *write_set_arg)
   {
     read_set= read_set_arg;
     write_set= write_set_arg;
     if (file)
       file->column_bitmaps_signal();
   }
-  inline void column_bitmaps_set_no_signal(MY_BITMAP *read_set_arg,
-                                           MY_BITMAP *write_set_arg)
+  inline void column_bitmaps_set_no_signal(std::bitset<MAX_FIELDS> *read_set_arg,
+                                           std::bitset<MAX_FIELDS> *write_set_arg)
   {
     read_set= read_set_arg;
     write_set= write_set_arg;
   }
 
-  void restore_column_map(my_bitmap_map *old);
+  void restore_column_map(std::bitset<MAX_FIELDS> *old);
 
-  my_bitmap_map *use_all_columns(MY_BITMAP *bitmap);
+  std::bitset<MAX_FIELDS> *use_all_columns(std::bitset<MAX_FIELDS> *bitmap);
   inline void use_all_columns()
   {
     column_bitmaps_set(&s->all_set, &s->all_set);

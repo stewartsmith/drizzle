@@ -26,6 +26,10 @@
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
 
+#include <bitset>
+
+using namespace std;
+
 /*
   When a user variable is updated (in a SET command or a query like
   SELECT @a:= ).
@@ -90,7 +94,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
   {
     Table *table= (Table *) arg;
     if (result_field->table == table || !table)
-      bitmap_set_bit(result_field->table->read_set, result_field->field_index);
+      result_field->table->read_set->set(result_field->field_index);
     if (result_field->vcol_info && result_field->vcol_info->expr_item)
       return result_field->vcol_info->
                expr_item->walk(&Item::register_field_in_read_map, 1, arg);
@@ -105,11 +109,11 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
 
 bool Item_func_set_user_var::register_field_in_bitmap(unsigned char *arg)
 {
-  MY_BITMAP *bitmap = (MY_BITMAP *) arg;
+  bitset<MAX_FIELDS> *bitmap = (bitset<MAX_FIELDS> *) arg;
   assert(bitmap);
   if (result_field)
   {
-    bitmap_set_bit(bitmap, result_field->field_index);
+    bitmap->set(result_field->field_index);
   }
   return 0;
 }

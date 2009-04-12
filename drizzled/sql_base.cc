@@ -46,6 +46,10 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 
+#include <bitset>
+
+using namespace std;
+
 extern drizzled::TransactionServices transaction_services;
 
 /**
@@ -3593,6 +3597,19 @@ bool rm_temporary_table(StorageEngine *base, char *path)
   return(error);
 }
 
+/*
+ * Helper function which tests whether a bit is set in the 
+ * bitset or not. It also sets the bit after this test is
+ * performed.
+ */
+static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
+{
+  bool ret= false;
+  if (bitmap->test(pos))
+    ret= true;
+  bitmap->set(pos);
+  return ret;
+}
 
 /*****************************************************************************
 * The following find_field_in_XXX procedures implement the core of the
@@ -3613,7 +3630,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 {
   if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    MY_BITMAP *current_bitmap, *other_bitmap;
+    bitset<MAX_FIELDS> *current_bitmap, *other_bitmap;
 
     /*
       We always want to register the used keys, as the column bitmap may have
@@ -3634,7 +3651,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       other_bitmap=   table->read_set;
     }
 
-    if (bitmap_fast_test_and_set(current_bitmap, field->field_index))
+    if (test_and_set_bit(current_bitmap, field->field_index))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;
@@ -3788,7 +3805,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         */
         if ((session->mark_used_columns != MARK_COLUMNS_WRITE) &&
             (not (*field_ptr)->is_stored))
-          bitmap_set_bit((*field_ptr)->table->write_set, (*field_ptr)->field_index);
+          (*field_ptr)->table->write_set->set((*field_ptr)->field_index);
       }
     }
     *cached_field_index_ptr= field_ptr - table->field;
@@ -3968,9 +3985,9 @@ find_field_in_table_ref(Session *session, TableList *table_list,
         {
           Table *table= field_to_set->table;
           if (session->mark_used_columns == MARK_COLUMNS_READ)
-            bitmap_set_bit(table->read_set, field_to_set->field_index);
+            table->read_set->set(field_to_set->field_index);
           else
-            bitmap_set_bit(table->write_set, field_to_set->field_index);
+            table->write_set->set(field_to_set->field_index);
         }
       }
   }
@@ -4718,7 +4735,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       {
         Table *table_1= nj_col_1->table_ref->table;
         /* Mark field_1 used for table cache. */
-        bitmap_set_bit(table_1->read_set, field_1->field_index);
+        table_1->read_set->set(field_1->field_index);
         table_1->covering_keys.intersect(field_1->part_of_key);
         table_1->merge_keys.merge(field_1->part_of_key);
       }
@@ -4726,7 +4743,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       {
         Table *table_2= nj_col_2->table_ref->table;
         /* Mark field_2 used for table cache. */
-        bitmap_set_bit(table_2->read_set, field_2->field_index);
+        table_2->read_set->set(field_2->field_index);
         table_2->covering_keys.intersect(field_2->part_of_key);
         table_2->merge_keys.merge(field_2->part_of_key);
       }
@@ -5520,7 +5537,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       if ((field= field_iterator.field()))
       {
         /* Mark fields as used to allow storage engine to optimze access */
-        bitmap_set_bit(field->table->read_set, field->field_index);
+        field->table->read_set->set(field->field_index);
         /*
           Mark virtual fields for write and others that the virtual fields
           depend on for read.
@@ -5530,7 +5547,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
           Item *vcol_item= field->vcol_info->expr_item;
           assert(vcol_item);
           vcol_item->walk(&Item::register_field_in_read_map, 1, (unsigned char *) 0);
-          bitmap_set_bit(field->table->write_set, field->field_index);
+          field->table->write_set->set(field->field_index);
         }
         if (table)
         {
