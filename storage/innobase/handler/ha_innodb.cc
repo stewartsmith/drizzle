@@ -2093,7 +2093,24 @@ mem_free_and_error:
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
 
+	if (innodb_locks_init() ||
+		innodb_trx_init() ||
+		innodb_lock_waits_init() ||
+		i_s_cmp_init() ||
+		i_s_cmp_reset_init() ||
+		i_s_cmpmem_init() ||
+		i_s_cmpmem_reset_init())
+		goto error;
+
 	registry.add(innodb_engine_ptr);
+
+	registry.add(innodb_trx_schema_table);
+	registry.add(innodb_locks_schema_table);
+	registry.add(innodb_lock_waits_schema_table);	
+	registry.add(innodb_cmp_schema_table);
+	registry.add(innodb_cmp_reset_schema_table);
+	registry.add(innodb_cmpmem_schema_table);
+	registry.add(innodb_cmpmem_reset_schema_table);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -2112,6 +2129,7 @@ innobase_deinit(PluginRegistry &registry)
 				/* out: TRUE if error */
 {
 	int	err= 0;
+	i_s_common_deinit(registry);
 	registry.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
@@ -9621,14 +9639,7 @@ drizzle_declare_plugin(innobase)
   innodb_status_variables_export,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
-},
-i_s_innodb_trx,
-i_s_innodb_locks,
-i_s_innodb_lock_waits,
-i_s_innodb_cmp,
-i_s_innodb_cmp_reset,
-i_s_innodb_cmpmem,
-i_s_innodb_cmpmem_reset
+}
 drizzle_declare_plugin_end;
 
 

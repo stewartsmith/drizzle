@@ -67,13 +67,13 @@ do {									\
 
 #define STRUCT_FLD(name, value)	value
 
-static ST_SCHEMA_TABLE *innodb_trx_schema_table= NULL;
-static ST_SCHEMA_TABLE *innodb_locks_schema_table= NULL;
-static ST_SCHEMA_TABLE *innodb_lock_waits_schema_table= NULL;
-static ST_SCHEMA_TABLE *innodb_cmp_schema_table= NULL;
-static ST_SCHEMA_TABLE *innodb_cmp_reset_schema_table= NULL;
-static ST_SCHEMA_TABLE *innodb_cmpmem_schema_table= NULL;
-static ST_SCHEMA_TABLE *innodb_cmpmem_reset_schema_table= NULL;
+ST_SCHEMA_TABLE *innodb_trx_schema_table= NULL;
+ST_SCHEMA_TABLE *innodb_locks_schema_table= NULL;
+ST_SCHEMA_TABLE *innodb_lock_waits_schema_table= NULL;
+ST_SCHEMA_TABLE *innodb_cmp_schema_table= NULL;
+ST_SCHEMA_TABLE *innodb_cmp_reset_schema_table= NULL;
+ST_SCHEMA_TABLE *innodb_cmpmem_schema_table= NULL;
+ST_SCHEMA_TABLE *innodb_cmpmem_reset_schema_table= NULL;
 
 static const ST_FIELD_INFO END_OF_ST_FIELD_INFO =
 	{STRUCT_FLD(field_name,		NULL),
@@ -132,12 +132,6 @@ trx_i_s_common_fill_table(
 
 /***********************************************************************
 Unbind a dynamic INFORMATION_SCHEMA table. */
-static
-int
-i_s_common_deinit(
-/*==============*/
-			/* out: 0 on success */
-	PluginRegistry &registry);	/* in/out: plugin registry object */
 
 /***********************************************************************
 Auxiliary function to store time_t value in DRIZZLE_TYPE_DATETIME
@@ -383,12 +377,11 @@ fill_innodb_trx_from_cache(
 
 /***********************************************************************
 Bind the dynamic table INFORMATION_SCHEMA.innodb_trx */
-static
 int
 innodb_trx_init(
 /*============*/
 			/* out: 0 on success */
-	PluginRegistry &registry)	/* in/out: table schema object */
+	)	/* in/out: table schema object */
 {
 	if ((innodb_trx_schema_table= new ST_SCHEMA_TABLE) == NULL)
 		return(1);
@@ -398,51 +391,9 @@ innodb_trx_init(
 	innodb_trx_schema_table->fill_table = trx_i_s_common_fill_table;
 	innodb_trx_schema_table->table_name= "INNODB_TRX";
 
-	registry.add(innodb_trx_schema_table);
-
 	return(0);
 }
 
-UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_trx =
-{
-	/* plugin name */
-	/* const char* */
-	STRUCT_FLD(name, "INNODB_TRX"),
-
-	/* plugin version */
-	/* const char* */
-	STRUCT_FLD(version, "1.0.2"),
-
-	/* plugin author (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(author, plugin_author),
-
-	/* general descriptive text (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(descr, "InnoDB transactions"),
-
-	/* the plugin license (PLUGIN_LICENSE_XXX) */
-	/* int */
-	STRUCT_FLD(license, PLUGIN_LICENSE_GPL),
-
-	/* the function to invoke when plugin is loaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(init, innodb_trx_init),
-
-	/* the function to invoke when plugin is unloaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(deinit, i_s_common_deinit),
-
-	/* struct st_mysql_show_var* */
-	STRUCT_FLD(status_vars, NULL),
-
-	/* struct st_mysql_sys_var** */
-	STRUCT_FLD(system_vars, NULL),
-
-	/* reserved for dependency checking */
-	/* void* */
-	STRUCT_FLD(__reserved1, NULL)
-};
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_locks */
 static ST_FIELD_INFO	innodb_locks_fields_info[] =
@@ -649,12 +600,11 @@ fill_innodb_locks_from_cache(
 
 /***********************************************************************
 Bind the dynamic table INFORMATION_SCHEMA.innodb_locks */
-static
 int
 innodb_locks_init(
 /*==============*/
 			/* out: 0 on success */
-	PluginRegistry &registry)	/* in/out: table schema object */
+	)	/* in/out: table schema object */
 {
 
 	if ((innodb_locks_schema_table= new ST_SCHEMA_TABLE) == NULL)
@@ -664,50 +614,9 @@ innodb_locks_init(
 	innodb_locks_schema_table->fields_info = innodb_locks_fields_info;
 	innodb_locks_schema_table->fill_table = trx_i_s_common_fill_table;
 	innodb_locks_schema_table->table_name= "INNODB_LOCKS";
-	registry.add(innodb_locks_schema_table);
 	return(0);
 }
 
-UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_locks =
-{
-	/* plugin name */
-	/* const char* */
-	STRUCT_FLD(name, "INNODB_LOCKS"),
-
-	/* plugin version */
-	/* const char* */
-	STRUCT_FLD(version, "1.0.2"),
-
-	/* plugin author (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(author, plugin_author),
-
-	/* general descriptive text (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(descr, "InnoDB conflicting locks"),
-
-	/* the plugin license (PLUGIN_LICENSE_XXX) */
-	/* int */
-	STRUCT_FLD(license, PLUGIN_LICENSE_GPL),
-
-	/* the function to invoke when plugin is loaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(init, innodb_locks_init),
-
-	/* the function to invoke when plugin is unloaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(deinit, i_s_common_deinit),
-
-	/* struct st_mysql_show_var* */
-	STRUCT_FLD(status_vars, NULL),
-
-	/* struct st_mysql_sys_var** */
-	STRUCT_FLD(system_vars, NULL),
-
-	/* reserved for dependency checking */
-	/* void* */
-	STRUCT_FLD(__reserved1, NULL)
-};
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_lock_waits */
 static ST_FIELD_INFO	innodb_lock_waits_fields_info[] =
@@ -822,12 +731,11 @@ fill_innodb_lock_waits_from_cache(
 
 /***********************************************************************
 Bind the dynamic table INFORMATION_SCHEMA.innodb_lock_waits */
-static
 int
 innodb_lock_waits_init(
 /*===================*/
 			/* out: 0 on success */
-	PluginRegistry &registry)	/* in/out: table schema object */
+	)
 {
 
 	if ((innodb_lock_waits_schema_table= new ST_SCHEMA_TABLE) == NULL)
@@ -838,51 +746,10 @@ innodb_lock_waits_init(
 	innodb_lock_waits_schema_table->fill_table = trx_i_s_common_fill_table;
 	innodb_lock_waits_schema_table->table_name= "INNODB_LOCK_WAITS";
 
-	registry.add(innodb_lock_waits_schema_table);	
 
 	return(0);
 }
 
-UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_lock_waits =
-{
-	/* plugin name */
-	/* const char* */
-	STRUCT_FLD(name, "INNODB_LOCK_WAITS"),
-
-	/* plugin version */
-	/* const char* */
-	STRUCT_FLD(version, "1.0.2"),
-
-	/* plugin author (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(author, "Innobase Oy"),
-
-	/* general descriptive text (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(descr, "InnoDB which lock is blocking which"),
-
-	/* the plugin license (PLUGIN_LICENSE_XXX) */
-	/* int */
-	STRUCT_FLD(license, PLUGIN_LICENSE_GPL),
-
-	/* the function to invoke when plugin is loaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(init, innodb_lock_waits_init),
-
-	/* the function to invoke when plugin is unloaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(deinit, i_s_common_deinit),
-
-	/* struct st_mysql_show_var* */
-	STRUCT_FLD(status_vars, NULL),
-
-	/* struct st_mysql_sys_var** */
-	STRUCT_FLD(system_vars, NULL),
-
-	/* reserved for dependency checking */
-	/* void* */
-	STRUCT_FLD(__reserved1, NULL)
-};
 
 /***********************************************************************
 Common function to fill any of the dynamic tables:
@@ -1119,12 +986,11 @@ i_s_cmp_reset_fill(
 
 /***********************************************************************
 Bind the dynamic table information_schema.innodb_cmp. */
-static
 int
 i_s_cmp_init(
 /*=========*/
 			/* out: 0 on success */
-	PluginRegistry &registry)	/* in/out: table schema object */
+	)
 {
 
 	if ((innodb_cmp_schema_table= new ST_SCHEMA_TABLE) == NULL)
@@ -1136,18 +1002,16 @@ i_s_cmp_init(
 	innodb_cmp_schema_table->fill_table = i_s_cmp_fill;
 	innodb_cmp_schema_table->table_name= "INNODB_CMP";
 
-	registry.add(innodb_cmp_schema_table);
 	return(0);
 }
 
 /***********************************************************************
 Bind the dynamic table information_schema.innodb_cmp_reset. */
-static
 int
 i_s_cmp_reset_init(
 /*===============*/
 			/* out: 0 on success */
-	PluginRegistry &registry)	/* in/out: table schema object */
+	)	/* in/out: table schema object */
 {
 
 	if ((innodb_cmp_reset_schema_table= new ST_SCHEMA_TABLE) == NULL)
@@ -1158,92 +1022,10 @@ i_s_cmp_reset_init(
 	innodb_cmp_reset_schema_table->fill_table = i_s_cmp_reset_fill;
 	innodb_cmp_reset_schema_table->table_name= "INNODB_CMP_RESET";
 
-	registry.add(innodb_cmp_reset_schema_table);
 	return(0);
 }
 
-UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_cmp =
-{
-	/* plugin name */
-	/* const char* */
-	STRUCT_FLD(name, "INNODB_CMP"),
 
-	/* plugin version */
-	/* const char* */
-	STRUCT_FLD(version, "1.0.2"),
-
-	/* plugin author (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(author, plugin_author),
-
-	/* general descriptive text (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(descr, "Statistics for the InnoDB compression"),
-
-	/* the plugin license (PLUGIN_LICENSE_XXX) */
-	/* int */
-	STRUCT_FLD(license, PLUGIN_LICENSE_GPL),
-
-	/* the function to invoke when plugin is loaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(init, i_s_cmp_init),
-
-	/* the function to invoke when plugin is unloaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(deinit, i_s_common_deinit),
-
-	/* struct st_mysql_show_var* */
-	STRUCT_FLD(status_vars, NULL),
-
-	/* struct st_mysql_sys_var** */
-	STRUCT_FLD(system_vars, NULL),
-
-	/* reserved for dependency checking */
-	/* void* */
-	STRUCT_FLD(__reserved1, NULL)
-};
-
-UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_cmp_reset =
-{
-	/* plugin name */
-	/* const char* */
-	STRUCT_FLD(name, "INNODB_CMP_RESET"),
-
-	/* plugin version */
-	/* const char* */
-	STRUCT_FLD(version, "1.0.2"),
-
-	/* plugin author (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(author, plugin_author),
-
-	/* general descriptive text (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(descr, "Statistics for the InnoDB compression;"
-		   " reset cumulated counts"),
-
-	/* the plugin license (PLUGIN_LICENSE_XXX) */
-	/* int */
-	STRUCT_FLD(license, PLUGIN_LICENSE_GPL),
-
-	/* the function to invoke when plugin is loaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(init, i_s_cmp_reset_init),
-
-	/* the function to invoke when plugin is unloaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(deinit, i_s_common_deinit),
-
-	/* struct st_mysql_show_var* */
-	STRUCT_FLD(status_vars, NULL),
-
-	/* struct st_mysql_sys_var** */
-	STRUCT_FLD(system_vars, NULL),
-
-	/* reserved for dependency checking */
-	/* void* */
-	STRUCT_FLD(__reserved1, NULL)
-};
 
 /* Fields of the dynamic table information_schema.innodb_cmpmem. */
 static ST_FIELD_INFO	i_s_cmpmem_fields_info[] =
@@ -1370,12 +1152,11 @@ i_s_cmpmem_reset_fill(
 
 /***********************************************************************
 Bind the dynamic table information_schema.innodb_cmpmem. */
-static
 int
 i_s_cmpmem_init(
 /*============*/
 			/* out: 0 on success */
-	PluginRegistry &registry)	/* in/out: table schema object */
+	)
 {
 
 	if ((innodb_cmpmem_schema_table= new ST_SCHEMA_TABLE) == NULL)
@@ -1386,18 +1167,16 @@ i_s_cmpmem_init(
 	innodb_cmpmem_schema_table->fill_table = i_s_cmpmem_fill;
 	innodb_cmpmem_schema_table->table_name= "INNODB_CMPMEM";
 
-	registry.add(innodb_cmpmem_schema_table);
 	return(0);
 }
 
 /***********************************************************************
 Bind the dynamic table information_schema.innodb_cmpmem_reset. */
-static
 int
 i_s_cmpmem_reset_init(
 /*==================*/
 			/* out: 0 on success */
-	PluginRegistry &registry)	/* in/out: table schema object */
+	)
 {
 	if ((innodb_cmpmem_reset_schema_table= new ST_SCHEMA_TABLE) == NULL)
 		return(1);
@@ -1407,96 +1186,12 @@ i_s_cmpmem_reset_init(
 	innodb_cmpmem_reset_schema_table->fill_table = i_s_cmpmem_reset_fill;
 	innodb_cmpmem_reset_schema_table->table_name= "INNODB_CMPMEM_RESET";
 
-	registry.add(innodb_cmpmem_reset_schema_table);
 	return(0);
 }
 
-UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_cmpmem =
-{
-	/* plugin name */
-	/* const char* */
-	STRUCT_FLD(name, "INNODB_CMPMEM"),
-
-	/* plugin version */
-	/* const char* */
-	STRUCT_FLD(version, "1.0.2"),
-
-	/* plugin author (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(author, plugin_author),
-
-	/* general descriptive text (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(descr, "Statistics for the InnoDB compressed buffer pool"),
-
-	/* the plugin license (PLUGIN_LICENSE_XXX) */
-	/* int */
-	STRUCT_FLD(license, PLUGIN_LICENSE_GPL),
-
-	/* the function to invoke when plugin is loaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(init, i_s_cmpmem_init),
-
-	/* the function to invoke when plugin is unloaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(deinit, i_s_common_deinit),
-
-	/* struct st_mysql_show_var* */
-	STRUCT_FLD(status_vars, NULL),
-
-	/* struct st_mysql_sys_var** */
-	STRUCT_FLD(system_vars, NULL),
-
-	/* reserved for dependency checking */
-	/* void* */
-	STRUCT_FLD(__reserved1, NULL)
-};
-
-UNIV_INTERN struct drizzled_plugin_manifest	i_s_innodb_cmpmem_reset =
-{
-	/* plugin name */
-	/* const char* */
-	STRUCT_FLD(name, "INNODB_CMPMEM_RESET"),
-
-	/* plugin version */
-	/* const char* */
-	STRUCT_FLD(version, "1.0.2"),
-
-	/* plugin author (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(author, plugin_author),
-
-	/* general descriptive text (for SHOW PLUGINS) */
-	/* const char* */
-	STRUCT_FLD(descr, "Statistics for the InnoDB compressed buffer pool;"
-		   " reset cumulated counts"),
-
-	/* the plugin license (PLUGIN_LICENSE_XXX) */
-	/* int */
-	STRUCT_FLD(license, PLUGIN_LICENSE_GPL),
-
-	/* the function to invoke when plugin is loaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(init, i_s_cmpmem_reset_init),
-
-	/* the function to invoke when plugin is unloaded */
-	/* int (*)(void*); */
-	STRUCT_FLD(deinit, i_s_common_deinit),
-
-	/* struct st_mysql_show_var* */
-	STRUCT_FLD(status_vars, NULL),
-
-	/* struct st_mysql_sys_var** */
-	STRUCT_FLD(system_vars, NULL),
-
-	/* reserved for dependency checking */
-	/* void* */
-	STRUCT_FLD(__reserved1, NULL)
-};
 
 /***********************************************************************
 Unbind a dynamic INFORMATION_SCHEMA table. */
-static
 int
 i_s_common_deinit(
 /*==============*/
@@ -1518,5 +1213,6 @@ i_s_common_deinit(
 	delete innodb_cmp_reset_schema_table;
 	delete innodb_cmpmem_schema_table;
 	delete innodb_cmpmem_reset_schema_table;
+
 	return(0);
 }
