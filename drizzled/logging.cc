@@ -30,12 +30,14 @@ static vector<Logging_handler *> all_loggers;
 
 void add_logger(Logging_handler *handler)
 {
-  all_loggers.push_back(handler);
+  if (handler != NULL)
+    all_loggers.push_back(handler);
 }
 
 void remove_logger(Logging_handler *handler)
 {
-  all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
+  if (handler != NULL)
+    all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
 }
 
 
