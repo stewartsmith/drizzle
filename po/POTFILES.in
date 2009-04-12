@@ -31,6 +31,7 @@ gnulib/getopt.c
 mysys/errors.cc
 mysys/my_error.cc
 mysys/my_getopt.cc
+plugin/auth_http/auth_http.cc
 plugin/errmsg_stderr/errmsg_stderr.cc
 plugin/logging_gearman/logging_gearman.cc
 plugin/logging_query/logging_query.cc
