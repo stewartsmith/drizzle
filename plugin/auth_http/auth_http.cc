@@ -10,7 +10,9 @@
 
 #include <curl/curl.h>
 
-CURL *curl_handle;
+#include <string>
+
+using namespace std;
 
 static bool sysvar_auth_http_enable= false;
 static char* sysvar_auth_http_url= NULL;
@@ -25,10 +27,35 @@ size_t curl_cb_read(void *ptr, size_t size, size_t nmemb, void *stream)
 
 class Auth_http : public Authentication
 {
+  CURLcode rv;
+  CURL *curl_handle;
 public:
+  Auth_http() : Authentication()
+  {
+    // we are trusting that plugin initializers are called singlethreaded at startup
+    // if something else also calls curl_global_init() in a threadrace while we are here,
+    // we will crash the server. 
+    curl_handle= curl_easy_init();
+
+    // turn off curl stuff that might mess us up
+    rv= curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 0);
+    rv= curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1);
+    rv= curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
+
+    // do a HEAD instead of a default GET
+    rv= curl_easy_setopt(curl_handle, CURLOPT_NOBODY, 1);
+
+    // set the read callback.  this shouldnt get called, because we are doing a HEAD
+    rv= curl_easy_setopt(curl_handle, CURLOPT_READFUNCTION, curl_cb_read);
+  }
+
+  ~Auth_http()
+  {
+    curl_easy_cleanup(curl_handle);
+  }
+
   virtual bool authenticate(Session *session, const char *password)
   {
-    CURLcode rv;
     long http_response_code;
 
     if (sysvar_auth_http_enable == false)
@@ -37,21 +64,23 @@ public:
     assert(session->security_ctx.user.c_str());
     assert(password);
 
-    // turn off curl stuff that might mess us up
-    rv= curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1);
-    rv= curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
-    rv= curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 0);
-
-    // do a HEAD instead of a default GET
-    rv= curl_easy_setopt(curl_handle, CURLOPT_NOBODY, 1);
-
-    // set the read callback.  this shouldnt get called, because we are doing a HEAD
-    rv= curl_easy_setopt(curl_handle, CURLOPT_READFUNCTION, curl_cb_read);
 
     // set the parameters: url, username, password
     rv= curl_easy_setopt(curl_handle, CURLOPT_URL, sysvar_auth_http_url);
-    rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME, session->security_ctx.user.c_str());
+#if defined(HAVE_CURLOPT_USERNAME)
+
+    rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME,
+                         session->security_ctx.user.c_str());
     rv= curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, password);
+
+#else
+
+    string userpwd= session->security_ctx.user;
+    userpwd.append(":");
+    userpwd.append(password);
+    rv= curl_easy_setopt(curl_handle, CURLOPT_USERPWD, userpwd.c_str());
+
+#endif /* defined(HAVE_CURLOPT_USERNAME) */
 
     // do it
     rv= curl_easy_perform(curl_handle);
@@ -71,34 +100,23 @@ public:
   }
 };
 
-static int initialize(void *p)
+Auth_http* auth= NULL;
+
+static int initialize(PluginRegistry &registry)
 {
-  Authentication **auth= static_cast<Authentication **>(p);
-
-  CURLcode rv;
-
-  *auth= new Auth_http();
-
-  // we are trusting that plugin initializers are called singlethreaded at startup
-  // if something else also calls curl_global_init() in a threadrace while we are here,
-  // we will crash the server. 
-  curl_handle= curl_easy_init();
-
-  rv= curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1);
-  rv= curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
-  rv= curl_easy_setopt(curl_handle, CURLOPT_NOBODY, 1);
+  auth= new Auth_http();
+  registry.add(auth);
 
   return 0;
 }
 
-static int finalize(void *p)
+static int finalize(PluginRegistry &registry)
 {
-  Auth_http *auth= static_cast<Auth_http *>(p);
-
   if (auth)
+  {
+    registry.remove(auth);
     delete auth;
-
-  curl_easy_cleanup(curl_handle);
+  }
 
   return 0;
 }
@@ -131,7 +149,6 @@ static struct st_mysql_sys_var* auth_http_system_variables[]= {
 
 drizzle_declare_plugin(auth_http)
 {
-  DRIZZLE_AUTH_PLUGIN,
   "auth_http",
   "0.1",
   "Mark Atwood",
