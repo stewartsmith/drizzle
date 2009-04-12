@@ -483,7 +483,7 @@ int mysql_update(Session *session, TableList *table_list,
   */
   can_compare_record= (!(table->file->ha_table_flags() &
                          HA_PARTIAL_COLUMN_READ) ||
-                       isBitmapSubset(table->write_set, table->read_set));
+                       ((*table->read_set & *table->write_set) == *table->write_set));
 
   while (!(error=info.read_record(&info)) && !session->killed)
   {
@@ -1322,8 +1322,7 @@ bool multi_update::send_data(List<Item> &)
       bool can_compare_record;
       can_compare_record= (!(table->file->ha_table_flags() &
                              HA_PARTIAL_COLUMN_READ) ||
-                           isBitmapSubset(table->write_set,
-                                          table->write_set));
+                           ((*table->read_set & *table->write_set) == *table->write_set));
       table->status|= STATUS_UPDATED;
       store_record(table,record[1]);
       if (fill_record(session, *fields_for_table[offset],
@@ -1522,8 +1521,7 @@ int multi_update::do_updates()
 
     can_compare_record= (!(table->file->ha_table_flags() &
                            HA_PARTIAL_COLUMN_READ) ||
-                         isBitmapSubset(table->write_set,
-                                        table->read_set));
+                         ((*table->read_set & *table->write_set) == *table->write_set));
 
     for (;;)
     {

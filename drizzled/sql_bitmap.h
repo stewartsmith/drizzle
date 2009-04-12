@@ -236,15 +236,6 @@ uint32_t setNextBit(std::bitset<MAX_FIELDS> &bitmap);
 uint32_t getFirstBitPos(const std::bitset<MAX_FIELDS> &bitmap);
 
 /*
- * Returns true if map1 is a subset of map2; otherwise,
- * it returns false.
- *
- * @param the bitmap to check with
- * @param the bitmap to check against
- */
-bool isBitmapSubset(const std::bitset<MAX_FIELDS> *map1, const std::bitset<MAX_FIELDS> *map2);
-
-/*
  * Returns true if there is any overlapping bits between
  * the 2 given bitmaps.
  *
