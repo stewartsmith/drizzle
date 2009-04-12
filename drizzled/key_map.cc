@@ -55,15 +55,6 @@ bool is_prefix(const key_map& map, const uint32_t prefix_size)
   return true;
 }
 
-void set_prefix(key_map &map, const uint32_t prefix_size)
-{
-  size_t pos= 0;
-  for (; pos < prefix_size; pos++)
-  {
-    map.set(pos);
-  }
-}
-
 bool is_overlapping(const key_map& map, const key_map& map2)
 {
   size_t count;
@@ -73,29 +64,4 @@ bool is_overlapping(const key_map& map, const key_map& map2)
       return false;
   }
   return true;
-}
-
-void bitset_subtract(key_map &map, key_map &map2)
-{
-  map&= map2.flip();
-  map2.flip();
-}
-
-char *print_key_map(char *buf)
-{
-  char *s= buf;
-  /*const unsigned char *e= (unsigned char *) buffer, *b= e + sizeof(buffer)-1;
-
-  while (!*b && b > e)
-    b--;
-  if ((*s= _dig_vec_upper[*b >> 4]) != '0')
-    s++;
-  *s++= _dig_vec_upper[*b & 15];
-  while (--b >= e)
-  {
-    *s++= _dig_vec_upper[*b >> 4];
-    *s++= _dig_vec_upper[*b & 15];
-  }*/
-  *s= 0;
-  return buf;
 }

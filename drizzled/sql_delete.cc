@@ -152,8 +152,8 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   /* Update the table->file->stats.records number */
   table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
 
-  table->covering_keys.reset();
-  table->quick_keys.reset();		// Can't use 'only index'
+  table->covering_keys.clear_all();
+  table->quick_keys.clear_all();		// Can't use 'only index'
   select=make_select(table, 0, 0, conds, 0, &error);
   if (error)
     goto err;
@@ -173,7 +173,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   }
 
   /* If running in safe sql mode, don't allow updates without keys */
-  if (!table->quick_keys.any())
+  if (table->quick_keys.is_clear_all())
   {
     session->server_status|=SERVER_QUERY_NO_INDEX_USED;
     if (safe_update && !using_limit)
@@ -194,7 +194,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     SORT_FIELD  *sortorder;
     ha_rows examined_rows;
 
-    if ((!select || !table->quick_keys.any()) && limit != HA_POS_ERROR)
+    if ((!select || table->quick_keys.is_clear_all()) && limit != HA_POS_ERROR)
       usable_index= get_index_for_order(table, (order_st*)(order->first), limit);
 
     if (usable_index == MAX_KEY)
@@ -504,7 +504,7 @@ multi_delete::initialize_tables(JOIN *join)
       tbl->no_keyread=1;
       /* Don't use record cache */
       tbl->no_cache= 1;
-      tbl->covering_keys.reset();
+      tbl->covering_keys.clear_all();
       if (tbl->file->has_transactions())
 	transactional_tables= 1;
       else

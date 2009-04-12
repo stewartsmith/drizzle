@@ -3636,8 +3636,8 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       been set for all fields (for example for view).
     */
 
-    table->covering_keys&= (field->part_of_key);
-    table->merge_keys|= (field->part_of_key);
+    table->covering_keys.intersect(field->part_of_key);
+    table->merge_keys.merge(field->part_of_key);
 
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
@@ -4735,16 +4735,16 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
         Table *table_1= nj_col_1->table_ref->table;
         /* Mark field_1 used for table cache. */
         table_1->read_set->set(field_1->field_index);
-        table_1->covering_keys&= (field_1->part_of_key);
-        table_1->merge_keys|= (field_1->part_of_key);
+        table_1->covering_keys.intersect(field_1->part_of_key);
+        table_1->merge_keys.merge(field_1->part_of_key);
       }
       if (field_2)
       {
         Table *table_2= nj_col_2->table_ref->table;
         /* Mark field_2 used for table cache. */
         table_2->read_set->set(field_2->field_index);
-        table_2->covering_keys&= (field_2->part_of_key);
-        table_2->merge_keys|= (field_2->part_of_key);
+        table_2->covering_keys.intersect(field_2->part_of_key);
+        table_2->merge_keys.merge(field_2->part_of_key);
       }
 
       if (using_fields != NULL)
@@ -5422,7 +5422,7 @@ bool get_key_map_from_key_list(key_map *map, Table *table,
   String *name;
   uint32_t pos;
 
-  map->reset();
+  map->clear_all();
   while ((name=it++))
   {
     if (table->s->keynames.type_names == 0 ||
@@ -5432,10 +5432,10 @@ bool get_key_map_from_key_list(key_map *map, Table *table,
     {
       my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), name->c_ptr(),
 	       table->pos_in_table_list->alias);
-      map->set();
+      map->set_all();
       return 1;
     }
-    map->set(pos-1);
+    map->set_bit(pos-1);
   }
   return 0;
 }
@@ -5550,8 +5550,8 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
         }
         if (table)
         {
-          table->covering_keys&= (field->part_of_key);
-          table->merge_keys|= (field->part_of_key);
+          table->covering_keys.intersect(field->part_of_key);
+          table->merge_keys.merge(field->part_of_key);
         }
         if (tables->is_natural_join)
         {
@@ -5568,8 +5568,8 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
           if (field_table)
           {
             session->used_tables|= field_table->map;
-            field_table->covering_keys&= (field->part_of_key);
-            field_table->merge_keys|= (field->part_of_key);
+            field_table->covering_keys.intersect(field->part_of_key);
+            field_table->merge_keys.merge(field->part_of_key);
             field_table->used_fields++;
           }
         }

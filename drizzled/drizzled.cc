@@ -337,8 +337,8 @@ char drizzle_real_data_home[FN_REFLEN],
      language[FN_REFLEN], 
      *opt_tc_log_file;
 char drizzle_unpacked_real_data_home[FN_REFLEN];
-const key_map key_map_empty;
-key_map key_map_full;                        // Will be initialized later
+const key_map key_map_empty(0);
+key_map key_map_full(0);                        // Will be initialized later
 
 uint32_t drizzle_data_home_len;
 char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
@@ -2724,7 +2724,7 @@ static void drizzle_init_variables(void)
   drizzled_user= drizzled_chroot= 0;
   my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
-  key_map_full.set();
+  key_map_full.set_all();
 
   /* Character sets */
   system_charset_info= &my_charset_utf8_general_ci;
