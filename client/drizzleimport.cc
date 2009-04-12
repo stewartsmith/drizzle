@@ -347,7 +347,9 @@ static int write_to_table(char *filename, drizzle_con_st *con)
   if (opt_ignore_lines >= 0)
   {
     end= strcpy(end, " IGNORE ")+8;
-    end= int64_t2str(opt_ignore_lines, end, 10);
+    ostringstream buffer;
+    buffer << opt_ignore_lines;
+    end= strcpy(end, buffer.str().c_str())+ buffer.str().size();
     end= strcpy(end, " LINES")+6;
   }
   if (opt_columns)
