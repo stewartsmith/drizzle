@@ -67,13 +67,13 @@ do {									\
 
 #define STRUCT_FLD(name, value)	value
 
-ST_SCHEMA_TABLE *innodb_trx_schema_table= NULL;
-ST_SCHEMA_TABLE *innodb_locks_schema_table= NULL;
-ST_SCHEMA_TABLE *innodb_lock_waits_schema_table= NULL;
-ST_SCHEMA_TABLE *innodb_cmp_schema_table= NULL;
-ST_SCHEMA_TABLE *innodb_cmp_reset_schema_table= NULL;
-ST_SCHEMA_TABLE *innodb_cmpmem_schema_table= NULL;
-ST_SCHEMA_TABLE *innodb_cmpmem_reset_schema_table= NULL;
+InfoSchemaTable *innodb_trx_schema_table= NULL;
+InfoSchemaTable *innodb_locks_schema_table= NULL;
+InfoSchemaTable *innodb_lock_waits_schema_table= NULL;
+InfoSchemaTable *innodb_cmp_schema_table= NULL;
+InfoSchemaTable *innodb_cmp_reset_schema_table= NULL;
+InfoSchemaTable *innodb_cmpmem_schema_table= NULL;
+InfoSchemaTable *innodb_cmpmem_reset_schema_table= NULL;
 
 static const ST_FIELD_INFO END_OF_ST_FIELD_INFO =
 	{STRUCT_FLD(field_name,		NULL),
@@ -383,9 +383,9 @@ innodb_trx_init(
 			/* out: 0 on success */
 	)	/* in/out: table schema object */
 {
-	if ((innodb_trx_schema_table= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_trx_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_trx_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_trx_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_trx_schema_table->fields_info = innodb_trx_fields_info;
 	innodb_trx_schema_table->fill_table = trx_i_s_common_fill_table;
@@ -607,9 +607,9 @@ innodb_locks_init(
 	)	/* in/out: table schema object */
 {
 
-	if ((innodb_locks_schema_table= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_locks_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_locks_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_locks_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_locks_schema_table->fields_info = innodb_locks_fields_info;
 	innodb_locks_schema_table->fill_table = trx_i_s_common_fill_table;
@@ -738,9 +738,9 @@ innodb_lock_waits_init(
 	)
 {
 
-	if ((innodb_lock_waits_schema_table= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_lock_waits_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_lock_waits_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_lock_waits_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_lock_waits_schema_table->fields_info = innodb_lock_waits_fields_info;
 	innodb_lock_waits_schema_table->fill_table = trx_i_s_common_fill_table;
@@ -993,9 +993,9 @@ i_s_cmp_init(
 	)
 {
 
-	if ((innodb_cmp_schema_table= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_cmp_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_cmp_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_cmp_schema_table, 0, sizeof(InfoSchemaTable));
 
 
 	innodb_cmp_schema_table->fields_info = i_s_cmp_fields_info;
@@ -1014,9 +1014,9 @@ i_s_cmp_reset_init(
 	)	/* in/out: table schema object */
 {
 
-	if ((innodb_cmp_reset_schema_table= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_cmp_reset_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_cmp_reset_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_cmp_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_cmp_reset_schema_table->fields_info = i_s_cmp_fields_info;
 	innodb_cmp_reset_schema_table->fill_table = i_s_cmp_reset_fill;
@@ -1159,9 +1159,9 @@ i_s_cmpmem_init(
 	)
 {
 
-	if ((innodb_cmpmem_schema_table= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_cmpmem_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_cmpmem_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_cmpmem_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_cmpmem_schema_table->fields_info = i_s_cmpmem_fields_info;
 	innodb_cmpmem_schema_table->fill_table = i_s_cmpmem_fill;
@@ -1178,9 +1178,9 @@ i_s_cmpmem_reset_init(
 			/* out: 0 on success */
 	)
 {
-	if ((innodb_cmpmem_reset_schema_table= new ST_SCHEMA_TABLE) == NULL)
+	if ((innodb_cmpmem_reset_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_cmpmem_reset_schema_table, 0, sizeof(ST_SCHEMA_TABLE));
+	memset(innodb_cmpmem_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_cmpmem_reset_schema_table->fields_info = i_s_cmpmem_fields_info;
 	innodb_cmpmem_reset_schema_table->fill_table = i_s_cmpmem_reset_fill;

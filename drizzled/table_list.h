@@ -60,7 +60,7 @@ class COND_EQUAL;
 class Natural_join_column;
 class select_union;
 class Select_Lex_Unit;
-class ST_SCHEMA_TABLE;
+class InfoSchemaTable;
 class Select_Lex;
 class Tmp_Table_Param;
 class Item_subselect;
@@ -167,7 +167,7 @@ public:
   */
   TableList	*correspondent_table;
   Select_Lex_Unit *derived;		/* Select_Lex_Unit of derived table */
-  ST_SCHEMA_TABLE *schema_table;        /* Information_schema table */
+  InfoSchemaTable *schema_table;        /* Information_schema table */
   Select_Lex	*schema_select_lex;
   /*
     True when the view field translation table is used to convert

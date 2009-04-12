@@ -38,7 +38,7 @@ class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
-class ST_SCHEMA_TABLE;
+struct InfoSchemaTable;
 
 typedef struct system_status_var STATUS_VAR;
 
@@ -62,14 +62,14 @@ bool schema_table_store_record(Session *session, Table *table);
 int get_quote_char_for_identifier(Session *session, const char *name,
                                   uint32_t length);
 
-ST_SCHEMA_TABLE *find_schema_table(Session *session, const char* table_name);
-ST_SCHEMA_TABLE *get_schema_table(enum enum_schema_tables schema_table_idx);
+InfoSchemaTable *find_schema_table(Session *session, const char* table_name);
+InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx);
 int make_schema_select(Session *session,  Select_Lex *sel,
                        enum enum_schema_tables schema_table_idx);
 int mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
 bool get_schema_tables_result(JOIN *join,
                               enum enum_schema_table_state executed_place);
-enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table);
+enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table);
 
 bool mysqld_show_open_tables(Session *session,const char *wild);
 bool mysqld_show_logs(Session *session);
@@ -90,7 +90,7 @@ void remove_status_vars(SHOW_VAR *list);
 void init_status_vars();
 void free_status_vars();
 void reset_status_vars();
-void add_infoschema_table(ST_SCHEMA_TABLE *schema_table);
-void remove_infoschema_table(ST_SCHEMA_TABLE *table);
+void add_infoschema_table(InfoSchemaTable *schema_table);
+void remove_infoschema_table(InfoSchemaTable *table);
 
 #endif /* DRIZZLE_SERVER_SHOW_H */

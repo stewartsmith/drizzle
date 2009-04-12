@@ -35,12 +35,12 @@ int i_s_cmp_reset_init();
 int i_s_cmpmem_init();
 int i_s_cmpmem_reset_init();
 
-extern ST_SCHEMA_TABLE *innodb_trx_schema_table;
-extern ST_SCHEMA_TABLE *innodb_locks_schema_table;
-extern ST_SCHEMA_TABLE *innodb_lock_waits_schema_table;
-extern ST_SCHEMA_TABLE *innodb_cmp_schema_table;
-extern ST_SCHEMA_TABLE *innodb_cmp_reset_schema_table;
-extern ST_SCHEMA_TABLE *innodb_cmpmem_schema_table;
-extern ST_SCHEMA_TABLE *innodb_cmpmem_reset_schema_table;
+extern InfoSchemaTable *innodb_trx_schema_table;
+extern InfoSchemaTable *innodb_locks_schema_table;
+extern InfoSchemaTable *innodb_lock_waits_schema_table;
+extern InfoSchemaTable *innodb_cmp_schema_table;
+extern InfoSchemaTable *innodb_cmp_reset_schema_table;
+extern InfoSchemaTable *innodb_cmpmem_schema_table;
+extern InfoSchemaTable *innodb_cmpmem_reset_schema_table;
 
 #endif /* i_s_h */

@@ -27,7 +27,7 @@
 
 struct st_plugin_int;
 class StorageEngine;
-struct ST_SCHEMA_TABLE;
+struct InfoSchemaTable;
 class Function_builder;
 class Logging_handler;
 class Error_message_handler;
@@ -62,7 +62,7 @@ public:
   static PluginRegistry& getPluginRegistry();
 
   void add(StorageEngine *engine);
-  void add(ST_SCHEMA_TABLE *schema_table);
+  void add(InfoSchemaTable *schema_table);
   void add(Function_builder *udf);
   void add(Logging_handler *handler);
   void add(Error_message_handler *handler);
@@ -73,7 +73,7 @@ public:
   void add(drizzled::plugin::Replicator *repl);
 
   void remove(StorageEngine *engine);
-  void remove(ST_SCHEMA_TABLE *schema_table);
+  void remove(InfoSchemaTable *schema_table);
   void remove(Function_builder *udf);
   void remove(Logging_handler *handler);
   void remove(Error_message_handler *handler);

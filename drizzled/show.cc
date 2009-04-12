@@ -66,12 +66,12 @@ static const char *ha_choice_values[] = {"", "0", "1"};
 static void store_key_options(Session *session, String *packet, Table *table,
                               KEY *key_info);
 
-static vector<ST_SCHEMA_TABLE *> all_schema_tables;
+static vector<InfoSchemaTable *> all_schema_tables;
 
 Table *create_schema_table(Session *session, TableList *table_list);
-int make_old_format(Session *session, ST_SCHEMA_TABLE *schema_table);
+int make_old_format(Session *session, InfoSchemaTable *schema_table);
 
-void add_infoschema_table(ST_SCHEMA_TABLE *schema_table)
+void add_infoschema_table(InfoSchemaTable *schema_table)
 {
   if (schema_table->create_table == NULL)
     schema_table->create_table= create_schema_table;
@@ -85,11 +85,11 @@ void add_infoschema_table(ST_SCHEMA_TABLE *schema_table)
   all_schema_tables.push_back(schema_table);
 }
 
-void remove_infoschema_table(ST_SCHEMA_TABLE *table)
+void remove_infoschema_table(InfoSchemaTable *table)
 {
   all_schema_tables.erase(remove_if(all_schema_tables.begin(),
                                     all_schema_tables.end(),
-                                    bind2nd(equal_to<ST_SCHEMA_TABLE *>(),
+                                    bind2nd(equal_to<InfoSchemaTable *>(),
                                             table)),
                           all_schema_tables.end());
 }
@@ -1593,7 +1593,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
 
 
 /* This is only used internally, but we need it here as a forward reference */
-extern ST_SCHEMA_TABLE schema_tables[];
+extern InfoSchemaTable schema_tables[];
 
 typedef struct st_lookup_field_values
 {
@@ -1665,7 +1665,7 @@ bool get_lookup_value(Session *session, Item_func *item_func,
                       TableList *table,
                       LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
-  ST_SCHEMA_TABLE *schema_table= table->schema_table;
+  InfoSchemaTable *schema_table= table->schema_table;
   ST_FIELD_INFO *field_info= schema_table->fields_info;
   const char *field_name1= schema_table->idx_field1 >= 0 ?
     field_info[schema_table->idx_field1].field_name : "";
@@ -1794,7 +1794,7 @@ bool uses_only_table_name_fields(Item *item, TableList *table)
   {
     Item_field *item_field= (Item_field*)item;
     const CHARSET_INFO * const cs= system_charset_info;
-    ST_SCHEMA_TABLE *schema_table= table->schema_table;
+    InfoSchemaTable *schema_table= table->schema_table;
     ST_FIELD_INFO *field_info= schema_table->fields_info;
     const char *field_name1= schema_table->idx_field1 >= 0 ?
       field_info[schema_table->idx_field1].field_name : "";
@@ -1929,7 +1929,7 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
 }
 
 
-enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table)
+enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table)
 {
   return (enum enum_schema_tables) (schema_table - &schema_tables[0]);
 }
@@ -2021,7 +2021,7 @@ struct st_add_schema_table
 };
 
 
-class AddSchemaTable : public unary_function<ST_SCHEMA_TABLE *, bool>
+class AddSchemaTable : public unary_function<InfoSchemaTable *, bool>
 {
   Session *session;
   st_add_schema_table *data;
@@ -2062,7 +2062,7 @@ public:
 int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wild)
 {
   LEX_STRING *file_name= 0;
-  ST_SCHEMA_TABLE *tmp_schema_table= schema_tables;
+  InfoSchemaTable *tmp_schema_table= schema_tables;
   st_add_schema_table add_data;
 
   for (; tmp_schema_table->table_name; tmp_schema_table++)
@@ -2091,7 +2091,7 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
 
   add_data.files= files;
   add_data.wild= wild;
-  vector<ST_SCHEMA_TABLE *>::iterator iter=
+  vector<InfoSchemaTable *>::iterator iter=
     find_if(all_schema_tables.begin(), all_schema_tables.end(),
            AddSchemaTable(session, &add_data));
   if (iter != all_schema_tables.end())
@@ -2194,7 +2194,7 @@ make_table_name_list(Session *session, List<LEX_STRING> *table_names, LEX *lex,
 
 static int
 fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
-                              ST_SCHEMA_TABLE *schema_table,
+                              InfoSchemaTable *schema_table,
                               Open_tables_state *open_tables_state_backup)
 {
   LEX *lex= session->lex;
@@ -2311,7 +2311,7 @@ static int fill_schema_table_names(Session *session, Table *table,
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                      ST_SCHEMA_TABLE *schema_table,
+                                      InfoSchemaTable *schema_table,
                                       enum enum_schema_tables)
 {
   /*
@@ -2352,7 +2352,7 @@ static uint32_t get_table_open_method(TableList *tables,
 */
 
 static int fill_schema_table_from_frm(Session *session,TableList *tables,
-                                      ST_SCHEMA_TABLE *schema_table,
+                                      InfoSchemaTable *schema_table,
                                       LEX_STRING *db_name,
                                       LEX_STRING *table_name,
                                       enum enum_schema_tables)
@@ -2425,7 +2425,7 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
   Select_Lex *old_all_select_lex= lex->all_selects_list;
   enum_sql_command save_sql_command= lex->sql_command;
   Select_Lex *lsel= tables->schema_select_lex;
-  ST_SCHEMA_TABLE *schema_table= tables->schema_table;
+  InfoSchemaTable *schema_table= tables->schema_table;
   Select_Lex sel;
   LOOKUP_FIELD_VALUES lookup_field_vals;
   LEX_STRING *db_name, *table_name;
@@ -3665,7 +3665,7 @@ get_referential_constraints_record(Session *session, TableList *tables,
 }
 
 
-class FindSchemaTableByName : public unary_function<ST_SCHEMA_TABLE *, bool>
+class FindSchemaTableByName : public unary_function<InfoSchemaTable *, bool>
 {
   const char *table_name;
 public:
@@ -3693,9 +3693,9 @@ public:
     #   pointer to 'schema_tables' element
 */
 
-ST_SCHEMA_TABLE *find_schema_table(Session *, const char* table_name)
+InfoSchemaTable *find_schema_table(Session *, const char* table_name)
 {
-  ST_SCHEMA_TABLE *schema_table= schema_tables;
+  InfoSchemaTable *schema_table= schema_tables;
 
   for (; schema_table->table_name; schema_table++)
   {
@@ -3705,7 +3705,7 @@ ST_SCHEMA_TABLE *find_schema_table(Session *, const char* table_name)
       return(schema_table);
   }
 
-  vector<ST_SCHEMA_TABLE *>::iterator iter= 
+  vector<InfoSchemaTable *>::iterator iter= 
     find_if(all_schema_tables.begin(), all_schema_tables.end(),
             FindSchemaTableByName(table_name));
   if (iter != all_schema_tables.end())
@@ -3714,7 +3714,7 @@ ST_SCHEMA_TABLE *find_schema_table(Session *, const char* table_name)
 }
 
 
-ST_SCHEMA_TABLE *get_schema_table(enum enum_schema_tables schema_table_idx)
+InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx)
 {
   return &schema_tables[schema_table_idx];
 }
@@ -3741,7 +3741,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
   Item *item;
   Table *table;
   List<Item> field_list;
-  ST_SCHEMA_TABLE *schema_table= table_list->schema_table;
+  InfoSchemaTable *schema_table= table_list->schema_table;
   ST_FIELD_INFO *fields_info= schema_table->fields_info;
   const CHARSET_INFO * const cs= system_charset_info;
 
@@ -3844,7 +3844,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
    0	success
 */
 
-int make_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   ST_FIELD_INFO *field_info= schema_table->fields_info;
   Name_resolution_context *context= &session->lex->select_lex.context;
@@ -3868,7 +3868,7 @@ int make_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
 }
 
 
-int make_schemata_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_schemata_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   char tmp[128];
   LEX *lex= session->lex;
@@ -3897,7 +3897,7 @@ int make_schemata_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
 }
 
 
-int make_table_names_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_table_names_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   char tmp[128];
   String buffer(tmp,sizeof(tmp), session->charset());
@@ -3933,7 +3933,7 @@ int make_table_names_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
 }
 
 
-int make_columns_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_columns_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {3, 14, 13, 6, 15, 5, 16, 17, 18, -1};
   int *field_num= fields_arr;
@@ -3962,7 +3962,7 @@ int make_columns_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
 }
 
 
-int make_character_sets_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_character_sets_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {0, 2, 1, 3, -1};
   int *field_num= fields_arr;
@@ -4046,7 +4046,7 @@ int mysql_schema_table(Session *session, LEX *, TableList *table_list)
 int make_schema_select(Session *session, Select_Lex *sel,
 		       enum enum_schema_tables schema_table_idx)
 {
-  ST_SCHEMA_TABLE *schema_table= get_schema_table(schema_table_idx);
+  InfoSchemaTable *schema_table= get_schema_table(schema_table_idx);
   LEX_STRING db, table;
   /*
      We have to make non const db_name & table_name
@@ -4427,7 +4427,7 @@ ST_FIELD_INFO referential_constraints_fields_info[]=
 
 */
 
-ST_SCHEMA_TABLE schema_tables[]=
+InfoSchemaTable schema_tables[]=
 {
   {"CHARACTER_SETS", charsets_fields_info, create_schema_table,
    fill_schema_charsets, make_character_sets_old_format, 0, -1, -1, 0, 0},

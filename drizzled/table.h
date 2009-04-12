@@ -406,7 +406,7 @@ typedef struct st_field_info
 class TableList;
 typedef class Item COND;
 
-struct ST_SCHEMA_TABLE
+struct InfoSchemaTable
 {
   const char* table_name;
   ST_FIELD_INFO *fields_info;
@@ -415,7 +415,7 @@ struct ST_SCHEMA_TABLE
   /* Fill table with data */
   int (*fill_table) (Session *session, TableList *tables, COND *cond);
   /* Handle fileds for old SHOW */
-  int (*old_format) (Session *session, struct ST_SCHEMA_TABLE *schema_table);
+  int (*old_format) (Session *session, struct InfoSchemaTable *schema_table);
   int (*process_table) (Session *session, TableList *tables, Table *table,
                         bool res, LEX_STRING *db_name, LEX_STRING *table_name);
   int idx_field1, idx_field2;

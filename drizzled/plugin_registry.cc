@@ -93,7 +93,7 @@ void PluginRegistry::add(StorageEngine *engine)
   add_storage_engine(engine);
 }
 
-void PluginRegistry::add(ST_SCHEMA_TABLE *schema_table)
+void PluginRegistry::add(InfoSchemaTable *schema_table)
 {
   add_infoschema_table(schema_table);
 }
@@ -143,7 +143,7 @@ void PluginRegistry::remove(StorageEngine *engine)
   remove_storage_engine(engine);
 }
 
-void PluginRegistry::remove(ST_SCHEMA_TABLE *schema_table)
+void PluginRegistry::remove(InfoSchemaTable *schema_table)
 {
   remove_infoschema_table(schema_table);
 }
