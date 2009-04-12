@@ -21,19 +21,11 @@
 #include <drizzled/sql_error.h>
 #include <drizzled/current_session.h>
 #include <zlib.h>
+#include "plugin/compression/compress.h"
+
 #include <string>
 
 using namespace std;
-
-class Item_func_compress: public Item_str_func
-{
-  String buffer;
-public:
-  Item_func_compress():Item_str_func(){}
-  void fix_length_and_dec(){max_length= (args[0]->max_length*120)/100+12;}
-  const char *func_name() const{return "compress";}
-  String *val_str(String *) ;
-};
 
 String *Item_func_compress::val_str(String *str)
 {
@@ -100,25 +92,3 @@ String *Item_func_compress::val_str(String *str)
 }
 
 
-Create_function<Item_func_compress> compressudf(string("compress"));
-
-static int compressudf_plugin_init(PluginRegistry &registry)
-{
-  registry.add(&compressudf);
-  return 0;
-}
-
-drizzle_declare_plugin(compress)
-{
-  "compress",
-  "1.0",
-  "Stewart Smith",
-  "UDF for compress()",
-  PLUGIN_LICENSE_GPL,
-  compressudf_plugin_init, /* Plugin Init */
-  NULL, /* Plugin Deinit */
-  NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
-}
-drizzle_declare_plugin_end;

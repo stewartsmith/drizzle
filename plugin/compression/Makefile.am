@@ -13,14 +13,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-EXTRA_LTLIBRARIES =	libcompressudf.la
-pkgplugin_LTLIBRARIES =	@plugin_compress_shared_target@
-libcompressudf_la_LDFLAGS =	-module -avoid-version -rpath $(pkgplugindir)\
-				${LIBZ}
-libcompressudf_la_CPPFLAGS=	$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
-libcompressudf_la_SOURCES =	compressudf.cc
+EXTRA_LTLIBRARIES=		libcompressionudf.la
+pkgplugin_LTLIBRARIES=		@plugin_compression_shared_target@
+libcompressionudf_la_LDFLAGS=	-module -avoid-version -rpath $(pkgplugindir)\
+				${LTLIBZ}
+libcompressionudf_la_CPPFLAGS=	$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
+libcompressionudf_la_SOURCES=	compress.cc \
+				compressionudf.cc \
+				uncompress.cc \
+				uncompressed_length.cc
 
 
-EXTRA_LIBRARIES =	libcompressudf.a
-noinst_LIBRARIES =	@plugin_compress_static_target@
-libcompressudf_a_SOURCES=	$(libcompressudf_la_SOURCES)
+EXTRA_LIBRARIES=		libcompressionudf.a
+noinst_LIBRARIES=		@plugin_compression_static_target@
+libcompressionudf_a_SOURCES=	$(libcompressionudf_la_SOURCES)

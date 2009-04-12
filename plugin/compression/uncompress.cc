@@ -1,37 +1,32 @@
-/* Copyright (C) 2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
+#include "plugin/compression/uncompress.h"
 
 #include <zlib.h>
 #include <string>
 
 using namespace std;
-
-class Item_func_uncompress: public Item_str_func
-{
-  String buffer;
-public:
-  Item_func_uncompress(): Item_str_func(){}
-  void fix_length_and_dec(){ maybe_null= 1; max_length= MAX_BLOB_WIDTH; }
-  const char *func_name() const{return "uncompress";}
-  String *val_str(String *) ;
-};
 
 String *Item_func_uncompress::val_str(String *str)
 {
@@ -85,26 +80,3 @@ err:
   return 0;
 }
 
-Create_function<Item_func_uncompress> uncompressudf("uncompress");
-
-static int uncompressudf_plugin_init(PluginRegistry &registry)
-{
-  registry.add(&uncompressudf);
-  return 0;
-}
-
-
-drizzle_declare_plugin(uncompress)
-{
-  "uncompress",
-  "1.0",
-  "Stewart Smith",
-  "UDF for compress()",
-  PLUGIN_LICENSE_GPL,
-  uncompressudf_plugin_init, /* Plugin Init */
-  NULL,   /* Plugin Deinit */
-  NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
-}
-drizzle_declare_plugin_end;
