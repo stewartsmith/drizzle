@@ -35,20 +35,11 @@
 
 using namespace std;
 
-void ThreadSafeBitset::resetBit(uint32_t pos)
-{
-  pthread_mutex_lock(&mutex);
-  bitmap.reset(pos);
-  pthread_mutex_unlock(&mutex);
-}
-
-uint32_t ThreadSafeBitset::setNextBit()
+uint32_t setNextBit(bitset<MAX_FIELDS> &bitmap)
 {
   uint32_t bit_found;
-  pthread_mutex_lock(&mutex);
   if ((bit_found= getFirstBitPos(bitmap)) != MY_BIT_NONE)
     bitmap.set(bit_found);
-  pthread_mutex_unlock(&mutex);
   return bit_found;
 }
 
@@ -64,13 +55,6 @@ uint32_t getFirstBitPos(const bitset<MAX_FIELDS> &bitmap)
     }
   }
   return first_bit;
-}
-
-bool isBitmapSubset(const bitset<MAX_FIELDS> *map1, const bitset<MAX_FIELDS> *map2)
-{
-  bitset<MAX_FIELDS> tmp1= *map2;
-  bitset<MAX_FIELDS> tmp2= *map1 & tmp1.flip();
-  return (!tmp2.any());
 }
 
 bool isBitmapOverlapping(const bitset<MAX_FIELDS> *map1, const bitset<MAX_FIELDS> *map2)

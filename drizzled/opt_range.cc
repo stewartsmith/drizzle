@@ -3130,8 +3130,8 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
     info->index_records += info->param->table->quick_rows[ror_scan->keynr];
     info->index_scan_costs += ror_scan->index_read_cost;
     info->covered_fields |= ror_scan->covered_fields;
-    if (!info->is_covering && isBitmapSubset(&info->param->needed_fields,
-                                             &info->covered_fields))
+    if (! info->is_covering &&
+        ((info->covered_fields & info->param->needed_fields) == info->param->needed_fields))
     {
       info->is_covering= true;
     }
@@ -3459,8 +3459,14 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
     if (total_cost > read_time)
       return NULL;
     /* F=F-covered by first(I) */
-    *covered_fields |= (*ror_scan_mark)->covered_fields;
-    all_covered= isBitmapSubset(&param->needed_fields, covered_fields);
+    *covered_fields|= (*ror_scan_mark)->covered_fields;
+    /*
+     * Check whether the param->needed_fields bitset is a subset of
+     * the covered_fields bitset. If the param->needed_fields bitset
+     * is a subset of covered_fields, then set all_covered to 
+     * true; otherwise, set it to false.
+     */
+    all_covered= ((*covered_fields & param->needed_fields) == param->needed_fields);
   } while ((++ror_scan_mark < ror_scans_end) && !all_covered);
 
   if (!all_covered || (ror_scan_mark - tree->ror_scans) == 1)

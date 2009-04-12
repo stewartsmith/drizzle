@@ -3773,7 +3773,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   status_var_increment(session->status_var.created_tmp_tables);
 
   if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
-    temp_pool_slot = temp_pool.setNextBit();
+    setNextBit(temp_pool);
 
   if (temp_pool_slot != MY_BIT_NONE) // we got a slot
     sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
@@ -3849,14 +3849,14 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         NULL))
   {
     if (temp_pool_slot != MY_BIT_NONE)
-      temp_pool.resetBit(temp_pool_slot);
+      temp_pool.reset(temp_pool_slot);
     return(NULL);				/* purecov: inspected */
   }
   /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
   {
     if (temp_pool_slot != MY_BIT_NONE)
-      temp_pool.resetBit(temp_pool_slot);
+      temp_pool.reset(temp_pool_slot);
     free_root(&own_root, MYF(0));               /* purecov: inspected */
     return(NULL);				/* purecov: inspected */
   }
@@ -4408,7 +4408,7 @@ err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
   if (temp_pool_slot != MY_BIT_NONE)
-    temp_pool.resetBit(temp_pool_slot);
+    temp_pool.reset(temp_pool_slot);
   return(NULL);				/* purecov: inspected */
 }
 
@@ -4718,7 +4718,7 @@ void Table::free_tmp_table(Session *session)
   free_io_cache(this);
 
   if (temp_pool_slot != MY_BIT_NONE)
-    temp_pool.resetBit(temp_pool_slot);
+    temp_pool.reset(temp_pool_slot);
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);

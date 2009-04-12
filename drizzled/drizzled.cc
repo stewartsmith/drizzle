@@ -366,7 +366,7 @@ struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
 
-ThreadSafeBitset temp_pool;
+bitset<MAX_FIELDS> temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
 const CHARSET_INFO *table_alias_charset;

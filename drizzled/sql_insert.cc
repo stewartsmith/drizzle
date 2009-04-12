@@ -828,7 +828,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             table->next_number_field->val_int());
         info->touched++;
         if ((table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
-             !isBitmapSubset(table->write_set, table->read_set)) ||
+             !((*table->read_set & *table->write_set) == *table->write_set)) ||
             table->compare_record())
         {
           if ((error=table->file->ha_update_row(table->record[1],
