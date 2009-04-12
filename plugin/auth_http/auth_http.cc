@@ -152,7 +152,7 @@ drizzle_declare_plugin(auth_http)
   "auth_http",
   "0.1",
   "Mark Atwood",
-  "PAM based authenication.",
+  "HTTP based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize, /* Plugin Deinit */
