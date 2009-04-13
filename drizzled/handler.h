@@ -37,8 +37,10 @@
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
 
+#include<bitset>
+
 #define HA_MAX_ALTER_FLAGS 40
-typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
+typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 
 typedef bool (*qc_engine_callback)(Session *session, char *table_key,
@@ -724,6 +726,27 @@ public:
    check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
  { return COMPATIBLE_DATA_NO; }
 
+ /*
+  * Check if the HA_ALTER_STORED_VCOL bit is set. If it is, then
+  * we will clear all other bits and return true; otherwise 
+  * clear all the bits in the the bitset and return false.
+  *
+  * @param    alter_flags    Bitmap that shows what will be changed
+  */
+ virtual bool check_stored_vcol_flag(HA_ALTER_FLAGS *alter_flags)
+ {
+   if (alter_flags->test(HA_ALTER_STORED_VCOL))
+   {
+     alter_flags->reset();
+     alter_flags->set(HA_ALTER_STORED_VCOL);
+   }
+   else
+   {
+     alter_flags->reset();
+   }
+   return (alter_flags->any());
+ }
+
  /* On-line ALTER Table interface */
 
  /**
@@ -755,7 +778,7 @@ public:
    if (this->check_if_incompatible_data(create_info, table_changes)
        == COMPATIBLE_DATA_NO)
      return(HA_ALTER_NOT_SUPPORTED);
-   else if ((*alter_flags & HA_ALTER_STORED_VCOL).is_set())
+   else if (this->check_stored_vcol_flag(alter_flags))
      return(HA_ALTER_NOT_SUPPORTED);
    else
      return(HA_ALTER_SUPPORTED_WAIT_LOCK);
@@ -1105,8 +1128,9 @@ extern uint32_t total_ha, total_ha_2pc;
 int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
-int storage_engine_initializer(st_plugin_int *plugin);
-int storage_engine_finalizer(st_plugin_int *plugin);
+
+void add_storage_engine(StorageEngine *engine);
+void remove_storage_engine(StorageEngine *engine);
 
 void ha_close_connection(Session* session);
 bool ha_flush_logs(StorageEngine *db_type);

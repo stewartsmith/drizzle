@@ -76,7 +76,7 @@ int*			wdl_my_umask;
 The following is defined in ha_innodb.cc. It is used for copying the
 system variables from the builtin innodb plugin to the dynamic plugin.
 */
-extern struct st_mysql_plugin*	builtin_innobase_plugin_ptr;
+extern struct drizzled_plugin_manifest*	builtin_innobase_plugin_ptr;
 
 /***********************************************************************
 The preffered load-address defined in PE (portable executable format).*/
@@ -644,10 +644,10 @@ wdl_get_external_variables(void)
 		 wdl_binlog_format_names, char*);
 
 	/* It is fine if builtin_innobase_plugin is not available. */
-	builtin_innobase_plugin_ptr = (struct st_mysql_plugin*)
+	builtin_innobase_plugin_ptr = (struct drizzled_plugin_manifest*)
 		wdl_get_varaddr_from_map(
 			hmod,
-			"?builtin_innobase_plugin@@3PAUst_mysql_plugin@@A");
+			"?builtin_innobase_plugin@@3PAUdrizzled_plugin_manifest@@A");
 
 #ifndef DBUG_OFF
 	GET_PROC_ADDR(_db_enter_);

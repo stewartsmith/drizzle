@@ -14,15 +14,15 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include <drizzled/server_includes.h>
-#include <drizzled/field.h>
-#include <drizzled/field/blob.h>
-#include <drizzled/field/timestamp.h>
-#include <storage/myisam/myisam.h>
-#include <drizzled/table.h>
-#include <drizzled/session.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/field.h"
+#include "drizzled/field/blob.h"
+#include "drizzled/field/timestamp.h"
+#include "storage/myisam/myisam.h"
+#include "drizzled/table.h"
+#include "drizzled/session.h"
 
-#include <storage/archive/ha_archive.h>
+#include "storage/archive/ha_archive.h"
 
 #include <stdio.h>
 #include <string>
@@ -136,6 +136,7 @@ public:
   }
 };
 
+static ArchiveEngine *archive_engine= NULL;
 
 /*
   Initialize the archive handler.
@@ -149,13 +150,12 @@ public:
     true        Error
 */
 
-int archive_db_init(void *p)
+int archive_db_init(PluginRegistry &registry)
 {
-  StorageEngine **engine= static_cast<StorageEngine **>(p);
 
-  ArchiveEngine *archive_engine= new ArchiveEngine(engine_name);
-
-  *engine= archive_engine;
+  pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
+  archive_engine= new ArchiveEngine(engine_name);
+  registry.add(archive_engine);
 
   /* When the engine starts up set the first version */
   global_version= 1;
@@ -174,9 +174,9 @@ int archive_db_init(void *p)
     false       OK
 */
 
-int archive_db_done(void *p)
+int archive_db_done(PluginRegistry &registry)
 {
-  ArchiveEngine *archive_engine= static_cast<ArchiveEngine *>(p);
+  registry.remove(archive_engine);
   delete archive_engine;
 
   pthread_mutex_destroy(&archive_mutex);
@@ -1420,7 +1420,6 @@ static struct st_mysql_sys_var* archive_system_variables[]= {
 
 drizzle_declare_plugin(archive)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "ARCHIVE",
   "3.5",
   "Brian Aker, MySQL AB",

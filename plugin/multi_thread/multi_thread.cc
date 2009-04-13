@@ -97,21 +97,34 @@ public:
   }
 };
 
-static int init(void *p)
+class MultiThreadFactory : public SchedulerFactory
 {
-  Multi_thread_scheduler** sched= static_cast<Multi_thread_scheduler **>(p);
+public:
+  MultiThreadFactory() : SchedulerFactory("multi_thread") {}
+  ~MultiThreadFactory() { if (scheduler != NULL) delete scheduler; }
+  Scheduler *operator() ()
+  {
+    if (scheduler == NULL)
+      scheduler= new Multi_thread_scheduler(max_threads);
+    return scheduler;
+  }
+};
+static MultiThreadFactory *factory= NULL;
 
-  *sched= new Multi_thread_scheduler(max_threads);
-
+static int init(PluginRegistry &registry)
+{
+  factory= new MultiThreadFactory();
+  registry.add(factory);
   return 0;
 }
 
-static int deinit(void *p)
+static int deinit(PluginRegistry &registry)
 {
-
-  Multi_thread_scheduler *sched= static_cast<Multi_thread_scheduler *>(p);
-  delete sched;
-
+  if (factory)
+  {
+    registry.remove(factory);
+    delete factory;
+  }
   return 0;
 }
 
@@ -127,7 +140,6 @@ static struct st_mysql_sys_var* system_variables[]= {
 
 drizzle_declare_plugin(multi_thread)
 {
-  DRIZZLE_SCHEDULING_PLUGIN,
   "multi_thread",
   "0.1",
   "Brian Aker",

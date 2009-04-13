@@ -49,19 +49,21 @@ public:
   }
 };
 
-int heap_init(void *p)
+static HeapEngine *engine= NULL;
+int heap_init(PluginRegistry &registry)
 {
-  StorageEngine **engine= static_cast<StorageEngine **>(p);
-  *engine= new HeapEngine(engine_name);
+  engine= new HeapEngine(engine_name);
+  registry.add(engine);
+  pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
   return 0;
 }
 
-int heap_deinit(void *p)
+int heap_deinit(PluginRegistry &registry)
 {
-  HeapEngine *engine= static_cast<HeapEngine *>(p);
+  registry.remove(engine);
   delete engine;
 
-  pthread_mutex_init(&THR_LOCK_heap,MY_MUTEX_INIT_FAST);
+  pthread_mutex_destroy(&THR_LOCK_heap);
 
   return hp_panic(HA_PANIC_CLOSE);
 }
@@ -849,7 +851,6 @@ bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info_in,
 
 drizzle_declare_plugin(heap)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MEMORY",
   "1.0",
   "MySQL AB",

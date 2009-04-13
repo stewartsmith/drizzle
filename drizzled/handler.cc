@@ -33,15 +33,17 @@
 #include "drizzled/cost_vect.h"
 #include "drizzled/session.h"
 #include "drizzled/sql_base.h"
-#include "drizzled/replicator.h"
+#include "drizzled/transaction_services.h"
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
 #include "drizzled/unireg.h" // for mysql_frm_type
 #include "drizzled/field/timestamp.h"
-#include "drizzled/serialize/table.pb.h"
+#include "drizzled/message/table.pb.h"
 
 using namespace std;
+
+extern drizzled::TransactionServices transaction_services;
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
@@ -3501,13 +3503,7 @@ static bool binlog_log_row(Table* table,
                            const unsigned char *before_record,
                            const unsigned char *after_record)
 {
-  bool error= false;
   Session *const session= table->in_use;
-
-  if (table->no_replicate == false)
-    return false;
-
-  error= replicator_session_init(session);
 
   switch (session->lex->sql_command)
   {
@@ -3516,17 +3512,17 @@ static bool binlog_log_row(Table* table,
   case SQLCOM_REPLACE_SELECT:
   case SQLCOM_INSERT_SELECT:
   case SQLCOM_CREATE_TABLE:
-    error= replicator_write_row(session, table);
+    transaction_services.insertRecord(session, table);
     break;
 
   case SQLCOM_UPDATE:
   case SQLCOM_UPDATE_MULTI:
-    error= replicator_update_row(session, table, before_record, after_record);
+    transaction_services.updateRecord(session, table, before_record, after_record);
     break;
 
   case SQLCOM_DELETE:
   case SQLCOM_DELETE_MULTI:
-    error= replicator_delete_row(session, table);
+    transaction_services.deleteRecord(session, table);
     break;
 
     /*
@@ -3536,7 +3532,7 @@ static bool binlog_log_row(Table* table,
     break;
   }
 
-  return error;
+  return false; //error;
 }
 
 int handler::ha_external_lock(Session *session, int lock_type)
@@ -3566,11 +3562,7 @@ int handler::ha_external_lock(Session *session, int lock_type)
 */
 int handler::ha_reset()
 {
-  /* Check that we have called all proper deallocation functions */
-  assert((unsigned char*) table->def_read_set.bitmap +
-              table->s->column_bitmap_size ==
-              (unsigned char*) table->def_write_set.bitmap);
-  assert(bitmap_is_set_all(&table->s->all_set));
+  assert(table->s->all_set.size() == table->s->all_set.count());
   assert(table->key_read == 0);
   /* ensure that ha_index_end / ha_rnd_end has been called */
   assert(inited == NONE);

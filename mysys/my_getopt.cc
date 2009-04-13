@@ -1269,7 +1269,8 @@ void my_print_variables(const struct my_option *options)
 	printf("%lu\n", *((ulong*) value));
 	break;
       case GET_SIZE:
-	cout << value;
+	int64_t2str((uint64_t)(*(size_t*)value), buff, 10);
+	printf("%s\n", buff);
 	break;
       case GET_LL:
 	printf("%s\n", llstr(*((int64_t*) value), buff));

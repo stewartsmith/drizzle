@@ -28,6 +28,7 @@
 #include <drizzled/registry.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
+#include <drizzled/plugin_registry.h>
 #include <string>
 
 #include CSTDINT_H
@@ -36,12 +37,12 @@ using namespace std;
 
 drizzled::Registry<StorageEngine *> all_engines;
 
-static void add_storage_engine(StorageEngine *engine)
+void add_storage_engine(StorageEngine *engine)
 {
   all_engines.add(engine);
 }
 
-static void remove_storage_engine(StorageEngine *engine)
+void remove_storage_engine(StorageEngine *engine)
 {
   all_engines.remove(engine);
 }
@@ -453,7 +454,7 @@ int ha_table_exists_in_engine(Session* session,
                          db, name, "", 0);
     if (table_proto_exists(path)==EEXIST)
     {
-      drizzle::Table table;
+      drizzled::message::Table table;
       build_table_filename(path, sizeof(path),
                            db, name, ".dfe", 0);
       if(drizzle_read_table_proto(path, &table)==0)
@@ -681,43 +682,6 @@ err:
   return(error != 0);
 }
 
-
-int storage_engine_finalizer(st_plugin_int *plugin)
-{
-  StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
-
-  remove_storage_engine(engine);
-
-  if (engine && plugin->plugin->deinit)
-    (void)plugin->plugin->deinit(engine);
-
-  return(0);
-}
-
-
-int storage_engine_initializer(st_plugin_int *plugin)
-{
-  StorageEngine *engine= NULL;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&engine))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error."),
-                    plugin->name.str);
-      return 1;
-    }
-  }
-
-  if (engine != NULL)
-    add_storage_engine(engine);
-
-  plugin->data= engine;
-  plugin->isInited= true;
-
-  return 0;
-}
 
 const string ha_resolve_storage_engine_name(const StorageEngine *engine)
 {

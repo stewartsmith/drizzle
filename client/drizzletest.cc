@@ -43,6 +43,8 @@
 #include <queue>
 #include <map>
 #include <string>
+#include <sstream>
+#include <iostream>
 #include <vector>
 
 #include PCRE_HEADER
@@ -1945,7 +1947,10 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
                      ',');
 
   /* Convert row number to int */
-  if (!str2int(ds_row.c_str(), 10, (long) 0, (long) INT_MAX, &row_no))
+  row_no= atoi(ds_row.c_str());
+  
+  istringstream buff(ds_row);
+  if ((buff >> row_no).fail())
     die("Invalid row number: '%s'", ds_row.c_str());
 
   /* Remove any surrounding "'s from the query - if there is any */
@@ -2505,8 +2510,9 @@ static void do_chmod_file(struct st_command *command)
                      ' ');
 
   /* Parse what mode to set */
+  istringstream buff(ds_mode);
   if (ds_mode.length() != 4 ||
-      str2int(ds_mode.c_str(), 8, 0, INT_MAX, &mode) == NULL)
+      (buff >> mode).fail())
     die("You must write a 4 digit octal number for mode");
 
   handle_command_error(command, chmod(ds_file.c_str(), mode));
@@ -3272,7 +3278,7 @@ static void do_let(struct st_command *command)
 
 static int do_sleep(struct st_command *command, bool real_sleep)
 {
-  int error= 0;
+  bool error= false;
   char *p= command->first_argument;
   char *sleep_start, *sleep_end= command->end;
   double sleep_val;
@@ -3286,7 +3292,9 @@ static int do_sleep(struct st_command *command, bool real_sleep)
   if (!my_isdigit(charset_info, *sleep_start))
     die("Invalid argument to %.*s \"%s\"", command->first_word_len,
         command->query,command->first_argument);
-  sleep_val= my_strtod(sleep_start, &sleep_end, &error);
+  string buff_str(sleep_start, sleep_end-sleep_start);
+  istringstream buff(buff_str);
+  error= (buff >> sleep_val).fail();
   if (error)
     die("Invalid argument to %.*s \"%s\"", command->first_word_len,
         command->query, command->first_argument);
@@ -3441,7 +3449,8 @@ static void do_get_errcodes(struct st_command *command)
       }
 
       /* Convert the sting to int */
-      if (!str2int(start, 10, (long) INT_MIN, (long) INT_MAX, &val))
+      istringstream buff(start);
+      if ((buff >> val).fail())
         die("Invalid argument to error: '%s'", command->first_argument);
 
       to->code.errnum= (uint32_t) val;
@@ -5007,9 +5016,9 @@ static void append_metadata(string *ds, drizzle_result_st *res)
 static void append_info(string *ds, uint64_t affected_rows,
                         const char *info)
 {
-  char buf[40], buff2[21];
-  sprintf(buf,"affected rows: %s\n", llstr(affected_rows, buff2));
-  ds->append(buf);
+  ostringstream buf;
+  buf << "affected rows: " << affected_rows << endl;
+  ds->append(buf.str());
   if (info && strcmp(info, ""))
   {
     ds->append("info: ");
@@ -5555,32 +5564,25 @@ static void get_command_type(struct st_command* command)
 
 static void mark_progress(struct st_command*, int line)
 {
-  char buf[32], *end;
   uint64_t timer= timer_now();
   if (!progress_start)
     progress_start= timer;
   timer-= progress_start;
 
+  ostringstream buf;
   /* Milliseconds since start */
-  end= int64_t2str(timer, buf, 10);
-  ds_progress.append(buf, (int)(end-buf));
-  ds_progress.append("\t", 1);
+  buf << timer << "\t";
 
   /* Parser line number */
-  end= int10_to_str(line, buf, 10);
-  ds_progress.append(buf, (int)(end-buf));
-  ds_progress.append("\t", 1);
+  buf << line << "\t";
 
   /* Filename */
-  ds_progress.append(cur_file->file_name);
-  ds_progress.append(":", 1);
+  buf << cur_file->file_name << ":";
 
   /* Line in file */
-  end= int10_to_str(cur_file->lineno, buf, 10);
-  ds_progress.append(buf, (int)(end-buf));
+  buf << cur_file->lineno << endl;
 
-
-  ds_progress.append("\n", 1);
+  ds_progress.append(buf.str());
 
 }
 
@@ -6060,10 +6062,10 @@ void timer_output(void)
 {
   if (timer_file)
   {
-    char buf[32], *end;
+    ostringstream buf;
     uint64_t timer= timer_now() - timer_start;
-    end= int64_t2str(timer, buf, 10);
-    str_to_file(timer_file,buf, (int) (end-buf));
+    buf << timer;
+    str_to_file(timer_file,buf.str().c_str(), buf.str().size() );
     /* Timer has been written to the file, don't use it anymore */
     timer_file= 0;
   }
@@ -7252,9 +7254,9 @@ void replace_append(string *ds, const char *val)
 /* Append uint32_t to ds, with optional replace */
 void replace_append_uint(string *ds, uint32_t val)
 {
-  char buff[22]; /* This should be enough for any int */
-  char *end= int64_t10_to_str(val, buff, 10);
-  replace_append_mem(ds, buff, end - buff);
+  ostringstream buff;
+  buff << val;
+  replace_append_mem(ds, buff.str().c_str(), buff.str().size());
 
 }
 

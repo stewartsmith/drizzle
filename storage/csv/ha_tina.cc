@@ -117,22 +117,23 @@ public:
   }
 };
 
-static int tina_init_func(void *p)
-{
-  StorageEngine **engine= static_cast<StorageEngine **>(p);
+static Tina *tina_engine= NULL;
 
-  Tina *tina_engine= new Tina(engine_name);
+static int tina_init_func(PluginRegistry &registry)
+{
+
+  tina_engine= new Tina(engine_name);
+  registry.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
                    (hash_get_key) tina_get_key,0,0);
-  *engine= tina_engine;
   return 0;
 }
 
-static int tina_done_func(void *p)
+static int tina_done_func(PluginRegistry &registry)
 {
-  Tina *tina_engine= static_cast<Tina *>(p);
+  registry.remove(tina_engine);
   delete tina_engine;
 
   hash_free(&tina_open_tables);
@@ -600,7 +601,7 @@ int ha_tina::find_current_row(unsigned char *buf)
     return(HA_ERR_END_OF_FILE);
 
   /* We must read all columns in case a table is opened for update */
-  read_all= !bitmap_is_clear_all(table->write_set);
+  read_all= !table->write_set->none();
   error= HA_ERR_CRASHED_ON_USAGE;
 
   memset(buf, 0, table->s->null_bytes);
@@ -670,7 +671,7 @@ int ha_tina::find_current_row(unsigned char *buf)
       }
     }
 
-    if (read_all || bitmap_is_set(table->read_set, (*field)->field_index))
+    if (read_all || table->read_set->test((*field)->field_index))
     {
       if ((*field)->store(buffer.ptr(), buffer.length(), buffer.charset(),
                           CHECK_FIELD_WARN))
@@ -1537,7 +1538,6 @@ bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
 
 drizzle_declare_plugin(csv)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "CSV",
   "1.0",
   "Brian Aker, MySQL AB",

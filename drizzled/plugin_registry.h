@@ -17,21 +17,72 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_PLUGIN_REGISTRY_H
+#define DRIZZLED_PLUGIN_REGISTRY_H
+
+
+#include <string>
 #include <vector>
+#include <map>
 
-class Plugin_registry_impl;
+struct st_plugin_int;
+class StorageEngine;
+struct InfoSchemaTable;
+class Function_builder;
+class Logging_handler;
+class Error_message_handler;
+class Authentication;
+class QueryCache;
+class SchedulerFactory;
+class ProtocolFactory;
+namespace drizzled
+{
+namespace plugin
+{
+class Replicator;
+}
+}
 
-class Plugin_registry
+class PluginRegistry
 {
 private:
-  Plugin_registry_impl *pImpl;
-public:
-  Plugin_registry();
-  static Plugin_registry& get_plugin_registry();
-  st_plugin_int *find(const LEX_STRING *name, int type);
+  std::map<std::string, st_plugin_int *>
+    plugin_map;
 
-  void add(st_mysql_plugin *handle, st_plugin_int *plugin);
-  void get_list(uint32_t type, std::vector<st_plugin_int *> &plugins);
-  void get_list(uint32_t type, std::vector<st_plugin_int *> &plugins, bool all);
+  PluginRegistry(const PluginRegistry&);
+public:
+  PluginRegistry() {}
+
+
+  st_plugin_int *find(const LEX_STRING *name);
+
+  void add(st_plugin_int *plugin);
+
+  std::vector<st_plugin_int *> get_list(bool active);
+  static PluginRegistry& getPluginRegistry();
+
+  void add(StorageEngine *engine);
+  void add(InfoSchemaTable *schema_table);
+  void add(Function_builder *udf);
+  void add(Logging_handler *handler);
+  void add(Error_message_handler *handler);
+  void add(Authentication *auth);
+  void add(QueryCache *qcache);
+  void add(SchedulerFactory *scheduler);
+  void add(ProtocolFactory *protocol);
+  void add(drizzled::plugin::Replicator *repl);
+
+  void remove(StorageEngine *engine);
+  void remove(InfoSchemaTable *schema_table);
+  void remove(Function_builder *udf);
+  void remove(Logging_handler *handler);
+  void remove(Error_message_handler *handler);
+  void remove(Authentication *auth);
+  void remove(QueryCache *qcache);
+  void remove(SchedulerFactory *scheduler);
+  void remove(ProtocolFactory *protocol);
+  void remove(drizzled::plugin::Replicator *repl);
+
 };
 
+#endif /* DRIZZLED_PLUGIN_REGISTRY_H */

@@ -17,8 +17,6 @@
 
 #include <drizzled/global.h>
 #include <libdrizzle/drizzle_client.h>
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
 
 #include "get_password.h"

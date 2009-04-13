@@ -17,7 +17,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/scheduler.h>
-#include <drizzled/serialize/serialize.h>
 #include <drizzled/connect.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
@@ -28,7 +27,8 @@ using namespace std;
 class Single_thread_scheduler : public Scheduler
 {
 public:
-  Single_thread_scheduler(uint32_t threads): Scheduler(threads) {}
+  Single_thread_scheduler()
+    : Scheduler(1) {}
 
   virtual bool init_new_connection_thread(void) {return 0;}
   
@@ -69,18 +69,36 @@ public:
   
 };
 
-static int init(void *p)
-{
-  Scheduler **sched= static_cast<Scheduler **>(p);
-  *sched= new Single_thread_scheduler(1);
 
+class SingleThreadFactory : public SchedulerFactory
+{
+public:
+  SingleThreadFactory() : SchedulerFactory("single_thread") {}
+  ~SingleThreadFactory() { if (scheduler != NULL) delete scheduler; }
+  Scheduler *operator() ()
+  {
+    if (scheduler == NULL)
+      scheduler= new Single_thread_scheduler();
+    return scheduler;
+  }
+};
+
+SingleThreadFactory *factory= NULL;
+
+static int init(PluginRegistry &registry)
+{
+  factory= new SingleThreadFactory();
+  registry.add(factory);
   return 0;
 }
 
-static int deinit(void *p)
+static int deinit(PluginRegistry &registry)
 {
-  Scheduler *sched= static_cast<Scheduler *>(p);
-  delete sched;
+  if (factory)
+  {
+    registry.remove(factory);
+    delete factory;
+  }
   return 0;
 }
 
@@ -90,7 +108,6 @@ static struct st_mysql_sys_var* system_variables[]= {
 
 drizzle_declare_plugin(single_thread)
 {
-  DRIZZLE_SCHEDULING_PLUGIN,
   "single_thread",
   "0.1",
   "Brian Aker",

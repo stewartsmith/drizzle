@@ -98,6 +98,7 @@ public:
 class ProtocolFactoryOldLibdrizzle: public ProtocolFactory
 {
 public:
+  ProtocolFactoryOldLibdrizzle() : ProtocolFactory("oldlibdrizzle") {}
   Protocol *operator()(void)
   {
     return new ProtocolOldLibdrizzle;

@@ -20,68 +20,26 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/logging.h>
 #include <drizzled/gettext.h>
+#include "drizzled/plugin_registry.h"
+
 #include <vector>
 
 using namespace std;
 
 static vector<Logging_handler *> all_loggers;
 
-static void add_logger(Logging_handler *handler)
+void add_logger(Logging_handler *handler)
 {
-  all_loggers.push_back(handler);
+  if (handler != NULL)
+    all_loggers.push_back(handler);
 }
 
-static void remove_logger(Logging_handler *handler)
+void remove_logger(Logging_handler *handler)
 {
-  all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
+  if (handler != NULL)
+    all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
 }
 
-int logging_initializer(st_plugin_int *plugin)
-{
-  Logging_handler *p= NULL;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&p))
-    {
-      /* TRANSLATORS: The leading word "logging" is the name
-         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR, "logging plugin '%s' init() failed",
-                    plugin->name.str);
-      return 1;
-    }
-  }
-
-  if (p != NULL)
-    add_logger(p);
-  plugin->data= p;
-
-  return 0;
-}
-
-
-int logging_finalizer(st_plugin_int *plugin)
-{
-  Logging_handler *p = static_cast<Logging_handler *>(plugin->data);
-
-  if (p != NULL)
-  {
-    remove_logger(p);
-
-    if (plugin->plugin->deinit)
-    {
-      if (plugin->plugin->deinit((void *)p))
-      {
-        /* TRANSLATORS: The leading word "logging" is the name
-           of the plugin api, and so should not be translated. */
-        errmsg_printf(ERRMSG_LVL_ERROR, _("logging plugin '%s' deinit() failed"),
-  		      plugin->name.str);
-      }
-    }
-  }
-
-  return 0;
-}
 
 class LoggingPreIterate : public unary_function<Logging_handler *, bool>
 {

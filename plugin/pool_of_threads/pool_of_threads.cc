@@ -17,7 +17,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/scheduler.h>
-#include <drizzled/serialize/serialize.h>
 #include <drizzled/connect.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
@@ -31,7 +30,7 @@ using namespace std;
 static volatile bool kill_pool_threads= false;
 
 static volatile uint32_t created_threads= 0;
-static int deinit(void *);
+static int deinit(PluginRegistry &registry);
 
 static struct event session_add_event;
 static struct event session_kill_event;
@@ -364,7 +363,6 @@ public:
    if (event_add(&session_add_event, NULL) || event_add(&session_kill_event, NULL))
    {
      errmsg_printf(ERRMSG_LVL_ERROR, _("session_add_event event_add error in libevent_init\n"));
-     deinit(NULL);
      return true;
   
    }
@@ -380,7 +378,6 @@ public:
         errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
                         error);
         pthread_mutex_unlock(&LOCK_thread_count);
-        deinit(NULL);                      // Cleanup
         return true;
       }
     }
@@ -393,6 +390,28 @@ public:
     return false;
   }
 }; 
+
+
+class PoolOfThreadsFactory : public SchedulerFactory
+{
+public:
+  PoolOfThreadsFactory() : SchedulerFactory("pool_of_threads") {}
+  ~PoolOfThreadsFactory() { if (scheduler != NULL) delete scheduler; }
+  Scheduler *operator() ()
+  {
+    if (scheduler == NULL)
+    {
+      Pool_of_threads_scheduler *pot= new Pool_of_threads_scheduler(size);
+      if (pot->libevent_init())
+      {
+        delete pot;
+        return NULL;
+      }
+      scheduler= pot;
+    }
+    return scheduler;
+  }
+};
 
 /*
   Close and delete a connection.
@@ -588,22 +607,14 @@ void libevent_session_add(Session* session)
 }
 
 
+static PoolOfThreadsFactory *factory= NULL;
 
-static int init(void *p)
+static int init(PluginRegistry &registry)
 {
   assert(size != 0);
 
-  void **plugin= static_cast<void **>(p);
-
-  Pool_of_threads_scheduler *sched=
-    new Pool_of_threads_scheduler(size);
-  if (sched->libevent_init())
-  {
-    delete sched;
-    return 1;
-  }
-
-  *plugin= static_cast<void *>(sched);
+  factory= new PoolOfThreadsFactory();
+  registry.add(factory);
 
   return 0;
 }
@@ -612,11 +623,13 @@ static int init(void *p)
   Wait until all pool threads have been deleted for clean shutdown
 */
 
-static int deinit(void *p)
+static int deinit(PluginRegistry &registry)
 {
-  Scheduler *sched= static_cast<Scheduler *>(p);
-  delete sched;
-
+  if (factory)
+  {
+    registry.remove(factory);
+    delete factory;
+  }
   return 0;
 }
 
@@ -636,7 +649,6 @@ static struct st_mysql_sys_var* system_variables[]= {
 
 drizzle_declare_plugin(pool_of_threads)
 {
-  DRIZZLE_SCHEDULING_PLUGIN,
   "pool_of_threads",
   "0.1",
   "Brian Aker",

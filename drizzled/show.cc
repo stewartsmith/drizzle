@@ -41,6 +41,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
+#include "drizzled/plugin_registry.h"
 
 #include <string>
 #include <iostream>
@@ -65,18 +66,30 @@ static const char *ha_choice_values[] = {"", "0", "1"};
 static void store_key_options(Session *session, String *packet, Table *table,
                               KEY *key_info);
 
-static vector<ST_SCHEMA_TABLE *> all_schema_tables;
+static vector<InfoSchemaTable *> all_schema_tables;
 
-static void add_infoschema_table(ST_SCHEMA_TABLE *table)
+Table *create_schema_table(Session *session, TableList *table_list);
+int make_old_format(Session *session, InfoSchemaTable *schema_table);
+
+void add_infoschema_table(InfoSchemaTable *schema_table)
 {
-  all_schema_tables.push_back(table);
+  if (schema_table->create_table == NULL)
+    schema_table->create_table= create_schema_table;
+  if (schema_table->old_format == NULL)
+    schema_table->old_format= make_old_format;
+  if (schema_table->idx_field1 == 0)
+    schema_table->idx_field1= -1;
+  if (schema_table->idx_field2)
+   schema_table->idx_field2= -1;
+
+  all_schema_tables.push_back(schema_table);
 }
 
-static void remove_infoschema_table(ST_SCHEMA_TABLE *table)
+void remove_infoschema_table(InfoSchemaTable *table)
 {
   all_schema_tables.erase(remove_if(all_schema_tables.begin(),
                                     all_schema_tables.end(),
-                                    bind2nd(equal_to<ST_SCHEMA_TABLE *>(),
+                                    bind2nd(equal_to<InfoSchemaTable *>(),
                                             table)),
                           all_schema_tables.end());
 }
@@ -132,92 +145,88 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
 ** List all table types supported
 ***************************************************************************/
 
-static bool show_plugins(Session *session, st_plugin_int *plugin, void *arg)
+class ShowPlugins : public unary_function<st_plugin_int *, bool>
 {
-  Table *table= (Table*) arg;
-  struct st_mysql_plugin *plug= plugin_decl(plugin);
-  struct st_plugin_dl *plugin_dl= plugin_dlib(plugin);
-  const CHARSET_INFO * const cs= system_charset_info;
+  Session *session;
+  Table *table;
+public:
+  ShowPlugins(Session *session_arg, Table *table_arg)
+    : session(session_arg), table(table_arg) {}
 
-  restore_record(table, s->default_values);
-
-  table->field[0]->store(plugin_name(plugin)->str,
-                         plugin_name(plugin)->length, cs);
-
-  if (plug->version)
+  result_type operator() (argument_type plugin)
   {
-    table->field[1]->store(plug->version, strlen(plug->version), cs);
-    table->field[1]->set_notnull();
-  }
-  else
-    table->field[1]->set_null();
-
-  if (plugin->isInited)
-    table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
-  else
-    table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
-
-  table->field[3]->store(plugin_type_names[plug->type].str,
-                         plugin_type_names[plug->type].length,
-                         cs);
-
-  if (plugin_dl)
-  {
-    table->field[4]->store(plugin_dl->dl.str, plugin_dl->dl.length, cs);
-    table->field[4]->set_notnull();
-  }
-  else
-  {
-    table->field[4]->set_null();
-  }
-
-  if (plug->author)
-  {
-    table->field[5]->store(plug->author, strlen(plug->author), cs);
+    struct drizzled_plugin_manifest *plug= plugin_decl(plugin);
+    const CHARSET_INFO * const cs= system_charset_info;
+  
+    restore_record(table, s->default_values);
+  
+    table->field[0]->store(plugin_name(plugin)->str,
+                           plugin_name(plugin)->length, cs);
+  
+    if (plug->version)
+    {
+      table->field[1]->store(plug->version, strlen(plug->version), cs);
+      table->field[1]->set_notnull();
+    }
+    else
+      table->field[1]->set_null();
+  
+    if (plugin->isInited)
+      table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
+    else
+      table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
+  
+    if (plug->author)
+    {
+      table->field[3]->store(plug->author, strlen(plug->author), cs);
+      table->field[3]->set_notnull();
+    }
+    else
+      table->field[3]->set_null();
+  
+    if (plug->descr)
+    {
+      table->field[4]->store(plug->descr, strlen(plug->descr), cs);
+      table->field[4]->set_notnull();
+    }
+    else
+      table->field[4]->set_null();
+  
+    switch (plug->license) {
+    case PLUGIN_LICENSE_GPL:
+      table->field[5]->store(PLUGIN_LICENSE_GPL_STRING,
+                             strlen(PLUGIN_LICENSE_GPL_STRING), cs);
+      break;
+    case PLUGIN_LICENSE_BSD:
+      table->field[5]->store(PLUGIN_LICENSE_BSD_STRING,
+                             strlen(PLUGIN_LICENSE_BSD_STRING), cs);
+      break;
+    case PLUGIN_LICENSE_LGPL:
+      table->field[5]->store(PLUGIN_LICENSE_LGPL_STRING,
+                             strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
+      break;
+    default:
+      table->field[5]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
+                             strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
+      break;
+    }
     table->field[5]->set_notnull();
+  
+    return schema_table_store_record(session, table);
   }
-  else
-    table->field[5]->set_null();
-
-  if (plug->descr)
-  {
-    table->field[6]->store(plug->descr, strlen(plug->descr), cs);
-    table->field[6]->set_notnull();
-  }
-  else
-    table->field[6]->set_null();
-
-  switch (plug->license) {
-  case PLUGIN_LICENSE_GPL:
-    table->field[7]->store(PLUGIN_LICENSE_GPL_STRING,
-                           strlen(PLUGIN_LICENSE_GPL_STRING), cs);
-    break;
-  case PLUGIN_LICENSE_BSD:
-    table->field[7]->store(PLUGIN_LICENSE_BSD_STRING,
-                           strlen(PLUGIN_LICENSE_BSD_STRING), cs);
-    break;
-  case PLUGIN_LICENSE_LGPL:
-    table->field[7]->store(PLUGIN_LICENSE_LGPL_STRING,
-                           strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
-    break;
-  default:
-    table->field[7]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
-                           strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
-    break;
-  }
-  table->field[7]->set_notnull();
-
-  return schema_table_store_record(session, table);
-}
+};
 
 
 int fill_plugins(Session *session, TableList *tables, COND *)
 {
   Table *table= tables->table;
 
-  if (plugin_foreach(session, show_plugins, DRIZZLE_ANY_PLUGIN, table, ~2))
-    return(1);
-
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
+  vector<st_plugin_int *> plugins= registry.get_list(true);
+  vector<st_plugin_int *>::iterator iter=
+    find_if(plugins.begin(), plugins.end(), ShowPlugins(session, table));
+  if (iter != plugins.end())
+    return 1;
   return(0);
 }
 
@@ -609,7 +618,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   TABLE_SHARE *share= table->s;
   HA_CREATE_INFO create_info;
   bool show_table_options= false;
-  my_bitmap_map *old_map;
+  bitset<MAX_FIELDS> *old_bitmap;
 
   restore_record(table, s->default_values); // Get empty record
 
@@ -636,7 +645,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     We have to restore the read_set if we are called from insert in case
     of row based replication.
   */
-  old_map= table->use_all_columns(table->read_set);
+  old_bitmap= table->use_all_columns(table->read_set);
 
   for (ptr=table->field ; (field= *ptr); ptr++)
   {
@@ -910,7 +919,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     append_directory(session, packet, "DATA",  create_info.data_file_name);
     append_directory(session, packet, "INDEX", create_info.index_file_name);
   }
-  table->restore_column_map(old_map);
+  table->restore_column_map(old_bitmap);
   return(0);
 }
 
@@ -1584,7 +1593,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
 
 
 /* This is only used internally, but we need it here as a forward reference */
-extern ST_SCHEMA_TABLE schema_tables[];
+extern InfoSchemaTable schema_tables[];
 
 typedef struct st_lookup_field_values
 {
@@ -1656,7 +1665,7 @@ bool get_lookup_value(Session *session, Item_func *item_func,
                       TableList *table,
                       LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
-  ST_SCHEMA_TABLE *schema_table= table->schema_table;
+  InfoSchemaTable *schema_table= table->schema_table;
   ST_FIELD_INFO *field_info= schema_table->fields_info;
   const char *field_name1= schema_table->idx_field1 >= 0 ?
     field_info[schema_table->idx_field1].field_name : "";
@@ -1785,7 +1794,7 @@ bool uses_only_table_name_fields(Item *item, TableList *table)
   {
     Item_field *item_field= (Item_field*)item;
     const CHARSET_INFO * const cs= system_charset_info;
-    ST_SCHEMA_TABLE *schema_table= table->schema_table;
+    InfoSchemaTable *schema_table= table->schema_table;
     ST_FIELD_INFO *field_info= schema_table->fields_info;
     const char *field_name1= schema_table->idx_field1 >= 0 ?
       field_info[schema_table->idx_field1].field_name : "";
@@ -1920,7 +1929,7 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
 }
 
 
-enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table)
+enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table)
 {
   return (enum enum_schema_tables) (schema_table - &schema_tables[0]);
 }
@@ -2012,7 +2021,7 @@ struct st_add_schema_table
 };
 
 
-class AddSchemaTable : public unary_function<ST_SCHEMA_TABLE *, bool>
+class AddSchemaTable : public unary_function<InfoSchemaTable *, bool>
 {
   Session *session;
   st_add_schema_table *data;
@@ -2053,7 +2062,7 @@ public:
 int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wild)
 {
   LEX_STRING *file_name= 0;
-  ST_SCHEMA_TABLE *tmp_schema_table= schema_tables;
+  InfoSchemaTable *tmp_schema_table= schema_tables;
   st_add_schema_table add_data;
 
   for (; tmp_schema_table->table_name; tmp_schema_table++)
@@ -2082,7 +2091,7 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
 
   add_data.files= files;
   add_data.wild= wild;
-  vector<ST_SCHEMA_TABLE *>::iterator iter=
+  vector<InfoSchemaTable *>::iterator iter=
     find_if(all_schema_tables.begin(), all_schema_tables.end(),
            AddSchemaTable(session, &add_data));
   if (iter != all_schema_tables.end())
@@ -2185,7 +2194,7 @@ make_table_name_list(Session *session, List<LEX_STRING> *table_names, LEX *lex,
 
 static int
 fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
-                              ST_SCHEMA_TABLE *schema_table,
+                              InfoSchemaTable *schema_table,
                               Open_tables_state *open_tables_state_backup)
 {
   LEX *lex= session->lex;
@@ -2302,7 +2311,7 @@ static int fill_schema_table_names(Session *session, Table *table,
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                      ST_SCHEMA_TABLE *schema_table,
+                                      InfoSchemaTable *schema_table,
                                       enum enum_schema_tables)
 {
   /*
@@ -2314,7 +2323,7 @@ static uint32_t get_table_open_method(TableList *tables,
     int table_open_method= 0, field_indx= 0;
     for (ptr=tables->table->field; (field= *ptr) ; ptr++)
     {
-      if (bitmap_is_set(tables->table->read_set, field->field_index))
+      if (tables->table->read_set->test(field->field_index))
         table_open_method|= schema_table->fields_info[field_indx].open_method;
       field_indx++;
     }
@@ -2343,7 +2352,7 @@ static uint32_t get_table_open_method(TableList *tables,
 */
 
 static int fill_schema_table_from_frm(Session *session,TableList *tables,
-                                      ST_SCHEMA_TABLE *schema_table,
+                                      InfoSchemaTable *schema_table,
                                       LEX_STRING *db_name,
                                       LEX_STRING *table_name,
                                       enum enum_schema_tables)
@@ -2416,7 +2425,7 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
   Select_Lex *old_all_select_lex= lex->all_selects_list;
   enum_sql_command save_sql_command= lex->sql_command;
   Select_Lex *lsel= tables->schema_select_lex;
-  ST_SCHEMA_TABLE *schema_table= tables->schema_table;
+  InfoSchemaTable *schema_table= tables->schema_table;
   Select_Lex sel;
   LOOKUP_FIELD_VALUES lookup_field_vals;
   LEX_STRING *db_name, *table_name;
@@ -3037,16 +3046,10 @@ static int get_schema_column_record(Session *session, TableList *tables,
     if (!show_table->read_set)
     {
       /* to satisfy 'field->val_str' ASSERTs */
-      unsigned char *bitmaps;
-      uint32_t bitmap_size= show_table_share->column_bitmap_size;
-      if (!(bitmaps= (unsigned char*) alloc_root(session->mem_root, bitmap_size)))
-        return(0);
-      bitmap_init(&show_table->def_read_set,
-                  (my_bitmap_map*) bitmaps, show_table_share->fields, false);
-      bitmap_set_all(&show_table->def_read_set);
+      show_table->def_read_set.set();
       show_table->read_set= &show_table->def_read_set;
     }
-    bitmap_set_all(show_table->read_set);
+    show_table->read_set->set();
   }
 
   for (; (field= *ptr) ; ptr++)
@@ -3662,7 +3665,7 @@ get_referential_constraints_record(Session *session, TableList *tables,
 }
 
 
-class FindSchemaTableByName : public unary_function<ST_SCHEMA_TABLE *, bool>
+class FindSchemaTableByName : public unary_function<InfoSchemaTable *, bool>
 {
   const char *table_name;
 public:
@@ -3690,9 +3693,9 @@ public:
     #   pointer to 'schema_tables' element
 */
 
-ST_SCHEMA_TABLE *find_schema_table(Session *, const char* table_name)
+InfoSchemaTable *find_schema_table(Session *, const char* table_name)
 {
-  ST_SCHEMA_TABLE *schema_table= schema_tables;
+  InfoSchemaTable *schema_table= schema_tables;
 
   for (; schema_table->table_name; schema_table++)
   {
@@ -3702,7 +3705,7 @@ ST_SCHEMA_TABLE *find_schema_table(Session *, const char* table_name)
       return(schema_table);
   }
 
-  vector<ST_SCHEMA_TABLE *>::iterator iter= 
+  vector<InfoSchemaTable *>::iterator iter= 
     find_if(all_schema_tables.begin(), all_schema_tables.end(),
             FindSchemaTableByName(table_name));
   if (iter != all_schema_tables.end())
@@ -3711,7 +3714,7 @@ ST_SCHEMA_TABLE *find_schema_table(Session *, const char* table_name)
 }
 
 
-ST_SCHEMA_TABLE *get_schema_table(enum enum_schema_tables schema_table_idx)
+InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx)
 {
   return &schema_tables[schema_table_idx];
 }
@@ -3738,7 +3741,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
   Item *item;
   Table *table;
   List<Item> field_list;
-  ST_SCHEMA_TABLE *schema_table= table_list->schema_table;
+  InfoSchemaTable *schema_table= table_list->schema_table;
   ST_FIELD_INFO *fields_info= schema_table->fields_info;
   const CHARSET_INFO * const cs= system_charset_info;
 
@@ -3818,12 +3821,9 @@ Table *create_schema_table(Session *session, TableList *table_list)
                                  TMP_TABLE_ALL_COLUMNS),
                                 HA_POS_ERROR, table_list->alias)))
     return(0);
-  my_bitmap_map* bitmaps=
-    (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
-  bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count,
-              false);
+  table->def_read_set.set();
   table->read_set= &table->def_read_set;
-  bitmap_clear_all(table->read_set);
+  table->read_set->reset();
   table_list->schema_table_param= tmp_table_param;
   return(table);
 }
@@ -3844,7 +3844,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
    0	success
 */
 
-int make_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   ST_FIELD_INFO *field_info= schema_table->fields_info;
   Name_resolution_context *context= &session->lex->select_lex.context;
@@ -3868,7 +3868,7 @@ int make_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
 }
 
 
-int make_schemata_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_schemata_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   char tmp[128];
   LEX *lex= session->lex;
@@ -3897,7 +3897,7 @@ int make_schemata_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
 }
 
 
-int make_table_names_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_table_names_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   char tmp[128];
   String buffer(tmp,sizeof(tmp), session->charset());
@@ -3933,7 +3933,7 @@ int make_table_names_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
 }
 
 
-int make_columns_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_columns_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {3, 14, 13, 6, 15, 5, 16, 17, 18, -1};
   int *field_num= fields_arr;
@@ -3962,7 +3962,7 @@ int make_columns_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
 }
 
 
-int make_character_sets_old_format(Session *session, ST_SCHEMA_TABLE *schema_table)
+int make_character_sets_old_format(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {0, 2, 1, 3, -1};
   int *field_num= fields_arr;
@@ -4046,7 +4046,7 @@ int mysql_schema_table(Session *session, LEX *, TableList *table_list)
 int make_schema_select(Session *session, Select_Lex *sel,
 		       enum enum_schema_tables schema_table_idx)
 {
-  ST_SCHEMA_TABLE *schema_table= get_schema_table(schema_table_idx);
+  InfoSchemaTable *schema_table= get_schema_table(schema_table_idx);
   LEX_STRING db, table;
   /*
      We have to make non const db_name & table_name
@@ -4391,9 +4391,6 @@ ST_FIELD_INFO plugin_fields_info[]=
    SKIP_OPEN_TABLE},
   {"PLUGIN_VERSION", 20, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE},
   {"PLUGIN_STATUS", 10, DRIZZLE_TYPE_VARCHAR, 0, 0, "Status", SKIP_OPEN_TABLE},
-  {"PLUGIN_TYPE", 80, DRIZZLE_TYPE_VARCHAR, 0, 0, "Type", SKIP_OPEN_TABLE},
-  {"PLUGIN_LIBRARY", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "Library",
-   SKIP_OPEN_TABLE},
   {"PLUGIN_AUTHOR", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE},
   {"PLUGIN_DESCRIPTION", 65535, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE},
   {"PLUGIN_LICENSE", 80, DRIZZLE_TYPE_VARCHAR, 0, 1, "License", SKIP_OPEN_TABLE},
@@ -4430,7 +4427,7 @@ ST_FIELD_INFO referential_constraints_fields_info[]=
 
 */
 
-ST_SCHEMA_TABLE schema_tables[]=
+InfoSchemaTable schema_tables[]=
 {
   {"CHARACTER_SETS", charsets_fields_info, create_schema_table,
    fill_schema_charsets, make_character_sets_old_format, 0, -1, -1, 0, 0},
@@ -4480,52 +4477,3 @@ ST_SCHEMA_TABLE schema_tables[]=
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List_iterator_fast<char>;
-template class List<char>;
-#endif
-
-int initialize_schema_table(st_plugin_int *plugin)
-{
-  ST_SCHEMA_TABLE *schema_table;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&schema_table))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error."),
-                    plugin->name.str);
-      return 1;
-    }
-
-    if (schema_table->create_table == NULL)
-      schema_table->create_table= create_schema_table;
-    if (schema_table->old_format == NULL)
-      schema_table->old_format= make_old_format;
-    if (schema_table->idx_field1 == 0)
-      schema_table->idx_field1= -1;
-    if (schema_table->idx_field2)
-      schema_table->idx_field2= -1;
-
-    /*- Make sure the plugin name is not set inside the init() function. */
-    schema_table->table_name= plugin->name.str;
-  }
-
-  add_infoschema_table(schema_table);
-  plugin->data= schema_table;
-
-  return 0;
-}
-
-int finalize_schema_table(st_plugin_int *plugin)
-{
-  ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;
-
-  remove_infoschema_table(schema_table);
-  if (schema_table && plugin->plugin->deinit)
-    plugin->plugin->deinit(schema_table);
-
-  return(0);
-}

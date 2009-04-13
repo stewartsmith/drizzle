@@ -20,6 +20,8 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/gettext.h>
+#include "drizzled/plugin_registry.h"
+
 #include <vector>
 
 using namespace std;
@@ -28,66 +30,16 @@ static vector<Error_message_handler *> all_errmsg_handler;
 
 static bool errmsg_has= false;
 
-static void add_errmsg_handler(Error_message_handler *handler)
+void add_errmsg_handler(Error_message_handler *handler)
 {
   all_errmsg_handler.push_back(handler);
+  errmsg_has= true;
 }
 
-static void remove_errmsg_handler(Error_message_handler *handler)
+void remove_errmsg_handler(Error_message_handler *handler)
 {
   all_errmsg_handler.erase(find(all_errmsg_handler.begin(),
                                 all_errmsg_handler.end(), handler));
-}
-
-int errmsg_initializer(st_plugin_int *plugin)
-{
-  Error_message_handler *p;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&p))
-    {
-      /* we're doing the errmsg plugin api,
-        so we can't trust the errmsg api to emit our error messages
-        so we will emit error messages to stderr */
-      /* TRANSLATORS: The leading word "errmsg" is the name
-        of the plugin api, and so should not be translated. */
-      fprintf(stderr,
-              _("errmsg plugin '%s' init() failed."),
-              plugin->name.str);
-      return 1;
-    }
-  }
-
-  add_errmsg_handler(p);
-  plugin->data= p;
-  errmsg_has= true;
-
-  return 0;
-
-}
-
-int errmsg_finalizer(st_plugin_int *plugin)
-{
-  Error_message_handler *p= static_cast<Error_message_handler *>(plugin->data);
-
-  remove_errmsg_handler(p);
-  if (plugin->plugin->deinit)
-  {
-    if (plugin->plugin->deinit(p))
-    {
-      /* we're doing the errmsg plugin api,
-	 so we can't trust the errmsg api to emit our error messages
-	 so we will emit error messages to stderr */
-      /* TRANSLATORS: The leading word "errmsg" is the name
-         of the plugin api, and so should not be translated. */
-      fprintf(stderr,
-              _("errmsg plugin '%s' deinit() failed."),
-              plugin->name.str);
-    }
-  }
-
-  return 0;
 }
 
 

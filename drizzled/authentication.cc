@@ -18,10 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/authentication.h>
-#include <drizzled/gettext.h>
-#include <drizzled/errmsg_print.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/authentication.h"
+#include "drizzled/gettext.h"
+#include "drizzled/errmsg_print.h"
+#include "drizzled/plugin_registry.h"
 
 #include <vector>
 
@@ -31,12 +32,12 @@ static vector<Authentication *> all_authentication;
 
 static bool are_plugins_loaded= false;
 
-static void add_authentication(Authentication *auth)
+void add_authentication(Authentication *auth)
 {
   all_authentication.push_back(auth);
 }
 
-static void remove_authentication(Authentication *auth)
+void remove_authentication(Authentication *auth)
 {
   all_authentication.erase(find(all_authentication.begin(),
                                 all_authentication.end(),
@@ -75,41 +76,3 @@ bool authenticate_user(Session *session, const char *password)
   return iter != all_authentication.end();
 }
 
-
-int authentication_initializer(st_plugin_int *plugin)
-{
-  Authentication *authen= NULL;
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&authen))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error."),
-                    plugin->name.str);
-      return 1;
-    }
-  }
-
-  if (authen == NULL)
-    return 1;
-
-  add_authentication(authen);
-  plugin->data= authen;
-  are_plugins_loaded= true;
-
-  return 0;
-}
-
-int authentication_finalizer(st_plugin_int *plugin)
-{
-  Authentication *authen= static_cast<Authentication *>(plugin->data);
-  assert(authen);
-
-  remove_authentication(authen);
-
-  if (authen && plugin->plugin->deinit)
-    plugin->plugin->deinit(authen);
-
-  return(0);
-}

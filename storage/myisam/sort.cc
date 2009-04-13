@@ -154,7 +154,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
 	  goto err;
 	}
       }
-      while ((maxbuffer= (records/(keys-1)+1)) != skr);
+      while ((maxbuffer= (size_t)(records/(keys-1)+1)) != skr);
 
     if ((sort_keys=(unsigned char **)malloc(keys*(sort_length+sizeof(char*)))))
     {

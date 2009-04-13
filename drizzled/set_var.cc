@@ -560,10 +560,8 @@ static void fix_trans_mem_root(Session *session, enum_var_type type)
 }
 
 
-static void fix_server_id(Session *session, enum_var_type)
+static void fix_server_id(Session *, enum_var_type)
 {
-  server_id_supplied = 1;
-  session->server_id= server_id;
 }
 
 
@@ -645,7 +643,7 @@ static bool get_size_t(Session *, set_var *var)
 
 bool sys_var_uint32_t_ptr::check(Session *, set_var *var)
 {
-  var->save_result.uint32_t_value= var->value->val_int();
+  var->save_result.uint32_t_value= (uint32_t)var->value->val_int();
   return 0;
 }
 

@@ -20,60 +20,24 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/qcache.h>
 #include <drizzled/gettext.h>
+#include "drizzled/plugin_registry.h"
 #include <vector>
 
 using namespace std;
 
 static vector<QueryCache *> all_query_cache;
 
-static void add_query_cache(QueryCache *handler)
+void add_query_cache(QueryCache *handler)
 {
   all_query_cache.push_back(handler);
 }
 
-static void remove_query_cache(QueryCache *handler)
+void remove_query_cache(QueryCache *handler)
 {
   all_query_cache.erase(find(all_query_cache.begin(), all_query_cache.end(),
                         handler));
 }
 
-int qcache_initializer(st_plugin_int *plugin)
-{
-  QueryCache *p;
-
-
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(&p))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' init() failed"),
-                    plugin->name.str);
-      return 1;
-    }
-  }
-
-  add_query_cache(p);
-  plugin->data= p;
-
-  return 0;
-
-}
-
-int qcache_finalizer(st_plugin_int *plugin)
-{
-  QueryCache *handler= static_cast<QueryCache *>(plugin->data);
-  remove_query_cache(handler);
-
-  if (plugin->plugin->deinit)
-  {
-    if (plugin->plugin->deinit(plugin->data))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' deinit() failed"),
-                    plugin->name.str);
-    }
-  }
-  return 0;
-}
 
 
 /* Namespaces are here to prevent global symbol clashes with these classes */

@@ -21,66 +21,48 @@
 #include <drizzled/scheduling.h>
 #include <drizzled/gettext.h>
 #include <drizzled/connect.h>
+#include "drizzled/plugin_registry.h"
 
-Scheduler *thread_scheduler= NULL;
+
+SchedulerFactory *scheduler_factory= NULL;
 
 static bool scheduler_inited= false; /* We must insist that only one of these plugins get loaded at a time */
 
 
 extern char *opt_scheduler;
 
-Scheduler &get_thread_scheduler()
+bool add_scheduler_factory(SchedulerFactory *factory)
 {
-  assert(thread_scheduler != NULL);
-  return *thread_scheduler;
-}
-
-int scheduling_initializer(st_plugin_int *plugin)
-{
-  if (memcmp(plugin->plugin->name, opt_scheduler, strlen(opt_scheduler)))
-    return 0;
+  if (factory->getName() != opt_scheduler)
+    return true;
 
   if (scheduler_inited)
   {
     fprintf(stderr, "You cannot load more then one scheduler plugin\n");
-    exit(1);
+    return(1);
   }
-
-  assert(plugin->plugin->init); /* Find poorly designed plugins */
-
-  if (plugin->plugin->init((void *)&thread_scheduler))
-  {
-    /* 
-      TRANSLATORS> The leading word "scheduling" is the name
-      of the plugin api, and so should not be translated. 
-    */
-    errmsg_printf(ERRMSG_LVL_ERROR, _("scheduling plugin '%s' init() failed"),
-	                plugin->name.str);
-      return 1;
-  }
+  scheduler_factory= factory;
 
   scheduler_inited= true;
-  /* We populate so we can find which plugin was initialized later on */
-  plugin->data= (void *)thread_scheduler;
-
-  return 0;
-
+  return false;
 }
 
-int scheduling_finalizer(st_plugin_int *plugin)
+bool remove_scheduler_factory(SchedulerFactory *)
 {
-  /* We know which one we initialized since its data pointer is filled */
-  if (plugin->plugin->deinit && plugin->data)
-  {
-    if (plugin->plugin->deinit((void *)thread_scheduler))
-    {
-      /* TRANSLATORS: The leading word "scheduling" is the name
-         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("scheduling plugin '%s' deinit() failed"),
-                    plugin->name.str);
-    }
-  }
-
-  return 0;
+  scheduler_factory= NULL;
+  scheduler_inited= false;
+  return false;
 }
+
+Scheduler &get_thread_scheduler()
+{
+  assert(scheduler_factory != NULL);
+  Scheduler *sched= (*scheduler_factory)();
+  if (sched == NULL)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Scheduler initialization failed."));
+    exit(1);
+  }
+  return *sched;
+}
+

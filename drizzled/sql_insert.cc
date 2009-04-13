@@ -33,6 +33,10 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/lock.h>
 
+#include <bitset>
+
+using namespace std;
+
 
 /*
   Check if insert fields are correct.
@@ -75,7 +79,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
       No fields are provided so all fields must be provided in the values.
       Thus we set all bits in the write set.
     */
-    bitmap_set_all(table->write_set);
+    table->write_set->set();
   }
   else
   {						// Part field list
@@ -116,14 +120,12 @@ static int check_insert_fields(Session *session, TableList *table_list,
     }
     if (table->timestamp_field)	// Don't automaticly set timestamp if used
     {
-      if (bitmap_is_set(table->write_set,
-                        table->timestamp_field->field_index))
+      if (table->write_set->test(table->timestamp_field->field_index))
         clear_timestamp_auto_bits(table->timestamp_field_type,
                                   TIMESTAMP_AUTO_SET_ON_INSERT);
       else
       {
-        bitmap_set_bit(table->write_set,
-                       table->timestamp_field->field_index);
+        table->write_set->set(table->timestamp_field->field_index);
       }
     }
     /* Mark all virtual columns for write*/
@@ -167,8 +169,8 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= bitmap_test_and_clear(table->write_set,
-                                          table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->test(table->timestamp_field->field_index);
+    table->write_set->reset(table->timestamp_field->field_index);
   }
 
   /* Check the fields we are going to modify */
@@ -178,13 +180,11 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
   if (table->timestamp_field)
   {
     /* Don't set timestamp column if this is modified. */
-    if (bitmap_is_set(table->write_set,
-                      table->timestamp_field->field_index))
+    if (table->write_set->test(table->timestamp_field->field_index))
       clear_timestamp_auto_bits(table->timestamp_field_type,
                                 TIMESTAMP_AUTO_SET_ON_UPDATE);
     if (timestamp_mark)
-      bitmap_set_bit(table->write_set,
-                     table->timestamp_field->field_index);
+      table->write_set->set(table->timestamp_field->field_index);
   }
   return 0;
 }
@@ -721,7 +721,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
-  MY_BITMAP *save_read_set, *save_write_set;
+  bitset<MAX_FIELDS> *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->file->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 
@@ -828,7 +828,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             table->next_number_field->val_int());
         info->touched++;
         if ((table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
-             !bitmap_is_subset(table->write_set, table->read_set)) ||
+             !((*table->read_set & *table->write_set) == *table->write_set)) ||
             table->compare_record())
         {
           if ((error=table->file->ha_update_row(table->record[1],
@@ -965,11 +965,11 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
                                            TableList *)
 {
   int err= 0;
-  MY_BITMAP *write_set= entry->write_set;
+  bitset<MAX_FIELDS> *write_set= entry->write_set;
 
   for (Field **field=entry->field ; *field ; field++)
   {
-    if (!bitmap_is_set(write_set, (*field)->field_index))
+    if (!write_set->test((*field)->field_index))
     {
       /*
        * If the field doesn't have any default value
@@ -1667,7 +1667,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
-    bitmap_set_bit(table->write_set, (*f)->field_index);
+    table->write_set->set((*f)->field_index);
 
   /* Don't set timestamp if used */
   table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;

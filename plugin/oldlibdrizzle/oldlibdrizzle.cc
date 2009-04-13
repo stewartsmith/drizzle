@@ -925,23 +925,27 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
   return session->checkUser(passwd, passwd_len, l_db);
 }
 
-static int init(void *p)
+static ProtocolFactoryOldLibdrizzle *factory= NULL;
+
+static int init(PluginRegistry &registry)
 {
-  ProtocolFactory **factory= static_cast<ProtocolFactory **>(p);
-  *factory= new ProtocolFactoryOldLibdrizzle;
+  factory= new ProtocolFactoryOldLibdrizzle;
+  registry.add(factory); 
   return 0;
 }
 
-static int deinit(void *p)
+static int deinit(PluginRegistry &registry)
 {
-  ProtocolFactoryOldLibdrizzle *factory= static_cast<ProtocolFactoryOldLibdrizzle *>(p);
-  delete factory;
+  if (factory)
+  {
+    registry.remove(factory);
+    delete factory;
+  }
   return 0;
 }
 
 drizzle_declare_plugin(oldlibdrizzle)
 {
-  DRIZZLE_PROTOCOL_PLUGIN,
   "oldlibdrizzle",
   "0.1",
   "Eric Day",

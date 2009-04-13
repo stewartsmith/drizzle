@@ -1,0 +1,32 @@
+DRIZZLE_PLUGIN(auth_http,[HTTP Authentication Plugin],
+        [HTTP based authentications])
+DRIZZLE_PLUGIN_DYNAMIC(auth_http, [libauth_http.la])
+DRIZZLE_PLUGIN_STATIC(auth_http, [libauth_http.a])
+DRIZZLE_PLUGIN_ACTIONS(auth_http, [
+  AC_LIB_HAVE_LINKFLAGS(curl,,
+    [#include <curl/curl.h>],
+    [
+      CURL *handle;
+      handle=curl_easy_init();
+    ])
+  AS_IF([test "x$ac_cv_libcurl" = "xno"],
+    AC_MSG_WARN([libcurl not working: not building auth_http plugin]),[
+    AC_CACHE_CHECK([if libcurl has CURLOPT_USERNAME],
+                       [drizzle_cv_curl_have_username],[
+       AC_COMPILE_IFELSE([
+         AC_LANG_PROGRAM(
+           [[
+            CURL *handle;
+            handle=curl_easy_init();
+            rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME, "foo");
+           ]])],
+         [drizzle_cv_curl_have_username=yes],
+         [drizzle_cv_curl_have_username=no])])
+    AS_IF([test "x$drizzle_cv_curl_have_username" = "xyes"],
+          AC_DEFINE([HAVE_CURLOPT_USERNAME],[1],
+                    [Does libcurl provide the CURLOPT_USERNAME constant]))
+
+    DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} ${LIBCURL}"
+    ])
+  AM_CONDITIONAL(BUILD_AUTH_HTTP,[test "${ac_cv_libcurl}" = "yes"])
+])

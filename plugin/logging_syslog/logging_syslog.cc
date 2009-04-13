@@ -150,11 +150,10 @@ public:
   }
 };
 
-static int logging_syslog_plugin_init(void *p)
-{
-  Logging_syslog **handler= static_cast<Logging_syslog **>(p);
-  *handler= NULL;
+static Logging_syslog *handler= NULL;
 
+static int logging_syslog_plugin_init(PluginRegistry &registry)
+{
   syslog_facility= -1;
   for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
   {
@@ -192,15 +191,15 @@ static int logging_syslog_plugin_init(void *p)
   openlog(sysvar_logging_syslog_ident,
           LOG_PID, syslog_facility);
 
-  *handler= new Logging_syslog();
+  handler= new Logging_syslog();
+  registry.add(handler);
 
   return 0;
 }
 
-static int logging_syslog_plugin_deinit(void *p)
+static int logging_syslog_plugin_deinit(PluginRegistry &registry)
 {
-  Logging_syslog *handler= static_cast<Logging_syslog *>(p);
-
+  registry.remove(handler);
   delete handler;
 
   return 0;
@@ -291,7 +290,6 @@ static struct st_mysql_sys_var* logging_syslog_system_variables[]= {
 
 drizzle_declare_plugin(logging_syslog)
 {
-  DRIZZLE_LOGGER_PLUGIN,
   "logging_syslog",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",

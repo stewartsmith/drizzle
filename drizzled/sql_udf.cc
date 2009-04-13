@@ -18,12 +18,12 @@
 #include <drizzled/gettext.h>
 #include <drizzled/sql_udf.h>
 #include <drizzled/registry.h>
+#include "drizzled/plugin_registry.h"
 
 #include <string>
 
 using namespace std;
 
-static bool udf_startup= false; /* We do not lock because startup is single threaded */
 static drizzled::Registry<Function_builder *> udf_registry;
 
 /* This is only called if using_udf_functions != 0 */
@@ -32,65 +32,14 @@ Function_builder *find_udf(const char *name, uint32_t length)
   return udf_registry.find(name, length);
 }
 
-static bool add_udf(Function_builder *udf)
+void add_udf(Function_builder *udf)
 {
-  return udf_registry.add(udf);
+  udf_registry.add(udf);
 }
 
-static void remove_udf(Function_builder *udf)
+void remove_udf(Function_builder *udf)
 {
   udf_registry.remove(udf);
 }
 
-int initialize_udf(st_plugin_int *plugin)
-{
-  Function_builder *f;
-
-  udf_startup= true;
-
-  if (plugin->plugin->init)
-  {
-    int r;
-    if ((r= plugin->plugin->init((void *)&f)))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error %d."),
-                    plugin->name.str, r);
-      return r;
-    }
-  }
-  else
-    return 1;
-
-  if (add_udf(f))
-    return 1;
-
-  plugin->data= f;
-  return 0;
-
-}
-
-int finalize_udf(st_plugin_int *plugin)
-{
-  Function_builder *udf = static_cast<Function_builder *>(plugin->data);
-
-  if (udf != NULL)
-  {
-    remove_udf(udf);
-  
-    if (plugin->plugin->deinit)
-    {
-      if (plugin->plugin->deinit((void *)udf))
-      {
-        /* TRANSLATORS: The leading word "udf" is the name
-           of the plugin api, and so should not be translated. */
-        errmsg_printf(ERRMSG_LVL_ERROR, _("udf plugin '%s' deinit() failed"),
-  		      plugin->name.str);
-      }
-    }
-
-  }
-
-  return 0;
-}
 
