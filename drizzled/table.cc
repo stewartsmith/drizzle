@@ -2471,6 +2471,7 @@ void Table::setup_tmp_table_column_bitmaps()
   s->all_set= def_read_set;
   this->s->all_set.set();
   default_column_bitmaps();
+  read_set->set();
 }
 
 
