@@ -18,8 +18,8 @@
  */
 
 
-#include <drizzled/configmake.h>
 #include <drizzled/server_includes.h>
+#include <drizzled/configmake.h>
 #include <drizzled/atomics.h>
 
 #include <netdb.h>
