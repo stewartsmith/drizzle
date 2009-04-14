@@ -1370,20 +1370,23 @@ then
 fi
 CPPFLAGS="-I\$(top_srcdir) -I\$(top_builddir) ${CPPFLAGS}"
 
-/* Must be done once we turn on warnings and such */
+dnl Must be done once we turn on warnings and such
 AC_CACHE_CHECK(
   [whether __attribute__ visibility "hidden" is supported],
-  [ac_cv_can_use_hidden_],
-  [AC_LANG_PUSH(C++)
-   AC_COMPILE_IFELSE([
-     AC_LANG_PROGRAM([[
+  [ac_cv_can_use_hidden_],[
+    AC_LANG_PUSH(C++)
+    AC_COMPILE_IFELSE([
+      AC_LANG_PROGRAM(
+        [[
 __attribute__((visibility ("hidden")))
-void testme() {  };],[
-     testme();]]
-     )],  
-   [ac_cv_can_use_hidden_=yes],
-   [ac_cv_can_use_hidden_=no])
-  AC_LANG_POP()])
+void testme() {  };
+        ]],[[
+     testme();
+        ]]
+      )],  
+      [ac_cv_can_use_hidden_=yes],
+      [ac_cv_can_use_hidden_=no])
+    AC_LANG_POP()])
 if test "$ac_cv_can_use_hidden_" = "yes"
 then
   AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
