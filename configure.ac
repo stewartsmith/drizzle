@@ -331,7 +331,7 @@ AC_LANG_PUSH([C++])
 AC_LIB_HAVE_LINKFLAGS(protobuf,,
 [#include <google/protobuf/descriptor.h>
 ],
-[google::protobuf::FileDescriptor* file;])
+[google::protobuf::FileDescriptor* file;],system)
 AS_IF([test x$ac_cv_libprotobuf = xno],
       AC_MSG_ERROR([protobuf is required for Drizzle. On Debian this can be found in libprotobuf-dev. On RedHat this can be found in protobuf-devel.]))
 

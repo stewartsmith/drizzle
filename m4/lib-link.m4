@@ -43,7 +43,7 @@ AC_DEFUN([AC_LIB_LINKFLAGS],
   undefine([NAME])
 ])
 
-dnl AC_LIB_HAVE_LINKFLAGS(name, dependencies, includes, testcode)
+dnl AC_LIB_HAVE_LINKFLAGS(name, dependencies, includes, testcode, [system])
 dnl searches for libname and the libraries corresponding to explicit and
 dnl implicit dependencies, together with the specified include files and
 dnl the ability to compile and link the specified testcode. If found, it
@@ -63,7 +63,7 @@ AC_DEFUN([AC_LIB_HAVE_LINKFLAGS],
 
   dnl Search for lib[]Name and define LIB[]NAME, LTLIB[]NAME and INC[]NAME
   dnl accordingly.
-  AC_LIB_LINKFLAGS_BODY([$1], [$2])
+  AC_LIB_LINKFLAGS_BODY([$1], [$2], [$5])
 
   dnl Add $INC[]NAME to CPPFLAGS before performing the following checks,
   dnl because if the user has installed lib[]Name and not disabled its use
@@ -136,11 +136,13 @@ AC_DEFUN([AC_LIB_RPATH],
     :, enable_rpath=yes)
 ])
 
-dnl AC_LIB_LINKFLAGS_BODY(name [, dependencies]) searches for libname and
-dnl the libraries corresponding to explicit and implicit dependencies.
+dnl AC_LIB_LINKFLAGS_BODY(name [, dependencies, system]) searches for 
+dnl libname and the libraries corresponding to explicit and 
+dnl implicit dependencies.
 dnl Sets the LIB${NAME}, LTLIB${NAME} and INC${NAME} variables.
 dnl Also, sets the LIB${NAME}_PREFIX variable to nonempty if libname was found
 dnl in ${LIB${NAME}_PREFIX}/$acl_libdirstem.
+dnl If system==system, -isystem is used instead of -I
 AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
 [
   AC_REQUIRE([AC_LIB_PREPARE_MULTILIB])
@@ -150,6 +152,12 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
   define([N_A_M_E],[m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]),[2.61]),[-1],[translit([$1],[.],[_])],[$1])])
   dnl By default, look in $includedir and $libdir.
   use_additional=yes
+  if test "x$3" = "xsystem"
+  then
+    i_system="-isystem "
+  else
+    i_system="-I"
+  fi
   AC_LIB_WITH_FINAL_PREFIX([
     eval additional_includedir=\"$includedir\"
     eval additional_libdir=\"$libdir\"
@@ -439,7 +447,7 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
                 if test -z "$haveit"; then
                   for x in $CPPFLAGS $INC[]NAME; do
                     AC_LIB_WITH_FINAL_PREFIX([eval x=\"$x\"])
-                    if test "X$x" = "X-I$additional_includedir"; then
+                    if test "X$x" = "X${i_system}$additional_includedir"; then
                       haveit=yes
                       break
                     fi
@@ -447,7 +455,7 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
                   if test -z "$haveit"; then
                     if test -d "$additional_includedir"; then
                       dnl Really add $additional_includedir to $INCNAME.
-                      INC[]NAME="${INC[]NAME}${INC[]NAME:+ }-I$additional_includedir"
+                      INC[]NAME="${INC[]NAME}${INC[]NAME:+ }${i_system}$additional_includedir"
                     fi
                   fi
                 fi
