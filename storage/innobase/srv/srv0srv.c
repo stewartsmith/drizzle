@@ -2692,7 +2692,7 @@ suspend_thread:
 	goto loop;
 
 
-#ifndef UNIV_SOLARIS
+#if (!defined(__SUNPRO_C) && !defined(__SUNPRO_CC))
 	OS_THREAD_DUMMY_RETURN;	/* Not reached, avoid compiler warning */
 #endif
 }

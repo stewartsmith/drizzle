@@ -183,26 +183,6 @@ AC_PATH_PROG(GENHTML, genhtml)
 
 AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
 
-dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
-if test "$ac_cv_c_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
-then
-  AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
-fi
-
-dnl C99 is illegal in C++... but these turn on extensions to the standard
-dnl On Solars. This whole block is sort of silly atm, since we don't do 
-dnl GCC on Solaris.
-if test "$GCC" = "yes"
-then
-  case "$target_os" in
-    *solaris*)
-    AC_DEFINE([_XOPEN_SOURCE],[600],[Turn on XOpen 6.0 Features])
-    AC_DEFINE([__C99FEATURES__],[1],[Turn on C99 Features for C++])
-    AC_DEFINE([__XPG6],[1],[Turn on C99/XOpen Group 6 Extensions])
-    ;;
-  esac
-fi
-
 AC_SUBST(NM)dnl
 
 AC_PROG_INSTALL
@@ -220,10 +200,18 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
+  isainfo_b=`isainfo -b`
+
 # Build optimized or debug version ?
 # First check for gcc and g++
 if test "$GCC" = "yes"
 then
+  if test "$isainfo_b" = "64"
+  then
+    IS_64="-m64"
+  fi
+  AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
+
   dnl The following is required for portable results of floating point 
   dnl calculations on PowerPC. The same must also be done for IA-64, but 
   dnl this options is missing in the IA-64 gcc backend.
@@ -234,8 +222,8 @@ then
     ;;
   esac
 
-  CFLAGS="-ggdb3 -std=gnu99 ${CFLAGS}"
-  CXXFLAGS="-ggdb3 ${CXXFLAGS}"
+  CFLAGS="-ggdb3 ${IS_64} -std=gnu99 ${CFLAGS}"
+  CXXFLAGS="-ggdb3  ${IS_64} ${CXXFLAGS}"
   AC_CXX_CHECK_STANDARD
   
 
@@ -247,6 +235,10 @@ then
 fi
 if test "$SUNCC" = "yes"
 then
+  if test "$isainfo_b" = "64"
+  then
+    IS_64="-m64"
+  fi
   dnl we put CPPFLAGS and LDFLAGS first here, because if the user has specified
   dnl command line CPPFLAGS or LDFLAGS, their -I or -L should come _first_
   if test "$target_cpu" = "sparc"
@@ -254,11 +246,6 @@ then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
 
-  isainfo_b=`isainfo -b`
-  if test "$isainfo_b" = "64"
-  then
-    IS_64="-m64"
-  fi
   if test "x$use_additional" != "xyes"
   then
     LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib"
@@ -1308,24 +1295,6 @@ template <> void C<int>::foo();
     
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
     GXX_PEDANTIC="-pedantic -Wundef -Woverloaded-virtual  -Wnon-virtual-dtor -Wctor-dtor-privacy ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
-
-    AC_CACHE_CHECK([whether __attribute__ visibility "hidden" is supported],
-      [ac_cv_can_use_hidden_],
-      [AC_LANG_PUSH(C++)
-       AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([
-          AC_INCLUDES_DEFAULT
-__attribute__((visibility ("hidden")))
-void testme() {  };],[
-     testme();])],  
-         [ac_cv_can_use_hidden_=yes],
-         [ac_cv_can_use_hidden_=no])
-       AC_LANG_POP()])
-    if test "$ac_cv_can_use_hidden_" = "yes"
-    then
-      AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
-                [Define to 1 if you have support for __attribute__((visibility("hidden")))])
-    fi
   fi
 
   if test "$ac_warn_unreachable" = "yes"
@@ -1392,9 +1361,34 @@ AC_SUBST(NO_UNREACHED)
 
 if test "$ac_cv_func_timegm" = "no" -o "$gl_cv_func_gnu_getopt" = "no"
 then
-  CPPFLAGS="-I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib ${CPPFLAGS}"
+  if test "$GCC" = "yes"
+  then
+    CPPFLAGS="-isystem \$(top_srcdir)/gnulib -isystem \$(top_builddir)/gnulib ${CPPFLAGS}"
+  else
+    CPPFLAGS="-I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib ${CPPFLAGS}"
+  fi
 fi
 CPPFLAGS="-I\$(top_srcdir) -I\$(top_builddir) ${CPPFLAGS}"
+
+/* Must be done once we turn on warnings and such */
+AC_CACHE_CHECK(
+  [whether __attribute__ visibility "hidden" is supported],
+  [ac_cv_can_use_hidden_],
+  [AC_LANG_PUSH(C++)
+   AC_COMPILE_IFELSE([
+     AC_LANG_PROGRAM([[
+__attribute__((visibility ("hidden")))
+void testme() {  };],[
+     testme();]]
+     )],  
+   [ac_cv_can_use_hidden_=yes],
+   [ac_cv_can_use_hidden_=no])
+  AC_LANG_POP()])
+if test "$ac_cv_can_use_hidden_" = "yes"
+then
+  AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
+  [Define to 1 if you have support for __attribute__((visibility("hidden")))])
+fi
 
 AM_CPPFLAGS="${CPPFLAGS}"
 AM_CFLAGS="${CC_WARNINGS} ${CFLAGS}"

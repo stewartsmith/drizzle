@@ -82,13 +82,6 @@
 #  include <time.h>
 # endif
 #endif
-#ifndef HAVE_DECL_TIMEGM
-#include <gnulib/time.h>
-# if defined(__cplusplus)
-extern "C"
-# endif
-time_t timegm (struct tm *__tm);
-#endif /* HAVE_DECL_TIMEGM */
 
 
 #if defined(__cplusplus)

@@ -32,7 +32,6 @@
 # endif
 #endif
 
-#include <gnulib/time.h>
 
 #ifndef _LIBC
 # undef __gmtime_r
