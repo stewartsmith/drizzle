@@ -152,7 +152,7 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
   define([N_A_M_E],[m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]),[2.61]),[-1],[translit([$1],[.],[_])],[$1])])
   dnl By default, look in $includedir and $libdir.
   use_additional=yes
-  if test "x$3" = "xsystem"
+  if test "x$GCC" = "xyes" -a "x$3" = "xsystem"
   then
     i_system="-isystem "
   else
