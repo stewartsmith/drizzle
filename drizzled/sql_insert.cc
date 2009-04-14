@@ -1265,6 +1265,9 @@ bool select_insert::send_data(List<Item> &values)
   if (session->is_error())
     return(1);
 
+  // Release latches in case bulk insert takes a long time
+  ha_release_temporary_latches(session);
+
   error= write_record(session, table, &info);
 
   if (!error)
