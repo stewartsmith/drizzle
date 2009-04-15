@@ -1369,9 +1369,7 @@ AC_CACHE_CHECK(
         [[
 __attribute__((visibility ("hidden")))
 void testme() {  };
-        ]],[[
-     testme();
-        ]]
+        ]],[[testme()]]
       )],  
       [ac_cv_can_use_hidden_=yes],
       [ac_cv_can_use_hidden_=no])
@@ -1406,7 +1404,6 @@ AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
  storage/Makefile dnl
  po/Makefile.in dnl
- client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/message/Makefile dnl
  drizzled/sql_builtin.cc dnl

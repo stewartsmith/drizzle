@@ -25,27 +25,47 @@ SUBDIRS = ${po} \
 	  gnulib \
 	  drizzled/message \
 	  . \
-	  client \
 	  storage \
 	  plugin \
 	  drizzled \
 	  tests \
 	  support-files
 
-EXTRA_DIST = config/config.rpath m4/gnulib-cache.m4
-CLEANFILES = drizzled/configmake.h
-DISTCLEANFILES = ac_available_languages_fragment
-MAINTAINERCLEANFILES = autom4te.cache
-
 BUILT_SOURCES=		drizzled/configmake.h
-noinst_LTLIBRARIES=	mysys/libmysys.la mystrings/libmystrings.la
+EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4
+CLEANFILES=		${BUILT_SOURCES}
+DISTCLEANFILES=		ac_available_languages_fragment
+MAINTAINERCLEANFILES=	autom4te.cache
+
+CLIENT_LDADD=		mysys/libmysys.la \
+			mystrings/libmystrings.la \
+			$(LIBDRIZZLE) $(LIBINTL) $(LIBZ) \
+			client/libgetpassword.la
+
+noinst_LTLIBRARIES= \
+		client/libgetpassword.la \
+		mysys/libmysys.la \
+		mystrings/libmystrings.la
 
 nobase_bin_PROGRAMS= \
+		client/drizzle \
+		client/drizzlecheck \
+		client/drizzledump \
+		client/drizzleimport \
+		client/drizzletest \
+		client/drizzleslap \
 		extra/my_print_defaults \
 		extra/mysql_waitpid \
 		extra/innochecksum
 
+
+client_libgetpassword_la_SOURCES= client/get_password.cc
+
 noinst_HEADERS=	\
+		client/client_priv.h \
+		client/errname.h
+		client/get_password.h \
+		client/my_readline.h \
 		drizzled/configmake.h \
 		mystrings/decimal.h \
 		mystrings/m_ctype.h \
@@ -152,6 +172,24 @@ mysys_libmysys_la_SOURCES= \
 		mysys/thr_lock.cc \
 		mysys/tree.cc \
 		mysys/typelib.cc
+
+client_drizzle_SOURCES=		client/drizzle.cc client/readline.cc
+client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS}
+
+client_drizzlecheck_SOURCES =	client/drizzlecheck.cc
+client_drizzlecheck_LDADD=	${CLIENT_LDADD}
+
+client_drizzledump_SOURCES=	client/drizzledump.cc
+client_drizzledump_LDADD=	${CLIENT_LDADD}
+
+client_drizzleimport_SOURCES=	client/drizzleimport.cc
+client_drizzleimport_LDADD=	${CLIENT_LDADD}
+
+client_drizzleslap_SOURCES=	client/drizzleslap.cc
+client_drizzleslap_LDADD=	${CLIENT_LDADD}
+
+client_drizzletest_SOURCES=	client/drizzletest.cc
+client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
 
 extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
 extra_my_print_defaults_LDADD= \
