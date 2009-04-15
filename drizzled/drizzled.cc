@@ -796,6 +796,7 @@ static void network_init(void)
   struct addrinfo *next;
   struct addrinfo hints;
   int error;
+  int ip_sock;
 
   set_ports();
 
@@ -812,20 +813,19 @@ static void network_init(void)
     unireg_abort(1);				/* purecov: tested */
   }
 
-  for (next= ai, pollfd_count= 0; next; next= next->ai_next, pollfd_count++)
+  for (next= ai, pollfd_count= 0; next; next= next->ai_next)
   {
-    int ip_sock;
-
     ip_sock= socket(next->ai_family, next->ai_socktype, next->ai_protocol);
-
     if (ip_sock == -1)
     {
-      sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
-      unireg_abort(1);				/* purecov: tested */
+      /* getaddrinfo can return bad results, skip them here and error later if
+         we didn't find anything to bind to. */
+      continue;
     }
 
     fds[pollfd_count].fd= ip_sock;
     fds[pollfd_count].events= POLLIN | POLLERR;
+    pollfd_count++;
 
     /* Add options for our listening socket */
     {
@@ -902,6 +902,12 @@ static void network_init(void)
                       errno);
       unireg_abort(1);
     }
+  }
+
+  if (pollfd_count == 0 && ai != NULL && ip_sock == -1)
+  {
+    sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
+    unireg_abort(1);				/* purecov: tested */
   }
 
   freeaddrinfo(ai);
