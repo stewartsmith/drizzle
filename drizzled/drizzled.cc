@@ -248,6 +248,7 @@ bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
 bool volatile abort_loop;
+int abort_pipe[2];
 bool volatile shutdown_in_progress;
 uint32_t max_used_connections;
 const char *opt_scheduler= "multi_thread";
@@ -448,19 +449,8 @@ static void clean_up_mutexes(void);
 
 void close_connections(void)
 {
-  int x;
-
   /* Abort listening to new connections */
-  for (x= 0; x < pollfd_count; x++)
-  {
-    if (fds[x].fd != -1)
-    {
-      (void) shutdown(fds[x].fd, SHUT_RDWR);
-      (void) close(fds[x].fd);
-      fds[x].fd= -1;
-    }
-  }
-
+  (void) write(abort_pipe[1], "\0", 1);
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -808,6 +798,7 @@ static void network_init(void)
   struct addrinfo *next;
   struct addrinfo hints;
   int error;
+  int ip_sock;
 
   set_ports();
 
@@ -824,20 +815,19 @@ static void network_init(void)
     unireg_abort(1);				/* purecov: tested */
   }
 
-  for (next= ai, pollfd_count= 0; next; next= next->ai_next, pollfd_count++)
+  for (next= ai, pollfd_count= 0; next; next= next->ai_next)
   {
-    int ip_sock;
-
     ip_sock= socket(next->ai_family, next->ai_socktype, next->ai_protocol);
-
     if (ip_sock == -1)
     {
-      sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
-      unireg_abort(1);				/* purecov: tested */
+      /* getaddrinfo can return bad results, skip them here and error later if
+         we didn't find anything to bind to. */
+      continue;
     }
 
     fds[pollfd_count].fd= ip_sock;
     fds[pollfd_count].events= POLLIN | POLLERR;
+    pollfd_count++;
 
     /* Add options for our listening socket */
     {
@@ -916,7 +906,28 @@ static void network_init(void)
     }
   }
 
+  if (pollfd_count == 0 && ai != NULL && ip_sock == -1)
+  {
+    sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
+    unireg_abort(1);				/* purecov: tested */
+  }
+
   freeaddrinfo(ai);
+
+  /* We need a pipe to wakeup the listening thread since some operating systems
+     are stupid. *cough* OSX *cough* */
+  if (pipe(abort_pipe) == -1)
+  {
+    sql_perror(_("Can't open abort pipet"));
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("pipe() on abort_pipe failed with error %d"), errno);
+    unireg_abort(1);
+  }
+
+  fds[pollfd_count].fd= abort_pipe[0];
+  fds[pollfd_count].events= POLLIN | POLLERR;
+  pollfd_count++; 
+
   return;
 }
 
@@ -1972,6 +1983,19 @@ void handle_connections_sockets()
 
     create_new_thread(session);
   }
+
+  for (x= 0; x < pollfd_count; x++)
+  {
+    if (fds[x].fd != -1)
+    {
+      (void) shutdown(fds[x].fd, SHUT_RDWR);
+      (void) close(fds[x].fd);
+      fds[x].fd= -1;
+    }
+  }
+
+  /* abort_pipe[0] was closed in the for loop above in fds[] */
+  (void) close(abort_pipe[1]);
 }
 
 
