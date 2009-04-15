@@ -1402,7 +1402,7 @@ dnl re-enable later
 dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
-AC_CONFIG_FILES(Makefile extra/Makefile dnl
+AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
  storage/Makefile dnl
  po/Makefile.in dnl

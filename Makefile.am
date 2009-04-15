@@ -23,10 +23,9 @@ endif
 
 SUBDIRS = ${po} \
 	  gnulib \
-	  . \
-	  extra \
-	  client \
 	  drizzled/message \
+	  . \
+	  client \
 	  storage \
 	  plugin \
 	  drizzled \
@@ -40,6 +39,11 @@ MAINTAINERCLEANFILES = autom4te.cache
 
 BUILT_SOURCES=		drizzled/configmake.h
 noinst_LTLIBRARIES=	mysys/libmysys.la mystrings/libmystrings.la
+
+nobase_bin_PROGRAMS= \
+		extra/my_print_defaults \
+		extra/mysql_waitpid \
+		extra/innochecksum
 
 noinst_HEADERS=	\
 		drizzled/configmake.h \
@@ -148,6 +152,17 @@ mysys_libmysys_la_SOURCES= \
 		mysys/thr_lock.cc \
 		mysys/tree.cc \
 		mysys/typelib.cc
+
+extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
+extra_my_print_defaults_LDADD= \
+		$(top_builddir)/mysys/libmysys.la \
+		$(top_builddir)/mystrings/libmystrings.la \
+		$(LIBINTL)
+extra_mysql_waitpid_SOURCES= extra/mysql_waitpid.cc
+extra_mysql_waitpid_LDADD= \
+		$(top_builddir)/mysys/libmysys.la \
+		$(top_builddir)/mystrings/libmystrings.la \
+		$(LIBINTL)
 
 # Create empty datadir 
 install-data-local:
