@@ -24,7 +24,6 @@ endif
 SUBDIRS = ${po} \
 	  gnulib \
 	  . \
-	  mystrings \
 	  extra \
 	  client \
 	  drizzled/message \
@@ -40,11 +39,16 @@ DISTCLEANFILES = ac_available_languages_fragment
 MAINTAINERCLEANFILES = autom4te.cache
 
 BUILT_SOURCES=		drizzled/configmake.h
-noinst_LTLIBRARIES=	mysys/libmysys.la
-
+noinst_LTLIBRARIES=	mysys/libmysys.la mystrings/libmystrings.la
 
 noinst_HEADERS=	\
 		drizzled/configmake.h \
+		mystrings/decimal.h \
+		mystrings/m_ctype.h \
+		mystrings/m_string.h \
+		mystrings/my_uctype.h \
+		mystrings/t_ctype.h
+		mystrings/utf8.h
 		mysys/aio_result.h \
 		mysys/base64.h \
 		mysys/definitions.h \
@@ -66,6 +70,24 @@ noinst_HEADERS=	\
 		mysys/sha1.h \
 		mysys/thr_lock.h \
 		mysys/typelib.h
+
+mystrings_libmystrings_la_SOURCES= \
+		mystrings/bmove_upp.cc \
+		mystrings/ctype-bin.cc \
+		mystrings/ctype-extra.cc \
+		mystrings/ctype-mb.cc \
+		mystrings/ctype-simple.cc \
+		mystrings/ctype-uca.cc \
+		mystrings/ctype-utf8.cc \
+		mystrings/ctype.cc \
+		mystrings/decimal.cc \
+		mystrings/dtoa.cc \
+		mystrings/int2str.cc \
+		mystrings/is_prefix.cc \
+		mystrings/llstr.cc \
+		mystrings/longlong2str.cc \
+		mystrings/my_strtoll10.cc \
+		mystrings/str2int.cc
 
 mysys_libmysys_la_SOURCES= \
 		mysys/array.cc \

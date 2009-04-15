@@ -1404,7 +1404,7 @@ AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile dnl
  gnulib/Makefile dnl
- mystrings/Makefile storage/Makefile dnl
+ storage/Makefile dnl
  po/Makefile.in dnl
  client/Makefile dnl
  drizzled/Makefile dnl
