@@ -257,10 +257,10 @@ public:
   }
 };
 
-static int logging_query_plugin_init(void *p)
+static Logging_query *handler= NULL;
+
+static int logging_query_plugin_init(PluginRegistry &registry)
 {
-  Logging_handler **handler= static_cast<Logging_handler **>(p);
-  *handler= NULL;
 
   if (sysvar_logging_query_filename == NULL)
   {
@@ -289,14 +289,14 @@ static int logging_query_plugin_init(void *p)
     return 0;
   }
 
-  *handler= new Logging_query();
+  handler= new Logging_query();
+  registry.add(handler);
 
   return 0;
 }
 
-static int logging_query_plugin_deinit(void *p)
+static int logging_query_plugin_deinit(PluginRegistry &registry)
 {
-  Logging_query *handler= static_cast<Logging_query *>(p);
 
   if (fd >= 0)
   {
@@ -304,6 +304,7 @@ static int logging_query_plugin_deinit(void *p)
     fd= -1;
   }
 
+  registry.remove(handler);
   delete handler;
 
   return 0;
@@ -374,7 +375,6 @@ static struct st_mysql_sys_var* logging_query_system_variables[]= {
 
 drizzle_declare_plugin(logging_query)
 {
-  DRIZZLE_LOGGER_PLUGIN,
   "logging_query",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",

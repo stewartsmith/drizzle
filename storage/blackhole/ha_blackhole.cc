@@ -275,14 +275,14 @@ static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *lengt
   return (unsigned char*) share->table_name;
 }
 
-static int blackhole_init(void *p)
+static StorageEngine *blackhole_engine= NULL;
+
+static int blackhole_init(PluginRegistry &registry)
 {
-  StorageEngine **engine= static_cast<StorageEngine **>(p);
 
-  BlackholeEngine *blackhole_engine= new BlackholeEngine(engine_name);
-
-  *engine= blackhole_engine; 
-
+  blackhole_engine= new BlackholeEngine(engine_name);
+  registry.add(blackhole_engine);
+  
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
   (void) hash_init(&blackhole_open_tables, system_charset_info,32,0,0,
                    (hash_get_key) blackhole_get_key,
@@ -291,9 +291,9 @@ static int blackhole_init(void *p)
   return 0;
 }
 
-static int blackhole_fini(void *p)
+static int blackhole_fini(PluginRegistry &registry)
 {
-  BlackholeEngine *blackhole_engine= static_cast<BlackholeEngine *>(p);
+  registry.remove(blackhole_engine);
   delete blackhole_engine;
 
   hash_free(&blackhole_open_tables);
@@ -304,7 +304,6 @@ static int blackhole_fini(void *p)
 
 drizzle_declare_plugin(blackhole)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "BLACKHOLE",
   "1.0",
   "MySQL AB",

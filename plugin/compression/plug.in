@@ -1,0 +1,5 @@
+DRIZZLE_PLUGIN(compression,[compression UDFs],
+        [UDF Plugin for compression])
+DRIZZLE_PLUGIN_STATIC(compression,   [libcompressionudf.a])
+DRIZZLE_PLUGIN_MANDATORY(compression)  dnl Default
+DRIZZLE_PLUGIN_DYNAMIC(compression,   [libcompressionudf.la])

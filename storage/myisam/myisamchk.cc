@@ -1018,7 +1018,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
       {
 	if (param->testflag & (T_EXTEND | T_MEDIUM))
 	  init_key_cache(dflt_key_cache,opt_key_cache_block_size,
-                         param->use_buffers, 0, 0);
+                         (size_t)param->use_buffers, 0, 0);
 	init_io_cache(&param->read_cache,datafile,
                       (uint) param->read_buffer_length,
                       READ_CACHE,
@@ -1426,7 +1426,8 @@ static int mi_sort_records(MI_CHECK *param,
   if (share->state.key_root[sort_key] == HA_OFFSET_ERROR)
     return(0);				/* Nothing to do */
 
-  init_key_cache(dflt_key_cache, opt_key_cache_block_size, param->use_buffers,
+  init_key_cache(dflt_key_cache, opt_key_cache_block_size, 
+                 (size_t)param->use_buffers,
                  0, 0);
   if (init_io_cache(&info->rec_cache,-1,(uint) param->write_buffer_length,
 		   WRITE_CACHE,share->pack.header_length,1,

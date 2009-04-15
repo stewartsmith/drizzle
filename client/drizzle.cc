@@ -1020,6 +1020,13 @@ extern "C" void handle_sigint(int sig);
 static void window_resize(int sig);
 #endif
 
+static inline int is_prefix(const char *s, const char *t)
+{
+  while (*t)
+    if (*s++ != *t++) return 0;
+  return 1;                                     /* WRONG */
+}
+
 /**
   Shutdown the server that we are currently connected to.
 
@@ -2062,7 +2069,8 @@ static bool add_line(string *buffer, char *line, char *in_string,
           {
             for (pos++ ;
                  *pos && (*pos != *delimiter ||
-                          !is_prefix(pos + 1, delimiter + 1)) ; pos++)
+                          strncmp(pos + 1, delimiter + 1,
+                                  strlen(delimiter + 1))) ; pos++)
               ;  // Remove parameters
             if (!*pos)
               pos--;
@@ -2113,7 +2121,8 @@ static bool add_line(string *buffer, char *line, char *in_string,
       buffer->clear();
       break;
     }
-    else if (!*ml_comment && !*in_string && is_prefix(pos, delimiter))
+    else if (!*ml_comment && !*in_string && !strncmp(pos, delimiter,
+                                                     strlen(delimiter)))
     {
       // Found a statement. Continue parsing after the delimiter
       pos+= delimiter_length;
@@ -2813,7 +2822,11 @@ com_go(string *buffer, const char *)
     {
       *pos++= ',';
       *pos++= ' ';
-      pos= int10_to_str(warnings, pos, 10);
+      char warnings_buff[20];
+      memset(warnings_buff,0,20);
+      sprintf(warnings_buff, "%d", warnings);
+      strcpy(pos, warnings_buff);
+      pos+= strlen(warnings_buff);
       pos= strcpy(pos, " warning")+8;
       if (warnings != 1)
         *pos++= 's';
@@ -4245,40 +4258,43 @@ static uint32_t start_timer(void)
 static void nice_time(double sec,char *buff,bool part_second)
 {
   uint32_t tmp;
+  ostringstream tmp_buff_str;
+
   if (sec >= 3600.0*24)
   {
     tmp=(uint32_t) floor(sec/(3600.0*24));
     sec-= 3600.0*24*tmp;
-    buff= int10_to_str((long) tmp, buff, 10);
+    tmp_buff_str << tmp;
 
     if (tmp > 1)
-      buff= strcpy(buff," days ")+6;
+      tmp_buff_str << " days ";
     else
-      buff= strcpy(buff," day ")+5;
+      tmp_buff_str << " day ";
 
   }
   if (sec >= 3600.0)
   {
     tmp=(uint32_t) floor(sec/3600.0);
     sec-=3600.0*tmp;
-    buff=int10_to_str((long) tmp, buff, 10);
+    tmp_buff_str << tmp;
 
     if (tmp > 1)
-      buff= strcpy(buff, " hours ")+7;
+      tmp_buff_str << " hours ";
     else
-      buff= strcpy(buff, " hour ")+6;
+      tmp_buff_str << " hour ";
   }
   if (sec >= 60.0)
   {
     tmp=(uint32_t) floor(sec/60.0);
     sec-=60.0*tmp;
-    buff=int10_to_str((long) tmp, buff, 10);
-    buff= strcpy(buff," min ")+5;
+    tmp_buff_str << tmp << " min ";
   }
   if (part_second)
-    sprintf(buff,"%.2f sec",sec);
+    tmp_buff_str.precision(2);
   else
-    sprintf(buff,"%d sec",(int) sec);
+    tmp_buff_str.precision(0);
+  tmp_buff_str << sec << " sec";
+  strcpy(buff, tmp_buff_str.str().c_str());
 }
 
 
@@ -4469,9 +4485,9 @@ static const char * construct_prompt()
 
 static void add_int_to_prompt(int toadd)
 {
-  char buffer[16];
-  int10_to_str(toadd, buffer, 10);
-  processed_prompt->append(buffer);
+  ostringstream buffer;
+  buffer << toadd;
+  processed_prompt->append(buffer.str().c_str());
 }
 
 static void init_username()

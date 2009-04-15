@@ -130,7 +130,7 @@ StorageEngine* innodb_engine_ptr= NULL;
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 /* These must be weak global variables in the dynamic plugin. */
 #ifdef __WIN__
-struct st_mysql_plugin*	builtin_innobase_plugin_ptr;
+struct drizzled_plugin_manifest*	builtin_innobase_plugin_ptr;
 #else
 int builtin_innobase_plugin;
 #endif /* __WIN__ */
@@ -220,7 +220,10 @@ class InnobaseEngine : public StorageEngine
 {
 public:
   InnobaseEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_NO_FLAGS, sizeof(trx_named_savept_t)) {}
+   : StorageEngine(name_arg, HTON_NO_FLAGS, sizeof(trx_named_savept_t))
+  {
+    addAlias("INNOBASE");
+  }
 
   virtual
   int
@@ -394,7 +397,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(void *p);
+innobase_deinit(PluginRegistry &registry);
 
 
 /*********************************************************************
@@ -1832,7 +1835,7 @@ int
 innobase_init(
 /*==========*/
 			/* out: 0 on success, error code on failure */
-	void	*p)	/* in: InnoDB StorageEngine */
+	PluginRegistry &registry)	/* in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/* Set if using current lib */
 	int		err;
@@ -1840,8 +1843,7 @@ innobase_init(
 	char		*default_path;
 	uint		format_id;
 
-	StorageEngine **engine= static_cast<StorageEngine **>(p);
-	InnobaseEngine *innobase_engine= new InnobaseEngine(string(innobase_engine_name));
+	innodb_engine_ptr= new InnobaseEngine(innobase_engine_name);
 
 #ifdef DRIZZLE_DYNAMIC_PLUGIN
 	if (!innodb_plugin_init()) {
@@ -1849,8 +1851,6 @@ innobase_init(
 		return -1;
 	}
 #endif /* DRIZZLE_DYNAMIC_PLUGIN */
-
-        innodb_engine_ptr = innobase_engine;
 
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
 
@@ -2093,7 +2093,24 @@ mem_free_and_error:
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
 
-	*engine= innobase_engine;
+	if (innodb_locks_init() ||
+		innodb_trx_init() ||
+		innodb_lock_waits_init() ||
+		i_s_cmp_init() ||
+		i_s_cmp_reset_init() ||
+		i_s_cmpmem_init() ||
+		i_s_cmpmem_reset_init())
+		goto error;
+
+	registry.add(innodb_engine_ptr);
+
+	registry.add(innodb_trx_schema_table);
+	registry.add(innodb_locks_schema_table);
+	registry.add(innodb_lock_waits_schema_table);	
+	registry.add(innodb_cmp_schema_table);
+	registry.add(innodb_cmp_reset_schema_table);
+	registry.add(innodb_cmpmem_schema_table);
+	registry.add(innodb_cmpmem_reset_schema_table);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -2107,13 +2124,14 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(void *p)
+innobase_deinit(PluginRegistry &registry)
 /*==============*/
 				/* out: TRUE if error */
 {
 	int	err= 0;
-	InnobaseEngine *innobase_engine= static_cast<InnobaseEngine *>(p);
- 	delete innobase_engine;
+	i_s_common_deinit(registry);
+	registry.remove(innodb_engine_ptr);
+ 	delete innodb_engine_ptr;
 
 	if (innodb_inited) {
 
@@ -3670,8 +3688,8 @@ build_template(
 				goto include_field;
 			}
 
-                        if (bitmap_is_set(table->read_set, sql_idx) ||
-                            bitmap_is_set(table->write_set, sql_idx)) {
+                        if (table->read_set->test(sql_idx) ||
+                            table->write_set->test(sql_idx)) {
 				/* This field is needed in the query */
 
 				goto include_field;
@@ -9513,13 +9531,10 @@ innodb_plugin_init(void)
 /*====================*/
 		/* out: TRUE if the dynamic InnoDB plugin should start */
 {
-# if !DRIZZLE_STORAGE_ENGINE_PLUGIN
-#  error "DRIZZLE_STORAGE_ENGINE_PLUGIN must be nonzero."
-# endif
 
 	/* Copy the system variables. */
 
-	struct st_mysql_plugin*		builtin;
+	struct drizzled_plugin_manifest*		builtin;
 	struct st_mysql_sys_var**	sta; /* static parameters */
 	struct st_mysql_sys_var**	dyn; /* dynamic parameters */
 
@@ -9531,16 +9546,8 @@ innodb_plugin_init(void)
 
 	builtin = builtin_innobase_plugin_ptr;
 #else
-	switch (builtin_innobase_plugin) {
-	case 0:
-		return(true);
-	case DRIZZLE_STORAGE_ENGINE_PLUGIN:
-		break;
-	default:
-		return(false);
-	}
 
-	builtin = (struct st_mysql_plugin*) &builtin_innobase_plugin;
+	builtin = (struct drizzled_plugin_manifest*) &builtin_innobase_plugin;
 #endif
 
 	for (sta = builtin->system_vars; *sta != NULL; sta++) {
@@ -9622,7 +9629,6 @@ innodb_plugin_init(void)
 
 drizzle_declare_plugin(innobase)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   innobase_engine_name,
   "1.0.1",
   "Innobase Oy",
@@ -9633,14 +9639,7 @@ drizzle_declare_plugin(innobase)
   innodb_status_variables_export,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
-},
-i_s_innodb_trx,
-i_s_innodb_locks,
-i_s_innodb_lock_waits,
-i_s_innodb_cmp,
-i_s_innodb_cmp_reset,
-i_s_innodb_cmpmem,
-i_s_innodb_cmpmem_reset
+}
 drizzle_declare_plugin_end;
 
 

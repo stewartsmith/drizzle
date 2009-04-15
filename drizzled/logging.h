@@ -22,14 +22,13 @@
 
 #include <drizzled/plugin/logging_handler.h>
 
-int logging_initializer(st_plugin_int *plugin);
-int logging_finalizer(st_plugin_int *plugin);
-
 /* there are no parameters other than the session because logging can
  * pull everything it needs out of the session.  If need to add
  * parameters, look at how errmsg.h and errmsg.cc do it. */
 
 bool logging_pre_do (Session *session);
 bool logging_post_do (Session *session);
+void add_logger(Logging_handler *handler);
+void remove_logger(Logging_handler *handler);
 
 #endif /* DRIZZLED_LOGGING_H */

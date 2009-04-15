@@ -20,5 +20,5 @@ DRIZZLE_PLUGIN_ACTIONS(pool_of_threads, [
   ]) 
   AS_IF([test x$ac_cv_libevent = xno],
       AC_MSG_ERROR([A recent libevent is required for Drizzle. Check http://www.monkey.org/~provos/libevent ]))
-  DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} ${LIBEVENT}"
+  DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} ${LTLIBEVENT}"
 ])

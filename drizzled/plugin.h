@@ -30,28 +30,6 @@ class Item;
   Plugin API. Common for all plugin types.
 */
 
-/*
-  The allowable types of plugins
-*/
-enum drizzle_plugin_type {
-  DRIZZLE_DAEMON_PLUGIN,                /* Daemon / Raw */
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,        /* Storage Engine */
-  DRIZZLE_INFORMATION_SCHEMA_PLUGIN,    /* Information Schema */
-  DRIZZLE_UDF_PLUGIN,                   /* User-Defined Function */
-  DRIZZLE_UDA_PLUGIN,                   /* User-Defined Aggregate Function */
-  DRIZZLE_AUDIT_PLUGIN,                 /* Audit */
-  DRIZZLE_LOGGER_PLUGIN,                /* Query Logging */
-  DRIZZLE_ERRMSG_PLUGIN,                /* Error Messages */
-  DRIZZLE_AUTH_PLUGIN,                  /* Authorization */
-  DRIZZLE_QCACHE_PLUGIN,                /* Query Cache */
-  DRIZZLE_SCHEDULING_PLUGIN,            /* Thread and Session Scheduling */
-  DRIZZLE_REPLICATOR_PLUGIN,            /* Database Replication */
-  DRIZZLE_PROTOCOL_PLUGIN,              /* Protocol Handlers */
-  DRIZZLE_PLUGIN_MAX=DRIZZLE_PROTOCOL_PLUGIN
-};
-
-/* The number of plugin types */
-const uint32_t DRIZZLE_MAX_PLUGIN_TYPE_NUM=DRIZZLE_PLUGIN_MAX+1;
 
 /* We use the following strings to define licenses for plugins */
 enum plugin_license_type {
@@ -70,23 +48,32 @@ const char * const PLUGIN_LICENSE_LGPL_STRING="LGPL";
 /*
   Macros for beginning and ending plugin declarations. Between
   drizzle_declare_plugin and drizzle_declare_plugin_end there should
-  be a st_mysql_plugin struct for each plugin to be declared.
+  be a drizzled_plugin_manifest struct for each plugin to be declared.
 */
 
 
 #ifndef DRIZZLE_DYNAMIC_PLUGIN
 #define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-struct st_mysql_plugin DECLS[]= {
+struct drizzled_plugin_manifest DECLS[]= {
 #else
 #define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-struct st_mysql_plugin _mysql_plugin_declarations_[]= {
+struct drizzled_plugin_manifest _mysql_plugin_declarations_[]= {
 #endif
 
 #define drizzle_declare_plugin(NAME) \
 __DRIZZLE_DECLARE_PLUGIN(NAME, \
                  builtin_ ## NAME ## _plugin)
 
-#define drizzle_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0,0}}
+#define drizzle_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0}}
+
+/*
+  the following flags are valid for plugin_init()
+*/
+#define PLUGIN_INIT_SKIP_DYNAMIC_LOADING 1
+#define PLUGIN_INIT_SKIP_PLUGIN_TABLE    2
+#define PLUGIN_INIT_SKIP_INITIALIZATION  4
+
+#define INITIAL_LEX_PLUGIN_LIST_SIZE    16
 
 /*
   declarations for SHOW STATUS support in plugins
@@ -95,7 +82,10 @@ enum enum_mysql_show_type
 {
   SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
   SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
-  SHOW_ARRAY, SHOW_FUNC, SHOW_DOUBLE, SHOW_SIZE
+  SHOW_ARRAY, SHOW_FUNC, SHOW_KEY_CACHE_LONG, SHOW_KEY_CACHE_LONGLONG,
+  SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS, SHOW_HAVE, 
+  SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH,
+  SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
 };
 
 struct st_mysql_show_var {
@@ -103,6 +93,9 @@ struct st_mysql_show_var {
   char *value;
   enum enum_mysql_show_type type;
 };
+
+typedef enum enum_mysql_show_type SHOW_TYPE;
+typedef struct st_mysql_show_var SHOW_VAR;
 
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024
@@ -364,25 +357,6 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
 #define SessionVAR(session, name) \
   (*(DRIZZLE_SYSVAR_NAME(name).resolve(session, DRIZZLE_SYSVAR_NAME(name).offset)))
 
-
-/*
-  Plugin description structure.
-*/
-
-struct st_mysql_plugin
-{
-  uint32_t type;        /* the plugin type (a DRIZZLE_XXX_PLUGIN value)   */
-  const char *name;     /* plugin name (for SHOW PLUGINS)               */
-  const char *version;  /* plugin version (for SHOW PLUGINS)            */
-  const char *author;   /* plugin author (for SHOW PLUGINS)             */
-  const char *descr;    /* general descriptive text (for SHOW PLUGINS ) */
-  int license;          /* the plugin license (PLUGIN_LICENSE_XXX)      */
-  int (*init)(void *);  /* the function to invoke when plugin is loaded */
-  int (*deinit)(void *);/* the function to invoke when plugin is unloaded */
-  struct st_mysql_show_var *status_vars;
-  struct st_mysql_sys_var **system_vars;
-  void *reserved1;   /* reserved for dependency checking             */
-};
 
 struct StorageEngine;
 

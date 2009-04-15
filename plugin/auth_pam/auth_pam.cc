@@ -107,28 +107,29 @@ public:
 };
 
 
-static int initialize(void *p)
+static Authentication *auth= NULL;
+
+static int initialize(PluginRegistry &registry)
 {
-  Authentication **auth= static_cast<Authentication **>(p);
-
-  *auth= new Auth_pam();
-
+  auth= new Auth_pam();
+  registry.add(auth);
   return 0;
 }
 
-static int finalize(void *p)
+static int finalize(PluginRegistry &registry)
 {
-  Auth_pam *auth= static_cast<Auth_pam *>(p);
 
   if (auth)
+  {
+    registry.remove(auth);
     delete auth;
+  }
 
   return 0;
 }
 
 drizzle_declare_plugin(auth_pam)
 {
-  DRIZZLE_AUTH_PLUGIN,
   "pam",
   "0.1",
   "Brian Aker",

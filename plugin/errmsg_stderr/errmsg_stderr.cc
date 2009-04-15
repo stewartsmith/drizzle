@@ -50,28 +50,28 @@ public:
   }
 };
 
-static int errmsg_stderr_plugin_init(void *p)
+static Error_message_stderr *handler= NULL;
+static int errmsg_stderr_plugin_init(PluginRegistry &registry)
 {
-  Error_message_handler **handler= static_cast<Error_message_handler **>(p);
-
-  *handler= new Error_message_stderr();
+  handler= new Error_message_stderr();
+  registry.add(handler);
 
   return 0;
 }
 
-static int errmsg_stderr_plugin_deinit(void *p)
+static int errmsg_stderr_plugin_deinit(PluginRegistry &registry)
 {
-  Error_message_stderr **handler= static_cast<Error_message_stderr **>(p);
 
   if (handler)
+  {
+    registry.add(handler);
     delete handler;
-
+  }
   return 0;
 }
 
 drizzle_declare_plugin(errmsg_stderr)
 {
-  DRIZZLE_ERRMSG_PLUGIN,
   "errmsg_stderr",
   "0.1",
   "Mark Atwood <mark@fallenpegasus.com>",

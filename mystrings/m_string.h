@@ -81,11 +81,6 @@ extern char *strrchr(const char *, char);
 extern char *strcpy(char *, const char *);
 #endif
 
-#if !defined(__cplusplus)
-#ifndef HAVE_STRPBRK
-extern char *strpbrk(const char *, const char *);
-#endif
-#endif
 extern int is_prefix(const char *, const char *);
 
 /* Conversion routines */

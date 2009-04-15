@@ -1035,8 +1035,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         statement
         opt_field_or_var_spec fields_or_vars opt_load_data_set_spec
         init_key_options key_options key_opts key_opt key_using_alg
-        parse_vcol_expr vcol_opt_attribute vcol_opt_attribute_list
-        vcol_attribute
 END_OF_INPUT
 
 %type <index_hint> index_hint_type
@@ -1110,7 +1108,6 @@ statement:
         | lock
         | optimize
         | keycache
-        | parse_vcol_expr
         | release
         | rename
         | repair
@@ -1455,10 +1452,10 @@ default_collation:
 storage_engines:
           ident_or_text
           {
-            st_plugin_int *plugin= ha_resolve_by_name(YYSession, &$1);
+            StorageEngine *engine= ha_resolve_by_name(YYSession, &$1);
 
-            if (plugin)
-              $$= static_cast<StorageEngine *>(plugin->data);
+            if (engine)
+              $$= engine;
             else
             {
               my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);
@@ -1470,9 +1467,9 @@ storage_engines:
 known_storage_engines:
           ident_or_text
           {
-            st_plugin_int *plugin;
-            if ((plugin= ha_resolve_by_name(YYSession, &$1)))
-              $$= static_cast<StorageEngine *>(plugin->data);
+            StorageEngine *engine;
+            if ((engine= ha_resolve_by_name(YYSession, &$1)))
+              $$= engine;
             else
             {
               my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);
@@ -1610,73 +1607,6 @@ field_spec:
         ;
 field_def:
           type opt_attribute {}
-        | VIRTUAL_SYM type AS '(' virtual_column_func ')' vcol_opt_attribute
-          {
-            $$=DRIZZLE_TYPE_VIRTUAL;
-            Lex->vcol_info->set_field_type((enum enum_field_types) $2);
-          }
-        ;
-
-vcol_opt_attribute:
-          /* empty */ {}
-        | vcol_opt_attribute_list {}
-        ;
-
-vcol_opt_attribute_list:
-          vcol_opt_attribute_list vcol_attribute {}
-        | vcol_attribute
-        ;
-
-vcol_attribute:
-          UNIQUE_SYM
-          {
-            LEX *lex=Lex;
-            lex->type|= UNIQUE_FLAG; 
-            lex->alter_info.flags|= ALTER_ADD_INDEX;
-          }
-        | UNIQUE_SYM KEY_SYM
-          {
-            LEX *lex=Lex;
-            lex->type|= UNIQUE_KEY_FLAG; 
-            lex->alter_info.flags|= ALTER_ADD_INDEX; 
-          }
-        | COMMENT_SYM TEXT_STRING_sys { Lex->comment= $2; }
-        | STORED_SYM
-          {
-            Lex->vcol_info->set_field_stored(true);
-          }
-        ;
-
-parse_vcol_expr:
-          PARSE_VCOL_EXPR_SYM '(' virtual_column_func ')'
-          {
-            /* 
-              "PARSE_VCOL_EXPR" can only be used by the SQL server
-              when reading a '*.frm' file.
-              Prevent the end user from invoking this command.
-            */
-            if (not Lex->parse_vcol_expr)
-            {
-              my_message(ER_SYNTAX_ERROR, ER(ER_SYNTAX_ERROR), MYF(0));
-              DRIZZLE_YYABORT;
-            }
-          }
-        ;
-
-virtual_column_func:
-          remember_name expr remember_end
-          {
-            Lex->vcol_info= new virtual_column_info();
-            if (not Lex->vcol_info)
-            {
-              my_error(ER_OUTOFMEMORY, MYF(0), sizeof(virtual_column_info));
-              DRIZZLE_YYABORT;
-            }
-            uint32_t expr_len= (uint)($3 - $1) - 1;
-            Lex->vcol_info->expr_str.str= (char* ) sql_memdup($1 + 1, expr_len);
-            Lex->vcol_info->expr_str.length= expr_len;
-            Lex->vcol_info->expr_item= $2;
-          }
         ;
 
 type:

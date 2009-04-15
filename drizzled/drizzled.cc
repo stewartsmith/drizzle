@@ -366,7 +366,7 @@ struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
 
-MY_BITMAP temp_pool;
+bitset<MAX_FIELDS> temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
 const CHARSET_INFO *table_alias_charset;
@@ -600,7 +600,6 @@ static void clean_up(bool print_message)
   free(drizzle_tmpdir);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
-  bitmap_free(&temp_pool);
 
   (void) unlink(pidfile_name);	// This may not always exist
 
@@ -1485,9 +1484,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
 
-  if (use_temp_pool && bitmap_init(&temp_pool,0,1024,1))
-    return 1;
-
   /* Reset table_alias_charset, now that lower_case_table_names is set. */
   lower_case_table_names= 1; /* This we need to look at */
   table_alias_charset= files_charset_info;
@@ -1598,23 +1594,28 @@ static int init_server_components()
   }
 
   /*
+    This is entirely for legacy. We will create a new "disk based" engine and a
+    "memory" engine which will be configurable longterm. We should be able to
+    remove partition and myisammrg.
+  */
+  const LEX_STRING myisam_engine_name= { C_STRING_WITH_LEN("MyISAM") };
+  const LEX_STRING heap_engine_name= { C_STRING_WITH_LEN("MEMORY") };
+  myisam_engine= ha_resolve_by_name(NULL, &myisam_engine_name);
+  heap_engine= ha_resolve_by_name(NULL, &heap_engine_name);
+
+  /*
     Check that the default storage engine is actually available.
   */
   if (default_storage_engine_str)
   {
     LEX_STRING name= { default_storage_engine_str,
                        strlen(default_storage_engine_str) };
-    st_plugin_int *plugin;
     StorageEngine *engine;
 
-    if ((plugin= ha_resolve_by_name(0, &name)))
+    if (!(engine= ha_resolve_by_name(0, &name)))
     {
-      engine= static_cast<StorageEngine *>(plugin->data);
-    }
-    else
-    {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
-                      default_storage_engine_str);
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
+                    default_storage_engine_str);
       unireg_abort(1);
     }
     if (!engine->is_enabled())
@@ -1622,15 +1623,15 @@ static int init_server_components()
       errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
                     default_storage_engine_str);
       unireg_abort(1);
-      //assert(global_system_variables.table_plugin);
+      //assert(global_system_variables.storage_engine);
     }
     else
     {
       /*
-        Need to unlock as global_system_variables.table_plugin
+        Need to unlock as global_system_variables.storage_engine
         was acquired during plugin_init()
       */
-      global_system_variables.table_plugin= plugin;
+      global_system_variables.storage_engine= engine;
     }
   }
 
@@ -2766,7 +2767,7 @@ static void drizzle_init_variables(void)
   lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */
   default_storage_engine_str= (char*) "innodb";
-  global_system_variables.table_plugin= NULL;
+  global_system_variables.storage_engine= NULL;
   global_system_variables.tx_isolation= ISO_REPEATABLE_READ;
   global_system_variables.select_limit= (uint64_t) HA_POS_ERROR;
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;

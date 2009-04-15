@@ -114,6 +114,7 @@
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
 #include <string>
+#include <bitset>
 
 using namespace std;
 
@@ -698,8 +699,8 @@ public:
   bool quick;				// Don't calulate possible keys
 
   uint32_t fields_bitmap_size;
-  MY_BITMAP needed_fields;    /* bitmask of fields needed by the query */
-  MY_BITMAP tmp_covered_fields;
+  bitset<MAX_FIELDS> needed_fields; /* bitmask of fields needed by the query */
+  bitset<MAX_FIELDS> tmp_covered_fields;
 
   key_map *needed_reg;        /* ptr to SQL_SELECT::needed_reg */
 
@@ -1090,12 +1091,9 @@ QUICK_SELECT_I::QUICK_SELECT_I()
 {}
 
 QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t key_nr,
-                                       bool no_alloc, MEM_ROOT *parent_alloc,
-                                       bool *create_error)
+                                       bool no_alloc, MEM_ROOT *parent_alloc)
   :free_file(0),cur_range(NULL),last_range(0),dont_free(0)
 {
-  my_bitmap_map *bitmap;
-
   in_ror_merged_scan= 0;
   sorted= 0;
   index= key_nr;
@@ -1120,14 +1118,6 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
   save_read_set= head->read_set;
   save_write_set= head->write_set;
 
-  /* Allocate a bitmap for used columns (Q: why not on MEM_ROOT?) */
-  if (!(bitmap= (my_bitmap_map*) malloc(head->s->column_bitmap_size)))
-  {
-    column_bitmap.bitmap= 0;
-    *create_error= 1;
-  }
-  else
-    bitmap_init(&column_bitmap, bitmap, head->s->fields, false);
   return;
 }
 
@@ -1169,7 +1159,6 @@ QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
     }
     delete_dynamic(&ranges); /* ranges are allocated in alloc */
     free_root(&alloc,MYF(0));
-    free((char*) column_bitmap.bitmap);
   }
   head->column_bitmaps_set(save_read_set, save_write_set);
   if (mrr_buf_desc)
@@ -1355,7 +1344,7 @@ end:
   }
   head->prepare_for_position();
   head->file= org_file;
-  bitmap_copy(&column_bitmap, head->read_set);
+  column_bitmap= *(head->read_set);
   head->column_bitmaps_set(&column_bitmap, &column_bitmap);
 
   return 0;
@@ -2096,17 +2085,11 @@ public:
 static int fill_used_fields_bitmap(PARAM *param)
 {
   Table *table= param->table;
-  my_bitmap_map *tmp;
   uint32_t pk;
-  param->tmp_covered_fields.bitmap= 0;
   param->fields_bitmap_size= table->s->column_bitmap_size;
-  if (!(tmp= (my_bitmap_map*) alloc_root(param->mem_root,
-                                  param->fields_bitmap_size)) ||
-      bitmap_init(&param->needed_fields, tmp, table->s->fields, false))
-    return 1;
 
-  bitmap_copy(&param->needed_fields, table->read_set);
-  bitmap_union(&param->needed_fields, table->write_set);
+  param->needed_fields = *(table->read_set);
+  param->needed_fields |= *(table->write_set);
 
   pk= param->table->s->primary_key;
   if (pk != MAX_KEY && param->table->file->primary_key_is_clustered())
@@ -2116,7 +2099,7 @@ static int fill_used_fields_bitmap(PARAM *param)
     KEY_PART_INFO *key_part_end= key_part +
                                  param->table->key_info[pk].key_parts;
     for (;key_part != key_part_end; ++key_part)
-      bitmap_clear_bit(&param->needed_fields, key_part->fieldnr-1);
+      param->needed_fields.reset(key_part->fieldnr-1);
   }
   return 0;
 }
@@ -2739,7 +2722,7 @@ typedef struct st_ror_scan_info
   SEL_ARG   *sel_arg;
 
   /* Fields used in the query and covered by this ROR scan. */
-  MY_BITMAP covered_fields;
+  bitset<MAX_FIELDS> covered_fields;
   uint32_t      used_fields_covered; /* # of set bits in covered_fields */
   int       key_rec_length; /* length of key record (including rowid) */
 
@@ -2790,18 +2773,15 @@ ROR_SCAN_INFO *make_ror_scan(const PARAM *param, int idx, SEL_ARG *sel_arg)
                                                 param->fields_bitmap_size)))
     return NULL;
 
-  if (bitmap_init(&ror_scan->covered_fields, bitmap_buf,
-                  param->table->s->fields, false))
-    return NULL;
-  bitmap_clear_all(&ror_scan->covered_fields);
+  ror_scan->covered_fields.reset();
 
   KEY_PART_INFO *key_part= param->table->key_info[keynr].key_part;
   KEY_PART_INFO *key_part_end= key_part +
                                param->table->key_info[keynr].key_parts;
   for (;key_part != key_part_end; ++key_part)
   {
-    if (bitmap_is_set(&param->needed_fields, key_part->fieldnr-1))
-      bitmap_set_bit(&ror_scan->covered_fields, key_part->fieldnr-1);
+    if (param->needed_fields.test(key_part->fieldnr-1))
+      ror_scan->covered_fields.set(key_part->fieldnr-1);
   }
   double rows= rows2double(param->table->quick_rows[ror_scan->keynr]);
   ror_scan->index_read_cost=
@@ -2869,7 +2849,7 @@ static int cmp_ror_scan_info_covering(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
 typedef struct
 {
   const PARAM *param;
-  MY_BITMAP covered_fields; /* union of fields covered by all scans */
+  bitset<MAX_FIELDS> covered_fields; /* union of fields covered by all scans */
   /*
     Fraction of table records that satisfies conditions of all scans.
     This is the number of full records that will be retrieved if a
@@ -2901,30 +2881,22 @@ static
 ROR_INTERSECT_INFO* ror_intersect_init(const PARAM *param)
 {
   ROR_INTERSECT_INFO *info;
-  my_bitmap_map* buf;
   if (!(info= (ROR_INTERSECT_INFO*)alloc_root(param->mem_root,
                                               sizeof(ROR_INTERSECT_INFO))))
     return NULL;
   info->param= param;
-  if (!(buf= (my_bitmap_map*) alloc_root(param->mem_root,
-                                         param->fields_bitmap_size)))
-    return NULL;
-  if (bitmap_init(&info->covered_fields, buf, param->table->s->fields,
-                  false))
-    return NULL;
   info->is_covering= false;
   info->index_scan_costs= 0.0;
   info->index_records= 0;
   info->out_rows= (double) param->table->file->stats.records;
-  bitmap_clear_all(&info->covered_fields);
+  info->covered_fields.reset();
   return info;
 }
 
 void ror_intersect_cpy(ROR_INTERSECT_INFO *dst, const ROR_INTERSECT_INFO *src)
 {
   dst->param= src->param;
-  memcpy(dst->covered_fields.bitmap, src->covered_fields.bitmap,
-         no_bytes_in_map(&src->covered_fields));
+  dst->covered_fields= src->covered_fields;
   dst->out_rows= src->out_rows;
   dst->is_covering= src->is_covering;
   dst->index_records= src->index_records;
@@ -3033,8 +3005,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
   SEL_ARG *sel_arg, *tuple_arg= NULL;
   key_part_map keypart_map= 0;
   bool cur_covered;
-  bool prev_covered= test(bitmap_is_set(&info->covered_fields,
-                                        key_part->fieldnr-1));
+  bool prev_covered= test(info->covered_fields.test(key_part->fieldnr-1));
   key_range min_range;
   key_range max_range;
   min_range.key= key_val;
@@ -3046,8 +3017,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
   for (sel_arg= scan->sel_arg; sel_arg;
        sel_arg= sel_arg->next_key_part)
   {
-    cur_covered= test(bitmap_is_set(&info->covered_fields,
-                                    key_part[sel_arg->part].fieldnr-1));
+    cur_covered= test(info->covered_fields.test(key_part[sel_arg->part].fieldnr-1));
     if (cur_covered != prev_covered)
     {
       /* create (part1val, ..., part{n-1}val) tuple. */
@@ -3159,9 +3129,9 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   {
     info->index_records += info->param->table->quick_rows[ror_scan->keynr];
     info->index_scan_costs += ror_scan->index_read_cost;
-    bitmap_union(&info->covered_fields, &ror_scan->covered_fields);
-    if (!info->is_covering && bitmap_is_subset(&info->param->needed_fields,
-                                               &info->covered_fields))
+    info->covered_fields |= ror_scan->covered_fields;
+    if (! info->is_covering &&
+        ((info->covered_fields & info->param->needed_fields) == info->param->needed_fields))
     {
       info->is_covering= true;
     }
@@ -3396,7 +3366,6 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const PARAM *param, SEL_TREE *tree,
   return(trp);
 }
 
-
 /*
   Get best covering ROR-intersection.
   SYNOPSIS
@@ -3450,15 +3419,8 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
   /*I=set of all covering indexes */
   ror_scan_mark= tree->ror_scans;
 
-  MY_BITMAP *covered_fields= &param->tmp_covered_fields;
-  if (!covered_fields->bitmap)
-    covered_fields->bitmap= (my_bitmap_map*)alloc_root(param->mem_root,
-                                               param->fields_bitmap_size);
-  if (!covered_fields->bitmap ||
-      bitmap_init(covered_fields, covered_fields->bitmap,
-                  param->table->s->fields, false))
-    return 0;
-  bitmap_clear_all(covered_fields);
+  bitset<MAX_FIELDS> *covered_fields= &param->tmp_covered_fields;
+  covered_fields->reset();
 
   double total_cost= 0.0f;
   ha_rows records=0;
@@ -3477,11 +3439,11 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
     */
     for (ROR_SCAN_INFO **scan= ror_scan_mark; scan != ror_scans_end; ++scan)
     {
-      bitmap_subtract(&(*scan)->covered_fields, covered_fields);
-      (*scan)->used_fields_covered=
-        bitmap_bits_set(&(*scan)->covered_fields);
-      (*scan)->first_uncovered_field=
-        bitmap_get_first(&(*scan)->covered_fields);
+      /* subtract a bitset */
+      (*scan)->covered_fields &= covered_fields->flip();
+      covered_fields->flip();
+      (*scan)->used_fields_covered= (*scan)->covered_fields.count();
+      (*scan)->first_uncovered_field= getFirstBitPos((*scan)->covered_fields);
     }
 
     my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark, sizeof(ROR_SCAN_INFO*),
@@ -3497,8 +3459,14 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
     if (total_cost > read_time)
       return NULL;
     /* F=F-covered by first(I) */
-    bitmap_union(covered_fields, &(*ror_scan_mark)->covered_fields);
-    all_covered= bitmap_is_subset(&param->needed_fields, covered_fields);
+    *covered_fields|= (*ror_scan_mark)->covered_fields;
+    /*
+     * Check whether the param->needed_fields bitset is a subset of
+     * the covered_fields bitset. If the param->needed_fields bitset
+     * is a subset of covered_fields, then set all_covered to 
+     * true; otherwise, set it to false.
+     */
+    all_covered= ((*covered_fields & param->needed_fields) == param->needed_fields);
   } while ((++ror_scan_mark < ror_scans_end) && !all_covered);
 
   if (!all_covered || (ror_scan_mark - tree->ror_scans) == 1)
@@ -6482,7 +6450,7 @@ get_quick_select(PARAM *param,uint32_t idx,SEL_ARG *key_tree, uint32_t mrr_flags
 
   quick=new QUICK_RANGE_SELECT(param->session, param->table,
                                param->real_keynr[idx],
-                               test(parent_alloc), NULL, &create_err);
+                               test(parent_alloc), NULL);
 
   if (quick)
   {
@@ -6671,12 +6639,12 @@ static bool null_part_in_key(KEY_PART *key_part, const unsigned char *key, uint3
 }
 
 
-bool QUICK_SELECT_I::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_SELECT_I::is_keys_used(const bitset<MAX_FIELDS> *fields)
 {
   return is_key_used(head, index, fields);
 }
 
-bool QUICK_INDEX_MERGE_SELECT::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_INDEX_MERGE_SELECT::is_keys_used(const bitset<MAX_FIELDS> *fields)
 {
   QUICK_RANGE_SELECT *quick;
   List_iterator_fast<QUICK_RANGE_SELECT> it(quick_selects);
@@ -6688,7 +6656,7 @@ bool QUICK_INDEX_MERGE_SELECT::is_keys_used(const MY_BITMAP *fields)
   return 0;
 }
 
-bool QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_ROR_INTERSECT_SELECT::is_keys_used(const bitset<MAX_FIELDS> *fields)
 {
   QUICK_RANGE_SELECT *quick;
   List_iterator_fast<QUICK_RANGE_SELECT> it(quick_selects);
@@ -6700,7 +6668,7 @@ bool QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MY_BITMAP *fields)
   return 0;
 }
 
-bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_ROR_UNION_SELECT::is_keys_used(const bitset<MAX_FIELDS> *fields)
 {
   QUICK_SELECT_I *quick;
   List_iterator_fast<QUICK_SELECT_I> it(quick_selects);
@@ -6746,7 +6714,7 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
 
   old_root= session->mem_root;
   /* The following call may change session->mem_root */
-  quick= new QUICK_RANGE_SELECT(session, table, ref->key, 0, 0, &create_err);
+  quick= new QUICK_RANGE_SELECT(session, table, ref->key, 0, 0);
   /* save mem_root set by QUICK_RANGE_SELECT constructor */
   alloc= session->mem_root;
   /*
@@ -8101,7 +8069,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
           If the field is used in the current query ensure that it's
           part of 'cur_index'
         */
-        if (bitmap_is_set(table->read_set, cur_field->field_index) &&
+        if (table->read_set->test(cur_field->field_index) &&
             !cur_field->part_of_key_not_clustered.is_set(cur_index))
           goto next_index;                  // Field was not part of key
       }
@@ -8273,7 +8241,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
                 (min_max_arg_part && (min_max_arg_part < last_part));
       for (; cur_part != last_part; cur_part++)
       {
-        if (bitmap_is_set(table->read_set, cur_part->field->field_index))
+        if (table->read_set->test(cur_part->field->field_index))
           goto next_index;
       }
     }

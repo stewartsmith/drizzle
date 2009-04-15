@@ -1,4 +1,0 @@
-DRIZZLE_STORAGE_ENGINE(protobuf_replicator,  protobuf_replicator,
-                      [Replication Engine], [Replication Engine for Drizzle])
-DRIZZLE_PLUGIN_STATIC(protobuf_replicator,   [libprotobuf_replicator.la])
-DRIZZLE_PLUGIN_MANDATORY(protobuf_replicator)  dnl Default

@@ -1751,6 +1751,7 @@ sub setup_vardir() {
     unlink($name);
   }
   system("chmod -R ugo+r $opt_vardir");
+  system("chmod -R ugo+r $opt_vardir/std_data_ln/*");
 }
 
 

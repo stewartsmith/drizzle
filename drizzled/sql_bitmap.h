@@ -29,7 +29,10 @@
 /// TODO: OMG FIX THIS
 
 #include <mysys/my_bitmap.h>
+#include <drizzled/definitions.h>
 #include <drizzled/util/test.h>
+
+#include <bitset>
 
 template <uint32_t default_width> class Bitmap
 {
@@ -214,5 +217,31 @@ typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
 /* useful constants */#
 extern const key_map key_map_empty;
 extern key_map key_map_full;          /* Should be threaded as const */
+
+/*
+ * Finds the first bit that is not set and sets
+ * it.
+ *
+ * @param the bitmap to work with
+ */
+uint32_t setNextBit(std::bitset<MAX_FIELDS> &bitmap);
+
+/*
+ * Returns the position of the first bit in the
+ * given bitmap which is not set. If every bit is set
+ * in the bitmap, return MY_BIT_NONE.
+ *
+ * @param the bitmap to work with
+ */
+uint32_t getFirstBitPos(const std::bitset<MAX_FIELDS> &bitmap);
+
+/*
+ * Returns true if there is any overlapping bits between
+ * the 2 given bitmaps.
+ *
+ * @param the first bitmap to work with
+ * @param the second bitmap to work with
+ */
+bool isBitmapOverlapping(const std::bitset<MAX_FIELDS> *map1, const std::bitset<MAX_FIELDS> *map2);
 
 #endif /* _SQL_BITMAP_H_ */

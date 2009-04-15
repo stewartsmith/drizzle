@@ -1,0 +1,7 @@
+package drizzled.message;
+option optimize_for = SPEED;
+
+message Schema {
+  required string name = 1;
+  optional string collation = 2;
+}

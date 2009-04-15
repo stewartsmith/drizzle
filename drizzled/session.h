@@ -185,7 +185,7 @@ struct system_variables
 
   bool old_alter_table;
 
-  st_plugin_int *table_plugin;
+  StorageEngine *storage_engine;
 
   /* Only charset part of these variables is sensible */
   const CHARSET_INFO  *character_set_filesystem;
@@ -499,7 +499,6 @@ public:
     first byte of the packet in executeStatement()
   */
   enum enum_server_command command;
-  uint32_t     server_id;
   uint32_t     file_id;			// for LOAD DATA INFILE
   /* remote (peer) port */
   uint16_t peer_port;
@@ -524,7 +523,36 @@ public:
   /* Place to store various things */
   void *session_marker;
 
-  void set_server_id(uint32_t sid) { server_id = sid; }
+  /** Returns the current query ID */
+  inline query_id_t getQueryId()  const
+  {
+    return query_id;
+  }
+
+  /** Returns the current query text */
+  inline const char *getQueryString()  const
+  {
+    return query;
+  }
+
+  /** Returns the length of the current query text */
+  inline size_t getQueryLength() const
+  {
+    return strlen(query);
+  }
+
+  /** Accessor method returning the server's ID. */
+  inline uint32_t getServerId()  const
+  {
+    /* We return the global server ID. */
+    return server_id;
+  }
+
+  /** Returns the current transaction ID for the session's current statement */
+  inline my_xid getTransactionId()
+  {
+    return transaction.xid_state.xid.quick_get_my_xid();
+  }
 
 public:
 
@@ -940,7 +968,13 @@ public:
     start_utime= utime_after_lock= my_micro_time();
   }
   void set_time_after_lock()  { utime_after_lock= my_micro_time(); }
-  uint64_t current_utime()  { return my_micro_time(); }
+  /**
+   * Returns the current micro-timestamp
+   */
+  inline uint64_t getCurrentTimestamp()  
+  { 
+    return my_micro_time(); 
+  }
   inline uint64_t found_rows(void)
   {
     return limit_found_rows;

@@ -1807,26 +1807,27 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *create_info,
   return COMPATIBLE_DATA_YES;
 }
 
-int myisam_deinit(void *p)
-{
+static MyisamEngine *engine= NULL;
 
-  MyisamEngine *engine= static_cast<MyisamEngine *>(p);
+static int myisam_init(PluginRegistry &registry)
+{
+  engine= new MyisamEngine(engine_name);
+  registry.add(engine);
+
+  pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
+
+  return 0;
+}
+
+int myisam_deinit(PluginRegistry &registry)
+{
+  registry.remove(engine);
   delete engine;
 
   pthread_mutex_destroy(&THR_LOCK_myisam);
 
   return mi_panic(HA_PANIC_CLOSE);
 }
-
-static int myisam_init(void *p)
-{
-  StorageEngine **engine= static_cast<StorageEngine **>(p);
-  
-  *engine= new MyisamEngine(engine_name);
-
-  return 0;
-}
-
 
 
 /****************************************************************************
@@ -1924,7 +1925,6 @@ static struct st_mysql_sys_var* system_variables[]= {
 
 drizzle_declare_plugin(myisam)
 {
-  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MyISAM",
   "1.0",
   "MySQL AB",

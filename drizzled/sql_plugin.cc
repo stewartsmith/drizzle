@@ -24,7 +24,7 @@
 #include <drizzled/protocol.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
-#include <drizzled/replicator.h>
+#include <drizzled/transaction_services.h>
 #include <drizzled/show.h>
 #include <drizzled/handler.h>
 #include <drizzled/set_var.h>
@@ -44,77 +44,11 @@
 
 using namespace std;
 
-extern struct st_mysql_plugin *mysqld_builtins[];
+extern struct drizzled_plugin_manifest *mysqld_builtins[];
 
 char *opt_plugin_load= NULL;
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
-/*
-  When you ad a new plugin type, add both a string and make sure that the
-  init and deinit array are correctly updated.
-*/
-const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
-{
-  { C_STRING_WITH_LEN("DAEMON") },
-  { C_STRING_WITH_LEN("STORAGE ENGINE") },
-  { C_STRING_WITH_LEN("INFORMATION SCHEMA") },
-  { C_STRING_WITH_LEN("UDF") },
-  { C_STRING_WITH_LEN("UDA") },
-  { C_STRING_WITH_LEN("AUDIT") },
-  { C_STRING_WITH_LEN("LOGGER") },
-  { C_STRING_WITH_LEN("ERRMSG") },
-  { C_STRING_WITH_LEN("AUTH") },
-  { C_STRING_WITH_LEN("QCACHE") },
-  { C_STRING_WITH_LEN("SCHEDULING") },
-  { C_STRING_WITH_LEN("REPLICATOR") },
-  { C_STRING_WITH_LEN("PROTOCOL") }
-};
-
-extern int initialize_schema_table(st_plugin_int *plugin);
-extern int finalize_schema_table(st_plugin_int *plugin);
-
-extern int initialize_udf(st_plugin_int *plugin);
-extern int finalize_udf(st_plugin_int *plugin);
-
-/*
-  The number of elements in both plugin_type_initialize and
-  plugin_type_deinitialize should equal to the number of plugins
-  defined.
-*/
-plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
-{
-  0,  /* Daemon */
-  storage_engine_initializer,  /* Storage Engine */
-  initialize_schema_table,  /* Information Schema */
-  initialize_udf,  /* UDF */
-  0,  /* UDA */
-  0,  /* Audit */
-  logging_initializer,  /* Logger */
-  errmsg_initializer,  /* Error Messages */
-  authentication_initializer,  /* Auth */
-  qcache_initializer,
-  scheduling_initializer,
-  replicator_initializer,
-  protocol_initializer
-};
-
-plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
-{
-  0,  /* Daemon */
-  storage_engine_finalizer,  /* Storage Engine */
-  finalize_schema_table,  /* Information Schema */
-  finalize_udf,  /* UDF */
-  0,  /* UDA */
-  0,  /* Audit */
-  logging_finalizer,  /* Logger */
-  errmsg_finalizer,  /* Logger */
-  authentication_finalizer,  /* Auth */
-  qcache_finalizer,
-  scheduling_finalizer,
-  replicator_finalizer,
-  protocol_finalizer
-};
-
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
 
 /* Note that 'int version' must be the first field of every plugin
@@ -216,7 +150,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
 static int test_plugin_options(MEM_ROOT *, struct st_plugin_int *,
                                int *, char **);
-static bool register_builtin(struct st_mysql_plugin *, struct st_plugin_int *,
+static bool register_builtin(struct st_plugin_int *,
                              struct st_plugin_int **);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
@@ -398,7 +332,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
     return(0);
   }
 
-  plugin_dl.plugins= (struct st_mysql_plugin *)sym;
+  plugin_dl.plugins= (struct drizzled_plugin_manifest *)sym;
 
   /* Duplicate and convert dll name */
   plugin_dl.dl.length= dl->length * files_charset_info->mbmaxlen + 1;
@@ -454,17 +388,6 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 
 
-st_plugin_int *plugin_lock_by_name(const LEX_STRING *name, int type)
-{
-  Plugin_registry registry= Plugin_registry::get_plugin_registry();
-
-  if (! initialized)
-    return(0);
-
-  return registry.find(name, type);
-}
-
-
 static st_plugin_int *plugin_insert_or_reuse(struct st_plugin_int *plugin)
 {
   struct st_plugin_int *tmp;
@@ -486,14 +409,14 @@ static bool plugin_add(MEM_ROOT *tmp_root,
                        const LEX_STRING *name, const LEX_STRING *dl,
                        int *argc, char **argv, int report)
 {
-  Plugin_registry registry= Plugin_registry::get_plugin_registry();
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
   struct st_plugin_int tmp;
-  struct st_mysql_plugin *plugin;
+  struct drizzled_plugin_manifest *plugin;
   if (! initialized)
     return(0);
 
-  if (registry.find(name, DRIZZLE_ANY_PLUGIN))
+  if (registry.find(name))
   {
     if (report & REPORT_TO_USER)
       my_error(ER_UDF_EXISTS, MYF(0), name->str);
@@ -509,8 +432,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   for (plugin= tmp.plugin_dl->plugins; plugin->name; plugin++)
   {
     uint32_t name_len= strlen(plugin->name);
-    if (plugin->type < DRIZZLE_MAX_PLUGIN_TYPE_NUM &&
-        ! my_strnncoll(system_charset_info,
+    if (! my_strnncoll(system_charset_info,
                        (const unsigned char *)name->str, name->length,
                        (const unsigned char *)plugin->name,
                        name_len))
@@ -525,7 +447,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       {
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
-          registry.add(plugin, tmp_plugin_ptr);
+          registry.add(tmp_plugin_ptr);
           init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
           return(false);
         }
@@ -549,6 +471,7 @@ err:
 
 static void plugin_del(struct st_plugin_int *plugin)
 {
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
   if (plugin->isInited)
   {
     if (plugin->plugin->status_vars)
@@ -556,16 +479,8 @@ static void plugin_del(struct st_plugin_int *plugin)
       remove_status_vars(plugin->plugin->status_vars);
     }
 
-    if (plugin_type_deinitialize[plugin->plugin->type])
-    {
-      if ((*plugin_type_deinitialize[plugin->plugin->type])(plugin))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' of type %s failed deinitialization"),
-                      plugin->name.str, plugin_type_names[plugin->plugin->type].str);
-      }
-    }
-    else if (plugin->plugin->deinit)
-      plugin->plugin->deinit(plugin);
+    if (plugin->plugin->deinit)
+      plugin->plugin->deinit(registry);
   }
 
   /* Free allocated strings before deleting the plugin. */
@@ -598,21 +513,14 @@ static bool plugin_initialize(struct st_plugin_int *plugin)
 {
   assert(plugin->isInited == false);
 
-  if (plugin_type_initialize[plugin->plugin->type])
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
+  if (plugin->plugin->init)
   {
-    if ((*plugin_type_initialize[plugin->plugin->type])(plugin))
+    if (plugin->plugin->init(registry))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' registration as a %s failed."),
-                      plugin->name.str, plugin_type_names[plugin->plugin->type].str);
-      goto err;
-    }
-  }
-  else if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(plugin))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' init function returned error."),
-                      plugin->name.str);
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error."),
+                    plugin->name.str);
       goto err;
     }
   }
@@ -666,8 +574,8 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 int plugin_init(int *argc, char **argv, int flags)
 {
   uint32_t idx;
-  struct st_mysql_plugin **builtins;
-  struct st_mysql_plugin *plugin;
+  struct drizzled_plugin_manifest **builtins;
+  struct drizzled_plugin_manifest *plugin;
   struct st_plugin_int tmp, *plugin_ptr;
   MEM_ROOT tmp_root;
 
@@ -706,26 +614,15 @@ int plugin_init(int *argc, char **argv, int flags)
       if (test_plugin_options(&tmp_root, &tmp, argc, argv))
         continue;
 
-      if (register_builtin(plugin, &tmp, &plugin_ptr))
+      if (register_builtin(&tmp, &plugin_ptr))
         goto err_unlock;
 
       if (plugin_initialize(plugin_ptr))
         goto err_unlock;
 
-      /*
-        initialize the global default storage engine so that it may
-        not be null in any child thread.
-      */
-      if (my_strcasecmp(&my_charset_utf8_general_ci, plugin->name, "MyISAM") == 0)
-      {
-        assert(!global_system_variables.table_plugin);
-        global_system_variables.table_plugin= plugin_ptr;
-      }
     }
   }
 
-  /* should now be set to MyISAM storage engine */
-  assert(global_system_variables.table_plugin);
 
   /* Register all dynamic plugins */
   if (!(flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
@@ -763,12 +660,11 @@ err:
 }
 
 
-static bool register_builtin(struct st_mysql_plugin *plugin,
-                             struct st_plugin_int *tmp,
+static bool register_builtin(struct st_plugin_int *tmp,
                              struct st_plugin_int **ptr)
 {
 
-  Plugin_registry registry= Plugin_registry::get_plugin_registry();
+  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
   tmp->isInited= false;
   tmp->plugin_dl= 0;
@@ -781,7 +677,7 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
         (struct st_plugin_int *) memdup_root(&plugin_mem_root, (unsigned char*)tmp,
                                              sizeof(struct st_plugin_int));
 
-  registry.add(plugin, *ptr);
+  registry.add(*ptr);
 
   return(0);
 }
@@ -796,7 +692,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
   char buffer[FN_REFLEN];
   LEX_STRING name= {buffer, 0}, dl= {NULL, 0}, *str= &name;
   struct st_plugin_dl *plugin_dl;
-  struct st_mysql_plugin *plugin;
+  struct drizzled_plugin_manifest *plugin;
   char *p= buffer;
   while (list)
   {
@@ -907,54 +803,6 @@ void plugin_shutdown(void)
 
   global_variables_dynamic_size= 0;
 }
-
-/**
- *
- * all: List all plugins
- */
-bool plugin_foreach(Session *session, plugin_foreach_func *func, int type, void *arg, bool all)
-{
-  uint32_t idx;
-  struct st_plugin_int *plugin;
-  vector<st_plugin_int *> plugins;
-
-  if (!initialized)
-    return(false);
-
-  if (type == DRIZZLE_ANY_PLUGIN)
-  {
-    plugins.reserve(plugin_array.elements);
-    for (idx= 0; idx < plugin_array.elements; idx++)
-    {
-      plugin= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
-      if (all)
-        plugins.push_back(plugin);
-      else if (plugin->isInited)
-        plugins.push_back(plugin);
-    }
-  }
-  else
-  {
-    Plugin_registry registry= Plugin_registry::get_plugin_registry();
-    registry.get_list(type, plugins, all);
-  }
-
-  vector<st_plugin_int *>::iterator plugin_iter;
-  for (plugin_iter= plugins.begin();
-       plugin_iter != plugins.end();
-       plugin_iter++)
-  {
-    plugin= *plugin_iter;
-    /* It will stop iterating on first engine error when "func" returns true */
-    if (plugin && func(session, plugin, arg))
-        goto err;
-  }
-
-  return false;
-err:
-  return true;
-}
-
 
 /****************************************************************************
   Internal type declarations for variables support
@@ -1569,18 +1417,18 @@ static unsigned long *mysql_sys_var_ptr_enum(Session* a_session, int offset)
 
 void plugin_sessionvar_init(Session *session)
 {
-  session->variables.table_plugin= NULL;
+  session->variables.storage_engine= NULL;
   cleanup_variables(session, &session->variables);
 
   session->variables= global_system_variables;
-  session->variables.table_plugin= NULL;
+  session->variables.storage_engine= NULL;
 
   /* we are going to allocate these lazily */
   session->variables.dynamic_variables_version= 0;
   session->variables.dynamic_variables_size= 0;
   session->variables.dynamic_variables_ptr= 0;
 
-  session->variables.table_plugin= global_system_variables.table_plugin;
+  session->variables.storage_engine= global_system_variables.storage_engine;
 }
 
 
@@ -1589,7 +1437,7 @@ void plugin_sessionvar_init(Session *session)
 */
 static void unlock_variables(Session *, struct system_variables *vars)
 {
-  vars->table_plugin= NULL;
+  vars->storage_engine= NULL;
 }
 
 
@@ -1629,7 +1477,7 @@ static void cleanup_variables(Session *session, struct system_variables *vars)
   }
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
 
-  assert(vars->table_plugin == NULL);
+  assert(vars->storage_engine == NULL);
 
   free(vars->dynamic_variables_ptr);
   vars->dynamic_variables_ptr= NULL;

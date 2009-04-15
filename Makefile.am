@@ -27,7 +27,7 @@ SUBDIRS = ${po} . \
 	  mysys \
 	  extra \
 	  client \
-	  drizzled/serialize \
+	  drizzled/message \
 	  storage \
 	  plugin \
 	  drizzled \

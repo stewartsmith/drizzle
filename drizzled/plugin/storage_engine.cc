@@ -25,23 +25,27 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <map>
+#include <drizzled/registry.h>
+#include <drizzled/unireg.h>
+#include <drizzled/data_home.h>
+#include <drizzled/plugin_registry.h>
 #include <string>
 
 #include CSTDINT_H
 
 using namespace std;
 
-map<string, StorageEngine *> all_engines;
+drizzled::Registry<StorageEngine *> all_engines;
 
-st_plugin_int *engine2plugin[MAX_HA];
-
-static const LEX_STRING sys_table_aliases[]=
+void add_storage_engine(StorageEngine *engine)
 {
-  { C_STRING_WITH_LEN("INNOBASE") },  { C_STRING_WITH_LEN("INNODB") },
-  { C_STRING_WITH_LEN("HEAP") },      { C_STRING_WITH_LEN("MEMORY") },
-  {NULL, 0}
-};
+  all_engines.add(engine);
+}
+
+void remove_storage_engine(StorageEngine *engine)
+{
+  all_engines.remove(engine);
+}
 
 StorageEngine::StorageEngine(const std::string name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg,
@@ -75,13 +79,6 @@ int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
   return HA_ERR_NO_SUCH_TABLE;
 }
 
-static st_plugin_int *ha_default_plugin(Session *session)
-{
-  if (session->variables.table_plugin)
-    return session->variables.table_plugin;
-  return global_system_variables.table_plugin;
-}
-
 
 /**
   Return the default storage engine StorageEngine for thread
@@ -94,11 +91,9 @@ static st_plugin_int *ha_default_plugin(Session *session)
 */
 StorageEngine *ha_default_storage_engine(Session *session)
 {
-  st_plugin_int *plugin= ha_default_plugin(session);
-  assert(plugin);
-  StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
-  assert(engine);
-  return engine;
+  if (session->variables.storage_engine)
+    return session->variables.storage_engine;
+  return global_system_variables.storage_engine;
 }
 
 
@@ -111,52 +106,21 @@ StorageEngine *ha_default_storage_engine(Session *session)
   @return
     pointer to storage engine plugin handle
 */
-st_plugin_int *ha_resolve_by_name(Session *session, const LEX_STRING *name)
+StorageEngine *ha_resolve_by_name(Session *session, const LEX_STRING *name)
 {
-  const LEX_STRING *table_alias;
-  st_plugin_int *plugin;
 
-redo:
-  /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
-  if (session && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
-                           (const unsigned char *)name->str, name->length,
-                           (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
-    return ha_default_plugin(session);
+  string find_str(name->str, name->length);
+  transform(find_str.begin(), find_str.end(),
+            find_str.begin(), ::tolower);
+  string default_str("default");
+  if (find_str == default_str)
+    return ha_default_storage_engine(session);
+    
 
-  if ((plugin= plugin_lock_by_name(name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
-  {
-    StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
-    if (engine->is_user_selectable())
-      return plugin;
-  }
+  StorageEngine *engine= all_engines.find(find_str);
 
-  /*
-    We check for the historical aliases.
-  */
-  for (table_alias= sys_table_aliases; table_alias->str; table_alias+= 2)
-  {
-    if (!my_strnncoll(&my_charset_utf8_general_ci,
-                      (const unsigned char *)name->str, name->length,
-                      (const unsigned char *)table_alias->str,
-                      table_alias->length))
-    {
-      name= table_alias + 1;
-      goto redo;
-    }
-  }
-
-  return NULL;
-}
-
-
-st_plugin_int *ha_lock_engine(Session *, StorageEngine *engine)
-{
-  if (engine)
-  {
-    st_plugin_int *plugin= engine2plugin[engine->slot];
-
-    return plugin;
-  }
+  if (engine && engine->is_user_selectable())
+    return engine;
 
   return NULL;
 }
@@ -181,56 +145,543 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
   return(get_new_handler(share, alloc, ha_default_storage_engine(current_session)));
 }
 
-
-int storage_engine_finalizer(st_plugin_int *plugin)
+class StorageEngineCloseConnection
+  : public unary_function<StorageEngine *, void>
 {
-  StorageEngine *engine= static_cast<StorageEngine *>(plugin->data);
+  Session *session;
+public:
+  StorageEngineCloseConnection(Session *session_arg) : session(session_arg) {}
+  /*
+    there's no need to rollback here as all transactions must
+    be rolled back already
+  */
+  inline result_type operator() (argument_type engine)
+  {
+    if (engine->is_enabled() && 
+      session_get_ha_data(session, engine))
+    engine->close_connection(session);
+  }
+};
 
-  all_engines.erase(engine->getName());
+/**
+  @note
+    don't bother to rollback here, it's done already
+*/
+void ha_close_connection(Session* session)
+{
+  for_each(all_engines.begin(), all_engines.end(),
+           StorageEngineCloseConnection(session));
+}
 
-  if (engine && plugin->plugin->deinit)
-    (void)plugin->plugin->deinit(engine);
+void ha_drop_database(char* path)
+{
+  for_each(all_engines.begin(), all_engines.end(),
+           bind2nd(mem_fun(&StorageEngine::drop_database),path));
+}
 
-  return(0);
+int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
+{
+  vector<int> results;
+  
+  if (commit)
+    transform(all_engines.begin(), all_engines.end(), results.begin(),
+              bind2nd(mem_fun(&StorageEngine::commit_by_xid),xid));
+  else
+    transform(all_engines.begin(), all_engines.end(), results.begin(),
+              bind2nd(mem_fun(&StorageEngine::rollback_by_xid),xid));
+
+  if (find_if(results.begin(), results.end(), bind2nd(equal_to<int>(),0))
+         == results.end())
+    return 1;
+  return 0;
 }
 
 
-int storage_engine_initializer(st_plugin_int *plugin)
+/**
+  @details
+  This function should be called when MySQL sends rows of a SELECT result set
+  or the EOF mark to the client. It releases a possible adaptive hash index
+  S-latch held by session in InnoDB and also releases a possible InnoDB query
+  FIFO ticket to enter InnoDB. To save CPU time, InnoDB allows a session to
+  keep them over several calls of the InnoDB handler interface when a join
+  is executed. But when we let the control to pass to the client they have
+  to be released because if the application program uses mysql_use_result(),
+  it may deadlock on the S-latch if the application on another connection
+  performs another SQL query. In MySQL-4.1 this is even more important because
+  there a connection can have several SELECT queries open at the same time.
+
+  @param session           the thread handle of the current connection
+
+  @return
+    always 0
+*/
+int ha_release_temporary_latches(Session *session)
 {
-  StorageEngine *engine;
+  for_each(all_engines.begin(), all_engines.end(),
+           bind2nd(mem_fun(&StorageEngine::release_temporary_latches),session));
+  return 0;
+}
 
 
-  if (plugin->plugin->init)
+bool ha_flush_logs(StorageEngine *engine)
+{
+  if (engine == NULL)
   {
-    if (plugin->plugin->init(&engine))
+    if (find_if(all_engines.begin(), all_engines.end(),
+            mem_fun(&StorageEngine::flush_logs))
+          != all_engines.begin())
+      return true;
+  }
+  else
+  {
+    if ((!engine->is_enabled()) ||
+        (engine->flush_logs()))
+      return true;
+  }
+  return false;
+}
+
+/**
+  recover() step of xa.
+
+  @note
+    there are three modes of operation:
+    - automatic recover after a crash
+    in this case commit_list != 0, tc_heuristic_recover==0
+    all xids from commit_list are committed, others are rolled back
+    - manual (heuristic) recover
+    in this case commit_list==0, tc_heuristic_recover != 0
+    DBA has explicitly specified that all prepared transactions should
+    be committed (or rolled back).
+    - no recovery (MySQL did not detect a crash)
+    in this case commit_list==0, tc_heuristic_recover == 0
+    there should be no prepared transactions in this case.
+*/
+class XARecover : unary_function<StorageEngine *, void>
+{
+  int trans_len, found_foreign_xids, found_my_xids;
+  bool result;
+  XID *trans_list;
+  HASH *commit_list;
+  bool dry_run;
+public:
+  XARecover(XID *trans_list_arg, int trans_len_arg,
+            HASH *commit_list_arg, bool dry_run_arg) 
+    : trans_len(trans_len_arg), found_foreign_xids(0), found_my_xids(0),
+      trans_list(trans_list_arg), commit_list(commit_list_arg),
+      dry_run(dry_run_arg)
+  {}
+  
+  int getForeignXIDs()
+  {
+    return found_foreign_xids; 
+  }
+
+  int getMyXIDs()
+  {
+    return found_my_xids; 
+  }
+
+  result_type operator() (argument_type engine)
+  {
+  
+    int got;
+  
+    if (engine->is_enabled())
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error."),
-                    plugin->name.str);
-      return 1;
+      while ((got= engine->recover(trans_list, trans_len)) > 0 )
+      {
+        errmsg_printf(ERRMSG_LVL_INFO,
+                      _("Found %d prepared transaction(s) in %s"),
+                      got, engine->getName().c_str());
+        for (int i=0; i < got; i ++)
+        {
+          my_xid x=trans_list[i].get_my_xid();
+          if (!x) // not "mine" - that is generated by external TM
+          {
+            xid_cache_insert(trans_list+i, XA_PREPARED);
+            found_foreign_xids++;
+            continue;
+          }
+          if (dry_run)
+          {
+            found_my_xids++;
+            continue;
+          }
+          // recovery mode
+          if (commit_list ?
+              hash_search(commit_list, (unsigned char *)&x, sizeof(x)) != 0 :
+              tc_heuristic_recover == TC_HEURISTIC_RECOVER_COMMIT)
+          {
+            engine->commit_by_xid(trans_list+i);
+          }
+          else
+          {
+            engine->rollback_by_xid(trans_list+i);
+          }
+        }
+        if (got < trans_len)
+          break;
+      }
     }
   }
 
-  if (engine->is_enabled())
-    engine2plugin[engine->slot]= plugin;
+};
+
+int ha_recover(HASH *commit_list)
+{
+  XID *trans_list= NULL;
+  int trans_len= 0;
+
+  bool dry_run= (commit_list==0 && tc_heuristic_recover==0);
+
+  /* commit_list and tc_heuristic_recover cannot be set both */
+  assert(commit_list==0 || tc_heuristic_recover==0);
+
+  /* if either is set, total_ha_2pc must be set too */
+  if (total_ha_2pc <= 1)
+    return 0;
+
+
+#ifndef WILL_BE_DELETED_LATER
 
   /*
-    This is entirely for legacy. We will create a new "disk based" engine and a
-    "memory" engine which will be configurable longterm. We should be able to
-    remove partition and myisammrg.
+    for now, only InnoDB supports 2pc. It means we can always safely
+    rollback all pending transactions, without risking inconsistent data
   */
-  if (strcmp(plugin->plugin->name, "MEMORY") == 0)
-    heap_engine= engine;
 
-  if (strcmp(plugin->plugin->name, "MyISAM") == 0)
-    myisam_engine= engine;
+  assert(total_ha_2pc == 2); // only InnoDB and binlog
+  tc_heuristic_recover= TC_HEURISTIC_RECOVER_ROLLBACK; // forcing ROLLBACK
+  dry_run=false;
+#endif
+  for (trans_len= MAX_XID_LIST_SIZE ;
+       trans_list==0 && trans_len > MIN_XID_LIST_SIZE; trans_len/=2)
+  {
+    trans_list=(XID *)malloc(trans_len*sizeof(XID));
+  }
+  if (!trans_list)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), trans_len*sizeof(XID));
+    return(1);
+  }
 
-  plugin->data= engine;
-  plugin->isInited= true;
-  all_engines[engine->getName()]= engine;
+  if (commit_list)
+    errmsg_printf(ERRMSG_LVL_INFO, _("Starting crash recovery..."));
 
+
+  XARecover recover_func(trans_list, trans_len, commit_list, dry_run);
+  for_each(all_engines.begin(), all_engines.end(), recover_func);
+  free(trans_list);
+ 
+  if (recover_func.getForeignXIDs())
+    errmsg_printf(ERRMSG_LVL_WARN,
+                  _("Found %d prepared XA transactions"),
+                  recover_func.getForeignXIDs());
+  if (dry_run && recover_func.getMyXIDs())
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Found %d prepared transactions! It means that drizzled "
+                    "was not shut down properly last time and critical "
+                    "recovery information (last binlog or %s file) was "
+                    "manually deleted after a crash. You have to start "
+                    "drizzled with the --tc-heuristic-recover switch to "
+                    "commit or rollback pending transactions."),
+                    recover_func.getMyXIDs(), opt_tc_log_file);
+    return(1);
+  }
+  if (commit_list)
+    errmsg_printf(ERRMSG_LVL_INFO, _("Crash recovery finished."));
+  return(0);
+}
+
+int ha_start_consistent_snapshot(Session *session)
+{
+  for_each(all_engines.begin(), all_engines.end(),
+           bind2nd(mem_fun(&StorageEngine::start_consistent_snapshot),session));
   return 0;
 }
+
+/**
+  Ask handler if the table exists in engine.
+  @retval
+    HA_ERR_NO_SUCH_TABLE     Table does not exist
+  @retval
+    HA_ERR_TABLE_EXIST       Table exists
+  @retval
+    \#                  Error code
+*/
+
+class TableExistsInStorageEngine: public unary_function<StorageEngine *,bool>
+{
+  Session *session;
+  const char *db;
+  const char *name;
+public:
+  TableExistsInStorageEngine(Session *session_arg,
+                             const char *db_arg, const char *name_arg)
+    :session(session_arg), db(db_arg), name(name_arg) {}
+  result_type operator() (argument_type engine)
+  {
+    int ret= engine->table_exists_in_engine(session, db, name);
+    return ret == HA_ERR_TABLE_EXIST;
+  } 
+};
+
+/**
+  Call this function in order to give the handler the possiblity
+  to ask engine if there are any new tables that should be written to disk
+  or any dropped tables that need to be removed from disk
+*/
+int ha_table_exists_in_engine(Session* session,
+                              const char* db, const char* name,
+                              StorageEngine **engine_arg)
+{
+  StorageEngine *engine= NULL;
+
+  drizzled::Registry<StorageEngine *>::iterator iter=
+    find_if(all_engines.begin(), all_engines.end(),
+            TableExistsInStorageEngine(session, db, name));
+  if (iter != all_engines.end()) 
+  {
+    engine= *iter;
+  }
+  else
+  {
+    /* Default way of knowing if a table exists. (checking .frm exists) */
+
+    char path[FN_REFLEN];
+    build_table_filename(path, sizeof(path),
+                         db, name, "", 0);
+    if (table_proto_exists(path)==EEXIST)
+    {
+      drizzled::message::Table table;
+      build_table_filename(path, sizeof(path),
+                           db, name, ".dfe", 0);
+      if(drizzle_read_table_proto(path, &table)==0)
+      {
+        LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
+                                 strlen(table.engine().name().c_str()) };
+        engine= ha_resolve_by_name(session, &engine_name);
+      }
+    }
+  }
+
+  if(engine_arg)
+    *engine_arg= engine;
+
+  if (engine == NULL)
+    return HA_ERR_NO_SUCH_TABLE;
+  return HA_ERR_TABLE_EXIST;
+}
+
+
+static const char *check_lowercase_names(handler *file, const char *path,
+                                         char *tmp_path)
+{
+  if (lower_case_table_names != 2 || (file->ha_table_flags() & HA_FILE_BASED))
+    return path;
+
+  /* Ensure that table handler get path in lower case */
+  if (tmp_path != path)
+    strcpy(tmp_path, path);
+
+  /*
+    we only should turn into lowercase database/table part
+    so start the process after homedirectory
+  */
+  my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
+  return tmp_path;
+}
+
+/**
+  An interceptor to hijack the text of the error message without
+  setting an error in the thread. We need the text to present it
+  in the form of a warning to the user.
+*/
+
+class Ha_delete_table_error_handler: public Internal_error_handler
+{
+public:
+  Ha_delete_table_error_handler() : Internal_error_handler() {}
+  virtual bool handle_error(uint32_t sql_errno,
+                            const char *message,
+                            DRIZZLE_ERROR::enum_warning_level level,
+                            Session *session);
+  char buff[DRIZZLE_ERRMSG_SIZE];
+};
+
+
+bool
+Ha_delete_table_error_handler::
+handle_error(uint32_t ,
+             const char *message,
+             DRIZZLE_ERROR::enum_warning_level ,
+             Session *)
+{
+  /* Grab the error message */
+  strncpy(buff, message, sizeof(buff)-1);
+  return true;
+}
+
+
+class DeleteTableStorageEngine
+  : public unary_function<StorageEngine *, void>
+{
+  Session *session;
+  const char *path;
+  handler **file;
+  int *dt_error;
+public:
+  DeleteTableStorageEngine(Session *session_arg, const char *path_arg,
+                           handler **file_arg, int *error_arg)
+    : session(session_arg), path(path_arg), file(file_arg), dt_error(error_arg) {}
+
+  result_type operator() (argument_type engine)
+  {
+
+    handler *tmp_file;
+    char tmp_path[FN_REFLEN];
+
+    if(*dt_error!=ENOENT) /* already deleted table */
+      return;
+
+    if (!engine)
+      return;
+
+    if (!engine->is_enabled())
+      return;
+
+    if ((tmp_file= engine->create(NULL, session->mem_root)))
+      tmp_file->init();
+    else
+      return;
+
+    path= check_lowercase_names(tmp_file, path, tmp_path);
+    int tmp_error= tmp_file->ha_delete_table(path);
+
+    if(tmp_error!=ENOENT)
+    {
+      *dt_error= tmp_error;
+      if(*file)
+        delete *file;
+      *file= tmp_file;
+      return;
+    }
+    else
+      delete tmp_file;
+    
+    return;
+  }
+};
+
+/**
+  This should return ENOENT if the file doesn't exists.
+  The .frm file will be deleted only if we return 0 or ENOENT
+*/
+int ha_delete_table(Session *session, const char *path,
+                    const char *db, const char *alias, bool generate_warning)
+{
+  TABLE_SHARE dummy_share;
+  Table dummy_table;
+  memset(&dummy_table, 0, sizeof(dummy_table));
+  memset(&dummy_share, 0, sizeof(dummy_share));
+
+  dummy_table.s= &dummy_share;
+
+  int error= ENOENT;
+  handler *file= NULL;
+
+  for_each(all_engines.begin(), all_engines.end(),
+           DeleteTableStorageEngine(session, path, &file, &error));
+
+  if (error && generate_warning)
+  {
+    /*
+      Because file->print_error() use my_error() to generate the error message
+      we use an internal error handler to intercept it and store the text
+      in a temporary buffer. Later the message will be presented to user
+      as a warning.
+    */
+    Ha_delete_table_error_handler ha_delete_table_error_handler;
+
+    /* Fill up strucutures that print_error may need */
+    dummy_share.path.str= (char*) path;
+    dummy_share.path.length= strlen(path);
+    dummy_share.db.str= (char*) db;
+    dummy_share.db.length= strlen(db);
+    dummy_share.table_name.str= (char*) alias;
+    dummy_share.table_name.length= strlen(alias);
+    dummy_table.alias= alias;
+
+
+    if(file != NULL)
+    {
+      file->change_table_ptr(&dummy_table, &dummy_share);
+
+      session->push_internal_handler(&ha_delete_table_error_handler);
+      file->print_error(error, 0);
+
+      session->pop_internal_handler();
+    }
+    else
+      error= -1; /* General form of fail. maybe bad FRM */
+
+    /*
+      XXX: should we convert *all* errors to warnings here?
+      What if the error is fatal?
+    */
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
+                 ha_delete_table_error_handler.buff);
+  }
+
+  if(file)
+    delete file;
+
+  return error;
+}
+
+/**
+  Initiates table-file and calls appropriate database-creator.
+
+  @retval
+   0  ok
+  @retval
+   1  error
+*/
+int ha_create_table(Session *session, const char *path,
+                    const char *db, const char *table_name,
+                    HA_CREATE_INFO *create_info,
+                    bool update_create_info)
+{
+  int error= 1;
+  Table table;
+  char name_buff[FN_REFLEN];
+  const char *name;
+  TABLE_SHARE share;
+
+  init_tmp_table_share(session, &share, db, 0, table_name, path);
+  if (open_table_def(session, &share, 0) ||
+      open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0, &table,
+                            OTM_CREATE))
+    goto err;
+
+  if (update_create_info)
+    table.updateCreateInfo(create_info);
+
+  name= check_lowercase_names(table.file, share.path.str, name_buff);
+
+  error= table.file->ha_create(name, &table, create_info);
+  table.closefrm(false);
+  if (error)
+  {
+    sprintf(name_buff,"%s.%s",db,table_name);
+    my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
+  }
+err:
+  free_table_share(&share);
+  return(error != 0);
+}
+
 
 const string ha_resolve_storage_engine_name(const StorageEngine *engine)
 {

@@ -43,26 +43,21 @@ public:
 Create_function<Item_func_hello_world>
   hello_world_udf(string("hello_world"));
 
-static int hello_world_plugin_init(void *p)
+static int hello_world_plugin_init(PluginRegistry &registry)
 {
-  Function_builder **f = static_cast<Function_builder**>(p);
-
-  *f= &hello_world_udf;
+  registry.add(&hello_world_udf);
 
   return 0;
 }
 
-static int hello_world_plugin_deinit(void *p)
+static int hello_world_plugin_deinit(PluginRegistry &)
 {
-  Function_builder *udff = static_cast<Function_builder *>(p);
-  (void)udff;
   return 0;
 }
 
 
 drizzle_declare_plugin(hello_world)
 {
-  DRIZZLE_UDF_PLUGIN,
   "hello_world",
   "1.0",
   "Mark Atwood",

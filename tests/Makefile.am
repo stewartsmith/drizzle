@@ -94,7 +94,7 @@ test: test-drizzle
 # maintenance and verification
 
 test-drizzle:
-	$(TEST_RUN) --fast --force --suite=main,vcol
+	$(TEST_RUN) --fast --force --suite=main
 
 test-big:
 	$(TEST_RUN) --fast --force --big-test --suite=big

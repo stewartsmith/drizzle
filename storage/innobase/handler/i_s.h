@@ -25,12 +25,22 @@ Created July 18, 2007 Vasil Dimov
 #ifndef i_s_h
 #define i_s_h
 
-extern struct st_mysql_plugin	i_s_innodb_trx;
-extern struct st_mysql_plugin	i_s_innodb_locks;
-extern struct st_mysql_plugin	i_s_innodb_lock_waits;
-extern struct st_mysql_plugin	i_s_innodb_cmp;
-extern struct st_mysql_plugin	i_s_innodb_cmp_reset;
-extern struct st_mysql_plugin	i_s_innodb_cmpmem;
-extern struct st_mysql_plugin	i_s_innodb_cmpmem_reset;
+int i_s_common_deinit(PluginRegistry &registry);
+
+int innodb_locks_init();
+int innodb_trx_init();
+int innodb_lock_waits_init();
+int i_s_cmp_init();
+int i_s_cmp_reset_init();
+int i_s_cmpmem_init();
+int i_s_cmpmem_reset_init();
+
+extern InfoSchemaTable *innodb_trx_schema_table;
+extern InfoSchemaTable *innodb_locks_schema_table;
+extern InfoSchemaTable *innodb_lock_waits_schema_table;
+extern InfoSchemaTable *innodb_cmp_schema_table;
+extern InfoSchemaTable *innodb_cmp_reset_schema_table;
+extern InfoSchemaTable *innodb_cmpmem_schema_table;
+extern InfoSchemaTable *innodb_cmpmem_reset_schema_table;
 
 #endif /* i_s_h */

@@ -26,6 +26,10 @@
 #define __i386__
 #endif
 
+#if defined(__sun) && defined(_FILE_OFFSET_BITS)
+#undef _FILE_OFFSET_BITS
+#endif
+
 #include <config.h>
 
 #if defined(__cplusplus)

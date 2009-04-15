@@ -19,7 +19,9 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/protocol.h>
+#include "drizzled/plugin_registry.h"
 #include <drizzled/gettext.h>
+
 
 extern char *opt_protocol;
 
@@ -31,49 +33,23 @@ Protocol *get_protocol()
   return (*protocol_factory)();
 }
 
-int protocol_initializer(st_plugin_int *plugin)
+bool add_protocol_factory(ProtocolFactory *factory)
 {
-  if (memcmp(plugin->plugin->name, opt_protocol, strlen(opt_protocol)))
-    return 0;
+  if (factory->getName() != opt_protocol)
+    return true;
 
   if (protocol_factory != NULL)
   {
     fprintf(stderr, "You cannot load more then one protocol plugin\n");
     exit(1);
   }
+  protocol_factory= factory;
 
-  assert(plugin->plugin->init); /* Find poorly designed plugins */
-
-  if (plugin->plugin->init((void *)&protocol_factory))
-  {
-    /* 
-      TRANSLATORS> The leading word "protocol" is the name
-      of the plugin api, and so should not be translated. 
-    */
-    errmsg_printf(ERRMSG_LVL_ERROR, _("protocol plugin '%s' init() failed"),
-	                plugin->name.str);
-      return 1;
-  }
-
-  plugin->data= protocol_factory;
-
-  return 0;
+  return false;
 }
 
-int protocol_finalizer(st_plugin_int *plugin)
+bool remove_protocol_factory(ProtocolFactory *)
 {
-  /* We know which one we initialized since its data pointer is filled */
-  if (plugin->plugin->deinit && plugin->data)
-  {
-    if (plugin->plugin->deinit((void *)plugin->data))
-    {
-      /* TRANSLATORS: The leading word "protocol" is the name
-         of the plugin api, and so should not be translated. */
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("protocol plugin '%s' deinit() failed"),
-                    plugin->name.str);
-    }
-  }
-
-  return 0;
+  protocol_factory= NULL;
+  return false;
 }

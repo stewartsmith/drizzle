@@ -75,18 +75,14 @@ String *Item_func_md5::val_str(String *str)
 
 Create_function<Item_func_md5> md5udf(string("md5"));
 
-static int md5udf_plugin_init(void *p)
+static int md5udf_plugin_init(PluginRegistry &registry)
 {
-  Function_builder **f = static_cast<Function_builder**>(p);
-
-  *f= &md5udf;
-
+  registry.add(&md5udf);
   return 0;
 }
 
 drizzle_declare_plugin(md5)
 {
-  DRIZZLE_UDF_PLUGIN,
   "md5",
   "1.0",
   "Stewart Smith",
