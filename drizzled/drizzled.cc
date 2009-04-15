@@ -448,7 +448,7 @@ static void clean_up_mutexes(void);
 void close_connections(void)
 {
   /* Abort listening to new connections */
-  (void) write(abort_pipe[1], "\0", 1);
+  assert(write(abort_pipe[1], "\0", 1) == 1);
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -904,7 +904,7 @@ static void network_init(void)
     }
   }
 
-  if (pollfd_count == 0 && ai != NULL && ip_sock == -1)
+  if (pollfd_count == 0 && ai != NULL)
   {
     sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
     unireg_abort(1);				/* purecov: tested */
