@@ -1368,14 +1368,17 @@ then
     CPPFLAGS="-I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib ${CPPFLAGS}"
   fi
 fi
+
 CPPFLAGS="-I\$(top_srcdir) -I\$(top_builddir) ${CPPFLAGS}"
+CFLAGS="${CC_WARNINGS} ${CFLAGS}"
+CXXFLAGS="${CXX_WARNINGS} ${W_EXCEPTIONS} ${CXXFLAGS}"
 
 dnl Must be done once we turn on warnings and such
 AC_CACHE_CHECK(
   [whether __attribute__ visibility "hidden" is supported],
   [ac_cv_can_use_hidden_],[
     AC_LANG_PUSH(C++)
-    AC_COMPILE_IFELSE([
+    AC_LINK_IFELSE([
       AC_LANG_PROGRAM(
         [[
 __attribute__((visibility ("hidden")))
@@ -1394,8 +1397,8 @@ then
 fi
 
 AM_CPPFLAGS="${CPPFLAGS}"
-AM_CFLAGS="${CC_WARNINGS} ${CFLAGS}"
-AM_CXXFLAGS="${CXX_WARNINGS} ${W_EXCEPTIONS} ${CXXFLAGS}"
+AM_CFLAGS="${CFLAGS}"
+AM_CXXFLAGS="${CXXFLAGS}"
 
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_CFLAGS])
