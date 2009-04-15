@@ -21,10 +21,10 @@ if BUILD_GETTEXT
   po=po
 endif
 
-SUBDIRS = ${po} . \
+SUBDIRS = ${po} \
 	  gnulib \
+	  . \
 	  mystrings \
-	  mysys \
 	  extra \
 	  client \
 	  drizzled/message \
@@ -39,8 +39,93 @@ CLEANFILES = drizzled/configmake.h
 DISTCLEANFILES = ac_available_languages_fragment
 MAINTAINERCLEANFILES = autom4te.cache
 
-BUILT_SOURCES = drizzled/configmake.h
-noinst_HEADERS = drizzled/configmake.h
+BUILT_SOURCES=		drizzled/configmake.h
+noinst_LTLIBRARIES=	mysys/libmysys.la
+
+
+noinst_HEADERS=	\
+		drizzled/configmake.h \
+		mysys/aio_result.h \
+		mysys/base64.h \
+		mysys/definitions.h \
+		mysys/drizzle_time.h \
+		mysys/hash.h \
+		mysys/iocache.h \
+		mysys/my_alloc.h \
+		mysys/my_bit.h \
+		mysys/my_bitmap.h \
+		mysys/my_dir.h \
+		mysys/my_getopt.h \
+		mysys/my_pthread.h \
+		mysys/my_static.h \
+		mysys/my_sys.h \
+		mysys/my_time.h \
+		mysys/my_tree.h \
+		mysys/mysys_err.h \
+		mysys/mysys_priv.h \
+		mysys/sha1.h \
+		mysys/thr_lock.h \
+		mysys/typelib.h
+
+mysys_libmysys_la_SOURCES= \
+		mysys/array.cc \
+		mysys/base64.cc \
+		mysys/charset-def.cc \
+		mysys/charset.cc \
+		mysys/checksum.cc \
+		mysys/default.cc \
+		mysys/default_modify.cc \
+		mysys/errors.cc \
+		mysys/hash.cc \
+		mysys/mf_arr_appstr.cc \
+		mysys/mf_cache.cc \
+		mysys/mf_dirname.cc \
+		mysys/mf_fn_ext.cc \
+		mysys/mf_format.cc \
+		mysys/mf_getdate.cc \
+		mysys/mf_iocache.cc \
+		mysys/mf_iocache2.cc \
+		mysys/mf_loadpath.cc \
+		mysys/mf_pack.cc \
+		mysys/mf_qsort.cc \
+		mysys/mf_qsort2.cc \
+		mysys/mf_radix.cc \
+		mysys/mf_same.cc \
+		mysys/mf_sort.cc \
+		mysys/mf_tempfile.cc \
+		mysys/mf_wcomp.cc \
+		mysys/mulalloc.cc \
+		mysys/my_access.cc \
+		mysys/my_alloc.cc \
+		mysys/my_bit.cc \
+		mysys/my_bitmap.cc \
+		mysys/my_copy.cc \
+		mysys/my_create.cc \
+		mysys/my_delete.cc \
+		mysys/my_dup.cc \
+		mysys/my_error.cc \
+		mysys/my_file.cc \
+		mysys/my_filename.cc \
+		mysys/my_getopt.cc \
+		mysys/my_getsystime.cc \
+		mysys/my_init.cc \
+		mysys/my_lib.cc \
+		mysys/my_open.cc \
+		mysys/my_read.cc \
+		mysys/my_redel.cc \
+		mysys/my_rename.cc \
+		mysys/my_static.cc \
+		mysys/my_symlink.cc \
+		mysys/my_symlink2.cc \
+		mysys/my_sync.cc \
+		mysys/my_thr_init.cc \
+		mysys/my_time.cc \
+		mysys/my_write.cc \
+		mysys/ptr_cmp.cc \
+		mysys/sha1.cc \
+		mysys/thr_lock.cc \
+		mysys/tree.cc \
+		mysys/typelib.cc
 
 # Create empty datadir 
 install-data-local:
