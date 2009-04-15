@@ -57,12 +57,6 @@ bool my_init(void)
   my_umask= 0660;                       /* Default umask for new files */
   my_umask_dir= 0700;                   /* Default umask for new directories */
   init_glob_errs();
-#if defined(SAFE_MUTEX)
-  safe_mutex_global_init();		/* Must be called early */
-#endif
-#if defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX)
-  fastmutex_global_init();              /* Must be called early */
-#endif
 #if defined(HAVE_PTHREAD_INIT)
   pthread_init();
 #endif
@@ -148,14 +142,6 @@ Voluntary context switches %ld, Involuntary context switches %ld\n",
 
   my_thread_end();
   my_thread_global_end();
-#if defined(SAFE_MUTEX)
-  /*
-    Check on destroying of mutexes. A few may be left that will get cleaned
-    up by C++ destructors
-  */
-  safe_mutex_end();
-
-#endif /* defined(SAFE_MUTEX) */
 
   my_init_done=0;
 } /* my_end */

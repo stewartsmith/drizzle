@@ -42,10 +42,6 @@ noinst_HEADERS=	\
 		sha1.h \
 		thr_lock.h
 
-if BUILD_FAST_MUTEX
-thr_mutex_source= thr_mutex.cc
-endif
-
 libmysys_la_SOURCES= \
 		array.cc \
 		base64.cc \
@@ -104,7 +100,4 @@ libmysys_la_SOURCES= \
 		sha1.cc \
 		thr_lock.cc \
 		tree.cc \
-		typelib.cc \
-		${thr_mutex_source}
-
-
+		typelib.cc

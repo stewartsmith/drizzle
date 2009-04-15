@@ -757,20 +757,6 @@ LIBS="$my_save_LIBS"
 AC_SUBST(LIBDL_LIBS)
 
 
-AC_ARG_WITH([fast-mutexes],
-    [AS_HELP_STRING([--with-fast-mutexes],
-	    [Compile with fast mutexes  @<:@default=off@:>@])],
-    [with_fast_mutexes=$withval],
-    [with_fast_mutexes=no])
-
-if test "$with_fast_mutexes" != "no"
-then
-	AC_DEFINE([MY_PTHREAD_FASTMUTEX], [1], 
-			[Define to 1 if you want to use fast mutexes])
-fi
-
-AM_CONDITIONAL(BUILD_FAST_MUTEX,[test "$with_fast_mutexes" != "no"])
-
 AC_ARG_WITH([atomic-ops],
     [AS_HELP_STRING([--with-atomic-ops=rwlocks|smp|up],
        [Implement atomic operations using pthread rwlocks or atomic CPU
