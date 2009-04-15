@@ -450,7 +450,8 @@ static void clean_up_mutexes(void);
 void close_connections(void)
 {
   /* Abort listening to new connections */
-  (void) write(abort_pipe[1], "\0", 1);
+  ssize_t ret= write(abort_pipe[1], "\0", 1);
+  assert(ret);
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -798,7 +799,7 @@ static void network_init(void)
   struct addrinfo *next;
   struct addrinfo hints;
   int error;
-  int ip_sock;
+  int ip_sock= -1;
 
   set_ports();
 
