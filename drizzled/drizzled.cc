@@ -907,7 +907,7 @@ static void network_init(void)
     }
   }
 
-  if (pollfd_count == 0 && ai != NULL && ip_sock == -1)
+  if (pollfd_count == 0 && ai != NULL)
   {
     sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
     unireg_abort(1);				/* purecov: tested */
