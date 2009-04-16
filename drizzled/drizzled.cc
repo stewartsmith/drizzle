@@ -18,8 +18,8 @@
  */
 
 
-#include <drizzled/configmake.h>
 #include <drizzled/server_includes.h>
+#include <drizzled/configmake.h>
 #include <drizzled/atomics.h>
 
 #include <netdb.h>
@@ -221,6 +221,8 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
  {&Arg_comparator::compare_decimal,    &Arg_comparator::compare_e_decimal}};
 
 /* static variables */
+
+extern TYPELIB optimizer_use_mrr_typelib;
 
 /* the default log output is log tables */
 static bool volatile select_thread_in_use;
@@ -448,7 +450,8 @@ static void clean_up_mutexes(void);
 void close_connections(void)
 {
   /* Abort listening to new connections */
-  assert(write(abort_pipe[1], "\0", 1) == 1);
+  ssize_t ret= write(abort_pipe[1], "\0", 1);
+  assert(ret);
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -796,7 +799,7 @@ static void network_init(void)
   struct addrinfo *next;
   struct addrinfo hints;
   int error;
-  int ip_sock;
+  int ip_sock= -1;
 
   set_ports();
 
@@ -2069,7 +2072,8 @@ enum options_drizzled
   OPT_PORT_OPEN_TIMEOUT,
   OPT_KEEP_FILES_ON_CREATE,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT
+  OPT_MIN_EXAMINED_ROW_LIMIT,
+  OPT_OPTIMIZER_USE_MRR
 };
 
 
@@ -2440,6 +2444,11 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
    0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
+  {"optimizer_use_mrr", OPT_OPTIMIZER_USE_MRR,
+   N_("Should the Optmizer use MRR or not. "
+      "Valid values are auto, force and disable"),
+   0, 0, 0, GET_STR, REQUIRED_ARG, 0,
+   0, 0, 0, 0, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -2929,6 +2938,13 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       int type;
       type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
       global_system_variables.tx_isolation= (type-1);
+      break;
+    }
+  case OPT_OPTIMIZER_USE_MRR:
+    {
+      int type;
+      type= find_type_or_exit(argument, &optimizer_use_mrr_typelib, opt->name);
+      global_system_variables.optimizer_use_mrr= (type-1);
       break;
     }
   case OPT_MYISAM_RECOVER:

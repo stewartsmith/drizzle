@@ -183,12 +183,6 @@ static my_thread_id thread_id= 0;
   SYNOPSIS
     my_thread_init()
 
-  NOTES
-    We can't use mutex_locks here if we are using windows as
-    we may have compiled the program with SAFE_MUTEX, in which
-    case the checking of mutex_locks will not work until
-    the pthread_self thread specific variable is initialized.
-
   RETURN
     0  ok
     1  Fatal error; mysys/dbug functions can't be used

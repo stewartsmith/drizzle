@@ -1,10 +1,11 @@
+#include <drizzled/global.h>
 
 #include "binlog_encoding.h"
 
-#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <stdexcept>
+#include <string.h>
 #include <getopt.h>
 
 using std::ios;
