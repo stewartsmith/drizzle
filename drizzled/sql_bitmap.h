@@ -242,6 +242,6 @@ uint32_t getFirstBitPos(const std::bitset<MAX_FIELDS> &bitmap);
  * @param the first bitmap to work with
  * @param the second bitmap to work with
  */
-bool isBitmapOverlapping(const std::bitset<MAX_FIELDS> *map1, const std::bitset<MAX_FIELDS> *map2);
+bool isBitmapOverlapping(const std::bitset<MAX_FIELDS> &map1, const std::bitset<MAX_FIELDS> &map2);
 
 #endif /* _SQL_BITMAP_H_ */

@@ -57,8 +57,8 @@ uint32_t getFirstBitPos(const bitset<MAX_FIELDS> &bitmap)
   return first_bit;
 }
 
-bool isBitmapOverlapping(const bitset<MAX_FIELDS> *map1, const bitset<MAX_FIELDS> *map2)
+bool isBitmapOverlapping(const bitset<MAX_FIELDS> &map1, const bitset<MAX_FIELDS> &map2)
 {
-  bitset<MAX_FIELDS> tmp= *map1 & *map2;
+  bitset<MAX_FIELDS> tmp= map1 & map2;
   return (tmp.any());
 }
