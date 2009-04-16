@@ -32,7 +32,7 @@ Created 1/20/1994 Heikki Tuuri
 #ifndef univ_i
 #define univ_i
 
-#if ( defined(sun) || defined(__sun) )
+#if (defined(__SUNPRO_C) || defined(__SUNPRO_CC))
 # include <sun_prefetch.h>
 #endif
 
@@ -407,7 +407,7 @@ it is read. */
 /* Minimize cache-miss latency by moving data at addr into a cache before
 it is read or written. */
 # define UNIV_PREFETCH_RW(addr) __builtin_prefetch(addr, 1, 3)
-#elif ( defined(sun) || defined(__sun) )
+#elif (defined(__SUNPRO_C) || defined(__SUNPRO_CC))
 # define UNIV_EXPECT(expr,value) (expr)
 # define UNIV_LIKELY_NULL(expr) (expr)
 # define UNIV_PREFETCH_R(addr) sun_prefetch_read_many((void *)(addr))
