@@ -3657,17 +3657,17 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 	  s->keys.set_bit(key);               // QQ: remove this ?
 
 	  refs=0;
-          const_ref.clear_all();
-	  eq_part.clear_all();
+          const_ref.reset();
+	  eq_part.reset();
 	  do
 	  {
 	    if (keyuse->val->type() != Item::NULL_ITEM && !keyuse->optimize)
 	    {
 	      if (!((~found_const_table_map) & keyuse->used_tables))
-		const_ref.set_bit(keyuse->keypart);
+		const_ref.set(keyuse->keypart);
 	      else
 		refs|=keyuse->used_tables;
-	      eq_part.set_bit(keyuse->keypart);
+	      eq_part.set(keyuse->keypart);
 	    }
 	    keyuse++;
 	  } while (keyuse->table == table && keyuse->key == key);
@@ -3683,7 +3683,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 	        int tmp;
 	        ref_changed = 1;
 	        s->type= JT_CONST;
-	        join->const_table_map|=table->map;
+	        join->const_table_map|= table->map;
 	        set_position(join,const_count++,s,start_keyuse);
 	        if (create_ref_for_key(join, s, start_keyuse,
 				       found_const_table_map))
@@ -3702,7 +3702,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 	        found_ref|= refs;      // Table is const if all refs are const
 	    }
             else if (const_ref == eq_part)
-              s->const_keys.set_bit(key);
+              s->const_keys.set(key);
           }
 	}
       }
@@ -3720,12 +3720,12 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
       Field *field= sargables->field;
       JOIN_TAB *join_tab= field->table->reginfo.join_tab;
       key_map possible_keys= field->key_start;
-      possible_keys.intersect(field->table->keys_in_use_for_query);
+      possible_keys&= field->table->keys_in_use_for_query;
       bool is_const= 1;
       for (uint32_t j=0; j < sargables->num_values; j++)
         is_const&= sargables->arg_value[j]->const_item();
       if (is_const)
-        join_tab[0].const_keys.merge(possible_keys);
+        join_tab[0].const_keys|= possible_keys;
     }
   }
 
@@ -4044,9 +4044,9 @@ add_key_field(KEY_FIELD **key_fields,uint32_t and_level, Item_func *cond,
     else
     {
       JOIN_TAB *stat=field->table->reginfo.join_tab;
-      key_map possible_keys=field->key_start;
-      possible_keys.intersect(field->table->keys_in_use_for_query);
-      stat[0].keys.merge(possible_keys);             // Add possible keys
+      key_map possible_keys= field->key_start;
+      possible_keys&= field->table->keys_in_use_for_query;
+      stat[0].keys|= possible_keys;             // Add possible keys
 
       /*
 	Save the following cases:
@@ -4059,7 +4059,7 @@ add_key_field(KEY_FIELD **key_fields,uint32_t and_level, Item_func *cond,
          Field BETWEEN ...
          Field IN ...
       */
-      stat[0].key_dependent|=used_tables;
+      stat[0].key_dependent|= used_tables;
 
       bool is_const=1;
       for (uint32_t i=0; i<num_values; i++)
@@ -4068,7 +4068,7 @@ add_key_field(KEY_FIELD **key_fields,uint32_t and_level, Item_func *cond,
           break;
       }
       if (is_const)
-        stat[0].const_keys.merge(possible_keys);
+        stat[0].const_keys|= possible_keys;
       else if (!eq_func)
       {
         /*
@@ -4808,14 +4808,14 @@ add_group_and_distinct_keys(JOIN *join, JOIN_TAB *join_tab)
 
   /* Intersect the keys of all group fields. */
   cur_item= indexed_fields_it++;
-  possible_keys.merge(cur_item->field->part_of_key);
+  possible_keys|= cur_item->field->part_of_key;
   while ((cur_item= indexed_fields_it++))
   {
-    possible_keys.intersect(cur_item->field->part_of_key);
+    possible_keys&= cur_item->field->part_of_key;
   }
 
-  if (!possible_keys.is_clear_all())
-    join_tab->const_keys.merge(possible_keys);
+  if (possible_keys.any())
+    join_tab->const_keys|= possible_keys;
 }
 
 
@@ -9411,20 +9411,20 @@ static void update_const_equal_items(COND *cond, JOIN_TAB *tab)
         Field *field= item_field->field;
         JOIN_TAB *stat= field->table->reginfo.join_tab;
         key_map possible_keys= field->key_start;
-        possible_keys.intersect(field->table->keys_in_use_for_query);
-        stat[0].const_keys.merge(possible_keys);
+        possible_keys&= field->table->keys_in_use_for_query;
+        stat[0].const_keys|= possible_keys;
 
         /*
           For each field in the multiple equality (for which we know that it
           is a constant) we have to find its corresponding key part, and set
           that key part in const_key_parts.
         */
-        if (!possible_keys.is_clear_all())
+        if (possible_keys.any())
         {
           Table *field_tab= field->table;
           KEYUSE *use;
           for (use= stat->keyuse; use && use->table == field_tab; use++)
-            if (possible_keys.is_set(use->key) &&
+            if (possible_keys.test(use->key) &&
                 field_tab->key_info[use->key].key_part[use->keypart].field ==
                 field)
               field_tab->const_key_parts[use->key]|= use->keypart_map;
@@ -12688,7 +12688,7 @@ test_if_subkey(order_st *order, Table *table, uint32_t ref, uint32_t ref_key_par
 
   for (nr= 0 ; nr < table->s->keys ; nr++)
   {
-    if (usable_keys->is_set(nr) &&
+    if (usable_keys->test(nr) &&
 	table->key_info[nr].key_length < min_length &&
 	table->key_info[nr].key_parts >= ref_key_parts &&
 	is_subkey(table->key_info[nr].key_part, ref_key_part,
@@ -12882,11 +12882,11 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
     Item *item= (*tmp_order->item)->real_item();
     if (item->type() != Item::FIELD_ITEM)
     {
-      usable_keys.clear_all();
+      usable_keys.reset();
       return(0);
     }
-    usable_keys.intersect(((Item_field*) item)->field->part_of_sortkey);
-    if (usable_keys.is_clear_all())
+    usable_keys&= ((Item_field*) item)->field->part_of_sortkey;
+    if (usable_keys.none())
       return(0);					// No usable keys
   }
 
@@ -12922,7 +12922,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
     /*
       We come here when there is a REF key.
     */
-    if (!usable_keys.is_set(ref_key))
+    if (! usable_keys.test(ref_key))
     {
       /*
 	We come here when ref_key is not among usable_keys
@@ -12933,7 +12933,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
 	keys
       */
       if (table->covering_keys.is_set(ref_key))
-	usable_keys.intersect(table->covering_keys);
+	usable_keys&= table->covering_keys;
       if (tab->pre_idx_push_select_cond)
         tab->select_cond= tab->select->cond= tab->pre_idx_push_select_cond;
       if ((new_ref_key= test_if_subkey(order, table, ref_key, ref_key_parts,
@@ -12969,8 +12969,8 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
             parameres are set correctly by the range optimizer.
            */
           key_map new_ref_key_map;
-          new_ref_key_map.clear_all();  // Force the creation of quick select
-          new_ref_key_map.set_bit(new_ref_key); // only for new_ref_key.
+          new_ref_key_map.reset();  // Force the creation of quick select
+          new_ref_key_map.set(new_ref_key); // only for new_ref_key.
 
           if (select->test_quick_select(tab->join->session, new_ref_key_map, 0,
                                         (tab->join->select_options &
@@ -12985,7 +12985,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
       }
     }
     /* Check if we get the rows in requested sorted order by using the key */
-    if (usable_keys.is_set(ref_key) &&
+    if (usable_keys.test(ref_key) &&
         (order_direction= test_if_order_by_key(order,table,ref_key,
 					       &used_key_parts)))
       goto check_reverse_order;
@@ -13025,7 +13025,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
       if (tab->type == JT_ALL && tab->join->tables > tab->join->const_tables + 1)
         return(0);
       keys= *table->file->keys_to_use_for_scanning();
-      keys.merge(table->covering_keys);
+      keys|= table->covering_keys;
 
       /*
 	We are adding here also the index specified in FORCE INDEX clause,
@@ -13033,9 +13033,9 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
         This is to allow users to use index in order_st BY.
       */
       if (table->force_index)
-	keys.merge(group ? table->keys_in_use_for_group_by :
+	keys|= (group ? table->keys_in_use_for_group_by :
                            table->keys_in_use_for_order_by);
-      keys.intersect(usable_keys);
+      keys&= usable_keys;
     }
     else
       keys= usable_keys;
@@ -13047,7 +13047,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
     for (nr=0; nr < table->s->keys ; nr++)
     {
       int direction;
-      if (keys.is_set(nr) &&
+      if (keys.test(nr) &&
           (direction= test_if_order_by_key(order, table, nr, &used_key_parts)))
       {
         bool is_covering= table->covering_keys.is_set(nr) || (nr == table->s->primary_key && table->file->primary_key_is_clustered());
@@ -13156,8 +13156,8 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
       if (table->quick_keys.is_set(best_key) && best_key != ref_key)
       {
         key_map test_map;
-        test_map.clear_all();       // Force the creation of quick select
-        test_map.set_bit(best_key); // only best_key.
+        test_map.reset();       // Force the creation of quick select
+        test_map.set(best_key); // only best_key.
         quick_created=
           select->test_quick_select(join->session, test_map, 0,
                                     join->select_options & OPTION_FOUND_ROWS ?
@@ -15848,12 +15848,12 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 					  strlen(join_type_str[tab->type]),
 					  cs));
       /* Build "possible_keys" value and add it to item_list */
-      if (!tab->keys.is_clear_all())
+      if (tab->keys.any())
       {
         uint32_t j;
         for (j=0 ; j < table->s->keys ; j++)
         {
-          if (tab->keys.is_set(j))
+          if (tab->keys.test(j))
           {
             if (tmp1.length())
               tmp1.append(',');

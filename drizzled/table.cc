@@ -3493,9 +3493,9 @@ bool TableList::process_index_hints(Table *tbl)
     /* initialize temporary variables used to collect hints of each kind */
     for (type= INDEX_HINT_IGNORE; type <= INDEX_HINT_FORCE; type++)
     {
-      index_join[type].clear_all();
-      index_order[type].clear_all();
-      index_group[type].clear_all();
+      index_join[type].reset();
+      index_order[type].reset();
+      index_group[type].reset();
     }
 
     /* iterate over the hints list */
@@ -3508,17 +3508,17 @@ bool TableList::process_index_hints(Table *tbl)
       {
         if (hint->clause & INDEX_HINT_MASK_JOIN)
         {
-          index_join[hint->type].clear_all();
+          index_join[hint->type].reset();
           have_empty_use_join= true;
         }
         if (hint->clause & INDEX_HINT_MASK_ORDER)
         {
-          index_order[hint->type].clear_all();
+          index_order[hint->type].reset();
           have_empty_use_order= true;
         }
         if (hint->clause & INDEX_HINT_MASK_GROUP)
         {
-          index_group[hint->type].clear_all();
+          index_group[hint->type].reset();
           have_empty_use_group= true;
         }
         continue;
@@ -3540,20 +3540,20 @@ bool TableList::process_index_hints(Table *tbl)
 
       /* add to the appropriate clause mask */
       if (hint->clause & INDEX_HINT_MASK_JOIN)
-        index_join[hint->type].set_bit (pos);
+        index_join[hint->type].set(pos);
       if (hint->clause & INDEX_HINT_MASK_ORDER)
-        index_order[hint->type].set_bit (pos);
+        index_order[hint->type].set(pos);
       if (hint->clause & INDEX_HINT_MASK_GROUP)
-        index_group[hint->type].set_bit (pos);
+        index_group[hint->type].set(pos);
     }
 
     /* cannot mix USE INDEX and FORCE INDEX */
-    if ((!index_join[INDEX_HINT_FORCE].is_clear_all() ||
-         !index_order[INDEX_HINT_FORCE].is_clear_all() ||
-         !index_group[INDEX_HINT_FORCE].is_clear_all()) &&
-        (!index_join[INDEX_HINT_USE].is_clear_all() ||  have_empty_use_join ||
-         !index_order[INDEX_HINT_USE].is_clear_all() || have_empty_use_order ||
-         !index_group[INDEX_HINT_USE].is_clear_all() || have_empty_use_group))
+    if ((index_join[INDEX_HINT_FORCE].any() ||
+         index_order[INDEX_HINT_FORCE].any() ||
+         index_group[INDEX_HINT_FORCE].any()) &&
+        (index_join[INDEX_HINT_USE].any() ||  have_empty_use_join ||
+         index_order[INDEX_HINT_USE].any() || have_empty_use_order ||
+         index_group[INDEX_HINT_USE].any() || have_empty_use_group))
     {
       my_error(ER_WRONG_USAGE, MYF(0), index_hint_type_name[INDEX_HINT_USE],
                index_hint_type_name[INDEX_HINT_FORCE]);
@@ -3561,23 +3561,23 @@ bool TableList::process_index_hints(Table *tbl)
     }
 
     /* process FORCE INDEX as USE INDEX with a flag */
-    if (!index_join[INDEX_HINT_FORCE].is_clear_all() ||
-        !index_order[INDEX_HINT_FORCE].is_clear_all() ||
-        !index_group[INDEX_HINT_FORCE].is_clear_all())
+    if (index_join[INDEX_HINT_FORCE].any() ||
+        index_order[INDEX_HINT_FORCE].any() ||
+        index_group[INDEX_HINT_FORCE].any())
     {
       tbl->force_index= true;
-      index_join[INDEX_HINT_USE].merge(index_join[INDEX_HINT_FORCE]);
-      index_order[INDEX_HINT_USE].merge(index_order[INDEX_HINT_FORCE]);
-      index_group[INDEX_HINT_USE].merge(index_group[INDEX_HINT_FORCE]);
+      index_join[INDEX_HINT_USE]|= index_join[INDEX_HINT_FORCE];
+      index_order[INDEX_HINT_USE]|= index_order[INDEX_HINT_FORCE];
+      index_group[INDEX_HINT_USE]|= index_group[INDEX_HINT_FORCE];
     }
 
     /* apply USE INDEX */
-    if (!index_join[INDEX_HINT_USE].is_clear_all() || have_empty_use_join)
-      tbl->keys_in_use_for_query.intersect(index_join[INDEX_HINT_USE]);
-    if (!index_order[INDEX_HINT_USE].is_clear_all() || have_empty_use_order)
-      tbl->keys_in_use_for_order_by.intersect (index_order[INDEX_HINT_USE]);
-    if (!index_group[INDEX_HINT_USE].is_clear_all() || have_empty_use_group)
-      tbl->keys_in_use_for_group_by.intersect (index_group[INDEX_HINT_USE]);
+    if (index_join[INDEX_HINT_USE].any() || have_empty_use_join)
+      tbl->keys_in_use_for_query&= index_join[INDEX_HINT_USE];
+    if (index_order[INDEX_HINT_USE].any() || have_empty_use_order)
+      tbl->keys_in_use_for_order_by&= index_order[INDEX_HINT_USE];
+    if (index_group[INDEX_HINT_USE].any() || have_empty_use_group)
+      tbl->keys_in_use_for_group_by&= index_group[INDEX_HINT_USE];
 
     /* apply IGNORE INDEX */
     tbl->keys_in_use_for_query.subtract (index_join[INDEX_HINT_IGNORE]);
@@ -4850,7 +4850,7 @@ uint32_t Table::find_shortest_key(const key_map *usable_keys)
 {
   uint32_t min_length= UINT32_MAX;
   uint32_t best= MAX_KEY;
-  if (!usable_keys->is_clear_all())
+  if (usable_keys->any())
   {
     for (uint32_t nr=0; nr < s->keys ; nr++)
     {
@@ -5001,7 +5001,7 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   map= (table_map) 1 << table_number;
   force_index= table_list->force_index;
   covering_keys= s->keys_for_keyread;
-  merge_keys.clear_all();
+  merge_keys.reset();
 }
 
 
