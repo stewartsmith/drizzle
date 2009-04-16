@@ -729,7 +729,9 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
 }
 
 /*
- *
+ * Helper function which tests whether a bit is set in the 
+ * bitset or not. It also sets the bit after this test is
+ * performed.
  */
 static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
 {
