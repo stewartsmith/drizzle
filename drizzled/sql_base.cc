@@ -5423,7 +5423,7 @@ bool get_key_map_from_key_list(key_map *map, Table *table,
   String *name;
   uint32_t pos;
 
-  map->clear_all();
+  map->reset();
   while ((name=it++))
   {
     if (table->s->keynames.type_names == 0 ||
@@ -5433,10 +5433,10 @@ bool get_key_map_from_key_list(key_map *map, Table *table,
     {
       my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), name->c_ptr(),
 	       table->pos_in_table_list->alias);
-      map->set_all();
+      map->set();
       return 1;
     }
-    map->set_bit(pos-1);
+    map->set(pos-1);
   }
   return 0;
 }
