@@ -55,6 +55,16 @@ bool is_prefix(const key_map& map, const uint32_t prefix_size)
   return true;
 }
 
+void set_prefix(key_map& map, const uint32_t prefix_size)
+{
+  size_t pos= 0;
+
+  for (; pos < prefix_size && pos < map.size(); pos++)
+  {
+    map.set(pos);
+  }
+}
+
 bool is_overlapping(const key_map& map, const key_map& map2)
 {
   size_t count;

@@ -31,6 +31,7 @@ typedef std::bitset<((MAX_INDEXES+7)/8*8)> key_map;
 
 bool is_subset(const key_map& map, const key_map& map2);
 bool is_prefix(const key_map& map, const uint32_t n);
+void set_prefix(key_map& map, const uint32_t n);
 bool is_overlapping(const key_map& map, const key_map& map2);
 
 #endif
