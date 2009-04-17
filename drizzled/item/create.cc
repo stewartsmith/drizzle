@@ -87,7 +87,6 @@
 #include <drizzled/function/math/floor.h>
 #include <drizzled/function/found_rows.h>
 #include <drizzled/function/get_system_var.h>
-#include <drizzled/function/get_variable.h>
 #include <drizzled/function/math/int_val.h>
 #include <drizzled/function/math/integer.h>
 #include <drizzled/function/last_insert.h>

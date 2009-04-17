@@ -1232,6 +1232,7 @@ public:
     return lex->current_select->add_group_to_list(this, item, asc);
   }
   void refresh_status();
+  user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
 };
 
 /*

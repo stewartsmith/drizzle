@@ -20,7 +20,6 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/set_user_var.h>
-#include <drizzled/function/get_variable.h>
 #include <drizzled/function/update_hash.h>
 #include <drizzled/field/num.h>
 #include <drizzled/virtual_column_info.h>
@@ -40,7 +39,7 @@ bool Item_func_set_user_var::fix_fields(Session *session, Item **ref)
   assert(fixed == 0);
   /* fix_fields will call Item_func_set_user_var::fix_length_and_dec */
   if (Item_func::fix_fields(session, ref) ||
-      !(entry= get_variable(&session->user_vars, name, 1)))
+      !(entry= session->getVariable(name, true)))
     return true;
   /*
      Remember the last query which updated it, this way a query can later know
