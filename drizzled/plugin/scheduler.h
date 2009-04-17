@@ -23,6 +23,9 @@
 #ifndef DRIZZLED_PLUGIN_SCHEDULING_H
 #define DRIZZLED_PLUGIN_SCHEDULING_H
 
+#include <string>
+#include <vector>
+
 class Scheduler
 {
 private:
@@ -56,6 +59,7 @@ public:
 class SchedulerFactory
 {
   std::string name;
+  std::vector<std::string> aliases;
 protected:
   Scheduler *scheduler;
 public:
@@ -64,6 +68,12 @@ public:
   virtual ~SchedulerFactory() {}
   virtual Scheduler *operator()(void)= 0;
   std::string getName() {return name;}
+  const std::vector<std::string>& getAliases() {return aliases;}
+  void addAlias(std::string alias)
+  {
+    aliases.push_back(alias);
+  }
+
 };
 
 #endif /* DRIZZLED_PLUGIN_SCHEDULING_H */

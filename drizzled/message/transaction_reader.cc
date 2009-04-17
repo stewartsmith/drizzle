@@ -217,12 +217,12 @@ int main(int argc, char* argv[])
       cerr << "Memory allocation failure trying to allocate " << length << " bytes."  << endl;
       exit(1);
     }
-    memset(temp_buffer, 0, length);
+    memset(temp_buffer, 0, (size_t)length);
     buffer= temp_buffer;
     size_t read_bytes= 0;
 
     /* Read the transaction */
-    if ((read_bytes= read(file, buffer, (uint64_t)length)) != (uint64_t)length)
+    if ((read_bytes= read(file, buffer, (size_t)length)) != (size_t)length)
     {
       cerr << "Could not read entire transaction. Read " << read_bytes << " bytes instead of " << length << " bytes." << endl;
       exit(1);

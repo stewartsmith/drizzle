@@ -251,7 +251,9 @@ bool volatile abort_loop;
 int abort_pipe[2];
 bool volatile shutdown_in_progress;
 uint32_t max_used_connections;
-const char *opt_scheduler= "multi_thread";
+const string opt_scheduler_default("multi_thread");
+char *opt_scheduler= NULL;
+
 const char *opt_protocol= "oldlibdrizzle";
 
 size_t my_thread_stack_size= 65536;
@@ -1600,6 +1602,23 @@ static int init_server_components()
     }
   }
 
+  string scheduler_name;
+  if (opt_scheduler)
+  {
+    scheduler_name= opt_scheduler;
+  }
+  else
+  {
+    scheduler_name= opt_scheduler_default;
+  }
+
+  if (set_scheduler_factory(scheduler_name))
+  {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                   _("No scheduler found, cannot continue!\n"));
+      unireg_abort(1);
+  }
+
   /* We have to initialize the storage engines before CSV logging */
   if (ha_init())
   {
@@ -2062,6 +2081,7 @@ enum options_drizzled
   OPT_DEFAULT_TIME_ZONE,
   OPT_OPTIMIZER_SEARCH_DEPTH,
   OPT_SCHEDULER,
+  OPT_PROTOCOL,
   OPT_OPTIMIZER_PRUNE_LEVEL,
   OPT_AUTO_INCREMENT, OPT_AUTO_INCREMENT_OFFSET,
   OPT_ENABLE_LARGE_PAGES,
@@ -2464,7 +2484,7 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.preload_buff_size,
    (char**) &max_system_variables.preload_buff_size, 0, GET_ULL,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
-  {"protocol", OPT_SCHEDULER,
+  {"protocol", OPT_PROTOCOL,
    N_("Select protocol to be used (by default oldlibdrizzle)."),
    (char**) &opt_protocol, (char**) &opt_protocol, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -2502,9 +2522,9 @@ struct my_option my_long_options[] =
    GET_UINT, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
    UINT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
   {"scheduler", OPT_SCHEDULER,
-   N_("Select scheduler to be used (by default pool-of-threads)."),
-   (char**) &opt_scheduler, (char**) &opt_scheduler, 0,
-   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Select scheduler to be used (by default multi-thread)."),
+   (char**)&opt_scheduler, (char**)&opt_scheduler,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,

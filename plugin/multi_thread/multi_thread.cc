@@ -100,7 +100,11 @@ public:
 class MultiThreadFactory : public SchedulerFactory
 {
 public:
-  MultiThreadFactory() : SchedulerFactory("multi_thread") {}
+  MultiThreadFactory() : SchedulerFactory("multi_thread")
+  {
+    addAlias("multi-thread");
+  }
+
   ~MultiThreadFactory() { if (scheduler != NULL) delete scheduler; }
   Scheduler *operator() ()
   {

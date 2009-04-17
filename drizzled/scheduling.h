@@ -22,8 +22,11 @@
 
 #include <drizzled/plugin/scheduler.h>
 
+#include <string>
+
 Scheduler& get_thread_scheduler();
 bool add_scheduler_factory(SchedulerFactory *scheduler);
 bool remove_scheduler_factory(SchedulerFactory *scheduler);
+bool set_scheduler_factory(const std::string& name);
 
 #endif /* DRIZZLED_SCHEDULING_H */
