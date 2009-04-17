@@ -27,7 +27,7 @@
 
 /* Used for finding keys */
 #if MAX_INDEXES <= 64
-typedef std::bitset<64>  key_map;
+typedef std::bitset<72> key_map;
 #else
 typedef std::bitset<((MAX_INDEXES+7)/8*8)> key_map;
 #endif
