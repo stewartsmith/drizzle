@@ -1006,12 +1006,8 @@ int ha_myisam::assign_to_keycache(Session* session, HA_CHECK_OPT *check_opt)
 
   if (table_list->process_index_hints(table))
     return(HA_ADMIN_FAILED);
-  map= ~(uint64_t) 0;
-  if (table->keys_in_use_for_query.any())
-    /* use all keys if there's no list specified by the user through hints */
-    map= table->keys_in_use_for_query.to_ulong();
 
-  if ((error= mi_assign_to_key_cache(file, map, new_key_cache)))
+  if ((error= mi_assign_to_key_cache(file, table->keys_in_use_for_query, new_key_cache)))
   {
     char buf[STRING_BUFFER_USUAL_SIZE];
     snprintf(buf, sizeof(buf),

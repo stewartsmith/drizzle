@@ -48,7 +48,7 @@ using namespace std;
     #  Error code
 */
 
-int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map,
+int mi_assign_to_key_cache(MI_INFO *info, key_map& key_map,
 			   KEY_CACHE *key_cache)
 {
   (void)key_map;
@@ -143,10 +143,11 @@ void mi_change_key_cache(KEY_CACHE *old_key_cache,
   list<MI_INFO *>::iterator it= myisam_open_list.begin();
   while (it != myisam_open_list.end())
   {
+    key_map key_map_param(UINT64_MAX);
     MI_INFO *info= *it;
     MYISAM_SHARE *share= info->s;
     if (share->key_cache == old_key_cache)
-      mi_assign_to_key_cache(info, UINT64_MAX, new_key_cache);
+      mi_assign_to_key_cache(info, key_map_param, new_key_cache);
     ++it;
   }
 
