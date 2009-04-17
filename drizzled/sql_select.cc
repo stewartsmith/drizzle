@@ -16030,7 +16030,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
             extra.append(STRING_WITH_LEN("; Range checked for each "
                                          "record (index map: 0x"));
             ostringstream s;
-            s << hex << tab->keys.to_ulong();
+            s << uppercase << hex << tab->keys.to_ulong();
             const char *par= s.str().c_str();
             extra.append(par);
             extra.append(')');
