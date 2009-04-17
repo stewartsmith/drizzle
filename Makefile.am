@@ -30,6 +30,9 @@ SUBDIRS = ${po} \
 	  drizzled \
 	  tests \
 	  support-files
+# Include DIST_SUBDIRS specifically to prevent trying to msgmerge on 
+# platforms that don't have it
+DIST_SUBDIRS= ${SUBDIRS}
 
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4
