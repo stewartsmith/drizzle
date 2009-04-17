@@ -32,7 +32,8 @@ SUBDIRS = ${po} \
 	  support-files
 
 BUILT_SOURCES=		drizzled/configmake.h
-EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4
+EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
+			config/plugin.ac config/plugin.am
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment
 MAINTAINERCLEANFILES=	autom4te.cache
@@ -201,6 +202,10 @@ extra_mysql_waitpid_LDADD= \
 		$(top_builddir)/mysys/libmysys.la \
 		$(top_builddir)/mystrings/libmystrings.la \
 		$(LIBINTL)
+
+EXTRA_LTLIBRARIES=
+pkgplugin_LTLIBRARIES=
+include config/plugin.am
 
 # Create empty datadir 
 install-data-local:

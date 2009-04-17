@@ -1106,6 +1106,11 @@ DRIZZLE_CHECK_MAX_INDEXES
 #--------------------------------------------------------------------
 
 DRIZZLE_CONFIGURE_PLUGINS([none])
+m4_include(config/plugin.ac)
+dnl Add code here to read set plugin lists and  set drizzled_default_plugin_list
+AC_DEFINE_UNQUOTED([DRIZZLED_PLUGIN_LIST],[$drizzled_default_plugin_list],
+                   [List of plugins that should be loaded on startup if no
+                    value is given for --plugin-load])
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
@@ -1368,7 +1373,7 @@ AC_CACHE_CHECK(
       AC_LANG_PROGRAM(
         [[
 __attribute__((visibility ("hidden")))
-void testme() {  };
+void testme() {  }
         ]],[[testme()]]
       )],  
       [ac_cv_can_use_hidden_=yes],
