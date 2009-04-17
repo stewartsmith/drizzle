@@ -143,7 +143,13 @@ void mi_change_key_cache(KEY_CACHE *old_key_cache,
   list<MI_INFO *>::iterator it= myisam_open_list.begin();
   while (it != myisam_open_list.end())
   {
-    key_map key_map_param(UINT64_MAX);
+    /* 
+     * TODO: is this necessary? can we just delete the key_map parameter to 
+     *       mi_assign_to_key_cache? couldn't create a key_map from
+     *       UINT64_MAX as it gives a compilation error on mac.
+     */
+    //key_map key_map_param(UINT64_MAX); 
+    key_map key_map_param;
     MI_INFO *info= *it;
     MYISAM_SHARE *share= info->s;
     if (share->key_cache == old_key_cache)
