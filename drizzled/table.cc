@@ -1290,7 +1290,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
           if (ha_option & HA_PRIMARY_KEY_IN_READ_INDEX)
           {
             field->part_of_key= share->keys_in_use;
-            if (field->part_of_sortkey.is_set(key))
+            if (field->part_of_sortkey.test(key))
               field->part_of_sortkey= share->keys_in_use;
           }
         }
@@ -1313,7 +1313,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
         set_if_bigger(share->max_unique_length,keyinfo->key_length);
     }
     if (primary_key < MAX_KEY &&
-	(share->keys_in_use.is_set(primary_key)))
+	(share->keys_in_use.test(primary_key)))
     {
       share->primary_key= primary_key;
       /*
@@ -3586,7 +3586,7 @@ bool TableList::process_index_hints(Table *tbl)
   }
 
   /* make sure covering_keys don't include indexes disabled with a hint */
-  tbl->covering_keys.intersect(tbl->keys_in_use_for_query);
+  tbl->covering_keys&= tbl->keys_in_use_for_query;
   return 0;
 }
 
@@ -4854,7 +4854,7 @@ uint32_t Table::find_shortest_key(const key_map *usable_keys)
   {
     for (uint32_t nr=0; nr < s->keys ; nr++)
     {
-      if (usable_keys->is_set(nr))
+      if (usable_keys->test(nr))
       {
         if (key_info[nr].key_length < min_length)
         {

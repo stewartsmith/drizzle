@@ -633,7 +633,7 @@ public:
 
   /*
     Possible ways to read rows using index_merge. The list is non-empty only
-    if type==KEY. Currently can be non empty only if keys_map.is_clear_all().
+    if type==KEY. Currently can be non empty only if keys_map.none().
   */
   List<SEL_IMERGE> merges;
 
@@ -1826,7 +1826,7 @@ uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit)
 
   for (idx= 0; idx < table->s->keys; idx++)
   {
-    if (!(table->keys_in_use_for_query.is_set(idx)))
+    if (!(table->keys_in_use_for_query.test(idx)))
       continue;
     KEY_PART_INFO *keyinfo= table->key_info[idx].key_part;
     uint32_t n_parts=  table->key_info[idx].key_parts;
@@ -2271,7 +2271,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
     param.alloced_sel_args= 0;
 
     /* Calculate cost of full index read for the shortest covering index */
-    if (!head->covering_keys.is_clear_all())
+    if (!head->covering_keys.none())
     {
       int key_for_use= head->find_shortest_key(&head->covering_keys);
       double key_read_time=
@@ -3567,7 +3567,7 @@ static TRP_RANGE *get_key_scans_params(PARAM *param, SEL_TREE *tree,
         param->needed_reg->set(keynr);
 
       bool read_index_only= index_read_must_be_used ||
-                            param->table->covering_keys.is_set(keynr);
+                            param->table->covering_keys.test(keynr);
 
       found_records= check_quick_select(param, idx, read_index_only, *key,
                                         update_tbl_stats, &mrr_flags,
@@ -8047,7 +8047,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
        cur_index_info++, cur_index++)
   {
     /* Check (B1) - if current index is covering. */
-    if (!table->covering_keys.is_set(cur_index))
+    if (!table->covering_keys.test(cur_index))
       goto next_index;
 
     /*
@@ -8071,7 +8071,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
           part of 'cur_index'
         */
         if (table->read_set->test(cur_field->field_index) &&
-            !cur_field->part_of_key_not_clustered.is_set(cur_index))
+            !cur_field->part_of_key_not_clustered.test(cur_index))
           goto next_index;                  // Field was not part of key
       }
     }
