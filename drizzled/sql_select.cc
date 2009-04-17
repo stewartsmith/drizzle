@@ -3672,7 +3672,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 	    keyuse++;
 	  } while (keyuse->table == table && keyuse->key == key);
 
-	  if (is_prefix(eq_part, table->key_info[key].key_parts) &&
+	  if (is_keymap_prefix(eq_part, table->key_info[key].key_parts) &&
               !table->pos_in_table_list->embedding)
 	  {
             if ((table->key_info[key].flags & (HA_NOSAME))
@@ -7113,7 +7113,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    the index if we are using limit and this is the first table
 	  */
 
-	  if ((cond && (!is_subset(tab->keys, tab->const_keys) && i > 0)) ||
+	  if ((cond && (!((tab->const_keys & tab->keys) == tab->keys) && i > 0)) ||
 	      (!tab->const_keys.none() && (i == join->const_tables) && (join->unit->select_limit_cnt < join->best_positions[i].records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
 	  {
 	    /* Join with outer join condition */
@@ -7165,8 +7165,8 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    sel->needed_reg=tab->needed_reg;
 	    sel->quick_keys.reset();
 	  }
-	  if (!is_subset(sel->quick_keys, tab->checked_keys) ||
-              !is_subset(sel->needed_reg, tab->checked_keys))
+	  if (!((tab->checked_keys & sel->quick_keys) == sel->quick_keys) ||
+              !((tab->checked_keys & sel->needed_reg) == sel->needed_reg))
 	  {
 	    tab->keys= sel->quick_keys;
             tab->keys|= sel->needed_reg;

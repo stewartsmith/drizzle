@@ -21,20 +21,7 @@
 
 #include <drizzled/key_map.h>
 
-bool is_subset(const key_map& map, const key_map& map2)
-{
-
-  size_t count;
-  for (count= 0; count < map.size(); count++)
-  {
-    if (map[count] & ~map2[count])
-      return true;
-  }
-  return false;
-
-}
-
-bool is_prefix(const key_map& map, const uint32_t prefix_size)
+bool is_keymap_prefix(const key_map& map, const uint32_t prefix_size)
 {
   size_t pos= 0;
 
