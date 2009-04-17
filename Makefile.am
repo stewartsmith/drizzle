@@ -81,7 +81,6 @@ noinst_HEADERS=	\
 		mysys/iocache.h \
 		mysys/my_alloc.h \
 		mysys/my_bit.h \
-		mysys/my_bitmap.h \
 		mysys/my_dir.h \
 		mysys/my_getopt.h \
 		mysys/my_pthread.h \
@@ -144,7 +143,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_access.cc \
 		mysys/my_alloc.cc \
 		mysys/my_bit.cc \
-		mysys/my_bitmap.cc \
 		mysys/my_copy.cc \
 		mysys/my_create.cc \
 		mysys/my_delete.cc \

@@ -2756,7 +2756,6 @@ static
 ROR_SCAN_INFO *make_ror_scan(const PARAM *param, int idx, SEL_ARG *sel_arg)
 {
   ROR_SCAN_INFO *ror_scan;
-  my_bitmap_map *bitmap_buf;
   uint32_t keynr;
 
   if (!(ror_scan= (ROR_SCAN_INFO*)alloc_root(param->mem_root,
@@ -2769,11 +2768,6 @@ ROR_SCAN_INFO *make_ror_scan(const PARAM *param, int idx, SEL_ARG *sel_arg)
                              param->table->file->ref_length);
   ror_scan->sel_arg= sel_arg;
   ror_scan->records= param->table->quick_rows[keynr];
-
-  if (!(bitmap_buf= (my_bitmap_map*) alloc_root(param->mem_root,
-                                                param->fields_bitmap_size)))
-    return NULL;
-
   ror_scan->covered_fields.reset();
 
   KEY_PART_INFO *key_part= param->table->key_info[keynr].key_part;
@@ -6315,7 +6309,7 @@ ha_rows check_quick_select(PARAM *param, uint32_t idx, bool index_only,
     param->table->quick_rows[keynr]=rows;
     if (update_tbl_stats)
     {
-      param->table->quick_keys.set_bit(keynr);
+      param->table->quick_keys.set(keynr);
       param->table->quick_key_parts[keynr]=param->max_key_part+1;
       param->table->quick_n_ranges[keynr]= param->range_count;
       param->table->quick_condition_rows=

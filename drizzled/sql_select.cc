@@ -3445,10 +3445,10 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
   {
     TableList *embedding= tables->embedding;
     stat_vector[i]=s;
-    s->keys.init();
-    s->const_keys.init();
-    s->checked_keys.init();
-    s->needed_reg.init();
+    s->keys.reset();
+    s->const_keys.reset();
+    s->checked_keys.reset();
+    s->needed_reg.reset();
     table_vector[i]=s->table=table=tables->table;
     table->pos_in_table_list= tables;
     error= table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
@@ -3654,7 +3654,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 	{
 	  start_keyuse=keyuse;
 	  key=keyuse->key;
-	  s->keys.set_bit(key);               // QQ: remove this ?
+	  s->keys.set(key);               // QQ: remove this ?
 
 	  refs=0;
           const_ref.reset();
@@ -3672,7 +3672,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 	    keyuse++;
 	  } while (keyuse->table == table && keyuse->key == key);
 
-	  if (eq_part.is_prefix(table->key_info[key].key_parts) &&
+	  if (is_prefix(eq_part, table->key_info[key].key_parts) &&
               !table->pos_in_table_list->embedding)
 	  {
             if ((table->key_info[key].flags & (HA_NOSAME))
@@ -4706,7 +4706,7 @@ update_ref_and_keys(Session *session, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
       /* Save ptr to first use */
       if (!use->table->reginfo.join_tab->keyuse)
 	use->table->reginfo.join_tab->keyuse=save_pos;
-      use->table->reginfo.join_tab->checked_keys.set_bit(use->key);
+      use->table->reginfo.join_tab->checked_keys.set(use->key);
       save_pos++;
     }
     i=(uint32_t) (save_pos-(KEYUSE*) keyuse->buffer);
@@ -6660,8 +6660,7 @@ make_simple_join(JOIN *join,Table *tmp_table)
   join_tab->select_cond=0;
   join_tab->quick=0;
   join_tab->type= JT_ALL;			/* Map through all records */
-  join_tab->keys.init();
-  join_tab->keys.set_all();                     /* test everything in quick */
+  join_tab->keys.set();                     /* test everything in quick */
   join_tab->info=0;
   join_tab->on_expr_ref=0;
   join_tab->last_inner= 0;
@@ -7114,7 +7113,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    the index if we are using limit and this is the first table
 	  */
 
-	  if ((cond && (!tab->keys.is_subset(tab->const_keys) && i > 0)) ||
+	  if ((cond && (!is_subset(tab->keys, tab->const_keys) && i > 0)) ||
 	      (!tab->const_keys.none() && (i == join->const_tables) && (join->unit->select_limit_cnt < join->best_positions[i].records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
 	  {
 	    /* Join with outer join condition */
@@ -7166,11 +7165,11 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    sel->needed_reg=tab->needed_reg;
 	    sel->quick_keys.reset();
 	  }
-	  if (!sel->quick_keys.is_subset(tab->checked_keys) ||
-              !sel->needed_reg.is_subset(tab->checked_keys))
+	  if (!is_subset(sel->quick_keys, tab->checked_keys) ||
+              !is_subset(sel->needed_reg, tab->checked_keys))
 	  {
-	    tab->keys=sel->quick_keys;
-            tab->keys.merge(sel->needed_reg);
+	    tab->keys= sel->quick_keys;
+            tab->keys|= sel->needed_reg;
 	    tab->use_quick= (!sel->needed_reg.none() &&
 			     (select->quick_keys.none() ||
 			      (select->quick &&
@@ -16027,10 +16026,10 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	  if (tab->use_quick == 2)
 	  {
             /* 4 bits per 1 hex digit + terminating '\0' */
-            char buf[MAX_KEY / 4 + 1];
+            //char buf[MAX_KEY / 4 + 1];
             extra.append(STRING_WITH_LEN("; Range checked for each "
                                          "record (index map: 0x"));
-            extra.append(tab->keys.print(buf));
+            //extra.append(print_key_map(tab->keys, buf));
             extra.append(')');
 	  }
 	  else if (tab->select->cond)

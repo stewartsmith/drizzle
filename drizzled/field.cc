@@ -1239,9 +1239,9 @@ Field *Field::new_field(MEM_ROOT *root, Table *new_table, bool)
   if (tmp->table->maybe_null)
     tmp->flags&= ~NOT_NULL_FLAG;
   tmp->table= new_table;
-  tmp->key_start.init(0);
-  tmp->part_of_key.init(0);
-  tmp->part_of_sortkey.init(0);
+  tmp->key_start.reset();
+  tmp->part_of_key.reset();
+  tmp->part_of_sortkey.reset();
   tmp->unireg_check= Field::NONE;
   tmp->flags&= (NOT_NULL_FLAG | BLOB_FLAG | UNSIGNED_FLAG | BINARY_FLAG | ENUM_FLAG | SET_FLAG);
   tmp->reset_fields();

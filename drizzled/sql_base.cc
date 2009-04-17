@@ -5570,7 +5570,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
           {
             session->used_tables|= field_table->map;
             field_table->covering_keys&= field->part_of_key;
-            field_table->merge_keys.merge(field->part_of_key);
+            field_table->merge_keys|= field->part_of_key;
             field_table->used_fields++;
           }
         }

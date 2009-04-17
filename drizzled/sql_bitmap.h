@@ -20,20 +20,12 @@
 #ifndef _SQL_BITMAP_H_
 #define _SQL_BITMAP_H_
 
-/*
-  Implementation of a bitmap type.
-  The idea with this is to be able to handle any constant number of bits but
-  also be able to use 32 or 64 bits bitmaps very efficiently
-*/
-
-/// TODO: OMG FIX THIS
-
-#include <mysys/my_bitmap.h>
-#include <drizzled/definitions.h>
 #include <drizzled/util/test.h>
 #include <drizzled/key_map.h>
 
 #include <bitset>
+
+#define BIT_NONE (~(uint32_t) 0)
 
 typedef uint64_t table_map;          /* Used for table bits in join */
 typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
@@ -45,7 +37,7 @@ typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
 */
 typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
 
-/* useful constants */#
+/* useful constants */
 extern const key_map key_map_empty;
 extern key_map key_map_full;          /* Should be threaded as const */
 
@@ -60,7 +52,7 @@ uint32_t setNextBit(std::bitset<MAX_FIELDS> &bitmap);
 /*
  * Returns the position of the first bit in the
  * given bitmap which is not set. If every bit is set
- * in the bitmap, return MY_BIT_NONE.
+ * in the bitmap, return BIT_NONE.
  *
  * @param the bitmap to work with
  */

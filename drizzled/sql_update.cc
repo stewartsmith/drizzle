@@ -103,8 +103,8 @@ static void prepare_record_for_error_message(int error, Table *table)
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */
-  unique_map &= table->read_set->flip();
-  unique_map &= table->write_set->flip();
+  unique_map&= table->read_set->flip();
+  unique_map&= table->write_set->flip();
   table->read_set->flip();
   table->write_set->flip();
 

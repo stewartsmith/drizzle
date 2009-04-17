@@ -75,3 +75,9 @@ bool is_overlapping(const key_map& map, const key_map& map2)
   }
   return true;
 }
+
+void key_map_subtract(key_map& map1, key_map& map2)
+{
+  map1&= map2.flip();
+  map2.flip();
+}

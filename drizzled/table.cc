@@ -655,8 +655,8 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
     share->keynames.type_lengths[keynr]= indx.name().length();
   }
 
-  share->keys_for_keyread.init(0);
-  share->keys_in_use.init(share->keys);
+  share->keys_for_keyread.reset();
+  set_prefix(share->keys_in_use, share->keys);
 
   if(table_options.has_connect_string())
   {
@@ -1263,18 +1263,18 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
                            (keyinfo->key_parts == 1)) ?
                            UNIQUE_KEY_FLAG : MULTIPLE_KEY_FLAG);
         if (i == 0)
-          field->key_start.set_bit(key);
+          field->key_start.set(key);
         if (field->key_length() == key_part->length &&
             !(field->flags & BLOB_FLAG))
         {
           if (handler_file->index_flags(key, i, 0) & HA_KEYREAD_ONLY)
           {
-            share->keys_for_keyread.set_bit(key);
-            field->part_of_key.set_bit(key);
-            field->part_of_key_not_clustered.set_bit(key);
+            share->keys_for_keyread.set(key);
+            field->part_of_key.set(key);
+            field->part_of_key_not_clustered.set(key);
           }
           if (handler_file->index_flags(key, i, 1) & HA_READ_ORDER)
-            field->part_of_sortkey.set_bit(key);
+            field->part_of_sortkey.set(key);
         }
         if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
             usable_parts == i)
@@ -1794,9 +1794,9 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
 
   if (!(outparam->alias= strdup(alias)))
     goto err;
-  outparam->quick_keys.init();
-  outparam->covering_keys.init();
-  outparam->keys_in_use_for_query.init();
+  outparam->quick_keys.reset();
+  outparam->covering_keys.reset();
+  outparam->keys_in_use_for_query.reset();
 
   /* Allocate handler */
   outparam->file= 0;
@@ -3298,7 +3298,7 @@ void Table::mark_columns_needed_for_update()
     for (reg_field= field ; *reg_field ; reg_field++)
     {
       /* Merge keys is all keys that had a column refered to in the query */
-      if (merge_keys.is_overlapping((*reg_field)->part_of_key))
+      if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
         read_set->set((*reg_field)->field_index);
     }
     file->column_bitmaps_signal();
@@ -3580,9 +3580,9 @@ bool TableList::process_index_hints(Table *tbl)
       tbl->keys_in_use_for_group_by&= index_group[INDEX_HINT_USE];
 
     /* apply IGNORE INDEX */
-    tbl->keys_in_use_for_query.subtract (index_join[INDEX_HINT_IGNORE]);
-    tbl->keys_in_use_for_order_by.subtract (index_order[INDEX_HINT_IGNORE]);
-    tbl->keys_in_use_for_group_by.subtract (index_group[INDEX_HINT_IGNORE]);
+    key_map_subtract(tbl->keys_in_use_for_query, index_join[INDEX_HINT_IGNORE]);
+    key_map_subtract(tbl->keys_in_use_for_order_by, index_order[INDEX_HINT_IGNORE]);
+    key_map_subtract(tbl->keys_in_use_for_group_by, index_group[INDEX_HINT_IGNORE]);
   }
 
   /* make sure covering_keys don't include indexes disabled with a hint */
@@ -3752,7 +3752,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint32_t  copy_func_count= param->func_count;
   uint32_t  hidden_null_count, hidden_null_pack_length, hidden_field_count;
   uint32_t  blob_count,group_null_items, string_count;
-  uint32_t  temp_pool_slot= MY_BIT_NONE;
+  uint32_t  temp_pool_slot= BIT_NONE;
   uint32_t fieldnr= 0;
   ulong reclength, string_total_length;
   bool  using_unique_constraint= 0;
@@ -3776,7 +3776,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
     setNextBit(temp_pool);
 
-  if (temp_pool_slot != MY_BIT_NONE) // we got a slot
+  if (temp_pool_slot != BIT_NONE) // we got a slot
     sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
             (unsigned long)current_pid, temp_pool_slot);
   else
@@ -3849,14 +3849,14 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
   {
-    if (temp_pool_slot != MY_BIT_NONE)
+    if (temp_pool_slot != BIT_NONE)
       temp_pool.reset(temp_pool_slot);
     return(NULL);				/* purecov: inspected */
   }
   /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
   {
-    if (temp_pool_slot != MY_BIT_NONE)
+    if (temp_pool_slot != BIT_NONE)
       temp_pool.reset(temp_pool_slot);
     free_root(&own_root, MYF(0));               /* purecov: inspected */
     return(NULL);				/* purecov: inspected */
@@ -3882,9 +3882,9 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->temp_pool_slot= temp_pool_slot;
   table->copy_blobs= 1;
   table->in_use= session;
-  table->quick_keys.init();
-  table->covering_keys.init();
-  table->keys_in_use_for_query.init();
+  table->quick_keys.reset();
+  table->covering_keys.reset();
+  table->keys_in_use_for_query.reset();
 
   table->setShare(share);
   init_tmp_table_share(session, share, "", 0, tmpname, tmpname);
@@ -3893,8 +3893,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
   share->table_charset= param->table_charset;
   share->primary_key= MAX_KEY;               // Indicate no primary key
-  share->keys_for_keyread.init();
-  share->keys_in_use.init();
+  share->keys_for_keyread.reset();
+  share->keys_in_use.reset();
 
   /* Calculate which type of fields we will store in the temporary table */
 
@@ -4408,7 +4408,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
-  if (temp_pool_slot != MY_BIT_NONE)
+  if (temp_pool_slot != BIT_NONE)
     temp_pool.reset(temp_pool_slot);
   return(NULL);				/* purecov: inspected */
 }
@@ -4718,7 +4718,7 @@ void Table::free_tmp_table(Session *session)
     (*ptr)->free();
   free_io_cache(this);
 
-  if (temp_pool_slot != MY_BIT_NONE)
+  if (temp_pool_slot != BIT_NONE)
     temp_pool.reset(temp_pool_slot);
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */

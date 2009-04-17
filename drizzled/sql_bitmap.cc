@@ -29,7 +29,7 @@
  * bitsets and methods for thread-safe bitsets.
  */
 
-#include "drizzled/sql_bitmap.h"
+#include <drizzled/sql_bitmap.h>
 
 #include <bitset>
 
@@ -38,14 +38,14 @@ using namespace std;
 uint32_t setNextBit(bitset<MAX_FIELDS> &bitmap)
 {
   uint32_t bit_found;
-  if ((bit_found= getFirstBitPos(bitmap)) != MY_BIT_NONE)
+  if ((bit_found= getFirstBitPos(bitmap)) != BIT_NONE)
     bitmap.set(bit_found);
   return bit_found;
 }
 
 uint32_t getFirstBitPos(const bitset<MAX_FIELDS> &bitmap)
 {
-  uint32_t first_bit= MY_BIT_NONE;
+  uint32_t first_bit= BIT_NONE;
   for (int idx= 0; idx < MAX_FIELDS; idx++)
   {
     if (!bitmap.test(idx))
