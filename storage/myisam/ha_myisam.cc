@@ -999,7 +999,6 @@ int ha_myisam::assign_to_keycache(Session* session, HA_CHECK_OPT *check_opt)
   KEY_CACHE *new_key_cache= check_opt->key_cache;
   const char *errmsg= 0;
   int error= HA_ADMIN_OK;
-  uint64_t map;
   TableList *table_list= table->pos_in_table_list;
 
   table->keys_in_use_for_query.reset();
