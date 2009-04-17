@@ -36,6 +36,7 @@
 
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
+#include <drizzled/key_map.h>
 
 #include<bitset>
 

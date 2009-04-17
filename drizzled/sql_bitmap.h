@@ -20,8 +20,9 @@
 #ifndef _SQL_BITMAP_H_
 #define _SQL_BITMAP_H_
 
+#include <drizzled/global.h>
+#include <drizzled/definitions.h>
 #include <drizzled/util/test.h>
-#include <drizzled/key_map.h>
 
 #include <bitset>
 
@@ -36,10 +37,6 @@ typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
   element)
 */
 typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
-
-/* useful constants */
-extern const key_map key_map_empty;
-extern key_map key_map_full;          /* Should be threaded as const */
 
 /*
  * Finds the first bit that is not set and sets

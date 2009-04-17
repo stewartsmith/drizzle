@@ -27,6 +27,7 @@
 
 #include <drizzled/sql_error.h>
 #include <drizzled/my_decimal.h>
+#include <drizzled/key_map.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
 /* System-wide common data structures */

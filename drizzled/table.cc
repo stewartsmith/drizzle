@@ -1373,13 +1373,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
   }
 
   share->db_low_byte_first= handler_file->low_byte_first();
-  share->column_bitmap_size= bitmap_buffer_size(share->fields);
-
-  my_bitmap_map *bitmaps;
-
-  if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
-                                             share->column_bitmap_size)))
-    goto err;
   share->all_set.set();
 
   if(handler_file)
@@ -3759,7 +3752,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   bool  use_packed_rows= 0;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
   char  *tmpname,path[FN_REFLEN];
-  unsigned char	*pos, *group_buff, *bitmaps;
+  unsigned char	*pos, *group_buff;
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
   uint32_t *blob_field;
@@ -3846,7 +3839,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         &tmpname, (uint32_t) strlen(path)+1,
                         &group_buff, (group && ! using_unique_constraint ?
                                       param->group_length : 0),
-                        &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
   {
     if (temp_pool_slot != BIT_NONE)
@@ -4444,7 +4436,6 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
   uint32_t *blob_field;
-  unsigned char *bitmaps;
   Table *table;
   TABLE_SHARE *share;
 
@@ -4453,7 +4444,6 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
                         &share, sizeof(*share),
                         &field, (field_count + 1) * sizeof(Field*),
                         &blob_field, (field_count+1) *sizeof(uint32_t),
-                        &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
     return 0;
 
