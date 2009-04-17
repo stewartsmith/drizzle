@@ -39,7 +39,7 @@ bool is_prefix(const key_map& map, const uint32_t prefix_size)
   size_t pos= 0;
 
   for (; pos < prefix_size; pos++)
-    if (map[pos] == false)
+    if (! map.test(pos))
       return false;
 
   /*TODO: huh?
@@ -49,7 +49,7 @@ bool is_prefix(const key_map& map, const uint32_t prefix_size)
   */
 
   for (; pos < map.size(); pos++)
-    if (map[pos] == true)
+    if (map.test(pos))
       return false;
 
   return true;
