@@ -15,7 +15,7 @@
 
 /* Funktions for comparing with wild-cards */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 
 	/* Test if a string is "comparable" to a wild-card string */
 	/* returns 0 if the strings are "comparable" */

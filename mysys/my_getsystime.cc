@@ -22,7 +22,7 @@
    exists some common code that should be merged into a function.
 */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include "my_static.h"
 
 #if TIME_WITH_SYS_TIME

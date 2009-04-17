@@ -15,7 +15,7 @@
 
 /* Routines to handle mallocing of results which will be freed the same time */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 
 

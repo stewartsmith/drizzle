@@ -3073,7 +3073,7 @@ void option_error_reporter(enum loglevel level, const char *format, ...)
 
 /**
   @todo
-  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "mysys_err.h" and return that code?
+  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "mysys/mysys_err.h" and return that code?
 */
 static void get_options(int *argc,char **argv)
 {
