@@ -47,7 +47,6 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/index_hint.h"
-#include "drizzled/util/convert.h"
 
 #include <string>
 #include <bitset>
@@ -16027,13 +16026,25 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	{
 	  if (tab->use_quick == 2)
 	  {
-            /* 4 bits per 1 hex digit + terminating '\0' */
-            char buf[MAX_KEY / 4 + 1];
+            /*
+             * To print out the bitset in tab->keys, we go through
+             * it 32 bits at a time. We need to do this to ensure
+             * that the to_ulong() method will not throw an
+             * out_of_range exception at runtime which would happen
+             * if the bitset we were working with was larger than 64
+             * bits on a 64-bit platform (for example).
+             */
+            ostringstream s;
+            string str= tab->keys.to_string();
+            for (uint32_t pos= 0; pos < tab->keys.size(); pos+= 32)
+            {
+              bitset<32> tmp(str, pos, 32);
+              if (tmp.any())
+                s << uppercase << hex << tmp.to_ulong();
+            }
             extra.append(STRING_WITH_LEN("; Range checked for each "
                                          "record (index map: 0x"));
-            drizzled_string_to_hex(buf, tab->keys.to_string().c_str(),
-                                   sizeof(tab->keys.to_string().c_str())-1);
-            extra.append(buf);
+            extra.append(s.str().c_str());
             extra.append(')');
 	  }
 	  else if (tab->select->cond)
