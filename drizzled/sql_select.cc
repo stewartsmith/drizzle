@@ -47,6 +47,7 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/index_hint.h"
+#include "drizzled/util/convert.h"
 
 #include <string>
 #include <bitset>
