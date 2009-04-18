@@ -16026,12 +16026,13 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	{
 	  if (tab->use_quick == 2)
 	  {
+            /* 4 bits per 1 hex digit + terminating '\0' */
+            char buf[MAX_KEY / 4 + 1];
             extra.append(STRING_WITH_LEN("; Range checked for each "
                                          "record (index map: 0x"));
-            ostringstream s;
-            s << uppercase << hex << tab->keys.to_ulong();
-            const char *par= s.str().c_str();
-            extra.append(par);
+            drizzled_string_to_hex(buf, tab->keys.to_string().c_str(),
+                                   sizeof(tab->keys.to_string().c_str())-1);
+            extra.append(buf);
             extra.append(')');
 	  }
 	  else if (tab->select->cond)
