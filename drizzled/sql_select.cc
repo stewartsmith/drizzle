@@ -16026,7 +16026,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	{
 	  if (tab->use_quick == 2)
 	  {
-            /* 4 bits per 1 hex digit + terminating '\0' */
             extra.append(STRING_WITH_LEN("; Range checked for each "
                                          "record (index map: 0x"));
             ostringstream s;
