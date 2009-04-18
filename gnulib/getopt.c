@@ -283,6 +283,9 @@ _getopt_initialize (int argc, char **argv, const char *optstring,
     }
   else
     d->__nonoption_flags_len = 0;
+#else
+  (void)argc;
+  (void)argv;
 #endif
 
   return optstring;
@@ -1101,7 +1104,7 @@ _getopt_internal (int argc, char **argv, const char *optstring,
 
 /* glibc gets a LSB-compliant getopt.
    Standalone applications get a POSIX-compliant getopt.  */
-#if _LIBC
+#if defined(_LIBC)
 enum { POSIXLY_CORRECT = 0 };
 #else
 enum { POSIXLY_CORRECT = 1 };
