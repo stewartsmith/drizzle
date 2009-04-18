@@ -70,7 +70,7 @@ multiple read locks.
 
 */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 
 #include "thr_lock.h"
 #include <mystrings/m_string.h>

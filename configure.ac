@@ -1345,7 +1345,7 @@ AC_SUBST(NO_REDUNDANT_DECLS)
 AC_SUBST(PROTOSKIP_WARNINGS)
 AC_SUBST(NO_UNREACHED)
 
-if test "$ac_cv_func_timegm" = "no" -o "$gl_cv_func_gnu_getopt" = "no"
+if test "x${gl_LIBOBJS}" != "x"
 then
   if test "$GCC" = "yes"
   then

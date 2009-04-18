@@ -18,7 +18,7 @@
   thread variables.
 */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include <mysys/my_pthread.h>
 #include <mystrings/m_string.h>
 

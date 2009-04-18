@@ -35,7 +35,7 @@
   Kindahl.
 */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include <mysys/my_bitmap.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_bit.h>

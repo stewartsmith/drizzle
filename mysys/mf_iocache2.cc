@@ -17,7 +17,7 @@
   More functions to be used with IO_CACHE files
 */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #include <stdarg.h>
 #include <mystrings/m_ctype.h>

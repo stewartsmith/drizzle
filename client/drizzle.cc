@@ -38,7 +38,7 @@
 #include <algorithm>
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include "my_readline.h"
+#include "client/my_readline.h"
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>

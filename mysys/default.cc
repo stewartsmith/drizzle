@@ -33,7 +33,7 @@
  --print-defaults	  ; Print the modified command line and exit
 ****************************************************************************/
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_dir.h>
