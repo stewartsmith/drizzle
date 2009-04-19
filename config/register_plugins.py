@@ -33,13 +33,13 @@ for plugin_dir in plugin_list:
   parser=ConfigParser.ConfigParser(defaults=dict(sources="",cflags="",cppflags="",cxxflags="", libadd="", ldflags=""))
   parser.read(plugin_file)
   plugin=dict(parser.items('plugin'))
-  rel_plugin_path= plugin_dir[len(top_srcdir)+len(os.path.sep):]
+  plugin['rel_path']= plugin_dir[len(top_srcdir)+len(os.path.sep):]
   # TODO: determine path to plugin dir relative to top_srcdir... append it
   # to source files if they don't already have it
   new_sources=""
   for src in plugin['sources'].split():
-    if not src.startswith(rel_plugin_path):
-      src= os.path.join(rel_plugin_path, plugin['sources'])
+    if not src.startswith(plugin['rel_path']):
+      src= os.path.join(plugin['rel_path'], plugin['sources'])
       new_sources += src
   plugin['sources']= new_sources
   
@@ -63,18 +63,21 @@ for plugin_dir in plugin_list:
     plugin['has_build_conditional']=False
     plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes"' %plugin
 
+  # Turn this on later plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN %(cppflags)s
 
   # Write plugin build instructions into plugin.am file.
   plugin_am.write("""
+plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
 if %(build_conditional_tag)s
   pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
   plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) %(ldflags)s
   plugin_lib%(name)s_plugin_la_LIBADD=%(libadd)s
-  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN %(cppflags)s
+  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) %(cppflags)s
   plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
   plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
   plugin_lib%(name)s_plugin_la_SOURCES=%(sources)s
+  #drizzled_drizzled_LDADD+=${top_builddir}/plugin/lib%(name)s_plugin.la
 endif
 """ % plugin)
 
@@ -107,7 +110,10 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes" -a !%(build_conditional)s],
 AM_CONDITIONAL([%(build_conditional_tag)s],
                [test %(build_conditional)s])
 AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
-      [drizzled_default_plugin_list="%(name)s,${drizzled_default_plugin_list}"])
+      [
+        drizzled_default_plugin_list="%(name)s,${drizzled_default_plugin_list}"
+        drizzled_builtin_list="builtin_%(name)s_plugin,${drizzled_builtin_list}"
+      ])
 """ % plugin)
  
 plugin_ac.close()

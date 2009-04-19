@@ -47,7 +47,7 @@ using namespace std;
 extern struct drizzled_plugin_manifest *mysqld_builtins[];
 
 char *opt_plugin_load= NULL;
-const char *opt_plugin_load_default= "#DRIZZLED_PLUGIN_LIST";
+const char *opt_plugin_load_default= QUOTE_ARG(DRIZZLED_PLUGIN_LIST);
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
