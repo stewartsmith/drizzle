@@ -19,10 +19,10 @@
 typedef struct drizzled_plugin_manifest builtin_plugin[];
 
 extern builtin_plugin 
-  @drizzled_plugin_defs@;
+  DRIZZLED_BUILTIN_LIST,@drizzled_plugin_defs@;
 
 struct drizzled_plugin_manifest *mysqld_builtins[]=
 {
-  @drizzled_plugin_defs@,(struct drizzled_plugin_manifest *)0
+  DRIZZLED_BUILTIN_LIST,@drizzled_plugin_defs@,(struct drizzled_plugin_manifest *)0
 };
 

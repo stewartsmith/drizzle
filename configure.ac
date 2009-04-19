@@ -1115,6 +1115,7 @@ AC_DEFINE_UNQUOTED([DRIZZLED_PLUGIN_LIST],[$drizzled_default_plugin_list],
 drizzled_builtin_list=`echo $drizzled_builtin_list | sed 's/, *$//'`
 AC_DEFINE_UNQUOTED([DRIZZLED_BUILTIN_LIST],[$drizzled_builtin_list],
                    [List of plugins to be loaded in sql_builtin.cc])
+AC_SUBST(drizzled_plugin_libs)
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)

@@ -8,7 +8,7 @@ top_srcdir='.'
 top_builddir='.'
 plugin_ini_fname='plugin.ini'
 plugin_list=[]
-autogen_header="# This file is generated, re-run %s to rebuild\n" % sys.argv[0]
+autogen_header="This file is generated, re-run %s to rebuild\n" % sys.argv[0]
 
 if len(sys.argv)>1:
   top_srcdir=sys.argv[1]
@@ -18,12 +18,12 @@ if len(sys.argv)>2:
 
 plugin_ac=open(os.path.join(top_builddir,'config','plugin.ac.new'),'w')
 plugin_am=open(os.path.join(top_srcdir,'config','plugin.am.new'),'w')
-plugin_ac.write(autogen_header)
-plugin_am.write(autogen_header)
+plugin_ac.write("dnl %s" % autogen_header)
+plugin_am.write("# %s" % autogen_header)
 
 def accumulate_plugins(arg, dirname, fnames):
   if plugin_ini_fname in fnames:
-    plugin_list.append(dirname)
+    arg.append(dirname)
 
 
 os.path.walk(top_srcdir,accumulate_plugins,plugin_list)
@@ -53,8 +53,15 @@ for plugin_dir in plugin_list:
   else:
     plugin['default_yesno']="no"
 
-  plugin_ac_file=os.path.join(plugin_dir,'plugin.ac')
-  plugin_am_file=os.path.join(plugin_dir,'plugin.am')
+  plugin_ac_file=os.path.join(plugin['rel_path'],'plugin.ac')
+  plugin_am_file=os.path.join(plugin['rel_path'],'plugin.am')
+  plugin_m4_dir=os.path.join(plugin['rel_path'],'m4')
+
+  plugin_m4_files=[]
+  if os.path.exists(plugin_m4_dir) and os.path.isdir(plugin_m4_dir):
+    for m4_file in os.listdir(plugin_m4_dir):
+      if os.path.splitext(m4_file)[-1] == '.m4':
+        plugin_m4_files.append(os.path.join(plugin['rel_path'], m4_file))
 
   plugin['build_conditional_tag']= "BUILD_%s_PLUGIN" % plugin['name'].upper()
   if plugin.has_key('build_conditional'):
@@ -65,24 +72,38 @@ for plugin_dir in plugin_list:
 
   # Turn this on later plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN %(cppflags)s
 
+  #
   # Write plugin build instructions into plugin.am file.
+  #
   plugin_am.write("""
 plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
 if %(build_conditional_tag)s
-  pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
-  plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) %(ldflags)s
+  noinst_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
+  plugin_lib%(name)s_plugin_la_LDFLAGS=%(ldflags)s
   plugin_lib%(name)s_plugin_la_LIBADD=%(libadd)s
   plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) %(cppflags)s
   plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
   plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
   plugin_lib%(name)s_plugin_la_SOURCES=%(sources)s
-  #drizzled_drizzled_LDADD+=${top_builddir}/plugin/lib%(name)s_plugin.la
 endif
 """ % plugin)
+  # Add this once we're actually doing dlopen (and remove -avoid-version if
+  # we move to ltdl
+  #pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
+  #plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) %(ldflags)s
+  # Add this and remove $drizzled_plugin_libs once drizzled is built from .
+  #drizzled_drizzled_LDADD+=${top_builddir}/plugin/lib%(name)s_plugin.la
 
   if os.path.exists(plugin_am_file):
     plugin_am.write('include %s\n' % plugin_am_file) 
+
+  #
+  # Write plugin config instructions into plugin.am file.
+  #
+  plugin_ac.write("\n\ndnl Config for %(title)s\n" % plugin)
+  for m4_file in plugin_m4_files:
+    plugin_ac.write('m4_sinclude([%s])\n' % m4_file) 
 
   plugin_ac.write("""
 AC_ARG_WITH([plugin-%(name)s],[
@@ -113,6 +134,7 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
       [
         drizzled_default_plugin_list="%(name)s,${drizzled_default_plugin_list}"
         drizzled_builtin_list="builtin_%(name)s_plugin,${drizzled_builtin_list}"
+        drizzled_plugin_libs="${drizzled_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
       ])
 """ % plugin)
  
