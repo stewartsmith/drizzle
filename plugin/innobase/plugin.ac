@@ -14,14 +14,10 @@
 # Place, Suite 330, Boston, MA 02111-1307 USA
 #
 
-DRIZZLE_STORAGE_ENGINE(innobase,  innodb, [InnoDB Storage Engine],
-        [Transactional Tables using InnoDB], [max,max-no-ndb])
-DRIZZLE_PLUGIN_STATIC(innobase,   [libinnobase.la])
-DRIZZLE_PLUGIN_DYNAMIC(innobase,   [ha_innodb.la])
-DRIZZLE_PLUGIN_MANDATORY(innobase)  dnl Default
-DRIZZLE_PLUGIN_ACTIONS(innobase,  [
-  AC_PROG_LEX
-  AC_FUNC_MMAP
+AC_DEFUN([AC_INNODB_ACTIONS],[
+  AC_REQUIRE([AC_PROG_LEX])
+  AC_REQUIRE([AC_FUNC_MMAP])
+
   AC_CHECK_LIB(rt, aio_read, [innodb_system_libs="-lrt"])
   AC_SUBST(innodb_system_libs)
   AC_CHECK_HEADERS(aio.h sched.h)
@@ -82,4 +78,5 @@ DRIZZLE_PLUGIN_ACTIONS(innobase,  [
     )
   ])
 
+AC_INNODB_ACTIONS
 # vim: set ft=config:

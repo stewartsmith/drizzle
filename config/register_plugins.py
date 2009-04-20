@@ -30,7 +30,7 @@ os.path.walk(top_srcdir,accumulate_plugins,plugin_list)
 
 for plugin_dir in plugin_list:
   plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
-  parser=ConfigParser.ConfigParser(defaults=dict(sources="",cflags="",cppflags="",cxxflags="", libadd="", ldflags=""))
+  parser=ConfigParser.ConfigParser(defaults=dict(sources="",cflags="",cppflags="",cxxflags="", libs="", ldflags=""))
   parser.read(plugin_file)
   plugin=dict(parser.items('plugin'))
   plugin['rel_path']= plugin_dir[len(top_srcdir)+len(os.path.sep):]
@@ -39,8 +39,8 @@ for plugin_dir in plugin_list:
   new_sources=""
   for src in plugin['sources'].split():
     if not src.startswith(plugin['rel_path']):
-      src= os.path.join(plugin['rel_path'], plugin['sources'])
-      new_sources += src
+      src= os.path.join(plugin['rel_path'], src)
+      new_sources= "%s %s" % (new_sources, src)
   plugin['sources']= new_sources
   
   if plugin.has_key('load_by_default'):
@@ -79,8 +79,8 @@ for plugin_dir in plugin_list:
 plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
 if %(build_conditional_tag)s
   noinst_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
-  plugin_lib%(name)s_plugin_la_LDFLAGS=%(ldflags)s
-  plugin_lib%(name)s_plugin_la_LIBADD=%(libadd)s
+  plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
+  plugin_lib%(name)s_plugin_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s
   plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) %(cppflags)s
   plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
   plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
@@ -91,7 +91,7 @@ endif
   # Add this once we're actually doing dlopen (and remove -avoid-version if
   # we move to ltdl
   #pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
-  #plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) %(ldflags)s
+  #plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) %(libs)s
   # Add this and remove $drizzled_plugin_libs once drizzled is built from .
   #drizzled_drizzled_LDADD+=${top_builddir}/plugin/lib%(name)s_plugin.la
 
@@ -135,6 +135,7 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
         drizzled_default_plugin_list="%(name)s,${drizzled_default_plugin_list}"
         drizzled_builtin_list="builtin_%(name)s_plugin,${drizzled_builtin_list}"
         drizzled_plugin_libs="${drizzled_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
+	DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} %(libs)s"
       ])
 """ % plugin)
  
