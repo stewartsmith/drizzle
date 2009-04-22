@@ -44,17 +44,12 @@
 #include "drizzled/temporal_interval.h"
 #endif
 #include "drizzled/temporal_format.h"
+#include "time.h"
 
 #include <ostream>
 #include <iomanip>
 #include <vector>
 #include <string.h>
-
-/* time.h may already have been included in global.h, but we
-   need to pick up the extra defs as well, after the global time.h */
-#ifndef HAVE_DECL_TIMEGM
-# include <gnulib/time.h>
-#endif
 
 extern std::vector<drizzled::TemporalFormat *> known_datetime_formats;
 extern std::vector<drizzled::TemporalFormat *> known_date_formats;

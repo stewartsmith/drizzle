@@ -248,13 +248,6 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
     info->write_end = info->write_buffer + info->buffer_length;
     pthread_mutex_init(&info->append_buffer_lock,MY_MUTEX_INIT_FAST);
   }
-#if defined(SAFE_MUTEX)
-  else
-  {
-    /* Clear mutex so that safe_mutex will notice that it's not initialized */
-    memset(&info->append_buffer_lock, 0, sizeof(info));
-  }
-#endif
 
   if (type == WRITE_CACHE)
     info->write_end=

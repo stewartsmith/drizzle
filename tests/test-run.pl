@@ -1340,9 +1340,10 @@ sub environment_setup () {
     push(@ld_library_paths, $debug_libraries_path);
   }
 
-  $ENV{'LD_LIBRARY_PATH'}= join(":", @ld_library_paths,
+  $ENV{'LD_LIBRARY_PATH'}= join(":", 
 				$ENV{'LD_LIBRARY_PATH'} ?
-				split(':', $ENV{'LD_LIBRARY_PATH'}) : ());
+				split(':', $ENV{'LD_LIBRARY_PATH'}) : (),
+                                @ld_library_paths);
   mtr_debug("LD_LIBRARY_PATH: $ENV{'LD_LIBRARY_PATH'}");
 
   $ENV{'DYLD_LIBRARY_PATH'}= join(":", @ld_library_paths,

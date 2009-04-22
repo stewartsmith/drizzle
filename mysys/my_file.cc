@@ -37,35 +37,32 @@
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_NOFILE)
 
 #ifndef RLIM_INFINITY
-#define RLIM_INFINITY ((uint32_t) 0xffffffff)
+#define RLIM_INFINITY ((rlim_t) 0xffffffff)
 #endif
 
 static uint64_t set_max_open_files(uint64_t max_file_limit)
 {
-  struct rlimit rlimit;
+  struct rlimit rlim;
   rlim_t old_cur;
 
-  if (!getrlimit(RLIMIT_NOFILE,&rlimit))
+  if (!getrlimit(RLIMIT_NOFILE,&rlim))
   {
-    old_cur= rlimit.rlim_cur;
-    if (rlimit.rlim_cur == RLIM_INFINITY)
-      rlimit.rlim_cur = max_file_limit;
-    if (rlimit.rlim_cur >= max_file_limit)
+    old_cur= rlim.rlim_cur;
+    if (rlim.rlim_cur == (rlim_t)RLIM_INFINITY)
+      rlim.rlim_cur = max_file_limit;
+    if (rlim.rlim_cur >= max_file_limit)
     {
-      if (rlimit.rlim_cur > UINT32_MAX)
-        return UINT32_MAX;
-      else
-        return((uint32_t)rlimit.rlim_cur);
+      return rlim.rlim_cur;
     }
-    rlimit.rlim_cur= rlimit.rlim_max= max_file_limit;
-    if (setrlimit(RLIMIT_NOFILE, &rlimit))
+    rlim.rlim_cur= rlim.rlim_max= max_file_limit;
+    if (setrlimit(RLIMIT_NOFILE, &rlim))
       max_file_limit= (old_cur < UINT32_MAX) ? (uint32_t)old_cur : UINT32_MAX;
     else
     {
-      rlimit.rlim_cur= 0;			/* Safety if next call fails */
-      (void) getrlimit(RLIMIT_NOFILE,&rlimit);
-      if (rlimit.rlim_cur)			/* If call didn't fail */
-	max_file_limit= (uint32_t) rlimit.rlim_cur;
+      rlim.rlim_cur= 0;			/* Safety if next call fails */
+      (void) getrlimit(RLIMIT_NOFILE,&rlim);
+      if (rlim.rlim_cur)			/* If call didn't fail */
+	max_file_limit= (uint32_t) rlim.rlim_cur;
     }
   }
   return(max_file_limit);
