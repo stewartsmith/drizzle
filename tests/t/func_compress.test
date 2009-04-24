@@ -83,3 +83,19 @@ select *, uncompress(a), uncompress(a) is null from t1;
 drop table t1;
 
 --echo End of 5.0 tests
+
+# parameter count
+
+--error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+select compress();
+--error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+select uncompress();
+--error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+select uncompressed_length();
+
+--error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+select compress('aeou', 'aoeu', 'aoeu');
+--error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+select uncompress('aoenuthn', 'aoeu');
+--error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+select uncompressed_length('aneohusa','naohuntah','onh');
