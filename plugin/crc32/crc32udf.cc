@@ -34,6 +34,7 @@ public:
   const char *func_name() const { return "crc32"; }
   void fix_length_and_dec() { max_length=10; }
   int64_t val_int();
+  bool check_argument_count(int n) { return (n==1); }
 };
 
 int64_t Item_func_crc32::val_int()

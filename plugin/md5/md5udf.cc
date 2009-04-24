@@ -36,7 +36,7 @@ public:
       get_charset_by_csname(args[0]->collation.collation->csname,
                             MY_CS_BINSORT), DERIVATION_COERCIBLE);
   }
-
+  bool check_argument_count(int n) { return (n==1); }
 };
 
 

@@ -139,6 +139,7 @@ public:
   void set_arguments(List<Item> &list);
   uint32_t argument_count() const { return arg_count; }
   void remove_arguments() { arg_count=0; }
+  virtual bool check_argument_count(int n) { (void)n; return true ; }
   virtual void split_sum_func(Session *session, Item **ref_pointer_array,
                               List<Item> &fields);
 
