@@ -26,6 +26,7 @@
 #include <drizzled/field/timestamp.h>
 
 #include <bitset>
+#include <list>
 
 using namespace std;
 
@@ -984,7 +985,7 @@ multi_update::multi_update(TableList *table_list,
 			   List<Item> *field_list, List<Item> *value_list,
 			   enum enum_duplicates handle_duplicates_arg,
                            bool ignore_arg)
-  :all_tables(table_list), leaves(leaves_list), update_tables(0),
+  :all_tables(table_list), leaves(leaves_list),
    tmp_tables(0), updated(0), found(0), fields(field_list),
    values(value_list), table_count(0), copy_field(0),
    handle_duplicates(handle_duplicates_arg), do_update(1), trans_safe(1),
@@ -1000,7 +1001,6 @@ int multi_update::prepare(List<Item> &,
                           Select_Lex_Unit *)
 {
   TableList *table_ref;
-  SQL_LIST update;
   table_map tables_to_update;
   Item_field *item;
   List_iterator_fast<Item> field_it(*fields);
@@ -1033,8 +1033,6 @@ int multi_update::prepare(List<Item> &,
     update_table->shared is position for table
     Don't use key read on tables that are updated
   */
-
-  update.empty();
   for (table_ref= leaves; table_ref; table_ref= table_ref->next_leaf)
   {
     /* TODO: add support of view of join support */
@@ -1046,7 +1044,7 @@ int multi_update::prepare(List<Item> &,
 						sizeof(*tl));
       if (!tl)
 	return(1);
-      update.link_in_list((unsigned char*) tl, (unsigned char**) &tl->next_local);
+      update_tables.push_back(tl);
       tl->shared= table_count++;
       table->no_keyread=1;
       table->covering_keys.clear_all();
@@ -1055,8 +1053,7 @@ int multi_update::prepare(List<Item> &,
   }
 
 
-  table_count=  update.elements;
-  update_tables= (TableList*) update.first;
+  table_count=  update_tables.size();
 
   tmp_tables = (Table**) session->calloc(sizeof(Table *) * table_count);
   tmp_table_param = (Tmp_Table_Param*) session->calloc(sizeof(Tmp_Table_Param) *
@@ -1172,8 +1169,6 @@ static bool safe_update_on_fly(Session *session, JOIN_TAB *join_tab,
 bool
 multi_update::initialize_tables(JOIN *join)
 {
-  TableList *table_ref;
-
   if ((session->options & OPTION_SAFE_UPDATES) && error_if_full_join(join))
     return(1);
   main_table=join->join_tab->table;
@@ -1183,10 +1178,12 @@ multi_update::initialize_tables(JOIN *join)
   assert(fields->elements);
 
   /* Create a temporary table for keys to all tables, except main table */
-  for (table_ref= update_tables; table_ref; table_ref= table_ref->next_local)
+  for (list<TableList*>::iterator it= update_tables.begin(); 
+       it != update_tables.end(); 
+       ++it)
   {
-    Table *table=table_ref->table;
-    uint32_t cnt= table_ref->shared;
+    Table *table= (*it)->table;
+    uint32_t cnt= (*it)->shared;
     List<Item> temp_fields;
     order_st     group;
     Tmp_Table_Param *tmp_param;
@@ -1196,7 +1193,7 @@ multi_update::initialize_tables(JOIN *join)
       table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
     if (table == main_table)			// First table in join
     {
-      if (safe_update_on_fly(session, join->join_tab, table_ref, all_tables))
+      if (safe_update_on_fly(session, join->join_tab, (*it), all_tables))
       {
 	table_to_update= main_table;		// Update table on the fly
 	continue;
@@ -1263,8 +1260,11 @@ multi_update::initialize_tables(JOIN *join)
 multi_update::~multi_update()
 {
   TableList *table;
-  for (table= update_tables ; table; table= table->next_local)
+  for (list<TableList*>::iterator it= update_tables.begin(); 
+       it != update_tables.end(); 
+       ++it)
   {
+    table= *it;
     table->table->no_keyread= table->table->no_cache= 0;
     if (ignore)
       table->table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
@@ -1291,12 +1291,12 @@ multi_update::~multi_update()
 
 bool multi_update::send_data(List<Item> &)
 {
-  TableList *cur_table;
-
-  for (cur_table= update_tables; cur_table; cur_table= cur_table->next_local)
+  for (list<TableList*>::iterator it= update_tables.begin(); 
+       it != update_tables.end(); 
+       ++it)
   {
-    Table *table= cur_table->table;
-    uint32_t offset= cur_table->shared;
+    Table *table= (*it)->table;
+    uint32_t offset= (*it)->shared;
     /*
       Check if we are using outer join and we didn't find the row
       or if we have already updated this row in the previous call to this
@@ -1480,8 +1480,11 @@ int multi_update::do_updates()
   do_update= 0;					// Don't retry this function
   if (!found)
     return(0);
-  for (cur_table= update_tables; cur_table; cur_table= cur_table->next_local)
+  for (list<TableList*>::iterator it= update_tables.begin(); 
+       it != update_tables.end(); 
+       ++it)
   {
+    cur_table= *it;
     bool can_compare_record;
     uint32_t offset= cur_table->shared;
 
@@ -1593,7 +1596,6 @@ int multi_update::do_updates()
     check_opt_it.rewind();
     while (Table *tbl= check_opt_it++)
         tbl->file->ha_rnd_end();
-
   }
   return(0);
 
