@@ -63,7 +63,7 @@ client_libgetpassword_la_SOURCES= client/get_password.cc
 
 noinst_HEADERS=	\
 		client/client_priv.h \
-		client/errname.h
+		client/errname.h \
 		client/get_password.h \
 		client/my_readline.h \
 		drizzled/configmake.h \
@@ -71,8 +71,8 @@ noinst_HEADERS=	\
 		mystrings/m_ctype.h \
 		mystrings/m_string.h \
 		mystrings/my_uctype.h \
-		mystrings/t_ctype.h
-		mystrings/utf8.h
+		mystrings/t_ctype.h \
+		mystrings/utf8.h \
 		mysys/aio_result.h \
 		mysys/base64.h \
 		mysys/definitions.h \
