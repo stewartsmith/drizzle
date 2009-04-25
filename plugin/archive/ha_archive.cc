@@ -22,7 +22,7 @@
 #include "drizzled/table.h"
 #include "drizzled/session.h"
 
-#include "storage/archive/ha_archive.h"
+#include "ha_archive.h"
 
 #include <stdio.h>
 #include <string>

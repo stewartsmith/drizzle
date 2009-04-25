@@ -47,6 +47,7 @@ noinst_LTLIBRARIES= \
 		mysys/libmysys.la \
 		mystrings/libmystrings.la
 
+noinst_PROGRAMS=
 nobase_bin_PROGRAMS= \
 		client/drizzle \
 		client/drizzlecheck \
