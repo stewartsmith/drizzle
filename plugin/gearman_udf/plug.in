@@ -1,0 +1,4 @@
+DRIZZLE_PLUGIN(gearman_udf, [Gearman UDF], [UDF Plugin for Gearman])
+DRIZZLE_PLUGIN_STATIC(gearman_udf, [libgearman_udf.a])
+DRIZZLE_PLUGIN_MANDATORY(gearman_udf) dnl Default
+DRIZZLE_PLUGIN_DYNAMIC(gearman_udf, [libgearman_udf.la])
