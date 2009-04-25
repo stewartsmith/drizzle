@@ -83,8 +83,8 @@ public:
   virtual bool store(const DRIZZLE_TIME *from)= 0;
   virtual bool store(const char *from, const CHARSET_INFO * const cs)
   {
-    if (from == NULL)
-      store();
+    if (from == NULL) 
+      return store();
     return store(from, strlen(from), cs);
   }
   virtual bool store(const char *from, size_t length,
