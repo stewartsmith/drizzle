@@ -23,15 +23,16 @@ AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
 TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/message sh
 TESTS = check_length.sh
 
-noinst_PROGRAMS = table_reader \
-									table_writer \
-									transaction_reader \
-									transaction_writer \
-									master_list_reader \
-									master_list_writer \
-									binlog_reader \
-									binlog_writer \
-									schema_reader
+noinst_PROGRAMS = \
+		table_reader \
+		table_writer \
+		transaction_reader \
+		transaction_writer \
+		master_list_reader \
+		master_list_writer \
+		binlog_reader \
+		binlog_writer \
+		schema_reader
 
 check_PROGRAMS = length
 
@@ -78,29 +79,32 @@ transaction_reader_SOURCES =  transaction_reader.cc
 
 length_SOURCES = length.cc
 
-EXTRA_DIST = schema.proto \
-						 table.proto \
-						 binary_log.proto \
-						 master_list.proto \
-						 transaction.proto \
-						 check_length.sh
+EXTRA_DIST = \
+		schema.proto \
+		table.proto \
+		binary_log.proto \
+		master_list.proto \
+		transaction.proto \
+		check_length.sh
 
-BUILT_SOURCES = schema.pb.h \
-								table.pb.h \
-								binary_log.pb.h \
-								transaction.pb.h \
-								master_list.pb.h
+BUILT_SOURCES = \
+		schema.pb.h \
+		table.pb.h \
+		binary_log.pb.h \
+		transaction.pb.h \
+		master_list.pb.h
 
-CLEANFILES =  binary_log.pb.h \
-              binary_log.pb.cc \
-              schema.pb.h \
-              schema.pb.cc \
-              table.pb.h \
-              table.pb.cc \
-	      			transaction.pb.h \
-              transaction.pb.cc \
-              master_list.pb.h \
-              master_list.pb.cc
+CLEANFILES = \
+		binary_log.pb.h \
+		binary_log.pb.cc \
+		schema.pb.h \
+		schema.pb.cc \
+		table.pb.h \
+		table.pb.cc \
+		transaction.pb.h \
+		transaction.pb.cc \
+		master_list.pb.h \
+		master_list.pb.cc
 
 SUFFIXES = .proto .pb.cc .pb.h
 .proto.pb.cc:
