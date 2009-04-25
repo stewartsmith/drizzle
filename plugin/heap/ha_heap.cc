@@ -14,16 +14,16 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/server_includes.h>
-#include "heap.h"
-
-#include <storage/heap/ha_heap.h>
-#include <storage/heap/heapdef.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/current_session.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
+
+#include "heap.h"
+#include "ha_heap.h"
+#include "heapdef.h"
 
 #include <string>
 

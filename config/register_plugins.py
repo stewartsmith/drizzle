@@ -144,6 +144,7 @@ AS_HELP_STRING([--without-%(name)s-plugin],[Disable building %(title)s])
     plugin_ac.write("""
 AS_IF([test "x$with_%(name)s_plugin" = "xyes" -a !%(build_conditional)s],
       [Build prerequisites not found for %(title)s, yet it was slated to be enabled by default. Aborting!])""" % plugin)
+  plugin['plugin_dep_libs']=" ".join(["\${top_builddir}/%s" % f for f in plugin['libs'].split()])
   plugin_ac.write("""
 AM_CONDITIONAL([%(build_conditional_tag)s],
                [test %(build_conditional)s])
@@ -152,7 +153,7 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
         drizzled_default_plugin_list="%(name)s,${drizzled_default_plugin_list}"
         drizzled_builtin_list="builtin_%(name)s_plugin,${drizzled_builtin_list}"
         drizzled_plugin_libs="${drizzled_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
-	DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} %(libs)s"
+	DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
       ])
 """ % plugin)
  
