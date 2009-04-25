@@ -1006,7 +1006,7 @@ int ha_myisam::assign_to_keycache(Session* session, HA_CHECK_OPT *check_opt)
   if (table_list->process_index_hints(table))
     return(HA_ADMIN_FAILED);
 
-  if ((error= mi_assign_to_key_cache(file, table->keys_in_use_for_query, new_key_cache)))
+  if ((error= mi_assign_to_key_cache(file, new_key_cache)))
   {
     char buf[STRING_BUFFER_USUAL_SIZE];
     snprintf(buf, sizeof(buf),

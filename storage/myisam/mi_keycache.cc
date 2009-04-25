@@ -27,7 +27,6 @@ using namespace std;
   SYNOPSIS
     mi_assign_to_key_cache()
       info          open table
-      key_map       map of indexes to assign to the key cache
       key_cache_ptr pointer to the key cache handle
       assign_lock   Mutex to lock during assignment
 
@@ -40,18 +39,14 @@ using namespace std;
 
   NOTES
     At present pages for all indexes must be assigned to the same key cache.
-    In future only pages for indexes specified in the key_map parameter
-    of the table will be assigned to the specified key cache.
 
   RETURN VALUE
     0  If a success
     #  Error code
 */
 
-int mi_assign_to_key_cache(MI_INFO *info, key_map& key_map,
-			   KEY_CACHE *key_cache)
+int mi_assign_to_key_cache(MI_INFO *info, KEY_CACHE *key_cache) 
 {
-  (void)key_map;
   int error= 0;
   MYISAM_SHARE* share= info->s;
 
@@ -143,17 +138,10 @@ void mi_change_key_cache(KEY_CACHE *old_key_cache,
   list<MI_INFO *>::iterator it= myisam_open_list.begin();
   while (it != myisam_open_list.end())
   {
-    /* 
-     * TODO: is this necessary? can we just delete the key_map parameter to 
-     *       mi_assign_to_key_cache? couldn't create a key_map from
-     *       UINT64_MAX as it gives a compilation error on mac.
-     */
-    //key_map key_map_param(UINT64_MAX); 
-    key_map key_map_param;
     MI_INFO *info= *it;
     MYISAM_SHARE *share= info->s;
     if (share->key_cache == old_key_cache)
-      mi_assign_to_key_cache(info, key_map_param, new_key_cache);
+      mi_assign_to_key_cache(info, new_key_cache);
     ++it;
   }
 
