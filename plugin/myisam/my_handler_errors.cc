@@ -20,7 +20,7 @@
 #include <drizzled/global.h>
 #include <drizzled/base.h>
 #include <mysys/my_sys.h>
-#include <storage/myisam/my_handler.h>
+#include <plugin/myisam/my_handler.h>
 
 #include <drizzled/gettext.h>
 

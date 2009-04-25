@@ -23,7 +23,7 @@
 #ifndef DRIZZLED_TABLE_H
 #define DRIZZLED_TABLE_H
 
-#include <storage/myisam/myisam.h>
+#include <plugin/myisam/myisam.h>
 #include <drizzled/order.h>
 #include <drizzled/filesort_info.h>
 #include <drizzled/natural_join_column.h>

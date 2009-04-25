@@ -1,5 +1,21 @@
 #!/usr/bin/python
 
+#  Copyright (C) 2009 Sun Microsystems
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; version 2 of the License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+
 # Find plugins in the tree and add them to the build system 
 
 import os, ConfigParser, sys
@@ -77,6 +93,7 @@ for plugin_dir in plugin_list:
   #
   plugin_am.write("""
 plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
+EXTRA_DIST += %(rel_path)s/plugin.ini
 if %(build_conditional_tag)s
   noinst_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
   plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s

@@ -19,7 +19,7 @@
 #define _my_handler_h
 
 #include <mystrings/m_ctype.h>
-#include <storage/myisam/myisampack.h>
+#include <plugin/myisam/myisampack.h>
 #ifdef	__cplusplus
 extern "C" {
 #endif

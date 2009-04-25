@@ -18,7 +18,7 @@
 #include "drizzled/field.h"
 #include "drizzled/field/blob.h"
 #include "drizzled/field/timestamp.h"
-#include "storage/myisam/myisam.h"
+#include "plugin/myisam/myisam.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
 

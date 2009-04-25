@@ -57,7 +57,7 @@
 # endif
 #endif
 
-#include <storage/myisam/ha_myisam.h>
+#include <plugin/myisam/ha_myisam.h>
 
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>

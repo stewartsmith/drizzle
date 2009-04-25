@@ -25,7 +25,7 @@
 
 /* Definitions for parameters to do with handler-routines */
 
-#include <storage/myisam/keycache.h>
+#include <plugin/myisam/keycache.h>
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
 #include <drizzled/sql_string.h>

@@ -28,7 +28,7 @@ extern "C" {
 #ifndef _keycache_h
 #include "keycache.h"
 #endif
-#include <storage/myisam/my_handler.h>
+#include <plugin/myisam/my_handler.h>
 #include <mysys/iocache.h>
 
 /*

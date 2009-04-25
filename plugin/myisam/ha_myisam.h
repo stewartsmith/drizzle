@@ -22,7 +22,7 @@
 
 /* class for the the myisam handler */
 
-#include <storage/myisam/myisam.h>
+#include <plugin/myisam/myisam.h>
 
 #define HA_RECOVER_NONE		0	/* No automatic recover */
 #define HA_RECOVER_DEFAULT	1	/* Automatic recover active */
