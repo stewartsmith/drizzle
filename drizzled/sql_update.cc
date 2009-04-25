@@ -492,7 +492,7 @@ int mysql_update(Session *session, TableList *table_list,
       if (table->file->was_semi_consistent_read())
         continue;  /* repeat the read of the same row if it still exists */
 
-      store_record(table,record[1]);
+      table->storeRecord();
       if (fill_record(session, fields, values, 0))
         break; /* purecov: inspected */
 
@@ -1324,7 +1324,7 @@ bool multi_update::send_data(List<Item> &)
                              HA_PARTIAL_COLUMN_READ) ||
                            ((*table->read_set & *table->write_set) == *table->write_set));
       table->status|= STATUS_UPDATED;
-      store_record(table,record[1]);
+      table->storeRecord();
       if (fill_record(session, *fields_for_table[offset],
                       *values_for_table[offset], 0))
 	return(1);
@@ -1553,7 +1553,7 @@ int multi_update::do_updates()
       } while((tbl= check_opt_it++));
 
       table->status|= STATUS_UPDATED;
-      store_record(table,record[1]);
+      table->storeRecord();
 
       /* Copy data from temporary table to current table */
       for (copy_field_ptr=copy_field;

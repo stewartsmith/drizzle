@@ -433,7 +433,7 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
     read_info.row_end[0]=0;
 #endif
 
-    restore_record(table, s->default_values);
+    table->restoreRecordAsDefault();
     /*
       There is no variables in fields_vars list in this format so
       this conversion is safe.
@@ -536,7 +536,7 @@ read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
       return(1);
     }
 
-    restore_record(table, s->default_values);
+    table->restoreRecordAsDefault();
 
     while ((item= it++))
     {
