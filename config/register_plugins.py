@@ -52,6 +52,8 @@ for plugin_dir in plugin_list:
   plugin['rel_path']= plugin_dir[len(top_srcdir)+len(os.path.sep):]
   # TODO: determine path to plugin dir relative to top_srcdir... append it
   # to source files if they don't already have it
+  if plugin['sources'] == "":
+    plugin['sources']="%s.cc" % plugin['name']
   new_sources=""
   for src in plugin['sources'].split():
     if not src.startswith(plugin['rel_path']):
