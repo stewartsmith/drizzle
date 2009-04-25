@@ -16034,8 +16034,10 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
              * if the bitset we were working with was larger than 64
              * bits on a 64-bit platform (for example).
              */
-            ostringstream s;
-            string str= tab->keys.to_string();
+            stringstream s, w;
+            string str;
+            w << tab->keys;
+            w >> str;
             for (uint32_t pos= 0; pos < tab->keys.size(); pos+= 32)
             {
               bitset<32> tmp(str, pos, 32);
