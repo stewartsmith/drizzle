@@ -19,7 +19,6 @@ test_archive_LDADD = $(LIBINTL) $(LTLIBZ) \
 		$(top_builddir)/mystrings/libmystrings.la \
 		$(LDADD)
 
-noinst_HEADERS+=	plugin/archive/ha_archive.h plugin/archive/azio.h
 noinst_PROGRAMS+= \
 		plugin/archive/archive_test \
 		plugin/archive/archive_reader \

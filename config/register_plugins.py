@@ -46,7 +46,7 @@ os.path.walk(top_srcdir,accumulate_plugins,plugin_list)
 
 for plugin_dir in plugin_list:
   plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
-  parser=ConfigParser.ConfigParser(defaults=dict(sources="",cflags="",cppflags="",cxxflags="", libs="", ldflags=""))
+  parser=ConfigParser.ConfigParser(defaults=dict(sources="",headers="", cflags="",cppflags="",cxxflags="", libs="", ldflags=""))
   parser.read(plugin_file)
   plugin=dict(parser.items('plugin'))
   plugin['rel_path']= plugin_dir[len(top_srcdir)+len(os.path.sep):]
@@ -60,6 +60,13 @@ for plugin_dir in plugin_list:
       src= os.path.join(plugin['rel_path'], src)
       new_sources= "%s %s" % (new_sources, src)
   plugin['sources']= new_sources
+
+  new_headers=""
+  for header in plugin['headers'].split():
+    if not header.startswith(plugin['rel_path']):
+      header= os.path.join(plugin['rel_path'], header)
+      new_headers= "%s %s" % (new_headers, header)
+  plugin['headers']= new_headers
   
   if plugin.has_key('load_by_default'):
     plugin['load_by_default']=parser.getboolean('plugin','load_by_default')
@@ -93,6 +100,8 @@ for plugin_dir in plugin_list:
   #
   # Write plugin build instructions into plugin.am file.
   #
+  if plugin['headers'] != "":
+    plugin_am.write("noinst_HEADERS += %(headers)s\n" % plugin)
   plugin_am.write("""
 plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
 EXTRA_DIST += %(rel_path)s/plugin.ini
