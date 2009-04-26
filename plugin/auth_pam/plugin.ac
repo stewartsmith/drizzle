@@ -7,5 +7,5 @@ AC_LIB_HAVE_LINKFLAGS(pam,,
   ])
 
 AS_IF([test "$ac_cv_libpam" = "no"],
- [AC_MSG_WARN([Couldn't find PAM headers, pam_auth will not be built])])
+ [AC_MSG_WARN([Couldn't find PAM development support, pam_auth will not be built. On Debian, libpam is in libpam0g-dev. On RedHat it's in pam-devel.])])
 
