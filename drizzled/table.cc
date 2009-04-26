@@ -4912,8 +4912,7 @@ bool Table::compare_record()
  */
 void Table::storeRecord()
 {
-  //memcpy( a->record[1], a->record[0], (size_t) a->s->reclength )
-  memcpy( record[1], record[0], (size_t) s->reclength );
+  memcpy(record[1], record[0], (size_t) s->reclength);
 }
 
 /*
@@ -4922,7 +4921,7 @@ void Table::storeRecord()
  */
 void Table::storeRecordAsInsert()
 {
-  memcpy( insert_values, record[0], (size_t) s->reclength );
+  memcpy(insert_values, record[0], (size_t) s->reclength);
 }
 
 /*
@@ -4931,7 +4930,7 @@ void Table::storeRecordAsInsert()
  */
 void Table::storeRecordAsDefault()
 {
-  memcpy( s->default_values, record[0], (size_t) s->reclength );
+  memcpy(s->default_values, record[0], (size_t) s->reclength);
 }
 
 /*
@@ -4940,8 +4939,7 @@ void Table::storeRecordAsDefault()
  */
 void Table::restoreRecord()
 {
-  //memcpy( a->record[1], a->record[0], (size_t) a->s->reclength )
-  memcpy( record[0], record[1], (size_t) s->reclength );
+  memcpy(record[0], record[1], (size_t) s->reclength);
 }
 
 /*
@@ -4950,7 +4948,7 @@ void Table::restoreRecord()
  */
 void Table::restoreRecordAsDefault()
 {
-  memcpy( record[0], s->default_values, (size_t) s->reclength );
+  memcpy(record[0], s->default_values, (size_t) s->reclength);
 }
 
 /*
@@ -4959,10 +4957,8 @@ void Table::restoreRecordAsDefault()
  */
 void Table::emptyRecord()
 {
-  do {
-    restoreRecordAsDefault();
-    memset( null_flags, 255, s->null_bytes );
-  } while (0);
+  restoreRecordAsDefault();
+  memset(null_flags, 255, s->null_bytes);
 }
 
 /*****************************************************************************
