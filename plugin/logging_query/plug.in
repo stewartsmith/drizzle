@@ -1,5 +1,0 @@
-DRIZZLE_PLUGIN(logging_query,[Query Logging Plugin],
-        [Logging Plugin that logs all queries.])
-DRIZZLE_PLUGIN_DYNAMIC(logging_query, [liblogging_query.la])
-DRIZZLE_PLUGIN_STATIC(logging_query, [liblogging_query.a])
-DRIZZLE_PLUGIN_MANDATORY(logging_query)  dnl Default
