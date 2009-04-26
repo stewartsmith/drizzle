@@ -152,7 +152,7 @@ AS_HELP_STRING([--without-%(name)s-plugin],[Disable building %(title)s])
   # it silently not build
   if plugin['has_build_conditional']:
     plugin_ac.write("""
-AS_IF([test  %(build_conditional)s || "x$with_%(name)s_plugin" = "xyes"],
+AS_IF([test  %(build_conditional)s -o "x$with_%(name)s_plugin" = "xyes"],
       AS_IF([test %(build_conditional)s],
             [with_%(name)s_plugin=yes],
             [AC_MSG_ERROR([Build prerequisites not found for %(title)s, yet it was slated to be enabled by default. Aborting!])]))
