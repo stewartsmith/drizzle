@@ -1130,7 +1130,6 @@ AC_DEFINE_UNQUOTED([DRIZZLED_PLUGIN_LIST],[$drizzled_default_plugin_list],
 drizzled_builtin_list=`echo $drizzled_builtin_list | sed 's/, *$//'`
 AC_DEFINE_UNQUOTED([DRIZZLED_BUILTIN_LIST],[$drizzled_builtin_list],
                    [List of plugins to be loaded in sql_builtin.cc])
-AC_SUBST(drizzled_plugin_libs)
 
 
 AC_ARG_ENABLE([profiling],
@@ -1422,7 +1421,6 @@ AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
  po/Makefile.in dnl
- drizzled/Makefile dnl
  drizzled/message/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
