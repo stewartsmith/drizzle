@@ -216,7 +216,10 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
-  isainfo_b=`isainfo -b`
+AC_CHECK_PROG(ISAINFO, isainfo, [no])
+AS_IF([test "x$ISAINFO" != "xno"],
+      [isainfo_b=`isainfo -b`],
+      [isainfo_b="x"])
 
 # Build optimized or debug version ?
 # First check for gcc and g++
@@ -264,10 +267,15 @@ then
 
   if test "x$use_additional" != "xyes"
   then
-    LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib"
-    CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
+    AS_IF([test "$isainfo_b" != "none"],[
+      LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib"
+      ],[
+      LDFLAGS="${LDFLAGS} -L/usr/local/lib -L/opt/csw/lib"
+      ])
+      CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
   fi
-  LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_b}"
+  AS_IF([test "$isainfo_b" != "none"],
+        [LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_b}"])
 
   CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
   CFLAGS="-g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS} ${CFLAGS}"
