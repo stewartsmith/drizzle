@@ -42,7 +42,7 @@ def accumulate_plugins(arg, dirname, fnames):
     arg.append(dirname)
 
 
-os.path.walk(top_srcdir,accumulate_plugins,plugin_list)
+os.path.walk(os.path.join(top_srcdir,"plugin"),accumulate_plugins,plugin_list)
 
 for plugin_dir in plugin_list:
   plugin_file= os.path.join(plugin_dir,plugin_ini_fname)

@@ -748,7 +748,7 @@ AC_CHECK_LIB(rt, aio_read)
 # For the sched_yield() function on Solaris
 AC_CHECK_FUNC(sched_yield, [],
   [AC_CHECK_LIB(posix4, [sched_yield],
-    [AC_DEFINE(HAVE_SCHED_YIELD) LIBS="$LIBS -lposix4"])])
+    [AC_DEFINE(HAVE_SCHED_YIELD, 1, [Have sched_yield function]) LIBS="$LIBS -lposix4"])])
 
 if test "$ac_cv_header_termio_h" = "no" -a "$ac_cv_header_termios_h" = "no"
 then
