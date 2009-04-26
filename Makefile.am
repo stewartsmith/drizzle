@@ -44,7 +44,7 @@ EXTRA_DIST=	config/config.rpath m4/gnulib-cache.m4 \
 		drizzled/message.mc \
 		drizzled/probes.d
 
-CLEANFILES=	${BUILT_SOURCES}
+CLEANFILES=	${BUILT_SOURCES} \
 		drizzled/configmake.h \
 		drizzled/function_hash.h \
 		drizzled/function_hash.stamp-h \
