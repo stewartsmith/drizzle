@@ -356,11 +356,11 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 $(mysql_plugin_libs) $(drizzled_plugin_libs) \
+		 $(drizzled_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
-drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
+drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(DRIZZLED_PLUGIN_DEP_LIBS)
 
 drizzled_LDFLAGS =
 
@@ -582,14 +582,13 @@ drizzled_SOURCES = \
 		records.cc \
 		rename.cc \
 		transaction_services.cc \
-    scheduling.cc \
+		scheduling.cc \
 		session.cc \
 		set_var.cc \
 		show.cc \
 		sj_tmp_table.cc \
 		sql_base.cc \
 		sql_bitmap.cc \
-		sql_builtin.cc \
 		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \

@@ -1121,7 +1121,6 @@ DRIZZLE_CHECK_MAX_INDEXES
 # functions tested above
 #--------------------------------------------------------------------
 
-DRIZZLE_CONFIGURE_PLUGINS([none])
 m4_include(config/plugin.ac)
 dnl Add code here to read set plugin lists and  set drizzled_default_plugin_list
 AC_DEFINE_UNQUOTED([DRIZZLED_PLUGIN_LIST],[$drizzled_default_plugin_list],
@@ -1132,12 +1131,6 @@ drizzled_builtin_list=`echo $drizzled_builtin_list | sed 's/, *$//'`
 AC_DEFINE_UNQUOTED([DRIZZLED_BUILTIN_LIST],[$drizzled_builtin_list],
                    [List of plugins to be loaded in sql_builtin.cc])
 AC_SUBST(drizzled_plugin_libs)
-
-AC_SUBST(mysql_plugin_dirs)
-AC_SUBST(mysql_plugin_libs)
-drizzled_plugin_defs=`echo $drizzled_plugin_defs | sed 's/, *$//'`
-AC_SUBST(drizzled_plugin_defs)
-AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
 
 
 AC_ARG_ENABLE([profiling],
@@ -1431,7 +1424,6 @@ AC_CONFIG_FILES(Makefile dnl
  po/Makefile.in dnl
  drizzled/Makefile dnl
  drizzled/message/Makefile dnl
- drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  plugin/Makefile dnl

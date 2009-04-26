@@ -74,7 +74,6 @@ include/stamp-h1
 server/drizzled_safe
 server/gen_lex_hash
 server/lex_hash.h
-server/sql_builtin.cc
 server/sql_yacc.cc
 server/sql_yacc.h
 server/sql_yacc.output

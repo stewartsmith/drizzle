@@ -24,7 +24,6 @@ SUBDIRS = ${po} \
 	  gnulib \
 	  drizzled/message \
 	  . \
-	  plugin \
 	  drizzled \
 	  tests \
 	  support-files
