@@ -1,0 +1,8 @@
+AC_LIB_HAVE_LINKFLAGS(crypto,,
+  [#include <openssl/md5.h>],
+  [
+    MD5_CTX context;
+    MD5_Init (&context);
+  ])
+  AS_IF([test "x$ac_cv_libcrypto" = "xno"],
+        AC_MSG_WARN([MD5 not found in crypto lib: not building md5 plugin]))

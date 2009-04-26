@@ -1,6 +1,22 @@
 dnl -*- bash -*-
 dnl Process this file with autoconf to produce a configure script.
 
+dnl  Copyright (C) 2009 Sun Microsystems
+dnl
+dnl  This program is free software; you can redistribute it and/or modify
+dnl  it under the terms of the GNU General Public License as published by
+dnl  the Free Software Foundation; version 2 of the License.
+dnl
+dnl  This program is distributed in the hope that it will be useful,
+dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+dnl  GNU General Public License for more details.
+dnl
+dnl  You should have received a copy of the GNU General Public License
+dnl  along with this program; if not, write to the Free Software
+dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
 m4_include(m4/bzr_version.m4)
@@ -1105,13 +1121,15 @@ DRIZZLE_CHECK_MAX_INDEXES
 # functions tested above
 #--------------------------------------------------------------------
 
-DRIZZLE_CONFIGURE_PLUGINS([none])
+m4_include(config/plugin.ac)
+dnl Add code here to read set plugin lists and  set drizzled_default_plugin_list
+AC_DEFINE_UNQUOTED([DRIZZLED_PLUGIN_LIST],[$drizzled_default_plugin_list],
+                   [List of plugins that should be loaded on startup if no
+                    value is given for --plugin-load])
 
-AC_SUBST(mysql_plugin_dirs)
-AC_SUBST(mysql_plugin_libs)
-drizzled_plugin_defs=`echo $drizzled_plugin_defs | sed 's/, *$//'`
-AC_SUBST(drizzled_plugin_defs)
-AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
+drizzled_builtin_list=`echo $drizzled_builtin_list | sed 's/, *$//'`
+AC_DEFINE_UNQUOTED([DRIZZLED_BUILTIN_LIST],[$drizzled_builtin_list],
+                   [List of plugins to be loaded in sql_builtin.cc])
 
 
 AC_ARG_ENABLE([profiling],
@@ -1368,7 +1386,7 @@ AC_CACHE_CHECK(
       AC_LANG_PROGRAM(
         [[
 __attribute__((visibility ("hidden")))
-void testme() {  };
+void testme() {  }
         ]],[[testme()]]
       )],  
       [ac_cv_can_use_hidden_=yes],
@@ -1402,14 +1420,10 @@ AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
- storage/Makefile dnl
  po/Makefile.in dnl
- drizzled/Makefile dnl
  drizzled/message/Makefile dnl
- drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
- plugin/Makefile dnl
  drizzled/drizzled_safe dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 

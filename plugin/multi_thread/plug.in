@@ -1,3 +1,0 @@
-DRIZZLE_PLUGIN(multi_thread,  [One Thread Per Connection Scheduler])
-DRIZZLE_PLUGIN_STATIC(multi_thread,   [libmulti_thread.la])
-DRIZZLE_PLUGIN_MANDATORY(multi_thread)  dnl Default

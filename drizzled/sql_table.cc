@@ -16,7 +16,7 @@
 /* drop and alter of tables */
 
 #include <drizzled/server_includes.h>
-#include <storage/myisam/myisam.h>
+#include <plugin/myisam/myisam.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>

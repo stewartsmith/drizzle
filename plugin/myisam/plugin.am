@@ -1,0 +1,78 @@
+#  Copyright (C) 2009 Sun Microsystems
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; version 2 of the License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+noinst_LTLIBRARIES+=	plugin/myisam/libmyisam.la 
+noinst_HEADERS+=	\
+			plugin/myisam/ha_myisam.h \
+			plugin/myisam/keycache.h \
+			plugin/myisam/my_handler.h \
+			plugin/myisam/myisam.h \
+			plugin/myisam/myisamdef.h \
+			plugin/myisam/myisampack.h
+
+plugin_myisam_libmyisam_la_SOURCES= \
+			plugin/myisam/mf_keycache.cc \
+			plugin/myisam/mf_keycaches.cc \
+			plugin/myisam/mi_cache.cc \
+			plugin/myisam/mi_changed.cc \
+			plugin/myisam/mi_check.cc \
+			plugin/myisam/mi_checksum.cc \
+			plugin/myisam/mi_close.cc \
+			plugin/myisam/mi_create.cc\
+			plugin/myisam/mi_delete.cc \
+			plugin/myisam/mi_delete_all.cc \
+			plugin/myisam/mi_delete_table.cc \
+			plugin/myisam/mi_dynrec.cc \
+			plugin/myisam/mi_extra.cc \
+			plugin/myisam/mi_info.cc \
+			plugin/myisam/mi_key.cc \
+			plugin/myisam/mi_keycache.cc \
+			plugin/myisam/mi_locking.cc \
+			plugin/myisam/mi_open.cc \
+			plugin/myisam/mi_page.cc \
+			plugin/myisam/mi_panic.cc \
+			plugin/myisam/mi_preload.cc \
+			plugin/myisam/mi_range.cc \
+			plugin/myisam/mi_rename.cc \
+			plugin/myisam/mi_rfirst.cc \
+			plugin/myisam/mi_rkey.cc \
+			plugin/myisam/mi_rlast.cc \
+			plugin/myisam/mi_rnext.cc \
+			plugin/myisam/mi_rnext_same.cc \
+			plugin/myisam/mi_rprev.cc \
+			plugin/myisam/mi_rrnd.cc \
+			plugin/myisam/mi_rsame.cc \
+			plugin/myisam/mi_rsamepos.cc \
+			plugin/myisam/mi_scan.cc \
+			plugin/myisam/mi_search.cc \
+			plugin/myisam/mi_static.cc \
+			plugin/myisam/mi_statrec.cc \
+			plugin/myisam/mi_unique.cc \
+			plugin/myisam/mi_update.cc \
+			plugin/myisam/mi_write.cc \
+			plugin/myisam/my_handler.cc \
+			plugin/myisam/my_handler_errors.cc \
+			plugin/myisam/my_pread.cc \
+			plugin/myisam/sort.cc 
+
+nobase_bin_PROGRAMS+=	plugin/myisam/myisamchk
+plugin_myisam_myisamchk_SOURCES= \
+			plugin/myisam/mi_reportnone.cc \
+			plugin/myisam/myisamchk.cc
+plugin_myisam_myisamchk_LDADD=	\
+			plugin/myisam/libmyisam.la \
+			$(top_builddir)/mysys/libmysys.la \
+			$(top_builddir)/mystrings/libmystrings.la \
+			$(LIBZ)	$(LIBINTL)

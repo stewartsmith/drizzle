@@ -1,3 +1,0 @@
-DRIZZLE_PLUGIN(oldlibdrizzle,  [Old libdrizzle Protocol])
-DRIZZLE_PLUGIN_STATIC(oldlibdrizzle,   [liboldlibdrizzle.la])
-DRIZZLE_PLUGIN_MANDATORY(oldlibdrizzle)  dnl Default
