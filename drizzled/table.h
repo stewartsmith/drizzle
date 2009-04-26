@@ -106,7 +106,13 @@ public:
   uint32_t find_shortest_key(const key_map *usable_keys);
   bool compare_record(Field **ptr);
   bool compare_record();
-
+  /* TODO: the (re)storeRecord's may be able to be further condensed */
+  void storeRecord();
+  void storeRecordAsInsert();
+  void storeRecordAsDefault();
+  void restoreRecord();
+  void restoreRecordAsDefault();
+  void emptyRecord();
   bool table_check_intact(const uint32_t table_f_count, const TABLE_FIELD_W_TYPE *table_def);
 
   /* See if this can be blown away */

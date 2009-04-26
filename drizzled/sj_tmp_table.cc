@@ -260,7 +260,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   }
 
   //param->recinfo=recinfo;
-  //store_record(table,s->default_values);        // Make empty default record
+  //table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)    // No limit
     share->max_rows= ~(ha_rows) 0;

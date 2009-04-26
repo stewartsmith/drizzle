@@ -350,7 +350,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   {
     if (fields.elements || !value_count)
     {
-      restore_record(table,s->default_values);	// Get empty record
+      table->restoreRecordAsDefault();	// Get empty record
       if (fill_record(session, fields, *values, 0))
       {
 	if (values_list.elements != 1 && ! session->is_error())
@@ -370,7 +370,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     else
     {
       if (session->used_tables)			// Column used in values()
-	restore_record(table,s->default_values);	// Get empty record
+	table->restoreRecordAsDefault();	// Get empty record
       else
       {
         /*
@@ -813,8 +813,8 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           an error is returned
         */
 	assert(table->insert_values != NULL);
-        store_record(table,insert_values);
-        restore_record(table,record[1]);
+        table->storeRecordAsInsert();
+        table->restoreRecord();
         assert(info->update_fields->elements ==
                     info->update_values->elements);
         if (fill_record(session, *info->update_fields,
@@ -1184,7 +1184,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     */
     table->file->ha_start_bulk_insert((ha_rows) 0);
   }
-  restore_record(table,s->default_values);		// Get empty record
+  table->restoreRecordAsDefault();		// Get empty record
   table->next_number_field=table->found_next_number_field;
 
   session->cuted_fields=0;
@@ -1279,7 +1279,7 @@ bool select_insert::send_data(List<Item> &values)
         originally touched by INSERT ... SELECT, so we have to restore
         their original values for the next row.
       */
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
     }
     if (table->next_number_field)
     {
@@ -1673,7 +1673,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
   table->next_number_field=table->found_next_number_field;
 
-  restore_record(table,s->default_values);      // Get empty record
+  table->restoreRecordAsDefault();      // Get empty record
   session->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
     table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);

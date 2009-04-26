@@ -10589,7 +10589,7 @@ do_select(JOIN *join,List<Item> *fields,Table *table)
   if (table)
   {
     table->file->extra(HA_EXTRA_WRITE_CACHE);
-    empty_record(table);
+    table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
         table->s->keys && !table->file->inited)
       table->file->ha_index_init(0, 0);
@@ -11154,7 +11154,7 @@ evaluate_null_complemented_join_record(JOIN *join, JOIN_TAB *join_tab)
     join_tab->found= 1;
     join_tab->not_null_compl= 0;
     /* The outer row is complemented by nulls for each inner tables */
-    restore_record(join_tab->table,s->default_values);  // Make empty record
+    join_tab->table->restoreRecordAsDefault();  // Make empty record
     join_tab->table->mark_as_null_row();       // For group by without error
     select_cond= join_tab->select_cond;
     /* Check all attached conditions for inner table rows. */
@@ -11382,14 +11382,14 @@ join_read_system(JOIN_TAB *tab)
       if (error != HA_ERR_END_OF_FILE)
 	return table->report_error(error);
       tab->table->mark_as_null_row();
-      empty_record(table);			// Make empty record
+      table->emptyRecord();			// Make empty record
       return -1;
     }
     update_virtual_fields_marked_for_write(table);
-    store_record(table,record[1]);
+    table->storeRecord();
   }
   else if (!table->status)			// Only happens with left join
-    restore_record(table,record[1]);			// restore old record
+    table->restoreRecord();			// restore old record
   table->null_row=0;
   return table->status ? -1 : 0;
 }
@@ -11429,18 +11429,18 @@ join_read_const(JOIN_TAB *tab)
     {
       table->status= STATUS_NOT_FOUND;
       tab->table->mark_as_null_row();
-      empty_record(table);
+      table->emptyRecord();
       if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
 	return table->report_error(error);
       return -1;
     }
     update_virtual_fields_marked_for_write(table);
-    store_record(table,record[1]);
+    table->storeRecord();
   }
   else if (!(table->status & ~STATUS_NULL_ROW))	// Only happens with left join
   {
     table->status=0;
-    restore_record(table,record[1]);			// restore old record
+    table->restoreRecord();			// restore old record
   }
   table->null_row=0;
   return table->status ? -1 : 0;
@@ -12115,7 +12115,7 @@ end_update(JOIN *join, JOIN_TAB *,
                                    HA_WHOLE_KEY,
                                    HA_READ_KEY_EXACT))
   {						/* Update old record */
-    restore_record(table,record[1]);
+    table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
     if ((error=table->file->ha_update_row(table->record[1],
                                           table->record[0])))
@@ -12192,7 +12192,7 @@ end_unique_update(JOIN *join, JOIN_TAB *,
       table->file->print_error(error,MYF(0));	/* purecov: inspected */
       return(NESTED_LOOP_ERROR);            /* purecov: inspected */
     }
-    restore_record(table,record[1]);
+    table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
     if ((error=table->file->ha_update_row(table->record[1],
                                           table->record[0])))

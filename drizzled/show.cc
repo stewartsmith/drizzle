@@ -158,7 +158,7 @@ public:
     struct drizzled_plugin_manifest *plug= plugin_decl(plugin);
     const CHARSET_INFO * const cs= system_charset_info;
   
-    restore_record(table, s->default_values);
+    table->restoreRecordAsDefault();
   
     table->field[0]->store(plugin_name(plugin)->str,
                            plugin_name(plugin)->length, cs);
@@ -468,7 +468,7 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
       field_list.push_back(new Item_field(field));
     }
   }
-  restore_record(table, s->default_values);              // Get empty record
+  table->restoreRecordAsDefault();              // Get empty record
   table->use_all_columns();
   if (session->protocol->sendFields(&field_list, Protocol::SEND_DEFAULTS))
     return;
@@ -620,7 +620,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   bool show_table_options= false;
   bitset<MAX_FIELDS> *old_bitmap;
 
-  restore_record(table, s->default_values); // Get empty record
+  table->restoreRecordAsDefault(); // Get empty record
 
   if (share->tmp_table)
     packet->append(STRING_WITH_LEN("CREATE TEMPORARY TABLE "));
@@ -1167,7 +1167,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       if (! tmp->protocol->isConnected())
         continue;
 
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
       /* ID */
       table->field[0]->store((int64_t) tmp->thread_id, true);
       /* USER */
@@ -1551,7 +1551,7 @@ static bool show_status_array(Session *session, const char *wild,
           assert(0);
           break;
         }
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         table->field[0]->store(name_buffer, strlen(name_buffer),
                                system_charset_info);
         table->field[1]->store(pos, (uint32_t) (end - pos), system_charset_info);
@@ -2521,7 +2521,7 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
       List_iterator_fast<LEX_STRING> it_files(table_names);
       while ((table_name= it_files++))
       {
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         table->field[schema_table->idx_field1]->
           store(db_name->str, db_name->length, system_charset_info);
         table->field[schema_table->idx_field2]->
@@ -2647,7 +2647,7 @@ err:
 bool store_schema_shemata(Session* session, Table *table, LEX_STRING *db_name,
                           const CHARSET_INFO * const cs)
 {
-  restore_record(table, s->default_values);
+  table->restoreRecordAsDefault();
   table->field[1]->store(db_name->str, db_name->length, system_charset_info);
   table->field[2]->store(cs->csname, strlen(cs->csname), system_charset_info);
   table->field[3]->store(cs->name, strlen(cs->name), system_charset_info);
@@ -2725,7 +2725,7 @@ static int get_schema_tables_record(Session *session, TableList *tables,
   DRIZZLE_TIME time;
   const CHARSET_INFO * const cs= system_charset_info;
 
-  restore_record(table, s->default_values);
+  table->restoreRecordAsDefault();
   table->field[1]->store(db_name->str, db_name->length, cs);
   table->field[2]->store(table_name->str, table_name->length, cs);
   if (res)
@@ -3069,7 +3069,7 @@ static int get_schema_column_record(Session *session, TableList *tables,
 
     count++;
     /* Get default row, with all NULL fields set to NULL */
-    restore_record(table, s->default_values);
+    table->restoreRecordAsDefault();
 
     table->field[1]->store(db_name->str, db_name->length, cs);
     table->field[2]->store(table_name->str, table_name->length, cs);
@@ -3140,7 +3140,7 @@ int fill_schema_charsets(Session *session, TableList *tables, COND *)
           wild_case_compare(scs, tmp_cs->csname,wild)))
     {
       const char *comment;
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
       table->field[0]->store(tmp_cs->csname, strlen(tmp_cs->csname), scs);
       table->field[1]->store(tmp_cs->name, strlen(tmp_cs->name), scs);
       comment= tmp_cs->comment ? tmp_cs->comment : "";
@@ -3178,7 +3178,7 @@ int fill_schema_collation(Session *session, TableList *tables, COND *)
           wild_case_compare(scs, tmp_cl->name,wild)))
       {
         const char *tmp_buff;
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
         table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
         table->field[2]->store((int64_t) tmp_cl->number, true);
@@ -3214,7 +3214,7 @@ int fill_schema_coll_charset_app(Session *session, TableList *tables, COND *)
       if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) ||
           !my_charset_same(tmp_cs,tmp_cl))
 	continue;
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
       table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
       table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
       if (schema_table_store_record(session, table))
@@ -3261,7 +3261,7 @@ static int get_schema_stat_record(Session *session, TableList *tables,
       const char *str;
       for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
       {
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         table->field[1]->store(db_name->str, db_name->length, cs);
         table->field[2]->store(table_name->str, table_name->length, cs);
         table->field[3]->store((int64_t) ((key_info->flags &
@@ -3327,7 +3327,7 @@ bool store_constraints(Session *session, Table *table, LEX_STRING *db_name,
                        uint32_t key_len, const char *con_type, uint32_t con_len)
 {
   const CHARSET_INFO * const cs= system_charset_info;
-  restore_record(table, s->default_values);
+  table->restoreRecordAsDefault();
   table->field[1]->store(db_name->str, db_name->length, cs);
   table->field[2]->store(key_name, key_len, cs);
   table->field[3]->store(db_name->str, db_name->length, cs);
@@ -3445,7 +3445,7 @@ static int get_schema_key_column_usage_record(Session *session,
         if (key_part->field)
         {
           f_idx++;
-          restore_record(table, s->default_values);
+          table->restoreRecordAsDefault();
           store_key_column_usage(table, db_name, table_name,
                                  key_info->name,
                                  strlen(key_info->name),
@@ -3472,7 +3472,7 @@ static int get_schema_key_column_usage_record(Session *session,
       {
         r_info= it1++;
         f_idx++;
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         store_key_column_usage(table, db_name, table_name,
                                f_key_info->forein_id->str,
                                f_key_info->forein_id->length,
@@ -3512,7 +3512,7 @@ int fill_open_tables(Session *session, TableList *tables, COND *)
 
   for (; open_list ; open_list=open_list->next)
   {
-    restore_record(table, s->default_values);
+    table->restoreRecordAsDefault();
     table->field[0]->store(open_list->db, strlen(open_list->db), cs);
     table->field[1]->store(open_list->table, strlen(open_list->table), cs);
     table->field[2]->store((int64_t) open_list->in_use, true);
@@ -3635,7 +3635,7 @@ get_referential_constraints_record(Session *session, TableList *tables,
     List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
     while ((f_key_info= it++))
     {
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
       table->field[1]->store(db_name->str, db_name->length, cs);
       table->field[9]->store(table_name->str, table_name->length, cs);
       table->field[2]->store(f_key_info->forein_id->str,

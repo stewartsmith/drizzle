@@ -4205,7 +4205,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   param->copy_field_end=copy;
   param->recinfo=recinfo;
-  store_record(table,s->default_values);        // Make empty default record
+  table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
     share->max_rows= ~(ha_rows) 0;
@@ -4880,7 +4880,7 @@ bool Table::compare_record(Field **ptr)
 bool Table::compare_record()
 {
   if (s->blob_fields + s->varchar_fields == 0)
-    return cmp_record(this, record[1]);
+    return memcmp(this->record[0], this->record[1], (size_t) s->reclength);
   /* Compare null bits */
   if (memcmp(null_flags,
 	     null_flags + s->rec_buff_length,
@@ -4896,9 +4896,60 @@ bool Table::compare_record()
   return false;
 }
 
+/*
+ * Store a record from previous record into next
+ *
+ */
+void Table::storeRecord()
+{
+  memcpy(record[1], record[0], (size_t) s->reclength);
+}
 
+/*
+ * Store a record as an insert
+ *
+ */
+void Table::storeRecordAsInsert()
+{
+  memcpy(insert_values, record[0], (size_t) s->reclength);
+}
 
+/*
+ * Store a record with default values
+ *
+ */
+void Table::storeRecordAsDefault()
+{
+  memcpy(s->default_values, record[0], (size_t) s->reclength);
+}
 
+/*
+ * Restore a record from previous record into next
+ *
+ */
+void Table::restoreRecord()
+{
+  memcpy(record[0], record[1], (size_t) s->reclength);
+}
+
+/*
+ * Restore a record with default values
+ *
+ */
+void Table::restoreRecordAsDefault()
+{
+  memcpy(record[0], s->default_values, (size_t) s->reclength);
+}
+
+/*
+ * Empty a record
+ *
+ */
+void Table::emptyRecord()
+{
+  restoreRecordAsDefault();
+  memset(null_flags, 255, s->null_bytes);
+}
 
 /*****************************************************************************
   The different ways to read a record
