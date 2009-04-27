@@ -74,7 +74,7 @@ noinst_LTLIBRARIES= \
 		mystrings/libmystrings.la
 
 noinst_PROGRAMS=
-nobase_bin_PROGRAMS= \
+bin_PROGRAMS= \
 		client/drizzle \
 		client/drizzlecheck \
 		client/drizzledump \

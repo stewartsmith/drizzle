@@ -67,7 +67,7 @@ plugin_myisam_libmyisam_la_SOURCES= \
 			plugin/myisam/my_pread.cc \
 			plugin/myisam/sort.cc 
 
-nobase_bin_PROGRAMS+=	plugin/myisam/myisamchk
+bin_PROGRAMS+=	plugin/myisam/myisamchk
 plugin_myisam_myisamchk_SOURCES= \
 			plugin/myisam/mi_reportnone.cc \
 			plugin/myisam/myisamchk.cc
