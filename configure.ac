@@ -216,7 +216,7 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
-AC_CHECK_PROG(ISAINFO, isainfo, [no])
+AC_CHECK_PROGS(ISAINFO, [isainfo], [no])
 AS_IF([test "x$ISAINFO" != "xno"],
       [isainfo_b=`isainfo -b`],
       [isainfo_b="x"])
