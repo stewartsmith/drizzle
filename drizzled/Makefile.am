@@ -597,7 +597,6 @@ drizzled_SOURCES = \
 		sql_list.cc \
 		sql_load.cc \
 		sql_locale.cc \
-		sql_olap.cc \
 		sql_parse.cc \
 		sql_plugin.cc \
 		sql_select.cc \
