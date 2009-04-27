@@ -114,13 +114,13 @@ if %(build_conditional_tag)s
   plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
   plugin_lib%(name)s_plugin_la_SOURCES=%(sources)s
-  drizzled_drizzled_LDADD+=${top_builddir}/plugin/lib%(name)s_plugin.la
 endif
 """ % plugin)
   # Add this once we're actually doing dlopen (and remove -avoid-version if
   # we move to ltdl
   #pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
   #plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) %(libs)s
+  #drizzled_drizzled_LDADD+=${top_builddir}/plugin/lib%(name)s_plugin.la
 
   if os.path.exists(plugin_am_file):
     plugin_am.write('include %s\n' % plugin_am_file) 
@@ -164,6 +164,7 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
       [
         drizzled_default_plugin_list="%(name)s,${drizzled_default_plugin_list}"
         drizzled_builtin_list="builtin_%(name)s_plugin,${drizzled_builtin_list}"
+        drizzled_plugin_libs="${drizzled_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
 	DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
       ])
 """ % plugin)
