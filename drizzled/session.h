@@ -438,7 +438,11 @@ public:
   THR_LOCK_OWNER *lock_id;              // If not main_lock_id, points to
                                         // the lock_id of a cursor.
   pthread_mutex_t LOCK_delete;		// Locked before session is deleted
-  char process_list_info[PROCESS_LIST_WIDTH];
+  /*
+    A peek into the query string for the session. This is a best effort
+    delivery, there is no guarantee whether the content is meaningful.
+  */
+  char process_list_info[PROCESS_LIST_WIDTH+1];
   /*
     A pointer to the stack frame of handle_one_connection(),
     which is called first in the thread for handling a client

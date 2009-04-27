@@ -462,7 +462,12 @@ mysql_execute_command(Session *session)
   TableList *all_tables;
   /* most outer Select_Lex_Unit of query */
   Select_Lex_Unit *unit= &lex->unit;
-  /* Saved variable value */
+  /* A peek into the query string */
+  size_t proc_info_len= session->query_length > PROCESS_LIST_WIDTH ?
+                        PROCESS_LIST_WIDTH : session->query_length;
+
+  memcpy(session->process_list_info, session->query, proc_info_len);
+  session->process_list_info[proc_info_len]= '\0';
 
   /*
     In many cases first table of main Select_Lex have special meaning =>

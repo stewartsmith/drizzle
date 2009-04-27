@@ -1098,15 +1098,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         session_info->start_time= tmp->start_time;
         session_info->query= NULL;
         if (tmp->process_list_info[0])
-        {
-          /*
-            query_length is always set to 0 when we set query = NULL; see
-	          the comment in session.h why this prevents crashes in possible
-            races with query_length
-          */
-          assert(tmp->process_list_info[PROCESS_LIST_WIDTH - 1] == 0);
-          session_info->query=(char*) session->strdup(tmp->process_list_info);
-        }
+          session_info->query= session->strdup(tmp->process_list_info);
         thread_infos.append(session_info);
       }
     }
@@ -1145,6 +1137,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
   const CHARSET_INFO * const cs= system_charset_info;
   char *user;
   time_t now= time(NULL);
+  size_t length;
 
   if (now == (time_t)-1)
     return 1;
@@ -1212,12 +1205,11 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       if (mysys_var)
         pthread_mutex_unlock(&mysys_var->mutex);
 
-      /* INFO */
-      if (tmp->query)
+      length= strlen(tmp->process_list_info);
+
+      if (length)
       {
-        table->field[7]->store(tmp->query,
-                               cmin((uint32_t)PROCESS_LIST_INFO_WIDTH,
-                                   tmp->query_length), cs);
+        table->field[7]->store(tmp->process_list_info, length, cs);
         table->field[7]->set_notnull();
       }
 
