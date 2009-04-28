@@ -32,8 +32,6 @@
   my_printf_error(ER_CODE, format, MYF(N), ...)
 */
 
-char errbuff[NRERRBUFFS][ERRMSGSIZE];
-
 /*
   Message texts are registered into a linked list of 'my_err_head' structs.
   Each struct contains (1.) an array of pointers to C character strings with
