@@ -23,13 +23,13 @@
 #include <stdint.h>
 #include <drizzled/table.h>
 
-class TABLE_SHARE;
+class TableShare;
 
 void table_cache_free(void);
 bool table_cache_init(void);
 bool table_def_init(void);
 void table_def_free(void);
-void assign_new_table_id(TABLE_SHARE *share);
+void assign_new_table_id(TableShare *share);
 uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
 

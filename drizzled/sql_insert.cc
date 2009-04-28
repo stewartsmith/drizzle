@@ -1459,7 +1459,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       DRIZZLE_LOCK **lock)
 {
   Table tmp_table;		// Used during 'Create_field()'
-  TABLE_SHARE share;
+  TableShare share;
   Table *table= 0;
   uint32_t select_field_count= items->elements;
   /* Add selected items to field list */

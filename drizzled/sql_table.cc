@@ -423,7 +423,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   for (table= tables; table; table= table->next_local)
   {
-    TABLE_SHARE *share;
+    TableShare *share;
     table->db_type= NULL;
     if ((share= get_cached_table_share(table->db, table->table_name)))
       table->db_type= share->db_type();
@@ -1725,7 +1725,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
   alias= table_case_name(create_info, table_name);
-  if (!(file= get_new_handler((TABLE_SHARE*) 0, session->mem_root,
+  if (!(file= get_new_handler((TableShare*) 0, session->mem_root,
                               create_info->db_type)))
   {
     my_error(ER_OUTOFMEMORY, MYF(0), sizeof(handler));
@@ -2065,7 +2065,7 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   int error=0;
 
   file= (base == NULL ? 0 :
-         get_new_handler((TABLE_SHARE*) 0, session->mem_root, base));
+         get_new_handler((TableShare*) 0, session->mem_root, base));
 
   build_table_filename(from, sizeof(from), old_db, old_name, "",
                        flags & FN_FROM_IS_TMP);
@@ -2204,7 +2204,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
 {
   int error= 0;
   Table tmp_table, *table;
-  TABLE_SHARE *share;
+  TableShare *share;
   char from[FN_REFLEN],tmp[FN_REFLEN+32];
   const char **ext;
   struct stat stat_info;
@@ -4479,7 +4479,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     case ENABLE:
       /*
         wait_while_table_is_used() ensures that table being altered is
-        opened only by this thread and that Table::TABLE_SHARE::version
+        opened only by this thread and that Table::TableShare::version
         of Table object corresponding to this table is 0.
         The latter guarantees that no DML statement will open this table
         until ALTER Table finishes (i.e. until close_thread_tables())

@@ -1207,7 +1207,7 @@ Field *Field::new_key_field(MEM_ROOT *root, Table *new_table,
 }
 
 
-/* This is used to generate a field in Table from TABLE_SHARE */
+/* This is used to generate a field in Table from TableShare */
 
 Field *Field::clone(MEM_ROOT *root, Table *new_table)
 {
@@ -1616,7 +1616,7 @@ uint32_t pack_length_to_packflag(uint32_t type)
 }
 
 
-Field *make_field(TABLE_SHARE *share, MEM_ROOT *root,
+Field *make_field(TableShare *share, MEM_ROOT *root,
                   unsigned char *ptr, uint32_t field_length,
 		  unsigned char *null_pos, unsigned char null_bit,
 		  uint32_t pack_flag,

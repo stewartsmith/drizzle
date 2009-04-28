@@ -33,7 +33,7 @@ class Session;
 class XID;
 class handler;
 
-class TABLE_SHARE;
+class TableShare;
 typedef struct st_mysql_lex_string LEX_STRING;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
@@ -224,7 +224,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commit_by_xid(XID *) { return 0; }
   virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual handler *create(TABLE_SHARE *, MEM_ROOT *)= 0;
+  virtual handler *create(TableShare *, MEM_ROOT *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -246,7 +246,7 @@ public:
 /* lookups */
 StorageEngine *ha_default_storage_engine(Session *session);
 StorageEngine *ha_resolve_by_name(Session *session, const LEX_STRING *name);
-handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
+handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
                          StorageEngine *db_type);
 const std::string ha_resolve_storage_engine_name(const StorageEngine *db_type);
 

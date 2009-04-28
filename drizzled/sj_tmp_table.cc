@@ -61,7 +61,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
 {
   MEM_ROOT *mem_root_save, own_root;
   Table *table;
-  TABLE_SHARE *share;
+  TableShare *share;
   uint32_t temp_pool_slot= MY_BIT_NONE;
   char  *tmpname,path[FN_REFLEN];
   Field **reg_field;

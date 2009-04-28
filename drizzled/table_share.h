@@ -24,10 +24,10 @@
   This class is shared between different table objects. There is one
   instance of table share per one table in the database.
 */
-class TABLE_SHARE
+class TableShare
 {
 public:
-  TABLE_SHARE() {}                    /* Remove gcc warning */
+  TableShare() {}                    /* Remove gcc warning */
 
   /** Category of this table. */
   enum_table_category table_category;
@@ -40,7 +40,7 @@ public:
   TYPELIB *intervals;			/* pointer to interval info */
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
-  TABLE_SHARE *next,		/* Link to unused shares */
+  TableShare *next,		/* Link to unused shares */
     **prev;
 
   /* The following is copied to each Table on OPEN */
@@ -144,7 +144,7 @@ public:
     NOTES
       Since 'key_buff' buffer will be referenced from share it should has same
       life-time as share itself.
-      This method automatically ensures that TABLE_SHARE::table_name/db have
+      This method automatically ensures that TableShare::table_name/db have
       appropriate values by using table cache key as their source.
   */
 

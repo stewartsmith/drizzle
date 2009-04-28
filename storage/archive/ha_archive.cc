@@ -129,7 +129,7 @@ class ArchiveEngine : public StorageEngine
 {
 public:
   ArchiveEngine(const string &name_arg) : StorageEngine(name_arg) {}
-  virtual handler *create(TABLE_SHARE *table,
+  virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_archive(this, table);
@@ -185,7 +185,7 @@ int archive_db_done(PluginRegistry &registry)
 }
 
 
-ha_archive::ha_archive(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+ha_archive::ha_archive(StorageEngine *engine_arg, TableShare *table_arg)
   :handler(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */

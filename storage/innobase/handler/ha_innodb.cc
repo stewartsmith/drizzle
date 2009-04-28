@@ -282,7 +282,7 @@ public:
   			/* out: 0 or error number */
   	XID	*xid);	/* in: X/Open XA transaction identification */
 
-  virtual handler *create(TABLE_SHARE *table,
+  virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_innobase(this, table);
@@ -1297,7 +1297,7 @@ check_trx_exists(
 /*************************************************************************
 Construct ha_innobase handler. */
 UNIV_INTERN
-ha_innobase::ha_innobase(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+ha_innobase::ha_innobase(StorageEngine *engine_arg, TableShare *table_arg)
   :handler(engine_arg, table_arg),
   int_table_flags(HA_REC_NOT_IN_SEQ |
 		  HA_NULL_IN_KEY |

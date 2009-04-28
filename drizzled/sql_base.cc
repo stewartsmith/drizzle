@@ -58,7 +58,7 @@ extern drizzled::TransactionServices transaction_services;
 Table *unused_tables;				/* Used by mysql_test */
 HASH open_cache;				/* Used by mysql_test */
 static HASH table_def_cache;
-static TABLE_SHARE *oldest_unused_share, end_of_unused_share;
+static TableShare *oldest_unused_share, end_of_unused_share;
 static pthread_mutex_t LOCK_table_share;
 static bool table_def_inited= 0;
 
@@ -150,19 +150,19 @@ uint32_t create_table_def_key(Session *session, char *key, TableList *table_list
 
 
 /*****************************************************************************
-  Functions to handle table definition cach (TABLE_SHARE)
+  Functions to handle table definition cach (TableShare)
 *****************************************************************************/
 
 extern "C" unsigned char *table_def_key(const unsigned char *record, size_t *length,
                                 bool )
 {
-  TABLE_SHARE *entry=(TABLE_SHARE*) record;
+  TableShare *entry=(TableShare*) record;
   *length= entry->table_cache_key.length;
   return (unsigned char*) entry->table_cache_key.str;
 }
 
 
-static void table_def_free_entry(TABLE_SHARE *share)
+static void table_def_free_entry(TableShare *share)
 {
   if (share->prev)
   {
@@ -209,7 +209,7 @@ uint32_t cached_table_definitions(void)
 
 
 /*
-  Get TABLE_SHARE for a table.
+  Get TableShare for a table.
 
   get_table_share()
   session			Thread handle
@@ -233,15 +233,15 @@ uint32_t cached_table_definitions(void)
    #  Share for table
 */
 
-TABLE_SHARE *get_table_share(Session *session, TableList *table_list, char *key,
+TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error)
 {
-  TABLE_SHARE *share;
+  TableShare *share;
 
   *error= 0;
 
   /* Read table definition from cache */
-  if ((share= (TABLE_SHARE*) hash_search(&table_def_cache,(unsigned char*) key,
+  if ((share= (TableShare*) hash_search(&table_def_cache,(unsigned char*) key,
                                          key_length)))
     goto found;
 
@@ -320,12 +320,12 @@ found:
   For arguments and return values, see get_table_from_share()
 */
 
-static TABLE_SHARE
+static TableShare
 *get_table_share_with_create(Session *session, TableList *table_list,
                              char *key, uint32_t key_length,
                              uint32_t db_flags, int *error)
 {
-  TABLE_SHARE *share;
+  TableShare *share;
 
   share= get_table_share(session, table_list, key, key_length, db_flags, error);
   /*
@@ -376,7 +376,7 @@ static TABLE_SHARE
      that the table is deleted or the thread is killed.
 */
 
-void release_table_share(TABLE_SHARE *share,
+void release_table_share(TableShare *share,
                          enum release_type )
 {
   bool to_be_deleted= 0;
@@ -423,10 +423,10 @@ void release_table_share(TABLE_SHARE *share,
 
   RETURN
     0  Not cached
-    #  TABLE_SHARE for table
+    #  TableShare for table
 */
 
-TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name)
+TableShare *get_cached_table_share(const char *db, const char *table_name)
 {
   char key[NAME_LEN*2+2];
   TableList table_list;
@@ -436,7 +436,7 @@ TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name)
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
   key_length= create_table_def_key((Session*) 0, key, &table_list, 0);
-  return (TABLE_SHARE*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
+  return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }
 
 
@@ -460,7 +460,7 @@ TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name)
 
 void close_handle_and_leave_table_as_lock(Table *table)
 {
-  TABLE_SHARE *share, *old_share= table->s;
+  TableShare *share, *old_share= table->s;
   char *key_buff;
   MEM_ROOT *mem_root= &table->mem_root;
 
@@ -525,7 +525,7 @@ OPEN_TableList *list_open_tables(const char *db, const char *wild)
   {
     OPEN_TableList *table;
     Table *entry=(Table*) hash_element(&open_cache,idx);
-    TABLE_SHARE *share= entry->s;
+    TableShare *share= entry->s;
 
     if (db && my_strcasecmp(system_charset_info, db, share->db.str))
       continue;
@@ -827,7 +827,7 @@ bool close_cached_connection_tables(Session *session, bool if_wait_for_refresh,
 
   for (idx= 0; idx < table_def_cache.records; idx++)
   {
-    TABLE_SHARE *share= (TABLE_SHARE *) hash_element(&table_def_cache, idx);
+    TableShare *share= (TableShare *) hash_element(&table_def_cache, idx);
 
     /* Ignore if table is not open or does not have a connect_string */
     if (!share->connect_string.length || !share->ref_count)
@@ -1406,7 +1406,7 @@ bool rename_temporary_table(Session* session, Table *table, const char *db,
 {
   char *key;
   uint32_t key_length;
-  TABLE_SHARE *share= table->s;
+  TableShare *share= table->s;
   TableList table_list;
 
   if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
@@ -1638,7 +1638,7 @@ bool name_lock_locked_table(Session *session, TableList *tables)
 bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in)
 {
   Table *table= table_list->table;
-  TABLE_SHARE *share;
+  TableShare *share;
   char *table_name= table_list->table_name;
   Table orig_table;
 
@@ -1718,7 +1718,7 @@ Table *table_cache_insert_placeholder(Session *session, const char *key,
                                       uint32_t key_length)
 {
   Table *table;
-  TABLE_SHARE *share;
+  TableShare *share;
   char *key_buff;
 
   safe_mutex_assert_owner(&LOCK_open);
@@ -2359,7 +2359,7 @@ bool reopen_table(Table *table)
           the function probably has to be adjusted before it can be used
           anywhere outside ALTER Table.
 
-    @note Must not use TABLE_SHARE::table_name/db of the table being closed,
+    @note Must not use TableShare::table_name/db of the table being closed,
           the strings are used in a loop even after the share may be freed.
 */
 
@@ -2790,7 +2790,7 @@ static int open_unireg_entry(Session *session, Table *entry, TableList *table_li
                              char *cache_key, uint32_t cache_key_length)
 {
   int error;
-  TABLE_SHARE *share;
+  TableShare *share;
   uint32_t discover_retry_count= 0;
 
   safe_mutex_assert_owner(&LOCK_open);
@@ -3440,7 +3440,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
                             open_table_mode open_mode)
 {
   Table *tmp_table;
-  TABLE_SHARE *share;
+  TableShare *share;
   char cache_key[MAX_DBKEY_LENGTH], *saved_cache_key, *tmp_path;
   uint32_t key_length, path_length;
   TableList table_list;
@@ -3455,7 +3455,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
                                    path_length + 1 + key_length)))
     return NULL;
 
-  share= (TABLE_SHARE*) (tmp_table+1);
+  share= (TableShare*) (tmp_table+1);
   tmp_path= (char*) (share+1);
   saved_cache_key= strcpy(tmp_path, path)+path_length+1;
   memcpy(saved_cache_key, cache_key, key_length);
@@ -3515,7 +3515,7 @@ bool rm_temporary_table(StorageEngine *base, char *path)
   if(delete_table_proto_file(path))
     error=1; /* purecov: inspected */
 
-  file= get_new_handler((TABLE_SHARE*) 0, current_session->mem_root, base);
+  file= get_new_handler((TableShare*) 0, current_session->mem_root, base);
   if (file && file->ha_delete_table(path))
   {
     error=1;
@@ -3703,7 +3703,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
     if (field_ptr)
     {
       /*
-        field_ptr points to field in TABLE_SHARE. Convert it to the matching
+        field_ptr points to field in TableShare. Convert it to the matching
         field in table
       */
       field_ptr= (table->field + (field_ptr - table->s->field));
@@ -3932,7 +3932,7 @@ Field *find_field_in_table_sef(Table *table, const char *name)
     if (field_ptr)
     {
       /*
-        field_ptr points to field in TABLE_SHARE. Convert it to the matching
+        field_ptr points to field in TableShare. Convert it to the matching
         field in table
       */
       field_ptr= (table->field + (field_ptr - table->s->field));
@@ -5787,7 +5787,7 @@ bool drizzle_rm_tmp_tables(void)
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   MY_DIR *dirp;
   FILEINFO *file;
-  TABLE_SHARE share;
+  TableShare share;
   Session *session;
 
   assert(drizzle_tmpdir);
@@ -5925,7 +5925,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
   char *key_pos= key;
   uint32_t key_length;
   Table *table;
-  TABLE_SHARE *share;
+  TableShare *share;
   bool result= 0, signalled= 0;
 
   key_pos= strcpy(key_pos, db) + strlen(db);
@@ -5987,7 +5987,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
       hash_delete(&open_cache,(unsigned char*) unused_tables);
 
     /* Remove table from table definition cache if it's not in use */
-    if ((share= (TABLE_SHARE*) hash_search(&table_def_cache,(unsigned char*) key,
+    if ((share= (TableShare*) hash_search(&table_def_cache,(unsigned char*) key,
                                            key_length)))
     {
       share->version= 0;                          // Mark for delete
