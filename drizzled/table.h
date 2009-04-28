@@ -151,7 +151,6 @@ public:
   Field *next_number_field;		/* Set if next_number is activated */
   Field *found_next_number_field;	/* Set on open */
   Field_timestamp *timestamp_field;
-  Field **vfield;                       /* Pointer to virtual fields*/
 
   TableList *pos_in_table_list;/* Element referring to this table */
   order_st *group;
@@ -293,7 +292,6 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
-  void mark_virtual_columns(void);
   inline void column_bitmaps_set(std::bitset<MAX_FIELDS> *read_set_arg,
                                  std::bitset<MAX_FIELDS> *write_set_arg)
   {

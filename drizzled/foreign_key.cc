@@ -124,27 +124,6 @@ bool Foreign_key::validate(List<Create_field> &table_fields)
       my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
       return true;
     }
-    if (type == Key::FOREIGN_KEY && sql_field->vcol_info)
-    {
-      if (delete_opt == FK_OPTION_SET_NULL)
-      {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
-                 "ON DELETE SET NULL");
-        return true;
-      }
-      if (update_opt == FK_OPTION_SET_NULL)
-      {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
-                 "ON UPDATE SET NULL");
-        return true;
-      }
-      if (update_opt == FK_OPTION_CASCADE)
-      {
-        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0),
-                 "ON UPDATE CASCADE");
-        return true;
-      }
-    }
   }
   return false;
 }

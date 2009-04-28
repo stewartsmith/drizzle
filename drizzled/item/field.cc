@@ -22,7 +22,6 @@
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/item/cmpfunc.h>
@@ -111,9 +110,6 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
   Table *table= (Table *) arg;
   if (field->table == table || !table)
     field->table->read_set->set(field->field_index);
-  if (field->vcol_info && field->vcol_info->expr_item)
-    return field->vcol_info->expr_item->walk(&Item::register_field_in_read_map,
-                                             1, arg);
   return 0;
 }
 

@@ -28,7 +28,6 @@
 #include "sql_select.h"
 #include <errno.h>
 #include <drizzled/error.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/field/str.h>
 #include <drizzled/field/longstr.h>
 #include <drizzled/field/num.h>
@@ -881,7 +880,7 @@ Field::Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_
    part_of_sortkey(0), unireg_check(unireg_check_arg),
    field_length(length_arg), null_bit(null_bit_arg),
    is_created_from_null_item(false),
-   vcol_info(NULL), is_stored(true)
+   is_stored(true)
 {
   flags=null_ptr ? 0: NOT_NULL_FLAG;
   comment.str= (char*) "";
@@ -1375,7 +1374,6 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
               ((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT) |
               (maybe_null ? FIELDFLAG_MAYBE_NULL : 0) |
               (is_unsigned ? 0 : FIELDFLAG_DECIMAL));
-  vcol_info= NULL;
   is_stored= true;
 }
 
@@ -1409,8 +1407,8 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
                         const CHARSET_INFO * const fld_charset,
-                        uint32_t, enum column_format_type column_format_in,
-                        virtual_column_info *fld_vcol_info)
+                        uint32_t, enum column_format_type column_format_in)
+                        
 {
   uint32_t sign_len, allowed_type_modifier= 0;
   uint32_t max_field_charlength= MAX_FIELD_CHARLENGTH;
@@ -1439,53 +1437,7 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
   interval_list.empty();
 
   comment= *fld_comment;
-  vcol_info= fld_vcol_info;
   is_stored= true;
-
-  /* Initialize data for a virtual field */
-  if (fld_type == DRIZZLE_TYPE_VIRTUAL)
-  {
-    assert(vcol_info && vcol_info->expr_item);
-    is_stored= vcol_info->get_field_stored();
-    /*
-      Perform per item-type checks to determine if the expression is
-      allowed for a virtual column.
-      Note that validation of the specific function is done later in
-      procedures open_table_from_share and fix_fields_vcol_func
-    */
-    switch (vcol_info->expr_item->type()) {
-    case Item::FUNC_ITEM:
-         if (((Item_func *)vcol_info->expr_item)->functype() == Item_func::FUNC_SP)
-         {
-           my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
-           return(true);
-         }
-         break;
-    case Item::COPY_STR_ITEM:
-    case Item::FIELD_AVG_ITEM:
-    case Item::PROC_ITEM:
-    case Item::REF_ITEM:
-    case Item::FIELD_STD_ITEM:
-    case Item::FIELD_VARIANCE_ITEM:
-    case Item::INSERT_VALUE_ITEM:
-    case Item::SUBSELECT_ITEM:
-    case Item::CACHE_ITEM:
-    case Item::TYPE_HOLDER:
-    case Item::PARAM_ITEM:
-         my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
-         return true;
-    default:
-      // Continue with the field creation
-      break;
-    }
-    /*
-      Make a field created for the real type.
-      Note that "real" and virtual fields differ from each other
-      only by Field::vcol_info, which is always 0 for normal columns.
-      vcol_info is updated for fields later in procedure open_binary_frm.
-    */
-    sql_type= fld_type= vcol_info->get_real_type();
-  }
 
   /*
     Set NO_DEFAULT_VALUE_FLAG if this field doesn't have a default value and
@@ -1849,7 +1801,6 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
   charset=    old_field->charset();		// May be NULL ptr
   comment=    old_field->comment;
   decimals=   old_field->decimals();
-  vcol_info=  old_field->vcol_info;
   is_stored= old_field->is_stored;
 
   /* Fix if the original table had 4 byte pointer blobs */

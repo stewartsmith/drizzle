@@ -78,7 +78,6 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/uint.h>
 #include <drizzled/item/null.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
 #include <drizzled/item/func.h>
 #include <drizzled/sql_base.h>
@@ -1600,8 +1599,7 @@ field_spec:
                                   lex->column_format,
                                   lex->default_value, lex->on_update_value, 
                                   &lex->comment,
-                                  lex->change,&lex->interval_list,lex->charset,
-                                  lex->vcol_info))
+                                  lex->change,&lex->interval_list,lex->charset))
               DRIZZLE_YYABORT;
           }
         ;
@@ -2210,8 +2208,7 @@ alter_list_item:
                                   lex->column_format,
                                   lex->default_value, lex->on_update_value,
                                   &lex->comment,
-                                  $3.str, &lex->interval_list, lex->charset,
-                                  lex->vcol_info))
+                                  $3.str, &lex->interval_list, lex->charset))
               DRIZZLE_YYABORT;
           }
           opt_place

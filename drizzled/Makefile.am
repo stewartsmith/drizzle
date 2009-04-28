@@ -342,7 +342,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		utf8/core.h \
 		utf8/unchecked.h \
 		user_var_entry.h \
-		virtual_column_info.h \
 		xid.h
 
 noinst_LTLIBRARIES = \
@@ -618,7 +617,6 @@ drizzled_SOURCES = \
 		tztime.cc \
 		uniques.cc \
 		util/convert.cc \
-		virtual_column_info.cc \
 		xid.cc
 
 if BUILD_DTRACE

@@ -1808,8 +1808,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
 		       char *change,
-                       List<String> *interval_list, const CHARSET_INFO * const cs,
-                       virtual_column_info *vcol_info)
+                       List<String> *interval_list, const CHARSET_INFO * const cs)
 {
   register Create_field *new_field;
   LEX  *lex= session->lex;
@@ -1880,8 +1879,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
   if (!(new_field= new Create_field()) ||
       new_field->init(session, field_name->str, type, length, decimals, type_modifier,
                       default_value, on_update_value, comment, change,
-                      interval_list, cs, 0, column_format,
-                      vcol_info))
+                      interval_list, cs, 0, column_format))
     return(1);
 
   lex->alter_info.create_list.push_back(new_field);
