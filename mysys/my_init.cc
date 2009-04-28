@@ -98,7 +98,6 @@ void my_end(int infoflag)
     if (my_file_opened | my_stream_opened)
     {
       /* TODO: Mark... look at replacement here
-       * sprintf(errbuff[0],EE(EE_OPEN_WARNING),my_file_opened,my_stream_opened);
        * (void) my_message_no_curses(EE_OPEN_WARNING,errbuff[0],ME_BELL);
        */
       (void) fflush(stdout);
