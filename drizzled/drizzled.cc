@@ -331,10 +331,6 @@ const double log_10[] = {
 time_t server_start_time;
 time_t flush_status_time;
 
-/* FRM Junk */
-const char *reg_ext= ".frm";
-uint32_t reg_ext_length= 4;
-
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];

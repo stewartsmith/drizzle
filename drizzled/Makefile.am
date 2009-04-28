@@ -343,7 +343,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		utf8/core.h \
 		utf8/unchecked.h \
 		user_var_entry.h \
-		virtual_column_info.h \
 		xid.h
 
 noinst_LTLIBRARIES = \
@@ -598,7 +597,6 @@ drizzled_SOURCES = \
 		sql_list.cc \
 		sql_load.cc \
 		sql_locale.cc \
-		sql_olap.cc \
 		sql_parse.cc \
 		sql_plugin.cc \
 		sql_select.cc \
@@ -620,7 +618,6 @@ drizzled_SOURCES = \
 		tztime.cc \
 		uniques.cc \
 		util/convert.cc \
-		virtual_column_info.cc \
 		xid.cc
 
 if BUILD_DTRACE

@@ -15,7 +15,6 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
 #include <drizzled/unireg.h>
 
@@ -172,37 +171,6 @@ static int fill_table_proto(drizzled::message::Table *table_proto,
       break;
     default:
       assert(0); /* Tell us, since this shouldn't happend */
-    }
-
-    if(field_arg->vcol_info)
-    {
-      uint32_t tmp_len;
-      tmp_len= system_charset_info->cset->charpos(system_charset_info,
-					  field_arg->vcol_info->expr_str.str,
-                                          field_arg->vcol_info->expr_str.str +
-                                          field_arg->vcol_info->expr_str.length,
-                                          VIRTUAL_COLUMN_EXPRESSION_MAXLEN);
-
-      if (tmp_len < field_arg->vcol_info->expr_str.length)
-      {
-        my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-                 field_arg->vcol_info->expr_str.str,"VIRTUAL COLUMN EXPRESSION",
-                 (uint32_t) VIRTUAL_COLUMN_EXPRESSION_MAXLEN);
-        return(1);
-      }
-
-      drizzled::message::Table::Field::VirtualFieldOptions *field_options;
-
-      field_options= attribute->mutable_virtual_options();
-
-      field_options->set_type(attribute->type());
-      attribute->set_type(drizzled::message::Table::Field::VIRTUAL);
-
-      string expr(field_arg->vcol_info->expr_str.str,
-		  field_arg->vcol_info->expr_str.length);
-
-      field_options->set_expression(expr);
-      field_options->set_physically_stored(field_arg->is_stored);
     }
 
 #ifdef NOTDONE

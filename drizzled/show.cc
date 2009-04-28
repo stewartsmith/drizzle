@@ -33,7 +33,6 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/return_date_time.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
 #include <drizzled/field/timestamp.h>
@@ -663,24 +662,8 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     else
       type.set_charset(system_charset_info);
 
-    if (field->vcol_info)
-    {
-      packet->append(STRING_WITH_LEN("VIRTUAL "));
-    }
-
     field->sql_type(type);
     packet->append(type.ptr(), type.length(), system_charset_info);
-
-    if (field->vcol_info)
-    {
-      packet->append(STRING_WITH_LEN(" AS ("));
-      packet->append(field->vcol_info->expr_str.str,
-                     field->vcol_info->expr_str.length,
-                     system_charset_info);
-      packet->append(STRING_WITH_LEN(")"));
-      if (field->is_stored)
-        packet->append(STRING_WITH_LEN(" STORED"));
-    }
 
     if (field->has_charset())
     {
@@ -729,8 +712,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
           packet->append(STRING_WITH_LEN(" DYNAMIC */"));
       }
     }
-    if (!field->vcol_info &&
-        get_field_default_value(session, table->timestamp_field,
+    if (get_field_default_value(session, table->timestamp_field,
                                 field, &def_value, 1))
     {
       packet->append(STRING_WITH_LEN(" DEFAULT "));
@@ -1098,15 +1080,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         session_info->start_time= tmp->start_time;
         session_info->query= NULL;
         if (tmp->process_list_info[0])
-        {
-          /*
-            query_length is always set to 0 when we set query = NULL; see
-	          the comment in session.h why this prevents crashes in possible
-            races with query_length
-          */
-          assert(tmp->process_list_info[PROCESS_LIST_WIDTH - 1] == 0);
-          session_info->query=(char*) session->strdup(tmp->process_list_info);
-        }
+          session_info->query= session->strdup(tmp->process_list_info);
         thread_infos.append(session_info);
       }
     }
@@ -1145,6 +1119,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
   const CHARSET_INFO * const cs= system_charset_info;
   char *user;
   time_t now= time(NULL);
+  size_t length;
 
   if (now == (time_t)-1)
     return 1;
@@ -1212,12 +1187,11 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       if (mysys_var)
         pthread_mutex_unlock(&mysys_var->mutex);
 
-      /* INFO */
-      if (tmp->query)
+      length= strlen(tmp->process_list_info);
+
+      if (length)
       {
-        table->field[7]->store(tmp->query,
-                               cmin((uint32_t)PROCESS_LIST_INFO_WIDTH,
-                                   tmp->query_length), cs);
+        table->field[7]->store(tmp->process_list_info, length, cs);
         table->field[7]->set_notnull();
       }
 
@@ -3100,8 +3074,6 @@ static int get_schema_column_record(Session *session, TableList *tables,
         field->unireg_check != Field::TIMESTAMP_DN_FIELD)
       table->field[16]->store(STRING_WITH_LEN("on update CURRENT_TIMESTAMP"),
                               cs);
-    if (field->vcol_info)
-          table->field[16]->store(STRING_WITH_LEN("VIRTUAL"), cs);
     table->field[18]->store(field->comment.str, field->comment.length, cs);
     {
       enum column_format_type column_format= (enum column_format_type)

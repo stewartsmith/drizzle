@@ -197,7 +197,7 @@ Session::Session(Protocol *protocol_arg)
 {
   uint64_t tmp;
 
-  memset(process_list_info, 0, PROCESS_LIST_WIDTH);
+  process_list_info[PROCESS_LIST_WIDTH]= '\0';
 
   /*
     Pass nominal parameters to init_alloc_root only to ensure that
