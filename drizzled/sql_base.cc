@@ -256,21 +256,6 @@ TABLE_SHARE *get_table_share(Session *session, TableList *table_list, char *key,
   */
   (void) pthread_mutex_lock(&share->mutex);
 
-  /*
-    We assign a new table id under the protection of the LOCK_open and
-    the share's own mutex.  We do this insted of creating a new mutex
-    and using it for the sole purpose of serializing accesses to a
-    static variable, we assign the table id here.  We assign it to the
-    share before inserting it into the table_def_cache to be really
-    sure that it cannot be read from the cache without having a table
-    id assigned.
-
-    CAVEAT. This means that the table cannot be used for
-    binlogging/replication purposes, unless get_table_share() has been
-    called directly or indirectly.
-   */
-  assign_new_table_id(share);
-
   if (my_hash_insert(&table_def_cache, (unsigned char*) share))
   {
     free_table_share(share);
@@ -2321,8 +2306,6 @@ bool reopen_table(Table *table)
   tmp.maybe_null=	table->maybe_null;
   tmp.status=		table->status;
 
-  tmp.s->table_map_id=  table->s->table_map_id;
-
   /* Get state */
   tmp.in_use=    	session;
   tmp.reginfo.lock_type=table->reginfo.lock_type;
@@ -2779,59 +2762,6 @@ void abort_locked_tables(Session *session,const char *db, const char *table_name
       break;
     }
   }
-}
-
-
-/*
-  Function to assign a new table map id to a table share.
-
-  PARAMETERS
-
-    share - Pointer to table share structure
-
-  DESCRIPTION
-
-    We are intentionally not checking that share->mutex is locked
-    since this function should only be called when opening a table
-    share and before it is entered into the table_def_cache (meaning
-    that it cannot be fetched by another thread, even accidentally).
-
-  PRE-CONDITION(S)
-
-    share is non-NULL
-    The LOCK_open mutex is locked
-
-  POST-CONDITION(S)
-
-    share->table_map_id is given a value that with a high certainty is
-    not used by any other table (the only case where a table id can be
-    reused is on wrap-around, which means more than 4 billion table
-    share opens have been executed while one table was open all the
-    time).
-
-    share->table_map_id is not UINT32_MAX.
- */
-void assign_new_table_id(TABLE_SHARE *share)
-{
-  static uint32_t last_table_id= UINT32_MAX;
-
-  /* Preconditions */
-  assert(share != NULL);
-  safe_mutex_assert_owner(&LOCK_open);
-
-  ulong tid= ++last_table_id;                   /* get next id */
-  /*
-    There is one reserved number that cannot be used.  Remember to
-    change this when 6-byte global table id's are introduced.
-  */
-  if (unlikely(tid == UINT32_MAX))
-    tid= ++last_table_id;
-  share->table_map_id= tid;
-
-  /* Post conditions */
-  assert(share->table_map_id != UINT32_MAX);
-
-  return;
 }
 
 /*

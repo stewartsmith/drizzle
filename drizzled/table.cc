@@ -158,23 +158,6 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
 
     share->version=       refresh_version;
 
-    /*
-      This constant is used to mark that no table map version has been
-      assigned.  No arithmetic is done on the value: it will be
-      overwritten with a value taken from DRIZZLE_BIN_LOG.
-    */
-    share->table_map_version= UINT64_MAX;
-
-    /*
-      Since alloc_table_share() can be called without any locking (for
-      example, ha_create_table... functions), we do not assign a table
-      map id here.  Instead we assign a value that is not used
-      elsewhere, and then assign a table map id inside open_table()
-      under the protection of the LOCK_open mutex.
-    */
-    share->table_map_id= UINT32_MAX;
-    share->cached_row_logging_check= -1;
-
     memcpy(&share->mem_root, &mem_root, sizeof(mem_root));
     pthread_mutex_init(&share->mutex, MY_MUTEX_INIT_FAST);
     pthread_cond_init(&share->cond, NULL);
@@ -206,7 +189,7 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
     use key_length= 0 as neither table_cache_key or key_length will be used).
 */
 
-void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
+void init_tmp_table_share(Session *, TABLE_SHARE *share, const char *key,
                           uint32_t key_length, const char *table_name,
                           const char *path)
 {
@@ -224,19 +207,6 @@ void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
   share->path.str=               (char*) path;
   share->normalized_path.str=    (char*) path;
   share->path.length= share->normalized_path.length= strlen(path);
-
-  /*
-    Temporary tables are not replicated, but we set up these fields
-    anyway to be able to catch errors.
-   */
-  share->table_map_version= ~(uint64_t)0;
-  share->cached_row_logging_check= -1;
-
-  /*
-    table_map_id is also used for MERGE tables to suppress repeated
-    compatibility checks.
-  */
-  share->table_map_id= (ulong) session->query_id;
 
   return;
 }
@@ -365,7 +335,7 @@ Item * default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
-    if(default_value->compare("NOW()")==0)
+    if (default_value->compare("NOW()") == 0)
       break;
   case DRIZZLE_TYPE_ENUM:
     default_item= new Item_string(default_value->c_str(),

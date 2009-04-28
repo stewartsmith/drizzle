@@ -131,16 +131,6 @@ public:
   bool crashed;
   bool name_lock, replace_with_name_lock;
   bool waiting_on_cond;                 /* Protection against free */
-  uint32_t table_map_id;                   /* for row-based replication */
-  uint64_t table_map_version;
-
-  /*
-    Cache for row-based replication table share checks that does not
-    need to be repeated. Possible values are: -1 when cache value is
-    not calculated yet, 0 when table *shall not* be replicated, 1 when
-    table *may* be replicated.
-  */
-  int cached_row_logging_check;
 
   /*
     Set share's table cache key and update its db and table name appropriately.
@@ -197,11 +187,6 @@ public:
   inline bool honor_global_locks()
   {
     return (table_category == TABLE_CATEGORY_USER);
-  }
-
-  inline uint32_t get_table_def_version()
-  {
-    return table_map_id;
   }
 
 };
