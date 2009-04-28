@@ -324,9 +324,6 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
   case drizzled::message::Table::Field::BLOB:
     field_type= DRIZZLE_TYPE_BLOB;
     break;
-  case drizzled::message::Table::Field::VIRTUAL:
-    field_type= DRIZZLE_TYPE_VIRTUAL;
-    break;
   default:
     field_type= DRIZZLE_TYPE_TINY; /* Set value to kill GCC warning */
     assert(1);
@@ -699,7 +696,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
 
   uint32_t stored_columns_reclength= 0;
 
-  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  for (unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
     drizzled::message::Table::Field pfield= table.field(fieldnr);
     if(pfield.has_constraints() && pfield.constraints().is_nullable())
@@ -709,16 +706,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
 
     enum_field_types drizzle_field_type=
       proto_field_type_to_drizzle_type(pfield.type());
-
-    if(drizzle_field_type==DRIZZLE_TYPE_VIRTUAL)
-    {
-      drizzled::message::Table::Field::VirtualFieldOptions field_options=
-	pfield.virtual_options();
-
-      drizzle_field_type=proto_field_type_to_drizzle_type(field_options.type());
-
-      field_is_stored= field_options.physically_stored();
-    }
 
     field_offsets[fieldnr]= stored_columns_reclength;
 
@@ -786,17 +773,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
     drizzled::message::Table::Field pfield= table.field(fieldnr);
 
     bool field_is_stored= true;
-
-    enum_field_types drizzle_field_type=
-      proto_field_type_to_drizzle_type(pfield.type());
-
-    if(drizzle_field_type==DRIZZLE_TYPE_VIRTUAL)
-    {
-      drizzled::message::Table::Field::VirtualFieldOptions field_options=
-	pfield.virtual_options();
-
-      field_is_stored= field_options.physically_stored();
-    }
 
     if(!field_is_stored)
     {
