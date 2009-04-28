@@ -33,7 +33,6 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/return_date_time.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
 #include <drizzled/field/timestamp.h>
@@ -663,24 +662,8 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     else
       type.set_charset(system_charset_info);
 
-    if (field->vcol_info)
-    {
-      packet->append(STRING_WITH_LEN("VIRTUAL "));
-    }
-
     field->sql_type(type);
     packet->append(type.ptr(), type.length(), system_charset_info);
-
-    if (field->vcol_info)
-    {
-      packet->append(STRING_WITH_LEN(" AS ("));
-      packet->append(field->vcol_info->expr_str.str,
-                     field->vcol_info->expr_str.length,
-                     system_charset_info);
-      packet->append(STRING_WITH_LEN(")"));
-      if (field->is_stored)
-        packet->append(STRING_WITH_LEN(" STORED"));
-    }
 
     if (field->has_charset())
     {
@@ -729,8 +712,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
           packet->append(STRING_WITH_LEN(" DYNAMIC */"));
       }
     }
-    if (!field->vcol_info &&
-        get_field_default_value(session, table->timestamp_field,
+    if (get_field_default_value(session, table->timestamp_field,
                                 field, &def_value, 1))
     {
       packet->append(STRING_WITH_LEN(" DEFAULT "));
@@ -3092,8 +3074,6 @@ static int get_schema_column_record(Session *session, TableList *tables,
         field->unireg_check != Field::TIMESTAMP_DN_FIELD)
       table->field[16]->store(STRING_WITH_LEN("on update CURRENT_TIMESTAMP"),
                               cs);
-    if (field->vcol_info)
-          table->field[16]->store(STRING_WITH_LEN("VIRTUAL"), cs);
     table->field[18]->store(field->comment.str, field->comment.length, cs);
     {
       enum column_format_type column_format= (enum column_format_type)

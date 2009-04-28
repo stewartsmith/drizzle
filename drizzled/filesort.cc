@@ -524,8 +524,6 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
       else
       {
 	error=file->rnd_next(sort_form->record[0]);
-        if (!error)
-          update_virtual_fields_marked_for_write(sort_form);
 
 	if (!flag)
 	{

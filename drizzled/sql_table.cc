@@ -872,8 +872,7 @@ int prepare_create_field(Create_field *sql_field,
                           (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
     break;
   }
-  if (!(sql_field->flags & NOT_NULL_FLAG) ||
-      (sql_field->vcol_info)) /* Make virtual columns always allow NULL values */
+  if (!(sql_field->flags & NOT_NULL_FLAG))
     sql_field->pack_flag|= FIELDFLAG_MAYBE_NULL;
   if (sql_field->flags & NO_DEFAULT_VALUE_FLAG)
     sql_field->pack_flag|= FIELDFLAG_NO_DEFAULT;
@@ -1128,7 +1127,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
             null_fields--;
 	  sql_field->flags=		dup_field->flags;
           sql_field->interval=          dup_field->interval;
-          sql_field->vcol_info=         dup_field->vcol_info;
           sql_field->is_stored=      dup_field->is_stored;
 	  it2.remove();			// Remove first (create) definition
 	  select_field_pos--;
@@ -1419,11 +1417,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
         {
           /* Key fields must always be physically stored. */
           my_error(ER_KEY_BASED_ON_GENERATED_VIRTUAL_COLUMN, MYF(0));
-          return(true);
-        }
-        if (key->type == Key::PRIMARY && sql_field->vcol_info)
-        {
-          my_error(ER_PRIMARY_KEY_BASED_ON_VIRTUAL_COLUMN, MYF(0));
           return(true);
         }
 	if (!(sql_field->flags & NOT_NULL_FLAG))
@@ -3374,14 +3367,6 @@ compare_tables(Session *session,
       if (!(table_changes_local= field->is_equal(new_field)))
         alter_flags->set(HA_ALTER_COLUMN_TYPE);
 
-      /*
-        Check if the altered column is a stored virtual field.
-        TODO: Mark such a column with an alter flag only if
-        the expression functions are not equal.
-      */
-      if (field->is_stored && field->vcol_info)
-        alter_flags->set(HA_ALTER_STORED_VCOL);
-
       /* Check if field was renamed */
       field->flags&= ~FIELD_IS_RENAMED;
       if (my_strcasecmp(system_charset_info,
@@ -5197,7 +5182,6 @@ copy_data_between_tables(Table *from,Table *to,
       copy_ptr->do_copy(copy_ptr);
     }
     prev_insert_id= to->file->next_insert_id;
-    update_virtual_fields_marked_for_write(to, false);
     error=to->file->ha_write_row(to->record[0]);
     to->auto_increment_field_not_null= false;
     if (error)

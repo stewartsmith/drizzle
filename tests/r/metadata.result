@@ -2,7 +2,7 @@ drop table if exists t1,t2;
 select 1, 1.0, -1, "hello", NULL;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def					1	5	1	1	N	32897	0	63
-def					1.0	10	4	3	N	129	1	63
+def					1.0	9	4	3	N	129	1	63
 def					-1	5	2	2	N	32897	0	63
 def					hello	8	20	5	N	1	31	45
 def					NULL	3	0	0	Y	32896	0	63
@@ -18,11 +18,11 @@ def	test	t1	t1	d	d	1	11	0	Y	32768	0	63
 def	test	t1	t1	e	e	5	20	0	Y	32768	0	63
 def	test	t1	t1	f	f	2	3	0	Y	32768	2	63
 def	test	t1	t1	g	g	2	4	0	Y	32768	3	63
-def	test	t1	t1	h	h	10	7	0	Y	0	4	63
+def	test	t1	t1	h	h	9	7	0	Y	0	4	63
 def	test	t1	t1	j	j	7	10	0	Y	128	0	63
 def	test	t1	t1	k	k	4	19	0	Y	160	0	63
 def	test	t1	t1	l	l	6	19	0	Y	128	0	63
-def	test	t1	t1	m	m	11	4	0	Y	256	0	45
+def	test	t1	t1	m	m	10	4	0	Y	256	0	45
 def	test	t1	t1	n	n	8	40	0	Y	0	0	45
 a	b	c	d	e	f	g	h	j	k	l	m	n
 select a b, b c from t1 as t2;

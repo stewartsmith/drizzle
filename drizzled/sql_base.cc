@@ -16,7 +16,6 @@
 
 /* Basic functions needed by many modules */
 #include <drizzled/server_includes.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/null.h>
 
@@ -3791,23 +3790,6 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
   if (field_ptr && *field_ptr)
   {
-    if ((*field_ptr)->vcol_info)
-    {
-      if (session->mark_used_columns != MARK_COLUMNS_NONE)
-      {
-        Item *vcol_item= (*field_ptr)->vcol_info->expr_item;
-        assert(vcol_item);
-        vcol_item->walk(&Item::register_field_in_read_map, 1, (unsigned char *) 0);
-        /*
-          Set the virtual field for write here if
-          1) this procedure is called for a read-only operation (SELECT), and
-          2) the virtual column is not phycically stored in the table
-        */
-        if ((session->mark_used_columns != MARK_COLUMNS_WRITE) &&
-            (not (*field_ptr)->is_stored))
-          (*field_ptr)->table->write_set->set((*field_ptr)->field_index);
-      }
-    }
     *cached_field_index_ptr= field_ptr - table->field;
     field= *field_ptr;
   }
@@ -5538,17 +5520,6 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       {
         /* Mark fields as used to allow storage engine to optimze access */
         field->table->read_set->set(field->field_index);
-        /*
-          Mark virtual fields for write and others that the virtual fields
-          depend on for read.
-        */
-        if (field->vcol_info)
-        {
-          Item *vcol_item= field->vcol_info->expr_item;
-          assert(vcol_item);
-          vcol_item->walk(&Item::register_field_in_read_map, 1, (unsigned char *) 0);
-          field->table->write_set->set(field->field_index);
-        }
         if (table)
         {
           table->covering_keys.intersect(field->part_of_key);
@@ -5763,18 +5734,6 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
     table= rfield->table;
     if (rfield == table->next_number_field)
       table->auto_increment_field_not_null= true;
-    if (rfield->vcol_info &&
-        value->type() != Item::DEFAULT_VALUE_ITEM &&
-        value->type() != Item::NULL_ITEM &&
-        table->s->table_category != TABLE_CATEGORY_TEMPORARY)
-    {
-      session->abort_on_warning= false;
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                          ER_WARNING_NON_DEFAULT_VALUE_FOR_VIRTUAL_COLUMN,
-                          ER(ER_WARNING_NON_DEFAULT_VALUE_FOR_VIRTUAL_COLUMN),
-                          rfield->field_name, table->s->table_name.str);
-      session->abort_on_warning= abort_on_warning_saved;
-    }
     if ((value->save_in_field(rfield, 0) < 0) && !ignore_errors)
     {
       my_message(ER_UNKNOWN_ERROR, ER(ER_UNKNOWN_ERROR), MYF(0));
@@ -5795,14 +5754,7 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
         values for virtual fields
       */
       if (table != prev_table)
-      {
         prev_table= table;
-        if (table->vfield)
-        {
-          if (update_virtual_fields_marked_for_write(table, false))
-            goto err;
-        }
-      }
     }
   }
   session->abort_on_warning= abort_on_warning_saved;
@@ -5866,18 +5818,6 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
     table= field->table;
     if (field == table->next_number_field)
       table->auto_increment_field_not_null= true;
-    if (field->vcol_info &&
-        value->type() != Item::DEFAULT_VALUE_ITEM &&
-        value->type() != Item::NULL_ITEM &&
-        table->s->table_category != TABLE_CATEGORY_TEMPORARY)
-    {
-      session->abort_on_warning= false;
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                          ER_WARNING_NON_DEFAULT_VALUE_FOR_VIRTUAL_COLUMN,
-                          ER(ER_WARNING_NON_DEFAULT_VALUE_FOR_VIRTUAL_COLUMN),
-                          field->field_name, table->s->table_name.str);
-      session->abort_on_warning= abort_on_warning_saved;
-    }
     if (value->save_in_field(field, 0) < 0)
       goto err;
     tbl_list.push_back(table);
@@ -5897,13 +5837,6 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
       if (table != prev_table)
       {
         prev_table= table;
-        if (table->vfield)
-        {
-          if (update_virtual_fields_marked_for_write(table, false))
-          {
-            goto err;
-          }
-        }
       }
     }
   }

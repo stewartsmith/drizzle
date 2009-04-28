@@ -22,7 +22,6 @@
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/function/update_hash.h>
 #include <drizzled/field/num.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
 
 #include <bitset>
@@ -94,9 +93,6 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
     Table *table= (Table *) arg;
     if (result_field->table == table || !table)
       result_field->table->read_set->set(result_field->field_index);
-    if (result_field->vcol_info && result_field->vcol_info->expr_item)
-      return result_field->vcol_info->
-               expr_item->walk(&Item::register_field_in_read_map, 1, arg);
   }
   return 0;
 }

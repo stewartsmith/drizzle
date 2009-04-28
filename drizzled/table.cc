@@ -25,7 +25,6 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
@@ -325,9 +324,6 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
   case drizzled::message::Table::Field::BLOB:
     field_type= DRIZZLE_TYPE_BLOB;
     break;
-  case drizzled::message::Table::Field::VIRTUAL:
-    field_type= DRIZZLE_TYPE_VIRTUAL;
-    break;
   default:
     field_type= DRIZZLE_TYPE_TINY; /* Set value to kill GCC warning */
     assert(1);
@@ -390,8 +386,6 @@ Item * default_value_item(enum_field_types field_type,
 				    default_value->length(),
 				    system_charset_info);
     }
-    break;
-  case DRIZZLE_TYPE_VIRTUAL:
     break;
   case DRIZZLE_TYPE_NEWDECIMAL:
     default_item= new Item_decimal(default_value->c_str(),
@@ -700,7 +694,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
 
   uint32_t stored_columns_reclength= 0;
 
-  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  for (unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
     drizzled::message::Table::Field pfield= table.field(fieldnr);
     if(pfield.has_constraints() && pfield.constraints().is_nullable())
@@ -710,16 +704,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
 
     enum_field_types drizzle_field_type=
       proto_field_type_to_drizzle_type(pfield.type());
-
-    if(drizzle_field_type==DRIZZLE_TYPE_VIRTUAL)
-    {
-      drizzled::message::Table::Field::VirtualFieldOptions field_options=
-	pfield.virtual_options();
-
-      drizzle_field_type=proto_field_type_to_drizzle_type(field_options.type());
-
-      field_is_stored= field_options.physically_stored();
-    }
 
     field_offsets[fieldnr]= stored_columns_reclength;
 
@@ -787,17 +771,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
     drizzled::message::Table::Field pfield= table.field(fieldnr);
 
     bool field_is_stored= true;
-
-    enum_field_types drizzle_field_type=
-      proto_field_type_to_drizzle_type(pfield.type());
-
-    if(drizzle_field_type==DRIZZLE_TYPE_VIRTUAL)
-    {
-      drizzled::message::Table::Field::VirtualFieldOptions field_options=
-	pfield.virtual_options();
-
-      field_is_stored= field_options.physically_stored();
-    }
 
     if(!field_is_stored)
     {
@@ -1002,29 +975,10 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
     }
 
     enum_field_types field_type;
-    virtual_column_info *vcol_info= NULL;
     bool field_is_stored= true;
 
 
     field_type= proto_field_type_to_drizzle_type(pfield.type());
-
-    if(field_type==DRIZZLE_TYPE_VIRTUAL)
-    {
-      drizzled::message::Table::Field::VirtualFieldOptions field_options=
-	pfield.virtual_options();
-
-      vcol_info= new virtual_column_info();
-      field_type= proto_field_type_to_drizzle_type(field_options.type());
-      field_is_stored= field_options.physically_stored();
-
-      size_t len= field_options.expression().length();
-      const char* str= field_options.expression().c_str();
-
-      vcol_info->expr_str.str= strmake_root(&share->mem_root, str, len);
-      vcol_info->expr_str.length= len;
-
-      share->vfields++;
-    }
 
     const CHARSET_INFO *charset= &my_charset_bin;
 
@@ -1131,7 +1085,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_S
 
     f->field_index= fieldnr;
     f->comment= comment;
-    f->vcol_info= vcol_info;
     f->is_stored= field_is_stored;
     if(!default_value
        && !(f->unireg_check==Field::NEXT_NUMBER)
@@ -1472,275 +1425,6 @@ err_not_open:
   return(error);
 }
 
-/*
-  Clear flag GET_FIXED_FIELDS_FLAG in all fields of the table.
-  This routine is used for error handling purposes.
-
-  SYNOPSIS
-    clear_field_flag()
-    table                Table object for which virtual columns are set-up
-
-  RETURN VALUE
-    NONE
-*/
-static void clear_field_flag(Table *table)
-{
-  Field **ptr;
-
-  for (ptr= table->field; *ptr; ptr++)
-    (*ptr)->flags&= (~GET_FIXED_FIELDS_FLAG);
-}
-
-/*
-  The function uses the feature in fix_fields where the flag
-  GET_FIXED_FIELDS_FLAG is set for all fields in the item tree.
-  This field must always be reset before returning from the function
-  since it is used for other purposes as well.
-
-  SYNOPSIS
-    fix_fields_vcol_func()
-    session                  The thread object
-    func_item            The item tree reference of the virtual columnfunction
-    table                The table object
-    field_name           The name of the processed field
-
-  RETURN VALUE
-    true                 An error occurred, something was wrong with the
-                         function.
-    false                Ok, a partition field array was created
-*/
-
-bool fix_fields_vcol_func(Session *session,
-                          Item* func_expr,
-                          Table *table,
-                          const char *field_name)
-{
-  uint32_t dir_length, home_dir_length;
-  bool result= true;
-  TableList tables;
-  TableList *save_table_list, *save_first_table, *save_last_table;
-  int error;
-  Name_resolution_context *context;
-  const char *save_where;
-  char* db_name;
-  char db_name_string[FN_REFLEN];
-  bool save_use_only_table_context;
-  Field **ptr, *field;
-  enum_mark_columns save_mark_used_columns= session->mark_used_columns;
-  assert(func_expr);
-
-  /*
-    Set-up the TABLE_LIST object to be a list with a single table
-    Set the object to zero to create NULL pointers and set alias
-    and real name to table name and get database name from file name.
-  */
-
-  bzero((void*)&tables, sizeof(TableList));
-  tables.alias= tables.table_name= (char*) table->s->table_name.str;
-  tables.table= table;
-  tables.next_local= NULL;
-  tables.next_name_resolution_table= NULL;
-  memcpy(db_name_string,
-         table->s->normalized_path.str,
-         table->s->normalized_path.length);
-  db_name_string[table->s->normalized_path.length]= '\0';
-  dir_length= dirname_length(db_name_string);
-  db_name_string[dir_length - 1]= 0;
-  home_dir_length= dirname_length(db_name_string);
-  db_name= &db_name_string[home_dir_length];
-  tables.db= db_name;
-
-  session->mark_used_columns= MARK_COLUMNS_NONE;
-
-  context= session->lex->current_context();
-  table->map= 1; //To ensure correct calculation of const item
-  table->get_fields_in_item_tree= true;
-  save_table_list= context->table_list;
-  save_first_table= context->first_name_resolution_table;
-  save_last_table= context->last_name_resolution_table;
-  context->table_list= &tables;
-  context->first_name_resolution_table= &tables;
-  context->last_name_resolution_table= NULL;
-  func_expr->walk(&Item::change_context_processor, 0, (unsigned char*) context);
-  save_where= session->where;
-  session->where= "virtual column function";
-
-  /* Save the context before fixing the fields*/
-  save_use_only_table_context= session->lex->use_only_table_context;
-  session->lex->use_only_table_context= true;
-  /* Fix fields referenced to by the virtual column function */
-  error= func_expr->fix_fields(session, (Item**)0);
-  /* Restore the original context*/
-  session->lex->use_only_table_context= save_use_only_table_context;
-  context->table_list= save_table_list;
-  context->first_name_resolution_table= save_first_table;
-  context->last_name_resolution_table= save_last_table;
-
-  if (unlikely(error))
-  {
-    clear_field_flag(table);
-    goto end;
-  }
-  session->where= save_where;
-  /*
-    Walk through the Item tree checking if all items are valid
-   to be part of the virtual column
- */
-  error= func_expr->walk(&Item::check_vcol_func_processor, 0, NULL);
-  if (error)
-  {
-    my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
-    clear_field_flag(table);
-    goto end;
-  }
-  if (unlikely(func_expr->const_item()))
-  {
-    my_error(ER_CONST_EXPR_IN_VCOL, MYF(0));
-    clear_field_flag(table);
-    goto end;
-  }
-  /* Ensure that this virtual column is not based on another virtual field. */
-  ptr= table->field;
-  while ((field= *(ptr++)))
-  {
-    if ((field->flags & GET_FIXED_FIELDS_FLAG) &&
-        (field->vcol_info))
-    {
-      my_error(ER_VCOL_BASED_ON_VCOL, MYF(0));
-      clear_field_flag(table);
-      goto end;
-    }
-  }
-  /*
-    Cleanup the fields marked with flag GET_FIXED_FIELDS_FLAG
-    when calling fix_fields.
-  */
-  clear_field_flag(table);
-  result= false;
-
-end:
-  table->get_fields_in_item_tree= false;
-  session->mark_used_columns= save_mark_used_columns;
-  table->map= 0; //Restore old value
-  return(result);
-}
-
-/*
-  Unpack the definition of a virtual column
-
-  SYNOPSIS
-    unpack_vcol_info_from_frm()
-    session                  Thread handler
-    table                Table with the checked field
-    field                Pointer to Field object
-    open_mode            Open table mode needed to determine
-                         which errors need to be generated in a failure
-    error_reported       updated flag for the caller that no other error
-                         messages are to be generated.
-
-  RETURN VALUES
-    true            Failure
-    false           Success
-*/
-bool unpack_vcol_info_from_frm(Session *session,
-                               Table *table,
-                               Field *field,
-                               LEX_STRING *vcol_expr,
-                               open_table_mode open_mode,
-                               bool *error_reported)
-{
-  assert(vcol_expr);
-
-  /*
-    Step 1: Construct a statement for the parser.
-    The parsed string needs to take the following format:
-    "PARSE_VCOL_EXPR (<expr_string_from_frm>)"
-  */
-  char *vcol_expr_str;
-  int str_len= 0;
-
-  if (!(vcol_expr_str= (char*) alloc_root(&table->mem_root,
-                                          vcol_expr->length +
-                                            parse_vcol_keyword.length + 3)))
-  {
-    return(true);
-  }
-  memcpy(vcol_expr_str,
-         (char*) parse_vcol_keyword.str,
-         parse_vcol_keyword.length);
-  str_len= parse_vcol_keyword.length;
-  memcpy(vcol_expr_str + str_len, "(", 1);
-  str_len++;
-  memcpy(vcol_expr_str + str_len,
-         (char*) vcol_expr->str,
-         vcol_expr->length);
-  str_len+= vcol_expr->length;
-  memcpy(vcol_expr_str + str_len, ")", 1);
-  str_len++;
-  memcpy(vcol_expr_str + str_len, "\0", 1);
-  str_len++;
-  Lex_input_stream lip(session, vcol_expr_str, str_len);
-
-  /*
-    Step 2: Setup session for parsing.
-    1) make Item objects be created in the memory allocated for the Table
-       object (not TABLE_SHARE)
-    2) ensure that created Item's are not put on to session->free_list
-       (which is associated with the parsed statement and hence cleared after
-       the parsing)
-    3) setup a flag in the LEX structure to allow "PARSE_VCOL_EXPR"
-       to be parsed as a SQL command.
-  */
-  MEM_ROOT **root_ptr, *old_root;
-  Item *backup_free_list= session->free_list;
-  root_ptr= current_mem_root_ptr();
-  old_root= *root_ptr;
-  *root_ptr= &table->mem_root;
-  session->free_list= NULL;
-  session->lex->parse_vcol_expr= true;
-
-  /*
-    Step 3: Use the parser to build an Item object from.
-  */
-  if (parse_sql(session, &lip))
-  {
-    goto parse_err;
-  }
-  /* From now on use vcol_info generated by the parser. */
-  field->vcol_info= session->lex->vcol_info;
-
-  /* Validate the Item tree. */
-  if (fix_fields_vcol_func(session,
-                           field->vcol_info->expr_item,
-                           table,
-                           field->field_name))
-  {
-    if (open_mode == OTM_CREATE)
-    {
-      /*
-        During CREATE/ALTER TABLE it is ok to receive errors here.
-        It is not ok if it happens during the opening of an frm
-        file as part of a normal query.
-      */
-      *error_reported= true;
-    }
-    field->vcol_info= NULL;
-    goto parse_err;
-  }
-  field->vcol_info->item_free_list= session->free_list;
-  session->free_list= backup_free_list;
-  *root_ptr= old_root;
-
-  return(false);
-
-parse_err:
-  session->lex->parse_vcol_expr= false;
-  session->free_items();
-  *root_ptr= old_root;
-  session->free_list= backup_free_list;
-  return(true);
-}
-
 
 /*
   Open a table based on a TABLE_SHARE
@@ -1778,7 +1462,7 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
   uint32_t records, i;
   bool error_reported= false;
   unsigned char *record;
-  Field **field_ptr, **vfield_ptr;
+  Field **field_ptr;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */
   assert(session->lex->is_lex_started);
@@ -1923,45 +1607,6 @@ int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alia
         }
       }
     }
-  }
-
-  /*
-    Process virtual columns, if any.
-  */
-  if (not (vfield_ptr = (Field **) alloc_root(&outparam->mem_root,
-                                              (uint32_t) ((share->vfields+1)*
-                                                      sizeof(Field*)))))
-    goto err;
-
-  outparam->vfield= vfield_ptr;
-
-  for (field_ptr= outparam->field; *field_ptr; field_ptr++)
-  {
-    if ((*field_ptr)->vcol_info)
-    {
-      if (unpack_vcol_info_from_frm(session,
-                                    outparam,
-                                    *field_ptr,
-                                    &(*field_ptr)->vcol_info->expr_str,
-                                    open_mode,
-                                    &error_reported))
-      {
-        error= 4; // in case no error is reported
-        goto err;
-      }
-      *(vfield_ptr++)= *field_ptr;
-    }
-  }
-  *vfield_ptr= NULL;                              // End marker
-  /* Check virtual columns against table's storage engine. */
-  if ((share->vfields && outparam->file) &&
-        (not outparam->file->check_if_supported_virtual_columns()))
-  {
-    my_error(ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN,
-             MYF(0),
-             "Specified storage engine");
-    error_reported= true;
-    goto err;
   }
 
   /* Allocate bitmaps */
@@ -3188,14 +2833,7 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index,
   KEY_PART_INFO *key_part_end= (key_part +
                                 key_info[index].key_parts);
   for (;key_part != key_part_end; key_part++)
-  {
     bitmap->set(key_part->fieldnr-1);
-    if (key_part->field->vcol_info &&
-        key_part->field->vcol_info->expr_item)
-      key_part->field->vcol_info->
-               expr_item->walk(&Item::register_field_in_bitmap,
-                               1, (unsigned char *) bitmap);
-  }
 }
 
 
@@ -3319,8 +2957,6 @@ void Table::mark_columns_needed_for_update()
       file->column_bitmaps_signal();
     }
   }
-  /* Mark all virtual columns as writable */
-  mark_virtual_columns();
   return;
 }
 
@@ -3336,40 +2972,6 @@ void Table::mark_columns_needed_for_insert()
 {
   if (found_next_number_field)
     mark_auto_increment_column();
-  /* Mark all virtual columns as writable */
-  mark_virtual_columns();
-}
-
-/*
-  @brief Update the write and read table bitmap to allow
-         using procedure save_in_field for all virtual columns
-         in the table.
-
-  @return       void
-
-  @detail
-    Each virtual field is set in the write column map.
-    All fields that the virtual columns are based on are set in the
-    read bitmap.
-*/
-
-void Table::mark_virtual_columns(void)
-{
-  Field **vfield_ptr, *tmp_vfield;
-  bool bitmap_updated= false;
-
-  for (vfield_ptr= vfield; *vfield_ptr; vfield_ptr++)
-  {
-    tmp_vfield= *vfield_ptr;
-    assert(tmp_vfield->vcol_info && tmp_vfield->vcol_info->expr_item);
-    tmp_vfield->vcol_info->expr_item->walk(&Item::register_field_in_read_map,
-                                           1, (unsigned char *) 0);
-    read_set->set(tmp_vfield->field_index);
-    write_set->set(tmp_vfield->field_index);
-    bitmap_updated= true;
-  }
-  if (bitmap_updated)
-    file->column_bitmaps_signal();
 }
 
 
@@ -4934,53 +4536,6 @@ int Table::report_error(int error)
   file->print_error(error,MYF(0));
 
   return 1;
-}
-
-
-/*
-  Calculate data for each virtual field marked for write in the
-  corresponding column map.
-
-  SYNOPSIS
-    update_virtual_fields_marked_for_write()
-    table                  The Table object
-    ignore_stored          Indication whether physically stored virtual
-                           fields do not need updating.
-                           This value is false when during INSERT and UPDATE
-                           and true in all other cases.
-
-  RETURN
-    0  - Success
-    >0 - Error occurred during the generation/calculation of a virtual field value
-
-*/
-
-int update_virtual_fields_marked_for_write(Table *table,
-                                           bool ignore_stored)
-{
-  Field **vfield_ptr, *vfield;
-  int error= 0;
-  if ((not table) or (not table->vfield))
-    return(0);
-
-  /* Iterate over virtual fields in the table */
-  for (vfield_ptr= table->vfield; *vfield_ptr; vfield_ptr++)
-  {
-    vfield= (*vfield_ptr);
-    assert(vfield->vcol_info && vfield->vcol_info->expr_item);
-    /*
-      Only update those fields that are marked in the write_set bitmap
-      and not _already_ physically stored in the database.
-    */
-    if (table->write_set->test(vfield->field_index) &&
-        (not (ignore_stored && vfield->is_stored))
-       )
-    {
-      /* Generate the actual value of the virtual fields */
-      error= vfield->vcol_info->expr_item->save_in_field(vfield, 0);
-    }
-  }
-  return(0);
 }
 
 

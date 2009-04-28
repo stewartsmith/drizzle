@@ -111,8 +111,6 @@ public:
    */
   bool is_created_from_null_item;
 
-  /* Virtual column data */
-  virtual_column_info *vcol_info;
   /*
     Indication that the field is physically stored in tables
     rather than just generated on SQL queries.
@@ -590,8 +588,6 @@ public:
   uint8_t       interval_id;	// For rea_create_table
   uint32_t	offset,pack_flag;
 
-  /* Virtual column expression statement */
-  virtual_column_info *vcol_info;
   /*
     Indication that the field is phycically stored in tables
     rather than just generated on SQL queries.
@@ -622,8 +618,7 @@ public:
             Item *on_update_value, LEX_STRING *comment, char *change,
             List<String> *interval_list, const CHARSET_INFO * const cs,
             uint32_t uint_geom_type,
-            enum column_format_type column_format,
-            virtual_column_info *vcol_info);
+            enum column_format_type column_format);
 };
 
 
