@@ -3460,7 +3460,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   saved_cache_key= strcpy(tmp_path, path)+path_length+1;
   memcpy(saved_cache_key, cache_key, key_length);
 
-  init_tmp_table_share(session, share, saved_cache_key, key_length,
+  init_tmp_table_share(share, saved_cache_key, key_length,
                        strchr(saved_cache_key, '\0')+1, tmp_path);
 
   if (open_table_def(session, share, 0) ||
@@ -5824,7 +5824,7 @@ bool drizzle_rm_tmp_tables(void)
           /* We should cut file extention before deleting of table */
           memcpy(filePathCopy, filePath, filePath_len - ext_len);
           filePathCopy[filePath_len - ext_len]= 0;
-          init_tmp_table_share(session, &share, "", 0, "", filePathCopy);
+          init_tmp_table_share(&share, "", 0, "", filePathCopy);
           if (!open_table_def(session, &share, 0) &&
               ((handler_file= get_new_handler(&share, session->mem_root,
                                               share.db_type()))))

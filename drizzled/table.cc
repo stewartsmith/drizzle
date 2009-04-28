@@ -171,7 +171,6 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
 
   SYNOPSIS
     init_tmp_table_share()
-    session         thread handle
     share	Share to fill
     key		Table_cache_key, as generated from create_table_def_key.
 		must start with db name.
@@ -189,7 +188,7 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
     use key_length= 0 as neither table_cache_key or key_length will be used).
 */
 
-void init_tmp_table_share(Session *, TABLE_SHARE *share, const char *key,
+void init_tmp_table_share(TABLE_SHARE *share, const char *key,
                           uint32_t key_length, const char *table_name,
                           const char *path)
 {
@@ -3459,7 +3458,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->keys_in_use_for_query.init();
 
   table->setShare(share);
-  init_tmp_table_share(session, share, "", 0, tmpname, tmpname);
+  init_tmp_table_share(share, "", 0, tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM

@@ -189,7 +189,7 @@ extern pthread_t signal_thread;
 /* table.cc */
 TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length);
-void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
+void init_tmp_table_share(TABLE_SHARE *share, const char *key,
                           uint32_t key_length,
                           const char *table_name, const char *path);
 void free_table_share(TABLE_SHARE *share);
