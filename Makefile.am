@@ -110,8 +110,7 @@ mystrings_libmystrings_la_SOURCES= \
 		mystrings/is_prefix.cc \
 		mystrings/llstr.cc \
 		mystrings/longlong2str.cc \
-		mystrings/my_strtoll10.cc \
-		mystrings/str2int.cc
+		mystrings/my_strtoll10.cc
 
 mysys_libmysys_la_SOURCES= \
 		mysys/array.cc \
