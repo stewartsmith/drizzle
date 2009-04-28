@@ -659,7 +659,7 @@ int ha_create_table(Session *session, const char *path,
   const char *name;
   TableShare share;
 
-  init_tmp_table_share(&share, db, 0, table_name, path);
+  share.init_tmp_table_share(db, 0, table_name, path);
   if (open_table_def(session, &share, 0) ||
       open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0, &table,
                             OTM_CREATE))

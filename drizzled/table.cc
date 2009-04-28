@@ -167,51 +167,6 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 
 
 /*
-  Initialize share for temporary tables
-
-  SYNOPSIS
-    init_tmp_table_share()
-    share	Share to fill
-    key		Table_cache_key, as generated from create_table_def_key.
-		must start with db name.
-    key_length	Length of key
-    table_name	Table name
-    path	Path to file (possible in lower case) without .frm
-
-  NOTES
-    This is different from alloc_table_share() because temporary tables
-    don't have to be shared between threads or put into the table def
-    cache, so we can do some things notable simpler and faster
-
-    If table is not put in session->temporary_tables (happens only when
-    one uses OPEN TEMPORARY) then one can specify 'db' as key and
-    use key_length= 0 as neither table_cache_key or key_length will be used).
-*/
-
-void init_tmp_table_share(TableShare *share, const char *key,
-                          uint32_t key_length, const char *table_name,
-                          const char *path)
-{
-
-  memset(share, 0, sizeof(*share));
-  init_sql_alloc(&share->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
-  share->table_category=         TABLE_CATEGORY_TEMPORARY;
-  share->tmp_table=              INTERNAL_TMP_TABLE;
-  share->db.str=                 (char*) key;
-  share->db.length=		 strlen(key);
-  share->table_cache_key.str=    (char*) key;
-  share->table_cache_key.length= key_length;
-  share->table_name.str=         (char*) table_name;
-  share->table_name.length=      strlen(table_name);
-  share->path.str=               (char*) path;
-  share->normalized_path.str=    (char*) path;
-  share->path.length= share->normalized_path.length= strlen(path);
-
-  return;
-}
-
-
-/*
   Free table share and memory used by it
 
   SYNOPSIS
@@ -3458,7 +3413,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->keys_in_use_for_query.init();
 
   table->setShare(share);
-  init_tmp_table_share(share, "", 0, tmpname, tmpname);
+  share->init_tmp_table_share("", 0, tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM

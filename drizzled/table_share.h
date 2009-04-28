@@ -90,7 +90,6 @@ public:
   StorageEngine *storage_engine;			/* storage engine plugin */
   inline StorageEngine *db_type() const	/* table_type for handler */
   {
-    // assert(storage_engine);
     return storage_engine;
   }
   enum row_type row_type;		/* How rows are stored */
@@ -187,6 +186,50 @@ public:
   inline bool honor_global_locks()
   {
     return (table_category == TABLE_CATEGORY_USER);
+  }
+
+
+  /*
+    Initialize share for temporary tables
+
+    SYNOPSIS
+    init_tmp_table_share()
+    share	Share to fill
+    key		Table_cache_key, as generated from create_table_def_key.
+    must start with db name.
+    key_length	Length of key
+    table_name	Table name
+    path	Path to file (possible in lower case) without .frm
+
+    NOTES
+    This is different from alloc_table_share() because temporary tables
+    don't have to be shared between threads or put into the table def
+    cache, so we can do some things notable simpler and faster
+
+    If table is not put in session->temporary_tables (happens only when
+    one uses OPEN TEMPORARY) then one can specify 'db' as key and
+    use key_length= 0 as neither table_cache_key or key_length will be used).
+  */
+
+  void init_tmp_table_share(const char *key,
+                            uint32_t key_length, const char *new_table_name,
+                            const char *new_path)
+  {
+    memset(this, 0, sizeof(TableShare));
+    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    table_category=         TABLE_CATEGORY_TEMPORARY;
+    tmp_table=              INTERNAL_TMP_TABLE;
+    db.str=                 (char*) key;
+    db.length=		 strlen(key);
+    table_cache_key.str=    (char*) key;
+    table_cache_key.length= key_length;
+    table_name.str=         (char*) new_table_name;
+    table_name.length=      strlen(new_table_name);
+    path.str=               (char*) new_path;
+    normalized_path.str=    (char*) new_path;
+    path.length= normalized_path.length= strlen(new_path);
+
+    return;
   }
 
 };
