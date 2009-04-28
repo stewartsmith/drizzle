@@ -387,8 +387,6 @@ Item * default_value_item(enum_field_types field_type,
 				    system_charset_info);
     }
     break;
-  case DRIZZLE_TYPE_VIRTUAL:
-    break;
   case DRIZZLE_TYPE_NEWDECIMAL:
     default_item= new Item_decimal(default_value->c_str(),
 				   default_value->length(),
