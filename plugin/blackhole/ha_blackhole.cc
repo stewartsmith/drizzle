@@ -28,7 +28,7 @@ class BlackholeEngine : public StorageEngine
 public:
   BlackholeEngine(const string &name_arg)
    : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
-  virtual handler *create(TABLE_SHARE *table,
+  virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_blackhole(this, table);
@@ -48,7 +48,7 @@ static void free_share(st_blackhole_share *share);
 *****************************************************************************/
 
 ha_blackhole::ha_blackhole(StorageEngine *engine_arg,
-                           TABLE_SHARE *table_arg)
+                           TableShare *table_arg)
   :handler(engine_arg, table_arg)
 {}
 

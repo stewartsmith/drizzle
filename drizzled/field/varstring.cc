@@ -52,7 +52,7 @@ Field_varstring::Field_varstring(unsigned char *ptr_arg,
                                  unsigned char null_bit_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
-                                 TABLE_SHARE *share,
+                                 TableShare *share,
                                  const CHARSET_INFO * const cs)
   :Field_longstr(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
                  unireg_check_arg, field_name_arg, cs),
@@ -63,7 +63,7 @@ Field_varstring::Field_varstring(unsigned char *ptr_arg,
 
 Field_varstring::Field_varstring(uint32_t len_arg,bool maybe_null_arg,
                                  const char *field_name_arg,
-                                 TABLE_SHARE *share,
+                                 TableShare *share,
                                  const CHARSET_INFO * const cs)
   :Field_longstr((unsigned char*) 0,len_arg,
                  maybe_null_arg ? (unsigned char*) "": 0, 0,

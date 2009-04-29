@@ -796,7 +796,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
   if (!dont_send_ok && (table= find_temporary_table(session, table_list)))
   {
     StorageEngine *table_type= table->s->db_type();
-    TABLE_SHARE *share= table->s;
+    TableShare *share= table->s;
 
     if (!table_type->check_flag(HTON_BIT_CAN_RECREATE))
       goto trunc_by_del;
@@ -812,7 +812,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
 					     share->table_name.str, 1,
                                              OTM_OPEN))))
       (void) rm_temporary_table(table_type, path);
-    free_table_share(share);
+    share->free_table_share();
     free((char*) table);
     /*
       If we return here we will not have logged the truncation to the bin log

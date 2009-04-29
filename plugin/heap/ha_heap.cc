@@ -42,7 +42,7 @@ public:
     addAlias("HEAP");
   }
 
-  virtual handler *create(TABLE_SHARE *table,
+  virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_heap(this, table);
@@ -74,7 +74,7 @@ int heap_deinit(PluginRegistry &registry)
 ** HEAP tables
 *****************************************************************************/
 
-ha_heap::ha_heap(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+ha_heap::ha_heap(StorageEngine *engine_arg, TableShare *table_arg)
   :handler(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
@@ -635,7 +635,7 @@ int ha_heap::create(const char *name, Table *table_arg,
   HA_KEYSEG *seg;
   char buff[FN_REFLEN];
   int error;
-  TABLE_SHARE *share= table_arg->s;
+  TableShare *share= table_arg->s;
   bool found_real_auto_increment= 0;
 
   if (!(columndef= (HP_COLUMNDEF*) malloc(column_count * sizeof(HP_COLUMNDEF))))

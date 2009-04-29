@@ -45,7 +45,7 @@ class Protocol;
 class Create_field;
 class virtual_column_info;
 
-class TABLE_SHARE;
+class TableShare;
 
 class Field;
 
@@ -668,7 +668,7 @@ public:
 };
 
 
-Field *make_field(TABLE_SHARE *share, MEM_ROOT *root, unsigned char *ptr, uint32_t field_length,
+Field *make_field(TableShare *share, MEM_ROOT *root, unsigned char *ptr, uint32_t field_length,
                   unsigned char *null_pos, unsigned char null_bit,
                   uint32_t pack_flag, enum_field_types field_type,
                   const CHARSET_INFO * cs,

@@ -614,7 +614,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   KEY *key_info;
   Table *table= table_list->table;
   handler *file= table->file;
-  TABLE_SHARE *share= table->s;
+  TableShare *share= table->s;
   HA_CREATE_INFO create_info;
   bool show_table_options= false;
   bitset<MAX_FIELDS> *old_bitmap;
@@ -2332,7 +2332,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
                                       enum enum_schema_tables)
 {
   Table *table= tables->table;
-  TABLE_SHARE *share;
+  TableShare *share;
   Table tbl;
   TableList table_list;
   uint32_t res= 0;
@@ -2719,7 +2719,7 @@ static int get_schema_tables_record(Session *session, TableList *tables,
   {
     char option_buff[400],*ptr;
     Table *show_table= tables->table;
-    TABLE_SHARE *share= show_table->s;
+    TableShare *share= show_table->s;
     handler *file= show_table->file;
     StorageEngine *tmp_db_type= share->db_type();
     if (share->tmp_table == SYSTEM_TMP_TABLE)
@@ -2978,7 +2978,7 @@ static int get_schema_column_record(Session *session, TableList *tables,
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   const CHARSET_INFO * const cs= system_charset_info;
   Table *show_table;
-  TABLE_SHARE *show_table_share;
+  TableShare *show_table_share;
   Field **ptr, *field, *timestamp_field;
   int count;
 

@@ -66,7 +66,7 @@ public:
   MyisamEngine(string name_arg)
    : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES) {}
 
-  virtual handler *create(TABLE_SHARE *table,
+  virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_myisam(this, table);
@@ -155,7 +155,7 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo, *recinfo_pos;
   HA_KEYSEG *keyseg;
-  TABLE_SHARE *share= table_arg->s;
+  TableShare *share= table_arg->s;
   uint32_t options= share->db_options_in_use;
   if (!(my_multi_malloc(MYF(MY_WME),
           recinfo_out, (share->fields * 2 + 2) * sizeof(MI_COLUMNDEF),
@@ -483,7 +483,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 }
 
-ha_myisam::ha_myisam(StorageEngine *engine_arg, TABLE_SHARE *table_arg)
+ha_myisam::ha_myisam(StorageEngine *engine_arg, TableShare *table_arg)
   :handler(engine_arg, table_arg), file(0),
   int_table_flags(HA_NULL_IN_KEY |
                   HA_BINLOG_ROW_CAPABLE |
@@ -1527,7 +1527,7 @@ int ha_myisam::info(uint32_t flag)
   }
   if (flag & HA_STATUS_CONST)
   {
-    TABLE_SHARE *share= table->s;
+    TableShare *share= table->s;
     stats.max_data_file_length=  misam_info.max_data_file_length;
     stats.max_index_file_length= misam_info.max_index_file_length;
     stats.create_time= misam_info.create_time;
@@ -1648,7 +1648,7 @@ int ha_myisam::create(const char *name, register Table *table_arg,
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo;
   MI_CREATE_INFO create_info;
-  TABLE_SHARE *share= table_arg->s;
+  TableShare *share= table_arg->s;
   uint32_t options= share->db_options_in_use;
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &create_records)))
     return(error); /* purecov: inspected */

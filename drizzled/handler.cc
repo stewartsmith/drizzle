@@ -1060,7 +1060,7 @@ int handler::ha_end_bulk_insert()
   return end_bulk_insert();
 }
 
-void handler::change_table_ptr(Table *table_arg, TABLE_SHARE *share)
+void handler::change_table_ptr(Table *table_arg, TableShare *share)
 {
   table= table_arg;
   table_share= share;

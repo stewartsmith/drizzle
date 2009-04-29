@@ -61,7 +61,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
 {
   MEM_ROOT *mem_root_save, own_root;
   Table *table;
-  TABLE_SHARE *share;
+  TableShare *share;
   uint32_t temp_pool_slot= BIT_NONE;
   char  *tmpname,path[FN_REFLEN];
   Field **reg_field;
@@ -141,7 +141,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   table->keys_in_use_for_query.reset();
 
   table->s= share;
-  init_tmp_table_share(session, share, "", 0, tmpname, tmpname);
+  share->init(tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM

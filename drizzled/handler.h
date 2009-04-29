@@ -53,7 +53,7 @@ typedef bool (*qc_engine_callback)(Session *session, char *table_key,
 
 class Table;
 class TableList;
-class TABLE_SHARE;
+class TableShare;
 class Select_Lex_Unit;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
@@ -162,7 +162,7 @@ public:
   typedef uint64_t Table_flags;
 
 protected:
-  TABLE_SHARE *table_share;   /* The table definition */
+  TableShare *table_share;   /* The table definition */
   Table *table;               /* The current open table */
   Table_flags cached_table_flags;       /* Set on init() and open() */
 
@@ -233,7 +233,7 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  handler(StorageEngine *engine_arg, TABLE_SHARE *share_arg)
+  handler(StorageEngine *engine_arg, TableShare *share_arg)
     :table_share(share_arg), table(0),
     estimation_rows_to_insert(0), engine(engine_arg),
     ref(0), in_range_check_pushed_down(false),
@@ -313,7 +313,7 @@ public:
   virtual void print_error(int error, myf errflag);
   virtual bool get_error_message(int error, String *buf);
   uint32_t get_dup_key(int error);
-  virtual void change_table_ptr(Table *table_arg, TABLE_SHARE *share);
+  virtual void change_table_ptr(Table *table_arg, TableShare *share);
 
   /* Estimates calculation */
   virtual double scan_time(void)
@@ -1297,10 +1297,10 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
 uint32_t create_table_def_key(Session *session, char *key, TableList *table_list,
                               bool tmp_table);
-TABLE_SHARE *get_table_share(Session *session, TableList *table_list, char *key,
+TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
-void release_table_share(TABLE_SHARE *share, enum release_type type);
-TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name);
+void release_table_share(TableShare *share, enum release_type type);
+TableShare *get_cached_table_share(const char *db, const char *table_name);
 Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update,
                    uint32_t lock_flags);
 Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32_t flags);
@@ -1319,7 +1319,7 @@ bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
 void close_data_files_and_morph_locks(Session *session, const char *db,
                                       const char *table_name);
 void close_handle_and_leave_table_as_lock(Table *table);
-bool open_new_frm(Session *session, TABLE_SHARE *share, const char *alias,
+bool open_new_frm(Session *session, TableShare *share, const char *alias,
                   uint32_t db_stat, uint32_t prgflag,
                   uint32_t ha_open_flags, Table *outparam,
                   TableList *table_desc, MEM_ROOT *mem_root);

@@ -51,7 +51,7 @@ LEX_STRING parse_vcol_keyword= { C_STRING_WITH_LEN("PARSE_VCOL_EXPR ") };
 
 /* Functions defined in this file */
 
-void open_table_error(TABLE_SHARE *share, int error, int db_errno,
+void open_table_error(TableShare *share, int error, int db_errno,
                       myf errortype, int errarg);
 static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
                               uint32_t types, char **names);
@@ -114,7 +114,7 @@ TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
 
 
 /*
-  Allocate a setup TABLE_SHARE structure
+  Allocate a setup TableShare structure
 
   SYNOPSIS
     alloc_table_share()
@@ -127,11 +127,11 @@ TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
     #  Share
 */
 
-TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
+TableShare *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length)
 {
   MEM_ROOT mem_root;
-  TABLE_SHARE *share;
+  TableShare *share;
   char *key_buff, *path_buff;
   char path[FN_REFLEN];
   uint32_t path_length;
@@ -158,23 +158,6 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
 
     share->version=       refresh_version;
 
-    /*
-      This constant is used to mark that no table map version has been
-      assigned.  No arithmetic is done on the value: it will be
-      overwritten with a value taken from DRIZZLE_BIN_LOG.
-    */
-    share->table_map_version= UINT64_MAX;
-
-    /*
-      Since alloc_table_share() can be called without any locking (for
-      example, ha_create_table... functions), we do not assign a table
-      map id here.  Instead we assign a value that is not used
-      elsewhere, and then assign a table map id inside open_table()
-      under the protection of the LOCK_open mutex.
-    */
-    share->table_map_id= UINT32_MAX;
-    share->cached_row_logging_check= -1;
-
     memcpy(&share->mem_root, &mem_root, sizeof(mem_root));
     pthread_mutex_init(&share->mutex, MY_MUTEX_INIT_FAST);
     pthread_cond_init(&share->cond, NULL);
@@ -182,108 +165,6 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
   return(share);
 }
 
-
-/*
-  Initialize share for temporary tables
-
-  SYNOPSIS
-    init_tmp_table_share()
-    session         thread handle
-    share	Share to fill
-    key		Table_cache_key, as generated from create_table_def_key.
-		must start with db name.
-    key_length	Length of key
-    table_name	Table name
-    path	Path to file (possible in lower case) without .frm
-
-  NOTES
-    This is different from alloc_table_share() because temporary tables
-    don't have to be shared between threads or put into the table def
-    cache, so we can do some things notable simpler and faster
-
-    If table is not put in session->temporary_tables (happens only when
-    one uses OPEN TEMPORARY) then one can specify 'db' as key and
-    use key_length= 0 as neither table_cache_key or key_length will be used).
-*/
-
-void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
-                          uint32_t key_length, const char *table_name,
-                          const char *path)
-{
-
-  memset(share, 0, sizeof(*share));
-  init_sql_alloc(&share->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
-  share->table_category=         TABLE_CATEGORY_TEMPORARY;
-  share->tmp_table=              INTERNAL_TMP_TABLE;
-  share->db.str=                 (char*) key;
-  share->db.length=		 strlen(key);
-  share->table_cache_key.str=    (char*) key;
-  share->table_cache_key.length= key_length;
-  share->table_name.str=         (char*) table_name;
-  share->table_name.length=      strlen(table_name);
-  share->path.str=               (char*) path;
-  share->normalized_path.str=    (char*) path;
-  share->path.length= share->normalized_path.length= strlen(path);
-
-  /*
-    Temporary tables are not replicated, but we set up these fields
-    anyway to be able to catch errors.
-   */
-  share->table_map_version= ~(uint64_t)0;
-  share->cached_row_logging_check= -1;
-
-  /*
-    table_map_id is also used for MERGE tables to suppress repeated
-    compatibility checks.
-  */
-  share->table_map_id= (ulong) session->query_id;
-
-  return;
-}
-
-
-/*
-  Free table share and memory used by it
-
-  SYNOPSIS
-    free_table_share()
-    share		Table share
-
-  NOTES
-    share->mutex must be locked when we come here if it's not a temp table
-*/
-
-void free_table_share(TABLE_SHARE *share)
-{
-  MEM_ROOT mem_root;
-  assert(share->ref_count == 0);
-
-  /*
-    If someone is waiting for this to be deleted, inform it about this.
-    Don't do a delete until we know that no one is refering to this anymore.
-  */
-  if (share->tmp_table == NO_TMP_TABLE)
-  {
-    /* share->mutex is locked in release_table_share() */
-    while (share->waiting_on_cond)
-    {
-      pthread_cond_broadcast(&share->cond);
-      pthread_cond_wait(&share->cond, &share->mutex);
-    }
-    /* No thread refers to this anymore */
-    pthread_mutex_unlock(&share->mutex);
-    pthread_mutex_destroy(&share->mutex);
-    pthread_cond_destroy(&share->cond);
-  }
-  hash_free(&share->name_hash);
-
-  share->storage_engine= NULL;
-
-  /* We must copy mem_root from share because share is allocated through it */
-  memcpy(&mem_root, &share->mem_root, sizeof(mem_root));
-  free_root(&mem_root, MYF(0));                 // Free's share
-  return;
-}
 
 enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
 {
@@ -365,7 +246,7 @@ Item * default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
-    if(default_value->compare("NOW()")==0)
+    if (default_value->compare("NOW()") == 0)
       break;
   case DRIZZLE_TYPE_ENUM:
     default_item= new Item_string(default_value->c_str(),
@@ -397,7 +278,7 @@ Item * default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int parse_table_proto(Session *session, drizzled::message::Table &table, TABLE_SHARE *share)
+int parse_table_proto(Session *session, drizzled::message::Table &table, TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;
@@ -1350,7 +1231,6 @@ err:
   open_table_def()
   session		Thread handler
   share		Fill this with table definition
-  db_flags	Bit mask of the following flags: OPEN_VIEW
 
   NOTES
     This function is called when the table definition is not cached in
@@ -1368,7 +1248,7 @@ err:
    6    Unknown .frm version
 */
 
-int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
+int open_table_def(Session *session, TableShare *share)
 {
   int error;
   bool error_given;
@@ -1420,7 +1300,7 @@ err_not_open:
 
 
 /*
-  Open a table based on a TABLE_SHARE
+  Open a table based on a TableShare
 
   SYNOPSIS
     open_table_from_share()
@@ -1447,7 +1327,7 @@ err_not_open:
    7    Table definition has changed in engine
 */
 
-int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alias,
+int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode)
 {
@@ -1709,7 +1589,7 @@ int Table::closefrm(bool free_share)
     if (s->tmp_table == NO_TMP_TABLE)
       release_table_share(s, RELEASE_NORMAL);
     else
-      free_table_share(s);
+      s->free_table_share();
   }
   free_root(&mem_root, MYF(0));
 
@@ -1873,7 +1753,7 @@ off_t make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 
 	/* error message when opening a form file */
 
-void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
+void open_table_error(TableShare *share, int error, int db_errno, int errarg)
 {
   int err_no;
   char buff[FN_REFLEN];
@@ -3342,7 +3222,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 {
   MEM_ROOT *mem_root_save, own_root;
   Table *table;
-  TABLE_SHARE *share;
+  TableShare *share;
   uint	i,field_count,null_count,null_pack_length;
   uint32_t  copy_func_count= param->func_count;
   uint32_t  hidden_null_count, hidden_null_pack_length, hidden_field_count;
@@ -3481,7 +3361,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->keys_in_use_for_query.reset();
 
   table->setShare(share);
-  init_tmp_table_share(session, share, "", 0, tmpname, tmpname);
+  share->init(tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
@@ -4039,7 +3919,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
   uint32_t null_pack_length;              /* NULL representation array length */
   uint32_t *blob_field;
   Table *table;
-  TABLE_SHARE *share;
+  TableShare *share;
 
   if (!multi_alloc_root(session->mem_root,
                         &table, sizeof(*table),
@@ -4185,7 +4065,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
   int error;
   MI_KEYDEF keydef;
   MI_UNIQUEDEF uniquedef;
-  TABLE_SHARE *share= s;
+  TableShare *share= s;
 
   if (share->keys)
   {						// Get keys for ni_create
@@ -4330,7 +4210,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
 			     int error, bool ignore_last_dupp_key_error)
 {
   Table new_table;
-  TABLE_SHARE share;
+  TableShare share;
   const char *save_proc_info;
   int write_err;
 
