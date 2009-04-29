@@ -72,12 +72,12 @@ bool create_myisam_from_heap(Session *session, Table *table,
 class Table {
 
 public:
-  TABLE_SHARE	*s;
+  TableShare	*s;
   Table() {}                               /* Remove gcc warning */
 
   /* SHARE methods */
-  inline TABLE_SHARE *getShare() { return s; } /* Get rid of this long term */
-  inline void setShare(TABLE_SHARE *new_share) { s= new_share; } /* Get rid of this long term */
+  inline TableShare *getShare() { return s; } /* Get rid of this long term */
+  inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
   inline uint32_t sizeFields() { return s->fields; }
   inline uint32_t getRecordLength() { return s->reclength; }
@@ -134,7 +134,7 @@ public:
     A set of keys that can be used in the query that references this
     table.
 
-    All indexes disabled on the table's TABLE_SHARE (see Table::s) will be
+    All indexes disabled on the table's TableShare (see Table::s) will be
     subtracted from this set upon instantiation. Thus for any Table t it holds
     that t.keys_in_use_for_query is a subset of t.s.keys_in_use. Generally we
     must not introduce any new keys here (see setup_tables).
@@ -246,7 +246,7 @@ public:
   /*
     Placeholder for an open table which prevents other connections
     from taking name-locks on this table. Typically used with
-    TABLE_SHARE::version member to take an exclusive name-lock on
+    TableShare::version member to take an exclusive name-lock on
     this table name -- a name lock that not only prevents other
     threads from opening the table, but also blocks other name
     locks. This is achieved by:

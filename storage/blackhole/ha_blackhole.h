@@ -45,7 +45,7 @@ class ha_blackhole: public handler
   st_blackhole_share *share;
 
 public:
-  ha_blackhole(StorageEngine *engine, TABLE_SHARE *table_arg);
+  ha_blackhole(StorageEngine *engine, TableShare *table_arg);
   ~ha_blackhole()
   {
   }

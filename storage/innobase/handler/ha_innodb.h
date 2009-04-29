@@ -95,7 +95,7 @@ class ha_innobase: public handler
 
 	/* Init values for the class: */
  public:
-	ha_innobase(StorageEngine *engine, TABLE_SHARE *table_arg);
+	ha_innobase(StorageEngine *engine, TableShare *table_arg);
 	~ha_innobase();
 	/*
 	  Get the row type from the storage engine.  If this method returns
