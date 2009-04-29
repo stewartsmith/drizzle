@@ -172,7 +172,7 @@ static void table_def_free_entry(TableShare *share)
     share->next->prev= share->prev;
     pthread_mutex_unlock(&LOCK_table_share);
   }
-  free_table_share(share);
+  share->free_table_share();
   return;
 }
 
@@ -216,8 +216,6 @@ uint32_t cached_table_definitions(void)
   table_list		Table that should be opened
   key			Table cache key
   key_length		Length of key
-  db_flags		Flags to open_table_def():
-			OPEN_VIEW
   error			out: Error code from open_table_def()
 
   IMPLEMENTATION
@@ -234,7 +232,7 @@ uint32_t cached_table_definitions(void)
 */
 
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
-                             uint32_t key_length, uint32_t db_flags, int *error)
+                             uint32_t key_length, uint32_t, int *error)
 {
   TableShare *share;
 
@@ -258,10 +256,10 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
 
   if (my_hash_insert(&table_def_cache, (unsigned char*) share))
   {
-    free_table_share(share);
+    share->free_table_share();
     return(0);				// return error
   }
-  if (open_table_def(session, share, db_flags))
+  if (open_table_def(session, share))
   {
     *error= share->error;
     (void) hash_delete(&table_def_cache, (unsigned char*) share);
@@ -1386,7 +1384,7 @@ void close_temporary(Table *table, bool free_share, bool delete_table)
 
   if (free_share)
   {
-    free_table_share(table->s);
+    table->s->free_table_share();
     free((char*) table);
   }
   return;
@@ -3460,9 +3458,9 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   saved_cache_key= strcpy(tmp_path, path)+path_length+1;
   memcpy(saved_cache_key, cache_key, key_length);
 
-  share->init_tmp_table_share(saved_cache_key, key_length, strchr(saved_cache_key, '\0')+1, tmp_path);
+  share->init(saved_cache_key, key_length, strchr(saved_cache_key, '\0')+1, tmp_path);
 
-  if (open_table_def(session, share, 0) ||
+  if (open_table_def(session, share) ||
       open_table_from_share(session, share, table_name,
                             (open_mode == OTM_ALTER) ? 0 :
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
@@ -3474,7 +3472,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
                             tmp_table, open_mode))
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
-    free_table_share(share);
+    share->free_table_share();
     free((char*) tmp_table);
     return(0);
   }
@@ -5823,15 +5821,15 @@ bool drizzle_rm_tmp_tables(void)
           /* We should cut file extention before deleting of table */
           memcpy(filePathCopy, filePath, filePath_len - ext_len);
           filePathCopy[filePath_len - ext_len]= 0;
-          share.init_tmp_table_share("", 0, "", filePathCopy);
-          if (!open_table_def(session, &share, 0) &&
+          share.init(NULL, filePathCopy);
+          if (!open_table_def(session, &share) &&
               ((handler_file= get_new_handler(&share, session->mem_root,
                                               share.db_type()))))
           {
             handler_file->ha_delete_table(filePathCopy);
             delete handler_file;
           }
-          free_table_share(&share);
+          share.free_table_share();
         }
         /*
           File can be already deleted by tmp_table.file->delete_table().

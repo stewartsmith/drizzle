@@ -143,7 +143,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   table->keys_in_use_for_query.init();
 
   table->s= share;
-  share->init_tmp_table_share("", 0, tmpname, tmpname);
+  share->init(tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM

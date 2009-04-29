@@ -659,8 +659,8 @@ int ha_create_table(Session *session, const char *path,
   const char *name;
   TableShare share;
 
-  share.init_tmp_table_share(db, 0, table_name, path);
-  if (open_table_def(session, &share, 0) ||
+  share.init(db, 0, table_name, path);
+  if (open_table_def(session, &share) ||
       open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0, &table,
                             OTM_CREATE))
     goto err;
@@ -678,7 +678,7 @@ int ha_create_table(Session *session, const char *path,
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
   }
 err:
-  free_table_share(&share);
+  share.free_table_share();
   return(error != 0);
 }
 

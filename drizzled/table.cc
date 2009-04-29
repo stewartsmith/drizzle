@@ -166,49 +166,6 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 }
 
 
-/*
-  Free table share and memory used by it
-
-  SYNOPSIS
-    free_table_share()
-    share		Table share
-
-  NOTES
-    share->mutex must be locked when we come here if it's not a temp table
-*/
-
-void free_table_share(TableShare *share)
-{
-  MEM_ROOT mem_root;
-  assert(share->ref_count == 0);
-
-  /*
-    If someone is waiting for this to be deleted, inform it about this.
-    Don't do a delete until we know that no one is refering to this anymore.
-  */
-  if (share->tmp_table == NO_TMP_TABLE)
-  {
-    /* share->mutex is locked in release_table_share() */
-    while (share->waiting_on_cond)
-    {
-      pthread_cond_broadcast(&share->cond);
-      pthread_cond_wait(&share->cond, &share->mutex);
-    }
-    /* No thread refers to this anymore */
-    pthread_mutex_unlock(&share->mutex);
-    pthread_mutex_destroy(&share->mutex);
-    pthread_cond_destroy(&share->cond);
-  }
-  hash_free(&share->name_hash);
-
-  share->storage_engine= NULL;
-
-  /* We must copy mem_root from share because share is allocated through it */
-  memcpy(&mem_root, &share->mem_root, sizeof(mem_root));
-  free_root(&mem_root, MYF(0));                 // Free's share
-  return;
-}
-
 enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
 {
   enum_field_types field_type;
@@ -1281,7 +1238,6 @@ err:
   open_table_def()
   session		Thread handler
   share		Fill this with table definition
-  db_flags	Bit mask of the following flags: OPEN_VIEW
 
   NOTES
     This function is called when the table definition is not cached in
@@ -1299,7 +1255,7 @@ err:
    6    Unknown .frm version
 */
 
-int open_table_def(Session *session, TableShare *share, uint32_t)
+int open_table_def(Session *session, TableShare *share)
 {
   int error;
   bool error_given;
@@ -1640,7 +1596,7 @@ int Table::closefrm(bool free_share)
     if (s->tmp_table == NO_TMP_TABLE)
       release_table_share(s, RELEASE_NORMAL);
     else
-      free_table_share(s);
+      s->free_table_share();
   }
   free_root(&mem_root, MYF(0));
 
@@ -3413,7 +3369,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->keys_in_use_for_query.init();
 
   table->setShare(share);
-  share->init_tmp_table_share("", 0, tmpname, tmpname);
+  share->init(tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM

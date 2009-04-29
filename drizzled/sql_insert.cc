@@ -1488,7 +1488,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   tmp_table.alias= 0;
   tmp_table.timestamp_field= 0;
   tmp_table.s= &share;
-  share.init_tmp_table_share("", 0, "", "");
+  share.init();
 
   tmp_table.s->db_create_options=0;
   tmp_table.s->blob_ptr_size= portable_sizeof_char_ptr;

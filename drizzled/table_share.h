@@ -193,7 +193,7 @@ public:
     Initialize share for temporary tables
 
     SYNOPSIS
-    init_tmp_table_share()
+    init()
     share	Share to fill
     key		Table_cache_key, as generated from create_table_def_key.
     must start with db name.
@@ -211,9 +211,20 @@ public:
     use key_length= 0 as neither table_cache_key or key_length will be used).
   */
 
-  void init_tmp_table_share(const char *key,
-                            uint32_t key_length, const char *new_table_name,
-                            const char *new_path)
+  void init()
+  {
+    init("", 0, "", "");
+  }
+
+  void init(const char *new_table_name,
+            const char *new_path)
+  {
+    init("", 0, new_table_name, new_path);
+  }
+
+  void init(const char *key,
+            uint32_t key_length, const char *new_table_name,
+            const char *new_path)
   {
     memset(this, 0, sizeof(TableShare));
     init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
@@ -231,5 +242,49 @@ public:
 
     return;
   }
+
+  /*
+    Free table share and memory used by it
+
+    SYNOPSIS
+    free_table_share()
+    share		Table share
+
+    NOTES
+    share->mutex must be locked when we come here if it's not a temp table
+  */
+
+  void free_table_share()
+  {
+    MEM_ROOT new_mem_root;
+    assert(ref_count == 0);
+
+    /*
+      If someone is waiting for this to be deleted, inform it about this.
+      Don't do a delete until we know that no one is refering to this anymore.
+    */
+    if (tmp_table == NO_TMP_TABLE)
+    {
+      /* share->mutex is locked in release_table_share() */
+      while (waiting_on_cond)
+      {
+        pthread_cond_broadcast(&cond);
+        pthread_cond_wait(&cond, &mutex);
+      }
+      /* No thread refers to this anymore */
+      pthread_mutex_unlock(&mutex);
+      pthread_mutex_destroy(&mutex);
+      pthread_cond_destroy(&cond);
+    }
+    hash_free(&name_hash);
+
+    storage_engine= NULL;
+
+    /* We must copy mem_root from share because share is allocated through it */
+    memcpy(&new_mem_root, &mem_root, sizeof(new_mem_root));
+    free_root(&new_mem_root, MYF(0));                 // Free's share
+    return;
+  }
+
 
 };
