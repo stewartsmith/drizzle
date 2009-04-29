@@ -27,7 +27,10 @@
 class TableShare
 {
 public:
-  TableShare() {}                    /* Remove gcc warning */
+  TableShare() 
+  {
+    init();
+  }                    /* Remove gcc warning */
 
   /** Category of this table. */
   enum_table_category table_category;
