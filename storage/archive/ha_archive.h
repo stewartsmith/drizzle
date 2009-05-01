@@ -20,6 +20,9 @@
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
 #include <drizzled/handler.h>
+#include <string>
+
+using namespace std;
 
 /*
   Please read ha_archive.cc first. If you are looking for more general
@@ -33,22 +36,29 @@ typedef struct st_archive_record_buffer {
 } archive_record_buffer;
 
 
-typedef struct st_archive_share {
-  char *table_name;
+class ArchiveShare {
+public:
+  ArchiveShare();
+  ArchiveShare(const char *name);
+  ~ArchiveShare();
+
+  bool prime(uint64_t *auto_increment);
+
+  string table_name;
   char data_file_name[FN_REFLEN];
-  uint32_t table_name_length,use_count;
+  uint32_t use_count;
   pthread_mutex_t mutex;
   THR_LOCK lock;
   azio_stream archive_write;     /* Archive file we are working with */
   bool archive_write_open;
   bool dirty;               /* Flag for if a flush should occur */
   bool crashed;             /* Meta file is crashed */
-  ha_rows rows_recorded;    /* Number of rows in tables */
   uint64_t mean_rec_length;
   char real_path[FN_REFLEN];
   unsigned int  version;
+  ha_rows rows_recorded;    /* Number of rows in tables */
   ha_rows version_rows;
-} ARCHIVE_SHARE;
+};
 
 /*
   Version for file format.
@@ -61,7 +71,7 @@ typedef struct st_archive_share {
 class ha_archive: public handler
 {
   THR_LOCK_DATA lock;        /* MySQL lock */
-  ARCHIVE_SHARE *share;      /* Shared lock info */
+  ArchiveShare *share;      /* Shared lock info */
 
   azio_stream archive;            /* Archive file we are working with */
   my_off_t current_position;  /* The position of the row we just read */
@@ -123,7 +133,7 @@ public:
   int get_row(azio_stream *file_to_read, unsigned char *buf);
   int get_row_version2(azio_stream *file_to_read, unsigned char *buf);
   int get_row_version3(azio_stream *file_to_read, unsigned char *buf);
-  ARCHIVE_SHARE *get_share(const char *table_name, int *rc);
+  ArchiveShare *get_share(const char *table_name, int *rc);
   int free_share();
   int init_archive_writer();
   int init_archive_reader();
