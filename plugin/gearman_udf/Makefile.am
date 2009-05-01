@@ -14,7 +14,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 EXTRA_LTLIBRARIES = libgearman_udf.la
-pkgplugin_LTLIBRARIES =	@plugin_gearman_udf_shared_target@
+pkgplugin_LTLIBRARIES =	@plugin_gearman_shared_target@
 libgearman_udf_la_LDFLAGS = -module -avoid-version -rpath $(pkgplugindir)
 libgearman_udf_la_LIBADD = $(LIBGEARMAN)
 libgearman_udf_la_CPPFLAGS= $(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
