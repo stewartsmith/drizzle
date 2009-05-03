@@ -1708,7 +1708,7 @@ void handler::print_error(int error, myf errflag)
     textno=ER_CRASHED_ON_USAGE;
     break;
   case HA_ERR_NOT_A_TABLE:
-    textno= error;
+	  textno= error;
     break;
   case HA_ERR_CRASHED_ON_REPAIR:
     textno=ER_CRASHED_ON_REPAIR;

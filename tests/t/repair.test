@@ -132,3 +132,4 @@ REPAIR TABLE tt1 USE_FRM;
 DROP TABLE tt1;
 
 SET GLOBAL myisam_sort_buffer_size=DEFAULT;
+
