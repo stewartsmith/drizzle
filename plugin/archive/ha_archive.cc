@@ -103,7 +103,7 @@ static const string engine_name("ARCHIVE");
 /* Variables for archive share methods */
 pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
 
-std::map<char *, st_archive_share *> archive_open_tables;
+std::map<const char *, ArchiveShare *> archive_open_tables;
 
 static unsigned int global_version;
 
@@ -210,6 +210,69 @@ int ha_archive::read_data_header(azio_stream *file_to_read)
   return(1);
 }
 
+ArchiveShare::ArchiveShare():
+  use_count(0), archive_write_open(false), dirty(false), crashed(false),
+  mean_rec_length(0), version(0), rows_recorded(0), version_rows(0)
+{
+  assert(1);
+}
+
+ArchiveShare::ArchiveShare(const char *name):
+  use_count(0), archive_write_open(false), dirty(false), crashed(false),
+  mean_rec_length(0), version(0), rows_recorded(0), version_rows(0)
+{
+  memset(&archive_write, 0, sizeof(azio_stream));     /* Archive file we are working with */
+  table_name.append(name);
+  fn_format(data_file_name, table_name.c_str(), "",
+            ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
+  /*
+    We will use this lock for rows.
+  */
+  pthread_mutex_init(&mutex,MY_MUTEX_INIT_FAST);
+}
+
+ArchiveShare::~ArchiveShare()
+{
+  thr_lock_delete(&lock);
+  pthread_mutex_destroy(&mutex);
+  /*
+    We need to make sure we don't reset the crashed state.
+    If we open a crashed file, wee need to close it as crashed unless
+    it has been repaired.
+    Since we will close the data down after this, we go on and count
+    the flush on close;
+  */
+  if (archive_write_open == true)
+    (void)azclose(&archive_write);
+}
+
+bool ArchiveShare::prime(uint64_t *auto_increment)
+{
+  azio_stream archive_tmp;
+
+  /*
+    We read the meta file, but do not mark it dirty. Since we are not
+    doing a write we won't mark it dirty (and we won't open it for
+    anything but reading... open it for write and we will generate null
+    compression writes).
+  */
+  if (!(azopen(&archive_tmp, data_file_name, O_RDONLY,
+               AZ_METHOD_BLOCK)))
+    return false;
+
+  *auto_increment= archive_tmp.auto_increment + 1;
+  rows_recorded= (ha_rows)archive_tmp.rows;
+  crashed= archive_tmp.dirty;
+  if (version < global_version)
+  {
+    version_rows= rows_recorded;
+    version= global_version;
+  }
+  azclose(&archive_tmp);
+
+  return true;
+}
+
 
 /*
   We create the shared memory space that we will use for the open table.
@@ -218,15 +281,15 @@ int ha_archive::read_data_header(azio_stream *file_to_read)
 
   See ha_example.cc for a longer description.
 */
-ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
+ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 {
   uint32_t length;
-  map<char *, st_archive_share *> ::iterator find_iter;
+  map<const char *, ArchiveShare *> ::iterator find_iter;
 
   pthread_mutex_lock(&archive_mutex);
   length=(uint) strlen(table_name);
 
-  find_iter= archive_open_tables.find((char *)table_name);
+  find_iter= archive_open_tables.find(table_name);
 
   if (find_iter != archive_open_tables.end())
     share= (*find_iter).second;
@@ -235,58 +298,25 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
 
   if (!share)
   {
-    char *tmp_name;
-    azio_stream archive_tmp;
+    share= new ArchiveShare(table_name);
 
-    if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
-                          &share, sizeof(*share),
-                          &tmp_name, length+1,
-                          NULL))
+    if (share == NULL)
     {
       pthread_mutex_unlock(&archive_mutex);
       *rc= HA_ERR_OUT_OF_MEM;
       return(NULL);
     }
 
-    share->use_count= 0;
-    share->table_name_length= length;
-    share->table_name= tmp_name;
-    share->crashed= false;
-    share->archive_write_open= false;
-    fn_format(share->data_file_name, table_name, "",
-              ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    strcpy(share->table_name, table_name);
-    /*
-      We will use this lock for rows.
-    */
-    pthread_mutex_init(&share->mutex,MY_MUTEX_INIT_FAST);
-
-    /*
-      We read the meta file, but do not mark it dirty. Since we are not
-      doing a write we won't mark it dirty (and we won't open it for
-      anything but reading... open it for write and we will generate null
-      compression writes).
-    */
-    if (!(azopen(&archive_tmp, share->data_file_name, O_RDONLY,
-                 AZ_METHOD_BLOCK)))
+    if (share->prime(&stats.auto_increment_value) == false)
     {
-      pthread_mutex_destroy(&share->mutex);
-      free(share);
       pthread_mutex_unlock(&archive_mutex);
       *rc= HA_ERR_CRASHED_ON_REPAIR;
-      return(NULL);
-    }
-    stats.auto_increment_value= archive_tmp.auto_increment + 1;
-    share->rows_recorded= (ha_rows)archive_tmp.rows;
-    share->crashed= archive_tmp.dirty;
-    if (share->version < global_version)
-    {
-      share->version_rows= share->rows_recorded;
-      share->version= global_version;
-    }
-    azclose(&archive_tmp);
+      delete share;
 
-    archive_open_tables[share->table_name]= share; 
+      return NULL;
+    }
+
+    archive_open_tables[share->table_name.c_str()]= share; 
     thr_lock_init(&share->lock);
   }
   share->use_count++;
@@ -304,31 +334,15 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
 */
 int ha_archive::free_share()
 {
-  int rc= 0;
-
   pthread_mutex_lock(&archive_mutex);
   if (!--share->use_count)
   {
-    archive_open_tables.erase(share->table_name);
-    thr_lock_delete(&share->lock);
-    pthread_mutex_destroy(&share->mutex);
-    /*
-      We need to make sure we don't reset the crashed state.
-      If we open a crashed file, wee need to close it as crashed unless
-      it has been repaired.
-      Since we will close the data down after this, we go on and count
-      the flush on close;
-    */
-    if (share->archive_write_open == true)
-    {
-      if (azclose(&(share->archive_write)))
-        rc= 1;
-    }
-    free((unsigned char*) share);
+    archive_open_tables.erase(share->table_name.c_str());
+    delete share;
   }
   pthread_mutex_unlock(&archive_mutex);
 
-  return(rc);
+  return 0;
 }
 
 int ha_archive::init_archive_writer()
@@ -746,51 +760,6 @@ int ha_archive::write_row(unsigned char *buf)
       rc= HA_ERR_FOUND_DUPP_KEY;
       goto error;
     }
-#ifdef DEAD_CODE
-    /*
-      Bad news, this will cause a search for the unique value which is very
-      expensive since we will have to do a table scan which will lock up
-      all other writers during this period. This could perhaps be optimized
-      in the future.
-    */
-    {
-      /*
-        First we create a buffer that we can use for reading rows, and can pass
-        to get_row().
-      */
-      if (!(read_buf= (unsigned char*) malloc(table->s->reclength)))
-      {
-        rc= HA_ERR_OUT_OF_MEM;
-        goto error;
-      }
-       /*
-         All of the buffer must be written out or we won't see all of the
-         data
-       */
-      azflush(&(share->archive_write), Z_SYNC_FLUSH);
-      /*
-        Set the position of the local read thread to the beginning postion.
-      */
-      if (read_data_header(&archive))
-      {
-        rc= HA_ERR_CRASHED_ON_USAGE;
-        goto error;
-      }
-
-      Field *mfield= table->next_number_field;
-
-      while (!(get_row(&archive, read_buf)))
-      {
-        if (!memcmp(read_buf + mfield->offset(record),
-                    table->next_number_field->ptr,
-                    mfield->max_display_length()))
-        {
-          rc= HA_ERR_FOUND_DUPP_KEY;
-          goto error;
-        }
-      }
-    }
-#endif
     else
     {
       if (temp_auto > share->archive_write.auto_increment)
@@ -1077,7 +1046,7 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
   }
 
   /* Lets create a file to contain the new data */
-  fn_format(writer_filename, share->table_name, "", ARN,
+  fn_format(writer_filename, share->table_name.c_str(), "", ARN,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   if (!(azopen(&writer, writer_filename, O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
