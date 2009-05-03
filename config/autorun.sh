@@ -58,6 +58,8 @@ else
   rm m4/bzr_version.m4.new
 fi
 
+python config/register_plugins.py
+
 if test x$LIBTOOLIZE = x; then
   if test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then
     LIBTOOLIZE=glibtoolize

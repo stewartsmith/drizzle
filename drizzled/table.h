@@ -23,7 +23,7 @@
 #ifndef DRIZZLED_TABLE_H
 #define DRIZZLED_TABLE_H
 
-#include <storage/myisam/myisam.h>
+#include <plugin/myisam/myisam.h>
 #include <drizzled/order.h>
 #include <drizzled/filesort_info.h>
 #include <drizzled/natural_join_column.h>
@@ -106,7 +106,13 @@ public:
   uint32_t find_shortest_key(const key_map *usable_keys);
   bool compare_record(Field **ptr);
   bool compare_record();
-
+  /* TODO: the (re)storeRecord's may be able to be further condensed */
+  void storeRecord();
+  void storeRecordAsInsert();
+  void storeRecordAsDefault();
+  void restoreRecord();
+  void restoreRecordAsDefault();
+  void emptyRecord();
   bool table_check_intact(const uint32_t table_f_count, const TABLE_FIELD_W_TYPE *table_def);
 
   /* See if this can be blown away */
@@ -156,7 +162,6 @@ public:
   order_st *group;
   const char	*alias;            	  /* alias or table name */
   unsigned char		*null_flags;
-  my_bitmap_map	*bitmap_init_value;
   std::bitset<MAX_FIELDS> def_read_set, def_write_set, tmp_set; /* containers */
   std::bitset<MAX_FIELDS> *read_set, *write_set;                /* Active column sets */
   /*
@@ -180,7 +185,7 @@ public:
   query_id_t	query_id;
 
   /*
-    For each key that has quick_keys.is_set(key) == true: estimate of #records
+    For each key that has quick_keys.test(key) == true: estimate of #records
     and max #key parts that range access would use.
   */
   ha_rows	quick_rows[MAX_KEY];

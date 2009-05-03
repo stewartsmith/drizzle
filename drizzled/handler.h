@@ -25,7 +25,7 @@
 
 /* Definitions for parameters to do with handler-routines */
 
-#include <storage/myisam/keycache.h>
+#include <plugin/myisam/keycache.h>
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
 #include <drizzled/sql_string.h>
@@ -36,6 +36,7 @@
 
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
+#include <drizzled/key_map.h>
 
 #include<bitset>
 

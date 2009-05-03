@@ -16,7 +16,7 @@
 /* drop and alter of tables */
 
 #include <drizzled/server_includes.h>
-#include <storage/myisam/myisam.h>
+#include <plugin/myisam/myisam.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -3952,7 +3952,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
   if (!(used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE))
     create_info->key_block_size= table->s->key_block_size;
 
-  restore_record(table, s->default_values);     // Empty record for DEFAULT
+  table->restoreRecordAsDefault();     // Empty record for DEFAULT
   Create_field *def;
 
     /*
@@ -5153,7 +5153,7 @@ copy_data_between_tables(Table *from,Table *to,
   if (ignore)
     to->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
   session->row_count= 0;
-  restore_record(to, s->default_values);        // Create empty record
+  to->restoreRecordAsDefault();        // Create empty record
   while (!(error=info.read_record(&info)))
   {
     if (session->killed)

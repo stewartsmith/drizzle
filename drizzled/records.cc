@@ -57,7 +57,7 @@ static int rr_index(READ_RECORD *info);
 void init_read_record_idx(READ_RECORD *info, Session *, Table *table,
                           bool print_error, uint32_t idx)
 {
-  empty_record(table);
+  table->emptyRecord();
   memset(info, 0, sizeof(*info));
   info->table= table;
   info->file=  table->file;
@@ -163,7 +163,7 @@ void init_read_record(READ_RECORD *info,Session *session, Table *table,
   }
   else
   {
-    empty_record(table);
+    table->emptyRecord();
     info->record= table->record[0];
     info->ref_length= table->file->ref_length;
   }

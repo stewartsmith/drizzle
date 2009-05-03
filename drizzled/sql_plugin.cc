@@ -43,10 +43,16 @@
 #define REPORT_TO_USER 2
 
 using namespace std;
-
-extern struct drizzled_plugin_manifest *mysqld_builtins[];
+ 
+typedef struct drizzled_plugin_manifest builtin_plugin[];
+extern builtin_plugin DRIZZLED_BUILTIN_LIST;
+static drizzled_plugin_manifest *drizzled_builtins[]=
+{
+  DRIZZLED_BUILTIN_LIST,(struct drizzled_plugin_manifest *)0
+};
 
 char *opt_plugin_load= NULL;
+const char *opt_plugin_load_default= QUOTE_ARG(DRIZZLED_PLUGIN_LIST);
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
@@ -601,7 +607,7 @@ int plugin_init(int *argc, char **argv, int flags)
   /*
     First we register builtin plugins
   */
-  for (builtins= mysqld_builtins; *builtins; builtins++)
+  for (builtins= drizzled_builtins; *builtins; builtins++)
   {
     for (plugin= *builtins; plugin->name; plugin++)
     {

@@ -64,7 +64,7 @@ static int errmsg_stderr_plugin_deinit(PluginRegistry &registry)
 
   if (handler)
   {
-    registry.add(handler);
+    registry.remove(handler);
     delete handler;
   }
   return 0;

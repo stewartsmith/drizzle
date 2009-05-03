@@ -53,7 +53,7 @@
 
 #include <drizzled/server_includes.h>
 #include <mysys/my_getopt.h>
-#include <storage/myisam/myisam.h>
+#include <plugin/myisam/myisam.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/tztime.h>

@@ -127,8 +127,6 @@ extern char *ullstr(int64_t value,char *buff);
 
 extern char *int2str(int32_t val, char *dst, int radix, int upcase);
 extern char *int10_to_str(int32_t val,char *dst,int radix);
-extern char *str2int(const char *src,int radix,long lower,long upper,
-                     long *val);
 int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
 extern char *int64_t2str(int64_t val,char *dst,int radix);
 extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
