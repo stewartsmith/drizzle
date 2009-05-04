@@ -556,7 +556,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   share->fields= table.field_size();
   share->vfields= 0;
-  share->stored_fields= share->fields;
 
   share->field= (Field**) alloc_root(&share->mem_root,
 				     ((share->fields+1) * sizeof(Field*)));
@@ -856,8 +855,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     }
 
     enum_field_types field_type;
-    bool field_is_stored= true;
-
 
     field_type= proto_field_type_to_drizzle_type(pfield.type());
 
@@ -966,7 +963,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     f->field_index= fieldnr;
     f->comment= comment;
-    f->is_stored= field_is_stored;
     if(!default_value
        && !(f->unireg_check==Field::NEXT_NUMBER)
        && (f->flags & NOT_NULL_FLAG)
@@ -982,11 +978,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     if (use_hash) /* supposedly this never fails... but comments lie */
       (void) my_hash_insert(&share->name_hash,
 			    (unsigned char*)&(share->field[fieldnr]));
-
-    if(!f->is_stored)
-    {
-      share->stored_fields--;
-    }
   }
 
   keyinfo= share->key_info;

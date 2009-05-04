@@ -823,8 +823,7 @@ Field::Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_
    key_start(0), part_of_key(0), part_of_key_not_clustered(0),
    part_of_sortkey(0), unireg_check(unireg_check_arg),
    field_length(length_arg), null_bit(null_bit_arg),
-   is_created_from_null_item(false),
-   is_stored(true)
+   is_created_from_null_item(false)
 {
   flags=null_ptr ? 0: NOT_NULL_FLAG;
   comment.str= (char*) "";

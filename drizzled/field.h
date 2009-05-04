@@ -112,13 +112,6 @@ public:
    */
   bool is_created_from_null_item;
 
-  /*
-    Indication that the field is physically stored in tables
-    rather than just generated on SQL queries.
-    As of now, false can only be set for generated-only virtual columns.
-  */
-  bool is_stored;
-
   Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
         unsigned char null_bit_arg, utype unireg_check_arg,
         const char *field_name_arg);
@@ -580,8 +573,6 @@ public:
   uint32_t  decimals, flags, pack_length, key_length;
   Field::utype unireg_check;
   TYPELIB *interval;			// Which interval to use
-  TYPELIB *save_interval;               // Temporary copy for the above
-                                        // Used only for UCS2 intervals
   List<String> interval_list;
   const CHARSET_INFO *charset;
   Field *field;				// For alter table
