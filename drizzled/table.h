@@ -269,8 +269,7 @@ public:
   bool locked_by_logger;
   bool locked_by_name;
   bool no_cache;
-  /* To signal that the table is associated with a HANDLER statement */
-  bool open_by_handler;
+
   /*
     To indicate that a non-null value of the auto_increment field
     was provided by the user or retrieved from the current record.
