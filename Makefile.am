@@ -202,17 +202,6 @@ EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
 include config/plugin.am
 
-# Create empty datadir 
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)$(localstatedir) 
-	@if test `id -u` = 0 ; then \
-		if test -n "$(GROUPADD)" && test -n "$(USERADD)"; then \
-			$(GROUPADD) $(DRIZZLED_USER) ;\
-			$(USERADD) -g $(DRIZZLED_USER) $(DRIZZLED_USER) ;\
-			chown $(DRIZZLED_USER) $(DESTDIR)$(localstatedir) ;\
-		fi \
-	fi
-
 
 .PHONY: test \
     test-force \
