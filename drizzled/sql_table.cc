@@ -33,6 +33,7 @@
 #include <drizzled/item/empty_string.h>
 #include <drizzled/transaction_services.h>
 
+
 using namespace std;
 extern drizzled::TransactionServices transaction_services;
 extern HASH lock_db_cache;
@@ -2511,11 +2512,10 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       if ((table->table->file->check_old_types() == HA_ADMIN_NEEDS_ALTER) ||
           (table->table->file->ha_check_for_upgrade(check_opt) ==
            HA_ADMIN_NEEDS_ALTER))
-      { 
+      {
         ha_autocommit_or_rollback(session, 1);
         close_thread_tables(session);
-        result_code= mysql_recreate_table(session, table);        
-        
+        result_code= mysql_recreate_table(session, table);
         /*
           mysql_recreate_table() can push OK or ERROR.
           Clear 'OK' status. If there is an error, keep it:
@@ -2527,8 +2527,9 @@ static bool mysql_admin_table(Session* session, TableList* tables,
         goto send_result;
       }
     }
+
     result_code = (table->table->file->*operator_func)(session, check_opt);
-    
+
 send_result:
 
     lex->cleanup_after_one_table_open();
@@ -2558,14 +2559,14 @@ send_result_message:
 
     switch (result_code) {
     case HA_ADMIN_NOT_IMPLEMENTED:
-    {
-      char buf[ERRMSGSIZE+20];
-    	uint32_t length=snprintf(buf, ERRMSGSIZE,
-                                 ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
-    	protocol->store(STRING_WITH_LEN("note"), system_charset_info);
-    	protocol->store(buf, length, system_charset_info);
-  	}
-    break;
+      {
+	char buf[ERRMSGSIZE+20];
+	uint32_t length=snprintf(buf, ERRMSGSIZE,
+                             ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
+	protocol->store(STRING_WITH_LEN("note"), system_charset_info);
+	protocol->store(buf, length, system_charset_info);
+      }
+      break;
 
     case HA_ADMIN_OK:
       protocol->store(STRING_WITH_LEN("status"), system_charset_info);
