@@ -267,7 +267,6 @@ public:
   */
   bool open_placeholder;
   bool locked_by_logger;
-  bool no_replicate;
   bool locked_by_name;
   bool no_cache;
   /* To signal that the table is associated with a HANDLER statement */

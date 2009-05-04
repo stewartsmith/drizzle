@@ -1537,7 +1537,6 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   memset(bitmaps, 0, bitmap_size*3);
 #endif
 
-  outparam->no_replicate= outparam->file;
   session->status_var.opened_tables++;
 
   return (0);
