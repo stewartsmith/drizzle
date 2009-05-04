@@ -300,8 +300,6 @@ public:
   {
     read_set= read_set_arg;
     write_set= write_set_arg;
-    if (file)
-      file->column_bitmaps_signal();
   }
   inline void column_bitmaps_set_no_signal(std::bitset<MAX_FIELDS> *read_set_arg,
                                            std::bitset<MAX_FIELDS> *write_set_arg)

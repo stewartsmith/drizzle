@@ -2638,13 +2638,10 @@ void Table::clear_column_bitmaps()
 
 void Table::prepare_for_position()
 {
-
   if ((file->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
       s->primary_key < MAX_KEY)
   {
     mark_columns_used_by_index_no_reset(s->primary_key, read_set);
-    /* signal change */
-    file->column_bitmaps_signal();
   }
   return;
 }
@@ -2689,8 +2686,6 @@ void Table::restore_column_maps_after_mark_index()
   key_read= 0;
   (void) file->extra(HA_EXTRA_NO_KEYREAD);
   default_column_bitmaps();
-  file->column_bitmaps_signal();
-  return;
 }
 
 
@@ -2728,7 +2723,6 @@ void Table::mark_auto_increment_column()
   write_set->set(found_next_number_field->field_index);
   if (s->next_number_keypart)
     mark_columns_used_by_index_no_reset(s->next_number_index, read_set);
-  file->column_bitmaps_signal();
 }
 
 
@@ -2760,7 +2754,6 @@ void Table::mark_columns_needed_for_delete()
       if ((*reg_field)->flags & PART_KEY_FLAG)
         read_set->set((*reg_field)->field_index);
     }
-    file->column_bitmaps_signal();
   }
 
   {
@@ -2773,10 +2766,7 @@ void Table::mark_columns_needed_for_delete()
     if (s->primary_key == MAX_KEY)
       file->use_hidden_primary_key();
     else
-    {
       mark_columns_used_by_index_no_reset(s->primary_key, read_set);
-      file->column_bitmaps_signal();
-    }
   }
 }
 
@@ -2811,7 +2801,6 @@ void Table::mark_columns_needed_for_update()
       if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
         read_set->set((*reg_field)->field_index);
     }
-    file->column_bitmaps_signal();
   }
 
   {
@@ -2824,10 +2813,7 @@ void Table::mark_columns_needed_for_update()
     if (s->primary_key == MAX_KEY)
       file->use_hidden_primary_key();
     else
-    {
       mark_columns_used_by_index_no_reset(s->primary_key, read_set);
-      file->column_bitmaps_signal();
-    }
   }
   return;
 }

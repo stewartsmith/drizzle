@@ -121,8 +121,6 @@ static void prepare_record_for_error_message(int error, Table *table)
   table->file->position(table->record[0]);
   /* Add all fields used by unique index to read_set. */
   *(table->read_set) |= unique_map;
-  /* Tell the engine about the new set. */
-  table->file->column_bitmaps_signal();
   /* Read record that is identified by table->file->ref. */
   (void) table->file->rnd_pos(table->record[1], table->file->ref);
   /* Copy the newly read columns into the new record. */
