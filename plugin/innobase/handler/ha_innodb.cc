@@ -3686,12 +3686,12 @@ build_template(
 				goto include_field;
 			}
 
-                        if (table->read_set->test(sql_idx) ||
-                            table->write_set->test(sql_idx)) {
+                        if (field->isRead() || field->isWrite())
 				/* This field is needed in the query */
-
 				goto include_field;
-			}
+
+                        assert(table->read_set->test(sql_idx) == field->isRead());
+                        assert(table->write_set->test(sql_idx) == field->isWrite());
 
 			if (fetch_primary_key_cols
 				&& dict_table_col_in_clustered_key(
