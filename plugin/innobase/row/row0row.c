@@ -968,9 +968,11 @@ row_raw_format(
 	ulint	ret;
 	ibool	format_in_hex;
 
+        ret = 0;
+
 	if (buf_size == 0) {
 
-		return(0);
+		return(ret);
 	}
 
 	if (data_len == UNIV_SQL_NULL) {
