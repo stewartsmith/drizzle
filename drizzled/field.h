@@ -589,13 +589,6 @@ public:
   uint8_t       interval_id;	// For rea_create_table
   uint32_t	offset,pack_flag;
 
-  /*
-    Indication that the field is phycically stored in tables
-    rather than just generated on SQL queries.
-    As of now, FALSE can only be set for generated-only virtual columns.
-  */
-  bool is_stored;
-
   Create_field() :after(0) {}
   Create_field(Field *field, Field *orig_field);
   /* Used to make a clone of this object for ALTER/CREATE TABLE */

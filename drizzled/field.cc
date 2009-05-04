@@ -1318,7 +1318,6 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
               ((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT) |
               (maybe_null ? FIELDFLAG_MAYBE_NULL : 0) |
               (is_unsigned ? 0 : FIELDFLAG_DECIMAL));
-  is_stored= true;
 }
 
 
@@ -1381,7 +1380,6 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
   interval_list.empty();
 
   comment= *fld_comment;
-  is_stored= true;
 
   /*
     Set NO_DEFAULT_VALUE_FLAG if this field doesn't have a default value and
@@ -1741,7 +1739,6 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
   charset=    old_field->charset();		// May be NULL ptr
   comment=    old_field->comment;
   decimals=   old_field->decimals();
-  is_stored= old_field->is_stored;
 
   /* Fix if the original table had 4 byte pointer blobs */
   if (flags & BLOB_FLAG)
