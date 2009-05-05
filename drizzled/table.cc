@@ -2632,7 +2632,7 @@ void Table::prepare_for_position()
   if ((file->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
       s->primary_key < MAX_KEY)
   {
-    mark_columns_used_by_index_no_reset(s->primary_key, read_set);
+    mark_columns_used_by_index_no_reset(s->primary_key);
   }
   return;
 }
@@ -2684,6 +2684,11 @@ void Table::restore_column_maps_after_mark_index()
   mark columns used by key, but don't reset other fields
 */
 
+void Table::mark_columns_used_by_index_no_reset(uint32_t index)
+{
+    mark_columns_used_by_index_no_reset(index, read_set);
+}
+
 void Table::mark_columns_used_by_index_no_reset(uint32_t index,
                                                 bitset<MAX_FIELDS> *bitmap)
 {
@@ -2713,7 +2718,7 @@ void Table::mark_auto_increment_column()
   read_set->set(found_next_number_field->field_index);
   write_set->set(found_next_number_field->field_index);
   if (s->next_number_keypart)
-    mark_columns_used_by_index_no_reset(s->next_number_index, read_set);
+    mark_columns_used_by_index_no_reset(s->next_number_index);
 }
 
 
@@ -2757,7 +2762,7 @@ void Table::mark_columns_needed_for_delete()
     if (s->primary_key == MAX_KEY)
       file->use_hidden_primary_key();
     else
-      mark_columns_used_by_index_no_reset(s->primary_key, read_set);
+      mark_columns_used_by_index_no_reset(s->primary_key);
   }
 }
 
@@ -2804,7 +2809,7 @@ void Table::mark_columns_needed_for_update()
     if (s->primary_key == MAX_KEY)
       file->use_hidden_primary_key();
     else
-      mark_columns_used_by_index_no_reset(s->primary_key, read_set);
+      mark_columns_used_by_index_no_reset(s->primary_key);
   }
   return;
 }

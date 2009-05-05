@@ -289,6 +289,7 @@ public:
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
   void mark_columns_used_by_index_no_reset(uint32_t index, std::bitset<MAX_FIELDS> *map);
+  void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
   void mark_auto_increment_column(void);

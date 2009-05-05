@@ -1520,8 +1520,7 @@ void handler::get_auto_increment(uint64_t ,
   int error;
 
   (void) extra(HA_EXTRA_KEYREAD);
-  table->mark_columns_used_by_index_no_reset(table->s->next_number_index,
-                                        table->read_set);
+  table->mark_columns_used_by_index_no_reset(table->s->next_number_index);
   index_init(table->s->next_number_index, 1);
   if (table->s->next_number_keypart == 0)
   {						// Autoincrement at key-start
