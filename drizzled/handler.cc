@@ -1496,24 +1496,6 @@ int handler::update_auto_increment()
 
 
 /**
-  MySQL signal that it changed the column bitmap
-
-  This is for handlers that needs to setup their own column bitmaps.
-  Normally the handler should set up their own column bitmaps in
-  index_init() or rnd_init() and in any column_bitmaps_signal() call after
-  this.
-
-  The handler is allowed to do changes to the bitmap after a index_init or
-  rnd_init() call is made as after this, MySQL will not use the bitmap
-  for any program logic checking.
-*/
-void handler::column_bitmaps_signal()
-{
-  return;
-}
-
-
-/**
   Reserves an interval of auto_increment values from the handler.
 
   offset and increment means that we want values to be of the form
@@ -1540,7 +1522,6 @@ void handler::get_auto_increment(uint64_t ,
   (void) extra(HA_EXTRA_KEYREAD);
   table->mark_columns_used_by_index_no_reset(table->s->next_number_index,
                                         table->read_set);
-  column_bitmaps_signal();
   index_init(table->s->next_number_index, 1);
   if (table->s->next_number_keypart == 0)
   {						// Autoincrement at key-start

@@ -556,7 +556,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   share->fields= table.field_size();
   share->vfields= 0;
-  share->stored_fields= share->fields;
 
   share->field= (Field**) alloc_root(&share->mem_root,
 				     ((share->fields+1) * sizeof(Field*)));
@@ -856,8 +855,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     }
 
     enum_field_types field_type;
-    bool field_is_stored= true;
-
 
     field_type= proto_field_type_to_drizzle_type(pfield.type());
 
@@ -966,7 +963,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     f->field_index= fieldnr;
     f->comment= comment;
-    f->is_stored= field_is_stored;
     if(!default_value
        && !(f->unireg_check==Field::NEXT_NUMBER)
        && (f->flags & NOT_NULL_FLAG)
@@ -982,11 +978,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     if (use_hash) /* supposedly this never fails... but comments lie */
       (void) my_hash_insert(&share->name_hash,
 			    (unsigned char*)&(share->field[fieldnr]));
-
-    if(!f->is_stored)
-    {
-      share->stored_fields--;
-    }
   }
 
   keyinfo= share->key_info;
@@ -1537,7 +1528,6 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   memset(bitmaps, 0, bitmap_size*3);
 #endif
 
-  outparam->no_replicate= outparam->file;
   session->status_var.opened_tables++;
 
   return (0);
@@ -2639,13 +2629,10 @@ void Table::clear_column_bitmaps()
 
 void Table::prepare_for_position()
 {
-
   if ((file->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
       s->primary_key < MAX_KEY)
   {
     mark_columns_used_by_index_no_reset(s->primary_key, read_set);
-    /* signal change */
-    file->column_bitmaps_signal();
   }
   return;
 }
@@ -2690,8 +2677,6 @@ void Table::restore_column_maps_after_mark_index()
   key_read= 0;
   (void) file->extra(HA_EXTRA_NO_KEYREAD);
   default_column_bitmaps();
-  file->column_bitmaps_signal();
-  return;
 }
 
 
@@ -2729,7 +2714,6 @@ void Table::mark_auto_increment_column()
   write_set->set(found_next_number_field->field_index);
   if (s->next_number_keypart)
     mark_columns_used_by_index_no_reset(s->next_number_index, read_set);
-  file->column_bitmaps_signal();
 }
 
 
@@ -2761,7 +2745,6 @@ void Table::mark_columns_needed_for_delete()
       if ((*reg_field)->flags & PART_KEY_FLAG)
         read_set->set((*reg_field)->field_index);
     }
-    file->column_bitmaps_signal();
   }
 
   {
@@ -2774,10 +2757,7 @@ void Table::mark_columns_needed_for_delete()
     if (s->primary_key == MAX_KEY)
       file->use_hidden_primary_key();
     else
-    {
       mark_columns_used_by_index_no_reset(s->primary_key, read_set);
-      file->column_bitmaps_signal();
-    }
   }
 }
 
@@ -2812,7 +2792,6 @@ void Table::mark_columns_needed_for_update()
       if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
         read_set->set((*reg_field)->field_index);
     }
-    file->column_bitmaps_signal();
   }
 
   {
@@ -2825,10 +2804,7 @@ void Table::mark_columns_needed_for_update()
     if (s->primary_key == MAX_KEY)
       file->use_hidden_primary_key();
     else
-    {
       mark_columns_used_by_index_no_reset(s->primary_key, read_set);
-      file->column_bitmaps_signal();
-    }
   }
   return;
 }

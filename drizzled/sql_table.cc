@@ -1127,7 +1127,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
             null_fields--;
 	  sql_field->flags=		dup_field->flags;
           sql_field->interval=          dup_field->interval;
-          sql_field->is_stored=      dup_field->is_stored;
 	  it2.remove();			// Remove first (create) definition
 	  select_field_pos--;
 	  break;
@@ -1159,23 +1158,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
-    /*
-          For now skip fields that are not physically stored in the database
-          (virtual fields) and update their offset later
-          (see the next loop).
-        */
-    if (sql_field->is_stored)
-      record_offset+= sql_field->pack_length;
-  }
-  /* Update virtual fields' offset */
-  it.rewind();
-  while ((sql_field=it++))
-  {
-    if (not sql_field->is_stored)
-    {
-      sql_field->offset= record_offset;
-      record_offset+= sql_field->pack_length;
-    }
   }
   if (timestamps_with_niladic > 1)
   {
@@ -1413,12 +1395,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 	    return(true);
 	  }
 	}
-        if (not sql_field->is_stored)
-        {
-          /* Key fields must always be physically stored. */
-          my_error(ER_KEY_BASED_ON_GENERATED_VIRTUAL_COLUMN, MYF(0));
-          return(true);
-        }
 	if (!(sql_field->flags & NOT_NULL_FLAG))
 	{
 	  if (key->type == Key::PRIMARY)
@@ -3995,13 +3971,6 @@ mysql_prepare_alter_table(Session *session, Table *table,
     if (def)
     {						// Field is changed
       def->field=field;
-      if (field->is_stored != def->is_stored)
-      {
-        my_error(ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN,
-                 MYF(0),
-                 "Changing the STORED status");
-        goto err;
-      }
       if (!def->after)
       {
 	new_create_list.push_back(def);
