@@ -674,14 +674,3 @@ uint32_t Field_blob::max_display_length()
     return 0;
   }
 }
-
-bool Field_blob::in_read_set()
-{
-  return (table->read_set->test(field_index));
-}
-
-
-bool Field_blob::in_write_set()
-{
-  return (table->write_set->test(field_index));
-}
