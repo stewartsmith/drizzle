@@ -126,8 +126,9 @@ unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length,
 
 void xid_free_hash(void *ptr)
 {
-  if (!((XID_STATE*)ptr)->in_session)
-    free((unsigned char*)ptr);
+  XID_STATE *state= (XID_STATE *)ptr;
+  if (state->in_session == false)
+    delete state;
 }
 
 bool xid_cache_init()
@@ -160,15 +161,15 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state)
   bool res;
   pthread_mutex_lock(&LOCK_xid_cache);
   if (hash_search(&xid_cache, xid->key(), xid->key_length()))
-    res=0;
-  else if (!(xs=(XID_STATE *)malloc(sizeof(*xs))))
-    res=1;
+    res= false;
+  else if ((xs = new XID_STATE) == NULL)
+    res= true;
   else
   {
     xs->xa_state=xa_state;
     xs->xid.set(xid);
     xs->in_session=0;
-    res=my_hash_insert(&xid_cache, (unsigned char*)xs);
+    res= my_hash_insert(&xid_cache, (unsigned char*)xs);
   }
   pthread_mutex_unlock(&LOCK_xid_cache);
   return res;
