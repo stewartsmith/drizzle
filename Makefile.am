@@ -30,7 +30,8 @@ SUBDIRS = ${po} \
 
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
-			config/plugin.ac config/plugin.am
+			config/plugin.ac config/plugin.am \
+			config/autorun.sh
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment
 MAINTAINERCLEANFILES=	autom4te.cache
@@ -201,17 +202,6 @@ extra_mysql_waitpid_LDADD= \
 EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
 include config/plugin.am
-
-# Create empty datadir 
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)$(localstatedir) 
-	@if test `id -u` = 0 ; then \
-		if test -n "$(GROUPADD)" && test -n "$(USERADD)"; then \
-			$(GROUPADD) $(DRIZZLED_USER) ;\
-			$(USERADD) -g $(DRIZZLED_USER) $(DRIZZLED_USER) ;\
-			chown $(DRIZZLED_USER) $(DESTDIR)$(localstatedir) ;\
-		fi \
-	fi
 
 
 .PHONY: test \

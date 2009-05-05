@@ -108,6 +108,7 @@ EXTRA_DIST += %(rel_path)s/plugin.ini
 if %(build_conditional_tag)s
   noinst_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
   plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
+  plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
   plugin_lib%(name)s_plugin_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s
   plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) %(cppflags)s
   plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
