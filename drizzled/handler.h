@@ -830,13 +830,6 @@ public:
  }
 
   /**
-    use_hidden_primary_key() is called in case of an update/delete when
-    (table_flags() and HA_PRIMARY_KEY_REQUIRED_FOR_DELETE) is defined
-    but we don't have a primary key
-  */
-  virtual void use_hidden_primary_key();
-
-  /**
     Lock table.
 
     @param    session                     Thread handle

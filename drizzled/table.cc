@@ -2742,6 +2742,23 @@ void Table::mark_auto_increment_column()
 
 void Table::mark_columns_needed_for_delete()
 {
+  /*
+    If the handler has no cursor capabilites, or we have row-based
+    replication active for the current statement, we have to read
+    either the primary key, the hidden primary key or all columns to
+    be able to do an delete
+
+  */
+  if (s->primary_key == MAX_KEY)
+  {
+    /* fallback to use all columns in the table to identify row */
+    use_all_columns();
+    return;
+  }
+  else
+    mark_columns_used_by_index_no_reset(s->primary_key);
+
+  /* If we the engine wants all predicates we mark all keys */
   if (file->ha_table_flags() & HA_REQUIRES_KEY_COLUMNS_FOR_DELETE)
   {
     Field **reg_field;
@@ -2750,19 +2767,6 @@ void Table::mark_columns_needed_for_delete()
       if ((*reg_field)->flags & PART_KEY_FLAG)
         read_set->set((*reg_field)->field_index);
     }
-  }
-
-  {
-    /*
-      If the handler has no cursor capabilites, or we have row-based
-      replication active for the current statement, we have to read
-      either the primary key, the hidden primary key or all columns to
-      be able to do an delete
-    */
-    if (s->primary_key == MAX_KEY)
-      file->use_hidden_primary_key();
-    else
-      mark_columns_used_by_index_no_reset(s->primary_key);
   }
 }
 
@@ -2787,6 +2791,21 @@ void Table::mark_columns_needed_for_delete()
 
 void Table::mark_columns_needed_for_update()
 {
+  /*
+    If the handler has no cursor capabilites, or we have row-based
+    logging active for the current statement, we have to read either
+    the primary key, the hidden primary key or all columns to be
+    able to do an update
+  */
+  if (s->primary_key == MAX_KEY)
+  {
+    /* fallback to use all columns in the table to identify row */
+    use_all_columns();
+    return;
+  }
+  else
+    mark_columns_used_by_index_no_reset(s->primary_key);
+
   if (file->ha_table_flags() & HA_REQUIRES_KEY_COLUMNS_FOR_DELETE)
   {
     /* Mark all used key columns for read */
@@ -2799,19 +2818,6 @@ void Table::mark_columns_needed_for_update()
     }
   }
 
-  {
-    /*
-      If the handler has no cursor capabilites, or we have row-based
-      logging active for the current statement, we have to read either
-      the primary key, the hidden primary key or all columns to be
-      able to do an update
-    */
-    if (s->primary_key == MAX_KEY)
-      file->use_hidden_primary_key();
-    else
-      mark_columns_used_by_index_no_reset(s->primary_key);
-  }
-  return;
 }
 
 
