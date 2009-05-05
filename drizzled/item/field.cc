@@ -725,7 +725,9 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
 }
 
 /*
- *
+ * Helper function which tests whether a bit is set in the 
+ * bitset or not. It also sets the bit after this test is
+ * performed.
  */
 static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
 {
@@ -929,7 +931,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
         /* purecov: begin inspected */
-        table->covering_keys.intersect(field->part_of_key);
+        table->covering_keys&= field->part_of_key;
         /* purecov: end */
       }
     }

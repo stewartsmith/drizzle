@@ -1,6 +1,6 @@
 /* A more-standard <time.h>.
 
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2008 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as published by
@@ -16,8 +16,8 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#if !defined(GNULIB_PORTCHECK)
-# define GNULIB_PORTCHECK 0
+#if __GNUC__ >= 3
+@PRAGMA_SYSTEM_HEADER@
 #endif
 
 /* Don't get in the way of glibc when it includes time.h merely to
@@ -91,7 +91,7 @@ char *strptime (char const *restrict __buf, char const *restrict __format,
 # endif
 
 /* Convert TM to a time_t value, assuming UTC.  */
-# if @REPLACE_TIMEGM@ || !defined(HAVE_DECL_TIMEGM)
+# if @REPLACE_TIMEGM@
 #  undef timegm
 #  define timegm rpl_timegm
 time_t timegm (struct tm *__tm);
@@ -100,7 +100,7 @@ time_t timegm (struct tm *__tm);
 /* Encourage applications to avoid unsafe functions that can overrun
    buffers when given outlandish struct tm values.  Portable
    applications should use strftime (or even sprintf) instead.  */
-# if defined(GNULIB_PORTCHECK)
+# if GNULIB_PORTCHECK
 #  undef asctime
 #  define asctime eschew_asctime
 #  undef asctime_r

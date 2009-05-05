@@ -29,9 +29,7 @@ static uint32_t atoi_octal(const char *str)
   long int tmp;
   while (*str && my_isspace(&my_charset_utf8_general_ci, *str))
     str++;
-  str2int(str,
-	  (*str == '0' ? 8 : 10),       /* Octalt or decimalt */
-	  0, INT_MAX, &tmp);
+  tmp= strtol(str, NULL, (*str == '0' ? 8 : 10));
   return (uint32_t) tmp;
 }
 
@@ -97,7 +95,6 @@ void my_end(int infoflag)
   {					/* Test if some file is left open */
     if (my_file_opened | my_stream_opened)
     {
-      sprintf(errbuff[0],EE(EE_OPEN_WARNING),my_file_opened,my_stream_opened);
       /* TODO: Mark... look at replacement here
        * (void) my_message_no_curses(EE_OPEN_WARNING,errbuff[0],ME_BELL);
        */

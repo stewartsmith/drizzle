@@ -1260,7 +1260,7 @@ class JOIN;
 
 
 
-#include <storage/myisam/myisam.h>
+#include <plugin/myisam/myisam.h>
 
 #include <drizzled/tmp_table_param.h>
 

@@ -142,7 +142,6 @@ typedef int  (*qsort_cmp2)(void*, const void *,const void *);
 extern int errno;			/* declare errno */
 #endif
 #endif					/* #ifndef errno */
-extern char errbuff[NRERRBUFFS][ERRMSGSIZE];
 extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
 typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);

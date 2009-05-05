@@ -27,6 +27,7 @@
 
 #include <drizzled/sql_error.h>
 #include <drizzled/my_decimal.h>
+#include <drizzled/key_map.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
 /* System-wide common data structures */
@@ -110,13 +111,6 @@ public:
 
    */
   bool is_created_from_null_item;
-
-  /*
-    Indication that the field is physically stored in tables
-    rather than just generated on SQL queries.
-    As of now, false can only be set for generated-only virtual columns.
-  */
-  bool is_stored;
 
   Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
         unsigned char null_bit_arg, utype unireg_check_arg,
@@ -525,6 +519,9 @@ public:
   friend class Item_sum_max;
   friend class Item_func_group_concat;
 
+  bool isRead();
+  bool isWrite();
+
 private:
   /*
     Primitive for implementing last_null_byte().
@@ -579,21 +576,12 @@ public:
   uint32_t  decimals, flags, pack_length, key_length;
   Field::utype unireg_check;
   TYPELIB *interval;			// Which interval to use
-  TYPELIB *save_interval;               // Temporary copy for the above
-                                        // Used only for UCS2 intervals
   List<String> interval_list;
   const CHARSET_INFO *charset;
   Field *field;				// For alter table
 
   uint8_t       interval_id;	// For rea_create_table
   uint32_t	offset,pack_flag;
-
-  /*
-    Indication that the field is phycically stored in tables
-    rather than just generated on SQL queries.
-    As of now, FALSE can only be set for generated-only virtual columns.
-  */
-  bool is_stored;
 
   Create_field() :after(0) {}
   Create_field(Field *field, Field *orig_field);

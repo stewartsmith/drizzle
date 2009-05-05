@@ -38,7 +38,7 @@
 
 #include <string.h>		/* For the real memcpy prototype.  */
 
-#if defined(DEBUG)
+#if DEBUG
 # include <stdio.h>
 # include <stdlib.h>
 /* Make it work even if the system's libc has its own mktime routine.  */
@@ -138,12 +138,6 @@ const unsigned short int __mon_yday[2][13] =
     { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 }
   };
 
-
-#ifndef mktime_internal
-time_t mktime_internal (struct tm *tp,
-	 	   struct tm *(*convert) (const time_t *, struct tm *),
-		   time_t *offset);
-#endif
 
 #ifndef _LIBC
 /* Portable standalone applications should supply a <time.h> that
@@ -296,7 +290,9 @@ __mktime_internal (struct tm *tp,
   int mday = tp->tm_mday;
   int mon = tp->tm_mon;
   int year_requested = tp->tm_year;
-  int isdst = tp->tm_isdst;
+  /* Normalize the value.  */
+  int isdst = ((tp->tm_isdst >> (8 * sizeof (tp->tm_isdst) - 1))
+	       | (tp->tm_isdst != 0));
 
   /* 1 if the previous probe was DST.  */
   int dst2;
@@ -528,7 +524,7 @@ libc_hidden_def (mktime)
 libc_hidden_weak (timelocal)
 #endif
 
-#if defined(DEBUG)
+#if DEBUG
 
 static int
 not_equal_tm (const struct tm *a, const struct tm *b)

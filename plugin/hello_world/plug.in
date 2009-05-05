@@ -1,3 +1,0 @@
-DRIZZLE_PLUGIN(hello_world,[Daemon Example Plugin],
-        [UDF Plugin for Hello World.])
-DRIZZLE_PLUGIN_DYNAMIC(hello_world,   [libhello_world.la])

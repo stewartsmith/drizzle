@@ -1519,8 +1519,11 @@ bool DateTime::from_time_t(const time_t from)
 void Date::to_time_t(time_t *to) const
 {
   if (in_unix_epoch())
+  {
     *to= _epoch_seconds;
-  *to= 0;
+  }
+  else
+    *to= 0;
 }
 
 void Timestamp::to_time_t(time_t *to) const

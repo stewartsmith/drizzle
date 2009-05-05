@@ -33,7 +33,8 @@
 #ifdef _LIBC
 # include <libintl.h>
 #else
-# include "drizzled/gettext.h"
+# include "gettext.h"
+# define _(msgid) gettext (msgid)
 #endif
 
 #if defined _LIBC && defined USE_IN_LIBIO
@@ -227,9 +228,6 @@ static const char *
 _getopt_initialize (int argc, char **argv, const char *optstring,
 		    int posixly_correct, struct _getopt_data *d)
 {
-  (void) argc;
-  (void) argv;
-
   /* Start processing options with ARGV-element 1 (since ARGV-element 0
      is the program name); the sequence of previously skipped
      non-option ARGV-elements is empty.  */
@@ -285,7 +283,7 @@ _getopt_initialize (int argc, char **argv, const char *optstring,
     }
   else
     d->__nonoption_flags_len = 0;
-#else 
+#else
   (void)argc;
   (void)argv;
 #endif
@@ -1106,7 +1104,7 @@ _getopt_internal (int argc, char **argv, const char *optstring,
 
 /* glibc gets a LSB-compliant getopt.
    Standalone applications get a POSIX-compliant getopt.  */
-#ifdef _LIBC
+#if defined(_LIBC)
 enum { POSIXLY_CORRECT = 0 };
 #else
 enum { POSIXLY_CORRECT = 1 };

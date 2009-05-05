@@ -530,8 +530,8 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     share->keynames.type_lengths[keynr]= indx.name().length();
   }
 
-  share->keys_for_keyread.init(0);
-  share->keys_in_use.init(share->keys);
+  share->keys_for_keyread.reset();
+  set_prefix(share->keys_in_use, share->keys);
 
   if(table_options.has_connect_string())
   {
@@ -556,7 +556,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   share->fields= table.field_size();
   share->vfields= 0;
-  share->stored_fields= share->fields;
 
   share->field= (Field**) alloc_root(&share->mem_root,
 				     ((share->fields+1) * sizeof(Field*)));
@@ -856,8 +855,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     }
 
     enum_field_types field_type;
-    bool field_is_stored= true;
-
 
     field_type= proto_field_type_to_drizzle_type(pfield.type());
 
@@ -966,7 +963,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     f->field_index= fieldnr;
     f->comment= comment;
-    f->is_stored= field_is_stored;
     if(!default_value
        && !(f->unireg_check==Field::NEXT_NUMBER)
        && (f->flags & NOT_NULL_FLAG)
@@ -982,11 +978,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     if (use_hash) /* supposedly this never fails... but comments lie */
       (void) my_hash_insert(&share->name_hash,
 			    (unsigned char*)&(share->field[fieldnr]));
-
-    if(!f->is_stored)
-    {
-      share->stored_fields--;
-    }
   }
 
   keyinfo= share->key_info;
@@ -1097,18 +1088,18 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
                            (keyinfo->key_parts == 1)) ?
                            UNIQUE_KEY_FLAG : MULTIPLE_KEY_FLAG);
         if (i == 0)
-          field->key_start.set_bit(key);
+          field->key_start.set(key);
         if (field->key_length() == key_part->length &&
             !(field->flags & BLOB_FLAG))
         {
           if (handler_file->index_flags(key, i, 0) & HA_KEYREAD_ONLY)
           {
-            share->keys_for_keyread.set_bit(key);
-            field->part_of_key.set_bit(key);
-            field->part_of_key_not_clustered.set_bit(key);
+            share->keys_for_keyread.set(key);
+            field->part_of_key.set(key);
+            field->part_of_key_not_clustered.set(key);
           }
           if (handler_file->index_flags(key, i, 1) & HA_READ_ORDER)
-            field->part_of_sortkey.set_bit(key);
+            field->part_of_sortkey.set(key);
         }
         if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
             usable_parts == i)
@@ -1124,7 +1115,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
           if (ha_option & HA_PRIMARY_KEY_IN_READ_INDEX)
           {
             field->part_of_key= share->keys_in_use;
-            if (field->part_of_sortkey.is_set(key))
+            if (field->part_of_sortkey.test(key))
               field->part_of_sortkey= share->keys_in_use;
           }
         }
@@ -1147,7 +1138,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
         set_if_bigger(share->max_unique_length,keyinfo->key_length);
     }
     if (primary_key < MAX_KEY &&
-	(share->keys_in_use.is_set(primary_key)))
+	(share->keys_in_use.test(primary_key)))
     {
       share->primary_key= primary_key;
       /*
@@ -1207,13 +1198,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   }
 
   share->db_low_byte_first= handler_file->low_byte_first();
-  share->column_bitmap_size= bitmap_buffer_size(share->fields);
-
-  my_bitmap_map *bitmaps;
-
-  if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
-                                             share->column_bitmap_size)))
-    goto err;
   share->all_set.set();
 
   if(handler_file)
@@ -1358,9 +1342,9 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
   if (!(outparam->alias= strdup(alias)))
     goto err;
-  outparam->quick_keys.init();
-  outparam->covering_keys.init();
-  outparam->keys_in_use_for_query.init();
+  outparam->quick_keys.reset();
+  outparam->covering_keys.reset();
+  outparam->keys_in_use_for_query.reset();
 
   /* Allocate handler */
   outparam->file= 0;
@@ -1544,7 +1528,6 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   memset(bitmaps, 0, bitmap_size*3);
 #endif
 
-  outparam->no_replicate= outparam->file;
   session->status_var.opened_tables++;
 
   return (0);
@@ -2646,13 +2629,10 @@ void Table::clear_column_bitmaps()
 
 void Table::prepare_for_position()
 {
-
   if ((file->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
       s->primary_key < MAX_KEY)
   {
     mark_columns_used_by_index_no_reset(s->primary_key, read_set);
-    /* signal change */
-    file->column_bitmaps_signal();
   }
   return;
 }
@@ -2697,8 +2677,6 @@ void Table::restore_column_maps_after_mark_index()
   key_read= 0;
   (void) file->extra(HA_EXTRA_NO_KEYREAD);
   default_column_bitmaps();
-  file->column_bitmaps_signal();
-  return;
 }
 
 
@@ -2736,7 +2714,6 @@ void Table::mark_auto_increment_column()
   write_set->set(found_next_number_field->field_index);
   if (s->next_number_keypart)
     mark_columns_used_by_index_no_reset(s->next_number_index, read_set);
-  file->column_bitmaps_signal();
 }
 
 
@@ -2768,7 +2745,6 @@ void Table::mark_columns_needed_for_delete()
       if ((*reg_field)->flags & PART_KEY_FLAG)
         read_set->set((*reg_field)->field_index);
     }
-    file->column_bitmaps_signal();
   }
 
   {
@@ -2781,10 +2757,7 @@ void Table::mark_columns_needed_for_delete()
     if (s->primary_key == MAX_KEY)
       file->use_hidden_primary_key();
     else
-    {
       mark_columns_used_by_index_no_reset(s->primary_key, read_set);
-      file->column_bitmaps_signal();
-    }
   }
 }
 
@@ -2816,10 +2789,9 @@ void Table::mark_columns_needed_for_update()
     for (reg_field= field ; *reg_field ; reg_field++)
     {
       /* Merge keys is all keys that had a column refered to in the query */
-      if (merge_keys.is_overlapping((*reg_field)->part_of_key))
+      if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
         read_set->set((*reg_field)->field_index);
     }
-    file->column_bitmaps_signal();
   }
 
   {
@@ -2832,10 +2804,7 @@ void Table::mark_columns_needed_for_update()
     if (s->primary_key == MAX_KEY)
       file->use_hidden_primary_key();
     else
-    {
       mark_columns_used_by_index_no_reset(s->primary_key, read_set);
-      file->column_bitmaps_signal();
-    }
   }
   return;
 }
@@ -2975,9 +2944,9 @@ bool TableList::process_index_hints(Table *tbl)
     /* initialize temporary variables used to collect hints of each kind */
     for (type= INDEX_HINT_IGNORE; type <= INDEX_HINT_FORCE; type++)
     {
-      index_join[type].clear_all();
-      index_order[type].clear_all();
-      index_group[type].clear_all();
+      index_join[type].reset();
+      index_order[type].reset();
+      index_group[type].reset();
     }
 
     /* iterate over the hints list */
@@ -2990,17 +2959,17 @@ bool TableList::process_index_hints(Table *tbl)
       {
         if (hint->clause & INDEX_HINT_MASK_JOIN)
         {
-          index_join[hint->type].clear_all();
+          index_join[hint->type].reset();
           have_empty_use_join= true;
         }
         if (hint->clause & INDEX_HINT_MASK_ORDER)
         {
-          index_order[hint->type].clear_all();
+          index_order[hint->type].reset();
           have_empty_use_order= true;
         }
         if (hint->clause & INDEX_HINT_MASK_GROUP)
         {
-          index_group[hint->type].clear_all();
+          index_group[hint->type].reset();
           have_empty_use_group= true;
         }
         continue;
@@ -3022,20 +2991,20 @@ bool TableList::process_index_hints(Table *tbl)
 
       /* add to the appropriate clause mask */
       if (hint->clause & INDEX_HINT_MASK_JOIN)
-        index_join[hint->type].set_bit (pos);
+        index_join[hint->type].set(pos);
       if (hint->clause & INDEX_HINT_MASK_ORDER)
-        index_order[hint->type].set_bit (pos);
+        index_order[hint->type].set(pos);
       if (hint->clause & INDEX_HINT_MASK_GROUP)
-        index_group[hint->type].set_bit (pos);
+        index_group[hint->type].set(pos);
     }
 
     /* cannot mix USE INDEX and FORCE INDEX */
-    if ((!index_join[INDEX_HINT_FORCE].is_clear_all() ||
-         !index_order[INDEX_HINT_FORCE].is_clear_all() ||
-         !index_group[INDEX_HINT_FORCE].is_clear_all()) &&
-        (!index_join[INDEX_HINT_USE].is_clear_all() ||  have_empty_use_join ||
-         !index_order[INDEX_HINT_USE].is_clear_all() || have_empty_use_order ||
-         !index_group[INDEX_HINT_USE].is_clear_all() || have_empty_use_group))
+    if ((index_join[INDEX_HINT_FORCE].any() ||
+         index_order[INDEX_HINT_FORCE].any() ||
+         index_group[INDEX_HINT_FORCE].any()) &&
+        (index_join[INDEX_HINT_USE].any() ||  have_empty_use_join ||
+         index_order[INDEX_HINT_USE].any() || have_empty_use_order ||
+         index_group[INDEX_HINT_USE].any() || have_empty_use_group))
     {
       my_error(ER_WRONG_USAGE, MYF(0), index_hint_type_name[INDEX_HINT_USE],
                index_hint_type_name[INDEX_HINT_FORCE]);
@@ -3043,32 +3012,32 @@ bool TableList::process_index_hints(Table *tbl)
     }
 
     /* process FORCE INDEX as USE INDEX with a flag */
-    if (!index_join[INDEX_HINT_FORCE].is_clear_all() ||
-        !index_order[INDEX_HINT_FORCE].is_clear_all() ||
-        !index_group[INDEX_HINT_FORCE].is_clear_all())
+    if (index_join[INDEX_HINT_FORCE].any() ||
+        index_order[INDEX_HINT_FORCE].any() ||
+        index_group[INDEX_HINT_FORCE].any())
     {
       tbl->force_index= true;
-      index_join[INDEX_HINT_USE].merge(index_join[INDEX_HINT_FORCE]);
-      index_order[INDEX_HINT_USE].merge(index_order[INDEX_HINT_FORCE]);
-      index_group[INDEX_HINT_USE].merge(index_group[INDEX_HINT_FORCE]);
+      index_join[INDEX_HINT_USE]|= index_join[INDEX_HINT_FORCE];
+      index_order[INDEX_HINT_USE]|= index_order[INDEX_HINT_FORCE];
+      index_group[INDEX_HINT_USE]|= index_group[INDEX_HINT_FORCE];
     }
 
     /* apply USE INDEX */
-    if (!index_join[INDEX_HINT_USE].is_clear_all() || have_empty_use_join)
-      tbl->keys_in_use_for_query.intersect(index_join[INDEX_HINT_USE]);
-    if (!index_order[INDEX_HINT_USE].is_clear_all() || have_empty_use_order)
-      tbl->keys_in_use_for_order_by.intersect (index_order[INDEX_HINT_USE]);
-    if (!index_group[INDEX_HINT_USE].is_clear_all() || have_empty_use_group)
-      tbl->keys_in_use_for_group_by.intersect (index_group[INDEX_HINT_USE]);
+    if (index_join[INDEX_HINT_USE].any() || have_empty_use_join)
+      tbl->keys_in_use_for_query&= index_join[INDEX_HINT_USE];
+    if (index_order[INDEX_HINT_USE].any() || have_empty_use_order)
+      tbl->keys_in_use_for_order_by&= index_order[INDEX_HINT_USE];
+    if (index_group[INDEX_HINT_USE].any() || have_empty_use_group)
+      tbl->keys_in_use_for_group_by&= index_group[INDEX_HINT_USE];
 
     /* apply IGNORE INDEX */
-    tbl->keys_in_use_for_query.subtract (index_join[INDEX_HINT_IGNORE]);
-    tbl->keys_in_use_for_order_by.subtract (index_order[INDEX_HINT_IGNORE]);
-    tbl->keys_in_use_for_group_by.subtract (index_group[INDEX_HINT_IGNORE]);
+    key_map_subtract(tbl->keys_in_use_for_query, index_join[INDEX_HINT_IGNORE]);
+    key_map_subtract(tbl->keys_in_use_for_order_by, index_order[INDEX_HINT_IGNORE]);
+    key_map_subtract(tbl->keys_in_use_for_group_by, index_group[INDEX_HINT_IGNORE]);
   }
 
   /* make sure covering_keys don't include indexes disabled with a hint */
-  tbl->covering_keys.intersect(tbl->keys_in_use_for_query);
+  tbl->covering_keys&= tbl->keys_in_use_for_query;
   return 0;
 }
 
@@ -3234,14 +3203,14 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint32_t  copy_func_count= param->func_count;
   uint32_t  hidden_null_count, hidden_null_pack_length, hidden_field_count;
   uint32_t  blob_count,group_null_items, string_count;
-  uint32_t  temp_pool_slot= MY_BIT_NONE;
+  uint32_t  temp_pool_slot= BIT_NONE;
   uint32_t fieldnr= 0;
   ulong reclength, string_total_length;
   bool  using_unique_constraint= 0;
   bool  use_packed_rows= 0;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
   char  *tmpname,path[FN_REFLEN];
-  unsigned char	*pos, *group_buff, *bitmaps;
+  unsigned char	*pos, *group_buff;
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
   uint32_t *blob_field;
@@ -3258,7 +3227,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
     setNextBit(temp_pool);
 
-  if (temp_pool_slot != MY_BIT_NONE) // we got a slot
+  if (temp_pool_slot != BIT_NONE) // we got a slot
     sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
             (unsigned long)current_pid, temp_pool_slot);
   else
@@ -3328,17 +3297,16 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         &tmpname, (uint32_t) strlen(path)+1,
                         &group_buff, (group && ! using_unique_constraint ?
                                       param->group_length : 0),
-                        &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
   {
-    if (temp_pool_slot != MY_BIT_NONE)
+    if (temp_pool_slot != BIT_NONE)
       temp_pool.reset(temp_pool_slot);
     return(NULL);				/* purecov: inspected */
   }
   /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
   {
-    if (temp_pool_slot != MY_BIT_NONE)
+    if (temp_pool_slot != BIT_NONE)
       temp_pool.reset(temp_pool_slot);
     free_root(&own_root, MYF(0));               /* purecov: inspected */
     return(NULL);				/* purecov: inspected */
@@ -3364,9 +3332,9 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->temp_pool_slot= temp_pool_slot;
   table->copy_blobs= 1;
   table->in_use= session;
-  table->quick_keys.init();
-  table->covering_keys.init();
-  table->keys_in_use_for_query.init();
+  table->quick_keys.reset();
+  table->covering_keys.reset();
+  table->keys_in_use_for_query.reset();
 
   table->setShare(share);
   share->init(tmpname, tmpname);
@@ -3375,8 +3343,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
   share->table_charset= param->table_charset;
   share->primary_key= MAX_KEY;               // Indicate no primary key
-  share->keys_for_keyread.init();
-  share->keys_in_use.init();
+  share->keys_for_keyread.reset();
+  share->keys_in_use.reset();
 
   /* Calculate which type of fields we will store in the temporary table */
 
@@ -3695,7 +3663,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   param->copy_field_end=copy;
   param->recinfo=recinfo;
-  store_record(table,s->default_values);        // Make empty default record
+  table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
     share->max_rows= ~(ha_rows) 0;
@@ -3890,7 +3858,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
-  if (temp_pool_slot != MY_BIT_NONE)
+  if (temp_pool_slot != BIT_NONE)
     temp_pool.reset(temp_pool_slot);
   return(NULL);				/* purecov: inspected */
 }
@@ -3926,7 +3894,6 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
   uint32_t *blob_field;
-  unsigned char *bitmaps;
   Table *table;
   TableShare *share;
 
@@ -3935,7 +3902,6 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
                         &share, sizeof(*share),
                         &field, (field_count + 1) * sizeof(Field*),
                         &blob_field, (field_count+1) *sizeof(uint32_t),
-                        &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
     return 0;
 
@@ -4200,7 +4166,7 @@ void Table::free_tmp_table(Session *session)
     (*ptr)->free();
   free_io_cache(this);
 
-  if (temp_pool_slot != MY_BIT_NONE)
+  if (temp_pool_slot != BIT_NONE)
     temp_pool.reset(temp_pool_slot);
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
@@ -4332,11 +4298,11 @@ uint32_t Table::find_shortest_key(const key_map *usable_keys)
 {
   uint32_t min_length= UINT32_MAX;
   uint32_t best= MAX_KEY;
-  if (!usable_keys->is_clear_all())
+  if (usable_keys->any())
   {
     for (uint32_t nr=0; nr < s->keys ; nr++)
     {
-      if (usable_keys->is_set(nr))
+      if (usable_keys->test(nr))
       {
         if (key_info[nr].key_length < min_length)
         {
@@ -4372,7 +4338,7 @@ bool Table::compare_record(Field **ptr)
 bool Table::compare_record()
 {
   if (s->blob_fields + s->varchar_fields == 0)
-    return cmp_record(this, record[1]);
+    return memcmp(this->record[0], this->record[1], (size_t) s->reclength);
   /* Compare null bits */
   if (memcmp(null_flags,
 	     null_flags + s->rec_buff_length,
@@ -4388,9 +4354,60 @@ bool Table::compare_record()
   return false;
 }
 
+/*
+ * Store a record from previous record into next
+ *
+ */
+void Table::storeRecord()
+{
+  memcpy(record[1], record[0], (size_t) s->reclength);
+}
 
+/*
+ * Store a record as an insert
+ *
+ */
+void Table::storeRecordAsInsert()
+{
+  memcpy(insert_values, record[0], (size_t) s->reclength);
+}
 
+/*
+ * Store a record with default values
+ *
+ */
+void Table::storeRecordAsDefault()
+{
+  memcpy(s->default_values, record[0], (size_t) s->reclength);
+}
 
+/*
+ * Restore a record from previous record into next
+ *
+ */
+void Table::restoreRecord()
+{
+  memcpy(record[0], record[1], (size_t) s->reclength);
+}
+
+/*
+ * Restore a record with default values
+ *
+ */
+void Table::restoreRecordAsDefault()
+{
+  memcpy(record[0], s->default_values, (size_t) s->reclength);
+}
+
+/*
+ * Empty a record
+ *
+ */
+void Table::emptyRecord()
+{
+  restoreRecordAsDefault();
+  memset(null_flags, 255, s->null_bytes);
+}
 
 /*****************************************************************************
   The different ways to read a record
@@ -4436,7 +4453,7 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   map= (table_map) 1 << table_number;
   force_index= table_list->force_index;
   covering_keys= s->keys_for_keyread;
-  merge_keys.clear_all();
+  merge_keys.reset();
 }
 
 

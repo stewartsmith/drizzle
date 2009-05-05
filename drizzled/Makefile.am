@@ -247,6 +247,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/type_holder.h \
 		item/uint.h \
 		key.h \
+		key_map.h \
 		key_part_spec.h \
 		korr.h \
 		lex_column.h \
@@ -354,11 +355,11 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 @mysql_plugin_libs@ \
+		 $(drizzled_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
-drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
+drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES}
 
 drizzled_LDFLAGS =
 
@@ -564,6 +565,7 @@ drizzled_SOURCES = \
 		item/uint.cc \
 		item.cc \
 		key.cc \
+		key_map.cc \
 		lock.cc \
 		logging.cc \
 		lookup_symbol.cc \
@@ -579,14 +581,13 @@ drizzled_SOURCES = \
 		records.cc \
 		rename.cc \
 		transaction_services.cc \
-    scheduling.cc \
+		scheduling.cc \
 		session.cc \
 		set_var.cc \
 		show.cc \
 		sj_tmp_table.cc \
 		sql_base.cc \
 		sql_bitmap.cc \
-		sql_builtin.cc \
 		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \

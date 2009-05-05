@@ -25,7 +25,7 @@
 
 /* Definitions for parameters to do with handler-routines */
 
-#include <storage/myisam/keycache.h>
+#include <plugin/myisam/keycache.h>
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
 #include <drizzled/sql_string.h>
@@ -36,6 +36,7 @@
 
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
+#include <drizzled/key_map.h>
 
 #include<bitset>
 
@@ -373,14 +374,6 @@ public:
   { assert(0); return "";}
 
 
-  /**
-    Signal that the table->read_set and table->write_set table maps changed
-    The handler is allowed to set additional bits in the above map in this
-    call. Normally the handler should ignore all calls until we have done
-    a ha_rnd_init() or ha_index_init(), write_row(), update_row or delete_row()
-    as there may be several calls to this routine.
-  */
-  virtual void column_bitmaps_signal();
   uint32_t get_index(void) const { return active_index; }
   virtual int close(void)=0;
 

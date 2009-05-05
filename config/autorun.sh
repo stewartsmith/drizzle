@@ -45,18 +45,24 @@ else
   RELEASE_VERSION="${RELEASE_DATE}.${BZR_REVNO}"
   touch ChangeLog
 fi
-sed -e "s/@BZR_REVNO@/${BZR_REVNO}/" \
-    -e "s/@BZR_REVID@/${BZR_REVID}/" \
-    -e "s/@BZR_BRANCH@/${BZR_BRANCH}/" \
-    -e "s/@RELEASE_DATE@/${RELEASE_DATE}/" \
-    -e "s/@RELEASE_VERSION@/${RELEASE_VERSION}/" \
-  m4/bzr_version.m4.in > m4/bzr_version.m4.new
 
-if ! diff m4/bzr_version.m4.new m4/bzr_version.m4 >/dev/null 2>&1 ; then
-  mv m4/bzr_version.m4.new m4/bzr_version.m4
-else
-  rm m4/bzr_version.m4.new
+if test -f m4/bzr_version.m4.in
+then
+  sed -e "s/@BZR_REVNO@/${BZR_REVNO}/" \
+      -e "s/@BZR_REVID@/${BZR_REVID}/" \
+      -e "s/@BZR_BRANCH@/${BZR_BRANCH}/" \
+      -e "s/@RELEASE_DATE@/${RELEASE_DATE}/" \
+      -e "s/@RELEASE_VERSION@/${RELEASE_VERSION}/" \
+    m4/bzr_version.m4.in > m4/bzr_version.m4.new
+  
+  if ! diff m4/bzr_version.m4.new m4/bzr_version.m4 >/dev/null 2>&1 ; then
+    mv m4/bzr_version.m4.new m4/bzr_version.m4
+  else
+    rm m4/bzr_version.m4.new
+  fi
 fi
+
+python config/register_plugins.py
 
 if test x$LIBTOOLIZE = x; then
   if test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then

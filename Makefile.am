@@ -1,18 +1,17 @@
-# test
-# # Copyright (C) 2000-2006 MySQL AB
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#  Copyright (C) 2009 Sun Microsystems
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; version 2 of the License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 ACLOCAL_AMFLAGS = -I m4 --force
 
@@ -25,14 +24,14 @@ SUBDIRS = ${po} \
 	  gnulib \
 	  drizzled/message \
 	  . \
-	  storage \
-	  plugin \
 	  drizzled \
 	  tests \
 	  support-files
 
 BUILT_SOURCES=		drizzled/configmake.h
-EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4
+EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
+			config/plugin.ac config/plugin.am \
+			config/autorun.sh
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment
 MAINTAINERCLEANFILES=	autom4te.cache
@@ -47,7 +46,8 @@ noinst_LTLIBRARIES= \
 		mysys/libmysys.la \
 		mystrings/libmystrings.la
 
-nobase_bin_PROGRAMS= \
+noinst_PROGRAMS=
+bin_PROGRAMS= \
 		client/drizzle \
 		client/drizzlecheck \
 		client/drizzledump \
@@ -81,7 +81,6 @@ noinst_HEADERS=	\
 		mysys/iocache.h \
 		mysys/my_alloc.h \
 		mysys/my_bit.h \
-		mysys/my_bitmap.h \
 		mysys/my_dir.h \
 		mysys/my_getopt.h \
 		mysys/my_pthread.h \
@@ -110,8 +109,7 @@ mystrings_libmystrings_la_SOURCES= \
 		mystrings/is_prefix.cc \
 		mystrings/llstr.cc \
 		mystrings/longlong2str.cc \
-		mystrings/my_strtoll10.cc \
-		mystrings/str2int.cc
+		mystrings/my_strtoll10.cc
 
 mysys_libmysys_la_SOURCES= \
 		mysys/array.cc \
@@ -144,7 +142,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_access.cc \
 		mysys/my_alloc.cc \
 		mysys/my_bit.cc \
-		mysys/my_bitmap.cc \
 		mysys/my_copy.cc \
 		mysys/my_create.cc \
 		mysys/my_delete.cc \
@@ -202,16 +199,9 @@ extra_mysql_waitpid_LDADD= \
 		$(top_builddir)/mystrings/libmystrings.la \
 		$(LIBINTL)
 
-# Create empty datadir 
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)$(localstatedir) 
-	@if test `id -u` = 0 ; then \
-		if test -n "$(GROUPADD)" && test -n "$(USERADD)"; then \
-			$(GROUPADD) $(DRIZZLED_USER) ;\
-			$(USERADD) -g $(DRIZZLED_USER) $(DRIZZLED_USER) ;\
-			chown $(DRIZZLED_USER) $(DESTDIR)$(localstatedir) ;\
-		fi \
-	fi
+EXTRA_LTLIBRARIES=
+pkgplugin_LTLIBRARIES=
+include config/plugin.am
 
 
 .PHONY: test \
