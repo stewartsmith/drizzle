@@ -719,27 +719,6 @@ public:
    check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
  { return COMPATIBLE_DATA_NO; }
 
- /*
-  * Check if the HA_ALTER_STORED_VCOL bit is set. If it is, then
-  * we will clear all other bits and return true; otherwise 
-  * clear all the bits in the the bitset and return false.
-  *
-  * @param    alter_flags    Bitmap that shows what will be changed
-  */
- virtual bool check_stored_vcol_flag(HA_ALTER_FLAGS *alter_flags)
- {
-   if (alter_flags->test(HA_ALTER_STORED_VCOL))
-   {
-     alter_flags->reset();
-     alter_flags->set(HA_ALTER_STORED_VCOL);
-   }
-   else
-   {
-     alter_flags->reset();
-   }
-   return (alter_flags->any());
- }
-
  /* On-line ALTER Table interface */
 
  /**
@@ -766,12 +745,10 @@ public:
       implementation.
  */
  virtual int check_if_supported_alter(Table *, HA_CREATE_INFO *create_info,
-                                      HA_ALTER_FLAGS * alter_flags, uint32_t table_changes)
+                                      HA_ALTER_FLAGS * , uint32_t table_changes)
  {
    if (this->check_if_incompatible_data(create_info, table_changes)
        == COMPATIBLE_DATA_NO)
-     return(HA_ALTER_NOT_SUPPORTED);
-   else if (this->check_stored_vcol_flag(alter_flags))
      return(HA_ALTER_NOT_SUPPORTED);
    else
      return(HA_ALTER_SUPPORTED_WAIT_LOCK);
@@ -857,12 +834,6 @@ public:
   {
     return HA_ERR_WRONG_COMMAND;
   }
-  /*
-    This procedure defines if the storage engine supports virtual columns.
-    Default false means "not supported".
-  */
-  virtual bool check_if_supported_virtual_columns(void)
-  { return false; }
 
 protected:
   /* Service methods for use by storage engines. */

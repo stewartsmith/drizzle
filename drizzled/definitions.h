@@ -526,7 +526,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 #define HA_RENAME_TABLE               (36)
 #define HA_ALTER_STORAGE_ENGINE       (37)
 #define HA_RECREATE                   (38)
-#define HA_ALTER_STORED_VCOL          (39)
 /* Remember to increase HA_MAX_ALTER_FLAGS when adding more flags! */
 
 /* Return values for check_if_supported_alter */
