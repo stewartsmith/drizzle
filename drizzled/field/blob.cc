@@ -605,7 +605,7 @@ const unsigned char *Field_blob::unpack(unsigned char *,
   uint32_t const master_packlength=
     param_data > 0 ? param_data & 0xFF : packlength;
   uint32_t const length= get_length(from, master_packlength, low_byte_first);
-  table->write_set->set(field_index);
+  table->setWriteSet(field_index);
   store(reinterpret_cast<const char*>(from) + master_packlength,
         length, field_charset);
   return(from + master_packlength + length);

@@ -8064,7 +8064,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
           If the field is used in the current query ensure that it's
           part of 'cur_index'
         */
-        if (table->read_set->test(cur_field->field_index) &&
+        if ((cur_field->isReadSet()) &&
             !cur_field->part_of_key_not_clustered.test(cur_index))
           goto next_index;                  // Field was not part of key
       }
@@ -8237,7 +8237,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
                 (min_max_arg_part && (min_max_arg_part < last_part));
       for (; cur_part != last_part; cur_part++)
       {
-        if (table->read_set->test(cur_part->field->field_index))
+        if (cur_part->field->isReadSet())
           goto next_index;
       }
     }

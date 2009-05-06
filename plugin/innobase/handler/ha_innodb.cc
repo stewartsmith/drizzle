@@ -3690,8 +3690,8 @@ build_template(
 				/* This field is needed in the query */
 				goto include_field;
 
-                        assert(table->read_set->test(sql_idx) == field->isReadSet());
-                        assert(table->write_set->test(sql_idx) == field->isWriteSet());
+                        assert(table->isReadSet(sql_idx) == field->isReadSet());
+                        assert(table->isWriteSet(sql_idx) == field->isWriteSet());
 
 			if (fetch_primary_key_cols
 				&& dict_table_col_in_clustered_key(

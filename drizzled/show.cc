@@ -2297,7 +2297,7 @@ static uint32_t get_table_open_method(TableList *tables,
     int table_open_method= 0, field_indx= 0;
     for (ptr=tables->table->field; (field= *ptr) ; ptr++)
     {
-      if (tables->table->read_set->test(field->field_index))
+      if (field->isReadSet())
         table_open_method|= schema_table->fields_info[field_indx].open_method;
       field_indx++;
     }
