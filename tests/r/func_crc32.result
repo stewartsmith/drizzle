@@ -1,3 +1,7 @@
+select crc32();
+ERROR 42000: Incorrect parameters in the call to native function 'crc32'
+select crc32('foo','bar','baz');
+ERROR 42000: Incorrect parameters in the call to native function 'crc32'
 select crc32('12341234');
 crc32('12341234')
 2136042507

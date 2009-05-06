@@ -115,3 +115,15 @@ Error	1259	ZLIB: Input data corrupted
 Error	1259	ZLIB: Input data corrupted
 drop table t1;
 End of 5.0 tests
+select compress();
+ERROR 42000: Incorrect parameters in the call to native function 'compress'
+select uncompress();
+ERROR 42000: Incorrect parameters in the call to native function 'uncompress'
+select uncompressed_length();
+ERROR 42000: Incorrect parameters in the call to native function 'uncompressed_length'
+select compress('aeou', 'aoeu', 'aoeu');
+ERROR 42000: Incorrect parameters in the call to native function 'compress'
+select uncompress('aoenuthn', 'aoeu');
+ERROR 42000: Incorrect parameters in the call to native function 'uncompress'
+select uncompressed_length('aneohusa','naohuntah','onh');
+ERROR 42000: Incorrect parameters in the call to native function 'uncompressed_length'

@@ -31,6 +31,7 @@ class Item_func_uncompress: public Item_str_func
 public:
   Item_func_uncompress(): Item_str_func(){}
   void fix_length_and_dec(){ maybe_null= 1; max_length= MAX_BLOB_WIDTH; }
+  bool check_argument_count(int n) { return (n==1); }
   const char *func_name() const{return "uncompress";}
   String *val_str(String *) ;
 };

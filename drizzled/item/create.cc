@@ -1591,7 +1591,14 @@ Create_udf_func::create(Session *session, Function_builder *udf,
 
   func= (*udf)(session->mem_root);
 
-  func->set_arguments(*item_list);
+  if(!func->check_argument_count(arg_count))
+  {
+    my_error(ER_WRONG_PARAMETERS_TO_NATIVE_FCT, MYF(0), func->func_name());
+    return NULL;
+  }
+
+  if(item_list)
+    func->set_arguments(*item_list);
 
   return func;
 }
