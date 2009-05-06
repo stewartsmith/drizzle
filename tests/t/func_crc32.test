@@ -1,3 +1,8 @@
+--error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+select crc32();
+--error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+select crc32('foo','bar','baz');
+
 select crc32('12341234');
 select crc32('a');
 select crc32('taohuoahusoahusoa haneo uhnteoahu ntoahu saonhu aoeuoa hun');

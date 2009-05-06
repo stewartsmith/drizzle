@@ -32,6 +32,7 @@ public:
   Item_func_compress():Item_str_func(){}
   void fix_length_and_dec(){max_length= (args[0]->max_length*120)/100+12;}
   const char *func_name() const{return "compress";}
+  bool check_argument_count(int n) { return (n==1); }
   String *val_str(String *) ;
 };
 
