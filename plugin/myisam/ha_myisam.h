@@ -118,7 +118,6 @@ class ha_myisam: public handler
   bool auto_repair() const { return myisam_recover_options != 0; }
   int optimize(Session* session, HA_CHECK_OPT* check_opt);
   int assign_to_keycache(Session* session, HA_CHECK_OPT* check_opt);
-  bool check_if_incompatible_data(HA_CREATE_INFO *info, uint32_t table_changes);
   MI_INFO *file_ptr(void)
   {
     return file;

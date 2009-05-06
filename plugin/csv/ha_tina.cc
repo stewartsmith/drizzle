@@ -1540,11 +1540,6 @@ int ha_tina::check(Session* session, HA_CHECK_OPT *)
 }
 
 
-bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
-{
-  return COMPATIBLE_DATA_YES;
-}
-
 drizzle_declare_plugin(csv)
 {
   "CSV",

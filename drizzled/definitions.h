@@ -596,21 +596,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 #define HA_HAS_RECORDS	       (INT64_C(1) << 32) /* records() gives exact count*/
 #define HA_MRR_CANT_SORT       (INT64_C(1) << 34)
 
-/*
-  Engine is capable of row-format and statement-format logging,
-  respectively
-*/
-#define HA_BINLOG_ROW_CAPABLE  (INT64_C(1) << 35)
-#define HA_BINLOG_STMT_CAPABLE (INT64_C(1) << 36)
-
-#define HA_ONLINE_ALTER        (INT64_C(1) << 37)
-
-/*
-  Set of all binlog flags. Currently only contain the capabilities
-  flags.
- */
-#define HA_BINLOG_FLAGS (HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE)
-
 /* bits in index_flags(index_number) for what you can do with index */
 #define HA_READ_NEXT            1       /* TODO really use this flag */
 #define HA_READ_PREV            2       /* supports ::index_prev */
@@ -672,12 +657,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 #define HA_OPTION_NO_DELAY_KEY_WRITE (1L << 18)
 #define HA_MAX_REC_LENGTH	65535
 
-/* Table caching type */
-#define HA_CACHE_TBL_NONTRANSACT 0
-#define HA_CACHE_TBL_NOCACHE     1
-#define HA_CACHE_TBL_ASKTRANSACT 2
-#define HA_CACHE_TBL_TRANSACT    4
-
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
 #define DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT 1
 
@@ -694,24 +673,6 @@ enum column_format_type { COLUMN_FORMAT_TYPE_NOT_USED= -1,
                           COLUMN_FORMAT_TYPE_DEFAULT=   0,
                           COLUMN_FORMAT_TYPE_FIXED=     1,
                           COLUMN_FORMAT_TYPE_DYNAMIC=   2 };
-
-enum enum_binlog_func {
-  BFN_RESET_LOGS=        1,
-  BFN_RESET_SLAVE=       2,
-  BFN_BINLOG_WAIT=       3,
-  BFN_BINLOG_END=        4,
-  BFN_BINLOG_PURGE_FILE= 5
-};
-
-enum enum_binlog_command {
-  LOGCOM_CREATE_TABLE,
-  LOGCOM_ALTER_TABLE,
-  LOGCOM_RENAME_TABLE,
-  LOGCOM_DROP_TABLE,
-  LOGCOM_CREATE_DB,
-  LOGCOM_ALTER_DB,
-  LOGCOM_DROP_DB
-};
 
 /* struct to hold information about the table that should be created */
 
@@ -747,7 +708,6 @@ enum enum_binlog_command {
 #define COMPATIBLE_DATA_NO  1
 
 #define UNDEF_NODEGROUP 65535
-#define NOT_A_PARTITION_ID ((uint32_t)-1)
 
 enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
 
@@ -1029,9 +989,6 @@ enum enum_table_category
 enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
 enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
                             DELAY_KEY_WRITE_ALL };
-enum enum_slave_exec_mode { SLAVE_EXEC_MODE_STRICT,
-                            SLAVE_EXEC_MODE_IDEMPOTENT,
-                            SLAVE_EXEC_MODE_LAST_BIT};
 enum enum_mark_columns
 { MARK_COLUMNS_NONE, MARK_COLUMNS_READ, MARK_COLUMNS_WRITE};
 

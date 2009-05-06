@@ -190,7 +190,6 @@ class ha_innobase: public handler
 
 	virtual bool get_error_message(int error, String *buf);
 
-	uint8_t table_cache_type();
 	/*
 	  ask handler about permission to cache table during query registration
 	*/

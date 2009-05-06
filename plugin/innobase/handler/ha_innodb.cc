@@ -1304,7 +1304,6 @@ ha_innobase::ha_innobase(StorageEngine *engine_arg, TableShare *table_arg)
 		  HA_CAN_INDEX_BLOBS |
 		  HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
 		  HA_PRIMARY_KEY_IN_READ_INDEX |
-		  HA_BINLOG_ROW_CAPABLE |
 		  HA_PARTIAL_COLUMN_READ |
 		  HA_TABLE_SCAN_ON_INDEX | 
                   HA_MRR_CANT_SORT),
@@ -2621,12 +2620,7 @@ UNIV_INTERN
 handler::Table_flags
 ha_innobase::table_flags() const
 {
-       /* Need to use tx_isolation here since table flags is (also)
-          called before prebuilt is inited. */
-        ulong const tx_isolation = session_tx_isolation(ha_session());
-        if (tx_isolation <= ISO_READ_COMMITTED)
-                return int_table_flags;
-        return int_table_flags | HA_BINLOG_STMT_CAPABLE;
+        return int_table_flags;
 }
 
 /********************************************************************
@@ -2700,13 +2694,6 @@ const key_map*
 ha_innobase::keys_to_use_for_scanning()
 {
 	return(&key_map_full);
-}
-
-UNIV_INTERN
-uint8_t
-ha_innobase::table_cache_type()
-{
-	return(HA_CACHE_TBL_ASKTRANSACT);
 }
 
 UNIV_INTERN
@@ -8794,41 +8781,6 @@ InnobaseEngine::rollback_by_xid(
 	} else {
 		return(XAER_NOTA);
 	}
-}
-
-
-
-UNIV_INTERN
-bool
-ha_innobase::check_if_incompatible_data(
-	HA_CREATE_INFO*	create_info,
-	uint		table_changes)
-{
-	if (table_changes != IS_EQUAL_YES) {
-
-		return(COMPATIBLE_DATA_NO);
-	}
-
-	/* Check that auto_increment value was not changed */
-	if ((create_info->used_fields & HA_CREATE_USED_AUTO) &&
-		create_info->auto_increment_value != 0) {
-
-		return(COMPATIBLE_DATA_NO);
-	}
-
-	/* Check that row format didn't change */
-	if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT) &&
-	    get_row_type() != create_info->row_type) {
-
-		return(COMPATIBLE_DATA_NO);
-	}
-
-	/* Specifying KEY_BLOCK_SIZE requests a rebuild of the table. */
-	if (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE) {
-		return(COMPATIBLE_DATA_NO);
-	}
-
-	return(COMPATIBLE_DATA_YES);
 }
 
 /****************************************************************

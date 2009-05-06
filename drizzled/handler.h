@@ -593,13 +593,6 @@ public:
   */
   virtual const char **bas_ext() const =0;
 
-  virtual int get_default_no_partitions(HA_CREATE_INFO *) { return 1;}
-  virtual bool get_no_parts(const char *, uint32_t *no_parts)
-  {
-    *no_parts= 0;
-    return 0;
-  }
-
   virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
 
   virtual int add_index(Table *, KEY *, uint32_t)
@@ -659,10 +652,6 @@ public:
                                      THR_LOCK_DATA **to,
                                      enum thr_lock_type lock_type)=0;
 
-  /** Type of table for caching query */
-  virtual uint8_t table_cache_type() { return HA_CACHE_TBL_NONTRANSACT; }
-
-
  /*
    @retval true   Primary key (if there is one) is clustered
                   key covering all fields
@@ -711,100 +700,6 @@ public:
 
  virtual Item *idx_cond_push(uint32_t, Item *idx_cond)
  { return idx_cond; }
-
- /*
-    Part of old fast alter table, to be depricated
-  */
- virtual bool
-   check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
- { return COMPATIBLE_DATA_NO; }
-
- /* On-line ALTER Table interface */
-
- /**
-    Check if a storage engine supports a particular alter table on-line
-
-    @param    altered_table     A temporary table show what table is to
-                                change to
-    @param    create_info       Information from the parsing phase about new
-                                table properties.
-    @param    alter_flags       Bitmask that shows what will be changed
-    @param    table_changes     Shows if table layout has changed (for
-                                backwards compatibility with
-                                check_if_incompatible_data
-
-    @retval   HA_ALTER_ERROR                Unexpected error
-    @retval   HA_ALTER_SUPPORTED_WAIT_LOCK  Supported, but requires DDL lock
-    @retval   HA_ALTER_SUPPORTED_NO_LOCK    Supported
-    @retval   HA_ALTER_NOT_SUPPORTED        Not supported
-
-    @note
-      The default implementation is implemented to support fast
-      alter table (storage engines that support some changes by
-      just changing the frm file) without any change in the handler
-      implementation.
- */
- virtual int check_if_supported_alter(Table *, HA_CREATE_INFO *create_info,
-                                      HA_ALTER_FLAGS * , uint32_t table_changes)
- {
-   if (this->check_if_incompatible_data(create_info, table_changes)
-       == COMPATIBLE_DATA_NO)
-     return(HA_ALTER_NOT_SUPPORTED);
-   else
-     return(HA_ALTER_SUPPORTED_WAIT_LOCK);
- }
- /**
-   Tell storage engine to prepare for the on-line alter table (pre-alter)
-
-   @param     session               The thread handle
-   @param     altered_table     A temporary table show what table is to
-                                change to
-   @param     alter_info        Storage place for data used during phase1
-                                and phase2
-   @param     alter_flags       Bitmask that shows what will be changed
-
-   @retval   0      OK
-   @retval   error  error code passed from storage engine
- */
- virtual int alter_table_phase1(Session *, Table *, HA_CREATE_INFO *, HA_ALTER_INFO *,
-                                HA_ALTER_FLAGS *)
- {
-   return HA_ERR_UNSUPPORTED;
- }
- /**
-    Tell storage engine to perform the on-line alter table (alter)
-
-    @param    session               The thread handle
-    @param    altered_table     A temporary table show what table is to
-                                change to
-    @param    alter_info        Storage place for data used during phase1
-                                and phase2
-    @param    alter_flags       Bitmask that shows what will be changed
-
-    @retval  0      OK
-    @retval  error  error code passed from storage engine
-
-    @note
-      If check_if_supported_alter returns HA_ALTER_SUPPORTED_WAIT_LOCK
-      this call is to be wrapped with a DDL lock. This is currently NOT
-      supported.
- */
- virtual int alter_table_phase2(Session *, Table *, HA_CREATE_INFO *, HA_ALTER_INFO *,
-                                HA_ALTER_FLAGS *)
- {
-   return HA_ERR_UNSUPPORTED;
- }
- /**
-    Tell storage engine that changed frm file is now on disk and table
-    has been re-opened (post-alter)
-
-    @param    session               The thread handle
-    @param    table             The altered table, re-opened
- */
- virtual int alter_table_phase3(Session *, Table *)
- {
-   return HA_ERR_UNSUPPORTED;
- }
 
   /**
     Lock table.
