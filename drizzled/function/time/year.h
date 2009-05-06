@@ -28,7 +28,6 @@ public:
   Item_func_year(Item *a) :Item_int_func(a) {}
   int64_t val_int();
   const char *func_name() const { return "year"; }
-  enum_monotonicity_info get_monotonicity_info() const;
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   void fix_length_and_dec()
   {

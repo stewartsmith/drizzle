@@ -50,23 +50,6 @@ Created 4/20/1996 Heikki Tuuri
 #define	ROW_INS_NEXT	2
 
 
-/*********************************************************************
-This prototype is copied from /mysql/sql/ha_innodb.cc.
-Invalidates the MySQL query cache for the table.
-NOTE that the exact prototype of this function has to be in
-/innobase/row/row0ins.c! */
-extern
-void
-innobase_invalidate_query_cache(
-/*============================*/
-	trx_t*	trx,		/* in: transaction which modifies the table */
-	char*	full_name,	/* in: concatenation of database name, null
-				char '\0', table name, null char'\0';
-				NOTE that in Windows this is always
-				in LOWER CASE! */
-	ulint	full_name_len);	/* in: full name length where also the null
-				chars count */
-
 /*************************************************************************
 Creates an insert node struct. */
 UNIV_INTERN
@@ -752,7 +735,7 @@ static
 void
 row_ins_invalidate_query_cache(
 /*===========================*/
-	que_thr_t*	thr,		/* in: query thread whose run_node
+	que_thr_t*	unused,		/* in: query thread whose run_node
 					is an update node */
 	const char*	name)		/* in: table name prefixed with
 					database name and a '/' character */
@@ -761,16 +744,14 @@ row_ins_invalidate_query_cache(
 	char*	ptr;
 	ulint	len = strlen(name) + 1;
 
+        (void)unused;
+
 	buf = mem_strdupl(name, len);
 
 	ptr = strchr(buf, '/');
 	ut_a(ptr);
 	*ptr = '\0';
 
-	/* We call a function in ha_innodb.cc */
-#ifndef UNIV_HOTBACKUP
-	innobase_invalidate_query_cache(thr_get_trx(thr), buf, len);
-#endif
 	mem_free(buf);
 }
 
