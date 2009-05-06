@@ -704,7 +704,6 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       if (column_format)
       {
         packet->append(STRING_WITH_LEN(" /*!"));
-        packet->append(STRING_WITH_LEN(DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR));
         packet->append(STRING_WITH_LEN(" COLUMN_FORMAT"));
         if (column_format == COLUMN_FORMAT_TYPE_FIXED)
           packet->append(STRING_WITH_LEN(" FIXED */"));

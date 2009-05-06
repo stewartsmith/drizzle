@@ -135,15 +135,6 @@
 */
 #define OPTIMIZE_I_S_TABLE     OPEN_TABLE_ONLY*2
 
-#define SC_INFO_LENGTH 4		/* Form format constant */
-#define TE_INFO_LENGTH 3
-
-#define FRM_VER 6
-#define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */
-#define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120
-#define DRIZZLE_VERSION_TABLESPACE_IN_FRM 50205
-#define DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR "50205"
-
 /*
   Minimum length pattern before Turbo Boyer-Moore is used
   for SELECT "text" LIKE "%pattern%", excluding the two
@@ -317,10 +308,6 @@
 /* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
 #define UNDEF_POS (-1)
 
-/* BINLOG_DUMP options */
-
-#define BINLOG_DUMP_NON_BLOCK   1
-
 /* sql_show.cc:show_log_files() */
 #define SHOW_LOG_STATUS_FREE "FREE"
 #define SHOW_LOG_STATUS_INUSE "IN USE"
@@ -457,16 +444,6 @@ enum enum_var_type
 
 typedef uint64_t query_id_t;
 typedef void *range_seq_t;
-
-
-/**
-   The maximum is defined as (ULONG_MAX/1000) with 4 bytes uint32_t
-*/
-static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
-
-#define SLAVE_NET_TIMEOUT  3600
-
-#define MAX_SLAVE_ERROR    2000
 
 /* masks for start/stop operations on io and sql slave threads */
 #define SLAVE_IO  1
@@ -703,11 +680,6 @@ enum column_format_type { COLUMN_FORMAT_TYPE_NOT_USED= -1,
 
 #define MAXGTRIDSIZE 64
 #define MAXBQUALSIZE 64
-
-#define COMPATIBLE_DATA_YES 0
-#define COMPATIBLE_DATA_NO  1
-
-#define UNDEF_NODEGROUP 65535
 
 enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
 
