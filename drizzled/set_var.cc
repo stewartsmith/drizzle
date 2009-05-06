@@ -217,8 +217,6 @@ static sys_var_session_uint32_t	sys_net_retry_count(&vars, "net_retry_count",
                                                     &SV::net_retry_count,
                                                     0, fix_net_retry_count);
 /* these two cannot be static */
-sys_var_session_bool sys_old_alter_table(&vars, "old_alter_table",
-                                         &SV::old_alter_table);
 static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
                                                       &SV::optimizer_prune_level);
 static sys_var_session_uint32_t sys_optimizer_search_depth(&vars, "optimizer_search_depth",

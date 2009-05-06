@@ -4571,9 +4571,6 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
 
   set_table_default_charset(session, create_info, db);
 
-  if (session->variables.old_alter_table
-      || (table->s->db_type() != create_info->db_type)
-     )
   {
     if (alter_info->build_method == HA_BUILD_ONLINE)
     {
