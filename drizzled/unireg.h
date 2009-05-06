@@ -118,28 +118,12 @@ extern "C" {
 */
 #define OPEN_TABLE_ONLY        OPEN_FRM_FILE_ONLY*2
 
-#define SC_INFO_LENGTH 4		/* Form format constant */
-#define TE_INFO_LENGTH 3
-
-
-#define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120
-#define DRIZZLE_VERSION_TABLESPACE_IN_FRM 50205
-#define DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR "50205"
-
 /*
   Minimum length pattern before Turbo Boyer-Moore is used
   for SELECT "text" LIKE "%pattern%", excluding the two
   wildcards in class Item_func_like.
 */
 #define MIN_TURBOBM_PATTERN_LEN 3
-
-/*
-   Defines for binary logging.
-   Do not decrease the value of BIN_LOG_HEADER_SIZE.
-   Do not even increase it before checking code.
-*/
-
-#define BIN_LOG_HEADER_SIZE    4
 
 #define DEFAULT_KEY_CACHE_NAME "default"
 

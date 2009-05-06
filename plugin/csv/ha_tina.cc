@@ -588,7 +588,7 @@ int ha_tina::find_current_row(unsigned char *buf)
   off_t end_offset, curr_offset= current_position;
   int eoln_len;
   int error;
-  bool read_all;
+  bool read_all= false;
 
   free_root(&blobroot, MYF(MY_MARK_BLOCKS_FREE));
 
@@ -601,11 +601,19 @@ int ha_tina::find_current_row(unsigned char *buf)
                        local_saved_data_file_length, &eoln_len)) == 0)
     return(HA_ERR_END_OF_FILE);
 
-  /* We must read all columns in case a table is opened for update */
-  read_all= !table->write_set->none();
   error= HA_ERR_CRASHED_ON_USAGE;
 
   memset(buf, 0, table->s->null_bytes);
+
+  /* We need to first check to see if this is a write (rewrite this to something sane that knows if we are doing an update) */
+  for (Field **field=table->field ; *field ; field++)
+  {
+    if ((*field)->isWriteSet())
+    {
+      read_all= true;
+      break;
+    }
+  }
 
   for (Field **field=table->field ; *field ; field++)
   {
@@ -672,7 +680,7 @@ int ha_tina::find_current_row(unsigned char *buf)
       }
     }
 
-    if (read_all || table->read_set->test((*field)->field_index))
+    if (read_all || (*field)->isReadSet())
     {
       if ((*field)->store(buffer.ptr(), buffer.length(), buffer.charset(),
                           CHECK_FIELD_WARN))
@@ -1531,11 +1539,6 @@ int ha_tina::check(Session* session, HA_CHECK_OPT *)
     return(HA_ADMIN_OK);
 }
 
-
-bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
-{
-  return COMPATIBLE_DATA_YES;
-}
 
 drizzle_declare_plugin(csv)
 {

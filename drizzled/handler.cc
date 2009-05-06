@@ -1520,8 +1520,7 @@ void handler::get_auto_increment(uint64_t ,
   int error;
 
   (void) extra(HA_EXTRA_KEYREAD);
-  table->mark_columns_used_by_index_no_reset(table->s->next_number_index,
-                                        table->read_set);
+  table->mark_columns_used_by_index_no_reset(table->s->next_number_index);
   index_init(table->s->next_number_index, 1);
   if (table->s->next_number_keypart == 0)
   {						// Autoincrement at key-start
@@ -3616,20 +3615,6 @@ int handler::ha_delete_row(const unsigned char *buf)
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;
-}
-
-
-
-/**
-  @details
-  use_hidden_primary_key() is called in case of an update/delete when
-  (table_flags() and HA_PRIMARY_KEY_REQUIRED_FOR_DELETE) is defined
-  but we don't have a primary key
-*/
-void handler::use_hidden_primary_key()
-{
-  /* fallback to use all columns in the table to identify row */
-  table->use_all_columns();
 }
 
 void table_case_convert(char * name, uint32_t length)

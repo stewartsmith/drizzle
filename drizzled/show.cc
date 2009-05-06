@@ -704,7 +704,6 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       if (column_format)
       {
         packet->append(STRING_WITH_LEN(" /*!"));
-        packet->append(STRING_WITH_LEN(DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR));
         packet->append(STRING_WITH_LEN(" COLUMN_FORMAT"));
         if (column_format == COLUMN_FORMAT_TYPE_FIXED)
           packet->append(STRING_WITH_LEN(" FIXED */"));
@@ -2297,7 +2296,7 @@ static uint32_t get_table_open_method(TableList *tables,
     int table_open_method= 0, field_indx= 0;
     for (ptr=tables->table->field; (field= *ptr) ; ptr++)
     {
-      if (tables->table->read_set->test(field->field_index))
+      if (field->isReadSet())
         table_open_method|= schema_table->fields_info[field_indx].open_method;
       field_indx++;
     }

@@ -486,8 +486,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 ha_myisam::ha_myisam(StorageEngine *engine_arg, TableShare *table_arg)
   :handler(engine_arg, table_arg), file(0),
   int_table_flags(HA_NULL_IN_KEY |
-                  HA_BINLOG_ROW_CAPABLE |
-                  HA_BINLOG_STMT_CAPABLE |
                   HA_DUPLICATE_POS |
                   HA_CAN_INDEX_BLOBS |
                   HA_AUTO_PART_KEY |
@@ -1778,28 +1776,6 @@ ha_rows ha_myisam::records_in_range(uint32_t inx, key_range *min_key,
 uint32_t ha_myisam::checksum() const
 {
   return (uint)file->state->checksum;
-}
-
-
-bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *create_info,
-					   uint32_t table_changes)
-{
-  uint32_t options= table->s->db_options_in_use;
-
-  if (create_info->auto_increment_value != stats.auto_increment_value ||
-      create_info->data_file_name != data_file_name ||
-      create_info->index_file_name != index_file_name ||
-      table_changes == IS_EQUAL_NO ||
-      table_changes & IS_EQUAL_PACK_LENGTH) // Not implemented yet
-    return COMPATIBLE_DATA_NO;
-
-  if ((options & (HA_OPTION_PACK_RECORD | HA_OPTION_CHECKSUM |
-		  HA_OPTION_DELAY_KEY_WRITE)) !=
-      (create_info->table_options & (HA_OPTION_PACK_RECORD |
-                                     HA_OPTION_CHECKSUM |
-			      HA_OPTION_DELAY_KEY_WRITE)))
-    return COMPATIBLE_DATA_NO;
-  return COMPATIBLE_DATA_YES;
 }
 
 static MyisamEngine *engine= NULL;

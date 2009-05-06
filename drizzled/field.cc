@@ -1929,14 +1929,14 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, const uint3
   }
 }
 
-bool Field::isRead() 
+bool Field::isReadSet() 
 { 
-  return table->read_set->test(field_index); 
+  return table->isReadSet(field_index); 
 }
 
 
-bool Field::isWrite()
+bool Field::isWriteSet()
 { 
-  return table->write_set->test(field_index); 
+  return table->isWriteSet(field_index); 
 }
 

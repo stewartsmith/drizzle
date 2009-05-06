@@ -519,8 +519,8 @@ public:
   friend class Item_sum_max;
   friend class Item_func_group_concat;
 
-  bool isRead();
-  bool isWrite();
+  bool isReadSet();
+  bool isWriteSet();
 
 private:
   /*

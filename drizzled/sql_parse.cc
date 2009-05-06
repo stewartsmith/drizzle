@@ -304,7 +304,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
   session->command=COM_SLEEP;
-  session->process_list_info[0]= 0;
+  memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
   session->query=0;
   session->query_length=0;
 

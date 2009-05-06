@@ -605,7 +605,7 @@ const unsigned char *Field_blob::unpack(unsigned char *,
   uint32_t const master_packlength=
     param_data > 0 ? param_data & 0xFF : packlength;
   uint32_t const length= get_length(from, master_packlength, low_byte_first);
-  table->write_set->set(field_index);
+  table->setWriteSet(field_index);
   store(reinterpret_cast<const char*>(from) + master_packlength,
         length, field_charset);
   return(from + master_packlength + length);
@@ -673,15 +673,4 @@ uint32_t Field_blob::max_display_length()
     assert(0); // we should never go here
     return 0;
   }
-}
-
-bool Field_blob::in_read_set()
-{
-  return (table->read_set->test(field_index));
-}
-
-
-bool Field_blob::in_write_set()
-{
-  return (table->write_set->test(field_index));
 }
