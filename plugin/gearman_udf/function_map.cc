@@ -44,12 +44,11 @@ GearmanFunctionMap::~GearmanFunctionMap()
 bool GearmanFunctionMap::add(string function, string servers)
 {
   map<string, gearman_client_st>::iterator x;
-  char *port;
-  char *next;
-  const char *current;
-  unsigned long current_length;
-  unsigned long total;
-  char *host;
+  string host;
+  string port;
+  size_t begin_pos= 0;
+  size_t end_pos;
+  size_t port_pos;
 
   pthread_mutex_lock(&lock);
 
@@ -63,42 +62,35 @@ bool GearmanFunctionMap::add(string function, string servers)
     }
   }
 
-  current= servers.c_str();
-  total= servers.size();
-
   while (1)
   {
-    next= (char *)memchr(current, ',', total);
-    if (next == NULL)
-      current_length= total;
+    end_pos= servers.find(',', begin_pos);
+    if (end_pos == string::npos)
+      host= servers.substr(begin_pos);
     else
-      current_length= next - current;
+      host= servers.substr(begin_pos, end_pos - begin_pos);
 
-    host= new char[current_length + 1];
-    memcpy(host, current, current_length);
-    host[current_length]= 0;
-
-    port= strchr(host, ':');
-    if (port != NULL)
+    port_pos= host.find(':');
+    if (port_pos == string::npos)
+      port.clear();
+    else
     {
-      *port= 0;
-      port++;
+      port= host.substr(port_pos + 1);
+      host[port_pos]= 0;
     }
 
-    if (gearman_client_add_server(&(functionMap[function]), host,
-                              port == NULL ? 0 : atoi(port)) != GEARMAN_SUCCESS)
+    if (gearman_client_add_server(&(functionMap[function]), host.c_str(),
+                                  port.size() == 0 ?
+                                  0 : atoi(port.c_str())) != GEARMAN_SUCCESS)
     {
-      delete[] host;
       pthread_mutex_unlock(&lock);
       return false;
     }
 
-    delete[] host;
-
-    if (next == NULL)
+    if (end_pos == string::npos)
       break;
 
-    current= next + 1;
+    begin_pos= end_pos + 1;
   }
 
   pthread_mutex_unlock(&lock);
