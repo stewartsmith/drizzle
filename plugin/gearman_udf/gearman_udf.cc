@@ -15,122 +15,39 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_udf.h>
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
 
-#include <list>
-#include <string>
-
-#include <libgearman/gearman.h>
+#include "gman_servers_set.h"
+#include "gman_do.h"
 
 using namespace std;
 
-class GearmanFunctionMap
-{
-  map<string, gearman_client_st *> functionMap;
-  pthread_mutex_t lock;
-  string errorString;
-
-public:
-  GearmanFunctionMap()
-  {
-    (void) pthread_mutex_init(&lock, NULL);
-  }
-
-  bool add(string function)
-  {
-    pthread_mutex_lock(&lock);
-
-    if (functionMap[function] == NULL)
-    {
-      functionMap[function]= gearman_client_create(NULL);
-      if (functionMap[function] == NULL)
-      {
-        errorString= "gearman_client_create() failed.";
-        pthread_mutex_unlock(&lock);
-        return false;
-      }
-    }
-
-printf("\nSize: %u\n", (uint32_t)functionMap.size());
-
-    pthread_mutex_unlock(&lock);
-    return true;
-  }
-};
-
-static GearmanFunctionMap _functionMap;
-
-class Item_func_gman_servers_set :public Item_str_func
-{
-  String buffer;
-public:
-  Item_func_gman_servers_set():Item_str_func(){}
-  void fix_length_and_dec() {}
-  const char *func_name() const{return "gman_do";}
-  String *val_str(String *);
-};
-
-String *Item_func_gman_servers_set::val_str(String *str)
-{
-  String *res;
-
-  if (!(res= args[0]->val_str(str)))
-  {
-    null_value= 1;
-    return 0;
-  }
-
-  (void) _functionMap.add(string(res->ptr()));
-
-  buffer.realloc(res->length());
-  strcpy(buffer.ptr(), res->ptr());
-  buffer.length(res->length());
-  null_value= 0;
-  return &buffer;
-}
-
-class Item_func_gman_do :public Item_str_func
-{
-  String buffer;
-public:
-  Item_func_gman_do():Item_str_func(){}
-  void fix_length_and_dec() { max_length=10; }
-  const char *func_name() const{return "gman_do";}
-  String *val_str(String *);
-};
-
-String *Item_func_gman_do::val_str(String *str)
-{
-  String *res;
-
-  if (!(res= args[0]->val_str(str)))
-  {
-    null_value= 1;
-    return 0;
-  }
-
-  (void) _functionMap.add(string(res->ptr()));
-
-  buffer.realloc(res->length());
-  strcpy(buffer.ptr(), res->ptr());
-  buffer.length(res->length());
-  null_value= 0;
-  return &buffer;
-}
-
 Create_function<Item_func_gman_servers_set> gman_servers_set(string("gman_servers_set"));
 Create_function<Item_func_gman_do> gman_do(string("gman_do"));
+Create_function<Item_func_gman_do_high> gman_do_high(string("gman_do_high"));
+Create_function<Item_func_gman_do_low> gman_do_low(string("gman_do_low"));
+Create_function<Item_func_gman_do_background> gman_do_background(string("gman_do_background"));
+Create_function<Item_func_gman_do_high_background> gman_do_high_background(string("gman_do_high_background"));
+Create_function<Item_func_gman_do_low_background> gman_do_low_background(string("gman_do_low_background"));
 
 static int gearman_udf_plugin_init(PluginRegistry &registry)
 {
   registry.add(&gman_servers_set);
   registry.add(&gman_do);
+  registry.add(&gman_do_high);
+  registry.add(&gman_do_low);
+  registry.add(&gman_do_background);
+  registry.add(&gman_do_high_background);
+  registry.add(&gman_do_low_background);
   return 0;
 }
 
 static int gearman_udf_plugin_deinit(PluginRegistry &registry)
 {
+  registry.remove(&gman_do_low_background);
+  registry.remove(&gman_do_high_background);
+  registry.remove(&gman_do_background);
+  registry.remove(&gman_do_low);
+  registry.remove(&gman_do_high);
   registry.remove(&gman_do);
   registry.remove(&gman_servers_set);
   return 0;

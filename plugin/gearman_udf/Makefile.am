@@ -18,7 +18,7 @@ pkgplugin_LTLIBRARIES =	@plugin_gearman_shared_target@
 libgearman_udf_la_LDFLAGS = -module -avoid-version -rpath $(pkgplugindir)
 libgearman_udf_la_LIBADD = $(LIBGEARMAN)
 libgearman_udf_la_CPPFLAGS= $(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
-libgearman_udf_la_SOURCES = gearman_udf.cc
+libgearman_udf_la_SOURCES = gearman_udf.cc function_map.cc function_map.h gman_servers_set.cc gman_sservers_set.h gman_do.cc gman_do.h
 
 EXTRA_LIBRARIES = libgearman_udf.a
 noinst_LIBRARIES = @plugin_gearman_static_target@
